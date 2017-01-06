@@ -9,31 +9,29 @@
 
 # search for bison
 macro(find_bison)
-  IF(NOT BISON_EXECUTABLE)
-    IF (MSVC)
-      FIND_PROGRAM(BISON_EXECUTABLE PATHS
-      		   NAMES bison.exe
-	           PATHS $ENV{LIB_DIR}/bin c:/cygwin/bin $ENV{PROGRAMFILES}/GnuWin32/bin
-	)
-    ELSE ()
-      FIND_PROGRAM(BISON_EXECUTABLE bison)
-    ENDIF ()
+if(NOT BISON_EXECUTABLE)
+    if (MSVC)
+        find_program(BISON_EXECUTABLE PATHS
+            NAMES bison.exe
+            PATHS $ENV{LIB_DIR}/bin c:/cygwin/bin $ENV{PROGRAMFILES}/GnuWin32/bin
+        )
+    else ()
+        find_program(BISON_EXECUTABLE bison)
+    endif ()
 
-    IF (BISON_EXECUTABLE)
-
-      EXEC_PROGRAM(${BISON_EXECUTABLE} ARGS --version OUTPUT_VARIABLE BISON_VERSION_STR)
-      # get first line in case it's multiline
-      STRING(REGEX REPLACE "([^\n]+).*" "\\1" FIRST_LINE "${BISON_VERSION_STR}")
-      # get version information
-      STRING(REGEX REPLACE ".* ([0-9]+)\\.([0-9]+)(\\..*)?" "\\1" BISON_VERSION_MAJOR "${FIRST_LINE}")
-      STRING(REGEX REPLACE ".* ([0-9]+)\\.([0-9]+)(\\..*)?" "\\2" BISON_VERSION_MINOR "${FIRST_LINE}")
-      IF (BISON_VERSION_MAJOR LESS 2 OR (BISON_VERSION_MAJOR EQUAL 2 AND BISON_VERSION_MINOR LESS 4))
-        message(WARNING "Bison version is too old (${BISON_VERSION_MAJOR}.${BISON_VERSION_MINOR}). Use 2.4 or higher.")
-        unset(BISON_EXECUTABLE)
-      ENDIF ()
-
-    ENDIF ()
-  ENDIF()
+    if (BISON_EXECUTABLE)
+        exec_program(${BISON_EXECUTABLE} ARGS --version OUTPUT_VARIABLE BISON_VERSION_STR)
+        # get first line in case it's multiline
+        string(REGEX REPLACE "([^\n]+).*" "\\1" FIRST_LINE "${BISON_VERSION_STR}")
+        # get version information
+        string(REGEX REPLACE ".* ([0-9]+)\\.([0-9]+)(\\..*)?" "\\1" BISON_VERSION_MAJOR "${FIRST_LINE}")
+        string(REGEX REPLACE ".* ([0-9]+)\\.([0-9]+)(\\..*)?" "\\2" BISON_VERSION_MINOR "${FIRST_LINE}")
+        if (BISON_VERSION_MAJOR LESS 2 OR (BISON_VERSION_MAJOR EQUAL 2 AND BISON_VERSION_MINOR LESS 4))
+            warning_msg("Bison version is too old (${BISON_VERSION_MAJOR}.${BISON_VERSION_MINOR}). Use 2.4 or higher.")
+            unset(BISON_EXECUTABLE)
+        endif ()
+    endif ()
+endif()
 
 endmacro()
 
@@ -41,7 +39,7 @@ macro(add_bison_files)
     find_bison()
 
     if(NOT BISON_EXECUTABLE)
-        message(WARNING "Bison: Skip creating ${ARGN}")
+        warning_msg("Bison: Skip creating ${ARGN}")
         return()
     endif()
 
@@ -75,7 +73,7 @@ macro(add_bison_files_prefix prefix)
     find_bison()
 
     if(NOT BISON_EXECUTABLE)
-        message(WARNING "Bison: Skip creating ${ARGN}")
+        warning_msg("Bison: Skip creating ${ARGN}")
         return()
     endif()
 
@@ -110,26 +108,27 @@ endmacro()
 
 # search flex
 macro(find_flex)
-    IF(NOT FLEX_EXECUTABLE)
-      IF (MSVC)
-        FIND_PROGRAM(FLEX_EXECUTABLE
-                     NAMES flex.exe
-                     PATHS $ENV{LIB_DIR}/bin c:/cygwin/bin $ENV{PROGRAMFILES}/GnuWin32/bin
-                    )
-      ELSE(MSVC)
-        FIND_PROGRAM(FLEX_EXECUTABLE flex)
-      ENDIF (MSVC)
-        IF (NOT FLEX_EXECUTABLE)
-          MESSAGE(WARNING "flex not found - aborting")
-        ENDIF (NOT FLEX_EXECUTABLE)
-    ENDIF(NOT FLEX_EXECUTABLE)
+    if(NOT FLEX_EXECUTABLE)
+        if(MSVC)
+            find_program(FLEX_EXECUTABLE
+                NAMES flex.exe
+                PATHS $ENV{LIB_DIR}/bin c:/cygwin/bin $ENV{PROGRAMFILES}/GnuWin32/bin
+            )
+        else()
+            find_program(FLEX_EXECUTABLE flex)
+        endif()
+
+        if(NOT FLEX_EXECUTABLE)
+            warning_msg("flex not found")
+        endif ()
+    endif()
 endmacro()
 
 macro(add_flex_files)
     find_flex()
 
     if(NOT FLEX_EXECUTABLE)
-        message(WARNING "Flex: Skip creating ${ARGN}")
+        warning_msg("Flex: Skip creating ${ARGN}")
         return()
     endif()
 
@@ -160,7 +159,7 @@ macro(add_flex_files_prefix prefix)
     find_flex()
 
     if(NOT FLEX_EXECUTABLE)
-        message(WARNING "Flex: Skip creating ${ARGN}")
+        warning_msg("Flex: Skip creating ${ARGN}")
         return()
     endif()
 

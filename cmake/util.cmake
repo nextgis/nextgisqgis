@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this script.  If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
-function(check_version major minor patch qgis_port)
+function(check_version major minor patch qgis_major qgis_minor qgis_patch qgis_name)
 
     string(TIMESTAMP CURRENT_YEAR "%y")
     string(TIMESTAMP CURRENT_MONTH "%m")
@@ -28,13 +28,19 @@ function(check_version major minor patch qgis_port)
     set(VERSION_MINOR ${CURRENT_MONTH})
     set(VERSION_PATCH 0)
     # QGIS_PORT is the version of QGIS this release is bound to
-    set(QGIS_PORT 2.14.10)
+    set(QGIS_MAJOR 2)
+    set(QGIS_MINOR 14)
+    set(QGIS_PATCH 10)
+    set(QGIS_NAME "Essen")
 
 
     set(${major} ${VERSION_MAJOR} PARENT_SCOPE)
     set(${minor} ${VERSION_MINOR} PARENT_SCOPE)
     set(${patch} ${VERSION_PATCH} PARENT_SCOPE)
-    set(${qgis_port} ${QGIS_PORT} PARENT_SCOPE)
+    set(${qgis_major} ${QGIS_MAJOR} PARENT_SCOPE)
+    set(${qgis_minor} ${QGIS_MINOR} PARENT_SCOPE)
+    set(${qgis_patch} ${QGIS_PATCH} PARENT_SCOPE)
+    set(${qgis_name} ${QGIS_NAME} PARENT_SCOPE)
 
     # Store version string in file for installer needs
     file(TIMESTAMP ${CMAKE_CURRENT_SOURCE_DIR}/src/core/qgis.h VERSION_DATETIME "%Y-%m-%d %H:%M:%S" UTC)
@@ -50,4 +56,14 @@ function(report_version name ver)
 
     message(STATUS "${BoldYellow}${name} version ${ver}${ColourReset}")
 
+endfunction()
+
+function(warning_msg text)
+    if(NOT SUPPRESS_VERBOSE_OUTPUT)
+    string(ASCII 27 Esc)
+    set(Red         "${Esc}[31m")
+    set(ColourReset "${Esc}[m")
+
+    message(STATUS "${Red}${text}${ColourReset}")
+    endif()
 endfunction()

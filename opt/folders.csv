@@ -1,6 +1,7 @@
 ,docs,,"BUGS,CODING,Exception_to_GPL_for_Qt.txt,INSTALL,NEWS,PROVENANCE,TODO"
 ,,,COPYING
 mac,,skip,
+ci,,skip,
 cmake,,skip,
 cmake_templates,,skip,
 debian,,skip,
@@ -11,6 +12,7 @@ ms-windows,,skip,
 postinstall,,skip,
 python,,skip,
 resources,,skip,
+rpm,,skip,
 src,resources,,Qgis.xsd
 scripts,,skip,
 tests,,skip,

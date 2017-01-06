@@ -51,7 +51,12 @@ else()
 
     set(INSTALL_BIN_DIR ${CMAKE_INSTALL_BINDIR} CACHE INTERNAL "Installation directory for executables" FORCE)
     set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE INTERNAL "Installation directory for libraries" FORCE)
-    set(INSTALL_INC_DIR ${CMAKE_INSTALL_INCLUDEDIR} CACHE INTERNAL "Installation directory for headers" FORCE)
+    set(INSTALL_INC_DIR ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME} CACHE INTERNAL "Installation directory for headers" FORCE)
+    set(INSTALL_SHARE_DIR ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME} CACHE INTERNAL "Installation directory for share data" FORCE)
+    set(INSTALL_PKGCONFIG_DIR ${INSTALL_LIB_DIR}/pkgconfig CACHE INTERNAL "Installation directory for pkgconfig (.pc) files" FORCE)
+    set(INSTALL_MAN_DIR ${CMAKE_INSTALL_MANDIR} CACHE INTERNAL "Installation directory for manual pages" FORCE)
+    set(INSTALL_DOC_DIR ${CMAKE_INSTALL_DOCDIR} CACHE INTERNAL "Installation directory for doc pages" FORCE)
+    set(INSTALL_PLUGIN_DIR ${INSTALL_LIB_DIR}/${PROJECT_NAME}/plugins CACHE INTERNAL "Installation directory for plugins" FORCE)
 endif()
 
 if(CMAKE_GENERATOR_TOOLSET MATCHES "v([0-9]+)_xp")
@@ -59,20 +64,17 @@ if(CMAKE_GENERATOR_TOOLSET MATCHES "v([0-9]+)_xp")
 endif()
 
 include(util)
-check_version(NGQGIS_MAJOR_VERSION NGQGIS_MINOR_VERSION NGQGIS_PATCH_VERSION NGQGIS_PORT)
+check_version(NGQGIS_MAJOR_VERSION NGQGIS_MINOR_VERSION NGQGIS_PATCH_VERSION CPACK_PACKAGE_VERSION_MAJOR CPACK_PACKAGE_VERSION_MINOR CPACK_PACKAGE_VERSION_PATCH RELEASE_NAME)
 set(VERSION ${NGQGIS_MAJOR_VERSION}.${NGQGIS_MINOR_VERSION}.${NGQGIS_PATCH_VERSION})
 
 if(OSX_FRAMEWORK)
     set(FRAMEWORK_VERSION "${NGQGIS_MAJOR_VERSION}")
 endif()
 
-configure_file(${CMAKE_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake IMMEDIATE @ONLY)
-
+include(configure)
 
 include_directories ( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories ( ${CMAKE_CURRENT_BINARY_DIR} )
-
-include(configure)
 
 report_version(${PROJECT_NAME} ${VERSION})
 
@@ -80,6 +82,7 @@ report_version(${PROJECT_NAME} ${VERSION})
 
 # Add binaries and libraries
 add_subdirectory(src)
+add_subdirectory(translations)
 
 add_custom_target(prepare_parser DEPENDS ${PREPARE_PARSER_TARGETS})
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
