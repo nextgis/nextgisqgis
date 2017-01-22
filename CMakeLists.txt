@@ -26,7 +26,11 @@
 
 cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
-project(ngqgis)
+project(qgis)
+
+if(NOT SKIP_PREFIX)
+    set(NG_PREFIX ng)
+endif()
 
 # Some init settings
 set(CMAKE_COLOR_MAKEFILE ON)
@@ -40,7 +44,7 @@ endif()
 
 if(OSX_FRAMEWORK)
   set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/Applications" CACHE INTERNAL "Installation directory for executables" FORCE)
-  set(INSTALL_LIB_DIR "${INSTALL_BIN_DIR}/${PROJECT_NAME}.app/Contents/Frameworks" CACHE INTERNAL "Installation directory for libraries" FORCE)
+  set(INSTALL_LIB_DIR "${INSTALL_BIN_DIR}/${NG_PREFIX}${PROJECT_NAME}.app/Contents/Frameworks" CACHE INTERNAL "Installation directory for libraries" FORCE)
   set(SKIP_INSTALL_HEADERS ON)
   set(SKIP_INSTALL_EXECUTABLES ON)
   set(SKIP_INSTALL_FILES ON)
@@ -51,12 +55,12 @@ else()
 
     set(INSTALL_BIN_DIR ${CMAKE_INSTALL_BINDIR} CACHE INTERNAL "Installation directory for executables" FORCE)
     set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE INTERNAL "Installation directory for libraries" FORCE)
-    set(INSTALL_INC_DIR ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME} CACHE INTERNAL "Installation directory for headers" FORCE)
-    set(INSTALL_SHARE_DIR ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME} CACHE INTERNAL "Installation directory for share data" FORCE)
+    set(INSTALL_INC_DIR ${CMAKE_INSTALL_INCLUDEDIR}/${NG_PREFIX}${PROJECT_NAME} CACHE INTERNAL "Installation directory for headers" FORCE)
+    set(INSTALL_SHARE_DIR ${CMAKE_INSTALL_DATADIR}/${NG_PREFIX}${PROJECT_NAME} CACHE INTERNAL "Installation directory for share data" FORCE)
     set(INSTALL_PKGCONFIG_DIR ${INSTALL_LIB_DIR}/pkgconfig CACHE INTERNAL "Installation directory for pkgconfig (.pc) files" FORCE)
     set(INSTALL_MAN_DIR ${CMAKE_INSTALL_MANDIR} CACHE INTERNAL "Installation directory for manual pages" FORCE)
     set(INSTALL_DOC_DIR ${CMAKE_INSTALL_DOCDIR} CACHE INTERNAL "Installation directory for doc pages" FORCE)
-    set(INSTALL_PLUGIN_DIR ${INSTALL_LIB_DIR}/${PROJECT_NAME}/plugins CACHE INTERNAL "Installation directory for plugins" FORCE)
+    set(INSTALL_PLUGIN_DIR ${INSTALL_LIB_DIR}/${NG_PREFIX}${PROJECT_NAME}/plugins CACHE INTERNAL "Installation directory for plugins" FORCE)
 endif()
 
 if(CMAKE_GENERATOR_TOOLSET MATCHES "v([0-9]+)_xp")
@@ -76,9 +80,43 @@ include(configure)
 include_directories ( ${CMAKE_CURRENT_SOURCE_DIR} )
 include_directories ( ${CMAKE_CURRENT_BINARY_DIR} )
 
-report_version(${PROJECT_NAME} ${VERSION})
+report_version("${NG_PREFIX}${PROJECT_NAME}" ${VERSION})
+
+include(FindAnyProject)
 
 # Search dependencies
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(QT4_NEED_COMPONENTS
+    QtCore QtGui QtXml QtNetwork QtSvg QtSql QtWebKit
+)
+find_anyproject(Qt4 REQUIRED COMPONENTS ${QT4_NEED_COMPONENTS})
+if(QT4_FOUND)
+    if (NOT TARGET Qt4::qmake)
+        add_executable(Qt4::qmake IMPORTED)
+        set_property(TARGET Qt4::qmake PROPERTY IMPORTED_LOCATION ${QT_QMAKE_EXECUTABLE})
+    endif()
+    if (NOT TARGET Qt4::moc)
+        add_executable(Qt4::moc IMPORTED)
+        set_property(TARGET Qt4::moc PROPERTY IMPORTED_LOCATION ${QT_MOC_EXECUTABLE})
+    endif()
+    if (NOT TARGET Qt4::rcc)
+        add_executable(Qt4::rcc IMPORTED)
+        set_property(TARGET Qt4::rcc PROPERTY IMPORTED_LOCATION ${QT_RCC_EXECUTABLE})
+    endif()
+    if (NOT TARGET Qt4::uic)
+        add_executable(Qt4::uic IMPORTED)
+        set_property(TARGET Qt4::uic PROPERTY IMPORTED_LOCATION ${QT_UIC_EXECUTABLE})
+    endif()
+
+    foreach(QT4_NEED_COMPONENT ${QT4_NEED_COMPONENTS})
+        string(TOUPPER ${QT4_NEED_COMPONENT} QT4_NEED_COMPONENT)
+        set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${QT_${QT4_NEED_COMPONENT}_LIBRARY})
+        include_directories(${QT_${QT4_NEED_COMPONENT}_INCLUDE_DIR})
+    endforeach()
+
+    include(Qt4Macros)
+endif()
 
 # Add binaries and libraries
 add_subdirectory(src)

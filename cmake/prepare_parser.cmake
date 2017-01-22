@@ -58,7 +58,7 @@ macro(add_bison_files)
             OUTPUT ${_out}
             COMMAND ${BISON_EXECUTABLE}
             ARGS
-            -o${_out} -d -v -t
+            -o${_out} -d -v
             ${_in}
             DEPENDS ${_in}
         )
@@ -94,7 +94,7 @@ macro(add_bison_files_prefix prefix)
             COMMAND ${BISON_EXECUTABLE}
             ARGS
             -p ${prefix}
-            -o${_out} -d -v -t
+            -o${_out} -d -v
             ${_in}
             DEPENDS ${_in}
         )

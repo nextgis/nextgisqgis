@@ -60,7 +60,7 @@ if(QT_LRELEASE_EXECUTABLE)
 
     # first compile sources, then compile translations
     if (WITH_DESKTOP)
-        add_dependencies (translations ${PROJECT_NAME})
+        add_dependencies (translations ${NG_PREFIX}${PROJECT_NAME})
     endif ()
 
     if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
@@ -68,5 +68,5 @@ if(QT_LRELEASE_EXECUTABLE)
              DESTINATION ${INSTALL_SHARE_DIR}/i18n)
     endif()
 else()
-    warning_msg("The lrelease utility not found. Translations will not be build!")    
+    warning_msg("The lrelease utility not found. Translations will not be build!")
 endif()

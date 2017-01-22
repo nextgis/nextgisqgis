@@ -34,7 +34,7 @@
 # define YY_EXP_HOME_BISHOP_WORK_PROJECTS_NEXTGISQGIS_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 1
+# define YYDEBUG 0
 #endif
 #if YYDEBUG
 extern int exp_debug;

@@ -63,7 +63,7 @@
 #define yyparse         exp_parse
 #define yylex           exp_lex
 #define yyerror         exp_error
-#define yydebug         exp_debug
+//#define yydebug         exp_debug
 #define yynerrs         exp_nerrs
 
 
@@ -138,96 +138,6 @@ struct expression_parser_context
 #else
 # define YYERROR_VERBOSE 1
 #endif
-
-/* In a future release of Bison, this section will be replaced
-   by #include "qgsexpressionparser.hpp".  */
-#ifndef YY_EXP_HOME_BISHOP_WORK_PROJECTS_NEXTGISQGIS_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED
-# define YY_EXP_HOME_BISHOP_WORK_PROJECTS_NEXTGISQGIS_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED
-/* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 1
-#endif
-#if YYDEBUG
-extern int exp_debug;
-#endif
-
-/* Token type.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
-  {
-    OR = 258,
-    AND = 259,
-    EQ = 260,
-    NE = 261,
-    LE = 262,
-    GE = 263,
-    LT = 264,
-    GT = 265,
-    REGEXP = 266,
-    LIKE = 267,
-    IS = 268,
-    PLUS = 269,
-    MINUS = 270,
-    MUL = 271,
-    DIV = 272,
-    INTDIV = 273,
-    MOD = 274,
-    CONCAT = 275,
-    POW = 276,
-    NOT = 277,
-    IN = 278,
-    NUMBER_FLOAT = 279,
-    NUMBER_INT = 280,
-    BOOLEAN = 281,
-    NULLVALUE = 282,
-    CASE = 283,
-    WHEN = 284,
-    THEN = 285,
-    ELSE = 286,
-    END = 287,
-    STRING = 288,
-    COLUMN_REF = 289,
-    FUNCTION = 290,
-    SPECIAL_COL = 291,
-    VARIABLE = 292,
-    COMMA = 293,
-    Unknown_CHARACTER = 294,
-    UMINUS = 295
-  };
-#endif
-
-/* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
-union YYSTYPE
-{
-#line 77 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:355  */
-
-  QgsExpression::Node* node;
-  QgsExpression::NodeList* nodelist;
-  double numberFloat;
-  int    numberInt;
-  bool   boolVal;
-  QString* text;
-  QgsExpression::BinaryOperator b_op;
-  QgsExpression::UnaryOperator u_op;
-  QgsExpression::WhenThen* whenthen;
-  QgsExpression::WhenThenList* whenthenlist;
-
-#line 219 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:355  */
-};
-
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
-#endif
-
-
-
-int exp_parse (expression_parser_context* parser_ctx);
-
-#endif /* !YY_EXP_HOME_BISHOP_WORK_PROJECTS_NEXTGISQGIS_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED  */
 
 /* Copy the second part of user declarations.  */
 
@@ -2038,4 +1948,3 @@ void exp_error(expression_parser_context* parser_ctx, const char* msg)
 {
   parser_ctx->errorMsg = msg;
 }
-

@@ -23,6 +23,9 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
+include (CheckIncludeFile)
+include (CheckIncludeFiles)
+include (CheckCSourceCompiles)
 
 if(NOT WIN32 AND NOT ANDROID)
     include(CheckFunctionExists)
@@ -98,27 +101,52 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Qunused-arguments")
 endif ()
 
-if (CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
+if (CMAKE_BUILD_TYPE MATCHES "Debug" OR CMAKE_BUILD_TYPE MATCHES "RelWithDebInfo")
     add_definitions(-DQGISDEBUG=1)
 endif ()
 
+check_c_source_compiles ("
+#include <stdlib.h>
+static void foo(void) __attribute__ ((unused));
+int main(void) { return 0; }
+" HAVE___ATTRIBUTE__)
+
+check_c_source_compiles ("
+#include <stdlib.h>
+static void foo(void) __attribute__ ((visibility(\"default\")));
+int main(void) { return 0; }
+" HAVE___ATTRIBUTE__VISIBILITY_DEFAULT)
+
+check_c_source_compiles ("
+#include <stdlib.h>
+static void foo(void) __attribute__ ((visibility(\"hidden\")));
+int main(void) { return 0; }
+" HAVE___ATTRIBUTE__VISIBILITY_HIDDEN)
+
+check_c_source_compiles ("
+__declspec(selectany) int a;
+int main(void) { return 0; }
+" HAVE___DECLSPEC)
+
+set (CMAKE_CXX_VISIBILITY_PRESET default)
+set (CMAKE_VISIBILITY_INLINES_HIDDEN 1)
+
+if (HAVE___ATTRIBUTE__VISIBILITY_DEFAULT)
+    set (DLLEXPORT "__attribute__((visibility(\"default\")))")
+    set (DLLIMPORT "")
+elseif (HAVE___DECLSPEC)
+    set (DLLEXPORT "__declspec(dllexport)")
+    set (DLLIMPORT "__declspec(dllimport)")
+endif (HAVE___ATTRIBUTE__VISIBILITY_DEFAULT)
+
 if (WIN32)
-    set(DLLIMPORT "__declspec(dllimport)")
-    set(DLLEXPORT "__declspec(dllexport)")
     if (MSVC)
         add_definitions(-D_USE_MATH_DEFINES)
-
         # Turn off deprecation warnings
         add_definitions(-D_CRT_SECURE_NO_WARNINGS)
         add_definitions(-D_CRT_NONSTDC_NO_WARNINGS)
     endif()
 else ()
-    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        set(DLLEXPORT "__attribute__ ((visibility (\\\"default\\\")))")
-    else()
-        set(DLLEXPORT "")
-    endif()
-
     if(PEDANTIC AND NOT APPLE)
         set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
         set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--no-undefined")
@@ -127,18 +155,30 @@ else ()
 
 endif()
 
-add_definitions("-DCORE_EXPORT=${DLLIMPORT}")
-add_definitions("-DGUI_EXPORT=${DLLIMPORT}")
-add_definitions("-DPYTHON_EXPORT=${DLLIMPORT}")
-add_definitions("-DANALYSIS_EXPORT=${DLLIMPORT}")
-add_definitions("-DAPP_EXPORT=${DLLIMPORT}")
-add_definitions("-DCUSTOMWIDGETS_EXPORT=${DLLIMPORT}")
-add_definitions("-DSERVER_EXPORT=${DLLIMPORT}")
+# TODO: Move to application where import needed
+# add_definitions("-DCORE_EXPORT=${DLLIMPORT}")
+# add_definitions("-DGUI_EXPORT=${DLLIMPORT}")
+# add_definitions("-DPYTHON_EXPORT=${DLLIMPORT}")
+# add_definitions("-DANALYSIS_EXPORT=${DLLIMPORT}")
+# add_definitions("-DAPP_EXPORT=${DLLIMPORT}")
+# add_definitions("-DCUSTOMWIDGETS_EXPORT=${DLLIMPORT}")
+# add_definitions("-DSERVER_EXPORT=${DLLIMPORT}")
+
 
 # Disable automatic conversion from QString to ASCII 8-bit strings (char *)
 # (Keeps code compatible with Qt/Mac/64bit)
 add_definitions(-DQT_NO_CAST_TO_ASCII)
 
+find_package(Threads)
+if(Threads_FOUND)
+    add_definitions(-D_HAVE_PTHREAD_)
+    set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+
+check_include_file("windows.h" HAVE_WINDOWS_H)
+if(HAVE_WINDOWS_H)
+    add_definitions(-D_HAVE_WINDOWS_H_)
+endif()
 
 #define QGIS_PLUGIN_SUBDIR "${QGIS_PLUGIN_SUBDIR}"
 #define QGIS_DATA_SUBDIR "${QGIS_DATA_SUBDIR}"
