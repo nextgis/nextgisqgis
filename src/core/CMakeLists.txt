@@ -40,6 +40,9 @@ add_bison_files(qgsexpressionparser.yy)
 find_package(PythonInterp REQUIRED)
 
 find_anyproject(GEOS REQUIRED)
+find_anyproject(Qca REQUIRED)
+find_anyproject(GDAL REQUIRED)
+find_anyproject(PROJ4 REQUIRED)
 
 set(QGIS_CORE_SRCS
   symbology-ng/qgs25drenderer.cpp
@@ -818,7 +821,7 @@ gps/qextserialport]]
 # endif()
 
 # Test data dir for QgsRenderChecker
-# ADD_DEFINITIONS(-DTEST_DATA_DIR="\\"${TEST_DATA_DIR}\\"")
+add_definitions(-DTEST_DATA_DIR="\\"${TEST_DATA_DIR}\\"")
 
 set(LIB_NAME ${NG_PREFIX}qgis_core)
 

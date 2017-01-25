@@ -37,3 +37,4 @@ resources/function_help/json,resources/function_help/json,,*
 resources/context_help,resources/context_help,,*
 cmake,cmake,,COPYING-CMAKE-SCRIPTS
 scripts,scripts,,py
+tests/testdata,tests/testdata,,*

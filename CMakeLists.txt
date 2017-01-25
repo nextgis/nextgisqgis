@@ -87,36 +87,13 @@ include(FindAnyProject)
 # Search dependencies
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(QT4_NEED_COMPONENTS
-    QtCore QtGui QtXml QtNetwork QtSvg QtSql QtWebKit
-)
-find_anyproject(Qt4 REQUIRED COMPONENTS ${QT4_NEED_COMPONENTS})
-if(QT4_FOUND)
-    if (NOT TARGET Qt4::qmake)
-        add_executable(Qt4::qmake IMPORTED)
-        set_property(TARGET Qt4::qmake PROPERTY IMPORTED_LOCATION ${QT_QMAKE_EXECUTABLE})
-    endif()
-    if (NOT TARGET Qt4::moc)
-        add_executable(Qt4::moc IMPORTED)
-        set_property(TARGET Qt4::moc PROPERTY IMPORTED_LOCATION ${QT_MOC_EXECUTABLE})
-    endif()
-    if (NOT TARGET Qt4::rcc)
-        add_executable(Qt4::rcc IMPORTED)
-        set_property(TARGET Qt4::rcc PROPERTY IMPORTED_LOCATION ${QT_RCC_EXECUTABLE})
-    endif()
-    if (NOT TARGET Qt4::uic)
-        add_executable(Qt4::uic IMPORTED)
-        set_property(TARGET Qt4::uic PROPERTY IMPORTED_LOCATION ${QT_UIC_EXECUTABLE})
-    endif()
+find_anyproject(Qt4 REQUIRED COMPONENTS QtCore QtGui QtXml QtNetwork QtSvg QtSql QtWebKit)
 
-    foreach(QT4_NEED_COMPONENT ${QT4_NEED_COMPONENTS})
-        string(TOUPPER ${QT4_NEED_COMPONENT} QT4_NEED_COMPONENT)
-        set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${QT_${QT4_NEED_COMPONENT}_LIBRARY})
-        include_directories(${QT_${QT4_NEED_COMPONENT}_INCLUDE_DIR})
-    endforeach()
-
-    include(Qt4Macros)
-endif()
+#create a variable to specify where our test data is
+#so that unit tests can use TEST_DATA_DIR to locate
+#the test data. See CMakeLists in test dirs for more info
+#TEST_DATA_DIR is also used by QgsRenderChecker currently in core
+set (TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/testdata")
 
 # Add binaries and libraries
 add_subdirectory(src)
