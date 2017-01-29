@@ -68,7 +68,7 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 16 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:339  */
+//#line 16 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:339  */
 
 #include <qglobal.h>
 #include <QList>
@@ -2038,4 +2038,3 @@ void exp_error(expression_parser_context* parser_ctx, const char* msg)
 {
   parser_ctx->errorMsg = msg;
 }
-

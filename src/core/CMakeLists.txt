@@ -43,6 +43,7 @@ find_anyproject(GEOS REQUIRED)
 find_anyproject(Qca REQUIRED)
 find_anyproject(GDAL REQUIRED)
 find_anyproject(PROJ4 REQUIRED)
+find_anyproject(Spatialite REQUIRED)
 
 set(QGIS_CORE_SRCS
   symbology-ng/qgs25drenderer.cpp
