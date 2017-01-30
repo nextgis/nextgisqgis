@@ -36,17 +36,19 @@ endif()
 add_bison_files(qgsexpressionparser.yy)
 
 # Default target
-
 find_package(PythonInterp REQUIRED)
 
-find_anyproject(EXPAT REQUIRED)
-find_anyproject(GEOS REQUIRED)
-find_anyproject(Qca REQUIRED)
-find_anyproject(GDAL REQUIRED)
-find_anyproject(PROJ4 REQUIRED)
-find_anyproject(SQLite3 REQUIRED)
-find_anyproject(Spatialite REQUIRED)
-find_anyproject(SpatialIndex REQUIRED)
+if(NOT PREPARE_ONLY)
+
+    find_anyproject(EXPAT REQUIRED)
+    find_anyproject(GEOS REQUIRED)
+    find_anyproject(Qca REQUIRED)
+    find_anyproject(GDAL REQUIRED)
+    find_anyproject(PROJ4 REQUIRED)
+    find_anyproject(SQLite3 REQUIRED)
+    find_anyproject(Spatialite REQUIRED)
+    find_anyproject(SpatialIndex REQUIRED)
+endif()
 
 set(QGIS_CORE_SRCS
     symbology-ng/qgs25drenderer.cpp
@@ -852,8 +854,8 @@ if(OSX_FRAMEWORK)
     set_target_properties(${LIB_NAME} PROPERTIES
         FRAMEWORK TRUE
         FRAMEWORK_VERSION ${FRAMEWORK_VERSION}
-        MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${VERSION}
-        MACOSX_FRAMEWORK_BUNDLE_VERSION ${VERSION}
+        MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${QGIS_VERSION}
+        MACOSX_FRAMEWORK_BUNDLE_VERSION ${QGIS_VERSION}
         MACOSX_FRAMEWORK_IDENTIFIER org.qgis.qgis2_core
         XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
         PUBLIC_HEADER "${QGIS_CORE_HDRS};${QGIS_CORE_MOC_HDRS}"
@@ -864,8 +866,8 @@ set_target_properties(${LIB_NAME} PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
 #generate unversioned libs for android
 set_target_properties(${LIB_NAME} PROPERTIES
-    VERSION ${VERSION}
-    SOVERSION ${NGQGIS_MAJOR_VERSION}
+    VERSION ${QGIS_VERSION}
+    SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR}
 )
 
 if(WIN32)

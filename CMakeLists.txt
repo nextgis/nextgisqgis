@@ -70,9 +70,10 @@ endif()
 include(util)
 check_version(NGQGIS_MAJOR_VERSION NGQGIS_MINOR_VERSION NGQGIS_PATCH_VERSION CPACK_PACKAGE_VERSION_MAJOR CPACK_PACKAGE_VERSION_MINOR CPACK_PACKAGE_VERSION_PATCH RELEASE_NAME)
 set(VERSION ${NGQGIS_MAJOR_VERSION}.${NGQGIS_MINOR_VERSION}.${NGQGIS_PATCH_VERSION})
+set(QGIS_VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH})
 
 if(OSX_FRAMEWORK)
-    set(FRAMEWORK_VERSION "${NGQGIS_MAJOR_VERSION}")
+    set(FRAMEWORK_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}")
 endif()
 
 include(configure)
@@ -82,27 +83,33 @@ include_directories ( ${CMAKE_CURRENT_BINARY_DIR} )
 
 report_version("${NG_PREFIX}${PROJECT_NAME}" ${VERSION})
 
-include(FindAnyProject)
+option(PREPARE_ONLY "Only generate flex and bison files" OFF)
 
-# Search dependencies
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-find_anyproject(Qt4 REQUIRED COMPONENTS QtCore QtGui QtXml QtNetwork QtSvg QtSql)
+if(NOT PREPARE_ONLY)
+    include(FindAnyProject)
 
-option(WITH_QTWEBKIT "Build support QT Webkit" ON)
-if(WITH_QTWEBKIT)
-    find_anyproject(Qt4 REQUIRED COMPONENTS QtWebKit)
+    # Search dependencies
+    set(CMAKE_AUTOMOC ON)
+    set(CMAKE_INCLUDE_CURRENT_DIR ON)
+    find_anyproject(Qt4 REQUIRED COMPONENTS QtCore QtGui QtXml QtNetwork QtSvg QtSql)
+
+    option(WITH_QTWEBKIT "Build support QT Webkit" ON)
+    if(WITH_QTWEBKIT)
+        find_anyproject(Qt4 REQUIRED COMPONENTS QtWebKit)
+    endif()
+
+    #create a variable to specify where our test data is
+    #so that unit tests can use TEST_DATA_DIR to locate
+    #the test data. See CMakeLists in test dirs for more info
+    #TEST_DATA_DIR is also used by QgsRenderChecker currently in core
+    set (TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/testdata")
 endif()
-
-#create a variable to specify where our test data is
-#so that unit tests can use TEST_DATA_DIR to locate
-#the test data. See CMakeLists in test dirs for more info
-#TEST_DATA_DIR is also used by QgsRenderChecker currently in core
-set (TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/testdata")
 
 # Add binaries and libraries
 add_subdirectory(src)
-add_subdirectory(translations)
+if(NOT PREPARE_ONLY)
+    add_subdirectory(translations)
+endif()
 
 add_custom_target(prepare_parser DEPENDS ${PREPARE_PARSER_TARGETS})
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)

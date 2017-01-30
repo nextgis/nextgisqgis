@@ -24,9 +24,17 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-include(prepare_parser)
+# Prepare_parser targets
+add_flex_files_prefix(raster raster/qgsrastercalclexer.ll)
+# Disable warnings
+if(MSVC)
+    if(PEDANTIC)
+        # 4127 expression is constant
+        # 4702 unreachable code
+        set_source_files_properties(qgsrastercalcparser.cpp PROPERTIES COMPILE_FLAGS "-wd4127 -wd4702")
+    endif()
+else()
+  set_source_files_properties(qgsrastercalcparser.cpp PROPERTIES COMPILE_FLAGS -w)
+endif()
 
-add_subdirectory(core)
-add_subdirectory(analysis)
-
-set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
+add_bison_files_prefix(raster raster/qgsrastercalcparser.yy)
