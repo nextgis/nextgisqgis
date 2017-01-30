@@ -41,5 +41,5 @@ tests/testdata,tests/testdata,,*
 src/analysis/interpolation,src/analysis/interpolation,,"cpp,h,hpp,c,cc"
 src/analysis/network,src/analysis/network,skip,
 src/analysis/openstreetmap,src/analysis/openstreetmap,skip,
-src/analysis/raster,src/analysis/raster,,"cpp,h,hpp,c,cc"
+src/analysis/raster,src/analysis/raster,,"cpp,h,ll,yy,hpp,c,cc"
 src/analysis/vector,src/analysis/vector,,"cpp,h,hpp,c,cc"
