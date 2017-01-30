@@ -121,7 +121,7 @@ struct expression_parser_context
 #define BINOP(x, y, z)  new QgsExpression::NodeBinaryOperator(x, y, z)
 
 
-#line 125 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:339  */
+//#line 125 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -202,7 +202,7 @@ extern int exp_debug;
 
 union YYSTYPE
 {
-#line 77 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:355  */
+//#line 77 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:355  */
 
   QgsExpression::Node* node;
   QgsExpression::NodeList* nodelist;
@@ -215,7 +215,7 @@ union YYSTYPE
   QgsExpression::WhenThen* whenthen;
   QgsExpression::WhenThenList* whenthenlist;
 
-#line 219 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:355  */
+//#line 219 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -231,7 +231,7 @@ int exp_parse (expression_parser_context* parser_ctx);
 
 /* Copy the second part of user declarations.  */
 
-#line 235 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:358  */
+//#line 235 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -1140,57 +1140,57 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, expression_parser_
   switch (yytype)
     {
           case 33: /* STRING  */
-#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
+//#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
       { delete ((*yyvaluep).text); }
-#line 1146 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
+//#line 1146 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
         break;
 
     case 34: /* COLUMN_REF  */
-#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
+//#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
       { delete ((*yyvaluep).text); }
-#line 1152 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
+//#line 1152 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
         break;
 
     case 35: /* FUNCTION  */
-#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
+//#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
       { delete ((*yyvaluep).text); }
-#line 1158 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
+//#line 1158 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
         break;
 
     case 36: /* SPECIAL_COL  */
-#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
+//#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
       { delete ((*yyvaluep).text); }
-#line 1164 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
+//#line 1164 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
         break;
 
     case 37: /* VARIABLE  */
-#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
+//#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
       { delete ((*yyvaluep).text); }
-#line 1170 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
+//#line 1170 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
         break;
 
     case 45: /* expression  */
-#line 149 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
+//#line 149 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
       { delete ((*yyvaluep).node); }
-#line 1176 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
+//#line 1176 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
         break;
 
     case 46: /* exp_list  */
-#line 150 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
+//#line 150 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
       { delete ((*yyvaluep).nodelist); }
-#line 1182 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
+//#line 1182 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
         break;
 
     case 47: /* when_then_clauses  */
-#line 153 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
+//#line 153 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
       { delete ((*yyvaluep).whenthenlist); }
-#line 1188 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
+//#line 1188 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
         break;
 
     case 48: /* when_then_clause  */
-#line 152 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
+//#line 152 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
       { delete ((*yyvaluep).whenthen); }
-#line 1194 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
+//#line 1194 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
         break;
 
 
@@ -1456,139 +1456,139 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 157 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 157 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { parser_ctx->rootNode = (yyvsp[0].node); }
-#line 1462 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1462 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 161 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 161 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1468 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1468 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 162 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 162 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1474 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1474 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 163 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 163 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1480 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1480 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 164 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 164 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1486 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1486 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 165 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 165 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1492 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1492 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 166 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 166 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1498 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1498 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 167 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 167 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1504 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1504 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 168 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 168 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1510 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1510 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 169 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 169 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1516 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1516 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 170 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 170 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1522 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1522 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 171 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 171 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1528 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1528 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 172 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 172 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1534 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1534 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 173 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 173 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1540 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1540 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 174 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 174 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1546 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1546 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 175 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 175 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1552 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1552 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 176 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 176 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1558 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1558 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 177 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 177 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1564 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1564 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 178 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 178 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1570 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1570 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 179 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 179 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1576 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1576 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 180 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 180 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = new QgsExpression::NodeUnaryOperator((yyvsp[-1].u_op), (yyvsp[0].node)); }
-#line 1582 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1582 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 181 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 181 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[-1].node); }
-#line 1588 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1588 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 183 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 183 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     {
           int fnIndex = QgsExpression::functionIndex(*(yyvsp[-3].text));
           delete (yyvsp[-3].text);
@@ -1609,11 +1609,11 @@ yyreduce:
           }
           (yyval.node) = new QgsExpression::NodeFunction(fnIndex, (yyvsp[-1].nodelist));
         }
-#line 1613 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1613 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 205 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 205 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     {
           int fnIndex = QgsExpression::functionIndex(*(yyvsp[-2].text));
           delete (yyvsp[-2].text);
@@ -1631,53 +1631,53 @@ yyreduce:
           }
           (yyval.node) = new QgsExpression::NodeFunction(fnIndex, new QgsExpression::NodeList());
         }
-#line 1635 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1635 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 223 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 223 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = new QgsExpression::NodeInOperator((yyvsp[-4].node), (yyvsp[-1].nodelist), false);  }
-#line 1641 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1641 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 224 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 224 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = new QgsExpression::NodeInOperator((yyvsp[-5].node), (yyvsp[-1].nodelist), true); }
-#line 1647 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1647 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 226 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 226 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = (yyvsp[0].node); }
-#line 1653 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1653 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 227 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 227 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = new QgsExpression::NodeUnaryOperator( QgsExpression::uoMinus, (yyvsp[0].node)); }
-#line 1659 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1659 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 229 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 229 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = new QgsExpression::NodeCondition((yyvsp[-1].whenthenlist)); }
-#line 1665 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1665 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 230 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 230 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = new QgsExpression::NodeCondition((yyvsp[-3].whenthenlist),(yyvsp[-1].node)); }
-#line 1671 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1671 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 233 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 233 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = new QgsExpression::NodeColumnRef( *(yyvsp[0].text) ); delete (yyvsp[0].text); }
-#line 1677 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1677 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 237 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 237 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     {
           int fnIndex = QgsExpression::functionIndex(*(yyvsp[0].text));
           if (fnIndex == -1)
@@ -1700,11 +1700,11 @@ yyreduce:
           }
           delete (yyvsp[0].text);
         }
-#line 1704 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1704 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 34:
-#line 262 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 262 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     {
           // @var is equivalent to var( "var" )
           QgsExpression::NodeList* args = new QgsExpression::NodeList();
@@ -1713,71 +1713,71 @@ yyreduce:
           (yyval.node) = new QgsExpression::NodeFunction( QgsExpression::functionIndex( "var" ), args );
           delete (yyvsp[0].text);
         }
-#line 1717 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1717 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 272 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 272 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = new QgsExpression::NodeLiteral( QVariant((yyvsp[0].numberFloat)) ); }
-#line 1723 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1723 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 273 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 273 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = new QgsExpression::NodeLiteral( QVariant((yyvsp[0].numberInt)) ); }
-#line 1729 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1729 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 274 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 274 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = new QgsExpression::NodeLiteral( QVariant((yyvsp[0].boolVal)) ); }
-#line 1735 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1735 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 275 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 275 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = new QgsExpression::NodeLiteral( QVariant(*(yyvsp[0].text)) ); delete (yyvsp[0].text); }
-#line 1741 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1741 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 276 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 276 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.node) = new QgsExpression::NodeLiteral( QVariant() ); }
-#line 1747 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1747 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 280 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 280 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.nodelist) = (yyvsp[-2].nodelist); (yyvsp[-2].nodelist)->append((yyvsp[0].node)); }
-#line 1753 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1753 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 281 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 281 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.nodelist) = new QgsExpression::NodeList(); (yyval.nodelist)->append((yyvsp[0].node)); }
-#line 1759 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1759 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 42:
-#line 285 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 285 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.whenthenlist) = (yyvsp[-1].whenthenlist); (yyvsp[-1].whenthenlist)->append((yyvsp[0].whenthen)); }
-#line 1765 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1765 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 286 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 286 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.whenthenlist) = new QgsExpression::WhenThenList(); (yyval.whenthenlist)->append((yyvsp[0].whenthen)); }
-#line 1771 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1771 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 290 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
+//#line 290 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
     { (yyval.whenthen) = new QgsExpression::WhenThen((yyvsp[-2].node),(yyvsp[0].node)); }
-#line 1777 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1777 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
     break;
 
 
-#line 1781 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+//#line 1781 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2005,7 +2005,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 293 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1906  */
+//#line 293 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1906  */
 
 
 
