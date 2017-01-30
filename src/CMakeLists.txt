@@ -26,6 +26,13 @@
 
 include(prepare_parser)
 
+if(NOT PREPARE_ONLY)
+    find_anyproject(GEOS REQUIRED)
+    find_anyproject(GDAL REQUIRED)
+    find_anyproject(SQLite3 REQUIRED)
+    find_anyproject(Spatialite REQUIRED)
+endif()
+
 add_subdirectory(core)
 add_subdirectory(analysis)
 

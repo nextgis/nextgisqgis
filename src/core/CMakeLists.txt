@@ -39,14 +39,9 @@ add_bison_files(qgsexpressionparser.yy)
 find_package(PythonInterp REQUIRED)
 
 if(NOT PREPARE_ONLY)
-
     find_anyproject(EXPAT REQUIRED)
-    find_anyproject(GEOS REQUIRED)
     find_anyproject(Qca REQUIRED)
-    find_anyproject(GDAL REQUIRED)
     find_anyproject(PROJ4 REQUIRED)
-    find_anyproject(SQLite3 REQUIRED)
-    find_anyproject(Spatialite REQUIRED)
     find_anyproject(SpatialIndex REQUIRED)
 endif()
 
@@ -384,20 +379,19 @@ set(QGIS_CORE_SRCS ${QGIS_CORE_SRCS}
     flex_qgsexpressionlexer.cpp
 )
 
-#[[ TODO: gps
-gps/context.c
-gps/gmath.c
-gps/info.c
-gps/parse.c
-gps/qgsgpsconnection.cpp
-gps/qgsgpsconnectionregistry.cpp
-gps/qgsgpsdconnection.cpp
-gps/qgsgpsdetector.cpp
-gps/qgsnmeaconnection.cpp
-gps/sentence.c
-gps/time.c
-gps/tok.c
-]]
+# TODO: gps
+# gps/context.c
+# gps/gmath.c
+# gps/info.c
+# gps/parse.c
+# gps/qgsgpsconnection.cpp
+# gps/qgsgpsconnectionregistry.cpp
+# gps/qgsgpsdconnection.cpp
+# gps/qgsgpsdetector.cpp
+# gps/qgsnmeaconnection.cpp
+# gps/sentence.c
+# gps/time.c
+# gps/tok.c
 
 set(QGIS_CORE_SRCS ${QGIS_CORE_SRCS}
   qgshttptransaction.cpp
@@ -425,7 +419,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/qgscontexthelp_texts.cpp
     DEPENDS ${CONTEXT_HELP_FILES}
 )
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if(MAKE_CXX_COMPILER_ID MATCHES "Clang")
   # spatialindex headers produce warnings
   set_source_files_properties(qgsspatialindex.cpp PROPERTIES COMPILE_FLAGS -Wno-overloaded-virtual)
 endif()
@@ -542,12 +536,11 @@ SET(QGIS_CORE_MOC_HDRS
     layertree/qgslayertreeregistrybridge.h
 )
 
-#[[ TODO: gps
-  gps/qgsgpsconnection.h
-  gps/qgsgpsdetector.h
-  gps/qgsnmeaconnection.h
-  gps/qgsgpsdconnection.h
-]]
+  # TODO: gps
+  # gps/qgsgpsconnection.h
+  # gps/qgsgpsdetector.h
+  # gps/qgsnmeaconnection.h
+  # gps/qgsgpsdconnection.h
 
 if(WITH_QTWEBKIT)
     add_definitions(-DWITH_QTWEBKIT)
@@ -829,15 +822,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
   symbology-ng
 )
 
-#[[
-gps/qextserialport]]
-
-# if(NOT MSVC)
-#   add_definitions("-UCORE_EXPORT")
-#   if("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -fvisibility-inlines-hidden")
-#   endif()
-# endif()
+# gps/qextserialport
 
 # Test data dir for QgsRenderChecker
 add_definitions(-DTEST_DATA_DIR="\\"${TEST_DATA_DIR}\\"")
@@ -851,6 +836,7 @@ target_compile_definitions (${LIB_NAME} INTERFACE "CORE_EXPORT=${DLLIMPORT}")
 set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
 
 target_link_extlibraries(${LIB_NAME})
+set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${LIB_NAME} PARENT_SCOPE)
 
 if(OSX_FRAMEWORK)
     set_target_properties(${LIB_NAME} PROPERTIES
@@ -886,8 +872,8 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
         FRAMEWORK DESTINATION ${INSTALL_LIB_DIR}
         PUBLIC_HEADER DESTINATION ${INSTALL_INC_DIR} COMPONENT headers
     )
+endif()
 
-    if(NOT OSX_FRAMEWORK)
-        install(FILES ${QGIS_CORE_HDRS} ${QGIS_CORE_MOC_HDRS} DESTINATION ${INSTALL_INC_DIR})
-    endif()
+if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
+    install(FILES ${QGIS_CORE_HDRS} ${QGIS_CORE_MOC_HDRS} DESTINATION ${INSTALL_INC_DIR})
 endif()
