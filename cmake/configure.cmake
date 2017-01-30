@@ -68,7 +68,7 @@ if (PEDANTIC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_warnings}")
     else ()
         # add warnings via flags (not as definitions as on Mac -Wall can not be overridden per language )
-        set(_warnings "-Wall -Wextra -Wno-long-long -Wformat-security -Wno-strict-aliasing")
+        set(_warnings "-Wall -Wextra -Wno-long-long -Wformat-security -Wno-strict-aliasing -Wno-inconsistent-missing-override")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${_warnings}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_warnings}")
 

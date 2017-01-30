@@ -53,13 +53,13 @@ if(OSX_FRAMEWORK)
 else()
     include(GNUInstallDirs)
 
-    set(INSTALL_BIN_DIR ${CMAKE_INSTALL_BINDIR} CACHE INTERNAL "Installation directory for executables" FORCE)
-    set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE INTERNAL "Installation directory for libraries" FORCE)
-    set(INSTALL_INC_DIR ${CMAKE_INSTALL_INCLUDEDIR}/${NG_PREFIX}${PROJECT_NAME} CACHE INTERNAL "Installation directory for headers" FORCE)
-    set(INSTALL_SHARE_DIR ${CMAKE_INSTALL_DATADIR}/${NG_PREFIX}${PROJECT_NAME} CACHE INTERNAL "Installation directory for share data" FORCE)
+    set(INSTALL_BIN_DIR ${CMAKE_INSTALL_FULL_BINDIR} CACHE INTERNAL "Installation directory for executables" FORCE)
+    set(INSTALL_LIB_DIR ${CMAKE_INSTALL_FULL_LIBDIR} CACHE INTERNAL "Installation directory for libraries" FORCE)
+    set(INSTALL_INC_DIR ${CMAKE_INSTALL_FULL_INCLUDEDIR}/${NG_PREFIX}${PROJECT_NAME} CACHE INTERNAL "Installation directory for headers" FORCE)
+    set(INSTALL_SHARE_DIR ${CMAKE_INSTALL_FULL_DATADIR}/${NG_PREFIX}${PROJECT_NAME} CACHE INTERNAL "Installation directory for share data" FORCE)
     set(INSTALL_PKGCONFIG_DIR ${INSTALL_LIB_DIR}/pkgconfig CACHE INTERNAL "Installation directory for pkgconfig (.pc) files" FORCE)
-    set(INSTALL_MAN_DIR ${CMAKE_INSTALL_MANDIR} CACHE INTERNAL "Installation directory for manual pages" FORCE)
-    set(INSTALL_DOC_DIR ${CMAKE_INSTALL_DOCDIR} CACHE INTERNAL "Installation directory for doc pages" FORCE)
+    set(INSTALL_MAN_DIR ${CMAKE_INSTALL_FULL_MANDIR} CACHE INTERNAL "Installation directory for manual pages" FORCE)
+    set(INSTALL_DOC_DIR ${CMAKE_INSTALL_FULL_DOCDIR} CACHE INTERNAL "Installation directory for doc pages" FORCE)
     set(INSTALL_PLUGIN_DIR ${INSTALL_LIB_DIR}/${NG_PREFIX}${PROJECT_NAME}/plugins CACHE INTERNAL "Installation directory for plugins" FORCE)
 endif()
 
@@ -87,7 +87,12 @@ include(FindAnyProject)
 # Search dependencies
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-find_anyproject(Qt4 REQUIRED COMPONENTS QtCore QtGui QtXml QtNetwork QtSvg QtSql QtWebKit)
+find_anyproject(Qt4 REQUIRED COMPONENTS QtCore QtGui QtXml QtNetwork QtSvg QtSql)
+
+option(WITH_QTWEBKIT "Build support QT Webkit" ON)
+if(WITH_QTWEBKIT)
+    find_anyproject(Qt4 REQUIRED COMPONENTS QtWebKit)
+endif()
 
 #create a variable to specify where our test data is
 #so that unit tests can use TEST_DATA_DIR to locate
