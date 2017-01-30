@@ -84,10 +84,9 @@ include_directories ( ${CMAKE_CURRENT_BINARY_DIR} )
 report_version("${NG_PREFIX}${PROJECT_NAME}" ${VERSION})
 
 option(PREPARE_ONLY "Only generate flex and bison files" OFF)
+include(FindAnyProject)
 
 if(NOT PREPARE_ONLY)
-    include(FindAnyProject)
-
     # Search dependencies
     set(CMAKE_AUTOMOC ON)
     set(CMAKE_INCLUDE_CURRENT_DIR ON)

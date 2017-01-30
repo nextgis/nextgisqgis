@@ -50,7 +50,7 @@
 #define YYSKELETON_NAME "yacc.c"
 
 /* Pure parsers.  */
-#define YYPURE 1
+#define YYPURE 0
 
 /* Push parsers.  */
 #define YYPUSH 0
@@ -60,68 +60,50 @@
 
 
 /* Substitute the variable and function names.  */
-#define yyparse         exp_parse
-#define yylex           exp_lex
-#define yyerror         exp_error
-#define yydebug         exp_debug
-#define yynerrs         exp_nerrs
+#define yyparse         rasterparse
+#define yylex           rasterlex
+#define yyerror         rastererror
+#define yydebug         rasterdebug
+#define yynerrs         rasternerrs
 
+#define yylval          rasterlval
+#define yychar          rasterchar
 
 /* Copy the first part of user declarations.  */
-#line 16 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:339  */
+#line 19 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:339  */
 
-#include <qglobal.h>
-#include <QList>
-#include <cstdlib>
-#include "qgsexpression.h"
+  #include "qgsrastercalcnode.h"
 
 #ifdef _MSC_VER
 #  pragma warning( disable: 4065 )  // switch statement contains 'default' but no 'case' labels
-#  pragma warning( disable: 4702 )  // unreachable code
+#  pragma warning( disable: 4701 )  // Potentially uninitialized local variable 'name' used
 #endif
 
-// don't redeclare malloc/free
-#define YYINCLUDED_STDLIB_H 1
+  // don't redeclare malloc/free
+  #define YYINCLUDED_STDLIB_H 1
 
-struct expression_parser_context;
-#include "qgsexpressionparser.hpp"
+  QgsRasterCalcNode* parseRasterCalcString(const QString& str, QString& parserErrorMsg);
 
-//! from lexer
-typedef void* yyscan_t;
-typedef struct yy_buffer_state* YY_BUFFER_STATE;
-extern int exp_lex_init(yyscan_t* scanner);
-extern int exp_lex_destroy(yyscan_t scanner);
-extern int exp_lex(YYSTYPE* yylval_param, yyscan_t yyscanner);
-extern YY_BUFFER_STATE exp__scan_string(const char* buffer, yyscan_t scanner);
+  //! from lex.yy.c
+  extern int rasterlex();
+  extern char* rastertext;
+  extern void set_raster_input_buffer(const char* buffer);
 
-/** returns parsed tree, otherwise returns nullptr and sets parserErrorMsg
-    (interface function to be called from QgsExpression)
-  */
-QgsExpression::Node* parseExpression(const QString& str, QString& parserErrorMsg);
+  //! varible where the parser error will be stored
+  QString rParserErrorMsg;
 
-/** error handler for bison */
-void exp_error(expression_parser_context* parser_ctx, const char* msg);
+  //! sets gParserErrorMsg
+  void rastererror(const char* msg);
 
-struct expression_parser_context
-{
-  // lexer context
-  yyscan_t flex_scanner;
+  //! temporary list for nodes without parent (if parsing fails these nodes are removed)
+  QList<QgsRasterCalcNode*> gTmpNodes;
+  void joinTmpNodes(QgsRasterCalcNode* parent, QgsRasterCalcNode* left, QgsRasterCalcNode* right);
+  void addToTmpNodes(QgsRasterCalcNode* node);
 
-  // varible where the parser error will be stored
-  QString errorMsg;
-  // root node of the expression
-  QgsExpression::Node* rootNode;
-};
+  // we want verbose error messages
+  #define YYERROR_VERBOSE 1
 
-#define scanner parser_ctx->flex_scanner
-
-// we want verbose error messages
-#define YYERROR_VERBOSE 1
-
-#define BINOP(x, y, z)  new QgsExpression::NodeBinaryOperator(x, y, z)
-
-
-#line 125 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:339  */
+#line 107 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -136,19 +118,19 @@ struct expression_parser_context
 # undef YYERROR_VERBOSE
 # define YYERROR_VERBOSE 1
 #else
-# define YYERROR_VERBOSE 1
+# define YYERROR_VERBOSE 0
 #endif
 
 /* In a future release of Bison, this section will be replaced
-   by #include "qgsexpressionparser.hpp".  */
-#ifndef YY_EXP_HOME_BISHOP_WORK_PROJECTS_NEXTGISQGIS_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED
-# define YY_EXP_HOME_BISHOP_WORK_PROJECTS_NEXTGISQGIS_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED
+   by #include "qgsrastercalcparser.hpp".  */
+#ifndef YY_RASTER_HOME_BISHOP_WORK_PROJECTS_NEXTGISQGIS_SRC_ANALYSIS_QGSRASTERCALCPARSER_HPP_INCLUDED
+# define YY_RASTER_HOME_BISHOP_WORK_PROJECTS_NEXTGISQGIS_SRC_ANALYSIS_QGSRASTERCALCPARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
 #endif
 #if YYDEBUG
-extern int exp_debug;
+extern int rasterdebug;
 #endif
 
 /* Token type.  */
@@ -156,44 +138,15 @@ extern int exp_debug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    OR = 258,
-    AND = 259,
-    EQ = 260,
-    NE = 261,
-    LE = 262,
-    GE = 263,
-    LT = 264,
-    GT = 265,
-    REGEXP = 266,
-    LIKE = 267,
-    IS = 268,
-    PLUS = 269,
-    MINUS = 270,
-    MUL = 271,
-    DIV = 272,
-    INTDIV = 273,
-    MOD = 274,
-    CONCAT = 275,
-    POW = 276,
-    NOT = 277,
-    IN = 278,
-    NUMBER_FLOAT = 279,
-    NUMBER_INT = 280,
-    BOOLEAN = 281,
-    NULLVALUE = 282,
-    CASE = 283,
-    WHEN = 284,
-    THEN = 285,
-    ELSE = 286,
-    END = 287,
-    STRING = 288,
-    COLUMN_REF = 289,
-    FUNCTION = 290,
-    SPECIAL_COL = 291,
-    VARIABLE = 292,
-    COMMA = 293,
-    Unknown_CHARACTER = 294,
-    UMINUS = 295
+    RASTER_BAND_REF = 258,
+    NUMBER = 259,
+    FUNCTION = 260,
+    AND = 261,
+    OR = 262,
+    NE = 263,
+    GE = 264,
+    LE = 265,
+    UMINUS = 266
   };
 #endif
 
@@ -202,20 +155,10 @@ extern int exp_debug;
 
 union YYSTYPE
 {
-#line 77 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:355  */
+#line 52 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:355  */
+ QgsRasterCalcNode* node; double number; QgsRasterCalcNode::Operator op;
 
-  QgsExpression::Node* node;
-  QgsExpression::NodeList* nodelist;
-  double numberFloat;
-  int    numberInt;
-  bool   boolVal;
-  QString* text;
-  QgsExpression::BinaryOperator b_op;
-  QgsExpression::UnaryOperator u_op;
-  QgsExpression::WhenThen* whenthen;
-  QgsExpression::WhenThenList* whenthenlist;
-
-#line 219 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:355  */
+#line 162 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -224,14 +167,15 @@ typedef union YYSTYPE YYSTYPE;
 #endif
 
 
+extern YYSTYPE rasterlval;
 
-int exp_parse (expression_parser_context* parser_ctx);
+int rasterparse (void);
 
-#endif /* !YY_EXP_HOME_BISHOP_WORK_PROJECTS_NEXTGISQGIS_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED  */
+#endif /* !YY_RASTER_HOME_BISHOP_WORK_PROJECTS_NEXTGISQGIS_SRC_ANALYSIS_QGSRASTERCALCPARSER_HPP_INCLUDED  */
 
 /* Copy the second part of user declarations.  */
 
-#line 235 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:358  */
+#line 179 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -471,23 +415,23 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  25
+#define YYFINAL  13
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   248
+#define YYLAST   132
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  43
+#define YYNTOKENS  22
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  6
+#define YYNNTS  3
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  44
+#define YYNRULES  21
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  88
+#define YYNSTATES  43
 
 /* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
    by yylex, with out-of-bounds checking.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   295
+#define YYMAXUTOK   266
 
 #define YYTRANSLATE(YYX)                                                \
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -500,12 +444,12 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-      41,    42,     2,     2,     2,     2,     2,     2,     2,     2,
+      20,    21,    16,    14,     2,    15,     2,    17,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      12,    11,    13,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,    18,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -522,36 +466,27 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39,    40
+       5,     6,     7,     8,     9,    10,    19
 };
 
 #if YYDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_uint16 yyrline[] =
+static const yytype_uint8 yyrline[] =
 {
-       0,   157,   157,   161,   162,   163,   164,   165,   166,   167,
-     168,   169,   170,   171,   172,   173,   174,   175,   176,   177,
-     178,   179,   180,   181,   182,   204,   223,   224,   226,   227,
-     229,   230,   233,   236,   261,   272,   273,   274,   275,   276,
-     280,   281,   285,   286,   290
+       0,    77,    77,    81,    82,    83,    84,    85,    86,    87,
+      88,    89,    90,    91,    92,    93,    94,    95,    96,    97,
+      98,    99
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || 1
+#if YYDEBUG || YYERROR_VERBOSE || 0
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "OR", "AND", "EQ", "NE", "LE", "GE",
-  "LT", "GT", "REGEXP", "LIKE", "IS", "PLUS", "MINUS", "MUL", "DIV",
-  "INTDIV", "MOD", "CONCAT", "POW", "NOT", "IN", "NUMBER_FLOAT",
-  "NUMBER_INT", "BOOLEAN", "NULLVALUE", "CASE", "WHEN", "THEN", "ELSE",
-  "END", "STRING", "COLUMN_REF", "FUNCTION", "SPECIAL_COL", "VARIABLE",
-  "COMMA", "Unknown_CHARACTER", "UMINUS", "'('", "')'", "$accept", "root",
-  "expression", "exp_list", "when_then_clauses", "when_then_clause", YY_NULLPTR
+  "$end", "error", "$undefined", "RASTER_BAND_REF", "NUMBER", "FUNCTION",
+  "AND", "OR", "NE", "GE", "LE", "'='", "'<'", "'>'", "'+'", "'-'", "'*'",
+  "'/'", "'^'", "UMINUS", "'('", "')'", "$accept", "root", "raster_exp", YY_NULLPTR
 };
 #endif
 
@@ -561,17 +496,15 @@ static const char *const yytname[] =
 static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
-     285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
-     295,    40,    41
+     265,    61,    60,    62,    43,    45,    42,    47,    94,   266,
+      40,    41
 };
 # endif
 
-#define YYPACT_NINF -64
+#define YYPACT_NINF -18
 
 #define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-64)))
+  (!!((Yystate) == (-18)))
 
 #define YYTABLE_NINF -1
 
@@ -580,17 +513,13 @@ static const yytype_uint16 yytoknum[] =
 
   /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
      STATE-NUM.  */
-static const yytype_int16 yypact[] =
+static const yytype_int8 yypact[] =
 {
-     147,   147,   147,   147,   -64,   -64,   -64,   -64,   -16,   -64,
-     -64,   -25,   -64,   -64,   147,    45,   186,   -64,   -64,   225,
-     147,    48,   -64,    97,    46,   -64,   147,   147,   147,   147,
-     147,   147,   147,   147,   147,   147,   147,   147,   147,   147,
-     147,   147,   147,   147,   147,    23,     6,   137,   147,   -64,
-     -64,   -64,   186,   -23,   -64,   206,   225,   -10,   -10,   -10,
-     -10,   -10,   -10,   -10,   -10,   -10,    54,    54,     3,     3,
-       3,     3,   -64,     3,    40,   147,   147,    86,   147,   -64,
-     147,   -20,   186,   -64,   186,   -17,   -64,   -64
+      20,   -18,   -18,   -17,    20,    20,    20,     4,    67,    20,
+     -18,   -18,    35,   -18,    20,    20,    20,    20,    20,    20,
+      20,    20,    20,    20,    20,    20,    20,    51,   -18,    79,
+      90,   100,   109,    15,   114,   114,   114,   -10,   -10,    -9,
+      -9,   -18,   -18
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -598,27 +527,23 @@ static const yytype_int16 yypact[] =
      means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     0,     0,     0,    35,    36,    37,    39,     0,    38,
-      32,     0,    33,    34,     0,     0,     2,    28,    29,    22,
-       0,     0,    43,     0,     0,     1,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,    30,
-      42,    25,    41,     0,    23,     4,     3,     5,     6,     7,
-       8,     9,    10,    11,    12,    13,    14,    15,    16,    18,
-      17,    19,    21,    20,     0,     0,     0,     0,     0,    24,
-       0,     0,    44,    31,    40,     0,    26,    27
+       0,    21,    20,     0,     0,     0,     0,     0,     2,     0,
+      18,    19,     0,     1,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,    17,     4,
+       5,     7,    10,    11,     6,     9,     8,    15,    16,    13,
+      14,    12,     3
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -64,   -64,     0,   -63,   -64,    61
+     -18,   -18,    -4
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,    15,    52,    53,    21,    22
+      -1,     7,     8
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -626,95 +551,65 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
-      16,    17,    18,    19,    37,    38,    39,    40,    41,    42,
-      43,    44,    81,    20,    24,    78,    23,    85,    78,    79,
-      47,    78,    86,    43,    44,    87,    55,    56,    57,    58,
-      59,    60,    61,    62,    63,    64,    65,    66,    67,    68,
-      69,    70,    71,    72,    73,    25,    74,    75,    77,    26,
-      27,    28,    29,    30,    31,    32,    33,    34,    35,    36,
-      37,    38,    39,    40,    41,    42,    43,    44,    45,    46,
-      39,    40,    41,    42,    43,    44,    82,    20,    84,    48,
-      49,    80,    50,     0,     0,     0,     0,     0,    54,    26,
-      27,    28,    29,    30,    31,    32,    33,    34,    35,    36,
-      37,    38,    39,    40,    41,    42,    43,    44,    45,    46,
-       0,     1,     2,     0,     0,     0,     0,     0,    83,     3,
-       0,     4,     5,     6,     7,     8,     0,     0,     0,     0,
-       9,    10,    11,    12,    13,     0,     0,     0,    14,    51,
-      26,    27,    28,    29,    30,    31,    32,    33,    34,    35,
-      36,    37,    38,    39,    40,    41,    42,    43,    44,    45,
-      46,     1,     2,     0,     0,     0,     0,    76,     0,     3,
-       0,     4,     5,     6,     7,     8,     0,     0,     0,     0,
-       9,    10,    11,    12,    13,     0,     0,     0,    14,    26,
-      27,    28,    29,    30,    31,    32,    33,    34,    35,    36,
-      37,    38,    39,    40,    41,    42,    43,    44,    45,    46,
-      27,    28,    29,    30,    31,    32,    33,    34,    35,    36,
-      37,    38,    39,    40,    41,    42,    43,    44,    45,    46,
-      28,    29,    30,    31,    32,    33,    34,    35,    36,    37,
-      38,    39,    40,    41,    42,    43,    44,    45,    46
+      10,    11,    12,     9,    13,    27,    24,    25,    26,    26,
+      29,    30,    31,    32,    33,    34,    35,    36,    37,    38,
+      39,    40,    41,     1,     2,     3,    19,    20,    21,    22,
+      23,    24,    25,    26,     4,     5,     0,     0,     0,     0,
+       6,    14,    15,    16,    17,    18,    19,    20,    21,    22,
+      23,    24,    25,    26,     0,     0,    28,    14,    15,    16,
+      17,    18,    19,    20,    21,    22,    23,    24,    25,    26,
+       0,     0,    42,    14,    15,    16,    17,    18,    19,    20,
+      21,    22,    23,    24,    25,    26,    15,    16,    17,    18,
+      19,    20,    21,    22,    23,    24,    25,    26,    16,    17,
+      18,    19,    20,    21,    22,    23,    24,    25,    26,    17,
+      18,    19,    20,    21,    22,    23,    24,    25,    26,    18,
+      19,    20,    21,    22,    23,    24,    25,    26,    22,    23,
+      24,    25,    26
 };
 
 static const yytype_int8 yycheck[] =
 {
-       0,     1,     2,     3,    14,    15,    16,    17,    18,    19,
-      20,    21,    75,    29,    14,    38,    41,    80,    38,    42,
-      20,    38,    42,    20,    21,    42,    26,    27,    28,    29,
-      30,    31,    32,    33,    34,    35,    36,    37,    38,    39,
-      40,    41,    42,    43,    44,     0,    23,    41,    48,     3,
-       4,     5,     6,     7,     8,     9,    10,    11,    12,    13,
+       4,     5,     6,    20,     0,     9,    16,    17,    18,    18,
       14,    15,    16,    17,    18,    19,    20,    21,    22,    23,
-      16,    17,    18,    19,    20,    21,    76,    29,    78,    31,
-      32,    41,    21,    -1,    -1,    -1,    -1,    -1,    42,     3,
-       4,     5,     6,     7,     8,     9,    10,    11,    12,    13,
-      14,    15,    16,    17,    18,    19,    20,    21,    22,    23,
-      -1,    14,    15,    -1,    -1,    -1,    -1,    -1,    32,    22,
-      -1,    24,    25,    26,    27,    28,    -1,    -1,    -1,    -1,
-      33,    34,    35,    36,    37,    -1,    -1,    -1,    41,    42,
-       3,     4,     5,     6,     7,     8,     9,    10,    11,    12,
-      13,    14,    15,    16,    17,    18,    19,    20,    21,    22,
-      23,    14,    15,    -1,    -1,    -1,    -1,    30,    -1,    22,
-      -1,    24,    25,    26,    27,    28,    -1,    -1,    -1,    -1,
-      33,    34,    35,    36,    37,    -1,    -1,    -1,    41,     3,
-       4,     5,     6,     7,     8,     9,    10,    11,    12,    13,
-      14,    15,    16,    17,    18,    19,    20,    21,    22,    23,
-       4,     5,     6,     7,     8,     9,    10,    11,    12,    13,
-      14,    15,    16,    17,    18,    19,    20,    21,    22,    23,
-       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,    19,    20,    21,    22,    23
+      24,    25,    26,     3,     4,     5,    11,    12,    13,    14,
+      15,    16,    17,    18,    14,    15,    -1,    -1,    -1,    -1,
+      20,     6,     7,     8,     9,    10,    11,    12,    13,    14,
+      15,    16,    17,    18,    -1,    -1,    21,     6,     7,     8,
+       9,    10,    11,    12,    13,    14,    15,    16,    17,    18,
+      -1,    -1,    21,     6,     7,     8,     9,    10,    11,    12,
+      13,    14,    15,    16,    17,    18,     7,     8,     9,    10,
+      11,    12,    13,    14,    15,    16,    17,    18,     8,     9,
+      10,    11,    12,    13,    14,    15,    16,    17,    18,     9,
+      10,    11,    12,    13,    14,    15,    16,    17,    18,    10,
+      11,    12,    13,    14,    15,    16,    17,    18,    14,    15,
+      16,    17,    18
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,    14,    15,    22,    24,    25,    26,    27,    28,    33,
-      34,    35,    36,    37,    41,    44,    45,    45,    45,    45,
-      29,    47,    48,    41,    45,     0,     3,     4,     5,     6,
-       7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
-      17,    18,    19,    20,    21,    22,    23,    45,    31,    32,
-      48,    42,    45,    46,    42,    45,    45,    45,    45,    45,
-      45,    45,    45,    45,    45,    45,    45,    45,    45,    45,
-      45,    45,    45,    45,    23,    41,    30,    45,    38,    42,
-      41,    46,    45,    32,    45,    46,    42,    42
+       0,     3,     4,     5,    14,    15,    20,    23,    24,    20,
+      24,    24,    24,     0,     6,     7,     8,     9,    10,    11,
+      12,    13,    14,    15,    16,    17,    18,    24,    21,    24,
+      24,    24,    24,    24,    24,    24,    24,    24,    24,    24,
+      24,    24,    21
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    43,    44,    45,    45,    45,    45,    45,    45,    45,
-      45,    45,    45,    45,    45,    45,    45,    45,    45,    45,
-      45,    45,    45,    45,    45,    45,    45,    45,    45,    45,
-      45,    45,    45,    45,    45,    45,    45,    45,    45,    45,
-      46,    46,    47,    47,    48
+       0,    22,    23,    24,    24,    24,    24,    24,    24,    24,
+      24,    24,    24,    24,    24,    24,    24,    24,    24,    24,
+      24,    24
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     1,     3,     3,     3,     3,     3,     3,     3,
-       3,     3,     3,     3,     3,     3,     3,     3,     3,     3,
-       3,     3,     2,     3,     4,     3,     5,     6,     2,     2,
-       3,     5,     1,     1,     1,     1,     1,     1,     1,     1,
-       3,     1,     2,     1,     4
+       0,     2,     1,     4,     3,     3,     3,     3,     3,     3,
+       3,     3,     3,     3,     3,     3,     3,     3,     2,     2,
+       1,     1
 };
 
 
@@ -742,7 +637,7 @@ do                                                              \
     }                                                           \
   else                                                          \
     {                                                           \
-      yyerror (parser_ctx, YY_("syntax error: cannot back up")); \
+      yyerror (YY_("syntax error: cannot back up")); \
       YYERROR;                                                  \
     }                                                           \
 while (0)
@@ -779,7 +674,7 @@ do {                                                                      \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Type, Value, parser_ctx); \
+                  Type, Value); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -790,11 +685,10 @@ do {                                                                      \
 `----------------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, expression_parser_context* parser_ctx)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
 {
   FILE *yyo = yyoutput;
   YYUSE (yyo);
-  YYUSE (parser_ctx);
   if (!yyvaluep)
     return;
 # ifdef YYPRINT
@@ -810,12 +704,12 @@ yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvalue
 `--------------------------------*/
 
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, expression_parser_context* parser_ctx)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
 {
   YYFPRINTF (yyoutput, "%s %s (",
              yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep, parser_ctx);
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -848,7 +742,7 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, expression_parser_context* parser_ctx)
+yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule)
 {
   unsigned long int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -862,7 +756,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, expression_par
       yy_symbol_print (stderr,
                        yystos[yyssp[yyi + 1 - yynrhs]],
                        &(yyvsp[(yyi + 1) - (yynrhs)])
-                                              , parser_ctx);
+                                              );
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -870,7 +764,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule, expression_par
 # define YY_REDUCE_PRINT(Rule)          \
 do {                                    \
   if (yydebug)                          \
-    yy_reduce_print (yyssp, yyvsp, Rule, parser_ctx); \
+    yy_reduce_print (yyssp, yyvsp, Rule); \
 } while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1128,79 +1022,28 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
 `-----------------------------------------------*/
 
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, expression_parser_context* parser_ctx)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
 {
   YYUSE (yyvaluep);
-  YYUSE (parser_ctx);
   if (!yymsg)
     yymsg = "Deleting";
   YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
 
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  switch (yytype)
-    {
-          case 33: /* STRING  */
-#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
-      { delete ((*yyvaluep).text); }
-#line 1146 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
-        break;
-
-    case 34: /* COLUMN_REF  */
-#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
-      { delete ((*yyvaluep).text); }
-#line 1152 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
-        break;
-
-    case 35: /* FUNCTION  */
-#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
-      { delete ((*yyvaluep).text); }
-#line 1158 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
-        break;
-
-    case 36: /* SPECIAL_COL  */
-#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
-      { delete ((*yyvaluep).text); }
-#line 1164 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
-        break;
-
-    case 37: /* VARIABLE  */
-#line 151 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
-      { delete ((*yyvaluep).text); }
-#line 1170 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
-        break;
-
-    case 45: /* expression  */
-#line 149 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
-      { delete ((*yyvaluep).node); }
-#line 1176 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
-        break;
-
-    case 46: /* exp_list  */
-#line 150 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
-      { delete ((*yyvaluep).nodelist); }
-#line 1182 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
-        break;
-
-    case 47: /* when_then_clauses  */
-#line 153 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
-      { delete ((*yyvaluep).whenthenlist); }
-#line 1188 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
-        break;
-
-    case 48: /* when_then_clause  */
-#line 152 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1257  */
-      { delete ((*yyvaluep).whenthen); }
-#line 1194 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1257  */
-        break;
-
-
-      default:
-        break;
-    }
+  YYUSE (yytype);
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
 
+
+
+/* The lookahead symbol.  */
+int yychar;
+
+/* The semantic value of the lookahead symbol.  */
+YYSTYPE yylval;
+/* Number of syntax errors so far.  */
+int yynerrs;
 
 
 /*----------.
@@ -1208,21 +1051,8 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, expression_parser_
 `----------*/
 
 int
-yyparse (expression_parser_context* parser_ctx)
+yyparse (void)
 {
-/* The lookahead symbol.  */
-int yychar;
-
-
-/* The semantic value of the lookahead symbol.  */
-/* Default value used for initialization, for pacifying older GCCs
-   or non-GCC compilers.  */
-YY_INITIAL_VALUE (static YYSTYPE yyval_default;)
-YYSTYPE yylval YY_INITIAL_VALUE (= yyval_default);
-
-    /* Number of syntax errors so far.  */
-    int yynerrs;
-
     int yystate;
     /* Number of tokens to shift before error messages enabled.  */
     int yyerrstatus;
@@ -1377,7 +1207,7 @@ yybackup:
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
-      yychar = yylex (&yylval, scanner);
+      yychar = yylex ();
     }
 
   if (yychar <= YYEOF)
@@ -1456,328 +1286,127 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 157 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { parser_ctx->rootNode = (yyvsp[0].node); }
-#line 1462 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 77 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    {}
+#line 1292 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 161 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1468 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 81 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode((yyvsp[-3].op), (yyvsp[-1].node), 0); joinTmpNodes((yyval.node), (yyvsp[-1].node), 0);}
+#line 1298 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 162 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1474 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 82 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opAND, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
+#line 1304 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 163 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1480 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 83 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opOR, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
+#line 1310 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 164 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1486 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 84 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opEQ, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
+#line 1316 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 165 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1492 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 85 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opNE, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
+#line 1322 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 166 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1498 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 86 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opGT, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node), (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1328 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 167 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1504 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 87 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opLT, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node), (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1334 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 168 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1510 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 88 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opGE, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node), (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1340 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 169 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1516 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 89 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opLE, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node), (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1346 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 170 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1522 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 90 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode(QgsRasterCalcNode::opPOW, (yyvsp[-2].node), (yyvsp[0].node)); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
+#line 1352 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 171 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1528 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 91 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode(QgsRasterCalcNode::opMUL, (yyvsp[-2].node), (yyvsp[0].node)); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
+#line 1358 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 172 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1534 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 92 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode(QgsRasterCalcNode::opDIV, (yyvsp[-2].node), (yyvsp[0].node)); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
+#line 1364 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 173 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1540 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 93 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode(QgsRasterCalcNode::opPLUS, (yyvsp[-2].node), (yyvsp[0].node)); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
+#line 1370 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 174 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1546 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 94 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode(QgsRasterCalcNode::opMINUS, (yyvsp[-2].node), (yyvsp[0].node)); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
+#line 1376 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 175 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1552 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 95 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = (yyvsp[-1].node); }
+#line 1382 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 176 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1558 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 96 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = (yyvsp[0].node); }
+#line 1388 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 177 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1564 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 97 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opSIGN, (yyvsp[0].node), 0 ); joinTmpNodes((yyval.node), (yyvsp[0].node), 0); }
+#line 1394 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 178 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1570 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 98 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode((yyvsp[0].number)); addToTmpNodes((yyval.node)); }
+#line 1400 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 179 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1576 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 22:
-#line 180 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = new QgsExpression::NodeUnaryOperator((yyvsp[-1].u_op), (yyvsp[0].node)); }
-#line 1582 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 23:
-#line 181 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = (yyvsp[-1].node); }
-#line 1588 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 24:
-#line 183 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    {
-          int fnIndex = QgsExpression::functionIndex(*(yyvsp[-3].text));
-          delete (yyvsp[-3].text);
-          if (fnIndex == -1)
-          {
-            // this should not actually happen because already in lexer we check whether an identifier is a known function
-            // (if the name is not known the token is parsed as a column)
-            exp_error(parser_ctx, "Function is not known");
-            delete (yyvsp[-1].nodelist);
-            YYERROR;
-          }
-          if ( QgsExpression::Functions()[fnIndex]->params() != -1
-               && QgsExpression::Functions()[fnIndex]->params() != (yyvsp[-1].nodelist)->count() )
-          {
-            exp_error(parser_ctx, "Function is called with wrong number of arguments");
-            delete (yyvsp[-1].nodelist);
-            YYERROR;
-          }
-          (yyval.node) = new QgsExpression::NodeFunction(fnIndex, (yyvsp[-1].nodelist));
-        }
-#line 1613 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 25:
-#line 205 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    {
-          int fnIndex = QgsExpression::functionIndex(*(yyvsp[-2].text));
-          delete (yyvsp[-2].text);
-          if (fnIndex == -1)
-          {
-            // this should not actually happen because already in lexer we check whether an identifier is a known function
-            // (if the name is not known the token is parsed as a column)
-            exp_error(parser_ctx, "Function is not known");
-            YYERROR;
-          }
-          if ( QgsExpression::Functions()[fnIndex]->params() != 0 )
-          {
-            exp_error(parser_ctx, "Function is called with wrong number of arguments");
-            YYERROR;
-          }
-          (yyval.node) = new QgsExpression::NodeFunction(fnIndex, new QgsExpression::NodeList());
-        }
-#line 1635 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 26:
-#line 223 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = new QgsExpression::NodeInOperator((yyvsp[-4].node), (yyvsp[-1].nodelist), false);  }
-#line 1641 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 27:
-#line 224 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = new QgsExpression::NodeInOperator((yyvsp[-5].node), (yyvsp[-1].nodelist), true); }
-#line 1647 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 28:
-#line 226 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = (yyvsp[0].node); }
-#line 1653 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 29:
-#line 227 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = new QgsExpression::NodeUnaryOperator( QgsExpression::uoMinus, (yyvsp[0].node)); }
-#line 1659 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 30:
-#line 229 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = new QgsExpression::NodeCondition((yyvsp[-1].whenthenlist)); }
-#line 1665 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 31:
-#line 230 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = new QgsExpression::NodeCondition((yyvsp[-3].whenthenlist),(yyvsp[-1].node)); }
-#line 1671 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 32:
-#line 233 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = new QgsExpression::NodeColumnRef( *(yyvsp[0].text) ); delete (yyvsp[0].text); }
-#line 1677 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 33:
-#line 237 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    {
-          int fnIndex = QgsExpression::functionIndex(*(yyvsp[0].text));
-          if (fnIndex == -1)
-          {
-            if ( !QgsExpression::hasSpecialColumn( *(yyvsp[0].text) ) )
-            {
-              exp_error(parser_ctx, "Special column is not known");
-              delete (yyvsp[0].text);
-              YYERROR;
-            }
-            // $var is equivalent to _specialcol_( "$var" )
-            QgsExpression::NodeList* args = new QgsExpression::NodeList();
-            QgsExpression::NodeLiteral* literal = new QgsExpression::NodeLiteral( *(yyvsp[0].text) );
-            args->append( literal );
-            (yyval.node) = new QgsExpression::NodeFunction( QgsExpression::functionIndex( "_specialcol_" ), args );
-          }
-          else
-          {
-            (yyval.node) = new QgsExpression::NodeFunction( fnIndex, nullptr );
-          }
-          delete (yyvsp[0].text);
-        }
-#line 1704 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 34:
-#line 262 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    {
-          // @var is equivalent to var( "var" )
-          QgsExpression::NodeList* args = new QgsExpression::NodeList();
-          QgsExpression::NodeLiteral* literal = new QgsExpression::NodeLiteral( QString(*(yyvsp[0].text)).mid(1) );
-          args->append( literal );
-          (yyval.node) = new QgsExpression::NodeFunction( QgsExpression::functionIndex( "var" ), args );
-          delete (yyvsp[0].text);
-        }
-#line 1717 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 35:
-#line 272 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = new QgsExpression::NodeLiteral( QVariant((yyvsp[0].numberFloat)) ); }
-#line 1723 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 36:
-#line 273 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = new QgsExpression::NodeLiteral( QVariant((yyvsp[0].numberInt)) ); }
-#line 1729 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 37:
-#line 274 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = new QgsExpression::NodeLiteral( QVariant((yyvsp[0].boolVal)) ); }
-#line 1735 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 38:
-#line 275 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = new QgsExpression::NodeLiteral( QVariant(*(yyvsp[0].text)) ); delete (yyvsp[0].text); }
-#line 1741 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 39:
-#line 276 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.node) = new QgsExpression::NodeLiteral( QVariant() ); }
-#line 1747 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 40:
-#line 280 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.nodelist) = (yyvsp[-2].nodelist); (yyvsp[-2].nodelist)->append((yyvsp[0].node)); }
-#line 1753 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 41:
-#line 281 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.nodelist) = new QgsExpression::NodeList(); (yyval.nodelist)->append((yyvsp[0].node)); }
-#line 1759 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 42:
-#line 285 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.whenthenlist) = (yyvsp[-1].whenthenlist); (yyvsp[-1].whenthenlist)->append((yyvsp[0].whenthen)); }
-#line 1765 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 43:
-#line 286 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.whenthenlist) = new QgsExpression::WhenThenList(); (yyval.whenthenlist)->append((yyvsp[0].whenthen)); }
-#line 1771 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
-    break;
-
-  case 44:
-#line 290 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1646  */
-    { (yyval.whenthen) = new QgsExpression::WhenThen((yyvsp[-2].node),(yyvsp[0].node)); }
-#line 1777 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 99 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1646  */
+    { (yyval.node) = new QgsRasterCalcNode(QString::fromUtf8(rastertext)); addToTmpNodes((yyval.node)); }
+#line 1406 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
     break;
 
 
-#line 1781 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.cpp" /* yacc.c:1646  */
+#line 1410 "/home/bishop/work/projects/nextgisqgis/src/analysis/qgsrastercalcparser.cpp" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1827,7 +1456,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (parser_ctx, YY_("syntax error"));
+      yyerror (YY_("syntax error"));
 #else
 # define YYSYNTAX_ERROR yysyntax_error (&yymsg_alloc, &yymsg, \
                                         yyssp, yytoken)
@@ -1854,7 +1483,7 @@ yyerrlab:
                 yymsgp = yymsg;
               }
           }
-        yyerror (parser_ctx, yymsgp);
+        yyerror (yymsgp);
         if (yysyntax_error_status == 2)
           goto yyexhaustedlab;
       }
@@ -1878,7 +1507,7 @@ yyerrlab:
       else
         {
           yydestruct ("Error: discarding",
-                      yytoken, &yylval, parser_ctx);
+                      yytoken, &yylval);
           yychar = YYEMPTY;
         }
     }
@@ -1934,7 +1563,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-                  yystos[yystate], yyvsp, parser_ctx);
+                  yystos[yystate], yyvsp);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -1971,7 +1600,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (parser_ctx, YY_("memory exhausted"));
+  yyerror (YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -1983,7 +1612,7 @@ yyreturn:
          user semantic actions for why this is necessary.  */
       yytoken = YYTRANSLATE (yychar);
       yydestruct ("Cleanup: discarding lookahead",
-                  yytoken, &yylval, parser_ctx);
+                  yytoken, &yylval);
     }
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYABORT or YYACCEPT.  */
@@ -1992,7 +1621,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  yystos[*yyssp], yyvsp, parser_ctx);
+                  yystos[*yyssp], yyvsp);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -2005,37 +1634,64 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 293 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1906  */
+#line 102 "/home/bishop/work/projects/nextgisqgis/src/analysis/raster/qgsrastercalcparser.yy" /* yacc.c:1906  */
 
 
-
-// returns parsed tree, otherwise returns nullptr and sets parserErrorMsg
-QgsExpression::Node* parseExpression(const QString& str, QString& parserErrorMsg)
+void addToTmpNodes(QgsRasterCalcNode* node)
 {
-  expression_parser_context ctx;
-  ctx.rootNode = 0;
+  gTmpNodes.append(node);
+}
 
-  exp_lex_init(&ctx.flex_scanner);
-  exp__scan_string(str.toUtf8().constData(), ctx.flex_scanner);
-  int res = exp_parse(&ctx);
-  exp_lex_destroy(ctx.flex_scanner);
+
+void joinTmpNodes(QgsRasterCalcNode* parent, QgsRasterCalcNode* left, QgsRasterCalcNode* right)
+{
+  bool res;
+  Q_UNUSED(res);
+
+  if (left)
+  {
+    res = gTmpNodes.removeAll(left) != 0;
+    Q_ASSERT(res);
+  }
+
+  if (right)
+  {
+    res = gTmpNodes.removeAll(right) != 0;
+    Q_ASSERT(res);
+  }
+
+  gTmpNodes.append(parent);
+}
+
+
+QgsRasterCalcNode* localParseRasterCalcString(const QString& str, QString& parserErrorMsg)
+{
+  // list should be empty when starting
+  Q_ASSERT(gTmpNodes.count() == 0);
+
+  set_raster_input_buffer(str.toUtf8().constData());
+  int res = rasterparse();
 
   // list should be empty when parsing was OK
   if (res == 0) // success?
   {
-    return ctx.rootNode;
+    Q_ASSERT(gTmpNodes.count() == 1);
+    return gTmpNodes.takeFirst();
   }
   else // error?
   {
-    parserErrorMsg = ctx.errorMsg;
-    delete ctx.rootNode;
+    parserErrorMsg = rParserErrorMsg;
+    // remove nodes without parents - to prevent memory leaks
+    while (gTmpNodes.size() > 0)
+      delete gTmpNodes.takeFirst();
     return nullptr;
   }
 }
 
-
-void exp_error(expression_parser_context* parser_ctx, const char* msg)
+void rastererror(const char* msg)
 {
-  parser_ctx->errorMsg = msg;
+  rParserErrorMsg = msg;
 }
+
+
 
