@@ -24,20 +24,49 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-include(prepare_parser)
+include_directories (
+    ../core
+    ../core/auth
+    ../core/geometry
+    ../gui
+    ../gui/auth
+)
 
-if(NOT PREPARE_ONLY)
-    find_anyproject(GEOS REQUIRED)
-    find_anyproject(GDAL REQUIRED)
-    find_anyproject(SQLite3 REQUIRED)
-    find_anyproject(Spatialite REQUIRED)
-    find_anyproject(Qca REQUIRED)
-endif()
+set(AUTH_PLUGINS
+    basic
+    identcert
+    pkipaths
+    pkipkcs12
+)
 
-add_subdirectory(core)
-add_subdirectory(analysis)
-add_subdirectory(ui)
-add_subdirectory(gui)
-add_subdirectory(auth)
+macro(add_auth_plugin PLUGIN_NAME)
+    file(GLOB AUTH_${PLUGIN_NAME}_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.h")
+    file(GLOB AUTH_${PLUGIN_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.cpp")
+    file(GLOB AUTH_${PLUGIN_NAME}_UIS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.ui")
 
-set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
+    qt4_wrap_ui(AUTH_${PLUGIN_NAME}_UIS_H ${AUTH_${PLUGIN_NAME}_UIS})
+    qt4_wrap_cpp(AUTH_${PLUGIN_NAME}_MOC_SRCS ${AUTH_${PLUGIN_NAME}_HEADERS})
+
+    add_library(${PLUGIN_NAME}authmethod MODULE ${AUTH_${PLUGIN_NAME}_SOURCES} ${AUTH_${PLUGIN_NAME}_HEADERS} ${AUTH_${PLUGIN_NAME}_MOC_SRCS} ${AUTH_${PLUGIN_NAME}_UIS_H})
+
+    target_link_extlibraries(${PLUGIN_NAME}authmethod)
+
+    if(OSX_FRAMEWORK)
+        set_target_properties(${PLUGIN_NAME}authmethod PROPERTIES
+            INSTALL_RPATH "@loader_path/../../../Frameworks/"
+            SUFFIX ".dylib"
+        )
+    endif()
+
+    set_target_properties(${PLUGIN_NAME}authmethod PROPERTIES CXX_STANDARD 11)
+
+    install(TARGETS ${PLUGIN_NAME}authmethod
+        RUNTIME DESTINATION ${INSTALL_PLUGIN_DIR}
+        LIBRARY DESTINATION ${INSTALL_PLUGIN_DIR}
+    )
+endmacro()
+
+foreach(AUTH_PLUGIN ${AUTH_PLUGINS})
+    info_msg("Add auth plugin ${AUTH_PLUGIN}")
+    add_auth_plugin(${AUTH_PLUGIN})
+endforeach()

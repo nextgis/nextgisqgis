@@ -91,7 +91,7 @@ extern int exp_debug;
 
 union YYSTYPE
 {
-#line 77 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1909  */
+//#line 77 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.yy" /* yacc.c:1909  */
 
   QgsExpression::Node* node;
   QgsExpression::NodeList* nodelist;
@@ -104,7 +104,7 @@ union YYSTYPE
   QgsExpression::WhenThen* whenthen;
   QgsExpression::WhenThenList* whenthenlist;
 
-#line 108 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.hpp" /* yacc.c:1909  */
+//#line 108 "/home/bishop/work/projects/nextgisqgis/src/core/qgsexpressionparser.hpp" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

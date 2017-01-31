@@ -20,7 +20,6 @@
 #include <QGridLayout>
 #include <QFileDialog>
 #include <QSettings>
-#include <QUrl>
 
 #include "qgsfilterlineedit.h"
 

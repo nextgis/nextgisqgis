@@ -67,3 +67,13 @@ function(warning_msg text)
     message(STATUS "${Red}${text}${ColourReset}")
     endif()
 endfunction()
+
+function(info_msg text)
+    if(NOT SUPPRESS_VERBOSE_OUTPUT)
+    string(ASCII 27 Esc)
+    set(Red         "${Esc}[36m")
+    set(ColourReset "${Esc}[m")
+
+    message(STATUS "${Red}${text}${ColourReset}")
+    endif()
+endfunction()
