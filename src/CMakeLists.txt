@@ -31,6 +31,7 @@ if(NOT PREPARE_ONLY)
     find_anyproject(GDAL REQUIRED)
     find_anyproject(SQLite3 REQUIRED)
     find_anyproject(Spatialite REQUIRED)
+    find_anyproject(Qca REQUIRED)
 endif()
 
 add_subdirectory(core)

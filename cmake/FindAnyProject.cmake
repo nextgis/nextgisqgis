@@ -155,8 +155,12 @@ function(find_anyproject name)
                 add_executable(Qt4::uic IMPORTED)
                 set_property(TARGET Qt4::uic PROPERTY IMPORTED_LOCATION ${QT_UIC_EXECUTABLE})
             endif()
+            if (NOT TARGET Qt4::lrelease)
+                add_executable(Qt4::lrelease IMPORTED)
+                set_property(TARGET Qt4::lrelease PROPERTY IMPORTED_LOCATION ${QT_LRELEASE_EXECUTABLE})
+            endif()
 
-            mark_as_advanced(Qt4::qmake Qt4::moc Qt4::rcc Qt4::uic)
+            mark_as_advanced(Qt4::qmake Qt4::moc Qt4::rcc Qt4::uic Qt4::lrelease)
 
             foreach(QT4_NEED_COMPONENT ${find_anyproject_COMPONENTS})
                 string(TOUPPER ${QT4_NEED_COMPONENT} QT4_NEED_COMPONENT)

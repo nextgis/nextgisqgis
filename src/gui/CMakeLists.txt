@@ -26,6 +26,7 @@
 
 if(NOT PREPARE_ONLY)
     find_anyproject(Qwt REQUIRED)
+    find_anyproject(Qscintilla REQUIRED)
 endif()
 
 set(QGIS_GUI_SRCS

@@ -23,50 +23,12 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
+file(GLOB TS_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.ts")
 
-find_program(QT_LRELEASE_EXECUTABLE
-    NAMES lrelease
-    PATHS ${QT_BINARY_DIR}
-    NO_DEFAULT_PATH
-)
+qt4_add_translation(QM_FILES ${TS_FILES})
 
-if(QT_LRELEASE_EXECUTABLE)
+add_custom_target (translations_target ALL DEPENDS ${QM_FILES})
 
-    macro(ADD_TRANSLATION_FILES _sources )
-
-        foreach (_current_FILE ${ARGN})
-            get_filename_component(_in ${_current_FILE} ABSOLUTE)
-            get_filename_component(_basename ${_current_FILE} NAME_WE)
-
-            set(_out ${CMAKE_CURRENT_BINARY_DIR}/${_basename}.qm)
-
-            add_custom_command(
-                OUTPUT ${_out}
-                COMMAND ${QT_LRELEASE_EXECUTABLE}
-                ARGS -verbose ${_in} -qm ${_out}
-                DEPENDS ${_in}
-            )
-
-            set(${_sources} ${${_sources}} ${_out} )
-        endforeach ()
-    endmacro()
-
-    set(TS_FILES qgis_ar.ts qgis_bg.ts qgis_bs.ts qgis_ca.ts qgis_cs.ts qgis_da.ts qgis_de.ts qgis_el.ts qgis_es.ts qgis_et.ts qgis_eu.ts qgis_fi.ts qgis_fr.ts qgis_gl.ts qgis_hi.ts qgis_hr.ts qgis_hu.ts qgis_id.ts qgis_it.ts qgis_ja.ts qgis_km.ts qgis_ko.ts qgis_lt.ts qgis_lv.ts qgis_nb.ts qgis_nl.ts qgis_pl.ts qgis_pt_BR.ts qgis_pt_PT.ts qgis_ro.ts qgis_ru.ts qgis_sk.ts qgis_sl.ts qgis_sr@latin.ts qgis_sv.ts qgis_tr.ts qgis_vi.ts qgis_zh-Hans.ts qgis_zh-Hant.ts)
-
-    # creating a custom target is needed to make the files build
-    # "ALL" means that it will be run by default
-    add_custom_target (translations ALL
-                       DEPENDS ${QM_FILES})
-
-    # first compile sources, then compile translations
-    if (WITH_DESKTOP)
-        add_dependencies (translations ${NG_PREFIX}${PROJECT_NAME})
-    endif ()
-
-    if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
-        install (FILES ${QM_FILES}
-             DESTINATION ${INSTALL_SHARE_DIR}/i18n)
-    endif()
-else()
-    warning_msg("The lrelease utility not found. Translations will not be build!")
+if(NOT SKIP_INSTALL_TRANSLATIONS AND NOT SKIP_INSTALL_ALL)
+    install(FILES ${QM_FILES} DESTINATION ${INSTALL_QM_DIR})
 endif()
