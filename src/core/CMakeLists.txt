@@ -40,7 +40,6 @@ find_package(PythonInterp REQUIRED)
 
 if(NOT PREPARE_ONLY)
     find_anyproject(EXPAT REQUIRED)
-    find_anyproject(Qca REQUIRED)
     find_anyproject(PROJ4 REQUIRED)
     find_anyproject(SpatialIndex REQUIRED)
 endif()
@@ -541,10 +540,6 @@ SET(QGIS_CORE_MOC_HDRS
   # gps/qgsgpsdetector.h
   # gps/qgsnmeaconnection.h
   # gps/qgsgpsdconnection.h
-
-if(WITH_QTWEBKIT)
-    add_definitions(-DWITH_QTWEBKIT)
-endif()
 
 set(QGIS_CORE_MOC_HDRS ${QGIS_CORE_MOC_HDRS}
   qgswebpage.h
