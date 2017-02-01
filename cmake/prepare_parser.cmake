@@ -40,33 +40,33 @@ macro(add_bison_files)
 
     if(NOT BISON_EXECUTABLE)
         warning_msg("Bison: Skip creating ${ARGN}")
-        return()
+    elseif(NOT PREPARE_ONLY)
+    else()
+        foreach (_current_FILE ${ARGN})
+            get_filename_component(_in ${_current_FILE} ABSOLUTE)
+            get_filename_component(_basename ${_current_FILE} NAME_WE)
+
+            set(_out ${CMAKE_CURRENT_SOURCE_DIR}/${_basename}.cpp)
+
+            # bison options:
+            # -t add debugging facilities
+            # -d produce additional header file (used in parser.l)
+            # -v produce additional *.output file with parser states
+
+            add_custom_command(
+                OUTPUT ${_out}
+                COMMAND ${BISON_EXECUTABLE}
+                ARGS
+                -o${_out} -d
+                ${_in}
+                DEPENDS ${_in}
+            )
+
+            add_custom_target(bison_${_basename} DEPENDS ${_out})
+            set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} bison_${_basename})
+        endforeach ()
+        set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
     endif()
-
-    foreach (_current_FILE ${ARGN})
-        get_filename_component(_in ${_current_FILE} ABSOLUTE)
-        get_filename_component(_basename ${_current_FILE} NAME_WE)
-
-        set(_out ${CMAKE_CURRENT_SOURCE_DIR}/${_basename}.cpp)
-
-        # bison options:
-        # -t add debugging facilities
-        # -d produce additional header file (used in parser.l)
-        # -v produce additional *.output file with parser states
-
-        add_custom_command(
-            OUTPUT ${_out}
-            COMMAND ${BISON_EXECUTABLE}
-            ARGS
-            -o${_out} -d
-            ${_in}
-            DEPENDS ${_in}
-        )
-
-        add_custom_target(bison_${_basename} DEPENDS ${_out})
-        set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} bison_${_basename})
-    endforeach ()
-    set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
 endmacro()
 
 macro(add_bison_files_prefix prefix)
@@ -74,34 +74,35 @@ macro(add_bison_files_prefix prefix)
 
     if(NOT BISON_EXECUTABLE)
         warning_msg("Bison: Skip creating ${ARGN}")
-        return()
+        break()
+    elseif(NOT PREPARE_ONLY)
+    else()
+        foreach (_current_FILE ${ARGN})
+            get_filename_component(_in ${_current_FILE} ABSOLUTE)
+            get_filename_component(_basename ${_current_FILE} NAME_WE)
+
+            set(_out ${CMAKE_CURRENT_SOURCE_DIR}/${_basename}.cpp)
+
+
+            # bison options:
+            # -t add debugging facilities
+            # -d produce additional header file (used in parser.l)
+            # -v produce additional *.output file with parser states
+
+            add_custom_command(
+                OUTPUT ${_out}
+                COMMAND ${BISON_EXECUTABLE}
+                ARGS
+                -p ${prefix}
+                -o${_out} -d
+                ${_in}
+                DEPENDS ${_in}
+            )
+            add_custom_target(bison_prefix_${_basename} DEPENDS ${_out})
+            set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} bison_prefix_${_basename})
+        endforeach ()
+        set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
     endif()
-
-    foreach (_current_FILE ${ARGN})
-        get_filename_component(_in ${_current_FILE} ABSOLUTE)
-        get_filename_component(_basename ${_current_FILE} NAME_WE)
-
-        set(_out ${CMAKE_CURRENT_SOURCE_DIR}/${_basename}.cpp)
-
-
-        # bison options:
-        # -t add debugging facilities
-        # -d produce additional header file (used in parser.l)
-        # -v produce additional *.output file with parser states
-
-        add_custom_command(
-            OUTPUT ${_out}
-            COMMAND ${BISON_EXECUTABLE}
-            ARGS
-            -p ${prefix}
-            -o${_out} -d
-            ${_in}
-            DEPENDS ${_in}
-        )
-        add_custom_target(bison_prefix_${_basename} DEPENDS ${_out})
-        set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} bison_prefix_${_basename})
-    endforeach ()
-    set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
 endmacro()
 
 # flex a .ll file
@@ -129,29 +130,29 @@ macro(add_flex_files)
 
     if(NOT FLEX_EXECUTABLE)
         warning_msg("Flex: Skip creating ${ARGN}")
-        return()
+    elseif(NOT PREPARE_ONLY)
+    else()
+        foreach (_current_FILE ${ARGN})
+            get_filename_component(_in ${_current_FILE} ABSOLUTE)
+            get_filename_component(_basename ${_current_FILE} NAME_WE)
+
+            set(_out ${CMAKE_CURRENT_SOURCE_DIR}/flex_${_basename}.cpp)
+
+            # -d option for flex means that it will produce output to stderr while analyzing
+
+            add_custom_command(
+                OUTPUT ${_out}
+                COMMAND ${FLEX_EXECUTABLE}
+                ARGS
+                -o${_out}
+                ${_in}
+                DEPENDS ${_in}
+            )
+            add_custom_target(flex_${_basename} DEPENDS ${_out})
+            set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} flex_${_basename})
+        endforeach ()
+        set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
     endif()
-
-    foreach (_current_FILE ${ARGN})
-        get_filename_component(_in ${_current_FILE} ABSOLUTE)
-        get_filename_component(_basename ${_current_FILE} NAME_WE)
-
-        set(_out ${CMAKE_CURRENT_SOURCE_DIR}/flex_${_basename}.cpp)
-
-        # -d option for flex means that it will produce output to stderr while analyzing
-
-        add_custom_command(
-            OUTPUT ${_out}
-            COMMAND ${FLEX_EXECUTABLE}
-            ARGS
-            -o${_out}
-            ${_in}
-            DEPENDS ${_in}
-        )
-        add_custom_target(flex_${_basename} DEPENDS ${_out})
-        set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} flex_${_basename})
-    endforeach ()
-    set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
 endmacro()
 
 
@@ -160,28 +161,29 @@ macro(add_flex_files_prefix prefix)
 
     if(NOT FLEX_EXECUTABLE)
         warning_msg("Flex: Skip creating ${ARGN}")
-        return()
+        break()
+    elseif(NOT PREPARE_ONLY)
+    else()
+        foreach (_current_FILE ${ARGN})
+            get_filename_component(_in ${_current_FILE} ABSOLUTE)
+            get_filename_component(_basename ${_current_FILE} NAME_WE)
+
+            set(_out ${CMAKE_CURRENT_SOURCE_DIR}/flex_${_basename}.cpp)
+
+            # -d option for flex means that it will produce output to stderr while analyzing
+
+            add_custom_command(
+                OUTPUT ${_out}
+                COMMAND ${FLEX_EXECUTABLE}
+                ARGS
+                -P${prefix}
+                -o${_out}
+                ${_in}
+                DEPENDS ${_in}
+            )
+            add_custom_target(flex_prefix_${_basename} DEPENDS ${_out})
+            set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} flex_prefix_${_basename})
+        endforeach ()
+        set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
     endif()
-
-    foreach (_current_FILE ${ARGN})
-        get_filename_component(_in ${_current_FILE} ABSOLUTE)
-        get_filename_component(_basename ${_current_FILE} NAME_WE)
-
-        set(_out ${CMAKE_CURRENT_SOURCE_DIR}/flex_${_basename}.cpp)
-
-        # -d option for flex means that it will produce output to stderr while analyzing
-
-        add_custom_command(
-            OUTPUT ${_out}
-            COMMAND ${FLEX_EXECUTABLE}
-            ARGS
-            -P${prefix}
-            -o${_out}
-            ${_in}
-            DEPENDS ${_in}
-        )
-        add_custom_target(flex_prefix_${_basename} DEPENDS ${_out})
-        set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} flex_prefix_${_basename})
-    endforeach ()
-    set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
 endmacro()

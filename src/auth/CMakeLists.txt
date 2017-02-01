@@ -25,11 +25,11 @@
 ################################################################################
 
 include_directories (
-    ../core
-    ../core/auth
-    ../core/geometry
-    ../gui
-    ../gui/auth
+    ${CMAKE_SOURCE_DIR}/src/core
+    ${CMAKE_SOURCE_DIR}/src/core/auth
+    ${CMAKE_SOURCE_DIR}/src/core/geometry
+    ${CMAKE_SOURCE_DIR}/src/gui
+    ${CMAKE_SOURCE_DIR}/src/gui/auth
 )
 
 set(AUTH_PLUGINS
@@ -44,8 +44,10 @@ macro(add_auth_plugin PLUGIN_NAME)
     file(GLOB AUTH_${PLUGIN_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.cpp")
     file(GLOB AUTH_${PLUGIN_NAME}_UIS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.ui")
 
-    qt4_wrap_ui(AUTH_${PLUGIN_NAME}_UIS_H ${AUTH_${PLUGIN_NAME}_UIS})
-    qt4_wrap_cpp(AUTH_${PLUGIN_NAME}_MOC_SRCS ${AUTH_${PLUGIN_NAME}_HEADERS})
+    if(NOT PREPARE_ONLY)
+        qt4_wrap_ui(AUTH_${PLUGIN_NAME}_UIS_H ${AUTH_${PLUGIN_NAME}_UIS})
+        qt4_wrap_cpp(AUTH_${PLUGIN_NAME}_MOC_SRCS ${AUTH_${PLUGIN_NAME}_HEADERS})
+    endif()
 
     add_library(${PLUGIN_NAME}authmethod MODULE ${AUTH_${PLUGIN_NAME}_SOURCES} ${AUTH_${PLUGIN_NAME}_HEADERS} ${AUTH_${PLUGIN_NAME}_MOC_SRCS} ${AUTH_${PLUGIN_NAME}_UIS_H})
 

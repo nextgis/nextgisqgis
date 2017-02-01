@@ -38,12 +38,6 @@ add_bison_files(qgsexpressionparser.yy)
 # Default target
 find_package(PythonInterp REQUIRED)
 
-if(NOT PREPARE_ONLY)
-    find_anyproject(EXPAT REQUIRED)
-    find_anyproject(PROJ4 REQUIRED)
-    find_anyproject(SpatialIndex REQUIRED)
-endif()
-
 set(QGIS_CORE_SRCS
     symbology-ng/qgs25drenderer.cpp
     symbology-ng/qgscategorizedsymbolrendererv2.cpp
@@ -434,7 +428,7 @@ else()
     PROPERTIES COMPILE_FLAGS -wd4702)
 endif()
 
-SET(QGIS_CORE_MOC_HDRS
+set(QGIS_CORE_MOC_HDRS
     qgsapplication.h
     qgsbrowsermodel.h
     qgscontexthelp.h
@@ -551,7 +545,7 @@ set(QGIS_CORE_MOC_HDRS ${QGIS_CORE_MOC_HDRS}
 )
 
 if(NOT PREPARE_ONLY)
-    QT4_WRAP_CPP(QGIS_CORE_MOC_SRCS ${QGIS_CORE_MOC_HDRS})
+    qt4_wrap_cpp(QGIS_CORE_MOC_SRCS ${QGIS_CORE_MOC_HDRS})
 endif()
 
 if(MSVC)

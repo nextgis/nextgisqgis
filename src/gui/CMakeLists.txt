@@ -24,11 +24,6 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-if(NOT PREPARE_ONLY)
-    find_anyproject(Qwt REQUIRED)
-    find_anyproject(Qscintilla REQUIRED)
-endif()
-
 set(QGIS_GUI_SRCS
   raster/qgsmultibandcolorrendererwidget.cpp
   raster/qgspalettedrendererwidget.cpp
@@ -736,6 +731,7 @@ target_compile_definitions (${LIB_NAME} INTERFACE "GUI_EXPORT=${DLLIMPORT}")
 set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
 
 target_link_extlibraries(${LIB_NAME})
+add_dependencies(${LIB_NAME} ${NG_PREFIX}qgis_core)
 set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${LIB_NAME} PARENT_SCOPE)
 
 if(OSX_FRAMEWORK)
