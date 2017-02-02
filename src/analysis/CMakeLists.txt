@@ -168,6 +168,7 @@ target_compile_definitions (${LIB_NAME} INTERFACE "ANALYSIS_EXPORT=${DLLIMPORT}"
 set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
 
 target_link_extlibraries(${LIB_NAME})
+set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${LIB_NAME} PARENT_SCOPE)
 
 if(OSX_FRAMEWORK)
     set_target_properties(${LIB_NAME} PROPERTIES

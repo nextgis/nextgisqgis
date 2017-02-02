@@ -117,8 +117,18 @@ function(find_anyproject name)
             if(${UPPER_NAME}_LIBRARY)
                 set(${UPPER_NAME}_LIBRARY ${${UPPER_NAME}_LIBRARY} CACHE INTERNAL "library ${name}")
             endif()
+            if(${UPPER_NAME}_VERSION)
+                set(${UPPER_NAME}_VERSION ${${UPPER_NAME}_VERSION} CACHE INTERNAL "library ${name} version")
+                set(${UPPER_NAME}_VERSION_STR ${${UPPER_NAME}_VERSION} CACHE INTERNAL "library ${name} version")
+            endif()
 
-            mark_as_advanced(${IS_FOUND} ${UPPER_NAME}_INCLUDE_DIR ${UPPER_NAME}_INCLUDE_DIRS ${UPPER_NAME}_LIBRARIES ${UPPER_NAME}_LIBRARY)
+            mark_as_advanced(${IS_FOUND} ${UPPER_NAME}_INCLUDE_DIR
+                ${UPPER_NAME}_INCLUDE_DIRS
+                ${UPPER_NAME}_LIBRARIES
+                ${UPPER_NAME}_LIBRARY
+                ${UPPER_NAME}_VERSION
+                ${UPPER_NAME}_VERSION_STR
+            )
         elseif(find_anyproject_REQUIRED)
             message(FATAL_ERROR "${name} is required in ${PROJECT_NAME}!")
         else()
@@ -187,6 +197,9 @@ function(find_anyproject name)
             set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${${name}_LIBRARIES} PARENT_SCOPE)
         elseif(${name}_LIBRARY)
             set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${${name}_LIBRARY} PARENT_SCOPE)
+        elseif(${UPPER_NAME}_VERSION)
+            set(${UPPER_NAME}_VERSION ${${UPPER_NAME}_VERSION} PARENT_SCOPE)
+            set(${UPPER_NAME}_VERSION_STR ${${UPPER_NAME}_VERSION} PARENT_SCOPE)
         endif()
     else()
         set(TARGET_LINK_LIB ${TARGET_LINK_LIB} PARENT_SCOPE)
