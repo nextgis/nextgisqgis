@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleName</key>
-	<string>${NG_PREFIX}QGIS</string>
+	<string>${PACKAGE_VENDOR} QGIS</string>
 	<key>CFBundleIdentifier</key>
 	<string>org.qgis.qgis2</string>
 	<key>CFBundleExecutable</key>
@@ -13,13 +13,13 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
-	<string>${NG_PREFIX}QGIS</string>
+	<string>${PACKAGE_VENDOR} QGIS</string>
 	<key>CFBundleGetInfoString</key>
-	<string>${QGIS_APP_NAME} ${VERSION} (${QGIS_VERSION}), © 2017 NextGIS</string>
+	<string>${QGIS_APP_NAME} ${VENDOR_VERSION} (${QGIS_VERSION}), © ${CURRENT_YEAR} ${PACKAGE_VENDOR}</string>
 	<key>CFBundleShortVersionString</key>
-	<string>${VERSION}</string>
+	<string>${VENDOR_VERSION}</string>
 	<key>CFBundleVersion</key>
-	<string>${VERSION} (${QGIS_VERSION})</string>
+	<string>${VENDOR_VERSION} (${QGIS_VERSION})</string>
 	<key>CFBundleIconFile</key>
 	<string>qgis_icon.icns</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -30,7 +30,7 @@
 	<array>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>${NG_PREFIX}QGIS Project document</string>
+			<string>${PACKAGE_VENDOR} QGIS Project document</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleTypeIconFile</key>
@@ -41,7 +41,7 @@
 			</array>
 			<key>CFBundleTypeOSTypes</key>
 			<array>
-				<string>QGIS</string>
+				<string>${PACKAGE_VENDOR} QGIS</string>
 			</array>
 		</dict>
 		<dict>
@@ -183,7 +183,7 @@
 		</dict>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>QGIS style document</string>
+			<string>${PACKAGE_VENDOR} QGIS style document</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleTypeIconFile</key>

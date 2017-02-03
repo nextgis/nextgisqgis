@@ -30,5 +30,5 @@ qt4_add_translation(QM_FILES ${TS_FILES})
 add_custom_target (translations_target ALL DEPENDS ${QM_FILES})
 
 if(NOT SKIP_INSTALL_TRANSLATIONS AND NOT SKIP_INSTALL_ALL)
-    install(FILES ${QM_FILES} DESTINATION ${INSTALL_QM_DIR})
+    install(FILES ${QM_FILES} DESTINATION "${INSTALL_SHARE_DIR}/i18n")
 endif()

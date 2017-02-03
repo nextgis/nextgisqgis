@@ -1515,9 +1515,9 @@ void QgisApp::createActions()
   connect( mActionDecreaseContrast, SIGNAL( triggered() ), this, SLOT( decreaseContrast() ) );
 
   // Vector Menu Items
-  connect( mActionOSMDownload, SIGNAL( triggered() ), this, SLOT( osmDownloadDialog() ) );
-  connect( mActionOSMImport, SIGNAL( triggered() ), this, SLOT( osmImportDialog() ) );
-  connect( mActionOSMExport, SIGNAL( triggered() ), this, SLOT( osmExportDialog() ) );
+  // connect( mActionOSMDownload, SIGNAL( triggered() ), this, SLOT( osmDownloadDialog() ) );
+  // connect( mActionOSMImport, SIGNAL( triggered() ), this, SLOT( osmImportDialog() ) );
+  // connect( mActionOSMExport, SIGNAL( triggered() ), this, SLOT( osmExportDialog() ) );
 
   // Help Menu Items
 
@@ -1527,16 +1527,16 @@ void QgisApp::createActions()
   mActionReportaBug->setShortcut( QString() );
 #endif
 
-  mActionHelpContents->setEnabled( QFileInfo( QgsApplication::pkgDataPath() + "/doc/index.html" ).exists() );
+  // mActionHelpContents->setEnabled( QFileInfo( QgsApplication::pkgDataPath() + "/doc/index.html" ).exists() );
 
   connect( mActionHelpContents, SIGNAL( triggered() ), this, SLOT( helpContents() ) );
   connect( mActionHelpAPI, SIGNAL( triggered() ), this, SLOT( apiDocumentation() ) );
   connect( mActionReportaBug, SIGNAL( triggered() ), this, SLOT( reportaBug() ) );
-  connect( mActionNeedSupport, SIGNAL( triggered() ), this, SLOT( supportProviders() ) );
+  // connect( mActionNeedSupport, SIGNAL( triggered() ), this, SLOT( supportProviders() ) );
   connect( mActionQgisHomePage, SIGNAL( triggered() ), this, SLOT( helpQgisHomePage() ) );
   connect( mActionCheckQgisVersion, SIGNAL( triggered() ), this, SLOT( checkQgisVersion() ) );
   connect( mActionAbout, SIGNAL( triggered() ), this, SLOT( about() ) );
-  connect( mActionSponsors, SIGNAL( triggered() ), this, SLOT( sponsors() ) );
+  // connect( mActionSponsors, SIGNAL( triggered() ), this, SLOT( sponsors() ) );
 
   connect( mActionShowPinnedLabels, SIGNAL( toggled( bool ) ), this, SLOT( showPinnedLabels( bool ) ) );
   connect( mActionPinLabels, SIGNAL( triggered() ), this, SLOT( pinLabels() ) );
@@ -2260,7 +2260,7 @@ void QgisApp::setTheme( const QString& theThemeName )
   mActionZoomActualSize->setIcon( QgsApplication::getThemeIcon( "/mActionZoomNative.png" ) );
   mActionQgisHomePage->setIcon( QgsApplication::getThemeIcon( "/mActionQgisHomePage.png" ) );
   mActionAbout->setIcon( QgsApplication::getThemeIcon( "/mActionHelpAbout.png" ) );
-  mActionSponsors->setIcon( QgsApplication::getThemeIcon( "/mActionHelpSponsors.png" ) );
+  // mActionSponsors->setIcon( QgsApplication::getThemeIcon( "/mActionHelpSponsors.png" ) );
   mActionDraw->setIcon( QgsApplication::getThemeIcon( "/mActionDraw.svg" ) );
   mActionToggleEditing->setIcon( QgsApplication::getThemeIcon( "/mActionToggleEditing.svg" ) );
   mActionSaveLayerEdits->setIcon( QgsApplication::getThemeIcon( "/mActionSaveAllEdits.svg" ) );
@@ -8539,10 +8539,7 @@ void QgisApp::adjustBrightnessContrast( int delta, bool updateBrightness )
 void QgisApp::helpContents()
 {
   // We should really ship the HTML version of the docs local too.
-  openURL( QString( "https://docs.qgis.org/%1.%2/%3/docs/user_manual/" )
-           .arg( QGis::QGIS_VERSION_INT / 10000 )
-           .arg( QGis::QGIS_VERSION_INT / 100 % 100 )
-           .arg( tr( "en", "documentation language" ) ),
+  openURL( QString( "http://docs.nexgis.ru/docs_ngqgis/" ),
            false );
 }
 
@@ -8569,7 +8566,7 @@ void QgisApp::supportProviders()
 
 void QgisApp::helpQgisHomePage()
 {
-  openURL( "https://qgis.org", false );
+  openURL( "http://nextgis.com", false );
 }
 
 void QgisApp::openURL( QString url, bool useQgisDocDirectory )

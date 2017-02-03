@@ -649,7 +649,7 @@ int main( int argc, char *argv[] )
 #ifdef Q_OS_MACX
   // If the GDAL plugins are bundled with the application and GDAL_DRIVER_PATH
   // is not already defined, use the GDAL plugins in the application bundle.
-  QString gdalPlugins( QCoreApplication::applicationDirPath().append( "/../../../../" + QString( QGIS_PLUGIN_SUBDIR ) ) );
+  QString gdalPlugins( QCoreApplication::applicationDirPath().append( "/../../../../" + + QString( QGIS_PLUGIN_SUBDIR ) ) );
   if ( QFile::exists( gdalPlugins ) && !getenv( "GDAL_DRIVER_PATH" ) )
   {
     setenv( "GDAL_DRIVER_PATH", gdalPlugins.toUtf8(), 1 );

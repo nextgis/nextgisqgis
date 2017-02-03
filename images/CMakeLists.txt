@@ -24,49 +24,40 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-include(prepare_parser)
-
-if(NOT PREPARE_ONLY)
-    find_anyproject(GEOS REQUIRED)
-    find_anyproject(GDAL REQUIRED)
-    find_anyproject(EXPAT REQUIRED)
-    find_anyproject(PROJ4 REQUIRED)
-    find_anyproject(SQLite3 REQUIRED)
-    find_anyproject(Spatialite REQUIRED)
-    find_anyproject(SpatialIndex REQUIRED)
-    find_anyproject(Qca REQUIRED)
-    find_anyproject(Qwt REQUIRED)
-    if(QWT_FOUND)
-        if(WIN32)
-            add_definitions(-DQWT_DLL)
-        endif()
-        add_definitions(-DQWT_VERSION_STR="${QWT_VERSION}")
-    endif()
-    find_anyproject(Qscintilla REQUIRED)
-    if(QSCINTILLA_FOUND)
-        add_definitions(-DQSCINTILLA_VERSION_STR="${QSCINTILLA_VERSION}")
-    endif()
-    find_anyproject(PostgreSQL DEFAULT ON)
-    if(POSTGRESQL_FOUND)
-        add_definitions(-DHAVE_PGCONFIG=1 -DHAVE_POSTGRESQL)
-    endif()
-endif()
-
-add_subdirectory(core)
-add_subdirectory(analysis)
-add_subdirectory(ui)
-add_subdirectory(gui)
-add_subdirectory(auth)
-add_subdirectory(providers)
-
 if(WITH_DESKTOP)
-  add_subdirectory(app)
-#TODO:  add_subdirectory(helpviewer)
-#TODO:  add_subdirectory(plugins)
-endif()
+    if(OSX_FRAMEWORK)
+        file(GLOB ICONS "icons/*.icns")
+        install(FILES ${ICONS} DESTINATION ${INSTALL_SHARE_DIR})
+    endif()
 
-if(WITH_BINDINGS)
-  # TODO: add_subdirectory(python)
-endif()
+    set(SVG_DIRS
+        svg/accommodation
+        svg/amenity
+        svg/arrows
+        svg/backgrounds
+        svg/components
+        svg/crosses
+        svg/emergency
+        svg/entertainment
+        svg/food
+        svg/geometric
+        svg/gpsicons
+        svg/health
+        svg/icon
+        svg/landmark
+        svg/money
+        svg/religion
+        svg/services
+        svg/shopping
+        svg/sport
+        svg/symbol
+        svg/tourist
+        svg/transport
+        svg/wind_roses
+    )
 
-set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
+    foreach(SVG_DIR ${SVG_DIRS})
+        file(GLOB IMAGES "${SVG_DIR}/*.svg")
+        install(FILES ${IMAGES} DESTINATION ${INSTALL_SHARE_DIR}/${SVG_DIR})
+    endforeach()
+endif()

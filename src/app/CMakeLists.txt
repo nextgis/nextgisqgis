@@ -461,6 +461,7 @@ if(OSX_FRAMEWORK)
 
     set_target_properties(${QGIS_APP_NAME} PROPERTIES
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/cmake/app.info.plist.in"
+        INSTALL_RPATH "@executable_path/../../../../Library/Frameworks;@executable_path/../Frameworks"
     )
 endif()
 

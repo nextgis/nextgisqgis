@@ -25,25 +25,24 @@
 #define QGIS_DATA_SUBDIR "${QGIS_DATA_SUBDIR}"
 #define QGIS_LIBEXEC_SUBDIR "${QGIS_LIBEXEC_SUBDIR}"
 #define QGIS_LIB_SUBDIR "${QGIS_LIB_SUBDIR}"
-#define CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}"
 #define CMAKE_SOURCE_DIR "${CMAKE_SOURCE_DIR}"
 
-//#undef QSCINTILLA_VERSION_STR "${QSCINTILLA_VERSION_STR}"
-#define NGQ_VERSION "${VERSION}"
+#define VENDOR_VERSION "${VERSION}"
+#define VENDOR "${PACKAGE_VENDOR}"
+#define VENDOR_DOMAIN "${PACKAGE_VENDOR_DOMAIN}"
+#define APP_NAME "${QGIS_APP_NAME}"
 
 #if defined( __APPLE__ )
 //used by Mac to find system or bundle resources relative to amount of bundling
 #define QGIS_MACAPP_BUNDLE ${QGIS_MACAPP_BUNDLE}
 #endif
 
-#define QT_PLUGINS_DIR "${QT_PLUGINS_DIR}"
-#define OSG_PLUGINS_PATH "${OSG_PLUGINS_PATH}"
+#cmakedefine QT_PLUGINS_DIR "${QT_PLUGINS_DIR}"
+#cmakedefine OSG_PLUGINS_PATH "${OSG_PLUGINS_PATH}"
 
 #cmakedefine USING_NMAKE
 
 #cmakedefine USING_NINJA
-
-#cmakedefine HAVE_POSTGRESQL
 
 #cmakedefine HAVE_SPATIALITE
 

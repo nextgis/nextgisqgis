@@ -1515,9 +1515,9 @@ void QgisApp::createActions()
   connect( mActionDecreaseContrast, SIGNAL( triggered() ), this, SLOT( decreaseContrast() ) );
 
   // Vector Menu Items
-  connect( mActionOSMDownload, SIGNAL( triggered() ), this, SLOT( osmDownloadDialog() ) );
-  connect( mActionOSMImport, SIGNAL( triggered() ), this, SLOT( osmImportDialog() ) );
-  connect( mActionOSMExport, SIGNAL( triggered() ), this, SLOT( osmExportDialog() ) );
+  // connect( mActionOSMDownload, SIGNAL( triggered() ), this, SLOT( osmDownloadDialog() ) );
+  // connect( mActionOSMImport, SIGNAL( triggered() ), this, SLOT( osmImportDialog() ) );
+  // connect( mActionOSMExport, SIGNAL( triggered() ), this, SLOT( osmExportDialog() ) );
 
   // Help Menu Items
 
