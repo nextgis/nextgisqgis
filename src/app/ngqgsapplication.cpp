@@ -26,15 +26,23 @@
 #include <QDir>
 #include <QProcess>
 
+#ifdef Q_OS_WIN
+#include <winsock.h>
+#include <windows.h>
+#include <Lmcons.h>
+#define SECURITY_WIN32
+#include <Security.h>
+#pragma comment( lib, "Secur32.lib" )
+#else
+#include <unistd.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <pwd.h>
+#endif
 
-QString NGQgsApplication::sPlatformName = "desktop";
-
-const char* NGQgsApplication::QGIS_ORGANIZATION_NAME = VENDOR;
-const char* NGQgsApplication::QGIS_ORGANIZATION_DOMAIN = VENDOR_DOMAIN;
-const char* NGQgsApplication::QGIS_APPLICATION_NAME = APP_NAME;
-
-QString ABISYM( NGQgsApplication::mNgConfigPath );
-QMap<QString, QString> ABISYM( NGQgsApplication::mNgSystemEnvVars );
+const char* QgsApplication::QGIS_ORGANIZATION_NAME = VENDOR;
+const char* QgsApplication::QGIS_ORGANIZATION_DOMAIN = VENDOR_DOMAIN;
+const char* QgsApplication::QGIS_APPLICATION_NAME = APP_NAME;
 
 //------------------------------------------------------------------------------
 // NGQgsApplication
@@ -47,7 +55,7 @@ NGQgsApplication::NGQgsApplication(int &argc, char **argv, bool GUIenabled,
 {
     sPlatformName = platformName;
 
-    init( customConfigPath );
+    NGQgsApplication::init( customConfigPath );
 }
 
 void NGQgsApplication::init(QString customConfigPath)
@@ -60,8 +68,11 @@ void NGQgsApplication::init(QString customConfigPath)
       }
       else
       {
-        customConfigPath = QString( "%1/.nextgis/qgis%2/" ).arg(
-                    QDir::homePath() ).arg( VERSION_INT / 10000 );
+        customConfigPath = QString( "%1.config%2qgis%3" )
+                .arg( QDir::homePath() + QDir::separator() )
+                .arg( QDir::separator() + QLatin1String(VENDOR) + QDir::separator() )
+                .arg( VERSION_INT / 10000 );
+        setenv("QGIS_CUSTOM_CONFIG_PATH", customConfigPath.toUtf8(), FALSE);
       }
     }
 
@@ -83,12 +94,18 @@ void NGQgsApplication::init(QString customConfigPath)
                             getenv( "QGIS_PREFIX_PATH" ) : defaultPrefixPath );
     QgsDebugMsg( QString( "prefixPath(): %1" ).arg( prefixPath ) );
     // NOTE: Set prefix, plugin, data (package), svg paths here
+    ABISYM( mDefaultSvgPaths ).clear();
     setPrefixPath( prefixPath, true );
+    setenv("QGIS_PREFIX_PATH", prefixPath.toUtf8(), FALSE);
 
     if ( !customConfigPath.isEmpty() )
     {
-      ABISYM( mNgConfigPath ) = customConfigPath + '/'; // make sure trailing slash is included
+      ABISYM( mConfigPath ) = customConfigPath + QDir::separator(); // make sure trailing slash is included
     }
+
+    ABISYM( mDefaultSvgPaths ) << customConfigPath + QDir::separator() +
+                                  QLatin1String("svg");
+    ABISYM( mRunningFromBuildDir ) = false;
 
     if ( getenv( "QGIS_AUTH_DB_DIR_PATH" ) )
     {
@@ -96,7 +113,9 @@ void NGQgsApplication::init(QString customConfigPath)
     }
     else
     {
+        ABISYM( mAuthDbDirPath ) = qgisSettingsDirPath();
         setAuthDbDirPath(qgisSettingsDirPath());
+        setenv( "QGIS_AUTH_DB_DIR_PATH", qgisSettingsDirPath().toUtf8(), FALSE );
     }
 
     // store system environment variables passed to application, before they are adjusted
@@ -114,17 +133,36 @@ void NGQgsApplication::init(QString customConfigPath)
         systemEnvVarMap.insert( varStrName, varStrValue );
       }
     }
-    ABISYM( mNgSystemEnvVars ) = systemEnvVarMap;
+    ABISYM( mSystemEnvVars ) = systemEnvVarMap;
+
+#ifdef Q_OS_WIN
+  TCHAR name [ UNLEN + 1 ];
+  DWORD size = UNLEN + 1;
+
+  //note - this only works for accounts connected to domain
+  if ( GetUserNameEx( NameDisplay, ( TCHAR* )name, &size ) )
+  {
+    sUserFullName = QString( name );
+  }
+
+  //fall back to login name
+  if ( sUserFullName.isEmpty() )
+    sUserFullName = userLoginName();
+#else
+  struct passwd *p = getpwuid( getuid() );
+
+  if ( p )
+  {
+    QString gecosName = QString::fromUtf8( p->pw_gecos );
+    sUserFullName = gecosName.left( gecosName.indexOf( ',', 0 ) );
+  }
+
+#endif
 
     // set max. thread count to -1
     // this should be read from QSettings but we don't know where they are at this point
     // so we read actual value in main.cpp
     setMaxThreads(-1);
-}
-
-QString NGQgsApplication::i18nPath()
-{
-    return pkgDataPath() + QLatin1String( "/i18n/" );
 }
 
 QString NGQgsApplication::pluginsPath()
@@ -137,19 +175,10 @@ QString NGQgsApplication::qtPluginsPath()
     return prefixPath() + QLatin1String(QT_PLUGIN_SUBDIR);
 }
 
-QString NGQgsApplication::qgisSettingsDirPath()
+/*
+QString NGQgsApplication::i18nPath()
 {
-    return ABISYM( mNgConfigPath );
-}
-
-QMap<QString, QString> NGQgsApplication::systemEnvVars()
-{
-    return ABISYM( mNgSystemEnvVars );
-}
-
-QString NGQgsApplication::platform()
-{
-    return sPlatformName;
+    return pkgDataPath() + QLatin1String( "/i18n/" );
 }
 
 QString NGQgsApplication::qgisMasterDbFilePath()
@@ -175,3 +204,4 @@ QString NGQgsApplication::defaultThemesFolder()
     return prefixPath() + QLatin1String(QGIS_DATA_SUBDIR) + QDir::separator() +
             QLatin1String("themes");
 }
+*/

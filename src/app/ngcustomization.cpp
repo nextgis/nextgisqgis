@@ -401,6 +401,7 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
                          true ).toBool() )
     {
       mSplash->hide();
+      QDir::setCurrent(NGQgsApplication::iconsPath());
       QgsTipGui myTip( this );
       myTip.exec();
     }
@@ -427,8 +428,6 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
 
 NGQgisApp::~NGQgisApp()
 {
-    NGQgsApplication::setFileOpenEventReceiver( nullptr );
-    NGQgsApplication::exitQgis();
 }
 
 void NGQgisApp::setupNetworkAccessManager()
@@ -960,12 +959,15 @@ void NGQgisApp::createToolBars()
   << mMapNavToolBar
   << mAttributesToolBar
   << mPluginToolBar
-  << mHelpToolBar
+ // << mHelpToolBar
   << mRasterToolBar
   << mVectorToolBar
   << mDatabaseToolBar
   << mWebToolBar
   << mLabelToolBar;
+
+  delete mHelpToolBar;
+  mHelpToolBar = nullptr;
 
   QList<QAction*> toolbarMenuActions;
   // Set action names so that they can be used in customization

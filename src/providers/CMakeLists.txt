@@ -83,7 +83,7 @@ macro(add_provider PLUGIN_NAME)
     if(OSX_FRAMEWORK)
         set_target_properties(${PLUGIN_NAME}provider PROPERTIES
             INSTALL_RPATH "@loader_path/../../../Frameworks/"
-            SUFFIX ".dylib"
+            SUFFIX ".so" # ".dylib" <- /src/app/qgspluginregistry.cpp:462
         )
     endif()
 
