@@ -358,6 +358,16 @@ set(QGIS_APP_MOC_HDRS
   qgsvariantdelegate.h
 )
 
+set(QGIS_APP_SRCS ${QGIS_APP_SRCS}
+    ngcustomization.cpp
+    ngqgsapplication.cpp
+)
+
+set(QGIS_APP_MOC_HDRS ${QGIS_APP_MOC_HDRS}
+    ngcustomization.h
+    ngqgsapplication.h
+)
+
 set(IMAGE_RCCS ../../images/images.qrc)
 
 qt4_add_resources(IMAGE_RCC_SRCS ${IMAGE_RCCS})

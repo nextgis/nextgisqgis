@@ -202,6 +202,7 @@
      <string>&amp;Help</string>
     </property>
     <addaction name="mActionHelpContents"/>
+    <addaction name="mActionHelpAPI"/>
     <addaction name="separator"/>
     <addaction name="mActionReportaBug"/>
     <addaction name="separator"/>
@@ -211,6 +212,7 @@
     <addaction name="mActionCheckQgisVersion"/>
     <addaction name="separator"/>
     <addaction name="mActionAbout"/>
+    <addaction name="mActionSponsors"/>
    </widget>
    <widget class="QMenu" name="mSettingsMenu">
     <property name="title">
@@ -235,6 +237,15 @@
     <property name="title">
      <string>Vect&amp;or</string>
     </property>
+    <widget class="QMenu" name="menuOpenStreetMap">
+     <property name="title">
+      <string>&amp;OpenStreetMap</string>
+     </property>
+     <addaction name="mActionOSMDownload"/>
+     <addaction name="mActionOSMImport"/>
+     <addaction name="mActionOSMExport"/>
+    </widget>
+    <addaction name="menuOpenStreetMap"/>
    </widget>
    <widget class="QMenu" name="mEditMenu">
     <property name="title">

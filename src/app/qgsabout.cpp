@@ -205,8 +205,6 @@ void QgsAbout::init()
   }
   setWhatsNew();
   setLicence();
-
-  lNGQVersion->setText(VENDOR_VERSION);
 }
 
 void QgsAbout::setLicence()

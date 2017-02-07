@@ -149,7 +149,7 @@
 #include "qgsfieldcalculator.h"
 #include "qgshtmlannotationitem.h"
 #include "qgsgenericprojectionselector.h"
-//#include "qgsgpsinformationwidget.h"
+#include "qgsgpsinformationwidget.h"
 #include "qgsguivectorlayertools.h"
 #include "qgslabelingwidget.h"
 #include "qgslayerdefinition.h"
@@ -240,9 +240,9 @@
 #include "ogr/qgsopenvectorlayerdialog.h"
 #include "ogr/qgsvectorlayersaveasdialog.h"
 
-// #include "qgsosmdownloaddialog.h"
-// #include "qgsosmimportdialog.h"
-// #include "qgsosmexportdialog.h"
+#include "qgsosmdownloaddialog.h"
+#include "qgsosmimportdialog.h"
+#include "qgsosmexportdialog.h"
 
 #ifdef ENABLE_MODELTEST
 #include "modeltest.h"
@@ -558,7 +558,7 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, bool skipVersionCh
     , mPythonUtils( nullptr )
     , mComposerManager( nullptr )
     , mpTileScaleWidget( nullptr )
-//    , mpGpsWidget( nullptr )
+    , mpGpsWidget( nullptr )
     , mTracer( nullptr )
     , mSnappingUtils( nullptr )
     , mProjectLastModified()
@@ -741,16 +741,16 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, bool skipVersionCh
   mUserInputDockWidget->setFloating( true );
 
   // create the GPS tool on starting QGIS - this is like the browser
-  //mpGpsWidget = new QgsGPSInformationWidget( mMapCanvas );
+  mpGpsWidget = new QgsGPSInformationWidget( mMapCanvas );
   //create the dock widget
-  // mpGpsDock = new QDockWidget( tr( "GPS Information Panel" ), this );
-  // mpGpsDock->setObjectName( "GPSInformation" );
-  // mpGpsDock->setAllowedAreas( Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea );
-  // addDockWidget( Qt::LeftDockWidgetArea, mpGpsDock );
+  mpGpsDock = new QDockWidget( tr( "GPS Information Panel" ), this );
+  mpGpsDock->setObjectName( "GPSInformation" );
+  mpGpsDock->setAllowedAreas( Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea );
+  addDockWidget( Qt::LeftDockWidgetArea, mpGpsDock );
   // add to the Panel submenu
   // now add our widget to the dock - ownership of the widget is passed to the dock
-  // mpGpsDock->setWidget( mpGpsWidget );
-  // mpGpsDock->hide();
+  mpGpsDock->setWidget( mpGpsWidget );
+  mpGpsDock->hide();
 
   mLastMapToolMessage = nullptr;
 
@@ -972,7 +972,7 @@ QgisApp::QgisApp()
     , mLayerTreeDock( nullptr )
     , mLayerOrderDock( nullptr )
     , mOverviewDock( nullptr )
-    // , mpGpsDock( nullptr )
+    , mpGpsDock( nullptr )
     , mLogDock( nullptr )
     , mNonEditMapTool( nullptr )
     , mScaleLabel( nullptr )
@@ -1021,7 +1021,7 @@ QgisApp::QgisApp()
     , mComposerManager( nullptr )
     , mpTileScaleWidget( nullptr )
     , mLastComposerId( 0 )
-    // , mpGpsWidget( nullptr )
+    , mpGpsWidget( nullptr )
     , mLastMapToolMessage( nullptr )
     , mLogViewer( nullptr )
     , mTrustedMacros( false )
@@ -1103,7 +1103,7 @@ QgisApp::~QgisApp()
 
   delete mpMaptip;
 
-  // delete mpGpsWidget;
+  delete mpGpsWidget;
 
   delete mOverviewMapCursor;
 
@@ -1515,9 +1515,9 @@ void QgisApp::createActions()
   connect( mActionDecreaseContrast, SIGNAL( triggered() ), this, SLOT( decreaseContrast() ) );
 
   // Vector Menu Items
-  // connect( mActionOSMDownload, SIGNAL( triggered() ), this, SLOT( osmDownloadDialog() ) );
-  // connect( mActionOSMImport, SIGNAL( triggered() ), this, SLOT( osmImportDialog() ) );
-  // connect( mActionOSMExport, SIGNAL( triggered() ), this, SLOT( osmExportDialog() ) );
+  connect( mActionOSMDownload, SIGNAL( triggered() ), this, SLOT( osmDownloadDialog() ) );
+  connect( mActionOSMImport, SIGNAL( triggered() ), this, SLOT( osmImportDialog() ) );
+  connect( mActionOSMExport, SIGNAL( triggered() ), this, SLOT( osmExportDialog() ) );
 
   // Help Menu Items
 
@@ -1527,16 +1527,16 @@ void QgisApp::createActions()
   mActionReportaBug->setShortcut( QString() );
 #endif
 
-  // mActionHelpContents->setEnabled( QFileInfo( QgsApplication::pkgDataPath() + "/doc/index.html" ).exists() );
+  mActionHelpContents->setEnabled( QFileInfo( QgsApplication::pkgDataPath() + "/doc/index.html" ).exists() );
 
   connect( mActionHelpContents, SIGNAL( triggered() ), this, SLOT( helpContents() ) );
   connect( mActionHelpAPI, SIGNAL( triggered() ), this, SLOT( apiDocumentation() ) );
   connect( mActionReportaBug, SIGNAL( triggered() ), this, SLOT( reportaBug() ) );
-  // connect( mActionNeedSupport, SIGNAL( triggered() ), this, SLOT( supportProviders() ) );
+  connect( mActionNeedSupport, SIGNAL( triggered() ), this, SLOT( supportProviders() ) );
   connect( mActionQgisHomePage, SIGNAL( triggered() ), this, SLOT( helpQgisHomePage() ) );
   connect( mActionCheckQgisVersion, SIGNAL( triggered() ), this, SLOT( checkQgisVersion() ) );
   connect( mActionAbout, SIGNAL( triggered() ), this, SLOT( about() ) );
-  // connect( mActionSponsors, SIGNAL( triggered() ), this, SLOT( sponsors() ) );
+  connect( mActionSponsors, SIGNAL( triggered() ), this, SLOT( sponsors() ) );
 
   connect( mActionShowPinnedLabels, SIGNAL( toggled( bool ) ), this, SLOT( showPinnedLabels( bool ) ) );
   connect( mActionPinLabels, SIGNAL( triggered() ), this, SLOT( pinLabels() ) );
@@ -2260,7 +2260,7 @@ void QgisApp::setTheme( const QString& theThemeName )
   mActionZoomActualSize->setIcon( QgsApplication::getThemeIcon( "/mActionZoomNative.png" ) );
   mActionQgisHomePage->setIcon( QgsApplication::getThemeIcon( "/mActionQgisHomePage.png" ) );
   mActionAbout->setIcon( QgsApplication::getThemeIcon( "/mActionHelpAbout.png" ) );
-  // mActionSponsors->setIcon( QgsApplication::getThemeIcon( "/mActionHelpSponsors.png" ) );
+  mActionSponsors->setIcon( QgsApplication::getThemeIcon( "/mActionHelpSponsors.png" ) );
   mActionDraw->setIcon( QgsApplication::getThemeIcon( "/mActionDraw.svg" ) );
   mActionToggleEditing->setIcon( QgsApplication::getThemeIcon( "/mActionToggleEditing.svg" ) );
   mActionSaveLayerEdits->setIcon( QgsApplication::getThemeIcon( "/mActionSaveAllEdits.svg" ) );
@@ -8539,7 +8539,10 @@ void QgisApp::adjustBrightnessContrast( int delta, bool updateBrightness )
 void QgisApp::helpContents()
 {
   // We should really ship the HTML version of the docs local too.
-  openURL( QString( "http://docs.nexgis.ru/docs_ngqgis/" ),
+  openURL( QString( "https://docs.qgis.org/%1.%2/%3/docs/user_manual/" )
+           .arg( QGis::QGIS_VERSION_INT / 10000 )
+           .arg( QGis::QGIS_VERSION_INT / 100 % 100 )
+           .arg( tr( "en", "documentation language" ) ),
            false );
 }
 
@@ -8566,7 +8569,7 @@ void QgisApp::supportProviders()
 
 void QgisApp::helpQgisHomePage()
 {
-  openURL( "http://nextgis.com", false );
+  openURL( "https://qgis.org", false );
 }
 
 void QgisApp::openURL( QString url, bool useQgisDocDirectory )
@@ -11255,23 +11258,23 @@ QMenu* QgisApp::createPopupMenu()
   return menu;
 }
 
-// void QgisApp::osmDownloadDialog()
-// {
-//   QgsOSMDownloadDialog dlg;
-//   dlg.exec();
-// }
-//
-// void QgisApp::osmImportDialog()
-// {
-//   QgsOSMImportDialog dlg;
-//   dlg.exec();
-// }
-//
-// void QgisApp::osmExportDialog()
-// {
-//   QgsOSMExportDialog dlg;
-//   dlg.exec();
-// }
+void QgisApp::osmDownloadDialog()
+{
+  QgsOSMDownloadDialog dlg;
+  dlg.exec();
+}
+
+void QgisApp::osmImportDialog()
+{
+  QgsOSMImportDialog dlg;
+  dlg.exec();
+}
+
+void QgisApp::osmExportDialog()
+{
+  QgsOSMExportDialog dlg;
+  dlg.exec();
+}
 
 void QgisApp::showStatisticsDockWidget()
 {

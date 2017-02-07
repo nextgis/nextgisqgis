@@ -82,9 +82,9 @@ QString QgsApplication::sUserName;
 QString QgsApplication::sUserFullName;
 QString QgsApplication::sPlatformName = "desktop";
 
-const char* QgsApplication::QGIS_ORGANIZATION_NAME = VENDOR;
-const char* QgsApplication::QGIS_ORGANIZATION_DOMAIN = VENDOR_DOMAIN;
-const char* QgsApplication::QGIS_APPLICATION_NAME = APP_NAME;
+const char* QgsApplication::QGIS_ORGANIZATION_NAME = "QGIS";
+const char* QgsApplication::QGIS_ORGANIZATION_DOMAIN = "qgis.org";
+const char* QgsApplication::QGIS_APPLICATION_NAME = "QGIS2";
 
 /*!
   \class QgsApplication
@@ -1365,3 +1365,4 @@ void QgsApplication::emitSettingsChanged()
 {
   emit settingsChanged();
 }
+

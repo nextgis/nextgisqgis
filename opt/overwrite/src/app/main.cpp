@@ -89,11 +89,7 @@ typedef SInt32 SRefCon;
 #include "qgsmessagelog.h"
 #include "qgspythonrunner.h"
 #include "qgslocalec.h"
-#include "qgisapp.h"
 #include "qgsmapcanvas.h"
-#include "qgsapplication.h"
-#include "qgsconfig.h"
-#include "qgsversion.h"
 #include "qgsexception.h"
 #include "qgsproject.h"
 #include "qgsrectangle.h"
@@ -102,6 +98,9 @@ typedef SInt32 SRefCon;
 #include "qgsvisibilitypresets.h"
 #include "qgsmaplayerregistry.h"
 #include "qgsvectorlayer.h"
+
+#include "ngqgsapplication.h"
+#include "ngcustomization.h"
 
 /** Print usage text
  */
@@ -257,11 +256,6 @@ void myMessageOutput( QtMsgType type, const char *msg )
   }
 }
 
-#if(ANDROID)
-// On Android, there there is a libqgis.so instead of a qgis executable.
-// The main method symbol of this library needs to be exported so it can be called by java
-APP_EXPORT
-#endif
 int main( int argc, char *argv[] )
 {
 #ifdef Q_OS_MACX
@@ -309,7 +303,7 @@ int main( int argc, char *argv[] )
 #endif  // _MSC_VER
 #endif  // WIN32
 
-// TODO: Add Googl breakpud here
+// TODO: Add Google breakpad here
   // Set up the custom qWarning/qDebug custom handler
 #ifndef ANDROID
   qInstallMsgHandler( myMessageOutput );
@@ -610,15 +604,15 @@ int main( int argc, char *argv[] )
     QgsCustomization::instance()->setEnabled( false );
   }
 
-  QgsApplication myApp( argc, argv, myUseGuiFlag, configpath );
+  NGQgsApplication myApp( argc, argv, myUseGuiFlag, configpath );
 
   myApp.setWindowIcon( QIcon( QgsApplication::appIconPath() ) );
 
   //
   // Set up the QSettings environment must be done after qapp is created
-  QCoreApplication::setOrganizationName( QgsApplication::QGIS_ORGANIZATION_NAME );
-  QCoreApplication::setOrganizationDomain( QgsApplication::QGIS_ORGANIZATION_DOMAIN );
-  QCoreApplication::setApplicationName( QgsApplication::QGIS_APPLICATION_NAME );
+  QCoreApplication::setOrganizationName( NGQgsApplication::QGIS_ORGANIZATION_NAME );
+  QCoreApplication::setOrganizationDomain( NGQgsApplication::QGIS_ORGANIZATION_DOMAIN );
+  QCoreApplication::setApplicationName( NGQgsApplication::QGIS_APPLICATION_NAME );
   QCoreApplication::setAttribute( Qt::AA_DontShowIconsInMenus, false );
 
   QSettings* customizationsettings;
@@ -649,13 +643,14 @@ int main( int argc, char *argv[] )
 #ifdef Q_OS_MACX
   // If the GDAL plugins are bundled with the application and GDAL_DRIVER_PATH
   // is not already defined, use the GDAL plugins in the application bundle.
-  QString gdalPlugins( QCoreApplication::applicationDirPath().append( "/../../../../" + + QString( QGIS_PLUGIN_SUBDIR ) ) );
+  QString gdalPlugins( QCoreApplication::applicationDirPath().append( "/../../../../" + QString( QGIS_PLUGIN_SUBDIR ) ) );
   if ( QFile::exists( gdalPlugins ) && !getenv( "GDAL_DRIVER_PATH" ) )
   {
     setenv( "GDAL_DRIVER_PATH", gdalPlugins.toUtf8(), 1 );
   }
 
   // Point GDAL_DATA at any GDAL share directory embedded in the app bundle
+  // TODO: On Windows and Mac OS X get gdal_data path from env in Linux not needed at all
   if ( !getenv( "GDAL_DATA" ) )
   {
     QStringList gdalShares;
@@ -690,7 +685,7 @@ int main( int argc, char *argv[] )
 
 
   // custom environment variables
-  QMap<QString, QString> systemEnvVars = QgsApplication::systemEnvVars();
+  QMap<QString, QString> systemEnvVars = NGQgsApplication::systemEnvVars();
   bool useCustomVars = mySettings.value( "qgis/customEnvVarsUse", QVariant( false ) ).toBool();
   if ( useCustomVars )
   {
@@ -764,7 +759,7 @@ int main( int argc, char *argv[] )
 
   /* Translation file for QGIS.
    */
-  QString i18nPath = QgsApplication::i18nPath();
+  QString i18nPath = NGQgsApplication::i18nPath();
   QString myUserLocale = mySettings.value( "locale/userLocale", "" ).toString();
   bool myLocaleOverrideFlag = mySettings.value( "locale/overrideFlag", false ).toBool();
   QString myLocale;
@@ -824,40 +819,15 @@ int main( int argc, char *argv[] )
     }
   }
 
-  // For non static builds on mac and win (static builds are not supported)
-  // we need to be sure we can find the qt image
-  // plugins. In mac be sure to look in the
-  // application bundle...
-#ifdef Q_OS_WIN
-  QCoreApplication::addLibraryPath( QApplication::applicationDirPath()
-                                    + QDir::separator() + "qtplugins" );
-#endif
-#ifdef Q_OS_MACX
-  // IMPORTANT: do before Qt uses any plugins, e.g. before loading splash screen
-  QString  myPath( QCoreApplication::applicationDirPath().append( "/../../../../" + QString( QGIS_PLUGIN_SUBDIR ) ) );
-  // Check if it contains a standard Qt-specific plugin subdirectory
-  if ( !QFile::exists( myPath + "/imageformats" ) )
-  {
-    // We are either running from build dir bundle, or launching binary directly.
-    // Use system Qt plugins, since they are not bundled.
-    // An app bundled with QGIS_MACAPP_BUNDLE=0 will still have Plugins/qgis in it
-    myPath = QT_PLUGINS_DIR;
-  }
-
-  // First clear the plugin search paths so we can be sure only plugins we define
-  // are being used. Note: this strips QgsApplication::pluginPath()
-  QStringList myPathList;
-  QCoreApplication::setLibraryPaths( myPathList );
-
-  QgsDebugMsg( QString( "Adding Mac QGIS and Qt plugins dirs to search path: %1" ).arg( myPath ) );
-  QCoreApplication::addLibraryPath( QgsApplication::pluginPath() );
-  QCoreApplication::addLibraryPath( myPath );
-#endif
+  QgsDebugMsg( QString( "Adding QGIS and Qt plugins dirs to search path: %1"
+                      ).arg( NGQgsApplication::pluginPath() ) );
+  QCoreApplication::addLibraryPath( NGQgsApplication::pluginsPath() );
+  QCoreApplication::addLibraryPath( NGQgsApplication::qtPluginsPath() );
 
   // set authentication database directory
   if ( !authdbdirectory.isEmpty() )
   {
-    QgsApplication::setAuthDbDirPath( authdbdirectory );
+    NGQgsApplication::setAuthDbDirPath( authdbdirectory );
   }
 
   //set up splash screen
@@ -886,10 +856,10 @@ int main( int argc, char *argv[] )
 
   // set max. thread count
   // this should be done in QgsApplication::init() but it doesn't know the settings dir.
-  QgsApplication::setMaxThreads( QSettings().value( "/qgis/max_threads", -1 ).toInt() );
+  NGQgsApplication::setMaxThreads( QSettings().value( "/qgis/max_threads", -1 ).toInt() );
 
-  QgisApp *qgis = new QgisApp( mypSplash, myRestorePlugins, mySkipVersionCheck ); // "QgisApp" used to find canonical instance
-  qgis->setObjectName( "QgisApp" );
+  NGQgisApp *qgis = new NGQgisApp( mypSplash, myRestorePlugins, mySkipVersionCheck ); // "QgisApp" used to find canonical instance
+  qgis->setObjectName( "NgQgisApp" );
 
   myApp.connect(
     &myApp, SIGNAL( preNotify( QObject *, QEvent *, bool * ) ),
