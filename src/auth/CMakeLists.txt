@@ -56,7 +56,7 @@ macro(add_auth_plugin PLUGIN_NAME)
     if(OSX_FRAMEWORK)
         set_target_properties(${PLUGIN_NAME}authmethod PROPERTIES
             INSTALL_RPATH "@loader_path/../../../Frameworks/"
-            SUFFIX ".dylib"
+            SUFFIX ".so" # ".dylib" <- /src/app/qgspluginregistry.cpp:462
         )
     endif()
 

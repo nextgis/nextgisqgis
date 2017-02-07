@@ -27,29 +27,19 @@ class APP_EXPORT NGQgsApplication : public QgsApplication
 {
     Q_OBJECT
   public:
-    static const char* QGIS_ORGANIZATION_NAME;
-    static const char* QGIS_ORGANIZATION_DOMAIN;
-    static const char* QGIS_APPLICATION_NAME;
-
     NGQgsApplication( int & argc, char ** argv, bool GUIenabled,
                       const QString& customConfigPath = QString(),
                       const QString& platformName = "desktop" );
 public:
     static void init( QString customConfigPath = QString() );
-    static QString i18nPath();
     static QString pluginsPath();
     static QString qtPluginsPath();
-    static QString qgisSettingsDirPath();
-    static QMap<QString, QString> systemEnvVars();
-    static QString platform();
+
+/*  static QString i18nPath();
     static QString qgisMasterDbFilePath();
     static QString srsDbFilePath();
     static QString defaultStyleV2Path();
-    static QString defaultThemesFolder();
-protected:
-    static QString ABISYM( mNgConfigPath );
-    static QMap<QString, QString> ABISYM( mNgSystemEnvVars );
-    static QString sPlatformName;
+    static QString defaultThemesFolder();*/
 };
 
 #endif // NGQGSAPPLICATION_H

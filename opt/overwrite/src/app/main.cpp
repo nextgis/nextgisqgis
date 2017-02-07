@@ -109,7 +109,7 @@ void usage( QString appName )
   QStringList msg;
 
   msg
-  << VENDOR << " QGIS - " << VENDOR_VERSION << "' (" << VERSION << ")\n"
+  << VENDOR << " QGIS - " << VENDOR_VERSION << " (" << VERSION << ")\n"
   << VENDOR << " QGIS is a user friendly Open Source Geographic Information System.\n"
   << "Usage: " << appName <<  " [OPTION] [FILE]\n"
   << "  OPTION:\n"
@@ -135,8 +135,8 @@ void usage( QString appName )
   << "\t[--dxf-scale-denom scale]\tscale for dxf output\n"
   << "\t[--dxf-encoding encoding]\tencoding to use for dxf output\n"
   << "\t[--dxf-preset visiblity-preset]\tlayer visibility preset to use for dxf output\n"
-  << "\t[--help]\t\tthis text\n"
-  << "\t[--]\t\ttreat all following arguments as FILEs\n\n"
+  << "\t[--help]\tthis text\n"
+  << "\t[--]\ttreat all following arguments as FILEs\n\n"
   << "  FILE:\n"
   << "    Files specified on the command line can include rasters,\n"
   << "    vectors, and QGIS project files (.qgs): \n"
@@ -333,7 +333,7 @@ int main( int argc, char *argv[] )
   int mySnapshotHeight = 600;
 
   bool myHideSplash = false;
-  bool mySkipVersionCheck = false;
+  bool mySkipVersionCheck = true; // disable QGIS version check (we have own NextGIS QGIS version check)
   bool myRestoreDefaultWindowState = false;
   bool myRestorePlugins = true;
   bool myCustomization = true;

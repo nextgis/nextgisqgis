@@ -30,6 +30,9 @@ if(WITH_DESKTOP)
         install(FILES ${ICONS} DESTINATION ${INSTALL_SHARE_DIR})
     endif()
 
+    file(GLOB PNG_ICONS "icons/qgis*.png")
+    install(FILES ${PNG_ICONS} DESTINATION ${INSTALL_SHARE_DIR}/images/icons)
+
     set(SVG_DIRS
         svg/accommodation
         svg/amenity
