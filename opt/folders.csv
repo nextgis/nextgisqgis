@@ -54,7 +54,7 @@ src/plugins/heatmap,src/plugins/heatmap,,"cpp,h,ui,png,svg,qrc"
 src/plugins/interpolation,src/plugins/interpolation,,"cpp,h,ui,png,svg,qrc"
 src/plugins/offline_editing,src/plugins/offline_editing,skip,
 src/plugins/oracle_raster,src/plugins/oracle_raster,skip,
-src/plugins/plugin_template,src/plugins/plugin_template,,"README,cpp,h,png,qrc,ui"
+src/plugins/plugin_template,src/plugins/plugin_template,skip,"README,cpp,h,png,qrc,ui"
 src/plugins/raster_terrain_analysis,src/plugins/raster_terrain_analysis,,"cpp,h,ui,qrc,png"
 src/plugins/roadgraph,src/plugins/roadgraph,skip,
 src/plugins/spatialquery,src/plugins/spatialquery,,"README,cpp,h,qrc,ui,png"
