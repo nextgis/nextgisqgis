@@ -53,6 +53,11 @@ To add some QGIS components:
 2. Add or modify CMakeLists.txt. For plugins you only need to add new directory name to plugins list (i.e. [providers](https://github.com/nextgis/nextgisqgis/blob/master/src/providers/CMakeLists.txt)).
 3. Check additional resources (images, databases or other files) which needed by component, are imported from original sources and install in target system via cmake install target.   
 
+Some dependencies are removed:
+
+* Flex and Bison not needed to build QGIS. Only to update/regenerate flex and byson lexer/parser files. To do it use this command ```cmake --build . --config release --target prepare_parser```
+* Spatial reference system database already filled and not generate. Special target to generate this DB will be added in future. 
+
 # License
 
 All scripts are licensed under GNU GPL v.2.

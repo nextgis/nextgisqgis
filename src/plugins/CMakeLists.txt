@@ -46,11 +46,10 @@ set(PLG_PLUGINS
     coordinate_capture
     geometry_checker
     geometry_snapper
-# TODO: Need Lib_GSL    georeferencer
 #    gps_importer
     heatmap
     interpolation
-# TODO:    raster_terrain_analysis
+    raster_terrain_analysis
     spatialquery
     topology
     zonal_statistics
@@ -107,3 +106,9 @@ foreach(PLG_PLUGIN ${PLG_PLUGINS})
     info_msg("Add plugin ${PLG_PLUGIN}")
     add_plugin(${PLG_PLUGIN})
 endforeach()
+
+find_anyproject(GSL)
+if(GSL_FOUND)
+    info_msg("Add plugin georeferencer")
+    add_plugin(georeferencer)
+endif()
