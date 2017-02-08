@@ -50,7 +50,7 @@ change QGIS sources as they will be overwritten next merge sources turn.
 To add some QGIS components:
 
 1. Add component path to folders.csv or remove skip mark if path already in this file. Check the all extensions/file names are in this row.
-2. Add or modify CMakeLists.txt. For plugins only add to plugins list needed.
+2. Add or modify CMakeLists.txt. For plugins you only need to add new directory name to plugins list (i.e. [providers](https://github.com/nextgis/nextgisqgis/blob/master/src/providers/CMakeLists.txt)).
 3. Check additional resources (images, databases or other files) which needed by component, are imported from original sources and install in target system via cmake install target.   
 
 # License
