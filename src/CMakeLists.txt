@@ -62,7 +62,7 @@ add_subdirectory(providers)
 if(WITH_DESKTOP)
   add_subdirectory(app)
 #TODO:  add_subdirectory(helpviewer)
-#TODO:  add_subdirectory(plugins)
+  add_subdirectory(plugins)
 endif()
 
 if(WITH_BINDINGS)
