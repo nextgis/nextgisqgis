@@ -55,6 +55,13 @@ set(PLG_PLUGINS
     zonal_statistics
 )
 
+find_anyproject(GSL DEFAULT ON)
+if(GSL_FOUND)
+    set(PLG_PLUGINS ${PLG_PLUGINS}
+        georeferencer
+    )
+endif()
+
 macro(add_plugin PLUGIN_NAME)
     include_directories (${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME})
 
@@ -106,9 +113,3 @@ foreach(PLG_PLUGIN ${PLG_PLUGINS})
     info_msg("Add plugin ${PLG_PLUGIN}")
     add_plugin(${PLG_PLUGIN})
 endforeach()
-
-find_anyproject(GSL)
-if(GSL_FOUND)
-    info_msg("Add plugin georeferencer")
-    add_plugin(georeferencer)
-endif()
