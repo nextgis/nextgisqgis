@@ -175,6 +175,37 @@ QString NGQgsApplication::qtPluginsPath()
     return prefixPath() + QLatin1String(QT_PLUGIN_SUBDIR);
 }
 
+QString NGQgsApplication::showSettings()
+{
+  QString myEnvironmentVar( getenv( "QGIS_PREFIX_PATH" ) );
+  QString myState = tr( "Application state:\n"
+                        "QGIS_PREFIX_PATH:\t%1\n"
+                        "Prefix:\t\t%2\n"
+                        "Library Path:\t\t%3\n"
+                        "Plugin Path:\t\t%4\n"
+                        "Package Data Path:\t%5\n"
+                        "Active Theme Name:\t%6\n"
+                        "Active Theme Path:\t%7\n"
+                        "Default Theme Path:\t%8\n"
+                        "SVG Search Paths:\t%9\n"
+                        "User DB Path:\t%10\n"
+                        "Auth DB Path:\t%11\n" )
+                    .arg( myEnvironmentVar,
+                          prefixPath(),
+                          libraryPath(),
+                          pluginPath(),
+                          pkgDataPath(),
+                          themeName(),
+                          activeThemePath(),
+                          defaultThemePath(),
+                          svgPaths().join( tr( "\n\t\t", "match indentation of application state" ) )
+                    )
+                    .arg( qgisMasterDbFilePath(),
+                          qgisAuthDbFilePath()
+                    );
+  return myState;
+}
+
 /*
 QString NGQgsApplication::i18nPath()
 {
