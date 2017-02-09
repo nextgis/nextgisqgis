@@ -96,6 +96,36 @@
 #endif // Q_OS_MACX
 
 //------------------------------------------------------------------------------
+// Implementation of the python runner
+//------------------------------------------------------------------------------
+class NGQgsPythonRunnerImpl : public QgsPythonRunner
+{
+  public:
+    explicit NGQgsPythonRunnerImpl( QgsPythonUtils* pythonUtils ) : mPythonUtils( pythonUtils ) {}
+
+    virtual bool runCommand( QString command, QString messageOnError = QString() ) override
+    {
+      if ( mPythonUtils && mPythonUtils->isEnabled() )
+      {
+        return mPythonUtils->runString( command, messageOnError, false );
+      }
+      return false;
+    }
+
+    virtual bool evalCommand( QString command, QString &result ) override
+    {
+      if ( mPythonUtils && mPythonUtils->isEnabled() )
+      {
+        return mPythonUtils->evalString( command, result );
+      }
+      return false;
+    }
+
+  protected:
+    QgsPythonUtils* mPythonUtils;
+};
+
+//------------------------------------------------------------------------------
 // NGQgisApp
 //------------------------------------------------------------------------------
 static bool ngCmpByText_( QAction* a, QAction* b )
@@ -1834,16 +1864,19 @@ void NGQgisApp::about()
 
 void NGQgisApp::loadPythonSupport()
 {
-    //FIXME: Check python paths
-/*  QString pythonlibName( "qgispython" );
-#if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
-  pythonlibName.prepend( NGQgsApplication::libraryPath() );
-#endif
-#ifdef __MINGW32__
-  pythonlibName.prepend( "lib" );
+    QString pythonlibName( "ngqgis_python" );
+#if defined(Q_OS_MAC)
+    pythonlibName.prepend( NGQgsApplication::libraryPath() + QDir::separator() );
+    pythonlibName.append( QLatin1String(".framework") + QDir::separator() +
+                          QLatin1String("ngqgis_python") );
+#elif defined(Q_OS_LINUX)
+    pythonlibName.prepend( NGQgsApplication::libraryPath() );
+#elif defined(__MINGW32__)
+    pythonlibName.prepend( "lib" );
 #endif
   QString version = QString( "%1.%2.%3" ).arg( VERSION_INT / 10000 ).arg( VERSION_INT / 100 % 100 ).arg( VERSION_INT % 100 );
   QgsDebugMsg( QString( "load library %1 (%2)" ).arg( pythonlibName, version ) );
+
   QLibrary pythonlib( pythonlibName, version );
   // It's necessary to set these two load hints, otherwise Python library won't work correctly
   // see http://lists.kde.org/?l=pykde&m=117190116820758&w=2
@@ -1854,7 +1887,8 @@ void NGQgisApp::loadPythonSupport()
     pythonlib.setFileName( pythonlibName );
     if ( !pythonlib.load() )
     {
-      QgsMessageLog::logMessage( tr( "Couldn't load Python support library: %1" ).arg( pythonlib.errorString() ) );
+      QgsMessageLog::logMessage( tr( "Couldn't load Python support library: %1" ).arg( pythonlib.errorString() ),
+        QString::null, QgsMessageLog::WARNING);
       return;
     }
   }
@@ -1865,7 +1899,8 @@ void NGQgisApp::loadPythonSupport()
   if ( !pythonlib_inst )
   {
     //using stderr on purpose because we want end users to see this [TS]
-    QgsMessageLog::logMessage( tr( "Couldn't resolve python support library's instance() symbol." ) );
+    QgsMessageLog::logMessage( tr( "Couldn't resolve python support library's instance() symbol." ),
+      QString::null, QgsMessageLog::WARNING );
     return;
   }
 
@@ -1881,11 +1916,11 @@ void NGQgisApp::loadPythonSupport()
     QgsPluginRegistry::instance()->setPythonUtils( mPythonUtils );
 
     // init python runner
-    QgsPythonRunner::setInstance( new QgsPythonRunnerImpl( mPythonUtils ) );
+    QgsPythonRunner::setInstance( new NGQgsPythonRunnerImpl( mPythonUtils ) );
 
-    QgsMessageLog::logMessage( tr( "Python support ENABLED :-) " ), QString::null,
+    QgsMessageLog::logMessage( tr( "Python support ENABLED" ), QString::null,
                                QgsMessageLog::INFO );
-  }*/
+  }
 }
 
 void NGQgisApp::checkQgisVersion()

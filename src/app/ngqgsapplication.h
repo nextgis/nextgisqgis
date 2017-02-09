@@ -34,6 +34,7 @@ public:
     static void init( QString customConfigPath = QString() );
     static QString pluginsPath();
     static QString qtPluginsPath();
+    static QString showSettings();
 
 /*  static QString i18nPath();
     static QString qgisMasterDbFilePath();

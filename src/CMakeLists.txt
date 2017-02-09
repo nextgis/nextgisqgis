@@ -66,7 +66,7 @@ if(WITH_DESKTOP)
 endif()
 
 if(WITH_BINDINGS)
-  # TODO: add_subdirectory(python)
+    add_subdirectory(python)
 endif()
 
 set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)

@@ -59,6 +59,7 @@ if(OSX_FRAMEWORK)
     set(INSTALL_SHARE_DIR ${CMAKE_INSTALL_PREFIX}/${QGIS_DATA_SUBDIR} CACHE INTERNAL "Installation directory for share data" FORCE)
     set(QT_PLUGIN_SUBDIR ${_PLUGIN_SUBDIR})
     set(QGIS_PLUGIN_SUBDIR ${_PLUGIN_SUBDIR}/${NG_PREFIX}${PROJECT_NAME})
+    set(QGIS_LIB_SUBDIR "Applications/${NG_PREFIX}${PROJECT_NAME}.app/Contents/Frameworks")
     set(QGIS_MACAPP_BUNDLE 1)
 
     set(SKIP_INSTALL_HEADERS ON)
@@ -85,6 +86,7 @@ else()
         set(QT_PLUGIN_SUBDIR "lib/qt5/plugins" )
     endif()
     set(QGIS_PLUGIN_SUBDIR "lib/${NG_PREFIX}${PROJECT_NAME}/plugins")
+    set(QGIS_LIB_SUBDIR "lib") #TODO On Linux it may be lib/x86_64...
     set(QGIS_MACAPP_BUNDLE 0)
 endif()
 
@@ -114,6 +116,7 @@ report_version("${NG_PREFIX}${PROJECT_NAME}" ${VERSION})
 
 option(PREPARE_ONLY "Only generate flex and bison files" OFF)
 option(WITH_DESKTOP "Build desktop components" ON)
+option(WITH_BINDINGS "Build python bindings" ON)
 include(FindAnyProject)
 
 if(NOT PREPARE_ONLY)
@@ -133,6 +136,10 @@ if(NOT PREPARE_ONLY)
     #the test data. See CMakeLists in test dirs for more info
     #TEST_DATA_DIR is also used by QgsRenderChecker currently in core
     set (TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/testdata")
+endif()
+
+if(WITH_BINDINGS)
+    find_package(PythonInterp REQUIRED)
 endif()
 
 # Add binaries and libraries
