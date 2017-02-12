@@ -1,0 +1,107 @@
+<Composer title="Макет 2" visible="1">
+ <Composition gridVisible="0" printResolution="300" paperWidth="297" snapGridOffsetX="0" guidesVisible="1" snapGridResolution="10" snapGridOffsetY="0" alignmentSnap="1" snapping="0" snapTolerancePixels="5" numPages="1" paperHeight="210" smartGuides="1" printAsRaster="0" generateWorldFile="0">
+  <symbol alpha="1" type="fill" name="">
+   <layer pass="0" class="SimpleFill" locked="0">
+    <prop k="border_width_map_unit_scale" v="0,0"/>
+    <prop k="color" v="255,255,255,255"/>
+    <prop k="joinstyle" v="miter"/>
+    <prop k="offset" v="0,0"/>
+    <prop k="offset_map_unit_scale" v="0,0"/>
+    <prop k="offset_unit" v="MM"/>
+    <prop k="outline_color" v="0,0,0,255"/>
+    <prop k="outline_style" v="no"/>
+    <prop k="outline_width" v="0.26"/>
+    <prop k="outline_width_unit" v="MM"/>
+    <prop k="style" v="solid"/>
+   </layer>
+  </symbol>
+  <SnapLine y1="0" x1="0" y2="210" x2="0"/>
+  <ComposerLabel valign="128" marginX="1" marginY="1" labelText="Название карты" htmlState="0" halign="4">
+   <LabelFont description="OpenGost Type A TT,18,-1,5,50,0,0,0,0,0"/>
+   <FontColor red="0" blue="0" green="0"/>
+   <ComposerItem pagey="20" page="1" id="" lastValidViewScaleFactor="-1" positionMode="0" positionLock="true" x="20" y="20" visibility="1" zValue="7" background="true" transparency="0" frameJoinStyle="miter" blendMode="0" width="102.613" outlineWidth="0.3" excludeFromExports="0" uuid="{51004de2-f0b5-4990-a260-21cdce08b8a3}" height="11.3075" itemRotation="0" frame="true" pagex="20">
+    <FrameColor alpha="255" red="0" blue="0" green="0"/>
+    <BackgroundColor alpha="255" red="255" blue="255" green="255"/>
+   </ComposerItem>
+  </ComposerLabel>
+  <ComposerScaleBar segmentMillimeters="23.6871" numMapUnitsPerScaleBarUnit="10000" numSegments="4" height="3" alignment="0" labelBarSpace="3" outlineWidth="0.3" units="1" numSegmentsLeft="2" lineJoinStyle="miter" style="Single Box" unitLabel="км" lineCapStyle="square" font="OpenGost Type A TT,14,-1,5,50,0,0,0,0,0" mapId="0" boxContentSpace="1" numUnitsPerSegment="10000">
+   <fillColor alpha="255" red="0" blue="0" green="0"/>
+   <fillColor2 alpha="255" red="255" blue="255" green="255"/>
+   <strokeColor alpha="255" red="0" blue="0" green="0"/>
+   <textColor alpha="255" red="0" blue="0" green="0"/>
+   <ComposerItem pagey="173.85" page="1" id="" lastValidViewScaleFactor="-1" positionMode="0" positionLock="true" x="19.85" y="173.85" visibility="1" zValue="6" background="false" transparency="0" frameJoinStyle="miter" blendMode="0" width="182" outlineWidth="0.3" excludeFromExports="0" uuid="{77920799-7cb4-49a9-b7cf-0a237a17cf7d}" height="16.3" itemRotation="0" frame="false" pagex="19.85">
+    <FrameColor alpha="255" red="0" blue="0" green="0"/>
+    <BackgroundColor alpha="255" red="255" blue="255" green="255"/>
+   </ComposerItem>
+  </ComposerScaleBar>
+  <ComposerLegend symbolWidth="7" title="Условные обозначения:" boxSpace="2" splitLayer="0" equalColumnWidth="0" map="0" titleAlignment="1" symbolHeight="4" wmsLegendHeight="25" wrapChar="" fontColor="#000000" columnSpace="2" wmsLegendWidth="50" columnCount="1">
+   <styles>
+    <style marginBottom="2" name="title" font="OpenGost Type A TT,20,-1,5,50,0,1,0,0,0"/>
+    <style marginTop="2" name="group" font="OpenGost Type A TT,16,-1,5,50,0,0,0,0,0"/>
+    <style marginTop="2" name="subgroup" font="OpenGost Type A TT,16,-1,5,50,0,0,0,0,0"/>
+    <style marginTop="2" name="symbol" font="Sans Serif,10,-1,5,50,0,0,0,0,0"/>
+    <style marginTop="2" marginLeft="2" name="symbolLabel" font="OpenGost Type A TT,16,-1,5,50,0,0,0,0,0"/>
+   </styles>
+   <ComposerItem pagey="157.4" page="1" id="Условные обозначения" lastValidViewScaleFactor="-1" positionMode="8" positionLock="false" x="202" y="157.4" visibility="1" zValue="2" background="true" transparency="0" frameJoinStyle="miter" blendMode="0" width="85" outlineWidth="0.3" excludeFromExports="0" uuid="{5089c399-6e3f-4372-a515-156c6298ff9d}" height="32.6" itemRotation="0" frame="true" pagex="202">
+    <FrameColor alpha="255" red="0" blue="0" green="0"/>
+    <BackgroundColor alpha="255" red="255" blue="255" green="255"/>
+   </ComposerItem>
+  </ComposerLegend>
+  <ComposerMap mapRotation="0" keepLayerSet="false" id="0" previewMode="Cache" drawCanvasItems="false">
+   <Extent ymin="6678299.60387377068400383" xmin="4084295.43399020982906222" ymax="6792906.34556370321661234" xmax="4264295.43417380936443806"/>
+   <LayerSet/>
+   <Grid/>
+   <ComposerMapGrid rightAnnotationDirection="0" gridFramePenColor="0,0,0,255" show="0" bottomAnnotationPosition="1" annotationFont="Sans Serif,10,-1,5,50,0,0,0,0,0" annotationPrecision="3" showAnnotation="0" topFrameDivisions="0" uuid="{104182ed-5c17-4436-8f4b-020005059d3e}" leftAnnotationDirection="0" topAnnotationPosition="1" rightAnnotationDisplay="0" offsetX="0" offsetY="0" rightFrameDivisions="0" gridStyle="0" annotationFontColor="0,0,0,255" intervalX="0" gridFrameSideFlags="15" intervalY="0" bottomAnnotationDirection="0" leftAnnotationDisplay="0" leftFrameDivisions="0" frameFillColor1="255,255,255,255" frameFillColor2="0,0,0,255" crossLength="3" gridFramePenThickness="0.5" bottomAnnotationDisplay="0" unit="0" topAnnotationDisplay="0" leftAnnotationPosition="1" blendMode="0" gridFrameStyle="0" rightAnnotationPosition="1" gridFrameWidth="2" name="Grid 1" annotationFormat="0" bottomFrameDivisions="0" topAnnotationDirection="0" frameAnnotationDistance="1">
+    <lineStyle>
+     <symbol alpha="1" type="line" name="">
+      <layer pass="0" class="SimpleLine" locked="0">
+       <prop k="capstyle" v="square"/>
+       <prop k="customdash" v="5;2"/>
+       <prop k="customdash_map_unit_scale" v="0,0"/>
+       <prop k="customdash_unit" v="MM"/>
+       <prop k="draw_inside_polygon" v="0"/>
+       <prop k="joinstyle" v="bevel"/>
+       <prop k="line_color" v="0,0,0,255"/>
+       <prop k="line_style" v="solid"/>
+       <prop k="line_width" v="0"/>
+       <prop k="line_width_unit" v="MM"/>
+       <prop k="offset" v="0"/>
+       <prop k="offset_map_unit_scale" v="0,0"/>
+       <prop k="offset_unit" v="MM"/>
+       <prop k="use_custom_dash" v="0"/>
+       <prop k="width_map_unit_scale" v="0,0"/>
+      </layer>
+     </symbol>
+    </lineStyle>
+    <markerStyle>
+     <symbol alpha="1" type="marker" name="">
+      <layer pass="0" class="SimpleMarker" locked="0">
+       <prop k="angle" v="0"/>
+       <prop k="color" v="0,0,0,255"/>
+       <prop k="horizontal_anchor_point" v="1"/>
+       <prop k="name" v="circle"/>
+       <prop k="offset" v="0,0"/>
+       <prop k="offset_map_unit_scale" v="0,0"/>
+       <prop k="offset_unit" v="MM"/>
+       <prop k="outline_color" v="0,0,0,255"/>
+       <prop k="outline_style" v="solid"/>
+       <prop k="outline_width" v="0"/>
+       <prop k="outline_width_map_unit_scale" v="0,0"/>
+       <prop k="outline_width_unit" v="MM"/>
+       <prop k="scale_method" v="area"/>
+       <prop k="size" v="2"/>
+       <prop k="size_map_unit_scale" v="0,0"/>
+       <prop k="size_unit" v="MM"/>
+       <prop k="vertical_anchor_point" v="1"/>
+      </layer>
+     </symbol>
+    </markerStyle>
+   </ComposerMapGrid>
+   <AtlasMap scalingMode="2" atlasDriven="0" margin="0.10000000000000001"/>
+   <ComposerItem pagey="20" page="1" id="Карта" lastValidViewScaleFactor="2.47623" positionMode="0" positionLock="true" x="20" y="20" visibility="1" zValue="1" background="false" transparency="0" frameJoinStyle="miter" blendMode="0" width="267" outlineWidth="0.3" excludeFromExports="0" uuid="{e6934f41-87d7-4480-8eb4-f01640e9317e}" height="170" itemRotation="0" frame="true" pagex="20">
+    <FrameColor alpha="255" red="0" blue="0" green="0"/>
+    <BackgroundColor alpha="255" red="255" blue="255" green="255"/>
+   </ComposerItem>
+  </ComposerMap>
+ </Composition>
+</Composer>

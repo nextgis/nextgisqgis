@@ -38,3 +38,9 @@ set(REMOTE_PLUGINS
     ngconnect
     identifyplus
 )
+
+foreach(LOCAL_PLUGIN ${LOCAL_PLUGINS})
+endforeach()
+
+foreach(REMOTE_PLUGIN ${REMOTE_PLUGINS})
+endforeach()
