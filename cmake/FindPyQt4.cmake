@@ -21,11 +21,15 @@
 # PYQT4_SIP_DIR - The directory holding the PyQt4 .sip files.
 #
 # PYQT4_SIP_FLAGS - The SIP flags used to build PyQt.
+#
+# PYQT4_PYUIC_PROGRAM - The pyuic4 program path.
+#
+# PYQT4_PYRCC_PROGRAM - The pyrcc4 program path.
 
 IF(EXISTS PYQT4_VERSION)
   # Already in cache, be silent
   SET(PYQT4_FOUND TRUE)
-ELSE(EXISTS PYQT4_VERSION)
+ELSE()
 
   FIND_FILE(_find_pyqt4_py FindPyQt4.py PATHS ${CMAKE_MODULE_PATH})
 
@@ -40,17 +44,41 @@ ELSE(EXISTS PYQT4_VERSION)
     STRING(REGEX REPLACE ".*\npyqt_sip_flags:([^\n]+).*$" "\\1" PYQT4_SIP_FLAGS ${pyqt_config})
     STRING(REGEX REPLACE ".*\npyqt_bin_dir:([^\n]+).*$" "\\1" PYQT4_BIN_DIR ${pyqt_config})
 
-    SET(PYQT4_FOUND TRUE)
-  ENDIF(pyqt_config)
+    SET(PYUIC_PROG_NAME pyuic4)
+    SET(PYUIC_PROG_NAMES python2-pyuic4 pyuic4)
+    SET(PYRCC_PROG_NAME pyrcc4)
 
-  IF(PYQT4_FOUND)
-    IF(NOT PYQT4_FIND_QUIETLY)
-      MESSAGE(STATUS "Found PyQt4 version: ${PYQT4_VERSION_STR}")
-    ENDIF(NOT PYQT4_FIND_QUIETLY)
-  ELSE(PYQT4_FOUND)
-    IF(PYQT4_FIND_REQUIRED)
-      MESSAGE(FATAL_ERROR "Could not find Python")
-    ENDIF(PYQT4_FIND_REQUIRED)
-  ENDIF(PYQT4_FOUND)
+    IF (MSVC)
+        FIND_PROGRAM(PYUIC_PROGRAM
+            NAMES ${PYUIC_PROG_NAME}.bat
+            PATHS $ENV{LIB_DIR}/bin
+        )
 
-ENDIF(EXISTS PYQT4_VERSION)
+        FIND_PROGRAM(PYRCC_PROGRAM
+          NAMES ${PYRCC_PROG_NAME}.exe
+          PATHS $ENV{LIB_DIR}/bin
+        )
+    ELSE()
+        FIND_PROGRAM(PYUIC_PROGRAM NAMES ${PYUIC_PROG_NAMES})
+        FIND_PROGRAM(PYRCC_PROGRAM ${PYRCC_PROG_NAME})
+    ENDIF()
+
+    IF (PYUIC_PROGRAM AND PYRCC_PROGRAM)
+        set(PYQT4_PYUIC_PROGRAM ${PYUIC_PROGRAM})
+        set(PYQT4_PYRCC_PROGRAM ${PYRCC_PROGRAM})
+        set(PYQT4_FOUND TRUE)
+    ENDIF()
+
+  ENDIF()
+
+    IF(PYQT4_FOUND)
+        IF(NOT PYQT4_FIND_QUIETLY)
+            MESSAGE(STATUS "Found PyQt4 version: ${PYQT4_VERSION_STR}")
+        ENDIF(NOT PYQT4_FIND_QUIETLY)
+    ELSE(PYQT4_FOUND)
+        IF(PYQT4_FIND_REQUIRED)
+            MESSAGE(FATAL_ERROR "Could not find Python")
+        ENDIF(PYQT4_FIND_REQUIRED)
+    ENDIF(PYQT4_FOUND)
+
+ENDIF()
