@@ -1,0 +1,167 @@
+################################################################################
+# Project:  NextGIS QGIS
+# Purpose:  CMake build scripts
+# Author:   Dmitry Baryshnikov, dmitry.baryshnikov@nexgis.com
+################################################################################
+# Copyright (C) 2017, NextGIS <info@nextgis.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+################################################################################
+
+include(SIPMacros)
+
+find_anyproject(SIP REQUIRED)
+find_anyproject(PyQt4 REQUIRED)
+# setup SIP variables
+set(PYQT_SIP_FLAGS ${PYQT4_SIP_FLAGS})
+set(PYQT_SIP_DIR ${PYQT4_SIP_DIR})
+
+set(SIP_INCLUDES ${PYQT_SIP_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+set(SIP_CONCAT_PARTS 4)
+separate_arguments(PYQT_SIP_FLAGS)
+
+# set(EXTRA_LINK_LIBRARIES ${TARGET_LINK_LIB})
+#
+# message("set(EXTRA_LINK_LIBRARIES ${TARGET_LINK_LIB})")
+
+# TODO: PyQStintilla
+
+include_directories(
+    ../src/core
+    ../src/core/auth
+    ../src/core/pal
+    ../src/core/composer
+    ../src/core/diagram
+    ../src/core/effects
+    ../src/core/dxf
+    ../src/core/geometry
+    ../src/core/gps
+    ../src/core/layertree
+    ../src/core/raster
+    ../src/core/symbology-ng
+
+    ../src/gui/raster
+    ../src/gui/attributetable
+    ../src/gui/auth
+    ../src/gui/editorwidgets
+    ../src/gui/editorwidgets/core
+    ../src/gui/effects
+    ../src/gui/layertree
+
+    ${CMAKE_BINARY_DIR}  # qgsconfig.h, qgsversion.h
+
+    ../src/gui
+    ../src/gui/symbology-ng
+    ../src/gui/effects
+    ../src/plugins
+    ${CMAKE_BINARY_DIR}/src/gui
+    ${CMAKE_BINARY_DIR}/src/ui
+
+    ../src/analysis/vector
+    ../src/analysis/raster
+    ../src/analysis/network
+    ../src/analysis/interpolation
+    ../src/analysis/openstreetmap
+    ${CMAKE_BINARY_DIR}/src/analysis/vector
+    ${CMAKE_BINARY_DIR}/src/analysis/network
+    ${CMAKE_BINARY_DIR}/src/analysis/raster
+    ${CMAKE_BINARY_DIR}/src/analysis/interpolation
+    ${CMAKE_BINARY_DIR}/src/analysis/openstreetmap
+
+    ${PYTHON_INCLUDE_PATH}
+)
+
+if(QT4_BUILD)
+    set(SIP_DISABLE_FEATURES ${SIP_DISABLE_FEATURES} QT5_SUPPORT)
+endif()
+
+set(SIP_DISABLE_FEATURES ${SIP_DISABLE_FEATURES}
+    ANDROID
+    ARM
+    HAVE_TOUCH
+    MOBILITY_LOCATION
+    HAVE_QSCI_SIP
+)
+
+if(PYQT4_VERSION_NUM LESS 263680)	# 0x040600
+    set(SIP_DISABLE_FEATURES ${SIP_DISABLE_FEATURES} PROXY_FACTORY)
+endif()
+
+IF(NOT PYQT4_VERSION_NUM LESS 263941 AND QT4_BUILD)	# 0x040705
+    set(SIP_DISABLE_FEATURES ${SIP_DISABLE_FEATURES} QSETINT_CONVERSION)
+endif()
+
+if(NOT PYQT4_VERSION_NUM LESS 264194)	# 0x040802
+    set(SIP_DISABLE_FEATURES ${SIP_DISABLE_FEATURES} QSETTYPE_CONVERSION)
+endif()
+
+if(PYQT4_VERSION_NUM LESS 264196)       # 0x040804
+    set(SIP_DISABLE_FEATURES ${SIP_DISABLE_FEATURES} QLISTCONSTPTR_CONVERSION)
+endif()
+
+if(NOT PYQT4_VERSION_NUM LESS 264453)	# 0x040905
+    set(SIP_DISABLE_FEATURES ${SIP_DISABLE_FEATURES} QVECTORINT_CONVERSION)
+endif()
+
+add_definitions("-DCORE_EXPORT=${DLLIMPORT}")
+add_definitions("-DGUI_EXPORT=${DLLIMPORT}")
+add_definitions("-DPYTHON_EXPORT=${DLLIMPORT}")
+add_definitions("-DANALYSIS_EXPORT=${DLLIMPORT}")
+add_definitions("-DAPP_EXPORT=${DLLIMPORT}")
+
+set(PY_MODULES
+    core
+    gui
+    analysis
+)
+
+foreach(PY_MODULE ${PY_MODULES})
+    file(GLOB_RECURSE sip_files_${PY_MODULE} ${PY_MODULE}/*.sip)
+    set(SIP_EXTRA_FILES_DEPEND ${sip_files_${PY_MODULE}})
+    set(SIP_EXTRA_OPTIONS ${PYQT_SIP_FLAGS} -o -a ${CMAKE_CURRENT_BINARY_DIR}/qgis.${PY_MODULE}.api)
+
+    if(PY_MODULE MATCHES "gui")
+        if(QSCI_SIP_DIR)
+            set(SIP_EXTRA_OPTIONS ${SIP_EXTRA_OPTIONS} -I ${QSCI_SIP_DIR})
+        endif()
+        if(UNIX AND NOT SIP_VERSION_NUM LESS 265984)
+            set(SIP_EXTRA_OPTIONS -P ${SIP_EXTRA_OPTIONS})
+            add_definitions(-Dprotected=public)
+        endif()
+    endif()
+
+    set(MODULES_SIP ${MODULES_SIP} ${NG_PREFIX}qgis_${PY_MODULE})
+    ADD_SIP_PYTHON_MODULE(qgis._${PY_MODULE} ${PY_MODULE}/${PY_MODULE}.sip ${MODULES_SIP})
+endforeach()
+
+# Plugin utilities files to copy to staging or install
+set(PY_FILES
+  __init__.py
+  utils.py
+  user.py
+)
+
+install(FILES ${PY_FILES} DESTINATION "${QGIS_PYTHON_DIR}")
+
+foreach(PY_MODULE ${PY_MODULES})
+    add_custom_target(py${PY_MODULE} ALL)
+    add_dependencies(py${PY_MODULE} python_module_qgis__${PY_MODULE})
+    file(GLOB_RECURSE PY_FILES "${PY_MODULE}/*.py")
+    install(FILES ${PY_FILES} DESTINATION "${QGIS_PYTHON_DIR}/${PY_MODULE}")
+endforeach()

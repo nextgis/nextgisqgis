@@ -131,6 +131,23 @@ if(NOT PREPARE_ONLY)
         add_definitions(-DWITH_QTWEBKIT)
     endif()
 
+    find_anyproject(GDAL REQUIRED)
+    find_anyproject(GEOS REQUIRED)
+    find_anyproject(Qca REQUIRED)
+
+    find_anyproject(Qscintilla REQUIRED)
+    if(QSCINTILLA_FOUND)
+        add_definitions(-DQSCINTILLA_VERSION_STR="${QSCINTILLA_VERSION}")
+    endif()
+
+    find_anyproject(Qwt REQUIRED)
+    if(QWT_FOUND)
+        if(WIN32)
+            add_definitions(-DQWT_DLL)
+        endif()
+        add_definitions(-DQWT_VERSION_STR="${QWT_VERSION}")
+    endif()
+
     #create a variable to specify where our test data is
     #so that unit tests can use TEST_DATA_DIR to locate
     #the test data. See CMakeLists in test dirs for more info
@@ -139,7 +156,15 @@ if(NOT PREPARE_ONLY)
 endif()
 
 if(WITH_BINDINGS)
+    # This is here as src/python
     find_package(PythonInterp REQUIRED)
+    find_package(PythonLibs REQUIRED)
+
+    if(OSX_FRAMEWORK)
+        set(QGIS_PYTHON_DIR "${CMAKE_INSTALL_PREFIX}/Library/Python/${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages/${PROJECT_NAME}")
+    else()
+        set(QGIS_PYTHON_DIR "${INSTALL_LIB_DIR}/Python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}/site-packages/${PROJECT_NAME}")
+    endif()
 endif()
 
 # Add binaries and libraries
@@ -148,6 +173,10 @@ if(NOT PREPARE_ONLY)
     add_subdirectory(translations)
     add_subdirectory(images)
     add_subdirectory(resources)
+endif()
+
+if(WITH_BINDINGS)
+    add_subdirectory(python)
 endif()
 
 add_custom_target(prepare_parser DEPENDS ${PREPARE_PARSER_TARGETS})
