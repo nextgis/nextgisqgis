@@ -36,11 +36,11 @@ set(SIP_INCLUDES ${PYQT_SIP_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 set(SIP_CONCAT_PARTS 4)
 separate_arguments(PYQT_SIP_FLAGS)
 
-# set(EXTRA_LINK_LIBRARIES ${TARGET_LINK_LIB})
-#
-# message("set(EXTRA_LINK_LIBRARIES ${TARGET_LINK_LIB})")
-
 # TODO: PyQStintilla
+
+# add_subdirectory(plugins)
+# add_subdirectory(console)
+add_subdirectory(pyplugin_installer)
 
 include_directories(
     ../src/core
