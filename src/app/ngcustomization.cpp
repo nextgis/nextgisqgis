@@ -449,7 +449,7 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
     // update windows
     qApp->processEvents();
 
-    ( void )QgsAuthGuiUtils::isDisabled( messageBar() );
+    // NOTE: Don't annoy user ( void )QgsAuthGuiUtils::isDisabled( messageBar() );
 
     fileNewBlank();
 
