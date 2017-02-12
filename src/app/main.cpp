@@ -606,7 +606,7 @@ int main( int argc, char *argv[] )
 
   NGQgsApplication myApp( argc, argv, myUseGuiFlag, configpath );
 
-  myApp.setWindowIcon( QIcon( NGQgsApplication::appIconPath() ) );
+  myApp.setWindowIcon( QIcon( QgsApplication::appIconPath() ) );
 
   //
   // Set up the QSettings environment must be done after qapp is created
@@ -654,7 +654,7 @@ int main( int argc, char *argv[] )
   if ( !getenv( "GDAL_DATA" ) )
   {
     QStringList gdalShares;
-    QString appResources( QDir::cleanPath( NGQgsApplication::pkgDataPath() ) );
+    QString appResources( QDir::cleanPath( QgsApplication::pkgDataPath() ) );
     gdalShares << QCoreApplication::applicationDirPath().append( "/share/gdal" )
     << appResources.append( "/share/gdal" )
     << appResources.append( "/gdal" );

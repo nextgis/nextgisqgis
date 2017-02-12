@@ -24,8 +24,6 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-find_package(PythonLibs REQUIRED)
-
 if(PYTHONLIBS_VERSION_STRING VERSION_LESS 3)
     add_definitions(-DPYTHON2)
 endif()
