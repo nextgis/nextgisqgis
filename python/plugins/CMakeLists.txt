@@ -23,34 +23,18 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
-include(PyQtMacros)
 
-set(QGIS_PLUGININSTALLER_DIR ${QGIS_DATA_SUBDIR}/python/pyplugin_installer)
-set(PYUIC_PROGRAM ${PYQT4_PYUIC_PROGRAM})
-set(PYRCC_PROGRAM ${PYQT4_PYRCC_PROGRAM})
-
-set(PY_PLUGININSTALLER_FILES
-    __init__.py
-    installer.py
-    installer_data.py
-    qgsplugininstallerinstallingdialog.py
-    qgsplugininstallerpluginerrordialog.py
-    qgsplugininstallerfetchingdialog.py
-    qgsplugininstallerrepositorydialog.py
-    unzip.py
-    version_compare.py
+set(LOCAL_PLUGINS
+    fTools
+    GdalTools
+    MetaSearch
 )
 
-# FILE(GLOB UI_FILES *.ui)
-# PYQT_WRAP_UI(PYUI_FILES ${UI_FILES})
-
-PYQT_WRAP_UI(PYUI_FILES
-    qgsplugininstallerfetchingbase.ui
-    qgsplugininstallerinstallingbase.ui
-    qgsplugininstallerpluginerrorbase.ui
-    qgsplugininstallerrepositorybase.ui
+set(REMOTE_PLUGINS
+    processing
+    qms
+    qtiles
+    geocoder
+    ngconnect
+    identifyplus
 )
-
-add_custom_target(pyplugin-installer ALL DEPENDS ${PYUI_FILES})
-
-install(FILES ${PY_PLUGININSTALLER_FILES} ${PYUI_FILES} DESTINATION "${QGIS_PLUGININSTALLER_DIR}")

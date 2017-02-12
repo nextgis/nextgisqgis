@@ -25,32 +25,22 @@
 ################################################################################
 include(PyQtMacros)
 
-set(QGIS_PLUGININSTALLER_DIR ${QGIS_DATA_SUBDIR}/python/pyplugin_installer)
+set(QGIS_CONSOLE_DIR ${QGIS_DATA_SUBDIR}/python/console)
 set(PYUIC_PROGRAM ${PYQT4_PYUIC_PROGRAM})
 set(PYRCC_PROGRAM ${PYQT4_PYRCC_PROGRAM})
 
-set(PY_PLUGININSTALLER_FILES
-    __init__.py
-    installer.py
-    installer_data.py
-    qgsplugininstallerinstallingdialog.py
-    qgsplugininstallerpluginerrordialog.py
-    qgsplugininstallerfetchingdialog.py
-    qgsplugininstallerrepositorydialog.py
-    unzip.py
-    version_compare.py
+set(PY_CONSOLE_FILES
+  console.py
+  console_sci.py
+  console_settings.py
+  console_output.py
+  console_editor.py
+  console_compile_apis.py
+  __init__.py
 )
 
-# FILE(GLOB UI_FILES *.ui)
-# PYQT_WRAP_UI(PYUI_FILES ${UI_FILES})
+file(GLOB UI_FILES *.ui)
+PYQT_WRAP_UI(PYUI_FILES ${UI_FILES})
+add_custom_target(pyconsole ALL DEPENDS ${PYUI_FILES})
 
-PYQT_WRAP_UI(PYUI_FILES
-    qgsplugininstallerfetchingbase.ui
-    qgsplugininstallerinstallingbase.ui
-    qgsplugininstallerpluginerrorbase.ui
-    qgsplugininstallerrepositorybase.ui
-)
-
-add_custom_target(pyplugin-installer ALL DEPENDS ${PYUI_FILES})
-
-install(FILES ${PY_PLUGININSTALLER_FILES} ${PYUI_FILES} DESTINATION "${QGIS_PLUGININSTALLER_DIR}")
+install(FILES ${PY_CONSOLE_FILES} ${PYUI_FILES} DESTINATION "${QGIS_CONSOLE_DIR}")

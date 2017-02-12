@@ -35,6 +35,7 @@ public:
     static QString pluginsPath();
     static QString qtPluginsPath();
     static QString showSettings();
+    static QString fontsPath();
 
 /*  static QString i18nPath();
     static QString qgisMasterDbFilePath();
