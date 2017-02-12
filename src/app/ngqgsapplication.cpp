@@ -206,6 +206,10 @@ QString NGQgsApplication::showSettings()
   return myState;
 }
 
+QString NGQgsApplication::fontsPath()
+{
+    return pkgDataPath() + QDir::separator() + QLatin1String( "fonts" );
+}
 /*
 QString NGQgsApplication::i18nPath()
 {

@@ -606,6 +606,18 @@ int main( int argc, char *argv[] )
 
   NGQgsApplication myApp( argc, argv, myUseGuiFlag, configpath );
 
+  // List font directory
+  QDir fontsDir(NGQgsApplication::fontsPath());
+  QStringList filters;
+  filters << "*.ttf" << "*.otf";
+  QStringList fontsList = fontsDir.entryList(filters,  QDir::Files);
+  // Add font to database
+  QStringList::Iterator it = fontsList.begin();
+  while (it != fontsList.end()) {
+      QFontDatabase::addApplicationFont( fontsDir.filePath(*it) );
+      ++it;
+  }
+
   myApp.setWindowIcon( QIcon( QgsApplication::appIconPath() ) );
 
   //

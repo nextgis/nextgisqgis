@@ -28,6 +28,7 @@ include(SIPMacros)
 
 find_anyproject(SIP REQUIRED)
 find_anyproject(PyQt4 REQUIRED)
+find_anyproject(Qsci DEFAULT ON)
 # setup SIP variables
 set(PYQT_SIP_FLAGS ${PYQT4_SIP_FLAGS})
 set(PYQT_SIP_DIR ${PYQT4_SIP_DIR})
@@ -36,10 +37,10 @@ set(SIP_INCLUDES ${PYQT_SIP_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 set(SIP_CONCAT_PARTS 4)
 separate_arguments(PYQT_SIP_FLAGS)
 
-# TODO: PyQStintilla
-
-# add_subdirectory(plugins)
-# add_subdirectory(console)
+add_subdirectory(plugins)
+if(QSCI_FOUND) # PyQScintilla required
+    add_subdirectory(console)
+endif()
 add_subdirectory(pyplugin_installer)
 
 include_directories(
@@ -96,8 +97,11 @@ set(SIP_DISABLE_FEATURES ${SIP_DISABLE_FEATURES}
     ARM
     HAVE_TOUCH
     MOBILITY_LOCATION
-    HAVE_QSCI_SIP
 )
+
+if(NOT QSCI_FOUND)
+    set(SIP_DISABLE_FEATURES ${SIP_DISABLE_FEATURES} HAVE_QSCI_SIP)
+endif()
 
 if(PYQT4_VERSION_NUM LESS 263680)	# 0x040600
     set(SIP_DISABLE_FEATURES ${SIP_DISABLE_FEATURES} PROXY_FACTORY)
