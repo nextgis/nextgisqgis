@@ -57,7 +57,7 @@ python/plugins/db_manager/db_plugins/vlayers,python/plugins/db_manager/db_plugin
 python/plugins/db_manager/icons,python/plugins/db_manager/icons,skip,"png,xpm,gif"
 python/plugins/db_manager/icons/toolbar,python/plugins/db_manager/icons/toolbar,skip,png
 python/plugins/db_manager/ui,python/plugins/db_manager/ui,skip,"py,ui"
-python/plugins/fTools,python/plugins/fTools,,
+python/plugins/fTools,python/plugins/fTools,,"py,LICENSE,qrc,metadata.txt"
 python/plugins/fTools/icons,python/plugins/fTools/icons,,"png,svg"
 python/plugins/fTools/icons/default,python/plugins/fTools/icons/default,,png
 python/plugins/fTools/icons_old,python/plugins/fTools/icons_old,skip,
