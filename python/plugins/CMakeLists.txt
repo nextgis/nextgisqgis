@@ -59,39 +59,48 @@ set(LOCAL_PLUGINS
     processing
 )
 
-set(REMOTE_CORE_PLUGINS
-    qms
-    qtiles
-    rugeocoder
-    ngconnect
-    gnm
-)
-
-#[[
-http://plugins.qgis.org/plugins/plugins.xml?qgis=2.14
-<pyqgis_plugin name="QuickMapServices" version="0.18.1" plugin_id="663">
-<pyqgis_plugin name="QTiles" version="1.5.2" plugin_id="255">
-<pyqgis_plugin name="RuGeocoder" version="0.4.1" plugin_id="215">
-<pyqgis_plugin name="NextGIS Connect" version="0.9.3" plugin_id="1009">
-</pyqgis_plugin><pyqgis_plugin name="QNetwork" version="0.1.1" plugin_id="1087">
-
-set(REMOTE_NG_PLUGINS
-    identifyplus
-)
-
-http://nextgis.ru/programs/qgis/qgis-repo.xml
-<pyqgis_plugin name="IdentifyPlus" version="2.1.2">
-]]
-
 foreach(PLUGIN ${LOCAL_PLUGINS})
     info_msg("Add local py plugin ${PLUGIN}")
     add_subdirectory(${PLUGIN})
 endforeach()
 
-foreach(PLUGIN ${REMOTE_CORE_PLUGINS})
-    info_msg("Add remote core py plugin ${PLUGIN}")
+set(REMOTE_PLUGINS
+    "QuickMapServices"
+    "QTiles"
+    "RuGeocoder"
+    "NextGIS Connect"
+    "QNetwork"
+    "IdentifyPlus"
+)
+
+# 1. get xml
+file(DOWNLOAD http://plugins.qgis.org/plugins/plugins.xml?qgis=2.14 ${CMAKE_CURRENT_BINARY_DIR}/repos/qgis_repo.xml)
+file(DOWNLOAD http://nextgis.ru/programs/qgis/qgis-repo.xml?qgis=2.14 ${CMAKE_CURRENT_BINARY_DIR}/repos/nextgis_repo.xml)
+
+file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
+
+foreach(PLUGIN ${REMOTE_PLUGINS})
+    info_msg("Add remote py plugin ${PLUGIN}")
+
+    # 2. parse xml and get url to zips
+    execute_process(COMMAND ${PYTHON_EXECUTABLE}
+        ${CMAKE_SOURCE_DIR}/scripts/process_repo_xml.py ${PLUGIN} ${CMAKE_CURRENT_BINARY_DIR}/repos
+        OUTPUT_VARIABLE DOWNLOAD_URL
+    )
+
+    string(STRIP ${DOWNLOAD_URL} DOWNLOAD_URL)
+
+    if(DOWNLOAD_URL)
+        string(REPLACE " " "_" OUT_NAME ${PLUGIN})
+        # 3. download zips
+        warning_msg("Download ${DOWNLOAD_URL} ...")
+        file(DOWNLOAD ${DOWNLOAD_URL} ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip SHOW_PROGRESS)
+
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf "${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
+    endif()
 endforeach()
 
-foreach(PLUGIN ${REMOTE_NG_PLUGINS})
-    info_msg("Add remote NextGIS py plugin ${PLUGIN}")
-endforeach()
+# 4. extract zips to install directory via install
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins/ DESTINATION ${QGIS_PYPLUGINS_DIR})
