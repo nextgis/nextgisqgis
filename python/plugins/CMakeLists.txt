@@ -56,19 +56,32 @@ set(LOCAL_PLUGINS
     fTools
     GdalTools
     MetaSearch
+    processing
 )
 
 set(REMOTE_CORE_PLUGINS
-    processing
     qms
     qtiles
     rugeocoder
     ngconnect
+    gnm
 )
+
+#[[
+http://plugins.qgis.org/plugins/plugins.xml?qgis=2.14
+<pyqgis_plugin name="QuickMapServices" version="0.18.1" plugin_id="663">
+<pyqgis_plugin name="QTiles" version="1.5.2" plugin_id="255">
+<pyqgis_plugin name="RuGeocoder" version="0.4.1" plugin_id="215">
+<pyqgis_plugin name="NextGIS Connect" version="0.9.3" plugin_id="1009">
+</pyqgis_plugin><pyqgis_plugin name="QNetwork" version="0.1.1" plugin_id="1087">
 
 set(REMOTE_NG_PLUGINS
     identifyplus
 )
+
+http://nextgis.ru/programs/qgis/qgis-repo.xml
+<pyqgis_plugin name="IdentifyPlus" version="2.1.2">
+]]
 
 foreach(PLUGIN ${LOCAL_PLUGINS})
     info_msg("Add local py plugin ${PLUGIN}")
