@@ -25,6 +25,7 @@
 ################################################################################
 
 include(SIPMacros)
+include(PyQtMacros)
 
 find_anyproject(SIP REQUIRED)
 find_anyproject(PyQt4 REQUIRED)
