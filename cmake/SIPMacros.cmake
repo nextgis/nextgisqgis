@@ -127,6 +127,11 @@ MACRO(ADD_SIP_PYTHON_MODULE MODULE_NAME MODULE_SIP)
     ENDIF (APPLE)
     SET_TARGET_PROPERTIES(${_logical_name} PROPERTIES PREFIX "" OUTPUT_NAME ${_child_module_name})
     set_property(TARGET ${_logical_name} PROPERTY CXX_STANDARD 11)
+    if(OSX_FRAMEWORK)
+        set_target_properties(${_logical_name} PROPERTIES
+            INSTALL_RPATH "@loader_path/../../../../Frameworks/"
+        )
+    endif()
 
     IF (WIN32)
       SET_TARGET_PROPERTIES(${_logical_name} PROPERTIES SUFFIX ".pyd")

@@ -24,15 +24,18 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-include(SIPMacros)
-include(PyQtMacros)
-
 find_anyproject(SIP REQUIRED)
 find_anyproject(PyQt4 REQUIRED)
 find_anyproject(Qsci DEFAULT ON)
+
+include(SIPMacros)
+include(PyQtMacros)
+
 # setup SIP variables
 set(PYQT_SIP_FLAGS ${PYQT4_SIP_FLAGS})
 set(PYQT_SIP_DIR ${PYQT4_SIP_DIR})
+set(PYUIC_PROGRAM ${PYQT4_PYUIC_PROGRAM})
+set(PYRCC_PROGRAM ${PYQT4_PYRCC_PROGRAM})
 
 set(SIP_INCLUDES ${PYQT_SIP_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 set(SIP_CONCAT_PARTS 4)
