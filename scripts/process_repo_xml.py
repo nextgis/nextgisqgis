@@ -18,14 +18,17 @@ version = '0.0.0'
 
 # list all xml files
 for repo_xml in os.listdir(repo_path):
-    tree = ET.parse(os.path.join(repo_path, repo_xml))
-    root = tree.getroot()
-    for pyqgis_plugin in root.findall('pyqgis_plugin'):
-        if plugin_name == pyqgis_plugin.get('name'):
-            if StrictVersion(pyqgis_plugin.get('version')) > StrictVersion(version):
-                version = pyqgis_plugin.get('version')
-                output_url = pyqgis_plugin.find('download_url').text
-#                if not output_url.endswith('.zip'):
-#                    output_url += pyqgis_plugin.find('file_name').text
+    try:
+        tree = ET.parse(os.path.join(repo_path, repo_xml))
+        root = tree.getroot()
+        for pyqgis_plugin in root.findall('pyqgis_plugin'):
+            if plugin_name == pyqgis_plugin.get('name'):
+                if StrictVersion(pyqgis_plugin.get('version')) > StrictVersion(version):
+                    version = pyqgis_plugin.get('version')
+                    output_url = pyqgis_plugin.find('download_url').text
+    #                if not output_url.endswith('.zip'):
+    #                    output_url += pyqgis_plugin.find('file_name').text
+    except:
+        pass
 
-print output_url,
+print output_url

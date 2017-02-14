@@ -189,16 +189,6 @@ function(find_anyproject name)
             include(Qt4Macros)
         endif()
 
-        if(SIP_FOUND)
-            set(SIP_BINARY_PATH ${SIP_BINARY_PATH} CACHE INTERNAL "library ${name} bin path")
-            set(SIP_DEFAULT_SIP_DIR ${SIP_DEFAULT_SIP_DIR} CACHE INTERNAL "library ${name} sip path")
-        endif()
-
-        if(PYQT4_FOUND)
-            set(PYQT4_SIP_DIR ${PYQT4_SIP_DIR} CACHE INTERNAL "library ${name} sip path")
-            set(PYQT4_SIP_FLAGS ${PYQT4_SIP_FLAGS} CACHE INTERNAL "library ${name} sip flags")
-        endif()
-
         if(${UPPER_NAME}_LIBRARIES)
             set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${${UPPER_NAME}_LIBRARIES} PARENT_SCOPE)
         elseif(${UPPER_NAME}_LIBRARY)
