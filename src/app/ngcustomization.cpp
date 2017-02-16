@@ -90,6 +90,8 @@
 // Editor widgets
 #include "qgseditorwidgetregistry.h"
 
+#include "ngsaboutdialog.h"
+
 #ifdef Q_OS_MACX
 #include <ApplicationServices/ApplicationServices.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -1787,79 +1789,8 @@ void NGQgisApp::fileNewFromDefaultTemplate()
 
 void NGQgisApp::about()
 {
-/*  static QgsAbout *abt = nullptr;
-  if ( !abt )
-  {
-    QApplication::setOverrideCursor( Qt::WaitCursor );
-    abt = new QgsAbout( this );
-    QString versionString = "<html><body><div align='center'><table width='100%'>";
-
-    versionString += "<tr>";
-    versionString += "<td>" + tr( "QGIS version" )       + "</td><td>" + QGis::QGIS_VERSION + "</td><td>";
-
-
-    if ( QString( QGis::QGIS_DEV_VERSION ) == "exported" )
-    {
-      versionString += tr( "QGIS code branch" ) + QString( "</td><td><a href=\"https://github.com/qgis/QGIS/tree/release-%1_%2\">Release %1.%2</a></td>" )
-                       .arg( QGis::QGIS_VERSION_INT / 10000 ).arg( QGis::QGIS_VERSION_INT / 100 % 100 );
-    }
-    else
-    {
-      versionString += tr( "QGIS code revision" ) + QString( "</td><td><a href=\"https://github.com/qgis/QGIS/commit/%1\">%1</a></td>" ).arg( QGis::QGIS_DEV_VERSION );
-    }
-
-    versionString += "</tr><tr>";
-
-    versionString += "<td>" + tr( "Compiled against Qt" ) + "</td><td>" + QT_VERSION_STR + "</td>";
-    versionString += "<td>" + tr( "Running against Qt" )  + "</td><td>" + qVersion() + "</td>";
-
-    versionString += "</tr><tr>";
-
-    versionString += "<td>" + tr( "Compiled against GDAL/OGR" ) + "</td><td>" + GDAL_RELEASE_NAME + "</td>";
-    versionString += "<td>" + tr( "Running against GDAL/OGR" )  + "</td><td>" + GDALVersionInfo( "RELEASE_NAME" ) + "</td>";
-
-    versionString += "</tr><tr>";
-
-    versionString += "<td>" + tr( "Compiled against GEOS" ) + "</td><td>" + GEOS_CAPI_VERSION + "</td>";
-    versionString += "<td>" + tr( "Running against GEOS" ) + "</td><td>" + GEOSversion() + "</td>";
-
-    versionString += "</tr><tr>";
-
-    versionString += "<td>" + tr( "PostgreSQL Client Version" ) + "</td><td>";
-#ifdef HAVE_POSTGRESQL
-    versionString += PG_VERSION;
-#else
-    versionString += tr( "No support." );
-#endif
-    versionString += "</td>";
-
-    versionString += "<td>" +  tr( "SpatiaLite Version" ) + "</td><td>";
-    versionString += spatialite_version();
-    versionString += "</td>";
-
-    versionString += "</tr><tr>";
-
-    versionString += "<td>" + tr( "QWT Version" ) + "</td><td>" + QWT_VERSION_STR + "</td>";
-    versionString += "<td>" + tr( "PROJ.4 Version" ) + "</td><td>" + QString::number( PJ_VERSION ) + "</td>";
-
-    versionString += "</tr><tr>";
-
-    versionString += "<td>" + tr( "QScintilla2 Version" ) + "</td><td>" + QSCINTILLA_VERSION_STR + "</td>";
-
-#ifdef QGISDEBUG
-    versionString += "<td colspan=2>" + tr( "This copy of QGIS writes debugging output." ) + "</td>";
-#endif
-
-    versionString += "</tr></table></div></body></html>";
-
-    abt->setVersion( versionString );
-
-    QApplication::restoreOverrideCursor();
-  }
-  abt->show();
-  abt->raise();
-  abt->activateWindow();
-  */
+    static NgsAboutDialog *about = new NgsAboutDialog (this);
+    about->exec();
 }
 
 void NGQgisApp::loadPythonSupport()
