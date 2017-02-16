@@ -47,7 +47,7 @@ macro(build_plugin SUBDIR)
         add_custom_target(${NAME}-installer ALL DEPENDS ${${NAME}_PYUI_FILES} ${${NAME}_PYRC_FILES})
     endif()
 
-    foreach(INSTALL_FILE ${${NAME}_PY_FILES} ${${NAME}_IMAGE_FILES} ${${NAME}_META_FILES} ${${NAME}_PYUI_FILES} ${${NAME}_PYRC_FILES})
+    foreach(INSTALL_FILE ${${NAME}_PY_FILES} ${${NAME}_IMAGE_FILES} ${${NAME}_META_FILES} ${${NAME}_PYUI_FILES} ${${NAME}_PYRC_FILES} ${${NAME}_UI_FILES})
         install(FILES ${INSTALL_FILE} DESTINATION "${QGIS_PYPLUGINS_DIR}/${SUBDIR}/")
     endforeach()
 endmacro()
@@ -66,11 +66,11 @@ endforeach()
 
 set(REMOTE_PLUGINS
     "QuickMapServices"
-    "QTiles"
-    "RuGeocoder"
+#    "QTiles"
+#    "RuGeocoder"
     "NextGIS Connect"
-    "QNetwork"
-    "IdentifyPlus"
+#    "QNetwork"
+#    "IdentifyPlus"
 )
 
 # 1. get xml
