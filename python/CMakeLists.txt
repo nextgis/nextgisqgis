@@ -45,6 +45,7 @@ add_subdirectory(plugins)
 if(QSCI_FOUND) # PyQScintilla required
     add_subdirectory(console)
 endif()
+add_subdirectory(PyQt)
 add_subdirectory(pyplugin_installer)
 
 include_directories(
@@ -173,3 +174,5 @@ foreach(PY_MODULE ${PY_MODULES})
     file(GLOB_RECURSE PY_FILES "${PY_MODULE}/*.py")
     install(FILES ${PY_FILES} DESTINATION "${QGIS_PYTHON_DIR}/${PY_MODULE}")
 endforeach()
+
+install(FILES qsci_apis/pyqgis.pap DESTINATION "${QGIS_DATA_SUBDIR}/python/qsci_apis")

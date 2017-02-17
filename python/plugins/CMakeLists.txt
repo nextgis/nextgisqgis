@@ -94,11 +94,13 @@ foreach(PLUGIN ${REMOTE_PLUGINS})
     if(DOWNLOAD_URL)
         string(REPLACE " " "_" OUT_NAME ${PLUGIN})
         # 3. download zips
-        warning_msg("Download ${DOWNLOAD_URL} ...")
-        file(DOWNLOAD ${DOWNLOAD_URL} ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip SHOW_PROGRESS)
+        if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip)
+            warning_msg("Download ${DOWNLOAD_URL} ...")
+            file(DOWNLOAD ${DOWNLOAD_URL} ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip SHOW_PROGRESS)
 
-        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf "${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
+            execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf "${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
+        endif()
     endif()
 endforeach()
 
