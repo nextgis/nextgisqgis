@@ -86,21 +86,22 @@ foreach(PLUGIN ${REMOTE_PLUGINS})
     # 2. parse xml and get url to zips
     execute_process(COMMAND ${PYTHON_EXECUTABLE}
         ${CMAKE_SOURCE_DIR}/scripts/process_repo_xml.py ${PLUGIN} ${CMAKE_CURRENT_BINARY_DIR}/repos
-        OUTPUT_VARIABLE DOWNLOAD_URL
+        OUTPUT_VARIABLE PACKAGE_DETAILS
+        OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 
-    string(STRIP ${DOWNLOAD_URL} DOWNLOAD_URL)
+    list(GET PACKAGE_DETAILS 0 DOWNLOAD_URL)
+    list(GET PACKAGE_DETAILS 1 VERSION)
 
     if(DOWNLOAD_URL)
         string(REPLACE " " "_" OUT_NAME ${PLUGIN})
         # 3. download zips
-        if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip)
+        if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}-${VERSION}.zip)
             warning_msg("Download ${DOWNLOAD_URL} ...")
-            file(DOWNLOAD ${DOWNLOAD_URL} ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip SHOW_PROGRESS)
-
-            execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf "${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip"
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
+            file(DOWNLOAD ${DOWNLOAD_URL} ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}-${VERSION}.zip SHOW_PROGRESS)
         endif()
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf "${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}-${VERSION}.zip"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)        
     endif()
 endforeach()
 

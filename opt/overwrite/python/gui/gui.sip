@@ -73,7 +73,7 @@
 %Include qgsfieldvalidator.sip
 %Include qgsfiledropedit.sip
 %Include qgsfilewidget.sip
-%Include qgsfiledownloader.sip
+//%Include qgsfiledownloader.sip
 %Include qgsfilterlineedit.sip
 %Include qgsformannotationitem.sip
 %Include qgsgenericprojectionselector.sip

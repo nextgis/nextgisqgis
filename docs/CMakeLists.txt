@@ -36,5 +36,11 @@ if(NOT SKIP_INSTALL_DOCS AND NOT SKIP_INSTALL_ALL)
         CODING
         Exception_to_GPL_for_Qt.txt
     )
-    install (FILES ${DOC_FILES} DESTINATION ${INSTALL_DOC_DIR})
+    install(FILES ${DOC_FILES} DESTINATION ${INSTALL_DOC_DIR})
+
+    file(DOWNLOAD http://docs.nextgis.ru/_downloads/NextGISQGIS.pdf ${CMAKE_CURRENT_BINARY_DIR}/NextGIS_QGIS_ru.pdf)
+    file(DOWNLOAD http://docs.nextgis.com/_downloads/NextGISQGIS.pdf ${CMAKE_CURRENT_BINARY_DIR}/NextGIS_QGIS_en.pdf)
+
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/NextGIS_QGIS_ru.pdf ${CMAKE_CURRENT_BINARY_DIR}/NextGIS_QGIS_en.pdf
+            DESTINATION ${INSTALL_DOC_DIR})
 endif()
