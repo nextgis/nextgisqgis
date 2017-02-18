@@ -31,4 +31,4 @@ for repo_xml in os.listdir(repo_path):
     except:
         pass
 
-print output_url
+print output_url + ';' + version
