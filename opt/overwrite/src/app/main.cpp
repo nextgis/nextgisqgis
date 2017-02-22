@@ -29,6 +29,7 @@
 #include <QFontDatabase>
 #include <QPixmap>
 #include <QLocale>
+#include <QLibraryInfo>
 #include <QSettings>
 #include <QSplashScreen>
 #include <QString>
@@ -258,6 +259,7 @@ void myMessageOutput( QtMsgType type, const char *msg )
 
 int main( int argc, char *argv[] )
 {
+
 #ifdef Q_OS_MACX
   // Increase file resource limits (i.e., number of allowed open files)
   // (from code provided by Larry Biehl, Purdue University, USA, from 'MultiSpec' project)
@@ -371,10 +373,17 @@ int main( int argc, char *argv[] )
 
   if ( !bundleclicked( argc, argv ) )
   {
-    // Build a local QCoreApplication from arguments. This way, arguments are correctly parsed from their native locale
     // It will use QString::fromLocal8Bit( argv ) under Unix and GetCommandLine() under Windows.
-    QCoreApplication coreApp( argc, argv );
-    args = QCoreApplication::arguments();
+    // NOTE: Don't create QCoreApplication as after it destruction qt.conf not used any more
+#ifdef Q_OS_WIN
+    QString cmdline = QString::fromWCharArray(GetCommandLine());
+    args = qWinCmdArgs(cmdline);
+#else
+    for (int a = 0; a < argc; ++a)
+    {
+        args << QString::fromLocal8Bit(argv[a]);
+    }
+#endif
 
     for ( int i = 1; i < args.size(); ++i )
     {
@@ -566,7 +575,6 @@ int main( int argc, char *argv[] )
     }
   }
 
-
   /////////////////////////////////////////////////////////////////////
   // Now we have the handlers for the different behaviours...
   ////////////////////////////////////////////////////////////////////
@@ -605,6 +613,9 @@ int main( int argc, char *argv[] )
   }
 
   NGQgsApplication myApp( argc, argv, myUseGuiFlag, configpath );
+
+  qDebug("Plugin path: %s", QLibraryInfo::location(QLibraryInfo::PluginsPath).toLocal8Bit().constData());
+  qDebug("Prefix: %s", QLibraryInfo::location(QLibraryInfo::PrefixPath).toLocal8Bit().constData());
 
   // List font directory
   QDir fontsDir(NGQgsApplication::fontsPath());

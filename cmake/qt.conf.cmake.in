@@ -1,0 +1,6 @@
+[Paths]
+Prefix = @QT_PREFIX@
+4/Translations = @QT4_TRANSLATION_DIR@
+4/Plugins = @QT4_PLUGINS_DIR@
+5/Translations = @QT5_TRANSLATION_DIR@
+5/Plugins = @QT5_PLUGINS_DIR@

@@ -55,6 +55,11 @@ if(OSX_FRAMEWORK)
     else()
         set(_PLUGIN_SUBDIR "Library/Plugins/Qt5")
     endif()
+    set(QT4_PLUGINS_DIR Library/Plugins/Qt4)
+    set(QT4_TRANSLATION_DIR Library/Translations/Qt4)
+    set(QT5_PLUGINS_DIR Library/Plugins/Qt5)
+    set(QT5_TRANSLATION_DIR Library/Translations/Qt5)
+
     set(INSTALL_PLUGIN_DIR ${CMAKE_INSTALL_PREFIX}/${_PLUGIN_SUBDIR}/${NG_PREFIX}${PROJECT_NAME} CACHE INTERNAL "Installation directory for plugins" FORCE)
     set(INSTALL_SHARE_DIR ${CMAKE_INSTALL_PREFIX}/${QGIS_DATA_SUBDIR} CACHE INTERNAL "Installation directory for share data" FORCE)
     set(INSTALL_MAN_DIR ${INSTALL_SHARE_DIR}/man CACHE INTERNAL "Installation directory for manual pages" FORCE)
@@ -87,11 +92,19 @@ else()
     else()
         set(QT_PLUGIN_SUBDIR "lib/qt5/plugins" )
     endif()
+
+    # On Windows qt.conf will be common for several applications so we need to have paths for qt4/5
+    set(QT4_PLUGINS_DIR FIXME)
+    set(QT4_TRANSLATION_DIR FIXME)
+    set(QT5_PLUGINS_DIR FIXME)
+    set(QT5_TRANSLATION_DIR FIXME)
+
     set(QGIS_PLUGIN_SUBDIR "lib/${NG_PREFIX}${PROJECT_NAME}/plugins")
     set(QGIS_LIB_SUBDIR "lib") #TODO On Linux it may be lib/x86_64...
     set(QGIS_MACAPP_BUNDLE 0)
 endif()
 
+set(QT_PREFIX ${CMAKE_INSTALL_PREFIX})
 set(CMAKE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(CMAKE_GENERATOR_TOOLSET MATCHES "v([0-9]+)_xp")
