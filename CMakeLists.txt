@@ -31,7 +31,7 @@ project(qgis)
 if(NOT SKIP_PREFIX)
     set(NG_PREFIX ng)
     set(PACKAGE_VENDOR "NextGIS")
-    set(PACKAGE_VENDOR_DOMAIN "com.nextgis")
+    set(PACKAGE_VENDOR_DOMAIN "nextgis.com")
 endif()
 
 # Some init settings
