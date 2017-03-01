@@ -29,7 +29,7 @@ __revision__ = '$Format:%H$'
 import os
 
 from PyQt4 import uic
-from PyQt4.QtCore import Qt, QEvent, QPyNullVariant
+from PyQt4.QtCore import Qt, QEvent, QPyNullVariant, QSettings
 from PyQt4.QtGui import (QFileDialog, QDialog, QIcon, QStyle,
                          QStandardItemModel, QStandardItem, QMessageBox, QStyledItemDelegate,
                          QLineEdit, QWidget, QToolButton, QHBoxLayout,
@@ -139,6 +139,7 @@ class ConfigDialog(BASE, WIDGET):
         self.adjustColumns()
 
     def accept(self):
+        qsettings = QSettings()
         for setting in self.items.keys():
             if isinstance(setting.value, bool):
                 setting.setValue(self.items[setting].checkState() == Qt.Checked)
@@ -149,7 +150,7 @@ class ConfigDialog(BASE, WIDGET):
                     QMessageBox.warning(self, self.tr('Wrong value'),
                                         self.tr('Wrong value for parameter "%s":\n\n%s' % (setting.description, unicode(e))))
                     return
-            setting.save()
+            setting.save(qsettings)
         Processing.updateAlgsList()
 
         QDialog.accept(self)

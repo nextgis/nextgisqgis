@@ -396,7 +396,7 @@ QString QgsApplication::activeThemePath()
 
 QString QgsApplication::appIconPath()
 {
-  return QString( "qgis-icon-60x60.png" );
+  return iconsPath() + "qgis-icon-60x60.png";
 }
 
 QString QgsApplication::iconPath( const QString& iconFile )
@@ -702,8 +702,20 @@ QStringList QgsApplication::svgPaths()
     myPathList = myPaths.split( '|' );
   }
 
-  myPathList << ABISYM( mDefaultSvgPaths );
-  return myPathList;
+  // maintain user set order while stripping duplicates
+  QStringList paths;
+  Q_FOREACH ( const QString& path, myPathList )
+  {
+    if ( !paths.contains( path ) )
+      paths.append( path );
+  }
+  Q_FOREACH ( const QString& path, ABISYM( mDefaultSvgPaths ) )
+  {
+    if ( !paths.contains( path ) )
+      paths.append( path );
+  }
+
+  return paths;
 }
 
 /*!

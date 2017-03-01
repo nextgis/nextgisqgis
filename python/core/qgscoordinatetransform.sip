@@ -216,5 +216,5 @@ extern PyObject *sipExportedExceptions__core[2];  // workaround: sipExportedExce
 
   signals:
     /** Signal when an invalid pj_transform() has occurred */
-    void  invalidTransformInput() const;
+    void invalidTransformInput() const;
 };
