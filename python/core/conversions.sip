@@ -1911,7 +1911,7 @@ template <TYPE>
 
 %If (QVECTORINT_CONVERSION)
 // QVector<int> is implemented as a Python list of integers.
-%MappedType QVector<int> 
+%MappedType QVector<int>
 {
 %TypeHeaderCode
 #include <qvector.h>
