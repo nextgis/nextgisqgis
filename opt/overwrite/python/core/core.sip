@@ -218,12 +218,12 @@
 %Include effects/qgsshadoweffect.sip
 %Include effects/qgstransformeffect.sip
 
-// %Include gps/qgsgpsconnection.sip
-// %Include gps/qgsgpsconnectionregistry.sip
-// %Include gps/qgsgpsdconnection.sip
-// %Include gps/qgsgpsdetector.sip
-// %Include gps/qgsnmeaconnection.sip
-// %Include gps/qgsqtlocationconnection.sip
+//%Include gps/qgsgpsconnection.sip
+//%Include gps/qgsgpsconnectionregistry.sip
+//%Include gps/qgsgpsdconnection.sip
+//%Include gps/qgsgpsdetector.sip
+//%Include gps/qgsnmeaconnection.sip
+//%Include gps/qgsqtlocationconnection.sip
 
 %Include layertree/qgslayertree.sip
 %Include layertree/qgslayertreegroup.sip

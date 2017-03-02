@@ -70,5 +70,6 @@ class QgsVectorLayerFeatureIterator : QgsAbstractFeatureIterator
     //void updateFeatureGeometry( QgsFeature& f );
 
   private:
-    QgsVectorLayerFeatureIterator(const QgsVectorLayerFeatureIterator &rhs);
+    QgsVectorLayerFeatureIterator( const QgsVectorLayerFeatureIterator &rhs );
+
 };
