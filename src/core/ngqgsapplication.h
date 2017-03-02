@@ -23,14 +23,23 @@
 
 #include "qgsapplication.h"
 
-class APP_EXPORT NGQgsApplication : public QgsApplication
+class CORE_EXPORT NGQgsApplication : public QgsApplication
 {
     Q_OBJECT
   public:
+    static const char* NGQGIS_ORGANIZATION_NAME;
+    static const char* NGQGIS_ORGANIZATION_DOMAIN;
+    static const char* NGQGIS_APPLICATION_NAME;
     NGQgsApplication( int & argc, char ** argv, bool GUIenabled,
                       const QString& customConfigPath = QString(),
                       const QString& platformName = "desktop" );
 public:
+    /** Set environment variable
+     * @param var environment variable name
+     * @param val value
+     */
+    static void putenv( const QString &var, const QString &val, int defaultVal );
+
     static void init( QString customConfigPath = QString() );
     static QString pluginsPath();
     static QString qtPluginsPath();

@@ -376,8 +376,10 @@ int main( int argc, char *argv[] )
     // It will use QString::fromLocal8Bit( argv ) under Unix and GetCommandLine() under Windows.
     // NOTE: Don't create QCoreApplication as after it destruction qt.conf not used any more
 #ifdef Q_OS_WIN
-    QString cmdline = QString::fromWCharArray(GetCommandLine());
-    args = qWinCmdArgs(cmdline);
+    // QString cmdline = QString::fromWCharArray(GetCommandLine());
+    // args = qWinCmdArgs(cmdline);
+    QCoreApplication coreApp( argc, argv );
+    args = QCoreApplication::arguments();
 #else
     for (int a = 0; a < argc; ++a)
     {
@@ -633,9 +635,9 @@ int main( int argc, char *argv[] )
 
   //
   // Set up the QSettings environment must be done after qapp is created
-  QCoreApplication::setOrganizationName( NGQgsApplication::QGIS_ORGANIZATION_NAME );
-  QCoreApplication::setOrganizationDomain( NGQgsApplication::QGIS_ORGANIZATION_DOMAIN );
-  QCoreApplication::setApplicationName( NGQgsApplication::QGIS_APPLICATION_NAME );
+  QCoreApplication::setOrganizationName( NGQgsApplication::NGQGIS_ORGANIZATION_NAME );
+  QCoreApplication::setOrganizationDomain( NGQgsApplication::NGQGIS_ORGANIZATION_DOMAIN );
+  QCoreApplication::setApplicationName( NGQgsApplication::NGQGIS_APPLICATION_NAME );
   QCoreApplication::setAttribute( Qt::AA_DontShowIconsInMenus, false );
 
   QSettings* customizationsettings;
