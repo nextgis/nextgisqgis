@@ -360,13 +360,11 @@ set(QGIS_APP_MOC_HDRS
 
 set(QGIS_APP_SRCS ${QGIS_APP_SRCS}
     ngcustomization.cpp
-    ngqgsapplication.cpp
     ngsaboutdialog.cpp
 )
 
 set(QGIS_APP_MOC_HDRS ${QGIS_APP_MOC_HDRS}
     ngcustomization.h
-    ngqgsapplication.h
     ngsaboutdialog.h
 )
 
@@ -446,7 +444,9 @@ set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
 if(OSX_FRAMEWORK)
     target_link_libraries(${LIB_NAME} "-framework CoreFoundation -framework CoreServices -framework ApplicationServices")
 endif()
-
+if(WIN32)
+    target_link_libraries(${LIB_NAME} "dbghelp")
+endif(WIN32)
 target_link_extlibraries(${LIB_NAME})
 set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${LIB_NAME})
 
@@ -458,7 +458,11 @@ target_compile_definitions (${QGIS_APP_NAME} PRIVATE "PYTHON_EXPORT=${DLLIMPORT}
 target_compile_definitions (${QGIS_APP_NAME} PRIVATE "ANALYSIS_EXPORT=${DLLIMPORT}")
 
 set_property(TARGET ${QGIS_APP_NAME} PROPERTY CXX_STANDARD 11)
-target_link_extlibraries(${QGIS_APP_NAME})
+
+if(WIN32)
+  target_link_libraries(${QGIS_APP_NAME} "dbghelp" ${QT_QTMAIN_LIBRARY})
+endif(WIN32)
+target_link_extlibraries(${QGIS_APP_NAME} )
 
 if(OSX_FRAMEWORK)
     set_target_properties(${LIB_NAME} PROPERTIES

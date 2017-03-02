@@ -40,9 +40,9 @@
 #include <pwd.h>
 #endif
 
-const char* QgsApplication::QGIS_ORGANIZATION_NAME = VENDOR;
-const char* QgsApplication::QGIS_ORGANIZATION_DOMAIN = VENDOR_DOMAIN;
-const char* QgsApplication::QGIS_APPLICATION_NAME = APP_NAME;
+const char* NGQgsApplication::NGQGIS_ORGANIZATION_NAME = VENDOR;
+const char* NGQgsApplication::NGQGIS_ORGANIZATION_DOMAIN = VENDOR_DOMAIN;
+const char* NGQgsApplication::NGQGIS_APPLICATION_NAME = APP_NAME;
 
 //------------------------------------------------------------------------------
 // NGQgsApplication
@@ -56,6 +56,15 @@ NGQgsApplication::NGQgsApplication(int &argc, char **argv, bool GUIenabled,
     sPlatformName = platformName;
 
     NGQgsApplication::init( customConfigPath );
+}
+
+void NGQgsApplication::putenv( const QString &var, const QString &val, int defaultVal )
+{
+#ifdef _MSC_VER
+  _putenv_s( var.toStdString().c_str(), val.toStdString().c_str() );
+#else
+  setenv( var.toStdString().c_str(), val.toStdString().c_str(), defaultVal );
+#endif
 }
 
 void NGQgsApplication::init(QString customConfigPath)
@@ -72,7 +81,7 @@ void NGQgsApplication::init(QString customConfigPath)
                 .arg( QDir::homePath() + QDir::separator() )
                 .arg( QDir::separator() + QLatin1String(VENDOR) + QDir::separator() )
                 .arg( VERSION_INT / 10000 );
-        setenv("QGIS_CUSTOM_CONFIG_PATH", customConfigPath.toUtf8(), FALSE);
+        putenv("QGIS_CUSTOM_CONFIG_PATH", customConfigPath.toUtf8(), FALSE);
       }
     }
 
@@ -96,7 +105,7 @@ void NGQgsApplication::init(QString customConfigPath)
     // NOTE: Set prefix, plugin, data (package), svg paths here
     ABISYM( mDefaultSvgPaths ).clear();
     setPrefixPath( prefixPath, true );
-    setenv("QGIS_PREFIX_PATH", prefixPath.toUtf8(), FALSE);
+    putenv("QGIS_PREFIX_PATH", prefixPath.toUtf8(), FALSE);
 
     if ( !customConfigPath.isEmpty() )
     {
@@ -115,7 +124,7 @@ void NGQgsApplication::init(QString customConfigPath)
     {
         ABISYM( mAuthDbDirPath ) = qgisSettingsDirPath();
         setAuthDbDirPath(qgisSettingsDirPath());
-        setenv( "QGIS_AUTH_DB_DIR_PATH", qgisSettingsDirPath().toUtf8(), FALSE );
+        putenv( "QGIS_AUTH_DB_DIR_PATH", qgisSettingsDirPath().toUtf8(), FALSE );
     }
 
     // store system environment variables passed to application, before they are adjusted

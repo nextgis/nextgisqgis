@@ -183,6 +183,11 @@ if(WITH_BINDINGS)
 endif()
 
 # Add binaries and libraries
+IF(MSVC)
+  # disable macros that offend std::numeric_limits<T>::min()/max()
+  ADD_DEFINITIONS(-DNOMINMAX)
+ENDIF(MSVC)
+
 add_subdirectory(src)
 if(NOT PREPARE_ONLY)
     add_subdirectory(translations)

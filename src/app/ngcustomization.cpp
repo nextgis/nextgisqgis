@@ -86,6 +86,7 @@
 #include <QProgressBar>
 #include <QSplashScreen>
 #include <QStackedWidget>
+#include <Qt/qdesktopservices.h>
 
 // Editor widgets
 #include "qgseditorwidgetregistry.h"
