@@ -27,9 +27,6 @@
 find_anyproject(SIP REQUIRED)
 find_anyproject(PyQt4 REQUIRED)
 find_anyproject(Qsci DEFAULT ON)
-
-find_anyproject(SQLite3 REQUIRED)
-find_anyproject(EXPAT REQUIRED)
     
 include(SIPMacros)
 include(PyQtMacros)
@@ -43,10 +40,6 @@ set(PYRCC_PROGRAM ${PYQT4_PYRCC_PROGRAM})
 set(SIP_INCLUDES ${PYQT_SIP_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 set(SIP_CONCAT_PARTS 4)
 separate_arguments(PYQT_SIP_FLAGS)
-
-if(WIN32)
-    set(SIP_TAGS WS_WIN Qt_4_8_7)
-endif(WIN32)
 
 add_subdirectory(plugins)
 if(QSCI_FOUND) # PyQScintilla required
