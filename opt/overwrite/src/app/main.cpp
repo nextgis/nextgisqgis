@@ -257,6 +257,80 @@ void myMessageOutput( QtMsgType type, const char *msg )
   }
 }
 
+template<typename Char>
+static QVector<Char*> qWinCmdLine(Char *cmdParam, int length, int &argc)
+{
+    QVector<Char*> argv(8);
+    Char *p = cmdParam;
+    Char *p_end = p + length;
+
+    argc = 0;
+
+    while (*p && p < p_end) {                                // parse cmd line arguments
+        while (QChar((short)(*p)).isSpace())                          // skip white space
+            p++;
+        if (*p && p < p_end) {                                // arg starts
+            int quote;
+            Char *start, *r;
+            if (*p == Char('\"') || *p == Char('\'')) {        // " or ' quote
+                quote = *p;
+                start = ++p;
+            } else {
+                quote = 0;
+                start = p;
+            }
+            r = start;
+            while (*p && p < p_end) {
+                if (quote) {
+                    if (*p == quote) {
+                        p++;
+                        if (QChar((short)(*p)).isSpace())
+                            break;
+                        quote = 0;
+                    }
+                }
+                if (*p == '\\') {                // escape char?
+                    p++;
+                    if (*p == Char('\"') || *p == Char('\''))
+                        ;                        // yes
+                    else
+                        p--;                        // treat \ literally
+                } else {
+                    if (!quote && (*p == Char('\"') || *p == Char('\''))) {        // " or ' quote
+                        quote = *p++;
+                        continue;
+                    } else if (QChar((short)(*p)).isSpace() && !quote)
+                        break;
+                }
+                if (*p)
+                    *r++ = *p++;
+            }
+            if (*p && p < p_end)
+                p++;
+            *r = Char('\0');
+
+            if (argc >= (int)argv.size()-1)        // expand array
+                argv.resize(argv.size()*2);
+            argv[argc++] = start;
+        }
+    }
+    argv[argc] = 0;
+
+    return argv;
+}
+static inline QStringList qWinCmdArgs(QString cmdLine) // not const-ref: this might be modified
+{
+    QStringList args;
+
+    int argc = 0;
+    QVector<wchar_t*> argv = qWinCmdLine<wchar_t>((wchar_t *)cmdLine.utf16(), cmdLine.length(), argc);
+    for (int a = 0; a < argc; ++a) {
+        args << QString::fromWCharArray(argv[a]);
+    }
+
+    return args;
+}
+
 int main( int argc, char *argv[] )
 {
 
@@ -376,7 +450,7 @@ int main( int argc, char *argv[] )
     // It will use QString::fromLocal8Bit( argv ) under Unix and GetCommandLine() under Windows.
     // NOTE: Don't create QCoreApplication as after it destruction qt.conf not used any more
 #ifdef Q_OS_WIN
-    QString cmdline = QString::fromWCharArray(GetCommandLine());
+    QString cmdline = QString::fromWCharArray(GetCommandLineW());
     args = qWinCmdArgs(cmdline);
 #else
     for (int a = 0; a < argc; ++a)
@@ -633,9 +707,9 @@ int main( int argc, char *argv[] )
 
   //
   // Set up the QSettings environment must be done after qapp is created
-  QCoreApplication::setOrganizationName( NGQgsApplication::QGIS_ORGANIZATION_NAME );
-  QCoreApplication::setOrganizationDomain( NGQgsApplication::QGIS_ORGANIZATION_DOMAIN );
-  QCoreApplication::setApplicationName( NGQgsApplication::QGIS_APPLICATION_NAME );
+  QCoreApplication::setOrganizationName( NGQgsApplication::NGQGIS_ORGANIZATION_NAME );
+  QCoreApplication::setOrganizationDomain( NGQgsApplication::NGQGIS_ORGANIZATION_DOMAIN );
+  QCoreApplication::setApplicationName( NGQgsApplication::NGQGIS_APPLICATION_NAME );
   QCoreApplication::setAttribute( Qt::AA_DontShowIconsInMenus, false );
 
   QSettings* customizationsettings;

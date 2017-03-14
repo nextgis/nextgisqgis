@@ -149,6 +149,9 @@ if(NOT PREPARE_ONLY)
     find_anyproject(GDAL REQUIRED)
     find_anyproject(GEOS REQUIRED)
     find_anyproject(Qca REQUIRED)
+    
+    find_anyproject(SQLite3 REQUIRED)
+    find_anyproject(EXPAT REQUIRED)
 
     find_anyproject(Qscintilla REQUIRED)
     if(QSCINTILLA_FOUND)

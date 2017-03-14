@@ -444,9 +444,7 @@ set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
 if(OSX_FRAMEWORK)
     target_link_libraries(${LIB_NAME} "-framework CoreFoundation -framework CoreServices -framework ApplicationServices")
 endif()
-if(WIN32)
-    target_link_libraries(${LIB_NAME} "dbghelp")
-endif(WIN32)
+
 target_link_extlibraries(${LIB_NAME})
 set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${LIB_NAME})
 
@@ -460,7 +458,9 @@ target_compile_definitions (${QGIS_APP_NAME} PRIVATE "ANALYSIS_EXPORT=${DLLIMPOR
 set_property(TARGET ${QGIS_APP_NAME} PROPERTY CXX_STANDARD 11)
 
 if(WIN32)
-  target_link_libraries(${QGIS_APP_NAME} "dbghelp" ${QT_QTMAIN_LIBRARY})
+  set_target_properties(${QGIS_APP_NAME}
+                        PROPERTIES COMPILE_FLAGS "/Zc:wchar_t-")
+  target_link_libraries(${QGIS_APP_NAME} ${QT_QTMAIN_LIBRARY})
 endif(WIN32)
 target_link_extlibraries(${QGIS_APP_NAME} )
 
