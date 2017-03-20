@@ -61,7 +61,8 @@ Some dependencies are removed:
 # License
 
 All scripts are licensed under GNU GPL v.2.
-[![License](https://img.shields.io/badge/License-GPL v2-blue.svg?maxAge=2592000)]()
+
+![License](https://img.shields.io/badge/License-GPL%20v2-blue.svg?maxAge=2592000)
 
 # Commercial support
 
