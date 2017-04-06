@@ -390,6 +390,10 @@ set(QGIS_CORE_SRCS ${QGIS_CORE_SRCS}
   qgshttptransaction.cpp
 )
 
+set(QGIS_CORE_SRCS ${QGIS_CORE_SRCS}
+    ngqgsapplication.cpp
+)
+
 file(GLOB JSON_HELP_FILES "${CMAKE_SOURCE_DIR}/resources/function_help/json/*")
 string(REPLACE "$" "$$" JSON_HELP_FILES "${JSON_HELP_FILES}")
 
@@ -527,6 +531,10 @@ set(QGIS_CORE_MOC_HDRS
     layertree/qgslayertreemodellegendnode.h
     layertree/qgslayertreenode.h
     layertree/qgslayertreeregistrybridge.h
+)
+
+set(QGIS_CORE_MOC_HDRS ${QGIS_CORE_MOC_HDRS}
+    ngqgsapplication.h
 )
 
   # TODO: gps

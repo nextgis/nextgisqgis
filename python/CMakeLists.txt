@@ -27,7 +27,7 @@
 find_anyproject(SIP REQUIRED)
 find_anyproject(PyQt4 REQUIRED)
 find_anyproject(Qsci DEFAULT ON)
-
+    
 include(SIPMacros)
 include(PyQtMacros)
 

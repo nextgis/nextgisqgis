@@ -27,9 +27,7 @@
 include(prepare_parser)
 
 if(NOT PREPARE_ONLY)
-    find_anyproject(EXPAT REQUIRED)
     find_anyproject(PROJ4 REQUIRED)
-    find_anyproject(SQLite3 REQUIRED)
     find_anyproject(Spatialite REQUIRED)
     find_anyproject(SpatialIndex REQUIRED)
     find_anyproject(PostgreSQL DEFAULT ON)
