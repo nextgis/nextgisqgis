@@ -30,7 +30,7 @@ function(check_version major minor patch qgis_major qgis_minor qgis_patch qgis_n
     # QGIS_PORT is the version of QGIS this release is bound to
     set(QGIS_MAJOR 2)
     set(QGIS_MINOR 14)
-    set(QGIS_PATCH 12)
+    set(QGIS_PATCH 13)
     set(QGIS_NAME "Essen")
 
 
