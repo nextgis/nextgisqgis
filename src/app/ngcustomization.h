@@ -26,6 +26,7 @@
 class APP_EXPORT NGQgisApp : public QgisApp
 {
     Q_OBJECT
+    Q_DISABLE_COPY(NGQgisApp)
 public:
     NGQgisApp( QSplashScreen *splash, bool restorePlugins = true,
                bool skipVersionCheck = false, QWidget *parent = nullptr,

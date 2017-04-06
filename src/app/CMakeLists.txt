@@ -360,13 +360,11 @@ set(QGIS_APP_MOC_HDRS
 
 set(QGIS_APP_SRCS ${QGIS_APP_SRCS}
     ngcustomization.cpp
-    ngqgsapplication.cpp
     ngsaboutdialog.cpp
 )
 
 set(QGIS_APP_MOC_HDRS ${QGIS_APP_MOC_HDRS}
     ngcustomization.h
-    ngqgsapplication.h
     ngsaboutdialog.h
 )
 
@@ -458,7 +456,13 @@ target_compile_definitions (${QGIS_APP_NAME} PRIVATE "PYTHON_EXPORT=${DLLIMPORT}
 target_compile_definitions (${QGIS_APP_NAME} PRIVATE "ANALYSIS_EXPORT=${DLLIMPORT}")
 
 set_property(TARGET ${QGIS_APP_NAME} PROPERTY CXX_STANDARD 11)
-target_link_extlibraries(${QGIS_APP_NAME})
+
+if(WIN32)
+  set_target_properties(${QGIS_APP_NAME}
+                        PROPERTIES COMPILE_FLAGS "/Zc:wchar_t-")
+  target_link_libraries(${QGIS_APP_NAME} ${QT_QTMAIN_LIBRARY})
+endif(WIN32)
+target_link_extlibraries(${QGIS_APP_NAME} )
 
 if(OSX_FRAMEWORK)
     set_target_properties(${LIB_NAME} PROPERTIES
