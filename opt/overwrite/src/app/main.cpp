@@ -765,6 +765,10 @@ int main( int argc, char *argv[] )
     }
   }
 #endif
+#ifdef Q_OS_WIN
+  putenv( QString("GDAL_DATA=" + QCoreApplication::applicationDirPath().append( "/../share/gdal" )).toUtf8().constData() );
+  putenv( QString("GDAL_DRIVER_PATH=" + QCoreApplication::applicationDirPath().append( "/../" ) + QString( QGIS_PLUGIN_SUBDIR ) ).toUtf8().constData() );
+#endif
 
   QSettings mySettings;
 
