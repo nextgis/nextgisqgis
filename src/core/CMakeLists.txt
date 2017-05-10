@@ -398,7 +398,7 @@ file(GLOB JSON_HELP_FILES "${CMAKE_SOURCE_DIR}/resources/function_help/json/*")
 string(REPLACE "$" "$$" JSON_HELP_FILES "${JSON_HELP_FILES}")
 string(REPLACE "\(" "\\(" JSON_HELP_FILES "${JSON_HELP_FILES}")
 string(REPLACE "\)" "\\)" JSON_HELP_FILES "${JSON_HELP_FILES}")
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/qgsexpression_texts.cpp
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/process_function_template.py
         ${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp.temp
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -408,7 +408,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp
 )
 
 file(GLOB CONTEXT_HELP_FILES "${CMAKE_SOURCE_DIR}/resources/context_help/*")
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/qgscontexthelp_texts.cpp
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/qgscontexthelp_texts.cpp
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/process_contexthelp.py
         ${CMAKE_CURRENT_BINARY_DIR}/qgscontexthelp_texts.cpp.temp
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
