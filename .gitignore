@@ -39,3 +39,7 @@ CMakeLists.txt.user
 # Installer
 build/
 inst/
+
+# generated files
+src/core/qgscontexthelp_texts.cpp
+src/core/qgsexpression_texts.cpp
