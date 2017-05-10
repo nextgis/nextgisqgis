@@ -98,7 +98,7 @@ python/plugins/processing/algs/saga,python/plugins/processing/algs/saga,,py
 python/plugins/processing/algs/saga/description,python/plugins/processing/algs/saga/description,,
 python/plugins/processing/algs/saga/description/2.2.3,python/plugins/processing/algs/saga/description/2.2.3,,txt
 python/plugins/processing/algs/saga/description/2.3.0,python/plugins/processing/algs/saga/description/2.3.0,,txt
-python/plugins/processing/algs/saga/ext,python/plugins/processing/algs/saga/description/ext,,py
+python/plugins/processing/algs/saga/ext,python/plugins/processing/algs/saga/ext,,py
 python/plugins/processing/algs/taudem,python/plugins/processing/algs/taudem,,py
 python/plugins/processing/algs/taudem/description,python/plugins/processing/algs/taudem/description,,py
 python/plugins/processing/algs/taudem/description/multi,python/plugins/processing/algs/taudem/description/multi,,txt
@@ -352,6 +352,7 @@ images/themes,images/themes,,
 images/themes/default,images/themes/default,,"png,svg,TXT,gif"
 images/themes/default/cadtools,images/themes/default/cadtools,,png
 images/themes/default/console,images/themes/default/console,,png
+images/themes/default/customization,images/themes/default/customization,,png
 images/themes/default/gpsicons,images/themes/default/gpsicons,,svg
 images/themes/default/propertyicons,images/themes/default/propertyicons,,"png,svg"
 images/themes/default/styleicons,images/themes/default/styleicons,,png
