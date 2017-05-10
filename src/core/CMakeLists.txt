@@ -405,6 +405,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/qgsexpression_texts.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp.temp
         ${CMAKE_CURRENT_SOURCE_DIR}/qgsexpression_texts.cpp
     DEPENDS ${JSON_HELP_FILES}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
 file(GLOB CONTEXT_HELP_FILES "${CMAKE_SOURCE_DIR}/resources/context_help/*")
@@ -415,6 +416,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/qgscontexthelp_texts.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/qgscontexthelp_texts.cpp.temp
         ${CMAKE_CURRENT_SOURCE_DIR}/qgscontexthelp_texts.cpp
     DEPENDS ${CONTEXT_HELP_FILES}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
 if(MAKE_CXX_COMPILER_ID MATCHES "Clang")
