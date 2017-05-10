@@ -77,7 +77,7 @@ if(OSX_FRAMEWORK)
 else()
     include(GNUInstallDirs)
 
-    set(QGIS_DATA_SUBDIR ${NG_PREFIX}${PROJECT_NAME})
+    set(QGIS_DATA_SUBDIR "${CMAKE_INSTALL_DATADIR}/${NG_PREFIX}${PROJECT_NAME}")
     set(INSTALL_BIN_DIR ${CMAKE_INSTALL_BINDIR} CACHE INTERNAL "Installation directory for executables" FORCE)
     set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE INTERNAL "Installation directory for libraries" FORCE)
     set(INSTALL_INC_DIR ${CMAKE_INSTALL_INCLUDEDIR}/${NG_PREFIX}${PROJECT_NAME} CACHE INTERNAL "Installation directory for headers" FORCE)
