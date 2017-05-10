@@ -769,6 +769,7 @@ int main( int argc, char *argv[] )
   putenv( QString("GDAL_DATA=" + QCoreApplication::applicationDirPath().append( "/../share/gdal" )).toUtf8().constData() );
   putenv( QString("GDAL_DRIVER_PATH=" + QCoreApplication::applicationDirPath().append( "/../" ) + QString( QGIS_PLUGIN_SUBDIR ) ).toUtf8().constData() );
 #endif
+
   QSettings mySettings;
 
   // update any saved setting for older themes to new default 'gis' theme (2013-04-15)

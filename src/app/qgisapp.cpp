@@ -2170,7 +2170,6 @@ void QgisApp::setIconSizes( int size )
   {
     QString className = toolbar->parent()->metaObject()->className();
     if ( className == this->metaObject()->className() )
-    //if ( className == "QgisApp" )
     {
       toolbar->setIconSize( QSize( size, size ) );
     }

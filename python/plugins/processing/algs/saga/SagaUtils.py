@@ -63,9 +63,17 @@ def findSagaFolder():
             if os.path.exists(os.path.join(testfolder, 'saga_cmd')):
                 folder = testfolder
     elif isWindows():
-        testfolder = os.path.join(os.path.dirname(QgsApplication.prefixPath()), 'saga')
-        if os.path.exists(os.path.join(testfolder, 'saga_cmd.exe')):
-            folder = testfolder
+        folders = []
+        folders.append(os.path.join(os.path.dirname(QgsApplication.prefixPath()), 'saga'))
+        if "OSGEO4W_ROOT" in os.environ:
+            folders.append(os.path.join(str(os.environ['OSGEO4W_ROOT']), "apps", "saga-ltr"))
+            folders.append(os.path.join(str(os.environ['OSGEO4W_ROOT']), "apps", "saga"))
+
+        for testfolder in folders:
+            if os.path.exists(os.path.join(testfolder, 'saga_cmd.exe')):
+                folder = testfolder
+                break
+
     return folder
 
 
@@ -87,12 +95,12 @@ def createSagaBatchJobFileFromSagaCommands(commands):
     fout = open(sagaBatchJobFilename(), 'w')
     if isWindows():
         fout.write('set SAGA=' + sagaPath() + '\n')
-        fout.write('set SAGA_MLB=' + sagaPath() + os.sep
-                   + 'modules' + '\n')
+        fout.write('set SAGA_MLB=' + sagaPath() + os.sep +
+                   'modules' + '\n')
         fout.write('PATH=%PATH%;%SAGA%;%SAGA_MLB%\n')
     elif isMac():
-        fout.write('export SAGA_MLB=' + sagaPath()
-                   + '/../lib/saga\n')
+        fout.write('export SAGA_MLB=' + sagaPath() +
+                   '/../lib/saga\n')
         fout.write('export PATH=' + sagaPath() + ':$PATH\n')
     else:
         pass
@@ -101,6 +109,7 @@ def createSagaBatchJobFileFromSagaCommands(commands):
 
     fout.write('exit')
     fout.close()
+
 
 _installedVersion = None
 _installedVersionFound = False
@@ -153,8 +162,8 @@ def executeSaga(progress):
     if isWindows():
         command = ['cmd.exe', '/C ', sagaBatchJobFilename()]
     else:
-        os.chmod(sagaBatchJobFilename(), stat.S_IEXEC
-                 | stat.S_IREAD | stat.S_IWRITE)
+        os.chmod(sagaBatchJobFilename(), stat.S_IEXEC |
+                 stat.S_IREAD | stat.S_IWRITE)
         command = [sagaBatchJobFilename()]
     loglines = []
     loglines.append(QCoreApplication.translate('SagaUtils', 'SAGA execution console output'))
