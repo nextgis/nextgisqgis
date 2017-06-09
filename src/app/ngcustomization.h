@@ -71,6 +71,17 @@ protected:
     virtual bool addProject(const QString &projectFile) override;
     virtual bool fileSave() override;
     virtual void fileSaveAs() override;
+private:
+    const QString updateProgrammPath();
+    bool mUpdatesAvailable;
+private slots:
+    void maintainerStrated();
+    void startUpdate();
+    void maintainerErrored(QProcess::ProcessError);
+    void maintainerStateChanged(QProcess::ProcessState);
+    void maintainerFinished(int code, QProcess::ExitStatus status);
+    void maintainerReadyReadStandardOutput();
+    void maintainerReadyReadStandardError();
 };
 
 #endif // NGCUSTOMIZATION_H
