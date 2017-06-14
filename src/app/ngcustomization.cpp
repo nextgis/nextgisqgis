@@ -94,6 +94,8 @@
 
 #include "ngsaboutdialog.h"
 
+#include "ngupdater.h"
+
 #ifdef Q_OS_MACX
 #include <ApplicationServices/ApplicationServices.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -459,12 +461,9 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
 
     NGQgsApplication::setFileOpenEventReceiver( this );
 
-    const QString updaterPath = updateProgrammPath();
-    if(!QFile::exists(updaterPath))
-    {
-      mActionCheckQgisVersion->setEnabled(false);
-      // mActionCheckQgisVersion->setToolTip(tr("There is not ") + this->updateProgrammName);
-    }
+    mNGUpdater = new NGQgisUpdater(this);
+    connect(mNGUpdater, SIGNAL(updatesInfoGettingStarted()), this, SLOT(updatesSearchStart()));
+    connect(mNGUpdater, SIGNAL(updatesInfoGettingFinished(bool)), this, SLOT(updatesSearchStop(bool)));
 }
 
 NGQgisApp::~NGQgisApp()
@@ -827,6 +826,11 @@ void NGQgisApp::createActions()
   connect( mActionMoveLabel, SIGNAL( triggered() ), this, SLOT( moveLabel() ) );
   connect( mActionRotateLabel, SIGNAL( triggered() ), this, SLOT( rotateLabel() ) );
   connect( mActionChangeLabelProperties, SIGNAL( triggered() ), this, SLOT( changeLabelProperties() ) );
+
+  QSettings settings;
+  if( settings.value( "/qgis/checkVersion", true ).toBool() )
+    connect( this, SIGNAL( initializationCompleted() ), this, SLOT(checkQgisVersion()));
+
 
 #ifndef HAVE_POSTGRESQL
   delete mActionAddPgLayer;
@@ -1863,13 +1867,6 @@ void NGQgisApp::loadPythonSupport()
   }
 }
 
-const QString NGQgisApp::updateProgrammPath()
-{
-  return QFileInfo(
-    QApplication::instance()->applicationDirPath()
-  ).absolutePath() + QDir::separator() + "nextgisupdater.exe";
-}
-
 void NGQgisApp::checkQgisVersion()
 {
     // TODO: NextGIS Check
@@ -1878,105 +1875,59 @@ void NGQgisApp::checkQgisVersion()
 
   connect( versionInfo, SIGNAL( versionInfoAvailable() ), this, SLOT( versionReplyFinished() ) );
   versionInfo->checkVersion();*/
-  mUpdatesAvailable = false;
 
-  #ifdef Q_OS_WIN32
-    const QString path = updateProgrammPath();
-    QStringList args;
-    args << "--checkupdates";
+  QObject* obj = sender();
+  mUpdatesCheckStartByUser = (obj == mActionCheckQgisVersion);
+  
+  mNGUpdater->checkUpdates();
 
-    QProcess* process = new QProcess(this);
-       
-    connect(process, SIGNAL(started()), this, SLOT(maintainerStrated()) );
-    connect(process, SIGNAL(error(QProcess::ProcessError)), this, SLOT(maintainerErrored(QProcess::ProcessError)));
-    connect(process, SIGNAL(stateChanged(QProcess::ProcessState)), this, SLOT(maintainerStateChanged(QProcess::ProcessState)));
-    connect(process, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(maintainerFinished(int, QProcess::ExitStatus)));
-    connect(process, SIGNAL(readyReadStandardOutput()), this, SLOT(maintainerReadyReadStandardOutput()));
-    connect(process, SIGNAL(readyReadStandardError()), this, SLOT(maintainerReadyReadStandardError()));
-
-    process->start(path, args);
-  #endif
-}
-
-void NGQgisApp::maintainerStrated()
-{
+  if (mUpdatesCheckStartByUser)
+  {
     QApplication::setOverrideCursor(Qt::WaitCursor);
+  }
 }
 
-void NGQgisApp::maintainerErrored(QProcess::ProcessError)
+void NGQgisApp::updatesSearchStart()
 {
 }
 
-void NGQgisApp::maintainerStateChanged(QProcess::ProcessState)
+void NGQgisApp::updatesSearchStop(bool updatesAvailable)
 {
-}
+  if (!updatesAvailable && !mUpdatesCheckStartByUser)
+    return;
 
-void NGQgisApp::maintainerFinished(int code, QProcess::ExitStatus status)
-{
+  QWidget* banner = new QWidget(this->messageBar());
+  QHBoxLayout* bannerLayout = new QHBoxLayout(banner);
+  bannerLayout->setContentsMargins(0, 0, 0, 0);
+  bannerLayout->setSpacing(20);
+
+  if ( updatesAvailable )
+  {
+      QLabel* msg = new QLabel(QString("<strong>%1</strong>").arg(this->tr("QGIS updates are available")), banner);
+      msg->setTextFormat(Qt::RichText);
+      bannerLayout->addWidget(msg);
+
+      QPushButton* upgrade = new QPushButton(this->tr("Update"), banner);
+      bannerLayout->addWidget(upgrade);
+      connect(upgrade, SIGNAL(clicked(bool)), mNGUpdater, SLOT(startUpdate()));
+
+  }
+  else
+  {
+      QLabel* msg = new QLabel(QString("<strong>%1</strong>").arg(this->tr("There are no available QGIS updates")), banner);
+      msg->setTextFormat(Qt::RichText);
+      bannerLayout->addWidget(msg);
+  }
+
+  bannerLayout->insertStretch(-1, 1);
+
+  QgsMessageBarItem* item = new QgsMessageBarItem(banner);
+  this->messageBar()->pushItem(item);
+
+  if (mUpdatesCheckStartByUser)
+  {
     QApplication::setOverrideCursor(Qt::ArrowCursor);
-
-    QProcess* prc = (QProcess*) sender();
-    prc->setParent(NULL);
-    
-    QWidget* banner = new QWidget(this->messageBar());
-    QHBoxLayout* bannerLayout = new QHBoxLayout(banner);
-    bannerLayout->setContentsMargins(0, 0, 0, 0);
-    bannerLayout->setSpacing(20);
-
-    if ( mUpdatesAvailable )
-    {
-        QLabel* msg = new QLabel(this->tr("<strong>QGIS updates are available</strong>"), banner);
-        msg->setTextFormat(Qt::RichText);
-        bannerLayout->addWidget(msg);
-
-        QPushButton* upgrade = new QPushButton("Update", banner);
-        bannerLayout->addWidget(upgrade);
-        connect(upgrade, SIGNAL(clicked(bool)), this, SLOT(startUpdate()));
-    }
-    else
-    {
-        QLabel* msg = new QLabel(this->tr("<strong>There are no available QGIS updates</strong>"), banner);
-        msg->setTextFormat(Qt::RichText);
-        bannerLayout->addWidget(msg);
-    }
-
-    bannerLayout->insertStretch(-1, 1);
-
-    QgsMessageBarItem* item = new QgsMessageBarItem(banner);
-    item->setIcon(QIcon(":/images/icons/qgis-icon-60x60.png"));
-    this->messageBar()->pushItem(item);
-}
-
-void NGQgisApp::maintainerReadyReadStandardOutput()
-{
-    QProcess* prc = (QProcess*) sender();
-
-    QByteArray data = prc->readAllStandardOutput();
-    QXmlInputSource xmlData;
-    xmlData.setData(data);
-    QXmlSimpleReader reader;
-    if ( reader.parse(xmlData) )
-    {
-      mUpdatesAvailable = true;
-    }
-}
-
-void NGQgisApp::maintainerReadyReadStandardError()
-{
-}
-
-void NGQgisApp::startUpdate()
-{
-  QString program = updateProgrammPath();
-  QStringList arguments;
-  arguments << "--updater";
-  
-  QMessageBox::information(this, tr("Attention!"), tr("Please, restart NGQGIS after upgrade."));
-  
-  QProcess::startDetached(
-    program,
-    arguments
-  ); 
+  }
 }
 
 void NGQgisApp::increaseBrightness()
