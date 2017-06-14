@@ -21,7 +21,10 @@
 #ifndef NGCUSTOMIZATION_H
 #define NGCUSTOMIZATION_H
 
+class NGQgisUpdater;
+
 #include "qgisapp.h"
+
 
 class APP_EXPORT NGQgisApp : public QgisApp
 {
@@ -71,17 +74,14 @@ protected:
     virtual bool addProject(const QString &projectFile) override;
     virtual bool fileSave() override;
     virtual void fileSaveAs() override;
-private:
-    const QString updateProgrammPath();
-    bool mUpdatesAvailable;
+
+private:   
+    bool mUpdatesCheckStartByUser;
+    NGQgisUpdater* mNGUpdater;
+
 private slots:
-    void maintainerStrated();
-    void startUpdate();
-    void maintainerErrored(QProcess::ProcessError);
-    void maintainerStateChanged(QProcess::ProcessState);
-    void maintainerFinished(int code, QProcess::ExitStatus status);
-    void maintainerReadyReadStandardOutput();
-    void maintainerReadyReadStandardError();
+    void updatesSearchStart();
+    void updatesSearchStop(bool updatesAvailable);
 };
 
 #endif // NGCUSTOMIZATION_H
