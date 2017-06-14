@@ -21,9 +21,8 @@
 #ifndef NGCUSTOMIZATION_H
 #define NGCUSTOMIZATION_H
 
-class NGQgisUpdater;
-
 #include "qgisapp.h"
+#include "ngupdater.h"
 
 
 class APP_EXPORT NGQgisApp : public QgisApp
