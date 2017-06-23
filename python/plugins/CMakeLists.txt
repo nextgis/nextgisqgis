@@ -34,6 +34,7 @@ macro(build_plugin SUBDIR)
     file(GLOB ${NAME}_QRC_FILES *.qrc)
     file(GLOB ${NAME}_IMAGE_FILES *.png *.svg *.gif)
     file(GLOB ${NAME}_META_FILES metadata* LICENSE* AUTHORS* requirements* *.htmp *.xml)
+    file(GLOB ${NAME}_QML_FILES *.qml)
 
     if(${NAME}_UI_FILES)
         PYQT_WRAP_UI(${NAME}_PYUI_FILES ${${NAME}_UI_FILES})
@@ -47,7 +48,7 @@ macro(build_plugin SUBDIR)
         add_custom_target(${NAME}-installer ALL DEPENDS ${${NAME}_PYUI_FILES} ${${NAME}_PYRC_FILES})
     endif()
 
-    foreach(INSTALL_FILE ${${NAME}_PY_FILES} ${${NAME}_IMAGE_FILES} ${${NAME}_META_FILES} ${${NAME}_PYUI_FILES} ${${NAME}_PYRC_FILES} ${${NAME}_UI_FILES})
+    foreach(INSTALL_FILE ${${NAME}_PY_FILES} ${${NAME}_IMAGE_FILES} ${${NAME}_META_FILES} ${${NAME}_PYUI_FILES} ${${NAME}_PYRC_FILES} ${${NAME}_UI_FILES} ${${NAME}_QML_FILES})
         install(FILES ${INSTALL_FILE} DESTINATION "${QGIS_PYPLUGINS_DIR}/${SUBDIR}/")
     endforeach()
 endmacro()
@@ -56,6 +57,7 @@ set(LOCAL_PLUGINS
     fTools
     GdalTools
     processing
+    db_manager
 )
 
 foreach(PLUGIN ${LOCAL_PLUGINS})

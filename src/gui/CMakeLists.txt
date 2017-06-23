@@ -568,9 +568,9 @@ endif()
 
 if(MSVC)
   set_source_files_properties(${QGIS_GUI_MOC_SRCS} PROPERTIES COMPILE_FLAGS "/wd4512 /wd4996" )
-else(MSVC)
+else()
   set_source_files_properties(${QGIS_GUI_MOC_SRCS} PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations" )
-endif(MSVC)
+endif()
 
 # for installing headers
 
@@ -726,9 +726,18 @@ set(LIB_NAME ${NG_PREFIX}qgis_gui)
 
 add_library(${LIB_NAME} SHARED ${QGIS_GUI_SRCS} ${QGIS_GUI_MOC_SRCS} ${QGIS_GUI_HDRS} ${QGIS_GUI_MOC_HDRS})
 
-target_compile_definitions (${LIB_NAME} PRIVATE "GUI_EXPORT=${DLLEXPORT}")
-target_compile_definitions (${LIB_NAME} INTERFACE "GUI_EXPORT=${DLLIMPORT}")
+target_compile_definitions(${LIB_NAME} PRIVATE "GUI_EXPORT=${DLLEXPORT}")
+target_compile_definitions(${LIB_NAME} INTERFACE "GUI_EXPORT=${DLLIMPORT}")
 set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
+
+
+if(OSX_FRAMEWORK)
+
+    find_library(CARBON_FRAMEWORK Carbon)
+    find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
+
+    set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${CARBON_FRAMEWORK} ${COREFOUNDATION_FRAMEWORK})
+endif()
 
 target_link_extlibraries(${LIB_NAME})
 add_dependencies(${LIB_NAME} ${NG_PREFIX}qgis_core)
