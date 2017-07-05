@@ -1909,7 +1909,7 @@ void NGQgisApp::updatesSearchStop(bool updatesAvailable)
 
       QPushButton* upgrade = new QPushButton(this->tr("Update"), banner);
       bannerLayout->addWidget(upgrade);
-      connect(upgrade, SIGNAL(clicked(bool)), mNGUpdater, SLOT(startUpdate()));
+      connect(upgrade, SIGNAL(clicked(bool)), this, SLOT(startUpdate()));
 
   }
   else
@@ -1928,6 +1928,22 @@ void NGQgisApp::updatesSearchStop(bool updatesAvailable)
   {
     QApplication::setOverrideCursor(Qt::ArrowCursor);
   }
+}
+
+void NGQgisApp::startUpdate()
+{
+    QMessageBox::StandardButton answer = QMessageBox::question(
+		(QWidget*)parent(),
+		tr("Close QGIS?"),
+		tr("For start update you must close QGIS. Close?"),
+		QMessageBox::Yes | QMessageBox::No
+	);
+	
+	if ( QMessageBox::Yes == answer )
+	{
+		if(saveDirty())
+			mNGUpdater->startUpdate();
+    }
 }
 
 void NGQgisApp::increaseBrightness()

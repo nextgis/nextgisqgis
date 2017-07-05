@@ -81,6 +81,7 @@ private:
 private slots:
     void updatesSearchStart();
     void updatesSearchStop(bool updatesAvailable);
+	void startUpdate();
 };
 
 #endif // NGCUSTOMIZATION_H
