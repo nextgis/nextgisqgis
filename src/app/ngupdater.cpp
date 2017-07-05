@@ -122,19 +122,23 @@ void NGQgisUpdater::maintainerReadyReadStandardError()
 
 void NGQgisUpdater::startUpdate()
 {
-  QString program = updateProgrammPath();
-  QStringList arguments;
-  arguments << "--updater";
-  
-  int status = QProcess::execute(
-    program,
-    arguments
-  );
+	QString program = updateProgrammPath();
+	QStringList arguments;
+	arguments << "--updater";
+	arguments << "--launch";
+	arguments << qApp->applicationFilePath();
+	if(qApp->arguments().size() > 1)
+	{
+		arguments << "--launch-options";
+		arguments << qApp->arguments().mid(1);		
+	}
 
-  if(status == 0)
-  {
-    QMessageBox::information((QWidget*)parent(), tr("Updates installed"), tr("Please, restart QGIS."));
-  }
+	qApp->exit();
+
+	QProcess::startDetached(
+		program,
+		arguments
+	);
 }
 
 const QStringList NGQgisUpdater::ignorePackages()

@@ -1,4 +1,4 @@
-/******************************************************************************
+	/******************************************************************************
  * Project: NextGIS QGIS
  * Purpose: NextGIS QGIS Customization
  * Author:  Alexander Lisovenko, alexander.lisovenko@nextgis.com
@@ -35,6 +35,7 @@ public:
     virtual ~NGQgisUpdater();
 
     void checkUpdates();
+	void startUpdate();
 signals:
     void updatesInfoGettingStarted();
     void updatesInfoGettingFinished(bool updatesAvailable);
@@ -54,7 +55,6 @@ private slots:
     void maintainerFinished(int code, QProcess::ExitStatus status);
     void maintainerReadyReadStandardOutput();
     void maintainerReadyReadStandardError();
-    void startUpdate();
 };
 
 #endif //NGUPDATER_H
