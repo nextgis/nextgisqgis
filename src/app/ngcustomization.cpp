@@ -1935,14 +1935,18 @@ void NGQgisApp::startUpdate()
     QMessageBox::StandardButton answer = QMessageBox::question(
 		(QWidget*)parent(),
 		tr("Close QGIS?"),
-		tr("For start update you must close QGIS. Close?"),
+		tr("We'll need to close QGIS to start updating. OK?"),
 		QMessageBox::Yes | QMessageBox::No
 	);
 	
 	if ( QMessageBox::Yes == answer )
 	{
 		if(saveDirty())
-			mNGUpdater->startUpdate();
+        {
+            closeProject();
+            mNGUpdater->startUpdate();
+            qApp->exit( 0 );
+        }
     }
 }
 

@@ -132,9 +132,6 @@ void NGQgisUpdater::startUpdate()
 		arguments << "--launch-options";
 		arguments << qApp->arguments().mid(1);		
 	}
-
-	qApp->exit();
-
 	QProcess::startDetached(
 		program,
 		arguments
