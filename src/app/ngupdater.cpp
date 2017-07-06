@@ -120,17 +120,17 @@ void NGQgisUpdater::maintainerReadyReadStandardError()
 {
 }
 
-void NGQgisUpdater::startUpdate()
+void NGQgisUpdater::startUpdate(QString projectPath)
 {
 	QString program = updateProgrammPath();
 	QStringList arguments;
 	arguments << "--updater";
 	arguments << "--launch";
 	arguments << qApp->applicationFilePath();
-	if(qApp->arguments().size() > 1)
+	if(!projectPath.isEmpty())
 	{
 		arguments << "--launch-options";
-		arguments << qApp->arguments().mid(1);		
+		arguments << projectPath;
 	}
 	QProcess::startDetached(
 		program,

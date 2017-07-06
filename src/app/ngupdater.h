@@ -35,7 +35,7 @@ public:
     virtual ~NGQgisUpdater();
 
     void checkUpdates();
-	void startUpdate();
+	void startUpdate(QString projectPath);
 signals:
     void updatesInfoGettingStarted();
     void updatesInfoGettingFinished(bool updatesAvailable);

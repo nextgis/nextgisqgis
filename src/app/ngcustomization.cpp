@@ -1936,15 +1936,18 @@ void NGQgisApp::startUpdate()
 		(QWidget*)parent(),
 		tr("Close QGIS?"),
 		tr("We'll need to close QGIS to start updating. OK?"),
-		QMessageBox::Yes | QMessageBox::No
+		QMessageBox::Cancel | QMessageBox::Ok
 	);
 	
-	if ( QMessageBox::Yes == answer )
+	if ( QMessageBox::Ok == answer )
 	{
 		if(saveDirty())
         {
             closeProject();
-            mNGUpdater->startUpdate();
+			QString lastProject;
+			if(!mRecentProjects.isEmpty())
+				lastProject = mRecentProjects.at( 0 ).path;
+            mNGUpdater->startUpdate(lastProject);
             qApp->exit( 0 );
         }
     }
