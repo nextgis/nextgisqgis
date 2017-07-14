@@ -87,11 +87,14 @@
 #include <QSplashScreen>
 #include <QStackedWidget>
 #include <QDesktopServices>
+#include <QtXml>
 
 // Editor widgets
 #include "qgseditorwidgetregistry.h"
 
 #include "ngsaboutdialog.h"
+
+#include "ngupdater.h"
 
 #ifdef Q_OS_MACX
 #include <ApplicationServices/ApplicationServices.h>
@@ -457,6 +460,10 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
     fileNewBlank();
 
     NGQgsApplication::setFileOpenEventReceiver( this );
+
+    mNGUpdater = new NGQgisUpdater(this);
+    connect(mNGUpdater, SIGNAL(updatesInfoGettingStarted()), this, SLOT(updatesSearchStart()));
+    connect(mNGUpdater, SIGNAL(updatesInfoGettingFinished(bool)), this, SLOT(updatesSearchStop(bool)));
 }
 
 NGQgisApp::~NGQgisApp()
@@ -809,7 +816,7 @@ void NGQgisApp::createActions()
   connect( mActionReportaBug, SIGNAL( triggered() ), this, SLOT( reportaBug() ) );
   connect( mActionNeedSupport, SIGNAL( triggered() ), this, SLOT( supportProviders() ) );
   connect( mActionQgisHomePage, SIGNAL( triggered() ), this, SLOT( helpQgisHomePage() ) );
-//  connect( mActionCheckQgisVersion, SIGNAL( triggered() ), this, SLOT( checkQgisVersion() ) );
+  connect( mActionCheckQgisVersion, SIGNAL( triggered() ), this, SLOT( checkQgisVersion() ) );
   connect( mActionAbout, SIGNAL( triggered() ), this, SLOT( about() ) );
 //  connect( mActionSponsors, SIGNAL( triggered() ), this, SLOT( sponsors() ) );
 
@@ -819,6 +826,11 @@ void NGQgisApp::createActions()
   connect( mActionMoveLabel, SIGNAL( triggered() ), this, SLOT( moveLabel() ) );
   connect( mActionRotateLabel, SIGNAL( triggered() ), this, SLOT( rotateLabel() ) );
   connect( mActionChangeLabelProperties, SIGNAL( triggered() ), this, SLOT( changeLabelProperties() ) );
+
+  QSettings settings;
+  if( settings.value( "/qgis/checkVersion", true ).toBool() )
+    connect( this, SIGNAL( initializationCompleted() ), this, SLOT(checkQgisVersion()));
+
 
 #ifndef HAVE_POSTGRESQL
   delete mActionAddPgLayer;
@@ -1863,6 +1875,82 @@ void NGQgisApp::checkQgisVersion()
 
   connect( versionInfo, SIGNAL( versionInfoAvailable() ), this, SLOT( versionReplyFinished() ) );
   versionInfo->checkVersion();*/
+
+  QObject* obj = sender();
+  mUpdatesCheckStartByUser = (obj == mActionCheckQgisVersion);
+  
+  mNGUpdater->checkUpdates();
+
+  if (mUpdatesCheckStartByUser)
+  {
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+  }
+}
+
+void NGQgisApp::updatesSearchStart()
+{
+}
+
+void NGQgisApp::updatesSearchStop(bool updatesAvailable)
+{
+  if (!updatesAvailable && !mUpdatesCheckStartByUser)
+    return;
+
+  QWidget* banner = new QWidget(this->messageBar());
+  QHBoxLayout* bannerLayout = new QHBoxLayout(banner);
+  bannerLayout->setContentsMargins(0, 0, 0, 0);
+  bannerLayout->setSpacing(20);
+
+  if ( updatesAvailable )
+  {
+      QLabel* msg = new QLabel(QString("<strong>%1</strong>").arg(this->tr("QGIS updates are available")), banner);
+      msg->setTextFormat(Qt::RichText);
+      bannerLayout->addWidget(msg);
+
+      QPushButton* upgrade = new QPushButton(this->tr("Update"), banner);
+      bannerLayout->addWidget(upgrade);
+      connect(upgrade, SIGNAL(clicked(bool)), this, SLOT(startUpdate()));
+
+  }
+  else
+  {
+      QLabel* msg = new QLabel(QString("<strong>%1</strong>").arg(this->tr("There are no available QGIS updates")), banner);
+      msg->setTextFormat(Qt::RichText);
+      bannerLayout->addWidget(msg);
+  }
+
+  bannerLayout->insertStretch(-1, 1);
+
+  QgsMessageBarItem* item = new QgsMessageBarItem(banner);
+  this->messageBar()->pushItem(item);
+
+  if (mUpdatesCheckStartByUser)
+  {
+    QApplication::setOverrideCursor(Qt::ArrowCursor);
+  }
+}
+
+void NGQgisApp::startUpdate()
+{
+    QMessageBox::StandardButton answer = QMessageBox::question(
+		(QWidget*)parent(),
+		tr("Close QGIS?"),
+		tr("We'll need to close QGIS to start updating. OK?"),
+		QMessageBox::Cancel | QMessageBox::Ok
+	);
+	
+	if ( QMessageBox::Ok == answer )
+	{
+		if(saveDirty())
+        {
+            closeProject();
+			QString lastProject;
+			if(!mRecentProjects.isEmpty())
+				lastProject = mRecentProjects.at( 0 ).path;
+            mNGUpdater->startUpdate(lastProject);
+            qApp->exit( 0 );
+        }
+    }
 }
 
 void NGQgisApp::increaseBrightness()

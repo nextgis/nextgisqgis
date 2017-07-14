@@ -361,11 +361,13 @@ set(QGIS_APP_MOC_HDRS
 set(QGIS_APP_SRCS ${QGIS_APP_SRCS}
     ngcustomization.cpp
     ngsaboutdialog.cpp
+    ngupdater.cpp
 )
 
 set(QGIS_APP_MOC_HDRS ${QGIS_APP_MOC_HDRS}
     ngcustomization.h
     ngsaboutdialog.h
+    ngupdater.h
 )
 
 set(IMAGE_RCCS ../../images/images.qrc)
