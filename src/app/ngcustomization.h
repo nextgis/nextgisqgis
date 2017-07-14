@@ -22,6 +22,8 @@
 #define NGCUSTOMIZATION_H
 
 #include "qgisapp.h"
+#include "ngupdater.h"
+
 
 class APP_EXPORT NGQgisApp : public QgisApp
 {
@@ -71,6 +73,15 @@ protected:
     virtual bool addProject(const QString &projectFile) override;
     virtual bool fileSave() override;
     virtual void fileSaveAs() override;
+
+private:   
+    bool mUpdatesCheckStartByUser;
+    NGQgisUpdater* mNGUpdater;
+
+private slots:
+    void updatesSearchStart();
+    void updatesSearchStop(bool updatesAvailable);
+	void startUpdate();
 };
 
 #endif // NGCUSTOMIZATION_H
