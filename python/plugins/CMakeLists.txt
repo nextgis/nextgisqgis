@@ -27,8 +27,19 @@
 set(QGIS_PYPLUGINS_DIR ${QGIS_DATA_SUBDIR}/python/plugins)
 set(QGIS_SOURCE_PYPLUGINS_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+FILE(WRITE ${CMAKE_BINARY_DIR}/stagecount 0)
+
 macro(build_plugin SUBDIR)
+    FILE(READ ${CMAKE_BINARY_DIR}/stagecount n)
+    MATH(EXPR n "${n}+1")
+    FILE(WRITE ${CMAKE_BINARY_DIR}/stagecount ${n})
+  
     string(REPLACE "/" "_" NAME ${SUBDIR})
+    #string(MD5 SUBDIR_HASH ${SUBDIR})
+
+    string(REPLACE "/" ";" DIRS ${SUBDIR})
+    list(GET DIRS 0 PLUGIN_NAME)
+    
     file(GLOB ${NAME}_PY_FILES *.py)
     file(GLOB ${NAME}_UI_FILES *.ui)
     file(GLOB ${NAME}_QRC_FILES *.qrc)
@@ -44,10 +55,18 @@ macro(build_plugin SUBDIR)
         PYQT_ADD_RESOURCES(${NAME}_PYRC_FILES ${${NAME}_QRC_FILES})
     endif()
 
-    if(${NAME}_PYUI_FILES OR ${NAME}_PYRC_FILES)
-        add_custom_target(${NAME}-installer ALL DEPENDS ${${NAME}_PYUI_FILES} ${${NAME}_PYRC_FILES})
+    if(NOT TARGET ${PLUGIN_NAME}-installer)
+        message(">>> New ${PLUGIN_NAME}-installer")
+        add_custom_target(${PLUGIN_NAME}-installer)
     endif()
-
+    
+    if(${NAME}_PYUI_FILES OR ${NAME}_PYRC_FILES)
+        message(">>>     Sub ${PLUGIN_NAME}-installer-${n}")
+        add_custom_target(${PLUGIN_NAME}-installer-${n} ALL DEPENDS ${${NAME}_PYUI_FILES} ${${NAME}_PYRC_FILES})
+        add_dependencies(${PLUGIN_NAME}-installer ${PLUGIN_NAME}-installer-${n})
+    endif()
+    
+    
     foreach(INSTALL_FILE ${${NAME}_PY_FILES} ${${NAME}_IMAGE_FILES} ${${NAME}_META_FILES} ${${NAME}_PYUI_FILES} ${${NAME}_PYRC_FILES} ${${NAME}_UI_FILES} ${${NAME}_QML_FILES})
         install(FILES ${INSTALL_FILE} DESTINATION "${QGIS_PYPLUGINS_DIR}/${SUBDIR}/")
     endforeach()
