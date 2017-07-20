@@ -956,7 +956,7 @@ QString QgsPostgresConn::quotedValue( const QVariant& value )
   }
 }
 
-PGresult *QgsPostgresConn::PQexec( const QString& query, bool logError )
+PGresult *QgsPostgresConn::PQexec( const QString& query, bool logError, bool retry )
 {
   if ( PQstatus() != CONNECTION_OK )
   {
@@ -994,6 +994,19 @@ PGresult *QgsPostgresConn::PQexec( const QString& query, bool logError )
         QgsDebugMsg( QString( "Not logged erroneous query: %1 returned %2 [%3]" )
                      .arg( query ).arg( errorStatus ).arg( PQresultErrorMessage( res ) ) );
       }
+    }
+  }
+  else if ( retry )
+  {
+    QgsMessageLog::logMessage( tr( "resetting bad connection." ), tr( "PostGIS" ) );
+    ::PQreset( mConn );
+    if ( PQstatus() == CONNECTION_OK )
+    {
+      return PQexec( query, logError, false );
+    }
+    else
+    {
+      QgsMessageLog::logMessage( tr( "connection still bad after reset." ), tr( "PostGIS" ) );
     }
   }
   else if ( logError )

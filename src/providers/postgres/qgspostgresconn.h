@@ -243,7 +243,7 @@ class QgsPostgresConn : public QObject
     //
 
     // run a query and check for errors
-    PGresult *PQexec( const QString& query, bool logError = true );
+    PGresult *PQexec( const QString& query, bool logError = true, bool retry = true );
     void PQfinish();
     QString PQerrorMessage();
     int PQsendQuery( const QString& query );
