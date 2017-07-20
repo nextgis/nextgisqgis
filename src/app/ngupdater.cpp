@@ -54,9 +54,8 @@ NGQgisUpdater::~NGQgisUpdater()
 const QString NGQgisUpdater::updateProgrammPath()
 {
 #ifdef Q_OS_WIN
-    return QFileInfo(
-    QApplication::instance()->applicationDirPath()
-  ).absolutePath() + QDir::separator() + "nextgisupdater.exe";
+    return NGQgsApplication::prefixPath() + QDir::separator() +
+            "nextgisupdater.exe";
 #elif defined(Q_OS_MACX)
     return NGQgsApplication::prefixPath() + QDir::separator() +
             "nextgisupdater.app/Contents/MacOS/nextgisupdater";
@@ -100,7 +99,7 @@ void NGQgisUpdater::maintainerFinished(int code, QProcess::ExitStatus status)
     QProcess* prc = (QProcess*) sender();
 
     QByteArray data = prc->readAllStandardOutput();
-    QXmlStreamReader xml(data);
+    QXmlStreamReader xml(QString::fromUtf8(data));
     while (!xml.atEnd() && !xml.hasError())
     {
         QXmlStreamReader::TokenType token = xml.readNext();
