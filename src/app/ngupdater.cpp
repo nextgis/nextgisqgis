@@ -23,6 +23,8 @@
 
 #include "qgsmessagebar.h"
 #include "qgsmessagebaritem.h"
+#include "qgsmessagelog.h"
+#include "ngqgsapplication.h"
 
 #include <QFile>
 #include <QDir>
@@ -51,14 +53,20 @@ NGQgisUpdater::~NGQgisUpdater()
 
 const QString NGQgisUpdater::updateProgrammPath()
 {
-  return QFileInfo(
+#ifdef Q_OS_WIN
+    return QFileInfo(
     QApplication::instance()->applicationDirPath()
   ).absolutePath() + QDir::separator() + "nextgisupdater.exe";
+#elif defined(Q_OS_MACX)
+    return NGQgsApplication::prefixPath() + QDir::separator() +
+            "nextgisupdater.app/Contents/MacOS/nextgisupdater";
+#else
+#error "Linux is not supported yet!"
+#endif
 }
 
 void NGQgisUpdater::checkUpdates()
 {
-#ifdef Q_OS_WIN32
     if (mMaintainerProcess->state() != QProcess::NotRunning)
     {
         return;
@@ -68,9 +76,10 @@ void NGQgisUpdater::checkUpdates()
     QStringList args;
     args << "--checkupdates";
 
+    QgsMessageLog::logMessage( QString(tr("Started check updates %1 %2")).arg(path).arg("--checkupdates"),
+                               QString::null, QgsMessageLog::INFO );
 
     mMaintainerProcess->start(path, args);
-#endif
 }
 
 void NGQgisUpdater::maintainerStrated()
