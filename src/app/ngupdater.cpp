@@ -76,8 +76,13 @@ void NGQgisUpdater::checkUpdates()
     QStringList args;
     args << "--checkupdates";
 
-    QgsMessageLog::logMessage( QString(tr("Started check updates %1 %2")).arg(path).arg("--checkupdates"),
+    QgsMessageLog::logMessage( tr("Started check updates ..."),
                                QString::null, QgsMessageLog::INFO );
+
+
+
+//    QgsMessageLog::logMessage( QString(tr("Started check updates %1 %2")).arg(path).arg("--checkupdates"),
+//                               QString::null, QgsMessageLog::INFO );
 
     mMaintainerProcess->start(path, args);
 }
@@ -141,6 +146,7 @@ void NGQgisUpdater::startUpdate(QString projectPath)
 		arguments << "--launch-options";
 		arguments << projectPath;
 	}
+
 	QProcess::startDetached(
 		program,
 		arguments
