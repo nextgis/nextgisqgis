@@ -1932,25 +1932,25 @@ void NGQgisApp::updatesSearchStop(bool updatesAvailable)
 
 void NGQgisApp::startUpdate()
 {
-    QMessageBox::StandardButton answer = QMessageBox::question(
-		(QWidget*)parent(),
-		tr("Close QGIS?"),
-		tr("We'll need to close QGIS to start updating. OK?"),
-		QMessageBox::Cancel | QMessageBox::Ok
-	);
-	
-	if ( QMessageBox::Ok == answer )
-	{
-		if(saveDirty())
-        {
-            closeProject();
-			QString lastProject;
-			if(!mRecentProjects.isEmpty())
-				lastProject = mRecentProjects.at( 0 ).path;
-            mNGUpdater->startUpdate(lastProject);
-            qApp->exit( 0 );
-        }
+  QMessageBox::StandardButton answer = QMessageBox::question(
+    (QWidget*)parent(),
+    tr("Close QGIS?"),
+    tr("We'll need to close QGIS to start updating. OK?"),
+    QMessageBox::Cancel | QMessageBox::Ok
+  );
+  
+  if ( QMessageBox::Ok == answer )
+  {
+    if(saveDirty())
+    {
+      QString currentProject = QgsProject::instance()->fileName();
+      closeProject();
+      mNGUpdater->startUpdate(
+        currentProject
+      );
+      qApp->exit( 0 );
     }
+  }
 }
 
 void NGQgisApp::increaseBrightness()
