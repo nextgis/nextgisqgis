@@ -23,6 +23,10 @@
 #include <QRegExp>
 #include <QMetaType>
 #include <QVariant>
+#include <QDateTime>
+#include <QDate>
+#include <QTime>
+#include <QHash>
 #include <stdlib.h>
 #include <cfloat>
 #include <cmath>
@@ -39,11 +43,11 @@ class CORE_EXPORT QGis
     // Version constants
     //
     // Version string
-    static const char* QGIS_VERSION;
+    static QString QGIS_VERSION;
     // Version number used for comparing versions using the "Check QGIS Version" function
     static const int QGIS_VERSION_INT;
     // Release name
-    static const char* QGIS_RELEASE_NAME;
+    static QString QGIS_RELEASE_NAME;
     // The development version
     static const char* QGIS_DEV_VERSION;
 
@@ -154,16 +158,20 @@ class CORE_EXPORT QGis
     //TODO QGIS 3.0 - clean up and move to QgsUnitTypes and rename to DistanceUnit
     enum UnitType
     {
-      Meters = 0,
-      Feet = 1,
-      Degrees = 2, //for 1.0 api backwards compatibility
-      UnknownUnit = 3,
+      Meters = 0, /*!< meters */
+      Feet = 1, /*!< imperial feet */
+      Degrees = 2, /*!< degrees, for planar geographic CRS distance measurements */ //for 1.0 api backwards compatibility
+      NauticalMiles = 7, /*!< nautical miles */
+      Kilometers = 8, /*!< kilometers */
+      Yards = 9, /*!< imperial yards */
+      Miles = 10, /*!< terrestial miles */
+
+      UnknownUnit = 3, /*!< unknown distance unit */
 
       // for [1.4;1.8] api compatibility
       DecimalDegrees = 2,         // was 2
       DegreesMinutesSeconds = 2,  // was 4
       DegreesDecimalMinutes = 2,  // was 5
-      NauticalMiles = 7
     };
 
     //! Provides the canonical name of the type value
@@ -242,6 +250,12 @@ class CORE_EXPORT QGis
      *  @note added in 2.3 */
     static double DEFAULT_HIGHLIGHT_MIN_WIDTH_MM;
 
+    /** Fudge factor used to compare two scales. The code is often going from scale to scale
+     *  denominator. So it looses precision and, when a limit is inclusive, can lead to errors.
+     *  To avoid that, use this factor instead of using <= or >=.
+     * @note added in 2.15*/
+    static double SCALE_PRECISION;
+
   private:
     // String representation of unit types (set in qgis.cpp)
     static const char *qgisUnitTypes[];
@@ -268,9 +282,62 @@ inline void ( *cast_to_fptr( void *p ) )()
 }
 #endif
 
-//
-// return a string representation of a double
-//
+/** \ingroup core
+ * RAII signal blocking class. Used for temporarily blocking signals from a QObject
+ * for the lifetime of QgsSignalBlocker object.
+ * @see whileBlocking()
+ * @note added in QGIS 2.16
+ * @note not available in Python bindings
+ */
+// based on Boojum's code from http://stackoverflow.com/questions/3556687/prevent-firing-signals-in-qt
+template<class Object> class QgsSignalBlocker
+{
+  public:
+
+    /** Constructor for QgsSignalBlocker
+     * @param object QObject to block signals from
+     */
+    explicit QgsSignalBlocker( Object* object )
+        : mObject( object )
+        , mPreviousState( object->blockSignals( true ) )
+    {}
+
+    ~QgsSignalBlocker()
+    {
+      mObject->blockSignals( mPreviousState );
+    }
+
+    //! Returns pointer to blocked QObject
+    Object* operator->() { return mObject; }
+
+  private:
+
+    Object* mObject;
+    bool mPreviousState;
+
+};
+
+/** Temporarily blocks signals from a QObject while calling a single method from the object.
+ *
+ * Usage:
+ *   whileBlocking( checkBox )->setChecked( true );
+ *   whileBlocking( spinBox )->setValue( 50 );
+ *
+ * No signals will be emitted when calling these methods.
+ *
+ * @note added in QGIS 2.16
+ * @see QgsSignalBlocker
+ * @note not available in Python bindings
+ */
+// based on Boojum's code from http://stackoverflow.com/questions/3556687/prevent-firing-signals-in-qt
+template<class Object> inline QgsSignalBlocker<Object> whileBlocking( Object* object )
+{
+  return QgsSignalBlocker<Object>( object );
+}
+
+//! Returns a string representation of a double
+//! @param a double value
+//! @param precision number of decimal places to retain
 inline QString qgsDoubleToString( double a, int precision = 17 )
 {
   if ( precision )
@@ -279,18 +346,27 @@ inline QString qgsDoubleToString( double a, int precision = 17 )
     return QString::number( a, 'f', precision );
 }
 
-//
-// compare two doubles (but allow some difference)
-//
+//! Compare two doubles (but allow some difference)
+//! @param a first double
+//! @param b second double
+//! @param epsilon maximum difference allowable between doubles
 inline bool qgsDoubleNear( double a, double b, double epsilon = 4 * DBL_EPSILON )
 {
   const double diff = a - b;
   return diff > -epsilon && diff <= epsilon;
 }
 
-//
-// compare two doubles using specified number of significant digits
-//
+//! Compare two floats (but allow some difference)
+//! @param a first float
+//! @param b second float
+//! @param epsilon maximum difference allowable between floats
+inline bool qgsFloatNear( float a, float b, float epsilon = 4 * FLT_EPSILON )
+{
+  const float diff = a - b;
+  return diff > -epsilon && diff <= epsilon;
+}
+
+//! Compare two doubles using specified number of significant digits
 inline bool qgsDoubleNearSig( double a, double b, int significantDigits = 10 )
 {
   // The most simple would be to print numbers as %.xe and compare as strings
@@ -306,13 +382,37 @@ inline bool qgsDoubleNearSig( double a, double b, int significantDigits = 10 )
          qRound( ar * pow( 10.0, significantDigits ) ) == qRound( br * pow( 10.0, significantDigits ) );
 }
 
-//
-// a round function which returns a double to guard against overflows
-//
+//! A round function which returns a double to guard against overflows
 inline double qgsRound( double x )
 {
   return x < 0.0 ? std::ceil( x - 0.5 ) : std::floor( x + 0.5 );
 }
+
+// Add missing qHash implementation for QDate, QTime, QDateTime
+// implementations taken from upstream Qt5 versions
+#if QT_VERSION < 0x050000
+
+//! Hash implementation for QDateTime
+//! @note not available in Python bindings
+inline uint qHash( const QDateTime &key )
+{
+  return qHash( key.toMSecsSinceEpoch() );
+}
+
+//! Hash implementation for QDate
+//! @note not available in Python bindings
+inline uint qHash( const QDate &key )
+{
+  return qHash( key.toJulianDay() );
+}
+
+//! Hash implementation for QTime
+//! @note not available in Python bindings
+inline uint qHash( const QTime &key )
+{
+  return QTime( 0, 0, 0, 0 ).msecsTo( key );
+}
+#endif
 
 //! Compares two QVariant values and returns whether the first is less than the second.
 //! Useful for sorting lists of variants, correctly handling sorting of the various

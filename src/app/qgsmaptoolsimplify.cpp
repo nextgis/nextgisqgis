@@ -52,6 +52,12 @@ void QgsSimplifyDialog::enableOkButton( bool enabled )
   okButton->setEnabled( enabled );
 }
 
+void QgsSimplifyDialog::closeEvent( QCloseEvent* e )
+{
+  QDialog::closeEvent( e );
+  mTool->clearSelection();
+}
+
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -170,19 +176,32 @@ void QgsMapToolSimplify::storeSimplified()
   double layerTolerance = QgsTolerance::toleranceInMapUnits( mTolerance, vlayer, mCanvas->mapSettings(), mToleranceUnits );
 
   vlayer->beginEditCommand( tr( "Geometry simplified" ) );
+  bool success = true;
   Q_FOREACH ( const QgsFeature& feat, mSelectedFeatures )
   {
     if ( QgsGeometry* g = feat.constGeometry()->simplify( layerTolerance ) )
     {
-      vlayer->changeGeometry( feat.id(), g );
+      if ( !vlayer->changeGeometry( feat.id(), g ) )
+      {
+        success = false;
+      }
       delete g;
+
+      if ( !success )
+        break;
     }
   }
-  vlayer->endEditCommand();
+  if ( success )
+  {
+    vlayer->endEditCommand();
+    clearSelection();
+  }
+  else
+  {
+    vlayer->destroyEditCommand();
+  }
 
-  clearSelection();
-
-  mCanvas->refresh();
+  vlayer->triggerRepaint();
 }
 
 
@@ -256,6 +275,12 @@ void QgsMapToolSimplify::canvasReleaseEvent( QgsMapMouseEvent* e )
   }
 
   mDragging = false;
+
+  if ( mSelectedFeatures.isEmpty() )
+  {
+    emit messageEmitted( tr( "Could not find a nearby feature in the current layer." ) );
+    return;
+  }
 
   // count vertices, prepare rubber bands
   mOriginalVertexCount = 0;

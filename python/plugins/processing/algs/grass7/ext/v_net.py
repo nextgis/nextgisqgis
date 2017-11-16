@@ -30,7 +30,6 @@ __copyright__ = '(C) 2015, Médéric Ribreux'
 __revision__ = '$Format:%H$'
 
 import os
-from processing.core.parameters import getParameterFromString, ParameterVector, ParameterNumber, ParameterBoolean, ParameterString
 
 
 def incorporatePoints(alg, pointLayerName=u'points', networkLayerName=u'input'):
@@ -93,7 +92,7 @@ def variableOutput(alg, params, nocats=True):
             continue
 
         out = alg.getOutputValue(outputName)
-        command = u"v.out.ogr {} type={} layer={} -s -e input={} output=\"{}\" format=ESRI_Shapefile output_layer={}".format(
+        command = u"v.out.ogr {} type={} layer={} -s -e input={} output=\"{}\" format=ESRI_Shapefile output_layer={} --overwrite".format(
             u"" if typeList[0] == u"line" and nocats else u"-c",
             typeList[0],
             typeList[1],

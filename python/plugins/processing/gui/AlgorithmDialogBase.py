@@ -28,16 +28,15 @@ __revision__ = '$Format:%H$'
 import os
 import webbrowser
 
-from PyQt4 import uic
-from PyQt4.QtCore import QCoreApplication, QSettings, QByteArray, SIGNAL, QUrl
-from PyQt4.QtGui import QApplication, QDialogButtonBox, QDesktopWidget
-from PyQt4.QtNetwork import QNetworkRequest, QNetworkReply
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import QCoreApplication, QSettings, QByteArray, QUrl
+from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QDesktopWidget
+from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 
 from qgis.utils import iface
-from qgis.core import *
+from qgis.core import QgsNetworkAccessManager
 
 from processing.core.ProcessingConfig import ProcessingConfig
-from processing.gui import AlgorithmClassification
 
 pluginPath = os.path.split(os.path.dirname(__file__))[0]
 WIDGET, BASE = uic.loadUiType(
@@ -63,11 +62,11 @@ class AlgorithmDialogBase(BASE, WIDGET):
 
         self.btnClose = self.buttonBox.button(QDialogButtonBox.Close)
 
-        self.setWindowTitle(AlgorithmClassification.getDisplayName(self.alg))
+        self.setWindowTitle(self.alg.displayName())
 
-        #~ desktop = QDesktopWidget()
-        #~ if desktop.physicalDpiX() > 96:
-        #~     self.textHelp.setZoomFactor(desktop.physicalDpiX() / 96)
+        # ~ desktop = QDesktopWidget()
+        # ~ if desktop.physicalDpiX() > 96:
+        # ~ self.txtHelp.setZoomFactor(desktop.physicalDpiX() / 96)
 
         algHelp = self.alg.shortHelp()
         if algHelp is None:
@@ -90,17 +89,22 @@ class AlgorithmDialogBase(BASE, WIDGET):
 
         isText, algHelp = self.alg.help()
         if algHelp is not None:
-            algHelp = algHelp if isText else QUrl(algHelp)
             try:
                 if isText:
                     self.txtHelp.setHtml(algHelp)
                 else:
-                    html = self.tr('<p>Downloading algorithm help... Please wait.</p>')
-                    self.txtHelp.setHtml(html)
-                    rq = QNetworkRequest(algHelp)
-                    self.reply = QgsNetworkAccessManager.instance().get(rq)
-                    self.reply.finished.connect(self.requestFinished)
-            except Exception, e:
+                    if algHelp.startswith('http'):
+                        html = self.tr('<p>Downloading algorithm help... Please wait.</p>')
+                        self.txtHelp.setHtml(html)
+                        rq = QNetworkRequest(QUrl(algHelp))
+                        self.reply = QgsNetworkAccessManager.instance().get(rq)
+                        self.reply.finished.connect(self.requestFinished)
+                    else:
+                        if algHelp.startswith('file://'):
+                            p = os.path.dirname(algHelp[7:])
+                            self.txtHelp.setSearchPaths([p])
+                            self.txtHelp.setSource(QUrl(algHelp))
+            except Exception as e:
                 self.tabWidget.removeTab(2)
         else:
             self.tabWidget.removeTab(2)

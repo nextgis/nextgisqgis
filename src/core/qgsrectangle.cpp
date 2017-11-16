@@ -30,7 +30,10 @@
 #include "qgslogger.h"
 
 QgsRectangle::QgsRectangle( double newxmin, double newymin, double newxmax, double newymax )
-    : xmin( newxmin ), ymin( newymin ), xmax( newxmax ), ymax( newymax )
+    : xmin( newxmin )
+    , ymin( newymin )
+    , xmax( newxmax )
+    , ymax( newymax )
 {
   normalize();
 }
@@ -191,14 +194,14 @@ bool QgsRectangle::contains( const QgsPoint &p ) const
          ymin <= p.y() && p.y() <= ymax;
 }
 
-void QgsRectangle::combineExtentWith( QgsRectangle * rect )
+void QgsRectangle::combineExtentWith( const QgsRectangle &rect )
 {
 
-  xmin = (( xmin < rect->xMinimum() ) ? xmin : rect->xMinimum() );
-  xmax = (( xmax > rect->xMaximum() ) ? xmax : rect->xMaximum() );
+  xmin = (( xmin < rect.xMinimum() ) ? xmin : rect.xMinimum() );
+  xmax = (( xmax > rect.xMaximum() ) ? xmax : rect.xMaximum() );
 
-  ymin = (( ymin < rect->yMinimum() ) ? ymin : rect->yMinimum() );
-  ymax = (( ymax > rect->yMaximum() ) ? ymax : rect->yMaximum() );
+  ymin = (( ymin < rect.yMinimum() ) ? ymin : rect.yMinimum() );
+  ymax = (( ymax > rect.yMaximum() ) ? ymax : rect.yMaximum() );
 
 }
 

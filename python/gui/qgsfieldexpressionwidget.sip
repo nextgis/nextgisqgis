@@ -53,6 +53,17 @@ class QgsFieldExpressionWidget : QWidget
      */
     QString asExpression() const;
 
+    /**
+     * Returns the currently selected field or expression. If a field is currently selected, the returned
+     * value will be converted to a valid expression referencing this field (ie enclosing the field name with
+     * appropriate quotations).
+     *
+     * Alias for asExpression()
+     *
+     * @note added in QGIS 2.18
+     */
+    QString expression() const;
+
     //! Returns the currently used layer
     QgsVectorLayer* layer() const;
 
@@ -84,8 +95,19 @@ class QgsFieldExpressionWidget : QWidget
     //! convenience slot to connect QgsMapLayerComboBox layer signal
     void setLayer( QgsMapLayer* layer );
 
+    //! sets the current row in the widget
+    void setRow( int row );
+
     //! sets the current field or expression in the widget
     void setField( const QString &fieldName );
+
+    /**
+     * Sets the current expression text and if applicable also the field.
+     * Alias for setField.
+     *
+     * @note Added in QGIS 2.18
+     */
+    void setExpression( const QString& expression );
 
   protected slots:
     //! open the expression dialog to edit the current or add a new expression

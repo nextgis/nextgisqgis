@@ -27,7 +27,7 @@ using namespace SpatialIndex;
 
 
 
-/**
+/** \ingroup core
  * \class QgisVisitor
  * \brief Custom visitor that adds found features to list.
  * \note not available in Python bindings
@@ -53,7 +53,7 @@ class QgisVisitor : public SpatialIndex::IVisitor
     QList<QgsFeatureId>& mList;
 };
 
-/**
+/** \ingroup core
  * \class QgsSpatialIndexCopyVisitor
  * \note not available in Python bindings
  */
@@ -82,7 +82,8 @@ class QgsSpatialIndexCopyVisitor : public SpatialIndex::IVisitor
 };
 
 
-/** \class QgsFeatureIteratorDataStream
+/** \ingroup core
+ * \class QgsFeatureIteratorDataStream
  * \brief Utility class for bulk loading of R-trees. Not a part of public API.
  * \note not available in Python bindings
 */
@@ -142,7 +143,8 @@ class QgsFeatureIteratorDataStream : public IDataStream
 };
 
 
-/** \class QgsSpatialIndexData
+/** \ingroup core
+ *  \class QgsSpatialIndexData
  * \brief Data of spatial index that may be implicitly shared
  * \note not available in Python bindings
 */
@@ -244,11 +246,8 @@ QgsSpatialIndex& QgsSpatialIndex::operator=( const QgsSpatialIndex & other )
 
 SpatialIndex::Region QgsSpatialIndex::rectToRegion( const QgsRectangle& rect )
 {
-  double pt1[2], pt2[2];
-  pt1[0] = rect.xMinimum();
-  pt1[1] = rect.yMinimum();
-  pt2[0] = rect.xMaximum();
-  pt2[1] = rect.yMaximum();
+  double pt1[2] = { rect.xMinimum(), rect.yMinimum() },
+                  pt2[2] = { rect.xMaximum(), rect.yMaximum() };
   return SpatialIndex::Region( pt1, pt2, 2 );
 }
 
@@ -324,9 +323,7 @@ QList<QgsFeatureId> QgsSpatialIndex::nearestNeighbor( const QgsPoint& point, int
   QList<QgsFeatureId> list;
   QgisVisitor visitor( list );
 
-  double pt[2];
-  pt[0] = point.x();
-  pt[1] = point.y();
+  double pt[2] = { point.x(), point.y() };
   Point p( pt, 2 );
 
   d->mRTree->nearestNeighborQuery( neighbors, p, visitor );

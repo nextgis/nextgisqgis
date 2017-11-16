@@ -31,7 +31,7 @@ import re
 from qgis.core import QGis, QgsProject, QgsVectorFileWriter, QgsMapLayer, QgsRasterLayer, \
     QgsVectorLayer, QgsMapLayerRegistry, QgsCoordinateReferenceSystem
 from qgis.gui import QgsSublayersDialog
-from PyQt4.QtCore import QSettings
+from qgis.PyQt.QtCore import QSettings
 from qgis.utils import iface
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.algs.gdal.GdalUtils import GdalUtils
@@ -74,8 +74,8 @@ def getSupportedOutputTableExtensions():
 
 
 def getRasterLayers(sorting=True):
-    layers = QgsProject.instance().layerTreeRoot().findLayers()
-    raster = [lay.layer() for lay in layers if lay.layer() is not None and canUseRasterLayer(lay.layer())]
+    layers = QgsMapLayerRegistry.instance().mapLayers().values()
+    raster = [lay for lay in layers if lay is not None and canUseRasterLayer(lay)]
     if sorting:
         return sorted(raster, key=lambda layer: layer.name().lower())
     else:
@@ -83,8 +83,8 @@ def getRasterLayers(sorting=True):
 
 
 def getVectorLayers(shapetype=[-1], sorting=True):
-    layers = QgsProject.instance().layerTreeRoot().findLayers()
-    vector = [lay.layer() for lay in layers if canUseVectorLayer(lay.layer(), shapetype)]
+    layers = QgsMapLayerRegistry.instance().mapLayers().values()
+    vector = [lay for lay in layers if canUseVectorLayer(lay, shapetype)]
     if sorting:
         return sorted(vector, key=lambda layer: layer.name().lower())
     else:
@@ -115,12 +115,11 @@ def getAllLayers():
 
 
 def getTables(sorting=True):
-    layers = QgsProject.instance().layerTreeRoot().findLayers()
+    layers = QgsMapLayerRegistry.instance().mapLayers().values()
     tables = []
     for layer in layers:
-        mapLayer = layer.layer()
-        if mapLayer.type() == QgsMapLayer.VectorLayer:
-            tables.append(mapLayer)
+        if layer.type() == QgsMapLayer.VectorLayer:
+            tables.append(layer)
     if sorting:
         return sorted(tables, key=lambda table: table.name().lower())
     else:
@@ -156,7 +155,7 @@ def loadList(layers):
         load(layer)
 
 
-def load(fileName, name=None, crs=None, style=None):
+def load(fileName, name=None, crs=None, style=None, isRaster=False):
     """Loads a layer/table into the current project, given its file.
     """
 
@@ -169,20 +168,8 @@ def load(fileName, name=None, crs=None, style=None):
         settings.setValue('/Projections/defaultBehaviour', '')
     if name is None:
         name = os.path.split(fileName)[1]
-    qgslayer = QgsVectorLayer(fileName, name, 'ogr')
-    if qgslayer.isValid():
-        if crs is not None and qgslayer.crs() is None:
-            qgslayer.setCrs(crs, False)
-        if style is None:
-            if qgslayer.geometryType() == QGis.Point:
-                style = ProcessingConfig.getSetting(ProcessingConfig.VECTOR_POINT_STYLE)
-            elif qgslayer.geometryType() == QGis.Line:
-                style = ProcessingConfig.getSetting(ProcessingConfig.VECTOR_LINE_STYLE)
-            else:
-                style = ProcessingConfig.getSetting(ProcessingConfig.VECTOR_POLYGON_STYLE)
-        qgslayer.loadNamedStyle(style)
-        QgsMapLayerRegistry.instance().addMapLayers([qgslayer])
-    else:
+
+    if isRaster:
         qgslayer = QgsRasterLayer(fileName, name)
         if qgslayer.isValid():
             if crs is not None and qgslayer.crs() is None:
@@ -197,6 +184,21 @@ def load(fileName, name=None, crs=None, style=None):
                 settings.setValue('/Projections/defaultBehaviour', prjSetting)
             raise RuntimeError('Could not load layer: ' + unicode(fileName)
                                + '\nCheck the processing framework log to look for errors')
+    else:
+        qgslayer = QgsVectorLayer(fileName, name, 'ogr')
+        if qgslayer.isValid():
+            if crs is not None and qgslayer.crs() is None:
+                qgslayer.setCrs(crs, False)
+            if style is None:
+                if qgslayer.geometryType() == QGis.Point:
+                    style = ProcessingConfig.getSetting(ProcessingConfig.VECTOR_POINT_STYLE)
+                elif qgslayer.geometryType() == QGis.Line:
+                    style = ProcessingConfig.getSetting(ProcessingConfig.VECTOR_LINE_STYLE)
+                else:
+                    style = ProcessingConfig.getSetting(ProcessingConfig.VECTOR_POLYGON_STYLE)
+            qgslayer.loadNamedStyle(style)
+            QgsMapLayerRegistry.instance().addMapLayers([qgslayer])
+
     if prjSetting:
         settings.setValue('/Projections/defaultBehaviour', prjSetting)
 
@@ -253,14 +255,15 @@ def getObjectFromUri(uri, forceLoad=True):
         settings.setValue('/Projections/defaultBehaviour', '')
 
         # If is not opened, we open it
+        name = os.path.basename(uri)
         for provider in ['ogr', 'postgres', 'spatialite', 'virtual']:
-            layer = QgsVectorLayer(uri, uri, provider)
+            layer = QgsVectorLayer(uri, name, provider)
             if layer.isValid():
                 if prjSetting:
                     settings.setValue('/Projections/defaultBehaviour', prjSetting)
                 _loadedLayers[normalizeLayerSource(layer.source())] = layer
                 return layer
-        layer = QgsRasterLayer(uri, uri)
+        layer = QgsRasterLayer(uri, name)
         if layer.isValid():
             if prjSetting:
                 settings.setValue('/Projections/defaultBehaviour', prjSetting)

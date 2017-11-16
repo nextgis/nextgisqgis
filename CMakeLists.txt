@@ -88,9 +88,9 @@ else()
     # TODO: solve the qt and qgis plugins paths
     set(INSTALL_PLUGIN_DIR ${INSTALL_LIB_DIR}/${NG_PREFIX}${PROJECT_NAME}/plugins CACHE INTERNAL "Installation directory for plugins" FORCE)
     if(QT4_BUILD)
-        set(QT_PLUGIN_SUBDIR "lib/qt4/plugins" )
+        set(QT_PLUGIN_SUBDIR "${INSTALL_LIB_DIR}/qt4/plugins" )
     else()
-        set(QT_PLUGIN_SUBDIR "lib/qt5/plugins" )
+        set(QT_PLUGIN_SUBDIR "${INSTALL_LIB_DIR}/qt5/plugins" )
     endif()
 
     # On Windows qt.conf will be common for several applications so we need to have paths for qt4/5
@@ -99,8 +99,8 @@ else()
     set(QT5_PLUGINS_DIR FIXME)
     set(QT5_TRANSLATION_DIR FIXME)
 
-    set(QGIS_PLUGIN_SUBDIR "lib/${NG_PREFIX}${PROJECT_NAME}/plugins")
-    set(QGIS_LIB_SUBDIR "lib") #TODO On Linux it may be lib/x86_64...
+    set(QGIS_PLUGIN_SUBDIR "${INSTALL_LIB_DIR}/${NG_PREFIX}${PROJECT_NAME}/plugins")
+    set(QGIS_LIB_SUBDIR ${INSTALL_LIB_DIR})
     set(QGIS_MACAPP_BUNDLE 0)
 endif()
 
@@ -180,8 +180,10 @@ if(WITH_BINDINGS)
 
     if(OSX_FRAMEWORK)
         set(QGIS_PYTHON_DIR "${CMAKE_INSTALL_PREFIX}/Library/Python/${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages/${PROJECT_NAME}")
-    else()
+    elseif(WIN32)
         set(QGIS_PYTHON_DIR "${INSTALL_LIB_DIR}/Python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}/site-packages/${PROJECT_NAME}")
+    else()
+        set(QGIS_PYTHON_DIR "lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/dist-packages/${PROJECT_NAME}")
     endif()
 endif()
 
@@ -189,7 +191,20 @@ endif()
 IF(MSVC)
   # disable macros that offend std::numeric_limits<T>::min()/max()
   ADD_DEFINITIONS(-DNOMINMAX)
+  
+  IF (MSVC_VERSION LESS 1900)
+    ADD_DEFINITIONS(-D_ALLOW_KEYWORD_MACROS)
+    ADD_DEFINITIONS("-Dnoexcept=")
+  ENDIF()
 ENDIF(MSVC)
+
+
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+if(COMPILER_SUPPORTS_CXX11)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
+
 
 add_subdirectory(src)
 if(NOT PREPARE_ONLY)

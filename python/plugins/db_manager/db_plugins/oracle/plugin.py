@@ -26,21 +26,19 @@ The content of this file is based on
 # this will disable the dbplugin if the connector raise an ImportError
 from .connector import OracleDBConnector
 
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from qgis.PyQt.QtCore import Qt, QSettings
+from qgis.PyQt.QtGui import QIcon, QKeySequence
+from qgis.PyQt.QtWidgets import QAction, QApplication, QMessageBox
+
+from qgis.core import QgsVectorLayer, NULL
 
 from ..plugin import ConnectionError, InvalidDataException, DBPlugin, \
     Database, Schema, Table, VectorTable, TableField, TableConstraint, \
-    TableIndex, TableTrigger, TableRule
-
-try:
-    from . import resources_rc
-except ImportError:
-    pass
-
-from ..html_elems import HtmlParagraph, HtmlList, HtmlTable
+    TableIndex, TableTrigger
 
 from qgis.core import QgsCredentials
+
+from . import resources_rc  # NOQA
 
 
 def classFactory():
@@ -93,12 +91,7 @@ class OracleDBPlugin(DBPlugin):
         uri = QgsDataSourceURI()
 
         settingsList = ["host", "port", "database", "username", "password"]
-        host, port, database, username, password = map(
-            lambda x: settings.value(x, "", type=str), settingsList)
-
-        # qgis1.5 use 'savePassword' instead of 'save' setting
-        savedPassword = settings.value("save", False, type=bool) or \
-            settings.value("savePassword", False, type=bool)
+        host, port, database, username, password = [settings.value(x, "", type=str) for x in settingsList]
 
         # get all of the connexion options
 
@@ -200,7 +193,6 @@ class ORDatabase(Database):
     def toSqlLayer(self, sql, geomCol, uniqueCol,
                    layerName=u"QueryLayer", layerType=None,
                    avoidSelectById=False, filter=""):
-        from qgis.core import QgsMapLayer, QgsVectorLayer
 
         uri = self.uri()
         con = self.database().connector
@@ -338,7 +330,7 @@ class ORTable(Table):
 
             msg = QApplication.translate(
                 "DBManagerPlugin",
-                "Do you want to {} index {} ?".format(
+                "Do you want to {} index {}?".format(
                     index_action, index_name))
             QApplication.restoreOverrideCursor()
             try:
@@ -353,14 +345,14 @@ class ORTable(Table):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
 
             if index_action == "rebuild":
-                self.aboutToChange()
+                self.aboutToChange.emit()
                 self.database().connector.rebuildTableIndex(
                     (self.schemaName(), self.name), index_name)
                 self.refreshIndexes()
                 return True
         elif action.startswith(u"mview/"):
             if action == "mview/refresh":
-                self.aboutToChange()
+                self.aboutToChange.emit()
                 self.database().connector.refreshMView(
                     (self.schemaName(), self.name))
                 return True
@@ -396,7 +388,7 @@ class ORTable(Table):
         ret = []
 
         # add the pk
-        pkcols = filter(lambda x: x.primaryKey, self.fields())
+        pkcols = [x for x in self.fields() if x.primaryKey]
         if len(pkcols) == 1:
             ret.append(pkcols[0])
 
@@ -457,7 +449,7 @@ class ORVectorTable(ORTable, VectorTable):
     def runAction(self, action):
         if action.startswith("extent/"):
             if action == "extent/update":
-                self.aboutToChange()
+                self.aboutToChange.emit()
                 self.updateExtent()
                 return True
 
@@ -497,12 +489,12 @@ class ORTableField(TableField):
 
         self.primaryKey = False
         self.num = int(self.num)
-        if isinstance(self.charMaxLen, QPyNullVariant):
+        if self.charMaxLen == NULL:
             self.charMaxLen = None
         else:
             self.charMaxLen = int(self.charMaxLen)
 
-        if isinstance(self.modifier, QPyNullVariant):
+        if self.modifier == NULL:
             self.modifier = None
         else:
             self.modifier = int(self.modifier)
@@ -512,7 +504,7 @@ class ORTableField(TableField):
         else:
             self.notNull = True
 
-        if isinstance(self.comment, QPyNullVariant):
+        if self.comment == NULL:
             self.comment = u""
 
         # find out whether fields are part of primary key
@@ -537,7 +529,7 @@ class ORTableField(TableField):
 
     def update(self, new_name, new_type_str=None, new_not_null=None,
                new_default_str=None):
-        self.table().aboutToChange()
+        self.table().aboutToChange.emit()
         if self.name == new_name:
             new_name = None
         if self.type2String() == new_type_str:
@@ -581,22 +573,22 @@ class ORTableConstraint(TableConstraint):
         else:
             self.type = ORTableConstraint.TypeUnknown
 
-        if isinstance(row[6], QPyNullVariant):
+        if row[6] == NULL:
             self.checkSource = u""
         else:
             self.checkSource = row[6]
 
-        if isinstance(row[8], QPyNullVariant):
+        if row[8] == NULL:
             self.foreignTable = u""
         else:
             self.foreignTable = row[8]
 
-        if isinstance(row[7], QPyNullVariant):
+        if row[7] == NULL:
             self.foreignOnDelete = u""
         else:
             self.foreignOnDelete = row[7]
 
-        if isinstance(row[9], QPyNullVariant):
+        if row[9] == NULL:
             self.foreignKey = u""
         else:
             self.foreignKey = row[9]

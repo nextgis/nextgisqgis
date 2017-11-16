@@ -301,7 +301,7 @@ void QgsExpressionBuilderWidget::loadFieldNames( const QgsFields& fields )
   fieldNames.reserve( fields.count() );
   for ( int i = 0; i < fields.count(); ++i )
   {
-    QString fieldName = fields[i].name();
+    QString fieldName = fields.at( i ).name();
     fieldNames << fieldName;
     registerItem( "Fields and Values", fieldName, " \"" + fieldName + "\" ", "", QgsExpressionItem::Field, false, i );
   }
@@ -399,10 +399,10 @@ bool QgsExpressionBuilderWidget::isExpressionValid()
   return mExpressionValid;
 }
 
-void QgsExpressionBuilderWidget::saveToRecent( const QString& key )
+void QgsExpressionBuilderWidget::saveToRecent( const QString& collection )
 {
   QSettings settings;
-  QString location = QString( "/expressions/recent/%1" ).arg( key );
+  QString location = QString( "/expressions/recent/%1" ).arg( collection );
   QStringList expressions = settings.value( location ).toStringList();
   expressions.removeAll( this->expressionText() );
 
@@ -414,13 +414,13 @@ void QgsExpressionBuilderWidget::saveToRecent( const QString& key )
   }
 
   settings.setValue( location, expressions );
-  this->loadRecent( key );
+  this->loadRecent( collection );
 }
 
-void QgsExpressionBuilderWidget::loadRecent( const QString& key )
+void QgsExpressionBuilderWidget::loadRecent( const QString& collection )
 {
-  mRecentKey = key;
-  QString name = tr( "Recent (%1)" ).arg( key );
+  mRecentKey = collection;
+  QString name = tr( "Recent (%1)" ).arg( collection );
   if ( mExpressionGroups.contains( name ) )
   {
     QgsExpressionItem* node = mExpressionGroups.value( name );
@@ -428,7 +428,7 @@ void QgsExpressionBuilderWidget::loadRecent( const QString& key )
   }
 
   QSettings settings;
-  QString location = QString( "/expressions/recent/%1" ).arg( key );
+  QString location = QString( "/expressions/recent/%1" ).arg( collection );
   QStringList expressions = settings.value( location ).toStringList();
   int i = 0;
   Q_FOREACH ( const QString& expression, expressions )
@@ -477,7 +477,7 @@ void QgsExpressionBuilderWidget::updateFunctionTree()
     QString name = func->name();
     if ( name.startsWith( '_' ) ) // do not display private functions
       continue;
-    if ( func->group() == "deprecated" ) // don't show deprecated functions
+    if ( func->isDeprecated() ) // don't show deprecated functions
       continue;
     if ( func->isContextual() )
     {
@@ -489,14 +489,7 @@ void QgsExpressionBuilderWidget::updateFunctionTree()
       name += '(';
     else if ( !name.startsWith( '$' ) )
       name += "()";
-    registerItem( func->group(), func->name(), ' ' + name + ' ', func->helptext() );
-  }
-
-  QList<QgsExpression::Function*> specials = QgsExpression::specialColumns();
-  for ( int i = 0; i < specials.size(); ++i )
-  {
-    QString name = specials[i]->name();
-    registerItem( specials[i]->group(), name, ' ' + name + ' ' );
+    registerItemForAllGroups( func->groups(), func->name(), ' ' + name + ' ', func->helptext() );
   }
 
   loadExpressionContext();
@@ -521,7 +514,9 @@ void QgsExpressionBuilderWidget::setExpressionContext( const QgsExpressionContex
 {
   mExpressionContext = context;
 
-  loadExpressionContext();
+  updateFunctionTree();
+  loadFieldNames();
+  loadRecent( mRecentKey );
 }
 
 void QgsExpressionBuilderWidget::on_txtExpressionString_textChanged()
@@ -619,7 +614,15 @@ void QgsExpressionBuilderWidget::loadExpressionContext()
       continue;
     if ( func->params() != 0 )
       name += '(';
-    registerItem( func->group(), func->name(), ' ' + name + ' ', func->helptext() );
+    registerItemForAllGroups( func->groups(), func->name(), ' ' + name + ' ', func->helptext() );
+  }
+}
+
+void QgsExpressionBuilderWidget::registerItemForAllGroups( const QStringList& groups, const QString& label, const QString& expressionText, const QString& helpText, QgsExpressionItem::ItemType type, bool highlightedItem, int sortOrder )
+{
+  Q_FOREACH ( const QString& group, groups )
+  {
+    registerItem( group, label, expressionText, helpText, type, highlightedItem, sortOrder );
   }
 }
 

@@ -114,7 +114,7 @@
           </property>
           <property name="icon">
            <iconset resource="../../images/images.qrc">
-            <normaloff>:/images/themes/default/propertyicons/symbology.png</normaloff>:/images/themes/default/propertyicons/symbology.png</iconset>
+            <normaloff>:/images/themes/default/propertyicons/symbology.svg</normaloff>:/images/themes/default/propertyicons/symbology.svg</iconset>
           </property>
          </item>
          <item>
@@ -234,6 +234,15 @@
             <normaloff>:/images/themes/default/mIconExpression.svg</normaloff>:/images/themes/default/mIconExpression.svg</iconset>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>Legend</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../../images/images.qrc">
+            <normaloff>:/images/themes/default/legend.svg</normaloff>:/images/themes/default/legend.svg</iconset>
+          </property>
+         </item>
         </widget>
        </item>
       </layout>
@@ -273,7 +282,7 @@
           </sizepolicy>
          </property>
          <property name="currentIndex">
-          <number>6</number>
+          <number>12</number>
          </property>
          <widget class="QWidget" name="mOptsPage_General">
           <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -302,8 +311,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>331</width>
-                <height>431</height>
+                <width>362</width>
+                <height>472</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -701,8 +710,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>123</width>
-                <height>38</height>
+                <width>129</width>
+                <height>42</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_28">
@@ -843,8 +852,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>721</width>
-                <height>199</height>
+                <width>806</width>
+                <height>258</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_32">
@@ -919,14 +928,30 @@
                     </property>
                    </spacer>
                   </item>
-                  <item row="2" column="1" colspan="4">
+                  <item row="2" column="1">
+                   <widget class="QLabel" name="mSimplifyAlgorithmLabel">
+                    <property name="toolTip">
+                     <string>This algorithm only is applied to simplify on local side</string>
+                    </property>
+                    <property name="text">
+                     <string>Simplification algorithm: </string>
+                    </property>
+                    <property name="margin">
+                     <number>2</number>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="2">
+                   <widget class="QComboBox" name="mSimplifyAlgorithmComboBox"/>
+                  </item>
+                  <item row="3" column="1" colspan="4">
                    <widget class="QCheckBox" name="mSimplifyDrawingAtProvider">
                     <property name="text">
                      <string>Simplify on provider side if possible</string>
                     </property>
                    </widget>
                   </item>
-                  <item row="3" column="1">
+                  <item row="4" column="1">
                    <widget class="QLabel" name="mSimplifyMaxScaleLabel">
                     <property name="text">
                      <string>Maximum scale at which the layer should be simplified (1:1 always simplifies): </string>
@@ -936,7 +961,7 @@
                     </property>
                    </widget>
                   </item>
-                  <item row="3" column="2">
+                  <item row="4" column="2">
                    <widget class="QgsScaleComboBox" name="mSimplifyMaximumScaleComboBox">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -1002,8 +1027,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>730</width>
-                <height>537</height>
+                <width>732</width>
+                <height>536</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_26">
@@ -1247,8 +1272,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>134</width>
-                <height>113</height>
+                <width>104</width>
+                <height>102</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_23">
@@ -1332,7 +1357,7 @@
                    </property>
                    <property name="icon">
                     <iconset resource="../../images/images.qrc">
-                     <normaloff>:/images/themes/default/mActionToggleEditing.png</normaloff>:/images/themes/default/mActionToggleEditing.png</iconset>
+                     <normaloff>:/images/themes/default/mActionToggleEditing.svg</normaloff>:/images/themes/default/mActionToggleEditing.svg</iconset>
                    </property>
                   </widget>
                  </item>
@@ -1416,8 +1441,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>393</width>
-                <height>641</height>
+                <width>424</width>
+                <height>697</height>
                </rect>
               </property>
               <layout class="QGridLayout" name="gridLayout_3">
@@ -1839,6 +1864,22 @@
            </item>
           </layout>
          </widget>
+         <widget class="QWidget" name="mOptsPage_Legend">
+          <layout class="QVBoxLayout" name="verticalLayout_8">
+           <item>
+            <widget class="QGroupBox" name="groupBox_3">
+             <property name="title">
+              <string>Embedded widgets in legend</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_22">
+              <item>
+               <widget class="QgsLayerTreeEmbeddedConfigWidget" name="mLegendConfigEmbeddedWidget" native="true"/>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </widget>
        </item>
       </layout>
@@ -1895,15 +1936,21 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>QgsScaleRangeWidget</class>
-   <extends>QWidget</extends>
-   <header>qgsscalerangewidget.h</header>
+   <class>QgsFieldComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgsfieldcombobox.h</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
    <class>QgsProjectionSelectionWidget</class>
    <extends>QWidget</extends>
-   <header location="global">qgsprojectionselectionwidget.h</header>
+   <header>qgsprojectionselectionwidget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QgsScaleRangeWidget</class>
+   <extends>QWidget</extends>
+   <header>qgsscalerangewidget.h</header>
   </customwidget>
   <customwidget>
    <class>QgsScaleComboBox</class>
@@ -1917,9 +1964,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>QgsFieldComboBox</class>
-   <extends>QComboBox</extends>
-   <header>qgsfieldcombobox.h</header>
+   <class>QgsLayerTreeEmbeddedConfigWidget</class>
+   <extends>QWidget</extends>
+   <header>qgslayertreeembeddedconfigwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
@@ -1943,6 +1990,7 @@
   <tabstop>scrollArea_19</tabstop>
   <tabstop>mSimplifyDrawingGroupBox</tabstop>
   <tabstop>mSimplifyDrawingSpinBox</tabstop>
+  <tabstop>mSimplifyAlgorithmComboBox</tabstop>
   <tabstop>mSimplifyDrawingAtProvider</tabstop>
   <tabstop>mSimplifyMaximumScaleComboBox</tabstop>
   <tabstop>mForceRasterCheckBox</tabstop>

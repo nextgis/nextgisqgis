@@ -27,7 +27,8 @@
 #include "QSortFilterProxyModel"
 #include "QStringListModel"
 
-/** An expression item that can be used in the QgsExpressionBuilderWidget tree.
+/** \ingroup gui
+ * An expression item that can be used in the QgsExpressionBuilderWidget tree.
   */
 class QgsExpressionItem : public QStandardItem
 {
@@ -92,7 +93,8 @@ class QgsExpressionItem : public QStandardItem
 
 };
 
-/** Search proxy used to filter the QgsExpressionBuilderWidget tree.
+/** \ingroup gui
+ * Search proxy used to filter the QgsExpressionBuilderWidget tree.
   * The default search for a tree model only searches top level this will handle one
   * level down
   */
@@ -111,14 +113,18 @@ class GUI_EXPORT QgsExpressionItemSearchProxy : public QSortFilterProxyModel
 };
 
 
-/** A reusable widget that can be used to build a expression string.
+/** \ingroup gui
+ * A reusable widget that can be used to build a expression string.
   * See QgsExpressionBuilderDialog for exmaple of usage.
   */
 class GUI_EXPORT QgsExpressionBuilderWidget : public QWidget, private Ui::QgsExpressionBuilderWidgetBase
 {
     Q_OBJECT
   public:
-    QgsExpressionBuilderWidget( QWidget *parent );
+    /**
+     * Create a new expression builder widget with an optional parent.
+     */
+    QgsExpressionBuilderWidget( QWidget* parent = nullptr );
     ~QgsExpressionBuilderWidget();
 
     /** Sets layer in order to get the fields and values
@@ -180,9 +186,17 @@ class GUI_EXPORT QgsExpressionBuilderWidget : public QWidget, private Ui::QgsExp
 
     bool isExpressionValid();
 
-    void saveToRecent( const QString& key );
+    /**
+     * Adds the current expression to the given collection.
+     * By default it is saved to the collection "generic".
+     */
+    void saveToRecent( const QString& collection = "generic" );
 
-    void loadRecent( const QString& key );
+    /**
+     * Loads the recent expressions from the given collection.
+     * By default it is loaded from the collection "generic".
+     */
+    void loadRecent( const QString& collection = "generic" );
 
     /** Create a new file in the function editor
      */
@@ -263,6 +277,20 @@ class GUI_EXPORT QgsExpressionBuilderWidget : public QWidget, private Ui::QgsExp
     QString helpStylesheet() const;
 
     void loadExpressionContext();
+
+    /** Registers a node item for the expression builder, adding multiple items when the function exists in multiple groups
+      * @param groups The groups the item will be show in the tree view.  If a group doesn't exist it will be created.
+      * @param label The label that is show to the user for the item in the tree.
+      * @param expressionText The text that is inserted into the expression area when the user double clicks on the item.
+      * @param helpText The help text that the user will see when item is selected.
+      * @param type The type of the expression item.
+      * @param highlightedItem set to true to make the item highlighted, which inserts a bold copy of the item at the top level
+      * @param sortOrder sort ranking for item
+      */
+    void registerItemForAllGroups( const QStringList& groups, const QString& label, const QString& expressionText,
+                                   const QString& helpText = "",
+                                   QgsExpressionItem::ItemType type = QgsExpressionItem::ExpressionNode,
+                                   bool highlightedItem = false, int sortOrder = 1 );
 
     bool mAutoSave;
     QString mFunctionsPath;

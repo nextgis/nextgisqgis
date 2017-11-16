@@ -25,7 +25,10 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
+import os
 import codecs
+
+from qgis.PyQt.QtGui import QIcon
 
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.parameters import ParameterVector
@@ -33,6 +36,8 @@ from processing.core.parameters import ParameterTableField
 from processing.core.outputs import OutputHTML
 from processing.core.outputs import OutputNumber
 from processing.tools import dataobjects, vector
+
+pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 
 class BasicStatisticsStrings(GeoAlgorithm):
@@ -48,6 +53,9 @@ class BasicStatisticsStrings(GeoAlgorithm):
     EMPTY = 'EMPTY'
     FILLED = 'FILLED'
     UNIQUE = 'UNIQUE'
+
+    def getIcon(self):
+        return QIcon(os.path.join(pluginPath, 'images', 'ftools', 'basic_statistics.png'))
 
     def defineCharacteristics(self):
         self.name, self.i18n_name = self.trAlgorithm('Basic statistics for text fields')
@@ -92,7 +100,7 @@ class BasicStatisticsStrings(GeoAlgorithm):
 
         features = vector.features(layer)
         count = len(features)
-        total = 100.0 / count
+        total = 100.0 / count if count > 0 else 1
         for current, ft in enumerate(features):
             value = ft[fieldName]
             if value:

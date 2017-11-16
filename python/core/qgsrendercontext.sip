@@ -23,6 +23,7 @@ class QgsRenderContext
       DrawSymbolBounds,         //!< Draw bounds of symbols (for debugging/testing)
       RenderMapTile,            //!< Draw map such that there are no problems between adjacent tiles
       Antialiasing,             //!< Use antialiasing while drawing
+      RenderPartialOutput,      //!< Whether to make extra effort to update map image with partially rendered layers (better for interactive map canvas). Added in QGIS 2.18
     };
     typedef QFlags<QgsRenderContext::Flag> Flags;
 
@@ -178,4 +179,16 @@ class QgsRenderContext
      * @see setFeatureFilterProvider()
      */
     const QgsFeatureFilterProvider* featureFilterProvider() const;
+
+    /** Sets the segmentation tolerance applied when rendering curved geometries
+    @param tolerance the segmentation tolerance*/
+    void setSegmentationTolerance( double tolerance );
+    /** Gets the segmentation tolerance applied when rendering curved geometries*/
+    double segmentationTolerance() const;
+
+    /** Sets segmentation tolerance type (maximum angle or maximum difference between curve and approximation)
+    @param type the segmentation tolerance typename*/
+    void setSegmentationToleranceType( QgsAbstractGeometryV2::SegmentationToleranceType type );
+    /** Gets segmentation tolerance type (maximum angle or maximum difference between curve and approximation)*/
+    QgsAbstractGeometryV2::SegmentationToleranceType segmentationToleranceType() const;
 };

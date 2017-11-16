@@ -25,21 +25,27 @@ __copyright__ = '(C) 2010, Michael Minn'
 
 __revision__ = '$Format:%H$'
 
+import os
 
-from PyQt4.QtCore import QVariant
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtCore import QVariant
 from qgis.core import QgsFields, QgsVectorLayer
 
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
 from processing.core.parameters import ParameterMultipleInput
 from processing.core.outputs import OutputVector
+from processing.tools import dataobjects
 
-from processing.tools import dataobjects, vector
+pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 
 class Merge(GeoAlgorithm):
     LAYERS = 'LAYERS'
     OUTPUT = 'OUTPUT'
+
+    def getIcon(self):
+        return QIcon(os.path.join(pluginPath, 'images', 'ftools', 'merge_shapes.png'))
 
     def defineCharacteristics(self):
         self.name, self.i18n_name = self.trAlgorithm('Merge vector layers')
@@ -80,7 +86,7 @@ class Merge(GeoAlgorithm):
                 if not found:
                     fields.append(sfield)
 
-        total = 100.0 / totalFeatureCount
+        total = 100.0 / totalFeatureCount if totalFeatureCount > 0 else 1
         writer = self.getOutputFromName(self.OUTPUT).getVectorWriter(
             fields.toList(), layers[0].wkbType(),
             layers[0].crs())

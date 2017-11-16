@@ -19,6 +19,7 @@
 #include "qgsgeometry.h"
 
 /**
+ * \ingroup core
  * This class offers geometry processing methods.
  *
  * The methods are available via QgsGeometry::[geometryfunction]
@@ -35,7 +36,7 @@ class QgsInternalGeometryEngine
      * for the whole lifetime of this object.
      * @param geometry
      */
-    QgsInternalGeometryEngine( const QgsGeometry& geometry );
+    explicit QgsInternalGeometryEngine( const QgsGeometry& geometry );
 
     /**
      * Will extrude a line or (segmentized) curve by a given offset and return a polygon

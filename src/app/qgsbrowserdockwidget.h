@@ -15,7 +15,6 @@
 #ifndef QGSBROWSERDOCKWIDGET_H
 #define QGSBROWSERDOCKWIDGET_H
 
-#include <QDockWidget>
 #include <ui_qgsbrowserdockwidgetbase.h>
 #include <ui_qgsbrowserlayerpropertiesbase.h>
 #include <ui_qgsbrowserdirectorypropertiesbase.h>
@@ -23,6 +22,7 @@
 
 #include "qgsdataitem.h"
 #include "qgsbrowsertreeview.h"
+#include "qgsdockwidget.h"
 #include <QSortFilterProxyModel>
 
 class QgsBrowserModel;
@@ -100,11 +100,12 @@ class QgsBrowserPropertiesDialog : public QDialog , private Ui::QgsBrowserProper
     QString mSettingsSection;
 };
 
-class APP_EXPORT QgsBrowserDockWidget : public QDockWidget, private Ui::QgsBrowserDockWidgetBase
+class APP_EXPORT QgsBrowserDockWidget : public QgsDockWidget, private Ui::QgsBrowserDockWidgetBase
 {
     Q_OBJECT
   public:
     explicit QgsBrowserDockWidget( const QString& name, QWidget *parent = nullptr );
+    explicit QgsBrowserDockWidget( const QString& name, QgsBrowserModel *model, QWidget *parent = nullptr );
     ~QgsBrowserDockWidget();
     void addFavouriteDirectory( const QString& favDir );
 
@@ -153,6 +154,7 @@ class APP_EXPORT QgsBrowserDockWidget : public QDockWidget, private Ui::QgsBrows
     float mPropertiesWidgetHeight;
 
   private:
+    void init( const QString& name );
 };
 
 

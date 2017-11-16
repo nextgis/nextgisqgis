@@ -80,12 +80,12 @@ class RandomExtract(GeoAlgorithm):
                             "different value and try again."))
             value = int(round(value / 100.0000, 4) * featureCount)
 
-        selran = random.sample(xrange(0, featureCount), value)
+        selran = random.sample(xrange(featureCount), value)
 
         writer = self.getOutputFromName(self.OUTPUT).getVectorWriter(
             layer.pendingFields().toList(), layer.wkbType(), layer.crs())
 
-        total = 100.0 / featureCount
+        total = 100.0 / featureCount if featureCount > 0 else 1
         for i, feat in enumerate(features):
             if i in selran:
                 writer.addFeature(feat)

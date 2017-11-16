@@ -20,6 +20,7 @@
 #include "qgswcssourceselect.h"
 #include "qgsowsconnection.h"
 #include "qgsnewhttpconnection.h"
+#include "qgscrscache.h"
 
 #include <QFileInfo>
 #include <QSettings>
@@ -29,39 +30,38 @@ QgsWCSConnectionItem::QgsWCSConnectionItem( QgsDataItem* parent, QString name, Q
     , mUri( uri )
 {
   mIconName = "mIconWcs.svg";
+  mCapabilities |= Collapse;
 }
 
 QgsWCSConnectionItem::~QgsWCSConnectionItem()
 {
-  QgsDebugMsg( "Entered" );
 }
 
 QVector<QgsDataItem*> QgsWCSConnectionItem::createChildren()
 {
-  QgsDebugMsg( "Entered" );
   QVector<QgsDataItem*> children;
 
   QgsDataSourceURI uri;
   uri.setEncodedUri( mUri );
   QgsDebugMsg( "mUri = " + mUri );
 
-  mCapabilities.setUri( uri );
+  mWcsCapabilities.setUri( uri );
 
   // Attention: supportedLayers() gives tree leafes, not top level
-  if ( !mCapabilities.lastError().isEmpty() )
+  if ( !mWcsCapabilities.lastError().isEmpty() )
   {
     //children.append( new QgsErrorItem( this, tr( "Failed to retrieve layers" ), mPath + "/error" ) );
     // TODO: show the error without adding child
     return children;
   }
 
-  Q_FOREACH ( const QgsWcsCoverageSummary& coverageSummary, mCapabilities.capabilities().contents.coverageSummary )
+  Q_FOREACH ( const QgsWcsCoverageSummary& coverageSummary, mWcsCapabilities.capabilities().contents.coverageSummary )
   {
     // Attention, the name may be empty
     QgsDebugMsg( QString::number( coverageSummary.orderId ) + ' ' + coverageSummary.identifier + ' ' + coverageSummary.title );
     QString pathName = coverageSummary.identifier.isEmpty() ? QString::number( coverageSummary.orderId ) : coverageSummary.identifier;
 
-    QgsWCSLayerItem * layer = new QgsWCSLayerItem( this, coverageSummary.title, mPath + '/' + pathName, mCapabilities.capabilities(), uri, coverageSummary );
+    QgsWCSLayerItem * layer = new QgsWCSLayerItem( this, coverageSummary.title, mPath + '/' + pathName, mWcsCapabilities.capabilities(), uri, coverageSummary );
 
     children.append( layer );
   }
@@ -119,7 +119,7 @@ void QgsWCSConnectionItem::deleteConnection()
 
 // ---------------------------------------------------------------------------
 
-QgsWCSLayerItem::QgsWCSLayerItem( QgsDataItem* parent, QString name, QString path, const QgsWcsCapabilitiesProperty& capabilitiesProperty, QgsDataSourceURI dataSourceUri, const QgsWcsCoverageSummary& coverageSummary )
+QgsWCSLayerItem::QgsWCSLayerItem( QgsDataItem* parent, QString name, QString path, const QgsWcsCapabilitiesProperty& capabilitiesProperty, const QgsDataSourceURI &dataSourceUri, const QgsWcsCoverageSummary& coverageSummary )
     : QgsLayerItem( parent, name, path, QString(), QgsLayerItem::Raster, "wcs" )
     , mCapabilities( capabilitiesProperty )
     , mDataSourceUri( dataSourceUri )
@@ -196,7 +196,7 @@ QString QgsWCSLayerItem::createUri()
   QgsCoordinateReferenceSystem testCrs;
   Q_FOREACH ( const QString& c, mCoverageSummary.supportedCrs )
   {
-    testCrs.createFromOgcWmsCrs( c );
+    testCrs = QgsCRSCache::instance()->crsByOgcWmsCrs( c );
     if ( testCrs.isValid() )
     {
       crs = c;

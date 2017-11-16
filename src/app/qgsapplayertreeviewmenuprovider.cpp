@@ -1,3 +1,17 @@
+/***************************************************************************
+    qgsapplayertreeviewmenuprovider.cpp
+    ---------------------
+    begin                : May 2014
+    copyright            : (C) 2014 by Martin Dobias
+    email                : wonder dot sk at gmail dot com
+ ***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 #include "qgsapplayertreeviewmenuprovider.h"
 
 
@@ -11,6 +25,7 @@
 #include "qgslayertreemodel.h"
 #include "qgslayertreemodellegendnode.h"
 #include "qgslayertreeviewdefaultactions.h"
+#include "qgsmapcanvas.h"
 #include "qgsmaplayerstyleguiutils.h"
 #include "qgsmaplayerregistry.h"
 #include "qgsproject.h"
@@ -100,13 +115,16 @@ QMenu* QgsAppLayerTreeViewMenuProvider::createContextMenu()
       // duplicate layer
       QAction* duplicateLayersAction = menu->addAction( QgsApplication::getThemeIcon( "/mActionDuplicateLayer.svg" ), tr( "&Duplicate" ), QgisApp::instance(), SLOT( duplicateLayers() ) );
 
-      if ( !vlayer || vlayer->geometryType() != QGis::NoGeometry )
+      if ( layer && layer->isSpatial() )
       {
         // set layer scale visibility
         menu->addAction( tr( "&Set Layer Scale Visibility" ), QgisApp::instance(), SLOT( setLayerScaleVisibility() ) );
 
+        if ( !layer->isInScaleRange( mCanvas->scale() ) )
+          menu->addAction( tr( "Zoom to &Visible Scale" ), QgisApp::instance(), SLOT( zoomToLayerScale() ) );
+
         // set layer crs
-        menu->addAction( QgsApplication::getThemeIcon( "/mActionSetCRS.png" ), tr( "&Set Layer CRS" ), QgisApp::instance(), SLOT( setLayerCRS() ) );
+        menu->addAction( QgsApplication::getThemeIcon( "/mActionSetCRS.png" ), tr( "Set Layer CRS" ), QgisApp::instance(), SLOT( setLayerCRS() ) );
 
         // assign layer crs to project
         menu->addAction( QgsApplication::getThemeIcon( "/mActionSetProjectCRS.png" ), tr( "Set &Project CRS from Layer" ), QgisApp::instance(), SLOT( setProjectCRSFromLayer() ) );
@@ -249,6 +267,11 @@ QMenu* QgsAppLayerTreeViewMenuProvider::createContextMenu()
 
       if ( mView->selectedNodes( true ).count() >= 2 )
         menu->addAction( actions->actionGroupSelected( menu ) );
+
+      if ( layer && layer->type() == QgsMapLayer::VectorLayer && static_cast<QgsVectorLayer*>( layer )->providerType() == "virtual" )
+      {
+        menu->addAction( tr( "Edit virtual layer settings" ), QgisApp::instance(), SLOT( addVirtualLayer() ) );
+      }
     }
 
   }
@@ -259,9 +282,9 @@ QMenu* QgsAppLayerTreeViewMenuProvider::createContextMenu()
       // symbology item
       if ( symbolNode->flags() & Qt::ItemIsUserCheckable )
       {
-        menu->addAction( QgsApplication::getThemeIcon( "/mActionShowAllLayers.png" ), tr( "&Show All Items" ),
+        menu->addAction( QgsApplication::getThemeIcon( "/mActionShowAllLayers.svg" ), tr( "&Show All Items" ),
                          symbolNode, SLOT( checkAllItems() ) );
-        menu->addAction( QgsApplication::getThemeIcon( "/mActionHideAllLayers.png" ), tr( "&Hide All Items" ),
+        menu->addAction( QgsApplication::getThemeIcon( "/mActionHideAllLayers.svg" ), tr( "&Hide All Items" ),
                          symbolNode, SLOT( uncheckAllItems() ) );
         menu->addSeparator();
       }
@@ -471,6 +494,7 @@ void QgsAppLayerTreeViewMenuProvider::editVectorSymbol()
 
   QScopedPointer< QgsSymbolV2 > symbol( singleRenderer->symbol() ? singleRenderer->symbol()->clone() : nullptr );
   QgsSymbolV2SelectorDialog dlg( symbol.data(), QgsStyleV2::defaultStyle(), layer, mView->window() );
+  dlg.setWindowTitle( tr( "Symbol selector" ) );
   dlg.setMapCanvas( mCanvas );
   if ( dlg.exec() )
   {
@@ -487,7 +511,7 @@ void QgsAppLayerTreeViewMenuProvider::setVectorSymbolColor( const QColor& color 
     return;
 
   QString layerId = action->property( "layerId" ).toString();
-  QgsVectorLayer* layer = dynamic_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( layerId ) );
+  QgsVectorLayer* layer = qobject_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( layerId ) );
   if ( !layer )
     return;
 
@@ -521,6 +545,7 @@ void QgsAppLayerTreeViewMenuProvider::setVectorSymbolColor( const QColor& color 
   }
 
   layer->triggerRepaint();
+  layer->emitStyleChanged();
   mView->refreshLayerSymbology( layer->id() );
 }
 
@@ -544,10 +569,15 @@ void QgsAppLayerTreeViewMenuProvider::editSymbolLegendNodeSymbol()
   QScopedPointer< QgsSymbolV2 > symbol( originalSymbol->clone() );
   QgsVectorLayer* vlayer = qobject_cast<QgsVectorLayer*>( node->layerNode()->layer() );
   QgsSymbolV2SelectorDialog dlg( symbol.data(), QgsStyleV2::defaultStyle(), vlayer, mView->window() );
+  dlg.setWindowTitle( tr( "Symbol selector" ) );
   dlg.setMapCanvas( mCanvas );
   if ( dlg.exec() )
   {
     node->setSymbol( symbol.take() );
+    if ( vlayer )
+    {
+      vlayer->emitStyleChanged();
+    }
   }
 }
 
@@ -571,4 +601,8 @@ void QgsAppLayerTreeViewMenuProvider::setSymbolLegendNodeColor( const QColor &co
   QgsSymbolV2* newSymbol = originalSymbol->clone();
   newSymbol->setColor( color );
   node->setSymbol( newSymbol );
+  if ( QgsVectorLayer* layer = qobject_cast<QgsVectorLayer*>( QgsMapLayerRegistry::instance()->mapLayer( layerId ) ) )
+  {
+    layer->emitStyleChanged();
+  }
 }

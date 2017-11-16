@@ -1,3 +1,17 @@
+/***************************************************************************
+    qgspointsample.cpp
+    ---------------------
+    begin                : July 2013
+    copyright            : (C) 2013 by Marco Hugentobler
+    email                : marco dot hugentobler at sourcepole dot ch
+ ***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 #include "qgspointsample.h"
 #include "qgsgeometry.h"
 #include "qgsspatialindex.h"
@@ -71,13 +85,13 @@ int QgsPointSample::createRandomPoints( QProgressDialog* pd )
     {
       minDistance = fet.attribute( mMinDistanceAttribute ).toDouble();
     }
-    addSamplePoints( fet, writer, nPoints, minDistance );
+    addSamplePoints( fet, writer, outputFields, nPoints, minDistance );
   }
 
   return 0;
 }
 
-void QgsPointSample::addSamplePoints( QgsFeature& inputFeature, QgsVectorFileWriter& writer, int nPoints, double minDistance )
+void QgsPointSample::addSamplePoints( QgsFeature& inputFeature, QgsVectorFileWriter& writer, const QgsFields& outputFields, int nPoints, double minDistance )
 {
   if ( !inputFeature.constGeometry() )
     return;
@@ -108,7 +122,7 @@ void QgsPointSample::addSamplePoints( QgsFeature& inputFeature, QgsVectorFileWri
     if ( ptGeom->within( geom ) && checkMinDistance( randPoint, sIndex, minDistance, pointMapForFeature ) )
     {
       //add feature to writer
-      QgsFeature f( mNCreatedPoints );
+      QgsFeature f( outputFields, mNCreatedPoints );
       f.setAttribute( "id", mNCreatedPoints + 1 );
       f.setAttribute( "station_id", points + 1 );
       f.setAttribute( "stratum_id", inputFeature.id() );

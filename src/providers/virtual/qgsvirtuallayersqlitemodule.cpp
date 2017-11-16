@@ -28,7 +28,7 @@ email                : hugo dot mercier at oslandia dot com
 #include <qgsgeometry.h>
 #include <qgsmaplayerregistry.h>
 #include <qgsproviderregistry.h>
-
+#include "qgsinterval.h"
 #include <sqlite3.h>
 #include <spatialite.h>
 #include <stdio.h>
@@ -196,10 +196,10 @@ private:
     // add a hidden field for rtree filtering
     sqlFields << "_search_frame_ HIDDEN BLOB";
 
-    for ( int i = 0; i < mFields.count(); i++ )
+    Q_FOREACH ( const QgsField& field, mFields )
     {
       QString typeName = "text";
-      switch ( mFields.at( i ).type() )
+      switch ( field.type() )
       {
         case QVariant::Int:
         case QVariant::UInt:
@@ -215,7 +215,7 @@ private:
           typeName = "text";
           break;
       }
-      sqlFields << mFields.at( i ).name() + " " + typeName;
+      sqlFields << field.name() + " " + typeName;
     }
 
     QgsVectorDataProvider* provider = mLayer ? mLayer->dataProvider() : mProvider;
@@ -256,7 +256,10 @@ struct VTableCursor
   QgsFeatureIterator mIterator;
   bool mEof;
 
-  VTableCursor( VTable *vtab ) : mVtab( vtab ), mEof( true ) {}
+  explicit VTableCursor( VTable *vtab )
+      : mVtab( vtab )
+      , mEof( true )
+  {}
 
   void filter( const QgsFeatureRequest& request )
   {
@@ -334,7 +337,7 @@ int vtableCreateConnect( sqlite3* sql, void* aux, int argc, const char* const* a
   }
 
   QScopedPointer<VTable> newVtab;
-  QString vname( argv[2] );
+
   int r;
   if ( argc == 4 )
   {
@@ -812,9 +815,9 @@ void qgisFunctionWrapper( sqlite3_context* ctxt, int nArgs, sqlite3_value** args
         qgsGeometryToSpatialiteBlob( ret.value<QgsGeometry>(), /*srid*/0, blob, size );
         sqlite3_result_blob( ctxt, blob, size, deleteGeometryBlob );
       }
-      else if ( ret.canConvert<QgsExpression::Interval>() )
+      else if ( ret.canConvert<QgsInterval>() )
       {
-        sqlite3_result_double( ctxt, ret.value<QgsExpression::Interval>().seconds() );
+        sqlite3_result_double( ctxt, ret.value<QgsInterval>().seconds() );
       }
       break;
     }
@@ -870,7 +873,7 @@ void registerQgisFunctions( sqlite3* db )
         // is it because a function of the same name already exist (in Spatialite for instance ?)
         // we then try to recreate it with a prefix
         name = "qgis_" + name;
-        r = sqlite3_create_function( db, name.toUtf8().constData(), foo->params(), SQLITE_UTF8, foo, qgisFunctionWrapper, nullptr, nullptr );
+        sqlite3_create_function( db, name.toUtf8().constData(), foo->params(), SQLITE_UTF8, foo, qgisFunctionWrapper, nullptr, nullptr );
       }
     }
   }

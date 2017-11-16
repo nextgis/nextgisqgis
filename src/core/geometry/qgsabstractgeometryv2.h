@@ -23,7 +23,6 @@ email                : marco.hugentobler at sourcepole dot com
 
 #include <QString>
 
-class QgsCoordinateTransform;
 class QgsMapToPixel;
 class QgsCurveV2;
 class QgsMultiCurveV2;
@@ -44,6 +43,14 @@ typedef QList< QgsRingSequenceV2 > QgsCoordinateSequenceV2;
 class CORE_EXPORT QgsAbstractGeometryV2
 {
   public:
+
+    /** Segmentation tolerance as maximum angle or maximum difference between approximation and circle*/
+    enum SegmentationToleranceType
+    {
+      MaximumAngle = 0,
+      MaximumDifference
+    };
+
     QgsAbstractGeometryV2();
     virtual ~QgsAbstractGeometryV2();
     QgsAbstractGeometryV2( const QgsAbstractGeometryV2& geom );
@@ -103,9 +110,15 @@ class CORE_EXPORT QgsAbstractGeometryV2
     virtual bool isValid() const = 0;
     virtual QgsMultiPointV2* locateAlong() const = 0;
     virtual QgsMultiCurveV2* locateBetween() const = 0;
-    virtual QgsCurveV2* boundary() const = 0;
     virtual QgsRectangle envelope() const = 0;
 #endif
+
+    /** Returns the closure of the combinatorial boundary of the geometry (ie the topological boundary of the geometry).
+     * For instance, a polygon geometry will have a boundary consisting of the linestrings for each ring in the polygon.
+     * @returns boundary for geometry. May be null for some geometry types.
+     * @note added in QGIS 2.18
+     */
+    virtual QgsAbstractGeometryV2* boundary() const = 0;
 
     //import
 
@@ -180,9 +193,15 @@ class CORE_EXPORT QgsAbstractGeometryV2
 
     /** Transforms the geometry using a coordinate transform
      * @param ct coordinate transform
-       @param d transformation direction
+     * @param d transformation direction
+     * @param transformZ set to true to also transform z coordinates. This requires that
+     * the z coordinates in the geometry represent height relative to the vertical datum
+     * of the source CRS (generally ellipsoidal heights) and are expressed in its vertical
+     * units (generally meters). If false, then z coordinates will not be changed by the
+     * transform.
      */
-    virtual void transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform ) = 0;
+    virtual void transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform,
+                            bool transformZ = false ) = 0;
 
     /** Transforms the geometry using a QTransform object
      * @param t QTransform transformation
@@ -226,7 +245,7 @@ class CORE_EXPORT QgsAbstractGeometryV2
      * @param leftOf returns whether the point lies on the left side of the nearest segment (true if point is to left of segment,
      * false if point is to right of segment)
      * @param epsilon epsilon for segment snapping
-     * @returns squared distance to closest segment
+     * @returns squared distance to closest segment or negative value on error
      */
     virtual double closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt, QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const = 0;
 
@@ -289,13 +308,15 @@ class CORE_EXPORT QgsAbstractGeometryV2
 
     /** Returns a version of the geometry without curves. Caller takes ownership of
      * the returned geometry.
+     * @param tolerance segmentation tolerance
+     * @param toleranceType maximum segmentation angle or maximum difference between approximation and curve
      */
-    virtual QgsAbstractGeometryV2* segmentize() const { return clone(); }
+    virtual QgsAbstractGeometryV2* segmentize( double tolerance = M_PI / 180., SegmentationToleranceType toleranceType = MaximumAngle ) const;
 
     /** Returns the geometry converted to the more generic curve type.
-     *  E.g. QgsLineStringV2 -> QgsCompoundCurveV2, QgsPolygonV2 -> QgsCurvePolygonV2,
-     *  QgsMultiLineStringV2 -> QgsMultiCurveV2, QgsMultiPolygonV2 -> QgsMultiSurfaceV2
-     */
+        E.g. QgsLineStringV2 -> QgsCompoundCurveV2, QgsPolygonV2 -> QgsCurvePolygonV2,
+        QgsMultiLineStringV2 -> QgsMultiCurveV2, QgsMultiPolygonV2 -> QgsMultiSurfaceV2
+        @return the converted geometry. Caller takes ownership*/
     virtual QgsAbstractGeometryV2* toCurveType() const { return 0; }
 
     /** Returns approximate angle at a vertex. This is usually the average angle between adjacent
@@ -388,7 +409,11 @@ struct CORE_EXPORT QgsVertexId
   };
 
   QgsVertexId( int _part = -1, int _ring = -1, int _vertex = -1, VertexType _type = SegmentVertex )
-      : part( _part ), ring( _ring ), vertex( _vertex ), type( _type ) {}
+      : part( _part )
+      , ring( _ring )
+      , vertex( _vertex )
+      , type( _type )
+  {}
 
   /** Returns true if the vertex id is valid
    */

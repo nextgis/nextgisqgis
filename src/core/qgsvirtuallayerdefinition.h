@@ -20,7 +20,7 @@ email                : hugo dot mercier at oslandia dot com
 #include <qgsfield.h>
 #include <qgis.h>
 
-/**
+/** \ingroup core
  * Class to manipulate the definition of a virtual layer
  *
  * It is used to extract parameters from an initial virtual layer definition as well as
@@ -29,7 +29,7 @@ email                : hugo dot mercier at oslandia dot com
 class CORE_EXPORT QgsVirtualLayerDefinition
 {
   public:
-    /**
+    /** \ingroup core
      * A SourceLayer is either a reference to a live layer in the registry
      * or all the parameters needed to load it (provider key, source, etc.)
      */
@@ -37,10 +37,17 @@ class CORE_EXPORT QgsVirtualLayerDefinition
     {
       public:
         //! Constructor variant to build a live layer reference
-        SourceLayer( const QString& name, const QString& ref ) : mName( name ), mRef( ref ) {}
+        SourceLayer( const QString& name, const QString& ref )
+            : mName( name )
+            , mRef( ref )
+        {}
         //! Constructor variant to build a layer with a provider and a source
         SourceLayer( const QString& name, const QString& source, const QString& provider, const QString& encoding )
-            : mName( name ), mSource( source ), mProvider( provider ), mEncoding( encoding ) {}
+            : mName( name )
+            , mSource( source )
+            , mProvider( provider )
+            , mEncoding( encoding )
+        {}
 
         //! Is it a live layer or not ?
         bool isReferenced() const { return !mRef.isEmpty(); }

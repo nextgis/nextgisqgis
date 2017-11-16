@@ -19,6 +19,7 @@
 #include "qgsapplication.h"
 #include "qgsgeometryutils.h"
 #include "qgslinestringv2.h"
+#include "qgsmultilinestringv2.h"
 #include "qgswkbptr.h"
 
 QgsPolygonV2::QgsPolygonV2()
@@ -68,6 +69,12 @@ bool QgsPolygonV2::operator!=( const QgsPolygonV2& other ) const
 QgsPolygonV2* QgsPolygonV2::clone() const
 {
   return new QgsPolygonV2( *this );
+}
+
+void QgsPolygonV2::clear()
+{
+  QgsCurvePolygonV2::clear();
+  mWkbType = QgsWKBTypes::Polygon;
 }
 
 bool QgsPolygonV2::fromWkb( QgsConstWkbPtr wkbPtr )
@@ -234,6 +241,28 @@ void QgsPolygonV2::setExteriorRing( QgsCurveV2* ring )
   }
 
   clearCache();
+}
+
+QgsAbstractGeometryV2* QgsPolygonV2::boundary() const
+{
+  if ( !mExteriorRing )
+    return nullptr;
+
+  if ( mInteriorRings.isEmpty() )
+  {
+    return mExteriorRing->clone();
+  }
+  else
+  {
+    QgsMultiLineStringV2* multiLine = new QgsMultiLineStringV2();
+    multiLine->addGeometry( mExteriorRing->clone() );
+    int nInteriorRings = mInteriorRings.size();
+    for ( int i = 0; i < nInteriorRings; ++i )
+    {
+      multiLine->addGeometry( mInteriorRings.at( i )->clone() );
+    }
+    return multiLine;
+  }
 }
 
 QgsPolygonV2* QgsPolygonV2::surfaceToPolygon() const

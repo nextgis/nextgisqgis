@@ -34,7 +34,7 @@ class QDomDocument;
 class QDomElement;
 class QPainter;
 
-/** \ingroup MapComposer
+/** \ingroup core
  * \class QgsComposerMapGridStack
  * \brief A collection of grids which is drawn above the map content in a
  * QgsComposerMap. The grid stack controls which grids are drawn and the
@@ -153,7 +153,7 @@ class CORE_EXPORT QgsComposerMapGridStack : public QgsComposerMapItemStack
 // QgsComposerMapGrid
 //
 
-/** \ingroup MapComposer
+/** \ingroup core
  * \class QgsComposerMapGrid
  * \brief An individual grid which is drawn above the map content in a
  * QgsComposerMap.
@@ -835,7 +835,12 @@ class CORE_EXPORT QgsComposerMapGrid : public QgsComposerMapItem
 
     struct GridExtension
     {
-      GridExtension() : top( 0.0 ), right( 0.0 ), bottom( 0.0 ), left( 0.0 ) {}
+      GridExtension()
+          : top( 0.0 )
+          , right( 0.0 )
+          , bottom( 0.0 )
+          , left( 0.0 )
+      {}
       double top;
       double right;
       double bottom;

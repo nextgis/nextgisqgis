@@ -46,6 +46,20 @@ QgsLayerTreeGroup::QgsLayerTreeGroup( const QgsLayerTreeGroup& other )
   connect( this, SIGNAL( visibilityChanged( QgsLayerTreeNode*, Qt::CheckState ) ), this, SLOT( nodeVisibilityChanged( QgsLayerTreeNode* ) ) );
 }
 
+QString QgsLayerTreeGroup::name() const
+{
+  return mName;
+}
+
+void QgsLayerTreeGroup::setName( const QString& n )
+{
+  if ( mName == n )
+    return;
+
+  mName = n;
+  emit nameChanged( this, n );
+}
+
 
 QgsLayerTreeGroup* QgsLayerTreeGroup::insertGroup( int index, const QString& name )
 {
@@ -240,7 +254,7 @@ QgsLayerTreeGroup* QgsLayerTreeGroup::findGroup( const QString& name )
   return nullptr;
 }
 
-QgsLayerTreeGroup* QgsLayerTreeGroup::readXML( QDomElement& element )
+QgsLayerTreeGroup* QgsLayerTreeGroup::readXML( QDomElement& element, bool looseMatch )
 {
   if ( element.tagName() != "layer-tree-group" )
     return nullptr;
@@ -256,7 +270,7 @@ QgsLayerTreeGroup* QgsLayerTreeGroup::readXML( QDomElement& element )
 
   groupNode->readCommonXML( element );
 
-  groupNode->readChildrenFromXML( element );
+  groupNode->readChildrenFromXML( element, looseMatch );
 
   groupNode->setIsMutuallyExclusive( isMutuallyExclusive, mutuallyExclusiveChildIndex );
 
@@ -284,13 +298,13 @@ void QgsLayerTreeGroup::writeXML( QDomElement& parentElement )
   parentElement.appendChild( elem );
 }
 
-void QgsLayerTreeGroup::readChildrenFromXML( QDomElement& element )
+void QgsLayerTreeGroup::readChildrenFromXML( QDomElement& element, bool looseMatch )
 {
   QList<QgsLayerTreeNode*> nodes;
   QDomElement childElem = element.firstChildElement();
   while ( !childElem.isNull() )
   {
-    QgsLayerTreeNode* newNode = QgsLayerTreeNode::readXML( childElem );
+    QgsLayerTreeNode* newNode = QgsLayerTreeNode::readXML( childElem, looseMatch );
     if ( newNode )
       nodes << newNode;
 

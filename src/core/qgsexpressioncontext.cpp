@@ -37,6 +37,8 @@ const QString QgsExpressionContext::EXPR_SYMBOL_COLOR( "symbol_color" );
 const QString QgsExpressionContext::EXPR_SYMBOL_ANGLE( "symbol_angle" );
 const QString QgsExpressionContext::EXPR_GEOMETRY_PART_COUNT( "geometry_part_count" );
 const QString QgsExpressionContext::EXPR_GEOMETRY_PART_NUM( "geometry_part_num" );
+const QString QgsExpressionContext::EXPR_GEOMETRY_POINT_COUNT( "geometry_point_count" );
+const QString QgsExpressionContext::EXPR_GEOMETRY_POINT_NUM( "geometry_point_num" );
 
 //
 // QgsExpressionContextScope
@@ -211,6 +213,7 @@ QgsExpressionContext::QgsExpressionContext( const QgsExpressionContext& other )
     mStack << new QgsExpressionContextScope( *scope );
   }
   mHighlightedVariables = other.mHighlightedVariables;
+  mCachedValues = other.mCachedValues;
 }
 
 QgsExpressionContext& QgsExpressionContext::operator=( const QgsExpressionContext & other )
@@ -222,6 +225,7 @@ QgsExpressionContext& QgsExpressionContext::operator=( const QgsExpressionContex
     mStack << new QgsExpressionContextScope( *scope );
   }
   mHighlightedVariables = other.mHighlightedVariables;
+  mCachedValues = other.mCachedValues;
   return *this;
 }
 
@@ -450,6 +454,26 @@ void QgsExpressionContext::setOriginalValueVariable( const QVariant &value )
                               value, true ) );
 }
 
+void QgsExpressionContext::setCachedValue( const QString& key, const QVariant& value ) const
+{
+  mCachedValues.insert( key, value );
+}
+
+bool QgsExpressionContext::hasCachedValue( const QString& key ) const
+{
+  return mCachedValues.contains( key );
+}
+
+QVariant QgsExpressionContext::cachedValue( const QString& key ) const
+{
+  return mCachedValues.value( key, QVariant() );
+}
+
+void QgsExpressionContext::clearCachedValues() const
+{
+  mCachedValues.clear();
+}
+
 
 //
 // QgsExpressionContextUtils
@@ -607,8 +631,8 @@ QgsExpressionContextScope* QgsExpressionContextUtils::projectScope()
 
   //add other known project variables
   scope->addVariable( QgsExpressionContextScope::StaticVariable( "project_title", project->title(), true ) );
-  scope->addVariable( QgsExpressionContextScope::StaticVariable( "project_path", project->fileInfo().filePath(), true ) );
-  scope->addVariable( QgsExpressionContextScope::StaticVariable( "project_folder", project->fileInfo().dir().path(), true ) );
+  scope->addVariable( QgsExpressionContextScope::StaticVariable( "project_path", QDir::toNativeSeparators( project->fileInfo().filePath() ), true ) );
+  scope->addVariable( QgsExpressionContextScope::StaticVariable( "project_folder", QDir::toNativeSeparators( project->fileInfo().dir().path() ), true ) );
   scope->addVariable( QgsExpressionContextScope::StaticVariable( "project_filename", project->fileInfo().fileName(), true ) );
 
   scope->addFunction( "project_color", new GetNamedProjectColor() );

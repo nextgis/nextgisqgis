@@ -48,6 +48,8 @@ QgsMultiBandColorRenderer::~QgsMultiBandColorRenderer()
 QgsMultiBandColorRenderer* QgsMultiBandColorRenderer::clone() const
 {
   QgsMultiBandColorRenderer * renderer = new QgsMultiBandColorRenderer( nullptr, mRedBand, mGreenBand, mBlueBand );
+  renderer->copyCommonProperties( this );
+
   if ( mRedContrastEnhancement )
   {
     renderer->setRedContrastEnhancement( new QgsContrastEnhancement( *mRedContrastEnhancement ) );
@@ -60,9 +62,6 @@ QgsMultiBandColorRenderer* QgsMultiBandColorRenderer::clone() const
   {
     renderer->setBlueContrastEnhancement( new QgsContrastEnhancement( *mBlueContrastEnhancement ) );
   }
-  renderer->setOpacity( mOpacity );
-  renderer->setAlphaBand( mAlphaBand );
-  renderer->setRasterTransparency( mRasterTransparency ? new QgsRasterTransparency( *mRasterTransparency ) : nullptr );
 
   return renderer;
 }
@@ -133,6 +132,11 @@ QgsRasterRenderer* QgsMultiBandColorRenderer::create( const QDomElement& elem, Q
 
 QgsRasterBlock* QgsMultiBandColorRenderer::block( int bandNo, QgsRectangle  const & extent, int width, int height )
 {
+  return block2( bandNo, extent, width, height );
+}
+
+QgsRasterBlock* QgsMultiBandColorRenderer::block2( int bandNo, QgsRectangle  const & extent, int width, int height, QgsRasterBlockFeedback* feedback )
+{
   Q_UNUSED( bandNo );
   QgsRasterBlock *outputBlock = new QgsRasterBlock();
   if ( !mInput )
@@ -186,7 +190,7 @@ QgsRasterBlock* QgsMultiBandColorRenderer::block( int bandNo, QgsRectangle  cons
   bandIt = bands.constBegin();
   for ( ; bandIt != bands.constEnd(); ++bandIt )
   {
-    bandBlocks[*bandIt] =  mInput->block( *bandIt, extent, width, height );
+    bandBlocks[*bandIt] =  mInput->block2( *bandIt, extent, width, height, feedback );
     if ( !bandBlocks[*bandIt] )
     {
       // We should free the alloced mem from block().

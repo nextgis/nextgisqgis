@@ -44,6 +44,7 @@
 QgsVectorLayerRenderer::QgsVectorLayerRenderer( QgsVectorLayer* layer, QgsRenderContext& context )
     : QgsMapLayerRenderer( layer->id() )
     , mContext( context )
+    , mInterruptionChecker( context )
     , mLayer( layer )
     , mFields( layer->fields() )
     , mRendererV2( nullptr )
@@ -52,7 +53,6 @@ QgsVectorLayerRenderer::QgsVectorLayerRenderer( QgsVectorLayer* layer, QgsRender
     , mDiagrams( false )
     , mLabelProvider( nullptr )
     , mDiagramProvider( nullptr )
-    , mLayerTransparency( 0 )
 {
   mSource = new QgsVectorLayerFeatureSource( layer );
 
@@ -63,7 +63,6 @@ QgsVectorLayerRenderer::QgsVectorLayerRenderer( QgsVectorLayer* layer, QgsRender
 
   mGeometryType = layer->geometryType();
 
-  mLayerTransparency = layer->layerTransparency();
   mFeatureBlendMode = layer->featureBlendMode();
 
   mSimplifyMethod = layer->simplifyMethod();
@@ -223,12 +222,11 @@ bool QgsVectorLayerRenderer::render()
       simplifyMethod.setMethodType( QgsSimplifyMethod::OptimizeForRendering );
       simplifyMethod.setTolerance( map2pixelTol );
       simplifyMethod.setThreshold( mSimplifyMethod.threshold() );
-
       simplifyMethod.setForceLocalOptimization( mSimplifyMethod.forceLocalOptimization() );
-
       featureRequest.setSimplifyMethod( simplifyMethod );
 
       QgsVectorSimplifyMethod vectorMethod = mSimplifyMethod;
+      vectorMethod.setTolerance( map2pixelTol );
       mContext.setVectorSimplifyMethod( vectorMethod );
     }
     else
@@ -246,6 +244,11 @@ bool QgsVectorLayerRenderer::render()
   }
 
   QgsFeatureIterator fit = mSource->getFeatures( featureRequest );
+  // Attach an interruption checker so that iterators that have potentially
+  // slow fetchFeature() implementations, such as in the WFS provider, can
+  // check it, instead of relying on just the mContext.renderingStopped() check
+  // in drawRendererV2()
+  fit.setInterruptionChecker( &mInterruptionChecker );
 
   if (( mRendererV2->capabilities() & QgsFeatureRendererV2::SymbolLevels ) && mRendererV2->usingSymbolLevels() )
     drawRendererV2Levels( fit );
@@ -255,18 +258,6 @@ bool QgsVectorLayerRenderer::render()
   if ( usingEffect )
   {
     mRendererV2->paintEffect()->end( mContext );
-  }
-
-  //apply layer transparency for vector layers
-  if ( mContext.useAdvancedEffects() && mLayerTransparency != 0 )
-  {
-    // a layer transparency has been set, so update the alpha for the flattened layer
-    // by combining it with the layer transparency
-    QColor transparentFillColor = QColor( 0, 0, 0, 255 - ( 255 * mLayerTransparency / 100 ) );
-    // use destination in composition mode to merge source's alpha with destination
-    mContext.painter()->setCompositionMode( QPainter::CompositionMode_DestinationIn );
-    mContext.painter()->fillRect( 0, 0, mContext.painter()->device()->width(),
-                                  mContext.painter()->device()->height(), transparentFillColor );
   }
 
   return true;
@@ -295,14 +286,14 @@ void QgsVectorLayerRenderer::drawRendererV2( QgsFeatureIterator& fit )
   {
     try
     {
-      if ( !fet.constGeometry() )
-        continue; // skip features without geometry
-
       if ( mContext.renderingStopped() )
       {
         QgsDebugMsg( QString( "Drawing of vector layer %1 cancelled." ).arg( layerID() ) );
         break;
       }
+
+      if ( !fet.constGeometry() )
+        continue; // skip features without geometry
 
       mContext.expressionContext().setFeature( fet );
 
@@ -392,9 +383,6 @@ void QgsVectorLayerRenderer::drawRendererV2Levels( QgsFeatureIterator& fit )
   QgsFeature fet;
   while ( fit.nextFeature( fet ) )
   {
-    if ( !fet.constGeometry() )
-      continue; // skip features without geometry
-
     if ( mContext.renderingStopped() )
     {
       qDebug( "rendering stop!" );
@@ -402,6 +390,9 @@ void QgsVectorLayerRenderer::drawRendererV2Levels( QgsFeatureIterator& fit )
       delete mContext.expressionContext().popScope();
       return;
     }
+
+    if ( !fet.constGeometry() )
+      continue; // skip features without geometry
 
     mContext.expressionContext().setFeature( fet );
     QgsSymbolV2* sym = mRendererV2->symbolForFeature( fet, mContext );
@@ -504,7 +495,7 @@ void QgsVectorLayerRenderer::drawRendererV2Levels( QgsFeatureIterator& fit )
           return;
         }
 
-        bool sel = mSelectedFeatureIds.contains( fit->id() );
+        bool sel = mContext.showSelection() && mSelectedFeatureIds.contains( fit->id() );
         // maybe vertex markers should be drawn only during the last pass...
         bool drawMarker = ( mDrawVertexMarkers && mContext.drawEditingInformation() && ( !mVertexMarkerOnlyForSelection || sel ) );
 
@@ -626,4 +617,19 @@ void QgsVectorLayerRenderer::prepareDiagrams( QgsVectorLayer* layer, QStringList
 
   mContext.labelingEngine()->prepareDiagramLayer( layer, attributeNames, mContext ); // will make internal copy of diagSettings + initialize it
 
+}
+
+/*  -----------------------------------------  */
+/*  QgsVectorLayerRendererInterruptionChecker  */
+/*  -----------------------------------------  */
+
+QgsVectorLayerRendererInterruptionChecker::QgsVectorLayerRendererInterruptionChecker
+( const QgsRenderContext& context )
+    : mContext( context )
+{
+}
+
+bool QgsVectorLayerRendererInterruptionChecker::mustStop() const
+{
+  return mContext.renderingStopped();
 }

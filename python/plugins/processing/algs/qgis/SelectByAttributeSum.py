@@ -33,7 +33,7 @@ from processing.core.parameters import ParameterVector
 from processing.core.parameters import ParameterTableField
 from processing.core.parameters import ParameterNumber
 from processing.core.outputs import OutputVector
-from processing.tools import dataobjects, vector
+from processing.tools import dataobjects
 
 
 class SelectByAttributeSum(GeoAlgorithm):
@@ -62,7 +62,7 @@ class SelectByAttributeSum(GeoAlgorithm):
 
         selected = layer.selectedFeaturesIds()
         if len(selected) == 0:
-            GeoAlgorithmExecutionException(
+            raise GeoAlgorithmExecutionException(
                 self.tr('There is no selection in the input layer. '
                         'Select one feature and try again.'))
 

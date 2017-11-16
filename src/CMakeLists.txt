@@ -34,7 +34,35 @@ if(NOT PREPARE_ONLY)
     if(POSTGRESQL_FOUND)
         add_definitions(-DHAVE_PGCONFIG=1 -DHAVE_POSTGRESQL)
     endif()
+
+    if(SPATIALITE_VERSION_GE_4_0_0)
+        add_definitions(-DSPATIALITE_VERSION_GE_4_0_0)
+    elseif(SPATIALITE_VERSION)
+    	if(${SPATIALITE_VERSION} VERSION_GREATER "4.0.0")
+            add_definitions(-DSPATIALITE_VERSION_GE_4_0_0)
+        endif()
+    endif()
+
+    if(SPATIALITE_VERSION_G_4_1_1)
+        add_definitions(-DSPATIALITE_VERSION_G_4_1_1)
+    elseif(SPATIALITE_VERSION)
+    	if(${SPATIALITE_VERSION} VERSION_GREATER "4.1.1")
+            add_definitions(-DSPATIALITE_VERSION_G_4_1_1)
+        endif()
+    endif()
+
+    if(SPATIALITE_HAS_INIT_EX)
+        add_definitions(-DSPATIALITE_HAS_INIT_EX)
+    elseif(SPATIALITE_VERSION)
+    	if(${SPATIALITE_VERSION} VERSION_GREATER "4.1.1")
+            add_definitions(-DSPATIALITE_HAS_INIT_EX)
+        endif()
+    endif()
 endif()
+
+add_definitions(-DSUPPORT_GEOPACKAGE=1)
+
+# add_definitions(-DWITH_ARCGIS) required QJson
 
 add_subdirectory(core)
 add_subdirectory(analysis)

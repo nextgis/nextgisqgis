@@ -21,7 +21,11 @@
 #include "qgscomposertable.h"
 #include "qgscomposertablev2.h"
 
-/** A text table item that reads text from string lists*/
+/** \ingroup core
+ * A text table item that reads text from string lists
+ * @deprecated use QgsComposerTextTableV2 intead
+*/
+//TODO QGIS 3.0 - remove
 class CORE_EXPORT QgsComposerTextTable: public QgsComposerTable
 {
     Q_OBJECT
@@ -72,7 +76,8 @@ class CORE_EXPORT QgsComposerTextTable: public QgsComposerTable
     QList< QStringList > mRowText;
 };
 
-/** A text table item that reads text from string lists
+/** \ingroup core
+ * A text table item that reads text from string lists
  * @note added in QGIS 2.10
 */
 class CORE_EXPORT QgsComposerTextTableV2 : public QgsComposerTableV2

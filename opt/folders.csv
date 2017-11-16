@@ -107,6 +107,7 @@ python/plugins/processing/core,python/plugins/processing/core,,py
 python/plugins/processing/gui,python/plugins/processing/gui,,"py,algnames.txt,algclassification.txt"
 python/plugins/processing/images,python/plugins/processing/images,,"png,svg,gif"
 python/plugins/processing/modeler,python/plugins/processing/modeler,,py
+python/plugins/processing/preconfigured,python/plugins/processing/preconfigured,,py
 python/plugins/processing/script,python/plugins/processing/script,,py
 python/plugins/processing/tests,python/plugins/processing/tests,,"py,md"
 python/plugins/processing/tests/data,python/plugins/processing/tests/data,,"dbf,prj,qpj,shp,shx,geojson,tif,qgs"
@@ -144,6 +145,7 @@ src/core/gps/qextserialport,src/core/gps/qextserialport,skip,
 src/core/layertree,src/core/layertree,,"cpp,h,hpp,c"
 src/core/pal,src/core/pal,,"cpp,h,hpp,c"
 src/core/raster,src/core/raster,,"cpp,h,hpp,c"
+src/core/simplify,src/core/simplify,,"cpp,h,hpp,c"
 src/core/symbology-ng,src/core/symbology-ng,,"cpp,h,hpp,c"
 src/plugins,src/plugins,,"h,hpp,py"
 src/plugins/compass,src/plugins/compass,,"cpp,h,ui,qrc"
@@ -278,6 +280,8 @@ src/ui/editorwidgets,src/ui/editorwidgets,,ui
 src/ui/effects,src/ui/effects,,ui
 src/ui/symbollayer,src/ui/symbollayer,,ui
 src/ui/templates,src/ui/templates,,ui
+src/ui/raster,src/ui/raster,,ui
+src/ui/styledock,src/ui/styledock,,ui
 src/gui,src/gui,,"cpp,h"
 src/gui/attributetable,src/gui/attributetable,,"cpp,h"
 src/gui/auth,src/gui/auth,,"cpp,h"
@@ -291,6 +295,7 @@ src/auth/basic,src/auth/basic,,"cpp,h,ui"
 src/auth/identcert,src/auth/identcert,,"cpp,h,ui"
 src/auth/pkipaths,src/auth/pkipaths,,"cpp,h,ui"
 src/auth/pkipkcs12,src/auth/pkipkcs12,,"cpp,h,ui"
+src/providers/arcgisrest,src/providers/arcgisrest,,"cpp,h,qrc,ui"
 src/providers/delimitedtext,src/providers/delimitedtext,,"cpp,h,qrc,ui"
 src/providers/gdal,src/providers/gdal,,"cpp,h,qrc,ui"
 src/providers/gpx,src/providers/gpx,,"cpp,h,qrc,ui"
@@ -309,6 +314,7 @@ src/providers/wfs,src/providers/wfs,,"cpp,h,qrc,ui"
 src/providers/wms,src/providers/wms,,"cpp,h,qrc,ui"
 src/app,src/app,,"cpp,h"
 src/app/composer,src/app/composer,,"cpp,h"
+src/app/dwg,src/app/dwg,skip,"cpp,h"
 src/app/gps,src/app/gps,skip,"cpp,h"
 src/app/legend,src/app/legend,,"cpp,h"
 src/app/nodetool,src/app/nodetool,,"cpp,h"
@@ -350,12 +356,12 @@ images/svg/wind_roses,images/svg/wind_roses,,svg
 images/theme_originals,images/theme_originals,skip,
 images/themes,images/themes,,
 images/themes/default,images/themes/default,,"png,svg,TXT,gif"
-images/themes/default/cadtools,images/themes/default/cadtools,,png
-images/themes/default/console,images/themes/default/console,,png
-images/themes/default/customization,images/themes/default/customization,,png
-images/themes/default/gpsicons,images/themes/default/gpsicons,,svg
+images/themes/default/cadtools,images/themes/default/cadtools,,"png,svg"
+images/themes/default/console,images/themes/default/console,,"png,svg"
+images/themes/default/customization,images/themes/default/customization,,"png,svg"
+images/themes/default/gpsicons,images/themes/default/gpsicons,,"png,svg"
 images/themes/default/propertyicons,images/themes/default/propertyicons,,"png,svg"
-images/themes/default/styleicons,images/themes/default/styleicons,,png
+images/themes/default/styleicons,images/themes/default/styleicons,,"png,svg"
 images/themes/default/svgbase,images/themes/default/svgbase,,"svg,txt"
 images/themes_old,images/themes_old,skip,
 src/python,src/python,,"cpp,h"

@@ -45,8 +45,11 @@ class QgsComposer;
 class QgsComposerManager;
 class QgsComposerView;
 class QgsStatusBarCoordinatesWidget;
+class QgsStatusBarMagnifierWidget;
+class QgsStatusBarScaleWidget;
 class QgsContrastEnhancement;
 class QgsCustomLayerOrderWidget;
+class QgsDockWidget;
 class QgsDoubleSpinBox;
 class QgsFeature;
 class QgsGeometry;
@@ -54,6 +57,7 @@ class QgsLayerTreeMapCanvasBridge;
 class QgsLayerTreeView;
 class QgsMapCanvas;
 class QgsMapLayer;
+class QgsMapLayerConfigWidgetFactory;
 class QgsMapTip;
 class QgsMapTool;
 class QgsMapToolAdvancedDigitizing;
@@ -89,10 +93,12 @@ class QgsDecorationItem;
 class QgsMessageLogViewer;
 class QgsMessageBar;
 
-class QgsScaleComboBox;
-
 class QgsDataItem;
 class QgsTileScaleWidget;
+
+class QgsLabelingWidget;
+class QgsLayerStylingWidget;
+class QgsDiagramProperties;
 
 #include <QMainWindow>
 #include <QToolBar>
@@ -112,6 +118,8 @@ class QgsTileScaleWidget;
 #include "qgsmessagebar.h"
 #include "qgsbookmarks.h"
 #include "qgswelcomepageitemsmodel.h"
+#include "qgsruntimeprofiler.h"
+
 
 #include "ui_qgisapp.h"
 
@@ -142,9 +150,6 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     //! For customization
     QgisApp( QWidget * parent, Qt::WindowFlags fl ) : QMainWindow( parent, fl )
       , mNonEditMapTool( nullptr )
-      , mScaleLabel( nullptr )
-      , mScaleEdit( nullptr )
-      , mScaleEditValidator( nullptr )
       , mCoordsEdit( nullptr )
       , mRotationLabel( nullptr )
       , mRotationEdit( nullptr )
@@ -280,7 +285,7 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
      * After adding the dock widget to the ui (by delegating to the QMainWindow
      * parent class, it will also add it to the View menu list of docks.*/
     void addDockWidget( Qt::DockWidgetArea area, QDockWidget *dockwidget );
-    void removeDockWidget( QDockWidget *dockwidget );
+    void removeDockWidget( QDockWidget* dockwidget );
     /** Add a toolbar to the main window. Overloaded from QMainWindow.
      * After adding the toolbar to the ui (by delegating to the QMainWindow
      * parent class, it will also add it to the View menu list of toolbars.*/
@@ -393,6 +398,8 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     QAction *actionAddWmsLayer() { return mActionAddWmsLayer; }
     QAction *actionAddWcsLayer() { return mActionAddWcsLayer; }
     QAction *actionAddWfsLayer() { return mActionAddWfsLayer; }
+    QAction* actionAddAfsLayer() { return mActionAddAfsLayer; }
+    QAction* actionAddAmsLayer() { return mActionAddAmsLayer; }
     QAction *actionCopyLayerStyle() { return mActionCopyStyle; }
     QAction *actionPasteLayerStyle() { return mActionPasteStyle; }
     QAction *actionOpenTable() { return mActionOpenTable; }
@@ -535,6 +542,12 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
 
     void parseVersionInfo( QNetworkReply* reply, int& latestVersion, QStringList& versionInfo );
 
+    /** Register a new tab in the layer properties dialog */
+    void registerMapLayerPropertiesFactory( QgsMapLayerConfigWidgetFactory* factory );
+
+    /** Unregister a previously registered tab in the layer properties dialog */
+    void unregisterMapLayerPropertiesFactory( QgsMapLayerConfigWidgetFactory* factory );
+
   public slots:
     void layerTreeViewDoubleClicked( const QModelIndex& index );
     //! Make sure the insertion point for new layers is up-to-date with the current item in layer tree view
@@ -649,7 +662,6 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
 
     //! copies features to internal clipboard
     void copyFeatures( QgsFeatureStore & featureStore );
-    void loadOGRSublayers( const QString& layertype, const QString& uri, const QStringList& list );
     void loadGDALSublayers( const QString& uri, const QStringList& list );
 
     /** Deletes the selected attributes for the currently selected vector layer*/
@@ -682,7 +694,7 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     void toolButtonActionTriggered( QAction * );
 
     //! layer selection changed
-    void legendLayerSelectionChanged( void );
+    void legendLayerSelectionChanged();
 
     //! Watch for QFileOpenEvent.
     virtual bool event( QEvent *event ) override;
@@ -694,6 +706,10 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     QgsPluginLayer* addPluginLayer( const QString& uri, const QString& baseName, const QString& providerKey );
 
     void addWfsLayer( const QString& uri, const QString& typeName );
+
+    void addAfsLayer( const QString& uri, const QString& typeName );
+
+    void addAmsLayer( const QString& uri, const QString& typeName );
 
     void versionReplyFinished();
 
@@ -711,9 +727,6 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     void refreshActionFeatureAction();
 
     QMenu *panelMenu() { return mPanelMenu; }
-
-    bool autoTransaction() const;
-    void setAutoTransaction( bool state );
 
   protected:
 
@@ -760,14 +773,14 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
                                              const QString& uri,
                                              const QString& layerName,
                                              const QString& provider );
-    //#ifdef HAVE_MSSQL
     //! Add a MSSQL layer to the map
     virtual void addMssqlLayer();
     //#endif
     //#ifdef HAVE_ORACLE
     //! Add a Oracle layer to the map
     virtual void addOracleLayer();
-    //#endif
+    //! Add a DB2 layer to the map
+    virtual void addDb2Layer();
     //! Add a virtual layer
     virtual void addVirtualLayer();
     //! toggles whether the current selected layer is in overview or not
@@ -776,8 +789,6 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     void saveLastMousePosition( const QgsPoint & );
     //! Slot to show current map scale;
     void showScale( double theScale );
-    //! Slot to handle user scale input;
-    void userScale();
     //! Slot to handle user rotation input;
     //! @note added in 2.8
     void userRotation();
@@ -785,8 +796,10 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     void removeLayer();
     //! Duplicate map layer(s) in legend
     void duplicateLayers( const QList<QgsMapLayer *>& lyrList = QList<QgsMapLayer *>() );
-    //! Set Scale visibility of selected layers
+    //! Set scale visibility of selected layers
     void setLayerScaleVisibility();
+    //! Zoom to nearest scale such that current layer is visible
+    void zoomToLayerScale();    
     //! Set CRS of a layer
     void setLayerCRS();
     //! Assign layer CRS to project
@@ -949,6 +962,8 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     virtual void fileSaveAs();
     //! Export project in dxf format
     virtual void dxfExport();
+    //! Import layers in dwg format
+    //void dwgImport();
     //! Open the project file corresponding to the
     //! text)= of the given action.
     virtual void openProject( QAction *action );
@@ -987,6 +1002,8 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     void newMemoryLayer();
     //! Create a new empty spatialite layer
     void newSpatialiteLayer();
+    //! Create a new empty GeoPackage layer
+    void newGeoPackageLayer();
     //! Print the current map view frame
     void newPrintComposer();
     void showComposerManager();
@@ -1071,10 +1088,14 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     void mergeSelectedFeatures();
     //! merges the attributes of selected features
     void mergeAttributesOfSelectedFeatures();
+    //! Modifies the attributes of selected features via feature form
+    void modifyAttributesOfSelectedFeatures();
     //! provides operations with nodes
     void nodeTool();
     //! activates the rotate points tool
     void rotatePointSymbols();
+    //! activates the offset point symbol tool
+    void offsetPointSymbol();
     //! shows the snapping Options
     virtual void snappingOptions();
 
@@ -1101,6 +1122,9 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
 
     //! select features by expression
     virtual void selectByExpression();
+
+    //! select features by form
+    void selectByForm();
 
     //! refresh map canvas
     virtual void refreshMapCanvas();
@@ -1130,6 +1154,9 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
 
     /** Called when some layer's editing mode was toggled on/off */
     virtual void layerEditStateChanged();
+
+    /** Update the label toolbar buttons */
+    void updateLabelToolButtons();
 
     /** Activates or deactivates actions depending on the current maplayer type.
     Is called from the legend when the current legend item has changed*/
@@ -1162,6 +1189,10 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     void addWcsLayer();
     //! Add a WFS layer to the map
     void addWfsLayer();
+    //! Add a ArcGIS FeatureServer layer to the map
+    void addAfsLayer();
+    //! Add a ArcGIS MapServer layer to the map
+    void addAmsLayer();
     //! Set map tool to Zoom out
     void zoomOut();
     //! Set map tool to Zoom in
@@ -1208,6 +1239,12 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     //! shows label settings dialog (for labeling-ng)
     void labeling();
 
+    //! shows the map styling dock
+    void mapStyleDock( bool enabled );
+
+    //! diagrams properties
+    void diagramProperties();
+
     //! set the CAD dock widget visible
     void setCadDockVisible( bool visible );
 
@@ -1229,7 +1266,7 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     void oldProjectVersionWarning( const QString& );
 
     //! Toggle map tips on/off
-    void toggleMapTips();
+    void toggleMapTips( bool enabled );
 
     //! Show the map tip
     void showMapTip();
@@ -1325,6 +1362,12 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
 
     /** Pushes a layer error to the message bar */
     void onLayerError( const QString& msg );
+    
+    /** Set the layer for the map style dock. Doesn't show the style dock */
+    void setMapStyleDockLayer( QgsMapLayer *layer );
+
+    //! Handles processing of dropped mimedata
+    void dropEventTimeout();
 
 signals:
     /** Emitted when a key is pressed and we want non widget sublasses to be able
@@ -1375,6 +1418,12 @@ signals:
     void layerSavedAs( QgsMapLayer* l, const QString& path );
 
   protected:
+    void startProfile( const QString &name );
+    void endProfile();
+    virtual void functionProfile( void ( QgisApp::*fnc )(), QgisApp *instance, QString name );
+
+    QgsRuntimeProfiler* mProfiler;
+
     /** This method will open a dialog so the user can select GDAL sublayers to load
      * @returns true if any items were loaded
      */
@@ -1466,6 +1515,9 @@ signals:
     /** Copy a vector style from a layer to another one, if they have the same geometry type */
     void duplicateVectorStyle( QgsVectorLayer* srcLayer, QgsVectorLayer* destLayer );
 
+    //! Loads the list of recent projects from settings
+    void readRecentProjects();
+    
     QgisAppStyleSheet *mStyleSheetBuilder;
 
     // actions for menus and toolbars -----------------
@@ -1496,11 +1548,11 @@ signals:
     QMenu *mToolbarMenu;
 
     // docks ------------------------------------------
-    QDockWidget *mLayerTreeDock;
-    QDockWidget *mLayerOrderDock;
-    QDockWidget *mOverviewDock;
-    QDockWidget *mpGpsDock;
-    QDockWidget *mLogDock;
+    QgsDockWidget *mLayerTreeDock;
+    QgsDockWidget *mLayerOrderDock;
+    QgsDockWidget *mOverviewDock;
+    QgsDockWidget *mpGpsDock;
+    QgsDockWidget *mLogDock;
 
 #ifdef Q_OS_MAC
     //! Window menu action to select this window
@@ -1547,6 +1599,7 @@ signals:
             , mDeletePart( nullptr )
             , mNodeTool( nullptr )
             , mRotatePointSymbolsTool( nullptr )
+            , mOffsetPointSymbolTool( nullptr )
             , mAnnotation( nullptr )
             , mFormAnnotation( nullptr )
             , mHtmlAnnotation( nullptr )
@@ -1595,6 +1648,7 @@ signals:
         QgsMapTool *mDeletePart;
         QgsMapTool *mNodeTool;
         QgsMapTool *mRotatePointSymbolsTool;
+        QgsMapTool *mOffsetPointSymbolTool;
         QgsMapTool *mAnnotation;
         QgsMapTool *mFormAnnotation;
         QgsMapTool *mHtmlAnnotation;
@@ -1610,12 +1664,10 @@ signals:
 
     QgsMapTool *mNonEditMapTool;
 
-    //! Widget that will live on the statusbar to display "scale 1:"
-    QLabel *mScaleLabel;
-    //! Widget that will live on the statusbar to display scale value
-    QgsScaleComboBox *mScaleEdit;
-    //! The validator for the mScaleEdit
-    QValidator * mScaleEditValidator;
+    QgsStatusBarScaleWidget* mScaleWidget;
+
+    //! zoom widget
+    QgsStatusBarMagnifierWidget *mMagnifierWidget;
 
     //! Widget that will live in the statusbar to display and edit coords
     QgsStatusBarCoordinatesWidget *mCoordsEdit;
@@ -1713,6 +1765,7 @@ signals:
     static QgisApp *smInstance;
 
     QgsUndoWidget *mUndoWidget;
+    QgsDockWidget *mUndoDock;
 
     QgsBrowserDockWidget *mBrowserWidget;
     QgsBrowserDockWidget *mBrowserWidget2;
@@ -1724,11 +1777,10 @@ signals:
     QgsSnappingDialog *mSnappingDialog;
 
     QgsPluginManager *mPluginManager;
+    QgsDockWidget *mMapStylingDock;
+    QgsLayerStylingWidget* mMapStyleWidget;
 
     QgsComposerManager *mComposerManager;
-
-    //! map of transaction group: QPair( providerKey, connString ) -> transactionGroup
-    QMap< QPair< QString, QString>, QgsTransactionGroup*> mTransactionGroups;
 
     //! Persistent tile scale slider
     QgsTileScaleWidget *mpTileScaleWidget;
@@ -1765,10 +1817,13 @@ signals:
     QgsMapCanvasTracer* mTracer;
 
     QAction* mActionFilterLegend;
+    QAction* mActionStyleDock;
 
     QgsLegendFilterButton* mLegendExpressionFilterButton;
 
     QgsSnappingUtils* mSnappingUtils;
+    
+    QList<QgsMapLayerConfigWidgetFactory*> mMapLayerPanelFactories;
 
     QDateTime mProjectLastModified;
 

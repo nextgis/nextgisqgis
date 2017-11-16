@@ -53,50 +53,65 @@ QgsRelationReferenceConfigDlg::QgsRelationReferenceConfigDlg( QgsVectorLayer* vl
       mExpressionWidget->setField( relation.referencedLayer()->displayExpression() );
     }
   }
+
+  connect( mCbxAllowNull, SIGNAL( toggled( bool ) ), this, SIGNAL( changed() ) );
+  connect( mCbxOrderByValue, SIGNAL( toggled( bool ) ), this, SIGNAL( changed() ) );
+  connect( mCbxShowForm, SIGNAL( toggled( bool ) ), this, SIGNAL( changed() ) );
+  connect( mCbxMapIdentification, SIGNAL( toggled( bool ) ), this, SIGNAL( changed() ) );
+  connect( mCbxReadOnly, SIGNAL( toggled( bool ) ), this, SIGNAL( changed() ) );
+  connect( mComboRelation, SIGNAL( currentIndexChanged( int ) ), this, SIGNAL( changed() ) );
+  connect( mCbxAllowAddFeatures, SIGNAL( toggled( bool ) ), this, SIGNAL( changed() ) );
+  connect( mFilterGroupBox, SIGNAL( toggled( bool ) ), this, SIGNAL( changed() ) );
+  connect( mFilterFieldsList, SIGNAL( itemChanged( QListWidgetItem* ) ), this, SIGNAL( changed() ) );
+  connect( mCbxChainFilters, SIGNAL( toggled( bool ) ), this, SIGNAL( changed() ) );
+  connect( mExpressionWidget, SIGNAL( fieldChanged( QString ) ), this, SIGNAL( changed() ) );
 }
 
-void QgsRelationReferenceConfigDlg::setConfig( const QMap<QString, QVariant>& config )
+void QgsRelationReferenceConfigDlg::setConfig( const QgsEditorWidgetConfig& config )
 {
   if ( config.contains( "AllowNULL" ) )
   {
-    mCbxAllowNull->setChecked( config[ "AllowNULL" ].toBool() );
+    mCbxAllowNull->setChecked( config.value( "AllowNULL" ).toBool() );
   }
 
   if ( config.contains( "OrderByValue" ) )
   {
-    mCbxOrderByValue->setChecked( config[ "OrderByValue" ].toBool() );
+    mCbxOrderByValue->setChecked( config.value( "OrderByValue" ).toBool() );
   }
 
   if ( config.contains( "ShowForm" ) )
   {
-    mCbxShowForm->setChecked( config[ "ShowForm" ].toBool() );
+    mCbxShowForm->setChecked( config.value( "ShowForm" ).toBool() );
   }
 
   if ( config.contains( "Relation" ) )
   {
-    mComboRelation->setCurrentIndex( mComboRelation->findData( config[ "Relation" ].toString() ) );
+    mComboRelation->setCurrentIndex( mComboRelation->findData( config.value( "Relation" ).toString() ) );
     relationChanged( mComboRelation->currentIndex() );
   }
 
   if ( config.contains( "MapIdentification" ) )
   {
-    mCbxMapIdentification->setChecked( config[ "MapIdentification"].toBool() );
+    mCbxMapIdentification->setChecked( config.value( "MapIdentification" ).toBool() );
   }
+
+  if ( config.contains( "AllowAddFeatures" ) )
+    mCbxAllowAddFeatures->setChecked( config.value( "AllowAddFeatures" ).toBool() );
 
   if ( config.contains( "ReadOnly" ) )
   {
-    mCbxReadOnly->setChecked( config[ "ReadOnly"].toBool() );
+    mCbxReadOnly->setChecked( config.value( "ReadOnly" ).toBool() );
   }
 
   if ( config.contains( "FilterFields" ) )
   {
     mFilterGroupBox->setChecked( true );
-    Q_FOREACH ( const QString& fld, config["FilterFields"].toStringList() )
+    Q_FOREACH ( const QString& fld, config.value( "FilterFields" ).toStringList() )
     {
       addFilterField( fld );
     }
 
-    mCbxChainFilters->setChecked( config["ChainFilters"].toBool() );
+    mCbxChainFilters->setChecked( config.value( "ChainFilters" ).toBool() );
   }
 }
 
@@ -142,6 +157,7 @@ QgsEditorWidgetConfig QgsRelationReferenceConfigDlg::config()
   myConfig.insert( "MapIdentification", mCbxMapIdentification->isEnabled() && mCbxMapIdentification->isChecked() );
   myConfig.insert( "ReadOnly", mCbxReadOnly->isChecked() );
   myConfig.insert( "Relation", mComboRelation->itemData( mComboRelation->currentIndex() ) );
+  myConfig.insert( "AllowAddFeatures", mCbxAllowAddFeatures->isChecked() );
 
   if ( mFilterGroupBox->isChecked() )
   {
@@ -175,7 +191,7 @@ void QgsRelationReferenceConfigDlg::loadFields()
     const QgsFields& flds = l->fields();
     for ( int i = 0; i < flds.count(); i++ )
     {
-      mAvailableFieldsList->addItem( l->attributeAlias( i ).isEmpty() ? flds.at( i ).name() : l->attributeAlias( i ) );
+      mAvailableFieldsList->addItem( flds.at( i ).displayName() );
       mAvailableFieldsList->item( mAvailableFieldsList->count() - 1 )->setData( Qt::UserRole, flds.at( i ).name() );
     }
   }

@@ -21,7 +21,7 @@
 class QgsMapLayer;
 class QgsLayerTreeLayer;
 
-/**
+/** \ingroup core
  * Layer tree group node serves as a container for layers and further groups.
  *
  * Group names do not need to be unique within one tree nor within one parent.
@@ -36,9 +36,9 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
     QgsLayerTreeGroup( const QgsLayerTreeGroup& other );
 
     //! Get group's name
-    QString name() const { return mName; }
+    QString name() const override;
     //! Set group's name
-    void setName( const QString& n ) { mName = n; }
+    void setName( const QString& n ) override;
 
     //! Insert a new group node with given name at specified position. Newly created node is owned by this group.
     QgsLayerTreeGroup* insertGroup( int index, const QString& name );
@@ -76,12 +76,22 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
     //! Find group node with specified name. Searches recursively the whole sub-tree.
     QgsLayerTreeGroup* findGroup( const QString& name );
 
-    //! Read group (tree) from XML element <layer-tree-group> and return the newly created group (or null on error)
-    static QgsLayerTreeGroup* readXML( QDomElement& element );
+    /**
+     * Read group (tree) from XML element <layer-tree-group> and return the newly
+     * created group (or null on error). If the looseMatch
+     * parameter is true then child legend layers will use looser matching criteria,
+     * eg testing layer source instead of layer IDs.
+     */
+    static QgsLayerTreeGroup* readXML( QDomElement& element, bool looseMatch = false );
+
     //! Write group (tree) as XML element <layer-tree-group> and add it to the given parent element
     virtual void writeXML( QDomElement& parentElement ) override;
-    //! Read children from XML and append them to the group.
-    void readChildrenFromXML( QDomElement& element );
+    /**
+     * Read children from XML and append them to the group. If the looseMatch
+     * parameter is true then legend layers will use looser matching criteria,
+     * eg testing layer source instead of layer IDs.
+     */
+    void readChildrenFromXML( QDomElement& element, bool looseMatch = false );
 
     //! Return text representation of the tree. For debugging purposes only.
     virtual QString dump() const override;

@@ -50,6 +50,8 @@ class CORE_EXPORT QgsMapLayer : public QObject
 {
     Q_OBJECT
 
+    Q_PROPERTY( QString name READ name WRITE setName NOTIFY nameChanged )
+
   public:
     /** Layers enum defining the types of layers that can be added to a map */
     enum LayerType
@@ -79,8 +81,17 @@ class CORE_EXPORT QgsMapLayer : public QObject
 
     /** Set the display name of the layer
      * @param name New name for the layer
+     * @deprecated Since 2.16, use setName instead
      */
-    void setLayerName( const QString & name );
+    Q_DECL_DEPRECATED void setLayerName( const QString & name );
+
+    /**
+     * Set the display name of the layer
+     * @param name New name for the layer
+     *
+     * @note added in 2.16
+     */
+    void setName( const QString& name );
 
     /** Get the display name of the layer
      * @return the layer name
@@ -231,6 +242,9 @@ class CORE_EXPORT QgsMapLayer : public QObject
     /** Returns the current blending mode for a layer */
     QPainter::CompositionMode blendMode() const;
 
+    /** Returns if this layer is read only. */
+    bool readOnly() const { return isReadOnly(); }
+
     /** Synchronises with changes in the datasource
         */
     virtual void reload() {}
@@ -288,6 +302,11 @@ class CORE_EXPORT QgsMapLayer : public QObject
 
     /** True if the layer can be edited */
     virtual bool isEditable() const;
+
+    /** Returns true if the layer is considered a spatial layer, ie it has some form of geometry associated with it.
+     * @note added in QGIS 2.16
+     */
+    virtual bool isSpatial() const { return true; }
 
     /** Sets state from Dom document
        @param layerElement The Dom element corresponding to ``maplayer'' tag
@@ -359,6 +378,7 @@ class CORE_EXPORT QgsMapLayer : public QObject
     /** Returns layer's spatial reference system
     @note This was introduced in QGIS 1.4
      */
+    //TODO QGIS 3.0 - return QgsCoordinateReferenceSystem object, not reference (since they are implicitly shared)
     const QgsCoordinateReferenceSystem& crs() const;
 
     /** Sets layer's spatial reference system */
@@ -469,6 +489,15 @@ class CORE_EXPORT QgsMapLayer : public QObject
      */
     virtual bool readSymbology( const QDomNode& node, QString& errorMessage ) = 0;
 
+    /** Read the style for the current layer from the Dom node supplied.
+     * @param node node that will contain the style definition for this layer.
+     * @param errorMessage reference to string that will be updated with any error messages
+     * @return true in case of success.
+     * @note added in 2.16
+     * @note To be implemented in subclasses. Default implementation does nothing and returns false.
+     */
+    virtual bool readStyle( const QDomNode& node, QString& errorMessage );
+
     /** Write the symbology for the layer into the docment provided.
      *  @param node the node that will have the style element added to it.
      *  @param doc the document that will have the QDomNode added.
@@ -477,8 +506,23 @@ class CORE_EXPORT QgsMapLayer : public QObject
      */
     virtual bool writeSymbology( QDomNode &node, QDomDocument& doc, QString& errorMessage ) const = 0;
 
+    /** Write just the style information for the layer into the document
+     *  @param node the node that will have the style element added to it.
+     *  @param doc the document that will have the QDomNode added.
+     *  @param errorMessage reference to string that will be updated with any error messages
+     *  @return true in case of success.
+     *  @note added in 2.16
+     *  @note To be implemented in subclasses. Default implementation does nothing and returns false.
+     */
+    virtual bool writeStyle( QDomNode& node, QDomDocument& doc, QString& errorMessage ) const;
+
     /** Return pointer to layer's undo stack */
     QUndoStack *undoStack();
+
+    /** Return pointer to layer's style undo stack
+     *  @note added in 2.16
+     */
+    QUndoStack *undoStackStyles();
 
     /* Layer legendUrl information */
     void setLegendUrl( const QString& legendUrl ) { mLegendUrl = legendUrl; }
@@ -511,29 +555,42 @@ class CORE_EXPORT QgsMapLayer : public QObject
      */
     QgsMapLayerStyleManager* styleManager() const;
 
+    /** Tests whether the layer should be visible at the specified scale.
+     * @param scale scale denominator to test
+     * @returns true if the layer is visible at the given scale.
+     * @note added in QGIS 2.16
+     * @see minimumScale()
+     * @see maximumScale()
+     * @see hasScaleBasedVisibility()
+     */
+    bool isInScaleRange( double scale ) const;
+
     /** Returns the minimum scale denominator at which the layer is visible.
      * Scale based visibility is only used if hasScaleBasedVisibility is true.
      * @returns minimum scale denominator at which the layer will render
-     * @see setMinimumScale
-     * @see maximumScale
-     * @see hasScaleBasedVisibility
+     * @see setMinimumScale()
+     * @see maximumScale()
+     * @see hasScaleBasedVisibility()
+     * @see isInScaleRange()
      */
-    float minimumScale() const;
+    double minimumScale() const;
 
     /** Returns the maximum scale denominator at which the layer is visible.
      * Scale based visibility is only used if hasScaleBasedVisibility is true.
      * @returns minimum scale denominator at which the layer will render
-     * @see setMaximumScale
-     * @see minimumScale
-     * @see hasScaleBasedVisibility
+     * @see setMaximumScale()
+     * @see minimumScale()
+     * @see hasScaleBasedVisibility()
+     * @see isInScaleRange()
      */
-    float maximumScale() const;
+    double maximumScale() const;
 
     /** Returns whether scale based visibility is enabled for the layer.
      * @returns true if scale based visibility is enabled
-     * @see minimumScale
-     * @see maximumScale
-     * @see setScaleBasedVisibility
+     * @see minimumScale()
+     * @see maximumScale()
+     * @see setScaleBasedVisibility()
+     * @see isInScaleRange()
      */
     bool hasScaleBasedVisibility() const;
 
@@ -549,7 +606,7 @@ class CORE_EXPORT QgsMapLayer : public QObject
      * @see setMaximumScale
      * @see setScaleBasedVisibility
      */
-    void setMinimumScale( const float theMinScale );
+    void setMinimumScale( double theMinScale );
 
     /** Sets the maximum scale denominator at which the layer will be visible.
      * Scale based visibility is only used if setScaleBasedVisibility is set to true.
@@ -558,7 +615,7 @@ class CORE_EXPORT QgsMapLayer : public QObject
      * @see setMinimumScale
      * @see setScaleBasedVisibility
      */
-    void setMaximumScale( const float theMaxScale );
+    void setMaximumScale( double theMaxScale );
 
     /** Sets whether scale based visibility is enabled for the layer.
      * @param enabled set to true to enable scale based visibility
@@ -592,6 +649,11 @@ class CORE_EXPORT QgsMapLayer : public QObject
     /** Time stamp of data source in the moment when data/metadata were loaded by provider */
     virtual QDateTime timestamp() const { return QDateTime() ; }
 
+    /** Triggers an emission of the styleChanged() signal.
+     * @note added in QGIS 2.16
+     */
+    void emitStyleChanged();
+
   signals:
 
     //! @deprecated in 2.4 - not emitted anymore
@@ -600,8 +662,17 @@ class CORE_EXPORT QgsMapLayer : public QObject
     /** Emit a signal with status (e.g. to be caught by QgisApp and display a msg on status bar) */
     void statusChanged( const QString& theStatus );
 
-    /** Emit a signal that the layer name has been changed */
-    void layerNameChanged();
+    /** Emit a signal that the layer name has been changed
+     * @deprecated since 2.16 use nameChanged() instead
+     */
+    Q_DECL_DEPRECATED void layerNameChanged();
+
+    /**
+     * Emitted when the name has been changed
+     *
+     * @note added in 2.16
+     */
+    void nameChanged();
 
     /** Emit a signal that layer's CRS has been reset */
     void layerCrsChanged();
@@ -623,14 +694,30 @@ class CORE_EXPORT QgsMapLayer : public QObject
     /** Signal emitted when the blend mode is changed, through QgsMapLayer::setBlendMode() */
     void blendModeChanged( QPainter::CompositionMode blendMode );
 
-    /** Signal emitted when renderer is changed */
+    /** Signal emitted when renderer is changed.
+     * @see styleChanged()
+    */
     void rendererChanged();
+
+    /** Signal emitted whenever a change affects the layer's style. Ie this may be triggered
+     * by renderer changes, label style changes, or other style changes such as blend
+     * mode or layer opacity changes.
+     * @note added in QGIS 2.16
+     * @see rendererChanged()
+    */
+    void styleChanged();
 
     /**
      * Signal emitted when legend of the layer has changed
      * @note added in 2.6
      */
     void legendChanged();
+
+    /**
+     * Emitted whenever the configuration is changed. The project listens to this signal
+     * to be marked as dirty.
+     */
+    void configChanged();
 
   protected:
     /** Set the extent */
@@ -717,9 +804,15 @@ class CORE_EXPORT QgsMapLayer : public QObject
     QgsError mError;
 
   private:
+    /**
+     * This method returns true by default but can be overwritten to specify
+     * that a certain layer is writable.
+     */
+    virtual bool isReadOnly() const { return true; }
+
     /** Layer's spatial reference system.
         private to make sure setCrs must be used and layerCrsChanged() is emitted */
-    QgsCoordinateReferenceSystem* mCRS;
+    QgsCoordinateReferenceSystem mCRS;
 
     /** Private copy constructor - QgsMapLayer not copyable */
     QgsMapLayer( QgsMapLayer const & );
@@ -740,14 +833,16 @@ class CORE_EXPORT QgsMapLayer : public QObject
     QString mTag;
 
     /** Minimum scale denominator at which this layer should be displayed */
-    float mMinScale;
+    double mMinScale;
     /** Maximum scale denominator at which this layer should be displayed */
-    float mMaxScale;
+    double mMaxScale;
     /** A flag that tells us whether to use the above vars to restrict layer visibility */
     bool mScaleBasedVisibility;
 
     /** Collection of undoable operations for this layer. **/
     QUndoStack mUndoStack;
+
+    QUndoStack mUndoStackStyles;
 
     //! Layer's persistent storage of additional properties (may be used by plugins)
     QgsObjectCustomProperties mCustomProperties;
@@ -758,5 +853,7 @@ class CORE_EXPORT QgsMapLayer : public QObject
     //! Manager of multiple styles available for a layer (may be null)
     QgsMapLayerStyleManager* mStyleManager;
 };
+
+Q_DECLARE_METATYPE( QgsMapLayer* )
 
 #endif

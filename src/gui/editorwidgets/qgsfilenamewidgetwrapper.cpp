@@ -53,14 +53,25 @@ bool QgsFileNameWidgetWrapper::valid() const
   return mLineEdit || mLabel;
 }
 
+void QgsFileNameWidgetWrapper::showIndeterminateState()
+{
+  if ( mLineEdit )
+  {
+    whileBlocking( mLineEdit )->clear();
+  }
+
+  if ( mLabel )
+    mLabel->clear();
+}
+
 QWidget* QgsFileNameWidgetWrapper::createWidget( QWidget* parent )
 {
   QWidget* container = new QWidget( parent );
   container->setBackgroundRole( QPalette::Window );
   container->setAutoFillBackground( true );
 
-  QLineEdit* le = new QgsFilterLineEdit( container );
-  QPushButton* pbn = new QPushButton( tr( "..." ), container );
+  QLineEdit* le = new QgsFilterLineEdit();
+  QPushButton* pbn = new QPushButton( tr( "..." ) );
   QGridLayout* layout = new QGridLayout();
 
   layout->setMargin( 0 );
@@ -139,4 +150,17 @@ void QgsFileNameWidgetWrapper::selectFileName()
 
   if ( mLabel )
     mLineEdit->setText( fileName );
+}
+
+void QgsFileNameWidgetWrapper::updateConstraintWidgetStatus( bool constraintValid )
+{
+  if ( mLineEdit )
+  {
+    if ( constraintValid )
+      mLineEdit->setStyleSheet( QString() );
+    else
+    {
+      mLineEdit->setStyleSheet( "QgsFilterLineEdit { background-color: #dd7777; }" );
+    }
+  }
 }

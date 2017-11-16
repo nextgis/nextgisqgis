@@ -55,7 +55,7 @@
 //#define RASTER_HISTOGRAM_BINS 256
 
 QgsRasterHistogramWidget::QgsRasterHistogramWidget( QgsRasterLayer* lyr, QWidget *parent )
-    : QWidget( parent )
+    : QgsMapLayerConfigWidget( lyr, nullptr, parent )
     , mRasterLayer( lyr )
     , mRendererWidget( nullptr )
 {
@@ -283,7 +283,6 @@ void QgsRasterHistogramWidget::on_btnHistoCompute_clicked()
 
 bool QgsRasterHistogramWidget::computeHistogram( bool forceComputeFlag )
 {
-  QgsDebugMsg( "entered." );
 
   //bool myIgnoreOutOfRangeFlag = true;
   //bool myThoroughBandScanFlag = false;
@@ -340,7 +339,6 @@ void QgsRasterHistogramWidget::refreshHistogram()
   //
   int myBandCountInt = mRasterLayer->bandCount();
 
-  QgsDebugMsg( "entered." );
 
   if ( ! computeHistogram( false ) )
   {
@@ -688,7 +686,7 @@ void QgsRasterHistogramWidget::on_mSaveAsImageButton_clicked()
 
   QPair< QString, QString> myFileNameAndFilter = QgisGui::getSaveAsImageName( this, tr( "Choose a file name to save the map image as" ) );
   QFileInfo myInfo( myFileNameAndFilter.first );
-  if ( QFileInfo( myFileNameAndFilter.first ).baseName() != "" )
+  if ( myInfo.baseName() != "" )
   {
     histoSaveAsImage( myFileNameAndFilter.first );
   }
@@ -981,7 +979,7 @@ void QgsRasterHistogramWidget::applyHistoMin()
     rect.setLeft( min.toDouble() );
     mHistoZoomer->zoom( rect );
   }
-
+  emit widgetChanged();
 }
 
 void QgsRasterHistogramWidget::applyHistoMax()
@@ -1010,6 +1008,7 @@ void QgsRasterHistogramWidget::applyHistoMax()
     rect.setRight( max.toDouble() );
     mHistoZoomer->zoom( rect );
   }
+  emit widgetChanged();
 }
 
 void QgsRasterHistogramWidget::on_btnHistoMin_toggled()
@@ -1249,4 +1248,9 @@ QPair< QString, QString > QgsRasterHistogramWidget::rendererMinMax( int theBandN
   QgsDebugMsg( QString( "bandNo %1 got min/max [%2] [%3]" ).arg( theBandNo ).arg( myMinMax.first, myMinMax.second ) );
 
   return myMinMax;
+}
+
+void QgsRasterHistogramWidget::apply()
+{
+
 }

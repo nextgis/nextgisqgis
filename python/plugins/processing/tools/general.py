@@ -25,14 +25,18 @@ __copyright__ = '(C) 2013, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
+import os
+import ConfigParser
+
 from processing.core.Processing import Processing
-from processing.gui.Postprocessing import handleAlgorithmResults
+from processing.core.alglist import algList
 from processing.core.parameters import ParameterSelection
+from processing.gui.Postprocessing import handleAlgorithmResults
 
 
 def alglist(text=None):
     s = ''
-    for provider in Processing.algs.values():
+    for provider in algList.algs.values():
         sortedlist = sorted(provider.values(), key=lambda alg: alg.name)
         for alg in sortedlist:
             if text is None or text.lower() in alg.name.lower():
@@ -75,3 +79,11 @@ def runalg(algOrName, *args, **kwargs):
 
 def runandload(name, *args, **kwargs):
     return Processing.runAlgorithm(name, handleAlgorithmResults, *args, **kwargs)
+
+
+def version():
+    pluginPath = os.path.split(os.path.dirname(__file__))[0]
+    cfg = ConfigParser.SafeConfigParser()
+    cfg.read(os.path.join(pluginPath, 'metadata.txt'))
+    ver = cfg.get('general', 'version').split('.')
+    return 10000 * int(ver[0]) + 100 * int(ver[1]) + int(ver[2])

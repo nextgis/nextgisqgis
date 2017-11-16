@@ -28,7 +28,7 @@ __revision__ = '$Format:%H$'
 import os
 import subprocess
 
-from PyQt4.QtCore import QCoreApplication
+from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import QgsApplication
 
 from processing.core.ProcessingConfig import ProcessingConfig
@@ -102,7 +102,6 @@ class TauDEMUtils:
     def executeTauDEM(command, progress):
         loglines = []
         loglines.append(TauDEMUtils.tr('TauDEM execution console output'))
-        command = TauDEMUtils.escapeAndJoin(command)
         fused_command = ''.join(['"%s" ' % c for c in command])
         progress.setInfo(TauDEMUtils.tr('TauDEM command:'))
         progress.setCommand(fused_command.replace('" "', ' ').strip('"'))
@@ -120,6 +119,12 @@ class TauDEMUtils:
         ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
 
     @staticmethod
+    def tr(string, context=''):
+        if context == '':
+            context = 'TauDEMUtils'
+        return QCoreApplication.translate(context, string)
+
+    @staticmethod
     def escapeAndJoin(strList):
         joined = ''
         for s in strList:
@@ -130,9 +135,3 @@ class TauDEMUtils:
                 escaped = s
             joined += escaped + ' '
         return joined.strip()
-
-    @staticmethod
-    def tr(string, context=''):
-        if context == '':
-            context = 'TauDEMUtils'
-        return QCoreApplication.translate(context, string)

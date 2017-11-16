@@ -43,13 +43,40 @@ class QgsVectorLayer;
 class QgsPalLayerSettings;
 class QgsDiagramLayerSettings;
 
+/** \ingroup core
+ * \class QgsLabelPosition
+ */
 class CORE_EXPORT QgsLabelPosition
 {
   public:
-    QgsLabelPosition( int id, double r, const QVector< QgsPoint >& corners, const QgsRectangle& rect, double w, double h, const QString& layer, const QString& labeltext, const QFont& labelfont, bool upside_down, bool diagram = false, bool pinned = false )
-        : featureId( id ), rotation( r ), cornerPoints( corners ), labelRect( rect ), width( w ), height( h ), layerID( layer ), labelText( labeltext ), labelFont( labelfont ), upsideDown( upside_down ), isDiagram( diagram ), isPinned( pinned ) {}
+    QgsLabelPosition( int id, double r, const QVector< QgsPoint >& corners, const QgsRectangle& rect, double w, double h, const QString& layer, const QString& labeltext, const QFont& labelfont, bool upside_down, bool diagram = false, bool pinned = false, const QString& providerId = QString() )
+        : featureId( id )
+        , rotation( r )
+        , cornerPoints( corners )
+        , labelRect( rect )
+        , width( w )
+        , height( h )
+        , layerID( layer )
+        , labelText( labeltext )
+        , labelFont( labelfont )
+        , upsideDown( upside_down )
+        , isDiagram( diagram )
+        , isPinned( pinned )
+        , providerID( providerId )
+    {}
     QgsLabelPosition()
-        : featureId( -1 ), rotation( 0 ), labelRect( QgsRectangle() ), width( 0 ), height( 0 ), layerID( "" ), labelText( "" ), labelFont( QFont() ), upsideDown( false ), isDiagram( false ), isPinned( false ) {}
+        : featureId( -1 )
+        , rotation( 0 )
+        , labelRect( QgsRectangle() )
+        , width( 0 )
+        , height( 0 )
+        , layerID( "" )
+        , labelText( "" )
+        , labelFont( QFont() )
+        , upsideDown( false )
+        , isDiagram( false )
+        , isPinned( false )
+    {}
     int featureId;
     double rotation;
     QVector< QgsPoint > cornerPoints;
@@ -62,9 +89,13 @@ class CORE_EXPORT QgsLabelPosition
     bool upsideDown;
     bool isDiagram;
     bool isPinned;
+    //! @note added in 2.14
+    QString providerID;
 };
 
-/** Labeling engine interface. */
+/** \ingroup core
+ * Labeling engine interface.
+*/
 class CORE_EXPORT QgsLabelingEngineInterface
 {
   public:
@@ -221,14 +252,34 @@ class CORE_EXPORT QgsMapRenderer : public QObject
     //! sets whether map image will be for overview
     void enableOverviewMode( bool isOverview = true ) { mOverview = isOverview; }
 
-    void setOutputSize( QSize size, int dpi );
+    /** Sets the desired size of the rendered map image.
+     * @param size size in pixels
+     * @param dpi resolution to render map using
+     * @see outputSize()
+     */
+    void setOutputSize( QSize size, double dpi );
+
+    /** Sets the desired size of the rendered map image.
+     * @param size size in pixels
+     * @param dpi resolution to render map using
+     * @see outputSizeF()
+     */
     void setOutputSize( QSizeF size, double dpi );
 
     //!accessor for output dpi
     double outputDpi();
-    //!accessor for output size
-    QSize outputSize();
-    QSizeF outputSizeF();
+
+    /** Returns the size which the map will be rendered at.
+     * @see setOutputSize()
+     * @see outputSizeF()
+     */
+    QSize outputSize() const;
+
+    /** Returns the size which the map will be rendered at.
+     * @see setOutputSize()
+     * @see outputSize()
+     */
+    QSizeF outputSizeF() const;
 
     /**
      * @brief transform bounding box from layer's CRS to output CRS
@@ -345,6 +396,9 @@ class CORE_EXPORT QgsMapRenderer : public QObject
       mRenderContext.setFeatureFilterProvider( ffp );
     }
 
+    /** Set tile mode (render code tries to prevent tile border effects)*/
+    void setTileRenderMode( bool enabled ) { mTileRenderMode = enabled; }
+
   signals:
 
     //! @deprecated in 2.4 - not emitted anymore
@@ -430,6 +484,7 @@ class CORE_EXPORT QgsMapRenderer : public QObject
     bool mProjectionsEnabled;
 
     //! destination spatial reference system of the projection
+    // TODO QGIS 3.0 - make object, not pointer
     QgsCoordinateReferenceSystem* mDestCRS;
 
     //! stores array of layers to be rendered (identified by string)
@@ -457,6 +512,14 @@ class CORE_EXPORT QgsMapRenderer : public QObject
     QgsMapSettings mMapSettings;
 
     QHash< QString, QgsLayerCoordinateTransform > mLayerCoordinateTransformInfo;
+
+    QHash< QPair< QString, QString >, QPair< int, int > > mDefaultDatumTransformations;
+
+    /** Tell the render system we are rendering a map tile*/
+    bool mTileRenderMode;
+
+  private:
+    void readDefaultDatumTransformations();
 };
 
 #endif

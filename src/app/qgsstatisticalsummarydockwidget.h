@@ -15,22 +15,19 @@
 #ifndef QGSSTATISTICALSUMMARYDOCKWIDGET_H
 #define QGSSTATISTICALSUMMARYDOCKWIDGET_H
 
-#include <QDockWidget>
 #include <QMap>
 #include "ui_qgsstatisticalsummarybase.h"
 
 #include "qgsstatisticalsummary.h"
+#include "qgsstringstatisticalsummary.h"
+#include "qgsdatetimestatisticalsummary.h"
+#include "qgsdockwidget.h"
 
-class QgsBrowserModel;
-class QModelIndex;
-class QgsDockBrowserTreeView;
-class QgsLayerItem;
-class QgsDataItem;
-class QgsBrowserTreeFilterProxyModel;
+class QMenu;
 
 /** A dock widget which displays a statistical summary of the values in a field or expression
  */
-class APP_EXPORT QgsStatisticalSummaryDockWidget : public QDockWidget, private Ui::QgsStatisticalSummaryWidgetBase
+class APP_EXPORT QgsStatisticalSummaryDockWidget : public QgsDockWidget, private Ui::QgsStatisticalSummaryWidgetBase
 {
     Q_OBJECT
 
@@ -58,10 +55,31 @@ class APP_EXPORT QgsStatisticalSummaryDockWidget : public QDockWidget, private U
 
   private:
 
+    //! Enumeration of supported statistics types
+    enum DataType
+    {
+      Numeric,  //!< Numeric fields: int, double, etc
+      String,  //!< String fields
+      DateTime  //!< Date and DateTime fields
+    };
+
     QgsVectorLayer* mLayer;
+    QMenu *mStatisticsMenu;
+    DataType mFieldType;
+    DataType mPreviousFieldType;
 
     QMap< int, QAction* > mStatsActions;
     static QList< QgsStatisticalSummary::Statistic > mDisplayStats;
+    static QList< QgsStringStatisticalSummary::Statistic > mDisplayStringStats;
+    static QList< QgsDateTimeStatisticalSummary::Statistic > mDisplayDateTimeStats;
+
+    void updateNumericStatistics( bool selectedOnly );
+    void updateStringStatistics( bool selectedOnly );
+    void updateDateTimeStatistics( bool selectedOnly );
+    void addRow( int row, const QString& name, const QString& value, bool showValue );
+    void refreshStatisticsMenu();
+    DataType fieldType( const QString &fieldName );
+
 };
 
 #endif // QGSSTATISTICALSUMMARYDOCKWIDGET_H

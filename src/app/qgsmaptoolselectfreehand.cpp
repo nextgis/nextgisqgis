@@ -68,12 +68,30 @@ void QgsMapToolSelectFreehand::canvasReleaseEvent( QgsMapMouseEvent* e )
   if ( !mRubberBand )
     return;
 
+  bool singleSelect = false;
+  if ( mRubberBand->numberOfVertices() > 0 && mRubberBand->numberOfVertices() <= 2 )
+  {
+    // single click, not drag - create a rectangle around clicked point
+    QgsVectorLayer* vlayer = QgsMapToolSelectUtils::getCurrentVectorLayer( mCanvas );
+    if ( vlayer )
+    {
+      QRect selectRect;
+      QgsMapToolSelectUtils::expandSelectRectangle( selectRect, vlayer, e->pos() );
+      QgsMapToolSelectUtils::setRubberBand( mCanvas, selectRect, mRubberBand );
+      singleSelect = true;
+    }
+  }
+
   if ( mRubberBand->numberOfVertices() > 2 )
   {
     QgsGeometry* shapeGeom = mRubberBand->asGeometry();
-    QgsMapToolSelectUtils::setSelectFeatures( mCanvas, shapeGeom, e );
+    if ( singleSelect )
+      QgsMapToolSelectUtils::selectSingleFeature( mCanvas, shapeGeom, e );
+    else
+      QgsMapToolSelectUtils::selectMultipleFeatures( mCanvas, shapeGeom, e );
     delete shapeGeom;
   }
+
   mRubberBand->reset( QGis::Polygon );
   delete mRubberBand;
   mRubberBand = nullptr;

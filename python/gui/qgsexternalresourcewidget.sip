@@ -1,8 +1,22 @@
 
+%ModuleHeaderCode
+// fix to allow compilation with sip 4.7 that for some reason
+// doesn't add this include to the file where the code from
+// ConvertToSubClassCode goes.
+#include "qgsexternalresourcewidget.h"
+%End
+
 class QgsExternalResourceWidget : QWidget
 {
 %TypeHeaderCode
-#include <qgsexternalresourcewidget.h>
+#include "qgsexternalresourcewidget.h"
+%End
+
+%ConvertToSubClassCode
+  if (dynamic_cast<QgsExternalResourceWidget*>(sipCpp) != NULL)
+    sipType = sipType_QgsExternalResourceWidget;
+  else
+    sipType = NULL;
 %End
 
   public:
@@ -58,6 +72,31 @@ class QgsExternalResourceWidget : QWidget
 
     //! defines if the widget is readonly
     void setReadOnly( bool readOnly );
+
+    /**
+     * Configures if paths are handled absolute or relative and if relative,
+     * which should be the base path.
+     */
+    QgsFileWidget::RelativeStorage relativeStorage() const;
+
+    /**
+     * Configures if paths are handled absolute or relative and if relative,
+     * which should be the base path.
+     */
+    void setRelativeStorage( const QgsFileWidget::RelativeStorage& relativeStorage );
+
+
+    /**
+     * Configures the base path which should be used if the relativeStorage property
+     * is set to QgsFileWidget::RelativeDefaultPath.
+     */
+    QString defaultRoot() const;
+
+    /**
+     * Configures the base path which should be used if the relativeStorage property
+     * is set to QgsFileWidget::RelativeDefaultPath.
+     */
+    void setDefaultRoot(const QString& defaultRoot);
 
   signals:
     //! emitteed as soon as the current document changes

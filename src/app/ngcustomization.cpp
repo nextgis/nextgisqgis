@@ -31,6 +31,7 @@
 #include "qgsclipboard.h"
 #include "qgscredentialdialog.h"
 #include "qgscomposer.h"
+#include "qgscrscache.h"
 #include "qgscustomization.h"
 #include "qgscustomlayerorderwidget.h"
 #include "qgsdoublespinbox.h"
@@ -50,6 +51,7 @@
 #include "qgsmapoverviewcanvas.h"
 #include "qgsmaptoolpinlabels.h"
 #include "qgsmaptoolmovelabel.h"
+#include "qgsmaptooloffsetpointsymbol.h"
 #include "qgsmaptoolshowhidelabels.h"
 #include "qgsmaptoolrotatelabel.h"
 #include "qgsmaptoolrotatepointsymbols.h"
@@ -68,6 +70,8 @@
 #include "qgspythonutilsimpl.h"
 #include "qgsstatisticalsummarydockwidget.h"
 #include "qgsstatusbarcoordinateswidget.h"
+#include "qgsstatusbarscalewidget.h"
+#include "qgsstatusbarmagnifierwidget.h"
 #include "qgsvisibilitypresets.h"
 #include "qgsvectordataprovider.h"
 #include "qgsundowidget.h"
@@ -77,6 +81,7 @@
 #include "qgsprojectproperties.h"
 #include "qgsmeasuretool.h"
 #include "qgsmaptoolmeasureangle.h"
+#include "qgslayerstylingwidget.h"
 
 #include <QCheckBox>
 #include <QFileDialog>
@@ -84,10 +89,18 @@
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QProgressBar>
+#include <QShortcut>
 #include <QSplashScreen>
 #include <QStackedWidget>
 #include <QDesktopServices>
 #include <QtXml>
+
+#include <pg_config.h>
+#include <sqlite3.h>
+extern "C"
+{
+#include <spatialite.h>
+}
 
 // Editor widgets
 #include "qgseditorwidgetregistry.h"
@@ -194,18 +207,20 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
     }
 
     smInstance = this;
+    mProfiler = QgsRuntimeProfiler::instance();
 
     setupNetworkAccessManager();
 
-    // load GUI: actions, menus, toolbars
-    setupUi( this );
+    setupAppUi();
 
     setupDatabase();
 
     setupAuthentication();
 
     // Create the themes folder for the user
+    startProfile( "Creating theme folder" );
     NGQgsApplication::createThemeFolder();
+    endProfile();
 
     mSplash->showMessage( tr( "Reading settings" ), Qt::AlignHCenter | Qt::AlignBottom );
     qApp->processEvents();
@@ -217,21 +232,21 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
 
     setupCentralContainer(skipVersionCheck);
 
-    createActions();
-    createActionGroups();
-    createMenus();
-    createToolBars();
-    createStatusBar();
-    createCanvasTools();
+    functionProfileNG( &NGQgisApp::createActions, this, "Create actions" );
+    functionProfileNG( &NGQgisApp::createActionGroups, this, "Create action group" );
+    functionProfileNG( &NGQgisApp::createMenus, this, "Create menus" );
+    functionProfileNG( &NGQgisApp::createToolBars, this, "Toolbars" );
+    functionProfileNG( &NGQgisApp::createStatusBar, this, "Status bar" );
+    functionProfileNG( &NGQgisApp::createCanvasTools, this, "Create canvas tools" );
     mMapCanvas->freeze();
-    initLayerTreeView();
-    createOverview();
-    createMapTips();
-    createDecorations();
-    readSettings();
-    updateRecentProjectPaths();
-    updateProjectFromTemplates();
-    legendLayerSelectionChanged();
+    functionProfileNG( &NGQgisApp::initLayerTreeView, this, "Init Layer tree view" );
+    functionProfileNG( &NGQgisApp::createOverview, this, "Create overview" );
+    functionProfileNG( &NGQgisApp::createMapTips, this, "Create map tips" );
+    functionProfileNG( &NGQgisApp::createDecorations, this, "Create decorations" );
+    functionProfileNG( &NGQgisApp::readSettings, this, "Read settings" );
+    functionProfileNG( &NGQgisApp::updateRecentProjectPaths, this, "Update recent project paths" );
+    functionProfileNG( &NGQgisApp::updateProjectFromTemplates, this, "Update project from templates" );
+    functionProfileNG( &NGQgisApp::legendLayerSelectionChanged, this, "Legend layer selection changed" );
     mSaveRollbackInProgress = false;
 
     QSettings settings;
@@ -243,13 +258,30 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
              this, SLOT( updateProjectFromTemplates() ) );
 
     // initialize the plugin manager
+    startProfile( "Plugin manager" );
     mPluginManager = new QgsPluginManager( this, restorePlugins );
+    endProfile();
 
-    addDockWidget( Qt::LeftDockWidgetArea, mUndoWidget );
-    mUndoWidget->hide();
+    addDockWidget( Qt::LeftDockWidgetArea, mUndoDock );
+    mUndoDock->hide();
 
+    startProfile( "Layer Style dock" );
+    mMapStylingDock = new QgsDockWidget( this );
+    mMapStylingDock->setWindowTitle( tr( "Layer Styling" ) );
+    mMapStylingDock->setObjectName( "LayerStyling" );
+    mMapStyleWidget = new QgsLayerStylingWidget( mMapCanvas, mMapLayerPanelFactories );
+    mMapStylingDock->setWidget( mMapStyleWidget );
+    connect( mMapStyleWidget, SIGNAL( styleChanged( QgsMapLayer* ) ), this, SLOT( updateLabelToolButtons() ) );
+    connect( mMapStylingDock, SIGNAL( visibilityChanged( bool ) ), mActionStyleDock, SLOT( setChecked( bool ) ) );
+
+    addDockWidget( Qt::RightDockWidgetArea, mMapStylingDock );
+    mMapStylingDock->hide();
+    endProfile();
+
+    startProfile( "Snapping dialog" );
     mSnappingDialog = new QgsSnappingDialog( this, mMapCanvas );
     mSnappingDialog->setObjectName( "SnappingOption" );
+    endProfile();
 
     mBrowserWidget = new QgsBrowserDockWidget( tr( "Browser Panel" ), this );
     mBrowserWidget->setObjectName( "Browser" );
@@ -277,43 +309,38 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
 
     mLogViewer = new QgsMessageLogViewer( statusBar(), this );
 
-    mLogDock = new QDockWidget( tr( "Log Messages Panel" ), this );
+    mLogDock = new QgsDockWidget( tr( "Log Messages Panel" ), this );
     mLogDock->setObjectName( "MessageLog" );
     mLogDock->setAllowedAreas( Qt::BottomDockWidgetArea | Qt::TopDockWidgetArea );
     addDockWidget( Qt::BottomDockWidgetArea, mLogDock );
     mLogDock->setWidget( mLogViewer );
     mLogDock->hide();
-    connect( mMessageButton, SIGNAL( toggled( bool ) ), mLogDock,
-             SLOT( setVisible( bool ) ) );
-    connect( mLogDock, SIGNAL( visibilityChanged( bool ) ), mMessageButton,
-             SLOT( setChecked( bool ) ) );
-    connect( QgsMessageLog::instance(), SIGNAL( messageReceived( bool ) ), this,
-             SLOT( toggleLogMessageIcon( bool ) ) );
-    connect( mMessageButton, SIGNAL( toggled( bool ) ), this,
-             SLOT( toggleLogMessageIcon( bool ) ) );
+    connect( mMessageButton, SIGNAL( toggled( bool ) ), mLogDock, SLOT( setVisible( bool ) ) );
+    connect( mLogDock, SIGNAL( visibilityChanged( bool ) ), mMessageButton, SLOT( setChecked( bool ) ) );
+    connect( QgsMessageLog::instance(), SIGNAL( messageReceived( bool ) ), this, SLOT( toggleLogMessageIcon( bool ) ) );
+    connect( mMessageButton, SIGNAL( toggled( bool ) ), this, SLOT( toggleLogMessageIcon( bool ) ) );
     mVectorLayerTools = new QgsGuiVectorLayerTools();
 
     // Init the editor widget types
     QgsEditorWidgetRegistry::initEditors( mMapCanvas, mInfoBar );
 
     mInternalClipboard = new QgsClipboard; // create clipboard
-    connect( mInternalClipboard, SIGNAL( changed() ), this,
-             SLOT( clipboardChanged() ) );
-    mQgisInterface = new QgisAppInterface( this ); // create the interface
+    connect( mInternalClipboard, SIGNAL( changed() ), this, SLOT( clipboardChanged() ) );
+    mQgisInterface = new QgisAppInterface( this ); // create the interfce
 
-  #ifdef Q_OS_MAC
-    // action for Window menu (create before generating WindowTitleChange event))
-    mWindowAction = new QAction( this );
-    connect( mWindowAction, SIGNAL( triggered() ), this, SLOT( activate() ) );
+#ifdef Q_OS_MAC
+  // action for Window menu (create before generating WindowTitleChange event))
+  mWindowAction = new QAction( this );
+  connect( mWindowAction, SIGNAL( triggered() ), this, SLOT( activate() ) );
 
-    // add this window to Window menu
-    addWindow( mWindowAction );
-  #endif
+  // add this window to Window menu
+  addWindow( mWindowAction );
+#endif
 
-    activateDeactivateLayerRelatedActions( nullptr ); // after members were created
+  activateDeactivateLayerRelatedActions( nullptr ); // after members were created
 
-    connect( QgsMapLayerActionRegistry::instance(), SIGNAL( changed() ), this,
-             SLOT( refreshActionFeatureAction() ) );
+  connect( QgsMapLayerActionRegistry::instance(), SIGNAL( changed() ), this, SLOT( refreshActionFeatureAction() ) );
+
 
     // set application's caption
     QString caption = QgisApp::tr( VENDOR " QGIS " ) +
@@ -328,6 +355,11 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
              this, SLOT( validateSrs( QgsCoordinateReferenceSystem& ) ) );
     QgsCoordinateReferenceSystem::setCustomSrsValidation( ngCustomSrsValidation_ );
 
+    // set QGIS specific srs validation
+    connect( this, SIGNAL( customSrsValidation( QgsCoordinateReferenceSystem& ) ),
+             this, SLOT( validateSrs( QgsCoordinateReferenceSystem& ) ) );
+    QgsCoordinateReferenceSystem::setCustomSrsValidation( ngCustomSrsValidation_ );
+
     // set graphical message output
     QgsMessageOutput::setMessageOutputCreator( ngMessageOutputViewer_ );
 
@@ -335,6 +367,7 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
     new QgsCredentialDialog( this );
 
     qApp->processEvents();
+
 
     // load providers
     mSplash->showMessage( tr( "Checking provider plugins" ), Qt::AlignHCenter |
@@ -371,11 +404,13 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
 
     if ( mPythonUtils && mPythonUtils->isEnabled() )
     {
-      // initialize the plugin installer to start fetching repositories in background
-      QgsPythonRunner::run( "import pyplugin_installer" );
-      QgsPythonRunner::run( "pyplugin_installer.initPluginInstaller()" );
-      // enable Python in the Plugin Manager and pass the PythonUtils to it
-      mPluginManager->setPythonUtils( mPythonUtils );
+        startProfile( "initPluginInstaller" );
+        // initialize the plugin installer to start fetching repositories in background
+        QgsPythonRunner::run( "import pyplugin_installer" );
+        QgsPythonRunner::run( "pyplugin_installer.initPluginInstaller()" );
+        // enable Python in the Plugin Manager and pass the PythonUtils to it
+        mPluginManager->setPythonUtils( mPythonUtils );
+        endProfile();
     }
     else if ( mActionShowPythonDialog )
     {
@@ -403,9 +438,13 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
     mSplash->showMessage( tr( "Restoring window state" ), Qt::AlignHCenter |
                           Qt::AlignBottom );
     qApp->processEvents();
+    startProfile( "Restore window state" );
     restoreWindowState();
+    endProfile();
 
+    startProfile( "Update customiziation on main window" );
     QgsCustomization::instance()->updateMainWindow( mToolbarMenu );
+    endProfile();
 
     mSplash->showMessage( tr( "QGIS Ready!" ), Qt::AlignHCenter |
                           Qt::AlignBottom );
@@ -417,6 +456,12 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
                                QgsMessageLog::INFO );
 
     mMapTipsVisible = false;
+    // This turns on the map tip if they where active in the last session
+    if ( settings.value( "/qgis/enableMapTips", false ).toBool() )
+    {
+      toggleMapTips( true );
+    }
+
     mTrustedMacros = false;
 
     // setup drag drop
@@ -424,13 +469,33 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
 
     mFullScreenMode = false;
     mPrevScreenModeMaximized = false;
+    startProfile( "Show main window" );
     show();
     qApp->processEvents();
+    endProfile();
 
     mMapCanvas->freeze( false );
     mMapCanvas->clearExtentHistory(); // reset zoomnext/zoomlast
     mLastComposerId = 0;
 
+    QShortcut* zoomInShortCut = new QShortcut( QKeySequence( tr( "Ctrl++" ) ), this );
+    connect( zoomInShortCut, SIGNAL( activated() ), mMapCanvas, SLOT( zoomIn() ) );
+    zoomInShortCut->setObjectName( "ZoomInToCanvas" );
+    zoomInShortCut->setWhatsThis( "Zoom in to canvas" );
+    QShortcut* zoomShortCut2 = new QShortcut( QKeySequence( tr( "Ctrl+=" ) ), this );
+    connect( zoomShortCut2, SIGNAL( activated() ), mMapCanvas, SLOT( zoomIn() ) );
+    zoomShortCut2->setObjectName( "ZoomInToCanvas2" );
+    zoomShortCut2->setWhatsThis( "Zoom in to canvas (secondary)" );
+    QShortcut* zoomOutShortCut = new QShortcut( QKeySequence( tr( "Ctrl+-" ) ), this );
+    connect( zoomOutShortCut, SIGNAL( activated() ), mMapCanvas, SLOT( zoomOut() ) );
+    zoomOutShortCut->setObjectName( "ZoomOutOfCanvas" );
+    zoomOutShortCut->setWhatsThis( "Zoom out of canvas" );
+
+    //also make ctrl+alt+= a shortcut to switch to zoom in map tool
+    QShortcut* zoomInToolShortCut = new QShortcut( QKeySequence( tr( "Ctrl+Alt+=" ) ), this );
+    connect( zoomInToolShortCut, SIGNAL( activated() ), this, SLOT( zoomIn() ) );
+    zoomInToolShortCut->setObjectName( "ZoomIn2" );
+    zoomInToolShortCut->setWhatsThis( "Zoom in (secondary)" );
 
     // Show a nice tip of the day
     if ( settings.value( QString( "/qgis/showTips%1" ).arg( VERSION_INT / 100 ),
@@ -446,20 +511,33 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
       QgsDebugMsg( "Tips are disabled" );
     }
 
+    //remove mActionTouch button
+    delete mActionTouch;
+    mActionTouch = nullptr;
 
     // supposedly all actions have been added, now register them to the shortcut manager
-    QgsShortcutsManager::instance()->registerAllChildrenActions( this );
+    QgsShortcutsManager::instance()->registerAllChildren( this );
 
     QgsProviderRegistry::instance()->registerGuis( this );
 
     // update windows
     qApp->processEvents();
 
-    // NOTE: Don't annoy user ( void )QgsAuthGuiUtils::isDisabled( messageBar() );
+    // notify user if authentication system is disabled
+    ( void )QgsAuthGuiUtils::isDisabled( messageBar() );
 
-    fileNewBlank();
+    startProfile( "New project" );
+    fileNewBlank(); // prepare empty project, also skips any default templates from loading
+    endProfile();
 
     NGQgsApplication::setFileOpenEventReceiver( this );
+
+    mProfiler->endGroup();
+    mProfiler->endGroup();
+
+    QgsDebugMsg( "PROFILE TIMES" );
+    QgsDebugMsg( QString( "PROFILE TIMES TOTAL - %1 " ).arg( mProfiler->totalTime() ) );
+
 
     mNGUpdater = new NGQgisUpdater(this);
     connect(mNGUpdater, SIGNAL(updatesInfoGettingStarted()), this, SLOT(updatesSearchStart()));
@@ -468,6 +546,16 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
 
 NGQgisApp::~NGQgisApp()
 {
+}
+
+void NGQgisApp::setupAppUi()
+{
+    // load GUI: actions, menus, toolbars
+    mProfiler->beginGroup( "qgisapp" );
+    mProfiler->beginGroup( "startup" );
+    startProfile( "Setting up UI" );
+    setupUi( this );
+    endProfile();
 }
 
 void NGQgisApp::setupNetworkAccessManager()
@@ -495,6 +583,7 @@ void NGQgisApp::setupNetworkAccessManager()
 
 void NGQgisApp::setupDatabase()
 {
+    startProfile( "Checking database" );
     mSplash->showMessage( tr( "Checking database" ), Qt::AlignHCenter |
                           Qt::AlignBottom );
     qApp->processEvents();
@@ -504,6 +593,7 @@ void NGQgisApp::setupDatabase()
     {
       QMessageBox::critical( this, tr( "Private qgis.db" ), dbError );
     }
+    endProfile();
 }
 
 void NGQgisApp::setupAuthentication()
@@ -525,11 +615,13 @@ void NGQgisApp::setupAuthentication()
 
 void NGQgisApp::setupStyleSheet()
 {
+    startProfile( "Building style sheet" );
     // set up stylesheet builder and apply saved or default style options
     mStyleSheetBuilder = new QgisAppStyleSheet( this );
     connect( mStyleSheetBuilder, SIGNAL( appStyleSheetChanged( const QString& ) ),
              this, SLOT( setAppStyleSheet( const QString& ) ) );
     mStyleSheetBuilder->buildStyleSheet( mStyleSheetBuilder->defaultOptions() );
+    endProfile();
 }
 
 void NGQgisApp::setupCentralContainer(bool skipVersionCheck)
@@ -541,6 +633,7 @@ void NGQgisApp::setupCentralContainer(bool skipVersionCheck)
     centralLayout->setContentsMargins( 0, 0, 0, 0 );
 
     // "theMapCanvas" used to find this canonical instance later
+    startProfile( "Creating map canvas" );
     mMapCanvas = new QgsMapCanvas( centralWidget, "theMapCanvas" );
     connect( mMapCanvas, SIGNAL( messageEmitted( const QString&,
                                 const QString&, QgsMessageBar::MessageLevel ) ),
@@ -554,11 +647,14 @@ void NGQgisApp::setupCentralContainer(bool skipVersionCheck)
     int myGreen = settings.value( "/qgis/default_canvas_color_green", 255 ).toInt();
     int myBlue = settings.value( "/qgis/default_canvas_color_blue", 255 ).toInt();
     mMapCanvas->setCanvasColor( QColor( myRed, myGreen, myBlue ) );
+    endProfile();
 
     // what type of project to auto-open
     mProjOpen = settings.value( "/qgis/projOpenAtLaunch", 0 ).toInt();
 
+    startProfile( "Welcome page" );
     mWelcomePage = new QgsWelcomePage( skipVersionCheck );
+    endProfile();
 
     mCentralContainer = new QStackedWidget;
     mCentralContainer->insertWidget( 0, mMapCanvas );
@@ -571,43 +667,59 @@ void NGQgisApp::setupCentralContainer(bool skipVersionCheck)
     mCentralContainer->setCurrentIndex( mProjOpen ? 0 : 1 );
 
     // a bar to warn the user with non-blocking messages
+    startProfile( "Message bar" );
     mInfoBar = new QgsMessageBar( centralWidget );
     mInfoBar->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
     centralLayout->addWidget( mInfoBar, 0, 0, 1, 1 );
+    endProfile();
 
     // User Input Dock Widget
+    startProfile( "User input dock" );
     mUserInputDockWidget = new QgsUserInputDockWidget( this );
     mUserInputDockWidget->setObjectName( "UserInputDockWidget" );
+    endProfile();
 
     //set the focus to the map canvas
     mMapCanvas->setFocus();
 
+    startProfile( "Layer tree" );
     mLayerTreeView = new QgsLayerTreeView( this );
     mLayerTreeView->setObjectName( "theLayerTreeView" );
+    endProfile();
 
     // create undo widget
-    mUndoWidget = new QgsUndoWidget( nullptr, mMapCanvas );
+    startProfile( "Undo dock" );
+    mUndoDock = new QgsDockWidget( tr( "Undo/Redo Panel" ), this );
+    mUndoWidget = new QgsUndoWidget( mUndoDock, mMapCanvas );
     mUndoWidget->setObjectName( "Undo" );
+    mUndoDock->setWidget( mUndoWidget );
+    mUndoDock->setObjectName( "undo/redo dock" );
+    endProfile();
 
     // Advanced Digitizing dock
-    mAdvancedDigitizingDockWidget = new QgsAdvancedDigitizingDockWidget(
-                mMapCanvas, this );
+    startProfile( "Advanced digitize panel" );
+    mAdvancedDigitizingDockWidget = new QgsAdvancedDigitizingDockWidget( mMapCanvas, this );
     mAdvancedDigitizingDockWidget->setObjectName( "AdvancedDigitizingTools" );
+    endProfile();
 
     // Statistical Summary dock
+    startProfile( "Stats dock" );
     mStatisticalSummaryDockWidget = new QgsStatisticalSummaryDockWidget( this );
     mStatisticalSummaryDockWidget->setObjectName( "StatistalSummaryDockWidget" );
+    endProfile();
 
     // Bookmarks dock
+    startProfile( "Bookmarks widget" );
     mBookMarksDockWidget = new QgsBookmarks( this );
     mBookMarksDockWidget->setObjectName( "BookmarksDockWidget" );
+    endProfile();
 
+    startProfile( "Snapping utils" );
     mSnappingUtils = new QgsMapCanvasSnappingUtils( mMapCanvas, this );
     mMapCanvas->setSnappingUtils( mSnappingUtils );
-    connect( QgsProject::instance(), SIGNAL( snapSettingsChanged() ),
-             mSnappingUtils, SLOT( readConfigFromProject() ) );
-    connect( this, SIGNAL( projectRead() ), mSnappingUtils,
-             SLOT( readConfigFromProject() ) );
+    connect( QgsProject::instance(), SIGNAL( snapSettingsChanged() ), mSnappingUtils, SLOT( readConfigFromProject() ) );
+    connect( this, SIGNAL( projectRead() ), mSnappingUtils, SLOT( readConfigFromProject() ) );
+    endProfile();
 }
 
 void NGQgisApp::createActions()
@@ -656,8 +768,10 @@ void NGQgisApp::createActions()
   connect( mActionDeletePart, SIGNAL( triggered() ), this, SLOT( deletePart() ) );
   connect( mActionMergeFeatures, SIGNAL( triggered() ), this, SLOT( mergeSelectedFeatures() ) );
   connect( mActionMergeFeatureAttributes, SIGNAL( triggered() ), this, SLOT( mergeAttributesOfSelectedFeatures() ) );
+  connect( mActionMultiEditAttributes, SIGNAL( triggered() ), this, SLOT( modifyAttributesOfSelectedFeatures() ) );
   connect( mActionNodeTool, SIGNAL( triggered() ), this, SLOT( nodeTool() ) );
   connect( mActionRotatePointSymbols, SIGNAL( triggered() ), this, SLOT( rotatePointSymbols() ) );
+  connect( mActionOffsetPointSymbol, SIGNAL( triggered() ), this, SLOT( offsetPointSymbol() ) );
   connect( mActionSnappingOptions, SIGNAL( triggered() ), this, SLOT( snappingOptions() ) );
   connect( mActionOffsetCurve, SIGNAL( triggered() ), this, SLOT( offsetCurve() ) );
 
@@ -674,6 +788,7 @@ void NGQgisApp::createActions()
   connect( mActionSelectAll, SIGNAL( triggered() ), this, SLOT( selectAll() ) );
   connect( mActionInvertSelection, SIGNAL( triggered() ), this, SLOT( invertSelection() ) );
   connect( mActionSelectByExpression, SIGNAL( triggered() ), this, SLOT( selectByExpression() ) );
+  connect( mActionSelectByForm, SIGNAL( triggered() ), this, SLOT( selectByForm() ) );
   connect( mActionIdentify, SIGNAL( triggered() ), this, SLOT( identify() ) );
   connect( mActionFeatureAction, SIGNAL( triggered() ), this, SLOT( doFeatureAction() ) );
   connect( mActionMeasure, SIGNAL( triggered() ), this, SLOT( measure() ) );
@@ -685,7 +800,7 @@ void NGQgisApp::createActions()
   connect( mActionZoomLast, SIGNAL( triggered() ), this, SLOT( zoomToPrevious() ) );
   connect( mActionZoomNext, SIGNAL( triggered() ), this, SLOT( zoomToNext() ) );
   connect( mActionZoomActualSize, SIGNAL( triggered() ), this, SLOT( zoomActualSize() ) );
-  connect( mActionMapTips, SIGNAL( triggered() ), this, SLOT( toggleMapTips() ) );
+  connect( mActionMapTips, SIGNAL( toggled( bool ) ), this, SLOT( toggleMapTips( bool ) ) );
   connect( mActionNewBookmark, SIGNAL( triggered() ), this, SLOT( newBookmark() ) );
   connect( mActionShowBookmarks, SIGNAL( triggered() ), this, SLOT( showBookmarks() ) );
   connect( mActionDraw, SIGNAL( triggered() ), this, SLOT( refreshMapCanvas() ) );
@@ -700,6 +815,7 @@ void NGQgisApp::createActions()
   // Layer Menu Items
   connect( mActionNewVectorLayer, SIGNAL( triggered() ), this, SLOT( newVectorLayer() ) );
   connect( mActionNewSpatiaLiteLayer, SIGNAL( triggered() ), this, SLOT( newSpatialiteLayer() ) );
+  connect( mActionNewGeoPackageLayer, SIGNAL( triggered() ), this, SLOT( newGeoPackageLayer() ) );
   connect( mActionNewMemoryLayer, SIGNAL( triggered() ), this, SLOT( newMemoryLayer() ) );
   connect( mActionShowRasterCalculator, SIGNAL( triggered() ), this, SLOT( showRasterCalculator() ) );
   connect( mActionShowAlignRasterTool, SIGNAL( triggered() ), this, SLOT( showAlignRasterTool() ) );
@@ -710,10 +826,13 @@ void NGQgisApp::createActions()
   connect( mActionAddPgLayer, SIGNAL( triggered() ), this, SLOT( addDatabaseLayer() ) );
   connect( mActionAddSpatiaLiteLayer, SIGNAL( triggered() ), this, SLOT( addSpatiaLiteLayer() ) );
   connect( mActionAddMssqlLayer, SIGNAL( triggered() ), this, SLOT( addMssqlLayer() ) );
+  connect( mActionAddDb2Layer, SIGNAL( triggered() ), this, SLOT( addDb2Layer() ) );
   connect( mActionAddOracleLayer, SIGNAL( triggered() ), this, SLOT( addOracleLayer() ) );
   connect( mActionAddWmsLayer, SIGNAL( triggered() ), this, SLOT( addWmsLayer() ) );
   connect( mActionAddWcsLayer, SIGNAL( triggered() ), this, SLOT( addWcsLayer() ) );
   connect( mActionAddWfsLayer, SIGNAL( triggered() ), this, SLOT( addWfsLayer() ) );
+  connect( mActionAddAfsLayer, SIGNAL( triggered() ), this, SLOT( addAfsLayer() ) );
+  connect( mActionAddAmsLayer, SIGNAL( triggered() ), this, SLOT( addAmsLayer() ) );
   connect( mActionAddDelimitedText, SIGNAL( triggered() ), this, SLOT( addDelimitedTextLayer() ) );
   connect( mActionAddVirtualLayer, SIGNAL( triggered() ), this, SLOT( addVirtualLayer() ) );
   connect( mActionOpenTable, SIGNAL( triggered() ), this, SLOT( attributeTable() ) );
@@ -758,6 +877,7 @@ void NGQgisApp::createActions()
 
 #ifdef Q_OS_MAC
   // Window Menu Items
+
   mActionWindowMinimize = new QAction( tr( "Minimize" ), this );
   mActionWindowMinimize->setShortcut( tr( "Ctrl+M", "Minimize Window" ) );
   mActionWindowMinimize->setStatusTip( tr( "Minimizes the active window to the dock" ) );
@@ -827,6 +947,8 @@ void NGQgisApp::createActions()
   connect( mActionRotateLabel, SIGNAL( triggered() ), this, SLOT( rotateLabel() ) );
   connect( mActionChangeLabelProperties, SIGNAL( triggered() ), this, SLOT( changeLabelProperties() ) );
 
+  connect( mActionDiagramProperties, SIGNAL( triggered() ), this, SLOT( diagramProperties() ) );
+
   QSettings settings;
   if( settings.value( "/qgis/checkVersion", true ).toBool() )
     connect( this, SIGNAL( initializationCompleted() ), this, SLOT(checkQgisVersion()));
@@ -837,9 +959,11 @@ void NGQgisApp::createActions()
   mActionAddPgLayer = 0;
 #endif
 
-#ifndef HAVE_MSSQL
-  delete mActionAddMssqlLayer;
-  mActionAddMssqlLayer = 0;
+#ifndef WITH_ARCGIS
+  delete mActionAddAfsLayer;
+  mActionAddAfsLayer = 0;
+  delete mActionAddAmsLayer;
+  mActionAddAmsLayer = 0;
 #endif
 
 #ifndef HAVE_ORACLE
@@ -851,63 +975,73 @@ void NGQgisApp::createActions()
 
 void NGQgisApp::createActionGroups()
 {
-  mMapToolGroup = new QActionGroup( this );
-  mMapToolGroup->addAction( mActionPan );
-  mMapToolGroup->addAction( mActionZoomIn );
-  mMapToolGroup->addAction( mActionZoomOut );
-  mMapToolGroup->addAction( mActionIdentify );
-  mMapToolGroup->addAction( mActionFeatureAction );
-  mMapToolGroup->addAction( mActionSelectFeatures );
-  mMapToolGroup->addAction( mActionSelectPolygon );
-  mMapToolGroup->addAction( mActionSelectFreehand );
-  mMapToolGroup->addAction( mActionSelectRadius );
-  mMapToolGroup->addAction( mActionDeselectAll );
-  mMapToolGroup->addAction( mActionSelectAll );
-  mMapToolGroup->addAction( mActionInvertSelection );
-  mMapToolGroup->addAction( mActionMeasure );
-  mMapToolGroup->addAction( mActionMeasureArea );
-  mMapToolGroup->addAction( mActionMeasureAngle );
-  mMapToolGroup->addAction( mActionAddFeature );
-  mMapToolGroup->addAction( mActionCircularStringCurvePoint );
-  mMapToolGroup->addAction( mActionCircularStringRadius );
-  mMapToolGroup->addAction( mActionMoveFeature );
-  mMapToolGroup->addAction( mActionRotateFeature );
-#if defined(GEOS_VERSION_MAJOR) && defined(GEOS_VERSION_MINOR) && \
-    ((GEOS_VERSION_MAJOR>3) || ((GEOS_VERSION_MAJOR==3) && (GEOS_VERSION_MINOR>=3)))
-  mMapToolGroup->addAction( mActionOffsetCurve );
-#endif
-  mMapToolGroup->addAction( mActionReshapeFeatures );
-  mMapToolGroup->addAction( mActionSplitFeatures );
-  mMapToolGroup->addAction( mActionSplitParts );
-  mMapToolGroup->addAction( mActionDeleteSelected );
-  mMapToolGroup->addAction( mActionAddRing );
-  mMapToolGroup->addAction( mActionFillRing );
-  mMapToolGroup->addAction( mActionAddPart );
-  mMapToolGroup->addAction( mActionSimplifyFeature );
-  mMapToolGroup->addAction( mActionDeleteRing );
-  mMapToolGroup->addAction( mActionDeletePart );
-  mMapToolGroup->addAction( mActionMergeFeatures );
-  mMapToolGroup->addAction( mActionMergeFeatureAttributes );
-  mMapToolGroup->addAction( mActionNodeTool );
-  mMapToolGroup->addAction( mActionRotatePointSymbols );
-  mMapToolGroup->addAction( mActionPinLabels );
-  mMapToolGroup->addAction( mActionShowHideLabels );
-  mMapToolGroup->addAction( mActionMoveLabel );
-  mMapToolGroup->addAction( mActionRotateLabel );
-  mMapToolGroup->addAction( mActionChangeLabelProperties );
+    //
+    // Map Tool Group
+    mMapToolGroup = new QActionGroup( this );
+  // #ifdef HAVE_TOUCH
+  //   mMapToolGroup->addAction( mActionTouch );
+  // #endif
+    mMapToolGroup->addAction( mActionPan );
+    mMapToolGroup->addAction( mActionZoomIn );
+    mMapToolGroup->addAction( mActionZoomOut );
+    mMapToolGroup->addAction( mActionIdentify );
+    mMapToolGroup->addAction( mActionFeatureAction );
+    mMapToolGroup->addAction( mActionSelectFeatures );
+    mMapToolGroup->addAction( mActionSelectPolygon );
+    mMapToolGroup->addAction( mActionSelectFreehand );
+    mMapToolGroup->addAction( mActionSelectRadius );
+    mMapToolGroup->addAction( mActionDeselectAll );
+    mMapToolGroup->addAction( mActionSelectAll );
+    mMapToolGroup->addAction( mActionInvertSelection );
+    mMapToolGroup->addAction( mActionMeasure );
+    mMapToolGroup->addAction( mActionMeasureArea );
+    mMapToolGroup->addAction( mActionMeasureAngle );
+    mMapToolGroup->addAction( mActionAddFeature );
+    mMapToolGroup->addAction( mActionCircularStringCurvePoint );
+    mMapToolGroup->addAction( mActionCircularStringRadius );
+    mMapToolGroup->addAction( mActionMoveFeature );
+    mMapToolGroup->addAction( mActionRotateFeature );
+  #if defined(GEOS_VERSION_MAJOR) && defined(GEOS_VERSION_MINOR) && \
+      ((GEOS_VERSION_MAJOR>3) || ((GEOS_VERSION_MAJOR==3) && (GEOS_VERSION_MINOR>=3)))
+    mMapToolGroup->addAction( mActionOffsetCurve );
+  #endif
+    mMapToolGroup->addAction( mActionReshapeFeatures );
+    mMapToolGroup->addAction( mActionSplitFeatures );
+    mMapToolGroup->addAction( mActionSplitParts );
+    mMapToolGroup->addAction( mActionDeleteSelected );
+    mMapToolGroup->addAction( mActionAddRing );
+    mMapToolGroup->addAction( mActionFillRing );
+    mMapToolGroup->addAction( mActionAddPart );
+    mMapToolGroup->addAction( mActionSimplifyFeature );
+    mMapToolGroup->addAction( mActionDeleteRing );
+    mMapToolGroup->addAction( mActionDeletePart );
+    mMapToolGroup->addAction( mActionMergeFeatures );
+    mMapToolGroup->addAction( mActionMergeFeatureAttributes );
+    mMapToolGroup->addAction( mActionNodeTool );
+    mMapToolGroup->addAction( mActionRotatePointSymbols );
+    mMapToolGroup->addAction( mActionOffsetPointSymbol );
+    mMapToolGroup->addAction( mActionPinLabels );
+    mMapToolGroup->addAction( mActionShowHideLabels );
+    mMapToolGroup->addAction( mActionMoveLabel );
+    mMapToolGroup->addAction( mActionRotateLabel );
+    mMapToolGroup->addAction( mActionChangeLabelProperties );
 
-  // Preview Modes Group
-  QActionGroup* mPreviewGroup = new QActionGroup( this );
-  mPreviewGroup->setExclusive( true );
-  mActionPreviewModeOff->setActionGroup( mPreviewGroup );
-  mActionPreviewModeGrayscale->setActionGroup( mPreviewGroup );
-  mActionPreviewModeMono->setActionGroup( mPreviewGroup );
-  mActionPreviewProtanope->setActionGroup( mPreviewGroup );
-  mActionPreviewDeuteranope->setActionGroup( mPreviewGroup );
+    // Preview Modes Group
+    QActionGroup* mPreviewGroup = new QActionGroup( this );
+    mPreviewGroup->setExclusive( true );
+    mActionPreviewModeOff->setActionGroup( mPreviewGroup );
+    mActionPreviewModeGrayscale->setActionGroup( mPreviewGroup );
+    mActionPreviewModeMono->setActionGroup( mPreviewGroup );
+    mActionPreviewProtanope->setActionGroup( mPreviewGroup );
+    mActionPreviewDeuteranope->setActionGroup( mPreviewGroup );
 }
 
 void NGQgisApp::createMenus()
 {
+#ifndef SUPPORT_GEOPACKAGE
+  mNewLayerMenu->removeAction( mActionNewGeoPackageLayer );
+#endif
+
   // Panel and Toolbar Submenus
   mPanelMenu = new QMenu( tr( "Panels" ), this );
   mPanelMenu->setObjectName( "mPanelMenu" );
@@ -1004,7 +1138,7 @@ void NGQgisApp::createToolBars()
   << mMapNavToolBar
   << mAttributesToolBar
   << mPluginToolBar
- // << mHelpToolBar
+//  << mHelpToolBar
   << mRasterToolBar
   << mVectorToolBar
   << mDatabaseToolBar
@@ -1154,10 +1288,14 @@ void NGQgisApp::createToolBars()
   tbAllEdits->setPopupMode( QToolButton::InstantPopup );
 
   // new layer tool button
+
   bt = new QToolButton();
   bt->setPopupMode( QToolButton::MenuButtonPopup );
   bt->addAction( mActionNewVectorLayer );
   bt->addAction( mActionNewSpatiaLiteLayer );
+#ifdef SUPPORT_GEOPACKAGE
+  bt->addAction( mActionNewGeoPackageLayer );
+#endif
   bt->addAction( mActionNewMemoryLayer );
 
   QAction* defNewLayerAction = mActionNewVectorLayer;
@@ -1172,13 +1310,102 @@ void NGQgisApp::createToolBars()
     case 2:
       defNewLayerAction = mActionNewMemoryLayer;
       break;
+#ifdef SUPPORT_GEOPACKAGE
+    case 3:
+      defNewLayerAction = mActionNewGeoPackageLayer;
+      break;
+#endif
   }
   bt->setDefaultAction( defNewLayerAction );
   QAction* newLayerAction = mLayerToolBar->addWidget( bt );
 
   newLayerAction->setObjectName( "ActionNewLayer" );
-  connect( bt, SIGNAL( triggered( QAction * ) ), this,
-           SLOT( toolButtonActionTriggered( QAction * ) ) );
+  connect( bt, SIGNAL( triggered( QAction * ) ), this, SLOT( toolButtonActionTriggered( QAction * ) ) );
+
+#ifdef WITH_ARCGIS
+  // map service tool button
+  bt = new QToolButton();
+  bt->setPopupMode( QToolButton::MenuButtonPopup );
+  bt->addAction( mActionAddWmsLayer );
+  bt->addAction( mActionAddAmsLayer );
+  QAction* defMapServiceAction = mActionAddWmsLayer;
+  switch ( settings.value( "/UI/defaultMapService", 0 ).toInt() )
+  {
+    case 0:
+      defMapServiceAction = mActionAddWmsLayer;
+      break;
+    case 1:
+      defMapServiceAction = mActionAddAmsLayer;
+      break;
+  };
+  bt->setDefaultAction( defMapServiceAction );
+  QAction* mapServiceAction = mLayerToolBar->insertWidget( mActionAddWmsLayer, bt );
+  mLayerToolBar->removeAction( mActionAddWmsLayer );
+  mapServiceAction->setObjectName( "ActionMapService" );
+  connect( bt, SIGNAL( triggered( QAction * ) ), this, SLOT( toolButtonActionTriggered( QAction * ) ) );
+
+  // feature service tool button
+  bt = new QToolButton();
+  bt->setPopupMode( QToolButton::MenuButtonPopup );
+  bt->addAction( mActionAddWfsLayer );
+  bt->addAction( mActionAddAfsLayer );
+  QAction* defFeatureServiceAction = mActionAddWfsLayer;
+  switch ( settings.value( "/UI/defaultFeatureService", 0 ).toInt() )
+  {
+    case 0:
+      defFeatureServiceAction = mActionAddWfsLayer;
+      break;
+    case 1:
+      defFeatureServiceAction = mActionAddAfsLayer;
+      break;
+  };
+  bt->setDefaultAction( defFeatureServiceAction );
+  QAction* featureServiceAction = mLayerToolBar->insertWidget( mActionAddWfsLayer, bt );
+  mLayerToolBar->removeAction( mActionAddWfsLayer );
+  featureServiceAction->setObjectName( "ActionFeatureService" );
+  connect( bt, SIGNAL( triggered( QAction * ) ), this, SLOT( toolButtonActionTriggered( QAction * ) ) );
+#else
+  QAction* mapServiceAction = mActionAddWmsLayer;
+#endif
+
+  // add db layer button
+  bt = new QToolButton();
+  bt->setPopupMode( QToolButton::MenuButtonPopup );
+  if ( mActionAddPgLayer )
+    bt->addAction( mActionAddPgLayer );
+  if ( mActionAddMssqlLayer )
+    bt->addAction( mActionAddMssqlLayer );
+  if ( mActionAddDb2Layer )
+    bt->addAction( mActionAddDb2Layer );
+  if ( mActionAddOracleLayer )
+    bt->addAction( mActionAddOracleLayer );
+  QAction* defAddDbLayerAction = mActionAddPgLayer;
+  switch ( settings.value( "/UI/defaultAddDbLayerAction", 0 ).toInt() )
+  {
+    case 0:
+      defAddDbLayerAction = mActionAddPgLayer;
+      break;
+    case 1:
+      defAddDbLayerAction = mActionAddMssqlLayer;
+      break;
+    case 2:
+      defAddDbLayerAction = mActionAddDb2Layer;
+      break;
+    case 3:
+      defAddDbLayerAction = mActionAddOracleLayer;
+      break;
+  }
+  if ( defAddDbLayerAction )
+    bt->setDefaultAction( defAddDbLayerAction );
+  QAction* addDbLayerAction = mLayerToolBar->insertWidget( mapServiceAction, bt );
+  addDbLayerAction->setObjectName( "ActionAddDbLayer" );
+  connect( bt, SIGNAL( triggered( QAction * ) ), this, SLOT( toolButtonActionTriggered( QAction * ) ) );
+
+  QLayout *layout = mLayerToolBar->layout();
+  for ( int i = 0; i < layout->count(); ++i )
+  {
+    layout->itemAt( i )->setAlignment( Qt::AlignLeft );
+  }
 
   //circular string digitize tool button
   QToolButton* tbAddCircularString = new QToolButton( mDigitizeToolBar );
@@ -1186,13 +1413,31 @@ void NGQgisApp::createToolBars()
   tbAddCircularString->addAction( mActionCircularStringCurvePoint );
   tbAddCircularString->addAction( mActionCircularStringRadius );
   tbAddCircularString->setDefaultAction( mActionCircularStringCurvePoint );
-  connect( tbAddCircularString, SIGNAL( triggered( QAction * ) ), this,
-           SLOT( toolButtonActionTriggered( QAction * ) ) );
+  connect( tbAddCircularString, SIGNAL( triggered( QAction * ) ), this, SLOT( toolButtonActionTriggered( QAction * ) ) );
   mDigitizeToolBar->insertWidget( mActionMoveFeature, tbAddCircularString );
 
+  bt = new QToolButton();
+  bt->setPopupMode( QToolButton::MenuButtonPopup );
+  bt->addAction( mActionRotatePointSymbols );
+  bt->addAction( mActionOffsetPointSymbol );
+
+  QAction* defPointSymbolAction = mActionRotatePointSymbols;
+  switch ( settings.value( "/UI/defaultPointSymbolAction", 0 ).toInt() )
+  {
+    case 0:
+      defPointSymbolAction = mActionRotatePointSymbols;
+      break;
+    case 1:
+      defPointSymbolAction = mActionOffsetPointSymbol;
+      break;
+  }
+  bt->setDefaultAction( defPointSymbolAction );
+  QAction* pointSymbolAction = mAdvancedDigitizeToolBar->addWidget( bt );
+  pointSymbolAction->setObjectName( "ActionPointSymbolTools" );
+  connect( bt, SIGNAL( triggered( QAction * ) ), this, SLOT( toolButtonActionTriggered( QAction * ) ) );
+
   // Cad toolbar
-  mAdvancedDigitizeToolBar->insertAction( mActionEnableTracing,
-                                mAdvancedDigitizingDockWidget->enableAction() );
+  mAdvancedDigitizeToolBar->insertAction( mActionEnableTracing, mAdvancedDigitizingDockWidget->enableAction() );
 
   mTracer = new QgsMapCanvasTracer( mMapCanvas, messageBar() );
   mTracer->setActionEnableTracing( mActionEnableTracing );
@@ -1200,141 +1445,128 @@ void NGQgisApp::createToolBars()
 
 void NGQgisApp::createStatusBar()
 {
-  //remove borders from children under Windows
-  statusBar()->setStyleSheet( "QStatusBar::item {border: none;}" );
+    //remove borders from children under Windows
+    statusBar()->setStyleSheet( "QStatusBar::item {border: none;}" );
 
-  // Add a panel to the status bar for the scale, coords and progress
-  // And also rendering suppression checkbox
-  mProgressBar = new QProgressBar( statusBar() );
-  mProgressBar->setObjectName( "mProgressBar" );
-  mProgressBar->setMaximumWidth( 100 );
-  mProgressBar->hide();
-  mProgressBar->setWhatsThis( tr( "Progress bar that displays the status "
-                                  "of rendering layers and other time-intensive operations" ) );
-  statusBar()->addPermanentWidget( mProgressBar, 1 );
+    // Add a panel to the status bar for the scale, coords and progress
+    // And also rendering suppression checkbox
+    mProgressBar = new QProgressBar( statusBar() );
+    mProgressBar->setObjectName( "mProgressBar" );
+    mProgressBar->setMaximumWidth( 100 );
+    mProgressBar->hide();
+    mProgressBar->setWhatsThis( tr( "Progress bar that displays the status "
+                                    "of rendering layers and other time-intensive operations" ) );
+    statusBar()->addPermanentWidget( mProgressBar, 1 );
 
-  connect( mMapCanvas, SIGNAL( renderStarting() ), this,
-           SLOT( canvasRefreshStarted() ) );
-  connect( mMapCanvas, SIGNAL( mapCanvasRefreshed() ), this,
-           SLOT( canvasRefreshFinished() ) );
+    connect( mMapCanvas, SIGNAL( renderStarting() ), this, SLOT( canvasRefreshStarted() ) );
+    connect( mMapCanvas, SIGNAL( mapCanvasRefreshed() ), this, SLOT( canvasRefreshFinished() ) );
 
-  // Bumped the font up one point size since 8 was too
-  // small on some platforms. A point size of 9 still provides
-  // plenty of display space on 1024x768 resolutions
-  QFont myFont( "Arial", 9 );
-  statusBar()->setFont( myFont );
+    // Bumped the font up one point size since 8 was too
+    // small on some platforms. A point size of 9 still provides
+    // plenty of display space on 1024x768 resolutions
+    QFont myFont( "Arial", 9 );
+    statusBar()->setFont( myFont );
 
-  //coords status bar widget
-  mCoordsEdit = new QgsStatusBarCoordinatesWidget( statusBar() );
-  mCoordsEdit->setMapCanvas( mMapCanvas );
-  mCoordsEdit->setFont( myFont );
-  statusBar()->addPermanentWidget( mCoordsEdit, 0 );
+    //coords status bar widget
+    mCoordsEdit = new QgsStatusBarCoordinatesWidget( statusBar() );
+    mCoordsEdit->setObjectName( "mCoordsEdit" );
+    mCoordsEdit->setMapCanvas( mMapCanvas );
+    mCoordsEdit->setFont( myFont );
+    statusBar()->addPermanentWidget( mCoordsEdit, 0 );
 
-  // add a label to show current scale
-  mScaleLabel = new QLabel( QString(), statusBar() );
-  mScaleLabel->setObjectName( "mScaleLable" );
-  mScaleLabel->setFont( myFont );
-  mScaleLabel->setMinimumWidth( 10 );
-  //mScaleLabel->setMaximumHeight( 20 );
-  mScaleLabel->setMargin( 3 );
-  mScaleLabel->setAlignment( Qt::AlignCenter );
-  mScaleLabel->setFrameStyle( QFrame::NoFrame );
-  mScaleLabel->setText( tr( "Scale" ) );
-  mScaleLabel->setToolTip( tr( "Current map scale" ) );
-  statusBar()->addPermanentWidget( mScaleLabel, 0 );
+    mScaleWidget = new QgsStatusBarScaleWidget( mMapCanvas, statusBar() );
+    mScaleWidget->setObjectName( "mScaleWidget" );
+    mScaleWidget->setFont( myFont );
+    connect( mScaleWidget, SIGNAL( scaleLockChanged( bool ) ), mMapCanvas, SLOT( setScaleLocked( bool ) ) );
+    statusBar()->addPermanentWidget( mScaleWidget, 0 );
 
-  mScaleEdit = new QgsScaleComboBox( statusBar() );
-  mScaleEdit->setObjectName( "mScaleEdit" );
-  mScaleEdit->setFont( myFont );
-  // seems setFont() change font only for popup not for line edit,
-  // so we need to set font for it separately
-  mScaleEdit->lineEdit()->setFont( myFont );
-  mScaleEdit->setMinimumWidth( 10 );
-  mScaleEdit->setContentsMargins( 0, 0, 0, 0 );
-  mScaleEdit->setWhatsThis( tr( "Displays the current map scale" ) );
-  mScaleEdit->setToolTip( tr( "Current map scale (formatted as x:y)" ) );
+    // zoom widget
+    mMagnifierWidget = new QgsStatusBarMagnifierWidget( statusBar() );
+    mMagnifierWidget->setObjectName( "mMagnifierWidget" );
+    mMagnifierWidget->setFont( myFont );
+    connect( mMapCanvas, SIGNAL( magnificationChanged( double ) ), mMagnifierWidget, SLOT( updateMagnification( double ) ) );
+    connect( mMagnifierWidget, SIGNAL( magnificationChanged( double ) ), mMapCanvas, SLOT( setMagnificationFactor( double ) ) );
+    mMagnifierWidget->updateMagnification( QSettings().value( "/qgis/magnifier_factor_default", 1.0 ).toDouble() );
+    statusBar()->addPermanentWidget( mMagnifierWidget, 0 );
 
-  statusBar()->addPermanentWidget( mScaleEdit, 0 );
-  connect( mScaleEdit, SIGNAL( scaleChanged() ), this, SLOT( userScale() ) );
+    if ( QgsMapCanvas::rotationEnabled() )
+    {
+      // add a widget to show/set current rotation
+      mRotationLabel = new QLabel( QString(), statusBar() );
+      mRotationLabel->setObjectName( "mRotationLabel" );
+      mRotationLabel->setFont( myFont );
+      mRotationLabel->setMinimumWidth( 10 );
+      //mRotationLabel->setMaximumHeight( 20 );
+      mRotationLabel->setMargin( 3 );
+      mRotationLabel->setAlignment( Qt::AlignCenter );
+      mRotationLabel->setFrameStyle( QFrame::NoFrame );
+      mRotationLabel->setText( tr( "Rotation" ) );
+      mRotationLabel->setToolTip( tr( "Current clockwise map rotation in degrees" ) );
+      statusBar()->addPermanentWidget( mRotationLabel, 0 );
 
-  if ( QgsMapCanvas::rotationEnabled() )
-  {
-    // add a widget to show/set current rotation
-    mRotationLabel = new QLabel( QString(), statusBar() );
-    mRotationLabel->setObjectName( "mRotationLabel" );
-    mRotationLabel->setFont( myFont );
-    mRotationLabel->setMinimumWidth( 10 );
-    //mRotationLabel->setMaximumHeight( 20 );
-    mRotationLabel->setMargin( 3 );
-    mRotationLabel->setAlignment( Qt::AlignCenter );
-    mRotationLabel->setFrameStyle( QFrame::NoFrame );
-    mRotationLabel->setText( tr( "Rotation" ) );
-    mRotationLabel->setToolTip( tr( "Current clockwise map rotation in degrees" ) );
-    statusBar()->addPermanentWidget( mRotationLabel, 0 );
+      mRotationEdit = new QgsDoubleSpinBox( statusBar() );
+      mRotationEdit->setObjectName( "mRotationEdit" );
+      mRotationEdit->setClearValue( 0.0 );
+      mRotationEdit->setKeyboardTracking( false );
+      mRotationEdit->setMaximumWidth( 120 );
+      mRotationEdit->setDecimals( 1 );
+      mRotationEdit->setRange( -180.0, 180.0 );
+      mRotationEdit->setWrapping( true );
+      mRotationEdit->setSingleStep( 5.0 );
+      mRotationEdit->setFont( myFont );
+      mRotationEdit->setWhatsThis( tr( "Shows the current map clockwise rotation "
+                                       "in degrees. It also allows editing to set "
+                                       "the rotation" ) );
+      mRotationEdit->setToolTip( tr( "Current clockwise map rotation in degrees" ) );
+      statusBar()->addPermanentWidget( mRotationEdit, 0 );
+      connect( mRotationEdit, SIGNAL( valueChanged( double ) ), this, SLOT( userRotation() ) );
 
-    mRotationEdit = new QgsDoubleSpinBox( statusBar() );
-    mRotationEdit->setObjectName( "mRotationEdit" );
-    mRotationEdit->setClearValue( 0.0 );
-    mRotationEdit->setKeyboardTracking( false );
-    mRotationEdit->setMaximumWidth( 120 );
-    mRotationEdit->setDecimals( 1 );
-    mRotationEdit->setRange( -180.0, 180.0 );
-    mRotationEdit->setWrapping( true );
-    mRotationEdit->setSingleStep( 5.0 );
-    mRotationEdit->setFont( myFont );
-    mRotationEdit->setWhatsThis( tr( "Shows the current map clockwise rotation "
-                                     "in degrees. It also allows editing to set "
-                                     "the rotation" ) );
-    mRotationEdit->setToolTip( tr( "Current clockwise map rotation in degrees" ) );
-    statusBar()->addPermanentWidget( mRotationEdit, 0 );
-    connect( mRotationEdit, SIGNAL( valueChanged( double ) ), this, SLOT( userRotation() ) );
+      showRotation();
+    }
 
-    showRotation();
-  }
+    // render suppression status bar widget
+    mRenderSuppressionCBox = new QCheckBox( tr( "Render" ), statusBar() );
+    mRenderSuppressionCBox->setObjectName( "mRenderSuppressionCBox" );
+    mRenderSuppressionCBox->setChecked( true );
+    mRenderSuppressionCBox->setFont( myFont );
+    mRenderSuppressionCBox->setWhatsThis( tr( "When checked, the map layers "
+                                          "are rendered in response to map navigation commands and other "
+                                          "events. When not checked, no rendering is done. This allows you "
+                                          "to add a large number of layers and symbolize them before rendering." ) );
+    mRenderSuppressionCBox->setToolTip( tr( "Toggle map rendering" ) );
+    statusBar()->addPermanentWidget( mRenderSuppressionCBox, 0 );
+    // On the fly projection status bar icon
+    // Changed this to a tool button since a QPushButton is
+    // sculpted on OS X and the icon is never displayed [gsherman]
+    mOnTheFlyProjectionStatusButton = new QToolButton( statusBar() );
+    mOnTheFlyProjectionStatusButton->setAutoRaise( true );
+    mOnTheFlyProjectionStatusButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
+    mOnTheFlyProjectionStatusButton->setObjectName( "mOntheFlyProjectionStatusButton" );
+    // Maintain uniform widget height in status bar by setting button height same as labels
+    // For Qt/Mac 3.3, the default toolbutton height is 30 and labels were expanding to match
+    mOnTheFlyProjectionStatusButton->setMaximumHeight( mScaleWidget->height() );
+    mOnTheFlyProjectionStatusButton->setIcon( NGQgsApplication::getThemeIcon( "mIconProjectionEnabled.png" ) );
+    mOnTheFlyProjectionStatusButton->setWhatsThis( tr( "This icon shows whether "
+        "on the fly coordinate reference system transformation is enabled or not. "
+        "Click the icon to bring up "
+        "the project properties dialog to alter this behaviour." ) );
+    mOnTheFlyProjectionStatusButton->setToolTip( tr( "CRS status - Click "
+        "to open coordinate reference system dialog" ) );
+    connect( mOnTheFlyProjectionStatusButton, SIGNAL( clicked() ),
+             this, SLOT( projectPropertiesProjections() ) );//bring up the project props dialog when clicked
+    statusBar()->addPermanentWidget( mOnTheFlyProjectionStatusButton, 0 );
+    statusBar()->showMessage( tr( "Ready" ) );
 
-  // render suppression status bar widget
-  mRenderSuppressionCBox = new QCheckBox( tr( "Render" ), statusBar() );
-  mRenderSuppressionCBox->setObjectName( "mRenderSuppressionCBox" );
-  mRenderSuppressionCBox->setChecked( true );
-  mRenderSuppressionCBox->setFont( myFont );
-  mRenderSuppressionCBox->setWhatsThis( tr( "When checked, the map layers "
-                                        "are rendered in response to map navigation commands and other "
-                                        "events. When not checked, no rendering is done. This allows you "
-                                        "to add a large number of layers and symbolize them before rendering." ) );
-  mRenderSuppressionCBox->setToolTip( tr( "Toggle map rendering" ) );
-  statusBar()->addPermanentWidget( mRenderSuppressionCBox, 0 );
-  // On the fly projection status bar icon
-  // Changed this to a tool button since a QPushButton is
-  // sculpted on OS X and the icon is never displayed [gsherman]
-  mOnTheFlyProjectionStatusButton = new QToolButton( statusBar() );
-  mOnTheFlyProjectionStatusButton->setAutoRaise( true );
-  mOnTheFlyProjectionStatusButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
-  mOnTheFlyProjectionStatusButton->setObjectName( "mOntheFlyProjectionStatusButton" );
-  // Maintain uniform widget height in status bar by setting button height same as labels
-  // For Qt/Mac 3.3, the default toolbutton height is 30 and labels were expanding to match
-  mOnTheFlyProjectionStatusButton->setMaximumHeight( mScaleLabel->height() );
-  mOnTheFlyProjectionStatusButton->setIcon( NGQgsApplication::getThemeIcon( "mIconProjectionEnabled.png" ) );
-  mOnTheFlyProjectionStatusButton->setWhatsThis( tr( "This icon shows whether "
-      "on the fly coordinate reference system transformation is enabled or not. "
-      "Click the icon to bring up "
-      "the project properties dialog to alter this behaviour." ) );
-  mOnTheFlyProjectionStatusButton->setToolTip( tr( "CRS status - Click "
-      "to open coordinate reference system dialog" ) );
-  connect( mOnTheFlyProjectionStatusButton, SIGNAL( clicked() ),
-           this, SLOT( projectPropertiesProjections() ) );//bring up the project props dialog when clicked
-  statusBar()->addPermanentWidget( mOnTheFlyProjectionStatusButton, 0 );
-  statusBar()->showMessage( tr( "Ready" ) );
-
-  mMessageButton = new QToolButton( statusBar() );
-  mMessageButton->setAutoRaise( true );
-  mMessageButton->setIcon( NGQgsApplication::getThemeIcon( "/mMessageLogRead.svg" ) );
-  mMessageButton->setToolTip( tr( "Messages" ) );
-  mMessageButton->setWhatsThis( tr( "Messages" ) );
-  mMessageButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
-  mMessageButton->setObjectName( "mMessageLogViewerButton" );
-  mMessageButton->setMaximumHeight( mScaleLabel->height() );
-  mMessageButton->setCheckable( true );
-  statusBar()->addPermanentWidget( mMessageButton, 0 );
+    mMessageButton = new QToolButton( statusBar() );
+    mMessageButton->setAutoRaise( true );
+    mMessageButton->setIcon( NGQgsApplication::getThemeIcon( "/mMessageLogRead.svg" ) );
+    mMessageButton->setToolTip( tr( "Messages" ) );
+    mMessageButton->setWhatsThis( tr( "Messages" ) );
+    mMessageButton->setToolButtonStyle( Qt::ToolButtonTextBesideIcon );
+    mMessageButton->setObjectName( "mMessageLogViewerButton" );
+    mMessageButton->setMaximumHeight( mScaleWidget->height() );
+    mMessageButton->setCheckable( true );
+    statusBar()->addPermanentWidget( mMessageButton, 0 );
 }
 
 void NGQgisApp::readSettings()
@@ -1344,49 +1576,7 @@ void NGQgisApp::readSettings()
   setTheme( themename );
 
   // Read legacy settings
-  mRecentProjects.clear();
-
-  settings.beginGroup( "/UI" );
-
-  // Migrate old recent projects if first time with new system
-  if ( !settings.childGroups().contains( "recentProjects" ) )
-  {
-    QStringList oldRecentProjects = settings.value( "/UI/recentProjectsList" ).toStringList();
-
-    Q_FOREACH ( const QString& project, oldRecentProjects )
-    {
-      QgsWelcomePageItemsModel::RecentProjectData data;
-      data.path = project;
-      data.title = project;
-
-      mRecentProjects.append( data );
-    }
-  }
-  settings.endGroup();
-
-  settings.beginGroup( "/UI/recentProjects" );
-  QStringList projectKeysList = settings.childGroups();
-
-  //convert list to int values to obtain proper order
-  QList<int> projectKeys;
-  Q_FOREACH ( const QString& key, projectKeysList )
-  {
-    projectKeys.append( key.toInt() );
-  }
-  qSort( projectKeys );
-
-  Q_FOREACH ( int key, projectKeys )
-  {
-    QgsWelcomePageItemsModel::RecentProjectData data;
-    settings.beginGroup( QString::number( key ) );
-    data.title = settings.value( "title" ).toString();
-    data.path = settings.value( "path" ).toString();
-    data.previewImagePath = settings.value( "previewImage" ).toString();
-    data.crs = settings.value( "crs" ).toString();
-    settings.endGroup();
-    mRecentProjects.append( data );
-  }
-  settings.endGroup();
+  readRecentProjects();
 
   // this is a new session! reset enable macros value to "ask"
   // whether set to "just for this session"
@@ -1406,7 +1596,7 @@ void NGQgisApp::setTheme( const QString& theThemeName )
   mActionSaveProjectAs->setIcon( NGQgsApplication::getThemeIcon( "/mActionFileSaveAs.svg" ) );
   mActionNewPrintComposer->setIcon( NGQgsApplication::getThemeIcon( "/mActionNewComposer.svg" ) );
   mActionShowComposerManager->setIcon( NGQgsApplication::getThemeIcon( "/mActionComposerManager.svg" ) );
-  mActionSaveMapAsImage->setIcon( NGQgsApplication::getThemeIcon( "/mActionSaveMapAsImage.png" ) );
+  mActionSaveMapAsImage->setIcon( NGQgsApplication::getThemeIcon( "/mActionSaveMapAsImage.svg" ) );
   mActionExit->setIcon( NGQgsApplication::getThemeIcon( "/mActionFileExit.png" ) );
   mActionAddOgrLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddOgrLayer.svg" ) );
   mActionAddRasterLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddRasterLayer.svg" ) );
@@ -1415,9 +1605,8 @@ void NGQgisApp::setTheme( const QString& theThemeName )
 #endif
   mActionNewSpatiaLiteLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionNewSpatiaLiteLayer.svg" ) );
   mActionAddSpatiaLiteLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddSpatiaLiteLayer.svg" ) );
-#ifdef HAVE_MSSQL
   mActionAddMssqlLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddMssqlLayer.svg" ) );
-#endif
+  mActionAddDb2Layer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddDb2Layer.svg" ) );
 #ifdef HAVE_ORACLE
   mActionAddOracleLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddOracleLayer.svg" ) );
 #endif
@@ -1428,8 +1617,8 @@ void NGQgisApp::setTheme( const QString& theThemeName )
   mActionNewVectorLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionNewVectorLayer.svg" ) );
   mActionNewMemoryLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionCreateMemory.svg" ) );
   mActionAddAllToOverview->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddAllToOverview.svg" ) );
-  mActionHideAllLayers->setIcon( NGQgsApplication::getThemeIcon( "/mActionHideAllLayers.png" ) );
-  mActionShowAllLayers->setIcon( NGQgsApplication::getThemeIcon( "/mActionShowAllLayers.png" ) );
+  mActionHideAllLayers->setIcon( NGQgsApplication::getThemeIcon( "/mActionHideAllLayers.svg" ) );
+  mActionShowAllLayers->setIcon( NGQgsApplication::getThemeIcon( "/mActionShowAllLayers.svg" ) );
   mActionHideSelectedLayers->setIcon( NGQgsApplication::getThemeIcon( "/mActionHideSelectedLayers.png" ) );
   mActionShowSelectedLayers->setIcon( NGQgsApplication::getThemeIcon( "/mActionShowSelectedLayers.png" ) );
   mActionRemoveAllFromOverview->setIcon( NGQgsApplication::getThemeIcon( "/mActionRemoveAllFromOverview.svg" ) );
@@ -1440,10 +1629,10 @@ void NGQgisApp::setTheme( const QString& theThemeName )
   mActionCheckQgisVersion->setIcon( NGQgsApplication::getThemeIcon( "/mActionCheckQgisVersion.png" ) );
   mActionOptions->setIcon( NGQgsApplication::getThemeIcon( "/mActionOptions.svg" ) );
   mActionConfigureShortcuts->setIcon( NGQgsApplication::getThemeIcon( "/mActionOptions.svg" ) );
-//  mActionCustomization->setIcon( NGQgsApplication::getThemeIcon( "/mActionOptions.svg" ) );
+  mActionCustomization->setIcon( NGQgsApplication::getThemeIcon( "/mActionOptions.svg" ) );
   mActionHelpContents->setIcon( NGQgsApplication::getThemeIcon( "/mActionHelpContents.svg" ) );
-  mActionLocalHistogramStretch->setIcon( NGQgsApplication::getThemeIcon( "/mActionLocalHistogramStretch.png" ) );
-  mActionFullHistogramStretch->setIcon( NGQgsApplication::getThemeIcon( "/mActionFullHistogramStretch.png" ) );
+  mActionLocalHistogramStretch->setIcon( NGQgsApplication::getThemeIcon( "/mActionLocalHistogramStretch.svg" ) );
+  mActionFullHistogramStretch->setIcon( NGQgsApplication::getThemeIcon( "/mActionFullHistogramStretch.svg" ) );
   mActionIncreaseBrightness->setIcon( NGQgsApplication::getThemeIcon( "/mActionIncreaseBrightness.svg" ) );
   mActionDecreaseBrightness->setIcon( NGQgsApplication::getThemeIcon( "/mActionDecreaseBrightness.svg" ) );
   mActionIncreaseContrast->setIcon( NGQgsApplication::getThemeIcon( "/mActionIncreaseContrast.svg" ) );
@@ -1451,7 +1640,7 @@ void NGQgisApp::setTheme( const QString& theThemeName )
   mActionZoomActualSize->setIcon( NGQgsApplication::getThemeIcon( "/mActionZoomNative.png" ) );
   mActionQgisHomePage->setIcon( NGQgsApplication::getThemeIcon( "/mActionQgisHomePage.png" ) );
   mActionAbout->setIcon( NGQgsApplication::getThemeIcon( "/mActionHelpAbout.png" ) );
-//  mActionSponsors->setIcon( NGQgsApplication::getThemeIcon( "/mActionHelpSponsors.png" ) );
+  mActionSponsors->setIcon( NGQgsApplication::getThemeIcon( "/mActionHelpSponsors.png" ) );
   mActionDraw->setIcon( NGQgsApplication::getThemeIcon( "/mActionDraw.svg" ) );
   mActionToggleEditing->setIcon( NGQgsApplication::getThemeIcon( "/mActionToggleEditing.svg" ) );
   mActionSaveLayerEdits->setIcon( NGQgsApplication::getThemeIcon( "/mActionSaveAllEdits.svg" ) );
@@ -1462,34 +1651,38 @@ void NGQgisApp::setTheme( const QString& theThemeName )
   mActionRollbackAllEdits->setIcon( NGQgsApplication::getThemeIcon( "/mActionRollbackAllEdits.svg" ) );
   mActionCancelEdits->setIcon( NGQgsApplication::getThemeIcon( "/mActionCancelEdits.svg" ) );
   mActionCancelAllEdits->setIcon( NGQgsApplication::getThemeIcon( "/mActionCancelAllEdits.svg" ) );
-  mActionCutFeatures->setIcon( NGQgsApplication::getThemeIcon( "/mActionEditCut.png" ) );
-  mActionCopyFeatures->setIcon( NGQgsApplication::getThemeIcon( "/mActionEditCopy.png" ) );
-  mActionPasteFeatures->setIcon( NGQgsApplication::getThemeIcon( "/mActionEditPaste.png" ) );
-  mActionAddFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionCapturePoint.png" ) );
-  mActionMoveFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionMoveFeature.png" ) );
-  mActionRotateFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionRotateFeature.png" ) );
-  mActionReshapeFeatures->setIcon( NGQgsApplication::getThemeIcon( "/mActionReshape.png" ) );
+  mActionCutFeatures->setIcon( NGQgsApplication::getThemeIcon( "/mActionEditCut.svg" ) );
+  mActionCopyFeatures->setIcon( NGQgsApplication::getThemeIcon( "/mActionEditCopy.svg" ) );
+  mActionPasteFeatures->setIcon( NGQgsApplication::getThemeIcon( "/mActionEditPaste.svg" ) );
+  mActionAddFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionCapturePoint.svg" ) );
+  mActionMoveFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionMoveFeaturePoint.svg" ) );
+  mActionRotateFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionRotateFeature.svg" ) );
+  mActionReshapeFeatures->setIcon( NGQgsApplication::getThemeIcon( "/mActionReshape.svg" ) );
   mActionSplitFeatures->setIcon( NGQgsApplication::getThemeIcon( "/mActionSplitFeatures.svg" ) );
   mActionSplitParts->setIcon( NGQgsApplication::getThemeIcon( "/mActionSplitParts.svg" ) );
   mActionDeleteSelected->setIcon( NGQgsApplication::getThemeIcon( "/mActionDeleteSelected.svg" ) );
-  mActionNodeTool->setIcon( NGQgsApplication::getThemeIcon( "/mActionNodeTool.png" ) );
-  mActionSimplifyFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionSimplify.png" ) );
-  mActionUndo->setIcon( NGQgsApplication::getThemeIcon( "/mActionUndo.png" ) );
-  mActionRedo->setIcon( NGQgsApplication::getThemeIcon( "/mActionRedo.png" ) );
-  mActionAddRing->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddRing.png" ) );
+  mActionNodeTool->setIcon( NGQgsApplication::getThemeIcon( "/mActionNodeTool.svg" ) );
+  mActionSimplifyFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionSimplify.svg" ) );
+  mActionUndo->setIcon( NGQgsApplication::getThemeIcon( "/mActionUndo.svg" ) );
+  mActionRedo->setIcon( NGQgsApplication::getThemeIcon( "/mActionRedo.svg" ) );
+  mActionAddRing->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddRing.svg" ) );
   mActionFillRing->setIcon( NGQgsApplication::getThemeIcon( "/mActionFillRing.svg" ) );
-  mActionAddPart->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddPart.png" ) );
-  mActionDeleteRing->setIcon( NGQgsApplication::getThemeIcon( "/mActionDeleteRing.png" ) );
-  mActionDeletePart->setIcon( NGQgsApplication::getThemeIcon( "/mActionDeletePart.png" ) );
-  mActionMergeFeatures->setIcon( NGQgsApplication::getThemeIcon( "/mActionMergeFeatures.png" ) );
-  mActionOffsetCurve->setIcon( NGQgsApplication::getThemeIcon( "/mActionOffsetCurve.png" ) );
-  mActionMergeFeatureAttributes->setIcon( NGQgsApplication::getThemeIcon( "/mActionMergeFeatureAttributes.png" ) );
-  mActionRotatePointSymbols->setIcon( NGQgsApplication::getThemeIcon( "mActionRotatePointSymbols.png" ) );
+  mActionAddPart->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddPart.svg" ) );
+  mActionDeleteRing->setIcon( NGQgsApplication::getThemeIcon( "/mActionDeleteRing.svg" ) );
+  mActionDeletePart->setIcon( NGQgsApplication::getThemeIcon( "/mActionDeletePart.svg" ) );
+  mActionMergeFeatures->setIcon( NGQgsApplication::getThemeIcon( "/mActionMergeFeatures.svg" ) );
+  mActionOffsetCurve->setIcon( NGQgsApplication::getThemeIcon( "/mActionOffsetCurve.svg" ) );
+  mActionMergeFeatureAttributes->setIcon( NGQgsApplication::getThemeIcon( "/mActionMergeFeatureAttributes.svg" ) );
+  mActionRotatePointSymbols->setIcon( NGQgsApplication::getThemeIcon( "mActionRotatePointSymbols.svg" ) );
+  mActionOffsetPointSymbol->setIcon( NGQgsApplication::getThemeIcon( "mActionOffsetPointSymbols.svg" ) );
   mActionZoomIn->setIcon( NGQgsApplication::getThemeIcon( "/mActionZoomIn.svg" ) );
   mActionZoomOut->setIcon( NGQgsApplication::getThemeIcon( "/mActionZoomOut.svg" ) );
   mActionZoomFullExtent->setIcon( NGQgsApplication::getThemeIcon( "/mActionZoomFullExtent.svg" ) );
   mActionZoomToSelected->setIcon( NGQgsApplication::getThemeIcon( "/mActionZoomToSelected.svg" ) );
   mActionShowRasterCalculator->setIcon( NGQgsApplication::getThemeIcon( "/mActionShowRasterCalculator.png" ) );
+#ifdef HAVE_TOUCH
+  mActionTouch->setIcon( NGQgsApplication::getThemeIcon( "/mActionTouch.svg" ) );
+#endif
   mActionPan->setIcon( NGQgsApplication::getThemeIcon( "/mActionPan.svg" ) );
   mActionPanToSelected->setIcon( NGQgsApplication::getThemeIcon( "/mActionPanToSelected.svg" ) );
   mActionZoomLast->setIcon( NGQgsApplication::getThemeIcon( "/mActionZoomLast.svg" ) );
@@ -1506,34 +1699,41 @@ void NGQgisApp::setTheme( const QString& theThemeName )
   mActionSelectAll->setIcon( NGQgsApplication::getThemeIcon( "/mActionSelectAll.svg" ) );
   mActionInvertSelection->setIcon( NGQgsApplication::getThemeIcon( "/mActionInvertSelection.svg" ) );
   mActionSelectByExpression->setIcon( NGQgsApplication::getThemeIcon( "/mIconExpressionSelect.svg" ) );
+  mActionSelectByForm->setIcon( NGQgsApplication::getThemeIcon( "/mIconFormSelect.svg" ) );
   mActionOpenTable->setIcon( NGQgsApplication::getThemeIcon( "/mActionOpenTable.svg" ) );
-  mActionOpenFieldCalc->setIcon( NGQgsApplication::getThemeIcon( "/mActionCalculateField.png" ) );
-  mActionMeasure->setIcon( NGQgsApplication::getThemeIcon( "/mActionMeasure.png" ) );
-  mActionMeasureArea->setIcon( NGQgsApplication::getThemeIcon( "/mActionMeasureArea.png" ) );
-  mActionMeasureAngle->setIcon( NGQgsApplication::getThemeIcon( "/mActionMeasureAngle.png" ) );
-  mActionMapTips->setIcon( NGQgsApplication::getThemeIcon( "/mActionMapTips.png" ) );
-  mActionShowBookmarks->setIcon( NGQgsApplication::getThemeIcon( "/mActionShowBookmarks.png" ) );
-  mActionNewBookmark->setIcon( NGQgsApplication::getThemeIcon( "/mActionNewBookmark.png" ) );
+  mActionOpenFieldCalc->setIcon( NGQgsApplication::getThemeIcon( "/mActionCalculateField.svg" ) );
+  mActionMeasure->setIcon( NGQgsApplication::getThemeIcon( "/mActionMeasure.svg" ) );
+  mActionMeasureArea->setIcon( NGQgsApplication::getThemeIcon( "/mActionMeasureArea.svg" ) );
+  mActionMeasureAngle->setIcon( NGQgsApplication::getThemeIcon( "/mActionMeasureAngle.svg" ) );
+  mActionMapTips->setIcon( NGQgsApplication::getThemeIcon( "/mActionMapTips.svg" ) );
+  mActionShowBookmarks->setIcon( NGQgsApplication::getThemeIcon( "/mActionShowBookmarks.svg" ) );
+  mActionNewBookmark->setIcon( NGQgsApplication::getThemeIcon( "/mActionNewBookmark.svg" ) );
   mActionCustomProjection->setIcon( NGQgsApplication::getThemeIcon( "/mActionCustomProjection.svg" ) );
   mActionAddWmsLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddWmsLayer.svg" ) );
   mActionAddWcsLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddWcsLayer.svg" ) );
   mActionAddWfsLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddWfsLayer.svg" ) );
+#ifdef WITH_ARCGIS
+  mActionAddAfsLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddAfsLayer.svg" ) );
+  mActionAddAmsLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddAmsLayer.svg" ) );
+#endif
   mActionAddToOverview->setIcon( NGQgsApplication::getThemeIcon( "/mActionInOverview.svg" ) );
-  mActionAnnotation->setIcon( NGQgsApplication::getThemeIcon( "/mActionAnnotation.png" ) );
-  mActionFormAnnotation->setIcon( NGQgsApplication::getThemeIcon( "/mActionFormAnnotation.png" ) );
-  mActionHtmlAnnotation->setIcon( NGQgsApplication::getThemeIcon( "/mActionFormAnnotation.png" ) );
-  mActionTextAnnotation->setIcon( NGQgsApplication::getThemeIcon( "/mActionTextAnnotation.png" ) );
-  mActionLabeling->setIcon( NGQgsApplication::getThemeIcon( "/mActionLabeling.png" ) );
+  mActionAnnotation->setIcon( NGQgsApplication::getThemeIcon( "/mActionAnnotation.svg" ) );
+  mActionFormAnnotation->setIcon( NGQgsApplication::getThemeIcon( "/mActionFormAnnotation.svg" ) );
+  mActionHtmlAnnotation->setIcon( NGQgsApplication::getThemeIcon( "/mActionHtmlAnnotation.svg" ) );
+  mActionSvgAnnotation->setIcon( NGQgsApplication::getThemeIcon( "/mActionSvgAnnotation.svg" ) );
+  mActionTextAnnotation->setIcon( NGQgsApplication::getThemeIcon( "/mActionTextAnnotation.svg" ) );
+  mActionLabeling->setIcon( NGQgsApplication::getThemeIcon( "/mActionLabeling.svg" ) );
   mActionShowPinnedLabels->setIcon( NGQgsApplication::getThemeIcon( "/mActionShowPinnedLabels.svg" ) );
   mActionPinLabels->setIcon( NGQgsApplication::getThemeIcon( "/mActionPinLabels.svg" ) );
   mActionShowHideLabels->setIcon( NGQgsApplication::getThemeIcon( "/mActionShowHideLabels.svg" ) );
-  mActionMoveLabel->setIcon( NGQgsApplication::getThemeIcon( "/mActionMoveLabel.png" ) );
+  mActionMoveLabel->setIcon( NGQgsApplication::getThemeIcon( "/mActionMoveLabel.svg" ) );
   mActionRotateLabel->setIcon( NGQgsApplication::getThemeIcon( "/mActionRotateLabel.svg" ) );
-  mActionChangeLabelProperties->setIcon( NGQgsApplication::getThemeIcon( "/mActionChangeLabelProperties.png" ) );
+  mActionChangeLabelProperties->setIcon( NGQgsApplication::getThemeIcon( "/mActionChangeLabelProperties.svg" ) );
+  mActionDiagramProperties->setIcon( NGQgsApplication::getThemeIcon( "/mActionDiagramProperties.svg" ) );
   mActionDecorationCopyright->setIcon( NGQgsApplication::getThemeIcon( "/copyright_label.png" ) );
   mActionDecorationNorthArrow->setIcon( NGQgsApplication::getThemeIcon( "/north_arrow.png" ) );
   mActionDecorationScaleBar->setIcon( NGQgsApplication::getThemeIcon( "/scale_bar.png" ) );
-  mActionDecorationGrid->setIcon( NGQgsApplication::getThemeIcon( "/transformed.png" ) );
+  mActionDecorationGrid->setIcon( NGQgsApplication::getThemeIcon( "/transformed.svg" ) );
 
   //change themes of all composers
   QSet<QgsComposer*>::const_iterator composerIt = mPrintComposers.constBegin();
@@ -1568,7 +1768,7 @@ void NGQgisApp::updateProjectFromTemplates()
 
     // add <blank> entry, which loads a blank template (regardless of "default template")
     if ( settings.value( "/qgis/newProjectDefault", QVariant( false ) ).toBool() )
-        mProjectFromTemplateMenu->addAction( tr( "< Blank >" ) );
+      mProjectFromTemplateMenu->addAction( tr( "< Blank >" ) );
 }
 
 void NGQgisApp::toggleLogMessageIcon( bool hasLogMessage )
@@ -1585,37 +1785,33 @@ void NGQgisApp::toggleLogMessageIcon( bool hasLogMessage )
 
 void NGQgisApp::initLayerTreeView()
 {
-  mLayerTreeView->setWhatsThis( tr( "Map legend that displays all the layers currently on the map canvas. Click on the check box to turn a layer on or off. Double click on a layer in the legend to customize its appearance and set other properties." ) );
+    mLayerTreeView->setWhatsThis( tr( "Map legend that displays all the layers currently on the map canvas. Click on the check box to turn a layer on or off. Double click on a layer in the legend to customize its appearance and set other properties." ) );
 
-  mLayerTreeDock = new QDockWidget( tr( "Layers Panel" ), this );
-  mLayerTreeDock->setObjectName( "Layers" );
-  mLayerTreeDock->setAllowedAreas( Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea );
+    mLayerTreeDock = new QgsDockWidget( tr( "Layers Panel" ), this );
+    mLayerTreeDock->setObjectName( "Layers" );
+    mLayerTreeDock->setAllowedAreas( Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea );
 
-  QgsLayerTreeModel *model = new QgsLayerTreeModel(
-              QgsProject::instance()->layerTreeRoot(), this );
+    QgsLayerTreeModel* model = new QgsLayerTreeModel( QgsProject::instance()->layerTreeRoot(), this );
+  #ifdef ENABLE_MODELTEST
+    new ModelTest( model, this );
+  #endif
+    model->setFlag( QgsLayerTreeModel::AllowNodeReorder );
+    model->setFlag( QgsLayerTreeModel::AllowNodeRename );
+    model->setFlag( QgsLayerTreeModel::AllowNodeChangeVisibility );
+    model->setFlag( QgsLayerTreeModel::ShowLegendAsTree );
+    model->setFlag( QgsLayerTreeModel::UseEmbeddedWidgets );
+    model->setAutoCollapseLegendNodes( 10 );
 
-  model->setFlag( QgsLayerTreeModel::AllowNodeReorder );
-  model->setFlag( QgsLayerTreeModel::AllowNodeRename );
-  model->setFlag( QgsLayerTreeModel::AllowNodeChangeVisibility );
-  model->setFlag( QgsLayerTreeModel::ShowLegendAsTree );
-  model->setAutoCollapseLegendNodes( 10 );
+    mLayerTreeView->setModel( model );
+    mLayerTreeView->setMenuProvider( new QgsAppLayerTreeViewMenuProvider( mLayerTreeView, mMapCanvas ) );
 
-  mLayerTreeView->setModel( model );
-  mLayerTreeView->setMenuProvider( new QgsAppLayerTreeViewMenuProvider(
-                                       mLayerTreeView, mMapCanvas ) );
+    setupLayerTreeViewFromSettings();
 
-  setupLayerTreeViewFromSettings();
-
-  connect( mLayerTreeView, SIGNAL( doubleClicked( QModelIndex ) ), this,
-           SLOT( layerTreeViewDoubleClicked( QModelIndex ) ) );
-  connect( mLayerTreeView, SIGNAL( currentLayerChanged( QgsMapLayer* ) ), this,
-           SLOT( activeLayerChanged( QgsMapLayer* ) ) );
-  connect( mLayerTreeView->selectionModel(),
-           SIGNAL( currentChanged( QModelIndex, QModelIndex ) ),
-           this, SLOT( updateNewLayerInsertionPoint() ) );
-  connect( QgsProject::instance()->layerTreeRegistryBridge(),
-           SIGNAL( addedLayersToLayerTree( QList<QgsMapLayer*> ) ),
-           this, SLOT( autoSelectAddedLayer( QList<QgsMapLayer*> ) ) );
+    connect( mLayerTreeView, SIGNAL( doubleClicked( QModelIndex ) ), this, SLOT( layerTreeViewDoubleClicked( QModelIndex ) ) );
+    connect( mLayerTreeView, SIGNAL( currentLayerChanged( QgsMapLayer* ) ), this, SLOT( activeLayerChanged( QgsMapLayer* ) ) );
+    connect( mLayerTreeView->selectionModel(), SIGNAL( currentChanged( QModelIndex, QModelIndex ) ), this, SLOT( updateNewLayerInsertionPoint() ) );
+    connect( QgsProject::instance()->layerTreeRegistryBridge(), SIGNAL( addedLayersToLayerTree( QList<QgsMapLayer*> ) ),
+             this, SLOT( autoSelectAddedLayer( QList<QgsMapLayer*> ) ) );
 
   // add group action
   QAction* actionAddGroup = new QAction( tr( "Add Group" ), this );
@@ -1641,8 +1837,14 @@ void NGQgisApp::initLayerTreeView()
 
   mLegendExpressionFilterButton = new QgsLegendFilterButton( this );
   mLegendExpressionFilterButton->setToolTip( tr( "Filter legend by expression" ) );
-  connect( mLegendExpressionFilterButton, SIGNAL( toggled( bool ) ), this,
-           SLOT( toggleFilterLegendByExpression( bool ) ) );
+  connect( mLegendExpressionFilterButton, SIGNAL( toggled( bool ) ), this, SLOT( toggleFilterLegendByExpression( bool ) ) );
+
+  mActionStyleDock = new QAction( tr( "Layer Styling" ), this );
+  mActionStyleDock->setCheckable( true );
+  mActionStyleDock->setToolTip( tr( "Open the layer styling dock" ) );
+  mActionStyleDock->setShortcut( QString( "F7" ) );
+  mActionStyleDock->setIcon( NGQgsApplication::getThemeIcon( "propertyicons/symbology.svg" ) );
+  connect( mActionStyleDock, SIGNAL( toggled( bool ) ), this, SLOT( mapStyleDock( bool ) ) );
 
   // expand / collapse tool buttons
   QAction* actionExpandAll = new QAction( tr( "Expand All" ), this );
@@ -1654,8 +1856,12 @@ void NGQgisApp::initLayerTreeView()
   actionCollapseAll->setToolTip( tr( "Collapse All" ) );
   connect( actionCollapseAll, SIGNAL( triggered( bool ) ), mLayerTreeView, SLOT( collapseAllNodes() ) );
 
+  QWidget* spacer = new QWidget();
+  spacer->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
+
   QToolBar* toolbar = new QToolBar();
   toolbar->setIconSize( QSize( 16, 16 ) );
+  toolbar->addAction( mActionStyleDock );
   toolbar->addAction( actionAddGroup );
   toolbar->addWidget( btnVisibilityPresets );
   toolbar->addAction( mActionFilterLegend );
@@ -1666,6 +1872,8 @@ void NGQgisApp::initLayerTreeView()
 
   QVBoxLayout* vboxLayout = new QVBoxLayout;
   vboxLayout->setMargin( 0 );
+  vboxLayout->setContentsMargins( 0, 0, 0, 0 );
+  vboxLayout->setSpacing( 0 );
   vboxLayout->addWidget( toolbar );
   vboxLayout->addWidget( mLayerTreeView );
 
@@ -1674,22 +1882,18 @@ void NGQgisApp::initLayerTreeView()
   mLayerTreeDock->setWidget( w );
   addDockWidget( Qt::LeftDockWidgetArea, mLayerTreeDock );
 
-  mLayerTreeCanvasBridge = new QgsLayerTreeMapCanvasBridge(
-              QgsProject::instance()->layerTreeRoot(), mMapCanvas, this );
-  connect( QgsProject::instance(), SIGNAL( writeProject( QDomDocument& ) ),
-           mLayerTreeCanvasBridge, SLOT( writeProject( QDomDocument& ) ) );
-  connect( QgsProject::instance(), SIGNAL( readProject( QDomDocument ) ),
-           mLayerTreeCanvasBridge, SLOT( readProject( QDomDocument ) ) );
+  mLayerTreeCanvasBridge = new QgsLayerTreeMapCanvasBridge( QgsProject::instance()->layerTreeRoot(), mMapCanvas, this );
+  connect( QgsProject::instance(), SIGNAL( writeProject( QDomDocument& ) ), mLayerTreeCanvasBridge, SLOT( writeProject( QDomDocument& ) ) );
+  connect( QgsProject::instance(), SIGNAL( readProject( QDomDocument ) ), mLayerTreeCanvasBridge, SLOT( readProject( QDomDocument ) ) );
 
-  bool otfTransformAutoEnable = QSettings().value(
-              "/Projections/otfTransformAutoEnable", true ).toBool();
+  bool otfTransformAutoEnable = QSettings().value( "/Projections/otfTransformAutoEnable", true ).toBool();
   mLayerTreeCanvasBridge->setAutoEnableCrsTransform( otfTransformAutoEnable );
 
   mMapLayerOrder = new QgsCustomLayerOrderWidget( mLayerTreeCanvasBridge, this );
   mMapLayerOrder->setObjectName( "theMapLayerOrder" );
 
   mMapLayerOrder->setWhatsThis( tr( "Map layer list that displays all layers in drawing order." ) );
-  mLayerOrderDock = new QDockWidget( tr( "Layer Order Panel" ), this );
+  mLayerOrderDock = new QgsDockWidget( tr( "Layer Order Panel" ), this );
   mLayerOrderDock->setObjectName( "LayerOrder" );
   mLayerOrderDock->setAllowedAreas( Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea );
 
@@ -1702,79 +1906,80 @@ void NGQgisApp::initLayerTreeView()
 
 void NGQgisApp::saveRecentProjectPath( const QString& projectPath, bool savePreviewImage )
 {
-  QSettings settings;
+    // first, re-read the recent project paths. This prevents loss of recent
+    // projects when multiple QGIS sessions are open
+    readRecentProjects();
 
-  // Get canonical absolute path
-  QFileInfo myFileInfo( projectPath );
-  QgsWelcomePageItemsModel::RecentProjectData projectData;
-  projectData.path = myFileInfo.absoluteFilePath();
-  projectData.title = QgsProject::instance()->title();
-  if ( projectData.title.isEmpty() )
-    projectData.title = projectData.path;
+    QSettings settings;
 
-  projectData.crs = mMapCanvas->mapSettings().destinationCrs().authid();
+    // Get canonical absolute path
+    QFileInfo myFileInfo( projectPath );
+    QgsWelcomePageItemsModel::RecentProjectData projectData;
+    projectData.path = myFileInfo.absoluteFilePath();
+    projectData.title = QgsProject::instance()->title();
+    if ( projectData.title.isEmpty() )
+      projectData.title = projectData.path;
 
-  if ( savePreviewImage )
-  {
-    // Generate a unique file name
-    QString fileName( QCryptographicHash::hash(( projectData.path.toUtf8() ),
-                                               QCryptographicHash::Md5 ).toHex() );
-    QString previewDir = QString( "%1/previewImages" ).arg(
-                NGQgsApplication::qgisSettingsDirPath() );
-    projectData.previewImagePath = QString( "%1/%2.png" ).arg( previewDir, fileName );
-    QDir().mkdir( previewDir );
+    projectData.crs = mMapCanvas->mapSettings().destinationCrs().authid();
 
-    // Render the map canvas
-    QSize previewSize( 250, 177 ); // h = w / sqrt(2)
-    QRect previewRect( QPoint(( mMapCanvas->width() - previewSize.width() ) / 2
-                              , ( mMapCanvas->height() - previewSize.height() ) / 2 )
-                       , previewSize );
+    if ( savePreviewImage )
+    {
+      // Generate a unique file name
+      QString fileName( QCryptographicHash::hash(( projectData.path.toUtf8() ), QCryptographicHash::Md5 ).toHex() );
+      QString previewDir = QString( "%1/previewImages" ).arg( NGQgsApplication::qgisSettingsDirPath() );
+      projectData.previewImagePath = QString( "%1/%2.png" ).arg( previewDir, fileName );
+      QDir().mkdir( previewDir );
 
-    QPixmap previewImage( previewSize );
-    QPainter previewPainter( &previewImage );
-    mMapCanvas->render( &previewPainter, QRect( QPoint(), previewSize ), previewRect );
+      // Render the map canvas
+      QSize previewSize( 250, 177 ); // h = w / sqrt(2)
+      QRect previewRect( QPoint(( mMapCanvas->width() - previewSize.width() ) / 2
+                                , ( mMapCanvas->height() - previewSize.height() ) / 2 )
+                         , previewSize );
 
-    // Save
-    previewImage.save( projectData.previewImagePath );
-  }
-  else
-  {
-    int idx = mRecentProjects.indexOf( projectData );
-    if ( idx != -1 )
-      projectData.previewImagePath = mRecentProjects.at( idx ).previewImagePath;
-  }
+      QPixmap previewImage( previewSize );
+      QPainter previewPainter( &previewImage );
+      mMapCanvas->render( &previewPainter, QRect( QPoint(), previewSize ), previewRect );
 
-  // If this file is already in the list, remove it
-  mRecentProjects.removeAll( projectData );
+      // Save
+      previewImage.save( projectData.previewImagePath );
+    }
+    else
+    {
+      int idx = mRecentProjects.indexOf( projectData );
+      if ( idx != -1 )
+        projectData.previewImagePath = mRecentProjects.at( idx ).previewImagePath;
+    }
 
-  // Prepend this file to the list
-  mRecentProjects.prepend( projectData );
+    // If this file is already in the list, remove it
+    mRecentProjects.removeAll( projectData );
 
-  // Keep the list to 10 items by trimming excess off the bottom
-  // And remove the associated image
-  while ( mRecentProjects.count() > 10 )
-  {
-    QFile( mRecentProjects.takeLast().previewImagePath ).remove();
-  }
+    // Prepend this file to the list
+    mRecentProjects.prepend( projectData );
 
-  settings.remove( "/UI/recentProjects" );
-  int idx = 0;
+    // Keep the list to 10 items by trimming excess off the bottom
+    // And remove the associated image
+    while ( mRecentProjects.count() > 10 )
+    {
+      QFile( mRecentProjects.takeLast().previewImagePath ).remove();
+    }
 
-  // Persist the list
-  Q_FOREACH ( const QgsWelcomePageItemsModel::RecentProjectData& recentProject,
-              mRecentProjects )
-  {
-    ++idx;
-    settings.beginGroup( QString( "/UI/recentProjects/%1" ).arg( idx ) );
-    settings.setValue( "title", recentProject.title );
-    settings.setValue( "path", recentProject.path );
-    settings.setValue( "previewImage", recentProject.previewImagePath );
-    settings.setValue( "crs", recentProject.crs );
-    settings.endGroup();
-  }
+    settings.remove( "/UI/recentProjects" );
+    int idx = 0;
 
-  // Update menu list of paths
-  updateRecentProjectPaths();
+    // Persist the list
+    Q_FOREACH ( const QgsWelcomePageItemsModel::RecentProjectData& recentProject, mRecentProjects )
+    {
+      ++idx;
+      settings.beginGroup( QString( "/UI/recentProjects/%1" ).arg( idx ) );
+      settings.setValue( "title", recentProject.title );
+      settings.setValue( "path", recentProject.path );
+      settings.setValue( "previewImage", recentProject.previewImagePath );
+      settings.setValue( "crs", recentProject.crs );
+      settings.endGroup();
+    }
+
+    // Update menu list of paths
+    updateRecentProjectPaths();
 
 }
 
@@ -1878,7 +2083,7 @@ void NGQgisApp::checkQgisVersion()
 
   QObject* obj = sender();
   mUpdatesCheckStartByUser = (obj == mActionCheckQgisVersion);
-  
+
   mNGUpdater->checkUpdates();
 
   if (mUpdatesCheckStartByUser)
@@ -1932,25 +2137,25 @@ void NGQgisApp::updatesSearchStop(bool updatesAvailable)
 
 void NGQgisApp::startUpdate()
 {
-  QMessageBox::StandardButton answer = QMessageBox::question(
-    (QWidget*)parent(),
-    tr("Close QGIS?"),
-    tr("We'll need to close QGIS to start updating. OK?"),
-    QMessageBox::Cancel | QMessageBox::Ok
-  );
-  
-  if ( QMessageBox::Ok == answer )
-  {
-    if(saveDirty())
-    {
-      QString currentProject = QgsProject::instance()->fileName();
-      closeProject();
-      mNGUpdater->startUpdate(
-        currentProject
-      );
-      qApp->exit( 0 );
+    QMessageBox::StandardButton answer = QMessageBox::question(
+        static_cast<QWidget*>(parent()),
+		tr("Close QGIS?"),
+		tr("We'll need to close QGIS to start updating. OK?"),
+		QMessageBox::Cancel | QMessageBox::Ok
+	);
+
+	if ( QMessageBox::Ok == answer )
+	{
+		if(saveDirty())
+        {
+            closeProject();
+			QString lastProject;
+			if(!mRecentProjects.isEmpty())
+				lastProject = mRecentProjects.at( 0 ).path;
+            mNGUpdater->startUpdate(lastProject);
+            qApp->exit( 0 );
+        }
     }
-  }
 }
 
 void NGQgisApp::increaseBrightness()
@@ -2045,445 +2250,382 @@ void NGQgisApp::updateCRSStatusBar()
 
 void NGQgisApp::activateDeactivateLayerRelatedActions( QgsMapLayer* layer )
 {
-  bool enableMove = false;
-  bool enableRotate = false;
-  bool enablePin = false;
-  bool enableShowHide = false;
-  bool enableChange = false;
+    updateLabelToolButtons();
 
-  QMap<QString, QgsMapLayer*> layers = QgsMapLayerRegistry::instance()->mapLayers();
-  for ( QMap<QString, QgsMapLayer*>::iterator it = layers.begin(); it != layers.end(); ++it )
-  {
-    QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( it.value() );
-    if ( !vlayer || !vlayer->isEditable() ||
-         ( !vlayer->diagramsEnabled() && !vlayer->labelsEnabled() ) )
-      continue;
+    mMenuPasteAs->setEnabled( clipboard() && !clipboard()->isEmpty() );
+    mActionPasteAsNewVector->setEnabled( clipboard() && !clipboard()->isEmpty() );
+    mActionPasteAsNewMemoryVector->setEnabled( clipboard() && !clipboard()->isEmpty() );
 
-    int colX, colY, colShow, colAng;
-    enablePin =
-      enablePin ||
-      ( qobject_cast<QgsMapToolPinLabels*>( mMapTools.mPinLabels ) &&
-        qobject_cast<QgsMapToolPinLabels*>( mMapTools.mPinLabels )->layerCanPin( vlayer, colX, colY ) );
+    updateLayerModifiedActions();
 
-    enableShowHide =
-      enableShowHide ||
-      ( qobject_cast<QgsMapToolShowHideLabels*>( mMapTools.mShowHideLabels ) &&
-        qobject_cast<QgsMapToolShowHideLabels*>( mMapTools.mShowHideLabels )->layerCanShowHide( vlayer, colShow ) );
-
-    enableMove =
-      enableMove ||
-      ( qobject_cast<QgsMapToolMoveLabel*>( mMapTools.mMoveLabel ) &&
-        ( qobject_cast<QgsMapToolMoveLabel*>( mMapTools.mMoveLabel )->labelMoveable( vlayer, colX, colY )
-          || qobject_cast<QgsMapToolMoveLabel*>( mMapTools.mMoveLabel )->diagramMoveable( vlayer, colX, colY ) )
-      );
-
-    enableRotate =
-      enableRotate ||
-      ( qobject_cast<QgsMapToolRotateLabel*>( mMapTools.mRotateLabel ) &&
-        qobject_cast<QgsMapToolRotateLabel*>( mMapTools.mRotateLabel )->layerIsRotatable( vlayer, colAng ) );
-
-    enableChange = true;
-
-    if ( enablePin && enableShowHide && enableMove && enableRotate && enableChange )
-      break;
-  }
-
-  mActionPinLabels->setEnabled( enablePin );
-  mActionShowHideLabels->setEnabled( enableShowHide );
-  mActionMoveLabel->setEnabled( enableMove );
-  mActionRotateLabel->setEnabled( enableRotate );
-  mActionChangeLabelProperties->setEnabled( enableChange );
-
-  mMenuPasteAs->setEnabled( clipboard() && !clipboard()->empty() );
-  mActionPasteAsNewVector->setEnabled( clipboard() && !clipboard()->empty() );
-  mActionPasteAsNewMemoryVector->setEnabled( clipboard() && !clipboard()->empty() );
-
-  updateLayerModifiedActions();
-
-  if ( !layer )
-  {
-    mActionSelectFeatures->setEnabled( false );
-    mActionSelectPolygon->setEnabled( false );
-    mActionSelectFreehand->setEnabled( false );
-    mActionSelectRadius->setEnabled( false );
-    mActionIdentify->setEnabled( QSettings().value( "/Map/identifyMode", 0 ).toInt() != 0 );
-    mActionSelectByExpression->setEnabled( false );
-    mActionLabeling->setEnabled( false );
-    mActionOpenTable->setEnabled( false );
-    mActionSelectAll->setEnabled( false );
-    mActionInvertSelection->setEnabled( false );
-    mActionOpenFieldCalc->setEnabled( false );
-    mActionToggleEditing->setEnabled( false );
-    mActionToggleEditing->setChecked( false );
-    mActionSaveLayerEdits->setEnabled( false );
-    mActionSaveLayerDefinition->setEnabled( false );
-    mActionLayerSaveAs->setEnabled( false );
-    mActionLayerProperties->setEnabled( false );
-    mActionLayerSubsetString->setEnabled( false );
-    mActionAddToOverview->setEnabled( false );
-    mActionFeatureAction->setEnabled( false );
-    mActionAddFeature->setEnabled( false );
-    mActionCircularStringCurvePoint->setEnabled( false );
-    mActionCircularStringRadius->setEnabled( false );
-    mActionMoveFeature->setEnabled( false );
-    mActionRotateFeature->setEnabled( false );
-    mActionOffsetCurve->setEnabled( false );
-    mActionNodeTool->setEnabled( false );
-    mActionDeleteSelected->setEnabled( false );
-    mActionCutFeatures->setEnabled( false );
-    mActionCopyFeatures->setEnabled( false );
-    mActionPasteFeatures->setEnabled( false );
-    mActionCopyStyle->setEnabled( false );
-    mActionPasteStyle->setEnabled( false );
-
-    mUndoWidget->dockContents()->setEnabled( false );
-    mActionUndo->setEnabled( false );
-    mActionRedo->setEnabled( false );
-    mActionSimplifyFeature->setEnabled( false );
-    mActionAddRing->setEnabled( false );
-    mActionFillRing->setEnabled( false );
-    mActionAddPart->setEnabled( false );
-    mActionDeleteRing->setEnabled( false );
-    mActionDeletePart->setEnabled( false );
-    mActionReshapeFeatures->setEnabled( false );
-    mActionOffsetCurve->setEnabled( false );
-    mActionSplitFeatures->setEnabled( false );
-    mActionSplitParts->setEnabled( false );
-    mActionMergeFeatures->setEnabled( false );
-    mActionMergeFeatureAttributes->setEnabled( false );
-    mActionRotatePointSymbols->setEnabled( false );
-    mActionEnableTracing->setEnabled( false );
-
-    mActionPinLabels->setEnabled( false );
-    mActionShowHideLabels->setEnabled( false );
-    mActionMoveLabel->setEnabled( false );
-    mActionRotateLabel->setEnabled( false );
-    mActionChangeLabelProperties->setEnabled( false );
-
-    mActionLocalHistogramStretch->setEnabled( false );
-    mActionFullHistogramStretch->setEnabled( false );
-    mActionLocalCumulativeCutStretch->setEnabled( false );
-    mActionFullCumulativeCutStretch->setEnabled( false );
-    mActionIncreaseBrightness->setEnabled( false );
-    mActionDecreaseBrightness->setEnabled( false );
-    mActionIncreaseContrast->setEnabled( false );
-    mActionDecreaseContrast->setEnabled( false );
-    mActionZoomActualSize->setEnabled( false );
-    mActionZoomToLayer->setEnabled( false );
-    return;
-  }
-
-  mActionLayerProperties->setEnabled( QgsProject::instance()->layerIsEmbedded(
-                                          layer->id() ).isEmpty() );
-  mActionAddToOverview->setEnabled( true );
-  mActionZoomToLayer->setEnabled( true );
-
-  mActionCopyStyle->setEnabled( true );
-  mActionPasteStyle->setEnabled( clipboard()->hasFormat( QGSCLIPBOARD_STYLE_MIME ) );
-
-  /***********Vector layers****************/
-  if ( layer->type() == QgsMapLayer::VectorLayer )
-  {
-    QgsVectorLayer* vlayer = qobject_cast<QgsVectorLayer *>( layer );
-    QgsVectorDataProvider* dprovider = vlayer->dataProvider();
-
-    bool isEditable = vlayer->isEditable();
-    bool layerHasSelection = vlayer->selectedFeatureCount() > 0;
-    bool layerHasActions = vlayer->actions()->size() ||
-            !QgsMapLayerActionRegistry::instance()->mapLayerActions( vlayer ).isEmpty();
-
-    mActionLocalHistogramStretch->setEnabled( false );
-    mActionFullHistogramStretch->setEnabled( false );
-    mActionLocalCumulativeCutStretch->setEnabled( false );
-    mActionFullCumulativeCutStretch->setEnabled( false );
-    mActionIncreaseBrightness->setEnabled( false );
-    mActionDecreaseBrightness->setEnabled( false );
-    mActionIncreaseContrast->setEnabled( false );
-    mActionDecreaseContrast->setEnabled( false );
-    mActionZoomActualSize->setEnabled( false );
-    mActionLabeling->setEnabled( true );
-
-    mActionSelectFeatures->setEnabled( true );
-    mActionSelectPolygon->setEnabled( true );
-    mActionSelectFreehand->setEnabled( true );
-    mActionSelectRadius->setEnabled( true );
-    mActionIdentify->setEnabled( true );
-    mActionSelectByExpression->setEnabled( true );
-    mActionOpenTable->setEnabled( true );
-    mActionSelectAll->setEnabled( true );
-    mActionInvertSelection->setEnabled( true );
-    mActionSaveLayerDefinition->setEnabled( true );
-    mActionLayerSaveAs->setEnabled( true );
-    mActionCopyFeatures->setEnabled( layerHasSelection );
-    mActionFeatureAction->setEnabled( layerHasActions );
-
-    if ( !isEditable && mMapCanvas && mMapCanvas->mapTool()
-         && mMapCanvas->mapTool()->isEditTool() && !mSaveRollbackInProgress )
+    if ( !layer )
     {
-      mMapCanvas->setMapTool( mNonEditMapTool );
-    }
+      mActionSelectFeatures->setEnabled( false );
+      mActionSelectPolygon->setEnabled( false );
+      mActionSelectFreehand->setEnabled( false );
+      mActionSelectRadius->setEnabled( false );
+      mActionIdentify->setEnabled( QSettings().value( "/Map/identifyMode", 0 ).toInt() != 0 );
+      mActionSelectByExpression->setEnabled( false );
+      mActionSelectByForm->setEnabled( false );
+      mActionLabeling->setEnabled( false );
+      mActionOpenTable->setEnabled( false );
+      mActionSelectAll->setEnabled( false );
+      mActionInvertSelection->setEnabled( false );
+      mActionOpenFieldCalc->setEnabled( false );
+      mActionToggleEditing->setEnabled( false );
+      mActionToggleEditing->setChecked( false );
+      mActionSaveLayerEdits->setEnabled( false );
+      mActionSaveLayerDefinition->setEnabled( false );
+      mActionLayerSaveAs->setEnabled( false );
+      mActionLayerProperties->setEnabled( false );
+      mActionLayerSubsetString->setEnabled( false );
+      mActionAddToOverview->setEnabled( false );
+      mActionFeatureAction->setEnabled( false );
+      mActionAddFeature->setEnabled( false );
+      mActionCircularStringCurvePoint->setEnabled( false );
+      mActionCircularStringRadius->setEnabled( false );
+      mActionMoveFeature->setEnabled( false );
+      mActionRotateFeature->setEnabled( false );
+      mActionOffsetCurve->setEnabled( false );
+      mActionNodeTool->setEnabled( false );
+      mActionDeleteSelected->setEnabled( false );
+      mActionCutFeatures->setEnabled( false );
+      mActionCopyFeatures->setEnabled( false );
+      mActionPasteFeatures->setEnabled( false );
+      mActionCopyStyle->setEnabled( false );
+      mActionPasteStyle->setEnabled( false );
 
-    if ( dprovider )
-    {
-      bool canChangeAttributes = dprovider->capabilities() & QgsVectorDataProvider::ChangeAttributeValues;
-      bool canDeleteFeatures = dprovider->capabilities() & QgsVectorDataProvider::DeleteFeatures;
-      bool canAddFeatures = dprovider->capabilities() & QgsVectorDataProvider::AddFeatures;
-      bool canSupportEditing = dprovider->capabilities() & QgsVectorDataProvider::EditingCapabilities;
-      bool canChangeGeometry = dprovider->capabilities() & QgsVectorDataProvider::ChangeGeometries;
-
-      mActionLayerSubsetString->setEnabled( !isEditable && dprovider->supportsSubsetString() );
-
-      mActionToggleEditing->setEnabled( canSupportEditing && !vlayer->isReadOnly() );
-      mActionToggleEditing->setChecked( canSupportEditing && isEditable );
-      mActionSaveLayerEdits->setEnabled( canSupportEditing && isEditable && vlayer->isModified() );
-      mUndoWidget->dockContents()->setEnabled( canSupportEditing && isEditable );
-      mActionUndo->setEnabled( canSupportEditing );
-      mActionRedo->setEnabled( canSupportEditing );
-
-      //start editing/stop editing
-      if ( canSupportEditing )
-      {
-        updateUndoActions();
-      }
-
-      mActionPasteFeatures->setEnabled( isEditable && canAddFeatures && !clipboard()->empty() );
-
-      mActionAddFeature->setEnabled( isEditable && canAddFeatures );
-      mActionCircularStringCurvePoint->setEnabled( isEditable && ( canAddFeatures || canChangeGeometry )
-          && ( vlayer->geometryType() == QGis::Line || vlayer->geometryType() == QGis::Polygon ) );
-      mActionCircularStringRadius->setEnabled( isEditable && ( canAddFeatures || canChangeGeometry )
-          && ( vlayer->geometryType() == QGis::Line || vlayer->geometryType() == QGis::Polygon ) );
-
-
-      //does provider allow deleting of features?
-      mActionDeleteSelected->setEnabled( isEditable && canDeleteFeatures && layerHasSelection );
-      mActionCutFeatures->setEnabled( isEditable && canDeleteFeatures && layerHasSelection );
-
-      //merge tool needs editable layer and provider with the capability of adding and deleting features
-      if ( isEditable && canChangeAttributes )
-      {
-        mActionMergeFeatures->setEnabled( layerHasSelection && canDeleteFeatures && canAddFeatures );
-        mActionMergeFeatureAttributes->setEnabled( layerHasSelection );
-      }
-      else
-      {
-        mActionMergeFeatures->setEnabled( false );
-        mActionMergeFeatureAttributes->setEnabled( false );
-      }
-
-      bool isMultiPart = QGis::isMultiType( vlayer->wkbType() ) || !dprovider->doesStrictFeatureTypeCheck();
-
-      // moving enabled if geometry changes are supported
-      mActionAddPart->setEnabled( isEditable && canChangeGeometry );
-      mActionDeletePart->setEnabled( isEditable && canChangeGeometry );
-      mActionMoveFeature->setEnabled( isEditable && canChangeGeometry );
-      mActionRotateFeature->setEnabled( isEditable && canChangeGeometry );
-      mActionNodeTool->setEnabled( isEditable && canChangeGeometry );
-
-      mActionEnableTracing->setEnabled( isEditable && canAddFeatures &&
-                                        ( vlayer->geometryType() == QGis::Line || vlayer->geometryType() == QGis::Polygon ) );
-
-      if ( vlayer->geometryType() == QGis::Point )
-      {
-        mActionAddFeature->setIcon( NGQgsApplication::getThemeIcon(
-                                        "/mActionCapturePoint.svg" ) );
-
-        mActionAddRing->setEnabled( false );
-        mActionFillRing->setEnabled( false );
-        mActionReshapeFeatures->setEnabled( false );
-        mActionSplitFeatures->setEnabled( false );
-        mActionSplitParts->setEnabled( false );
-        mActionSimplifyFeature->setEnabled( false );
-        mActionDeleteRing->setEnabled( false );
-        mActionRotatePointSymbols->setEnabled( false );
-        mActionOffsetCurve->setEnabled( false );
-
-        if ( isEditable && canChangeAttributes )
-        {
-          if ( QgsMapToolRotatePointSymbols::layerIsRotatable( vlayer ) )
-          {
-            mActionRotatePointSymbols->setEnabled( true );
-          }
-        }
-      }
-      else if ( vlayer->geometryType() == QGis::Line )
-      {
-        mActionAddFeature->setIcon( NGQgsApplication::getThemeIcon(
-                                        "/mActionCaptureLine.svg" ) );
-
-        mActionReshapeFeatures->setEnabled( isEditable && canChangeGeometry );
-        mActionSplitFeatures->setEnabled( isEditable && canAddFeatures );
-        mActionSplitParts->setEnabled( isEditable && canChangeGeometry && isMultiPart );
-        mActionSimplifyFeature->setEnabled( isEditable && canChangeGeometry );
-        mActionOffsetCurve->setEnabled( isEditable && canAddFeatures && canChangeAttributes );
-
-        mActionAddRing->setEnabled( false );
-        mActionFillRing->setEnabled( false );
-        mActionDeleteRing->setEnabled( false );
-      }
-      else if ( vlayer->geometryType() == QGis::Polygon )
-      {
-        mActionAddFeature->setIcon( NGQgsApplication::getThemeIcon(
-                                        "/mActionCapturePolygon.svg" ) );
-
-        mActionAddRing->setEnabled( isEditable && canChangeGeometry );
-        mActionFillRing->setEnabled( isEditable && canChangeGeometry );
-        mActionReshapeFeatures->setEnabled( isEditable && canChangeGeometry );
-        mActionSplitFeatures->setEnabled( isEditable && canAddFeatures );
-        mActionSplitParts->setEnabled( isEditable && canChangeGeometry && isMultiPart );
-        mActionSimplifyFeature->setEnabled( isEditable && canChangeGeometry );
-        mActionDeleteRing->setEnabled( isEditable && canChangeGeometry );
-        mActionOffsetCurve->setEnabled( false );
-      }
-      else if ( vlayer->geometryType() == QGis::NoGeometry )
-      {
-        mActionAddFeature->setIcon( NGQgsApplication::getThemeIcon(
-                                        "/mActionNewTableRow.png" ) );
-      }
-
-      mActionOpenFieldCalc->setEnabled( true );
-
-      return;
-    }
-    else
-    {
-      mUndoWidget->dockContents()->setEnabled( false );
+      mUndoDock->widget()->setEnabled( false );
       mActionUndo->setEnabled( false );
       mActionRedo->setEnabled( false );
-    }
+      mActionSimplifyFeature->setEnabled( false );
+      mActionAddRing->setEnabled( false );
+      mActionFillRing->setEnabled( false );
+      mActionAddPart->setEnabled( false );
+      mActionDeleteRing->setEnabled( false );
+      mActionDeletePart->setEnabled( false );
+      mActionReshapeFeatures->setEnabled( false );
+      mActionOffsetCurve->setEnabled( false );
+      mActionSplitFeatures->setEnabled( false );
+      mActionSplitParts->setEnabled( false );
+      mActionMergeFeatures->setEnabled( false );
+      mActionMergeFeatureAttributes->setEnabled( false );
+      mActionMultiEditAttributes->setEnabled( false );
+      mActionRotatePointSymbols->setEnabled( false );
+      mActionOffsetPointSymbol->setEnabled( false );
+      mActionEnableTracing->setEnabled( false );
 
-    mActionLayerSubsetString->setEnabled( false );
-  } //end vector layer block
-  /*************Raster layers*************/
-  else if ( layer->type() == QgsMapLayer::RasterLayer )
-  {
-    const QgsRasterLayer *rlayer = qobject_cast<const QgsRasterLayer *>( layer );
-    if ( rlayer->dataProvider()->dataType( 1 ) != QGis::ARGB32
-         && rlayer->dataProvider()->dataType( 1 ) != QGis::ARGB32_Premultiplied )
-    {
-      if ( rlayer->dataProvider()->capabilities() & QgsRasterDataProvider::Size )
-      {
-        mActionFullHistogramStretch->setEnabled( true );
-      }
-      else
-      {
-        // it would hang up reading the data for WMS for example
-        mActionFullHistogramStretch->setEnabled( false );
-      }
-      mActionLocalHistogramStretch->setEnabled( true );
-    }
-    else
-    {
+      mActionPinLabels->setEnabled( false );
+      mActionShowHideLabels->setEnabled( false );
+      mActionMoveLabel->setEnabled( false );
+      mActionRotateLabel->setEnabled( false );
+      mActionChangeLabelProperties->setEnabled( false );
+
+      mActionDiagramProperties->setEnabled( false );
+
       mActionLocalHistogramStretch->setEnabled( false );
       mActionFullHistogramStretch->setEnabled( false );
+      mActionLocalCumulativeCutStretch->setEnabled( false );
+      mActionFullCumulativeCutStretch->setEnabled( false );
+      mActionIncreaseBrightness->setEnabled( false );
+      mActionDecreaseBrightness->setEnabled( false );
+      mActionIncreaseContrast->setEnabled( false );
+      mActionDecreaseContrast->setEnabled( false );
+      mActionZoomActualSize->setEnabled( false );
+      mActionZoomToLayer->setEnabled( false );
+      return;
     }
 
-    mActionLocalCumulativeCutStretch->setEnabled( true );
-    mActionFullCumulativeCutStretch->setEnabled( true );
-    mActionIncreaseBrightness->setEnabled( true );
-    mActionDecreaseBrightness->setEnabled( true );
-    mActionIncreaseContrast->setEnabled( true );
-    mActionDecreaseContrast->setEnabled( true );
+    mActionLayerProperties->setEnabled( QgsProject::instance()->layerIsEmbedded( layer->id() ).isEmpty() );
+    mActionAddToOverview->setEnabled( true );
+    mActionZoomToLayer->setEnabled( true );
 
-    mActionLayerSubsetString->setEnabled( false );
-    mActionFeatureAction->setEnabled( false );
-    mActionSelectFeatures->setEnabled( false );
-    mActionSelectPolygon->setEnabled( false );
-    mActionSelectFreehand->setEnabled( false );
-    mActionSelectRadius->setEnabled( false );
-    mActionZoomActualSize->setEnabled( true );
-    mActionOpenTable->setEnabled( false );
-    mActionSelectAll->setEnabled( false );
-    mActionInvertSelection->setEnabled( false );
-    mActionSelectByExpression->setEnabled( false );
-    mActionOpenFieldCalc->setEnabled( false );
-    mActionToggleEditing->setEnabled( false );
-    mActionToggleEditing->setChecked( false );
-    mActionSaveLayerEdits->setEnabled( false );
-    mUndoWidget->dockContents()->setEnabled( false );
-    mActionUndo->setEnabled( false );
-    mActionRedo->setEnabled( false );
-    mActionSaveLayerDefinition->setEnabled( true );
-    mActionLayerSaveAs->setEnabled( true );
-    mActionAddFeature->setEnabled( false );
-    mActionCircularStringCurvePoint->setEnabled( false );
-    mActionCircularStringRadius->setEnabled( false );
-    mActionDeleteSelected->setEnabled( false );
-    mActionAddRing->setEnabled( false );
-    mActionFillRing->setEnabled( false );
-    mActionAddPart->setEnabled( false );
-    mActionNodeTool->setEnabled( false );
-    mActionMoveFeature->setEnabled( false );
-    mActionRotateFeature->setEnabled( false );
-    mActionOffsetCurve->setEnabled( false );
-    mActionCopyFeatures->setEnabled( false );
-    mActionCutFeatures->setEnabled( false );
-    mActionPasteFeatures->setEnabled( false );
-    mActionRotatePointSymbols->setEnabled( false );
-    mActionDeletePart->setEnabled( false );
-    mActionDeleteRing->setEnabled( false );
-    mActionSimplifyFeature->setEnabled( false );
-    mActionReshapeFeatures->setEnabled( false );
-    mActionSplitFeatures->setEnabled( false );
-    mActionSplitParts->setEnabled( false );
-    mActionLabeling->setEnabled( false );
+    mActionCopyStyle->setEnabled( true );
+    mActionPasteStyle->setEnabled( clipboard()->hasFormat( QGSCLIPBOARD_STYLE_MIME ) );
 
-    //NOTE: This check does not really add any protection, as it is called on load not on layer select/activate
-    //If you load a layer with a provider and idenitfy ability then load another without, the tool would be disabled for both
-
-    //Enable the Identify tool ( GDAL datasets draw without a provider )
-    //but turn off if data provider exists and has no Identify capabilities
-    mActionIdentify->setEnabled( true );
-
-    QSettings settings;
-    int identifyMode = settings.value( "/Map/identifyMode", 0 ).toInt();
-    if ( identifyMode == 0 )
+    /***********Vector layers****************/
+    if ( layer->type() == QgsMapLayer::VectorLayer )
     {
-      const QgsRasterLayer *rlayer = qobject_cast<const QgsRasterLayer *>( layer );
-      const QgsRasterDataProvider* dprovider = rlayer->dataProvider();
+      QgsVectorLayer* vlayer = qobject_cast<QgsVectorLayer *>( layer );
+      QgsVectorDataProvider* dprovider = vlayer->dataProvider();
+
+      bool isEditable = vlayer->isEditable();
+      bool layerHasSelection = vlayer->selectedFeatureCount() > 0;
+      bool layerHasActions = vlayer->actions()->size() || !QgsMapLayerActionRegistry::instance()->mapLayerActions( vlayer ).isEmpty();
+
+      mActionLocalHistogramStretch->setEnabled( false );
+      mActionFullHistogramStretch->setEnabled( false );
+      mActionLocalCumulativeCutStretch->setEnabled( false );
+      mActionFullCumulativeCutStretch->setEnabled( false );
+      mActionIncreaseBrightness->setEnabled( false );
+      mActionDecreaseBrightness->setEnabled( false );
+      mActionIncreaseContrast->setEnabled( false );
+      mActionDecreaseContrast->setEnabled( false );
+      mActionZoomActualSize->setEnabled( false );
+      mActionLabeling->setEnabled( true );
+      mActionDiagramProperties->setEnabled( true );
+
+      mActionSelectFeatures->setEnabled( true );
+      mActionSelectPolygon->setEnabled( true );
+      mActionSelectFreehand->setEnabled( true );
+      mActionSelectRadius->setEnabled( true );
+      mActionIdentify->setEnabled( true );
+      mActionSelectByExpression->setEnabled( true );
+      mActionSelectByForm->setEnabled( true );
+      mActionOpenTable->setEnabled( true );
+      mActionSelectAll->setEnabled( true );
+      mActionInvertSelection->setEnabled( true );
+      mActionSaveLayerDefinition->setEnabled( true );
+      mActionLayerSaveAs->setEnabled( true );
+      mActionCopyFeatures->setEnabled( layerHasSelection );
+      mActionFeatureAction->setEnabled( layerHasActions );
+
+      if ( !isEditable && mMapCanvas && mMapCanvas->mapTool()
+           && ( mMapCanvas->mapTool()->flags() & QgsMapTool::EditTool ) && !mSaveRollbackInProgress )
+      {
+        mMapCanvas->setMapTool( mNonEditMapTool );
+      }
+
       if ( dprovider )
       {
-        // does provider allow the identify map tool?
-        if ( dprovider->capabilities() & QgsRasterDataProvider::Identify )
+        bool canChangeAttributes = dprovider->capabilities() & QgsVectorDataProvider::ChangeAttributeValues;
+        bool canDeleteFeatures = dprovider->capabilities() & QgsVectorDataProvider::DeleteFeatures;
+        bool canAddFeatures = dprovider->capabilities() & QgsVectorDataProvider::AddFeatures;
+        bool canSupportEditing = dprovider->capabilities() & QgsVectorDataProvider::EditingCapabilities;
+        bool canChangeGeometry = dprovider->capabilities() & QgsVectorDataProvider::ChangeGeometries;
+
+        mActionLayerSubsetString->setEnabled( !isEditable && dprovider->supportsSubsetString() );
+
+        mActionToggleEditing->setEnabled( canSupportEditing && !vlayer->readOnly() );
+        mActionToggleEditing->setChecked( canSupportEditing && isEditable );
+        mActionSaveLayerEdits->setEnabled( canSupportEditing && isEditable && vlayer->isModified() );
+        mUndoDock->widget()->setEnabled( canSupportEditing && isEditable );
+        mActionUndo->setEnabled( canSupportEditing );
+        mActionRedo->setEnabled( canSupportEditing );
+
+        //start editing/stop editing
+        if ( canSupportEditing )
         {
-          mActionIdentify->setEnabled( true );
+          updateUndoActions();
+        }
+
+        mActionPasteFeatures->setEnabled( isEditable && canAddFeatures && !clipboard()->isEmpty() );
+
+        mActionAddFeature->setEnabled( isEditable && canAddFeatures );
+        mActionCircularStringCurvePoint->setEnabled( isEditable && ( canAddFeatures || canChangeGeometry )
+            && ( vlayer->geometryType() == QGis::Line || vlayer->geometryType() == QGis::Polygon ) );
+        mActionCircularStringRadius->setEnabled( isEditable && ( canAddFeatures || canChangeGeometry )
+            && ( vlayer->geometryType() == QGis::Line || vlayer->geometryType() == QGis::Polygon ) );
+
+
+        //does provider allow deleting of features?
+        mActionDeleteSelected->setEnabled( isEditable && canDeleteFeatures && layerHasSelection );
+        mActionCutFeatures->setEnabled( isEditable && canDeleteFeatures && layerHasSelection );
+
+        //merge tool needs editable layer and provider with the capability of adding and deleting features
+        if ( isEditable && canChangeAttributes )
+        {
+          mActionMergeFeatures->setEnabled( layerHasSelection && canDeleteFeatures && canAddFeatures );
+          mActionMergeFeatureAttributes->setEnabled( layerHasSelection );
+          mActionMultiEditAttributes->setEnabled( layerHasSelection );
         }
         else
         {
-          mActionIdentify->setEnabled( false );
+          mActionMergeFeatures->setEnabled( false );
+          mActionMergeFeatureAttributes->setEnabled( false );
+          mActionMultiEditAttributes->setEnabled( false );
+        }
+
+        bool isMultiPart = QGis::isMultiType( vlayer->wkbType() ) || !dprovider->doesStrictFeatureTypeCheck();
+
+        // moving enabled if geometry changes are supported
+        mActionAddPart->setEnabled( isEditable && canChangeGeometry );
+        mActionDeletePart->setEnabled( isEditable && canChangeGeometry );
+        mActionMoveFeature->setEnabled( isEditable && canChangeGeometry );
+        mActionRotateFeature->setEnabled( isEditable && canChangeGeometry );
+        mActionNodeTool->setEnabled( isEditable && canChangeGeometry );
+
+        mActionEnableTracing->setEnabled( isEditable && canAddFeatures &&
+                                          ( vlayer->geometryType() == QGis::Line || vlayer->geometryType() == QGis::Polygon ) );
+
+        if ( vlayer->geometryType() == QGis::Point )
+        {
+          mActionAddFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionCapturePoint.svg" ) );
+          mActionMoveFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionMoveFeaturePoint.svg" ) );
+
+          mActionAddRing->setEnabled( false );
+          mActionFillRing->setEnabled( false );
+          mActionReshapeFeatures->setEnabled( false );
+          mActionSplitFeatures->setEnabled( false );
+          mActionSplitParts->setEnabled( false );
+          mActionSimplifyFeature->setEnabled( false );
+          mActionDeleteRing->setEnabled( false );
+          mActionRotatePointSymbols->setEnabled( false );
+          mActionOffsetPointSymbol->setEnabled( false );
+          mActionOffsetCurve->setEnabled( false );
+
+          if ( isEditable && canChangeAttributes )
+          {
+            if ( QgsMapToolRotatePointSymbols::layerIsRotatable( vlayer ) )
+            {
+              mActionRotatePointSymbols->setEnabled( true );
+            }
+            if ( QgsMapToolOffsetPointSymbol::layerIsOffsetable( vlayer ) )
+            {
+              mActionOffsetPointSymbol->setEnabled( true );
+            }
+          }
+        }
+        else if ( vlayer->geometryType() == QGis::Line )
+        {
+          mActionAddFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionCaptureLine.svg" ) );
+          mActionMoveFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionMoveFeatureLine.svg" ) );
+
+          mActionReshapeFeatures->setEnabled( isEditable && canChangeGeometry );
+          mActionSplitFeatures->setEnabled( isEditable && canAddFeatures );
+          mActionSplitParts->setEnabled( isEditable && canChangeGeometry && isMultiPart );
+          mActionSimplifyFeature->setEnabled( isEditable && canChangeGeometry );
+          mActionOffsetCurve->setEnabled( isEditable && canAddFeatures && canChangeAttributes );
+
+          mActionAddRing->setEnabled( false );
+          mActionFillRing->setEnabled( false );
+          mActionDeleteRing->setEnabled( false );
+        }
+        else if ( vlayer->geometryType() == QGis::Polygon )
+        {
+          mActionAddFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionCapturePolygon.svg" ) );
+          mActionMoveFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionMoveFeature.svg" ) );
+
+          mActionAddRing->setEnabled( isEditable && canChangeGeometry );
+          mActionFillRing->setEnabled( isEditable && canChangeGeometry );
+          mActionReshapeFeatures->setEnabled( isEditable && canChangeGeometry );
+          mActionSplitFeatures->setEnabled( isEditable && canAddFeatures );
+          mActionSplitParts->setEnabled( isEditable && canChangeGeometry && isMultiPart );
+          mActionSimplifyFeature->setEnabled( isEditable && canChangeGeometry );
+          mActionDeleteRing->setEnabled( isEditable && canChangeGeometry );
+          mActionOffsetCurve->setEnabled( false );
+        }
+        else if ( vlayer->geometryType() == QGis::NoGeometry )
+        {
+          mActionAddFeature->setIcon( NGQgsApplication::getThemeIcon( "/mActionNewTableRow.svg" ) );
+        }
+
+        mActionOpenFieldCalc->setEnabled( true );
+      }
+      else
+      {
+        mUndoDock->widget()->setEnabled( false );
+        mActionUndo->setEnabled( false );
+        mActionRedo->setEnabled( false );
+        mActionLayerSubsetString->setEnabled( false );
+      }
+    } //end vector layer block
+    /*************Raster layers*************/
+    else if ( layer->type() == QgsMapLayer::RasterLayer )
+    {
+      const QgsRasterLayer *rlayer = qobject_cast<const QgsRasterLayer *>( layer );
+      if ( rlayer->dataProvider()->dataType( 1 ) != QGis::ARGB32
+           && rlayer->dataProvider()->dataType( 1 ) != QGis::ARGB32_Premultiplied )
+      {
+        if ( rlayer->dataProvider()->capabilities() & QgsRasterDataProvider::Size )
+        {
+          mActionFullHistogramStretch->setEnabled( true );
+        }
+        else
+        {
+          // it would hang up reading the data for WMS for example
+          mActionFullHistogramStretch->setEnabled( false );
+        }
+        mActionLocalHistogramStretch->setEnabled( true );
+      }
+      else
+      {
+        mActionLocalHistogramStretch->setEnabled( false );
+        mActionFullHistogramStretch->setEnabled( false );
+      }
+
+      mActionLocalCumulativeCutStretch->setEnabled( true );
+      mActionFullCumulativeCutStretch->setEnabled( true );
+      mActionIncreaseBrightness->setEnabled( true );
+      mActionDecreaseBrightness->setEnabled( true );
+      mActionIncreaseContrast->setEnabled( true );
+      mActionDecreaseContrast->setEnabled( true );
+
+      mActionLayerSubsetString->setEnabled( false );
+      mActionFeatureAction->setEnabled( false );
+      mActionSelectFeatures->setEnabled( false );
+      mActionSelectPolygon->setEnabled( false );
+      mActionSelectFreehand->setEnabled( false );
+      mActionSelectRadius->setEnabled( false );
+      mActionZoomActualSize->setEnabled( true );
+      mActionOpenTable->setEnabled( false );
+      mActionSelectAll->setEnabled( false );
+      mActionInvertSelection->setEnabled( false );
+      mActionSelectByExpression->setEnabled( false );
+      mActionSelectByForm->setEnabled( false );
+      mActionOpenFieldCalc->setEnabled( false );
+      mActionToggleEditing->setEnabled( false );
+      mActionToggleEditing->setChecked( false );
+      mActionSaveLayerEdits->setEnabled( false );
+      mUndoDock->widget()->setEnabled( false );
+      mActionUndo->setEnabled( false );
+      mActionRedo->setEnabled( false );
+      mActionSaveLayerDefinition->setEnabled( true );
+      mActionLayerSaveAs->setEnabled( true );
+      mActionAddFeature->setEnabled( false );
+      mActionCircularStringCurvePoint->setEnabled( false );
+      mActionCircularStringRadius->setEnabled( false );
+      mActionDeleteSelected->setEnabled( false );
+      mActionAddRing->setEnabled( false );
+      mActionFillRing->setEnabled( false );
+      mActionAddPart->setEnabled( false );
+      mActionNodeTool->setEnabled( false );
+      mActionMoveFeature->setEnabled( false );
+      mActionRotateFeature->setEnabled( false );
+      mActionOffsetCurve->setEnabled( false );
+      mActionCopyFeatures->setEnabled( false );
+      mActionCutFeatures->setEnabled( false );
+      mActionPasteFeatures->setEnabled( false );
+      mActionRotatePointSymbols->setEnabled( false );
+      mActionOffsetPointSymbol->setEnabled( false );
+      mActionDeletePart->setEnabled( false );
+      mActionDeleteRing->setEnabled( false );
+      mActionSimplifyFeature->setEnabled( false );
+      mActionReshapeFeatures->setEnabled( false );
+      mActionSplitFeatures->setEnabled( false );
+      mActionSplitParts->setEnabled( false );
+      mActionLabeling->setEnabled( false );
+      mActionDiagramProperties->setEnabled( false );
+
+      //NOTE: This check does not really add any protection, as it is called on load not on layer select/activate
+      //If you load a layer with a provider and idenitfy ability then load another without, the tool would be disabled for both
+
+      //Enable the Identify tool ( GDAL datasets draw without a provider )
+      //but turn off if data provider exists and has no Identify capabilities
+      mActionIdentify->setEnabled( true );
+
+      QSettings settings;
+      int identifyMode = settings.value( "/Map/identifyMode", 0 ).toInt();
+      if ( identifyMode == 0 )
+      {
+        const QgsRasterLayer *rlayer = qobject_cast<const QgsRasterLayer *>( layer );
+        const QgsRasterDataProvider* dprovider = rlayer->dataProvider();
+        if ( dprovider )
+        {
+          // does provider allow the identify map tool?
+          if ( dprovider->capabilities() & QgsRasterDataProvider::Identify )
+          {
+            mActionIdentify->setEnabled( true );
+          }
+          else
+          {
+            mActionIdentify->setEnabled( false );
+          }
         }
       }
     }
-  }
-}
 
-void NGQgisApp::openURL( QString url, bool useQgisDocDirectory )
-{
-  // open help in user browser
-  if ( useQgisDocDirectory )
-  {
-    url = "file://" + NGQgsApplication::pkgDataPath() + "/doc/" + url;
-  }
-#ifdef Q_OS_MACX
-  /* Use Mac OS X Launch Services which uses the user's default browser
-   * and will just open a new window if that browser is already running.
-   * QProcess creates a new browser process for each invocation and expects a
-   * commandline application rather than a bundled application.
-   */
-  CFURLRef urlRef = CFURLCreateWithBytes( kCFAllocatorDefault,
-            reinterpret_cast<const UInt8*>( url.toUtf8().data() ), url.length(),
-                                          kCFStringEncodingUTF8, nullptr );
-  OSStatus status = LSOpenCFURLRef( urlRef, nullptr );
-  status = 0; //avoid compiler warning
-  CFRelease( urlRef );
-#elif defined(Q_OS_WIN)
-  if ( url.startsWith( "file://", Qt::CaseInsensitive ) )
-    ShellExecute( 0, 0, url.mid( 7 ).toLocal8Bit().constData(), 0, 0, SW_SHOWNORMAL );
-  else
-    QDesktopServices::openUrl( url );
-#else
-  QDesktopServices::openUrl( url );
-#endif
+    refreshFeatureActions();
 }
 
 void NGQgisApp::fileNew( bool thePromptToSaveFlag, bool forceBlank )
@@ -2535,7 +2677,7 @@ void NGQgisApp::fileNew( bool thePromptToSaveFlag, bool forceBlank )
   mMapCanvas->setCanvasColor( QColor( myRed, myGreen, myBlue ) );
   mOverviewCanvas->setBackgroundColor( QColor( myRed, myGreen, myBlue ) );
 
-  prj->dirty( false );
+  prj->setDirty( false );
 
   ngSetTitleBarText_( *this );
 
@@ -2548,19 +2690,17 @@ void NGQgisApp::fileNew( bool thePromptToSaveFlag, bool forceBlank )
   mMapCanvas->refresh();
   mMapCanvas->clearExtentHistory();
   mMapCanvas->setRotation( 0.0 );
-  mScaleEdit->updateScales();
+  mScaleWidget->updateScales();
 
   // set project CRS
-  QString defCrs = settings.value( "/Projections/projectDefaultCrs",
-                                   GEO_EPSG_CRS_AUTHID ).toString();
-  QgsCoordinateReferenceSystem srs;
-  srs.createFromOgcWmsCrs( defCrs );
+  QString defCrs = settings.value( "/Projections/projectDefaultCrs", GEO_EPSG_CRS_AUTHID ).toString();
+  QgsCoordinateReferenceSystem srs = QgsCRSCache::instance()->crsByOgcWmsCrs( defCrs );
   mMapCanvas->setDestinationCrs( srs );
   // write the projections _proj string_ to project settings
   prj->writeEntry( "SpatialRefSys", "/ProjectCRSProj4String", srs.toProj4() );
   prj->writeEntry( "SpatialRefSys", "/ProjectCrs", srs.authid() );
   prj->writeEntry( "SpatialRefSys", "/ProjectCRSID", static_cast< int >( srs.srsid() ) );
-  prj->dirty( false );
+  prj->setDirty( false );
   if ( srs.mapUnits() != QGis::UnknownUnit )
   {
     mMapCanvas->setMapUnits( srs.mapUnits() );
@@ -2666,7 +2806,7 @@ bool NGQgisApp::addProject( const QString& projectFile )
   bool projectScales = QgsProject::instance()->readBoolEntry( "Scales", "/useProjectScales" );
   if ( projectScales )
   {
-    mScaleEdit->updateScales( QgsProject::instance()->readListEntry( "Scales", "/ScalesList" ) );
+    mScaleWidget->updateScales( QgsProject::instance()->readListEntry( "Scales", "/ScalesList" ) );
   }
 
   mMapCanvas->updateScale();
@@ -2732,167 +2872,178 @@ bool NGQgisApp::addProject( const QString& projectFile )
 
 bool NGQgisApp::fileSave()
 {
-  QFileInfo fullPath;
+    // if we don't have a file name, then obviously we need to get one; note
+    // that the project file name is reset to null in fileNew()
+    QFileInfo fullPath;
 
-  if ( QgsProject::instance()->fileName().isNull() )
-  {
+    if ( QgsProject::instance()->fileName().isNull() )
+    {
+      // Retrieve last used project dir from persistent settings
+      QSettings settings;
+      QString lastUsedDir = settings.value( "/UI/lastProjectDir", QDir::homePath() ).toString();
+
+      QString path = QFileDialog::getSaveFileName(
+                       this,
+                       tr( "Choose a QGIS project file" ),
+                       lastUsedDir + '/' + QgsProject::instance()->title(),
+                       tr( "QGIS files" ) + " (*.qgs *.QGS)" );
+      if ( path.isEmpty() )
+        return false;
+
+      fullPath.setFile( path );
+
+      // make sure we have the .qgs extension in the file name
+      if ( "qgs" != fullPath.suffix().toLower() )
+      {
+        fullPath.setFile( fullPath.filePath() + ".qgs" );
+      }
+
+
+      QgsProject::instance()->setFileName( fullPath.filePath() );
+    }
+    else
+    {
+      QFileInfo fi( QgsProject::instance()->fileName() );
+      fullPath = fi.absoluteFilePath();
+      if ( fi.exists() && !mProjectLastModified.isNull() && mProjectLastModified != fi.lastModified() )
+      {
+        if ( QMessageBox::warning( this,
+                                   tr( "Project file was changed" ),
+                                   tr( "The loaded project file on disk was meanwhile changed.  Do you want to overwrite the changes?\n"
+                                       "\nLast modification date on load was: %1"
+                                       "\nCurrent last modification date is: %2" )
+                                   .arg( mProjectLastModified.toString( Qt::DefaultLocaleLongDate ),
+                                         fi.lastModified().toString( Qt::DefaultLocaleLongDate ) ),
+                                   QMessageBox::Ok | QMessageBox::Cancel ) == QMessageBox::Cancel )
+          return false;
+      }
+
+      if ( fi.exists() && ! fi.isWritable() )
+      {
+        messageBar()->pushMessage( tr( "Insufficient permissions" ),
+                                   tr( "The project file is not writable." ),
+                                   QgsMessageBar::WARNING );
+        return false;
+      }
+    }
+
+  if ( QgsProject::instance()->write() )
+    {
+      ngSetTitleBarText_( *this ); // update title bar
+      statusBar()->showMessage( tr( "Saved project to: %1" ).arg( QDir::toNativeSeparators( QgsProject::instance()->fileName() ) ), 5000 );
+
+      saveRecentProjectPath( fullPath.filePath() );
+
+      QFileInfo fi( QgsProject::instance()->fileName() );
+      mProjectLastModified = fi.lastModified();
+    }
+    else
+    {
+      QMessageBox::critical( this,
+                             tr( "Unable to save project %1" ).arg( QDir::toNativeSeparators( QgsProject::instance()->fileName() ) ),
+                             QgsProject::instance()->error() );
+      return false;
+    }
+
+    // run the saved project macro
+    if ( mTrustedMacros )
+    {
+      QgsPythonRunner::run( "qgis.utils.saveProjectMacro();" );
+    }
+
+    return true;
+}
+
+void NGQgisApp::fileSaveAs()
+{
     // Retrieve last used project dir from persistent settings
     QSettings settings;
     QString lastUsedDir = settings.value( "/UI/lastProjectDir", QDir::homePath() ).toString();
 
-    QString path = QFileDialog::getSaveFileName(
-                     this,
-                     tr( "Choose a QGIS project file" ),
-                     lastUsedDir + '/' + QgsProject::instance()->title(),
-                     tr( "QGIS files" ) + " (*.qgs *.QGS)" );
+    QString path = QFileDialog::getSaveFileName( this,
+                   tr( "Choose a file name to save the QGIS project file as" ),
+                   lastUsedDir + '/' + QgsProject::instance()->title(),
+                   tr( "QGIS files" ) + " (*.qgs *.QGS)" );
     if ( path.isEmpty() )
-      return false;
+      return;
 
-    fullPath.setFile( path );
+    QFileInfo fullPath( path );
 
-    // make sure we have the .qgs extension in the file name
+    settings.setValue( "/UI/lastProjectDir", fullPath.path() );
+
+    // make sure the .qgs extension is included in the path name. if not, add it...
     if ( "qgs" != fullPath.suffix().toLower() )
     {
       fullPath.setFile( fullPath.filePath() + ".qgs" );
     }
 
-
     QgsProject::instance()->setFileName( fullPath.filePath() );
-  }
-  else
-  {
-    QFileInfo fi( QgsProject::instance()->fileName() );
-    fullPath = fi.absoluteFilePath();
-    if ( fi.exists() && !mProjectLastModified.isNull() && mProjectLastModified != fi.lastModified() )
+
+    if ( QgsProject::instance()->write() )
     {
-      if ( QMessageBox::warning( this,
-                                 tr( "Project file was changed" ),
-                                 tr( "The loaded project file on disk was meanwhile changed.  Do you want to overwrite the changes?\n"
-                                     "\nLast modification date on load was: %1"
-                                     "\nCurrent last modification date is: %2" )
-                                 .arg( mProjectLastModified.toString( Qt::DefaultLocaleLongDate ),
-                                       fi.lastModified().toString( Qt::DefaultLocaleLongDate ) ),
-                                 QMessageBox::Ok | QMessageBox::Cancel ) == QMessageBox::Cancel )
-        return false;
+      ngSetTitleBarText_( *this ); // update title bar
+      statusBar()->showMessage( tr( "Saved project to: %1" ).arg( QDir::toNativeSeparators( QgsProject::instance()->fileName() ) ), 5000 );
+      // add this to the list of recently used project files
+      saveRecentProjectPath( fullPath.filePath() );
+      mProjectLastModified = fullPath.lastModified();
     }
-
-    if ( fi.exists() && ! fi.isWritable() )
+    else
     {
-      messageBar()->pushMessage( tr( "Insufficient permissions" ),
-                                 tr( "The project file is not writable." ),
-                                 QgsMessageBar::WARNING );
-      return false;
+      QMessageBox::critical( this,
+                             tr( "Unable to save project %1" ).arg( QDir::toNativeSeparators( QgsProject::instance()->fileName() ) ),
+                             QgsProject::instance()->error(),
+                             QMessageBox::Ok,
+                             Qt::NoButton );
     }
-  }
-
-  if ( QgsProject::instance()->write() )
-  {
-    ngSetTitleBarText_( *this ); // update title bar
-    statusBar()->showMessage( tr( "Saved project to: %1" ).arg(
-                                  QgsProject::instance()->fileName() ), 5000 );
-
-    saveRecentProjectPath( fullPath.filePath() );
-
-    QFileInfo fi( QgsProject::instance()->fileName() );
-    mProjectLastModified = fi.lastModified();
-  }
-  else
-  {
-    QMessageBox::critical( this,
-                           tr( "Unable to save project %1" ).arg(
-                               QgsProject::instance()->fileName() ),
-                               QgsProject::instance()->error() );
-    return false;
-  }
-
-  // run the saved project macro
-  if ( mTrustedMacros )
-  {
-    QgsPythonRunner::run( "qgis.utils.saveProjectMacro();" );
-  }
-
-  return true;
 }
 
-void NGQgisApp::fileSaveAs()
+void NGQgisApp::functionProfileNG(void (NGQgisApp::*fnc)(),
+                                NGQgisApp* instance, QString name)
 {
-  QSettings settings;
-  QString lastUsedDir = settings.value( "/UI/lastProjectDir", QDir::homePath() ).toString();
-
-  QString path = QFileDialog::getSaveFileName( this,
-                 tr( "Choose a file name to save the QGIS project file as" ),
-                 lastUsedDir + '/' + QgsProject::instance()->title(),
-                 tr( "QGIS files" ) + " (*.qgs *.QGS)" );
-  if ( path.isEmpty() )
-    return;
-
-  QFileInfo fullPath( path );
-
-  settings.setValue( "/UI/lastProjectDir", fullPath.path() );
-
-  // make sure the .qgs extension is included in the path name. if not, add it...
-  if ( "qgs" != fullPath.suffix().toLower() )
-  {
-    fullPath.setFile( fullPath.filePath() + ".qgs" );
-  }
-
-  QgsProject::instance()->setFileName( fullPath.filePath() );
-
-  if ( QgsProject::instance()->write() )
-  {
-    ngSetTitleBarText_( *this ); // update title bar
-    statusBar()->showMessage( tr( "Saved project to: %1" ).arg(
-                                  QgsProject::instance()->fileName() ), 5000 );
-    // add this to the list of recently used project files
-    saveRecentProjectPath( fullPath.filePath() );
-    mProjectLastModified = fullPath.lastModified();
-  }
-  else
-  {
-    QMessageBox::critical( this,
-                           tr( "Unable to save project %1" ).arg(
-                           QgsProject::instance()->fileName() ),
-                           QgsProject::instance()->error(),
-                           QMessageBox::Ok,
-                           Qt::NoButton );
-  }
+    startProfile( name );
+    ( instance->*fnc )();
+    endProfile();
 }
 
 void NGQgisApp::projectProperties()
 {
-  QApplication::setOverrideCursor( Qt::WaitCursor );
-  QgsProjectProperties *pp = new QgsProjectProperties( mMapCanvas, this );
-  // if called from the status bar, show the projection tab
-  if ( mShowProjectionTab )
-  {
-    pp->showProjectionsTab();
-    mShowProjectionTab = false;
-  }
-  qApp->processEvents();
-  // Be told if the mouse display precision may have changed by the user
-  // changing things in the project properties dialog box
-  connect( pp, SIGNAL( displayPrecisionChanged() ), this,
-           SLOT( updateMouseCoordinatePrecision() ) );
+    /* Display the property sheet for the Project */
+    // set wait cursor since construction of the project properties
+    // dialog results in the construction of the spatial reference
+    // system QMap
+    QApplication::setOverrideCursor( Qt::WaitCursor );
+    QgsProjectProperties *pp = new QgsProjectProperties( mMapCanvas, this );
+    // if called from the status bar, show the projection tab
+    if ( mShowProjectionTab )
+    {
+      pp->showProjectionsTab();
+      mShowProjectionTab = false;
+    }
+    qApp->processEvents();
+    // Be told if the mouse display precision may have changed by the user
+    // changing things in the project properties dialog box
+    connect( pp, SIGNAL( displayPrecisionChanged() ), this,
+             SLOT( updateMouseCoordinatePrecision() ) );
 
-  connect( pp, SIGNAL( scalesChanged( const QStringList & ) ), mScaleEdit,
-           SLOT( updateScales( const QStringList & ) ) );
-  QApplication::restoreOverrideCursor();
+    connect( pp, SIGNAL( scalesChanged( const QStringList & ) ), mScaleWidget,
+             SLOT( updateScales( const QStringList & ) ) );
+    QApplication::restoreOverrideCursor();
 
-  //pass any refresh signals off to canvases
-  // Line below was commented out by wonder three years ago (r4949).
-  // It is needed to refresh scale bar after changing display units.
-  connect( pp, SIGNAL( refresh() ), mMapCanvas, SLOT( refresh() ) );
+    //pass any refresh signals off to canvases
+    // Line below was commented out by wonder three years ago (r4949).
+    // It is needed to refresh scale bar after changing display units.
+    connect( pp, SIGNAL( refresh() ), mMapCanvas, SLOT( refresh() ) );
 
-  // Display the modal dialog box.
-  pp->exec();
+    // Display the modal dialog box.
+    pp->exec();
 
-  qobject_cast<QgsMeasureTool*>( mMapTools.mMeasureDist )->updateSettings();
-  qobject_cast<QgsMeasureTool*>( mMapTools.mMeasureArea )->updateSettings();
-  qobject_cast<QgsMapToolMeasureAngle*>( mMapTools.mMeasureAngle )->updateSettings();
+    qobject_cast<QgsMeasureTool*>( mMapTools.mMeasureDist )->updateSettings();
+    qobject_cast<QgsMeasureTool*>( mMapTools.mMeasureArea )->updateSettings();
+    qobject_cast<QgsMapToolMeasureAngle*>( mMapTools.mMeasureAngle )->updateSettings();
 
-  // Set the window title.
-  ngSetTitleBarText_( *this );
+    // Set the window title.
+    ngSetTitleBarText_( *this );
 
-  // delete the property sheet object
-  delete pp;
+    // delete the property sheet object
+    delete pp;
 }

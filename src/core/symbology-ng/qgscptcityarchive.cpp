@@ -845,7 +845,6 @@ QgsCptCityCollectionItem::QgsCptCityCollectionItem( QgsCptCityDataItem* parent,
 
 QgsCptCityCollectionItem::~QgsCptCityCollectionItem()
 {
-  // QgsDebugMsg( "Entered" );
   Q_FOREACH ( QgsCptCityDataItem* i, mChildren )
   {
     // QgsDebugMsg( QString( "delete child = 0x%0" ).arg(( qlonglong )i, 8, 16, QLatin1Char( '0' ) ) );
@@ -967,7 +966,7 @@ QMap< QString, QStringList > QgsCptCityDirectoryItem::rampsMap()
   if ( ! mRampsMap.isEmpty() )
     return mRampsMap;
 
-  QString curName, prevName, prevPath, curVariant, curSep, schemeName;
+  QString curName, prevName, curVariant, curSep, schemeName;
   QStringList listVariant;
   QStringList schemeNamesAll, schemeNames;
   bool prevAdd, curAdd;
@@ -1085,13 +1084,15 @@ QMap< QString, QStringList > QgsCptCityDirectoryItem::rampsMap()
     }
 
   }
+#if 0
   //TODO what to do with other vars? e.g. schemeNames
-  // // add schemes to archive
-  // mSchemeMap[ path ] = schemeNames;
-  // schemeCount += schemeName.count();
-  // schemeNames.clear();
-  // listVariant.clear();
-  // prevName = "";
+  // add schemes to archive
+  mSchemeMap[ path ] = schemeNames;
+  schemeCount += schemeName.count();
+  schemeNames.clear();
+  listVariant.clear();
+  prevName = "";
+#endif
   return mRampsMap;
 }
 
@@ -1295,7 +1296,8 @@ bool QgsCptCitySelectionItem::equal( const QgsCptCityDataItem *other )
 //-----------------------------------------------------------------------
 QgsCptCityAllRampsItem::QgsCptCityAllRampsItem( QgsCptCityDataItem* parent,
     const QString& name, const QVector<QgsCptCityDataItem*>& items )
-    : QgsCptCityCollectionItem( parent, name, QString() ), mItems( items )
+    : QgsCptCityCollectionItem( parent, name, QString() )
+    , mItems( items )
 {
   mType = AllRamps;
   mValid = true;
@@ -1328,7 +1330,9 @@ QVector<QgsCptCityDataItem*> QgsCptCityAllRampsItem::createChildren()
 
 QgsCptCityBrowserModel::QgsCptCityBrowserModel( QObject *parent,
     QgsCptCityArchive* archive, ViewType viewType )
-    : QAbstractItemModel( parent ), mArchive( archive ), mViewType( viewType )
+    : QAbstractItemModel( parent )
+    , mArchive( archive )
+    , mViewType( viewType )
 {
   Q_ASSERT( mArchive );
   QgsDebugMsg( "archiveName = " + archive->archiveName() + " viewType=" + static_cast< int >( viewType ) );
@@ -1369,7 +1373,7 @@ void QgsCptCityBrowserModel::removeRootItems()
 Qt::ItemFlags QgsCptCityBrowserModel::flags( const QModelIndex & index ) const
 {
   if ( !index.isValid() )
-    return nullptr;
+    return Qt::ItemFlags();
 
   Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 
@@ -1648,7 +1652,6 @@ void QgsCptCityBrowserModel::beginInsertItems( QgsCptCityDataItem *parent, int f
 }
 void QgsCptCityBrowserModel::endInsertItems()
 {
-  QgsDebugMsg( "Entered" );
   endInsertRows();
 }
 void QgsCptCityBrowserModel::beginRemoveItems( QgsCptCityDataItem *parent, int first, int last )
@@ -1661,7 +1664,6 @@ void QgsCptCityBrowserModel::beginRemoveItems( QgsCptCityDataItem *parent, int f
 }
 void QgsCptCityBrowserModel::endRemoveItems()
 {
-  QgsDebugMsg( "Entered" );
   endRemoveRows();
 }
 void QgsCptCityBrowserModel::connectItem( QgsCptCityDataItem* item )

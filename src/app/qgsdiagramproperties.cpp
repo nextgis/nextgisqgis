@@ -31,6 +31,8 @@
 #include "qgsfeatureiterator.h"
 #include "qgscolordialog.h"
 #include "qgisgui.h"
+#include "qgssymbolv2selectordialog.h"
+#include "qgsstylev2.h"
 
 #include <QList>
 #include <QMessageBox>
@@ -51,8 +53,10 @@ static QgsExpressionContext _getExpressionContext( const void* context )
   return expContext;
 }
 
-QgsDiagramProperties::QgsDiagramProperties( QgsVectorLayer* layer, QWidget* parent )
+QgsDiagramProperties::QgsDiagramProperties( QgsVectorLayer* layer,
+    QWidget* parent, QgsMapCanvas *canvas )
     : QWidget( parent )
+    , mMapCanvas( canvas )
 {
   mLayer = layer;
   if ( !layer )
@@ -65,8 +69,16 @@ QgsDiagramProperties::QgsDiagramProperties( QgsVectorLayer* layer, QWidget* pare
   // get rid of annoying outer focus rect on Mac
   mDiagramOptionsListWidget->setAttribute( Qt::WA_MacShowFocusRect, false );
 
-  connect( mEnableDiagramsCheckBox, SIGNAL( toggled( bool ) ), mDiagramTypeFrame, SLOT( setEnabled( bool ) ) );
-  connect( mEnableDiagramsCheckBox, SIGNAL( toggled( bool ) ), mDiagramFrame, SLOT( setEnabled( bool ) ) );
+  mDiagramTypeComboBox->blockSignals( true );
+  QPixmap pix = QgsApplication::getThemePixmap( "diagramNone" );
+  mDiagramTypeComboBox->addItem( pix, tr( "No diagrams" ), "None" );
+  pix = QgsApplication::getThemePixmap( "pie-chart" );
+  mDiagramTypeComboBox->addItem( pix, tr( "Pie chart" ), DIAGRAM_NAME_PIE );
+  pix = QgsApplication::getThemePixmap( "text" );
+  mDiagramTypeComboBox->addItem( pix, tr( "Text diagram" ), DIAGRAM_NAME_TEXT );
+  pix = QgsApplication::getThemePixmap( "histogram" );
+  mDiagramTypeComboBox->addItem( pix, tr( "Histogram" ), DIAGRAM_NAME_HISTOGRAM );
+  mDiagramTypeComboBox->blockSignals( false );
 
   mScaleRangeWidget->setMapCanvas( QgisApp::instance()->mapCanvas() );
   mSizeFieldExpressionWidget->registerGetExpressionContextCallback( &_getExpressionContext, mLayer );
@@ -84,15 +96,19 @@ QgsDiagramProperties::QgsDiagramProperties( QgsVectorLayer* layer, QWidget* pare
 
   mMaxValueSpinBox->setShowClearButton( false );
 
-  mDiagramUnitComboBox->insertItem( 0, tr( "mm" ), QgsDiagramSettings::MM );
-  mDiagramUnitComboBox->insertItem( 1, tr( "Map units" ), QgsDiagramSettings::MapUnits );
+  mDiagramAttributesTreeWidget->setItemDelegateForColumn( ColumnAttributeExpression, new EditBlockerDelegate( this ) );
+  mDiagramAttributesTreeWidget->setItemDelegateForColumn( ColumnColor, new EditBlockerDelegate( this ) );
+
+  connect( mFixedSizeRadio, SIGNAL( toggled( bool ) ), this, SLOT( scalingTypeChanged() ) );
+  connect( mAttributeBasedScalingRadio, SIGNAL( toggled( bool ) ), this, SLOT( scalingTypeChanged() ) );
+
+  mDiagramUnitComboBox->setUnits( QgsSymbolV2::OutputUnitList() << QgsSymbolV2::MM << QgsSymbolV2::MapUnit << QgsSymbolV2::Pixel );
+  mDiagramLineUnitComboBox->setUnits( QgsSymbolV2::OutputUnitList() << QgsSymbolV2::MM << QgsSymbolV2::MapUnit << QgsSymbolV2::Pixel );
 
   QGis::GeometryType layerType = layer->geometryType();
   if ( layerType == QGis::UnknownGeometry || layerType == QGis::NoGeometry )
   {
-    mEnableDiagramsCheckBox->setChecked( false );
-    mEnableDiagramsCheckBox->setEnabled( false );
-    mDiagramTypeFrame->setEnabled( false );
+    mDiagramTypeComboBox->setEnabled( false );
     mDiagramFrame->setEnabled( false );
   }
 
@@ -122,15 +138,6 @@ QgsDiagramProperties::QgsDiagramProperties( QgsVectorLayer* layer, QWidget* pare
   }
   mPlacementComboBox->blockSignals( false );
 
-  mDiagramTypeComboBox->blockSignals( true );
-  QPixmap pix = QgsApplication::getThemePixmap( "pie-chart" );
-  mDiagramTypeComboBox->addItem( pix, tr( "Pie chart" ), DIAGRAM_NAME_PIE );
-  pix = QgsApplication::getThemePixmap( "text" );
-  mDiagramTypeComboBox->addItem( pix, tr( "Text diagram" ), DIAGRAM_NAME_TEXT );
-  pix = QgsApplication::getThemePixmap( "histogram" );
-  mDiagramTypeComboBox->addItem( pix, tr( "Histogram" ), DIAGRAM_NAME_HISTOGRAM );
-  mDiagramTypeComboBox->blockSignals( false );
-
   mLabelPlacementComboBox->addItem( tr( "Height" ), QgsDiagramSettings::Height );
   mLabelPlacementComboBox->addItem( tr( "x-height" ), QgsDiagramSettings::XHeight );
 
@@ -144,6 +151,8 @@ QgsDiagramProperties::QgsDiagramProperties( QgsVectorLayer* layer, QWidget* pare
   mAngleOffsetComboBox->addItem( tr( "Right" ), 0 );
   mAngleOffsetComboBox->addItem( tr( "Bottom" ), 270 * 16 );
   mAngleOffsetComboBox->addItem( tr( "Left" ), 180 * 16 );
+
+  mDataDefinedVisibilityComboBox->addItem( tr( "None" ), -1 );
 
   QSettings settings;
 
@@ -178,21 +187,23 @@ QgsDiagramProperties::QgsDiagramProperties( QgsVectorLayer* layer, QWidget* pare
     QTreeWidgetItem *newItem = new QTreeWidgetItem( mAttributesTreeWidget );
     QString name = QString( "\"%1\"" ).arg( layerFields[idx].name() );
     newItem->setText( 0, name );
-    newItem->setData( 0, Qt::UserRole, name );
+    newItem->setData( 0, RoleAttributeExpression, name );
     newItem->setFlags( newItem->flags() & ~Qt::ItemIsDropEnabled );
 
     mDataDefinedXComboBox->addItem( layerFields[idx].name(), idx );
     mDataDefinedYComboBox->addItem( layerFields[idx].name(), idx );
+    mDataDefinedVisibilityComboBox->addItem( layerFields[idx].name(), idx );
   }
 
   const QgsDiagramRendererV2* dr = layer->diagramRenderer();
   if ( !dr ) //no diagram renderer yet, insert reasonable default
   {
-    mEnableDiagramsCheckBox->setChecked( false );
-    mDiagramTypeFrame->setEnabled( false );
-    mDiagramFrame->setEnabled( false );
+    mDiagramTypeComboBox->blockSignals( true );
+    mDiagramTypeComboBox->setCurrentIndex( 0 );
+    mDiagramTypeComboBox->blockSignals( false );
     mFixedSizeRadio->setChecked( true );
-    mDiagramUnitComboBox->setCurrentIndex( mDiagramUnitComboBox->findText( tr( "mm" ) ) );
+    mDiagramUnitComboBox->setUnit( QgsSymbolV2::MM );
+    mDiagramLineUnitComboBox->setUnit( QgsSymbolV2::MM );
     mLabelPlacementComboBox->setCurrentIndex( mLabelPlacementComboBox->findText( tr( "x-height" ) ) );
     mDiagramSizeSpinBox->setEnabled( true );
     mDiagramSizeSpinBox->setValue( 15 );
@@ -203,6 +214,10 @@ QgsDiagramProperties::QgsDiagramProperties( QgsVectorLayer* layer, QWidget* pare
     mScaleVisibilityGroupBox->setChecked( layer->hasScaleBasedVisibility() );
     mScaleRangeWidget->setScaleRange( 1.0 / layer->maximumScale(), 1.0 / layer->minimumScale() ); // caution: layer uses scale denoms, widget uses true scales
     mShowAllCheckBox->setChecked( true );
+    mDataDefinedVisibilityGroupBox->setChecked( false );
+    mCheckBoxAttributeLegend->setChecked( true );
+    mCheckBoxSizeLegend->setChecked( false );
+    mSizeLegendSymbol.reset( QgsMarkerSymbolV2::createSimple( QgsStringMap() ) );
 
     switch ( layerType )
     {
@@ -224,9 +239,6 @@ QgsDiagramProperties::QgsDiagramProperties( QgsVectorLayer* layer, QWidget* pare
         break;
     }
     mBackgroundColorButton->setColor( QColor( 255, 255, 255, 255 ) );
-    mDiagramTypeComboBox->blockSignals( true );
-    mDiagramTypeComboBox->setCurrentIndex( 0 );
-    mDiagramTypeComboBox->blockSignals( false );
     //force a refresh of widget status to match diagram type
     on_mDiagramTypeComboBox_currentIndexChanged( mDiagramTypeComboBox->currentIndex() );
   }
@@ -243,14 +255,17 @@ QgsDiagramProperties::QgsDiagramProperties( QgsVectorLayer* layer, QWidget* pare
     }
     mDiagramSizeSpinBox->setEnabled( mFixedSizeRadio->isChecked() );
     mLinearScaleFrame->setEnabled( mAttributeBasedScalingRadio->isChecked() );
+    mCheckBoxAttributeLegend->setChecked( dr->attributeLegend() );
+    mCheckBoxSizeLegend->setChecked( dr->sizeLegend() );
+    mSizeLegendSymbol.reset( dr->sizeLegendSymbol() ? dr->sizeLegendSymbol()->clone() : QgsMarkerSymbolV2::createSimple( QgsStringMap() ) );
+    QIcon icon = QgsSymbolLayerV2Utils::symbolPreviewIcon( mSizeLegendSymbol.data(), mButtonSizeLegendSymbol->iconSize() );
+    mButtonSizeLegendSymbol->setIcon( icon );
 
     //assume single category or linearly interpolated diagram renderer for now
     QList<QgsDiagramSettings> settingList = dr->diagramSettings();
     if ( !settingList.isEmpty() )
     {
-      mEnableDiagramsCheckBox->setChecked( settingList.at( 0 ).enabled );
-      mDiagramTypeFrame->setEnabled( mEnableDiagramsCheckBox->isChecked() );
-      mDiagramFrame->setEnabled( mEnableDiagramsCheckBox->isChecked() );
+      mDiagramFrame->setEnabled( settingList.at( 0 ).enabled );
       mDiagramFont = settingList.at( 0 ).font;
       QSizeF size = settingList.at( 0 ).size;
       mBackgroundColorButton->setColor( settingList.at( 0 ).backgroundColor );
@@ -263,14 +278,10 @@ QgsDiagramProperties::QgsDiagramProperties( QgsVectorLayer* layer, QWidget* pare
       mScaleRangeWidget->setScaleRange( 1.0 / ( settingList.at( 0 ).maxScaleDenominator > 0 ? settingList.at( 0 ).maxScaleDenominator : layer->maximumScale() ),
                                         1.0 / ( settingList.at( 0 ).minScaleDenominator > 0 ? settingList.at( 0 ).minScaleDenominator : layer->minimumScale() ) );
       mScaleVisibilityGroupBox->setChecked( settingList.at( 0 ).scaleBasedVisibility );
-      if ( settingList.at( 0 ).sizeType == QgsDiagramSettings::MM )
-      {
-        mDiagramUnitComboBox->setCurrentIndex( 0 );
-      }
-      else
-      {
-        mDiagramUnitComboBox->setCurrentIndex( 1 );
-      }
+      mDiagramUnitComboBox->setUnit( settingList.at( 0 ).sizeType );
+      mDiagramUnitComboBox->setMapUnitScale( settingList.at( 0 ).sizeScale );
+      mDiagramLineUnitComboBox->setUnit( settingList.at( 0 ).lineSizeUnit );
+      mDiagramLineUnitComboBox->setMapUnitScale( settingList.at( 0 ).lineSizeScale );
 
       if ( settingList.at( 0 ).labelPlacementMethod == QgsDiagramSettings::Height )
       {
@@ -333,7 +344,7 @@ QgsDiagramProperties::QgsDiagramProperties( QgsVectorLayer* layer, QWidget* pare
       {
         QTreeWidgetItem *newItem = new QTreeWidgetItem( mDiagramAttributesTreeWidget );
         newItem->setText( 0, *catIt );
-        newItem->setData( 0, Qt::UserRole, *catIt );
+        newItem->setData( 0, RoleAttributeExpression, *catIt );
         newItem->setFlags( newItem->flags() & ~Qt::ItemIsDropEnabled );
         QColor col( *coIt );
         col.setAlpha( 255 );
@@ -366,38 +377,44 @@ QgsDiagramProperties::QgsDiagramProperties( QgsVectorLayer* layer, QWidget* pare
     const QgsDiagramLayerSettings *dls = layer->diagramLayerSettings();
     if ( dls )
     {
-      mDiagramDistanceSpinBox->setValue( dls->dist );
-      mPrioritySlider->setValue( dls->priority );
-      mZIndexSpinBox->setValue( dls->zIndex );
+      mDiagramDistanceSpinBox->setValue( dls->distance() );
+      mPrioritySlider->setValue( dls->getPriority() );
+      mZIndexSpinBox->setValue( dls->getZIndex() );
       mDataDefinedXComboBox->setCurrentIndex( mDataDefinedXComboBox->findData( dls->xPosColumn ) );
       mDataDefinedYComboBox->setCurrentIndex( mDataDefinedYComboBox->findData( dls->yPosColumn ) );
       if ( dls->xPosColumn != -1 || dls->yPosColumn != -1 )
       {
         mDataDefinedPositionGroupBox->setChecked( true );
       }
-      mPlacementComboBox->setCurrentIndex( mPlacementComboBox->findData( dls->placement ) );
+      mPlacementComboBox->setCurrentIndex( mPlacementComboBox->findData( dls->getPlacement() ) );
 
-      chkLineAbove->setChecked( dls->placementFlags & QgsDiagramLayerSettings::AboveLine );
-      chkLineBelow->setChecked( dls->placementFlags & QgsDiagramLayerSettings::BelowLine );
-      chkLineOn->setChecked( dls->placementFlags & QgsDiagramLayerSettings::OnLine );
-      if ( !( dls->placementFlags & QgsDiagramLayerSettings::MapOrientation ) )
+      chkLineAbove->setChecked( dls->linePlacementFlags() & QgsDiagramLayerSettings::AboveLine );
+      chkLineBelow->setChecked( dls->linePlacementFlags() & QgsDiagramLayerSettings::BelowLine );
+      chkLineOn->setChecked( dls->linePlacementFlags() & QgsDiagramLayerSettings::OnLine );
+      if ( !( dls->linePlacementFlags() & QgsDiagramLayerSettings::MapOrientation ) )
         chkLineOrientationDependent->setChecked( true );
 
-      mShowAllCheckBox->setChecked( dls->showAll );
+      mShowAllCheckBox->setChecked( dls->showAllDiagrams() );
+      mDataDefinedVisibilityComboBox->setCurrentIndex( mDataDefinedVisibilityComboBox->findData( dls->showColumn ) );
+      if ( dls->showColumn != -1 )
+      {
+        mDataDefinedVisibilityGroupBox->setChecked( true );
+      }
     }
 
     if ( dr->diagram() )
     {
-      QString diagramName = dr->diagram()->diagramName();
+      mDiagramType = dr->diagram()->diagramName();
+
       mDiagramTypeComboBox->blockSignals( true );
-      mDiagramTypeComboBox->setCurrentIndex( mDiagramTypeComboBox->findData( diagramName ) );
+      mDiagramTypeComboBox->setCurrentIndex( settingList.at( 0 ).enabled ? mDiagramTypeComboBox->findData( mDiagramType ) : 0 );
       mDiagramTypeComboBox->blockSignals( false );
       //force a refresh of widget status to match diagram type
       on_mDiagramTypeComboBox_currentIndexChanged( mDiagramTypeComboBox->currentIndex() );
       if ( mDiagramTypeComboBox->currentIndex() == -1 )
       {
         QMessageBox::warning( this, tr( "Unknown diagram type." ),
-                              tr( "The diagram type '%1' is unknown. A default type is selected for you." ).arg( diagramName ), QMessageBox::Ok );
+                              tr( "The diagram type '%1' is unknown. A default type is selected for you." ).arg( mDiagramType ), QMessageBox::Ok );
         mDiagramTypeComboBox->setCurrentIndex( mDiagramTypeComboBox->findData( DIAGRAM_NAME_PIE ) );
       }
     }
@@ -417,71 +434,79 @@ QgsDiagramProperties::~QgsDiagramProperties()
 
 void QgsDiagramProperties::on_mDiagramTypeComboBox_currentIndexChanged( int index )
 {
-  QString diagramType = mDiagramTypeComboBox->itemData( index ).toString();
-
-  if ( DIAGRAM_NAME_TEXT == diagramType )
+  if ( index == 0 )
   {
-    mTextOptionsFrame->show();
-    mBackgroundColorLabel->show();
-    mBackgroundColorButton->show();
-    mDiagramFontButton->show();
+    mDiagramFrame->setEnabled( false );
   }
   else
   {
-    mTextOptionsFrame->hide();
-    mBackgroundColorLabel->hide();
-    mBackgroundColorButton->hide();
-    mDiagramFontButton->hide();
-  }
+    mDiagramFrame->setEnabled( true );
 
-  if ( DIAGRAM_NAME_HISTOGRAM == diagramType )
-  {
-    mBarWidthLabel->show();
-    mBarWidthSpinBox->show();
-    mBarOptionsFrame->show();
-    mAttributeBasedScalingRadio->setChecked( true );
-    mFixedSizeRadio->setEnabled( false );
-    mDiagramSizeSpinBox->setEnabled( false );
-    mLinearlyScalingLabel->setText( tr( "Bar length: Scale linearly, so that the following value matches the specified bar length:" ) );
-    mSizeLabel->setText( tr( "Bar length" ) );
-    mFrameIncreaseSize->setVisible( false );
-  }
-  else
-  {
-    mBarWidthLabel->hide();
-    mBarWidthSpinBox->hide();
-    mBarOptionsFrame->hide();
-    mLinearlyScalingLabel->setText( tr( "Scale linearly between 0 and the following attribute value / diagram size:" ) );
-    mSizeLabel->setText( tr( "Size" ) );
-    mAttributeBasedScalingRadio->setEnabled( true );
-    mFixedSizeRadio->setEnabled( true );
-    mDiagramSizeSpinBox->setEnabled( mFixedSizeRadio->isChecked() );
-    mFrameIncreaseSize->setVisible( true );
-  }
+    mDiagramType = mDiagramTypeComboBox->itemData( index ).toString();
 
-  if ( DIAGRAM_NAME_TEXT == diagramType || DIAGRAM_NAME_PIE == diagramType )
-  {
-    mScaleDependencyComboBox->show();
-    mScaleDependencyLabel->show();
-  }
-  else
-  {
-    mScaleDependencyComboBox->hide();
-    mScaleDependencyLabel->hide();
-  }
+    if ( DIAGRAM_NAME_TEXT == mDiagramType )
+    {
+      mTextOptionsFrame->show();
+      mBackgroundColorLabel->show();
+      mBackgroundColorButton->show();
+      mDiagramFontButton->show();
+    }
+    else
+    {
+      mTextOptionsFrame->hide();
+      mBackgroundColorLabel->hide();
+      mBackgroundColorButton->hide();
+      mDiagramFontButton->hide();
+    }
 
-  if ( DIAGRAM_NAME_PIE == diagramType )
-  {
-    mAngleOffsetComboBox->show();
-    mAngleOffsetLabel->show();
-  }
-  else
-  {
-    mAngleOffsetComboBox->hide();
-    mAngleOffsetLabel->hide();
+    if ( DIAGRAM_NAME_HISTOGRAM == mDiagramType )
+    {
+      mBarWidthLabel->show();
+      mBarWidthSpinBox->show();
+      mBarOptionsFrame->show();
+      mAttributeBasedScalingRadio->setChecked( true );
+      mFixedSizeRadio->setEnabled( false );
+      mDiagramSizeSpinBox->setEnabled( false );
+      mLinearlyScalingLabel->setText( tr( "Bar length: Scale linearly, so that the following value matches the specified bar length:" ) );
+      mSizeLabel->setText( tr( "Bar length" ) );
+      mFrameIncreaseSize->setVisible( false );
+    }
+    else
+    {
+      mBarWidthLabel->hide();
+      mBarWidthSpinBox->hide();
+      mBarOptionsFrame->hide();
+      mLinearlyScalingLabel->setText( tr( "Scale linearly between 0 and the following attribute value / diagram size:" ) );
+      mSizeLabel->setText( tr( "Size" ) );
+      mAttributeBasedScalingRadio->setEnabled( true );
+      mFixedSizeRadio->setEnabled( true );
+      mDiagramSizeSpinBox->setEnabled( mFixedSizeRadio->isChecked() );
+      mFrameIncreaseSize->setVisible( true );
+    }
+
+    if ( DIAGRAM_NAME_TEXT == mDiagramType || DIAGRAM_NAME_PIE == mDiagramType )
+    {
+      mScaleDependencyComboBox->show();
+      mScaleDependencyLabel->show();
+    }
+    else
+    {
+      mScaleDependencyComboBox->hide();
+      mScaleDependencyLabel->hide();
+    }
+
+    if ( DIAGRAM_NAME_PIE == mDiagramType )
+    {
+      mAngleOffsetComboBox->show();
+      mAngleOffsetLabel->show();
+    }
+    else
+    {
+      mAngleOffsetComboBox->hide();
+      mAngleOffsetLabel->hide();
+    }
   }
 }
-
 QString QgsDiagramProperties::guessLegendText( const QString& expression )
 {
   //trim unwanted characters from expression text for legend
@@ -497,7 +522,7 @@ void QgsDiagramProperties::addAttribute( QTreeWidgetItem * item )
 
   newItem->setText( 0, item->text( 0 ) );
   newItem->setText( 2, guessLegendText( item->text( 0 ) ) );
-  newItem->setData( 0, Qt::UserRole, item->data( 0, Qt::UserRole ) );
+  newItem->setData( 0, RoleAttributeExpression, item->data( 0, RoleAttributeExpression ) );
   newItem->setFlags(( newItem->flags() | Qt::ItemIsEditable ) & ~Qt::ItemIsDropEnabled );
 
   //set initial color for diagram category
@@ -583,13 +608,33 @@ void QgsDiagramProperties::on_mDiagramFontButton_clicked()
 
 void QgsDiagramProperties::on_mDiagramAttributesTreeWidget_itemDoubleClicked( QTreeWidgetItem * item, int column )
 {
-  if ( column == 1 ) //change color
+  switch ( column )
   {
-    QColor newColor = QgsColorDialogV2::getColor( item->background( 1 ).color(), nullptr );
-    if ( newColor.isValid() )
+    case ColumnAttributeExpression:
     {
-      item->setBackground( 1, QBrush( newColor ) );
+      QString currentExpression = item->data( 0, RoleAttributeExpression ).toString();
+
+      QString newExpression = showExpressionBuilder( currentExpression );
+      if ( !newExpression.isEmpty() )
+      {
+        item->setData( 0, Qt::DisplayRole, newExpression );
+        item->setData( 0, RoleAttributeExpression, newExpression );
+      }
+      break;
     }
+
+    case ColumnColor:
+    {
+      QColor newColor = QgsColorDialogV2::getColor( item->background( 1 ).color(), nullptr );
+      if ( newColor.isValid() )
+      {
+        item->setBackground( 1, QBrush( newColor ) );
+      }
+      break;
+    }
+
+    case ColumnLegendText:
+      break;
   }
 }
 
@@ -601,11 +646,10 @@ void QgsDiagramProperties::on_mEngineSettingsButton_clicked()
 
 void QgsDiagramProperties::apply()
 {
-  bool diagramsEnabled = mEnableDiagramsCheckBox->isChecked();
+  int index = mDiagramTypeComboBox->currentIndex();
+  bool diagramsEnabled = ( index != 0 );
 
   QgsDiagram* diagram = nullptr;
-  int index = mDiagramTypeComboBox->currentIndex();
-  QString diagramType = mDiagramTypeComboBox->itemData( index ).toString();
 
   if ( diagramsEnabled && 0 == mDiagramAttributesTreeWidget->topLevelItemCount() )
   {
@@ -664,11 +708,11 @@ void QgsDiagramProperties::apply()
   }
 #endif
 
-  if ( diagramType == DIAGRAM_NAME_TEXT )
+  if ( mDiagramType == DIAGRAM_NAME_TEXT )
   {
     diagram = new QgsTextDiagram();
   }
-  else if ( diagramType == DIAGRAM_NAME_PIE )
+  else if ( mDiagramType == DIAGRAM_NAME_PIE )
   {
     diagram = new QgsPieDiagram();
   }
@@ -678,7 +722,7 @@ void QgsDiagramProperties::apply()
   }
 
   QgsDiagramSettings ds;
-  ds.enabled = mEnableDiagramsCheckBox->isChecked();
+  ds.enabled = ( mDiagramTypeComboBox->currentIndex() != 0 );
   ds.font = mDiagramFont;
   ds.transparency = mTransparencySpinBox->value() * 255.0 / 100.0;
 
@@ -693,14 +737,17 @@ void QgsDiagramProperties::apply()
     QColor color = mDiagramAttributesTreeWidget->topLevelItem( i )->background( 1 ).color();
     color.setAlpha( 255 - ds.transparency );
     categoryColors.append( color );
-    categoryAttributes.append( mDiagramAttributesTreeWidget->topLevelItem( i )->data( 0, Qt::UserRole ).toString() );
+    categoryAttributes.append( mDiagramAttributesTreeWidget->topLevelItem( i )->data( 0, RoleAttributeExpression ).toString() );
     categoryLabels.append( mDiagramAttributesTreeWidget->topLevelItem( i )->text( 2 ) );
   }
   ds.categoryColors = categoryColors;
   ds.categoryAttributes = categoryAttributes;
   ds.categoryLabels = categoryLabels;
   ds.size = QSizeF( mDiagramSizeSpinBox->value(), mDiagramSizeSpinBox->value() );
-  ds.sizeType = static_cast<QgsDiagramSettings::SizeType>( mDiagramUnitComboBox->itemData( mDiagramUnitComboBox->currentIndex() ).toInt() );
+  ds.sizeType = mDiagramUnitComboBox->unit();
+  ds.sizeScale = mDiagramUnitComboBox->getMapUnitScale();
+  ds.lineSizeUnit = mDiagramLineUnitComboBox->unit();
+  ds.lineSizeScale = mDiagramLineUnitComboBox->getMapUnitScale();
   ds.labelPlacementMethod = static_cast<QgsDiagramSettings::LabelPlacementMethod>( mLabelPlacementComboBox->itemData( mLabelPlacementComboBox->currentIndex() ).toInt() );
   ds.scaleByArea = mScaleDependencyComboBox->itemData( mScaleDependencyComboBox->currentIndex() ).toBool();
 
@@ -729,12 +776,12 @@ void QgsDiagramProperties::apply()
 
   ds.barWidth = mBarWidthSpinBox->value();
 
+  QgsDiagramRendererV2* renderer = nullptr;
   if ( mFixedSizeRadio->isChecked() )
   {
     QgsSingleCategoryDiagramRenderer* dr = new QgsSingleCategoryDiagramRenderer();
-    dr->setDiagram( diagram );
     dr->setDiagramSettings( ds );
-    mLayer->setDiagramRenderer( dr );
+    renderer = dr;
   }
   else
   {
@@ -756,16 +803,28 @@ void QgsDiagramProperties::apply()
       int attributeNumber = mLayer->fields().fieldNameIndex( sizeFieldNameOrExp );
       dr->setClassificationAttribute( attributeNumber );
     }
-    dr->setDiagram( diagram );
     dr->setDiagramSettings( ds );
-    mLayer->setDiagramRenderer( dr );
+    renderer = dr;
   }
+  renderer->setDiagram( diagram );
+  renderer->setAttributeLegend( mCheckBoxAttributeLegend->isChecked() );
+  renderer->setSizeLegend( mCheckBoxSizeLegend->isChecked() );
+  renderer->setSizeLegendSymbol( mSizeLegendSymbol->clone() );
+  mLayer->setDiagramRenderer( renderer );
 
   QgsDiagramLayerSettings dls;
-  dls.dist = mDiagramDistanceSpinBox->value();
-  dls.priority = mPrioritySlider->value();
-  dls.zIndex = mZIndexSpinBox->value();
-  dls.showAll = mShowAllCheckBox->isChecked();
+  dls.setDistance( mDiagramDistanceSpinBox->value() );
+  dls.setPriority( mPrioritySlider->value() );
+  dls.setZIndex( mZIndexSpinBox->value() );
+  dls.setShowAllDiagrams( mShowAllCheckBox->isChecked() );
+  if ( mDataDefinedVisibilityGroupBox->isChecked() )
+  {
+    dls.showColumn = mDataDefinedVisibilityComboBox->itemData( mDataDefinedVisibilityComboBox->currentIndex() ).toInt();
+  }
+  else
+  {
+    dls.showColumn = -1;
+  }
   if ( mDataDefinedPositionGroupBox->isChecked() )
   {
     dls.xPosColumn = mDataDefinedXComboBox->itemData( mDataDefinedXComboBox->currentIndex() ).toInt();
@@ -776,18 +835,52 @@ void QgsDiagramProperties::apply()
     dls.xPosColumn = -1;
     dls.yPosColumn = -1;
   }
-  dls.placement = ( QgsDiagramLayerSettings::Placement )mPlacementComboBox->itemData( mPlacementComboBox->currentIndex() ).toInt();
-  dls.placementFlags = ( QgsDiagramLayerSettings::LinePlacementFlags )0;
+  dls.setPlacement(( QgsDiagramLayerSettings::Placement )mPlacementComboBox->itemData( mPlacementComboBox->currentIndex() ).toInt() );
+
+  unsigned int flags = 0;
   if ( chkLineAbove->isChecked() )
-    dls.placementFlags |= QgsDiagramLayerSettings::AboveLine;
+    flags |= QgsDiagramLayerSettings::AboveLine;
   if ( chkLineBelow->isChecked() )
-    dls.placementFlags |= QgsDiagramLayerSettings::BelowLine;
+    flags |= QgsDiagramLayerSettings::BelowLine;
   if ( chkLineOn->isChecked() )
-    dls.placementFlags |= QgsDiagramLayerSettings::OnLine;
+    flags |= QgsDiagramLayerSettings::OnLine;
   if ( ! chkLineOrientationDependent->isChecked() )
-    dls.placementFlags |= QgsDiagramLayerSettings::MapOrientation;
+    flags |= QgsDiagramLayerSettings::MapOrientation;
+  dls.setLinePlacementFlags( flags );
 
   mLayer->setDiagramLayerSettings( dls );
+
+  // refresh
+  QgisApp::instance()->markDirty();
+  mLayer->triggerRepaint();
+}
+
+QString QgsDiagramProperties::showExpressionBuilder( const QString& initialExpression )
+{
+  QgsExpressionContext context;
+  context << QgsExpressionContextUtils::globalScope()
+  << QgsExpressionContextUtils::projectScope()
+  << QgsExpressionContextUtils::atlasScope( nullptr )
+  << QgsExpressionContextUtils::mapSettingsScope( QgisApp::instance()->mapCanvas()->mapSettings() )
+  << QgsExpressionContextUtils::layerScope( mLayer );
+
+  QgsExpressionBuilderDialog dlg( mLayer, initialExpression, this, "generic", context );
+  dlg.setWindowTitle( tr( "Expression based attribute" ) );
+
+  QgsDistanceArea myDa;
+  myDa.setSourceCrs( mLayer->crs().srsid() );
+  myDa.setEllipsoidalMode( QgisApp::instance()->mapCanvas()->mapSettings().hasCrsTransformEnabled() );
+  myDa.setEllipsoid( QgsProject::instance()->readEntry( "Measure", "/Ellipsoid", GEO_NONE ) );
+  dlg.setGeomCalculator( myDa );
+
+  if ( dlg.exec() == QDialog::Accepted )
+  {
+    return dlg.expressionText();
+  }
+  else
+  {
+    return QString();
+  }
 }
 
 void QgsDiagramProperties::showAddAttributeExpressionDialog()
@@ -799,43 +892,25 @@ void QgsDiagramProperties::showAddAttributeExpressionDialog()
     expression = selections[0]->text( 0 );
   }
 
-  QgsExpressionContext context;
-  context << QgsExpressionContextUtils::globalScope()
-  << QgsExpressionContextUtils::projectScope()
-  << QgsExpressionContextUtils::atlasScope( nullptr )
-  << QgsExpressionContextUtils::mapSettingsScope( QgisApp::instance()->mapCanvas()->mapSettings() )
-  << QgsExpressionContextUtils::layerScope( mLayer );
+  QString newExpression = showExpressionBuilder( expression );
 
-  QgsExpressionBuilderDialog dlg( mLayer, expression, this, "generic", context );
-  dlg.setWindowTitle( tr( "Expression based attribute" ) );
-
-  QgsDistanceArea myDa;
-  myDa.setSourceCrs( mLayer->crs().srsid() );
-  myDa.setEllipsoidalMode( QgisApp::instance()->mapCanvas()->mapSettings().hasCrsTransformEnabled() );
-  myDa.setEllipsoid( QgsProject::instance()->readEntry( "Measure", "/Ellipsoid", GEO_NONE ) );
-  dlg.setGeomCalculator( myDa );
-
-  if ( dlg.exec() == QDialog::Accepted )
+  //Only add the expression if the user has entered some text.
+  if ( !newExpression.isEmpty() )
   {
-    QString expression =  dlg.expressionText();
-    //Only add the expression if the user has entered some text.
-    if ( !expression.isEmpty() )
-    {
-      QTreeWidgetItem *newItem = new QTreeWidgetItem( mDiagramAttributesTreeWidget );
+    QTreeWidgetItem *newItem = new QTreeWidgetItem( mDiagramAttributesTreeWidget );
 
-      newItem->setText( 0, expression );
-      newItem->setText( 2, expression );
-      newItem->setData( 0, Qt::UserRole, expression );
-      newItem->setFlags(( newItem->flags() | Qt::ItemIsEditable ) & ~Qt::ItemIsDropEnabled );
+    newItem->setText( 0, newExpression );
+    newItem->setText( 2, newExpression );
+    newItem->setData( 0, RoleAttributeExpression, newExpression );
+    newItem->setFlags(( newItem->flags() | Qt::ItemIsEditable ) & ~Qt::ItemIsDropEnabled );
 
-      //set initial color for diagram category
-      int red = 1 + ( int )( 255.0 * qrand() / ( RAND_MAX + 1.0 ) );
-      int green = 1 + ( int )( 255.0 * qrand() / ( RAND_MAX + 1.0 ) );
-      int blue = 1 + ( int )( 255.0 * qrand() / ( RAND_MAX + 1.0 ) );
-      QColor randomColor( red, green, blue );
-      newItem->setBackground( 1, QBrush( randomColor ) );
-      mDiagramAttributesTreeWidget->addTopLevelItem( newItem );
-    }
+    //set initial color for diagram category
+    int red = 1 + ( int )( 255.0 * qrand() / ( RAND_MAX + 1.0 ) );
+    int green = 1 + ( int )( 255.0 * qrand() / ( RAND_MAX + 1.0 ) );
+    int blue = 1 + ( int )( 255.0 * qrand() / ( RAND_MAX + 1.0 ) );
+    QColor randomColor( red, green, blue );
+    newItem->setBackground( 1, QBrush( randomColor ) );
+    mDiagramAttributesTreeWidget->addTopLevelItem( newItem );
   }
   activateWindow(); // set focus back parent
 }
@@ -867,4 +942,34 @@ void QgsDiagramProperties::on_mPlacementComboBox_currentIndexChanged( int index 
   chkLineBelow->setEnabled( linePlacementEnabled );
   chkLineOn->setEnabled( linePlacementEnabled );
   chkLineOrientationDependent->setEnabled( linePlacementEnabled );
+}
+
+void QgsDiagramProperties::on_mButtonSizeLegendSymbol_clicked()
+{
+  QgsMarkerSymbolV2* newSymbol = mSizeLegendSymbol->clone();
+  QgsSymbolV2SelectorDialog d( newSymbol, QgsStyleV2::defaultStyle(), nullptr, this );
+
+  if ( d.exec() == QDialog::Accepted )
+  {
+    mSizeLegendSymbol.reset( newSymbol );
+    QIcon icon = QgsSymbolLayerV2Utils::symbolPreviewIcon( mSizeLegendSymbol.data(), mButtonSizeLegendSymbol->iconSize() );
+    mButtonSizeLegendSymbol->setIcon( icon );
+  }
+  else
+  {
+    delete newSymbol;
+  }
+}
+
+void QgsDiagramProperties::scalingTypeChanged()
+{
+  if ( !mAttributeBasedScalingRadio->isChecked() )
+  {
+    mCheckBoxSizeLegend->setChecked( false );
+    mCheckBoxSizeLegend->setEnabled( false );
+  }
+  else
+  {
+    mCheckBoxSizeLegend->setEnabled( true );
+  }
 }

@@ -25,7 +25,7 @@ __copyright__ = '(C) 2015, Nyall Dawson'
 
 __revision__ = '$Format:%H$'
 
-from qgis.core import QGis, QgsGeometry, QgsFeature
+from qgis.core import QgsFeature
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
 from processing.core.parameters import ParameterVector, ParameterNumber
@@ -67,7 +67,7 @@ class Smooth(GeoAlgorithm):
         outFeat = QgsFeature()
 
         features = vector.features(layer)
-        total = 100.0 / len(features)
+        total = 100.0 / len(features) if len(features) > 0 else 1
 
         for current, inFeat in enumerate(features):
             inGeom = inFeat.constGeometry()

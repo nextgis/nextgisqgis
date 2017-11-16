@@ -4,7 +4,7 @@
 ***************************************************************************
     lasinfoPro.py
     ---------------------
-    Date                 : October 2014
+    Date                 : October 2014 and May 2016
     Copyright            : (C) 2014 by Martin Isenburg
     Email                : martin near rapidlasso point com
 ***************************************************************************
@@ -24,8 +24,8 @@ __copyright__ = '(C) 2014, Martin Isenburg'
 __revision__ = '$Format:%H$'
 
 import os
-from LAStoolsUtils import LAStoolsUtils
-from LAStoolsAlgorithm import LAStoolsAlgorithm
+from .LAStoolsUtils import LAStoolsUtils
+from .LAStoolsAlgorithm import LAStoolsAlgorithm
 
 from processing.core.parameters import ParameterSelection
 from processing.core.parameters import ParameterBoolean
@@ -74,7 +74,10 @@ class lasinfoPro(LAStoolsAlgorithm):
         self.addParametersVerboseGUI()
 
     def processAlgorithm(self, progress):
-        commands = [os.path.join(LAStoolsUtils.LAStoolsPath(), "bin", "lasinfo")]
+        if (LAStoolsUtils.hasWine()):
+            commands = [os.path.join(LAStoolsUtils.LAStoolsPath(), "bin", "lasinfo.exe")]
+        else:
+            commands = [os.path.join(LAStoolsUtils.LAStoolsPath(), "bin", "lasinfo")]
         self.addParametersVerboseCommands(commands)
         self.addParametersPointInputFolderCommands(commands)
         if self.getParameterValue(lasinfoPro.COMPUTE_DENSITY):

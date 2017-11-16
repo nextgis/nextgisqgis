@@ -31,7 +31,7 @@ import time
 import sys
 import uuid
 
-from PyQt4.QtCore import QFileInfo, QDir
+from qgis.PyQt.QtCore import QDir
 from qgis.core import QgsApplication
 
 numExported = 1
@@ -46,7 +46,7 @@ def userFolder():
 
 
 def defaultOutputFolder():
-    folder = os.path.join(userFolder(), "outputs")
+    folder = os.path.join(userFolder(), 'outputs')
     if not QDir(folder).exists():
         QDir().mkpath(folder)
 
@@ -60,7 +60,7 @@ def isWindows():
 def isMac():
     return sys.platform == 'darwin'
 
-_tempFolderSuffix = unicode(uuid.uuid4()).replace('-', '')
+_tempFolderSuffix = uuid.uuid4().hex
 
 
 def tempFolder():
@@ -96,7 +96,7 @@ def getTempFilenameInTempFolder(basename):
     """
 
     path = tempFolder()
-    path = os.path.join(path, unicode(uuid.uuid4()).replace('-', ''))
+    path = os.path.join(path, uuid.uuid4().hex)
     mkdir(path)
     basename = removeInvalidChars(basename)
     filename = os.path.join(path, basename)
@@ -108,7 +108,7 @@ def getTempDirInTempFolder():
     """
 
     path = tempFolder()
-    path = os.path.join(path, unicode(uuid.uuid4()).replace('-', ''))
+    path = os.path.join(path, uuid.uuid4().hex)
     mkdir(path)
     return path
 
@@ -136,3 +136,15 @@ def mkdir(newdir):
             mkdir(head)
         if tail:
             os.mkdir(newdir)
+
+
+def escapeAndJoin(strList):
+    joined = ''
+    for s in strList:
+        if s[0] != '-' and ' ' in s:
+            escaped = '"' + s.replace('\\', '\\\\').replace('"', '\\"') \
+                + '"'
+        else:
+            escaped = s
+        joined += escaped + ' '
+    return joined.strip()

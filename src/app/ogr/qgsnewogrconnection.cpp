@@ -16,6 +16,7 @@
  ***************************************************************************/
 #include <QSettings>
 #include <QMessageBox>
+#include <QRegExpValidator>
 
 #include "qgsnewogrconnection.h"
 #include "qgscontexthelp.h"
@@ -69,6 +70,7 @@ QgsNewOgrConnection::QgsNewOgrConnection( QWidget *parent, const QString& connTy
     txtName->setEnabled( false );
     cmbDatabaseTypes->setEnabled( false );
   }
+  txtName->setValidator( new QRegExpValidator( QRegExp( "[^\\/]+" ), txtName ) );
 }
 
 QgsNewOgrConnection::~QgsNewOgrConnection()

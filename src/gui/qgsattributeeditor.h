@@ -30,11 +30,12 @@ class QgsDualView;
 class QgsRelationManager;
 class QgsVectorLayer;
 
-/**
+/** \ingroup gui
  * \brief create attribute widget for editing
  *
  * @deprecated
  */
+// TODO QGIS 3.0 - remove
 class GUI_EXPORT QgsAttributeEditor : public QObject
 {
     Q_OBJECT

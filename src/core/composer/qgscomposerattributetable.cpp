@@ -25,7 +25,8 @@
 //QgsComposerAttributeTableCompare
 
 QgsComposerAttributeTableCompare::QgsComposerAttributeTableCompare()
-    : mCurrentSortColumn( 0 ), mAscending( true )
+    : mCurrentSortColumn( 0 )
+    , mAscending( true )
 {
 }
 
@@ -129,14 +130,15 @@ void QgsComposerAttributeTable::resetColumns()
   mColumns.clear();
 
   //rebuild columns list from vector layer fields
-  const QgsFields& fields = mVectorLayer->fields();
-  for ( int idx = 0; idx < fields.count(); ++idx )
+  int idx = 0;
+  Q_FOREACH ( const QgsField& field, mVectorLayer->fields() )
   {
     QString currentAlias = mVectorLayer->attributeDisplayName( idx );
     QgsComposerTableColumn* col = new QgsComposerTableColumn;
-    col->setAttribute( fields[idx].name() );
+    col->setAttribute( field.name() );
     col->setHeading( currentAlias );
     mColumns.append( col );
+    idx++;
   }
 }
 
@@ -244,13 +246,15 @@ void QgsComposerAttributeTable::setDisplayAttributes( const QSet<int>& attr, boo
   else
   {
     //resetting, so add all attributes to columns
-    for ( int idx = 0; idx < fields.count(); ++idx )
+    int idx = 0;
+    Q_FOREACH ( const QgsField& field, fields )
     {
       QString currentAlias = mVectorLayer->attributeDisplayName( idx );
       QgsComposerTableColumn* col = new QgsComposerTableColumn;
-      col->setAttribute( fields[idx].name() );
+      col->setAttribute( field.name() );
       col->setHeading( currentAlias );
       mColumns.append( col );
+      idx++;
     }
   }
 

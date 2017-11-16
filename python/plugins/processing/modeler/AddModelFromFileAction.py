@@ -27,12 +27,14 @@ __revision__ = '$Format:%H$'
 
 import os
 import shutil
-from PyQt4.QtGui import QIcon, QFileDialog, QMessageBox
-from PyQt4.QtCore import QSettings, QFileInfo
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QFileDialog, QMessageBox
+from qgis.PyQt.QtCore import QSettings, QFileInfo
 from processing.gui.ToolboxAction import ToolboxAction
 from processing.modeler.ModelerAlgorithm import ModelerAlgorithm
 from processing.modeler.WrongModelException import WrongModelException
 from processing.modeler.ModelerUtils import ModelerUtils
+from processing.core.alglist import algList
 
 pluginPath = os.path.split(os.path.dirname(__file__))[0]
 
@@ -40,8 +42,8 @@ pluginPath = os.path.split(os.path.dirname(__file__))[0]
 class AddModelFromFileAction(ToolboxAction):
 
     def __init__(self):
-        self.name = self.tr('Add model from file', 'AddModelFromFileAction')
-        self.group = self.tr('Tools', 'AddModelFromFileAction')
+        self.name, self.i18n_name = self.trAction('Add model from file')
+        self.group, self.i18n_group = self.trAction('Tools')
 
     def getIcon(self):
         return QIcon(os.path.join(pluginPath, 'images', 'model.png'))
@@ -69,6 +71,6 @@ class AddModelFromFileAction(ToolboxAction):
                                     self.tr('Error reading model', 'AddModelFromFileAction'),
                                     self.tr('Cannot read file', 'AddModelFromFileAction'))
                 return
-            destFilename = os.path.join(ModelerUtils.modelsFolder(), os.path.basename(filename))
+            destFilename = os.path.join(ModelerUtils.modelsFolders()[0], os.path.basename(filename))
             shutil.copyfile(filename, destFilename)
-            self.toolbox.updateProvider('model')
+            algList.reloadProvider('model')

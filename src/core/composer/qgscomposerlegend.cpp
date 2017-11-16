@@ -334,7 +334,6 @@ void QgsComposerLegend::setRasterBorderWidth( double width ) { mSettings.setRast
 
 void QgsComposerLegend::synchronizeWithModel()
 {
-  QgsDebugMsg( "Entered" );
   adjustBoxSize();
   updateItem();
 }
@@ -413,6 +412,8 @@ bool QgsComposerLegend::writeXML( QDomElement& elem, QDomDocument & doc ) const
   {
     composerLegendElem.setAttribute( "legendFilterByMap", "1" );
   }
+
+  composerLegendElem.setAttribute( "legendFilterByAtlas", mFilterOutAtlas ? "1" : "0" );
 
   return _writeXML( composerLegendElem, doc );
 }
@@ -523,6 +524,7 @@ bool QgsComposerLegend::readXML( const QDomElement& itemElem, const QDomDocument
   {
     setComposerMap( mComposition->getComposerMapById( itemElem.attribute( "map" ).toInt() ) );
   }
+  mFilterOutAtlas = itemElem.attribute( "legendFilterByAtlas", "0" ).toInt();
 
   QDomElement oldLegendModelElem = itemElem.firstChildElement( "Model" );
   if ( !oldLegendModelElem.isNull() )
@@ -536,7 +538,7 @@ bool QgsComposerLegend::readXML( const QDomElement& itemElem, const QDomDocument
   {
     // QGIS >= 2.6
     QDomElement layerTreeElem = itemElem.firstChildElement( "layer-tree-group" );
-    setCustomLayerTree( QgsLayerTreeGroup::readXML( layerTreeElem ) );
+    setCustomLayerTree( QgsLayerTreeGroup::readXML( layerTreeElem, true ) );
   }
 
   //restore general composer item properties

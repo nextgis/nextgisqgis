@@ -19,6 +19,8 @@
 #include "qgssymbollayerv2utils.h"
 #include "qgsdxfexport.h"
 #include "qgsexpression.h"
+#include "qgsgeometry.h"
+#include "qgsgeometrycollectionv2.h"
 #include "qgsrendercontext.h"
 #include "qgsproject.h"
 #include "qgssvgcache.h"
@@ -388,7 +390,13 @@ QgsSymbolLayerV2* QgsSimpleFillSymbolLayerV2::createFromSld( QDomElement &elemen
   QPointF offset;
   QgsSymbolLayerV2Utils::displacementFromSldElement( element, offset );
 
+  QString uom = element.attribute( QString( "uom" ), "" );
+  offset.setX( QgsSymbolLayerV2Utils::sizeInPixelsFromSldUom( uom, offset.x() ) );
+  offset.setY( QgsSymbolLayerV2Utils::sizeInPixelsFromSldUom( uom, offset.y() ) );
+  borderWidth = QgsSymbolLayerV2Utils::sizeInPixelsFromSldUom( uom, borderWidth );
+
   QgsSimpleFillSymbolLayerV2* sl = new QgsSimpleFillSymbolLayerV2( color, fillStyle, borderColor, borderStyle, borderWidth );
+  sl->setOutputUnit( QgsSymbolV2::Pixel );
   sl->setOffset( offset );
   return sl;
 }
@@ -947,18 +955,17 @@ QgsMapUnitScale QgsGradientFillSymbolLayerV2::mapUnitScale() const
 //QgsShapeburstFillSymbolLayer
 
 QgsShapeburstFillSymbolLayerV2::QgsShapeburstFillSymbolLayerV2( const QColor& color, const QColor& color2, ShapeburstColorType colorType,
-    int blurRadius, bool useWholeShape, double maxDistance ) :
-
-    mBlurRadius( blurRadius ),
-    mUseWholeShape( useWholeShape ),
-    mMaxDistance( maxDistance ),
-    mDistanceUnit( QgsSymbolV2::MM ),
-    mColorType( colorType ),
-    mColor2( color2 ),
-    mGradientRamp( nullptr ),
-    mTwoColorGradientRamp( nullptr ),
-    mIgnoreRings( false ),
-    mOffsetUnit( QgsSymbolV2::MM )
+    int blurRadius, bool useWholeShape, double maxDistance )
+    : mBlurRadius( blurRadius )
+    , mUseWholeShape( useWholeShape )
+    , mMaxDistance( maxDistance )
+    , mDistanceUnit( QgsSymbolV2::MM )
+    , mColorType( colorType )
+    , mColor2( color2 )
+    , mGradientRamp( nullptr )
+    , mTwoColorGradientRamp( nullptr )
+    , mIgnoreRings( false )
+    , mOffsetUnit( QgsSymbolV2::MM )
 {
   mColor = color;
 }
@@ -1734,10 +1741,11 @@ QSet<QString> QgsImageFillSymbolLayer::usedAttributes() const
 
 //QgsSVGFillSymbolLayer
 
-QgsSVGFillSymbolLayer::QgsSVGFillSymbolLayer( const QString& svgFilePath, double width, double angle ): QgsImageFillSymbolLayer(),
-    mPatternWidth( width ),
-    mPatternWidthUnit( QgsSymbolV2::MM ),
-    mSvgOutlineWidthUnit( QgsSymbolV2::MM )
+QgsSVGFillSymbolLayer::QgsSVGFillSymbolLayer( const QString& svgFilePath, double width, double angle )
+    : QgsImageFillSymbolLayer()
+    , mPatternWidth( width )
+    , mPatternWidthUnit( QgsSymbolV2::MM )
+    , mSvgOutlineWidthUnit( QgsSymbolV2::MM )
 {
   setSvgFilePath( svgFilePath );
   mOutlineWidth = 0.3;
@@ -1749,11 +1757,12 @@ QgsSVGFillSymbolLayer::QgsSVGFillSymbolLayer( const QString& svgFilePath, double
   mSvgPattern = nullptr;
 }
 
-QgsSVGFillSymbolLayer::QgsSVGFillSymbolLayer( const QByteArray& svgData, double width, double angle ): QgsImageFillSymbolLayer(),
-    mPatternWidth( width ),
-    mPatternWidthUnit( QgsSymbolV2::MM ),
-    mSvgData( svgData ),
-    mSvgOutlineWidthUnit( QgsSymbolV2::MM )
+QgsSVGFillSymbolLayer::QgsSVGFillSymbolLayer( const QByteArray& svgData, double width, double angle )
+    : QgsImageFillSymbolLayer()
+    , mPatternWidth( width )
+    , mPatternWidthUnit( QgsSymbolV2::MM )
+    , mSvgData( svgData )
+    , mSvgOutlineWidthUnit( QgsSymbolV2::MM )
 {
   storeViewBox();
   mOutlineWidth = 0.3;
@@ -2156,6 +2165,10 @@ QgsSymbolLayerV2* QgsSVGFillSymbolLayer::createFromSld( QDomElement &element )
 
   QgsSymbolLayerV2Utils::lineFromSld( graphicElem, penStyle, borderColor, borderWidth );
 
+  QString uom = element.attribute( QString( "uom" ), "" );
+  size = QgsSymbolLayerV2Utils::sizeInPixelsFromSldUom( uom, size );
+  borderWidth = QgsSymbolLayerV2Utils::sizeInPixelsFromSldUom( uom, borderWidth );
+
   double angle = 0.0;
   QString angleFunc;
   if ( QgsSymbolLayerV2Utils::rotationFromSldElement( graphicElem, angleFunc ) )
@@ -2167,6 +2180,7 @@ QgsSymbolLayerV2* QgsSVGFillSymbolLayer::createFromSld( QDomElement &element )
   }
 
   QgsSVGFillSymbolLayer* sl = new QgsSVGFillSymbolLayer( path, size, angle );
+  sl->setOutputUnit( QgsSymbolV2::Pixel );
   sl->setSvgFillColor( fillColor );
   sl->setSvgOutlineColor( borderColor );
   sl->setSvgOutlineWidth( borderWidth );
@@ -2832,8 +2846,12 @@ void QgsLinePatternFillSymbolLayer::startRender( QgsSymbolV2RenderContext& conte
   prepareExpressions( context );
 }
 
-void QgsLinePatternFillSymbolLayer::stopRender( QgsSymbolV2RenderContext & )
+void QgsLinePatternFillSymbolLayer::stopRender( QgsSymbolV2RenderContext &context )
 {
+  if ( mFillLineSymbol )
+  {
+    mFillLineSymbol->stopRender( context.renderContext() );
+  }
 }
 
 QgsStringMap QgsLinePatternFillSymbolLayer::properties() const
@@ -3011,7 +3029,12 @@ QgsSymbolLayerV2* QgsLinePatternFillSymbolLayer::createFromSld( QDomElement &ele
     offset = sqrt( pow( vectOffset.x(), 2 ) + pow( vectOffset.y(), 2 ) );
   }
 
+  QString uom = element.attribute( QString( "uom" ), "" );
+  size = QgsSymbolLayerV2Utils::sizeInPixelsFromSldUom( uom, size );
+  lineWidth = QgsSymbolLayerV2Utils::sizeInPixelsFromSldUom( uom, lineWidth );
+
   QgsLinePatternFillSymbolLayer* sl = new QgsLinePatternFillSymbolLayer();
+  sl->setOutputUnit( QgsSymbolV2::Pixel );
   sl->setColor( lineColor );
   sl->setLineWidth( lineWidth );
   sl->setLineAngle( angle );
@@ -3037,9 +3060,17 @@ QgsSymbolLayerV2* QgsLinePatternFillSymbolLayer::createFromSld( QDomElement &ele
 
 ////////////////////////
 
-QgsPointPatternFillSymbolLayer::QgsPointPatternFillSymbolLayer(): QgsImageFillSymbolLayer(), mMarkerSymbol( nullptr ), mDistanceX( 15 ),
-    mDistanceXUnit( QgsSymbolV2::MM ), mDistanceY( 15 ), mDistanceYUnit( QgsSymbolV2::MM ), mDisplacementX( 0 ), mDisplacementXUnit( QgsSymbolV2::MM ),
-    mDisplacementY( 0 ), mDisplacementYUnit( QgsSymbolV2::MM )
+QgsPointPatternFillSymbolLayer::QgsPointPatternFillSymbolLayer()
+    : QgsImageFillSymbolLayer()
+    , mMarkerSymbol( nullptr )
+    , mDistanceX( 15 )
+    , mDistanceXUnit( QgsSymbolV2::MM )
+    , mDistanceY( 15 )
+    , mDistanceYUnit( QgsSymbolV2::MM )
+    , mDisplacementX( 0 )
+    , mDisplacementXUnit( QgsSymbolV2::MM )
+    , mDisplacementY( 0 )
+    , mDisplacementYUnit( QgsSymbolV2::MM )
 {
   mDistanceX = 15;
   mDistanceY = 15;
@@ -3416,7 +3447,12 @@ QColor QgsPointPatternFillSymbolLayer::color() const
 //////////////
 
 
-QgsCentroidFillSymbolLayerV2::QgsCentroidFillSymbolLayerV2(): mMarker( nullptr ), mPointOnSurface( false )
+QgsCentroidFillSymbolLayerV2::QgsCentroidFillSymbolLayerV2()
+    : mMarker( nullptr )
+    , mPointOnSurface( false )
+    , mPointOnAllParts( true )
+    , mCurrentFeatureId( -1 )
+    , mBiggestPartIndex( -1 )
 {
   setSubSymbol( new QgsMarkerSymbolV2() );
 }
@@ -3432,6 +3468,8 @@ QgsSymbolLayerV2* QgsCentroidFillSymbolLayerV2::create( const QgsStringMap& prop
 
   if ( properties.contains( "point_on_surface" ) )
     sl->setPointOnSurface( properties["point_on_surface"].toInt() != 0 );
+  if ( properties.contains( "point_on_all_parts" ) )
+    sl->setPointOnAllParts( properties["point_on_all_parts"].toInt() != 0 );
 
   return sl;
 }
@@ -3456,6 +3494,9 @@ void QgsCentroidFillSymbolLayerV2::startRender( QgsSymbolV2RenderContext& contex
 {
   mMarker->setAlpha( context.alpha() );
   mMarker->startRender( context.renderContext(), context.fields() );
+
+  mCurrentFeatureId = -1;
+  mBiggestPartIndex = 0;
 }
 
 void QgsCentroidFillSymbolLayerV2::stopRender( QgsSymbolV2RenderContext& context )
@@ -3467,14 +3508,51 @@ void QgsCentroidFillSymbolLayerV2::renderPolygon( const QPolygonF& points, QList
 {
   Q_UNUSED( rings );
 
-  QPointF centroid = mPointOnSurface ? QgsSymbolLayerV2Utils::polygonPointOnSurface( points ) : QgsSymbolLayerV2Utils::polygonCentroid( points );
-  mMarker->renderPoint( centroid, context.feature(), context.renderContext(), -1, context.selected() );
+  if ( !mPointOnAllParts )
+  {
+    const QgsFeature* feature = context.feature();
+    if ( feature )
+    {
+      if ( feature->id() != mCurrentFeatureId )
+      {
+        mCurrentFeatureId = feature->id();
+        mBiggestPartIndex = 1;
+
+        if ( context.geometryPartCount() > 1 )
+        {
+          const QgsGeometry *geom = feature->constGeometry();
+          const QgsGeometryCollectionV2* geomCollection = static_cast<const QgsGeometryCollectionV2*>( geom->geometry() );
+
+          double area = 0;
+          double areaBiggest = 0;
+          for ( int i = 0; i < context.geometryPartCount(); ++i )
+          {
+            area = geomCollection->geometryN( i )->area();
+            if ( area > areaBiggest )
+            {
+              areaBiggest = area;
+              mBiggestPartIndex = i + 1;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  QgsDebugMsg( QString( "num: %1, count: %2" ).arg( context.geometryPartNum() ).arg( context.geometryPartCount() ) );
+
+  if ( mPointOnAllParts || ( context.geometryPartNum() == mBiggestPartIndex ) )
+  {
+    QPointF centroid = mPointOnSurface ? QgsSymbolLayerV2Utils::polygonPointOnSurface( points ) : QgsSymbolLayerV2Utils::polygonCentroid( points );
+    mMarker->renderPoint( centroid, context.feature(), context.renderContext(), -1, context.selected() );
+  }
 }
 
 QgsStringMap QgsCentroidFillSymbolLayerV2::properties() const
 {
   QgsStringMap map;
   map["point_on_surface"] = QString::number( mPointOnSurface );
+  map["point_on_all_parts"] = QString::number( mPointOnAllParts );
   return map;
 }
 
@@ -3485,6 +3563,7 @@ QgsCentroidFillSymbolLayerV2* QgsCentroidFillSymbolLayerV2::clone() const
   x->mColor = mColor;
   x->setSubSymbol( mMarker->clone() );
   x->setPointOnSurface( mPointOnSurface );
+  x->setPointOnAllParts( mPointOnAllParts );
   copyPaintEffect( x );
   return x;
 }

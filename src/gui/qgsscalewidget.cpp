@@ -37,7 +37,7 @@ QgsScaleWidget::QgsScaleWidget( QWidget *parent )
   layout->addWidget( mCurrentScaleButton );
   mCurrentScaleButton->hide();
 
-  connect( mScaleComboBox, SIGNAL( scaleChanged() ), this, SIGNAL( scaleChanged() ) );
+  connect( mScaleComboBox, SIGNAL( scaleChanged( double ) ), this, SIGNAL( scaleChanged( double ) ) );
   connect( mCurrentScaleButton, SIGNAL( clicked() ), this, SLOT( setScaleFromCanvas() ) );
 }
 
@@ -66,5 +66,7 @@ void QgsScaleWidget::setScaleFromCanvas()
   setScale( 1 / mCanvas->scale() );
 }
 
-
-
+void QgsScaleWidget::setScale( double scale )
+{
+  return mScaleComboBox->setScale( scale );
+}

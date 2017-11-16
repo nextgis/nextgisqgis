@@ -25,7 +25,7 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
-from PyQt4.QtCore import QVariant
+from qgis.PyQt.QtCore import QVariant
 from qgis.core import QgsExpression, QgsExpressionContext, QgsExpressionContextUtils, QgsFeature, QgsField, QgsDistanceArea, QgsProject, GEO_NONE
 from qgis.utils import iface
 from processing.core.GeoAlgorithm import GeoAlgorithm
@@ -130,7 +130,7 @@ class FieldsCalculator(GeoAlgorithm):
         calculationSuccess = True
 
         features = vector.features(layer)
-        total = 100.0 / len(features)
+        total = 100.0 / len(features) if len(features) > 0 else 1
 
         rownum = 1
         for current, f in enumerate(features):

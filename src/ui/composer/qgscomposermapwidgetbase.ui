@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>457</width>
-    <height>1086</height>
+    <width>472</width>
+    <height>2688</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -54,9 +54,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-1446</y>
-        <width>444</width>
-        <height>2493</height>
+        <y>0</y>
+        <width>466</width>
+        <height>2627</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -81,7 +81,7 @@
           <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_5">
-          <item row="0" column="0" colspan="3">
+          <item row="0" column="0" colspan="2">
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
              <widget class="QComboBox" name="mPreviewModeComboBox">
@@ -102,13 +102,6 @@
             </item>
            </layout>
           </item>
-          <item row="4" column="0" colspan="3">
-           <widget class="QCheckBox" name="mDrawCanvasItemsCheckBox">
-            <property name="text">
-             <string>Draw map canvas items</string>
-            </property>
-           </widget>
-          </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_2">
             <property name="text">
@@ -119,7 +112,7 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="2">
+          <item row="1" column="1">
            <layout class="QHBoxLayout" name="horizontalLayout_6">
             <item>
              <widget class="QLineEdit" name="mScaleLineEdit">
@@ -137,7 +130,72 @@
             </item>
            </layout>
           </item>
-          <item row="5" column="0" colspan="3">
+          <item row="2" column="0">
+           <widget class="QLabel" name="mMapRotationLabel">
+            <property name="text">
+             <string>Map rotation</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <layout class="QHBoxLayout" name="horizontalLayout_7">
+            <item>
+             <widget class="QgsDoubleSpinBox" name="mMapRotationSpinBox">
+              <property name="suffix">
+               <string> °</string>
+              </property>
+              <property name="maximum">
+               <double>360.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QgsDataDefinedButton" name="mMapRotationDDBtn">
+              <property name="text">
+               <string>...</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="3" column="0" colspan="2">
+           <widget class="QCheckBox" name="mDrawCanvasItemsCheckBox">
+            <property name="text">
+             <string>Draw map canvas items</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QgsCollapsibleGroupBoxBasic" name="groupBox_2">
+         <property name="title">
+          <string>Layers</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_12">
+            <item>
+             <widget class="QCheckBox" name="mFollowVisibilityPresetCheckBox">
+              <property name="text">
+               <string>Follow visibility preset</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="mFollowVisibilityPresetCombo"/>
+            </item>
+            <item>
+             <widget class="QgsDataDefinedButton" name="mStylePresetsDDBtn">
+              <property name="text">
+               <string>...</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
            <layout class="QHBoxLayout" name="horizontalLayout_10">
             <item>
              <widget class="QCheckBox" name="mKeepLayerListCheckBox">
@@ -148,7 +206,7 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>Lock layers for map item</string>
+               <string>Lock layers</string>
               </property>
              </widget>
             </item>
@@ -184,51 +242,12 @@
             </item>
            </layout>
           </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="mMapRotationLabel">
+          <item>
+           <widget class="QCheckBox" name="mKeepLayerStylesCheckBox">
             <property name="text">
-             <string>Map rotation</string>
+             <string>Lock styles for layers</string>
             </property>
            </widget>
-          </item>
-          <item row="2" column="2">
-           <layout class="QHBoxLayout" name="horizontalLayout_7">
-            <item>
-             <widget class="QgsDoubleSpinBox" name="mMapRotationSpinBox">
-              <property name="suffix">
-               <string> °</string>
-              </property>
-              <property name="maximum">
-               <double>360.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QgsDataDefinedButton" name="mMapRotationDDBtn">
-              <property name="text">
-               <string>...</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item row="8" column="0" colspan="3">
-           <layout class="QHBoxLayout" name="horizontalLayout_12">
-            <item>
-             <widget class="QCheckBox" name="mKeepLayerStylesCheckBox">
-              <property name="text">
-               <string>Lock layer styles for map item</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QgsDataDefinedButton" name="mStylePresetsDDBtn">
-              <property name="text">
-               <string>...</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
           </item>
          </layout>
         </widget>
@@ -1350,7 +1369,7 @@
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="QComboBox" name="mOverviewFrameMapComboBox"/>
+              <widget class="QgsComposerItemComboBox" name="mOverviewFrameMapComboBox"/>
              </item>
              <item row="1" column="0">
               <widget class="QLabel" name="mOverviewFrameStyleLabel">
@@ -1436,10 +1455,15 @@
    <extends>QComboBox</extends>
    <header>qgsblendmodecombobox.h</header>
   </customwidget>
+  <customwidget>
+   <class>QgsComposerItemComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgscomposeritemcombobox.h</header>
+  </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>scrollArea</tabstop>
   <tabstop>groupBox</tabstop>
+  <tabstop>scrollArea</tabstop>
   <tabstop>mPreviewModeComboBox</tabstop>
   <tabstop>mUpdatePreviewButton</tabstop>
   <tabstop>mScaleLineEdit</tabstop>
@@ -1447,11 +1471,13 @@
   <tabstop>mMapRotationSpinBox</tabstop>
   <tabstop>mMapRotationDDBtn</tabstop>
   <tabstop>mDrawCanvasItemsCheckBox</tabstop>
+  <tabstop>mFollowVisibilityPresetCheckBox</tabstop>
+  <tabstop>mFollowVisibilityPresetCombo</tabstop>
+  <tabstop>mStylePresetsDDBtn</tabstop>
   <tabstop>mKeepLayerListCheckBox</tabstop>
   <tabstop>mLayerListFromPresetButton</tabstop>
   <tabstop>mLayersDDBtn</tabstop>
   <tabstop>mKeepLayerStylesCheckBox</tabstop>
-  <tabstop>mStylePresetsDDBtn</tabstop>
   <tabstop>mExtentsCheckBox</tabstop>
   <tabstop>mXMinLineEdit</tabstop>
   <tabstop>mXMinDDBtn</tabstop>

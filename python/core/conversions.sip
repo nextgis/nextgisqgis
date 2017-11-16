@@ -19,12 +19,14 @@ which are not wrapped by PyQt:
 - QList< QPair< QString, QList<QString> > >
 - QVector<TYPE*>
 - QMap<qint64, QgsFeature*>
+- NULL QVariant which is missing in PyQt5 with sip.enableautoconversion
 */
 
 %Feature QSETINT_CONVERSION
 %Feature QSETTYPE_CONVERSION
 %Feature QLISTCONSTPTR_CONVERSION
 %Feature QVECTORINT_CONVERSION
+%Feature CHIMERA_NULL_VARIANT_CONVERSION
 
 %ModuleHeaderCode
 
@@ -1404,7 +1406,11 @@ template<int, TYPE2*>
 
       const int t1 = i.key();
       TYPE2 * t2 = i.value();
+#if (PY_VERSION_HEX < 0x03000000)
       PyObject *t1obj = PyInt_FromSize_t(t1);
+#else
+      PyObject *t1obj = PyLong_FromSize_t(t1);
+#endif
       PyObject *t2obj = sipConvertFromType(t2, sipType_TYPE2, sipTransferObj);
       if (PyDict_GetItem(d, t1obj) == NULL)
       {
@@ -1577,6 +1583,67 @@ template<int, TYPE2*>
 
       QString *t1 = reinterpret_cast<QString *>(sipConvertToType(sipKey, sipType_QString, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
       qm->append( qMakePair( *t1, l ) );
+      sipReleaseType(t1, sipType_QString, state);
+    }
+
+    *sipCppPtr = qm;
+
+    return sipGetState(sipTransferObj);
+%End
+};
+
+%MappedType QList < QPair< QString, double > >
+{
+%TypeHeaderCode
+#include <QPair>
+#include <QList>
+%End
+
+%ConvertFromTypeCode
+//convert map to a python dictionary
+    PyObject *d;
+
+    if ((d = PyList_New( sipCpp->size() )) == NULL)
+      return NULL;
+
+    for ( int i = 0; i<sipCpp->size(); i++ )
+    {
+      PyObject *p;
+      if ((p = PyList_New(2) ) == NULL)
+      {
+        Py_DECREF(d);
+        return NULL;
+      }
+
+      PyObject *t1obj = sipConvertFromNewType(new QString(sipCpp->at(i).first), sipType_QString, sipTransferObj);
+      PyObject *t2obj = PyFloat_FromDouble( (double) sipCpp->at(i).second );
+      PyList_SetItem( p, 0, t1obj );
+      PyList_SetItem( p, 1, t2obj );
+
+      PyList_SetItem( d, i, p );
+    }
+
+    return d;
+%End
+%ConvertToTypeCode
+#if PY_VERSION_HEX >= 0x02050000
+    Py_ssize_t i = 0;
+#else
+    int i = 0;
+#endif
+    QList < QPair< QString, double > > *qm = new QList< QPair< QString, double > >;
+
+    for ( i = 0; i < PyList_GET_SIZE(sipPy); i++ )
+    {
+          int state;
+
+      PyObject *sipPair = PyList_GetItem( sipPy, i );
+      PyObject *sipString = PyList_GetItem( sipPair, 0 );
+      PyObject *sipDouble = PyList_GetItem( sipPair, 1 );
+
+      QString *t1 = reinterpret_cast<QString *>(sipConvertToType(sipString, sipType_QString, sipTransferObj, SIP_NOT_NONE, &state, sipIsErr));
+      double value = PyFloat_AsDouble(sipDouble);
+      qm->append( qMakePair( *t1, value ) );
       sipReleaseType(t1, sipType_QString, state);
     }
 
@@ -1959,4 +2026,18 @@ template <TYPE>
     return sipGetState(sipTransferObj);
 %End
 };
+%End
+
+%If (CHIMERA_NULL_VARIANT_CONVERSION)
+%ModuleHeaderCode
+#include "qgissiphelper.h"
+%End
+
+%PostInitialisationCode
+
+// Import the Chimera helper registration functions.
+void (*register_from_qvariant_convertor)(FromQVariantConvertorFn);
+register_from_qvariant_convertor = (void (*)(FromQVariantConvertorFn))sipImportSymbol("pyqt5_register_from_qvariant_convertor");
+register_from_qvariant_convertor(null_from_qvariant_convertor);
+%End
 %End

@@ -26,9 +26,10 @@ __copyright__ = '(C) 2012, Victor Olaya'
 __revision__ = '$Format:%H$'
 
 import os
+import re
 
-from PyQt4.QtGui import QIcon
-from PyQt4.QtCore import QUrl
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtCore import QUrl
 
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.algs.gdal.GdalAlgorithmDialog import GdalAlgorithmDialog
@@ -59,7 +60,9 @@ class GdalAlgorithm(GeoAlgorithm):
                     c = c.replace(layer.source(), exported)
                     if os.path.isfile(layer.source()):
                         fileName = os.path.splitext(os.path.split(layer.source())[1])[0]
-                        c = c.replace(' ' + fileName + ' ', ' ' + exportedFileName + ' ')
+                        c = re.sub('[\s]{}[\s]'.format(fileName), ' ' + exportedFileName + ' ', c)
+                        c = re.sub('[\s]{}'.format(fileName), ' ' + exportedFileName, c)
+                        c = re.sub('["\']{}["\']'.format(fileName), "'" + exportedFileName + "'", c)
 
             commands[i] = c
         GdalUtils.runGdal(commands, progress)

@@ -29,6 +29,8 @@ class QgsMapLayer;
 class QgsVectorLayer;
 struct sqlite3;
 
+/** \ingroup core
+ */
 class CORE_EXPORT QgsOfflineEditing : public QObject
 {
     Q_OBJECT
@@ -49,14 +51,15 @@ class CORE_EXPORT QgsOfflineEditing : public QObject
     ~QgsOfflineEditing();
 
     /** Convert current project for offline editing
-     * @param offlineDataPath path to offline db file
-     * @param offlineDbFile offline db file name
-     * @param layerIds list of layer names to convert
+     * @param offlineDataPath Path to offline db file
+     * @param offlineDbFile Offline db file name
+     * @param layerIds List of layer names to convert
+     * @param onlySelected Only copy selected features from layers where a selection is present
      */
-    bool convertToOfflineProject( const QString& offlineDataPath, const QString& offlineDbFile, const QStringList& layerIds );
+    bool convertToOfflineProject( const QString& offlineDataPath, const QString& offlineDbFile, const QStringList& layerIds, bool onlySelected = false );
 
     /** Return true if current project is offline */
-    bool isOfflineProject();
+    bool isOfflineProject() const;
 
     /** Synchronize to remote layers */
     void synchronize();
@@ -96,7 +99,7 @@ class CORE_EXPORT QgsOfflineEditing : public QObject
     void initializeSpatialMetadata( sqlite3 *sqlite_handle );
     bool createSpatialiteDB( const QString& offlineDbPath );
     void createLoggingTables( sqlite3* db );
-    QgsVectorLayer* copyVectorLayer( QgsVectorLayer* layer, sqlite3* db, const QString& offlineDbPath );
+    QgsVectorLayer* copyVectorLayer( QgsVectorLayer* layer, sqlite3* db, const QString& offlineDbPath, bool onlySelected );
 
     void applyAttributesAdded( QgsVectorLayer* remoteLayer, sqlite3* db, int layerId, int commitNo );
     void applyFeaturesAdded( QgsVectorLayer* offlineLayer, QgsVectorLayer* remoteLayer, sqlite3* db, int layerId );
@@ -105,6 +108,15 @@ class CORE_EXPORT QgsOfflineEditing : public QObject
     void applyGeometryChanges( QgsVectorLayer* remoteLayer, sqlite3* db, int layerId, int commitNo );
     void updateFidLookup( QgsVectorLayer* remoteLayer, sqlite3* db, int layerId );
     void copySymbology( QgsVectorLayer* sourceLayer, QgsVectorLayer* targetLayer );
+    /**
+     * Updates all relations that reference or are referenced by the source layer to the targetLayer.
+     */
+    void updateRelations( QgsVectorLayer* sourceLayer, QgsVectorLayer* targetLayer );
+    /**
+     * Update all visibility presets that affect the source layer.
+     */
+    void updateVisibilityPresets( QgsVectorLayer* sourceLayer, QgsVectorLayer* targetLayer );
+
     QMap<int, int> attributeLookup( QgsVectorLayer* offlineLayer, QgsVectorLayer* remoteLayer );
 
     void showWarning( const QString& message );
@@ -141,6 +153,11 @@ class CORE_EXPORT QgsOfflineEditing : public QObject
     };
     typedef QList<GeometryChange> GeometryChanges;
     GeometryChanges sqlQueryGeometryChanges( sqlite3* db, const QString& sql );
+    /**
+     * in case of sync error the flag is set to true
+     */
+    bool syncError;
+
 
   private slots:
     void layerAdded( QgsMapLayer* layer );

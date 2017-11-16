@@ -27,7 +27,9 @@
 
 class QgsSpatialIndex;
 
-/** A renderer that automatically displaces points with the same position*/
+/** \ingroup core
+ * A renderer that automatically displaces points with the same position
+*/
 class CORE_EXPORT QgsPointDisplacementRenderer: public QgsFeatureRendererV2
 {
   public:
@@ -78,7 +80,7 @@ class CORE_EXPORT QgsPointDisplacementRenderer: public QgsFeatureRendererV2
      */
     virtual QgsSymbolV2List originalSymbolsForFeature( QgsFeature& feat, QgsRenderContext& context ) override;
     /** Returns which legend keys match the feature
-     * @note added in QGIS 2.14.10
+     * @note added in QGIS 2.18.2
      */
     virtual QSet< QString > legendKeysForFeature( QgsFeature& feature, QgsRenderContext& context ) override;
     /** Proxy that will call this method on the embedded renderer.

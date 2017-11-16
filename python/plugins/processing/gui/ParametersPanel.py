@@ -32,11 +32,12 @@ __revision__ = '$Format:%H$'
 import os
 import locale
 
-from qgis.core import *
+from qgis.core import QgsMapLayerRegistry, QgsMapLayer
 
-from PyQt4 import uic
-from PyQt4.QtCore import QCoreApplication, QVariant
-from PyQt4.QtGui import QWidget, QLayout, QVBoxLayout, QHBoxLayout, QToolButton, QIcon, QLabel, QCheckBox, QComboBox, QLineEdit, QPlainTextEdit
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import QCoreApplication, QVariant
+from qgis.PyQt.QtWidgets import QWidget, QLayout, QVBoxLayout, QHBoxLayout, QToolButton, QLabel, QCheckBox, QComboBox, QLineEdit, QPlainTextEdit
+from qgis.PyQt.QtGui import QIcon
 
 from processing.core.ProcessingConfig import ProcessingConfig
 
@@ -49,14 +50,17 @@ from processing.gui.NumberInputPanel import NumberInputPanel
 from processing.gui.ExtentSelectionPanel import ExtentSelectionPanel
 from processing.gui.FileSelectionPanel import FileSelectionPanel
 from processing.gui.CrsSelectionPanel import CrsSelectionPanel
+from processing.gui.PointSelectionPanel import PointSelectionPanel
 from processing.gui.GeometryPredicateSelectionPanel import \
     GeometryPredicateSelectionPanel
+from processing.gui.ListMultiselectWidget import ListMultiSelectWidget
 
 from processing.core.parameters import ParameterRaster
 from processing.core.parameters import ParameterVector
 from processing.core.parameters import ParameterTable
 from processing.core.parameters import ParameterBoolean
 from processing.core.parameters import ParameterTableField
+from processing.core.parameters import ParameterTableMultipleField
 from processing.core.parameters import ParameterSelection
 from processing.core.parameters import ParameterFixedTable
 from processing.core.parameters import ParameterRange
@@ -66,6 +70,7 @@ from processing.core.parameters import ParameterExtent
 from processing.core.parameters import ParameterFile
 from processing.core.parameters import ParameterCrs
 from processing.core.parameters import ParameterString
+from processing.core.parameters import ParameterPoint
 from processing.core.parameters import ParameterGeometryPredicate
 
 from processing.core.outputs import OutputRaster
@@ -111,7 +116,7 @@ class ParametersPanel(BASE, WIDGET):
                 if isinstance(param, ParameterVector):
                     if dataobjects.canUseVectorLayer(layer, param.shapetype):
                         widget = self.valueItems[param.name]
-                        if isinstance(widget, InputLayerSelectorPanel):
+                        if isinstance(widget, InputLayerSelectorPanel) and hasattr(widget.cmbText, 'addItem'):
                             widget = widget.cmbText
                         widget.addItem(self.getExtendedLayerName(layer), layer)
         elif layer.type() == QgsMapLayer.RasterLayer and dataobjects.canUseRasterLayer(layer):
@@ -140,6 +145,12 @@ class ParametersPanel(BASE, WIDGET):
                     if isinstance(widget, InputLayerSelectorPanel):
                         widget = widget.cmbText
 
+                        if widget is not None:
+                            idx = widget.findData(layer)
+                            if idx != -1:
+                                widget.removeItem(idx)
+                            widget = None
+
         elif layer.type() == QgsMapLayer.RasterLayer:
             for param in self.alg.parameters:
                 if param.hidden:
@@ -147,10 +158,11 @@ class ParametersPanel(BASE, WIDGET):
                 if isinstance(param, ParameterRaster):
                     widget = self.valueItems[param.name].cmbText
 
-        if widget is not None:
-            idx = widget.findData(layer)
-            if idx != -1:
-                widget.removeItem(idx)
+                    if widget is not None:
+                        idx = widget.findData(layer)
+                        if idx != -1:
+                            widget.removeItem(idx)
+                        widget = None
 
         self.updateMultipleInputs()
 
@@ -168,14 +180,11 @@ class ParametersPanel(BASE, WIDGET):
                 widget.updateForOptions(opts)
 
     def initWidgets(self):
-        #tooltips = self.alg.getParameterDescriptions()
-
         # If there are advanced parameters — show corresponding groupbox
         for param in self.alg.parameters:
             if param.isAdvanced:
                 self.grpAdvanced.show()
                 break
-
         # Create widgets and put them in layouts
         for param in self.alg.parameters:
             if param.hidden:
@@ -184,6 +193,8 @@ class ParametersPanel(BASE, WIDGET):
             desc = param.description
             if isinstance(param, ParameterExtent):
                 desc += self.tr(' (xmin, xmax, ymin, ymax)')
+            if isinstance(param, ParameterPoint):
+                desc += self.tr(' (x, y)')
             try:
                 if param.optional:
                     desc += self.tr(' [optional]')
@@ -210,11 +221,8 @@ class ParametersPanel(BASE, WIDGET):
                 widget = QWidget()
                 widget.setLayout(layout)
 
-            #~ if param.name in tooltips.keys():
-                #~ tooltip = tooltips[param.name]
-            #~ else:
-                #~ tooltip = param.description
-            #~ widget.setToolTip(tooltip)
+            tooltips = self.alg.getParameterDescriptions()
+            widget.setToolTip(tooltips.get(param.name, param.description))
 
             if isinstance(param, ParameterBoolean):
                 widget.setText(desc)
@@ -253,6 +261,22 @@ class ParametersPanel(BASE, WIDGET):
                 self.layoutMain.insertWidget(self.layoutMain.count() - 1, check)
                 self.checkBoxes[output.name] = check
             self.valueItems[output.name] = widget
+
+            if isinstance(output, OutputVector):
+                if output.base_input in self.dependentItems:
+                    items = self.dependentItems[output.base_input]
+                else:
+                    items = []
+                    self.dependentItems[output.base_input] = items
+                items.append(output)
+
+                base_input = self.alg.getParameterFromName(output.base_input)
+                if isinstance(base_input, ParameterVector):
+                    layers = dataobjects.getVectorLayers(base_input.shapetype)
+                else:
+                    layers = dataobjects.getTables()
+                if len(layers) > 0:
+                    output.base_layer = layers[0]
 
     def buttonToggled(self, value):
         if value:
@@ -331,21 +355,24 @@ class ParametersPanel(BASE, WIDGET):
                 item.setChecked(True)
             else:
                 item.setChecked(False)
-        elif isinstance(param, ParameterTableField):
-            item = QComboBox()
+        elif isinstance(param, ParameterTableField) or isinstance(param, ParameterTableMultipleField):
+            if isinstance(param, ParameterTableMultipleField):
+                item = ListMultiSelectWidget()
+            else:
+                item = QComboBox()
             if param.parent in self.dependentItems:
                 items = self.dependentItems[param.parent]
             else:
                 items = []
                 self.dependentItems[param.parent] = items
-            items.append(param.name)
+            items.append(param)
             parent = self.alg.getParameterFromName(param.parent)
             if isinstance(parent, ParameterVector):
                 layers = dataobjects.getVectorLayers(parent.shapetype)
             else:
                 layers = dataobjects.getTables()
             if len(layers) > 0:
-                if param.optional:
+                if param.optional and isinstance(param, ParameterTableField):
                     item.addItem(self.tr('[not set]'))
                 item.addItems(self.getFields(layers[0], param.datatype))
         elif isinstance(param, ParameterSelection):
@@ -376,6 +403,8 @@ class ParametersPanel(BASE, WIDGET):
                                     param.isInteger)
         elif isinstance(param, ParameterExtent):
             item = ExtentSelectionPanel(self.parent, self.alg, param.default)
+        elif isinstance(param, ParameterPoint):
+            item = PointSelectionPanel(self.parent, param.default)
         elif isinstance(param, ParameterCrs):
             item = CrsSelectionPanel(param.default)
         elif isinstance(param, ParameterString):
@@ -423,14 +452,22 @@ class ParametersPanel(BASE, WIDGET):
         if sender.name not in self.dependentItems:
             return
         layer = sender.itemData(sender.currentIndex())
+        if not layer:
+            return
         children = self.dependentItems[sender.name]
         for child in children:
-            widget = self.valueItems[child]
-            widget.clear()
-            if self.alg.getParameterFromName(child).optional:
-                widget.addItem(self.tr('[not set]'))
-            widget.addItems(self.getFields(layer,
-                                           self.alg.getParameterFromName(child).datatype))
+            if (isinstance(child, ParameterTableField) or isinstance(
+                    child, ParameterTableMultipleField)):
+                widget = self.valueItems[child.name]
+                widget.clear()
+                if (self.alg.getParameterFromName(child.name).optional and
+                        not isinstance(child, ParameterTableMultipleField)):
+                    widget.addItem(self.tr('[not set]'))
+                widget.addItems(
+                    self.getFields(layer, self.alg.getParameterFromName(
+                                   child.name).datatype))
+            if isinstance(child, OutputVector):
+                child.base_layer = layer
 
     def getFields(self, layer, datatype):
         fieldTypes = []
@@ -448,7 +485,12 @@ class ParametersPanel(BASE, WIDGET):
 
     def somethingDependsOnThisParameter(self, parent):
         for param in self.alg.parameters:
-            if isinstance(param, ParameterTableField):
+            if isinstance(param, (ParameterTableField,
+                                  ParameterTableMultipleField)):
                 if param.parent == parent.name:
+                    return True
+        for output in self.alg.outputs:
+            if isinstance(output, OutputVector):
+                if output.base_layer == parent.name:
                     return True
         return False

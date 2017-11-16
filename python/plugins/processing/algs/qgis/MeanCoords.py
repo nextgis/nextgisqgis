@@ -25,13 +25,20 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
-from PyQt4.QtCore import QVariant
+import os
+
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtCore import QVariant
+
 from qgis.core import QGis, QgsField, QgsFeature, QgsGeometry, QgsPoint
+
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.parameters import ParameterTableField
 from processing.core.parameters import ParameterVector
 from processing.core.outputs import OutputVector
 from processing.tools import dataobjects, vector
+
+pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 
 class MeanCoords(GeoAlgorithm):
@@ -41,6 +48,9 @@ class MeanCoords(GeoAlgorithm):
     OUTPUT = 'OUTPUT'
     UID = 'UID'
     WEIGHT = 'WEIGHT'
+
+    def getIcon(self):
+        return QIcon(os.path.join(pluginPath, 'images', 'ftools', 'mean.png'))
 
     def defineCharacteristics(self):
         self.name, self.i18n_name = self.trAlgorithm('Mean coordinate(s)')
@@ -84,7 +94,7 @@ class MeanCoords(GeoAlgorithm):
         )
 
         features = vector.features(layer)
-        total = 100.0 / len(features)
+        total = 100.0 / len(features) if len(features) > 0 else 1
         means = {}
         for current, feat in enumerate(features):
             progress.setPercentage(int(current * total))
@@ -112,16 +122,16 @@ class MeanCoords(GeoAlgorithm):
             means[clazz] = (cx, cy, totalweight)
 
         current = 0
-        total = 100.0 / len(means)
+        total = 100.0 / len(means) if len(means) > 0 else 1
         for (clazz, values) in means.iteritems():
-            outFeat = QgsFeature()
-            cx = values[0] / values[2]
-            cy = values[1] / values[2]
-            meanPoint = QgsPoint(cx, cy)
-
-            outFeat.setGeometry(QgsGeometry.fromPoint(meanPoint))
-            outFeat.setAttributes([cx, cy, clazz])
-            writer.addFeature(outFeat)
+            if values[2]:
+                outFeat = QgsFeature()
+                cx = values[0] / values[2]
+                cy = values[1] / values[2]
+                meanPoint = QgsPoint(cx, cy)
+                outFeat.setGeometry(QgsGeometry.fromPoint(meanPoint))
+                outFeat.setAttributes([cx, cy, clazz])
+                writer.addFeature(outFeat)
             current += 1
             progress.setPercentage(int(current * total))
 

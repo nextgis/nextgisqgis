@@ -192,7 +192,7 @@ void QgsMapToolAddPart::cadCanvasReleaseEvent( QgsMapMouseEvent * e )
 
       vlayer->endEditCommand();
 
-      mCanvas->refresh();
+      vlayer->triggerRepaint();
       return;
     }
 
@@ -218,6 +218,10 @@ void QgsMapToolAddPart::cadCanvasReleaseEvent( QgsMapMouseEvent * e )
 
     case 6:
       errorMessage = tr( "Selected geometry could not be found" );
+      break;
+
+    case 7:
+      errorMessage = tr( "Update geometry error" );
       break;
   }
 

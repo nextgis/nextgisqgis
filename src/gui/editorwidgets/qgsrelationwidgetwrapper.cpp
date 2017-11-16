@@ -39,6 +39,37 @@ void QgsRelationWidgetWrapper::setFeature( const QgsFeature& feature )
     mWidget->setFeature( feature );
 }
 
+void QgsRelationWidgetWrapper::setVisible( bool visible )
+{
+  if ( mWidget )
+    mWidget->setVisible( visible );
+}
+
+bool QgsRelationWidgetWrapper::showUnlinkButton() const
+{
+  return mWidget->showUnlinkButton();
+}
+
+void QgsRelationWidgetWrapper::setShowUnlinkButton( bool showUnlinkButton )
+{
+  if ( mWidget )
+    mWidget->setShowUnlinkButton( showUnlinkButton );
+}
+
+bool QgsRelationWidgetWrapper::showLabel() const
+{
+  if ( mWidget )
+    return mWidget->showLabel();
+  else
+    return false;
+}
+
+void QgsRelationWidgetWrapper::setShowLabel( bool showLabel )
+{
+  if ( mWidget )
+    mWidget->setShowLabel( showLabel );
+}
+
 void QgsRelationWidgetWrapper::initWidget( QWidget* editor )
 {
   QgsRelationEditorWidget* w = dynamic_cast<QgsRelationEditorWidget*>( editor );
@@ -59,11 +90,14 @@ void QgsRelationWidgetWrapper::initWidget( QWidget* editor )
 
   w->setEditorContext( myContext );
 
+  QgsRelation nmrel = QgsProject::instance()->relationManager()->relation( config( "nm-rel" ).toString() );
+
   // If this widget is already embedded by the same relation, reduce functionality
   const QgsAttributeEditorContext* ctx = &context();
   do
   {
-    if ( ctx->relation().name() == mRelation.name() && ctx->formMode() == QgsAttributeEditorContext::Embed )
+    if (( ctx->relation().name() == mRelation.name() && ctx->formMode() == QgsAttributeEditorContext::Embed )
+        || ( nmrel.isValid() && ctx->relation().name() == nmrel.name() ) )
     {
       w->setVisible( false );
       break;
@@ -72,7 +106,6 @@ void QgsRelationWidgetWrapper::initWidget( QWidget* editor )
   }
   while ( ctx );
 
-  QgsRelation nmrel = QgsProject::instance()->relationManager()->relation( config( "nm-rel" ).toString() );
 
   w->setRelations( mRelation, nmrel );
 
@@ -82,4 +115,15 @@ void QgsRelationWidgetWrapper::initWidget( QWidget* editor )
 bool QgsRelationWidgetWrapper::valid() const
 {
   return mWidget;
+}
+
+bool QgsRelationWidgetWrapper::showLinkButton() const
+{
+  return mWidget->showLinkButton();
+}
+
+void QgsRelationWidgetWrapper::setShowLinkButton( bool showLinkButton )
+{
+  if ( mWidget )
+    mWidget->setShowLinkButton( showLinkButton );
 }

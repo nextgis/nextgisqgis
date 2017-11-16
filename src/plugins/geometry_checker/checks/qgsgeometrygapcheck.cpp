@@ -1,8 +1,16 @@
 /***************************************************************************
- *  qgsgeometrygapcheck.cpp                                                *
- *  -------------------                                                    *
- *  copyright            : (C) 2014 by Sandro Mani / Sourcepole AG         *
- *  email                : smani@sourcepole.ch                             *
+    qgsgeometrygapcheck.cpp
+    ---------------------
+    begin                : September 2015
+    copyright            : (C) 2014 by Sandro Mani / Sourcepole AG
+    email                : smani at sourcepole dot ch
+ ***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
  ***************************************************************************/
 
 #include "qgsgeometryengine.h"
@@ -79,7 +87,7 @@ void QgsGeometryGapCheck::collectErrors( QList<QgsGeometryCheckError*>& errors, 
   // For each gap polygon which does not lie on the boundary, get neighboring polygons and add error
   for ( int iPart = 0, nParts = diffGeom->partCount(); iPart < nParts; ++iPart )
   {
-    QgsAbstractGeometryV2* geom = QgsGeomUtils::getGeomPart( diffGeom, iPart )->clone();
+    QgsAbstractGeometryV2* geom = QgsGeomUtils::getGeomPart( diffGeom, iPart );
     // Skip the gap between features and boundingbox
     if ( geom->boundingBox() == envelope->boundingBox() )
     {
@@ -118,7 +126,7 @@ void QgsGeometryGapCheck::collectErrors( QList<QgsGeometryCheckError*>& errors, 
     }
 
     // Add error
-    errors.append( new QgsGeometryGapCheckError( this, geom, neighboringIds, geom->area(), gapAreaBBox ) );
+    errors.append( new QgsGeometryGapCheckError( this, geom->clone(), neighboringIds, geom->area(), gapAreaBBox ) );
   }
 
   delete unionGeom;

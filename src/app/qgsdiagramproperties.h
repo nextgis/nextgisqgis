@@ -18,17 +18,20 @@
 #ifndef QGSDIAGRAMPROPERTIES_H
 #define QGSDIAGRAMPROPERTIES_H
 
+#include "qgssymbolv2.h"
 #include <QDialog>
 #include <ui_qgsdiagrampropertiesbase.h>
+#include <QStyledItemDelegate>
 
 class QgsVectorLayer;
+class QgsMapCanvas;
 
 class APP_EXPORT QgsDiagramProperties : public QWidget, private Ui::QgsDiagramPropertiesBase
 {
     Q_OBJECT
 
   public:
-    QgsDiagramProperties( QgsVectorLayer* layer, QWidget* parent );
+    QgsDiagramProperties( QgsVectorLayer* layer, QWidget* parent, QgsMapCanvas *canvas );
 
     ~QgsDiagramProperties();
 
@@ -48,6 +51,8 @@ class APP_EXPORT QgsDiagramProperties : public QWidget, private Ui::QgsDiagramPr
     void showAddAttributeExpressionDialog();
     void on_mDiagramStackedWidget_currentChanged( int index );
     void on_mPlacementComboBox_currentIndexChanged( int index );
+    void on_mButtonSizeLegendSymbol_clicked();
+    void scalingTypeChanged();
 
   protected:
     QFont mDiagramFont;
@@ -56,8 +61,40 @@ class APP_EXPORT QgsDiagramProperties : public QWidget, private Ui::QgsDiagramPr
 
   private:
 
-    QString guessLegendText( const QString &expression );
+    enum Columns
+    {
+      ColumnAttributeExpression = 0,
+      ColumnColor,
+      ColumnLegendText,
+    };
 
+    enum Roles
+    {
+      RoleAttributeExpression = Qt::UserRole,
+    };
+
+    QString showExpressionBuilder( const QString& initialExpression );
+
+    // Keeps track of the diagram type to properly save / restore settings when the diagram type combo box is set to no diagram.
+    QString mDiagramType;
+    QScopedPointer< QgsMarkerSymbolV2 > mSizeLegendSymbol;
+
+    QString guessLegendText( const QString &expression );
+    QgsMapCanvas *mMapCanvas;
 };
+
+class EditBlockerDelegate: public QStyledItemDelegate
+{
+  public:
+    EditBlockerDelegate( QObject* parent = nullptr )
+        : QStyledItemDelegate( parent )
+    {}
+
+    virtual QWidget* createEditor( QWidget *, const QStyleOptionViewItem &, const QModelIndex & ) const override
+    {
+      return nullptr;
+    }
+};
+
 
 #endif // QGSDIAGRAMPROPERTIES_H

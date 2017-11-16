@@ -34,6 +34,7 @@ include_directories (
     ${CMAKE_SOURCE_DIR}/src/gui
     ${CMAKE_SOURCE_DIR}/src/gui/auth
     ${CMAKE_SOURCE_DIR}/src/gui/editorwidgets
+    ${CMAKE_SOURCE_DIR}/src/gui/layertree
     ${CMAKE_BINARY_DIR}/src/ui
     ${CMAKE_SOURCE_DIR}/src/analysis
     ${CMAKE_SOURCE_DIR}/src/analysis/vector

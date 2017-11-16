@@ -141,7 +141,7 @@ QgsFieldCalculator::QgsFieldCalculator( QgsVectorLayer* vl, QWidget* parent )
 
   QSettings settings;
   restoreGeometry( settings.value( "/Windows/QgsFieldCalculator/geometry" ).toByteArray() );
-
+    
   #ifdef Q_OS_MAC
     if( settings.value("/Windows/forceToEnglish", true).toBool() ) {
         selectInput("en");
@@ -443,12 +443,14 @@ void QgsFieldCalculator::populateFields()
   const QgsFields& fields = mVectorLayer->fields();
   for ( int idx = 0; idx < fields.count(); ++idx )
   {
+    if ( fields.fieldOrigin( idx ) != QgsFields::OriginExpression && fields.fieldOrigin( idx ) != QgsFields::OriginJoin )
+    {
+      QString fieldName = fields.at( idx ).name();
 
-    QString fieldName = fields[idx].name();
-
-    //insert into field list and field combo box
-    mFieldMap.insert( fieldName, idx );
-    mExistingFieldComboBox->addItem( fieldName );
+      //insert into field list and field combo box
+      mFieldMap.insert( fieldName, idx );
+      mExistingFieldComboBox->addItem( fieldName );
+    }
   }
 
   if ( mVectorLayer->geometryType() != QGis::NoGeometry )

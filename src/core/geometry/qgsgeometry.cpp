@@ -367,6 +367,62 @@ QgsPoint QgsGeometry::closestVertex( const QgsPoint& point, int& atVertex, int& 
   return QgsPoint( vp.x(), vp.y() );
 }
 
+double QgsGeometry::distanceToVertex( int vertex ) const
+{
+  if ( !d->geometry )
+  {
+    return -1;
+  }
+
+  QgsVertexId id;
+  if ( !vertexIdFromVertexNr( vertex, id ) )
+  {
+    return -1;
+  }
+
+  return QgsGeometryUtils::distanceToVertex( *( d->geometry ), id );
+}
+
+double QgsGeometry::angleAtVertex( int vertex ) const
+{
+  if ( !d->geometry )
+  {
+    return 0;
+  }
+
+  QgsVertexId v2;
+  if ( !vertexIdFromVertexNr( vertex, v2 ) )
+  {
+    return 0;
+  }
+
+  QgsVertexId v1;
+  QgsVertexId v3;
+  QgsGeometryUtils::adjacentVertices( *d->geometry, v2, v1, v3 );
+  if ( v1.isValid() && v3.isValid() )
+  {
+    QgsPointV2 p1 = d->geometry->vertexAt( v1 );
+    QgsPointV2 p2 = d->geometry->vertexAt( v2 );
+    QgsPointV2 p3 = d->geometry->vertexAt( v3 );
+    double angle1 = QgsGeometryUtils::lineAngle( p1.x(), p1.y(), p2.x(), p2.y() );
+    double angle2 = QgsGeometryUtils::lineAngle( p2.x(), p2.y(), p3.x(), p3.y() );
+    return QgsGeometryUtils::averageAngle( angle1, angle2 );
+  }
+  else if ( v3.isValid() )
+  {
+    QgsPointV2 p1 = d->geometry->vertexAt( v2 );
+    QgsPointV2 p2 = d->geometry->vertexAt( v3 );
+    return QgsGeometryUtils::lineAngle( p1.x(), p1.y(), p2.x(), p2.y() );
+  }
+  else if ( v1.isValid() )
+  {
+    QgsPointV2 p1 = d->geometry->vertexAt( v1 );
+    QgsPointV2 p2 = d->geometry->vertexAt( v2 );
+    return QgsGeometryUtils::lineAngle( p1.x(), p1.y(), p2.x(), p2.y() );
+  }
+  return 0.0;
+}
+
 void QgsGeometry::adjacentVertices( int atVertex, int& beforeVertex, int& afterVertex ) const
 {
   if ( !d->geometry )
@@ -434,7 +490,7 @@ bool QgsGeometry::deleteVertex( int atVertex )
   }
 
   //maintain compatibility with < 2.10 API
-  if ( d->geometry->geometryType() == "MultiPoint" )
+  if ( QgsWKBTypes::flatType( d->geometry->wkbType() ) == QgsWKBTypes::MultiPoint )
   {
     detach( true );
     removeWkbGeos();
@@ -472,7 +528,7 @@ bool QgsGeometry::insertVertex( double x, double y, int beforeVertex )
   }
 
   //maintain compatibility with < 2.10 API
-  if ( d->geometry->geometryType() == "MultiPoint" )
+  if ( QgsWKBTypes::flatType( d->geometry->wkbType() ) == QgsWKBTypes::MultiPoint )
   {
     detach( true );
     removeWkbGeos();
@@ -745,27 +801,34 @@ int QgsGeometry::splitGeometry( const QList<QgsPoint>& splitLine, QList<QgsGeome
 /** Replaces a part of this geometry with another line*/
 int QgsGeometry::reshapeGeometry( const QList<QgsPoint>& reshapeWithLine )
 {
+  QgsPointSequenceV2 reshapeLine;
+  convertPointList( reshapeWithLine, reshapeLine );
+  return reshapeGeometry( reshapeLine );
+}
+
+int QgsGeometry::reshapeGeometry( const QList<QgsPointV2>& reshapeLine )
+{
   if ( !d->geometry )
   {
     return 0;
   }
 
-  QgsPointSequenceV2 reshapeLine;
-  convertPointList( reshapeWithLine, reshapeLine );
   QgsLineStringV2 reshapeLineString;
   reshapeLineString.setPoints( reshapeLine );
-
   QgsGeos geos( d->geometry );
   int errorCode = 0;
   QgsAbstractGeometryV2* geom = geos.reshapeGeometry( reshapeLineString, &errorCode );
+
   if ( errorCode == 0 && geom )
   {
     detach( false );
-    delete d->geometry;
-    d->geometry = geom;
     removeWkbGeos();
+    d->geometry = geom;
     return 0;
   }
+
+  delete geom;
+
   return errorCode;
 }
 
@@ -997,7 +1060,7 @@ bool QgsGeometry::convertToSingleType()
 
 QgsPoint QgsGeometry::asPoint() const
 {
-  if ( !d->geometry || d->geometry->geometryType() != "Point" )
+  if ( !d->geometry || QgsWKBTypes::flatType( d->geometry->wkbType() ) != QgsWKBTypes::Point )
   {
     return QgsPoint();
   }
@@ -1018,7 +1081,8 @@ QgsPolyline QgsGeometry::asPolyline() const
     return polyLine;
   }
 
-  bool doSegmentation = ( d->geometry->geometryType() == "CompoundCurve" || d->geometry->geometryType() == "CircularString" );
+  bool doSegmentation = ( QgsWKBTypes::flatType( d->geometry->wkbType() ) == QgsWKBTypes::CompoundCurve
+                          || QgsWKBTypes::flatType( d->geometry->wkbType() ) == QgsWKBTypes::CircularString );
   QgsLineStringV2* line = nullptr;
   if ( doSegmentation )
   {
@@ -1060,7 +1124,7 @@ QgsPolygon QgsGeometry::asPolygon() const
   if ( !d->geometry )
     return QgsPolygon();
 
-  bool doSegmentation = ( d->geometry->geometryType() == "CurvePolygon" );
+  bool doSegmentation = ( QgsWKBTypes::flatType( d->geometry->wkbType() ) == QgsWKBTypes::CurvePolygon );
 
   QgsPolygonV2* p = nullptr;
   if ( doSegmentation )
@@ -1094,7 +1158,7 @@ QgsPolygon QgsGeometry::asPolygon() const
 
 QgsMultiPoint QgsGeometry::asMultiPoint() const
 {
-  if ( !d->geometry || d->geometry->geometryType() != "MultiPoint" )
+  if ( !d->geometry || QgsWKBTypes::flatType( d->geometry->wkbType() ) != QgsWKBTypes::MultiPoint )
   {
     return QgsMultiPoint();
   }
@@ -1370,7 +1434,12 @@ QgsGeometry* QgsGeometry::interpolate( double distance ) const
   {
     return nullptr;
   }
-  QgsGeos geos( d->geometry );
+
+  QgsGeometry line = *this;
+  if ( type() == QGis::Polygon )
+    line = QgsGeometry( d->geometry->boundary() );
+
+  QgsGeos geos( line.geometry() );
   QgsAbstractGeometryV2* result = geos.interpolate( distance );
   if ( !result )
   {
@@ -1378,6 +1447,79 @@ QgsGeometry* QgsGeometry::interpolate( double distance ) const
   }
   return new QgsGeometry( result );
 }
+
+double QgsGeometry::lineLocatePoint( const QgsGeometry& point ) const
+{
+  if ( type() != QGis::Line )
+    return -1;
+
+  if ( QgsWKBTypes::flatType( point.d->geometry->wkbType() ) != QgsWKBTypes::Point )
+    return -1;
+
+  QgsGeometry segmentized = *this;
+  if ( QgsWKBTypes::isCurvedType( d->geometry->wkbType() ) )
+  {
+    segmentized = QgsGeometry( static_cast< QgsCurveV2* >( d->geometry )->segmentize() );
+  }
+
+  QgsGeos geos( d->geometry );
+  return geos.lineLocatePoint( *( static_cast< QgsPointV2* >( point.d->geometry ) ) );
+}
+
+double QgsGeometry::interpolateAngle( double distance ) const
+{
+  if ( !d->geometry )
+    return 0.0;
+
+  // always operate on segmentized geometries
+  QgsGeometry segmentized = *this;
+  if ( QgsWKBTypes::isCurvedType( d->geometry->wkbType() ) )
+  {
+    segmentized = QgsGeometry( static_cast< QgsCurveV2* >( d->geometry )->segmentize() );
+  }
+
+  QgsVertexId previous;
+  QgsVertexId next;
+  if ( !QgsGeometryUtils::verticesAtDistance( *segmentized.geometry(), distance, previous, next ) )
+    return 0.0;
+
+  if ( previous == next )
+  {
+    // distance coincided exactly with a vertex
+    QgsVertexId v2 = previous;
+    QgsVertexId v1;
+    QgsVertexId v3;
+    QgsGeometryUtils::adjacentVertices( *segmentized.geometry(), v2, v1, v3 );
+    if ( v1.isValid() && v3.isValid() )
+    {
+      QgsPointV2 p1 = segmentized.geometry()->vertexAt( v1 );
+      QgsPointV2 p2 = segmentized.geometry()->vertexAt( v2 );
+      QgsPointV2 p3 = segmentized.geometry()->vertexAt( v3 );
+      double angle1 = QgsGeometryUtils::lineAngle( p1.x(), p1.y(), p2.x(), p2.y() );
+      double angle2 = QgsGeometryUtils::lineAngle( p2.x(), p2.y(), p3.x(), p3.y() );
+      return QgsGeometryUtils::averageAngle( angle1, angle2 );
+    }
+    else if ( v3.isValid() )
+    {
+      QgsPointV2 p1 = segmentized.geometry()->vertexAt( v2 );
+      QgsPointV2 p2 = segmentized.geometry()->vertexAt( v3 );
+      return QgsGeometryUtils::lineAngle( p1.x(), p1.y(), p2.x(), p2.y() );
+    }
+    else
+    {
+      QgsPointV2 p1 = segmentized.geometry()->vertexAt( v1 );
+      QgsPointV2 p2 = segmentized.geometry()->vertexAt( v2 );
+      return QgsGeometryUtils::lineAngle( p1.x(), p1.y(), p2.x(), p2.y() );
+    }
+  }
+  else
+  {
+    QgsPointV2 p1 = segmentized.geometry()->vertexAt( previous );
+    QgsPointV2 p2 = segmentized.geometry()->vertexAt( next );
+    return QgsGeometryUtils::lineAngle( p1.x(), p1.y(), p2.x(), p2.y() );
+  }
+}
+
 
 QgsGeometry* QgsGeometry::intersection( const QgsGeometry* geometry ) const
 {
@@ -1407,6 +1549,23 @@ QgsGeometry* QgsGeometry::combine( const QgsGeometry* geometry ) const
     return nullptr;
   }
   return new QgsGeometry( resultGeom );
+}
+
+QgsGeometry QgsGeometry::mergeLines() const
+{
+  if ( !d->geometry )
+  {
+    return QgsGeometry();
+  }
+
+  if ( QgsWKBTypes::flatType( d->geometry->wkbType() ) == QgsWKBTypes::LineString )
+  {
+    // special case - a single linestring was passed
+    return QgsGeometry( *this );
+  }
+
+  QgsGeos geos( d->geometry );
+  return geos.mergeLines();
 }
 
 QgsGeometry* QgsGeometry::difference( const QgsGeometry* geometry ) const

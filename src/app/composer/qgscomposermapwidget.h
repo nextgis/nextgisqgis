@@ -25,7 +25,7 @@
 
 class QgsMapLayer;
 
-/** \ingroup MapComposer
+/** \ingroup app
  * Input widget for the configuration of QgsComposerMap
  * */
 class QgsComposerMapWidget: public QgsComposerItemBaseWidget, private Ui::QgsComposerMapWidgetBase
@@ -39,14 +39,14 @@ class QgsComposerMapWidget: public QgsComposerItemBaseWidget, private Ui::QgsCom
   public slots:
     void on_mPreviewModeComboBox_activated( int i );
     void on_mScaleLineEdit_editingFinished();
-    void on_mMapRotationSpinBox_valueChanged( double value );
     void on_mSetToMapCanvasExtentButton_clicked();
     void on_mViewExtentInCanvasButton_clicked();
     void on_mUpdatePreviewButton_clicked();
+    void on_mFollowVisibilityPresetCheckBox_stateChanged( int state );
     void on_mKeepLayerListCheckBox_stateChanged( int state );
     void on_mKeepLayerStylesCheckBox_stateChanged( int state );
     void on_mDrawCanvasItemsCheckBox_stateChanged( int state );
-    void on_mOverviewFrameMapComboBox_currentIndexChanged( const QString& text );
+    void overviewMapChanged( QgsComposerItem* item );
     void on_mOverviewFrameStyleButton_clicked();
     void on_mOverviewBlendModeComboBox_currentIndexChanged( int index );
     void on_mOverviewInvertCheckbox_toggled( bool state );
@@ -145,7 +145,6 @@ class QgsComposerMapWidget: public QgsComposerItemBaseWidget, private Ui::QgsCom
     void blockOverviewItemsSignals( bool block );
 
   protected:
-    void showEvent( QShowEvent * event ) override;
 
     void addPageToToolbox( QWidget * widget, const QString& name );
 
@@ -160,6 +159,8 @@ class QgsComposerMapWidget: public QgsComposerItemBaseWidget, private Ui::QgsCom
 
   private slots:
 
+    void rotationChanged();
+
     /** Sets the GUI elements to the values of mPicture*/
     void setGuiElementValues();
 
@@ -169,9 +170,12 @@ class QgsComposerMapWidget: public QgsComposerItemBaseWidget, private Ui::QgsCom
     /** Enables or disables the atlas controls when composer atlas is toggled on/off*/
     void compositionAtlasToggled( bool atlasEnabled );
 
-    void aboutToShowVisibilityPresetsMenu();
+    void aboutToShowKeepLayersVisibilityPresetsMenu();
 
-    void visibilityPresetSelected();
+    void followVisibilityPresetSelected( int currentIndex );
+    void keepLayersVisibilityPresetSelected();
+
+    void onPresetsChanged();
 
   private:
     QgsComposerMap* mComposerMap;
@@ -199,9 +203,6 @@ class QgsComposerMapWidget: public QgsComposerItemBaseWidget, private Ui::QgsCom
 
     void updateGridLineSymbolMarker( const QgsComposerMapGrid* grid );
     void updateGridMarkerSymbolMarker( const QgsComposerMapGrid* grid );
-
-    /** Updates the map combo box with the current composer map ids*/
-    void refreshMapComboBox();
 
     /** Enables/disables grid frame related controls*/
     void toggleFrameControls( bool frameEnabled, bool frameFillEnabled, bool frameSizeEnabled );

@@ -18,8 +18,9 @@
 
 #include "qgisapp.h"
 #include "qgsapplication.h"
-#include "qgsattributeaction.h"
+#include "qgsactionmanager.h"
 #include "qgsattributedialog.h"
+#include "qgsdockwidget.h"
 #include "qgseditorwidgetregistry.h"
 #include "qgsfeatureaction.h"
 #include "qgsgeometry.h"
@@ -33,8 +34,10 @@
 #include "qgsproject.h"
 #include "qgsrasterlayer.h"
 #include "qgsvectorlayer.h"
+#include "qgsvectordataprovider.h"
 #include "qgswebview.h"
 #include "qgswebframe.h"
+#include "qgsstringutils.h"
 #include "qgsfiledownloader.h"
 
 #include <QCloseEvent>
@@ -45,7 +48,6 @@
 #include <QSettings>
 #include <QMenu>
 #include <QClipboard>
-#include <QDockWidget>
 #include <QMenuBar>
 #include <QPushButton>
 #include <QPrinter>
@@ -53,6 +55,7 @@
 #include <QDesktopServices>
 #include <QMessageBox>
 #include <QComboBox>
+#include <QTextDocument>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QFileDialog>
@@ -65,7 +68,6 @@
 #include <qwt_symbol.h>
 #include <qwt_legend.h>
 #include "qgsvectorcolorrampv2.h" // for random colors
-
 
 QgsIdentifyResultsWebView::QgsIdentifyResultsWebView( QWidget *parent ) : QgsWebView( parent )
 {
@@ -127,7 +129,7 @@ void QgsIdentifyResultsWebView::handleDownload( QUrl url )
   }
 }
 
-void QgsIdentifyResultsWebView::print( void )
+void QgsIdentifyResultsWebView::print()
 {
   QPrinter printer;
   QPrintDialog *dialog = new QPrintDialog( &printer );
@@ -268,7 +270,6 @@ QgsIdentifyResultsWebViewItem::QgsIdentifyResultsWebViewItem( QTreeWidget *treeW
 
 void QgsIdentifyResultsWebViewItem::loadFinished( bool ok )
 {
-  QgsDebugMsg( "Entered" );
   Q_UNUSED( ok );
 
   mWebView->show();
@@ -312,7 +313,7 @@ QgsIdentifyResultsDialog::QgsIdentifyResultsDialog( QgsMapCanvas *canvas, QWidge
   mOpenFormAction->setDisabled( true );
 
   QSettings mySettings;
-  mDock = new QDockWidget( tr( "Identify Results" ), QgisApp::instance() );
+  mDock = new QgsDockWidget( tr( "Identify Results" ), QgisApp::instance() );
   mDock->setObjectName( "IdentifyResultsDock" );
   mDock->setAllowedAreas( Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea );
   mDock->setWidget( this );
@@ -484,7 +485,7 @@ void QgsIdentifyResultsDialog::addFeature( QgsVectorLayer *vlayer, const QgsFeat
     if ( vlayer->fields().size() > 0 )
     {
       QTreeWidgetItem *editItem = new QTreeWidgetItem( QStringList() << "" << ( vlayer->isEditable() ? tr( "Edit feature form" ) : tr( "View feature form" ) ) );
-      editItem->setIcon( 0, QgsApplication::getThemeIcon( "/mActionPropertyItem.png" ) );
+      editItem->setIcon( 0, QgsApplication::getThemeIcon( "/mActionFormView.svg" ) );
       editItem->setData( 0, Qt::UserRole, "edit" );
       actionItem->addChild( editItem );
     }
@@ -525,8 +526,19 @@ void QgsIdentifyResultsDialog::addFeature( QgsVectorLayer *vlayer, const QgsFeat
     if ( i >= fields.count() )
       continue;
 
-    QString value = fields.at( i ).displayString( attrs.at( i ) );
+    if ( vlayer->editFormConfig()->widgetType( i ) == "Hidden" )
+    {
+      continue;
+    }
+
+    // _TAG
+    QString defVal;
+    if ( fields.fieldOrigin( i ) == QgsFields::OriginProvider && vlayer->dataProvider() )
+      defVal = vlayer->dataProvider()->defaultValue( fields.fieldOriginIndex( i ), true ).toString();
+
+    QString value = defVal == attrs.at( i ) ? defVal : fields.at( i ).displayString( attrs.at( i ) );
     QTreeWidgetItem *attrItem = new QTreeWidgetItem( QStringList() << QString::number( i ) << value );
+    featItem->addChild( attrItem );
 
     attrItem->setData( 0, Qt::DisplayRole, vlayer->attributeDisplayName( i ) );
     attrItem->setData( 0, Qt::UserRole, fields[i].name() );
@@ -534,15 +546,21 @@ void QgsIdentifyResultsDialog::addFeature( QgsVectorLayer *vlayer, const QgsFeat
 
     attrItem->setData( 1, Qt::UserRole, value );
 
-    if ( vlayer->editFormConfig()->widgetType( i ) == "Hidden" )
+    value = representValue( vlayer, fields.at( i ).name(), attrs.at( i ) );
+    bool foundLinks = false;
+    QString links = QgsStringUtils::insertLinks( value, &foundLinks );
+    if ( foundLinks )
     {
-      delete attrItem;
-      continue;
+      QLabel* valueLabel = new QLabel( links );
+      valueLabel->setOpenExternalLinks( true );
+      attrItem->treeWidget()->setItemWidget( attrItem, 1, valueLabel );
+      attrItem->setData( 1, Qt::DisplayRole, QString() );
     }
-
-    value = representValue( vlayer, fields[i].name(), attrs.at( i ) );
-
-    attrItem->setData( 1, Qt::DisplayRole, value );
+    else
+    {
+      attrItem->setData( 1, Qt::DisplayRole, value );
+      attrItem->treeWidget()->setItemWidget( attrItem, 1, nullptr );
+    }
 
     if ( fields[i].name() == vlayer->displayField() )
     {
@@ -550,8 +568,6 @@ void QgsIdentifyResultsDialog::addFeature( QgsVectorLayer *vlayer, const QgsFeat
       featItem->setText( 1, attrItem->text( 1 ) );
       featureLabeled = true;
     }
-
-    featItem->addChild( attrItem );
   }
 
   if ( !featureLabeled )
@@ -974,7 +990,6 @@ void QgsIdentifyResultsDialog::itemClicked( QTreeWidgetItem *item, int column )
 
 void QgsIdentifyResultsDialog::contextMenuEvent( QContextMenuEvent* event )
 {
-  QgsDebugMsg( "Entered" );
 
   // only handle context menu event if showing tree widget
   if ( stackedWidget->currentIndex() != 0 )
@@ -1007,7 +1022,7 @@ void QgsIdentifyResultsDialog::contextMenuEvent( QContextMenuEvent* event )
     if ( vlayer )
     {
       mActionPopup->addAction(
-        QgsApplication::getThemeIcon( "/mActionPropertyItem.png" ),
+        QgsApplication::getThemeIcon( "/mActionPropertyItem.svg" ),
         vlayer->isEditable() ? tr( "Edit feature form" ) : tr( "View feature form" ),
         this, SLOT( featureForm() ) );
     }
@@ -1124,7 +1139,6 @@ void QgsIdentifyResultsDialog::expandColumnsToFit()
 
 void QgsIdentifyResultsDialog::clear()
 {
-  QgsDebugMsg( "Entered" );
   for ( int i = 0; i < lstResults->topLevelItemCount(); i++ )
   {
     disconnectLayer( lstResults->topLevelItem( i )->data( 0, Qt::UserRole ).value<QObject *>() );
@@ -1532,7 +1546,21 @@ void QgsIdentifyResultsDialog::attributeValueChanged( QgsFeatureId fid, int idx,
         if ( item->data( 0, Qt::UserRole + 1 ).toInt() == idx )
         {
           value = representValue( vlayer, fld.name(), val );
-          item->setData( 1, Qt::DisplayRole, value );
+
+          bool foundLinks = false;
+          QString links = QgsStringUtils::insertLinks( value, &foundLinks );
+          if ( foundLinks )
+          {
+            QLabel* valueLabel = new QLabel( links );
+            valueLabel->setOpenExternalLinks( true );
+            item->treeWidget()->setItemWidget( item, 1, valueLabel );
+            item->setData( 1, Qt::DisplayRole, QString() );
+          }
+          else
+          {
+            item->treeWidget()->setItemWidget( item, 1, nullptr );
+            item->setData( 1, Qt::DisplayRole, value );
+          }
           return;
         }
       }
@@ -1726,7 +1754,6 @@ void QgsIdentifyResultsDialog::copyAttributeValue()
 
 void QgsIdentifyResultsDialog::copyFeatureAttributes()
 {
-  QgsDebugMsg( "Entered" );
   QClipboard *clipboard = QApplication::clipboard();
   QString text;
 
@@ -1836,7 +1863,6 @@ void QgsIdentifyResultsDialog::on_mActionCopy_triggered( bool checked )
 
 void QgsIdentifyResultsDialog::copyFeature()
 {
-  QgsDebugMsg( "Entered" );
 
   QgsIdentifyResultsFeatureItem *item = dynamic_cast<QgsIdentifyResultsFeatureItem *>( featureItem( lstResults->selectedItems().value( 0 ) ) );
 
@@ -1853,7 +1879,6 @@ void QgsIdentifyResultsDialog::copyFeature()
 
 void QgsIdentifyResultsDialog::toggleFeatureSelection()
 {
-  QgsDebugMsg( "Entered" );
 
   QgsIdentifyResultsFeatureItem *item = dynamic_cast<QgsIdentifyResultsFeatureItem *>( featureItem( lstResults->selectedItems().value( 0 ) ) );
 
@@ -1875,7 +1900,6 @@ void QgsIdentifyResultsDialog::toggleFeatureSelection()
 
 void QgsIdentifyResultsDialog::formatChanged( int index )
 {
-  QgsDebugMsg( "Entered" );
   QComboBox *combo = qobject_cast<QComboBox*>( sender() );
   if ( !combo )
   {

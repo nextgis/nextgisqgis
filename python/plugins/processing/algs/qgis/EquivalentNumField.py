@@ -25,8 +25,8 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
-from PyQt4.QtCore import QVariant
-from qgis.core import QgsField, QgsFeature, QgsGeometry
+from qgis.PyQt.QtCore import QVariant
+from qgis.core import QgsField, QgsFeature
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.parameters import ParameterVector
 from processing.core.parameters import ParameterTableField
@@ -63,7 +63,7 @@ class EquivalentNumField(GeoAlgorithm):
         classes = {}
 
         features = vector.features(vlayer)
-        total = 100.0 / len(features)
+        total = 100.0 / len(features) if len(features) > 0 else 1
         for current, feature in enumerate(features):
             progress.setPercentage(int(current * total))
             inGeom = feature.geometry()

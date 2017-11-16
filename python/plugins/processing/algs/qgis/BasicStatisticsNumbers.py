@@ -25,16 +25,22 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
-import math
+import os
 import codecs
 
+from qgis.PyQt.QtGui import QIcon
+
 from qgis.core import QgsStatisticalSummary
+
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.parameters import ParameterVector
 from processing.core.parameters import ParameterTableField
 from processing.core.outputs import OutputHTML
 from processing.core.outputs import OutputNumber
 from processing.tools import dataobjects, vector
+
+
+pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 
 class BasicStatisticsNumbers(GeoAlgorithm):
@@ -59,6 +65,9 @@ class BasicStatisticsNumbers(GeoAlgorithm):
     THIRDQUARTILE = 'THIRDQUARTILE'
     NULLVALUES = 'NULLVALUES'
     IQR = 'IQR'
+
+    def getIcon(self):
+        return QIcon(os.path.join(pluginPath, 'images', 'ftools', 'basic_statistics.png'))
 
     def defineCharacteristics(self):
         self.name, self.i18n_name = self.trAlgorithm('Basic statistics for numeric fields')
@@ -111,12 +120,11 @@ class BasicStatisticsNumbers(GeoAlgorithm):
         nullValues = 0
         iqr = 0
 
-        isFirst = True
         values = []
 
         features = vector.features(layer)
         count = len(features)
-        total = 100.0 / float(count)
+        total = 100.0 / count if count > 0 else 1
         for current, ft in enumerate(features):
             value = ft[fieldName]
             if value or value == 0:

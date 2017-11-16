@@ -84,10 +84,85 @@ QgsPointV2 QgsGeometryUtils::closestVertex( const QgsAbstractGeometryV2& geom, c
       id.part = vertexId.part;
       id.ring = vertexId.ring;
       id.vertex = vertexId.vertex;
+      id.type = vertexId.type;
     }
   }
 
   return minDistPoint;
+}
+
+double QgsGeometryUtils::distanceToVertex( const QgsAbstractGeometryV2 &geom, const QgsVertexId &id )
+{
+  double currentDist = 0;
+  QgsVertexId vertexId;
+  QgsPointV2 vertex;
+  QgsPointV2 previousVertex;
+
+  bool first = true;
+  while ( geom.nextVertex( vertexId, vertex ) )
+  {
+    if ( !first )
+    {
+      currentDist += sqrt( QgsGeometryUtils::sqrDistance2D( previousVertex, vertex ) );
+    }
+
+    previousVertex = vertex;
+    first = false;
+
+    if ( vertexId == id )
+    {
+      //found target vertex
+      return currentDist;
+    }
+  }
+
+  //could not find target vertex
+  return -1;
+}
+
+bool QgsGeometryUtils::verticesAtDistance( const QgsAbstractGeometryV2& geometry, double distance, QgsVertexId& previousVertex, QgsVertexId& nextVertex )
+{
+  double currentDist = 0;
+  previousVertex = QgsVertexId();
+  nextVertex = QgsVertexId();
+
+  QgsPointV2 point;
+  QgsPointV2 previousPoint;
+
+  if ( qgsDoubleNear( distance, 0.0 ) )
+  {
+    geometry.nextVertex( previousVertex, point );
+    nextVertex = previousVertex;
+    return true;
+  }
+
+  bool first = true;
+  while ( currentDist < distance && geometry.nextVertex( nextVertex, point ) )
+  {
+    if ( !first )
+    {
+      currentDist += sqrt( QgsGeometryUtils::sqrDistance2D( previousPoint, point ) );
+    }
+
+    if ( qgsDoubleNear( currentDist, distance ) )
+    {
+      // exact hit!
+      previousVertex = nextVertex;
+      return true;
+    }
+
+    if ( currentDist > distance )
+    {
+      return true;
+    }
+
+    previousVertex = nextVertex;
+    previousPoint = point;
+    first = false;
+  }
+
+  //could not find target distance
+  return false;
 }
 
 void QgsGeometryUtils::adjacentVertices( const QgsAbstractGeometryV2& geom, QgsVertexId atVertex, QgsVertexId& beforeVertex, QgsVertexId& afterVertex )
@@ -127,9 +202,16 @@ void QgsGeometryUtils::adjacentVertices( const QgsAbstractGeometryV2& geom, QgsV
   }
   else if ( atVertex.vertex == 0 )
   {
-    afterVertex.part = atVertex.part;
-    afterVertex.ring = atVertex.ring;
-    afterVertex.vertex = atVertex.vertex + 1;
+    if ( ring.size() > 1 )
+    {
+      afterVertex.part = atVertex.part;
+      afterVertex.ring = atVertex.ring;
+      afterVertex.vertex = atVertex.vertex + 1;
+    }
+    else
+    {
+      afterVertex = QgsVertexId(); //after vertex invalid
+    }
     if ( polygonType && ring.size() > 3 )
     {
       beforeVertex.part = atVertex.part;
@@ -166,30 +248,31 @@ double QgsGeometryUtils::sqrDistance2D( const QgsPointV2& pt1, const QgsPointV2&
 
 double QgsGeometryUtils::sqrDistToLine( double ptX, double ptY, double x1, double y1, double x2, double y2, double& minDistX, double& minDistY, double epsilon )
 {
-  //normal vector
-  double nx = y2 - y1;
-  double ny = -( x2 - x1 );
+  minDistX = x1;
+  minDistY = y1;
 
-  double t;
-  t = ( ptX * ny - ptY * nx - x1 * ny + y1 * nx ) / (( x2 - x1 ) * ny - ( y2 - y1 ) * nx );
+  double dx = x2 - x1;
+  double dy = y2 - y1;
 
-  if ( t < 0.0 )
+  if ( !qgsDoubleNear( dx, 0.0 ) || !qgsDoubleNear( dy, 0.0 ) )
   {
-    minDistX = x1;
-    minDistY = y1;
-  }
-  else if ( t > 1.0 )
-  {
-    minDistX = x2;
-    minDistY = y2;
-  }
-  else
-  {
-    minDistX = x1 + t * ( x2 - x1 );
-    minDistY = y1 + t * ( y2 - y1 );
+    double t = (( ptX - x1 ) * dx + ( ptY - y1 ) * dy ) / ( dx * dx + dy * dy );
+    if ( t > 1 )
+    {
+      minDistX = x2;
+      minDistY = y2;
+    }
+    else if ( t > 0 )
+    {
+      minDistX += dx * t ;
+      minDistY += dy * t ;
+    }
   }
 
-  double dist = ( minDistX - ptX ) * ( minDistX - ptX ) + ( minDistY - ptY ) * ( minDistY - ptY );
+  dx = ptX - minDistX;
+  dy = ptY - minDistY;
+
+  double dist = dx * dx + dy * dy;
 
   //prevent rounding errors if the point is directly on the segment
   if ( qgsDoubleNear( dist, 0.0, epsilon ) )
@@ -330,9 +413,9 @@ void QgsGeometryUtils::circleCenterRadius( const QgsPointV2& pt1, const QgsPoint
   //closed circle
   if ( qgsDoubleNear( pt1.x(), pt3.x() ) && qgsDoubleNear( pt1.y(), pt3.y() ) )
   {
-    centerX = pt2.x();
-    centerY = pt2.y();
-    radius = sqrt( pow( pt2.x() - pt1.x(), 2.0 ) + pow( pt2.y() - pt1.y(), 2.0 ) );
+    centerX = ( pt1.x() + pt2.x() ) / 2.0;
+    centerY = ( pt1.y() + pt2.y() ) / 2.0;
+    radius = sqrt( pow( centerX - pt1.x(), 2.0 ) + pow( centerY - pt1.y(), 2.0 ) );
     return;
   }
 
@@ -631,12 +714,20 @@ QDomElement QgsGeometryUtils::pointsToGML2( const QgsPointSequenceV2 &points, QD
 {
   QDomElement elemCoordinates = doc.createElementNS( ns, "coordinates" );
 
+  // coordinate separator
+  QString cs = ",";
+  // tupel separator
+  QString ts = " ";
+
+  elemCoordinates.setAttribute( "cs", cs );
+  elemCoordinates.setAttribute( "ts", ts );
+
   QString strCoordinates;
 
   Q_FOREACH ( const QgsPointV2& p, points )
-    strCoordinates += qgsDoubleToString( p.x(), precision ) + ',' + qgsDoubleToString( p.y(), precision ) + ' ';
+    strCoordinates += qgsDoubleToString( p.x(), precision ) + cs + qgsDoubleToString( p.y(), precision ) + ts;
 
-  if ( strCoordinates.endsWith( ' ' ) )
+  if ( strCoordinates.endsWith( ts ) )
     strCoordinates.chop( 1 ); // Remove trailing space
 
   elemCoordinates.appendChild( doc.createTextNode( strCoordinates ) );

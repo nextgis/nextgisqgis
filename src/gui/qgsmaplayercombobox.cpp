@@ -17,8 +17,8 @@
 #include "qgsmaplayermodel.h"
 
 
-QgsMapLayerComboBox::QgsMapLayerComboBox( QWidget *parent ) :
-    QComboBox( parent )
+QgsMapLayerComboBox::QgsMapLayerComboBox( QWidget *parent )
+    : QComboBox( parent )
 {
   mProxyModel = new QgsMapLayerProxyModel( this );
   setModel( mProxyModel );
@@ -30,6 +30,12 @@ QgsMapLayerComboBox::QgsMapLayerComboBox( QWidget *parent ) :
 
 void QgsMapLayerComboBox::setLayer( QgsMapLayer *layer )
 {
+  if ( !layer )
+  {
+    setCurrentIndex( -1 );
+    return;
+  }
+
   QModelIndex idx = mProxyModel->sourceLayerModel()->indexFromLayer( layer );
   if ( idx.isValid() )
   {

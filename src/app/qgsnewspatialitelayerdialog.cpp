@@ -29,6 +29,7 @@
 #include "qgscoordinatereferencesystem.h"
 #include "qgsgenericprojectionselector.h"
 #include "qgsslconnect.h"
+#include "qgscrscache.h"
 
 #include "qgslogger.h"
 
@@ -49,8 +50,8 @@ QgsNewSpatialiteLayerDialog::QgsNewSpatialiteLayerDialog( QWidget *parent, Qt::W
   QSettings settings;
   restoreGeometry( settings.value( "/Windows/NewSpatiaLiteLayer/geometry" ).toByteArray() );
 
-  mAddAttributeButton->setIcon( QgsApplication::getThemeIcon( "/mActionNewAttribute.png" ) );
-  mRemoveAttributeButton->setIcon( QgsApplication::getThemeIcon( "/mActionDeleteAttribute.png" ) );
+  mAddAttributeButton->setIcon( QgsApplication::getThemeIcon( "/mActionNewAttribute.svg" ) );
+  mRemoveAttributeButton->setIcon( QgsApplication::getThemeIcon( "/mActionDeleteAttribute.svg" ) );
   mTypeBox->addItem( tr( "Text data" ), "text" );
   mTypeBox->addItem( tr( "Whole number" ), "integer" );
   mTypeBox->addItem( tr( "Decimal number" ), "real" );
@@ -74,8 +75,7 @@ QgsNewSpatialiteLayerDialog::QgsNewSpatialiteLayerDialog( QWidget *parent, Qt::W
   mOkButton->setEnabled( false );
 
   // Set the SRID box to a default of WGS84
-  QgsCoordinateReferenceSystem srs;
-  srs.createFromOgcWmsCrs( settings.value( "/Projections/layerDefaultCrs", GEO_EPSG_CRS_AUTHID ).toString() );
+  QgsCoordinateReferenceSystem srs = QgsCRSCache::instance()->crsByOgcWmsCrs( settings.value( "/Projections/layerDefaultCrs", GEO_EPSG_CRS_AUTHID ).toString() );
   srs.validate();
   mCrsId = srs.authid();
   leSRID->setText( srs.authid() + " - " + srs.description() );
@@ -244,8 +244,7 @@ void QgsNewSpatialiteLayerDialog::on_pbnFindSRID_clicked()
 
   if ( mySelector->exec() )
   {
-    QgsCoordinateReferenceSystem srs;
-    srs.createFromOgcWmsCrs( mySelector->selectedAuthId() );
+    QgsCoordinateReferenceSystem srs = QgsCRSCache::instance()->crsByOgcWmsCrs( mySelector->selectedAuthId() );
     QString crsId = srs.authid();
     if ( crsId != mCrsId )
     {

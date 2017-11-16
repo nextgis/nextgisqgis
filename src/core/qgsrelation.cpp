@@ -153,32 +153,25 @@ QgsFeatureIterator QgsRelation::getRelatedFeatures( const QgsFeature& feature ) 
 
 QgsFeatureRequest QgsRelation::getRelatedFeaturesRequest( const QgsFeature& feature ) const
 {
+  QString filter = getRelatedFeaturesFilter( feature );
+  QgsDebugMsg( QString( "Filter conditions: '%1'" ).arg( filter ) );
+
+  QgsFeatureRequest myRequest;
+  myRequest.setFilterExpression( filter );
+  return myRequest;
+}
+
+QString QgsRelation::getRelatedFeaturesFilter( const QgsFeature& feature ) const
+{
   QStringList conditions;
 
   Q_FOREACH ( const QgsRelation::FieldPair& fieldPair, mFieldPairs )
   {
-    int referencingIdx = referencingLayer()->fields().indexFromName( fieldPair.referencingField() );
-    QgsField referencingField = referencingLayer()->fields().at( referencingIdx );
-
-    if ( referencingField.type() == QVariant::String )
-    {
-      // Use quotes
-      conditions << QString( "\"%1\" = '%2'" ).arg( fieldPair.referencingField(), feature.attribute( fieldPair.referencedField() ).toString() );
-    }
-    else
-    {
-      // No quotes
-      conditions << QString( "\"%1\" = %2" ).arg( fieldPair.referencingField(), feature.attribute( fieldPair.referencedField() ).toString() );
-    }
+    QVariant val( feature.attribute( fieldPair.referencedField() ) );
+    conditions << QgsExpression::createFieldEqualityExpression( fieldPair.referencingField(), val );
   }
 
-  QgsFeatureRequest myRequest;
-
-  QgsDebugMsg( QString( "Filter conditions: '%1'" ).arg( conditions.join( " AND " ) ) );
-
-  myRequest.setFilterExpression( conditions.join( " AND " ) );
-
-  return myRequest;
+  return conditions.join( " AND " );
 }
 
 QgsFeatureRequest QgsRelation::getReferencedFeatureRequest( const QgsAttributes& attributes ) const
@@ -187,21 +180,8 @@ QgsFeatureRequest QgsRelation::getReferencedFeatureRequest( const QgsAttributes&
 
   Q_FOREACH ( const QgsRelation::FieldPair& fieldPair, mFieldPairs )
   {
-    int referencedIdx = referencedLayer()->fields().indexFromName( fieldPair.referencedField() );
     int referencingIdx = referencingLayer()->fields().indexFromName( fieldPair.referencingField() );
-
-    QgsField referencedField = referencedLayer()->fields().at( referencedIdx );
-
-    if ( referencedField.type() == QVariant::String )
-    {
-      // Use quotes
-      conditions << QString( "\"%1\" = '%2'" ).arg( fieldPair.referencedField(), attributes.at( referencingIdx ).toString() );
-    }
-    else
-    {
-      // No quotes
-      conditions << QString( "\"%1\" = %2" ).arg( fieldPair.referencedField(), attributes.at( referencingIdx ).toString() );
-    }
+    conditions << QgsExpression::createFieldEqualityExpression( fieldPair.referencedField(), attributes.at( referencingIdx ) );
   }
 
   QgsFeatureRequest myRequest;

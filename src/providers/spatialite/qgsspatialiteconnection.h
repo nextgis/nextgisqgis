@@ -41,7 +41,10 @@ class QgsSpatiaLiteConnection : public QObject
     typedef struct TableEntry
     {
       TableEntry( const QString& _tableName, const QString& _column, const QString& _type )
-          : tableName( _tableName ), column( _column ), type( _type ) {}
+          : tableName( _tableName )
+          , column( _column )
+          , type( _type )
+      {}
       QString tableName;
       QString column;
       QString type;

@@ -30,6 +30,9 @@ typedef QList<int> QgsAttributeList;
 typedef QSet<int> QgsAttributeIds;
 typedef QMap<QgsFeatureId, QgsFeature> QgsFeatureMap;
 
+/** \ingroup core
+ * \class QgsVectorLayerEditBuffer
+ */
 class CORE_EXPORT QgsVectorLayerEditBuffer : public QObject
 {
     Q_OBJECT
@@ -69,6 +72,12 @@ class CORE_EXPORT QgsVectorLayerEditBuffer : public QObject
     /** Delete an attribute field (but does not commit it) */
     virtual bool deleteAttribute( int attr );
 
+    /** Renames an attribute field (but does not commit it)
+     * @param attr attribute index
+     * @param newName new name of field
+     * @note added in QGIS 2.16
+    */
+    virtual bool renameAttribute( int attr, const QString& newName );
 
     /**
       Attempts to commit any changes to disk.  Returns the result of the attempt.
@@ -124,9 +133,23 @@ class CORE_EXPORT QgsVectorLayerEditBuffer : public QObject
     void attributeAdded( int idx );
     void attributeDeleted( int idx );
 
+    /** Emitted when an attribute has been renamed
+     * @param idx attribute index
+     * @param newName new attribute name
+     * @note added in QGSI 2.16
+     */
+    void attributeRenamed( int idx, const QString& newName );
+
     /** Signals emitted after committing changes */
     void committedAttributesDeleted( const QString& layerId, const QgsAttributeList& deletedAttributes );
     void committedAttributesAdded( const QString& layerId, const QList<QgsField>& addedAttributes );
+
+    /** Emitted after committing an attribute rename
+     * @param layerId ID of layer
+     * @param renamedAttributes map of field index to new name
+     * @note added in QGIS 2.16
+     */
+    void committedAttributesRenamed( const QString& layerId, const QgsFieldNameMap& renamedAttributes );
     void committedFeaturesAdded( const QString& layerId, const QgsFeatureList& addedFeatures );
     void committedFeaturesRemoved( const QString& layerId, const QgsFeatureIds& deletedFeatureIds );
     void committedAttributeValuesChanges( const QString& layerId, const QgsChangedAttributesMap& changedAttributesValues );
@@ -150,11 +173,23 @@ class CORE_EXPORT QgsVectorLayerEditBuffer : public QObject
     /** Update added and changed features after removal of an attribute */
     void handleAttributeDeleted( int index );
 
-
     /** Updates an index in an attribute map to a new value (for updates of changed attributes) */
     void updateAttributeMapIndex( QgsAttributeMap& attrs, int index, int offset ) const;
 
     void updateLayerFields();
+
+    /** \brief Apply geometry modification basing on provider geometry type.
+     * Geometry is modified only if successful conversion is possible.
+     * adaptGeometry calls \ref QgsVectorDataProvider::convertToProviderType()
+     * if necessary and that apply the modifications.
+     * \param geometry pointer to the geometry that should be adapted to provider
+     * \returns bool true if success.
+     *  True: Input geometry is changed because conversion is applied or
+     *  geometry is untouched if geometry conversion is not necessary.
+     *  False: Conversion is not possible and geometry is untouched.
+     * \note added in QGIS 2.18.14
+     */
+    bool adaptGeometry( QgsGeometry* geometry );
 
   protected:
     QgsVectorLayer* L;
@@ -167,6 +202,7 @@ class CORE_EXPORT QgsVectorLayerEditBuffer : public QObject
     friend class QgsVectorLayerUndoCommandChangeAttribute;
     friend class QgsVectorLayerUndoCommandAddAttribute;
     friend class QgsVectorLayerUndoCommandDeleteAttribute;
+    friend class QgsVectorLayerUndoCommandRenameAttribute;
 
     /** Deleted feature IDs which are not commited.  Note a feature can be added and then deleted
         again before the change is committed - in that case the added feature would be removed
@@ -186,9 +222,11 @@ class CORE_EXPORT QgsVectorLayerEditBuffer : public QObject
     /** Added attributes fields which are not commited */
     QList<QgsField> mAddedAttributes;
 
+    /** Renamed attributes which are not commited. */
+    QgsFieldNameMap mRenamedAttributes;
+
     /** Changed geometries which are not commited. */
     QgsGeometryMap mChangedGeometries;
-
 };
 
 #endif // QGSVECTORLAYEREDITBUFFER_H

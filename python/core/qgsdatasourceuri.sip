@@ -14,7 +14,7 @@ class QgsDataSourceURI
 %End
 
   public:
-    enum SSLmode { SSLprefer, SSLdisable, SSLallow, SSLrequire };
+    enum SSLmode { SSLprefer, SSLdisable, SSLallow, SSLrequire, SSLverifyCA, SSLverifyFull };
 
     //! default constructor
     QgsDataSourceURI();
@@ -144,6 +144,12 @@ class QgsDataSourceURI
     QString database() const;
     //! Returns the port
     QString port() const;
+    //! Returns the driver
+	// @note added in QGIS 2.16
+    QString driver() const;
+    //! Sets the driver name
+	// @note added in QGIS 2.16
+    void setDriver( const QString& driver );
     //! Returns the password
     QString password() const;
     //! Returns the SSL mode

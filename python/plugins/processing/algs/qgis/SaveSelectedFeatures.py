@@ -26,9 +26,10 @@ __copyright__ = '(C) 2012, Victor Olaya'
 __revision__ = '$Format:%H$'
 
 from processing.core.GeoAlgorithm import GeoAlgorithm
+from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
 from processing.core.parameters import ParameterVector
 from processing.core.outputs import OutputVector
-from processing.tools import dataobjects, vector
+from processing.tools import dataobjects
 
 
 class SaveSelectedFeatures(GeoAlgorithm):
@@ -55,8 +56,11 @@ class SaveSelectedFeatures(GeoAlgorithm):
         writer = output.getVectorWriter(vectorLayer.fields(),
                                         vectorLayer.wkbType(), vectorLayer.crs())
 
-        features = vector.features(vectorLayer)
-        total = 100.0 / len(features)
+        features = vectorLayer.selectedFeaturesIterator()
+        if vectorLayer.selectedFeatureCount() == 0:
+            raise GeoAlgorithmExecutionException(self.tr('There are no selected features in the input layer.'))
+
+        total = 100.0 / vectorLayer.selectedFeatureCount() if vectorLayer.selectedFeatureCount() > 0 else 1
         for current, feat in enumerate(features):
             writer.addFeature(feat)
             progress.setPercentage(int(current * total))

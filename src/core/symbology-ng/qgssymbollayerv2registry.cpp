@@ -15,6 +15,7 @@
 
 #include "qgssymbollayerv2registry.h"
 
+#include "qgsarrowsymbollayer.h"
 #include "qgsellipsesymbollayerv2.h"
 #include "qgsmarkersymbollayerv2.h"
 #include "qgslinesymbollayerv2.h"
@@ -29,9 +30,12 @@ QgsSymbolLayerV2Registry::QgsSymbolLayerV2Registry()
                       QgsSimpleLineSymbolLayerV2::create, QgsSimpleLineSymbolLayerV2::createFromSld ) );
   addSymbolLayerType( new QgsSymbolLayerV2Metadata( "MarkerLine", QObject::tr( "Marker line" ), QgsSymbolV2::Line,
                       QgsMarkerLineSymbolLayerV2::create, QgsMarkerLineSymbolLayerV2::createFromSld ) );
+  addSymbolLayerType( new QgsSymbolLayerV2Metadata( "ArrowLine", QObject::tr( "Arrow" ), QgsSymbolV2::Line, QgsArrowSymbolLayer::create ) );
 
   addSymbolLayerType( new QgsSymbolLayerV2Metadata( "SimpleMarker", QObject::tr( "Simple marker" ), QgsSymbolV2::Marker,
                       QgsSimpleMarkerSymbolLayerV2::create, QgsSimpleMarkerSymbolLayerV2::createFromSld ) );
+  addSymbolLayerType( new QgsSymbolLayerV2Metadata( "FilledMarker", QObject::tr( "Filled marker" ), QgsSymbolV2::Marker,
+                      QgsFilledMarkerSymbolLayer::create ) );
   addSymbolLayerType( new QgsSymbolLayerV2Metadata( "SvgMarker", QObject::tr( "SVG marker" ), QgsSymbolV2::Marker,
                       QgsSvgMarkerSymbolLayerV2::create, QgsSvgMarkerSymbolLayerV2::createFromSld ) );
   addSymbolLayerType( new QgsSymbolLayerV2Metadata( "FontMarker", QObject::tr( "Font marker" ), QgsSymbolV2::Marker,

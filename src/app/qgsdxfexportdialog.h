@@ -87,7 +87,10 @@ class QgsDxfExportDialog : public QDialog, private Ui::QgsDxfExportDialogBase
     QString saveFile() const;
     bool exportMapExtent() const;
     bool layerTitleAsName() const;
+    bool force2d() const;
+    QString mapTheme() const;
     QString encoding() const;
+    long crs() const;
 
   public slots:
     /** Change the selection of layers in the list */
@@ -99,11 +102,14 @@ class QgsDxfExportDialog : public QDialog, private Ui::QgsDxfExportDialogBase
     void setOkEnabled();
     void saveSettings();
     void on_mVisibilityPresets_currentIndexChanged( int index );
+    void on_mCrsSelector_crsChanged( const QgsCoordinateReferenceSystem &crs );
 
   private:
     void cleanGroup( QgsLayerTreeNode *node );
     QgsLayerTreeGroup *mLayerTreeGroup;
     FieldSelectorDelegate *mFieldSelectorDelegate;
+
+    long mCRS;
 };
 
 #endif // QGSDXFEXPORTDIALOG_H

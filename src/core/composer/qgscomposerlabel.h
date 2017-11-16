@@ -23,8 +23,9 @@
 class QgsVectorLayer;
 class QgsFeature;
 class QgsDistanceArea;
+class QgsWebPage;
 
-/** \ingroup MapComposer
+/** \ingroup core
  * A label that can be placed onto a map composition.
  */
 class CORE_EXPORT QgsComposerLabel: public QgsComposerItem
@@ -184,6 +185,9 @@ class CORE_EXPORT QgsComposerLabel: public QgsComposerItem
     /** Helper function to calculate x/y shift for adjustSizeToText() depending on rotation, current size and alignment*/
     void itemShiftAdjustSize( double newWidth, double newHeight, double& xShift, double& yShift ) const;
 
+    /** Called when the content is changed to handle HTML loading */
+    void contentChanged();
+
     // Font
     QFont mFont;
 
@@ -204,10 +208,15 @@ class CORE_EXPORT QgsComposerLabel: public QgsComposerItem
     /** Replaces replace '$CURRENT_DATE<(FORMAT)>' with the current date (e.g. $CURRENT_DATE(d 'June' yyyy)*/
     void replaceDateText( QString& text ) const;
 
+    //! Creates an encoded stylesheet url using the current font and label appearance settings
+    QUrl createStylesheetUrl() const;
+
     QScopedPointer<QgsFeature> mExpressionFeature;
     QgsVectorLayer* mExpressionLayer;
     QMap<QString, QVariant> mSubstitutions;
     QgsDistanceArea* mDistanceArea;
+
+    QgsWebPage* mWebPage;
 };
 
 #endif

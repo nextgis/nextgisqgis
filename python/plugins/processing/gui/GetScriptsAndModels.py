@@ -30,22 +30,24 @@ import os
 import json
 from functools import partial
 
-from PyQt4 import uic
-from PyQt4.QtCore import Qt, QCoreApplication, QUrl
-from PyQt4.QtGui import QIcon, QCursor, QApplication, QTreeWidgetItem, QPushButton, QMessageBox
-from PyQt4.QtNetwork import QNetworkReply, QNetworkRequest
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import Qt, QCoreApplication, QUrl
+from qgis.PyQt.QtGui import QIcon, QCursor
+from qgis.PyQt.QtWidgets import QApplication, QTreeWidgetItem, QPushButton, QMessageBox
+from qgis.PyQt.QtNetwork import QNetworkReply, QNetworkRequest
 
 from qgis.utils import iface, show_message_log
 from qgis.core import QgsNetworkAccessManager, QgsMessageLog
 from qgis.gui import QgsMessageBar
 
+from processing.core.alglist import algList
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.gui.ToolboxAction import ToolboxAction
+from processing.gui import Help2Html
+from processing.gui.Help2Html import getDescription, ALG_DESC, ALG_VERSION, ALG_CREATOR
 from processing.script.ScriptUtils import ScriptUtils
 from processing.algs.r.RUtils import RUtils
 from processing.modeler.ModelerUtils import ModelerUtils
-from processing.gui import Help2Html
-from processing.gui.Help2Html import getDescription, ALG_DESC, ALG_VERSION, ALG_CREATOR
 
 pluginPath = os.path.split(os.path.dirname(__file__))[0]
 WIDGET, BASE = uic.loadUiType(
@@ -55,8 +57,8 @@ WIDGET, BASE = uic.loadUiType(
 class GetScriptsAction(ToolboxAction):
 
     def __init__(self):
-        self.name = self.tr('Get scripts from on-line scripts collection', 'GetScriptsAction')
-        self.group = self.tr('Tools', 'GetScriptsAction')
+        self.name, self.i18n_name = self.trAction('Get scripts from on-line scripts collection')
+        self.group, self.i18n_group = self.trAction('Tools')
 
     def getIcon(self):
         return QIcon(os.path.join(pluginPath, 'images', 'script.png'))
@@ -71,15 +73,15 @@ class GetScriptsAction(ToolboxAction):
 
         dlg = GetScriptsAndModelsDialog(GetScriptsAndModelsDialog.SCRIPTS)
         dlg.exec_()
-        if dlg.updateToolbox:
-            self.toolbox.updateProvider('script')
+        if dlg.updateProvider:
+            algList.reloadProvider('script')
 
 
 class GetRScriptsAction(ToolboxAction):
 
     def __init__(self):
-        self.name = self.tr('Get R scripts from on-line scripts collection', 'GetRScriptsAction')
-        self.group = self.tr('Tools', 'GetRScriptsAction')
+        self.name, self.i18n_name = self.trAction('Get R scripts from on-line scripts collection')
+        self.group, self.i18n_group = self.trAction('Tools')
 
     def getIcon(self):
         return QIcon(os.path.join(pluginPath, 'images', 'r.svg'))
@@ -94,15 +96,15 @@ class GetRScriptsAction(ToolboxAction):
 
         dlg = GetScriptsAndModelsDialog(GetScriptsAndModelsDialog.RSCRIPTS)
         dlg.exec_()
-        if dlg.updateToolbox:
-            self.toolbox.updateProvider('r')
+        if dlg.updateProvider:
+            algList.reloadProvider('r')
 
 
 class GetModelsAction(ToolboxAction):
 
     def __init__(self):
-        self.name = self.tr('Get models from on-line scripts collection', 'GetModelsAction')
-        self.group = self.tr('Tools', 'GetModelsAction')
+        self.name, self.i18n_name = self.trAction('Get models from on-line scripts collection')
+        self.group, self.i18n_group = self.trAction('Tools')
 
     def getIcon(self):
         return QIcon(os.path.join(pluginPath, 'images', 'model.png'))
@@ -117,8 +119,8 @@ class GetModelsAction(ToolboxAction):
 
         dlg = GetScriptsAndModelsDialog(GetScriptsAndModelsDialog.MODELS)
         dlg.exec_()
-        if dlg.updateToolbox:
-            self.toolbox.updateProvider('model')
+        if dlg.updateProvider:
+            algList.reloadProvider('model')
 
 
 class GetScriptsAndModelsDialog(BASE, WIDGET):
@@ -151,20 +153,20 @@ class GetScriptsAndModelsDialog(BASE, WIDGET):
 
         self.resourceType = resourceType
         if self.resourceType == self.MODELS:
-            self.folder = ModelerUtils.modelsFolder()
+            self.folder = ModelerUtils.modelsFolders()[0]
             self.urlBase = '{}/models/'.format(repoUrl)
             self.icon = QIcon(os.path.join(pluginPath, 'images', 'model.png'))
         elif self.resourceType == self.SCRIPTS:
-            self.folder = ScriptUtils.scriptsFolder()
+            self.folder = ScriptUtils.scriptsFolders()[0]
             self.urlBase = '{}/scripts/'.format(repoUrl)
             self.icon = QIcon(os.path.join(pluginPath, 'images', 'script.png'))
         else:
-            self.folder = RUtils.RScriptsFolder()
+            self.folder = RUtils.RScriptsFolders()[0]
             self.urlBase = '{}/rscripts/'.format(repoUrl)
             self.icon = QIcon(os.path.join(pluginPath, 'images', 'r.svg'))
 
         self.lastSelectedItem = None
-        self.updateToolbox = False
+        self.updateProvider = False
         self.populateTree()
         self.buttonBox.accepted.connect(self.okPressed)
         self.buttonBox.rejected.connect(self.cancelPressed)
@@ -191,9 +193,6 @@ class GetScriptsAndModelsDialog(BASE, WIDGET):
             reply.finished.connect(partial(loadFunction, reply, arguments))
         else:
             reply.finished.connect(partial(loadFunction, reply))
-
-        while not reply.isFinished():
-            QCoreApplication.processEvents()
 
     def populateTree(self):
         self.uptodateItem = QTreeWidgetItem()
@@ -328,7 +327,7 @@ class GetScriptsAndModelsDialog(BASE, WIDGET):
                 if os.path.exists(path):
                     os.remove(path)
 
-        self.updateToolbox = len(toDownload) + len(toDelete) > 0
+        self.updateProvider = len(toDownload) + len(toDelete) > 0
         super(GetScriptsAndModelsDialog, self).accept()
 
 

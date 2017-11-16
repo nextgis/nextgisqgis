@@ -25,7 +25,11 @@ __copyright__ = '(C) 2014, Alexander Bruy'
 
 __revision__ = '$Format:%H$'
 
-from qgis.core import QGis, QgsFeature, QgsGeometry, QgsFeatureRequest, NULL
+import os
+
+from qgis.PyQt.QtGui import QIcon
+
+from qgis.core import QGis, QgsFeature, QgsGeometry, QgsFeatureRequest, NULL, QgsWKBTypes
 from processing.core.ProcessingLog import ProcessingLog
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
@@ -33,12 +37,17 @@ from processing.core.parameters import ParameterVector
 from processing.core.outputs import OutputVector
 from processing.tools import dataobjects, vector
 
+pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+
 
 class SymmetricalDifference(GeoAlgorithm):
 
     INPUT = 'INPUT'
     OVERLAY = 'OVERLAY'
     OUTPUT = 'OUTPUT'
+
+    def getIcon(self):
+        return QIcon(os.path.join(pluginPath, 'images', 'ftools', 'sym_difference.png'))
 
     def defineCharacteristics(self):
         self.name, self.i18n_name = self.trAlgorithm('Symmetrical difference')
@@ -56,7 +65,7 @@ class SymmetricalDifference(GeoAlgorithm):
         layerB = dataobjects.getObjectFromUri(
             self.getParameterValue(self.OVERLAY))
 
-        geomType = QGis.multiType(layerA.wkbType())
+        geomType = QgsWKBTypes.multiType(QGis.fromOldWkbType(layerA.wkbType()))
         fields = vector.combineVectorFields(layerA, layerB)
         writer = self.getOutputFromName(self.OUTPUT).getVectorWriter(
             fields, geomType, layerA.crs())
@@ -70,7 +79,7 @@ class SymmetricalDifference(GeoAlgorithm):
         featuresA = vector.features(layerA)
         featuresB = vector.features(layerB)
 
-        total = 100.0 / (len(featuresA) * len(featuresB))
+        total = 100.0 / (len(featuresA) * len(featuresB)) if len(featuresA) * len(featuresB) > 0 else 1
         count = 0
 
         for featA in featuresA:

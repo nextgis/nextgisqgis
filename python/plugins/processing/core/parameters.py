@@ -28,11 +28,12 @@ __revision__ = '$Format:%H$'
 
 import sys
 import os
-import re
 
-from processing.tools.vector import resolveFieldIndex, features
-from PyQt4.QtCore import QCoreApplication
-from qgis.core import QgsRasterLayer, QgsVectorLayer
+from processing.tools.vector import resolveFieldIndex
+from processing.tools.vector import features
+from qgis.PyQt.QtCore import QCoreApplication
+from qgis.core import QgsRasterLayer
+from qgis.core import QgsVectorLayer
 from processing.tools.system import isWindows
 from processing.tools import dataobjects
 
@@ -139,7 +140,11 @@ class ParameterBoolean(Parameter):
         return True
 
     def getAsScriptCode(self):
-        return '##' + self.name + '=boolean ' + str(self.default)
+        param_type = ''
+        if self.optional:
+            param_type += 'optional '
+        param_type += 'boolean '
+        return '##' + self.name + '=' + param_type + str(self.default)
 
 
 class ParameterCrs(Parameter):
@@ -166,7 +171,11 @@ class ParameterCrs(Parameter):
         return '"' + unicode(self.value) + '"'
 
     def getAsScriptCode(self):
-        return '##' + self.name + '=crs ' + str(self.default)
+        param_type = ''
+        if self.optional:
+            param_type += 'optional '
+        param_type += 'crs '
+        return '##' + self.name + '=' + param_type + str(self.default)
 
 
 class ParameterDataObject(Parameter):
@@ -212,7 +221,46 @@ class ParameterExtent(Parameter):
         return '"' + unicode(self.value) + '"'
 
     def getAsScriptCode(self):
-        return '##' + self.name + '=extent'
+        param_type = ''
+        if self.optional:
+            param_type += 'optional '
+        param_type += 'extent'
+        return '##' + self.name + '=' + param_type
+
+
+class ParameterPoint(Parameter):
+
+    def __init__(self, name='', description='', default=None, optional=False):
+        Parameter.__init__(self, name, description, default, optional)
+        # The value is a string in the form "x, y"
+
+    def setValue(self, text):
+        if text is None:
+            if not self.optional:
+                return False
+            self.value = None
+            return True
+
+        tokens = unicode(text).split(',')
+        if len(tokens) != 2:
+            return False
+        try:
+            float(tokens[0])
+            float(tokens[1])
+            self.value = text
+            return True
+        except:
+            return False
+
+    def getValueAsCommandLineParameter(self):
+        return '"' + unicode(self.value) + '"'
+
+    def getAsScriptCode(self):
+        param_type = ''
+        if self.optional:
+            param_type += 'optional '
+        param_type += 'point'
+        return '##' + self.name + '=' + param_type
 
 
 class ParameterFile(Parameter):
@@ -244,10 +292,14 @@ class ParameterFile(Parameter):
             return 'file'
 
     def getAsScriptCode(self):
+        param_type = ''
+        if self.optional:
+            param_type += 'optional '
         if self.isFolder:
-            return '##' + self.name + '=folder'
+            param_type += 'folder'
         else:
-            return '##' + self.name + '=file'
+            param_type += 'file'
+        return '##' + self.name + '=' + param_type
 
 
 class ParameterFixedTable(Parameter):
@@ -309,6 +361,38 @@ class ParameterMultipleInput(ParameterDataObject):
         ParameterDataObject.__init__(self, name, description, None, optional)
         self.datatype = int(float(datatype))
         self.exported = None
+        self.minNumInputs = 0
+
+    """ Set minimum required number of inputs for parameter
+
+    By default minimal number of inputs is set to 1
+
+    @type _minNumInputs: numeric type or None
+    @param _minNumInputs: required minimum number of inputs for parameter. \
+                          If user will pass None as parameter, we will use default minimal number of inputs (1)
+    @return: result, if the minimum number of inputs were set.
+    """
+
+    def setMinNumInputs(self, _minNumInputs):
+        if _minNumInputs is None:
+            self.minNumInputs = 0
+            return True
+
+        if _minNumInputs < 1 and not self.optional:
+            # don't allow to set negative or null number of inputs if parameter isn't optional
+            return False
+
+        self.minNumInputs = int(_minNumInputs)
+        return True
+
+    """ Get minimum required number of inputs for parameter
+
+    @return: minimum number of inputs required for this parameter
+    @see: setMinNumInputs()
+    """
+
+    def getMinNumInputs(self):
+        return self.minNumInputs
 
     def setValue(self, obj):
         self.exported = None
@@ -321,9 +405,14 @@ class ParameterMultipleInput(ParameterDataObject):
         if isinstance(obj, list):
             if len(obj) == 0:
                 if self.optional:
+                    self.value = None
                     return True
                 else:
                     return False
+            # prevent setting value if we didn't provide required minimal number of inputs
+            elif len(obj) < self.minNumInputs:
+                return False
+
             self.value = ";".join([self.getAsString(lay) for lay in obj])
             return True
         else:
@@ -331,7 +420,8 @@ class ParameterMultipleInput(ParameterDataObject):
             return True
 
     def getSafeExportedLayers(self):
-        """Returns not the value entered by the user, but a string with
+        """
+        Returns not the value entered by the user, but a string with
         semicolon-separated filenames which contains the data of the
         selected layers, but saved in a standard format (currently
         shapefiles for vector layers and GeoTiff for raster) so that
@@ -391,6 +481,7 @@ class ParameterMultipleInput(ParameterDataObject):
                     if layer.name() == s:
                         return unicode(layer.dataProvider().dataSourceUri())
                 return s
+
         if self.datatype == ParameterMultipleInput.TYPE_FILE:
             return unicode(value)
         else:
@@ -430,12 +521,16 @@ class ParameterMultipleInput(ParameterDataObject):
             return 'any vectors'
 
     def getAsScriptCode(self):
+        param_type = ''
+        if self.optional:
+            param_type += 'optional '
         if self.datatype == self.TYPE_RASTER:
-            return '##' + self.name + '=multiple raster'
+            param_type += 'multiple raster'
         if self.datatype == self.TYPE_FILE:
-            return '##' + self.name + '=multiple file'
+            param_type += 'multiple file'
         else:
-            return '##' + self.name + '=multiple vector'
+            param_type += 'multiple vector'
+        return '##' + self.name + '=' + param_type
 
 
 class ParameterNumber(Parameter):
@@ -488,7 +583,11 @@ class ParameterNumber(Parameter):
             return False
 
     def getAsScriptCode(self):
-        return '##' + self.name + '=number ' + str(self.default)
+        param_type = ''
+        if self.optional:
+            param_type += 'optional '
+        param_type += 'number'
+        return '##' + self.name + '=' + param_type + str(self.default)
 
 
 class ParameterRange(Parameter):
@@ -586,7 +685,11 @@ class ParameterRaster(ParameterDataObject):
         return ';;'.join(exts)
 
     def getAsScriptCode(self):
-        return '##' + self.name + '=raster'
+        param_type = ''
+        if self.optional:
+            param_type += 'optional '
+        param_type += 'raster'
+        return '##' + self.name + '=' + param_type
 
 
 class ParameterSelection(Parameter):
@@ -637,16 +740,17 @@ class ParameterString(Parameter):
     NEWLINE = '\n'
     ESCAPED_NEWLINE = '\\n'
 
-    def __init__(self, name='', description='', default=None, multiline=False,
-                 optional=False):
+    def __init__(self, name='', description='', default='', multiline=False,
+                 optional=False, evaluateExpressions=False):
         Parameter.__init__(self, name, description, default, optional)
         self.multiline = parseBool(multiline)
+        self.evaluateExpressions = parseBool(evaluateExpressions)
 
     def setValue(self, obj):
-        if obj is None:
+        if not bool(obj):
             if not self.optional:
                 return False
-            self.value = None
+            self.value = ''
             return True
 
         self.value = unicode(obj).replace(
@@ -661,7 +765,11 @@ class ParameterString(Parameter):
                 if self.value is not None else unicode(None))
 
     def getAsScriptCode(self):
-        return '##' + self.name + '=string ' + self.default
+        param_type = ''
+        if self.optional:
+            param_type += 'optional '
+        param_type += 'string'
+        return '##' + self.name + '=' + param_type + self.default
 
 
 class ParameterTable(ParameterDataObject):
@@ -729,10 +837,21 @@ class ParameterTable(ParameterDataObject):
         return ';;'.join(exts)
 
     def getAsScriptCode(self):
-        return '##' + self.name + '=table'
+        param_type = ''
+        if self.optional:
+            param_type += 'optional '
+        param_type += 'table'
+        return '##' + self.name + '=' + param_type
 
 
 class ParameterTableField(Parameter):
+
+    """A parameter representing a table field.
+    Its value is a string that represents the name of the field.
+
+    In a script you can use it with
+    ##Field=[optional] field [number|string] Parentinput
+    """
 
     DATA_TYPE_NUMBER = 0
     DATA_TYPE_STRING = 1
@@ -772,7 +891,78 @@ class ParameterTableField(Parameter):
             return 'any'
 
     def getAsScriptCode(self):
-        return '##' + self.name + '=field ' + self.parent
+        param_type = ''
+        if self.optional:
+            param_type += 'optional '
+        param_type += 'field'
+        return '##' + self.name + '=' + param_type + self.parent
+
+
+class ParameterTableMultipleField(Parameter):
+
+    """A parameter representing several table fields.
+        Its value is a string with items separated by semicolons, each of
+        which represents the name of each field.
+
+        In a script you can use it with
+        ##Fields=[optional] multiple field [number|string] Parentinput
+
+        In the batch runner simply use a string with items separated by
+        semicolons, each of which represents the name of each field.
+
+        see algs.qgis.DeleteColumn.py for an usage example
+    """
+
+    DATA_TYPE_NUMBER = 0
+    DATA_TYPE_STRING = 1
+    DATA_TYPE_ANY = -1
+
+    def __init__(self, name='', description='', parent=None, datatype=-1,
+                 optional=False):
+        Parameter.__init__(self, name, description, None, optional)
+        self.parent = parent
+        self.datatype = int(datatype)
+
+    def getValueAsCommandLineParameter(self):
+        return '"' + unicode(self.value) + '"' if self.value is not None else unicode(None)
+
+    def setValue(self, obj):
+        if obj is None:
+            if self.optional:
+                self.value = None
+                return True
+            return False
+
+        if isinstance(obj, list):
+            if len(obj) == 0:
+                if self.optional:
+                    self.value = None
+                    return True
+                return False
+            self.value = ";".join(obj)
+            return True
+        else:
+            self.value = unicode(obj)
+            return True
+
+    def __str__(self):
+        return self.name + ' <' + self.__module__.split('.')[-1] + ' from ' \
+            + self.parent + '>'
+
+    def dataType(self):
+        if self.datatype == self.DATA_TYPE_NUMBER:
+            return 'numeric'
+        elif self.datatype == self.DATA_TYPE_STRING:
+            return 'string'
+        else:
+            return 'any'
+
+    def getAsScriptCode(self):
+        param_type = ''
+        if self.optional:
+            param_type += 'optional '
+        param_type += 'multiple field '
+        return '##' + self.name + '=' + param_type + self.parent
 
 
 class ParameterVector(ParameterDataObject):
@@ -860,7 +1050,11 @@ class ParameterVector(ParameterDataObject):
         return types[:-2]
 
     def getAsScriptCode(self):
-        return '##' + self.name + '=vector'
+        param_type = ''
+        if self.optional:
+            param_type += 'optional '
+        param_type += 'vector'
+        return '##' + self.name + '=' + param_type
 
 
 class ParameterGeometryPredicate(Parameter):
@@ -897,7 +1091,7 @@ class ParameterGeometryPredicate(Parameter):
             return False
 
         if isinstance(value, unicode):
-            self.value = value.split(';') # relates to ModelerAlgorithm.resolveValue
+            self.value = value.split(';')  # relates to ModelerAlgorithm.resolveValue
         else:
             self.value = value
         return True

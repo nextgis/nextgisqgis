@@ -27,7 +27,7 @@ __revision__ = '$Format:%H$'
 
 import random
 
-from PyQt4.QtCore import QVariant
+from qgis.PyQt.QtCore import QVariant
 from qgis.core import (QGis, QgsFields, QgsField, QgsGeometry, QgsSpatialIndex,
                        QgsDistanceArea, QgsFeatureRequest, QgsFeature,
                        QgsPoint)
@@ -74,7 +74,7 @@ class RandomPointsAlongLines(GeoAlgorithm):
         nIterations = 0
         maxIterations = pointCount * 200
         featureCount = layer.featureCount()
-        total = 100.0 / pointCount
+        total = 100.0 / pointCount if pointCount > 0 else 1
 
         index = QgsSpatialIndex()
         points = dict()

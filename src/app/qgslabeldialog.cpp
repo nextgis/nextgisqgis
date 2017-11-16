@@ -36,7 +36,6 @@ QgsLabelDialog::QgsLabelDialog( QgsLabel *label, QWidget *parent )
     , mFont( "Helvetica" )
 {
   setupUi( this );
-  QgsDebugMsg( "entering." );
 
   Q_ASSERT( label );
 
@@ -53,7 +52,6 @@ QgsLabelDialog::QgsLabelDialog( QgsLabel *label, QWidget *parent )
 
 void QgsLabelDialog::init()
 {
-  QgsDebugMsg( "entering." );
 
   QgsLabelAttributes * myLabelAttributes = mLabel->labelAttributes();
   //populate a string list with all the field names which will be used to set up the
@@ -272,13 +270,13 @@ void QgsLabelDialog::init()
 
 
 
-void QgsLabelDialog::changeFont( void )
+void QgsLabelDialog::changeFont()
 {
-  QgsDebugMsg( "entering." );
 
   qreal fontSize = mFont.pointSizeF();
   bool resultFlag;
   QFont newFont = QgisGui::getFont( resultFlag, mFont );
+  Q_UNUSED( newFont );
   if ( !resultFlag )
     return;
 
@@ -290,9 +288,8 @@ void QgsLabelDialog::changeFont( void )
   lblSample->setFont( mFont );
 }
 
-void QgsLabelDialog::changeFontColor( void )
+void QgsLabelDialog::changeFontColor()
 {
-  QgsDebugMsg( "entering." );
 
   QColor color = QColorDialog::getColor( mFontColor );
   if ( !color.isValid() )
@@ -304,9 +301,8 @@ void QgsLabelDialog::changeFontColor( void )
   lblSample->setPalette( palette );
 }
 
-void QgsLabelDialog::changeBufferColor( void )
+void QgsLabelDialog::changeBufferColor()
 {
-  QgsDebugMsg( "entering." );
 
   QColor color = QColorDialog::getColor( mBufferColor );
   if ( !color.isValid() )
@@ -327,12 +323,10 @@ int QgsLabelDialog::itemNoForField( const QString& theFieldName, const QStringLi
 
 QgsLabelDialog::~QgsLabelDialog()
 {
-  QgsDebugMsg( "entering." );
 }
 
 void QgsLabelDialog::apply()
 {
-  QgsDebugMsg( "entering." );
 
   //set the label props that are NOT bound to a field in the attributes tbl
   //All of these are set in the labelAttributes member of the layer

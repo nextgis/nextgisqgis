@@ -21,6 +21,9 @@
 #include <QScopedPointer>
 #include <QRegExp>
 
+/** \ingroup core
+ * \class QgsRendererRangeV2
+ */
 class CORE_EXPORT QgsRendererRangeV2
 {
   public:
@@ -75,7 +78,10 @@ class CORE_EXPORT QgsRendererRangeV2
 typedef QList<QgsRendererRangeV2> QgsRangeList;
 
 
-// @note added in 2.6
+/** \ingroup core
+ * \class QgsRendererRangeV2LabelFormat
+ * \note added in QGIS 2.6
+ */
 class CORE_EXPORT QgsRendererRangeV2LabelFormat
 {
   public:
@@ -120,6 +126,9 @@ class QgsVectorLayer;
 class QgsVectorColorRampV2;
 
 Q_NOWARN_DEPRECATED_PUSH
+/** \ingroup core
+ * \class QgsGraduatedSymbolRendererV2
+ */
 class CORE_EXPORT QgsGraduatedSymbolRendererV2 : public QgsFeatureRendererV2
 {
   public:

@@ -23,19 +23,17 @@ email                : brush.tyler@gmail.com
 # this will disable the dbplugin if the connector raise an ImportError
 from .connector import PostGisDBConnector
 
-from PyQt4.QtCore import QSettings, Qt, QRegExp, SIGNAL
-from PyQt4.QtGui import QIcon, QAction, QApplication, QMessageBox
+from qgis.PyQt.QtCore import QSettings, Qt, QRegExp
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QAction, QApplication, QMessageBox
 from qgis.gui import QgsMessageBar
 
 from ..plugin import ConnectionError, InvalidDataException, DBPlugin, Database, Schema, Table, VectorTable, RasterTable, \
     TableField, TableConstraint, TableIndex, TableTrigger, TableRule
 
-try:
-    from . import resources_rc
-except ImportError:
-    pass
-
 import re
+
+from . import resources_rc  # NOQA
 
 
 def classFactory():
@@ -80,7 +78,7 @@ class PostGisDBPlugin(DBPlugin):
         uri = QgsDataSourceURI()
 
         settingsList = ["service", "host", "port", "database", "username", "password", "authcfg"]
-        service, host, port, database, username, password, authcfg = map(lambda x: settings.value(x, "", type=str), settingsList)
+        service, host, port, database, username, password, authcfg = [settings.value(x, "", type=str) for x in settingsList]
 
         useEstimatedMetadata = settings.value("estimatedMetadata", False, type=bool)
         sslmode = settings.value("sslmode", QgsDataSourceURI.SSLprefer, type=int)
@@ -96,7 +94,7 @@ class PostGisDBPlugin(DBPlugin):
 
         try:
             return self.connectToUri(uri)
-        except ConnectionError as e:
+        except ConnectionError:
             return False
 
 
@@ -140,6 +138,9 @@ class PGDatabase(Database):
         action = QAction(self.tr("Run &Vacuum Analyze"), self)
         mainWindow.registerAction(action, self.tr("&Table"), self.runVacuumAnalyzeActionSlot)
 
+        action = QAction(self.tr("Run &Refresh Materialized View"), self)
+        mainWindow.registerAction(action, self.tr("&Table"), self.runRefreshMaterializedViewSlot)
+
     def runVacuumAnalyzeActionSlot(self, item, action, parent):
         QApplication.restoreOverrideCursor()
         try:
@@ -152,8 +153,21 @@ class PGDatabase(Database):
 
         item.runVacuumAnalyze()
 
+    def runRefreshMaterializedViewSlot(self, item, action, parent):
+        QApplication.restoreOverrideCursor()
+        try:
+            if not isinstance(item, PGTable) or item._relationType != 'm':
+                parent.infoBar.pushMessage(self.tr("Select a materialized view for refresh."), QgsMessageBar.INFO,
+                                           parent.iface.messageTimeout())
+                return
+        finally:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        item.runRefreshMaterializedView()
+
     def hasLowercaseFieldNamesOption(self):
         return True
+
 
 class PGSchema(Schema):
 
@@ -171,8 +185,14 @@ class PGTable(Table):
         self.estimatedRowCount = int(self.estimatedRowCount)
 
     def runVacuumAnalyze(self):
-        self.aboutToChange()
+        self.aboutToChange.emit()
         self.database().connector.runVacuumAnalyze((self.schemaName(), self.name))
+        # TODO: change only this item, not re-create all the tables in the schema/database
+        self.schema().refresh() if self.schema() else self.database().refresh()
+
+    def runRefreshMaterializedView(self):
+        self.aboutToChange.emit()
+        self.database().connector.runRefreshMaterializedView((self.schemaName(), self.name))
         # TODO: change only this item, not re-create all the tables in the schema/database
         self.schema().refresh() if self.schema() else self.database().refresh()
 
@@ -201,9 +221,14 @@ class PGTable(Table):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
 
             if rule_action == "delete":
-                self.aboutToChange()
+                self.aboutToChange.emit()
                 self.database().connector.deleteTableRule(rule_name, (self.schemaName(), self.name))
                 self.refreshRules()
+                return True
+
+        elif action.startswith("refreshmaterializedview/"):
+            if action == "refreshmaterializedview/run":
+                self.runRefreshMaterializedView()
                 return True
 
         return Table.runAction(self, action)
@@ -234,13 +259,13 @@ class PGTable(Table):
         return PGTableDataModel(self, parent)
 
     def delete(self):
-        self.aboutToChange()
+        self.aboutToChange.emit()
         if self.isView:
             ret = self.database().connector.deleteView((self.schemaName(), self.name), self._relationType == 'm')
         else:
             ret = self.database().connector.deleteTable((self.schemaName(), self.name))
-        if ret is not False:
-            self.emit(SIGNAL('deleted'))
+        if not ret:
+            self.deleted.emit()
         return ret
 
 
@@ -278,12 +303,22 @@ class PGRasterTable(PGTable, RasterTable):
     def gdalUri(self, uri=None):
         if not uri:
             uri = self.database().uri()
+        service = (u'service=%s' % uri.service()) if uri.service() else ''
         schema = (u'schema=%s' % self.schemaName()) if self.schemaName() else ''
         dbname = (u'dbname=%s' % uri.database()) if uri.database() else ''
         host = (u'host=%s' % uri.host()) if uri.host() else ''
         user = (u'user=%s' % uri.username()) if uri.username() else ''
         passw = (u'password=%s' % uri.password()) if uri.password() else ''
         port = (u'port=%s' % uri.port()) if uri.port() else ''
+
+        if not dbname:
+            # GDAL postgisraster driver *requires* ad dbname
+            # See: https://trac.osgeo.org/gdal/ticket/6910
+            # TODO: cache this ?
+            connector = self.database().connector
+            r = connector._execute(None, "SELECT current_database()")
+            dbname = (u'dbname=%s' % connector._fetchone(r)[0])
+            connector._close_cursor(r)
 
         # Find first raster field
         col = ''
@@ -292,8 +327,8 @@ class PGRasterTable(PGTable, RasterTable):
                 col = u'column=%s' % fld.name
                 break
 
-        gdalUri = u'PG: %s %s %s %s %s mode=2 %s %s table=%s' % \
-                  (dbname, host, user, passw, port, schema, col, self.name)
+        gdalUri = u'PG: %s %s %s %s %s %s mode=2 %s %s table=%s' % \
+                  (service, dbname, host, user, passw, port, schema, col, self.name)
 
         return gdalUri
 

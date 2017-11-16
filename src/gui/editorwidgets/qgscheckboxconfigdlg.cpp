@@ -15,10 +15,13 @@
 
 #include "qgscheckboxconfigdlg.h"
 
-QgsCheckBoxConfigDlg::QgsCheckBoxConfigDlg( QgsVectorLayer* vl, int fieldIdx, QWidget *parent ) :
-    QgsEditorConfigWidget( vl, fieldIdx, parent )
+QgsCheckBoxConfigDlg::QgsCheckBoxConfigDlg( QgsVectorLayer* vl, int fieldIdx, QWidget *parent )
+    : QgsEditorConfigWidget( vl, fieldIdx, parent )
 {
   setupUi( this );
+
+  connect( leCheckedState, SIGNAL( textEdited( QString ) ), this, SIGNAL( changed() ) );
+  connect( leUncheckedState, SIGNAL( textEdited( QString ) ), this, SIGNAL( changed() ) );
 }
 
 QgsEditorWidgetConfig QgsCheckBoxConfigDlg::config()

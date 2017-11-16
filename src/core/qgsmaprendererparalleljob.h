@@ -18,7 +18,8 @@
 
 #include "qgsmaprendererjob.h"
 
-/** Job implementation that renders all layers in parallel.
+/** \ingroup core
+ * Job implementation that renders all layers in parallel.
  *
  * The resulting map image can be retrieved with renderedImage() function.
  * It is safe to call that function while rendering is active to see preview of the map.
@@ -34,6 +35,7 @@ class CORE_EXPORT QgsMapRendererParallelJob : public QgsMapRendererQImageJob
 
     virtual void start() override;
     virtual void cancel() override;
+    virtual void cancelWithoutBlocking() override;
     virtual void waitForFinished() override;
     virtual bool isActive() const override;
 
@@ -72,6 +74,10 @@ class CORE_EXPORT QgsMapRendererParallelJob : public QgsMapRendererQImageJob
     QgsRenderContext mLabelingRenderContext;
     QFuture<void> mLabelingFuture;
     QFutureWatcher<void> mLabelingFutureWatcher;
+
+  private slots:
+
+    void renderLayersFinishedWhenJobCanceled();
 };
 
 

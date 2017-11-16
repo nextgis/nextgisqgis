@@ -24,14 +24,15 @@ QgsVectorFieldSymbolLayerWidget::QgsVectorFieldSymbolLayerWidget( const QgsVecto
 
   if ( mVectorLayer )
   {
-    const QgsFields& fm = mVectorLayer->fields();
     mXAttributeComboBox->addItem( "" );
     mYAttributeComboBox->addItem( "" );
-    for ( int idx = 0; idx < fm.count(); ++idx )
+    int i = 0;
+    Q_FOREACH ( const QgsField& f, mVectorLayer->fields() )
     {
-      QString fieldName = fm[idx].name();
-      mXAttributeComboBox->addItem( fieldName );
-      mYAttributeComboBox->addItem( fieldName );
+      QString fieldName = f.name();
+      mXAttributeComboBox->addItem( mVectorLayer->fields().iconForField( i ), fieldName );
+      mYAttributeComboBox->addItem( mVectorLayer->fields().iconForField( i ), fieldName );
+      i++;
     }
   }
 }

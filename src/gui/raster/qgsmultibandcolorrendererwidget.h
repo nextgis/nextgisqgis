@@ -28,6 +28,9 @@ class QgsRasterDataProvider;
 class QgsRasterLayer;
 class QLineEdit;
 
+/** \ingroup gui
+ * \class QgsMultiBandColorRendererWidget
+ */
 class GUI_EXPORT QgsMultiBandColorRendererWidget: public QgsRasterRendererWidget, private Ui::QgsMultiBandColorRendererWidgetBase
 {
     Q_OBJECT
@@ -38,6 +41,7 @@ class GUI_EXPORT QgsMultiBandColorRendererWidget: public QgsRasterRendererWidget
     ~QgsMultiBandColorRendererWidget();
 
     QgsRasterRenderer* renderer() override;
+    void setMapCanvas( QgsMapCanvas* canvas ) override;
 
     void setFromRenderer( const QgsRasterRenderer* r );
 

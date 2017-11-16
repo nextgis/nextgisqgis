@@ -26,7 +26,9 @@ __copyright__ = '(C) 2014, Arnaud Morvan'
 __revision__ = '$Format:%H$'
 
 
-from PyQt4.QtGui import QComboBox, QSpacerItem
+from qgis.core import QgsMapLayerRegistry
+
+from qgis.PyQt.QtWidgets import QComboBox, QSpacerItem
 
 from processing.core.parameters import ParameterVector
 from processing.tools import dataobjects
@@ -56,7 +58,8 @@ class FieldsMapperParametersPanel(ParametersPanel):
             else:
                 items = []
                 self.dependentItems[param.parent] = items
-            items.append(param.name)
+            items.append(param)
+
             parent = self.alg.getParameterFromName(param.parent)
             if isinstance(parent, ParameterVector):
                 layers = dataobjects.getVectorLayers(parent.shapetype)
@@ -76,27 +79,32 @@ class FieldsMapperParametersPanel(ParametersPanel):
         layer = sender.itemData(sender.currentIndex())
         children = self.dependentItems[sender.name]
         for child in children:
-            widget = self.valueItems[child]
+            widget = self.valueItems[child.name]
             if isinstance(widget, FieldsMappingPanel):
                 widget.setLayer(layer)
+        ParametersPanel.updateDependentFields(self)
 
     def somethingDependsOnThisParameter(self, parent):
         for param in self.alg.parameters:
             if isinstance(param, ParameterFieldsMapping):
                 if param.parent == parent.name:
                     return True
-        return False
+        return ParametersPanel.somethingDependsOnThisParameter(self, parent)
 
 
 class FieldsMapperParametersDialog(AlgorithmDialog):
 
     def __init__(self, alg):
-        AlgorithmDialogBase.__init__(self, alg)
+        AlgorithmDialog.__init__(self, alg)
 
-        self.alg = alg
+        QgsMapLayerRegistry.instance().layerWasAdded.disconnect(self.mainWidget.layerAdded)
+        QgsMapLayerRegistry.instance().layersWillBeRemoved.disconnect(self.mainWidget.layersWillBeRemoved)
+        self.tabWidget.widget(0).layout().removeWidget(self.mainWidget)
 
         self.mainWidget = FieldsMapperParametersPanel(self, alg)
         self.setMainWidget()
+        QgsMapLayerRegistry.instance().layerWasAdded.connect(self.mainWidget.layerAdded)
+        QgsMapLayerRegistry.instance().layersWillBeRemoved.connect(self.mainWidget.layersWillBeRemoved)
 
     def setParamValue(self, param, widget, alg=None):
         if isinstance(param, ParameterFieldsMapping):

@@ -30,6 +30,9 @@
 #include <QPen>
 #include <QBrush>
 
+/** \ingroup core
+ * \class QgsSimpleFillSymbolLayerV2
+ */
 class CORE_EXPORT QgsSimpleFillSymbolLayerV2 : public QgsFillSymbolLayerV2
 {
   public:
@@ -149,6 +152,9 @@ class CORE_EXPORT QgsSimpleFillSymbolLayerV2 : public QgsFillSymbolLayerV2
 
 class QgsVectorColorRampV2;
 
+/** \ingroup core
+ * \class QgsGradientFillSymbolLayerV2
+ */
 class CORE_EXPORT QgsGradientFillSymbolLayerV2 : public QgsFillSymbolLayerV2
 {
   public:
@@ -301,6 +307,9 @@ class CORE_EXPORT QgsGradientFillSymbolLayerV2 : public QgsFillSymbolLayerV2
     QPointF rotateReferencePoint( QPointF refPoint, double angle );
 };
 
+/** \ingroup core
+ * \class QgsShapeburstFillSymbolLayerV2
+ */
 class CORE_EXPORT QgsShapeburstFillSymbolLayerV2 : public QgsFillSymbolLayerV2
 {
   public:
@@ -544,7 +553,8 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayerV2 : public QgsFillSymbolLayerV2
     void dtArrayToQImage( double * array, QImage *im, QgsVectorColorRampV2* ramp, double layerAlpha = 1, bool useWholeShape = true, int maxPixelDistance = 0 );
 };
 
-/** Base class for polygon renderers generating texture images*/
+/** \ingroup core
+ * Base class for polygon renderers generating texture images*/
 class CORE_EXPORT QgsImageFillSymbolLayer: public QgsFillSymbolLayerV2
 {
   public:
@@ -776,7 +786,8 @@ class CORE_EXPORT QgsRasterFillSymbolLayer: public QgsImageFillSymbolLayer
                        const QgsSymbolV2RenderContext& context );
 };
 
-/** A class for svg fill patterns. The class automatically scales the pattern to
+/** \ingroup core
+ * A class for svg fill patterns. The class automatically scales the pattern to
    the appropriate pixel dimensions of the output device*/
 class CORE_EXPORT QgsSVGFillSymbolLayer: public QgsImageFillSymbolLayer
 {
@@ -868,6 +879,9 @@ class CORE_EXPORT QgsSVGFillSymbolLayer: public QgsImageFillSymbolLayer
                        double svgOutlineWidth, QgsSymbolV2::OutputUnit svgOutlineWidthUnit, const QgsSymbolV2RenderContext& context, const QgsMapUnitScale& patternWidthMapUnitScale, const QgsMapUnitScale &svgOutlineWidthMapUnitScale );
 };
 
+/** \ingroup core
+ * \class QgsLinePatternFillSymbolLayer
+ */
 class CORE_EXPORT QgsLinePatternFillSymbolLayer: public QgsImageFillSymbolLayer
 {
   public:
@@ -962,6 +976,9 @@ class CORE_EXPORT QgsLinePatternFillSymbolLayer: public QgsImageFillSymbolLayer
     QgsLineSymbolV2* mFillLineSymbol;
 };
 
+/** \ingroup core
+ * \class QgsPointPatternFillSymbolLayer
+ */
 class CORE_EXPORT QgsPointPatternFillSymbolLayer: public QgsImageFillSymbolLayer
 {
   public:
@@ -1058,6 +1075,9 @@ class CORE_EXPORT QgsPointPatternFillSymbolLayer: public QgsImageFillSymbolLayer
                        double displacementX, double displacementY );
 };
 
+/** \ingroup core
+ * \class QgsCentroidFillSymbolLayerV2
+ */
 class CORE_EXPORT QgsCentroidFillSymbolLayerV2 : public QgsFillSymbolLayerV2
 {
   public:
@@ -1103,9 +1123,20 @@ class CORE_EXPORT QgsCentroidFillSymbolLayerV2 : public QgsFillSymbolLayerV2
     void setPointOnSurface( bool pointOnSurface ) { mPointOnSurface = pointOnSurface; }
     bool pointOnSurface() const { return mPointOnSurface; }
 
+    /** Sets whether a point is drawn for all parts or only on the biggest part of multi-part features.
+     * @note added in 2.16 */
+    void setPointOnAllParts( bool pointOnAllParts ) { mPointOnAllParts = pointOnAllParts; }
+    /** Returns whether a point is drawn for all parts or only on the biggest part of multi-part features.
+     * @note added in 2.16 */
+    bool pointOnAllParts() const { return mPointOnAllParts; }
+
   protected:
     QgsMarkerSymbolV2* mMarker;
     bool mPointOnSurface;
+    bool mPointOnAllParts;
+
+    QgsFeatureId mCurrentFeatureId;
+    int mBiggestPartIndex;
 };
 
 #endif

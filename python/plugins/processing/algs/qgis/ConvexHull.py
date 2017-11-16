@@ -25,9 +25,13 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
-from PyQt4.QtCore import QVariant
+import os
+
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtCore import QVariant
 
 from qgis.core import QGis, QgsField, QgsFeature, QgsGeometry
+
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
 from processing.core.parameters import ParameterVector
@@ -36,6 +40,8 @@ from processing.core.parameters import ParameterSelection
 from processing.core.outputs import OutputVector
 from processing.tools import dataobjects, vector
 
+pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+
 
 class ConvexHull(GeoAlgorithm):
 
@@ -43,6 +49,9 @@ class ConvexHull(GeoAlgorithm):
     OUTPUT = 'OUTPUT'
     FIELD = 'FIELD'
     METHOD = 'METHOD'
+
+    def getIcon(self):
+        return QIcon(os.path.join(pluginPath, 'images', 'ftools', 'convex_hull.png'))
 
     def defineCharacteristics(self):
         self.name, self.i18n_name = self.trAlgorithm('Convex hull')
@@ -100,7 +109,7 @@ class ConvexHull(GeoAlgorithm):
         if useField:
             unique = layer.uniqueValues(index)
             current = 0
-            total = 100.0 / (len(features) * len(unique))
+            total = 100.0 / (len(features) * len(unique)) if len(features) * len(unique) > 0 else 1
             for i in unique:
                 first = True
                 hull = []
@@ -132,7 +141,7 @@ class ConvexHull(GeoAlgorithm):
                 fid += 1
         else:
             hull = []
-            total = 100.0 / layer.featureCount()
+            total = 100.0 / layer.featureCount() if layer.featureCount() > 0 else 1
             features = vector.features(layer)
             for current, f in enumerate(features):
                 inGeom = QgsGeometry(f.geometry())

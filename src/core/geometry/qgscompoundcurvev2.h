@@ -58,7 +58,11 @@ class CORE_EXPORT QgsCompoundCurveV2: public QgsCurveV2
     virtual QgsPointV2 endPoint() const override;
     virtual void points( QgsPointSequenceV2 &pts ) const override;
     virtual int numPoints() const override;
-    virtual QgsLineStringV2* curveToLine() const override;
+    /** Returns a new line string geometry corresponding to a segmentized approximation
+     * of the curve.
+     * @param tolerance segmentation tolerance
+     * @param toleranceType maximum segmentation angle or maximum difference between approximation and curve*/
+    virtual QgsLineStringV2* curveToLine( double tolerance = M_PI_2 / 90, SegmentationToleranceType toleranceType = MaximumAngle ) const override;
 
     /** Returns the number of curves in the geometry.
      */
@@ -82,11 +86,8 @@ class CORE_EXPORT QgsCompoundCurveV2: public QgsCurveV2
     void addVertex( const QgsPointV2& pt );
 
     void draw( QPainter& p ) const override;
-    /** Transforms the geometry using a coordinate transform
-     * @param ct coordinate transform
-       @param d transformation direction
-     */
-    void transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform ) override;
+    void transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform,
+                    bool transformZ = false ) override;
     void transform( const QTransform& t ) override;
     void addToPainterPath( QPainterPath& path ) const override;
     void drawAsPolygon( QPainter& p ) const override;

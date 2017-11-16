@@ -483,7 +483,7 @@ void QgsLabel::setFields( const QgsFields & fields )
   mFields = fields;
 }
 
-QgsFields & QgsLabel::fields( void )
+QgsFields & QgsLabel::fields( )
 {
   return mFields;
 }
@@ -504,10 +504,10 @@ QString QgsLabel::labelField( int attr ) const
   int fieldIndex = mLabelFieldIdx[attr];
   if ( fieldIndex < 0 || fieldIndex >= mFields.count() )
     return QString();
-  return mFields[fieldIndex].name();
+  return mFields.at( fieldIndex ).name();
 }
 
-QgsLabelAttributes *QgsLabel::labelAttributes( void )
+QgsLabelAttributes *QgsLabel::labelAttributes()
 {
   return mLabelAttributes;
 }
@@ -1413,4 +1413,10 @@ void QgsLabel::setMaxScale( float theMaxScale )
 float QgsLabel::maxScale() const
 {
   return mMaxScale;
+}
+
+bool QgsLabel::isInScaleRange( double scale ) const
+{
+  return !mScaleBasedVisibility ||
+         ( mMinScale * QGis::SCALE_PRECISION < scale && scale * QGis::SCALE_PRECISION < mMaxScale );
 }

@@ -157,7 +157,7 @@ void QgsRendererRangeV2::toSld( QDomDocument &doc, QDomElement &element, QgsStri
 
   QDomElement descrElem = doc.createElement( "se:Description" );
   QDomElement titleElem = doc.createElement( "se:Title" );
-  QString descrStr = QString( "range: %1 - %2" ).arg( mLowerValue ).arg( mUpperValue );
+  QString descrStr = QString( "range: %1 - %2" ).arg( qgsDoubleToString( mLowerValue ), qgsDoubleToString( mUpperValue ) );
   titleElem.appendChild( doc.createTextNode( !mLabel.isEmpty() ? mLabel : descrStr ) );
   descrElem.appendChild( titleElem );
   ruleElem.appendChild( descrElem );
@@ -178,20 +178,20 @@ void QgsRendererRangeV2::toSld( QDomDocument &doc, QDomElement &element, QgsStri
 int QgsRendererRangeV2LabelFormat::MaxPrecision = 15;
 int QgsRendererRangeV2LabelFormat::MinPrecision = -6;
 
-QgsRendererRangeV2LabelFormat::QgsRendererRangeV2LabelFormat():
-    mFormat( " %1 - %2 " ),
-    mPrecision( 4 ),
-    mTrimTrailingZeroes( false ),
-    mNumberScale( 1.0 ),
-    mNumberSuffix( "" ),
-    mReTrailingZeroes( "[.,]?0*$" ),
-    mReNegativeZero( "^\\-0(?:[.,]0*)?$" )
+QgsRendererRangeV2LabelFormat::QgsRendererRangeV2LabelFormat()
+    : mFormat( " %1 - %2 " )
+    , mPrecision( 4 )
+    , mTrimTrailingZeroes( false )
+    , mNumberScale( 1.0 )
+    , mNumberSuffix( "" )
+    , mReTrailingZeroes( "[.,]?0*$" )
+    , mReNegativeZero( "^\\-0(?:[.,]0*)?$" )
 {
 }
 
-QgsRendererRangeV2LabelFormat::QgsRendererRangeV2LabelFormat( const QString& format, int precision, bool trimTrailingZeroes ):
-    mReTrailingZeroes( "[.,]?0*$" ),
-    mReNegativeZero( "^\\-0(?:[.,]0*)?$" )
+QgsRendererRangeV2LabelFormat::QgsRendererRangeV2LabelFormat( const QString& format, int precision, bool trimTrailingZeroes )
+    : mReTrailingZeroes( "[.,]?0*$" )
+    , mReNegativeZero( "^\\-0(?:[.,]0*)?$" )
 {
   setFormat( format );
   setPrecision( precision );
@@ -1637,7 +1637,6 @@ bool valueGreaterThan( const QgsRendererRangeV2 &r1, const QgsRendererRangeV2 &r
 
 void QgsGraduatedSymbolRendererV2::sortByValue( Qt::SortOrder order )
 {
-  QgsDebugMsg( "Entered" );
   if ( order == Qt::AscendingOrder )
   {
     qSort( mRanges.begin(), mRanges.end(), valueLessThan );

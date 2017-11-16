@@ -229,19 +229,19 @@ class QgsSymbolV2
      * Creates a point in screen coordinates from a wkb string in map
      * coordinates
      */
-    static QgsConstWkbPtr _getPoint( QPointF& pt, QgsRenderContext& context, QgsConstWkbPtr wkb );
+    static QgsConstWkbPtr _getPoint( QPointF& pt, QgsRenderContext& context, QgsConstWkbPtr& wkb );
 
     /**
      * Creates a line string in screen coordinates from a wkb string in map
      * coordinates
      */
-    static QgsConstWkbPtr _getLineString( QPolygonF& pts, QgsRenderContext& context, QgsConstWkbPtr wkb, bool clipToExtent = true );
+    static QgsConstWkbPtr _getLineString( QPolygonF& pts, QgsRenderContext& context, QgsConstWkbPtr& wkb, bool clipToExtent = true );
 
     /**
      * Creates a polygon in screen coordinates from a wkb string in map
      * coordinates
      */
-    static QgsConstWkbPtr _getPolygon( QPolygonF& pts, QList<QPolygonF>& holes, QgsRenderContext& context, QgsConstWkbPtr wkb, bool clipToExtent = true );
+    static QgsConstWkbPtr _getPolygon( QPolygonF& pts, QList<QPolygonF>& holes, QgsRenderContext& context, QgsConstWkbPtr& wkb, bool clipToExtent = true );
 
     /**
      * Retrieve a cloned list of all layers that make up this symbol.
@@ -264,6 +264,10 @@ class QgsSymbolV2
     //! (marker-marker, line-line, fill-fill/line)
     //! @deprecated since 2.14, use QgsSymbolLayerV2::isCompatibleWithSymbol instead
     bool isSymbolLayerCompatible( SymbolType layerType );
+
+    //! Render editing vertex marker at specified point
+    //! @note added in QGIS 2.16
+    void renderVertexMarker( QPointF pt, QgsRenderContext& context, int currentVertexMarkerType, int currentVertexMarkerSize );
 
   private:
     QgsSymbolV2( const QgsSymbolV2& );
@@ -317,6 +321,24 @@ class QgsSymbolV2RenderContext
     //! (other times fields() returns null)
     //! @note added in 2.4
     const QgsFields* fields() const;
+
+    /** Part count of current geometry
+     * @note added in QGIS 2.16
+     */
+    int geometryPartCount() const;
+    /** Sets the part count of current geometry
+     * @note added in QGIS 2.16
+     */
+    void setGeometryPartCount( int count );
+
+    /** Part number of current geometry
+     * @note added in QGIS 2.16
+     */
+    int geometryPartNum() const;
+    /** Sets the part number of current geometry
+     * @note added in QGIS 2.16
+     */
+    void setGeometryPartNum( int num );
 
     double outputLineWidth( double width ) const;
     double outputPixelSize( double size ) const;

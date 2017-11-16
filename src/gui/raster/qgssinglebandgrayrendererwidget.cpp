@@ -41,6 +41,7 @@ QgsSingleBandGrayRendererWidget::QgsSingleBandGrayRendererWidget( QgsRasterLayer
 
     mMinMaxWidget = new QgsRasterMinMaxWidget( layer, this );
     mMinMaxWidget->setExtent( extent );
+    mMinMaxWidget->setMapCanvas( mCanvas );
 
     QHBoxLayout *layout = new QHBoxLayout();
     layout->setContentsMargins( 0, 0, 0, 0 );
@@ -64,6 +65,11 @@ QgsSingleBandGrayRendererWidget::QgsSingleBandGrayRendererWidget( QgsRasterLayer
     mContrastEnhancementComboBox->addItem( tr( "Clip to MinMax" ), 3 );
 
     setFromRenderer( layer->renderer() );
+
+    connect( mGradientComboBox, SIGNAL( currentIndexChanged( int ) ), this, SIGNAL( widgetChanged() ) );
+    connect( mContrastEnhancementComboBox, SIGNAL( currentIndexChanged( int ) ), this, SIGNAL( widgetChanged() ) );
+    connect( mMaxLineEdit, SIGNAL( textChanged( QString ) ), this, SIGNAL( widgetChanged() ) );
+    connect( mMinLineEdit, SIGNAL( textChanged( QString ) ), this, SIGNAL( widgetChanged() ) );
   }
 }
 
@@ -100,6 +106,12 @@ QgsRasterRenderer* QgsSingleBandGrayRendererWidget::renderer()
   return renderer;
 }
 
+void QgsSingleBandGrayRendererWidget::setMapCanvas( QgsMapCanvas* canvas )
+{
+  QgsRasterRendererWidget::setMapCanvas( canvas );
+  mMinMaxWidget->setMapCanvas( canvas );
+}
+
 void QgsSingleBandGrayRendererWidget::loadMinMax( int theBandNo, double theMin, double theMax, int theOrigin )
 {
   Q_UNUSED( theBandNo );
@@ -130,6 +142,7 @@ void QgsSingleBandGrayRendererWidget::on_mGrayBandComboBox_currentIndexChanged( 
   QList<int> myBands;
   myBands.append( mGrayBandComboBox->itemData( index ).toInt() );
   mMinMaxWidget->setBands( myBands );
+  emit widgetChanged();
 }
 
 void QgsSingleBandGrayRendererWidget::setFromRenderer( const QgsRasterRenderer* r )

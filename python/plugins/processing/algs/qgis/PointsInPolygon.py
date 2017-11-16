@@ -25,13 +25,20 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
-from PyQt4.QtCore import QVariant
+import os
+
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtCore import QVariant
+
 from qgis.core import QgsGeometry, QgsFeatureRequest, QgsFeature, QgsField
+
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.parameters import ParameterVector
 from processing.core.parameters import ParameterString
 from processing.core.outputs import OutputVector
 from processing.tools import dataobjects, vector
+
+pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 
 class PointsInPolygon(GeoAlgorithm):
@@ -40,6 +47,9 @@ class PointsInPolygon(GeoAlgorithm):
     POINTS = 'POINTS'
     OUTPUT = 'OUTPUT'
     FIELD = 'FIELD'
+
+    def getIcon(self):
+        return QIcon(os.path.join(pluginPath, 'images', 'ftools', 'sum_points.png'))
 
     def defineCharacteristics(self):
         self.name, self.i18n_name = self.trAlgorithm('Count points in polygon')
@@ -75,7 +85,7 @@ class PointsInPolygon(GeoAlgorithm):
         geom = QgsGeometry()
 
         features = vector.features(polyLayer)
-        total = 100.0 / len(features)
+        total = 100.0 / len(features) if len(features) > 0 else 1
         for current, ftPoly in enumerate(features):
             geom = ftPoly.geometry()
             engine = QgsGeometry.createGeometryEngine(geom.geometry())

@@ -49,6 +49,7 @@ QgsPointDisplacementRendererWidget::QgsPointDisplacementRendererWidget( QgsVecto
     return;
   }
   setupUi( this );
+
   mDistanceUnitWidget->setUnits( QgsSymbolV2::OutputUnitList() << QgsSymbolV2::MM << QgsSymbolV2::MapUnit << QgsSymbolV2::Pixel );
 
   if ( renderer )
@@ -68,10 +69,9 @@ QgsPointDisplacementRendererWidget::QgsPointDisplacementRendererWidget( QgsVecto
   //insert attributes into combo box
   if ( layer )
   {
-    const QgsFields& layerAttributes = layer->fields();
-    for ( int idx = 0; idx < layerAttributes.count(); ++idx )
+    Q_FOREACH ( const QgsField& f, layer->fields() )
     {
-      mLabelFieldComboBox->addItem( layerAttributes[idx].name() );
+      mLabelFieldComboBox->addItem( f.name() );
     }
     mLabelFieldComboBox->addItem( tr( "None" ) );
 
@@ -87,11 +87,11 @@ QgsPointDisplacementRendererWidget::QgsPointDisplacementRendererWidget( QgsVecto
   }
 
   //insert possible renderer types
-  QStringList rendererList = QgsRendererV2Registry::instance()->renderersList();
+  QStringList rendererList = QgsRendererV2Registry::instance()->renderersList( QgsRendererV2AbstractMetadata::PointLayer );
   QStringList::const_iterator it = rendererList.constBegin();
   for ( ; it != rendererList.constEnd(); ++it )
   {
-    if ( *it != "pointDisplacement" && *it != "heatmapRenderer" && *it != "invertedPolygonRenderer" )
+    if ( *it != "pointDisplacement" )
     {
       QgsRendererV2AbstractMetadata* m = QgsRendererV2Registry::instance()->rendererMetadata( *it );
       mRendererComboBox->addItem( m->icon(), m->visibleName(), *it );
@@ -189,6 +189,7 @@ void QgsPointDisplacementRendererWidget::on_mLabelFieldComboBox_currentIndexChan
     {
       mRenderer->setLabelAttributeName( text );
     }
+    emit widgetChanged();
   }
 }
 
@@ -201,6 +202,7 @@ void QgsPointDisplacementRendererWidget::on_mRendererComboBox_currentIndexChange
     delete mEmbeddedRendererWidget;
     mEmbeddedRendererWidget = m->createRendererWidget( mLayer, mStyle, mRenderer->embeddedRenderer()->clone() );
     mEmbeddedRendererWidget->setMapCanvas( mMapCanvas );
+    emit widgetChanged();
   }
 }
 
@@ -210,6 +212,7 @@ void QgsPointDisplacementRendererWidget::on_mPlacementComboBox_currentIndexChang
     return;
 
   mRenderer->setPlacement(( QgsPointDisplacementRenderer::Placement )mPlacementComboBox->itemData( index ).toInt() );
+  emit widgetChanged();
 }
 
 void QgsPointDisplacementRendererWidget::on_mRendererSettingsButton_clicked()
@@ -233,6 +236,7 @@ void QgsPointDisplacementRendererWidget::on_mRendererSettingsButton_clicked()
     d->exec();
     mEmbeddedRendererWidget->setParent( nullptr );
     delete d;
+    emit widgetChanged();
   }
 }
 
@@ -248,6 +252,7 @@ void QgsPointDisplacementRendererWidget::on_mLabelFontButton_clicked()
   if ( ok )
   {
     mRenderer->setLabelFont( newFont );
+    emit widgetChanged();
   }
 }
 
@@ -256,6 +261,7 @@ void QgsPointDisplacementRendererWidget::on_mCircleWidthSpinBox_valueChanged( do
   if ( mRenderer )
   {
     mRenderer->setCircleWidth( d );
+    emit widgetChanged();
   }
 }
 
@@ -267,6 +273,7 @@ void QgsPointDisplacementRendererWidget::on_mCircleColorButton_colorChanged( con
   }
 
   mRenderer->setCircleColor( newColor );
+  emit widgetChanged();
 }
 
 void QgsPointDisplacementRendererWidget::on_mLabelColorButton_colorChanged( const QColor& newColor )
@@ -277,6 +284,7 @@ void QgsPointDisplacementRendererWidget::on_mLabelColorButton_colorChanged( cons
   }
 
   mRenderer->setLabelColor( newColor );
+  emit widgetChanged();
 }
 
 void QgsPointDisplacementRendererWidget::on_mCircleModificationSpinBox_valueChanged( double d )
@@ -287,6 +295,7 @@ void QgsPointDisplacementRendererWidget::on_mCircleModificationSpinBox_valueChan
   }
 
   mRenderer->setCircleRadiusAddition( d );
+  emit widgetChanged();
 }
 
 void QgsPointDisplacementRendererWidget::on_mDistanceSpinBox_valueChanged( double d )
@@ -294,6 +303,7 @@ void QgsPointDisplacementRendererWidget::on_mDistanceSpinBox_valueChanged( doubl
   if ( mRenderer )
   {
     mRenderer->setTolerance( d );
+    emit widgetChanged();
   }
 }
 
@@ -303,6 +313,7 @@ void QgsPointDisplacementRendererWidget::on_mDistanceUnitWidget_changed()
   {
     mRenderer->setToleranceUnit( mDistanceUnitWidget->unit() );
     mRenderer->setToleranceMapUnitScale( mDistanceUnitWidget->getMapUnitScale() );
+    emit widgetChanged();
   }
 }
 
@@ -331,6 +342,7 @@ void QgsPointDisplacementRendererWidget::on_mMaxScaleDenominatorEdit_textChanged
   if ( ok )
   {
     mRenderer->setMaxLabelScaleDenominator( scaleDenominator );
+    emit widgetChanged();
   }
 }
 
@@ -367,6 +379,7 @@ void QgsPointDisplacementRendererWidget::on_mCenterSymbolPushButton_clicked()
   }
   mRenderer->setCenterSymbol( markerSymbol );
   updateCenterIcon();
+  emit widgetChanged();
 }
 
 void QgsPointDisplacementRendererWidget::updateCenterIcon()
@@ -382,7 +395,8 @@ void QgsPointDisplacementRendererWidget::updateCenterIcon()
 
 void QgsPointDisplacementRendererWidget::setupBlankUi( const QString& layerName )
 {
-  QGridLayout* layout = new QGridLayout( this );
   QLabel* label = new QLabel( tr( "The point displacement renderer only applies to (single) point layers. \n'%1' is not a point layer and cannot be displayed by the point displacement renderer" ).arg( layerName ), this );
+  QVBoxLayout* layout = new QVBoxLayout( this );
+  layout->setContentsMargins( 0, 0, 0, 0 );
   layout->addWidget( label );
 }

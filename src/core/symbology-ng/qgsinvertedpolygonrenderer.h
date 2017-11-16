@@ -23,7 +23,7 @@
 #include "qgsgeometry.h"
 #include <QScopedPointer>
 
-/**
+/** \ingroup core
  * QgsInvertedPolygonRenderer is a polygon-only feature renderer used to
  * display features inverted, where the exterior is turned to an interior
  * and where the exterior theoretically spans the entire plane, allowing
@@ -109,6 +109,8 @@ class CORE_EXPORT QgsInvertedPolygonRenderer : public QgsFeatureRendererV2
      */
     virtual bool willRenderFeature( QgsFeature& feat, QgsRenderContext& context ) override;
 
+    virtual QgsLegendSymbolListV2 legendSymbolItemsV2() const override;
+
     /** Creates a renderer out of an XML, for loading*/
     static QgsFeatureRendererV2* create( QDomElement& element );
 
@@ -183,8 +185,12 @@ class CORE_EXPORT QgsInvertedPolygonRenderer : public QgsFeatureRendererV2
       bool selected;
       bool drawMarkers;
       int layer;
-      FeatureDecoration( QgsFeature& a_feature, bool a_selected, bool a_drawMarkers, int a_layer ) :
-          feature( a_feature ), selected( a_selected ), drawMarkers( a_drawMarkers ), layer( a_layer ) {}
+      FeatureDecoration( QgsFeature& a_feature, bool a_selected, bool a_drawMarkers, int a_layer )
+          : feature( a_feature )
+          , selected( a_selected )
+          , drawMarkers( a_drawMarkers )
+          , layer( a_layer )
+      {}
     };
     QList<FeatureDecoration> mFeatureDecorations;
 

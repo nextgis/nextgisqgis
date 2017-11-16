@@ -19,6 +19,12 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgspointv2.h"
 #include "qgswkbptr.h"
 
+QgsMultiPointV2::QgsMultiPointV2()
+    : QgsGeometryCollectionV2()
+{
+  mWkbType = QgsWKBTypes::MultiPoint;
+}
+
 QgsMultiPointV2 *QgsMultiPointV2::clone() const
 {
   return new QgsMultiPointV2( *this );
@@ -28,7 +34,7 @@ bool QgsMultiPointV2::fromWkt( const QString& wkt )
 {
   QString collectionWkt( wkt );
   //test for non-standard MultiPoint(x1 y1, x2 y2) format
-  QRegExp regex( "^\\s*MultiPoint\\s*[ZM]*\\s*\\(\\s*\\d" );
+  QRegExp regex( "^\\s*MultiPoint\\s*[ZM]*\\s*\\(\\s*[-\\d]" );
   regex.setCaseSensitivity( Qt::CaseInsensitive );
   if ( regex.indexIn( collectionWkt ) >= 0 )
   {
@@ -98,4 +104,9 @@ bool QgsMultiPointV2::addGeometry( QgsAbstractGeometryV2* g )
   }
   setZMTypeFromSubGeometry( g, QgsWKBTypes::MultiPoint );
   return QgsGeometryCollectionV2::addGeometry( g );
+}
+
+QgsAbstractGeometryV2* QgsMultiPointV2::boundary() const
+{
+  return nullptr;
 }

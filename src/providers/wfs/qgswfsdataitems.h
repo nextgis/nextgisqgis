@@ -58,7 +58,7 @@ class QgsWFSConnectionItem : public QgsDataCollectionItem
   private:
     QString mUri;
 
-    QgsWFSCapabilities* mCapabilities;
+    QgsWFSCapabilities* mWfsCapabilities;
 };
 
 
@@ -67,7 +67,7 @@ class QgsWFSLayerItem : public QgsLayerItem
     Q_OBJECT
 
   public:
-    QgsWFSLayerItem( QgsDataItem* parent, QString name, QgsDataSourceURI uri, QString featureType, QString title, QString crsString );
+    QgsWFSLayerItem( QgsDataItem* parent, QString name, const QgsDataSourceURI &uri, QString featureType, QString title, QString crsString );
     ~QgsWFSLayerItem();
 
 };

@@ -87,13 +87,15 @@ void QgsScopedSqlite::close_()
 
 namespace Sqlite
 {
-  Query::Query( sqlite3* db, const QString& q ) : db_( db ), nBind_( 1 )
+  Query::Query( sqlite3* db, const QString& q )
+      : db_( db )
+      , nBind_( 1 )
   {
     QByteArray ba( q.toUtf8() );
     int r = sqlite3_prepare_v2( db, ba.constData(), ba.size(), &stmt_, nullptr );
     if ( r )
     {
-      QString err = QString( "Query preparation error on %1" ).arg( q );
+      QString err = QString( "Query preparation error on %1: %2" ).arg( q ).arg( sqlite3_errmsg( db ) );
       throw std::runtime_error( err.toUtf8().constData() );
     }
   }

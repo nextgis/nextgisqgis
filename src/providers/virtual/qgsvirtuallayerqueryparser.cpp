@@ -154,7 +154,6 @@ namespace QgsVirtualLayerQueryParser
     Sqlite::Query::exec( db, viewStr );
 
     QStringList columns;
-    bool hasInvalidName = false;
     QVector<int> undefinedColumns;
     TableDef tableDef;
     {
@@ -193,7 +192,7 @@ namespace QgsVirtualLayerQueryParser
       }
     }
 
-    if ( hasInvalidName || undefinedColumns.size() == 0 )
+    if ( undefinedColumns.size() == 0 )
       return tableDef;
 
     // get the first row to introspect types
@@ -201,7 +200,7 @@ namespace QgsVirtualLayerQueryParser
       QString qs = "SELECT ";
       for ( int i = 0; i < undefinedColumns.size(); i++ )
       {
-        qs += columns[undefinedColumns[i]];
+        qs += "\"" + columns[undefinedColumns[i]] + "\"";
         if ( i != undefinedColumns.size() - 1 )
           qs += ", ";
       }

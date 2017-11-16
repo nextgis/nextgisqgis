@@ -20,7 +20,9 @@
 #include <QGraphicsScene>
 
 QgsFormAnnotationDialog::QgsFormAnnotationDialog( QgsFormAnnotationItem* item, QWidget * parent, Qt::WindowFlags f )
-    : QDialog( parent, f ), mItem( item ), mEmbeddedWidget( nullptr )
+    : QDialog( parent, f )
+    , mItem( item )
+    , mEmbeddedWidget( nullptr )
 {
   setupUi( this );
   mEmbeddedWidget = new QgsAnnotationWidget( mItem );
@@ -85,5 +87,13 @@ void QgsFormAnnotationDialog::deleteItem()
   }
   delete mItem;
   mItem = nullptr;
+}
+
+void QgsFormAnnotationDialog::on_mButtonBox_clicked( QAbstractButton* button )
+{
+  if ( mButtonBox->buttonRole( button ) == QDialogButtonBox::ApplyRole )
+  {
+    applySettingsToItem();
+  }
 }
 

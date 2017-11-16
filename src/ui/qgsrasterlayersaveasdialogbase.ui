@@ -596,7 +596,7 @@ datasets with maximum width and height specified below.</string>
               </property>
               <property name="icon">
                <iconset resource="../../images/images.qrc">
-                <normaloff>:/images/themes/default/mActionDeleteAttribute.png</normaloff>:/images/themes/default/mActionDeleteAttribute.png</iconset>
+                <normaloff>:/images/themes/default/mActionDeleteAttribute.svg</normaloff>:/images/themes/default/mActionDeleteAttribute.svg</iconset>
               </property>
              </widget>
             </item>
@@ -610,7 +610,7 @@ datasets with maximum width and height specified below.</string>
               </property>
               <property name="icon">
                <iconset resource="../../images/images.qrc">
-                <normaloff>:/images/themes/default/mActionRemove.png</normaloff>:/images/themes/default/mActionRemove.png</iconset>
+                <normaloff>:/images/themes/default/mActionRemove.svg</normaloff>:/images/themes/default/mActionRemove.svg</iconset>
               </property>
              </widget>
             </item>

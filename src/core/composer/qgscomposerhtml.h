@@ -20,12 +20,15 @@
 #include "qgsfeature.h"
 #include <QUrl>
 
-class QWebPage;
+class QgsWebPage;
 class QImage;
 class QgsVectorLayer;
 class QgsNetworkContentFetcher;
 class QgsDistanceArea;
 
+/** \ingroup core
+ * \class QgsComposerHtml
+ */
 class CORE_EXPORT QgsComposerHtml: public QgsComposerMultiFrame
 {
     Q_OBJECT
@@ -228,7 +231,7 @@ class CORE_EXPORT QgsComposerHtml: public QgsComposerMultiFrame
   private:
     ContentMode mContentMode;
     QUrl mUrl;
-    QWebPage* mWebPage;
+    QgsWebPage* mWebPage;
     QString mHtml;
     QString mFetchedHtml;
     QString mLastFetchedUrl;
@@ -247,6 +250,9 @@ class CORE_EXPORT QgsComposerHtml: public QgsComposerMultiFrame
 
     QString mUserStylesheet;
     bool mEnableUserStylesheet;
+
+    //! JSON string representation of current atlas feature
+    QString mAtlasFeatureJSON;
 
     QgsNetworkContentFetcher* mFetcher;
 

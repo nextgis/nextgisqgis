@@ -23,7 +23,8 @@
 #include <QPair>
 #include <QObject>
 
-/** List of colors paired with a friendly display name identifying the color
+/** \ingroup core
+ * List of colors paired with a friendly display name identifying the color
  * \note Added in version 2.5
 */
 typedef QList< QPair< QColor, QString > > QgsNamedColorList;
@@ -151,6 +152,8 @@ class CORE_EXPORT QgsUserColorScheme : public QgsGplColorScheme
 
     virtual bool isEditable() const override { return true; }
 
+    virtual QgsColorScheme::SchemeFlags flags() const override;
+
     /** Sets the name for the scheme
      * @param name new name
      */
@@ -160,6 +163,12 @@ class CORE_EXPORT QgsUserColorScheme : public QgsGplColorScheme
      * @returns true if erase was successful
      */
     bool erase();
+
+    /** Sets whether a this scheme should be shown in color button menus.
+     * @param show set to true to show in color button menus, or false to hide from menus
+     * @note added in QGIS 2.18
+     */
+    void setShowSchemeInMenu( bool show );
 
   protected:
 

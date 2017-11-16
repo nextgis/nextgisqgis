@@ -27,10 +27,11 @@ __revision__ = '$Format:%H$'
 
 import os
 
-from PyQt4.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from processing.gui.ToolboxAction import ToolboxAction
 from processing.gui.ScriptEditorDialog import ScriptEditorDialog
+from processing.core.alglist import algList
 
 pluginPath = os.path.split(os.path.dirname(__file__))[0]
 
@@ -41,8 +42,9 @@ class CreateNewScriptAction(ToolboxAction):
     SCRIPT_R = 1
 
     def __init__(self, actionName, scriptType):
-        self.name = actionName
-        self.group = self.tr('Tools', 'CreateNewScriptAction')
+        self.name, self.i18n_name = self.trAction(actionName)
+        self.group, self.i18n_group = self.trAction('Tools')
+
         self.scriptType = scriptType
 
     def getIcon(self):
@@ -61,6 +63,6 @@ class CreateNewScriptAction(ToolboxAction):
         dlg.exec_()
         if dlg.update:
             if self.scriptType == self.SCRIPT_PYTHON:
-                self.toolbox.updateProvider('script')
+                algList.reloadProvider('script')
             elif self.scriptType == self.SCRIPT_R:
-                self.toolbox.updateProvider('r')
+                algList.reloadProvider('r')

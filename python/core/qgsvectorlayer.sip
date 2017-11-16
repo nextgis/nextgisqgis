@@ -3,243 +3,12 @@ typedef QList<int> QgsAttributeList;
 typedef QSet<int> QgsAttributeIds;
 
 
-class QgsAttributeEditorElement : QObject
-{
-%TypeHeaderCode
-#include "qgsvectorlayer.h"
-%End
-
-%ConvertToSubClassCode
-  QgsAttributeEditorElement* e = qobject_cast<QgsAttributeEditorElement*>( sipCpp );
-
-  sipType = 0;
-  if ( e )
-  {
-    switch ( e->type() )
-    {
-      case QgsAttributeEditorElement::AeTypeContainer: sipType = sipType_QgsAttributeEditorContainer; break;
-      case QgsAttributeEditorElement::AeTypeField:   sipType = sipType_QgsAttributeEditorField; break;
-      case QgsAttributeEditorElement::AeTypeRelation:  sipType = sipType_QgsAttributeEditorRelation; break;
-    }
-  }
-%End
-
-
-  public:
-
-    enum AttributeEditorType
-    {
-      AeTypeContainer,
-      AeTypeField,
-      AeTypeRelation,
-      AeTypeInvalid
-    };
-
-    /**
-     * Constructor
-     *
-     * @param type The type of the new element. Should never
-     * @param name
-     * @param parent
-     */
-    QgsAttributeEditorElement( AttributeEditorType type, const QString& name, QObject *parent /TransferThis/ = NULL );
-
-    //! Destructor
-    virtual ~QgsAttributeEditorElement();
-
-    /**
-     * Return the name of this element
-     *
-     * @return The name for this element
-     */
-    QString name() const;
-
-    /**
-     * The type of this element
-     *
-     * @return The type
-     */
-    AttributeEditorType type() const;
-
-    /**
-     * Is reimplemented in classes inheriting from this to serialize it.
-     *
-     * @param doc The QDomDocument which is used to create new XML elements
-     *
-     * @return An DOM element which represents this element
-     */
-    virtual QDomElement toDomElement( QDomDocument& doc ) const = 0;
-};
-
-class QgsAttributeEditorContainer : QgsAttributeEditorElement
-{
-%TypeHeaderCode
-#include "qgsvectorlayer.h"
-%End
-
-  public:
-    /**
-     * Creates a new attribute editor container
-     *
-     * @param name   The name to show as title
-     * @param parent The parent. May be another container.
-     */
-    QgsAttributeEditorContainer( const QString& name, QObject *parent  /TransferThis/ );
-
-    //! Destructor
-    ~QgsAttributeEditorContainer();
-
-    /**
-     * Will serialize this containers information into a QDomElement for saving it in an XML file.
-     *
-     * @param doc The QDomDocument used to generate the QDomElement
-     *
-     * @return The XML element
-     */
-    virtual QDomElement toDomElement( QDomDocument& doc ) const;
-
-    /**
-     * Add a child element to this container. This may be another container, a field or a relation.
-     *
-     * @param element The element to add as child
-     */
-    virtual void addChildElement( QgsAttributeEditorElement *widget );
-
-    /**
-     * Determines if this container is rendered as collapsible group box or tab in a tabwidget
-     *
-     * @param isGroupBox If true, this will be a group box
-     */
-    virtual void setIsGroupBox( bool isGroupBox );
-
-    /**
-     * Returns if this container is going to be rendered as a group box
-     *
-     * @return True if it will be a group box, false if it will be a tab
-     */
-    virtual bool isGroupBox() const;
-
-    /**
-     * Get a list of the children elements of this container
-     *
-     * @return A list of elements
-     */
-    QList<QgsAttributeEditorElement*> children() const;
-
-    /**
-     * Traverses the element tree to find any element of the specified type
-     *
-     * @param type The type which should be searched
-     *
-     * @return A list of elements of the type which has been searched for
-     */
-    virtual QList<QgsAttributeEditorElement*> findElements( AttributeEditorType type ) const;
-
-    /**
-     * Change the name of this container
-     *
-     * @param name
-     */
-    virtual void setName( const QString& name );
-
-};
-
-/**
- * This element will load a field's widget onto the form.
- */
-class QgsAttributeEditorField : QgsAttributeEditorElement
-{
-%TypeHeaderCode
-#include "qgsvectorlayer.h"
-%End
-  public:
-    /**
-     * Creates a new attribute editor element which represents a field
-     *
-     * @param name   The name of the element
-     * @param idx    The index of the field which should be embedded
-     * @param parent The parent of this widget (used as container)
-     */
-    QgsAttributeEditorField( const QString& name, int idx, QObject *parent /TransferThis/ );
-
-    //! Destructor
-    ~QgsAttributeEditorField();
-
-    /**
-     * Will serialize this elements information into a QDomElement for saving it in an XML file.
-     *
-     * @param doc The QDomDocument used to generate the QDomElement
-     *
-     * @return The XML element
-     */
-    virtual QDomElement toDomElement( QDomDocument& doc ) const;
-
-    /**
-     * Return the index of the field
-     * @return
-     */
-    int idx() const;
-};
-
-/**
- * This element will load a relation editor onto the form.
- *
- * @note Added in 2.1
- */
-class QgsAttributeEditorRelation : QgsAttributeEditorElement
-{
-  public:
-    /**
-     * Creates a new element which embeds a relation.
-     *
-     * @param name         The name of this element
-     * @param relationId   The id of the relation to embed
-     * @param parent       The parent (used as container)
-     */
-    QgsAttributeEditorRelation( const QString& name, const QString &relationId, QObject *parent /TransferThis/ );
-
-    /**
-     * Creates a new element which embeds a relation.
-     *
-     * @param name         The name of this element
-     * @param relation     The relation to embed
-     * @param parent       The parent (used as container)
-     */
-    QgsAttributeEditorRelation( const QString& name, const QgsRelation& relation, QObject *parent /TransferThis/);
-
-    //! Destructor
-    ~QgsAttributeEditorRelation();
-
-    /**
-     * Will serialize this elements information into a QDomElement for saving it in an XML file.
-     *
-     * @param doc The QDomDocument used to generate the QDomElement
-     *
-     * @return The XML element
-     */
-    virtual QDomElement toDomElement( QDomDocument& doc ) const;
-
-    /**
-     * Get the id of the relation which shall be embedded
-     *
-     * @return the id
-     */
-    const QgsRelation& relation() const;
-
-    /**
-     * Initializes the relation from the id
-     *
-     * @param relManager The relation manager to use for the initialization
-     * @return true if the relation was found in the relationmanager
-     */
-    bool init( QgsRelationManager *relManager );
-};
-
 struct QgsVectorJoinInfo
 {
 %TypeHeaderCode
 #include "qgsvectorlayer.h"
 %End
+  QgsVectorJoinInfo();
 
   /** Join field in the target layer*/
   QString targetFieldName;
@@ -249,6 +18,8 @@ struct QgsVectorJoinInfo
   QString joinFieldName;
   /** True if the join is cached in virtual memory*/
   bool memoryCache;
+  /** True if the cached join attributes need to be updated*/
+  bool cacheDirty;
   /** Cache for joined attributes to provide fast lookup (size is 0 if no memory caching)
    * @note not available in python bindings
    */
@@ -379,6 +150,15 @@ class QgsVectorLayer : QgsMapLayer
       InvalidLayer, /**< Edit failed due to invalid layer */
     };
 
+    //! Selection behaviour
+    enum SelectBehaviour
+    {
+      SetSelection, /**< Set selection, removing any existing selection */
+      AddToSelection, /**< Add selection to current selection */
+      IntersectSelection, /**< Modify current selection to include only select features which match */
+      RemoveFromSelection, /**<  Remove from current selection */
+    };
+
     /** Constructor - creates a vector layer
      *
      * The QgsVectorLayer is constructed by instantiating a data provider.  The provider
@@ -411,7 +191,7 @@ class QgsVectorLayer : QgsMapLayer
     void setDisplayField( const QString& fldName = "" );
 
     /** Returns the primary display field name used in the identify results dialog */
-    const QString displayField() const;
+    QString displayField() const;
 
     /** Set the preview expression, used to create a human readable preview string.
      *  Used e.g. in the attribute table feature list. Uses { @link QgsExpression }.
@@ -427,7 +207,7 @@ class QgsVectorLayer : QgsMapLayer
      *
      *  @return The expression which will be used to preview features for this layer
      */
-    const QString displayExpression();
+    QString displayExpression() const;
 
     /** Returns the data provider */
     QgsVectorDataProvider* dataProvider();
@@ -515,7 +295,7 @@ class QgsVectorLayer : QgsMapLayer
      */
     // const QgsLabel *label() const;
 
-    QgsAttributeAction *actions();
+    QgsActionManager *actions();
 
     /**
      * The number of features that are selected in this layer
@@ -531,8 +311,42 @@ class QgsVectorLayer : QgsMapLayer
      * @param addToSelection  If set to true will not clear before selecting
      *
      * @see   invertSelectionInRectangle(QgsRectangle & rect)
+     * @see selectByExpression()
+     * @deprecated use selectByRect() instead
      */
-    void select( QgsRectangle & rect, bool addToSelection );
+    void select( QgsRectangle & rect, bool addToSelection ) /Deprecated/;
+
+    /**
+     * Select features found within the search rectangle (in layer's coordinates)
+     * @param rect search rectangle
+     * @param behaviour selection type, allows adding to current selection, removing
+     * from selection, etc.
+     * @see invertSelectionInRectangle(QgsRectangle & rect)
+     * @see selectByExpression()
+     * @see selectByIds()
+     */
+    void selectByRect( QgsRectangle & rect, SelectBehaviour behaviour = SetSelection );
+
+    /** Select matching features using an expression.
+     * @param expression expression to evaluate to select features
+     * @param behaviour selection type, allows adding to current selection, removing
+     * from selection, etc.
+     * @note added in QGIS 2.16
+     * @see selectByRect()
+     * @see selectByIds()
+     */
+    void selectByExpression( const QString& expression, SelectBehaviour behaviour = SetSelection );
+
+    /** Select matching features using a list of feature IDs. Will emit the
+     * selectionChanged() signal with the clearAndSelect flag set.
+     * @param ids feature IDs to select
+     * @param behaviour selection type, allows adding to current selection, removing
+     * from selection, etc.
+     * @note added in QGIS 2.16
+     * @see selectByRect()
+     * @see selectByExpression()
+     */
+    void selectByIds( const QgsFeatureIds &ids, SelectBehaviour behaviour = SetSelection );
 
     /**
      * Modifies the current selection on this layer
@@ -544,6 +358,7 @@ class QgsVectorLayer : QgsMapLayer
      * @see   select(QgsFeatureId)
      * @see   deselect(QgsFeatureIds)
      * @see   deselect(QgsFeatureId)
+     * @see selectByExpression()
      */
     void modifySelection( QgsFeatureIds selectIds, QgsFeatureIds deselectIds );
 
@@ -602,8 +417,9 @@ class QgsVectorLayer : QgsMapLayer
      * clearAndSelect flag set.
      *
      * @param ids   The ids which will be the new selection
+     * @deprecated use selectByIds() instead
      */
-    void setSelectedFeatures( const QgsFeatureIds &ids );
+    void setSelectedFeatures( const QgsFeatureIds &ids ) /Deprecated/;
 
     /** Returns the bounding box of the selected features. If there is no selection, QgsRectangle(0,0,0,0) is returned */
     QgsRectangle boundingBoxOfSelected();
@@ -730,6 +546,13 @@ class QgsVectorLayer : QgsMapLayer
      */
     bool readSymbology( const QDomNode& node, QString& errorMessage );
 
+    /** Read the style for the current layer from the Dom node supplied.
+     * @param node node that will contain the style definition for this layer.
+     * @param errorMessage reference to string that will be updated with any error messages
+     * @return true in case of success.
+     */
+    bool readStyle( const QDomNode& node, QString& errorMessage );
+
     /** Write the symbology for the layer into the docment provided.
      *  @param node the node that will have the style element added to it.
      *  @param doc the document that will have the QDomNode added.
@@ -737,6 +560,14 @@ class QgsVectorLayer : QgsMapLayer
      *  @return true in case of success.
      */
     bool writeSymbology( QDomNode& node, QDomDocument& doc, QString& errorMessage ) const;
+
+    /** Write just the style information for the layer into the document
+     *  @param node the node that will have the style element added to it.
+     *  @param doc the document that will have the QDomNode added.
+     *  @param errorMessage reference to string that will be updated with any error messages
+     *  @return true in case of success.
+     */
+    bool writeStyle( QDomNode& node, QDomDocument& doc, QString& errorMessage ) const;
 
     /**
      * Writes the symbology of the layer into the document provided in SLD 1.1 format
@@ -996,6 +827,8 @@ class QgsVectorLayer : QgsMapLayer
     /** Returns true if the provider is in editing mode */
     virtual bool isEditable() const;
 
+    virtual bool isSpatial() const;
+
     /** Returns true if the provider is in read-only mode */
     virtual bool isReadOnly() const;
 
@@ -1131,6 +964,13 @@ class QgsVectorLayer : QgsMapLayer
 
     /** Removes an alias (a display name) for attributes to display in dialogs */
     void remAttributeAlias( int attIndex );
+
+    /** Renames an attribute field  (but does not commit it).
+     * @param attIndex attribute index
+     * @param newName new name of field
+     * @note added in QGIS 2.16
+    */
+    bool renameAttribute( int attIndex, const QString& newName );
 
     /**
      * Adds a tab (for the attribute editor form) holding groups and fields
@@ -1498,6 +1338,42 @@ class QgsVectorLayer : QgsMapLayer
     /** Caches joined attributes if required (and not already done) */
     void createJoinCaches();
 
+    /** Returns the calculated default value for the specified field index. The default
+     * value may be taken from a client side default value expression (see setDefaultValueExpression())
+     * or taken from the underlying data provider.
+     * @param index field index
+     * @param feature optional feature to use for default value evaluation. If passed,
+     * then properties from the feature (such as geometry) can be used when calculating
+     * the default value.
+     * @param context optional expression context to evaluate expressions again. If not
+     * specified, a default context will be created
+     * @return calculated default value
+     * @note added in QGIS 2.18
+     * @see setDefaultValueExpression()
+     */
+    QVariant defaultValue( int index, const QgsFeature& feature = QgsFeature(),
+                           QgsExpressionContext* context = nullptr ) const;
+
+    /** Sets an expression to use when calculating the default value for a field.
+     * @param index field index
+     * @param expression expression to evaluate when calculating default values for field. Pass
+     * an empty expression to clear the default.
+     * @note added in QGIS 2.18
+     * @see defaultValue()
+     * @see defaultValueExpression()
+     */
+    void setDefaultValueExpression( int index, const QString& expression );
+
+    /** Returns the expression used when calculating the default value for a field.
+     * @param index field index
+     * @returns expression evaluated when calculating default values for field, or an
+     * empty string if no default is set
+     * @note added in QGIS 2.18
+     * @see defaultValue()
+     * @see setDefaultValueExpression()
+     */
+    QString defaultValueExpression( int index ) const;
+
     /** Calculates a list of unique values contained within an attribute in the layer. Note that
      * in some circumstances when unsaved changes are present for the layer then the returned list
      * may contain outdated values (for instance when the attribute value in a saved feature has
@@ -1528,6 +1404,21 @@ class QgsVectorLayer : QgsMapLayer
      * @see uniqueValues()
      */
     QVariant maximumValue( int index );
+
+    /** Calculates an aggregated value from the layer's features.
+     * @param aggregate aggregate to calculate
+     * @param fieldOrExpression source field or expression to use as basis for aggregated values.
+     * @param parameters parameters controlling aggregate calculation
+     * @param context expression context for expressions and filters
+     * @param ok if specified, will be set to true if aggregate calculation was successful
+     * @return calculated aggregate value
+     * @note added in QGIS 2.16
+     */
+    QVariant aggregate( QgsAggregateCalculator::Aggregate aggregate,
+                        const QString& fieldOrExpression,
+                        const QgsAggregateCalculator::AggregateParameters& parameters = QgsAggregateCalculator::AggregateParameters(),
+                        QgsExpressionContext* context = nullptr,
+                        bool* ok = nullptr );
 
     /** Fetches all values from a specified field name or expression.
      * @param fieldOrExpression field name or an expression string
@@ -1589,6 +1480,18 @@ class QgsVectorLayer : QgsMapLayer
      * @note added in QGIS 2.12
      */
     QgsConditionalLayerStyles *conditionalStyles() const;
+
+    /**
+     * Get the attribute table configuration object.
+     * This defines the appearance of the attribute table.
+     */
+    QgsAttributeTableConfig attributeTableConfig() const;
+
+    /**
+     * Set the attribute table configuration object.
+     * This defines the appearance of the attribute table.
+     */
+    void setAttributeTableConfig( const QgsAttributeTableConfig& attributeTableConfig );
 
   public slots:
     /**
@@ -1758,20 +1661,46 @@ class QgsVectorLayer : QgsMapLayer
      * This can be due to manually adding attributes or due to a join.
      */
     void updatedFields();
-    void layerDeleted();
 
-    void attributeValueChanged( QgsFeatureId fid, int idx, const QVariant & );
-    void geometryChanged( QgsFeatureId fid, QgsGeometry &geom );
+    /**
+     * @deprecated use QObject::destroyed instead
+     */
+    void layerDeleted() /Deprecated/;
 
-    /** Signals emitted after committing changes */
+    /**
+     * Is emitted whenever an attribute value change is done in the edit buffer.
+     * Note that at this point the attribute change is not yet saved to the provider.
+     *
+     * @param fid The id of the changed feature
+     * @param idx The attribute index of the changed attribute
+     * @param value The new value of the attribute
+     */
+    void attributeValueChanged( QgsFeatureId fid, int idx, const QVariant& value );
+
+    /**
+     * Is emitted whenever a geometry change is done in the edit buffer.
+     * Note that at this point the geometry change is not yet saved to the provider.
+     *
+     * @param fid The id of the changed feature
+     * @param geometry The new geometry
+     */
+    void geometryChanged( QgsFeatureId fid, QgsGeometry& geometry );
+
+    /** This signal is emitted, when attributes are deleted from the provider */
     void committedAttributesDeleted( const QString& layerId, const QgsAttributeList& deletedAttributes );
+    /** This signal is emitted, when attributes are added to the provider */
     void committedAttributesAdded( const QString& layerId, const QList<QgsField>& addedAttributes );
+    /** This signal is emitted, when features are added to the provider */
     void committedFeaturesAdded( const QString& layerId, const QgsFeatureList& addedFeatures );
+    /** This signal is emitted, when features are deleted from the provider */
     void committedFeaturesRemoved( const QString& layerId, const QgsFeatureIds& deletedFeatureIds );
+    /** This signal is emitted, when attribute value changes are saved to the provider */
     void committedAttributeValuesChanges( const QString& layerId, const QgsChangedAttributesMap& changedAttributesValues );
+    /** This signal is emitted, when geometry changes are saved to the provider */
     void committedGeometriesChanges( const QString& layerId, const QgsGeometryMap& changedGeometries );
 
-    void saveLayerToProject();
+    /** Deprecated: This signal has never been emitted */
+    void saveLayerToProject() /Deprecated/;
 
     /** Emitted when the font family defined for labeling layer is not found on system */
     void labelingFontNotFound( QgsVectorLayer* layer, const QString& fontfamily );

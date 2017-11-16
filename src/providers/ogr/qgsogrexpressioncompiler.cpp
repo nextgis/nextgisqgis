@@ -17,7 +17,8 @@
 #include "qgsogrprovider.h"
 
 QgsOgrExpressionCompiler::QgsOgrExpressionCompiler( QgsOgrFeatureSource* source )
-    : QgsSqlExpressionCompiler( source->mFields, QgsSqlExpressionCompiler::CaseInsensitiveStringMatch | QgsSqlExpressionCompiler::NoNullInBooleanLogic )
+    : QgsSqlExpressionCompiler( source->mFields, QgsSqlExpressionCompiler::CaseInsensitiveStringMatch | QgsSqlExpressionCompiler::NoNullInBooleanLogic
+                                | QgsSqlExpressionCompiler::NoUnaryMinus )
     , mSource( source )
 {
 }
@@ -33,8 +34,6 @@ QgsSqlExpressionCompiler::Result QgsOgrExpressionCompiler::compile( const QgsExp
   else if ( mSource->mDriverName == "PostgreSQL" )
     return Fail;
   else if ( mSource->mDriverName == "OCI" )
-    return Fail;
-  else if ( mSource->mDriverName == "SQLite" )
     return Fail;
   else if ( mSource->mDriverName == "ODBC" )
     return Fail;
@@ -89,7 +88,7 @@ QgsSqlExpressionCompiler::Result QgsOgrExpressionCompiler::compileNode( const Qg
 
 QString QgsOgrExpressionCompiler::quotedIdentifier( const QString& identifier )
 {
-  return mSource->mProvider->quotedIdentifier( identifier.toUtf8() );
+  return QgsOgrProviderUtils::quotedIdentifier( identifier.toUtf8(), mSource->mDriverName );
 }
 
 QString QgsOgrExpressionCompiler::quotedValue( const QVariant& value, bool& ok )
@@ -102,5 +101,5 @@ QString QgsOgrExpressionCompiler::quotedValue( const QVariant& value, bool& ok )
     return value.toBool() ? "(1=1)" : "(1=0)";
   }
 
-  return QgsOgrUtils::quotedValue( value );
+  return QgsOgrProviderUtils::quotedValue( value );
 }

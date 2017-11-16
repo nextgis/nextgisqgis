@@ -28,7 +28,8 @@ class QgsPalLayerSettings;
 class QgsRuleBasedLabeling;
 
 
-/** Implements a derived label provider internally used for DXF export
+/** \ingroup core
+ * Implements a derived label provider internally used for DXF export
  *
  * Internal class, not in public API. Added in QGIS 2.12
  * @note not available in Python bindings
@@ -37,7 +38,7 @@ class QgsDxfLabelProvider : public QgsVectorLayerLabelProvider
 {
   public:
     //! construct the provider
-    explicit QgsDxfLabelProvider( QgsVectorLayer* layer, QgsDxfExport* dxf, const QgsPalLayerSettings *settings );
+    explicit QgsDxfLabelProvider( QgsVectorLayer* layer, const QString& providerId, QgsDxfExport* dxf, const QgsPalLayerSettings *settings );
 
     /** Re-implementation that writes to DXF file instead of drawing with QPainter
      * @param context render context
@@ -57,10 +58,11 @@ class QgsDxfLabelProvider : public QgsVectorLayerLabelProvider
     QgsDxfExport* mDxfExport;
 };
 
-/** Implements a derived label provider for rule based labels internally used
+/** \ingroup core
+ * Implements a derived label provider for rule based labels internally used
  * for DXF export
  *
- * Internal class, not in public API. Backported from QGIS 2.15
+ * Internal class, not in public API. Added in QGIS 2.15
  * @note not available in Python bindings
  */
 class QgsDxfRuleBasedLabelProvider : public QgsRuleBasedLabelProvider
@@ -88,7 +90,7 @@ class QgsDxfRuleBasedLabelProvider : public QgsRuleBasedLabelProvider
     void registerDxfFeature( QgsFeature& feature, QgsRenderContext &context, const QString& dxfLayerName );
 
     //! create QgsDxfLabelProvider
-    virtual QgsVectorLayerLabelProvider *createProvider( QgsVectorLayer *layer, bool withFeatureLoop, const QgsPalLayerSettings *settings ) override;
+    virtual QgsVectorLayerLabelProvider *createProvider( QgsVectorLayer *layer, const QString& providerId, bool withFeatureLoop, const QgsPalLayerSettings *settings ) override;
 
   protected:
     //! pointer to parent DXF export where this instance is used

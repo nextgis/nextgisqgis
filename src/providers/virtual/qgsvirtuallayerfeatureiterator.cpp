@@ -240,8 +240,8 @@ bool QgsVirtualLayerFeatureIterator::fetchFeature( QgsFeature& feature )
   return true;
 }
 
-QgsVirtualLayerFeatureSource::QgsVirtualLayerFeatureSource( const QgsVirtualLayerProvider* p ) :
-    mProvider( p )
+QgsVirtualLayerFeatureSource::QgsVirtualLayerFeatureSource( const QgsVirtualLayerProvider* p )
+    : mProvider( p )
 {
 }
 

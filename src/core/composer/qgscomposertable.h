@@ -26,7 +26,11 @@
 
 class QgsComposerTableColumn;
 
-/** A class to display feature attributes in the print composer*/
+/** \ingroup core
+ * A class to display feature attributes in the print composer
+ * @deprecated use QgsComposerTableV2 instead
+*/
+//TODO QGIS 3.0 -remove
 class CORE_EXPORT QgsComposerTable: public QgsComposerItem
 {
     Q_OBJECT

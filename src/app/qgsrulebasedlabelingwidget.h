@@ -17,6 +17,8 @@
 
 #include <QWidget>
 
+#include "qgspanelwidget.h"
+
 #include <ui_qgsrulebasedlabelingwidget.h>
 
 #include "qgsrulebasedlabeling.h"
@@ -72,8 +74,10 @@ class APP_EXPORT QgsRuleBasedLabelingModel : public QAbstractItemModel
 };
 
 
+class QgsLabelingRulePropsWidget;
 
-class QgsRuleBasedLabelingWidget : public QWidget, private Ui::QgsRuleBasedLabelingWidget
+
+class QgsRuleBasedLabelingWidget : public QgsPanelWidget, private Ui::QgsRuleBasedLabelingWidget
 {
     Q_OBJECT
   public:
@@ -84,6 +88,7 @@ class QgsRuleBasedLabelingWidget : public QWidget, private Ui::QgsRuleBasedLabel
     void writeSettingsToLayer();
 
   signals:
+    void widgetChanged();
 
   protected slots:
     void addRule();
@@ -92,6 +97,10 @@ class QgsRuleBasedLabelingWidget : public QWidget, private Ui::QgsRuleBasedLabel
     void removeRule();
     void copy();
     void paste();
+
+  private slots:
+    void ruleWidgetPanelAccepted( QgsPanelWidget* panel );
+    void liveUpdateRuleFromPanel();
 
   protected:
     QgsRuleBasedLabeling::Rule* currentRule();
@@ -113,22 +122,38 @@ class QgsRuleBasedLabelingWidget : public QWidget, private Ui::QgsRuleBasedLabel
 
 class QgsLabelingGui;
 
-#include "ui_qgslabelingrulepropsdialog.h"
+#include "ui_qgslabelingrulepropswidget.h"
 
-class APP_EXPORT QgsLabelingRulePropsDialog : public QDialog, private Ui::QgsLabelingRulePropsDialog
+class APP_EXPORT QgsLabelingRulePropsWidget : public QgsPanelWidget, private Ui::QgsLabelingRulePropsWidget
 {
     Q_OBJECT
 
   public:
-    QgsLabelingRulePropsDialog( QgsRuleBasedLabeling::Rule* rule, QgsVectorLayer* layer, QWidget* parent = nullptr, QgsMapCanvas* mapCanvas = nullptr );
-    ~QgsLabelingRulePropsDialog();
+    enum Mode
+    {
+      Adding,
+      Editing
+    };
+
+    QgsLabelingRulePropsWidget( QgsRuleBasedLabeling::Rule* rule, QgsVectorLayer* layer,
+                                QWidget* parent = nullptr, QgsMapCanvas* mapCanvas = nullptr );
+    ~QgsLabelingRulePropsWidget();
 
     QgsRuleBasedLabeling::Rule* rule() { return mRule; }
+
+    virtual void setDockMode( bool dockMode ) override;
+
+  signals:
+    void widgetChanged();
 
   public slots:
     void testFilter();
     void buildExpression();
-    void accept() override;
+
+    /**
+     * Apply any changes from the widget to the set rule.
+     */
+    void apply();
 
   protected:
     QgsRuleBasedLabeling::Rule* mRule; // borrowed

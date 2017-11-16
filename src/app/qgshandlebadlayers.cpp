@@ -157,7 +157,6 @@ QgsHandleBadLayers::~QgsHandleBadLayers()
 
 void QgsHandleBadLayers::selectionChanged()
 {
-  QgsDebugMsg( "entered." );
 
   mRows.clear();
 
@@ -250,7 +249,6 @@ void QgsHandleBadLayers::setFilename( int row, const QString& filename )
 
 void QgsHandleBadLayers::browseClicked()
 {
-  QgsDebugMsg( "entered." );
 
   if ( mRows.size() == 1 )
   {
@@ -362,14 +360,11 @@ void QgsHandleBadLayers::editAuthCfg()
 
 void QgsHandleBadLayers::apply()
 {
-  QgsDebugMsg( "entered." );
   for ( int i = 0; i < mLayerList->rowCount(); i++ )
   {
     int idx = mLayerList->item( i, 0 )->data( Qt::UserRole ).toInt();
     QDomNode &node = const_cast<QDomNode &>( mLayers[ idx ] );
 
-    QString type = mLayerList->item( i, 1 )->text();
-    QString provider = mLayerList->item( i, 2 )->text();
     QTableWidgetItem *item = mLayerList->item( i, 4 );
     QString datasource = item->text();
 
@@ -387,7 +382,6 @@ void QgsHandleBadLayers::apply()
 
 void QgsHandleBadLayers::accept()
 {
-  QgsDebugMsg( "entered." );
   apply();
 
   if ( mLayerList->rowCount() > 0  &&
@@ -407,7 +401,6 @@ void QgsHandleBadLayers::accept()
 
 void QgsHandleBadLayers::rejected()
 {
-  QgsDebugMsg( "entered." );
 
   if ( mLayerList->rowCount() > 0  &&
        QMessageBox::warning( this,

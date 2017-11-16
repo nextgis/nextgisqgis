@@ -17,6 +17,8 @@
 #include "qgscomposition.h"
 #include "qgscomposerutils.h"
 #include "qgscomposerarrow.h"
+#include "qgscomposerpolygon.h"
+#include "qgscomposerpolyline.h"
 #include "qgscomposerframe.h"
 #include "qgscomposerhtml.h"
 #include "qgscomposerlabel.h"
@@ -56,6 +58,8 @@
 #include <QDir>
 
 #include <limits>
+#include "gdal.h"
+#include "cpl_conv.h"
 
 QgsComposition::QgsComposition( QgsMapRenderer* mapRenderer )
     : QGraphicsScene( nullptr )
@@ -85,7 +89,6 @@ void QgsComposition::init()
   mPageStyleSymbol = nullptr;
   mPrintAsRaster = false;
   mGenerateWorldFile = false;
-  mWorldFileMap = nullptr;
   mUseAdvancedEffects = true;
   mSnapToGrid = false;
   mGridVisible = false;
@@ -163,7 +166,6 @@ QgsComposition::QgsComposition()
     , mPageStyleSymbol( 0 )
     , mPrintAsRaster( false )
     , mGenerateWorldFile( false )
-    , mWorldFileMap( 0 )
     , mUseAdvancedEffects( true )
     , mSnapToGrid( false )
     , mGridVisible( false )
@@ -415,7 +417,7 @@ void QgsComposition::setPaperSize( const double width, const double height, bool
     mPages.at( i )->setSceneRect( QRectF( 0, currentY, width, height ) );
     currentY += ( height + mSpaceBetweenPages );
   }
-  QgsProject::instance()->dirty( true );
+  QgsProject::instance()->setDirty( true );
   updateBounds();
   emit paperSizeChanged();
 }
@@ -541,7 +543,7 @@ void QgsComposition::setNumPages( const int pages )
     }
   }
 
-  QgsProject::instance()->dirty( true );
+  QgsProject::instance()->setDirty( true );
   updateBounds();
 
   emit nPagesChanged();
@@ -603,7 +605,7 @@ void QgsComposition::setPageStyleSymbol( QgsFillSymbolV2* symbol )
 {
   delete mPageStyleSymbol;
   mPageStyleSymbol = static_cast<QgsFillSymbolV2*>( symbol->clone() );
-  QgsProject::instance()->dirty( true );
+  QgsProject::instance()->setDirty( true );
 }
 
 void QgsComposition::createDefaultPageStyleSymbol()
@@ -847,7 +849,18 @@ void QgsComposition::setPrintResolution( const int dpi )
 {
   mPrintResolution = dpi;
   emit printResolutionChanged();
-  QgsProject::instance()->dirty( true );
+  QgsProject::instance()->setDirty( true );
+}
+
+QgsComposerMap* QgsComposition::worldFileMap() const
+{
+  return dynamic_cast< QgsComposerMap* >( const_cast< QgsComposerItem* >( getComposerItemByUuid( mWorldFileMapId ) ) );
+}
+
+void QgsComposition::setWorldFileMap( QgsComposerMap* map )
+{
+  mWorldFileMapId = map ? map->uuid() : QString();
+  QgsProject::instance()->setDirty( true );
 }
 
 void QgsComposition::setUseAdvancedEffects( const bool effectsEnabled )
@@ -932,10 +945,7 @@ bool QgsComposition::writeXML( QDomElement& composerElem, QDomDocument& doc )
   compositionElem.setAttribute( "printAsRaster", mPrintAsRaster );
 
   compositionElem.setAttribute( "generateWorldFile", mGenerateWorldFile ? 1 : 0 );
-  if ( mGenerateWorldFile && mWorldFileMap )
-  {
-    compositionElem.setAttribute( "worldFileMap", mWorldFileMap->id() );
-  }
+  compositionElem.setAttribute( "worldFileMap", mWorldFileMapId );
 
   compositionElem.setAttribute( "alignmentSnap", mAlignmentSnap ? 1 : 0 );
   compositionElem.setAttribute( "guidesVisible", mGuidesVisible ? 1 : 0 );
@@ -1046,6 +1056,7 @@ bool QgsComposition::readXML( const QDomElement& compositionElem, const QDomDocu
   mPrintResolution = compositionElem.attribute( "printResolution", "300" ).toInt();
 
   mGenerateWorldFile = compositionElem.attribute( "generateWorldFile", "0" ).toInt() == 1 ? true : false;
+  mWorldFileMapId = compositionElem.attribute( "worldFileMap" );
 
   //data defined properties
   QgsComposerUtils::readDataDefinedPropertyMap( compositionElem, &mDataDefinedNames, &mDataDefinedProperties );
@@ -1387,6 +1398,69 @@ void QgsComposition::addItemsFromXML( const QDomElement& elem, const QDomDocumen
       pushAddRemoveCommand( newShape, tr( "Shape added" ) );
     }
   }
+
+  // polygon
+  QDomNodeList composerPolygonList = elem.elementsByTagName( "ComposerPolygon" );
+  for ( int i = 0; i < composerPolygonList.size(); ++i )
+  {
+    QDomElement currentComposerPolygonElem = composerPolygonList.at( i ).toElement();
+    QgsComposerPolygon* newPolygon = new QgsComposerPolygon( this );
+    newPolygon->readXML( currentComposerPolygonElem, doc );
+
+    if ( pos )
+    {
+      if ( pasteInPlace )
+      {
+        newPolygon->setItemPosition( newPolygon->pos().x(), fmod( newPolygon->pos().y(), ( paperHeight() + spaceBetweenPages() ) ) );
+        newPolygon->move( pasteInPlacePt->x(), pasteInPlacePt->y() );
+      }
+      else
+      {
+        newPolygon->move( pasteShiftPos.x(), pasteShiftPos.y() );
+      }
+      newPolygon->setSelected( true );
+      lastPastedItem = newPolygon;
+    }
+
+    addComposerPolygon( newPolygon );
+    newPolygon->setZValue( newPolygon->zValue() + zOrderOffset );
+    if ( addUndoCommands )
+    {
+      pushAddRemoveCommand( newPolygon, tr( "Polygon added" ) );
+    }
+  }
+
+  // polyline
+  QDomNodeList addComposerPolylineList = elem.elementsByTagName( "ComposerPolyline" );
+  for ( int i = 0; i < addComposerPolylineList.size(); ++i )
+  {
+    QDomElement currentComposerPolylineElem = addComposerPolylineList.at( i ).toElement();
+    QgsComposerPolyline* newPolyline = new QgsComposerPolyline( this );
+    newPolyline->readXML( currentComposerPolylineElem, doc );
+
+    if ( pos )
+    {
+      if ( pasteInPlace )
+      {
+        newPolyline->setItemPosition( newPolyline->pos().x(), fmod( newPolyline->pos().y(), ( paperHeight() + spaceBetweenPages() ) ) );
+        newPolyline->move( pasteInPlacePt->x(), pasteInPlacePt->y() );
+      }
+      else
+      {
+        newPolyline->move( pasteShiftPos.x(), pasteShiftPos.y() );
+      }
+      newPolyline->setSelected( true );
+      lastPastedItem = newPolyline;
+    }
+
+    addComposerPolyline( newPolyline );
+    newPolyline->setZValue( newPolyline->zValue() + zOrderOffset );
+    if ( addUndoCommands )
+    {
+      pushAddRemoveCommand( newPolyline, tr( "Polyline added" ) );
+    }
+  }
+
   // picture
   QDomNodeList composerPictureList = elem.elementsByTagName( "ComposerPicture" );
   for ( int i = 0; i < composerPictureList.size(); ++i )
@@ -1743,7 +1817,7 @@ void QgsComposition::alignSelectedItemsLeft()
     subcommand->saveAfterState();
   }
   mUndoStack->push( parentCommand );
-  QgsProject::instance()->dirty( true );
+  QgsProject::instance()->setDirty( true );
 }
 
 void QgsComposition::alignSelectedItemsHCenter()
@@ -1773,7 +1847,7 @@ void QgsComposition::alignSelectedItemsHCenter()
     subcommand->saveAfterState();
   }
   mUndoStack->push( parentCommand );
-  QgsProject::instance()->dirty( true );
+  QgsProject::instance()->setDirty( true );
 }
 
 void QgsComposition::alignSelectedItemsRight()
@@ -1803,7 +1877,7 @@ void QgsComposition::alignSelectedItemsRight()
     subcommand->saveAfterState();
   }
   mUndoStack->push( parentCommand );
-  QgsProject::instance()->dirty( true );
+  QgsProject::instance()->setDirty( true );
 }
 
 void QgsComposition::alignSelectedItemsTop()
@@ -1832,7 +1906,7 @@ void QgsComposition::alignSelectedItemsTop()
     subcommand->saveAfterState();
   }
   mUndoStack->push( parentCommand );
-  QgsProject::instance()->dirty( true );
+  QgsProject::instance()->setDirty( true );
 }
 
 void QgsComposition::alignSelectedItemsVCenter()
@@ -1860,7 +1934,7 @@ void QgsComposition::alignSelectedItemsVCenter()
     subcommand->saveAfterState();
   }
   mUndoStack->push( parentCommand );
-  QgsProject::instance()->dirty( true );
+  QgsProject::instance()->setDirty( true );
 }
 
 void QgsComposition::alignSelectedItemsBottom()
@@ -1888,7 +1962,7 @@ void QgsComposition::alignSelectedItemsBottom()
     subcommand->saveAfterState();
   }
   mUndoStack->push( parentCommand );
-  QgsProject::instance()->dirty( true );
+  QgsProject::instance()->setDirty( true );
 }
 
 void QgsComposition::lockSelectedItems()
@@ -1906,7 +1980,7 @@ void QgsComposition::lockSelectedItems()
 
   setAllUnselected();
   mUndoStack->push( parentCommand );
-  QgsProject::instance()->dirty( true );
+  QgsProject::instance()->setDirty( true );
 }
 
 void QgsComposition::unlockAllItems()
@@ -1935,7 +2009,7 @@ void QgsComposition::unlockAllItems()
     }
   }
   mUndoStack->push( parentCommand );
-  QgsProject::instance()->dirty( true );
+  QgsProject::instance()->setDirty( true );
 }
 
 QgsComposerItemGroup *QgsComposition::groupItems( QList<QgsComposerItem *> items )
@@ -2039,7 +2113,7 @@ void QgsComposition::updateZValues( const bool addUndoCommands )
   if ( addUndoCommands )
   {
     mUndoStack->push( parentCommand );
-    QgsProject::instance()->dirty( true );
+    QgsProject::instance()->setDirty( true );
   }
 }
 
@@ -2388,7 +2462,7 @@ void QgsComposition::endCommand()
     if ( mActiveItemCommand->containsChange() ) //protect against empty commands
     {
       mUndoStack->push( mActiveItemCommand );
-      QgsProject::instance()->dirty( true );
+      QgsProject::instance()->setDirty( true );
     }
     else
     {
@@ -2433,7 +2507,7 @@ void QgsComposition::endMultiFrameCommand()
     if ( mActiveMultiFrameCommand->containsChange() )
     {
       mUndoStack->push( mActiveMultiFrameCommand );
-      QgsProject::instance()->dirty( true );
+      QgsProject::instance()->setDirty( true );
     }
     else
     {
@@ -2471,6 +2545,26 @@ void QgsComposition::addComposerArrow( QgsComposerArrow* arrow )
   connect( arrow, SIGNAL( sizeChanged() ), this, SLOT( updateBounds() ) );
 
   emit composerArrowAdded( arrow );
+}
+
+void QgsComposition::addComposerPolygon( QgsComposerPolygon *polygon )
+{
+  addItem( polygon );
+
+  updateBounds();
+  connect( polygon, SIGNAL( sizeChanged() ), this, SLOT( updateBounds() ) );
+
+  emit composerPolygonAdded( polygon );
+}
+
+void QgsComposition::addComposerPolyline( QgsComposerPolyline *polyline )
+{
+  addItem( polyline );
+
+  updateBounds();
+  connect( polyline, SIGNAL( sizeChanged() ), this, SLOT( updateBounds() ) );
+
+  emit composerPolylineAdded( polyline );
 }
 
 void QgsComposition::addComposerLabel( QgsComposerLabel* label )
@@ -2660,7 +2754,7 @@ void QgsComposition::pushAddRemoveCommand( QgsComposerItem* item, const QString&
   QgsAddRemoveItemCommand* c = new QgsAddRemoveItemCommand( state, item, this, text );
   connectAddRemoveCommandSignals( c );
   undoStack()->push( c );
-  QgsProject::instance()->dirty( true );
+  QgsProject::instance()->setDirty( true );
 }
 
 void QgsComposition::connectAddRemoveCommandSignals( QgsAddRemoveItemCommand* c )
@@ -2725,6 +2819,20 @@ void QgsComposition::sendItemAddedSignal( QgsComposerItem* item )
   {
     emit composerShapeAdded( shape );
     emit selectedItemChanged( shape );
+    return;
+  }
+  QgsComposerPolygon* polygon = dynamic_cast<QgsComposerPolygon*>( item );
+  if ( polygon )
+  {
+    emit composerPolygonAdded( polygon );
+    emit selectedItemChanged( polygon );
+    return;
+  }
+  QgsComposerPolyline* polyline = dynamic_cast<QgsComposerPolyline*>( item );
+  if ( polyline )
+  {
+    emit composerPolylineAdded( polyline );
+    emit selectedItemChanged( polyline );
     return;
   }
   QgsComposerAttributeTable* table = dynamic_cast<QgsComposerAttributeTable*>( item );
@@ -2820,6 +2928,34 @@ bool QgsComposition::exportAsPDF( const QString& file )
   QPrinter printer;
   beginPrintAsPDF( printer, file );
   return print( printer );
+}
+
+void QgsComposition::georeferenceOutput( const QString& file, QgsComposerMap* map,
+    const QRectF& exportRegion, double dpi ) const
+{
+  if ( dpi < 0 )
+    dpi = printResolution();
+
+  double* t = computeGeoTransform( map, exportRegion, dpi );
+  if ( !t )
+    return;
+
+  // important - we need to manually specify the DPI in advance, as GDAL will otherwise
+  // assume a DPI of 150
+  CPLSetConfigOption( "GDAL_PDF_DPI", QString::number( dpi ).toLocal8Bit().constData() );
+  GDALDatasetH outputDS = GDALOpen( file.toLocal8Bit().constData(), GA_Update );
+  if ( outputDS )
+  {
+    GDALSetGeoTransform( outputDS, t );
+#if 0
+    //TODO - metadata can be set here, eg:
+    GDALSetMetadataItem( outputDS, "AUTHOR", "me", nullptr );
+#endif
+    GDALSetProjection( outputDS, mMapSettings.destinationCrs().toWkt().toLocal8Bit().constData() );
+    GDALClose( outputDS );
+  }
+  CPLSetConfigOption( "GDAL_PDF_DPI", nullptr );
+  delete[] t;
 }
 
 void QgsComposition::doPrint( QPrinter& printer, QPainter& p, bool startNewPage )
@@ -3022,6 +3158,87 @@ void QgsComposition::renderRect( QPainter* p, const QRectF& rect )
   mPlotStyle = savedPlotStyle;
 }
 
+double* QgsComposition::computeGeoTransform( const QgsComposerMap* map, const QRectF& region , double dpi ) const
+{
+  if ( !map )
+    map = worldFileMap();
+
+  if ( !map )
+    return nullptr;
+
+  if ( dpi < 0 )
+    dpi = printResolution();
+
+  // calculate region of composition to export (in mm)
+  QRectF exportRegion = region;
+  if ( !exportRegion.isValid() )
+  {
+    int pageNumber = map->page() - 1;
+    double pageY = pageNumber * ( mPageHeight + mSpaceBetweenPages );
+    exportRegion = QRectF( 0, pageY, mPageWidth, mPageHeight );
+  }
+
+  // map rectangle (in mm)
+  QRectF mapItemSceneRect = map->mapRectToScene( map->rect() );
+
+  // destination width/height in mm
+  double outputHeightMM = exportRegion.height();
+  double outputWidthMM = exportRegion.width();
+
+  // map properties
+  QgsRectangle mapExtent = *map->currentMapExtent();
+  double mapXCenter = mapExtent.center().x();
+  double mapYCenter = mapExtent.center().y();
+  double alpha = - map->mapRotation() / 180 * M_PI;
+  double sinAlpha = sin( alpha );
+  double cosAlpha = cos( alpha );
+
+  // get the extent (in map units) for the exported region
+  QPointF mapItemPos = map->pos();
+  //adjust item position so it is relative to export region
+  mapItemPos.rx() -= exportRegion.left();
+  mapItemPos.ry() -= exportRegion.top();
+
+  // calculate extent of entire page in map units
+  double xRatio = mapExtent.width() / mapItemSceneRect.width();
+  double yRatio = mapExtent.height() / mapItemSceneRect.height();
+  double xmin = mapExtent.xMinimum() - mapItemPos.x() * xRatio;
+  double ymax = mapExtent.yMaximum() + mapItemPos.y() * yRatio;
+  QgsRectangle paperExtent( xmin, ymax - outputHeightMM * yRatio, xmin + outputWidthMM * xRatio, ymax );
+
+  // calculate origin of page
+  double X0 = paperExtent.xMinimum();
+  double Y0 = paperExtent.yMaximum();
+
+  if ( !qgsDoubleNear( alpha, 0.0 ) )
+  {
+    // translate origin to account for map rotation
+    double X1 = X0 - mapXCenter;
+    double Y1 = Y0 - mapYCenter;
+    double X2 = X1 * cosAlpha + Y1 * sinAlpha;
+    double Y2 = -X1 * sinAlpha + Y1 * cosAlpha;
+    X0 = X2 + mapXCenter;
+    Y0 = Y2 + mapYCenter;
+  }
+
+  // calculate scaling of pixels
+  int pageWidthPixels = static_cast< int >( dpi * outputWidthMM / 25.4 );
+  int pageHeightPixels = static_cast< int >( dpi * outputHeightMM / 25.4 );
+  double pixelWidthScale = paperExtent.width() / pageWidthPixels;
+  double pixelHeightScale = paperExtent.height() / pageHeightPixels;
+
+  // transform matrix
+  double* t = new double[6];
+  t[0] = X0;
+  t[1] = cosAlpha * pixelWidthScale;
+  t[2] = -sinAlpha * pixelWidthScale;
+  t[3] = Y0;
+  t[4] = -sinAlpha * pixelHeightScale;
+  t[5] = -cosAlpha * pixelHeightScale;
+
+  return t;
+}
+
 QString QgsComposition::encodeStringForXML( const QString& str )
 {
   QString modifiedStr( str );
@@ -3048,12 +3265,13 @@ QGraphicsView *QgsComposition::graphicsView() const
 
 void QgsComposition::computeWorldFileParameters( double& a, double& b, double& c, double& d, double& e, double& f ) const
 {
-  if ( !mWorldFileMap )
+  const QgsComposerMap* map = worldFileMap();
+  if ( !map )
   {
     return;
   }
 
-  int pageNumber = mWorldFileMap->page() - 1;
+  int pageNumber = map->page() - 1;
   double pageY = pageNumber * ( mPageHeight + mSpaceBetweenPages );
   QRectF pageRect( 0, pageY, mPageWidth, mPageHeight );
   computeWorldFileParameters( pageRect, a, b, c, d, e, f );
@@ -3062,8 +3280,8 @@ void QgsComposition::computeWorldFileParameters( double& a, double& b, double& c
 void QgsComposition::computeWorldFileParameters( const QRectF& exportRegion, double& a, double& b, double& c, double& d, double& e, double& f ) const
 {
   // World file parameters : affine transformation parameters from pixel coordinates to map coordinates
-
-  if ( !mWorldFileMap )
+  QgsComposerMap* map = worldFileMap();
+  if ( !map )
   {
     return;
   }
@@ -3071,10 +3289,10 @@ void QgsComposition::computeWorldFileParameters( const QRectF& exportRegion, dou
   double destinationHeight = exportRegion.height();
   double destinationWidth = exportRegion.width();
 
-  QRectF mapItemSceneRect = mWorldFileMap->mapRectToScene( mWorldFileMap->rect() );
-  QgsRectangle mapExtent = *mWorldFileMap->currentMapExtent();
+  QRectF mapItemSceneRect = map->mapRectToScene( map->rect() );
+  QgsRectangle mapExtent = *map->currentMapExtent();
 
-  double alpha = mWorldFileMap->mapRotation() / 180 * M_PI;
+  double alpha = map->mapRotation() / 180 * M_PI;
 
   double xRatio = mapExtent.width() / mapItemSceneRect.width();
   double yRatio = mapExtent.height() / mapItemSceneRect.height();
@@ -3083,7 +3301,7 @@ void QgsComposition::computeWorldFileParameters( const QRectF& exportRegion, dou
   double yCenter = mapExtent.center().y();
 
   // get the extent (in map units) for the region
-  QPointF mapItemPos = mWorldFileMap->pos();
+  QPointF mapItemPos = map->pos();
   //adjust item position so it is relative to export region
   mapItemPos.rx() -= exportRegion.left();
   mapItemPos.ry() -= exportRegion.top();

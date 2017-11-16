@@ -67,7 +67,8 @@ QgsPointDisplacementRenderer::~QgsPointDisplacementRenderer()
 QgsPointDisplacementRenderer* QgsPointDisplacementRenderer::clone() const
 {
   QgsPointDisplacementRenderer* r = new QgsPointDisplacementRenderer( mLabelAttributeName );
-  r->setEmbeddedRenderer( mRenderer->clone() );
+  if ( mRenderer )
+    r->setEmbeddedRenderer( mRenderer->clone() );
   r->setCircleWidth( mCircleWidth );
   r->setCircleColor( mCircleColor );
   r->setLabelFont( mLabelFont );
@@ -177,7 +178,8 @@ void QgsPointDisplacementRenderer::drawGroup( const DisplacementGroup& group, Qg
   QgsGeometry groupGeom( groupMultiPoint );
   QgsGeometry* centroid = groupGeom.centroid();
   QPointF pt;
-  _getPoint( pt, context, QgsConstWkbPtr( centroid->asWkb(), centroid->wkbSize() ) );
+  QgsConstWkbPtr wkbPtr( centroid->asWkb(), centroid->wkbSize() );
+  _getPoint( pt, context, wkbPtr );
   delete centroid;
 
   //calculate max diagonal size from all symbols in group

@@ -29,7 +29,7 @@ class QgsMapLayer;
 class QgsVectorLayer;
 
 
-/**
+/** \ingroup gui
  * @brief The QgsFieldExpressionWidget class reates a widget to choose fields and edit expressions
  * It contains a combo boxto display the fields and expression and a button to open the expression dialog.
  * The combo box is editable, allowing expressions to be edited inline.
@@ -89,12 +89,24 @@ class GUI_EXPORT QgsFieldExpressionWidget : public QWidget
       */
     QString currentText() const;
 
-    /** Returns the currently selected field or expression. If a field is currently selected, the returned
+    /**
+     * Returns the currently selected field or expression. If a field is currently selected, the returned
      * value will be converted to a valid expression referencing this field (ie enclosing the field name with
      * appropriate quotations).
      * @note added in QGIS 2.14
      */
     QString asExpression() const;
+
+    /**
+     * Returns the currently selected field or expression. If a field is currently selected, the returned
+     * value will be converted to a valid expression referencing this field (ie enclosing the field name with
+     * appropriate quotations).
+     *
+     * Alias for asExpression()
+     *
+     * @note added in QGIS 2.18
+     */
+    QString expression() const;
 
     //! Returns the currently used layer
     QgsVectorLayer* layer() const;
@@ -127,8 +139,19 @@ class GUI_EXPORT QgsFieldExpressionWidget : public QWidget
     //! convenience slot to connect QgsMapLayerComboBox layer signal
     void setLayer( QgsMapLayer* layer );
 
+    //! sets the current row in the widget
+    void setRow( int row ) { mCombo->setCurrentIndex( row ); }
+
     //! sets the current field or expression in the widget
     void setField( const QString &fieldName );
+
+    /**
+     * Sets the current expression text and if applicable also the field.
+     * Alias for setField.
+     *
+     * @note Added in QGIS 2.18
+     */
+    void setExpression( const QString& expression );
 
   protected slots:
     //! open the expression dialog to edit the current or add a new expression

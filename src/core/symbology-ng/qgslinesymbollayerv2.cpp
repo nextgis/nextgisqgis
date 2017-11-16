@@ -471,7 +471,12 @@ QgsSymbolLayerV2* QgsSimpleLineSymbolLayerV2::createFromSld( QDomElement &elemen
       offset = d;
   }
 
+  QString uom = element.attribute( QString( "uom" ), "" );
+  width = QgsSymbolLayerV2Utils::sizeInPixelsFromSldUom( uom, width );
+  offset = QgsSymbolLayerV2Utils::sizeInPixelsFromSldUom( uom, offset );
+
   QgsSimpleLineSymbolLayerV2* l = new QgsSimpleLineSymbolLayerV2( color, width, penStyle );
+  l->setOutputUnit( QgsSymbolV2::Pixel );
   l->setOffset( offset );
   l->setPenJoinStyle( penJoinStyle );
   l->setPenCapStyle( penCapStyle );
@@ -658,7 +663,11 @@ double QgsSimpleLineSymbolLayerV2::dxfOffset( const QgsDxfExport& e, QgsSymbolV2
 class MyLine
 {
   public:
-    MyLine( QPointF p1, QPointF p2 ) : mVertical( false ), mIncreasing( false ), mT( 0.0 ), mLength( 0.0 )
+    MyLine( QPointF p1, QPointF p2 )
+        : mVertical( false )
+        , mIncreasing( false )
+        , mT( 0.0 )
+        , mLength( 0.0 )
     {
       if ( p1 == p2 )
         return; // invalid
@@ -953,6 +962,9 @@ void QgsMarkerLineSymbolLayerV2::renderPolylineInterval( const QPolygonF& points
   QgsRenderContext& rc = context.renderContext();
   double interval = mInterval;
 
+  QgsExpressionContextScope* scope = new QgsExpressionContextScope();
+  context.renderContext().expressionContext().appendScope( scope );
+
   if ( hasDataDefinedProperty( QgsSymbolLayerV2::EXPR_INTERVAL ) )
   {
     context.setOriginalValueVariable( mInterval );
@@ -972,6 +984,7 @@ void QgsMarkerLineSymbolLayerV2::renderPolylineInterval( const QPolygonF& points
   double painterUnitInterval = QgsSymbolLayerV2Utils::convertToPainterUnits( rc, interval, mIntervalUnit, mIntervalMapUnitScale );
   lengthLeft = painterUnitInterval - QgsSymbolLayerV2Utils::convertToPainterUnits( rc, offsetAlongLine, mIntervalUnit, mIntervalMapUnitScale );
 
+  int pointNum = 0;
   for ( int i = 1; i < points.count(); ++i )
   {
     const QPointF& pt = points[i];
@@ -1002,12 +1015,15 @@ void QgsMarkerLineSymbolLayerV2::renderPolylineInterval( const QPolygonF& points
       // "c" is 1 for regular point or in interval (0,1] for begin of line segment
       lastPt += c * diff;
       lengthLeft -= painterUnitInterval;
+      scope->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_GEOMETRY_POINT_NUM, ++pointNum, true ) );
       mMarker->renderPoint( lastPt, context.feature(), rc, -1, context.selected() );
       c = 1; // reset c (if wasn't 1 already)
     }
 
     lastPt = pt;
   }
+
+  delete context.renderContext().expressionContext().popScope();
 }
 
 static double _averageAngle( QPointF prevPt, QPointF pt, QPointF nextPt )
@@ -1031,6 +1047,10 @@ void QgsMarkerLineSymbolLayerV2::renderPolylineVertex( const QPolygonF& points, 
   int i, maxCount;
   bool isRing = false;
 
+  QgsExpressionContextScope* scope = new QgsExpressionContextScope();
+  context.renderContext().expressionContext().appendScope( scope );
+  scope->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_GEOMETRY_POINT_COUNT, points.size(), true ) );
+
   double offsetAlongLine = mOffsetAlongLine;
   if ( hasDataDefinedProperty( QgsSymbolLayerV2::EXPR_OFFSET_ALONG_LINE ) )
   {
@@ -1053,14 +1073,17 @@ void QgsMarkerLineSymbolLayerV2::renderPolylineVertex( const QPolygonF& points, 
     QgsPointV2 vPoint;
     double x, y, z;
     QPointF mapPoint;
+    int pointNum = 0;
     while ( context.renderContext().geometry()->nextVertex( vId, vPoint ) )
     {
+      scope->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_GEOMETRY_POINT_NUM, ++pointNum, true ) );
+
       if (( placement == Vertex && vId.type == QgsVertexId::SegmentVertex )
           || ( placement == CurvePoint && vId.type == QgsVertexId::CurveVertex ) )
       {
         //transform
         x = vPoint.x(), y = vPoint.y();
-        z = vPoint.z();
+        z = 0.0;
         if ( ct )
         {
           ct->transformInPlace( x, y, z );
@@ -1076,6 +1099,8 @@ void QgsMarkerLineSymbolLayerV2::renderPolylineVertex( const QPolygonF& points, 
         mMarker->renderPoint( mapPoint, context.feature(), rc, -1, context.selected() );
       }
     }
+
+    delete context.renderContext().expressionContext().popScope();
     return;
   }
 
@@ -1098,6 +1123,7 @@ void QgsMarkerLineSymbolLayerV2::renderPolylineVertex( const QPolygonF& points, 
   }
   else
   {
+    delete context.renderContext().expressionContext().popScope();
     return;
   }
 
@@ -1108,11 +1134,16 @@ void QgsMarkerLineSymbolLayerV2::renderPolylineVertex( const QPolygonF& points, 
     renderOffsetVertexAlongLine( points, i, distance, context );
     // restore original rotation
     mMarker->setAngle( origAngle );
+
+    delete context.renderContext().expressionContext().popScope();
     return;
   }
 
+  int pointNum = 0;
   for ( ; i < maxCount; ++i )
   {
+    scope->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_GEOMETRY_POINT_NUM, ++pointNum, true ) );
+
     if ( isRing && placement == Vertex && i == points.count() - 1 )
     {
       continue; // don't draw the last marker - it has been drawn already
@@ -1129,6 +1160,8 @@ void QgsMarkerLineSymbolLayerV2::renderPolylineVertex( const QPolygonF& points, 
 
   // restore original rotation
   mMarker->setAngle( origAngle );
+
+  delete context.renderContext().expressionContext().popScope();
 }
 
 double QgsMarkerLineSymbolLayerV2::markerAngle( const QPolygonF& points, bool isRing, int vertex )
@@ -1523,7 +1556,12 @@ QgsSymbolLayerV2* QgsMarkerLineSymbolLayerV2::createFromSld( QDomElement &elemen
       offset = d;
   }
 
+  QString uom = element.attribute( QString( "uom" ), "" );
+  interval = QgsSymbolLayerV2Utils::sizeInPixelsFromSldUom( uom, interval );
+  offset = QgsSymbolLayerV2Utils::sizeInPixelsFromSldUom( uom, offset );
+
   QgsMarkerLineSymbolLayerV2* x = new QgsMarkerLineSymbolLayerV2( rotateMarker );
+  x->setOutputUnit( QgsSymbolV2::Pixel );
   x->setPlacement( placement );
   x->setInterval( interval );
   x->setSubSymbol( marker );

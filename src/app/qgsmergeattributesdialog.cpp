@@ -362,7 +362,8 @@ QVariant QgsMergeAttributesDialog::calcStatistic( int col, QgsStatisticalSummary
 
   summary.calculate( values );
 
-  return QVariant::fromValue( summary.statistic( stat ) );
+  double val = summary.statistic( stat );
+  return qIsNaN( val ) ? QVariant( QVariant::Double ) : val;
 }
 
 QVariant QgsMergeAttributesDialog::concatenationAttribute( int col )
@@ -459,7 +460,7 @@ void QgsMergeAttributesDialog::on_mRemoveFeatureFromSelectionButton_clicked()
   //remove feature from the vector layer selection
   QgsFeatureIds selectedIds = mVectorLayer->selectedFeaturesIds();
   selectedIds.remove( featureId );
-  mVectorLayer->setSelectedFeatures( selectedIds );
+  mVectorLayer->selectByIds( selectedIds );
   mMapCanvas->repaint();
 
   //remove feature option from the combo box (without altering the current merge values)
@@ -522,6 +523,11 @@ QgsAttributes QgsMergeAttributesDialog::mergedAttributes() const
     return QgsAttributes();
   }
 
+  QgsExpressionContext context;
+  context << QgsExpressionContextUtils::globalScope()
+  << QgsExpressionContextUtils::projectScope()
+  << QgsExpressionContextUtils::layerScope( mVectorLayer );
+
   int widgetIndex = 0;
   QgsAttributes results( mFields.count() );
   for ( int fieldIdx = 0; fieldIdx < mFields.count(); ++fieldIdx )
@@ -529,7 +535,9 @@ QgsAttributes QgsMergeAttributesDialog::mergedAttributes() const
     if ( mHiddenAttributes.contains( fieldIdx ) )
     {
       //hidden attribute, set to default value
-      if ( mVectorLayer->dataProvider() )
+      if ( !mVectorLayer->defaultValueExpression( fieldIdx ).isEmpty() )
+        results[fieldIdx] = mVectorLayer->defaultValue( fieldIdx, mFeatureList.at( 0 ), &context );
+      else if ( mVectorLayer->dataProvider() )
         results[fieldIdx] = mVectorLayer->dataProvider()->defaultValue( fieldIdx );
       else
         results[fieldIdx] = QVariant();
@@ -550,6 +558,10 @@ QgsAttributes QgsMergeAttributesDialog::mergedAttributes() const
     if ( comboBox->itemData( comboBox->currentIndex() ).toString() != "skip" )
     {
       results[fieldIdx] = currentItem->data( Qt::DisplayRole );
+    }
+    else if ( !mVectorLayer->defaultValueExpression( fieldIdx ).isEmpty() )
+    {
+      results[fieldIdx] = mVectorLayer->defaultValue( fieldIdx, mFeatureList.at( 0 ), &context );
     }
     else if ( mVectorLayer->dataProvider() )
     {

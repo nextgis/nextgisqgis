@@ -31,7 +31,8 @@ class QgsExpression;
 
 
 
-/** Base class for all diagram types*/
+/** \ingroup core
+ * Base class for all diagram types*/
 class CORE_EXPORT QgsDiagram
 {
   public:
@@ -63,6 +64,14 @@ class CORE_EXPORT QgsDiagram
     virtual Q_DECL_DEPRECATED QSizeF diagramSize( const QgsAttributes& attributes, const QgsRenderContext& c, const QgsDiagramSettings& s, const QgsDiagramInterpolationSettings& is );
     /** Returns the size in map units the diagram will use to render. Interpolate size*/
     virtual QSizeF diagramSize( const QgsFeature& feature, const QgsRenderContext& c, const QgsDiagramSettings& s, const QgsDiagramInterpolationSettings& is ) = 0;
+
+    /** Returns the size of the legend item for the diagram corresponding to a specified value.
+     * @param value value to return legend item size for
+     * @param s diagram settings
+     * @param is interpolation settings
+     * @note added in QGIS 2.16
+     */
+    virtual double legendSize( double value, const QgsDiagramSettings& s, const QgsDiagramInterpolationSettings& is ) const = 0;
 
   protected:
     QgsDiagram();
@@ -100,6 +109,14 @@ class CORE_EXPORT QgsDiagram
      *  @return The properly scaled font for rendering
      */
     QFont scaledFont( const QgsDiagramSettings& s, const QgsRenderContext& c );
+
+    /** Returns the scaled size of a diagram for a value, respecting the specified diagram interpolation settings.
+     * @param value value to calculate corresponding circular size for
+     * @param s diagram settings
+     * @param is interpolation settings
+     * @note added in QGIS 2.16
+     */
+    QSizeF sizeForValue( double value, const QgsDiagramSettings& s, const QgsDiagramInterpolationSettings& is ) const;
 
   private:
     QMap<QString, QgsExpression*> mExpressions;

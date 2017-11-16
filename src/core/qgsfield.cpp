@@ -86,6 +86,14 @@ QString QgsField::name() const
   return d->name;
 }
 
+QString QgsField::displayName() const
+{
+  if ( !d->alias.isEmpty() )
+    return d->alias;
+  else
+    return d->name;
+}
+
 QVariant::Type QgsField::type() const
 {
   return d->type;
@@ -109,6 +117,11 @@ int QgsField::precision() const
 QString QgsField::comment() const
 {
   return d->comment;
+}
+
+bool QgsField::isNumeric() const
+{
+  return d->type == QVariant::Double || d->type == QVariant::Int || d->type == QVariant::UInt || d->type == QVariant::LongLong || d->type == QVariant::ULongLong;
 }
 
 /***************************************************************************
@@ -144,6 +157,26 @@ void QgsField::setPrecision( int precision )
 void QgsField::setComment( const QString& comment )
 {
   d->comment = comment;
+}
+
+QString QgsField::defaultValueExpression() const
+{
+  return d->defaultValueExpression;
+}
+
+void QgsField::setDefaultValueExpression( const QString& expression )
+{
+  d->defaultValueExpression = expression;
+}
+
+QString QgsField::alias() const
+{
+  return d->alias;
+}
+
+void QgsField::setAlias( const QString& alias )
+{
+  d->alias = alias;
 }
 
 /***************************************************************************
@@ -247,20 +280,24 @@ QDataStream& operator<<( QDataStream& out, const QgsField& field )
   out << field.length();
   out << field.precision();
   out << field.comment();
+  out << field.alias();
+  out << field.defaultValueExpression();
   return out;
 }
 
 QDataStream& operator>>( QDataStream& in, QgsField& field )
 {
   quint32 type, length, precision;
-  QString name, typeName, comment;
-  in >> name >> type >> typeName >> length >> precision >> comment;
+  QString name, typeName, comment, alias, defaultValueExpression;
+  in >> name >> type >> typeName >> length >> precision >> comment >> alias >> defaultValueExpression;
   field.setName( name );
   field.setType( static_cast< QVariant::Type >( type ) );
   field.setTypeName( typeName );
   field.setLength( static_cast< int >( length ) );
   field.setPrecision( static_cast< int >( precision ) );
   field.setComment( comment );
+  field.setAlias( alias );
+  field.setDefaultValueExpression( defaultValueExpression );
   return in;
 }
 
@@ -439,27 +476,58 @@ bool QgsFields::operator==( const QgsFields &other ) const
   return d->fields == other.d->fields;
 }
 
+QgsFields::const_iterator QgsFields::constBegin() const noexcept
+{
+  if ( d->fields.isEmpty() )
+    return const_iterator();
+
+  return const_iterator( &d->fields.first() );
+}
+
+QgsFields::const_iterator QgsFields::constEnd() const noexcept
+{
+  if ( d->fields.isEmpty() )
+    return const_iterator();
+
+  return const_iterator( &d->fields.last() + 1 );
+}
+
+QgsFields::const_iterator QgsFields::begin() const noexcept
+{
+  if ( d->fields.isEmpty() )
+    return const_iterator();
+
+  return const_iterator( &d->fields.first() );
+}
+
+QgsFields::const_iterator QgsFields::end() const noexcept
+{
+  if ( d->fields.isEmpty() )
+    return const_iterator();
+
+  return const_iterator( &d->fields.last() + 1 );
+}
+
+QgsFields::iterator QgsFields::begin()
+{
+  if ( d->fields.isEmpty() )
+    return iterator();
+
+  d.detach();
+  return iterator( &d->fields.first() );
+}
+
+QgsFields::iterator QgsFields::end()
+{
+  if ( d->fields.isEmpty() )
+    return iterator();
+
+  d.detach();
+  return iterator( &d->fields.last() + 1 );
+}
+
 QIcon QgsFields::iconForField( int fieldIdx ) const
 {
-  static QIcon intIcon;
-  if ( intIcon.isNull() )
-    intIcon = QgsApplication::getThemeIcon( "/mIconFieldInteger.svg" );
-  static QIcon floatIcon;
-  if ( floatIcon.isNull() )
-    floatIcon = QgsApplication::getThemeIcon( "/mIconFieldFloat.svg" );
-  static QIcon stringIcon;
-  if ( stringIcon.isNull() )
-    stringIcon = QgsApplication::getThemeIcon( "/mIconFieldText.svg" );
-  static QIcon dateIcon;
-  if ( dateIcon.isNull() )
-    dateIcon = QgsApplication::getThemeIcon( "/mIconFieldDate.svg" );
-  static QIcon dateTimeIcon;
-  if ( dateTimeIcon.isNull() )
-    dateTimeIcon = QgsApplication::getThemeIcon( "/mIconFieldDateTime.svg" );
-  static QIcon timeIcon;
-  if ( timeIcon.isNull() )
-    timeIcon = QgsApplication::getThemeIcon( "/mIconFieldTime.svg" );
-
   switch ( d->fields.at( fieldIdx ).field.type() )
   {
     case QVariant::Int:
@@ -467,27 +535,27 @@ QIcon QgsFields::iconForField( int fieldIdx ) const
     case QVariant::LongLong:
     case QVariant::ULongLong:
     {
-      return intIcon;
+      return QgsApplication::getThemeIcon( "/mIconFieldInteger.svg" );
     }
     case QVariant::Double:
     {
-      return floatIcon;
+      return QgsApplication::getThemeIcon( "/mIconFieldFloat.svg" );
     }
     case QVariant::String:
     {
-      return stringIcon;
+      return QgsApplication::getThemeIcon( "/mIconFieldText.svg" );
     }
     case QVariant::Date:
     {
-      return dateIcon;
+      return QgsApplication::getThemeIcon( "/mIconFieldDate.svg" );
     }
     case QVariant::DateTime:
     {
-      return dateTimeIcon;
+      return QgsApplication::getThemeIcon( "/mIconFieldDateTime.svg" );
     }
     case QVariant::Time:
     {
-      return timeIcon;
+      return QgsApplication::getThemeIcon( "/mIconFieldTime.svg" );
     }
     default:
       return QIcon();

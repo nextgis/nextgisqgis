@@ -41,6 +41,7 @@ QgsPalettedRendererWidget::QgsPalettedRendererWidget( QgsRasterLayer* layer, con
     }
 
     setFromRenderer( mRasterLayer->renderer() );
+    connect( mBandComboBox, SIGNAL( currentIndexChanged( int ) ), this, SIGNAL( widgetChanged() ) );
   }
 }
 
@@ -77,11 +78,20 @@ void QgsPalettedRendererWidget::on_mTreeWidget_itemDoubleClicked( QTreeWidgetIte
     if ( c.isValid() )
     {
       item->setBackground( column, QBrush( c ) );
+      emit widgetChanged();
     }
   }
   else if ( column == 2 && item )
   {
     item->setFlags( Qt::ItemIsEnabled | Qt::ItemIsEditable | Qt::ItemIsSelectable );
+  }
+}
+
+void QgsPalettedRendererWidget::on_mTreeWidget_itemChanged( QTreeWidgetItem * item, int column )
+{
+  if ( column == 2 && item ) //palette label modified
+  {
+    emit widgetChanged();
   }
 }
 

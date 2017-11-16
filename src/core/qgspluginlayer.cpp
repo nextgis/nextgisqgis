@@ -18,7 +18,8 @@
 #include "qgsmaplayerrenderer.h"
 
 QgsPluginLayer::QgsPluginLayer( const QString& layerType, const QString& layerName )
-    : QgsMapLayer( PluginLayer, layerName ), mPluginLayerType( layerType )
+    : QgsMapLayer( PluginLayer, layerName )
+    , mPluginLayerType( layerType )
 {
   setLegend( QgsMapLayerLegend::defaultPluginLegend( this ) );
 }
@@ -33,14 +34,20 @@ void QgsPluginLayer::setExtent( const QgsRectangle &extent )
   mExtent = extent;
 }
 
+void QgsPluginLayer::setSource( const QString& source )
+{
+  mDataSource = source;
+}
+
 QgsLegendSymbologyList QgsPluginLayer::legendSymbologyItems( QSize iconSize )
 {
   Q_UNUSED( iconSize );
   return QgsLegendSymbologyList();
 }
 
-/** Fallback layer renderer implementation for layer that do not support map renderer yet.
- *
+/**
+ * \ingroup core
+ * Fallback layer renderer implementation for layer that do not support map renderer yet.
  * @note added in 2.4
  * @note not available in Python bindings
  */

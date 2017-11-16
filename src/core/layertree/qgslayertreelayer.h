@@ -20,7 +20,7 @@
 
 class QgsMapLayer;
 
-/**
+/** \ingroup core
  * Layer tree node points to a map layer.
  *
  * When using with existing QgsMapLayer instance, it is expected that the layer
@@ -42,8 +42,28 @@ class CORE_EXPORT QgsLayerTreeLayer : public QgsLayerTreeNode
 {
     Q_OBJECT
   public:
+
+    //! Parameters for loose layer matching
+    struct LayerMatchParams
+    {
+      //! Layer public source
+      QString source;
+      //! Layer name
+      QString name;
+      //! Provider
+      QString providerKey;
+    };
+
     explicit QgsLayerTreeLayer( QgsMapLayer* layer );
     QgsLayerTreeLayer( const QgsLayerTreeLayer& other );
+
+    /**
+     * Creates a layer node which will attach to a layer with matching
+     * parameters. This can be used for "looser" layer matching,
+     * avoiding the usual layer id check in favour of attaching to any layer
+     * with an equal source/name/provider.
+     */
+    static QgsLayerTreeLayer* createLayerFromParams( const LayerMatchParams& source );
 
     explicit QgsLayerTreeLayer( const QString& layerId, const QString& name = QString() );
 
@@ -51,13 +71,34 @@ class CORE_EXPORT QgsLayerTreeLayer : public QgsLayerTreeNode
 
     QgsMapLayer* layer() const { return mLayer; }
 
+    //! Get layer's name
+    //! @note added in 2.18.1
+    QString name() const override;
+    //! Set layer's name
+    //! @note added in 2.18.1
+    void setName( const QString& n ) override;
+
+    /**
+     * Attempts to attach this layer node to a layer with a matching
+     * QgsMapLayer::publicSource(). This can be used for "looser" layer matching,
+     * avoiding the usual layer id check in favour of attaching to any layer
+     * with an equal source.
+     */
+    void attachToSource( const LayerMatchParams &source );
+
     QString layerName() const;
     void setLayerName( const QString& n );
 
     Qt::CheckState isVisible() const { return mVisible; }
     void setVisible( Qt::CheckState visible );
 
-    static QgsLayerTreeLayer* readXML( QDomElement& element );
+    /**
+     * Creates a new layer from an XML definition. If the looseMatch
+     * parameter is true then legend layers will use looser matching criteria,
+     * eg testing layer source instead of layer IDs.
+     */
+    static QgsLayerTreeLayer* readXML( QDomElement& element, bool looseMatch = false );
+
     virtual void writeXML( QDomElement& parentElement ) override;
 
     virtual QString dump() const override;
@@ -67,6 +108,9 @@ class CORE_EXPORT QgsLayerTreeLayer : public QgsLayerTreeNode
   protected slots:
     void registryLayersAdded( const QList<QgsMapLayer*>& layers );
     void registryLayersWillBeRemoved( const QStringList& layerIds );
+    //! Emits a nameChanged() signal if layer's name has changed
+    //! @note added in 2.18.1
+    void layerNameChanged();
 
   signals:
     //! emitted when a previously unavailable layer got loaded
@@ -80,8 +124,17 @@ class CORE_EXPORT QgsLayerTreeLayer : public QgsLayerTreeNode
 
     QString mLayerId;
     QString mLayerName; // only used if layer does not exist
+
+    //! Only used when loosely matching to layers - eg when creating a composer legend from template
+    //! If set this will attach to the first matching layer with equal parameters
+    LayerMatchParams mLooseMatchParams;
+
     QgsMapLayer* mLayer; // not owned! may be null
     Qt::CheckState mVisible;
+
+  private:
+
+    bool layerMatchesSource( QgsMapLayer *layer, const LayerMatchParams& params ) const;
 };
 
 

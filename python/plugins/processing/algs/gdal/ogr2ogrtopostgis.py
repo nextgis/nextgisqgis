@@ -43,6 +43,7 @@ from processing.tools.vector import ogrConnectionString, ogrLayerName
 class Ogr2OgrToPostGis(GdalAlgorithm):
 
     INPUT_LAYER = 'INPUT_LAYER'
+    SHAPE_ENCODING = 'SHAPE_ENCODING'
     GTYPE = 'GTYPE'
     GEOMTYPE = ['', 'NONE', 'GEOMETRY', 'POINT', 'LINESTRING', 'POLYGON', 'GEOMETRYCOLLECTION', 'MULTIPOINT', 'MULTIPOLYGON', 'MULTILINESTRING']
     S_SRS = 'S_SRS'
@@ -81,6 +82,8 @@ class Ogr2OgrToPostGis(GdalAlgorithm):
         self.group, self.i18n_group = self.trAlgorithm('[OGR] Miscellaneous')
         self.addParameter(ParameterVector(self.INPUT_LAYER,
                                           self.tr('Input layer'), [ParameterVector.VECTOR_TYPE_ANY], False))
+        self.addParameter(ParameterString(self.SHAPE_ENCODING,
+                                          self.tr('Shape encoding'), "", optional=True))
         self.addParameter(ParameterSelection(self.GTYPE,
                                              self.tr('Output geometry type'), self.GEOMTYPE, 0))
         self.addParameter(ParameterCrs(self.A_SRS,
@@ -90,15 +93,15 @@ class Ogr2OgrToPostGis(GdalAlgorithm):
         self.addParameter(ParameterCrs(self.S_SRS,
                                        self.tr('Override source CRS'), '', optional=True))
         self.addParameter(ParameterString(self.HOST,
-                                          self.tr('Host'), 'localhost', optional=False))
+                                          self.tr('Host'), 'localhost', optional=True))
         self.addParameter(ParameterString(self.PORT,
-                                          self.tr('Port'), '5432', optional=False))
+                                          self.tr('Port'), '5432', optional=True))
         self.addParameter(ParameterString(self.USER,
-                                          self.tr('Username'), '', optional=False))
+                                          self.tr('Username'), '', optional=True))
         self.addParameter(ParameterString(self.DBNAME,
-                                          self.tr('Database name'), '', optional=False))
+                                          self.tr('Database name'), '', optional=True))
         self.addParameter(ParameterString(self.PASSWORD,
-                                          self.tr('Password'), '', optional=False))
+                                          self.tr('Password'), '', optional=True))
         self.addParameter(ParameterString(self.SCHEMA,
                                           self.tr('Schema name'), 'public', optional=True))
         self.addParameter(ParameterString(self.TABLE,
@@ -151,17 +154,17 @@ class Ogr2OgrToPostGis(GdalAlgorithm):
                                           self.tr('Additional creation options'), '', optional=True))
 
     def getConnectionString(self):
-        host = unicode(self.getParameterValue(self.HOST))
-        port = unicode(self.getParameterValue(self.PORT))
-        user = unicode(self.getParameterValue(self.USER))
-        dbname = unicode(self.getParameterValue(self.DBNAME))
-        password = unicode(self.getParameterValue(self.PASSWORD))
-        schema = unicode(self.getParameterValue(self.SCHEMA))
+        host = self.getParameterValue(self.HOST)
+        port = self.getParameterValue(self.PORT)
+        user = self.getParameterValue(self.USER)
+        dbname = self.getParameterValue(self.DBNAME)
+        password = self.getParameterValue(self.PASSWORD)
+        schema = self.getParameterValue(self.SCHEMA)
         arguments = []
         if host:
             arguments.append('host=' + host)
         if port:
-            arguments.append('port=' + port)
+            arguments.append('port=' + str(port))
         if dbname:
             arguments.append('dbname=' + dbname)
         if password:
@@ -175,6 +178,7 @@ class Ogr2OgrToPostGis(GdalAlgorithm):
     def getConsoleCommands(self):
         inLayer = self.getParameterValue(self.INPUT_LAYER)
         ogrLayer = ogrConnectionString(inLayer)[1:-1]
+        shapeEncoding = self.getParameterValue(self.SHAPE_ENCODING)
         ssrs = unicode(self.getParameterValue(self.S_SRS))
         tsrs = unicode(self.getParameterValue(self.T_SRS))
         asrs = unicode(self.getParameterValue(self.A_SRS))
@@ -208,6 +212,10 @@ class Ogr2OgrToPostGis(GdalAlgorithm):
         arguments = []
         arguments.append('-progress')
         arguments.append('--config PG_USE_COPY YES')
+        if len(shapeEncoding) > 0:
+            arguments.append('--config')
+            arguments.append('SHAPE_ENCODING')
+            arguments.append('"' + shapeEncoding + '"')
         arguments.append('-f')
         arguments.append('PostgreSQL')
         arguments.append('PG:"')
@@ -235,9 +243,12 @@ class Ogr2OgrToPostGis(GdalAlgorithm):
             arguments.append(pkstring)
         elif primary_key is not None:
             arguments.append("-lco FID=" + primary_key)
-        if len(table) > 0:
-            arguments.append('-nln')
-            arguments.append(table)
+        if len(table) == 0:
+            table = ogrLayerName(inLayer).lower()
+        if schema:
+            table = '{}.{}'.format(schema, table)
+        arguments.append('-nln')
+        arguments.append(table)
         if len(ssrs) > 0:
             arguments.append('-s_srs')
             arguments.append(ssrs)

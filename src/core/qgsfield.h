@@ -43,6 +43,16 @@ class QgsFieldsPrivate;
 
 class CORE_EXPORT QgsField
 {
+    Q_GADGET
+
+    Q_PROPERTY( bool isNumeric READ isNumeric )
+    Q_PROPERTY( int length READ length WRITE setLength )
+    Q_PROPERTY( int precision READ precision WRITE setPrecision )
+    Q_PROPERTY( QString comment READ comment WRITE setComment )
+    Q_PROPERTY( QString name READ name WRITE setName )
+    Q_PROPERTY( QString alias READ alias WRITE setAlias )
+    Q_PROPERTY( QString defaultValueExpression READ defaultValueExpression WRITE setDefaultValueExpression )
+
   public:
     /** Constructor. Constructs a new QgsField object.
      * @param name Field name
@@ -76,8 +86,19 @@ class CORE_EXPORT QgsField
     bool operator==( const QgsField& other ) const;
     bool operator!=( const QgsField& other ) const;
 
-    //! Gets the name of the field
+    /** Returns the name of the field.
+     * @see setName()
+     * @see displayName()
+     */
     QString name() const;
+
+    /** Returns the name to use when displaying this field. This will be the
+     * field alias if set, otherwise the field name.
+     * @see name()
+     * @see alias()
+     * @note added in QGIS 2.18
+     */
+    QString displayName() const;
 
     //! Gets variant type of the field as it will be retrieved from data source
     QVariant::Type type() const;
@@ -106,6 +127,14 @@ class CORE_EXPORT QgsField
      * Returns the field comment
      */
     QString comment() const;
+
+    /**
+     * Returns if this field is numeric. Any integer or floating point type
+     * will return true for this.
+     *
+     * @note added in QGIS 2.18
+     */
+    bool isNumeric() const;
 
     /**
      * Set the field name.
@@ -141,6 +170,36 @@ class CORE_EXPORT QgsField
      */
     void setComment( const QString& comment );
 
+    /** Returns the expression used when calculating the default value for the field.
+     * @returns expression evaluated when calculating default values for field, or an
+     * empty string if no default is set
+     * @note added in QGIS 2.18
+     * @see setDefaultValueExpression()
+     */
+    QString defaultValueExpression() const;
+
+    /** Sets an expression to use when calculating the default value for the field.
+     * @param expression expression to evaluate when calculating default values for field. Pass
+     * an empty expression to clear the default.
+     * @note added in QGIS 2.18
+     * @see defaultValueExpression()
+     */
+    void setDefaultValueExpression( const QString& expression );
+
+    /** Returns the alias for the field (the friendly displayed name of the field ),
+     * or an empty string if there is no alias.
+     * @see setAlias()
+     * @note added in QGIS 2.18
+     */
+    QString alias() const;
+
+    /** Sets the alias for the field (the friendly displayed name of the field ).
+     * @param alias field alias, or empty string to remove an existing alias
+     * @see alias()
+     * @note added in QGIS 2.18
+     */
+    void setAlias( const QString& alias );
+
     /** Formats string for display*/
     QString displayString( const QVariant& v ) const;
 
@@ -152,6 +211,12 @@ class CORE_EXPORT QgsField
      * @return   True if the conversion was successful
      */
     bool convertCompatible( QVariant& v ) const;
+
+    //! Allows direct construction of QVariants from fields.
+    operator QVariant() const
+    {
+      return QVariant::fromValue( *this );
+    }
 
   private:
 
@@ -283,11 +348,144 @@ class CORE_EXPORT QgsFields
     bool operator==( const QgsFields& other ) const;
     //! @note added in 2.6
     bool operator!=( const QgsFields& other ) const { return !( *this == other ); }
-
     /** Returns an icon corresponding to a field index, based on the field's type and source
      * @note added in QGIS 2.14
      */
     QIcon iconForField( int fieldIdx ) const;
+
+    //! Allows direct construction of QVariants from fields.
+    operator QVariant() const
+    {
+      return QVariant::fromValue( *this );
+    }
+
+    ///@cond PRIVATE
+
+    class const_iterator;
+
+    class iterator
+    {
+      public:
+        QgsFields::Field* d;
+        typedef std::random_access_iterator_tag  iterator_category;
+        typedef qptrdiff difference_type;
+
+        inline iterator()
+            : d( nullptr )
+        {}
+        inline iterator( QgsFields::Field *n )
+            : d( n )
+        {}
+
+        inline QgsField& operator*() const { return d->field; }
+        inline QgsField* operator->() const { return &d->field; }
+        inline QgsField& operator[]( difference_type j ) const { return d[j].field; }
+        inline bool operator==( const iterator &o ) const noexcept { return d == o.d; }
+        inline bool operator!=( const iterator &o ) const noexcept { return d != o.d; }
+        inline bool operator<( const iterator& other ) const noexcept { return d < other.d; }
+        inline bool operator<=( const iterator& other ) const noexcept { return d <= other.d; }
+        inline bool operator>( const iterator& other ) const noexcept { return d > other.d; }
+        inline bool operator>=( const iterator& other ) const noexcept { return d >= other.d; }
+
+        inline iterator& operator++() { ++d; return *this; }
+        inline iterator operator++( int ) { QgsFields::Field* n = d; ++d; return n; }
+        inline iterator& operator--() { d--; return *this; }
+        inline iterator operator--( int ) { QgsFields::Field* n = d; d--; return n; }
+        inline iterator& operator+=( difference_type j ) { d += j; return *this; }
+        inline iterator& operator-=( difference_type j ) { d -= j; return *this; }
+        inline iterator operator+( difference_type j ) const { return iterator( d + j ); }
+        inline iterator operator-( difference_type j ) const { return iterator( d -j ); }
+        inline int operator-( iterator j ) const { return int( d - j.d ); }
+    };
+    friend class iterator;
+
+    class const_iterator
+    {
+      public:
+        const QgsFields::Field* d;
+
+        typedef std::random_access_iterator_tag  iterator_category;
+        typedef qptrdiff difference_type;
+
+        inline const_iterator()
+            : d( nullptr ) {}
+        inline const_iterator( const QgsFields::Field* f )
+            : d( f ) {}
+        inline const_iterator( const const_iterator &o )
+            : d( o.d ) {}
+        inline explicit const_iterator( const iterator &o )
+            : d( o.d ) {}
+        inline const QgsField& operator*() const { return d->field; }
+        inline const QgsField* operator->() const { return &d->field; }
+        inline const QgsField& operator[]( difference_type j ) const noexcept { return d[j].field; }
+        inline bool operator==( const const_iterator &o ) const noexcept { return d == o.d; }
+        inline bool operator!=( const const_iterator &o ) const noexcept { return d != o.d; }
+        inline bool operator<( const const_iterator& other ) const noexcept { return d < other.d; }
+        inline bool operator<=( const const_iterator& other ) const noexcept { return d <= other.d; }
+        inline bool operator>( const const_iterator& other ) const noexcept { return d > other.d; }
+        inline bool operator>=( const const_iterator& other ) const noexcept { return d >= other.d; }
+        inline const_iterator& operator++() { ++d; return *this; }
+        inline const_iterator operator++( int ) { const QgsFields::Field* n = d; ++d; return n; }
+        inline const_iterator& operator--() { d--; return *this; }
+        inline const_iterator operator--( int ) { const QgsFields::Field* n = d; --d; return n; }
+        inline const_iterator& operator+=( difference_type j ) { d += j; return *this; }
+        inline const_iterator& operator-=( difference_type j ) { d -= j; return *this; }
+        inline const_iterator operator+( difference_type j ) const { return const_iterator( d + j ); }
+        inline const_iterator operator-( difference_type j ) const { return const_iterator( d -j ); }
+        inline int operator-( const_iterator j ) const { return int( d - j.d ); }
+    };
+    friend class const_iterator;
+    ///@endcond
+
+
+    /**
+     * Returns a const STL-style iterator pointing to the first item in the list.
+     *
+     * @note added in 2.16
+     * @note not available in Python bindings
+     */
+    const_iterator constBegin() const noexcept;
+
+    /**
+     * Returns a const STL-style iterator pointing to the imaginary item after the last item in the list.
+     *
+     * @note added in 2.16
+     * @note not available in Python bindings
+     */
+    const_iterator constEnd() const noexcept;
+
+    /**
+     * Returns a const STL-style iterator pointing to the first item in the list.
+     *
+     * @note added in 2.16
+     * @note not available in Python bindings
+     */
+    const_iterator begin() const noexcept;
+
+    /**
+     * Returns a const STL-style iterator pointing to the imaginary item after the last item in the list.
+     *
+     * @note added in 2.16
+     * @note not available in Python bindings
+     */
+    const_iterator end() const noexcept;
+
+    /**
+     * Returns an STL-style iterator pointing to the first item in the list.
+     *
+     * @note added in 2.16
+     * @note not available in Python bindings
+     */
+    iterator begin();
+
+
+    /**
+     * Returns an STL-style iterator pointing to the imaginary item after the last item in the list.
+     *
+     * @note added in 2.16
+     * @note not available in Python bindings
+     */
+    iterator end();
 
   private:
 

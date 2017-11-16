@@ -54,18 +54,15 @@ class QgsCircularStringV2: public QgsCurveV2
      * @copydoc QgsCurveV2::endPoint()
      */
     virtual QgsPointV2 endPoint() const;
-    /**
-     * @copydoc QgsCurveV2::curveToLine()
-     */
-    virtual QgsLineStringV2* curveToLine() const /Factory/;
+     /** Returns a new line string geometry corresponding to a segmentized approximation
+     * of the curve.
+     * @param tolerance segmentation tolerance
+     * @param toleranceType maximum segmentation angle or maximum difference between approximation and curve*/
+    virtual QgsLineStringV2* curveToLine( double tolerance = M_PI_2 / 90, SegmentationToleranceType toleranceType = MaximumAngle ) const /Factory/;
 
     void draw( QPainter& p ) const;
-
-    /** Transforms the geometry using a coordinate transform
-     * @param ct coordinate transform
-     * @param d transformation direction
-     */
-    void transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform );
+    void transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform,
+                    bool transformZ = false );
     void transform( const QTransform& t );
     void addToPainterPath( QPainterPath& path ) const;
 

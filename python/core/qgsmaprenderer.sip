@@ -6,7 +6,7 @@ class QgsLabelPosition
 #include <qgsmaprenderer.h>
 %End
   public:
-    QgsLabelPosition( int id, double r, const QVector< QgsPoint >& corners, const QgsRectangle& rect, double w, double h, const QString& layer, const QString& labeltext, const QFont& labelfont, bool upside_down, bool diagram = false, bool pinned = false );
+    QgsLabelPosition( int id, double r, const QVector< QgsPoint >& corners, const QgsRectangle& rect, double w, double h, const QString& layer, const QString& labeltext, const QFont& labelfont, bool upside_down, bool diagram = false, bool pinned = false, const QString& providerId = QString() );
     QgsLabelPosition();
     int featureId;
     double rotation;
@@ -20,6 +20,8 @@ class QgsLabelPosition
     bool upsideDown;
     bool isDiagram;
     bool isPinned;
+    //! @note added in 2.14
+    QString providerID;
 };
 
 /** Labeling engine interface. */
@@ -182,14 +184,34 @@ class QgsMapRenderer : QObject
     //! sets whether map image will be for overview
     void enableOverviewMode( bool isOverview = true );
 
-    void setOutputSize( QSize size, int dpi );
+    /** Sets the desired size of the rendered map image.
+     * @param size size in pixels
+     * @param dpi resolution to render map using
+     * @see outputSize()
+     */
+    void setOutputSize( QSize size, double dpi );
+
+    /** Sets the desired size of the rendered map image.
+     * @param size size in pixels
+     * @param dpi resolution to render map using
+     * @see outputSizeF()
+     */
     void setOutputSize( QSizeF size, double dpi );
 
     //!accessor for output dpi
     double outputDpi();
-    //!accessor for output size
-    QSize outputSize();
-    QSizeF outputSizeF();
+
+    /** Returns the size which the map will be rendered at.
+     * @see setOutputSize()
+     * @see outputSizeF()
+     */
+    QSize outputSize() const;
+
+    /** Returns the size which the map will be rendered at.
+     * @see setOutputSize()
+     * @see outputSize()
+     */
+    QSizeF outputSizeF() const;
 
     /**
      * @brief transform bounding box from layer's CRS to output CRS
@@ -302,6 +324,9 @@ class QgsMapRenderer : QObject
      * @note added in QGIS 2.14
      */
     void setFeatureFilterProvider( const QgsFeatureFilterProvider* ffp );
+
+    /** Set tile mode (render code tries to prevent tile border effects)*/
+    void setTileRenderMode( bool enabled );
 
   signals:
 

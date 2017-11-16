@@ -22,6 +22,12 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgslinestringv2.h"
 #include "qgsmulticurvev2.h"
 
+QgsMultiLineStringV2::QgsMultiLineStringV2()
+    : QgsMultiCurveV2()
+{
+  mWkbType = QgsWKBTypes::MultiLineString;
+}
+
 QgsMultiLineStringV2* QgsMultiLineStringV2::clone() const
 {
   return new QgsMultiLineStringV2( *this );
@@ -44,8 +50,6 @@ QDomElement QgsMultiLineStringV2::asGML2( QDomDocument& doc, int precision, cons
       QDomElement elemLineStringMember = doc.createElementNS( ns, "lineStringMember" );
       elemLineStringMember.appendChild( lineString->asGML2( doc, precision, ns ) );
       elemMultiLineString.appendChild( elemLineStringMember );
-
-      delete lineString;
     }
   }
 
@@ -54,7 +58,7 @@ QDomElement QgsMultiLineStringV2::asGML2( QDomDocument& doc, int precision, cons
 
 QDomElement QgsMultiLineStringV2::asGML3( QDomDocument& doc, int precision, const QString& ns ) const
 {
-  QDomElement elemMultiCurve = doc.createElementNS( ns, "MultiLineString" );
+  QDomElement elemMultiCurve = doc.createElementNS( ns, "MultiCurve" );
   Q_FOREACH ( const QgsAbstractGeometryV2 *geom, mGeometries )
   {
     if ( dynamic_cast<const QgsLineStringV2*>( geom ) )
@@ -112,3 +116,4 @@ QgsAbstractGeometryV2* QgsMultiLineStringV2::toCurveType() const
   }
   return multiCurve;
 }
+

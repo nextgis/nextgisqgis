@@ -21,7 +21,7 @@
 
 class QgsVectorLayer;
 
-/**
+/** \ingroup core
  Stores metadata about one symbol layer class.
 
  @note It's necessary to implement createSymbolLayer() function.
@@ -31,7 +31,10 @@ class CORE_EXPORT QgsSymbolLayerV2AbstractMetadata
 {
   public:
     QgsSymbolLayerV2AbstractMetadata( const QString& name, const QString& visibleName, QgsSymbolV2::SymbolType type )
-        : mName( name ), mVisibleName( visibleName ), mType( type ) {}
+        : mName( name )
+        , mVisibleName( visibleName )
+        , mType( type )
+    {}
 
     virtual ~QgsSymbolLayerV2AbstractMetadata() {}
 
@@ -57,7 +60,7 @@ typedef QgsSymbolLayerV2*( *QgsSymbolLayerV2CreateFunc )( const QgsStringMap& );
 typedef QgsSymbolLayerV2Widget*( *QgsSymbolLayerV2WidgetFunc )( const QgsVectorLayer* );
 typedef QgsSymbolLayerV2*( *QgsSymbolLayerV2CreateFromSldFunc )( QDomElement& );
 
-/**
+/** \ingroup core
  Convenience metadata class that uses static functions to create symbol layer and its widget.
  */
 class CORE_EXPORT QgsSymbolLayerV2Metadata : public QgsSymbolLayerV2AbstractMetadata
@@ -107,7 +110,7 @@ class CORE_EXPORT QgsSymbolLayerV2Metadata : public QgsSymbolLayerV2AbstractMeta
 };
 
 
-/**
+/** \ingroup core
  Registry of available symbol layer classes.
  Implemented as a singleton.
  */

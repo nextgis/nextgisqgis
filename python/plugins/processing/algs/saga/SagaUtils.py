@@ -28,8 +28,9 @@ __revision__ = '$Format:%H$'
 import os
 import stat
 import subprocess
+import time
 
-from PyQt4.QtCore import QCoreApplication
+from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import QgsApplication
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.core.ProcessingLog import ProcessingLog
@@ -37,8 +38,10 @@ from processing.tools.system import isWindows, isMac, userFolder
 
 SAGA_LOG_COMMANDS = 'SAGA_LOG_COMMANDS'
 SAGA_LOG_CONSOLE = 'SAGA_LOG_CONSOLE'
-SAGA_FOLDER = 'SAGA_FOLDER'
 SAGA_IMPORT_EXPORT_OPTIMIZATION = 'SAGA_IMPORT_EXPORT_OPTIMIZATION'
+
+_installedVersion = None
+_installedVersionFound = False
 
 
 def sagaBatchJobFilename():
@@ -64,6 +67,7 @@ def findSagaFolder():
                 folder = testfolder
     elif isWindows():
         folders = []
+        folders.append(os.path.join(os.path.dirname(QgsApplication.prefixPath()), 'saga-ltr'))
         folders.append(os.path.join(os.path.dirname(QgsApplication.prefixPath()), 'saga'))
         if "OSGEO4W_ROOT" in os.environ:
             folders.append(os.path.join(str(os.environ['OSGEO4W_ROOT']), "apps", "saga-ltr"))
@@ -78,11 +82,10 @@ def findSagaFolder():
 
 
 def sagaPath():
-    folder = ProcessingConfig.getSetting(SAGA_FOLDER)
-    if folder is None or folder == '':
-        folder = findSagaFolder()
-        if folder is not None:
-            ProcessingConfig.setSettingValue(SAGA_FOLDER, folder)
+    if not isWindows() and not isMac():
+        return ''
+
+    folder = findSagaFolder()
     return folder or ''
 
 
@@ -105,14 +108,15 @@ def createSagaBatchJobFileFromSagaCommands(commands):
     else:
         pass
     for command in commands:
-        fout.write('saga_cmd ' + command.encode('utf8') + '\n')
+        try:
+            # Python 2
+            fout.write('saga_cmd ' + command.encode('utf8') + '\n')
+        except TypeError:
+            # Python 3
+            fout.write('saga_cmd ' + command + '\n')
 
     fout.write('exit')
     fout.close()
-
-
-_installedVersion = None
-_installedVersionFound = False
 
 
 def getSagaInstalledVersion(runSaga=False):
@@ -142,6 +146,8 @@ def getSagaInstalledVersion(runSaga=False):
             stderr=subprocess.STDOUT,
             universal_newlines=True,
         ).stdout
+        if isMac():  # This trick avoids having an uninterrupted system call exception if SAGA is not installed
+            time.sleep(1)
         try:
             lines = proc.readlines()
             for line in lines:

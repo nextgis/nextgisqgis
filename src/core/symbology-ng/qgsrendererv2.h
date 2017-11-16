@@ -51,10 +51,16 @@ typedef QList< QPair<QString, QgsSymbolV2*> > QgsLegendSymbolList;
 ////////
 // symbol levels
 
+/** \ingroup core
+ * \class QgsSymbolV2LevelItem
+ */
 class CORE_EXPORT QgsSymbolV2LevelItem
 {
   public:
-    QgsSymbolV2LevelItem( QgsSymbolV2* symbol, int layer ) : mSymbol( symbol ), mLayer( layer ) {}
+    QgsSymbolV2LevelItem( QgsSymbolV2* symbol, int layer )
+        : mSymbol( symbol )
+        , mLayer( layer )
+    {}
     QgsSymbolV2* symbol() { return mSymbol; }
     int layer() { return mLayer; }
   protected:
@@ -72,6 +78,9 @@ typedef QList< QgsSymbolV2Level > QgsSymbolV2LevelOrder;
 //////////////
 // renderers
 
+/** \ingroup core
+ * \class QgsFeatureRendererV2
+ */
 class CORE_EXPORT QgsFeatureRendererV2
 {
   public:
@@ -166,6 +175,11 @@ class CORE_EXPORT QgsFeatureRendererV2
      */
     virtual QList<QString> usedAttributes() = 0;
 
+    /**
+     * Returns true if this renderer requires the geometry to apply the filter.
+     */
+    virtual bool filterNeedsGeometry() const;
+
     virtual ~QgsFeatureRendererV2();
 
     virtual QgsFeatureRendererV2* clone() const = 0;
@@ -187,11 +201,11 @@ class CORE_EXPORT QgsFeatureRendererV2
 
     enum Capabilities
     {
-      SymbolLevels = 1,               // rendering with symbol levels (i.e. implements symbols(), symbolForFeature())
-      RotationField = 1 <<  1,        // rotate symbols by attribute value
-      MoreSymbolsPerFeature = 1 << 2, // may use more than one symbol to render a feature: symbolsForFeature() will return them
-      Filter         = 1 << 3,        // features may be filtered, i.e. some features may not be rendered (categorized, rule based ...)
-      ScaleDependent = 1 << 4         // depends on scale if feature will be rendered (rule based )
+      SymbolLevels = 1,               //!< rendering with symbol levels (i.e. implements symbols(), symbolForFeature())
+      RotationField = 1 <<  1,        //!< rotate symbols by attribute value
+      MoreSymbolsPerFeature = 1 << 2, //!< may use more than one symbol to render a feature: symbolsForFeature() will return them
+      Filter         = 1 << 3,        //!< features may be filtered, i.e. some features may not be rendered (categorized, rule based ...)
+      ScaleDependent = 1 << 4         //!< depends on scale if feature will be rendered (rule based )
     };
 
     //! returns bitwise OR-ed capabilities of the renderer
@@ -229,7 +243,7 @@ class CORE_EXPORT QgsFeatureRendererV2
       return writeSld( doc, styleName, QgsStringMap() );
     }
     //! create the SLD UserStyle element following the SLD v1.1 specs with the given name
-    //! @note added in 2.14.8
+    //! @note added in 2.14
     virtual QDomElement writeSld( QDomDocument& doc, const QString& styleName, const QgsStringMap& props ) const;
 
     /** Create a new renderer according to the information contained in
@@ -451,9 +465,23 @@ class CORE_EXPORT QgsFeatureRendererV2
     //! render editing vertex marker for a polygon
     void renderVertexMarkerPolygon( QPolygonF& pts, QList<QPolygonF>* rings, QgsRenderContext& context );
 
-    static QgsConstWkbPtr _getPoint( QPointF& pt, QgsRenderContext& context, QgsConstWkbPtr wkb );
-    static QgsConstWkbPtr _getLineString( QPolygonF& pts, QgsRenderContext& context, QgsConstWkbPtr wkb, bool clipToExtent = true );
-    static QgsConstWkbPtr _getPolygon( QPolygonF& pts, QList<QPolygonF>& holes, QgsRenderContext& context, QgsConstWkbPtr wkb, bool clipToExtent = true );
+    /**
+     * Creates a point in screen coordinates from a wkb string in map
+     * coordinates
+     */
+    static QgsConstWkbPtr _getPoint( QPointF& pt, QgsRenderContext& context, QgsConstWkbPtr& wkb );
+
+    /**
+     * Creates a line string in screen coordinates from a wkb string in map
+     * coordinates
+     */
+    static QgsConstWkbPtr _getLineString( QPolygonF& pts, QgsRenderContext& context, QgsConstWkbPtr& wkb, bool clipToExtent = true );
+
+    /**
+     * Creates a polygon in screen coordinates from a wkb string in map
+     * coordinates
+     */
+    static QgsConstWkbPtr _getPolygon( QPolygonF& pts, QList<QPolygonF>& holes, QgsRenderContext& context, QgsConstWkbPtr& wkb, bool clipToExtent = true );
 
     void setScaleMethodToSymbol( QgsSymbolV2* symbol, int scaleMethod );
 

@@ -42,6 +42,9 @@ class QPixmap;
 class QPointF;
 class QSize;
 
+/** \ingroup core
+ * \class QgsSymbolLayerV2Utils
+ */
 class CORE_EXPORT QgsSymbolLayerV2Utils
 {
   public:
@@ -99,6 +102,14 @@ class CORE_EXPORT QgsSymbolLayerV2Utils
 
     static QString encodeScaleMethod( QgsSymbolV2::ScaleMethod scaleMethod );
     static QgsSymbolV2::ScaleMethod decodeScaleMethod( const QString& str );
+
+    /** Returns the size scaled in pixels according to the uom attribute.
+     * @param uom The uom attribute from SLD 1.1 version
+     * @param size The original size
+     * @returns the size in pixels
+     * @note added in QGIS 2.18 and 3.0
+     */
+    static double sizeInPixelsFromSldUom( const QString &uom, double size );
 
     static QPainter::CompositionMode decodeBlendMode( const QString& s );
 
@@ -396,9 +407,21 @@ class CORE_EXPORT QgsSymbolLayerV2Utils
      * @param unit units for specified size
      * @param scale map unit scale
      * @note added in QGIS 2.12
-     * @see lineWidthScaleFactor
+     * @see lineWidthScaleFactor()
+     * @see convertToMapUnits()
      */
     static double convertToPainterUnits( const QgsRenderContext&c, double size, QgsSymbolV2::OutputUnit unit, const QgsMapUnitScale& scale = QgsMapUnitScale() );
+
+    /** Converts a size from the specied units to map units. The conversion respects the limits
+     * specified by the optional scale parameter.
+     * @param c render context
+     * @param size size to convert
+     * @param unit units for specified size
+     * @param scale map unit scale
+     * @note added in QGIS 2.16
+     * @see convertToPainterUnits()
+     */
+    static double convertToMapUnits( const QgsRenderContext&c, double size, QgsSymbolV2::OutputUnit unit, const QgsMapUnitScale& scale = QgsMapUnitScale() );
 
     /** Returns scale factor painter units -> pixel dimensions*/
     static double pixelSizeScaleFactor( const QgsRenderContext& c, QgsSymbolV2::OutputUnit u, const QgsMapUnitScale& scale = QgsMapUnitScale() );
@@ -474,31 +497,31 @@ class CORE_EXPORT QgsSymbolLayerV2Utils
 
     /** Rescales the given size based on the uomScale found in the props, if any is found, otherwise
      *  returns the value un-modified
-     * @note added in 2.14.8
+     * @note added in 2.14
      */
     static double rescaleUom( double size, QgsSymbolV2::OutputUnit unit, const QgsStringMap& props );
 
     /** Rescales the given point based on the uomScale found in the props, if any is found, otherwise
      *  returns a copy of the original point
-     * @note added in 2.14.8
+     * @note added in 2.14
      */
     static QPointF rescaleUom( const QPointF& point, QgsSymbolV2::OutputUnit unit, const QgsStringMap& props );
 
     /** Rescales the given array based on the uomScale found in the props, if any is found, otherwise
      *  returns a copy of the original point
-     * @note added in 2.14.8
+     * @note added in 2.14
      */
     static QVector<qreal> rescaleUom( const QVector<qreal>& array, QgsSymbolV2::OutputUnit unit, const QgsStringMap& props );
 
     /**
      * Checks if the properties contain scaleMinDenom and scaleMaxDenom, if available, they are added into the SE Rule element
-     * @note added in 2.14.8
+     * @note added in 2.14
      */
     static void applyScaleDependency( QDomDocument& doc, QDomElement& ruleElem, const QgsStringMap& props );
 
     /**
       * Merges the local scale limits, if any, with the ones already in the map, if any
-      * @note added in 2.14.8
+      * @note added in 2.14
       */
     static void mergeScaleDependencies( int mScaleMinDenom, int mScaleMaxDenom, QgsStringMap& props );
 

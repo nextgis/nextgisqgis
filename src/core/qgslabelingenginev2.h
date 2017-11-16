@@ -28,7 +28,7 @@
 class QgsLabelingEngineV2;
 
 
-/**
+/** \ingroup core
  * @brief The QgsAbstractLabelProvider class is an interface class. Implementations
  * return list of labels and their associated geometries - these are used by
  * QgsLabelingEngineV2 to compute the final layout of labels.
@@ -44,7 +44,7 @@ class CORE_EXPORT QgsAbstractLabelProvider
 
   public:
     //! Construct the provider with default values
-    QgsAbstractLabelProvider( const QString& layerId = QString() );
+    QgsAbstractLabelProvider( const QString& layerId = QString(), const QString& providerId = QString() );
     //! Vritual destructor
     virtual ~QgsAbstractLabelProvider() {}
 
@@ -76,6 +76,11 @@ class CORE_EXPORT QgsAbstractLabelProvider
     //! Returns ID of associated layer, or empty string if no layer is associated with the provider.
     QString layerId() const { return mLayerId; }
 
+    //! Returns provider ID - useful in case there is more than one label provider within a layer
+    //! (e.g. in case of rule-based labeling - provider ID = rule's key). May be empty string if
+    //! layer ID is sufficient for identification of provider's configuration.
+    QString providerId() const { return mProviderId; }
+
     //! Flags associated with the provider
     Flags flags() const { return mFlags; }
 
@@ -102,6 +107,8 @@ class CORE_EXPORT QgsAbstractLabelProvider
     QString mName;
     //! Associated layer's ID, if applicable
     QString mLayerId;
+    //! Associated provider ID (one layer may have multiple providers, e.g. in rule-based labeling)
+    QString mProviderId;
     //! Flags altering drawing and registration of features
     Flags mFlags;
     //! Placement strategy
@@ -120,7 +127,7 @@ Q_DECLARE_OPERATORS_FOR_FLAGS( QgsAbstractLabelProvider::Flags )
 
 
 
-/**
+/** \ingroup core
  * @brief The QgsLabelingEngineV2 class provides map labeling functionality.
  * The input for the engine is a list of label provider objects and map settings.
  * Based on the input, the engine computes layout of labels for the given map view
@@ -243,7 +250,7 @@ class CORE_EXPORT QgsLabelingEngineV2
 Q_DECLARE_OPERATORS_FOR_FLAGS( QgsLabelingEngineV2::Flags )
 
 
-/**
+/** \ingroup core
  * @class QgsLabelingUtils
  * @brief Contains helper utilities for working with QGIS' labeling engine.
  * @note this class is not a part of public API yet. See notes in QgsLabelingEngineV2

@@ -34,7 +34,8 @@
 
 
 QgsMeasureDialog::QgsMeasureDialog( QgsMeasureTool* tool, Qt::WindowFlags f )
-    : QDialog( tool->canvas()->topLevelWidget(), f ), mTool( tool )
+    : QDialog( tool->canvas()->topLevelWidget(), f )
+    , mTool( tool )
 {
   setupUi( this );
 
@@ -98,6 +99,7 @@ void QgsMeasureDialog::updateSettings()
   QgsDebugMsg( QString( "Area units: %1" ).arg( QgsUnitTypes::encodeUnit( mAreaUnits ) ) );
   QgsDebugMsg( QString( "Canvas units : %1" ).arg( QgsUnitTypes::encodeUnit( mCanvasUnits ) ) );
 
+  mTable->clear();
   mTotal = 0;
   updateUi();
 }
@@ -267,7 +269,7 @@ QString QgsMeasureDialog::formatDistance( double distance, bool convertUnits ) c
 
   if ( convertUnits )
     distance = convertLength( distance, mDistanceUnits );
-  return QgsDistanceArea::textUnit( distance, mDecimalPlaces, mDistanceUnits, false, baseUnit );
+  return QgsDistanceArea::formatDistance( distance, mDecimalPlaces, mDistanceUnits, baseUnit );
 }
 
 QString QgsMeasureDialog::formatArea( double area, bool convertUnits ) const
@@ -519,7 +521,10 @@ void QgsMeasureDialog::repopulateComboBoxUnits( bool isArea )
   else
   {
     mUnitsCombo->addItem( QgsUnitTypes::toString( QGis::Meters ), QGis::Meters );
+    mUnitsCombo->addItem( QgsUnitTypes::toString( QGis::Kilometers ), QGis::Kilometers );
     mUnitsCombo->addItem( QgsUnitTypes::toString( QGis::Feet ), QGis::Feet );
+    mUnitsCombo->addItem( QgsUnitTypes::toString( QGis::Yards ), QGis::Yards );
+    mUnitsCombo->addItem( QgsUnitTypes::toString( QGis::Miles ), QGis::Miles );
     mUnitsCombo->addItem( QgsUnitTypes::toString( QGis::Degrees ), QGis::Degrees );
     mUnitsCombo->addItem( QgsUnitTypes::toString( QGis::NauticalMiles ), QGis::NauticalMiles );
   }

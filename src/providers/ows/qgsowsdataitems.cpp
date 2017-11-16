@@ -29,6 +29,7 @@ QgsOWSConnectionItem::QgsOWSConnectionItem( QgsDataItem* parent, QString name, Q
     : QgsDataCollectionItem( parent, name, path )
 {
   mIconName = "mIconConnect.png";
+  mCapabilities |= Collapse;
 }
 
 QgsOWSConnectionItem::~QgsOWSConnectionItem()
@@ -37,7 +38,6 @@ QgsOWSConnectionItem::~QgsOWSConnectionItem()
 
 QVector<QgsDataItem*> QgsOWSConnectionItem::createChildren()
 {
-  QgsDebugMsg( "Entered" );
   QVector<QgsDataItem*> children;
   QMap<QgsDataItem*, QString> serviceItems; // service/provider key
 
@@ -184,7 +184,6 @@ QgsOWSRootItem::~QgsOWSRootItem()
 
 QVector<QgsDataItem*> QgsOWSRootItem::createChildren()
 {
-  QgsDebugMsg( "Entered" );
   QVector<QgsDataItem*> connections;
   // Combine all WMS,WFS,WCS connections
   QStringList connNames;

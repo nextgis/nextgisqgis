@@ -28,7 +28,7 @@ __revision__ = '$Format:%H$'
 import os
 import json
 
-from PyQt4.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
@@ -43,9 +43,11 @@ from processing.core.parameters import ParameterNumber
 from processing.core.parameters import ParameterBoolean
 from processing.core.parameters import ParameterSelection
 from processing.core.parameters import ParameterTableField
+from processing.core.parameters import ParameterTableMultipleField
 from processing.core.parameters import ParameterExtent
 from processing.core.parameters import ParameterCrs
 from processing.core.parameters import ParameterFile
+from processing.core.parameters import ParameterPoint
 from processing.core.outputs import OutputTable
 from processing.core.outputs import OutputVector
 from processing.core.outputs import OutputRaster
@@ -57,7 +59,7 @@ from processing.core.outputs import OutputNumber
 from processing.tools.system import isWindows
 from processing.tools.system import setTempOutput
 from processing.script.WrongScriptException import WrongScriptException
-from RUtils import RUtils
+from .RUtils import RUtils
 
 
 class RAlgorithm(GeoAlgorithm):
@@ -239,8 +241,19 @@ class RAlgorithm(GeoAlgorithm):
                     break
             if found:
                 param = ParameterTableField(name, desc, field)
+        elif token.lower().strip().startswith('multiple field'):
+            field = token.strip()[len('multiple field') + 1:]
+            found = False
+            for p in self.parameters:
+                if p.name == field:
+                    found = True
+                    break
+            if found:
+                param = ParameterTableMultipleField(name, desc, field)
         elif token.lower().strip() == 'extent':
             param = ParameterExtent(name, desc)
+        elif token.lower().strip() == 'point':
+            param = ParameterPoint(name, desc)
         elif token.lower().strip() == 'file':
             param = ParameterFile(name, desc, False)
         elif token.lower().strip() == 'folder':
@@ -483,7 +496,7 @@ class RAlgorithm(GeoAlgorithm):
                     commands.append(param.name + '= NULL')
                 else:
                     commands.append(param.name + ' = "' + param.value + '"')
-            elif isinstance(param, (ParameterTableField, ParameterString,
+            elif isinstance(param, (ParameterTableField, ParameterTableMultipleField, ParameterString,
                                     ParameterFile)):
                 if param.value is None:
                     commands.append(param.name + '= NULL')

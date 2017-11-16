@@ -12,6 +12,7 @@ class QgsPolygonV2: public QgsCurvePolygonV2
 
     virtual QString geometryType() const;
     virtual QgsPolygonV2* clone() const /Factory/;
+    void clear();
 
     virtual bool fromWkb( QgsConstWkbPtr wkb );
 
@@ -26,12 +27,13 @@ class QgsPolygonV2: public QgsCurvePolygonV2
 
     QgsPolygonV2* surfaceToPolygon() const /Factory/;
 
-    /** Returns the geometry converted to the more generic curve type QgsCurvePolygon
-         @return the converted geometry. Caller takes ownership*/
+    /** Returns the geometry converted to the more generic curve type QgsCurvePolygonV2
+     @return the converted geometry. Caller takes ownership*/
     QgsAbstractGeometryV2* toCurveType() const /Factory/;
 
     void addInteriorRing( QgsCurveV2* ring /Transfer/ );
     //overridden to handle LineString25D rings
     virtual void setExteriorRing( QgsCurveV2* ring /Transfer/ );
 
+    virtual QgsAbstractGeometryV2* boundary() const /Factory/;
 };

@@ -43,6 +43,23 @@
 #include <QInputDialog>
 
 
+static int _unfilteredLegendNodeIndex( QgsLayerTreeModelLegendNode* legendNode )
+{
+  return legendNode->model()->layerOriginalLegendNodes( legendNode->layerNode() ).indexOf( legendNode );
+}
+
+static int _originalLegendNodeIndex( QgsLayerTreeModelLegendNode* legendNode )
+{
+  // figure out index of the legend node as it comes out of the map layer legend.
+  // first legend nodes may be reordered, output of that is available in layerOriginalLegendNodes().
+  // next the nodes may be further filtered (by scale, map content etc).
+  // so here we go in reverse order: 1. find index before filtering, 2. find index before reorder
+  int unfilteredNodeIndex = _unfilteredLegendNodeIndex( legendNode );
+  QList<int> order = QgsMapLayerLegendUtils::legendNodeOrder( legendNode->layerNode() );
+  return ( unfilteredNodeIndex >= 0 && unfilteredNodeIndex < order.count() ? order[unfilteredNodeIndex] : -1 );
+}
+
+
 QgsComposerLegendWidget::QgsComposerLegendWidget( QgsComposerLegend* legend )
     : QgsComposerItemBaseWidget( nullptr, legend )
     , mLegend( legend )
@@ -55,7 +72,7 @@ QgsComposerLegendWidget::QgsComposerLegendWidget( QgsComposerLegend* legend )
   mRemoveToolButton->setIcon( QIcon( QgsApplication::iconPath( "symbologyRemove.svg" ) ) );
   mMoveUpToolButton->setIcon( QIcon( QgsApplication::iconPath( "symbologyUp.svg" ) ) );
   mMoveDownToolButton->setIcon( QIcon( QgsApplication::iconPath( "symbologyDown.svg" ) ) );
-  mCountToolButton->setIcon( QIcon( QgsApplication::iconPath( "mActionSum.png" ) ) );
+  mCountToolButton->setIcon( QIcon( QgsApplication::iconPath( "mActionSum.svg" ) ) );
 
   mFontColorButton->setColorDialogTitle( tr( "Select font color" ) );
   mFontColorButton->setContext( "composer" );
@@ -63,6 +80,10 @@ QgsComposerLegendWidget::QgsComposerLegendWidget( QgsComposerLegend* legend )
   mRasterBorderColorButton->setColorDialogTitle( tr( "Select border color" ) );
   mRasterBorderColorButton->setAllowAlpha( true );
   mRasterBorderColorButton->setContext( "composer " );
+
+  mMapComboBox->setComposition( legend->composition() );
+  mMapComboBox->setItemType( QgsComposerItem::ComposerMap );
+  connect( mMapComboBox, SIGNAL( itemChanged( QgsComposerItem* ) ), this, SLOT( composerMapChanged( QgsComposerItem* ) ) );
 
   //add widget for item properties
   QgsComposerItemWidget* itemPropertiesWidget = new QgsComposerItemWidget( this, legend );
@@ -132,19 +153,12 @@ void QgsComposerLegendWidget::setGuiElements()
   mRasterBorderColorButton->setColor( mLegend->rasterBorderColor() );
 
   mCheckBoxAutoUpdate->setChecked( mLegend->autoUpdateModel() );
-  refreshMapComboBox();
 
   mCheckboxResizeContents->setChecked( mLegend->resizeToContents() );
+  mFilterLegendByAtlasCheckBox->setChecked( mLegend->legendFilterOutAtlas() );
 
   const QgsComposerMap* map = mLegend->composerMap();
-  if ( map )
-  {
-    mMapComboBox->setCurrentIndex( mMapComboBox->findData( map->id() ) );
-  }
-  else
-  {
-    mMapComboBox->setCurrentIndex( mMapComboBox->findData( -1 ) );
-  }
+  mMapComboBox->setItem( map );
   mFontColorButton->setColor( mLegend->fontColor() );
   blockAllSignals( false );
 
@@ -484,7 +498,7 @@ void QgsComposerLegendWidget::on_mMoveDownToolButton_clicked()
   }
   else // legend node
   {
-    _moveLegendNode( legendNode->layerNode(), index.row(), 1 );
+    _moveLegendNode( legendNode->layerNode(), _unfilteredLegendNodeIndex( legendNode ), 1 );
     mItemTreeView->layerTreeModel()->refreshLayerLegend( legendNode->layerNode() );
   }
 
@@ -521,7 +535,7 @@ void QgsComposerLegendWidget::on_mMoveUpToolButton_clicked()
   }
   else // legend node
   {
-    _moveLegendNode( legendNode->layerNode(), index.row(), -1 );
+    _moveLegendNode( legendNode->layerNode(), _unfilteredLegendNodeIndex( legendNode ), -1 );
     mItemTreeView->layerTreeModel()->refreshLayerLegend( legendNode->layerNode() );
   }
 
@@ -555,15 +569,9 @@ void QgsComposerLegendWidget::on_mCheckBoxAutoUpdate_stateChanged( int state )
   }
 }
 
-void QgsComposerLegendWidget::on_mMapComboBox_currentIndexChanged( int index )
+void QgsComposerLegendWidget::composerMapChanged( QgsComposerItem* item )
 {
   if ( !mLegend )
-  {
-    return;
-  }
-
-  QVariant itemData = mMapComboBox->itemData( index );
-  if ( itemData.type() == QVariant::Invalid )
   {
     return;
   }
@@ -574,21 +582,13 @@ void QgsComposerLegendWidget::on_mMapComboBox_currentIndexChanged( int index )
     return;
   }
 
-  int mapNr = itemData.toInt();
-  if ( mapNr < 0 )
+  QgsComposerMap* map = dynamic_cast< QgsComposerMap* >( item );
+  if ( map )
   {
-    mLegend->setComposerMap( nullptr );
-  }
-  else
-  {
-    const QgsComposerMap* map = comp->getComposerMapById( mapNr );
-    if ( map )
-    {
-      mLegend->beginCommand( tr( "Legend map changed" ) );
-      mLegend->setComposerMap( map );
-      mLegend->updateItem();
-      mLegend->endCommand();
-    }
+    mLegend->beginCommand( tr( "Legend map changed" ) );
+    mLegend->setComposerMap( map );
+    mLegend->updateItem();
+    mLegend->endCommand();
   }
 }
 
@@ -706,7 +706,7 @@ void QgsComposerLegendWidget::on_mRemoveToolButton_clicked()
     if ( QgsLayerTreeModelLegendNode* legendNode = mItemTreeView->layerTreeModel()->index2legendNode( index ) )
     {
       QgsLayerTreeLayer* nodeLayer = legendNode->layerNode();
-      nodesWithRemoval[nodeLayer].append( index.row() );
+      nodesWithRemoval[nodeLayer].append( _unfilteredLegendNodeIndex( legendNode ) );
     }
   }
   Q_FOREACH ( QgsLayerTreeLayer* nodeLayer, nodesWithRemoval.keys() )
@@ -923,55 +923,13 @@ void QgsComposerLegendWidget::blockAllSignals( bool b )
   mWmsLegendHeightSpinBox->blockSignals( b );
   mCheckboxResizeContents->blockSignals( b );
   mTitleSpaceBottomSpinBox->blockSignals( b );
-}
-
-void QgsComposerLegendWidget::refreshMapComboBox()
-{
-  if ( !mLegend )
-  {
-    return;
-  }
-
-  const QgsComposition* composition = mLegend->composition();
-  if ( !composition )
-  {
-    return;
-  }
-
-  //save current entry
-  int currentMapId = mMapComboBox->itemData( mMapComboBox->currentIndex() ).toInt();
-  mMapComboBox->clear();
-
-  QList<const QgsComposerMap*> availableMaps = composition->composerMapItems();
-  QList<const QgsComposerMap*>::const_iterator mapItemIt = availableMaps.constBegin();
-  for ( ; mapItemIt != availableMaps.constEnd(); ++mapItemIt )
-  {
-    mMapComboBox->addItem( tr( "Map %1" ).arg(( *mapItemIt )->id() ), ( *mapItemIt )->id() );
-  }
-  mMapComboBox->addItem( tr( "None" ), -1 );
-
-  //the former entry is not there anymore
-  int entry = mMapComboBox->findData( currentMapId );
-  if ( entry == -1 )
-  {
-  }
-  else
-  {
-    mMapComboBox->setCurrentIndex( entry );
-  }
-}
-
-void QgsComposerLegendWidget::showEvent( QShowEvent * event )
-{
-  refreshMapComboBox();
-  QWidget::showEvent( event );
+  mFilterLegendByAtlasCheckBox->blockSignals( b );
 }
 
 void QgsComposerLegendWidget::selectedChanged( const QModelIndex & current, const QModelIndex & previous )
 {
   Q_UNUSED( current );
   Q_UNUSED( previous );
-  QgsDebugMsg( "Entered" );
 
   if ( mLegend && mLegend->autoUpdateModel() )
     return;
@@ -1067,17 +1025,12 @@ void QgsComposerLegendWidget::on_mItemTreeView_doubleClicked( const QModelIndex 
     currentNode->setCustomProperty( "legend/title-label", newText );
 
     // force update of label of the legend node with embedded icon (a bit clumsy i know)
-    QList<QgsLayerTreeModelLegendNode*> nodes = model->layerLegendNodes( QgsLayerTree::toLayer( currentNode ) );
-    if ( nodes.count() == 1 && nodes[0]->isEmbeddedInParent() )
-      nodes[0]->setUserLabel( QString() );
+    if ( QgsLayerTreeModelLegendNode* embeddedNode = model->legendNodeEmbeddedInParent( QgsLayerTree::toLayer( currentNode ) ) )
+      embeddedNode->setUserLabel( QString() );
   }
   else if ( legendNode )
   {
-    QList<int> order = QgsMapLayerLegendUtils::legendNodeOrder( legendNode->layerNode() );
-    //find unfiltered row number
-    QList<QgsLayerTreeModelLegendNode*> layerLegendNodes = model->layerOriginalLegendNodes( legendNode->layerNode() );
-    int unfilteredRowIndex = layerLegendNodes.indexOf( legendNode );
-    int originalIndex = ( unfilteredRowIndex >= 0 && unfilteredRowIndex < order.count() ? order[unfilteredRowIndex] : -1 );
+    int originalIndex = _originalLegendNodeIndex( legendNode );
     QgsMapLayerLegendUtils::setLegendNodeUserLabel( legendNode->layerNode(), originalIndex, newText );
     model->refreshLayerLegend( legendNode->layerNode() );
   }
@@ -1097,7 +1050,7 @@ QgsComposerLegendMenuProvider::QgsComposerLegendMenuProvider( QgsLayerTreeView* 
     , mWidget( w )
 {}
 
-QMenu*QgsComposerLegendMenuProvider::createContextMenu()
+QMenu* QgsComposerLegendMenuProvider::createContextMenu()
 {
   if ( !mView->currentNode() )
     return nullptr;
@@ -1109,7 +1062,7 @@ QMenu*QgsComposerLegendMenuProvider::createContextMenu()
 
   if ( QgsLayerTree::isLayer( mView->currentNode() ) )
   {
-    menu->addAction( tr( "Reset to defaults" ), mWidget, SLOT( resetLayerNodeToDefaults() ) );
+    menu->addAction( QObject::tr( "Reset to defaults" ), mWidget, SLOT( resetLayerNodeToDefaults() ) );
     menu->addSeparator();
   }
 

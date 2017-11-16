@@ -189,7 +189,7 @@ class QgsVariableEditorTree : public QTreeWidget
 
     QModelIndex moveCursor( CursorAction cursorAction, Qt::KeyboardModifiers modifiers ) override;
 
-    static QIcon mExpandIcon;
+    QIcon mExpandIcon;
 
   private:
 

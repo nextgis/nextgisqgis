@@ -39,6 +39,9 @@ CMakeLists.txt.user
 # Installer
 build/
 inst/
+debian/
+obj-*-linux-gnu/
+*.tar.gz
 
 # generated files
 src/core/qgscontexthelp_texts.cpp

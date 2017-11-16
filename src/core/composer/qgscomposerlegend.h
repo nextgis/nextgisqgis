@@ -33,7 +33,7 @@ class QgsComposerMap;
 class QgsLegendRenderer;
 
 
-/** \ingroup MapComposer
+/** \ingroup core
  * Item model implementation based on layer tree model for composer legend.
  * Overrides some functionality of QgsLayerTreeModel to better fit the needs of composer legend.
  *
@@ -52,7 +52,7 @@ class CORE_EXPORT QgsLegendModelV2 : public QgsLayerTreeModel
 };
 
 
-/** \ingroup MapComposer
+/** \ingroup core
  * A legend that can be placed onto a map composition
  */
 class CORE_EXPORT QgsComposerLegend : public QgsComposerItem
@@ -79,13 +79,13 @@ class CORE_EXPORT QgsComposerLegend : public QgsComposerItem
      * @param enabled set to false to disable automatic resizing. The legend frame will not
      * be expanded to fit legend items, and items may be cropped from display.
      * @see resizeToContents()
-     * @note added in QGIS 3.0
+     * @note added in QGIS 2.18
      */
     void setResizeToContents( bool enabled );
 
     /** Returns whether the legend should automatically resize to fit its contents.
      * @see setResizeToContents()
-     * @note added in QGIS 3.0
+     * @note added in QGIS 2.18
      */
     bool resizeToContents() const;
 

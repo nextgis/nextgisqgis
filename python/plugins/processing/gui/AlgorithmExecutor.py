@@ -17,6 +17,7 @@
 ***************************************************************************
 """
 
+
 __author__ = 'Victor Olaya'
 __date__ = 'August 2012'
 __copyright__ = '(C) 2012, Victor Olaya'
@@ -27,7 +28,7 @@ __revision__ = '$Format:%H$'
 
 import sys
 
-from PyQt4.QtCore import QSettings, QCoreApplication
+from qgis.PyQt.QtCore import QSettings, QCoreApplication
 from qgis.core import QgsFeature, QgsVectorFileWriter
 from processing.core.ProcessingLog import ProcessingLog
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
@@ -35,7 +36,7 @@ from processing.gui.Postprocessing import handleAlgorithmResults
 from processing.tools import dataobjects
 from processing.tools.system import getTempFilename
 from processing.tools import vector
-from processing.gui.SilentProgress import SilentProgress
+from processing.core.SilentProgress import SilentProgress
 
 
 def runalg(alg, progress=None):
@@ -45,14 +46,13 @@ def runalg(alg, progress=None):
     Return true if everything went OK, false if the algorithm
     could not be completed.
     """
-    if progress is None:
-        progress = SilentProgress()
     try:
-        alg.execute(progress)
+        alg.execute(progress or SilentProgress())
         return True
     except GeoAlgorithmExecutionException as e:
         ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
-        progress.error(e.msg)
+        if progress is not None:
+            progress.error(e.msg)
         return False
 
 
@@ -90,7 +90,7 @@ def runalgIterating(alg, paramToIter, progress):
             out.value = filename
         progress.setText(tr('Executing iteration %s/%s...' % (unicode(i), unicode(len(filelist)))))
         progress.setPercentage(i * 100 / len(filelist))
-        if runalg(alg):
+        if runalg(alg, progress):
             handleAlgorithmResults(alg, None, False)
         else:
             return False

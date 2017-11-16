@@ -25,6 +25,8 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
+import os
+
 from qgis.core import QgsFeature
 
 from processing.core.GeoAlgorithm import GeoAlgorithm
@@ -33,6 +35,8 @@ from processing.core.parameters import ParameterTable
 from processing.core.parameters import ParameterTableField
 from processing.core.outputs import OutputVector
 from processing.tools import dataobjects, vector
+
+pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 
 class JoinAttributes(GeoAlgorithm):
@@ -77,7 +81,7 @@ class JoinAttributes(GeoAlgorithm):
         # Cache attributes of Layer 2
         cache = {}
         features = vector.features(layer2)
-        total = 100.0 / len(features)
+        total = 100.0 / len(features) if len(features) > 0 else 1
         for current, feat in enumerate(features):
             attrs = feat.attributes()
             joinValue2 = unicode(attrs[joinField2Index])
@@ -88,7 +92,7 @@ class JoinAttributes(GeoAlgorithm):
         # Create output vector layer with additional attribute
         outFeat = QgsFeature()
         features = vector.features(layer)
-        total = 100.0 / len(features)
+        total = 100.0 / len(features) if len(features) > 0 else 1
         for current, feat in enumerate(features):
             outFeat.setGeometry(feat.geometry())
             attrs = feat.attributes()

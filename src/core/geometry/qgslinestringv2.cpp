@@ -87,7 +87,7 @@ void QgsLineStringV2::clear()
   mY.clear();
   mZ.clear();
   mM.clear();
-  mWkbType = QgsWKBTypes::Unknown;
+  mWkbType = QgsWKBTypes::LineString;
   clearCache();
 }
 
@@ -150,7 +150,7 @@ bool QgsLineStringV2::fromWkt( const QString& wkt )
 
   QPair<QgsWKBTypes::Type, QString> parts = QgsGeometryUtils::wktReadBlock( wkt );
 
-  if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
+  if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::LineString )
     return false;
   mWkbType = parts.first;
 
@@ -209,14 +209,9 @@ QDomElement QgsLineStringV2::asGML3( QDomDocument& doc, int precision, const QSt
   QgsPointSequenceV2 pts;
   points( pts );
 
-  QDomElement elemCurve = doc.createElementNS( ns, "Curve" );
-  QDomElement elemSegments = doc.createElementNS( ns, "segments" );
-  QDomElement elemArcString = doc.createElementNS( ns, "LineStringSegment" );
-  elemArcString.appendChild( QgsGeometryUtils::pointsToGML3( pts, doc, precision, ns, is3D() ) );
-  elemSegments.appendChild( elemArcString );
-  elemCurve.appendChild( elemSegments );
-
-  return elemCurve;
+  QDomElement elemLineString = doc.createElementNS( ns, "LineString" );
+  elemLineString.appendChild( QgsGeometryUtils::pointsToGML3( pts, doc, precision, ns, is3D() ) );
+  return elemLineString;
 }
 
 QString QgsLineStringV2::asJSON( int precision ) const
@@ -271,8 +266,10 @@ QgsPointV2 QgsLineStringV2::endPoint() const
  * See details in QEP #17
  ****************************************************************************/
 
-QgsLineStringV2* QgsLineStringV2::curveToLine() const
+QgsLineStringV2* QgsLineStringV2::curveToLine( double tolerance, SegmentationToleranceType toleranceType ) const
 {
+  Q_UNUSED( tolerance );
+  Q_UNUSED( toleranceType );
   return static_cast<QgsLineStringV2*>( clone() );
 }
 
@@ -597,13 +594,14 @@ QgsAbstractGeometryV2* QgsLineStringV2::toCurveType() const
  * See details in QEP #17
  ****************************************************************************/
 
-void QgsLineStringV2::transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d )
+void QgsLineStringV2::transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d, bool transformZ )
 {
   double* zArray = mZ.data();
 
   bool hasZ = is3D();
   int nPoints = numPoints();
-  if ( !hasZ )
+  bool useDummyZ = !hasZ || !transformZ;
+  if ( useDummyZ )
   {
     zArray = new double[nPoints];
     for ( int i = 0; i < nPoints; ++i )
@@ -612,7 +610,7 @@ void QgsLineStringV2::transform( const QgsCoordinateTransform& ct, QgsCoordinate
     }
   }
   ct.transformCoords( nPoints, mX.data(), mY.data(), zArray, d );
-  if ( !hasZ )
+  if ( useDummyZ )
   {
     delete[] zArray;
   }

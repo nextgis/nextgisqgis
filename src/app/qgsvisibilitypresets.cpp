@@ -30,7 +30,7 @@
 #include "qgsnewnamedialog.h"
 
 #include <QInputDialog>
-
+#include <QMessageBox>
 
 QgsVisibilityPresets* QgsVisibilityPresets::sInstance;
 
@@ -68,7 +68,7 @@ void QgsVisibilityPresets::addPerLayerCheckedLegendSymbols( QgsVisibilityPresetC
     bool hasCheckableItems = false;
     bool someItemsUnchecked = false;
     QSet<QString> checkedItems;
-    Q_FOREACH ( QgsLayerTreeModelLegendNode* legendNode, model->layerLegendNodes( nodeLayer ) )
+    Q_FOREACH ( QgsLayerTreeModelLegendNode* legendNode, model->layerLegendNodes( nodeLayer, true ) )
     {
       if ( legendNode->flags() & Qt::ItemIsUserCheckable )
       {
@@ -181,6 +181,12 @@ void QgsVisibilityPresets::replaceTriggered()
   if ( !actionPreset )
     return;
 
+  int res = QMessageBox::question( mMenu, tr( "Replace preset" ),
+                                   tr( "Are you sure you want to replace the existing preset %1?" ).arg( actionPreset->text() ),
+                                   QMessageBox::Yes | QMessageBox::No, QMessageBox::No );
+  if ( res != QMessageBox::Yes )
+    return;
+
   //adding preset with same name is effectively a replace
   addPreset( actionPreset->text() );
 }
@@ -210,7 +216,7 @@ void QgsVisibilityPresets::applyStateToLayerTreeGroup( QgsLayerTreeGroup* parent
         {
           const QSet<QString>& checkedNodes = rec.mPerLayerCheckedLegendSymbols[nodeLayer->layerId()];
           // some nodes are not checked
-          Q_FOREACH ( QgsLayerTreeModelLegendNode* legendNode, model->layerLegendNodes( nodeLayer ) )
+          Q_FOREACH ( QgsLayerTreeModelLegendNode* legendNode, model->layerLegendNodes( nodeLayer, true ) )
           {
             Qt::CheckState shouldHaveState = checkedNodes.contains( legendNode->data( QgsLayerTreeModelLegendNode::RuleKeyRole ).toString() ) ? Qt::Checked : Qt::Unchecked;
             if (( legendNode->flags() & Qt::ItemIsUserCheckable ) &&
@@ -221,7 +227,7 @@ void QgsVisibilityPresets::applyStateToLayerTreeGroup( QgsLayerTreeGroup* parent
         else
         {
           // all nodes should be checked
-          Q_FOREACH ( QgsLayerTreeModelLegendNode* legendNode, model->layerLegendNodes( nodeLayer ) )
+          Q_FOREACH ( QgsLayerTreeModelLegendNode* legendNode, model->layerLegendNodes( nodeLayer, true ) )
           {
             if (( legendNode->flags() & Qt::ItemIsUserCheckable ) &&
                 legendNode->data( Qt::CheckStateRole ).toInt() != Qt::Checked )

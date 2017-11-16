@@ -89,6 +89,8 @@ class QgsMemoryProvider : public QgsVectorDataProvider
      */
     virtual bool addAttributes( const QList<QgsField> &attributes ) override;
 
+    virtual bool renameAttributes( const QgsFieldNameMap& renamedAttributes ) override;
+
     /**
      * Deletes existing attributes
      * @param attributes a set containing names of attributes
@@ -132,7 +134,6 @@ class QgsMemoryProvider : public QgsVectorDataProvider
      */
     virtual int capabilities() const override;
 
-
     /* Implementation of functions from QgsDataProvider */
 
     /**
@@ -157,10 +158,7 @@ class QgsMemoryProvider : public QgsVectorDataProvider
 
     virtual QgsCoordinateReferenceSystem crs() override;
 
-  protected:
-
-    // called when added / removed features or geometries has been changed
-    void updateExtent();
+    void updateExtents() override;
 
   private:
     // Coordinate reference system
@@ -169,7 +167,7 @@ class QgsMemoryProvider : public QgsVectorDataProvider
     // fields
     QgsFields mFields;
     QGis::WkbType mWkbType;
-    QgsRectangle mExtent;
+    mutable QgsRectangle mExtent;
 
     // features
     QgsFeatureMap mFeatures;

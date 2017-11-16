@@ -29,13 +29,19 @@
 class QToolButton;
 class QScrollArea;
 
+/** \ingroup gui
+ * \class QgsGroupBoxCollapseButton
+ */
 class GUI_EXPORT QgsGroupBoxCollapseButton : public QToolButton
 {
     Q_OBJECT
 
   public:
     QgsGroupBoxCollapseButton( QWidget *parent = nullptr )
-        : QToolButton( parent ), mAltDown( false ), mShiftDown( false ) {}
+        : QToolButton( parent )
+        , mAltDown( false )
+        , mShiftDown( false )
+    {}
 
     ~QgsGroupBoxCollapseButton() {}
 
@@ -159,8 +165,8 @@ class GUI_EXPORT QgsCollapsibleGroupBoxBasic : public QGroupBox
     bool mShiftDown;
     bool mTitleClicked;
 
-    static QIcon mCollapseIcon;
-    static QIcon mExpandIcon;
+    QIcon mCollapseIcon;
+    QIcon mExpandIcon;
 };
 
 /** \ingroup gui

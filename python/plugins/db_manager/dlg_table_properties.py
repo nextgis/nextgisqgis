@@ -22,8 +22,8 @@ The content of this file is based on
  ***************************************************************************/
 """
 
-from PyQt4.QtCore import Qt, SIGNAL
-from PyQt4.QtGui import QDialog, QMessageBox, QApplication
+from qgis.PyQt.QtCore import Qt, pyqtSignal
+from qgis.PyQt.QtWidgets import QDialog, QMessageBox, QApplication
 
 from .db_plugins.data_model import TableFieldsModel, TableConstraintsModel, TableIndexesModel
 from .db_plugins.plugin import BaseError
@@ -38,6 +38,7 @@ from .ui.ui_DlgTableProperties import Ui_DbManagerDlgTableProperties as Ui_Dialo
 
 
 class DlgTableProperties(QDialog, Ui_Dialog):
+    aboutToChangeTable = pyqtSignal()
 
     def __init__(self, table, parent=None):
         QDialog.__init__(self, parent)
@@ -55,18 +56,21 @@ class DlgTableProperties(QDialog, Ui_Dialog):
         m = TableIndexesModel(self)
         self.viewIndexes.setModel(m)
 
-        self.connect(self.btnAddColumn, SIGNAL("clicked()"), self.addColumn)
-        self.connect(self.btnAddGeometryColumn, SIGNAL("clicked()"), self.addGeometryColumn)
-        self.connect(self.btnEditColumn, SIGNAL("clicked()"), self.editColumn)
-        self.connect(self.btnDeleteColumn, SIGNAL("clicked()"), self.deleteColumn)
+        self.btnAddColumn.clicked.connect(self.addColumn)
+        self.btnAddGeometryColumn.clicked.connect(self.addGeometryColumn)
+        self.btnEditColumn.clicked.connect(self.editColumn)
+        self.btnDeleteColumn.clicked.connect(self.deleteColumn)
 
-        self.connect(self.btnAddConstraint, SIGNAL("clicked()"), self.addConstraint)
-        self.connect(self.btnDeleteConstraint, SIGNAL("clicked()"), self.deleteConstraint)
+        self.btnAddConstraint.clicked.connect(self.addConstraint)
+        self.btnDeleteConstraint.clicked.connect(self.deleteConstraint)
 
-        self.connect(self.btnAddIndex, SIGNAL("clicked()"), self.createIndex)
-        self.connect(self.btnAddSpatialIndex, SIGNAL("clicked()"), self.createSpatialIndex)
-        self.connect(self.btnDeleteIndex, SIGNAL("clicked()"), self.deleteIndex)
+        self.btnAddIndex.clicked.connect(self.createIndex)
+        self.btnAddSpatialIndex.clicked.connect(self.createSpatialIndex)
+        self.btnDeleteIndex.clicked.connect(self.deleteIndex)
 
+        self.refresh()
+
+    def refresh(self):
         self.populateViews()
         self.checkSupports()
 
@@ -75,9 +79,8 @@ class DlgTableProperties(QDialog, Ui_Dialog):
         self.btnEditColumn.setEnabled(allowEditColumns)
         self.btnDeleteColumn.setEnabled(allowEditColumns)
 
-        allowSpatial = self.db.connector.hasSpatialSupport()
-        self.btnAddGeometryColumn.setEnabled(allowSpatial)
-        self.btnAddSpatialIndex.setEnabled(allowSpatial)
+        self.btnAddGeometryColumn.setEnabled(self.db.connector.canAddGeometryColumn((self.table.schemaName(), self.table.name)))
+        self.btnAddSpatialIndex.setEnabled(self.db.connector.canAddSpatialIndex((self.table.schemaName(), self.table.name)))
 
     def populateViews(self):
         self.populateFields()
@@ -113,11 +116,11 @@ class DlgTableProperties(QDialog, Ui_Dialog):
         fld = dlg.getField()
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.emit(SIGNAL("aboutToChangeTable()"))
+        self.aboutToChangeTable.emit()
         try:
             # add column to table
             self.table.addField(fld)
-            self.populateViews()
+            self.refresh()
         except BaseError as e:
             DlgDbError.showError(e, self)
             return
@@ -129,7 +132,7 @@ class DlgTableProperties(QDialog, Ui_Dialog):
         dlg = DlgAddGeometryColumn(self, self.table)
         if not dlg.exec_():
             return
-        self.populateViews()
+        self.refresh()
 
     def editColumn(self):
         """ open dialog to change column info and alter table appropriately """
@@ -148,10 +151,10 @@ class DlgTableProperties(QDialog, Ui_Dialog):
         new_fld = dlg.getField(True)
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.emit(SIGNAL("aboutToChangeTable()"))
+        self.aboutToChangeTable.emit()
         try:
             fld.update(new_fld.name, new_fld.type2String(), new_fld.notNull, new_fld.default2String())
-            self.populateViews()
+            self.refresh()
         except BaseError as e:
             DlgDbError.showError(e, self)
             return
@@ -173,10 +176,10 @@ class DlgTableProperties(QDialog, Ui_Dialog):
             return
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.emit(SIGNAL("aboutToChangeTable()"))
+        self.aboutToChangeTable.emit()
         try:
             fld.delete()
-            self.populateViews()
+            self.refresh()
         except BaseError as e:
             DlgDbError.showError(e, self)
             return
@@ -209,7 +212,7 @@ class DlgTableProperties(QDialog, Ui_Dialog):
         dlg = DlgCreateConstraint(self, self.table)
         if not dlg.exec_():
             return
-        self.populateViews()
+        self.refresh()
 
     def deleteConstraint(self):
         """ delete a constraint """
@@ -228,10 +231,10 @@ class DlgTableProperties(QDialog, Ui_Dialog):
             return
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.emit(SIGNAL("aboutToChangeTable()"))
+        self.aboutToChangeTable.emit()
         try:
             constr.delete()
-            self.populateViews()
+            self.refresh()
         except BaseError as e:
             DlgDbError.showError(e, self)
             return
@@ -272,7 +275,7 @@ class DlgTableProperties(QDialog, Ui_Dialog):
         dlg = DlgCreateIndex(self, self.table)
         if not dlg.exec_():
             return
-        self.populateViews()
+        self.refresh()
 
     def createSpatialIndex(self):
         """ create spatial index for the geometry column """
@@ -288,11 +291,11 @@ class DlgTableProperties(QDialog, Ui_Dialog):
 
         # TODO: first check whether the index doesn't exist already
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.emit(SIGNAL("aboutToChangeTable()"))
+        self.aboutToChangeTable.emit()
 
         try:
             self.table.createSpatialIndex()
-            self.populateViews()
+            self.refresh()
         except BaseError as e:
             DlgDbError.showError(e, self)
             return
@@ -323,10 +326,10 @@ class DlgTableProperties(QDialog, Ui_Dialog):
             return
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.emit(SIGNAL("aboutToChangeTable()"))
+        self.aboutToChangeTable.emit()
         try:
             idx.delete()
-            self.populateViews()
+            self.refresh()
         except BaseError as e:
             DlgDbError.showError(e, self)
             return

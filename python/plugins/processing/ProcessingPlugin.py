@@ -30,8 +30,9 @@ import inspect
 import os
 import sys
 
-from PyQt4.QtCore import Qt, QCoreApplication, QDir
-from PyQt4.QtGui import QMenu, QAction, QIcon
+from qgis.PyQt.QtCore import Qt, QCoreApplication, QDir
+from qgis.PyQt.QtWidgets import QMenu, QAction
+from qgis.PyQt.QtGui import QIcon
 
 from processing.core.Processing import Processing
 from processing.gui.ProcessingToolbox import ProcessingToolbox
@@ -41,6 +42,8 @@ from processing.gui.ResultsDialog import ResultsDialog
 from processing.gui.CommanderWindow import CommanderWindow
 from processing.modeler.ModelerDialog import ModelerDialog
 from processing.tools.system import tempFolder
+from processing.gui.menus import removeMenus, initializeMenus, createMenus
+from processing.core.alglist import algList
 
 
 cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
@@ -52,15 +55,13 @@ class ProcessingPlugin:
 
     def __init__(self, iface):
         self.iface = iface
-
-    def initGui(self):
         Processing.initialize()
 
+    def initGui(self):
         self.commander = None
         self.toolbox = ProcessingToolbox()
         self.iface.addDockWidget(Qt.RightDockWidgetArea, self.toolbox)
         self.toolbox.hide()
-        Processing.addAlgListListener(self.toolbox)
 
         self.menu = QMenu(self.iface.mainWindow().menuBar())
         self.menu.setObjectName('processing')
@@ -119,8 +120,12 @@ class ProcessingPlugin:
         self.iface.registerMainWindowAction(self.commanderAction,
                                             self.tr('Ctrl+Alt+D'))
 
+        initializeMenus()
+        createMenus()
+
     def unload(self):
         self.toolbox.setVisible(False)
+        self.iface.removeDockWidget(self.toolbox)
         self.menu.deleteLater()
 
         # delete temporary output files
@@ -135,12 +140,13 @@ class ProcessingPlugin:
         self.iface.unregisterMainWindowAction(self.resultsAction)
         self.iface.unregisterMainWindowAction(self.commanderAction)
 
+        removeMenus()
+
     def openCommander(self):
         if self.commander is None:
             self.commander = CommanderWindow(
                 self.iface.mainWindow(),
                 self.iface.mapCanvas())
-            Processing.addAlgListListener(self.commander)
         self.commander.prepareGui()
         self.commander.show()
 
@@ -154,7 +160,7 @@ class ProcessingPlugin:
         dlg = ModelerDialog()
         dlg.exec_()
         if dlg.update:
-            self.toolbox.updateProvider('model')
+            algList.reloadProvider('model')
 
     def openResults(self):
         dlg = ResultsDialog()

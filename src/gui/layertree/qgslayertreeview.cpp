@@ -16,6 +16,7 @@
 #include "qgslayertreeview.h"
 
 #include "qgslayertree.h"
+#include "qgslayertreeembeddedwidgetregistry.h"
 #include "qgslayertreemodel.h"
 #include "qgslayertreemodellegendnode.h"
 #include "qgslayertreeviewdefaultactions.h"
@@ -23,6 +24,7 @@
 
 #include <QMenu>
 #include <QContextMenuEvent>
+
 
 QgsLayerTreeView::QgsLayerTreeView( QWidget *parent )
     : QTreeView( parent )
@@ -129,6 +131,27 @@ void QgsLayerTreeView::modelRowsInserted( const QModelIndex& index, int start, i
   if ( !parentNode )
     return;
 
+  // Embedded widgets - replace placeholders in the model by actual widgets
+  if ( layerTreeModel()->testFlag( QgsLayerTreeModel::UseEmbeddedWidgets ) && QgsLayerTree::isLayer( parentNode ) )
+  {
+    QgsLayerTreeLayer* nodeLayer = QgsLayerTree::toLayer( parentNode );
+    if ( QgsMapLayer* layer = nodeLayer->layer() )
+    {
+      int widgetsCount = layer->customProperty( "embeddedWidgets/count", 0 ).toInt();
+      QList<QgsLayerTreeModelLegendNode*> legendNodes = layerTreeModel()->layerLegendNodes( nodeLayer, true );
+      for ( int i = 0; i < widgetsCount; ++i )
+      {
+        QString providerId = layer->customProperty( QString( "embeddedWidgets/%1/id" ).arg( i ) ).toString();
+        if ( QgsLayerTreeEmbeddedWidgetProvider* provider = QgsLayerTreeEmbeddedWidgetRegistry::instance()->provider( providerId ) )
+        {
+          QModelIndex index = layerTreeModel()->legendNode2index( legendNodes[i] );
+          setIndexWidget( index, provider->createWidget( layer, i ) );
+        }
+      }
+    }
+  }
+
+
   if ( QgsLayerTree::isLayer( parentNode ) )
   {
     // if ShowLegendAsTree flag is enabled in model, we may need to expand some legend nodes
@@ -136,7 +159,7 @@ void QgsLayerTreeView::modelRowsInserted( const QModelIndex& index, int start, i
     if ( expandedNodeKeys.isEmpty() )
       return;
 
-    Q_FOREACH ( QgsLayerTreeModelLegendNode* legendNode, layerTreeModel()->layerLegendNodes( QgsLayerTree::toLayer( parentNode ) ) )
+    Q_FOREACH ( QgsLayerTreeModelLegendNode* legendNode, layerTreeModel()->layerLegendNodes( QgsLayerTree::toLayer( parentNode ), true ) )
     {
       QString ruleKey = legendNode->data( QgsLayerTreeModelLegendNode::RuleKeyRole ).toString();
       if ( expandedNodeKeys.contains( ruleKey ) )
@@ -230,18 +253,22 @@ void QgsLayerTreeView::updateExpandedStateFromNode( QgsLayerTreeNode* node )
 
 QgsMapLayer* QgsLayerTreeView::layerForIndex( const QModelIndex& index ) const
 {
-  QgsLayerTreeNode* node = layerTreeModel()->index2node( index );
-  if ( node )
+  // Check if model has been set and index is valid
+  if ( layerTreeModel() && index.isValid( ) )
   {
-    if ( QgsLayerTree::isLayer( node ) )
-      return QgsLayerTree::toLayer( node )->layer();
-  }
-  else
-  {
-    // possibly a legend node
-    QgsLayerTreeModelLegendNode* legendNode = layerTreeModel()->index2legendNode( index );
-    if ( legendNode )
-      return legendNode->layerNode()->layer();
+    QgsLayerTreeNode* node = layerTreeModel()->index2node( index );
+    if ( node )
+    {
+      if ( QgsLayerTree::isLayer( node ) )
+        return QgsLayerTree::toLayer( node )->layer();
+    }
+    else
+    {
+      // possibly a legend node
+      QgsLayerTreeModelLegendNode* legendNode = layerTreeModel()->index2legendNode( index );
+      if ( legendNode )
+        return legendNode->layerNode()->layer();
+    }
   }
 
   return nullptr;
@@ -322,7 +349,7 @@ static void _expandAllLegendNodes( QgsLayerTreeLayer* nodeLayer, bool expanded, 
   QStringList lst;
   if ( expanded )
   {
-    Q_FOREACH ( QgsLayerTreeModelLegendNode* legendNode, model->layerLegendNodes( nodeLayer ) )
+    Q_FOREACH ( QgsLayerTreeModelLegendNode* legendNode, model->layerLegendNodes( nodeLayer, true ) )
     {
       QString parentKey = legendNode->data( QgsLayerTreeModelLegendNode::ParentRuleKeyRole ).toString();
       if ( !parentKey.isEmpty() && !lst.contains( parentKey ) )
@@ -358,4 +385,13 @@ void QgsLayerTreeView::collapseAllNodes()
   // unfortunately collapseAll() does not emit collapsed() signals
   _expandAllNodes( layerTreeModel()->rootGroup(), false, layerTreeModel() );
   collapseAll();
+}
+
+void QgsLayerTreeView::dropEvent( QDropEvent *event )
+{
+  if ( event->keyboardModifiers() & Qt::AltModifier )
+  {
+    event->accept();
+  }
+  QTreeView::dropEvent( event );
 }
