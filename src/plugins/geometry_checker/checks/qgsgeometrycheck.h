@@ -1,8 +1,16 @@
 /***************************************************************************
- *  qgsgeometrycheck.h                                                     *
- *  -------------------                                                    *
- *  copyright            : (C) 2014 by Sandro Mani / Sourcepole AG         *
- *  email                : smani@sourcepole.ch                             *
+    qgsgeometrycheck.h
+    ---------------------
+    begin                : September 2014
+    copyright            : (C) 2014 by Sandro Mani / Sourcepole AG
+    email                : smani at sourcepole dot ch
+ ***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
  ***************************************************************************/
 
 #ifndef QGS_GEOMETRY_CHECK_H
@@ -52,7 +60,10 @@ class QgsGeometryCheck : public QObject
     {
       Change() {}
       Change( ChangeWhat _what, ChangeType _type, QgsVertexId _vidx = QgsVertexId() )
-          : what( _what ), type( _type ), vidx( _vidx ) {}
+          : what( _what )
+          , type( _type )
+          , vidx( _vidx )
+      {}
       ChangeWhat what;
       ChangeType type;
       QgsVertexId vidx;
@@ -60,7 +71,10 @@ class QgsGeometryCheck : public QObject
 
     typedef QMap<QgsFeatureId, QList<Change> > Changes;
 
-    QgsGeometryCheck( CheckType checkType, QgsFeaturePool* featurePool ) : mCheckType( checkType ), mFeaturePool( featurePool ) {}
+    QgsGeometryCheck( CheckType checkType, QgsFeaturePool* featurePool )
+        : mCheckType( checkType )
+        , mFeaturePool( featurePool )
+    {}
     virtual ~QgsGeometryCheck() {}
     virtual void collectErrors( QList<QgsGeometryCheckError*>& errors, QStringList& messages, QAtomicInt* progressCounter = nullptr, const QgsFeatureIds& ids = QgsFeatureIds() ) const = 0;
     virtual void fixError( QgsGeometryCheckError* error, int method, int mergeAttributeIndex, Changes& changes ) const = 0;

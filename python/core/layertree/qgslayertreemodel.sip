@@ -94,14 +94,20 @@ class QgsLayerTreeModel : QAbstractItemModel
     QModelIndex legendNode2index( QgsLayerTreeModelLegendNode* legendNode );
 
     //! Return filtered list of active legend nodes attached to a particular layer node
+    //! (by default it returns also legend node embedded in parent layer node (if any) unless skipNodeEmbeddedInParent is true)
     //! @note added in 2.6
+    //! @note skipNodeEmbeddedInParent added in 2.18
     //! @see layerOriginalLegendNodes()
-    QList<QgsLayerTreeModelLegendNode*> layerLegendNodes( QgsLayerTreeLayer* nodeLayer );
+    QList<QgsLayerTreeModelLegendNode*> layerLegendNodes( QgsLayerTreeLayer* nodeLayer, bool skipNodeEmbeddedInParent = false );
 
     //! Return original (unfiltered) list of legend nodes attached to a particular layer node
     //! @note added in 2.14
     //! @see layerLegendNodes()
     QList<QgsLayerTreeModelLegendNode*> layerOriginalLegendNodes( QgsLayerTreeLayer* nodeLayer );
+
+    //! Return legend node that may be embbeded in parent (i.e. its icon will be used for layer's icon).
+    //! @note added in 2.18
+    QgsLayerTreeModelLegendNode* legendNodeEmbeddedInParent( QgsLayerTreeLayer* nodeLayer ) const;
 
     /** Searches through the layer tree to find a legend node with a matching layer ID
      * and rule key.
@@ -203,6 +209,9 @@ class QgsLayerTreeModel : QAbstractItemModel
     void nodeRemovedChildren();
 
     void nodeVisibilityChanged( QgsLayerTreeNode* node );
+    //! Updates model when node's name has changed
+    //! @note added in 2.18.1
+    void nodeNameChanged( QgsLayerTreeNode* node, const QString& name );
 
     void nodeCustomPropertyChanged( QgsLayerTreeNode* node, const QString& key );
 
@@ -230,6 +239,12 @@ class QgsLayerTreeModel : QAbstractItemModel
 
     //! emit dataChanged() for layer tree node items
     void recursivelyEmitDataChanged( const QModelIndex& index = QModelIndex() );
+
+    /** Updates layer data for scale dependent layers, should be called when map scale changes.
+     * Emits dataChanged() for all scale dependent layers.
+     * @note added in QGIS 2.16
+     */
+    void refreshScaleBasedLayers( const QModelIndex& index = QModelIndex() );
 
     static const QIcon& iconGroup();
 

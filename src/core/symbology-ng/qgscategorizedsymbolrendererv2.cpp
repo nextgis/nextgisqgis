@@ -445,12 +445,6 @@ void QgsCategorizedSymbolRendererV2::startRender( QgsRenderContext& context, con
       mTempSymbols[ cat.symbol()] = tempSymbol;
     }
   }
-
-  Q_FOREACH ( QgsSymbolV2 *symbol, mSymbolHash.values() )
-  {
-    symbol->startRender( context, &fields );
-  }
-
   return;
 }
 
@@ -459,11 +453,6 @@ void QgsCategorizedSymbolRendererV2::stopRender( QgsRenderContext& context )
   Q_FOREACH ( const QgsRendererCategoryV2& cat, mCategories )
   {
     cat.symbol()->stopRender( context );
-  }
-
-  Q_FOREACH ( QgsSymbolV2 *symbol, mSymbolHash.values() )
-  {
-    symbol->stopRender( context );
   }
 
   // cleanup mTempSymbols
@@ -739,30 +728,33 @@ QDomElement QgsCategorizedSymbolRendererV2::save( QDomDocument& doc )
   rendererElem.setAttribute( "attr", mAttrName );
 
   // categories
-  int i = 0;
-  QgsSymbolV2Map symbols;
-  QDomElement catsElem = doc.createElement( "categories" );
-  QgsCategoryList::const_iterator it = mCategories.constBegin();
-  for ( ; it != mCategories.constEnd(); ++it )
+  if ( !mCategories.isEmpty() )
   {
-    const QgsRendererCategoryV2& cat = *it;
-    QString symbolName = QString::number( i );
-    symbols.insert( symbolName, cat.symbol() );
+    int i = 0;
+    QgsSymbolV2Map symbols;
+    QDomElement catsElem = doc.createElement( "categories" );
+    QgsCategoryList::const_iterator it = mCategories.constBegin();
+    for ( ; it != mCategories.constEnd(); ++it )
+    {
+      const QgsRendererCategoryV2& cat = *it;
+      QString symbolName = QString::number( i );
+      symbols.insert( symbolName, cat.symbol() );
 
-    QDomElement catElem = doc.createElement( "category" );
-    catElem.setAttribute( "value", cat.value().toString() );
-    catElem.setAttribute( "symbol", symbolName );
-    catElem.setAttribute( "label", cat.label() );
-    catElem.setAttribute( "render", cat.renderState() ? "true" : "false" );
-    catsElem.appendChild( catElem );
-    i++;
+      QDomElement catElem = doc.createElement( "category" );
+      catElem.setAttribute( "value", cat.value().toString() );
+      catElem.setAttribute( "symbol", symbolName );
+      catElem.setAttribute( "label", cat.label() );
+      catElem.setAttribute( "render", cat.renderState() ? "true" : "false" );
+      catsElem.appendChild( catElem );
+      i++;
+    }
+    rendererElem.appendChild( catsElem );
+
+    // save symbols
+    QDomElement symbolsElem = QgsSymbolLayerV2Utils::saveSymbols( symbols, "symbols", doc );
+    rendererElem.appendChild( symbolsElem );
+
   }
-
-  rendererElem.appendChild( catsElem );
-
-  // save symbols
-  QDomElement symbolsElem = QgsSymbolLayerV2Utils::saveSymbols( symbols, "symbols", doc );
-  rendererElem.appendChild( symbolsElem );
 
   // save source symbol
   if ( mSourceSymbol.data() )

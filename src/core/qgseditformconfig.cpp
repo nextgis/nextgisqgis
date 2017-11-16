@@ -29,7 +29,7 @@ QString QgsEditFormConfig::widgetType( int fieldIdx ) const
   if ( fieldIdx < 0 || fieldIdx >= mFields.count() )
     return "TextEdit";
 
-  return mEditorWidgetV2Types.value( mFields[fieldIdx].name(), "TextEdit" );
+  return mEditorWidgetV2Types.value( mFields.at( fieldIdx ).name(), "TextEdit" );
 }
 
 QString QgsEditFormConfig::widgetType( const QString& fieldName ) const
@@ -42,7 +42,7 @@ QgsEditorWidgetConfig QgsEditFormConfig::widgetConfig( int fieldIdx ) const
   if ( fieldIdx < 0 || fieldIdx >= mFields.count() )
     return QgsEditorWidgetConfig();
 
-  return mWidgetConfigs.value( mFields[fieldIdx].name() );
+  return mWidgetConfigs.value( mFields.at( fieldIdx ).name() );
 }
 
 QgsEditorWidgetConfig QgsEditFormConfig::widgetConfig( const QString& widgetName ) const
@@ -82,7 +82,7 @@ bool QgsEditFormConfig::removeWidgetConfig( int fieldIdx )
   if ( fieldIdx < 0 || fieldIdx >= mFields.count() )
     return false;
 
-  return mWidgetConfigs.remove( mFields[fieldIdx].name() );
+  return mWidgetConfigs.remove( mFields.at( fieldIdx ).name() );
 }
 
 void QgsEditFormConfig::setUiForm( const QString& ui )
@@ -119,6 +119,46 @@ bool QgsEditFormConfig::labelOnTop( int idx ) const
     return false;
 }
 
+QString QgsEditFormConfig::expression( int idx ) const
+{
+  QString expr;
+
+  if ( idx >= 0 && idx < mFields.count() )
+    expr = mConstraints.value( mFields.at( idx ).name(), QString() );
+
+  return expr;
+}
+
+void QgsEditFormConfig::setExpression( int idx, const QString& str )
+{
+  if ( idx >= 0 && idx < mFields.count() )
+    mConstraints[ mFields.at( idx ).name()] = str;
+}
+
+QString QgsEditFormConfig::expressionDescription( int idx ) const
+{
+  QString description;
+
+  if ( idx >= 0 && idx < mFields.count() )
+    description = mConstraintsDescription[ mFields.at( idx ).name()];
+
+  return description;
+}
+
+void QgsEditFormConfig::setExpressionDescription( int idx, const QString &descr )
+{
+  if ( idx >= 0 && idx < mFields.count() )
+    mConstraintsDescription[ mFields.at( idx ).name()] = descr;
+}
+
+bool QgsEditFormConfig::notNull( int idx ) const
+{
+  if ( idx >= 0 && idx < mFields.count() )
+    return mNotNull.value( mFields.at( idx ).name(), false );
+  else
+    return false;
+}
+
 void QgsEditFormConfig::setReadOnly( int idx, bool readOnly )
 {
   if ( idx >= 0 && idx < mFields.count() )
@@ -129,6 +169,12 @@ void QgsEditFormConfig::setLabelOnTop( int idx, bool onTop )
 {
   if ( idx >= 0 && idx < mFields.count() )
     mLabelOnTop[ mFields.at( idx ).name()] = onTop;
+}
+
+void QgsEditFormConfig::setNotNull( int idx, bool notnull )
+{
+  if ( idx >= 0 && idx < mFields.count() )
+    mNotNull[ mFields.at( idx ).name()] = notnull;
 }
 
 void QgsEditFormConfig::readXml( const QDomNode& node )
@@ -223,6 +269,8 @@ void QgsEditFormConfig::readXml( const QDomNode& node )
     addTab( attributeEditorWidget );
   }
 
+  onRelationsLoaded();
+
 
   //// TODO: MAKE THIS MORE GENERIC, SO INDIVIDUALL WIDGETS CAN NOT ONLY SAVE STRINGS
   /// SEE QgsEditorWidgetFactory::writeConfig
@@ -280,7 +328,6 @@ void QgsEditFormConfig::writeXml( QDomNode& node ) const
   efifpField.appendChild( doc.createTextNode( QgsProject::instance()->writePath( initFilePath() ) ) );
   node.appendChild( efifpField );
 
-
   QDomElement eficField  = doc.createElement( "editforminitcode" );
   eficField.appendChild( doc.createCDATASection( initCode() ) );
   node.appendChild( eficField );
@@ -337,6 +384,7 @@ void QgsEditFormConfig::writeXml( QDomNode& node ) const
     {
       QDomElement widgetElem = doc.createElement( "widget" );
       widgetElem.setAttribute( "name", configIt.key() );
+      // widgetElem.setAttribute( "notNull",  );
 
       QDomElement configElem = doc.createElement( "config" );
       widgetElem.appendChild( configElem );
@@ -369,6 +417,26 @@ QgsAttributeEditorElement* QgsEditFormConfig::attributeEditorElementFromDomEleme
   if ( elem.tagName() == "attributeEditorContainer" )
   {
     QgsAttributeEditorContainer* container = new QgsAttributeEditorContainer( elem.attribute( "name" ), parent );
+    bool ok;
+    int cc = elem.attribute( "columnCount" ).toInt( &ok );
+    if ( !ok )
+      cc = 0;
+    container->setColumnCount( cc );
+
+    bool isGroupBox = elem.attribute( "groupBox" ).toInt( &ok );
+    if ( ok )
+      container->setIsGroupBox( isGroupBox );
+    else
+      container->setIsGroupBox( qobject_cast<QgsAttributeEditorContainer*>( parent ) );
+
+    bool visibilityExpressionEnabled = elem.attribute( "visibilityExpressionEnabled" ).toInt( &ok );
+    QgsOptionalExpression visibilityExpression;
+    if ( ok )
+    {
+      visibilityExpression.setEnabled( visibilityExpressionEnabled );
+      visibilityExpression.setData( QgsExpression( elem.attribute( "visibilityExpression" ) ) );
+    }
+    container->setVisibilityExpression( visibilityExpression );
 
     QDomNodeList childNodeList = elem.childNodes();
 
@@ -393,8 +461,17 @@ QgsAttributeEditorElement* QgsEditFormConfig::attributeEditorElementFromDomEleme
     // At this time, the relations are not loaded
     // So we only grab the id and delegate the rest to onRelationsLoaded()
     QString name = elem.attribute( "name" );
-    newElement = new QgsAttributeEditorRelation( name, elem.attribute( "relation", "[None]" ), parent );
+    QgsAttributeEditorRelation* relElement = new QgsAttributeEditorRelation( name, elem.attribute( "relation", "[None]" ), parent );
+    relElement->setShowLinkButton( elem.attribute( "showLinkButton", "1" ).toInt() );
+    relElement->setShowUnlinkButton( elem.attribute( "showUnlinkButton", "1" ).toInt() );
+    newElement = relElement;
   }
+
+  if ( elem.hasAttribute( "showLabel" ) )
+    newElement->setShowLabel( elem.attribute( "showLabel" ).toInt() );
+  else
+    newElement->setShowLabel( true );
+
   return newElement;
 }
 
@@ -419,4 +496,143 @@ void QgsEditFormConfig::onRelationsLoaded()
       }
     }
   }
+}
+
+int QgsAttributeEditorContainer::columnCount() const
+{
+  return mColumnCount;
+}
+
+void QgsAttributeEditorContainer::setColumnCount( int columnCount )
+{
+  mColumnCount = columnCount;
+}
+
+void QgsAttributeEditorContainer::saveConfiguration( QDomElement& elem ) const
+{
+  elem.setAttribute( "columnCount", mColumnCount );
+  elem.setAttribute( "groupBox", mIsGroupBox ? 1 : 0 );
+  elem.setAttribute( "visibilityExpressionEnabled", mVisibilityExpression.enabled() ? 1 : 0 );
+  elem.setAttribute( "visibilityExpression", mVisibilityExpression->expression() );
+
+  Q_FOREACH ( QgsAttributeEditorElement* child, mChildren )
+  {
+    QDomDocument doc = elem.ownerDocument();
+    elem.appendChild( child->toDomElement( doc ) );
+  }
+}
+
+QgsOptionalExpression QgsAttributeEditorContainer::visibilityExpression() const
+{
+  return mVisibilityExpression;
+}
+
+void QgsAttributeEditorContainer::setVisibilityExpression( const QgsOptionalExpression& visibilityExpression )
+{
+  mVisibilityExpression = visibilityExpression;
+}
+
+QString QgsAttributeEditorContainer::typeIdentifier() const
+{
+  return "attributeEditorContainer";
+}
+
+void QgsAttributeEditorContainer::addChildElement( QgsAttributeEditorElement *widget )
+{
+  mChildren.append( widget );
+}
+
+void QgsAttributeEditorContainer::setName( const QString& name )
+{
+  mName = name;
+}
+
+QList<QgsAttributeEditorElement*> QgsAttributeEditorContainer::findElements( QgsAttributeEditorElement::AttributeEditorType type ) const
+{
+  QList<QgsAttributeEditorElement*> results;
+
+  Q_FOREACH ( QgsAttributeEditorElement* elem, mChildren )
+  {
+    if ( elem->type() == type )
+    {
+      results.append( elem );
+    }
+
+    if ( elem->type() == AeTypeContainer )
+    {
+      QgsAttributeEditorContainer* cont = dynamic_cast<QgsAttributeEditorContainer*>( elem );
+      if ( cont )
+        results += cont->findElements( type );
+    }
+  }
+
+  return results;
+}
+
+void QgsAttributeEditorField::saveConfiguration( QDomElement &elem ) const
+{
+  elem.setAttribute( "index", mIdx );
+}
+
+QString QgsAttributeEditorField::typeIdentifier() const
+{
+  return "attributeEditorField";
+}
+
+QDomElement QgsAttributeEditorElement::toDomElement( QDomDocument& doc ) const
+{
+  QDomElement elem = doc.createElement( typeIdentifier() );
+  elem.setAttribute( "name", mName );
+  elem.setAttribute( "showLabel", mShowLabel );
+
+  saveConfiguration( elem );
+  return elem;
+}
+
+bool QgsAttributeEditorElement::showLabel() const
+{
+  return mShowLabel;
+}
+
+void QgsAttributeEditorElement::setShowLabel( bool showLabel )
+{
+  mShowLabel = showLabel;
+}
+
+void QgsAttributeEditorRelation::saveConfiguration( QDomElement& elem ) const
+{
+  elem.setAttribute( "relation", mRelation.id() );
+  elem.setAttribute( "showLinkButton", mShowLinkButton );
+  elem.setAttribute( "showUnlinkButton", mShowUnlinkButton );
+}
+
+QString QgsAttributeEditorRelation::typeIdentifier() const
+{
+  return "attributeEditorRelation";
+}
+
+bool QgsAttributeEditorRelation::showUnlinkButton() const
+{
+  return mShowUnlinkButton;
+}
+
+void QgsAttributeEditorRelation::setShowUnlinkButton( bool showUnlinkButton )
+{
+  mShowUnlinkButton = showUnlinkButton;
+}
+
+bool QgsAttributeEditorRelation::init( QgsRelationManager* relationManager )
+{
+  mRelation = relationManager->relation( mRelationId );
+  return mRelation.isValid();
+}
+
+bool QgsAttributeEditorRelation::showLinkButton() const
+{
+  return mShowLinkButton;
+}
+
+void QgsAttributeEditorRelation::setShowLinkButton( bool showLinkButton )
+{
+  mShowLinkButton = showLinkButton;
 }

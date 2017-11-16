@@ -19,13 +19,14 @@
 #include "qgssymbollevelsv2dialog.h"
 #include "qgsexpressionbuilderdialog.h"
 #include "qgsmapcanvas.h"
+#include "qgspanelwidget.h"
 
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QMenu>
 
 QgsRendererV2Widget::QgsRendererV2Widget( QgsVectorLayer* layer, QgsStyleV2* style )
-    : QWidget()
+    : QgsPanelWidget()
     , mLayer( layer )
     , mStyle( style )
     , mMapCanvas( nullptr )
@@ -253,6 +254,7 @@ void QgsRendererV2Widget::showSymbolLevelsDialog( QgsFeatureRendererV2* r )
   if ( dlg.exec() )
   {
     r->setUsingSymbolLevels( dlg.usingLevels() );
+    emit widgetChanged();
   }
 }
 
@@ -272,12 +274,14 @@ void QgsRendererV2Widget::applyChanges()
 }
 
 
+
 ////////////
 
 #include "qgsfield.h"
 
 QgsRendererV2DataDefinedMenus::QgsRendererV2DataDefinedMenus( QMenu* menu, QgsVectorLayer* layer, const QString& rotationField, const QString& sizeScaleField, QgsSymbolV2::ScaleMethod scaleMethod )
-    : QObject( menu ), mLayer( layer )
+    : QObject( menu )
+    , mLayer( layer )
 {
   mRotationMenu = new QMenu( tr( "Rotation field" ) );
   mSizeScaleMenu = new QMenu( tr( "Size scale field" ) );
@@ -340,10 +344,8 @@ void QgsRendererV2DataDefinedMenus::populateMenu( QMenu* menu, const QString& fi
   menu->addSeparator();
 
   bool hasField = false;
-  const QgsFields & flds = mLayer->fields();
-  for ( int idx = 0; idx < flds.count(); ++idx )
+  Q_FOREACH ( const QgsField& fld, mLayer->fields() )
   {
-    const QgsField& fld = flds[idx];
     if ( fld.type() == QVariant::Int || fld.type() == QVariant::Double )
     {
       QAction* a = new QAction( fld.name(), actionGroup );

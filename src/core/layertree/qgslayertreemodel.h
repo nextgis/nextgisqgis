@@ -32,7 +32,7 @@ class QgsMapLayer;
 class QgsMapSettings;
 class QgsExpression;
 
-/**
+/** \ingroup core
  * The QgsLayerTreeModel class is model implementation for Qt item views framework.
  * The model can be used in any QTreeView, it is however recommended to use it
  * with QgsLayerTreeView which brings additional functionality specific to layer tree handling.
@@ -80,6 +80,7 @@ class CORE_EXPORT QgsLayerTreeModel : public QAbstractItemModel
       ShowRasterPreviewIcon      = 0x0002,  //!< Will use real preview of raster layer as icon (may be slow)
       ShowLegendAsTree           = 0x0004,  //!< For legends that support it, will show them in a tree instead of a list (needs also ShowLegend). Added in 2.8
       DeferredLegendInvalidation = 0x0008,  //!< defer legend model invalidation
+      UseEmbeddedWidgets         = 0x0010,  //!< Layer nodes may optionally include extra embedded widgets (if used in QgsLayerTreeView). Added in 2.16
 
       // behavioral flags
       AllowNodeReorder           = 0x1000,  //!< Allow reordering with drag'n'drop
@@ -118,14 +119,20 @@ class CORE_EXPORT QgsLayerTreeModel : public QAbstractItemModel
     QModelIndex legendNode2index( QgsLayerTreeModelLegendNode* legendNode );
 
     //! Return filtered list of active legend nodes attached to a particular layer node
+    //! (by default it returns also legend node embedded in parent layer node (if any) unless skipNodeEmbeddedInParent is true)
     //! @note added in 2.6
+    //! @note skipNodeEmbeddedInParent added in 2.18
     //! @see layerOriginalLegendNodes()
-    QList<QgsLayerTreeModelLegendNode*> layerLegendNodes( QgsLayerTreeLayer* nodeLayer );
+    QList<QgsLayerTreeModelLegendNode*> layerLegendNodes( QgsLayerTreeLayer* nodeLayer, bool skipNodeEmbeddedInParent = false );
 
     //! Return original (unfiltered) list of legend nodes attached to a particular layer node
     //! @note added in 2.14
     //! @see layerLegendNodes()
     QList<QgsLayerTreeModelLegendNode*> layerOriginalLegendNodes( QgsLayerTreeLayer* nodeLayer );
+
+    //! Return legend node that may be embbeded in parent (i.e. its icon will be used for layer's icon).
+    //! @note added in 2.18
+    QgsLayerTreeModelLegendNode* legendNodeEmbeddedInParent( QgsLayerTreeLayer* nodeLayer ) const;
 
     /** Searches through the layer tree to find a legend node with a matching layer ID
      * and rule key.
@@ -227,6 +234,9 @@ class CORE_EXPORT QgsLayerTreeModel : public QAbstractItemModel
     void nodeRemovedChildren();
 
     void nodeVisibilityChanged( QgsLayerTreeNode* node );
+    //! Updates model when node's name has changed
+    //! @note added in 2.18.1
+    void nodeNameChanged( QgsLayerTreeNode* node, const QString& name );
 
     void nodeCustomPropertyChanged( QgsLayerTreeNode* node, const QString& key );
 
@@ -254,6 +264,12 @@ class CORE_EXPORT QgsLayerTreeModel : public QAbstractItemModel
 
     //! emit dataChanged() for layer tree node items
     void recursivelyEmitDataChanged( const QModelIndex& index = QModelIndex() );
+
+    /** Updates layer data for scale dependent layers, should be called when map scale changes.
+     * Emits dataChanged() for all scale dependent layers.
+     * @note added in QGIS 2.16
+     */
+    void refreshScaleBasedLayers( const QModelIndex& index = QModelIndex() );
 
     static const QIcon& iconGroup();
 
@@ -302,9 +318,19 @@ class CORE_EXPORT QgsLayerTreeModel : public QAbstractItemModel
     //! @note not available in Python bindings
     struct LayerLegendData
     {
+      LayerLegendData()
+          : embeddedNodeInParent( nullptr )
+          , tree( nullptr )
+      {
+      }
+
       //! Active legend nodes. May have been filtered.
       //! Owner of legend nodes is still originalNodes !
       QList<QgsLayerTreeModelLegendNode*> activeNodes;
+      //! A legend node that is not displayed separately, its icon is instead
+      //! shown within the layer node's item.
+      //! May be null. if non-null, node is owned by originalNodes !
+      QgsLayerTreeModelLegendNode* embeddedNodeInParent;
       //! Data structure for storage of legend nodes.
       //! These are nodes as received from QgsMapLayerLegend
       QList<QgsLayerTreeModelLegendNode*> originalNodes;
@@ -313,7 +339,7 @@ class CORE_EXPORT QgsLayerTreeModel : public QAbstractItemModel
     };
 
     //! @note not available in Python bindings
-    void tryBuildLegendTree( LayerLegendData& data );
+    LayerLegendTree* tryBuildLegendTree( const QList<QgsLayerTreeModelLegendNode*>& nodes );
 
     //! Overrides of map layers' styles: key = layer ID, value = style XML.
     //! This allows to show legend that is different from the current style of layers
@@ -330,6 +356,9 @@ class CORE_EXPORT QgsLayerTreeModel : public QAbstractItemModel
 
     QScopedPointer<QgsMapSettings> mLegendFilterMapSettings;
     QScopedPointer<QgsMapHitTest> mLegendFilterHitTest;
+
+    //! whether to use map filtering
+    bool mLegendFilterUsesExtent;
 
     double mLegendMapViewMupp;
     int mLegendMapViewDpi;

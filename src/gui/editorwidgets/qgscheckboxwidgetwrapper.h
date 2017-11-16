@@ -21,7 +21,7 @@
 #include <QCheckBox>
 #include <QGroupBox>
 
-/**
+/** \ingroup gui
  * Wraps a checkbox widget. This will offer a checkbox to represent boolean values.
  *
  * Options:
@@ -42,6 +42,8 @@ class GUI_EXPORT QgsCheckboxWidgetWrapper : public QgsEditorWidgetWrapper
     // QgsEditorWidgetWrapper interface
   public:
     QVariant value() const override;
+
+    void showIndeterminateState() override;
 
   protected:
     QWidget* createWidget( QWidget* parent ) override;

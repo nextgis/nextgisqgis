@@ -109,9 +109,9 @@ QSizeF QgsLayerTreeModelLegendNode::drawSymbolText( const QgsLegendSettings& set
 
     // Vertical alignment of label with symbol
     if ( labelSize.height() < symbolSize.height() )
-      labelY += symbolSize.height() / 2 + textHeight / 2;  // label centered with symbol
-    else
-      labelY += textHeight; // label starts at top and runs under symbol
+      labelY += symbolSize.height() / 2 - labelSize.height() / 2;  // label centered with symbol
+
+    labelY += textHeight;
   }
 
   for ( QStringList::Iterator itemPart = lines.begin(); itemPart != lines.end(); ++itemPart )
@@ -200,7 +200,7 @@ void QgsSymbolV2LegendNode::setSymbol( QgsSymbolV2* symbol )
     return;
 
   mItem.setSymbol( symbol );
-  vlayer->rendererV2()->setLegendSymbolItem( mItem.ruleKey(), symbol->clone() );
+  vlayer->rendererV2()->setLegendSymbolItem( mItem.ruleKey(), symbol );
 
   mPixmap = QPixmap();
 
@@ -615,7 +615,7 @@ const QImage& QgsWMSLegendNode::getLegendGraphic() const
       connect( mFetcher.data(), SIGNAL( error( const QString& ) ), this, SLOT( getLegendGraphicErrored( const QString& ) ) );
       connect( mFetcher.data(), SIGNAL( progress( qint64, qint64 ) ), this, SLOT( getLegendGraphicProgress( qint64, qint64 ) ) );
       mFetcher->start();
-    } // else QgsDebugMsg("XXX No legend supported ?");
+    } // else QgsDebugMsg("XXX No legend supported?");
 
   }
 

@@ -62,8 +62,8 @@ void QgsBrowserPropertiesWrapLabel::adjustHeight( QSizeF size )
   setMaximumHeight( height );
 }
 
-QgsBrowserPropertiesWidget::QgsBrowserPropertiesWidget( QWidget* parent ) :
-    QWidget( parent )
+QgsBrowserPropertiesWidget::QgsBrowserPropertiesWidget( QWidget* parent )
+    : QWidget( parent )
 {
 }
 
@@ -102,12 +102,12 @@ QgsBrowserPropertiesWidget* QgsBrowserPropertiesWidget::createWidget( QgsDataIte
   return propertiesWidget;
 }
 
-QgsBrowserLayerProperties::QgsBrowserLayerProperties( QWidget* parent ) :
-    QgsBrowserPropertiesWidget( parent )
+QgsBrowserLayerProperties::QgsBrowserLayerProperties( QWidget* parent )
+    : QgsBrowserPropertiesWidget( parent )
 {
   setupUi( this );
 
-  mUriLabel = new QgsBrowserPropertiesWrapLabel( "", this );
+  mUriLabel = new QgsBrowserPropertiesWrapLabel( QString(), this );
   mHeaderGridLayout->addItem( new QWidgetItem( mUriLabel ), 1, 1 );
 }
 
@@ -122,7 +122,6 @@ void QgsBrowserLayerProperties::setItem( QgsDataItem* item )
   QgsMapLayer::LayerType type = layerItem->mapLayerType();
   QString layerMetadata = tr( "Error" );
   QgsCoordinateReferenceSystem layerCrs;
-  QString notice;
 
   // temporarily override /Projections/defaultBehaviour to avoid dialog prompt
   QSettings settings;
@@ -215,13 +214,13 @@ void QgsBrowserLayerProperties::setCondensedMode( bool condensedMode )
   }
 }
 
-QgsBrowserDirectoryProperties::QgsBrowserDirectoryProperties( QWidget* parent ) :
-    QgsBrowserPropertiesWidget( parent )
+QgsBrowserDirectoryProperties::QgsBrowserDirectoryProperties( QWidget* parent )
+    : QgsBrowserPropertiesWidget( parent )
     , mDirectoryWidget( nullptr )
 {
   setupUi( this );
 
-  mPathLabel = new QgsBrowserPropertiesWrapLabel( "", mHeaderWidget );
+  mPathLabel = new QgsBrowserPropertiesWrapLabel( QString(), mHeaderWidget );
   mHeaderGridLayout->addItem( new QWidgetItem( mPathLabel ), 0, 1 );
 }
 
@@ -236,8 +235,8 @@ void QgsBrowserDirectoryProperties::setItem( QgsDataItem* item )
   mLayout->addWidget( mDirectoryWidget );
 }
 
-QgsBrowserPropertiesDialog::QgsBrowserPropertiesDialog( const QString& settingsSection, QWidget* parent ) :
-    QDialog( parent )
+QgsBrowserPropertiesDialog::QgsBrowserPropertiesDialog( const QString& settingsSection, QWidget* parent )
+    : QDialog( parent )
     , mPropertiesWidget( nullptr )
     , mSettingsSection( settingsSection )
 {
@@ -262,14 +261,36 @@ void QgsBrowserPropertiesDialog::setItem( QgsDataItem* item )
   setWindowTitle( item->type() == QgsDataItem::Layer ? tr( "Layer Properties" ) : tr( "Directory Properties" ) );
 }
 
-QgsBrowserDockWidget::QgsBrowserDockWidget( const QString& name, QWidget * parent ) :
-    QDockWidget( parent )
+
+QgsBrowserDockWidget::QgsBrowserDockWidget( const QString& name, QgsBrowserModel *model, QWidget * parent )
+    : QgsDockWidget( parent )
+    , mModel( model )
+    , mProxyModel( nullptr )
+    , mPropertiesWidgetEnabled( false )
+    , mPropertiesWidgetHeight( 0 )
+{
+  init( name );
+}
+
+
+QgsBrowserDockWidget::QgsBrowserDockWidget( const QString& name, QWidget * parent )
+    : QgsDockWidget( parent )
     , mModel( nullptr )
     , mProxyModel( nullptr )
     , mPropertiesWidgetEnabled( false )
     , mPropertiesWidgetHeight( 0 )
 {
+  init( name );
+}
+
+
+void QgsBrowserDockWidget::init( const QString& name )
+{
   setupUi( this );
+
+  mContents->layout()->setContentsMargins( 0, 0, 0, 0 );
+  mContents->layout()->setMargin( 0 );
+  static_cast< QVBoxLayout* >( mContents->layout() )->setSpacing( 0 );
 
   setWindowTitle( name );
 
@@ -277,7 +298,7 @@ QgsBrowserDockWidget::QgsBrowserDockWidget( const QString& name, QWidget * paren
   mLayoutBrowser->addWidget( mBrowserView );
 
   mWidgetFilter->hide();
-  mLeFilter->setPlaceholderText( tr( "Type here to filter current item..." ) );
+  mLeFilter->setPlaceholderText( tr( "Type here to filter visible items..." ) );
   // icons from http://www.fatcow.com/free-icons License: CC Attribution 3.0
 
   QMenu* menu = new QMenu( this );
@@ -321,6 +342,7 @@ QgsBrowserDockWidget::QgsBrowserDockWidget( const QString& name, QWidget * paren
   connect( mSplitter, SIGNAL( splitterMoved( int, int ) ), this, SLOT( splitterMoved() ) );
 }
 
+
 QgsBrowserDockWidget::~QgsBrowserDockWidget()
 {
   QSettings settings;
@@ -331,16 +353,26 @@ QgsBrowserDockWidget::~QgsBrowserDockWidget()
 
 void QgsBrowserDockWidget::showEvent( QShowEvent * e )
 {
-  // delayed initialization of the model
+
   if ( !mModel )
   {
     mModel = new QgsBrowserModel( mBrowserView );
+  }
 
+  // delayed initialization of the model
+  if ( !mModel->initialized( ) )
+  {
+    mModel->init();
+  }
+
+  if ( ! mProxyModel )
+  {
     connect( QgisApp::instance(), SIGNAL( newProject() ), mModel, SLOT( updateProjectHome() ) );
 
     mProxyModel = new QgsBrowserTreeFilterProxyModel( this );
     mProxyModel->setBrowserModel( mModel );
     mBrowserView->setSettingsSection( objectName().toLower() ); // to distinguish 2 instances ow browser
+    mBrowserView->setBrowserModel( mModel );
     mBrowserView->setModel( mProxyModel );
     // provide a horizontal scroll bar instead of using ellipse (...) for longer items
     mBrowserView->setTextElideMode( Qt::ElideNone );
@@ -366,7 +398,7 @@ void QgsBrowserDockWidget::showEvent( QShowEvent * e )
     mSplitter->setSizes( sizes );
   }
 
-  QDockWidget::showEvent( e );
+  QgsDockWidget::showEvent( e );
 }
 
 void QgsBrowserDockWidget::showContextMenu( QPoint pt )
@@ -471,7 +503,6 @@ void QgsBrowserDockWidget::refresh()
 
 void QgsBrowserDockWidget::refreshModel( const QModelIndex& index )
 {
-  QgsDebugMsg( "Entered" );
   QgsDataItem *item = mModel->dataItem( index );
   if ( item )
   {
@@ -664,8 +695,12 @@ void QgsBrowserDockWidget::showFilterWidget( bool visible )
   mWidgetFilter->setVisible( visible );
   if ( ! visible )
   {
-    mLeFilter->setText( "" );
+    mLeFilter->setText( QString() );
     setFilter();
+  }
+  else
+  {
+    mLeFilter->setFocus();
   }
 }
 
@@ -808,8 +843,10 @@ void QgsDockBrowserTreeView::dragMoveEvent( QDragMoveEvent* e )
 //
 
 QgsBrowserTreeFilterProxyModel::QgsBrowserTreeFilterProxyModel( QObject* parent )
-    : QSortFilterProxyModel( parent ), mModel( nullptr )
-    , mFilter( "" ), mPatternSyntax( "normal" ), mCaseSensitivity( Qt::CaseInsensitive )
+    : QSortFilterProxyModel( parent )
+    , mModel( nullptr )
+    , mPatternSyntax( "normal" )
+    , mCaseSensitivity( Qt::CaseInsensitive )
 {
   setDynamicSortFilter( true );
 }
@@ -903,7 +940,8 @@ bool QgsBrowserTreeFilterProxyModel::filterAcceptsString( const QString& value )
 
 bool QgsBrowserTreeFilterProxyModel::filterAcceptsRow( int sourceRow, const QModelIndex& sourceParent ) const
 {
-  if ( mFilter == "" || !mModel ) return true;
+  if ( mFilter.isEmpty() || !mModel )
+    return true;
 
   QModelIndex sourceIndex = mModel->index( sourceRow, 0, sourceParent );
   return filterAcceptsItem( sourceIndex ) || filterAcceptsAncestor( sourceIndex ) || filterAcceptsDescendant( sourceIndex );

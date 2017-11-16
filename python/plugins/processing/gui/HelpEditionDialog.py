@@ -16,8 +16,6 @@
 *                                                                         *
 ***************************************************************************
 """
-from processing.modeler.ModelerAlgorithm import ModelerAlgorithm
-
 
 __author__ = 'Victor Olaya'
 __date__ = 'August 2012'
@@ -30,10 +28,11 @@ __revision__ = '$Format:%H$'
 import os
 import json
 
-from PyQt4 import uic
-from PyQt4.QtGui import QDialog, QMessageBox, QTreeWidgetItem
+from qgis.PyQt import uic
+from qgis.PyQt.QtWidgets import QDialog, QTreeWidgetItem
 
 from processing.core.ProcessingLog import ProcessingLog
+from processing.modeler.ModelerAlgorithm import ModelerAlgorithm
 
 pluginPath = os.path.split(os.path.dirname(__file__))[0]
 WIDGET, BASE = uic.loadUiType(
@@ -62,7 +61,7 @@ class HelpEditionDialog(BASE, WIDGET):
                     try:
                         with open(helpfile) as f:
                             self.descriptions = json.load(f)
-                    except Exception as e:
+                    except Exception:
                         ProcessingLog.addToLog(ProcessingLog.LOG_WARNING,
                                                self.tr('Cannot open help file: %s') % helpfile)
 

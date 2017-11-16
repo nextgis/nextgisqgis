@@ -76,8 +76,20 @@ class QgsLayerTreeNode : QObject
     //! Get list of children of the node. Children are owned by the parent
     QList<QgsLayerTreeNode*> children();
 
-    //! Read layer tree from XML. Returns new instance
-    static QgsLayerTreeNode *readXML( QDomElement &element );
+    //! Return name of the node
+    //! @note added in 2.18.1
+    virtual QString name() const = 0;
+    //! Set name of the node. Emits nameChanged signal.
+    //! @note added in 2.18.1
+    virtual void setName( const QString& name ) = 0;
+
+    /**
+     * Read layer tree from XML. Returns new instance. If the looseMatch
+     * parameter is true then child legend layers will use looser matching criteria,
+     * eg testing layer source instead of layer IDs.
+     */
+    static QgsLayerTreeNode *readXML( QDomElement &element, bool looseMatch = false ) /Factory/;
+
     //! Write layer tree to XML
     virtual void writeXML( QDomElement &parentElement ) = 0;
 
@@ -119,6 +131,9 @@ class QgsLayerTreeNode : QObject
     void customPropertyChanged( QgsLayerTreeNode *node, const QString& key );
     //! Emitted when the collapsed/expanded state of a node within the tree has been changed
     void expandedChanged( QgsLayerTreeNode *node, bool expanded );
+    //! Emitted when the name of the node is changed
+    //! @note added in 2.18.1
+    void nameChanged( QgsLayerTreeNode* node, QString name );
 
   protected:
 

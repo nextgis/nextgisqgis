@@ -54,6 +54,7 @@ class CORE_EXPORT QgsGeometryCollectionV2: public QgsAbstractGeometryV2
     virtual int dimension() const override;
     virtual QString geometryType() const override { return "GeometryCollection"; }
     virtual void clear() override;
+    virtual QgsAbstractGeometryV2* boundary() const override;
 
     /** Adds a geometry and takes ownership. Returns true in case of success.*/
     virtual bool addGeometry( QgsAbstractGeometryV2* g );
@@ -70,11 +71,8 @@ class CORE_EXPORT QgsGeometryCollectionV2: public QgsAbstractGeometryV2
      */
     virtual bool removeGeometry( int nr );
 
-    /** Transforms the geometry using a coordinate transform
-     * @param ct coordinate transform
-     * @param d transformation direction
-     */
-    virtual void transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform ) override;
+    virtual void transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform,
+                            bool transformZ = false ) override;
     void transform( const QTransform& t ) override;
 #if 0
     virtual void clip( const QgsRectangle& rect ) override;
@@ -109,8 +107,10 @@ class CORE_EXPORT QgsGeometryCollectionV2: public QgsAbstractGeometryV2
 
     bool hasCurvedSegments() const override;
 
-    /** Returns a geometry without curves. Caller takes ownership*/
-    QgsAbstractGeometryV2* segmentize() const override;
+    /** Returns a geometry without curves. Caller takes ownership
+     * @param tolerance segmentation tolerance
+     * @param toleranceType maximum segmentation angle or maximum difference between approximation and curve*/
+    QgsAbstractGeometryV2* segmentize( double tolerance = M_PI_2 / 90, SegmentationToleranceType toleranceType = MaximumAngle ) const override;
 
     /** Returns approximate rotation angle for a vertex. Usually average angle between adjacent segments.
      * @param vertex the vertex id

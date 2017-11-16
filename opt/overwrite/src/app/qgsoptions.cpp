@@ -30,6 +30,8 @@
 #include "qgsscaleutils.h"
 #include "qgsnetworkaccessmanager.h"
 #include "qgsproject.h"
+#include "qgsdualview.h"
+#include "qgscrscache.h"
 
 #include "qgsattributetablefiltermodel.h"
 #include "qgsrasterformatsaveoptionswidget.h"
@@ -41,6 +43,7 @@
 #include "qgscolordialog.h"
 #include "qgsexpressioncontext.h"
 #include "qgsunittypes.h"
+#include "qgsclipboard.h"
 
 #include <QInputDialog>
 #include <QFileDialog>
@@ -70,11 +73,20 @@
  * \class QgsOptions - Set user options and preferences
  * Constructor
  */
-QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl ) :
-    QgsOptionsDialogBase( "Options", parent, fl ),
-    mSettings( nullptr )
+QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl )
+    : QgsOptionsDialogBase( "Options", parent, fl )
+    , mSettings( nullptr )
 {
   setupUi( this );
+
+#ifdef Q_OS_LINUX
+  /*
+   * NextGIS. Disable option for Ubuntu
+   */
+  cbxCheckVersion->setVisible(false);
+  line_2->setVisible(false);
+  horizontalLayout_29->addWidget(new QLabel(this));
+#endif
 
   // QgsOptionsDialogBase handles saving/restoring of geometry, splitter and current tab states,
   // switching vertical tabs between icon/text to icon-only modes (splitter collapsed to left),
@@ -328,6 +340,11 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl ) :
   cmbAttrTableBehaviour->addItem( tr( "Show features visible on map" ), QgsAttributeTableFilterModel::ShowVisible );
   cmbAttrTableBehaviour->setCurrentIndex( cmbAttrTableBehaviour->findData( mSettings->value( "/qgis/attributeTableBehaviour", QgsAttributeTableFilterModel::ShowAll ).toInt() ) );
 
+  mAttrTableViewComboBox->clear();
+  mAttrTableViewComboBox->addItem( tr( "Remember last view" ), -1 );
+  mAttrTableViewComboBox->addItem( tr( "Table view" ), QgsDualView::AttributeTable );
+  mAttrTableViewComboBox->addItem( tr( "Form view" ), QgsDualView::AttributeEditor );
+  mAttrTableViewComboBox->setCurrentIndex( mAttrTableViewComboBox->findData( mSettings->value( "/qgis/attributeTableView", -1 ).toInt() ) );
 
   spinBoxAttrTableRowCache->setValue( mSettings->value( "/qgis/attributeTableRowCache", 10000 ).toInt() );
   spinBoxAttrTableRowCache->setSpecialValueText( tr( "All" ) );
@@ -379,7 +396,7 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl ) :
     radUseGlobalProjection->setChecked( true );
   }
   QString myLayerDefaultCrs = mSettings->value( "/Projections/layerDefaultCrs", GEO_EPSG_CRS_AUTHID ).toString();
-  mLayerDefaultCrs.createFromOgcWmsCrs( myLayerDefaultCrs );
+  mLayerDefaultCrs = QgsCRSCache::instance()->crsByOgcWmsCrs( myLayerDefaultCrs );
   leLayerGlobalCrs->setCrs( mLayerDefaultCrs );
 
   //on the fly CRS transformation settings
@@ -398,7 +415,7 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl ) :
   }
 
   QString myDefaultCrs = mSettings->value( "/Projections/projectDefaultCrs", GEO_EPSG_CRS_AUTHID ).toString();
-  mDefaultCrs.createFromOgcWmsCrs( myDefaultCrs );
+  mDefaultCrs = QgsCRSCache::instance()->crsByOgcWmsCrs( myDefaultCrs );
   leProjectGlobalCrs->setCrs( mDefaultCrs );
   leProjectGlobalCrs->setOptionVisible( QgsProjectionSelectionWidget::DefaultCrs, false );
 
@@ -453,7 +470,10 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl ) :
 
   // Set the units for measuring
   mDistanceUnitsComboBox->addItem( tr( "Meters" ), QGis::Meters );
+  mDistanceUnitsComboBox->addItem( tr( "Kilometers" ), QGis::Kilometers );
   mDistanceUnitsComboBox->addItem( tr( "Feet" ), QGis::Feet );
+  mDistanceUnitsComboBox->addItem( tr( "Yards" ), QGis::Yards );
+  mDistanceUnitsComboBox->addItem( tr( "Miles" ), QGis::Miles );
   mDistanceUnitsComboBox->addItem( tr( "Nautical miles" ), QGis::NauticalMiles );
   mDistanceUnitsComboBox->addItem( tr( "Degrees" ), QGis::Degrees );
   mDistanceUnitsComboBox->addItem( tr( "Map units" ), QGis::UnknownUnit );
@@ -566,10 +586,43 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl ) :
   mSimplifyDrawingSpinBox->setValue( mSettings->value( "/qgis/simplifyDrawingTol", QGis::DEFAULT_MAPTOPIXEL_THRESHOLD ).toFloat() );
   mSimplifyDrawingAtProvider->setChecked( !mSettings->value( "/qgis/simplifyLocal", true ).toBool() );
 
+  //segmentation tolerance type
+  mToleranceTypeComboBox->addItem( tr( "Maximum angle" ), 0 );
+  mToleranceTypeComboBox->addItem( tr( "Maximum difference" ), 1 );
+  int toleranceType = mSettings->value( "/qgis/segmentationToleranceType", "0" ).toInt();
+  int toleranceTypeIndex = mToleranceTypeComboBox->findData( toleranceType );
+  if ( toleranceTypeIndex != -1 )
+  {
+    mToleranceTypeComboBox->setCurrentIndex( toleranceTypeIndex );
+  }
+
+  double tolerance = mSettings->value( "/qgis/segmentationTolerance", "0.01745" ).toDouble();
+  if ( toleranceType == 0 )
+  {
+    tolerance = tolerance * 180.0 / M_PI; //value shown to the user is degree, not rad
+  }
+  mSegmentationToleranceSpinBox->setValue( tolerance );
+
   QStringList myScalesList = PROJECT_SCALES.split( ',' );
   myScalesList.append( "1:1" );
   mSimplifyMaximumScaleComboBox->updateScales( myScalesList );
   mSimplifyMaximumScaleComboBox->setScale( 1.0 / mSettings->value( "/qgis/simplifyMaxScale", 1 ).toFloat() );
+
+  // Magnifier
+  double magnifierMin = 100 * QgisGui::CANVAS_MAGNIFICATION_MIN;
+  double magnifierMax = 100 * QgisGui::CANVAS_MAGNIFICATION_MAX;
+  double magnifierVal = 100 * mSettings->value( "/qgis/magnifier_factor_default", 1.0 ).toDouble();
+  doubleSpinBoxMagnifierDefault->setRange( magnifierMin, magnifierMax );
+  doubleSpinBoxMagnifierDefault->setSingleStep( 50 );
+  doubleSpinBoxMagnifierDefault->setDecimals( 0 );
+  doubleSpinBoxMagnifierDefault->setSuffix( "%" );
+  doubleSpinBoxMagnifierDefault->setValue( magnifierVal );
+
+  // Default local simplification algorithm
+  mSimplifyAlgorithmComboBox->addItem( tr( "Distance" ), ( int )QgsVectorSimplifyMethod::Distance );
+  mSimplifyAlgorithmComboBox->addItem( tr( "SnapToGrid" ), ( int )QgsVectorSimplifyMethod::SnapToGrid );
+  mSimplifyAlgorithmComboBox->addItem( tr( "Visvalingam" ), ( int )QgsVectorSimplifyMethod::Visvalingam );
+  mSimplifyAlgorithmComboBox->setCurrentIndex( mSimplifyAlgorithmComboBox->findData( mSettings->value( "/qgis/simplifyAlgorithm", 0 ).toInt() ) );
 
   // Slightly awkard here at the settings value is true to use QImage,
   // but the checkbox is true to use QPixmap
@@ -586,8 +639,15 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl ) :
   cbxAddOracleDC->setChecked( mSettings->value( "/qgis/addOracleDC", false ).toBool() );
   cbxCompileExpressions->setChecked( mSettings->value( "/qgis/compileExpressions", true ).toBool() );
   cbxCreateRasterLegendIcons->setChecked( mSettings->value( "/qgis/createRasterLegendIcons", false ).toBool() );
-  cbxAutoTransaction->setChecked( QgisApp::instance()->autoTransaction() );
-  cbxCopyWKTGeomFromTable->setChecked( mSettings->value( "/qgis/copyGeometryAsWKT", true ).toBool() );
+
+  mComboCopyFeatureFormat->addItem( tr( "Plain text, no geometry" ), QgsClipboard::AttributesOnly );
+  mComboCopyFeatureFormat->addItem( tr( "Plain text, WKT geometry" ), QgsClipboard::AttributesWithWKT );
+  mComboCopyFeatureFormat->addItem( tr( "GeoJSON" ), QgsClipboard::GeoJSON );
+  if ( mSettings->contains( "/qgis/copyFeatureFormat" ) )
+    mComboCopyFeatureFormat->setCurrentIndex( mComboCopyFeatureFormat->findData( mSettings->value( "/qgis/copyFeatureFormat", true ).toInt() ) );
+  else
+    mComboCopyFeatureFormat->setCurrentIndex( mComboCopyFeatureFormat->findData( mSettings->value( "/qgis/copyGeometryAsWKT", true ).toBool() ?
+        QgsClipboard::AttributesWithWKT : QgsClipboard::AttributesOnly ) );
   leNullValue->setText( mSettings->value( "qgis/nullValue", "NULL" ).toString() );
   cbxIgnoreShapeEncoding->setChecked( mSettings->value( "/qgis/ignoreShapeEncoding", true ).toBool() );
   cbxCanvasRotation->setChecked( QgsMapCanvas::rotationEnabled() );
@@ -608,7 +668,6 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl ) :
   initContrastEnhancement( cboxContrastEnhancementAlgorithmMultiBandSingleByte, "multiBandSingleByte", "NoEnhancement" );
   initContrastEnhancement( cboxContrastEnhancementAlgorithmMultiBandMultiByte, "multiBandMultiByte", "StretchToMinimumMaximum" );
 
-  QString cumulativeCutText = tr( "Cumulative pixel count cut" );
   cboxContrastEnhancementLimits->addItem( tr( "Cumulative pixel count cut" ), "CumulativeCut" );
   cboxContrastEnhancementLimits->addItem( tr( "Minimum / maximum" ), "MinMax" );
   cboxContrastEnhancementLimits->addItem( tr( "Mean +/- standard deviation" ), "StdDev" );
@@ -676,7 +735,6 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl ) :
   }
   leTemplateFolder->setText( templateDirName );
 
-  cmbWheelAction->setCurrentIndex( mSettings->value( "/qgis/wheel_action", 2 ).toInt() );
   spinZoomFactor->setValue( mSettings->value( "/qgis/zoom_factor", 2 ).toDouble() );
 
   // predefined scales for scale combobox
@@ -781,7 +839,6 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl ) :
 
   //set elements in digitizing tab
   mLineWidthSpinBox->setValue( mSettings->value( "/qgis/digitizing/line_width", 1 ).toInt() );
-  QColor digitizingColor;
   myRed = mSettings->value( "/qgis/digitizing/line_color_red", 255 ).toInt();
   myGreen = mSettings->value( "/qgis/digitizing/line_color_green", 0 ).toInt();
   myBlue = mSettings->value( "/qgis/digitizing/line_color_blue", 0 ).toInt();
@@ -1132,6 +1189,7 @@ void QgsOptions::saveOptions()
   mSettings->setValue( "/qgis/checkVersion", cbxCheckVersion->isChecked() );
   mSettings->setValue( "/qgis/dockAttributeTable", cbxAttributeTableDocked->isChecked() );
   mSettings->setValue( "/qgis/attributeTableBehaviour", cmbAttrTableBehaviour->itemData( cmbAttrTableBehaviour->currentIndex() ) );
+  mSettings->setValue( "/qgis/attributeTableView", mAttrTableViewComboBox->itemData( mAttrTableViewComboBox->currentIndex() ) );
   mSettings->setValue( "/qgis/attributeTableRowCache", spinBoxAttrTableRowCache->value() );
   mSettings->setValue( "/qgis/promptForRasterSublayers", cmbPromptRasterSublayers->currentIndex() );
   mSettings->setValue( "/qgis/scanItemsInBrowser2",
@@ -1146,8 +1204,8 @@ void QgsOptions::saveOptions()
   mSettings->setValue( "/qgis/defaultLegendGraphicResolution", mLegendGraphicResolutionSpinBox->value() );
   bool createRasterLegendIcons = mSettings->value( "/qgis/createRasterLegendIcons", false ).toBool();
   mSettings->setValue( "/qgis/createRasterLegendIcons", cbxCreateRasterLegendIcons->isChecked() );
-  QgisApp::instance()->setAutoTransaction( cbxAutoTransaction->isChecked() );
-  mSettings->setValue( "/qgis/copyGeometryAsWKT", cbxCopyWKTGeomFromTable->isChecked() );
+  mSettings->setValue( "/qgis/copyFeatureFormat", mComboCopyFeatureFormat->itemData( mComboCopyFeatureFormat->currentIndex() ).toInt() );
+
   mSettings->setValue( "/qgis/new_layers_visible", chkAddedVisibility->isChecked() );
   mSettings->setValue( "/qgis/enable_anti_aliasing", chkAntiAliasing->isChecked() );
   mSettings->setValue( "/qgis/enable_render_caching", chkUseRenderCaching->isChecked() );
@@ -1170,9 +1228,23 @@ void QgsOptions::saveOptions()
     if ( mSimplifyDrawingSpinBox->value() > 1 ) simplifyHints |= QgsVectorSimplifyMethod::AntialiasingSimplification;
   }
   mSettings->setValue( "/qgis/simplifyDrawingHints", ( int ) simplifyHints );
+  mSettings->setValue( "/qgis/simplifyAlgorithm", mSimplifyAlgorithmComboBox->itemData( mSimplifyAlgorithmComboBox->currentIndex() ).toInt() );
   mSettings->setValue( "/qgis/simplifyDrawingTol", mSimplifyDrawingSpinBox->value() );
   mSettings->setValue( "/qgis/simplifyLocal", !mSimplifyDrawingAtProvider->isChecked() );
   mSettings->setValue( "/qgis/simplifyMaxScale", 1.0 / mSimplifyMaximumScaleComboBox->scale() );
+
+  // magnification
+  mSettings->setValue( "/qgis/magnifier_factor_default", doubleSpinBoxMagnifierDefault->value() / 100 );
+
+  //curve segmentation
+  int segmentationType = mToleranceTypeComboBox->itemData( mToleranceTypeComboBox->currentIndex() ).toInt();
+  mSettings->setValue( "/qgis/segmentationToleranceType", segmentationType );
+  double segmentationTolerance = mSegmentationToleranceSpinBox->value();
+  if ( segmentationType == 0 )
+  {
+    segmentationTolerance = segmentationTolerance / 180.0 * M_PI; //user sets angle tolerance in degrees, internal classes need value in rad
+  }
+  mSettings->setValue( "/qgis/segmentationTolerance", segmentationTolerance );
 
   // project
   mSettings->setValue( "/qgis/projOpenAtLaunch", mProjectOnLaunchCmbBx->currentIndex() );
@@ -1279,7 +1351,6 @@ void QgsOptions::saveOptions()
   mSettings->setValue( "/qgis/default_measure_color_green", myColor.green() );
   mSettings->setValue( "/qgis/default_measure_color_blue", myColor.blue() );
 
-  mSettings->setValue( "/qgis/wheel_action", cmbWheelAction->currentIndex() );
   mSettings->setValue( "/qgis/zoom_factor", spinZoomFactor->value() );
 
   //digitizing

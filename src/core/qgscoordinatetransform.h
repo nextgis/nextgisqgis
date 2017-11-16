@@ -19,6 +19,8 @@
 
 //qt includes
 #include <QObject>
+#include <QThreadStorage>
+#include <QReadWriteLock>
 
 //qgis includes
 #include "qgspoint.h"
@@ -34,6 +36,7 @@ class QPolygonF;
 #include <vector>
 
 typedef void* projPJ;
+typedef void* projCtx;
 class QString;
 
 /** \ingroup core
@@ -159,11 +162,11 @@ class CORE_EXPORT QgsCoordinateTransform : public QObject
     // C style arrays.
     void transformInPlace( double& x, double& y, double &z, TransformDirection direction = ForwardTransform ) const;
 
-    // @note not available in python bindings
+    //! @note not available in python bindings
     void transformInPlace( float& x, float& y, double &z, TransformDirection direction = ForwardTransform ) const;
-    // @note not available in python bindings
+    //! @note not available in python bindings
     void transformInPlace( float& x, float& y, float& z, TransformDirection direction = ForwardTransform ) const;
-    // @note not available in python bindings
+    //! @note not available in python bindings
     void transformInPlace( QVector<float>& x, QVector<float>& y, QVector<float>& z,
                            TransformDirection direction = ForwardTransform ) const;
 
@@ -274,15 +277,26 @@ class CORE_EXPORT QgsCoordinateTransform : public QObject
      */
     QgsCoordinateReferenceSystem mDestCRS;
 
-    /*!
-     * Proj4 data structure of the source projection (layer coordinate system)
-     */
-    projPJ mSourceProjection;
+    QString mSourceProjString;
+    QString mDestProjString;
 
-    /*!
-     * Proj4 data structure of the destination projection (map canvas coordinate system)
-     */
-    projPJ mDestinationProjection;
+    class QgsProjContextStore
+    {
+      public:
+
+        QgsProjContextStore();
+        ~QgsProjContextStore();
+
+        projCtx get() { return context; }
+
+      private:
+
+        projCtx context;
+    };
+
+    static QThreadStorage< QgsProjContextStore* > mProjContext;
+    mutable QReadWriteLock mProjLock;
+    mutable QMap< uintptr_t, QPair< projPJ, projPJ > > mProjProjections;
 
     int mSourceDatumTransform;
     int mDestinationDatumTransform;
@@ -297,6 +311,9 @@ class CORE_EXPORT QgsCoordinateTransform : public QObject
     static void searchDatumTransform( const QString& sql, QList< int >& transforms );
     /** In certain situations, null grid shifts have to be added to src / dst proj string*/
     void addNullGridShifts( QString& srcProjString, QString& destProjString );
+
+    QPair< projPJ, projPJ > threadLocalProjData() const;
+    void freeProj();
 };
 
 //! Output stream operator

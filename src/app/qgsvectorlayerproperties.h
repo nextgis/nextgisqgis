@@ -42,6 +42,9 @@ class QgsLabelingWidget;
 class QgsDiagramProperties;
 class QgsFieldsProperties;
 class QgsRendererV2PropertiesDialog;
+class QgsMapLayerConfigWidgetFactory;
+class QgsMapLayerConfigWidget;
+class QgsPanelWidget;
 
 class APP_EXPORT QgsVectorLayerProperties : public QgsOptionsDialogBase, private Ui::QgsVectorLayerPropertiesBase
 {
@@ -73,6 +76,9 @@ class APP_EXPORT QgsVectorLayerProperties : public QgsOptionsDialogBase, private
       @param name attribute name
       @return false in case of a non-existing attribute.*/
     bool deleteAttribute( int attr );
+
+    /** Adds a properties page factory to the vector layer properties dialog. */
+    void addPropertiesPageFactory( QgsMapLayerConfigWidgetFactory *factory );
 
   public slots:
 
@@ -118,6 +124,7 @@ class APP_EXPORT QgsVectorLayerProperties : public QgsOptionsDialogBase, private
 
     void on_mButtonAddJoin_clicked();
     void on_mButtonEditJoin_clicked();
+    void on_mJoinTreeWidget_itemDoubleClicked( QTreeWidgetItem *item, int column );
     void on_mButtonRemoveJoin_clicked();
 
     void on_mSimplifyDrawingGroupBox_toggled( bool checked );
@@ -160,7 +167,9 @@ class APP_EXPORT QgsVectorLayerProperties : public QgsOptionsDialogBase, private
 
     void updateSymbologyPage();
 
-    QgsVectorLayer *layer;
+    void setPbnQueryBuilderEnabled();
+
+    QgsVectorLayer *mLayer;
 
     bool mMetadataFilled;
 
@@ -179,7 +188,7 @@ class APP_EXPORT QgsVectorLayerProperties : public QgsOptionsDialogBase, private
     /** Label dialog. If apply is pressed, options are applied to vector's QgsLabel */
     QgsLabelDialog* labelDialog;
     /** Actions dialog. If apply is pressed, the actions are stored for later use */
-    QgsAttributeActionDialog* actionDialog;
+    QgsAttributeActionDialog* mActionDialog;
     /** Diagram dialog. If apply is pressed, options are applied to vector's diagrams*/
     QgsDiagramProperties* diagramPropertiesDialog;
     /** Fields dialog. If apply is pressed, options are applied to vector's diagrams*/
@@ -188,17 +197,20 @@ class APP_EXPORT QgsVectorLayerProperties : public QgsOptionsDialogBase, private
     //! List of joins of a layer at the time of creation of the dialog. Used to return joins to previous state if dialog is cancelled
     QList< QgsVectorJoinInfo > mOldJoins;
 
+    //! A list of additional pages provided by plugins
+    QList<QgsMapLayerConfigWidget*> mLayerPropertiesPages;
+
     /** Previous layer style. Used to reset style to previous state if new style
      * was loaded but dialog is cancelled */
     QgsMapLayerStyle mOldStyle;
 
     void initDiagramTab();
 
-    /** Buffer pixmap which takes the picture of renderers before they are assigned to the vector layer*/
-    //QPixmap bufferPixmap;
-
     /** Adds a new join to mJoinTreeWidget*/
     void addJoinToTreeWidget( const QgsVectorJoinInfo& join , const int insertIndex = -1 );
+
+  private slots:
+    void openPanel( QgsPanelWidget* panel );
 };
 
 inline QString QgsVectorLayerProperties::displayName()

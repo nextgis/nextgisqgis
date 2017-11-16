@@ -288,13 +288,13 @@ void QgsInvertedPolygonRenderer::stopRender( QgsRenderContext& context )
       Q_FOREACH ( QgsGeometry* geom, cit.geometries )
       {
         QgsMultiPolygon multi;
-        if (( geom->wkbType() == QGis::WKBPolygon ) ||
-            ( geom->wkbType() == QGis::WKBPolygon25D ) )
+        QgsWKBTypes::Type type = QgsWKBTypes::flatType( geom->geometry()->wkbType() );
+
+        if (( type == QgsWKBTypes::Polygon ) || ( type == QgsWKBTypes::CurvePolygon ) )
         {
           multi.append( geom->asPolygon() );
         }
-        else if (( geom->wkbType() == QGis::WKBMultiPolygon ) ||
-                 ( geom->wkbType() == QGis::WKBMultiPolygon25D ) )
+        else if (( type == QgsWKBTypes::MultiPolygon ) || ( type == QgsWKBTypes::MultiSurface ) )
         {
           multi = geom->asMultiPolygon();
         }
@@ -505,6 +505,14 @@ bool QgsInvertedPolygonRenderer::willRenderFeature( QgsFeature& feat, QgsRenderC
     return false;
   }
   return mSubRenderer->willRenderFeature( feat, context );
+}
+
+QgsLegendSymbolListV2 QgsInvertedPolygonRenderer::legendSymbolItemsV2() const
+{
+  if ( !mSubRenderer )
+    return QgsFeatureRendererV2::legendSymbolItemsV2();
+
+  return mSubRenderer->legendSymbolItemsV2();
 }
 
 QgsInvertedPolygonRenderer* QgsInvertedPolygonRenderer::convertFromRenderer( const QgsFeatureRendererV2 *renderer )

@@ -17,6 +17,7 @@
 ***************************************************************************
 """
 
+
 __author__ = 'Victor Olaya'
 __date__ = 'August 2012'
 __copyright__ = '(C) 2012, Victor Olaya'
@@ -25,38 +26,56 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
-from PyQt4.QtCore import Qt, QUrl, QMetaObject
-from PyQt4.QtGui import (QDialog,
-                         QDialogButtonBox,
-                         QLabel,
-                         QLineEdit,
-                         QFrame,
-                         QPushButton,
-                         QSizePolicy,
-                         QVBoxLayout,
-                         QHBoxLayout,
-                         QTabWidget,
-                         QWidget,
-                         QScrollArea,
-                         QComboBox,
-                         QTableWidgetItem,
-                         QMessageBox,
-                         QTextBrowser)
-from PyQt4.QtNetwork import QNetworkRequest, QNetworkReply
+from qgis.PyQt.QtCore import Qt, QUrl, QMetaObject
+from qgis.PyQt.QtWidgets import (QDialog, QDialogButtonBox, QLabel, QLineEdit,
+                                 QFrame, QPushButton, QSizePolicy, QVBoxLayout,
+                                 QHBoxLayout, QTabWidget, QWidget, QScrollArea,
+                                 QComboBox, QTableWidgetItem, QMessageBox,
+                                 QTextBrowser)
+from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 
 from qgis.core import QgsNetworkAccessManager
 
-from processing.modeler.ModelerAlgorithm import ValueFromInput, \
-    ValueFromOutput, Algorithm, ModelerOutput
+from qgis.gui import QgsMessageBar
+
 from processing.gui.CrsSelectionPanel import CrsSelectionPanel
 from processing.gui.MultipleInputPanel import MultipleInputPanel
 from processing.gui.FixedTablePanel import FixedTablePanel
 from processing.gui.RangePanel import RangePanel
 from processing.gui.GeometryPredicateSelectionPanel import \
     GeometryPredicateSelectionPanel
+from processing.core.parameters import (ParameterExtent,
+                                        ParameterRaster,
+                                        ParameterVector,
+                                        ParameterBoolean,
+                                        ParameterTable,
+                                        ParameterFixedTable,
+                                        ParameterMultipleInput,
+                                        ParameterSelection,
+                                        ParameterRange,
+                                        ParameterNumber,
+                                        ParameterString,
+                                        ParameterCrs,
+                                        ParameterTableField,
+                                        ParameterTableMultipleField,
+                                        ParameterFile,
+                                        ParameterPoint,
+                                        ParameterGeometryPredicate)
+from processing.core.outputs import (OutputRaster,
+                                     OutputVector,
+                                     OutputTable,
+                                     OutputHTML,
+                                     OutputFile,
+                                     OutputDirectory,
+                                     OutputNumber,
+                                     OutputString,
+                                     OutputExtent)
+
+from processing.modeler.ModelerAlgorithm import (ValueFromInput,
+                                                 ValueFromOutput,
+                                                 Algorithm,
+                                                 ModelerOutput)
 from processing.modeler.MultilineTextPanel import MultilineTextPanel
-from processing.core.parameters import ParameterExtent, ParameterRaster, ParameterVector, ParameterBoolean, ParameterTable, ParameterFixedTable, ParameterMultipleInput, ParameterSelection, ParameterRange, ParameterNumber, ParameterString, ParameterCrs, ParameterTableField, ParameterFile, ParameterGeometryPredicate
-from processing.core.outputs import OutputRaster, OutputVector, OutputTable, OutputHTML, OutputFile, OutputDirectory, OutputNumber, OutputString, OutputExtent
 
 
 class ModelerParametersDialog(QDialog):
@@ -68,13 +87,13 @@ class ModelerParametersDialog(QDialog):
     def __init__(self, alg, model, algName=None):
         QDialog.__init__(self)
         self.setModal(True)
-        #The algorithm to define in this dialog. It is an instance of GeoAlgorithm
+        # The algorithm to define in this dialog. It is an instance of GeoAlgorithm
         self._alg = alg
-        #The resulting algorithm after the user clicks on OK. it is an instance of the container Algorithm class
+        # The resulting algorithm after the user clicks on OK. it is an instance of the container Algorithm class
         self.alg = None
-        #The model this algorithm is going to be added to
+        # The model this algorithm is going to be added to
         self.model = model
-        #The name of the algorithm in the model, in case we are editing it and not defining it for the first time
+        # The name of the algorithm in the model, in case we are editing it and not defining it for the first time
         self._algName = algName
         self.setupUi()
         self.params = None
@@ -97,6 +116,10 @@ class ModelerParametersDialog(QDialog):
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setSpacing(5)
         self.verticalLayout.setMargin(20)
+
+        self.bar = QgsMessageBar()
+        self.bar.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.verticalLayout.addWidget(self.bar)
 
         hLayout = QHBoxLayout()
         hLayout.setSpacing(5)
@@ -128,7 +151,9 @@ class ModelerParametersDialog(QDialog):
                 continue
             desc = param.description
             if isinstance(param, ParameterExtent):
-                desc += '(xmin, xmax, ymin, ymax)'
+                desc += self.tr('(xmin, xmax, ymin, ymax)')
+            if isinstance(param, ParameterPoint):
+                desc += self.tr('(x, y)')
             label = QLabel(desc)
             self.labels[param.name] = label
             widget = self.getWidgetFromParameter(param)
@@ -187,7 +212,6 @@ class ModelerParametersDialog(QDialog):
         self.txtHelp = QTextBrowser()
 
         html = None
-        url = None
         isText, algHelp = self._alg.help()
         if algHelp is not None:
             algHelp = algHelp if isText else QUrl(algHelp)
@@ -211,6 +235,16 @@ class ModelerParametersDialog(QDialog):
         self.buttonBox.rejected.connect(self.cancelPressed)
         QMetaObject.connectSlotsByName(self)
 
+    def requestFinished(self):
+        """Change the webview HTML content"""
+        reply = self.sender()
+        if reply.error() != QNetworkReply.NoError:
+            html = self.tr('<h2>No help available for this algorithm</h2><p>{}</p>'.format(reply.errorString()))
+        else:
+            html = unicode(reply.readAll())
+        reply.deleteLater()
+        self.txtHelp.setHtml(html)
+
     def getAvailableDependencies(self):
         if self._algName is None:
             dependent = []
@@ -221,16 +255,6 @@ class ModelerParametersDialog(QDialog):
             if alg.name not in dependent:
                 opts.append(alg)
         return opts
-
-    def requestFinished(self):
-        """Change the webview HTML content"""
-        reply = self.sender()
-        if reply.error() != QNetworkReply.NoError:
-            html = self.tr('<h2>No help available for this algorithm</h2><p>{}</p>'.format(reply.errorString()))
-        else:
-            html = unicode(reply.readAll())
-        reply.deleteLater()
-        self.txtHelp.setHtml(html)
 
     def getDependenciesPanel(self):
         return MultipleInputPanel([alg.algorithm.name for alg in self.getAvailableDependencies()])
@@ -345,6 +369,12 @@ class ModelerParametersDialog(QDialog):
             fields = self.getAvailableValuesOfType(ParameterTableField, None)
             for f in fields:
                 item.addItem(self.resolveValueDescription(f), f)
+        elif isinstance(param, ParameterTableMultipleField):
+            item = QComboBox()
+            item.setEditable(True)
+            fields = self.getAvailableValuesOfType(ParameterTableMultipleField, None)
+            for f in fields:
+                item.addItem(self.resolveValueDescription(f), f)
         elif isinstance(param, ParameterNumber):
             item = QComboBox()
             item.setEditable(True)
@@ -364,6 +394,13 @@ class ModelerParametersDialog(QDialog):
                 item.addItem(self.resolveValueDescription(ex), ex)
             if not self.canUseAutoExtent():
                 item.setEditText(unicode(param.default))
+        elif isinstance(param, ParameterPoint):
+            item = QComboBox()
+            item.setEditable(True)
+            points = self.getAvailableValuesOfType(ParameterPoint)
+            for p in points:
+                item.addItem(self.resolveValueDescription(p), p)
+            item.setEditText(unicode(param.default))
         elif isinstance(param, ParameterFile):
             item = QComboBox()
             item.setEditable(True)
@@ -456,7 +493,8 @@ class ModelerParametersDialog(QDialog):
                         ParameterNumber,
                         ParameterBoolean,
                         ParameterExtent,
-                        ParameterFile
+                        ParameterFile,
+                        ParameterPoint
                 )):
                     self.setComboBoxValue(widget, value, param)
                 elif isinstance(param, ParameterString):
@@ -502,6 +540,8 @@ class ModelerParametersDialog(QDialog):
             if param.hidden:
                 continue
             if not self.setParamValue(alg, param, self.valueItems[param.name]):
+                self.bar.pushMessage("Error", "Wrong or missing value for parameter '%s'" % param.description,
+                                     level=QgsMessageBar.WARNING)
                 return None
         for output in outputs:
             if not output.hidden:
@@ -623,6 +663,29 @@ class ModelerParametersDialog(QDialog):
             alg.params[param.name] = value
         return True
 
+    def setParamPointValue(self, alg, param, widget):
+        idx = widget.findText(widget.currentText())
+        if idx < 0:
+            s = unicode(widget.currentText()).strip()
+            if s:
+                try:
+                    tokens = s.split(',')
+                    if len(tokens) != 2:
+                        return False
+                    for token in tokens:
+                        float(token)
+                except:
+                    return False
+            elif param.optional:
+                s = None
+            else:
+                return False
+            alg.params[param.name] = [s]
+        else:
+            value = widget.itemData(widget.currentIndex())
+            alg.params[param.name] = value
+        return True
+
     def setParamValue(self, alg, param, widget):
         if isinstance(param, (ParameterRaster, ParameterVector,
                               ParameterTable)):
@@ -640,6 +703,8 @@ class ModelerParametersDialog(QDialog):
             return self.setParamNumberValue(alg, param, widget)
         elif isinstance(param, ParameterExtent):
             return self.setParamExtentValue(alg, param, widget)
+        elif isinstance(param, ParameterPoint):
+            return self.setParamPointValue(alg, param, widget)
         elif isinstance(param, ParameterFile):
             return self.setParamFileValue(alg, param, widget)
         elif isinstance(param, ParameterSelection):
@@ -660,7 +725,8 @@ class ModelerParametersDialog(QDialog):
                 return False
             alg.params[param.name] = ParameterFixedTable.tableToString(table)
             return True
-        elif isinstance(param, ParameterTableField):
+        elif isinstance(param, (ParameterTableField,
+                                ParameterTableMultipleField)):
             return self.setParamTableFieldValue(alg, param, widget)
         elif isinstance(param, ParameterMultipleInput):
             if param.datatype == ParameterMultipleInput.TYPE_VECTOR_ANY:
@@ -683,9 +749,6 @@ class ModelerParametersDialog(QDialog):
         self.alg = self.createAlgorithm()
         if self.alg is not None:
             self.close()
-        else:
-            QMessageBox.warning(self, self.tr('Unable to add algorithm'),
-                                self.tr('Wrong or missing parameter values'))
 
     def cancelPressed(self):
         self.alg = None

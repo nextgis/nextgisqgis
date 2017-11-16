@@ -18,7 +18,6 @@
 #include "qgsapplication.h"
 #include "qgscomposermodel.h"
 #include "qgscomposition.h"
-#include "qgscomposeritem.h"
 #include "qgspaperitem.h"
 #include "qgslogger.h"
 #include <QApplication>
@@ -158,6 +157,9 @@ QVariant QgsComposerModel::data( const QModelIndex &index, int role ) const
     case Qt::UserRole:
       //store item uuid in userrole so we can later get the QModelIndex for a specific item
       return item->uuid();
+    case Qt::UserRole+1:
+      //user role stores reference in column object
+      return qVariantFromValue( qobject_cast<QObject *>( item ) );
 
     case Qt::TextAlignmentRole:
       return Qt::AlignLeft & Qt::AlignVCenter;
@@ -208,19 +210,16 @@ bool QgsComposerModel::setData( const QModelIndex & index, const QVariant & valu
     case Visibility:
       //first column is item visibility
       item->setVisibility( value.toBool() );
-      emit dataChanged( index, index );
       return true;
 
     case LockStatus:
       //second column is item lock state
       item->setPositionLock( value.toBool() );
-      emit dataChanged( index, index );
       return true;
 
     case ItemId:
       //last column is item id
       item->setId( value.toString() );
-      emit dataChanged( index, index );
       return true;
   }
 
@@ -234,7 +233,7 @@ QVariant QgsComposerModel::headerData( int section, Qt::Orientation orientation,
     lockIcon = QgsApplication::getThemeIcon( "/locked.svg" );
   static QIcon showIcon;
   if ( showIcon.isNull() )
-    showIcon = QgsApplication::getThemeIcon( "/mActionShowAllLayers.png" );
+    showIcon = QgsApplication::getThemeIcon( "/mActionShowAllLayers.svg" );
 
   switch ( role )
   {
@@ -945,3 +944,74 @@ void QgsComposerModel::setSelected( const QModelIndex &index )
 
   mComposition->setSelectedItem( item );
 }
+
+
+//
+// QgsComposerFilteredModel
+//
+
+QgsComposerProxyModel::QgsComposerProxyModel( QgsComposition *composition, QObject *parent )
+    : QSortFilterProxyModel( parent )
+    , mComposition( composition )
+    , mItemTypeFilter( QgsComposerItem::ComposerItem )
+{
+  if ( mComposition )
+    setSourceModel( mComposition->itemsModel() );
+
+  // WARNING: the below code triggers a Qt bug (tested on Qt 4.8, can't reproduce on Qt5) whenever the QgsComposerModel source model
+  // calls beginInsertRows - since it's non functional anyway it's now disabled
+  // PLEASE verify that the Qt issue is fixed before reenabling
+
+  setDynamicSortFilter( true );
+#if 0
+  // TODO doesn't seem to work correctly - not updated when item changes
+  setSortLocaleAware( true );
+  sort( QgsComposerModel::ItemId );
+#endif
+}
+
+QgsComposerItem *QgsComposerProxyModel::itemFromSourceIndex( const QModelIndex &sourceIndex ) const
+{
+  if ( !mComposition )
+    return nullptr;
+
+  //get column corresponding to an index from the source model
+  QVariant itemAsVariant = sourceModel()->data( sourceIndex, Qt::UserRole + 1 );
+  return qobject_cast<QgsComposerItem *>( itemAsVariant.value<QObject *>() );
+}
+
+void QgsComposerProxyModel::setFilterType( QgsComposerItem::ItemType itemType )
+{
+  mItemTypeFilter = itemType;
+  invalidate();
+}
+
+void QgsComposerProxyModel::setExceptedItemList( const QList< QgsComposerItem*>& exceptList )
+{
+  if ( mExceptedList == exceptList )
+    return;
+
+  mExceptedList = exceptList;
+  invalidateFilter();
+}
+
+bool QgsComposerProxyModel::filterAcceptsRow( int source_row, const QModelIndex &source_parent ) const
+{
+  //get QgsComposerItem corresponding to row
+  QModelIndex index = sourceModel()->index( source_row, 0, source_parent );
+  QgsComposerItem* item = itemFromSourceIndex( index );
+
+  if ( !item )
+    return false;
+
+  // specific exceptions
+  if ( mExceptedList.contains( item ) )
+    return false;
+
+  // filter by type
+  if ( mItemTypeFilter != QgsComposerItem::ComposerItem && item->type() != mItemTypeFilter )
+    return false;
+
+  return true;
+}
+

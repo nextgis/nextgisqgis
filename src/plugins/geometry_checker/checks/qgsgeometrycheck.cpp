@@ -1,8 +1,16 @@
 /***************************************************************************
- *  qgsgeometrycheck.h                                                     *
- *  -------------------                                                    *
- *  copyright            : (C) 2014 by Sandro Mani / Sourcepole AG         *
- *  email                : smani@sourcepole.ch                             *
+    qgsgeometrycheck.cpp
+    ---------------------
+    begin                : September 2015
+    copyright            : (C) 2014 by Sandro Mani / Sourcepole AG
+    email                : smani at sourcepole dot ch
+ ***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
  ***************************************************************************/
 
 #include "qgsgeometrycollectionv2.h"
@@ -53,13 +61,13 @@ QgsGeometryCheckError::QgsGeometryCheckError( const QgsGeometryCheck* check,
     const QgsPointV2& errorLocation,
     QgsVertexId vidx,
     const QVariant& value , ValueType valueType )
-    : mCheck( check ),
-    mFeatureId( featureId ),
-    mErrorLocation( errorLocation ),
-    mVidx( vidx ),
-    mValue( value ),
-    mValueType( valueType ),
-    mStatus( StatusPending )
+    : mCheck( check )
+    , mFeatureId( featureId )
+    , mErrorLocation( errorLocation )
+    , mVidx( vidx )
+    , mValue( value )
+    , mValueType( valueType )
+    , mStatus( StatusPending )
 {}
 
 QgsGeometryCheckError::~QgsGeometryCheckError()
@@ -70,7 +78,10 @@ QgsAbstractGeometryV2 *QgsGeometryCheckError::geometry()
 {
   QgsFeature f;
   if ( mCheck->getFeaturePool()->get( featureId(), f ) && f.geometry() )
-    return f.geometry()->geometry()->clone();
+  {
+    QgsAbstractGeometryV2* geom = f.geometry()->geometry();
+    return mVidx.part >= 0 ? QgsGeomUtils::getGeomPart( geom, mVidx.part )->clone() : geom->clone();
+  }
   return nullptr;
 }
 

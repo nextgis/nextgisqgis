@@ -27,9 +27,6 @@
 #include <QSettings>
 #include <QScrollArea>
 
-QIcon QgsCollapsibleGroupBoxBasic::mCollapseIcon;
-QIcon QgsCollapsibleGroupBoxBasic::mExpandIcon;
-
 QgsCollapsibleGroupBoxBasic::QgsCollapsibleGroupBoxBasic( QWidget *parent )
     : QGroupBox( parent )
 {
@@ -45,12 +42,10 @@ QgsCollapsibleGroupBoxBasic::QgsCollapsibleGroupBoxBasic( const QString &title,
 
 QgsCollapsibleGroupBoxBasic::~QgsCollapsibleGroupBoxBasic()
 {
-  //QgsDebugMsg( "Entered" );
 }
 
 void QgsCollapsibleGroupBoxBasic::init()
 {
-  //QgsDebugMsg( "Entered" );
   // variables
   mCollapsed = false;
   mInitFlat = false;
@@ -65,11 +60,8 @@ void QgsCollapsibleGroupBoxBasic::init()
   mTitleClicked = false;
 
   // init icons
-  if ( mCollapseIcon.isNull() )
-  {
-    mCollapseIcon = QgsApplication::getThemeIcon( "/mIconCollapse.png" );
-    mExpandIcon = QgsApplication::getThemeIcon( "/mIconExpand.png" );
-  }
+  mCollapseIcon = QgsApplication::getThemeIcon( "/mIconCollapse.png" );
+  mExpandIcon = QgsApplication::getThemeIcon( "/mIconExpand.png" );
 
   // collapse button
   mCollapseButton = new QgsGroupBoxCollapseButton( this );
@@ -89,7 +81,6 @@ void QgsCollapsibleGroupBoxBasic::init()
 
 void QgsCollapsibleGroupBoxBasic::showEvent( QShowEvent * event )
 {
-  QgsDebugMsg( "Entered" );
   // initialise widget on first show event only
   if ( mShown )
   {
@@ -484,21 +475,22 @@ void QgsCollapsibleGroupBoxBasic::collapseExpandFixes()
 // ----
 
 QgsCollapsibleGroupBox::QgsCollapsibleGroupBox( QWidget *parent, QSettings* settings )
-    : QgsCollapsibleGroupBoxBasic( parent ), mSettings( settings )
+    : QgsCollapsibleGroupBoxBasic( parent )
+    , mSettings( settings )
 {
   init();
 }
 
 QgsCollapsibleGroupBox::QgsCollapsibleGroupBox( const QString &title,
     QWidget *parent, QSettings* settings )
-    : QgsCollapsibleGroupBoxBasic( title, parent ), mSettings( settings )
+    : QgsCollapsibleGroupBoxBasic( title, parent )
+    , mSettings( settings )
 {
   init();
 }
 
 QgsCollapsibleGroupBox::~QgsCollapsibleGroupBox()
 {
-  //QgsDebugMsg( "Entered" );
   saveState();
   if ( mDelSettings ) // local settings obj to delete
     delete mSettings;
@@ -516,7 +508,6 @@ void QgsCollapsibleGroupBox::setSettings( QSettings* settings )
 
 void QgsCollapsibleGroupBox::init()
 {
-  //QgsDebugMsg( "Entered" );
   // use pointer to app qsettings if no custom qsettings specified
   // custom qsettings object may be from Python plugin
   mDelSettings = false;
@@ -535,7 +526,6 @@ void QgsCollapsibleGroupBox::init()
 
 void QgsCollapsibleGroupBox::showEvent( QShowEvent * event )
 {
-  //QgsDebugMsg( "Entered" );
   // initialise widget on first show event only
   if ( mShown )
   {
@@ -576,7 +566,6 @@ QString QgsCollapsibleGroupBox::saveKey() const
 
 void QgsCollapsibleGroupBox::loadState()
 {
-  //QgsDebugMsg( "Entered" );
   if ( !mSettings )
     return;
 
@@ -605,7 +594,6 @@ void QgsCollapsibleGroupBox::loadState()
 
 void QgsCollapsibleGroupBox::saveState() const
 {
-  //QgsDebugMsg( "Entered" );
   if ( !mSettings )
     return;
 

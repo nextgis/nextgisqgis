@@ -28,10 +28,14 @@ __revision__ = '$Format:%H$'
 import os
 import subprocess
 import platform
-from PyQt4.QtCore import QSettings
+
+from osgeo import gdal
+
+from qgis.PyQt.QtCore import QSettings
 from qgis.core import QgsApplication, QgsVectorFileWriter
-from processing.core.ProcessingConfig import ProcessingConfig
 from processing.core.ProcessingLog import ProcessingLog
+from processing.core.ProcessingConfig import ProcessingConfig
+from processing.core.SilentProgress import SilentProgress
 from processing.tools.system import isWindows, isMac
 
 try:
@@ -48,45 +52,56 @@ class GdalUtils:
     supportedRasters = None
 
     @staticmethod
-    def runGdal(commands, progress):
-        envval = unicode(os.getenv('PATH'))
+    def runGdal(commands, progress=None):
+        if progress is None:
+            progress = SilentProgress()
+        envval = os.getenv('PATH')
         # We need to give some extra hints to get things picked up on OS X
-        if platform.system() == 'Darwin':
-            if os.path.isfile(os.path.join(QgsApplication.prefixPath(), "bin", "gdalinfo")):
-                # Looks like there's a bundled gdal. Let's use it.
-                os.environ['PATH'] = "%s%s%s" % (os.path.join(QgsApplication.prefixPath(), "bin"), os.pathsep, envval)
-                os.environ['DYLD_LIBRARY_PATH'] = os.path.join(QgsApplication.prefixPath(), "lib")
-            else:
-                # Nothing internal. Let's see if we can find it elsewhere.
-                settings = QSettings()
-                path = unicode(settings.value('/GdalTools/gdalPath', ''))
-                envval += '%s%s' % (os.pathsep, path)
-                os.putenv('PATH', envval)
+        isDarwin = False
+        try:
+            isDarwin = platform.system() == 'Darwin'
+        except IOError: # https://travis-ci.org/m-kuhn/QGIS#L1493-L1526
+            pass
+        if isDarwin and os.path.isfile(os.path.join(QgsApplication.prefixPath(), "bin", "gdalinfo")):
+            # Looks like there's a bundled gdal. Let's use it.
+            os.environ['PATH'] = "{}{}{}".format(os.path.join(QgsApplication.prefixPath(), "bin"), os.pathsep, envval)
+            os.environ['DYLD_LIBRARY_PATH'] = os.path.join(QgsApplication.prefixPath(), "lib")
         else:
             # Other platforms should use default gdal finder codepath
             settings = QSettings()
-            path = unicode(settings.value('/GdalTools/gdalPath', ''))
+            path = settings.value('/GdalTools/gdalPath', '')
             if not path.lower() in envval.lower().split(os.pathsep):
-                envval += '%s%s' % (os.pathsep, path)
+                envval += '{}{}'.format(os.pathsep, path)
                 os.putenv('PATH', envval)
 
-        loglines = []
-        loglines.append('GDAL execution console output')
-        fused_command = ''.join(['%s ' % c for c in commands])
+        fused_command = ' '.join([unicode(c) for c in commands])
         progress.setInfo('GDAL command:')
         progress.setCommand(fused_command)
-        proc = subprocess.Popen(
-            fused_command,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stdin=open(os.devnull),
-            stderr=subprocess.STDOUT,
-            universal_newlines=True,
-        ).stdout
         progress.setInfo('GDAL command output:')
-        for line in iter(proc.readline, ''):
-            progress.setConsoleInfo(line)
-            loglines.append(line)
+        success = False
+        retry_count = 0
+        while success == False:
+            loglines = []
+            loglines.append('GDAL execution console output')
+            try:
+                proc = subprocess.Popen(
+                    fused_command,
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stdin=open(os.devnull),
+                    stderr=subprocess.STDOUT,
+                    universal_newlines=True,
+                ).stdout
+                for line in proc:
+                    progress.setConsoleInfo(line)
+                    loglines.append(line)
+                success = True
+            except IOError as e:
+                if retry_count < 5:
+                    retry_count += 1
+                else:
+                    raise IOError(e.message + u'\nTried 5 times without success. Last iteration stopped after reading {} line(s).\nLast line(s):\n{}'.format(len(loglines), u'\n'.join(loglines[-10:])))
+
         ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
         GdalUtils.consoleOutput = loglines
 
@@ -110,6 +125,8 @@ class GdalUtils:
         for i in range(gdal.GetDriverCount()):
             driver = gdal.GetDriver(i)
             if driver is None:
+                continue
+            if GdalUtils.version() >= 2000000 and 'DCAP_RASTER' not in driver.GetMetadata_Dict():
                 continue
             shortName = driver.ShortName
             metadata = driver.GetMetadata()
@@ -167,6 +184,10 @@ class GdalUtils:
                 escaped = s
             joined += escaped + ' '
         return joined.strip()
+
+    @staticmethod
+    def version():
+        return int(gdal.VersionInfo('VERSION_NUM'))
 
     @staticmethod
     def gdalHelpPath():

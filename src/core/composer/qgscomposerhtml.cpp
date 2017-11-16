@@ -25,6 +25,7 @@
 #include "qgsvectorlayer.h"
 #include "qgsproject.h"
 #include "qgsdistancearea.h"
+#include "qgsjsonutils.h"
 
 #include "qgswebpage.h"
 #include "qgswebframe.h"
@@ -51,7 +52,8 @@ QgsComposerHtml::QgsComposerHtml( QgsComposition* c, bool createUndoCommands )
 {
   mDistanceArea = new QgsDistanceArea();
   mHtmlUnitsToMM = htmlUnitsToMM();
-  mWebPage = new QWebPage();
+  mWebPage = new QgsWebPage();
+  mWebPage->setIdentifier( tr( "Composer HTML item" ) );
   mWebPage->mainFrame()->setScrollBarPolicy( Qt::Horizontal, Qt::ScrollBarAlwaysOff );
   mWebPage->mainFrame()->setScrollBarPolicy( Qt::Vertical, Qt::ScrollBarAlwaysOff );
 
@@ -184,8 +186,11 @@ void QgsComposerHtml::loadHtml( const bool useCache, const QgsExpressionContext 
   //reset page size. otherwise viewport size increases but never decreases again
   mWebPage->setViewportSize( QSize( maxFrameWidth() * mHtmlUnitsToMM, 0 ) );
 
-  //set html, using the specified url as base if in Url mode
-  mWebPage->mainFrame()->setHtml( loadedHtml, mContentMode == QgsComposerHtml::Url ? QUrl( mActualFetchedUrl ) : QUrl() );
+  //set html, using the specified url as base if in Url mode or the project file if in manual mode
+  const QUrl baseUrl = mContentMode == QgsComposerHtml::Url ?
+                       QUrl( mActualFetchedUrl ) :
+                       QUrl::fromLocalFile( QgsProject::instance()->fileInfo().absoluteFilePath() );
+  mWebPage->mainFrame()->setHtml( loadedHtml, baseUrl );
 
   //set user stylesheet
   QWebSettings* settings = mWebPage->settings();
@@ -203,6 +208,14 @@ void QgsComposerHtml::loadHtml( const bool useCache, const QgsExpressionContext 
 
   while ( !mLoaded )
   {
+    qApp->processEvents();
+  }
+
+  //inject JSON feature
+  if ( !mAtlasFeatureJSON.isEmpty() )
+  {
+    mWebPage->mainFrame()->evaluateJavaScript( QString( "if ( typeof setFeature === \"function\" ) { setFeature(%1); }" ).arg( mAtlasFeatureJSON ) );
+    //needs an extra process events here to give javascript a chance to execute
     qApp->processEvents();
   }
 
@@ -540,6 +553,11 @@ void QgsComposerHtml::setExpressionContext( const QgsFeature &feature, QgsVector
     mDistanceArea->setEllipsoidalMode( mComposition->mapSettings().hasCrsTransformEnabled() );
   }
   mDistanceArea->setEllipsoid( QgsProject::instance()->readEntry( "Measure", "/Ellipsoid", GEO_NONE ) );
+
+  // create JSON representation of feature
+  QgsJSONExporter exporter( layer );
+  exporter.setIncludeRelated( true );
+  mAtlasFeatureJSON = exporter.exportFeature( feature );
 }
 
 void QgsComposerHtml::refreshExpressionContext()

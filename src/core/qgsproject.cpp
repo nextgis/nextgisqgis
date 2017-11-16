@@ -37,6 +37,9 @@
 #include "qgsvisibilitypresetcollection.h"
 #include "qgslayerdefinition.h"
 #include "qgsunittypes.h"
+#include "qgstransaction.h"
+#include "qgstransactiongroup.h"
+#include "qgsvectordataprovider.h"
 
 #include <QApplication>
 #include <QFileInfo>
@@ -65,8 +68,7 @@ QgsProject *QgsProject::theProject_ = nullptr;
     of { "properties", "someplugin", "foo", "bar", "baz" }.  "properties" is
     always first because that's the permanent ``root'' Property node.
  */
-static
-QStringList makeKeyTokens_( QString const &scope, QString const &key )
+QStringList makeKeyTokens_( const QString& scope, const QString& key )
 {
   QStringList keyTokens = QStringList( scope );
   keyTokens += key.split( '/', QString::SkipEmptyParts );
@@ -95,8 +97,7 @@ QStringList makeKeyTokens_( QString const &scope, QString const &key )
   }
 
   return keyTokens;
-} // makeKeyTokens_
-
+}
 
 
 
@@ -109,10 +110,9 @@ QStringList makeKeyTokens_( QString const &scope, QString const &key )
 
    @return null if not found, otherwise located Property
 */
-static
-QgsProperty *findKey_( QString const &scope,
-                       QString const &key,
-                       QgsPropertyKey &rootProperty )
+QgsProperty *findKey_( const QString& scope,
+                       const QString& key,
+                       QgsPropertyKey& rootProperty )
 {
   QgsPropertyKey *currentProperty = &rootProperty;
   QgsProperty *nextProperty;           // link to next property down hiearchy
@@ -174,7 +174,7 @@ QgsProperty *findKey_( QString const &scope,
   }
 
   return nullptr;
-} // findKey_
+}
 
 
 
@@ -185,10 +185,9 @@ QgsProperty *findKey_( QString const &scope,
 @param rootProperty is the property from which to start adding
 @param value the value associated with the key
 */
-static
-QgsProperty *addKey_( QString const &scope,
-                      QString const &key,
-                      QgsPropertyKey *rootProperty,
+QgsProperty *addKey_( const QString& scope,
+                      const QString& key,
+                      QgsPropertyKey* rootProperty,
                       const QVariant& value )
 {
   QStringList keySequence = makeKeyTokens_( scope, key );
@@ -252,13 +251,11 @@ QgsProperty *addKey_( QString const &scope,
 
   return nullptr;
 
-} // addKey_
+}
 
 
-
-static
-void removeKey_( QString const &scope,
-                 QString const &key,
+void removeKey_( const QString& scope,
+                 const QString& key,
                  QgsPropertyKey &rootProperty )
 {
   QgsPropertyKey *currentProperty = &rootProperty;
@@ -315,19 +312,24 @@ void removeKey_( QString const &scope,
     }
   }
 
-} // void removeKey_
+}
 
 
+// TODO QGIS 3.0 - move to private members. This pattern is adding complexity without any current benefits.
 
 struct QgsProject::Imp
 {
   QFile file;                 // current physical project file
   QgsPropertyKey properties_; // property hierarchy
   QString title;              // project title
+  bool autoTransaction;       // transaction grouped editing
+  bool evaluateDefaultValues; // evaluate default values immediately
   bool dirty;                 // project has been modified since it has been read or saved
 
   Imp()
       : title()
+      , autoTransaction( false )
+      , evaluateDefaultValues( false )
       , dirty( false )
   {                             // top property node is the root
     // "properties" that contains all plug-in
@@ -344,11 +346,12 @@ struct QgsProject::Imp
     file.setFileName( QString() );
     properties_.clearKeys();
     title.clear();
+    autoTransaction = false;
+    evaluateDefaultValues = false;
     dirty = false;
   }
 
-};  // struct QgsProject::Imp
-
+};
 
 
 QgsProject::QgsProject()
@@ -363,8 +366,9 @@ QgsProject::QgsProject()
   // whenever layers are added to or removed from the registry,
   // layer tree will be updated
   mLayerTreeRegistryBridge = new QgsLayerTreeRegistryBridge( mRootGroup, this );
-} // QgsProject ctor
-
+  connect( QgsMapLayerRegistry::instance(), SIGNAL( layersAdded( QList<QgsMapLayer*> ) ), this, SLOT( onMapLayersAdded( QList<QgsMapLayer*> ) ) );
+  connect( QgsMapLayerRegistry::instance(), SIGNAL( layersRemoved( QStringList ) ), this, SLOT( cleanTransactionGroups() ) );
+}
 
 
 QgsProject::~QgsProject()
@@ -372,10 +376,7 @@ QgsProject::~QgsProject()
   delete mBadLayerHandler;
   delete mRelationManager;
   delete mRootGroup;
-
-  // note that QScopedPointer automatically deletes imp_ when it's destroyed
-} // QgsProject dtor
-
+}
 
 
 QgsProject *QgsProject::instance()
@@ -385,36 +386,30 @@ QgsProject *QgsProject::instance()
     theProject_ = new QgsProject;
   }
   return theProject_;
-} // QgsProject *instance()
+}
 
 void QgsProject::setTitle( const QString &title )
 {
   imp_->title = title;
 
-  dirty( true );
+  setDirty( true );
 }
 
 
 QString QgsProject::title() const
 {
   return imp_->title;
-} // QgsProject::title() const
+}
 
 
 bool QgsProject::isDirty() const
 {
   return imp_->dirty;
-} // bool QgsProject::isDirty()
-
-
-void QgsProject::dirty( bool b )
-{
-  imp_->dirty = b;
-} // bool QgsProject::isDirty()
+}
 
 void QgsProject::setDirty( bool b )
 {
-  dirty( b );
+  imp_->dirty = b;
 }
 
 void QgsProject::emitVariablesChanged()
@@ -422,15 +417,22 @@ void QgsProject::emitVariablesChanged()
   emit variablesChanged();
 }
 
-
-void QgsProject::setFileName( QString const &name )
+void QgsProject::setFileName( const QString& name )
 {
+  if ( name == imp_->file.fileName() )
+    return;
+
+  QString oldHomePath = homePath();
+
   imp_->file.setFileName( name );
+  emit fileNameChanged();
 
-  dirty( true );
-} // void QgsProject::setFileName( QString const &name )
+  QString newHomePath = homePath();
+  if ( newHomePath != oldHomePath )
+    emit homePathChanged();
 
-
+  setDirty( true );
+}
 
 QString QgsProject::fileName() const
 {
@@ -467,11 +469,11 @@ void QgsProject::clear()
 }
 
 // basically a debugging tool to dump property list values
-static void dump_( QgsPropertyKey const &topQgsPropertyKey )
+void dump_( const QgsPropertyKey& topQgsPropertyKey )
 {
   QgsDebugMsg( "current properties:" );
   topQgsPropertyKey.dump();
-} // dump_
+}
 
 
 /**
@@ -504,9 +506,7 @@ scope.  "layers" is a list containing three string values.
 @param project_properties should be the top QgsPropertyKey node.
 
 */
-static
-void
-_getProperties( QDomDocument const &doc, QgsPropertyKey &project_properties )
+void _getProperties( const QDomDocument& doc, QgsPropertyKey& project_properties )
 {
   QDomNodeList properties = doc.elementsByTagName( "properties" );
 
@@ -535,23 +535,14 @@ _getProperties( QDomDocument const &doc, QgsPropertyKey &project_properties )
   {
     QgsDebugMsg( "Project_properties.readXML() failed" );
   }
-} // _getProperties
-
-
+}
 
 
 /**
    Get the project title
-
-   XML in file has this form:
-\code{.xml}
-   <qgis projectname="default project">
-   <title>a project title</title>
-\endcode
-
    @todo XXX we should go with the attribute xor title, not both.
 */
-static void _getTitle( QDomDocument const &doc, QString &title )
+static void _getTitle( const QDomDocument& doc, QString& title )
 {
   QDomNodeList nl = doc.elementsByTagName( "title" );
 
@@ -583,14 +574,9 @@ static void _getTitle( QDomDocument const &doc, QString &title )
 
   title = titleText.data();
 
-} // _getTitle
+}
 
-
-/** Return the version string found in the given Dom document
-
-   @returns the version string or an empty string if none found
- */
-static QgsProjectVersion _getVersion( QDomDocument const &doc )
+QgsProjectVersion getVersion( const QDomDocument& doc )
 {
   QDomNodeList nl = doc.elementsByTagName( "qgis" );
 
@@ -605,74 +591,29 @@ static QgsProjectVersion _getVersion( QDomDocument const &doc )
   QDomElement qgisElement = qgisNode.toElement(); // qgis node should be element
   QgsProjectVersion projectVersion( qgisElement.attribute( "version" ) );
   return projectVersion;
-} // _getVersion
+}
 
+void QgsProject::processLayerJoins( QgsVectorLayer* layer )
+{
+  if ( !layer )
+    return;
 
+  layer->createJoinCaches();
+  layer->updateFields();
+}
 
-/**
-   Read map layers from project file
-
-
-   @returns \code QPair< bool, QList<QDomNode> > \endcode
-        bool is true if function worked; else is false.
-     list contains nodes corresponding to layers that couldn't be loaded
-
-   @note XML of form:
-
-\code{.xml}
-   <maplayer type="vector">
-      <layername>Hydrop</layername>
-      <datasource>/data/usgs/city_shp/hydrop.shp</datasource>
-      <zorder>0</zorder>
-      <provider>ogr</provider>
-      <singlesymbol>
-         <renderitem>
-            <value>blabla</value>
-            <symbol>
-               <outlinecolor red="85" green="0" blue="255" />
-               <outlinestyle>SolidLine</outlinestyle>
-               <outlinewidth>1</outlinewidth>
-               <fillcolor red="0" green="170" blue="255" />
-               <fillpattern>SolidPattern</fillpattern>
-            </symbol>
-            <label>blabla</label>
-         </renderitem>
-      </singlesymbol>
-      <label>0</label>
-      <labelattributes>
-         <label text="Label" field="" />
-         <family name="Sans Serif" field="" />
-         <size value="12" units="pt" field="" />
-         <bold on="0" field="" />
-         <italic on="0" field="" />
-         <underline on="0" field="" />
-         <color red="0" green="0" blue="0" field="" />
-         <x field="" />
-         <y field="" />
-         <offset  units="pt" x="0" xfield="" y="0" yfield="" />
-         <angle value="0" field="" />
-         <alignment value="center" field="" />
-      </labelattributes>
-   </maplayer>
-\endcode
-*/
-QPair< bool, QList<QDomNode> > QgsProject::_getMapLayers( QDomDocument const &doc )
+bool QgsProject::_getMapLayers( const QDomDocument& doc, QList<QDomNode>& brokenNodes )
 {
   // Layer order is set by the restoring the legend settings from project file.
   // This is done on the 'readProject( ... )' signal
 
   QDomNodeList nl = doc.elementsByTagName( "maplayer" );
 
-  QList<QDomNode> brokenNodes; // a list of Dom nodes corresponding to layers
-  // that we were unable to load; this could be
-  // because the layers were removed or
-  // re-located after the project was last saved
-
   // process the map layer nodes
 
   if ( 0 == nl.count() )      // if we have no layers to process, bail
   {
-    return qMakePair( true, brokenNodes ); // Decided to return "true" since it's
+    return true; // Decided to return "true" since it's
     // possible for there to be a project with no
     // layers; but also, more imporantly, this
     // would cause the tests/qgsproject to fail
@@ -687,7 +628,7 @@ QPair< bool, QList<QDomNode> > QgsProject::_getMapLayers( QDomDocument const &do
   // order layers based on their dependencies
   QgsLayerDefinition::DependencySorter depSorter( doc );
   if ( depSorter.hasCycle() || depSorter.hasMissingDependency() )
-    return qMakePair( false, QList<QDomNode>() );
+    return false;
 
   QVector<QDomNode> sortedLayerNodes = depSorter.sortedLayerNodes();
 
@@ -724,8 +665,7 @@ QPair< bool, QList<QDomNode> > QgsProject::_getMapLayers( QDomDocument const &do
   QList< QPair< QgsVectorLayer*, QDomElement > >::iterator vIt = vLayerList.begin();
   for ( ; vIt != vLayerList.end(); ++vIt )
   {
-    vIt->first->createJoinCaches();
-    vIt->first->updateFields();
+    processLayerJoins( vIt->first );
   }
 
   QSet<QgsVectorLayer *> notified;
@@ -738,10 +678,8 @@ QPair< bool, QList<QDomNode> > QgsProject::_getMapLayers( QDomDocument const &do
     emit readMapLayer( vIt->first, vIt->second );
   }
 
-
-
-  return qMakePair( returnStatus, brokenNodes );
-} // _getMapLayers
+  return returnStatus;
+}
 
 bool QgsProject::addLayer( const QDomElement &layerElem, QList<QDomNode> &brokenNodes, QList< QPair< QgsVectorLayer*, QDomElement > > &vectorLayerList )
 {
@@ -798,22 +736,13 @@ bool QgsProject::addLayer( const QDomElement &layerElem, QList<QDomNode> &broken
   }
 }
 
-
-/**
-   Please note that most of the contents were copied from qgsproject
-*/
-bool QgsProject::read( QFileInfo const &file )
+bool QgsProject::read( const QFileInfo& file )
 {
   imp_->file.setFileName( file.filePath() );
 
   return read();
-} // QgsProject::read
+}
 
-
-
-/**
-   presuming that the caller has already reset the map canvas, map registry, and legend
- */
 bool QgsProject::read()
 {
   clearError();
@@ -860,7 +789,7 @@ bool QgsProject::read()
   QgsDebugMsg( "Project title: " + imp_->title );
 
   // get project version string, if any
-  QgsProjectVersion fileVersion =  _getVersion( *doc );
+  QgsProjectVersion fileVersion =  getVersion( *doc );
   QgsProjectVersion thisVersion( QGis::QGIS_VERSION );
 
   if ( thisVersion > fileVersion )
@@ -894,6 +823,22 @@ bool QgsProject::read()
   // now get project title
   _getTitle( *doc, imp_->title );
 
+  QDomNodeList nl = doc->elementsByTagName( "autotransaction" );
+  if ( nl.count() )
+  {
+    QDomElement transactionElement = nl.at( 0 ).toElement();
+    if ( transactionElement.attribute( "active", "0" ).toInt() == 1 )
+      imp_->autoTransaction = true;
+  }
+
+  nl = doc->elementsByTagName( "evaluateDefaultValues" );
+  if ( nl.count() )
+  {
+    QDomElement evaluateDefaultValuesElement = nl.at( 0 ).toElement();
+    if ( evaluateDefaultValuesElement.attribute( "active", "0" ).toInt() == 1 )
+      imp_->evaluateDefaultValues = true;
+  }
+
   // read the layer tree from project file
 
   mRootGroup->setCustomProperty( "loading", 1 );
@@ -913,23 +858,22 @@ bool QgsProject::read()
   mLayerTreeRegistryBridge->setEnabled( false );
 
   // get the map layers
-  QPair< bool, QList<QDomNode> > getMapLayersResults =  _getMapLayers( *doc );
+  QList<QDomNode> brokenNodes;
+  bool clean = _getMapLayers( *doc, brokenNodes );
 
   // review the integrity of the retrieved map layers
-  bool clean = getMapLayersResults.first;
-
   if ( !clean )
   {
     QgsDebugMsg( "Unable to get map layers from project file." );
 
-    if ( ! getMapLayersResults.second.isEmpty() )
+    if ( !brokenNodes.isEmpty() )
     {
-      QgsDebugMsg( "there are " + QString::number( getMapLayersResults.second.size() ) + " broken layers" );
+      QgsDebugMsg( "there are " + QString::number( brokenNodes.size() ) + " broken layers" );
     }
 
     // we let a custom handler to decide what to do with missing layers
     // (default implementation ignores them, there's also a GUI handler that lets user choose correct path)
-    mBadLayerHandler->handleBadLayers( getMapLayersResults.second, *doc );
+    mBadLayerHandler->handleBadLayers( brokenNodes, *doc );
   }
 
   mLayerTreeRegistryBridge->setEnabled( true );
@@ -945,16 +889,18 @@ bool QgsProject::read()
   mVisibilityPresetCollection.reset( new QgsVisibilityPresetCollection() );
   mVisibilityPresetCollection->readXML( *doc );
 
+
   // read the project: used by map canvas and legend
   emit readProject( *doc );
 
   // if all went well, we're allegedly in pristine state
   if ( clean )
-    dirty( false );
+    setDirty( false );
+
+  emit nonIdentifiableLayersChanged( nonIdentifiableLayers() );
 
   return true;
-
-} // QgsProject::read
+}
 
 
 void QgsProject::loadEmbeddedNodes( QgsLayerTreeGroup *group )
@@ -999,23 +945,85 @@ void QgsProject::loadEmbeddedNodes( QgsLayerTreeGroup *group )
   }
 }
 
+void QgsProject::onMapLayersAdded( const QList<QgsMapLayer*>& layers )
+{
+  Q_FOREACH ( QgsMapLayer* layer, layers )
+  {
+    QgsVectorLayer* vlayer = qobject_cast<QgsVectorLayer*>( layer );
+    if ( vlayer )
+    {
+      if ( autoTransaction() )
+      {
+        if ( QgsTransaction::supportsTransaction( vlayer ) )
+        {
+          QString connString = QgsDataSourceURI( vlayer->source() ).connectionInfo();
+          QString key = vlayer->providerType();
+
+          QgsTransactionGroup* tg = mTransactionGroups.value( qMakePair( key, connString ) );
+
+          if ( !tg )
+          {
+            tg = new QgsTransactionGroup();
+            mTransactionGroups.insert( qMakePair( key, connString ), tg );
+
+            connect( tg, SIGNAL( commitError( QString ) ), this, SLOT( displayMapToolMessage( QString ) ) );
+          }
+          tg->addLayer( vlayer );
+        }
+      }
+      vlayer->dataProvider()->setProviderProperty( QgsVectorDataProvider::EvaluateDefaultValues, evaluateDefaultValues() );
+    }
+
+    connect( layer, SIGNAL( configChanged() ), this, SLOT( setDirty() ) );
+  }
+}
+
+void QgsProject::cleanTransactionGroups( bool force )
+{
+  for ( QMap< QPair< QString, QString>, QgsTransactionGroup*>::Iterator tg = mTransactionGroups.begin(); tg != mTransactionGroups.end(); )
+  {
+    if ( tg.value()->isEmpty() || force )
+    {
+      delete tg.value();
+      tg = mTransactionGroups.erase( tg );
+    }
+    else
+    {
+      ++tg;
+    }
+  }
+}
 
 bool QgsProject::read( QDomNode &layerNode )
 {
   QList<QDomNode> brokenNodes;
   QList< QPair< QgsVectorLayer*, QDomElement > > vectorLayerList;
-  return addLayer( layerNode.toElement(), brokenNodes, vectorLayerList );
-} // QgsProject::read( QDomNode &layerNode )
+  if ( addLayer( layerNode.toElement(), brokenNodes, vectorLayerList ) )
+  {
+    // have to try to update joins for all layers now - a previously added layer may be dependent on this newly
+    // added layer for joins
+    QVector<QgsVectorLayer*> vectorLayers = QgsMapLayerRegistry::instance()->layers<QgsVectorLayer*>();
+    Q_FOREACH ( QgsVectorLayer* layer, vectorLayers )
+    {
+      processLayerJoins( layer );
+    }
 
+    if ( !vectorLayerList.isEmpty() )
+    {
+      emit readMapLayer( vectorLayerList.at( 0 ).first, vectorLayerList.at( 0 ).second );
+    }
 
+    return true;
+  }
+  return false;
+}
 
 bool QgsProject::write( QFileInfo const &file )
 {
   imp_->file.setFileName( file.filePath() );
 
   return write();
-} // QgsProject::write( QFileInfo const &file )
-
+}
 
 bool QgsProject::write()
 {
@@ -1050,6 +1058,14 @@ bool QgsProject::write()
   QDomElement titleNode = doc->createElement( "title" );
   qgisNode.appendChild( titleNode );
 
+  QDomElement transactionNode = doc->createElement( "autotransaction" );
+  transactionNode.setAttribute( "active", imp_->autoTransaction ? "1" : "0" );
+  qgisNode.appendChild( transactionNode );
+
+  QDomElement evaluateDefaultValuesNode = doc->createElement( "evaluateDefaultValues" );
+  evaluateDefaultValuesNode.setAttribute( "active", imp_->evaluateDefaultValues ? "1" : "0" );
+  qgisNode.appendChild( evaluateDefaultValuesNode );
+
   QDomText titleText = doc->createTextNode( title() );  // XXX why have title TWICE?
   titleNode.appendChild( titleText );
 
@@ -1077,7 +1093,6 @@ bool QgsProject::write()
 
     if ( ml )
     {
-      QString externalProjectFile = layerIsEmbedded( ml->id() );
       QHash< QString, QPair< QString, bool> >::const_iterator emIt = mEmbeddedLayers.constFind( ml->id() );
       if ( emIt == mEmbeddedLayers.constEnd() )
       {
@@ -1197,76 +1212,62 @@ bool QgsProject::write()
     return false;
   }
 
-  dirty( false );               // reset to pristine state
+  setDirty( false );               // reset to pristine state
 
   emit projectSaved();
 
   return true;
-} // QgsProject::write
-
-
+}
 
 void QgsProject::clearProperties()
 {
   clear();
 
-  dirty( true );
-} // QgsProject::clearProperties()
+  setDirty( true );
+}
 
-
-
-bool
-QgsProject::writeEntry( QString const &scope, const QString &key, bool value )
+bool QgsProject::writeEntry( const QString& scope, QString const& key, bool value )
 {
-  dirty( true );
+  setDirty( true );
 
   return addKey_( scope, key, &imp_->properties_, value );
-} // QgsProject::writeEntry ( ..., bool value )
+}
 
-
-bool
-QgsProject::writeEntry( QString const &scope, const QString &key,
-                        double value )
+bool QgsProject::writeEntry( const QString& scope, const QString& key,
+                             double value )
 {
-  dirty( true );
+  setDirty( true );
 
   return addKey_( scope, key, &imp_->properties_, value );
-} // QgsProject::writeEntry ( ..., double value )
+}
 
-
-bool
-QgsProject::writeEntry( QString const &scope, const QString &key, int value )
+bool QgsProject::writeEntry( const QString& scope, QString const& key, int value )
 {
-  dirty( true );
+  setDirty( true );
 
   return addKey_( scope, key, &imp_->properties_, value );
-} // QgsProject::writeEntry ( ..., int value )
+}
 
-
-bool
-QgsProject::writeEntry( QString const &scope, const QString &key,
-                        const QString &value )
+bool QgsProject::writeEntry( const QString& scope, const QString &key,
+                             const QString& value )
 {
-  dirty( true );
+  setDirty( true );
 
   return addKey_( scope, key, &imp_->properties_, value );
-} // QgsProject::writeEntry ( ..., const QString &value )
+}
 
-
-bool
-QgsProject::writeEntry( QString const &scope, const QString &key,
-                        const QStringList &value )
+bool QgsProject::writeEntry( const QString& scope, const QString& key,
+                             const QStringList& value )
 {
-  dirty( true );
+  setDirty( true );
 
   return addKey_( scope, key, &imp_->properties_, value );
-} // QgsProject::writeEntry ( ..., const QStringList &value )
+}
 
-QStringList
-QgsProject::readListEntry( QString const &scope,
-                           const QString &key,
-                           const QStringList& def,
-                           bool *ok ) const
+QStringList QgsProject::readListEntry( const QString& scope,
+                                       const QString &key,
+                                       const QStringList& def,
+                                       bool *ok ) const
 {
   QgsProperty *property = findKey_( scope, key, imp_->properties_ );
 
@@ -1287,14 +1288,13 @@ QgsProject::readListEntry( QString const &scope,
   }
 
   return def;
-} // QgsProject::readListEntry
+}
 
 
-QString
-QgsProject::readEntry( QString const &scope,
-                       const QString &key,
-                       const QString &def,
-                       bool *ok ) const
+QString QgsProject::readEntry( const QString& scope,
+                               const QString& key,
+                               const QString& def,
+                               bool* ok ) const
 {
   QgsProperty *property = findKey_( scope, key, imp_->properties_ );
 
@@ -1313,12 +1313,10 @@ QgsProject::readEntry( QString const &scope,
   }
 
   return def;
-} // QgsProject::readEntry
+}
 
-
-int
-QgsProject::readNumEntry( QString const &scope, const QString &key, int def,
-                          bool *ok ) const
+int QgsProject::readNumEntry( const QString& scope, const QString &key, int def,
+                              bool* ok ) const
 {
   QgsProperty *property = findKey_( scope, key, imp_->properties_ );
 
@@ -1342,13 +1340,11 @@ QgsProject::readNumEntry( QString const &scope, const QString &key, int def,
   }
 
   return def;
-} // QgsProject::readNumEntry
+}
 
-
-double
-QgsProject::readDoubleEntry( QString const &scope, const QString &key,
-                             double def,
-                             bool *ok ) const
+double QgsProject::readDoubleEntry( const QString& scope, const QString& key,
+                                    double def,
+                                    bool* ok ) const
 {
   QgsProperty *property = findKey_( scope, key, imp_->properties_ );
   if ( property )
@@ -1364,12 +1360,10 @@ QgsProject::readDoubleEntry( QString const &scope, const QString &key,
   }
 
   return def;
-} // QgsProject::readDoubleEntry
+}
 
-
-bool
-QgsProject::readBoolEntry( QString const &scope, const QString &key, bool def,
-                           bool *ok ) const
+bool QgsProject::readBoolEntry( const QString& scope, const QString &key, bool def,
+                                bool* ok ) const
 {
   QgsProperty *property = findKey_( scope, key, imp_->properties_ );
 
@@ -1386,21 +1380,20 @@ QgsProject::readBoolEntry( QString const &scope, const QString &key, bool def,
   }
 
   return def;
-} // QgsProject::readBoolEntry
+}
 
 
-bool QgsProject::removeEntry( QString const &scope, const QString &key )
+bool QgsProject::removeEntry( const QString& scope, const QString& key )
 {
   removeKey_( scope, key, imp_->properties_ );
 
-  dirty( true );
+  setDirty( true );
 
   return !findKey_( scope, key, imp_->properties_ );
-} // QgsProject::removeEntry
+}
 
 
-
-QStringList QgsProject::entryList( QString const &scope, QString const &key ) const
+QStringList QgsProject::entryList( const QString& scope, const QString& key ) const
 {
   QgsProperty *foundProperty = findKey_( scope, key, imp_->properties_ );
 
@@ -1415,10 +1408,9 @@ QStringList QgsProject::entryList( QString const &scope, QString const &key ) co
   }
 
   return entries;
-} // QgsProject::entryList
+}
 
-
-QStringList QgsProject::subkeyList( QString const &scope, QString const &key ) const
+QStringList QgsProject::subkeyList( const QString& scope, const QString& key ) const
 {
   QgsProperty *foundProperty = findKey_( scope, key, imp_->properties_ );
 
@@ -1433,18 +1425,13 @@ QStringList QgsProject::subkeyList( QString const &scope, QString const &key ) c
   }
 
   return entries;
-
-} // QgsProject::subkeyList
-
-
+}
 
 void QgsProject::dumpProperties() const
 {
   dump_( imp_->properties_ );
-} // QgsProject::dumpProperties
+}
 
-
-// return the absolute path from a filename read from project file
 QString QgsProject::readPath( QString src ) const
 {
   if ( readBoolEntry( "Paths", "/Absolute", false ) )
@@ -1553,7 +1540,6 @@ QString QgsProject::readPath( QString src ) const
   return vsiPrefix + projElems.join( "/" );
 }
 
-// return the absolute or relative path to write it to the project file
 QString QgsProject::writePath( const QString& src, const QString& relativeBasePath ) const
 {
   if ( readBoolEntry( "Paths", "/Absolute", false ) || src.isEmpty() )
@@ -1564,7 +1550,7 @@ QString QgsProject::writePath( const QString& src, const QString& relativeBasePa
   QFileInfo srcFileInfo( src );
   QFileInfo projFileInfo( fileName() );
   QString srcPath = srcFileInfo.exists() ? srcFileInfo.canonicalFilePath() : src;
-  QString projPath = projFileInfo.canonicalFilePath();
+  QString projPath = projFileInfo.exists( ) ? projFileInfo.canonicalFilePath() : fileName();
 
   if ( !relativeBasePath.isNull() )
   {
@@ -1889,14 +1875,14 @@ QgsLayerTreeGroup *QgsProject::createEmbeddedGroup( const QString &groupName, co
   initializeEmbeddedSubtree( projectFilePath, newGroup );
   mLayerTreeRegistryBridge->setEnabled( true );
 
+  QStringList thisProjectIdentifyDisabledLayers = nonIdentifiableLayers();
+
   // consider the layers might be identify disabled in its project
   Q_FOREACH ( const QString& layerId, newGroup->findLayerIds() )
   {
     if ( embeddedIdentifyDisabledLayers.contains( layerId ) )
     {
-      QStringList thisProjectIdentifyDisabledLayers = QgsProject::instance()->readListEntry( "Identify", "/disabledLayers" );
       thisProjectIdentifyDisabledLayers.append( layerId );
-      QgsProject::instance()->writeEntry( "Identify", "/disabledLayers", thisProjectIdentifyDisabledLayers );
     }
 
     QgsLayerTreeLayer *layer = newGroup->findLayer( layerId );
@@ -1905,6 +1891,8 @@ QgsLayerTreeGroup *QgsProject::createEmbeddedGroup( const QString &groupName, co
       layer->setVisible( invisibleLayers.contains( layerId ) ? Qt::Unchecked : Qt::Checked );
     }
   }
+
+  setNonIdentifiableLayers( thisProjectIdentifyDisabledLayers );
 
   return newGroup;
 }
@@ -2058,6 +2046,25 @@ void QgsProject::snapSettings( QStringList &layerIdList, QStringList &enabledLis
   avoidIntersectionList = readListEntry( "Digitizing", "/AvoidIntersectionsList" );
 }
 
+bool QgsProject::evaluateDefaultValues() const
+{
+  return imp_->evaluateDefaultValues;
+}
+
+void QgsProject::setEvaluateDefaultValues( bool evaluateDefaultValues )
+{
+  Q_FOREACH ( QgsMapLayer* layer, QgsMapLayerRegistry::instance()->mapLayers().values() )
+  {
+    QgsVectorLayer* vl = qobject_cast<QgsVectorLayer*>( layer );
+    if ( vl )
+    {
+      vl->dataProvider()->setProviderProperty( QgsVectorDataProvider::EvaluateDefaultValues, evaluateDefaultValues );
+    }
+  }
+
+  imp_->evaluateDefaultValues = evaluateDefaultValues;
+}
+
 void QgsProject::setTopologicalEditing( bool enabled )
 {
   QgsProject::instance()->writeEntry( "Digitizing", "/TopologicalEditing", ( enabled ? 1 : 0 ) );
@@ -2122,4 +2129,62 @@ QgsLayerTreeGroup *QgsProject::layerTreeRoot() const
 QgsVisibilityPresetCollection* QgsProject::visibilityPresetCollection()
 {
   return mVisibilityPresetCollection.data();
+}
+
+void QgsProject::setNonIdentifiableLayers( QList<QgsMapLayer*> layers )
+{
+  QStringList currentLayers = nonIdentifiableLayers();
+
+  QStringList newLayers;
+  Q_FOREACH ( QgsMapLayer* l, layers )
+  {
+    newLayers << l->id();
+  }
+
+  if ( newLayers == currentLayers )
+    return;
+
+  QStringList disabledLayerIds;
+
+  Q_FOREACH ( QgsMapLayer* l, layers )
+  {
+    disabledLayerIds << l->id();
+  }
+
+  setNonIdentifiableLayers( disabledLayerIds );
+}
+
+void QgsProject::setNonIdentifiableLayers( const QStringList& layerIds )
+{
+  writeEntry( "Identify", "/disabledLayers", layerIds );
+
+  emit nonIdentifiableLayersChanged( layerIds );
+}
+
+QStringList QgsProject::nonIdentifiableLayers() const
+{
+  return QgsProject::instance()->readListEntry( "Identify", "/disabledLayers" );
+}
+
+bool QgsProject::autoTransaction() const
+{
+  return imp_->autoTransaction;
+}
+
+void QgsProject::setAutoTransaction( bool autoTransaction )
+{
+  if ( autoTransaction != imp_->autoTransaction )
+  {
+    imp_->autoTransaction = autoTransaction;
+
+    if ( autoTransaction )
+      onMapLayersAdded( QgsMapLayerRegistry::instance()->mapLayers().values() );
+    else
+      cleanTransactionGroups( true );
+  }
+}
+
+QMap<QPair<QString, QString>, QgsTransactionGroup*> QgsProject::transactionGroups()
+{
+  return mTransactionGroups;
 }

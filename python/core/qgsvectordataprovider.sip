@@ -54,7 +54,9 @@ class QgsVectorDataProvider : QgsDataProvider
       /** Supports joint updates for attributes and geometry
        * Providers supporting this should still define ChangeGeometries | ChangeAttributeValues
        */
-      ChangeFeatures
+      ChangeFeatures,
+      /** Supports renaming attributes (fields). Added in QGIS 2.16 */
+      RenameAttributes,
     };
 
     /** Bitmask of all provider's editing capabilities */
@@ -87,7 +89,7 @@ class QgsVectorDataProvider : QgsDataProvider
      * @note added in 2.4
      * @return new instance of QgsAbstractFeatureSource (caller is responsible for deleting it)
      */
-    virtual QgsAbstractFeatureSource* featureSource() const /Factory/;
+    virtual QgsAbstractFeatureSource *featureSource() const = 0 /Factory/;
 
     /**
      * Returns the permanent storage type for this layer as a friendly name.
@@ -154,6 +156,22 @@ class QgsVectorDataProvider : QgsDataProvider
      */
     virtual void uniqueValues( int index, QList<QVariant> &uniqueValues /Out/, int limit = -1 );
 
+    /** Calculates an aggregated value from the layer's features. The base implementation does nothing,
+     * but subclasses can override this method to handoff calculation of aggregates to the provider.
+     * @param aggregate aggregate to calculate
+     * @param index the index of the attribute to calculate aggregate over
+     * @param parameters parameters controlling aggregate calculation
+     * @param context expression context for filter
+     * @param ok will be set to true if calculation was successfully performed by the data provider
+     * @return calculated aggregate value
+     * @note added in QGIS 2.16
+     */
+    virtual QVariant aggregate( QgsAggregateCalculator::Aggregate aggregate,
+                                int index,
+                                const QgsAggregateCalculator::AggregateParameters& parameters,
+                                QgsExpressionContext* context,
+                                bool& ok );
+
     /**
      * Returns the possible enum values of an attribute. Returns an empty stringlist if a provider does not support enum types
      * or if the given attribute is not an enum type.
@@ -190,6 +208,14 @@ class QgsVectorDataProvider : QgsDataProvider
     virtual bool deleteAttributes( const QSet<int> &attributes );
 
     /**
+     * Renames existing attributes.
+     * @param renamedAttributes map of attribute index to new attribute name
+     * @return true in case of success and false in case of failure
+     * @note added in QGIS 2.16
+     */
+    virtual bool renameAttributes( const QgsFieldNameMap& renamedAttributes );
+
+    /**
      * Changes attribute values of existing features.
      * @param attr_map a map containing changed attributes
      * @return true in case of success and false in case of failure
@@ -208,9 +234,11 @@ class QgsVectorDataProvider : QgsDataProvider
                                  const QMap<qint64, QgsGeometry> &geometry_map );
 
     /**
-     * Returns the default value for field specified by @c fieldId
+     * Returns the default value for field specified by \a fieldId.
+     * If \a forceLazyEval is set to true, the provider the default value
+     * will not be evaluated on server side even if specified in the project properties.
      */
-    virtual QVariant defaultValue( int fieldId );
+    virtual QVariant defaultValue( int fieldId, bool forceLazyEval = false );
 
     /**
      * Changes geometries of existing features
@@ -265,7 +293,7 @@ class QgsVectorDataProvider : QgsDataProvider
     /**
      * Return list of indexes to fetch all attributes in nextFeature()
      */
-    QList<int> attributeIndexes();
+    virtual QList<int> attributeIndexes();
 
     /**
      * Return list of indexes of fields that make up the primary key
@@ -304,7 +332,7 @@ class QgsVectorDataProvider : QgsDataProvider
      * Returns true if the provider is strict about the type of inserted features
      * (e.g. no multipolygon in a polygon layer)
      */
-    bool doesStrictFeatureTypeCheck() const;
+    virtual bool doesStrictFeatureTypeCheck() const;
 
     /** Returns a list of available encodings */
     static const QStringList &availableEncodings();
@@ -362,7 +390,17 @@ class QgsVectorDataProvider : QgsDataProvider
 
     void pushError( const QString& msg );
 
-    /** Converts the geometry to the provider type if possible / necessary
-    @return the converted geometry or nullptr if no conversion was necessary or possible*/
-    QgsGeometry* convertToProviderType( const QgsGeometry& geom ) const /Factory/;
+    /** \brief Converts the geometry to the provider type if possible / necessary
+     * this is the list of possible modifications:
+     * - convert compoundcurve to circularstring
+     *   (possible if compoundcurve consists of one circular string)
+     * - convert to multitype if necessary
+     * - convert to curved type if necessary
+     * - convert to linear type from curved type
+     * - Add z/m 0 default values
+     * - Remove z/m
+     * \ref QgsVectorLayerEditBuffer::adaptGeometry()
+     * \param geom Geometry to convert
+     * \returns the converted geometry or nullptr if no conversion was necessary or possible*/
+    QgsGeometry* convertToProviderType( const QgsGeometry* geom ) const /Factory/;
 };

@@ -38,6 +38,7 @@
 #if QT_VERSION < 0x050000
 #include <QPlastiqueStyle>
 #endif
+#include <QDesktopWidget>
 #include <QTranslator>
 #include <QImageReader>
 #include <QMessageBox>
@@ -254,6 +255,14 @@ void myMessageOutput( QtMsgType type, const char *msg )
       dumpBacktrace( 256 );
       abort();                    // deliberately dump core
     }
+
+
+#if QT_VERSION >= 0x050500
+    case QtInfoMsg:
+      myPrint( "Info: %s\n", msg );
+      break;
+#endif
+
   }
 }
 
@@ -863,7 +872,7 @@ int main( int argc, char *argv[] )
   QString i18nPath = NGQgsApplication::i18nPath();
   QString myUserLocale = mySettings.value( "locale/userLocale", "" ).toString();
   bool myLocaleOverrideFlag = mySettings.value( "locale/overrideFlag", false ).toBool();
-  QString myLocale;
+
   //
   // Priority of translation is:
   //  - command line
@@ -934,12 +943,12 @@ int main( int argc, char *argv[] )
   //set up splash screen
   QString mySplashPath( QgsCustomization::instance()->splashPath() );
   QPixmap myPixmap( mySplashPath + QLatin1String( "splash.png" ) );
-  QSplashScreen *mypSplash = new QSplashScreen( myPixmap );
-  if ( mySettings.value( "/qgis/hideSplash" ).toBool() || myHideSplash )
-  {
-    //splash screen hidden
-  }
-  else
+
+  int w = 600 * qApp->desktop()->logicalDpiX() / 96;
+  int h = 300 * qApp->desktop()->logicalDpiY() / 96;
+
+  QSplashScreen *mypSplash = new QSplashScreen( myPixmap.scaled( w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation ) );
+  if ( !myHideSplash && !mySettings.value( "/qgis/hideSplash" ).toBool() )
   {
     //for win and linux we can just automask and png transparency areas will be used
     mypSplash->setMask( myPixmap.mask() );
@@ -1047,7 +1056,7 @@ int main( int argc, char *argv[] )
     //replace backslashes with forward slashes
     pythonfile.replace( '\\', '/' );
 #endif
-    QgsPythonRunner::run( QString( "execfile('%1')" ).arg( pythonfile ) );
+    QgsPythonRunner::run( QString( "exec(open('%1').read())" ).arg( pythonfile ) );
   }
 
   /////////////////////////////////`////////////////////////////////////

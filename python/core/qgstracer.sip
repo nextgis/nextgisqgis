@@ -51,7 +51,7 @@ class QgsTracer : QObject
 
     //! Whether there was an error during graph creation due to noding exception,
     //! indicating some input data topology problems
-    //! @note added in QGIS 2.14.2
+    //! @note added in QGIS 2.16
     bool hasTopologyProblem() const;
 
     //! Possible errors that may happen when calling findShortestPath()

@@ -36,6 +36,7 @@ include_directories (
 )
 
 set(PROV_PLUGINS
+    # arcgisrest - need QJson library
     delimitedtext
     gdal
     gpx
@@ -99,6 +100,8 @@ foreach(PROV_PLUGIN ${PROV_PLUGINS})
     info_msg("Add provider ${PROV_PLUGIN}")
     add_provider(${PROV_PLUGIN})
 endforeach()
+
+## Providers with dependencies
 
 if(POSTGRESQL_FOUND)
     info_msg("Add provider postgres")

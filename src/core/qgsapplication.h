@@ -349,6 +349,7 @@ class CORE_EXPORT QgsApplication : public QApplication
     /** Get maximum concurrent thread count
      * @note added in 2.4 */
     static int maxThreads() { return ABISYM( mMaxThreads ); }
+
     /** Set maximum concurrent thread count
      * @note must be between 1 and \#cores, -1 means use all available cores
      * @note added in 2.4 */
@@ -369,7 +370,7 @@ class CORE_EXPORT QgsApplication : public QApplication
      * be called whenever global, application-wide settings are altered to advise listeners
      * that they may need to update their state.
      * @see settingsChanged()
-     * @note added in QGIS 3.0
+     * @note added in QGIS 2.18
      */
     void emitSettingsChanged();
 
@@ -378,7 +379,7 @@ class CORE_EXPORT QgsApplication : public QApplication
     void preNotify( QObject * receiver, QEvent * event, bool * done );
 
     /** Emitted whenever any global, application-wide settings are changed.
-     * @note added in QGIS 3.0
+     * @note added in QGIS 2.18
      * @see emitSettingsChanged()
      */
     void settingsChanged();
@@ -423,6 +424,8 @@ class CORE_EXPORT QgsApplication : public QApplication
     static QString sUserName;
     static QString sUserFullName;
     static QString sPlatformName;
+
+    QMap<QString, QIcon> mIconCache;
 };
 
 #endif

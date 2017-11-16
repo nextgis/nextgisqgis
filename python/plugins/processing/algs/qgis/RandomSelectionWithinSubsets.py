@@ -25,8 +25,13 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
+import os
 import random
+
+from qgis.PyQt.QtGui import QIcon
+
 from qgis.core import QgsFeature
+
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
 from processing.core.parameters import ParameterSelection
@@ -36,6 +41,8 @@ from processing.core.parameters import ParameterTableField
 from processing.core.outputs import OutputVector
 from processing.tools import dataobjects, vector
 
+pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+
 
 class RandomSelectionWithinSubsets(GeoAlgorithm):
 
@@ -44,6 +51,9 @@ class RandomSelectionWithinSubsets(GeoAlgorithm):
     NUMBER = 'NUMBER'
     FIELD = 'FIELD'
     OUTPUT = 'OUTPUT'
+
+    def getIcon(self):
+        return QIcon(os.path.join(pluginPath, 'images', 'ftools', 'sub_selection.png'))
 
     def defineCharacteristics(self):
         self.allowOnlyOpenedLayers = True
@@ -94,7 +104,7 @@ class RandomSelectionWithinSubsets(GeoAlgorithm):
         inFeat = QgsFeature()
 
         current = 0
-        total = 100.0 / (featureCount * len(unique))
+        total = 100.0 / (featureCount * len(unique)) if featureCount * len(unique) > 0 else 1
 
         if not len(unique) == featureCount:
             for i in unique:
@@ -120,6 +130,6 @@ class RandomSelectionWithinSubsets(GeoAlgorithm):
                 selran.extend(selFeat)
             layer.setSelectedFeatures(selran)
         else:
-            layer.setSelectedFeatures(range(0, featureCount))
+            layer.setSelectedFeatures(range(featureCount))
 
         self.setOutputValue(self.OUTPUT, filename)

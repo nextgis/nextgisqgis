@@ -31,8 +31,8 @@ import uuid
 import importlib
 import re
 
-from PyQt4.QtCore import QCoreApplication, QUrl
-from PyQt4.QtGui import QIcon
+from qgis.PyQt.QtCore import QCoreApplication, QUrl
+from qgis.PyQt.QtGui import QIcon
 
 from qgis.core import QgsRasterLayer
 from qgis.utils import iface
@@ -42,10 +42,24 @@ from processing.core.ProcessingConfig import ProcessingConfig
 from processing.core.ProcessingLog import ProcessingLog
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
 
-from processing.core.parameters import getParameterFromString, ParameterVector, ParameterMultipleInput, ParameterExtent, ParameterNumber, ParameterSelection, ParameterRaster, ParameterTable, ParameterBoolean, ParameterString
-from processing.core.outputs import getOutputFromString, OutputRaster, OutputVector, OutputFile, OutputHTML
+from processing.core.parameters import (getParameterFromString,
+                                        ParameterVector,
+                                        ParameterMultipleInput,
+                                        ParameterExtent,
+                                        ParameterNumber,
+                                        ParameterSelection,
+                                        ParameterRaster,
+                                        ParameterTable,
+                                        ParameterBoolean,
+                                        ParameterString,
+                                        ParameterPoint)
+from processing.core.outputs import (getOutputFromString,
+                                     OutputRaster,
+                                     OutputVector,
+                                     OutputFile,
+                                     OutputHTML)
 
-from GrassUtils import GrassUtils
+from .GrassUtils import GrassUtils
 
 from processing.tools import dataobjects, system
 
@@ -70,6 +84,7 @@ class GrassAlgorithm(GeoAlgorithm):
         self.descriptionFile = descriptionfile
         self.defineCharacteristicsFromFile()
         self.numExportedLayers = 0
+        self._icon = None
 
     def getCopy(self):
         newone = GrassAlgorithm(self.descriptionFile)
@@ -77,7 +92,9 @@ class GrassAlgorithm(GeoAlgorithm):
         return newone
 
     def getIcon(self):
-        return QIcon(os.path.join(pluginPath, 'images', 'grass.svg'))
+        if self._icon is None:
+            self._icon = QIcon(os.path.join(pluginPath, 'images', 'grass.svg'))
+        return self._icon
 
     def help(self):
         helpPath = GrassUtils.grassHelpPath()
@@ -87,7 +104,7 @@ class GrassAlgorithm(GeoAlgorithm):
         if os.path.exists(helpPath):
             return False, QUrl.fromLocalFile(os.path.join(helpPath, '{}.html'.format(self.grassName))).toString()
         else:
-            return False, helpPath + '{}.html'.format(self.grassName)
+            return False, '{}{}.html'.format(helpPath, self.grassName)
 
     def getParameterDescriptions(self):
         descs = {}
@@ -173,7 +190,7 @@ class GrassAlgorithm(GeoAlgorithm):
         if hasVectorInput:
             param = ParameterNumber(self.GRASS_SNAP_TOLERANCE_PARAMETER,
                                     'v.in.ogr snap tolerance (-1 = no snap)',
-                                    -1, None, -1.0)
+                                    - 1, None, -1.0)
             param.isAdvanced = True
             self.addParameter(param)
             param = ParameterNumber(self.GRASS_MIN_AREA_PARAMETER,
@@ -339,6 +356,8 @@ class GrassAlgorithm(GeoAlgorithm):
                 command += ' ' + param.name + '=' + unicode(param.options[idx])
             elif isinstance(param, ParameterString):
                 command += ' ' + param.name + '="' + unicode(param.value) + '"'
+            elif isinstance(param, ParameterPoint):
+                command += ' ' + param.name + '=' + unicode(param.value)
             else:
                 command += ' ' + param.name + '="' + unicode(param.value) + '"'
 
@@ -456,7 +475,7 @@ class GrassAlgorithm(GeoAlgorithm):
         snap = self.getParameterValue(self.GRASS_SNAP_TOLERANCE_PARAMETER)
         command += ' snap=' + unicode(snap)
         command += ' dsn="%s"' % os.path.dirname(filename)
-        command += ' layer="%s"' % os.path.splitext(os.path.basename(filename)[:-4])[0]
+        command += ' layer="%s"' % os.path.basename(filename)[:-4]
         command += ' output=' + destFilename
         command += ' --overwrite -o'
         return command

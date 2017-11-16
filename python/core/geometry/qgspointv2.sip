@@ -153,10 +153,12 @@ class QgsPointV2: public QgsAbstractGeometryV2
     QDomElement asGML3( QDomDocument& doc, int precision = 17, const QString& ns = "gml" ) const;
     QString asJSON( int precision = 17 ) const;
     void draw( QPainter& p ) const;
-    void transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform );
+    void transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform,
+                    bool transformZ = false );
     void transform( const QTransform& t );
     virtual QList< QList< QList< QgsPointV2 > > > coordinateSequence() const;
     virtual int nCoordinates() const;
+    virtual QgsAbstractGeometryV2* boundary() const /Factory/;
 
     //low-level editing
     virtual bool insertVertex( QgsVertexId position, const QgsPointV2& vertex );

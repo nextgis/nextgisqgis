@@ -35,9 +35,9 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 
-QgsOWSConnection::QgsOWSConnection( const QString & theService, const QString & theConnName ) :
-    mConnName( theConnName ),
-    mService( theService )
+QgsOWSConnection::QgsOWSConnection( const QString & theService, const QString & theConnName )
+    : mConnName( theConnName )
+    , mService( theService )
 {
   QgsDebugMsg( "theConnName = " + theConnName );
 
@@ -102,7 +102,7 @@ QString QgsOWSConnection::connectionInfo()
   return mConnectionInfo;
 }
 
-QgsDataSourceURI QgsOWSConnection::uri()
+QgsDataSourceURI QgsOWSConnection::uri() const
 {
   return mUri;
 }

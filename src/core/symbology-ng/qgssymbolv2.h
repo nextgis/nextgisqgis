@@ -49,6 +49,9 @@ class QgsFeatureRendererV2;
 
 typedef QList<QgsSymbolLayerV2*> QgsSymbolLayerV2List;
 
+/** \ingroup core
+ * \class QgsSymbolV2
+ */
 class CORE_EXPORT QgsSymbolV2
 {
     friend class QgsFeatureRendererV2;
@@ -280,19 +283,19 @@ class CORE_EXPORT QgsSymbolV2
      * Creates a point in screen coordinates from a wkb string in map
      * coordinates
      */
-    static QgsConstWkbPtr _getPoint( QPointF& pt, QgsRenderContext& context, QgsConstWkbPtr wkb );
+    static QgsConstWkbPtr _getPoint( QPointF& pt, QgsRenderContext& context, QgsConstWkbPtr& wkb );
 
     /**
      * Creates a line string in screen coordinates from a wkb string in map
      * coordinates
      */
-    static QgsConstWkbPtr _getLineString( QPolygonF& pts, QgsRenderContext& context, QgsConstWkbPtr wkb, bool clipToExtent = true );
+    static QgsConstWkbPtr _getLineString( QPolygonF& pts, QgsRenderContext& context, QgsConstWkbPtr& wkb, bool clipToExtent = true );
 
     /**
      * Creates a polygon in screen coordinates from a wkb string in map
      * coordinates
      */
-    static QgsConstWkbPtr _getPolygon( QPolygonF& pts, QList<QPolygonF>& holes, QgsRenderContext& context, QgsConstWkbPtr wkb, bool clipToExtent = true );
+    static QgsConstWkbPtr _getPolygon( QPolygonF& pts, QList<QPolygonF>& holes, QgsRenderContext& context, QgsConstWkbPtr& wkb, bool clipToExtent = true );
 
     /**
      * Retrieve a cloned list of all layers that make up this symbol.
@@ -316,6 +319,10 @@ class CORE_EXPORT QgsSymbolV2
     //! @deprecated since 2.14, use QgsSymbolLayerV2::isCompatibleWithSymbol instead
     Q_DECL_DEPRECATED bool isSymbolLayerCompatible( SymbolType layerType );
 
+    //! Render editing vertex marker at specified point
+    //! @note added in QGIS 2.16
+    void renderVertexMarker( QPointF pt, QgsRenderContext& context, int currentVertexMarkerType, int currentVertexMarkerSize );
+
     SymbolType mType;
     QgsSymbolLayerV2List mLayers;
 
@@ -328,6 +335,9 @@ class CORE_EXPORT QgsSymbolV2
     const QgsVectorLayer* mLayer; //current vectorlayer
 
   private:
+    //! True if render has already been started - guards against multiple calls to
+    //! startRender() (usually a result of not cloning a shared symbol instance before rendering).
+    bool mStarted;
     //! Initialized in startRender, destroyed in stopRender
     QgsSymbolV2RenderContext* mSymbolRenderContext;
 
@@ -337,6 +347,9 @@ class CORE_EXPORT QgsSymbolV2
 
 ///////////////////////
 
+/** \ingroup core
+ * \class QgsSymbolV2RenderContext
+ */
 class CORE_EXPORT QgsSymbolV2RenderContext
 {
   public:
@@ -380,6 +393,24 @@ class CORE_EXPORT QgsSymbolV2RenderContext
     //! @note added in 2.4
     const QgsFields* fields() const { return mFields; }
 
+    /** Part count of current geometry
+     * @note added in QGIS 2.16
+     */
+    int geometryPartCount() const { return mGeometryPartCount; }
+    /** Sets the part count of current geometry
+     * @note added in QGIS 2.16
+     */
+    void setGeometryPartCount( int count ) { mGeometryPartCount = count; }
+
+    /** Part number of current geometry
+     * @note added in QGIS 2.16
+     */
+    int geometryPartNum() const { return mGeometryPartNum; }
+    /** Sets the part number of current geometry
+     * @note added in QGIS 2.16
+     */
+    void setGeometryPartNum( int num ) { mGeometryPartNum = num; }
+
     double outputLineWidth( double width ) const;
     double outputPixelSize( double size ) const;
 
@@ -411,6 +442,8 @@ class CORE_EXPORT QgsSymbolV2RenderContext
     int mRenderHints;
     const QgsFeature* mFeature; //current feature
     const QgsFields* mFields;
+    int mGeometryPartCount;
+    int mGeometryPartNum;
 
 
     QgsSymbolV2RenderContext( const QgsSymbolV2RenderContext& rh );
@@ -421,7 +454,9 @@ class CORE_EXPORT QgsSymbolV2RenderContext
 //////////////////////
 
 
-
+/** \ingroup core
+ * \class QgsMarkerSymbolV2
+ */
 class CORE_EXPORT QgsMarkerSymbolV2 : public QgsSymbolV2
 {
   public:
@@ -566,7 +601,9 @@ class CORE_EXPORT QgsMarkerSymbolV2 : public QgsSymbolV2
 };
 
 
-
+/** \ingroup core
+ * \class QgsLineSymbolV2
+ */
 class CORE_EXPORT QgsLineSymbolV2 : public QgsSymbolV2
 {
   public:
@@ -606,7 +643,9 @@ class CORE_EXPORT QgsLineSymbolV2 : public QgsSymbolV2
 };
 
 
-
+/** \ingroup core
+ * \class QgsFillSymbolV2
+ */
 class CORE_EXPORT QgsFillSymbolV2 : public QgsSymbolV2
 {
   public:

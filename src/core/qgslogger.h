@@ -110,11 +110,15 @@ class CORE_EXPORT QgsLogger
     static QTime sTime;
 };
 
+/** \ingroup core
+ */
 class QgsScopeLogger
 {
   public:
     QgsScopeLogger( const char* file, const char* func, int line )
-        : _file( file ), _func( func ), _line( line )
+        : _file( file )
+        , _func( func )
+        , _line( line )
     {
       QgsLogger::debug( "Entering.", 1, _file, _func, _line );
     }

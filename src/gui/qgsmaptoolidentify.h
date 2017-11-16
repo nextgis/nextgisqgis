@@ -33,7 +33,7 @@ class QgsMapCanvas;
 class QgsHighlight;
 class QgsIdentifyMenu;
 
-/**
+/** \ingroup gui
   \brief Map tool for identifying features in layers
 
   after selecting a point, performs the identification:
@@ -91,6 +91,8 @@ class GUI_EXPORT QgsMapToolIdentify : public QgsMapTool
     QgsMapToolIdentify( QgsMapCanvas * canvas );
 
     virtual ~QgsMapToolIdentify();
+
+    virtual Flags flags() const override { return QgsMapTool::AllowZoomRect; }
 
     //! Overridden mouse move event
     virtual void canvasMoveEvent( QgsMapMouseEvent* e ) override;

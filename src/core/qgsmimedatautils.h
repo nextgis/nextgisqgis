@@ -20,6 +20,9 @@
 
 class QgsLayerItem;
 
+/** \ingroup core
+ * \class QgsMimeDataUtils
+ */
 class CORE_EXPORT QgsMimeDataUtils
 {
   public:
@@ -51,6 +54,8 @@ class CORE_EXPORT QgsMimeDataUtils
     static QStringList decode( const QString& encoded );
 
 };
+
+Q_DECLARE_METATYPE( QgsMimeDataUtils::UriList );
 
 #endif // QGSMIMEDATAUTILS_H
 

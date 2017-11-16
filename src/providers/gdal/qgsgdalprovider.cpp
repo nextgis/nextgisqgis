@@ -32,7 +32,7 @@
 #include "qgsrasteridentifyresult.h"
 #include "qgsrasterlayer.h"
 #include "qgsrasterpyramid.h"
-
+#include "qgscrscache.h"
 #include "qgspoint.h"
 
 #include <QImage>
@@ -139,9 +139,20 @@ QgsGdalProvider::QgsGdalProvider( const QString &uri, bool update )
 
   QgsGdalProviderBase::registerGdalDrivers();
 
-  // GDAL tends to open AAIGrid as Float32 which results in lost precision
-  // and confusing values shown to users, force Float64
-  CPLSetConfigOption( "AAIGRID_DATATYPE", "Float64" );
+  if ( !CPLGetConfigOption( "AAIGRID_DATATYPE", nullptr ) )
+  {
+    // GDAL tends to open AAIGrid as Float32 which results in lost precision
+    // and confusing values shown to users, force Float64
+    CPLSetConfigOption( "AAIGRID_DATATYPE", "Float64" );
+  }
+
+  if ( !CPLGetConfigOption( "VRT_SHARED_SOURCE", nullptr ) )
+  {
+    // GDAL version up to this date have issues will use of VRT in multi-threaded
+    // scenarios. See https://issues.qgis.org/issues/16507 /
+    // https://trac.osgeo.org/gdal/ticket/6939
+    CPLSetConfigOption( "VRT_SHARED_SOURCE", "NO" );
+  }
 
   // To get buildSupportedRasterFileFilter the provider is called with empty uri
   if ( uri.isEmpty() )
@@ -178,7 +189,6 @@ QgsGdalProvider::QgsGdalProvider( const QString &uri, bool update )
 
 QgsGdalProvider* QgsGdalProvider::clone() const
 {
-  QgsDebugMsg( "Entered" );
   QgsGdalProvider * provider = new QgsGdalProvider( dataSourceUri() );
   provider->copyBaseSettings( *this );
   return provider;
@@ -197,7 +207,7 @@ bool QgsGdalProvider::crsFromWkt( const char *wkt )
                        .arg( OSRGetAuthorityName( hCRS, nullptr ),
                              OSRGetAuthorityCode( hCRS, nullptr ) );
       QgsDebugMsg( "authid recognized as " + authid );
-      mCrs.createFromOgcWmsCrs( authid );
+      mCrs = QgsCRSCache::instance()->crsByOgcWmsCrs( authid );
     }
     else
     {
@@ -213,7 +223,7 @@ bool QgsGdalProvider::crsFromWkt( const char *wkt )
       OGRFree( pszWkt );
 
       // create CRS from Wkt
-      mCrs.createFromWkt( myWktString );
+      mCrs = QgsCRSCache::instance()->crsByWkt( myWktString );
     }
   }
 
@@ -224,7 +234,6 @@ bool QgsGdalProvider::crsFromWkt( const char *wkt )
 
 QgsGdalProvider::~QgsGdalProvider()
 {
-  QgsDebugMsg( "entering." );
   if ( mGdalBaseDataset )
   {
     GDALDereferenceDataset( mGdalBaseDataset );
@@ -389,6 +398,11 @@ QImage* QgsGdalProvider::draw( QgsRectangle  const & viewExtent, int pixelWidth,
 
 QgsRasterBlock* QgsGdalProvider::block( int theBandNo, const QgsRectangle &theExtent, int theWidth, int theHeight )
 {
+  return block2( theBandNo, theExtent, theWidth, theHeight );
+}
+
+QgsRasterBlock* QgsGdalProvider::block2( int theBandNo, const QgsRectangle &theExtent, int theWidth, int theHeight, QgsRasterBlockFeedback* feedback )
+{
   //QgsRasterBlock *block = new QgsRasterBlock( dataType( theBandNo ), theWidth, theHeight, noDataValue( theBandNo ) );
   QgsRasterBlock *block;
   if ( srcHasNoDataValue( theBandNo ) && useSrcNoDataValue( theBandNo ) )
@@ -410,7 +424,7 @@ QgsRasterBlock* QgsGdalProvider::block( int theBandNo, const QgsRectangle &theEx
     QRect subRect = QgsRasterBlock::subRect( theExtent, theWidth, theHeight, mExtent );
     block->setIsNoDataExcept( subRect );
   }
-  readBlock( theBandNo, theExtent, theWidth, theHeight, block->bits() );
+  readBlock( theBandNo, theExtent, theWidth, theHeight, block->bits(), feedback );
   // apply scale and offset
   block->applyScaleOffset( bandScale( theBandNo ), bandOffset( theBandNo ) );
   block->applyNoDataValues( userNoDataValues( theBandNo ) );
@@ -422,7 +436,6 @@ void QgsGdalProvider::readBlock( int theBandNo, int xBlock, int yBlock, void *bl
   // TODO!!!: Check data alignment!!! May it happen that nearest value which
   // is not nearest is assigned to an output cell???
 
-  //QgsDebugMsg( "Entered" );
 
   //QgsDebugMsg( "yBlock = "  + QString::number( yBlock ) );
 
@@ -435,7 +448,7 @@ void QgsGdalProvider::readBlock( int theBandNo, int xBlock, int yBlock, void *bl
   gdalRasterIO( myGdalBand, GF_Read, xOff, yOff, mXBlockSize, mYBlockSize, block, mXBlockSize, mYBlockSize, ( GDALDataType ) mGdalDataType.at( theBandNo - 1 ), 0, 0 );
 }
 
-void QgsGdalProvider::readBlock( int theBandNo, QgsRectangle  const & theExtent, int thePixelWidth, int thePixelHeight, void *theBlock )
+void QgsGdalProvider::readBlock( int theBandNo, QgsRectangle  const & theExtent, int thePixelWidth, int thePixelHeight, void *theBlock, QgsRasterBlockFeedback* feedback )
 {
   QgsDebugMsg( "thePixelWidth = "  + QString::number( thePixelWidth ) );
   QgsDebugMsg( "thePixelHeight = "  + QString::number( thePixelHeight ) );
@@ -607,11 +620,12 @@ void QgsGdalProvider::readBlock( int theBandNo, QgsRectangle  const & theExtent,
   GDALRasterBandH gdalBand = GDALGetRasterBand( mGdalDataset, theBandNo );
   GDALDataType type = ( GDALDataType )mGdalDataType.at( theBandNo - 1 );
   CPLErrorReset();
+
   CPLErr err = gdalRasterIO( gdalBand, GF_Read,
                              srcLeft, srcTop, srcWidth, srcHeight,
                              ( void * )tmpBlock,
                              tmpWidth, tmpHeight, type,
-                             0, 0 );
+                             0, 0, feedback );
 
   if ( err != CPLE_None )
   {
@@ -871,13 +885,11 @@ void QgsGdalProvider::computeMinMax( int theBandNo ) const
  */
 QList<QgsColorRampShader::ColorRampItem> QgsGdalProvider::colorTable( int theBandNumber )const
 {
-  QgsDebugMsg( "entered." );
   return QgsGdalProviderBase::colorTable( mGdalDataset, theBandNumber );
 }
 
 QgsCoordinateReferenceSystem QgsGdalProvider::crs()
 {
-  QgsDebugMsg( "Entered" );
   return mCrs;
 }
 
@@ -974,7 +986,7 @@ QString QgsGdalProvider::generateBandName( int theBandNumber ) const
   return QgsRasterDataProvider::generateBandName( theBandNumber );
 }
 
-QgsRasterIdentifyResult QgsGdalProvider::identify( const QgsPoint & thePoint, QgsRaster::IdentifyFormat theFormat, const QgsRectangle &theExtent, int theWidth, int theHeight )
+QgsRasterIdentifyResult QgsGdalProvider::identify( const QgsPoint & thePoint, QgsRaster::IdentifyFormat theFormat, const QgsRectangle &theExtent, int theWidth, int theHeight , int /*theDpi*/ )
 {
   QgsDebugMsg( QString( "thePoint =  %1 %2" ).arg( thePoint.x(), 0, 'g', 10 ).arg( thePoint.y(), 0, 'g', 10 ) );
 
@@ -1068,7 +1080,14 @@ QgsRasterIdentifyResult QgsGdalProvider::identify( const QgsPoint & thePoint, Qg
     }
     else
     {
-      results.insert( i, value );
+      if ( srcDataType( i ) == QGis::Float32 )
+      {
+        // Insert a float QVariant so that QgsMapToolIdentify::identifyRasterLayer()
+        // can print a string without an excessive precision
+        results.insert( i, static_cast<float>( value ) );
+      }
+      else
+        results.insert( i, value );
     }
     delete myBlock;
   }
@@ -1598,13 +1617,20 @@ QString QgsGdalProvider::buildPyramids( const QList<QgsRasterPyramid> & theRaste
     Q_FOREACH ( const QString& option, theConfigOptions )
     {
       QStringList opt = option.split( '=' );
-      QByteArray key = opt[0].toLocal8Bit();
-      QByteArray value = opt[1].toLocal8Bit();
-      // save previous value
-      myConfigOptionsOld[ opt[0] ] = QString( CPLGetConfigOption( key.data(), nullptr ) );
-      // set temp. value
-      CPLSetConfigOption( key.data(), value.data() );
-      QgsDebugMsg( QString( "set option %1=%2" ).arg( key.data(), value.data() ) );
+      if ( opt.size() == 2 )
+      {
+        QByteArray key = opt[0].toLocal8Bit();
+        QByteArray value = opt[1].toLocal8Bit();
+        // save previous value
+        myConfigOptionsOld[ opt[0] ] = QString( CPLGetConfigOption( key.data(), nullptr ) );
+        // set temp. value
+        CPLSetConfigOption( key.data(), value.data() );
+        QgsDebugMsg( QString( "set option %1=%2" ).arg( key.data(), value.data() ) );
+      }
+      else
+      {
+        QgsDebugMsg( QString( "invalid pyramid option: %1" ).arg( option ) );
+      }
     }
   }
 
@@ -1634,7 +1660,8 @@ QString QgsGdalProvider::buildPyramids( const QList<QgsRasterPyramid> & theRaste
     }
   }
   /* From : http://www.gdal.org/classGDALDataset.html#a2aa6f88b3bbc840a5696236af11dde15
-   * pszResampling : one of "NEAREST", "GAUSS", "CUBIC", "AVERAGE", "MODE", "AVERAGE_MAGPHASE" or "NONE" controlling the downsampling method applied.
+   * pszResampling : one of "NEAREST", "GAUSS", "CUBIC", "CUBICSPLINE" (GDAL >= 2.0),
+   * "LANCZOS" ( GDAL >= 2.0), "AVERAGE", "MODE" or "NONE" controlling the downsampling method applied.
    * nOverviews : number of overviews to build.
    * panOverviewList : the list of overview decimation factors to build.
    * nListBands : number of bands to build overviews for in panBandList. Build for all bands if this is 0.
@@ -1967,7 +1994,6 @@ static QString createFileFilter_( QString const &longName, QString const &glob )
 
 void buildSupportedRasterFileFilterAndExtensions( QString & theFileFiltersString, QStringList & theExtensions, QStringList & theWildcards )
 {
-  QgsDebugMsg( "Entered" );
 
   // then iterate through all of the supported drivers, adding the
   // corresponding file filter
@@ -2503,7 +2529,8 @@ void QgsGdalProvider::initBaseDataset()
              || mGeoTransform[2] != 0.0
              || mGeoTransform[4] != 0.0
              || mGeoTransform[5] > 0.0 ) )
-      || GDALGetGCPCount( mGdalBaseDataset ) > 0 )
+      || GDALGetGCPCount( mGdalBaseDataset ) > 0
+      || GDALGetMetadata( mGdalBaseDataset, "RPC" ) )
   {
     QgsLogger::warning( "Creating Warped VRT." );
 
@@ -2580,7 +2607,16 @@ void QgsGdalProvider::initBaseDataset()
   if ( !crsFromWkt( GDALGetProjectionRef( mGdalDataset ) ) &&
        !crsFromWkt( GDALGetGCPProjection( mGdalDataset ) ) )
   {
-    QgsDebugMsg( "No valid CRS identified" );
+    if ( mGdalBaseDataset != mGdalDataset &&
+         GDALGetMetadata( mGdalBaseDataset, "RPC" ) )
+    {
+      // Warped VRT of RPC is in EPSG:4326
+      mCrs = QgsCRSCache::instance()->crsByOgcWmsCrs( "EPSG:4326" );
+    }
+    else
+    {
+      QgsDebugMsg( "No valid CRS identified" );
+    }
   }
 
   //set up the coordinat transform - in the case of raster this is mainly used to convert
@@ -2625,6 +2661,15 @@ void QgsGdalProvider::initBaseDataset()
 
     int isValid = false;
     double myNoDataValue = GDALGetRasterNoDataValue( myGdalBand, &isValid );
+    // We check that the double value we just got is representable in the
+    // data type. In normal situations this should not be needed, but it happens
+    // to have 8bit TIFFs with nan as the nodata value. If not checking against
+    // the min/max bounds, it would be cast to 0 by representableValue().
+    if ( isValid && !QgsRaster::isRepresentableValue( myNoDataValue, dataTypeFromGdal( myGdalDataType ) ) )
+    {
+      QgsDebugMsg( QString( "GDALGetRasterNoDataValue = %1 is not representable in data type, so ignoring it" ).arg( myNoDataValue ) );
+      isValid = false;
+    }
     if ( isValid )
     {
       QgsDebugMsg( QString( "GDALGetRasterNoDataValue = %1" ).arg( myNoDataValue ) );
@@ -2952,7 +2997,7 @@ QString QgsGdalProvider::validateCreationOptions( const QStringList& createOptio
   return message;
 }
 
-QString QgsGdalProvider::validatePyramidsCreationOptions( QgsRaster::RasterPyramidsFormat pyramidsFormat,
+QString QgsGdalProvider::validatePyramidsConfigOptions( QgsRaster::RasterPyramidsFormat pyramidsFormat,
     const QStringList & theConfigOptions, const QString & fileFormat )
 {
   // Erdas Imagine format does not support config options
@@ -2967,21 +3012,19 @@ QString QgsGdalProvider::validatePyramidsCreationOptions( QgsRaster::RasterPyram
   else if ( pyramidsFormat == QgsRaster::PyramidsInternal )
   {
     QStringList supportedFormats;
-    supportedFormats << "gtiff" << "georaster" << "hfa" << "jp2kak" << "mrsid" << "nitf";
+    supportedFormats << "gtiff" << "georaster" << "hfa" << "gpkg" << "rasterlite" << "nitf";
     if ( ! supportedFormats.contains( fileFormat.toLower() ) )
-      return QString( "Internal pyramids format only supported for gtiff/georaster/hfa/jp2kak/mrsid/nitf files (using %1)" ).arg( fileFormat );
-    // TODO - check arguments for georaster hfa jp2kak mrsid nitf
-    // for now, only test gtiff
-    else if ( fileFormat.toLower() != "gtiff" )
-      return QString();
+      return QString( "Internal pyramids format only supported for gtiff/georaster/gpkg/rasterlite/nitf files (using %1)" ).arg( fileFormat );
   }
-
-  // for gtiff external or internal pyramids, validate gtiff-specific values
-  // PHOTOMETRIC_OVERVIEW=YCBCR requires a source raster with only 3 bands (RGB)
-  if ( theConfigOptions.contains( "PHOTOMETRIC_OVERVIEW=YCBCR" ) )
+  else
   {
-    if ( GDALGetRasterCount( mGdalDataset ) != 3 )
-      return "PHOTOMETRIC_OVERVIEW=YCBCR requires a source raster with only 3 bands (RGB)";
+    // for gtiff external pyramids, validate gtiff-specific values
+    // PHOTOMETRIC_OVERVIEW=YCBCR requires a source raster with only 3 bands (RGB)
+    if ( theConfigOptions.contains( "PHOTOMETRIC_OVERVIEW=YCBCR" ) )
+    {
+      if ( GDALGetRasterCount( mGdalDataset ) != 3 )
+        return "PHOTOMETRIC_OVERVIEW=YCBCR requires a source raster with only 3 bands (RGB)";
+    }
   }
 
   return QString();
@@ -3012,6 +3055,10 @@ QGISEXTERN QList<QPair<QString, QString> > *pyramidResamplingMethods()
     methods.append( QPair<QString, QString>( "AVERAGE", QObject::tr( "Average" ) ) );
     methods.append( QPair<QString, QString>( "GAUSS", QObject::tr( "Gauss" ) ) );
     methods.append( QPair<QString, QString>( "CUBIC", QObject::tr( "Cubic" ) ) );
+#if GDAL_VERSION_MAJOR >= 2
+    methods.append( QPair<QString, QString>( "CUBICSPLINE", QObject::tr( "Cubic Spline" ) ) );
+    methods.append( QPair<QString, QString>( "LANCZOS", QObject::tr( "Lanczos" ) ) );
+#endif
     methods.append( QPair<QString, QString>( "MODE", QObject::tr( "Mode" ) ) );
     methods.append( QPair<QString, QString>( "NONE", QObject::tr( "None" ) ) );
   }

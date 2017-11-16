@@ -23,7 +23,7 @@
 class QgsExpressionSorter
 {
   public:
-    QgsExpressionSorter( const QList<QgsFeatureRequest::OrderByClause>& preparedOrderBys )
+    explicit QgsExpressionSorter( const QList<QgsFeatureRequest::OrderByClause>& preparedOrderBys )
         : mPreparedOrderBys( preparedOrderBys )
     {}
 
@@ -123,7 +123,7 @@ class QgsExpressionSorter
 
       expressionContext->appendScope( scope );
 
-      QList<QgsIndexedFeature> indexedFeatures;
+      QVector<QgsIndexedFeature> indexedFeatures;
 
       QgsIndexedFeature indexedFeature;
 

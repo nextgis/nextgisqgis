@@ -27,9 +27,9 @@ __revision__ = '$Format:%H$'
 
 from shapely.ops import polygonize
 from shapely.ops import unary_union
-from shapely.geometry import Point, MultiLineString
+from shapely.geometry import MultiLineString
 
-from PyQt4.QtCore import QVariant
+from qgis.PyQt.QtCore import QVariant
 from qgis.core import QGis, QgsFields, QgsField, QgsFeature, QgsGeometry
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
@@ -72,7 +72,7 @@ class Polygonize(GeoAlgorithm):
         allLinesList = []
         features = vector.features(vlayer)
         progress.setInfo(self.tr('Processing lines...'))
-        total = 40.0 / len(features)
+        total = 40.0 / len(features) if len(features) > 0 else 1
         for current, inFeat in enumerate(features):
             inGeom = inFeat.geometry()
             if inGeom.isMultipart():
@@ -97,7 +97,7 @@ class Polygonize(GeoAlgorithm):
         progress.setInfo('Saving polygons...')
         writer = output.getVectorWriter(fields, QGis.WKBPolygon, vlayer.crs())
         outFeat = QgsFeature()
-        total = 50.0 / len(polygons)
+        total = 50.0 / len(polygons) if len(polygons) > 0 else 1
         for current, polygon in enumerate(polygons):
             outFeat.setGeometry(QgsGeometry.fromWkt(polygon.wkt))
             if self.getParameterValue(self.GEOMETRY):

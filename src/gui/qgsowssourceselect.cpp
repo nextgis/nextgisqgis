@@ -36,6 +36,7 @@
 #include "qgsdataprovider.h"
 #include "qgsowssourceselect.h"
 #include "qgsnetworkaccessmanager.h"
+#include "qgscrscache.h"
 
 #include <QButtonGroup>
 #include <QFileDialog>
@@ -97,7 +98,7 @@ QgsOWSSourceSelect::QgsOWSSourceSelect( const QString& service, QWidget * parent
     if ( currentCRS != -1 )
     {
       //convert CRS id to epsg
-      QgsCoordinateReferenceSystem currentRefSys( currentCRS, QgsCoordinateReferenceSystem::InternalCrsId );
+      QgsCoordinateReferenceSystem currentRefSys = QgsCRSCache::instance()->crsBySrsId( currentCRS );
       if ( currentRefSys.isValid() )
       {
         mSelectedCRS = currentRefSys.authid();
@@ -138,7 +139,6 @@ void QgsOWSSourceSelect::clearFormats()
 
 void QgsOWSSourceSelect::populateFormats()
 {
-  QgsDebugMsg( "entered" );
 
   // A server may offer more similar formats, which are mapped
   // to the same GDAL format, e.g. GeoTIFF and TIFF
@@ -224,7 +224,6 @@ void QgsOWSSourceSelect::populateFormats()
 
 void QgsOWSSourceSelect::populateTimes()
 {
-  QgsDebugMsg( "entered" );
   mTimeComboBox->clear();
   mTimeComboBox->insertItems( 0, selectedLayersTimes() );
   mTimeComboBox->setEnabled( !selectedLayersTimes().isEmpty() );
@@ -344,7 +343,6 @@ void QgsOWSSourceSelect::populateLayerList()
 
 void QgsOWSSourceSelect::on_mConnectButton_clicked()
 {
-  QgsDebugMsg( "entered" );
 
   mLayersTreeWidget->clear();
   clearFormats();
@@ -366,7 +364,6 @@ void QgsOWSSourceSelect::on_mConnectButton_clicked()
 
 void QgsOWSSourceSelect::addClicked()
 {
-  QgsDebugMsg( "entered" );
 }
 
 void QgsOWSSourceSelect::enableLayersForCrs( QTreeWidgetItem * )
@@ -388,8 +385,8 @@ void QgsOWSSourceSelect::on_mChangeCRSButton_clicked()
   mySelector->setOgcWmsCrsFilter( mSelectedLayersCRSs );
 
   QString myDefaultCrs = QgsProject::instance()->readEntry( "SpatialRefSys", "/ProjectCrs", GEO_EPSG_CRS_AUTHID );
-  QgsCoordinateReferenceSystem defaultCRS;
-  if ( defaultCRS.createFromOgcWmsCrs( myDefaultCrs ) )
+  QgsCoordinateReferenceSystem defaultCRS = QgsCRSCache::instance()->crsByOgcWmsCrs( myDefaultCrs );
+  if ( defaultCRS.isValid() )
   {
     mySelector->setSelectedCrsId( defaultCRS.srsid() );
   }
@@ -416,7 +413,6 @@ void QgsOWSSourceSelect::on_mLayersTreeWidget_itemSelectionChanged()
 
 void QgsOWSSourceSelect::populateCRS()
 {
-  QgsDebugMsg( "Entered" );
   clearCRS();
   mSelectedLayersCRSs = selectedLayersCRSs().toSet();
   mCRSLabel->setText( tr( "Coordinate Reference System (%n available)", "crs count", mSelectedLayersCRSs.count() ) + ':' );
@@ -594,8 +590,7 @@ QString QgsOWSSourceSelect::descriptionForAuthId( const QString& authId )
   if ( mCrsNames.contains( authId ) )
     return mCrsNames[ authId ];
 
-  QgsCoordinateReferenceSystem qgisSrs;
-  qgisSrs.createFromOgcWmsCrs( authId );
+  QgsCoordinateReferenceSystem qgisSrs = QgsCRSCache::instance()->crsByOgcWmsCrs( authId );
   mCrsNames.insert( authId, qgisSrs.description() );
   return qgisSrs.description();
 }

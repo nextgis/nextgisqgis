@@ -1,8 +1,16 @@
 /***************************************************************************
- *  qgsgeometryareacheck.cpp                                               *
- *  -------------------                                                    *
- *  copyright            : (C) 2014 by Sandro Mani / Sourcepole AG         *
- *  email                : smani@sourcepole.ch                             *
+    qgsgeometryareacheck.cpp
+    ---------------------
+    begin                : September 2015
+    copyright            : (C) 2014 by Sandro Mani / Sourcepole AG
+    email                : smani at sourcepole dot ch
+ ***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
  ***************************************************************************/
 
 #include "qgsgeometryengine.h"
@@ -182,14 +190,6 @@ bool QgsGeometryAreaCheck::mergeWithNeighbor( QgsFeature& feature, int partIdx, 
     return method == MergeIdenticalAttribute ? true : false;
   }
 
-
-  // Remove polygon from source geometry
-  deleteFeatureGeometryPart( feature, partIdx, changes );
-  if ( mergeFeature.id() == feature.id() && mergePartIdx > partIdx )
-  {
-    --mergePartIdx;
-  }
-
   // Merge geometries
   QgsAbstractGeometryV2* mergeGeom = mergeFeature.geometry()->geometry();
   QgsGeometryEngine* geomEngine = QgsGeomUtils::createGeomEngine( QgsGeomUtils::getGeomPart( mergeGeom, mergePartIdx ), QgsGeometryCheckPrecision::tolerance() );
@@ -199,6 +199,14 @@ bool QgsGeometryAreaCheck::mergeWithNeighbor( QgsFeature& feature, int partIdx, 
   {
     return false;
   }
+
+  // Remove polygon from source geometry
+  deleteFeatureGeometryPart( feature, partIdx, changes );
+  if ( mergeFeature.id() == feature.id() && mergePartIdx > partIdx )
+  {
+    --mergePartIdx;
+  }
+  // Replace polygon in merge geometry
   replaceFeatureGeometryPart( mergeFeature, mergePartIdx, combinedGeom, changes );
 
   return true;

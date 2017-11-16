@@ -50,6 +50,10 @@ class QgsMapCanvas : QGraphicsView
     //! Destructor
     ~QgsMapCanvas();
 
+    //! Returns the magnification factor
+    //! @note added in 2.16
+    double magnificationFactor() const;
+
     void setLayerSet( QList<QgsMapCanvasLayer>& layers );
 
     void setCurrentLayer( QgsMapLayer* layer );
@@ -269,13 +273,11 @@ class QgsMapCanvas : QGraphicsView
     QgsMapLayer* currentLayer();
 
     //! set wheel action and zoom factor (should be greater than 1)
-    void setWheelAction( WheelAction action, double factor = 2 );
+    //! @deprecated No more options for wheel action
+    void setWheelAction( WheelAction action, double factor = 2 ) /Deprecated/;
 
-    //! Zoom in with fixed factor
-    void zoomIn();
-
-    //! Zoom out with fixed factor
-    void zoomOut();
+    //! set the wheel zoom factor
+    void setWheelFactor( double factor );
 
     //! Zoom to a specific scale
     void zoomScale( double scale );
@@ -286,6 +288,11 @@ class QgsMapCanvas : QGraphicsView
 
     //! Zooms in/out with a given center
     void zoomWithCenter( int x, int y, bool zoomIn );
+
+    //! Returns whether the scale is locked, so zooming can be performed using magnication.
+    //! @note added in 2.16
+    //! @see setScaleLocked()
+    bool scaleLocked() const;
 
     //! used to determine if anti-aliasing is enabled or not
     void enableAntiAliasing( bool theFlag );
@@ -383,6 +390,13 @@ class QgsMapCanvas : QGraphicsView
      */
     // const QgsExpressionContextScope& expressionContextScope() const;
 
+     /** Sets the segmentation tolerance applied when rendering curved geometries
+    @param tolerance the segmentation tolerance*/
+    void setSegmentationTolerance( double tolerance );
+    /** Sets segmentation tolerance type (maximum angle or maximum difference between curve and approximation)
+    @param type the segmentation tolerance typename*/
+    void setSegmentationToleranceType( QgsAbstractGeometryV2::SegmentationToleranceType type );
+
   public slots:
 
     /** Repaints the canvas map*/
@@ -435,6 +449,23 @@ class QgsMapCanvas : QGraphicsView
     //! @note added in 2.8
     static void enableRotation( bool enabled );
 
+    //! Sets the factor of magnification to apply to the map canvas. Indeed, we
+    //! increase/decrease the DPI of the map settings according to this factor
+    //! in order to render marker point, labels, ... bigger.
+    //! @note added in 2.16
+    void setMagnificationFactor( double factor );
+
+    //! Lock the scale, so zooming can be performed using magnication
+    //! @note added in 2.16
+    //! @see scaleLocked()
+    void setScaleLocked( bool isLocked );
+
+    //! Zoom in with fixed factor
+    void zoomIn();
+
+    //! Zoom out with fixed factor
+    void zoomOut();
+
   signals:
     /** Let the owner know how far we are with render operations */
     //! @deprecated since 2.4 - already unused in 2.0 anyway
@@ -453,6 +484,10 @@ class QgsMapCanvas : QGraphicsView
     //! Emitted when the rotation of the map changes
     //! @note added in 2.8
     void rotationChanged( double );
+
+    //! Emitted when the scale of the map changes
+    //! @note added in 2.16
+    void magnificationChanged( double );
 
     /** Emitted when the canvas has rendered.
      * Passes a pointer to the painter on which the map was drawn. This is

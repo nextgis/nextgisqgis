@@ -39,7 +39,7 @@ QgsGeometryCheckerDialog::QgsGeometryCheckerDialog( QgisInterface *iface, QWidge
   layout->addWidget( mTabWidget );
   layout->addWidget( mButtonBox );
 
-  mTabWidget->addTab( new QgsGeometryCheckerSetupTab( iface ), tr( "Setup" ) );
+  mTabWidget->addTab( new QgsGeometryCheckerSetupTab( iface ), tr( "Settings" ) );
   mTabWidget->addTab( new QWidget(), tr( "Result" ) );
   mTabWidget->setTabEnabled( 1, false );
 
@@ -70,7 +70,7 @@ void QgsGeometryCheckerDialog::onCheckerFinished( bool successful )
   {
     mTabWidget->setTabEnabled( 1, true );
     mTabWidget->setCurrentIndex( 1 );
-    static_cast<QgsGeometryCheckerResultTab*>( mTabWidget->widget( 1 ) )->showCheckMessages();
+    static_cast<QgsGeometryCheckerResultTab*>( mTabWidget->widget( 1 ) )->finalize();
   }
 }
 

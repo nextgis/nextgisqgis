@@ -130,7 +130,7 @@ bool QgsPointV2::fromWkt( const QString& wkt )
 
   QPair<QgsWKBTypes::Type, QString> parts = QgsGeometryUtils::wktReadBlock( wkt );
 
-  if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::parseType( geometryType() ) )
+  if ( QgsWKBTypes::flatType( parts.first ) != QgsWKBTypes::Point )
     return false;
   mWkbType = parts.first;
 
@@ -213,7 +213,16 @@ QDomElement QgsPointV2::asGML2( QDomDocument& doc, int precision, const QString&
 {
   QDomElement elemPoint = doc.createElementNS( ns, "Point" );
   QDomElement elemCoordinates = doc.createElementNS( ns, "coordinates" );
-  QString strCoordinates = qgsDoubleToString( mX, precision ) + ',' + qgsDoubleToString( mY, precision );
+
+  // coordinate separator
+  QString cs = ",";
+  // tupel separator
+  QString ts = " ";
+
+  elemCoordinates.setAttribute( "cs", cs );
+  elemCoordinates.setAttribute( "ts", ts );
+
+  QString strCoordinates = qgsDoubleToString( mX, precision ) + cs + qgsDoubleToString( mY, precision );
   elemCoordinates.appendChild( doc.createTextNode( strCoordinates ) );
   elemPoint.appendChild( elemCoordinates );
   return elemPoint;
@@ -253,15 +262,22 @@ void QgsPointV2::draw( QPainter& p ) const
 
 void QgsPointV2::clear()
 {
-  mWkbType = QgsWKBTypes::Unknown;
   mX = mY = mZ = mM = 0.;
   clearCache();
 }
 
-void QgsPointV2::transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d )
+void QgsPointV2::transform( const QgsCoordinateTransform& ct, QgsCoordinateTransform::TransformDirection d, bool transformZ )
 {
   clearCache();
-  ct.transformInPlace( mX, mY, mZ, d );
+  if ( transformZ )
+  {
+    ct.transformInPlace( mX, mY, mZ, d );
+  }
+  else
+  {
+    double z = 0.0;
+    ct.transformInPlace( mX, mY, z, d );
+  }
 }
 
 QgsCoordinateSequenceV2 QgsPointV2::coordinateSequence() const
@@ -272,6 +288,11 @@ QgsCoordinateSequenceV2 QgsPointV2::coordinateSequence() const
   cs.back().append( QgsPointSequenceV2() << QgsPointV2( *this ) );
 
   return cs;
+}
+
+QgsAbstractGeometryV2* QgsPointV2::boundary() const
+{
+  return nullptr;
 }
 
 /***************************************************************************
@@ -299,11 +320,12 @@ bool QgsPointV2::moveVertex( QgsVertexId position, const QgsPointV2& newPos )
 
 double QgsPointV2::closestSegment( const QgsPointV2& pt, QgsPointV2& segmentPt,  QgsVertexId& vertexAfter, bool* leftOf, double epsilon ) const
 {
+  Q_UNUSED( pt );
+  Q_UNUSED( segmentPt );
+  Q_UNUSED( vertexAfter );
   Q_UNUSED( leftOf );
   Q_UNUSED( epsilon );
-  segmentPt = *this;
-  vertexAfter = QgsVertexId( 0, 0, 0 );
-  return QgsGeometryUtils::sqrDistance2D( *this, pt );
+  return -1;  // no segments - return error
 }
 
 bool QgsPointV2::nextVertex( QgsVertexId& id, QgsPointV2& vertex ) const

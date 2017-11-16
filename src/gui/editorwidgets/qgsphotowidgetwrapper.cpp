@@ -20,6 +20,7 @@
 #include <QGridLayout>
 #include <QFileDialog>
 #include <QSettings>
+#include <QUrl>
 
 #include "qgsfilterlineedit.h"
 
@@ -145,14 +146,26 @@ QVariant QgsPhotoWidgetWrapper::value() const
   return v;
 }
 
+void QgsPhotoWidgetWrapper::showIndeterminateState()
+{
+  if ( mLineEdit )
+  {
+    whileBlocking( mLineEdit )->clear();
+  }
+  if ( mPhotoLabel )
+    mPhotoLabel->clear();
+  if ( mPhotoPixmapLabel )
+    mPhotoPixmapLabel->clear();
+}
+
 QWidget* QgsPhotoWidgetWrapper::createWidget( QWidget* parent )
 {
   QWidget* container = new QWidget( parent );
-  QGridLayout* layout = new QGridLayout( container );
-  QgsFilterLineEdit* le = new QgsFilterLineEdit( container );
-  QgsPixmapLabel* label = new QgsPixmapLabel( parent );
+  QGridLayout* layout = new QGridLayout();
+  QgsFilterLineEdit* le = new QgsFilterLineEdit();
+  QgsPixmapLabel* label = new QgsPixmapLabel();
   label->setObjectName( "PhotoLabel" );
-  QPushButton* pb = new QPushButton( tr( "..." ), container );
+  QPushButton* pb = new QPushButton( tr( "..." ) );
   pb->setObjectName( "FileChooserButton" );
 
   layout->addWidget( label, 0, 0, 1, 2 );
@@ -233,9 +246,7 @@ void QgsPhotoWidgetWrapper::setValue( const QVariant& value )
   {
     if ( value.isNull() )
     {
-      mLineEdit->blockSignals( true );
-      mLineEdit->setText( QSettings().value( "qgis/nullValue", "NULL" ).toString() );
-      mLineEdit->blockSignals( false );
+      whileBlocking( mLineEdit )->setText( QSettings().value( "qgis/nullValue", "NULL" ).toString() );
       clearPicture();
     }
     else
@@ -254,4 +265,17 @@ void QgsPhotoWidgetWrapper::setEnabled( bool enabled )
 
   if ( mButton )
     mButton->setEnabled( enabled );
+}
+
+void QgsPhotoWidgetWrapper::updateConstraintWidgetStatus( bool constraintValid )
+{
+  if ( mLineEdit )
+  {
+    if ( constraintValid )
+      mLineEdit->setStyleSheet( QString() );
+    else
+    {
+      mLineEdit->setStyleSheet( "QgsFilterLineEdit { background-color: #dd7777; }" );
+    }
+  }
 }

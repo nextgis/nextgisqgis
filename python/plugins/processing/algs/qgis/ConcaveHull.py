@@ -27,6 +27,7 @@ __revision__ = '$Format:%H$'
 
 from qgis.core import QGis, QgsFeatureRequest, QgsFeature, QgsGeometry
 from processing.core.GeoAlgorithm import GeoAlgorithm
+from processing.core.SilentProgress import SilentProgress
 from processing.core.parameters import ParameterVector
 from processing.core.parameters import ParameterNumber
 from processing.core.parameters import ParameterBoolean
@@ -63,16 +64,20 @@ class ConcaveHull(GeoAlgorithm):
         alpha = self.getParameterValue(self.ALPHA)
         holes = self.getParameterValue(self.HOLES)
         no_multigeom = self.getParameterValue(self.NO_MULTIGEOMETRY)
+        runalg_kwargs = {}
+        if isinstance(progress, SilentProgress):
+            runalg_kwargs['progress'] = progress
 
         # Delaunay triangulation from input point layer
         progress.setText(self.tr('Creating Delaunay triangles...'))
-        delone_triangles = processing.runalg("qgis:delaunaytriangulation", layer, None)['OUTPUT']
+        delone_triangles = processing.runalg("qgis:delaunaytriangulation",
+                                             layer, None, **runalg_kwargs)['OUTPUT']
         delaunay_layer = processing.getObject(delone_triangles)
 
         # Get max edge length from Delaunay triangles
         progress.setText(self.tr('Computing edges max length...'))
         features = delaunay_layer.getFeatures()
-        counter = 50. / delaunay_layer.featureCount()
+        counter = 50. / delaunay_layer.featureCount() if delaunay_layer.featureCount() > 0 else 1
         lengths = []
         edges = {}
         for feat in features:
@@ -85,7 +90,7 @@ class ConcaveHull(GeoAlgorithm):
 
         # Get features with longest edge longer than alpha*max_length
         progress.setText(self.tr('Removing features...'))
-        counter = 50. / len(edges)
+        counter = 50. / len(edges) if len(edges) > 0 else 1
         i = 0
         ids = []
         for id, max_len in edges.iteritems():
@@ -103,7 +108,7 @@ class ConcaveHull(GeoAlgorithm):
         # Dissolve all Delaunay triangles
         progress.setText(self.tr('Dissolving Delaunay triangles...'))
         dissolved = processing.runalg("qgis:dissolve", delaunay_layer,
-                                      True, None, None)['OUTPUT']
+                                      True, None, None, **runalg_kwargs)['OUTPUT']
         dissolved_layer = processing.getObject(dissolved)
 
         # Save result

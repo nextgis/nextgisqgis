@@ -28,11 +28,17 @@ __revision__ = '$Format:%H$'
 import re
 import os
 
-from PyQt4 import uic
-from PyQt4.QtCore import QCoreApplication, QSettings
-from PyQt4.QtGui import QDialog, QMenu, QAction, QCursor, QFileDialog
-from qgis.gui import QgsEncodingFileDialog
-from qgis.core import *
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import QCoreApplication, QSettings
+from qgis.PyQt.QtWidgets import QDialog, QMenu, QAction, QFileDialog
+from qgis.PyQt.QtGui import QCursor
+from qgis.gui import QgsEncodingFileDialog, QgsExpressionBuilderDialog
+from qgis.core import (QgsDataSourceURI,
+                       QgsCredentials,
+                       QgsExpressionContext,
+                       QgsExpressionContextUtils,
+                       QgsExpression,
+                       QgsExpressionContextScope)
 
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.core.outputs import OutputVector
@@ -48,6 +54,8 @@ class OutputSelectionPanel(BASE, WIDGET):
 
     SAVE_TO_TEMP_FILE = QCoreApplication.translate(
         'OutputSelectionPanel', '[Save to temporary file]')
+    SAVE_TO_TEMP_LAYER = QCoreApplication.translate(
+        'OutputSelectionPanel', '[Create temporary layer]')
 
     def __init__(self, output, alg):
         super(OutputSelectionPanel, self).__init__(None)
@@ -57,7 +65,12 @@ class OutputSelectionPanel(BASE, WIDGET):
         self.alg = alg
 
         if hasattr(self.leText, 'setPlaceholderText'):
-            self.leText.setPlaceholderText(self.SAVE_TO_TEMP_FILE)
+            if isinstance(output, OutputVector) \
+                    and alg.provider.supportsNonFileBasedOutput():
+                # use memory layers for temporary files if supported
+                self.leText.setPlaceholderText(self.SAVE_TO_TEMP_LAYER)
+            else:
+                self.leText.setPlaceholderText(self.SAVE_TO_TEMP_FILE)
 
         self.btnSelect.clicked.connect(self.selectOutput)
 
@@ -67,8 +80,14 @@ class OutputSelectionPanel(BASE, WIDGET):
         else:
             popupMenu = QMenu()
 
-            actionSaveToTempFile = QAction(
-                self.tr('Save to a temporary file'), self.btnSelect)
+            if isinstance(self.output, OutputVector) \
+                    and self.alg.provider.supportsNonFileBasedOutput():
+                # use memory layers for temporary files if supported
+                actionSaveToTempFile = QAction(
+                    self.tr('Create temporary layer'), self.btnSelect)
+            else:
+                actionSaveToTempFile = QAction(
+                    self.tr('Save to a temporary file'), self.btnSelect)
             actionSaveToTempFile.triggered.connect(self.saveToTemporaryFile)
             popupMenu.addAction(actionSaveToTempFile)
 
@@ -77,12 +96,13 @@ class OutputSelectionPanel(BASE, WIDGET):
             actionSaveToFile.triggered.connect(self.selectFile)
             popupMenu.addAction(actionSaveToFile)
 
+            actionShowExpressionsBuilder = QAction(
+                self.tr('Use expression...'), self.btnSelect)
+            actionShowExpressionsBuilder.triggered.connect(self.showExpressionsBuilder)
+            popupMenu.addAction(actionShowExpressionsBuilder)
+
             if isinstance(self.output, OutputVector) \
                     and self.alg.provider.supportsNonFileBasedOutput():
-                actionSaveToMemory = QAction(
-                    self.tr('Save to memory layer'), self.btnSelect)
-                actionSaveToMemory.triggered.connect(self.saveToMemory)
-                popupMenu.addAction(actionSaveToMemory)
                 actionSaveToSpatialite = QAction(
                     self.tr('Save to Spatialite table...'), self.btnSelect)
                 actionSaveToSpatialite.triggered.connect(self.saveToSpatialite)
@@ -98,6 +118,22 @@ class OutputSelectionPanel(BASE, WIDGET):
                 popupMenu.addAction(actionSaveToPostGIS)
 
             popupMenu.exec_(QCursor.pos())
+
+    def showExpressionsBuilder(self):
+        dlg = QgsExpressionBuilderDialog(None, self.leText.text(), self, 'generic', self.expressionContext())
+        dlg.setWindowTitle(self.tr('Expression based output'))
+        if dlg.exec_() == QDialog.Accepted:
+            self.leText.setText(dlg.expressionText())
+
+    def expressionContext(self):
+        context = QgsExpressionContext()
+        context.appendScope(QgsExpressionContextUtils.globalScope())
+        context.appendScope(QgsExpressionContextUtils.projectScope())
+        processingScope = QgsExpressionContextScope()
+        for param in self.alg.parameters:
+            processingScope.setVariable('%s_value' % param.name, '')
+        context.appendScope(processingScope)
+        return context
 
     def saveToTemporaryFile(self):
         self.leText.setText('')
@@ -115,7 +151,9 @@ class OutputSelectionPanel(BASE, WIDGET):
             password = settings.value(mySettings + '/password')
             uri = QgsDataSourceURI()
             uri.setConnection(host, str(port), dbname, user, password)
-            uri.setDataSource(dlg.schema, dlg.table, "the_geom")
+            uri.setDataSource(dlg.schema, dlg.table,
+                              "the_geom" if self.output.hasGeometry() else None)
+
             connInfo = uri.connectionInfo()
             (success, user, passwd) = QgsCredentials.instance().get(connInfo, None, None)
             if success:
@@ -155,11 +193,9 @@ class OutputSelectionPanel(BASE, WIDGET):
 
             uri = QgsDataSourceURI()
             uri.setDatabase(fileName)
-            uri.setDataSource('', self.output.name.lower(), 'the_geom')
+            uri.setDataSource('', self.output.name.lower(),
+                              'the_geom' if self.output.hasGeometry() else None)
             self.leText.setText("spatialite:" + uri.uri())
-
-    def saveToMemory(self):
-        self.leText.setText('memory:')
 
     def selectFile(self):
         fileFilter = self.output.getFileFilter(self.alg)
@@ -201,8 +237,21 @@ class OutputSelectionPanel(BASE, WIDGET):
 
     def getValue(self):
         fileName = unicode(self.leText.text())
-        if fileName.strip() in ['', self.SAVE_TO_TEMP_FILE]:
-            value = None
+        context = self.expressionContext()
+        exp = QgsExpression(fileName)
+        if not exp.hasParserError():
+            result = exp.evaluate(context)
+            if not exp.hasEvalError():
+                fileName = result
+                if fileName.startswith("[") and fileName.endswith("]"):
+                    fileName = fileName[1:-1]
+        if fileName.strip() in ['', self.SAVE_TO_TEMP_FILE, self.SAVE_TO_TEMP_LAYER]:
+            if isinstance(self.output, OutputVector) \
+                    and self.alg.provider.supportsNonFileBasedOutput():
+                # use memory layers for temporary files if supported
+                value = 'memory:'
+            else:
+                value = None
         elif fileName.startswith('memory:'):
             value = fileName
         elif fileName.startswith('postgis:'):

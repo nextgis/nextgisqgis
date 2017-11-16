@@ -63,16 +63,13 @@ QgsSingleBandPseudoColorRenderer* QgsSingleBandPseudoColorRenderer::clone() cons
       QgsColorRampShader * colorRampShader = new QgsColorRampShader( mShader->minimumValue(), mShader->maximumValue() );
 
       colorRampShader->setColorRampType( origColorRampShader->colorRampType() );
-
+      colorRampShader->setClip( origColorRampShader->clip() );
       colorRampShader->setColorRampItemList( origColorRampShader->colorRampItemList() );
       shader->setRasterShaderFunction( colorRampShader );
     }
   }
   QgsSingleBandPseudoColorRenderer * renderer = new QgsSingleBandPseudoColorRenderer( nullptr, mBand, shader );
-
-  renderer->setOpacity( mOpacity );
-  renderer->setAlphaBand( mAlphaBand );
-  renderer->setRasterTransparency( mRasterTransparency ? new QgsRasterTransparency( *mRasterTransparency ) : nullptr );
+  renderer->copyCommonProperties( this );
 
   return renderer;
 }
@@ -112,6 +109,11 @@ QgsRasterRenderer* QgsSingleBandPseudoColorRenderer::create( const QDomElement& 
 
 QgsRasterBlock* QgsSingleBandPseudoColorRenderer::block( int bandNo, QgsRectangle  const & extent, int width, int height )
 {
+  return block2( bandNo, extent, width, height );
+}
+
+QgsRasterBlock* QgsSingleBandPseudoColorRenderer::block2( int bandNo, QgsRectangle  const & extent, int width, int height, QgsRasterBlockFeedback* feedback )
+{
   Q_UNUSED( bandNo );
 
   QgsRasterBlock *outputBlock = new QgsRasterBlock();
@@ -121,7 +123,7 @@ QgsRasterBlock* QgsSingleBandPseudoColorRenderer::block( int bandNo, QgsRectangl
   }
 
 
-  QgsRasterBlock *inputBlock = mInput->block( mBand, extent, width, height );
+  QgsRasterBlock *inputBlock = mInput->block2( mBand, extent, width, height, feedback );
   if ( !inputBlock || inputBlock->isEmpty() )
   {
     QgsDebugMsg( "No raster data!" );
@@ -135,7 +137,7 @@ QgsRasterBlock* QgsSingleBandPseudoColorRenderer::block( int bandNo, QgsRectangl
   QgsRasterBlock *alphaBlock = nullptr;
   if ( mAlphaBand > 0 && mAlphaBand != mBand )
   {
-    alphaBlock = mInput->block( mAlphaBand, extent, width, height );
+    alphaBlock = mInput->block2( mAlphaBand, extent, width, height, feedback );
     if ( !alphaBlock || alphaBlock->isEmpty() )
     {
       delete inputBlock;

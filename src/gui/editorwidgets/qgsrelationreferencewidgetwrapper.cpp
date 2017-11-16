@@ -24,6 +24,7 @@ QgsRelationReferenceWidgetWrapper::QgsRelationReferenceWidgetWrapper( QgsVectorL
     , mWidget( nullptr )
     , mCanvas( canvas )
     , mMessageBar( messageBar )
+    , mIndeterminateState( false )
 {
 }
 
@@ -59,6 +60,7 @@ void QgsRelationReferenceWidgetWrapper::initWidget( QWidget* editor )
     mWidget->setFilterFields( config( "FilterFields" ).toStringList() );
     mWidget->setChainFilters( config( "ChainFilters" ).toBool() );
   }
+  mWidget->setAllowAddFeatures( config( "AllowAddFeatures", false ).toBool() );
 
   QgsRelation relation = QgsProject::instance()->relationManager()->relation( config( "Relation" ).toString() );
 
@@ -103,11 +105,21 @@ bool QgsRelationReferenceWidgetWrapper::valid() const
   return mWidget;
 }
 
+void QgsRelationReferenceWidgetWrapper::showIndeterminateState()
+{
+  if ( mWidget )
+  {
+    mWidget->showIndeterminateState();
+  }
+  mIndeterminateState = true;
+}
+
 void QgsRelationReferenceWidgetWrapper::setValue( const QVariant& val )
 {
-  if ( !mWidget || val == value() )
+  if ( !mWidget || ( !mIndeterminateState && val == value() ) )
     return;
 
+  mIndeterminateState = false;
   mWidget->setForeignKey( val );
 }
 
@@ -126,4 +138,15 @@ void QgsRelationReferenceWidgetWrapper::foreignKeyChanged( QVariant value )
     value = QVariant( field().type() );
   }
   emit valueChanged( value );
+}
+
+void QgsRelationReferenceWidgetWrapper::updateConstraintWidgetStatus( bool constraintValid )
+{
+  if ( mWidget )
+  {
+    if ( constraintValid )
+      mWidget->setStyleSheet( QString() );
+    else
+      mWidget->setStyleSheet( ".QComboBox { background-color: #dd7777; }" );
+  }
 }

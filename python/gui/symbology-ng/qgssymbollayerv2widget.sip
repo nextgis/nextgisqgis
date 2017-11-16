@@ -178,6 +178,41 @@ class QgsSimpleFillSymbolLayerV2Widget : QgsSymbolLayerV2Widget
 
 ///////////
 
+/** \ingroup gui
+ * \class QgsFilledMarkerSymbolLayerWidget
+ * \brief Widget for configuring QgsFilledMarkerSymbolLayer symbol layers.
+ * \note Added in version 2.16
+ */
+class QgsFilledMarkerSymbolLayerWidget : QgsSymbolLayerV2Widget
+{
+%TypeHeaderCode
+#include <qgssymbollayerv2widget.h>
+%End
+
+  public:
+
+    /** Constructor for QgsFilledMarkerSymbolLayerWidget.
+     * @param vl associated vector layer
+     * @param parent parent widget
+     */
+    QgsFilledMarkerSymbolLayerWidget( const QgsVectorLayer* vl, QWidget* parent /TransferThis/ = nullptr );
+
+    ~QgsFilledMarkerSymbolLayerWidget();
+
+    /** Creates a new QgsFilledMarkerSymbolLayerWidget.
+     * @param vl associated vector layer
+     */
+    static QgsSymbolLayerV2Widget* create( const QgsVectorLayer* vl ) /Factory/;
+
+    // from base class
+    virtual void setSymbolLayer( QgsSymbolLayerV2* layer );
+    virtual QgsSymbolLayerV2* symbolLayer();
+
+};
+
+///////////
+
+
 class QgsGradientFillSymbolLayerV2Widget : QgsSymbolLayerV2Widget
 {
 %TypeHeaderCode
@@ -408,12 +443,18 @@ class QgsFontMarkerSymbolLayerV2Widget : QgsSymbolLayerV2Widget
   public slots:
     void setFontFamily( const QFont& font );
     void setColor( const QColor& color );
+
+    /** Set outline color.
+     * @note added in 2.16 */
+    void setColorBorder( const QColor& color );
     void setSize( double size );
     void setAngle( double angle );
     void setCharacter( QChar chr );
     void setOffset();
     void on_mSizeUnitWidget_changed();
     void on_mOffsetUnitWidget_changed();
+    void on_mBorderWidthUnitWidget_changed();
+    void on_mBorderWidthSpinBox_valueChanged( double d );
     void on_mHorizontalAnchorComboBox_currentIndexChanged( int index );
     void on_mVerticalAnchorComboBox_currentIndexChanged( int index );
 };

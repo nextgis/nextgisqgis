@@ -50,6 +50,8 @@ class QgsFeatureRendererV2
     sipType = sipType_QgsPointDisplacementRenderer;
   else if (sipCpp->type() == "25dRenderer")
     sipType = sipType_Qgs25DRenderer;
+  else if (sipCpp->type() == "nullSymbol")
+    sipType = sipType_QgsNullSymbolRenderer;
   else
     sipType = 0;
 %End
@@ -146,6 +148,11 @@ class QgsFeatureRendererV2
      */
     virtual QList<QString> usedAttributes() = 0;
 
+    /**
+     * Returns true if this renderer requires the geometry to apply the filter.
+     */
+    virtual bool filterNeedsGeometry() const;
+
     virtual ~QgsFeatureRendererV2();
 
     virtual QgsFeatureRendererV2* clone() const = 0 /Factory/;
@@ -206,7 +213,7 @@ class QgsFeatureRendererV2
     //! @note added in 2.8
     virtual QDomElement writeSld( QDomDocument& doc, const QString& styleName ) const;
     //! create the SLD UserStyle element following the SLD v1.1 specs with the given name
-    //! @note added in 2.14.8
+    //! @note added in 2.14
     virtual QDomElement writeSld( QDomDocument& doc, const QString& styleName, const QgsStringMap& props ) const;
 
     /** Create a new renderer according to the information contained in
@@ -421,9 +428,23 @@ class QgsFeatureRendererV2
     //! render editing vertex marker for a polygon
     void renderVertexMarkerPolygon( QPolygonF& pts, QList<QPolygonF>* rings, QgsRenderContext& context );
 
-    static QgsConstWkbPtr _getPoint( QPointF& pt, QgsRenderContext& context, QgsConstWkbPtr wkb );
-    static QgsConstWkbPtr _getLineString( QPolygonF& pts, QgsRenderContext& context, QgsConstWkbPtr wkb, bool clipToExtent = true );
-    static QgsConstWkbPtr _getPolygon( QPolygonF& pts, QList<QPolygonF>& holes, QgsRenderContext& context, QgsConstWkbPtr wkb, bool clipToExtent = true );
+    /**
+     * Creates a point in screen coordinates from a wkb string in map
+     * coordinates
+     */
+    static QgsConstWkbPtr _getPoint( QPointF& pt, QgsRenderContext& context, QgsConstWkbPtr& wkb );
+
+    /**
+     * Creates a line string in screen coordinates from a wkb string in map
+     * coordinates
+     */
+    static QgsConstWkbPtr _getLineString( QPolygonF& pts, QgsRenderContext& context, QgsConstWkbPtr& wkb, bool clipToExtent = true );
+
+    /**
+     * Creates a polygon in screen coordinates from a wkb string in map
+     * coordinates
+     */
+    static QgsConstWkbPtr _getPolygon( QPolygonF& pts, QList<QPolygonF>& holes, QgsRenderContext& context, QgsConstWkbPtr& wkb, bool clipToExtent = true );
 
     void setScaleMethodToSymbol( QgsSymbolV2* symbol, int scaleMethod );
 

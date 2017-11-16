@@ -21,7 +21,7 @@
 #include <QComboBox>
 
 
-/**
+/** \ingroup gui
  * Wraps a value map widget.
  *
  * Options:
@@ -42,6 +42,7 @@ class GUI_EXPORT QgsValueMapWidgetWrapper : public QgsEditorWidgetWrapper
     // QgsEditorWidgetWrapper interface
   public:
     QVariant value() const override;
+    void showIndeterminateState() override;
 
   protected:
     QWidget* createWidget( QWidget* parent ) override;

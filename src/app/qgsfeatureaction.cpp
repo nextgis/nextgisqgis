@@ -22,6 +22,7 @@
 #include "qgsguivectorlayertools.h"
 #include "qgsidentifyresultsdialog.h"
 #include "qgslogger.h"
+#include "qgshighlight.h"
 #include "qgsmapcanvas.h"
 #include "qgsproject.h"
 #include "qgsvectordataprovider.h"
@@ -59,8 +60,11 @@ QgsAttributeDialog *QgsFeatureAction::newDialog( bool cloneFeature )
 
   context.setDistanceArea( myDa );
   context.setVectorLayerTools( QgisApp::instance()->vectorLayerTools() );
+  context.setFormMode( QgsAttributeEditorContext::StandaloneDialog );
 
-  QgsAttributeDialog *dialog = new QgsAttributeDialog( mLayer, f, cloneFeature, nullptr, true, context );
+  QgsAttributeDialog *dialog = new QgsAttributeDialog( mLayer, f, cloneFeature, parentWidget(), true, context );
+  dialog->setWindowFlags( dialog->windowFlags() | Qt::Tool );
+  dialog->setObjectName( QString( "featureactiondlg:%1:%2" ).arg( mLayer->id() ).arg( f->id() ) );
 
   if ( mLayer->actions()->size() > 0 )
   {
@@ -93,10 +97,21 @@ QgsAttributeDialog *QgsFeatureAction::newDialog( bool cloneFeature )
 
 bool QgsFeatureAction::viewFeatureForm( QgsHighlight *h )
 {
-  if ( !mLayer )
+  if ( !mLayer || !mFeature )
     return false;
 
-  QgsAttributeDialog *dialog = newDialog( true );
+  QString name( QString( "featureactiondlg:%1:%2" ).arg( mLayer->id() ).arg( mFeature->id() ) );
+
+  QgsAttributeDialog *dialog = QgisApp::instance()->findChild<QgsAttributeDialog *>( name );
+  if ( dialog )
+  {
+    delete h;
+    dialog->raise();
+    dialog->activateWindow();
+    return true;
+  }
+
+  dialog = newDialog( true );
   dialog->setHighlight( h );
   // delete the dialog when it is closed
   dialog->setAttribute( Qt::WA_DeleteOnClose );
@@ -115,7 +130,7 @@ bool QgsFeatureAction::editFeature( bool showModal )
     QScopedPointer<QgsAttributeDialog> dialog( newDialog( false ) );
 
     if ( !mFeature->isValid() )
-      dialog->setIsAddDialog( true );
+      dialog->setMode( QgsAttributeForm::AddFeatureMode );
 
     int rv = dialog->exec();
     mFeature->setAttributes( dialog->feature()->attributes() );
@@ -123,16 +138,25 @@ bool QgsFeatureAction::editFeature( bool showModal )
   }
   else
   {
-    QgsAttributeDialog* dialog = newDialog( false );
+    QString name( QString( "featureactiondlg:%1:%2" ).arg( mLayer->id() ).arg( mFeature->id() ) );
+
+    QgsAttributeDialog *dialog = QgisApp::instance()->findChild<QgsAttributeDialog *>( name );
+    if ( dialog )
+    {
+      dialog->raise();
+      return true;
+    }
+
+    dialog = newDialog( false );
 
     if ( !mFeature->isValid() )
-      dialog->setIsAddDialog( true );
+      dialog->setMode( QgsAttributeForm::AddFeatureMode );
 
     // delete the dialog when it is closed
     dialog->setAttribute( Qt::WA_DeleteOnClose );
     dialog->show();
   }
-  
+
   return true;
 }
 
@@ -148,6 +172,12 @@ bool QgsFeatureAction::addFeature( const QgsAttributeMap& defaultAttributes, boo
   bool reuseLastValues = settings.value( "/qgis/digitizing/reuseLastValues", false ).toBool();
   QgsDebugMsg( QString( "reuseLastValues: %1" ).arg( reuseLastValues ) );
 
+  QgsExpressionContext context;
+  context
+  << QgsExpressionContextUtils::globalScope()
+  << QgsExpressionContextUtils::projectScope()
+  << QgsExpressionContextUtils::layerScope( mLayer );
+
   // add the fields to the QgsFeature
   const QgsFields& fields = mLayer->fields();
   mFeature->initAttributes( fields.count() );
@@ -158,6 +188,11 @@ bool QgsFeatureAction::addFeature( const QgsAttributeMap& defaultAttributes, boo
     if ( defaultAttributes.contains( idx ) )
     {
       v = defaultAttributes.value( idx );
+    }
+    else if ( !mLayer->defaultValueExpression( idx ).isEmpty() )
+    {
+      // client side default expression set - use this in preference to reusing last value
+      v = mLayer->defaultValue( idx, *mFeature, &context );
     }
     else if ( reuseLastValues && sLastUsedValues.contains( mLayer ) && sLastUsedValues[ mLayer ].contains( idx ) && !pkAttrList.contains( idx ) )
     {
@@ -202,7 +237,7 @@ bool QgsFeatureAction::addFeature( const QgsAttributeMap& defaultAttributes, boo
     QgsAttributeDialog *dialog = newDialog( false );
     // delete the dialog when it is closed
     dialog->setAttribute( Qt::WA_DeleteOnClose );
-    dialog->setIsAddDialog( true );
+    dialog->setMode( QgsAttributeForm::AddFeatureMode );
     dialog->setEditCommandMessage( text() );
 
     connect( dialog->attributeForm(), SIGNAL( featureSaved( const QgsFeature & ) ), this, SLOT( onFeatureSaved( const QgsFeature & ) ) );

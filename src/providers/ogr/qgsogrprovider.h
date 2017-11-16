@@ -140,19 +140,9 @@ class QgsOgrProvider : public QgsVectorDataProvider
     /** Deletes a feature*/
     virtual bool deleteFeatures( const QgsFeatureIds & id ) override;
 
-    /**
-     * Adds new attributes
-     * @param attributes list of new attributes
-     * @return true in case of success and false in case of failure
-     */
     virtual bool addAttributes( const QList<QgsField> &attributes ) override;
-
-    /**
-     * Deletes existing attributes
-     * @param attributes a set containing names of attributes
-     * @return true in case of success and false in case of failure
-     */
     virtual bool deleteAttributes( const QgsAttributeIds &attributes ) override;
+    virtual bool renameAttributes( const QgsFieldNameMap& renamedAttributes ) override;
 
     /** Changes attribute values of existing features */
     virtual bool changeAttributeValues( const QgsChangedAttributesMap &attr_map ) override;
@@ -180,6 +170,8 @@ class QgsOgrProvider : public QgsVectorDataProvider
     virtual bool enterUpdateMode() override;
 
     virtual bool leaveUpdateMode() override;
+
+    virtual bool isSaveAndLoadStyleToDBSupported() override;
 
     /** Return vector file filter string
      *
@@ -313,8 +305,15 @@ class QgsOgrProvider : public QgsVectorDataProvider
   private:
     unsigned char *getGeometryPointer( OGRFeatureH fet );
     QString ogrWkbGeometryTypeName( OGRwkbGeometryType type ) const;
-    OGRwkbGeometryType ogrWkbGeometryTypeFromName( const QString& typeName ) const;
+
+    //! Starts a transaction if possible and return true in that case
+    bool startTransaction();
+
+    //! Commits a transaction
+    bool commitTransaction();
+
     QgsFields mAttributeFields;
+    bool mFirstFieldIsFid;
     OGRDataSourceH ogrDataSource;
     OGREnvelope* mExtent;
     bool mForceRecomputeExtent;
@@ -356,7 +355,7 @@ class QgsOgrProvider : public QgsVectorDataProvider
 
     bool mValid;
 
-    OGRwkbGeometryType geomType;
+    OGRwkbGeometryType mOGRGeomType;
     long mFeaturesCounted;
 
     mutable QStringList mSubLayerList;
@@ -397,11 +396,11 @@ class QgsOgrProvider : public QgsVectorDataProvider
 };
 
 
-class QgsOgrUtils
+class QgsOgrProviderUtils
 {
   public:
-    static void setRelevantFields( OGRLayerH ogrLayer, int fieldCount, bool fetchGeometry, const QgsAttributeList &fetchAttributes );
-    static OGRLayerH setSubsetString( OGRLayerH layer, OGRDataSourceH ds, QTextCodec* encoding, const QString& subsetString );
+    static void setRelevantFields( OGRLayerH ogrLayer, int fieldCount, bool fetchGeometry, const QgsAttributeList &fetchAttributes, bool firstAttrIsFid );
+    static OGRLayerH setSubsetString( OGRLayerH layer, OGRDataSourceH ds, QTextCodec* encoding, const QString& subsetString, bool &origFidAdded );
     static QByteArray quotedIdentifier( QByteArray field, const QString& ogrDriverName );
 
     /** Quote a value for placement in a SQL string.

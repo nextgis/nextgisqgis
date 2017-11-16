@@ -35,13 +35,16 @@ QgsMapSettings::QgsMapSettings()
     , mSize( QSize( 0, 0 ) )
     , mExtent()
     , mRotation( 0.0 )
+    , mMagnificationFactor( 1.0 )
     , mProjectionsEnabled( false )
-    , mDestCRS( GEOCRS_ID, QgsCoordinateReferenceSystem::InternalCrsId )  // WGS 84
+    , mDestCRS( QgsCRSCache::instance()->crsBySrsId( GEOCRS_ID ) )  // WGS 84
     , mDatumTransformStore( mDestCRS )
     , mBackgroundColor( Qt::white )
     , mSelectionColor( Qt::yellow )
     , mFlags( Antialiasing | UseAdvancedEffects | DrawLabeling | DrawSelection )
     , mImageFormat( QImage::Format_ARGB32_Premultiplied )
+    , mSegmentationTolerance( M_PI_2 / 90 )
+    , mSegmentationToleranceType( QgsAbstractGeometryV2::MaximumAngle )
     , mValid( false )
     , mVisibleExtent()
     , mMapUnitsPerPixel( 1 )
@@ -53,15 +56,45 @@ QgsMapSettings::QgsMapSettings()
   setMapUnits( QGis::Degrees );
 }
 
+void QgsMapSettings::setMagnificationFactor( double factor )
+{
+  double ratio = mMagnificationFactor / factor;
+
+  mMagnificationFactor = factor;
+
+  double rot = rotation();
+  setRotation( 0.0 );
+
+  QgsRectangle ext = visibleExtent();
+  ext.scale( ratio );
+
+  mRotation = rot;
+  mExtent = ext;
+  mDpi = mDpi / ratio;
+
+  QgsDebugMsg( QString( "Magnification factor: %1  dpi: %2  ratio: %3" ).arg( factor ).arg( mDpi ).arg( ratio ) );
+
+  updateDerived();
+}
+
+double QgsMapSettings::magnificationFactor() const
+{
+  return mMagnificationFactor;
+}
 
 QgsRectangle QgsMapSettings::extent() const
 {
   return mExtent;
 }
 
-void QgsMapSettings::setExtent( const QgsRectangle& extent )
+void QgsMapSettings::setExtent( const QgsRectangle& extent, bool magnified )
 {
-  mExtent = extent;
+  QgsRectangle magnifiedExtent = extent;
+
+  if ( !magnified )
+    magnifiedExtent.scale( 1 / mMagnificationFactor );
+
+  mExtent = magnifiedExtent;
 
   updateDerived();
 }
@@ -208,12 +241,12 @@ void QgsMapSettings::setOutputSize( QSize size )
   updateDerived();
 }
 
-int QgsMapSettings::outputDpi() const
+double QgsMapSettings::outputDpi() const
 {
   return mDpi;
 }
 
-void QgsMapSettings::setOutputDpi( int dpi )
+void QgsMapSettings::setOutputDpi( double dpi )
 {
   mDpi = dpi;
 

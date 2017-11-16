@@ -35,6 +35,7 @@
 #include "qgsexpression.h"
 #include "qgsvisibilitypresetcollection.h"
 #include "qgsannotation.h"
+#include "qgsmaplayerref.h"
 
 #include "qgslabel.h"
 #include "qgslabelattributes.h"
@@ -54,6 +55,7 @@ QgsComposerMap::QgsComposerMap( QgsComposition *composition, int x, int y, int w
     , mEvaluatedMapRotation( 0 )
     , mKeepLayerSet( false )
     , mKeepLayerStyles( false )
+    , mFollowVisibilityPreset( false )
     , mUpdatesEnabled( true )
     , mMapCanvas( nullptr )
     , mDrawCanvasItems( true )
@@ -99,6 +101,7 @@ QgsComposerMap::QgsComposerMap( QgsComposition *composition )
     , mEvaluatedMapRotation( 0 )
     , mKeepLayerSet( false )
     , mKeepLayerStyles( false )
+    , mFollowVisibilityPreset( false )
     , mUpdatesEnabled( true )
     , mMapCanvas( nullptr )
     , mDrawCanvasItems( true )
@@ -249,7 +252,7 @@ QgsMapSettings QgsComposerMap::mapSettings( const QgsRectangle& extent, QSizeF s
   return jobMapSettings;
 }
 
-void QgsComposerMap::cache( void )
+void QgsComposerMap::cache()
 {
   if ( mPreviewMode == Rectangle )
   {
@@ -538,28 +541,32 @@ QStringList QgsComposerMap::layersToRender( const QgsExpressionContext* context 
 
   QStringList renderLayerSet;
 
-  QVariant exprVal;
-  if ( dataDefinedEvaluate( QgsComposerObject::MapStylePreset, exprVal, *evalContext ) )
+  if ( mFollowVisibilityPreset )
   {
-    QString presetName = exprVal.toString();
+    QString presetName = mFollowVisibilityPresetName;
+
+    // preset name can be overridden by data-defined one
+    QVariant exprVal;
+    if ( dataDefinedEvaluate( QgsComposerObject::MapStylePreset, exprVal, *evalContext ) )
+    {
+      presetName = exprVal.toString();
+    }
 
     if ( QgsProject::instance()->visibilityPresetCollection()->hasPreset( presetName ) )
       renderLayerSet = QgsProject::instance()->visibilityPresetCollection()->presetVisibleLayers( presetName );
-  }
-
-  //use stored layer set or read current set from main canvas
-  if ( renderLayerSet.isEmpty() )
-  {
-    if ( mKeepLayerSet )
-    {
-      renderLayerSet = mLayerSet;
-    }
-    else
-    {
+    else  // fallback to using map canvas layers
       renderLayerSet = mComposition->mapSettings().layers();
-    }
+  }
+  else if ( mKeepLayerSet )
+  {
+    renderLayerSet = mLayerSet;
+  }
+  else
+  {
+    renderLayerSet = mComposition->mapSettings().layers();
   }
 
+  QVariant exprVal;
   if ( dataDefinedEvaluate( QgsComposerObject::MapLayers, exprVal, *evalContext ) )
   {
     renderLayerSet.clear();
@@ -596,16 +603,29 @@ QStringList QgsComposerMap::layersToRender( const QgsExpressionContext* context 
 
 QMap<QString, QString> QgsComposerMap::layerStyleOverridesToRender( const QgsExpressionContext& context ) const
 {
-  QVariant exprVal;
-  if ( dataDefinedEvaluate( QgsComposerObject::MapStylePreset, exprVal, context ) )
+  if ( mFollowVisibilityPreset )
   {
-    QString presetName = exprVal.toString();
+    QString presetName = mFollowVisibilityPresetName;
+
+    QVariant exprVal;
+    if ( dataDefinedEvaluate( QgsComposerObject::MapStylePreset, exprVal, context ) )
+    {
+      presetName = exprVal.toString();
+    }
 
     if ( QgsProject::instance()->visibilityPresetCollection()->hasPreset( presetName ) )
       return QgsProject::instance()->visibilityPresetCollection()->presetStyleOverrides( presetName );
-
+    else
+      return QMap<QString, QString>();
   }
-  return mLayerStyleOverrides;
+  else if ( mKeepLayerStyles )
+  {
+    return mLayerStyleOverrides;
+  }
+  else
+  {
+    return QMap<QString, QString>();
+  }
 }
 
 double QgsComposerMap::scale() const
@@ -837,7 +857,7 @@ void QgsComposerMap::setNewAtlasFeatureExtent( const QgsRectangle& extent )
       newExtent.setYMinimum( extent.yMinimum() - deltaHeight / 2 );
       newExtent.setYMaximum( extent.yMaximum() + deltaHeight / 2 );
     }
-    else if ( currentWidthHeightRatio >= newWidthHeightRatio )
+    else
     {
       //enlarge width of new extent, ensuring the map center stays the same
       double newWidth = currentWidthHeightRatio * newExtent.height();
@@ -1295,17 +1315,30 @@ bool QgsComposerMap::writeXML( QDomElement& elem, QDomDocument & doc ) const
   extentElem.setAttribute( "ymax", qgsDoubleToString( mExtent.yMaximum() ) );
   composerMapElem.appendChild( extentElem );
 
+  // follow visibility preset
+  composerMapElem.setAttribute( "followPreset", mFollowVisibilityPreset ? "true" : "false" );
+  composerMapElem.setAttribute( "followPresetName", mFollowVisibilityPresetName );
+
   //map rotation
   composerMapElem.setAttribute( "mapRotation", QString::number( mMapRotation ) );
 
   //layer set
   QDomElement layerSetElem = doc.createElement( "LayerSet" );
-  QStringList::const_iterator layerIt = mLayerSet.constBegin();
-  for ( ; layerIt != mLayerSet.constEnd(); ++layerIt )
+  Q_FOREACH ( const QString &layerId, mLayerSet )
   {
+    QgsMapLayerRef layerRef( layerId );
+    layerRef.resolve();
+
+    if ( !layerRef )
+      continue;
+
     QDomElement layerElem = doc.createElement( "Layer" );
-    QDomText layerIdText = doc.createTextNode( *layerIt );
+    QDomText layerIdText = doc.createTextNode( layerRef.layerId );
     layerElem.appendChild( layerIdText );
+    layerElem.setAttribute( "name", layerRef.name );
+    layerElem.setAttribute( "source", layerRef.source );
+    layerElem.setAttribute( "provider", layerRef.provider );
+
     layerSetElem.appendChild( layerElem );
   }
   composerMapElem.appendChild( layerSetElem );
@@ -1318,7 +1351,15 @@ bool QgsComposerMap::writeXML( QDomElement& elem, QDomDocument & doc ) const
     for ( ; styleIt != mLayerStyleOverrides.constEnd(); ++styleIt )
     {
       QDomElement styleElem = doc.createElement( "LayerStyle" );
-      styleElem.setAttribute( "layerid", styleIt.key() );
+
+      QgsMapLayerRef ref( styleIt.key() );
+      ref.resolve();
+
+      styleElem.setAttribute( "layerid", ref.layerId );
+      styleElem.setAttribute( "name", ref.name );
+      styleElem.setAttribute( "source", ref.source );
+      styleElem.setAttribute( "provider", ref.provider );
+
       QgsMapLayerStyle style( styleIt.value() );
       style.writeXml( styleElem );
       stylesElem.appendChild( styleElem );
@@ -1396,6 +1437,10 @@ bool QgsComposerMap::readXML( const QDomElement& itemElem, const QDomDocument& d
     mMapRotation = itemElem.attribute( "mapRotation", "0" ).toDouble();
   }
 
+  // follow visibility preset
+  mFollowVisibilityPreset = itemElem.attribute( "followPreset" ).compare( "true" ) == 0;
+  mFollowVisibilityPresetName = itemElem.attribute( "followPresetName" );
+
   //mKeepLayerSet flag
   QString keepLayerSetFlag = itemElem.attribute( "keepLayerSet" );
   if ( keepLayerSetFlag.compare( "true", Qt::CaseInsensitive ) == 0 )
@@ -1429,8 +1474,15 @@ bool QgsComposerMap::readXML( const QDomElement& itemElem, const QDomDocument& d
     layerSet.reserve( layerIdNodeList.size() );
     for ( int i = 0; i < layerIdNodeList.size(); ++i )
     {
-      const QDomElement& layerIdElement = layerIdNodeList.at( i ).toElement();
-      layerSet << layerIdElement.text();
+      QDomElement layerElem = layerIdNodeList.at( i ).toElement();
+      QString layerId = layerElem.text();
+      QString layerName = layerElem.attribute( "name" );
+      QString layerSource = layerElem.attribute( "source" );
+      QString layerProvider = layerElem.attribute( "provider" );
+
+      QgsMapLayerRef ref( layerId, layerName, layerSource, layerProvider );
+      ref.resolveWeakly();
+      layerSet << ref.layerId;
     }
   }
   mLayerSet = layerSet;
@@ -1446,9 +1498,15 @@ bool QgsComposerMap::readXML( const QDomElement& itemElem, const QDomDocument& d
     {
       const QDomElement& layerStyleElement = layerStyleNodeList.at( i ).toElement();
       QString layerId = layerStyleElement.attribute( "layerid" );
+      QString layerName = layerStyleElement.attribute( "name" );
+      QString layerSource = layerStyleElement.attribute( "source" );
+      QString layerProvider = layerStyleElement.attribute( "provider" );
+      QgsMapLayerRef ref( layerId, layerName, layerSource, layerProvider );
+      ref.resolveWeakly();
+
       QgsMapLayerStyle style;
       style.readXml( layerStyleElement );
-      mLayerStyleOverrides.insert( layerId, style.xmlData() );
+      mLayerStyleOverrides.insert( ref.layerId, style.xmlData() );
     }
   }
 

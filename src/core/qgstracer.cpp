@@ -87,6 +87,8 @@ double closestSegment( const QgsPolyline& pl, const QgsPoint& pt, int& vertexAft
 /** Simple graph structure for shortest path search */
 struct QgsTracerGraph
 {
+  QgsTracerGraph() : joinedVertices( 0 ) {}
+
   struct E  // bidirectional edge
   {
     //! vertices that the edge connects
@@ -120,7 +122,7 @@ struct QgsTracerGraph
 
 QgsTracerGraph* makeGraph( const QVector<QgsPolyline>& edges )
 {
-  QgsTracerGraph* g = new QgsTracerGraph;
+  QgsTracerGraph *g = new QgsTracerGraph();
   g->joinedVertices = 0;
   QHash<QgsPoint, int> point2vertex;
 
@@ -406,6 +408,20 @@ void resetGraph( QgsTracerGraph& g )
 
 void extractLinework( const QgsGeometry* g, QgsMultiPolyline& mpl )
 {
+  // segmentize curved geometries - we will use noding algorithm from GEOS
+  // to find all intersections a bit later (so we need them segmentized anyway)
+  QScopedPointer<QgsGeometry> segmentizedGeom;
+  if ( QgsWKBTypes::isCurvedType( g->geometry()->wkbType() ) )
+  {
+    QgsAbstractGeometryV2* segmentizedGeomV2 = g->geometry()->segmentize();
+    if ( !segmentizedGeomV2 )
+      return;
+
+    // temporarily replace the original geometry by our segmentized one
+    segmentizedGeom.reset( new QgsGeometry( segmentizedGeomV2 ) );
+    g = segmentizedGeom.data();
+  }
+
   switch ( QgsWKBTypes::flatType( g->geometry()->wkbType() ) )
   {
     case QgsWKBTypes::LineString:

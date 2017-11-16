@@ -107,7 +107,8 @@ class CORE_EXPORT QgsProperty
 
 
 
-/** QgsPropertyValue node
+/** \ingroup core
+ * QgsPropertyValue node
 
 Contains a QgsPropertyKey's value
 */
@@ -165,7 +166,7 @@ class CORE_EXPORT QgsPropertyValue : public QgsProperty
 
 
 
-/**
+/** \ingroup core
    QgsPropertyKey node
 
    Can, itself, contain QgsPropertyKeys and QgsPropertyValues.
@@ -240,7 +241,6 @@ class CORE_EXPORT QgsPropertyKey : public QgsProperty
     {
       return setValue( name(), value );
     }
-
 
     void dump( int tabs = 0 ) const override;
 

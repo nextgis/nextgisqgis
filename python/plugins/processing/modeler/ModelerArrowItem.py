@@ -46,8 +46,9 @@
 ***************************************************************************
 """
 
-from PyQt4.QtCore import Qt, QPointF
-from PyQt4.QtGui import QGraphicsPathItem, QPen, QGraphicsItem, QPainterPath, QPolygonF, QPainter
+from qgis.PyQt.QtCore import Qt, QPointF
+from qgis.PyQt.QtWidgets import QGraphicsPathItem, QGraphicsItem
+from qgis.PyQt.QtGui import QPen, QPainterPath, QPolygonF, QPainter
 from processing.modeler.ModelerGraphicItem import ModelerGraphicItem
 from processing.modeler.ModelerAlgorithm import Algorithm
 

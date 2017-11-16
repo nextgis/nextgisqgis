@@ -25,7 +25,12 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
-from qgis.core import QGis, QgsFeature, QgsGeometry
+import os
+
+from qgis.PyQt.QtGui import QIcon
+
+from qgis.core import QGis, QgsFeature, QgsGeometry, NULL
+
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
 from processing.core.parameters import ParameterVector
@@ -33,12 +38,17 @@ from processing.core.parameters import ParameterTableField
 from processing.core.outputs import OutputVector
 from processing.tools import dataobjects, vector
 
+pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
+
 
 class SinglePartsToMultiparts(GeoAlgorithm):
 
     INPUT = 'INPUT'
     FIELD = 'FIELD'
     OUTPUT = 'OUTPUT'
+
+    def getIcon(self):
+        return QIcon(os.path.join(pluginPath, 'images', 'ftools', 'single_to_multi.png'))
 
     def defineCharacteristics(self):
         self.name, self.i18n_name = self.trAlgorithm('Singleparts to multipart')
@@ -69,15 +79,27 @@ class SinglePartsToMultiparts(GeoAlgorithm):
 
         current = 0
         features = vector.features(layer)
-        total = 100.0 / (len(features) * len(unique))
+        total = 100.0 / (len(features) * len(unique)) if len(features) * len(unique) > 0 else 1
+
+        nullFeatures = []
         if not len(unique) == layer.featureCount():
             for i in unique:
-                multi_feature = []
                 first = True
+                multi_feature = []
                 features = vector.features(layer)
                 for inFeat in features:
                     atMap = inFeat.attributes()
                     idVar = atMap[index]
+                    if idVar in [None, NULL] and inFeat.id() not in nullFeatures:
+                        nullFeatures.append(inFeat.id())
+                        outGeom = QgsGeometry(inFeat.geometry())
+                        outFeat.setAttributes(atMap)
+                        outFeat.setGeometry(outGeom)
+                        writer.addFeature(outFeat)
+                        current += 1
+                        progress.setPercentage(int(current * total))
+                        continue
+
                     if unicode(idVar).strip() == unicode(i).strip():
                         if first:
                             attrs = atMap
@@ -90,11 +112,12 @@ class SinglePartsToMultiparts(GeoAlgorithm):
                     current += 1
                     progress.setPercentage(int(current * total))
 
-                outFeat.setAttributes(attrs)
-                outGeom = QgsGeometry(self.convertGeometry(multi_feature,
-                                                           vType))
-                outFeat.setGeometry(outGeom)
-                writer.addFeature(outFeat)
+                if len(multi_feature) > 0:
+                    outGeom = QgsGeometry(
+                        self.convertGeometry(multi_feature, vType))
+                    outFeat.setGeometry(outGeom)
+                    outFeat.setAttributes(attrs)
+                    writer.addFeature(outFeat)
 
             del writer
         else:
@@ -118,7 +141,7 @@ class SinglePartsToMultiparts(GeoAlgorithm):
                 return QGis.WKBMultiPolygon
             else:
                 return QGis.WKBUnknown
-        except Exception as err:
+        except Exception:
             pass
 
     def extractAsMulti(self, geom):

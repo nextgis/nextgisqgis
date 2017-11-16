@@ -21,7 +21,7 @@
 #include "qgstolerance.h"
 #include "qgspointlocator.h"
 
-/**
+/** \ingroup core
  * This class has all the configuration of snapping and can return answers to snapping queries.
  * Internally, it keeps a cache of QgsPointLocator instances for multiple layers.
  *
@@ -65,6 +65,7 @@ class CORE_EXPORT QgsSnappingUtils : public QObject
 
     /** Set current layer so that if mode is SnapCurrentLayer we know which layer to use */
     void setCurrentLayer( QgsVectorLayer* layer );
+    /** The current layer used if mode is SnapCurrentLayer */
     QgsVectorLayer* currentLayer() const { return mCurrentLayer; }
 
 
@@ -87,7 +88,8 @@ class CORE_EXPORT QgsSnappingUtils : public QObject
     {
       IndexAlwaysFull,    //!< For all layers build index of full extent. Uses more memory, but queries are faster.
       IndexNeverFull,     //!< For all layers only create temporary indexes of small extent. Low memory usage, slower queries.
-      IndexHybrid         //!< For "big" layers using IndexNeverFull, for the rest IndexAlwaysFull. Compromise between speed and memory usage.
+      IndexHybrid,        //!< For "big" layers using IndexNeverFull, for the rest IndexAlwaysFull. Compromise between speed and memory usage.
+      IndexExtent         //!< For all layer build index of extent given in map settings
     };
 
     /** Set a strategy for indexing geometry data - determines how fast and memory consuming the data structures will be */
@@ -105,7 +107,30 @@ class CORE_EXPORT QgsSnappingUtils : public QObject
      */
     struct LayerConfig
     {
-      LayerConfig( QgsVectorLayer* l, const QgsPointLocator::Types& t, double tol, QgsTolerance::UnitType u ) : layer( l ), type( t ), tolerance( tol ), unit( u ) {}
+      /**
+       * Create a new configuration for a snapping layer.
+
+        ```py
+        snapper = QgsMapCanvasSnappingUtils(mapCanvas)
+
+        snapping_layer1 = QgsSnappingUtils.LayerConfig(layer1, QgsPointLocator.Vertex, 10, QgsTolerance.Pixels)
+        snapping_layer2 = QgsSnappingUtils.LayerConfig(layer2, QgsPointLocator.Vertex and QgsPointLocator.Edge, 10, QgsTolerance.Pixels)
+
+        snapper.setLayers([snapping_layer1, snapping_layer2])
+        snapper.setSnapToMapMode(QgsSnappingUtils.SnapAdvanced)
+        ```
+
+       * @param l   The vector layer for which this configuration is
+       * @param t   Which parts of the geometry should be snappable
+       * @param tol The tolerance radius in which the snapping will trigger
+       * @param u   The unit in which the tolerance is specified
+       */
+      LayerConfig( QgsVectorLayer* l, QgsPointLocator::Types t, double tol, QgsTolerance::UnitType u )
+          : layer( l )
+          , type( t )
+          , tolerance( tol )
+          , unit( u )
+      {}
 
       bool operator==( const LayerConfig& other ) const
       {

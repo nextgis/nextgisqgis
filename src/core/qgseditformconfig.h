@@ -22,8 +22,9 @@
 
 #include "qgseditorwidgetconfig.h"
 #include "qgsrelationmanager.h"
+#include "qgsoptionalexpression.h"
 
-/**
+/** \ingroup core
  * This is an abstract base class for any elements of a drag and drop form.
  *
  * This can either be a container which will be represented on the screen
@@ -53,7 +54,11 @@ class CORE_EXPORT QgsAttributeEditorElement : public QObject
      * @param parent
      */
     QgsAttributeEditorElement( AttributeEditorType type, const QString& name, QObject *parent = nullptr )
-        : QObject( parent ), mType( type ), mName( name ) {}
+        : QObject( parent )
+        , mType( type )
+        , mName( name )
+        , mShowLabel( true )
+    {}
 
     //! Destructor
     virtual ~QgsAttributeEditorElement() {}
@@ -73,21 +78,52 @@ class CORE_EXPORT QgsAttributeEditorElement : public QObject
     AttributeEditorType type() const { return mType; }
 
     /**
-     * Is reimplemented in classes inheriting from this to serialize it.
+     * Get the XML Dom element to save this element.
      *
      * @param doc The QDomDocument which is used to create new XML elements
      *
-     * @return An DOM element which represents this element
+     * @return A DOM element to serialize this element
      */
-    virtual QDomElement toDomElement( QDomDocument& doc ) const = 0;
+    QDomElement toDomElement( QDomDocument& doc ) const;
+
+    /**
+     * Controls if this element should be labeled with a title (field, relation or groupname).
+     *
+     * @note Added in QGIS 2.18
+     */
+    bool showLabel() const;
+
+    /**
+     * Controls if this element should be labeled with a title (field, relation or groupname).
+     *
+     * @note Added in QGIS 2.18
+     */
+    void setShowLabel( bool showLabel );
 
   protected:
     AttributeEditorType mType;
     QString mName;
+    bool mShowLabel;
+
+  private:
+    /**
+     * Should be implemented by subclasses to save type specific configuration.
+     *
+     * @note Added in QGIS 2.18
+     */
+    virtual void saveConfiguration( QDomElement& elem ) const = 0;
+
+    /**
+     * All subclasses need to overwrite this method and return a type specific identifier.
+     * Needs to be XML key compatible.
+     *
+     * @note Added in QGIS 2.18
+     */
+    virtual QString typeIdentifier() const = 0;
 };
 
 
-/**
+/** \ingroup core
  * This is a container for attribute editors, used to group them visually in the
  * attribute form if it is set to the drag and drop designer.
  */
@@ -105,19 +141,11 @@ class CORE_EXPORT QgsAttributeEditorContainer : public QgsAttributeEditorElement
     QgsAttributeEditorContainer( const QString& name, QObject *parent )
         : QgsAttributeEditorElement( AeTypeContainer, name, parent )
         , mIsGroupBox( true )
+        , mColumnCount( 1 )
     {}
 
     //! Destructor
     virtual ~QgsAttributeEditorContainer() {}
-
-    /**
-     * Will serialize this containers information into a QDomElement for saving it in an XML file.
-     *
-     * @param doc The QDomDocument used to generate the QDomElement
-     *
-     * @return The XML element
-     */
-    virtual QDomElement toDomElement( QDomDocument& doc ) const override;
 
     /**
      * Add a child element to this container. This may be another container, a field or a relation.
@@ -158,17 +186,44 @@ class CORE_EXPORT QgsAttributeEditorContainer : public QgsAttributeEditorElement
 
     /**
      * Change the name of this container
-     *
-     * @param name
      */
     void setName( const QString& name );
 
+    /**
+     * Get the number of columns in this group
+     */
+    int columnCount() const;
+
+    /**
+     * Set the number of columns in this group
+     */
+    void setColumnCount( int columnCount );
+
+    /**
+     * An expression that controls the visibility of this container.
+     *
+     * @note Added in QGIS 2.18
+     */
+    QgsOptionalExpression visibilityExpression() const;
+
+    /**
+     * An expression that controls the visibility of this container.
+     *
+     * @note Added in QGIS 2.18
+     */
+    void setVisibilityExpression( const QgsOptionalExpression& visibilityExpression );
+
   private:
+    virtual void saveConfiguration( QDomElement& elem ) const override;
+    virtual QString typeIdentifier() const override;
+
     bool mIsGroupBox;
     QList<QgsAttributeEditorElement*> mChildren;
+    int mColumnCount;
+    QgsOptionalExpression mVisibilityExpression;
 };
 
-/**
+/** \ingroup core
  * This element will load a field's widget onto the form.
  */
 class CORE_EXPORT QgsAttributeEditorField : public QgsAttributeEditorElement
@@ -184,19 +239,12 @@ class CORE_EXPORT QgsAttributeEditorField : public QgsAttributeEditorElement
      * @param parent The parent of this widget (used as container)
      */
     QgsAttributeEditorField( const QString& name, int idx, QObject *parent )
-        : QgsAttributeEditorElement( AeTypeField, name, parent ), mIdx( idx ) {}
+        : QgsAttributeEditorElement( AeTypeField, name, parent )
+        , mIdx( idx )
+    {}
 
     //! Destructor
     virtual ~QgsAttributeEditorField() {}
-
-    /**
-     * Will serialize this elements information into a QDomElement for saving it in an XML file.
-     *
-     * @param doc The QDomDocument used to generate the QDomElement
-     *
-     * @return The XML element
-     */
-    virtual QDomElement toDomElement( QDomDocument& doc ) const override;
 
     /**
      * Return the index of the field
@@ -205,10 +253,12 @@ class CORE_EXPORT QgsAttributeEditorField : public QgsAttributeEditorElement
     int idx() const { return mIdx; }
 
   private:
+    virtual void saveConfiguration( QDomElement& elem ) const override;
+    virtual QString typeIdentifier() const override;
     int mIdx;
 };
 
-/**
+/** \ingroup core
  * This element will load a relation editor onto the form.
  */
 class CORE_EXPORT QgsAttributeEditorRelation : public QgsAttributeEditorElement
@@ -225,7 +275,10 @@ class CORE_EXPORT QgsAttributeEditorRelation : public QgsAttributeEditorElement
      */
     QgsAttributeEditorRelation( const QString& name, const QString &relationId, QObject *parent )
         : QgsAttributeEditorElement( AeTypeRelation, name, parent )
-        , mRelationId( relationId ) {}
+        , mRelationId( relationId )
+        , mShowLinkButton( true )
+        , mShowUnlinkButton( true )
+    {}
 
     /**
      * Creates a new element which embeds a relation.
@@ -237,19 +290,13 @@ class CORE_EXPORT QgsAttributeEditorRelation : public QgsAttributeEditorElement
     QgsAttributeEditorRelation( const QString& name, const QgsRelation& relation, QObject *parent )
         : QgsAttributeEditorElement( AeTypeRelation, name, parent )
         , mRelationId( relation.id() )
-        , mRelation( relation ) {}
+        , mRelation( relation )
+        , mShowLinkButton( true )
+        , mShowUnlinkButton( true )
+    {}
 
     //! Destructor
     virtual ~QgsAttributeEditorRelation() {}
-
-    /**
-     * Will serialize this elements information into a QDomElement for saving it in an XML file.
-     *
-     * @param doc The QDomDocument used to generate the QDomElement
-     *
-     * @return The XML element
-     */
-    virtual QDomElement toDomElement( QDomDocument& doc ) const override;
 
     /**
      * Get the id of the relation which shall be embedded
@@ -266,12 +313,45 @@ class CORE_EXPORT QgsAttributeEditorRelation : public QgsAttributeEditorElement
      */
     bool init( QgsRelationManager *relManager );
 
+    /**
+     * Determines if the "link feature" button should be shown
+     *
+     * @note Added in QGIS 2.18
+     */
+    bool showLinkButton() const;
+    /**
+     * Determines if the "link feature" button should be shown
+     *
+     * @note Added in QGIS 2.18
+     */
+    void setShowLinkButton( bool showLinkButton );
+
+    /**
+     * Determines if the "unlink feature" button should be shown
+     *
+     * @note Added in QGIS 2.18
+     */
+    bool showUnlinkButton() const;
+    /**
+     * Determines if the "unlink feature" button should be shown
+     *
+     * @note Added in QGIS 2.18
+     */
+    void setShowUnlinkButton( bool showUnlinkButton );
+
   private:
+    virtual void saveConfiguration( QDomElement& elem ) const override;
+    virtual QString typeIdentifier() const override;
     QString mRelationId;
     QgsRelation mRelation;
+    bool mShowLinkButton;
+    bool mShowUnlinkButton;
 };
 
 
+/** \ingroup core
+ * \class QgsEditFormConfig
+ */
 class CORE_EXPORT QgsEditFormConfig : public QObject
 {
     Q_OBJECT
@@ -290,7 +370,9 @@ class CORE_EXPORT QgsEditFormConfig : public QObject
     {
       GroupData() {}
       GroupData( const QString& name, const QList<QString>& fields )
-          : mName( name ), mFields( fields ) {}
+          : mName( name )
+          , mFields( fields )
+      {}
       QString mName;
       QList<QString> mFields;
     };
@@ -299,7 +381,10 @@ class CORE_EXPORT QgsEditFormConfig : public QObject
     {
       TabData() {}
       TabData( const QString& name, const QList<QString>& fields, const QList<GroupData>& groups )
-          : mName( name ), mFields( fields ), mGroups( groups ) {}
+          : mName( name )
+          , mFields( fields )
+          , mGroups( groups )
+      {}
       QString mName;
       QList<QString> mFields;
       QList<GroupData> mGroups;
@@ -329,7 +414,7 @@ class CORE_EXPORT QgsEditFormConfig : public QObject
     /**
      * This is only useful in combination with EditorLayout::TabLayout.
      *
-     * Adds a new tab to the layout. Should be a QgsAttributeEditorContainer.
+     * Adds a new element to the layout.
      */
     void addTab( QgsAttributeEditorElement* data ) { mAttributeEditorElements.append( data ); }
 
@@ -464,12 +549,12 @@ class CORE_EXPORT QgsEditFormConfig : public QObject
     QgsEditorWidgetConfig widgetConfig( const QString& widgetName ) const;
 
     /**
-     * Remove the configuration for the editor widget used to represent the field at the given index
-     *
-     * @param fieldIdx  The index of the field
-     *
-     * @return true if successful, false if the field does not exist
-     */
+    * Remove the configuration for the editor widget used to represent the field at the given index
+    *
+    * @param fieldIdx  The index of the field
+    *
+    * @return true if successful, false if the field does not exist
+    */
     bool removeWidgetConfig( int fieldIdx );
 
     /**
@@ -491,6 +576,47 @@ class CORE_EXPORT QgsEditFormConfig : public QObject
      * If set to false, the widget at the given index will be read-only.
      */
     void setReadOnly( int idx, bool readOnly = true );
+
+    /**
+     * Returns the constraint expression of a specific field
+     * @param idx The index of the field
+     * @return the expression
+     * @note added in QGIS 2.16
+     */
+    QString expression( int idx ) const;
+
+    /**
+     * Set the constraint expression for a specific field
+     * @param idx the field index
+     * @param str the constraint expression
+     * @note added in QGIS 2.16
+     */
+    void setExpression( int idx, const QString& str );
+
+    /**
+     * Returns the constraint expression description of a specific filed.
+     * @param idx The index of the field
+     * @return the expression description
+     * @note added in QGIS 2.16
+     */
+    QString expressionDescription( int idx ) const;
+
+    /**
+     * Set the constraint expression description for a specific field.
+     * @param idx The index of the field
+     * @param descr The description of the expression
+     * @note added in QGIS 2.16
+     */
+    void setExpressionDescription( int idx, const QString &descr );
+
+    /**
+     * Returns if the field at fieldidx should be treated as NOT NULL value
+     */
+    bool notNull( int fieldidx ) const;
+    /**
+     * Set if the field at fieldidx should be treated as NOT NULL value
+     */
+    void setNotNull( int idx, bool notnull = true );
 
     /**
      * If this returns true, the widget at the given index will receive its label on the previous line
@@ -611,8 +737,11 @@ class CORE_EXPORT QgsEditFormConfig : public QObject
     /** Map that stores the tab for attributes in the edit form. Key is the tab order and value the tab name*/
     QList< TabData > mTabs;
 
+    QMap< QString, QString> mConstraints;
+    QMap< QString, QString> mConstraintsDescription;
     QMap< QString, bool> mFieldEditables;
     QMap< QString, bool> mLabelOnTop;
+    QMap< QString, bool> mNotNull;
 
     QMap<QString, QString> mEditorWidgetV2Types;
     QMap<QString, QgsEditorWidgetConfig > mWidgetConfigs;

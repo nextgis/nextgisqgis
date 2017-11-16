@@ -52,8 +52,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>118</width>
-          <height>78</height>
+          <width>116</width>
+          <height>76</height>
          </rect>
         </property>
        </widget>
@@ -133,6 +133,7 @@
    <addaction name="mActionMouseZoom"/>
    <addaction name="mActionSelectMoveItem"/>
    <addaction name="mActionMoveItemContent"/>
+   <addaction name="mActionEditNodesItem"/>
    <addaction name="separator"/>
    <addaction name="mActionAddNewMap"/>
    <addaction name="mActionAddImage"/>
@@ -167,7 +168,7 @@
    </property>
    <property name="icon">
     <iconset resource="../../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionFilePrint.png</normaloff>:/images/themes/default/mActionFilePrint.png</iconset>
+     <normaloff>:/images/themes/default/mActionFilePrint.svg</normaloff>:/images/themes/default/mActionFilePrint.svg</iconset>
    </property>
    <property name="text">
     <string>&amp;Print...</string>
@@ -305,7 +306,7 @@
   <action name="mActionExportAsImage">
    <property name="icon">
     <iconset resource="../../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionSaveMapAsImage.png</normaloff>:/images/themes/default/mActionSaveMapAsImage.png</iconset>
+     <normaloff>:/images/themes/default/mActionSaveMapAsImage.svg</normaloff>:/images/themes/default/mActionSaveMapAsImage.svg</iconset>
    </property>
    <property name="text">
     <string>Export as &amp;Image...</string>
@@ -317,7 +318,7 @@
   <action name="mActionExportAsPDF">
    <property name="icon">
     <iconset resource="../../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionSaveAsPDF.png</normaloff>:/images/themes/default/mActionSaveAsPDF.png</iconset>
+     <normaloff>:/images/themes/default/mActionSaveAsPDF.svg</normaloff>:/images/themes/default/mActionSaveAsPDF.svg</iconset>
    </property>
    <property name="text">
     <string>&amp;Export as PDF...</string>
@@ -326,7 +327,7 @@
   <action name="mActionExportAsSVG">
    <property name="icon">
     <iconset resource="../../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionSaveAsSVG.png</normaloff>:/images/themes/default/mActionSaveAsSVG.png</iconset>
+     <normaloff>:/images/themes/default/mActionSaveAsSVG.svg</normaloff>:/images/themes/default/mActionSaveAsSVG.svg</iconset>
    </property>
    <property name="text">
     <string>Export as S&amp;VG...</string>
@@ -361,8 +362,8 @@
   </action>
   <action name="mActionShowGrid">
    <property name="icon">
-    <iconset resource="../../../python/plugins/fTools/resources.qrc">
-     <normaloff>:/icons/default/vector_grid.png</normaloff>:/icons/default/vector_grid.png</iconset>
+    <iconset resource="../../../images/images.qrc">
+     <normaloff>:/images/themes/default/vector_grid.png</normaloff>:/images/themes/default/vector_grid.png</iconset>
    </property>
    <property name="text">
     <string>Show &amp;Grid</string>
@@ -637,7 +638,7 @@
   <action name="mActionUndo">
    <property name="icon">
     <iconset>
-     <normalon>:/images/themes/default/mActionUndo.png</normalon>
+     <normalon>:/images/themes/default/mActionUndo.svg</normalon>
     </iconset>
    </property>
    <property name="text">
@@ -653,7 +654,7 @@
   <action name="mActionRedo">
    <property name="icon">
     <iconset resource="../../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionRedo.png</normaloff>:/images/themes/default/mActionRedo.png</iconset>
+     <normaloff>:/images/themes/default/mActionRedo.svg</normaloff>:/images/themes/default/mActionRedo.svg</iconset>
    </property>
    <property name="text">
     <string>&amp;Redo</string>
@@ -962,7 +963,7 @@
   <action name="mActionPrintAtlas">
    <property name="icon">
     <iconset resource="../../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionFilePrint.png</normaloff>:/images/themes/default/mActionFilePrint.png</iconset>
+     <normaloff>:/images/themes/default/mActionFilePrint.svg</normaloff>:/images/themes/default/mActionFilePrint.svg</iconset>
    </property>
    <property name="text">
     <string>&amp;Print Atlas...</string>
@@ -971,7 +972,7 @@
   <action name="mActionExportAtlasAsImage">
    <property name="icon">
     <iconset resource="../../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionSaveMapAsImage.png</normaloff>:/images/themes/default/mActionSaveMapAsImage.png</iconset>
+     <normaloff>:/images/themes/default/mActionSaveMapAsImage.svg</normaloff>:/images/themes/default/mActionSaveMapAsImage.svg</iconset>
    </property>
    <property name="text">
     <string>Export Atlas as &amp;Images...</string>
@@ -980,7 +981,7 @@
   <action name="mActionExportAtlasAsSVG">
    <property name="icon">
     <iconset resource="../../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionSaveAsSVG.png</normaloff>:/images/themes/default/mActionSaveAsSVG.png</iconset>
+     <normaloff>:/images/themes/default/mActionSaveAsSVG.svg</normaloff>:/images/themes/default/mActionSaveAsSVG.svg</iconset>
    </property>
    <property name="text">
     <string>Export Atlas as S&amp;VG...</string>
@@ -989,7 +990,7 @@
   <action name="mActionExportAtlasAsPDF">
    <property name="icon">
     <iconset resource="../../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionSaveAsPDF.png</normaloff>:/images/themes/default/mActionSaveAsPDF.png</iconset>
+     <normaloff>:/images/themes/default/mActionSaveAsPDF.svg</normaloff>:/images/themes/default/mActionSaveAsPDF.svg</iconset>
    </property>
    <property name="text">
     <string>&amp;Export Atlas as PDF...</string>
@@ -1057,9 +1058,49 @@
     <string>Show pages</string>
    </property>
   </action>
+  <action name="mActionAddPolygon">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Add Polygon</string>
+   </property>
+   <property name="toolTip">
+    <string>Add polygon</string>
+   </property>
+  </action>
+  <action name="mActionNodesItem">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Nodes item</string>
+   </property>
+   <property name="toolTip">
+    <string>Nodes item</string>
+   </property>
+  </action>
+  <action name="mActionAddPolyline">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Add Polyline</string>
+   </property>
+   <property name="toolTip">
+    <string>Add polyline</string>
+   </property>
+  </action>
+  <action name="mActionEditNodesItem">
+   <property name="text">
+    <string>Edit Nodes Item</string>
+   </property>
+   <property name="toolTip">
+    <string>Edit Nodes Item</string>
+   </property>
+  </action>
  </widget>
  <resources>
-  <include location="../../../python/plugins/fTools/resources.qrc"/>
   <include location="../../../images/images.qrc"/>
  </resources>
  <connections/>

@@ -47,13 +47,13 @@ QgsLayerTreeNode::~QgsLayerTreeNode()
   qDeleteAll( mChildren );
 }
 
-QgsLayerTreeNode* QgsLayerTreeNode::readXML( QDomElement& element )
+QgsLayerTreeNode* QgsLayerTreeNode::readXML( QDomElement& element, bool looseMatch )
 {
   QgsLayerTreeNode* node = nullptr;
   if ( element.tagName() == "layer-tree-group" )
-    node = QgsLayerTreeGroup::readXML( element );
+    node = QgsLayerTreeGroup::readXML( element, looseMatch );
   else if ( element.tagName() == "layer-tree-layer" )
-    node = QgsLayerTreeLayer::readXML( element );
+    node = QgsLayerTreeLayer::readXML( element, looseMatch );
 
   return node;
 }
@@ -136,6 +136,7 @@ void QgsLayerTreeNode::insertChildrenPrivate( int index, QList<QgsLayerTreeNode*
     connect( nodes[i], SIGNAL( customPropertyChanged( QgsLayerTreeNode*, QString ) ), this, SIGNAL( customPropertyChanged( QgsLayerTreeNode*, QString ) ) );
     connect( nodes[i], SIGNAL( visibilityChanged( QgsLayerTreeNode*, Qt::CheckState ) ), this, SIGNAL( visibilityChanged( QgsLayerTreeNode*, Qt::CheckState ) ) );
     connect( nodes[i], SIGNAL( expandedChanged( QgsLayerTreeNode*, bool ) ), this, SIGNAL( expandedChanged( QgsLayerTreeNode*, bool ) ) );
+    connect( nodes[i], SIGNAL( nameChanged( QgsLayerTreeNode*, QString ) ), this, SIGNAL( nameChanged( QgsLayerTreeNode*, QString ) ) );
   }
   emit addedChildren( this, index, indexTo );
 }

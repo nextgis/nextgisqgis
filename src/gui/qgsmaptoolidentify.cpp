@@ -200,9 +200,7 @@ bool QgsMapToolIdentify::identifyVectorLayer( QList<IdentifyResult> *results, Qg
   if ( !layer || !layer->hasGeometryType() )
     return false;
 
-  if ( layer->hasScaleBasedVisibility() &&
-       ( layer->minimumScale() > mCanvas->mapSettings().scale() ||
-         layer->maximumScale() <= mCanvas->mapSettings().scale() ) )
+  if ( !layer->isInScaleRange( mCanvas->mapSettings().scale() ) )
   {
     QgsDebugMsg( "Out of scale limits" );
     return false;
@@ -311,6 +309,18 @@ void QgsMapToolIdentify::closestVertexAttributes( const QgsAbstractGeometryV2& g
   {
     str = QLocale::system().toString( closestPoint.m(), 'g', 10 );
     derivedAttributes.insert( "Closest vertex M", str );
+  }
+
+  if ( vId.type == QgsVertexId::CurveVertex )
+  {
+    double radius, centerX, centerY;
+    QgsVertexId vIdBefore = vId;
+    --vIdBefore.vertex;
+    QgsVertexId vIdAfter = vId;
+    ++vIdAfter.vertex;
+    QgsGeometryUtils::circleCenterRadius( geometry.vertexAt( vIdBefore ), geometry.vertexAt( vId ),
+                                          geometry.vertexAt( vIdAfter ), radius, centerX, centerY );
+    derivedAttributes.insert( "Closest vertex radius", QLocale::system().toString( radius ) );
   }
 }
 
@@ -544,8 +554,18 @@ bool QgsMapToolIdentify::identifyRasterLayer( QList<IdentifyResult> *results, Qg
         }
         else
         {
-          double value = values.value( bandNo ).toDouble();
-          valueString = QgsRasterBlock::printValue( value );
+          QVariant value( values.value( bandNo ) );
+          // The cast is legit. Quoting QT doc :
+          // "Although this function is declared as returning QVariant::Type,
+          // the return value should be interpreted as QMetaType::Type"
+          if ( static_cast<QMetaType::Type>( value.type() ) == QMetaType::Float )
+          {
+            valueString = QgsRasterBlock::printValue( value.toFloat() );
+          }
+          else
+          {
+            valueString = QgsRasterBlock::printValue( value.toDouble() );
+          }
         }
         attributes.insert( dprovider->generateBandName( bandNo ), valueString );
       }
@@ -671,7 +691,7 @@ QString QgsMapToolIdentify::formatDistance( double distance ) const
   QSettings settings;
   bool baseUnit = settings.value( "/qgis/measure/keepbaseunit", false ).toBool();
 
-  return QgsDistanceArea::textUnit( distance, 3, displayDistanceUnits(), false, baseUnit );
+  return QgsDistanceArea::formatDistance( distance, 3, displayDistanceUnits(), baseUnit );
 }
 
 QString QgsMapToolIdentify::formatArea( double area ) const
@@ -684,7 +704,6 @@ QString QgsMapToolIdentify::formatArea( double area ) const
 
 void QgsMapToolIdentify::formatChanged( QgsRasterLayer *layer )
 {
-  QgsDebugMsg( "Entered" );
   QList<IdentifyResult> results;
   if ( identifyRasterLayer( &results, layer, mLastPoint, mLastExtent, mLastMapUnitsPerPixel ) )
   {

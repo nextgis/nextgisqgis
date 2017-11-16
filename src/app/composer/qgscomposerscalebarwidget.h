@@ -22,7 +22,7 @@
 
 class QgsComposerScaleBar;
 
-/** \ingroup MapComposer
+/** \ingroup app
  * A widget to define the properties of a QgsComposerScaleBarItem.
  */
 class QgsComposerScaleBarWidget: public QgsComposerItemBaseWidget, private Ui::QgsComposerScaleBarWidgetBase
@@ -34,8 +34,8 @@ class QgsComposerScaleBarWidget: public QgsComposerItemBaseWidget, private Ui::Q
     ~QgsComposerScaleBarWidget();
 
   public slots:
-    void on_mMapComboBox_activated( const QString& text );
-    void on_mHeightSpinBox_valueChanged( int i );
+
+    void on_mHeightSpinBox_valueChanged( double d );
     void on_mLineWidthSpinBox_valueChanged( double d );
     void on_mSegmentSizeSpinBox_valueChanged( double d );
     void on_mSegmentsLeftSpinBox_valueChanged( int i );
@@ -54,21 +54,18 @@ class QgsComposerScaleBarWidget: public QgsComposerItemBaseWidget, private Ui::Q
     void on_mUnitsComboBox_currentIndexChanged( int index );
     void on_mLineJoinStyleCombo_currentIndexChanged( int index );
     void on_mLineCapStyleCombo_currentIndexChanged( int index );
-    void on_mMinWidthSpinBox_valueChanged( int i );
-    void on_mMaxWidthSpinBox_valueChanged( int i );
+    void on_mMinWidthSpinBox_valueChanged( double d );
+    void on_mMaxWidthSpinBox_valueChanged( double d );
 
   private slots:
     void setGuiElements();
     void segmentSizeRadioChanged( QAbstractButton*radio );
-
-  protected:
-    void showEvent( QShowEvent * event ) override;
+    void composerMapChanged( QgsComposerItem* item );
 
   private:
     QgsComposerScaleBar* mComposerScaleBar;
     QButtonGroup mSegmentSizeRadioGroup;
 
-    void refreshMapComboBox();
     /** Enables/disables the signals of the input gui elements*/
     void blockMemberSignals( bool enable );
 

@@ -89,6 +89,20 @@ QString QgsValueMapWidgetFactory::representValue( QgsVectorLayer* vl, int fieldI
   return config.key( value, QVariant( QString( "(%1)" ).arg( value.toString() ) ).toString() );
 }
 
+QVariant QgsValueMapWidgetFactory::sortValue( QgsVectorLayer* vl, int fieldIdx, const QgsEditorWidgetConfig& config, const QVariant& cache, const QVariant& value ) const
+{
+  return representValue( vl, fieldIdx, config, cache, value );
+}
+
+Qt::AlignmentFlag QgsValueMapWidgetFactory::alignmentFlag( QgsVectorLayer* vl, int fieldIdx, const QgsEditorWidgetConfig& config ) const
+{
+  Q_UNUSED( vl );
+  Q_UNUSED( fieldIdx );
+  Q_UNUSED( config );
+
+  return Qt::AlignLeft;
+}
+
 QMap<const char*, int> QgsValueMapWidgetFactory::supportedWidgetTypes()
 {
   QMap<const char*, int> map = QMap<const char*, int>();

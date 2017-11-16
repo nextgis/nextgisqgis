@@ -21,7 +21,7 @@
 #include <QComboBox>
 #include <QLineEdit>
 
-/**
+/** \ingroup gui
  * Wraps a unique value widget. Will offer any value previously used for this field.
  *
  * Options:
@@ -40,6 +40,7 @@ class GUI_EXPORT QgsUniqueValuesWidgetWrapper : public QgsEditorWidgetWrapper
     // QgsEditorWidgetWrapper interface
   public:
     QVariant value() const override;
+    void showIndeterminateState() override;
 
   protected:
     QWidget* createWidget( QWidget* parent ) override;

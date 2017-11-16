@@ -28,6 +28,7 @@ class QTextCodec;
 #include "qgsfeature.h"
 #include "qgsfield.h"
 #include "qgsrectangle.h"
+#include "qgsaggregatecalculator.h"
 
 typedef QList<int> QgsAttributeList;
 typedef QSet<int> QgsAttributeIds;
@@ -51,6 +52,7 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider
     Q_OBJECT
 
     friend class QgsTransaction;
+    friend class QgsVectorLayerEditBuffer;
 
   public:
 
@@ -101,12 +103,15 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider
       /** Supports joint updates for attributes and geometry
        * Providers supporting this should still define ChangeGeometries | ChangeAttributeValues
        */
-      ChangeFeatures =                              1 << 18
+      ChangeFeatures =                              1 << 18,
+      /** Supports renaming attributes (fields). Added in QGIS 2.16 */
+      RenameAttributes =                            1 << 19,
     };
 
     /** Bitmask of all provider's editing capabilities */
     const static int EditingCapabilities = AddFeatures | DeleteFeatures |
-                                           ChangeAttributeValues | ChangeGeometries | AddAttributes | DeleteAttributes;
+                                           ChangeAttributeValues | ChangeGeometries | AddAttributes | DeleteAttributes |
+                                           RenameAttributes;
 
     /**
      * Constructor of the vector provider
@@ -135,7 +140,7 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider
      * @note added in 2.4
      * @return new instance of QgsAbstractFeatureSource (caller is responsible for deleting it)
      */
-    virtual QgsAbstractFeatureSource* featureSource() const { Q_ASSERT( 0 && "All providers must support featureSource()" ); return nullptr; }
+    virtual QgsAbstractFeatureSource *featureSource() const = 0;
 
     /**
      * Returns the permanent storage type for this layer as a friendly name.
@@ -164,6 +169,7 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider
      * @return map of fields
      * @see QgsFields
      */
+    // TODO QGIS 3: return by value
     virtual const QgsFields &fields() const = 0;
 
     /**
@@ -202,6 +208,22 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider
      */
     virtual void uniqueValues( int index, QList<QVariant> &uniqueValues, int limit = -1 );
 
+    /** Calculates an aggregated value from the layer's features. The base implementation does nothing,
+     * but subclasses can override this method to handoff calculation of aggregates to the provider.
+     * @param aggregate aggregate to calculate
+     * @param index the index of the attribute to calculate aggregate over
+     * @param parameters parameters controlling aggregate calculation
+     * @param context expression context for filter
+     * @param ok will be set to true if calculation was successfully performed by the data provider
+     * @return calculated aggregate value
+     * @note added in QGIS 2.16
+     */
+    virtual QVariant aggregate( QgsAggregateCalculator::Aggregate aggregate,
+                                int index,
+                                const QgsAggregateCalculator::AggregateParameters& parameters,
+                                QgsExpressionContext* context,
+                                bool& ok );
+
     /**
      * Returns the possible enum values of an attribute. Returns an empty stringlist if a provider does not support enum types
      * or if the given attribute is not an enum type.
@@ -238,6 +260,14 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider
     virtual bool deleteAttributes( const QgsAttributeIds &attributes );
 
     /**
+     * Renames existing attributes.
+     * @param renamedAttributes map of attribute index to new attribute name
+     * @return true in case of success and false in case of failure
+     * @note added in QGIS 2.16
+     */
+    virtual bool renameAttributes( const QgsFieldNameMap& renamedAttributes );
+
+    /**
      * Changes attribute values of existing features.
      * @param attr_map a map containing changed attributes
      * @return true in case of success and false in case of failure
@@ -256,9 +286,11 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider
                                  const QgsGeometryMap &geometry_map );
 
     /**
-     * Returns the default value for field specified by @c fieldId
+     * Returns the default value for field specified by \a fieldId.
+     * If \a forceLazyEval is set to true, the provider the default value
+     * will not be evaluated on server side even if specified in the project properties.
      */
-    virtual QVariant defaultValue( int fieldId );
+    virtual QVariant defaultValue( int fieldId, bool forceLazyEval = false );
 
     /**
      * Changes geometries of existing features
@@ -332,8 +364,15 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider
 
     struct NativeType
     {
-      NativeType( const QString& typeDesc, const QString& typeName, QVariant::Type type, int minLen = 0, int maxLen = 0, int minPrec = 0, int maxPrec = 0 ) :
-          mTypeDesc( typeDesc ), mTypeName( typeName ), mType( type ), mMinLen( minLen ), mMaxLen( maxLen ), mMinPrec( minPrec ), mMaxPrec( maxPrec ) {}
+      NativeType( const QString& typeDesc, const QString& typeName, QVariant::Type type, int minLen = 0, int maxLen = 0, int minPrec = 0, int maxPrec = 0 )
+          : mTypeDesc( typeDesc )
+          , mTypeName( typeName )
+          , mType( type )
+          , mMinLen( minLen )
+          , mMaxLen( maxLen )
+          , mMinPrec( minPrec )
+          , mMaxPrec( maxPrec )
+      {}
 
       QString mTypeDesc;
       QString mTypeName;
@@ -429,9 +468,19 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider
     /** Old-style mapping of index to name for QgsPalLabeling fix */
     QgsAttrPalIndexNameHash mAttrPalIndexName;
 
-    /** Converts the geometry to the provider type if possible / necessary
-    @return the converted geometry or nullptr if no conversion was necessary or possible*/
-    QgsGeometry* convertToProviderType( const QgsGeometry& geom ) const;
+    /** \brief Converts the geometry to the provider type if possible / necessary
+     * this is the list of possible modifications:
+     * - convert compoundcurve to circularstring
+     *   (possible if compoundcurve consists of one circular string)
+     * - convert to multitype if necessary
+     * - convert to curved type if necessary
+     * - convert to linear type from curved type
+     * - Add z/m 0 default values
+     * - Remove z/m
+     * \ref QgsVectorLayerEditBuffer::adaptGeometry()
+     * \param geom Geometry to convert
+     * \returns the converted geometry or nullptr if no conversion was necessary or possible*/
+    QgsGeometry* convertToProviderType( const QgsGeometry* geom ) const;
 
   private:
     /** Old notation **/

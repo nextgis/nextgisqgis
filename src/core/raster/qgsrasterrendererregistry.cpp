@@ -21,18 +21,29 @@
 #include "qgssinglebandcolordatarenderer.h"
 #include "qgssinglebandgrayrenderer.h"
 #include "qgssinglebandpseudocolorrenderer.h"
+#include "qgshillshaderenderer.h"
+#include "qgsapplication.h"
+
 #include <QSettings>
+#include <QIcon>
 
 QgsRasterRendererRegistryEntry::QgsRasterRendererRegistryEntry( const QString& theName, const QString& theVisibleName,
     QgsRasterRendererCreateFunc rendererFunction,
-    QgsRasterRendererWidgetCreateFunc widgetFunction ):
-    name( theName ), visibleName( theVisibleName ), rendererCreateFunction( rendererFunction ),
-    widgetCreateFunction( widgetFunction )
+    QgsRasterRendererWidgetCreateFunc widgetFunction )
+    : name( theName )
+    , visibleName( theVisibleName )
+    , rendererCreateFunction( rendererFunction )
+    , widgetCreateFunction( widgetFunction )
 {
 }
 
 QgsRasterRendererRegistryEntry::QgsRasterRendererRegistryEntry(): rendererCreateFunction( nullptr ), widgetCreateFunction( nullptr )
 {
+}
+
+QIcon QgsRasterRendererRegistryEntry::icon()
+{
+  return QgsApplication::getThemeIcon( QString( "styleicons/%1.svg" ).arg( name ) );
 }
 
 QgsRasterRendererRegistry* QgsRasterRendererRegistry::instance()
@@ -53,6 +64,8 @@ QgsRasterRendererRegistry::QgsRasterRendererRegistry()
                                           QgsSingleBandPseudoColorRenderer::create, nullptr ) );
   insert( QgsRasterRendererRegistryEntry( "singlebandcolordata", QObject::tr( "Singleband color data" ),
                                           QgsSingleBandColorDataRenderer::create, nullptr ) );
+  insert( QgsRasterRendererRegistryEntry( "hillshade", QObject::tr( "Hillshade" ),
+                                          QgsHillshadeRenderer::create, nullptr ) );
 }
 
 void QgsRasterRendererRegistry::insert( const QgsRasterRendererRegistryEntry& entry )

@@ -36,7 +36,8 @@ class QgsMapRendererCache;
 class QgsPalLabeling;
 
 
-/** Structure keeping low-level rendering job information.
+/** \ingroup core
+ * Structure keeping low-level rendering job information.
  * @note not part of public API!
  */
 struct LayerRenderJob
@@ -45,6 +46,7 @@ struct LayerRenderJob
   QImage* img; // may be null if it is not necessary to draw to separate image (e.g. sequential rendering)
   QgsMapLayerRenderer* renderer; // must be deleted
   QPainter::CompositionMode blendMode;
+  double opacity;
   bool cached; // if true, img already contains cached image from previous rendering
   QString layerId;
   int renderingTime; //!< time it took to render the layer in ms (it is -1 if not rendered or still rendering)
@@ -53,7 +55,7 @@ struct LayerRenderJob
 typedef QList<LayerRenderJob> LayerRenderJobs;
 
 
-/**
+/** \ingroup core
  * Abstract base class for map rendering implementations.
  *
  * The API is designed in a way that rendering is done asynchronously, therefore
@@ -94,6 +96,13 @@ class CORE_EXPORT QgsMapRendererJob : public QObject
     //! Does nothing if the rendering is not active.
     virtual void cancel() = 0;
 
+    /**
+     * Triggers cancelation of the rendering job without blocking. The render job will continue
+     * to operate until it is able to cancel, at which stage the finished() signal will be emitted.
+     * Does nothing if the rendering is not active.
+     */
+    virtual void cancelWithoutBlocking() = 0;
+
     //! Block until the job has finished.
     virtual void waitForFinished() = 0;
 
@@ -105,7 +114,10 @@ class CORE_EXPORT QgsMapRendererJob : public QObject
 
     struct Error
     {
-      Error( const QString& lid, const QString& msg ) : layerID( lid ), message( msg ) {}
+      Error( const QString& lid, const QString& msg )
+          : layerID( lid )
+          , message( msg )
+      {}
 
       QString layerID;
       QString message;
@@ -186,7 +198,8 @@ class CORE_EXPORT QgsMapRendererJob : public QObject
 };
 
 
-/** Intermediate base class adding functionality that allows client to query the rendered image.
+/** \ingroup core
+ * Intermediate base class adding functionality that allows client to query the rendered image.
  *  The image can be queried even while the rendering is still in progress to get intermediate result
  *
  * @note added in 2.4
@@ -200,6 +213,7 @@ class CORE_EXPORT QgsMapRendererQImageJob : public QgsMapRendererJob
 
     //! Get a preview/resulting image
     virtual QImage renderedImage() = 0;
+
 };
 
 

@@ -41,7 +41,7 @@
 
 #include "qgslabelfeature.h"
 
-/**
+/** \ingroup core
  * \class pal::LabelInfo
  * \note not available in Python bindings
  */
@@ -83,6 +83,7 @@ namespace pal
   class FeaturePart;
 
   /**
+   * \ingroup core
    * \brief Main class to handle feature
    * \class pal::FeaturePart
    * \note not available in Python bindings
@@ -160,8 +161,36 @@ namespace pal
        */
       int createCandidatesAlongLine( QList<LabelPosition *> &lPos, PointSet *mapShape );
 
+      /** Generate candidates for line feature, by trying to place candidates towards the middle of the longest
+       * straightish segments of the line. Segments closer to horizontal are preferred over vertical segments.
+       * @param lPos pointer to an array of candidates, will be filled by generated candidates
+       * @param mapShape a pointer to the line
+       * @returns the number of generated candidates
+       */
+      int createCandidatesAlongLineNearStraightSegments( QList<LabelPosition *> &lPos, PointSet *mapShape );
+
+      /** Generate candidates for line feature, by trying to place candidates as close as possible to the line's midpoint.
+       * Candidates can "cut corners" if it helps them place near this mid point.
+       * @param lPos pointer to an array of candidates, will be filled by generated candidates
+       * @param mapShape a pointer to the line
+       * @param initialCost initial cost for candidates generated using this method. If set, cost can be increased
+       * by a preset amount.
+       * @returns the number of generated candidates
+       */
+      int createCandidatesAlongLineNearMidpoint( QList<LabelPosition *> &lPos, PointSet *mapShape, double initialCost = 0.0 );
+
+      /** Returns the label position for a curved label at a specific offset along a path.
+       * @param path_positions line path to place label on
+       * @param path_distances array of distances to each segment on path
+       * @param orientation can be 0 for automatic calculation of orientation, or -1/+1 for a specific label orientation
+       * @param index
+       * @param distance distance to offset label along curve by
+       * @param reversed if true label is reversed from lefttoright to righttoleft
+       * @param flip if true label is placed on the other side of the line
+       * @returns calculated label position
+       */
       LabelPosition* curvedPlacementAtOffset( PointSet* path_positions, double* path_distances,
-                                              int orientation, int index, double distance );
+                                              int& orientation, int index, double distance, bool& reversed, bool& flip );
 
       /** Generate curved candidates for line features.
        * @param lPos pointer to an array of candidates, will be filled by generated candidates
@@ -196,13 +225,28 @@ namespace pal
       double getLabelHeight() const { return mLF->size().height(); }
       double getLabelDistance() const { return mLF->distLabel(); }
 
-      bool getFixedRotation() { return mLF->hasFixedAngle(); }
-      double getLabelAngle() { return mLF->fixedAngle(); }
-      bool getFixedPosition() { return mLF->hasFixedPosition(); }
-      bool getAlwaysShow() { return mLF->alwaysShow(); }
-      bool isObstacle() { return mLF->isObstacle(); }
-      double obstacleFactor() { return mLF->obstacleFactor(); }
-      double repeatDistance() { return mLF->repeatDistance(); }
+      //! Returns true if the feature's label has a fixed rotation
+      bool hasFixedRotation() const { return mLF->hasFixedAngle(); }
+
+      //! Returns the fixed angle for the feature's label
+      double fixedAngle() const { return mLF->fixedAngle(); }
+
+      //! Returns true if the feature's label has a fixed position
+      bool hasFixedPosition() const { return mLF->hasFixedPosition(); }
+
+      //! Returns true if the feature's label should always been shown,
+      //! even when it collides with other labels
+      bool alwaysShow() const { return mLF->alwaysShow(); }
+
+      //! Returns true if the feature should act as an obstacle to labels
+      bool isObstacle() const { return mLF->isObstacle(); }
+
+      //! Returns the feature's obstacle factor, which represents the penalty
+      //! incurred for a label to overlap the feature
+      double obstacleFactor() const { return mLF->obstacleFactor(); }
+
+      //! Returns the distance between repeating labels for this feature
+      double repeatDistance() const { return mLF->repeatDistance(); }
 
       //! Get number of holes (inner rings) - they are considered as obstacles
       int getNumSelfObstacles() const { return mHoles.count(); }
@@ -225,6 +269,12 @@ namespace pal
        */
       double calculatePriority() const;
 
+      //! Returns true if feature's label must be displayed upright
+      bool showUprightLabels() const;
+
+      //! Returns true if the next char position is found. The referenced parameters are updated.
+      bool nextCharPosition( double charWidth, double segment_length, PointSet* path_positions, int& index, double& distance,
+                             double& start_x, double& start_y, double& end_x, double& end_y ) const;
 
     protected:
 

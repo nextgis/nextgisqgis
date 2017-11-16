@@ -25,8 +25,8 @@ __copyright__ = '(C) 2010, Michael Minn'
 
 __revision__ = '$Format:%H$'
 
-from PyQt4.QtCore import QVariant
-from qgis.core import QGis, QgsField, QgsGeometry, QgsDistanceArea, QgsFeature, QgsFeatureRequest
+from qgis.PyQt.QtCore import QVariant
+from qgis.core import QGis, QgsField, QgsGeometry, QgsDistanceArea, QgsFeature, QgsFeatureRequest, QgsProject
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
 from processing.core.parameters import ParameterVector
@@ -111,10 +111,13 @@ class HubDistance(GeoAlgorithm):
         distance = QgsDistanceArea()
         distance.setSourceCrs(layerPoints.crs().srsid())
         distance.setEllipsoidalMode(True)
+        project_ellipsoid = QgsProject.instance().readEntry('Measure', '/Ellipsoid',
+                                                            'NONE')[0]
+        distance.setEllipsoid(project_ellipsoid)
 
         # Scan source points, find nearest hub, and write to output file
         features = vector.features(layerPoints)
-        total = 100.0 / len(features)
+        total = 100.0 / len(features) if len(features) > 0 else 1
         for current, f in enumerate(features):
             src = f.geometry().boundingBox().center()
 

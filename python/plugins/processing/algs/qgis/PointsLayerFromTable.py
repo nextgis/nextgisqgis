@@ -25,7 +25,11 @@ __copyright__ = '(C) 2013, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
-from qgis.core import QGis, QgsCoordinateReferenceSystem, QgsFeature, QgsGeometry, QgsPoint
+from qgis.core import QGis
+from qgis.core import QgsCoordinateReferenceSystem
+from qgis.core import QgsFeature
+from qgis.core import QgsGeometry
+from qgis.core import QgsPoint
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.parameters import ParameterTable
 from processing.core.parameters import ParameterTableField
@@ -71,7 +75,7 @@ class PointsLayerFromTable(GeoAlgorithm):
 
         outFeat = QgsFeature()
         features = vector.features(vlayer)
-        total = 100.0 / len(features)
+        total = 100.0 / len(features) if len(features) > 0 else 1
         for current, feature in enumerate(features):
             progress.setPercentage(int(current * total))
             attrs = feature.attributes()

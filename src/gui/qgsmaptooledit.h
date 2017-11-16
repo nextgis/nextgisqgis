@@ -24,7 +24,9 @@ class QgsGeometryRubberBand;
 class QgsVectorLayer;
 class QKeyEvent;
 
-/** Base class for map tools that edit vector geometry*/
+/** \ingroup gui
+ * Base class for map tools that edit vector geometry
+*/
 class GUI_EXPORT QgsMapToolEdit: public QgsMapTool
 {
     Q_OBJECT
@@ -33,11 +35,7 @@ class GUI_EXPORT QgsMapToolEdit: public QgsMapTool
     QgsMapToolEdit( QgsMapCanvas* canvas );
     virtual ~QgsMapToolEdit();
 
-    /**
-     * Is this an edit tool?
-     * @return  Of course it is or you would not be inheriting from it.
-     */
-    virtual bool isEditTool() override { return true; }
+    virtual Flags flags() const override { return QgsMapTool::EditTool; }
 
   protected:
 

@@ -207,7 +207,7 @@ LayerRenderJobs QgsMapRendererJob::prepareJobs( QPainter* painter, QgsPalLabelin
                  .arg( ml->blendMode() )
                );
 
-    if ( ml->hasScaleBasedVisibility() && ( mSettings.scale() < ml->minimumScale() || mSettings.scale() > ml->maximumScale() ) ) //|| mOverview )
+    if ( !ml->isInScaleRange( mSettings.scale() ) ) //|| mOverview )
     {
       QgsDebugMsg( "Layer not rendered because it is not within the defined visibility scale range" );
       continue;
@@ -245,6 +245,11 @@ LayerRenderJobs QgsMapRendererJob::prepareJobs( QPainter* painter, QgsPalLabelin
     job.cached = false;
     job.img = nullptr;
     job.blendMode = ml->blendMode();
+    job.opacity = 1.0;
+    if ( QgsVectorLayer* vl = qobject_cast<QgsVectorLayer *>( ml ) )
+    {
+      job.opacity = 1.0 - vl->layerTransparency() / 100.0;
+    }
     job.layerId = ml->id();
     job.renderingTime = -1;
 
@@ -361,8 +366,10 @@ QImage QgsMapRendererJob::composeImage( const QgsMapSettings& settings, const La
     const LayerRenderJob& job = *it;
 
     painter.setCompositionMode( job.blendMode );
+    painter.setOpacity( job.opacity );
 
     Q_ASSERT( job.img );
+
     painter.drawImage( 0, 0, *job.img );
   }
 

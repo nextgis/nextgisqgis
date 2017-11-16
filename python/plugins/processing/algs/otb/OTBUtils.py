@@ -30,7 +30,8 @@ __revision__ = '$Format:%H$'
 
 import os
 import re
-from PyQt4.QtCore import QCoreApplication
+import time
+from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import QgsApplication
 import subprocess
 from processing.core.ProcessingConfig import ProcessingConfig
@@ -39,7 +40,7 @@ from processing.tools.system import isMac, isWindows
 import logging
 import xml.etree.ElementTree as ET
 import traceback
-from processing.gui.SilentProgress import SilentProgress
+from processing.core.SilentProgress import SilentProgress
 
 
 OTB_FOLDER = "OTB_FOLDER"
@@ -49,7 +50,7 @@ OTB_GEOID_FILE = "OTB_GEOID_FILE"
 
 
 def findOtbPath():
-    folder = None
+    folder = ""
     #try to configure the path automatically
     if isMac():
         testfolder = os.path.join(unicode(QgsApplication.prefixPath()), "bin")
@@ -72,14 +73,14 @@ def findOtbPath():
 
 
 def otbPath():
-    folder = findOtbPath()
+    folder = ProcessingConfig.getSetting(OTB_FOLDER)
     if folder is None:
-        folder = ProcessingConfig.getSetting(OTB_FOLDER)
+        folder = ""
     return folder
 
 
 def findOtbLibPath():
-    folder = None
+    folder = ""
     #try to configure the path automatically
     if isMac():
         testfolder = os.path.join(unicode(QgsApplication.prefixPath()), "lib/otb/applications")
@@ -115,6 +116,7 @@ def otbGeoidPath():
 def otbDescriptionPath():
     return os.path.join(os.path.dirname(__file__), "description")
 
+
 _installedVersion = None
 _installedVersionFound = False
 
@@ -126,7 +128,7 @@ def getInstalledVersion(runOtb=False):
     if _installedVersionFound and not runOtb:
         return _installedVersion
 
-    if otbPath() is None:
+    if otbPath() is None or otbLibPath() is None:
         _installedVersionFound = False
         return None
     commands = [os.path.join(otbPath(), "otbcli_Smoothing")]
@@ -141,7 +143,10 @@ def getInstalledVersion(runOtb=False):
 
 
 def compatibleDescriptionPath(version):
-    supportedVersions = {"5.0.0": "5.0.0"}
+    supportedVersions = {"5.0.0": "5.0.0",
+                         "5.4.0": "5.4.0",
+                         "5.6.0": "5.6.0",
+                         "5.8.0": "5.8.0"}
     if version is None:
         return None
     if version not in supportedVersions:
@@ -160,6 +165,8 @@ def executeOtb(commands, progress, addToLog=True):
     os.putenv('ITK_AUTOLOAD_PATH', otbLibPath())
     fused_command = ''.join(['"%s" ' % re.sub(r'^"|"$', '', c) for c in commands])
     proc = subprocess.Popen(fused_command, shell=True, stdout=subprocess.PIPE, stdin=open(os.devnull), stderr=subprocess.STDOUT, universal_newlines=True).stdout
+    if isMac():  # This trick avoids having an uninterrupted system call exception if OTB is not installed
+        time.sleep(1)
     for line in iter(proc.readline, ""):
         if "[*" in line:
             idx = line.find("[*")
@@ -271,10 +278,9 @@ def remove_parameter_by_criteria(doc, criteria):
 
 
 def defaultWrite(available_app, original_dom_document):
-    fh = open("description/%s.xml" % available_app, "w")
-    the_root = original_dom_document
-    ET.ElementTree(the_root).write(fh)
-    fh.close()
+    with open("description/%s.xml" % available_app, "w") as fh:
+        the_root = original_dom_document
+        ET.ElementTree(the_root).write(fh)
 
 
 def defaultSplit(available_app, original_dom_document, parameter):

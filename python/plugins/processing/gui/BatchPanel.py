@@ -28,9 +28,9 @@ __revision__ = '$Format:%H$'
 import os
 import json
 
-from PyQt4 import uic
-from PyQt4.QtGui import (QWidget, QIcon, QTableWidgetItem, QComboBox, QLineEdit,
-                         QHeaderView, QFileDialog, QMessageBox)
+from qgis.PyQt import uic
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QTableWidgetItem, QComboBox, QLineEdit, QHeaderView, QFileDialog, QMessageBox
 
 from qgis.core import QgsApplication
 
@@ -38,6 +38,7 @@ from processing.gui.FileSelectionPanel import FileSelectionPanel
 from processing.gui.CrsSelectionPanel import CrsSelectionPanel
 from processing.gui.ExtentSelectionPanel import ExtentSelectionPanel
 from processing.gui.FixedTablePanel import FixedTablePanel
+from processing.gui.PointSelectionPanel import PointSelectionPanel
 from processing.gui.BatchInputSelectionPanel import BatchInputSelectionPanel
 from processing.gui.BatchOutputSelectionPanel import BatchOutputSelectionPanel
 from processing.gui.GeometryPredicateSelectionPanel import GeometryPredicateSelectionPanel
@@ -48,6 +49,7 @@ from processing.core.parameters import ParameterTable
 from processing.core.parameters import ParameterVector
 from processing.core.parameters import ParameterExtent
 from processing.core.parameters import ParameterCrs
+from processing.core.parameters import ParameterPoint
 from processing.core.parameters import ParameterBoolean
 from processing.core.parameters import ParameterSelection
 from processing.core.parameters import ParameterFixedTable
@@ -155,6 +157,8 @@ class BatchPanel(BASE, WIDGET):
             item = FixedTablePanel(param)
         elif isinstance(param, ParameterExtent):
             item = ExtentSelectionPanel(self.parent, self.alg, param.default)
+        elif isinstance(param, ParameterPoint):
+            item = PointSelectionPanel(self.parent, param.default)
         elif isinstance(param, ParameterCrs):
             item = CrsSelectionPanel(param.default)
         elif isinstance(param, ParameterFile):
@@ -167,7 +171,8 @@ class BatchPanel(BASE, WIDGET):
         else:
             item = QLineEdit()
             try:
-                item.setText(unicode(param.default))
+                if param.default:
+                    item.setText(unicode(param.default))
             except:
                 pass
 
@@ -196,7 +201,7 @@ class BatchPanel(BASE, WIDGET):
                         continue
                     widget = self.tblParameters.cellWidget(row, column)
                     if param.name in params:
-                        value = params[param.name]
+                        value = params[param.name].strip('"')
                         self.setValueInWidget(widget, value)
                     column += 1
 
@@ -205,7 +210,7 @@ class BatchPanel(BASE, WIDGET):
                         continue
                     widget = self.tblParameters.cellWidget(row, column)
                     if out.name in outputs:
-                        value = outputs[out.name]
+                        value = outputs[out.name].strip('"')
                         self.setValueInWidget(widget, value)
                     column += 1
         except TypeError:
@@ -252,6 +257,7 @@ class BatchPanel(BASE, WIDGET):
                     return
                 algParams[param.name] = param.getValueAsCommandLineParameter()
                 col += 1
+
             col = 0
             for param in alg.parameters:
                 if param.hidden:
@@ -264,6 +270,7 @@ class BatchPanel(BASE, WIDGET):
                         return
                     algParams[param.name] = unicode(param.value)
                 col += 1
+
             for out in alg.outputs:
                 if out.hidden:
                     continue
@@ -342,13 +349,7 @@ class BatchPanel(BASE, WIDGET):
             self.tblParameters.setCellWidget(row, column, item)
 
     def removeRows(self):
-        #~ self.tblParameters.setUpdatesEnabled(False)
-        #~ indexes = self.tblParameters.selectionModel().selectedIndexes()
-        #~ indexes.sort()
-        #~ for i in reversed(indexes):
-            #~ self.tblParameters.model().removeRow(i.row())
-        #~ self.tblParameters.setUpdatesEnabled(True)
-        if self.tblParameters.rowCount() > 2:
+        if self.tblParameters.rowCount() > 1:
             self.tblParameters.setRowCount(self.tblParameters.rowCount() - 1)
 
     def fillParameterValues(self, column):

@@ -34,6 +34,7 @@
 #include "qgsstylev2.h" //for symbol selector dialog
 #include "qgsmapcanvas.h"
 #include "qgsapplication.h"
+#include "qgssvgselectorwidget.h"
 
 #include "qgslogger.h"
 #include "qgssizescalewidget.h"
@@ -85,11 +86,14 @@ static QgsExpressionContext _getExpressionContext( const void* context )
   expContext << symbolScope;
   expContext.lastScope()->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_GEOMETRY_PART_COUNT, 1, true ) );
   expContext.lastScope()->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_GEOMETRY_PART_NUM, 1, true ) );
+  expContext.lastScope()->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_GEOMETRY_POINT_COUNT, 1, true ) );
+  expContext.lastScope()->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_GEOMETRY_POINT_NUM, 1, true ) );
 
   //TODO - show actual value
   expContext.setOriginalValueVariable( QVariant() );
   expContext.setHighlightedVariables( QStringList() << QgsExpressionContext::EXPR_ORIGINAL_VALUE << QgsExpressionContext::EXPR_SYMBOL_COLOR
-                                      << QgsExpressionContext::EXPR_GEOMETRY_PART_COUNT << QgsExpressionContext::EXPR_GEOMETRY_PART_NUM );
+                                      << QgsExpressionContext::EXPR_GEOMETRY_PART_COUNT << QgsExpressionContext::EXPR_GEOMETRY_PART_NUM
+                                      << QgsExpressionContext::EXPR_GEOMETRY_POINT_COUNT << QgsExpressionContext::EXPR_GEOMETRY_POINT_NUM );
 
   return expContext;
 }
@@ -439,22 +443,23 @@ QgsSimpleMarkerSymbolLayerV2Widget::QgsSimpleMarkerSymbolLayerV2Widget( const Qg
     mSizeDDBtn->setAssistant( tr( "Size Assistant..." ), new QgsSizeScaleWidget( mVectorLayer, mAssistantPreviewSymbol ) );
 
   QSize size = lstNames->iconSize();
-  QStringList names;
-  names << "circle" << "rectangle" << "diamond" << "pentagon" << "cross" << "cross2" << "triangle"
-  << "equilateral_triangle" << "star" << "regular_star" << "arrow" << "line" << "arrowhead" << "filled_arrowhead";
   double markerSize = DEFAULT_POINT_SIZE * 2;
-  for ( int i = 0; i < names.count(); ++i )
+  Q_FOREACH ( QgsSimpleMarkerSymbolLayerBase::Shape shape, QgsSimpleMarkerSymbolLayerBase::availableShapes() )
   {
-    QgsSimpleMarkerSymbolLayerV2* lyr = new QgsSimpleMarkerSymbolLayerV2( names[i], QColor( 200, 200, 200 ), QColor( 0, 0, 0 ), markerSize );
+    QgsSimpleMarkerSymbolLayerV2* lyr = new QgsSimpleMarkerSymbolLayerV2( shape, markerSize );
+    lyr->setColor( QColor( 200, 200, 200 ) );
+    lyr->setOutlineColor( QColor( 0, 0, 0 ) );
     QIcon icon = QgsSymbolLayerV2Utils::symbolLayerPreviewIcon( lyr, QgsSymbolV2::MM, size );
     QListWidgetItem* item = new QListWidgetItem( icon, QString(), lstNames );
-    item->setData( Qt::UserRole, names[i] );
+    item->setData( Qt::UserRole, static_cast< int >( shape ) );
+    item->setToolTip( QgsSimpleMarkerSymbolLayerBase::encodeShape( shape ) );
     delete lyr;
   }
 
   connect( lstNames, SIGNAL( currentRowChanged( int ) ), this, SLOT( setName() ) );
   connect( btnChangeColorBorder, SIGNAL( colorChanged( const QColor& ) ), this, SLOT( setColorBorder( const QColor& ) ) );
   connect( btnChangeColorFill, SIGNAL( colorChanged( const QColor& ) ), this, SLOT( setColorFill( const QColor& ) ) );
+  connect( cboJoinStyle, SIGNAL( currentIndexChanged( int ) ), this, SLOT( penJoinStyleChanged() ) );
   connect( spinSize, SIGNAL( valueChanged( double ) ), this, SLOT( setSize() ) );
   connect( spinAngle, SIGNAL( valueChanged( double ) ), this, SLOT( setAngle() ) );
   connect( spinOffsetX, SIGNAL( valueChanged( double ) ), this, SLOT( setOffset() ) );
@@ -476,10 +481,10 @@ void QgsSimpleMarkerSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer
   mLayer = static_cast<QgsSimpleMarkerSymbolLayerV2*>( layer );
 
   // set values
-  QString name = mLayer->name();
+  QgsSimpleMarkerSymbolLayerBase::Shape shape = mLayer->shape();
   for ( int i = 0; i < lstNames->count(); ++i )
   {
-    if ( lstNames->item( i )->data( Qt::UserRole ).toString() == name )
+    if ( static_cast< QgsSimpleMarkerSymbolLayerBase::Shape >( lstNames->item( i )->data( Qt::UserRole ).toInt() ) == shape )
     {
       lstNames->setCurrentRow( i );
       break;
@@ -489,7 +494,8 @@ void QgsSimpleMarkerSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer
   btnChangeColorBorder->setColor( mLayer->borderColor() );
   btnChangeColorBorder->blockSignals( false );
   btnChangeColorFill->blockSignals( true );
-  btnChangeColorFill->setColor( mLayer->color() );
+  btnChangeColorFill->setColor( mLayer->fillColor() );
+  btnChangeColorFill->setEnabled( QgsSimpleMarkerSymbolLayerBase::shapeIsFilled( mLayer->shape() ) );
   btnChangeColorFill->blockSignals( false );
   spinSize->blockSignals( true );
   spinSize->setValue( mLayer->size() );
@@ -503,6 +509,9 @@ void QgsSimpleMarkerSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer
   mOutlineWidthSpinBox->blockSignals( true );
   mOutlineWidthSpinBox->setValue( mLayer->outlineWidth() );
   mOutlineWidthSpinBox->blockSignals( false );
+  cboJoinStyle->blockSignals( true );
+  cboJoinStyle->setPenJoinStyle( mLayer->penJoinStyle() );
+  cboJoinStyle->blockSignals( false );
 
   // without blocking signals the value gets changed because of slot setOffset()
   spinOffsetX->blockSignals( true );
@@ -534,14 +543,16 @@ void QgsSimpleMarkerSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer
   mVerticalAnchorComboBox->blockSignals( false );
 
   registerDataDefinedButton( mNameDDBtn, "name", QgsDataDefinedButton::String, tr( "string " ) + QLatin1String( "[<b>square</b>|<b>rectangle</b>|<b>diamond</b>|"
-                             "<b>pentagon</b>|<b>triangle</b>|<b>equilateral_triangle</b>|"
-                             "<b>star</b>|<b>regular_star</b>|<b>arrow</b>|<b>filled_arrowhead</b>|"
-                             "<b>circle</b>|<b>cross</b>|<b>x</b>|"
-                             "<b>cross2</b>|<b>line</b>|<b>arrowhead</b>]" ) );
+                             "<b>pentagon</b>|<b>hexagon</b>|<b>triangle</b>|<b>equilateral_triangle</b>|"
+                             "<b>star</b>|<b>arrow</b>|<b>filled_arrowhead</b>|"
+                             "<b>circle</b>|<b>cross</b>|<b>cross_fill</b>|<b>x</b>|"
+                             "<b>line</b>|<b>arrowhead</b>|<b>cross2</b>|<b>semi_circle</b>|<b>third_circle</b>|<b>quarter_circle</b>|"
+                             "<b>quarter_square</b>|<b>half_square</b>|<b>diagonal_half_square</b>|<b>right_half_triangle</b>|<b>left_half_triangle</b>]" ) );
   registerDataDefinedButton( mFillColorDDBtn, "color", QgsDataDefinedButton::String, QgsDataDefinedButton::colorAlphaDesc() );
   registerDataDefinedButton( mBorderColorDDBtn, "color_border", QgsDataDefinedButton::String, QgsDataDefinedButton::colorAlphaDesc() );
   registerDataDefinedButton( mOutlineWidthDDBtn, "outline_width", QgsDataDefinedButton::Double, QgsDataDefinedButton::doublePosDesc() );
   registerDataDefinedButton( mOutlineStyleDDBtn, "outline_style", QgsDataDefinedButton::String, QgsDataDefinedButton::lineStyleDesc() );
+  registerDataDefinedButton( mJoinStyleDDBtn, "join_style", QgsDataDefinedButton::String, QgsDataDefinedButton::penJoinStyleDesc() );
   registerDataDefinedButton( mSizeDDBtn, "size", QgsDataDefinedButton::Double, QgsDataDefinedButton::doublePosDesc() );
   registerDataDefinedButton( mAngleDDBtn, "angle", QgsDataDefinedButton::Double, QgsDataDefinedButton::double180RotDesc() );
   registerDataDefinedButton( mOffsetDDBtn, "offset", QgsDataDefinedButton::String, QgsDataDefinedButton::doubleXYDesc() );
@@ -558,7 +569,8 @@ QgsSymbolLayerV2* QgsSimpleMarkerSymbolLayerV2Widget::symbolLayer()
 
 void QgsSimpleMarkerSymbolLayerV2Widget::setName()
 {
-  mLayer->setName( lstNames->currentItem()->data( Qt::UserRole ).toString() );
+  mLayer->setShape( static_cast< QgsSimpleMarkerSymbolLayerBase::Shape>( lstNames->currentItem()->data( Qt::UserRole ).toInt() ) );
+  btnChangeColorFill->setEnabled( QgsSimpleMarkerSymbolLayerBase::shapeIsFilled( mLayer->shape() ) );
   emit changed();
 }
 
@@ -571,6 +583,12 @@ void QgsSimpleMarkerSymbolLayerV2Widget::setColorBorder( const QColor& color )
 void QgsSimpleMarkerSymbolLayerV2Widget::setColorFill( const QColor& color )
 {
   mLayer->setColor( color );
+  emit changed();
+}
+
+void QgsSimpleMarkerSymbolLayerV2Widget::penJoinStyleChanged()
+{
+  mLayer->setPenJoinStyle( cboJoinStyle->penJoinStyle() );
   emit changed();
 }
 
@@ -821,6 +839,187 @@ void QgsSimpleFillSymbolLayerV2Widget::on_mOffsetUnitWidget_changed()
     emit changed();
   }
 }
+
+///////////
+
+QgsFilledMarkerSymbolLayerWidget::QgsFilledMarkerSymbolLayerWidget( const QgsVectorLayer* vl, QWidget* parent )
+    : QgsSymbolLayerV2Widget( parent, vl )
+{
+  mLayer = nullptr;
+
+  setupUi( this );
+  mSizeUnitWidget->setUnits( QgsSymbolV2::OutputUnitList() << QgsSymbolV2::MM << QgsSymbolV2::MapUnit << QgsSymbolV2::Pixel );
+  mOffsetUnitWidget->setUnits( QgsSymbolV2::OutputUnitList() << QgsSymbolV2::MM << QgsSymbolV2::MapUnit << QgsSymbolV2::Pixel );
+
+  spinOffsetX->setClearValue( 0.0 );
+  spinOffsetY->setClearValue( 0.0 );
+
+  //make a temporary symbol for the size assistant preview
+  mAssistantPreviewSymbol = new QgsMarkerSymbolV2();
+
+  if ( mVectorLayer )
+    mSizeDDBtn->setAssistant( tr( "Size Assistant..." ), new QgsSizeScaleWidget( mVectorLayer, mAssistantPreviewSymbol ) );
+
+  QSize size = lstNames->iconSize();
+  double markerSize = DEFAULT_POINT_SIZE * 2;
+  Q_FOREACH ( QgsSimpleMarkerSymbolLayerBase::Shape shape, QgsSimpleMarkerSymbolLayerBase::availableShapes() )
+  {
+    if ( !QgsSimpleMarkerSymbolLayerBase::shapeIsFilled( shape ) )
+      continue;
+
+    QgsSimpleMarkerSymbolLayerV2* lyr = new QgsSimpleMarkerSymbolLayerV2( shape, markerSize );
+    lyr->setColor( QColor( 200, 200, 200 ) );
+    lyr->setOutlineColor( QColor( 0, 0, 0 ) );
+    QIcon icon = QgsSymbolLayerV2Utils::symbolLayerPreviewIcon( lyr, QgsSymbolV2::MM, size );
+    QListWidgetItem* item = new QListWidgetItem( icon, QString(), lstNames );
+    item->setData( Qt::UserRole, static_cast< int >( shape ) );
+    item->setToolTip( QgsSimpleMarkerSymbolLayerBase::encodeShape( shape ) );
+    delete lyr;
+  }
+
+  connect( lstNames, SIGNAL( currentRowChanged( int ) ), this, SLOT( setShape() ) );
+  connect( spinSize, SIGNAL( valueChanged( double ) ), this, SLOT( setSize() ) );
+  connect( spinAngle, SIGNAL( valueChanged( double ) ), this, SLOT( setAngle() ) );
+  connect( spinOffsetX, SIGNAL( valueChanged( double ) ), this, SLOT( setOffset() ) );
+  connect( spinOffsetY, SIGNAL( valueChanged( double ) ), this, SLOT( setOffset() ) );
+  connect( this, SIGNAL( changed() ), this, SLOT( updateAssistantSymbol() ) );
+}
+
+QgsFilledMarkerSymbolLayerWidget::~QgsFilledMarkerSymbolLayerWidget()
+{
+  delete mAssistantPreviewSymbol;
+}
+
+void QgsFilledMarkerSymbolLayerWidget::setSymbolLayer( QgsSymbolLayerV2* layer )
+{
+  if ( layer->layerType() != "FilledMarker" )
+    return;
+
+  // layer type is correct, we can do the cast
+  mLayer = static_cast<QgsFilledMarkerSymbolLayer*>( layer );
+
+  // set values
+  QgsSimpleMarkerSymbolLayerBase::Shape shape = mLayer->shape();
+  for ( int i = 0; i < lstNames->count(); ++i )
+  {
+    if ( static_cast< QgsSimpleMarkerSymbolLayerBase::Shape >( lstNames->item( i )->data( Qt::UserRole ).toInt() ) == shape )
+    {
+      lstNames->setCurrentRow( i );
+      break;
+    }
+  }
+  whileBlocking( spinSize )->setValue( mLayer->size() );
+  whileBlocking( spinAngle )->setValue( mLayer->angle() );
+  whileBlocking( spinOffsetX )->setValue( mLayer->offset().x() );
+  whileBlocking( spinOffsetY )->setValue( mLayer->offset().y() );
+
+  mSizeUnitWidget->blockSignals( true );
+  mSizeUnitWidget->setUnit( mLayer->sizeUnit() );
+  mSizeUnitWidget->setMapUnitScale( mLayer->sizeMapUnitScale() );
+  mSizeUnitWidget->blockSignals( false );
+  mOffsetUnitWidget->blockSignals( true );
+  mOffsetUnitWidget->setUnit( mLayer->offsetUnit() );
+  mOffsetUnitWidget->setMapUnitScale( mLayer->offsetMapUnitScale() );
+  mOffsetUnitWidget->blockSignals( false );
+
+  //anchor points
+  whileBlocking( mHorizontalAnchorComboBox )->setCurrentIndex( mLayer->horizontalAnchorPoint() );
+  whileBlocking( mVerticalAnchorComboBox )->setCurrentIndex( mLayer->verticalAnchorPoint() );
+
+  registerDataDefinedButton( mNameDDBtn, "name", QgsDataDefinedButton::String, tr( "string " ) + QLatin1String( "[<b>square</b>|<b>rectangle</b>|<b>diamond</b>|"
+                             "<b>pentagon</b>|<b>hexagon</b>|<b>triangle</b>|<b>equilateral_triangle</b>|"
+                             "<b>star</b>|<b>arrow</b>|<b>filled_arrowhead</b>|"
+                             "<b>circle</b>|<b>cross</b>|<b>cross_fill</b>|<b>x</b>|"
+                             "<b>line</b>|<b>arrowhead</b>|<b>cross2</b>|<b>semi_circle</b>|<b>third_circle</b>|<b>quarter_circle</b>|"
+                             "<b>quarter_square</b>|<b>half_square</b>|<b>diagonal_half_square</b>|<b>right_half_triangle</b>|<b>left_half_triangle</b>]" ) );
+  registerDataDefinedButton( mSizeDDBtn, "size", QgsDataDefinedButton::Double, QgsDataDefinedButton::doublePosDesc() );
+  registerDataDefinedButton( mAngleDDBtn, "angle", QgsDataDefinedButton::Double, QgsDataDefinedButton::double180RotDesc() );
+  registerDataDefinedButton( mOffsetDDBtn, "offset", QgsDataDefinedButton::String, QgsDataDefinedButton::doubleXYDesc() );
+  registerDataDefinedButton( mHorizontalAnchorDDBtn, "horizontal_anchor_point", QgsDataDefinedButton::String, QgsDataDefinedButton::horizontalAnchorDesc() );
+  registerDataDefinedButton( mVerticalAnchorDDBtn, "vertical_anchor_point", QgsDataDefinedButton::String, QgsDataDefinedButton::verticalAnchorDesc() );
+
+  updateAssistantSymbol();
+}
+
+QgsSymbolLayerV2* QgsFilledMarkerSymbolLayerWidget::symbolLayer()
+{
+  return mLayer;
+}
+
+void QgsFilledMarkerSymbolLayerWidget::setShape()
+{
+  mLayer->setShape( static_cast< QgsSimpleMarkerSymbolLayerBase::Shape>( lstNames->currentItem()->data( Qt::UserRole ).toInt() ) );
+  emit changed();
+}
+
+void QgsFilledMarkerSymbolLayerWidget::setSize()
+{
+  mLayer->setSize( spinSize->value() );
+  emit changed();
+}
+
+void QgsFilledMarkerSymbolLayerWidget::setAngle()
+{
+  mLayer->setAngle( spinAngle->value() );
+  emit changed();
+}
+
+void QgsFilledMarkerSymbolLayerWidget::setOffset()
+{
+  mLayer->setOffset( QPointF( spinOffsetX->value(), spinOffsetY->value() ) );
+  emit changed();
+}
+
+void QgsFilledMarkerSymbolLayerWidget::on_mSizeUnitWidget_changed()
+{
+  if ( mLayer )
+  {
+    mLayer->setSizeUnit( mSizeUnitWidget->unit() );
+    mLayer->setSizeMapUnitScale( mSizeUnitWidget->getMapUnitScale() );
+    emit changed();
+  }
+}
+
+void QgsFilledMarkerSymbolLayerWidget::on_mOffsetUnitWidget_changed()
+{
+  if ( mLayer )
+  {
+    mLayer->setOffsetUnit( mOffsetUnitWidget->unit() );
+    mLayer->setOffsetMapUnitScale( mOffsetUnitWidget->getMapUnitScale() );
+    emit changed();
+  }
+}
+
+void QgsFilledMarkerSymbolLayerWidget::on_mHorizontalAnchorComboBox_currentIndexChanged( int index )
+{
+  if ( mLayer )
+  {
+    mLayer->setHorizontalAnchorPoint(( QgsMarkerSymbolLayerV2::HorizontalAnchorPoint ) index );
+    emit changed();
+  }
+}
+
+void QgsFilledMarkerSymbolLayerWidget::on_mVerticalAnchorComboBox_currentIndexChanged( int index )
+{
+  if ( mLayer )
+  {
+    mLayer->setVerticalAnchorPoint(( QgsMarkerSymbolLayerV2::VerticalAnchorPoint ) index );
+    emit changed();
+  }
+}
+
+void QgsFilledMarkerSymbolLayerWidget::updateAssistantSymbol()
+{
+  for ( int i = mAssistantPreviewSymbol->symbolLayerCount() - 1 ; i >= 0; --i )
+  {
+    mAssistantPreviewSymbol->deleteSymbolLayer( i );
+  }
+  mAssistantPreviewSymbol->appendSymbolLayer( mLayer->clone() );
+  QgsDataDefined* ddSize = mLayer->getDataDefinedProperty( "size" );
+  if ( ddSize )
+    mAssistantPreviewSymbol->setDataDefinedSize( *ddSize );
+}
+
 
 ///////////
 
@@ -1164,6 +1363,12 @@ QgsShapeburstFillSymbolLayerV2Widget::QgsShapeburstFillSymbolLayerV2Widget( cons
   mDistanceUnitWidget->setUnits( QgsSymbolV2::OutputUnitList() << QgsSymbolV2::MM << QgsSymbolV2::MapUnit << QgsSymbolV2::Pixel );
   mOffsetUnitWidget->setUnits( QgsSymbolV2::OutputUnitList() << QgsSymbolV2::MM << QgsSymbolV2::MapUnit << QgsSymbolV2::Pixel );
 
+  QButtonGroup* group1 = new QButtonGroup( this );
+  group1->addButton( radioColorRamp );
+  group1->addButton( radioTwoColor );
+  QButtonGroup* group2 = new QButtonGroup( this );
+  group2->addButton( mRadioUseMaxDistance );
+  group2->addButton( mRadioUseWholeShape );
   btnChangeColor->setAllowAlpha( true );
   btnChangeColor->setColorDialogTitle( tr( "Select gradient color" ) );
   btnChangeColor->setContext( "symbology" );
@@ -1617,8 +1822,11 @@ QgsSvgMarkerSymbolLayerV2Widget::~QgsSvgMarkerSymbolLayerV2Widget()
 
 void QgsSvgMarkerSymbolLayerV2Widget::populateList()
 {
-  QgsSvgGroupsModel* g = new QgsSvgGroupsModel( viewGroups );
+  QAbstractItemModel* oldModel = viewGroups->model();
+  QgsSvgSelectorGroupsModel* g = new QgsSvgSelectorGroupsModel( viewGroups );
   viewGroups->setModel( g );
+  delete oldModel;
+
   // Set the tree expanded at the first level
   int rows = g->rowCount( g->indexFromItem( g->invisibleRootItem() ) );
   for ( int i = 0; i < rows; i++ )
@@ -1627,19 +1835,22 @@ void QgsSvgMarkerSymbolLayerV2Widget::populateList()
   }
 
   // Initally load the icons in the List view without any grouping
-  QgsSvgListModel* m = new QgsSvgListModel( viewImages );
+  oldModel = viewImages->model();
+  QgsSvgSelectorListModel* m = new QgsSvgSelectorListModel( viewImages );
   viewImages->setModel( m );
+  delete oldModel;
 }
 
 void QgsSvgMarkerSymbolLayerV2Widget::populateIcons( const QModelIndex& idx )
 {
   QString path = idx.data( Qt::UserRole + 1 ).toString();
 
-  QgsSvgListModel* m = new QgsSvgListModel( viewImages, path );
+  QAbstractItemModel* oldModel = viewImages->model();
+  QgsSvgSelectorListModel* m = new QgsSvgSelectorListModel( viewImages, path );
   viewImages->setModel( m );
+  delete oldModel;
 
   connect( viewImages->selectionModel(), SIGNAL( currentChanged( const QModelIndex&, const QModelIndex& ) ), this, SLOT( setName( const QModelIndex& ) ) );
-  emit changed();
 }
 
 void QgsSvgMarkerSymbolLayerV2Widget::setGuiForSvg( const QgsSvgMarkerSymbolLayerV2* layer )
@@ -2100,8 +2311,11 @@ void QgsSVGFillSymbolLayerWidget::setFile( const QModelIndex& item )
 
 void QgsSVGFillSymbolLayerWidget::insertIcons()
 {
-  QgsSvgGroupsModel* g = new QgsSvgGroupsModel( mSvgTreeView );
+  QAbstractItemModel* oldModel = mSvgTreeView->model();
+  QgsSvgSelectorGroupsModel* g = new QgsSvgSelectorGroupsModel( mSvgTreeView );
   mSvgTreeView->setModel( g );
+  delete oldModel;
+
   // Set the tree expanded at the first level
   int rows = g->rowCount( g->indexFromItem( g->invisibleRootItem() ) );
   for ( int i = 0; i < rows; i++ )
@@ -2109,19 +2323,22 @@ void QgsSVGFillSymbolLayerWidget::insertIcons()
     mSvgTreeView->setExpanded( g->indexFromItem( g->item( i ) ), true );
   }
 
-  QgsSvgListModel* m = new QgsSvgListModel( mSvgListView );
+  oldModel = mSvgListView->model();
+  QgsSvgSelectorListModel* m = new QgsSvgSelectorListModel( mSvgListView );
   mSvgListView->setModel( m );
+  delete oldModel;
 }
 
 void QgsSVGFillSymbolLayerWidget::populateIcons( const QModelIndex& idx )
 {
   QString path = idx.data( Qt::UserRole + 1 ).toString();
 
-  QgsSvgListModel* m = new QgsSvgListModel( mSvgListView, path );
+  QAbstractItemModel* oldModel = mSvgListView->model();
+  QgsSvgSelectorListModel* m = new QgsSvgSelectorListModel( mSvgListView, path );
   mSvgListView->setModel( m );
+  delete oldModel;
 
   connect( mSvgListView->selectionModel(), SIGNAL( currentChanged( const QModelIndex&, const QModelIndex& ) ), this, SLOT( setFile( const QModelIndex& ) ) );
-  emit changed();
 }
 
 
@@ -2476,13 +2693,17 @@ QgsFontMarkerSymbolLayerV2Widget::QgsFontMarkerSymbolLayerV2Widget( const QgsVec
 
   setupUi( this );
   mSizeUnitWidget->setUnits( QgsSymbolV2::OutputUnitList() << QgsSymbolV2::MM << QgsSymbolV2::MapUnit << QgsSymbolV2::Pixel );
+  mBorderWidthUnitWidget->setUnits( QgsSymbolV2::OutputUnitList() << QgsSymbolV2::MM << QgsSymbolV2::MapUnit << QgsSymbolV2::Pixel );
   mOffsetUnitWidget->setUnits( QgsSymbolV2::OutputUnitList() << QgsSymbolV2::MM << QgsSymbolV2::MapUnit << QgsSymbolV2::Pixel );
   widgetChar = new CharacterWidget;
   scrollArea->setWidget( widgetChar );
 
   btnColor->setAllowAlpha( true );
-  btnColor->setColorDialogTitle( tr( "Select symbol color" ) );
+  btnColor->setColorDialogTitle( tr( "Select symbol fill color" ) );
   btnColor->setContext( "symbology" );
+  btnBorderColor->setAllowAlpha( true );
+  btnBorderColor->setColorDialogTitle( tr( "Select symbol outline color" ) );
+  btnBorderColor->setContext( "symbology" );
 
   spinOffsetX->setClearValue( 0.0 );
   spinOffsetY->setClearValue( 0.0 );
@@ -2495,7 +2716,10 @@ QgsFontMarkerSymbolLayerV2Widget::QgsFontMarkerSymbolLayerV2Widget( const QgsVec
 
   connect( cboFont, SIGNAL( currentFontChanged( const QFont & ) ), this, SLOT( setFontFamily( const QFont& ) ) );
   connect( spinSize, SIGNAL( valueChanged( double ) ), this, SLOT( setSize( double ) ) );
+  connect( cboJoinStyle, SIGNAL( currentIndexChanged( int ) ), this, SLOT( penJoinStyleChanged() ) );
   connect( btnColor, SIGNAL( colorChanged( const QColor& ) ), this, SLOT( setColor( const QColor& ) ) );
+  connect( btnBorderColor, SIGNAL( colorChanged( const QColor& ) ), this, SLOT( setColorBorder( const QColor& ) ) );
+  connect( cboJoinStyle, SIGNAL( currentIndexChanged( int ) ), this, SLOT( penJoinStyleChanged() ) );
   connect( spinAngle, SIGNAL( valueChanged( double ) ), this, SLOT( setAngle( double ) ) );
   connect( spinOffsetX, SIGNAL( valueChanged( double ) ), this, SLOT( setOffset() ) );
   connect( spinOffsetY, SIGNAL( valueChanged( double ) ), this, SLOT( setOffset() ) );
@@ -2518,18 +2742,12 @@ void QgsFontMarkerSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer )
 
   QFont layerFont( mLayer->fontFamily() );
   // set values
-  cboFont->blockSignals( true );
-  cboFont->setCurrentFont( layerFont );
-  cboFont->blockSignals( false );
-  spinSize->blockSignals( true );
-  spinSize->setValue( mLayer->size() );
-  spinSize->blockSignals( false );
-  btnColor->blockSignals( true );
-  btnColor->setColor( mLayer->color() );
-  btnColor->blockSignals( false );
-  spinAngle->blockSignals( true );
-  spinAngle->setValue( mLayer->angle() );
-  spinAngle->blockSignals( false );
+  whileBlocking( cboFont )->setCurrentFont( layerFont );
+  whileBlocking( spinSize )->setValue( mLayer->size() );
+  whileBlocking( btnColor )->setColor( mLayer->color() );
+  whileBlocking( btnBorderColor )->setColor( mLayer->outlineColor() );
+  whileBlocking( mBorderWidthSpinBox )->setValue( mLayer->outlineWidth() );
+  whileBlocking( spinAngle )->setValue( mLayer->angle() );
 
   widgetChar->blockSignals( true );
   widgetChar->updateFont( layerFont );
@@ -2537,34 +2755,36 @@ void QgsFontMarkerSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer )
   widgetChar->blockSignals( false );
 
   //block
-  spinOffsetX->blockSignals( true );
-  spinOffsetX->setValue( mLayer->offset().x() );
-  spinOffsetX->blockSignals( false );
-  spinOffsetY->blockSignals( true );
-  spinOffsetY->setValue( mLayer->offset().y() );
-  spinOffsetY->blockSignals( false );
+  whileBlocking( spinOffsetX )->setValue( mLayer->offset().x() );
+  whileBlocking( spinOffsetY )->setValue( mLayer->offset().y() );
 
   mSizeUnitWidget->blockSignals( true );
   mSizeUnitWidget->setUnit( mLayer->sizeUnit() );
   mSizeUnitWidget->setMapUnitScale( mLayer->sizeMapUnitScale() );
   mSizeUnitWidget->blockSignals( false );
 
+  mBorderWidthUnitWidget->blockSignals( true );
+  mBorderWidthUnitWidget->setUnit( mLayer->outlineWidthUnit() );
+  mBorderWidthUnitWidget->setMapUnitScale( mLayer->outlineWidthMapUnitScale() );
+  mBorderWidthUnitWidget->blockSignals( false );
+
   mOffsetUnitWidget->blockSignals( true );
   mOffsetUnitWidget->setUnit( mLayer->offsetUnit() );
   mOffsetUnitWidget->setMapUnitScale( mLayer->offsetMapUnitScale() );
   mOffsetUnitWidget->blockSignals( false );
 
+  whileBlocking( cboJoinStyle )->setPenJoinStyle( mLayer->penJoinStyle() );
+
   //anchor points
-  mHorizontalAnchorComboBox->blockSignals( true );
-  mVerticalAnchorComboBox->blockSignals( true );
-  mHorizontalAnchorComboBox->setCurrentIndex( mLayer->horizontalAnchorPoint() );
-  mVerticalAnchorComboBox->setCurrentIndex( mLayer->verticalAnchorPoint() );
-  mHorizontalAnchorComboBox->blockSignals( false );
-  mVerticalAnchorComboBox->blockSignals( false );
+  whileBlocking( mHorizontalAnchorComboBox )->setCurrentIndex( mLayer->horizontalAnchorPoint() );
+  whileBlocking( mVerticalAnchorComboBox )->setCurrentIndex( mLayer->verticalAnchorPoint() );
 
   registerDataDefinedButton( mSizeDDBtn, "size", QgsDataDefinedButton::Double, QgsDataDefinedButton::doublePosDesc() );
   registerDataDefinedButton( mRotationDDBtn, "angle", QgsDataDefinedButton::Double, QgsDataDefinedButton::double180RotDesc() );
   registerDataDefinedButton( mColorDDBtn, "color", QgsDataDefinedButton::String, QgsDataDefinedButton::colorAlphaDesc() );
+  registerDataDefinedButton( mBorderColorDDBtn, "color_border", QgsDataDefinedButton::String, QgsDataDefinedButton::colorAlphaDesc() );
+  registerDataDefinedButton( mBorderWidthDDBtn, "outline_width", QgsDataDefinedButton::Double, QgsDataDefinedButton::doublePosDesc() );
+  registerDataDefinedButton( mJoinStyleDDBtn, "join_style", QgsDataDefinedButton::String, QgsDataDefinedButton::penJoinStyleDesc() );
   registerDataDefinedButton( mOffsetDDBtn, "offset", QgsDataDefinedButton::String, QgsDataDefinedButton::doubleXYDesc() );
   registerDataDefinedButton( mHorizontalAnchorDDBtn, "horizontal_anchor_point", QgsDataDefinedButton::String, QgsDataDefinedButton::horizontalAnchorDesc() );
   registerDataDefinedButton( mVerticalAnchorDDBtn, "vertical_anchor_point", QgsDataDefinedButton::String, QgsDataDefinedButton::verticalAnchorDesc() );
@@ -2588,6 +2808,12 @@ void QgsFontMarkerSymbolLayerV2Widget::setFontFamily( const QFont& font )
 void QgsFontMarkerSymbolLayerV2Widget::setColor( const QColor& color )
 {
   mLayer->setColor( color );
+  emit changed();
+}
+
+void QgsFontMarkerSymbolLayerV2Widget::setColorBorder( const QColor& color )
+{
+  mLayer->setOutlineColor( color );
   emit changed();
 }
 
@@ -2616,6 +2842,12 @@ void QgsFontMarkerSymbolLayerV2Widget::setOffset()
   emit changed();
 }
 
+void QgsFontMarkerSymbolLayerV2Widget::penJoinStyleChanged()
+{
+  mLayer->setPenJoinStyle( cboJoinStyle->penJoinStyle() );
+  emit changed();
+}
+
 void QgsFontMarkerSymbolLayerV2Widget::on_mSizeUnitWidget_changed()
 {
   if ( mLayer )
@@ -2636,6 +2868,16 @@ void QgsFontMarkerSymbolLayerV2Widget::on_mOffsetUnitWidget_changed()
   }
 }
 
+void QgsFontMarkerSymbolLayerV2Widget::on_mBorderWidthUnitWidget_changed()
+{
+  if ( mLayer )
+  {
+    mLayer->setOutlineWidthUnit( mSizeUnitWidget->unit() );
+    mLayer->setOutlineWidthMapUnitScale( mSizeUnitWidget->getMapUnitScale() );
+    emit changed();
+  }
+}
+
 void QgsFontMarkerSymbolLayerV2Widget::on_mHorizontalAnchorComboBox_currentIndexChanged( int index )
 {
   if ( mLayer )
@@ -2650,6 +2892,15 @@ void QgsFontMarkerSymbolLayerV2Widget::on_mVerticalAnchorComboBox_currentIndexCh
   if ( mLayer )
   {
     mLayer->setVerticalAnchorPoint( QgsMarkerSymbolLayerV2::VerticalAnchorPoint( index ) );
+    emit changed();
+  }
+}
+
+void QgsFontMarkerSymbolLayerV2Widget::on_mBorderWidthSpinBox_valueChanged( double d )
+{
+  if ( mLayer )
+  {
+    mLayer->setOutlineWidth( d );
     emit changed();
   }
 }
@@ -2686,9 +2937,8 @@ void QgsCentroidFillSymbolLayerV2Widget::setSymbolLayer( QgsSymbolLayerV2* layer
   mLayer = static_cast<QgsCentroidFillSymbolLayerV2*>( layer );
 
   // set values
-  mDrawInsideCheckBox->blockSignals( true );
-  mDrawInsideCheckBox->setChecked( mLayer->pointOnSurface() );
-  mDrawInsideCheckBox->blockSignals( false );
+  whileBlocking( mDrawInsideCheckBox )->setChecked( mLayer->pointOnSurface() );
+  whileBlocking( mDrawAllPartsCheckBox )->setChecked( mLayer->pointOnAllParts() );
 }
 
 QgsSymbolLayerV2* QgsCentroidFillSymbolLayerV2Widget::symbolLayer()
@@ -2699,6 +2949,12 @@ QgsSymbolLayerV2* QgsCentroidFillSymbolLayerV2Widget::symbolLayer()
 void QgsCentroidFillSymbolLayerV2Widget::on_mDrawInsideCheckBox_stateChanged( int state )
 {
   mLayer->setPointOnSurface( state == Qt::Checked );
+  emit changed();
+}
+
+void QgsCentroidFillSymbolLayerV2Widget::on_mDrawAllPartsCheckBox_stateChanged( int state )
+{
+  mLayer->setPointOnAllParts( state == Qt::Checked );
   emit changed();
 }
 
@@ -2977,129 +3233,6 @@ void QgsRasterFillSymbolLayerWidget::updatePreviewImage()
   p.end();
   mLabelImagePreview->setPixmap( QPixmap::fromImage( previewImage ) );
 }
-
-
-/// @cond PRIVATE
-
-QgsSvgListModel::QgsSvgListModel( QObject* parent ) : QAbstractListModel( parent )
-{
-  mSvgFiles = QgsSymbolLayerV2Utils::listSvgFiles();
-}
-
-QgsSvgListModel::QgsSvgListModel( QObject* parent, const QString& path ) : QAbstractListModel( parent )
-{
-  mSvgFiles = QgsSymbolLayerV2Utils::listSvgFilesAt( path );
-}
-
-int QgsSvgListModel::rowCount( const QModelIndex& parent ) const
-{
-  Q_UNUSED( parent );
-  return mSvgFiles.count();
-}
-
-QVariant QgsSvgListModel::data( const QModelIndex& index, int role ) const
-{
-  QString entry = mSvgFiles.at( index.row() );
-
-  if ( role == Qt::DecorationRole ) // icon
-  {
-    QPixmap pixmap;
-    if ( !QPixmapCache::find( entry, pixmap ) )
-    {
-      // render SVG file
-      QColor fill, outline;
-      double outlineWidth, fillOpacity, outlineOpacity;
-      bool fillParam, fillOpacityParam, outlineParam, outlineWidthParam, outlineOpacityParam;
-      bool hasDefaultFillColor = false, hasDefaultFillOpacity = false, hasDefaultOutlineColor = false,
-                                 hasDefaultOutlineWidth = false, hasDefaultOutlineOpacity = false;
-      QgsSvgCache::instance()->containsParams( entry, fillParam, hasDefaultFillColor, fill,
-          fillOpacityParam, hasDefaultFillOpacity, fillOpacity,
-          outlineParam, hasDefaultOutlineColor, outline,
-          outlineWidthParam, hasDefaultOutlineWidth, outlineWidth,
-          outlineOpacityParam, hasDefaultOutlineOpacity, outlineOpacity );
-
-      //if defaults not set in symbol, use these values
-      if ( !hasDefaultFillColor )
-        fill = QColor( 200, 200, 200 );
-      fill.setAlphaF( hasDefaultFillOpacity ? fillOpacity : 1.0 );
-      if ( !hasDefaultOutlineColor )
-        outline = Qt::black;
-      outline.setAlphaF( hasDefaultOutlineOpacity ? outlineOpacity : 1.0 );
-      if ( !hasDefaultOutlineWidth )
-        outlineWidth = 0.6;
-
-      bool fitsInCache; // should always fit in cache at these sizes (i.e. under 559 px ^ 2, or half cache size)
-      const QImage& img = QgsSvgCache::instance()->svgAsImage( entry, 30.0, fill, outline, outlineWidth, 3.5 /*appr. 88 dpi*/, 1.0, fitsInCache );
-      pixmap = QPixmap::fromImage( img );
-      QPixmapCache::insert( entry, pixmap );
-    }
-
-    return pixmap;
-  }
-  else if ( role == Qt::UserRole || role == Qt::ToolTipRole )
-  {
-    return entry;
-  }
-
-  return QVariant();
-}
-
-
-QgsSvgGroupsModel::QgsSvgGroupsModel( QObject* parent ) : QStandardItemModel( parent )
-{
-  QStringList svgPaths = QgsApplication::svgPaths();
-  QStandardItem *parentItem = invisibleRootItem();
-
-  for ( int i = 0; i < svgPaths.size(); i++ )
-  {
-    QDir dir( svgPaths[i] );
-    QStandardItem *baseGroup;
-
-    if ( dir.path().contains( QgsApplication::pkgDataPath() ) )
-    {
-      baseGroup = new QStandardItem( QString( "App Symbols" ) );
-    }
-    else if ( dir.path().contains( QgsApplication::qgisSettingsDirPath() ) )
-    {
-      baseGroup = new QStandardItem( QString( "User Symbols" ) );
-    }
-    else
-    {
-      baseGroup = new QStandardItem( dir.dirName() );
-    }
-    baseGroup->setData( QVariant( svgPaths[i] ) );
-    baseGroup->setEditable( false );
-    baseGroup->setCheckable( false );
-    baseGroup->setIcon( QgsApplication::style()->standardIcon( QStyle::SP_DirIcon ) );
-    baseGroup->setToolTip( dir.path() );
-    parentItem->appendRow( baseGroup );
-    createTree( baseGroup );
-    QgsDebugMsg( QString( "SVG base path %1: %2" ).arg( i ).arg( baseGroup->data().toString() ) );
-  }
-}
-
-void QgsSvgGroupsModel::createTree( QStandardItem*& parentGroup )
-{
-  QDir parentDir( parentGroup->data().toString() );
-  Q_FOREACH ( const QString& item, parentDir.entryList( QDir::Dirs | QDir::NoDotAndDotDot ) )
-  {
-    QStandardItem* group = new QStandardItem( item );
-    group->setData( QVariant( parentDir.path() + '/' + item ) );
-    group->setEditable( false );
-    group->setCheckable( false );
-    group->setToolTip( parentDir.path() + '/' + item );
-    group->setIcon( QgsApplication::style()->standardIcon( QStyle::SP_DirIcon ) );
-    parentGroup->appendRow( group );
-    createTree( group );
-  }
-}
-
-
-/// @endcond
-
-
-
-
 
 
 QgsGeometryGeneratorSymbolLayerWidget::QgsGeometryGeneratorSymbolLayerWidget( const QgsVectorLayer* vl, QWidget* parent )

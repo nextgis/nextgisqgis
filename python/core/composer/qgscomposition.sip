@@ -1,4 +1,4 @@
-/** \ingroup MapComposer
+/** \ingroup core
  * Graphics scene for map printing. The class manages the paper item which always
  * is the item in the back (z-value 0). It maintains the z-Values of the items and stores
  * them in a list in ascending z-Order. This list can be changed to lower/raise items one position
@@ -378,10 +378,34 @@ class QgsComposition : QGraphicsScene
     bool printAsRaster() const;
     void setPrintAsRaster( const bool enabled );
 
+    /** Returns true if the composition will generate corresponding world files when pages
+     * are exported.
+     * @see setGenerateWorldFile()
+     * @see worldFileMap()
+     */
     bool generateWorldFile() const;
-    void setGenerateWorldFile( const bool enabled );
 
-    QgsComposerMap* worldFileMap();
+    /** Sets whether the composition will generate corresponding world files when pages
+     * are exported.
+     * @param enabled set to true to generate world files
+     * @see generateWorldFile()
+     * @see setWorldFileMap()
+     */
+    void setGenerateWorldFile( bool enabled );
+
+    /** Returns the map item which will be used to generate corresponding world files when the
+     * composition is exported, or nullptr if no corresponding map is set.
+     * @see setWorldFileMap()
+     * @see generateWorldFile()
+     */
+    QgsComposerMap* worldFileMap() const;
+
+    /** Sets the map item which will be used to generate corresponding world files when the
+     * composition is exported.
+     * @param map composer map item
+     * @see worldFileMap()
+     * @see setGenerateWorldFile()
+     */
     void setWorldFileMap( QgsComposerMap* map );
 
     /** Returns true if a composition should use advanced effects such as blend modes */
@@ -546,22 +570,26 @@ class QgsComposition : QGraphicsScene
     void addMultiFrame( QgsComposerMultiFrame* multiFrame );
     /** Removes multi frame (but does not delete it)*/
     void removeMultiFrame( QgsComposerMultiFrame* multiFrame );
-    /** Adds an arrow item to the graphics scene and advices composer to create a widget for it (through signal)
+    /** Adds an arrow item to the graphics scene and advises composer to create a widget for it (through signal)
       @note not available in python bindings*/
     void addComposerArrow( QgsComposerArrow* arrow );
-    /** Adds label to the graphics scene and advices composer to create a widget for it (through signal)*/
+    /** Adds label to the graphics scene and advises composer to create a widget for it (through signal)*/
     void addComposerLabel( QgsComposerLabel* label );
-    /** Adds map to the graphics scene and advices composer to create a widget for it (through signal)*/
+    /** Adds map to the graphics scene and advises composer to create a widget for it (through signal)*/
     void addComposerMap( QgsComposerMap* map, const bool setDefaultPreviewStyle = true );
-    /** Adds scale bar to the graphics scene and advices composer to create a widget for it (through signal)*/
+    /** Adds scale bar to the graphics scene and advises composer to create a widget for it (through signal)*/
     void addComposerScaleBar( QgsComposerScaleBar* scaleBar );
-    /** Adds legend to the graphics scene and advices composer to create a widget for it (through signal)*/
+    /** Adds legend to the graphics scene and advises composer to create a widget for it (through signal)*/
     void addComposerLegend( QgsComposerLegend* legend );
-    /** Adds picture to the graphics scene and advices composer to create a widget for it (through signal)*/
+    /** Adds picture to the graphics scene and advises composer to create a widget for it (through signal)*/
     void addComposerPicture( QgsComposerPicture* picture );
-    /** Adds a composer shape to the graphics scene and advices composer to create a widget for it (through signal)*/
+    /** Adds a composer shape to the graphics scene and advises composer to create a widget for it (through signal)*/
     void addComposerShape( QgsComposerShape* shape );
-    /** Adds a composer table to the graphics scene and advices composer to create a widget for it (through signal)*/
+    /** Adds a composer polygon and advises composer to create a widget for it (through signal)*/
+    void addComposerPolygon( QgsComposerPolygon* polygon );
+    /** Adds a composer polyline and advises composer to create a widget for it (through signal)*/
+    void addComposerPolyline( QgsComposerPolyline* polyline );
+    /** Adds a composer table to the graphics scene and advises composer to create a widget for it (through signal)*/
     void addComposerTable( QgsComposerAttributeTable* table );
     /** Adds composer html frame and advises composer to create a widget for it (through signal)*/
     void addComposerHtmlFrame( QgsComposerHtml* html /Transfer/, QgsComposerFrame* frame /Transfer/);
@@ -649,6 +677,18 @@ class QgsComposition : QGraphicsScene
      * @see renderRectAsRaster()
      */
     void renderRect( QPainter* p, const QRectF& rect );
+
+    /** Georeferences a file (image of PDF) exported from the composition.
+     * @param file filename of exported file
+     * @param referenceMap map item to use for georeferencing, or leave as nullptr to use the
+     * currently defined worldFileMap().
+     * @param exportRegion set to a valid rectangle to indicate that only part of the composition was
+     * exported
+     * @param dpi set to DPI of exported file, or leave as -1 to use composition's DPI.
+     * @note added in QGIS 2.16
+     */
+    void georeferenceOutput( const QString& file, QgsComposerMap* referenceMap = nullptr,
+                             const QRectF& exportRegion = QRectF(), double dpi = -1 ) const;
 
     /** Compute world file parameters. Assumes the whole page containing the associated map item
      * will be exported.
@@ -828,6 +868,10 @@ class QgsComposition : QGraphicsScene
     void selectedItemChanged( QgsComposerItem* selected );
     /** Is emitted when new composer arrow has been added to the view*/
     void composerArrowAdded( QgsComposerArrow* arrow );
+    /** Is emitted when new composer polygon has been added to the view*/
+    void composerPolygonAdded( QgsComposerPolygon* polygon );
+    /** Is emitted when new composer polyline has been added to the view*/
+    void composerPolylineAdded( QgsComposerPolyline* polyline );
     /** Is emitted when a new composer html has been added to the view*/
     void composerHtmlFrameAdded( QgsComposerHtml* html, QgsComposerFrame* frame );
     /** Is emitted when a new item group has been added to the view*/
@@ -858,7 +902,7 @@ class QgsComposition : QGraphicsScene
     void statusMsgChanged( QString message );
 
     /** Emitted whenever the expression variables stored in the composition have been changed.
-     * @note added in QGIS 3.0
+     * @note added in QGIS 2.18
      */
     void variablesChanged();
 };

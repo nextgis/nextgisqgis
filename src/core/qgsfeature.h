@@ -109,7 +109,7 @@ typedef QMap<int, QVariant> QgsAttributeMap;
  * See details in QEP #17
  ****************************************************************************/
 
-/**
+/** \ingroup core
  * A vector of attributes. Mostly equal to QVector<QVariant>.
  */
 class CORE_EXPORT QgsAttributes : public QVector<QVariant>
@@ -412,6 +412,12 @@ class CORE_EXPORT QgsFeature
      *  @see setFields
      */
     int fieldNameIndex( const QString& fieldName ) const;
+
+    //! Allows direct construction of QVariants from features.
+    operator QVariant() const
+    {
+      return QVariant::fromValue( *this );
+    }
 
   private:
 

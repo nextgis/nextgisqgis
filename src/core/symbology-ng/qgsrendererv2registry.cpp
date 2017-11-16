@@ -23,12 +23,18 @@
 #include "qgsinvertedpolygonrenderer.h"
 #include "qgsheatmaprenderer.h"
 #include "qgs25drenderer.h"
+#include "qgsnullsymbolrenderer.h"
+#include "qgsvectorlayer.h"
 
 QgsRendererV2Registry::QgsRendererV2Registry()
 {
   // add default renderers
+  addRenderer( new QgsRendererV2Metadata( "nullSymbol",
+                                          QObject::tr( "No symbols" ),
+                                          QgsNullSymbolRenderer::create ) );
+
   addRenderer( new QgsRendererV2Metadata( "singleSymbol",
-                                          QObject::tr( "Single Symbol" ),
+                                          QObject::tr( "Single symbol" ),
                                           QgsSingleSymbolRendererV2::create,
                                           QgsSingleSymbolRendererV2::createFromSld ) );
 
@@ -46,21 +52,33 @@ QgsRendererV2Registry::QgsRendererV2Registry()
                                           QgsRuleBasedRendererV2::createFromSld ) );
 
   addRenderer( new QgsRendererV2Metadata( "pointDisplacement",
-                                          QObject::tr( "Point Displacement" ),
-                                          QgsPointDisplacementRenderer::create ) );
+                                          QObject::tr( "Point displacement" ),
+                                          QgsPointDisplacementRenderer::create,
+                                          QIcon(),
+                                          nullptr,
+                                          QgsRendererV2AbstractMetadata::PointLayer ) );
 
   addRenderer( new QgsRendererV2Metadata( "invertedPolygonRenderer",
-                                          QObject::tr( "Inverted Polygons" ),
-                                          QgsInvertedPolygonRenderer::create ) );
+                                          QObject::tr( "Inverted polygons" ),
+                                          QgsInvertedPolygonRenderer::create,
+                                          QIcon(),
+                                          nullptr,
+                                          QgsRendererV2AbstractMetadata::PolygonLayer ) );
 
   addRenderer( new QgsRendererV2Metadata( "heatmapRenderer",
                                           QObject::tr( "Heatmap" ),
-                                          QgsHeatmapRenderer::create ) );
+                                          QgsHeatmapRenderer::create,
+                                          QIcon(),
+                                          nullptr,
+                                          QgsRendererV2AbstractMetadata::PointLayer ) );
 
 
   addRenderer( new QgsRendererV2Metadata( "25dRenderer",
                                           QObject::tr( "2.5 D" ),
-                                          Qgs25DRenderer::create ) );
+                                          Qgs25DRenderer::create,
+                                          QIcon(),
+                                          nullptr,
+                                          QgsRendererV2AbstractMetadata::PolygonLayer ) );
 }
 
 QgsRendererV2Registry::~QgsRendererV2Registry()
@@ -103,7 +121,39 @@ QgsRendererV2AbstractMetadata* QgsRendererV2Registry::rendererMetadata( const QS
 
 QgsRendererV2Metadata::~QgsRendererV2Metadata() {}
 
-QStringList QgsRendererV2Registry::renderersList()
+QStringList QgsRendererV2Registry::renderersList( QgsRendererV2AbstractMetadata::LayerTypes layerTypes ) const
 {
-  return mRenderersOrder;
+  QStringList renderers;
+  Q_FOREACH ( const QString& renderer, mRenderersOrder )
+  {
+    if ( mRenderers.value( renderer )->compatibleLayerTypes() & layerTypes )
+      renderers << renderer;
+  }
+  return renderers;
+}
+
+QStringList QgsRendererV2Registry::renderersList( const QgsVectorLayer* layer ) const
+{
+  QgsRendererV2AbstractMetadata::LayerType layerType = QgsRendererV2AbstractMetadata::All;
+
+  switch ( layer->geometryType() )
+  {
+    case QGis::Point:
+      layerType = QgsRendererV2AbstractMetadata::PointLayer;
+      break;
+
+    case QGis::Line:
+      layerType = QgsRendererV2AbstractMetadata::LineLayer;
+      break;
+
+    case QGis::Polygon:
+      layerType = QgsRendererV2AbstractMetadata::PolygonLayer;
+      break;
+
+    case QGis::UnknownGeometry:
+    case QGis::NoGeometry:
+      break;
+  }
+
+  return renderersList( layerType );
 }

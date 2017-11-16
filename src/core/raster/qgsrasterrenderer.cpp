@@ -24,8 +24,6 @@
 #include <QImage>
 #include <QPainter>
 
-#define tr( sourceText ) QCoreApplication::translate ( "QgsRasterRenderer", sourceText )
-
 // See #9101 before any change of NODATA_COLOR!
 const QRgb QgsRasterRenderer::NODATA_COLOR = qRgba( 0, 0, 0, 0 );
 
@@ -134,6 +132,16 @@ void QgsRasterRenderer::readXML( const QDomElement& rendererElem )
     mRasterTransparency = new QgsRasterTransparency();
     mRasterTransparency->readXML( rasterTransparencyElem );
   }
+}
+
+void QgsRasterRenderer::copyCommonProperties( const QgsRasterRenderer* other )
+{
+  if ( !other )
+    return;
+
+  setOpacity( other->opacity() );
+  setAlphaBand( other->alphaBand() );
+  setRasterTransparency( other->rasterTransparency() ? new QgsRasterTransparency( *other->rasterTransparency() ) : nullptr );
 }
 
 QString QgsRasterRenderer::minMaxOriginName( int theOrigin )

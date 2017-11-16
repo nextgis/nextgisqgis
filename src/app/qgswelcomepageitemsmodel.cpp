@@ -16,6 +16,7 @@
 #include "qgswelcomepageitemsmodel.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgsmessagelog.h"
+#include "qgscrscache.h"
 
 #include <QApplication>
 #include <QAbstractTextDocumentLayout>
@@ -24,6 +25,7 @@
 #include <QFileInfo>
 #include <QPainter>
 #include <QTextDocument>
+#include <QDir>
 
 QgsWelcomePageItemDelegate::QgsWelcomePageItemDelegate( QObject * parent )
     : QStyledItemDelegate( parent )
@@ -145,12 +147,11 @@ QVariant QgsWelcomePageItemsModel::data( const QModelIndex& index, int role ) co
     case TitleRole:
       return mRecentProjects.at( index.row() ).title != mRecentProjects.at( index.row() ).path ? mRecentProjects.at( index.row() ).title : QFileInfo( mRecentProjects.at( index.row() ).path ).baseName();
     case PathRole:
-      return mRecentProjects.at( index.row() ).path;
+      return QDir::toNativeSeparators( mRecentProjects.at( index.row() ).path );
     case CrsRole:
       if ( mRecentProjects.at( index.row() ).crs != "" )
       {
-        QgsCoordinateReferenceSystem crs;
-        crs.createFromOgcWmsCrs( mRecentProjects.at( index.row() ).crs );
+        QgsCoordinateReferenceSystem crs = QgsCRSCache::instance()->crsByOgcWmsCrs( mRecentProjects.at( index.row() ).crs );
         return  QString( "%1 (%2)" ).arg( mRecentProjects.at( index.row() ).crs, crs.description() );
       }
       else
@@ -159,7 +160,11 @@ QVariant QgsWelcomePageItemsModel::data( const QModelIndex& index, int role ) co
       }
     case Qt::DecorationRole:
     {
-      QImage thumbnail( mRecentProjects.at( index.row() ).previewImagePath );
+      QString filename( mRecentProjects.at( index.row() ).previewImagePath );
+      if ( filename.isEmpty() )
+        return QVariant();
+
+      QImage thumbnail( filename );
       if ( thumbnail.isNull() )
         return QVariant();
 

@@ -23,6 +23,9 @@
 
 class QgsRasterLayer;
 
+/** \ingroup gui
+ * \class QgsPalettedRendererWidget
+ */
 class GUI_EXPORT QgsPalettedRendererWidget: public QgsRasterRendererWidget, private Ui::QgsPalettedRendererWidgetBase
 {
     Q_OBJECT
@@ -38,6 +41,7 @@ class GUI_EXPORT QgsPalettedRendererWidget: public QgsRasterRendererWidget, priv
 
   private slots:
     void on_mTreeWidget_itemDoubleClicked( QTreeWidgetItem * item, int column );
+    void on_mTreeWidget_itemChanged( QTreeWidgetItem * item, int column );
 };
 
 #endif // QGSPALETTEDRENDERERWIDGET_H

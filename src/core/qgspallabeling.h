@@ -32,6 +32,7 @@
 #include "qgsmaprenderer.h" // definition of QgsLabelingEngineInterface
 #include "qgsdiagramrendererv2.h"
 #include "qgsmapunitscale.h"
+#include "qgsstringutils.h"
 
 namespace pal
 {
@@ -61,6 +62,9 @@ class QgsVectorLayerLabelProvider;
 class QgsDxfExport;
 class QgsVectorLayerDiagramProvider;
 
+/** \ingroup core
+ * \class QgsPalLayerSettings
+ */
 class CORE_EXPORT QgsPalLayerSettings
 {
   public:
@@ -86,6 +90,7 @@ class CORE_EXPORT QgsPalLayerSettings
       Horizontal, /**< Arranges horizontal candidates scattered throughout a polygon feature. Applies to polygon layers only.*/
       Free, /**< Arranges candidates scattered throughout a polygon feature. Candidates are rotated to respect the polygon's orientation. Applies to polygon layers only.*/
       OrderedPositionsAroundPoint, /**< Candidates are placed in predefined positions around a point. Peference is given to positions with greatest cartographic appeal, eg top right, bottom right, etc. Applies to point layers only.*/
+      PerimeterCurved, /** Arranges candidates following the curvature of a polygon's boundary. Applies to polygon layers only.*/
     };
 
     //! Positions for labels when using the QgsPalLabeling::OrderedPositionsAroundPoint placement mode
@@ -369,6 +374,11 @@ class CORE_EXPORT QgsPalLayerSettings
     int textTransp;
     QPainter::CompositionMode blendMode;
     QColor previewBkgrdColor;
+
+    //! Substitution collection for automatic text substitution with labels
+    QgsStringReplacementCollection substitutions;
+    //! True if substitutions should be applied
+    bool useSubstitutions;
 
     //-- text formatting
 
@@ -723,6 +733,8 @@ class CORE_EXPORT QgsPalLayerSettings
     static QVector< PredefinedPointPosition > DEFAULT_PLACEMENT_ORDER;
 };
 
+/** \ingroup core
+ */
 class CORE_EXPORT QgsLabelCandidate
 {
   public:
@@ -830,7 +842,7 @@ class CORE_EXPORT QgsLabelComponent
 };
 
 
-/**
+/** \ingroup core
  * Class that stores computed placement from labeling engine.
  * @note added in 2.4
  */
@@ -857,6 +869,9 @@ class CORE_EXPORT QgsLabelingResults
 };
 
 Q_NOWARN_DEPRECATED_PUSH
+/** \ingroup core
+ * \class QgsPalLabeling
+ */
 class CORE_EXPORT QgsPalLabeling : public QgsLabelingEngineInterface
 {
   public:

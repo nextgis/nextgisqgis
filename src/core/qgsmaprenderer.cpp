@@ -55,11 +55,15 @@ QgsMapRenderer::QgsMapRenderer()
   mSize = QSize( 0, 0 );
 
   mProjectionsEnabled = false;
-  mDestCRS = new QgsCoordinateReferenceSystem( GEOCRS_ID, QgsCoordinateReferenceSystem::InternalCrsId ); //WGS 84
+  mDestCRS = new QgsCoordinateReferenceSystem( QgsCRSCache::instance()->crsBySrsId( GEOCRS_ID ) ); //WGS 84
 
   mOutputUnits = QgsMapRenderer::Millimeters;
+  mFullExtent.setMinimal();
 
   mLabelingEngine = nullptr;
+  readDefaultDatumTransformations();
+
+  mTileRenderMode = false;
 }
 
 QgsMapRenderer::~QgsMapRenderer()
@@ -136,7 +140,7 @@ double QgsMapRenderer::rotation() const
 }
 
 
-void QgsMapRenderer::setOutputSize( QSize size, int dpi )
+void QgsMapRenderer::setOutputSize( QSize size, double dpi )
 {
   mSize = QSizeF( size.width(), size.height() );
   mScaleCalculator->setDpi( dpi );
@@ -155,12 +159,12 @@ double QgsMapRenderer::outputDpi()
   return mScaleCalculator->dpi();
 }
 
-QSize QgsMapRenderer::outputSize()
+QSize QgsMapRenderer::outputSize() const
 {
   return mSize.toSize();
 }
 
-QSizeF QgsMapRenderer::outputSizeF()
+QSizeF QgsMapRenderer::outputSizeF() const
 {
   return mSize;
 }
@@ -341,6 +345,8 @@ void QgsMapRenderer::render( QPainter* painter, double* forceWidthScale )
   QListIterator<QString> li( mLayerSet );
   li.toBack();
 
+  mRenderContext.setFlag( QgsRenderContext::RenderMapTile, mTileRenderMode );
+
   QgsRectangle r1, r2;
 
   while ( li.hasPrevious() )
@@ -393,7 +399,7 @@ void QgsMapRenderer::render( QPainter* painter, double* forceWidthScale )
       mypContextPainter->setCompositionMode( ml->blendMode() );
     }
 
-    if ( !ml->hasScaleBasedVisibility() || ( ml->minimumScale() <= mScale && mScale < ml->maximumScale() ) || mOverview )
+    if ( ml->isInScaleRange( mScale ) || mOverview )
     {
       connect( ml, SIGNAL( drawingProgress( int, int ) ), this, SLOT( onDrawingProgress( int, int ) ) );
 
@@ -583,7 +589,7 @@ void QgsMapRenderer::render( QPainter* painter, double* forceWidthScale )
       {
         // only make labels if the layer is visible
         // after scale dep viewing settings are checked
-        if ( !ml->hasScaleBasedVisibility() || ( ml->minimumScale() < mScale && mScale < ml->maximumScale() ) )
+        if ( ml->isInScaleRange( mScale ) )
         {
           bool split = false;
 
@@ -928,15 +934,19 @@ QgsRectangle QgsMapRenderer::mapToLayerCoordinates( QgsMapLayer* theLayer, QgsRe
   return rect;
 }
 
-
 void QgsMapRenderer::updateFullExtent()
 {
-  QgsDebugMsg( "called." );
-  QgsMapLayerRegistry* registry = QgsMapLayerRegistry::instance();
-
-  // reset the map canvas extent since the extent may now be smaller
-  // We can't use a constructor since QgsRectangle normalizes the rectangle upon construction
   mFullExtent.setMinimal();
+}
+
+QgsRectangle QgsMapRenderer::fullExtent()
+{
+  QgsDebugMsg( "called." );
+
+  if ( !mFullExtent.isNull() )
+    return mFullExtent;
+
+  QgsMapLayerRegistry* registry = QgsMapLayerRegistry::instance();
 
   // iterate through the map layers and test each layers extent
   // against the current min and max values
@@ -993,11 +1003,7 @@ void QgsMapRenderer::updateFullExtent()
   }
 
   QgsDebugMsg( "Full extent: " + mFullExtent.toString() );
-}
 
-QgsRectangle QgsMapRenderer::fullExtent()
-{
-  updateFullExtent();
   return mFullExtent;
 }
 
@@ -1012,7 +1018,6 @@ QStringList& QgsMapRenderer::layerSet()
 {
   return mLayerSet;
 }
-
 
 bool QgsMapRenderer::readXML( QDomNode & theNode )
 {
@@ -1110,6 +1115,12 @@ const QgsCoordinateTransform *QgsMapRenderer::transformation( const QgsMapLayer 
   }
   else
   {
+    //is there a defined datum transformation?
+    QHash< QPair< QString, QString >, QPair< int, int > >::const_iterator it = mDefaultDatumTransformations.find( qMakePair( layer->crs().authid(), mDestCRS->authid() ) );
+    if ( it != mDefaultDatumTransformations.constEnd() )
+    {
+      return QgsCoordinateTransformCache::instance()->transform( it.key().first, it.key().second, it.value().first, it.value().second );
+    }
     emit datumTransformInfoRequested( layer, layer->crs().authid(), mDestCRS->authid() );
   }
 
@@ -1273,6 +1284,26 @@ void QgsMapRenderer::addLayerCoordinateTransform( const QString& layerId, const 
 void QgsMapRenderer::clearLayerCoordinateTransforms()
 {
   mLayerCoordinateTransformInfo.clear();
+}
+
+void QgsMapRenderer::readDefaultDatumTransformations()
+{
+  const char* envChar = getenv( "DEFAULT_DATUM_TRANSFORM" );
+  if ( envChar )
+  {
+    QString envString( envChar );
+    QStringList transformSplit = envString.split( ";" );
+    for ( int i = 0; i < transformSplit.size(); ++i )
+    {
+      QStringList slashSplit = transformSplit.at( i ).split( "/" );
+      if ( slashSplit.size() < 4 )
+      {
+        continue;
+      }
+
+      mDefaultDatumTransformations.insert( qMakePair( slashSplit.at( 0 ), slashSplit.at( 1 ) ), qMakePair( slashSplit.at( 2 ).toInt(), slashSplit.at( 3 ).toInt() ) );
+    }
+  }
 }
 
 bool QgsMapRenderer::mDrawing = false;

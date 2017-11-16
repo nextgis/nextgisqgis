@@ -105,9 +105,11 @@ void QgsMapToolDeletePart::canvasReleaseEvent( QgsMapMouseEvent* e )
   if ( g->deletePart( mPressedPartNum ) )
   {
     vlayer->beginEditCommand( tr( "Part of multipart feature deleted" ) );
-    vlayer->changeGeometry( f.id(), g );
-    vlayer->endEditCommand();
-    mCanvas->refresh();
+    if ( !vlayer->changeGeometry( f.id(), g ) )
+      vlayer->destroyEditCommand();
+    else
+      vlayer->endEditCommand();
+    vlayer->triggerRepaint();
   }
   else
   {

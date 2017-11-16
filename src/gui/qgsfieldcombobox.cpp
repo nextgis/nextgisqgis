@@ -18,8 +18,8 @@
 #include "qgsmaplayer.h"
 #include "qgsvectorlayer.h"
 
-QgsFieldComboBox::QgsFieldComboBox( QWidget *parent ) :
-    QComboBox( parent )
+QgsFieldComboBox::QgsFieldComboBox( QWidget *parent )
+    : QComboBox( parent )
 {
   mFieldProxyModel = new QgsFieldProxyModel( this );
   setModel( mFieldProxyModel );
@@ -59,7 +59,7 @@ void QgsFieldComboBox::setField( const QString& fieldName )
     QModelIndex proxyIdx = mFieldProxyModel->mapFromSource( idx );
     if ( proxyIdx.isValid() )
     {
-      setCurrentIndex( idx.row() );
+      setCurrentIndex( proxyIdx.row() );
       emit fieldChanged( currentField() );
       return;
     }

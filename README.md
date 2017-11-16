@@ -56,7 +56,18 @@ To add some QGIS components:
 Some dependencies are removed:
 
 * Flex and Bison not needed to build QGIS. Only to update/regenerate flex and byson lexer/parser files. To do it use this command ```cmake --build . --config release --target prepare_parser```
-* Spatial reference system database already filled and not generate. Special target to generate this DB will be added in future. 
+* Spatial reference system database already filled and not generate. Special target to generate this DB will be added in future.
+
+# Build
+## Mac OS X
+
+```bash
+    cmake -DOSX_FRAMEWORK=ON -DWITH_BINDINGS=ON ..
+```
+
+## Windows
+
+## Linux
 
 # License
 

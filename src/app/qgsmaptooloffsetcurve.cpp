@@ -119,6 +119,11 @@ void QgsMapToolOffsetCurve::canvasReleaseEvent( QgsMapMouseEvent* e )
         createDistanceWidget();
       }
     }
+
+    if ( !mOriginalGeometry )
+    {
+      emit messageEmitted( tr( "Could not find a nearby feature in any vector layer." ) );
+    }
     return;
   }
 
@@ -186,7 +191,7 @@ void QgsMapToolOffsetCurve::applyOffset()
   delete mSnapVertexMarker;
   mSnapVertexMarker = nullptr;
   mForceCopy = false;
-  mCanvas->refresh();
+  layer->triggerRepaint();
 }
 
 void QgsMapToolOffsetCurve::placeOffsetCurveToValue()
@@ -334,6 +339,7 @@ void QgsMapToolOffsetCurve::createDistanceWidget()
   mDistanceWidget->setMaximum( 99999999 );
   mDistanceWidget->setDecimals( 6 );
   mDistanceWidget->setPrefix( tr( "Offset: " ) );
+  mDistanceWidget->setClearValue( 0.0 );
   QgisApp::instance()->addUserInputWidget( mDistanceWidget );
 
   mDistanceWidget->setFocus( Qt::TabFocusReason );

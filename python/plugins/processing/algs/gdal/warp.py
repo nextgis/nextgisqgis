@@ -25,8 +25,13 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
+import os
+
+from qgis.PyQt.QtGui import QIcon
+
 from processing.algs.gdal.GdalAlgorithm import GdalAlgorithm
 from processing.core.parameters import ParameterRaster
+from processing.core.parameters import ParameterExtent
 from processing.core.parameters import ParameterSelection
 from processing.core.parameters import ParameterCrs
 from processing.core.parameters import ParameterNumber
@@ -34,6 +39,8 @@ from processing.core.parameters import ParameterString
 from processing.core.parameters import ParameterBoolean
 from processing.core.outputs import OutputRaster
 from processing.algs.gdal.GdalUtils import GdalUtils
+
+pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 
 class warp(GdalAlgorithm):
@@ -58,6 +65,12 @@ class warp(GdalAlgorithm):
     BIGTIFFTYPE = ['', 'YES', 'NO', 'IF_NEEDED', 'IF_SAFER']
     COMPRESSTYPE = ['NONE', 'JPEG', 'LZW', 'PACKBITS', 'DEFLATE']
     TFW = 'TFW'
+    USE_RASTER_EXTENT = 'USE_RASTER_EXTENT'
+    RASTER_EXTENT = 'RASTER_EXTENT'
+    EXTENT_CRS = 'EXTENT_CRS'
+
+    def getIcon(self):
+        return QIcon(os.path.join(pluginPath, 'images', 'gdaltools', 'warp.png'))
 
     def defineCharacteristics(self):
         self.name, self.i18n_name = self.trAlgorithm('Warp (reproject)')
@@ -75,6 +88,12 @@ class warp(GdalAlgorithm):
                                           0.0, None, 0.0))
         self.addParameter(ParameterSelection(self.METHOD,
                                              self.tr('Resampling method'), self.METHOD_OPTIONS))
+        self.addParameter(ParameterBoolean(self.USE_RASTER_EXTENT,
+                                           self.tr('Set georeferenced extents of output file'),
+                                           False))
+        self.addParameter(ParameterExtent(self.RASTER_EXTENT, self.tr('Raster extent'), optional=True))
+        self.addParameter(ParameterCrs(self.EXTENT_CRS,
+                                       self.tr('CRS of the raster extent'), '', optional=True))
 
         params = []
         params.append(ParameterSelection(self.RTYPE,
@@ -118,14 +137,17 @@ class warp(GdalAlgorithm):
         compress = self.COMPRESSTYPE[self.getParameterValue(self.COMPRESS)]
         bigtiff = self.BIGTIFFTYPE[self.getParameterValue(self.BIGTIFF)]
         tfw = unicode(self.getParameterValue(self.TFW))
+        useRasterExtent = self.getParameterValue(self.USE_RASTER_EXTENT)
+        rasterExtent = unicode(self.getParameterValue(self.RASTER_EXTENT))
+        extentCrs = self.getParameterValue(self.EXTENT_CRS)
 
         arguments = []
         arguments.append('-ot')
         arguments.append(self.TYPE[self.getParameterValue(self.RTYPE)])
-        if len(srccrs) > 0:
+        if srccrs:
             arguments.append('-s_srs')
             arguments.append(srccrs)
-        if len(dstcrs) > 0:
+        if dstcrs:
             arguments.append('-t_srs')
             arguments.append(dstcrs)
         if noData and len(noData) > 0:
@@ -144,6 +166,23 @@ class warp(GdalAlgorithm):
         extra = self.getParameterValue(self.EXTRA)
         if extra is not None:
             extra = unicode(extra)
+
+        if useRasterExtent:
+            regionCoords = rasterExtent.split(',')
+            if len(regionCoords) >= 4:
+                rastext = []
+                rastext.append('-te')
+                rastext.append(regionCoords[0])
+                rastext.append(regionCoords[2])
+                rastext.append(regionCoords[1])
+                rastext.append(regionCoords[3])
+                arguments.extend(rastext)
+
+            if GdalUtils.version() >= 2000000:
+                if extentCrs:
+                    arguments.append('-te_srs')
+                    arguments.append(extentCrs)
+
         if extra and len(extra) > 0:
             arguments.append(extra)
         if GdalUtils.getFormatShortNameFromFilename(out) == "GTiff":
@@ -160,6 +199,8 @@ class warp(GdalAlgorithm):
                 arguments.append("-co TFW=YES")
             if len(bigtiff) > 0:
                 arguments.append("-co BIGTIFF=" + bigtiff)
+
+            arguments.append("-wo OPTIMIZE_SIZE=TRUE")
 
         arguments.append(self.getParameterValue(self.INPUT))
         arguments.append(out)

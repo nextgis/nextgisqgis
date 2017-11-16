@@ -25,14 +25,20 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
+import os
+
+from qgis.PyQt.QtGui import QIcon
+
 from qgis.core import QGis, QgsFeatureRequest, QgsFeature, QgsGeometry, QgsWKBTypes
 
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.ProcessingLog import ProcessingLog
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
-from processing.core.parameters import ParameterVector
+from processing.core.parameters import ParameterVector, ParameterBoolean
 from processing.core.outputs import OutputVector
 from processing.tools import dataobjects, vector
+
+pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 wkbTypeGroups = {
     'Point': (QGis.WKBPoint, QGis.WKBMultiPoint, QGis.WKBPoint25D, QGis.WKBMultiPoint25D,),
@@ -48,7 +54,11 @@ class Intersection(GeoAlgorithm):
 
     INPUT = 'INPUT'
     INPUT2 = 'INPUT2'
+    IGNORE_NULL = 'IGNORE_NULL'
     OUTPUT = 'OUTPUT'
+
+    def getIcon(self):
+        return QIcon(os.path.join(pluginPath, 'images', 'ftools', 'intersect.png'))
 
     def defineCharacteristics(self):
         self.name, self.i18n_name = self.trAlgorithm('Intersection')
@@ -57,6 +67,9 @@ class Intersection(GeoAlgorithm):
                                           self.tr('Input layer'), [ParameterVector.VECTOR_TYPE_ANY]))
         self.addParameter(ParameterVector(self.INPUT2,
                                           self.tr('Intersect layer'), [ParameterVector.VECTOR_TYPE_ANY]))
+        self.addParameter(ParameterBoolean(Intersection.IGNORE_NULL,
+                                           self.tr('Ignore NULL geometries'),
+                                           False, True))
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Intersection')))
 
     def processAlgorithm(self, progress):
@@ -64,24 +77,50 @@ class Intersection(GeoAlgorithm):
             self.getParameterValue(self.INPUT))
         vlayerB = dataobjects.getObjectFromUri(
             self.getParameterValue(self.INPUT2))
+        ignoreNull = self.getParameterValue(Intersection.IGNORE_NULL)
 
-        geomType = QGis.multiType(vlayerA.wkbType())
+        geomType = QgsWKBTypes.multiType(QGis.fromOldWkbType(vlayerA.wkbType()))
         fields = vector.combineVectorFields(vlayerA, vlayerB)
         writer = self.getOutputFromName(self.OUTPUT).getVectorWriter(fields,
                                                                      geomType, vlayerA.crs())
         outFeat = QgsFeature()
         index = vector.spatialindex(vlayerB)
         selectionA = vector.features(vlayerA)
-        total = 100.0 / len(selectionA)
+        total = 100.0 / len(selectionA) if len(selectionA) > 0 else 1
         for current, inFeatA in enumerate(selectionA):
             progress.setPercentage(int(current * total))
-            geom = QgsGeometry(inFeatA.geometry())
+            geom = inFeatA.geometry()
+            if not geom:
+                if ignoreNull:
+                    continue
+                else:
+                    raise GeoAlgorithmExecutionException(
+                        self.tr('Input layer A contains NULL geometries. '
+                                'Please check "Ignore NULL geometries" '
+                                'if you want to run this algorithm anyway.'))
+            if not geom.isGeosValid():
+                raise GeoAlgorithmExecutionException(
+                    self.tr('Input layer A contains invalid geometries '
+                            '(feature {}). Unable to complete intersection '
+                            'algorithm.'.format(inFeatA.id())))
             atMapA = inFeatA.attributes()
             intersects = index.intersects(geom.boundingBox())
-            for i in intersects:
-                request = QgsFeatureRequest().setFilterFid(i)
-                inFeatB = vlayerB.getFeatures(request).next()
+            for inFeatB in vlayerB.getFeatures(QgsFeatureRequest().setFilterFids(intersects)):
                 tmpGeom = QgsGeometry(inFeatB.geometry())
+                if not geom:
+                    if ignoreNull:
+                        continue
+                    else:
+                        raise GeoAlgorithmExecutionException(
+                            self.tr('Input layer B contains NULL geometries. '
+                                    'Please check "Ignore NULL geometries" '
+                                    'if you want to run this algorithm anyway.'))
+                if not geom.isGeosValid():
+                    raise GeoAlgorithmExecutionException(
+                        self.tr('Input layer B contains invalid geometries '
+                                '(feature {}). Unable to complete intersection '
+                                'algorithm.'.format(inFeatB.id())))
+
                 if geom.intersects(tmpGeom):
                     atMapB = inFeatB.attributes()
                     int_geom = QgsGeometry(geom.intersection(tmpGeom))
@@ -90,7 +129,10 @@ class Intersection(GeoAlgorithm):
                         int_geom = QgsGeometry()
                         if int_com is not None:
                             int_sym = geom.symDifference(tmpGeom)
-                            int_geom = QgsGeometry(int_com.difference(int_sym))
+                            if int_sym:
+                                diff_geom = int_com.difference(int_sym)
+                                int_geom = QgsGeometry(diff_geom)
+
                     if int_geom.isGeosEmpty() or not int_geom.isGeosValid():
                         raise GeoAlgorithmExecutionException(
                             self.tr('GEOS geoprocessing error: One or '
@@ -106,7 +148,8 @@ class Intersection(GeoAlgorithm):
                             writer.addFeature(outFeat)
                     except:
                         raise GeoAlgorithmExecutionException(
-                            self.tr('Feature geometry error: One or more '
-                                    'output features ignored due to invalid geometry.'))
+                            self.tr('Feature geometry error: one or '
+                                    'more output features ignored due '
+                                    'to invalid geometry.'))
 
         del writer

@@ -27,7 +27,7 @@ __revision__ = '$Format:%H$'
 
 import sys
 
-from PyQt4.QtCore import QVariant
+from qgis.PyQt.QtCore import QVariant
 from qgis.core import QgsFeature, QgsField
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
@@ -103,7 +103,7 @@ class FieldsPyculator(GeoAlgorithm):
                 exec(bytecode, new_ns)
             except:
                 raise GeoAlgorithmExecutionException(
-                    self.tr("FieldPyculator code execute error.Global code block can't be executed!\n%s\n%s" % (unicode(sys.exc_info()[0].__name__), unicode(sys.exc_info()[1]))))
+                    self.tr("FieldPyculator code execute error.Global code block can't be executed!\n%s\n%s") % (unicode(sys.exc_info()[0].__name__), unicode(sys.exc_info()[1])))
 
         # Replace all fields tags
         fields = layer.fields()
@@ -126,11 +126,11 @@ class FieldsPyculator(GeoAlgorithm):
             bytecode = compile(code, '<string>', 'exec')
         except:
             raise GeoAlgorithmExecutionException(
-                self.tr("FieldPyculator code execute error.Field code block can't be executed!\n%s\n%s" % (unicode(sys.exc_info()[0].__name__), unicode(sys.exc_info()[1]))))
+                self.tr("FieldPyculator code execute error.Field code block can't be executed!\n%s\n%s") % (unicode(sys.exc_info()[0].__name__), unicode(sys.exc_info()[1])))
 
         # Run
         features = vector.features(layer)
-        total = 100.0 / len(features)
+        total = 100.0 / len(features) if len(features) > 0 else 1
         for current, feat in enumerate(features):
             progress.setPercentage(int(current * total))
             attrs = feat.attributes()
@@ -160,7 +160,7 @@ class FieldsPyculator(GeoAlgorithm):
                 raise GeoAlgorithmExecutionException(
                     self.tr("FieldPyculator code execute error\n"
                             "Field code block does not return '%s1' variable! "
-                            "Please declare this variable in your code!" % self.RESULT_VAR_NAME))
+                            "Please declare this variable in your code!") % self.RESULT_VAR_NAME)
 
             # Write feature
             outFeat.setGeometry(feat.geometry())

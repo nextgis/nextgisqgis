@@ -25,7 +25,12 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
-from qgis.core import QGis, QgsGeometry, QgsFeatureRequest
+import os
+
+from qgis.PyQt.QtGui import QIcon
+
+from qgis.core import QgsGeometry, QgsFeatureRequest
+
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.parameters import ParameterSelection
 from processing.core.parameters import ParameterVector
@@ -33,6 +38,8 @@ from processing.core.parameters import ParameterGeometryPredicate
 from processing.core.parameters import ParameterNumber
 from processing.core.outputs import OutputVector
 from processing.tools import dataobjects, vector
+
+pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 
 class SelectByLocation(GeoAlgorithm):
@@ -44,9 +51,13 @@ class SelectByLocation(GeoAlgorithm):
     METHOD = 'METHOD'
     OUTPUT = 'OUTPUT'
 
+    def getIcon(self):
+        return QIcon(os.path.join(pluginPath, 'images', 'ftools', 'select_location.png'))
+
     def defineCharacteristics(self):
         self.name, self.i18n_name = self.trAlgorithm('Select by location')
         self.group, self.i18n_group = self.trAlgorithm('Vector selection tools')
+        self.showInModeler = False
 
         self.methods = [self.tr('creating new selection'),
                         self.tr('adding to current selection'),
@@ -90,7 +101,7 @@ class SelectByLocation(GeoAlgorithm):
         geom = QgsGeometry()
         selectedSet = []
         features = vector.features(selectLayer)
-        total = 100.0 / len(features)
+        total = 100.0 / len(features) if len(features) > 0 else 1
         for current, f in enumerate(features):
             geom = vector.snapToPrecision(f.geometry(), precision)
             bbox = vector.bufferedBoundingBox(geom.boundingBox(), 0.51 * precision)

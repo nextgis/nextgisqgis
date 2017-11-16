@@ -47,7 +47,7 @@ bool QgsGeometryAnalyzer::simplify( QgsVectorLayer* layer,
   }
 
   QGis::WkbType outputType = dp->geometryType();
-  const QgsCoordinateReferenceSystem crs = layer->crs();
+  QgsCoordinateReferenceSystem crs = layer->crs();
 
   QgsVectorFileWriter vWriter( shapefileName, dp->encoding(), layer->fields(), outputType, &crs );
   QgsFeature currentFeature;
@@ -163,7 +163,7 @@ bool QgsGeometryAnalyzer::centroids( QgsVectorLayer* layer, const QString& shape
   }
 
   QGis::WkbType outputType = QGis::WKBPoint;
-  const QgsCoordinateReferenceSystem crs = layer->crs();
+  QgsCoordinateReferenceSystem crs = layer->crs();
 
   QgsVectorFileWriter vWriter( shapefileName, dp->encoding(), layer->fields(), outputType, &crs );
   QgsFeature currentFeature;
@@ -279,7 +279,7 @@ bool QgsGeometryAnalyzer::extent( QgsVectorLayer* layer,
   }
 
   QGis::WkbType outputType = QGis::WKBPolygon;
-  const QgsCoordinateReferenceSystem crs = layer->crs();
+  QgsCoordinateReferenceSystem crs = layer->crs();
 
   QgsFields fields;
   fields.append( QgsField( QString( "MINX" ), QVariant::Double ) );
@@ -389,7 +389,7 @@ bool QgsGeometryAnalyzer::convexHull( QgsVectorLayer* layer, const QString& shap
   fields.append( QgsField( QString( "PERIM" ), QVariant::Double ) );
 
   QGis::WkbType outputType = QGis::WKBPolygon;
-  const QgsCoordinateReferenceSystem crs = layer->crs();
+  QgsCoordinateReferenceSystem crs = layer->crs();
 
   QgsVectorFileWriter vWriter( shapefileName, dp->encoding(), fields, outputType, &crs );
   QgsFeature currentFeature;
@@ -595,7 +595,7 @@ bool QgsGeometryAnalyzer::dissolve( QgsVectorLayer* layer, const QString& shapef
   }
 
   QGis::WkbType outputType = dp->geometryType();
-  const QgsCoordinateReferenceSystem crs = layer->crs();
+  QgsCoordinateReferenceSystem crs = layer->crs();
 
   QgsVectorFileWriter vWriter( shapefileName, dp->encoding(), layer->fields(), outputType, &crs );
   QgsFeature currentFeature;
@@ -748,7 +748,7 @@ bool QgsGeometryAnalyzer::buffer( QgsVectorLayer* layer, const QString& shapefil
   {
     outputType = QGis::WKBMultiPolygon;
   }
-  const QgsCoordinateReferenceSystem crs = layer->crs();
+  QgsCoordinateReferenceSystem crs = layer->crs();
 
   QgsVectorFileWriter vWriter( shapefileName, dp->encoding(), layer->fields(), outputType, &crs );
   QgsFeature currentFeature;
@@ -1178,32 +1178,29 @@ QgsGeometry* QgsGeometryAnalyzer::locateBetweenMeasures( double fromMeasure, dou
   }
 
   QgsMultiPolyline resultGeom;
-  QgsWKBTypes::Type wkbType = lineGeom->geometry()->wkbType();
 
-  //only linestring / multilinestring types supported at the moment
-  if ( QgsWKBTypes::singleType( QgsWKBTypes::flatType( wkbType ) ) != QgsWKBTypes::LineString || QgsWKBTypes::coordDimensions( wkbType ) < 3 )
+  //need to go with WKB and z coordinate until QgsGeometry supports M values
+  QgsConstWkbPtr wkbPtr( lineGeom->asWkb(), lineGeom->wkbSize() );
+  wkbPtr.readHeader();
+
+  QGis::WkbType wkbType = lineGeom->wkbType();
+  if ( wkbType != QGis::WKBLineString25D && wkbType != QGis::WKBMultiLineString25D )
   {
     return nullptr;
   }
 
-  bool hasZM = QgsWKBTypes::hasZ( wkbType ) && QgsWKBTypes::hasM( wkbType );
-
-
-  QgsConstWkbPtr wkbPtr( lineGeom->asWkb(), lineGeom->wkbSize() );
-  wkbPtr.readHeader();
-
-  if ( QgsWKBTypes::flatType( wkbType ) == QgsWKBTypes::LineString )
+  if ( wkbType == QGis::WKBLineString25D )
   {
-    locateBetweenWkbString( wkbPtr, resultGeom, fromMeasure, toMeasure, hasZM );
+    locateBetweenWkbString( wkbPtr, resultGeom, fromMeasure, toMeasure );
   }
-  else if ( QgsWKBTypes::flatType( wkbType ) == QgsWKBTypes::MultiLineString )
+  else if ( wkbType == QGis::WKBMultiLineString25D )
   {
     int nLines;
     wkbPtr >> nLines;
     for ( int i = 0; i < nLines; ++i )
     {
       wkbPtr.readHeader();
-      wkbPtr = locateBetweenWkbString( wkbPtr, resultGeom, fromMeasure, toMeasure, hasZM );
+      wkbPtr = locateBetweenWkbString( wkbPtr, resultGeom, fromMeasure, toMeasure );
     }
   }
 
@@ -1216,7 +1213,7 @@ QgsGeometry* QgsGeometryAnalyzer::locateBetweenMeasures( double fromMeasure, dou
 
 QgsGeometry* QgsGeometryAnalyzer::locateAlongMeasure( double measure, const QgsGeometry *lineGeom )
 {
-  if ( !lineGeom || !lineGeom->geometry() )
+  if ( !lineGeom )
   {
     return nullptr;
   }
@@ -1225,29 +1222,25 @@ QgsGeometry* QgsGeometryAnalyzer::locateAlongMeasure( double measure, const QgsG
 
   //need to go with WKB and z coordinate until QgsGeometry supports M values
   QgsConstWkbPtr wkbPtr( lineGeom->asWkb(), lineGeom->wkbSize() );
-  wkbPtr.readHeader();
-  QgsWKBTypes::Type wkbType = lineGeom->geometry()->wkbType();
+  QGis::WkbType wkbType = lineGeom->wkbType();
 
-  //only linestring / multilinestring types supported at the moment
-  if ( QgsWKBTypes::singleType( QgsWKBTypes::flatType( wkbType ) ) != QgsWKBTypes::LineString || QgsWKBTypes::coordDimensions( wkbType ) < 3 )
+  if ( wkbType != QGis::WKBLineString25D && wkbType != QGis::WKBMultiLineString25D )
   {
     return nullptr;
   }
 
-  bool hasZM = QgsWKBTypes::hasZ( wkbType ) && QgsWKBTypes::hasM( wkbType );
-
-  if ( QgsWKBTypes::flatType( wkbType ) == QgsWKBTypes::LineString )
+  if ( wkbType == QGis::WKBLineString25D )
   {
-    locateAlongWkbString( wkbPtr, resultGeom, measure, hasZM );
+    locateAlongWkbString( wkbPtr, resultGeom, measure );
   }
-  else if ( QgsWKBTypes::flatType( wkbType ) == QgsWKBTypes::MultiLineString )
+  else if ( wkbType == QGis::WKBMultiLineString25D )
   {
     int nLines;
     wkbPtr >> nLines;
     for ( int i = 0; i < nLines; ++i )
     {
       wkbPtr.readHeader();
-      wkbPtr = locateAlongWkbString( wkbPtr, resultGeom, measure, hasZM );
+      wkbPtr = locateAlongWkbString( wkbPtr, resultGeom, measure );
     }
   }
 
@@ -1259,7 +1252,7 @@ QgsGeometry* QgsGeometryAnalyzer::locateAlongMeasure( double measure, const QgsG
   return QgsGeometry::fromMultiPoint( resultGeom );
 }
 
-QgsConstWkbPtr QgsGeometryAnalyzer::locateBetweenWkbString( QgsConstWkbPtr wkbPtr, QgsMultiPolyline& result, double fromMeasure, double toMeasure, bool zm )
+QgsConstWkbPtr QgsGeometryAnalyzer::locateBetweenWkbString( QgsConstWkbPtr wkbPtr, QgsMultiPolyline& result, double fromMeasure, double toMeasure )
 {
   int nPoints;
   wkbPtr >> nPoints;
@@ -1269,12 +1262,7 @@ QgsConstWkbPtr QgsGeometryAnalyzer::locateBetweenWkbString( QgsConstWkbPtr wkbPt
   for ( int i = 0; i < nPoints; ++i )
   {
     double x, y, z;
-    wkbPtr >> x >> y;
-    if ( zm )
-    {
-      wkbPtr += sizeof( double );
-    }
-    wkbPtr >> z;
+    wkbPtr >> x >> y >> z;
 
     if ( i > 0 )
     {
@@ -1311,7 +1299,7 @@ QgsConstWkbPtr QgsGeometryAnalyzer::locateBetweenWkbString( QgsConstWkbPtr wkbPt
   return wkbPtr;
 }
 
-QgsConstWkbPtr QgsGeometryAnalyzer::locateAlongWkbString( QgsConstWkbPtr wkbPtr, QgsMultiPoint& result, double measure, bool zm )
+QgsConstWkbPtr QgsGeometryAnalyzer::locateAlongWkbString( QgsConstWkbPtr wkbPtr, QgsMultiPoint& result, double measure )
 {
   int nPoints;
   wkbPtr >> nPoints;
@@ -1320,12 +1308,7 @@ QgsConstWkbPtr QgsGeometryAnalyzer::locateAlongWkbString( QgsConstWkbPtr wkbPtr,
   double prevx = 0.0, prevy = 0.0, prevz = 0.0;
   for ( int i = 0; i < nPoints; ++i )
   {
-    wkbPtr >> x >> y;
-    if ( zm )
-    {
-      wkbPtr += sizeof( double );
-    }
-    wkbPtr >> z;
+    wkbPtr >> x >> y >> z;
 
     if ( i > 0 )
     {

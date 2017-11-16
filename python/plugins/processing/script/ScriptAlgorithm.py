@@ -26,9 +26,10 @@ __copyright__ = '(C) 2012, Victor Olaya'
 __revision__ = '$Format:%H$'
 
 import os
-from PyQt4 import QtGui
 import re
 import json
+from qgis.core import QgsExpressionContextUtils, QgsExpressionContext
+from qgis.PyQt.QtGui import QIcon
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.gui.Help2Html import getHtmlFromHelpFile
 from processing.core.parameters import ParameterRaster
@@ -41,8 +42,10 @@ from processing.core.parameters import ParameterNumber
 from processing.core.parameters import ParameterBoolean
 from processing.core.parameters import ParameterSelection
 from processing.core.parameters import ParameterTableField
+from processing.core.parameters import ParameterTableMultipleField
 from processing.core.parameters import ParameterExtent
 from processing.core.parameters import ParameterFile
+from processing.core.parameters import ParameterPoint
 from processing.core.parameters import getParameterFromString
 from processing.core.outputs import OutputTable
 from processing.core.outputs import OutputVector
@@ -53,7 +56,9 @@ from processing.core.outputs import OutputHTML
 from processing.core.outputs import OutputFile
 from processing.core.outputs import OutputDirectory
 from processing.core.outputs import getOutputFromString
+from processing.core.ProcessingLog import ProcessingLog
 from processing.script.WrongScriptException import WrongScriptException
+from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
 
 pluginPath = os.path.split(os.path.dirname(__file__))[0]
 
@@ -69,7 +74,7 @@ class ScriptAlgorithm(GeoAlgorithm):
         """
 
         GeoAlgorithm.__init__(self)
-        self._icon = QtGui.QIcon(os.path.join(pluginPath, 'images', 'script.png'))
+        self._icon = QIcon(os.path.join(pluginPath, 'images', 'script.png'))
 
         self.script = script
         self.allowEdit = True
@@ -89,8 +94,8 @@ class ScriptAlgorithm(GeoAlgorithm):
         return self._icon
 
     def defineCharacteristicsFromFile(self):
+        self.error = None
         self.script = ''
-        self.silentOutputs = []
         filename = os.path.basename(self.descriptionFile)
         self.name = filename[:filename.rfind('.')].replace('_', ' ')
         self.group = self.tr('User scripts', 'ScriptAlgorithm')
@@ -101,9 +106,8 @@ class ScriptAlgorithm(GeoAlgorithm):
                 try:
                     self.processParameterLine(line.strip('\n'))
                 except:
-                    raise WrongScriptException(
-                        self.tr('Could not load script: %s\n'
-                                'Problem with line: %s', 'ScriptAlgorithm') % (self.descriptionFile, line))
+                    self.error = self.tr('This script has a syntax errors.\n'
+                                         'Problem with line: %s', 'ScriptAlgorithm') % line
             self.script += line
             line = lines.readline()
         lines.close()
@@ -113,7 +117,6 @@ class ScriptAlgorithm(GeoAlgorithm):
 
     def defineCharacteristicsFromScript(self):
         lines = self.script.split('\n')
-        self.silentOutputs = []
         self.name, self.i18n_name = self.trAlgorithm('[Unnamed algorithm]', 'ScriptAlgorithm')
         self.group, self.i18n_group = self.trAlgorithm('User scripts', 'ScriptAlgorithm')
         for line in lines:
@@ -122,6 +125,9 @@ class ScriptAlgorithm(GeoAlgorithm):
                     self.processParameterLine(line.strip('\n'))
                 except:
                     pass
+
+    def checkBeforeOpeningParametersDialog(self):
+        return self.error
 
     def checkInputCRS(self):
         if self.noCRSWarning:
@@ -225,6 +231,8 @@ class ScriptAlgorithm(GeoAlgorithm):
                 param = ParameterBoolean(name, descName)
         elif token.lower().strip() == 'extent':
             param = ParameterExtent(name, descName)
+        elif token.lower().strip() == 'point':
+            param = ParameterPoint(name, descName)
         elif token.lower().strip() == 'file':
             param = ParameterFile(name, descName, False)
         elif token.lower().strip() == 'folder':
@@ -236,14 +244,49 @@ class ScriptAlgorithm(GeoAlgorithm):
             else:
                 param = ParameterNumber(name, descName)
         elif token.lower().strip().startswith('field'):
-            field = token.strip()[len('field') + 1:]
+            if token.lower().strip().startswith('field number'):
+                field = token.strip()[len('field number') + 1:]
+                datatype = ParameterTableField.DATA_TYPE_NUMBER
+            elif token.lower().strip().startswith('field string'):
+                field = token.strip()[len('field string') + 1:]
+                datatype = ParameterTableField.DATA_TYPE_STRING
+            else:
+                field = token.strip()[len('field') + 1:]
+                datatype = ParameterTableField.DATA_TYPE_ANY
             found = False
             for p in self.parameters:
                 if p.name == field:
                     found = True
                     break
             if found:
-                param = ParameterTableField(name, descName, field)
+                param = ParameterTableField(
+                    name=name,
+                    description=descName,
+                    parent=field,
+                    datatype=datatype
+                )
+        elif token.lower().strip().startswith('multiple field'):
+            if token.lower().strip().startswith('multiple field number'):
+                field = token.strip()[len('multiple field number') + 1:]
+                datatype = ParameterTableMultipleField.DATA_TYPE_NUMBER
+            elif token.lower().strip().startswith('multiple field string'):
+                field = token.strip()[len('multiple field string') + 1:]
+                datatype = ParameterTableMultipleField.DATA_TYPE_STRING
+            else:
+                field = token.strip()[len('multiple field') + 1:]
+                datatype = ParameterTableMultipleField.DATA_TYPE_ANY
+            found = False
+            for p in self.parameters:
+                if p.name == field:
+                    found = True
+                    break
+            if found:
+                param = ParameterTableMultipleField(
+                    name=name,
+                    description=descName,
+                    parent=field,
+                    datatype=datatype
+                )
         elif token.lower().strip().startswith('string'):
             default = token.strip()[len('string') + 1:]
             if default:
@@ -287,6 +330,8 @@ class ScriptAlgorithm(GeoAlgorithm):
             out = OutputNumber()
         elif token.lower().strip().startswith('string'):
             out = OutputString()
+        elif token.lower().strip().startswith('extent'):
+            out = OutputExtent()
 
         return out
 
@@ -306,9 +351,6 @@ class ScriptAlgorithm(GeoAlgorithm):
                         'Problem with line %d', 'ScriptAlgorithm') % (self.descriptionFile or '', line))
 
     def processAlgorithm(self, progress):
-
-        script = 'import processing\n'
-
         ns = {}
         ns['progress'] = progress
         ns['scriptDescriptionFile'] = self.descriptionFile
@@ -319,7 +361,20 @@ class ScriptAlgorithm(GeoAlgorithm):
         for out in self.outputs:
             ns[out.name] = out.value
 
+        variables = re.findall('@[a-zA-Z0-9_]*', self.script)
+        script = 'import processing\n'
         script += self.script
+
+        context = QgsExpressionContext()
+        context.appendScope(QgsExpressionContextUtils.globalScope())
+        context.appendScope(QgsExpressionContextUtils.projectScope())
+        for var in variables:
+            varname = var[1:]
+            if context.hasVariable(varname):
+                script = script.replace(var, context.variable(varname))
+            else:
+                ProcessingLog.addToLog(ProcessingLog.LOG_WARNING, 'Cannot find variable: %s' % varname)
+
         exec((script), ns)
         for out in self.outputs:
             out.setValue(ns[out.name])

@@ -23,16 +23,11 @@ __copyright__ = '(C) 2014, Nathan Woodrow'
 # This will get replaced with a git SHA1 when you do a git archive
 __revision__ = '$Format:%H$'
 
-try:
-    import sip
-    sip.setapi("QVariant", 2)
-except:
-    pass
+from qgis.PyQt.QtCore import QCoreApplication, NULL
 
 import inspect
 import string
 from qgis._core import *
-from PyQt4.QtCore import QCoreApplication
 
 
 def register_function(function, arg_count, group, usesgeometry=False, referenced_columns=[QgsFeatureRequest.AllAttributes], **kwargs):
@@ -83,7 +78,7 @@ def register_function(function, arg_count, group, usesgeometry=False, referenced
 
     helptemplate = string.Template("""<h3>$name function</h3><br>$doc""")
     name = kwargs.get('name', function.__name__)
-    helptext = function.__doc__ or ''
+    helptext = kwargs.get('help_text') or function.__doc__ or ''
     helptext = helptext.strip()
     expandargs = False
 
@@ -137,45 +132,6 @@ def qgsfunction(args='auto', group='custom', **kwargs):
     def wrapper(func):
         return register_function(func, args, group, **kwargs)
     return wrapper
-
-try:
-    # Add a __nonzero__ method onto QPyNullVariant so we can check for null values easier.
-    #   >>> value = QPyNullVariant("int")
-    #   >>> if value:
-    #   >>>	  print "Not a null value"
-    from types import MethodType
-    from PyQt4.QtCore import QPyNullVariant
-
-    def __nonzero__(self):
-        return False
-
-    def __repr__(self):
-        return 'NULL'
-
-    def __eq__(self, other):
-        return isinstance(other, QPyNullVariant) or other is None
-
-    def __ne__(self, other):
-        return not isinstance(other, QPyNullVariant) and other is not None
-
-    def __hash__(self):
-        return 2178309
-
-    QPyNullVariant.__nonzero__ = MethodType(__nonzero__, None, QPyNullVariant)
-    QPyNullVariant.__repr__ = MethodType(__repr__, None, QPyNullVariant)
-    QPyNullVariant.__eq__ = MethodType(__eq__, None, QPyNullVariant)
-    QPyNullVariant.__ne__ = MethodType(__ne__, None, QPyNullVariant)
-    QPyNullVariant.__hash__ = MethodType(__hash__, None, QPyNullVariant)
-
-    NULL = QPyNullVariant(int)
-
-except ImportError:
-    try:
-        # TODO: Fixme, this creates an invalid variant, not a NULL one
-        from PyQt5.QtCore import QVariant
-        NULL = QVariant()
-    except (ImportError, RuntimeError):
-        pass
 
 
 class QgsEditError(Exception):

@@ -31,7 +31,7 @@ class QgsWCSConnectionItem : public QgsDataCollectionItem
 
     virtual QList<QAction*> actions() override;
 
-    QgsWcsCapabilities mCapabilities;
+    QgsWcsCapabilities mWcsCapabilities;
     QVector<QgsWcsCoverageSummary> mLayerProperties;
 
   public slots:
@@ -49,7 +49,8 @@ class QgsWCSLayerItem : public QgsLayerItem
     Q_OBJECT
   public:
     QgsWCSLayerItem( QgsDataItem* parent, QString name, QString path,
-                     const QgsWcsCapabilitiesProperty& capabilitiesProperty, QgsDataSourceURI dataSourceUri, const QgsWcsCoverageSummary& coverageSummary );
+                     const QgsWcsCapabilitiesProperty& capabilitiesProperty,
+                     const QgsDataSourceURI& dataSourceUri, const QgsWcsCoverageSummary& coverageSummary );
     ~QgsWCSLayerItem();
 
     QString createUri();

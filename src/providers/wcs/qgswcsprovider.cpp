@@ -30,6 +30,7 @@
 #include "qgsnetworkaccessmanager.h"
 #include "qgsnetworkreplyparser.h"
 #include "qgsmessagelog.h"
+#include "qgscrscache.h"
 
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -341,11 +342,13 @@ QgsWcsProvider::QgsWcsProvider( QString const &uri )
 #endif
     mGdalDataType.append( myGdalDataType );
 
+#if 0
     // TODO: what to do if null values from DescribeCoverage differ?
-    //if ( !mCoverageSummary.nullValues.contains( myNoDataValue ) )
-    //{
-    //  QgsDebugMsg( QString( "noDataValue %1 is missing in nullValues from CoverageDescription" ).arg( myNoDataValue ) );
-    //}
+    if ( !mCoverageSummary.nullValues.contains( myNoDataValue ) )
+    {
+      QgsDebugMsg( QString( "noDataValue %1 is missing in nullValues from CoverageDescription" ).arg( myNoDataValue ) );
+    }
+#endif
 
     QgsDebugMsg( QString( "mSrcGdalDataType[%1] = %2" ).arg( i - 1 ).arg( mSrcGdalDataType.at( i - 1 ) ) );
     QgsDebugMsg( QString( "mGdalDataType[%1] = %2" ).arg( i - 1 ).arg( mGdalDataType.at( i - 1 ) ) );
@@ -495,7 +498,7 @@ void QgsWcsProvider::setCoverageCrs( QString const & crs )
 
     mCoverageCrs = crs;
 
-    mCrs.createFromOgcWmsCrs( mCoverageCrs );
+    mCrs = QgsCRSCache::instance()->crsByOgcWmsCrs( mCoverageCrs );
   }
 }
 
@@ -505,10 +508,8 @@ void QgsWcsProvider::setQueryItem( QUrl &url, const QString& item, const QString
   url.addQueryItem( item, value );
 }
 
-void QgsWcsProvider::readBlock( int bandNo, QgsRectangle  const & viewExtent, int pixelWidth, int pixelHeight, void *block )
+void QgsWcsProvider::readBlock( int bandNo, QgsRectangle  const & viewExtent, int pixelWidth, int pixelHeight, void *block, QgsRasterBlockFeedback* feedback )
 {
-  QgsDebugMsg( "Entered" );
-
   // TODO: set block to null values, move that to function and call only if fails
   memset( block, 0, pixelWidth * pixelHeight * QgsRasterBlock::typeSize( dataType( bandNo ) ) );
 
@@ -526,7 +527,7 @@ void QgsWcsProvider::readBlock( int bandNo, QgsRectangle  const & viewExtent, in
        mCachedViewWidth != pixelWidth ||
        mCachedViewHeight != pixelHeight )
   {
-    getCache( bandNo, viewExtent, pixelWidth, pixelHeight );
+    getCache( bandNo, viewExtent, pixelWidth, pixelHeight, QString(), feedback );
   }
 
   if ( mCachedGdalDataset )
@@ -625,10 +626,9 @@ void QgsWcsProvider::readBlock( int bandNo, QgsRectangle  const & viewExtent, in
   }
 }
 
-void QgsWcsProvider::getCache( int bandNo, QgsRectangle  const & viewExtent, int pixelWidth, int pixelHeight, QString crs )
+void QgsWcsProvider::getCache( int bandNo, QgsRectangle  const & viewExtent, int pixelWidth, int pixelHeight, QString crs, QgsRasterBlockFeedback* feedback )
 {
   Q_UNUSED( bandNo );
-  QgsDebugMsg( "Entered" );
   // delete cached data
   clearCache();
 
@@ -652,8 +652,8 @@ void QgsWcsProvider::getCache( int bandNo, QgsRectangle  const & viewExtent, int
   if ( !mIgnoreAxisOrientation && ( mCapabilities.version().startsWith( "1.1" ) ) )
   {
     //create CRS from string
-    QgsCoordinateReferenceSystem theSrs;
-    if ( theSrs.createFromOgcWmsCrs( crs ) && theSrs.axisInverted() )
+    QgsCoordinateReferenceSystem theSrs = QgsCRSCache::instance()->crsByOgcWmsCrs( crs );
+    if ( theSrs.isValid() && theSrs.axisInverted() )
     {
       changeXY = true;
     }
@@ -779,7 +779,7 @@ void QgsWcsProvider::getCache( int bandNo, QgsRectangle  const & viewExtent, int
 
   emit statusChanged( tr( "Getting map via WCS." ) );
 
-  QgsWcsDownloadHandler handler( url, mAuth, mCacheLoadControl, mCachedData, mCapabilities.version(), mCachedError );
+  QgsWcsDownloadHandler handler( url, mAuth, mCacheLoadControl, mCachedData, mCapabilities.version(), mCachedError, feedback );
   handler.blockingDownload();
 
   QgsDebugMsg( QString( "%1 bytes received" ).arg( mCachedData.size() ) );
@@ -829,7 +829,6 @@ void QgsWcsProvider::getCache( int bandNo, QgsRectangle  const & viewExtent, int
 // use standard readBlock with extent
 void QgsWcsProvider::readBlock( int theBandNo, int xBlock, int yBlock, void *block )
 {
-  QgsDebugMsg( "Entered" );
 
   QgsDebugMsg( QString( "xBlock = %1 yBlock = %2" ).arg( xBlock ).arg( yBlock ) );
 
@@ -848,7 +847,7 @@ void QgsWcsProvider::readBlock( int theBandNo, int xBlock, int yBlock, void *blo
 
   QgsRectangle extent( xMin, yMin, xMax, yMax );
 
-  readBlock( theBandNo, extent, mXBlockSize, mYBlockSize, block );
+  readBlock( theBandNo, extent, mXBlockSize, mYBlockSize, block, nullptr );
 }
 
 
@@ -894,7 +893,6 @@ int QgsWcsProvider::ySize() const { return mHeight; }
 
 void QgsWcsProvider::clearCache()
 {
-  QgsDebugMsg( "Entered" );
   if ( mCachedGdalDataset )
   {
     QgsDebugMsg( "Close mCachedGdalDataset" );
@@ -917,7 +915,6 @@ void QgsWcsProvider::clearCache()
 
 QList<QgsColorRampShader::ColorRampItem> QgsWcsProvider::colorTable( int theBandNumber )const
 {
-  QgsDebugMsg( "entered." );
   return mColorTables.value( theBandNumber - 1 );
 }
 
@@ -930,7 +927,6 @@ int QgsWcsProvider::colorInterpretation( int bandNo ) const
 
 bool QgsWcsProvider::parseServiceExceptionReportDom( QByteArray const & xml, const QString& wcsVersion, QString& errorTitle, QString& errorText )
 {
-  QgsDebugMsg( "entering." );
 
 #ifdef QGISDEBUG
   //test the content of the QByteArray
@@ -985,7 +981,6 @@ bool QgsWcsProvider::parseServiceExceptionReportDom( QByteArray const & xml, con
 
 void QgsWcsProvider::parseServiceException( QDomElement const & e, const QString& wcsVersion, QString& errorTitle, QString& errorText )
 {
-  QgsDebugMsg( "entering." );
 
   errorTitle = tr( "Service Exception" );
 
@@ -1079,7 +1074,6 @@ QString QgsWcsProvider::wcsVersion()
 
 bool QgsWcsProvider::calculateExtent()
 {
-  QgsDebugMsg( "entered." );
 
   // Make sure we know what extents are available
   if ( !mCoverageSummary.described )
@@ -1102,13 +1096,10 @@ bool QgsWcsProvider::calculateExtent()
     // box to the user's selected CRS
     if ( !mCoordinateTransform )
     {
-      QgsCoordinateReferenceSystem qgisSrsSource;
-      QgsCoordinateReferenceSystem qgisSrsDest;
+      QgsCoordinateReferenceSystem qgisSrsSource = QgsCRSCache::instance()->crsByOgcWmsCrs( "EPSG:4326" );
+      QgsCoordinateReferenceSystem qgisSrsDest = QgsCRSCache::instance()->crsByOgcWmsCrs( mCoverageCrs );
 
-      //qgisSrsSource.createFromOgcWmsCrs( DEFAULT_LATLON_CRS );
-      qgisSrsSource.createFromOgcWmsCrs( "EPSG:4326" );
       //QgsDebugMsg( "qgisSrsSource: " + qgisSrsSource.toWkt() );
-      qgisSrsDest.createFromOgcWmsCrs( mCoverageCrs );
       //QgsDebugMsg( "qgisSrsDest: " + qgisSrsDest.toWkt() );
 
       mCoordinateTransform = new QgsCoordinateTransform( qgisSrsSource, qgisSrsDest );
@@ -1365,7 +1356,7 @@ QString QgsWcsProvider:: htmlRow( const QString &text1, const QString &text2 )
   return "<tr>" + htmlCell( text1 ) +  htmlCell( text2 ) + "</tr>";
 }
 
-QgsRasterIdentifyResult QgsWcsProvider::identify( const QgsPoint & thePoint, QgsRaster::IdentifyFormat theFormat, const QgsRectangle &theExtent, int theWidth, int theHeight )
+QgsRasterIdentifyResult QgsWcsProvider::identify( const QgsPoint & thePoint, QgsRaster::IdentifyFormat theFormat, const QgsRectangle &theExtent, int theWidth, int theHeight , int /*theDpi*/ )
 {
   QgsDebugMsg( QString( "thePoint =  %1 %2" ).arg( thePoint.x(), 0, 'g', 10 ).arg( thePoint.y(), 0, 'g', 10 ) );
   QgsDebugMsg( QString( "theWidth = %1 theHeight = %2" ).arg( theWidth ).arg( theHeight ) );
@@ -1665,14 +1656,25 @@ QGISEXTERN bool isProvider()
 
 int QgsWcsDownloadHandler::sErrors = 0;
 
-QgsWcsDownloadHandler::QgsWcsDownloadHandler( const QUrl& url, QgsWcsAuthorization& auth, QNetworkRequest::CacheLoadControl cacheLoadControl, QByteArray& cachedData, const QString& wcsVersion, QgsError& cachedError )
+QgsWcsDownloadHandler::QgsWcsDownloadHandler( const QUrl& url, QgsWcsAuthorization& auth, QNetworkRequest::CacheLoadControl cacheLoadControl, QByteArray& cachedData, const QString& wcsVersion, QgsError& cachedError, QgsRasterBlockFeedback* feedback )
     : mAuth( auth )
     , mEventLoop( new QEventLoop )
     , mCacheReply( nullptr )
     , mCachedData( cachedData )
     , mWcsVersion( wcsVersion )
     , mCachedError( cachedError )
+    , mFeedback( feedback )
 {
+  if ( feedback )
+  {
+    connect( feedback, SIGNAL( cancelled() ), this, SLOT( cancelled() ), Qt::QueuedConnection );
+
+    // rendering could have been cancelled before we started to listen to cancelled() signal
+    // so let's check before doing the download and maybe quit prematurely
+    if ( feedback->isCancelled() )
+      return;
+  }
+
   QNetworkRequest request( url );
   if ( !mAuth.setAuthorization( request ) )
   {
@@ -1704,6 +1706,9 @@ QgsWcsDownloadHandler::~QgsWcsDownloadHandler()
 
 void QgsWcsDownloadHandler::blockingDownload()
 {
+  if ( mFeedback && mFeedback->isCancelled() )
+    return; // nothing to do
+
   mEventLoop->exec( QEventLoop::ExcludeUserInputEvents );
 
   Q_ASSERT( !mCacheReply );
@@ -1891,39 +1896,43 @@ void QgsWcsDownloadHandler::cacheReplyFinished()
   }
   else
   {
-    // Resend request if AlwaysCache
-    QNetworkRequest request = mCacheReply->request();
-    if ( request.attribute( QNetworkRequest::CacheLoadControlAttribute ).toInt() == QNetworkRequest::AlwaysCache )
+    // report any errors except for the one we have caused by cancelling the request
+    if ( mCacheReply->error() != QNetworkReply::OperationCanceledError )
     {
-      QgsDebugMsg( "Resend request with PreferCache" );
-      request.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache );
-
-      mCacheReply->deleteLater();
-
-      mCacheReply = QgsNetworkAccessManager::instance()->get( request );
-      if ( !mAuth.setAuthorizationReply( mCacheReply ) )
+      // Resend request if AlwaysCache
+      QNetworkRequest request = mCacheReply->request();
+      if ( request.attribute( QNetworkRequest::CacheLoadControlAttribute ).toInt() == QNetworkRequest::AlwaysCache )
       {
+        QgsDebugMsg( "Resend request with PreferCache" );
+        request.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache );
+
         mCacheReply->deleteLater();
-        mCacheReply = nullptr;
-        QgsMessageLog::logMessage( tr( "Network reply update failed for authentication config" ),
-                                   tr( "WCS" ) );
-        finish();
+
+        mCacheReply = QgsNetworkAccessManager::instance()->get( request );
+        if ( !mAuth.setAuthorizationReply( mCacheReply ) )
+        {
+          mCacheReply->deleteLater();
+          mCacheReply = nullptr;
+          QgsMessageLog::logMessage( tr( "Network reply update failed for authentication config" ),
+                                     tr( "WCS" ) );
+          finish();
+          return;
+        }
+        connect( mCacheReply, SIGNAL( finished() ), this, SLOT( cacheReplyFinished() ), Qt::DirectConnection );
+        connect( mCacheReply, SIGNAL( downloadProgress( qint64, qint64 ) ), this, SLOT( cacheReplyProgress( qint64, qint64 ) ), Qt::DirectConnection );
+
         return;
       }
-      connect( mCacheReply, SIGNAL( finished() ), this, SLOT( cacheReplyFinished() ), Qt::DirectConnection );
-      connect( mCacheReply, SIGNAL( downloadProgress( qint64, qint64 ) ), this, SLOT( cacheReplyProgress( qint64, qint64 ) ), Qt::DirectConnection );
 
-      return;
-    }
-
-    sErrors++;
-    if ( sErrors < 100 )
-    {
-      QgsMessageLog::logMessage( tr( "Map request failed [error:%1 url:%2]" ).arg( mCacheReply->errorString(), mCacheReply->url().toString() ), tr( "WCS" ) );
-    }
-    else if ( sErrors == 100 )
-    {
-      QgsMessageLog::logMessage( tr( "Not logging more than 100 request errors." ), tr( "WCS" ) );
+      sErrors++;
+      if ( sErrors < 100 )
+      {
+        QgsMessageLog::logMessage( tr( "Map request failed [error:%1 url:%2]" ).arg( mCacheReply->errorString(), mCacheReply->url().toString() ), tr( "WCS" ) );
+      }
+      else if ( sErrors == 100 )
+      {
+        QgsMessageLog::logMessage( tr( "Not logging more than 100 request errors." ), tr( "WCS" ) );
+      }
     }
 
     mCacheReply->deleteLater();
@@ -1935,7 +1944,17 @@ void QgsWcsDownloadHandler::cacheReplyFinished()
 
 void QgsWcsDownloadHandler::cacheReplyProgress( qint64 bytesReceived, qint64 bytesTotal )
 {
-  QString msg = tr( "%1 of %2 bytes of map downloaded." ).arg( bytesReceived ).arg( bytesTotal < 0 ? QString( "unknown number of" ) : QString::number( bytesTotal ) );
-  QgsDebugMsgLevel( msg, 3 );
-  //emit statusChanged( msg );
+  Q_UNUSED( bytesReceived );
+  Q_UNUSED( bytesTotal );
+  QgsDebugMsgLevel( tr( "%1 of %2 bytes of map downloaded." ).arg( bytesReceived ).arg( bytesTotal < 0 ? QString( "unknown number of" ) : QString::number( bytesTotal ) ), 3 );
+}
+
+void QgsWcsDownloadHandler::cancelled()
+{
+  QgsDebugMsg( "Caught cancelled() signal" );
+  if ( mCacheReply )
+  {
+    QgsDebugMsg( "Aborting WCS network request" );
+    mCacheReply->abort();
+  }
 }

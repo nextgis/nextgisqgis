@@ -13,6 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsgraduatedsymbolrendererv2widget.h"
+#include "qgspanelwidget.h"
 
 #include "qgssymbolv2.h"
 #include "qgssymbollayerv2utils.h"
@@ -324,7 +325,6 @@ void QgsGraduatedSymbolRendererV2Model::removeAllRows()
 
 void QgsGraduatedSymbolRendererV2Model::sort( int column, Qt::SortOrder order )
 {
-  QgsDebugMsg( "Entered" );
   if ( column == 0 )
   {
     return;
@@ -433,6 +433,7 @@ QgsGraduatedSymbolRendererV2Widget::QgsGraduatedSymbolRendererV2Widget( QgsVecto
 
   // setup user interface
   setupUi( this );
+
   mModel = new QgsGraduatedSymbolRendererV2Model( this );
 
   mExpressionWidget->setFilters( QgsFieldProxyModel::Numeric | QgsFieldProxyModel::Date );
@@ -643,6 +644,7 @@ void QgsGraduatedSymbolRendererV2Widget::updateUiFromRenderer( bool updateCount 
   mHistogramWidget->refresh();
 
   connectUpdateHandlers();
+  emit widgetChanged();
 }
 
 void QgsGraduatedSymbolRendererV2Widget::graduatedColumnChanged( const QString& field )
@@ -682,7 +684,58 @@ void QgsGraduatedSymbolRendererV2Widget::refreshRanges( bool reset )
     return;
 
   mModel->updateSymbology( reset );
+  emit widgetChanged();
 }
+
+void QgsGraduatedSymbolRendererV2Widget::cleanUpSymbolSelector( QgsPanelWidget *container )
+{
+  QgsSymbolV2SelectorWidget *dlg = qobject_cast<QgsSymbolV2SelectorWidget*>( container );
+  if ( !dlg )
+    return;
+
+  dlg->releaseSymbol();
+}
+
+void QgsGraduatedSymbolRendererV2Widget::updateSymbolsFromWidget()
+{
+  QgsSymbolV2SelectorWidget* dlg = qobject_cast<QgsSymbolV2SelectorWidget*>( sender() );
+  delete mGraduatedSymbol;
+  mGraduatedSymbol = dlg->symbol()->clone();
+
+  mSizeUnitWidget->blockSignals( true );
+  mSizeUnitWidget->setUnit( mGraduatedSymbol->outputUnit() );
+  mSizeUnitWidget->setMapUnitScale( mGraduatedSymbol->mapUnitScale() );
+  mSizeUnitWidget->blockSignals( false );
+
+  QItemSelectionModel* m = viewGraduated->selectionModel();
+  QModelIndexList selectedIndexes = m->selectedRows( 1 );
+  if ( m && !selectedIndexes.isEmpty() )
+  {
+    Q_FOREACH ( const QModelIndex& idx, selectedIndexes )
+    {
+      if ( idx.isValid() )
+      {
+        int rangeIdx = idx.row();
+        QgsSymbolV2* newRangeSymbol = mGraduatedSymbol->clone();
+        if ( selectedIndexes.count() > 1 )
+        {
+          //if updating multiple ranges, retain the existing range colors
+          newRangeSymbol->setColor( mRenderer->ranges().at( rangeIdx ).symbol()->color() );
+        }
+        mRenderer->updateRangeSymbol( rangeIdx, newRangeSymbol );
+      }
+    }
+  }
+  else
+  {
+    updateGraduatedSymbolIcon();
+    mRenderer->updateSymbols( mGraduatedSymbol );
+  }
+
+  refreshSymbolView();
+  emit widgetChanged();
+}
+
 
 void QgsGraduatedSymbolRendererV2Widget::classifyGraduated()
 {
@@ -777,37 +830,13 @@ void QgsGraduatedSymbolRendererV2Widget::reapplySizes()
 
 void QgsGraduatedSymbolRendererV2Widget::changeGraduatedSymbol()
 {
-  // Change the selected symbols alone if anything is selected
-  QItemSelectionModel* m = viewGraduated->selectionModel();
-  QModelIndexList i = m->selectedRows();
-  if ( m && !i.isEmpty() )
-  {
-    changeSelectedSymbols();
-    return;
-  }
-
-  // Otherwise change the base mGraduatedSymbol
   QgsSymbolV2* newSymbol = mGraduatedSymbol->clone();
+  QgsSymbolV2SelectorWidget* dlg = new QgsSymbolV2SelectorWidget( newSymbol, mStyle, mLayer, nullptr );
+  dlg->setMapCanvas( mMapCanvas );
 
-  QgsSymbolV2SelectorDialog dlg( newSymbol, mStyle, mLayer, this );
-  dlg.setMapCanvas( mMapCanvas );
-  if ( !dlg.exec() )
-  {
-    delete newSymbol;
-    return;
-  }
-
-  delete mGraduatedSymbol;
-  mGraduatedSymbol = newSymbol;
-
-  mSizeUnitWidget->blockSignals( true );
-  mSizeUnitWidget->setUnit( mGraduatedSymbol->outputUnit() );
-  mSizeUnitWidget->setMapUnitScale( mGraduatedSymbol->mapUnitScale() );
-  mSizeUnitWidget->blockSignals( false );
-
-  updateGraduatedSymbolIcon();
-  mRenderer->updateSymbols( mGraduatedSymbol );
-  refreshSymbolView();
+  connect( dlg, SIGNAL( widgetChanged() ), this, SLOT( updateSymbolsFromWidget() ) );
+  connect( dlg, SIGNAL( accepted( QgsPanelWidget* ) ), this, SLOT( cleanUpSymbolSelector( QgsPanelWidget* ) ) );
+  openPanel( dlg );
 }
 
 void QgsGraduatedSymbolRendererV2Widget::updateGraduatedSymbolIcon()
@@ -875,47 +904,18 @@ void QgsGraduatedSymbolRendererV2Widget::rangesClicked( const QModelIndex & idx 
 
 void QgsGraduatedSymbolRendererV2Widget::changeSelectedSymbols()
 {
-  QItemSelectionModel* m = viewGraduated->selectionModel();
-  QModelIndexList selectedIndexes = m->selectedRows( 1 );
-  if ( m && !selectedIndexes.isEmpty() )
-  {
-    QgsSymbolV2* newSymbol = mGraduatedSymbol->clone();
-    QgsSymbolV2SelectorDialog dlg( newSymbol, mStyle, mLayer, this );
-    dlg.setMapCanvas( mMapCanvas );
-    if ( !dlg.exec() )
-    {
-      delete newSymbol;
-      return;
-    }
-
-    Q_FOREACH ( const QModelIndex& idx, selectedIndexes )
-    {
-      if ( idx.isValid() )
-      {
-        int rangeIdx = idx.row();
-        QgsSymbolV2* newRangeSymbol = newSymbol->clone();
-        newRangeSymbol->setColor( mRenderer->ranges()[rangeIdx].symbol()->color() );
-        mRenderer->updateRangeSymbol( rangeIdx, newRangeSymbol );
-      }
-    }
-  }
-  refreshSymbolView();
 }
 
 void QgsGraduatedSymbolRendererV2Widget::changeRangeSymbol( int rangeIdx )
 {
   QgsSymbolV2* newSymbol = mRenderer->ranges()[rangeIdx].symbol()->clone();
+  QgsSymbolV2SelectorWidget* dlg = new QgsSymbolV2SelectorWidget( newSymbol, mStyle, mLayer, nullptr );
+  dlg->setDockMode( this->dockMode() );
+  dlg->setMapCanvas( mMapCanvas );
 
-  QgsSymbolV2SelectorDialog dlg( newSymbol, mStyle, mLayer, this );
-  dlg.setMapCanvas( mMapCanvas );
-  if ( !dlg.exec() )
-  {
-    delete newSymbol;
-    return;
-  }
-
-  mRenderer->updateRangeSymbol( rangeIdx, newSymbol );
-  mHistogramWidget->refresh();
+  connect( dlg, SIGNAL( widgetChanged() ), this, SLOT( updateSymbolsFromWidget() ) );
+  connect( dlg, SIGNAL( accepted( QgsPanelWidget* ) ), this, SLOT( cleanUpSymbolSelector( QgsPanelWidget* ) ) );
+  openPanel( dlg );
 }
 
 void QgsGraduatedSymbolRendererV2Widget::changeRange( int rangeIdx )
@@ -952,6 +952,7 @@ void QgsGraduatedSymbolRendererV2Widget::changeRange( int rangeIdx )
     }
   }
   mHistogramWidget->refresh();
+  emit widgetChanged();
 }
 
 void QgsGraduatedSymbolRendererV2Widget::addClass()
@@ -1081,10 +1082,14 @@ QList<QgsSymbolV2*> QgsGraduatedSymbolRendererV2Widget::selectedSymbols()
 
 QgsSymbolV2* QgsGraduatedSymbolRendererV2Widget::findSymbolForRange( double lowerBound, double upperBound, const QgsRangeList& ranges ) const
 {
+  int decimalPlaces = mRenderer->labelFormat().precision() + 2;
+  if ( decimalPlaces < 0 )
+    decimalPlaces = 0;
+  double precision = 1.0 / qPow( 10, decimalPlaces );
+
   for ( QgsRangeList::const_iterator it = ranges.begin(); it != ranges.end(); ++it )
   {
-    //range string has been created with option 'f',4
-    if ( qgsDoubleNear( lowerBound, it->lowerValue(), 0.0001 ) && qgsDoubleNear( upperBound, it->upperValue(), 0.0001 ) )
+    if ( qgsDoubleNear( lowerBound, it->lowerValue(), precision ) && qgsDoubleNear( upperBound, it->upperValue(), precision ) )
     {
       return it->symbol();
     }
@@ -1099,6 +1104,7 @@ void QgsGraduatedSymbolRendererV2Widget::refreshSymbolView()
     mModel->updateSymbology();
   }
   mHistogramWidget->refresh();
+  emit widgetChanged();
 }
 
 void QgsGraduatedSymbolRendererV2Widget::showSymbolLevels()
@@ -1113,10 +1119,12 @@ void QgsGraduatedSymbolRendererV2Widget::rowsMoved()
   {
     cbxLinkBoundaries->setChecked( false );
   }
+  emit widgetChanged();
 }
 
 void QgsGraduatedSymbolRendererV2Widget::modelDataChanged()
 {
+  emit widgetChanged();
 }
 
 void QgsGraduatedSymbolRendererV2Widget::keyPressEvent( QKeyEvent* event )
@@ -1138,5 +1146,6 @@ void QgsGraduatedSymbolRendererV2Widget::keyPressEvent( QKeyEvent* event )
     {
       mModel->addClass( *rIt );
     }
+    emit widgetChanged();
   }
 }

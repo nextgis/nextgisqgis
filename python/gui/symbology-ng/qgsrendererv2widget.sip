@@ -1,4 +1,4 @@
-class QgsRendererV2Widget : QWidget
+class QgsRendererV2Widget : QgsPanelWidget
 {
 %TypeHeaderCode
 #include <qgsrendererv2widget.h>

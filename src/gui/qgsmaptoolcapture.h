@@ -32,6 +32,9 @@ class QgsVertexMarker;
 class QgsMapLayer;
 class QgsGeometryValidator;
 
+/** \ingroup gui
+ * \class QgsMapToolCapture
+ */
 class GUI_EXPORT QgsMapToolCapture : public QgsMapToolAdvancedDigitizing
 {
     Q_OBJECT
@@ -190,6 +193,15 @@ class GUI_EXPORT QgsMapToolCapture : public QgsMapToolAdvancedDigitizing
      * @return List of points
      */
     QList<QgsPoint> points();
+
+    /**
+     * List of digitized points with z support
+     *
+     * @return List of points
+     *
+     * @note added in 2.18
+     */
+    QgsPointSequenceV2 pointsV2();
 
     /**
      * Set the points on which to work

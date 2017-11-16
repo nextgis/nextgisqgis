@@ -81,14 +81,21 @@ bool QgsVectorDataProvider::deleteAttributes( const QgsAttributeIds &attributes 
   return false;
 }
 
+bool QgsVectorDataProvider::renameAttributes( const QgsFieldNameMap& renamedAttributes )
+{
+  Q_UNUSED( renamedAttributes );
+  return false;
+}
+
 bool QgsVectorDataProvider::changeAttributeValues( const QgsChangedAttributesMap &attr_map )
 {
   Q_UNUSED( attr_map );
   return false;
 }
 
-QVariant QgsVectorDataProvider::defaultValue( int fieldId )
+QVariant QgsVectorDataProvider::defaultValue( int fieldId, bool forceLazyEval )
 {
+  Q_UNUSED( forceLazyEval )
   Q_UNUSED( fieldId );
   return QVariant();
 }
@@ -189,11 +196,23 @@ QString QgsVectorDataProvider::capabilitiesString() const
     QgsDebugMsg( "Capability: Delete Attributes" );
   }
 
+  if ( abilities & QgsVectorDataProvider::RenameAttributes )
+  {
+    abilitiesList += tr( "Rename Attributes" );
+    QgsDebugMsg( "Capability: Rename Attributes" );
+  }
+
   if ( abilities & QgsVectorDataProvider::CreateSpatialIndex )
   {
     // TODO: Tighten up this test.  See QgsOgrProvider for details.
     abilitiesList += tr( "Create Spatial Index" );
     QgsDebugMsg( "Capability: Create Spatial Index" );
+  }
+
+  if ( abilities & QgsVectorDataProvider::CreateAttributeIndex )
+  {
+    abilitiesList += tr( "Create Attribute Indexes" );
+    QgsDebugMsg( "Capability: Create Attribute Index" );
   }
 
   if ( abilities & QgsVectorDataProvider::SelectAtId )
@@ -226,22 +245,25 @@ QString QgsVectorDataProvider::capabilitiesString() const
     QgsDebugMsg( "Capability: change both feature attributes and geometry at once" );
   }
 
+  if ( abilities & QgsVectorDataProvider::TransactionSupport )
+  {
+    abilitiesList += tr( "Transactions" );
+    QgsDebugMsg( "Capability: transactions" );
+  }
+
+  if ( abilities & QgsVectorDataProvider::CircularGeometries )
+  {
+    abilitiesList += tr( "Curved Geometries" );
+    QgsDebugMsg( "Supports circular geometry types (circularstring, compoundcurve, curvepolygon)" );
+  }
+
   return abilitiesList.join( ", " );
 }
 
 
 int QgsVectorDataProvider::fieldNameIndex( const QString& fieldName ) const
 {
-  const QgsFields &theFields = fields();
-
-  for ( int i = 0; i < theFields.count(); ++i )
-  {
-    if ( QString::compare( theFields[i].name(), fieldName, Qt::CaseInsensitive ) == 0 )
-    {
-      return i;
-    }
-  }
-  return -1;
+  return fields().fieldNameIndex( fieldName );
 }
 
 QMap<QString, int> QgsVectorDataProvider::fieldNameMap() const
@@ -388,6 +410,19 @@ void QgsVectorDataProvider::uniqueValues( int index, QList<QVariant> &values, in
     if ( limit >= 0 && values.size() >= limit )
       break;
   }
+}
+
+QVariant QgsVectorDataProvider::aggregate( QgsAggregateCalculator::Aggregate aggregate, int index,
+    const QgsAggregateCalculator::AggregateParameters& parameters, QgsExpressionContext* context, bool& ok )
+{
+  //base implementation does nothing
+  Q_UNUSED( aggregate );
+  Q_UNUSED( index );
+  Q_UNUSED( parameters );
+  Q_UNUSED( context );
+
+  ok = false;
+  return QVariant();
 }
 
 void QgsVectorDataProvider::clearMinMaxCache()
@@ -587,20 +622,20 @@ QSet<QString> QgsVectorDataProvider::layerDependencies() const
   return QSet<QString>();
 }
 
-QgsGeometry* QgsVectorDataProvider::convertToProviderType( const QgsGeometry& geom ) const
+QgsGeometry* QgsVectorDataProvider::convertToProviderType( const QgsGeometry* geom ) const
 {
-  if ( geom.isEmpty() )
+  if ( !geom )
   {
     return nullptr;
   }
 
-  QgsAbstractGeometryV2* geometry = geom.geometry();
+  QgsAbstractGeometryV2* geometry = geom->geometry();
   if ( !geometry )
   {
     return nullptr;
   }
 
-  QgsWKBTypes::Type providerGeomType = QgsWKBTypes::Type( geometryType() );
+  QgsWKBTypes::Type providerGeomType = QGis::fromOldWkbType( geometryType() );
 
   //geom is already in the provider geometry type
   if ( geometry->wkbType() == providerGeomType )
@@ -679,10 +714,37 @@ QgsGeometry* QgsVectorDataProvider::convertToProviderType( const QgsGeometry& ge
     outputGeom->addMValue();
   }
 
+  // remove Z if provider does not have
+  // control added to fix https://issues.qgis.org/issues/16927
+  if ( !QgsWKBTypes::hasZ( providerGeomType ) && QgsWKBTypes::hasZ( geometry->wkbType() ) )
+  {
+    if ( !outputGeom )
+    {
+      outputGeom = geometry->clone();
+    }
+    outputGeom->dropZValue();
+  }
+
+  // remove M if provider does not have
+  // control added as follow-up of https://issues.qgis.org/issues/16927
+  if ( !QgsWKBTypes::hasM( providerGeomType ) && QgsWKBTypes::hasM( geometry->wkbType() ) )
+  {
+    if ( !outputGeom )
+    {
+      outputGeom = geometry->clone();
+    }
+    outputGeom->dropMValue();
+  }
+
   if ( outputGeom )
   {
     return new QgsGeometry( outputGeom );
   }
+
+  QString msg = tr( "Geometry type %1 not compatible with provider type %2.", "not compatible geometry" )
+                .arg( QgsWKBTypes::displayString( geometry->wkbType() ) )
+                .arg( QgsWKBTypes::displayString( providerGeomType ) );
+  const_cast<QgsVectorDataProvider*>( this )->pushError( msg );
   return nullptr;
 }
 

@@ -125,12 +125,19 @@ QgsComposerMapWidget::QgsComposerMapWidget( QgsComposerMap* composerMap )
   //set initial state of frame style controls
   toggleFrameControls( false, false, false );
 
-  QMenu* m = new QMenu( this );
-  mLayerListFromPresetButton->setMenu( m );
-  mLayerListFromPresetButton->setIcon( QgsApplication::getThemeIcon( "/mActionShowAllLayers.png" ) );
-  mLayerListFromPresetButton->setToolTip( tr( "Set layer list from a visibility preset" ) );
+  // follow preset combo
+  mFollowVisibilityPresetCombo->setModel( new QStringListModel( mFollowVisibilityPresetCombo ) );
+  connect( mFollowVisibilityPresetCombo, SIGNAL( currentIndexChanged( int ) ), this, SLOT( followVisibilityPresetSelected( int ) ) );
+  connect( QgsProject::instance()->visibilityPresetCollection(), SIGNAL( presetsChanged() ),
+           this, SLOT( onPresetsChanged() ) );
+  onPresetsChanged();
 
-  connect( m, SIGNAL( aboutToShow() ), this, SLOT( aboutToShowVisibilityPresetsMenu() ) );
+  // keep layers from preset button
+  QMenu* menuKeepLayers = new QMenu( this );
+  mLayerListFromPresetButton->setMenu( menuKeepLayers );
+  mLayerListFromPresetButton->setIcon( QgsApplication::getThemeIcon( "/mActionShowAllLayers.svg" ) );
+  mLayerListFromPresetButton->setToolTip( tr( "Set layer list from a visibility preset" ) );
+  connect( menuKeepLayers, SIGNAL( aboutToShow() ), this, SLOT( aboutToShowKeepLayersVisibilityPresetsMenu() ) );
 
   if ( composerMap )
   {
@@ -152,6 +159,11 @@ QgsComposerMapWidget::QgsComposerMapWidget( QgsComposerMap* composerMap )
 
       compositionAtlasToggled( atlas->enabled() );
     }
+
+    mOverviewFrameMapComboBox->setComposition( composerMap->composition() );
+    mOverviewFrameMapComboBox->setItemType( QgsComposerItem::ComposerMap );
+    mOverviewFrameMapComboBox->setExceptedItemList( QList< QgsComposerItem* >() << composerMap );
+    connect( mOverviewFrameMapComboBox, SIGNAL( itemChanged( QgsComposerItem* ) ), this, SLOT( overviewMapChanged( QgsComposerItem* ) ) );
   }
 
   //connections for data defined buttons
@@ -185,6 +197,9 @@ QgsComposerMapWidget::QgsComposerMapWidget( QgsComposerMap* composerMap )
   updateGuiElements();
   loadGridEntries();
   loadOverviewEntries();
+
+  connect( mMapRotationSpinBox, SIGNAL( editingFinished() ), this, SLOT( rotationChanged() ) );
+
   blockAllSignals( false );
 }
 
@@ -296,8 +311,11 @@ void QgsComposerMapWidget::compositionAtlasToggled( bool atlasEnabled )
   }
 }
 
-void QgsComposerMapWidget::aboutToShowVisibilityPresetsMenu()
+void QgsComposerMapWidget::aboutToShowKeepLayersVisibilityPresetsMenu()
 {
+  // this menu is for the case when setting "keep layers" and "keep layer styles"
+  // and the preset configuration is copied. The preset is not followed further.
+
   QMenu* menu = qobject_cast<QMenu*>( sender() );
   if ( !menu )
     return;
@@ -305,19 +323,38 @@ void QgsComposerMapWidget::aboutToShowVisibilityPresetsMenu()
   menu->clear();
   Q_FOREACH ( const QString& presetName, QgsProject::instance()->visibilityPresetCollection()->presets() )
   {
-    QAction* a = menu->addAction( presetName, this, SLOT( visibilityPresetSelected() ) );
-    a->setCheckable( true );
-    QStringList layers = QgsVisibilityPresets::instance()->orderedPresetVisibleLayers( presetName );
-    QMap<QString, QString> styles = QgsProject::instance()->visibilityPresetCollection()->presetStyleOverrides( presetName );
-    if ( layers == mComposerMap->layerSet() && styles == mComposerMap->layerStyleOverrides() )
-      a->setChecked( true );
+    menu->addAction( presetName, this, SLOT( keepLayersVisibilityPresetSelected() ) );
   }
 
   if ( menu->actions().isEmpty() )
     menu->addAction( tr( "No presets defined" ) )->setEnabled( false );
 }
 
-void QgsComposerMapWidget::visibilityPresetSelected()
+void QgsComposerMapWidget::followVisibilityPresetSelected( int currentIndex )
+{
+  if ( !mComposerMap )
+    return;
+
+  if ( currentIndex == -1 )
+    return;  // doing combo box model reset
+
+  QString presetName;
+  if ( currentIndex != 0 )
+  {
+    presetName = mFollowVisibilityPresetCombo->currentText();
+  }
+
+  if ( presetName == mComposerMap->followVisibilityPresetName() )
+    return;
+
+  mFollowVisibilityPresetCheckBox->setChecked( true );
+  mComposerMap->setFollowVisibilityPresetName( presetName );
+
+  mComposerMap->cache();
+  mComposerMap->update();
+}
+
+void QgsComposerMapWidget::keepLayersVisibilityPresetSelected()
 {
   QAction* action = qobject_cast<QAction*>( sender() );
   if ( !action )
@@ -336,6 +373,23 @@ void QgsComposerMapWidget::visibilityPresetSelected()
 
     mComposerMap->cache();
     mComposerMap->update();
+  }
+}
+
+void QgsComposerMapWidget::onPresetsChanged()
+{
+  if ( QStringListModel* model = qobject_cast<QStringListModel*>( mFollowVisibilityPresetCombo->model() ) )
+  {
+    QStringList lst;
+    lst.append( tr( "(none)" ) );
+    lst += QgsProject::instance()->visibilityPresetCollection()->presets();
+    model->setStringList( lst );
+
+    // select the previously selected item again
+    int presetModelIndex = mFollowVisibilityPresetCombo->findText( mComposerMap->followVisibilityPresetName() );
+    mFollowVisibilityPresetCombo->blockSignals( true );
+    mFollowVisibilityPresetCombo->setCurrentIndex( presetModelIndex != -1 ? presetModelIndex : 0 ); // 0 == none
+    mFollowVisibilityPresetCombo->blockSignals( false );
   }
 }
 
@@ -527,7 +581,7 @@ void QgsComposerMapWidget::on_mScaleLineEdit_editingFinished()
   mComposerMap->endCommand();
 }
 
-void QgsComposerMapWidget::on_mMapRotationSpinBox_valueChanged( double value )
+void QgsComposerMapWidget::rotationChanged()
 {
   if ( !mComposerMap )
   {
@@ -535,7 +589,7 @@ void QgsComposerMapWidget::on_mMapRotationSpinBox_valueChanged( double value )
   }
 
   mComposerMap->beginCommand( tr( "Map rotation changed" ), QgsComposerMergeCommand::ComposerMapRotation );
-  mComposerMap->setMapRotation( value );
+  mComposerMap->setMapRotation( mMapRotationSpinBox->value() );
   mComposerMap->endCommand();
   mComposerMap->cache();
   mComposerMap->update();
@@ -662,6 +716,12 @@ void QgsComposerMapWidget::updateGuiElements()
   mYMaxLineEdit->setText( QString::number( composerMapExtent.yMaximum(), 'f', 3 ) );
 
   mMapRotationSpinBox->setValue( mComposerMap->mapRotation( QgsComposerObject::OriginalValue ) );
+
+  // follow preset check box
+  mFollowVisibilityPresetCheckBox->setCheckState(
+    mComposerMap->followVisibilityPreset() ? Qt::Checked : Qt::Unchecked );
+  int presetModelIndex = mFollowVisibilityPresetCombo->findText( mComposerMap->followVisibilityPresetName() );
+  mFollowVisibilityPresetCombo->setCurrentIndex( presetModelIndex != -1 ? presetModelIndex : 0 ); // 0 == none
 
   //keep layer list check box
   if ( mComposerMap->keepLayerSet() )
@@ -792,6 +852,8 @@ void QgsComposerMapWidget::blockAllSignals( bool b )
   mAtlasMarginSpinBox->blockSignals( b );
   mAtlasFixedScaleRadio->blockSignals( b );
   mAtlasMarginRadio->blockSignals( b );
+  mFollowVisibilityPresetCheckBox->blockSignals( b );
+  mFollowVisibilityPresetCombo->blockSignals( b );
   mKeepLayerListCheckBox->blockSignals( b );
   mKeepLayerStylesCheckBox->blockSignals( b );
   mSetToMapCanvasExtentButton->blockSignals( b );
@@ -892,6 +954,30 @@ void QgsComposerMapWidget::on_mUpdatePreviewButton_clicked()
   mUpdatePreviewButton->setEnabled( true );
 }
 
+void QgsComposerMapWidget::on_mFollowVisibilityPresetCheckBox_stateChanged( int state )
+{
+  if ( !mComposerMap )
+  {
+    return;
+  }
+
+  if ( state == Qt::Checked )
+  {
+    mComposerMap->setFollowVisibilityPreset( true );
+
+    // mutually exclusive with keeping custom layer list
+    mKeepLayerListCheckBox->setCheckState( Qt::Unchecked );
+    mKeepLayerStylesCheckBox->setCheckState( Qt::Unchecked );
+
+    mComposerMap->cache();
+    mComposerMap->update();
+  }
+  else
+  {
+    mComposerMap->setFollowVisibilityPreset( false );
+  }
+}
+
 void QgsComposerMapWidget::on_mKeepLayerListCheckBox_stateChanged( int state )
 {
   if ( !mComposerMap )
@@ -903,6 +989,9 @@ void QgsComposerMapWidget::on_mKeepLayerListCheckBox_stateChanged( int state )
   {
     mComposerMap->storeCurrentLayerSet();
     mComposerMap->setKeepLayerSet( true );
+
+    // mutually exclusive with following a preset
+    mFollowVisibilityPresetCheckBox->setCheckState( Qt::Unchecked );
   }
   else
   {
@@ -950,12 +1039,6 @@ void QgsComposerMapWidget::on_mDrawCanvasItemsCheckBox_stateChanged( int state )
   mComposerMap->update();
   mUpdatePreviewButton->setEnabled( true );
   mComposerMap->endCommand();
-}
-
-void QgsComposerMapWidget::showEvent( QShowEvent * event )
-{
-  refreshMapComboBox();
-  QWidget::showEvent( event );
 }
 
 void QgsComposerMapWidget::addPageToToolbox( QWidget* widget, const QString& name )
@@ -1093,53 +1176,6 @@ void QgsComposerMapWidget::initAnnotationDirectionBox( QComboBox* c, QgsComposer
     return;
   }
   c->setCurrentIndex( c->findData( dir ) );
-}
-
-void QgsComposerMapWidget::refreshMapComboBox()
-{
-  if ( !mComposerMap )
-  {
-    return;
-  }
-
-  mOverviewFrameMapComboBox->blockSignals( true );
-
-  //save the current entry in case it is still present after refresh
-  QString saveComboText = mOverviewFrameMapComboBox->currentText();
-
-  mOverviewFrameMapComboBox->clear();
-  mOverviewFrameMapComboBox->addItem( tr( "None" ), -1 );
-  const QgsComposition* composition = mComposerMap->composition();
-  if ( !composition )
-  {
-    return;
-  }
-
-  QList<const QgsComposerMap*> availableMaps = composition->composerMapItems();
-  QList<const QgsComposerMap*>::const_iterator mapItemIt = availableMaps.constBegin();
-  for ( ; mapItemIt != availableMaps.constEnd(); ++mapItemIt )
-  {
-    if (( *mapItemIt )->id() != mComposerMap->id() )
-    {
-      mOverviewFrameMapComboBox->addItem( tr( "Map %1" ).arg(( *mapItemIt )->id() ), ( *mapItemIt )->id() );
-    }
-  }
-
-  if ( !saveComboText.isEmpty() )
-  {
-    int saveTextIndex = mOverviewFrameMapComboBox->findText( saveComboText );
-    if ( saveTextIndex == -1 )
-    {
-      //entry is no longer present
-      mOverviewFrameMapComboBox->setCurrentIndex( mOverviewFrameMapComboBox->findText( tr( "None" ) ) );
-    }
-    else
-    {
-      mOverviewFrameMapComboBox->setCurrentIndex( saveTextIndex );
-    }
-  }
-
-  mOverviewFrameMapComboBox->blockSignals( false );
 }
 
 void QgsComposerMapWidget::atlasLayerChanged( QgsVectorLayer* layer )
@@ -2412,9 +2448,7 @@ void QgsComposerMapWidget::setOverviewItems( const QgsComposerMapOverview* overv
   mOverviewCheckBox->setChecked( overview->enabled() );
 
   //overview frame
-  refreshMapComboBox();
-  int overviewMapFrameId = overview->frameMapId();
-  mOverviewFrameMapComboBox->setCurrentIndex( mOverviewFrameMapComboBox->findData( overviewMapFrameId ) );
+  mOverviewFrameMapComboBox->setItem( mComposerMap->composition()->getComposerMapById( overview->frameMapId() ) );
   //overview frame blending mode
   mOverviewBlendModeComboBox->setBlendMode( overview->blendMode() );
   //overview inverted
@@ -2508,7 +2542,7 @@ void QgsComposerMapWidget::on_mOverviewCheckBox_toggled( bool state )
   mComposerMap->endCommand();
 }
 
-void QgsComposerMapWidget::on_mOverviewFrameMapComboBox_currentIndexChanged( const QString& text )
+void QgsComposerMapWidget::overviewMapChanged( QgsComposerItem* item )
 {
   QgsComposerMapOverview* overview = currentOverview();
   if ( !overview )
@@ -2516,47 +2550,12 @@ void QgsComposerMapWidget::on_mOverviewFrameMapComboBox_currentIndexChanged( con
     return;
   }
 
-  int id;
-
-  if ( text == tr( "None" ) )
-  {
-    id = -1;
-  }
-  else
-  {
-
-    //get composition
-    const QgsComposition* composition = mComposerMap->composition();
-    if ( !composition )
-    {
-      return;
-    }
-
-    //extract id
-    bool conversionOk;
-    QStringList textSplit = text.split( ' ' );
-    if ( textSplit.size() < 1 )
-    {
-      return;
-    }
-
-    QString idString = textSplit.at( textSplit.size() - 1 );
-    id = idString.toInt( &conversionOk );
-
-    if ( !conversionOk )
-    {
-      return;
-    }
-
-    const QgsComposerMap* composerMap = composition->getComposerMapById( id );
-    if ( !composerMap )
-    {
-      return;
-    }
-  }
+  QgsComposerMap* map = dynamic_cast< QgsComposerMap* >( item );
+  if ( !map )
+    return;
 
   mComposerMap->beginCommand( tr( "Overview map changed" ) );
-  overview->setFrameMap( id );
+  overview->setFrameMap( map->id() );
   mComposerMap->update();
   mComposerMap->endCommand();
 }

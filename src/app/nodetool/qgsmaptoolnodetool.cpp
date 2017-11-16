@@ -229,7 +229,7 @@ void QgsMapToolNodeTool::canvasPressEvent( QgsMapMouseEvent* e )
       QgsFeature feature = getFeatureAtPoint( e );
       if ( !feature.constGeometry() )
       {
-        emit messageEmitted( tr( "could not snap to a segment on the current layer." ) );
+        emit messageEmitted( tr( "Could not snap to a feature in the current layer." ) );
         return;
       }
       else
@@ -502,7 +502,7 @@ void QgsMapToolNodeTool::canvasReleaseEvent( QgsMapMouseEvent* e )
       }
 
       mSelectedFeature->moveSelectedVertexes( releaseLayerCoords - pressLayerCoords );
-      mCanvas->refresh();
+      vlayer->triggerRepaint();
     }
     else // selecting vertexes by rubberband
     {
@@ -646,7 +646,7 @@ void QgsMapToolNodeTool::canvasDoubleClickEvent( QgsMapMouseEvent* e )
   vlayer->endEditCommand();
 
   // make sure that new node gets its vertex marker
-  mCanvas->refresh();
+  vlayer->triggerRepaint();
 }
 
 void QgsMapToolNodeTool::deleteNodeSelection()
@@ -674,7 +674,7 @@ void QgsMapToolNodeTool::deleteNodeSelection()
 
       safeSelectVertex( nextVertexToSelect );
     }
-    mCanvas->refresh();
+    mSelectedFeature->vlayer()->triggerRepaint();
   }
 }
 

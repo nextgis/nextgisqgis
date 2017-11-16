@@ -19,11 +19,11 @@
 #include <QMenu>
 #include <QSignalMapper>
 
-#include "qgsattributeaction.h"
+#include "qgsactionmanager.h"
 #include "qgsmaplayeractionregistry.h"
 
 
-/**
+/** \ingroup gui
  * This class is a menu that is populated automatically with the actions defined for a given layer.
  */
 
@@ -120,7 +120,7 @@ class GUI_EXPORT QgsActionMenu : public QMenu
     const QgsFeature* feature();
 
     QgsVectorLayer* mLayer;
-    QgsAttributeAction* mActions;
+    QgsActionManager* mActions;
     const QgsFeature* mFeature;
     QgsFeatureId mFeatureId;
     bool mOwnsFeature;

@@ -99,7 +99,9 @@ bool QgsSnappingUtils::isIndexPrepared( QgsVectorLayer* vl, const QgsRectangle& 
   if ( mStrategy == IndexAlwaysFull && loc->hasIndex() )
     return true;
 
-  if ( mStrategy == IndexHybrid && loc->hasIndex() && ( !loc->extent() || loc->extent()->contains( areaOfInterest ) ) )
+  QgsRectangle aoi( areaOfInterest );
+  aoi.scale( 0.999 );
+  if (( mStrategy == IndexHybrid || mStrategy == IndexExtent ) && loc->hasIndex() && ( !loc->extent() || loc->extent()->contains( aoi ) ) )
     return true;
 
   return false; // the index - even if it exists - is not suitable
@@ -349,7 +351,13 @@ void QgsSnappingUtils::prepareIndex( const QList<LayerAndAreaOfInterest>& layers
       QTime tt;
       tt.start();
       QgsPointLocator* loc = locatorForLayer( vl );
-      if ( mStrategy == IndexHybrid )
+      if ( mStrategy == IndexExtent )
+      {
+        QgsRectangle rect( mMapSettings.extent() );
+        loc->setExtent( &rect );
+        loc->init();
+      }
+      else if ( mStrategy == IndexHybrid )
       {
         // first time the layer is used? - let's set an initial guess about indexing
         if ( !mHybridMaxAreaPerLayer.contains( vl->id() ) )
@@ -533,7 +541,7 @@ QString QgsSnappingUtils::dump()
            .arg( layer.layer->name() )
            .arg( layer.type ).arg( layer.tolerance ).arg( layer.unit );
 
-    if ( mStrategy == IndexAlwaysFull || mStrategy == IndexHybrid )
+    if ( mStrategy == IndexAlwaysFull || mStrategy == IndexHybrid || mStrategy == IndexExtent )
     {
       if ( QgsPointLocator* loc = locatorForLayer( layer.layer ) )
       {
@@ -559,7 +567,7 @@ QString QgsSnappingUtils::dump()
           else
             limit = "not evaluated";
         }
-        msg += QString( "index : YES | %1 | %2 | %3\n" ).arg( cachedGeoms ).arg( extentStr ).arg( limit );
+        msg += QString( "index : YES | %1 | %2 | %3\n" ).arg( cachedGeoms, extentStr, limit );
       }
       else
         msg += QString( "index : ???\n" ); // should not happen
@@ -601,7 +609,8 @@ void QgsSnappingUtils::readConfigFromProject()
   setSnapOnIntersections( QgsProject::instance()->readNumEntry( "Digitizing", "/IntersectionSnapping", 0 ) );
 
   //read snapping settings from project
-  bool snappingDefinedInProject, ok;
+  bool snappingDefinedInProject = false;
+  bool ok = false;
   QStringList layerIdList = QgsProject::instance()->readListEntry( "Digitizing", "/LayerSnappingList", QStringList(), &snappingDefinedInProject );
   QStringList enabledList = QgsProject::instance()->readListEntry( "Digitizing", "/LayerSnappingEnabledList", QStringList(), &ok );
   QStringList toleranceList = QgsProject::instance()->readListEntry( "Digitizing", "/LayerSnappingToleranceList", QStringList(), &ok );

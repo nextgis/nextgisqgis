@@ -35,7 +35,13 @@ from processing.core.parameters import (Parameter,
                                         ParameterFile,
                                         ParameterFixedTable,
                                         ParameterMultipleInput,
-                                        ParameterNumber)
+                                        ParameterNumber,
+                                        ParameterPoint,
+                                        ParameterString,
+                                        ParameterVector,
+                                        ParameterTableField,
+                                        ParameterTableMultipleField)
+from processing.tests.TestData import points2
 
 from qgis.core import (QgsRasterLayer,
                        QgsVectorLayer)
@@ -154,44 +160,74 @@ class ParameterExtentTest(unittest.TestCase):
         self.assertEqual(requiredParameter.value, '1,2,3,4')
 
 
+class ParameterPointTest(unittest.TestCase):
+
+    def testSetValue(self):
+        parameter = ParameterPoint('myName', 'myDesc')
+        self.assertTrue(parameter.setValue('0,2'))
+        self.assertEqual(parameter.value, '0,2')
+
+    def testSetInvalidValue(self):
+        parameter = ParameterPoint('myName', 'myDesc')
+        self.assertFalse(parameter.setValue('0'))
+        self.assertFalse(parameter.setValue('0,a'))
+
+    def testOptional(self):
+        optionalParameter = ParameterPoint('myName', 'myDesc', default='0,1', optional=True)
+        self.assertEqual(optionalParameter.value, '0,1')
+        optionalParameter.setValue('1,2')
+        self.assertEqual(optionalParameter.value, '1,2')
+        self.assertTrue(optionalParameter.setValue(None))
+        # Extent is unique in that it will let you set `None`, whereas other
+        # optional parameters become "default" when assigning None.
+        self.assertEqual(optionalParameter.value, None)
+
+        requiredParameter = ParameterPoint('myName', 'myDesc', default='0,1', optional=False)
+        self.assertEqual(requiredParameter.value, '0,1')
+        requiredParameter.setValue('1,2')
+        self.assertEqual(requiredParameter.value, '1,2')
+        self.assertFalse(requiredParameter.setValue(None))
+        self.assertEqual(requiredParameter.value, '1,2')
+
+
 class ParameterFileTest(unittest.TestCase):
 
     def testSetValue(self):
         parameter = ParameterFile('myName', 'myDesc')
         self.assertTrue(parameter.setValue('myFile.png'))
-        self.assertEquals(parameter.value, 'myFile.png')
+        self.assertEqual(parameter.value, 'myFile.png')
 
     def testOptional(self):
         optionalParameter = ParameterFile('myName', 'myDesc', optional=True)
         self.assertTrue(optionalParameter.setValue('myFile.png'))
-        self.assertEquals(optionalParameter.value, 'myFile.png')
+        self.assertEqual(optionalParameter.value, 'myFile.png')
 
         self.assertTrue(optionalParameter.setValue(""))
-        self.assertEquals(optionalParameter.value, '')
+        self.assertEqual(optionalParameter.value, '')
 
         self.assertTrue(optionalParameter.setValue(None))
-        self.assertEquals(optionalParameter.value, None)
+        self.assertEqual(optionalParameter.value, None)
 
         requiredParameter = ParameterFile('myName', 'myDesc', optional=False)
         self.assertTrue(requiredParameter.setValue('myFile.png'))
-        self.assertEquals(requiredParameter.value, 'myFile.png')
+        self.assertEqual(requiredParameter.value, 'myFile.png')
 
         self.assertFalse(requiredParameter.setValue(''))
-        self.assertEquals(requiredParameter.value, 'myFile.png')
+        self.assertEqual(requiredParameter.value, 'myFile.png')
 
         self.assertFalse(requiredParameter.setValue('  '))
-        self.assertEquals(requiredParameter.value, 'myFile.png')
+        self.assertEqual(requiredParameter.value, 'myFile.png')
 
         self.assertFalse(requiredParameter.setValue(None))
-        self.assertEquals(requiredParameter.value, 'myFile.png')
+        self.assertEqual(requiredParameter.value, 'myFile.png')
 
     def testSetValueWithExtension(self):
         parameter = ParameterFile('myName', 'myDesc', ext="png")
         self.assertTrue(parameter.setValue('myFile.png'))
-        self.assertEquals(parameter.value, 'myFile.png')
+        self.assertEqual(parameter.value, 'myFile.png')
 
         self.assertFalse(parameter.setValue('myFile.bmp'))
-        self.assertEquals(parameter.value, 'myFile.png')
+        self.assertEqual(parameter.value, 'myFile.png')
 
     def testGetValueAsCommandLineParameter(self):
         parameter = ParameterFile('myName', 'myDesc')
@@ -206,13 +242,13 @@ class TestParameterFixedTable(unittest.TestCase):
             ['a0', 'a1', 'a2'],
             ['b0', 'b1', 'b2']
         ]
-        self.assertEquals(ParameterFixedTable.tableToString(table), 'a0,a1,a2,b0,b1,b2')
+        self.assertEqual(ParameterFixedTable.tableToString(table), 'a0,a1,a2,b0,b1,b2')
 
         table = [['a0']]
-        self.assertEquals(ParameterFixedTable.tableToString(table), 'a0')
+        self.assertEqual(ParameterFixedTable.tableToString(table), 'a0')
 
         table = [[]]
-        self.assertEquals(ParameterFixedTable.tableToString(table), '')
+        self.assertEqual(ParameterFixedTable.tableToString(table), '')
 
     def testSetStringValue(self):
         parameter = ParameterFixedTable('myName', 'myDesc')
@@ -267,6 +303,19 @@ class ParameterMultipleInputTest(unittest.TestCase):
         self.assertFalse(parameter.setValue(None))
         self.assertEqual(parameter.value, "myLayerFile.shp")
 
+    def testMultipleInput(self):
+        parameter = ParameterMultipleInput('myName', 'myDesc', optional=True)
+        self.assertTrue(parameter.setMinNumInputs(1))
+
+        parameter = ParameterMultipleInput('myName', 'myDesc', optional=False)
+        self.assertFalse(parameter.setMinNumInputs(0))
+
+        parameter.setMinNumInputs(2)
+        self.assertTrue(parameter.setValue(['myLayerFile.shp', 'myLayerFile2.shp']))
+
+        parameter.setMinNumInputs(3)
+        self.assertFalse(parameter.setValue(['myLayerFile.shp', 'myLayerFile2.shp']))
+
     def testGetAsStringWhenRaster(self):
         parameter = ParameterMultipleInput('myName', 'myDesc', datatype=ParameterMultipleInput.TYPE_RASTER)
 
@@ -301,7 +350,7 @@ class ParameterNumberTest(unittest.TestCase):
     def testSetValue(self):
         parameter = ParameterNumber('myName', 'myDescription')
         self.assertTrue(parameter.setValue(5))
-        self.assertEquals(parameter.value, 5)
+        self.assertEqual(parameter.value, 5)
 
     def testSetValueOnlyValidNumbers(self):
         parameter = ParameterNumber('myName', 'myDescription')
@@ -350,16 +399,96 @@ class ParameterNumberTest(unittest.TestCase):
         self.assertEqual(requiredParameter.value, 5)
 
 
-def suite():
-    suite = unittest.makeSuite(ParametersTest, 'test')
-    return suite
+class ParameterStringTest(unittest.TestCase):
+
+    def testSetValue(self):
+        parameter = ParameterString('myName', 'myDescription')
+        self.assertTrue(parameter.setValue('test'))
+        self.assertEqual(parameter.value, 'test')
+
+    def testOptional(self):
+        optionalParameter = ParameterString('myName', 'myDesc', default='test', optional=True)
+        self.assertEqual(optionalParameter.value, 'test')
+        optionalParameter.setValue('check')
+        self.assertEqual(optionalParameter.value, 'check')
+        self.assertTrue(optionalParameter.setValue(None))
+        self.assertEqual(optionalParameter.value, '')
+
+        requiredParameter = ParameterCrs('myName', 'myDesc', default='test', optional=False)
+        self.assertEqual(requiredParameter.value, 'test')
+        requiredParameter.setValue('check')
+        self.assertEqual(requiredParameter.value, 'check')
+        self.assertFalse(requiredParameter.setValue(None))
+        self.assertEqual(requiredParameter.value, 'check')
 
 
-def runtests():
-    result = unittest.TestResult()
-    testsuite = suite()
-    testsuite.run(result)
-    return result
+class ParameterTableFieldTest(unittest.TestCase):
+
+    def testOptional(self):
+        parent_name = 'test_parent_layer'
+        test_data = points2()
+        test_layer = QgsVectorLayer(test_data, parent_name, 'ogr')
+        parent = ParameterVector(parent_name, parent_name)
+        parent.setValue(test_layer)
+        parameter = ParameterTableField(
+            'myName', 'myDesc', parent_name, optional=True)
+
+
+class ParameterTableMultipleFieldTest(unittest.TestCase):
+
+    def setUp(self):
+        self.parent_name = 'test_parent_layer'
+        test_data = points2()
+        test_layer = QgsVectorLayer(test_data, self.parent_name, 'ogr')
+        self.parent = ParameterVector(self.parent_name,
+                                      self.parent_name)
+        self.parent.setValue(test_layer)
+
+    def testGetAsScriptCode(self):
+        parameter = ParameterTableMultipleField(
+            'myName', 'myDesc', self.parent_name, optional=False)
+
+        self.assertEqual(
+            parameter.getAsScriptCode(),
+            '##myName=multiple field test_parent_layer')
+
+        # test optional
+        parameter.optional = True
+        self.assertEqual(
+            parameter.getAsScriptCode(),
+            '##myName=optional multiple field test_parent_layer')
+
+    def testOptional(self):
+        parameter = ParameterTableMultipleField(
+            'myName', 'myDesc', self.parent_name, optional=True)
+
+        parameter.setValue(['my', 'super', 'widget', '77'])
+        self.assertEqual(parameter.value, 'my;super;widget;77')
+
+        parameter.setValue([])
+        self.assertEqual(parameter.value, None)
+
+        parameter.setValue(None)
+        self.assertEqual(parameter.value, None)
+
+        parameter.setValue(['my', 'widget', '77'])
+        self.assertEqual(parameter.value, 'my;widget;77')
+
+    def testSetValue(self):
+        parameter = ParameterTableMultipleField(
+            'myName', 'myDesc', self.parent_name, optional=False)
+
+        parameter.setValue(['my', 'super', 'widget', '77'])
+        self.assertEqual(parameter.value, 'my;super;widget;77')
+
+        parameter.setValue([])
+        self.assertEqual(parameter.value, 'my;super;widget;77')
+
+        parameter.setValue(None)
+        self.assertEqual(parameter.value, 'my;super;widget;77')
+
+        parameter.setValue(['my', 'widget', '77'])
+        self.assertEqual(parameter.value, 'my;widget;77')
 
 if __name__ == '__main__':
     unittest.main()

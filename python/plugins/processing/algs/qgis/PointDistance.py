@@ -25,8 +25,13 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
+import os
 import math
-from qgis.core import QgsFeatureRequest, QgsFeature, QgsGeometry, QgsDistanceArea
+
+from qgis.PyQt.QtGui import QIcon
+
+from qgis.core import QgsFeatureRequest, QgsDistanceArea
+
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.parameters import ParameterNumber
 from processing.core.parameters import ParameterVector
@@ -34,6 +39,8 @@ from processing.core.parameters import ParameterSelection
 from processing.core.parameters import ParameterTableField
 from processing.core.outputs import OutputTable
 from processing.tools import dataobjects, vector
+
+pluginPath = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
 
 
 class PointDistance(GeoAlgorithm):
@@ -45,6 +52,9 @@ class PointDistance(GeoAlgorithm):
     MATRIX_TYPE = 'MATRIX_TYPE'
     NEAREST_POINTS = 'NEAREST_POINTS'
     DISTANCE_MATRIX = 'DISTANCE_MATRIX'
+
+    def getIcon(self):
+        return QIcon(os.path.join(pluginPath, 'images', 'ftools', 'matrix.png'))
 
     def defineCharacteristics(self):
         self.name, self.i18n_name = self.trAlgorithm('Distance matrix')
@@ -82,11 +92,14 @@ class PointDistance(GeoAlgorithm):
         nPoints = self.getParameterValue(self.NEAREST_POINTS)
 
         outputFile = self.getOutputFromName(self.DISTANCE_MATRIX)
+        self.writer = outputFile.getTableWriter([])
+
+        if inLayer.id() == targetLayer.id():
+            if nPoints > 0:
+                nPoints += 1
 
         if nPoints < 1:
             nPoints = len(vector.features(targetLayer))
-
-        self.writer = outputFile.getTableWriter([])
 
         if matType == 0:
             # Linear distance matrix
@@ -116,7 +129,7 @@ class PointDistance(GeoAlgorithm):
         distArea = QgsDistanceArea()
 
         features = vector.features(inLayer)
-        total = 100.0 / len(features)
+        total = 100.0 / len(features) if len(features) > 0 else 1
         for current, inFeat in enumerate(features):
             inGeom = inFeat.geometry()
             inID = unicode(inFeat.attributes()[inIdx])
@@ -148,33 +161,30 @@ class PointDistance(GeoAlgorithm):
 
     def regularMatrix(self, inLayer, inField, targetLayer, targetField,
                       nPoints, progress):
-        index = vector.spatialindex(targetLayer)
+        features = vector.features(inLayer)
+        total = 100.0 / len(features) if len(features) > 0 else 1
 
-        inIdx = inLayer.fieldNameIndex(inField)
-
-        distArea = QgsDistanceArea()
+        targetIdx = targetLayer.fieldNameIndex(targetField)
 
         first = True
-        features = vector.features(inLayer)
-        total = 100.0 / len(features)
+        distArea = QgsDistanceArea()
+        index = vector.spatialindex(targetLayer)
+
         for current, inFeat in enumerate(features):
             inGeom = inFeat.geometry()
-            inID = unicode(inFeat.attributes()[inIdx])
-            featList = index.nearestNeighbor(inGeom.asPoint(), nPoints)
             if first:
+                featList = index.nearestNeighbor(inGeom.asPoint(), nPoints)
                 first = False
                 data = ['ID']
-                for i in range(len(featList)):
-                    data.append('DIST_{0}'.format(i + 1))
+                request = QgsFeatureRequest().setFilterFids(featList).setSubsetOfAttributes([targetIdx])
+                for f in targetLayer.getFeatures(request):
+                    data.append(unicode(f[targetField]))
                 self.writer.addRecord(data)
 
-            data = [inID]
-            for i in featList:
-                request = QgsFeatureRequest().setFilterFid(i)
-                outFeat = targetLayer.getFeatures(request).next()
-                outGeom = outFeat.geometry()
-                dist = distArea.measureLine(inGeom.asPoint(),
-                                            outGeom.asPoint())
+            data = [unicode(inFeat[inField])]
+            for f in targetLayer.getFeatures(request):
+                outGeom = f.geometry()
+                dist = distArea.measureLine(inGeom.asPoint(), outGeom.asPoint())
                 data.append(unicode(float(dist)))
             self.writer.addRecord(data)
 

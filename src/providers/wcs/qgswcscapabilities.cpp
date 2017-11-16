@@ -32,6 +32,7 @@
 #include "qgsnetworkaccessmanager.h"
 #include "qgsmessageoutput.h"
 #include "qgsmessagelog.h"
+#include "qgscrscache.h"
 
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -195,7 +196,6 @@ bool QgsWcsCapabilities::sendRequest( QString const & url )
 
 void QgsWcsCapabilities::clear()
 {
-  QgsDebugMsg( "Entered" );
   mCoverageCount = 0;
   mCoveragesSupported.clear();
   mCapabilities = QgsWcsCapabilitiesProperty();
@@ -716,7 +716,6 @@ void QgsWcsCapabilities::parseContentMetadata( QDomElement const & e, QgsWcsCove
 void QgsWcsCapabilities::parseCoverageOfferingBrief( QDomElement const & e, QgsWcsCoverageSummary &coverageSummary, QgsWcsCoverageSummary *parent )
 {
   Q_UNUSED( parent );
-  QgsDebugMsg( "Entered" );
   coverageSummary.orderId = ++mCoverageCount;
 
   coverageSummary.identifier = firstChildText( e, "name" );
@@ -982,8 +981,8 @@ bool QgsWcsCapabilities::parseDescribeCoverageDom11( QByteArray const &xml, QgsW
     else
     {
       QgsRectangle box;
-      QgsCoordinateReferenceSystem crs;
-      if ( crs.createFromOgcWmsCrs( authid ) && crs.axisInverted() )
+      QgsCoordinateReferenceSystem crs = QgsCRSCache::instance()->crsByOgcWmsCrs( authid );
+      if ( crs.isValid() && crs.axisInverted() )
       {
         box = QgsRectangle( low[1], low[0], high[1], high[0] );
       }
@@ -1194,7 +1193,6 @@ QString QgsWcsCapabilities::lastErrorFormat()
 
 bool QgsWcsCapabilities::setAuthorization( QNetworkRequest &request ) const
 {
-  QgsDebugMsg( "entered" );
   if ( mUri.hasParam( "authcfg" ) && !mUri.param( "authcfg" ).isEmpty() )
   {
     return QgsAuthManager::instance()->updateNetworkRequest( request, mUri.param( "authcfg" ) );

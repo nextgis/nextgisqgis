@@ -171,9 +171,35 @@ class QgsGeometry
 
     /**
      * Returns the vertex closest to the given point, the corresponding vertex index, squared distance snap point / target point
-     * and the indices of the vertices before/after. The vertices before/after are -1 if not present
+     * and the indices of the vertices before and after the closest vertex.
+     * @param point point to search for
+     * @param atVertex will be set to the vertex index of the closest found vertex
+     * @param beforeVertex will be set to the vertex index of the previous vertex from the closest one. Will be set to -1 if
+     * not present.
+     * @param afterVertex will be set to the vertex index of the next vertex after the closest one. Will be set to -1 if
+     * not present.
+     * @param sqrDist will be set to the square distance between the closest vertex and the specified point
+     * @returns closest point in geometry. If not found (empty geometry), returns null point nad sqrDist is negative.
      */
+    //TODO QGIS 3.0 - rename beforeVertex to previousVertex, afterVertex to nextVertex
     QgsPoint closestVertex( const QgsPoint& point, int& atVertex /Out/, int& beforeVertex /Out/, int& afterVertex /Out/, double& sqrDist /Out/ ) const;
+
+    /**
+     * Returns the distance along this geometry from its first vertex to the specified vertex.
+     * @param vertex vertex index to calculate distance to
+     * @returns distance to vertex (following geometry), or -1 for invalid vertex numbers
+     * @note added in QGIS 2.16
+     */
+    double distanceToVertex( int vertex ) const;
+
+    /**
+     * Returns the bisector angle for this geometry at the specified vertex.
+     * @param vertex vertex index to calculate bisector angle at
+     * @returns bisector angle, in radians clockwise from north
+     * @note added in QGIS 2.18
+     * @see interpolateAngle()
+     */
+    double angleAtVertex( int vertex ) const;
 
     /**
      * Returns the indexes of the vertices before and after the given vertex index.
@@ -370,6 +396,15 @@ class QgsGeometry
      */
     int reshapeGeometry( const QList<QgsPoint>& reshapeWithLine );
 
+    /**
+      * Replaces a part of this geometry with another line with Z support
+      *
+      * @return 0 in case of success
+      *
+      * @note added in 2.18
+      */
+    int reshapeGeometry( const QList<QgsPointV2>& reshapeWithLine );
+
     /** Changes this geometry such that it does not intersect the other geometry
      * @param other geometry that should not be intersect
      * @return 0 in case of success
@@ -456,8 +491,31 @@ class QgsGeometry
     /**
      * Return interpolated point on line at distance
      * @note added in 1.9
+     * @see lineLocatePoint()
      */
     QgsGeometry* interpolate( double distance ) /Factory/;
+
+    /** Returns a distance representing the location along this linestring of the closest point
+     * on this linestring geometry to the specified point. Ie, the returned value indicates
+     * how far along this linestring you need to traverse to get to the closest location
+     * where this linestring comes to the specified point.
+     * @param point point to seek proximity to
+     * @return distance along line, or -1 on error
+     * @note only valid for linestring geometries
+     * @see interpolate()
+     * @note added in QGIS 2.18
+     */
+    double lineLocatePoint( const QgsGeometry& point ) const;
+
+    /** Returns the angle parallel to the linestring or polygon boundary at the specified distance
+     * along the geometry. Angles are in radians, clockwise from north.
+     * If the distance coincides precisely at a node then the average angle from the segment either side
+     * of the node is returned.
+     * @param distance distance along geometry
+     * @note added in QGIS 2.18
+     * @see angleAtVertex()
+     */
+    double interpolateAngle( double distance ) const;
 
     /** Returns a geometry representing the points shared by this geometry and other. */
     QgsGeometry* intersection( const QgsGeometry* geometry ) const /Factory/;
@@ -467,6 +525,15 @@ class QgsGeometry
      * @note this operation is not called union since its a reserved word in C++.
      */
     QgsGeometry* combine( const QgsGeometry* geometry ) const /Factory/;
+
+    /** Merges any connected lines in a LineString/MultiLineString geometry and
+     * converts them to single line strings.
+     * @returns a LineString or MultiLineString geometry, with any connected lines
+     * joined. An empty geometry will be returned if the input geometry was not a
+     * MultiLineString geometry.
+     * @note added in QGIS 2.18
+     */
+    QgsGeometry mergeLines() const;
 
     /** Returns a geometry representing the points making up this geometry that do not make up other. */
     QgsGeometry* difference( const QgsGeometry* geometry ) const /Factory/;
@@ -756,6 +823,9 @@ class QgsGeometry
      * @param output destination for list of points converted to QgsPoint
      */
     static void convertPointList( const QList<QgsPointV2>& input, QList<QgsPoint>& output );
+
+    //! Allows direct construction of QVariants from geometry.
+    operator QVariant() const;
 
 }; // class QgsGeometry
 

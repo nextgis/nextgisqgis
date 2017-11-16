@@ -51,8 +51,6 @@ QgsCustomProjectionDialog::QgsCustomProjectionDialog( QWidget *parent, Qt::Windo
   QSettings settings;
   restoreGeometry( settings.value( "/Windows/CustomProjection/geometry" ).toByteArray() );
 
-  pbnAdd->setIcon( QgsApplication::getThemeIcon( "symbologyAdd.svg" ) );
-  pbnRemove->setIcon( QgsApplication::getThemeIcon( "symbologyRemove.svg" ) );
   // user database is created at QGIS startup in QgisApp::createDB
   // we just check whether there is our database [MD]
   QFileInfo myFileInfo;
@@ -369,7 +367,6 @@ void QgsCustomProjectionDialog::on_leNameList_currentItemChanged( QTreeWidgetIte
 
 void QgsCustomProjectionDialog::on_pbnCopyCRS_clicked()
 {
-  QgsDebugMsg( "Entered" );
   QgsGenericProjectionSelector *mySelector = new QgsGenericProjectionSelector( this );
   if ( mySelector->exec() )
   {
@@ -390,7 +387,6 @@ void QgsCustomProjectionDialog::on_pbnCopyCRS_clicked()
 
 void QgsCustomProjectionDialog::on_buttonBox_accepted()
 {
-  QgsDebugMsg( "Entered" );
   //Update the current CRS:
   int i = leNameList->currentIndex().row();
   if ( i != -1 )
@@ -452,7 +448,6 @@ void QgsCustomProjectionDialog::on_buttonBox_accepted()
 
 void QgsCustomProjectionDialog::on_pbnCalculate_clicked()
 {
-  QgsDebugMsg( "entered." );
 
 
   //

@@ -52,7 +52,8 @@ QgsPluginRegistry *QgsPluginRegistry::instance()
 }
 
 QgsPluginRegistry::QgsPluginRegistry()
-    : mPythonUtils( nullptr ), mQgisInterface( nullptr )
+    : mPythonUtils( nullptr )
+    , mQgisInterface( nullptr )
 {
 // constructor does nothing
 }
@@ -236,7 +237,7 @@ bool QgsPluginRegistry::checkQgisVersion( const QString& minVersion, const QStri
   }
 
   // our qgis version - cut release name after version number
-  QString qgisVersion = QString( QGis::QGIS_VERSION ).section( '-', 0, 0 );
+  QString qgisVersion = QGis::QGIS_VERSION.section( '-', 0, 0 );
 
   QStringList qgisVersionParts = qgisVersion.split( '.' );
 
@@ -494,7 +495,6 @@ void QgsPluginRegistry::restoreSessionPlugins( const QString& thePluginDirString
     QgsDebugMsg( "Loading python plugins" );
 
     QStringList corePlugins = QStringList();
-    corePlugins << "fTools";
     corePlugins << "GdalTools";
     corePlugins << "db_manager";
     corePlugins << "processing";

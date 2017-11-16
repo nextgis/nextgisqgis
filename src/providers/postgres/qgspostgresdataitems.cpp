@@ -38,6 +38,7 @@ QgsPGConnectionItem::QgsPGConnectionItem( QgsDataItem* parent, QString name, QSt
     : QgsDataCollectionItem( parent, name, path )
 {
   mIconName = "mIconConnect.png";
+  mCapabilities |= Collapse;
 }
 
 QgsPGConnectionItem::~QgsPGConnectionItem()
@@ -46,7 +47,6 @@ QgsPGConnectionItem::~QgsPGConnectionItem()
 
 QVector<QgsDataItem*> QgsPGConnectionItem::createChildren()
 {
-  QgsDebugMsg( "Entered" );
 
   QVector<QgsDataItem*>items;
 
@@ -449,9 +449,9 @@ QString QgsPGLayerItem::createUri()
 
   QgsDataSourceURI uri( QgsPostgresConn::connUri( connItem->name() ).connectionInfo( false ) );
   uri.setDataSource( mLayerProperty.schemaName, mLayerProperty.tableName, mLayerProperty.geometryColName, mLayerProperty.sql, pkColName );
-  uri.setWkbType( QGis::fromOldWkbType( mLayerProperty.types[0] ) );
+  uri.setWkbType( QGis::fromOldWkbType( mLayerProperty.types.at( 0 ) ) );
   if ( uri.newWkbType() != QgsWKBTypes::NoGeometry )
-    uri.setSrid( QString::number( mLayerProperty.srids[0] ) );
+    uri.setSrid( QString::number( mLayerProperty.srids.at( 0 ) ) );
   QgsDebugMsg( QString( "layer uri: %1" ).arg( uri.uri( false ) ) );
   return uri.uri( false );
 }
@@ -470,7 +470,6 @@ QgsPGSchemaItem::~QgsPGSchemaItem()
 
 QVector<QgsDataItem*> QgsPGSchemaItem::createChildren()
 {
-  QgsDebugMsg( "Entered" );
 
   QVector<QgsDataItem*>items;
 

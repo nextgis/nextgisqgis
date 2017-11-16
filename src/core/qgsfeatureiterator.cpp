@@ -15,7 +15,6 @@
 #include "qgsfeatureiterator.h"
 #include "qgslogger.h"
 
-#include "qgsgeometrysimplifier.h"
 #include "qgssimplifymethod.h"
 
 #include "qgsexpressionsorter.h"
@@ -26,15 +25,13 @@ QgsAbstractFeatureIterator::QgsAbstractFeatureIterator( const QgsFeatureRequest&
     , mZombie( false )
     , refs( 0 )
     , mFetchedCount( 0 )
-    , mGeometrySimplifier( nullptr )
-    , mLocalSimplification( false )
+    , mCompileStatus( NoCompilation )
     , mUseCachedFeatures( false )
 {
 }
 
 QgsAbstractFeatureIterator::~QgsAbstractFeatureIterator()
 {
-  delete mGeometrySimplifier;
 }
 
 bool QgsAbstractFeatureIterator::nextFeature( QgsFeature& f )
@@ -78,12 +75,6 @@ bool QgsAbstractFeatureIterator::nextFeature( QgsFeature& f )
     }
   }
 
-  // simplify the geometry using the simplifier configured
-  if ( dataOk && mLocalSimplification )
-  {
-    if ( f.constGeometry() )
-      simplify( f );
-  }
   if ( dataOk )
     mFetchedCount++;
 
@@ -137,18 +128,7 @@ void QgsAbstractFeatureIterator::deref()
 
 bool QgsAbstractFeatureIterator::prepareSimplification( const QgsSimplifyMethod& simplifyMethod )
 {
-  mLocalSimplification = false;
-
-  delete mGeometrySimplifier;
-  mGeometrySimplifier = nullptr;
-
-  // setup the simplification of geometries to fetch
-  if ( !( mRequest.flags() & QgsFeatureRequest::NoGeometry ) && simplifyMethod.methodType() != QgsSimplifyMethod::NoSimplification && ( simplifyMethod.forceLocalOptimization() || !providerCanSimplify( simplifyMethod.methodType() ) ) )
-  {
-    mGeometrySimplifier = QgsSimplifyMethod::createGeometrySimplifier( simplifyMethod );
-    mLocalSimplification = nullptr != mGeometrySimplifier;
-    return mLocalSimplification;
-  }
+  Q_UNUSED( simplifyMethod );
   return false;
 }
 
@@ -204,24 +184,14 @@ bool QgsAbstractFeatureIterator::providerCanSimplify( QgsSimplifyMethod::MethodT
   return false;
 }
 
-bool QgsAbstractFeatureIterator::simplify( QgsFeature& feature )
-{
-  // simplify locally the geometry using the configured simplifier
-  if ( mGeometrySimplifier )
-  {
-    QgsGeometry* geometry = feature.geometry();
-
-    QGis::GeometryType geometryType = geometry->type();
-    if ( geometryType == QGis::Line || geometryType == QGis::Polygon )
-      return mGeometrySimplifier->simplifyGeometry( geometry );
-  }
-  return false;
-}
-
 bool QgsAbstractFeatureIterator::prepareOrderBy( const QList<QgsFeatureRequest::OrderByClause>& orderBys )
 {
   Q_UNUSED( orderBys )
   return false;
+}
+
+void QgsAbstractFeatureIterator::setInterruptionChecker( QgsInterruptionChecker* )
+{
 }
 
 ///////

@@ -33,10 +33,7 @@ QgsAttributeDialog::QgsAttributeDialog( QgsVectorLayer* vl, QgsFeature* thepFeat
   QgsAttributeEditorContext context;
   context.setDistanceArea( myDa );
 
-  init( vl, thepFeature, context );
-
-  if ( !showDialogButtons )
-    mAttributeForm->hideButtonBox();
+  init( vl, thepFeature, context, showDialogButtons );
 }
 
 QgsAttributeDialog::QgsAttributeDialog( QgsVectorLayer* vl, QgsFeature* thepFeature, bool featureOwner, QWidget* parent, bool showDialogButtons, const QgsAttributeEditorContext &context )
@@ -44,10 +41,7 @@ QgsAttributeDialog::QgsAttributeDialog( QgsVectorLayer* vl, QgsFeature* thepFeat
     , mHighlight( nullptr )
     , mOwnedFeature( featureOwner ? thepFeature : nullptr )
 {
-  init( vl, thepFeature, context );
-
-  if ( !showDialogButtons )
-    mAttributeForm->hideButtonBox();
+  init( vl, thepFeature, context, showDialogButtons );
 }
 
 QgsAttributeDialog::~QgsAttributeDialog()
@@ -94,12 +88,27 @@ void QgsAttributeDialog::show()
   activateWindow();
 }
 
-void QgsAttributeDialog::init( QgsVectorLayer* layer, QgsFeature* feature, const QgsAttributeEditorContext &context )
+void QgsAttributeDialog::reject()
 {
+  // Delete any actions on other layers that may have been triggered from this dialog
+  if ( mAttributeForm->mode() == QgsAttributeForm::AddFeatureMode )
+    mTrackedVectorLayerTools.rollback();
+
+  QDialog::reject();
+}
+
+void QgsAttributeDialog::init( QgsVectorLayer* layer, QgsFeature* feature, const QgsAttributeEditorContext& context, bool showDialogButtons )
+{
+  QgsAttributeEditorContext trackedContext = context;
   setWindowTitle( tr( "%1 - Feature Attributes" ).arg( layer->name() ) );
   setLayout( new QGridLayout() );
   layout()->setMargin( 0 );
-  mAttributeForm = new QgsAttributeForm( layer, *feature, context, this );
+  mTrackedVectorLayerTools.setVectorLayerTools( trackedContext.vectorLayerTools() );
+  trackedContext.setVectorLayerTools( &mTrackedVectorLayerTools );
+  if ( showDialogButtons )
+    trackedContext.setFormMode( QgsAttributeEditorContext::StandaloneDialog );
+
+  mAttributeForm = new QgsAttributeForm( layer, *feature, trackedContext, this );
   mAttributeForm->disconnectButtonBox();
   layout()->addWidget( mAttributeForm );
   QDialogButtonBox* buttonBox = mAttributeForm->findChild<QDialogButtonBox*>();

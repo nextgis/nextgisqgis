@@ -35,6 +35,7 @@ public:
                Qt::WindowFlags fl = Qt::Window );
     virtual ~NGQgisApp();
 protected:
+    virtual void setupAppUi();
     virtual void setupNetworkAccessManager();
     virtual void setupDatabase();
     virtual void setupAuthentication();
@@ -66,13 +67,14 @@ protected:
     virtual void supportProviders() override;
     virtual void helpQgisHomePage() override;
     virtual void updateCRSStatusBar() override;
-    virtual void openURL(QString url, bool useQgisDocDirectory = true) override;
     virtual void activateDeactivateLayerRelatedActions(QgsMapLayer *layer) override;
     virtual void fileNew(bool thePromptToSaveFlag, bool forceBlank) override;
     virtual void projectProperties() override;
     virtual bool addProject(const QString &projectFile) override;
     virtual bool fileSave() override;
     virtual void fileSaveAs() override;
+    virtual void functionProfileNG( void ( NGQgisApp::*fnc )(), NGQgisApp *instance, QString name );
+
 
 private:   
     bool mUpdatesCheckStartByUser;

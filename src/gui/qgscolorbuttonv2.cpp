@@ -49,6 +49,7 @@ QgsColorButtonV2::QgsColorButtonV2( QWidget *parent, const QString& cdt, QgsColo
     , mColorSet( false )
     , mShowNoColorOption( false )
     , mNoColorString( tr( "No color" ) )
+    , mShowNull( false )
     , mPickingColor( false )
     , mMenu( nullptr )
 
@@ -93,6 +94,25 @@ const QPixmap& QgsColorButtonV2::transparentBackground()
 
 void QgsColorButtonV2::showColorDialog()
 {
+  QColor currentColor = color();
+  if ( QgsPanelWidget* panel = QgsPanelWidget::findParentPanel( this ) )
+  {
+    QgsCompoundColorWidget* colorWidget = new QgsCompoundColorWidget( panel, currentColor, panel->dockMode() ? QgsCompoundColorWidget::LayoutVertical :
+        QgsCompoundColorWidget::LayoutDefault );
+    colorWidget->setPanelTitle( mColorDialogTitle );
+    colorWidget->setAllowAlpha( mAllowAlpha );
+
+    if ( currentColor.isValid() )
+    {
+      colorWidget->setPreviousColor( currentColor );
+    }
+
+    connect( colorWidget, SIGNAL( currentColorChanged( QColor ) ), this, SLOT( setValidTemporaryColor( QColor ) ) );
+    connect( colorWidget, SIGNAL( panelAccepted( QgsPanelWidget* ) ), this, SLOT( panelAccepted( QgsPanelWidget* ) ) );
+    panel->openPanel( colorWidget );
+    return;
+  }
+
   QColor newColor;
   QSettings settings;
 
@@ -153,6 +173,29 @@ void QgsColorButtonV2::setToDefaultColor()
   }
 
   setColor( mDefaultColor );
+}
+
+void QgsColorButtonV2::setToNull()
+{
+  setColor( QColor() );
+}
+
+bool QgsColorButtonV2::event( QEvent *e )
+{
+  if ( e->type() == QEvent::ToolTip )
+  {
+    QString name = this->color().name();
+    int hue = this->color().hue();
+    int value = this->color().value();
+    int saturation = this->color().saturation();
+    QString info = QString( "HEX: %1 \n"
+                            "RGB: %2 \n"
+                            "HSV: %3,%4,%5" ).arg( name )
+                   .arg( QgsSymbolLayerV2Utils::encodeColor( this->color() ) )
+                   .arg( hue ).arg( saturation ).arg( value );
+    setToolTip( info );
+  }
+  return QToolButton::event( e );
 }
 
 void QgsColorButtonV2::setToNoColor()
@@ -344,6 +387,23 @@ void QgsColorButtonV2::setValidColor( const QColor& newColor )
   }
 }
 
+void QgsColorButtonV2::setValidTemporaryColor( const QColor& newColor )
+{
+  if ( newColor.isValid() )
+  {
+    setColor( newColor );
+  }
+}
+
+void QgsColorButtonV2::panelAccepted( QgsPanelWidget* widget )
+{
+  if ( QgsCompoundColorWidget* colorWidget = qobject_cast< QgsCompoundColorWidget* >( widget ) )
+  {
+    addRecentColor( colorWidget->color() );
+    colorWidget->deleteLater();
+  }
+}
+
 QPixmap QgsColorButtonV2::createMenuIcon( const QColor &color, const bool showChecks )
 {
   //create an icon pixmap
@@ -393,6 +453,14 @@ void QgsColorButtonV2::prepareMenu()
   //menu is opened, otherwise color schemes like the recent color scheme grid are meaningless
   mMenu->clear();
 
+  if ( mShowNull )
+  {
+    QAction* nullAction = new QAction( tr( "Clear color" ), this );
+    nullAction->setIcon( createMenuIcon( Qt::transparent, false ) );
+    mMenu->addAction( nullAction );
+    connect( nullAction, SIGNAL( triggered() ), this, SLOT( setToNull() ) );
+  }
+
   //show default color option if set
   if ( mDefaultColor.isValid() )
   {
@@ -409,6 +477,15 @@ void QgsColorButtonV2::prepareMenu()
     mMenu->addAction( noColorAction );
     connect( noColorAction, SIGNAL( triggered() ), this, SLOT( setToNoColor() ) );
   }
+
+  mMenu->addSeparator();
+  QgsColorWheel* colorWheel = new QgsColorWheel( mMenu );
+  colorWheel->setColor( color() );
+  QgsColorWidgetAction* colorAction = new QgsColorWidgetAction( colorWheel, mMenu, mMenu );
+  colorAction->setDismissOnColorSelection( false );
+  connect( colorAction, SIGNAL( colorChanged( const QColor& ) ), this, SLOT( setColor( const QColor& ) ) );
+  mMenu->addAction( colorAction );
+
 
   if ( mColorSchemeRegistry )
   {
@@ -655,5 +732,20 @@ void QgsColorButtonV2::setBehaviour( const QgsColorButtonV2::Behaviour behaviour
 void QgsColorButtonV2::setDefaultColor( const QColor& color )
 {
   mDefaultColor = color;
+}
+
+void QgsColorButtonV2::setShowNull( bool showNull )
+{
+  mShowNull = showNull;
+}
+
+bool QgsColorButtonV2::showNull() const
+{
+  return mShowNull;
+}
+
+bool QgsColorButtonV2::isNull() const
+{
+  return !mColor.isValid();
 }
 

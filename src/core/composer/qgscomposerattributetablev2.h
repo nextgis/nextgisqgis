@@ -20,11 +20,14 @@
 
 #include "qgscomposertablev2.h"
 #include "qgscomposerattributetable.h"
+#include "qgsvectorlayerref.h"
 
 class QgsComposerMap;
 class QgsVectorLayer;
 
-/** Helper class for sorting tables, takes into account sorting column and ascending / descending*/
+/** \ingroup core
+ * Helper class for sorting tables, takes into account sorting column and ascending / descending
+*/
 class CORE_EXPORT QgsComposerAttributeTableCompareV2
 {
   public:
@@ -47,7 +50,9 @@ class CORE_EXPORT QgsComposerAttributeTableCompareV2
 };
 
 
-/** A table that displays attributes from a vector layer*/
+/** \ingroup core
+ * A table that displays attributes from a vector layer
+*/
 class CORE_EXPORT QgsComposerAttributeTableV2: public QgsComposerTableV2
 {
     Q_OBJECT
@@ -116,7 +121,7 @@ class CORE_EXPORT QgsComposerAttributeTableV2: public QgsComposerTableV2
      * @returns attribute table's current vector layer
      * @see setVectorLayer
      */
-    QgsVectorLayer* vectorLayer() const { return mVectorLayer; }
+    QgsVectorLayer* vectorLayer() const { return mVectorLayer.get(); }
 
     /** Sets the relation id from which to display child features
      * @param relationId id for relation to display child features from
@@ -258,9 +263,19 @@ class CORE_EXPORT QgsComposerAttributeTableV2: public QgsComposerTableV2
      * @param refresh set to true to force the table to refetch features from its vector layer
      * and immediately update the display of the table. This may result in the table changing size
      * to accommodate the new displayed feature attributes.
-     * @see displayAttributes
+     * @deprecated use setDisplayedFields() instead
      */
-    void setDisplayAttributes( const QSet<int>& attr, bool refresh = true );
+    Q_DECL_DEPRECATED void setDisplayAttributes( const QSet<int>& attr, bool refresh = true );
+
+    /** Sets the attributes to display in the table.
+     * @param fields list of fields names from the vector layer to show.
+     * Set to an empty list to show all feature attributes.
+     * @param refresh set to true to force the table to refetch features from its vector layer
+     * and immediately update the display of the table. This may result in the table changing size
+     * to accommodate the new displayed feature attributes.
+     * @note added in QGIS 2.16
+     */
+    void setDisplayedFields( const QStringList& fields, bool refresh = true );
 
     /** Returns the attributes used to sort the table's features.
      * @returns a QList of integer/bool pairs, where the integer refers to the attribute index and
@@ -300,7 +315,7 @@ class CORE_EXPORT QgsComposerAttributeTableV2: public QgsComposerTableV2
     /** Attribute source*/
     ContentSource mSource;
     /** Associated vector layer*/
-    QgsVectorLayer* mVectorLayer;
+    QgsVectorLayerRef mVectorLayer;
     /** Relation id, if in relation children mode*/
     QString mRelationId;
 

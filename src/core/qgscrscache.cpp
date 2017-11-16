@@ -55,8 +55,8 @@ const QgsCoordinateTransform* QgsCoordinateTransformCache::transform( const QStr
   }
 
   //not found, insert new value
-  const QgsCoordinateReferenceSystem& srcCrs = QgsCRSCache::instance()->crsByAuthId( srcAuthId );
-  const QgsCoordinateReferenceSystem& destCrs = QgsCRSCache::instance()->crsByAuthId( destAuthId );
+  QgsCoordinateReferenceSystem srcCrs = QgsCRSCache::instance()->crsByOgcWmsCrs( srcAuthId );
+  QgsCoordinateReferenceSystem destCrs = QgsCRSCache::instance()->crsByOgcWmsCrs( destAuthId );
   QgsCoordinateTransform* ct = new QgsCoordinateTransform( srcCrs, destCrs );
   ct->setSourceDatumTransform( srcDatumTransform );
   ct->setDestinationDatumTransform( destDatumTransform );
@@ -95,11 +95,15 @@ QgsCRSCache* QgsCRSCache::instance()
 }
 
 QgsCRSCache::QgsCRSCache()
+    : mCRSLock( QReadWriteLock::Recursive )
+    , mCRSProj4Lock( QReadWriteLock::Recursive )
+    , mCRSSrsIdLock( QReadWriteLock::Recursive )
 {
 }
 
 void QgsCRSCache::updateCRSCache( const QString& authid )
 {
+  QWriteLocker lock( &mCRSLock );
   QgsCoordinateReferenceSystem s;
   if ( s.createFromOgcWmsCrs( authid ) )
   {
@@ -113,25 +117,132 @@ void QgsCRSCache::updateCRSCache( const QString& authid )
   QgsCoordinateTransformCache::instance()->invalidateCrs( authid );
 }
 
-const QgsCoordinateReferenceSystem& QgsCRSCache::crsByAuthId( const QString& authid )
+QgsCoordinateReferenceSystem QgsCRSCache::crsByAuthId( const QString& authid )
 {
-  QHash< QString, QgsCoordinateReferenceSystem >::const_iterator crsIt = mCRS.constFind( authid );
+  return crsByOgcWmsCrs( authid );
+}
+
+QgsCoordinateReferenceSystem QgsCRSCache::crsByOgcWmsCrs( const QString& ogcCrs ) const
+{
+  mCRSLock.lockForRead();
+  QHash< QString, QgsCoordinateReferenceSystem >::const_iterator crsIt = mCRS.constFind( ogcCrs );
   if ( crsIt == mCRS.constEnd() )
   {
+    mCRSLock.unlock();
+    mCRSLock.lockForWrite();
     QgsCoordinateReferenceSystem s;
-    if ( ! s.createFromOgcWmsCrs( authid ) )
+    if ( ! s.createFromOgcWmsCrs( ogcCrs ) )
     {
-      return mInvalidCRS;
+      QgsCoordinateReferenceSystem result = mCRS.insert( ogcCrs, mInvalidCRS ).value();
+      mCRSLock.unlock();
+      return result;
     }
-    return mCRS.insert( authid, s ).value();
+    else
+    {
+      QgsCoordinateReferenceSystem result = mCRS.insert( ogcCrs, s ).value();
+      mCRSLock.unlock();
+      return result;
+    }
   }
   else
   {
-    return crsIt.value();
+    QgsCoordinateReferenceSystem result = crsIt.value();
+    mCRSLock.unlock();
+    return result;
   }
 }
 
-const QgsCoordinateReferenceSystem& QgsCRSCache::crsByEpsgId( long epsg )
+QgsCoordinateReferenceSystem QgsCRSCache::crsByEpsgId( long epsg ) const
 {
-  return crsByAuthId( "EPSG:" + QString::number( epsg ) );
+  return crsByOgcWmsCrs( "EPSG:" + QString::number( epsg ) );
+}
+
+QgsCoordinateReferenceSystem QgsCRSCache::crsByProj4( const QString& proj4 ) const
+{
+  mCRSProj4Lock.lockForRead();
+  QHash< QString, QgsCoordinateReferenceSystem >::const_iterator crsIt = mCRSProj4.constFind( proj4 );
+  if ( crsIt == mCRSProj4.constEnd() )
+  {
+    mCRSProj4Lock.unlock();
+    mCRSProj4Lock.lockForWrite();
+    QgsCoordinateReferenceSystem s;
+    if ( ! s.createFromProj4( proj4 ) )
+    {
+      QgsCoordinateReferenceSystem result = mCRSProj4.insert( proj4, mInvalidCRS ).value();
+      mCRSProj4Lock.unlock();
+      return result;
+    }
+    else
+    {
+      QgsCoordinateReferenceSystem result = mCRSProj4.insert( proj4, s ).value();
+      mCRSProj4Lock.unlock();
+      return result;
+    }
+  }
+  else
+  {
+    QgsCoordinateReferenceSystem result = crsIt.value();
+    mCRSProj4Lock.unlock();
+    return result;
+  }
+}
+
+QgsCoordinateReferenceSystem QgsCRSCache::crsByWkt( const QString& wkt ) const
+{
+  mCRSWktLock.lockForRead();
+  QHash< QString, QgsCoordinateReferenceSystem >::const_iterator crsIt = mCRSWkt.constFind( wkt );
+  if ( crsIt == mCRSWkt.constEnd() )
+  {
+    mCRSWktLock.unlock();
+    mCRSWktLock.lockForWrite();
+    QgsCoordinateReferenceSystem s;
+    if ( ! s.createFromWkt( wkt ) )
+    {
+      QgsCoordinateReferenceSystem result = mCRSWkt.insert( wkt, mInvalidCRS ).value();
+      mCRSWktLock.unlock();
+      return result;
+    }
+    else
+    {
+      QgsCoordinateReferenceSystem result = mCRSWkt.insert( wkt, s ).value();
+      mCRSWktLock.unlock();
+      return result;
+    }
+  }
+  else
+  {
+    QgsCoordinateReferenceSystem result = crsIt.value();
+    mCRSWktLock.unlock();
+    return result;
+  }
+}
+
+QgsCoordinateReferenceSystem QgsCRSCache::crsBySrsId( long srsId ) const
+{
+  mCRSSrsIdLock.lockForRead();
+  QHash< long, QgsCoordinateReferenceSystem >::const_iterator crsIt = mCRSSrsId.constFind( srsId );
+  if ( crsIt == mCRSSrsId.constEnd() )
+  {
+    mCRSSrsIdLock.unlock();
+    mCRSSrsIdLock.lockForWrite();
+    QgsCoordinateReferenceSystem s;
+    if ( ! s.createFromSrsId( srsId ) )
+    {
+      QgsCoordinateReferenceSystem result = mCRSSrsId.insert( srsId, mInvalidCRS ).value();
+      mCRSSrsIdLock.unlock();
+      return result;
+    }
+    else
+    {
+      QgsCoordinateReferenceSystem result = mCRSSrsId.insert( srsId, s ).value();
+      mCRSSrsIdLock.unlock();
+      return result;
+    }
+  }
+  else
+  {
+    QgsCoordinateReferenceSystem result = crsIt.value();
+    mCRSSrsIdLock.unlock();
+    return result;
+  }
 }

@@ -124,7 +124,7 @@ class QgsGdalProvider : public QgsRasterDataProvider, QgsGdalProviderBase
      */
     bool isValid() override;
 
-    QgsRasterIdentifyResult identify( const QgsPoint & thePoint, QgsRaster::IdentifyFormat theFormat, const QgsRectangle &theExtent = QgsRectangle(), int theWidth = 0, int theHeight = 0 ) override;
+    QgsRasterIdentifyResult identify( const QgsPoint & thePoint, QgsRaster::IdentifyFormat theFormat, const QgsRectangle &theExtent = QgsRectangle(), int theWidth = 0, int theHeight = 0, int theDpi = 96 ) override;
 
     /**
      * \brief   Returns the caption error text for the last error in this provider
@@ -171,9 +171,10 @@ class QgsGdalProvider : public QgsRasterDataProvider, QgsGdalProviderBase
 
     /** Reimplemented from QgsRasterDataProvider to bypass second resampling (more efficient for local file based sources)*/
     QgsRasterBlock *block( int theBandNo, const QgsRectangle &theExtent, int theWidth, int theHeight ) override;
+    QgsRasterBlock *block2( int theBandNo, const QgsRectangle &theExtent, int theWidth, int theHeight, QgsRasterBlockFeedback* feedback = nullptr ) override;
 
     void readBlock( int bandNo, int xBlock, int yBlock, void *data ) override;
-    void readBlock( int bandNo, QgsRectangle  const & viewExtent, int width, int height, void *data ) override;
+    void readBlock( int bandNo, QgsRectangle  const & viewExtent, int width, int height, void *data, QgsRasterBlockFeedback* feedback = nullptr ) override;
 
     /** Read band scale for raster value
      * @@note added in 2.3 */
@@ -244,8 +245,8 @@ class QgsGdalProvider : public QgsRasterDataProvider, QgsGdalProviderBase
     bool remove() override;
 
     QString validateCreationOptions( const QStringList& createOptions, const QString& format ) override;
-    QString validatePyramidsCreationOptions( QgsRaster::RasterPyramidsFormat pyramidsFormat,
-        const QStringList & theConfigOptions, const QString & fileFormat );
+    QString validatePyramidsConfigOptions( QgsRaster::RasterPyramidsFormat pyramidsFormat,
+                                           const QStringList & theConfigOptions, const QString & fileFormat ) override;
 
   private:
     // update mode

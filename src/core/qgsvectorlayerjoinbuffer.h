@@ -28,7 +28,8 @@
 typedef QList< QgsVectorJoinInfo > QgsVectorJoinList;
 
 
-/** Manages joined fields for a vector layer*/
+/** \ingroup core
+ * Manages joined fields for a vector layer*/
 class CORE_EXPORT QgsVectorLayerJoinBuffer : public QObject
 {
     Q_OBJECT
@@ -90,6 +91,8 @@ class CORE_EXPORT QgsVectorLayerJoinBuffer : public QObject
   private slots:
     void joinedLayerUpdatedFields();
 
+    void joinedLayerModified();
+
   private:
 
     QgsVectorLayer* mLayer;
@@ -99,6 +102,9 @@ class CORE_EXPORT QgsVectorLayerJoinBuffer : public QObject
 
     /** Caches attributes of join layer in memory if QgsVectorJoinInfo.memoryCache is true (and the cache is not already there)*/
     void cacheJoinLayer( QgsVectorJoinInfo& joinInfo );
+
+    /** Main mutex to protect most data members that can be modified concurrently */
+    QMutex mMutex;
 };
 
 #endif // QGSVECTORLAYERJOINBUFFER_H

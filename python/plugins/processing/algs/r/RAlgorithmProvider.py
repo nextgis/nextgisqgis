@@ -27,7 +27,7 @@ __revision__ = '$Format:%H$'
 
 import os
 
-from PyQt4.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from processing.core.ProcessingConfig import ProcessingConfig, Setting
 from processing.core.ProcessingLog import ProcessingLog
@@ -39,8 +39,8 @@ from processing.script.WrongScriptException import WrongScriptException
 from processing.gui.GetScriptsAndModels import GetRScriptsAction
 from processing.tools.system import isWindows
 
-from RUtils import RUtils
-from RAlgorithm import RAlgorithm
+from .RUtils import RUtils
+from .RAlgorithm import RAlgorithm
 
 pluginPath = os.path.normpath(os.path.join(
     os.path.split(os.path.dirname(__file__))[0], os.pardir))
@@ -52,7 +52,7 @@ class RAlgorithmProvider(AlgorithmProvider):
         AlgorithmProvider.__init__(self)
         self.activate = False
         self.actions.append(CreateNewScriptAction(
-            self.tr('Create new R script'), CreateNewScriptAction.SCRIPT_R))
+            'Create new R script', CreateNewScriptAction.SCRIPT_R))
         self.actions.append(GetRScriptsAction())
         self.contextMenuActions = \
             [EditScriptAction(EditScriptAction.SCRIPT_R),
@@ -62,8 +62,8 @@ class RAlgorithmProvider(AlgorithmProvider):
         AlgorithmProvider.initializeSettings(self)
         ProcessingConfig.addSetting(Setting(
             self.getDescription(), RUtils.RSCRIPTS_FOLDER,
-            self.tr('R Scripts folder'), RUtils.RScriptsFolder(),
-            valuetype=Setting.FOLDER))
+            self.tr('R Scripts folder'), RUtils.defaultRScriptsFolder(),
+            valuetype=Setting.MULTIPLE_FOLDERS))
         if isWindows():
             ProcessingConfig.addSetting(Setting(
                 self.getDescription(),
@@ -95,8 +95,11 @@ class RAlgorithmProvider(AlgorithmProvider):
         return 'r'
 
     def _loadAlgorithms(self):
-        folder = RUtils.RScriptsFolder()
-        self.loadFromFolder(folder)
+        folders = RUtils.RScriptsFolders()
+        self.algs = []
+        for f in folders:
+            self.loadFromFolder(f)
+
         folder = os.path.join(os.path.dirname(__file__), 'scripts')
         self.loadFromFolder(folder)
 

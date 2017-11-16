@@ -28,6 +28,8 @@
 #include "qgslayertreemapcanvasbridge.h"
 #include "qgsvisibilitypresetcollection.h"
 #include "qgsmapcanvas.h"
+#include "qgsgenericprojectionselector.h"
+#include "qgscrscache.h"
 
 #include <QFileDialog>
 #include <QPushButton>
@@ -49,7 +51,6 @@ QWidget *FieldSelectorDelegate::createEditor( QWidget *parent, const QStyleOptio
   QgsVectorLayer *vl = m->vectorLayer( index );
   if ( !vl )
     return nullptr;
-
 
   QgsFieldComboBox *w = new QgsFieldComboBox( parent );
   w->setLayer( vl );
@@ -438,6 +439,8 @@ QgsDxfExportDialog::QgsDxfExportDialog( QWidget *parent, Qt::WindowFlags f )
   connect( mSelectAllButton, SIGNAL( clicked() ), this, SLOT( selectAll() ) );
   connect( mUnSelectAllButton, SIGNAL( clicked() ), this, SLOT( unSelectAll() ) );
 
+  mFileLineEdit->setFocus();
+
   //last dxf symbology mode
   QSettings s;
   mSymbologyModeComboBox->setCurrentIndex( QgsProject::instance()->readEntry( "dxf", "/lastDxfSymbologyMode", s.value( "qgis/lastDxfSymbologyMode", "2" ).toString() ).toInt() );
@@ -451,10 +454,21 @@ QgsDxfExportDialog::QgsDxfExportDialog( QWidget *parent, Qt::WindowFlags f )
   QStringList ids = QgsProject::instance()->visibilityPresetCollection()->presets();
   ids.prepend( "" );
   mVisibilityPresets->addItems( ids );
-  mVisibilityPresets->setCurrentIndex( mVisibilityPresets->findText( QgsProject::instance()->readEntry( "dxf", "/lastVisibilityPreset", "" ) ) );
+  mVisibilityPresets->setCurrentIndex( mVisibilityPresets->findText( QgsProject::instance()->readEntry( "dxf", "/lastVisibliltyPreset", "" ) ) );
 
   buttonBox->button( QDialogButtonBox::Ok )->setEnabled( false );
   restoreGeometry( s.value( "/Windows/DxfExport/geometry" ).toByteArray() );
+
+  mCRS = QgsProject::instance()->readEntry( "dxf", "/lastDxfCrs",
+         s.value( "qgis/lastDxfCrs", QString::number( QgisApp::instance()->mapCanvas()->mapSettings().destinationCrs().srsid() ) ).toString()
+                                          ).toLong();
+
+  QgsCoordinateReferenceSystem crs = QgsCRSCache::instance()->crsBySrsId( mCRS );
+  mCrsSelector->setCrs( crs );
+  mCrsSelector->setLayerCrs( crs );
+  mCrsSelector->dialog()->setMessage( tr( "Select the coordinate reference system for the dxf file. "
+                                          "The data points will be transformed from the layer coordinate reference system." ) );
+
   mEncoding->addItems( QgsDxfExport::encodings() );
   mEncoding->setCurrentIndex( mEncoding->findText( QgsProject::instance()->readEntry( "dxf", "/lastDxfEncoding", s.value( "qgis/lastDxfEncoding", "CP1252" ).toString() ) ) );
 }
@@ -588,6 +602,11 @@ bool QgsDxfExportDialog::layerTitleAsName() const
   return mLayerTitleAsName->isChecked();
 }
 
+bool QgsDxfExportDialog::force2d() const
+{
+  return mForce2d->isChecked();
+}
+
 void QgsDxfExportDialog::saveSettings()
 {
   QSettings s;
@@ -598,6 +617,7 @@ void QgsDxfExportDialog::saveSettings()
   s.setValue( "qgis/lastDxfMapRectangle", mMapExtentCheckBox->isChecked() );
   s.setValue( "qgis/lastDxfLayerTitleAsName", mLayerTitleAsName->isChecked() );
   s.setValue( "qgis/lastDxfEncoding", mEncoding->currentText() );
+  s.setValue( "qgis/lastDxfCrs", QString::number( mCRS ) );
 
   QgsProject::instance()->writeEntry( "dxf", "/lastDxfSymbologyMode", mSymbologyModeComboBox->currentIndex() );
   QgsProject::instance()->writeEntry( "dxf", "/lastSymbologyExportScale", mScaleWidget->scale() );
@@ -605,10 +625,26 @@ void QgsDxfExportDialog::saveSettings()
   QgsProject::instance()->writeEntry( "dxf", "/lastDxfMapRectangle", mMapExtentCheckBox->isChecked() );
   QgsProject::instance()->writeEntry( "dxf", "/lastDxfEncoding", mEncoding->currentText() );
   QgsProject::instance()->writeEntry( "dxf", "/lastVisibilityPreset", mVisibilityPresets->currentText() );
+  QgsProject::instance()->writeEntry( "dxf", "/lastDxfCrs", QString::number( mCRS ) );
 }
 
 
 QString QgsDxfExportDialog::encoding() const
 {
   return mEncoding->currentText();
+}
+
+void QgsDxfExportDialog::on_mCrsSelector_crsChanged( const QgsCoordinateReferenceSystem &crs )
+{
+  mCRS = crs.srsid();
+}
+
+long QgsDxfExportDialog::crs() const
+{
+  return mCRS;
+}
+
+QString QgsDxfExportDialog::mapTheme() const
+{
+  return mVisibilityPresets->currentText();
 }

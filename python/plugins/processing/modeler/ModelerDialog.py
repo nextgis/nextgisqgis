@@ -16,7 +16,6 @@
 *                                                                         *
 ***************************************************************************
 """
-from processing.gui import AlgorithmClassification
 
 __author__ = 'Victor Olaya'
 __date__ = 'August 2012'
@@ -30,12 +29,12 @@ import codecs
 import sys
 import os
 
-from PyQt4 import uic
-from PyQt4.QtCore import Qt, QRectF, QMimeData, QPoint, QPointF, QSettings, QByteArray
-from PyQt4.QtGui import QGraphicsView, QTreeWidget, QIcon, QMessageBox, QFileDialog, QImage, QPainter, QTreeWidgetItem
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import Qt, QRectF, QMimeData, QPoint, QPointF, QSettings, QByteArray
+from qgis.PyQt.QtWidgets import QGraphicsView, QTreeWidget, QMessageBox, QFileDialog, QTreeWidgetItem
+from qgis.PyQt.QtGui import QIcon, QImage, QPainter
 from qgis.core import QgsApplication
 from processing.core.ProcessingConfig import ProcessingConfig
-from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.ProcessingLog import ProcessingLog
 from processing.gui.HelpEditionDialog import HelpEditionDialog
 from processing.gui.AlgorithmDialog import AlgorithmDialog
@@ -45,6 +44,7 @@ from processing.modeler.ModelerParametersDialog import ModelerParametersDialog
 from processing.modeler.ModelerUtils import ModelerUtils
 from processing.modeler.ModelerScene import ModelerScene
 from processing.modeler.WrongModelException import WrongModelException
+from processing.core.alglist import algList
 
 pluginPath = os.path.split(os.path.dirname(__file__))[0]
 WIDGET, BASE = uic.loadUiType(
@@ -89,7 +89,7 @@ class ModelerDialog(BASE, WIDGET):
                 if text in ModelerParameterDefinitionDialog.paramTypes:
                     self.addInputOfType(text, event.pos())
                 else:
-                    alg = ModelerUtils.getAlgorithm(text)
+                    alg = algList.getAlgorithm(text)
                     if alg is not None:
                         self._addAlgorithm(alg.getCopy(), event.pos())
                 event.accept()
@@ -158,7 +158,7 @@ class ModelerDialog(BASE, WIDGET):
         self.btnOpen.setIcon(QgsApplication.getThemeIcon('/mActionFileOpen.svg'))
         self.btnSave.setIcon(QgsApplication.getThemeIcon('/mActionFileSave.svg'))
         self.btnSaveAs.setIcon(QgsApplication.getThemeIcon('/mActionFileSaveAs.svg'))
-        self.btnExportImage.setIcon(QgsApplication.getThemeIcon('/mActionSaveMapAsImage.png'))
+        self.btnExportImage.setIcon(QgsApplication.getThemeIcon('/mActionSaveMapAsImage.svg'))
         self.btnExportPython.setIcon(QgsApplication.getThemeIcon('/console/iconSaveAsConsole.png'))
         self.btnEditHelp.setIcon(QIcon(os.path.join(pluginPath, 'images', 'edithelp.png')))
         self.btnRun.setIcon(QIcon(os.path.join(pluginPath, 'images', 'runalgorithm.png')))
@@ -226,7 +226,7 @@ class ModelerDialog(BASE, WIDGET):
     def editHelp(self):
         if self.alg.provider is None:
             # Might happen if model is opened from modeler dialog
-            self.alg.provider = ModelerUtils.providers['model']
+            self.alg.provider = algList.getProviderFromName('model')
         alg = self.alg.getCopy()
         dlg = HelpEditionDialog(alg)
         dlg.exec_()
@@ -243,7 +243,7 @@ class ModelerDialog(BASE, WIDGET):
 
         if self.alg.provider is None:
             # Might happen if model is opened from modeler dialog
-            self.alg.provider = ModelerUtils.providers['model']
+            self.alg.provider = algList.getProviderFromName('model')
         alg = self.alg.getCopy()
         dlg = AlgorithmDialog(alg)
         dlg.exec_()
@@ -310,7 +310,7 @@ class ModelerDialog(BASE, WIDGET):
         else:
             filename = unicode(QFileDialog.getSaveFileName(self,
                                                            self.tr('Save Model'),
-                                                           ModelerUtils.modelsFolder(),
+                                                           ModelerUtils.modelsFolders()[0],
                                                            self.tr('Processing models (*.model)')))
             if filename:
                 if not filename.endswith('.model'):
@@ -341,7 +341,7 @@ class ModelerDialog(BASE, WIDGET):
 
     def openModel(self):
         filename = unicode(QFileDialog.getOpenFileName(self,
-                                                       self.tr('Open Model'), ModelerUtils.modelsFolder(),
+                                                       self.tr('Open Model'), ModelerUtils.modelsFolders()[0],
                                                        self.tr('Processing models (*.model *.MODEL)')))
         if filename:
             try:
@@ -390,7 +390,7 @@ class ModelerDialog(BASE, WIDGET):
                     pos = QPointF(pos)
                 self.alg.addParameter(ModelerParameter(dlg.param, pos))
                 self.repaintModel()
-                #self.view.ensureVisible(self.scene.getLastParameterItem())
+                # self.view.ensureVisible(self.scene.getLastParameterItem())
                 self.hasChanged = True
 
     def getPositionForParameterItem(self):
@@ -420,7 +420,7 @@ class ModelerDialog(BASE, WIDGET):
     def addAlgorithm(self):
         item = self.algorithmTree.currentItem()
         if isinstance(item, TreeAlgorithmItem):
-            alg = ModelerUtils.getAlgorithm(item.alg.commandLineName())
+            alg = algList.getAlgorithm(item.alg.commandLineName())
             self._addAlgorithm(alg.getCopy())
 
     def _addAlgorithm(self, alg, pos=None):
@@ -469,14 +469,13 @@ class ModelerDialog(BASE, WIDGET):
     def fillAlgorithmTreeUsingProviders(self):
         self.algorithmTree.clear()
         text = unicode(self.searchBox.text())
-        allAlgs = ModelerUtils.allAlgs
+        allAlgs = algList.algs
         for providerName in allAlgs.keys():
             name = 'ACTIVATE_' + providerName.upper().replace(' ', '_')
             if not ProcessingConfig.getSetting(name):
                 continue
             groups = {}
-            provider = allAlgs[providerName]
-            algs = provider.values()
+            algs = allAlgs[providerName].values()
 
             # Add algorithms
             for alg in algs:
@@ -498,12 +497,10 @@ class ModelerDialog(BASE, WIDGET):
 
             if len(groups) > 0:
                 providerItem = QTreeWidgetItem()
-                providerItem.setText(0,
-                                     ModelerUtils.providers[providerName].getDescription())
-                providerItem.setToolTip(0,
-                                        ModelerUtils.providers[providerName].getDescription())
-                providerItem.setIcon(0,
-                                     ModelerUtils.providers[providerName].getIcon())
+                provider = algList.getProviderFromName(providerName)
+                providerItem.setText(0, provider.getDescription())
+                providerItem.setToolTip(0, provider.getDescription())
+                providerItem.setIcon(0, provider.getIcon())
                 for groupItem in groups.values():
                     providerItem.addChild(groupItem)
                 self.algorithmTree.addTopLevelItem(providerItem)
@@ -521,7 +518,7 @@ class TreeAlgorithmItem(QTreeWidgetItem):
         QTreeWidgetItem.__init__(self)
         self.alg = alg
         icon = alg.getIcon()
-        name = AlgorithmClassification.getDisplayName(alg)
+        name = alg.displayName()
         self.setIcon(0, icon)
         self.setToolTip(0, name)
         self.setText(0, name)

@@ -44,7 +44,7 @@ bool QgsOverlayAnalyzer::intersection( QgsVectorLayer* layerA, QgsVectorLayer* l
   }
 
   QGis::WkbType outputType = dpA->geometryType();
-  const QgsCoordinateReferenceSystem crs = layerA->crs();
+  QgsCoordinateReferenceSystem crs = layerA->crs();
   QgsFields fieldsA = layerA->fields();
   QgsFields fieldsB = layerB->fields();
   combineFieldLists( fieldsA, fieldsB );
@@ -184,8 +184,8 @@ void QgsOverlayAnalyzer::intersectFeature( QgsFeature& f, QgsVectorFileWriter* v
 void QgsOverlayAnalyzer::combineFieldLists( QgsFields& fieldListA, const QgsFields& fieldListB )
 {
   QList<QString> names;
-  for ( int idx = 0; idx < fieldListA.count(); ++idx )
-    names.append( fieldListA.at( idx ).name() );
+  Q_FOREACH ( const QgsField& field, fieldListA )
+    names.append( field.name() );
 
   for ( int idx = 0; idx < fieldListB.count(); ++idx )
   {

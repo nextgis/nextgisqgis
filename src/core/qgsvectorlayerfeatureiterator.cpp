@@ -29,13 +29,15 @@
 QgsVectorLayerFeatureSource::QgsVectorLayerFeatureSource( QgsVectorLayer *layer )
     : mCrsId( 0 )
 {
+  QMutexLocker locker( &layer->mFeatureSourceConstructorMutex );
   mProviderFeatureSource = layer->dataProvider()->featureSource();
   mFields = layer->fields();
+
+  layer->createJoinCaches();
   mJoinBuffer = layer->mJoinBuffer->clone();
+
   mExpressionFieldBuffer = new QgsExpressionFieldBuffer( *layer->mExpressionFieldBuffer );
   mCrsId = layer->crs().srsid();
-
-  mCanBeSimplified = layer->hasGeometryType() && layer->geometryType() != QGis::Point;
 
   mHasEditBuffer = layer->editBuffer();
   if ( mHasEditBuffer )
@@ -93,8 +95,30 @@ QgsFeatureIterator QgsVectorLayerFeatureSource::getFeatures( const QgsFeatureReq
 QgsVectorLayerFeatureIterator::QgsVectorLayerFeatureIterator( QgsVectorLayerFeatureSource* source, bool ownSource, const QgsFeatureRequest& request )
     : QgsAbstractFeatureIteratorFromSource<QgsVectorLayerFeatureSource>( source, ownSource, request )
     , mFetchedFid( false )
-    , mEditGeometrySimplifier( nullptr )
+    , mInterruptionChecker( nullptr )
 {
+  if ( mRequest.filterType() == QgsFeatureRequest::FilterExpression )
+  {
+    mRequest.expressionContext()->setFields( mSource->mFields );
+    mRequest.filterExpression()->prepare( mRequest.expressionContext() );
+
+    if ( mRequest.flags() & QgsFeatureRequest::SubsetOfAttributes )
+    {
+      //ensure that all fields required for filter expressions are prepared
+      Q_FOREACH ( const QString& field, mRequest.filterExpression()->referencedColumns() )
+      {
+        int attrIdx = mSource->mFields.fieldNameIndex( field );
+        if ( !mRequest.subsetOfAttributes().contains( attrIdx ) )
+          mRequest.setSubsetOfAttributes( mRequest.subsetOfAttributes() << attrIdx );
+      }
+    }
+
+    // Required for local filtering
+    // Also requred with compiler enabled for updateAttributeValues() on fetched features.
+    if ( mRequest.filterExpression()->needsGeometry() )
+      mRequest.setFlags( mRequest.flags() & ~QgsFeatureRequest::NoGeometry );
+  }
+
   prepareFields();
 
   mHasVirtualAttributes = !mFetchJoinInfo.isEmpty() || !mExpressionFieldInfo.isEmpty();
@@ -142,6 +166,8 @@ QgsVectorLayerFeatureIterator::QgsVectorLayerFeatureIterator( QgsVectorLayerFeat
       if ( source->mFields.fieldOrigin( idx ) != QgsFields::OriginProvider )
       {
         mProviderRequest.disableFilter();
+        // can't limit at provider side
+        mProviderRequest.setLimit( -1 );
       }
     }
   }
@@ -149,7 +175,35 @@ QgsVectorLayerFeatureIterator::QgsVectorLayerFeatureIterator( QgsVectorLayerFeat
   if ( mSource->mHasEditBuffer )
   {
     mChangedFeaturesRequest = mProviderRequest;
-    mChangedFeaturesRequest.setFilterFids( mSource->mChangedAttributeValues.keys().toSet() );
+    QgsFeatureIds changedIds;
+    QgsChangedAttributesMap::const_iterator attIt = mSource->mChangedAttributeValues.constBegin();
+    for ( ; attIt != mSource->mChangedAttributeValues.constEnd(); ++attIt )
+    {
+      changedIds << attIt.key();
+    }
+    mChangedFeaturesRequest.setFilterFids( changedIds );
+
+    if ( mChangedFeaturesRequest.limit() > 0 )
+    {
+      int providerLimit = mProviderRequest.limit();
+
+      // features may be deleted in buffer, so increase limit sent to provider
+      providerLimit += mSource->mDeletedFeatureIds.size();
+
+      if ( mProviderRequest.filterType() == QgsFeatureRequest::FilterExpression )
+      {
+        // attribute changes may mean some features no longer match expression, so increase limit sent to provider
+        providerLimit += mSource->mChangedAttributeValues.size();
+      }
+
+      if ( mProviderRequest.filterType() == QgsFeatureRequest::FilterExpression || mProviderRequest.filterType() == QgsFeatureRequest::FilterRect )
+      {
+        // geometry changes may mean some features no longer match expression or rect, so increase limit sent to provider
+        providerLimit += mSource->mChangedGeometries.size();
+      }
+
+      mProviderRequest.setLimit( providerLimit );
+    }
   }
 
   if ( request.filterType() == QgsFeatureRequest::FilterFid )
@@ -169,20 +223,11 @@ QgsVectorLayerFeatureIterator::QgsVectorLayerFeatureIterator( QgsVectorLayerFeat
 
     rewindEditBuffer();
   }
-
-  if ( mRequest.filterType() == QgsFeatureRequest::FilterExpression )
-  {
-    mRequest.expressionContext()->setFields( mSource->mFields );
-    mRequest.filterExpression()->prepare( mRequest.expressionContext() );
-  }
 }
 
 
 QgsVectorLayerFeatureIterator::~QgsVectorLayerFeatureIterator()
 {
-  delete mEditGeometrySimplifier;
-  mEditGeometrySimplifier = nullptr;
-
   qDeleteAll( mExpressionFieldInfo );
 
   close();
@@ -232,6 +277,7 @@ bool QgsVectorLayerFeatureIterator::fetchFeature( QgsFeature& f )
   {
     mChangedFeaturesIterator.close();
     mProviderIterator = mSource->mProviderFeatureSource->getFeatures( mProviderRequest );
+    mProviderIterator.setInterruptionChecker( mInterruptionChecker );
   }
 
   while ( mProviderIterator.nextFeature( f ) )
@@ -306,8 +352,11 @@ bool QgsVectorLayerFeatureIterator::close()
   return true;
 }
 
-
-
+void QgsVectorLayerFeatureIterator::setInterruptionChecker( QgsInterruptionChecker* interruptionChecker )
+{
+  mProviderIterator.setInterruptionChecker( interruptionChecker );
+  mInterruptionChecker = interruptionChecker;
+}
 
 bool QgsVectorLayerFeatureIterator::fetchNextAddedFeature( QgsFeature& f )
 {
@@ -342,14 +391,6 @@ void QgsVectorLayerFeatureIterator::useAddedFeature( const QgsFeature& src, QgsF
   if ( src.constGeometry() && !( mRequest.flags() & QgsFeatureRequest::NoGeometry ) )
   {
     f.setGeometry( new QgsGeometry( *src.constGeometry() ) );
-
-    // simplify the edited geometry using its simplifier configured
-    if ( mEditGeometrySimplifier )
-    {
-      QgsGeometry* geometry = f.geometry();
-      QGis::GeometryType geometryType = geometry->type();
-      if ( geometryType == QGis::Line || geometryType == QGis::Polygon ) mEditGeometrySimplifier->simplifyGeometry( geometry );
-    }
   }
 
   // TODO[MD]: if subset set just some attributes
@@ -424,14 +465,6 @@ void QgsVectorLayerFeatureIterator::useChangedAttributeFeature( QgsFeatureId fid
   if ( !( mRequest.flags() & QgsFeatureRequest::NoGeometry ) )
   {
     f.setGeometry( geom );
-
-    // simplify the edited geometry using its simplifier configured
-    if ( mEditGeometrySimplifier )
-    {
-      QgsGeometry* geometry = f.geometry();
-      QGis::GeometryType geometryType = geometry->type();
-      if ( geometryType == QGis::Line || geometryType == QGis::Polygon ) mEditGeometrySimplifier->simplifyGeometry( geometry );
-    }
   }
 
   bool subsetAttrs = ( mRequest.flags() & QgsFeatureRequest::SubsetOfAttributes );
@@ -555,7 +588,6 @@ void QgsVectorLayerFeatureIterator::prepareFields()
   mPreparedFields.clear();
   mFieldsToPrepare.clear();
   mFetchJoinInfo.clear();
-  mOrderedJoinInfoList.clear();
 
   mExpressionContext.reset( new QgsExpressionContext() );
   mExpressionContext->appendScope( QgsExpressionContextUtils::globalScope() );
@@ -572,70 +604,6 @@ void QgsVectorLayerFeatureIterator::prepareFields()
 
     mPreparedFields << fieldIdx;
     prepareField( fieldIdx );
-  }
-
-  //sort joins by dependency
-  if ( mFetchJoinInfo.size() > 0 )
-  {
-    createOrderedJoinList();
-  }
-}
-
-void QgsVectorLayerFeatureIterator::createOrderedJoinList()
-{
-  mOrderedJoinInfoList = mFetchJoinInfo.values();
-  if ( mOrderedJoinInfoList.size() < 2 )
-  {
-    return;
-  }
-
-  QSet<int> resolvedFields; //todo: get provider / virtual fields without joins
-
-  //add all provider fields without joins as resolved fields
-  QList< int >::const_iterator prepFieldIt = mPreparedFields.constBegin();
-  for ( ; prepFieldIt != mPreparedFields.constEnd(); ++prepFieldIt )
-  {
-    if ( mSource->mFields.fieldOrigin( *prepFieldIt ) != QgsFields::OriginJoin )
-    {
-      resolvedFields.insert( *prepFieldIt );
-    }
-  }
-
-  //iterate through the joins. If target field is not yet covered, move the entry to the end of the list
-
-  //some join combinations might not have a resolution at all
-  int maxIterations = ( mOrderedJoinInfoList.size() + 1 ) * mOrderedJoinInfoList.size() / 2.0;
-  int currentIteration = 0;
-
-  for ( int i = 0; i < mOrderedJoinInfoList.size() - 1; ++i )
-  {
-    if ( !resolvedFields.contains( mOrderedJoinInfoList.at( i ).targetField ) )
-    {
-      mOrderedJoinInfoList.append( mOrderedJoinInfoList.at( i ) );
-      mOrderedJoinInfoList.removeAt( i );
-      --i;
-    }
-    else
-    {
-      int offset = mOrderedJoinInfoList.at( i ).indexOffset;
-      int joinField = mOrderedJoinInfoList.at( i ).joinField;
-
-      QgsAttributeList attributes = mOrderedJoinInfoList.at( i ).attributes;
-      QgsAttributeList::const_iterator attIt = attributes.constBegin();
-      for ( ; attIt != attributes.constEnd(); ++attIt )
-      {
-        if ( *attIt != joinField )
-        {
-          resolvedFields.insert( joinField < *attIt ? *attIt + offset - 1 : *attIt + offset );
-        }
-      }
-    }
-
-    ++currentIteration;
-    if ( currentIteration >= maxIterations )
-    {
-      break;
-    }
   }
 }
 
@@ -663,19 +631,21 @@ void QgsVectorLayerFeatureIterator::prepareField( int fieldIdx )
 
 void QgsVectorLayerFeatureIterator::addJoinedAttributes( QgsFeature &f )
 {
-  QList< FetchJoinInfo >::const_iterator joinIt = mOrderedJoinInfoList.constBegin();
-  for ( ; joinIt != mOrderedJoinInfoList.constEnd(); ++joinIt )
+  QMap<const QgsVectorJoinInfo*, FetchJoinInfo>::const_iterator joinIt = mFetchJoinInfo.constBegin();
+  for ( ; joinIt != mFetchJoinInfo.constEnd(); ++joinIt )
   {
-    QVariant targetFieldValue = f.attribute( joinIt->targetField );
+    const FetchJoinInfo& info = joinIt.value();
+    Q_ASSERT( joinIt.key() );
 
+    QVariant targetFieldValue = f.attribute( info.targetField );
     if ( !targetFieldValue.isValid() )
       continue;
 
-    const QHash< QString, QgsAttributes>& memoryCache = joinIt->joinInfo->cachedAttributes;
+    const QHash< QString, QgsAttributes>& memoryCache = info.joinInfo->cachedAttributes;
     if ( memoryCache.isEmpty() )
-      joinIt->addJoinedAttributesDirect( f, targetFieldValue );
+      info.addJoinedAttributesDirect( f, targetFieldValue );
     else
-      joinIt->addJoinedAttributesCached( f, targetFieldValue );
+      info.addJoinedAttributesCached( f, targetFieldValue );
   }
 }
 
@@ -730,39 +700,13 @@ void QgsVectorLayerFeatureIterator::addExpressionAttribute( QgsFeature& f, int a
 
 bool QgsVectorLayerFeatureIterator::prepareSimplification( const QgsSimplifyMethod& simplifyMethod )
 {
-  delete mEditGeometrySimplifier;
-  mEditGeometrySimplifier = nullptr;
-
-  // setup simplification for edited geometries to fetch
-  if ( !( mRequest.flags() & QgsFeatureRequest::NoGeometry ) && simplifyMethod.methodType() != QgsSimplifyMethod::NoSimplification && mSource->mCanBeSimplified )
-  {
-    mEditGeometrySimplifier = QgsSimplifyMethod::createGeometrySimplifier( simplifyMethod );
-    return nullptr != mEditGeometrySimplifier;
-  }
+  Q_UNUSED( simplifyMethod );
   return false;
 }
 
 bool QgsVectorLayerFeatureIterator::providerCanSimplify( QgsSimplifyMethod::MethodType methodType ) const
 {
   Q_UNUSED( methodType );
-#if 0
-  // TODO[MD]: after merge
-  QgsVectorDataProvider* provider = L->dataProvider();
-
-  if ( provider && methodType != QgsSimplifyMethod::NoSimplification )
-  {
-    int capabilities = provider->capabilities();
-
-    if ( methodType == QgsSimplifyMethod::OptimizeForRendering )
-    {
-      return ( capabilities & QgsVectorDataProvider::SimplifyGeometries );
-    }
-    else if ( methodType == QgsSimplifyMethod::PreserveTopology )
-    {
-      return ( capabilities & QgsVectorDataProvider::SimplifyGeometriesWithTopologicalValidation );
-    }
-  }
-#endif
   return false;
 }
 

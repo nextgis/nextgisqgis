@@ -35,6 +35,7 @@
 #include "qgspolygonv2.h"
 #include "qgssurfacev2.h"
 #include "qgsunittypes.h"
+#include "qgscrscache.h"
 
 // MSVC compiler doesn't have defined M_PI in math.h
 #ifndef M_PI
@@ -105,8 +106,7 @@ bool QgsDistanceArea::willUseEllipsoid() const
 
 void QgsDistanceArea::setSourceCrs( long srsid )
 {
-  QgsCoordinateReferenceSystem srcCRS;
-  srcCRS.createFromSrsId( srsid );
+  QgsCoordinateReferenceSystem srcCRS = QgsCRSCache::instance()->crsBySrsId( srsid );
   mCoordTransform->setSourceCrs( srcCRS );
 }
 
@@ -117,8 +117,7 @@ void QgsDistanceArea::setSourceCrs( const QgsCoordinateReferenceSystem& srcCRS )
 
 void QgsDistanceArea::setSourceAuthId( const QString& authId )
 {
-  QgsCoordinateReferenceSystem srcCRS;
-  srcCRS.createFromOgcWmsCrs( authId );
+  QgsCoordinateReferenceSystem srcCRS = QgsCRSCache::instance()->crsByOgcWmsCrs( authId );
   mCoordTransform->setSourceCrs( srcCRS );
 }
 
@@ -227,8 +226,7 @@ bool QgsDistanceArea::setEllipsoid( const QString& ellipsoid )
 
   // get spatial ref system for ellipsoid
   QString proj4 = "+proj=longlat +ellps=" + ellipsoid + " +no_defs";
-  QgsCoordinateReferenceSystem destCRS;
-  destCRS.createFromProj4( proj4 );
+  QgsCoordinateReferenceSystem destCRS = QgsCRSCache::instance()->crsByProj4( proj4 );
   //TODO: createFromProj4 used to save to the user database any new CRS
   // this behavior was changed in order to separate creation and saving.
   // Not sure if it necessary to save it here, should be checked by someone
@@ -895,9 +893,18 @@ double QgsDistanceArea::computePolygonArea( const QList<QgsPoint>& points ) cons
     return 0;
   }
 
+  // IMPORTANT
+  // don't change anything here without reporting the changes to upstream (GRASS)
+  // let's all be good opensource citizens and share the improvements!
+
   double x1, y1, x2, y2, dx, dy;
   double Qbar1, Qbar2;
   double area;
+
+  /* GRASS comment: threshold for dy, should be between 1e-4 and 1e-7
+   * See relevant discussion at https://trac.osgeo.org/grass/ticket/3369
+  */
+  const double thresh = 1e-6;
 
   QgsDebugMsgLevel( "Ellipsoid: " + mEllipsoid, 3 );
   if (( ! mEllipsoidalMode ) || ( mEllipsoid == GEO_NONE ) )
@@ -929,11 +936,28 @@ double QgsDistanceArea::computePolygonArea( const QList<QgsPoint>& points ) cons
         x1 += m_TwoPI;
 
     dx = x2 - x1;
-    area += dx * ( m_Qp - getQ( y2 ) );
-
     dy = y2 - y1;
-    if ( !qgsDoubleNear( dy, 0.0 ) )
-      area += dx * getQ( y2 ) - ( dx / dy ) * ( Qbar2 - Qbar1 );
+    if ( qAbs( dy ) > thresh )
+    {
+      /* account for different latitudes y1, y2 */
+      area += dx * ( m_Qp - ( Qbar2 - Qbar1 ) / dy );
+    }
+    else
+    {
+      /* latitudes y1, y2 are (nearly) identical */
+
+      /* if y2 becomes similar to y1, i.e. y2 -> y1
+       * Qbar2 - Qbar1 -> 0 and dy -> 0
+       * (Qbar2 - Qbar1) / dy -> ?
+       * (Qbar2 - Qbar1) / dy should approach Q((y1 + y2) / 2)
+       * Metz 2017
+       */
+      area += dx * ( m_Qp - getQ( ( y1 + y2 ) / 2.0 ) );
+
+      /* original:
+       * area += dx * getQ( y2 ) - ( dx / dy ) * ( Qbar2 - Qbar1 );
+       */
+    }
   }
   if (( area *= m_AE ) < 0.0 )
     area = -area;
@@ -1100,6 +1124,109 @@ QString QgsDistanceArea::textUnit( double value, int decimals, QGis::UnitType u,
   }
 
   return QString( "%L1%2" ).arg( value, 0, 'f', decimals ).arg( unitLabel );
+}
+
+QString QgsDistanceArea::formatDistance( double distance, int decimals, QGis::UnitType unit, bool keepBaseUnit )
+{
+  QString unitLabel;
+
+  switch ( unit )
+  {
+    case QGis::Meters:
+      if ( keepBaseUnit || qAbs( distance ) == 0.0 )
+      {
+        unitLabel = QObject::tr( " m" );
+      }
+      else if ( qAbs( distance ) > 1000.0 )
+      {
+        unitLabel = QObject::tr( " km" );
+        distance = distance / 1000;
+      }
+      else if ( qAbs( distance ) < 0.01 )
+      {
+        unitLabel = QObject::tr( " mm" );
+        distance = distance * 1000;
+      }
+      else if ( qAbs( distance ) < 0.1 )
+      {
+        unitLabel = QObject::tr( " cm" );
+        distance = distance * 100;
+      }
+      else
+      {
+        unitLabel = QObject::tr( " m" );
+      }
+      break;
+
+    case QGis::Kilometers:
+      if ( keepBaseUnit || qAbs( distance ) >= 1.0 )
+      {
+        unitLabel = QObject::tr( " km" );
+      }
+      else
+      {
+        unitLabel = QObject::tr( " m" );
+        distance = distance * 1000;
+      }
+      break;
+
+    case QGis::Feet:
+      if ( qAbs( distance ) <= 5280.0 || keepBaseUnit )
+      {
+        unitLabel = QObject::tr( " ft" );
+      }
+      else
+      {
+        unitLabel = QObject::tr( " mi" );
+        distance /= 5280.0;
+      }
+      break;
+
+    case QGis::Yards:
+      if ( qAbs( distance ) <= 1760.0 || keepBaseUnit )
+      {
+        unitLabel = QObject::tr( " yd" );
+      }
+      else
+      {
+        unitLabel = QObject::tr( " mi" );
+        distance /= 1760.0;
+      }
+      break;
+
+    case QGis::Miles:
+      if ( qAbs( distance ) >= 1.0 || keepBaseUnit )
+      {
+        unitLabel = QObject::tr( " mi" );
+      }
+      else
+      {
+        unitLabel = QObject::tr( " ft" );
+        distance *= 5280.0;
+      }
+      break;
+
+    case QGis::NauticalMiles:
+      unitLabel = QObject::tr( " NM" );
+      break;
+
+    case QGis::Degrees:
+
+      if ( qAbs( distance ) == 1.0 )
+        unitLabel = QObject::tr( " degree" );
+      else
+        unitLabel = QObject::tr( " degrees" );
+      break;
+
+    case QGis::UnknownUnit:
+      unitLabel.clear();
+      break;
+    default:
+      QgsDebugMsg( QString( "Error: not picked up map units - actual value = %1" ).arg( unit ) );
+      break;
+  }
+
+  return QString( "%L1%2" ).arg( distance, 0, 'f', decimals ).arg( unitLabel );
 }
 
 QString QgsDistanceArea::formatArea( double area, int decimals, QgsUnitTypes::AreaUnit unit, bool keepBaseUnit )

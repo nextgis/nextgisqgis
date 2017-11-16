@@ -1,3 +1,17 @@
+/***************************************************************************
+    qgscomposerruler.cpp
+    ---------------------
+    begin                : January 2013
+    copyright            : (C) 2013 by Marco Hugentobler
+    email                : marco dot hugentobler at sourcepole dot ch
+ ***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 #include "qgscomposerruler.h"
 #include "qgscomposition.h"
 #include "qgis.h"
@@ -12,11 +26,12 @@ const unsigned int COUNT_VALID_MAGNITUDES = 5;
 const int QgsComposerRuler::validScaleMultiples[] = {1, 2, 5};
 const int QgsComposerRuler::validScaleMagnitudes[] = {1, 10, 100, 1000, 10000};
 
-QgsComposerRuler::QgsComposerRuler( QgsComposerRuler::Direction d ) : QWidget( nullptr ),
-    mDirection( d ),
-    mComposition( nullptr ),
-    mLineSnapItem( nullptr ),
-    mScaleMinPixelsWidth( 0 )
+QgsComposerRuler::QgsComposerRuler( QgsComposerRuler::Direction d )
+    : QWidget( nullptr )
+    , mDirection( d )
+    , mComposition( nullptr )
+    , mLineSnapItem( nullptr )
+    , mScaleMinPixelsWidth( 0 )
 {
   setMouseTracking( true );
 
@@ -360,8 +375,10 @@ int QgsComposerRuler::optimumNumberDivisions( double rulerScale, int scaleMultip
 
 void QgsComposerRuler::setSceneTransform( const QTransform& transform )
 {
+#if 0
   QString debug = QString::number( transform.dx() ) + ',' + QString::number( transform.dy() ) + ','
                   + QString::number( transform.m11() ) + ',' + QString::number( transform.m22() );
+#endif
   mTransform = transform;
   update();
 }

@@ -1,3 +1,17 @@
+/***************************************************************************
+    qgsmapcanvastracer.cpp
+    ---------------------
+    begin                : January 2016
+    copyright            : (C) 2016 by Martin Dobias
+    email                : wonder dot sk at gmail dot com
+ ***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 #include "qgsmapcanvastracer.h"
 
 #include "qgsapplication.h"
@@ -10,16 +24,13 @@
 
 #include <QAction>
 
-QHash<QgsMapCanvas*, QgsMapCanvasTracer*> QgsMapCanvasTracer::sTracers;
-
-
 QgsMapCanvasTracer::QgsMapCanvasTracer( QgsMapCanvas* canvas, QgsMessageBar* messageBar )
     : mCanvas( canvas )
     , mMessageBar( messageBar )
     , mLastMessage( nullptr )
     , mActionEnableTracing( nullptr )
 {
-  sTracers.insert( canvas, this );
+  tracers().insert( mCanvas, this );
 
   // when things change we just invalidate the graph - and set up new parameters again only when necessary
   connect( canvas, SIGNAL( destinationCrsChanged() ), this, SLOT( invalidateGraph() ) );
@@ -35,12 +46,12 @@ QgsMapCanvasTracer::QgsMapCanvasTracer( QgsMapCanvas* canvas, QgsMessageBar* mes
 
 QgsMapCanvasTracer::~QgsMapCanvasTracer()
 {
-  sTracers.remove( mCanvas );
+  tracers().remove( mCanvas );
 }
 
 QgsMapCanvasTracer* QgsMapCanvasTracer::tracerForCanvas( QgsMapCanvas* canvas )
 {
-  return sTracers.value( canvas, 0 );
+  return tracers().value( canvas );
 }
 
 void QgsMapCanvasTracer::reportError( QgsTracer::PathError err, bool addingVertex )
@@ -122,4 +133,10 @@ void QgsMapCanvasTracer::onCurrentLayerChanged()
   // no need to bother if we are not snapping
   if ( mCanvas->snappingUtils()->snapToMapMode() == QgsSnappingUtils::SnapCurrentLayer )
     invalidateGraph();
+}
+
+QHash<QgsMapCanvas*, QgsMapCanvasTracer*> &QgsMapCanvasTracer::tracers()
+{
+  static QHash<QgsMapCanvas*, QgsMapCanvasTracer*> sTracers;
+  return sTracers;
 }

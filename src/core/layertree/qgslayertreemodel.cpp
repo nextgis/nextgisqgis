@@ -32,6 +32,35 @@
 #include "qgssymbollayerv2utils.h"
 #include "qgsvectorlayer.h"
 
+///@cond PRIVATE
+
+/** In order to support embedded widgets in layer tree view, the model
+ * generates one placeholder legend node for each embedded widget.
+ * The placeholder will be replaced by an embedded widget in QgsLayerTreeView
+ */
+class EmbeddedWidgetLegendNode : public QgsLayerTreeModelLegendNode
+{
+  public:
+    EmbeddedWidgetLegendNode( QgsLayerTreeLayer* nodeL )
+        : QgsLayerTreeModelLegendNode( nodeL )
+    {
+      // we need a valid rule key to allow the model to build a tree out of legend nodes
+      // if that's possible (if there is a node without a rule key, building of tree is cancelled)
+      mRuleKey = "embedded-widget-" + QUuid::createUuid().toString();
+    }
+
+    virtual QVariant data( int role ) const override
+    {
+      if ( role == RuleKeyRole )
+        return mRuleKey;
+      return QVariant();
+    }
+
+  private:
+    QString mRuleKey;
+};
+
+///@endcond
 
 QgsLayerTreeModel::QgsLayerTreeModel( QgsLayerTreeGroup* rootNode, QObject *parent )
     : QAbstractItemModel( parent )
@@ -39,6 +68,7 @@ QgsLayerTreeModel::QgsLayerTreeModel( QgsLayerTreeGroup* rootNode, QObject *pare
     , mFlags( ShowLegend | AllowLegendChangeState | DeferredLegendInvalidation )
     , mAutoCollapseLegendNodesCount( -1 )
     , mLegendFilterByScale( 0 )
+    , mLegendFilterUsesExtent( false )
     , mLegendMapViewMupp( 0 )
     , mLegendMapViewDpi( 0 )
     , mLegendMapViewScale( 0 )
@@ -197,6 +227,12 @@ QVariant QgsLayerTreeModel::data( const QModelIndex &index, int role ) const
         if ( testFlag( ShowRasterPreviewIcon ) )
         {
           QgsRasterLayer* rlayer = qobject_cast<QgsRasterLayer *>( layer );
+          // avoid to create preview for wms that imply a better multi thread management
+          // due to async nature of wms.
+          // The following two line of code is part of the fix of
+          // https://issues.qgis.org/issues/16803
+          if ( rlayer->providerType() == QLatin1String( "wms" ) )
+            return QgsLayerItem::iconRaster();
           return QIcon( QPixmap::fromImage( rlayer->previewAsImage( QSize( 32, 32 ) ) ) );
         }
         else
@@ -271,12 +307,40 @@ QVariant QgsLayerTreeModel::data( const QModelIndex &index, int role ) const
       f.setUnderline( true );
     return f;
   }
+  else if ( role == Qt::ForegroundRole )
+  {
+    QBrush brush( Qt::black, Qt::SolidPattern );
+    if ( QgsLayerTree::isLayer( node ) )
+    {
+      const QgsMapLayer* layer = QgsLayerTree::toLayer( node )->layer();
+      if ( layer && !layer->isInScaleRange( mLegendMapViewScale ) )
+      {
+        brush.setColor( Qt::lightGray );
+      }
+    }
+    return brush;
+  }
   else if ( role == Qt::ToolTipRole )
   {
     if ( QgsLayerTree::isLayer( node ) )
     {
-      if ( QgsMapLayer* layer = QgsLayerTree::toLayer( node )->layer() )
-        return layer->publicSource();
+      if ( QgsMapLayer *layer = QgsLayerTree::toLayer( node )->layer() )
+      {
+        QStringList parts;
+        QString title = layer->title().isEmpty() ? layer->shortName() : layer->title();
+        if ( title.isEmpty() )
+          title = layer->name();
+        title = "<b>" + title + "</b>";
+        if ( layer->crs().isValid() )
+          title = tr( "%1 (%2)" ).arg( title, layer->crs().authid() );
+
+        parts << title;
+
+        if ( !layer->abstract().isEmpty() )
+          parts << "<br/>" + layer->abstract().replace( QLatin1String( "\n" ), QLatin1String( "<br/>" ) );
+        parts << "<i>" + layer->publicSource() + "</i>";
+        return parts.join( "<br/>" );
+      }
     }
   }
 
@@ -288,7 +352,7 @@ Qt::ItemFlags QgsLayerTreeModel::flags( const QModelIndex& index ) const
 {
   if ( !index.isValid() )
   {
-    Qt::ItemFlags rootFlags = nullptr;
+    Qt::ItemFlags rootFlags = Qt::ItemFlags();
     if ( testFlag( AllowNodeReorder ) )
       rootFlags |= Qt::ItemIsDropEnabled;
     return rootFlags;
@@ -570,6 +634,7 @@ void QgsLayerTreeModel::setLegendFilter( const QgsMapSettings* settings, bool us
     mLegendFilterMapSettings.reset( new QgsMapSettings( *settings ) );
     mLegendFilterMapSettings->setLayerStyleOverrides( mLayerStyleOverrides );
     QgsMapHitTest::LayerFilterExpression exprs;
+    mLegendFilterUsesExtent = useExtent;
     // collect expression filters
     if ( useExpressions )
     {
@@ -626,6 +691,8 @@ void QgsLayerTreeModel::setLegendMapViewData( double mapUnitsPerPixel, int dpi, 
 
   // now invalidate legend nodes!
   legendInvalidateMapBasedData();
+
+  refreshScaleBasedLayers();
 }
 
 void QgsLayerTreeModel::legendMapViewData( double* mapUnitsPerPixel, int* dpi, double* scale )
@@ -694,6 +761,15 @@ void QgsLayerTreeModel::nodeRemovedChildren()
 
 void QgsLayerTreeModel::nodeVisibilityChanged( QgsLayerTreeNode* node )
 {
+  Q_ASSERT( node );
+
+  QModelIndex index = node2index( node );
+  emit dataChanged( index, index );
+}
+
+void QgsLayerTreeModel::nodeNameChanged( QgsLayerTreeNode* node, const QString& name )
+{
+  Q_UNUSED( name );
   Q_ASSERT( node );
 
   QModelIndex index = node2index( node );
@@ -812,7 +888,6 @@ void QgsLayerTreeModel::connectToLayer( QgsLayerTreeLayer* nodeLayer )
     connect( layer, SIGNAL( editingStarted() ), this, SLOT( layerNeedsUpdate() ), Qt::UniqueConnection );
     connect( layer, SIGNAL( editingStopped() ), this, SLOT( layerNeedsUpdate() ), Qt::UniqueConnection );
     connect( layer, SIGNAL( layerModified() ), this, SLOT( layerNeedsUpdate() ), Qt::UniqueConnection );
-    connect( layer, SIGNAL( layerNameChanged() ), this, SLOT( layerNeedsUpdate() ), Qt::UniqueConnection );
   }
 }
 
@@ -885,6 +960,7 @@ void QgsLayerTreeModel::connectToRootNode()
   connect( mRootNode, SIGNAL( willRemoveChildren( QgsLayerTreeNode*, int, int ) ), this, SLOT( nodeWillRemoveChildren( QgsLayerTreeNode*, int, int ) ) );
   connect( mRootNode, SIGNAL( removedChildren( QgsLayerTreeNode*, int, int ) ), this, SLOT( nodeRemovedChildren() ) );
   connect( mRootNode, SIGNAL( visibilityChanged( QgsLayerTreeNode*, Qt::CheckState ) ), this, SLOT( nodeVisibilityChanged( QgsLayerTreeNode* ) ) );
+  connect( mRootNode, SIGNAL( nameChanged( QgsLayerTreeNode*, QString ) ), this, SLOT( nodeNameChanged( QgsLayerTreeNode*, QString ) ) );
 
   connect( mRootNode, SIGNAL( customPropertyChanged( QgsLayerTreeNode*, QString ) ), this, SLOT( nodeCustomPropertyChanged( QgsLayerTreeNode*, QString ) ) );
 
@@ -912,6 +988,24 @@ void QgsLayerTreeModel::recursivelyEmitDataChanged( const QModelIndex& idx )
     recursivelyEmitDataChanged( index( i, 0, idx ) );
 }
 
+void QgsLayerTreeModel::refreshScaleBasedLayers( const QModelIndex& idx )
+{
+  QgsLayerTreeNode* node = index2node( idx );
+  if ( !node )
+    return;
+
+  if ( node->nodeType() == QgsLayerTreeNode::NodeLayer )
+  {
+    const QgsMapLayer* layer = QgsLayerTree::toLayer( node )->layer();
+    if ( layer && layer->hasScaleBasedVisibility() )
+    {
+      emit dataChanged( idx, idx );
+    }
+  }
+  int count = node->children().count();
+  for ( int i = 0; i < count; ++i )
+    refreshScaleBasedLayers( index( i, 0, idx ) );
+}
 
 Qt::DropActions QgsLayerTreeModel::supportedDropActions() const
 {
@@ -1037,7 +1131,7 @@ const QIcon& QgsLayerTreeModel::iconGroup()
   static QIcon icon;
 
   if ( icon.isNull() )
-    icon = QgsApplication::getThemeIcon( "/mActionFolder.png" );
+    icon = QgsApplication::getThemeIcon( "/mActionFolder.svg" );
 
   return icon;
 }
@@ -1058,8 +1152,9 @@ QList<QgsLayerTreeModelLegendNode*> QgsLayerTreeModel::filterLegendNodes( const 
   {
     Q_FOREACH ( QgsLayerTreeModelLegendNode* node, nodes )
     {
-      QgsSymbolV2* symbolKey = reinterpret_cast< QgsSymbolV2* >( node->data( QgsSymbolV2LegendNode::SymbolV2LegacyRuleKeyRole ).value<void*>() );
-      if ( symbolKey )
+      QgsSymbolV2* ruleKey = reinterpret_cast< QgsSymbolV2* >( node->data( QgsSymbolV2LegendNode::SymbolV2LegacyRuleKeyRole ).value<void*>() );
+      bool checked = mLegendFilterUsesExtent || node->data( Qt::CheckStateRole ).toInt() == Qt::Checked;
+      if ( ruleKey && checked )
       {
         QString ruleKey = node->data( QgsSymbolV2LegendNode::RuleKeyRole ).toString();
         if ( QgsVectorLayer* vl = qobject_cast<QgsVectorLayer*>( node->layerNode()->layer() ) )
@@ -1068,7 +1163,7 @@ QList<QgsLayerTreeModelLegendNode*> QgsLayerTreeModel::filterLegendNodes( const 
             filtered << node;
         }
       }
-      else  // unknown node type
+      else  // unknown node type or unchecked
         filtered << node;
     }
   }
@@ -1126,9 +1221,18 @@ void QgsLayerTreeModel::addLegendToLayer( QgsLayerTreeLayer* nodeL )
   // apply filtering defined in layer node's custom properties (reordering, filtering, custom labels)
   QgsMapLayerLegendUtils::applyLayerNodeProperties( nodeL, lstNew );
 
-  QList<QgsLayerTreeModelLegendNode*> filteredLstNew = filterLegendNodes( lstNew );
+  if ( testFlag( UseEmbeddedWidgets ) )
+  {
+    // generate placeholder legend nodes that will be replaced by widgets in QgsLayerTreeView
+    int widgetsCount = ml->customProperty( "embeddedWidgets/count", 0 ).toInt();
+    while ( widgetsCount > 0 )
+    {
+      lstNew.insert( 0, new EmbeddedWidgetLegendNode( nodeL ) );
+      --widgetsCount;
+    }
+  }
 
-  bool isEmbedded = filteredLstNew.count() == 1 && filteredLstNew[0]->isEmbeddedInParent();
+  QList<QgsLayerTreeModelLegendNode*> filteredLstNew = filterLegendNodes( lstNew );
 
   Q_FOREACH ( QgsLayerTreeModelLegendNode* n, lstNew )
   {
@@ -1136,22 +1240,39 @@ void QgsLayerTreeModel::addLegendToLayer( QgsLayerTreeLayer* nodeL )
     connect( n, SIGNAL( dataChanged() ), this, SLOT( legendNodeDataChanged() ) );
   }
 
-  LayerLegendData data;
-  data.originalNodes = lstNew;
-  data.activeNodes = filteredLstNew;
-  data.tree = nullptr;
+  // See if we have an embedded node - if we do, we will not use it among active nodes.
+  // Legend node embedded in parent does not have to be the first one,
+  // there can be also nodes generated for embedded widgets
+  QgsLayerTreeModelLegendNode* embeddedNode = nullptr;
+  Q_FOREACH ( QgsLayerTreeModelLegendNode* legendNode, filteredLstNew )
+  {
+    if ( legendNode->isEmbeddedInParent() )
+    {
+      embeddedNode = legendNode;
+      filteredLstNew.removeOne( legendNode );
+      break;
+    }
+  }
+
+  LayerLegendTree* legendTree = nullptr;
 
   // maybe the legend nodes form a tree - try to create a tree structure from the list
   if ( testFlag( ShowLegendAsTree ) )
-    tryBuildLegendTree( data );
+    legendTree = tryBuildLegendTree( filteredLstNew );
 
-  int count = data.tree ? data.tree->children[nullptr].count() : filteredLstNew.count();
+  int count = legendTree ? legendTree->children[nullptr].count() : filteredLstNew.count();
 
-  if ( ! isEmbedded ) beginInsertRows( node2index( nodeL ), 0, count - 1 );
+  if ( !filteredLstNew.isEmpty() ) beginInsertRows( node2index( nodeL ), 0, count - 1 );
+
+  LayerLegendData data;
+  data.originalNodes = lstNew;
+  data.activeNodes = filteredLstNew;
+  data.embeddedNodeInParent = embeddedNode;
+  data.tree = legendTree;
 
   mLegend[nodeL] = data;
 
-  if ( ! isEmbedded ) endInsertRows();
+  if ( !filteredLstNew.isEmpty() ) endInsertRows();
 
   if ( hasStyleOverride )
     ml->styleManager()->restoreOverrideStyle();
@@ -1162,11 +1283,11 @@ void QgsLayerTreeModel::addLegendToLayer( QgsLayerTreeLayer* nodeL )
 }
 
 
-void QgsLayerTreeModel::tryBuildLegendTree( LayerLegendData& data )
+QgsLayerTreeModel::LayerLegendTree* QgsLayerTreeModel::tryBuildLegendTree( const QList<QgsLayerTreeModelLegendNode*>& nodes )
 {
   // first check whether there are any legend nodes that are not top-level
   bool hasParentKeys = false;
-  Q_FOREACH ( QgsLayerTreeModelLegendNode* n, data.activeNodes )
+  Q_FOREACH ( QgsLayerTreeModelLegendNode* n, nodes )
   {
     if ( !n->data( QgsLayerTreeModelLegendNode::ParentRuleKeyRole ).toString().isEmpty() )
     {
@@ -1175,30 +1296,31 @@ void QgsLayerTreeModel::tryBuildLegendTree( LayerLegendData& data )
     }
   }
   if ( !hasParentKeys )
-    return; // all legend nodes are top-level => stick with list representation
+    return nullptr; // all legend nodes are top-level => stick with list representation
 
   // make mapping from rules to nodes and do some sanity checks
   QHash<QString, QgsLayerTreeModelLegendNode*> rule2node;
   rule2node[QString()] = nullptr;
-  Q_FOREACH ( QgsLayerTreeModelLegendNode* n, data.activeNodes )
+  Q_FOREACH ( QgsLayerTreeModelLegendNode* n, nodes )
   {
     QString ruleKey = n->data( QgsLayerTreeModelLegendNode::RuleKeyRole ).toString();
     if ( ruleKey.isEmpty() ) // in tree all nodes must have key
-      return;
+      return nullptr;
     if ( rule2node.contains( ruleKey ) ) // and they must be unique
-      return;
+      return nullptr;
     rule2node[ruleKey] = n;
   }
 
   // create the tree structure
-  data.tree = new LayerLegendTree;
-  Q_FOREACH ( QgsLayerTreeModelLegendNode* n, data.activeNodes )
+  LayerLegendTree* tree = new LayerLegendTree;
+  Q_FOREACH ( QgsLayerTreeModelLegendNode* n, nodes )
   {
     QString parentRuleKey = n->data( QgsLayerTreeModelLegendNode::ParentRuleKeyRole ).toString();
     QgsLayerTreeModelLegendNode* parent = rule2node.value( parentRuleKey, nullptr );
-    data.tree->parents[n] = parent;
-    data.tree->children[parent] << n;
+    tree->parents[n] = parent;
+    tree->children[parent] << n;
   }
+  return tree;
 }
 
 
@@ -1232,6 +1354,7 @@ QModelIndex QgsLayerTreeModel::legendNode2index( QgsLayerTreeModelLegendNode* le
   int row = data.activeNodes.indexOf( legendNode );
   if ( row < 0 ) // legend node may be filtered (exists within the list of original nodes, but not in active nodes)
     return QModelIndex();
+
   return index( row, 0, parentIndex );
 }
 
@@ -1248,9 +1371,6 @@ int QgsLayerTreeModel::legendNodeRowCount( QgsLayerTreeModelLegendNode* node ) c
 
 int QgsLayerTreeModel::legendRootRowCount( QgsLayerTreeLayer* nL ) const
 {
-  if ( legendEmbeddedInParent( nL ) )
-    return 0;
-
   if ( !mLegend.contains( nL ) )
     return 0;
 
@@ -1258,7 +1378,8 @@ int QgsLayerTreeModel::legendRootRowCount( QgsLayerTreeLayer* nL ) const
   if ( data.tree )
     return data.tree->children[nullptr].count();
 
-  return data.activeNodes.count();
+  int count = data.activeNodes.count();
+  return count;
 }
 
 
@@ -1322,20 +1443,34 @@ Qt::ItemFlags QgsLayerTreeModel::legendNodeFlags( QgsLayerTreeModelLegendNode* n
 
 bool QgsLayerTreeModel::legendEmbeddedInParent( QgsLayerTreeLayer* nodeLayer ) const
 {
-  const LayerLegendData& data = mLegend[nodeLayer];
-  return data.activeNodes.count() == 1 && data.activeNodes[0]->isEmbeddedInParent();
+  return mLegend[nodeLayer].embeddedNodeInParent != nullptr;
+}
+
+QgsLayerTreeModelLegendNode* QgsLayerTreeModel::legendNodeEmbeddedInParent( QgsLayerTreeLayer* nodeLayer ) const
+{
+  return mLegend[nodeLayer].embeddedNodeInParent;
 }
 
 
 QIcon QgsLayerTreeModel::legendIconEmbeddedInParent( QgsLayerTreeLayer* nodeLayer ) const
 {
-  return QIcon( qvariant_cast<QPixmap>( mLegend[nodeLayer].activeNodes[0]->data( Qt::DecorationRole ) ) );
+  QgsLayerTreeModelLegendNode* legendNode = mLegend[nodeLayer].embeddedNodeInParent;
+  if ( !legendNode )
+    return QIcon();
+  return QIcon( qvariant_cast<QPixmap>( legendNode->data( Qt::DecorationRole ) ) );
 }
 
 
-QList<QgsLayerTreeModelLegendNode*> QgsLayerTreeModel::layerLegendNodes( QgsLayerTreeLayer* nodeLayer )
+QList<QgsLayerTreeModelLegendNode*> QgsLayerTreeModel::layerLegendNodes( QgsLayerTreeLayer* nodeLayer, bool skipNodeEmbeddedInParent )
 {
-  return mLegend.value( nodeLayer ).activeNodes;
+  if ( !mLegend.contains( nodeLayer ) )
+    return QList<QgsLayerTreeModelLegendNode*>();
+
+  const LayerLegendData& data = mLegend[nodeLayer];
+  QList<QgsLayerTreeModelLegendNode*> lst( data.activeNodes );
+  if ( !skipNodeEmbeddedInParent && data.embeddedNodeInParent )
+    lst.prepend( data.embeddedNodeInParent );
+  return lst;
 }
 
 QList<QgsLayerTreeModelLegendNode*> QgsLayerTreeModel::layerOriginalLegendNodes( QgsLayerTreeLayer* nodeLayer )

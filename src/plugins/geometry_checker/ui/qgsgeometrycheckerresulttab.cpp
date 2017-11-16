@@ -38,7 +38,11 @@
 QString QgsGeometryCheckerResultTab::sSettingsGroup = "/geometry_checker/default_fix_methods/";
 
 QgsGeometryCheckerResultTab::QgsGeometryCheckerResultTab( QgisInterface* iface, QgsGeometryChecker* checker, QgsFeaturePool *featurePool, QTabWidget* tabWidget, QWidget* parent )
-    : QWidget( parent ), mTabWidget( tabWidget ), mIface( iface ), mChecker( checker ), mFeaturePool( featurePool )
+    : QWidget( parent )
+    , mTabWidget( tabWidget )
+    , mIface( iface )
+    , mChecker( checker )
+    , mFeaturePool( featurePool )
 {
   ui.setupUi( this );
   mErrorCount = 0;
@@ -72,7 +76,9 @@ QgsGeometryCheckerResultTab::QgsGeometryCheckerResultTab( QgisInterface* iface, 
 
   ui.progressBarFixErrors->setVisible( false );
   ui.tableWidgetErrors->horizontalHeader()->setSortIndicator( 0, Qt::AscendingOrder );
+  // Not sure why, but this is needed...
   ui.tableWidgetErrors->setSortingEnabled( true );
+  ui.tableWidgetErrors->setSortingEnabled( false );
 }
 
 QgsGeometryCheckerResultTab::~QgsGeometryCheckerResultTab()
@@ -84,8 +90,9 @@ QgsGeometryCheckerResultTab::~QgsGeometryCheckerResultTab()
   qDeleteAll( mCurrentRubberBands );
 }
 
-void QgsGeometryCheckerResultTab::showCheckMessages()
+void QgsGeometryCheckerResultTab::finalize()
 {
+  ui.tableWidgetErrors->setSortingEnabled( true );
   if ( !mChecker->getMessages().isEmpty() )
   {
     QDialog dialog;
@@ -103,10 +110,9 @@ void QgsGeometryCheckerResultTab::showCheckMessages()
 
 void QgsGeometryCheckerResultTab::addError( QgsGeometryCheckError *error )
 {
-  // Disable sorting to prevent crashes: if i.e. sorting by col 0, as soon as the item(row, 0)
-  // is set, the row is potentially moved due to sorting, and subsequent item(row, col) reference wrong
-  // item
-  ui.tableWidgetErrors->setSortingEnabled( false );
+  bool sortingWasEnabled = ui.tableWidgetErrors->isSortingEnabled();
+  if ( sortingWasEnabled )
+    ui.tableWidgetErrors->setSortingEnabled( false );
 
   int row = ui.tableWidgetErrors->rowCount();
   int prec = 7 - std::floor( qMax( 0., std::log10( qMax( error->location().x(), error->location().y() ) ) ) );
@@ -141,7 +147,8 @@ void QgsGeometryCheckerResultTab::addError( QgsGeometryCheckError *error )
   mStatistics.newErrors.insert( error );
   mErrorMap.insert( error, QPersistentModelIndex( ui.tableWidgetErrors->model()->index( row, 0 ) ) );
 
-  ui.tableWidgetErrors->setSortingEnabled( true );
+  if ( sortingWasEnabled )
+    ui.tableWidgetErrors->setSortingEnabled( true );
 }
 
 void QgsGeometryCheckerResultTab::updateError( QgsGeometryCheckError *error, bool statusChanged )
@@ -265,7 +272,11 @@ bool QgsGeometryCheckerResultTab::exportErrorsDo( const QString& file )
     f.setAttribute( fieldFeatureId, error->featureId() );
     f.setAttribute( fieldErrDesc, error->description() );
     f.setGeometry( new QgsGeometry( error->location().clone() ) );
-    layer->dataProvider()->addFeatures( QgsFeatureList() << f );
+    if ( !layer->dataProvider()->addFeatures( QgsFeatureList() << f ) )
+    {
+      delete layer;
+      return false;
+    }
   }
 
   // Remove existing layer with same uri
@@ -304,7 +315,7 @@ void QgsGeometryCheckerResultTab::highlightErrors( bool current )
   mCurrentRubberBands.clear();
 
   QList<QTableWidgetItem*> items;
-  QList<QgsPoint> errorPositions;
+  QVector<QgsPoint> errorPositions;
   QgsRectangle totextent;
 
   if ( current )

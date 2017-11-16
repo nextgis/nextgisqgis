@@ -39,6 +39,9 @@ class QgsScopedExpressionFunction : QgsExpression::Function
  * Examples include a project's scope, which could contain information about the current project such as
  * the project file's location. QgsExpressionContextScope can encapsulate both variables (static values)
  * and functions(which are calculated only when an expression is evaluated).
+ *
+ * See QgsExpressionContextUtils for helper methods for working with QgsExpressionContextScope objects.
+ *
  * \note added in QGIS 2.12
  */
 
@@ -191,6 +194,7 @@ class QgsExpressionContextScope
     void setFields( const QgsFields& fields );
 };
 
+
 /** \ingroup core
  * \class QgsExpressionContext
  * \brief Expression contexts are used to encapsulate the parameters around which a QgsExpression should
@@ -198,6 +202,9 @@ class QgsExpressionContextScope
  * their evaluated result. A QgsExpressionContext consists of a stack of QgsExpressionContextScope objects,
  * where scopes added later to the stack will override conflicting variables and functions from scopes
  * lower in the stack.
+ *
+ * See QgsExpressionContextUtils for helper methods for working with QgsExpressionContext objects.
+ *
  * \note added in QGIS 2.12
  */
 
@@ -292,7 +299,7 @@ class QgsExpressionContext
     /** Returns the index of the first scope with a matching name within the context.
      * @param scopeName name of scope to find
      * @returns index of scope, or -1 if scope was not found within the context.
-     * @note added in QGIS 3.0
+     * @note added in QGIS 2.18
      */
     int indexOfScope( const QString& scopeName ) const;
 
@@ -395,6 +402,46 @@ class QgsExpressionContext
      * @note added in QGIS 2.12
      */
     void setOriginalValueVariable( const QVariant& value );
+
+    /** Sets a value to cache within the expression context. This can be used to cache the results
+     * of expensive expression sub-calculations, to speed up future evaluations using the same
+     * expression context.
+     * @param key unique key for retrieving cached value
+     * @param value value to cache
+     * @see hasCachedValue()
+     * @see cachedValue()
+     * @see clearCachedValues()
+     * @note added in QGIS 2.16
+     */
+    void setCachedValue( const QString& key, const QVariant& value ) const;
+
+    /** Returns true if the expression context contains a cached value with a matching key.
+     * @param key unique key used to store cached value
+     * @see setCachedValue()
+     * @see cachedValue()
+     * @see clearCachedValues()
+     * @note added in QGIS 2.16
+     */
+    bool hasCachedValue( const QString& key ) const;
+
+    /** Returns the matching cached value, if set. This can be used to retrieve the previously stored results
+     * of an expensive expression sub-calculation.
+     * @param key unique key used to store cached value
+     * @returns matching cached value, or invalid QVariant if not set
+     * @see setCachedValue()
+     * @see hasCachedValue()
+     * @see clearCachedValues()
+     * @note added in QGIS 2.16
+     */
+    QVariant cachedValue( const QString& key ) const;
+
+    /** Clears all cached values from the context.
+     * @see setCachedValue()
+     * @see hasCachedValue()
+     * @see cachedValue()
+     * @note added in QGIS 2.16
+     */
+    void clearCachedValues() const;
 
     //! Inbuilt variable name for fields storage
     static const QString EXPR_FIELDS;

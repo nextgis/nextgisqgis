@@ -49,6 +49,7 @@ enum QgsPostgresPrimaryKeyType
 {
   pktUnknown,
   pktInt,
+  pktUint64,
   pktTid,
   pktOid,
   pktFidMap
@@ -243,11 +244,11 @@ class QgsPostgresConn : public QObject
     //
 
     // run a query and check for errors
-    PGresult *PQexec( const QString& query, bool logError = true, bool retry = true );
+    PGresult *PQexec( const QString& query, bool logError = true, bool retry = true ) const;
     void PQfinish();
-    QString PQerrorMessage();
+    QString PQerrorMessage() const;
     int PQsendQuery( const QString& query );
-    int PQstatus();
+    int PQstatus() const;
     PGresult *PQgetResult();
     PGresult *PQprepare( const QString& stmtName, const QString& query, int nParams, const Oid *paramTypes );
     PGresult *PQexecPrepared( const QString& stmtName, const QStringList &params );
@@ -308,6 +309,13 @@ class QgsPostgresConn : public QObject
     QString fieldExpression( const QgsField &fld, QString expr = "%1" );
 
     QString connInfo() const { return mConnInfo; }
+
+    /**
+     * Returns the underlying database.
+     *
+     * @since QGIS 2.18
+     */
+    QString currentDatabase() const;
 
     static const int sGeomTypeSelectLimit;
 

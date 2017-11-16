@@ -20,6 +20,7 @@
 #include "effects/qgseffectstack.h"
 #include <QWidget>
 #include <QStandardItemModel>
+#include <qgspanelwidget.h>
 
 #include "ui_qgseffectstackpropertieswidgetbase.h"
 
@@ -27,6 +28,7 @@ class EffectItem;
 class QgsPaintEffect;
 class QCheckBox;
 class QToolButton;
+class QgsPanelWidget;
 
 /** \ingroup gui
  * \class QgsEffectStackPropertiesWidget
@@ -39,7 +41,7 @@ class QToolButton;
  * \see QgsEffectStackCompactWidget
  */
 
-class GUI_EXPORT QgsEffectStackPropertiesWidget : public QWidget, private Ui::QgsEffectStackPropertiesWidgetBase
+class GUI_EXPORT QgsEffectStackPropertiesWidget : public QgsPanelWidget, private Ui::QgsEffectStackPropertiesWidgetBase
 {
     Q_OBJECT
 
@@ -183,7 +185,7 @@ class GUI_EXPORT QgsEffectStackPropertiesDialog: public QgsDialog
  * \see QgsEffectStackPropertiesDialog
  */
 
-class GUI_EXPORT QgsEffectStackCompactWidget: public QWidget
+class GUI_EXPORT QgsEffectStackCompactWidget: public QgsPanelWidget
 {
     Q_OBJECT
 
@@ -198,7 +200,7 @@ class GUI_EXPORT QgsEffectStackCompactWidget: public QWidget
     QgsEffectStackCompactWidget( QWidget* parent = nullptr, QgsPaintEffect* effect = nullptr );
     ~QgsEffectStackCompactWidget();
 
-    /** Sets paint effect attached to the widget
+    /** Sets paint effect attached to the widget,
      * @param effect QgsPaintEffect for modification by the widget. If the effect
      * is not a QgsEffectStack, it will be automatically converted to an effect
      * stack consisting of the original effect
@@ -229,8 +231,10 @@ class GUI_EXPORT QgsEffectStackCompactWidget: public QWidget
 
     void enableToggled( bool checked );
 
-  private:
+    void updateAcceptWidget( QgsPanelWidget* panel );
+    void updateEffectLive();
 
+  private:
     QgsEffectStack* mStack;
     QCheckBox* mEnabledCheckBox;
     QToolButton* mButton;

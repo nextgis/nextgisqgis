@@ -285,6 +285,16 @@ QgsFeatureIterator QgsMemoryProvider::getFeatures( const QgsFeatureRequest& requ
 
 QgsRectangle QgsMemoryProvider::extent()
 {
+  if ( mExtent.isEmpty() && !mFeatures.isEmpty() )
+  {
+    mExtent.setMinimal();
+    Q_FOREACH ( const QgsFeature &feat, mFeatures )
+    {
+      if ( feat.constGeometry() )
+        mExtent.unionRect( feat.constGeometry()->boundingBox() );
+    }
+  }
+
   return mExtent;
 }
 
@@ -328,23 +338,34 @@ QgsCoordinateReferenceSystem QgsMemoryProvider::crs()
 
 bool QgsMemoryProvider::addFeatures( QgsFeatureList & flist )
 {
+  // whether or not to update the layer extent on the fly as we add features
+  bool updateExtent = mFeatures.isEmpty() || !mExtent.isEmpty();
+
   // TODO: sanity checks of fields and geometries
   for ( QgsFeatureList::iterator it = flist.begin(); it != flist.end(); ++it )
   {
-    mFeatures[mNextFeatureId] = *it;
-    QgsFeature& newfeat = mFeatures[mNextFeatureId];
-    newfeat.setFeatureId( mNextFeatureId );
-    newfeat.setValid( true );
     it->setFeatureId( mNextFeatureId );
+    it->setValid( true );
 
-    // update spatial index
-    if ( mSpatialIndex )
-      mSpatialIndex->insertFeature( newfeat );
+    mFeatures.insert( mNextFeatureId, *it );
+
+    if ( it->constGeometry() )
+    {
+      if ( updateExtent )
+      {
+        if ( mExtent.isNull() )
+          mExtent = it->constGeometry()->boundingBox();
+        else
+          mExtent.combineExtentWith( it->constGeometry()->boundingBox() );
+      }
+
+      // update spatial index
+      if ( mSpatialIndex )
+        mSpatialIndex->insertFeature( *it );
+    }
 
     mNextFeatureId++;
   }
-
-  updateExtent();
 
   return true;
 }
@@ -366,7 +387,7 @@ bool QgsMemoryProvider::deleteFeatures( const QgsFeatureIds & id )
     mFeatures.erase( fit );
   }
 
-  updateExtent();
+  updateExtents();
 
   return true;
 }
@@ -375,7 +396,6 @@ bool QgsMemoryProvider::addAttributes( const QList<QgsField> &attributes )
 {
   for ( QList<QgsField>::const_iterator it = attributes.begin(); it != attributes.end(); ++it )
   {
-    // Why are attributes restricted to int,double and string only?
     switch ( it->type() )
     {
       case QVariant::Int:
@@ -402,6 +422,30 @@ bool QgsMemoryProvider::addAttributes( const QList<QgsField> &attributes )
     }
   }
   return true;
+}
+
+bool QgsMemoryProvider::renameAttributes( const QgsFieldNameMap& renamedAttributes )
+{
+  QgsFieldNameMap::const_iterator renameIt = renamedAttributes.constBegin();
+  bool result = true;
+  for ( ; renameIt != renamedAttributes.constEnd(); ++renameIt )
+  {
+    int fieldIndex = renameIt.key();
+    if ( fieldIndex < 0 || fieldIndex >= mFields.count() )
+    {
+      result = false;
+      continue;
+    }
+    if ( mFields.indexFromName( renameIt.value() ) >= 0 )
+    {
+      //field name already in use
+      result = false;
+      continue;
+    }
+
+    mFields[ fieldIndex ].setName( renameIt.value() );
+  }
+  return result;
 }
 
 bool QgsMemoryProvider::deleteAttributes( const QgsAttributeIds& attributes )
@@ -460,7 +504,7 @@ bool QgsMemoryProvider::changeGeometryValues( const QgsGeometryMap &geometry_map
       mSpatialIndex->insertFeature( *fit );
   }
 
-  updateExtent();
+  updateExtents();
 
   return true;
 }
@@ -506,26 +550,14 @@ bool QgsMemoryProvider::createSpatialIndex()
 int QgsMemoryProvider::capabilities() const
 {
   return AddFeatures | DeleteFeatures | ChangeGeometries |
-         ChangeAttributeValues | AddAttributes | DeleteAttributes | CreateSpatialIndex |
+         ChangeAttributeValues | AddAttributes | DeleteAttributes | RenameAttributes | CreateSpatialIndex |
          SelectAtId | SelectGeometryAtId | CircularGeometries;
 }
 
 
-void QgsMemoryProvider::updateExtent()
+void QgsMemoryProvider::updateExtents()
 {
-  if ( mFeatures.isEmpty() )
-  {
-    mExtent = QgsRectangle();
-  }
-  else
-  {
-    mExtent.setMinimal();
-    Q_FOREACH ( const QgsFeature& feat, mFeatures )
-    {
-      if ( feat.constGeometry() )
-        mExtent.unionRect( feat.constGeometry()->boundingBox() );
-    }
-  }
+  mExtent.setMinimal();
 }
 
 

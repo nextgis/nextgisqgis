@@ -59,16 +59,15 @@ QgsStatusBarCoordinatesWidget::QgsStatusBarCoordinatesWidget( QWidget *parent )
   mLineEdit->setWhatsThis( tr( "Shows the map coordinates at the "
                                "current cursor position. The display is continuously updated "
                                "as the mouse is moved. It also allows editing to set the canvas "
-                               "center to a given position. The format is lat,lon or east,north" ) );
-  mLineEdit->setToolTip( tr( "Current map coordinate (lat,lon or east,north)" ) );
+                               "center to a given position. The format is longitude,latitude or east,north" ) );
+  mLineEdit->setToolTip( tr( "Current map coordinate (longitude,latitude or east,north)" ) );
 
   //toggle to switch between mouse pos and extents display in status bar widget
   mToggleExtentsViewButton = new QToolButton( this );
-  mToggleExtentsViewButton->setMaximumWidth( 20 );
-  //mToggleExtentsViewButton->setMaximumHeight( 20 );
-  mToggleExtentsViewButton->setIcon( QgsApplication::getThemeIcon( "tracking.png" ) );
+  mToggleExtentsViewButton->setIcon( QgsApplication::getThemeIcon( "tracking.svg" ) );
   mToggleExtentsViewButton->setToolTip( tr( "Toggle extents and mouse position display" ) );
   mToggleExtentsViewButton->setCheckable( true );
+  mToggleExtentsViewButton->setAutoRaise( true );
   connect( mToggleExtentsViewButton, SIGNAL( toggled( bool ) ), this, SLOT( extentsViewToggled( bool ) ) );
 
   QHBoxLayout* layout = new QHBoxLayout( this );
@@ -194,7 +193,7 @@ void QgsStatusBarCoordinatesWidget::extentsViewToggled( bool theFlag )
   if ( theFlag )
   {
     //extents view mode!
-    mToggleExtentsViewButton->setIcon( QgsApplication::getThemeIcon( "extents.png" ) );
+    mToggleExtentsViewButton->setIcon( QgsApplication::getThemeIcon( "extents.svg" ) );
     mLineEdit->setToolTip( tr( "Map coordinates for the current view extents" ) );
     mLineEdit->setReadOnly( true );
     showExtent();
@@ -202,7 +201,7 @@ void QgsStatusBarCoordinatesWidget::extentsViewToggled( bool theFlag )
   else
   {
     //mouse cursor pos view mode!
-    mToggleExtentsViewButton->setIcon( QgsApplication::getThemeIcon( "tracking.png" ) );
+    mToggleExtentsViewButton->setIcon( QgsApplication::getThemeIcon( "tracking.svg" ) );
     mLineEdit->setToolTip( tr( "Map coordinates at mouse cursor position" ) );
     mLineEdit->setReadOnly( false );
     mLabel->setText( tr( "Coordinate:" ) );

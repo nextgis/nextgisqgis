@@ -578,7 +578,7 @@ void QgsRubberBand::updateRect()
       }
       else
       {
-        r.combineExtentWith( &rect );
+        r.combineExtentWith( rect );
       }
     }
   }

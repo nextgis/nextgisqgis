@@ -60,7 +60,7 @@ QgsFileWidget::QgsFileWidget( QWidget *parent )
 
   // otherwise, use the traditional QLineEdit
   mLineEdit = new QgsFilterLineEdit( this );
-  connect( mLineEdit, SIGNAL( textEdited( QString ) ), this, SLOT( textEdited( QString ) ) );
+  connect( mLineEdit, SIGNAL( textChanged( QString ) ), this, SLOT( textEdited( QString ) ) );
   layout->addWidget( mLineEdit, 1, 0 );
 
   mFileWidgetButton = new QToolButton( this );
@@ -86,10 +86,9 @@ void QgsFileWidget::setFilePath( QString path )
   {
     path = "";
   }
-  mFilePath = path;
-  mLineEdit->setText( path );
-  mLinkLabel->setText( toUrl( path ) );
-  emit fileChanged( mFilePath );
+
+  //will trigger textEdited slot
+  mLineEdit->setValue( path );
 }
 
 void QgsFileWidget::setReadOnly( bool readOnly )
@@ -294,7 +293,7 @@ QString QgsFileWidget::toUrl( const QString& path ) const
   QUrl url = QUrl::fromUserInput( urlStr );
   if ( !url.isValid() || !url.isLocalFile() )
   {
-    QgsDebugMsg( QString( "URL: %1 is not valid or not a local file !" ).arg( path ) );
+    QgsDebugMsg( QString( "URL: %1 is not valid or not a local file!" ).arg( path ) );
     rep =  path;
   }
 

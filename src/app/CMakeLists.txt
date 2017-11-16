@@ -31,18 +31,17 @@ set(QGIS_APP_SRCS
   qgsabout.cpp
   qgsalignrasterdialog.cpp
   qgsapplayertreeviewmenuprovider.cpp
-  qgssponsors.cpp
   qgsaddattrdialog.cpp
   qgsaddtaborgroup.cpp
   qgsjoindialog.cpp
   qgsannotationwidget.cpp
   qgsattributeactiondialog.cpp
+  qgsattributeactionpropertiesdialog.cpp
   qgsattributetypedialog.cpp
   qgsattributetabledialog.cpp
   qgsbookmarks.cpp
   qgsbrowserdockwidget.cpp
   qgsclipboard.cpp
-  qgsconfigureshortcutsdialog.cpp
   qgscustomization.cpp
   qgscustomprojectiondialog.cpp
   qgsdecorationitem.cpp
@@ -76,6 +75,8 @@ set(QGIS_APP_SRCS
   qgsrulebasedlabelingwidget.cpp
   qgssavestyletodbdialog.cpp
   qgsstatusbarcoordinateswidget.cpp
+  qgsstatusbarmagnifierwidget.cpp
+  qgsstatusbarscalewidget.cpp
   qgsversioninfo.cpp
   qgswelcomepageitemsmodel.cpp
   qgswelcomepage.cpp
@@ -99,6 +100,8 @@ set(QGIS_APP_SRCS
   qgsmaptoolmovefeature.cpp
   qgsmaptoolmovelabel.cpp
   qgsmaptooloffsetcurve.cpp
+  qgsmaptooloffsetpointsymbol.cpp
+  qgsmaptoolpointsymbol.cpp
   qgsmaptoolreshape.cpp
   qgsmaptoolrotatefeature.cpp
   qgsmaptoolrotatelabel.cpp
@@ -120,10 +123,12 @@ set(QGIS_APP_SRCS
   nodetool/qgsvertexentry.cpp
   nodetool/qgsnodeeditor.cpp
 
+  qgslayerstylingwidget.cpp
   qgsmeasuredialog.cpp
   qgsmeasuretool.cpp
   qgsmergeattributesdialog.cpp
   qgsoptions.cpp
+  qgspointmarkeritem.cpp
   qgspointrotationitem.cpp
   qgspluginmetadata.cpp
   qgspluginregistry.cpp
@@ -133,9 +138,10 @@ set(QGIS_APP_SRCS
   qgsrasterlayerproperties.cpp
   qgsrelationmanagerdialog.cpp
   qgsrelationadddlg.cpp
+  qgsselectbyformdialog.cpp
   qgsstatisticalsummarydockwidget.cpp
+  qgssubstitutionlistwidget.cpp
   qgstextannotationdialog.cpp
-  qgsshortcutsmanager.cpp
   qgssnappingdialog.cpp
   qgssvgannotationdialog.cpp
   qgsundowidget.cpp
@@ -161,6 +167,8 @@ set(QGIS_APP_SRCS
   composer/qgscomposermapwidget.cpp
   composer/qgscomposerscalebarwidget.cpp
   composer/qgscomposershapewidget.cpp
+  composer/qgscomposerpolygonwidget.cpp
+  composer/qgscomposerpolylinewidget.cpp
   composer/qgscomposertablewidget.cpp
   composer/qgscomposertablebackgroundcolorsdialog.cpp
   composer/qgscomposerlegenditemdialog.cpp
@@ -182,6 +190,9 @@ set(QGIS_APP_SRCS
   # openstreetmap/qgsosmdownloaddialog.cpp
   # openstreetmap/qgsosmimportdialog.cpp
   # openstreetmap/qgsosmexportdialog.cpp
+
+  # dwg/qgsdwgimportdialog.cpp
+  # dwg/qgsdwgimporter.cpp
 
   pluginmanager/qgspluginmanager.cpp
   pluginmanager/qgspluginmanager_texts.cpp
@@ -207,12 +218,12 @@ set(QGIS_APP_MOC_HDRS
   qgsannotationwidget.h
   qgsapplayertreeviewmenuprovider.h
   qgsattributeactiondialog.h
+  qgsattributeactionpropertiesdialog.h
   qgsattributetypedialog.h
   qgsattributetabledialog.h
   qgsbookmarks.h
   qgsbrowserdockwidget.h
   qgsclipboard.h
-  qgsconfigureshortcutsdialog.h
   qgscustomization.h
   qgscustomprojectiondialog.h
   qgsdecorationitem.h
@@ -245,8 +256,9 @@ set(QGIS_APP_MOC_HDRS
   qgsmaplayerstyleguiutils.h
   qgsrulebasedlabelingwidget.h
   qgssavestyletodbdialog.h
-  qgsshortcutsmanager.h
   qgsstatusbarcoordinateswidget.h
+  qgsstatusbarmagnifierwidget.h
+  qgsstatusbarscalewidget.h
   qgsversioninfo.h
   qgswelcomepageitemsmodel.h
   qgswelcomepage.h
@@ -271,6 +283,8 @@ set(QGIS_APP_MOC_HDRS
   qgsmaptoolmovelabel.h
   qgsmaptoollabel.h
   qgsmaptooloffsetcurve.h
+  qgsmaptooloffsetpointsymbol.h
+  qgsmaptoolpointsymbol.h
   qgsmaptoolreshape.h
   qgsmaptoolrotatefeature.h
   qgsmaptoolrotatelabel.h
@@ -292,6 +306,7 @@ set(QGIS_APP_MOC_HDRS
   nodetool/qgsselectedfeature.h
   nodetool/qgsnodeeditor.h
 
+  qgslayerstylingwidget.h
   qgsmeasuredialog.h
   qgsmeasuretool.h
   qgsmergeattributesdialog.h
@@ -302,9 +317,10 @@ set(QGIS_APP_MOC_HDRS
   qgsrasterlayerproperties.h
   qgsrelationmanagerdialog.h
   qgsrelationadddlg.h
+  qgsselectbyformdialog.h
   qgssnappingdialog.h
-  qgssponsors.h
   qgsstatisticalsummarydockwidget.h
+  qgssubstitutionlistwidget.h
   qgssvgannotationdialog.h
   qgstextannotationdialog.h
   qgstipgui.h
@@ -332,6 +348,8 @@ set(QGIS_APP_MOC_HDRS
   composer/qgscomposertablewidget.h
   composer/qgscomposertablebackgroundcolorsdialog.h
   composer/qgscomposershapewidget.h
+  composer/qgscomposerpolygonwidget.h
+  composer/qgscomposerpolylinewidget.h
   composer/qgscompositionwidget.h
   composer/qgsatlascompositionwidget.h
 
@@ -346,6 +364,8 @@ set(QGIS_APP_MOC_HDRS
   # openstreetmap/qgsosmdownloaddialog.h
   # openstreetmap/qgsosmimportdialog.h
   # openstreetmap/qgsosmexportdialog.h
+
+  # dwg/qgsdwgimportdialog.h
 
   pluginmanager/qgspluginmanager.h
   pluginmanager/qgsapppluginmanagerinterface.h
@@ -426,11 +446,14 @@ include_directories(
   ../gui/layertree
   ../plugins
   ../python
+  # dwg
   # gps
   # openstreetmap
 )
 
-cmake_policy(SET CMP0063 NEW)
+if(${CMAKE_VERSION} VERSION_GREATER "3.3.2")
+    cmake_policy(SET CMP0063 NEW)
+endif()
 
 set(LIB_NAME ${NG_PREFIX}qgis_app)
 

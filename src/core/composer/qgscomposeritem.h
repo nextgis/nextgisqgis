@@ -33,7 +33,7 @@ class QgsDataDefined;
 class QgsComposition;
 class QgsExpressionContext;
 
-/** \ingroup MapComposer
+/** \ingroup core
  * A item that forms part of a map composition.
  */
 class CORE_EXPORT QgsComposerItem: public QgsComposerObject, public QGraphicsRectItem
@@ -56,6 +56,8 @@ class CORE_EXPORT QgsComposerItem: public QgsComposerObject, public QGraphicsRec
       ComposerPicture,
       ComposerScaleBar,
       ComposerShape,
+      ComposerPolygon,
+      ComposerPolyline,
       ComposerTable,
       ComposerAttributeTable,
       ComposerTextTable,

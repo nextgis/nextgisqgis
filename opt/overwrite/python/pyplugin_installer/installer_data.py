@@ -23,18 +23,24 @@
  ***************************************************************************/
 """
 
-from PyQt4.QtCore import pyqtSignal, QObject, QCoreApplication, QFile, QDir, QDirIterator, QSettings, QDate, QUrl, QFileInfo, QLocale
-from PyQt4.QtXml import QDomDocument
-from PyQt4.QtNetwork import QNetworkRequest, QNetworkReply
+from qgis.PyQt.QtCore import (pyqtSignal, QObject, QCoreApplication, QFile,
+                              QDir, QDirIterator, QSettings, QDate, QUrl,
+                              QFileInfo, QLocale, QByteArray)
+from qgis.PyQt.QtXml import QDomDocument
+from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 import sys
 import os
 import codecs
-import ConfigParser
+try:
+    import ConfigParser
+except ImportError:
+    import ConfigParser as configparser
 import qgis.utils
 from qgis.core import QGis, QgsNetworkAccessManager, QgsAuthManager
 from qgis.gui import QgsMessageBar
 from qgis.utils import iface, plugin_paths
-from version_compare import compareVersions, normalizeVersion, isCompatible
+from .version_compare import compareVersions, normalizeVersion, isCompatible
+
 
 """
 Data structure:
@@ -73,6 +79,7 @@ mPlugins = dict of dicts {id : {
     "error_details" unicode,                    # error description
     "experimental" boolean,                     # true if experimental, false if stable
     "deprecated" boolean,                       # true if deprected, false if actual
+    "trusted" boolean,                          # true if trusted, false if not trusted
     "version_available" unicode,                # available version
     "zip_repository" unicode,                   # the remote repository id
     "download_url" unicode,                     # url for downloading the plugin
@@ -393,7 +400,12 @@ class Repositories(QObject):
             reposXML = QDomDocument()
             content = reply.readAll()
             # Fix lonely ampersands in metadata
-            reposXML.setContent(content.replace("& ", "&amp; "))
+            a = QByteArray()
+            a.append("& ")
+            b = QByteArray()
+            b.append("&amp; ")
+            content = content.replace(a, b)
+            reposXML.setContent(content)
             pluginNodes = reposXML.elementsByTagName("pyqgis_plugin")
             if pluginNodes.size():
                 for i in range(pluginNodes.size()):
@@ -407,6 +419,9 @@ class Repositories(QObject):
                     deprecated = False
                     if pluginNodes.item(i).firstChildElement("deprecated").text().strip().upper() in ["TRUE", "YES"]:
                         deprecated = True
+                    trusted = False
+                    if pluginNodes.item(i).firstChildElement("trusted").text().strip().upper() in ["TRUE", "YES"]:
+                        trusted = True
                     icon = pluginNodes.item(i).firstChildElement("icon").text().strip()
                     if icon and not icon.startswith("http"):
                         icon = "http://%s/%s" % (QUrl(self.mRepositories[reposName]["url"]).host(), icon)
@@ -438,6 +453,7 @@ class Repositories(QObject):
                         "icon": icon,
                         "experimental": experimental,
                         "deprecated": deprecated,
+                        "trusted": trusted,
                         "filename": fileName,
                         "installed": False,
                         "available": True,
@@ -666,6 +682,7 @@ class Plugins(QObject):
             "pythonic": True,
             "experimental": pluginMetadata("experimental").strip().upper() in ["TRUE", "YES"],
             "deprecated": pluginMetadata("deprecated").strip().upper() in ["TRUE", "YES"],
+            "trusted": False,
             "version_available": "",
             "zip_repository": "",
             "download_url": path,      # warning: local path as url!
@@ -752,7 +769,7 @@ class Plugins(QObject):
                         # other remote metadata is preffered:
                         for attrib in ["name", "plugin_id", "description", "about", "category", "tags", "changelog", "author_name", "author_email", "homepage",
                                        "tracker", "code_repository", "experimental", "deprecated", "version_available", "zip_repository",
-                                       "download_url", "filename", "downloads", "average_vote", "rating_votes"]:
+                                       "download_url", "filename", "downloads", "average_vote", "rating_votes", "trusted"]:
                             if attrib not in translatableAttributes or attrib == "name":  # include name!
                                 if plugin[attrib]:
                                     self.mPlugins[key][attrib] = plugin[attrib]

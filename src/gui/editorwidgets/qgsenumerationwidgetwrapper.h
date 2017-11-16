@@ -20,7 +20,8 @@
 
 #include <QComboBox>
 
-/** \class QgsEnumerationWidgetWrapper
+/** \ingroup gui
+ * \class QgsEnumerationWidgetWrapper
  * \note not available in Python bindings
  */
 
@@ -33,6 +34,7 @@ class GUI_EXPORT QgsEnumerationWidgetWrapper : public QgsEditorWidgetWrapper
     // QgsEditorWidgetWrapper interface
   public:
     QVariant value() const override;
+    void showIndeterminateState() override;
 
   protected:
     QWidget* createWidget( QWidget* parent ) override;

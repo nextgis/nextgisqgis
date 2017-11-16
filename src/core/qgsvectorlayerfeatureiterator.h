@@ -30,7 +30,8 @@ class QgsExpressionContext;
 
 class QgsVectorLayerFeatureIterator;
 
-/** Partial snapshot of vector layer's state (only the members necessary for access to features)
+/** \ingroup core
+ * Partial snapshot of vector layer's state (only the members necessary for access to features)
  * @note not available in Python bindings
 */
 class QgsVectorLayerFeatureSource : public QgsAbstractFeatureSource
@@ -55,8 +56,6 @@ class QgsVectorLayerFeatureSource : public QgsAbstractFeatureSource
 
     bool mHasEditBuffer;
 
-    bool mCanBeSimplified;
-
     // A deep-copy is only performed, if the original maps change
     // see here https://github.com/qgis/Quantum-GIS/pull/673
     // for explanation
@@ -70,7 +69,8 @@ class QgsVectorLayerFeatureSource : public QgsAbstractFeatureSource
     long mCrsId;
 };
 
-
+/** \ingroup core
+ */
 class CORE_EXPORT QgsVectorLayerFeatureIterator : public QgsAbstractFeatureIteratorFromSource<QgsVectorLayerFeatureSource>
 {
   public:
@@ -84,13 +84,15 @@ class CORE_EXPORT QgsVectorLayerFeatureIterator : public QgsAbstractFeatureItera
     //! end of iterating: free the resources / lock
     virtual bool close() override;
 
+    virtual void setInterruptionChecker( QgsInterruptionChecker* interruptionChecker ) override;
+
   protected:
     //! fetch next feature, return true on success
     virtual bool fetchFeature( QgsFeature& feature ) override;
 
     //! Overrides default method as we only need to filter features in the edit buffer
     //! while for others filtering is left to the provider implementation.
-    inline virtual bool nextFeatureFilterExpression( QgsFeature &f ) override { return fetchFeature( f ); }
+    virtual bool nextFeatureFilterExpression( QgsFeature &f ) override { return fetchFeature( f ); }
 
     //! Setup the simplification of geometries to fetch using the specified simplify method
     virtual bool prepareSimplification( const QgsSimplifyMethod& simplifyMethod ) override;
@@ -191,16 +193,12 @@ class CORE_EXPORT QgsVectorLayerFeatureIterator : public QgsAbstractFeatureItera
     bool mHasVirtualAttributes;
 
   private:
-    //! optional object to locally simplify edited (changed or added) geometries fetched by this feature iterator
-    QgsAbstractGeometrySimplifier* mEditGeometrySimplifier;
-
     QScopedPointer<QgsExpressionContext> mExpressionContext;
+
+    QgsInterruptionChecker* mInterruptionChecker;
 
     QList< int > mPreparedFields;
     QList< int > mFieldsToPrepare;
-
-    /** Join list sorted by dependency*/
-    QList< FetchJoinInfo > mOrderedJoinInfoList;
 
     /**
      * Will always return true. We assume that ordering has been done on provider level already.
@@ -210,8 +208,6 @@ class CORE_EXPORT QgsVectorLayerFeatureIterator : public QgsAbstractFeatureItera
 
     //! returns whether the iterator supports simplify geometries on provider side
     virtual bool providerCanSimplify( QgsSimplifyMethod::MethodType methodType ) const override;
-
-    void createOrderedJoinList();
 };
 
 #endif // QGSVECTORLAYERFEATUREITERATOR_H

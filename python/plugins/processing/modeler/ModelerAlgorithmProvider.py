@@ -27,7 +27,7 @@ __revision__ = '$Format:%H$'
 
 import os
 
-from PyQt4.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from processing.core.AlgorithmProvider import AlgorithmProvider
 from processing.core.ProcessingConfig import ProcessingConfig, Setting
@@ -55,10 +55,7 @@ class ModelerAlgorithmProvider(AlgorithmProvider):
         AlgorithmProvider.initializeSettings(self)
         ProcessingConfig.addSetting(Setting(self.getDescription(),
                                             ModelerUtils.MODELS_FOLDER, self.tr('Models folder', 'ModelerAlgorithmProvider'),
-                                            ModelerUtils.modelsFolder(), valuetype=Setting.FOLDER))
-
-    def setAlgsList(self, algs):
-        ModelerUtils.allAlgs = algs
+                                            ModelerUtils.defaultModelsFolder(), valuetype=Setting.MULTIPLE_FOLDERS))
 
     def modelsFolder(self):
         return ModelerUtils.modelsFolder()
@@ -73,8 +70,10 @@ class ModelerAlgorithmProvider(AlgorithmProvider):
         return QIcon(os.path.join(pluginPath, 'images', 'model.png'))
 
     def _loadAlgorithms(self):
-        folder = ModelerUtils.modelsFolder()
-        self.loadFromFolder(folder)
+        folders = ModelerUtils.modelsFolders()
+        self.algs = []
+        for f in folders:
+            self.loadFromFolder(f)
 
     def loadFromFolder(self, folder):
         if not os.path.exists(folder):

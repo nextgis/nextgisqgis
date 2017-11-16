@@ -28,18 +28,17 @@ __revision__ = '$Format:%H$'
 
 import os
 import traceback
-from PyQt4.QtGui import QApplication
-from PyQt4.QtCore import QCoreApplication
+from qgis.PyQt.QtWidgets import QApplication
+from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import QgsMapLayerRegistry
 
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.core.ProcessingResults import ProcessingResults
 from processing.core.ProcessingLog import ProcessingLog
+from processing.core.SilentProgress import SilentProgress
 
 from processing.gui.ResultsDialog import ResultsDialog
 from processing.gui.RenderingStyles import RenderingStyles
-from processing.gui.MessageDialog import MessageDialog
-from processing.gui.SilentProgress import SilentProgress
 
 from processing.core.outputs import OutputRaster
 from processing.core.outputs import OutputVector
@@ -71,9 +70,11 @@ def handleAlgorithmResults(alg, progress=None, showResults=True):
                         name = os.path.basename(out.value)
                     else:
                         name = out.description
+
+                    isRaster = True if isinstance(out, OutputRaster) else False
                     dataobjects.load(out.value, name, alg.crs,
-                                     RenderingStyles.getStyle(alg.commandLineName(),
-                                                              out.name))
+                                     RenderingStyles.getStyle(alg.commandLineName(), out.name),
+                                     isRaster)
             except Exception:
                 ProcessingLog.addToLog(ProcessingLog.LOG_ERROR,
                                        "Error loading result layer:\n" + traceback.format_exc())

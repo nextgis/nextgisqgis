@@ -18,6 +18,7 @@
 #include <QSettings>
 #include <QMessageBox>
 #include <QInputDialog>
+#include <QRegExpValidator>
 
 #include "qgspgnewconnection.h"
 #include "qgsauthmanager.h"
@@ -26,7 +27,8 @@
 #include "qgspostgresconn.h"
 
 QgsPgNewConnection::QgsPgNewConnection( QWidget *parent, const QString& connName, Qt::WindowFlags fl )
-    : QDialog( parent, fl ), mOriginalConnName( connName )
+    : QDialog( parent, fl )
+    , mOriginalConnName( connName )
     , mAuthConfigSelect( nullptr )
 {
   setupUi( this );
@@ -35,6 +37,8 @@ QgsPgNewConnection::QgsPgNewConnection( QWidget *parent, const QString& connName
   cbxSSLmode->addItem( tr( "allow" ), QgsDataSourceURI::SSLallow );
   cbxSSLmode->addItem( tr( "prefer" ), QgsDataSourceURI::SSLprefer );
   cbxSSLmode->addItem( tr( "require" ), QgsDataSourceURI::SSLrequire );
+  cbxSSLmode->addItem( tr( "verify-ca" ), QgsDataSourceURI::SSLverifyCA );
+  cbxSSLmode->addItem( tr( "verify-full" ), QgsDataSourceURI::SSLverifyFull );
 
   mAuthConfigSelect = new QgsAuthConfigSelect( this, "postgres" );
   tabAuthentication->insertTab( 1, mAuthConfigSelect, tr( "Configurations" ) );
@@ -97,9 +101,9 @@ QgsPgNewConnection::QgsPgNewConnection( QWidget *parent, const QString& connName
       tabAuthentication->setCurrentIndex( tabAuthentication->indexOf( mAuthConfigSelect ) );
     }
 
-
     txtName->setText( connName );
   }
+  txtName->setValidator( new QRegExpValidator( QRegExp( "[^\\/]*" ), txtName ) );
 }
 /** Autoconnected SLOTS **/
 void QgsPgNewConnection::accept()

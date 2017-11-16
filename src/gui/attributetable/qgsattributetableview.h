@@ -31,9 +31,9 @@ class QgsVectorLayer;
 class QgsVectorLayerCache;
 class QMenu;
 class QProgressDialog;
+class QgsAttributeTableConfig;
 
-
-/**
+/** \ingroup gui
  * @brief
  * Provides a table view of features of a @link QgsVectorLayer @endlink.
  *
@@ -47,7 +47,6 @@ class GUI_EXPORT QgsAttributeTableView : public QTableView
 
   public:
     QgsAttributeTableView( QWidget* parent = nullptr );
-    virtual ~QgsAttributeTableView();
 
     virtual void setModel( QgsAttributeTableFilterModel* filterModel );
 
@@ -60,7 +59,7 @@ class GUI_EXPORT QgsAttributeTableView : public QTableView
     /**
      * This event filter is installed on the verticalHeader to intercept mouse press and release
      * events. These are used to disable / enable live synchronisation with the map canvas selection
-     * which can be slow due to recurring canvas repaints. Updating the
+     * which can be slow due to recurring canvas repaints.
      *
      * @param object The object which is the target of the event.
      * @param event  The intercepted event
@@ -68,6 +67,13 @@ class GUI_EXPORT QgsAttributeTableView : public QTableView
      * @return Returns always false, so the event gets processed
      */
     virtual bool eventFilter( QObject* object, QEvent* event ) override;
+
+    /**
+     * Set the attribute table config which should be used to control
+     * the appearance of the attribute table.
+     * @note added in QGIS 2.16
+     */
+    void setAttributeTableConfig( const QgsAttributeTableConfig& config );
 
   protected:
     /**
@@ -128,6 +134,13 @@ class GUI_EXPORT QgsAttributeTableView : public QTableView
      */
     void willShowContextMenu( QMenu* menu, const QModelIndex& atIndex );
 
+    /** Emitted when a column in the view has been resized.
+     * @param column column index (starts at 0)
+     * @param width new width in pixel
+     * @note added in QGIS 2.16
+     */
+    void columnResized( int column, int width );
+
     void finished();
 
   public slots:
@@ -140,19 +153,24 @@ class GUI_EXPORT QgsAttributeTableView : public QTableView
   private slots:
     void modelDeleted();
     void showHorizontalSortIndicator();
+    void actionTriggered();
+    void columnSizeChanged( int index, int oldWidth, int newWidth );
+    void onActionColumnItemPainted( const QModelIndex& index );
+    void recreateActionWidgets();
 
   private:
+    void updateActionImage( QWidget* widget );
+    QWidget* createActionWidget( QgsFeatureId fid );
+
     void selectRow( int row, bool anchor );
-    QgsAttributeTableModel* mMasterModel;
     QgsAttributeTableFilterModel* mFilterModel;
     QgsFeatureSelectionModel* mFeatureSelectionModel;
     QgsIFeatureSelectionManager* mFeatureSelectionManager;
     QgsAttributeTableDelegate* mTableDelegate;
-    QAbstractItemModel* mModel; // Most likely the filter model
     QMenu *mActionPopup;
-    QgsVectorLayerCache* mLayerCache;
     int mRowSectionAnchor;
     QItemSelectionModel::SelectionFlag mCtrlDragSelectionFlag;
+    QMap< QModelIndex, QWidget* > mActionWidgets;
 };
 
 #endif
