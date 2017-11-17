@@ -33,13 +33,13 @@ macro(build_plugin SUBDIR)
     FILE(READ ${CMAKE_BINARY_DIR}/stagecount n)
     MATH(EXPR n "${n}+1")
     FILE(WRITE ${CMAKE_BINARY_DIR}/stagecount ${n})
-  
+
     string(REPLACE "/" "_" NAME ${SUBDIR})
     #string(MD5 SUBDIR_HASH ${SUBDIR})
 
     string(REPLACE "/" ";" DIRS ${SUBDIR})
     list(GET DIRS 0 PLUGIN_NAME)
-    
+
     file(GLOB ${NAME}_PY_FILES *.py)
     file(GLOB ${NAME}_UI_FILES *.ui)
     file(GLOB ${NAME}_QRC_FILES *.qrc)
@@ -59,14 +59,14 @@ macro(build_plugin SUBDIR)
         message(">>> New ${PLUGIN_NAME}-installer")
         add_custom_target(${PLUGIN_NAME}-installer)
     endif()
-    
+
     if(${NAME}_PYUI_FILES OR ${NAME}_PYRC_FILES)
         message(">>>     Sub ${PLUGIN_NAME}-installer-${n}")
         add_custom_target(${PLUGIN_NAME}-installer-${n} ALL DEPENDS ${${NAME}_PYUI_FILES} ${${NAME}_PYRC_FILES})
         add_dependencies(${PLUGIN_NAME}-installer ${PLUGIN_NAME}-installer-${n})
     endif()
-    
-    
+
+
     foreach(INSTALL_FILE ${${NAME}_PY_FILES} ${${NAME}_IMAGE_FILES} ${${NAME}_META_FILES} ${${NAME}_PYUI_FILES} ${${NAME}_PYRC_FILES} ${${NAME}_UI_FILES} ${${NAME}_QML_FILES})
         install(FILES ${INSTALL_FILE} DESTINATION "${QGIS_PYPLUGINS_DIR}/${SUBDIR}/")
     endforeach()
@@ -95,8 +95,8 @@ set(REMOTE_PLUGINS
 )
 
 # 1. get xml
-file(DOWNLOAD http://plugins.qgis.org/plugins/plugins.xml?qgis=2.14 ${CMAKE_CURRENT_BINARY_DIR}/repos/0.qgis_repo.xml)
-file(DOWNLOAD http://nextgis.ru/programs/qgis/qgis-repo.xml?qgis=2.14 ${CMAKE_CURRENT_BINARY_DIR}/repos/1.nextgis_repo.xml)
+file(DOWNLOAD http://plugins.qgis.org/plugins/plugins.xml?qgis=${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR} ${CMAKE_CURRENT_BINARY_DIR}/repos/0.qgis_repo.xml)
+file(DOWNLOAD http://nextgis.ru/programs/qgis/qgis-repo.xml?qgis=${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR} ${CMAKE_CURRENT_BINARY_DIR}/repos/1.nextgis_repo.xml)
 
 file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
