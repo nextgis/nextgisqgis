@@ -27,7 +27,7 @@
 find_anyproject(SIP REQUIRED)
 find_anyproject(PyQt4 REQUIRED)
 find_anyproject(Qsci DEFAULT ON)
-    
+
 include(SIPMacros)
 include(PyQtMacros)
 
@@ -158,10 +158,11 @@ foreach(PY_MODULE ${PY_MODULES})
     ADD_SIP_PYTHON_MODULE(qgis._${PY_MODULE} ${PY_MODULE}/${PY_MODULE}.sip ${MODULES_SIP})
 endforeach()
 
+configure_file(${CMAKE_SOURCE_DIR}/cmake/utils.py.in ${CMAKE_CURRENT_BINARY_DIR}/utils.py IMMEDIATE @ONLY)
 # Plugin utilities files to copy to staging or install
 set(PY_FILES
   __init__.py
-  utils.py
+  ${CMAKE_CURRENT_BINARY_DIR}/utils.py
   user.py
 )
 
