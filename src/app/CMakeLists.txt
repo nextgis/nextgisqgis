@@ -528,6 +528,13 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
         FRAMEWORK DESTINATION ${INSTALL_LIB_DIR}
         PUBLIC_HEADER DESTINATION ${INSTALL_INC_DIR} COMPONENT headers
     )
+
+    if(OSX_FRAMEWORK)
+        install(CODE "execute_process(
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${INSTALL_LIB_DIR2}
+            COMMAND ${CMAKE_COMMAND} -E create_symlink ../../Applications/${NG_PREFIX}${PROJECT_NAME}.app/Contents/Frameworks/${LIB_NAME}.framework ${INSTALL_LIB_DIR2}/${LIB_NAME}.framework )"
+        )
+    endif()
 endif()
 
 if(NOT SKIP_INSTALL_EXECUTABLES AND NOT SKIP_INSTALL_ALL)

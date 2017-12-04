@@ -67,6 +67,8 @@ if(OSX_FRAMEWORK)
     set(QT_PLUGIN_SUBDIR ${_PLUGIN_SUBDIR})
     set(QGIS_PLUGIN_SUBDIR ${_PLUGIN_SUBDIR}/${NG_PREFIX}${PROJECT_NAME})
     set(QGIS_LIB_SUBDIR "Applications/${NG_PREFIX}${PROJECT_NAME}.app/Contents/Frameworks")
+    set(INSTALL_LIB_DIR2 ${CMAKE_INSTALL_PREFIX}/Library/Frameworks CACHE INTERNAL "Installation directory for symlinks" FORCE)
+
     set(QGIS_MACAPP_BUNDLE 1)
 
     set(SKIP_INSTALL_HEADERS ON)
@@ -149,7 +151,7 @@ if(NOT PREPARE_ONLY)
     find_anyproject(GDAL REQUIRED)
     find_anyproject(GEOS REQUIRED)
     find_anyproject(Qca REQUIRED)
-    
+
     find_anyproject(SQLite3 REQUIRED)
     find_anyproject(EXPAT REQUIRED)
 
@@ -191,7 +193,7 @@ endif()
 IF(MSVC)
   # disable macros that offend std::numeric_limits<T>::min()/max()
   ADD_DEFINITIONS(-DNOMINMAX)
-  
+
   IF (MSVC_VERSION LESS 1900)
     ADD_DEFINITIONS(-D_ALLOW_KEYWORD_MACROS)
     ADD_DEFINITIONS("-Dnoexcept=")
