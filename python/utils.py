@@ -49,7 +49,6 @@ import warnings
 import codecs
 import time
 import functools
-from raven import Client
 
 if sys.version_info[0] >= 3:
     import builtins
@@ -60,8 +59,6 @@ if sys.version_info[0] >= 3:
 
 # ######################
 # ERROR HANDLING
-
-client = Client('https://71159235f0b542adb8ef214aa24f5aa6:11eae721ce1f490680c6adef9400b950@sentry.nextgis.com/9')
 
 warnings.simplefilter('default')
 warnings.filterwarnings("ignore", "the sets module is deprecated")
@@ -196,7 +193,6 @@ def open_stack_dialog(type, value, tb, msg, pop_error=True):
 
 
 def qgis_excepthook(type, value, tb):
-    client.captureException()
     showException(type, value, tb, None, messagebar=True)
 
 

@@ -164,7 +164,7 @@ QgsRelationReferenceWidget::QgsRelationReferenceWidget( QWidget* parent )
   connect( mMapIdentificationButton, SIGNAL( clicked() ), this, SLOT( mapIdentification() ) );
   connect( mRemoveFKButton, SIGNAL( clicked() ), this, SLOT( deleteForeignKey() ) );
   connect( mAddEntryButton, SIGNAL( clicked( bool ) ), this, SLOT( addEntry() ) );
-  connect( mComboBox, SIGNAL( editTextChanged( QString ) ), this, SLOT( updateAddEntryButton() ) );
+  connect( mComboBox, SIGNAL( editTextChanged( QString ) ), this, SLOT( editTextUpdated( const QString & ) ) );
 }
 
 QgsRelationReferenceWidget::~QgsRelationReferenceWidget()
@@ -479,7 +479,8 @@ void QgsRelationReferenceWidget::init()
 
     QSet<QString> requestedAttrs;
 
-    QgsVectorLayerCache* layerCache = new QgsVectorLayerCache( mReferencedLayer, 100000, this );
+    const int cacheSize = QSettings().value( "/QgsRelationReferenceWidget/cacheSize" ).toInt();
+    QgsVectorLayerCache* layerCache = new QgsVectorLayerCache( mReferencedLayer, cacheSize, this );
 
     if ( !mFilterFields.isEmpty() )
     {
@@ -583,8 +584,14 @@ void QgsRelationReferenceWidget::init()
       }
     }
 
-    QVariant featId = mFeature.isValid() ? mFeature.id() : QVariant( QVariant::Int );
-    mComboBox->setCurrentIndex( mComboBox->findData( featId, QgsAttributeTableModel::FeatureIdRole ) );
+    if ( mFeature.isValid() )
+    {
+      mComboBox->setCurrentIndex( mComboBox->findData( mFeature.id(), QgsAttributeTableModel::FeatureIdRole ) );
+    }
+    else
+    {
+      mComboBox->setCurrentIndex( -1 );
+    }
 
     // Only connect after iterating, to have only one iterator on the referenced table at once
     connect( mComboBox, SIGNAL( currentIndexChanged( int ) ), this, SLOT( comboReferenceChanged( int ) ) );
@@ -934,6 +941,18 @@ void QgsRelationReferenceWidget::filterChanged()
   }
 
   mFilterModel->setFilteredFeatures( featureIds );
+
+  if ( mChainFilters && mComboBox->count() > 0 )
+  {
+    if ( scb->currentIndex() == 0 )
+    {
+      mComboBox->setCurrentIndex( 0 );
+    }
+    else if ( mComboBox->count() > 1 )
+    {
+      mComboBox->setCurrentIndex( 1 );
+    }
+  }
 }
 
 void QgsRelationReferenceWidget::addEntry()
@@ -989,4 +1008,14 @@ void QgsRelationReferenceWidget::disableChainedComboBoxes( const QComboBox *scb 
 
     ccb = cb;
   }
+}
+
+void QgsRelationReferenceWidget::editTextUpdated( const QString &text )
+{
+  updateAddEntryButton();
+
+  // allow to raise an invalid constraint on NULL values if necessary
+  // and when the combobox is updated manually from the keyboard
+  if ( text.isEmpty() && mAllowNull )
+    mComboBox->setCurrentIndex( 0 );
 }

@@ -38,6 +38,7 @@ class SettingsWatcher(QObject):
 
     settingsChanged = pyqtSignal()
 
+
 settingsWatcher = SettingsWatcher()
 
 
@@ -150,7 +151,7 @@ class ProcessingConfig:
             ProcessingConfig.tr('General'),
             ProcessingConfig.MODELS_SCRIPTS_REPO,
             ProcessingConfig.tr('Scripts and models repository'),
-            'https://raw.githubusercontent.com/qgis/QGIS-Processing/master'))
+            'https://raw.githubusercontent.com/qgis/QGIS-Processing/qgis-2'))
         extensions = processing.tools.dataobjects.getSupportedOutputVectorLayerExtensions()
         ProcessingConfig.addSetting(Setting(
             ProcessingConfig.tr('General'),

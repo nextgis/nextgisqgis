@@ -1094,7 +1094,7 @@ int main( int argc, char *argv[] )
     dxfExport.setExtent( dxfExtent );
 
     QStringList layerIds;
-    QList< QPair<QgsVectorLayer *, int > > layers;
+    QList< QgsDxfExport::DxfLayer > layers;
     if ( !dxfPreset.isEmpty() )
     {
       Q_FOREACH ( const QString& layer, QgsProject::instance()->visibilityPresetCollection()->presetVisibleLayers( dxfPreset ) )
@@ -1102,7 +1102,7 @@ int main( int argc, char *argv[] )
         QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( QgsMapLayerRegistry::instance()->mapLayer( layer ) );
         if ( !vl )
           continue;
-        layers << qMakePair<QgsVectorLayer *, int>( vl, -1 );
+        layers << QgsDxfExport::DxfLayer( vl );
         layerIds << vl->id();
       }
     }
@@ -1113,7 +1113,7 @@ int main( int argc, char *argv[] )
         QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( ml );
         if ( !vl )
           continue;
-        layers << qMakePair<QgsVectorLayer *, int>( vl, -1 );
+        layers << QgsDxfExport::DxfLayer( vl );
         layerIds << vl->id();
       }
     }

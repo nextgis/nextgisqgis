@@ -6,9 +6,7 @@
     <message>
         <source>&lt;html&gt;&lt;body&gt;&lt;h2&gt;Algorithm description&lt;/h2&gt;
 </source>
-        <translation>&lt;html&gt;&lt;body&gt;&lt;h2&gt;Algorithmenbeschreibung&lt;/h2&gt;
-
-</translation>
+        <translation>&lt;html&gt;&lt;body&gt;&lt;h2&gt;Algorithmenbeschreibung&lt;/h2&gt;</translation>
     </message>
     <message>
         <source>OTB execution console output</source>
@@ -2713,7 +2711,7 @@ Abfrage:
     </message>
     <message>
         <source>Saved query:</source>
-        <translation>Gespeicherte Abfrage:</translation>
+        <translation type="obsolete">Gespeicherte Abfrage:</translation>
     </message>
     <message>
         <source>Name</source>
@@ -2774,6 +2772,10 @@ laden</translation>
     <message>
         <source>Set filter</source>
         <translation>Filter setzen</translation>
+    </message>
+    <message>
+        <source>Saved query</source>
+        <translation>Gespeicherte Abfrage</translation>
     </message>
 </context>
 <context>
@@ -2860,11 +2862,15 @@ laden</translation>
     </message>
     <message>
         <source>Saved query:</source>
-        <translation>Gespeicherte Abfrage:</translation>
+        <translation type="obsolete">Gespeicherte Abfrage:</translation>
     </message>
     <message>
         <source>Name</source>
         <translation>Name</translation>
+    </message>
+    <message>
+        <source>Saved query</source>
+        <translation>Gespeicherte Abfrage</translation>
     </message>
 </context>
 <context>
@@ -4251,6 +4257,30 @@ Objektgeometriefehler: Eine oder mehrere Ausgabeobjekte mit ungültiger Geometri
     <message>
         <source>A-</source>
         <translation>A-</translation>
+    </message>
+    <message>
+        <source>Case sensitive</source>
+        <translation>Groß-/Kleinschreibung beachten</translation>
+    </message>
+    <message>
+        <source>Whole word</source>
+        <translation>Ganzes Wort</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>Ersetzen</translation>
+    </message>
+    <message>
+        <source>Find what:</source>
+        <translation>Zu suchender Text:</translation>
+    </message>
+    <message>
+        <source>Replace with:</source>
+        <translation>Ersetzen durch:</translation>
+    </message>
+    <message>
+        <source>Find</source>
+        <translation>Suchen</translation>
     </message>
 </context>
 <context>
@@ -24406,25 +24436,25 @@ Datenbank: %3</translation>
         <source>Unable to create the bookmark.
 Driver:%1
 Database:%2</source>
-        <translation>Konnte das Lesezeichen nicht erzeugen.
+        <translation type="obsolete">Konnte das Lesezeichen nicht erzeugen.
 Treiber: %1
 Datenbank: %2</translation>
     </message>
     <message>
         <source>Really Delete?</source>
-        <translation>Wirklich löschen?</translation>
+        <translation type="obsolete">Wirklich löschen?</translation>
     </message>
     <message numerus="yes">
         <source>Are you sure you want to delete %n bookmark(s)?</source>
         <comment>number of rows</comment>
         <translation>
-            <numerusform>Sind Sie sicher, daß Sie das Lesezeichen löschen wollen?</numerusform>
-            <numerusform>Sind Sie sicher, daß Sie %n Lesezeichen löschen wollen?</numerusform>
+            <numerusform>Soll das Lesezeichen wirklich gelöscht werden?</numerusform>
+            <numerusform>Sollen %n Lesezeichen wirklich gelöscht werden?</numerusform>
         </translation>
     </message>
     <message>
         <source>Empty extent</source>
-        <translation>Ausdehnung leer</translation>
+        <translation type="obsolete">Ausdehnung leer</translation>
     </message>
     <message>
         <source>Reprojected extent is empty.</source>
@@ -24456,10 +24486,26 @@ Datenbank: %2</translation>
     </message>
     <message>
         <source>Export bookmarks</source>
-        <translation>Exportiere Lesezeichen</translation>
+        <translation type="obsolete">Exportiere Lesezeichen</translation>
     </message>
     <message>
         <source>XML files( *.xml *.XML )</source>
+        <translation type="obsolete">XML-Dateien (*.xml *.XML)</translation>
+    </message>
+    <message>
+        <source>Delete Bookmarks</source>
+        <translation>Lesezeichen löschen</translation>
+    </message>
+    <message>
+        <source>Empty Extent</source>
+        <translation>Ausdehnung leer</translation>
+    </message>
+    <message>
+        <source>Export Bookmarks</source>
+        <translation>Lesezeichen exportieren</translation>
+    </message>
+    <message>
+        <source>XML files (*.xml *.XML)</source>
         <translation>XML-Dateien (*.xml *.XML)</translation>
     </message>
 </context>
@@ -31897,11 +31943,11 @@ und aktuelle Datei ist [%3]</translation>
     </message>
     <message>
         <source>Date &amp; time</source>
-        <translation>Datum &amp; Zeit</translation>
+        <translation type="obsolete">Datum &amp; Zeit</translation>
     </message>
     <message>
         <source>Custom format</source>
-        <translation>Benutzerformat</translation>
+        <translation type="obsolete">Benutzerformat</translation>
     </message>
     <message>
         <source>Default</source>
@@ -31930,6 +31976,14 @@ und aktuelle Datei ist [%3]</translation>
     <message>
         <source>Widget display</source>
         <translation>Bedienelementanzeige</translation>
+    </message>
+    <message>
+        <source>Date time</source>
+        <translation>Datum mit Zeit</translation>
+    </message>
+    <message>
+        <source>ISO date time</source>
+        <translation>ISO-Datum mit Zeit</translation>
     </message>
 </context>
 <context>
@@ -51074,7 +51128,7 @@ verbesserung</translation>
     </message>
     <message>
         <source>Add an integer id field as the primary key for the new layer</source>
-        <translation>Eine ganzzahliges Primärschlüsselfeld ergänzen</translation>
+        <translation type="obsolete">Eine ganzzahliges Primärschlüsselfeld ergänzen</translation>
     </message>
     <message>
         <source>Create a spatial index</source>
@@ -51195,6 +51249,10 @@ verbesserung</translation>
     <message>
         <source>Length</source>
         <translation>Länge</translation>
+    </message>
+    <message>
+        <source>Create a spatial index for this layer</source>
+        <translation>Räumlichen Index für diesen Layer erzeugen</translation>
     </message>
 </context>
 <context>
@@ -52445,7 +52503,7 @@ Immer Netzwerk: immer aus dem Netzwerk laden und nicht prüfen, ob im Cache ein 
         <translation>In der Offline-Kopie werden Z- und M-Werte des Layers %1 weggelassen.</translation>
     </message>
     <message>
-        <source>Syncronization failed</source>
+        <source>Synchronization failed</source>
         <translation>Synchronisation gescheitert</translation>
     </message>
 </context>
@@ -57316,6 +57374,18 @@ Ergebnis: %3 (%4)</translation>
     <message>
         <source>PQgetCancel failed</source>
         <translation>PQgetCancel gescheitert</translation>
+    </message>
+    <message>
+        <source>Cannot set WriteOwner permission to cert: %0 to allow removing it</source>
+        <translation>Kann WriteOwner-Recht nicht auf Zertifikat %0 setzen, um es zu entfernen zu dürfen</translation>
+    </message>
+    <message>
+        <source>Client security failure</source>
+        <translation>Client-Sicherheitsfehler</translation>
+    </message>
+    <message>
+        <source>Cannot remove cert: %0 to allow removing it</source>
+        <translation>Kann Zertifikat %0 nicht löschen</translation>
     </message>
 </context>
 <context>
@@ -62272,6 +62342,13 @@ und nur die Geometriespalte des Haupttypname kann als die Geometriespalte des Er
     <message>
         <source>Select features by value</source>
         <translation>Objekte nach Wert wählen</translation>
+    </message>
+</context>
+<context>
+    <name>QgsSelectLayerTreeModel</name>
+    <message>
+        <source>The source of this layer is a &lt;b&gt;WFS&lt;/b&gt; server.&lt;br&gt;Some WFS layers are not suitable for offline&lt;br&gt;editing due to unstable primary keys&lt;br&gt;please check with your system administrator&lt;br&gt;if this WFS layer can be used for offline&lt;br&gt;editing.</source>
+        <translation>Die Quelle diese Layers it ein &lt;b&gt;WFS&lt;/b&gt;-Server.&lt;br&gt;Einige WFS-Layers sind nicht für die Offline-&lt;br&gt;Bearbeitung geeignet, durch instabile Primärschlüssel.&lt;br&gt;Bitte den Systemadministrator fragen,&lt;br&gt;ob dieser WFS-Layer offline bearbeitet&lt;br&gt;werden kann.</translation>
     </message>
 </context>
 <context>
@@ -83382,31 +83459,31 @@ Base Path (i.e. keep only filename from attribute)</source>
     <name>nviz7</name>
     <message>
         <source>nviz7</source>
-        <translation>nviz7</translation>
+        <translation type="obsolete">nviz7</translation>
     </message>
     <message>
         <source>Visualization(NVIZ)</source>
-        <translation>Visualisierung (NVIZ)</translation>
+        <translation type="obsolete">Visualisierung (NVIZ)</translation>
     </message>
     <message>
         <source>Raster file(s) for elevation</source>
-        <translation>Rasterdatei(en) für Höhen</translation>
+        <translation type="obsolete">Rasterdatei(en) für Höhen</translation>
     </message>
     <message>
         <source>Vector lines/areas overlay file(s)</source>
-        <translation>Vektorlinien-/-flächenüberlagerungsdatei(en)</translation>
+        <translation type="obsolete">Vektorlinien-/-flächenüberlagerungsdatei(en)</translation>
     </message>
     <message>
         <source>Raster file(s) for color</source>
-        <translation>Rasterdatei(en) für Farbe</translation>
+        <translation type="obsolete">Rasterdatei(en) für Farbe</translation>
     </message>
     <message>
         <source>GRASS region extent</source>
-        <translation>GRASS-Regionengrenzen</translation>
+        <translation type="obsolete">GRASS-Regionengrenzen</translation>
     </message>
     <message>
         <source>GRASS region cellsize (leave 0 for default)</source>
-        <translation>GRASS-Regionenzellengröße (0 für um Voreinstellung beizubehalten)</translation>
+        <translation type="obsolete">GRASS-Regionenzellengröße (0 für um Voreinstellung beizubehalten)</translation>
     </message>
 </context>
 <context>

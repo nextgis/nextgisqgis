@@ -406,18 +406,18 @@ void QgsDxfExport::setMapSettings( const QgsMapSettings &settings )
   mMapSettings = settings;
 }
 
-void QgsDxfExport::addLayers( const QList< QPair< QgsVectorLayer *, int > > &layers )
+void QgsDxfExport::addLayers( const QList<DxfLayer> &layers )
 {
   QStringList layerList;
 
   mLayerNameAttribute.clear();
 
-  QList< QPair< QgsVectorLayer*, int > >::const_iterator layerIt = layers.constBegin();
+  QList< DxfLayer >::const_iterator layerIt = layers.constBegin();
   for ( ; layerIt != layers.constEnd(); ++layerIt )
   {
-    layerList << layerIt->first->id();
-    if ( layerIt->second >= 0 )
-      mLayerNameAttribute.insert( layerIt->first->id(), layerIt->second );
+    layerList << layerIt->layer()->id();
+    if ( layerIt->layerOutputAttributeIndex() >= 0 )
+      mLayerNameAttribute.insert( layerIt->layer()->id(), layerIt->layerOutputAttributeIndex() );
   }
 
   mMapSettings.setLayers( layerList );
@@ -1072,12 +1072,9 @@ void QgsDxfExport::writeEntities()
       else
       {
         QgsSymbolV2List symbolList = renderer->symbolsForFeature( fet, ctx );
-        if ( symbolList.size() < 1 )
-        {
-          continue;
-        }
+        bool hasSymbology = symbolList.size() > 0;
 
-        if ( mSymbologyExport == QgsDxfExport::SymbolLayerSymbology ) // symbol layer symbology, but layer does not use symbol levels
+        if ( hasSymbology && mSymbologyExport == QgsDxfExport::SymbolLayerSymbology ) // symbol layer symbology, but layer does not use symbol levels
         {
           QgsSymbolV2List::iterator symbolIt = symbolList.begin();
           for ( ; symbolIt != symbolList.end(); ++symbolIt )
@@ -1089,7 +1086,7 @@ void QgsDxfExport::writeEntities()
             }
           }
         }
-        else
+        else if ( hasSymbology )
         {
           // take first symbollayer from first symbol
           QgsSymbolV2* s = symbolList.first();
@@ -3726,7 +3723,7 @@ void QgsDxfExport::writeMText( const QString& layer, const QString& text, const 
     writeGroup( 3, t.left( 250 ) );
     t = t.mid( 250 );
   }
-  writeGroup( 1, text );
+  writeGroup( 1, t );
 
   writeGroup( 50, angle );        // Rotation angle in radians
   writeGroup( 41, width * 1.1 );  // Reference rectangle width
@@ -4473,6 +4470,7 @@ void QgsDxfExport::drawLabel( QString layerId, QgsRenderContext& context, pal::L
   }
 
   txt = txt.replace( wrapchr, "\\P" );
+  txt.replace( " ", "\\~" );
 
   if ( tmpLyr.textFont.underline() )
   {

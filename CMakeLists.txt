@@ -3,7 +3,7 @@
 # Purpose:  CMake build scripts
 # Author:   Dmitry Baryshnikov, dmitry.baryshnikov@nexgis.com
 ################################################################################
-# Copyright (C) 2017, NextGIS <info@nextgis.com>
+# Copyright (C) 2017-2018, NextGIS <info@nextgis.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -48,7 +48,7 @@ option(QT4_BUILD "Build with Qt4" ON)
 
 if(OSX_FRAMEWORK)
     set(QGIS_DATA_SUBDIR "Applications/${NG_PREFIX}${PROJECT_NAME}.app/Contents/Resources")
-    set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/Applications" CACHE INTERNAL "Installation directory for executables" FORCE)
+    set(INSTALL_BIN_DIR "Applications" CACHE INTERNAL "Installation directory for executables" FORCE)
     set(INSTALL_LIB_DIR "${INSTALL_BIN_DIR}/${NG_PREFIX}${PROJECT_NAME}.app/Contents/Frameworks" CACHE INTERNAL "Installation directory for libraries" FORCE)
     if(QT4_BUILD)
         set(_PLUGIN_SUBDIR "Library/Plugins/Qt4")
@@ -60,14 +60,14 @@ if(OSX_FRAMEWORK)
     set(QT5_PLUGINS_DIR Library/Plugins/Qt5)
     set(QT5_TRANSLATION_DIR Library/Translations/Qt5)
 
-    set(INSTALL_PLUGIN_DIR ${CMAKE_INSTALL_PREFIX}/${_PLUGIN_SUBDIR}/${NG_PREFIX}${PROJECT_NAME} CACHE INTERNAL "Installation directory for plugins" FORCE)
-    set(INSTALL_SHARE_DIR ${CMAKE_INSTALL_PREFIX}/${QGIS_DATA_SUBDIR} CACHE INTERNAL "Installation directory for share data" FORCE)
+    set(INSTALL_PLUGIN_DIR ${_PLUGIN_SUBDIR}/${NG_PREFIX}${PROJECT_NAME} CACHE INTERNAL "Installation directory for plugins" FORCE)
+    set(INSTALL_SHARE_DIR ${QGIS_DATA_SUBDIR} CACHE INTERNAL "Installation directory for share data" FORCE)
     set(INSTALL_MAN_DIR ${INSTALL_SHARE_DIR}/man CACHE INTERNAL "Installation directory for manual pages" FORCE)
     set(INSTALL_DOC_DIR ${INSTALL_SHARE_DIR}/doc CACHE INTERNAL "Installation directory for doc pages" FORCE)
     set(QT_PLUGIN_SUBDIR ${_PLUGIN_SUBDIR})
     set(QGIS_PLUGIN_SUBDIR ${_PLUGIN_SUBDIR}/${NG_PREFIX}${PROJECT_NAME})
     set(QGIS_LIB_SUBDIR "Applications/${NG_PREFIX}${PROJECT_NAME}.app/Contents/Frameworks")
-    set(INSTALL_LIB_DIR2 ${CMAKE_INSTALL_PREFIX}/Library/Frameworks CACHE INTERNAL "Installation directory for symlinks" FORCE)
+    set(INSTALL_LIB_DIR2 Library/Frameworks CACHE INTERNAL "Installation directory for symlinks" FORCE)
 
     set(QGIS_MACAPP_BUNDLE 1)
 
@@ -181,7 +181,7 @@ if(WITH_BINDINGS)
     find_package(PythonLibs REQUIRED)
 
     if(OSX_FRAMEWORK)
-        set(QGIS_PYTHON_DIR "${CMAKE_INSTALL_PREFIX}/Library/Python/${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages/${PROJECT_NAME}")
+        set(QGIS_PYTHON_DIR "Library/Python/${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages/${PROJECT_NAME}")
     elseif(WIN32)
         set(QGIS_PYTHON_DIR "${INSTALL_LIB_DIR}/Python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}/site-packages/${PROJECT_NAME}")
     else()
@@ -221,4 +221,26 @@ if(WITH_BINDINGS)
 endif()
 
 add_custom_target(prepare_parser DEPENDS ${PREPARE_PARSER_TARGETS})
+
+set(PACKAGE_NAME ${PROJECT_NAME})
+string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
+
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+
+# Archiving ====================================================================
+
+set(CPACK_PACKAGE_NAME "${PACKAGE_NAME}")
+set(CPACK_PACKAGE_VENDOR "${PACKAGE_VENDOR}")
+set(CPACK_PACKAGE_VERSION "${VERSION}")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PACKAGE_NAME} Installation")
+set(CPACK_PACKAGE_RELOCATABLE TRUE)
+set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
+set(CPACK_GENERATOR "ZIP")
+set(CPACK_MONOLITHIC_INSTALL ON)
+set(CPACK_STRIP_FILES TRUE)
+
+# Get cpack zip archive name
+get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
+set(CPACK_PACKAGE_FILE_NAME ${PROJECT_CPACK_FILENAME})
+
+include(CPack)
