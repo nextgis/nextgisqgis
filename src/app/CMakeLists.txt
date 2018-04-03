@@ -519,6 +519,10 @@ if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 # install
+execute_process(
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/symlinks
+    COMMAND ${CMAKE_COMMAND} -E create_symlink ../../Applications/${NG_PREFIX}${PROJECT_NAME}.app/Contents/Frameworks/${LIB_NAME}.framework ${PROJECT_BINARY_DIR}/symlinks/${LIB_NAME}.framework
+)
 
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
     install(TARGETS ${LIB_NAME}
@@ -530,10 +534,7 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
     )
 
     if(OSX_FRAMEWORK)
-        install(CODE "execute_process(
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${INSTALL_LIB_DIR2}
-            COMMAND ${CMAKE_COMMAND} -E create_symlink ../../Applications/${NG_PREFIX}${PROJECT_NAME}.app/Contents/Frameworks/${LIB_NAME}.framework ${INSTALL_LIB_DIR2}/${LIB_NAME}.framework )"
-        )
+        install(FILES ${PROJECT_BINARY_DIR}/symlinks/${LIB_NAME}.framework DESTINATION ${INSTALL_LIB_DIR2})
     endif()
 endif()
 
