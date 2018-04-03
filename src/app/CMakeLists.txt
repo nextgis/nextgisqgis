@@ -467,7 +467,7 @@ target_compile_definitions (${LIB_NAME} PRIVATE "ANALYSIS_EXPORT=${DLLIMPORT}")
 set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
 
 if(OSX_FRAMEWORK)
-    target_link_libraries(${LIB_NAME} "-framework CoreFoundation -framework CoreServices -framework ApplicationServices")
+    set(TARGET_LINK_LIB ${TARGET_LINK_LIB} "-framework CoreFoundation -framework CoreServices -framework ApplicationServices")
 endif()
 
 target_link_extlibraries(${LIB_NAME})

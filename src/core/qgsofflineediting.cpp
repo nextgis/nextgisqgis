@@ -307,10 +307,6 @@ void QgsOfflineEditing::synchronize()
             sqlExec( db, sql );
             sql = QString( "DELETE FROM 'log_geometry_updates' WHERE \"layer_id\" = %1" ).arg( layerId );
             sqlExec( db, sql );
-
-            // reset commitNo
-            QString sql = QString( "UPDATE 'log_indices' SET 'last_index' = 0 WHERE \"name\" = 'commit_no'" );
-            sqlExec( db, sql );
           }
           else
           {
@@ -320,7 +316,7 @@ void QgsOfflineEditing::synchronize()
         else
         {
           remoteLayer->rollBack();
-          showWarning( tr( "Syncronization failed" ) );
+          showWarning( tr( "Synchronization failed" ) );
         }
       }
       else
@@ -346,6 +342,10 @@ void QgsOfflineEditing::synchronize()
       QgsDebugMsg( "Remote layer is not valid!" );
     }
   }
+
+  // reset commitNo
+  QString sql = QString( "UPDATE 'log_indices' SET 'last_index' = 0 WHERE \"name\" = 'commit_no'" );
+  sqlExec( db, sql );
 
   emit progressStopped();
 

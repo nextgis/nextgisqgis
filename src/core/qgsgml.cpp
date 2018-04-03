@@ -555,8 +555,10 @@ void QgsGmlStreamingParser::startElement( const XML_Char* el, const XML_Char** a
       }
     }
   }
-  else if ( localNameLen == static_cast<int>( mGeometryAttributeUTF8Len ) &&
-            memcmp( pszLocalName, mGeometryAttributePtr, localNameLen ) == 0 )
+  else if (( theParseMode == feature || theParseMode == featureTuple ) &&
+           mCurrentFeature &&
+           localNameLen == static_cast<int>( mGeometryAttributeUTF8Len ) &&
+           memcmp( pszLocalName, mGeometryAttributePtr, localNameLen ) == 0 )
   {
     mParseModeStack.push( QgsGmlStreamingParser::geometry );
     mFoundUnhandledGeometryElement = false;
@@ -903,6 +905,7 @@ void QgsGmlStreamingParser::endElement( const XML_Char* el )
         {
           g->transform( QTransform( 0, 1, 1, 0, 0, 0 ) );
         }
+        Q_ASSERT( mCurrentFeature );
         mCurrentFeature->setGeometry( g );
         OGR_G_DestroyGeometry( hGeom );
       }
