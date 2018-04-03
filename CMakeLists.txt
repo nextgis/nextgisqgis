@@ -140,13 +140,14 @@ if(NOT PREPARE_ONLY)
     # Search dependencies
     set(CMAKE_AUTOMOC ON)
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
-    find_anyproject(Qt4 REQUIRED COMPONENTS QtCore QtGui QtXml QtNetwork QtSvg QtSql QtUiTools QtScript)
-
+    set(QT_REQUIRED_COMPONENTS QtCore QtGui QtXml QtNetwork QtSvg QtSql QtUiTools QtScript)
     option(WITH_QTWEBKIT "Build support QT Webkit" ON)
     if(WITH_QTWEBKIT)
-        find_anyproject(Qt4 REQUIRED COMPONENTS QtWebKit)
+        set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} QtWebKit)
         add_definitions(-DWITH_QTWEBKIT)
     endif()
+
+    find_anyproject(Qt4 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
 
     find_anyproject(GDAL REQUIRED)
     find_anyproject(GEOS REQUIRED)
