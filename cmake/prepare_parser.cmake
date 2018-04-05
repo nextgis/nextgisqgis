@@ -163,27 +163,28 @@ macro(add_flex_files_prefix prefix)
         warning_msg("Flex: Skip creating ${ARGN}")
         break()
     elseif(NOT PREPARE_ONLY)
-    else()
-        foreach (_current_FILE ${ARGN})
-            get_filename_component(_in ${_current_FILE} ABSOLUTE)
-            get_filename_component(_basename ${_current_FILE} NAME_WE)
+        else()
+            foreach (_current_FILE ${ARGN})
+                get_filename_component(_in ${_current_FILE} ABSOLUTE)
+                get_filename_component(_basename ${_current_FILE} NAME_WE)
 
-            set(_out ${CMAKE_CURRENT_SOURCE_DIR}/flex_${_basename}.cpp)
+                set(_out ${CMAKE_CURRENT_SOURCE_DIR}/flex_${_basename}.cpp)
 
-            # -d option for flex means that it will produce output to stderr while analyzing
+                # -d option for flex means that it will produce output to stderr while analyzing
 
-            add_custom_command(
-                OUTPUT ${_out}
-                COMMAND ${FLEX_EXECUTABLE}
-                ARGS
-                -P${prefix}
-                -o${_out}
-                ${_in}
-                DEPENDS ${_in}
-            )
-            add_custom_target(flex_prefix_${_basename} DEPENDS ${_out})
-            set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} flex_prefix_${_basename})
-        endforeach ()
-        set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
+                add_custom_command(
+                    OUTPUT ${_out}
+                    COMMAND ${FLEX_EXECUTABLE}
+                    ARGS
+                    -P${prefix}
+                    -o${_out}
+                    ${_in}
+                    DEPENDS ${_in}
+                )
+                add_custom_target(flex_prefix_${_basename} DEPENDS ${_out})
+                set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} flex_prefix_${_basename})
+            endforeach ()
+            set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
+        endif()
     endif()
 endmacro()
