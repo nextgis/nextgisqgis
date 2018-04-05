@@ -3,7 +3,7 @@
 # Purpose:  CMake build scripts
 # Author:   Dmitry Baryshnikov, dmitry.baryshnikov@nexgis.com
 ################################################################################
-# Copyright (C) 2017, NextGIS <info@nextgis.com>
+# Copyright (C) 2017-2018, NextGIS <info@nextgis.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -483,11 +483,11 @@ target_compile_definitions (${QGIS_APP_NAME} PRIVATE "ANALYSIS_EXPORT=${DLLIMPOR
 set_property(TARGET ${QGIS_APP_NAME} PROPERTY CXX_STANDARD 11)
 
 if(WIN32)
-  set_target_properties(${QGIS_APP_NAME}
-                        PROPERTIES COMPILE_FLAGS "/Zc:wchar_t-")
-  target_link_libraries(${QGIS_APP_NAME} ${QT_QTMAIN_LIBRARY})
+    set_target_properties(${QGIS_APP_NAME}
+                          PROPERTIES COMPILE_FLAGS "/Zc:wchar_t-")
+    set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${QT_QTMAIN_LIBRARY})
 endif(WIN32)
-target_link_extlibraries(${QGIS_APP_NAME} )
+target_link_extlibraries(${QGIS_APP_NAME})
 
 if(OSX_FRAMEWORK)
     set_target_properties(${LIB_NAME} PROPERTIES

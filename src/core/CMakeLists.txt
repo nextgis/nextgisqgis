@@ -3,7 +3,7 @@
 # Purpose:  CMake build scripts
 # Author:   Dmitry Baryshnikov, dmitry.baryshnikov@nexgis.com
 ################################################################################
-# Copyright (C) 2017, NextGIS <info@nextgis.com>
+# Copyright (C) 2017-2018, NextGIS <info@nextgis.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -899,6 +899,10 @@ target_compile_definitions (${LIB_NAME} PRIVATE "CORE_EXPORT=${DLLEXPORT}")
 target_compile_definitions (${LIB_NAME} INTERFACE "CORE_EXPORT=${DLLIMPORT}")
 set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
 
+if(WIN32)
+    set(TARGET_LINK_LIB ${TARGET_LINK_LIB} wsock32)
+endif()
+
 target_link_extlibraries(${LIB_NAME})
 set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${LIB_NAME} PARENT_SCOPE)
 
@@ -921,10 +925,6 @@ set_target_properties(${LIB_NAME} PROPERTIES
     VERSION ${QGIS_VERSION}
     SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR}
 )
-
-if(WIN32)
-    target_link_libraries(${LIB_NAME} wsock32)
-endif()
 
 # install
 
