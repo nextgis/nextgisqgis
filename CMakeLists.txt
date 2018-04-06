@@ -159,14 +159,13 @@ if(NOT PREPARE_ONLY)
     find_anyproject(Qscintilla REQUIRED)
     if(QSCINTILLA_FOUND)
         add_definitions(-DQSCINTILLA_VERSION_STR="${QSCINTILLA_VERSION}")
+        include_directories(${QSCINTILLA_INCLUDE_DIRS}/qscintilla)
     endif()
 
     find_anyproject(Qwt REQUIRED)
     if(QWT_FOUND)
-        if(WIN32)
-            add_definitions(-DQWT_DLL)
-        endif()
         add_definitions(-DQWT_VERSION_STR="${QWT_VERSION}")
+        include_directories(${QWT_INCLUDE_DIRS}/qwt)
     endif()
 
     #create a variable to specify where our test data is
