@@ -485,6 +485,7 @@ set_property(TARGET ${QGIS_APP_NAME} PROPERTY CXX_STANDARD 11)
 if(WIN32)
     set_target_properties(${QGIS_APP_NAME}
                           PROPERTIES COMPILE_FLAGS "/Zc:wchar_t-")
+    set_property(TARGET ${QGIS_APP_NAME} APPEND PROPERTY LINK_FLAGS /entry:mainCRTStartup)
     set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${QT_QTMAIN_LIBRARY})
 endif(WIN32)
 target_link_extlibraries(${QGIS_APP_NAME})
