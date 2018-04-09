@@ -179,7 +179,7 @@ if(NOT PREPARE_ONLY)
 
     # Copy zlib to qt bin directory
     if(WIN32)
-        get_target_property(ZLIB_IMPORTED_LOCATION ${ZLIB_LIBRARIES} IMPORTED_LOCATION)
+        get_target_property(ZLIB_IMPORTED_LOCATION ${ZLIB_LIBRARIES} IMPORTED_LOCATION_RELEASE)
         get_filename_component(PATH_DIR ${ZLIB_IMPORTED_LOCATION} PATH)
         set(ENV{PATH} "$ENV{PATH};${PATH_DIR}")
         get_target_property(RCC_PATH Qt4::rcc IMPORTED_LOCATION)
