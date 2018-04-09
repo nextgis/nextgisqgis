@@ -71,9 +71,9 @@ else(WIN32)
     get_filename_component(LIB_DIR "${PY_PROGRAMS_DIR}" PATH)
 
     get_filename_component(SITE_PACKAGES_DIR "${PYTHON_EXECUTABLE}" PATH)
-    set(SITE_PACKAGES_DIR "${SITE_PACKAGES_DIR}/Lib/Python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}/site-packages/")
+    set(SITE_PACKAGES_DIR "${SITE_PACKAGES_DIR}/Lib/site-packages/")
 
-    message(STATUS "PyQt4 path: ${LIB_DIR}/lib/python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}/site-packages/PyQt4")
+    message(STATUS "SITE_PACKAGES_DIR: ${SITE_PACKAGES_DIR}")
     file(COPY ${LIB_DIR}/lib/python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}/site-packages/PyQt4 DESTINATION ${SITE_PACKAGES_DIR})
     file(COPY ${COPY_LIBRARIES} DESTINATION ${SITE_PACKAGES_DIR}/PyQt4)
     file(GLOB SIP_FILES "${SIP_PYTHON_DIR}/*")
