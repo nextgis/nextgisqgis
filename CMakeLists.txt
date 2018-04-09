@@ -173,6 +173,19 @@ if(NOT PREPARE_ONLY)
     #the test data. See CMakeLists in test dirs for more info
     #TEST_DATA_DIR is also used by QgsRenderChecker currently in core
     set (TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/testdata")
+
+
+    find_anyproject(ZLIB REQUIRED)
+
+    # Copy zlib to qt bin directory
+    if(WIN32)
+        get_target_property(ZLIB_IMPORTED_LOCATION ${ZLIB_LIBRARIES} IMPORTED_LOCATION)
+        get_filename_component(PATH_DIR ${ZLIB_IMPORTED_LOCATION} PATH)
+        set(ENV{PATH} "$ENV{PATH};${PATH_DIR}")
+        get_target_property(RCC_PATH Qt4::rcc IMPORTED_LOCATION)
+        get_filename_component(QT_BIN_DIR ${RCC_PATH} PATH)
+        file(COPY ${ZLIB_IMPORTED_LOCATION} DESTINATION ${QT_BIN_DIR})
+    endif()
 endif()
 
 if(WITH_BINDINGS)
