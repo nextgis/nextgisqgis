@@ -130,6 +130,7 @@ class QgsDiagramProperties;
 
 #ifdef Q_OS_WIN
 #include <windows.h>
+#include <functional>
 #endif
 
 class QgsLegendFilterButton;
@@ -799,7 +800,7 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     //! Set scale visibility of selected layers
     void setLayerScaleVisibility();
     //! Zoom to nearest scale such that current layer is visible
-    void zoomToLayerScale();    
+    void zoomToLayerScale();
     //! Set CRS of a layer
     void setLayerCRS();
     //! Assign layer CRS to project
@@ -1362,7 +1363,7 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
 
     /** Pushes a layer error to the message bar */
     void onLayerError( const QString& msg );
-    
+
     /** Set the layer for the map style dock. Doesn't show the style dock */
     void setMapStyleDockLayer( QgsMapLayer *layer );
 
@@ -1517,7 +1518,7 @@ signals:
 
     //! Loads the list of recent projects from settings
     void readRecentProjects();
-    
+
     QgisAppStyleSheet *mStyleSheetBuilder;
 
     // actions for menus and toolbars -----------------
@@ -1822,7 +1823,7 @@ signals:
     QgsLegendFilterButton* mLegendExpressionFilterButton;
 
     QgsSnappingUtils* mSnappingUtils;
-    
+
     QList<QgsMapLayerConfigWidgetFactory*> mMapLayerPanelFactories;
 
     QDateTime mProjectLastModified;
@@ -1847,4 +1848,3 @@ signals:
 #endif
 
 #endif
-
