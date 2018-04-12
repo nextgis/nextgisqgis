@@ -102,7 +102,9 @@ function(find_anyproject name)
                     find_package(${name} ${FIND_PROJECT_ARG} MODULE QUIET)
                 endif()
             endif()
-            if(${name}_FOUND OR ${UPPER_NAME}_FOUND)
+
+            # Additional checks for Qca
+            if((${name}_FOUND OR ${UPPER_NAME}_FOUND) AND (${name}_INCLUDE_DIR OR ${name}_INCLUDE_DIRS OR ${UPPER_NAME}_INCLUDE_DIR OR ${UPPER_NAME}_INCLUDE_DIRS))
                 set(FOUND_WITH_CONFIG_MODE TRUE)
             else()
                 message(STATUS "Not found ${name} in packages. Try look in system.")
@@ -143,6 +145,16 @@ function(find_anyproject name)
                 set(${UPPER_NAME}_INCLUDE_DIR ${${UPPER_NAME}_INCLUDE_DIR} CACHE INTERNAL "include directories ${name}")
                 set(${UPPER_NAME}_INCLUDE_DIRS ${${UPPER_NAME}_INCLUDE_DIR})
             endif()
+
+            # For Qt
+            if(find_anyproject_COMPONENTS)
+                foreach(_component ${find_anyproject_COMPONENTS})
+                    if(TARGET ${name}::${_component})
+                        set(${UPPER_NAME}_LIBRARIES ${${UPPER_NAME}_LIBRARIES} ${name}::${_component})
+                    endif()
+                endforeach()
+            endif()
+
             if(${UPPER_NAME}_LIBRARIES)
                 set(${UPPER_NAME}_LIBRARIES ${${UPPER_NAME}_LIBRARIES} CACHE INTERNAL "library ${name}")
                 set(${UPPER_NAME}_LIBRARY ${${UPPER_NAME}_LIBRARIES})

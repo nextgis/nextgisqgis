@@ -38,7 +38,7 @@ NGQgisUpdater::NGQgisUpdater( QWidget* parent )
     : QObject( parent )
 {
     mMaintainerProcess = new QProcess(this);
-       
+
     connect(mMaintainerProcess, SIGNAL(started()), this, SLOT(maintainerStrated()) );
     connect(mMaintainerProcess, SIGNAL(error(QProcess::ProcessError)), this, SLOT(maintainerErrored(QProcess::ProcessError)));
     connect(mMaintainerProcess, SIGNAL(stateChanged(QProcess::ProcessState)), this, SLOT(maintainerStateChanged(QProcess::ProcessState)));
@@ -60,7 +60,8 @@ const QString NGQgisUpdater::updateProgrammPath()
     return NGQgsApplication::prefixPath() + QDir::separator() +
             "nextgisupdater.app/Contents/MacOS/nextgisupdater";
 #else
-#error "Linux is not supported yet!"
+#warning "Linux is not supported yet!"
+    return "";
 #endif
 }
 

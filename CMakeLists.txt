@@ -148,6 +148,7 @@ if(NOT PREPARE_ONLY)
     endif()
 
     find_anyproject(Qt4 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
+    set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
 
     find_anyproject(GDAL REQUIRED)
     find_anyproject(GEOS REQUIRED)

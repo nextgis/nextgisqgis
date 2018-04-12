@@ -51,6 +51,9 @@ target_compile_definitions (${LIB_NAME} PRIVATE "PYTHON_EXPORT=${DLLEXPORT}")
 target_compile_definitions (${LIB_NAME} INTERFACE "PYTHON_EXPORT=${DLLIMPORT}")
 set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
 
+# May be not nesessary
+set_property(TARGET ${LIB_NAME} PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
+
 target_link_extlibraries(${LIB_NAME})
 add_dependencies(${LIB_NAME} ${NG_PREFIX}qgis_core)
 set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${LIB_NAME} PARENT_SCOPE)
