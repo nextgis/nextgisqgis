@@ -95,7 +95,7 @@ void NGQgsApplication::init(QString customConfigPath)
                            + QDir::separator() + ".."
                            + QDir::separator() + "..");
 #else
-    QString defaultPrefixPath("/usr");
+    QDir defaultPrefixDir("/usr");
 #endif
     QString defaultPrefixPath =  defaultPrefixDir.absolutePath();
 
