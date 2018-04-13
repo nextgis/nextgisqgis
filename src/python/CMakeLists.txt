@@ -47,12 +47,9 @@ set(LIB_NAME ${NG_PREFIX}qgis_python)
 
 add_library(${LIB_NAME} SHARED ${QGISPYTHON_SRCS})
 
-target_compile_definitions (${LIB_NAME} PRIVATE "PYTHON_EXPORT=${DLLEXPORT}")
+target_compile_definitions (${LIB_NAME} PRIVATE "PYTHON_EXPORT=${DLLEXPORT}" $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
 target_compile_definitions (${LIB_NAME} INTERFACE "PYTHON_EXPORT=${DLLIMPORT}")
 set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
-
-# May be not nesessary
-set_property(TARGET ${LIB_NAME} PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
 
 target_link_extlibraries(${LIB_NAME})
 add_dependencies(${LIB_NAME} ${NG_PREFIX}qgis_core)
