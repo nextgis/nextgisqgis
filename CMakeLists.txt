@@ -149,6 +149,9 @@ if(NOT PREPARE_ONLY)
 
     find_anyproject(Qt4 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
+    if(WIN32)
+        add_definitions(-DQT_DLL) # Only for shared libraries on win32
+    endif()
 
     find_anyproject(GDAL REQUIRED)
     find_anyproject(GEOS REQUIRED)
