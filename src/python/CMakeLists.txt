@@ -24,10 +24,6 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-if(PYTHONLIBS_VERSION_STRING VERSION_LESS 3)
-    add_definitions(-DPYTHON2)
-endif()
-
 set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${PYTHON_LIBRARY})
 
 set(QGISPYTHON_SRCS qgispython.cpp qgspythonutilsimpl.cpp)
