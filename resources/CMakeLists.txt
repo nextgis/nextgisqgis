@@ -24,6 +24,8 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+configure_file(ngqgis.desktop.in ${CMAKE_CURRENT_BINARY_DIR}/ngqgis.desktop @ONLY)
+
 if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL)
     install(FILES srs.db qgis.db symbology-ng-style.db spatialite.db customization.xml
             DESTINATION ${INSTALL_SHARE_DIR}/resources)
@@ -32,4 +34,8 @@ if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL)
     install(DIRECTORY fonts DESTINATION ${INSTALL_SHARE_DIR})
     install(DIRECTORY composer_templates DESTINATION ${INSTALL_SHARE_DIR})
     install(FILES ${CMAKE_BINARY_DIR}/qt.conf DESTINATION ${INSTALL_SHARE_DIR})
+
+    if(NOT OSX_FRAMEWORK)
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ngqgis.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+    endif()
 endif()
