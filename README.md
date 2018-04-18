@@ -1,6 +1,6 @@
 # NextGIS QGIS
 
-:four_leaf_clover: NextGIS build of QGIS
+:four_leaf_clover: NextGIS QGIS build using NextGIS Borsch. 
 
 This simplified and reorganized repository of original [QGIS](https://github.com/qgis/qgis) with NextGIS additions needed by network installer.
 
@@ -90,7 +90,7 @@ Some dependencies are removed:
 
 # License
 
-All scripts are licensed under GNU GPL v.2.
+All scripts are licensed under GNU GPL v2. See COPYING file.
 
 ![License](https://img.shields.io/badge/License-GPL%20v2-blue.svg?maxAge=2592000)
 
