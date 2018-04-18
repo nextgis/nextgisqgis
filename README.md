@@ -1,4 +1,5 @@
 # NextGIS QGIS
+
 :four_leaf_clover: NextGIS build of QGIS
 
 This simplified and reorganized repository of original [QGIS](https://github.com/qgis/qgis) with NextGIS additions needed by network installer.
@@ -67,7 +68,25 @@ Some dependencies are removed:
 
 ## Windows
 
+
+```bash
+    cmake -DWITH_EXPAT_EXTERNAL=ON -DWITH_GDAL_EXTERNAL=ON -DWITH_GEOS_EXTERNAL=ON \
+    -DWITH_GSL_EXTERNAL=ON -DWITH_LibXml2_EXTERNAL=ON -DWITH_PostgreSQL_EXTERNAL=ON \
+    -DWITH_PROJ4_EXTERNAL=ON -DWITH_Qca_EXTERNAL=ON -DWITH_Qscintilla_EXTERNAL=ON \
+    -DWITH_Qwt_EXTERNAL=ON -DWITH_SpatialIndex_EXTERNAL=ON -DWITH_Spatialite_EXTERNAL=ON \
+    -DWITH_SQLite3_EXTERNAL=ON -DWITH_SIP_EXTERNAL=ON -DWITH_Qt4_EXTERNAL=ON \
+    -DWITH_BINDINGS=ON -DWITH_PyQt4_EXTERNAL=ON -DWITH_Qsci_EXTERNAL=ON -DWITH_ZLIB_EXTERNAL=ON ..
+```
+
 ## Linux
+
+
+```bash
+    cmake -DWITH_EXPAT=ON -DWITH_GDAL=ON -DWITH_GEOS=ON -DWITH_GSL=ON -DWITH_LibXml2=ON \
+    -DWITH_PostgreSQL=ON -DWITH_PROJ4=ON -DWITH_Qca=ON -DWITH_Qscintilla=ON -DWITH_Qwt=ON \
+    -DWITH_SpatialIndex=ON -DWITH_Spatialite=ON -DWITH_SQLite3=ON -DWITH_SIP=ON \
+    -DWITH_Qt4=ON -DWITH_BINDINGS=ON -DWITH_PyQt4=ON -DWITH_Qsci=ON -DWITH_ZLIB=ON -DWITH_BINDINGS=ON ..
+```
 
 # License
 
