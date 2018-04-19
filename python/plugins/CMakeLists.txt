@@ -84,6 +84,7 @@ foreach(PLUGIN ${LOCAL_PLUGINS})
     add_subdirectory(${PLUGIN})
 endforeach()
 
+# NOTE: Keep in sync with opt/ppa_prepare.py
 set(REMOTE_PLUGINS
 #    "MetaSearch Catalogue Client"
     "QuickMapServices"
@@ -104,26 +105,37 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
 foreach(PLUGIN ${REMOTE_PLUGINS})
     info_msg("Add remote py plugin ${PLUGIN}")
 
-    # 2. parse xml and get url to zips
-    execute_process(COMMAND ${PYTHON_EXECUTABLE}
-        ${CMAKE_SOURCE_DIR}/scripts/process_repo_xml.py ${PLUGIN} ${CMAKE_CURRENT_BINARY_DIR}/repos
-        OUTPUT_VARIABLE PACKAGE_DETAILS
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
+    string(REPLACE " " "_" OUT_NAME ${PLUGIN})
 
-    list(GET PACKAGE_DETAILS 0 DOWNLOAD_URL)
-    list(GET PACKAGE_DETAILS 1 VERSION)
+    # Check local copy of plugins
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${OUT_NAME}.zip)
+        file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${OUT_NAME}.zip DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/zip_files)
+    else()
 
-    if(DOWNLOAD_URL)
-        string(REPLACE " " "_" OUT_NAME ${PLUGIN})
-        # 3. download zips
-        if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}-${VERSION}.zip)
-            warning_msg("Download ${DOWNLOAD_URL} ...")
-            file(DOWNLOAD ${DOWNLOAD_URL} ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}-${VERSION}.zip SHOW_PROGRESS)
+        # 2. parse xml and get url to zips
+        execute_process(COMMAND ${PYTHON_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/scripts/process_repo_xml.py ${PLUGIN} ${CMAKE_CURRENT_BINARY_DIR}/repos
+            OUTPUT_VARIABLE PACKAGE_DETAILS
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+
+        list(GET PACKAGE_DETAILS 0 DOWNLOAD_URL)
+        list(GET PACKAGE_DETAILS 1 PLG_VERSION)
+
+        if(DOWNLOAD_URL)
+            # 3. download zips
+            if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip)
+                warning_msg("Download ${DOWNLOAD_URL} ...")
+                file(DOWNLOAD ${DOWNLOAD_URL} ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip SHOW_PROGRESS)
+            endif()
         endif()
-        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf "${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}-${VERSION}.zip"
+    endif()
+
+    if(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf "${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
     endif()
+
 endforeach()
 
 # 4. extract zips to install directory via install
