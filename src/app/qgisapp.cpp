@@ -803,12 +803,14 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, bool skipVersionCh
   mSnappingDialog->setObjectName( "SnappingOption" );
   endProfile();
 
-  mBrowserWidget = new QgsBrowserDockWidget( tr( "Browser Panel" ), this );
+  // Create the (shared) model with delayed initialization
+  mBrowserModel = new QgsBrowserModel( this, false );
+  mBrowserWidget = new QgsBrowserDockWidget( tr( "Browser Panel" ), mBrowserModel, this );
   mBrowserWidget->setObjectName( "Browser" );
   addDockWidget( Qt::LeftDockWidgetArea, mBrowserWidget );
   mBrowserWidget->hide();
 
-  mBrowserWidget2 = new QgsBrowserDockWidget( tr( "Browser Panel (2)" ), this );
+  mBrowserWidget2 = new QgsBrowserDockWidget( tr( "Browser Panel (2)" ), mBrowserModel, this );
   mBrowserWidget2->setObjectName( "Browser2" );
   addDockWidget( Qt::LeftDockWidgetArea, mBrowserWidget2 );
   mBrowserWidget2->hide();
@@ -1147,6 +1149,7 @@ QgisApp::QgisApp()
     , mPythonUtils( nullptr )
     , mUndoWidget( nullptr )
     , mUndoDock( nullptr )
+    , mBrowserModel( nullptr )
     , mBrowserWidget( nullptr )
     , mBrowserWidget2( nullptr )
     , mAdvancedDigitizingDockWidget( nullptr )
@@ -1186,6 +1189,8 @@ QgisApp::QgisApp()
   mLayerTreeView = new QgsLayerTreeView( this );
   mUndoWidget = new QgsUndoWidget( nullptr, mMapCanvas );
   mInfoBar = new QgsMessageBar( centralWidget() );
+  mPanelMenu = new QMenu( this );
+  mProgressBar = new QProgressBar( this );
   // More tests may need more members to be initialized
 }
 
@@ -3250,7 +3255,7 @@ void QgisApp::updateRecentProjectPaths()
 
   Q_FOREACH ( const QgsWelcomePageItemsModel::RecentProjectData& recentProject, mRecentProjects )
   {
-    QAction* action = mRecentProjectsMenu->addAction( QString( "%1 (%2)" ).arg( recentProject.title != recentProject.path ? recentProject.title : QFileInfo( recentProject.path ).baseName(), QDir::toNativeSeparators( recentProject.path ) ) );
+    QAction* action = mRecentProjectsMenu->addAction( QString( "%1 (%2)" ).arg( recentProject.title != recentProject.path ? recentProject.title : QFileInfo( recentProject.path ).completeBaseName(), QDir::toNativeSeparators( recentProject.path ) ) );
     action->setEnabled( QFile::exists(( recentProject.path ) ) );
     action->setData( recentProject.path );
   }
@@ -8269,17 +8274,13 @@ void QgisApp::layerSubsetString()
   // Set the sql in the query builder to the same in the prop dialog
   // (in case the user has already changed it)
   qb->setSql( vlayer->subsetString() );
-  // Open the query builder
-  if ( qb->exec() )
-  {
-    if ( subsetBefore != qb->sql() )
-    {
-      vlayer->triggerRepaint();
-      if ( mLayerTreeView )
+  // Open the query builder and refresh symbology if sql has changed
+  // Note: repaintRequested is emitted directly from QgsQueryBuilder
+  //       when the sql is set in the layer.
+  if ( qb->exec() && ( subsetBefore != qb->sql() ) && mLayerTreeView )
       {
         mLayerTreeView->refreshLayerSymbology( vlayer->id() );
-      }
-    }
+    activateDeactivateLayerRelatedActions( vlayer );
   }
 
   // delete the query builder object
@@ -10253,13 +10254,12 @@ void QgisApp::layersWereAdded( const QList<QgsMapLayer *>& theLayers )
       connect( vlayer, SIGNAL( labelingFontNotFound( QgsVectorLayer*, QString ) ), this, SLOT( labelingFontNotFound( QgsVectorLayer*, QString ) ) );
 
       QgsVectorDataProvider* vProvider = vlayer->dataProvider();
-      if ( vProvider && vProvider->capabilities() & QgsVectorDataProvider::EditingCapabilities )
-      {
-        connect( vlayer, SIGNAL( layerModified() ), this, SLOT( updateLayerModifiedActions() ) );
-        connect( vlayer, SIGNAL( editingStarted() ), this, SLOT( layerEditStateChanged() ) );
-        connect( vlayer, SIGNAL( editingStopped() ), this, SLOT( layerEditStateChanged() ) );
-      }
-
+      // Do not check for layer editing capabilities because they may change
+      // (for example when subsetString is added/removed) and signals need to
+      // be in place in order to update the GUI
+      connect( vlayer, SIGNAL( layerModified() ), this, SLOT( updateLayerModifiedActions() ) );
+      connect( vlayer, SIGNAL( editingStarted() ), this, SLOT( layerEditStateChanged() ) );
+      connect( vlayer, SIGNAL( editingStopped() ), this, SLOT( layerEditStateChanged() ) );
       connect( vlayer, SIGNAL( raiseError( QString ) ), this, SLOT( onLayerError( QString ) ) );
 
       provider = vProvider;

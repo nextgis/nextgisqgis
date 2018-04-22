@@ -82,6 +82,7 @@ class QNetworkProxy;
 class QAuthenticator;
 
 class QgsBrowserDockWidget;
+class QgsBrowserModel;
 class QgsAdvancedDigitizingDockWidget;
 class QgsSnappingDialog;
 class QgsGPSInformationWidget;
@@ -1768,6 +1769,7 @@ signals:
     QgsUndoWidget *mUndoWidget;
     QgsDockWidget *mUndoDock;
 
+    QgsBrowserModel *mBrowserModel;
     QgsBrowserDockWidget *mBrowserWidget;
     QgsBrowserDockWidget *mBrowserWidget2;
 
