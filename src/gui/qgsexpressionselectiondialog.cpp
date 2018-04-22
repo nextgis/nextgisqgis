@@ -53,8 +53,8 @@ QgsExpressionSelectionDialog::QgsExpressionSelectionDialog( QgsVectorLayer* laye
 
   QSettings settings;
   restoreGeometry( settings.value( "/Windows/ExpressionSelectionDialog/geometry" ).toByteArray() );
-  
-  #ifdef Q_OS_MAC
+
+  #if defined Q_OS_MAC || defined Q_OS_WIN
     if( settings.value("/Windows/forceToEnglish", true).toBool() ) {
       selectInput("en");
     }
