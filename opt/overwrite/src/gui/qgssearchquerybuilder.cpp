@@ -63,7 +63,7 @@ QgsSearchQueryBuilder::QgsSearchQueryBuilder( QgsVectorLayer* layer,
     lblDataUri->setText( layer->name() );
   populateFields();
 
-  #ifdef Q_OS_MAC
+  #if defined Q_OS_MAC || defined Q_OS_WIN
     QSettings settings;
     if( settings.value("/Windows/forceToEnglish", true).toBool() ) {
         selectInput("en");
@@ -81,7 +81,6 @@ void QgsSearchQueryBuilder::populateFields()
   if ( !mLayer )
     return;
 
-  QgsDebugMsg( "entering." );
   const QgsFields& fields = mLayer->fields();
   for ( int idx = 0; idx < fields.count(); ++idx )
   {
@@ -95,7 +94,6 @@ void QgsSearchQueryBuilder::populateFields()
 
 void QgsSearchQueryBuilder::setupListViews()
 {
-  QgsDebugMsg( "entering." );
   //Models
   mModelFields = new QStandardItemModel();
   mModelValues = new QStandardItemModel();

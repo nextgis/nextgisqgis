@@ -116,4 +116,24 @@ inline void selectInput(std::string lang)
 
 #endif // Q_OS_MAC
 
+#ifdef Q_OS_WIN
+
+#include <windows.h>
+
+// Solution is form here: https://stackoverflow.com/q/9685560/2901140
+
+inline void selectInput(std::string lang)
+{
+    int nCode = 0x0009;
+    if("en" == lang)
+        nCode = 0x0009;
+    else if("ru" == lang)
+        nCode = 0x0019;
+    // codes are from https://msdn.microsoft.com/en-us/library/cc233982.aspx
+
+    SendMessage(GetActiveWindow(), WM_INPUTLANGCHANGEREQUEST, 0, nCode);
+}
+
+#endif // Q_OS_WIN
+
 #endif // NGADDONS_H

@@ -63,7 +63,7 @@ QgsSearchQueryBuilder::QgsSearchQueryBuilder( QgsVectorLayer* layer,
     lblDataUri->setText( layer->name() );
   populateFields();
 
-  #ifdef Q_OS_MAC
+  #if defined Q_OS_MAC || defined Q_OS_WIN
     QSettings settings;
     if( settings.value("/Windows/forceToEnglish", true).toBool() ) {
         selectInput("en");

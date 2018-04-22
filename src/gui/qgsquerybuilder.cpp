@@ -56,7 +56,7 @@ QgsQueryBuilder::QgsQueryBuilder( QgsVectorLayer *layer,
 
   populateFields();
 
-#ifdef Q_OS_MAC
+#if defined Q_OS_MAC || defined Q_OS_WIN
   if( settings.value("/Windows/forceToEnglish", true).toBool() ) {
       selectInput("en");
   }

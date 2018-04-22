@@ -141,8 +141,8 @@ QgsFieldCalculator::QgsFieldCalculator( QgsVectorLayer* vl, QWidget* parent )
 
   QSettings settings;
   restoreGeometry( settings.value( "/Windows/QgsFieldCalculator/geometry" ).toByteArray() );
-    
-  #ifdef Q_OS_MAC
+
+  #if defined Q_OS_MAC || defined Q_OS_WIN
     if( settings.value("/Windows/forceToEnglish", true).toBool() ) {
         selectInput("en");
     }
@@ -303,7 +303,12 @@ void QgsFieldCalculator::accept()
         if ( value.canConvert< QgsGeometry >() )
         {
           QgsGeometry geom = value.value< QgsGeometry >();
-          mVectorLayer->changeGeometry( feature.id(), &geom );
+          if ( !mVectorLayer->changeGeometry( feature.id(), &geom ) )
+          {
+            calculationSuccess = false;
+            error = tr( "Can not change geometry for feature: %1", "Field calculator" ).arg( feature.id() );
+            break;
+          }
         }
       }
       else
