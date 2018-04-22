@@ -159,6 +159,7 @@ include_directories(
     interpolation
 )
 
+if(NOT PREPARE_ONLY)
 set(LIB_NAME ${NG_PREFIX}qgis_analysis)
 
 add_library(${LIB_NAME} SHARED ${QGIS_ANALYSIS_SRCS} ${QGIS_ANALYSIS_MOC_SRCS} ${QGIS_ANALYSIS_HDRS})
@@ -215,3 +216,5 @@ endif()
 if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
     install(FILES ${QGIS_ANALYSIS_HDRS} DESTINATION ${INSTALL_INC_DIR})
 endif()
+
+endif(NOT PREPARE_ONLY)
