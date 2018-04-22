@@ -392,9 +392,11 @@ set(QGIS_APP_MOC_HDRS ${QGIS_APP_MOC_HDRS}
 
 set(IMAGE_RCCS ../../images/images.qrc)
 
-qt4_add_resources(IMAGE_RCC_SRCS ${IMAGE_RCCS})
+if(NOT PREPARE_ONLY)
+    qt4_add_resources(IMAGE_RCC_SRCS ${IMAGE_RCCS})
 
-qt4_wrap_cpp(QGIS_APP_MOC_SRCS ${QGIS_APP_MOC_HDRS})
+    qt4_wrap_cpp(QGIS_APP_MOC_SRCS ${QGIS_APP_MOC_HDRS})
+endif()
 
 set(QGIS_APPMAIN_SRCS main.cpp)
 
