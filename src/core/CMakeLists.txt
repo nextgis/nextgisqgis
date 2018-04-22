@@ -101,10 +101,10 @@ set(QGIS_CORE_SRCS
 
     qgis.cpp
     qgsapplication.cpp
-  qgsaction.cpp
-  qgsactionmanager.cpp
-  qgsaggregatecalculator.cpp
-  qgsattributetableconfig.cpp
+    qgsaction.cpp
+    qgsactionmanager.cpp
+    qgsaggregatecalculator.cpp
+    qgsattributetableconfig.cpp
     qgsbearingutils.cpp
     qgsbrowsermodel.cpp
     qgscachedfeatureiterator.cpp
@@ -467,8 +467,8 @@ set(QGIS_CORE_MOC_HDRS
     qgsdataprovider.h
     qgsdbfilterproxymodel.h
     qgseditformconfig.h
-  qgsfeedback.h
-  qgsfield.h
+    qgsfeedback.h
+    qgsfield.h
     qgsgeometryvalidator.h
     qgsgml.h
     qgsgmlschema.h
@@ -506,7 +506,7 @@ set(QGIS_CORE_MOC_HDRS
     qgsvectorlayer.h
     qgsvectorlayerjoinbuffer.h
     qgsvisibilitypresetcollection.h
-  qgswebpage.h
+    qgswebpage.h
     qgswebview.h
 
     auth/qgsauthmanager.h
@@ -537,9 +537,9 @@ set(QGIS_CORE_MOC_HDRS
     composer/qgscomposerpicture.h
     composer/qgscomposerscalebar.h
     composer/qgscomposershape.h
-  composer/qgscomposernodesitem.h
-  composer/qgscomposerpolygon.h
-  composer/qgscomposerpolyline.h
+    composer/qgscomposernodesitem.h
+    composer/qgscomposerpolygon.h
+    composer/qgscomposerpolyline.h
     composer/qgscomposertablecolumn.h
     composer/qgscomposertable.h
     composer/qgscomposertablev2.h

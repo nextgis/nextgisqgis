@@ -116,6 +116,7 @@
 #include "qgsauthsslerrorsdialog.h"
 #endif
 #include "qgsbookmarks.h"
+#include "qgsbrowsermodel.h"
 #include "qgsbrowserdockwidget.h"
 #include "qgsadvanceddigitizingdockwidget.h"
 #include "qgsclipboard.h"
