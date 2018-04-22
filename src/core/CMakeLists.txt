@@ -891,6 +891,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
 # Test data dir for QgsRenderChecker
 add_definitions(-DTEST_DATA_DIR="\\"${TEST_DATA_DIR}\\"")
 
+if(NOT PREPARE_ONLY)
 set(LIB_NAME ${NG_PREFIX}qgis_core)
 
 add_library(${LIB_NAME} SHARED ${QGIS_CORE_SRCS} ${QGIS_CORE_MOC_SRCS} ${QGIS_CORE_HDRS} ${QGIS_CORE_MOC_HDRS})
@@ -952,3 +953,5 @@ endif()
 if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
     install(FILES ${QGIS_CORE_HDRS} ${QGIS_CORE_MOC_HDRS} DESTINATION ${INSTALL_INC_DIR})
 endif()
+
+endif(NOT PREPARE_ONLY)

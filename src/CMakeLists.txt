@@ -69,19 +69,22 @@ add_definitions(-DSUPPORT_GEOPACKAGE=1)
 
 add_subdirectory(core)
 add_subdirectory(analysis)
-add_subdirectory(ui)
-add_subdirectory(gui)
-add_subdirectory(auth)
-add_subdirectory(providers)
 
-if(WITH_DESKTOP)
-  add_subdirectory(app)
-#TODO:  add_subdirectory(helpviewer)
-  add_subdirectory(plugins)
-endif()
+if(NOT PREPARE_ONLY)
+    add_subdirectory(ui)
+    add_subdirectory(gui)
+    add_subdirectory(auth)
+    add_subdirectory(providers)
 
-if(WITH_BINDINGS)
-    add_subdirectory(python)
+    if(WITH_DESKTOP)
+      add_subdirectory(app)
+      add_subdirectory(plugins)
+    endif()
+
+    if(WITH_BINDINGS)
+        add_subdirectory(python)
+    endif()
+
 endif()
 
 set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
