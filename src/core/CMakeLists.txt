@@ -40,7 +40,7 @@ find_package(PythonInterp REQUIRED)
 
 set(QGIS_CORE_SRCS
     symbology-ng/qgs25drenderer.cpp
-  symbology-ng/qgsarrowsymbollayer.cpp
+    symbology-ng/qgsarrowsymbollayer.cpp
     symbology-ng/qgscategorizedsymbolrendererv2.cpp
     symbology-ng/qgscolorbrewerpalette.cpp
     symbology-ng/qgscptcityarchive.cpp
@@ -53,7 +53,7 @@ set(QGIS_CORE_SRCS
     symbology-ng/qgslegendsymbolitemv2.cpp
     symbology-ng/qgslinesymbollayerv2.cpp
     symbology-ng/qgsmarkersymbollayerv2.cpp
-  symbology-ng/qgsnullsymbolrenderer.cpp
+    symbology-ng/qgsnullsymbolrenderer.cpp
     symbology-ng/qgspointdisplacementrenderer.cpp
     symbology-ng/qgsrendererv2.cpp
     symbology-ng/qgsrendererv2registry.cpp
@@ -126,8 +126,8 @@ set(QGIS_CORE_SRCS
     qgsdataitemprovider.cpp
     qgsdataitemproviderregistry.cpp
     qgsdatasourceuri.cpp
-  qgsdataprovider.cpp
-  qgsdatetimestatisticalsummary.cpp
+    qgsdataprovider.cpp
+    qgsdatetimestatisticalsummary.cpp
     qgsdatumtransformstore.cpp
     qgsdbfilterproxymodel.cpp
     qgsdiagramrendererv2.cpp
@@ -149,8 +149,8 @@ set(QGIS_CORE_SRCS
     qgsgml.cpp
     qgsgmlschema.cpp
     qgshistogram.cpp
-  qgsinterval.cpp
-  qgsjsonutils.cpp
+    qgsinterval.cpp
+    qgsjsonutils.cpp
     qgslabel.cpp
     qgslabelattributes.cpp
     qgslabelfeature.cpp
@@ -187,8 +187,8 @@ set(QGIS_CORE_SRCS
     qgsobjectcustomproperties.cpp
     qgsofflineediting.cpp
     qgsogcutils.cpp
-  qgsogrutils.cpp
-  qgsoptionalexpression.cpp
+    qgsogrutils.cpp
+    qgsoptionalexpression.cpp
     qgsowsconnection.cpp
     qgspaintenginehack.cpp
     qgspallabeling.cpp
@@ -212,7 +212,7 @@ set(QGIS_CORE_SRCS
     qgsrendercontext.cpp
     qgsrulebasedlabeling.cpp
     qgsrunprocess.cpp
-  qgsruntimeprofiler.cpp
+    qgsruntimeprofiler.cpp
     qgsscalecalculator.cpp
     qgsscaleexpression.cpp
     qgsscaleutils.cpp
@@ -222,10 +222,10 @@ set(QGIS_CORE_SRCS
     qgssnappingutils.cpp
     qgsspatialindex.cpp
     qgssqlexpressioncompiler.cpp
-  qgssqliteexpressioncompiler.cpp
-  qgssqlstatement.cpp
+    qgssqliteexpressioncompiler.cpp
+    qgssqlstatement.cpp
     qgsstatisticalsummary.cpp
-  qgsstringstatisticalsummary.cpp
+    qgsstringstatisticalsummary.cpp
     qgsstringutils.cpp
     qgstextlabelfeature.cpp
     qgstolerance.cpp
@@ -284,9 +284,9 @@ set(QGIS_CORE_SRCS
     composer/qgscomposerpicture.cpp
     composer/qgscomposerscalebar.cpp
     composer/qgscomposershape.cpp
-  composer/qgscomposernodesitem.cpp
-  composer/qgscomposerpolygon.cpp
-  composer/qgscomposerpolyline.cpp
+    composer/qgscomposernodesitem.cpp
+    composer/qgscomposerpolygon.cpp
+    composer/qgscomposerpolyline.cpp
     composer/qgscomposertable.cpp
     composer/qgscomposertablecolumn.cpp
     composer/qgscomposertablev2.cpp
@@ -358,7 +358,7 @@ set(QGIS_CORE_SRCS
     raster/qgssinglebandcolordatarenderer.cpp
     raster/qgssinglebandgrayrenderer.cpp
     raster/qgssinglebandpseudocolorrenderer.cpp
-  raster/qgshillshaderenderer.cpp
+    raster/qgshillshaderenderer.cpp
 
     geometry/qgsabstractgeometryv2.cpp
     geometry/qgscircularstringv2.cpp
@@ -382,7 +382,7 @@ set(QGIS_CORE_SRCS
     geometry/qgspolygonv2.cpp
     geometry/qgswkbptr.cpp
     geometry/qgswkbtypes.cpp
-  geometry/qgswkbsimplifierptr.cpp
+    geometry/qgswkbsimplifierptr.cpp
 
     qgscontexthelp_texts.cpp
     qgsexpression_texts.cpp
