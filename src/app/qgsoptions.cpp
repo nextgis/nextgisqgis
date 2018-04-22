@@ -649,7 +649,7 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl )
     mComboCopyFeatureFormat->setCurrentIndex( mComboCopyFeatureFormat->findData( mSettings->value( "/qgis/copyGeometryAsWKT", true ).toBool() ?
         QgsClipboard::AttributesWithWKT : QgsClipboard::AttributesOnly ) );
   leNullValue->setText( mSettings->value( "qgis/nullValue", "NULL" ).toString() );
-  cbxIgnoreShapeEncoding->setChecked( mSettings->value( "/qgis/ignoreShapeEncoding", true ).toBool() );
+  cbxIgnoreShapeEncoding->setChecked( mSettings->value( "/qgis/ignoreShapeEncoding", false ).toBool() );
   cbxCanvasRotation->setChecked( QgsMapCanvas::rotationEnabled() );
 
   cmbLegendDoubleClickAction->setCurrentIndex( mSettings->value( "/qgis/legendDoubleClickAction", 0 ).toInt() );
