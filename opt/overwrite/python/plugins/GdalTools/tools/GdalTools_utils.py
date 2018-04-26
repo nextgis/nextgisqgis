@@ -29,8 +29,8 @@ __revision__ = '$Format:%H$'
 # setLastUsedDir( QString *file_or_dir path )
 # -------------------------------------------------
 
-from PyQt4.QtCore import QObject, QSettings, QFileInfo, SIGNAL, QDir, QCoreApplication
-from PyQt4.QtGui import QFileDialog
+from qgis.PyQt.QtCore import QObject, QSettings, QFileInfo, QDir, QCoreApplication, pyqtSignal
+from qgis.PyQt.QtWidgets import QFileDialog
 
 from qgis.core import QgsApplication, QgsMapLayerRegistry, QgsRectangle, QgsProviderRegistry, QgsLogger
 from qgis.gui import QgsEncodingFileDialog
@@ -153,6 +153,7 @@ def getVectorExtensions():
 
 
 class LayerRegistry(QObject):
+    layersChanged = pyqtSignal()
 
     _instance = None
     _iface = None
@@ -176,9 +177,9 @@ class LayerRegistry(QObject):
 
         LayerRegistry.layers = self.getAllLayers()
         LayerRegistry._instance = self
-        self.connect(QgsMapLayerRegistry.instance(), SIGNAL("removeAll()"), self.removeAllLayers)
-        self.connect(QgsMapLayerRegistry.instance(), SIGNAL("layerWasAdded(QgsMapLayer *)"), self.layerAdded)
-        self.connect(QgsMapLayerRegistry.instance(), SIGNAL("layerWillBeRemoved(QString)"), self.removeLayer)
+        QgsMapLayerRegistry.instance().removeAll.connect(self.removeAllLayers)
+        QgsMapLayerRegistry.instance().layerWasAdded.connect(self.layerAdded)
+        QgsMapLayerRegistry.instance().layerWillBeRemoved.connect(self.removeLayer)
 
     def getAllLayers(self):
         if LayerRegistry._iface and hasattr(LayerRegistry._iface, 'legendInterface'):
@@ -187,15 +188,15 @@ class LayerRegistry(QObject):
 
     def layerAdded(self, layer):
         LayerRegistry.layers.append(layer)
-        self.emit(SIGNAL("layersChanged"))
+        self.layersChanged.emit()
 
     def removeLayer(self, layerId):
-        LayerRegistry.layers = filter(lambda x: x.id() != layerId, LayerRegistry.layers)
-        self.emit(SIGNAL("layersChanged"))
+        LayerRegistry.layers = [x for x in LayerRegistry.layers if x.id() != layerId]
+        self.layersChanged.emit()
 
     def removeAllLayers(self):
         LayerRegistry.layers = []
-        self.emit(SIGNAL("layersChanged"))
+        self.layersChanged.emit()
 
     @classmethod
     def isRaster(self, layer):
@@ -945,7 +946,7 @@ def setMacOSXDefaultEnvironment():
     qgis_app = u"%s" % QgsApplication.prefixPath()
     qgis_app = QDir(qgis_app).absolutePath()
 
-    qgis_bin = u"%s/usr/bin" % QgsApplication.prefixPath()   # path to QGis bin folder
+    qgis_bin = u"%s/usr/bin" % qgis_app   # path to QGis bin folder
     qgis_python = u"%s/Applications/ngqgis.app/Contents/Resources/python" % qgis_app    # path to QGis python folder
 
     # path to the GDAL framework within the Qgis application folder (QGis standalone only)
