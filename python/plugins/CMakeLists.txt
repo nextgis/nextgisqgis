@@ -40,7 +40,7 @@ macro(build_plugin SUBDIR)
     string(REPLACE "/" ";" DIRS ${SUBDIR})
     list(GET DIRS 0 PLUGIN_NAME)
 
-    file(GLOB ${NAME}_PY_FILES *.py)
+    file(GLOB ${NAME}_PY_FILES *.py terrain.txt)
     file(GLOB ${NAME}_UI_FILES *.ui)
     file(GLOB ${NAME}_QRC_FILES *.qrc)
     file(GLOB ${NAME}_IMAGE_FILES *.png *.svg *.gif)

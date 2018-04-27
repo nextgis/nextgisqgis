@@ -24,6 +24,9 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.core import QGis
 import qgis.utils
 
+# load icons for actions
+import resources_rc
+
 # are all dependencies satisfied?
 valid = True
 
