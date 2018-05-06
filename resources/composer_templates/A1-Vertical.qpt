@@ -19,7 +19,7 @@
    <ComposerItem pagey="0" page="1" id="Рамка" lastValidViewScaleFactor="-1" positionMode="0" positionLock="true" x="0" y="0" visibility="1" zValue="3" background="false" transparency="0" frameJoinStyle="miter" blendMode="0" width="594" outlineWidth="0.3" excludeFromExports="0" uuid="{4bacb874-d1be-4ea5-9f67-91dcc481f6f7}" height="841" itemRotation="0" frame="false" pagex="0">
     <FrameColor alpha="255" red="0" blue="0" green="0"/>
     <BackgroundColor alpha="255" red="255" blue="255" green="255"/>
-    <dataDefinedSource expr="" field="" active="false" useExpr="true"/>
+    <dataDefinedSource expr="@qgis_composer_templates_path + '/A1-v.svg'" field="" active="true" useExpr="true"/>
    </ComposerItem>
   </ComposerPicture>
   <ComposerMap mapRotation="0" keepLayerSet="false" id="0" previewMode="Cache" drawCanvasItems="false">
