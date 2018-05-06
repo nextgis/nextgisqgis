@@ -28,7 +28,7 @@
    <ComposerItem pagey="0" page="1" id="Рамка" lastValidViewScaleFactor="-1" positionMode="0" positionLock="true" x="0" y="0" visibility="1" zValue="3" background="false" transparency="0" frameJoinStyle="miter" blendMode="0" width="210" outlineWidth="0.3" excludeFromExports="0" uuid="{4bacb874-d1be-4ea5-9f67-91dcc481f6f7}" height="297" itemRotation="0" frame="false" pagex="0">
     <FrameColor alpha="255" red="0" blue="0" green="0"/>
     <BackgroundColor alpha="255" red="255" blue="255" green="255"/>
-    <dataDefinedSource expr="" field="" active="false" useExpr="true"/>
+    <dataDefinedSource expr="@qgis_composer_templates_path + '/A4-v.svg'" field="" active="true" useExpr="true"/>
    </ComposerItem>
   </ComposerPicture>
   <ComposerLegend symbolWidth="7" title="Условные обозначения:" boxSpace="2" splitLayer="0" equalColumnWidth="0" map="0" titleAlignment="1" symbolHeight="4" wmsLegendHeight="25" wrapChar="" fontColor="#000000" columnSpace="2" wmsLegendWidth="50" columnCount="1">
