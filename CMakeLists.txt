@@ -137,6 +137,10 @@ option(WITH_BINDINGS "Build python bindings" ON)
 include(FindAnyProject)
 
 if(NOT PREPARE_ONLY)
+    if(POLICY CMP0071)
+        cmake_policy(SET CMP0071 OLD)
+    endif()
+
     # Search dependencies
     set(CMAKE_AUTOMOC ON)
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
