@@ -506,7 +506,6 @@ set(QGIS_CORE_MOC_HDRS
     qgsvectorlayer.h
     qgsvectorlayerjoinbuffer.h
     qgsvisibilitypresetcollection.h
-    qgswebpage.h
     qgswebview.h
 
     auth/qgsauthmanager.h
@@ -619,7 +618,6 @@ set(QGIS_CORE_HDRS
   qgscolorscheme.h
   qgscolorschemeregistry.h
   qgsconnectionpool.h
-  qgscontexthelp.h
   qgsconditionalstyle.h
   qgscoordinatereferencesystem.h
   qgscoordinatereferencesystem_p.h
@@ -629,13 +627,11 @@ set(QGIS_CORE_HDRS
   qgsdartmeasurement.h
   qgsdatadefined.h
   qgsdatadefined_p.h
-  qgsdataitem.h
   qgsdataitemprovider.h
   qgsdataitemproviderregistry.h
   qgsdatasourceuri.h
   qgsdatetimestatisticalsummary.h
   qgsdatumtransformstore.h
-  qgsdbfilterproxymodel.h
   qgsdiagramrendererv2.h
   qgsdistancearea.h
   qgseditorwidgetconfig.h
@@ -671,7 +667,6 @@ set(QGIS_CORE_HDRS
   qgsmaplayerlistutils.h
   qgsmaplayerref.h
   qgsmaplayerrenderer.h
-  qgsmaplayerstylemanager.h
   qgsmapsettings.h
   qgsmaptopixel.h
   qgsmaptopixelgeometrysimplifier.h
@@ -682,13 +677,10 @@ set(QGIS_CORE_HDRS
   qgsogcutils.h
   qgsoptional.h
   qgsoptionalexpression.h
-  qgsowsconnection.h
   qgspaintenginehack.h
   qgspallabeling.h
   qgspluginlayerregistry.h
   qgspoint.h
-  qgspointlocator.h
-  qgsproject.h
   qgsprojectfiletransform.h
   qgsprojectproperty.h
   qgsprojectversion.h
@@ -707,7 +699,6 @@ set(QGIS_CORE_HDRS
   qgsscaleutils.h
   qgssimplifymethod.h
   qgssnapper.h
-  qgssnappingutils.h
   qgsspatialindex.h
   qgssqlexpressioncompiler.h
   qgsstatisticalsummary.h
@@ -716,11 +707,8 @@ set(QGIS_CORE_HDRS
   qgstestutils.h
   qgstextlabelfeature.h
   qgstolerance.h
-  qgstracer.h
   qgsunittypes.h
 
-  qgsvectordataprovider.h
-  qgsvectorlayercache.h
   qgsvectorlayerref.h
   qgsvectorfilewriter.h
   qgsvectorlayerdiagramprovider.h
@@ -731,18 +719,12 @@ set(QGIS_CORE_HDRS
   qgsvectorlayerrenderer.h
   qgsvectorlayerundocommand.h
   qgsvectorsimplifymethod.h
-  qgsvisibilitypresetcollection.h
   qgsxmlutils.h
-  qgswebpage.h
-  qgswebframe.h
-  qgswebview.h
   qgslocalec.h
 
   auth/qgsauthcertutils.h
   auth/qgsauthconfig.h
   auth/qgsauthcrypto.h
-  auth/qgsauthmanager.h
-  auth/qgsauthmethod.h
   auth/qgsauthmethodmetadata.h
   auth/qgsauthmethodregistry.h
 
@@ -762,17 +744,13 @@ set(QGIS_CORE_HDRS
   effects/qgscoloreffect.h
 
   composer/qgsaddremovemultiframecommand.h
-  composer/qgscomposerarrow.h
-  composer/qgscomposerframe.h
   composer/qgscomposeritemcommand.h
   composer/qgscomposerlegenditem.h
   composer/qgscomposerlegendstyle.h
   composer/qgscomposermultiframecommand.h
   composer/qgscomposertable.h
-  composer/qgscomposertexttable.h
   composer/qgsdoubleboxscalebarstyle.h
   composer/qgsnumericscalebarstyle.h
-  composer/qgspaperitem.h
   composer/qgsscalebarstyle.h
   composer/qgssingleboxscalebarstyle.h
   composer/qgsticksscalebarstyle.h

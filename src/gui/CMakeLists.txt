@@ -564,8 +564,6 @@ set(QGIS_GUI_MOC_HDRS
   effects/qgspainteffectwidget.h
 
   editorwidgets/core/qgseditorconfigwidget.h
-  editorwidgets/core/qgseditorconfigwidget.h
-  editorwidgets/core/qgseditorwidgetregistry.h
   editorwidgets/core/qgseditorwidgetregistry.h
   editorwidgets/core/qgseditorwidgetwrapper.h
   editorwidgets/core/qgssearchwidgetwrapper.h
@@ -648,17 +646,12 @@ set(QGIS_GUI_HDRS
   qgsattributeformlegacyinterface.h
   qgscursors.h
   qgsdetaileditemdata.h
-  qgsexpressionbuilderdialog.h
-  qgsfiledropedit.h
   qgshighlight.h
   qgsmapcanvasitem.h
   qgsmapcanvasmap.h
   qgsmapcanvassnapper.h
-  qgsmapcanvassnappingutils.h
-  qgsmapcanvastracer.h
   qgsmaplayerconfigwidgetfactory.h
   qgsmapmouseevent.h
-  qgsmaptip.h
   qgsnumericsortlistviewitem.h
   qgsrubberband.h
   qgssqlcomposerdialog.h
@@ -666,33 +659,12 @@ set(QGIS_GUI_HDRS
   qgstablewidgetitem.h
   qgstextannotationitem.h
   qgstrackedvectorlayertools.h
-  qgsuserinputdockwidget.h
   qgsvectorlayertools.h
   qgsvertexmarker.h
-  qgsfiledownloader.h
 
   attributetable/qgsfeaturemodel.h
 
-  auth/qgsauthauthoritieseditor.h
-  auth/qgsauthcertificateinfo.h
-  auth/qgsauthcertificatemanager.h
-  auth/qgsauthcerttrustpolicycombobox.h
-  auth/qgsauthconfigedit.h
-  auth/qgsauthconfigeditor.h
-  auth/qgsauthconfigidedit.h
-  auth/qgsauthconfigselect.h
-  auth/qgsautheditorwidgets.h
   auth/qgsauthguiutils.h
-  auth/qgsauthidentitieseditor.h
-  auth/qgsauthimportcertdialog.h
-  auth/qgsauthimportidentitydialog.h
-  auth/qgsauthmasterpassresetdialog.h
-  auth/qgsauthmethodedit.h
-  auth/qgsauthserverseditor.h
-  auth/qgsauthsslconfigwidget.h
-  auth/qgsauthsslerrorsdialog.h
-  auth/qgsauthsslimportdialog.h
-  auth/qgsauthtrustedcasdialog.h
 
   editorwidgets/core/qgseditorwidgetfactory.h
 
@@ -713,10 +685,7 @@ set(QGIS_GUI_HDRS
   editorwidgets/qgsvaluemapwidgetfactory.h
   editorwidgets/qgsvaluerelationwidgetfactory.h
 
-  layertree/qgslayertreeembeddedconfigwidget.h
   layertree/qgslayertreeembeddedwidgetregistry.h
-
-  raster/qgsrasterrendererwidget.h
 )
 
 if(WITH_QTWEBKIT)
