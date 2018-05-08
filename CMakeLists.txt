@@ -137,13 +137,13 @@ option(WITH_BINDINGS "Build python bindings" ON)
 include(FindAnyProject)
 
 if(NOT PREPARE_ONLY)
-    if(POLICY CMP0071)
-        cmake_policy(SET CMP0071 OLD)
-    endif()
-
-    # Search dependencies
-    set(CMAKE_AUTOMOC ON)
-    set(CMAKE_INCLUDE_CURRENT_DIR ON)
+    # if(POLICY CMP0071)
+    #     cmake_policy(SET CMP0071 NEW)
+    # endif()
+    #
+    # # Search dependencies
+    # set(CMAKE_AUTOMOC ON)
+    # set(CMAKE_INCLUDE_CURRENT_DIR ON)
     set(QT_REQUIRED_COMPONENTS QtCore QtGui QtXml QtNetwork QtSvg QtSql QtUiTools QtScript)
     option(WITH_QTWEBKIT "Build support QT Webkit" ON)
     if(WITH_QTWEBKIT)
