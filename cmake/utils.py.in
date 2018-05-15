@@ -49,8 +49,14 @@ import warnings
 import codecs
 import time
 import functools
-from raven import Client
-from raven.transport.requests import RequestsHTTPTransport
+
+have_raven = True
+try:
+    from raven import Client
+    from raven.transport.requests import RequestsHTTPTransport
+except:
+    have_raven = False
+    pass
 import platform
 #import qgis.utils
 
@@ -64,19 +70,20 @@ if sys.version_info[0] >= 3:
 # ######################
 # ERROR HANDLING
 
-client = Client('https://71159235f0b542adb8ef214aa24f5aa6:11eae721ce1f490680c6adef9400b950@sentry.nextgis.com/9?timeout=15&verify_ssl=0',
-    transport=RequestsHTTPTransport,
-    processors = (
-	'raven.processors.SanitizePasswordsProcessor',
-    ),
-    tags = {
-	'system': platform.system(),
-	'sys_release': platform.release(),
-	'platform': platform.platform(),
-	'version': platform.version()
-    },
-    release='NextGIS @VERSION@ [' + QGis.QGIS_VERSION + ']'
-    )
+if have_raven:
+    client = Client('https://71159235f0b542adb8ef214aa24f5aa6:11eae721ce1f490680c6adef9400b950@sentry.nextgis.com/9?timeout=15&verify_ssl=0',
+        transport=RequestsHTTPTransport,
+        processors = (
+    	'raven.processors.SanitizePasswordsProcessor',
+        ),
+        tags = {
+    	'system': platform.system(),
+    	'sys_release': platform.release(),
+    	'platform': platform.platform(),
+    	'version': platform.version()
+        },
+        release='NextGIS @VERSION@ [' + QGis.QGIS_VERSION + ']'
+        )
 
 warnings.simplefilter('default')
 warnings.filterwarnings("ignore", "the sets module is deprecated")
@@ -211,7 +218,8 @@ def open_stack_dialog(type, value, tb, msg, pop_error=True):
 
 
 def qgis_excepthook(type, value, tb):
-    client.captureException()
+    if have_raven:
+        client.captureException()
     showException(type, value, tb, None, messagebar=True)
 
 
