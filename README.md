@@ -1,6 +1,6 @@
 # NextGIS QGIS
 
-:four_leaf_clover: NextGIS QGIS build using NextGIS Borsch. 
+:four_leaf_clover: NextGIS QGIS build using NextGIS Borsch.
 
 This simplified and reorganized repository of original [QGIS](https://github.com/qgis/qgis) with NextGIS additions needed by network installer.
 
@@ -60,6 +60,7 @@ Some dependencies are removed:
 * Spatial reference system database already filled and not generate. Special target to generate this DB will be added in future.
 
 # Build
+
 ## Mac OS X
 
 ```bash
