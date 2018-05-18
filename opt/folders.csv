@@ -40,7 +40,7 @@ python/gui/effects,python/gui/effects,,sip
 python/gui/layertree,python/gui/layertree,,sip
 python/gui/raster,python/gui/raster,,sip
 python/gui/symbology-ng,python/gui/symbology-ng,,sip
-python/networkanalysis,python/networkanalysis,,
+python/networkanalysis,python/networkanalysis,,py
 python/plugins/db_manager,python/plugins/db_manager,,"py,TODO,LICENSE,README,CREDITS,metadata.txt,qrc"
 python/plugins/db_manager/db_plugins,python/plugins/db_manager/db_plugins,,py
 python/plugins/db_manager/db_plugins/oracle,python/plugins/db_manager/db_plugins/oracle,,"py,md,qrc"
@@ -74,6 +74,8 @@ python/plugins/MetaSearch/ui,python/plugins/MetaSearch/ui,skip,ui
 python/plugins/processing,python/plugins/processing,,"py,metadata.txt"
 python/plugins/processing/algs,python/plugins/processing/algs,,py
 python/plugins/processing/algs/exampleprovider,python/plugins/processing/algs/exampleprovider,,"py,metadata.txt"
+python/plugins/processing/algs/examplescripts,python/plugins/processing/algs/examplescripts,,"py,metadata.txt"
+python/plugins/processing/algs/examplescripts/scripts,python/plugins/processing/algs/examplescripts/scripts,,py
 python/plugins/processing/algs/gdal,python/plugins/processing/algs/gdal,,py
 python/plugins/processing/algs/grass,python/plugins/processing/algs/grass,,"py,grass.txt"
 python/plugins/processing/algs/grass/description,python/plugins/processing/algs/grass/description,,txt
@@ -85,7 +87,7 @@ python/plugins/processing/algs/lidar,python/plugins/processing/algs/lidar,,py
 python/plugins/processing/algs/lidar/fusion,python/plugins/processing/algs/lidar/fusion,,py
 python/plugins/processing/algs/lidar/lastools,python/plugins/processing/algs/lidar/lastools,,py
 python/plugins/processing/algs/otb,python/plugins/processing/algs/otb,,py
-python/plugins/processing/algs/otb/description,python/plugins/processing/algs/otb/description,,
+python/plugins/processing/algs/otb/description,python/plugins/processing/algs/otb/description,skip,
 python/plugins/processing/algs/otb/description/5.0.0,python/plugins/processing/algs/otb/description/5.0.0,,xml
 python/plugins/processing/algs/otb/description/5.0.0/doc,python/plugins/processing/algs/otb/description/5.0.0/doc,,"html,css"
 python/plugins/processing/algs/otb/helper,python/plugins/processing/algs/otb/helper,,py
@@ -95,9 +97,7 @@ python/plugins/processing/algs/qgis/scripts,python/plugins/processing/algs/qgis/
 python/plugins/processing/algs/qgis/ui,python/plugins/processing/algs/qgis/ui,,"py,ui"
 python/plugins/processing/algs/r,python/plugins/processing/algs/r,,py
 python/plugins/processing/algs/saga,python/plugins/processing/algs/saga,,py
-python/plugins/processing/algs/saga/description,python/plugins/processing/algs/saga/description,,
-python/plugins/processing/algs/saga/description/2.2.3,python/plugins/processing/algs/saga/description/2.2.3,,txt
-python/plugins/processing/algs/saga/description/2.3.0,python/plugins/processing/algs/saga/description/2.3.0,,txt
+python/plugins/processing/algs/saga/description,python/plugins/processing/algs/saga/description,,txt
 python/plugins/processing/algs/saga/ext,python/plugins/processing/algs/saga/ext,,py
 python/plugins/processing/algs/taudem,python/plugins/processing/algs/taudem,,py
 python/plugins/processing/algs/taudem/description,python/plugins/processing/algs/taudem/description,,py
@@ -106,6 +106,8 @@ python/plugins/processing/algs/taudem/description/single,python/plugins/processi
 python/plugins/processing/core,python/plugins/processing/core,,py
 python/plugins/processing/gui,python/plugins/processing/gui,,"py,algnames.txt,algclassification.txt"
 python/plugins/processing/images,python/plugins/processing/images,,"png,svg,gif"
+python/plugins/processing/images/ftools,python/plugins/processing/images/ftools,,"png,svg,gif"
+python/plugins/processing/images/gdaltools,python/plugins/processing/images/gdaltools,,"png,svg,gif"
 python/plugins/processing/modeler,python/plugins/processing/modeler,,py
 python/plugins/processing/preconfigured,python/plugins/processing/preconfigured,,py
 python/plugins/processing/script,python/plugins/processing/script,,py
@@ -123,6 +125,7 @@ python/PyQt/PyQt4/uic,python/PyQt/PyQt4/uic,,py
 python/PyQt/PyQt5,python/PyQt/PyQt5,,py
 python/PyQt/PyQt5/uic,python/PyQt/PyQt5/uic,,py
 python/qsci_apis,python/qsci_apis,,pap
+python/sip_helpers,python/sip_helpers,,"h,cpp"
 python/QtWebKit,python/QtWebKit,skip,py
 python/server,python/server,skip,"py,sip"
 python/testing,python/testing,skip,py
