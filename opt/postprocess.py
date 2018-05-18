@@ -114,6 +114,8 @@ for line in fileinput.input(utilfile, inplace = 1):
             print "    set(QGIS_PATCH " + qgis_patch + ")"
     elif "set(QGIS_NAME " in line:
             print "    set(QGIS_NAME \"" + qgis_name + "\")"
+    elif "set(VERSION_PATCH " in line:
+            print "    set(VERSION_PATCH 0)"        
     else:
         print line,
 

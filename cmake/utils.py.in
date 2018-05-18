@@ -219,7 +219,12 @@ def open_stack_dialog(type, value, tb, msg, pop_error=True):
 
 def qgis_excepthook(type, value, tb):
     if have_raven:
-        client.captureException()
+        logmessage = ''
+        for s in traceback.format_exception(type, value, tb):
+            logmessage += s.decode('utf-8', 'replace') if hasattr(s, 'decode') else s
+        if logmessage != '':
+            client.captureMessage(logmessage)
+        # client.captureException()
     showException(type, value, tb, None, messagebar=True)
 
 
