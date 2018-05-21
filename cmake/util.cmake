@@ -26,11 +26,11 @@ function(check_version major minor patch qgis_major qgis_minor qgis_patch qgis_n
     # QGIS release version
     set(VERSION_MAJOR ${CURRENT_YEAR})
     set(VERSION_MINOR ${CURRENT_MONTH})
-    set(VERSION_PATCH 2)
+    set(VERSION_PATCH 3)
     # QGIS_PORT is the version of QGIS this release is bound to
     set(QGIS_MAJOR 2)
     set(QGIS_MINOR 18)
-    set(QGIS_PATCH 19)
+    set(QGIS_PATCH 20)
     set(QGIS_NAME "Las Palmas")
 
 
