@@ -22,8 +22,10 @@
 #define NGCUSTOMIZATION_H
 
 #include "qgisapp.h"
-#include "ngupdater.h"
 
+#ifdef NGSTD_USING
+#include "ngupdater.h"
+#endif // NGSTD_USING
 
 class APP_EXPORT NGQgisApp : public QgisApp
 {
@@ -76,9 +78,11 @@ protected:
     virtual void functionProfileNG( void ( NGQgisApp::*fnc )(), NGQgisApp *instance, QString name );
 
 
-private:   
+private:
     bool mUpdatesCheckStartByUser;
+#ifdef NGSTD_USING
     NGQgisUpdater* mNGUpdater;
+#endif // NGSTD_USING
 
 private slots:
     void updatesSearchStart();

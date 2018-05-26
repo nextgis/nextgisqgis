@@ -378,16 +378,27 @@ set(QGIS_APP_MOC_HDRS
   qgsvariantdelegate.h
 )
 
+find_anyproject(NGSTD REQUIRED COMPONENTS framework4)
+if(NGSTD_FOUND)
+    add_definitions(-DNGSTD_USING)
+
+    set(QGIS_APP_SRCS ${QGIS_APP_SRCS}
+        ngupdater.cpp
+    )
+
+    set(QGIS_APP_MOC_HDRS ${QGIS_APP_MOC_HDRS}
+        ngupdater.h
+    )
+endif()
+
 set(QGIS_APP_SRCS ${QGIS_APP_SRCS}
     ngcustomization.cpp
     ngsaboutdialog.cpp
-    ngupdater.cpp
 )
 
 set(QGIS_APP_MOC_HDRS ${QGIS_APP_MOC_HDRS}
     ngcustomization.h
     ngsaboutdialog.h
-    ngupdater.h
 )
 
 set(IMAGE_RCCS ../../images/images.qrc)
