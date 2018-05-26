@@ -340,6 +340,22 @@ static inline QStringList qWinCmdArgs(QString cmdLine) // not const-ref: this mi
     return args;
 }
 
+#ifdef Q_OS_MACOS
+static void translationPath(const QString &basePath,
+                               QList<QString> &localePaths)
+{
+    QDir baseDir(basePath);
+    QStringList filters;
+    filters << QStringLiteral("ngstd_*.framework");
+    QStringList list = baseDir.entryList(filters);
+    foreach (QString subPath, list) {
+        const QString &libTrPath = basePath + "/" + subPath +
+                "/Resources/translations";
+        localePaths.append(libTrPath);
+    }
+}
+#endif // Q_OS_MACOS
+
 int main( int argc, char *argv[] )
 {
 
@@ -908,32 +924,60 @@ int main( int argc, char *argv[] )
     }
   }
 
-  QTranslator qgistor( nullptr );
-  QTranslator qttor( nullptr );
   if ( myTranslationCode != "C" )
   {
-    if ( qgistor.load( QString( "qgis_" ) + myTranslationCode, i18nPath ) )
-    {
-      myApp.installTranslator( &qgistor );
-    }
-    else
-    {
-      qWarning( "loading of qgis translation failed [%s]", QString( "%1/qgis_%2" ).arg( i18nPath, myTranslationCode ).toLocal8Bit().constData() );
-    }
 
-    /* Translation file for Qt.
-     * The strings from the QMenuBar context section are used by Qt/Mac to shift
-     * the About, Preferences and Quit items to the Mac Application menu.
-     * These items must be translated identically in both qt_ and qgis_ files.
-     */
-    if ( qttor.load( QString( "qt_" ) + myTranslationCode, QLibraryInfo::location( QLibraryInfo::TranslationsPath ) ) )
-    {
-      myApp.installTranslator( &qttor );
-    }
-    else
-    {
-      qWarning( "loading of qt translation failed [%s]", QString( "%1/qt_%2" ).arg( QLibraryInfo::location( QLibraryInfo::TranslationsPath ), myTranslationCode ).toLocal8Bit().constData() );
-    }
+      QList<QString> localePaths;
+      localePaths.append(i18nPath);
+      #ifdef Q_OS_MACOS
+        translationPath(QCoreApplication::applicationDirPath() +
+                             "/Contents/Frameworks/", localePaths);
+        translationPath(QCoreApplication::applicationDirPath() +
+                             "/../../Contents/Frameworks/", localePaths);
+        translationPath(QCoreApplication::applicationDirPath() +
+                             "/../Library/Frameworks/", localePaths);
+        translationPath(QCoreApplication::applicationDirPath() +
+                             "/../../../../Library/Frameworks/", localePaths);
+      #else
+        const QString &libTrPath = QCoreApplication::applicationDirPath()
+                  + QLatin1String("/../share/translations");
+        localePaths.append(libTrPath);
+      #endif
+
+        localePaths.append(QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+
+        // get qm files list in libTrPath
+        QStringList translationFilters;
+        QStringList translationCodes(myTranslationCode);
+        if(myTranslationCode.indexOf("_") != -1) {
+            translationCodes << myTranslationCode.left(2);
+        }
+
+        foreach (QString translationCode, translationCodes) {
+            translationFilters << QStringLiteral("ngstd_*%1*").arg(translationCode);
+            translationFilters << QStringLiteral("qt_%1*").arg(translationCode);
+            translationFilters << QStringLiteral("qtbase_%1*").arg(translationCode);
+            translationFilters << QStringLiteral("qgis_%1*").arg(translationCode);
+            translationFilters << QStringLiteral("qscintilla_%1*").arg(translationCode);
+        }
+
+        foreach(QString localePath, localePaths) {
+            QDir localeDir(localePath);
+            QStringList libTrList = localeDir.entryList(translationFilters);
+            qDebug() << "Translation path " << localePath << " -- get translation files: " << libTrList;
+            foreach (QString trFileName, libTrList) {
+                QString loadFile = localeDir.absoluteFilePath(trFileName);
+                QTranslator *translator = new QTranslator;
+                if (translator->load(loadFile)) {
+                    qDebug() << "Loaded translation file " << loadFile;
+                    myApp.installTranslator(translator);
+                }
+                else {
+                    qWarning() << "Loading of translation failed [" << loadFile << "]";
+                    delete translator;
+                }
+            }
+        }
   }
 
   QgsDebugMsg( QString( "Adding QGIS and Qt plugins dirs to search path: %1"
