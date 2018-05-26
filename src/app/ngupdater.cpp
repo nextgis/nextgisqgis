@@ -21,142 +21,39 @@
 
 #include "ngupdater.h"
 
-#include "qgsmessagebar.h"
-#include "qgsmessagebaritem.h"
-#include "qgsmessagelog.h"
+#ifdef NGSTD_USING
+
 #include "ngqgsapplication.h"
 
-#include <QFile>
-#include <QDir>
-#include <QFileInfo>
-#include <QApplication>
-#include <QProcess>
-#include <QXmlStreamReader>
-#include <QMessageBox>
+const QStringList packages = (QStringList() <<
+                              "Qt5" << "Formbuilder" << "Python" <<
+                              "Operation for all python" << "Utilities" <<
+                              "SQLite3 utilities" << "QHULL utilities" <<
+                              "QCA utilities" << "Proj4 utilities" <<
+                              "OpenCAD utilities" << "GIF utilities" <<
+                              "EXPAT utilities" << "CURL utilities" <<
+                              "Operation for all utils" << "Spatial libraries"
+                             );
 
-NGQgisUpdater::NGQgisUpdater( QWidget* parent )
-    : QObject( parent )
+NGQgisUpdater::NGQgisUpdater(QWidget *parent) : NGUpdater (parent)
 {
-    mMaintainerProcess = new QProcess(this);
 
-    connect(mMaintainerProcess, SIGNAL(started()), this, SLOT(maintainerStrated()) );
-    connect(mMaintainerProcess, SIGNAL(error(QProcess::ProcessError)), this, SLOT(maintainerErrored(QProcess::ProcessError)));
-    connect(mMaintainerProcess, SIGNAL(stateChanged(QProcess::ProcessState)), this, SLOT(maintainerStateChanged(QProcess::ProcessState)));
-    connect(mMaintainerProcess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(maintainerFinished(int, QProcess::ExitStatus)));
-    connect(mMaintainerProcess, SIGNAL(readyReadStandardOutput()), this, SLOT(maintainerReadyReadStandardOutput()));
-    connect(mMaintainerProcess, SIGNAL(readyReadStandardError()), this, SLOT(maintainerReadyReadStandardError()));
-}
-
-NGQgisUpdater::~NGQgisUpdater()
-{
-}
-
-const QString NGQgisUpdater::updateProgrammPath()
-{
-#ifdef Q_OS_WIN
-    return NGQgsApplication::prefixPath() + QDir::separator() +
-            "nextgisupdater.exe";
-#elif defined(Q_OS_MACX)
-    return NGQgsApplication::prefixPath() + QDir::separator() +
-            "nextgisupdater.app/Contents/MacOS/nextgisupdater";
-#else
-#warning "Linux is not supported yet!"
-    return "";
-#endif
-}
-
-void NGQgisUpdater::checkUpdates()
-{
-    if (mMaintainerProcess->state() != QProcess::NotRunning)
-    {
-        return;
-    }
-
-    const QString path = updateProgrammPath();
-    QStringList args;
-    args << "--checkupdates";
-
-    QgsMessageLog::logMessage( tr("Started check updates ..."),
-                               QString::null, QgsMessageLog::INFO );
-
-
-
-//    QgsMessageLog::logMessage( QString(tr("Started check updates %1 %2")).arg(path).arg("--checkupdates"),
-//                               QString::null, QgsMessageLog::INFO );
-
-    mMaintainerProcess->start(path, args);
-}
-
-void NGQgisUpdater::maintainerStrated()
-{
-    this->updatesInfoGettingStarted();
-}
-
-void NGQgisUpdater::maintainerErrored(QProcess::ProcessError)
-{
-}
-
-void NGQgisUpdater::maintainerStateChanged(QProcess::ProcessState)
-{
-}
-
-void NGQgisUpdater::maintainerFinished(int code, QProcess::ExitStatus status)
-{
-    QProcess* prc = (QProcess*) sender();
-
-    QByteArray data = prc->readAllStandardOutput();
-    QXmlStreamReader xml(QString::fromUtf8(data));
-    while (!xml.atEnd() && !xml.hasError())
-    {
-        QXmlStreamReader::TokenType token = xml.readNext();
-        if (token == QXmlStreamReader::StartDocument)
-            continue;
-        if (token == QXmlStreamReader::StartElement)
-        {
-            if (xml.name() == "update")
-            {
-                if (!ignorePackages().contains(xml.attributes().value("name").toString(), Qt::CaseInsensitive))
-                {
-                    this->updatesInfoGettingFinished(true);
-                    return;
-                }
-            }
-        }
-    }
-    this->updatesInfoGettingFinished(false);
-}
-
-void NGQgisUpdater::maintainerReadyReadStandardOutput()
-{
-}
-
-void NGQgisUpdater::maintainerReadyReadStandardError()
-{
-}
-
-void NGQgisUpdater::startUpdate(QString projectPath)
-{
-	QString program = updateProgrammPath();
-	QStringList arguments;
-	arguments << "--updater";
-	arguments << "--launch";
-	arguments << qApp->applicationFilePath();
-	if(!projectPath.isEmpty())
-	{
-		arguments << "--launch-options";
-		arguments << projectPath;
-	}
-
-	QProcess::startDetached(
-		program,
-		arguments
-	);
 }
 
 const QStringList NGQgisUpdater::ignorePackages()
 {
-    QStringList packages;
-    packages << "Qt5";
-    packages << "Formbuilder";
     return packages;
 }
+
+const QString NGQgisUpdater::updaterPath()
+{
+#if defined Q_OS_WIN
+    return NGQgsApplication::prefixPath() + QDir::separator() + NGUpdater::updaterPath();
+#elif defined(Q_OS_MACX)
+    return NGQgsApplication::prefixPath() + QDir::separator() + NGUpdater::updaterPath();
+#else
+    return NGUpdater::updaterPath();
+#endif
+}
+
+#endif // NGSTD_USING

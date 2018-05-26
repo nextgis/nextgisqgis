@@ -21,40 +21,24 @@
 #ifndef NGUPDATER_H
 #define NGUPDATER_H
 
+#ifdef NGSTD_USING
 
-#include <QObject>
-#include <QString>
-#include <QProcess>
+#include "framework/updater.h"
 
 
-class NGQgisUpdater: public QObject
+class NGQgisUpdater: public NGUpdater
 {
     Q_OBJECT
 public:
-    NGQgisUpdater( QWidget* parent );
-    virtual ~NGQgisUpdater();
+    explicit NGQgisUpdater( QWidget *parent = nullptr );
+    virtual ~NGQgisUpdater() = default;
 
-    void checkUpdates();
-	void startUpdate(QString projectPath);
-signals:
-    void updatesInfoGettingStarted();
-    void updatesInfoGettingFinished(bool updatesAvailable);
+protected:
+    virtual const QStringList ignorePackages() override;
+    virtual const QString updaterPath() override;
 
-private:
-    const QString updateProgrammPath();
-    const QStringList ignorePackages();
-
-private:
-    QProcess* mMaintainerProcess;
-    bool mUpdatesAvailable;
-
-private slots:
-    void maintainerStrated();
-    void maintainerErrored(QProcess::ProcessError);
-    void maintainerStateChanged(QProcess::ProcessState);
-    void maintainerFinished(int code, QProcess::ExitStatus status);
-    void maintainerReadyReadStandardOutput();
-    void maintainerReadyReadStandardError();
 };
+
+#endif // NGSTD_USING
 
 #endif //NGUPDATER_H

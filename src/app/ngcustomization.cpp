@@ -107,12 +107,15 @@ extern "C"
 
 #include "ngsaboutdialog.h"
 
-#include "ngupdater.h"
-
 #ifdef Q_OS_MACX
 #include <ApplicationServices/ApplicationServices.h>
 #include <CoreFoundation/CoreFoundation.h>
 #endif // Q_OS_MACX
+
+#ifdef NGSTD_USING
+#include "framework/access/access.h"
+#include "framework/access/signbutton.h"
+#endif // NGSTD_USING
 
 //------------------------------------------------------------------------------
 // Implementation of the python runner
@@ -538,10 +541,11 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
     QgsDebugMsg( "PROFILE TIMES" );
     QgsDebugMsg( QString( "PROFILE TIMES TOTAL - %1 " ).arg( mProfiler->totalTime() ) );
 
-
+#ifdef NGSTD_USING
     mNGUpdater = new NGQgisUpdater(this);
     connect(mNGUpdater, SIGNAL(updatesInfoGettingStarted()), this, SLOT(updatesSearchStart()));
     connect(mNGUpdater, SIGNAL(updatesInfoGettingFinished(bool)), this, SLOT(updatesSearchStop(bool)));
+#endif // NGSTD_USING
 }
 
 NGQgisApp::~NGQgisApp()
@@ -1441,6 +1445,20 @@ void NGQgisApp::createToolBars()
 
   mTracer = new QgsMapCanvasTracer( mMapCanvas, messageBar() );
   mTracer->setActionEnableTracing( mActionEnableTracing );
+
+  // Add NextGIS account toolbar
+  QWidget* spacer = new QWidget();
+  spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  mNGAccountToolBar->addWidget(spacer);
+
+#ifdef NGSTD_USING
+  NGSignInButton *toolbAuth = new NGSignInButton(QString("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
+                                     "user_info.read");
+  toolbAuth->setCursor(Qt::PointingHandCursor);
+  mNGAccountToolBar->addWidget(toolbAuth);
+  // TODO: QObject::connect(toolbAuth, SIGNAL(supportInfoUpdated()), this, SLOT(onSupportInfoUpdated()));
+#endif
+
 }
 
 void NGQgisApp::createStatusBar()
@@ -2074,22 +2092,19 @@ void NGQgisApp::loadPythonSupport()
 
 void NGQgisApp::checkQgisVersion()
 {
-    // TODO: NextGIS Check
-/*  QgsVersionInfo* versionInfo = new QgsVersionInfo();
-  QApplication::setOverrideCursor( Qt::WaitCursor );
+    QObject* obj = sender();
+    mUpdatesCheckStartByUser = (obj == mActionCheckQgisVersion);
 
-  connect( versionInfo, SIGNAL( versionInfoAvailable() ), this, SLOT( versionReplyFinished() ) );
-  versionInfo->checkVersion();*/
+    QgsMessageLog::logMessage( tr("Started check updates ..."), QString::null,
+                               QgsMessageLog::INFO );
+#ifdef NGSTD_USING
+    mNGUpdater->checkUpdates();
 
-  QObject* obj = sender();
-  mUpdatesCheckStartByUser = (obj == mActionCheckQgisVersion);
-
-  mNGUpdater->checkUpdates();
-
-  if (mUpdatesCheckStartByUser)
-  {
-    QApplication::setOverrideCursor(Qt::WaitCursor);
-  }
+    if (mUpdatesCheckStartByUser)
+    {
+        QApplication::setOverrideCursor(Qt::WaitCursor);
+    }
+#endif // NGSTD_USING
 }
 
 void NGQgisApp::updatesSearchStart()
@@ -2137,6 +2152,7 @@ void NGQgisApp::updatesSearchStop(bool updatesAvailable)
 
 void NGQgisApp::startUpdate()
 {
+#ifdef NGSTD_USING
     QMessageBox::StandardButton answer = QMessageBox::question(
         static_cast<QWidget*>(parent()),
 		tr("Close QGIS?"),
@@ -2156,6 +2172,7 @@ void NGQgisApp::startUpdate()
             qApp->exit( 0 );
         }
     }
+#endif // NGSTD_USING
 }
 
 void NGQgisApp::increaseBrightness()
