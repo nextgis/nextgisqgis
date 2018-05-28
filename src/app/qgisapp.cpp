@@ -85,7 +85,7 @@
 // Mac OS X Includes
 // Must include before GEOS 3 due to unqualified use of 'Point'
 //
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MAC
 #include <ApplicationServices/ApplicationServices.h>
 
 // check macro breaks QItemDelegate
@@ -6710,7 +6710,7 @@ bool QgisApp::loadComposersFromProject( const QDomDocument& doc )
     composer->readXML( composerNodes.at( i ).toElement(), doc );
     mPrintComposers.insert( composer );
     mPrintComposersMenu->addAction( composer->windowAction() );
-#ifndef Q_OS_MACX
+#ifndef Q_OS_MAC
     composer->setWindowState( Qt::WindowMinimized );
     composer->show();
 #endif
@@ -9220,7 +9220,7 @@ void QgisApp::openURL( QString url, bool useQgisDocDirectory )
   {
     url = "file://" + QgsApplication::pkgDataPath() + "/doc/" + url;
   }
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MAC
   /* Use Mac OS X Launch Services which uses the user's default browser
    * and will just open a new window if that browser is already running.
    * QProcess creates a new browser process for each invocation and expects a

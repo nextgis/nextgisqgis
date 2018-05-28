@@ -107,10 +107,10 @@ extern "C"
 
 #include "ngsaboutdialog.h"
 
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MAC
 #include <ApplicationServices/ApplicationServices.h>
 #include <CoreFoundation/CoreFoundation.h>
-#endif // Q_OS_MACX
+#endif // Q_OS_MAC
 
 #ifdef NGSTD_USING
 #include "framework/access/access.h"

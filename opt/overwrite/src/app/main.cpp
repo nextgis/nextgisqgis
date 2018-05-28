@@ -67,7 +67,7 @@ int _fmode = _O_BINARY;
 #include <getopt.h>
 #endif
 
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MAC
 #include <ApplicationServices/ApplicationServices.h>
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
 typedef SInt32 SRefCon;
@@ -340,7 +340,7 @@ static inline QStringList qWinCmdArgs(QString cmdLine) // not const-ref: this mi
     return args;
 }
 
-#ifdef Q_OS_MACOS
+#ifdef Q_OS_MAC
 static void translationPath(const QString &basePath,
                                QList<QString> &localePaths)
 {
@@ -354,12 +354,12 @@ static void translationPath(const QString &basePath,
         localePaths.append(libTrPath);
     }
 }
-#endif // Q_OS_MACOS
+#endif // Q_OS_MAC
 
 int main( int argc, char *argv[] )
 {
 
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MAC
   // Increase file resource limits (i.e., number of allowed open files)
   // (from code provided by Larry Biehl, Purdue University, USA, from 'MultiSpec' project)
   // This is generally 256 for the soft limit on Mac
@@ -762,7 +762,7 @@ int main( int argc, char *argv[] )
   QgsCustomization::instance()->setSettings( customizationsettings );
   QgsCustomization::instance()->loadDefault();
 
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MAC
   // If the GDAL plugins are bundled with the application and GDAL_DRIVER_PATH
   // is not already defined, use the GDAL plugins in the application bundle.
   QString gdalPlugins( QCoreApplication::applicationDirPath().append( "/../../../../" + QString( QGIS_PLUGIN_SUBDIR ) ) );
@@ -789,7 +789,7 @@ int main( int argc, char *argv[] )
       }
     }
   }
-#endif // Q_OS_MACX
+#endif // Q_OS_MAC
 
 #ifdef Q_OS_WIN
     putenv( QString("GDAL_DATA=" + QCoreApplication::applicationDirPath().append( "/../share/gdal" )).toUtf8().constData() );
@@ -929,7 +929,7 @@ int main( int argc, char *argv[] )
 
       QList<QString> localePaths;
       localePaths.append(i18nPath);
-      #ifdef Q_OS_MACOS
+      #ifdef Q_OS_MAC
         translationPath(QCoreApplication::applicationDirPath() +
                              "/Contents/Frameworks/", localePaths);
         translationPath(QCoreApplication::applicationDirPath() +
@@ -942,7 +942,7 @@ int main( int argc, char *argv[] )
         const QString &libTrPath = QCoreApplication::applicationDirPath()
                   + QLatin1String("/../share/translations");
         localePaths.append(libTrPath);
-      #endif
+      #endif // Q_OS_MAC
 
         localePaths.append(QLibraryInfo::location(QLibraryInfo::TranslationsPath));
 
