@@ -346,9 +346,9 @@ static void translationPath(const QString &basePath,
 {
     QDir baseDir(basePath);
     QStringList filters;
-    filters << QStringLiteral("ngstd_*.framework");
+    filters << QString("ngstd_*.framework");
     QStringList list = baseDir.entryList(filters);
-    foreach (QString subPath, list) {
+    foreach (const QString &subPath, list) {
         const QString &libTrPath = basePath + "/" + subPath +
                 "/Resources/translations";
         localePaths.append(libTrPath);
@@ -954,11 +954,11 @@ int main( int argc, char *argv[] )
         }
 
         foreach (QString translationCode, translationCodes) {
-            translationFilters << QStringLiteral("ngstd_*%1*").arg(translationCode);
-            translationFilters << QStringLiteral("qt_%1*").arg(translationCode);
-            translationFilters << QStringLiteral("qtbase_%1*").arg(translationCode);
-            translationFilters << QStringLiteral("qgis_%1*").arg(translationCode);
-            translationFilters << QStringLiteral("qscintilla_%1*").arg(translationCode);
+            translationFilters << QString("ngstd_*%1*").arg(translationCode);
+            translationFilters << QString("qt_%1*").arg(translationCode);
+            translationFilters << QString("qtbase_%1*").arg(translationCode);
+            translationFilters << QString("qgis_%1*").arg(translationCode);
+            translationFilters << QString("qscintilla_%1*").arg(translationCode);
         }
 
         foreach(QString localePath, localePaths) {
