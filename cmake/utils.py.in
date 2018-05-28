@@ -49,28 +49,12 @@ import warnings
 import codecs
 import time
 import functools
+import platform
 
 have_raven = True
 try:
     from raven import Client
     from raven.transport.requests import RequestsHTTPTransport
-except:
-    have_raven = False
-    pass
-import platform
-#import qgis.utils
-
-if sys.version_info[0] >= 3:
-    import builtins
-    builtins.__dict__['unicode'] = str
-    builtins.__dict__['basestring'] = str
-    builtins.__dict__['long'] = int
-    builtins.__dict__['Set'] = set
-
-# ######################
-# ERROR HANDLING
-
-if have_raven:
     client = Client('https://71159235f0b542adb8ef214aa24f5aa6:11eae721ce1f490680c6adef9400b950@sentry.nextgis.com/9?timeout=15&verify_ssl=0',
         transport=RequestsHTTPTransport,
         processors = (
@@ -84,6 +68,20 @@ if have_raven:
         },
         release='NextGIS @VERSION@ [' + QGis.QGIS_VERSION + ']'
         )
+except:
+    have_raven = False
+    pass
+#import qgis.utils
+
+if sys.version_info[0] >= 3:
+    import builtins
+    builtins.__dict__['unicode'] = str
+    builtins.__dict__['basestring'] = str
+    builtins.__dict__['long'] = int
+    builtins.__dict__['Set'] = set
+
+# ######################
+# ERROR HANDLING
 
 warnings.simplefilter('default')
 warnings.filterwarnings("ignore", "the sets module is deprecated")
