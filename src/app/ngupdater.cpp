@@ -51,7 +51,7 @@ const QString NGQgisUpdater::updaterPath()
 {
 #if defined Q_OS_WIN
     return NGQgsApplication::prefixPath() + QDir::separator() + NGUpdater::updaterPath();
-#elif defined(Q_OS_MACX)
+#elif defined(Q_OS_MAC)
     return NGQgsApplication::prefixPath() + QDir::separator() + NGUpdater::updaterPath();
 #else
     return NGUpdater::updaterPath();

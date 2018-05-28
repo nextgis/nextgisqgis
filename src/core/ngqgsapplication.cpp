@@ -89,7 +89,7 @@ void NGQgsApplication::init(QString customConfigPath)
 
 #ifdef Q_OS_WIN
     QDir defaultPrefixDir(applicationDirPath() + QDir::separator() + "..");
-#elif defined(Q_OS_MACX)
+#elif defined(Q_OS_MAC)
     QDir defaultPrefixDir(applicationDirPath() + QDir::separator() + ".."
                            + QDir::separator() + ".."
                            + QDir::separator() + ".."
