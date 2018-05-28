@@ -23,6 +23,8 @@
 
 #ifdef NGSTD_USING
 
+#include <QDir>
+
 #include "ngqgsapplication.h"
 
 const QStringList packages = (QStringList() <<
