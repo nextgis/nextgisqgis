@@ -73,6 +73,8 @@ except:
     pass
 #import qgis.utils
 
+from ngstd.framework import *
+
 if sys.version_info[0] >= 3:
     import builtins
     builtins.__dict__['unicode'] = str
@@ -216,7 +218,7 @@ def open_stack_dialog(type, value, tb, msg, pop_error=True):
 
 
 def qgis_excepthook(type, value, tb):
-    if have_raven:
+    if have_raven and NGAccess.instance().isUserSupported():
         logmessage = ''
         for s in traceback.format_exception(type, value, tb):
             logmessage += s.decode('utf-8', 'replace') if hasattr(s, 'decode') else s
