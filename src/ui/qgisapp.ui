@@ -325,7 +325,7 @@
     <string>NextGIS Account Toolbar</string>
    </property>
    <property name="movable">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="allowedAreas">
     <set>Qt::TopToolBarArea</set>
