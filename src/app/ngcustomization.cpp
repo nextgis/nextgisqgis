@@ -543,8 +543,8 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
 
 #ifdef NGSTD_USING
     mNGUpdater = new NGQgisUpdater(this);
-    connect(mNGUpdater, SIGNAL(updatesInfoGettingStarted()), this, SLOT(updatesSearchStart()));
-    connect(mNGUpdater, SIGNAL(updatesInfoGettingFinished(bool)), this, SLOT(updatesSearchStop(bool)));
+    connect(mNGUpdater, SIGNAL(checkUpdatesStarted()), this, SLOT(updatesSearchStart()));
+    connect(mNGUpdater, SIGNAL(checkUpdatesFinished(bool)), this, SLOT(updatesSearchStop(bool)));
 #endif // NGSTD_USING
 }
 
