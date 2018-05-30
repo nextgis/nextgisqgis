@@ -32,7 +32,7 @@ QGIS utilities module
 
 """
 
-from qgis.PyQt.QtCore import QCoreApplication, QLocale
+from qgis.PyQt.QtCore import QCoreApplication, QLocale, QSettings
 from qgis.PyQt.QtWidgets import QPushButton, QApplication
 from qgis.core import QGis, QgsExpression, QgsMessageLog, qgsfunction, QgsMessageOutput
 from qgis.gui import QgsMessageBar
@@ -219,7 +219,7 @@ def open_stack_dialog(type, value, tb, msg, pop_error=True):
 
 def qgis_excepthook(type, value, tb):
     settings = QSettings()
-    sendCrashes = settings.value("/nextgis/sendCrashes", False, type=bool))
+    sendCrashes = settings.value("/nextgis/sendCrashes", False, type=bool)
     if sendCrashes and have_raven and NGAccess.instance().isUserSupported():
         logmessage = ''
         for s in traceback.format_exception(type, value, tb):
