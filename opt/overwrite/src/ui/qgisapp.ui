@@ -51,7 +51,6 @@
     <addaction name="mActionSaveProjectAs"/>
     <addaction name="mActionSaveMapAsImage"/>
     <addaction name="mActionDxfExport"/>
-    <addaction name="mActionDwgImport"/>
     <addaction name="separator"/>
     <addaction name="mActionNewPrintComposer"/>
     <addaction name="mActionShowComposerManager"/>
@@ -2300,11 +2299,6 @@ Acts on currently active editable layer</string>
   <action name="mActionDxfExport">
    <property name="text">
     <string>DXF Export...</string>
-   </property>
-  </action>
-  <action name="mActionDwgImport">
-   <property name="text">
-    <string>DWG/DXF Import...</string>
    </property>
   </action>
   <action name="mActionFillRing">

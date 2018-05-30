@@ -550,6 +550,9 @@ NGQgisApp::NGQgisApp(QSplashScreen *splash, bool restorePlugins,
 
 NGQgisApp::~NGQgisApp()
 {
+#ifdef NGSTD_USING
+    NGAccess::instance().save();
+#endif // NGSTD_USING
 }
 
 void NGQgisApp::setupAppUi()
