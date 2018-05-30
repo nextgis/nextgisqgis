@@ -69,6 +69,10 @@
 
 #include "qgsconfig.h"
 
+#ifdef NGSTD_USING
+#include "framework/access/access.h"
+#endif // NGSTD_USING
+
 /**
  * \class QgsOptions - Set user options and preferences
  * Constructor
@@ -937,7 +941,27 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl )
   mVariableEditor->reloadContext();
   mVariableEditor->setEditableScopeIndex( 0 );
 
+  // NextGIS settings
+#ifdef NGSTD_USING
+  if(NGAccess::instance().isUserAuthorized()) {
+      avatar->setText(QString("<html><head/><body><p><img src=\"%1\" height=\"64\"/></p></body></html>")
+                  .arg(NGAccess::instance().avatarFilePath()));
 
+      descriptionText->setText(QString("<html><head/><body><p>%1<br>%2</p><p><b>%3</b></p></body></html>")
+                                .arg(NGAccess::instance().firstName())
+                                .arg(NGAccess::instance().lastName())
+                                .arg(NGAccess::instance().isUserSupported() ?
+                                         tr("Supported") : tr("Unsupported")));
+      sendCrashes->setEnabled(true);
+  }
+  else {
+      avatar->setText("");
+      descriptionText->setText(tr("Not authorized"));
+      sendCrashes->setEnabled(false);
+  }
+  sendCrashes->setChecked( mSettings->value( "nextgis/sendCrashes", "0" ).toBool() );
+
+#endif // NGSTD_USING
 
   mAdvancedSettingsEditor->setSettingsObject( mSettings );
 
@@ -1482,6 +1506,9 @@ void QgsOptions::saveOptions()
   {
     // TODO[MD] QgisApp::instance()->legend()->updateLegendItemSymbologies();
   }
+
+  // NextGIS settings
+  mSettings->setValue( "nextgis/sendCrashes", sendCrashes->isChecked() );
 
   //save variables
   QgsExpressionContextUtils::setGlobalVariables( mVariableEditor->variablesInActiveScope() );
