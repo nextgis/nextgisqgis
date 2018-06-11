@@ -19,17 +19,19 @@ sources merging process:
 * [folders.csv](https://github.com/nextgis/nextgisqgis/blob/master/opt/folders.csv) - list of original directories to merge
 * [postprocess.py](https://github.com/nextgis/nextgisqgis/blob/master/opt/postprocess.py) - script executed after successfully merging (name is constant for tools.py)
 
-Postprocess copies files (with paths) from ```opt/overwrite``` to the root of
+Postprocess copied files (with paths) from ```opt/overwrite``` to the root of
 repository. Files with same names and paths overwrite.
 
 # Customization details
 
-The only few files of original sources changed:
+The only few files of original sources were change:
 
 * main.cpp - the entry point of QGIS
 * qgisapp.h - private members made protected, several methods made virtual
 * qgisapplication.h - private members made protected, several methods made virtual
 * qgisapp.ui - remove some menus and buttons
+
+The full list of files can be found in opt/overwrite directory. 
 
 There are special files with NextGIS customization:
 
