@@ -70,6 +70,8 @@ from processing.preconfigured.PreconfiguredAlgorithmProvider import Preconfigure
 
 class Processing:
 
+    currentlyUpdatingAlgList = False
+
     providers = []
 
     # Same structure as algs in algList
@@ -182,10 +184,14 @@ class Processing:
         requires the list of algorithms to be created again from
         algorithm providers.
         """
+        if Processing.currentlyUpdatingAlgList:
+            return
+        Processing.currentlyUpdatingAlgList = True
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         for p in Processing.providers:
-            Processing.reloadProvider(p) # .getName())
+            Processing.reloadProvider(p.getName())
         QApplication.restoreOverrideCursor()
+        Processing.currentlyUpdatingAlgList = False
 
     @staticmethod
     def reloadProvider(providerName):
