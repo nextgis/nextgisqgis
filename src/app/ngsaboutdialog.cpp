@@ -48,7 +48,7 @@ NgsAboutDialog::NgsAboutDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    QString version(VENDOR " QGIS\nversion " VENDOR_VERSION " (" VERSION ")");
+    QString version(VENDOR " QGIS";
 
     QFont font = ui->appText->font();
     font.setBold(true);
