@@ -22,6 +22,8 @@
 #include "ui_ngsaboutdialog.h"
 #include "qgsconfig.h"
 
+#include <QSysInfo>
+
 //
 // GDAL/OGR includes
 //
@@ -40,6 +42,21 @@
 extern "C"
 {
 #include <spatialite.h>
+}
+
+static QString platformStr()
+{
+    QString os;
+#ifdef Q_OS_LINUX
+    os = QString("Linux (%1)").arg((QSysInfo::WordSize == 32) ? "i386" : (QSysInfo::WordSize == 64) ? "amd64" : "unknown");
+#elif defined Q_OS_WIN
+    os = QString("Windows (%1 bit)").arg(QSysInfo::WordSize);
+#elif defined Q_OS_MAC
+    os = QString("MacOS X (%1 bit)").arg(QSysInfo::WordSize);
+#else
+    os = QString("Unknown (%1 bit)").arg(QSysInfo::WordSize);
+#endif
+    return os;
 }
 
 NgsAboutDialog::NgsAboutDialog(QWidget *parent) :
@@ -64,6 +81,7 @@ NgsAboutDialog::NgsAboutDialog(QWidget *parent) :
     details += "<hr>";
     details += "<div style='margin:10;padding:0;line-height:150%;font-size:14px'>";
 
+    details += tr( "Platform" ) + ": " + platformStr() + "<br>";
     details += tr( "Compiled against Qt" ) + ": " + QLatin1String(QT_VERSION_STR) + "<br>";
     details += tr( "Running against Qt" )  + ": " + qVersion() + "<br>";
 
