@@ -63,6 +63,13 @@ if(GSL_FOUND)
     )
 endif()
 
+find_anyproject(OpenCV DEFAULT ON)
+if(OPENCV_FOUND)
+    set(PLG_PLUGINS ${PLG_PLUGINS}
+        dtclassifier
+    )
+endif()
+
 macro(add_plugin PLUGIN_NAME)
     include_directories (${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME})
 
