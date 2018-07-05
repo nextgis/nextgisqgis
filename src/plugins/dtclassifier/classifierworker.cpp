@@ -37,8 +37,13 @@
 #include "classifierutils.h"
 #include "classifierworker.h"
 
+#if CV_MAJOR_VERSION == 2
+
+#elif CV_MAJOR_VERSION == 3
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
+#define CV_ROW_SAMPLE ml::ROW_SAMPLE
+#endif
 
 ClassifierWorker::ClassifierWorker(ClassifierWorkerConfig config)
     : QObject(),
@@ -130,6 +135,14 @@ void ClassifierWorker::process()
 QString ClassifierWorker::smoothRaster( const QString& path )
 {
     QgsDebugMsg(QString("ClassifierWorker::smoothRaster: %1").arg(path));
+#if CV_MAJOR_VERSION == 2
+    CvMat* img = cvLoadImageM( path.toUtf8(), CV_LOAD_IMAGE_UNCHANGED );
+    QgsDebugMsg(QString("ClassifierWorker::smoothRaster img->rows: %1").arg(img->rows));
+    CvMat* outImg = cvCreateMat( img->rows, img->cols, CV_8UC1 );
+    QgsDebugMsg(QString("ClassifierWorker::smoothRaster img->cols: %1").arg(img->cols));
+
+    cvSmooth( img, outImg, CV_MEDIAN, mConfig.kernel_size );
+#elif CV_MAJOR_VERSION == 3
 
     Mat img = imread( path.toStdString(), IMREAD_UNCHANGED );
     QgsDebugMsg(QString("ClassifierWorker::smoothRaster img->rows: %1").arg(img->rows));
@@ -137,6 +150,7 @@ QString ClassifierWorker::smoothRaster( const QString& path )
     QgsDebugMsg(QString("ClassifierWorker::smoothRaster img->cols: %1").arg(img->cols));
 
     medianBlur( img, outImg, mConfig.kernel_size );
+#endif
     QgsDebugMsg(QString("ClassifierWorker::smoothRaster mConfig.kernel_size: %1").arg(mConfig.kernel_size));
 
 /*
@@ -172,9 +186,14 @@ QString ClassifierWorker::smoothRaster( const QString& path )
 
     outRaster->SetGeoTransform( geotransform );
     outRaster->SetProjection( mEnv->mResultInputRasterFileInfo->projection().toUtf8() );
+#if CV_MAJOR_VERSION == 2
+    int res = outRaster->RasterIO( GF_Write, 0, 0, mEnv->mResultInputRasterFileInfo->xSize(), mEnv->mResultInputRasterFileInfo->ySize(), (void*)outImg->data.ptr, mEnv->mResultInputRasterFileInfo->xSize(), mEnv->mResultInputRasterFileInfo->ySize(), GDT_Byte, 1, 0, 0, 0, 0 );
 
+    cvReleaseMat( &img );
+    cvReleaseMat( &outImg );
+#elif CV_MAJOR_VERSION == 3
     int res = outRaster->RasterIO( GF_Write, 0, 0, mEnv->mResultInputRasterFileInfo->xSize(), mEnv->mResultInputRasterFileInfo->ySize(), (void*)outImg.data, mEnv->mResultInputRasterFileInfo->xSize(), mEnv->mResultInputRasterFileInfo->ySize(), GDT_Byte, 1, 0, 0, 0, 0 );
-
+#endif
     Q_UNUSED(res)
 
     GDALClose( (GDALDatasetH) outRaster );
@@ -873,8 +892,13 @@ void CreateTrainData::doWork()
 
     QgsDebugMsg(QString("Train layer fetures count %1 (%2)").arg(featCount).arg(bc));
 
+#if CV_MAJOR_VERSION == 2
+    mTrainData = cvCreateMat( featCount, bc, CV_32F );
+    mTrainResponses = cvCreateMat( featCount, 1, CV_32F );
+#elif CV_MAJOR_VERSION == 3
     mTrainData = Mat( featCount, bc, CV_32F );
     mTrainResponses = Mat( featCount, 1, CV_32F );
+#endif
 
     QgsFeature feat;
     int i = 0;
@@ -893,11 +917,19 @@ void CreateTrainData::doWork()
     //while ( provider->nextFeature( feat ) )
     //{
       //atMap = feat.attributeMap();
-      for (int j = 0; j < bc; j++)
-      {
-        mTrainData.at<float>(i,j) = feat.attribute(j).toDouble();
-      }
-      mTrainResponses.at<float>(i,0) = feat.attribute(bc).toDouble();
+#if CV_MAJOR_VERSION == 2
+        for (int j = 0; j < bc; j++)
+        {
+            cvmSet( mTrainData, i, j, feat.attribute(j).toDouble() );
+        }
+        cvmSet( mTrainResponses, i, 0, feat.attribute(bc).toDouble() );
+#elif CV_MAJOR_VERSION == 3
+        for (int j = 0; j < bc; j++)
+        {
+            mTrainData.at<float>(i,j) = feat.attribute(j).toDouble();
+        }
+        mTrainResponses.at<float>(i,0) = feat.attribute(bc).toDouble();
+#endif
       i++;
 
       nextStep();
@@ -919,8 +951,13 @@ PrepareModel::PrepareModel(ClassifierWorkerConfig* config, ClassifierWorkerEnv* 
 PrepareModel::~PrepareModel()
 {
     QgsDebugMsg( QString("PrepareModel::~PrepareModel") );
+#if CV_MAJOR_VERSION == 2
+    mEnv->mDTree = NULL;
+    mEnv->mRTree = NULL;
+#elif CV_MAJOR_VERSION == 3
     mEnv->mDTree.release();
     mEnv->mRTree.release();
+#endif
     mDTree->clear();
     mRTree->clear();
 }
@@ -943,8 +980,13 @@ void PrepareModel::doWork()
 {
     QgsDebugMsg(QString("ClassifierWorker::prepareModel"));
 
+#if CV_MAJOR_VERSION == 2
+    mDTree = new CvDTree();
+    mRTree = new CvRTrees();
+#elif CV_MAJOR_VERSION == 3
     mDTree = ml::DTrees::create();
     mRTree = ml::RTrees::create();
+#endif
 
     if (!mConfig->mInputModel.isEmpty())
     {
@@ -962,6 +1004,34 @@ void PrepareModel::doWork()
 
     if ( mConfig->use_decision_tree )
     {
+#if CV_MAJOR_VERSION == 2
+        CvDTreeParams params( 8,     // max depth
+                              10,    // min sample count
+                              0,     // regression accuracy
+                              true,  // use surrogates
+                              10,    // max number of categories
+                              10,    // prune tree with K fold cross-validation
+                              false, // use 1 rule
+                              false, // throw away the pruned tree branches
+                              0      // the array of priors, the bigger p_weight, the more attention
+                             );
+
+        // build decision tree classifier
+        if ( mConfig->discrete_classes )
+        {
+          QgsDebugMsg(QString("ClassifierWorker::prepareModel 1"));
+          CvMat* var_type;
+          var_type = cvCreateMat( mEnv->mTrainData->cols + 1, 1, CV_8U );
+          cvSet( var_type, cvScalarAll(CV_VAR_CATEGORICAL) );
+          mDTree->train( mEnv->mTrainData, CV_ROW_SAMPLE, mEnv->mTrainResponses, 0, 0, var_type, 0, params );
+          cvReleaseMat( &var_type );
+          QgsDebugMsg(QString("ClassifierWorker::prepareModel 2"));
+        }
+        else
+        {
+          mDTree->train( mEnv->mTrainData, CV_ROW_SAMPLE, mEnv->mTrainResponses, 0, 0, 0, 0, params );
+        }
+#elif CV_MAJOR_VERSION == 3
         mDTree->setMaxDepth(8);
         mDTree->setMinSampleCount(10);
         mDTree->setRegressionAccuracy(0);
@@ -970,17 +1040,6 @@ void PrepareModel::doWork()
         mDTree->setTruncatePrunedTree(false);
         mDTree->setUse1SERule(false);
         mDTree->setPriors(Mat());
-
-      // CvDTreeParams params( 8,     // max depth
-      //                       10,    // min sample count
-      //                       0,     // regression accuracy
-      //                       true,  // use surrogates
-      //                       10,    // max number of categories
-      //                       10,    // prune tree with K fold cross-validation
-      //                       false, // use 1 rule
-      //                       false, // throw away the pruned tree branches
-      //                       0      // the array of priors, the bigger p_weight, the more attention
-      //                      );
 
       // build decision tree classifier
       if ( mConfig->discrete_classes )
@@ -997,11 +1056,12 @@ void PrepareModel::doWork()
       {
         mDTree->train( mEnv->mTrainData, ml::ROW_SAMPLE, mEnv->mTrainResponses );
       }
+#endif
     }
     else // or random trees
     {
       // build random trees classifier
-      mRTree->train( mEnv->mTrainData, ml::ROW_SAMPLE, mEnv->mTrainResponses );
+      mRTree->train( mEnv->mTrainData, CV_ROW_SAMPLE, mEnv->mTrainResponses );
     }
 
     QgsDebugMsg(QString("prepareModel Finish"));
@@ -1010,11 +1070,17 @@ void PrepareModel::doWork()
     {
         QString treeFileName = mConfig->mOutputModel;
         QgsDebugMsg(QString("Model save file: %1").arg(treeFileName));
-
+#if CV_MAJOR_VERSION == 2
         if ( mConfig->use_decision_tree )
             mDTree->save( treeFileName.toStdString() );
         else
             mRTree->save( treeFileName.toStdString() );
+#elif CV_MAJOR_VERSION == 3
+    if ( mConfig->use_decision_tree )
+        mDTree->save( treeFileName.toUtf8(), "MyTree" );
+    else
+        mRTree->save( treeFileName.toUtf8(), "MyTree" );
+#endif
     }
 
     mEnv->mDTree = mDTree;

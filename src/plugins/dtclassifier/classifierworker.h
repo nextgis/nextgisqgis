@@ -27,8 +27,19 @@
 #include <QString>
 #include <QStringList>
 
-#include "opencv2/core/core.hpp"
+#include "opencv2/core/version.hpp"
 #include "opencv2/ml/ml.hpp"
+#if CV_MAJOR_VERSION == 2
+#include "opencv2/core/core_c.h"
+#include "opencv2/highgui/highgui_c.h"
+#include "opencv2/imgproc/imgproc_c.h"
+#define CV_DTREES CvDTree*
+#define CV_RTREES CvRTrees*
+#elif CV_MAJOR_VERSION == 3
+#include "opencv2/core/core.hpp"
+#define CV_DTREES Ptr<ml::DTrees>
+#define CV_RTREES Ptr<ml::RTrees>
+#endif
 
 #include "qgisinterface.h"
 #include "rasterfileinfo.h"
@@ -105,8 +116,8 @@ struct ClassifierWorkerEnv
     Mat mTrainData;
     Mat mTrainResponses;
 
-    Ptr<ml::DTrees> mDTree;
-    Ptr<ml::RTrees> mRTree;
+    CV_DTREES mDTree;
+    CV_RTREES mRTree;
 };
 
 
@@ -238,8 +249,8 @@ class PrepareModel : public ClassifierWorkerStep
         ~PrepareModel();
 
     private:
-        Ptr<ml::DTrees> mDTree;
-        Ptr<ml::RTrees> mRTree;
+        CV_DTREES mDTree;
+        CV_RTREES mRTree;
 
         void doWork();
         size_t stepCount();
