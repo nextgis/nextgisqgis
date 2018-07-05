@@ -6,7 +6,7 @@
   copyright            : (C) 2011 by Alexander Bruy
   email                : alexander.bruy@gmail.com
   Copyright (C) 2011-2018, NextGIS <info@nextgis.com>
-  Author: Dmitry Baryshnikov, <dmitry.baryshnikov@nextgis.com> 
+  Author: Dmitry Baryshnikov, <dmitry.baryshnikov@nextgis.com>
 
  ***************************************************************************/
 
@@ -20,6 +20,7 @@
  ***************************************************************************/
 
 #include <QAction>
+#include <QMessageBox>
 #include <QToolBar>
 
 #include <qgisinterface.h>
@@ -91,7 +92,7 @@ void Classifier::onUserInfoUpdated()
     if(!NGAccess::instance().isFunctionAvailable("QGIS", "dtclassifier")) {
         dtclIcon = NGAccess::lockIcon(dtclIcon, QSize(48,48));
     }
-    mActionClassify->setIcon(saveIcon);
+    mActionClassify->setIcon(dtclIcon);
 }
 
 void Classifier::help()
