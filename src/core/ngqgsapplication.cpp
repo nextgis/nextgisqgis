@@ -89,6 +89,11 @@ void NGQgsApplication::init(QString customConfigPath)
 
 #ifdef Q_OS_WIN
     QDir defaultPrefixDir(applicationDirPath() + QDir::separator() + "..");
+
+    // Add search gdal utilities paths
+    QString path = getenv( "PATH" );
+    putenv("PATH", QString( "%1;%2" ).arg(path).arg(applicationDirPath()), "");
+
 #elif defined(Q_OS_MAC)
     QDir defaultPrefixDir(applicationDirPath() + QDir::separator() + ".."
                            + QDir::separator() + ".."
