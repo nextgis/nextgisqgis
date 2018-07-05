@@ -61,6 +61,11 @@ if(NOT PREPARE_ONLY)
             add_definitions(-DSPATIALITE_HAS_INIT_EX)
         endif()
     endif()
+
+    find_anyproject(NGSTD REQUIRED COMPONENTS framework4)
+    if(NGSTD_FOUND)
+        add_definitions(-DNGSTD_USING)
+    endif()
 endif()
 
 add_definitions(-DSUPPORT_GEOPACKAGE=1)

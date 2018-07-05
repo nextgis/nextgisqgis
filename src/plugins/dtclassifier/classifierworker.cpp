@@ -1071,15 +1071,15 @@ void PrepareModel::doWork()
         QString treeFileName = mConfig->mOutputModel;
         QgsDebugMsg(QString("Model save file: %1").arg(treeFileName));
 #if CV_MAJOR_VERSION == 2
-        if ( mConfig->use_decision_tree )
-            mDTree->save( treeFileName.toStdString() );
-        else
-            mRTree->save( treeFileName.toStdString() );
-#elif CV_MAJOR_VERSION == 3
     if ( mConfig->use_decision_tree )
         mDTree->save( treeFileName.toUtf8(), "MyTree" );
     else
         mRTree->save( treeFileName.toUtf8(), "MyTree" );
+#elif CV_MAJOR_VERSION == 3
+    if ( mConfig->use_decision_tree )
+        mDTree->save( treeFileName.toStdString() );
+    else
+        mRTree->save( treeFileName.toStdString() );
 #endif
     }
 
