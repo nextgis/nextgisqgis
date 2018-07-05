@@ -64,7 +64,7 @@ if(GSL_FOUND)
 endif()
 
 find_anyproject(OpenCV DEFAULT ON)
-if(OPENCV_FOUND)
+if(OPENCV_FOUND AND NGSTD_FOUND)
     set(PLG_PLUGINS ${PLG_PLUGINS}
         dtclassifier
     )

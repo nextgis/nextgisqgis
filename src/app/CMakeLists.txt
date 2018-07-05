@@ -378,9 +378,7 @@ set(QGIS_APP_MOC_HDRS
   qgsvariantdelegate.h
 )
 
-find_anyproject(NGSTD REQUIRED COMPONENTS framework4)
 if(NGSTD_FOUND)
-    add_definitions(-DNGSTD_USING)
 
     set(QGIS_APP_SRCS ${QGIS_APP_SRCS}
         ngupdater.cpp
