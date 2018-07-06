@@ -31,8 +31,6 @@
 #include "opencv2/ml/ml.hpp"
 #if CV_MAJOR_VERSION == 2
 #include "opencv2/core/core_c.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
 #define CV_DTREES CvDTree*
 #define CV_RTREES CvRTrees*
 #elif CV_MAJOR_VERSION == 3
