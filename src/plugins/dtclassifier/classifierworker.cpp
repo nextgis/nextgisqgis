@@ -38,7 +38,8 @@
 #include "classifierworker.h"
 
 #if CV_MAJOR_VERSION == 2
-
+#include "opencv2/highgui/highgui_c.h"
+#include "opencv2/imgproc/imgproc_c.h"
 #elif CV_MAJOR_VERSION == 3
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
@@ -865,8 +866,6 @@ CreateTrainData::CreateTrainData(ClassifierWorkerConfig* config, ClassifierWorke
 CreateTrainData::~CreateTrainData()
 {
     QgsDebugMsg( QString("CreateTrainData::~CreateTrainData") );
-    mEnv->mTrainData = NULL;
-    mEnv->mTrainResponses = NULL;
 }
 
 size_t CreateTrainData::stepCount()
@@ -892,13 +891,8 @@ void CreateTrainData::doWork()
 
     QgsDebugMsg(QString("Train layer fetures count %1 (%2)").arg(featCount).arg(bc));
 
-#if CV_MAJOR_VERSION == 2
-    mTrainData = cvCreateMat( featCount, bc, CV_32F );
-    mTrainResponses = cvCreateMat( featCount, 1, CV_32F );
-#elif CV_MAJOR_VERSION == 3
     mTrainData = Mat( featCount, bc, CV_32F );
     mTrainResponses = Mat( featCount, 1, CV_32F );
-#endif
 
     QgsFeature feat;
     int i = 0;
@@ -917,19 +911,11 @@ void CreateTrainData::doWork()
     //while ( provider->nextFeature( feat ) )
     //{
       //atMap = feat.attributeMap();
-#if CV_MAJOR_VERSION == 2
-        for (int j = 0; j < bc; j++)
-        {
-            cvmSet( mTrainData, i, j, feat.attribute(j).toDouble() );
-        }
-        cvmSet( mTrainResponses, i, 0, feat.attribute(bc).toDouble() );
-#elif CV_MAJOR_VERSION == 3
         for (int j = 0; j < bc; j++)
         {
             mTrainData.at<float>(i,j) = feat.attribute(j).toDouble();
         }
         mTrainResponses.at<float>(i,0) = feat.attribute(bc).toDouble();
-#endif
       i++;
 
       nextStep();
@@ -990,11 +976,17 @@ void PrepareModel::doWork()
 
     if (!mConfig->mInputModel.isEmpty())
     {
+#if CV_MAJOR_VERSION == 2
+        if ( mConfig->use_decision_tree )
+            mDTree->load(mConfig->mInputModel.toUtf8());
+        else
+            mRTree->load(mConfig->mInputModel.toUtf8());
+#elif CV_MAJOR_VERSION == 3
         if ( mConfig->use_decision_tree )
             mDTree->load(mConfig->mInputModel.toStdString());
         else
             mRTree->load(mConfig->mInputModel.toStdString());
-
+#endif
         mEnv->mDTree = mDTree;
         mEnv->mRTree = mRTree;
 
@@ -1020,16 +1012,13 @@ void PrepareModel::doWork()
         if ( mConfig->discrete_classes )
         {
           QgsDebugMsg(QString("ClassifierWorker::prepareModel 1"));
-          CvMat* var_type;
-          var_type = cvCreateMat( mEnv->mTrainData->cols + 1, 1, CV_8U );
-          cvSet( var_type, cvScalarAll(CV_VAR_CATEGORICAL) );
-          mDTree->train( mEnv->mTrainData, CV_ROW_SAMPLE, mEnv->mTrainResponses, 0, 0, var_type, 0, params );
-          cvReleaseMat( &var_type );
+          Mat var_type( mEnv->mTrainData.cols + 1, 1, CV_8U, Scalar::all(CV_VAR_CATEGORICAL) );
+          mDTree->train( mEnv->mTrainData, CV_ROW_SAMPLE, mEnv->mTrainResponses, Mat(), Mat(), var_type, Mat(), params );
           QgsDebugMsg(QString("ClassifierWorker::prepareModel 2"));
         }
         else
         {
-          mDTree->train( mEnv->mTrainData, CV_ROW_SAMPLE, mEnv->mTrainResponses, 0, 0, 0, 0, params );
+          mDTree->train( mEnv->mTrainData, CV_ROW_SAMPLE, mEnv->mTrainResponses, Mat(), Mat(), Mat(), Mat(), params );
         }
 #elif CV_MAJOR_VERSION == 3
         mDTree->setMaxDepth(8);
@@ -1145,7 +1134,11 @@ void Classify::doWork()
 
         if ( mConfig->use_decision_tree )
         {
+#if CV_MAJOR_VERSION == 2
+          outData[ col ] = (unsigned char)mEnv->mDTree->predict( sample )->value;
+#elif CV_MAJOR_VERSION == 3
           outData[ col ] = (unsigned char)mEnv->mDTree->predict( sample );
+#endif
         }
         else
         {
