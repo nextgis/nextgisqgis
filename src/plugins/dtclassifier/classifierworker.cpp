@@ -976,7 +976,7 @@ void PrepareModel::doWork()
 
     if (!mConfig->mInputModel.isEmpty())
     {
-        const char *modelPath = mConfig->mInputModel.toUtf8().date();
+        const char *modelPath = mConfig->mInputModel.toUtf8().data();
 #if CV_MAJOR_VERSION == 2
         if ( mConfig->use_decision_tree )
             mDTree->load(modelPath);
