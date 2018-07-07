@@ -983,9 +983,9 @@ void PrepareModel::doWork()
             mRTree->load(mConfig->mInputModel.toUtf8());
 #elif CV_MAJOR_VERSION == 3
         if ( mConfig->use_decision_tree )
-            mDTree->load(mConfig->mInputModel.toStdString());
+            mDTree = ml::DTrees::load(mConfig->mInputModel.toStdString());
         else
-            mRTree->load(mConfig->mInputModel.toStdString());
+            mRTree = ml::RTrees::load(mConfig->mInputModel.toStdString());
 #endif
         mEnv->mDTree = mDTree;
         mEnv->mRTree = mRTree;
