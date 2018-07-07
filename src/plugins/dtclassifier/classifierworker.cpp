@@ -976,16 +976,17 @@ void PrepareModel::doWork()
 
     if (!mConfig->mInputModel.isEmpty())
     {
+        const char *modelPath = mConfig->mInputModel.toUtf8().date();
 #if CV_MAJOR_VERSION == 2
         if ( mConfig->use_decision_tree )
-            mDTree->load(mConfig->mInputModel.toUtf8());
+            mDTree->load(modelPath);
         else
-            mRTree->load(mConfig->mInputModel.toUtf8());
+            mRTree->load(modelPath);
 #elif CV_MAJOR_VERSION == 3
         if ( mConfig->use_decision_tree )
-            mDTree = ml::DTrees::load(mConfig->mInputModel.toStdString());
+            mDTree = ml::DTrees::load(modelPath);
         else
-            mRTree = ml::RTrees::load(mConfig->mInputModel.toStdString());
+            mRTree = ml::RTrees::load(modelPath);
 #endif
         mEnv->mDTree = mDTree;
         mEnv->mRTree = mRTree;
