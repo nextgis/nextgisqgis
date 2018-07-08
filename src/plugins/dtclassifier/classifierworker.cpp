@@ -976,17 +976,18 @@ void PrepareModel::doWork()
 
     if (!mConfig->mInputModel.isEmpty())
     {
-        String modelPath(mConfig->mInputModel.toUtf8().data());
 #if CV_MAJOR_VERSION == 2
         if ( mConfig->use_decision_tree )
-            mDTree->load(modelPath);
+            mDTree->load(mConfig->mInputModel.toUtf8());
         else
-            mRTree->load(modelPath);
+            mRTree->load(mConfig->mInputModel.toUtf8());
 #elif CV_MAJOR_VERSION == 3
         if ( mConfig->use_decision_tree )
-            mDTree = ml::DTrees::load(modelPath);
+        // https://docs.opencv.org/3.2.0/d3/d46/classcv_1_1Algorithm.html#a623841c33b58ea9c4847da04607e067b
+        // Ptr<SVM> svm = Algorithm::load<SVM>("my_svm_model.xml");
+            mDTree = Algorithm::load<ml::DTrees>(mConfig->mInputModel.toStdString());
         else
-            mRTree = ml::RTrees::load(modelPath);
+            mRTree = Algorithm::load<ml::RTrees>(mConfig->mInputModel.toStdString());
 #endif
         mEnv->mDTree = mDTree;
         mEnv->mRTree = mRTree;
