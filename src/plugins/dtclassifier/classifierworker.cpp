@@ -247,7 +247,7 @@ void ClassifierWorker::applyRasterStyle( QgsRasterLayer* layer, const QColor res
 
   QgsRasterShader* rs = new QgsRasterShader(0.0, 1.0);
   QgsColorRampShader* crs = new QgsColorRampShader(0.0, 1.0);
-  crs->setColorRampType(QgsColorRampShader::DISCRETE);
+  crs->setColorRampType(QgsColorRampShader::INTERPOLATED);
 
   // create color ramp
   /*
@@ -256,14 +256,14 @@ void ClassifierWorker::applyRasterStyle( QgsRasterLayer* layer, const QColor res
   QList<QgsColorRampShader::ColorRampItem> myColorRampItems;
 
   QgsColorRampShader::ColorRampItem absenceItem, presenceItem;
-  absenceItem.value = 0;
+  absenceItem.value = 0.0;
   absenceItem.color = QColor( Qt::white );
   absenceItem.color.setAlpha(0);
-  absenceItem.label = "";
+  absenceItem.label = "none";
 
-  presenceItem.value = 1;
+  presenceItem.value = 1.1;
   presenceItem.color = resColor;
-  presenceItem.label = "";
+  presenceItem.label = "presence";
 
   myColorRampItems.append( absenceItem );
   myColorRampItems.append( presenceItem );
@@ -273,6 +273,8 @@ void ClassifierWorker::applyRasterStyle( QgsRasterLayer* layer, const QColor res
   rs->setRasterShaderFunction(crs);
 
   QgsSingleBandPseudoColorRenderer* render = new QgsSingleBandPseudoColorRenderer(layer->dataProvider(), 1, rs);
+  render->setClassificationMin( 0.0 );
+  render->setClassificationMax( 1.0 );
   layer->setRenderer(render);
   // sort the shader items
   /*
