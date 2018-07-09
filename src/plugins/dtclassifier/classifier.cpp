@@ -82,11 +82,11 @@ void Classifier::initGui()
   mIface->addPluginToMenu( tr( "DTclassifier" ), mActionClassify );
   mIface->addPluginToMenu( tr( "DTclassifier" ), mActionAbout );
 
-  connect(&NGAccess::instance(), SIGNAL( userInfoUpdated() ),
-            this, SLOT( onUserInfoUpdated() ) );
+  connect(&NGAccess::instance(), SIGNAL( supportInfoUpdated() ),
+            this, SLOT( onSupportInfoUpdated() ) );
 }
 
-void Classifier::onUserInfoUpdated()
+void Classifier::onSupportInfoUpdated()
 {
     QIcon dtclIcon(":/classifier/icons/classifier.png");
     if(!NGAccess::instance().isFunctionAvailable("QGIS", "dtclassifier")) {
