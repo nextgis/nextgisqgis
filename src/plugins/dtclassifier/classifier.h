@@ -48,7 +48,7 @@ class Classifier: public QObject, public QgisPlugin
     //! show the help document
     void help();
     //! if account properties changed
-    void onUserInfoUpdated();
+    void onSupportInfoUpdated();
 
   private:
     //! pointer to the QGIS interface object
