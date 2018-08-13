@@ -88,7 +88,7 @@ endforeach()
 set(REMOTE_PLUGINS
 #    "MetaSearch Catalogue Client"
     "QuickMapServices"
-#    "QTiles"
+    "QTiles"
 #    "RuGeocoder"
     "NextGIS Connect"
 #    "QNetwork"
