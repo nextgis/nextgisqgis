@@ -501,9 +501,9 @@ void QgsPluginRegistry::restoreSessionPlugins( const QString& thePluginDirString
     corePlugins << "MetaSearch";
 
     // NextGIS plugins
-    corePlugin << "qtiles";
-    corePlugin << "quick_map_services";
-    corePlugin << "nextgis_connect";
+    corePlugins << "qtiles";
+    corePlugins << "quick_map_services";
+    corePlugins << "nextgis_connect";
 
     // make the required core plugins enabled by default:
     Q_FOREACH ( const QString& corePlugin, corePlugins )
