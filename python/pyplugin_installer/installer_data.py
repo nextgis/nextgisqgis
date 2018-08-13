@@ -253,7 +253,7 @@ class Repositories(QObject):
     def checkingOnStart(self):
         """ return true if checking for news and updates is enabled """
         settings = QSettings()
-        return settings.value(settingsGroup + "/checkOnStart", False, type=bool)
+        return settings.value(settingsGroup + "/checkOnStart", True, type=bool)
 
     # ----------------------------------------- #
     def setCheckingOnStart(self, state):
