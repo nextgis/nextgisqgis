@@ -18,6 +18,7 @@ import tempfile
 
 plugins = [
     "QuickMapServices",
+    "QTiles",
     "NextGIS Connect"
 ]
 
