@@ -137,8 +137,8 @@ void usage( QString appName )
   << "\t[--dxf-scale-denom scale]\tscale for dxf output\n"
   << "\t[--dxf-encoding encoding]\tencoding to use for dxf output\n"
   << "\t[--dxf-preset visiblity-preset]\tlayer visibility preset to use for dxf output\n"
-  << "\t[--help]\tthis text\n"
-  << "\t[--]\ttreat all following arguments as FILEs\n\n"
+  << "\t[--help]\t\tthis text\n"
+  << "\t[--]\t\ttreat all following arguments as FILEs\n\n"
   << "  FILE:\n"
   << "    Files specified on the command line can include rasters,\n"
   << "    vectors, and QGIS project files (.qgs): \n"
@@ -358,7 +358,6 @@ static void translationPath(const QString &basePath,
 
 int main( int argc, char *argv[] )
 {
-
 #ifdef Q_OS_MAC
   // Increase file resource limits (i.e., number of allowed open files)
   // (from code provided by Larry Biehl, Purdue University, USA, from 'MultiSpec' project)
@@ -673,6 +672,7 @@ int main( int argc, char *argv[] )
       }
     }
   }
+
 
   /////////////////////////////////////////////////////////////////////
   // Now we have the handlers for the different behaviours...
