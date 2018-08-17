@@ -32,7 +32,7 @@ import sys
 import os
 import codecs
 try:
-    import ConfigParser
+    import configparser
 except ImportError:
     import ConfigParser as configparser
 import qgis.utils
@@ -99,7 +99,7 @@ seenPluginGroup = "/Qgis/plugin-seen"
 
 
 # Repositories: (name, url, possible depreciated url)
-officialRepo = (QCoreApplication.translate("QgsPluginInstaller", "QGIS Official Plugin Repository"), "http://plugins.qgis.org/plugins/plugins.xml", "http://plugins.qgis.org/plugins")
+officialRepo = (QCoreApplication.translate("QgsPluginInstaller", "QGIS Official Plugin Repository"), "https://plugins.qgis.org/plugins/plugins.xml", "https://plugins.qgis.org/plugins")
 nextGISRepo = (QCoreApplication.translate("QgsPluginInstaller", "NextGIS Plugin Repository"), "http://nextgis.ru/programs/qgis/qgis-repo.xml")
 depreciatedRepos = [
     ("Old QGIS Official Repository", "http://pyqgis.org/repo/official"),
@@ -578,7 +578,7 @@ class Plugins(QObject):
                 for better control on wchich module is examined
                 in case there is an installed plugin masking a core one """
             global errorDetails
-            cp = ConfigParser.ConfigParser()
+            cp = configparser.ConfigParser()
             try:
                 cp.readfp(codecs.open(metadataFile, "r", "utf8"))
                 return cp.get('general', fct)
@@ -724,10 +724,10 @@ class Plugins(QObject):
                         # failedToLoad = settings.value("/PythonPlugins/watchDog/" + key) is not None
                         testLoadThis = testLoad and key not in qgis.utils.plugins
                         plugin = self.getInstalledPlugin(key, path=path, readOnly=readOnly, testLoad=testLoadThis)
-                        self.localCache[key] = plugin
                         if key in self.localCache.keys() and compareVersions(self.localCache[key]["version_installed"], plugin["version_installed"]) == 1:
                             # An obsolete plugin in the "user" location is masking a newer one in the "system" location!
                             self.obsoletePlugins += [key]
+                        self.localCache[key] = plugin
             except:
                 # it's not necessary to stop if one of the dirs is inaccessible
                 pass

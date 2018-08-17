@@ -43,6 +43,8 @@ python/gui/symbology-ng,python/gui/symbology-ng,,sip
 python/networkanalysis,python/networkanalysis,,py
 python/plugins/db_manager,python/plugins/db_manager,,"py,TODO,LICENSE,README,CREDITS,metadata.txt,qrc"
 python/plugins/db_manager/db_plugins,python/plugins/db_manager/db_plugins,,py
+python/plugins/db_manager/db_plugins/gpkg,python/plugins/db_manager/db_plugins/gpkg,,"py,qrc"
+python/plugins/db_manager/db_plugins/gpkg/icons,python/plugins/db_manager/db_plugins/gpkg/icons,,png
 python/plugins/db_manager/db_plugins/oracle,python/plugins/db_manager/db_plugins/oracle,,"py,md,qrc"
 python/plugins/db_manager/db_plugins/oracle/icons,python/plugins/db_manager/db_plugins/oracle/icons,,png
 python/plugins/db_manager/db_plugins/postgis,python/plugins/db_manager/db_plugins/postgis,,"py,qrc"
