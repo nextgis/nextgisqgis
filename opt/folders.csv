@@ -174,7 +174,7 @@ src/plugins/grass,src/plugins/grass,skip,
 src/plugins/heatmap,src/plugins/heatmap,,"cpp,h,ui,png,svg,qrc"
 src/plugins/interpolation,src/plugins/interpolation,,"cpp,h,ui,png,svg,qrc"
 src/plugins/offline_editing,src/plugins/offline_editing,skip,
-src/plugins/oracle_raster,src/plugins/oracle_raster,skip,
+src/plugins/oracle_raster,src/plugins/oracle_raster,,"qrc,svg,cpp,h,ui"
 src/plugins/plugin_template,src/plugins/plugin_template,skip,"README,cpp,h,png,qrc,ui"
 src/plugins/raster_terrain_analysis,src/plugins/raster_terrain_analysis,,"cpp,h,ui,qrc,png"
 src/plugins/roadgraph,src/plugins/roadgraph,skip,
@@ -308,7 +308,8 @@ src/providers/grass,src/providers/grass,skip,"cpp,h,qrc,ui"
 src/providers/memory,src/providers/memory,,"cpp,h,qrc,ui"
 src/providers/mssql,src/providers/mssql,skip,"cpp,h,qrc,ui"
 src/providers/ogr,src/providers/ogr,,"cpp,h,qrc,ui"
-src/providers/oracle,src/providers/oracle,skip,"cpp,h,qrc,ui"
+src/providers/oracle,src/providers/oracle,,"cpp,h,qrc,ui"
+src/providers/oracle/ocispatial,src/providers/oracle/ocispatial,,"h"
 src/providers/ows,src/providers/ows,,"cpp,h,qrc,ui"
 src/providers/postgres,src/providers/postgres,,"cpp,h,qrc,ui"
 src/providers/spatialite,src/providers/spatialite,,"cpp,h,qrc,ui"

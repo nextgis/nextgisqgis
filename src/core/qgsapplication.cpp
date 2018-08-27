@@ -171,7 +171,7 @@ void QgsApplication::init( QString customConfigPath )
     char *prefixPath = getenv( "QGIS_PREFIX_PATH" );
     if ( !prefixPath )
     {
-#if defined(Q_OS_MAC) || defined(Q_OS_WIN)
+#if defined(Q_OS_MACX) || defined(Q_OS_WIN)
       setPrefixPath( applicationDirPath(), true );
 #elif defined(ANDROID)
       // this is  "/data/data/org.qgis.qgis" in android
@@ -602,7 +602,7 @@ QString QgsApplication::licenceFilePath()
 QString QgsApplication::helpAppPath()
 {
   QString helpAppPath;
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACX
   helpAppPath = applicationDirPath() + "/bin/qgis_help.app/Contents/MacOS";
 #else
   helpAppPath = libexecPath();
@@ -1387,3 +1387,4 @@ void QgsApplication::emitSettingsChanged()
 {
   emit settingsChanged();
 }
+

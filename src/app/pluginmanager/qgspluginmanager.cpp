@@ -50,7 +50,7 @@
 // This doesn't work on windows and causes problems with plugins
 // on OS X (the code doesn't cause a problem but including dlfcn.h
 // renders plugins unloadable)
-#if !defined(Q_OS_WIN) && !defined(Q_OS_MAC)
+#if !defined(Q_OS_WIN) && !defined(Q_OS_MACX)
 #include <dlfcn.h>
 #endif
 #endif
@@ -336,7 +336,7 @@ void QgsPluginManager::getCppPluginsMetadata()
       // This doesn't work on windows and causes problems with plugins
       // on OS X (the code doesn't cause a problem but including dlfcn.h
       // renders plugins unloadable)
-#if !defined(Q_OS_WIN) && !defined(Q_OS_MAC)
+#if !defined(Q_OS_WIN) && !defined(Q_OS_MACX)
       // test code to help debug loading problems
       // This doesn't work on windows and causes problems with plugins
       // on OS X (the code doesn't cause a problem but including dlfcn.h
@@ -354,7 +354,7 @@ void QgsPluginManager::getCppPluginsMetadata()
         QgsDebugMsg( "dlopen succeeded for " + lib );
         dlclose( handle );
       }
-#endif //#ifndef Q_OS_WIN && Q_OS_MAC
+#endif //#ifndef Q_OS_WIN && Q_OS_MACX
 #endif //#ifdef TESTLIB
 
       QgsDebugMsg( "Examining: " + lib );
@@ -1570,3 +1570,5 @@ void QgsPluginManager::pushMessage( const QString &text, QgsMessageBar::MessageL
   }
   msgBar->pushMessage( text, level, duration );
 }
+
+

@@ -66,6 +66,11 @@ if(NOT PREPARE_ONLY)
     if(NGSTD_FOUND)
         add_definitions(-DNGSTD_USING)
     endif()
+
+    find_anyproject(OCI REQUIRED)
+    if(OCI_FOUND)
+        include_directories(${OCI_INCLUDE_DIRS}/oci)
+    endif()
 endif()
 
 add_definitions(-DSUPPORT_GEOPACKAGE=1)

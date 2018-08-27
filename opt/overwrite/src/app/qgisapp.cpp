@@ -1268,7 +1268,8 @@ QgisApp::~QgisApp()
 
   QgsApplication::exitQgis();
 
-  delete QgsProject::instance();
+  // While destructing some widgets access QgsProject::instance() after this line
+  // delete QgsProject::instance();
 
   delete mPythonUtils;
 }
