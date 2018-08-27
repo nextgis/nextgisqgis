@@ -1,0 +1,481 @@
+/***************************************************************************
+      qgsoracleprovider.h  -  Data provider for oracle layers
+                             -------------------
+    begin                : August 2012
+    copyright            : (C) 2012 by Juergen E. Fischer
+    email                : jef at norbit dot de
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
+#ifndef QGSORACLEPROVIDER_H
+#define QGSORACLEPROVIDER_H
+
+#include "qgsvectordataprovider.h"
+#include "qgsrectangle.h"
+#include "qgsvectorlayerimport.h"
+#include "qgsoracletablemodel.h"
+#include "qgsdatasourceuri.h"
+
+#include <QVector>
+#include <QQueue>
+#include <QSqlQuery>
+#include <QSqlError>
+
+class QgsFeature;
+class QgsField;
+class QgsGeometry;
+class QgsOracleFeatureIterator;
+class QgsOracleSharedData;
+
+enum QgsOraclePrimaryKeyType
+{
+  pktUnknown,
+  pktInt,
+  pktRowId,
+  pktFidMap
+};
+
+/**
+  \class QgsOracleProvider
+  \brief Data provider for oracle layers.
+
+  This provider implements the
+  interface defined in the QgsDataProvider class to provide access to spatial
+  data residing in a oracle enabled database.
+  */
+class QgsOracleProvider : public QgsVectorDataProvider
+{
+    Q_OBJECT
+    Q_PROPERTY( QString workspace READ getWorkspace WRITE setWorkspace )
+
+  public:
+
+    /** Import a vector layer into the database */
+    static QgsVectorLayerImport::ImportError createEmptyLayer(
+      const QString& uri,
+      const QgsFields &fields,
+      QGis::WkbType wkbType,
+      const QgsCoordinateReferenceSystem *srs,
+      bool overwrite,
+      QMap<int, int> *oldToNewAttrIdxMap,
+      QString *errorMessage = 0,
+      const QMap<QString, QVariant> *options = 0
+    );
+
+    /**
+     * Constructor for the provider. The uri must be in the following format:
+     * host=localhost user=gsherman dbname=test password=xxx table=test.alaska (the_geom)
+     * @param uri String containing the required parameters to connect to the database
+     * and query the table.
+     */
+    explicit QgsOracleProvider( QString const &uri = "" );
+
+    //! Destructor
+    virtual ~QgsOracleProvider();
+
+    virtual QgsAbstractFeatureSource *featureSource() const override;
+
+    /**
+      * Returns the permanent storage type for this layer as a friendly name.
+      */
+    virtual QString storageType() const override;
+
+    /** Get the QgsCoordinateReferenceSystem for this layer
+     * @note Must be reimplemented by each provider.
+     * If the provider isn't capable of returning
+     * its projection an empty srs will be returned
+     */
+    virtual QgsCoordinateReferenceSystem crs() override;
+
+    /** Get the feature type. This corresponds to
+     * WKBPoint,
+     * WKBLineString,
+     * WKBPolygon,
+     * WKBMultiPoint,
+     * WKBMultiLineString or
+     * WKBMultiPolygon
+     * as defined in qgis.h
+     */
+    QGis::WkbType geometryType() const override;
+
+    /** Return the number of layers for the current data source
+     * @note Should this be subLayerCount() instead?
+     */
+    size_t layerCount() const;
+
+    /**
+     * Get the number of features in the layer
+     */
+    long featureCount() const override;
+
+    /**
+     * Get the number of fields in the layer
+     */
+    uint fieldCount() const;
+
+    /**
+     * Return a string representation of the endian-ness for the layer
+     */
+    QString endianString();
+
+    /**
+     * Changes the stored extent for this layer to the supplied extent.
+     * For example, this is called when the extent worker thread has a result.
+     */
+    void setExtent( QgsRectangle& newExtent );
+
+    /** Return the extent for this data layer
+     */
+    virtual QgsRectangle extent() override;
+
+    /** Update the extent
+     */
+    virtual void updateExtents() override;
+
+    /** Determine the fields making up the primary key
+     */
+    bool determinePrimaryKey();
+
+    /**
+     * Get the field information for the layer
+     * @return vector of QgsField objects
+     */
+    const QgsFields &fields() const override;
+
+    /**
+     * Return a short comment for the data that this provider is
+     * providing access to (e.g. the comment for oracle table).
+     */
+    QString dataComment() const override;
+
+    /** Reset the layer
+     */
+    void rewind();
+
+    /** Returns the minimum value of an attribute
+     *  @param index the index of the attribute */
+    QVariant minimumValue( int index ) override;
+
+    /** Returns the maximum value of an attribute
+     *  @param index the index of the attribute */
+    QVariant maximumValue( int index ) override;
+
+    /** Return the unique values of an attribute
+     *  @param index the index of the attribute
+     *  @param values reference to the list of unique values */
+    virtual void uniqueValues( int index, QList<QVariant> &uniqueValues, int limit = -1 ) override;
+
+    /** Returns true if layer is valid
+     */
+    bool isValid() override;
+
+    QgsAttributeList pkAttributeIndexes() override { return mPrimaryKeyAttrs; }
+
+    /** Returns the default value for field specified by @c fieldName */
+    QVariant defaultValue( QString fieldName, QString tableName = QString::null, QString schemaName = QString::null );
+
+    /**
+     * Returns the default value for field specified by \a fieldId.
+     * If \a forceLazyEval is set to true, the provider the default value
+     * will not be evaluated on server side even if specified in the project properties.
+     */
+    virtual QVariant defaultValue( int fieldId, bool forceLazyEval = false ) override;
+
+    /** Adds a list of features
+      @return true in case of success and false in case of failure*/
+    bool addFeatures( QgsFeatureList &flist ) override;
+
+    /** Deletes a list of features
+      @param id list of feature ids
+      @return true in case of success and false in case of failure*/
+    bool deleteFeatures( const QgsFeatureIds & id ) override;
+
+    /** Adds new attributes
+      @param name map with attribute name as key and type as value
+      @return true in case of success and false in case of failure*/
+    bool addAttributes( const QList<QgsField> &attributes ) override;
+
+    /** Deletes existing attributes
+      @param ids ids of attributes to delete
+      @return true in case of success and false in case of failure*/
+    bool deleteAttributes( const QgsAttributeIds &ids ) override;
+
+    /** Renames existing attributes
+      @param renamedAttributes attributes to rename
+      @return true in case of success and false in case of failure*/
+    bool renameAttributes( const QgsFieldNameMap& renamedAttributes ) override;
+
+    /** Changes attribute values of existing features
+      @param attr_map a map containing the new attributes. The integer is the feature id,
+      the first QString is the attribute name and the second one is the new attribute value
+      @return true in case of success and false in case of failure*/
+    bool changeAttributeValues( const QgsChangedAttributesMap &attr_map ) override;
+
+    /**
+       Changes geometries of existing features
+       @param geometry_map   A QMap containing the feature IDs to change the geometries of.
+                             the second map parameter being the new geometries themselves
+       @return               true in case of success and false in case of failure
+     */
+    bool changeGeometryValues( const QgsGeometryMap &geometry_map ) override;
+
+    /** Tries to create an spatial index file for faster access if only a subset of the features is required
+     @return true in case of success*/
+    bool createSpatialIndex() override;
+
+    //! Get the table name associated with this provider instance
+    QString getTableName();
+
+    /** Accessor for sql where clause used to limit dataset */
+    QString subsetString() override;
+
+    /** Mutator for sql where clause used to limit dataset size */
+    bool setSubsetString( const QString& theSQL, bool updateFeatureCount = true ) override;
+
+    virtual bool supportsSubsetString() override { return true; }
+
+    /** Returns a bitmask containing the supported capabilities*/
+    int capabilities() const override;
+
+    /** Return a provider name
+     *
+     * Essentially just returns the provider key.  Should be used to build file
+     * dialogs so that providers can be shown with their supported types. Thus
+     * if more than one provider supports a given format, the user is able to
+     * select a specific provider to open that file.
+     *
+     * @note
+     *
+     * Instead of being pure virtual, might be better to generalize this
+     * behavior and presume that none of the sub-classes are going to do
+     * anything strange with regards to their name or description?
+     *
+     */
+    QString name() const override;
+
+    /** Return description
+     *
+     * Return a terse string describing what the provider is.
+     *
+     * @note
+     *
+     * Instead of being pure virtual, might be better to generalize this
+     * behavior and presume that none of the sub-classes are going to do
+     * anything strange with regards to their name or description?
+     *
+     */
+    QString description() const override;
+
+    /**
+     * Query the provider for features specified in request.
+     */
+    virtual QgsFeatureIterator getFeatures( const QgsFeatureRequest &request = QgsFeatureRequest() ) override;
+
+    static bool exec( QSqlQuery &qry, QString sql );
+
+    /**
+     * It returns true. Saving style to db is supported by this provider
+     */
+    virtual bool isSaveAndLoadStyleToDBSupported() override { return true; }
+
+    /**
+     * Switch to oracle workspace
+     */
+    void setWorkspace( const QString &workspace );
+
+    /**
+     * Retrieve oracle workspace name
+     */
+    QString getWorkspace() const;
+
+  private:
+    QString whereClause( QgsFeatureId featureId ) const;
+    QString pkParamWhereClause() const;
+    QString paramValue( QString fieldvalue, const QString &defaultValue ) const;
+    void appendGeomParam( const QgsGeometry *geom, QSqlQuery &qry ) const;
+    void appendPkParams( QgsFeatureId fid, QSqlQuery &qry ) const;
+
+    bool hasSufficientPermsAndCapabilities();
+
+    const QgsField &field( int index ) const;
+
+    /** Load the field list
+     */
+    bool loadFields();
+
+    /** Convert a QgsField to work with Oracle */
+    static bool convertField( QgsField &field );
+
+    QgsFields mAttributeFields;  //! List of fields
+    QVariantList mDefaultValues; //! List of default values
+    QString mDataComment;
+
+    //! Data source URI struct for this layer
+    QgsDataSourceURI mUri;
+
+    /**
+     * Flag indicating if the layer data source is a valid oracle layer
+     */
+    bool mValid;
+
+    /**
+     * provider references query (instead of a table)
+     */
+    bool mIsQuery;
+
+    /**
+     * Name of the table with no schema
+     */
+    QString mTableName;
+    /**
+     * Name of the table or subquery
+     */
+    QString mQuery;
+    /**
+     * Owner of the table
+     */
+    QString mOwnerName;
+    /**
+     * SQL statement used to limit the features retrieved
+     */
+    QString mSqlWhereClause;
+
+    /**
+     * Data type for the primary key
+     */
+    QgsOraclePrimaryKeyType mPrimaryKeyType;
+
+    /**
+     * List of primary key attributes for fetching features.
+     */
+    QList<int> mPrimaryKeyAttrs;
+    QString mPrimaryKeyDefault;
+
+    QString mGeometryColumn;          //! name of the geometry column
+    QgsRectangle mLayerExtent;        //! Rectangle that contains the extent (bounding box) of the layer
+    mutable long mFeaturesCounted;    //! Number of features in the layer
+    int mSrid;                        //! srid of column
+    int mEnabledCapabilities;         //! capabilities of layer
+
+    QGis::WkbType mDetectedGeomType;  //! geometry type detected in the database
+    QGis::WkbType mRequestedGeomType; //! geometry type requested in the uri
+
+    bool getGeometryDetails();
+
+    /* Use estimated metadata. Uses fast table counts, geometry type and extent determination */
+    bool mUseEstimatedMetadata;
+
+    /* Include additional geo attributes */
+    bool mIncludeGeoAttributes;
+
+    struct OracleFieldNotFound {}; //! Exception to throw
+
+    struct OracleException
+    {
+      OracleException( QString msg, const QSqlQuery &q )
+          : mWhat( tr( "Oracle error: %1\nSQL: %2\nError: %3" )
+                   .arg( msg )
+                   .arg( q.lastError().text() )
+                   .arg( q.lastQuery() )
+                 )
+      {}
+
+      OracleException( QString msg, const QSqlDatabase &q )
+          : mWhat( tr( "Oracle error: %1\nError: %2" )
+                   .arg( msg )
+                   .arg( q.lastError().text() )
+                 )
+      {}
+
+      OracleException( const OracleException &e )
+          : mWhat( e.errorMessage() )
+      {}
+
+      ~OracleException()
+      {}
+
+      QString errorMessage() const
+      {
+        return mWhat;
+      }
+
+    private:
+      QString mWhat;
+    };
+
+    // A function that determines if the given schema.table.column
+    // contains unqiue entries
+    bool uniqueData( QString query, QString colName );
+
+    void disconnectDb();
+
+    static QString quotedIdentifier( QString ident ) { return QgsOracleConn::quotedIdentifier( ident ); }
+    static QString quotedValue( const QVariant &value, QVariant::Type type = QVariant::Invalid ) { return QgsOracleConn::quotedValue( value, type ); }
+
+    QMap<QVariant, QgsFeatureId> mKeyToFid;  //! map key values to feature id
+    QMap<QgsFeatureId, QVariant> mFidToKey;  //! map feature back to fea
+    QgsFeatureId mFidCounter;                //! next feature id if map is used
+    QgsOracleConn *mConnection;
+
+    bool mHasSpatialIndex;                   //! Geometry column is indexed
+    QString mSpatialIndexName;               //! name of spatial index of geometry column
+
+    QSharedPointer<QgsOracleSharedData> mShared;
+
+    friend class QgsOracleFeatureIterator;
+    friend class QgsOracleFeatureSource;
+};
+
+
+/** Assorted Oracle utility functions */
+class QgsOracleUtils
+{
+  public:
+    static QString whereClause( QgsFeatureId featureId,
+                                const QgsFields& fields,
+                                QgsOraclePrimaryKeyType primaryKeyType,
+                                const QList<int>& primaryKeyAttrs,
+                                QSharedPointer<QgsOracleSharedData> sharedData );
+
+    static QString whereClause( QgsFeatureIds featureIds,
+                                const QgsFields& fields,
+                                QgsOraclePrimaryKeyType primaryKeyType,
+                                const QList<int>& primaryKeyAttrs,
+                                QSharedPointer<QgsOracleSharedData> sharedData );
+
+    static QString andWhereClauses( const QString& c1, const QString& c2 );
+};
+
+
+/** Data shared between provider class and its feature sources. Ideally there should
+ *  be as few members as possible because there could be simultaneous reads/writes
+ *  from different threads and therefore locking has to be involved. */
+class QgsOracleSharedData
+{
+  public:
+    QgsOracleSharedData();
+
+    // FID lookups
+    QgsFeatureId lookupFid( const QVariant &v ); // lookup existing mapping or add a new one
+    QVariant removeFid( QgsFeatureId fid );
+    void insertFid( QgsFeatureId fid, const QVariant& k );
+    QVariant lookupKey( QgsFeatureId featureId );
+
+  protected:
+    QMutex mMutex; //!< Access to all data members is guarded by the mutex
+
+    QgsFeatureId mFidCounter;                    // next feature id if map is used
+    QMap<QVariant, QgsFeatureId> mKeyToFid;      // map key values to feature id
+    QMap<QgsFeatureId, QVariant> mFidToKey;      // map feature back to fea
+};
+
+
+#endif

@@ -70,6 +70,12 @@ if(OPENCV_FOUND AND NGSTD_FOUND)
     )
 endif()
 
+if(OCI_FOUND)
+    set(PLG_PLUGINS ${PLG_PLUGINS}
+        oracle_raster
+    )
+endif()
+
 macro(add_plugin PLUGIN_NAME)
     include_directories (${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME})
 

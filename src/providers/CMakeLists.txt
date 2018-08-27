@@ -50,6 +50,12 @@ set(PROV_PLUGINS
     wms
 )
 
+if(OCI_FOUND)
+    set(PROV_PLUGINS ${PROV_PLUGINS}
+        oracle
+    )
+endif()
+
 macro(add_provider PLUGIN_NAME)
     include_directories (${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME})
     file(GLOB PROV_${PLUGIN_NAME}_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.h")
