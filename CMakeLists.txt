@@ -124,6 +124,16 @@ if(OSX_FRAMEWORK)
     set(FRAMEWORK_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}")
 endif()
 
+# For configure
+
+set(HAVE_SPATIALITE TRUE)
+#cmakedefine HAVE_MSSQL
+set(HAVE_ORACLE TRUE)
+
+if(WITH_BINDINGS)
+    set(HAVE_PYTHON TRUE)
+endif()
+
 include(configure)
 
 include_directories ( ${CMAKE_CURRENT_SOURCE_DIR} )

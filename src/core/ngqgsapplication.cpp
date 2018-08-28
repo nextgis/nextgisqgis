@@ -78,7 +78,7 @@ void NGQgsApplication::init(QString customConfigPath)
       else
       {
           QString config;
-      #ifdef Q_OS_MACOS
+      #ifdef Q_OS_MAC
           config = QLatin1String("Library/Application Support");
       #else
           config = QLatin1String(".config");
