@@ -2,7 +2,8 @@
 
 :four_leaf_clover: NextGIS QGIS build using NextGIS Borsch.
 
-This simplified and reorganized repository of original [QGIS](https://github.com/qgis/qgis) with NextGIS additions needed by network installer.
+This simplified and reorganized repository of original [QGIS](https://github.com/qgis/qgis)
+with NextGIS additions needed by network installer.
 
 # Update sources
 
@@ -13,13 +14,14 @@ directory](https://github.com/nextgis-borsch/borsch/tree/master/opt):
 > python tools.py organize --src /<path to QGIS sources>/QGIS --dst_name qgis
 ```
 
-In [opt directory](https://github.com/nextgis/nextgisqgis/tree/master/opt) of this repository there is several files which interfere on
+In [opt directory](https://github.com/nextgis/nextgisqgis/tree/master/opt) of this
+repository there is several files which interfere on
 sources merging process:
 
 * [folders.csv](https://github.com/nextgis/nextgisqgis/blob/master/opt/folders.csv) - list of original directories to merge
 * [postprocess.py](https://github.com/nextgis/nextgisqgis/blob/master/opt/postprocess.py) - script executed after successfully merging (name is constant for tools.py)
 
-Postprocess copied files (with paths) from ```opt/overwrite``` to the root of
+Postprocess copying files (with paths) from ```opt/overwrite``` to the root of
 repository. Files with same names and paths overwrite.
 
 # Customization details
@@ -31,7 +33,7 @@ The only few files of original sources were change:
 * qgisapplication.h - private members made protected, several methods made virtual
 * qgisapp.ui - remove some menus and buttons
 
-The full list of files can be found in opt/overwrite directory. 
+The full list of files can be found in opt/overwrite directory.
 
 There are special files with NextGIS customization:
 
