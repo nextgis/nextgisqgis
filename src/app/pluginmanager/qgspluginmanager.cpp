@@ -50,7 +50,7 @@
 // This doesn't work on windows and causes problems with plugins
 // on OS X (the code doesn't cause a problem but including dlfcn.h
 // renders plugins unloadable)
-#if !defined(Q_OS_WIN) && !defined(Q_OS_MAC)
+#if !defined(Q_OS_WIN) && !defined(Q_OS_MACX)
 #include <dlfcn.h>
 #endif
 #endif
@@ -1570,3 +1570,5 @@ void QgsPluginManager::pushMessage( const QString &text, QgsMessageBar::MessageL
   }
   msgBar->pushMessage( text, level, duration );
 }
+
+

@@ -9240,7 +9240,7 @@ void QgisApp::openURL( QString url, bool useQgisDocDirectory )
   {
     url = "file://" + QgsApplication::pkgDataPath() + "/doc/" + url;
   }
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACX
   /* Use Mac OS X Launch Services which uses the user's default browser
    * and will just open a new window if that browser is already running.
    * QProcess creates a new browser process for each invocation and expects a

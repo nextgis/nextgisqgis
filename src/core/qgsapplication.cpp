@@ -602,7 +602,7 @@ QString QgsApplication::licenceFilePath()
 QString QgsApplication::helpAppPath()
 {
   QString helpAppPath;
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACX
   helpAppPath = applicationDirPath() + "/bin/qgis_help.app/Contents/MacOS";
 #else
   helpAppPath = libexecPath();
@@ -1387,3 +1387,4 @@ void QgsApplication::emitSettingsChanged()
 {
   emit settingsChanged();
 }
+
