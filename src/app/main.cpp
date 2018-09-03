@@ -67,7 +67,7 @@ int _fmode = _O_BINARY;
 #include <getopt.h>
 #endif
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACX
 #include <ApplicationServices/ApplicationServices.h>
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
 typedef SInt32 SRefCon;
@@ -358,7 +358,7 @@ static void translationPath(const QString &basePath,
 
 int main( int argc, char *argv[] )
 {
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACX
   // Increase file resource limits (i.e., number of allowed open files)
   // (from code provided by Larry Biehl, Purdue University, USA, from 'MultiSpec' project)
   // This is generally 256 for the soft limit on Mac
@@ -762,7 +762,7 @@ int main( int argc, char *argv[] )
   QgsCustomization::instance()->setSettings( customizationsettings );
   QgsCustomization::instance()->loadDefault();
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACX
   // If the GDAL plugins are bundled with the application and GDAL_DRIVER_PATH
   // is not already defined, use the GDAL plugins in the application bundle.
   QString gdalPlugins( QCoreApplication::applicationDirPath().append( "/../../../../" + QString( QGIS_PLUGIN_SUBDIR ) ) );
@@ -772,7 +772,6 @@ int main( int argc, char *argv[] )
   }
 
   // Point GDAL_DATA at any GDAL share directory embedded in the app bundle
-  // TODO: On Windows and Mac OS X get gdal_data path from env in Linux not needed at all
   if ( !getenv( "GDAL_DATA" ) )
   {
     QStringList gdalShares;

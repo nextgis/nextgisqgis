@@ -50,6 +50,12 @@ set(PROV_PLUGINS
     wms
 )
 
+if(POSTGRESQL_FOUND)
+    set(PROV_PLUGINS ${PROV_PLUGINS}
+        postgres
+    )
+endif()
+
 if(OCI_FOUND)
     set(PROV_PLUGINS ${PROV_PLUGINS}
         oracle
@@ -106,10 +112,3 @@ foreach(PROV_PLUGIN ${PROV_PLUGINS})
     info_msg("Add provider ${PROV_PLUGIN}")
     add_provider(${PROV_PLUGIN})
 endforeach()
-
-## Providers with dependencies
-
-if(POSTGRESQL_FOUND)
-    info_msg("Add provider postgres")
-    add_provider(postgres)
-endif()

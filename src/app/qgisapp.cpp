@@ -85,7 +85,7 @@
 // Mac OS X Includes
 // Must include before GEOS 3 due to unqualified use of 'Point'
 //
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACX
 #include <ApplicationServices/ApplicationServices.h>
 
 // check macro breaks QItemDelegate
