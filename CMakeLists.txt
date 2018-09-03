@@ -147,7 +147,14 @@ option(WITH_BINDINGS "Build python bindings" ON)
 include(FindAnyProject)
 
 if(NOT PREPARE_ONLY)
-    # if(POLICY CMP0071)
+    find_anyproject(ZLIB REQUIRED)
+    find_anyproject(SQLite3 REQUIRED)
+    find_anyproject(EXPAT REQUIRED)
+    find_anyproject(GEOS REQUIRED)
+    find_anyproject(PROJ4 REQUIRED)
+    find_anyproject(GDAL REQUIRED)
+
+        # if(POLICY CMP0071)
     #     cmake_policy(SET CMP0071 NEW)
     # endif()
     #
@@ -167,13 +174,7 @@ if(NOT PREPARE_ONLY)
         add_definitions(-DQT_DLL) # Only for shared libraries on win32
     endif()
 
-    find_anyproject(GDAL REQUIRED)
-    find_anyproject(GEOS REQUIRED)
     find_anyproject(Qca REQUIRED)
-
-    find_anyproject(SQLite3 REQUIRED)
-    find_anyproject(EXPAT REQUIRED)
-
     find_anyproject(Qscintilla REQUIRED)
     if(QSCINTILLA_FOUND)
         add_definitions(-DQSCINTILLA_VERSION_STR="${QSCINTILLA_VERSION}")
@@ -191,9 +192,6 @@ if(NOT PREPARE_ONLY)
     #the test data. See CMakeLists in test dirs for more info
     #TEST_DATA_DIR is also used by QgsRenderChecker currently in core
     set (TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/testdata")
-
-
-    find_anyproject(ZLIB REQUIRED)
 
     # Copy zlib to qt bin directory
     if(WIN32)
@@ -231,13 +229,11 @@ IF(MSVC)
   ENDIF()
 ENDIF(MSVC)
 
-
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 if(COMPILER_SUPPORTS_CXX11)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
-
 
 add_subdirectory(src)
 if(NOT PREPARE_ONLY)
