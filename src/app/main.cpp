@@ -67,7 +67,7 @@ int _fmode = _O_BINARY;
 #include <getopt.h>
 #endif
 
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MAC
 #include <ApplicationServices/ApplicationServices.h>
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
 typedef SInt32 SRefCon;
@@ -356,9 +356,12 @@ static void translationPath(const QString &basePath,
 }
 #endif // Q_OS_MAC
 
+#include "ogr_api.h"
+#include "ogrsf_frmts.h"
+
 int main( int argc, char *argv[] )
 {
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MAC
   // Increase file resource limits (i.e., number of allowed open files)
   // (from code provided by Larry Biehl, Purdue University, USA, from 'MultiSpec' project)
   // This is generally 256 for the soft limit on Mac
@@ -762,7 +765,7 @@ int main( int argc, char *argv[] )
   QgsCustomization::instance()->setSettings( customizationsettings );
   QgsCustomization::instance()->loadDefault();
 
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MAC
   // If the GDAL plugins are bundled with the application and GDAL_DRIVER_PATH
   // is not already defined, use the GDAL plugins in the application bundle.
   QString gdalPlugins( QCoreApplication::applicationDirPath().append( "/../../../../" + QString( QGIS_PLUGIN_SUBDIR ) ) );
@@ -772,6 +775,7 @@ int main( int argc, char *argv[] )
   }
 
   // Point GDAL_DATA at any GDAL share directory embedded in the app bundle
+  // TODO: On Windows and Mac OS X get gdal_data path from env in Linux not needed at all
   if ( !getenv( "GDAL_DATA" ) )
   {
     QStringList gdalShares;
@@ -788,7 +792,18 @@ int main( int argc, char *argv[] )
       }
     }
   }
-#endif
+#endif // Q_OS_MAC
+
+#ifdef Q_OS_WIN
+    putenv( QString("GDAL_DATA=" + QCoreApplication::applicationDirPath().append( "/../share/gdal" )).toUtf8().constData() );
+    putenv( QString("GDAL_DRIVER_PATH=" + QCoreApplication::applicationDirPath().append( "/../" ) + QString( QGIS_PLUGIN_SUBDIR ) ).toUtf8().constData() );
+    if(!getenv("SSL_CERT_FILE")) {
+        putenv(QString("SSL_CERT_FILE=" + QCoreApplication::applicationDirPath().append( "/../share/ssl/certs/cert.pem" )).toUtf8().constData());
+    }
+    if (!getenv("CURL_CA_BUNDLE")) {
+        putenv(QString("CURL_CA_BUNDLE=" + QCoreApplication::applicationDirPath().append( "/../share/ssl/certs/cert.pem" )).toUtf8().constData());
+    }
+#endif // Q_OS_WIN
 
   QSettings mySettings;
 

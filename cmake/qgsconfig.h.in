@@ -49,7 +49,7 @@
 
 #cmakedefine HAVE_MSSQL
 
-#cmakedefine HAVE_ORACLE
+#cmakedefine HAVE_ORACLE 1
 
 #cmakedefine HAVE_PYTHON
 

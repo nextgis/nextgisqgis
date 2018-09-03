@@ -126,28 +126,28 @@ void QgsApplication::init( QString customConfigPath )
   QString prefixPath( getenv( "QGIS_PREFIX_PATH" ) ? getenv( "QGIS_PREFIX_PATH" ) : applicationDirPath() );
   // QgsDebugMsg( QString( "prefixPath(): %1" ).arg( prefixPath ) );
 
-  // check if QGIS is run from build directory (not the install directory)
-  QFile f;
-  // "/../../.." is for Mac bundled app in build directory
-  Q_FOREACH ( const QString& path, QStringList() << "" << "/.." << "/bin" << "/../../.." )
-  {
-    f.setFileName( prefixPath + path + "/qgisbuildpath.txt" );
-    if ( f.exists() )
-      break;
-  }
-  if ( f.exists() && f.open( QIODevice::ReadOnly ) )
-  {
-    ABISYM( mRunningFromBuildDir ) = true;
-    ABISYM( mBuildSourcePath ) = f.readLine().trimmed();
-    ABISYM( mBuildOutputPath ) = f.readLine().trimmed();
-    qDebug( "Running from build directory!" );
-    qDebug( "- source directory: %s", ABISYM( mBuildSourcePath ).toUtf8().data() );
-    qDebug( "- output directory of the build: %s", ABISYM( mBuildOutputPath ).toUtf8().data() );
-#ifdef _MSC_VER
-    ABISYM( mCfgIntDir ) = prefixPath.split( '/', QString::SkipEmptyParts ).last();
-    qDebug( "- cfg: %s", ABISYM( mCfgIntDir ).toUtf8().data() );
-#endif
-  }
+//   // check if QGIS is run from build directory (not the install directory)
+//   QFile f;
+//   // "/../../.." is for Mac bundled app in build directory
+//   Q_FOREACH ( const QString& path, QStringList() << "" << "/.." << "/bin" << "/../../.." )
+//   {
+//     f.setFileName( prefixPath + path + "/qgisbuildpath.txt" );
+//     if ( f.exists() )
+//       break;
+//   }
+//   if ( f.exists() && f.open( QIODevice::ReadOnly ) )
+//   {
+//     ABISYM( mRunningFromBuildDir ) = true;
+//     ABISYM( mBuildSourcePath ) = f.readLine().trimmed();
+//     ABISYM( mBuildOutputPath ) = f.readLine().trimmed();
+//     qDebug( "Running from build directory!" );
+//     qDebug( "- source directory: %s", ABISYM( mBuildSourcePath ).toUtf8().data() );
+//     qDebug( "- output directory of the build: %s", ABISYM( mBuildOutputPath ).toUtf8().data() );
+// #ifdef _MSC_VER
+//     ABISYM( mCfgIntDir ) = prefixPath.split( '/', QString::SkipEmptyParts ).last();
+//     qDebug( "- cfg: %s", ABISYM( mCfgIntDir ).toUtf8().data() );
+// #endif
+//   }
 
   if ( ABISYM( mRunningFromBuildDir ) )
   {
@@ -1387,4 +1387,3 @@ void QgsApplication::emitSettingsChanged()
 {
   emit settingsChanged();
 }
-
