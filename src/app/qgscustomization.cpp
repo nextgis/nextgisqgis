@@ -36,7 +36,7 @@
 #include <QStatusBar>
 #include <QMetaObject>
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACX
 QgsCustomizationDialog::QgsCustomizationDialog( QWidget *parent, QSettings* settings )
     : QMainWindow( parent, Qt::WindowSystemMenuHint )  // Modeless dialog with close button only
 #else

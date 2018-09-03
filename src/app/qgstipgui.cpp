@@ -23,7 +23,7 @@
 #include <qgstip.h>
 #include <qgstipfactory.h>
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACX
 QgsTipGui::QgsTipGui( QWidget *parent )
     : QDialog( parent, Qt::WindowSystemMenuHint )  // Dialog with close button only
 #else
