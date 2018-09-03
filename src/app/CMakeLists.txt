@@ -533,7 +533,6 @@ endif()
 # install
 if(OSX_FRAMEWORK)
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/symlinks
         COMMAND ${CMAKE_COMMAND} -E create_symlink ../../Applications/${NG_PREFIX}${PROJECT_NAME}.app/Contents/Frameworks/${LIB_NAME}.framework ${PROJECT_BINARY_DIR}/symlinks/${LIB_NAME}.framework
     )
 endif()

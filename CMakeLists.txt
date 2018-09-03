@@ -235,6 +235,13 @@ if(COMPILER_SUPPORTS_CXX11)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
+# install
+if(OSX_FRAMEWORK)
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/symlinks
+    )
+endif()
+
 add_subdirectory(src)
 if(NOT PREPARE_ONLY)
     add_subdirectory(translations)
