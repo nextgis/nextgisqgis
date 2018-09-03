@@ -171,7 +171,7 @@ void QgsApplication::init( QString customConfigPath )
     char *prefixPath = getenv( "QGIS_PREFIX_PATH" );
     if ( !prefixPath )
     {
-#if defined(Q_OS_MAC) || defined(Q_OS_WIN)
+#if defined(Q_OS_MACX) || defined(Q_OS_WIN)
       setPrefixPath( applicationDirPath(), true );
 #elif defined(ANDROID)
       // this is  "/data/data/org.qgis.qgis" in android
