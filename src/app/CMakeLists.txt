@@ -475,14 +475,30 @@ target_compile_definitions (${LIB_NAME} INTERFACE "APP_EXPORT=${DLLIMPORT}")
 
 target_compile_definitions (${LIB_NAME} PRIVATE "PYTHON_EXPORT=${DLLIMPORT}")
 target_compile_definitions (${LIB_NAME} PRIVATE "ANALYSIS_EXPORT=${DLLIMPORT}")
-set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
+# set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
 
+set(TARGET_LINK_LIBEX)
 if(OSX_FRAMEWORK)
-    set(TARGET_LINK_LIB ${TARGET_LINK_LIB} "-framework CoreFoundation -framework CoreServices -framework ApplicationServices")
+    find_library(CARBON_FRAMEWORK Carbon)
+    find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
+
+    set(TARGET_LINK_LIBEX ${TARGET_LINK_LIBEX} ${CARBON_FRAMEWORK} ${COREFOUNDATION_FRAMEWORK})
 endif()
 
-target_link_extlibraries(${LIB_NAME})
-set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${LIB_NAME})
+set(TARGET_LINK_LIBEX ${TARGET_LINK_LIBEX}
+    ${QWT_LIBRARIES}
+    Qt4::QtUiTools
+    ${NGSTD_LIBRARIES}
+    ${QSCINTILLA_LIBRARIES}
+
+    ${NG_PREFIX}qgis_core
+    ${NG_PREFIX}qgis_gui
+    ${NG_PREFIX}qgis_analysis
+)
+
+target_link_libraries(${LIB_NAME} PRIVATE ${TARGET_LINK_LIBEX})
+# target_link_extlibraries(${LIB_NAME})
+# set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${LIB_NAME})
 
 add_executable(${QGIS_APP_NAME} MACOSX_BUNDLE WIN32 ${QGIS_APPMAIN_SRCS} ${IMAGE_RCC_SRCS} ${TEST_RCC_SRCS})
 target_compile_definitions (${QGIS_APP_NAME} PRIVATE "APP_EXPORT=${DLLIMPORT}")
@@ -493,13 +509,22 @@ target_compile_definitions (${QGIS_APP_NAME} PRIVATE "ANALYSIS_EXPORT=${DLLIMPOR
 
 set_property(TARGET ${QGIS_APP_NAME} PROPERTY CXX_STANDARD 11)
 
+set(TARGET_LINK_LIBEX)
 if(WIN32)
     set_target_properties(${QGIS_APP_NAME}
                           PROPERTIES COMPILE_FLAGS "/Zc:wchar_t-")
     set_property(TARGET ${QGIS_APP_NAME} APPEND PROPERTY LINK_FLAGS /entry:mainCRTStartup)
-    set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${QT_QTMAIN_LIBRARY})
+    set(TARGET_LINK_LIBEX ${TARGET_LINK_LIBEX} ${QT_QTMAIN_LIBRARY})
 endif(WIN32)
-target_link_extlibraries(${QGIS_APP_NAME})
+
+set(TARGET_LINK_LIBEX ${TARGET_LINK_LIBEX}
+    Qt4::QtCore
+    ${LIB_NAME}
+    ${NG_PREFIX}qgis_core
+    ${NG_PREFIX}qgis_gui
+)
+target_link_libraries(${QGIS_APP_NAME} PRIVATE ${TARGET_LINK_LIBEX})
+# target_link_extlibraries(${QGIS_APP_NAME})
 
 if(OSX_FRAMEWORK)
     set_target_properties(${LIB_NAME} PROPERTIES
@@ -510,6 +535,7 @@ if(OSX_FRAMEWORK)
         MACOSX_FRAMEWORK_IDENTIFIER org.qgis.qgis2_core
         XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
         PUBLIC_HEADER "${QGIS_CORE_HDRS};${QGIS_CORE_MOC_HDRS}"
+        LINK_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}"
     )
 
     set_target_properties(${QGIS_APP_NAME} PROPERTIES

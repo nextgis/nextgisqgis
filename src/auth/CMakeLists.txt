@@ -50,8 +50,12 @@ macro(add_auth_plugin PLUGIN_NAME)
     endif()
 
     add_library(${PLUGIN_NAME}authmethod MODULE ${AUTH_${PLUGIN_NAME}_SOURCES} ${AUTH_${PLUGIN_NAME}_HEADERS} ${AUTH_${PLUGIN_NAME}_MOC_SRCS} ${AUTH_${PLUGIN_NAME}_UIS_H})
+    target_link_libraries(${PLUGIN_NAME}authmethod PRIVATE
+        ${NG_PREFIX}qgis_core
+        ${NG_PREFIX}qgis_gui
+    )
 
-    target_link_extlibraries(${PLUGIN_NAME}authmethod)
+    # target_link_extlibraries(${PLUGIN_NAME}authmethod)
 
     if(OSX_FRAMEWORK)
         set_target_properties(${PLUGIN_NAME}authmethod PROPERTIES
@@ -60,7 +64,7 @@ macro(add_auth_plugin PLUGIN_NAME)
         )
     endif()
 
-    set_target_properties(${PLUGIN_NAME}authmethod PROPERTIES CXX_STANDARD 11)
+    # set_target_properties(${PLUGIN_NAME}authmethod PROPERTIES CXX_STANDARD 11)
 
     install(TARGETS ${PLUGIN_NAME}authmethod
         RUNTIME DESTINATION ${INSTALL_PLUGIN_DIR}

@@ -99,7 +99,24 @@ macro(add_plugin PLUGIN_NAME)
 
     add_library(${PLUGIN_NAME}plugin MODULE ${PLG_${PLUGIN_NAME}_SOURCES} ${PLG_${PLUGIN_NAME}_HEADERS} ${PLG_${PLUGIN_NAME}_MOC_SRCS} ${PLG_${PLUGIN_NAME}_RCC} ${PLG_${PLUGIN_NAME}_UI_H})
 
-    target_link_extlibraries(${PLUGIN_NAME}plugin)
+    # target_link_extlibraries(${PLUGIN_NAME}plugin)
+    target_link_libraries(${PLUGIN_NAME}plugin PRIVATE
+        ${NG_PREFIX}qgis_analysis
+        ${NG_PREFIX}qgis_core
+        ${NG_PREFIX}qgis_gui
+    )
+
+    if("${PLUGIN_NAME}" STREQUAL "georeferencer")
+        target_link_libraries(${PLUGIN_NAME}plugin PRIVATE ${GSL_LIBRARIES})
+    endif()
+
+    if("${PLUGIN_NAME}" STREQUAL "dtclassifier")
+        target_link_libraries(${PLUGIN_NAME}plugin PRIVATE ${OPENCV_LIBRARIES} ${NGSTD_LIBRARIES})
+    endif()
+
+    if("${PLUGIN_NAME}" STREQUAL "oracle_raster")
+        target_link_libraries(${PLUGIN_NAME}plugin PRIVATE ${OCI_LIBRARIES})
+    endif()
 
     if(OSX_FRAMEWORK)
         set_target_properties(${PLUGIN_NAME}plugin PROPERTIES
@@ -108,7 +125,7 @@ macro(add_plugin PLUGIN_NAME)
         )
     endif()
 
-    set_target_properties(${PLUGIN_NAME}plugin PROPERTIES CXX_STANDARD 11)
+    # set_target_properties(${PLUGIN_NAME}plugin PROPERTIES CXX_STANDARD 11)
 
     target_compile_definitions (${PLUGIN_NAME}plugin PRIVATE "APP_EXPORT=${DLLIMPORT}")
     target_compile_definitions (${PLUGIN_NAME}plugin PRIVATE "CORE_EXPORT=${DLLIMPORT}")
