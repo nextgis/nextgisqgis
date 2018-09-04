@@ -876,14 +876,37 @@ add_library(${LIB_NAME} SHARED ${QGIS_CORE_SRCS} ${QGIS_CORE_MOC_SRCS} ${QGIS_CO
 
 target_compile_definitions (${LIB_NAME} PRIVATE "CORE_EXPORT=${DLLEXPORT}")
 target_compile_definitions (${LIB_NAME} INTERFACE "CORE_EXPORT=${DLLIMPORT}")
-set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
+# set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
 
+set(TARGET_LINK_LIBEX)
 if(WIN32)
-    set(TARGET_LINK_LIB ${TARGET_LINK_LIB} wsock32)
+    set(TARGET_LINK_LIBEX ${TARGET_LINK_LIBEX} wsock32)
 endif()
 
-target_link_extlibraries(${LIB_NAME})
-set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${LIB_NAME} PARENT_SCOPE)
+set(TARGET_LINK_LIBEX ${TARGET_LINK_LIBEX}
+    Qt4::QtXml
+    Qt4::QtCore
+    Qt4::QtGui
+    Qt4::QtNetwork
+    Qt4::QtSvg
+    Qt4::QtSql
+    Qt4::QtWebKit
+    #
+    ${QCA_LIBRARIES}
+    ${PROJ4_LIBRARIES}
+    ${GEOS_LIBRARIES}
+    ${GDAL_LIBRARIES}
+    ${SPATIALINDEX_LIBRARIES}
+    ${EXPAT_LIBRARIES}
+    ${SQLITE3_LIBRARIES}
+    ${SPATIALITE_LIBRARIES}
+)
+
+target_link_libraries(${LIB_NAME} 
+    ${TARGET_LINK_LIBEX}
+)
+# target_link_extlibraries(${LIB_NAME})
+# set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${LIB_NAME} PARENT_SCOPE)
 
 if(OSX_FRAMEWORK)
     set_target_properties(${LIB_NAME} PROPERTIES
@@ -894,6 +917,7 @@ if(OSX_FRAMEWORK)
         MACOSX_FRAMEWORK_IDENTIFIER org.qgis.qgis2_core
         XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
         PUBLIC_HEADER "${QGIS_CORE_HDRS};${QGIS_CORE_MOC_HDRS}"
+        LINK_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}"
     )
 endif()
 

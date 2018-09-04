@@ -47,9 +47,13 @@ target_compile_definitions (${LIB_NAME} PRIVATE "PYTHON_EXPORT=${DLLEXPORT}" $<$
 target_compile_definitions (${LIB_NAME} INTERFACE "PYTHON_EXPORT=${DLLIMPORT}")
 set_property(TARGET ${LIB_NAME} PROPERTY CXX_STANDARD 11)
 
-target_link_extlibraries(${LIB_NAME})
-add_dependencies(${LIB_NAME} ${NG_PREFIX}qgis_core)
-set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${LIB_NAME} PARENT_SCOPE)
+target_link_libraries(${LIB_NAME} PRIVATE
+    ${NG_PREFIX}qgis_core
+    ${PYTHON_LIBRARIES}
+)
+# target_link_extlibraries(${LIB_NAME})
+# add_dependencies(${LIB_NAME} ${NG_PREFIX}qgis_core)
+# set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${LIB_NAME} PARENT_SCOPE)
 
 if(OSX_FRAMEWORK)
     set_target_properties(${LIB_NAME} PROPERTIES
@@ -60,6 +64,7 @@ if(OSX_FRAMEWORK)
         MACOSX_FRAMEWORK_IDENTIFIER org.qgis.qgis2_python
         XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
         PUBLIC_HEADER "${QGIS_GUI_HDRS};${QGIS_GUI_MOC_HDRS}"
+        LINK_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}"
     )
 endif()
 

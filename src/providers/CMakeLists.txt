@@ -69,13 +69,6 @@ macro(add_provider PLUGIN_NAME)
     file(GLOB PROV_${PLUGIN_NAME}_UIS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.ui")
     file(GLOB PROV_${PLUGIN_NAME}_RCS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.qrc")
 
-    if(${PLUGIN_NAME} STREQUAL "wcs")
-        set(PROV_${PLUGIN_NAME}_SOURCES ${PROV_${PLUGIN_NAME}_SOURCES}
-            ${CMAKE_CURRENT_SOURCE_DIR}/gdal/qgsgdalproviderbase.cpp
-        )
-        include_directories(../gdal)
-    endif()
-
     if(NOT PREPARE_ONLY)
         if(PROV_${PLUGIN_NAME}_RCS)
             qt4_add_resources(PROV_${PLUGIN_NAME}_RCC ${PROV_${PLUGIN_NAME}_RCS})
@@ -89,9 +82,37 @@ macro(add_provider PLUGIN_NAME)
 
     endif()
 
+    if("${PLUGIN_NAME}" STREQUAL "wcs")
+        set(PROV_${PLUGIN_NAME}_SOURCES ${PROV_${PLUGIN_NAME}_SOURCES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/gdal/qgsgdalproviderbase.cpp
+        )
+        include_directories(../gdal)
+    endif()
+
     add_library(${PLUGIN_NAME}provider MODULE ${PROV_${PLUGIN_NAME}_SOURCES} ${PROV_${PLUGIN_NAME}_HEADERS} ${PROV_${PLUGIN_NAME}_MOC_SRCS} ${PROV_${PLUGIN_NAME}_RCC} ${PROV_${PLUGIN_NAME}_UI_H})
 
-    target_link_extlibraries(${PLUGIN_NAME}provider)
+    if("${PLUGIN_NAME}" STREQUAL "postgres")
+        target_link_libraries(${PLUGIN_NAME}provider PRIVATE ${POSTGRESQL_LIBRARIES})
+    endif()
+
+    if("${PLUGIN_NAME}" STREQUAL "oracle")
+        target_link_libraries(${PLUGIN_NAME}provider PRIVATE Qt4::QtSql)
+    endif()
+
+    if("${PLUGIN_NAME}" STREQUAL "virtual")
+        target_link_libraries(${PLUGIN_NAME}provider PRIVATE ${QSCINTILLA_LIBRARIES})
+    endif()
+
+    if("${PLUGIN_NAME}" STREQUAL "wms")
+        target_link_libraries(${PLUGIN_NAME}provider PRIVATE Qt4::QtScript)
+    endif()
+
+    target_link_libraries(${PLUGIN_NAME}provider PRIVATE
+        ${NG_PREFIX}qgis_core
+        ${NG_PREFIX}qgis_gui
+    )
+
+    # target_link_extlibraries(${PLUGIN_NAME}provider)
 
     if(OSX_FRAMEWORK)
         set_target_properties(${PLUGIN_NAME}provider PROPERTIES
@@ -100,7 +121,7 @@ macro(add_provider PLUGIN_NAME)
         )
     endif()
 
-    set_target_properties(${PLUGIN_NAME}provider PROPERTIES CXX_STANDARD 11)
+    # set_target_properties(${PLUGIN_NAME}provider PROPERTIES CXX_STANDARD 11)
 
     install(TARGETS ${PLUGIN_NAME}provider
         RUNTIME DESTINATION ${INSTALL_PLUGIN_DIR}
