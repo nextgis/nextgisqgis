@@ -891,7 +891,7 @@ set(TARGET_LINK_LIBEX ${TARGET_LINK_LIBEX}
     Qt4::QtSvg
     Qt4::QtSql
     Qt4::QtWebKit
-    #
+    
     ${QCA_LIBRARIES}
     ${PROJ4_LIBRARIES}
     ${GEOS_LIBRARIES}
@@ -902,7 +902,7 @@ set(TARGET_LINK_LIBEX ${TARGET_LINK_LIBEX}
     ${SPATIALITE_LIBRARIES}
 )
 
-target_link_libraries(${LIB_NAME} 
+target_link_libraries(${LIB_NAME}
     ${TARGET_LINK_LIBEX}
 )
 # target_link_extlibraries(${LIB_NAME})
