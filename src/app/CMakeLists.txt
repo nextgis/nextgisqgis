@@ -522,6 +522,7 @@ set(TARGET_LINK_LIBEX ${TARGET_LINK_LIBEX}
     ${LIB_NAME}
     ${NG_PREFIX}qgis_core
     ${NG_PREFIX}qgis_gui
+    ${NG_PREFIX}qgis_analysis
 )
 target_link_libraries(${QGIS_APP_NAME} PRIVATE ${TARGET_LINK_LIBEX})
 # target_link_extlibraries(${QGIS_APP_NAME})
