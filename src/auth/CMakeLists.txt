@@ -53,6 +53,7 @@ macro(add_auth_plugin PLUGIN_NAME)
     target_link_libraries(${PLUGIN_NAME}authmethod PRIVATE
         ${NG_PREFIX}qgis_core
         ${NG_PREFIX}qgis_gui
+        ${QCA_LIBRARIES}
     )
 
     # target_link_extlibraries(${PLUGIN_NAME}authmethod)
