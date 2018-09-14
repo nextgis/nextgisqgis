@@ -947,7 +947,7 @@ def setMacOSXDefaultEnvironment():
     qgis_app = QDir(qgis_app).absolutePath()
 
     qgis_bin = u"%s/usr/bin" % qgis_app   # path to QGis bin folder
-    qgis_python = u"%s/Applications/ngqgis.app/Contents/Resources/python" % qgis_app    # path to QGis python folder
+    qgis_python = u"%s/Applications/qgis-ng.app/Contents/Resources/python" % qgis_app    # path to QGis python folder
 
     # path to the GDAL framework within the Qgis application folder (QGis standalone only)
     qgis_standalone_gdal_path = u"%s/Library/Frameworks/gdal.framework" % qgis_app
