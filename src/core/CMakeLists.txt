@@ -891,7 +891,7 @@ set(TARGET_LINK_LIBEX ${TARGET_LINK_LIBEX}
     Qt4::QtSvg
     Qt4::QtSql
     Qt4::QtWebKit
-    
+
     ${QCA_LIBRARIES}
     ${PROJ4_LIBRARIES}
     ${GEOS_LIBRARIES}
@@ -932,7 +932,7 @@ set_target_properties(${LIB_NAME} PROPERTIES
 # install
 if(OSX_FRAMEWORK)
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -E create_symlink ../../Applications/${NG_PREFIX}${PROJECT_NAME}.app/Contents/Frameworks/${LIB_NAME}.framework ${PROJECT_BINARY_DIR}/symlinks/${LIB_NAME}.framework
+        COMMAND ${CMAKE_COMMAND} -E create_symlink ../../Applications/${QGIS_APP_NAME}.app/Contents/Frameworks/${LIB_NAME}.framework ${PROJECT_BINARY_DIR}/symlinks/${LIB_NAME}.framework
     )
 endif()
 
