@@ -356,9 +356,6 @@ static void translationPath(const QString &basePath,
 }
 #endif // Q_OS_MAC
 
-#include "ogr_api.h"
-#include "ogrsf_frmts.h"
-
 int main( int argc, char *argv[] )
 {
 #ifdef Q_OS_MAC
