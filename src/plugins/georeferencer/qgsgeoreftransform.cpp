@@ -18,13 +18,17 @@
 
 #include <gdal.h>
 #include <gdal_alg.h>
+#include <cpl_string.h>
 
 #include "qgsleastsquares.h"
 
 #include <cmath>
-
 #include <cassert>
 #include <limits>
+
+#if !defined(GDAL_COMPUTE_VERSION) || GDAL_VERSION_NUM < GDAL_COMPUTE_VERSION(2,0,0)
+#define CPLsnprintf snprintf
+#endif
 
 /**
  * A simple transform which is paremetrized by a translation and anistotropic scale.
@@ -511,7 +515,7 @@ bool QgsGDALGeorefTransform::updateParametersFromGCPs( const QVector<QgsPoint> &
   for ( int i = 0; i < n; i++ )
   {
     GCPList[i].pszId = new char[20];
-    snprintf( GCPList[i].pszId, 19, "gcp%i", i );
+    CPLsnprintf( GCPList[i].pszId, 19, "gcp%i", i );
     GCPList[i].pszInfo = nullptr;
     GCPList[i].dfGCPPixel =  pixelCoords[i].x();
     GCPList[i].dfGCPLine  = -pixelCoords[i].y();
