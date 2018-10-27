@@ -2569,6 +2569,15 @@ void QgsLinePatternFillSymbolLayer::applyPattern( const QgsSymbolV2RenderContext
   double outputPixelDist = distance * QgsSymbolLayerV2Utils::pixelSizeScaleFactor( ctx, mDistanceUnit, mDistanceMapUnitScale );
   double outputPixelOffset = mOffset * QgsSymbolLayerV2Utils::pixelSizeScaleFactor( ctx,  mOffsetUnit, mOffsetMapUnitScale );
 
+  // NOTE: this may need to be modified if we ever change from a forced rasterized/brush approach,
+  // because potentially we may want to allow vector based line pattern fills where the first line
+  // is offset by a large distance
+
+  // fix truncated pattern with larger offsets
+  outputPixelOffset = fmod( outputPixelOffset, outputPixelDist );
+  if ( outputPixelOffset > outputPixelDist / 2.0 )
+    outputPixelOffset -= outputPixelDist;
+
   // To get all patterns into image, we have to consider symbols size (estimateMaxBleed()).
   // For marker lines we have to get markers interval.
   double outputPixelBleed = 0;
@@ -2621,6 +2630,9 @@ void QgsLinePatternFillSymbolLayer::applyPattern( const QgsSymbolV2RenderContext
 
   //create image
   int height, width;
+  lineAngle = fmod( lineAngle, 360 );
+  if ( lineAngle < 0 )
+    lineAngle += 360;
   if ( qgsDoubleNear( lineAngle, 0 ) || qgsDoubleNear( lineAngle, 360 ) || qgsDoubleNear( lineAngle, 180 ) )
   {
     height = outputPixelDist;
@@ -2646,11 +2658,11 @@ void QgsLinePatternFillSymbolLayer::applyPattern( const QgsSymbolV2RenderContext
     height = qAbs( height );
     width = qAbs( width );
 
-    outputPixelDist = height * cos( lineAngle * M_PI / 180 );
+    outputPixelDist = qAbs( height * cos( lineAngle * M_PI / 180 ) );
 
     // Round offset to correspond to one pixel height, otherwise lines may
     // be shifted on tile border if offset falls close to pixel center
-    int offsetHeight = qRound( qAbs( outputPixelOffset / cos( lineAngle * M_PI / 180 ) ) );
+    int offsetHeight = qRound( outputPixelOffset / cos( lineAngle * M_PI / 180 ) );
     outputPixelOffset = offsetHeight * cos( lineAngle * M_PI / 180 );
   }
 
