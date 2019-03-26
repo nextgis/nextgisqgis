@@ -72,7 +72,7 @@ class ClassifierDialog : public QDialog, private Ui::ClassifierDialogBase
     QString mOutputFileName;
 
     RasterFileInfo mFileInfo;
-	
+
     // void rasterClassification( const QString& rasterFileName );
 
     // QString createSingleBandRaster();
