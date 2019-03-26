@@ -78,7 +78,7 @@ ClassifierDialog::ClassifierDialog( QWidget* parent)
   connect( btnMultiAbsence, SIGNAL( clicked() ), this, SLOT( selectLayers() ) );
   connect( btnOutputFile, SIGNAL( clicked() ), this, SLOT( selectOutputFile() ) );
   connect( rastersList, SIGNAL( itemSelectionChanged() ), this, SLOT( updateInputRasters() ) );
-  connect( rbDecisionTree, SIGNAL( toggled( bool ) ), this, SLOT( toggleDiscreteLabelsCheckBoxState( bool ) ) );
+  // connect( rbDecisionTree, SIGNAL( toggled( bool ) ), this, SLOT( toggleDiscreteLabelsCheckBoxState( bool ) ) );
   connect( generalizeCheckBox, SIGNAL( stateChanged( int ) ), this, SLOT( toggleKernelSizeSpinState( int ) ) );
   // connect( spnKernelSize, SIGNAL( editingFinished() ), this, SLOT( validateSize() ) );
 
@@ -118,7 +118,7 @@ void ClassifierDialog::selectLayers()
       cmbPresenceLayer->setEnabled( true );
       cmbPresenceLayer->setCurrentIndex( -1 );
       mPresenceLayers.clear();
-    
+
     layersCmbCustomization();
       return;
     }
@@ -137,7 +137,7 @@ void ClassifierDialog::selectLayers()
       cmbAbsenceLayer->setEnabled( true );
       cmbAbsenceLayer->setCurrentIndex( -1 );
       mAbsenceLayers.clear();
-    
+
     layersCmbCustomization();
       return;
     }
@@ -213,7 +213,7 @@ void ClassifierDialog::doClassificationExt()
 {
   bool is_valid = true;
 
-  if (leOutputRaster->text().isEmpty()) 
+  if (leOutputRaster->text().isEmpty())
   {
     leOutputRaster->setPlaceholderText( tr("Please, choose output file!") );
   leOutputRaster->setStyleSheet("background-color: rgba(255, 0, 0, 50);");
@@ -252,7 +252,7 @@ void ClassifierDialog::doClassificationExt()
   }
 
   if (cmbPresenceLayer->currentIndex() == -1)
-  { 
+  {
   cmbPresenceLayer->setEditable(true);
   cmbPresenceLayer->lineEdit()->setEnabled(false);
   cmbPresenceLayer->lineEdit()->setStyleSheet("background-color: rgba(255, 0, 0, 50);");
@@ -306,8 +306,8 @@ void ClassifierDialog::doClassificationExt()
   config.mOutputTrainLayer = fi.absoluteDir().absolutePath() + "/" + fi.baseName() + "_train_points.shp";
   config.mOutputModel = fi.absoluteDir().absolutePath() + "/" + fi.baseName() + "_tree.yaml";
 
-  config.use_decision_tree = rbDecisionTree->isChecked();
-  config.discrete_classes = discreteLabelsCheckBox->isChecked();
+  config.use_decision_tree = false; //rbDecisionTree->isChecked();
+  config.discrete_classes = false; //discreteLabelsCheckBox->isChecked();
 
   config.do_generalization = generalizeCheckBox->isChecked();
   config.kernel_size = spnKernelSize->value();
@@ -319,7 +319,7 @@ void ClassifierDialog::doClassificationExt()
   connect( worker, SIGNAL( progressSubStep(int) ), stepProgress, SLOT( setValue(int) ) );
   connect( worker, SIGNAL( finished() ), this, SLOT( finishedProcess() ) );
   QgsDebugMsg(QString("worker"));
-  
+
   thread = new QThread(this);
   worker->moveToThread(thread);
   connect( thread, SIGNAL( started() ), worker, SLOT( process() ) );
@@ -388,17 +388,17 @@ void ClassifierDialog::manageGui()
 
   // classification settings
   QString algorithm = settings.value( "classificationAlg", "dtree" ).toString();
-  if ( algorithm == "dtree" )
-  {
-    rbDecisionTree->setChecked( true );
-    discreteLabelsCheckBox->setEnabled( true );
-  }
-  else
+  // if ( algorithm == "dtree" )
+  // {
+  //   rbDecisionTree->setChecked( true );
+  //   discreteLabelsCheckBox->setEnabled( true );
+  // }
+  // else
   {
     rbRandomTrees->setChecked( true );
-    discreteLabelsCheckBox->setEnabled( false );
+    // discreteLabelsCheckBox->setEnabled( false );
   }
-  discreteLabelsCheckBox->setChecked( settings.value( "discreteClasses", true ).toBool() );
+  // discreteLabelsCheckBox->setChecked( settings.value( "discreteClasses", true ).toBool() );
 
   // populate vector layers comboboxes
   QMap<QString, QgsMapLayer*> mapLayers = QgsMapLayerRegistry::instance()->mapLayers();
@@ -507,10 +507,10 @@ void ClassifierDialog::cmbUserSelectionHandler( int index )
 }
 
 void ClassifierDialog::layersCmbCustomization()
-{ 
+{
   QStandardItemModel* aModel = qobject_cast<QStandardItemModel*>(cmbAbsenceLayer->model());
   for (int i = 0; i < aModel->rowCount(); ++i)
-  { 
+  {
     QStandardItem* aItem = aModel->item(i);
     aItem->setEnabled(true);
 

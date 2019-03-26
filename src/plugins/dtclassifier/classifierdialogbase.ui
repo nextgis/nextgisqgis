@@ -143,7 +143,7 @@
      <property name="title">
       <string>Settings</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <!--layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
@@ -155,7 +155,7 @@
            <bool>true</bool>
           </property>
          </widget>
-        </item>
+     </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
@@ -186,12 +186,15 @@
           </item>
          </layout>
         </item>
-       </layout>
+    </layout-->
       </item>
       <item>
        <widget class="QRadioButton" name="rbRandomTrees">
         <property name="text">
          <string>Use random forest</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
