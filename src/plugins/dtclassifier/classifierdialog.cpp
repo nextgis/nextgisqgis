@@ -452,14 +452,14 @@ void ClassifierDialog::manageGui()
 
 void ClassifierDialog::toggleDiscreteLabelsCheckBoxState( bool checked )
 {
-  if ( checked )
-  {
-    discreteLabelsCheckBox->setEnabled( true );
-  }
-  else
-  {
-    discreteLabelsCheckBox->setEnabled( false );
-  }
+  // if ( checked )
+  // {
+  //   discreteLabelsCheckBox->setEnabled( true );
+  // }
+  // else
+  // {
+  //   discreteLabelsCheckBox->setEnabled( false );
+  // }
 }
 
 void ClassifierDialog::toggleKernelSizeSpinState( int state )
