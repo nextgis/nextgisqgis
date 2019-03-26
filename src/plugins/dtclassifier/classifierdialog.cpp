@@ -273,7 +273,7 @@ void ClassifierDialog::doClassificationExt()
   // save checkboxes state
   QSettings settings( "NextGIS", "DTclassifier" );
 
-  settings.setValue( "discreteClasses", discreteLabelsCheckBox->isChecked() );
+  // settings.setValue( "discreteClasses", discreteLabelsCheckBox->isChecked() );
   settings.setValue( "addToCanvas", addToCanvasCheckBox->isChecked() );
   settings.setValue( "saveTempLayers", savePointLayersCheckBox->isChecked() );
 
