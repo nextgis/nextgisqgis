@@ -46,8 +46,8 @@ static const QString _ext_description = QObject::tr( "This plugin allows to sele
 
 static const QString _category = QObject::tr( "Raster" );
 static const QString _version = QString( "0.5.0" ); // Update to OpenCV 3.x
-static const QString _icon = ":/classifier/icons/classifier.png";
-static const QString _icon_48x48 = ":/classifier/icons/classifier_48x48.png";
+static const QString _icon = ":/classifier/icons/classifier.svg"; //":/classifier/icons/classifier.png";
+static const QString _icon_48x48 = ":/classifier/icons/classifier.svg"; //":/classifier/icons/classifier_48x48.png";
 
 
 Classifier::Classifier( QgisInterface* iface ):
@@ -64,7 +64,7 @@ Classifier::~Classifier()
 
 void Classifier::initGui()
 {
-    QIcon dtclIcon(":/classifier/icons/classifier.png");
+    QIcon dtclIcon(":/classifier/icons/classifier.svg");
     if(!NGAccess::instance().isFunctionAvailable("QGIS", "dtclassifier")) {
         dtclIcon = NGAccess::lockIcon(dtclIcon, QSize(48,48));
     }
@@ -88,7 +88,7 @@ void Classifier::initGui()
 
 void Classifier::onSupportInfoUpdated()
 {
-    QIcon dtclIcon(":/classifier/icons/classifier.png");
+    QIcon dtclIcon(":/classifier/icons/classifier.svg");
     if(!NGAccess::instance().isFunctionAvailable("QGIS", "dtclassifier")) {
         dtclIcon = NGAccess::lockIcon(dtclIcon, QSize(48,48));
     }
