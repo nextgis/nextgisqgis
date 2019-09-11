@@ -46,3 +46,5 @@ obj-*-linux-gnu/
 # generated files
 src/core/qgscontexthelp_texts.cpp
 src/core/qgsexpression_texts.cpp
+
+.vscode/*

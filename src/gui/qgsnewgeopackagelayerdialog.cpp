@@ -392,6 +392,7 @@ bool QgsNewGeoPackageLayerDialog::apply()
     QgsCoordinateReferenceSystem srs = QgsCRSCache::instance()->crsBySrsId( crsId );
     QString srsWkt = srs.toWkt();
     hSRS = OSRNewSpatialReference( srsWkt.toLocal8Bit().data() );
+    OSRSetAxisMappingStrategy(hSRS, OAMS_TRADITIONAL_GIS_ORDER);
   }
 
   // Set options

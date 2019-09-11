@@ -100,7 +100,7 @@ seenPluginGroup = "/Qgis/plugin-seen"
 
 # Repositories: (name, url, possible depreciated url)
 officialRepo = (QCoreApplication.translate("QgsPluginInstaller", "QGIS Official Plugin Repository"), "https://plugins.qgis.org/plugins/plugins.xml", "https://plugins.qgis.org/plugins")
-nextGISRepo = (QCoreApplication.translate("QgsPluginInstaller", "NextGIS Plugin Repository"), "http://nextgis.ru/programs/qgis/qgis-repo.xml")
+nextGISRepo = (QCoreApplication.translate("QgsPluginInstaller", "NextGIS Plugin Repository"), "https://rm.nextgis.com/api/repo/1/qgis_xml")
 depreciatedRepos = [
     ("Old QGIS Official Repository", "http://pyqgis.org/repo/official"),
     ("Old QGIS Contributed Repository", "http://pyqgis.org/repo/contributed"),
