@@ -43,8 +43,8 @@ qgis_version = '{}.{}'.format(qgis_major, qgis_minor)
 print 'QGIS sources version: ' + qgis_version
 
 metadata_xml_urls = [
-    'http://plugins.qgis.org/plugins/plugins.xml?qgis=' + qgis_version,
-    'http://nextgis.ru/programs/qgis/qgis-repo.xml?qgis=' + qgis_version
+    'https://plugins.qgis.org/plugins/plugins.xml?qgis=' + qgis_version,
+    'https://rm.nextgis.com/api/repo/1/qgis_xml?qgis=' + qgis_version
 ]
 
 # Create repos dir

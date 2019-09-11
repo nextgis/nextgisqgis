@@ -394,6 +394,7 @@ void QgsVectorFileWriter::init( QString vectorFileName,
     QString srsWkt = srs->toWkt();
     QgsDebugMsg( "WKT to save as is " + srsWkt );
     mOgrRef = OSRNewSpatialReference( srsWkt.toLocal8Bit().constData() );
+    OSRSetAxisMappingStrategy(mOgrRef, OAMS_TRADITIONAL_GIS_ORDER);
   }
 
   // datasource created, now create the output layer

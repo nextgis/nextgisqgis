@@ -63,12 +63,13 @@ if(GSL_FOUND)
     )
 endif()
 
-find_anyproject(OpenCV DEFAULT ON)
-if(OPENCV_FOUND AND NGSTD_FOUND)
-    set(PLG_PLUGINS ${PLG_PLUGINS}
-        dtclassifier
-    )
-endif()
+# TODO: Return back ufter opencv update.
+# find_anyproject(OpenCV DEFAULT ON)
+# if(OPENCV_FOUND AND NGSTD_FOUND)
+#     set(PLG_PLUGINS ${PLG_PLUGINS}
+#         dtclassifier
+#     )
+# endif()
 
 if(OCI_FOUND)
     set(PLG_PLUGINS ${PLG_PLUGINS}
