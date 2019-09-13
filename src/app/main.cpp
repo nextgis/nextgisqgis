@@ -794,6 +794,7 @@ int main( int argc, char *argv[] )
 #ifdef Q_OS_WIN
     putenv( QString("GDAL_DATA=" + QCoreApplication::applicationDirPath().append( "/../share/gdal" )).toUtf8().constData() );
     putenv( QString("GDAL_DRIVER_PATH=" + QCoreApplication::applicationDirPath().append( "/../" ) + QString( QGIS_PLUGIN_SUBDIR ) ).toUtf8().constData() );
+    putenv(QString("PROJ_LIB=" + QCoreApplication::applicationDirPath().append( "/../share/proj" )).toUtf8().constData());
     if(!getenv("SSL_CERT_FILE")) {
         putenv(QString("SSL_CERT_FILE=" + QCoreApplication::applicationDirPath().append( "/../share/ssl/certs/cert.pem" )).toUtf8().constData());
     }

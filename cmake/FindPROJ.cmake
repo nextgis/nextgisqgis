@@ -60,7 +60,7 @@ endif ()
 # Handle the QUIETLY and REQUIRED arguments and set SPATIALINDEX_FOUND to TRUE
 # if all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(PROJ4 
+find_package_handle_standard_args(PROJ 
                                   REQUIRED_VARS PROJ_LIBRARY PROJ_INCLUDE_DIR 
                                   VERSION_VAR PROJ_VERSION_STRING)
 
