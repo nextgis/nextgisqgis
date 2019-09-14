@@ -55,7 +55,7 @@ have_raven = True
 try:
     from raven import Client
     from raven.transport.requests import RequestsHTTPTransport
-    client = Client('https://71159235f0b542adb8ef214aa24f5aa6:11eae721ce1f490680c6adef9400b950@sentry.nextgis.com/9?timeout=15&verify_ssl=0',
+    client = Client('https://71159235f0b542adb8ef214aa24f5aa6@sentry.nextgis.com/9?timeout=17&verify_ssl=0',
         transport=RequestsHTTPTransport,
         processors = (
     	'raven.processors.SanitizePasswordsProcessor',
