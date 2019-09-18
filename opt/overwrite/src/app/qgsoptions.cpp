@@ -71,6 +71,7 @@
 
 #ifdef NGSTD_USING
 #include "framework/access/access.h"
+#include "core/request.h"
 #endif // NGSTD_USING
 
 /**
@@ -1169,6 +1170,13 @@ void QgsOptions::saveOptions()
   mSettings->setValue( "proxy/proxyUser", leProxyUser->text() );
   mSettings->setValue( "proxy/proxyPassword", leProxyPassword->text() );
   mSettings->setValue( "proxy/proxyType", mProxyTypeComboBox->currentText() );
+
+  // NEXTGIS:
+  NGRequest::setProxy(grpProxy->isChecked(), 
+    mProxyTypeComboBox->currentText() == "DefaultProxy", leProxyHost->text(), 
+    leProxyPort->text().toInt(), leProxyUser->text(), leProxyPassword->text(), 
+    "ANY");
+  // END NEXTGIS
 
   if ( !mCacheDirectory->text().isEmpty() )
     mSettings->setValue( "cache/directory", mCacheDirectory->text() );
