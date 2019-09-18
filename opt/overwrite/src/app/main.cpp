@@ -104,6 +104,10 @@ typedef SInt32 SRefCon;
 #include "ngqgsapplication.h"
 #include "ngcustomization.h"
 
+#ifdef NGSTD_USING
+#include "core/request.h"
+#endif // NGSTD_USING
+
 /** Print usage text
  */
 void usage( QString appName )
@@ -1015,6 +1019,20 @@ int main( int argc, char *argv[] )
     mySettings.remove( "/UI/state" );
     mySettings.remove( "/qgis/restoreDefaultWindowState" );
   }
+
+#ifdef NGSTD_USING  
+  QString proxyHost = mySettings.value( "proxy/proxyHost", "" ).toString();
+  int proxyPort = mySettings.value( "proxy/proxyPort", "" ).toString().toInt();
+  QString proxyUser = mySettings.value( "proxy/proxyUser", "" ).toString();
+  QString proxyPassword = mySettings.value( "proxy/proxyPassword", "" ).toString();
+  QString proxyTypeString =  mySettings.value( "proxy/proxyType", "" ).toString();
+
+
+  NGRequest::setProxy(mySettings.value( "proxy/proxyEnabled", false ).toBool(), 
+    proxyTypeString == "DefaultProxy", proxyHost, 
+    proxyPort, proxyUser, proxyPassword, 
+    "ANY");
+#endif // NGSTD_USING 
 
   // set max. thread count
   // this should be done in QgsApplication::init() but it doesn't know the settings dir.

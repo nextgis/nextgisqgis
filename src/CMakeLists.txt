@@ -72,7 +72,7 @@ if(NOT PREPARE_ONLY)
         add_definitions(-DHAVE_ORACLE=1)
     endif()
 
-    find_anyproject(NGSTD REQUIRED COMPONENTS framework4)
+    find_anyproject(NGSTD REQUIRED COMPONENTS core4 framework4)
     if(NGSTD_FOUND)
         add_definitions(-DNGSTD_USING)
     endif()
