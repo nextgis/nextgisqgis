@@ -1459,6 +1459,8 @@ void NGQgisApp::createToolBars()
                                      "user_info.read");
   toolbAuth->setCursor(Qt::PointingHandCursor);
   mNGAccountToolBar->addWidget(toolbAuth);
+  NGAccess::instance().setEndPoint( settings.value("nextgis/endpoint", 
+    NGAccess::instance().endPoint() ).toString());
   // TODO: QObject::connect(toolbAuth, SIGNAL(supportInfoUpdated()), this, SLOT(onSupportInfoUpdated()));
 #endif
 
