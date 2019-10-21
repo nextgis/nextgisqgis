@@ -947,7 +947,10 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl )
 
   // NextGIS settings
 #ifdef NGSTD_USING
-  if(NGAccess::instance().isUserAuthorized()) {
+  if(NGAccess::instance().isEnterprise()) {
+    authGroupBox->hide();
+  }
+  else if(NGAccess::instance().isUserAuthorized()) {
       avatar->setText(QString("<html><head/><body><p><img src=\"%1\" height=\"64\"/></p></body></html>")
                   .arg(NGAccess::instance().avatarFilePath()));
 
@@ -957,12 +960,17 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl )
                                 .arg(NGAccess::instance().isUserSupported() ?
                                          tr("Supported") : tr("Unsupported")));
       sendCrashes->setEnabled(true);
+      authGroupBox->show();
+      signButton->setText(tr("Exit"));
   }
   else {
       avatar->setText("");
       descriptionText->setText(tr("Not authorized"));
       sendCrashes->setEnabled(false);
+      authGroupBox->show();
+      signButton->setText(tr("Sign in"));
   }
+  endpointEdit->setText( mSettings->value( "nextgis/endpoint", NGAccess::instance().endPoint() ).toString() );
   sendCrashes->setChecked( mSettings->value( "nextgis/sendCrashes", "0" ).toBool() );
 
 #endif // NGSTD_USING
@@ -971,6 +979,16 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl )
 
   // restore window and widget geometry/state
   restoreOptionsBaseUi();
+}
+
+void QgsOptions::on_signinButton_clicked()
+{
+    if(NGAccess::instance().isUserAuthorized()) {
+        NGAccess::instance().exit();
+    }
+    else {
+        NGAccess::instance().authorize();
+    }
 }
 
 //! Destructor
@@ -1520,6 +1538,7 @@ void QgsOptions::saveOptions()
 
   // NextGIS settings
   mSettings->setValue( "nextgis/sendCrashes", sendCrashes->isChecked() );
+  mSettings->setValue( "nextgis/enpoint", endpointEdit->text() );
 
   //save variables
   QgsExpressionContextUtils::setGlobalVariables( mVariableEditor->variablesInActiveScope() );
