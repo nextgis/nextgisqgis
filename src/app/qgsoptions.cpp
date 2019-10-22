@@ -946,7 +946,17 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl )
   mSettings->setValue( key, mSettings->value( key, 200000 ) );
 
   // NextGIS settings
-#ifdef NGSTD_USING
+  ngInitControls();
+
+  mAdvancedSettingsEditor->setSettingsObject( mSettings );
+
+  // restore window and widget geometry/state
+  restoreOptionsBaseUi();
+}
+
+void QgsOptions::ngInitControls() 
+{
+#ifdef NGSTD_USING   
   if(NGAccess::instance().isEnterprise()) {
     authGroupBox->hide();
   }
@@ -961,34 +971,32 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl )
                                          tr("Supported") : tr("Unsupported")));
       sendCrashes->setEnabled(true);
       authGroupBox->show();
-      signButton->setText(tr("Exit"));
+      signinButton->setText(tr("Exit"));
   }
   else {
       avatar->setText("");
       descriptionText->setText(tr("Not authorized"));
       sendCrashes->setEnabled(false);
       authGroupBox->show();
-      signButton->setText(tr("Sign in"));
+      signinButton->setText(tr("Sign in"));
   }
   endpointEdit->setText( mSettings->value( "nextgis/endpoint", NGAccess::instance().endPoint() ).toString() );
   sendCrashes->setChecked( mSettings->value( "nextgis/sendCrashes", "0" ).toBool() );
-
-#endif // NGSTD_USING
-
-  mAdvancedSettingsEditor->setSettingsObject( mSettings );
-
-  // restore window and widget geometry/state
-  restoreOptionsBaseUi();
+#endif // NGSTD_USING  
 }
 
 void QgsOptions::on_signinButton_clicked()
 {
+#ifdef NGSTD_USING  
     if(NGAccess::instance().isUserAuthorized()) {
         NGAccess::instance().exit();
+        
     }
     else {
         NGAccess::instance().authorize();
     }
+#endif // NGSTD_USING  
+    ngInitControls();  
 }
 
 //! Destructor
