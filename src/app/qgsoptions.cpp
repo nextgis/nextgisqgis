@@ -947,11 +947,17 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl )
 
   // NextGIS settings
   ngInitControls();
+  connect(&NGAccess::instance(), SIGNAL(userInfoUpdated()), this, SLOT(onUserInfoUpdated()));
 
   mAdvancedSettingsEditor->setSettingsObject( mSettings );
 
   // restore window and widget geometry/state
   restoreOptionsBaseUi();
+}
+
+void QgsOptions::onUserInfoUpdated()
+{
+    ngInitControls();
 }
 
 void QgsOptions::ngInitControls() 
@@ -995,8 +1001,7 @@ void QgsOptions::on_signinButton_clicked()
     else {
         NGAccess::instance().authorize();
     }
-#endif // NGSTD_USING  
-    ngInitControls();  
+#endif // NGSTD_USING
 }
 
 //! Destructor
