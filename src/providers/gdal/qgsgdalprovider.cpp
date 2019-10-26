@@ -200,7 +200,6 @@ bool QgsGdalProvider::crsFromWkt( const char *wkt )
 {
 
   OGRSpatialReferenceH hCRS = OSRNewSpatialReference( nullptr );
-  OSRSetAxisMappingStrategy(hCRS, OAMS_TRADITIONAL_GIS_ORDER);
 
   if ( OSRImportFromWkt( hCRS, ( char ** ) &wkt ) == OGRERR_NONE )
   {
