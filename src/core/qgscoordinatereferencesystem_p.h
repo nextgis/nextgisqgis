@@ -52,7 +52,6 @@ class QgsCoordinateReferenceSystemPrivate : public QSharedData
         , mAxisInvertedDirty( false )
         , mAxisInverted( false )
     {
-      OSRSetAxisMappingStrategy(mCRS, OAMS_TRADITIONAL_GIS_ORDER);
     }
 
     QgsCoordinateReferenceSystemPrivate( const QgsCoordinateReferenceSystemPrivate& other )
@@ -80,7 +79,6 @@ class QgsCoordinateReferenceSystemPrivate : public QSharedData
       else
       {
         mCRS = OSRNewSpatialReference( nullptr );
-        OSRSetAxisMappingStrategy(mCRS, OAMS_TRADITIONAL_GIS_ORDER);
       }
     }
 

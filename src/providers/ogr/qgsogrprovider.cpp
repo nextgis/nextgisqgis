@@ -2788,7 +2788,6 @@ QGISEXTERN bool createEmptyDataSource( const QString &uri,
   if ( !myWkt.isNull()  &&  myWkt.length() != 0 )
   {
     reference = OSRNewSpatialReference( myWkt.toLocal8Bit().data() );
-    OSRSetAxisMappingStrategy(reference, OAMS_TRADITIONAL_GIS_ORDER);
   }
 
   // Map the qgis geometry type to the OGR geometry type

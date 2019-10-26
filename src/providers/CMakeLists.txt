@@ -62,6 +62,12 @@ if(OCI_FOUND)
     )
 endif()
 
+if(WIN32)
+    set(PROV_PLUGINS ${PROV_PLUGINS}
+        mssql
+    )
+endif()
+
 macro(add_provider PLUGIN_NAME)
     include_directories (${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME})
     file(GLOB PROV_${PLUGIN_NAME}_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.h")
@@ -95,7 +101,7 @@ macro(add_provider PLUGIN_NAME)
         target_link_libraries(${PLUGIN_NAME}provider PRIVATE ${POSTGRESQL_LIBRARIES})
     endif()
 
-    if("${PLUGIN_NAME}" STREQUAL "oracle")
+    if("${PLUGIN_NAME}" STREQUAL "oracle" OR "${PLUGIN_NAME}" STREQUAL "mssql")
         target_link_libraries(${PLUGIN_NAME}provider PRIVATE Qt4::QtSql)
     endif()
 
