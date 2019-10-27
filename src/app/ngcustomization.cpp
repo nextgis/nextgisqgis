@@ -833,7 +833,7 @@ void NGQgisApp::createActions()
   connect( mActionAddPgLayer, SIGNAL( triggered() ), this, SLOT( addDatabaseLayer() ) );
   connect( mActionAddSpatiaLiteLayer, SIGNAL( triggered() ), this, SLOT( addSpatiaLiteLayer() ) );
   connect( mActionAddMssqlLayer, SIGNAL( triggered() ), this, SLOT( addMssqlLayer() ) );
-  connect( mActionAddDb2Layer, SIGNAL( triggered() ), this, SLOT( addDb2Layer() ) );
+  // connect( mActionAddDb2Layer, SIGNAL( triggered() ), this, SLOT( addDb2Layer() ) );
   connect( mActionAddOracleLayer, SIGNAL( triggered() ), this, SLOT( addOracleLayer() ) );
   connect( mActionAddWmsLayer, SIGNAL( triggered() ), this, SLOT( addWmsLayer() ) );
   connect( mActionAddWcsLayer, SIGNAL( triggered() ), this, SLOT( addWcsLayer() ) );
@@ -1382,8 +1382,8 @@ void NGQgisApp::createToolBars()
     bt->addAction( mActionAddPgLayer );
   if ( mActionAddMssqlLayer )
     bt->addAction( mActionAddMssqlLayer );
-  if ( mActionAddDb2Layer )
-    bt->addAction( mActionAddDb2Layer );
+  // if ( mActionAddDb2Layer )
+  //   bt->addAction( mActionAddDb2Layer );
   if ( mActionAddOracleLayer )
     bt->addAction( mActionAddOracleLayer );
   QAction* defAddDbLayerAction = mActionAddPgLayer;
@@ -1396,7 +1396,7 @@ void NGQgisApp::createToolBars()
       defAddDbLayerAction = mActionAddMssqlLayer;
       break;
     case 2:
-      defAddDbLayerAction = mActionAddDb2Layer;
+      // defAddDbLayerAction = mActionAddDb2Layer;
       break;
     case 3:
       defAddDbLayerAction = mActionAddOracleLayer;
@@ -1629,7 +1629,7 @@ void NGQgisApp::setTheme( const QString& theThemeName )
   mActionNewSpatiaLiteLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionNewSpatiaLiteLayer.svg" ) );
   mActionAddSpatiaLiteLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddSpatiaLiteLayer.svg" ) );
   mActionAddMssqlLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddMssqlLayer.svg" ) );
-  mActionAddDb2Layer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddDb2Layer.svg" ) );
+  // mActionAddDb2Layer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddDb2Layer.svg" ) );
 #ifdef HAVE_ORACLE
   mActionAddOracleLayer->setIcon( NGQgsApplication::getThemeIcon( "/mActionAddOracleLayer.svg" ) );
 #endif
