@@ -63,7 +63,7 @@ if(GSL_FOUND)
     )
 endif()
 
-# TODO: Return back ufter opencv update.
+# TODO: Return back after opencv update.
 # find_anyproject(OpenCV DEFAULT ON)
 # if(OPENCV_FOUND AND NGSTD_FOUND)
 #     set(PLG_PLUGINS ${PLG_PLUGINS}
