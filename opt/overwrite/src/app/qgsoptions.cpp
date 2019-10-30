@@ -993,12 +993,13 @@ void QgsOptions::ngInitControls()
 
 void QgsOptions::on_signinButton_clicked()
 {
+    mSettings->setValue( "nextgis/endpoint", endpointEdit->text() );
 #ifdef NGSTD_USING  
     if(NGAccess::instance().isUserAuthorized()) {
         NGAccess::instance().exit();
-        
     }
     else {
+        NGAccess::instance().setEndPoint( endpointEdit->text() ).toString());
         NGAccess::instance().authorize();
     }
 #endif // NGSTD_USING
@@ -1551,7 +1552,7 @@ void QgsOptions::saveOptions()
 
   // NextGIS settings
   mSettings->setValue( "nextgis/sendCrashes", sendCrashes->isChecked() );
-  mSettings->setValue( "nextgis/enpoint", endpointEdit->text() );
+  mSettings->setValue( "nextgis/endpoint", endpointEdit->text() );
 
   //save variables
   QgsExpressionContextUtils::setGlobalVariables( mVariableEditor->variablesInActiveScope() );
