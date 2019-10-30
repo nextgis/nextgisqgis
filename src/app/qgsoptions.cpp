@@ -999,7 +999,7 @@ void QgsOptions::on_signinButton_clicked()
         NGAccess::instance().exit();
     }
     else {
-        NGAccess::instance().setEndPoint( endpointEdit->text() ).toString());
+        NGAccess::instance().setEndPoint( endpointEdit->text() );
         NGAccess::instance().authorize();
     }
 #endif // NGSTD_USING
