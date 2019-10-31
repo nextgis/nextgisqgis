@@ -1456,7 +1456,7 @@ void NGQgisApp::createToolBars()
 
 #ifdef NGSTD_USING
   QString endPoint = settings.value("nextgis/endpoint", 
-    NGAccess::instance().endPoint() ).toString());  
+    NGAccess::instance().endPoint() ).toString();  
   NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
                                      QLatin1String("user_info.read"), endPoint);
   toolbAuth->setCursor(Qt::PointingHandCursor);
