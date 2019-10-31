@@ -1455,12 +1455,12 @@ void NGQgisApp::createToolBars()
   mNGAccountToolBar->addWidget(spacer);
 
 #ifdef NGSTD_USING
-  NGSignInButton *toolbAuth = new NGSignInButton(QString("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
-                                     "user_info.read");
+  QString endPoint = settings.value("nextgis/endpoint", 
+    NGAccess::instance().endPoint() ).toString());  
+  NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
+                                     QLatin1String("user_info.read"), endPoint);
   toolbAuth->setCursor(Qt::PointingHandCursor);
   mNGAccountToolBar->addWidget(toolbAuth);
-  NGAccess::instance().setEndPoint( settings.value("nextgis/endpoint", 
-    NGAccess::instance().endPoint() ).toString());
   // TODO: QObject::connect(toolbAuth, SIGNAL(supportInfoUpdated()), this, SLOT(onSupportInfoUpdated()));
 #endif
 
