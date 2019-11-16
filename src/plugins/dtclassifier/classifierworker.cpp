@@ -40,7 +40,7 @@
 #if CV_MAJOR_VERSION == 2
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
-#elif CV_MAJOR_VERSION == 3
+#elif CV_MAJOR_VERSION > 3
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
 #define CV_ROW_SAMPLE ml::ROW_SAMPLE
@@ -143,7 +143,7 @@ QString ClassifierWorker::smoothRaster( const QString& path )
     QgsDebugMsg(QString("ClassifierWorker::smoothRaster img->cols: %1").arg(img->cols));
 
     cvSmooth( img, outImg, CV_MEDIAN, mConfig.kernel_size );
-#elif CV_MAJOR_VERSION == 3
+#elif CV_MAJOR_VERSION > 2
 
     Mat img = imread( path.toStdString(), IMREAD_UNCHANGED );
     QgsDebugMsg(QString("ClassifierWorker::smoothRaster img->rows: %1").arg(img->rows));
@@ -192,7 +192,7 @@ QString ClassifierWorker::smoothRaster( const QString& path )
 
     cvReleaseMat( &img );
     cvReleaseMat( &outImg );
-#elif CV_MAJOR_VERSION == 3
+#elif CV_MAJOR_VERSION > 2
     int res = outRaster->RasterIO( GF_Write, 0, 0, mEnv->mResultInputRasterFileInfo->xSize(), mEnv->mResultInputRasterFileInfo->ySize(), (void*)outImg.data, mEnv->mResultInputRasterFileInfo->xSize(), mEnv->mResultInputRasterFileInfo->ySize(), GDT_Byte, 1, 0, 0, 0, 0 );
 #endif
     Q_UNUSED(res)
