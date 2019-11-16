@@ -33,7 +33,7 @@
 #include "opencv2/core/core_c.h"
 #define CV_DTREES CvDTree*
 #define CV_RTREES CvRTrees*
-#elif CV_MAJOR_VERSION == 3
+#elif CV_MAJOR_VERSION > 2
 #include "opencv2/core/core.hpp"
 #define CV_DTREES Ptr<ml::DTrees>
 #define CV_RTREES Ptr<ml::RTrees>
