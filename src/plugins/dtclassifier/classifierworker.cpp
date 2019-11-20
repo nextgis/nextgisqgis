@@ -942,7 +942,7 @@ PrepareModel::~PrepareModel()
 #if CV_MAJOR_VERSION == 2
     mEnv->mDTree = NULL;
     mEnv->mRTree = NULL;
-#elif CV_MAJOR_VERSION == 3
+#elif CV_MAJOR_VERSION > 2
     mEnv->mDTree.release();
     mEnv->mRTree.release();
 #endif
@@ -971,7 +971,7 @@ void PrepareModel::doWork()
 #if CV_MAJOR_VERSION == 2
     mDTree = new CvDTree();
     mRTree = new CvRTrees();
-#elif CV_MAJOR_VERSION == 3
+#elif CV_MAJOR_VERSION > 2
     mDTree = ml::DTrees::create();
     mRTree = ml::RTrees::create();
 #endif
@@ -983,7 +983,7 @@ void PrepareModel::doWork()
             mDTree->load(mConfig->mInputModel.toUtf8());
         else
             mRTree->load(mConfig->mInputModel.toUtf8());
-#elif CV_MAJOR_VERSION == 3
+#elif CV_MAJOR_VERSION > 2
         if ( mConfig->use_decision_tree )
         // https://docs.opencv.org/3.2.0/d3/d46/classcv_1_1Algorithm.html#a623841c33b58ea9c4847da04607e067b
         // Ptr<SVM> svm = Algorithm::load<SVM>("my_svm_model.xml");
@@ -1024,7 +1024,7 @@ void PrepareModel::doWork()
         {
           mDTree->train( mEnv->mTrainData, CV_ROW_SAMPLE, mEnv->mTrainResponses, Mat(), Mat(), Mat(), Mat(), params );
         }
-#elif CV_MAJOR_VERSION == 3
+#elif CV_MAJOR_VERSION > 2
         mDTree->setMaxDepth(8);
         mDTree->setMinSampleCount(10);
         mDTree->setRegressionAccuracy(0);
@@ -1068,7 +1068,7 @@ void PrepareModel::doWork()
         mDTree->save( treeFileName.toUtf8(), "MyTree" );
     else
         mRTree->save( treeFileName.toUtf8(), "MyTree" );
-#elif CV_MAJOR_VERSION == 3
+#elif CV_MAJOR_VERSION > 2
     if ( mConfig->use_decision_tree )
         mDTree->save( treeFileName.toStdString() );
     else
@@ -1140,7 +1140,7 @@ void Classify::doWork()
         {
 #if CV_MAJOR_VERSION == 2
           outData[ col ] = (unsigned char)mEnv->mDTree->predict( sample )->value;
-#elif CV_MAJOR_VERSION == 3
+#elif CV_MAJOR_VERSION > 2
           outData[ col ] = (unsigned char)mEnv->mDTree->predict( sample );
 #endif
         }
