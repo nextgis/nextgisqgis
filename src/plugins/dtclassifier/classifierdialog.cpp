@@ -52,6 +52,7 @@
 #include "qgsvectordataprovider.h"
 #include "qgsvectorlayer.h"
 #include "qgsvectorfilewriter.h"
+#include "qgsgeometryvalidator.h"
 
 #include "classifierdialog.h"
 #include "layerselectordialog.h"
@@ -68,6 +69,9 @@ ClassifierDialog::ClassifierDialog( QWidget* parent)
   cmbAbsenceLayer->clear();
 
   manageGui();
+
+	clearPresenceLayersValidationError();
+	clearAbsenceLayersValidationError();
 
   // need this for working with rasters
   GDALAllRegister();
@@ -106,6 +110,7 @@ void ClassifierDialog::selectLayers()
 
   if ( senderName == "btnMultiPresence" )
   {
+		clearPresenceLayersValidationError();
     if ( btnMultiPresence->isChecked() )
     {
       //dlg.setLayerList( &mPresenceLayers );
@@ -125,6 +130,7 @@ void ClassifierDialog::selectLayers()
   }
   else
   {
+		clearAbsenceLayersValidationError();
     if ( btnMultiAbsence->isChecked() )
     {
       //dlg.setLayerList( &mAbsenceLayers );
@@ -267,6 +273,50 @@ void ClassifierDialog::doClassificationExt()
 
   if (is_valid == false)
     return;
+
+	for (int i = 0; i < mPresenceLayers.size(); ++i )
+	{
+		QString layerName = mPresenceLayers.at( i );
+		QgsVectorLayer* layer = vectorLayerByName( layerName );
+
+		QgsFeature inFeat;
+		QgsVectorDataProvider* srcProvider = layer->dataProvider();
+		QgsFeatureIterator fit = srcProvider->getFeatures();
+		fit.rewind();
+		while ( fit.nextFeature( inFeat ) )
+		{
+			QList< QgsGeometry::Error > errors;
+			QgsGeometryValidator::validateGeometry(inFeat.geometry(), errors);
+
+			if (errors.size() > 0)
+			{
+				setPresenceLayersValidationError(tr("There are invalid geometries in selected layer(s)!"));
+			  return;
+			}
+		}
+	}
+
+	for (int i = 0; i < mAbsenceLayers.size(); ++i )
+	{
+		QString layerName = mAbsenceLayers.at( i );
+		QgsVectorLayer* layer = vectorLayerByName( layerName );
+
+		QgsFeature inFeat;
+		QgsVectorDataProvider* srcProvider = layer->dataProvider();
+		QgsFeatureIterator fit = srcProvider->getFeatures();
+		fit.rewind();
+		while ( fit.nextFeature( inFeat ) )
+		{
+			QList< QgsGeometry::Error > errors;
+			QgsGeometryValidator::validateGeometry(inFeat.geometry(), errors);
+
+			if (errors.size() > 0)
+			{
+				setAbsenceLayersValidationError(tr("There are invalid geometries in selected layer(s)!"));
+			  return;
+			}
+		}
+	}
 
   buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 
@@ -488,6 +538,8 @@ void ClassifierDialog::cmbUserSelectionHandler( int index )
   QString senderName = sender()->objectName();
   if (senderName == cmbPresenceLayer->objectName())
   {
+    clearPresenceLayersValidationError();
+
     mPresenceLayers.clear();
     if (index != -1)
     {
@@ -496,6 +548,8 @@ void ClassifierDialog::cmbUserSelectionHandler( int index )
   }
   if (senderName == cmbAbsenceLayer->objectName())
   {
+    clearAbsenceLayersValidationError();
+
     mAbsenceLayers.clear();
     if (index != -1)
     {
@@ -563,4 +617,40 @@ void ClassifierDialog::updateStepProgress()
 {
   stepProgress->setValue( stepProgress->value() + 1 );
   QApplication::processEvents();
+}
+
+void ClassifierDialog::setPresenceLayersValidationError(const QString& msg)
+{
+	cmbPresenceLayer->setEditable(true);
+	cmbPresenceLayer->lineEdit()->setEnabled(false);
+	cmbPresenceLayer->lineEdit()->setStyleSheet("background-color: rgba(255, 0, 0, 50);");
+	presence_msg->setText(msg);
+}
+
+void ClassifierDialog::clearPresenceLayersValidationError()
+{
+	if (cmbPresenceLayer->lineEdit())
+	{
+	  cmbPresenceLayer->lineEdit()->setStyleSheet("background-color: rgba(255, 255, 255, 0);");
+		cmbPresenceLayer->setEditable(false);
+	}
+	presence_msg->setText("");
+}
+
+void ClassifierDialog::setAbsenceLayersValidationError(const QString& msg)
+{
+	cmbAbsenceLayer->setEditable(true);
+	cmbAbsenceLayer->lineEdit()->setEnabled(false);
+	cmbAbsenceLayer->lineEdit()->setStyleSheet("background-color: rgba(255, 0, 0, 50);");
+	absence_msg->setText(msg);
+}
+
+void ClassifierDialog::clearAbsenceLayersValidationError()
+{
+	if (cmbAbsenceLayer->lineEdit())
+	{
+		cmbAbsenceLayer->lineEdit()->setStyleSheet("background-color: rgba(255, 255, 255, 0);");
+		cmbAbsenceLayer->setEditable(false);
+	}
+	absence_msg->setText("");
 }
