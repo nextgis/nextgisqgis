@@ -99,6 +99,11 @@ class ClassifierDialog : public QDialog, private Ui::ClassifierDialogBase
 
     void layersCmbCustomization();
 
+    void setPresenceLayersValidationError(const QString& msg);
+    void clearPresenceLayersValidationError();
+    void setAbsenceLayersValidationError(const QString& msg);
+    void clearAbsenceLayersValidationError();
+
   private slots:
     void finishedProcess();
 };
