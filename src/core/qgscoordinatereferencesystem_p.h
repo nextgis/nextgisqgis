@@ -52,7 +52,9 @@ class QgsCoordinateReferenceSystemPrivate : public QSharedData
         , mAxisInvertedDirty( false )
         , mAxisInverted( false )
     {
+      #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
       OSRSetAxisMappingStrategy(mCRS, OAMS_TRADITIONAL_GIS_ORDER);
+      #endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
     }
 
     QgsCoordinateReferenceSystemPrivate( const QgsCoordinateReferenceSystemPrivate& other )
@@ -80,7 +82,9 @@ class QgsCoordinateReferenceSystemPrivate : public QSharedData
       else
       {
         mCRS = OSRNewSpatialReference( nullptr );
+        #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
         OSRSetAxisMappingStrategy(mCRS, OAMS_TRADITIONAL_GIS_ORDER);
+        #endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
       }
     }
 

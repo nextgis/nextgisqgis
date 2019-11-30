@@ -152,7 +152,9 @@ bool QgsCoordinateReferenceSystem::createFromUserInput( const QString &theDefini
   QString theWkt;
   char *wkt = nullptr;
   OGRSpatialReferenceH crs = OSRNewSpatialReference( nullptr );
+  #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
   OSRSetAxisMappingStrategy(crs, OAMS_TRADITIONAL_GIS_ORDER);
+  #endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
 
   // make sure towgs84 parameter is loaded if using an ESRI definition and gdal >= 1.9
 #if GDAL_VERSION_NUM >= 1900
@@ -351,7 +353,9 @@ bool QgsCoordinateReferenceSystem::loadFromDb( const QString& db, const QString&
     {
       OSRDestroySpatialReference( d->mCRS );
       d->mCRS = OSRNewSpatialReference( nullptr );
+      #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
       OSRSetAxisMappingStrategy(d->mCRS, OAMS_TRADITIONAL_GIS_ORDER);
+      #endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
       d->mIsValid = OSRSetFromUserInput( d->mCRS, d->mAuthId.toLower().toAscii() ) == OGRERR_NONE;
       setMapUnits();
     }
@@ -381,7 +385,9 @@ bool QgsCoordinateReferenceSystem::axisInverted() const
     if ( orientation == OAO_Other && d->mAuthId.startsWith( "EPSG:", Qt::CaseInsensitive ) )
     {
       OGRSpatialReferenceH crs = OSRNewSpatialReference( nullptr );
+      #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
       OSRSetAxisMappingStrategy(crs, OAMS_TRADITIONAL_GIS_ORDER);
+      #endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
       if ( OSRImportFromEPSGA( crs, d->mAuthId.mid( 5 ).toInt() ) == OGRERR_NONE )
       {
         OSRGetAxis( crs, OSRIsGeographic( crs ) ? "GEOGCS" : "PROJCS", 0, &orientation );
@@ -901,7 +907,9 @@ void QgsCoordinateReferenceSystem::setProj4String( const QString& theProj4String
 
   OSRDestroySpatialReference( d->mCRS );
   d->mCRS = OSRNewSpatialReference( nullptr );
+  #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
   OSRSetAxisMappingStrategy(d->mCRS, OAMS_TRADITIONAL_GIS_ORDER);
+  #endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
   d->mIsValid = OSRImportFromProj4( d->mCRS, theProj4String.trimmed().toLatin1().constData() ) == OGRERR_NONE;
   // OSRImportFromProj4() may accept strings that are not valid proj.4 strings,
   // e.g if they lack a +ellps parameter, it will automatically add +ellps=WGS84, but as
@@ -1617,7 +1625,9 @@ bool QgsCoordinateReferenceSystem::loadWkts( QHash<int, QString> &wkts, const ch
 bool QgsCoordinateReferenceSystem::loadIDs( QHash<int, QString> &wkts )
 {
   OGRSpatialReferenceH crs = OSRNewSpatialReference( nullptr );
+  #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
   OSRSetAxisMappingStrategy(crs, OAMS_TRADITIONAL_GIS_ORDER);
+  #endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
   Q_FOREACH ( const QString& csv, QStringList() << "gcs.csv" << "pcs.csv" << "vertcs.csv" << "compdcs.csv" << "geoccs.csv" )
   {
     QString filename = CPLFindFile( "gdal", csv.toUtf8() );
@@ -1716,7 +1726,9 @@ int QgsCoordinateReferenceSystem::syncDb()
   ( void )sqlite3_exec( database, "UPDATE tbl_srs SET srid=141001 WHERE srid=41001 AND auth_name='OSGEO' AND auth_id='41001'", nullptr, 0, 0 );
 
   OGRSpatialReferenceH crs = OSRNewSpatialReference( nullptr );
+  #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
   OSRSetAxisMappingStrategy(crs, OAMS_TRADITIONAL_GIS_ORDER);
+  #endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
   const char *tail;
   sqlite3_stmt *select;
   char *errMsg = nullptr;

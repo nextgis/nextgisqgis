@@ -2788,7 +2788,9 @@ QGISEXTERN bool createEmptyDataSource( const QString &uri,
   if ( !myWkt.isNull()  &&  myWkt.length() != 0 )
   {
     reference = OSRNewSpatialReference( myWkt.toLocal8Bit().data() );
+    #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
     OSRSetAxisMappingStrategy(reference, OAMS_TRADITIONAL_GIS_ORDER);
+    #endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
   }
 
   // Map the qgis geometry type to the OGR geometry type

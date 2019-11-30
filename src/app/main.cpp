@@ -1021,17 +1021,18 @@ int main( int argc, char *argv[] )
   }
 
 #ifdef NGSTD_USING  
+#if NGLIB_VERSION_NUMBER > 1100
   QString proxyHost = mySettings.value( "proxy/proxyHost", "" ).toString();
   int proxyPort = mySettings.value( "proxy/proxyPort", "" ).toString().toInt();
   QString proxyUser = mySettings.value( "proxy/proxyUser", "" ).toString();
   QString proxyPassword = mySettings.value( "proxy/proxyPassword", "" ).toString();
   QString proxyTypeString =  mySettings.value( "proxy/proxyType", "" ).toString();
 
-
   NGRequest::setProxy(mySettings.value( "proxy/proxyEnabled", false ).toBool(), 
     proxyTypeString == "DefaultProxy", proxyHost, 
     proxyPort, proxyUser, proxyPassword, 
     "ANY");
+#endif // NGLIB_VERSION_NUMBER > 1100    
 #endif // NGSTD_USING 
 
   // set max. thread count

@@ -392,7 +392,9 @@ bool QgsNewGeoPackageLayerDialog::apply()
     QgsCoordinateReferenceSystem srs = QgsCRSCache::instance()->crsBySrsId( crsId );
     QString srsWkt = srs.toWkt();
     hSRS = OSRNewSpatialReference( srsWkt.toLocal8Bit().data() );
+    #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
     OSRSetAxisMappingStrategy(hSRS, OAMS_TRADITIONAL_GIS_ORDER);
+    #endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
   }
 
   // Set options

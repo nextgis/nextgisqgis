@@ -106,7 +106,9 @@ bool QgsImageWarper::createDestinationDataset( const QString &outputName, GDALDa
   if ( crs.isValid() )
   {
     OGRSpatialReferenceH oTargetSRS = OSRNewSpatialReference( nullptr );
+    #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
     OSRSetAxisMappingStrategy(oTargetSRS, OAMS_TRADITIONAL_GIS_ORDER);
+    #endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
     OGRErr err = OSRImportFromProj4( oTargetSRS, crs.toProj4().toUtf8() );
     if ( err != CE_None )
     {

@@ -76,7 +76,9 @@ bool QgsOgrLayerItem::setCrs( QgsCoordinateReferenceSystem crs )
 
   // save ordinary .prj file
   OGRSpatialReferenceH hSRS = OSRNewSpatialReference( wkt.toLocal8Bit().data() );
+  #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
   OSRSetAxisMappingStrategy(hSRS, OAMS_TRADITIONAL_GIS_ORDER);
+  #endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
   OSRMorphToESRI( hSRS ); // this is the important stuff for shapefile .prj
   char* pszOutWkt = nullptr;
   OSRExportToWkt( hSRS, &pszOutWkt );
