@@ -81,7 +81,7 @@ ELSE(WIN32)
     IF (NOT GEOS_INCLUDE_DIR OR NOT GEOS_LIBRARY OR NOT GEOS_CONFIG)
       # didn't find OS X framework, and was not set by user
       SET(GEOS_CONFIG_PREFER_PATH "$ENV{GEOS_HOME}/bin" CACHE STRING "preferred path to GEOS (geos-config)")
-      FIND_PROGRAM(GEOS_CONFIG <
+      FIND_PROGRAM(GEOS_CONFIG geos-config
           ${GEOS_CONFIG_PREFER_PATH}
           /usr/local/bin/
           /usr/bin/
