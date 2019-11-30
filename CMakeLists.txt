@@ -161,7 +161,7 @@ if(NOT PREPARE_ONLY)
     endif()
     find_anyproject(GDAL REQUIRED)
 
-        # if(POLICY CMP0071)
+    # if(POLICY CMP0071)
     #     cmake_policy(SET CMP0071 NEW)
     # endif()
     #

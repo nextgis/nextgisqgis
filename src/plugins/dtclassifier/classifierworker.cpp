@@ -40,7 +40,7 @@
 #if CV_MAJOR_VERSION == 2
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
-#elif CV_MAJOR_VERSION > 3
+#elif CV_MAJOR_VERSION > 2
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
 #define CV_ROW_SAMPLE ml::ROW_SAMPLE
@@ -145,7 +145,7 @@ QString ClassifierWorker::smoothRaster( const QString& path )
     cvSmooth( img, outImg, CV_MEDIAN, mConfig.kernel_size );
 #elif CV_MAJOR_VERSION > 2
 
-    Mat img = imread( path.toStdString(), IMREAD_UNCHANGED );
+    Mat img = imread( path.toStdString(), cv::IMREAD_UNCHANGED );
     QgsDebugMsg(QString("ClassifierWorker::smoothRaster img->rows: %1").arg(img->rows));
     Mat outImg( img.rows, img.cols, CV_8UC1 );
     QgsDebugMsg(QString("ClassifierWorker::smoothRaster img->cols: %1").arg(img->cols));

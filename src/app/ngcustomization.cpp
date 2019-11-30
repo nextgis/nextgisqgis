@@ -1454,7 +1454,8 @@ void NGQgisApp::createToolBars()
   spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   mNGAccountToolBar->addWidget(spacer);
 
-#ifdef NGSTD_USING
+#ifdef NGSTD_USING 
+#if NGLIB_VERSION_NUMBER > 1100
   QString endPoint = settings.value("nextgis/endpoint", 
     NGAccess::instance().endPoint() ).toString();  
   NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
@@ -1462,6 +1463,7 @@ void NGQgisApp::createToolBars()
   toolbAuth->setCursor(Qt::PointingHandCursor);
   mNGAccountToolBar->addWidget(toolbAuth);
   // TODO: QObject::connect(toolbAuth, SIGNAL(supportInfoUpdated()), this, SLOT(onSupportInfoUpdated()));
+#endif
 #endif
 
 }
