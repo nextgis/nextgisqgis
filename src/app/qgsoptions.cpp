@@ -986,7 +986,7 @@ void QgsOptions::ngInitControls()
       authGroupBox->show();
       signinButton->setText(tr("Sign in"));
   }
-  #if NGLIB_VERSION_NUMBER > 1100
+  #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
   endpointEdit->setText( mSettings->value( "nextgis/endpoint", NGAccess::instance().endPoint() ).toString() );
   #endif // NGLIB_VERSION_NUMBER > 1100
   sendCrashes->setChecked( mSettings->value( "nextgis/sendCrashes", "0" ).toBool() );
@@ -1001,7 +1001,7 @@ void QgsOptions::on_signinButton_clicked()
         NGAccess::instance().exit();
     }
     else {
-      #if NGLIB_VERSION_NUMBER > 1100
+      #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
         NGAccess::instance().setEndPoint( endpointEdit->text() );
       #endif // NGLIB_VERSION_NUMBER > 1100
         NGAccess::instance().authorize();
@@ -1208,12 +1208,12 @@ void QgsOptions::saveOptions()
   mSettings->setValue( "proxy/proxyType", mProxyTypeComboBox->currentText() );
 
   // NEXTGIS:
-  #if NGLIB_VERSION_NUMBER >= 1100
+  #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
   NGRequest::setProxy(grpProxy->isChecked(), 
     mProxyTypeComboBox->currentText() == "DefaultProxy", leProxyHost->text(), 
     leProxyPort->text().toInt(), leProxyUser->text(), leProxyPassword->text(), 
     "ANY");
-  #endif // NGLIB_VERSION_NUMBER >= 1100  
+  #endif // NGLIB_VERSION_NUMBER > 1100  
   // END NEXTGIS
 
   if ( !mCacheDirectory->text().isEmpty() )
