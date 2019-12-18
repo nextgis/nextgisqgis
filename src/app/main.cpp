@@ -1021,7 +1021,7 @@ int main( int argc, char *argv[] )
   }
 
 #ifdef NGSTD_USING  
-#if NGLIB_VERSION_NUMBER > 1100
+#if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
   QString proxyHost = mySettings.value( "proxy/proxyHost", "" ).toString();
   int proxyPort = mySettings.value( "proxy/proxyPort", "" ).toString().toInt();
   QString proxyUser = mySettings.value( "proxy/proxyUser", "" ).toString();

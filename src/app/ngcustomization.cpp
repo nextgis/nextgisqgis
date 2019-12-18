@@ -1455,16 +1455,19 @@ void NGQgisApp::createToolBars()
   mNGAccountToolBar->addWidget(spacer);
 
 #ifdef NGSTD_USING 
-#if NGLIB_VERSION_NUMBER > 1100
+#if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
   QString endPoint = settings.value("nextgis/endpoint", 
     NGAccess::instance().endPoint() ).toString();  
   NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
                                      QLatin1String("user_info.read"), endPoint);
+#else
+  NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
+                                     QLatin1String("user_info.read"));
+#endif // NGLIB_VERSION_NUMBER > 1100
   toolbAuth->setCursor(Qt::PointingHandCursor);
   mNGAccountToolBar->addWidget(toolbAuth);
   // TODO: QObject::connect(toolbAuth, SIGNAL(supportInfoUpdated()), this, SLOT(onSupportInfoUpdated()));
-#endif
-#endif
+#endif // NGSTD_USING
 
 }
 
