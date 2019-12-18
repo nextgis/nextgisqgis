@@ -106,6 +106,7 @@ typedef SInt32 SRefCon;
 
 #ifdef NGSTD_USING
 #include "core/request.h"
+#include "core/version.h"
 #endif // NGSTD_USING
 
 /** Print usage text
