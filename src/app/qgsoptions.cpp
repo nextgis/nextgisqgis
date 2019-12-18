@@ -70,8 +70,9 @@
 #include "qgsconfig.h"
 
 #ifdef NGSTD_USING
-#include "framework/access/access.h"
 #include "core/request.h"
+#include "core/version.h"
+#include "framework/access/access.h"
 #endif // NGSTD_USING
 
 /**

@@ -113,6 +113,7 @@ extern "C"
 #endif // Q_OS_MAC
 
 #ifdef NGSTD_USING
+#include "core/version.h"
 #include "framework/access/access.h"
 #include "framework/access/signbutton.h"
 #endif // NGSTD_USING
