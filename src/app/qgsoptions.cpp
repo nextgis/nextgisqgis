@@ -989,8 +989,6 @@ void QgsOptions::ngInitControls()
   }
   #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
   endpointEdit->setText( mSettings->value( "nextgis/endpoint", NGAccess::instance().endPoint() ).toString() );
-  #else
-  #error Too old ngstd
   #endif // NGLIB_VERSION_NUMBER > 1100
   sendCrashes->setChecked( mSettings->value( "nextgis/sendCrashes", "0" ).toBool() );
 #endif // NGSTD_USING  
