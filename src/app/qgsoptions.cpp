@@ -976,21 +976,20 @@ void QgsOptions::ngInitControls()
                                 .arg(NGAccess::instance().lastName())
                                 .arg(NGAccess::instance().isUserSupported() ?
                                          tr("Supported") : tr("Unsupported")));
-      sendCrashes->setEnabled(true);
       authGroupBox->show();
       signinButton->setText(tr("Exit"));
   }
   else {
       avatar->setText("");
       descriptionText->setText(tr("Not authorized"));
-      sendCrashes->setEnabled(false);
       authGroupBox->show();
       signinButton->setText(tr("Sign in"));
   }
   #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
   endpointEdit->setText( mSettings->value( "nextgis/endpoint", NGAccess::instance().endPoint() ).toString() );
   #endif // NGLIB_VERSION_NUMBER > 1100
-  sendCrashes->setChecked( mSettings->value( "nextgis/sendCrashes", "0" ).toBool() );
+
+  sendCrashes->setChecked(mSettings->value("nextgis/sendCrashes", "0").toBool());
 #endif // NGSTD_USING  
 }
 
@@ -1560,6 +1559,8 @@ void QgsOptions::saveOptions()
   // NextGIS settings
   mSettings->setValue( "nextgis/sendCrashes", sendCrashes->isChecked() );
   mSettings->setValue( "nextgis/endpoint", endpointEdit->text() );
+
+  NGAccess::instance().initSentry(sendCrashes->isChecked(), "");
 
   //save variables
   QgsExpressionContextUtils::setGlobalVariables( mVariableEditor->variablesInActiveScope() );

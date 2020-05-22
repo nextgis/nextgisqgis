@@ -118,6 +118,8 @@ extern "C"
 #include "framework/access/signbutton.h"
 #endif // NGSTD_USING
 
+static const QString SENTRY_KEY = "https://71159235f0b542adb8ef214aa24f5aa6@sentry.nextgis.com/9";
+
 //------------------------------------------------------------------------------
 // Implementation of the python runner
 //------------------------------------------------------------------------------
@@ -1461,6 +1463,8 @@ void NGQgisApp::createToolBars()
     NGAccess::instance().endPoint() ).toString();  
   NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
                                      QLatin1String("user_info.read"), endPoint);
+
+  NGAccess::instance().initSentry(settings.value("nextgis/sendCrashes", "0").toBool(), SENTRY_KEY);
 #else
   NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
                                      QLatin1String("user_info.read"));
