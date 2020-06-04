@@ -28,11 +28,11 @@ src/core/providers/meshmemory,src/core/providers/meshmemory,,"cpp,h"
 src/core/providers/ogr,src/core/providers/ogr,,"cpp,h"
 src/core/raster,src/core/raster,,"cpp,h"
 src/core/scalebar,src/core/scalebar,,"cpp,h"
-src/core/scripts,src/core/scripts,,process_function_template.py
 src/core/simplify,src/core/simplify,,"cpp,h"
 src/core/symbology,src/core/symbology,,"cpp,h"
 src/core/validity,src/core/validity,,"cpp,h"
 src/plugins,src/plugins,,qgisplugin.h
+cmake_templates,cmake_templates,,qgsconfig.h.in
 external/kdbush/include,external/kdbush/include,,hpp
 external/nlohmann,external/nlohmann,,hpp
 external/nlohmann/detail,external/nlohmann/detail,,hpp
@@ -46,3 +46,4 @@ external/poly2tri,external/poly2tri,,h
 external/poly2tri/common,external/poly2tri/common,,"cc,h"
 external/poly2tri/sweep,external/poly2tri/sweep,,"cc,h"
 external/rtree/include,external/rtree/include,,h
+scripts,scripts,,process_function_template.py
