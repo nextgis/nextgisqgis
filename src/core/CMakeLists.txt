@@ -881,7 +881,7 @@ ENDIF(NOT MSVC)
 SET(QGIS_CORE_HDRS
   ${CMAKE_SOURCE_DIR}/../../external/nlohmann/json_fwd.hpp
   ${CMAKE_BINARY_DIR}/qgsconfig.h
-  ../plugins/qgisplugin.h
+#  ../plugins/qgisplugin.h
 
   qgis.h
   qgis_sip.h

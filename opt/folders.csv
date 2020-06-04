@@ -31,7 +31,6 @@ src/core/scalebar,src/core/scalebar,,"cpp,h"
 src/core/simplify,src/core/simplify,,"cpp,h"
 src/core/symbology,src/core/symbology,,"cpp,h"
 src/core/validity,src/core/validity,,"cpp,h"
-src/plugins,src/plugins,,qgisplugin.h
 cmake_templates,cmake_templates,,qgsconfig.h.in
 external/kdbush/include,external/kdbush/include,,hpp
 external/nlohmann,external/nlohmann,,hpp
