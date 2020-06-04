@@ -157,9 +157,9 @@ find_anyproject(SQLITE3 REQUIRED)
 find_anyproject(SPATIALITE REQUIRED)
 find_anyproject(QCA REQUIRED)
 
-FIND_PACKAGE(LibZip REQUIRED)
-FIND_PACKAGE(QtKeychain REQUIRED)
-FIND_PACKAGE(PythonLibrary REQUIRED)
+find_anyproject(LibZip REQUIRED)
+find_anyproject(QtKeychain REQUIRED)
+find_anyproject(PythonLibrary REQUIRED)
 
 #############################################################
 # search for Qt5
