@@ -1,163 +1,207 @@
-#.rst:
-# FindGDAL
-# --------
+# Find GDAL
+# ~~~~~~~~~
+# Copyright (c) 2007, Magnus Homann <magnus at homann dot se>
+# Redistribution and use is allowed according to the terms of the BSD license.
+# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 #
 #
+# Once run this will define: 
+# 
+# GDAL_FOUND       = system has GDAL lib
 #
-# Locate gdal
+# GDAL_LIBRARY     = full path to the library
 #
-# This module accepts the following environment variables:
-#
-# ::
-#
-#     GDAL_DIR or GDAL_ROOT - Specify the location of GDAL
-#
-#
-#
-# This module defines the following CMake variables:
-#
-# ::
-#
-#     GDAL_FOUND - True if libgdal is found
-#     GDAL_LIBRARY - A variable pointing to the GDAL library
-#     GDAL_INCLUDE_DIR - Where to find the headers
+# GDAL_INCLUDE_DIR      = where to find headers 
 
-#=============================================================================
-# Copyright 2007-2009 Kitware, Inc.
-#
-# Distributed under the OSI-approved BSD License (the "License");
-# see accompanying file Copyright.txt for details.
-#
-# This software is distributed WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the License for more information.
-#=============================================================================
-# (To distribute this file outside of CMake, substitute the full
-#  License text for the above reference.)
+INCLUDE (${CMAKE_SOURCE_DIR}/cmake/MacPlistMacros.cmake)
 
-#
-# $GDALDIR is an environment variable that would
-# correspond to the ./configure --prefix=$GDAL_DIR
-# used in building gdal.
-#
-# Created by Eric Wing. I'm not a gdal user, but OpenSceneGraph uses it
-# for osgTerrain so I whipped this module together for completeness.
-# I actually don't know the conventions or where files are typically
-# placed in distros.
-# Any real gdal users are encouraged to correct this (but please don't
-# break the OS X framework stuff when doing so which is what usually seems
-# to happen).
+IF(WIN32)
 
-# This makes the presumption that you are include gdal.h like
-#
-#include "gdal.h"
+  IF (MINGW)
+    FIND_PATH(GDAL_INCLUDE_DIR gdal.h /usr/local/include /usr/include c:/msys/local/include)
+    FIND_LIBRARY(GDAL_LIBRARY NAMES gdal PATHS /usr/local/lib /usr/lib c:/msys/local/lib)
+  ENDIF (MINGW)
 
-find_path(GDAL_INCLUDE_DIR gdal.h
-  HINTS
-    ENV GDAL_DIR
-    ENV GDAL_ROOT
-  PATH_SUFFIXES
-     include/gdal
-     include/gdal/1.10
-     include/gdal/1.11
-     include/gdal/2.0
-     include/gdal/2.1
-     include/GDAL
-     include
-  PATHS
-      ~/Library/Frameworks/gdal.framework/Headers
-      /Library/Frameworks/gdal.framework/Headers
-      /sw # Fink
-      /opt/local # DarwinPorts
-      /opt/csw # Blastwave
-      /opt
-)
+  IF (MSVC)
+    FIND_PATH(GDAL_INCLUDE_DIR gdal.h "$ENV{LIB_DIR}/include/gdal" $ENV{INCLUDE})
+    FIND_LIBRARY(GDAL_LIBRARY NAMES gdal gdal_i PATHS 
+	    "$ENV{LIB_DIR}/lib" $ENV{LIB} /usr/lib c:/msys/local/lib)
+    IF (GDAL_LIBRARY)
+      SET (
+         GDAL_LIBRARY;odbc32;odbccp32 
+         CACHE STRING INTERNAL)
+    ENDIF (GDAL_LIBRARY)
+  ENDIF (MSVC)
 
-if(UNIX)
-    # Use gdal-config to obtain the library version (this should hopefully
-    # allow us to -lgdal1.x.y where x.y are correct version)
-    # For some reason, libgdal development packages do not contain
-    # libgdal.so...
-    find_program(GDAL_CONFIG gdal-config
-        HINTS
-          ENV GDAL_DIR
-          ENV GDAL_ROOT
-        PATH_SUFFIXES bin
-        PATHS
-            /sw # Fink
-            /opt/local # DarwinPorts
-            /opt/csw # Blastwave
-            /opt
-    )
+ELSEIF(APPLE AND QGIS_MAC_DEPS_DIR)
 
-    if(GDAL_CONFIG)
-        exec_program(${GDAL_CONFIG} ARGS --libs OUTPUT_VARIABLE GDAL_CONFIG_LIBS)
-        if(GDAL_CONFIG_LIBS)
-            string(REGEX MATCHALL "-l[^ ]+" _gdal_dashl ${GDAL_CONFIG_LIBS})
-            string(REPLACE "-l" "" _gdal_lib "${_gdal_dashl}")
-            string(REGEX MATCHALL "-L[^ ]+" _gdal_dashL ${GDAL_CONFIG_LIBS})
-            string(REPLACE "-L" "" _gdal_libpath "${_gdal_dashL}")
-        endif()
-    endif()
-endif()
+    FIND_PATH(GDAL_INCLUDE_DIR gdal.h "$ENV{LIB_DIR}/include")
+    FIND_LIBRARY(GDAL_LIBRARY NAMES gdal PATHS "$ENV{LIB_DIR}/lib")
 
-find_library(GDAL_LIBRARY
-  NAMES ${_gdal_lib} gdal gdal_i gdal1.5.0 gdal1.4.0 gdal1.3.2 GDAL
-  HINTS
-     ENV GDAL_DIR
-     ENV GDAL_ROOT
-     ${_gdal_libpath}
-  PATH_SUFFIXES lib
-  PATHS
-    /sw
-    /opt/local
-    /opt/csw
-    /opt
-    /usr/freeware
-)
+ELSE(WIN32)
 
-if(GDAL_INCLUDE_DIR)
-    set(GDAL_VERSION_MAJOR 0)
-    set(GDAL_VERSION_MINOR 0)
-    set(GDAL_VERSION_PATCH 0)
+  IF(UNIX) 
 
-    if(EXISTS "${GDAL_INCLUDE_DIR}/gdal_version.h")
-        file(READ ${GDAL_INCLUDE_DIR}/gdal_version.h GDAL_VERSION_H_CONTENTS)
-        string(REGEX MATCH "GDAL_VERSION_MAJOR[ \t]+([0-9]+)"
-          GDAL_VERSION_MAJOR ${GDAL_VERSION_H_CONTENTS})
-        string (REGEX MATCH "([0-9]+)"
-          GDAL_VERSION_MAJOR ${GDAL_VERSION_MAJOR})
-        string(REGEX MATCH "GDAL_VERSION_MINOR[ \t]+([0-9]+)"
-          GDAL_VERSION_MINOR ${GDAL_VERSION_H_CONTENTS})
-        string (REGEX MATCH "([0-9]+)"
-          GDAL_VERSION_MINOR ${GDAL_VERSION_MINOR})
-        string(REGEX MATCH "GDAL_VERSION_REV[ \t]+([0-9]+)"
-          GDAL_VERSION_PATCH ${GDAL_VERSION_H_CONTENTS})
-        string (REGEX MATCH "([0-9]+)"
-          GDAL_VERSION_PATCH ${GDAL_VERSION_PATCH})
+    # try to use framework on mac
+    # want clean framework path, not unix compatibility path
+    IF (APPLE)
+      IF (CMAKE_FIND_FRAMEWORK MATCHES "FIRST"
+          OR CMAKE_FRAMEWORK_PATH MATCHES "ONLY"
+          OR NOT CMAKE_FIND_FRAMEWORK)
+        SET (CMAKE_FIND_FRAMEWORK_save ${CMAKE_FIND_FRAMEWORK} CACHE STRING "" FORCE)
+        SET (CMAKE_FIND_FRAMEWORK "ONLY" CACHE STRING "" FORCE)
+        FIND_LIBRARY(GDAL_LIBRARY GDAL)
+        IF (GDAL_LIBRARY)
+          # they're all the same in a framework
+          SET (GDAL_INCLUDE_DIR ${GDAL_LIBRARY}/Headers CACHE PATH "Path to a file.")
+          # set GDAL_CONFIG to make later test happy, not used here, may not exist
+          SET (GDAL_CONFIG ${GDAL_LIBRARY}/unix/bin/gdal-config CACHE FILEPATH "Path to a program.")
+          # version in info.plist
+          GET_VERSION_PLIST (${GDAL_LIBRARY}/Resources/Info.plist GDAL_VERSION)
+          IF (NOT GDAL_VERSION)
+            MESSAGE (FATAL_ERROR "Could not determine GDAL version from framework.")
+          ENDIF (NOT GDAL_VERSION)
+          STRING(REGEX REPLACE "([0-9]+)\\.([0-9]+)\\.([0-9]+)" "\\1" GDAL_VERSION_MAJOR "${GDAL_VERSION}")
+          STRING(REGEX REPLACE "([0-9]+)\\.([0-9]+)\\.([0-9]+)" "\\2" GDAL_VERSION_MINOR "${GDAL_VERSION}")
+          IF (GDAL_VERSION_MAJOR LESS 2)
+            MESSAGE (FATAL_ERROR "GDAL version is too old (${GDAL_VERSION}). Use 2.1 or higher.")
+          ENDIF (GDAL_VERSION_MAJOR LESS 2)
+          IF ( (GDAL_VERSION_MAJOR EQUAL 2) AND (GDAL_VERSION_MINOR LESS 1) )
+            MESSAGE (FATAL_ERROR "GDAL version is too old (${GDAL_VERSION}). Use 2.1 or higher.")
+          ENDIF( (GDAL_VERSION_MAJOR EQUAL 2) AND (GDAL_VERSION_MINOR LESS 1) )
+
+        ENDIF (GDAL_LIBRARY)
+        SET (CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK_save} CACHE STRING "" FORCE)
+      ENDIF ()
+    ENDIF (APPLE)
+
+    IF(CYGWIN)
+      FIND_LIBRARY(GDAL_LIBRARY NAMES gdal PATHS /usr/lib /usr/local/lib)
+    ENDIF(CYGWIN)
+
+    IF (NOT GDAL_INCLUDE_DIR OR NOT GDAL_LIBRARY OR NOT GDAL_CONFIG)
+      # didn't find OS X framework, and was not set by user
+      SET(GDAL_CONFIG_PREFER_PATH "$ENV{GDAL_HOME}/bin" CACHE STRING "preferred path to GDAL (gdal-config)")
+      SET(GDAL_CONFIG_PREFER_FWTOOLS_PATH "$ENV{FWTOOLS_HOME}/bin_safe" CACHE STRING "preferred path to GDAL (gdal-config) from FWTools")
+      FIND_PROGRAM(GDAL_CONFIG gdal-config
+          ${GDAL_CONFIG_PREFER_PATH}
+          ${GDAL_CONFIG_PREFER_FWTOOLS_PATH}
+          $ENV{LIB_DIR}/bin
+          /usr/local/bin/
+          /usr/bin/
+          )
+      # MESSAGE("DBG GDAL_CONFIG ${GDAL_CONFIG}")
     
-        unset(GDAL_VERSION_H_CONTENTS)
-    endif()
+      IF (GDAL_CONFIG) 
+
+        ## extract gdal version 
+        EXEC_PROGRAM(${GDAL_CONFIG}
+            ARGS --version
+            OUTPUT_VARIABLE GDAL_VERSION )
+        STRING(REGEX REPLACE "([0-9]+)\\.([0-9]+)\\.([0-9]+)" "\\1" GDAL_VERSION_MAJOR "${GDAL_VERSION}")
+        STRING(REGEX REPLACE "([0-9]+)\\.([0-9]+)\\.([0-9]+)" "\\2" GDAL_VERSION_MINOR "${GDAL_VERSION}")
+        STRING(REGEX REPLACE "([0-9]+)\\.([0-9]+)\\.([0-9]+)" "\\3" GDAL_VERSION_MICRO "${GDAL_VERSION}")
+  
+        # MESSAGE("DBG GDAL_VERSION ${GDAL_VERSION}")
+        # MESSAGE("DBG GDAL_VERSION_MAJOR ${GDAL_VERSION_MAJOR}")
+        # MESSAGE("DBG GDAL_VERSION_MINOR ${GDAL_VERSION_MINOR}")
+  
+        # check for gdal version
+        # version 1.2.5 is known NOT to be supported (missing CPL_STDCALL macro)
+        # According to INSTALL, 2.1+ is required
+        IF (GDAL_VERSION_MAJOR LESS 2)
+          MESSAGE (FATAL_ERROR "GDAL version is too old (${GDAL_VERSION}). Use 2.1 or higher.")
+        ENDIF (GDAL_VERSION_MAJOR LESS 2)
+        IF ( (GDAL_VERSION_MAJOR EQUAL 2) AND (GDAL_VERSION_MINOR LESS 1) )
+          MESSAGE (FATAL_ERROR "GDAL version is too old (${GDAL_VERSION}). Use 2.1 or higher.")
+        ENDIF( (GDAL_VERSION_MAJOR EQUAL 2) AND (GDAL_VERSION_MINOR LESS 1) )
+        IF ( (GDAL_VERSION_MAJOR EQUAL 3) AND (GDAL_VERSION_MINOR EQUAL 0) AND (GDAL_VERSION_MICRO LESS 3) )
+          MESSAGE (FATAL_ERROR "GDAL version is too old (${GDAL_VERSION}). Use 3.0.3 or higher.")
+        ENDIF( (GDAL_VERSION_MAJOR EQUAL 3) AND (GDAL_VERSION_MINOR EQUAL 0) AND (GDAL_VERSION_MICRO LESS 3) )
+
+        # set INCLUDE_DIR to prefix+include
+        EXEC_PROGRAM(${GDAL_CONFIG}
+            ARGS --prefix
+            OUTPUT_VARIABLE GDAL_PREFIX)
+        #SET(GDAL_INCLUDE_DIR ${GDAL_PREFIX}/include CACHE STRING INTERNAL)
+        FIND_PATH(GDAL_INCLUDE_DIR 
+            gdal.h 
+            ${GDAL_PREFIX}/include/gdal
+            ${GDAL_PREFIX}/include
+            /usr/local/include 
+            /usr/include 
+            )
+
+        ## extract link dirs for rpath  
+        EXEC_PROGRAM(${GDAL_CONFIG}
+            ARGS --libs
+            OUTPUT_VARIABLE GDAL_CONFIG_LIBS )
+
+        ## split off the link dirs (for rpath)
+        ## use regular expression to match wildcard equivalent "-L*<endchar>"
+        ## with <endchar> is a space or a semicolon
+        STRING(REGEX MATCHALL "[-][L]([^ ;])+" 
+            GDAL_LINK_DIRECTORIES_WITH_PREFIX 
+            "${GDAL_CONFIG_LIBS}" )
+        #      MESSAGE("DBG  GDAL_LINK_DIRECTORIES_WITH_PREFIX=${GDAL_LINK_DIRECTORIES_WITH_PREFIX}")
+
+        ## remove prefix -L because we need the pure directory for LINK_DIRECTORIES
       
-    set(GDAL_VERSION_STRING "${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_PATCH}")   
-endif ()    
+        IF (GDAL_LINK_DIRECTORIES_WITH_PREFIX)
+          STRING(REGEX REPLACE "[-][L]" "" GDAL_LINK_DIRECTORIES ${GDAL_LINK_DIRECTORIES_WITH_PREFIX} )
+        ENDIF (GDAL_LINK_DIRECTORIES_WITH_PREFIX)
+
+        ## split off the name
+        ## use regular expression to match wildcard equivalent "-l*<endchar>"
+        ## with <endchar> is a space or a semicolon
+        STRING(REGEX MATCHALL "[-][l]([^ ;])+" 
+            GDAL_LIB_NAME_WITH_PREFIX 
+            "${GDAL_CONFIG_LIBS}" )
+        #      MESSAGE("DBG  GDAL_LIB_NAME_WITH_PREFIX=${GDAL_LIB_NAME_WITH_PREFIX}")
 
 
-# Handle the QUIETLY and REQUIRED arguments and set SPATIALINDEX_FOUND to TRUE
-# if all listed variables are TRUE
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(GDAL 
-                                  REQUIRED_VARS GDAL_LIBRARY GDAL_INCLUDE_DIR 
-                                  VERSION_VAR GDAL_VERSION_STRING)
+        ## remove prefix -l because we need the pure name
+      
+        IF (GDAL_LIB_NAME_WITH_PREFIX)
+          STRING(REGEX REPLACE "[-][l]" "" GDAL_LIB_NAME ${GDAL_LIB_NAME_WITH_PREFIX} )
+        ENDIF (GDAL_LIB_NAME_WITH_PREFIX)
 
-IF(GDAL_FOUND)
-    set(GDAL_LIBRARIES ${GDAL_LIBRARY})
-    set(GDAL_INCLUDE_DIRS ${GDAL_INCLUDE_DIR})
-ENDIF()
+        IF (APPLE)
+          IF (NOT GDAL_LIBRARY)
+            # work around empty GDAL_LIBRARY left by framework check
+            # while still preserving user setting if given
+            # ***FIXME*** need to improve framework check so below not needed
+            SET(GDAL_LIBRARY ${GDAL_LINK_DIRECTORIES}/lib${GDAL_LIB_NAME}.dylib CACHE STRING INTERNAL FORCE)
+          ENDIF (NOT GDAL_LIBRARY)
+        ELSE (APPLE)
+          FIND_LIBRARY(GDAL_LIBRARY NAMES ${GDAL_LIB_NAME} PATHS ${GDAL_LINK_DIRECTORIES}/lib)
+        ENDIF (APPLE)
+      
+      ELSE(GDAL_CONFIG)
+        MESSAGE("FindGDAL.cmake: gdal-config not found. Please set it manually. GDAL_CONFIG=${GDAL_CONFIG}")
+      ENDIF(GDAL_CONFIG)
+    ENDIF (NOT GDAL_INCLUDE_DIR OR NOT GDAL_LIBRARY OR NOT GDAL_CONFIG)
+  ENDIF(UNIX)
+ENDIF(WIN32)
 
-# Hide internal variables
-mark_as_advanced(
-  GDAL_INCLUDE_DIR
-  GDAL_LIBRARY)
 
-#======================
+IF (GDAL_INCLUDE_DIR AND GDAL_LIBRARY)
+   SET(GDAL_FOUND TRUE)
+ENDIF (GDAL_INCLUDE_DIR AND GDAL_LIBRARY)
+
+IF (GDAL_FOUND)
+
+   IF (NOT GDAL_FIND_QUIETLY)
+      FILE(READ ${GDAL_INCLUDE_DIR}/gdal_version.h gdal_version)
+      STRING(REGEX REPLACE "^.*GDAL_RELEASE_NAME +\"([^\"]+)\".*$" "\\1" GDAL_RELEASE_NAME "${gdal_version}")
+
+      MESSAGE(STATUS "Found GDAL: ${GDAL_LIBRARY} (${GDAL_RELEASE_NAME})")
+   ENDIF (NOT GDAL_FIND_QUIETLY)
+
+ELSE (GDAL_FOUND)
+
+   MESSAGE(GDAL_INCLUDE_DIR=${GDAL_INCLUDE_DIR})
+   MESSAGE(GDAL_LIBRARY=${GDAL_LIBRARY})
+   MESSAGE(FATAL_ERROR "Could not find GDAL")
+
+ENDIF (GDAL_FOUND)
