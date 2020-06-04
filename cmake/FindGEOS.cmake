@@ -13,45 +13,31 @@
 #    GEOS_LIBRARY
 #
 
-FUNCTION (GET_VERSION_PLIST PLISTFILE OUTVAR)
-	SET (PVERSION "")
-	IF (EXISTS ${PLISTFILE})
-		FILE (READ "${PLISTFILE}" info_plist)
-		STRING (REGEX REPLACE "\n" "" info_plist "${info_plist}")
-		STRING (REGEX MATCH "<key>CFBundleShortVersionString</key>[ \t]*<string>([0-9\\.]*)</string>" PLISTVERSION "${info_plist}")
-		STRING (REGEX REPLACE "<key>CFBundleShortVersionString</key>[ \t]*<string>([0-9\\.]*)</string>" "\\1" PVERSION "${PLISTVERSION}")
-	ENDIF (EXISTS ${PLISTFILE})
-	SET (${OUTVAR} ${PVERSION} PARENT_SCOPE)
-ENDFUNCTION (GET_VERSION_PLIST)
- 
+INCLUDE (${CMAKE_SOURCE_DIR}/cmake/MacPlistMacros.cmake)
+
 IF(WIN32)
 
   IF (MINGW)
-    FIND_PATH(GEOS_INCLUDE_DIR geos_c.h /usr/local/include /usr/include c:/msys/local/include)
-    FIND_LIBRARY(GEOS_LIBRARY NAMES geos_c PATHS /usr/local/lib /usr/lib c:/msys/local/lib)
+    FIND_PATH(GEOS_INCLUDE_DIR geos_c.h "$ENV{LIB_DIR}/include" /usr/local/include /usr/include c:/msys/local/include)
+    FIND_LIBRARY(GEOS_LIBRARY NAMES geos_c PATHS "$ENV{LIB_DIR}/lib" /usr/local/lib /usr/lib c:/msys/local/lib)
   ENDIF (MINGW)
 
   IF (MSVC)
     FIND_PATH(GEOS_INCLUDE_DIR geos_c.h $ENV{LIB_DIR}/include $ENV{INCLUDE})
-    FIND_LIBRARY(GEOS_LIBRARY NAMES geos geos_c_i PATHS
-      "$ENV{LIB}/lib"
+    FIND_LIBRARY(GEOS_LIBRARY NAMES geos geos_c_i geos_c PATHS
+      "$ENV{LIB_DIR}/lib"
       $ENV{LIB}
-      #mingw
-      c:/msys/local/lib
-      NO_DEFAULT_PATH
       )
-    IF (GEOS_LIBRARY)
-       SET (
-         GEOS_LIBRARY
-         GEOS_LIBRARY;odbc32;odbccp32
-         CACHE STRING INTERNAL)
-    ENDIF (GEOS_LIBRARY)
   ENDIF (MSVC)
+
+ELSEIF(APPLE AND QGIS_MAC_DEPS_DIR)
+
+    FIND_PATH(GEOS_INCLUDE_DIR geos_c.h "$ENV{LIB_DIR}/include" )
+    FIND_LIBRARY(GEOS_LIBRARY NAMES geos_c PATHS "$ENV{LIB_DIR}/lib" )
 
 ELSE(WIN32)
 
  IF(UNIX)
-
     # try to use framework on mac
     # want clean framework path, not unix compatibility path
     IF (APPLE)
@@ -73,16 +59,24 @@ ELSE(WIN32)
           ENDIF (NOT GEOS_VERSION)
           STRING(REGEX REPLACE "([0-9]+)\\.([0-9]+)\\.([0-9]+)" "\\1" GEOS_VERSION_MAJOR "${GEOS_VERSION}")
           STRING(REGEX REPLACE "([0-9]+)\\.([0-9]+)\\.([0-9]+)" "\\2" GEOS_VERSION_MINOR "${GEOS_VERSION}")
+          IF (GEOS_VERSION_MAJOR LESS 3)
+            MESSAGE (FATAL_ERROR "GEOS version is too old (${GEOS_VERSION}). Use 3.0.0 or higher.")
+          ENDIF (GEOS_VERSION_MAJOR LESS 3)
         ENDIF (GEOS_LIBRARY)
         SET (CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK_save} CACHE STRING "" FORCE)
       ENDIF ()
     ENDIF (APPLE)
+
+    IF(CYGWIN)
+      FIND_LIBRARY(GEOS_LIBRARY NAMES geos_c PATHS /usr/lib /usr/local/lib)
+    ENDIF(CYGWIN)
 
     IF (NOT GEOS_INCLUDE_DIR OR NOT GEOS_LIBRARY OR NOT GEOS_CONFIG)
       # didn't find OS X framework, and was not set by user
       SET(GEOS_CONFIG_PREFER_PATH "$ENV{GEOS_HOME}/bin" CACHE STRING "preferred path to GEOS (geos-config)")
       FIND_PROGRAM(GEOS_CONFIG geos-config
           ${GEOS_CONFIG_PREFER_PATH}
+          $ENV{LIB_DIR}/bin
           /usr/local/bin/
           /usr/bin/
           )
@@ -95,6 +89,10 @@ ELSE(WIN32)
             OUTPUT_VARIABLE GEOS_VERSION)
         STRING(REGEX REPLACE "([0-9]+)\\.([0-9]+)\\.([0-9]+)" "\\1" GEOS_VERSION_MAJOR "${GEOS_VERSION}")
         STRING(REGEX REPLACE "([0-9]+)\\.([0-9]+)\\.([0-9]+)" "\\2" GEOS_VERSION_MINOR "${GEOS_VERSION}")
+
+        IF (GEOS_VERSION_MAJOR LESS 3 OR (GEOS_VERSION_MAJOR EQUAL 3 AND GEOS_VERSION_MINOR LESS 3) )
+          MESSAGE (FATAL_ERROR "GEOS version is too old (${GEOS_VERSION}). Use 3.3.0 or higher.")
+        ENDIF (GEOS_VERSION_MAJOR LESS 3 OR (GEOS_VERSION_MAJOR EQUAL 3 AND GEOS_VERSION_MINOR LESS 3) )
 
         # set INCLUDE_DIR to prefix+include
         EXEC_PROGRAM(${GEOS_CONFIG}
@@ -153,7 +151,7 @@ ELSE(WIN32)
             SET(GEOS_LIBRARY ${GEOS_LINK_DIRECTORIES}/lib${GEOS_LIB_NAME}.dylib CACHE STRING INTERNAL FORCE)
           ENDIF (NOT GEOS_LIBRARY)
         ELSE (APPLE)
-          SET(GEOS_LIBRARY ${GEOS_LINK_DIRECTORIES}/lib${GEOS_LIB_NAME}.so CACHE STRING INTERNAL)
+          FIND_LIBRARY(GEOS_LIBRARY NAMES ${GEOS_LIB_NAME} PATHS ${GEOS_LIB_DIRECTORIES}/lib)
         ENDIF (APPLE)
         #MESSAGE("DBG  GEOS_LIBRARY=${GEOS_LIBRARY}")
 
@@ -164,12 +162,26 @@ ELSE(WIN32)
   ENDIF(UNIX)
 ENDIF(WIN32)
 
-# Handle the QUIETLY and REQUIRED arguments and set GEOS_FOUND to TRUE
-# if all listed variables are TRUE
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(GEOS
-                                  REQUIRED_VARS GEOS_LIBRARY GEOS_INCLUDE_DIR
-                                  VERSION_VAR GEOS_VERSION)
+IF(GEOS_INCLUDE_DIR AND NOT GEOS_VERSION)
+  FILE(READ ${GEOS_INCLUDE_DIR}/geos_c.h VERSIONFILE)
+  STRING(REGEX MATCH "#define GEOS_VERSION \"[0-9]+\\.[0-9]+\\.[0-9]+" GEOS_VERSION ${VERSIONFILE})
+  STRING(REGEX MATCH "[0-9]+\\.[0-9]\\.[0-9]+" GEOS_VERSION ${GEOS_VERSION})
+ENDIF(GEOS_INCLUDE_DIR AND NOT GEOS_VERSION)
 
-# Hide internal variables
-mark_as_advanced(GEOS_LIBRARY GEOS_INCLUDE_DIR)
+IF (GEOS_INCLUDE_DIR AND GEOS_LIBRARY)
+   SET(GEOS_FOUND TRUE)
+ENDIF (GEOS_INCLUDE_DIR AND GEOS_LIBRARY)
+
+IF (GEOS_FOUND)
+
+   IF (NOT GEOS_FIND_QUIETLY)
+      MESSAGE(STATUS "Found GEOS: ${GEOS_LIBRARY} (${GEOS_VERSION})")
+   ENDIF (NOT GEOS_FIND_QUIETLY)
+
+ELSE (GEOS_FOUND)
+
+   MESSAGE(GEOS_INCLUDE_DIR=${GEOS_INCLUDE_DIR})
+   MESSAGE(GEOS_LIBRARY=${GEOS_LIBRARY})
+   MESSAGE(FATAL_ERROR "Could not find GEOS")
+
+ENDIF (GEOS_FOUND)
