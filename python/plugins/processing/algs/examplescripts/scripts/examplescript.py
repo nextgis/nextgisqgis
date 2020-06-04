@@ -1,3 +1,0 @@
-##text=string
-
-print text

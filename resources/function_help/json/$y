@@ -1,7 +1,0 @@
-{
-  "name": "$y",
-  "type": "function",
-  "description": "Returns the y coordinate of the current feature.",
-  "examples": [ { "expression":"$y", "returns":"42"}
-  ]
-}
