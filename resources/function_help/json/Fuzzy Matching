@@ -1,5 +1,0 @@
-{
-  "name": "Fuzzy Matching",
-  "type": "group",
-  "description": "This group contains functions for fuzzy comparisons between values."
-}

@@ -1,5 +1,0 @@
-{
-  "name": "Variables",
-  "type": "group",
-  "description": "This group contains dynamic variables which can be inserted into your expressions."
-}
