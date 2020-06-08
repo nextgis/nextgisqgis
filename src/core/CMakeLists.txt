@@ -20,209 +20,51 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12 FATAL_ERROR)
-PROJECT(ngcore)
-
-if(NOT DEFINED PACKAGE_VENDOR)
-    set(PACKAGE_VENDOR NextGIS)
-endif()
-
-if(NOT DEFINED PACKAGE_BUGREPORT)
-    set(PACKAGE_BUGREPORT info@nextgis.com)
-endif()
-
-# some init settings
-set(CMAKE_COLOR_MAKEFILE ON)
-# set path to additional CMake modules
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/../../cmake ${CMAKE_MODULE_PATH})
-
-
-if(OSX_FRAMEWORK AND (BUILD_SHARED_LIBS OR BUILD_STATIC_LIBS))
-  message(FATAL_ERROR "Only OSX_FRAMEWORK key or any or both BUILD_SHARED_LIBS
-                       and BUILD_STATIC_LIBS keys are permitted")
-endif()
-
-if(OSX_FRAMEWORK)
-    set(INSTALL_BIN_DIR "bin" CACHE INTERNAL "Installation directory for executables" FORCE)
-    set(INSTALL_LIB_DIR "Library/Frameworks" CACHE INTERNAL "Installation directory for libraries" FORCE)
-    set(INSTALL_CMAKECONF_DIR ${INSTALL_LIB_DIR}/${PROJECT_NAME}.framework/Resources/CMake CACHE INTERNAL "Installation directory for cmake config files" FORCE)
-    set(INSTALL_INC_DIR ${INSTALL_LIB_DIR}/${PROJECT_NAME}.framework/Headers CACHE INTERNAL "Installation directory for headers" FORCE)
-    set(SKIP_INSTALL_HEADERS ON)
-    set(SKIP_INSTALL_EXECUTABLES ON)
-    set(SKIP_INSTALL_FILES ON)
-    set(SKIP_INSTALL_EXPORT ON)
-    set(CMAKE_MACOSX_RPATH ON)
+# Prepare_parser targets
+add_flex_files(qgsexpressionlexer.ll qgssqlstatementlexer.ll)
+# Disable warnings
+if(MSVC)
+  set_source_files_properties(flex_qgsexpressionlexer.cpp flex_qgssqlstatementlexer.cpp PROPERTIES COMPILE_FLAGS /W0)
 else()
-    include(GNUInstallDirs)
-
-    set(INSTALL_BIN_DIR ${CMAKE_INSTALL_BINDIR} CACHE INTERNAL "Installation directory for executables" FORCE)
-    set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE INTERNAL "Installation directory for libraries" FORCE)
-    set(INSTALL_INC_DIR ${CMAKE_INSTALL_INCLUDEDIR} CACHE INTERNAL "Installation directory for headers" FORCE)
-    set(INSTALL_PKGCONFIG_DIR "${INSTALL_LIB_DIR}/pkgconfig" CACHE INTERNAL "Installation directory for pkgconfig (.pc) files" FORCE)
-    set(INSTALL_CMAKECONF_DIR ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/CMake CACHE INTERNAL "Installation directory for cmake config files" FORCE)
+  set_source_files_properties(flex_qgsexpressionlexer.cpp flex_qgssqlstatementlexer.cpp PROPERTIES COMPILE_FLAGS -w)
 endif()
 
-set(PACKAGE_NAME ${PROJECT_NAME})
-string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
+add_bison_files(qgsexpressionparser.yy qgssqlstatementparser.yy)
 
-set(LIB_NAME ${PROJECT_NAME})
-set(TARGETS ${LIB_NAME})
-
-#############################################################
-# Project and version
-
-include(util)
-
-check_version(NGQGIS_MAJOR_VERSION NGQGIS_MINOR_VERSION NGQGIS_PATCH_VERSION CPACK_PACKAGE_VERSION_MAJOR CPACK_PACKAGE_VERSION_MINOR CPACK_PACKAGE_VERSION_PATCH RELEASE_NAME)
-set(VERSION ${NGQGIS_MAJOR_VERSION}.${NGQGIS_MINOR_VERSION}.${NGQGIS_PATCH_VERSION})
-set(QGIS_VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH})
-
-report_version(${PROJECT_NAME} ${VERSION})
-
-MATH(EXPR QGIS_VERSION_INT "${CPACK_PACKAGE_VERSION_MAJOR}*10000+${CPACK_PACKAGE_VERSION_MINOR}*100+${CPACK_PACKAGE_VERSION_PATCH}")
-
-# POLICIES
-CMAKE_POLICY (SET CMP0071 NEW)
-
-SET (LIBRARY_TYPE SHARED)
-
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-SET(CMAKE_AUTOMOC ON)
-
-#############################################################
-# check if lexer and parser are not missing
-# http://www.mail-archive.com/cmake@cmake.org/msg02861.html
-
-INCLUDE(Flex)
-FIND_FLEX()
-
-IF (NOT FLEX_EXECUTABLE)
-    MESSAGE(FATAL_ERROR "Couldn't find Flex")
-ENDIF (NOT FLEX_EXECUTABLE)
-
-INCLUDE(Bison)
-FIND_BISON()
-
-IF (NOT BISON_EXECUTABLE)
-    MESSAGE(FATAL_ERROR "Couldn't find Bison")
-ENDIF (NOT BISON_EXECUTABLE)
-
-#############################################################
-
-include(FindAnyProject)
-
-find_anyproject(PROJ REQUIRED)
-
-if(PROJ_FOUND)
-	add_definitions(-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H)
-
-   IF (EXISTS ${PROJ_INCLUDE_DIR}/proj.h AND EXISTS ${PROJ_INCLUDE_DIR}/proj_experimental.h)
-	 FILE(READ ${PROJ_INCLUDE_DIR}/proj.h proj_version)
-	 STRING(REGEX REPLACE "^.*PROJ_VERSION_MAJOR +([0-9]+).*$" "\\1" PROJ_VERSION_MAJOR "${proj_version}")
-	 STRING(REGEX REPLACE "^.*PROJ_VERSION_MINOR +([0-9]+).*$" "\\1" PROJ_VERSION_MINOR "${proj_version}")
-	 STRING(REGEX REPLACE "^.*PROJ_VERSION_PATCH +([0-9]+).*$" "\\1" PROJ_VERSION_PATCH "${proj_version}")
-	 STRING(CONCAT PROJ_VERSION_STR "(" ${PROJ_VERSION_MAJOR} "." ${PROJ_VERSION_MINOR} "." ${PROJ_VERSION_PATCH} ")")
-	 IF ((PROJ_VERSION_MAJOR EQUAL 6) AND ((PROJ_VERSION_MINOR LESS 3) OR (PROJ_VERSION_MINOR EQUAL 3 AND PROJ_VERSION_PATCH LESS 1)))
-	   MESSAGE (FATAL_ERROR "Cannot build QGIS using Proj ${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR}.${PROJ_VERSION_PATCH} Use 6.3.1 or higher.")
-	 ENDIF ((PROJ_VERSION_MAJOR EQUAL 6) AND ((PROJ_VERSION_MINOR LESS 3) OR (PROJ_VERSION_MINOR EQUAL 3 AND PROJ_VERSION_PATCH LESS 1)))
-   ELSE(EXISTS ${PROJ_INCLUDE_DIR}/proj.h AND EXISTS ${PROJ_INCLUDE_DIR}/proj_experimental.h)
-	 FILE(READ ${PROJ_INCLUDE_DIR}/proj_api.h proj_version)
-	 STRING(REGEX REPLACE "^.*PJ_VERSION ([0-9]+).*$" "\\1" PJ_VERSION "${proj_version}")
-
-	 # This will break if 4.10.0 ever will be released (highly unlikely)
-	 STRING(REGEX REPLACE "([0-9])([0-9])([0-9])" "\\1" PROJ_VERSION_MAJOR "${PJ_VERSION}")
-	 STRING(REGEX REPLACE "([0-9])([0-9])([0-9])" "\\2" PROJ_VERSION_MINOR "${PJ_VERSION}")
-	 STRING(REGEX REPLACE "([0-9])([0-9])([0-9])" "\\3" PROJ_VERSION_PATCH "${PJ_VERSION}")
-	 STRING(CONCAT PROJ_VERSION_STR "(" ${PROJ_VERSION_MAJOR} "." ${PROJ_VERSION_MINOR} "." ${PROJ_VERSION_PATCH} ")")
-
-	 # Minimum Proj version required is 4.9.3
-	 IF ((PROJ_VERSION_MAJOR EQUAL 4) AND ((PROJ_VERSION_MINOR LESS 9) OR ((PROJ_VERSION_MINOR EQUAL 9) AND (PROJ_VERSION_PATCH LESS 3))))
-	   MESSAGE(FATAL_ERROR "Found Proj: ${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR}.${PROJ_VERSION_PATCH}. Cannot build QGIS using Proj older than 4.9.3.")
-	 ENDIF((PROJ_VERSION_MAJOR EQUAL 4) AND ((PROJ_VERSION_MINOR LESS 9) OR ((PROJ_VERSION_MINOR EQUAL 9) AND (PROJ_VERSION_PATCH LESS 3))))
-   ENDIF(EXISTS ${PROJ_INCLUDE_DIR}/proj.h AND EXISTS ${PROJ_INCLUDE_DIR}/proj_experimental.h)
-   IF (NOT PROJ_FIND_QUIETLY)
-	 MESSAGE(STATUS "Found Proj: ${PROJ_LIBRARY} version ${PROJ_VERSION_MAJOR} ${PROJ_VERSION_STR}")
-   ENDIF (NOT PROJ_FIND_QUIETLY)
-
-   ADD_DEFINITIONS(-DPROJ_VERSION_MAJOR=${PROJ_VERSION_MAJOR})
-
-ENDIF (PROJ_FOUND)
+# Default target
+find_package(PythonInterp REQUIRED)
 
 
-find_anyproject(GEOS REQUIRED)
-find_anyproject(GDAL REQUIRED)
-find_anyproject(EXPAT REQUIRED)
-find_anyproject(SPATIALINDEX REQUIRED)
-find_anyproject(SQLITE3 REQUIRED)
-find_anyproject(SPATIALITE REQUIRED)
-find_anyproject(QCA REQUIRED)
+    set(PROJ_VERSION_MAJOR 0)
 
-find_anyproject(LibZip REQUIRED)
-find_anyproject(QtKeychain REQUIRED)
-find_anyproject(PythonLibrary REQUIRED)
+    if(EXISTS "${PROJ_INCLUDE_DIR}/proj_api.h")
+        file(READ "${PROJ_INCLUDE_DIR}/proj_api.h" PROJ_API_H_CONTENTS)
+        string(REGEX MATCH "PJ_VERSION[ \t]+([0-9]+)"
+          PJ_VERSION ${PROJ_API_H_CONTENTS})
+        string (REGEX MATCH "([0-9]+)"
+          PJ_VERSION ${PJ_VERSION})
 
-#############################################################
-# search for Qt5
-SET(QT_MIN_VERSION 5.9.0)
+        string(SUBSTRING ${PJ_VERSION} 0 1 PROJ_VERSION_MAJOR)
+        unset(PROJ_API_H_CONTENTS)
+    endif()
+	
+	ADD_DEFINITIONS(-DPROJ_VERSION_MAJOR=${PROJ_VERSION_MAJOR})
 
-set(QT_REQUIRED_COMPONENTS Core Gui Widgets Network Xml Svg Concurrent PrintSupport Positioning Sql)
+set(QGIS_CORE_SRCS
+  ${CMAKE_SOURCE_DIR}/external/kdbush/include/kdbush.hpp
+  ${CMAKE_SOURCE_DIR}/external/nmea/context.c
+  ${CMAKE_SOURCE_DIR}/external/nmea/gmath.c
+  ${CMAKE_SOURCE_DIR}/external/nmea/info.c
+  ${CMAKE_SOURCE_DIR}/external/nmea/parse.c
+  ${CMAKE_SOURCE_DIR}/external/nmea/sentence.c
+  ${CMAKE_SOURCE_DIR}/external/nmea/time.c
+  ${CMAKE_SOURCE_DIR}/external/nmea/tok.c
 
-# Use Qt5SerialPort optionally for GPS
-SET (WITH_QT5SERIALPORT TRUE CACHE BOOL "Determines whether Qt5SerialPort should be tried for GPS positioning")
-IF (WITH_QT5SERIALPORT)
-  #FIND_PACKAGE(Qt5SerialPort REQUIRED)
-  # following variable is used in qgsconfig.h
-  SET (HAVE_QT5SERIALPORT TRUE)
-  SET(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} SerialPort)
-ENDIF(WITH_QT5SERIALPORT)
-
-find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
-
-#set(Qt5Core_VERSION_MAJOR ${QT5_VERSION})
-set(Qt5Core_VERSION_MAJOR 5)
-
-#############################################################
-
-IF(MSVC)
-  SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-  SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-  # disable macros that offend std::numeric_limits<T>::min()/max()
-  ADD_DEFINITIONS(-DNOMINMAX)
-  
-    # Turn on defines for non standard maths stuff
-  ADD_DEFINITIONS(-D_USE_MATH_DEFINES)
-
-  # Turn off deprecation warnings
-  ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
-  ADD_DEFINITIONS(-D_CRT_NONSTDC_NO_WARNINGS)
-ENDIF(MSVC)
-  
-#############################################################
-
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/../../cmake_templates/qgsconfig.h.in ${CMAKE_BINARY_DIR}/qgsconfig.h)
-INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
-
-INCLUDE(CreateQgsVersion)
-CREATE_QGSVERSION()
-
-############################################################
-# sources
-
-SET(QGIS_CORE_SRCS
-  ${CMAKE_SOURCE_DIR}/../../external/kdbush/include/kdbush.hpp
-  ${CMAKE_SOURCE_DIR}/../../external/nmea/context.c
-  ${CMAKE_SOURCE_DIR}/../../external/nmea/gmath.c
-  ${CMAKE_SOURCE_DIR}/../../external/nmea/info.c
-  ${CMAKE_SOURCE_DIR}/../../external/nmea/parse.c
-  ${CMAKE_SOURCE_DIR}/../../external/nmea/sentence.c
-  ${CMAKE_SOURCE_DIR}/../../external/nmea/time.c
-  ${CMAKE_SOURCE_DIR}/../../external/nmea/tok.c
-
-  ${CMAKE_SOURCE_DIR}/../../external/poly2tri/common/shapes.cc
-  ${CMAKE_SOURCE_DIR}/../../external/poly2tri/sweep/advancing_front.cc
-  ${CMAKE_SOURCE_DIR}/../../external/poly2tri/sweep/cdt.cc
-  ${CMAKE_SOURCE_DIR}/../../external/poly2tri/sweep/sweep_context.cc
-  ${CMAKE_SOURCE_DIR}/../../external/poly2tri/sweep/sweep.cc
+  ${CMAKE_SOURCE_DIR}/external/poly2tri/common/shapes.cc
+  ${CMAKE_SOURCE_DIR}/external/poly2tri/sweep/advancing_front.cc
+  ${CMAKE_SOURCE_DIR}/external/poly2tri/sweep/cdt.cc
+  ${CMAKE_SOURCE_DIR}/external/poly2tri/sweep/sweep_context.cc
+  ${CMAKE_SOURCE_DIR}/external/poly2tri/sweep/sweep.cc
 
   callouts/qgscallout.cpp
   callouts/qgscalloutsregistry.cpp
@@ -822,34 +664,32 @@ SET(QGIS_CORE_SRCS
   validity/qgsvaliditycheckcontext.cpp
   validity/qgsvaliditycheckregistry.cpp
 
-  ${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp
+  qgsexpression_texts.cpp
 
   qgsuserprofile.cpp
   qgsuserprofilemanager.cpp
 )
 
+set(QGIS_CORE_SRCS ${QGIS_CORE_SRCS}
+    qgsexpressionparser.cpp
+    qgssqlstatementparser.cpp
+    flex_qgsexpressionlexer.cpp
+    flex_qgssqlstatementlexer.cpp
+)
+
 FILE(GLOB JSON_HELP_FILES "${CMAKE_SOURCE_DIR}/resources/function_help/json/*")
-IF(NOT USING_NINJA)
-  STRING(REPLACE "$" "$$" JSON_HELP_FILES "${JSON_HELP_FILES}")
-ENDIF(NOT USING_NINJA)
+#STRING(REPLACE "$" "$$" JSON_HELP_FILES "${JSON_HELP_FILES}")
 STRING(REPLACE "\(" "\\(" JSON_HELP_FILES "${JSON_HELP_FILES}")
 STRING(REPLACE "\)" "\\)" JSON_HELP_FILES "${JSON_HELP_FILES}")
-ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp
-  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/../../scripts/process_function_template.py ${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp.temp
-  COMMAND ${CMAKE_COMMAND} -DSRC=${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp.temp -DDST=${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp -P ${CMAKE_SOURCE_DIR}/../../cmake/CopyIfChanged.cmake
+ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/qgsexpression_texts.cpp
+  COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/process_function_template.py ${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp.temp
+  COMMAND ${CMAKE_COMMAND} -DSRC=${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp.temp -DDST=${CMAKE_CURRENT_SOURCE_DIR}/qgsexpression_texts.cpp -P ${CMAKE_SOURCE_DIR}/cmake/CopyIfChanged.cmake
   DEPENDS ${JSON_HELP_FILES}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-IF(ENABLE_MODELTEST)
-  SET(MODELTEST_SRCS
-    ../../tests/qt_modeltest/modeltest.cpp
-    ../../tests/qt_modeltest/dynamictreemodel.cpp
-  )
-  SET(QGIS_CORE_SRCS ${QGIS_CORE_SRCS}
-    ${MODELTEST_SRCS}
-  )
-ENDIF(ENABLE_MODELTEST)
+add_custom_target(qgsexpression_texts DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/qgsexpression_texts.cpp)
+set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} qgsexpression_texts PARENT_SCOPE)
 
 IF (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # spatialindex headers produce warnings
@@ -862,10 +702,10 @@ ENDIF (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   )
 #ENDIF (QT_MOBILITY_LOCATION_FOUND OR Qt5Positioning_FOUND)
 
-ADD_FLEX_FILES_PREFIX(QGIS_CORE_SRCS exp_ qgsexpressionlexer.ll)
-ADD_FLEX_FILES_PREFIX(QGIS_CORE_SRCS sqlstatement_ qgssqlstatementlexer.ll)
-ADD_BISON_FILES_PREFIX(QGIS_CORE_SRCS exp_ qgsexpressionparser.yy)
-ADD_BISON_FILES_PREFIX(QGIS_CORE_SRCS sqlstatement_ qgssqlstatementparser.yy)
+#ADD_FLEX_FILES_PREFIX(QGIS_CORE_SRCS exp_ qgsexpressionlexer.ll)
+#ADD_FLEX_FILES_PREFIX(QGIS_CORE_SRCS sqlstatement_ qgssqlstatementlexer.ll)
+#ADD_BISON_FILES_PREFIX(QGIS_CORE_SRCS exp_ qgsexpressionparser.yy)
+#ADD_BISON_FILES_PREFIX(QGIS_CORE_SRCS sqlstatement_ qgssqlstatementparser.yy)
 
 IF(NOT MSVC)
   SET_SOURCE_FILES_PROPERTIES(qgsexpressionparser.cpp qgssqlstatementparser.cpp PROPERTIES COMPILE_FLAGS -w)
@@ -879,9 +719,9 @@ ELSE(NOT MSVC)
 ENDIF(NOT MSVC)
 
 SET(QGIS_CORE_HDRS
-  ${CMAKE_SOURCE_DIR}/../../external/nlohmann/json_fwd.hpp
+  ${CMAKE_SOURCE_DIR}/external/nlohmann/json_fwd.hpp
   ${CMAKE_BINARY_DIR}/qgsconfig.h
-#  ../plugins/qgisplugin.h
+# plugins/qgisplugin.h
 
   qgis.h
   qgis_sip.h
@@ -1548,7 +1388,7 @@ INCLUDE_DIRECTORIES(
   classification
   dxf
   effects
-  ${CMAKE_SOURCE_DIR}/expression
+  expression
   fieldformatter
   geometry
   geocms
@@ -1573,12 +1413,12 @@ INCLUDE_DIRECTORIES(
   symbology
   mesh
   validity
-  ${CMAKE_SOURCE_DIR}/../../external
-  ${CMAKE_SOURCE_DIR}/../../external/nlohmann
-  ${CMAKE_SOURCE_DIR}/../../external/kdbush/include
-  ${CMAKE_SOURCE_DIR}/../../external/nmea
-  ${CMAKE_SOURCE_DIR}/../../external/poly2tri
-  ${CMAKE_SOURCE_DIR}/../../external/rtree/include
+  ${CMAKE_SOURCE_DIR}/external
+  ${CMAKE_SOURCE_DIR}/external/nlohmann
+  ${CMAKE_SOURCE_DIR}/external/kdbush/include
+  ${CMAKE_SOURCE_DIR}/external/nmea
+  ${CMAKE_SOURCE_DIR}/external/poly2tri
+  ${CMAKE_SOURCE_DIR}/external/rtree/include
 )
 
 INCLUDE_DIRECTORIES(SYSTEM
@@ -1627,201 +1467,191 @@ ADD_DEFINITIONS(-DTEST_DATA_DIR="${TEST_DATA_DIR}")
 
 #############################################################
 # qgis_core library
-ADD_LIBRARY(${LIB_NAME} ${LIBRARY_TYPE} ${QGIS_CORE_SRCS} ${QGIS_CORE_HDRS} ${QGIS_CORE_PRIVATE_HDRS})
 
-include(GenerateExportHeader)
+if (NOT PREPARE_ONLY)
 
-GENERATE_EXPORT_HEADER(
-  ${LIB_NAME}
-  BASE_NAME CORE
-  EXPORT_FILE_NAME qgis_core.h
-)
+	set(LIB_NAME ${NG_PREFIX}qgis_core)
+	set(TARGETS ${LIB_NAME})
 
-SET(QGIS_CORE_HDRS ${QGIS_CORE_HDRS} ${CMAKE_CURRENT_BINARY_DIR}/qgis_core.h)
+	ADD_LIBRARY(${LIB_NAME} SHARED ${QGIS_CORE_SRCS} ${QGIS_CORE_HDRS} ${QGIS_CORE_PRIVATE_HDRS})
 
-IF(ENABLE_MODELTEST)
-  TARGET_LINK_LIBRARIES(${TARGETS} ${Qt5Test_LIBRARIES})
-ENDIF(ENABLE_MODELTEST)
+	include(GenerateExportHeader)
+
+	GENERATE_EXPORT_HEADER(
+	  ${LIB_NAME}
+	  BASE_NAME CORE
+	  EXPORT_FILE_NAME qgis_core.h
+	)
+
+	SET(QGIS_CORE_HDRS ${QGIS_CORE_HDRS} ${CMAKE_CURRENT_BINARY_DIR}/qgis_core.h)
+
+	IF(ENABLE_MODELTEST)
+	  TARGET_LINK_LIBRARIES(${TARGETS} ${Qt5Test_LIBRARIES})
+	ENDIF(ENABLE_MODELTEST)
 
 
-IF(HAVE_OPENCL)
-  TARGET_LINK_LIBRARIES(${TARGETS} ${OpenCL_LIBRARY})
-ENDIF(HAVE_OPENCL)
+	IF(HAVE_OPENCL)
+	  TARGET_LINK_LIBRARIES(${TARGETS} ${OpenCL_LIBRARY})
+	ENDIF(HAVE_OPENCL)
 
 
-IF(NOT APPLE)
-    message(STATUS  " INSTALL(FILES ${QGIS_CORE_HDRS} DESTINATION ${QGIS_INCLUDE_DIR})")
-    INSTALL(FILES ${QGIS_CORE_HDRS} DESTINATION include)
-ELSE(NOT APPLE)
+	IF(NOT APPLE)
+		message(STATUS  " INSTALL(FILES ${QGIS_CORE_HDRS} DESTINATION ${QGIS_INCLUDE_DIR})")
+		INSTALL(FILES ${QGIS_CORE_HDRS} DESTINATION include)
+	ELSE(NOT APPLE)
 
-  SET_TARGET_PROPERTIES(${TARGETS} PROPERTIES
-    CLEAN_DIRECT_OUTPUT 1
-    FRAMEWORK 1
-    FRAMEWORK_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}"
-    MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/mac/framework.info.plist.in"
-    MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${COMPLETE_VERSION}
-    MACOSX_FRAMEWORK_IDENTIFIER org.qgis.qgis3_core
-    BUILD_WITH_INSTALL_RPATH TRUE
-    PUBLIC_HEADER "${QGIS_CORE_HDRS}"
-    LINK_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}"
-  )
-  # generated export header does not get copied with PUBLIC_HEADER files
-  ADD_CUSTOM_COMMAND(TARGET ${TARGETS}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy qgis_core.h ${INSTALL_INC_DIR}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS qgis_core.h
-  )
-ENDIF(NOT APPLE)
+	  SET_TARGET_PROPERTIES(${TARGETS} PROPERTIES
+		CLEAN_DIRECT_OUTPUT 1
+		FRAMEWORK 1
+		FRAMEWORK_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}"
+		MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/mac/framework.info.plist.in"
+		MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${COMPLETE_VERSION}
+		MACOSX_FRAMEWORK_IDENTIFIER org.qgis.qgis3_core
+		BUILD_WITH_INSTALL_RPATH TRUE
+		PUBLIC_HEADER "${QGIS_CORE_HDRS}"
+		LINK_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}"
+	  )
+	  # generated export header does not get copied with PUBLIC_HEADER files
+	  ADD_CUSTOM_COMMAND(TARGET ${TARGETS}
+		POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy qgis_core.h ${INSTALL_INC_DIR}
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		DEPENDS qgis_core.h
+	  )
+	ENDIF(NOT APPLE)
 
-#generate unversioned libs for android
-IF (NOT ANDROID)
-  SET_TARGET_PROPERTIES(${TARGETS} PROPERTIES
-    VERSION ${COMPLETE_VERSION}
-    SOVERSION ${COMPLETE_VERSION}
-    )
-ENDIF (NOT ANDROID)
+	#generate unversioned libs for android
+	IF (NOT ANDROID)
+	  SET_TARGET_PROPERTIES(${TARGETS} PROPERTIES
+		VERSION ${COMPLETE_VERSION}
+		SOVERSION ${COMPLETE_VERSION}
+		)
+	ENDIF (NOT ANDROID)
 
-# make sure to create qgsversion.h before compiling
-ADD_DEPENDENCIES(${TARGETS} version)
+	# make sure to create qgsversion.h before compiling
+	ADD_DEPENDENCIES(${TARGETS} version)
 
-# because of htonl
-IF (WIN32)
-  #FIND_LIBRARY(SETUPAPI_LIBRARY NAMES setupapi PATHS $ENV{LIB})
-  #FIND_LIBRARY(VERSION_LIBRARY NAMES version PATHS $ENV{LIB})
-  #TARGET_LINK_LIBRARIES(${TARGETS} wsock32 ${SETUPAPI_LIBRARY} dbghelp ${VERSION_LIBRARY})
-  TARGET_LINK_LIBRARIES(${TARGETS} wsock32 Setupapi.lib dbghelp version.lib)
-ENDIF (WIN32)
+	# because of htonl
+	IF (WIN32)
+	  TARGET_LINK_LIBRARIES(${TARGETS} wsock32 setupapi dbghelp version)
+	ENDIF (WIN32)
 
-IF (APPLE)
-  TARGET_LINK_LIBRARIES(${TARGETS} ${LIBTASN1_LIBRARY})
-ENDIF (APPLE)
+	IF (APPLE)
+	  TARGET_LINK_LIBRARIES(${TARGETS} ${LIBTASN1_LIBRARY})
+	ENDIF (APPLE)
 
-IF (APPLE AND NOT IOS)
-  TARGET_LINK_LIBRARIES(${TARGETS} qgis_native)
-ENDIF (APPLE AND NOT IOS)
+	IF (APPLE AND NOT IOS)
+	  TARGET_LINK_LIBRARIES(${TARGETS} qgis_native)
+	ENDIF (APPLE AND NOT IOS)
 
-IF (QT_MOBILITY_LOCATION_FOUND)
-  TARGET_LINK_LIBRARIES(${TARGETS} ${QT_MOBILITY_LOCATION_LIBRARY})
-ENDIF (QT_MOBILITY_LOCATION_FOUND)
+	IF (QT_MOBILITY_LOCATION_FOUND)
+	  TARGET_LINK_LIBRARIES(${TARGETS} ${QT_MOBILITY_LOCATION_LIBRARY})
+	ENDIF (QT_MOBILITY_LOCATION_FOUND)
 
-IF (ADD_CLAZY_CHECKS)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_BASE_FLAGS} -Xclang -plugin-arg-clazy -Xclang ${CLAZY_BASE_CHECKS},non-pod-global-static")
-ENDIF (ADD_CLAZY_CHECKS)
+	IF (ADD_CLAZY_CHECKS)
+	  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_BASE_FLAGS} -Xclang -plugin-arg-clazy -Xclang ${CLAZY_BASE_CHECKS},non-pod-global-static")
+	ENDIF (ADD_CLAZY_CHECKS)
 
-TARGET_LINK_LIBRARIES(${TARGETS}
-Qt5::Xml
-Qt5::Core
-Qt5::Gui
-Qt5::Widgets
-Qt5::Svg
-Qt5::PrintSupport
-Qt5::Network
-Qt5::Sql
-Qt5::Concurrent
-Qt5::Positioning
-  ${QCA_LIBRARY}
-  ${QTKEYCHAIN_LIBRARY}
-  ${PROJ_LIBRARY}
-  ${GEOS_LIBRARY}
-  ${GDAL_LIBRARY}
-  ${SPATIALINDEX_LIBRARY}
-  ${EXPAT_LIBRARY}
-  ${SQLITE3_LIBRARY}
-  ${SPATIALITE_LIBRARY}
-  ${LIBZIP_LIBRARY}
-)
+	TARGET_LINK_LIBRARIES(${TARGETS}
+	  Qt5::Xml
+	  Qt5::Core
+	  Qt5::Gui
+	  Qt5::Widgets
+	  Qt5::Svg
+	  Qt5::PrintSupport
+	  Qt5::Network
+	  Qt5::Sql
+	  Qt5::Concurrent
+	  Qt5::Positioning
+	  ${QCA_LIBRARY}
+	  ${QTKEYCHAIN_LIBRARY}
+	  ${PROJ_LIBRARY}
+	  ${GEOS_LIBRARY}
+	  ${GDAL_LIBRARY}
+	  ${SPATIALINDEX_LIBRARY}
+	  ${EXPAT_LIBRARY}
+	  ${SQLITE3_LIBRARY}
+	  ${SPATIALITE_LIBRARY}
+	  ${LIBZIP_LIBRARY}
+	)
+	
+	#if (WITH_WEBKIT)
+	#	TARGET_LINK_LIBRARIES(${TARGETS} Qt5::WebKit)
+	#endif(WITH_WEBKIT)
 
-IF (FORCE_STATIC_PROVIDERS)
-  INCLUDE_DIRECTORIES(
-    ${CMAKE_SOURCE_DIR}/src/providers/wms
-    ${CMAKE_SOURCE_DIR}/src/providers/postgres
-  )
+	IF (FORCE_STATIC_PROVIDERS)
+	  INCLUDE_DIRECTORIES(
+		${CMAKE_SOURCE_DIR}/src/providers/wms
+		${CMAKE_SOURCE_DIR}/src/providers/postgres
+	  )
 
-  TARGET_LINK_LIBRARIES(${TARGETS}
-    wmsprovider_a
-    postgresprovider_a
-  )
-ENDIF (FORCE_STATIC_PROVIDERS)
+	  TARGET_LINK_LIBRARIES(${TARGETS}
+		wmsprovider_a
+		postgresprovider_a
+	  )
+	ENDIF (FORCE_STATIC_PROVIDERS)
 
-IF (MSVC)
-  #needed for linking to gdal which needs odbc
-  SET(TARGET_LINK_LIBRARIES ${TARGETS} odbc32 odbccp32)
-ENDIF (MSVC)
+	IF (MSVC)
+	  #needed for linking to gdal which needs odbc
+	  SET(TARGET_LINK_LIBRARIES ${TARGETS} odbc32 odbccp32)
+	ENDIF (MSVC)
 
-IF (WITH_QT5SERIALPORT)
-  TARGET_LINK_LIBRARIES(${TARGETS}
-    Qt5::SerialPort
-  )
-ENDIF (WITH_QT5SERIALPORT)
+	IF (WITH_QT5SERIALPORT)
+	  TARGET_LINK_LIBRARIES(${TARGETS}
+		Qt5::SerialPort
+	  )
+	ENDIF (WITH_QT5SERIALPORT)
 
-TARGET_COMPILE_DEFINITIONS(${TARGETS} PRIVATE "-DQT_NO_FOREACH")
+	TARGET_COMPILE_DEFINITIONS(${TARGETS} PRIVATE "-DQT_NO_FOREACH")
 
-# clang-tidy
-IF(CLANG_TIDY_EXE)
-  SET_TARGET_PROPERTIES(
-    ${TARGETS} PROPERTIES
-    CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
-  )
-ENDIF(CLANG_TIDY_EXE)
+	# clang-tidy
+	IF(CLANG_TIDY_EXE)
+	  SET_TARGET_PROPERTIES(
+		${TARGETS} PROPERTIES
+		CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
+	  )
+	ENDIF(CLANG_TIDY_EXE)
 
-add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
-# Export package ===============================================================
+	# Export package ===============================================================
 
-# Add path to includes to build-tree export
-target_include_directories(${TARGETS} PUBLIC
- $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
- $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-)
+	# Add path to includes to build-tree export
+	target_include_directories(${TARGETS} PUBLIC
+	 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+	 $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+	)
 
-# Add all targets to the build-tree export set
-export(TARGETS ${TARGETS}
-   FILE ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Targets.cmake)
+	# Add all targets to the build-tree export set
+	export(TARGETS ${TARGETS}
+	   FILE ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Targets.cmake)
 
-if(REGISTER_PACKAGE)
-   # Export the package for use from the build-tree
-   # (this registers the build-tree with a global CMake-registry)
-   export(PACKAGE ${PACKAGE_UPPER_NAME})
-endif()
+	if(REGISTER_PACKAGE)
+	   # Export the package for use from the build-tree
+	   # (this registers the build-tree with a global CMake-registry)
+	   export(PACKAGE ${PACKAGE_UPPER_NAME})
+	endif()
 
-# Create the Config.cmake file
-configure_file(../../cmake/PackageConfig.cmake.in
-   ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake @ONLY)
+	# Create the Config.cmake file
+	configure_file(${CMAKE_SOURCE_DIR}/cmake/PackageConfig.cmake.in
+	   ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake @ONLY)
 
-if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
-    install(TARGETS ${TARGETS} 
-        EXPORT ${PACKAGE_UPPER_NAME}Targets
-        RUNTIME DESTINATION ${INSTALL_BIN_DIR}
-        ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
-        LIBRARY DESTINATION ${INSTALL_LIB_DIR}
-        INCLUDES DESTINATION ${INSTALL_INC_DIR}
-        FRAMEWORK DESTINATION ${INSTALL_LIB_DIR}
-    )
+	if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
+		install(TARGETS ${TARGETS} 
+			EXPORT ${PACKAGE_UPPER_NAME}Targets
+			RUNTIME DESTINATION ${INSTALL_BIN_DIR}
+			ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
+			LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+			INCLUDES DESTINATION ${INSTALL_INC_DIR}
+			FRAMEWORK DESTINATION ${INSTALL_LIB_DIR}
+		)
 
-    # Install the <Package>Config.cmake
-    install(FILES
-        ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake
-        DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
+		# Install the <Package>Config.cmake
+		#install(FILES
+		#    ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake
+		#    DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
 
-    # Install the export set for use with the install-tree
-    install(EXPORT ${PACKAGE_UPPER_NAME}Targets DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
-endif()
+		# Install the export set for use with the install-tree
+		#install(EXPORT ${PACKAGE_UPPER_NAME}Targets DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
+	endif()
 
-# Archiving ====================================================================
-
-set(CPACK_PACKAGE_NAME "${PACKAGE_NAME}")
-set(CPACK_PACKAGE_VENDOR "${PACKAGE_VENDOR}")
-set(CPACK_PACKAGE_VERSION "${VERSION}")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PACKAGE_NAME} Installation")
-set(CPACK_PACKAGE_RELOCATABLE TRUE)
-set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
-set(CPACK_GENERATOR "ZIP")
-set(CPACK_MONOLITHIC_INSTALL ON)
-set(CPACK_STRIP_FILES TRUE)
-
-# Get cpack zip archive name
-get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
-set(CPACK_PACKAGE_FILE_NAME ${PROJECT_CPACK_FILENAME})
-
-include(CPack)
+endif(NOT PREPARE_ONLY)

@@ -3,7 +3,7 @@
 # Purpose:  CMake build scripts
 # Author:   Dmitry Baryshnikov, dmitry.baryshnikov@nexgis.com
 ################################################################################
-# Copyright (C) 2017-2018, NextGIS <info@nextgis.com>
+# Copyright (C) 2017-2020, NextGIS <info@nextgis.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -25,7 +25,6 @@
 ################################################################################
 
 cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
-
 project(qgis)
 
 if(NOT SKIP_PREFIX)
@@ -44,8 +43,6 @@ if(OSX_FRAMEWORK AND (BUILD_SHARED_LIBS OR BUILD_STATIC_LIBS))
                        and BUILD_STATIC_LIBS keys are permitted")
 endif()
 
-option(QT4_BUILD "Build with Qt4" ON)
-
 if(OSX_FRAMEWORK)
     set(QGIS_APP_NAME ${PROJECT_NAME}-${NG_PREFIX})
 else()
@@ -56,13 +53,7 @@ if(OSX_FRAMEWORK)
     set(QGIS_DATA_SUBDIR "Applications/${QGIS_APP_NAME}.app/Contents/Resources")
     set(INSTALL_BIN_DIR "Applications" CACHE INTERNAL "Installation directory for executables" FORCE)
     set(INSTALL_LIB_DIR "${INSTALL_BIN_DIR}/${QGIS_APP_NAME}.app/Contents/Frameworks" CACHE INTERNAL "Installation directory for libraries" FORCE)
-    if(QT4_BUILD)
-        set(_PLUGIN_SUBDIR "Library/Plugins/Qt4")
-    else()
-        set(_PLUGIN_SUBDIR "Library/Plugins/Qt5")
-    endif()
-    set(QT4_PLUGINS_DIR Library/Plugins/Qt4)
-    set(QT4_TRANSLATION_DIR Library/Translations/Qt4)
+    set(_PLUGIN_SUBDIR "Library/Plugins/Qt5")
     set(QT5_PLUGINS_DIR Library/Plugins/Qt5)
     set(QT5_TRANSLATION_DIR Library/Translations/Qt5)
 
@@ -95,11 +86,8 @@ else()
     set(INSTALL_DOC_DIR ${CMAKE_INSTALL_DOCDIR} CACHE INTERNAL "Installation directory for doc pages" FORCE)
     # TODO: solve the qt and qgis plugins paths
     set(INSTALL_PLUGIN_DIR ${INSTALL_LIB_DIR}/${NG_PREFIX}${PROJECT_NAME}/plugins CACHE INTERNAL "Installation directory for plugins" FORCE)
-    if(QT4_BUILD)
-        set(QT_PLUGIN_SUBDIR "${INSTALL_LIB_DIR}/qt4/plugins" )
-    else()
-        set(QT_PLUGIN_SUBDIR "${INSTALL_LIB_DIR}/qt5/plugins" )
-    endif()
+    set(QT_PLUGIN_SUBDIR "${INSTALL_LIB_DIR}/qt5/plugins" )
+
 
     # On Windows qt.conf will be common for several applications so we need to have paths for qt4/5
     set(QT4_PLUGINS_DIR FIXME)
@@ -134,9 +122,6 @@ set(HAVE_SPATIALITE TRUE)
 #cmakedefine HAVE_MSSQL
 set(HAVE_ORACLE TRUE)
 
-if(WITH_BINDINGS)
-    set(HAVE_PYTHON TRUE)
-endif()
 
 include(configure)
 
@@ -146,84 +131,55 @@ include_directories ( ${CMAKE_CURRENT_BINARY_DIR} )
 report_version("${NG_PREFIX}${PROJECT_NAME}" ${VERSION})
 
 option(PREPARE_ONLY "Only generate flex and bison files" OFF)
-option(WITH_DESKTOP "Build desktop components" ON)
-option(WITH_BINDINGS "Build python bindings" ON)
+
 include(FindAnyProject)
 
 if(NOT PREPARE_ONLY)
-    find_anyproject(ZLIB REQUIRED)
-    find_anyproject(SQLite3 REQUIRED)
-    find_anyproject(EXPAT REQUIRED)
-    find_anyproject(GEOS REQUIRED)
-    find_anyproject(PROJ REQUIRED)
-    if(PROJ_FOUND)
+
+	find_anyproject(PROJ REQUIRED)
+	if(PROJ_FOUND)
         add_definitions(-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H)
     endif()
-    find_anyproject(GDAL REQUIRED)
+	
+    find_anyproject(GEOS REQUIRED)
+	find_anyproject(GDAL REQUIRED)
+	find_anyproject(EXPAT REQUIRED)
+	find_anyproject(SPATIALINDEX REQUIRED)
+	find_anyproject(SQLITE3 REQUIRED)
+	find_anyproject(SPATIALITE REQUIRED)
+	find_anyproject(QCA REQUIRED)
 
-    # if(POLICY CMP0071)
-    #     cmake_policy(SET CMP0071 NEW)
-    # endif()
-    #
-    # # Search dependencies
-    # set(CMAKE_AUTOMOC ON)
+	find_anyproject(LibZip REQUIRED)
+	find_anyproject(QtKeychain REQUIRED)
+	
+
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
-    set(QT_REQUIRED_COMPONENTS QtCore QtGui QtXml QtNetwork QtSvg QtSql QtUiTools QtScript)
-    option(WITH_QTWEBKIT "Build support QT Webkit" ON)
+	SET(CMAKE_AUTOMOC ON)
+	
+    set(QT_REQUIRED_COMPONENTS Core Gui Widgets Network Xml Svg Concurrent PrintSupport Positioning Sql)
+	
+    option(WITH_QTWEBKIT "Build support QT Webkit" OFF)
     if(WITH_QTWEBKIT)
-        set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} QtWebKit)
+        set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} WebKit)
         add_definitions(-DWITH_QTWEBKIT)
     endif()
+	
+	set (WITH_QT5SERIALPORT TRUE CACHE BOOL "Determines whether Qt5SerialPort should be tried for GPS positioning")
+	if (WITH_QT5SERIALPORT)
+	  #FIND_PACKAGE(Qt5SerialPort REQUIRED)
+	  # following variable is used in qgsconfig.h
+	  set(HAVE_QT5SERIALPORT TRUE)
+	  set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} SerialPort)
+	endif(WITH_QT5SERIALPORT)
 
-    find_anyproject(Qt4 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
+    find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
-    if(WIN32)
-        add_definitions(-DQT_DLL) # Only for shared libraries on win32
-    endif()
 
-    find_anyproject(Qca REQUIRED)
-    find_anyproject(Qscintilla REQUIRED)
-    if(QSCINTILLA_FOUND)
-        add_definitions(-DQSCINTILLA_VERSION_STR="${QSCINTILLA_VERSION}")
-        include_directories(${QSCINTILLA_INCLUDE_DIRS}/qscintilla)
-    endif()
-
-    find_anyproject(Qwt REQUIRED)
-    if(QWT_FOUND)
-        add_definitions(-DQWT_VERSION_STR="${QWT_VERSION}")
-        include_directories(${QWT_INCLUDE_DIRS}/qwt)
-    endif()
-
-    #create a variable to specify where our test data is
-    #so that unit tests can use TEST_DATA_DIR to locate
-    #the test data. See CMakeLists in test dirs for more info
-    #TEST_DATA_DIR is also used by QgsRenderChecker currently in core
-    set (TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/testdata")
-
-    # Copy zlib to qt bin directory
-    if(WIN32)
-        get_target_property(ZLIB_IMPORTED_LOCATION ${ZLIB_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        get_filename_component(PATH_DIR ${ZLIB_IMPORTED_LOCATION} PATH)
-        set(ENV{PATH} "$ENV{PATH};${PATH_DIR}")
-        get_target_property(RCC_PATH Qt4::rcc IMPORTED_LOCATION)
-        get_filename_component(QT_BIN_DIR ${RCC_PATH} PATH)
-        file(COPY ${ZLIB_IMPORTED_LOCATION} DESTINATION ${QT_BIN_DIR})
-    endif()
+	#set(Qt5Core_VERSION_MAJOR ${QT5_VERSION})
+	set(Qt5Core_VERSION_MAJOR 5)
 endif()
 
-if(WITH_BINDINGS)
-    # This is here as src/python
-    find_package(PythonInterp REQUIRED)
-    find_package(PythonLibs REQUIRED)
-
-    if(OSX_FRAMEWORK)
-        set(QGIS_PYTHON_DIR "Library/Python/${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages/${PROJECT_NAME}")
-    elseif(WIN32)
-        set(QGIS_PYTHON_DIR "${INSTALL_LIB_DIR}/Python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}/site-packages/${PROJECT_NAME}")
-    else()
-        set(QGIS_PYTHON_DIR "lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/dist-packages/${PROJECT_NAME}")
-    endif()
-endif()
+############################################
 
 # Add binaries and libraries
 IF(MSVC)
@@ -236,43 +192,31 @@ IF(MSVC)
   ENDIF()
 ENDIF(MSVC)
 
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-if(COMPILER_SUPPORTS_CXX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-endif()
 
-if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-return-type-c-linkage -Wno-overloaded-virtual")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Qunused-arguments")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Qunused-arguments")
-    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Qunused-arguments")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Qunused-arguments")
-endif()
+MATH(EXPR QGIS_VERSION_INT "${CPACK_PACKAGE_VERSION_MAJOR}*10000+${CPACK_PACKAGE_VERSION_MINOR}*100+${CPACK_PACKAGE_VERSION_PATCH}")
 
-# Disable automatic conversion from QString to ASCII 8-bit strings (char *)
-# (Keeps code compatible with Qt/Mac/64bit)
-add_definitions(-DQT_NO_CAST_TO_ASCII)
+# POLICIES
+CMAKE_POLICY (SET CMP0071 NEW)
 
-# install
-if(OSX_FRAMEWORK)
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/symlinks
-    )
-endif()
+
+#############################################################
+
+IF(MSVC)
+  SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+  SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+  # disable macros that offend std::numeric_limits<T>::min()/max()
+  ADD_DEFINITIONS(-DNOMINMAX)
+  
+    # Turn on defines for non standard maths stuff
+  ADD_DEFINITIONS(-D_USE_MATH_DEFINES)
+
+  # Turn off deprecation warnings
+  ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
+  ADD_DEFINITIONS(-D_CRT_NONSTDC_NO_WARNINGS)
+ENDIF(MSVC)
+  
 
 add_subdirectory(src)
-if(NOT PREPARE_ONLY)
-    add_subdirectory(translations)
-    add_subdirectory(images)
-    add_subdirectory(resources)
-    add_subdirectory(docs)
-endif()
-
-if(WITH_BINDINGS)
-    add_subdirectory(python)
-endif()
 
 add_custom_target(prepare_parser DEPENDS ${PREPARE_PARSER_TARGETS})
 
@@ -280,6 +224,7 @@ set(PACKAGE_NAME ${PROJECT_NAME})
 string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
 
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+
 
 # Archiving ====================================================================
 
