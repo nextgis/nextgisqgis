@@ -1,90 +1,77 @@
-# Find Proj
-# ~~~~~~~~~
-# Copyright (c) 2007, Martin Dobias <wonder.sk at gmail.com>
+###############################################################################
+# CMake module to search for PROJ.4 library
+#
+# On success, the macro sets the following variables:
+# PROJ_FOUND       = if the library found
+# PROJ_LIBRARY     = full path to the library
+# PROJ_INCLUDE_DIR = where to find the library headers 
+# also defined, but not for general use are
+# PROJ_LIBRARY, where to find the PROJ.4 library.
+#
+# Copyright (c) 2009 Mateusz Loskot <mateusz@loskot.net>
+# Copyright (c) 2015 NextGIS <info@nextgis.com>
+#
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 #
-# CMake module to search for Proj library
-#
-# If it's found it sets PROJ_FOUND to TRUE
-# and following variables are set:
-#    PROJ_INCLUDE_DIR
-#    PROJ_LIBRARY
+###############################################################################
 
-# FIND_PATH and FIND_LIBRARY normally search standard locations
-# before the specified paths. To search non-standard paths first,
-# FIND_* is invoked first with specified paths and NO_DEFAULT_PATH
-# and then again with no specified paths to search the default
-# locations. When an earlier FIND_* succeeds, subsequent FIND_*s
-# searching for the same item do nothing.
+# Try to use OSGeo4W installation
+IF(WIN32)
+    SET(PROJ_OSGEO4W_HOME "C:/OSGeo4W") 
 
-# try to use framework on mac
-# want clean framework path, not unix compatibility path
-IF (APPLE)
-  IF (CMAKE_FIND_FRAMEWORK MATCHES "FIRST"
-      OR CMAKE_FRAMEWORK_PATH MATCHES "ONLY"
-      OR NOT CMAKE_FIND_FRAMEWORK)
-    SET (CMAKE_FIND_FRAMEWORK_save ${CMAKE_FIND_FRAMEWORK} CACHE STRING "" FORCE)
-    SET (CMAKE_FIND_FRAMEWORK "ONLY" CACHE STRING "" FORCE)
-    #FIND_PATH(PROJ_INCLUDE_DIR PROJ/proj_api.h)
-    FIND_LIBRARY(PROJ_LIBRARY PROJ)
-    IF (PROJ_LIBRARY)
-      # FIND_PATH doesn't add "Headers" for a framework
-      SET (PROJ_INCLUDE_DIR ${PROJ_LIBRARY}/Headers CACHE PATH "Path to a file.")
-    ENDIF (PROJ_LIBRARY)
-    SET (CMAKE_FIND_FRAMEWORK ${CMAKE_FIND_FRAMEWORK_save} CACHE STRING "" FORCE)
-  ENDIF ()
-ENDIF (APPLE)
+    IF($ENV{OSGEO4W_HOME})
+        SET(PROJ_OSGEO4W_HOME "$ENV{OSGEO4W_HOME}") 
+    ENDIF()
+ENDIF(WIN32)
 
 FIND_PATH(PROJ_INCLUDE_DIR proj_api.h
-  "$ENV{INCLUDE}"
-  "$ENV{LIB_DIR}/include"
-  )
+    PATHS ${PROJ_OSGEO4W_HOME}/include
+    DOC "Path to PROJ.4 library include directory")
 
-FIND_LIBRARY(PROJ_LIBRARY NAMES proj_i proj PATHS
-  "$ENV{LIB}"
-  "$ENV{LIB_DIR}/lib"
-  )
+SET(PROJ_NAMES ${PROJ_NAMES} proj proj_i)
+FIND_LIBRARY(PROJ_LIBRARY
+    NAMES ${PROJ_NAMES}
+    PATHS ${PROJ_OSGEO4W_HOME}/lib
+    DOC "Path to PROJ.4 library file")
 
-IF (PROJ_INCLUDE_DIR AND PROJ_LIBRARY)
-   SET(PROJ_FOUND TRUE)
-ENDIF (PROJ_INCLUDE_DIR AND PROJ_LIBRARY)
+if(PROJ_INCLUDE_DIR)
+    set(PROJ_VERSION_MAJOR 0)
+    set(PROJ_VERSION_MINOR 0)
+    set(PROJ_VERSION_PATCH 0)
+    set(PROJ_VERSION_NAME "EARLY RELEASE")
 
-IF (PROJ_FOUND)
-   IF (EXISTS ${PROJ_INCLUDE_DIR}/proj.h AND EXISTS ${PROJ_INCLUDE_DIR}/proj_experimental.h)
-     FILE(READ ${PROJ_INCLUDE_DIR}/proj.h proj_version)
-     STRING(REGEX REPLACE "^.*PROJ_VERSION_MAJOR +([0-9]+).*$" "\\1" PROJ_VERSION_MAJOR "${proj_version}")
-     STRING(REGEX REPLACE "^.*PROJ_VERSION_MINOR +([0-9]+).*$" "\\1" PROJ_VERSION_MINOR "${proj_version}")
-     STRING(REGEX REPLACE "^.*PROJ_VERSION_PATCH +([0-9]+).*$" "\\1" PROJ_VERSION_PATCH "${proj_version}")
-     STRING(CONCAT PROJ_VERSION_STR "(" ${PROJ_VERSION_MAJOR} "." ${PROJ_VERSION_MINOR} "." ${PROJ_VERSION_PATCH} ")")
-     IF ((PROJ_VERSION_MAJOR EQUAL 6) AND ((PROJ_VERSION_MINOR LESS 3) OR (PROJ_VERSION_MINOR EQUAL 3 AND PROJ_VERSION_PATCH LESS 1)))
-       MESSAGE (FATAL_ERROR "Cannot build QGIS using Proj ${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR}.${PROJ_VERSION_PATCH} Use 6.3.1 or higher.")
-     ENDIF ((PROJ_VERSION_MAJOR EQUAL 6) AND ((PROJ_VERSION_MINOR LESS 3) OR (PROJ_VERSION_MINOR EQUAL 3 AND PROJ_VERSION_PATCH LESS 1)))
-   ELSE(EXISTS ${PROJ_INCLUDE_DIR}/proj.h AND EXISTS ${PROJ_INCLUDE_DIR}/proj_experimental.h)
-     FILE(READ ${PROJ_INCLUDE_DIR}/proj_api.h proj_version)
-     STRING(REGEX REPLACE "^.*PJ_VERSION ([0-9]+).*$" "\\1" PJ_VERSION "${proj_version}")
+    if(EXISTS "${PROJ_INCLUDE_DIR}/proj_api.h")
+        file(READ "${PROJ_INCLUDE_DIR}/proj_api.h" PROJ_API_H_CONTENTS)
+        string(REGEX MATCH "PJ_VERSION[ \t]+([0-9]+)"
+          PJ_VERSION ${PROJ_API_H_CONTENTS})
+        string (REGEX MATCH "([0-9]+)"
+          PJ_VERSION ${PJ_VERSION})
 
-     # This will break if 4.10.0 ever will be released (highly unlikely)
-     STRING(REGEX REPLACE "([0-9])([0-9])([0-9])" "\\1" PROJ_VERSION_MAJOR "${PJ_VERSION}")
-     STRING(REGEX REPLACE "([0-9])([0-9])([0-9])" "\\2" PROJ_VERSION_MINOR "${PJ_VERSION}")
-     STRING(REGEX REPLACE "([0-9])([0-9])([0-9])" "\\3" PROJ_VERSION_PATCH "${PJ_VERSION}")
-     STRING(CONCAT PROJ_VERSION_STR "(" ${PROJ_VERSION_MAJOR} "." ${PROJ_VERSION_MINOR} "." ${PROJ_VERSION_PATCH} ")")
+        string(SUBSTRING ${PJ_VERSION} 0 1 PROJ_VERSION_MAJOR)
+        string(SUBSTRING ${PJ_VERSION} 1 1 PROJ_VERSION_MINOR)
+        string(SUBSTRING ${PJ_VERSION} 2 1 PROJ_VERSION_PATCH)
+        unset(PROJ_API_H_CONTENTS)
+    endif()
+      
+    set(PROJ_VERSION_STRING "${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR}.${PROJ_VERSION_PATCH}")   
+endif ()    
+         
+# Handle the QUIETLY and REQUIRED arguments and set SPATIALINDEX_FOUND to TRUE
+# if all listed variables are TRUE
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(PROJ 
+                                  REQUIRED_VARS PROJ_LIBRARY PROJ_INCLUDE_DIR 
+                                  VERSION_VAR PROJ_VERSION_STRING)
 
-     # Minimum Proj version required is 4.9.3
-     IF ((PROJ_VERSION_MAJOR EQUAL 4) AND ((PROJ_VERSION_MINOR LESS 9) OR ((PROJ_VERSION_MINOR EQUAL 9) AND (PROJ_VERSION_PATCH LESS 3))))
-       MESSAGE(FATAL_ERROR "Found Proj: ${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR}.${PROJ_VERSION_PATCH}. Cannot build QGIS using Proj older than 4.9.3.")
-     ENDIF((PROJ_VERSION_MAJOR EQUAL 4) AND ((PROJ_VERSION_MINOR LESS 9) OR ((PROJ_VERSION_MINOR EQUAL 9) AND (PROJ_VERSION_PATCH LESS 3))))
-   ENDIF(EXISTS ${PROJ_INCLUDE_DIR}/proj.h AND EXISTS ${PROJ_INCLUDE_DIR}/proj_experimental.h)
-   IF (NOT PROJ_FIND_QUIETLY)
-     MESSAGE(STATUS "Found Proj: ${PROJ_LIBRARY} version ${PROJ_VERSION_MAJOR} ${PROJ_VERSION_STR}")
-   ENDIF (NOT PROJ_FIND_QUIETLY)
+IF(PROJ_FOUND)
+  set(PROJ_LIBRARIES ${PROJ_LIBRARY})
+  set(PROJ_INCLUDE_DIRS ${PROJ_INCLUDE_DIR})
+ENDIF()
 
-   ADD_DEFINITIONS(-DPROJ_VERSION_MAJOR=${PROJ_VERSION_MAJOR})
+# Hide internal variables
+mark_as_advanced(
+  PROJ_INCLUDE_DIR
+  PROJ_LIBRARY)
 
-ELSE (PROJ_FOUND)
-
-   IF (PROJ_FIND_REQUIRED)
-      MESSAGE(FATAL_ERROR "Could not find Proj")
-   ENDIF (PROJ_FIND_REQUIRED)
-
-ENDIF (PROJ_FOUND)
+#======================

@@ -13,7 +13,7 @@
 #    GEOS_LIBRARY
 #
 
-INCLUDE (${CMAKE_SOURCE_DIR}/../../cmake/MacPlistMacros.cmake)
+INCLUDE (${CMAKE_SOURCE_DIR}/cmake/MacPlistMacros.cmake)
 
 IF(WIN32)
 
