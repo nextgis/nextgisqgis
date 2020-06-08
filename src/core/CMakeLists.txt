@@ -29,7 +29,9 @@ else()
   set_source_files_properties(flex_qgsexpressionlexer.cpp flex_qgssqlstatementlexer.cpp PROPERTIES COMPILE_FLAGS -w)
 endif()
 
-add_bison_files(qgsexpressionparser.yy qgssqlstatementparser.yy)
+add_bison_files_prefix(exp_ qgsexpressionparser.yy)
+add_bison_files_prefix(sqlstatement_ qgssqlstatementparser.yy)
+
 
 # Default target
 find_package(PythonInterp REQUIRED)
@@ -687,9 +689,6 @@ ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/qgsexpression_texts.cpp
   DEPENDS ${JSON_HELP_FILES}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
-
-add_custom_target(qgsexpression_texts DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/qgsexpression_texts.cpp)
-set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} qgsexpression_texts PARENT_SCOPE)
 
 IF (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # spatialindex headers produce warnings
@@ -1363,7 +1362,7 @@ ENDIF (HAVE_OPENCL)
 
 IF(NOT MSVC)
   IF ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE MATCHES Release OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo))
-    SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp PROPERTIES COMPILE_FLAGS "-O1")
+    SET_SOURCE_FILES_PROPERTIES(qgsexpression_texts.cpp PROPERTIES COMPILE_FLAGS "-O1")
     SET_SOURCE_FILES_PROPERTIES(qgscoordinatereferencesystem.cpp PROPERTIES COMPILE_FLAGS "-mllvm -inline-threshold=128")
   ENDIF ()
 ENDIF(NOT MSVC)
