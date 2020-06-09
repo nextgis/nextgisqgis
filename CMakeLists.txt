@@ -88,13 +88,6 @@ else()
     set(INSTALL_PLUGIN_DIR ${INSTALL_LIB_DIR}/${NG_PREFIX}${PROJECT_NAME}/plugins CACHE INTERNAL "Installation directory for plugins" FORCE)
     set(QT_PLUGIN_SUBDIR "${INSTALL_LIB_DIR}/qt5/plugins" )
 
-
-    # On Windows qt.conf will be common for several applications so we need to have paths for qt4/5
-    set(QT4_PLUGINS_DIR FIXME)
-    set(QT4_TRANSLATION_DIR FIXME)
-    set(QT5_PLUGINS_DIR FIXME)
-    set(QT5_TRANSLATION_DIR FIXME)
-
     set(QGIS_PLUGIN_SUBDIR "${INSTALL_LIB_DIR}/${NG_PREFIX}${PROJECT_NAME}/plugins")
     set(QGIS_LIB_SUBDIR ${INSTALL_LIB_DIR})
     set(QGIS_MACAPP_BUNDLE 0)
@@ -136,84 +129,81 @@ include(FindAnyProject)
 
 if(NOT PREPARE_ONLY)
 
-	find_anyproject(PROJ REQUIRED)
-	if(PROJ_FOUND)
+    find_anyproject(PROJ REQUIRED)
+    if(PROJ_FOUND)
         add_definitions(-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H)
     endif()
-	
+    
     find_anyproject(GEOS REQUIRED)
-	find_anyproject(GDAL REQUIRED)
-	find_anyproject(EXPAT REQUIRED)
-	find_anyproject(SPATIALINDEX REQUIRED)
-	find_anyproject(SQLITE3 REQUIRED)
-	find_anyproject(SPATIALITE REQUIRED)
-	find_anyproject(QCA REQUIRED)
+    find_anyproject(GDAL REQUIRED)
+    find_anyproject(EXPAT REQUIRED)
+    find_anyproject(SPATIALINDEX REQUIRED)
+    find_anyproject(SQLITE3 REQUIRED)
+    find_anyproject(SPATIALITE REQUIRED)
+    find_anyproject(QCA REQUIRED)
 
-	find_anyproject(LibZip REQUIRED)
-	find_anyproject(QtKeychain REQUIRED)
-	
+    find_anyproject(LibZip REQUIRED)
+    find_anyproject(QtKeychain REQUIRED)
+    
 
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
-	SET(CMAKE_AUTOMOC ON)
-	
+    SET(CMAKE_AUTOMOC ON)
+    
     set(QT_REQUIRED_COMPONENTS Core Gui Widgets Network Xml Svg Concurrent PrintSupport Positioning Sql)
-	
+    
     option(WITH_QTWEBKIT "Build support QT Webkit" OFF)
     if(WITH_QTWEBKIT)
         set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} WebKit)
         add_definitions(-DWITH_QTWEBKIT)
     endif()
-	
-	set (WITH_QT5SERIALPORT TRUE CACHE BOOL "Determines whether Qt5SerialPort should be tried for GPS positioning")
-	if (WITH_QT5SERIALPORT)
-	  #FIND_PACKAGE(Qt5SerialPort REQUIRED)
-	  # following variable is used in qgsconfig.h
-	  set(HAVE_QT5SERIALPORT TRUE)
-	  set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} SerialPort)
-	endif(WITH_QT5SERIALPORT)
+    
+    set (WITH_QT5SERIALPORT TRUE CACHE BOOL "Determines whether Qt5SerialPort should be tried for GPS positioning")
+    if (WITH_QT5SERIALPORT)
+      # following variable is used in qgsconfig.h
+      set(HAVE_QT5SERIALPORT TRUE)
+      set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} SerialPort)
+    endif(WITH_QT5SERIALPORT)
 
     find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
 
-	#set(Qt5Core_VERSION_MAJOR ${QT5_VERSION})
-	set(Qt5Core_VERSION_MAJOR 5)
+    string(SUBSTRING ${QT5_VERSION} 0 1 Qt5Core_VERSION_MAJOR)
 endif()
 
 ############################################
 
 # Add binaries and libraries
-IF(MSVC)
+if(MSVC)
   # disable macros that offend std::numeric_limits<T>::min()/max()
-  ADD_DEFINITIONS(-DNOMINMAX)
+  add_definitions(-DNOMINMAX)
 
-  IF (MSVC_VERSION LESS 1900)
-    ADD_DEFINITIONS(-D_ALLOW_KEYWORD_MACROS)
-    ADD_DEFINITIONS("-Dnoexcept=")
-  ENDIF()
-ENDIF(MSVC)
+  if (MSVC_VERSION LESS 1900)
+    add_definitions(-D_ALLOW_KEYWORD_MACROS)
+    add_definitions("-Dnoexcept=")
+  endif()
+endif(MSVC)
 
 
-MATH(EXPR QGIS_VERSION_INT "${CPACK_PACKAGE_VERSION_MAJOR}*10000+${CPACK_PACKAGE_VERSION_MINOR}*100+${CPACK_PACKAGE_VERSION_PATCH}")
+math(EXPR QGIS_VERSION_INT "${CPACK_PACKAGE_VERSION_MAJOR}*10000+${CPACK_PACKAGE_VERSION_MINOR}*100+${CPACK_PACKAGE_VERSION_PATCH}")
 
 # POLICIES
-CMAKE_POLICY (SET CMP0071 NEW)
-
+cmake_policy(SET CMP0071 NEW)
 
 #############################################################
 
 IF(MSVC)
-  SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-  SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
   # disable macros that offend std::numeric_limits<T>::min()/max()
-  ADD_DEFINITIONS(-DNOMINMAX)
+  add_definitions(-DNOMINMAX)
   
     # Turn on defines for non standard maths stuff
-  ADD_DEFINITIONS(-D_USE_MATH_DEFINES)
+  add_definitions(-D_USE_MATH_DEFINES)
 
   # Turn off deprecation warnings
-  ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
-  ADD_DEFINITIONS(-D_CRT_NONSTDC_NO_WARNINGS)
-ENDIF(MSVC)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+  add_definitions(-D_CRT_NONSTDC_NO_WARNINGS)
+endif(MSVC)
   
 
 add_subdirectory(src)
@@ -224,7 +214,6 @@ set(PACKAGE_NAME ${PROJECT_NAME})
 string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
 
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
-
 
 # Archiving ====================================================================
 
