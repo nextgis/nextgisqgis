@@ -114,7 +114,7 @@ function(get_binary_package url repo repo_type repo_id exact_version is_static d
 
         include(JSONParser)
         sbeParseJson(api_request _JSON_CONTENTS)
-        foreach(asset_id ${api_request.files}) 
+        foreach(asset_id ${api_request.files})
             string(FIND ${api_request.files_${asset_id}.name} "${STATIC_PREFIX}${COMPILER}.zip" IS_FOUND)
             # In this case we get static and shared. Add one more check.
             if(NOT ANDROID)
