@@ -17,7 +17,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
 
 COPY . /root/ngqgis/
 
-WORKDIR /root/ngqgis/src/core/build
+WORKDIR /root/ngqgis/build
 
 RUN cmake .. -DCMAKE_INSTALL_PREFIX=install && \
     cmake --build . --target install --config Release
