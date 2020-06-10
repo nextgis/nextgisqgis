@@ -15,6 +15,7 @@ import fileinput
 import os
 import sys
 import shutil
+import subprocess
 
 cmake_src_path = os.path.join(sys.argv[1], 'CMakeLists.txt')
 
@@ -130,3 +131,10 @@ if os.path.exists(ovr_path):
             if not filename.startswith("."):
                 color_print("Overwrite " + dst_file, False, 'LRED')
                 shutil.copyfile(src_file, dst_file)
+
+# patch files
+patches_path = os.path.join(os.getcwd(), 'patches')
+if os.path.exists(patches_path):
+    for dirname, dirnames, filenames in os.walk(patches_path):
+        for patch in filenames:
+            subprocess.call(['git', 'apply', os.path.join(patches_path, patch)], cwd="../")
