@@ -1,0 +1,21 @@
+diff --git a/src/core/symbology/qgsmarkersymbollayer.h b/src/core/symbology/qgsmarkersymbollayer.h
+index 61b75fd..d274a52 100644
+--- a/src/core/symbology/qgsmarkersymbollayer.h
++++ b/src/core/symbology/qgsmarkersymbollayer.h
+@@ -242,7 +242,6 @@ class CORE_EXPORT QgsSimpleMarkerSymbolLayer : public QgsSimpleMarkerSymbolLayer
+     QgsSimpleMarkerSymbolLayer *clone() const override SIP_FACTORY;
+     void writeSldMarker( QDomDocument &doc, QDomElement &element, const QgsStringMap &props ) const override;
+     QString ogrFeatureStyle( double mmScaleFactor, double mapUnitScaleFactor ) const override;
+-    bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const override;
+     void setOutputUnit( QgsUnitTypes::RenderUnit unit ) override;
+     QgsUnitTypes::RenderUnit outputUnit() const override;
+     void setMapUnitScale( const QgsMapUnitScale &scale ) override;
+@@ -602,8 +601,6 @@ class CORE_EXPORT QgsSvgMarkerSymbolLayer : public QgsMarkerSymbolLayer
+     void setMapUnitScale( const QgsMapUnitScale &scale ) override;
+     QgsMapUnitScale mapUnitScale() const override;
+ 
+-    bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const override;
+-
+     QRectF bounds( QPointF point, QgsSymbolRenderContext &context ) override;
+ 
+   protected:

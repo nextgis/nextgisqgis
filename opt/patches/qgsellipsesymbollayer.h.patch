@@ -1,0 +1,13 @@
+diff --git a/src/core/symbology/qgsellipsesymbollayer.h b/src/core/symbology/qgsellipsesymbollayer.h
+index be914d2..f07238d 100644
+--- a/src/core/symbology/qgsellipsesymbollayer.h
++++ b/src/core/symbology/qgsellipsesymbollayer.h
+@@ -45,8 +45,6 @@ class CORE_EXPORT QgsEllipseSymbolLayer: public QgsMarkerSymbolLayer
+     void toSld( QDomDocument &doc, QDomElement &element, const QgsStringMap &props ) const override;
+     void writeSldMarker( QDomDocument &doc, QDomElement &element, const QgsStringMap &props ) const override;
+ 
+-    bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const override;
+-
+     void setSymbolName( const QString &name ) { mSymbolName = name; }
+     QString symbolName() const { return mSymbolName; }
+ 
