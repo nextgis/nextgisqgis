@@ -5,17 +5,14 @@ src/core/auth,src/core/auth,,"cpp,h,hpp,c"
 src/core/callouts,src/core/callouts,,"cpp,h"
 src/core/classification,src/core/classification,,"cpp,h"
 src/core/diagram,src/core/diagram,,"cpp,h"
-src/core/dxf,src/core/dxf,,"cpp,h"
 src/core/effects,src/core/effects,,"cpp,h"
 src/core/expression,src/core/expression,,"cpp,h"
 src/core/fieldformatter,src/core/fieldformatter,,"cpp,h"
 src/core/geocms/geonode,src/core/geocms/geonode,,"cpp,h"
 src/core/geometry,src/core/geometry,,"cpp,h"
-src/core/gps,src/core/gps,,"cpp,h"
 src/core/labeling,src/core/labeling,,"cpp,h"
 src/core/layertree,src/core/layertree,,"cpp,h"
 src/core/layout,src/core/layout,,"cpp,h"
-src/core/locator,src/core/locator,,"cpp,h"
 src/core/mesh,src/core/mesh,,"cpp,h"
 src/core/metadata,src/core/metadata,,"cpp,h"
 src/core/numericformats,src/core/numericformats,,"cpp,h"
@@ -39,7 +36,6 @@ external/nlohmann/detail/conversions,external/nlohmann/detail/conversions,,hpp
 external/nlohmann/detail/input,external/nlohmann/detail/input,,hpp
 external/nlohmann/detail/iterators,external/nlohmann/detail/iterators,,hpp
 external/nlohmann/detail/meta,external/nlohmann/detail/meta,,hpp
-external/nmea,external/nmea,,"c,h"
 external/nlohmann/detail/output,external/nlohmann/detail/output,,hpp
 external/poly2tri,external/poly2tri,,h
 external/poly2tri/common,external/poly2tri/common,,"cc,h"
