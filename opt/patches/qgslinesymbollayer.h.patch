@@ -1,0 +1,13 @@
+diff --git a/src/core/symbology/qgslinesymbollayer.h b/src/core/symbology/qgslinesymbollayer.h
+index 7afb0b8..20d01ca 100644
+--- a/src/core/symbology/qgslinesymbollayer.h
++++ b/src/core/symbology/qgslinesymbollayer.h
+@@ -80,8 +80,6 @@ class CORE_EXPORT QgsSimpleLineSymbolLayer : public QgsLineSymbolLayer
+     double estimateMaxBleed( const QgsRenderContext &context ) const override;
+     QVector<qreal> dxfCustomDashPattern( QgsUnitTypes::RenderUnit &unit ) const override;
+     Qt::PenStyle dxfPenStyle() const override;
+-    double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
+-    double dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
+     QColor dxfColor( QgsSymbolRenderContext &context ) const override;
+ 
+     /**
