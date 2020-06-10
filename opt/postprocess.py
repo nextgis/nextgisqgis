@@ -130,8 +130,3 @@ if os.path.exists(ovr_path):
             if not filename.startswith("."):
                 color_print("Overwrite " + dst_file, False, 'LRED')
                 shutil.copyfile(src_file, dst_file)
-
-# Delete unnacessary file
-delete_path = os.path.abspath(os.path.join(os.getcwd(), os.pardir, 'src', 'plugins', 'raster_terrain_analysis', 'qgsruggednessindex.cpp'))
-color_print("Delete " + delete_path, False, 'LRED')
-os.remove(delete_path)
