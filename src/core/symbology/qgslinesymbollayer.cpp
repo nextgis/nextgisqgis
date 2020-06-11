@@ -16,7 +16,6 @@
 #include "qgslinesymbollayer.h"
 #include "qgscurve.h"
 #include "qgscurvepolygon.h"
-#include "qgsdxfexport.h"
 #include "qgssymbollayerutils.h"
 #include "qgsexpression.h"
 #include "qgsrendercontext.h"
@@ -624,23 +623,6 @@ Qt::PenStyle QgsSimpleLineSymbolLayer::dxfPenStyle() const
   return mPenStyle;
 }
 
-double QgsSimpleLineSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
-{
-  double width = mWidth;
-  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyStrokeWidth ) )
-  {
-    context.setOriginalValueVariable( mWidth );
-    width = mDataDefinedProperties.valueAsDouble( QgsSymbolLayer::PropertyStrokeWidth, context.renderContext().expressionContext(), mWidth );
-  }
-
-  width *= e.mapUnitScaleFactor( e.symbologyScale(), widthUnit(), e.mapUnits(), context.renderContext().mapToPixel().mapUnitsPerPixel() );
-  if ( mWidthUnit == QgsUnitTypes::RenderMapUnits )
-  {
-    e.clipValueToMapUnitScale( width, mWidthMapUnitScale, context.renderContext().scaleFactor() );
-  }
-  return width;
-}
-
 QColor QgsSimpleLineSymbolLayer::dxfColor( QgsSymbolRenderContext &context ) const
 {
   if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyStrokeColor ) )
@@ -649,25 +631,6 @@ QColor QgsSimpleLineSymbolLayer::dxfColor( QgsSymbolRenderContext &context ) con
     return mDataDefinedProperties.valueAsColor( QgsSymbolLayer::PropertyStrokeColor, context.renderContext().expressionContext(), mColor );
   }
   return mColor;
-}
-
-double QgsSimpleLineSymbolLayer::dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
-{
-  Q_UNUSED( e )
-  double offset = mOffset;
-
-  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyOffset ) )
-  {
-    context.setOriginalValueVariable( mOffset );
-    offset = mDataDefinedProperties.valueAsDouble( QgsSymbolLayer::PropertyOffset, context.renderContext().expressionContext(), mOffset );
-  }
-
-  offset *= e.mapUnitScaleFactor( e.symbologyScale(), offsetUnit(), e.mapUnits(), context.renderContext().mapToPixel().mapUnitsPerPixel() );
-  if ( mOffsetUnit == QgsUnitTypes::RenderMapUnits )
-  {
-    e.clipValueToMapUnitScale( offset, mOffsetMapUnitScale, context.renderContext().scaleFactor() );
-  }
-  return -offset; //direction seems to be inverse to symbology offset
 }
 
 /////////

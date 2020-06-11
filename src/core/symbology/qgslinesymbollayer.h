@@ -80,8 +80,6 @@ class CORE_EXPORT QgsSimpleLineSymbolLayer : public QgsLineSymbolLayer
     double estimateMaxBleed( const QgsRenderContext &context ) const override;
     QVector<qreal> dxfCustomDashPattern( QgsUnitTypes::RenderUnit &unit ) const override;
     Qt::PenStyle dxfPenStyle() const override;
-    double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
-    double dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
     QColor dxfColor( QgsSymbolRenderContext &context ) const override;
 
     /**

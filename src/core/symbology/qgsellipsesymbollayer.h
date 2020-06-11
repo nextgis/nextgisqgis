@@ -45,8 +45,6 @@ class CORE_EXPORT QgsEllipseSymbolLayer: public QgsMarkerSymbolLayer
     void toSld( QDomDocument &doc, QDomElement &element, const QgsStringMap &props ) const override;
     void writeSldMarker( QDomDocument &doc, QDomElement &element, const QgsStringMap &props ) const override;
 
-    bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const override;
-
     void setSymbolName( const QString &name ) { mSymbolName = name; }
     QString symbolName() const { return mSymbolName; }
 
