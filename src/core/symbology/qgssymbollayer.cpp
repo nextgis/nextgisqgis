@@ -18,7 +18,6 @@
 #include "qgsexpression.h"
 #include "qgsrendercontext.h"
 #include "qgsvectorlayer.h"
-#include "qgsdxfexport.h"
 #include "qgsgeometrysimplifier.h"
 #include "qgspainteffect.h"
 #include "qgseffectstack.h"
@@ -115,30 +114,6 @@ void QgsSymbolLayer::startFeatureRender( const QgsFeature &, QgsRenderContext & 
 void QgsSymbolLayer::stopFeatureRender( const QgsFeature &, QgsRenderContext & )
 {
 
-}
-
-bool QgsSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift ) const
-{
-  Q_UNUSED( e )
-  Q_UNUSED( mmMapUnitScaleFactor )
-  Q_UNUSED( layerName )
-  Q_UNUSED( context )
-  Q_UNUSED( shift )
-  return false;
-}
-
-double QgsSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
-{
-  Q_UNUSED( e )
-  Q_UNUSED( context )
-  return 1.0;
-}
-
-double QgsSymbolLayer::dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
-{
-  Q_UNUSED( e )
-  Q_UNUSED( context )
-  return 0.0;
 }
 
 QColor QgsSymbolLayer::dxfColor( QgsSymbolRenderContext &context ) const
@@ -683,13 +658,6 @@ double QgsLineSymbolLayer::width( const QgsRenderContext &context ) const
 {
   return context.convertToPainterUnits( mWidth, mWidthUnit, mWidthMapUnitScale );
 }
-
-double QgsLineSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
-{
-  Q_UNUSED( context )
-  return width() * e.mapUnitScaleFactor( e.symbologyScale(), widthUnit(), e.mapUnits(), context.renderContext().mapToPixel().mapUnitsPerPixel() );
-}
-
 
 void QgsFillSymbolLayer::drawPreviewIcon( QgsSymbolRenderContext &context, QSize size )
 {
