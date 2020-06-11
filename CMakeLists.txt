@@ -149,20 +149,13 @@ if(NOT PREPARE_ONLY)
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
     SET(CMAKE_AUTOMOC ON)
     
-    set(QT_REQUIRED_COMPONENTS Core Gui Widgets Network Xml Svg Concurrent PrintSupport Positioning Sql)
+    set(QT_REQUIRED_COMPONENTS Core Gui Widgets Network Xml Svg Concurrent PrintSupport Sql)
     
     option(WITH_QTWEBKIT "Build support QT Webkit" OFF)
     if(WITH_QTWEBKIT)
         set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} WebKit)
         add_definitions(-DWITH_QTWEBKIT)
     endif()
-    
-    set (WITH_QT5SERIALPORT TRUE CACHE BOOL "Determines whether Qt5SerialPort should be tried for GPS positioning")
-    if (WITH_QT5SERIALPORT)
-      # following variable is used in qgsconfig.h
-      set(HAVE_QT5SERIALPORT TRUE)
-      set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} SerialPort)
-    endif(WITH_QT5SERIALPORT)
 
     find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
