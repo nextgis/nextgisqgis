@@ -52,13 +52,6 @@ add_definitions(-DPROJ_VERSION_MAJOR=${PROJ_VERSION_MAJOR})
 
 set(QGIS_CORE_SRCS
   ${CMAKE_SOURCE_DIR}/external/kdbush/include/kdbush.hpp
-  ${CMAKE_SOURCE_DIR}/external/nmea/context.c
-  ${CMAKE_SOURCE_DIR}/external/nmea/gmath.c
-  ${CMAKE_SOURCE_DIR}/external/nmea/info.c
-  ${CMAKE_SOURCE_DIR}/external/nmea/parse.c
-  ${CMAKE_SOURCE_DIR}/external/nmea/sentence.c
-  ${CMAKE_SOURCE_DIR}/external/nmea/time.c
-  ${CMAKE_SOURCE_DIR}/external/nmea/tok.c
 
   ${CMAKE_SOURCE_DIR}/external/poly2tri/common/shapes.cc
   ${CMAKE_SOURCE_DIR}/external/poly2tri/sweep/advancing_front.cc
@@ -78,13 +71,6 @@ set(QGIS_CORE_SRCS
   classification/qgsclassificationjenks.cpp
   classification/qgsclassificationstandarddeviation.cpp
   classification/qgsclassificationlogarithmic.cpp
-
-  gps/qgsgpsconnection.cpp
-  gps/qgsgpsconnectionregistry.cpp
-  gps/qgsgpsdconnection.cpp
-  gps/qgsgpsdetector.cpp
-  gps/qgsnmeaconnection.cpp
-  gps/qgsqtlocationconnection.cpp
 
   symbology/qgs25drenderer.cpp
   symbology/qgsarrowsymbollayer.cpp
@@ -182,11 +168,6 @@ set(QGIS_CORE_SRCS
   expression/qgsexpressionnodeimpl.cpp
   expression/qgsexpressionfunction.cpp
   expression/qgsexpressionutils.cpp
-
-  locator/qgslocator.cpp
-  locator/qgslocatorfilter.cpp
-  locator/qgslocatormodel.cpp
-  locator/qgslocatormodelbridge.cpp
 
   processing/qgsprocessing.cpp
   processing/qgsprocessingalgorithm.cpp
@@ -469,11 +450,6 @@ set(QGIS_CORE_SRCS
   qgstestutils.cpp
   qgsziputils.cpp
 
-  dxf/qgsdxfexport.cpp
-  dxf/qgsdxfpaintdevice.cpp
-  dxf/qgsdxfpaintengine.cpp
-  dxf/qgsdxfpallabeling.cpp
-
   layout/qgsabstractreportsection.cpp
   layout/qgslayout.cpp
   layout/qgslayoutaligner.cpp
@@ -657,9 +633,6 @@ set(QGIS_CORE_SRCS
   fieldformatter/qgsrelationreferencefieldformatter.cpp
   fieldformatter/qgsvaluemapfieldformatter.cpp
   fieldformatter/qgsvaluerelationfieldformatter.cpp
-
-  geocms/geonode/qgsgeonodeconnection.cpp
-  geocms/geonode/qgsgeonoderequest.cpp
 
   validity/qgsabstractvaliditycheck.cpp
   validity/qgsvaliditycheckcontext.cpp
@@ -1004,8 +977,6 @@ set(QGIS_CORE_HDRS
   diagram/qgsstackedbardiagram.h
   diagram/qgstextdiagram.h
 
-  dxf/qgsdxfexport.h
-
   effects/qgsblureffect.h
   effects/qgscoloreffect.h
   effects/qgseffectstack.h
@@ -1031,9 +1002,6 @@ set(QGIS_CORE_HDRS
   fieldformatter/qgsrelationreferencefieldformatter.h
   fieldformatter/qgsvaluemapfieldformatter.h
   fieldformatter/qgsvaluerelationfieldformatter.h
-
-  geocms/geonode/qgsgeonodeconnection.h
-  geocms/geonode/qgsgeonoderequest.h
 
   geometry/qgsabstractgeometry.h
   geometry/qgsbox3d.h
@@ -1068,12 +1036,6 @@ set(QGIS_CORE_HDRS
   geometry/qgstriangle.h
   geometry/qgswkbptr.h
   geometry/qgswkbtypes.h
-
-  gps/qgsgpsconnection.h
-  gps/qgsgpsdconnection.h
-  gps/qgsgpsdetector.h
-  gps/qgsnmeaconnection.h
-  gps/qgsqtlocationconnection.h
 
   labeling/qgslabelfeature.h
   labeling/qgslabeling.h
@@ -1155,12 +1117,6 @@ set(QGIS_CORE_HDRS
   layout/qgsreport.h
   layout/qgsreportsectionfieldgroup.h
   layout/qgsreportsectionlayout.h
-
-  locator/qgslocator.h
-  locator/qgslocatorcontext.h
-  locator/qgslocatorfilter.h
-  locator/qgslocatormodel.h
-  locator/qgslocatormodelbridge.h
 
   mesh/qgsmesh3daveraging.h
   mesh/qgsmeshdataprovider.h
@@ -1357,17 +1313,13 @@ include_directories(
   annotations
   auth
   classification
-  dxf
   effects
   expression
   fieldformatter
   geometry
-  geocms
-  geocms/geonode
   labeling
   layertree
   layout
-  locator
   metadata
   numericformats
   pal
@@ -1387,7 +1339,6 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/external
   ${CMAKE_SOURCE_DIR}/external/nlohmann
   ${CMAKE_SOURCE_DIR}/external/kdbush/include
-  ${CMAKE_SOURCE_DIR}/external/nmea
   ${CMAKE_SOURCE_DIR}/external/poly2tri
   ${CMAKE_SOURCE_DIR}/external/rtree/include
 )
@@ -1403,7 +1354,6 @@ include_directories(SYSTEM
   ${SPATIALITE_INCLUDE_DIR}
   ${QCA_INCLUDE_DIR}
   ${QTKEYCHAIN_INCLUDE_DIR}
-  ${Qt5SerialPort_INCLUDE_DIRS}
 )
 
 
@@ -1490,13 +1440,7 @@ if (NOT PREPARE_ONLY)
       )
     endif(NOT APPLE)
 
-    #generate unversioned libs for android
-    if (NOT ANDROID)
-      set_target_properties(${TARGETS} PROPERTIES
-        VERSION ${COMPLETE_VERSION}
-        SOVERSION ${COMPLETE_VERSION}
-        )
-    endif (NOT ANDROID)
+    set_target_properties(${TARGETS} PROPERTIES VERSION ${COMPLETE_VERSION} SOVERSION ${COMPLETE_VERSION})
 
     # make sure to create qgsversion.h before compiling
     #add_dependencies(${TARGETS} version)
@@ -1514,10 +1458,6 @@ if (NOT PREPARE_ONLY)
       target_link_libraries(${TARGETS} qgis_native)
     endif (APPLE AND NOT IOS)
 
-    if (QT_MOBILITY_LOCATION_FOUND)
-      target_link_libraries(${TARGETS} ${QT_MOBILITY_LOCATION_LIBRARY})
-    endif (QT_MOBILITY_LOCATION_FOUND)
-
     if (ADD_CLAZY_CHECKS)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_BASE_FLAGS} -Xclang -plugin-arg-clazy -Xclang ${CLAZY_BASE_CHECKS},non-pod-global-static")
     endif (ADD_CLAZY_CHECKS)
@@ -1532,7 +1472,6 @@ if (NOT PREPARE_ONLY)
       Qt5::Network
       Qt5::Sql
       Qt5::Concurrent
-      Qt5::Positioning
       ${QCA_LIBRARY}
       ${QTKEYCHAIN_LIBRARY}
       ${PROJ_LIBRARY}
@@ -1565,12 +1504,6 @@ if (NOT PREPARE_ONLY)
       #needed for linking to gdal which needs odbc
       set(TARGET_LINK_LIBRARIES ${TARGETS} odbc32 odbccp32)
     endif (MSVC)
-
-    if (WITH_QT5SERIALPORT)
-      target_link_libraries(${TARGETS}
-        Qt5::SerialPort
-      )
-    endif (WITH_QT5SERIALPORT)
 
     target_compile_definitions(${TARGETS} PRIVATE "-DQT_NO_FOREACH")
 
