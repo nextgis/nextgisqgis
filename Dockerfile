@@ -10,14 +10,15 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
     python3-pip \
     curl \
     dumb-init \
+    ninja-build \
     git devscripts debhelper equivs build-essential bash cmake \
     flex bison libproj-dev libgeos-dev libgdal-dev libspatialindex-dev \
     libsqlite3-dev libspatialite-dev libqca-qt5-2-dev libzip-dev \
-    libqt5svg5-dev libqt5serialport5-dev qtpositioning5-dev qt5keychain-dev
+    libqt5svg5-dev qt5keychain-dev
 
 COPY . /root/ngqgis/
 
 WORKDIR /root/ngqgis/build
 
-RUN cmake .. -DCMAKE_INSTALL_PREFIX=install && \
+RUN cmake .. -DCMAKE_INSTALL_PREFIX=install -DUSING_NINJA=ON -G Ninja && \
     cmake --build . --target install --config Release
