@@ -141,10 +141,8 @@ if(NOT PREPARE_ONLY)
     find_anyproject(SQLITE3 REQUIRED)
     find_anyproject(SPATIALITE REQUIRED)
     find_anyproject(QCA REQUIRED)
-
-    find_anyproject(LibZip REQUIRED)
-    find_anyproject(QtKeychain REQUIRED)
-    
+    find_anyproject(LIBZIP REQUIRED)
+    find_anyproject(QTKEYCHAIN REQUIRED)
 
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
     SET(CMAKE_AUTOMOC ON)
