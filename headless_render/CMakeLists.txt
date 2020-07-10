@@ -1,212 +1,65 @@
-#############################################################
-# CMake settings
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1.0)
-SET(CMAKE_COLOR_MAKEFILE ON)
-SET(CMAKE_AUTORCC ON)
-# set path to additional CMake modules
-SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
-# POLICIES
-CMAKE_POLICY (SET CMP0048 NEW)
-CMAKE_POLICY (SET CMP0053 NEW)
-CMAKE_POLICY (SET CMP0071 NEW)
+################################################################################
+# Copyright (C) 2020, NextGIS <info@nextgis.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+################################################################################
 
-# don't relink it only the shared object changes
-SET(CMAKE_LINK_DEPENDS_NO_SHARED ON)
+set(TARGETS headless_render)
 
-#############################################################
-# Project and version
-SET(CPACK_PACKAGE_VERSION_MAJOR "3")
-SET(CPACK_PACKAGE_VERSION_MINOR "14")
-SET(CPACK_PACKAGE_VERSION_PATCH "0")
-SET(COMPLETE_VERSION ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH})
-SET(RELEASE_NAME "Pi")
-PROJECT(qgis VERSION ${COMPLETE_VERSION})
+INCLUDE_DIRECTORIES(
+  ${CMAKE_SOURCE_DIR}/src/core
+  ${CMAKE_SOURCE_DIR}/src/core/annotations
+  ${CMAKE_SOURCE_DIR}/src/core/auth
+  ${CMAKE_SOURCE_DIR}/src/core/expression
+  ${CMAKE_SOURCE_DIR}/src/core/gps
+  ${CMAKE_SOURCE_DIR}/src/core/dxf
+  ${CMAKE_SOURCE_DIR}/src/core/geometry
+  ${CMAKE_SOURCE_DIR}/src/core/geocms/geonode
+  ${CMAKE_SOURCE_DIR}/src/core/metadata
+  ${CMAKE_SOURCE_DIR}/src/core/mesh
+  ${CMAKE_SOURCE_DIR}/src/core/numericformats
+  ${CMAKE_SOURCE_DIR}/src/core/labeling
+  ${CMAKE_SOURCE_DIR}/src/core/layertree
+  ${CMAKE_SOURCE_DIR}/src/core/locator
+  ${CMAKE_SOURCE_DIR}/src/core/numericformats
+  ${CMAKE_SOURCE_DIR}/src/core/pal
+  ${CMAKE_SOURCE_DIR}/src/core/providers/memory
+  ${CMAKE_SOURCE_DIR}/src/core/raster
+  ${CMAKE_SOURCE_DIR}/src/core/scalebar
+  ${CMAKE_SOURCE_DIR}/src/core/symbology
+  ${CMAKE_SOURCE_DIR}/src/core/effects
+  ${CMAKE_SOURCE_DIR}/src/core/validity
+  ${CMAKE_SOURCE_DIR}/src/core/vectortile
 
-SET(QGIS_APP_NAME "qgis")
+  ${CMAKE_BINARY_DIR}/src/core
+)
 
-# Note the version no is Mmmpp for Major/minor/patch, 0-padded, thus '10100' for 1.1.0
-MATH(EXPR QGIS_VERSION_INT "${CPACK_PACKAGE_VERSION_MAJOR}*10000+${CPACK_PACKAGE_VERSION_MINOR}*100+${CPACK_PACKAGE_VERSION_PATCH}")
-MESSAGE(STATUS "QGIS version: ${COMPLETE_VERSION} ${RELEASE_NAME} (${QGIS_VERSION_INT})")
+INCLUDE_DIRECTORIES(
+  ${CMAKE_SOURCE_DIR}/external/nlohmann
+)
 
-SET (DEFAULT_FORCE_STATIC_LIBS FALSE)
-SET (DEFAULT_FORCE_STATIC_PROVIDERS FALSE)
+ADD_EXECUTABLE(${TARGETS} headless_render.cpp)
 
-SET (FORCE_STATIC_LIBS ${DEFAULT_FORCE_STATIC_LIBS} CACHE BOOL "Determines whether libraries should be static only")
-MARK_AS_ADVANCED(FORCE_STATIC_LIBS)
-IF (FORCE_STATIC_LIBS)
-  SET (LIBRARY_TYPE STATIC)
-ELSE (FORCE_STATIC_LIBS)
-  SET (LIBRARY_TYPE SHARED)
-ENDIF (FORCE_STATIC_LIBS)
+TARGET_LINK_LIBRARIES(${TARGETS} ${NG_PREFIX}qgis_core)
 
-SET (FORCE_STATIC_PROVIDERS ${DEFAULT_FORCE_STATIC_PROVIDERS} CACHE BOOL "Determines whether data providers should be static only")
-MARK_AS_ADVANCED(FORCE_STATIC_PROVIDERS)
-IF (FORCE_STATIC_PROVIDERS)
-  # following variable is used in qgsconfig.h
-  SET (HAVE_STATIC_PROVIDERS TRUE)
-ENDIF (FORCE_STATIC_PROVIDERS)
+if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
+  install(TARGETS ${TARGETS} RUNTIME DESTINATION ${INSTALL_BIN_DIR})
+endif()
 
-  # Only GRASS 7 is currently supported but we keep dual version support in cmake for possible future switch to GRASS 8.
-  # Try to configure and build GRASS plugin by default
-  FOREACH (GRASS_SEARCH_VERSION 7)
-    SET (GRASS_CACHE_VERSION ${GRASS_SEARCH_VERSION})
-    SET (WITH_GRASS${GRASS_CACHE_VERSION} TRUE CACHE BOOL "Determines whether GRASS ${GRASS_SEARCH_VERSION} plugin should be built")
-    IF (WITH_GRASS${GRASS_CACHE_VERSION})
-      FIND_PACKAGE(GRASS ${GRASS_SEARCH_VERSION})
-      SET (GRASS_PREFIX${GRASS_CACHE_VERSION} ${GRASS_PREFIX${GRASS_SEARCH_VERSION}} CACHE PATH "Path to GRASS ${GRASS_SEARCH_VERSION} base directory")
-    ENDIF (WITH_GRASS${GRASS_CACHE_VERSION})
-  ENDFOREACH (GRASS_SEARCH_VERSION)
 
-  SET (HAVE_GUI FALSE)    # used in qgsconfig.h
-
-  INCLUDE(Flex)
-  FIND_FLEX()
-  IF (NOT FLEX_EXECUTABLE)
-    MESSAGE(FATAL_ERROR "Couldn't find Flex")
-  ENDIF (NOT FLEX_EXECUTABLE)
-
-  INCLUDE(Bison)
-  FIND_BISON()
-  IF (NOT BISON_EXECUTABLE)
-    MESSAGE(FATAL_ERROR "Couldn't find Bison")
-  ENDIF (NOT BISON_EXECUTABLE)
-
-  # required
-  FIND_PACKAGE(Proj)
-  FIND_PACKAGE(GEOS)
-  FIND_PACKAGE(GDAL)
-  FIND_PACKAGE(Expat REQUIRED)
-  FIND_PACKAGE(Spatialindex REQUIRED)
-  FIND_PACKAGE(LibZip REQUIRED)
-
-  FIND_PACKAGE(Sqlite3)
-  IF (NOT SQLITE3_FOUND)
-    MESSAGE (SEND_ERROR "sqlite3 dependency was not found!")
-  ENDIF (NOT SQLITE3_FOUND)
-
-  FIND_PACKAGE(Protobuf REQUIRED)   # for decoding of vector tiles in MVT format
-  MESSAGE(STATUS "Found Protobuf: ${Protobuf_LIBRARIES}")
-  IF (NOT Protobuf_PROTOC_EXECUTABLE)
-    MESSAGE (SEND_ERROR "Protobuf library's 'protoc' tool was not found!")
-  ENDIF ()
-  FIND_PACKAGE(ZLIB REQUIRED)       # for decompression of vector tiles in MBTiles file
-  MESSAGE(STATUS "Found zlib: ${ZLIB_LIBRARIES}")
-
-  FIND_PACKAGE(SpatiaLite REQUIRED)
-
-  IF (NOT PROJ_FOUND OR NOT GEOS_FOUND OR NOT GDAL_FOUND)
-    MESSAGE (SEND_ERROR "Some dependencies were not found! Proj: ${PROJ_FOUND}, Geos: ${GEOS_FOUND}, GDAL: ${GDAL_FOUND}")
-  ENDIF (NOT PROJ_FOUND OR NOT GEOS_FOUND OR NOT GDAL_FOUND)
-
-  SET (WITH_QTWEBKIT TRUE CACHE BOOL "Enable QtWebkit support")
-  IF (WITH_QTWEBKIT)
-    ADD_DEFINITIONS(-DWITH_QTWEBKIT)
-    MESSAGE(STATUS "Qt WebKit support enabled")
-  ELSE (WITH_QTWEBKIT)
-    MESSAGE(STATUS "Qt WebKit support DISABLED.")
-  ENDIF(WITH_QTWEBKIT)
-  #############################################################
-  # search for Qt5
-  SET(QT_MIN_VERSION 5.9.0)
-
-  FIND_PACKAGE(Qt5Core QUIET)
-  FIND_PACKAGE(Qt5Gui REQUIRED)
-  FIND_PACKAGE(Qt5Widgets REQUIRED)
-  FIND_PACKAGE(Qt5Network REQUIRED)
-  FIND_PACKAGE(Qt5Xml REQUIRED)
-  FIND_PACKAGE(Qt5Svg REQUIRED)
-  FIND_PACKAGE(Qt5Concurrent REQUIRED)
-  IF (NOT IOS)
-    FIND_PACKAGE(Qt5PrintSupport REQUIRED)
-  ELSE(NOT IOS)
-    ADD_DEFINITIONS(-DQT_NO_PRINTER)
-  ENDIF(NOT IOS)
-  FIND_PACKAGE(Qt5Positioning)
-  IF (WITH_QTWEBKIT)
-    FIND_PACKAGE(Qt5WebKit REQUIRED)
-    FIND_PACKAGE(Qt5WebKitWidgets REQUIRED)
-  ENDIF(WITH_QTWEBKIT)
-  FIND_PACKAGE(Qt5Sql REQUIRED)
-
-  MESSAGE(STATUS "Found Qt version: ${Qt5Core_VERSION_STRING}")
-
-  IF(WITH_QTWEBKIT)
-    SET(OPTIONAL_QTWEBKIT ${Qt5WebKitWidgets_LIBRARIES})
-  ENDIF(WITH_QTWEBKIT)
-
-  # Password helper
-  FIND_PACKAGE(QtKeychain REQUIRED)
-  # Master password hash and authentication encryption
-  FIND_PACKAGE(QCA REQUIRED)
-
-  # Disable automatic conversion from QString to ASCII 8-bit strings (char *)
-  # (Keeps code compatible with Qt/Mac/64bit)
-  ADD_DEFINITIONS(-DQT_NO_CAST_TO_ASCII)
-
-SET(CMAKE_AUTOMOC ON)
-
-SET(ENABLE_MODELTEST FALSE CACHE BOOL "Enable QT ModelTest (not for production)")
-
-#############################################################
-
-SET(CMAKE_CXX_STANDARD 11)
-
-IF (CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
-  MESSAGE (STATUS "Debug output enabled")
-  SET(QGISDEBUG TRUE)
-ELSE (CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
-  SET(QGISDEBUG FALSE)
-ENDIF (CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
-
-IF(MSVC)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8")
-  SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-  SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-  # disable macros that offend std::numeric_limits<T>::min()/max()
-  ADD_DEFINITIONS(-DNOMINMAX)
-ENDIF(MSVC)
-
-# Prevent build when Qt api deprecated before this Qt version is used:
-ADD_DEFINITIONS(-DQT_DEPRECATED_WARNINGS)
-# Unfortunately Qwt uses deprecated QString::null in headers, preventing this being raised above 5.8
-ADD_DEFINITIONS(-DQT_DISABLE_DEPRECATED_BEFORE=0x050800)
-
-#############################################################
-
-IF (WIN32)
-  IF (MSVC)
-    # Turn on defines for non standard maths stuff
-    ADD_DEFINITIONS(-D_USE_MATH_DEFINES)
-
-    # Turn off deprecation warnings
-    ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
-    ADD_DEFINITIONS(-D_CRT_NONSTDC_NO_WARNINGS)
-  ENDIF(MSVC)
-ENDIF(WIN32)
-
-INCLUDE(GenerateExportHeader)
-
-#############################################################
-SET (QGIS_BIN_DIR  bin)
-SET (QGIS_LIB_DIR lib)
-SET (QGIS_INCLUDE_DIR include)
-
-SET (QGIS_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output)
-SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${QGIS_OUTPUT_DIRECTORY}/${QGIS_BIN_DIR})
-SET (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${QGIS_OUTPUT_DIRECTORY}/${QGIS_LIB_DIR})
-
-#############################################################
-# create qgsconfig.h
-# installed with app target
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake_templates/qgsconfig.h.in ${CMAKE_BINARY_DIR}/qgsconfig.h)
-INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
-
-INCLUDE(CreateQgsVersion)
-CREATE_QGSVERSION()
-
-FIND_PACKAGE(PythonLibrary REQUIRED)
-
-LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/src/core)
-
-ADD_SUBDIRECTORY(src)
