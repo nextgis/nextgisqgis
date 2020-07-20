@@ -20,9 +20,9 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-set(TARGETS headless_render)
-
 INCLUDE_DIRECTORIES(
+  ${CMAKE_SOURCE_DIR}/src/headlessrender
+
   ${CMAKE_SOURCE_DIR}/src/core
   ${CMAKE_SOURCE_DIR}/src/core/annotations
   ${CMAKE_SOURCE_DIR}/src/core/auth
@@ -54,12 +54,32 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}/external/nlohmann
 )
 
-ADD_EXECUTABLE(${TARGETS} headless_render.cpp)
+if (NOT PREPARE_ONLY)
 
-TARGET_LINK_LIBRARIES(${TARGETS} ${NG_PREFIX}qgis_core)
+  set(LIB_NAME ${NG_PREFIX}qgis_hrlib)
+  set(APP_NAME ${NG_PREFIX}qgis_hrapp)
 
-if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
-  install(TARGETS ${TARGETS} RUNTIME DESTINATION ${INSTALL_BIN_DIR})
+  ADD_LIBRARY(${LIB_NAME} lib.cpp)
+  TARGET_LINK_LIBRARIES(${LIB_NAME} ${NG_PREFIX}qgis_core)
+
+  target_compile_definitions (${LIB_NAME} PRIVATE "HEADLESSRENDER_EXPORT=${DLLEXPORT}")
+  target_compile_definitions (${LIB_NAME} INTERFACE "HEADLESSRENDER_EXPORT=${DLLIMPORT}")
+
+  ADD_EXECUTABLE(${APP_NAME} app.cpp)
+  TARGET_LINK_LIBRARIES(${APP_NAME} ${LIB_NAME})
+
+  if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
+    install(TARGETS ${LIB_NAME}
+      EXPORT ${PACKAGE_UPPER_NAME}Targets
+      LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+      INCLUDES DESTINATION ${INSTALL_INC_DIR}
+    )
+  endif()
+
+  if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
+    install(TARGETS ${APP_NAME} RUNTIME DESTINATION ${INSTALL_BIN_DIR})
+  endif()
+
 endif()
 
 

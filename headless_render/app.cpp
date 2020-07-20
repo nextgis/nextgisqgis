@@ -4,11 +4,12 @@
 #include <QList>
 
 #include "qgsvectorlayer.h"
-#include "qgsmaprenderercustompainterjob.h"
 #include "qgsmapsettings.h"
 #include "qgsmaplayer.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgsnetworkaccessmanager.h"
+
+#include "lib.h"
 
 int main(int argc, char **argv)
 {
@@ -22,32 +23,31 @@ int main(int argc, char **argv)
 
     QgsNetworkAccessManager::instance();
 
-    QgsVectorLayer *layer = new QgsVectorLayer( argv[1], "settlement", QStringLiteral( "ogr" ));
+    QgsVectorLayer *layer = new QgsVectorLayer( argv[1], "layername", QStringLiteral( "ogr" ));
 
     bool loadNamedStyleResult;
     layer->loadNamedStyle( argv[2], loadNamedStyleResult);
 
     QgsMapSettings settings;
     settings.setOutputSize( { 800, 600 } );
-    settings.setOutputImageFormat(QImage::Format_ARGB32_Premultiplied);
+    settings.setOutputImageFormat( QImage::Format_ARGB32_Premultiplied );
     settings.setDestinationCrs(QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:4326" ) ));
-    settings.setLayers(QList<QgsMapLayer *>() << layer);
-    settings.setExtent(settings.fullExtent());
+    settings.setLayers( QList<QgsMapLayer *>() << layer );
+    settings.setExtent( settings.fullExtent() );
 
-    QImage image = QImage( settings.deviceOutputSize(), settings.outputImageFormat()  );
-    QPainter painter;
-    painter.begin( &image );
+    HeadlessRender render;
 
-    auto renderJob = new QgsMapRendererCustomPainterJob( settings, &painter );
-    QObject::connect( renderJob, &QgsMapRendererJob::finished, [&]()
+    auto job = render.renderVector(settings);
+    QObject::connect(job, &HeadlessRenderJob::finished, [&](const QImage &image)
     {
+
         image.save( QString(argv[3]) + "/result.png", "PNG" );
 
+        job->deleteLater();
         layer->deleteLater();
-        renderJob->deleteLater();
+
         app.quit();
     });
-    renderJob->start();
 
     return app.exec();
 }
