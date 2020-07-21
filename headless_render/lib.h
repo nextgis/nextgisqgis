@@ -32,7 +32,11 @@ namespace HeadlessRender
     };
 
     HEADLESS_RENDER_EXPORT void init();
+
     HEADLESS_RENDER_EXPORT Image renderVector(const char *uri, const char *qmlString, int width, int height, int epsg);
+
+    HEADLESS_RENDER_EXPORT Image renderRaster(const char *uri, const char *qmlString, int width, int height, int epsg);
+
     HEADLESS_RENDER_EXPORT const char *getVersion();
 }
 
