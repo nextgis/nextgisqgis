@@ -27,8 +27,10 @@ namespace HeadlessRender
 {
     struct Image
     {
-        uchar *data;
+        uchar *data = nullptr;
         int size;
+
+        ~Image();
     };
 
     HEADLESS_RENDER_EXPORT void init();
