@@ -17,5 +17,11 @@ int main(int argc, char **argv)
     QFile styleFile(argv[2]);
     styleFile.open(QIODevice::ReadOnly);
 
-    uchar *data = HeadlessRender::renderVector( argv[1], styleFile.readAll().data(), 800, 600, 4326 );
+    HeadlessRender::Image image = HeadlessRender::renderVector( argv[1], styleFile.readAll().data(), 800, 600, 4326 );
+
+    QFile outFile(argv[3] + QString("/result.png"));
+    if (outFile.open(QIODevice::WriteOnly)) {
+        outFile.write(reinterpret_cast<const char *>( image.data ), image.size);
+        outFile.close();
+    }
 }

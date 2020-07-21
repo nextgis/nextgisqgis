@@ -8,7 +8,7 @@
 #include "qgsmaprendererparalleljob.h"
 #include "qgscoordinatereferencesystem.h"
 
-uchar *imageData(const QImage &image);
+HeadlessRender::Image imageData(const QImage &image);
 
 void HeadlessRender::init()
 {
@@ -20,7 +20,7 @@ const char * HeadlessRender::getVersion()
     return HEADLESS_RENDER_LIB_VERSION_STRING;
 }
 
-uchar *HeadlessRender::renderVector(const char *uri, const char *qmlString, int width, int height, int epsg)
+HeadlessRender::Image HeadlessRender::renderVector(const char *uri, const char *qmlString, int width, int height, int epsg)
 {
     QString readStyleError;
     QDomDocument domDocument;
@@ -44,7 +44,7 @@ uchar *HeadlessRender::renderVector(const char *uri, const char *qmlString, int 
     return imageData(job->renderedImage());
 }
 
-uchar *imageData(const QImage &image)
+HeadlessRender::Image imageData(const QImage &image)
 {
     QByteArray bytes;
     QBuffer buffer( &bytes );
@@ -53,8 +53,9 @@ uchar *imageData(const QImage &image)
     image.save( &buffer, "PNG" );
     buffer.close();
 
-    uchar *data = (uchar *) malloc( bytes.size() );
-    memcpy( data, reinterpret_cast<uchar *>(bytes.data()), bytes.size() );
+    const int size = bytes.size();
+    uchar *data = (uchar *) malloc( size );
+    memcpy( data, reinterpret_cast<uchar *>(bytes.data()), size );
 
-    return data;
+    return { .data = data, .size = size };
 }

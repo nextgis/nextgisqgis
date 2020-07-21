@@ -21,14 +21,18 @@
 #ifndef HEADLESS_RENDER_H
 #define HEADLESS_RENDER_H
 
-#include <QImage>
-
-class QgsMapSettings;
+#include <QtGlobal>
 
 namespace HeadlessRender
 {
+    struct Image
+    {
+        uchar *data;
+        int size;
+    };
+
     HEADLESS_RENDER_EXPORT void init();
-    HEADLESS_RENDER_EXPORT uchar *renderVector(const char *uri, const char *qmlString, int width, int height, int epsg);
+    HEADLESS_RENDER_EXPORT Image renderVector(const char *uri, const char *qmlString, int width, int height, int epsg);
     HEADLESS_RENDER_EXPORT const char *getVersion();
 }
 
