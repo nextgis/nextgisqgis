@@ -18,18 +18,17 @@
 *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#ifndef HEADLESS_RENDER_H
-#define HEADLESS_RENDER_H
+#ifndef HEADLESS_RENDER_LIB_MAJOR_VERSION
 
-#include <QImage>
+#define HEADLESS_RENDER_LIB_MAJOR_VERSION 0
+#define HEADLESS_RENDER_LIB_MINOR_VERSION 1
+#define HEADLESS_RENDER_LIB_PATCH_NUMBER 0
 
-class QgsMapSettings;
+#define STRINGIZE(x)  #x
+#define MAKE_VERSION_DOT_STRING(x, y, z) STRINGIZE(x) "." STRINGIZE(y) "." \
+    STRINGIZE(z)
 
-namespace HeadlessRender
-{
-    HEADLESS_RENDER_EXPORT void init();
-    HEADLESS_RENDER_EXPORT uchar *renderVector(const char *uri, const char *qmlString, int width, int height, int epsg);
-    HEADLESS_RENDER_EXPORT const char *getVersion();
-}
+#define HEADLESS_RENDER_LIB_VERSION_STRING MAKE_VERSION_DOT_STRING(HEADLESS_RENDER_LIB_MAJOR_VERSION, \
+     HEADLESS_RENDER_LIB_MINOR_VERSION,  HEADLESS_RENDER_LIB_PATCH_NUMBER)
 
-#endif // HEADLESS_RENDER_H
+#endif // HEADLESS_RENDER_LIB_MAJOR_VERSION
