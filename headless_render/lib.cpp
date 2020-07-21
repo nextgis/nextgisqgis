@@ -30,7 +30,7 @@
 #include "qgscoordinatereferencesystem.h"
 
 HeadlessRender::Image imageData(const QImage &image);
-QImage renderLayer(QPointer<QgsMapLayer> layer, const char *qmlString, int width, int height, int epsg);
+QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString, int width, int height, int epsg);
 
 void HeadlessRender::init()
 {
@@ -54,7 +54,7 @@ HeadlessRender::Image HeadlessRender::renderRaster(const char *uri, const char *
     return imageData( renderLayer( layer, qmlString, width, height, epsg ) );
 }
 
-QImage renderLayer(QPointer<QgsMapLayer> layer, const char *qmlString, int width, int height, int epsg)
+QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString, int width, int height, int epsg)
 {
     QString readStyleError;
     QDomDocument domDocument;
@@ -91,4 +91,9 @@ HeadlessRender::Image imageData(const QImage &image)
     memcpy( data, reinterpret_cast<uchar *>(bytes.data()), size );
 
     return { .data = data, .size = size };
+}
+
+HeadlessRender::Image::~Image()
+{
+    free(data);
 }
