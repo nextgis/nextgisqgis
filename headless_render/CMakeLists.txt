@@ -20,7 +20,7 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-INCLUDE_DIRECTORIES(
+include_directories(
   ${CMAKE_SOURCE_DIR}/src/headlessrender
 
   ${CMAKE_SOURCE_DIR}/src/core
@@ -50,25 +50,31 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_BINARY_DIR}/src/core
 )
 
-INCLUDE_DIRECTORIES(
+include_directories(
   ${CMAKE_SOURCE_DIR}/external/nlohmann
 )
 
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/pybind11/cmake ${CMAKE_MODULE_PATH})
+
+
 if (NOT PREPARE_ONLY)
 
-  set(LIB_NAME ${NG_PREFIX}qgis_hrlib)
-  set(APP_NAME ${NG_PREFIX}qgis_hrapp)
+  # Library
 
-  ADD_LIBRARY(${LIB_NAME} lib.cpp)
-  TARGET_LINK_LIBRARIES(${LIB_NAME} ${NG_PREFIX}qgis_core)
+  set(LIB_NAME headlessrender)
+
+  set(LIB_SOURCES lib.cpp)
+  set(LIB_PUBLIC_HEADERS lib.h)
+
+  add_library(${LIB_NAME} ${LIB_SOURCES})
+  target_link_libraries(${LIB_NAME} ${NG_PREFIX}qgis_core)
 
   target_compile_definitions (${LIB_NAME} PRIVATE "HEADLESS_RENDER_EXPORT=${DLLEXPORT}")
   target_compile_definitions (${LIB_NAME} INTERFACE "HEADLESS_RENDER_EXPORT=${DLLIMPORT}")
 
-  ADD_EXECUTABLE(${APP_NAME} app.cpp)
-  TARGET_LINK_LIBRARIES(${APP_NAME} ${LIB_NAME})
-
   if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
+    install(FILES ${LIB_PUBLIC_HEADERS} DESTINATION include/headless_render)
+
     install(TARGETS ${LIB_NAME}
       EXPORT ${PACKAGE_UPPER_NAME}Targets
       LIBRARY DESTINATION ${INSTALL_LIB_DIR}
@@ -76,8 +82,41 @@ if (NOT PREPARE_ONLY)
     )
   endif()
 
+
+  # Application
+
+  set(APP_NAME headlessrender_app)
+
+  add_executable(${APP_NAME} app.cpp)
+  target_link_libraries(${APP_NAME} ${LIB_NAME})
+
   if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
     install(TARGETS ${APP_NAME} RUNTIME DESTINATION ${INSTALL_BIN_DIR})
+  endif()
+
+
+  # Python library
+
+  include(pybind11Tools)
+
+  set(PY_LIB_NAME py_headlessrender)
+
+  pybind11_add_module(${PY_LIB_NAME} pylib.cpp lib.cpp)
+
+  target_compile_definitions (${PY_LIB_NAME} PRIVATE "HEADLESS_RENDER_EXPORT=${DLLEXPORT}")
+  target_compile_definitions (${PY_LIB_NAME} INTERFACE "HEADLESS_RENDER_EXPORT=${DLLIMPORT}")
+
+  target_include_directories(${PY_LIB_NAME} PUBLIC ${PYTHON_INCLUDE_DIRS})
+  target_include_directories(${PY_LIB_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/pybind11/include)
+
+  target_link_libraries(${PY_LIB_NAME} PRIVATE ${NG_PREFIX}qgis_core)
+  target_link_libraries(${PY_LIB_NAME} PRIVATE ${PYTHON_LIBRARY})
+
+  if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
+    install(TARGETS ${PY_LIB_NAME}
+      EXPORT ${PACKAGE_UPPER_NAME}Targets
+      LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+    )
   endif()
 
 endif()

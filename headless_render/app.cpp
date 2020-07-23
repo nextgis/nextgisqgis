@@ -11,17 +11,16 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    QApplication app( argc, argv );
-    HeadlessRender::init();
+    HeadlessRender::init(argc, argv);
 
     QFile styleFile(argv[2]);
     styleFile.open(QIODevice::ReadOnly);
 
-    HeadlessRender::Image image = HeadlessRender::renderVector( argv[1], styleFile.readAll().data(), 800, 600, 4326 );
+    auto image = HeadlessRender::renderVector( argv[1], styleFile.readAll().data(), 800, 600, 4326 );
 
     QFile outFile(argv[3] + QString("/result.png"));
     if (outFile.open(QIODevice::WriteOnly)) {
-        outFile.write(reinterpret_cast<const char *>( image.data ), image.size);
+        outFile.write(reinterpret_cast<const char *>( image->getData() ), image->getSize());
         outFile.close();
     }
 }
