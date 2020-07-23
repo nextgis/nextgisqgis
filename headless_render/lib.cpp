@@ -29,12 +29,25 @@
 #include "qgsmaprendererparalleljob.h"
 #include "qgscoordinatereferencesystem.h"
 
-HeadlessRender::Image imageData(const QImage &image);
+#include <QApplication>
+
+std::shared_ptr<HeadlessRender::Image> imageData(const QImage &image);
+
 QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString, int width, int height, int epsg);
 
-void HeadlessRender::init()
+static QApplication *app = nullptr;
+
+void HeadlessRender::init(int argc, char **argv)
 {
+    app = new QApplication(argc, argv);
+
     QgsNetworkAccessManager::instance();
+}
+
+void HeadlessRender::deinit()
+{
+    if (app)
+        app->deleteLater();
 }
 
 const char * HeadlessRender::getVersion()
@@ -42,13 +55,13 @@ const char * HeadlessRender::getVersion()
     return HEADLESS_RENDER_LIB_VERSION_STRING;
 }
 
-HeadlessRender::Image HeadlessRender::renderVector(const char *uri, const char *qmlString, int width, int height, int epsg)
+std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderVector(const char *uri, const char *qmlString, int width, int height, int epsg)
 {
     QPointer<QgsMapLayer> layer = new QgsVectorLayer( uri, "layername", QStringLiteral( "ogr" ));
     return imageData( renderLayer( layer, qmlString, width, height, epsg ) );
 }
 
-HeadlessRender::Image HeadlessRender::renderRaster(const char *uri, const char *qmlString, int width, int height, int epsg)
+std::shared_ptr<HeadlessRender::Image> HeadlessRender::renderRaster(const char *uri, const char *qmlString, int width, int height, int epsg)
 {
     QPointer<QgsMapLayer> layer = new QgsRasterLayer( uri );
     return imageData( renderLayer( layer, qmlString, width, height, epsg ) );
@@ -77,7 +90,7 @@ QImage renderLayer(const QPointer<QgsMapLayer> &layer, const char *qmlString, in
     return job->renderedImage();
 }
 
-HeadlessRender::Image imageData(const QImage &image)
+std::shared_ptr<HeadlessRender::Image> imageData(const QImage &image)
 {
     QByteArray bytes;
     QBuffer buffer( &bytes );
@@ -87,10 +100,10 @@ HeadlessRender::Image imageData(const QImage &image)
     buffer.close();
 
     const int size = bytes.size();
-    uchar *data = (uchar *) malloc( size );
-    memcpy( data, reinterpret_cast<uchar *>(bytes.data()), size );
+    unsigned char *data = (unsigned char *) malloc( size );
+    memcpy( data, reinterpret_cast<unsigned char *>(bytes.data()), size );
 
-    return { .data = data, .size = size };
+    return std::make_shared<HeadlessRender::Image>( data, size );
 }
 
 HeadlessRender::Image::~Image()

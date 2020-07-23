@@ -21,23 +21,32 @@
 #ifndef HEADLESS_RENDER_H
 #define HEADLESS_RENDER_H
 
-#include <QtGlobal>
+#include <memory>
 
 namespace HeadlessRender
 {
-    struct Image
+    class Image
     {
-        uchar *data = nullptr;
-        int size;
-
+    public:
+        Image() = default;
+        Image(unsigned char *d, int sz) : data(d), size(sz) {}
         ~Image();
+
+        unsigned char *getData() { return data; }
+        int getSize() const { return size; }
+
+    private:
+        unsigned char *data = nullptr;
+        int size = 0;
     };
 
-    HEADLESS_RENDER_EXPORT void init();
+    HEADLESS_RENDER_EXPORT void init(int argc, char **argv);
 
-    HEADLESS_RENDER_EXPORT Image renderVector(const char *uri, const char *qmlString, int width, int height, int epsg);
+    HEADLESS_RENDER_EXPORT void deinit();
 
-    HEADLESS_RENDER_EXPORT Image renderRaster(const char *uri, const char *qmlString, int width, int height, int epsg);
+    HEADLESS_RENDER_EXPORT std::shared_ptr<Image> renderVector(const char *uri, const char *qmlString, int width, int height, int epsg);
+
+    HEADLESS_RENDER_EXPORT std::shared_ptr<Image> renderRaster(const char *uri, const char *qmlString, int width, int height, int epsg);
 
     HEADLESS_RENDER_EXPORT const char *getVersion();
 }
