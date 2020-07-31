@@ -124,7 +124,6 @@ include_directories ( ${CMAKE_CURRENT_BINARY_DIR} )
 report_version("${NG_PREFIX}${PROJECT_NAME}" ${VERSION})
 
 option(PREPARE_ONLY "Only generate flex and bison files" OFF)
-option(BUILD_HEADLESS_RENDER "Build headless_render application" OFF)
 
 include(FindAnyProject)
 
@@ -196,13 +195,8 @@ IF(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
   add_definitions(-D_CRT_NONSTDC_NO_WARNINGS)
 endif(MSVC)
-  
 
 add_subdirectory(src)
-
-if (BUILD_HEADLESS_RENDER)
-  add_subdirectory(headless_render)
-endif(BUILD_HEADLESS_RENDER)
 
 add_custom_target(prepare_parser DEPENDS ${PREPARE_PARSER_TARGETS})
 
