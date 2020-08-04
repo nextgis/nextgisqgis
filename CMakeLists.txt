@@ -158,7 +158,6 @@ if(NOT PREPARE_ONLY)
     find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
 
-    string(SUBSTRING ${QT5_VERSION} 0 1 Qt5Core_VERSION_MAJOR)
 endif()
 
 ############################################
