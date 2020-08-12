@@ -5385,7 +5385,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QGroupBox" name="groupBox_30">
+            <widget class="QGroupBox" name="authGroupBox">
              <property name="title">
               <string>Authorize options</string>
              </property>

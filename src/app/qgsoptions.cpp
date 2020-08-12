@@ -990,8 +990,9 @@ void QgsOptions::ngInitControls()
       signinButton->setText(tr("Sign in"));
   }
   #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
-  QString authTypeStr = settings.value("nextgis/auth_type", QLatin1String("NextGIS ID")).toString();
-  authTypeSelector->setCurrentText(authTypeStr);
+  QString authTypeStr = mSettings->value("nextgis/auth_type", QLatin1String("NextGIS ID")).toString();
+  auto index = authTypeSelector->findData(authTypeStr);
+  authTypeSelector->setCurrentIndex(index);
   endpointEdit->setText( mSettings->value( "nextgis/endpoint", NGAccess::instance().endPoint() ).toString() );
 
   #endif // NGLIB_VERSION_NUMBER > 1100

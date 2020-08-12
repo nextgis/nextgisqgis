@@ -986,8 +986,9 @@ void QgsOptions::ngInitControls()
       authGroupBox->show();
       signinButton->setText(tr("Sign in"));
   }
-  QString authTypeStr = settings.value("nextgis/auth_type", QLatin1String("NextGIS ID")).toString();
-  authTypeSelector->setCurrentText(authTypeStr);
+  QString authTypeStr = mSettings->value("nextgis/auth_type", QLatin1String("NextGIS ID")).toString();
+  auto index = authTypeSelector->findData(authTypeStr);
+  authTypeSelector->setCurrentIndex(index);
   endpointEdit->setText( mSettings->value( "nextgis/endpoint", NGAccess::instance().endPoint() ).toString() );
   sendCrashes->setChecked( mSettings->value( "nextgis/sendCrashes", "0" ).toBool() );
 #endif // NGSTD_USING  
