@@ -5445,6 +5445,13 @@
                  </spacer>
                 </item>
                 <item>
+                 <widget class="QPushButton" name="defaultsButton">
+                  <property name="text">
+                   <string>Defaults</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
                  <widget class="QPushButton" name="signinButton">
                   <property name="text">
                    <string>Sign in</string>

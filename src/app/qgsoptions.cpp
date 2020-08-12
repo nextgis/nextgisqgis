@@ -1001,6 +1001,12 @@ void QgsOptions::ngInitControls()
 #endif // NGSTD_USING  
 }
 
+void QgsOptions::on_defaultsButton_clicked()
+{
+    endpointEdit->setText("https://my.nextgis.com");
+    authTypeSelector->setCurrentIndex(0);
+}
+
 void QgsOptions::on_signinButton_clicked()
 {
     mSettings->setValue( "nextgis/endpoint", endpointEdit->text() );

@@ -205,6 +205,7 @@ class APP_EXPORT QgsOptions : public QgsOptionsDialogBase, private Ui::QgsOption
     void on_mButtonExportColors_clicked();
     void on_signinButton_clicked();
     void onUserInfoUpdated();
+    void on_defaultsButton_clicked();
 
   private:
     QSettings *mSettings;
