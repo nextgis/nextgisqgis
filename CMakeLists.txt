@@ -181,7 +181,7 @@ if(NOT PREPARE_ONLY)
         add_definitions(-DQT_DLL) # Only for shared libraries on win32
     endif()
 
-    find_anyproject(Qca REQUIRED EXACT 2.2.0)
+    find_anyproject(Qca REQUIRED VERSION 2.2.0 EXACT)
     find_anyproject(Qscintilla REQUIRED)
     if(QSCINTILLA_FOUND)
         add_definitions(-DQSCINTILLA_VERSION_STR="${QSCINTILLA_VERSION}")
