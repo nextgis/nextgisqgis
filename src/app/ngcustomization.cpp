@@ -1460,9 +1460,15 @@ void NGQgisApp::createToolBars()
 #ifdef NGSTD_USING 
 #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
   QString endPoint = settings.value("nextgis/endpoint", 
-    NGAccess::instance().endPoint() ).toString();  
+    NGAccess::instance().endPoint() ).toString();
+  NGAccess::AuthSourceType type = NGAccess::AuthSourceType::NGID;
+  QString authTypeStr = settings.value("nextgis/auth_type", QLatin1String("NextGIS ID")).toString();
+  if(authTypeStr != "NextGIS ID") {
+    // TODO: Support more types
+    type = NGAccess::AuthSourceType::KeyCloakOpenID;
+  }
   NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
-                                     QLatin1String("user_info.read"), endPoint);
+                                     QLatin1String("user_info.read"), endPoint, type);
 
   NGAccess::instance().initSentry(settings.value("nextgis/sendCrashes", "0").toBool(), SENTRY_KEY);
 #else

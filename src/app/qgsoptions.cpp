@@ -971,11 +971,15 @@ void QgsOptions::ngInitControls()
       avatar->setText(QString("<html><head/><body><p><img src=\"%1\" height=\"64\"/></p></body></html>")
                   .arg(NGAccess::instance().avatarFilePath()));
 
+      QString supportedText;
+      if(NGAccess::instance().authType() == NGAccess::AuthSourceType::NGID) {
+          supportedText= NGAccess::instance().isUserSupported() ?
+                                             tr("Supported") : tr("Unsupported");
+      }
       descriptionText->setText(QString("<html><head/><body><p>%1<br>%2</p><p><b>%3</b></p></body></html>")
                                 .arg(NGAccess::instance().firstName())
                                 .arg(NGAccess::instance().lastName())
-                                .arg(NGAccess::instance().isUserSupported() ?
-                                         tr("Supported") : tr("Unsupported")));
+                                .arg(supportedText));
       authGroupBox->show();
       signinButton->setText(tr("Exit"));
   }
@@ -986,7 +990,10 @@ void QgsOptions::ngInitControls()
       signinButton->setText(tr("Sign in"));
   }
   #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
+  QString authTypeStr = settings.value("nextgis/auth_type", QLatin1String("NextGIS ID")).toString();
+  authTypeSelector->setCurrentText(authTypeStr);
   endpointEdit->setText( mSettings->value( "nextgis/endpoint", NGAccess::instance().endPoint() ).toString() );
+
   #endif // NGLIB_VERSION_NUMBER > 1100
 
   sendCrashes->setChecked(mSettings->value("nextgis/sendCrashes", "0").toBool());
@@ -996,13 +1003,18 @@ void QgsOptions::ngInitControls()
 void QgsOptions::on_signinButton_clicked()
 {
     mSettings->setValue( "nextgis/endpoint", endpointEdit->text() );
+    mSettings->setValue( "nextgis/auth_type", authTypeSelector->currentText() );
 #ifdef NGSTD_USING  
     if(NGAccess::instance().isUserAuthorized()) {
         NGAccess::instance().exit();
     }
     else {
       #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
-        NGAccess::instance().setEndPoint( endpointEdit->text() );
+        NGAccess::AuthSourceType type = NGAccess::AuthSourceType::NGID;
+        if(authTypeSelector->currentText() != "NextGIS ID") {
+            type = NGAccess::AuthSourceType::KeyCloakOpenID;
+        }
+        NGAccess::instance().setEndPoint( endpointEdit->text(), type );
       #endif // NGLIB_VERSION_NUMBER > 1100
         NGAccess::instance().authorize();
     }
@@ -1559,6 +1571,7 @@ void QgsOptions::saveOptions()
   // NextGIS settings
   mSettings->setValue( "nextgis/sendCrashes", sendCrashes->isChecked() );
   mSettings->setValue( "nextgis/endpoint", endpointEdit->text() );
+  mSettings->setValue( "nextgis/auth_type", authTypeSelector->currentText() );
 
   NGAccess::instance().initSentry(sendCrashes->isChecked(), "");
 

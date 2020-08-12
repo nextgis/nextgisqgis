@@ -986,6 +986,8 @@ void QgsOptions::ngInitControls()
       authGroupBox->show();
       signinButton->setText(tr("Sign in"));
   }
+  QString authTypeStr = settings.value("nextgis/auth_type", QLatin1String("NextGIS ID")).toString();
+  authTypeSelector->setCurrentText(authTypeStr);
   endpointEdit->setText( mSettings->value( "nextgis/endpoint", NGAccess::instance().endPoint() ).toString() );
   sendCrashes->setChecked( mSettings->value( "nextgis/sendCrashes", "0" ).toBool() );
 #endif // NGSTD_USING  
@@ -994,12 +996,17 @@ void QgsOptions::ngInitControls()
 void QgsOptions::on_signinButton_clicked()
 {
     mSettings->setValue( "nextgis/endpoint", endpointEdit->text() );
+    mSettings->setValue( "nextgis/auth_type", authTypeSelector->currentText() );
 #ifdef NGSTD_USING  
     if(NGAccess::instance().isUserAuthorized()) {
         NGAccess::instance().exit();
     }
     else {
-        NGAccess::instance().setEndPoint( endpointEdit->text() );
+        NGAccess::AuthSourceType type = NGAccess::AuthSourceType::NGID;
+        if(authTypeSelector->currentText() != "NextGIS ID") {
+            type = NGAccess::AuthSourceType::KeyCloakOpenID;
+        }
+        NGAccess::instance().setEndPoint( endpointEdit->text(), type );
         NGAccess::instance().authorize();
     }
 #endif // NGSTD_USING
@@ -1553,6 +1560,7 @@ void QgsOptions::saveOptions()
   // NextGIS settings
   mSettings->setValue( "nextgis/sendCrashes", sendCrashes->isChecked() );
   mSettings->setValue( "nextgis/endpoint", endpointEdit->text() );
+  mSettings->setValue( "nextgis/auth_type", authTypeSelector->currentText() );
 
   //save variables
   QgsExpressionContextUtils::setGlobalVariables( mVariableEditor->variablesInActiveScope() );
