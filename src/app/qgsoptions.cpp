@@ -991,7 +991,7 @@ void QgsOptions::ngInitControls()
   }
   #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
   QString authTypeStr = mSettings->value("nextgis/auth_type", QLatin1String("NextGIS ID")).toString();
-  auto index = authTypeSelector->findData(authTypeStr);
+  auto index = authTypeSelector->findText(authTypeStr);
   authTypeSelector->setCurrentIndex(index);
   endpointEdit->setText( mSettings->value( "nextgis/endpoint", NGAccess::instance().endPoint() ).toString() );
 
