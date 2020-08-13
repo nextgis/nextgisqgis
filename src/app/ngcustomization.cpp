@@ -1471,7 +1471,7 @@ void NGQgisApp::createToolBars()
   NGAccess::AuthSourceType type = NGAccess::AuthSourceType::Custom;
   if(authTypeStr == "NextGIS ID") {
       type = NGAccess::AuthSourceType::NGID;
-  {
+  }
   else if(authTypeStr == "Keycloak") {
       type = NGAccess::AuthSourceType::KeyCloakOpenID;
   }
