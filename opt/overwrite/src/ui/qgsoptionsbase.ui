@@ -3135,7 +3135,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>588</width>
-                <height>612</height>
+                <height>592</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_30">
@@ -5387,29 +5387,125 @@
            <item>
             <widget class="QGroupBox" name="authGroupBox">
              <property name="title">
-              <string>Authorize</string>
+              <string>Authorize options</string>
              </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_6">
+             <layout class="QVBoxLayout" name="verticalLayout_29">
               <item>
-               <widget class="QLabel" name="enpointLabel">
-                <property name="text">
-                 <string>Endpoint</string>
-                </property>
-               </widget>
+               <layout class="QGridLayout" name="gridLayout_23">
+                <item row="1" column="1">
+                 <widget class="QLineEdit" name="endpointEdit">
+                  <property name="inputMethodHints">
+                   <set>Qt::ImhUrlCharactersOnly</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QLabel" name="tokenEndpointLabel">
+                  <property name="text">
+                   <string>Token endpoint</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QComboBox" name="authTypeSelector">
+                  <item>
+                   <property name="text">
+                    <string>NextGIS ID</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Keycloak</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>Custom</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="enpointLabel">
+                  <property name="text">
+                   <string>Endpoint</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="typeLabel">
+                  <property name="text">
+                   <string>Type</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="authEndpointLabel">
+                  <property name="text">
+                   <string>Auth endpoint</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0">
+                 <widget class="QLabel" name="userInfoEndpoinLabel">
+                  <property name="text">
+                   <string>User info endpoint</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QLineEdit" name="authEndpointEdit">
+                  <property name="inputMethodHints">
+                   <set>Qt::ImhUrlCharactersOnly</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QLineEdit" name="tokenEndpointEdit">
+                  <property name="inputMethodHints">
+                   <set>Qt::ImhUrlCharactersOnly</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <widget class="QLineEdit" name="userInfoEndpointEdit">
+                  <property name="inputMethodHints">
+                   <set>Qt::ImhUrlCharactersOnly</set>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
               <item>
-               <widget class="QLineEdit" name="endpointEdit">
-                <property name="inputMethodHints">
-                 <set>Qt::ImhUrlCharactersOnly</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="signinButton">
-                <property name="text">
-                 <string>Sign in</string>
-                </property>
-               </widget>
+               <layout class="QHBoxLayout" name="horizontalLayout_3">
+                <item>
+                 <spacer name="horizontalSpacer_2">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="defaultsButton">
+                  <property name="text">
+                   <string>Defaults</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="signinButton">
+                  <property name="text">
+                   <string>Sign in</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </item>
              </layout>
             </widget>
@@ -5417,7 +5513,7 @@
            <item>
             <widget class="QCheckBox" name="sendCrashes">
              <property name="enabled">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
