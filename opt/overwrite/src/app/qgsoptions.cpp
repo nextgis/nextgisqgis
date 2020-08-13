@@ -1006,7 +1006,7 @@ void QgsOptions::on_authTypeSelector_currentIndexChanged(int idx)
       tokenEndpointLabel->show();
       tokenEndpointEdit->show();
       userInfoEndpoinLabel->show();
-      userInfoEndpointEdit->shown();
+      userInfoEndpointEdit->show();
     }
     else {
       authEndpointLabel->hide();
@@ -1041,7 +1041,7 @@ void QgsOptions::on_signinButton_clicked()
         if(authTypeSelector->currentText() == "NextGIS ID") {
             type = NGAccess::AuthSourceType::NGID;
         }
-        else if(authTypeSelector->currentText() == "Keycloak")
+        else if(authTypeSelector->currentText() == "Keycloak") {
             type = NGAccess::AuthSourceType::KeyCloakOpenID;
         }
         NGAccess::instance().setEndPoint( endpointEdit->text(), type );
