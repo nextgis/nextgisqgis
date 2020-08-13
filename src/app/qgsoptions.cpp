@@ -994,9 +994,9 @@ void QgsOptions::ngInitControls()
   auto index = authTypeSelector->findText(authTypeStr);
   authTypeSelector->setCurrentIndex(index);
   endpointEdit->setText( mSettings->value( "nextgis/endpoint", NGAccess::instance().endPoint() ).toString() );
-  endpointEdit->setText( mSettings->value( "nextgis/auth_endpoint", NGAccess::instance().authEndpoint() ).toString() );
-  endpointEdit->setText( mSettings->value( "nextgis/token_endpoint", NGAccess::instance().tokenEndpoint() ).toString() );
-  endpointEdit->setText( mSettings->value( "nextgis/user_info_endpoint", NGAccess::instance().userInfoEndpoint() ).toString() );
+  authEndpointEdit->setText( mSettings->value( "nextgis/auth_endpoint", NGAccess::instance().authEndpoint() ).toString() );
+  tokenEndpointEdit->setText( mSettings->value( "nextgis/token_endpoint", NGAccess::instance().tokenEndpoint() ).toString() );
+  userInfoEndpointEdit->setText( mSettings->value( "nextgis/user_info_endpoint", NGAccess::instance().userInfoEndpoint() ).toString() );
   #endif // NGLIB_VERSION_NUMBER > 1100
 
   sendCrashes->setChecked(mSettings->value("nextgis/sendCrashes", "0").toBool());
@@ -1010,8 +1010,9 @@ void QgsOptions::on_defaultsButton_clicked()
 }
 
 
-void on_authTypeSelector_currentIndexChanged(int idx) 
+void QgsOptions::on_authTypeSelector_currentIndexChanged(int idx) 
 {
+#ifdef NGSTD_USING   
     if(idx == 2) {
       authEndpointLabel->show();
       authEndpointEdit->show();
@@ -1028,6 +1029,7 @@ void on_authTypeSelector_currentIndexChanged(int idx)
       userInfoEndpoinLabel->hide();
       userInfoEndpointEdit->hide();
     }
+#endif // NGSTD_USING      
 }
 
 void QgsOptions::on_signinButton_clicked()
