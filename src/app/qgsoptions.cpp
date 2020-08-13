@@ -1047,7 +1047,8 @@ void QgsOptions::on_signinButton_clicked()
       #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
         NGAccess::AuthSourceType type = NGAccess::AuthSourceType::Custom;
         if(authTypeSelector->currentText() == "NextGIS ID") {
-            type = NGAccess::AuthSourceType::NGID
+            type = NGAccess::AuthSourceType::NGID;
+        }
         else if(authTypeSelector->currentText() == "Keycloak")
             type = NGAccess::AuthSourceType::KeyCloakOpenID;
         }
