@@ -1467,12 +1467,12 @@ void NGQgisApp::createToolBars()
     NGAccess::instance().tokenEndpoint() ).toString();
   QString userInfoEndPoint = settings.value("nextgis/user_info_endpoint", 
     NGAccess::instance().userInfoEndpoint() ).toString();    
-  NGAccess::AuthSourceType type = NGAccess::AuthSourceType::NGID;
   QString authTypeStr = settings.value("nextgis/auth_type", QLatin1String("NextGIS ID")).toString();
   NGAccess::AuthSourceType type = NGAccess::AuthSourceType::Custom;
   if(authTypeStr == "NextGIS ID") {
-      type = NGAccess::AuthSourceType::NGID
-  else if(authTypeStr == "Keycloak")
+      type = NGAccess::AuthSourceType::NGID;
+  {
+  else if(authTypeStr == "Keycloak") {
       type = NGAccess::AuthSourceType::KeyCloakOpenID;
   }
   NGAccess::instance().setAuthEndpoint(authEndPoint);
