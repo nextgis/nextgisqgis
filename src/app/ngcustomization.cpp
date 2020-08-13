@@ -1461,12 +1461,23 @@ void NGQgisApp::createToolBars()
 #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
   QString endPoint = settings.value("nextgis/endpoint", 
     NGAccess::instance().endPoint() ).toString();
+  QString authEndPoint = settings.value("nextgis/auth_endpoint", 
+    NGAccess::instance().authEndpoint() ).toString();
+  QString tokenEndPoint = settings.value("nextgis/token_endpoint", 
+    NGAccess::instance().tokenEndpoint() ).toString();
+  QString userInfoEndPoint = settings.value("nextgis/user_info_endpoint", 
+    NGAccess::instance().userInfoEndpoint() ).toString();    
   NGAccess::AuthSourceType type = NGAccess::AuthSourceType::NGID;
   QString authTypeStr = settings.value("nextgis/auth_type", QLatin1String("NextGIS ID")).toString();
-  if(authTypeStr != "NextGIS ID") {
-    // TODO: Support more types
-    type = NGAccess::AuthSourceType::KeyCloakOpenID;
+  NGAccess::AuthSourceType type = NGAccess::AuthSourceType::Custom;
+  if(authTypeStr == "NextGIS ID") {
+      type = NGAccess::AuthSourceType::NGID
+  else if(authTypeStr == "Keycloak")
+      type = NGAccess::AuthSourceType::KeyCloakOpenID;
   }
+  NGAccess::instance().setAuthEndpoint(authEndPoint);
+  NGAccess::instance().setTokenEndpoint(tokenEndPoint);
+  NGAccess::instance().setUserInfoEndpoint(userInfoEndPoint);
   NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
                                      QLatin1String("user_info.read"), endPoint, type);
 

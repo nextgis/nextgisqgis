@@ -5392,24 +5392,17 @@
              <layout class="QVBoxLayout" name="verticalLayout_29">
               <item>
                <layout class="QGridLayout" name="gridLayout_23">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="label_2">
-                  <property name="text">
-                   <string>Type</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="enpointLabel">
-                  <property name="text">
-                   <string>Endpoint</string>
-                  </property>
-                 </widget>
-                </item>
                 <item row="1" column="1">
                  <widget class="QLineEdit" name="endpointEdit">
                   <property name="inputMethodHints">
                    <set>Qt::ImhUrlCharactersOnly</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0">
+                 <widget class="QLabel" name="tokenEndpointLabel">
+                  <property name="text">
+                   <string>Token endpoint</string>
                   </property>
                  </widget>
                 </item>
@@ -5425,6 +5418,60 @@
                     <string>Keycloak</string>
                    </property>
                   </item>
+                  <item>
+                   <property name="text">
+                    <string>Custom</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="enpointLabel">
+                  <property name="text">
+                   <string>Endpoint</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="typeLabel">
+                  <property name="text">
+                   <string>Type</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QLabel" name="authEndpointLabel">
+                  <property name="text">
+                   <string>Auth endpoint</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0">
+                 <widget class="QLabel" name="userInfoEndpoinLabel">
+                  <property name="text">
+                   <string>User info endpoint</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QLineEdit" name="authEndpointEdit">
+                  <property name="inputMethodHints">
+                   <set>Qt::ImhUrlCharactersOnly</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QLineEdit" name="tokenEndpointEdit">
+                  <property name="inputMethodHints">
+                   <set>Qt::ImhUrlCharactersOnly</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="1">
+                 <widget class="QLineEdit" name="userInfoEndpointEdit">
+                  <property name="inputMethodHints">
+                   <set>Qt::ImhUrlCharactersOnly</set>
+                  </property>
                  </widget>
                 </item>
                </layout>
