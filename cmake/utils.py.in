@@ -219,8 +219,8 @@ def open_stack_dialog(type, value, tb, msg, pop_error=True):
 
 def qgis_excepthook(type, value, tb):
     settings = QSettings()
-    sendCrashes = settings.value("/nextgis/sendCrashes", False, type=bool)
-    if sendCrashes and have_raven and NGAccess.instance().isUserSupported():
+    send_crashes = settings.value("/nextgis/send_crashes", False, type=bool)
+    if send_crashes and have_raven and NGAccess.instance().isUserSupported():
         logmessage = ''
         for s in traceback.format_exception(type, value, tb):
             logmessage += s.decode('utf-8', 'replace') if hasattr(s, 'decode') else s

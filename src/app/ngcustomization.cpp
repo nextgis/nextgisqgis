@@ -1459,29 +1459,24 @@ void NGQgisApp::createToolBars()
 
 #ifdef NGSTD_USING 
 #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
-  QString endPoint = settings.value("nextgis/endpoint", 
+  QString endPointStr = settings.value("nextgis/endpoint", 
     NGAccess::instance().endPoint() ).toString();
-  QString authEndPoint = settings.value("nextgis/auth_endpoint", 
+  QString authEndPointStr = settings.value("nextgis/auth_endpoint", 
     NGAccess::instance().authEndpoint() ).toString();
-  QString tokenEndPoint = settings.value("nextgis/token_endpoint", 
+  QString tokenEndPointStr = settings.value("nextgis/token_endpoint", 
     NGAccess::instance().tokenEndpoint() ).toString();
-  QString userInfoEndPoint = settings.value("nextgis/user_info_endpoint", 
+  QString userInfoEndPointStr = settings.value("nextgis/user_info_endpoint", 
     NGAccess::instance().userInfoEndpoint() ).toString();    
-  QString authTypeStr = settings.value("nextgis/auth_type", QLatin1String("NextGIS ID")).toString();
-  NGAccess::AuthSourceType type = NGAccess::AuthSourceType::Custom;
-  if(authTypeStr == "NextGIS ID") {
-      type = NGAccess::AuthSourceType::NGID;
-  }
-  else if(authTypeStr == "Keycloak") {
-      type = NGAccess::AuthSourceType::KeyCloakOpenID;
-  }
-  NGAccess::instance().setAuthEndpoint(authEndPoint);
-  NGAccess::instance().setTokenEndpoint(tokenEndPoint);
-  NGAccess::instance().setUserInfoEndpoint(userInfoEndPoint);
+  int authType = settings.value("nextgis/auth_type", 0).toInt();
+  NGAccess::AuthSourceType type = static_cast<NGAccess::AuthSourceType>(authType);
+  auto scopes = settings.value("nextgis/auth_scopes", "").toString();
+  NGAccess::instance().setAuthEndpoint(authEndPointStr);
+  NGAccess::instance().setTokenEndpoint(tokenEndPointStr);
+  NGAccess::instance().setUserInfoEndpoint(userInfoEndPointStr);
   NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
-                                     QLatin1String("user_info.read"), endPoint, type);
+                                  scopes, endPointStr, type);
 
-  NGAccess::instance().initSentry(settings.value("nextgis/sendCrashes", "0").toBool(), SENTRY_KEY);
+  NGAccess::instance().initSentry(settings.value("nextgis/send_crashes", "0").toBool(), SENTRY_KEY);
 #else
   NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
                                      QLatin1String("user_info.read"));

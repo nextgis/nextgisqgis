@@ -206,7 +206,7 @@ class APP_EXPORT QgsOptions : public QgsOptionsDialogBase, private Ui::QgsOption
     void on_signinButton_clicked();
     void onUserInfoUpdated();
     void on_defaultsButton_clicked();
-    void on_authTypeSelector_currentIndexChanged( int idx );
+    void on_authTypeSelector_currentIndexChanged( int index );
 
   private:
     QSettings *mSettings;
@@ -225,6 +225,7 @@ class APP_EXPORT QgsOptions : public QgsOptionsDialogBase, private Ui::QgsOption
     QListWidgetItem* addScaleToScaleList( const QString &newScale );
     void addScaleToScaleList( QListWidgetItem* newItem );
     void ngInitControls(); 
+    void updateAuthControls(int type);
 
   protected:
     QgisAppStyleSheet* mStyleSheetBuilder;

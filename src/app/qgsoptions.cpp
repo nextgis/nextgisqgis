@@ -990,17 +990,49 @@ void QgsOptions::ngInitControls()
       signinButton->setText(tr("Sign in"));
   }
   #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
-  QString authTypeStr = mSettings->value("nextgis/auth_type", QLatin1String("NextGIS ID")).toString();
-  auto index = authTypeSelector->findText(authTypeStr);
+  int index = mSettings->value("nextgis/auth_type", 0).toInt();
   authTypeSelector->setCurrentIndex(index);
   endpointEdit->setText( mSettings->value( "nextgis/endpoint", NGAccess::instance().endPoint() ).toString() );
   authEndpointEdit->setText( mSettings->value( "nextgis/auth_endpoint", NGAccess::instance().authEndpoint() ).toString() );
   tokenEndpointEdit->setText( mSettings->value( "nextgis/token_endpoint", NGAccess::instance().tokenEndpoint() ).toString() );
   userInfoEndpointEdit->setText( mSettings->value( "nextgis/user_info_endpoint", NGAccess::instance().userInfoEndpoint() ).toString() );
+  codeChallengeCheckBox->setChecked( mSettings->value( "nextgis/use_code_challenge").toBool() );
+  updateAuthControls(index);
+
   #endif // NGLIB_VERSION_NUMBER > 1100
 
-  sendCrashes->setChecked(mSettings->value("nextgis/sendCrashes", "0").toBool());
+  sendCrashes->setChecked(mSettings->value("nextgis/send_crashes", "0").toBool());
 #endif // NGSTD_USING  
+}
+
+void QgsOptions::updateAuthControls(int type)
+{
+    if(type == 2) {
+        authEndpointLabel->show();
+        authEndpointEdit->show();
+        tokenEndpointLabel->show();
+        tokenEndpointEdit->show();
+        userInfoEndpoinLabel->show();
+        userInfoEndpointEdit->show();
+        codeChallengeLabel->show();
+        codeChallengeCheckBox->show();
+    }
+    else {
+        authEndpointLabel->hide();
+        authEndpointEdit->hide();
+        tokenEndpointLabel->hide();
+        tokenEndpointEdit->hide();
+        userInfoEndpoinLabel->hide();
+        userInfoEndpointEdit->hide();
+        if(type == 0) {
+            codeChallengeLabel->hide();
+            codeChallengeCheckBox->hide();
+        }
+        else {
+            codeChallengeLabel->show();
+            codeChallengeCheckBox->show();
+        }
+    }
 }
 
 void QgsOptions::on_defaultsButton_clicked()
@@ -1010,25 +1042,10 @@ void QgsOptions::on_defaultsButton_clicked()
 }
 
 
-void QgsOptions::on_authTypeSelector_currentIndexChanged(int idx) 
+void QgsOptions::on_authTypeSelector_currentIndexChanged(int index) 
 {
 #ifdef NGSTD_USING   
-    if(idx == 2) {
-      authEndpointLabel->show();
-      authEndpointEdit->show();
-      tokenEndpointLabel->show();
-      tokenEndpointEdit->show();
-      userInfoEndpoinLabel->show();
-      userInfoEndpointEdit->show();
-    }
-    else {
-      authEndpointLabel->hide();
-      authEndpointEdit->hide();
-      tokenEndpointLabel->hide();
-      tokenEndpointEdit->hide();
-      userInfoEndpoinLabel->hide();
-      userInfoEndpointEdit->hide();
-    }
+    updateAuthControls(index);
 #endif // NGSTD_USING      
 }
 
@@ -1039,18 +1056,21 @@ void QgsOptions::on_signinButton_clicked()
     mSettings->setValue( "nextgis/token_endpoint", tokenEndpointEdit->text() );
     mSettings->setValue( "nextgis/user_info_endpoint", userInfoEndpointEdit->text() );    
     mSettings->setValue( "nextgis/auth_type", authTypeSelector->currentText() );
+    mSettings->setValue( "nextgis/use_code_challenge" ).toBool();
 #ifdef NGSTD_USING  
     if(NGAccess::instance().isUserAuthorized()) {
         NGAccess::instance().exit();
     }
     else {
       #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
-        NGAccess::AuthSourceType type = NGAccess::AuthSourceType::Custom;
-        if(authTypeSelector->currentText() == "NextGIS ID") {
-            type = NGAccess::AuthSourceType::NGID;
-        }
-        else if(authTypeSelector->currentText() == "Keycloak") {
-            type = NGAccess::AuthSourceType::KeyCloakOpenID;
+        NGAccess::AuthSourceType type =
+                static_cast<NGAccess::AuthSourceType>(authTypeSelector->currentIndex());
+        NGAccess::instance().setAuthEndpoint( authEndpointEdit->text() );
+        NGAccess::instance().setTokenEndpoint( tokenEndpointEdit->text() );
+        NGAccess::instance().setUserInfoEndpoint( userInfoEndpointEdit->text() );
+        NGAccess::instance().setUseCodeChallenge( codeChallengeCheckBox->isChecked() );
+        if(type == NGAccess::AuthSourceType::NGID) {
+            NGAccess::instance().setUseCodeChallenge(true);
         }
         NGAccess::instance().setEndPoint( endpointEdit->text(), type );
       #endif // NGLIB_VERSION_NUMBER > 1100
@@ -1607,12 +1627,13 @@ void QgsOptions::saveOptions()
   }
 
   // NextGIS settings
-  mSettings->setValue( "nextgis/sendCrashes", sendCrashes->isChecked() );
+  mSettings->setValue( "nextgis/send_crashes", sendCrashes->isChecked() );
   mSettings->setValue( "nextgis/endpoint", endpointEdit->text() );
   mSettings->setValue( "nextgis/auth_endpoint", authEndpointEdit->text() );
   mSettings->setValue( "nextgis/token_endpoint", tokenEndpointEdit->text() );
   mSettings->setValue( "nextgis/user_info_endpoint", userInfoEndpointEdit->text() );
-  mSettings->setValue( "nextgis/auth_type", authTypeSelector->currentText() );
+  mSettings->setValue( "nextgis/auth_type", authTypeSelector->currentIndex() );
+  mSettings->setValue( "nextgis/use_code_challenge", codeChallengeCheckBox->isChecked() );
 
   NGAccess::instance().initSentry(sendCrashes->isChecked(), "");
 
