@@ -1056,7 +1056,7 @@ void QgsOptions::on_signinButton_clicked()
     mSettings->setValue( "nextgis/token_endpoint", tokenEndpointEdit->text() );
     mSettings->setValue( "nextgis/user_info_endpoint", userInfoEndpointEdit->text() );    
     mSettings->setValue( "nextgis/auth_type", authTypeSelector->currentText() );
-    mSettings->setValue( "nextgis/use_code_challenge" ).toBool();
+    mSettings->setValue( "nextgis/use_code_challenge", codeChallengeCheckBox->isChecked() );
 #ifdef NGSTD_USING  
     if(NGAccess::instance().isUserAuthorized()) {
         NGAccess::instance().exit();
