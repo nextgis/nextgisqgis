@@ -115,7 +115,7 @@ set(HAVE_SPATIALITE TRUE)
 #cmakedefine HAVE_MSSQL
 set(HAVE_ORACLE TRUE)
 
-
+include(GenerateExportHeader)
 include(configure)
 
 include_directories ( ${CMAKE_CURRENT_SOURCE_DIR} )

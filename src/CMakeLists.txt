@@ -23,5 +23,6 @@
 include(prepare_parser)
 
 add_subdirectory(core)
+add_subdirectory(analysis)
 
 set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
