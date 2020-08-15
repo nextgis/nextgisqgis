@@ -1396,8 +1396,6 @@ if (NOT PREPARE_ONLY)
 
     add_library(${LIB_NAME} SHARED ${QGIS_CORE_SRCS} ${QGIS_CORE_HDRS} ${QGIS_CORE_PRIVATE_HDRS})
 
-    include(GenerateExportHeader)
-
     generate_export_header(
       ${LIB_NAME}
       BASE_NAME CORE
