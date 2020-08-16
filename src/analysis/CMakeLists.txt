@@ -366,7 +366,7 @@ SET(QGIS_ANALYSIS_HDRS
   vector/qgszonalstatistics.h
 )
 
-find_anyproject(EXIV REQUIRED)
+find_anyproject(EXIV2 REQUIRED)
 
 INCLUDE_DIRECTORIES(SYSTEM ${SPATIALITE_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(SYSTEM ${SPATIALINDEX_INCLUDE_DIR})
@@ -374,9 +374,11 @@ INCLUDE_DIRECTORIES(SYSTEM ${SQLITE3_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(BEFORE raster)
 INCLUDE_DIRECTORIES(BEFORE mesh)
 
-add_flex_files(raster/qgsrastercalclexer.ll mesh/qgsmeshcalclexer.ll)
-add_bison_files(raster/qgsrastercalcparser.yy mesh/qgsmeshcalcparser.yy)
+add_flex_files_prefix(raster raster/qgsrastercalclexer.ll)
+add_flex_files_prefix(mesh mesh/qgsmeshcalclexer.ll)
 
+add_bison_files_prefix(raster raster/qgsrastercalcparser.yy)
+add_bison_files_prefix(mesh mesh/qgsmeshcalcparser.yy)
 
 #ADD_FLEX_FILES_PREFIX(QGIS_ANALYSIS_SRCS raster raster/qgsrastercalclexer.ll)
 #ADD_FLEX_FILES_PREFIX(QGIS_ANALYSIS_SRCS mesh mesh/qgsmeshcalclexer.ll)
@@ -440,7 +442,7 @@ INCLUDE_DIRECTORIES(SYSTEM
   ${GEOS_INCLUDE_DIR}
   ${GDAL_INCLUDE_DIR}
   ${SQLITE3_INCLUDE_DIR}
-  ${EXIV_INCLUDE_DIR}
+  ${EXIV2_INCLUDE_DIR}
 )
 
 IF(HAVE_OPENCL)
@@ -501,7 +503,7 @@ ENDIF (NOT ANDROID)
 TARGET_LINK_LIBRARIES(
   qgis_analysis
   ${NG_PREFIX}qgis_core
-  ${EXIV_LIBRARIES}
+  ${EXIV2_LIBRARIES}
   )
 
 IF(HAVE_OPENCL)
