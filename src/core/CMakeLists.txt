@@ -1392,7 +1392,7 @@ add_definitions(-DTEST_DATA_DIR="${TEST_DATA_DIR}")
 if (NOT PREPARE_ONLY)
 
     set(LIB_NAME ${NG_PREFIX}qgis_core)
-    set(TARGETS ${LIB_NAME})
+    SET(TARGETS ${TARGETS} ${LIB_NAME} PARENT_SCOPE)
 
     add_library(${LIB_NAME} SHARED ${QGIS_CORE_SRCS} ${QGIS_CORE_HDRS} ${QGIS_CORE_PRIVATE_HDRS})
 
@@ -1405,20 +1405,17 @@ if (NOT PREPARE_ONLY)
     set(QGIS_CORE_HDRS ${QGIS_CORE_HDRS} ${CMAKE_CURRENT_BINARY_DIR}/qgis_core.h)
 
     if(ENABLE_MODELTEST)
-      target_link_libraries(${TARGETS} ${Qt5Test_LIBRARIES})
+      target_link_libraries(${LIB_NAME} ${Qt5Test_LIBRARIES})
     endif(ENABLE_MODELTEST)
 
 
     if(HAVE_OPENCL)
-      target_link_libraries(${TARGETS} ${OpenCL_LIBRARY})
+      target_link_libraries(${LIB_NAME} ${OpenCL_LIBRARY})
     endif(HAVE_OPENCL)
 
 
-    if(NOT APPLE)
-        message(STATUS  " INSTALL(FILES ${QGIS_CORE_HDRS} DESTINATION ${QGIS_INCLUDE_DIR})")
-        INSTALL(FILES ${QGIS_CORE_HDRS} DESTINATION include)
-    else(NOT APPLE)
-      set_target_properties(${TARGETS} PROPERTIES
+    if(APPLE)
+      set_target_properties(${LIB_NAME} PROPERTIES
         CLEAN_DIRECT_OUTPUT 1
         FRAMEWORK 1
         FRAMEWORK_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}"
@@ -1430,37 +1427,37 @@ if (NOT PREPARE_ONLY)
         LINK_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}"
       )
       # generated export header does not get copied with PUBLIC_HEADER files
-      add_custom_command(TARGET ${TARGETS}
+      add_custom_command(TARGET ${LIB_NAME}
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy qgis_core.h ${INSTALL_INC_DIR}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         DEPENDS qgis_core.h
       )
-    endif(NOT APPLE)
+    endif(APPLE)
 
-    set_target_properties(${TARGETS} PROPERTIES VERSION ${VERSION} SOVERSION ${VERSION})
+    set_target_properties(${LIB_NAME} PROPERTIES VERSION ${VERSION} SOVERSION ${VERSION})
 
     # make sure to create qgsversion.h before compiling
-    #add_dependencies(${TARGETS} version)
+    #add_dependencies(${LIB_NAME} version)
 
     # because of htonl
     if (WIN32)
-      target_link_libraries(${TARGETS} wsock32 setupapi dbghelp version)
+      target_link_libraries(${LIB_NAME} wsock32 setupapi dbghelp version)
     endif (WIN32)
 
     if (APPLE)
-      target_link_libraries(${TARGETS} ${LIBTASN1_LIBRARY})
+      target_link_libraries(${LIB_NAME} ${LIBTASN1_LIBRARY})
     endif (APPLE)
 
     if (APPLE AND NOT IOS)
-      target_link_libraries(${TARGETS} qgis_native)
+      target_link_libraries(${LIB_NAME} qgis_native)
     endif (APPLE AND NOT IOS)
 
     if (ADD_CLAZY_CHECKS)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_BASE_FLAGS} -Xclang -plugin-arg-clazy -Xclang ${CLAZY_BASE_CHECKS},non-pod-global-static")
     endif (ADD_CLAZY_CHECKS)
 
-    target_link_libraries(${TARGETS}
+    target_link_libraries(${LIB_NAME}
       Qt5::Xml
       Qt5::Core
       Qt5::Gui
@@ -1483,7 +1480,7 @@ if (NOT PREPARE_ONLY)
     )
     
     if (WITH_WEBKIT)
-       target_link_libraries(${TARGETS} Qt5::WebKit)
+       target_link_libraries(${LIB_NAME} Qt5::WebKit)
     endif(WITH_WEBKIT)
 
     if (FORCE_STATIC_PROVIDERS)
@@ -1492,7 +1489,7 @@ if (NOT PREPARE_ONLY)
         ${CMAKE_SOURCE_DIR}/src/providers/postgres
       )
 
-      target_link_libraries(${TARGETS}
+      target_link_libraries(${LIB_NAME}
         wmsprovider_a
         postgresprovider_a
       )
@@ -1500,50 +1497,32 @@ if (NOT PREPARE_ONLY)
 
     if (MSVC)
       #needed for linking to gdal which needs odbc
-      set(TARGET_LINK_LIBRARIES ${TARGETS} odbc32 odbccp32)
+      set(TARGET_LINK_LIBRARIES ${LIB_NAME} odbc32 odbccp32)
     endif (MSVC)
 
-    target_compile_definitions(${TARGETS} PRIVATE "-DQT_NO_FOREACH")
+    target_compile_definitions(${LIB_NAME} PRIVATE "-DQT_NO_FOREACH")
 
     # clang-tidy
     if(CLANG_TIDY_EXE)
       set_target_properties(
-        ${TARGETS} PROPERTIES
+        ${LIB_NAME} PROPERTIES
         CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
       )
     endif(CLANG_TIDY_EXE)
 
 
-    # Export package ===============================================================
-
-    # Add path to includes to build-tree export
-    target_include_directories(${TARGETS} PUBLIC
-     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    )
-
-    # Add all targets to the build-tree export set
-    export(TARGETS ${TARGETS}
-       FILE ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Targets.cmake)
-
-    if(REGISTER_PACKAGE)
-       # Export the package for use from the build-tree
-       # (this registers the build-tree with a global CMake-registry)
-       export(PACKAGE ${PACKAGE_UPPER_NAME})
-    endif()
-
-    # Create the Config.cmake file
-    configure_file(${CMAKE_SOURCE_DIR}/cmake/PackageConfig.cmake.in
-       ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake @ONLY)
-
-    if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
-        install(TARGETS ${TARGETS} 
+    if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)       
+        install(TARGETS ${LIB_NAME} 
             EXPORT ${PACKAGE_UPPER_NAME}Targets
             RUNTIME DESTINATION ${INSTALL_BIN_DIR}
             ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
             LIBRARY DESTINATION ${INSTALL_LIB_DIR}
             INCLUDES DESTINATION ${INSTALL_INC_DIR}
             FRAMEWORK DESTINATION ${INSTALL_LIB_DIR}
+        )
+        
+        install(FILES ${QGIS_CORE_HDRS} 
+            DESTINATION ${INSTALL_INC_DIR}/core
         )
     endif()
 

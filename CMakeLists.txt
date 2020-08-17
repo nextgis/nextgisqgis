@@ -56,6 +56,7 @@ if(OSX_FRAMEWORK)
     set(_PLUGIN_SUBDIR "Library/Plugins/Qt5")
     set(QT5_PLUGINS_DIR Library/Plugins/Qt5)
     set(QT5_TRANSLATION_DIR Library/Translations/Qt5)
+    set(INSTALL_CMAKECONF_DIR ${INSTALL_LIB_DIR}/${PROJECT_NAME}.framework/Resources/CMake CACHE INTERNAL "Installation directory for cmake config files" FORCE)
 
     set(INSTALL_PLUGIN_DIR ${_PLUGIN_SUBDIR}/${NG_PREFIX}${PROJECT_NAME} CACHE INTERNAL "Installation directory for plugins" FORCE)
     set(INSTALL_SHARE_DIR ${QGIS_DATA_SUBDIR} CACHE INTERNAL "Installation directory for share data" FORCE)
@@ -91,6 +92,7 @@ else()
     set(QGIS_PLUGIN_SUBDIR "${INSTALL_LIB_DIR}/${NG_PREFIX}${PROJECT_NAME}/plugins")
     set(QGIS_LIB_SUBDIR ${INSTALL_LIB_DIR})
     set(QGIS_MACAPP_BUNDLE 0)
+    set(INSTALL_CMAKECONF_DIR ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/CMake CACHE INTERNAL "Installation directory for cmake config files" FORCE)
 endif()
 
 set(QT_PREFIX ${CMAKE_INSTALL_PREFIX})
@@ -195,14 +197,41 @@ IF(MSVC)
   add_definitions(-D_CRT_NONSTDC_NO_WARNINGS)
 endif(MSVC)
 
+set(PACKAGE_NAME ${PROJECT_NAME})
+string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
+
 add_subdirectory(src)
 
 add_custom_target(prepare_parser DEPENDS ${PREPARE_PARSER_TARGETS})
 
-set(PACKAGE_NAME ${PROJECT_NAME})
-string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
-
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+
+# Export package ===============================================================
+
+# Add path to includes to build-tree export
+#target_include_directories(${TARGETS} PUBLIC
+# $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+# $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+#)
+
+# Add all targets to the build-tree export set
+export(TARGETS ${TARGETS}
+   FILE ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Targets.cmake)
+
+if(REGISTER_PACKAGE)
+   # Export the package for use from the build-tree
+   # (this registers the build-tree with a global CMake-registry)
+   export(PACKAGE ${PACKAGE_UPPER_NAME})
+endif()
+message(STATUS "INSTALL_CMAKECONF_DIR: ${INSTALL_CMAKECONF_DIR}")
+if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
+   # Install the export set for use with the install-tree
+   install(EXPORT ${PACKAGE_UPPER_NAME}Targets DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
+endif()
+
+# Create the Config.cmake file
+configure_file(${CMAKE_SOURCE_DIR}/cmake/PackageConfig.cmake.in
+   ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake @ONLY)
 
 # Archiving ====================================================================
 
