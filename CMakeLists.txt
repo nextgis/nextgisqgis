@@ -131,6 +131,8 @@ include(FindAnyProject)
 
 if(NOT PREPARE_ONLY)
 
+    find_package(Python3 REQUIRED)
+
     find_anyproject(PROJ REQUIRED)
     if(PROJ_FOUND)
         add_definitions(-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H)
