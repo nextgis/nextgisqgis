@@ -41,3 +41,11 @@ external/poly2tri/common,external/poly2tri/common,,"cc,h"
 external/poly2tri/sweep,external/poly2tri/sweep,,"cc,h"
 external/rtree/include,external/rtree/include,,h
 scripts,scripts,,process_function_template.py
+src/analysis,src/analysis,,"h,cpp"
+src/analysis/interpolation,src/analysis/interpolation,,"h,cpp"
+src/analysis/mesh,src/analysis/mesh,,"h,cpp,ll,yy"
+src/analysis/network,src/analysis/network,,"h,cpp"
+src/analysis/processing,src/analysis/processing,,"h,cpp"
+src/analysis/raster,src/analysis/raster,,"h,cpp,ll,yy"
+src/analysis/vector,src/analysis/vector,,"h,cpp"
+src/analysis/vector/geometry_checker,src/analysis/vector/geometry_checker,,"h,cpp"
