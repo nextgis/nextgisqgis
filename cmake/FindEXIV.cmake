@@ -57,6 +57,7 @@ ELSE(WIN32)
       NAMES exiv2
       PATHS
         /usr/lib/x86_64-linux-gnu
+	/usr/lib/i386-linux-gnu
         /usr/lib64
         /usr/lib
         /usr/local/lib

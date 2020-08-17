@@ -14,7 +14,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
     git devscripts debhelper equivs build-essential bash cmake \
     flex bison libproj-dev libgeos-dev libgdal-dev libspatialindex-dev \
     libsqlite3-dev libspatialite-dev libqca-qt5-2-dev libzip-dev \
-    libqt5svg5-dev qt5keychain-dev
+    libqt5svg5-dev qt5keychain-dev libexiv2-dev
 
 COPY . /root/ngqgis/
 
