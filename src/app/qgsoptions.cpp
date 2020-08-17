@@ -1635,6 +1635,17 @@ void QgsOptions::saveOptions()
   mSettings->setValue( "nextgis/auth_type", authTypeSelector->currentIndex() );
   mSettings->setValue( "nextgis/use_code_challenge", codeChallengeCheckBox->isChecked() );
 
+  NGAccess::AuthSourceType type =
+          static_cast<NGAccess::AuthSourceType>(authTypeSelector->currentIndex());
+  NGAccess::instance().setAuthEndpoint( authEndpointEdit->text() );
+  NGAccess::instance().setTokenEndpoint( tokenEndpointEdit->text() );
+  NGAccess::instance().setUserInfoEndpoint( userInfoEndpointEdit->text() );
+  NGAccess::instance().setUseCodeChallenge( codeChallengeCheckBox->isChecked() );
+  if(type == NGAccess::AuthSourceType::NGID) {
+      NGAccess::instance().setUseCodeChallenge(true);
+  }
+  NGAccess::instance().setEndPoint( endpointEdit->text(), type );
+
   NGAccess::instance().initSentry(sendCrashes->isChecked(), "");
 
   //save variables
