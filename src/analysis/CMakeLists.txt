@@ -467,8 +467,8 @@ if (NOT PREPARE_ONLY)
     #generate unversioned libs for android
     IF (NOT ANDROID)
       SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES
-        VERSION ${COMPLETE_VERSION}
-        SOVERSION ${COMPLETE_VERSION}
+        VERSION ${VERSION}
+        SOVERSION ${VERSION}
         )
     ENDIF (NOT ANDROID)
 
