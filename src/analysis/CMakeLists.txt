@@ -156,14 +156,9 @@ SET(QGIS_ANALYSIS_SRCS
   processing/qgsalgorithmruggedness.cpp
   processing/qgsalgorithmsaveselectedfeatures.cpp
   processing/qgsalgorithmsegmentize.cpp
-  processing/qgsalgorithmserviceareafromlayer.cpp
-  processing/qgsalgorithmserviceareafrompoint.cpp
   processing/qgsalgorithmsetlayerencoding.cpp
   processing/qgsalgorithmsetmvalue.cpp
   processing/qgsalgorithmsetzvalue.cpp
-  processing/qgsalgorithmshortestpathlayertopoint.cpp
-  processing/qgsalgorithmshortestpathpointtolayer.cpp
-  processing/qgsalgorithmshortestpathpointtopoint.cpp
   processing/qgsalgorithmshpencodinginfo.cpp
   processing/qgsalgorithmsimplify.cpp
   processing/qgsalgorithmsinglesidedbuffer.cpp
@@ -195,9 +190,6 @@ SET(QGIS_ANALYSIS_SRCS
   processing/qgsprojectstylealgorithms.cpp
   processing/qgsstylealgorithms.cpp
 
-  processing/qgsalgorithmnetworkanalysisbase.cpp
-
-  processing/qgsnativealgorithms.cpp
   processing/qgsoverlayutils.cpp
   processing/qgsrasteranalysisutils.cpp
   processing/qgsreclassifyutils.cpp
@@ -224,14 +216,6 @@ SET(QGIS_ANALYSIS_SRCS
   mesh/qgsmeshcalculator.cpp
   mesh/qgsmeshcalcutils.cpp
   mesh/qgsmeshcontours.cpp
-
-  network/qgsgraph.cpp
-  network/qgsgraphbuilder.cpp
-  network/qgsgraphbuilderinterface.cpp
-  network/qgsnetworkspeedstrategy.cpp
-  network/qgsnetworkdistancestrategy.cpp
-  network/qgsvectorlayerdirector.cpp
-  network/qgsgraphanalyzer.cpp
 
   vector/geometry_checker/qgsfeaturepool.cpp
   vector/geometry_checker/qgsgeometryanglecheck.cpp
@@ -300,19 +284,8 @@ SET(QGIS_ANALYSIS_HDRS
   mesh/qgsmeshcalcutils.h
   mesh/qgsmeshcontours.h
 
-  network/qgsgraph.h
-  network/qgsgraphanalyzer.h
-  network/qgsgraphbuilder.h
-  network/qgsgraphbuilderinterface.h
-  network/qgsgraphdirector.h
-  network/qgsnetworkdistancestrategy.h
-  network/qgsnetworkspeedstrategy.h
-  network/qgsnetworkstrategy.h
-  network/qgsvectorlayerdirector.h
-
   processing/qgsalgorithmfiledownloader.h
   processing/qgsalgorithmimportphotos.h
-  processing/qgsnativealgorithms.h
   processing/qgsprojectstylealgorithms.h
   processing/qgsreclassifyutils.h
 
@@ -429,7 +402,7 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_BINARY_DIR}/src/core
   ${CMAKE_BINARY_DIR}/src/analysis
   interpolation
-  network
+  #network
 )
 INCLUDE_DIRECTORIES(SYSTEM
   ${SPATIALINDEX_INCLUDE_DIR} # before GEOS for case-insensitive filesystems
@@ -530,8 +503,8 @@ if (NOT PREPARE_ONLY)
             FRAMEWORK DESTINATION ${INSTALL_LIB_DIR}
         )
         
-        install(FILES ${QGIS_CORE_HDRS} 
-            DESTINATION ${INSTALL_INC_DIR}/analysis
+        install(FILES ${QGIS_ANALYSIS_HDRS} 
+            DESTINATION ${INSTALL_INC_DIR}
         )
     endif()
 endif(NOT PREPARE_ONLY)

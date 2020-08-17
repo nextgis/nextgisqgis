@@ -1522,7 +1522,7 @@ if (NOT PREPARE_ONLY)
         )
         
         install(FILES ${QGIS_CORE_HDRS} 
-            DESTINATION ${INSTALL_INC_DIR}/core
+            DESTINATION ${INSTALL_INC_DIR}
         )
     endif()
 
