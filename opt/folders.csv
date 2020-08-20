@@ -102,3 +102,8 @@ images/themes/default/mesh,images/themes/default/mesh,,svg
 images/themes/default/propertyicons,images/themes/default/propertyicons,,svg
 images/themes/default/styleicons,images/themes/default/styleicons,,svg
 images/themes/default/svgbase,images/themes/default/svgbase,,svg
+external/wintoast/src,external/wintoast/src,,"h,cpp"
+src/native,src/native,,"h,cpp"
+src/native/linux,src/native/linux,,"h,cpp"
+src/native/mac,src/native/mac,,"h,mm"
+src/native/win,src/native/win,,"h,cpp"
