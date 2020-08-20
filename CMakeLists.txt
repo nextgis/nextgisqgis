@@ -152,6 +152,9 @@ if(NOT PREPARE_ONLY)
     SET(CMAKE_AUTOMOC ON)
     
     set(QT_REQUIRED_COMPONENTS Core Gui Widgets Network Xml Svg Concurrent PrintSupport Sql 3DCore 3DRender 3DInput 3DLogic 3DExtras)
+    if (MSVC)
+        set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} WinExtras)
+    endif()
     
     option(WITH_QTWEBKIT "Build support QT Webkit" OFF)
     if(WITH_QTWEBKIT)
