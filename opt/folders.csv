@@ -90,7 +90,7 @@ images/svg/transport,images/svg/transport,,svg
 images/svg/wind_roses,images/svg/wind_roses,,svg
 images/svg,images/svg,,txt
 images/themes,images/themes,,txt
-images/themes/default/,,,"txt,svg,xcf,png,gif"
+images/themes/default/,images/themes/default/,,"txt,svg,xcf,png,gif"
 images/themes/default/algorithms,images/themes/default/algorithms,,svg
 images/themes/default/cadtools,images/themes/default/cadtools,,svg
 images/themes/default/checks,images/themes/default/checks,,svg
