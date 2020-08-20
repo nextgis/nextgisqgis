@@ -151,7 +151,7 @@ if(NOT PREPARE_ONLY)
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
     SET(CMAKE_AUTOMOC ON)
     
-    set(QT_REQUIRED_COMPONENTS Core Gui Widgets Network Xml Svg Concurrent PrintSupport Sql)
+    set(QT_REQUIRED_COMPONENTS Core Gui Widgets Network Xml Svg Concurrent PrintSupport Sql 3DCore 3DRender 3DInput 3DLogic 3DExtras)
     
     option(WITH_QTWEBKIT "Build support QT Webkit" OFF)
     if(WITH_QTWEBKIT)
