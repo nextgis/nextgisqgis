@@ -20,11 +20,44 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-include(prepare_parser)
+INCLUDE_DIRECTORIES(SYSTEM
+  ${CMAKE_CURRENT_BINARY_DIR}
+)
 
-add_subdirectory(core)
-add_subdirectory(analysis)
-add_subdirectory(3d)
-add_subdirectory(crashhandler)
+QT5_WRAP_UI(CRASH_UIS_H qgscrashdialog.ui)
 
-set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
+SET(IMAGE_RCCS ../../images/images.qrc)
+QT5_ADD_RESOURCES(IMAGE_RCC_SRCS ${IMAGE_RCCS})
+
+# -wd4091 Avoid 'typedef' ignored on left of '' when no variable is declared warning in dbghelp.h
+SET_SOURCE_FILES_PROPERTIES(qgsstacktrace.cpp PROPERTIES COMPILE_FLAGS -wd4091)
+
+if (NOT PREPARE_ONLY)
+    SET(APP_NAME ${NG_PREFIX}qgiscrashhandler)
+    
+    ADD_EXECUTABLE(${APP_NAME} WIN32
+      main.cpp
+      ${CRASH_UIS_H}
+      ${CRASH_HDR_MOC}
+      ${IMAGE_RCC_SRCS}
+      qgscrashdialog.cpp
+      qgsstacktrace.cpp
+      qgscrashreport.cpp
+      #${CMAKE_CURRENT_SOURCE_DIR}/../app/qgis_win32.rc
+    )
+
+    TARGET_LINK_LIBRARIES(${APP_NAME}
+        Qt5::Core
+        Qt5::Gui
+        Qt5::Widgets
+        dbghelp
+    )
+    
+    # install
+    if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)     
+        install(TARGETS ${APP_NAME} 
+            RUNTIME DESTINATION ${INSTALL_BIN_DIR}
+        )
+    endif()
+
+endif(NOT PREPARE_ONLY)
