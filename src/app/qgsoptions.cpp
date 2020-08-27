@@ -996,7 +996,7 @@ void QgsOptions::ngInitControls()
   authEndpointEdit->setText( mSettings->value( "nextgis/auth_endpoint", NGAccess::instance().authEndpoint() ).toString() );
   tokenEndpointEdit->setText( mSettings->value( "nextgis/token_endpoint", NGAccess::instance().tokenEndpoint() ).toString() );
   userInfoEndpointEdit->setText( mSettings->value( "nextgis/user_info_endpoint", NGAccess::instance().userInfoEndpoint() ).toString() );
-  codeChallengeCheckBox->setChecked( mSettings->value( "nextgis/use_code_challenge").toBool() );
+  codeChallengeCheckBox->setChecked( mSettings->value( "nextgis/use_code_challenge" ).toBool() );
   updateAuthControls(index);
 
   #endif // NGLIB_VERSION_NUMBER > 1100

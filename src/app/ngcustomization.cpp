@@ -1473,6 +1473,8 @@ void NGQgisApp::createToolBars()
   NGAccess::instance().setAuthEndpoint(authEndPointStr);
   NGAccess::instance().setTokenEndpoint(tokenEndPointStr);
   NGAccess::instance().setUserInfoEndpoint(userInfoEndPointStr);
+  bool codeChallenge = settings.value("nextgis/use_code_challenge", "1" ).toBool();
+  NGAccess::instance().setUseCodeChallenge(codeChallenge);
   NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
                                   scopes, endPointStr, type);
 
