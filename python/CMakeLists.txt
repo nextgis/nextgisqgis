@@ -24,9 +24,9 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-find_anyproject(SIP REQUIRED)
+find_anyproject(SIP REQUIRED VERSION 4.19.8 EXACT)
 find_anyproject(PyQt4 REQUIRED)
-find_anyproject(Qsci DEFAULT ON NAMES Qsci Qscintilla)
+find_anyproject(Qsci DEFAULT ON VERSION 2.10.4 EXACT NAMES Qsci Qscintilla)
 
 include(SIPMacros)
 include(PyQtMacros)
