@@ -394,7 +394,9 @@ void QgsVectorFileWriter::init( QString vectorFileName,
     QString srsWkt = srs->toWkt();
     QgsDebugMsg( "WKT to save as is " + srsWkt );
     mOgrRef = OSRNewSpatialReference( srsWkt.toLocal8Bit().constData() );
+    #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
     OSRSetAxisMappingStrategy(mOgrRef, OAMS_TRADITIONAL_GIS_ORDER);
+    #endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
   }
 
   // datasource created, now create the output layer
@@ -1918,6 +1920,30 @@ QMap<QString, QgsVectorFileWriter::MetaData> QgsVectorFileWriter::initMetaData()
                            datasetOptions,
                            layerOptions,
                            "UTF-8"
+                         )
+                       );
+
+  // SXF
+  datasetOptions.clear();
+  layerOptions.clear();
+
+  datasetOptions.insert( "SXF_WRITE_RSC", new BoolOption(
+                           QObject::tr( "Write correspondent RSC file. By default RSC file created."
+                           true  // Default value
+                         ) );
+
+  layerOptions.insert( "SXF_NEW_BEHAVIOR", new HiddenOption(
+                         "YES"
+                       ) ); 
+
+  driverMetadata.insert( "SXF",
+                         MetaData(
+                           "Storage and eXchange Format",
+                           QObject::tr( "Storage and eXchange Format" ),
+                           "*.sxf",
+                           "sxf",
+                           datasetOptions,
+                           layerOptions
                          )
                        );
 

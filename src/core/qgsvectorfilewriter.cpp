@@ -1923,6 +1923,30 @@ QMap<QString, QgsVectorFileWriter::MetaData> QgsVectorFileWriter::initMetaData()
                          )
                        );
 
+  // SXF
+  datasetOptions.clear();
+  layerOptions.clear();
+
+  datasetOptions.insert( "SXF_WRITE_RSC", new BoolOption(
+                           QObject::tr( "Write correspondent RSC file. By default RSC file created."
+                           true  // Default value
+                         ) );
+
+  layerOptions.insert( "SXF_NEW_BEHAVIOR", new HiddenOption(
+                         "YES"
+                       ) ); 
+
+  driverMetadata.insert( "SXF",
+                         MetaData(
+                           "Storage and eXchange Format",
+                           QObject::tr( "Storage and eXchange Format" ),
+                           "*.sxf",
+                           "sxf",
+                           datasetOptions,
+                           layerOptions
+                         )
+                       );
+
   return driverMetadata;
 }
 
