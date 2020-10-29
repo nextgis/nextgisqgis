@@ -1928,7 +1928,7 @@ QMap<QString, QgsVectorFileWriter::MetaData> QgsVectorFileWriter::initMetaData()
   layerOptions.clear();
 
   datasetOptions.insert( "SXF_WRITE_RSC", new BoolOption(
-                           QObject::tr( "Write correspondent RSC file. By default RSC file create."
+                           QObject::tr( "Write correspondent RSC file. By default RSC file create."),
                            true  // Default value
                          ) );
 
