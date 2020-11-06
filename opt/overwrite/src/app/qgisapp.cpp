@@ -11757,7 +11757,7 @@ void QgisApp::namSslErrors( QNetworkReply *reply, const QList<QSslError> &errors
     {
       QgsDebugMsg( "Restarting network reply timeout" );
       timer->setSingleShot( true );
-      timer->start( s.value( "/qgis/networkAndProxy/networkTimeout", "60000" ).toInt() );
+      timer->start( s.value( "/qgis/networkAndProxy/networkTimeout", "300000" ).toInt() );
     }
   }
 }

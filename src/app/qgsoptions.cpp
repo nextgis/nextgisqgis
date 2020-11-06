@@ -285,7 +285,7 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl )
   }
 
   //Network timeout
-  mNetworkTimeoutSpinBox->setValue( mSettings->value( "/qgis/networkAndProxy/networkTimeout", "60000" ).toInt() );
+  mNetworkTimeoutSpinBox->setValue( mSettings->value( "/qgis/networkAndProxy/networkTimeout", "300000" ).toInt() );
   leUserAgent->setText( mSettings->value( "/qgis/networkAndProxy/userAgent", "Mozilla/5.0" ).toString() );
 
   // WMS capabilities expiry time
