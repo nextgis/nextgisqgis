@@ -3023,6 +3023,17 @@ void QgsOgrProvider::uniqueValues( int index, QList<QVariant> &uniqueValues, int
   return QgsVectorDataProvider::uniqueValues( index, uniqueValues, limit );
 #else
   QByteArray sql = "SELECT DISTINCT " + quotedIdentifier( mEncoding->fromUnicode( fld.name() ) );
+
+  // GPKG/SQLite fid
+  // For GPKG and SQLITE drivers PK fields are not exposed as real fields, (and OGR_F_GetFID only
+  // works with GPKG), so we are adding an extra column that will become index 0
+  // See https://github.com/qgis/QGIS/issues/29129
+  if ( ( ogrDriverName == QLatin1String( "GPKG" ) || ogrDriverName == QLatin1String( "SQLite" ) )
+       && mFirstFieldIsFid && index == 0 )
+  {
+    sql += ", " + quotedIdentifier( mEncoding->fromUnicode( fld.name() ) ) + " AS fid2";
+  }
+
   sql += " FROM " + quotedIdentifier( OGR_FD_GetName( OGR_L_GetLayerDefn( ogrLayer ) ) );
 
   if ( !mSubsetString.isEmpty() )

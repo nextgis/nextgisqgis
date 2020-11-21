@@ -35,9 +35,6 @@ endif()
 
 add_bison_files(qgsexpressionparser.yy qgssqlstatementparser.yy)
 
-# Default target
-find_package(PythonInterp REQUIRED)
-
 set(QGIS_CORE_SRCS
     symbology-ng/qgs25drenderer.cpp
     symbology-ng/qgsarrowsymbollayer.cpp
@@ -415,6 +412,8 @@ set(QGIS_CORE_SRCS ${QGIS_CORE_SRCS}
 set(QGIS_CORE_SRCS ${QGIS_CORE_SRCS}
     ngqgsapplication.cpp
 )
+# Default target
+find_package(PythonInterp REQUIRED)
 
 file(GLOB JSON_HELP_FILES "${CMAKE_SOURCE_DIR}/resources/function_help/json/*")
 string(REPLACE "$" "$$" JSON_HELP_FILES "${JSON_HELP_FILES}")

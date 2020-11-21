@@ -66,7 +66,7 @@ if(NOT PREPARE_ONLY)
         add_definitions(-DHAVE_PGCONFIG=1 -DHAVE_POSTGRESQL)
     endif()
 
-    find_anyproject(OCI REQUIRED)
+    find_anyproject(OCI DEFAULT ON)
     if(OCI_FOUND)
         include_directories(${OCI_INCLUDE_DIRS}/oci)
         add_definitions(-DHAVE_ORACLE=1)

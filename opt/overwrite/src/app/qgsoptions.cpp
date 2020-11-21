@@ -947,9 +947,10 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl )
   mSettings->setValue( key, mSettings->value( key, 200000 ) );
 
   // NextGIS settings
+#ifdef NGSTD_USING
   ngInitControls();
   connect(&NGAccess::instance(), SIGNAL(userInfoUpdated()), this, SLOT(onUserInfoUpdated()));
-
+#endif // NGSTD_USING
   mAdvancedSettingsEditor->setSettingsObject( mSettings );
 
   // restore window and widget geometry/state
@@ -1278,12 +1279,14 @@ void QgsOptions::saveOptions()
   mSettings->setValue( "proxy/proxyType", mProxyTypeComboBox->currentText() );
 
   // NEXTGIS:
+#ifdef NGSTD_USING
   #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
   NGRequest::setProxy(grpProxy->isChecked(), 
     mProxyTypeComboBox->currentText() == "DefaultProxy", leProxyHost->text(), 
     leProxyPort->text().toInt(), leProxyUser->text(), leProxyPassword->text(), 
     "ANY");
   #endif // NGLIB_VERSION_NUMBER > 1100  
+  #endif // NGSTD_USING
   // END NEXTGIS
 
   if ( !mCacheDirectory->text().isEmpty() )
@@ -1627,6 +1630,7 @@ void QgsOptions::saveOptions()
   }
 
   // NextGIS settings
+#ifdef NGSTD_USING
   mSettings->setValue( "nextgis/send_crashes", sendCrashes->isChecked() );
   mSettings->setValue( "nextgis/endpoint", endpointEdit->text() );
   mSettings->setValue( "nextgis/auth_endpoint", authEndpointEdit->text() );
@@ -1645,8 +1649,9 @@ void QgsOptions::saveOptions()
       NGAccess::instance().setUseCodeChallenge(true);
   }
   NGAccess::instance().setEndPoint( endpointEdit->text(), type );
-  
+
   NGAccess::instance().initSentry(sendCrashes->isChecked(), "");
+#endif // NGSTD_USING
 
   //save variables
   QgsExpressionContextUtils::setGlobalVariables( mVariableEditor->variablesInActiveScope() );

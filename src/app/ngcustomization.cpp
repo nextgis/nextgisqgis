@@ -95,7 +95,10 @@
 #include <QDesktopServices>
 #include <QtXml>
 
+#ifdef HAVE_PGCONFIG
 #include <pg_config.h>
+#endif // HAVE_PGCONFIG
+
 #include <sqlite3.h>
 extern "C"
 {
