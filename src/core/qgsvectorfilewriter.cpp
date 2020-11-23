@@ -1932,6 +1932,21 @@ QMap<QString, QgsVectorFileWriter::MetaData> QgsVectorFileWriter::initMetaData()
                            true  // Default value
                          ) );
 
+  datasetOptions.insert( "SXF_MAP_NAME", new StringOption(
+                           QObject::tr( "Write map name."),
+                           ""
+                         ) );
+
+  datasetOptions.insert( "SXF_SHEET_KEY", new StringOption(
+                           QObject::tr( "Write sheet name."),
+                           ""
+                         ) );
+
+  datasetOptions.insert( "SXF_MAP_SCALE", new IntOption(
+                           QObject::tr( "Write sheet scale."),
+                           1000000
+                         ) );
+
   layerOptions.insert( "SXF_NEW_BEHAVIOR", new HiddenOption(
                          "YES"
                        ) ); 
