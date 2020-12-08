@@ -147,9 +147,9 @@ QList<QPair<QLabel*, QWidget*> > QgsVectorLayerSaveAsDialog::createControls( con
         if ( opt )
         {
           QSpinBox *sb = new QSpinBox();
+          sb->setRange(0, 100000000);
           sb->setObjectName( it.key() );
           sb->setValue( opt->defaultValue );
-          sb->setRange(0, 100000000);
           control = sb;
         }
         break;
