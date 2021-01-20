@@ -25,7 +25,6 @@ include(prepare_parser)
 add_subdirectory(core)
 add_subdirectory(analysis)
 add_subdirectory(3d)
-add_subdirectory(crashhandler)
 add_subdirectory(native)
 
 set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)

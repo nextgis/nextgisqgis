@@ -56,7 +56,6 @@ src/3d/shaders/mesh,src/3d/shaders/mesh,,"frag,geom,vert"
 src/3d/symbols,src/3d/symbols,,"h,cpp"
 src/3d/terrain,src/3d/terrain,,"h,cpp"
 src/3d,src/3d,,"h,cpp,qrc"
-src/crashhandler,src/crashhandler,,"h,cpp,ui"
 images,images,,"qrc,txt"
 images/composer,images/composer,,svg
 images/flags,images/flags,,svg
