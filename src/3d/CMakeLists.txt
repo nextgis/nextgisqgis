@@ -186,7 +186,7 @@ INCLUDE_DIRECTORIES(SYSTEM
   ${GEOS_INCLUDE_DIR}
   ${GDAL_INCLUDE_DIR}
   ${SQLITE3_INCLUDE_DIR}
-  ${QT5_INCLUDE_DIR}
+  ${QT5_3DEXTRA_INCLUDE_DIR}
 )
 
 #############################################################
@@ -204,7 +204,7 @@ if (NOT PREPARE_ONLY)
         Qt5::3DRender 
         Qt5::3DInput 
         Qt5::3DLogic 
-        Qt5::3DExtras 
+	Qt5::3DExtras 
         Qt5::Xml
         Qt5::Widgets
         Qt5::Concurrent
