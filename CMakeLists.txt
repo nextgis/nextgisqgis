@@ -211,6 +211,8 @@ set(PACKAGE_NAME ${PROJECT_NAME})
 string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
 
 add_subdirectory(src)
+add_subdirectory(images)
+add_subdirectory(resources)
 
 add_custom_target(prepare_parser DEPENDS ${PREPARE_PARSER_TARGETS})
 
@@ -233,7 +235,7 @@ if(REGISTER_PACKAGE)
    # (this registers the build-tree with a global CMake-registry)
    export(PACKAGE ${PACKAGE_UPPER_NAME})
 endif()
-message(STATUS "INSTALL_CMAKECONF_DIR: ${INSTALL_CMAKECONF_DIR}")
+
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
    # Install the export set for use with the install-tree
    install(EXPORT ${PACKAGE_UPPER_NAME}Targets DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
