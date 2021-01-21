@@ -163,9 +163,9 @@ if(NOT PREPARE_ONLY)
     endif()
 
     set(QT5_3DEXTRA_LIBRARY "/usr/lib/x86_64-linux-gnu/libQt53DExtras.so")
-    set(QT5_3DEXTRA_INCLUDE_DIR "/root/ngqgis/external/qt3dextra-headers")
-    set(Qt53DExtras_DIR "/root/ngqgis/external/qt3dextra-headers/cmake/Qt53DExtras")
-    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "/root/ngqgis/external/qt3dextra-headers")
+    set(QT5_3DEXTRA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
+    set(Qt53DExtras_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers/cmake/Qt53DExtras")
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
 
     find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
