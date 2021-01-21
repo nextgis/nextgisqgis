@@ -149,7 +149,7 @@ if(NOT PREPARE_ONLY)
     find_anyproject(QTKEYCHAIN REQUIRED)
 
     set(CMAKE_INCLUDE_CURRENT_DIR ON)
-    SET(CMAKE_AUTOMOC ON)
+    set(CMAKE_AUTOMOC ON)
     
     set(QT_REQUIRED_COMPONENTS Core Gui Widgets Network Xml Svg Concurrent PrintSupport Sql 3DCore 3DRender 3DInput 3DLogic 3DExtras)
     if (MSVC)
@@ -161,6 +161,11 @@ if(NOT PREPARE_ONLY)
         set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} WebKit)
         add_definitions(-DWITH_QTWEBKIT)
     endif()
+
+    set(QT5_3DEXTRA_LIBRARY "/usr/lib/x86_64-linux-gnu/libQt53DExtras.so")
+    set(QT5_3DEXTRA_INCLUDE_DIR "/root/ngqgis/external/qt3dextra-headers")
+    set(Qt53DExtras_DIR "/root/ngqgis/external/qt3dextra-headers/cmake/Qt53DExtras")
+    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "/root/ngqgis/external/qt3dextra-headers")
 
     find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
