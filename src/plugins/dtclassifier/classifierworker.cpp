@@ -146,9 +146,9 @@ QString ClassifierWorker::smoothRaster( const QString& path )
 #elif CV_MAJOR_VERSION > 2
 
     Mat img = imread( path.toStdString(), cv::IMREAD_UNCHANGED );
-    QgsDebugMsg(QString("ClassifierWorker::smoothRaster img->rows: %1").arg(img->rows));
+    QgsDebugMsg(QString("ClassifierWorker::smoothRaster img.rows: %1").arg(img.rows));
     Mat outImg( img.rows, img.cols, CV_8UC1 );
-    QgsDebugMsg(QString("ClassifierWorker::smoothRaster img->cols: %1").arg(img->cols));
+    QgsDebugMsg(QString("ClassifierWorker::smoothRaster img.cols: %1").arg(img.cols));
 
     medianBlur( img, outImg, mConfig.kernel_size );
 #endif
