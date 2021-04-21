@@ -444,7 +444,7 @@ QIcon QgsComposerPictureWidget::svgToIcon( const QString& filePath ) const
     outlineWidth = 0.6;
 
   bool fitsInCache; // should always fit in cache at these sizes (i.e. under 559 px ^ 2, or half cache size)
-  const QImage& img = QgsSvgCache::instance()->svgAsImage( filePath, 30.0, fill, outline, outlineWidth, 3.5 /*appr. 88 dpi*/, 1.0, fitsInCache );
+  QImage img = QgsSvgCache::instance()->svgAsImage( filePath, 30.0, fill, outline, outlineWidth, 3.5 /*appr. 88 dpi*/, 1.0, fitsInCache );
 
   return QIcon( QPixmap::fromImage( img ) );
 }

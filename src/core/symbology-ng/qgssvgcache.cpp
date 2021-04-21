@@ -175,7 +175,9 @@ const QPicture& QgsSvgCache::svgAsPicture( const QString& file, double size, con
     trimToMaximumSize();
   }
 
-  return *( currentEntry->picture );
+  QPicture p = *( currentEntry->picture );
+  p.detach();
+  return p;
 }
 
 const QByteArray& QgsSvgCache::svgContent( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,

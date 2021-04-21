@@ -2025,8 +2025,8 @@ void QgsSvgMarkerSymbolLayerV2::renderPoint( QPointF point, QgsSymbolV2RenderCon
   double hwRatio = 1.0;
   if ( !context.renderContext().forceVectorOutput() && !rotated )
   {
-    const QImage& img = QgsSvgCache::instance()->svgAsImage( path, size, fillColor, outlineColor, outlineWidth,
-                        context.renderContext().scaleFactor(), context.renderContext().rasterScaleFactor(), fitsInCache );
+    QImage img = QgsSvgCache::instance()->svgAsImage( path, size, fillColor, outlineColor, outlineWidth,
+                 context.renderContext().scaleFactor(), context.renderContext().rasterScaleFactor(), fitsInCache );
     if ( fitsInCache && img.width() > 1 )
     {
       usePict = false;
@@ -2049,8 +2049,8 @@ void QgsSvgMarkerSymbolLayerV2::renderPoint( QPointF point, QgsSymbolV2RenderCon
   if ( usePict || !fitsInCache )
   {
     p->setOpacity( context.alpha() );
-    const QPicture& pct = QgsSvgCache::instance()->svgAsPicture( path, size, fillColor, outlineColor, outlineWidth,
-                          context.renderContext().scaleFactor(), context.renderContext().rasterScaleFactor(), context.renderContext().forceVectorOutput() );
+    QPicture pct = QgsSvgCache::instance()->svgAsPicture( path, size, fillColor, outlineColor, outlineWidth,
+                   context.renderContext().scaleFactor(), context.renderContext().rasterScaleFactor(), context.renderContext().forceVectorOutput() );
 
     if ( pct.width() > 1 )
     {
