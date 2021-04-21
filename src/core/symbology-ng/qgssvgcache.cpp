@@ -175,8 +175,12 @@ const QPicture& QgsSvgCache::svgAsPicture( const QString& file, double size, con
     trimToMaximumSize();
   }
 
-  QPicture p = *( currentEntry->picture );
-  p.detach();
+  QPicture p;
+  // For some reason p.detach() doesn't seem to always work as intended, at
+  // least with QT 5.5 on Ubuntu 16.04
+  // Serialization/deserialization is a safe way to be ensured we don't
+  // share a copy.
+  p.setData( currentEntry->picture->data(), currentEntry->picture->size() );
   return p;
 }
 
