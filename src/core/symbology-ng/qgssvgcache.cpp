@@ -160,7 +160,7 @@ const QImage& QgsSvgCache::svgAsImage( const QString& file, double size, const Q
   return *( currentEntry->image );
 }
 
-const QPicture& QgsSvgCache::svgAsPicture( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
+QPicture QgsSvgCache::svgAsPicture( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
     double widthScaleFactor, double rasterScaleFactor, bool forceVectorOutput )
 {
   QMutexLocker locker( &mMutex );

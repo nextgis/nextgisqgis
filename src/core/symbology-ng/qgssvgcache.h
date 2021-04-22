@@ -123,7 +123,7 @@ class CORE_EXPORT QgsSvgCache : public QObject
      * @param rasterScaleFactor raster scale factor
      * @param forceVectorOutput
      */
-    const QPicture& svgAsPicture( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
+    QPicture svgAsPicture( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
                                   double widthScaleFactor, double rasterScaleFactor, bool forceVectorOutput = false );
 
     /** Calculates the viewbox size of a (possibly cached) SVG file.
