@@ -115,13 +115,15 @@ QgsSvgCache::~QgsSvgCache()
 }
 
 
-const QImage& QgsSvgCache::svgAsImage( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
+QImage QgsSvgCache::svgAsImage( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
                                        double widthScaleFactor, double rasterScaleFactor, bool& fitsInCache )
 {
   QMutexLocker locker( &mMutex );
 
   fitsInCache = true;
   QgsSvgCacheEntry* currentEntry = cacheEntry( file, size, fill, outline, outlineWidth, widthScaleFactor, rasterScaleFactor );
+
+  QImage result;
 
   //if current entry image is 0: cache image for entry
   // checks to see if image will fit into cache
@@ -149,15 +151,23 @@ const QImage& QgsSvgCache::svgAsImage( const QString& file, double size, const Q
       {
         cachePicture( currentEntry, false );
       }
+
+      // ...and render cached picture to result image
+      result = imageFromCachedPicture(*currentEntry);
     }
     else
     {
       cacheImage( currentEntry );
+      result = *(currentEntry->image);
     }
     trimToMaximumSize();
   }
+  else
+  {
+      result = *(currentEntry->image);
+  }
 
-  return *( currentEntry->image );
+  return result;
 }
 
 QPicture QgsSvgCache::svgAsPicture( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
@@ -930,6 +940,44 @@ void QgsSvgCache::printEntryList()
     QgsDebugMsg( "Raster scale factor" + QString::number( entry->rasterScaleFactor ) );
     entry = entry->nextEntry;
   }
+}
+
+QSize QgsSvgCache::sizeForImage(const QgsSvgCacheEntry &entry, QSizeF &viewBoxSize, QSizeF &scaledSize) const
+{
+    QSvgRenderer r(entry.svgContent);
+    double hwRatio = 1.0;
+    viewBoxSize = r.viewBoxF().size();
+    if (viewBoxSize.width() > 0)
+    {
+        hwRatio = viewBoxSize.height() / viewBoxSize.width();
+    }
+
+    // cast double image sizes to int for QImage
+    scaledSize.setWidth(entry.size);
+    int wImgSize = static_cast<int>(scaledSize.width());
+    if (wImgSize < 1)
+    {
+        wImgSize = 1;
+    }
+    scaledSize.setHeight(scaledSize.width() * hwRatio);
+    int hImgSize = static_cast<int>(scaledSize.height());
+    if (hImgSize < 1)
+    {
+        hImgSize = 1;
+    }
+    return QSize(wImgSize, hImgSize);
+}
+
+QImage QgsSvgCache::imageFromCachedPicture(const QgsSvgCacheEntry &entry) const
+{
+    QSizeF viewBoxSize;
+    QSizeF scaledSize;
+    QImage image(sizeForImage(entry, viewBoxSize, scaledSize), QImage::Format_ARGB32_Premultiplied);
+    image.fill(0); // transparent background
+
+    QPainter p(&image);
+    p.drawPicture(QPoint(0, 0), *entry.picture);
+    return image;
 }
 
 void QgsSvgCache::trimToMaximumSize()

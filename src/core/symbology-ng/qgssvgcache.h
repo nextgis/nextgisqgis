@@ -111,7 +111,7 @@ class CORE_EXPORT QgsSvgCache : public QObject
      * @param rasterScaleFactor raster scale factor
      * @param fitsInCache
      */
-    const QImage& svgAsImage( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
+    QImage svgAsImage( const QString& file, double size, const QColor& fill, const QColor& outline, double outlineWidth,
                               double widthScaleFactor, double rasterScaleFactor, bool& fitsInCache );
     /** Get SVG  as QPicture&.
      * @param file Absolute or relative path to SVG file.
@@ -268,6 +268,17 @@ class CORE_EXPORT QgsSvgCache : public QObject
 
     /** For debugging*/
     void printEntryList();
+
+    /**
+     * Returns the target size (in pixels) and calculates the \a viewBoxSize
+     * for a cache \a entry.
+     */
+    QSize sizeForImage(const QgsSvgCacheEntry &entry, QSizeF &viewBoxSize, QSizeF &scaledSize) const;
+
+    /**
+     * Returns a rendered image for a cached picture \a entry.
+     */
+    QImage imageFromCachedPicture(const QgsSvgCacheEntry &entry) const;
 
     /** SVG content to be rendered if SVG file was not found. */
     QByteArray mMissingSvg;
