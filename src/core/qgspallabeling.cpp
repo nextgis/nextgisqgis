@@ -211,6 +211,7 @@ QgsPalLayerSettings::QgsPalLayerSettings()
   priority = 5;
   repeatDistance = 0;
   repeatDistanceUnit = MM;
+  overrunDistance = 0.0;
 
   // rendering
   scaleVisibility = false;
@@ -441,6 +442,7 @@ QgsPalLayerSettings& QgsPalLayerSettings::operator=( const QgsPalLayerSettings &
   repeatDistance = s.repeatDistance;
   repeatDistanceUnit = s.repeatDistanceUnit;
   repeatDistanceMapUnitScale = s.repeatDistanceMapUnitScale;
+  overrunDistance = s.overrunDistance;
 
   // rendering
   scaleVisibility = s.scaleVisibility;
@@ -1532,6 +1534,8 @@ void QgsPalLayerSettings::readXml( QDomElement& elem )
     repeatDistanceMapUnitScale = QgsSymbolLayerV2Utils::decodeMapUnitScale( placementElem.attribute( "repeatDistanceMapUnitScale" ) );
   }
 
+  overrunDistance = placementElem.attribute( "overrunDistance", "0" ).toDouble();
+
   // rendering
   QDomElement renderingElem = elem.firstChildElement( "rendering" );
   scaleMin = renderingElem.attribute( "scaleMin", "0" ).toInt();
@@ -1687,6 +1691,7 @@ QDomElement QgsPalLayerSettings::writeXml( QDomDocument& doc )
   placementElem.setAttribute( "repeatDistance", repeatDistance );
   placementElem.setAttribute( "repeatDistanceUnit", repeatDistanceUnit );
   placementElem.setAttribute( "repeatDistanceMapUnitScale", QgsSymbolLayerV2Utils::encodeMapUnitScale( repeatDistanceMapUnitScale ) );
+  placementElem.setAttribute( "overrunDistance", overrunDistance );
 
   // rendering
   QDomElement renderingElem = doc.createElement( "rendering" );

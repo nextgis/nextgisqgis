@@ -483,6 +483,8 @@ class CORE_EXPORT QgsPalLayerSettings
     SizeUnit repeatDistanceUnit;
     QgsMapUnitScale repeatDistanceMapUnitScale;
 
+    double overrunDistance;
+
     // offset labels of point/centroid features default to center
     // move label to quadrant: left/down, don't move, right/up (-1, 0, 1)
     QuadrantPosition quadOffset;
