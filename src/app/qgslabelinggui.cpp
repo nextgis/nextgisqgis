@@ -701,6 +701,8 @@ void QgsLabelingGui::init()
   mRepeatDistanceUnitWidget->setUnit( lyr.repeatDistanceUnit == QgsPalLayerSettings::MapUnits ? QgsSymbolV2::MapUnit : QgsSymbolV2::MM );
   mRepeatDistanceUnitWidget->setMapUnitScale( lyr.repeatDistanceMapUnitScale );
 
+  mOverrunDistanceSpinBox->setValue( lyr.overrunDistance );
+
   mPrioritySlider->setValue( lyr.priority );
   mChkNoObstacle->setChecked( lyr.obstacle );
   mObstacleFactorSlider->setValue( lyr.obstacleFactor * 50 );
@@ -1013,6 +1015,8 @@ QgsPalLayerSettings QgsLabelingGui::layerSettings()
   lyr.repeatDistance = mRepeatDistanceSpinBox->value();
   lyr.repeatDistanceUnit = mRepeatDistanceUnitWidget->unit() == QgsSymbolV2::MapUnit ? QgsPalLayerSettings::MapUnits : QgsPalLayerSettings::MM;
   lyr.repeatDistanceMapUnitScale = mRepeatDistanceUnitWidget->getMapUnitScale();
+
+  lyr.overrunDistance = mOverrunDistanceSpinBox->value();
 
   lyr.textColor = btnTextColor->color();
   lyr.textFont = mRefFont;
