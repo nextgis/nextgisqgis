@@ -236,7 +236,10 @@ void Qgs25DRenderer::setWallShadingEnabled( bool enabled )
 
 bool Qgs25DRenderer::wallShadingEnabled()
 {
-  return wallLayer()->getDataDefinedProperty( "color" )->isActive();
+  QgsDataDefined *qgsDataDefinedProperty = wallLayer()->getDataDefinedProperty( "color" );
+  if ( !qgsDataDefinedProperty )
+      return false;
+  return qgsDataDefinedProperty->isActive();
 }
 
 QColor Qgs25DRenderer::roofColor() const
