@@ -3,7 +3,7 @@
 # Purpose:  CMake build scripts
 # Author:   Dmitry Baryshnikov, dmitry.baryshnikov@nexgis.com
 ################################################################################
-# Copyright (C) 2017-2020, NextGIS <info@nextgis.com>
+# Copyright (C) 2017-2022, NextGIS <info@nextgis.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -134,9 +134,9 @@ if(NOT PREPARE_ONLY)
     find_package(PythonLibrary REQUIRED)
 
     find_anyproject(PROJ REQUIRED)
-    if(PROJ_FOUND)
-        add_definitions(-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H)
-    endif()
+    # if(PROJ_FOUND)
+    #     add_definitions(-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H)
+    # endif()
     
     find_anyproject(GEOS REQUIRED)
     find_anyproject(GDAL REQUIRED)
@@ -162,10 +162,10 @@ if(NOT PREPARE_ONLY)
         add_definitions(-DWITH_QTWEBKIT)
     endif()
 
-    set(QT5_3DEXTRA_LIBRARY "/usr/lib/x86_64-linux-gnu/libQt53DExtras.so")
-    set(QT5_3DEXTRA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
-    set(Qt53DExtras_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers/cmake/Qt53DExtras")
-    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
+    # set(QT5_3DEXTRA_LIBRARY "/usr/lib/x86_64-linux-gnu/libQt53DExtras.so")
+    # set(QT5_3DEXTRA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
+    # set(Qt53DExtras_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers/cmake/Qt53DExtras")
+    # set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
 
     find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
@@ -189,7 +189,10 @@ endif(MSVC)
 math(EXPR QGIS_VERSION_INT "${CPACK_PACKAGE_VERSION_MAJOR}*10000+${CPACK_PACKAGE_VERSION_MINOR}*100+${CPACK_PACKAGE_VERSION_PATCH}")
 
 # POLICIES
-cmake_policy(SET CMP0071 NEW)
+if(POLICY CMP0071)
+    cmake_policy(SET CMP0071 NEW)
+endif()
+
 
 #############################################################
 
