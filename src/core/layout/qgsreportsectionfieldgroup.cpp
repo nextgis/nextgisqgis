@@ -40,7 +40,7 @@ QIcon QgsReportSectionFieldGroup::icon() const
 
 QgsReportSectionFieldGroup *QgsReportSectionFieldGroup::clone() const
 {
-  std::unique_ptr< QgsReportSectionFieldGroup > copy = qgis::make_unique< QgsReportSectionFieldGroup >( nullptr );
+  std::unique_ptr< QgsReportSectionFieldGroup > copy = std::make_unique< QgsReportSectionFieldGroup >( nullptr );
   copyCommonProperties( copy.get() );
 
   if ( mBody )
@@ -125,12 +125,12 @@ QgsLayout *QgsReportSectionFieldGroup::nextBody( bool &ok )
     // no features left for this iteration
     mFeatures = QgsFeatureIterator();
 
-    if ( footer() )
+    if ( auto *lFooter = footer() )
     {
-      footer()->reportContext().blockSignals( true );
-      footer()->reportContext().setLayer( mCoverageLayer.get() );
-      footer()->reportContext().blockSignals( false );
-      footer()->reportContext().setFeature( mLastFeature );
+      lFooter->reportContext().blockSignals( true );
+      lFooter->reportContext().setLayer( mCoverageLayer.get() );
+      lFooter->reportContext().blockSignals( false );
+      lFooter->reportContext().setFeature( mLastFeature );
     }
     ok = false;
     return nullptr;
@@ -219,7 +219,7 @@ bool QgsReportSectionFieldGroup::readPropertiesFromElement( const QDomElement &e
   if ( !bodyElement.isNull() )
   {
     const QDomElement bodyLayoutElem = bodyElement.firstChild().toElement();
-    std::unique_ptr< QgsLayout > body = qgis::make_unique< QgsLayout >( project() );
+    std::unique_ptr< QgsLayout > body = std::make_unique< QgsLayout >( project() );
     body->readXml( bodyLayoutElem, doc, context );
     mBody = std::move( body );
   }
@@ -254,7 +254,7 @@ QgsFeatureRequest QgsReportSectionFieldGroup::buildFeatureRequest() const
   }
   if ( !filterParts.empty() )
   {
-    QString filterString = QStringLiteral( "(%1)" ).arg( filterParts.join( QStringLiteral( ") AND (" ) ) );
+    QString filterString = QStringLiteral( "(%1)" ).arg( filterParts.join( QLatin1String( ") AND (" ) ) );
     request.setFilterExpression( filterString );
   }
 
@@ -294,7 +294,7 @@ void QgsReportSectionFieldGroup::updateChildContexts( const QgsFeature &feature 
   c.fieldFilters = currentFilter;
 
   const QList< QgsAbstractReportSection * > sections = childSections();
-  for ( QgsAbstractReportSection *section : qgis::as_const( sections ) )
+  for ( QgsAbstractReportSection *section : std::as_const( sections ) )
   {
     section->setContext( c );
   }

@@ -50,36 +50,16 @@
 #include "qgsapplication.h"
 #include "qgsexpressioncontextutils.h"
 #include "qgsrenderedfeaturehandlerinterface.h"
+#include "qgslegendpatchshape.h"
+#include "qgsgeos.h"
+#include "qgsmarkersymbol.h"
+#include "qgslinesymbol.h"
+#include "qgsfillsymbol.h"
 
-inline
-QgsProperty rotateWholeSymbol( double additionalRotation, const QgsProperty &property )
-{
-  QString exprString = property.asExpression();
-  return QgsProperty::fromExpression( QString::number( additionalRotation ) + " + (" + exprString + ')' );
-}
-
-inline
-QgsProperty scaleWholeSymbol( double scaleFactor, const QgsProperty &property )
-{
-  QString exprString = property.asExpression();
-  return QgsProperty::fromExpression( QString::number( scaleFactor ) + "*(" + exprString + ')' );
-}
-
-inline
-QgsProperty scaleWholeSymbol( double scaleFactorX, double scaleFactorY, const QgsProperty &property )
-{
-  QString exprString = property.asExpression();
-  return QgsProperty::fromExpression(
-           ( !qgsDoubleNear( scaleFactorX, 0.0 ) ? "tostring(" + QString::number( scaleFactorX ) + "*(" + exprString + "))" : QStringLiteral( "'0'" ) ) +
-           "|| ',' || " +
-           ( !qgsDoubleNear( scaleFactorY, 0.0 ) ? "tostring(" + QString::number( scaleFactorY ) + "*(" + exprString + "))" : QStringLiteral( "'0'" ) ) );
-}
-
-
-////////////////////
+QgsPropertiesDefinition QgsSymbol::sPropertyDefinitions;
 
 Q_NOWARN_DEPRECATED_PUSH // because of deprecated mLayer
-QgsSymbol::QgsSymbol( SymbolType type, const QgsSymbolLayerList &layers )
+QgsSymbol::QgsSymbol( Qgis::SymbolType type, const QgsSymbolLayerList &layers )
   : mType( type )
   , mLayers( layers )
 {
@@ -109,9 +89,9 @@ QPolygonF QgsSymbol::_getLineString( QgsRenderContext &context, const QgsCurve &
   QPolygonF pts;
 
   //apply clipping for large lines to achieve a better rendering performance
-  if ( clipToExtent && nPoints > 1 )
+  if ( clipToExtent && nPoints > 1 && !( context.flags() & Qgis::RenderContextFlag::ApplyClipAfterReprojection ) )
   {
-    const QgsRectangle &e = context.extent();
+    const QgsRectangle e = context.extent();
     const double cw = e.width() / 10;
     const double ch = e.height() / 10;
     const QgsRectangle clipRect( e.xMinimum() - cw, e.yMinimum() - ch, e.xMaximum() + cw, e.yMaximum() + ch );
@@ -142,6 +122,16 @@ QPolygonF QgsSymbol::_getLineString( QgsRenderContext &context, const QgsCurve &
     return !std::isfinite( point.x() ) || !std::isfinite( point.y() );
   } ), pts.end() );
 
+  if ( clipToExtent && nPoints > 1 && context.flags() & Qgis::RenderContextFlag::ApplyClipAfterReprojection )
+  {
+    // early clipping was not possible, so we have to apply it here after transformation
+    const QgsRectangle e = context.mapExtent();
+    const double cw = e.width() / 10;
+    const double ch = e.height() / 10;
+    const QgsRectangle clipRect( e.xMinimum() - cw, e.yMinimum() - ch, e.xMaximum() + cw, e.yMaximum() + ch );
+    pts = QgsClipper::clippedLine( pts, clipRect );
+  }
+
   QPointF *ptr = pts.data();
   for ( int i = 0; i < pts.size(); ++i, ++ptr )
   {
@@ -155,10 +145,6 @@ QPolygonF QgsSymbol::_getPolygonRing( QgsRenderContext &context, const QgsCurve 
 {
   const QgsCoordinateTransform ct = context.coordinateTransform();
   const QgsMapToPixel &mtp = context.mapToPixel();
-  const QgsRectangle &e = context.extent();
-  const double cw = e.width() / 10;
-  const double ch = e.height() / 10;
-  QgsRectangle clipRect( e.xMinimum() - cw, e.yMinimum() - ch, e.xMaximum() + cw, e.yMaximum() + ch );
 
   QPolygonF poly = curve.asQPolygonF();
 
@@ -168,16 +154,19 @@ QPolygonF QgsSymbol::_getPolygonRing( QgsRenderContext &context, const QgsCurve 
   if ( correctRingOrientation )
   {
     // ensure consistent polygon ring orientation
-    if ( isExteriorRing && curve.orientation() != QgsCurve::Clockwise )
+    if ( isExteriorRing && curve.orientation() != Qgis::AngularDirection::Clockwise )
       std::reverse( poly.begin(), poly.end() );
-    else if ( !isExteriorRing && curve.orientation() != QgsCurve::CounterClockwise )
+    else if ( !isExteriorRing && curve.orientation() != Qgis::AngularDirection::CounterClockwise )
       std::reverse( poly.begin(), poly.end() );
   }
 
   //clip close to view extent, if needed
-  const QRectF ptsRect = poly.boundingRect();
-  if ( clipToExtent && !context.extent().contains( ptsRect ) )
+  if ( clipToExtent && !( context.flags() & Qgis::RenderContextFlag::ApplyClipAfterReprojection ) && !context.extent().contains( poly.boundingRect() ) )
   {
+    const QgsRectangle e = context.extent();
+    const double cw = e.width() / 10;
+    const double ch = e.height() / 10;
+    const QgsRectangle clipRect( e.xMinimum() - cw, e.yMinimum() - ch, e.xMaximum() + cw, e.yMaximum() + ch );
     QgsClipper::trimPolygon( poly, clipRect );
   }
 
@@ -201,6 +190,16 @@ QPolygonF QgsSymbol::_getPolygonRing( QgsRenderContext &context, const QgsCurve 
     return !std::isfinite( point.x() ) || !std::isfinite( point.y() );
   } ), poly.end() );
 
+  if ( clipToExtent && context.flags() & Qgis::RenderContextFlag::ApplyClipAfterReprojection && !context.mapExtent().contains( poly.boundingRect() ) )
+  {
+    // early clipping was not possible, so we have to apply it here after transformation
+    const QgsRectangle e = context.mapExtent();
+    const double cw = e.width() / 10;
+    const double ch = e.height() / 10;
+    const QgsRectangle clipRect( e.xMinimum() - cw, e.yMinimum() - ch, e.xMaximum() + cw, e.yMaximum() + ch );
+    QgsClipper::trimPolygon( poly, clipRect );
+  }
+
   QPointF *ptr = poly.data();
   for ( int i = 0; i < poly.size(); ++i, ++ptr )
   {
@@ -213,16 +212,58 @@ QPolygonF QgsSymbol::_getPolygonRing( QgsRenderContext &context, const QgsCurve 
   return poly;
 }
 
-void QgsSymbol::_getPolygon( QPolygonF &pts, QList<QPolygonF> &holes, QgsRenderContext &context, const QgsPolygon &polygon, const bool clipToExtent, const bool correctRingOrientation )
+void QgsSymbol::_getPolygon( QPolygonF &pts, QVector<QPolygonF> &holes, QgsRenderContext &context, const QgsPolygon &polygon, const bool clipToExtent, const bool correctRingOrientation )
 {
   holes.clear();
 
   pts = _getPolygonRing( context, *polygon.exteriorRing(), clipToExtent, true, correctRingOrientation );
-  for ( int idx = 0; idx < polygon.numInteriorRings(); idx++ )
+  const int ringCount = polygon.numInteriorRings();
+  holes.reserve( ringCount );
+  for ( int idx = 0; idx < ringCount; idx++ )
   {
     const QPolygonF hole = _getPolygonRing( context, *( polygon.interiorRing( idx ) ), clipToExtent, false, correctRingOrientation );
-    if ( !hole.isEmpty() ) holes.append( hole );
+    if ( !hole.isEmpty() )
+      holes.append( hole );
   }
+}
+
+QString QgsSymbol::symbolTypeToString( Qgis::SymbolType type )
+{
+  switch ( type )
+  {
+    case Qgis::SymbolType::Marker:
+      return QObject::tr( "Marker" );
+    case Qgis::SymbolType::Line:
+      return QObject::tr( "Line" );
+    case Qgis::SymbolType::Fill:
+      return QObject::tr( "Fill" );
+    case Qgis::SymbolType::Hybrid:
+      return QObject::tr( "Hybrid" );
+  }
+  return QString();
+}
+
+Qgis::SymbolType QgsSymbol::symbolTypeForGeometryType( QgsWkbTypes::GeometryType type )
+{
+  switch ( type )
+  {
+    case QgsWkbTypes::PointGeometry:
+      return Qgis::SymbolType::Marker;
+    case QgsWkbTypes::LineGeometry:
+      return Qgis::SymbolType::Line;
+    case QgsWkbTypes::PolygonGeometry:
+      return Qgis::SymbolType::Fill;
+    case QgsWkbTypes::UnknownGeometry:
+    case QgsWkbTypes::NullGeometry:
+      return Qgis::SymbolType::Hybrid;
+  }
+  return Qgis::SymbolType::Hybrid;
+}
+
+const QgsPropertiesDefinition &QgsSymbol::propertyDefinitions()
+{
+  QgsSymbol::initPropertyDefinitions();
+  return sPropertyDefinitions;
 }
 
 QgsSymbol::~QgsSymbol()
@@ -250,6 +291,23 @@ QgsUnitTypes::RenderUnit QgsSymbol::outputUnit() const
     }
   }
   return unit;
+}
+
+bool QgsSymbol::usesMapUnits() const
+{
+  if ( mLayers.empty() )
+  {
+    return false;
+  }
+
+  for ( const QgsSymbolLayer *layer : mLayers )
+  {
+    if ( layer->usesMapUnits() )
+    {
+      return true;
+    }
+  }
+  return false;
 }
 
 QgsMapUnitScale QgsSymbol::mapUnitScale() const
@@ -323,13 +381,13 @@ QgsSymbol *QgsSymbol::defaultSymbol( QgsWkbTypes::GeometryType geomType )
     switch ( geomType )
     {
       case QgsWkbTypes::PointGeometry:
-        s = qgis::make_unique< QgsMarkerSymbol >();
+        s = std::make_unique< QgsMarkerSymbol >();
         break;
       case QgsWkbTypes::LineGeometry:
-        s = qgis::make_unique< QgsLineSymbol >();
+        s = std::make_unique< QgsLineSymbol >();
         break;
       case QgsWkbTypes::PolygonGeometry:
-        s = qgis::make_unique< QgsFillSymbol >();
+        s = std::make_unique< QgsFillSymbol >();
         break;
       default:
         QgsDebugMsg( QStringLiteral( "unknown layer's geometry type" ) );
@@ -442,6 +500,8 @@ void QgsSymbol::startRender( QgsRenderContext &context, const QgsFields &fields 
   std::unique_ptr< QgsExpressionContextScope > scope( QgsExpressionContextUtils::updateSymbolScope( this, new QgsExpressionContextScope() ) );
   mSymbolRenderContext->setExpressionContextScope( scope.release() );
 
+  mDataDefinedProperties.prepare( context.expressionContext() );
+
   const auto constMLayers = mLayers;
   for ( QgsSymbolLayer *layer : constMLayers )
   {
@@ -499,7 +559,7 @@ QColor QgsSymbol::color() const
   return QColor( 0, 0, 0 );
 }
 
-void QgsSymbol::drawPreviewIcon( QPainter *painter, QSize size, QgsRenderContext *customContext, bool selected, const QgsExpressionContext *expressionContext )
+void QgsSymbol::drawPreviewIcon( QPainter *painter, QSize size, QgsRenderContext *customContext, bool selected, const QgsExpressionContext *expressionContext, const QgsLegendPatchShape *patchShape )
 {
   QgsRenderContext *context = customContext;
   std::unique_ptr< QgsRenderContext > tempContext;
@@ -507,13 +567,34 @@ void QgsSymbol::drawPreviewIcon( QPainter *painter, QSize size, QgsRenderContext
   {
     tempContext.reset( new QgsRenderContext( QgsRenderContext::fromQPainter( painter ) ) );
     context = tempContext.get();
+    context->setFlag( Qgis::RenderContextFlag::RenderSymbolPreview, true );
   }
 
   const bool prevForceVector = context->forceVectorOutput();
   context->setForceVectorOutput( true );
-  QgsSymbolRenderContext symbolContext( *context, QgsUnitTypes::RenderUnknownUnit, mOpacity, false, mRenderHints, nullptr );
+
+  const double opacity = expressionContext ? dataDefinedProperties().valueAsDouble( QgsSymbol::PropertyOpacity, *expressionContext, mOpacity ) : mOpacity;
+
+  QgsSymbolRenderContext symbolContext( *context, QgsUnitTypes::RenderUnknownUnit, opacity, false, mRenderHints, nullptr );
   symbolContext.setSelected( selected );
-  symbolContext.setOriginalGeometryType( mType == Fill ? QgsWkbTypes::PolygonGeometry : QgsWkbTypes::UnknownGeometry );
+  switch ( mType )
+  {
+    case Qgis::SymbolType::Marker:
+      symbolContext.setOriginalGeometryType( QgsWkbTypes::PointGeometry );
+      break;
+    case Qgis::SymbolType::Line:
+      symbolContext.setOriginalGeometryType( QgsWkbTypes::LineGeometry );
+      break;
+    case Qgis::SymbolType::Fill:
+      symbolContext.setOriginalGeometryType( QgsWkbTypes::PolygonGeometry );
+      break;
+    case Qgis::SymbolType::Hybrid:
+      symbolContext.setOriginalGeometryType( QgsWkbTypes::UnknownGeometry );
+      break;
+  }
+
+  if ( patchShape )
+    symbolContext.setPatchShape( *patchShape );
 
   if ( !customContext && expressionContext )
   {
@@ -527,31 +608,44 @@ void QgsSymbol::drawPreviewIcon( QPainter *painter, QSize size, QgsRenderContext
     context->setExpressionContext( expContext );
   }
 
-  for ( QgsSymbolLayer *layer : qgis::as_const( mLayers ) )
+  for ( QgsSymbolLayer *layer : std::as_const( mLayers ) )
   {
     if ( !layer->enabled()  || ( customContext && !customContext->isSymbolLayerEnabled( layer ) ) )
       continue;
 
-    if ( mType == Fill && layer->type() == Line )
+    if ( mType == Qgis::SymbolType::Fill && layer->type() == Qgis::SymbolType::Line )
     {
       // line symbol layer would normally draw just a line
       // so we override this case to force it to draw a polygon stroke
       QgsLineSymbolLayer *lsl = dynamic_cast<QgsLineSymbolLayer *>( layer );
       if ( lsl )
       {
-        // from QgsFillSymbolLayer::drawPreviewIcon()
-        QPolygonF poly = QRectF( QPointF( 0, 0 ), QPointF( size.width() - 1, size.height() - 1 ) );
+        // from QgsFillSymbolLayer::drawPreviewIcon() -- would be nicer to add the
+        // symbol type to QgsSymbolLayer::drawPreviewIcon so this logic could be avoided!
+
+        // hmm... why was this using size -1 ??
+        const QSizeF targetSize = QSizeF( size.width() - 1, size.height() - 1 );
+
+        const QList< QList< QPolygonF > > polys = patchShape ? patchShape->toQPolygonF( Qgis::SymbolType::Fill, targetSize )
+            : QgsStyle::defaultStyle()->defaultPatchAsQPolygonF( Qgis::SymbolType::Fill, targetSize );
+
         lsl->startRender( symbolContext );
         QgsPaintEffect *effect = lsl->paintEffect();
+
+        std::unique_ptr< QgsEffectPainter > effectPainter;
         if ( effect && effect->enabled() )
+          effectPainter = std::make_unique< QgsEffectPainter >( symbolContext.renderContext(), effect );
+
+        for ( const QList< QPolygonF > &poly : polys )
         {
-          QgsEffectPainter p( symbolContext.renderContext(), effect );
-          lsl->renderPolygonStroke( poly, nullptr, symbolContext );
+          QVector< QPolygonF > rings;
+          rings.reserve( poly.size() );
+          for ( int i = 1; i < poly.size(); ++i )
+            rings << poly.at( i );
+          lsl->renderPolygonStroke( poly.value( 0 ), &rings, symbolContext );
         }
-        else
-        {
-          lsl->renderPolygonStroke( poly, nullptr, symbolContext );
-        }
+
+        effectPainter.reset();
         lsl->stopRender( symbolContext );
       }
     }
@@ -589,6 +683,7 @@ QImage QgsSymbol::asImage( QSize size, QgsRenderContext *customContext )
 
   QPainter p( &image );
   p.setRenderHint( QPainter::Antialiasing );
+  p.setRenderHint( QPainter::SmoothPixmapTransform );
 
   drawPreviewIcon( &p, size, customContext );
 
@@ -596,7 +691,7 @@ QImage QgsSymbol::asImage( QSize size, QgsRenderContext *customContext )
 }
 
 
-QImage QgsSymbol::bigSymbolPreviewImage( QgsExpressionContext *expressionContext )
+QImage QgsSymbol::bigSymbolPreviewImage( QgsExpressionContext *expressionContext, Qgis::SymbolPreviewFlags flags )
 {
   QImage preview( QSize( 100, 100 ), QImage::Format_ARGB32_Premultiplied );
   preview.fill( 0 );
@@ -605,7 +700,7 @@ QImage QgsSymbol::bigSymbolPreviewImage( QgsExpressionContext *expressionContext
   p.setRenderHint( QPainter::Antialiasing );
   p.translate( 0.5, 0.5 ); // shift by half a pixel to avoid blurring due antialiasing
 
-  if ( mType == QgsSymbol::Marker )
+  if ( mType == Qgis::SymbolType::Marker && flags & Qgis::SymbolPreviewFlag::FlagIncludeCrosshairsForMarkerSymbols )
   {
     p.setPen( QPen( Qt::gray ) );
     p.drawLine( 0, 50, 100, 50 );
@@ -613,19 +708,23 @@ QImage QgsSymbol::bigSymbolPreviewImage( QgsExpressionContext *expressionContext
   }
 
   QgsRenderContext context = QgsRenderContext::fromQPainter( &p );
+  context.setFlag( Qgis::RenderContextFlag::RenderSymbolPreview );
+  context.setFlag( Qgis::RenderContextFlag::Antialiasing );
+  context.setFlag( Qgis::RenderContextFlag::HighQualityImageTransforms );
+  context.setPainterFlagsUsingContext( &p );
   if ( expressionContext )
     context.setExpressionContext( *expressionContext );
 
   context.setIsGuiPreview( true );
   startRender( context );
 
-  if ( mType == QgsSymbol::Line )
+  if ( mType == Qgis::SymbolType::Line )
   {
     QPolygonF poly;
     poly << QPointF( 0, 50 ) << QPointF( 99, 50 );
     static_cast<QgsLineSymbol *>( this )->renderPolyline( poly, nullptr, context );
   }
-  else if ( mType == QgsSymbol::Fill )
+  else if ( mType == Qgis::SymbolType::Fill )
   {
     QPolygonF polygon;
     polygon << QPointF( 20, 20 ) << QPointF( 80, 20 ) << QPointF( 80, 80 ) << QPointF( 20, 80 ) << QPointF( 20, 20 );
@@ -640,19 +739,23 @@ QImage QgsSymbol::bigSymbolPreviewImage( QgsExpressionContext *expressionContext
   return preview;
 }
 
+QImage QgsSymbol::bigSymbolPreviewImage( QgsExpressionContext *expressionContext, int flags )
+{
+  return bigSymbolPreviewImage( expressionContext, static_cast< Qgis::SymbolPreviewFlags >( flags ) );
+}
 
 QString QgsSymbol::dump() const
 {
   QString t;
   switch ( type() )
   {
-    case QgsSymbol::Marker:
+    case Qgis::SymbolType::Marker:
       t = QStringLiteral( "MARKER" );
       break;
-    case QgsSymbol::Line:
+    case Qgis::SymbolType::Line:
       t = QStringLiteral( "LINE" );
       break;
-    case QgsSymbol::Fill:
+    case Qgis::SymbolType::Fill:
       t = QStringLiteral( "FILL" );
       break;
     default:
@@ -667,7 +770,7 @@ QString QgsSymbol::dump() const
   return s;
 }
 
-void QgsSymbol::toSld( QDomDocument &doc, QDomElement &element, QgsStringMap props ) const
+void QgsSymbol::toSld( QDomDocument &doc, QDomElement &element, QVariantMap props ) const
 {
   props[ QStringLiteral( "alpha" )] = QString::number( opacity() );
   double scaleFactor = 1.0;
@@ -694,9 +797,9 @@ QgsSymbolLayerList QgsSymbol::cloneLayers() const
   return lst;
 }
 
-void QgsSymbol::renderUsingLayer( QgsSymbolLayer *layer, QgsSymbolRenderContext &context )
+void QgsSymbol::renderUsingLayer( QgsSymbolLayer *layer, QgsSymbolRenderContext &context, QgsWkbTypes::GeometryType geometryType, const QPolygonF *points, const QVector<QPolygonF> *rings )
 {
-  Q_ASSERT( layer->type() == Hybrid );
+  Q_ASSERT( layer->type() == Qgis::SymbolType::Hybrid );
 
   if ( layer->dataDefinedProperties().hasActiveProperties() && !layer->dataDefinedProperties().valueAsBool( QgsSymbolLayer::PropertyLayerEnabled, context.renderContext().expressionContext(), true ) )
     return;
@@ -707,17 +810,20 @@ void QgsSymbol::renderUsingLayer( QgsSymbolLayer *layer, QgsSymbolRenderContext 
   if ( effect && effect->enabled() )
   {
     QgsEffectPainter p( context.renderContext(), effect );
-    generatorLayer->render( context );
+    generatorLayer->render( context, geometryType, points, rings );
   }
   else
   {
-    generatorLayer->render( context );
+    generatorLayer->render( context, geometryType, points, rings );
   }
 }
 
 QSet<QString> QgsSymbol::usedAttributes( const QgsRenderContext &context ) const
 {
-  QSet<QString> attributes;
+  // calling referencedFields() with ignoreContext=true because in our expression context
+  // we do not have valid QgsFields yet - because of that the field names from expressions
+  // wouldn't get reported
+  QSet<QString> attributes = mDataDefinedProperties.referencedFields( context.expressionContext(), true );
   QgsSymbolLayerList::const_iterator sIt = mLayers.constBegin();
   for ( ; sIt != mLayers.constEnd(); ++sIt )
   {
@@ -729,12 +835,29 @@ QSet<QString> QgsSymbol::usedAttributes( const QgsRenderContext &context ) const
   return attributes;
 }
 
+void QgsSymbol::setDataDefinedProperty( QgsSymbol::Property key, const QgsProperty &property )
+{
+  mDataDefinedProperties.setProperty( key, property );
+}
+
 bool QgsSymbol::hasDataDefinedProperties() const
 {
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
+  if ( mDataDefinedProperties.hasActiveProperties() )
+    return true;
+
+  for ( QgsSymbolLayer *layer : mLayers )
   {
     if ( layer->hasDataDefinedProperties() )
+      return true;
+  }
+  return false;
+}
+
+bool QgsSymbol::canCauseArtifactsBetweenAdjacentTiles() const
+{
+  for ( QgsSymbolLayer *layer : mLayers )
+  {
+    if ( layer->canCauseArtifactsBetweenAdjacentTiles() )
       return true;
   }
   return false;
@@ -796,7 +919,7 @@ class GeometryRestorer
 };
 ///@endcond PRIVATE
 
-void QgsSymbol::renderFeature( const QgsFeature &feature, QgsRenderContext &context, int layer, bool selected, bool drawVertexMarker, int currentVertexMarkerType, double currentVertexMarkerSize )
+void QgsSymbol::renderFeature( const QgsFeature &feature, QgsRenderContext &context, int layer, bool selected, bool drawVertexMarker, Qgis::VertexMarkerType currentVertexMarkerType, double currentVertexMarkerSize )
 {
   if ( context.renderingStopped() )
     return;
@@ -808,28 +931,51 @@ void QgsSymbol::renderFeature( const QgsFeature &feature, QgsRenderContext &cont
   }
 
   GeometryRestorer geomRestorer( context );
-  QgsGeometry segmentizedGeometry = geom;
+
   bool usingSegmentizedGeometry = false;
   context.setGeometry( geom.constGet() );
 
-  bool tileMapRendering = context.testFlag( QgsRenderContext::RenderMapTile );
-
-  //convert curve types to normal point/line/polygon ones
-  if ( QgsWkbTypes::isCurvedType( geom.constGet()->wkbType() ) )
+  if ( geom.type() != QgsWkbTypes::PointGeometry && !geom.boundingBox().isNull() )
   {
-    QgsAbstractGeometry *g = geom.constGet()->segmentize( context.segmentationTolerance(), context.segmentationToleranceType() );
-    if ( !g )
+    try
     {
-      return;
+      const QPointF boundsOrigin = _getPoint( context, QgsPoint( geom.boundingBox().xMinimum(), geom.boundingBox().yMinimum() ) );
+      if ( std::isfinite( boundsOrigin.x() ) && std::isfinite( boundsOrigin.y() ) )
+        context.setTextureOrigin( boundsOrigin );
     }
-    segmentizedGeometry = QgsGeometry( g );
-    usingSegmentizedGeometry = true;
+    catch ( QgsCsException & )
+    {
+
+    }
   }
 
-  mSymbolRenderContext->setGeometryPartCount( segmentizedGeometry.constGet()->partCount() );
+  bool clippingEnabled = clipFeaturesToExtent();
+  // do any symbol layers prevent feature clipping?
+  for ( QgsSymbolLayer *layer : std::as_const( mLayers ) )
+  {
+    if ( layer->flags() & Qgis::SymbolLayerFlag::DisableFeatureClipping )
+    {
+      clippingEnabled = false;
+      break;
+    }
+  }
+  if ( clippingEnabled && context.testFlag( Qgis::RenderContextFlag::RenderMapTile ) )
+  {
+    // If the "avoid artifacts between adjacent tiles" flag is set (RenderMapTile), then we'll force disable
+    // the geometry clipping IF (and only if) this symbol can potentially have rendering artifacts when rendered as map tiles.
+    // If the symbol won't have any artifacts anyway, then it's pointless and incredibly expensive to skip the clipping!
+    if ( canCauseArtifactsBetweenAdjacentTiles() )
+    {
+      clippingEnabled = false;
+    }
+  }
+  if ( context.extent().isEmpty() )
+    clippingEnabled = false;
+
+  mSymbolRenderContext->setGeometryPartCount( geom.constGet()->partCount() );
   mSymbolRenderContext->setGeometryPartNum( 1 );
 
-  bool needsExpressionContext = hasDataDefinedProperties();
+  const bool needsExpressionContext = hasDataDefinedProperties();
   ExpressionContextScopePopper scopePopper;
   if ( mSymbolRenderContext->expressionContextScope() )
   {
@@ -852,281 +998,423 @@ void QgsSymbol::renderFeature( const QgsFeature &feature, QgsRenderContext &cont
   // Collection of markers to paint, only used for no curve types.
   QPolygonF markers;
 
-  // Simplify the geometry, if needed.
-  if ( context.vectorSimplifyMethod().forceLocalOptimization() )
-  {
-    const int simplifyHints = context.vectorSimplifyMethod().simplifyHints();
-    const QgsMapToPixelSimplifier simplifier( simplifyHints, context.vectorSimplifyMethod().tolerance(),
-        static_cast< QgsMapToPixelSimplifier::SimplifyAlgorithm >( context.vectorSimplifyMethod().simplifyAlgorithm() ) );
-    segmentizedGeometry = simplifier.simplify( segmentizedGeometry );
-  }
-
   QgsGeometry renderedBoundsGeom;
 
-  startFeatureRender( feature, context, layer );
+  // Step 1 - collect the set of painter coordinate geometries to render.
+  // We do this upfront, because we only want to ever do this once, regardless how many symbol layers we need to render.
 
-  switch ( QgsWkbTypes::flatType( segmentizedGeometry.constGet()->wkbType() ) )
+  struct PointInfo
   {
-    case QgsWkbTypes::Point:
+    QPointF renderPoint;
+    const QgsPoint *originalGeometry = nullptr;
+  };
+  QVector< PointInfo > pointsToRender;
+
+  struct LineInfo
+  {
+    QPolygonF renderLine;
+    const QgsCurve *originalGeometry = nullptr;
+  };
+  QVector< LineInfo > linesToRender;
+
+  struct PolygonInfo
+  {
+    QPolygonF renderExterior;
+    QVector< QPolygonF > renderRings;
+    const QgsCurvePolygon *originalGeometry = nullptr;
+    int originalPartIndex = 0;
+  };
+  QVector< PolygonInfo > polygonsToRender;
+
+  std::function< void ( const QgsAbstractGeometry *, int partIndex )> getPartGeometry;
+  getPartGeometry = [&pointsToRender, &linesToRender, &polygonsToRender, &getPartGeometry, &context, &clippingEnabled, &markers, &feature, &usingSegmentizedGeometry, this]( const QgsAbstractGeometry * part, int partIndex = 0 )
+  {
+    Q_UNUSED( feature )
+
+    if ( !part )
+      return;
+
+    // geometry preprocessing
+    QgsGeometry temporaryGeometryContainer;
+    const QgsAbstractGeometry *processedGeometry = nullptr;
+
+    const bool isMultiPart = qgsgeometry_cast< const QgsGeometryCollection * >( part ) && qgsgeometry_cast< const QgsGeometryCollection * >( part )->numGeometries() > 1;
+
+    if ( !isMultiPart )
     {
-      if ( mType != QgsSymbol::Marker )
+      // segmentize curved geometries
+      const bool needsSegmentizing = QgsWkbTypes::isCurvedType( part->wkbType() ) || part->hasCurvedSegments();
+      if ( needsSegmentizing )
       {
-        QgsDebugMsg( QStringLiteral( "point can be drawn only with marker symbol!" ) );
-        break;
-      }
-
-      const QgsPoint *point = static_cast< const QgsPoint * >( segmentizedGeometry.constGet() );
-      const QPointF pt = _getPoint( context, *point );
-      static_cast<QgsMarkerSymbol *>( this )->renderPoint( pt, &feature, context, layer, selected );
-
-      if ( context.hasRenderedFeatureHandlers() || context.testFlag( QgsRenderContext::DrawSymbolBounds ) )
-      {
-        const QRectF bounds = static_cast<QgsMarkerSymbol *>( this )->bounds( pt, context, feature );
-        if ( context.hasRenderedFeatureHandlers() )
+        std::unique_ptr< QgsAbstractGeometry > segmentizedPart( part->segmentize( context.segmentationTolerance(), context.segmentationToleranceType() ) );
+        if ( !segmentizedPart )
         {
-          renderedBoundsGeom = QgsGeometry::fromRect( QgsRectangle( bounds ) );
+          return;
         }
-        if ( context.testFlag( QgsRenderContext::DrawSymbolBounds ) )
+        temporaryGeometryContainer.set( segmentizedPart.release() );
+        processedGeometry = temporaryGeometryContainer.constGet();
+        usingSegmentizedGeometry = true;
+      }
+      else
+      {
+        // no segmentation required
+        processedGeometry = part;
+      }
+
+      // Simplify the geometry, if needed.
+      if ( context.vectorSimplifyMethod().forceLocalOptimization() )
+      {
+        const int simplifyHints = context.vectorSimplifyMethod().simplifyHints();
+        const QgsMapToPixelSimplifier simplifier( simplifyHints, context.vectorSimplifyMethod().tolerance(),
+            static_cast< QgsMapToPixelSimplifier::SimplifyAlgorithm >( context.vectorSimplifyMethod().simplifyAlgorithm() ) );
+
+        std::unique_ptr< QgsAbstractGeometry > simplified( simplifier.simplify( processedGeometry ) );
+        if ( simplified )
         {
-          //draw debugging rect
-          context.painter()->setPen( Qt::red );
-          context.painter()->setBrush( QColor( 255, 0, 0, 100 ) );
-          context.painter()->drawRect( bounds );
-        }
-      }
-
-      if ( drawVertexMarker && !usingSegmentizedGeometry )
-      {
-        markers << pt;
-      }
-    }
-    break;
-    case QgsWkbTypes::LineString:
-    {
-      if ( mType != QgsSymbol::Line )
-      {
-        QgsDebugMsg( QStringLiteral( "linestring can be drawn only with line symbol!" ) );
-        break;
-      }
-      const QgsCurve &curve = dynamic_cast<const QgsCurve &>( *segmentizedGeometry.constGet() );
-      const QPolygonF pts = _getLineString( context, curve, !tileMapRendering && clipFeaturesToExtent() );
-      static_cast<QgsLineSymbol *>( this )->renderPolyline( pts, &feature, context, layer, selected );
-
-      if ( context.hasRenderedFeatureHandlers() )
-        renderedBoundsGeom = QgsGeometry::fromQPolygonF( pts );
-
-      if ( drawVertexMarker && !usingSegmentizedGeometry )
-      {
-        markers = pts;
-      }
-    }
-    break;
-    case QgsWkbTypes::Polygon:
-    case QgsWkbTypes::Triangle:
-    {
-      QPolygonF pts;
-      QList<QPolygonF> holes;
-      if ( mType != QgsSymbol::Fill )
-      {
-        QgsDebugMsg( QStringLiteral( "polygon can be drawn only with fill symbol!" ) );
-        break;
-      }
-      const QgsPolygon &polygon = dynamic_cast<const QgsPolygon &>( *segmentizedGeometry.constGet() );
-      if ( !polygon.exteriorRing() )
-      {
-        QgsDebugMsg( QStringLiteral( "cannot render polygon with no exterior ring" ) );
-        break;
-      }
-      _getPolygon( pts, holes, context, polygon, !tileMapRendering && clipFeaturesToExtent(), mForceRHR );
-      static_cast<QgsFillSymbol *>( this )->renderPolygon( pts, ( !holes.isEmpty() ? &holes : nullptr ), &feature, context, layer, selected );
-
-      if ( context.hasRenderedFeatureHandlers() )
-        renderedBoundsGeom = QgsGeometry::fromQPolygonF( pts ); // TODO - consider holes?
-
-      if ( drawVertexMarker && !usingSegmentizedGeometry )
-      {
-        markers = pts;
-
-        const auto constHoles = holes;
-        for ( const QPolygonF &hole : constHoles )
-        {
-          markers << hole;
+          temporaryGeometryContainer.set( simplified.release() );
+          processedGeometry = temporaryGeometryContainer.constGet();
         }
       }
+
+      // clip geometry to render context clipping regions
+      if ( !context.featureClipGeometry().isEmpty() )
+      {
+        // apply feature clipping from context to the rendered geometry only -- just like the render time simplification,
+        // we should NEVER apply this to the geometry attached to the feature itself. Doing so causes issues with certain
+        // renderer settings, e.g. if polygons are being rendered using a rule based renderer based on the feature's area,
+        // then we need to ensure that the original feature area is used instead of the clipped area..
+        QgsGeos geos( processedGeometry );
+        std::unique_ptr< QgsAbstractGeometry > clippedGeom( geos.intersection( context.featureClipGeometry().constGet() ) );
+        if ( clippedGeom )
+        {
+          temporaryGeometryContainer.set( clippedGeom.release() );
+          processedGeometry = temporaryGeometryContainer.constGet();
+        }
+      }
     }
-    break;
-
-    case QgsWkbTypes::MultiPoint:
+    else
     {
-      if ( mType != QgsSymbol::Marker )
-      {
-        QgsDebugMsg( QStringLiteral( "multi-point can be drawn only with marker symbol!" ) );
-        break;
-      }
+      // for multipart geometries, the processing is deferred till we're rendering the actual part...
+      processedGeometry = part;
+    }
 
-      const QgsMultiPoint &mp = static_cast< const QgsMultiPoint & >( *segmentizedGeometry.constGet() );
+    if ( !processedGeometry )
+    {
+      // shouldn't happen!
+      QgsDebugMsg( QStringLiteral( "No processed geometry to render for part!" ) );
+      return;
+    }
 
-      if ( drawVertexMarker && !usingSegmentizedGeometry )
+    switch ( QgsWkbTypes::flatType( processedGeometry->wkbType() ) )
+    {
+      case QgsWkbTypes::Point:
       {
-        markers.reserve( mp.numGeometries() );
-      }
-
-      for ( int i = 0; i < mp.numGeometries(); ++i )
-      {
-        if ( context.renderingStopped() )
+        if ( mType != Qgis::SymbolType::Marker )
+        {
+          QgsDebugMsgLevel( QStringLiteral( "point can be drawn only with marker symbol!" ), 2 );
           break;
-
-        mSymbolRenderContext->setGeometryPartNum( i + 1 );
-        if ( needsExpressionContext )
-          mSymbolRenderContext->expressionContextScope()->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_GEOMETRY_PART_NUM, i + 1, true ) );
-
-        const QgsPoint &point = static_cast< const QgsPoint & >( *mp.geometryN( i ) );
-        const QPointF pt = _getPoint( context, point );
-        static_cast<QgsMarkerSymbol *>( this )->renderPoint( pt, &feature, context, layer, selected );
-
-        if ( context.hasRenderedFeatureHandlers() )
-        {
-          const QRectF bounds = static_cast<QgsMarkerSymbol *>( this )->bounds( pt, context, feature );
-          renderedBoundsGeom = QgsGeometry::collectGeometry( QVector< QgsGeometry>() << QgsGeometry::fromRect( QgsRectangle( bounds ) ) << renderedBoundsGeom );
         }
 
-        if ( drawVertexMarker && !usingSegmentizedGeometry )
-        {
-          markers.append( pt );
-        }
-      }
-    }
-    break;
-
-    case QgsWkbTypes::MultiCurve:
-    case QgsWkbTypes::MultiLineString:
-    {
-      if ( mType != QgsSymbol::Line )
-      {
-        QgsDebugMsg( QStringLiteral( "multi-linestring can be drawn only with line symbol!" ) );
+        PointInfo info;
+        info.originalGeometry = qgsgeometry_cast< const QgsPoint * >( part );
+        info.renderPoint = _getPoint( context, *info.originalGeometry );
+        pointsToRender << info;
         break;
       }
 
-      const QgsGeometryCollection &geomCollection = dynamic_cast<const QgsGeometryCollection &>( *segmentizedGeometry.constGet() );
-
-      const unsigned int num = geomCollection.numGeometries();
-      for ( unsigned int i = 0; i < num; ++i )
+      case QgsWkbTypes::LineString:
       {
-        if ( context.renderingStopped() )
+        if ( mType != Qgis::SymbolType::Line )
+        {
+          QgsDebugMsgLevel( QStringLiteral( "linestring can be drawn only with line symbol!" ), 2 );
           break;
-
-        mSymbolRenderContext->setGeometryPartNum( i + 1 );
-        if ( needsExpressionContext )
-          mSymbolRenderContext->expressionContextScope()->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_GEOMETRY_PART_NUM, i + 1, true ) );
-
-        context.setGeometry( geomCollection.geometryN( i ) );
-        const QgsCurve &curve = dynamic_cast<const QgsCurve &>( *geomCollection.geometryN( i ) );
-        const QPolygonF pts = _getLineString( context, curve, !tileMapRendering && clipFeaturesToExtent() );
-        static_cast<QgsLineSymbol *>( this )->renderPolyline( pts, &feature, context, layer, selected );
-
-        if ( context.hasRenderedFeatureHandlers() )
-        {
-          renderedBoundsGeom = QgsGeometry::collectGeometry( QVector< QgsGeometry>() << QgsGeometry::fromQPolygonF( pts ) << renderedBoundsGeom );
         }
 
-        if ( drawVertexMarker && !usingSegmentizedGeometry )
-        {
-          markers << pts;
-        }
-      }
-    }
-    break;
-
-    case QgsWkbTypes::MultiSurface:
-    case QgsWkbTypes::MultiPolygon:
-    {
-      if ( mType != QgsSymbol::Fill )
-      {
-        QgsDebugMsg( QStringLiteral( "multi-polygon can be drawn only with fill symbol!" ) );
+        LineInfo info;
+        info.originalGeometry = qgsgeometry_cast<const QgsCurve *>( part );
+        info.renderLine = _getLineString( context, *qgsgeometry_cast<const QgsCurve *>( processedGeometry ), clippingEnabled );
+        linesToRender << info;
         break;
       }
 
-      QPolygonF pts;
-      QList<QPolygonF> holes;
-
-      const QgsGeometryCollection &geomCollection = dynamic_cast<const QgsGeometryCollection &>( *segmentizedGeometry.constGet() );
-      const unsigned int num = geomCollection.numGeometries();
-
-      // Sort components by approximate area (probably a bit faster than using
-      // area() )
-      std::map<double, QList<unsigned int> > mapAreaToPartNum;
-      for ( unsigned int i = 0; i < num; ++i )
+      case QgsWkbTypes::Polygon:
+      case QgsWkbTypes::Triangle:
       {
-        const QgsPolygon &polygon = dynamic_cast<const QgsPolygon &>( *geomCollection.geometryN( i ) );
-        const QgsRectangle r( polygon.boundingBox() );
-        mapAreaToPartNum[ r.width() * r.height()] << i;
+        QPolygonF pts;
+        if ( mType != Qgis::SymbolType::Fill )
+        {
+          QgsDebugMsgLevel( QStringLiteral( "polygon can be drawn only with fill symbol!" ), 2 );
+          break;
+        }
+
+        PolygonInfo info;
+        info.originalGeometry = qgsgeometry_cast<const QgsCurvePolygon *>( part );
+        info.originalPartIndex = partIndex;
+        if ( !qgsgeometry_cast<const QgsPolygon *>( processedGeometry )->exteriorRing() )
+        {
+          QgsDebugMsg( QStringLiteral( "cannot render polygon with no exterior ring" ) );
+          break;
+        }
+
+        _getPolygon( info.renderExterior, info.renderRings, context, *qgsgeometry_cast<const QgsPolygon *>( processedGeometry ), clippingEnabled, mForceRHR );
+        polygonsToRender << info;
+        break;
       }
 
-      // Draw starting with larger parts down to smaller parts, so that in
-      // case of a part being incorrectly inside another part, it is drawn
-      // on top of it (#15419)
-      std::map<double, QList<unsigned int> >::const_reverse_iterator iter = mapAreaToPartNum.rbegin();
-      for ( ; iter != mapAreaToPartNum.rend(); ++iter )
+      case QgsWkbTypes::MultiPoint:
       {
-        const QList<unsigned int> &listPartIndex = iter->second;
-        for ( int idx = 0; idx < listPartIndex.size(); ++idx )
+        const QgsMultiPoint *mp = qgsgeometry_cast< const QgsMultiPoint * >( processedGeometry );
+        markers.reserve( mp->numGeometries() );
+      }
+      FALLTHROUGH
+      case QgsWkbTypes::MultiCurve:
+      case QgsWkbTypes::MultiLineString:
+      case QgsWkbTypes::GeometryCollection:
+      {
+        const QgsGeometryCollection *geomCollection = qgsgeometry_cast<const QgsGeometryCollection *>( processedGeometry );
+
+        const unsigned int num = geomCollection->numGeometries();
+        for ( unsigned int i = 0; i < num; ++i )
         {
           if ( context.renderingStopped() )
             break;
 
-          const unsigned i = listPartIndex[idx];
-          mSymbolRenderContext->setGeometryPartNum( i + 1 );
-          if ( needsExpressionContext )
-            mSymbolRenderContext->expressionContextScope()->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_GEOMETRY_PART_NUM, i + 1, true ) );
+          getPartGeometry( geomCollection->geometryN( i ), i );
+        }
+        break;
+      }
 
-          context.setGeometry( geomCollection.geometryN( i ) );
-          const QgsPolygon &polygon = dynamic_cast<const QgsPolygon &>( *geomCollection.geometryN( i ) );
-          if ( !polygon.exteriorRing() )
+      case QgsWkbTypes::MultiSurface:
+      case QgsWkbTypes::MultiPolygon:
+      {
+        if ( mType != Qgis::SymbolType::Fill )
+        {
+          QgsDebugMsgLevel( QStringLiteral( "multi-polygon can be drawn only with fill symbol!" ), 2 );
+          break;
+        }
+
+        QPolygonF pts;
+
+        const QgsGeometryCollection *geomCollection = dynamic_cast<const QgsGeometryCollection *>( processedGeometry );
+        const unsigned int num = geomCollection->numGeometries();
+
+        // Sort components by approximate area (probably a bit faster than using
+        // area() )
+        std::map<double, QList<unsigned int> > thisAreaToPartNum;
+        for ( unsigned int i = 0; i < num; ++i )
+        {
+          const QgsRectangle r( geomCollection->geometryN( i )->boundingBox() );
+          thisAreaToPartNum[ r.width() * r.height()] << i;
+        }
+
+        // Draw starting with larger parts down to smaller parts, so that in
+        // case of a part being incorrectly inside another part, it is drawn
+        // on top of it (#15419)
+        std::map<double, QList<unsigned int> >::const_reverse_iterator iter = thisAreaToPartNum.rbegin();
+        for ( ; iter != thisAreaToPartNum.rend(); ++iter )
+        {
+          const QList<unsigned int> &listPartIndex = iter->second;
+          for ( int idx = 0; idx < listPartIndex.size(); ++idx )
+          {
+            const unsigned i = listPartIndex[idx];
+            getPartGeometry( geomCollection->geometryN( i ), i );
+          }
+        }
+        break;
+      }
+
+      default:
+        QgsDebugMsg( QStringLiteral( "feature %1: unsupported wkb type %2/%3 for rendering" )
+                     .arg( feature.id() )
+                     .arg( QgsWkbTypes::displayString( part->wkbType() ) )
+                     .arg( part->wkbType(), 0, 16 ) );
+    }
+  };
+
+  // Use the simplified type ref when rendering -- this avoids some unnecessary cloning/geometry modification
+  // (e.g. if the original geometry is a compound curve containing only a linestring curve, we don't have
+  // to segmentize the geometry before rendering)
+  getPartGeometry( geom.constGet()->simplifiedTypeRef(), 0 );
+
+  // step 2 - determine which layers to render
+  std::vector< int > layers;
+  if ( layer == -1 )
+  {
+    layers.reserve( mLayers.count() );
+    for ( int i = 0; i < mLayers.count(); ++i )
+      layers.emplace_back( i );
+  }
+  else
+  {
+    layers.emplace_back( layer );
+  }
+
+  // step 3 - render these geometries using the desired symbol layers.
+
+  if ( needsExpressionContext )
+    mSymbolRenderContext->expressionContextScope()->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "symbol_layer_count" ), mLayers.count(), true ) );
+
+  for ( const int symbolLayerIndex : layers )
+  {
+    QgsSymbolLayer *symbolLayer = mLayers.value( symbolLayerIndex );
+    if ( !symbolLayer || !symbolLayer->enabled() )
+      continue;
+
+    if ( needsExpressionContext )
+      mSymbolRenderContext->expressionContextScope()->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "symbol_layer_index" ), symbolLayerIndex + 1, true ) );
+
+    symbolLayer->startFeatureRender( feature, context );
+
+    switch ( mType )
+    {
+      case Qgis::SymbolType::Marker:
+      {
+        int geometryPartNumber = 0;
+        for ( const PointInfo &point : std::as_const( pointsToRender ) )
+        {
+          if ( context.renderingStopped() )
             break;
 
-          _getPolygon( pts, holes, context, polygon, !tileMapRendering && clipFeaturesToExtent(), mForceRHR );
-          static_cast<QgsFillSymbol *>( this )->renderPolygon( pts, ( !holes.isEmpty() ? &holes : nullptr ), &feature, context, layer, selected );
+          mSymbolRenderContext->setGeometryPartNum( geometryPartNumber + 1 );
+          if ( needsExpressionContext )
+            mSymbolRenderContext->expressionContextScope()->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_GEOMETRY_PART_NUM, geometryPartNumber + 1, true ) );
 
+          static_cast<QgsMarkerSymbol *>( this )->renderPoint( point.renderPoint, &feature, context, symbolLayerIndex, selected );
+          geometryPartNumber++;
+        }
+
+        break;
+      }
+
+      case Qgis::SymbolType::Line:
+      {
+        if ( linesToRender.empty() )
+          break;
+
+        int geometryPartNumber = 0;
+        for ( const LineInfo &line : std::as_const( linesToRender ) )
+        {
+          if ( context.renderingStopped() )
+            break;
+
+          mSymbolRenderContext->setGeometryPartNum( geometryPartNumber + 1 );
+          if ( needsExpressionContext )
+            mSymbolRenderContext->expressionContextScope()->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_GEOMETRY_PART_NUM, geometryPartNumber + 1, true ) );
+
+          context.setGeometry( line.originalGeometry );
+          static_cast<QgsLineSymbol *>( this )->renderPolyline( line.renderLine, &feature, context, symbolLayerIndex, selected );
+          geometryPartNumber++;
+        }
+        break;
+      }
+
+      case Qgis::SymbolType::Fill:
+      {
+        for ( const PolygonInfo &info : std::as_const( polygonsToRender ) )
+        {
+          if ( context.renderingStopped() )
+            break;
+
+          mSymbolRenderContext->setGeometryPartNum( info.originalPartIndex + 1 );
+          if ( needsExpressionContext )
+            mSymbolRenderContext->expressionContextScope()->addVariable( QgsExpressionContextScope::StaticVariable( QgsExpressionContext::EXPR_GEOMETRY_PART_NUM, info.originalPartIndex + 1, true ) );
+
+          context.setGeometry( info.originalGeometry );
+          static_cast<QgsFillSymbol *>( this )->renderPolygon( info.renderExterior, ( !info.renderRings.isEmpty() ? &info.renderRings : nullptr ), &feature, context, symbolLayerIndex, selected );
+        }
+
+        break;
+      }
+
+      case Qgis::SymbolType::Hybrid:
+        break;
+    }
+
+    symbolLayer->stopFeatureRender( feature, context );
+  }
+
+  // step 4 - handle post processing steps
+  switch ( mType )
+  {
+    case Qgis::SymbolType::Marker:
+    {
+      markers.reserve( pointsToRender.size() );
+      for ( const PointInfo &info : std::as_const( pointsToRender ) )
+      {
+        if ( context.hasRenderedFeatureHandlers() || context.testFlag( Qgis::RenderContextFlag::DrawSymbolBounds ) )
+        {
+          const QRectF bounds = static_cast<QgsMarkerSymbol *>( this )->bounds( info.renderPoint, context, feature );
           if ( context.hasRenderedFeatureHandlers() )
           {
-            renderedBoundsGeom = QgsGeometry::collectGeometry( QVector< QgsGeometry>() << QgsGeometry::fromQPolygonF( pts ) << renderedBoundsGeom ); // TODO: consider holes?
+            renderedBoundsGeom = renderedBoundsGeom.isNull() ? QgsGeometry::fromRect( bounds )
+                                 : QgsGeometry::collectGeometry( QVector< QgsGeometry>() << QgsGeometry::fromRect( QgsRectangle( bounds ) ) << renderedBoundsGeom );
           }
-
-          if ( drawVertexMarker && !usingSegmentizedGeometry )
+          if ( context.testFlag( Qgis::RenderContextFlag::DrawSymbolBounds ) )
           {
-            markers << pts;
-
-            const auto constHoles = holes;
-            for ( const QPolygonF &hole : constHoles )
-            {
-              markers << hole;
-            }
+            //draw debugging rect
+            context.painter()->setPen( Qt::red );
+            context.painter()->setBrush( QColor( 255, 0, 0, 100 ) );
+            context.painter()->drawRect( bounds );
           }
+        }
+
+        if ( drawVertexMarker && !usingSegmentizedGeometry )
+        {
+          markers.append( info.renderPoint );
         }
       }
       break;
     }
-    case QgsWkbTypes::GeometryCollection:
-    {
-      const QgsGeometryCollection &geomCollection = dynamic_cast<const QgsGeometryCollection &>( *segmentizedGeometry.constGet() );
-      if ( geomCollection.numGeometries() == 0 )
-      {
-        // skip noise from empty geometry collections from simplification
-        break;
-      }
 
-      FALLTHROUGH
+    case Qgis::SymbolType::Line:
+    {
+      for ( const LineInfo &info : std::as_const( linesToRender ) )
+      {
+        if ( context.hasRenderedFeatureHandlers() && !info.renderLine.empty() )
+        {
+          renderedBoundsGeom = renderedBoundsGeom.isNull() ? QgsGeometry::fromQPolygonF( info.renderLine )
+                               : QgsGeometry::collectGeometry( QVector< QgsGeometry>() << QgsGeometry::fromQPolygonF( info.renderLine ) << renderedBoundsGeom );
+        }
+
+        if ( drawVertexMarker && !usingSegmentizedGeometry )
+        {
+          markers << info.renderLine;
+        }
+      }
+      break;
     }
-    default:
-      QgsDebugMsg( QStringLiteral( "feature %1: unsupported wkb type %2/%3 for rendering" )
-                   .arg( feature.id() )
-                   .arg( QgsWkbTypes::displayString( geom.constGet()->wkbType() ) )
-                   .arg( geom.wkbType(), 0, 16 ) );
+
+    case Qgis::SymbolType::Fill:
+    {
+      int i = 0;
+      for ( const PolygonInfo &info : std::as_const( polygonsToRender ) )
+      {
+        if ( context.hasRenderedFeatureHandlers() && !info.renderExterior.empty() )
+        {
+          renderedBoundsGeom = renderedBoundsGeom.isNull() ? QgsGeometry::fromQPolygonF( info.renderExterior )
+                               : QgsGeometry::collectGeometry( QVector< QgsGeometry>() << QgsGeometry::fromQPolygonF( info.renderExterior ) << renderedBoundsGeom );
+          // TODO: consider holes?
+        }
+
+        if ( drawVertexMarker && !usingSegmentizedGeometry )
+        {
+          markers << info.renderExterior;
+
+          for ( const QPolygonF &hole : info.renderRings )
+          {
+            markers << hole;
+          }
+        }
+        i++;
+      }
+      break;
+    }
+
+    case Qgis::SymbolType::Hybrid:
+      break;
   }
 
-  stopFeatureRender( feature, context, layer );
-
-  if ( context.hasRenderedFeatureHandlers() )
+  if ( context.hasRenderedFeatureHandlers() && !renderedBoundsGeom.isNull() )
   {
     QgsRenderedFeatureHandlerInterface::RenderedFeatureContext featureContext( context );
     const QList< QgsRenderedFeatureHandlerInterface * > handlers = context.renderedFeatureHandlers();
@@ -1177,10 +1465,23 @@ QgsSymbolRenderContext *QgsSymbol::symbolRenderContext()
   return mSymbolRenderContext.get();
 }
 
-void QgsSymbol::renderVertexMarker( QPointF pt, QgsRenderContext &context, int currentVertexMarkerType, double currentVertexMarkerSize )
+void QgsSymbol::renderVertexMarker( QPointF pt, QgsRenderContext &context, Qgis::VertexMarkerType currentVertexMarkerType, double currentVertexMarkerSize )
 {
   int markerSize = context.convertToPainterUnits( currentVertexMarkerSize, QgsUnitTypes::RenderMillimeters );
-  QgsSymbolLayerUtils::drawVertexMarker( pt.x(), pt.y(), *context.painter(), static_cast< QgsSymbolLayerUtils::VertexMarkerType >( currentVertexMarkerType ), markerSize );
+  QgsSymbolLayerUtils::drawVertexMarker( pt.x(), pt.y(), *context.painter(), currentVertexMarkerType, markerSize );
+}
+
+void QgsSymbol::initPropertyDefinitions()
+{
+  if ( !sPropertyDefinitions.isEmpty() )
+    return;
+
+  QString origin = QStringLiteral( "symbol" );
+
+  sPropertyDefinitions = QgsPropertiesDefinition
+  {
+    { QgsSymbol::PropertyOpacity, QgsPropertyDefinition( "alpha", QObject::tr( "Opacity" ), QgsPropertyDefinition::Opacity, origin )},
+  };
 }
 
 void QgsSymbol::startFeatureRender( const QgsFeature &feature, QgsRenderContext &context, const int layer )
@@ -1230,932 +1531,3 @@ void QgsSymbol::stopFeatureRender( const QgsFeature &feature, QgsRenderContext &
     }
   }
 }
-
-////////////////////
-
-
-QgsSymbolRenderContext::QgsSymbolRenderContext( QgsRenderContext &c, QgsUnitTypes::RenderUnit u, qreal opacity, bool selected, QgsSymbol::RenderHints renderHints, const QgsFeature *f, const QgsFields &fields, const QgsMapUnitScale &mapUnitScale )
-  : mRenderContext( c )
-  , mOutputUnit( u )
-  , mMapUnitScale( mapUnitScale )
-  , mOpacity( opacity )
-  , mSelected( selected )
-  , mRenderHints( renderHints )
-  , mFeature( f )
-  , mFields( fields )
-  , mGeometryPartCount( 0 )
-  , mGeometryPartNum( 0 )
-{
-}
-
-void QgsSymbolRenderContext::setOriginalValueVariable( const QVariant &value )
-{
-  mRenderContext.expressionContext().setOriginalValueVariable( value );
-}
-
-double QgsSymbolRenderContext::outputLineWidth( double width ) const
-{
-  return mRenderContext.convertToPainterUnits( width, mOutputUnit, mMapUnitScale );
-}
-
-double QgsSymbolRenderContext::outputPixelSize( double size ) const
-{
-  return mRenderContext.convertToPainterUnits( size, mOutputUnit, mMapUnitScale );
-}
-
-QgsSymbolRenderContext &QgsSymbolRenderContext::operator=( const QgsSymbolRenderContext & )
-{
-  // This is just a dummy implementation of assignment.
-  // sip 4.7 generates a piece of code that needs this function to exist.
-  // It's not generated automatically by the compiler because of
-  // mRenderContext member which is a reference (and thus can't be changed).
-  Q_ASSERT( false );
-  return *this;
-}
-
-QgsExpressionContextScope *QgsSymbolRenderContext::expressionContextScope()
-{
-  return mExpressionContextScope.get();
-}
-
-void QgsSymbolRenderContext::setExpressionContextScope( QgsExpressionContextScope *contextScope )
-{
-  mExpressionContextScope.reset( contextScope );
-}
-
-///////////////////
-
-QgsMarkerSymbol *QgsMarkerSymbol::createSimple( const QgsStringMap &properties )
-{
-  QgsSymbolLayer *sl = QgsSimpleMarkerSymbolLayer::create( properties );
-  if ( !sl )
-    return nullptr;
-
-  QgsSymbolLayerList layers;
-  layers.append( sl );
-  return new QgsMarkerSymbol( layers );
-}
-
-QgsLineSymbol *QgsLineSymbol::createSimple( const QgsStringMap &properties )
-{
-  QgsSymbolLayer *sl = QgsSimpleLineSymbolLayer::create( properties );
-  if ( !sl )
-    return nullptr;
-
-  QgsSymbolLayerList layers;
-  layers.append( sl );
-  return new QgsLineSymbol( layers );
-}
-
-QgsFillSymbol *QgsFillSymbol::createSimple( const QgsStringMap &properties )
-{
-  QgsSymbolLayer *sl = QgsSimpleFillSymbolLayer::create( properties );
-  if ( !sl )
-    return nullptr;
-
-  QgsSymbolLayerList layers;
-  layers.append( sl );
-  return new QgsFillSymbol( layers );
-}
-
-///////////////////
-
-QgsMarkerSymbol::QgsMarkerSymbol( const QgsSymbolLayerList &layers )
-  : QgsSymbol( Marker, layers )
-{
-  if ( mLayers.isEmpty() )
-    mLayers.append( new QgsSimpleMarkerSymbolLayer() );
-}
-
-void QgsMarkerSymbol::setAngle( double symbolAngle )
-{
-  double origAngle = angle();
-  double angleDiff = symbolAngle - origAngle;
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    QgsMarkerSymbolLayer *markerLayer = dynamic_cast<QgsMarkerSymbolLayer *>( layer );
-    if ( markerLayer )
-      markerLayer->setAngle( markerLayer->angle() + angleDiff );
-  }
-}
-
-double QgsMarkerSymbol::angle() const
-{
-  for ( QgsSymbolLayer *layer : qgis::as_const( mLayers ) )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-    const QgsMarkerSymbolLayer *markerLayer = static_cast<const QgsMarkerSymbolLayer *>( layer );
-    return markerLayer->angle();
-  }
-  return 0;
-}
-
-void QgsMarkerSymbol::setLineAngle( double lineAng )
-{
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-    QgsMarkerSymbolLayer *markerLayer = static_cast<QgsMarkerSymbolLayer *>( layer );
-    markerLayer->setLineAngle( lineAng );
-  }
-}
-
-void QgsMarkerSymbol::setDataDefinedAngle( const QgsProperty &property )
-{
-  const double symbolRotation = angle();
-
-
-  for ( QgsSymbolLayer *layer : qgis::as_const( mLayers ) )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-    const QgsMarkerSymbolLayer *markerLayer = static_cast<const QgsMarkerSymbolLayer *>( layer );
-    if ( !property )
-    {
-      layer->setDataDefinedProperty( QgsSymbolLayer::PropertyAngle, QgsProperty() );
-    }
-    else
-    {
-      if ( qgsDoubleNear( markerLayer->angle(), symbolRotation ) )
-      {
-        layer->setDataDefinedProperty( QgsSymbolLayer::PropertyAngle, property );
-      }
-      else
-      {
-        QgsProperty rotatedDD = rotateWholeSymbol( markerLayer->angle() - symbolRotation, property );
-        layer->setDataDefinedProperty( QgsSymbolLayer::PropertyAngle, rotatedDD );
-      }
-    }
-  }
-}
-
-QgsProperty QgsMarkerSymbol::dataDefinedAngle() const
-{
-  const double symbolRotation = angle();
-  QgsProperty symbolDD;
-
-  // find the base of the "en masse" pattern
-  const auto layers = mLayers;
-  for ( QgsSymbolLayer *layer : layers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-    const QgsMarkerSymbolLayer *markerLayer = static_cast<const QgsMarkerSymbolLayer *>( layer );
-    if ( qgsDoubleNear( markerLayer->angle(), symbolRotation ) && markerLayer->dataDefinedProperties().isActive( QgsSymbolLayer::PropertyAngle ) )
-    {
-      symbolDD = markerLayer->dataDefinedProperties().property( QgsSymbolLayer::PropertyAngle );
-      break;
-    }
-  }
-
-  if ( !symbolDD )
-    return QgsProperty();
-
-  // check that all layer's angle expressions match the "en masse" pattern
-  for ( QgsSymbolLayer *layer : layers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-    const QgsMarkerSymbolLayer *markerLayer = static_cast<const QgsMarkerSymbolLayer *>( layer );
-
-    QgsProperty layerAngleDD = markerLayer->dataDefinedProperties().property( QgsSymbolLayer::PropertyAngle );
-
-    if ( qgsDoubleNear( markerLayer->angle(), symbolRotation ) )
-    {
-      if ( !layerAngleDD || layerAngleDD != symbolDD )
-        return QgsProperty();
-    }
-    else
-    {
-      QgsProperty rotatedDD( rotateWholeSymbol( markerLayer->angle() - symbolRotation, symbolDD ) );
-      if ( !layerAngleDD || layerAngleDD != rotatedDD )
-        return QgsProperty();
-    }
-  }
-  return symbolDD;
-}
-
-
-void QgsMarkerSymbol::setSize( double s )
-{
-  double origSize = size();
-
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-    QgsMarkerSymbolLayer *markerLayer = static_cast<QgsMarkerSymbolLayer *>( layer );
-    if ( qgsDoubleNear( markerLayer->size(), origSize ) )
-      markerLayer->setSize( s );
-    else if ( !qgsDoubleNear( origSize, 0.0 ) )
-    {
-      // proportionally scale size
-      markerLayer->setSize( markerLayer->size() * s / origSize );
-    }
-    // also scale offset to maintain relative position
-    if ( !qgsDoubleNear( origSize, 0.0 ) && ( !qgsDoubleNear( markerLayer->offset().x(), 0.0 ) || !qgsDoubleNear( markerLayer->offset().y(), 0.0 ) ) )
-      markerLayer->setOffset( QPointF( markerLayer->offset().x() * s / origSize,
-                                       markerLayer->offset().y() * s / origSize ) );
-  }
-}
-
-double QgsMarkerSymbol::size() const
-{
-  // return size of the largest symbol
-  double maxSize = 0;
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-    const QgsMarkerSymbolLayer *markerLayer = static_cast<const QgsMarkerSymbolLayer *>( layer );
-    double lsize = markerLayer->size();
-    if ( lsize > maxSize )
-      maxSize = lsize;
-  }
-  return maxSize;
-}
-
-double QgsMarkerSymbol::size( const QgsRenderContext &context ) const
-{
-  // return size of the largest symbol
-  double maxSize = 0;
-  for ( QgsSymbolLayer *layer : mLayers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-    const QgsMarkerSymbolLayer *markerLayer = static_cast<const QgsMarkerSymbolLayer *>( layer );
-    const double layerSize = context.convertToPainterUnits( markerLayer->size(), markerLayer->sizeUnit(), markerLayer->sizeMapUnitScale() );
-    maxSize = std::max( maxSize, layerSize );
-  }
-  return maxSize;
-}
-
-void QgsMarkerSymbol::setSizeUnit( QgsUnitTypes::RenderUnit unit )
-{
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-
-    QgsMarkerSymbolLayer *markerLayer = static_cast<QgsMarkerSymbolLayer *>( layer );
-    markerLayer->setSizeUnit( unit );
-  }
-}
-
-QgsUnitTypes::RenderUnit QgsMarkerSymbol::sizeUnit() const
-{
-  bool first = true;
-  QgsUnitTypes::RenderUnit unit = QgsUnitTypes::RenderUnknownUnit;
-
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-    const QgsMarkerSymbolLayer *markerLayer = static_cast<const QgsMarkerSymbolLayer *>( layer );
-
-    if ( first )
-      unit = markerLayer->sizeUnit();
-    else
-    {
-      if ( unit != markerLayer->sizeUnit() )
-        return QgsUnitTypes::RenderUnknownUnit;
-    }
-
-    first = false;
-  }
-  return unit;
-}
-
-void QgsMarkerSymbol::setSizeMapUnitScale( const QgsMapUnitScale &scale )
-{
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-
-    QgsMarkerSymbolLayer *markerLayer = static_cast<QgsMarkerSymbolLayer *>( layer );
-    markerLayer->setSizeMapUnitScale( scale );
-  }
-}
-
-QgsMapUnitScale QgsMarkerSymbol::sizeMapUnitScale() const
-{
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-
-    QgsMarkerSymbolLayer *markerLayer = static_cast<QgsMarkerSymbolLayer *>( layer );
-    return markerLayer->sizeMapUnitScale();
-  }
-  return QgsMapUnitScale();
-}
-
-void QgsMarkerSymbol::setDataDefinedSize( const QgsProperty &property )
-{
-  const double symbolSize = size();
-
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-    QgsMarkerSymbolLayer *markerLayer = static_cast<QgsMarkerSymbolLayer *>( layer );
-
-    if ( !property )
-    {
-      markerLayer->setDataDefinedProperty( QgsSymbolLayer::PropertySize, QgsProperty() );
-      markerLayer->setDataDefinedProperty( QgsSymbolLayer::PropertyOffset, QgsProperty() );
-    }
-    else
-    {
-      if ( qgsDoubleNear( symbolSize, 0.0 ) || qgsDoubleNear( markerLayer->size(), symbolSize ) )
-      {
-        markerLayer->setDataDefinedProperty( QgsSymbolLayer::PropertySize, property );
-      }
-      else
-      {
-        markerLayer->setDataDefinedProperty( QgsSymbolLayer::PropertySize, scaleWholeSymbol( markerLayer->size() / symbolSize, property ) );
-      }
-
-      if ( !qgsDoubleNear( markerLayer->offset().x(), 0.0 ) || !qgsDoubleNear( markerLayer->offset().y(), 0.0 ) )
-      {
-        markerLayer->setDataDefinedProperty( QgsSymbolLayer::PropertyOffset, scaleWholeSymbol(
-                                               markerLayer->offset().x() / symbolSize,
-                                               markerLayer->offset().y() / symbolSize, property ) );
-      }
-    }
-  }
-}
-
-QgsProperty QgsMarkerSymbol::dataDefinedSize() const
-{
-  const double symbolSize = size();
-
-  QgsProperty symbolDD;
-
-  // find the base of the "en masse" pattern
-  const auto layers = mLayers;
-  for ( QgsSymbolLayer *layer : layers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-    const QgsMarkerSymbolLayer *markerLayer = static_cast<const QgsMarkerSymbolLayer *>( layer );
-    if ( qgsDoubleNear( markerLayer->size(), symbolSize ) && markerLayer->dataDefinedProperties().isActive( QgsSymbolLayer::PropertySize ) )
-    {
-      symbolDD = markerLayer->dataDefinedProperties().property( QgsSymbolLayer::PropertySize );
-      break;
-    }
-  }
-
-  if ( !symbolDD )
-    return QgsProperty();
-
-  // check that all layers size expressions match the "en masse" pattern
-  for ( QgsSymbolLayer *layer : layers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-    const QgsMarkerSymbolLayer *markerLayer = static_cast<const QgsMarkerSymbolLayer *>( layer );
-
-    QgsProperty layerSizeDD = markerLayer->dataDefinedProperties().property( QgsSymbolLayer::PropertySize );
-    QgsProperty layerOffsetDD = markerLayer->dataDefinedProperties().property( QgsSymbolLayer::PropertyOffset );
-
-    if ( qgsDoubleNear( markerLayer->size(), symbolSize ) )
-    {
-      if ( !layerSizeDD || layerSizeDD != symbolDD )
-        return QgsProperty();
-    }
-    else
-    {
-      if ( qgsDoubleNear( symbolSize, 0.0 ) )
-        return QgsProperty();
-
-      QgsProperty scaledDD( scaleWholeSymbol( markerLayer->size() / symbolSize, symbolDD ) );
-      if ( !layerSizeDD || layerSizeDD != scaledDD )
-        return QgsProperty();
-    }
-
-    QgsProperty scaledOffsetDD( scaleWholeSymbol( markerLayer->offset().x() / symbolSize, markerLayer->offset().y() / symbolSize, symbolDD ) );
-    if ( layerOffsetDD && layerOffsetDD != scaledOffsetDD )
-      return QgsProperty();
-  }
-
-  return symbolDD;
-}
-
-void QgsMarkerSymbol::setScaleMethod( QgsSymbol::ScaleMethod scaleMethod )
-{
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-    QgsMarkerSymbolLayer *markerLayer = static_cast<QgsMarkerSymbolLayer *>( layer );
-    markerLayer->setScaleMethod( scaleMethod );
-  }
-}
-
-QgsSymbol::ScaleMethod QgsMarkerSymbol::scaleMethod()
-{
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    if ( layer->type() != QgsSymbol::Marker )
-      continue;
-    const QgsMarkerSymbolLayer *markerLayer = static_cast<const QgsMarkerSymbolLayer *>( layer );
-    // return scale method of the first symbol layer
-    return markerLayer->scaleMethod();
-  }
-
-  return DEFAULT_SCALE_METHOD;
-}
-
-void QgsMarkerSymbol::renderPointUsingLayer( QgsMarkerSymbolLayer *layer, QPointF point, QgsSymbolRenderContext &context )
-{
-  static QPointF nullPoint( 0, 0 );
-
-  if ( layer->dataDefinedProperties().hasActiveProperties() && !layer->dataDefinedProperties().valueAsBool( QgsSymbolLayer::PropertyLayerEnabled, context.renderContext().expressionContext(), true ) )
-    return;
-
-  QgsPaintEffect *effect = layer->paintEffect();
-  if ( effect && effect->enabled() )
-  {
-    QgsEffectPainter p( context.renderContext() );
-    p->translate( point );
-    p.setEffect( effect );
-    layer->renderPoint( nullPoint, context );
-  }
-  else
-  {
-    layer->renderPoint( point, context );
-  }
-}
-
-void QgsMarkerSymbol::renderPoint( QPointF point, const QgsFeature *f, QgsRenderContext &context, int layerIdx, bool selected )
-{
-  QgsSymbolRenderContext symbolContext( context, QgsUnitTypes::RenderUnknownUnit, mOpacity, selected, mRenderHints, f );
-  symbolContext.setGeometryPartCount( symbolRenderContext()->geometryPartCount() );
-  symbolContext.setGeometryPartNum( symbolRenderContext()->geometryPartNum() );
-
-  if ( layerIdx != -1 )
-  {
-    QgsSymbolLayer *symbolLayer = mLayers.value( layerIdx );
-    if ( symbolLayer && symbolLayer->enabled() && context.isSymbolLayerEnabled( symbolLayer ) )
-    {
-      if ( symbolLayer->type() == QgsSymbol::Marker )
-      {
-        QgsMarkerSymbolLayer *markerLayer = static_cast<QgsMarkerSymbolLayer *>( symbolLayer );
-        renderPointUsingLayer( markerLayer, point, symbolContext );
-      }
-      else
-        renderUsingLayer( symbolLayer, symbolContext );
-    }
-    return;
-  }
-
-
-  for ( QgsSymbolLayer *symbolLayer : qgis::as_const( mLayers ) )
-  {
-    if ( context.renderingStopped() )
-      break;
-
-    if ( !symbolLayer->enabled() || !context.isSymbolLayerEnabled( symbolLayer ) )
-      continue;
-
-    if ( symbolLayer->type() == QgsSymbol::Marker )
-    {
-      QgsMarkerSymbolLayer *markerLayer = static_cast<QgsMarkerSymbolLayer *>( symbolLayer );
-      renderPointUsingLayer( markerLayer, point, symbolContext );
-    }
-    else
-      renderUsingLayer( symbolLayer, symbolContext );
-  }
-}
-
-QRectF QgsMarkerSymbol::bounds( QPointF point, QgsRenderContext &context, const QgsFeature &feature ) const
-{
-  QgsSymbolRenderContext symbolContext( context, QgsUnitTypes::RenderUnknownUnit, mOpacity, false, mRenderHints, &feature, feature.fields() );
-
-  QRectF bound;
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    if ( layer->type() == QgsSymbol::Marker )
-    {
-      QgsMarkerSymbolLayer *symbolLayer = static_cast< QgsMarkerSymbolLayer * >( layer );
-      if ( bound.isNull() )
-        bound = symbolLayer->bounds( point, symbolContext );
-      else
-        bound = bound.united( symbolLayer->bounds( point, symbolContext ) );
-    }
-  }
-  return bound;
-}
-
-QgsMarkerSymbol *QgsMarkerSymbol::clone() const
-{
-  QgsMarkerSymbol *cloneSymbol = new QgsMarkerSymbol( cloneLayers() );
-  cloneSymbol->setOpacity( mOpacity );
-  Q_NOWARN_DEPRECATED_PUSH
-  cloneSymbol->setLayer( mLayer );
-  Q_NOWARN_DEPRECATED_POP
-  cloneSymbol->setClipFeaturesToExtent( mClipFeaturesToExtent );
-  cloneSymbol->setForceRHR( mForceRHR );
-  return cloneSymbol;
-}
-
-
-///////////////////
-// LINE
-
-QgsLineSymbol::QgsLineSymbol( const QgsSymbolLayerList &layers )
-  : QgsSymbol( Line, layers )
-{
-  if ( mLayers.isEmpty() )
-    mLayers.append( new QgsSimpleLineSymbolLayer() );
-}
-
-void QgsLineSymbol::setWidth( double w )
-{
-  double origWidth = width();
-
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    QgsLineSymbolLayer *lineLayer = dynamic_cast<QgsLineSymbolLayer *>( layer );
-
-    if ( lineLayer )
-    {
-      if ( qgsDoubleNear( lineLayer->width(), origWidth ) )
-      {
-        lineLayer->setWidth( w );
-      }
-      else if ( !qgsDoubleNear( origWidth, 0.0 ) )
-      {
-        // proportionally scale the width
-        lineLayer->setWidth( lineLayer->width() * w / origWidth );
-      }
-      // also scale offset to maintain relative position
-      if ( !qgsDoubleNear( origWidth, 0.0 ) && !qgsDoubleNear( lineLayer->offset(), 0.0 ) )
-        lineLayer->setOffset( lineLayer->offset() * w / origWidth );
-    }
-  }
-}
-
-double QgsLineSymbol::width() const
-{
-  double maxWidth = 0;
-  if ( mLayers.isEmpty() )
-    return maxWidth;
-
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *symbolLayer : constMLayers )
-  {
-    const QgsLineSymbolLayer *lineLayer = dynamic_cast<QgsLineSymbolLayer *>( symbolLayer );
-    if ( lineLayer )
-    {
-      double width = lineLayer->width();
-      if ( width > maxWidth )
-        maxWidth = width;
-    }
-  }
-  return maxWidth;
-}
-
-double QgsLineSymbol::width( const QgsRenderContext &context ) const
-{
-  // return width of the largest symbol
-  double maxWidth = 0;
-  for ( QgsSymbolLayer *layer : mLayers )
-  {
-    if ( layer->type() != QgsSymbol::Line )
-      continue;
-    const QgsLineSymbolLayer *lineLayer = static_cast<const QgsLineSymbolLayer *>( layer );
-    const double layerWidth = lineLayer->width( context );
-    maxWidth = std::max( maxWidth, layerWidth );
-  }
-  return maxWidth;
-}
-
-void QgsLineSymbol::setDataDefinedWidth( const QgsProperty &property )
-{
-  const double symbolWidth = width();
-
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    QgsLineSymbolLayer *lineLayer = dynamic_cast<QgsLineSymbolLayer *>( layer );
-
-    if ( lineLayer )
-    {
-      if ( !property )
-      {
-        lineLayer->setDataDefinedProperty( QgsSymbolLayer::PropertyStrokeWidth, QgsProperty() );
-        lineLayer->setDataDefinedProperty( QgsSymbolLayer::PropertyOffset, QgsProperty() );
-      }
-      else
-      {
-        if ( qgsDoubleNear( symbolWidth, 0.0 ) || qgsDoubleNear( lineLayer->width(), symbolWidth ) )
-        {
-          lineLayer->setDataDefinedProperty( QgsSymbolLayer::PropertyStrokeWidth, property );
-        }
-        else
-        {
-          lineLayer->setDataDefinedProperty( QgsSymbolLayer::PropertyStrokeWidth, scaleWholeSymbol( lineLayer->width() / symbolWidth, property ) );
-        }
-
-        if ( !qgsDoubleNear( lineLayer->offset(), 0.0 ) )
-        {
-          lineLayer->setDataDefinedProperty( QgsSymbolLayer::PropertyOffset, scaleWholeSymbol( lineLayer->offset() / symbolWidth, property ) );
-        }
-      }
-    }
-  }
-}
-
-QgsProperty QgsLineSymbol::dataDefinedWidth() const
-{
-  const double symbolWidth = width();
-
-  QgsProperty symbolDD;
-
-  // find the base of the "en masse" pattern
-  for ( QgsSymbolLayerList::const_iterator it = mLayers.begin(); it != mLayers.end(); ++it )
-  {
-    const QgsLineSymbolLayer *layer = dynamic_cast<const QgsLineSymbolLayer *>( *it );
-    if ( layer && qgsDoubleNear( layer->width(), symbolWidth ) && layer->dataDefinedProperties().isActive( QgsSymbolLayer::PropertyStrokeWidth ) )
-    {
-      symbolDD = layer->dataDefinedProperties().property( QgsSymbolLayer::PropertyStrokeWidth );
-      break;
-    }
-  }
-
-  if ( !symbolDD )
-    return QgsProperty();
-
-  // check that all layers width expressions match the "en masse" pattern
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    if ( layer->type() != QgsSymbol::Line )
-      continue;
-    const QgsLineSymbolLayer *lineLayer = static_cast<const QgsLineSymbolLayer *>( layer );
-
-    QgsProperty layerWidthDD = lineLayer->dataDefinedProperties().property( QgsSymbolLayer::PropertyStrokeWidth );
-    QgsProperty layerOffsetDD = lineLayer->dataDefinedProperties().property( QgsSymbolLayer::PropertyOffset );
-
-    if ( qgsDoubleNear( lineLayer->width(), symbolWidth ) )
-    {
-      if ( !layerWidthDD || layerWidthDD != symbolDD )
-        return QgsProperty();
-    }
-    else
-    {
-      if ( qgsDoubleNear( symbolWidth, 0.0 ) )
-        return QgsProperty();
-
-      QgsProperty scaledDD( scaleWholeSymbol( lineLayer->width() / symbolWidth, symbolDD ) );
-      if ( !layerWidthDD || layerWidthDD != scaledDD )
-        return QgsProperty();
-    }
-
-    QgsProperty scaledOffsetDD( scaleWholeSymbol( lineLayer->offset() / symbolWidth, symbolDD ) );
-    if ( layerOffsetDD && layerOffsetDD != scaledOffsetDD )
-      return QgsProperty();
-  }
-
-  return symbolDD;
-}
-
-void QgsLineSymbol::renderPolyline( const QPolygonF &points, const QgsFeature *f, QgsRenderContext &context, int layerIdx, bool selected )
-{
-  //save old painter
-  QPainter *renderPainter = context.painter();
-  QgsSymbolRenderContext symbolContext( context, QgsUnitTypes::RenderUnknownUnit, mOpacity, selected, mRenderHints, f );
-  symbolContext.setOriginalGeometryType( QgsWkbTypes::LineGeometry );
-  symbolContext.setGeometryPartCount( symbolRenderContext()->geometryPartCount() );
-  symbolContext.setGeometryPartNum( symbolRenderContext()->geometryPartNum() );
-
-  if ( layerIdx != -1 )
-  {
-    QgsSymbolLayer *symbolLayer = mLayers.value( layerIdx );
-    if ( symbolLayer && symbolLayer->enabled() && context.isSymbolLayerEnabled( symbolLayer ) )
-    {
-      if ( symbolLayer->type() == QgsSymbol::Line )
-      {
-        QgsLineSymbolLayer *lineLayer = static_cast<QgsLineSymbolLayer *>( symbolLayer );
-        renderPolylineUsingLayer( lineLayer, points, symbolContext );
-      }
-      else
-        renderUsingLayer( symbolLayer, symbolContext );
-    }
-    return;
-  }
-
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *symbolLayer : constMLayers )
-  {
-    if ( context.renderingStopped() )
-      break;
-
-    if ( !symbolLayer->enabled() || !context.isSymbolLayerEnabled( symbolLayer ) )
-      continue;
-
-    if ( symbolLayer->type() == QgsSymbol::Line )
-    {
-      QgsLineSymbolLayer *lineLayer = static_cast<QgsLineSymbolLayer *>( symbolLayer );
-      renderPolylineUsingLayer( lineLayer, points, symbolContext );
-    }
-    else
-    {
-      renderUsingLayer( symbolLayer, symbolContext );
-    }
-  }
-
-  context.setPainter( renderPainter );
-}
-
-void QgsLineSymbol::renderPolylineUsingLayer( QgsLineSymbolLayer *layer, const QPolygonF &points, QgsSymbolRenderContext &context )
-{
-  if ( layer->dataDefinedProperties().hasActiveProperties() && !layer->dataDefinedProperties().valueAsBool( QgsSymbolLayer::PropertyLayerEnabled, context.renderContext().expressionContext(), true ) )
-    return;
-
-  QgsPaintEffect *effect = layer->paintEffect();
-  if ( effect && effect->enabled() )
-  {
-    QgsEffectPainter p( context.renderContext() );
-    p->translate( points.boundingRect().topLeft() );
-    p.setEffect( effect );
-    layer->renderPolyline( points.translated( -points.boundingRect().topLeft() ), context );
-  }
-  else
-  {
-    layer->renderPolyline( points, context );
-  }
-}
-
-
-QgsLineSymbol *QgsLineSymbol::clone() const
-{
-  QgsLineSymbol *cloneSymbol = new QgsLineSymbol( cloneLayers() );
-  cloneSymbol->setOpacity( mOpacity );
-  Q_NOWARN_DEPRECATED_PUSH
-  cloneSymbol->setLayer( mLayer );
-  Q_NOWARN_DEPRECATED_POP
-  cloneSymbol->setClipFeaturesToExtent( mClipFeaturesToExtent );
-  cloneSymbol->setForceRHR( mForceRHR );
-  return cloneSymbol;
-}
-
-///////////////////
-// FILL
-
-QgsFillSymbol::QgsFillSymbol( const QgsSymbolLayerList &layers )
-  : QgsSymbol( Fill, layers )
-{
-  if ( mLayers.isEmpty() )
-    mLayers.append( new QgsSimpleFillSymbolLayer() );
-}
-
-void QgsFillSymbol::renderPolygon( const QPolygonF &points, QList<QPolygonF> *rings, const QgsFeature *f, QgsRenderContext &context, int layerIdx, bool selected )
-{
-  QgsSymbolRenderContext symbolContext( context, QgsUnitTypes::RenderUnknownUnit, mOpacity, selected, mRenderHints, f );
-  symbolContext.setOriginalGeometryType( QgsWkbTypes::PolygonGeometry );
-  symbolContext.setGeometryPartCount( symbolRenderContext()->geometryPartCount() );
-  symbolContext.setGeometryPartNum( symbolRenderContext()->geometryPartNum() );
-
-  if ( layerIdx != -1 )
-  {
-    QgsSymbolLayer *symbolLayer = mLayers.value( layerIdx );
-    if ( symbolLayer && symbolLayer->enabled() && context.isSymbolLayerEnabled( symbolLayer ) )
-    {
-      if ( symbolLayer->type() == Fill || symbolLayer->type() == Line )
-        renderPolygonUsingLayer( symbolLayer, points, rings, symbolContext );
-      else
-        renderUsingLayer( symbolLayer, symbolContext );
-    }
-    return;
-  }
-
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *symbolLayer : constMLayers )
-  {
-    if ( context.renderingStopped() )
-      break;
-
-    if ( !symbolLayer->enabled() || !context.isSymbolLayerEnabled( symbolLayer ) )
-      continue;
-
-    if ( symbolLayer->type() == Fill || symbolLayer->type() == Line )
-      renderPolygonUsingLayer( symbolLayer, points, rings, symbolContext );
-    else
-      renderUsingLayer( symbolLayer, symbolContext );
-  }
-}
-
-void QgsFillSymbol::renderPolygonUsingLayer( QgsSymbolLayer *layer, const QPolygonF &points, QList<QPolygonF> *rings, QgsSymbolRenderContext &context )
-{
-  if ( layer->dataDefinedProperties().hasActiveProperties() && !layer->dataDefinedProperties().valueAsBool( QgsSymbolLayer::PropertyLayerEnabled, context.renderContext().expressionContext(), true ) )
-    return;
-
-  QgsSymbol::SymbolType layertype = layer->type();
-
-  QgsPaintEffect *effect = layer->paintEffect();
-  if ( effect && effect->enabled() )
-  {
-    QRectF bounds = polygonBounds( points, rings );
-    QList<QPolygonF> *translatedRings = translateRings( rings, -bounds.left(), -bounds.top() );
-
-    QgsEffectPainter p( context.renderContext() );
-    p->translate( bounds.topLeft() );
-    p.setEffect( effect );
-    if ( layertype == QgsSymbol::Fill )
-    {
-      ( static_cast<QgsFillSymbolLayer *>( layer ) )->renderPolygon( points.translated( -bounds.topLeft() ), translatedRings, context );
-    }
-    else if ( layertype == QgsSymbol::Line )
-    {
-      ( static_cast<QgsLineSymbolLayer *>( layer ) )->renderPolygonStroke( points.translated( -bounds.topLeft() ), translatedRings, context );
-    }
-    delete translatedRings;
-  }
-  else
-  {
-    if ( layertype == QgsSymbol::Fill )
-    {
-      ( static_cast<QgsFillSymbolLayer *>( layer ) )->renderPolygon( points, rings, context );
-    }
-    else if ( layertype == QgsSymbol::Line )
-    {
-      ( static_cast<QgsLineSymbolLayer *>( layer ) )->renderPolygonStroke( points, rings, context );
-    }
-  }
-}
-
-QRectF QgsFillSymbol::polygonBounds( const QPolygonF &points, const QList<QPolygonF> *rings ) const
-{
-  QRectF bounds = points.boundingRect();
-  if ( rings )
-  {
-    QList<QPolygonF>::const_iterator it = rings->constBegin();
-    for ( ; it != rings->constEnd(); ++it )
-    {
-      bounds = bounds.united( ( *it ).boundingRect() );
-    }
-  }
-  return bounds;
-}
-
-QList<QPolygonF> *QgsFillSymbol::translateRings( const QList<QPolygonF> *rings, double dx, double dy ) const
-{
-  if ( !rings )
-    return nullptr;
-
-  QList<QPolygonF> *translatedRings = new QList<QPolygonF>;
-  QList<QPolygonF>::const_iterator it = rings->constBegin();
-  for ( ; it != rings->constEnd(); ++it )
-  {
-    translatedRings->append( ( *it ).translated( dx, dy ) );
-  }
-  return translatedRings;
-}
-
-QgsFillSymbol *QgsFillSymbol::clone() const
-{
-  QgsFillSymbol *cloneSymbol = new QgsFillSymbol( cloneLayers() );
-  cloneSymbol->setOpacity( mOpacity );
-  Q_NOWARN_DEPRECATED_PUSH
-  cloneSymbol->setLayer( mLayer );
-  Q_NOWARN_DEPRECATED_POP
-  cloneSymbol->setClipFeaturesToExtent( mClipFeaturesToExtent );
-  cloneSymbol->setForceRHR( mForceRHR );
-  return cloneSymbol;
-}
-
-void QgsFillSymbol::setAngle( double angle )
-{
-  const auto constMLayers = mLayers;
-  for ( QgsSymbolLayer *layer : constMLayers )
-  {
-    if ( layer->type() != QgsSymbol::Fill )
-      continue;
-
-    QgsFillSymbolLayer *fillLayer = static_cast<QgsFillSymbolLayer *>( layer );
-
-    if ( fillLayer )
-      fillLayer->setAngle( angle );
-  }
-}
-
-

@@ -443,7 +443,7 @@ void QgsLayoutGuideCollection::applyGuidesToAllOtherPages( int sourcePage )
   }
 
   // remaining guides belong to source page - clone them to other pages
-  for ( QgsLayoutGuide *guide : qgis::as_const( mGuides ) )
+  for ( QgsLayoutGuide *guide : std::as_const( mGuides ) )
   {
     for ( int p = 0; p < mPageCollection->pageCount(); ++p )
     {
@@ -548,12 +548,12 @@ bool QgsLayoutGuideCollection::writeXml( QDomElement &parentElement, QDomDocumen
 bool QgsLayoutGuideCollection::readXml( const QDomElement &e, const QDomDocument &, const QgsReadWriteContext & )
 {
   QDomElement element = e;
-  if ( element.nodeName() != QStringLiteral( "GuideCollection" ) )
+  if ( element.nodeName() != QLatin1String( "GuideCollection" ) )
   {
     element = element.firstChildElement( QStringLiteral( "GuideCollection" ) );
   }
 
-  if ( element.nodeName() != QStringLiteral( "GuideCollection" ) )
+  if ( element.nodeName() != QLatin1String( "GuideCollection" ) )
   {
     return false;
   }

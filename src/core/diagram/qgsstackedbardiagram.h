@@ -36,11 +36,11 @@ class QgsRenderContext;
  * \ingroup core
  * \class QgsStackedBarDiagram
  *
- * A stacked bar chart diagram.
+ * \brief A stacked bar chart diagram.
  *
  * \since QGIS 3.12
  */
-class CORE_EXPORT QgsStackedBarDiagram: public QgsDiagram
+class CORE_EXPORT QgsStackedBarDiagram: public QgsDiagram SIP_NODEFAULTCTORS
 {
   public:
     QgsStackedBarDiagram();

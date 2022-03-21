@@ -34,14 +34,15 @@ class QFile;
 #define QgsDebugMsgLevel(str, level) if ( level <= QgsLogger::debugLevel() ) { QgsLogger::debug(QString(str), (level), __FILE__, __FUNCTION__, __LINE__); }(void)(0)
 #define QgsDebugCall QgsScopeLogger _qgsScopeLogger(__FILE__, __FUNCTION__, __LINE__)
 #else
-#define QgsDebugCall
-#define QgsDebugMsg(str)
-#define QgsDebugMsgLevel(str, level)
+#define QgsDebugCall do {} while(false)
+#define QgsDebugMsg(str) do {} while(false)
+#define QgsDebugMsgLevel(str, level) do {} while(false)
 #endif
 
 /**
  * \ingroup core
- * QgsLogger is a class to print debug/warning/error messages to the console.
+ * \brief QgsLogger is a class to print debug/warning/error messages to the console.
+ *
  * The advantage of this class over iostream & co. is that the
  * output can be controlled with environment variables:
  * QGIS_DEBUG is an int describing what debug messages are written to the console.
@@ -62,11 +63,12 @@ class CORE_EXPORT QgsLogger
 
     /**
      * Goes to qDebug.
-    \param msg the message to be printed
-    \param debuglevel
-    \param file file name where the message comes from
-    \param function function where the message comes from
-    \param line place in file where the message comes from*/
+     * \param msg the message to be printed
+     * \param debuglevel
+     * \param file file name where the message comes from
+     * \param function function where the message comes from
+     * \param line place in file where the message comes from
+    */
     static void debug( const QString &msg, int debuglevel = 1, const char *file = nullptr, const char *function = nullptr, int line = -1 );
 
     //! Similar to the previous method, but prints a variable int-value pair
@@ -90,18 +92,19 @@ class CORE_EXPORT QgsLogger
       debug( var, os.str().c_str(), file, function, line, debuglevel );
     }
 
-    //! Goes to qWarning
+    //! Goes to qWarning.
     static void warning( const QString &msg );
 
-    //! Goes to qCritical
+    //! Goes to qCritical.
     static void critical( const QString &msg );
 
-    //! Goes to qFatal
+    //! Goes to qFatal.
     static void fatal( const QString &msg );
 
     /**
      * Reads the environment variable QGIS_DEBUG and converts it to int. If QGIS_DEBUG is not set,
-     the function returns 1 if QGISDEBUG is defined and 0 if not*/
+     * the function returns 1 if QGISDEBUG is defined and 0 if not.
+    */
     static int debugLevel()
     {
       if ( sDebugLevel == -999 )
@@ -109,12 +112,13 @@ class CORE_EXPORT QgsLogger
       return sDebugLevel;
     }
 
-    //! Logs the message passed in to the logfile defined in QGIS_LOG_FILE if any. *
+    //! Logs the message passed in to the logfile defined in QGIS_LOG_FILE if any.
     static void logMessageToFile( const QString &message );
 
     /**
      * Reads the environment variable QGIS_LOG_FILE. Returns NULL if the variable is not set,
-     * otherwise returns a file name for writing log messages to.*/
+     * otherwise returns a file name for writing log messages to.
+    */
     static QString logFile();
 
   private:

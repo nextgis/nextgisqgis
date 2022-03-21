@@ -1,11 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 ################################################################################
 ##
 ## Project: NextGIS Borsch build system
 ## Author: Dmitry Baryshnikov <dmitry.baryshnikov@nextgis.com>
 ##
-## Copyright (c) 2017 NextGIS <info@nextgis.com>
+## Copyright (c) 2017-2022 NextGIS <info@nextgis.com>
 ## License: GPL v.2
 ##
 ## Purpose: Post processing script
@@ -60,7 +60,7 @@ def extract_value(text):
 
 def color_print(text, bold, color):
     if sys.platform == 'win32':
-        print text
+        print (text)
     else:
         out_text = ''
         if bold:
@@ -86,20 +86,20 @@ def color_print(text, bold, color):
         else:
             out_text += bcolors.OKGRAY
         out_text += text + bcolors.ENDC
-        print out_text
+        print (out_text)
 
 with open(cmake_src_path) as f:
     for line in f:
-        if "SET(CPACK_PACKAGE_VERSION_MAJOR" in line:
+        if "SET(CPACK_PACKAGE_VERSION_MAJOR" in line.upper():
             qgis_major = extract_value(line)
             qgis_major_get = True
-        elif "SET(CPACK_PACKAGE_VERSION_MINOR" in line:
+        elif "SET(CPACK_PACKAGE_VERSION_MINOR" in line.upper():
             qgis_minor = extract_value(line)
             qgis_minor_get = True
-        elif "SET(CPACK_PACKAGE_VERSION_PATCH" in line:
+        elif "SET(CPACK_PACKAGE_VERSION_PATCH" in line.upper():
             qgis_patch = extract_value(line)
             qgis_patch_get = True
-        elif "SET(RELEASE_NAME" in line:
+        elif "SET(RELEASE_NAME" in line.upper():
             qgis_name = extract_value(line)
             qgis_name_get = True
 
@@ -108,17 +108,17 @@ with open(cmake_src_path) as f:
 
 for line in fileinput.input(utilfile, inplace = 1):
     if "set(QGIS_MAJOR " in line:
-        print "    set(QGIS_MAJOR " + qgis_major + ")"
+        print ("    set(QGIS_MAJOR " + qgis_major + ")")
     elif "set(QGIS_MINOR " in line:
-            print "    set(QGIS_MINOR " + qgis_minor + ")"
+        print ("    set(QGIS_MINOR " + qgis_minor + ")")
     elif "set(QGIS_PATCH " in line:
-            print "    set(QGIS_PATCH " + qgis_patch + ")"
+        print ("    set(QGIS_PATCH " + qgis_patch + ")")
     elif "set(QGIS_NAME " in line:
-            print "    set(QGIS_NAME \"" + qgis_name + "\")"
+        print ("    set(QGIS_NAME \"" + qgis_name + "\")")
     elif "set(VERSION_PATCH " in line:
-            print "    set(VERSION_PATCH 0)"        
+        print ("    set(VERSION_PATCH 0)")
     else:
-        print line,
+        print (line),
 
 # overwrite files
 ovr_path = os.path.join(os.getcwd(), 'overwrite')
@@ -137,4 +137,5 @@ patches_path = os.path.join(os.getcwd(), 'patches')
 if os.path.exists(patches_path):
     for dirname, dirnames, filenames in os.walk(patches_path):
         for patch in filenames:
-            subprocess.call(['git', 'apply', os.path.join(patches_path, patch)], cwd="../")
+            color_print("Patch " + patch, False, 'LRED')
+            subprocess.call(['git', 'apply', '--ignore-whitespace', os.path.join(patches_path, patch)], cwd = "../")

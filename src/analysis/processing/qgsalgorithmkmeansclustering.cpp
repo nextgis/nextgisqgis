@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgsalgorithmkmeansclustering.h"
+#include <unordered_map>
 
 ///@cond PRIVATE
 
@@ -52,8 +53,16 @@ void QgsKMeansClusteringAlgorithm::initAlgorithm( const QVariantMap & )
                 QObject::tr( "Input layer" ), QList< int >() << QgsProcessing::TypeVectorAnyGeometry ) );
   addParameter( new QgsProcessingParameterNumber( QStringLiteral( "CLUSTERS" ), QObject::tr( "Number of clusters" ),
                 QgsProcessingParameterNumber::Integer, 5, false, 1 ) );
-  addParameter( new QgsProcessingParameterString( QStringLiteral( "FIELD_NAME" ),
-                QObject::tr( "Cluster field name" ), QStringLiteral( "CLUSTER_ID" ) ) );
+
+  auto fieldNameParam = std::make_unique<QgsProcessingParameterString>( QStringLiteral( "FIELD_NAME" ),
+                        QObject::tr( "Cluster field name" ), QStringLiteral( "CLUSTER_ID" ) );
+  fieldNameParam->setFlags( fieldNameParam->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
+  addParameter( fieldNameParam.release() );
+  auto sizeFieldNameParam = std::make_unique<QgsProcessingParameterString>( QStringLiteral( "SIZE_FIELD_NAME" ),
+                            QObject::tr( "Cluster size field name" ), QStringLiteral( "CLUSTER_SIZE" ) );
+  sizeFieldNameParam->setFlags( sizeFieldNameParam->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
+  addParameter( sizeFieldNameParam.release() );
+
   addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Clusters" ), QgsProcessing::TypeVectorAnyGeometry ) );
 }
 
@@ -77,9 +86,11 @@ QVariantMap QgsKMeansClusteringAlgorithm::processAlgorithm( const QVariantMap &p
   int k = parameterAsInt( parameters, QStringLiteral( "CLUSTERS" ), context );
 
   QgsFields outputFields = source->fields();
-  const QString clusterFieldName = parameterAsString( parameters, QStringLiteral( "FIELD_NAME" ), context );
   QgsFields newFields;
+  const QString clusterFieldName = parameterAsString( parameters, QStringLiteral( "FIELD_NAME" ), context );
   newFields.append( QgsField( clusterFieldName, QVariant::Int ) );
+  const QString clusterSizeFieldName = parameterAsString( parameters, QStringLiteral( "SIZE_FIELD_NAME" ), context );
+  newFields.append( QgsField( clusterSizeFieldName, QVariant::Int ) );
   outputFields = QgsProcessingUtils::combineFields( outputFields, newFields );
 
   QString dest;
@@ -89,9 +100,10 @@ QVariantMap QgsKMeansClusteringAlgorithm::processAlgorithm( const QVariantMap &p
 
   // build list of point inputs - if it's already a point, use that. If not, take the centroid.
   feedback->pushInfo( QObject::tr( "Collecting input points" ) );
-  double step = source->featureCount() > 0 ? 50.0 / source->featureCount() : 1;
+  const double step = source->featureCount() > 0 ? 50.0 / source->featureCount() : 1;
   int i = 0;
   int n = 0;
+  int featureWithGeometryCount = 0;
   QgsFeature feat;
 
   std::vector< Feature > clusterFeatures;
@@ -108,13 +120,14 @@ QVariantMap QgsKMeansClusteringAlgorithm::processAlgorithm( const QVariantMap &p
     feedback->setProgress( i * step );
     if ( !feat.hasGeometry() )
       continue;
+    featureWithGeometryCount++;
 
     QgsPointXY point;
     if ( QgsWkbTypes::flatType( feat.geometry().wkbType() ) == QgsWkbTypes::Point )
       point = QgsPointXY( *qgsgeometry_cast< const QgsPoint * >( feat.geometry().constGet() ) );
     else
     {
-      QgsGeometry centroid = feat.geometry().centroid();
+      const QgsGeometry centroid = feat.geometry().centroid();
       if ( centroid.isNull() )
         continue; // centroid failed, e.g. empty linestring
 
@@ -123,7 +136,7 @@ QVariantMap QgsKMeansClusteringAlgorithm::processAlgorithm( const QVariantMap &p
 
     n++;
 
-    idToObj.insert( feat.id(), clusterFeatures.size() );
+    idToObj[ feat.id() ] = clusterFeatures.size();
     clusterFeatures.emplace_back( Feature( point ) );
   }
 
@@ -144,6 +157,11 @@ QVariantMap QgsKMeansClusteringAlgorithm::processAlgorithm( const QVariantMap &p
     calculateKMeans( clusterFeatures, centers, k, feedback );
   }
 
+  // cluster size
+  std::unordered_map< int, int> clusterSize;
+  for ( const int obj : idToObj )
+    clusterSize[ clusterFeatures[ obj ].cluster ]++;
+
   features = source->getFeatures();
   i = 0;
   while ( features.nextFeature( feat ) )
@@ -156,24 +174,23 @@ QVariantMap QgsKMeansClusteringAlgorithm::processAlgorithm( const QVariantMap &p
 
     feedback->setProgress( 50 + i * step );
     QgsAttributes attr = feat.attributes();
-    if ( !feat.hasGeometry() )
+    const auto obj = idToObj.find( feat.id() );
+    if ( !feat.hasGeometry() || obj == idToObj.end() )
     {
-      attr << QVariant();
+      attr << QVariant() << QVariant();
     }
     else if ( k <= 1 )
     {
-      attr << 0;
-    }
-    else if ( !idToObj.contains( feat.id() ) )
-    {
-      attr << QVariant();
+      attr << 0 << featureWithGeometryCount;
     }
     else
     {
-      attr << clusterFeatures[ idToObj.value( feat.id() ) ].cluster;
+      const int cluster = clusterFeatures[ *obj ].cluster;
+      attr << cluster << clusterSize[ cluster ];
     }
     feat.setAttributes( attr );
-    sink->addFeature( feat, QgsFeatureSink::FastInsert );
+    if ( !sink->addFeature( feat, QgsFeatureSink::FastInsert ) )
+      throw QgsProcessingException( writeFeatureError( sink.get(), parameters, QStringLiteral( "OUTPUT" ) ) );
   }
 
   QVariantMap outputs;
@@ -185,7 +202,7 @@ QVariantMap QgsKMeansClusteringAlgorithm::processAlgorithm( const QVariantMap &p
 
 void QgsKMeansClusteringAlgorithm::initClusters( std::vector<Feature> &points, std::vector<QgsPointXY> &centers, const int k, QgsProcessingFeedback *feedback )
 {
-  std::size_t n = points.size();
+  const std::size_t n = points.size();
   if ( n == 0 )
     return;
 
@@ -225,7 +242,7 @@ void QgsKMeansClusteringAlgorithm::initClusters( std::vector<Feature> &points, s
 
   if ( feedback && duplicateCount > 1 )
   {
-    feedback->pushInfo( QObject::tr( "There are at least %1 duplicate inputs, the number of output clusters may be less than was requested" ).arg( duplicateCount ) );
+    feedback->pushInfo( QObject::tr( "There are at least %n duplicate input(s), the number of output clusters may be less than was requested", nullptr, duplicateCount ) );
   }
 
   // By now two points should be found and be not the same
@@ -305,9 +322,9 @@ void QgsKMeansClusteringAlgorithm::calculateKMeans( std::vector<QgsKMeansCluster
   }
 
   if ( !converged && feedback )
-    feedback->reportError( QObject::tr( "Clustering did not converge after %1 iterations" ).arg( i ) );
+    feedback->reportError( QObject::tr( "Clustering did not converge after %n iteration(s)", nullptr, i ) );
   else if ( feedback )
-    feedback->pushInfo( QObject::tr( "Clustering converged after %1 iterations" ).arg( i ) );
+    feedback->pushInfo( QObject::tr( "Clustering converged after %n iteration(s)", nullptr, i ) );
 }
 
 // ported from https://github.com/postgis/postgis/blob/svn-trunk/liblwgeom/lwkmeans.c
@@ -315,7 +332,7 @@ void QgsKMeansClusteringAlgorithm::calculateKMeans( std::vector<QgsKMeansCluster
 void QgsKMeansClusteringAlgorithm::findNearest( std::vector<QgsKMeansClusteringAlgorithm::Feature> &points, const std::vector<QgsPointXY> &centers, const int k, bool &changed )
 {
   changed = false;
-  std::size_t n = points.size();
+  const std::size_t n = points.size();
   for ( std::size_t i = 0; i < n; i++ )
   {
     Feature &point = points[i];
@@ -348,7 +365,7 @@ void QgsKMeansClusteringAlgorithm::findNearest( std::vector<QgsKMeansClusteringA
 
 void QgsKMeansClusteringAlgorithm::updateMeans( const std::vector<Feature> &points, std::vector<QgsPointXY> &centers, std::vector<uint> &weights, const int k )
 {
-  uint n = points.size();
+  const uint n = points.size();
   std::fill( weights.begin(), weights.end(), 0 );
   for ( int i = 0; i < k; i++ )
   {
@@ -357,7 +374,7 @@ void QgsKMeansClusteringAlgorithm::updateMeans( const std::vector<Feature> &poin
   }
   for ( uint i = 0; i < n; i++ )
   {
-    int cluster = points[i].cluster;
+    const int cluster = points[i].cluster;
     centers[cluster] += QgsVector( points[i].point.x(),
                                    points[i].point.y() );
     weights[cluster] += 1;

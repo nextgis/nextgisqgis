@@ -19,13 +19,14 @@
 #define QGSMAPSETTINGSUTILS_H
 
 #include "qgis_core.h"
-#include "qgsmapsettings.h"
-
+#include "qgis_sip.h"
 #include <QString>
+
+class QgsMapSettings;
 
 /**
  * \ingroup core
- * Utilities for map settings.
+ * \brief Utilities for map settings.
  * \since QGIS 3.0
  */
 class CORE_EXPORT QgsMapSettingsUtils
@@ -34,10 +35,21 @@ class CORE_EXPORT QgsMapSettingsUtils
   public:
 
     /**
-     * Checks whether any of the layers attached to a map settings object contain advanced effects
-     * \param mapSettings map settings
+     * Flags for controlling the behavior of containsAdvancedEffects()
+     * \since QGIS 3.14
      */
-    static const QStringList containsAdvancedEffects( const QgsMapSettings &mapSettings );
+    enum class EffectsCheckFlag
+    {
+      IgnoreGeoPdfSupportedEffects = 1 << 0, //!< Ignore advanced effects which are supported in GeoPDF exports
+    };
+    Q_DECLARE_FLAGS( EffectsCheckFlags, EffectsCheckFlag )
+
+    /**
+     * Checks whether any of the layers attached to a map settings object contain advanced effects.
+     *
+     * The optional \a flags argument can be used to fine-tune the check behavior.
+     */
+    static QStringList containsAdvancedEffects( const QgsMapSettings &mapSettings, EffectsCheckFlags flags = QgsMapSettingsUtils::EffectsCheckFlags() );
 
     /**
      * Computes the six parameters of a world file.
@@ -60,5 +72,7 @@ class CORE_EXPORT QgsMapSettingsUtils
     static QString worldFileContent( const QgsMapSettings &mapSettings );
 
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS( QgsMapSettingsUtils::EffectsCheckFlags )
 
 #endif

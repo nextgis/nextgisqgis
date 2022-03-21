@@ -37,10 +37,8 @@
 QgsHillshadeRenderer::QgsHillshadeRenderer( QgsRasterInterface *input, int band, double lightAzimuth, double lightAngle ):
   QgsRasterRenderer( input, QStringLiteral( "hillshade" ) )
   , mBand( band )
-  , mZFactor( 1 )
   , mLightAngle( lightAngle )
   , mLightAzimuth( lightAzimuth )
-  , mMultiDirectional( false )
 {
 
 }
@@ -127,10 +125,13 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
     alphaBlock = inputBlock;
   }
 
-  if ( !outputBlock->reset( Qgis::ARGB32_Premultiplied, width, height ) )
+  if ( !outputBlock->reset( Qgis::DataType::ARGB32_Premultiplied, width, height ) )
   {
     return outputBlock.release();
   }
+
+  if ( width == 0 || height == 0 )
+    return outputBlock.release();
 
   // Starting the computation
 
@@ -175,7 +176,7 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
     if ( source.isEmpty() )
     {
       useOpenCL = false;
-      QgsMessageLog::logMessage( QObject::tr( "Error loading OpenCL program source from path %1" ).arg( QgsOpenClUtils::sourcePath() ), QgsOpenClUtils::LOGMESSAGE_TAG, Qgis::Critical );
+      QgsMessageLog::logMessage( QObject::tr( "Error loading OpenCL program source from path %1" ).arg( QgsOpenClUtils::sourcePath() ), QgsOpenClUtils::LOGMESSAGE_TAG, Qgis::MessageLevel::Critical );
     }
   }
 
@@ -218,7 +219,7 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
 
       if ( inputBlock->dataType() != Qgis::DataType::Float32 )
       {
-        source.replace( QStringLiteral( "__global float *scanLine" ), QStringLiteral( "__global %1 *scanLine" ).arg( typeName ) );
+        source.replace( QLatin1String( "__global float *scanLine" ), QStringLiteral( "__global %1 *scanLine" ).arg( typeName ) );
       }
 
       // Data type for input is Float32 (4 bytes)
@@ -232,7 +233,7 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
       // Buffer scanlines, 1px height, 2px wider
       // Data type for input is Float32 (4 bytes)
       // keep only three scanlines in memory at a time, make room for initial and final nodata
-      std::unique_ptr<QgsRasterBlock> scanLine = qgis::make_unique<QgsRasterBlock>( inputBlock->dataType(), scanLineWidth, 1 );
+      std::unique_ptr<QgsRasterBlock> scanLine = std::make_unique<QgsRasterBlock>( inputBlock->dataType(), scanLineWidth, 1 );
       // Note: output block is not 2px wider and it is an image
       // Prepare context and queue
       cl::Context ctx = QgsOpenClUtils::context();
@@ -357,10 +358,10 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
     catch ( cl::Error &e )
     {
       QgsMessageLog::logMessage( QObject::tr( "Error running OpenCL program: %1 - %2" ).arg( e.what( ) ).arg( QgsOpenClUtils::errorText( e.err( ) ) ),
-                                 QgsOpenClUtils::LOGMESSAGE_TAG, Qgis::Critical );
+                                 QgsOpenClUtils::LOGMESSAGE_TAG, Qgis::MessageLevel::Critical );
       QgsOpenClUtils::setEnabled( false );
       QgsMessageLog::logMessage( QObject::tr( "OpenCL has been disabled, you can re-enable it in the options dialog." ),
-                                 QgsOpenClUtils::LOGMESSAGE_TAG, Qgis::Critical );
+                                 QgsOpenClUtils::LOGMESSAGE_TAG, Qgis::MessageLevel::Critical );
     }
 
   } // End of OpenCL processing path
@@ -369,78 +370,92 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
 
 #endif
 
-    for ( qgssize i = 0; i < static_cast<qgssize>( height ); i++ )
+    double pixelValues[9] {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    bool isNoData[9] {false, false, false, false, false, false, false, false, false};
+
+    for ( int row = 0; row < height; row++ )
     {
-
-      for ( qgssize j = 0; j < static_cast<qgssize>( width ); j++ )
+      for ( int col = 0; col < width; col++ )
       {
-
-        if ( inputBlock->isNoData( i,  j ) )
+        int iUp = row - 1;
+        int iDown = row + 1;
+        if ( row == 0 )
         {
-          outputBlock->setColor( static_cast<int>( i ), static_cast<int>( j ), defaultNodataColor );
+          iUp = row;
+        }
+        else if ( row == height - 1 )
+        {
+          iDown = row;
+        }
+
+        if ( col == 0 )
+        {
+          // seed the matrix with the values from the first column
+          pixelValues[ 0 ] = inputBlock->valueAndNoData( iUp, 0, isNoData[0] );
+          pixelValues[ 1 ] = pixelValues[0];
+          isNoData[1] = isNoData[0];
+          pixelValues[ 2 ] = pixelValues[0];
+          isNoData[2] = isNoData[0];
+
+          pixelValues[ 3 ] = inputBlock->valueAndNoData( row, 0, isNoData[3] );
+          pixelValues[ 4 ] = pixelValues[3];
+          isNoData[4] = isNoData[3];
+          pixelValues[ 5 ] = pixelValues[3];
+          isNoData[5] = isNoData[3];
+
+          pixelValues[ 6 ] = inputBlock->valueAndNoData( iDown, 0, isNoData[6] );
+          pixelValues[ 7 ] = pixelValues[6];
+          isNoData[7] = isNoData[6];
+          pixelValues[ 8 ] = pixelValues[6];
+          isNoData[8] = isNoData[6];
+        }
+        else
+        {
+          // shift matrices left
+          pixelValues[ 0 ] = pixelValues[1];
+          pixelValues[ 1 ] = pixelValues[2];
+          pixelValues[ 3 ] = pixelValues[4];
+          pixelValues[ 4 ] = pixelValues[5];
+          pixelValues[ 6 ] = pixelValues[7];
+          pixelValues[ 7 ] = pixelValues[8];
+          isNoData[ 0 ] = isNoData[1];
+          isNoData[ 1 ] = isNoData[2];
+          isNoData[ 3 ] = isNoData[4];
+          isNoData[ 4 ] = isNoData[5];
+          isNoData[ 6 ] = isNoData[7];
+          isNoData[ 7 ] = isNoData[8];
+        }
+
+        // calculate new values
+        if ( col < width - 1 )
+        {
+          pixelValues[2] = inputBlock->valueAndNoData( iUp, col + 1, isNoData[2] );
+          pixelValues[5] = inputBlock->valueAndNoData( row, col + 1, isNoData[5] );
+          pixelValues[8] = inputBlock->valueAndNoData( iDown, col + 1, isNoData[8] );
+        }
+
+        if ( isNoData[ 4 ] )
+        {
+          outputBlock->setColor( row, col, defaultNodataColor );
           continue;
         }
 
-        qgssize iUp, iDown, jLeft, jRight;
-        if ( i == 0 )
-        {
-          iUp = i;
-          iDown = i + 1;
-        }
-        else if ( i < static_cast<qgssize>( height ) - 1 )
-        {
-          iUp = i - 1;
-          iDown = i + 1;
-        }
-        else
-        {
-          iUp = i - 1;
-          iDown = i;
-        }
+        // This is center cell. Use this in place of nodata neighbors
+        const double x22 = pixelValues[4];
 
-        if ( j == 0 )
-        {
-          jLeft = j;
-          jRight = j + 1;
-        }
-        else if ( j <  static_cast<qgssize>( width ) - 1 )
-        {
-          jLeft = j - 1;
-          jRight = j + 1;
-        }
-        else
-        {
-          jLeft = j - 1;
-          jRight = j;
-        }
-
-        double x11;
-        double x21;
-        double x31;
-        double x12;
-        double x22; // Working cell
-        double x32;
-        double x13;
-        double x23;
-        double x33;
-
-        // This is center cell. It is not nodata. Use this in place of nodata neighbors
-        x22 = inputBlock->value( i, j );
-
-        x11 = inputBlock->isNoData( iUp, jLeft )  ? x22 : inputBlock->value( iUp, jLeft );
-        x21 = inputBlock->isNoData( i, jLeft )     ? x22 : inputBlock->value( i, jLeft );
-        x31 = inputBlock->isNoData( iDown, jLeft ) ? x22 : inputBlock->value( iDown, jLeft );
-
-        x12 = inputBlock->isNoData( iUp, j )       ? x22 : inputBlock->value( iUp, j );
+        const double x11 = isNoData[0] ? x22 : pixelValues[0];
+        const double x21 = isNoData[3] ? x22 : pixelValues[3];
+        const double x31 = isNoData[6] ? x22 : pixelValues[6];
+        const double x12 = isNoData[1] ? x22 : pixelValues[1];
         // x22
-        x32 = inputBlock->isNoData( iDown, j )     ? x22 : inputBlock->value( iDown, j );
+        const double x32 = isNoData[7] ? x22 : pixelValues[7];
+        const double x13 = isNoData[2] ? x22 : pixelValues[2];
+        const double x23 = isNoData[5] ? x22 : pixelValues[5];
+        const double x33 = isNoData[8] ? x22 : pixelValues[8];
 
-        x13 = inputBlock->isNoData( iUp, jRight )   ? x22 : inputBlock->value( iUp, jRight );
-        x23 = inputBlock->isNoData( i, jRight )     ? x22 : inputBlock->value( i, jRight );
-        x33 = inputBlock->isNoData( iDown, jRight ) ? x22 : inputBlock->value( iDown, jRight );
-
-        double derX = calcFirstDerX( x11, x21, x31, x12, x22, x32, x13, x23, x33, cellXSize );
-        double derY = calcFirstDerY( x11, x21, x31, x12, x22, x32, x13, x23, x33, cellYSize );
+        // Calculates the first order derivative in x-direction according to Horn (1981)
+        const double derX = ( ( x13 + x23 + x23 + x33 ) - ( x11 + x21 + x21 + x31 ) ) / ( 8 * cellXSize );
+        const double derY = ( ( x31 + x32 + x32 + x33 ) - ( x11 + x12 + x12 + x13 ) ) / ( 8 * -cellYSize );
 
         // Fast formula
 
@@ -448,11 +463,11 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
         if ( !mMultiDirectional )
         {
           // Standard single direction hillshade
-          grayValue = qBound( 0.0, ( sin_altRadians_mul_254 -
-                                     ( derY * cos_az_mul_cos_alt_mul_z_mul_254 -
-                                       derX * sin_az_mul_cos_alt_mul_z_mul_254 ) ) /
-                              std::sqrt( 1 + square_z * ( derX * derX + derY * derY ) )
-                              , 255.0 );
+          grayValue = std::clamp( ( sin_altRadians_mul_254 -
+                                    ( derY * cos_az_mul_cos_alt_mul_z_mul_254 -
+                                      derX * sin_az_mul_cos_alt_mul_z_mul_254 ) ) /
+                                  std::sqrt( 1 + square_z * ( derX * derX + derY * derY ) ),
+                                  0.0, 255.0 );
         }
         else
         {
@@ -464,7 +479,7 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
           // Flat?
           if ( xx_plus_yy == 0.0 )
           {
-            grayValue = qBound( 0.0f, static_cast<float>( 1.0 + sin_altRadians_mul_254 ), 255.0f );
+            grayValue = std::clamp( static_cast<float>( 1.0 + sin_altRadians_mul_254 ), 0.0f, 255.0f );
           }
           else
           {
@@ -494,7 +509,7 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
                                            weight_360 * val360_mul_127 ) / xx_plus_yy ) /
                                        ( 1 + square_z * xx_plus_yy );
 
-            grayValue = qBound( 0.0f, 1.0f + cang_mul_127, 255.0f );
+            grayValue = std::clamp( 1.0f + cang_mul_127, 0.0f, 255.0f );
           }
         }
 
@@ -505,16 +520,16 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
         }
         if ( mAlphaBand > 0 )
         {
-          currentAlpha *= alphaBlock->value( i ) / 255.0;
+          currentAlpha *= alphaBlock->value( row ) / 255.0;
         }
 
         if ( qgsDoubleNear( currentAlpha, 1.0 ) )
         {
-          outputBlock->setColor( i, j, qRgba( grayValue, grayValue, grayValue, 255 ) );
+          outputBlock->setColor( row, col, qRgba( grayValue, grayValue, grayValue, 255 ) );
         }
         else
         {
-          outputBlock->setColor( i, j, qRgba( currentAlpha * grayValue, currentAlpha * grayValue, currentAlpha * grayValue, currentAlpha * 255 ) );
+          outputBlock->setColor( row, col, qRgba( currentAlpha * grayValue, currentAlpha * grayValue, currentAlpha * grayValue, currentAlpha * 255 ) );
         }
       }
     }
@@ -558,23 +573,7 @@ void QgsHillshadeRenderer::setBand( int bandNo )
   mBand = bandNo;
 }
 
-double QgsHillshadeRenderer::calcFirstDerX( double x11, double x21, double x31, double x12, double x22, double x32, double x13, double x23, double x33, double cellsize )
-{
-  Q_UNUSED( x12 )
-  Q_UNUSED( x22 )
-  Q_UNUSED( x32 )
-  return ( ( x13 + x23 + x23 + x33 ) - ( x11 + x21 + x21 + x31 ) ) / ( 8 * cellsize );
-}
-
-double QgsHillshadeRenderer::calcFirstDerY( double x11, double x21, double x31, double x12, double x22, double x32, double x13, double x23, double x33, double cellsize )
-{
-  Q_UNUSED( x21 )
-  Q_UNUSED( x22 )
-  Q_UNUSED( x23 )
-  return ( ( x31 + x32 + x32 + x33 ) - ( x11 + x12 + x12 + x13 ) ) / ( 8 * -cellsize );
-}
-
-void QgsHillshadeRenderer::toSld( QDomDocument &doc, QDomElement &element, const QgsStringMap &props ) const
+void QgsHillshadeRenderer::toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const
 {
   // create base structure
   QgsRasterRenderer::toSld( doc, element, props );

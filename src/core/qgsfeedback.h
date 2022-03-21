@@ -23,16 +23,15 @@
 
 /**
  * \ingroup core
- * Base class for feedback objects to be used for cancellation of something running in a worker thread.
+ * \brief Base class for feedback objects to be used for cancellation of something running in a worker thread.
+ *
  * The class may be used as is or it may be subclassed for extended functionality
  * for a particular operation (e.g. report progress or pass some data for preview).
  *
  * When cancel() is called, the internal code has two options to check for cancellation state:
  *
- * - if the worker thread uses an event loop (e.g. for network communication), the code can
- *   make a queued connection to canceled() signal and handle the cancellation in its slot.
- * - if the worker thread does not use an event loop, it can poll isCanceled() method regularly
- *   to see if the operation should be canceled.
+ * - if the worker thread uses an event loop (e.g. for network communication), the code can make a queued connection to canceled() signal and handle the cancellation in its slot.
+ * - if the worker thread does not use an event loop, it can poll isCanceled() method regularly to see if the operation should be canceled.
  *
  * The class is meant to be created and destroyed in the main thread.
  *
@@ -52,7 +51,7 @@ class CORE_EXPORT QgsFeedback : public QObject
     {}
 
     //! Tells whether the operation has been canceled already
-    bool isCanceled() const { return mCanceled; }
+    bool isCanceled() const SIP_HOLDGIL { return mCanceled; }
 
     /**
      * Sets the current progress for the feedback object. The \a progress
@@ -78,7 +77,30 @@ class CORE_EXPORT QgsFeedback : public QObject
      * \see progressChanged()
      * \since QGIS 3.0
      */
-    double progress() const { return mProgress; }
+    double progress() const SIP_HOLDGIL { return mProgress; }
+
+    /**
+     * Returns the current processed objects count reported by the feedback object. Depending on how the
+     * feedback object is used processed count reporting may not be supported. The returned value
+     * is an unsigned long integer and starts from 0.
+     * \see setProcessedCount()
+     * \see processedCountChanged()
+     * \since QGIS 3.24
+     */
+    unsigned long long processedCount() const SIP_HOLDGIL { return mProcessedCount; }
+
+    /**
+     * Sets the current processed objects count for the feedback object. The \a processedCount
+     * argument is an unsigned long integer and starts from 0.
+     * \see processedCount()
+     * \see processedCountChanged()
+     * \since QGIS 3.24
+     */
+    void setProcessedCount( unsigned long long processedCount )
+    {
+      mProcessedCount = processedCount;
+      emit processedCountChanged( processedCount );
+    }
 
   public slots:
 
@@ -105,11 +127,23 @@ class CORE_EXPORT QgsFeedback : public QObject
      */
     void progressChanged( double progress );
 
+    /**
+     * Emitted when the feedback object reports a change in the number of processed objects.
+     * Depending on how the feedback object is used processed count reporting may not be supported. The \a processedCount
+     * argument is an unsigned long integer and starts from 0.
+     * \see setProgress()
+     * \see progress()
+     * \since QGIS 3.24
+     */
+    void processedCountChanged( unsigned long long processedCount );
+
   private:
     //! Whether the operation has been canceled already. False by default.
     bool mCanceled = false;
 
     double mProgress = 0.0;
+    unsigned long long mProcessedCount = 0;
 };
+
 
 #endif // QGSFEEDBACK_H

@@ -31,10 +31,16 @@ void QgsShadowEffect::draw( QgsRenderContext &context )
   if ( !source() || !enabled() || !context.painter() )
     return;
 
+  if ( context.feedback() && context.feedback()->isCanceled() )
+    return;
+
   QImage colorisedIm = sourceAsImage( context )->copy();
 
+  if ( context.feedback() && context.feedback()->isCanceled() )
+    return;
+
   QPainter *painter = context.painter();
-  painter->save();
+  const QgsScopedQPainterState painterState( painter );
   painter->setCompositionMode( mBlendMode );
 
   if ( !exteriorShadow() )
@@ -46,26 +52,27 @@ void QgsShadowEffect::draw( QgsRenderContext &context )
 
   QgsImageOperation::overlayColor( colorisedIm, mColor );
 
-  int blurLevel = std::round( context.convertToPainterUnits( mBlurLevel, mBlurUnit, mBlurMapUnitScale ) );
+  const int blurLevel = std::round( context.convertToPainterUnits( mBlurLevel, mBlurUnit, mBlurMapUnitScale, Qgis::RenderSubcomponentProperty::BlurSize ) );
   if ( blurLevel <= 16 )
   {
-    QgsImageOperation::stackBlur( colorisedIm, blurLevel );
+    QgsImageOperation::stackBlur( colorisedIm, blurLevel, false, context.feedback() );
   }
   else
   {
-    QImage *imb = QgsImageOperation::gaussianBlur( colorisedIm, blurLevel );
-    colorisedIm = QImage( *imb );
+    QImage *imb = QgsImageOperation::gaussianBlur( colorisedIm, blurLevel, context.feedback() );
+    if ( !imb->isNull() )
+      colorisedIm = QImage( *imb );
     delete imb;
   }
 
-  double offsetDist = context.convertToPainterUnits( mOffsetDist, mOffsetUnit, mOffsetMapUnitScale );
+  const double offsetDist = context.convertToPainterUnits( mOffsetDist, mOffsetUnit, mOffsetMapUnitScale );
 
-  double   angleRad = mOffsetAngle * M_PI / 180; // to radians
-  QPointF transPt( -offsetDist * std::cos( angleRad + M_PI_2 ),
-                   -offsetDist * std::sin( angleRad + M_PI_2 ) );
+  const double   angleRad = mOffsetAngle * M_PI / 180; // to radians
+  const QPointF transPt( -offsetDist * std::cos( angleRad + M_PI_2 ),
+                         -offsetDist * std::sin( angleRad + M_PI_2 ) );
 
   //transparency, scale
-  QgsImageOperation::multiplyOpacity( colorisedIm, mOpacity );
+  QgsImageOperation::multiplyOpacity( colorisedIm, mOpacity, context.feedback() );
 
   if ( !exteriorShadow() )
   {
@@ -88,12 +95,11 @@ void QgsShadowEffect::draw( QgsRenderContext &context )
   {
     painter->drawImage( imageOffset( context ) + transPt, colorisedIm );
   }
-  painter->restore();
 }
 
-QgsStringMap QgsShadowEffect::properties() const
+QVariantMap QgsShadowEffect::properties() const
 {
-  QgsStringMap props;
+  QVariantMap props;
   props.insert( QStringLiteral( "enabled" ), mEnabled ? "1" : "0" );
   props.insert( QStringLiteral( "draw_mode" ), QString::number( int( mDrawMode ) ) );
   props.insert( QStringLiteral( "blend_mode" ), QString::number( int( mBlendMode ) ) );
@@ -109,17 +115,17 @@ QgsStringMap QgsShadowEffect::properties() const
   return props;
 }
 
-void QgsShadowEffect::readProperties( const QgsStringMap &props )
+void QgsShadowEffect::readProperties( const QVariantMap &props )
 {
   bool ok;
-  QPainter::CompositionMode mode = static_cast< QPainter::CompositionMode >( props.value( QStringLiteral( "blend_mode" ) ).toInt( &ok ) );
+  const QPainter::CompositionMode mode = static_cast< QPainter::CompositionMode >( props.value( QStringLiteral( "blend_mode" ) ).toInt( &ok ) );
   if ( ok )
   {
     mBlendMode = mode;
   }
   if ( props.contains( QStringLiteral( "transparency" ) ) )
   {
-    double transparency = props.value( QStringLiteral( "transparency" ) ).toDouble( &ok );
+    const double transparency = props.value( QStringLiteral( "transparency" ) ).toDouble( &ok );
     if ( ok )
     {
       mOpacity = 1.0 - transparency;
@@ -127,7 +133,7 @@ void QgsShadowEffect::readProperties( const QgsStringMap &props )
   }
   else
   {
-    double opacity = props.value( QStringLiteral( "opacity" ) ).toDouble( &ok );
+    const double opacity = props.value( QStringLiteral( "opacity" ) ).toDouble( &ok );
     if ( ok )
     {
       mOpacity = opacity;
@@ -135,7 +141,7 @@ void QgsShadowEffect::readProperties( const QgsStringMap &props )
   }
   mEnabled = props.value( QStringLiteral( "enabled" ), QStringLiteral( "1" ) ).toInt();
   mDrawMode = static_cast< QgsPaintEffect::DrawMode >( props.value( QStringLiteral( "draw_mode" ), QStringLiteral( "2" ) ).toInt() );
-  double level = props.value( QStringLiteral( "blur_level" ) ).toDouble( &ok );
+  const double level = props.value( QStringLiteral( "blur_level" ) ).toDouble( &ok );
   if ( ok )
   {
     mBlurLevel = level;
@@ -145,31 +151,34 @@ void QgsShadowEffect::readProperties( const QgsStringMap &props )
       mBlurLevel *= 0.2645;
     }
   }
-  mBlurUnit = QgsUnitTypes::decodeRenderUnit( props.value( QStringLiteral( "blur_unit" ) ) );
-  mBlurMapUnitScale = QgsSymbolLayerUtils::decodeMapUnitScale( props.value( QStringLiteral( "blur_unit_scale" ) ) );
-  int angle = props.value( QStringLiteral( "offset_angle" ) ).toInt( &ok );
+  mBlurUnit = QgsUnitTypes::decodeRenderUnit( props.value( QStringLiteral( "blur_unit" ) ).toString() );
+  mBlurMapUnitScale = QgsSymbolLayerUtils::decodeMapUnitScale( props.value( QStringLiteral( "blur_unit_scale" ) ).toString() );
+  const int angle = props.value( QStringLiteral( "offset_angle" ) ).toInt( &ok );
   if ( ok )
   {
     mOffsetAngle = angle;
   }
-  double distance = props.value( QStringLiteral( "offset_distance" ) ).toDouble( &ok );
+  const double distance = props.value( QStringLiteral( "offset_distance" ) ).toDouble( &ok );
   if ( ok )
   {
     mOffsetDist = distance;
   }
-  mOffsetUnit = QgsUnitTypes::decodeRenderUnit( props.value( QStringLiteral( "offset_unit" ) ) );
-  mOffsetMapUnitScale = QgsSymbolLayerUtils::decodeMapUnitScale( props.value( QStringLiteral( "offset_unit_scale" ) ) );
+  mOffsetUnit = QgsUnitTypes::decodeRenderUnit( props.value( QStringLiteral( "offset_unit" ) ).toString() );
+  mOffsetMapUnitScale = QgsSymbolLayerUtils::decodeMapUnitScale( props.value( QStringLiteral( "offset_unit_scale" ) ).toString() );
   if ( props.contains( QStringLiteral( "color" ) ) )
   {
-    mColor = QgsSymbolLayerUtils::decodeColor( props.value( QStringLiteral( "color" ) ) );
+    mColor = QgsSymbolLayerUtils::decodeColor( props.value( QStringLiteral( "color" ) ).toString() );
   }
 }
 
 QRectF QgsShadowEffect::boundingRect( const QRectF &rect, const QgsRenderContext &context ) const
 {
   //blur radius and offset distance
-  int blurLevel = std::round( context.convertToPainterUnits( mBlurLevel, mBlurUnit, mBlurMapUnitScale ) );
-  double spread = context.convertToPainterUnits( mOffsetDist, mOffsetUnit, mOffsetMapUnitScale );
+  const int blurLevel = std::round( context.convertToPainterUnits( mBlurLevel, mBlurUnit, mBlurMapUnitScale, Qgis::RenderSubcomponentProperty::BlurSize ) );
+
+  // spread is initially the shadow offset size
+  double spread = context.convertToPainterUnits( mOffsetDist, mOffsetUnit, mOffsetMapUnitScale, Qgis::RenderSubcomponentProperty::ShadowOffset );
+
   //plus possible extension due to blur, with a couple of extra pixels thrown in for safety
   spread += blurLevel * 2 + 10;
   return rect.adjusted( -spread, -spread, spread, spread );
@@ -180,7 +189,7 @@ QRectF QgsShadowEffect::boundingRect( const QRectF &rect, const QgsRenderContext
 // QgsDropShadowEffect
 //
 
-QgsPaintEffect *QgsDropShadowEffect::create( const QgsStringMap &map )
+QgsPaintEffect *QgsDropShadowEffect::create( const QVariantMap &map )
 {
   QgsDropShadowEffect *effect = new QgsDropShadowEffect();
   effect->readProperties( map );
@@ -213,7 +222,7 @@ bool QgsDropShadowEffect::exteriorShadow() const
 // QgsInnerShadowEffect
 //
 
-QgsPaintEffect *QgsInnerShadowEffect::create( const QgsStringMap &map )
+QgsPaintEffect *QgsInnerShadowEffect::create( const QVariantMap &map )
 {
   QgsInnerShadowEffect *effect = new QgsInnerShadowEffect();
   effect->readProperties( map );

@@ -44,7 +44,7 @@ bool QgsGeometryCheck::isCompatible( QgsVectorLayer *layer ) const
 
 QgsGeometryCheck::Flags QgsGeometryCheck::flags() const
 {
-  return nullptr;
+  return QgsGeometryCheck::Flags();
 }
 
 void QgsGeometryCheck::fixError( const QMap<QString, QgsFeaturePool *> &featurePools, QgsGeometryCheckError *error, int method, const QMap<QString, int> &mergeAttributeIndices, QgsGeometryCheck::Changes &changes ) const
@@ -65,7 +65,7 @@ QList<QgsGeometryCheckResolutionMethod> QgsGeometryCheck::availableResolutionMet
   const QStringList methods = resolutionMethods();
   Q_NOWARN_DEPRECATED_POP
 
-  int i = 0;
+  const int i = 0;
   for ( const QString &method : methods )
   {
     fixes.append( QgsGeometryCheckResolutionMethod( i, method, QString(), false ) );
@@ -175,7 +175,7 @@ double QgsGeometryCheck::scaleFactor( const QPointer<QgsVectorLayer> &layer ) co
   QgsVectorLayer *lyr = layer.data();
   if ( lyr )
   {
-    QgsCoordinateTransform ct( lyr->crs(), mContext->mapCrs, mContext->transformContext );
+    const QgsCoordinateTransform ct( lyr->crs(), mContext->mapCrs, mContext->transformContext );
     scaleFactor = ct.scaleFactor( lyr->extent() );
   }
   return scaleFactor;

@@ -27,13 +27,12 @@
 #include "qgsexpressioncontext.h"
 #include "qgsfields.h"
 #include "qgscoordinatetransform.h"
-#include "qgssymbol.h"
 #include "qgsproperty.h"
 #include "qgspropertycollection.h"
-#include "qgsdatadefinedsizelegend.h"
 
 #include "diagram/qgsdiagram.h"
 #include "qgsreadwritecontext.h"
+#include "qgsmapunitscale.h"
 
 class QgsDiagramRenderer;
 class QgsFeature;
@@ -45,6 +44,8 @@ class QgsVectorLayer;
 class QgsLayerTreeModelLegendNode;
 class QgsLayerTreeLayer;
 class QgsPaintEffect;
+class QgsDataDefinedSizeLegend;
+class QgsLineSymbol;
 
 namespace pal { class Layer; } SIP_SKIP
 
@@ -656,7 +657,7 @@ class CORE_EXPORT QgsDiagramSettings
 /**
  * \ingroup core
  * \class QgsDiagramInterpolationSettings
- * Additional diagram settings for interpolated size rendering.
+ * \brief Additional diagram settings for interpolated size rendering.
  */
 class CORE_EXPORT QgsDiagramInterpolationSettings
 {
@@ -685,9 +686,9 @@ class CORE_EXPORT QgsDiagramRenderer
 
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
-    if ( sipCpp->rendererName() == QStringLiteral( "SingleCategory" ) )
+    if ( sipCpp->rendererName() == QLatin1String( "SingleCategory" ) )
       sipType = sipType_QgsSingleCategoryDiagramRenderer;
-    else if ( sipCpp->rendererName() == QStringLiteral( "LinearlyInterpolated" ) )
+    else if ( sipCpp->rendererName() == QLatin1String( "LinearlyInterpolated" ) )
       sipType = sipType_QgsLinearlyInterpolatedDiagramRenderer;
     else
       sipType = NULL;
@@ -704,7 +705,8 @@ class CORE_EXPORT QgsDiagramRenderer
 
     /**
      * Returns new instance that is equivalent to this one
-     * \since QGIS 2.4 */
+     * \since QGIS 2.4
+    */
     virtual QgsDiagramRenderer *clone() const = 0 SIP_FACTORY;
 
     //! Returns size of the diagram for a feature in map units. Returns an invalid QSizeF in case of error
@@ -813,7 +815,7 @@ class CORE_EXPORT QgsDiagramRenderer
 
 /**
  * \ingroup core
- * Renders the diagrams for all features with the same settings
+ * \brief Renders the diagrams for all features with the same settings
 */
 class CORE_EXPORT QgsSingleCategoryDiagramRenderer : public QgsDiagramRenderer
 {
@@ -855,6 +857,10 @@ class CORE_EXPORT QgsLinearlyInterpolatedDiagramRenderer : public QgsDiagramRend
   public:
     QgsLinearlyInterpolatedDiagramRenderer();
     ~QgsLinearlyInterpolatedDiagramRenderer() override;
+    //! Copy constructor
+    QgsLinearlyInterpolatedDiagramRenderer( const QgsLinearlyInterpolatedDiagramRenderer &other );
+
+    QgsLinearlyInterpolatedDiagramRenderer &operator=( const QgsLinearlyInterpolatedDiagramRenderer &other );
 
     QgsLinearlyInterpolatedDiagramRenderer *clone() const override SIP_FACTORY;
 
@@ -922,9 +928,6 @@ class CORE_EXPORT QgsLinearlyInterpolatedDiagramRenderer : public QgsDiagramRend
     bool diagramSettings( const QgsFeature &feature, const QgsRenderContext &c, QgsDiagramSettings &s ) const override;
 
     QSizeF diagramSize( const QgsFeature &, const QgsRenderContext &c ) const override;
-
-    //! Copy constructor
-    QgsLinearlyInterpolatedDiagramRenderer( const QgsLinearlyInterpolatedDiagramRenderer &other );
 
   private:
     QgsDiagramSettings mSettings;

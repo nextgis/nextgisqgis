@@ -179,9 +179,11 @@ if(Threads_FOUND)
     set(TARGET_LINK_LIB ${TARGET_LINK_LIB} ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
-check_include_file("windows.h" HAVE_WINDOWS_H)
-if(HAVE_WINDOWS_H)
-    add_definitions(-D_HAVE_WINDOWS_H_)
+if (WIN32)
+    check_include_file("windows.h" HAVE_WINDOWS_H)
+    if(HAVE_WINDOWS_H)
+        add_definitions(-D_HAVE_WINDOWS_H_)
+    endif()
 endif()
 
 set(VENDOR_VERSION ${VERSION})
@@ -195,7 +197,6 @@ string(TIMESTAMP CURRENT_YEAR "%Y" UTC)
 
 math(EXPR QGIS_VERSION_INT "${CPACK_PACKAGE_VERSION_MAJOR}*10000+${CPACK_PACKAGE_VERSION_MINOR}*100+${CPACK_PACKAGE_VERSION_PATCH}")
 
-configure_file(${CMAKE_SOURCE_DIR}/cmake/qgsconfig.h.in ${CMAKE_CURRENT_BINARY_DIR}/qgsconfig.h)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake IMMEDIATE @ONLY)
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/qgsversion.h "#define QGSVERSION \"${VERSION}\"
 #define QGS_GIT_REMOTE_URL \"https://github.com/nextgis/nextgisqgis\" "

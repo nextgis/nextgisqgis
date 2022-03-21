@@ -46,14 +46,14 @@ class CORE_EXPORT QgsTileCache
 
     /**
      * Try to access a tile and load it into "image" argument
-     * \returns true if the tile exists in the cache
+     * \returns TRUE if the tile exists in the cache
      */
     static bool tile( const QUrl &url, QImage &image );
 
     //! how many tiles are stored in the in-memory cache
-    static int totalCost() { QMutexLocker locker( &sTileCacheMutex ); return sTileCache.totalCost(); }
+    static int totalCost();
     //! how many tiles can be stored in the in-memory cache
-    static int maxCost() { QMutexLocker locker( &sTileCacheMutex ); return sTileCache.maxCost(); }
+    static int maxCost();
 
   private:
     //! in-memory cache

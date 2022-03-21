@@ -27,7 +27,6 @@
 
 namespace pal
 {
-  class LabelInfo;
   class Layer;
 }
 
@@ -318,6 +317,21 @@ class CORE_EXPORT QgsLabelFeature
      */
     void setArrangementFlags( QgsLabeling::LinePlacementFlags flags ) { mArrangementFlags = flags; }
 
+    /**
+     * Returns the polygon placement flags, which dictate how polygon labels can be placed.
+     *
+     * \see setPolygonPlacementFlags()
+     * \since QGIS 3.14
+     */
+    QgsLabeling::PolygonPlacementFlags polygonPlacementFlags() const { return mPolygonPlacementFlags; }
+
+    /**
+     * Sets the polygon placement \a flags, which dictate how polygon labels can be placed.
+     *
+     * \see polygonPlacementFlags()
+     * \since QGIS 3.14
+     */
+    void setPolygonPlacementFlags( QgsLabeling::PolygonPlacementFlags flags ) { mPolygonPlacementFlags = flags; }
 
     /**
      * Text of the label
@@ -328,11 +342,6 @@ class CORE_EXPORT QgsLabelFeature
     QString labelText() const { return mLabelText; }
     //! Sets text of the label
     void setLabelText( const QString &text ) { mLabelText = text; }
-
-    //! Gets additional info required for curved label placement. Returns NULLPTR if not set
-    pal::LabelInfo *curvedLabelInfo() const { return mInfo; }
-    //! takes ownership of the instance
-    void setCurvedLabelInfo( pal::LabelInfo *info ) { mInfo = info; }
 
     //! Gets PAL layer of the label feature. Should be only used internally in PAL
     pal::Layer *layer() const { return mLayer; }
@@ -416,6 +425,53 @@ class CORE_EXPORT QgsLabelFeature
     void setOverrunSmoothDistance( double distance );
 
     /**
+     * Returns the percent along the line at which labels should be placed, for line labels only.
+     *
+     * By default, this is 0.5 which indicates that labels should be placed as close to the
+     * center of the line as possible. A value of 0.0 indicates that the labels should be placed
+     * as close to the start of the line as possible, while a value of 1.0 pushes labels towards
+     * the end of the line.
+     *
+     * \see setLineAnchorPercent()
+     * \see lineAnchorType()
+     * \since QGIS 3.16
+     */
+    double lineAnchorPercent() const { return mLineAnchorPercent; }
+
+    /**
+     * Sets the \a percent along the line at which labels should be placed, for line labels only.
+     *
+     * By default, this is 0.5 which indicates that labels should be placed as close to the
+     * center of the line as possible. A value of 0.0 indicates that the labels should be placed
+     * as close to the start of the line as possible, while a value of 1.0 pushes labels towards
+     * the end of the line.
+     *
+     * \see lineAnchorPercent()
+     * \see setLineAnchorType()
+     * \since QGIS 3.16
+     */
+    void setLineAnchorPercent( double percent ) { mLineAnchorPercent = percent; }
+
+
+    /**
+     * Returns the line anchor type, which dictates how the lineAnchorPercent() setting is
+     * handled.
+     *
+     * \see setLineAnchorType()
+     * \see lineAnchorPercent()
+     */
+    QgsLabelLineSettings::AnchorType lineAnchorType() const { return mLineAnchorType; }
+
+    /**
+     * Sets the line anchor \a type, which dictates how the lineAnchorPercent() setting is
+     * handled.
+     *
+     * \see lineAnchorType()
+     * \see setLineAnchorPercent()
+     */
+    void setLineAnchorType( QgsLabelLineSettings::AnchorType type ) { mLineAnchorType = type; }
+
+    /**
      * Returns TRUE if all parts of the feature should be labeled.
      * \see setLabelAllParts()
      * \since QGIS 3.10
@@ -451,6 +507,40 @@ class CORE_EXPORT QgsLabelFeature
      * \since QGIS 3.12
      */
     void setObstacleSettings( const QgsLabelObstacleSettings &settings );
+
+    /**
+     * Returns the original layer CRS of the feature associated with the label.
+     *
+     * \see setOriginalFeatureCrs()
+     * \since QGIS 3.20
+     */
+    QgsCoordinateReferenceSystem originalFeatureCrs() const;
+
+    /**
+     * Sets the original layer \a crs of the feature associated with the label.
+     *
+     * \see originalFeatureCrs()
+     * \since QGIS 3.20
+     */
+    void setOriginalFeatureCrs( const QgsCoordinateReferenceSystem &crs );
+
+    /**
+     * Returns the minimum size (in map unit) for a feature to be labelled.
+     *
+     * \note At the moment this is only used when labeling merged lines
+     * \see minimumSize()
+     * \since QGIS 3.20
+     */
+    double minimumSize() const { return mMinimumSize; }
+
+    /**
+     * Sets the minimum \a size (in map unit) for a feature to be labelled.
+     *
+     * \note At the moment this is only used when labeling merged lines
+     * \see setMinimumSize()
+     * \since QGIS 3.20
+     */
+    void setMinimumSize( double size ) { mMinimumSize = size; }
 
   protected:
     //! Pointer to PAL layer (assigned when registered to PAL)
@@ -500,15 +590,14 @@ class CORE_EXPORT QgsLabelFeature
     bool mAlwaysShow = false;
     //! text of the label
     QString mLabelText;
-    //! extra information for curved labels (may be NULLPTR)
-    pal::LabelInfo *mInfo = nullptr;
 
     //! Distance to allow label to overrun linear features
     double mOverrunDistance = 0;
     //! Distance to smooth angle of line start and end when calculating overruns
     double mOverrunSmoothDistance = 0;
 
-    QgsLabeling::LinePlacementFlags mArrangementFlags = nullptr;
+    QgsLabeling::LinePlacementFlags mArrangementFlags = QgsLabeling::LinePlacementFlags();
+    QgsLabeling::PolygonPlacementFlags mPolygonPlacementFlags = QgsLabeling::PolygonPlacementFlag::AllowPlacementInsideOfPolygon;
 
   private:
 
@@ -524,9 +613,17 @@ class CORE_EXPORT QgsLabelFeature
 
     bool mLabelAllParts = false;
 
-    QgsLabelObstacleSettings mObstacleSettings;
+    QgsLabelObstacleSettings mObstacleSettings{};
 
     QgsPointXY mAnchorPosition;
+
+    double mLineAnchorPercent = 0.5;
+    QgsLabelLineSettings::AnchorType mLineAnchorType = QgsLabelLineSettings::AnchorType::HintOnly;
+
+    QgsCoordinateReferenceSystem mOriginalFeatureCrs;
+
+    double mMinimumSize = 0.0;
+
 };
 
 #endif // QGSLABELFEATURE_H

@@ -24,9 +24,11 @@ class QgsSurface;
 
 /**
  * \ingroup analysis
+ * \brief Area check.
  */
 class ANALYSIS_EXPORT QgsGeometryAreaCheck : public QgsGeometryCheck
 {
+    Q_DECLARE_TR_FUNCTIONS( QgsGeometryAreaCheck )
   public:
     enum ResolutionMethod { MergeLongestEdge, MergeLargestArea, MergeIdenticalAttribute, Delete, NoChange };
 

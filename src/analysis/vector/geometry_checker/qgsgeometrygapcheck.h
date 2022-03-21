@@ -24,7 +24,7 @@
 
 /**
  * \ingroup analysis
- * An error produced by a QgsGeometryGapCheck.
+ * \brief An error produced by a QgsGeometryGapCheck.
  *
  * \since QGIS 3.4
  */
@@ -82,13 +82,15 @@ class ANALYSIS_EXPORT QgsGeometryGapCheckError : public QgsGeometryCheckError
 
 /**
  * \ingroup analysis
- * Checks for gaps between neighbouring polygons.
+ * \brief Checks for gaps between neighbouring polygons.
  *
  * \since QGIS 3.4
  */
 class ANALYSIS_EXPORT QgsGeometryGapCheck : public QgsGeometryCheck
 {
     Q_GADGET
+    Q_DECLARE_TR_FUNCTIONS( QgsGeometryGapCheck )
+
   public:
     //! Resolution methods for geometry gap checks
     enum ResolutionMethod
@@ -145,7 +147,7 @@ class ANALYSIS_EXPORT QgsGeometryGapCheck : public QgsGeometryCheck
     const double mGapThresholdMapUnits;
     QgsWeakMapLayerPointer mAllowedGapsLayer;
     std::unique_ptr<QgsVectorLayerFeatureSource> mAllowedGapsSource;
-    double mAllowedGapsBuffer;
+    double mAllowedGapsBuffer = 0;
 
 };
 

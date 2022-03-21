@@ -27,7 +27,7 @@ class QgsPointXY;
 
 /**
  * \ingroup analysis
- * This represents an error reported by a geometry check.
+ * \brief This represents an error reported by a geometry check.
  *
  * \note This class is a technology preview and unstable API.
  * \since QGIS 3.4
@@ -234,6 +234,11 @@ class ANALYSIS_EXPORT QgsGeometryCheckError
     Status mStatus;
     QString mResolutionMessage;
 
+  private:
+
+#ifdef SIP_RUN
+    const QgsGeometryCheckError &operator=( const QgsGeometryCheckError & );
+#endif
 };
 
 Q_DECLARE_METATYPE( QgsGeometryCheckError * )

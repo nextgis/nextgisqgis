@@ -2,15 +2,15 @@ FROM ubuntu:18.04
 
 # This will make apt-get install without question
 ARG DEBIAN_FRONTEND=noninteractive
-ENV TZ 'UTC'
+# ENV TZ 'UTC' ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && tzdata
 
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && apt-get update \
+RUN apt-get update \
   && apt-get install -y \
-    apt-transport-https ca-certificates tzdata \
+    apt-transport-https ca-certificates \
     python3-pip \
     curl \
     dumb-init \
-    ninja-build \
+    # ninja-build \
     git \
     devscripts \
     debhelper \
@@ -18,8 +18,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
     build-essential \
     bash \
     cmake \
-    flex \
-    bison \
+    # flex \
+    # bison \
     libproj-dev \
     libgeos-dev \
     libgdal-dev \
@@ -30,7 +30,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
     libzip-dev \
     libqt5svg5-dev \
     qt5keychain-dev \
-    libexiv2-dev \
+    # libexiv2-dev \
     qt3d5-dev \
     qt3d-assimpsceneimport-plugin \
     qt3d-defaultgeometryloader-plugin \
@@ -42,13 +42,14 @@ COPY . /root/ngqgis/
 WORKDIR /root/ngqgis/build
 
 RUN cmake .. \
-        -DQT5_3DEXTRA_LIBRARY="/usr/lib/x86_64-linux-gnu/libQt53DExtras.so" \
-        -DQT5_3DEXTRA_INCLUDE_DIR="/root/ngqgis/external/qt3dextra-headers" \
-        -DQt53DExtras_DIR="/root/ngqgis/external/qt3dextra-headers/cmake/Qt53DExtras" \
-        -DCMAKE_PREFIX_PATH="/root/ngqgis/external/qt3dextra-headers" \
+        # -DQT5_3DEXTRA_LIBRARY="/usr/lib/x86_64-linux-gnu/libQt53DExtras.so" \
+        # -DQT5_3DEXTRA_INCLUDE_DIR="/root/ngqgis/external/qt3dextra-headers" \
+        # -DQt53DExtras_DIR="/root/ngqgis/external/qt3dextra-headers/cmake/Qt53DExtras" \
+        # -DCMAKE_PREFIX_PATH="/root/ngqgis/external/qt3dextra-headers" \
         -DCMAKE_INSTALL_PREFIX=install \
-        -DUSING_NINJA=ON \
-        -G Ninja \
+        # -DUSING_NINJA=ON \
+        # -G Ninja \
     && cmake --build . \
         --target install \
-        --config Release
+        --config Release \
+        -- -j8

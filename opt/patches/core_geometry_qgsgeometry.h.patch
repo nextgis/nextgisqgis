@@ -1,0 +1,17 @@
+--- a/src/core/geometry/qgsgeometry.h	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/geometry/qgsgeometry.h	2022-03-07 23:14:46.000000000 +0300
+@@ -37,10 +37,10 @@
+ #include "qgsfeatureid.h"
+ #include "qgsvertexid.h"
+ 
+-#ifndef SIP_RUN
+-#include "json_fwd.hpp"
+-using namespace nlohmann;
+-#endif
++// #ifndef SIP_RUN
++// #include "json_fwd.hpp"
++// using namespace nlohmann;
++// #endif
+ 
+ class QgsGeometryEngine;
+ class QgsVectorLayer;

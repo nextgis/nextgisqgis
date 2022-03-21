@@ -14,19 +14,23 @@
  ***************************************************************************/
 
 #include "qgslayertree.h"
-#include "qgsmaplayerlistutils.h"
+#include "qgsmaplayerlistutils_p.h"
 #include "qgsvectorlayer.h"
 
 QgsLayerTree::QgsLayerTree()
 {
-  connect( this, &QgsLayerTree::addedChildren, this, &QgsLayerTree::nodeAddedChildren );
-  connect( this, &QgsLayerTree::removedChildren, this, &QgsLayerTree::nodeRemovedChildren );
+  init();
 }
 
 QgsLayerTree::QgsLayerTree( const QgsLayerTree &other )
   : QgsLayerTreeGroup( other )
   , mCustomLayerOrder( other.mCustomLayerOrder )
   , mHasCustomLayerOrder( other.mHasCustomLayerOrder )
+{
+  init();
+}
+
+void QgsLayerTree::init()
 {
   connect( this, &QgsLayerTree::addedChildren, this, &QgsLayerTree::nodeAddedChildren );
   connect( this, &QgsLayerTree::removedChildren, this, &QgsLayerTree::nodeRemovedChildren );
@@ -80,18 +84,7 @@ QList<QgsMapLayer *> QgsLayerTree::layerOrder() const
   }
   else
   {
-    QList<QgsMapLayer *> layers;
-    const QList< QgsLayerTreeLayer * > foundLayers = findLayers();
-    for ( const auto &treeLayer : foundLayers )
-    {
-      QgsMapLayer *layer = treeLayer->layer();
-      if ( !layer || !layer->isSpatial() )
-      {
-        continue;
-      }
-      layers.append( layer );
-    }
-    return layers;
+    return layerOrderRespectingGroupLayers();
   }
 }
 
@@ -129,14 +122,14 @@ void QgsLayerTree::writeXml( QDomElement &parentElement, const QgsReadWriteConte
 
   writeCommonXml( elem );
 
-  for ( QgsLayerTreeNode *node : qgis::as_const( mChildren ) )
+  for ( QgsLayerTreeNode *node : std::as_const( mChildren ) )
     node->writeXml( elem, context );
 
   QDomElement customOrderElem = doc.createElement( QStringLiteral( "custom-order" ) );
   customOrderElem.setAttribute( QStringLiteral( "enabled" ), mHasCustomLayerOrder ? 1 : 0 );
   elem.appendChild( customOrderElem );
 
-  for ( QgsMapLayer *layer : qgis::as_const( mCustomLayerOrder ) )
+  for ( QgsMapLayer *layer : std::as_const( mCustomLayerOrder ) )
   {
     // Safety belt, see https://github.com/qgis/QGIS/issues/26975
     // Crash when deleting an item from the layout legend
@@ -187,7 +180,7 @@ void QgsLayerTree::nodeAddedChildren( QgsLayerTreeNode *node, int indexFrom, int
     }
   }
 
-  for ( QgsMapLayer *layer : qgis::as_const( layers ) )
+  for ( QgsMapLayer *layer : std::as_const( layers ) )
   {
     if ( !mCustomLayerOrder.contains( layer ) && layer )
       mCustomLayerOrder.append( layer );

@@ -22,7 +22,7 @@ QgsPluginLayer::QgsPluginLayer( const QString &layerType, const QString &layerNa
   : QgsMapLayer( QgsMapLayerType::PluginLayer, layerName )
   , mPluginLayerType( layerType )
 {
-  mDataProvider = new QgsPluginLayerDataProvider( layerType, QgsDataProvider::ProviderOptions() );
+  mDataProvider = new QgsPluginLayerDataProvider( layerType, QgsDataProvider::ProviderOptions(), QgsDataProvider::ReadFlags() );
 }
 
 QgsPluginLayer::~QgsPluginLayer()
@@ -40,7 +40,7 @@ QString QgsPluginLayer::pluginLayerType()
 
 void QgsPluginLayer::setExtent( const QgsRectangle &extent )
 {
-  mExtent = extent;
+  QgsMapLayer::setExtent( extent );
   static_cast<QgsPluginLayerDataProvider *>( mDataProvider )->setExtent( extent );
 }
 
@@ -63,8 +63,10 @@ const QgsDataProvider *QgsPluginLayer::dataProvider() const
 // QgsPluginLayerDataProvider
 //
 ///@cond PRIVATE
-QgsPluginLayerDataProvider::QgsPluginLayerDataProvider( const QString &layerType, const ProviderOptions &options )
-  : QgsDataProvider( QString(), options )
+QgsPluginLayerDataProvider::QgsPluginLayerDataProvider( const QString &layerType,
+    const ProviderOptions &options,
+    QgsDataProvider::ReadFlags flags )
+  : QgsDataProvider( QString(), options, flags )
   , mName( layerType )
 {}
 

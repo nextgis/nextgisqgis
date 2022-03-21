@@ -20,6 +20,7 @@
 
 #include "qgsmaplayerrenderer.h"
 #include "qgsrasterdataprovider.h"
+#include "qgsmapclippingregion.h"
 
 class QPainter;
 
@@ -37,7 +38,7 @@ class QgsRasterLayerRenderer;
 
 /**
  * \ingroup core
- * Specific internal feedback class to provide preview of raster layer rendering.
+ * \brief Specific internal feedback class to provide preview of raster layer rendering.
  * \note not available in Python bindings
  * \since QGIS 3.0
  */
@@ -61,7 +62,7 @@ class CORE_EXPORT QgsRasterLayerRendererFeedback : public QgsRasterBlockFeedback
 
 /**
  * \ingroup core
- * Implementation of threaded rendering for raster layers.
+ * \brief Implementation of threaded rendering for raster layers.
  *
  * \note not available in Python bindings
  * \since QGIS 2.4
@@ -74,6 +75,7 @@ class CORE_EXPORT QgsRasterLayerRenderer : public QgsMapLayerRenderer
 
     bool render() override;
     QgsFeedback *feedback() const override;
+    bool forceRasterRender() const override;
 
   private:
 
@@ -85,6 +87,8 @@ class CORE_EXPORT QgsRasterLayerRenderer : public QgsMapLayerRenderer
 
     //! feedback class for cancellation and preview generation
     QgsRasterLayerRendererFeedback *mFeedback = nullptr;
+
+    QList< QgsMapClippingRegion > mClippingRegions;
 
     friend class QgsRasterLayerRendererFeedback;
 };

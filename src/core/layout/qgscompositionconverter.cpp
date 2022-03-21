@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include <QObject>
+#include <QUuid>
 
 #include "qgscompositionconverter.h"
 #include "qgsreadwritecontext.h"
@@ -30,6 +31,10 @@
 #include "qgsproject.h"
 #include "qgsmaplayerstylemanager.h"
 #include "qgsvectorlayer.h"
+#include "qgslinesymbollayer.h"
+#include "qgslinesymbol.h"
+#include "qgsfillsymbol.h"
+#include "qgsmarkersymbol.h"
 
 #include "qgsprintlayout.h"
 #include "qgslayoutatlas.h"
@@ -53,6 +58,7 @@
 #include "qgslayoutmultiframe.h"
 #include "qgslayoutframe.h"
 #include "qgslayoutguidecollection.h"
+#include "qgslayoutnortharrowhandler.h"
 
 QgsPropertiesDefinition QgsCompositionConverter::sPropertyDefinitions;
 
@@ -121,9 +127,9 @@ std::unique_ptr< QgsPrintLayout > QgsCompositionConverter::createLayoutFromCompo
 {
   initPropertyDefinitions();
 
-  QDomElement parentElement = composerElement.parentNode().toElement();
+  const QDomElement parentElement = composerElement.parentNode().toElement();
 
-  std::unique_ptr< QgsPrintLayout > layout = qgis::make_unique< QgsPrintLayout >( project );
+  std::unique_ptr< QgsPrintLayout > layout = std::make_unique< QgsPrintLayout >( project );
   layout->undoStack()->blockCommands( true );
 
   layout->mCustomProperties.readXml( composerElement );
@@ -131,13 +137,13 @@ std::unique_ptr< QgsPrintLayout > QgsCompositionConverter::createLayoutFromCompo
   // Guides
   layout->guides().setVisible( composerElement.attribute( QStringLiteral( "guidesVisible" ), QStringLiteral( "1" ) ).toInt() != 0 );
 
-  int printResolution = composerElement.attribute( QStringLiteral( "printResolution" ), QStringLiteral( "300" ) ).toInt();
+  const int printResolution = composerElement.attribute( QStringLiteral( "printResolution" ), QStringLiteral( "300" ) ).toInt();
   layout->renderContext().setDpi( printResolution );
 
   // Create pages
-  int pages = composerElement.attribute( QStringLiteral( "numPages" ) ).toInt( );
-  float paperHeight = composerElement.attribute( QStringLiteral( "paperHeight" ) ).toDouble( );
-  float paperWidth = composerElement.attribute( QStringLiteral( "paperWidth" ) ).toDouble( );
+  const int pages = composerElement.attribute( QStringLiteral( "numPages" ) ).toInt( );
+  const float paperHeight = composerElement.attribute( QStringLiteral( "paperHeight" ) ).toDouble( );
+  const float paperWidth = composerElement.attribute( QStringLiteral( "paperWidth" ) ).toDouble( );
 
   QString name = composerElement.attribute( QStringLiteral( "name" ) );
   // Try title
@@ -147,24 +153,24 @@ std::unique_ptr< QgsPrintLayout > QgsCompositionConverter::createLayoutFromCompo
   if ( name.isEmpty() )
     name = parentElement.attribute( QStringLiteral( "title" ) );
   layout->setName( name );
-  QgsLayoutSize pageSize( paperWidth, paperHeight );
+  const QgsLayoutSize pageSize( paperWidth, paperHeight );
   for ( int j = 0; j < pages; j++ )
   {
     QgsLayoutItemPage *page = QgsLayoutItemPage::create( layout.get() );
     page->setPageSize( pageSize );
     layout->pageCollection()->addPage( page );
     //custom snap lines
-    QDomNodeList snapLineNodes = composerElement.elementsByTagName( QStringLiteral( "SnapLine" ) );
+    const QDomNodeList snapLineNodes = composerElement.elementsByTagName( QStringLiteral( "SnapLine" ) );
     for ( int i = 0; i < snapLineNodes.size(); ++i )
     {
-      QDomElement snapLineElem = snapLineNodes.at( i ).toElement();
-      double x1 = snapLineElem.attribute( QStringLiteral( "x1" ) ).toDouble();
-      double y1 = snapLineElem.attribute( QStringLiteral( "y1" ) ).toDouble();
-      double x2 = snapLineElem.attribute( QStringLiteral( "x2" ) ).toDouble();
+      const QDomElement snapLineElem = snapLineNodes.at( i ).toElement();
+      const double x1 = snapLineElem.attribute( QStringLiteral( "x1" ) ).toDouble();
+      const double y1 = snapLineElem.attribute( QStringLiteral( "y1" ) ).toDouble();
+      const double x2 = snapLineElem.attribute( QStringLiteral( "x2" ) ).toDouble();
       // Not necessary: double y2 = snapLineElem.attribute( QStringLiteral( "y2" ) ).toDouble();
-      Qt::Orientation orientation( x1 == x2 ? Qt::Orientation::Vertical : Qt::Orientation::Horizontal );
-      QgsLayoutMeasurement position( x1 == x2 ? x1 : y1 );
-      std::unique_ptr< QgsLayoutGuide > guide = qgis::make_unique< QgsLayoutGuide >( orientation, position, page );
+      const Qt::Orientation orientation( x1 == x2 ? Qt::Orientation::Vertical : Qt::Orientation::Horizontal );
+      const QgsLayoutMeasurement position( x1 == x2 ? x1 : y1 );
+      std::unique_ptr< QgsLayoutGuide > guide = std::make_unique< QgsLayoutGuide >( orientation, position, page );
       layout->guides().addGuide( guide.release() );
     }
   }
@@ -172,11 +178,11 @@ std::unique_ptr< QgsPrintLayout > QgsCompositionConverter::createLayoutFromCompo
 
   if ( composerElement.elementsByTagName( QStringLiteral( "symbol" ) ).size() )
   {
-    QDomElement symbolElement = composerElement.elementsByTagName( QStringLiteral( "symbol" ) ).at( 0 ).toElement();
+    const QDomElement symbolElement = composerElement.elementsByTagName( QStringLiteral( "symbol" ) ).at( 0 ).toElement();
     QgsReadWriteContext context;
     if ( project )
       context.setPathResolver( project->pathResolver() );
-    std::unique_ptr< QgsFillSymbol > symbol( QgsSymbolLayerUtils::loadSymbol<QgsFillSymbol>( symbolElement, context ) );
+    const std::unique_ptr< QgsFillSymbol > symbol( QgsSymbolLayerUtils::loadSymbol<QgsFillSymbol>( symbolElement, context ) );
     if ( symbol )
       layout->pageCollection()->setPageStyleSymbol( symbol.get() );
   }
@@ -186,7 +192,7 @@ std::unique_ptr< QgsPrintLayout > QgsCompositionConverter::createLayoutFromCompo
   // Read atlas from the parent element (Composer)
   if ( parentElement.elementsByTagName( QStringLiteral( "Atlas" ) ).size() )
   {
-    QDomElement atlasElement = parentElement.elementsByTagName( QStringLiteral( "Atlas" ) ).at( 0 ).toElement();
+    const QDomElement atlasElement = parentElement.elementsByTagName( QStringLiteral( "Atlas" ) ).at( 0 ).toElement();
     readAtlasXml( layout->atlas(), atlasElement, layout->project() );
   }
 
@@ -217,10 +223,10 @@ void QgsCompositionConverter::adjustPos( QgsPrintLayout *layout, QgsLayoutItem *
 void QgsCompositionConverter::restoreGeneralComposeItemProperties( QgsLayoutItem *layoutItem, const QDomElement &itemElem )
 {
   //restore general composer item properties
-  QDomNodeList composerItemList = itemElem.elementsByTagName( QStringLiteral( "ComposerItem" ) );
+  const QDomNodeList composerItemList = itemElem.elementsByTagName( QStringLiteral( "ComposerItem" ) );
   if ( !composerItemList.isEmpty() )
   {
-    QDomElement composerItemElem = composerItemList.at( 0 ).toElement();
+    const QDomElement composerItemElem = composerItemList.at( 0 ).toElement();
 
     //rotation
     if ( !qgsDoubleNear( composerItemElem.attribute( QStringLiteral( "rotation" ), QStringLiteral( "0" ) ).toDouble(), 0.0 ) )
@@ -279,10 +285,10 @@ QPointF QgsCompositionConverter::minPointFromXml( const QDomElement &elem )
 {
   double minX = std::numeric_limits<double>::max();
   double minY = std::numeric_limits<double>::max();
-  QDomNodeList composerItemList = elem.elementsByTagName( QStringLiteral( "ComposerItem" ) );
+  const QDomNodeList composerItemList = elem.elementsByTagName( QStringLiteral( "ComposerItem" ) );
   for ( int i = 0; i < composerItemList.size(); ++i )
   {
-    QDomElement currentComposerItemElem = composerItemList.at( i ).toElement();
+    const QDomElement currentComposerItemElem = composerItemList.at( i ).toElement();
     double x, y;
     bool xOk, yOk;
     x = currentComposerItemElem.attribute( QStringLiteral( "x" ) ).toDouble( &xOk );
@@ -314,7 +320,7 @@ QList<QgsLayoutObject *> QgsCompositionConverter::addItemsFromCompositionXml( Qg
   //if we are adding items to a layout which already contains items, we need to make sure
   //these items are placed at the top of the layout and that zValues are not duplicated
   //so, calculate an offset which needs to be added to the zValue of created items
-  int zOrderOffset = layout->mItemsModel->zOrderListSize();
+  const int zOrderOffset = layout->mItemsModel->zOrderListSize();
 
   QPointF pasteShiftPos;
   int pageNumber = -1;
@@ -323,7 +329,7 @@ QList<QgsLayoutObject *> QgsCompositionConverter::addItemsFromCompositionXml( Qg
     //If we are placing items relative to a certain point, then calculate how much we need
     //to shift the items by so that they are placed at this point
     //First, calculate the minimum position from the xml
-    QPointF minItemPos = minPointFromXml( parentElement );
+    const QPointF minItemPos = minPointFromXml( parentElement );
     //next, calculate how much each item needs to be shifted from its original position
     //so that it's placed at the correct relative position
     pasteShiftPos = *position - minItemPos;
@@ -338,7 +344,7 @@ QList<QgsLayoutObject *> QgsCompositionConverter::addItemsFromCompositionXml( Qg
   // Map (this needs to come first to build the uuid <-> ID map for map composer items
   for ( int i = 0; i < parentElement.elementsByTagName( QStringLiteral( "ComposerMap" ) ).size(); i++ )
   {
-    QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerMap" ) ).at( i ) );
+    const QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerMap" ) ).at( i ) );
     QgsLayoutItemMap *layoutItem = new QgsLayoutItemMap( layout );
     readMapXml( layoutItem, itemNode.toElement(), layout->project(), mapIdUiidMap );
     adjustPos( layout, layoutItem, position, pasteInPlace, zOrderOffset, pasteShiftPos, pageNumber );
@@ -348,7 +354,7 @@ QList<QgsLayoutObject *> QgsCompositionConverter::addItemsFromCompositionXml( Qg
   // Label
   for ( int i = 0; i < parentElement.elementsByTagName( QStringLiteral( "ComposerLabel" ) ).size(); i++ )
   {
-    QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerLabel" ) ).at( i ) );
+    const QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerLabel" ) ).at( i ) );
     QgsLayoutItemLabel *layoutItem = new QgsLayoutItemLabel( layout );
     readLabelXml( layoutItem, itemNode.toElement(), layout->project() );
     adjustPos( layout, layoutItem, position, pasteInPlace, zOrderOffset, pasteShiftPos, pageNumber );
@@ -358,7 +364,7 @@ QList<QgsLayoutObject *> QgsCompositionConverter::addItemsFromCompositionXml( Qg
   // Shape
   for ( int i = 0; i < parentElement.elementsByTagName( QStringLiteral( "ComposerShape" ) ).size(); i++ )
   {
-    QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerShape" ) ).at( i ) );
+    const QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerShape" ) ).at( i ) );
     QgsLayoutItemShape *layoutItem = new QgsLayoutItemShape( layout );
     readShapeXml( layoutItem, itemNode.toElement(), layout->project() );
     adjustPos( layout, layoutItem, position, pasteInPlace, zOrderOffset, pasteShiftPos, pageNumber );
@@ -368,7 +374,7 @@ QList<QgsLayoutObject *> QgsCompositionConverter::addItemsFromCompositionXml( Qg
   // Picture
   for ( int i = 0; i < parentElement.elementsByTagName( QStringLiteral( "ComposerPicture" ) ).size(); i++ )
   {
-    QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerPicture" ) ).at( i ) );
+    const QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerPicture" ) ).at( i ) );
     QgsLayoutItemPicture *layoutItem = new QgsLayoutItemPicture( layout );
     readPictureXml( layoutItem, itemNode.toElement(), layout->project(), mapIdUiidMap );
     adjustPos( layout, layoutItem, position, pasteInPlace, zOrderOffset, pasteShiftPos, pageNumber );
@@ -378,7 +384,7 @@ QList<QgsLayoutObject *> QgsCompositionConverter::addItemsFromCompositionXml( Qg
   // Polygon
   for ( int i = 0; i < parentElement.elementsByTagName( QStringLiteral( "ComposerPolygon" ) ).size(); i++ )
   {
-    QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerPolygon" ) ).at( i ) );
+    const QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerPolygon" ) ).at( i ) );
     QgsLayoutItemPolygon *layoutItem = new QgsLayoutItemPolygon( layout );
     readPolyXml<QgsLayoutItemPolygon, QgsFillSymbol>( layoutItem, itemNode.toElement(), layout->project() );
     adjustPos( layout, layoutItem, position, pasteInPlace, zOrderOffset, pasteShiftPos, pageNumber );
@@ -388,7 +394,7 @@ QList<QgsLayoutObject *> QgsCompositionConverter::addItemsFromCompositionXml( Qg
   // Polyline
   for ( int i = 0; i < parentElement.elementsByTagName( QStringLiteral( "ComposerPolyline" ) ).size(); i++ )
   {
-    QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerPolyline" ) ).at( i ) );
+    const QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerPolyline" ) ).at( i ) );
     QgsLayoutItemPolyline *layoutItem = new QgsLayoutItemPolyline( layout );
     readPolyXml<QgsLayoutItemPolyline, QgsLineSymbol>( layoutItem, itemNode.toElement(), layout->project() );
     adjustPos( layout, layoutItem, position, pasteInPlace, zOrderOffset, pasteShiftPos, pageNumber );
@@ -398,7 +404,7 @@ QList<QgsLayoutObject *> QgsCompositionConverter::addItemsFromCompositionXml( Qg
   // Arrow
   for ( int i = 0; i < parentElement.elementsByTagName( QStringLiteral( "ComposerArrow" ) ).size(); i++ )
   {
-    QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerArrow" ) ).at( i ) );
+    const QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerArrow" ) ).at( i ) );
     QgsLayoutItemPolyline *layoutItem = new QgsLayoutItemPolyline( layout );
     readArrowXml( layoutItem, itemNode.toElement(), layout->project() );
     adjustPos( layout, layoutItem, position, pasteInPlace, zOrderOffset, pasteShiftPos, pageNumber );
@@ -408,7 +414,7 @@ QList<QgsLayoutObject *> QgsCompositionConverter::addItemsFromCompositionXml( Qg
   // Scalebar
   for ( int i = 0; i < parentElement.elementsByTagName( QStringLiteral( "ComposerScaleBar" ) ).size(); i++ )
   {
-    QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerScaleBar" ) ).at( i ) );
+    const QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerScaleBar" ) ).at( i ) );
     QgsLayoutItemScaleBar *layoutItem = new QgsLayoutItemScaleBar( layout );
     readScaleBarXml( layoutItem, itemNode.toElement(), layout->project(), mapIdUiidMap );
     adjustPos( layout, layoutItem, position, pasteInPlace, zOrderOffset, pasteShiftPos, pageNumber );
@@ -418,7 +424,7 @@ QList<QgsLayoutObject *> QgsCompositionConverter::addItemsFromCompositionXml( Qg
   // Legend
   for ( int i = 0; i < parentElement.elementsByTagName( QStringLiteral( "ComposerLegend" ) ).size(); i++ )
   {
-    QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerLegend" ) ).at( i ) );
+    const QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerLegend" ) ).at( i ) );
     QgsLayoutItemLegend *layoutItem = new QgsLayoutItemLegend( layout );
     readLegendXml( layoutItem, itemNode.toElement(), layout->project(), mapIdUiidMap );
     adjustPos( layout, layoutItem, position, pasteInPlace, zOrderOffset, pasteShiftPos, pageNumber );
@@ -428,7 +434,7 @@ QList<QgsLayoutObject *> QgsCompositionConverter::addItemsFromCompositionXml( Qg
   // Html
   for ( int i = 0; i < parentElement.elementsByTagName( QStringLiteral( "ComposerHtml" ) ).size(); i++ )
   {
-    QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerHtml" ) ).at( i ) );
+    const QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerHtml" ) ).at( i ) );
     QgsLayoutItemHtml *layoutItem = new QgsLayoutItemHtml( layout );
     readHtmlXml( layoutItem, itemNode.toElement(), layout->project() );
     // Adjust position for frames
@@ -443,7 +449,7 @@ QList<QgsLayoutObject *> QgsCompositionConverter::addItemsFromCompositionXml( Qg
   // Attribute Table
   for ( int i = 0; i < parentElement.elementsByTagName( QStringLiteral( "ComposerAttributeTableV2" ) ).size(); i++ )
   {
-    QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerAttributeTableV2" ) ).at( i ) );
+    const QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerAttributeTableV2" ) ).at( i ) );
     QgsLayoutItemAttributeTable *layoutItem = new QgsLayoutItemAttributeTable( layout );
     readTableXml( layoutItem, itemNode.toElement(), layout->project() );
     // Adjust position for frames
@@ -452,6 +458,16 @@ QList<QgsLayoutObject *> QgsCompositionConverter::addItemsFromCompositionXml( Qg
     {
       adjustPos( layout, frame, position, pasteInPlace, zOrderOffset, pasteShiftPos, pageNumber );
     }
+    newItems << layoutItem ;
+  }
+
+  // Group
+  for ( int i = 0; i < parentElement.elementsByTagName( QStringLiteral( "ComposerItemGroup" ) ).size(); i++ )
+  {
+    const QDomNode itemNode( parentElement.elementsByTagName( QStringLiteral( "ComposerItemGroup" ) ).at( i ) );
+    QgsLayoutItemGroup *layoutItem = new QgsLayoutItemGroup( layout );
+    readGroupXml( layoutItem, itemNode.toElement(), layout->project(), newItems );
+    adjustPos( layout, layoutItem, position, pasteInPlace, zOrderOffset, pasteShiftPos, pageNumber );
     newItems << layoutItem ;
   }
 
@@ -471,11 +487,11 @@ QDomDocument QgsCompositionConverter::convertCompositionTemplate( const QDomDocu
     context.setPathResolver( project->pathResolver() );
   if ( document.elementsByTagName( QStringLiteral( "Composition" ) ).count( ) > 0 )
   {
-    QDomElement composerElem = document.elementsByTagName( QStringLiteral( "Composition" ) ).at( 0 ).toElement( );
+    const QDomElement composerElem = document.elementsByTagName( QStringLiteral( "Composition" ) ).at( 0 ).toElement( );
 
     std::unique_ptr<QgsLayout> layout = createLayoutFromCompositionXml( composerElem,
                                         project );
-    QDomElement elem = layout->writeXml( doc, context );
+    const QDomElement elem = layout->writeXml( doc, context );
     doc.appendChild( elem );
   }
   return doc;
@@ -505,7 +521,7 @@ bool QgsCompositionConverter::readLabelXml( QgsLayoutItemLabel *layoutItem, cons
   if ( !marginXOk || !marginYOk )
   {
     //upgrade old projects where margins where stored in a single attribute
-    double margin = itemElem.attribute( QStringLiteral( "margin" ), QStringLiteral( "1.0" ) ).toDouble();
+    const double margin = itemElem.attribute( QStringLiteral( "margin" ), QStringLiteral( "1.0" ) ).toDouble();
     marginX = margin;
     marginY = margin;
   }
@@ -522,22 +538,34 @@ bool QgsCompositionConverter::readLabelXml( QgsLayoutItemLabel *layoutItem, cons
   QFont font;
   //font
   QgsFontUtils::setFromXmlChildNode( font, itemElem, QStringLiteral( "LabelFont" ) );
-  layoutItem->setFont( font );
+  QgsTextFormat format;
+  format.setFont( font );
+  if ( font.pointSizeF() > 0 )
+  {
+    format.setSize( font.pointSizeF() );
+    format.setSizeUnit( QgsUnitTypes::RenderPoints );
+  }
+  else if ( font.pixelSize() > 0 )
+  {
+    format.setSize( font.pixelSize() );
+    format.setSizeUnit( QgsUnitTypes::RenderPixels );
+  }
 
   //font color
-  QDomNodeList fontColorList = itemElem.elementsByTagName( QStringLiteral( "FontColor" ) );
+  const QDomNodeList fontColorList = itemElem.elementsByTagName( QStringLiteral( "FontColor" ) );
   if ( !fontColorList.isEmpty() )
   {
-    QDomElement fontColorElem = fontColorList.at( 0 ).toElement();
-    int red = fontColorElem.attribute( QStringLiteral( "red" ), QStringLiteral( "0" ) ).toInt();
-    int green = fontColorElem.attribute( QStringLiteral( "green" ), QStringLiteral( "0" ) ).toInt();
-    int blue = fontColorElem.attribute( QStringLiteral( "blue" ), QStringLiteral( "0" ) ).toInt();
-    layoutItem->setFontColor( QColor( red, green, blue ) );
+    const QDomElement fontColorElem = fontColorList.at( 0 ).toElement();
+    const int red = fontColorElem.attribute( QStringLiteral( "red" ), QStringLiteral( "0" ) ).toInt();
+    const int green = fontColorElem.attribute( QStringLiteral( "green" ), QStringLiteral( "0" ) ).toInt();
+    const int blue = fontColorElem.attribute( QStringLiteral( "blue" ), QStringLiteral( "0" ) ).toInt();
+    format.setColor( QColor( red, green, blue ) );
   }
   else
   {
-    layoutItem->setFontColor( QColor( 0, 0, 0 ) );
+    format.setColor( QColor( 0, 0, 0 ) );
   }
+  layoutItem->setTextFormat( format );
 
   return true;
 }
@@ -556,15 +584,15 @@ bool QgsCompositionConverter::readShapeXml( QgsLayoutItemShape *layoutItem, cons
 
   if ( itemElem.elementsByTagName( QStringLiteral( "symbol" ) ).size() )
   {
-    QDomElement symbolElement = itemElem.elementsByTagName( QStringLiteral( "symbol" ) ).at( 0 ).toElement();
-    std::unique_ptr< QgsFillSymbol > shapeStyleSymbol( QgsSymbolLayerUtils::loadSymbol<QgsFillSymbol>( symbolElement, context ) );
+    const QDomElement symbolElement = itemElem.elementsByTagName( QStringLiteral( "symbol" ) ).at( 0 ).toElement();
+    const std::unique_ptr< QgsFillSymbol > shapeStyleSymbol( QgsSymbolLayerUtils::loadSymbol<QgsFillSymbol>( symbolElement, context ) );
     if ( shapeStyleSymbol )
       layoutItem->setSymbol( shapeStyleSymbol.get() );
   }
   else
   {
     //upgrade project file from 2.0 to use symbol styling
-    QgsStringMap properties;
+    QVariantMap properties;
     properties.insert( QStringLiteral( "color" ), QgsSymbolLayerUtils::encodeColor( layoutItem->brush().color() ) );
     if ( layoutItem->hasBackground() )
     {
@@ -586,10 +614,10 @@ bool QgsCompositionConverter::readShapeXml( QgsLayoutItemShape *layoutItem, cons
     properties.insert( QStringLiteral( "width_border" ), QString::number( layoutItem->pen().widthF() ) );
 
     //for pre 2.0 projects, shape color and outline were specified in a different element...
-    QDomNodeList outlineColorList = itemElem.elementsByTagName( QStringLiteral( "OutlineColor" ) );
+    const QDomNodeList outlineColorList = itemElem.elementsByTagName( QStringLiteral( "OutlineColor" ) );
     if ( !outlineColorList.isEmpty() )
     {
-      QDomElement frameColorElem = outlineColorList.at( 0 ).toElement();
+      const QDomElement frameColorElem = outlineColorList.at( 0 ).toElement();
       bool redOk, greenOk, blueOk, alphaOk, widthOk;
       int penRed, penGreen, penBlue, penAlpha;
       double penWidth;
@@ -606,10 +634,10 @@ bool QgsCompositionConverter::readShapeXml( QgsLayoutItemShape *layoutItem, cons
         properties.insert( QStringLiteral( "width_border" ), QString::number( penWidth ) );
       }
     }
-    QDomNodeList fillColorList = itemElem.elementsByTagName( QStringLiteral( "FillColor" ) );
+    const QDomNodeList fillColorList = itemElem.elementsByTagName( QStringLiteral( "FillColor" ) );
     if ( !fillColorList.isEmpty() )
     {
-      QDomElement fillColorElem = fillColorList.at( 0 ).toElement();
+      const QDomElement fillColorElem = fillColorList.at( 0 ).toElement();
       bool redOk, greenOk, blueOk, alphaOk;
       int fillRed, fillGreen, fillBlue, fillAlpha;
 
@@ -627,14 +655,14 @@ bool QgsCompositionConverter::readShapeXml( QgsLayoutItemShape *layoutItem, cons
     if ( itemElem.hasAttribute( QStringLiteral( "transparentFill" ) ) )
     {
       //old style (pre 2.0) of specifying that shapes had no fill
-      bool hasOldTransparentFill = itemElem.attribute( QStringLiteral( "transparentFill" ), QStringLiteral( "0" ) ).toInt();
+      const bool hasOldTransparentFill = itemElem.attribute( QStringLiteral( "transparentFill" ), QStringLiteral( "0" ) ).toInt();
       if ( hasOldTransparentFill )
       {
         properties.insert( QStringLiteral( "style" ), QStringLiteral( "no" ) );
       }
     }
 
-    std::unique_ptr< QgsFillSymbol > shapeStyleSymbol( QgsFillSymbol::createSimple( properties ) );
+    const std::unique_ptr< QgsFillSymbol > shapeStyleSymbol( QgsFillSymbol::createSimple( properties ) );
     layoutItem->setSymbol( shapeStyleSymbol.get() );
   }
   // Disable frame for shapes
@@ -671,7 +699,7 @@ bool QgsCompositionConverter::readPictureXml( QgsLayoutItemPicture *layoutItem, 
   if ( project )
   {
     // convert from relative path to absolute. For SVG we also need to consider system SVG paths
-    QgsPathResolver pathResolver = project->pathResolver();
+    const QgsPathResolver pathResolver = project->pathResolver();
     if ( imagePath.endsWith( QLatin1String( ".svg" ), Qt::CaseInsensitive ) )
       imagePath = QgsSymbolLayerUtils::svgSymbolNameToPath( imagePath, pathResolver );
     else
@@ -688,11 +716,11 @@ bool QgsCompositionConverter::readPictureXml( QgsLayoutItemPicture *layoutItem, 
   }
 
   //rotation map
-  layoutItem->mNorthMode = static_cast< QgsLayoutItemPicture::NorthMode >( itemElem.attribute( QStringLiteral( "northMode" ), QStringLiteral( "0" ) ).toInt() );
-  layoutItem->mNorthOffset = itemElem.attribute( QStringLiteral( "northOffset" ), QStringLiteral( "0" ) ).toDouble();
+  layoutItem->mNorthArrowHandler->setNorthMode( static_cast< QgsLayoutNorthArrowHandler::NorthMode >( itemElem.attribute( QStringLiteral( "northMode" ), QStringLiteral( "0" ) ).toInt() ) );
+  layoutItem->mNorthArrowHandler->setNorthOffset( itemElem.attribute( QStringLiteral( "northOffset" ), QStringLiteral( "0" ) ).toDouble() );
 
-  QString rotationMapId = itemElem.attribute( QStringLiteral( "mapId" ), QStringLiteral( "-1" ) );
-  if ( rotationMapId != QStringLiteral( "-1" ) )
+  const QString rotationMapId = itemElem.attribute( QStringLiteral( "mapId" ), QStringLiteral( "-1" ) );
+  if ( rotationMapId != QLatin1String( "-1" ) )
   {
     // Find uuid for map with given id
     QgsLayoutItemMap *mapInstance = qobject_cast<QgsLayoutItemMap *>( layoutItem->layout()->itemByUuid( mapId2Uuid[ rotationMapId ] ) );
@@ -708,20 +736,20 @@ bool QgsCompositionConverter::readArrowXml( QgsLayoutItemPolyline *layoutItem, c
 {
   readPolyXml<QgsLayoutItemPolyline, QgsLineSymbol>( layoutItem, itemElem, project );
   QPolygonF polygon;
-  QDomNodeList startPointList = itemElem.elementsByTagName( QStringLiteral( "StartPoint" ) );
+  const QDomNodeList startPointList = itemElem.elementsByTagName( QStringLiteral( "StartPoint" ) );
   if ( ! startPointList.isEmpty() )
   {
-    QDomElement node = startPointList.at( 0 ).toElement();
+    const QDomElement node = startPointList.at( 0 ).toElement();
     polygon.append( QPointF( node.attribute( QStringLiteral( "x" ) ).toDouble( ), node.attribute( QStringLiteral( "y" ) ).toDouble() ) );
   }
-  QDomNodeList stopPointList = itemElem.elementsByTagName( QStringLiteral( "StopPoint" ) );
+  const QDomNodeList stopPointList = itemElem.elementsByTagName( QStringLiteral( "StopPoint" ) );
   if ( ! stopPointList.isEmpty() )
   {
-    QDomElement node = stopPointList.at( 0 ).toElement();
+    const QDomElement node = stopPointList.at( 0 ).toElement();
     polygon.append( QPointF( node.attribute( QStringLiteral( "x" ) ).toDouble( ), node.attribute( QStringLiteral( "y" ) ).toDouble() ) );
   }
 
-  QgsCompositionConverter::MarkerMode markerMode = static_cast< QgsCompositionConverter::MarkerMode>( itemElem.attribute( QStringLiteral( "markerMode" ), QStringLiteral( "0" ) ).toInt( ) );
+  const QgsCompositionConverter::MarkerMode markerMode = static_cast< QgsCompositionConverter::MarkerMode>( itemElem.attribute( QStringLiteral( "markerMode" ), QStringLiteral( "0" ) ).toInt( ) );
 
   if ( markerMode == QgsCompositionConverter::MarkerMode::DefaultMarker )
   {
@@ -741,7 +769,7 @@ bool QgsCompositionConverter::readArrowXml( QgsLayoutItemPolyline *layoutItem, c
     if ( project )
     {
       // convert from relative path to absolute. For SVG we also need to consider system SVG paths
-      QgsPathResolver pathResolver = project->pathResolver();
+      const QgsPathResolver pathResolver = project->pathResolver();
       if ( !endMarkerFile.isEmpty() )
       {
         if ( endMarkerFile.endsWith( QLatin1String( ".svg" ), Qt::CaseInsensitive ) )
@@ -774,7 +802,7 @@ bool QgsCompositionConverter::readArrowXml( QgsLayoutItemPolyline *layoutItem, c
     layoutItem->setStartMarker( QgsLayoutItemPolyline::MarkerMode::NoMarker );
   }
   // Calculate the margin
-  double margin = polygon.boundingRect().left() - layoutItem->pos().x();
+  const double margin = polygon.boundingRect().left() - layoutItem->pos().x();
   polygon.translate( - polygon.boundingRect().left() + margin, - polygon.boundingRect().top() + margin );
   layoutItem->setNodes( polygon );
 
@@ -788,7 +816,7 @@ bool QgsCompositionConverter::readMapXml( QgsLayoutItemMap *layoutItem, const QD
   mapId2Uuid[ itemElem.attribute( QStringLiteral( "id" ) ) ] = layoutItem->uuid();
 
   // TODO: Unused but all the layouts readXML require it (I'd suggest to remove it from the API)
-  QDomDocument doc;
+  const QDomDocument doc;
 
   QgsReadWriteContext context;
 
@@ -796,10 +824,10 @@ bool QgsCompositionConverter::readMapXml( QgsLayoutItemMap *layoutItem, const QD
     context.setPathResolver( project->pathResolver() );
 
   //extent
-  QDomNodeList extentNodeList = itemElem.elementsByTagName( QStringLiteral( "Extent" ) );
+  const QDomNodeList extentNodeList = itemElem.elementsByTagName( QStringLiteral( "Extent" ) );
   if ( !extentNodeList.isEmpty() )
   {
-    QDomElement extentElem = extentNodeList.at( 0 ).toElement();
+    const QDomElement extentElem = extentNodeList.at( 0 ).toElement();
     double xmin, xmax, ymin, ymax;
     xmin = extentElem.attribute( QStringLiteral( "xmin" ) ).toDouble();
     xmax = extentElem.attribute( QStringLiteral( "xmax" ) ).toDouble();
@@ -808,10 +836,10 @@ bool QgsCompositionConverter::readMapXml( QgsLayoutItemMap *layoutItem, const QD
     layoutItem->setExtent( QgsRectangle( xmin, ymin, xmax, ymax ) );
   }
 
-  QDomNodeList crsNodeList = itemElem.elementsByTagName( QStringLiteral( "crs" ) );
+  const QDomNodeList crsNodeList = itemElem.elementsByTagName( QStringLiteral( "crs" ) );
   if ( !crsNodeList.isEmpty() )
   {
-    QDomElement crsElem = crsNodeList.at( 0 ).toElement();
+    const QDomElement crsElem = crsNodeList.at( 0 ).toElement();
     layoutItem->crs().readXml( crsElem );
   }
   else
@@ -830,7 +858,7 @@ bool QgsCompositionConverter::readMapXml( QgsLayoutItemMap *layoutItem, const QD
   layoutItem->setFollowVisibilityPresetName( itemElem.attribute( QStringLiteral( "followPresetName" ) ) );
 
   //mKeepLayerSet flag
-  QString keepLayerSetFlag = itemElem.attribute( QStringLiteral( "keepLayerSet" ) );
+  const QString keepLayerSetFlag = itemElem.attribute( QStringLiteral( "keepLayerSet" ) );
   if ( keepLayerSetFlag.compare( QLatin1String( "true" ), Qt::CaseInsensitive ) == 0 )
   {
     layoutItem->setKeepLayerSet( true );
@@ -840,7 +868,7 @@ bool QgsCompositionConverter::readMapXml( QgsLayoutItemMap *layoutItem, const QD
     layoutItem->setKeepLayerSet( false );
   }
 
-  QString drawCanvasItemsFlag = itemElem.attribute( QStringLiteral( "drawCanvasItems" ), QStringLiteral( "true" ) );
+  const QString drawCanvasItemsFlag = itemElem.attribute( QStringLiteral( "drawCanvasItems" ), QStringLiteral( "true" ) );
   if ( drawCanvasItemsFlag.compare( QLatin1String( "true" ), Qt::CaseInsensitive ) == 0 )
   {
     layoutItem->setDrawAnnotations( true );
@@ -855,19 +883,19 @@ bool QgsCompositionConverter::readMapXml( QgsLayoutItemMap *layoutItem, const QD
   //mLayers
   layoutItem->mLayers.clear();
 
-  QDomNodeList layerSetNodeList = itemElem.elementsByTagName( QStringLiteral( "LayerSet" ) );
+  const QDomNodeList layerSetNodeList = itemElem.elementsByTagName( QStringLiteral( "LayerSet" ) );
   if ( !layerSetNodeList.isEmpty() )
   {
-    QDomElement layerSetElem = layerSetNodeList.at( 0 ).toElement();
-    QDomNodeList layerIdNodeList = layerSetElem.elementsByTagName( QStringLiteral( "Layer" ) );
+    const QDomElement layerSetElem = layerSetNodeList.at( 0 ).toElement();
+    const QDomNodeList layerIdNodeList = layerSetElem.elementsByTagName( QStringLiteral( "Layer" ) );
     layoutItem->mLayers.reserve( layerIdNodeList.size() );
     for ( int i = 0; i < layerIdNodeList.size(); ++i )
     {
-      QDomElement layerElem = layerIdNodeList.at( i ).toElement();
-      QString layerId = layerElem.text();
-      QString layerName = layerElem.attribute( QStringLiteral( "name" ) );
-      QString layerSource = layerElem.attribute( QStringLiteral( "source" ) );
-      QString layerProvider = layerElem.attribute( QStringLiteral( "provider" ) );
+      const QDomElement layerElem = layerIdNodeList.at( i ).toElement();
+      const QString layerId = layerElem.text();
+      const QString layerName = layerElem.attribute( QStringLiteral( "name" ) );
+      const QString layerSource = layerElem.attribute( QStringLiteral( "source" ) );
+      const QString layerProvider = layerElem.attribute( QStringLiteral( "provider" ) );
 
       QgsMapLayerRef ref( layerId, layerName, layerSource, layerProvider );
       ref.resolveWeakly( project );
@@ -876,19 +904,19 @@ bool QgsCompositionConverter::readMapXml( QgsLayoutItemMap *layoutItem, const QD
   }
 
   // override styles
-  QDomNodeList layerStylesNodeList = itemElem.elementsByTagName( QStringLiteral( "LayerStyles" ) );
+  const QDomNodeList layerStylesNodeList = itemElem.elementsByTagName( QStringLiteral( "LayerStyles" ) );
   layoutItem->mKeepLayerStyles = !layerStylesNodeList.isEmpty();
   if ( layoutItem->mKeepLayerStyles )
   {
-    QDomElement layerStylesElem = layerStylesNodeList.at( 0 ).toElement();
-    QDomNodeList layerStyleNodeList = layerStylesElem.elementsByTagName( QStringLiteral( "LayerStyle" ) );
+    const QDomElement layerStylesElem = layerStylesNodeList.at( 0 ).toElement();
+    const QDomNodeList layerStyleNodeList = layerStylesElem.elementsByTagName( QStringLiteral( "LayerStyle" ) );
     for ( int i = 0; i < layerStyleNodeList.size(); ++i )
     {
       const QDomElement &layerStyleElement = layerStyleNodeList.at( i ).toElement();
-      QString layerId = layerStyleElement.attribute( QStringLiteral( "layerid" ) );
-      QString layerName = layerStyleElement.attribute( QStringLiteral( "name" ) );
-      QString layerSource = layerStyleElement.attribute( QStringLiteral( "source" ) );
-      QString layerProvider = layerStyleElement.attribute( QStringLiteral( "provider" ) );
+      const QString layerId = layerStyleElement.attribute( QStringLiteral( "layerid" ) );
+      const QString layerName = layerStyleElement.attribute( QStringLiteral( "name" ) );
+      const QString layerSource = layerStyleElement.attribute( QStringLiteral( "source" ) );
+      const QString layerProvider = layerStyleElement.attribute( QStringLiteral( "provider" ) );
       QgsMapLayerRef ref( layerId, layerName, layerSource, layerProvider );
       ref.resolveWeakly( project );
 
@@ -904,14 +932,14 @@ bool QgsCompositionConverter::readMapXml( QgsLayoutItemMap *layoutItem, const QD
 
   //overviews
   //read overview stack
-  QDomNodeList mapOverviewNodeList = itemElem.elementsByTagName( QStringLiteral( "ComposerMapOverview" ) );
+  const QDomNodeList mapOverviewNodeList = itemElem.elementsByTagName( QStringLiteral( "ComposerMapOverview" ) );
   for ( int i = 0; i < mapOverviewNodeList.size(); ++i )
   {
-    QDomElement mapOverviewElem = mapOverviewNodeList.at( i ).toElement();
+    const QDomElement mapOverviewElem = mapOverviewNodeList.at( i ).toElement();
     std::unique_ptr<QgsLayoutItemMapOverview> mapOverview( new QgsLayoutItemMapOverview( mapOverviewElem.attribute( QStringLiteral( "name" ) ), layoutItem ) );
     mapOverview->readXml( mapOverviewElem, doc, context );
-    QString frameMapId = mapOverviewElem.attribute( QStringLiteral( "frameMap" ), QStringLiteral( "-1" ) );
-    if ( frameMapId != QStringLiteral( "-1" ) && mapId2Uuid.contains( frameMapId ) )
+    const QString frameMapId = mapOverviewElem.attribute( QStringLiteral( "frameMap" ), QStringLiteral( "-1" ) );
+    if ( frameMapId != QLatin1String( "-1" ) && mapId2Uuid.contains( frameMapId ) )
     {
       QgsLayoutItemMap *mapInstance = qobject_cast<QgsLayoutItemMap *>( layoutItem->layout()->itemByUuid( mapId2Uuid[ frameMapId ] ) );
       if ( mapInstance )
@@ -928,10 +956,10 @@ bool QgsCompositionConverter::readMapXml( QgsLayoutItemMap *layoutItem, const QD
   //load grid / grid annotation in old xml format
   //only do this if the grid stack didn't load any grids, otherwise this will
   //be the dummy element created by QGIS >= 2.5 (refs #10905)
-  QDomNodeList gridNodeList = itemElem.elementsByTagName( QStringLiteral( "Grid" ) );
+  const QDomNodeList gridNodeList = itemElem.elementsByTagName( QStringLiteral( "Grid" ) );
   if ( layoutItem->mGridStack->size() == 0 && !gridNodeList.isEmpty() )
   {
-    QDomElement gridElem = gridNodeList.at( 0 ).toElement();
+    const QDomElement gridElem = gridNodeList.at( 0 ).toElement();
     QgsLayoutItemMapGrid *mapGrid = new QgsLayoutItemMapGrid( QObject::tr( "Grid %1" ).arg( 1 ), layoutItem );
     mapGrid->setEnabled( gridElem.attribute( QStringLiteral( "show" ), QStringLiteral( "0" ) ) != QLatin1String( "0" ) );
     mapGrid->setStyle( QgsLayoutItemMapGrid::GridStyle( gridElem.attribute( QStringLiteral( "gridStyle" ), QStringLiteral( "0" ) ).toInt() ) );
@@ -947,12 +975,12 @@ bool QgsCompositionConverter::readMapXml( QgsLayoutItemMap *layoutItem, const QD
     mapGrid->setFrameFillColor1( QgsSymbolLayerUtils::decodeColor( gridElem.attribute( QStringLiteral( "frameFillColor1" ), QStringLiteral( "255,255,255,255" ) ) ) );
     mapGrid->setFrameFillColor2( QgsSymbolLayerUtils::decodeColor( gridElem.attribute( QStringLiteral( "frameFillColor2" ), QStringLiteral( "0,0,0,255" ) ) ) );
     mapGrid->setBlendMode( QgsPainting::getCompositionMode( static_cast< QgsPainting::BlendMode >( itemElem.attribute( QStringLiteral( "gridBlendMode" ), QStringLiteral( "0" ) ).toUInt() ) ) );
-    QDomElement gridSymbolElem = gridElem.firstChildElement( QStringLiteral( "symbol" ) );
+    const QDomElement gridSymbolElem = gridElem.firstChildElement( QStringLiteral( "symbol" ) );
     QgsLineSymbol *lineSymbol = nullptr;
     if ( gridSymbolElem.isNull() )
     {
       //old project file, read penWidth /penColorRed, penColorGreen, penColorBlue
-      lineSymbol = QgsLineSymbol::createSimple( QgsStringMap() );
+      lineSymbol = QgsLineSymbol::createSimple( QVariantMap() );
       lineSymbol->setWidth( gridElem.attribute( QStringLiteral( "penWidth" ), QStringLiteral( "0" ) ).toDouble() );
       lineSymbol->setColor( QColor( gridElem.attribute( QStringLiteral( "penColorRed" ), QStringLiteral( "0" ) ).toInt(),
                                     gridElem.attribute( QStringLiteral( "penColorGreen" ), QStringLiteral( "0" ) ).toInt(),
@@ -965,10 +993,10 @@ bool QgsCompositionConverter::readMapXml( QgsLayoutItemMap *layoutItem, const QD
     mapGrid->setLineSymbol( lineSymbol );
 
     //annotation
-    QDomNodeList annotationNodeList = gridElem.elementsByTagName( QStringLiteral( "Annotation" ) );
+    const QDomNodeList annotationNodeList = gridElem.elementsByTagName( QStringLiteral( "Annotation" ) );
     if ( !annotationNodeList.isEmpty() )
     {
-      QDomElement annotationElem = annotationNodeList.at( 0 ).toElement();
+      const QDomElement annotationElem = annotationNodeList.at( 0 ).toElement();
       mapGrid->setAnnotationEnabled( annotationElem.attribute( QStringLiteral( "show" ), QStringLiteral( "0" ) ) != QLatin1String( "0" ) );
       mapGrid->setAnnotationFormat( QgsLayoutItemMapGrid::AnnotationFormat( annotationElem.attribute( QStringLiteral( "format" ), QStringLiteral( "0" ) ).toInt() ) );
       mapGrid->setAnnotationPosition( QgsLayoutItemMapGrid::AnnotationPosition( annotationElem.attribute( QStringLiteral( "leftPosition" ), QStringLiteral( "0" ) ).toInt() ), QgsLayoutItemMapGrid::Left );
@@ -982,8 +1010,21 @@ bool QgsCompositionConverter::readMapXml( QgsLayoutItemMap *layoutItem, const QD
       mapGrid->setAnnotationFrameDistance( annotationElem.attribute( QStringLiteral( "frameDistance" ), QStringLiteral( "0" ) ).toDouble() );
       QFont annotationFont;
       annotationFont.fromString( annotationElem.attribute( QStringLiteral( "font" ), QString() ) );
-      mapGrid->setAnnotationFont( annotationFont );
-      mapGrid->setAnnotationFontColor( QgsSymbolLayerUtils::decodeColor( itemElem.attribute( QStringLiteral( "fontColor" ), QStringLiteral( "0,0,0,255" ) ) ) );
+
+      QgsTextFormat annotationFormat = mapGrid->annotationTextFormat();
+      annotationFormat.setFont( annotationFont );
+      if ( annotationFont.pointSizeF() > 0 )
+      {
+        annotationFormat.setSize( annotationFont.pointSizeF() );
+        annotationFormat.setSizeUnit( QgsUnitTypes::RenderPoints );
+      }
+      else if ( annotationFont.pixelSize() > 0 )
+      {
+        annotationFormat.setSize( annotationFont.pixelSize() );
+        annotationFormat.setSizeUnit( QgsUnitTypes::RenderPixels );
+      }
+      annotationFormat.setColor( QgsSymbolLayerUtils::decodeColor( itemElem.attribute( QStringLiteral( "fontColor" ), QStringLiteral( "0,0,0,255" ) ) ) );
+      mapGrid->setAnnotationTextFormat( annotationFormat );
 
       mapGrid->setAnnotationPrecision( annotationElem.attribute( QStringLiteral( "precision" ), QStringLiteral( "3" ) ).toInt() );
     }
@@ -991,10 +1032,10 @@ bool QgsCompositionConverter::readMapXml( QgsLayoutItemMap *layoutItem, const QD
   }
 
   //atlas
-  QDomNodeList atlasNodeList = itemElem.elementsByTagName( QStringLiteral( "AtlasMap" ) );
+  const QDomNodeList atlasNodeList = itemElem.elementsByTagName( QStringLiteral( "AtlasMap" ) );
   if ( !atlasNodeList.isEmpty() )
   {
-    QDomElement atlasElem = atlasNodeList.at( 0 ).toElement();
+    const QDomElement atlasElem = atlasNodeList.at( 0 ).toElement();
     layoutItem->mAtlasDriven = ( atlasElem.attribute( QStringLiteral( "atlasDriven" ), QStringLiteral( "0" ) ) != QLatin1String( "0" ) );
     if ( atlasElem.hasAttribute( QStringLiteral( "fixedScale" ) ) ) // deprecated XML
     {
@@ -1029,10 +1070,8 @@ bool QgsCompositionConverter::readScaleBarXml( QgsLayoutItemScaleBar *layoutItem
   layoutItem->setMaximumBarWidth( itemElem.attribute( QStringLiteral( "maxBarWidth" ), QStringLiteral( "150" ) ).toDouble() );
   layoutItem->mSegmentMillimeters = itemElem.attribute( QStringLiteral( "segmentMillimeters" ), QStringLiteral( "0.0" ) ).toDouble();
   layoutItem->setMapUnitsPerScaleBarUnit( itemElem.attribute( QStringLiteral( "numMapUnitsPerScaleBarUnit" ), QStringLiteral( "1.0" ) ).toDouble() );
-  layoutItem->setLineWidth( itemElem.attribute( QStringLiteral( "outlineWidth" ), QStringLiteral( "0.3" ) ).toDouble() );
   layoutItem->setUnitLabel( itemElem.attribute( QStringLiteral( "unitLabel" ) ) );
-  layoutItem->setLineJoinStyle( QgsSymbolLayerUtils::decodePenJoinStyle( itemElem.attribute( QStringLiteral( "lineJoinStyle" ), QStringLiteral( "miter" ) ) ) );
-  layoutItem->setLineCapStyle( QgsSymbolLayerUtils::decodePenCapStyle( itemElem.attribute( QStringLiteral( "lineCapStyle" ), QStringLiteral( "square" ) ) ) );
+
   QFont f;
   if ( !QgsFontUtils::setFromXmlChildNode( f, itemElem, QStringLiteral( "scaleBarFont" ) ) )
   {
@@ -1044,10 +1083,10 @@ bool QgsCompositionConverter::readScaleBarXml( QgsLayoutItemScaleBar *layoutItem
 
   //colors
   //fill color
-  QDomNodeList fillColorList = itemElem.elementsByTagName( QStringLiteral( "fillColor" ) );
+  const QDomNodeList fillColorList = itemElem.elementsByTagName( QStringLiteral( "fillColor" ) );
   if ( !fillColorList.isEmpty() )
   {
-    QDomElement fillColorElem = fillColorList.at( 0 ).toElement();
+    const QDomElement fillColorElem = fillColorList.at( 0 ).toElement();
     bool redOk, greenOk, blueOk, alphaOk;
     int fillRed, fillGreen, fillBlue, fillAlpha;
 
@@ -1058,19 +1097,19 @@ bool QgsCompositionConverter::readScaleBarXml( QgsLayoutItemScaleBar *layoutItem
 
     if ( redOk && greenOk && blueOk && alphaOk )
     {
-      layoutItem->setFillColor( QColor( fillRed, fillGreen, fillBlue, fillAlpha ) );
+      layoutItem->fillSymbol()->setColor( QColor( fillRed, fillGreen, fillBlue, fillAlpha ) );
     }
   }
   else
   {
-    layoutItem->setFillColor( QColor( itemElem.attribute( QStringLiteral( "brushColor" ), QStringLiteral( "#000000" ) ) ) );
+    layoutItem->fillSymbol()->setColor( QColor( itemElem.attribute( QStringLiteral( "brushColor" ), QStringLiteral( "#000000" ) ) ) );
   }
 
   //fill color 2
-  QDomNodeList fillColor2List = itemElem.elementsByTagName( QStringLiteral( "fillColor2" ) );
+  const QDomNodeList fillColor2List = itemElem.elementsByTagName( QStringLiteral( "fillColor2" ) );
   if ( !fillColor2List.isEmpty() )
   {
-    QDomElement fillColor2Elem = fillColor2List.at( 0 ).toElement();
+    const QDomElement fillColor2Elem = fillColor2List.at( 0 ).toElement();
     bool redOk, greenOk, blueOk, alphaOk;
     int fillRed, fillGreen, fillBlue, fillAlpha;
 
@@ -1081,19 +1120,25 @@ bool QgsCompositionConverter::readScaleBarXml( QgsLayoutItemScaleBar *layoutItem
 
     if ( redOk && greenOk && blueOk && alphaOk )
     {
-      layoutItem->setFillColor2( QColor( fillRed, fillGreen, fillBlue, fillAlpha ) );
+      layoutItem->alternateFillSymbol()->setColor( QColor( fillRed, fillGreen, fillBlue, fillAlpha ) );
     }
   }
   else
   {
-    layoutItem->setFillColor2( QColor( itemElem.attribute( QStringLiteral( "brush2Color" ), QStringLiteral( "#ffffff" ) ) ) );
+    layoutItem->alternateFillSymbol()->setColor( QColor( itemElem.attribute( QStringLiteral( "brush2Color" ), QStringLiteral( "#ffffff" ) ) ) );
   }
 
+  std::unique_ptr< QgsLineSymbol > lineSymbol = std::make_unique< QgsLineSymbol >();
+  std::unique_ptr< QgsSimpleLineSymbolLayer > lineSymbolLayer = std::make_unique< QgsSimpleLineSymbolLayer >();
+  lineSymbolLayer->setWidth( itemElem.attribute( QStringLiteral( "outlineWidth" ), QStringLiteral( "0.3" ) ).toDouble() );
+  lineSymbolLayer->setWidthUnit( QgsUnitTypes::RenderMillimeters );
+  lineSymbolLayer->setPenJoinStyle( QgsSymbolLayerUtils::decodePenJoinStyle( itemElem.attribute( QStringLiteral( "lineJoinStyle" ), QStringLiteral( "miter" ) ) ) );
+  lineSymbolLayer->setPenCapStyle( QgsSymbolLayerUtils::decodePenCapStyle( itemElem.attribute( QStringLiteral( "lineCapStyle" ), QStringLiteral( "square" ) ) ) );
   //stroke color
-  QDomNodeList strokeColorList = itemElem.elementsByTagName( QStringLiteral( "strokeColor" ) );
+  const QDomNodeList strokeColorList = itemElem.elementsByTagName( QStringLiteral( "strokeColor" ) );
   if ( !strokeColorList.isEmpty() )
   {
-    QDomElement strokeColorElem = strokeColorList.at( 0 ).toElement();
+    const QDomElement strokeColorElem = strokeColorList.at( 0 ).toElement();
     bool redOk, greenOk, blueOk, alphaOk;
     int strokeRed, strokeGreen, strokeBlue, strokeAlpha;
 
@@ -1104,25 +1149,23 @@ bool QgsCompositionConverter::readScaleBarXml( QgsLayoutItemScaleBar *layoutItem
 
     if ( redOk && greenOk && blueOk && alphaOk )
     {
-      layoutItem->setLineColor( QColor( strokeRed, strokeGreen, strokeBlue, strokeAlpha ) );
-      QPen p = layoutItem->mSettings.pen();
-      p.setColor( layoutItem->mSettings.lineColor() );
-      layoutItem->setPen( p );
+      lineSymbolLayer->setColor( QColor( strokeRed, strokeGreen, strokeBlue, strokeAlpha ) );
     }
   }
   else
   {
-    layoutItem->setLineColor( QColor( itemElem.attribute( QStringLiteral( "penColor" ), QStringLiteral( "#000000" ) ) ) );
-    QPen p = layoutItem->mSettings.pen();
-    p.setColor( layoutItem->mSettings.lineColor() );
-    layoutItem->setPen( p );
+    lineSymbolLayer->setColor( QColor( itemElem.attribute( QStringLiteral( "penColor" ), QStringLiteral( "#000000" ) ) ) );
   }
+  lineSymbol->changeSymbolLayer( 0, lineSymbolLayer.release() );
+  layoutItem->setDivisionLineSymbol( lineSymbol->clone() );
+  layoutItem->setSubdivisionLineSymbol( lineSymbol->clone() );
+  layoutItem->setLineSymbol( lineSymbol.release() );
 
   //font color
-  QDomNodeList textColorList = itemElem.elementsByTagName( QStringLiteral( "textColor" ) );
+  const QDomNodeList textColorList = itemElem.elementsByTagName( QStringLiteral( "textColor" ) );
   if ( !textColorList.isEmpty() )
   {
-    QDomElement textColorElem = textColorList.at( 0 ).toElement();
+    const QDomElement textColorElem = textColorList.at( 0 ).toElement();
     bool redOk, greenOk, blueOk, alphaOk;
     int textRed, textGreen, textBlue, textAlpha;
 
@@ -1148,7 +1191,7 @@ bool QgsCompositionConverter::readScaleBarXml( QgsLayoutItemScaleBar *layoutItem
   }
 
   //style
-  QString styleString = itemElem.attribute( QStringLiteral( "style" ), QString() );
+  const QString styleString = itemElem.attribute( QStringLiteral( "style" ), QString() );
   layoutItem->setStyle( QObject::tr( styleString.toLocal8Bit().data() ) );
 
   if ( itemElem.attribute( QStringLiteral( "unitType" ) ).isEmpty() )
@@ -1178,8 +1221,8 @@ bool QgsCompositionConverter::readScaleBarXml( QgsLayoutItemScaleBar *layoutItem
   layoutItem->setAlignment( static_cast< QgsScaleBarSettings::Alignment >( itemElem.attribute( QStringLiteral( "alignment" ), QStringLiteral( "0" ) ).toInt() ) );
 
   //composer map: use uuid
-  QString mapId = itemElem.attribute( QStringLiteral( "mapId" ), QStringLiteral( "-1" ) );
-  if ( mapId != QStringLiteral( "-1" ) && mapId2Uuid.contains( mapId ) )
+  const QString mapId = itemElem.attribute( QStringLiteral( "mapId" ), QStringLiteral( "-1" ) );
+  if ( mapId != QLatin1String( "-1" ) && mapId2Uuid.contains( mapId ) )
   {
     QgsLayoutItemMap *mapInstance = qobject_cast<QgsLayoutItemMap *>( layoutItem->layout()->itemByUuid( mapId2Uuid[ mapId ] ) );
     if ( mapInstance )
@@ -1203,8 +1246,8 @@ bool QgsCompositionConverter::readLegendXml( QgsLayoutItemLegend *layoutItem, co
   context.setProjectTranslator( const_cast<QgsProject *>( project ) );
 
   //composer map: use uuid
-  QString mapId = itemElem.attribute( QStringLiteral( "map" ), QStringLiteral( "-1" ) );
-  if ( mapId != QStringLiteral( "-1" ) && mapId2Uuid.contains( mapId ) )
+  const QString mapId = itemElem.attribute( QStringLiteral( "map" ), QStringLiteral( "-1" ) );
+  if ( mapId != QLatin1String( "-1" ) && mapId2Uuid.contains( mapId ) )
   {
     QgsLayoutItemMap *mapInstance = qobject_cast<QgsLayoutItemMap *>( layoutItem->layout()->itemByUuid( mapId2Uuid[ mapId ] ) );
     if ( mapInstance )
@@ -1225,16 +1268,16 @@ bool QgsCompositionConverter::readLegendXml( QgsLayoutItemLegend *layoutItem, co
   layoutItem->setSplitLayer( itemElem.attribute( QStringLiteral( "splitLayer" ), QStringLiteral( "0" ) ).toInt() == 1 );
   layoutItem->setEqualColumnWidth( itemElem.attribute( QStringLiteral( "equalColumnWidth" ), QStringLiteral( "0" ) ).toInt() == 1 );
 
-  QDomNodeList stylesNodeList = itemElem.elementsByTagName( QStringLiteral( "styles" ) );
+  const QDomNodeList stylesNodeList = itemElem.elementsByTagName( QStringLiteral( "styles" ) );
   if ( !stylesNodeList.isEmpty() )
   {
-    QDomNode stylesNode = stylesNodeList.at( 0 );
+    const QDomNode stylesNode = stylesNodeList.at( 0 );
     for ( int i = 0; i < stylesNode.childNodes().size(); i++ )
     {
-      QDomElement styleElem = stylesNode.childNodes().at( i ).toElement();
+      const QDomElement styleElem = stylesNode.childNodes().at( i ).toElement();
       QgsLegendStyle style;
       style.readXml( styleElem, QDomDocument() );
-      QString name = styleElem.attribute( QStringLiteral( "name" ) );
+      const QString name = styleElem.attribute( QStringLiteral( "name" ) );
       QgsLegendStyle::Style s;
       if ( name == QLatin1String( "title" ) ) s = QgsLegendStyle::Title;
       else if ( name == QLatin1String( "group" ) ) s = QgsLegendStyle::Group;
@@ -1296,10 +1339,10 @@ bool QgsCompositionConverter::readAtlasXml( QgsLayoutAtlas *atlasItem, const QDo
   atlasItem->setEnabled( itemElem.attribute( QStringLiteral( "enabled" ), QStringLiteral( "false" ) ) == QLatin1String( "true" ) );
 
   // look for stored layer name
-  QString layerId = itemElem.attribute( QStringLiteral( "coverageLayer" ) );
-  QString layerName = itemElem.attribute( QStringLiteral( "coverageLayerName" ) );
-  QString layerSource = itemElem.attribute( QStringLiteral( "coverageLayerSource" ) );
-  QString layerProvider = itemElem.attribute( QStringLiteral( "coverageLayerProvider" ) );
+  const QString layerId = itemElem.attribute( QStringLiteral( "coverageLayer" ) );
+  const QString layerName = itemElem.attribute( QStringLiteral( "coverageLayerName" ) );
+  const QString layerSource = itemElem.attribute( QStringLiteral( "coverageLayerSource" ) );
+  const QString layerProvider = itemElem.attribute( QStringLiteral( "coverageLayerProvider" ) );
 
   QgsVectorLayerRef layerRef( layerId, layerName, layerSource, layerProvider );
   atlasItem->setCoverageLayer( layerRef.resolveWeakly( project ) );
@@ -1335,17 +1378,17 @@ bool QgsCompositionConverter::readHtmlXml( QgsLayoutItemHtml *layoutItem, const 
 
   //first create the frames
   layoutItem->setResizeMode( static_cast< QgsLayoutMultiFrame::ResizeMode >( itemElem.attribute( QStringLiteral( "resizeMode" ), QStringLiteral( "0" ) ).toInt() ) );
-  QDomNodeList frameList = itemElem.elementsByTagName( QStringLiteral( "ComposerFrame" ) );
+  const QDomNodeList frameList = itemElem.elementsByTagName( QStringLiteral( "ComposerFrame" ) );
   for ( int i = 0; i < frameList.size(); ++i )
   {
-    QDomElement frameElem = frameList.at( i ).toElement();
+    const QDomElement frameElem = frameList.at( i ).toElement();
     QgsLayoutFrame *newFrame = new QgsLayoutFrame( layoutItem->layout(), layoutItem );
     restoreGeneralComposeItemProperties( newFrame, frameElem );
     // Read frame XML
-    double x = itemElem.attribute( QStringLiteral( "sectionX" ) ).toDouble();
-    double y = itemElem.attribute( QStringLiteral( "sectionY" ) ).toDouble();
-    double width = itemElem.attribute( QStringLiteral( "sectionWidth" ) ).toDouble();
-    double height = itemElem.attribute( QStringLiteral( "sectionHeight" ) ).toDouble();
+    const double x = itemElem.attribute( QStringLiteral( "sectionX" ) ).toDouble();
+    const double y = itemElem.attribute( QStringLiteral( "sectionY" ) ).toDouble();
+    const double width = itemElem.attribute( QStringLiteral( "sectionWidth" ) ).toDouble();
+    const double height = itemElem.attribute( QStringLiteral( "sectionHeight" ) ).toDouble();
     newFrame->setContentSection( QRectF( x, y, width, height ) );
     newFrame->setHidePageIfEmpty( itemElem.attribute( QStringLiteral( "hidePageIfEmpty" ), QStringLiteral( "0" ) ).toInt() );
     newFrame->setHideBackgroundIfEmpty( itemElem.attribute( QStringLiteral( "hideBackgroundIfEmpty" ), QStringLiteral( "0" ) ).toInt() );
@@ -1366,7 +1409,7 @@ bool QgsCompositionConverter::readHtmlXml( QgsLayoutItemHtml *layoutItem, const 
   layoutItem->setUserStylesheetEnabled( itemElem.attribute( QStringLiteral( "stylesheetEnabled" ), QStringLiteral( "false" ) ) == QLatin1String( "true" ) );
 
   //finally load the set url
-  QString urlString = itemElem.attribute( QStringLiteral( "url" ) );
+  const QString urlString = itemElem.attribute( QStringLiteral( "url" ) );
   if ( !urlString.isEmpty() )
   {
     layoutItem->setUrl( urlString );
@@ -1384,17 +1427,17 @@ bool QgsCompositionConverter::readTableXml( QgsLayoutItemAttributeTable *layoutI
 
   //first create the frames
   layoutItem->setResizeMode( static_cast< QgsLayoutMultiFrame::ResizeMode >( itemElem.attribute( QStringLiteral( "resizeMode" ), QStringLiteral( "0" ) ).toInt() ) );
-  QDomNodeList frameList = itemElem.elementsByTagName( QStringLiteral( "ComposerFrame" ) );
+  const QDomNodeList frameList = itemElem.elementsByTagName( QStringLiteral( "ComposerFrame" ) );
   for ( int i = 0; i < frameList.size(); ++i )
   {
-    QDomElement frameElem = frameList.at( i ).toElement();
+    const QDomElement frameElem = frameList.at( i ).toElement();
     QgsLayoutFrame *newFrame = new QgsLayoutFrame( layoutItem->layout(), layoutItem );
     restoreGeneralComposeItemProperties( newFrame, frameElem );
     // Read frame XML
-    double x = itemElem.attribute( QStringLiteral( "sectionX" ) ).toDouble();
-    double y = itemElem.attribute( QStringLiteral( "sectionY" ) ).toDouble();
-    double width = itemElem.attribute( QStringLiteral( "sectionWidth" ) ).toDouble();
-    double height = itemElem.attribute( QStringLiteral( "sectionHeight" ) ).toDouble();
+    const double x = itemElem.attribute( QStringLiteral( "sectionX" ) ).toDouble();
+    const double y = itemElem.attribute( QStringLiteral( "sectionY" ) ).toDouble();
+    const double width = itemElem.attribute( QStringLiteral( "sectionWidth" ) ).toDouble();
+    const double height = itemElem.attribute( QStringLiteral( "sectionHeight" ) ).toDouble();
     newFrame->setContentSection( QRectF( x, y, width, height ) );
     newFrame->setHidePageIfEmpty( itemElem.attribute( QStringLiteral( "hidePageIfEmpty" ), QStringLiteral( "0" ) ).toInt() );
     newFrame->setHideBackgroundIfEmpty( itemElem.attribute( QStringLiteral( "hideBackgroundIfEmpty" ), QStringLiteral( "0" ) ).toInt() );
@@ -1404,18 +1447,48 @@ bool QgsCompositionConverter::readTableXml( QgsLayoutItemAttributeTable *layoutI
   layoutItem->setEmptyTableBehavior( static_cast<QgsLayoutTable::EmptyTableMode>( itemElem.attribute( QStringLiteral( "emptyTableMode" ), QStringLiteral( "0" ) ).toInt() ) );
   layoutItem->setEmptyTableMessage( itemElem.attribute( QStringLiteral( "emptyTableMessage" ), QObject::tr( "No matching records" ) ) );
   layoutItem->setShowEmptyRows( itemElem.attribute( QStringLiteral( "showEmptyRows" ), QStringLiteral( "0" ) ).toInt() );
-  if ( !QgsFontUtils::setFromXmlChildNode( layoutItem->mHeaderFont, itemElem, QStringLiteral( "headerFontProperties" ) ) )
+  QFont headerFont;
+  if ( !QgsFontUtils::setFromXmlChildNode( headerFont, itemElem, QStringLiteral( "headerFontProperties" ) ) )
   {
-    layoutItem->mHeaderFont.fromString( itemElem.attribute( QStringLiteral( "headerFont" ), QString() ) );
+    headerFont.fromString( itemElem.attribute( QStringLiteral( "headerFont" ), QString() ) );
   }
-  layoutItem->setHeaderFontColor( QgsSymbolLayerUtils::decodeColor( itemElem.attribute( QStringLiteral( "headerFontColor" ), QStringLiteral( "0,0,0,255" ) ) ) );
+  QgsTextFormat headerFormat = layoutItem->headerTextFormat();
+  headerFormat.setFont( headerFont );
+  if ( headerFont.pointSizeF() > 0 )
+  {
+    headerFormat.setSize( headerFont.pointSizeF() );
+    headerFormat.setSizeUnit( QgsUnitTypes::RenderPoints );
+  }
+  else if ( headerFont.pixelSize() > 0 )
+  {
+    headerFormat.setSize( headerFont.pixelSize() );
+    headerFormat.setSizeUnit( QgsUnitTypes::RenderPixels );
+  }
+  headerFormat.setColor( QgsSymbolLayerUtils::decodeColor( itemElem.attribute( QStringLiteral( "headerFontColor" ), QStringLiteral( "0,0,0,255" ) ) ) );
+  layoutItem->setHeaderTextFormat( headerFormat );
   layoutItem->setHeaderHAlignment( static_cast<QgsLayoutTable::HeaderHAlignment>( itemElem.attribute( QStringLiteral( "headerHAlignment" ), QStringLiteral( "0" ) ).toInt() ) ) ;
   layoutItem->setHeaderMode( static_cast<QgsLayoutTable::HeaderMode>( itemElem.attribute( QStringLiteral( "headerMode" ), QStringLiteral( "0" ) ).toInt() ) );
-  if ( !QgsFontUtils::setFromXmlChildNode( layoutItem->mContentFont, itemElem, QStringLiteral( "contentFontProperties" ) ) )
+
+  QFont contentFont;
+  if ( !QgsFontUtils::setFromXmlChildNode( contentFont, itemElem, QStringLiteral( "contentFontProperties" ) ) )
   {
-    layoutItem->mContentFont.fromString( itemElem.attribute( QStringLiteral( "contentFont" ), QString() ) );
+    contentFont.fromString( itemElem.attribute( QStringLiteral( "contentFont" ), QString() ) );
   }
-  layoutItem->setContentFontColor( QgsSymbolLayerUtils::decodeColor( itemElem.attribute( QStringLiteral( "contentFontColor" ), QStringLiteral( "0,0,0,255" ) ) ) );
+  QgsTextFormat contentFormat = layoutItem->contentTextFormat();
+  contentFormat.setFont( contentFont );
+  if ( contentFont.pointSizeF() > 0 )
+  {
+    contentFormat.setSize( contentFont.pointSizeF() );
+    contentFormat.setSizeUnit( QgsUnitTypes::RenderPoints );
+  }
+  else if ( contentFont.pixelSize() > 0 )
+  {
+    contentFormat.setSize( contentFont.pixelSize() );
+    contentFormat.setSizeUnit( QgsUnitTypes::RenderPixels );
+  }
+  contentFormat.setColor( QgsSymbolLayerUtils::decodeColor( itemElem.attribute( QStringLiteral( "contentFontColor" ), QStringLiteral( "0,0,0,255" ) ) ) );
+  layoutItem->setContentTextFormat( contentFormat );
+
   layoutItem->setCellMargin( itemElem.attribute( QStringLiteral( "cellMargin" ), QStringLiteral( "1.0" ) ).toDouble() );
   layoutItem->setGridStrokeWidth( itemElem.attribute( QStringLiteral( "gridStrokeWidth" ), QStringLiteral( "0.5" ) ).toDouble() );
   layoutItem->setHorizontalGrid( itemElem.attribute( QStringLiteral( "horizontalGrid" ), QStringLiteral( "1" ) ).toInt() );
@@ -1427,27 +1500,29 @@ bool QgsCompositionConverter::readTableXml( QgsLayoutItemAttributeTable *layoutI
 
   //restore column specifications
   layoutItem->mColumns.clear();
-  QDomNodeList columnsList = itemElem.elementsByTagName( QStringLiteral( "displayColumns" ) );
+  layoutItem->mSortColumns.clear();
+
+  const QDomNodeList columnsList = itemElem.elementsByTagName( QStringLiteral( "displayColumns" ) );
   if ( !columnsList.isEmpty() )
   {
-    QDomElement columnsElem = columnsList.at( 0 ).toElement();
-    QDomNodeList columnEntryList = columnsElem.elementsByTagName( QStringLiteral( "column" ) );
+    const QDomElement columnsElem = columnsList.at( 0 ).toElement();
+    const QDomNodeList columnEntryList = columnsElem.elementsByTagName( QStringLiteral( "column" ) );
     for ( int i = 0; i < columnEntryList.size(); ++i )
     {
-      QDomElement columnElem = columnEntryList.at( i ).toElement();
-      QgsLayoutTableColumn *column = new QgsLayoutTableColumn;
-      column->mHAlignment = static_cast< Qt::AlignmentFlag >( columnElem.attribute( QStringLiteral( "hAlignment" ), QString::number( Qt::AlignLeft ) ).toInt() );
-      column->mVAlignment = static_cast< Qt::AlignmentFlag >( columnElem.attribute( QStringLiteral( "vAlignment" ), QString::number( Qt::AlignVCenter ) ).toInt() );
-      column->mHeading = columnElem.attribute( QStringLiteral( "heading" ), QString() );
-      column->mAttribute = columnElem.attribute( QStringLiteral( "attribute" ), QString() );
-      column->mSortByRank = columnElem.attribute( QStringLiteral( "sortByRank" ), QStringLiteral( "0" ) ).toInt();
-      column->mSortOrder = static_cast< Qt::SortOrder >( columnElem.attribute( QStringLiteral( "sortOrder" ), QString::number( Qt::AscendingOrder ) ).toInt() );
-      column->mWidth = columnElem.attribute( QStringLiteral( "width" ), QStringLiteral( "0.0" ) ).toDouble();
+      const QDomElement columnElem = columnEntryList.at( i ).toElement();
+      QgsLayoutTableColumn column;
+      column.mHAlignment = static_cast< Qt::AlignmentFlag >( columnElem.attribute( QStringLiteral( "hAlignment" ), QString::number( Qt::AlignLeft ) ).toInt() );
+      column.mVAlignment = static_cast< Qt::AlignmentFlag >( columnElem.attribute( QStringLiteral( "vAlignment" ), QString::number( Qt::AlignVCenter ) ).toInt() );
+      column.mHeading = columnElem.attribute( QStringLiteral( "heading" ), QString() );
+      column.mAttribute = columnElem.attribute( QStringLiteral( "attribute" ), QString() );
+      column.mSortByRank = columnElem.attribute( QStringLiteral( "sortByRank" ), QStringLiteral( "0" ) ).toInt();
+      column.mSortOrder = static_cast< Qt::SortOrder >( columnElem.attribute( QStringLiteral( "sortOrder" ), QString::number( Qt::AscendingOrder ) ).toInt() );
+      column.mWidth = columnElem.attribute( QStringLiteral( "width" ), QStringLiteral( "0.0" ) ).toDouble();
 
-      QDomNodeList bgColorList = columnElem.elementsByTagName( QStringLiteral( "backgroundColor" ) );
+      const QDomNodeList bgColorList = columnElem.elementsByTagName( QStringLiteral( "backgroundColor" ) );
       if ( !bgColorList.isEmpty() )
       {
-        QDomElement bgColorElem = bgColorList.at( 0 ).toElement();
+        const QDomElement bgColorElem = bgColorList.at( 0 ).toElement();
         bool redOk, greenOk, blueOk, alphaOk;
         int bgRed, bgGreen, bgBlue, bgAlpha;
         bgRed = bgColorElem.attribute( QStringLiteral( "red" ) ).toDouble( &redOk );
@@ -1456,27 +1531,34 @@ bool QgsCompositionConverter::readTableXml( QgsLayoutItemAttributeTable *layoutI
         bgAlpha = bgColorElem.attribute( QStringLiteral( "alpha" ) ).toDouble( &alphaOk );
         if ( redOk && greenOk && blueOk && alphaOk )
         {
-          column->mBackgroundColor = QColor( bgRed, bgGreen, bgBlue, bgAlpha );
+          column.mBackgroundColor = QColor( bgRed, bgGreen, bgBlue, bgAlpha );
         }
       }
       layoutItem->mColumns.append( column );
+
+      // sorting columns are now (QGIS 3.14+) handled in a dedicated list
+      // copy the display columns if sortByRank > 0 and then, sort them by rank
+      Q_NOWARN_DEPRECATED_PUSH
+      std::copy_if( layoutItem->mColumns.begin(), layoutItem->mColumns.end(), std::back_inserter( layoutItem->mSortColumns ), []( const QgsLayoutTableColumn & col ) {return col.sortByRank() > 0;} );
+      std::sort( layoutItem->mSortColumns.begin(), layoutItem->mSortColumns.end(), []( const QgsLayoutTableColumn & a, const QgsLayoutTableColumn & b ) {return a.sortByRank() < b.sortByRank();} );
+      Q_NOWARN_DEPRECATED_POP
     }
   }
 
   //restore cell styles
-  QDomNodeList stylesList = itemElem.elementsByTagName( QStringLiteral( "cellStyles" ) );
+  const QDomNodeList stylesList = itemElem.elementsByTagName( QStringLiteral( "cellStyles" ) );
   if ( !stylesList.isEmpty() )
   {
-    QDomElement stylesElem = stylesList.at( 0 ).toElement();
+    const QDomElement stylesElem = stylesList.at( 0 ).toElement();
 
     QMap< QgsLayoutTable::CellStyleGroup, QString >::const_iterator it = layoutItem->mCellStyleNames.constBegin();
     for ( ; it != layoutItem->mCellStyleNames.constEnd(); ++it )
     {
-      QString styleName = it.value();
-      QDomNodeList styleList = stylesElem.elementsByTagName( styleName );
+      const QString styleName = it.value();
+      const QDomNodeList styleList = stylesElem.elementsByTagName( styleName );
       if ( !styleList.isEmpty() )
       {
-        QDomElement styleElem = styleList.at( 0 ).toElement();
+        const QDomElement styleElem = styleList.at( 0 ).toElement();
         QgsLayoutTableStyle *style = layoutItem->mCellStyles.value( it.key() );
         if ( style )
           style->readXml( styleElem );
@@ -1485,10 +1567,10 @@ bool QgsCompositionConverter::readTableXml( QgsLayoutItemAttributeTable *layoutI
   }
 
   // look for stored layer name
-  QString layerId = itemElem.attribute( QStringLiteral( "vectorLayer" ) );
-  QString layerName = itemElem.attribute( QStringLiteral( "vectorLayerName" ) );
-  QString layerSource = itemElem.attribute( QStringLiteral( "vectorLayerSource" ) );
-  QString layerProvider = itemElem.attribute( QStringLiteral( "vectorLayerProvider" ) );
+  const QString layerId = itemElem.attribute( QStringLiteral( "vectorLayer" ) );
+  const QString layerName = itemElem.attribute( QStringLiteral( "vectorLayerName" ) );
+  const QString layerSource = itemElem.attribute( QStringLiteral( "vectorLayerSource" ) );
+  const QString layerProvider = itemElem.attribute( QStringLiteral( "vectorLayerProvider" ) );
 
   QgsVectorLayerRef layerRef( layerId, layerName, layerSource, layerProvider );
   layoutItem->setVectorLayer( layerRef.resolveWeakly( project ) );
@@ -1496,25 +1578,49 @@ bool QgsCompositionConverter::readTableXml( QgsLayoutItemAttributeTable *layoutI
   return true;
 }
 
+bool QgsCompositionConverter::readGroupXml( QgsLayoutItemGroup *layoutItem, const QDomElement &itemElem, const QgsProject *project, const QList< QgsLayoutObject * > &items )
+{
+  Q_UNUSED( project )
+
+  restoreGeneralComposeItemProperties( layoutItem, itemElem );
+
+  const QDomNodeList nodes = itemElem.elementsByTagName( "ComposerItemGroupElement" );
+  for ( int i = 0, n = nodes.size(); i < n; ++i )
+  {
+    const QDomElement groupElement = nodes.at( i ).toElement();
+    const QString elementUuid = groupElement.attribute( "uuid" );
+
+    for ( QgsLayoutObject *item : items )
+    {
+      if ( dynamic_cast<QgsLayoutItem *>( item ) && static_cast<QgsLayoutItem *>( item )->uuid() == elementUuid )
+      {
+        layoutItem->addItem( static_cast<QgsLayoutItem *>( item ) );
+        break;
+      }
+    }
+  }
+
+  return true;
+}
 
 template <class T, class T2>
 bool QgsCompositionConverter::readPolyXml( T *layoutItem, const QDomElement &itemElem, const QgsProject *project )
 {
   restoreGeneralComposeItemProperties( layoutItem, itemElem );
-  QDomNodeList nodeList = itemElem.elementsByTagName( QStringLiteral( "node" ) );
+  const QDomNodeList nodeList = itemElem.elementsByTagName( QStringLiteral( "node" ) );
   if ( !nodeList.isEmpty() )
   {
     QPolygonF polygon;
     for ( int i = 0; i < nodeList.length(); i++ )
     {
-      QDomElement node = nodeList.at( i ).toElement();
+      const QDomElement node = nodeList.at( i ).toElement();
       polygon.append( QPointF( node.attribute( QStringLiteral( "x" ) ).toDouble( ), node.attribute( QStringLiteral( "y" ) ).toDouble() ) );
     }
     layoutItem->setNodes( polygon );
   }
   if ( itemElem.elementsByTagName( QStringLiteral( "symbol" ) ).size() )
   {
-    QDomElement symbolElement = itemElem.elementsByTagName( QStringLiteral( "symbol" ) ).at( 0 ).toElement();
+    const QDomElement symbolElement = itemElem.elementsByTagName( QStringLiteral( "symbol" ) ).at( 0 ).toElement();
     QgsReadWriteContext context;
     if ( project )
       context.setPathResolver( project->pathResolver( ) );
@@ -1545,23 +1651,23 @@ bool QgsCompositionConverter::readXml( QgsLayoutItem *layoutItem, const QDomElem
   layoutItem->mTemplateUuid = itemElem.attribute( QStringLiteral( "templateUuid" ) );
 
   //id
-  QString id = itemElem.attribute( QStringLiteral( "id" ), QString() );
+  const QString id = itemElem.attribute( QStringLiteral( "id" ), QString() );
   layoutItem->setId( id );
 
   //frame
-  QString frame = itemElem.attribute( QStringLiteral( "frame" ) );
+  const QString frame = itemElem.attribute( QStringLiteral( "frame" ) );
   layoutItem->setFrameEnabled( frame.compare( QLatin1String( "true" ), Qt::CaseInsensitive ) == 0 ) ;
 
   //frame
-  QString background = itemElem.attribute( QStringLiteral( "background" ) );
+  const QString background = itemElem.attribute( QStringLiteral( "background" ) );
   layoutItem->setBackgroundEnabled( background.compare( QLatin1String( "true" ), Qt::CaseInsensitive ) == 0 );
 
   //position lock for mouse moves/resizes
-  QString positionLock = itemElem.attribute( QStringLiteral( "positionLock" ) );
+  const QString positionLock = itemElem.attribute( QStringLiteral( "positionLock" ) );
   layoutItem->setLocked( positionLock.compare( QLatin1String( "true" ), Qt::CaseInsensitive ) == 0 );
 
   //visibility
-  layoutItem->setVisibility( itemElem.attribute( QStringLiteral( "visibility" ), QStringLiteral( "1" ) ) != QStringLiteral( "0" ) );
+  layoutItem->setVisibility( itemElem.attribute( QStringLiteral( "visibility" ), QStringLiteral( "1" ) ) != QLatin1String( "0" ) );
 
   layoutItem->mParentGroupUuid = itemElem.attribute( QStringLiteral( "groupUuid" ) );
   if ( !layoutItem->mParentGroupUuid.isEmpty() )
@@ -1574,7 +1680,7 @@ bool QgsCompositionConverter::readXml( QgsLayoutItem *layoutItem, const QDomElem
   layoutItem->mTemplateUuid = itemElem.attribute( QStringLiteral( "templateUuid" ) );
 
 
-  QRectF position = itemPosition( layoutItem, itemElem );
+  const QRectF position = itemPosition( layoutItem, itemElem );
 
   // TODO: missing?
   // mLastValidViewScaleFactor = itemElem.attribute( QStringLiteral( "lastValidViewScaleFactor" ), QStringLiteral( "-1" ) ).toDouble();
@@ -1582,10 +1688,10 @@ bool QgsCompositionConverter::readXml( QgsLayoutItem *layoutItem, const QDomElem
   layoutItem->setZValue( itemElem.attribute( QStringLiteral( "zValue" ) ).toDouble() );
 
   //pen
-  QDomNodeList frameColorList = itemElem.elementsByTagName( QStringLiteral( "FrameColor" ) );
+  const QDomNodeList frameColorList = itemElem.elementsByTagName( QStringLiteral( "FrameColor" ) );
   if ( !frameColorList.isEmpty() )
   {
-    QDomElement frameColorElem = frameColorList.at( 0 ).toElement();
+    const QDomElement frameColorElem = frameColorList.at( 0 ).toElement();
     bool redOk, greenOk, blueOk, alphaOk, widthOk;
     int penRed, penGreen, penBlue, penAlpha;
     double penWidth;
@@ -1611,10 +1717,10 @@ bool QgsCompositionConverter::readXml( QgsLayoutItem *layoutItem, const QDomElem
   }
 
   //brush
-  QDomNodeList bgColorList = itemElem.elementsByTagName( QStringLiteral( "BackgroundColor" ) );
+  const QDomNodeList bgColorList = itemElem.elementsByTagName( QStringLiteral( "BackgroundColor" ) );
   if ( !bgColorList.isEmpty() )
   {
-    QDomElement bgColorElem = bgColorList.at( 0 ).toElement();
+    const QDomElement bgColorElem = bgColorList.at( 0 ).toElement();
     bool redOk, greenOk, blueOk, alphaOk;
     int bgRed, bgGreen, bgBlue, bgAlpha;
     bgRed = bgColorElem.attribute( QStringLiteral( "red" ) ).toDouble( &redOk );
@@ -1669,7 +1775,7 @@ bool QgsCompositionConverter::readOldComposerObjectXml( QgsLayoutObject *layoutI
   //old (pre 3.0) data defined properties
   QgsCompositionConverter::readOldDataDefinedPropertyMap( itemElem, layoutItem->mDataDefinedProperties );
 
-  QDomNode propsNode = itemElem.namedItem( QStringLiteral( "dataDefinedProperties" ) );
+  const QDomNode propsNode = itemElem.namedItem( QStringLiteral( "dataDefinedProperties" ) );
   if ( !propsNode.isNull() )
   {
     layoutItem->mDataDefinedProperties.readXml( propsNode.toElement(), sPropertyDefinitions );
@@ -1696,12 +1802,12 @@ void QgsCompositionConverter::readOldDataDefinedPropertyMap( const QDomElement &
   QgsPropertiesDefinition::const_iterator i = defs.constBegin();
   for ( ; i != defs.constEnd(); ++i )
   {
-    QString elemName = i.value().name();
-    QDomNodeList ddNodeList = itemElem.elementsByTagName( elemName );
+    const QString elemName = i.value().name();
+    const QDomNodeList ddNodeList = itemElem.elementsByTagName( elemName );
     if ( !ddNodeList.isEmpty() )
     {
-      QDomElement ddElem = ddNodeList.at( 0 ).toElement();
-      QgsProperty prop = readOldDataDefinedProperty( static_cast< QgsCompositionConverter::DataDefinedProperty >( i.key() ), ddElem );
+      const QDomElement ddElem = ddNodeList.at( 0 ).toElement();
+      const QgsProperty prop = readOldDataDefinedProperty( static_cast< QgsCompositionConverter::DataDefinedProperty >( i.key() ), ddElem );
       if ( prop )
         dataDefinedProperties.setProperty( i.key(), prop );
     }
@@ -1716,16 +1822,16 @@ QgsProperty QgsCompositionConverter::readOldDataDefinedProperty( const QgsCompos
     return QgsProperty();
   }
 
-  QString active = ddElem.attribute( QStringLiteral( "active" ) );
+  const QString active = ddElem.attribute( QStringLiteral( "active" ) );
   bool isActive = false;
   if ( active.compare( QLatin1String( "true" ), Qt::CaseInsensitive ) == 0 )
   {
     isActive = true;
   }
-  QString field = ddElem.attribute( QStringLiteral( "field" ) );
-  QString expr = ddElem.attribute( QStringLiteral( "expr" ) );
+  const QString field = ddElem.attribute( QStringLiteral( "field" ) );
+  const QString expr = ddElem.attribute( QStringLiteral( "expr" ) );
 
-  QString useExpr = ddElem.attribute( QStringLiteral( "useExpr" ) );
+  const QString useExpr = ddElem.attribute( QStringLiteral( "useExpr" ) );
   bool isExpression = false;
   if ( useExpr.compare( QLatin1String( "true" ), Qt::CaseInsensitive ) == 0 )
   {

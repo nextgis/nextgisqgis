@@ -22,6 +22,7 @@ email                : ersts@amnh.org
 
 #include "qgis_core.h"
 #include "qgis_sip.h"
+#include "qgsreadwritecontext.h"
 
 class QDomDocument;
 class QDomElement;
@@ -29,7 +30,7 @@ class QgsRasterShaderFunction;
 
 /**
  * \ingroup core
- * Interface for all raster shaders.
+ * \brief Interface for all raster shaders.
  */
 class CORE_EXPORT QgsRasterShader
 {
@@ -131,12 +132,12 @@ class CORE_EXPORT QgsRasterShader
     /**
      * Writes shader state to an XML element.
      */
-    void writeXml( QDomDocument &doc, QDomElement &parent ) const;
+    void writeXml( QDomDocument &doc, QDomElement &parent, const QgsReadWriteContext &context = QgsReadWriteContext() ) const;
 
     /**
      * Reads shader state from an XML element.
      */
-    void readXml( const QDomElement &elem );
+    void readXml( const QDomElement &elem, const QgsReadWriteContext &context = QgsReadWriteContext() );
 
   private:
 #ifdef SIP_RUN

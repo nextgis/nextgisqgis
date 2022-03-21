@@ -63,9 +63,10 @@ class CORE_EXPORT QgsGdalUtils
     /**
      * Resamples a single band raster to the destination dataset with different resolution (and possibly with different CRS).
      * Ideally the source dataset should cover the whole area or the destination dataset.
+     * \returns TRUE on success
      * \since QGIS 3.8
      */
-    static void resampleSingleBandRaster( GDALDatasetH hSrcDS, GDALDatasetH hDstDS, GDALResampleAlg resampleAlg );
+    static bool resampleSingleBandRaster( GDALDatasetH hSrcDS, GDALDatasetH hDstDS, GDALResampleAlg resampleAlg, const char *pszCoordinateOperation );
 
     /**
      * Resamples a QImage \a image using GDAL resampler.
@@ -99,6 +100,69 @@ class CORE_EXPORT QgsGdalUtils
      * \since QGIS 3.12
      */
     static gdal::dataset_unique_ptr imageToMemoryDataset( const QImage &image );
+
+    /**
+     * This is a copy of GDALAutoCreateWarpedVRT optimized for imagery using RPC georeferencing
+     * that also sets RPC_HEIGHT in GDALCreateGenImgProjTransformer2 based on HEIGHT_OFF.
+     * By default GDAL would assume that the imagery has zero elevation - if that is not the case,
+     * the image would not be shown in the correct location.
+     *
+     * \since QGIS 3.14
+     */
+    static GDALDatasetH rpcAwareAutoCreateWarpedVrt(
+      GDALDatasetH hSrcDS,
+      const char *pszSrcWKT,
+      const char *pszDstWKT,
+      GDALResampleAlg eResampleAlg,
+      double dfMaxError,
+      const GDALWarpOptions *psOptionsIn );
+
+    /**
+     * This is a wrapper around GDALCreateGenImgProjTransformer2() that takes into account RPC
+     * georeferencing (it sets RPC_HEIGHT in GDALCreateGenImgProjTransformer2 based on HEIGHT_OFF).
+     * By default GDAL would assume that the imagery has zero elevation - if that is not the case,
+     * the image would not be shown in the correct location.
+     *
+     * \since QGIS 3.16
+     */
+    static void *rpcAwareCreateTransformer( GDALDatasetH hSrcDS, GDALDatasetH hDstDS = nullptr, char **papszOptions = nullptr );
+
+#ifndef QT_NO_NETWORKPROXY
+    //! Sets the gdal proxy variables
+    static void setupProxy();
+#endif
+
+    /**
+     * Returns TRUE if the dataset at the specified \a path is considered "cheap" to open.
+     *
+     * Datasets which are considered cheap to open may correspond to very small file sizes, or data types
+     * which only require some inexpensive header parsing to open.
+     *
+     * One use case for this method is to test whether a remote dataset can be safely opened
+     * to resolve the geometry types and other metadata without causing undue network traffic.
+     *
+     * The \a smallFileSizeLimit argument specifies the maximum file size (in bytes) which will
+     * be considered as small.
+     *
+     * \since QGIS 3.22
+     */
+    static bool pathIsCheapToOpen( const QString &path, int smallFileSizeLimit = 50000 );
+
+    /**
+     * Returns a list of file extensions which potentially contain multiple layers representing
+     * GDAL raster or vector layers.
+     *
+     * \since QGIS 3.22
+     */
+    static QStringList multiLayerFileExtensions();
+
+    /**
+     * Returns TRUE if the VRT file at the specified path is a VRT matching
+     * the given layer \a type.
+     *
+     * \since QGIS 3.22
+     */
+    static bool vrtMatchesLayerType( const QString &vrtPath, QgsMapLayerType type );
 
     friend class TestQgsGdalUtils;
 };

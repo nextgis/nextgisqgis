@@ -38,7 +38,7 @@ QString QgsDbscanClusteringAlgorithm::shortDescription() const
 
 QStringList QgsDbscanClusteringAlgorithm::tags() const
 {
-  return QObject::tr( "clustering,clusters,density,based,points" ).split( ',' );
+  return QObject::tr( "clustering,clusters,density,based,points,distance" ).split( ',' );
 }
 
 QString QgsDbscanClusteringAlgorithm::group() const
@@ -60,15 +60,19 @@ void QgsDbscanClusteringAlgorithm::initAlgorithm( const QVariantMap & )
   addParameter( new QgsProcessingParameterDistance( QStringLiteral( "EPS" ),
                 QObject::tr( "Maximum distance between clustered points" ), 1, QStringLiteral( "INPUT" ), false, 0 ) );
 
-  auto dbscanStarParam = qgis::make_unique<QgsProcessingParameterBoolean>( QStringLiteral( "DBSCAN*" ),
+  auto dbscanStarParam = std::make_unique<QgsProcessingParameterBoolean>( QStringLiteral( "DBSCAN*" ),
                          QObject::tr( "Treat border points as noise (DBSCAN*)" ), false, true );
   dbscanStarParam->setFlags( dbscanStarParam->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
   addParameter( dbscanStarParam.release() );
 
-  auto fieldNameParam = qgis::make_unique<QgsProcessingParameterString>( QStringLiteral( "FIELD_NAME" ),
+  auto fieldNameParam = std::make_unique<QgsProcessingParameterString>( QStringLiteral( "FIELD_NAME" ),
                         QObject::tr( "Cluster field name" ), QStringLiteral( "CLUSTER_ID" ) );
   fieldNameParam->setFlags( fieldNameParam->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
   addParameter( fieldNameParam.release() );
+  auto sizeFieldNameParam = std::make_unique<QgsProcessingParameterString>( QStringLiteral( "SIZE_FIELD_NAME" ),
+                            QObject::tr( "Cluster size field name" ), QStringLiteral( "CLUSTER_SIZE" ) );
+  sizeFieldNameParam->setFlags( sizeFieldNameParam->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
+  addParameter( sizeFieldNameParam.release() );
 
   addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Clusters" ), QgsProcessing::TypeVectorPoint ) );
 
@@ -109,13 +113,16 @@ QVariantMap QgsDbscanClusteringAlgorithm::processAlgorithm( const QVariantMap &p
     throw QgsProcessingException( invalidSourceError( parameters, QStringLiteral( "INPUT" ) ) );
 
   const std::size_t minSize = static_cast< std::size_t>( parameterAsInt( parameters, QStringLiteral( "MIN_SIZE" ), context ) );
-  const double eps = parameterAsDouble( parameters, QStringLiteral( "EPS" ), context );
+  const double eps1 = parameterAsDouble( parameters, QStringLiteral( "EPS" ), context );
+  const double eps2 = parameterAsDouble( parameters, QStringLiteral( "EPS2" ), context );
   const bool borderPointsAreNoise = parameterAsBoolean( parameters, QStringLiteral( "DBSCAN*" ), context );
 
   QgsFields outputFields = source->fields();
-  const QString clusterFieldName = parameterAsString( parameters, QStringLiteral( "FIELD_NAME" ), context );
   QgsFields newFields;
+  const QString clusterFieldName = parameterAsString( parameters, QStringLiteral( "FIELD_NAME" ), context );
   newFields.append( QgsField( clusterFieldName, QVariant::Int ) );
+  const QString clusterSizeFieldName = parameterAsString( parameters, QStringLiteral( "SIZE_FIELD_NAME" ), context );
+  newFields.append( QgsField( clusterSizeFieldName, QVariant::Int ) );
   outputFields = QgsProcessingUtils::combineFields( outputFields, newFields );
 
   QString dest;
@@ -123,21 +130,48 @@ QVariantMap QgsDbscanClusteringAlgorithm::processAlgorithm( const QVariantMap &p
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
-  // build spatial index
+  QgsFeatureRequest indexRequest;
+
+  std::unordered_map< QgsFeatureId, QDateTime> idToDateTime;
+  const QString dateTimeFieldName = parameterAsString( parameters, QStringLiteral( "DATETIME_FIELD" ), context );
+  int dateTimefieldIndex = -1;
+  if ( !dateTimeFieldName.isEmpty() )
+  {
+    dateTimefieldIndex = source->fields().lookupField( dateTimeFieldName );
+    if ( dateTimefieldIndex == -1 )
+      throw QgsProcessingException( QObject::tr( "Datetime field missing" ) );
+
+    indexRequest.setSubsetOfAttributes( QgsAttributeList() << dateTimefieldIndex );
+  }
+  else
+  {
+    indexRequest.setNoAttributes();
+  }
+
+  // build spatial index, also collecting feature datetimes if required
   feedback->pushInfo( QObject::tr( "Building spatial index" ) );
-  QgsSpatialIndexKDBush index( *source, feedback );
+  QgsFeatureIterator indexIterator = source->getFeatures( indexRequest );
+  QgsSpatialIndexKDBush index( indexIterator, [&idToDateTime, dateTimefieldIndex]( const QgsFeature & feature )->bool
+  {
+    if ( dateTimefieldIndex >= 0 )
+      idToDateTime[ feature.id() ] = feature.attributes().at( dateTimefieldIndex ).toDateTime();
+    return true;
+  }, feedback );
+
   if ( feedback->isCanceled() )
     return QVariantMap();
 
-  // dbscan!
+  // stdbscan!
   feedback->pushInfo( QObject::tr( "Analysing clusters" ) );
   std::unordered_map< QgsFeatureId, int> idToCluster;
   idToCluster.reserve( index.size() );
-  QgsFeatureIterator features = source->getFeatures( QgsFeatureRequest().setNoAttributes() );
   const long featureCount = source->featureCount();
+  QgsFeatureIterator features = source->getFeatures( QgsFeatureRequest().setNoAttributes() );
+  stdbscan( minSize, eps1, eps2, borderPointsAreNoise, featureCount, features, index, idToCluster, idToDateTime, feedback );
 
-  int clusterCount = 0;
-  dbscan( minSize, eps, borderPointsAreNoise, featureCount, features, index, idToCluster, clusterCount, feedback );
+  // cluster size
+  std::unordered_map< int, int> clusterSize;
+  std::for_each( idToCluster.begin(), idToCluster.end(), [ &clusterSize ]( std::pair< QgsFeatureId, int > idCluster ) { clusterSize[ idCluster.second ]++; } );
 
   // write clusters
   const double writeStep = featureCount > 0 ? 10.0 / featureCount : 1;
@@ -154,34 +188,35 @@ QVariantMap QgsDbscanClusteringAlgorithm::processAlgorithm( const QVariantMap &p
 
     feedback->setProgress( 90 + i * writeStep );
     QgsAttributes attr = feat.attributes();
-    auto cluster = idToCluster.find( feat.id() );
+    const auto cluster = idToCluster.find( feat.id() );
     if ( cluster != idToCluster.end() )
     {
-      attr << cluster->second;
+      attr << cluster->second  << clusterSize[ cluster->second ];
     }
     else
     {
-      attr << QVariant();
+      attr << QVariant() << QVariant();
     }
     feat.setAttributes( attr );
-    sink->addFeature( feat, QgsFeatureSink::FastInsert );
+    if ( !sink->addFeature( feat, QgsFeatureSink::FastInsert ) )
+      throw QgsProcessingException( writeFeatureError( sink.get(), parameters, QStringLiteral( "OUTPUT" ) ) );
   }
 
   QVariantMap outputs;
   outputs.insert( QStringLiteral( "OUTPUT" ), dest );
-  outputs.insert( QStringLiteral( "NUM_CLUSTERS" ), clusterCount );
+  outputs.insert( QStringLiteral( "NUM_CLUSTERS" ), static_cast< unsigned int >( clusterSize.size() ) );
   return outputs;
 }
 
-
-void QgsDbscanClusteringAlgorithm::dbscan( const std::size_t minSize,
-    const double eps,
+void QgsDbscanClusteringAlgorithm::stdbscan( const std::size_t minSize,
+    const double eps1,
+    const double eps2,
     const bool borderPointsAreNoise,
     const long featureCount,
     QgsFeatureIterator features,
     QgsSpatialIndexKDBush &index,
     std::unordered_map< QgsFeatureId, int> &idToCluster,
-    int &clusterCount,
+    std::unordered_map< QgsFeatureId, QDateTime> &idToDateTime,
     QgsProcessingFeedback *feedback )
 {
   const double step = featureCount > 0 ? 90.0 / featureCount : 1;
@@ -191,7 +226,7 @@ void QgsDbscanClusteringAlgorithm::dbscan( const std::size_t minSize,
 
   QgsFeature feat;
   int i = 0;
-  clusterCount = 0;
+  int clusterCount = 0;
 
   while ( features.nextFeature( feat ) )
   {
@@ -223,13 +258,22 @@ void QgsDbscanClusteringAlgorithm::dbscan( const std::size_t minSize,
       continue;
     }
 
+    if ( !idToDateTime.empty() && !idToDateTime[ feat.id() ].isValid() )
+    {
+      // missing datetime value
+      feedback->reportError( QObject::tr( "Feature %1 is missing a valid datetime value." ).arg( feat.id() ).arg( QgsWkbTypes::displayString( feat.geometry().wkbType() ) ) );
+      feedback->setProgress( ++i * step );
+      continue;
+    }
+
     std::unordered_set< QgsSpatialIndexKDBushData, KDBushDataHashById, KDBushDataEqualById> within;
 
     if ( minSize > 1 )
     {
-      index.within( point, eps, [ &within]( const QgsSpatialIndexKDBushData & data )
+      index.within( point, eps1, [&within, pointId = feat.id(), &idToDateTime, &eps2]( const QgsSpatialIndexKDBushData & data )
       {
-        within.insert( data );
+        if ( idToDateTime.empty() || ( idToDateTime[ data.id ].isValid() && std::abs( idToDateTime[ pointId ].secsTo( idToDateTime[ data.id ] ) ) <= eps2 ) )
+          within.insert( data );
       } );
       if ( within.size() < minSize )
         continue;
@@ -254,7 +298,7 @@ void QgsDbscanClusteringAlgorithm::dbscan( const std::size_t minSize,
         break;
       }
 
-      QgsSpatialIndexKDBushData j = *within.begin();
+      const QgsSpatialIndexKDBushData j = *within.begin();
       within.erase( within.begin() );
 
       if ( visited.find( j.id ) != visited.end() )
@@ -267,13 +311,15 @@ void QgsDbscanClusteringAlgorithm::dbscan( const std::size_t minSize,
       feedback->setProgress( ++i * step );
 
       // check from this point
-      QgsPointXY point2 = j.point();
+      const QgsPointXY point2 = j.point();
 
       std::unordered_set< QgsSpatialIndexKDBushData, KDBushDataHashById, KDBushDataEqualById > within2;
-      index.within( point2, eps, [&within2]( const QgsSpatialIndexKDBushData & data )
+      index.within( point2, eps1, [&within2, point2Id = j.id, &idToDateTime, &eps2]( const QgsSpatialIndexKDBushData & data )
       {
-        within2.insert( data );
+        if ( idToDateTime.empty() || ( idToDateTime[ data.id ].isValid() && std::abs( idToDateTime[ point2Id ].secsTo( idToDateTime[ data.id ] ) ) <= eps2 ) )
+          within2.insert( data );
       } );
+
       if ( within2.size() >= minSize )
       {
         // expand neighbourhood

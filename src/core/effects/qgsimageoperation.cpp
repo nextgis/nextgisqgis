@@ -19,6 +19,7 @@
 #include "qgis.h"
 #include "qgscolorramp.h"
 #include "qgslogger.h"
+#include "qgsfeedback.h"
 #include <QtConcurrentMap>
 #include <QColor>
 #include <QPainter>
@@ -32,29 +33,32 @@
 /// @cond PRIVATE
 
 template <typename PixelOperation>
-void QgsImageOperation::runPixelOperation( QImage &image, PixelOperation &operation )
+void QgsImageOperation::runPixelOperation( QImage &image, PixelOperation &operation, QgsFeedback *feedback )
 {
-  if ( image.height() * image.width() < 100000 )
+  if ( static_cast< qgssize >( image.height() ) * image.width() < 100000 )
   {
     //small image, don't multithread
     //this threshold was determined via testing various images
-    runPixelOperationOnWholeImage( image, operation );
+    runPixelOperationOnWholeImage( image, operation, feedback );
   }
   else
   {
     //large image, multithread operation
-    QgsImageOperation::ProcessBlockUsingPixelOperation<PixelOperation> blockOp( operation );
+    QgsImageOperation::ProcessBlockUsingPixelOperation<PixelOperation> blockOp( operation, feedback );
     runBlockOperationInThreads( image, blockOp, QgsImageOperation::ByRow );
   }
 }
 
 template <typename PixelOperation>
-void QgsImageOperation::runPixelOperationOnWholeImage( QImage &image, PixelOperation &operation )
+void QgsImageOperation::runPixelOperationOnWholeImage( QImage &image, PixelOperation &operation, QgsFeedback *feedback )
 {
   int height = image.height();
   int width = image.width();
   for ( int y = 0; y < height; ++y )
   {
+    if ( feedback && feedback->isCanceled() )
+      break;
+
     QRgb *ref = reinterpret_cast< QRgb * >( image.scanLine( y ) );
     for ( int x = 0; x < width; ++x )
     {
@@ -69,7 +73,7 @@ template <typename RectOperation>
 void QgsImageOperation::runRectOperation( QImage &image, RectOperation &operation )
 {
   //possibly could be tweaked for rect operations
-  if ( image.height() * image.width() < 100000 )
+  if ( static_cast< qgssize >( image.height() ) * image.width() < 100000 )
   {
     //small image, don't multithread
     //this threshold was determined via testing various images
@@ -97,14 +101,14 @@ void QgsImageOperation::runRectOperationOnWholeImage( QImage &image, RectOperati
 //linear operations
 
 template <typename LineOperation>
-void QgsImageOperation::runLineOperation( QImage &image, LineOperation &operation )
+void QgsImageOperation::runLineOperation( QImage &image, LineOperation &operation, QgsFeedback *feedback )
 {
   //possibly could be tweaked for rect operations
-  if ( image.height() * image.width() < 100000 )
+  if ( static_cast< qgssize >( image.height() ) * image.width() < 100000 )
   {
     //small image, don't multithread
     //this threshold was determined via testing various images
-    runLineOperationOnWholeImage( image, operation );
+    runLineOperationOnWholeImage( image, operation, feedback );
   }
   else
   {
@@ -115,7 +119,7 @@ void QgsImageOperation::runLineOperation( QImage &image, LineOperation &operatio
 }
 
 template <class LineOperation>
-void QgsImageOperation::runLineOperationOnWholeImage( QImage &image, LineOperation &operation )
+void QgsImageOperation::runLineOperationOnWholeImage( QImage &image, LineOperation &operation, QgsFeedback *feedback )
 {
   int height = image.height();
   int width = image.width();
@@ -126,6 +130,9 @@ void QgsImageOperation::runLineOperationOnWholeImage( QImage &image, LineOperati
   {
     for ( int y = 0; y < height; ++y )
     {
+      if ( feedback && feedback->isCanceled() )
+        break;
+
       QRgb *ref = reinterpret_cast< QRgb * >( image.scanLine( y ) );
       operation( ref, width, bpl );
     }
@@ -136,6 +143,9 @@ void QgsImageOperation::runLineOperationOnWholeImage( QImage &image, LineOperati
     unsigned char *ref = image.scanLine( 0 );
     for ( int x = 0; x < width; ++x, ref += 4 )
     {
+      if ( feedback && feedback->isCanceled() )
+        break;
+
       operation( reinterpret_cast< QRgb * >( ref ), height, bpl );
     }
   }
@@ -182,15 +192,16 @@ void QgsImageOperation::runBlockOperationInThreads( QImage &image, BlockOperatio
 
 //grayscale
 
-void QgsImageOperation::convertToGrayscale( QImage &image, const GrayscaleMode mode )
+void QgsImageOperation::convertToGrayscale( QImage &image, const GrayscaleMode mode, QgsFeedback *feedback )
 {
   if ( mode == GrayscaleOff )
   {
     return;
   }
 
+  image.detach();
   GrayscalePixelOperation operation( mode );
-  runPixelOperation( image, operation );
+  runPixelOperation( image, operation, feedback );
 }
 
 void QgsImageOperation::GrayscalePixelOperation::operator()( QRgb &rgb, const int x, const int y )
@@ -242,10 +253,11 @@ void QgsImageOperation::grayscaleAverageOp( QRgb &rgb )
 
 //brightness/contrast
 
-void QgsImageOperation::adjustBrightnessContrast( QImage &image, const int brightness, const double contrast )
+void QgsImageOperation::adjustBrightnessContrast( QImage &image, const int brightness, const double contrast, QgsFeedback *feedback )
 {
+  image.detach();
   BrightnessContrastPixelOperation operation( brightness, contrast );
-  runPixelOperation( image, operation );
+  runPixelOperation( image, operation, feedback );
 }
 
 void QgsImageOperation::BrightnessContrastPixelOperation::operator()( QRgb &rgb, const int x, const int y )
@@ -260,16 +272,17 @@ void QgsImageOperation::BrightnessContrastPixelOperation::operator()( QRgb &rgb,
 
 int QgsImageOperation::adjustColorComponent( int colorComponent, int brightness, double contrastFactor )
 {
-  return qBound( 0, static_cast< int >( ( ( ( ( ( colorComponent / 255.0 ) - 0.5 ) * contrastFactor ) + 0.5 ) * 255 ) + brightness ), 255 );
+  return std::clamp( static_cast< int >( ( ( ( ( ( colorComponent / 255.0 ) - 0.5 ) * contrastFactor ) + 0.5 ) * 255 ) + brightness ), 0, 255 );
 }
 
 //hue/saturation
 
-void QgsImageOperation::adjustHueSaturation( QImage &image, const double saturation, const QColor &colorizeColor, const double colorizeStrength )
+void QgsImageOperation::adjustHueSaturation( QImage &image, const double saturation, const QColor &colorizeColor, const double colorizeStrength, QgsFeedback *feedback )
 {
+  image.detach();
   HueSaturationPixelOperation operation( saturation, colorizeColor.isValid() && colorizeStrength > 0.0,
                                          colorizeColor.hue(), colorizeColor.saturation(), colorizeStrength );
-  runPixelOperation( image, operation );
+  runPixelOperation( image, operation, feedback );
 }
 
 void QgsImageOperation::HueSaturationPixelOperation::operator()( QRgb &rgb, const int x, const int y )
@@ -319,7 +332,7 @@ void QgsImageOperation::HueSaturationPixelOperation::operator()( QRgb &rgb, cons
 
 //multiply opacity
 
-void QgsImageOperation::multiplyOpacity( QImage &image, const double factor )
+void QgsImageOperation::multiplyOpacity( QImage &image, const double factor, QgsFeedback *feedback )
 {
   if ( qgsDoubleNear( factor, 1.0 ) )
   {
@@ -331,6 +344,7 @@ void QgsImageOperation::multiplyOpacity( QImage &image, const double factor )
     //decreasing opacity - we can use the faster DestinationIn composition mode
     //to reduce the alpha channel
     QColor transparentFillColor = QColor( 0, 0, 0, 255 * factor );
+    image.detach();
     QPainter painter( &image );
     painter.setCompositionMode( QPainter::CompositionMode_DestinationIn );
     painter.fillRect( 0, 0, image.width(), image.height(), transparentFillColor );
@@ -339,8 +353,9 @@ void QgsImageOperation::multiplyOpacity( QImage &image, const double factor )
   else
   {
     //increasing opacity - run this as a pixel operation for multithreading
+    image.detach();
     MultiplyOpacityPixelOperation operation( factor );
-    runPixelOperation( image, operation );
+    runPixelOperation( image, operation, feedback );
   }
 }
 
@@ -348,7 +363,7 @@ void QgsImageOperation::MultiplyOpacityPixelOperation::operator()( QRgb &rgb, co
 {
   Q_UNUSED( x )
   Q_UNUSED( y )
-  rgb = qRgba( qRed( rgb ), qGreen( rgb ), qBlue( rgb ), qBound( 0.0, std::round( mFactor * qAlpha( rgb ) ), 255.0 ) );
+  rgb = qRgba( qRed( rgb ), qGreen( rgb ), qBlue( rgb ), std::clamp( std::round( mFactor * qAlpha( rgb ) ), 0.0, 255.0 ) );
 }
 
 // overlay color
@@ -360,6 +375,7 @@ void QgsImageOperation::overlayColor( QImage &image, const QColor &color )
 
   //use QPainter SourceIn composition mode to overlay color (fast)
   //this retains image's alpha channel but replaces color
+  image.detach();
   QPainter painter( &image );
   painter.setCompositionMode( QPainter::CompositionMode_SourceIn );
   painter.fillRect( 0, 0, image.width(), image.height(), opaqueColor );
@@ -368,7 +384,7 @@ void QgsImageOperation::overlayColor( QImage &image, const QColor &color )
 
 // distance transform
 
-void QgsImageOperation::distanceTransform( QImage &image, const DistanceTransformProperties &properties )
+void QgsImageOperation::distanceTransform( QImage &image, const DistanceTransformProperties &properties, QgsFeedback *feedback )
 {
   if ( ! properties.ramp )
   {
@@ -377,27 +393,37 @@ void QgsImageOperation::distanceTransform( QImage &image, const DistanceTransfor
   }
 
   //first convert to 1 bit alpha mask array
-  double *array = new double[ static_cast< qgssize >( image.width() ) * image.height()];
-  ConvertToArrayPixelOperation convertToArray( image.width(), array, properties.shadeExterior );
-  runPixelOperation( image, convertToArray );
+  std::unique_ptr<double[]> array( new double[ static_cast< qgssize >( image.width() ) * image.height()] );
+  if ( feedback && feedback->isCanceled() )
+    return;
+
+  image.detach();
+  ConvertToArrayPixelOperation convertToArray( image.width(), array.get(), properties.shadeExterior );
+  runPixelOperation( image, convertToArray, feedback );
+  if ( feedback && feedback->isCanceled() )
+    return;
 
   //calculate distance transform (single threaded only)
-  distanceTransform2d( array, image.width(), image.height() );
+  distanceTransform2d( array.get(), image.width(), image.height(), feedback );
+  if ( feedback && feedback->isCanceled() )
+    return;
 
   double spread;
   if ( properties.useMaxDistance )
   {
-    spread = std::sqrt( maxValueInDistanceTransformArray( array, image.width() * image.height() ) );
+    spread = std::sqrt( maxValueInDistanceTransformArray( array.get(), image.width() * image.height() ) );
   }
   else
   {
     spread = properties.spread;
   }
 
+  if ( feedback && feedback->isCanceled() )
+    return;
+
   //shade distance transform
-  ShadeFromArrayOperation shadeFromArray( image.width(), array, spread, properties );
-  runPixelOperation( image, shadeFromArray );
-  delete [] array;
+  ShadeFromArrayOperation shadeFromArray( image.width(), array.get(), spread, properties );
+  runPixelOperation( image, shadeFromArray, feedback );
 }
 
 void QgsImageOperation::ConvertToArrayPixelOperation::operator()( QRgb &rgb, const int x, const int y )
@@ -476,23 +502,26 @@ double QgsImageOperation::maxValueInDistanceTransformArray( const double *array,
 }
 
 /* distance transform of 2d function using squared distance */
-void QgsImageOperation::distanceTransform2d( double *im, int width, int height )
+void QgsImageOperation::distanceTransform2d( double *im, int width, int height, QgsFeedback *feedback )
 {
   int maxDimension = std::max( width, height );
 
-  double *f = new double[ maxDimension ];
-  int *v = new int[ maxDimension ];
-  double *z = new double[ maxDimension + 1 ];
-  double *d = new double[ maxDimension ];
+  std::unique_ptr<double[]> f( new double[ maxDimension ] );
+  std::unique_ptr<int []> v( new int[ maxDimension ] );
+  std::unique_ptr<double[]>z( new double[ maxDimension + 1 ] );
+  std::unique_ptr<double[]>d( new double[ maxDimension ] );
 
   // transform along columns
   for ( int x = 0; x < width; x++ )
   {
+    if ( feedback && feedback->isCanceled() )
+      break;
+
     for ( int y = 0; y < height; y++ )
     {
       f[y] = im[ x + y * width ];
     }
-    distanceTransform1d( f, height, v, z, d );
+    distanceTransform1d( f.get(), height, v.get(), z.get(), d.get() );
     for ( int y = 0; y < height; y++ )
     {
       im[ x + y * width ] = d[y];
@@ -502,21 +531,19 @@ void QgsImageOperation::distanceTransform2d( double *im, int width, int height )
   // transform along rows
   for ( int y = 0; y < height; y++ )
   {
+    if ( feedback && feedback->isCanceled() )
+      break;
+
     for ( int x = 0; x < width; x++ )
     {
       f[x] = im[  x + y * width ];
     }
-    distanceTransform1d( f, width, v, z, d );
+    distanceTransform1d( f.get(), width, v.get(), z.get(), d.get() );
     for ( int x = 0; x < width; x++ )
     {
       im[  x + y * width ] = d[x];
     }
   }
-
-  delete [] d;
-  delete [] f;
-  delete [] v;
-  delete [] z;
 }
 
 void QgsImageOperation::ShadeFromArrayOperation::operator()( QRgb &rgb, const int x, const int y )
@@ -555,7 +582,7 @@ void QgsImageOperation::ShadeFromArrayOperation::operator()( QRgb &rgb, const in
 
 //stack blur
 
-void QgsImageOperation::stackBlur( QImage &image, const int radius, const bool alphaOnly )
+void QgsImageOperation::stackBlur( QImage &image, const int radius, const bool alphaOnly, QgsFeedback *feedback )
 {
   // culled from Qt's qpixmapfilter.cpp, see: http://www.qtcentre.org/archive/index.php/t-26534.html
   int tab[] = { 14, 10, 8, 6, 5, 5, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2 };
@@ -567,40 +594,61 @@ void QgsImageOperation::stackBlur( QImage &image, const int radius, const bool a
   //ensure correct source format.
   QImage::Format originalFormat = image.format();
   QImage *pImage = &image;
+  std::unique_ptr< QImage> convertedImage;
   if ( !alphaOnly && originalFormat != QImage::Format_ARGB32_Premultiplied )
   {
-    pImage = new QImage( image.convertToFormat( QImage::Format_ARGB32_Premultiplied ) );
+    convertedImage = std::make_unique< QImage >( image.convertToFormat( QImage::Format_ARGB32_Premultiplied ) );
+    pImage = convertedImage.get();
   }
   else if ( alphaOnly && originalFormat != QImage::Format_ARGB32 )
   {
-    pImage = new QImage( image.convertToFormat( QImage::Format_ARGB32 ) );
+    convertedImage = std::make_unique< QImage >( image.convertToFormat( QImage::Format_ARGB32 ) );
+    pImage = convertedImage.get();
   }
+  else
+  {
+    image.detach();
+  }
+
+  if ( feedback && feedback->isCanceled() )
+    return;
 
   if ( alphaOnly )
     i1 = i2 = ( QSysInfo::ByteOrder == QSysInfo::BigEndian ? 0 : 3 );
 
-  StackBlurLineOperation topToBottomBlur( alpha, QgsImageOperation::ByColumn, true, i1, i2 );
-  runLineOperation( *pImage, topToBottomBlur );
+  StackBlurLineOperation topToBottomBlur( alpha, QgsImageOperation::ByColumn, true, i1, i2, feedback );
+  runLineOperation( *pImage, topToBottomBlur, feedback );
 
-  StackBlurLineOperation leftToRightBlur( alpha, QgsImageOperation::ByRow, true, i1, i2 );
-  runLineOperation( *pImage, leftToRightBlur );
+  if ( feedback && feedback->isCanceled() )
+    return;
 
-  StackBlurLineOperation bottomToTopBlur( alpha, QgsImageOperation::ByColumn, false, i1, i2 );
-  runLineOperation( *pImage, bottomToTopBlur );
+  StackBlurLineOperation leftToRightBlur( alpha, QgsImageOperation::ByRow, true, i1, i2, feedback );
+  runLineOperation( *pImage, leftToRightBlur, feedback );
 
-  StackBlurLineOperation rightToLeftBlur( alpha, QgsImageOperation::ByRow, false, i1, i2 );
-  runLineOperation( *pImage, rightToLeftBlur );
+  if ( feedback && feedback->isCanceled() )
+    return;
+
+  StackBlurLineOperation bottomToTopBlur( alpha, QgsImageOperation::ByColumn, false, i1, i2, feedback );
+  runLineOperation( *pImage, bottomToTopBlur, feedback );
+
+  if ( feedback && feedback->isCanceled() )
+    return;
+
+  StackBlurLineOperation rightToLeftBlur( alpha, QgsImageOperation::ByRow, false, i1, i2, feedback );
+  runLineOperation( *pImage, rightToLeftBlur, feedback );
+
+  if ( feedback && feedback->isCanceled() )
+    return;
 
   if ( pImage->format() != originalFormat )
   {
     image = pImage->convertToFormat( originalFormat );
-    delete pImage;
   }
 }
 
 //gaussian blur
 
-QImage *QgsImageOperation::gaussianBlur( QImage &image, const int radius )
+QImage *QgsImageOperation::gaussianBlur( QImage &image, const int radius, QgsFeedback *feedback )
 {
   int width = image.width();
   int height = image.height();
@@ -612,41 +660,57 @@ QImage *QgsImageOperation::gaussianBlur( QImage &image, const int radius )
     return copy;
   }
 
-  double *kernel = createGaussianKernel( radius );
+  std::unique_ptr<double[]>kernel( createGaussianKernel( radius ) );
+  if ( feedback && feedback->isCanceled() )
+    return new QImage();
 
   //ensure correct source format.
   QImage::Format originalFormat = image.format();
   QImage *pImage = &image;
+  std::unique_ptr< QImage> convertedImage;
   if ( originalFormat != QImage::Format_ARGB32_Premultiplied )
   {
-    pImage = new QImage( image.convertToFormat( QImage::Format_ARGB32_Premultiplied ) );
+    convertedImage = std::make_unique< QImage >( image.convertToFormat( QImage::Format_ARGB32_Premultiplied ) );
+    pImage = convertedImage.get();
   }
+  else
+  {
+    image.detach();
+  }
+  if ( feedback && feedback->isCanceled() )
+    return new QImage();
 
   //blur along rows
   QImage xBlurImage = QImage( width, height, QImage::Format_ARGB32_Premultiplied );
-  GaussianBlurOperation rowBlur( radius, QgsImageOperation::ByRow, &xBlurImage, kernel );
+  GaussianBlurOperation rowBlur( radius, QgsImageOperation::ByRow, &xBlurImage, kernel.get(), feedback );
   runRectOperation( *pImage, rowBlur );
 
+  if ( feedback && feedback->isCanceled() )
+    return new QImage();
+
   //blur along columns
-  QImage *yBlurImage = new QImage( width, height, QImage::Format_ARGB32_Premultiplied );
-  GaussianBlurOperation colBlur( radius, QgsImageOperation::ByColumn, yBlurImage, kernel );
+  std::unique_ptr< QImage > yBlurImage = std::make_unique< QImage >( width, height, QImage::Format_ARGB32_Premultiplied );
+  GaussianBlurOperation colBlur( radius, QgsImageOperation::ByColumn, yBlurImage.get(), kernel.get(), feedback );
   runRectOperation( xBlurImage, colBlur );
 
-  delete[] kernel;
+  if ( feedback && feedback->isCanceled() )
+    return new QImage();
+
+  kernel.reset();
 
   if ( originalFormat != QImage::Format_ARGB32_Premultiplied )
   {
-    QImage *convertedImage = new QImage( yBlurImage->convertToFormat( originalFormat ) );
-    delete yBlurImage;
-    delete pImage;
-    return convertedImage;
+    return new QImage( yBlurImage->convertToFormat( originalFormat ) );
   }
 
-  return yBlurImage;
+  return yBlurImage.release();
 }
 
 void QgsImageOperation::GaussianBlurOperation::operator()( QgsImageOperation::ImageBlock &block )
 {
+  if ( mFeedback && mFeedback->isCanceled() )
+    return;
+
   int width = block.image->width();
   int height = block.image->height();
   int sourceBpl = block.image->bytesPerLine();
@@ -661,10 +725,16 @@ void QgsImageOperation::GaussianBlurOperation::operator()( QgsImageOperation::Im
     //blur along rows
     for ( unsigned int y = block.beginLine; y < block.endLine; ++y, outputLineRef += mDestImageBpl )
     {
+      if ( mFeedback && mFeedback->isCanceled() )
+        break;
+
       sourceRef = sourceFirstLine;
       destRef = reinterpret_cast< QRgb * >( outputLineRef );
       for ( int x = 0; x < width; ++x, ++destRef, sourceRef += 4 )
       {
+        if ( mFeedback && mFeedback->isCanceled() )
+          break;
+
         *destRef = gaussianBlurVertical( y, sourceRef, sourceBpl, height );
       }
     }
@@ -674,9 +744,15 @@ void QgsImageOperation::GaussianBlurOperation::operator()( QgsImageOperation::Im
     unsigned char *sourceRef = block.image->scanLine( block.beginLine );
     for ( unsigned int y = block.beginLine; y < block.endLine; ++y, outputLineRef += mDestImageBpl, sourceRef += sourceBpl )
     {
+      if ( mFeedback && mFeedback->isCanceled() )
+        break;
+
       destRef = reinterpret_cast< QRgb * >( outputLineRef );
       for ( int x = 0; x < width; ++x, ++destRef )
       {
+        if ( mFeedback && mFeedback->isCanceled() )
+          break;
+
         *destRef = gaussianBlurHorizontal( x, sourceRef, width );
       }
     }
@@ -694,7 +770,7 @@ inline QRgb QgsImageOperation::GaussianBlurOperation::gaussianBlurVertical( cons
 
   for ( int i = 0; i <= mRadius * 2; ++i )
   {
-    y = qBound( 0, posy + ( i - mRadius ), height - 1 );
+    y = std::clamp( posy + ( i - mRadius ), 0, height - 1 );
     ref = sourceFirstLine + sourceBpl * y;
 
     QRgb *refRgb = reinterpret_cast< QRgb * >( ref );
@@ -718,7 +794,7 @@ inline QRgb QgsImageOperation::GaussianBlurOperation::gaussianBlurHorizontal( co
 
   for ( int i = 0; i <= mRadius * 2; ++i )
   {
-    x = qBound( 0, posx + ( i - mRadius ), width - 1 );
+    x = std::clamp( posx + ( i - mRadius ), 0, width - 1 );
     ref = sourceFirstLine + x * 4;
 
     QRgb *refRgb = reinterpret_cast< QRgb * >( ref );
@@ -766,6 +842,7 @@ double *QgsImageOperation::createGaussianKernel( const int radius )
 
 void QgsImageOperation::flipImage( QImage &image, QgsImageOperation::FlipType type )
 {
+  image.detach();
   FlipLineOperation flipOperation( type == QgsImageOperation::FlipHorizontal ? QgsImageOperation::ByRow : QgsImageOperation::ByColumn );
   runLineOperation( image, flipOperation );
 }
@@ -829,6 +906,7 @@ QRect QgsImageOperation::nonTransparentImageRect( const QImage &image, QSize min
       if ( qAlpha( imgScanline[x] ) )
       {
         xmin = x;
+        break;
       }
     }
   }
@@ -842,6 +920,7 @@ QRect QgsImageOperation::nonTransparentImageRect( const QImage &image, QSize min
       if ( qAlpha( imgScanline[x] ) )
       {
         xmax = x;
+        break;
       }
     }
   }

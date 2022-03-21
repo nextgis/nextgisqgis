@@ -34,7 +34,8 @@ SIP_FEATURE( ARM ) // Some parts are not available in sip bindings on ARM becaus
 
 /**
  * \ingroup core
- * A class to trim lines and polygons to within a rectangular region.
+ * \brief A class to trim lines and polygons to within a rectangular region.
+ *
  * The functions in this class are likely to be called from within a
  * render loop and hence need to as CPU efficient as possible.
  * The main purpose of the functions in this class are to trim lines
@@ -108,6 +109,13 @@ class CORE_EXPORT QgsClipper
      */
     static QPolygonF clippedLine( const QgsCurve &curve, const QgsRectangle &clipExtent );
 
+    /**
+     * Takes a \a curve and clips it to clipExtent.
+     *
+     * \since QGIS 3.16
+     */
+    static QPolygonF clippedLine( const QPolygonF &curve, const QgsRectangle &clipExtent );
+
   private:
 
     // Used when testing for equivalence to 0.0
@@ -144,12 +152,12 @@ class CORE_EXPORT QgsClipper
 
     /**
      * Connects two lines split by the clip (by inserting points on the clip border)
-      \param x0 x-coordinate of the first line end
-      \param y0 y-coordinate of the first line end
-      \param x1 x-coordinate of the second line start
-      \param y1 y-coordinate of the second line start
-      \param clipRect clip rectangle
-      \param pts: in/out array of clipped points
+     * \param x0 x-coordinate of the first line end
+     * \param y0 y-coordinate of the first line end
+     * \param x1 x-coordinate of the second line start
+     * \param y1 y-coordinate of the second line start
+     * \param clipRect clip rectangle
+     * \param pts: in/out array of clipped points
       */
     static void connectSeparatedLines( double x0, double y0, double x1, double y1,
                                        const QgsRectangle &clipRect, QPolygonF &pts );
@@ -258,7 +266,7 @@ inline void QgsClipper::trimFeatureToBoundary(
         // store both ends of the new edge
         if ( !( i2 == 0 && shapeOpen ) )
         {
-          QgsPointXY p = intersect( inX[i1], inY[i1], inX[i2], inY[i2], b );
+          const QgsPointXY p = intersect( inX[i1], inY[i1], inX[i2], inY[i2], b );
           outX.push_back( p.x() );
           outY.push_back( p.y() );
         }
@@ -274,7 +282,7 @@ inline void QgsClipper::trimFeatureToBoundary(
       {
         if ( !( i2 == 0 && shapeOpen ) )
         {
-          QgsPointXY p = intersect( inX[i1], inY[i1], inX[i2], inY[i2], b );
+          const QgsPointXY p = intersect( inX[i1], inY[i1], inX[i2], inY[i2], b );
           outX.push_back( p.x() );
           outY.push_back( p.y() );
         }
@@ -401,7 +409,7 @@ inline QgsPointXY QgsClipper::intersect( const double x1, const double y1,
   if ( std::fabs( r_d ) > SMALL_NUM && std::fabs( r_n ) > SMALL_NUM )
   {
     // they cross
-    double r = r_n / r_d;
+    const double r = r_n / r_d;
     p.set( x1 + r * ( x2 - x1 ), y1 + r * ( y2 - y1 ) );
   }
   else

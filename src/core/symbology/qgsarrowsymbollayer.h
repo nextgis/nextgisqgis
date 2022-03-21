@@ -20,6 +20,8 @@
 #include "qgis.h"
 #include "qgssymbollayer.h"
 
+class QgsFillSymbol;
+
 
 /**
  * \ingroup core
@@ -33,6 +35,7 @@ class CORE_EXPORT QgsArrowSymbolLayer : public QgsLineSymbolLayer
   public:
     //! Simple constructor
     QgsArrowSymbolLayer();
+    ~QgsArrowSymbolLayer() override;
 
     /**
      * Create a new QgsArrowSymbolLayer
@@ -41,13 +44,14 @@ class CORE_EXPORT QgsArrowSymbolLayer : public QgsLineSymbolLayer
      *
      * \returns A new QgsArrowSymbolLayer
      */
-    static QgsSymbolLayer *create( const QgsStringMap &properties = QgsStringMap() ) SIP_FACTORY;
+    static QgsSymbolLayer *create( const QVariantMap &properties = QVariantMap() ) SIP_FACTORY;
 
     QgsArrowSymbolLayer *clone() const override SIP_FACTORY;
-    QgsSymbol *subSymbol() override { return mSymbol.get(); }
+    QgsSymbol *subSymbol() override;
     bool setSubSymbol( QgsSymbol *symbol SIP_TRANSFER ) override;
     QSet<QString> usedAttributes( const QgsRenderContext &context ) const override;
     bool hasDataDefinedProperties() const override;
+    bool usesMapUnits() const override;
 
     //! Gets current arrow width
     double arrowWidth() const { return mArrowWidth; }
@@ -137,13 +141,14 @@ class CORE_EXPORT QgsArrowSymbolLayer : public QgsLineSymbolLayer
     //! Sets the arrow type
     void setArrowType( ArrowType type ) { mArrowType = type; }
 
-    QgsStringMap properties() const override;
+    QVariantMap properties() const override;
     QString layerType() const override;
     void startRender( QgsSymbolRenderContext &context ) override;
     void stopRender( QgsSymbolRenderContext &context ) override;
     void renderPolyline( const QPolygonF &points, QgsSymbolRenderContext &context ) override;
     void setColor( const QColor &c ) override;
     QColor color() const override;
+    bool canCauseArtifactsBetweenAdjacentTiles() const override;
 
   private:
 #ifdef SIP_RUN

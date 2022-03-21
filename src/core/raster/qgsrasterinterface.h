@@ -30,10 +30,11 @@
 #include "qgsrasterblock.h"
 #include "qgsrasterhistogram.h"
 #include "qgsrectangle.h"
+#include "qgsrendercontext.h"
 
 /**
  * \ingroup core
- * Feedback object tailored for raster block reading.
+ * \brief Feedback object tailored for raster block reading.
  *
  * \since QGIS 3.0
  */
@@ -93,6 +94,22 @@ class CORE_EXPORT QgsRasterBlockFeedback : public QgsFeedback
      */
     QStringList errors() const { return mErrors; }
 
+    /**
+     * Returns the render context of the associated block reading
+     *
+     * \see setRenderContext()
+     * \since QGIS 3.24.0
+     */
+    QgsRenderContext renderContext() const;
+
+    /**
+     * Sets the render context of the associated block reading
+     *
+     * \see renderContext()
+     * \since QGIS 3.24.0
+     */
+    void setRenderContext( const QgsRenderContext &renderContext );
+
   private:
 
     /**
@@ -106,12 +123,14 @@ class CORE_EXPORT QgsRasterBlockFeedback : public QgsFeedback
 
     //! List of errors encountered while retrieving block
     QStringList mErrors;
+
+    QgsRenderContext mRenderContext;
 };
 
 
 /**
  * \ingroup core
- * Base class for processing filters like renderers, reprojector, resampler etc.
+ * \brief Base class for processing filters like renderers, reprojector, resampler etc.
  */
 class CORE_EXPORT QgsRasterInterface
 {
@@ -183,16 +202,16 @@ class CORE_EXPORT QgsRasterInterface
     enum Capability
     {
       NoCapabilities   = 0,
-      Size             = 1 << 1, // original data source size (and thus resolution) is known, it is not always available, for example for WMS
-      Create           = 1 << 2, // create new datasets
-      Remove           = 1 << 3, // delete datasets
-      BuildPyramids    = 1 << 4, // supports building of pyramids (overviews)
-      Identify         = 1 << 5, // at least one identify format supported
-      IdentifyValue    = 1 << 6, // numerical values
-      IdentifyText     = 1 << 7, // WMS text
-      IdentifyHtml     = 1 << 8, // WMS HTML
-      IdentifyFeature  = 1 << 9, // WMS GML -> feature
-      Prefetch         = 1 << 10, // allow prefetching of out-of-view images
+      Size             = 1 << 1, //!< Original data source size (and thus resolution) is known, it is not always available, for example for WMS
+      Create           = 1 << 2, //!< Create new datasets
+      Remove           = 1 << 3, //!< Delete datasets
+      BuildPyramids    = 1 << 4, //!< Supports building of pyramids (overviews)
+      Identify         = 1 << 5, //!< At least one identify format supported
+      IdentifyValue    = 1 << 6, //!< Numerical values
+      IdentifyText     = 1 << 7, //!< WMS text
+      IdentifyHtml     = 1 << 8, //!< WMS HTML
+      IdentifyFeature  = 1 << 9, //!< WMS GML -> feature
+      Prefetch         = 1 << 10, //!< Allow prefetching of out-of-view images
     };
 
     QgsRasterInterface( QgsRasterInterface *input = nullptr );
@@ -220,7 +239,7 @@ class CORE_EXPORT QgsRasterInterface
      * Returns source data type for the band specified by number,
      *  source data type may be shorter than dataType
     */
-    virtual Qgis::DataType sourceDataType( int bandNo ) const { return mInput ? mInput->sourceDataType( bandNo ) : Qgis::UnknownDataType; }
+    virtual Qgis::DataType sourceDataType( int bandNo ) const { return mInput ? mInput->sourceDataType( bandNo ) : Qgis::DataType::UnknownDataType; }
 
     /**
      * Gets the extent of the interface.
@@ -228,7 +247,10 @@ class CORE_EXPORT QgsRasterInterface
      */
     virtual QgsRectangle extent() const { return mInput ? mInput->extent() : QgsRectangle(); }
 
-    int dataTypeSize( int bandNo ) { return QgsRasterBlock::typeSize( dataType( bandNo ) ); }
+    /**
+     * Returns the size (in bytes) for the data type for the specified band.
+     */
+    int dataTypeSize( int bandNo ) const { return QgsRasterBlock::typeSize( dataType( bandNo ) ); }
 
     //! Gets number of bands
     virtual int bandCount() const = 0;
@@ -242,10 +264,21 @@ class CORE_EXPORT QgsRasterInterface
     virtual int ySize() const { return mInput ? mInput->ySize() : 0; }
 
     //! \brief helper function to create zero padded band names
-    virtual QString generateBandName( int bandNumber ) const
-    {
-      return tr( "Band" ) + QStringLiteral( " %1" ) .arg( bandNumber, 1 + static_cast< int >( std::log10( static_cast< double >( bandCount() ) ) ), 10, QChar( '0' ) );
-    }
+    virtual QString generateBandName( int bandNumber ) const;
+
+    /**
+     * Returns the name of the color interpretation for the specified \a bandNumber.
+     *
+     * \since QGIS 3.18
+     */
+    virtual QString colorInterpretationName( int bandNumber ) const;
+
+    /**
+     * Generates a friendly, descriptive name for the specified \a bandNumber.
+     *
+     * \since QGIS 3.18
+     */
+    QString displayBandName( int bandNumber ) const;
 
     /**
      * Read block of data using given extent and size.
@@ -526,15 +559,13 @@ class CORE_EXPORT QgsRasterInterface
       maximum = PyFloat_AsDouble( a4 );
     }
 
-#if defined(SIP_PROTECTED_IS_PUBLIC)
+#if defined(SIP_PROTECTED_IS_PUBLIC) || (SIP_VERSION >= 0x050000 && !defined(_MSC_VER))
     sipCpp->initHistogram( *a0, a1, a2, minimum, maximum, *a5, a6, a7 );
 #else
     sipCpp->sipProtect_initHistogram( *a0, a1, a2, minimum, maximum, *a5, a6, a7 );
 #endif
     % End
 #endif
-
-
 
     //! Fill in statistics defaults if not specified
     void initStatistics( QgsRasterBandStats &statistics, int bandNo,

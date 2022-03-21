@@ -22,11 +22,12 @@
 #include "qgis_core.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgsrectangle.h"
+#include "qgsgeometry.h"
 
 /**
  * \class QgsReferencedGeometryBase
  * \ingroup core
- * A base class for geometry primitives which are stored with an associated reference system.
+ * \brief A base class for geometry primitives which are stored with an associated reference system.
  *
  * QgsReferencedGeometryBase classes represent some form of geometry primitive
  * (such as rectangles) which have an optional coordinate reference system
@@ -66,7 +67,7 @@ class CORE_EXPORT QgsReferencedGeometryBase
 
 /**
  * \ingroup core
- * A QgsRectangle with associated coordinate reference system.
+ * \brief A QgsRectangle with associated coordinate reference system.
  * \since QGIS 3.0
  */
 class CORE_EXPORT QgsReferencedRectangle : public QgsRectangle, public QgsReferencedGeometryBase
@@ -90,8 +91,8 @@ class CORE_EXPORT QgsReferencedRectangle : public QgsRectangle, public QgsRefere
       return QVariant::fromValue( *this );
     }
 
-    bool operator==( const QgsReferencedRectangle &other );
-    bool operator!=( const QgsReferencedRectangle &other );
+    bool operator==( const QgsReferencedRectangle &other ) const;
+    bool operator!=( const QgsReferencedRectangle &other ) const;
 
 #ifdef SIP_RUN
     SIP_PYOBJECT __repr__();
@@ -107,7 +108,7 @@ Q_DECLARE_METATYPE( QgsReferencedRectangle )
 
 /**
  * \ingroup core
- * A QgsPointXY with associated coordinate reference system.
+ * \brief A QgsPointXY with associated coordinate reference system.
  * \since QGIS 3.0
  */
 class CORE_EXPORT QgsReferencedPointXY : public QgsPointXY, public QgsReferencedGeometryBase
@@ -145,5 +146,54 @@ class CORE_EXPORT QgsReferencedPointXY : public QgsPointXY, public QgsReferenced
 };
 
 Q_DECLARE_METATYPE( QgsReferencedPointXY )
+
+/**
+ * \ingroup core
+ * \brief A QgsGeometry with associated coordinate reference system.
+ * \since QGIS 3.16
+ */
+class CORE_EXPORT QgsReferencedGeometry : public QgsGeometry, public QgsReferencedGeometryBase
+{
+  public:
+
+    /**
+     * Constructor for QgsReferencedGeometry, with the specified initial \a geometry
+     * and \a crs.
+     */
+    QgsReferencedGeometry( const QgsGeometry &geometry, const QgsCoordinateReferenceSystem &crs );
+
+    /**
+     * Constructor for QgsReferencedGeometry.
+     */
+    QgsReferencedGeometry() = default;
+
+    //! Allows direct construction of QVariants from geometry.
+    operator QVariant() const
+    {
+      return QVariant::fromValue( *this );
+    }
+
+    /**
+     * Construct a new QgsReferencedGeometry from referenced \a point
+     */
+    static QgsReferencedGeometry fromReferencedPointXY( const QgsReferencedPointXY &point );
+
+    /**
+     * Construct a new QgsReferencedGeometry from referenced \a rectangle
+     */
+    static QgsReferencedGeometry fromReferencedRect( const QgsReferencedRectangle &rectangle );
+
+
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    QString str = QStringLiteral( "<QgsReferencedGeometry: %1 (%2)>" ).arg( sipCpp->asWkt(), sipCpp->crs().authid() );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
+
+};
+
+Q_DECLARE_METATYPE( QgsReferencedGeometry )
 
 #endif // QGSREFERENCEDGEOMETRY_H

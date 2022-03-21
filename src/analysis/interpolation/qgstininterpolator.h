@@ -23,7 +23,7 @@
 #include "qgis_analysis.h"
 
 class QgsFeatureSink;
-class Triangulation;
+class QgsTriangulation;
 class TriangleInterpolator;
 class QgsFeature;
 class QgsFeedback;
@@ -31,7 +31,7 @@ class QgsFields;
 
 /**
  * \ingroup analysis
- *  Interpolation in a triangular irregular network
+ * \brief Interpolation in a triangular irregular network
  * \since QGIS 3.0
 */
 class ANALYSIS_EXPORT QgsTinInterpolator: public QgsInterpolator
@@ -76,7 +76,7 @@ class ANALYSIS_EXPORT QgsTinInterpolator: public QgsInterpolator
     void setTriangulationSink( QgsFeatureSink *sink );
 
   private:
-    Triangulation *mTriangulation = nullptr;
+    QgsTriangulation *mTriangulation = nullptr;
     TriangleInterpolator *mTriangleInterpolator = nullptr;
     bool mIsInitialized;
     QgsFeedback *mFeedback = nullptr;

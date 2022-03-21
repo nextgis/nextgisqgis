@@ -272,44 +272,69 @@ QgsFields::iterator QgsFields::end()
   return iterator( &d->fields.last() + 1 );
 }
 
-QIcon QgsFields::iconForField( int fieldIdx ) const
+QIcon QgsFields::iconForField( int fieldIdx, bool considerOrigin ) const
 {
-  switch ( d->fields.at( fieldIdx ).field.type() )
+  if ( considerOrigin )
+  {
+    switch ( fieldOrigin( fieldIdx ) )
+    {
+      case QgsFields::OriginExpression:
+        return QgsApplication::getThemeIcon( QStringLiteral( "/mIconExpression.svg" ) );
+
+      case QgsFields::OriginJoin:
+        return QgsApplication::getThemeIcon( QStringLiteral( "/propertyicons/join.svg" ) );
+
+      default:
+        return iconForFieldType( d->fields.at( fieldIdx ).field.type(), d->fields.at( fieldIdx ).field.subType() );
+    }
+  }
+  return iconForFieldType( d->fields.at( fieldIdx ).field.type(), d->fields.at( fieldIdx ).field.subType() );
+}
+
+QIcon QgsFields::iconForFieldType( QVariant::Type type, QVariant::Type subType )
+{
+  switch ( type )
   {
     case QVariant::Bool:
-      return QgsApplication::getThemeIcon( "/mIconFieldBool.svg" );
-
+      return QgsApplication::getThemeIcon( QStringLiteral( "/mIconFieldBool.svg" ) );
     case QVariant::Int:
     case QVariant::UInt:
     case QVariant::LongLong:
     case QVariant::ULongLong:
-    {
-      return QgsApplication::getThemeIcon( "/mIconFieldInteger.svg" );
-    }
+      return QgsApplication::getThemeIcon( QStringLiteral( "/mIconFieldInteger.svg" ) );
     case QVariant::Double:
-    {
-      return QgsApplication::getThemeIcon( "/mIconFieldFloat.svg" );
-    }
+      return QgsApplication::getThemeIcon( QStringLiteral( "/mIconFieldFloat.svg" ) );
     case QVariant::String:
-    {
-      return QgsApplication::getThemeIcon( "/mIconFieldText.svg" );
-    }
+      return QgsApplication::getThemeIcon( QStringLiteral( "/mIconFieldText.svg" ) );
     case QVariant::Date:
-    {
-      return QgsApplication::getThemeIcon( "/mIconFieldDate.svg" );
-    }
+      return QgsApplication::getThemeIcon( QStringLiteral( "/mIconFieldDate.svg" ) );
     case QVariant::DateTime:
-    {
-      return QgsApplication::getThemeIcon( "/mIconFieldDateTime.svg" );
-    }
+      return QgsApplication::getThemeIcon( QStringLiteral( "/mIconFieldDateTime.svg" ) );
     case QVariant::Time:
-    {
-      return QgsApplication::getThemeIcon( "/mIconFieldTime.svg" );
-    }
+      return QgsApplication::getThemeIcon( QStringLiteral( "/mIconFieldTime.svg" ) );
     case QVariant::ByteArray:
+      return QgsApplication::getThemeIcon( QStringLiteral( "/mIconFieldBinary.svg" ) );
+    case QVariant::List:
     {
-      return QgsApplication::getThemeIcon( "/mIconFieldBinary.svg" );
+      switch ( subType )
+      {
+        case QVariant::Int:
+        case QVariant::UInt:
+        case QVariant::LongLong:
+        case QVariant::ULongLong:
+          return QgsApplication::getThemeIcon( QStringLiteral( "/mIconFieldArrayInteger.svg" ) );
+        case QVariant::Double:
+          return QgsApplication::getThemeIcon( QStringLiteral( "/mIconFieldArrayFloat.svg" ) );
+        case QVariant::String:
+          return QgsApplication::getThemeIcon( QStringLiteral( "/mIconFieldArrayString.svg" ) );
+        default:
+          return QgsApplication::getThemeIcon( QStringLiteral( "/mIconFieldArray.svg" ) );
+      }
     }
+    case QVariant::StringList:
+      return QgsApplication::getThemeIcon( QStringLiteral( "/mIconFieldArrayString.svg" ) );
+    case QVariant::Map:
+      return QgsApplication::getThemeIcon( QStringLiteral( "/mIconFieldJson.svg" ) );
     default:
       return QIcon();
   }
@@ -340,7 +365,7 @@ int QgsFields::lookupField( const QString &fieldName ) const
 
   for ( int idx = 0; idx < count(); ++idx )
   {
-    QString alias = d->fields[idx].field.alias();
+    const QString alias = d->fields[idx].field.alias();
     if ( !alias.isEmpty() && QString::compare( alias, fieldName, Qt::CaseInsensitive ) == 0 )
       return idx;
   }

@@ -1,0 +1,24 @@
+--- a/src/core/expression/qgsexpressioncontextutils.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/expression/qgsexpressioncontextutils.cpp	2022-03-07 23:14:46.000000000 +0300
+@@ -35,7 +35,7 @@
+ #include "qgsprojoperation.h"
+ #include "qgsmarkersymbol.h"
+ #include "qgstriangularmesh.h"
+-#include "qgsvectortileutils.h"
++// #include "qgsvectortileutils.h"
+ 
+ QgsExpressionContextScope *QgsExpressionContextUtils::globalScope()
+ {
+@@ -437,10 +437,10 @@
+   scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_id" ), "canvas", true ) );
+   scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_rotation" ), mapSettings.rotation(), true ) );
+   scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_scale" ), mapSettings.scale(), true ) );
+-
++/*
+   scope->setVariable( QStringLiteral( "zoom_level" ), QgsVectorTileUtils::scaleToZoomLevel( mapSettings.scale(), 0, 99999 ), true );
+   scope->setVariable( QStringLiteral( "vector_tile_zoom" ), QgsVectorTileUtils::scaleToZoom( mapSettings.scale() ), true );
+-
++*/
+   // IMPORTANT: ANY CHANGES HERE ALSO NEED TO BE MADE TO QgsLayoutItemMap::createExpressionContext()
+   // (rationale is described in QgsLayoutItemMap::createExpressionContext() )
+ 

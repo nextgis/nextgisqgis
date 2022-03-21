@@ -3,8 +3,8 @@
 # Purpose:  CMake build scripts
 # Author:   Dmitry Baryshnikov, polimax@mail.ru
 ################################################################################
-# Copyright (C) 2015-2020, NextGIS <info@nextgis.com>
-# Copyright (C) 2015-2020 Dmitry Baryshnikov
+# Copyright (C) 2015-2022, NextGIS <info@nextgis.com>
+# Copyright (C) 2015-2022 Dmitry Baryshnikov
 #
 # This script is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ function(color_message text)
     set(BoldGreen   "${Esc}[1;32m")
     set(ColourReset "${Esc}[m")
 
-    message(STATUS "${BoldGreen}${text}${ColourReset}")
+    message("i ${BoldGreen}${text}${ColourReset}")
 
 endfunction()
 
@@ -167,6 +167,7 @@ function(find_extproject name)
     endif()
 
     # Get some properties from <cmakemodules>/FindExt${name}.cmake file.
+    # message("Get some properties from <cmakemodules>/FindExt${name}.cmake file.")
     include(FindExt${name})
 
     if(find_extproject_EXACT)

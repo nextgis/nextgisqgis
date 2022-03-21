@@ -1,0 +1,26 @@
+--- a/src/core/geometry/qgsabstractgeometry.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/geometry/qgsabstractgeometry.cpp	2022-03-08 12:31:29.000000000 +0300
+@@ -22,7 +22,7 @@
+ #include "qgsgeometrycollection.h"
+ #include "qgsvertexid.h"
+ 
+-#include <nlohmann/json.hpp>
++// #include <nlohmann/json.hpp>
+ #include <limits>
+ #include <QTransform>
+ 
+@@ -190,12 +190,12 @@
+ 
+ QString QgsAbstractGeometry::asJson( int precision )
+ {
+-  return QString::fromStdString( asJsonObject( precision ).dump() );
++  return QString::fromStdString( asJsonObject( precision ).Format(CPLJSONObject::PrettyFormat::Plain) );
+ }
+ 
+ json QgsAbstractGeometry::asJsonObject( int precision ) const
+ {
+-  Q_UNUSED( precision ) return nullptr;
++  Q_UNUSED( precision ) return json();
+ }
+ 
+ QgsPoint QgsAbstractGeometry::centroid() const

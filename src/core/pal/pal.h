@@ -133,13 +133,13 @@ namespace pal
        * the rendered map. This may differ from \a extent in the case of rotated or non-rectangular
        * maps.
        */
-      std::unique_ptr< Problem > extractProblem( const QgsRectangle &extent, const QgsGeometry &mapBoundary );
+      std::unique_ptr< Problem > extractProblem( const QgsRectangle &extent, const QgsGeometry &mapBoundary, QgsRenderContext &context );
 
       /**
        * Solves the labeling problem, selecting the best candidate locations for all labels and returns a list of these
        * calculated label positions.
        *
-       * If \a displayAll is true, then the best positions for ALL labels will be returned, regardless of whether these
+       * If \a displayAll is TRUE, then the best positions for ALL labels will be returned, regardless of whether these
        * labels overlap other labels.
        *
        * If the optional \a unlabeled list is specified, it will be filled with a list of all feature labels which could
@@ -147,7 +147,7 @@ namespace pal
        *
        * Ownership of the returned labels is not transferred - it resides with the pal object.
        */
-      QList<LabelPosition *> solveProblem( Problem *prob, bool displayAll, QList<pal::LabelPosition *> *unlabeled = nullptr );
+      QList<LabelPosition *> solveProblem( Problem *prob, QgsRenderContext &context, bool displayAll, QList<pal::LabelPosition *> *unlabeled = nullptr );
 
       /**
        * Sets whether partial labels show be allowed.
@@ -241,6 +241,11 @@ namespace pal
        */
       int globalCandidatesLimitPolygon() const { return mGlobalCandidatesLimitPolygon; }
 
+      /**
+       * Returns TRUE if a labelling candidate \a lp1 conflicts with \a lp2.
+       */
+      bool candidatesAreConflicting( const LabelPosition *lp1, const LabelPosition *lp2 ) const;
+
     private:
 
       std::unordered_map< QgsAbstractLabelProvider *, std::unique_ptr< Layer > > mLayers;
@@ -258,6 +263,9 @@ namespace pal
       int mEjChainDeg = 50;
       int mTenure = 10;
       double mCandListSize = 0.2;
+
+      unsigned int mNextCandidateId = 1;
+      mutable QHash< QPair< unsigned int, unsigned int >, bool > mCandidateConflicts;
 
       /**
        * \brief show partial labels (cut-off by the map canvas) or not
@@ -277,13 +285,6 @@ namespace pal
       FnIsCanceled fnIsCanceled = nullptr;
       //! Application-specific context for the cancellation check function
       void *fnIsCanceledContext = nullptr;
-
-      /**
-       * Creates a Problem, by extracting labels and generating candidates from the given \a extent.
-       * The \a mapBoundary geometry specifies the actual visible region of the map, and is used
-       * for pruning candidates which fall outside the visible region.
-       */
-      std::unique_ptr< Problem > extract( const QgsRectangle &extent, const QgsGeometry &mapBoundary );
 
       /**
        * \brief Choose the size of popmusic subpart's

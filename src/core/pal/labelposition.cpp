@@ -68,7 +68,7 @@ LabelPosition::LabelPosition( int id, double x1, double y1, double w, double h, 
   while ( this->alpha < 0 )
     this->alpha += 2 * M_PI;
 
-  double beta = this->alpha + M_PI_2;
+  const double beta = this->alpha + M_PI_2;
 
   double dx1, dx2, dy1, dy2;
 
@@ -94,7 +94,7 @@ LabelPosition::LabelPosition( int id, double x1, double y1, double w, double h, 
   if ( !feature->layer()->isCurved() &&
        this->alpha > M_PI_2 && this->alpha <= 3 * M_PI_2 )
   {
-    if ( feature->showUprightLabels() )
+    if ( feature->onlyShowUprightLabels() )
     {
       // Turn label upsidedown by inverting boundary points
       double tx, ty;
@@ -151,7 +151,7 @@ LabelPosition::LabelPosition( const LabelPosition &other )
   h = other.h;
 
   if ( other.mNextPart )
-    mNextPart = qgis::make_unique< LabelPosition >( *other.mNextPart );
+    mNextPart = std::make_unique< LabelPosition >( *other.mNextPart );
 
   partId = other.partId;
   upsideDown = other.upsideDown;
@@ -213,6 +213,7 @@ bool LabelPosition::intersects( const GEOSPreparedGeometry *geometry )
   }
   catch ( GEOSException &e )
   {
+    qWarning( "GEOS exception: %s", e.what() );
     QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
     return false;
   }
@@ -238,6 +239,7 @@ bool LabelPosition::within( const GEOSPreparedGeometry *geometry )
   }
   catch ( GEOSException &e )
   {
+    qWarning( "GEOS exception: %s", e.what() );
     QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
     return false;
   }
@@ -266,56 +268,39 @@ bool LabelPosition::isInConflict( const LabelPosition *lp ) const
     return false; // always overlaping itself !
 
   if ( !nextPart() && !lp->nextPart() )
-    return isInConflictSinglePart( lp );
-  else
-    return isInConflictMultiPart( lp );
-}
-
-bool LabelPosition::isInConflictSinglePart( const LabelPosition *lp ) const
-{
-  if ( qgsDoubleNear( alpha, 0 ) && qgsDoubleNear( lp->alpha, 0 ) )
   {
-    // simple case -- both candidates are oriented to axis, so shortcut with easy calculation
-    return boundingBoxIntersects( lp );
+    if ( qgsDoubleNear( alpha, 0 ) && qgsDoubleNear( lp->alpha, 0 ) )
+    {
+      // simple case -- both candidates are oriented to axis, so shortcut with easy calculation
+      return boundingBoxIntersects( lp );
+    }
   }
 
-  if ( !mGeos )
-    createGeosGeom();
-
-  if ( !lp->mGeos )
-    lp->createGeosGeom();
-
-  GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
-  try
-  {
-    bool result = ( GEOSPreparedIntersects_r( geosctxt, preparedGeom(), lp->mGeos ) == 1 );
-    return result;
-  }
-  catch ( GEOSException &e )
-  {
-    QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
-    return false;
-  }
+  return isInConflictMultiPart( lp );
 }
 
 bool LabelPosition::isInConflictMultiPart( const LabelPosition *lp ) const
 {
-  // check all parts against all parts of other one
-  const LabelPosition *tmp1 = this;
-  while ( tmp1 )
-  {
-    // check tmp1 against parts of other label
-    const LabelPosition *tmp2 = lp;
-    while ( tmp2 )
-    {
-      if ( tmp1->isInConflictSinglePart( tmp2 ) )
-        return true;
-      tmp2 = tmp2->nextPart();
-    }
+  if ( !mMultipartGeos )
+    createMultiPartGeosGeom();
 
-    tmp1 = tmp1->nextPart();
+  if ( !lp->mMultipartGeos )
+    lp->createMultiPartGeosGeom();
+
+  GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
+  try
+  {
+    const bool result = ( GEOSPreparedIntersects_r( geosctxt, preparedMultiPartGeom(), lp->mMultipartGeos ) == 1 );
+    return result;
   }
-  return false; // no conflict found
+  catch ( GEOSException &e )
+  {
+    qWarning( "GEOS exception: %s", e.what() );
+    QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
+    return false;
+  }
+
+  return false;
 }
 
 int LabelPosition::partCount() const
@@ -429,11 +414,72 @@ void LabelPosition::insertIntoIndex( PalRtree<LabelPosition> &index )
   index.insert( this, QgsRectangle( amin[0], amin[1], amax[0], amax[1] ) );
 }
 
+
+void LabelPosition::createMultiPartGeosGeom() const
+{
+  GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
+
+  std::vector< const GEOSGeometry * > geometries;
+  const LabelPosition *tmp1 = this;
+  while ( tmp1 )
+  {
+    const GEOSGeometry *partGeos = tmp1->geos();
+    if ( !GEOSisEmpty_r( geosctxt, partGeos ) )
+      geometries.emplace_back( partGeos );
+    tmp1 = tmp1->nextPart();
+  }
+
+  const std::size_t partCount = geometries.size();
+  GEOSGeometry **geomarr = new GEOSGeometry*[ partCount ];
+  for ( std::size_t i = 0; i < partCount; ++i )
+  {
+    geomarr[i ] = GEOSGeom_clone_r( geosctxt, geometries[i] );
+  }
+
+  mMultipartGeos = GEOSGeom_createCollection_r( geosctxt, GEOS_MULTIPOLYGON, geomarr, partCount );
+  delete [] geomarr;
+}
+
+const GEOSPreparedGeometry *LabelPosition::preparedMultiPartGeom() const
+{
+  if ( !mMultipartGeos )
+    createMultiPartGeosGeom();
+
+  if ( !mMultipartPreparedGeos )
+  {
+    mMultipartPreparedGeos = GEOSPrepare_r( QgsGeos::getGEOSHandler(), mMultipartGeos );
+  }
+  return mMultipartPreparedGeos;
+}
+
 double LabelPosition::getDistanceToPoint( double xp, double yp ) const
 {
   //first check if inside, if so then distance is -1
-  double distance = ( containsPoint( xp, yp ) ? -1
-                      : std::sqrt( minDistanceToPoint( xp, yp ) ) );
+  bool contains = false;
+  if ( alpha == 0 )
+  {
+    // easy case -- horizontal label
+    contains = x[0] <= xp && x[1] >= xp && y[0] <= yp && y[2] >= yp;
+  }
+  else
+  {
+    contains = containsPoint( xp, yp );
+  }
+
+  double distance = -1;
+  if ( !contains )
+  {
+    if ( alpha == 0 )
+    {
+      const double dx = std::max( std::max( x[0] - xp, 0.0 ), xp - x[1] );
+      const double dy = std::max( std::max( y[0] - yp, 0.0 ), yp - y[2] );
+      distance = std::sqrt( dx * dx + dy * dy );
+    }
+    else
+    {
+      distance = std::sqrt( minDistanceToPoint( xp, yp ) );
+    }
+  }
 
   if ( mNextPart && distance > 0 )
     return std::min( distance, mNextPart->getDistanceToPoint( xp, yp ) );
@@ -463,6 +509,7 @@ bool LabelPosition::crossesLine( PointSet *line ) const
   }
   catch ( GEOSException &e )
   {
+    qWarning( "GEOS exception: %s", e.what() );
     QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
     return false;
   }
@@ -493,6 +540,7 @@ bool LabelPosition::crossesBoundary( PointSet *polygon ) const
   }
   catch ( GEOSException &e )
   {
+    qWarning( "GEOS exception: %s", e.what() );
     QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
     return false;
   }
@@ -503,8 +551,8 @@ bool LabelPosition::crossesBoundary( PointSet *polygon ) const
 int LabelPosition::polygonIntersectionCost( PointSet *polygon ) const
 {
   //effectively take the average polygon intersection cost for all label parts
-  double totalCost = polygonIntersectionCostForParts( polygon );
-  int n = partCount();
+  const double totalCost = polygonIntersectionCostForParts( polygon );
+  const int n = partCount();
   return std::ceil( totalCost / n );
 }
 
@@ -526,6 +574,7 @@ bool LabelPosition::intersectsWithPolygon( PointSet *polygon ) const
   }
   catch ( GEOSException &e )
   {
+    qWarning( "GEOS exception: %s", e.what() );
     QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
   }
 
@@ -583,6 +632,7 @@ double LabelPosition::polygonIntersectionCostForParts( PointSet *polygon ) const
   }
   catch ( GEOSException &e )
   {
+    qWarning( "GEOS exception: %s", e.what() );
     QgsMessageLog::logMessage( QObject::tr( "Exception: %1" ).arg( e.what() ), QObject::tr( "GEOS" ) );
   }
 
@@ -595,4 +645,26 @@ double LabelPosition::polygonIntersectionCostForParts( PointSet *polygon ) const
   }
 
   return cost;
+}
+
+double LabelPosition::angleDifferential()
+{
+  double angleDiff = 0.0;
+  double angleLast = 0.0;
+  LabelPosition *tmp = this;
+  while ( tmp )
+  {
+    if ( tmp != this ) // not first?
+    {
+      double diff = std::fabs( tmp->getAlpha() - angleLast );
+      if ( diff > 2 * M_PI )
+        diff -= 2 * M_PI;
+      diff = std::min( diff, 2 * M_PI - diff ); // difference 350 deg is actually just 10 deg...
+      angleDiff += diff;
+    }
+
+    angleLast = tmp->getAlpha();
+    tmp = tmp->nextPart();
+  }
+  return angleDiff;
 }

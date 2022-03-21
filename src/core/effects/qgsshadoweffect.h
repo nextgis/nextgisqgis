@@ -20,7 +20,9 @@
 #include "qgis_core.h"
 #include "qgspainteffect.h"
 #include "qgis_sip.h"
-#include "qgssymbol.h"
+#include "qgsunittypes.h"
+#include "qgsmapunitscale.h"
+
 #include <QPainter>
 
 /**
@@ -31,15 +33,15 @@
  * \since QGIS 2.9
  */
 
-class CORE_EXPORT QgsShadowEffect : public QgsPaintEffect
+class CORE_EXPORT QgsShadowEffect : public QgsPaintEffect SIP_NODEFAULTCTORS
 {
 
   public:
 
     QgsShadowEffect();
 
-    QgsStringMap properties() const override;
-    void readProperties( const QgsStringMap &props ) override;
+    QVariantMap properties() const override;
+    void readProperties( const QVariantMap &props ) override;
 
     /**
      * Sets blur level (radius) for the shadow.
@@ -251,7 +253,7 @@ class CORE_EXPORT QgsShadowEffect : public QgsPaintEffect
  *
  * \since QGIS 2.9
  */
-class CORE_EXPORT QgsDropShadowEffect : public QgsShadowEffect
+class CORE_EXPORT QgsDropShadowEffect : public QgsShadowEffect SIP_NODEFAULTCTORS
 {
 
   public:
@@ -261,7 +263,7 @@ class CORE_EXPORT QgsDropShadowEffect : public QgsShadowEffect
      * \param map encoded properties string map
      * \returns new QgsDropShadowEffect
      */
-    static QgsPaintEffect *create( const QgsStringMap &map ) SIP_FACTORY;
+    static QgsPaintEffect *create( const QVariantMap &map ) SIP_FACTORY;
 
     QgsDropShadowEffect();
 
@@ -282,7 +284,7 @@ class CORE_EXPORT QgsDropShadowEffect : public QgsShadowEffect
  *
  * \since QGIS 2.9
  */
-class CORE_EXPORT QgsInnerShadowEffect : public QgsShadowEffect
+class CORE_EXPORT QgsInnerShadowEffect : public QgsShadowEffect SIP_NODEFAULTCTORS
 {
 
   public:
@@ -292,7 +294,7 @@ class CORE_EXPORT QgsInnerShadowEffect : public QgsShadowEffect
      * \param map encoded properties string map
      * \returns new QgsInnerShadowEffect
      */
-    static QgsPaintEffect *create( const QgsStringMap &map ) SIP_FACTORY;
+    static QgsPaintEffect *create( const QVariantMap &map ) SIP_FACTORY;
 
     QgsInnerShadowEffect();
 

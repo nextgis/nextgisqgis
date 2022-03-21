@@ -21,6 +21,7 @@
 #include <QFont>
 #include <QIcon>
 #include <QTimer>
+#include <QUuid>
 #include <memory>
 
 #include "qgsgeometry.h"
@@ -37,7 +38,8 @@ class QgsLayerTree;
 
 /**
  * \ingroup core
- * The QgsLayerTreeModel class is model implementation for Qt item views framework.
+ * \brief The QgsLayerTreeModel class is model implementation for Qt item views framework.
+ *
  * The model can be used in any QTreeView, it is however recommended to use it
  * with QgsLayerTreeView which brings additional functionality specific to layer tree handling.
  *
@@ -286,6 +288,14 @@ class CORE_EXPORT QgsLayerTreeModel : public QAbstractItemModel
      */
     static int scaleIconSize( int standardSize );
 
+  signals:
+
+    /**
+     * Emits a message than can be displayed to the user in a GUI class
+     * \since QGIS 3.14
+     */
+    void messageEmitted( const QString &message, Qgis::MessageLevel level = Qgis::MessageLevel::Info, int duration = 5 );
+
   protected slots:
     void nodeWillAddChildren( QgsLayerTreeNode *node, int indexFrom, int indexTo );
     void nodeAddedChildren( QgsLayerTreeNode *node, int indexFrom, int indexTo );
@@ -305,6 +315,12 @@ class CORE_EXPORT QgsLayerTreeModel : public QAbstractItemModel
     void nodeLayerLoaded();
     void nodeLayerWillBeUnloaded();
     void layerLegendChanged();
+
+    /**
+     * Emitted when layer flags have changed.
+     * \since QGIS 3.18
+     */
+    void layerFlagsChanged();
 
     void layerNeedsUpdate();
 
@@ -332,7 +348,7 @@ class CORE_EXPORT QgsLayerTreeModel : public QAbstractItemModel
      * Emits dataChanged() for all scale dependent layers.
      * \since QGIS 2.16
      */
-    void refreshScaleBasedLayers( const QModelIndex &index = QModelIndex() );
+    void refreshScaleBasedLayers( const QModelIndex &index = QModelIndex(), double previousScale = 0.0 );
 
     static QIcon iconGroup();
 
@@ -366,8 +382,10 @@ class CORE_EXPORT QgsLayerTreeModel : public QAbstractItemModel
     /**
      * Structure that stores tree representation of map layer's legend.
      * This structure is used only when the following requirements are met:
-     * 1. tree legend representation is enabled in model (ShowLegendAsTree flag)
-     * 2. some legend nodes have non-null parent rule key (accessible via data(ParentRuleKeyRole) method)
+     *
+     * # tree legend representation is enabled in model (ShowLegendAsTree flag)
+     * # some legend nodes have non-null parent rule key (accessible via data(ParentRuleKeyRole) method)
+     *
      * The tree structure (parents and children of each node) is extracted by analyzing nodes' parent rules.
      * \note not available in Python bindings
      */
@@ -425,6 +443,12 @@ class CORE_EXPORT QgsLayerTreeModel : public QAbstractItemModel
     //! Per layer data about layer's legend nodes
     QHash<QgsLayerTreeLayer *, LayerLegendData> mLegend;
 
+    /**
+     * Keep track of layer nodes for which the legend
+     * size needs to be recalculated
+     */
+    QSet<QgsLayerTreeLayer *> mInvalidatedNodes;
+
     QFont mFontLayer;
     QFont mFontGroup;
 
@@ -442,10 +466,14 @@ class CORE_EXPORT QgsLayerTreeModel : public QAbstractItemModel
     double mLegendMapViewScale;
     QTimer mDeferLegendInvalidationTimer;
 
+  private slots:
+    void legendNodeSizeChanged();
+
   private:
 
     //! Returns a temporary render context
     QgsRenderContext *createTemporaryRenderContext() const;
+
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS( QgsLayerTreeModel::Flags )
@@ -475,6 +503,8 @@ class EmbeddedWidgetLegendNode : public QgsLayerTreeModelLegendNode
     {
       if ( role == RuleKeyRole )
         return mRuleKey;
+      else if ( role == QgsLayerTreeModelLegendNode::NodeTypeRole )
+        return QgsLayerTreeModelLegendNode::EmbeddedWidget;
       return QVariant();
     }
 

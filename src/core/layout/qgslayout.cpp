@@ -31,6 +31,7 @@
 #include "qgsvectorlayer.h"
 #include "qgsexpressioncontextutils.h"
 #include "qgsstyleentityvisitor.h"
+#include "qgsruntimeprofiler.h"
 
 QgsLayout::QgsLayout( QgsProject *project )
   : mProject( project )
@@ -64,7 +65,7 @@ QgsLayout::~QgsLayout()
   while ( deleted )
   {
     deleted = false;
-    for ( QGraphicsItem *item : qgis::as_const( itemList ) )
+    for ( QGraphicsItem *item : std::as_const( itemList ) )
     {
       if ( dynamic_cast< QgsLayoutItem * >( item ) && !dynamic_cast< QgsLayoutItemPage *>( item ) )
       {
@@ -87,7 +88,7 @@ QgsLayout *QgsLayout::clone() const
   QDomElement elem = writeXml( currentDoc, context );
   currentDoc.appendChild( elem );
 
-  std::unique_ptr< QgsLayout > newLayout = qgis::make_unique< QgsLayout >( mProject );
+  std::unique_ptr< QgsLayout > newLayout = std::make_unique< QgsLayout >( mProject );
   bool ok = false;
   newLayout->loadFromTemplate( currentDoc, context, true, &ok );
   if ( !ok )
@@ -238,7 +239,7 @@ QgsLayoutItem *QgsLayout::itemByUuid( const QString &uuid, bool includeTemplateU
 {
   QList<QgsLayoutItem *> itemList;
   layoutItems( itemList );
-  for ( QgsLayoutItem *item : qgis::as_const( itemList ) )
+  for ( QgsLayoutItem *item : std::as_const( itemList ) )
   {
     if ( item->uuid() == uuid )
       return item;
@@ -253,7 +254,7 @@ QgsLayoutItem *QgsLayout::itemByTemplateUuid( const QString &uuid ) const
 {
   QList<QgsLayoutItem *> itemList;
   layoutItems( itemList );
-  for ( QgsLayoutItem *item : qgis::as_const( itemList ) )
+  for ( QgsLayoutItem *item : std::as_const( itemList ) )
   {
     if ( item->mTemplateUuid == uuid )
       return item;
@@ -437,7 +438,7 @@ QgsLayoutItemMap *QgsLayout::referenceMap() const
   layoutItems( maps );
   QgsLayoutItemMap *largestMap = nullptr;
   double largestMapArea = 0;
-  for ( QgsLayoutItemMap *map : qgis::as_const( maps ) )
+  for ( QgsLayoutItemMap *map : std::as_const( maps ) )
   {
     double area = map->rect().width() * map->rect().height();
     if ( area > largestMapArea )
@@ -871,6 +872,7 @@ void QgsLayout::addLayoutItemPrivate( QgsLayoutItem *item )
   updateBounds();
   mItemsModel->rebuildZList();
   connect( item, &QgsLayoutItem::backgroundTaskCountChanged, this, &QgsLayout::itemBackgroundTaskCountChanged );
+  emit itemAdded( item );
 }
 
 void QgsLayout::removeLayoutItemPrivate( QgsLayoutItem *item )
@@ -947,7 +949,7 @@ void QgsLayout::updateZValues( const bool addUndoCommands )
 
 bool QgsLayout::readXml( const QDomElement &layoutElement, const QDomDocument &document, const QgsReadWriteContext &context )
 {
-  if ( layoutElement.nodeName() != QStringLiteral( "Layout" ) )
+  if ( layoutElement.nodeName() != QLatin1String( "Layout" ) )
   {
     return false;
   }
@@ -957,13 +959,26 @@ bool QgsLayout::readXml( const QDomElement &layoutElement, const QDomDocument &d
     return object->readXml( layoutElement, document, context );
   };
 
+  std::unique_ptr< QgsScopedRuntimeProfile > profile;
+  if ( QgsApplication::profiler()->groupIsActive( QStringLiteral( "projectload" ) ) )
+    profile = std::make_unique< QgsScopedRuntimeProfile >( tr( "Read layout settings" ), QStringLiteral( "projectload" ) );
+
   blockSignals( true ); // defer changed signal to end
   readXmlLayoutSettings( layoutElement, document, context );
   blockSignals( false );
 
+  if ( profile )
+    profile->switchTask( tr( "Load pages" ) );
   restore( mPageCollection.get() );
+  if ( profile )
+    profile->switchTask( tr( "Load snapping settings" ) );
   restore( &mSnapper );
+  if ( profile )
+    profile->switchTask( tr( "Load grid settings" ) );
   restore( &mGridSettings );
+
+  if ( profile )
+    profile->switchTask( tr( "Restore items" ) );
   addItemsFromXml( layoutElement, document, context );
 
   emit changed();
@@ -997,6 +1012,11 @@ QList< QgsLayoutItem * > QgsLayout::addItemsFromXml( const QDomElement &parentEl
       pageNumber = mPageCollection->pageNumberForPoint( *position );
     }
   }
+
+  std::unique_ptr< QgsScopedRuntimeProfile > profile;
+  if ( QgsApplication::profiler()->groupIsActive( QStringLiteral( "projectload" ) ) )
+    profile = std::make_unique< QgsScopedRuntimeProfile >( tr( "Read items" ), QStringLiteral( "projectload" ) );
+
   // multiframes
 
   //TODO - fix this. pasting multiframe frame items has no effect
@@ -1005,6 +1025,15 @@ QList< QgsLayoutItem * > QgsLayout::addItemsFromXml( const QDomElement &parentEl
   {
     const QDomElement multiFrameElem = multiFrameList.at( i ).toElement();
     const int itemType = multiFrameElem.attribute( QStringLiteral( "type" ) ).toInt();
+
+    if ( profile )
+    {
+      if ( QgsLayoutMultiFrameAbstractMetadata *metadata = QgsApplication::layoutItemRegistry()->multiFrameMetadata( itemType ) )
+      {
+        profile->switchTask( tr( "Load %1" ).arg( metadata->visibleName() ) );
+      }
+    }
+
     std::unique_ptr< QgsLayoutMultiFrame > mf( QgsApplication::layoutItemRegistry()->createMultiFrame( itemType, this ) );
     if ( !mf )
     {
@@ -1036,10 +1065,19 @@ QList< QgsLayoutItem * > QgsLayout::addItemsFromXml( const QDomElement &parentEl
   for ( int i = 0; i < layoutItemList.size(); ++i )
   {
     const QDomElement currentItemElem = layoutItemList.at( i ).toElement();
-    if ( currentItemElem.nodeName() != QStringLiteral( "LayoutItem" ) )
+    if ( currentItemElem.nodeName() != QLatin1String( "LayoutItem" ) )
       continue;
 
     const int itemType = currentItemElem.attribute( QStringLiteral( "type" ) ).toInt();
+
+    if ( profile )
+    {
+      if ( QgsLayoutItemAbstractMetadata *metadata = QgsApplication::layoutItemRegistry()->itemMetadata( itemType ) )
+      {
+        profile->switchTask( tr( "Load %1" ).arg( metadata->visibleName() ) );
+      }
+    }
+
     std::unique_ptr< QgsLayoutItem > item( QgsApplication::layoutItemRegistry()->createItem( itemType, this ) );
     if ( !item )
     {
@@ -1071,20 +1109,33 @@ QList< QgsLayoutItem * > QgsLayout::addItemsFromXml( const QDomElement &parentEl
   // to other items in the layout, which may not have existed at the time the
   // item's state was restored. E.g. a scalebar may have been restored before the map
   // it is linked to
-  for ( QgsLayoutItem *item : qgis::as_const( newItems ) )
+  std::unique_ptr< QgsScopedRuntimeProfile > itemProfile;
+  if ( profile )
   {
-    item->finalizeRestoreFromXml();
+    profile->switchTask( tr( "Finalize restore" ) );
   }
-  for ( QgsLayoutMultiFrame *mf : qgis::as_const( newMultiFrames ) )
+  for ( QgsLayoutItem *item : std::as_const( newItems ) )
   {
+    if ( profile )
+      itemProfile = std::make_unique< QgsScopedRuntimeProfile >( item->displayName(), QStringLiteral( "projectload" ) );
+    item->finalizeRestoreFromXml();
+    if ( itemProfile )
+      itemProfile.reset();
+  }
+  for ( QgsLayoutMultiFrame *mf : std::as_const( newMultiFrames ) )
+  {
+    if ( profile )
+      itemProfile = std::make_unique< QgsScopedRuntimeProfile >( mf->displayName(), QStringLiteral( "projectload" ) );
     mf->finalizeRestoreFromXml();
+    if ( itemProfile )
+      itemProfile.reset();
   }
 
-  for ( QgsLayoutItem *item : qgis::as_const( newItems ) )
+  for ( QgsLayoutItem *item : std::as_const( newItems ) )
   {
     item->mTemplateUuid.clear();
   }
-  for ( QgsLayoutMultiFrame *mf : qgis::as_const( newMultiFrames ) )
+  for ( QgsLayoutMultiFrame *mf : std::as_const( newMultiFrames ) )
   {
     mf->mTemplateUuid.clear();
   }
@@ -1092,6 +1143,9 @@ QList< QgsLayoutItem * > QgsLayout::addItemsFromXml( const QDomElement &parentEl
   //Since this function adds items in an order which isn't the z-order, and each item is added to end of
   //z order list in turn, it will now be inconsistent with the actual order of items in the scene.
   //Make sure z order list matches the actual order of items in the scene.
+
+  if ( profile )
+    profile->switchTask( tr( "Update model" ) );
   mItemsModel->rebuildZList();
 
   return newItems;

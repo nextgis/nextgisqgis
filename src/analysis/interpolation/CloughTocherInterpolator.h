@@ -27,7 +27,9 @@ class NormVecDecorator;
 
 /**
  * \ingroup analysis
- * This is an implementation of a Clough-Tocher interpolator based on a triangular tessellation. The derivatives orthogonal to the boundary curves are interpolated linearly along a triangle edge.
+ * \brief This is an implementation of a Clough-Tocher interpolator based on a triangular tessellation.
+ *
+ * The derivatives orthogonal to the boundary curves are interpolated linearly along a triangle edge.
  * \note Not available in Python bindings
 */
 class ANALYSIS_EXPORT CloughTocherInterpolator : public TriangleInterpolator
@@ -106,7 +108,7 @@ class ANALYSIS_EXPORT CloughTocherInterpolator : public TriangleInterpolator
     CloughTocherInterpolator( NormVecDecorator *tin );
 
     //! Calculates the normal vector and assigns it to vec (not implemented at the moment)
-    bool calcNormVec( double x, double y, Vector3D *result SIP_OUT ) override;
+    bool calcNormVec( double x, double y, QgsPoint &result SIP_OUT ) override;
     bool calcPoint( double x, double y, QgsPoint &result SIP_OUT ) override;
     virtual void setTriangulation( NormVecDecorator *tin );
 };

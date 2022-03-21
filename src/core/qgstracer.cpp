@@ -24,8 +24,9 @@
 #include "qgsvectorlayer.h"
 #include "qgsexception.h"
 #include "qgsrenderer.h"
-#include "qgssettings.h"
+#include "qgssettingsregistrycore.h"
 #include "qgsexpressioncontextutils.h"
+#include "qgsrendercontext.h"
 
 #include <queue>
 #include <vector>
@@ -253,9 +254,6 @@ QVector<QgsPointXY> shortestPath( const QgsTracerGraph &g, int v1, int v2 )
   }
 
   std::reverse( path.begin(), path.end() );
-  //Q_FOREACH (int x, path)
-  //  qDebug("e: %d", x);
-
   std::reverse( points.begin(), points.end() );
   return points;
 }
@@ -278,18 +276,17 @@ int point2vertex( const QgsTracerGraph &g, const QgsPointXY &pt, double epsilon 
 
 int point2edge( const QgsTracerGraph &g, const QgsPointXY &pt, int &lineVertexAfter, double epsilon = 1e-6 )
 {
-  int vertexAfter;
-
   for ( int i = 0; i < g.e.count(); ++i )
   {
     if ( g.inactiveEdges.contains( i ) )
       continue;  // ignore temporarily disabled edges
 
     const QgsTracerGraph::E &e = g.e.at( i );
+    int vertexAfter = -1;
     double dist = closestSegment( e.coords, pt, vertexAfter, epsilon );
     if ( dist == 0 )
     {
-      lineVertexAfter = vertexAfter; //NOLINT
+      lineVertexAfter = vertexAfter;
       return i;
     }
   }
@@ -387,7 +384,7 @@ void resetGraph( QgsTracerGraph &g )
   g.joinedVertices = 0;
 
   // fix vertices of deactivated edges
-  for ( int eIdx : qgis::as_const( g.inactiveEdges ) )
+  for ( int eIdx : std::as_const( g.inactiveEdges ) )
   {
     if ( eIdx >= g.e.count() )
       continue;
@@ -488,14 +485,14 @@ bool QgsTracer::initGraph()
 
   t1.start();
   int featuresCounted = 0;
-  bool enableInvisibleFeature = QgsSettings().value( QStringLiteral( "/qgis/digitizing/snap_invisible_feature" ), false ).toBool();
-  for ( const QgsVectorLayer *vl : qgis::as_const( mLayers ) )
+  for ( const QgsVectorLayer *vl : std::as_const( mLayers ) )
   {
     QgsFeatureRequest request;
     bool filter = false;
     std::unique_ptr< QgsFeatureRenderer > renderer;
     std::unique_ptr<QgsRenderContext> ctx;
 
+    bool enableInvisibleFeature = QgsSettingsRegistryCore::settingsDigitizingSnapInvisibleFeature.value();
     if ( !enableInvisibleFeature && mRenderContext && vl->renderer() )
     {
       renderer.reset( vl->renderer()->clone() );
@@ -591,8 +588,8 @@ bool QgsTracer::initGraph()
   Q_UNUSED( timeNoding )
   Q_UNUSED( timeNodingCall )
   Q_UNUSED( timeMake )
-  QgsDebugMsg( QStringLiteral( "tracer extract %1 ms, noding %2 ms (call %3 ms), make %4 ms" )
-               .arg( timeExtract ).arg( timeNoding ).arg( timeNodingCall ).arg( timeMake ) );
+  QgsDebugMsgLevel( QStringLiteral( "tracer extract %1 ms, noding %2 ms (call %3 ms), make %4 ms" )
+                    .arg( timeExtract ).arg( timeNoding ).arg( timeNodingCall ).arg( timeMake ), 2 );
 
   return true;
 }
@@ -607,7 +604,7 @@ void QgsTracer::setLayers( const QList<QgsVectorLayer *> &layers )
   if ( mLayers == layers )
     return;
 
-  for ( QgsVectorLayer *layer : qgis::as_const( mLayers ) )
+  for ( QgsVectorLayer *layer : std::as_const( mLayers ) )
   {
     disconnect( layer, &QgsVectorLayer::featureAdded, this, &QgsTracer::onFeatureAdded );
     disconnect( layer, &QgsVectorLayer::featureDeleted, this, &QgsTracer::onFeatureDeleted );
@@ -664,14 +661,14 @@ void QgsTracer::setOffset( double offset )
 void QgsTracer::offsetParameters( int &quadSegments, int &joinStyle, double &miterLimit )
 {
   quadSegments = mOffsetSegments;
-  joinStyle = mOffsetJoinStyle;
+  joinStyle = static_cast< int >( mOffsetJoinStyle );
   miterLimit = mOffsetMiterLimit;
 }
 
 void QgsTracer::setOffsetParameters( int quadSegments, int joinStyle, double miterLimit )
 {
   mOffsetSegments = quadSegments;
-  mOffsetJoinStyle = joinStyle;
+  mOffsetJoinStyle = static_cast< Qgis::JoinStyle >( joinStyle );
   mOffsetMiterLimit = miterLimit;
 }
 
@@ -769,7 +766,7 @@ QVector<QgsPointXY> QgsTracer::findShortestPath( const QgsPointXY &p1, const Qgs
 
   Q_UNUSED( tPrep )
   Q_UNUSED( tPath )
-  QgsDebugMsg( QStringLiteral( "path timing: prep %1 ms, path %2 ms" ).arg( tPrep ).arg( tPath ) );
+  QgsDebugMsgLevel( QStringLiteral( "path timing: prep %1 ms, path %2 ms" ).arg( tPrep ).arg( tPath ), 2 );
 
   resetGraph( *mGraph );
 

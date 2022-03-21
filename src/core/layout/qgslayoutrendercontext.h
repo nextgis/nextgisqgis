@@ -18,10 +18,14 @@
 
 #include "qgis_core.h"
 #include "qgslayoutmeasurementconverter.h"
-#include "qgsrendercontext.h"
+#include "qgsvectorsimplifymethod.h"
+#include "qgis.h"
 #include <QtGlobal>
+#include <QColor>
+#include <QVector>
 
 class QgsLayout;
+class QgsFeatureFilterProvider;
 
 /**
  * \ingroup core
@@ -48,6 +52,7 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
       FlagDrawSelection = 1 << 7, //!< Draw selection
       FlagDisableTiledRasterLayerRenders = 1 << 8, //!< If set, then raster layers will not be drawn as separate tiles. This may improve the appearance in exported files, at the cost of much higher memory usage during exports.
       FlagRenderLabelsByMapLayer = 1 << 9, //!< When rendering map items to multi-layered exports, render labels belonging to different layers into separate export layers
+      FlagLosslessImageRendering = 1 << 10, //!< Render images losslessly whenever possible, instead of the default lossy jpeg rendering used for some destination devices (e.g. PDF). This flag only works with builds based on Qt 5.13 or later.
     };
     Q_DECLARE_FLAGS( Flags, Flag )
 
@@ -92,7 +97,7 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
     /**
      * Returns the combination of render context flags matched to the layout context's settings.
      */
-    QgsRenderContext::Flags renderContextFlags() const;
+    Qgis::RenderContextFlags renderContextFlags() const;
 
     /**
      * Sets the \a dpi for outputting the layout. This also sets the
@@ -210,7 +215,7 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
      * \see setTextRenderFormat()
      * \since QGIS 3.4.3
      */
-    QgsRenderContext::TextRenderFormat textRenderFormat() const
+    Qgis::TextRenderFormat textRenderFormat() const
     {
       return mTextRenderFormat;
     }
@@ -221,7 +226,7 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
      * \see textRenderFormat()
      * \since QGIS 3.4.3
      */
-    void setTextRenderFormat( QgsRenderContext::TextRenderFormat format )
+    void setTextRenderFormat( Qgis::TextRenderFormat format )
     {
       mTextRenderFormat = format;
     }
@@ -296,6 +301,26 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
      */
     QVector<qreal> predefinedScales() const { return mPredefinedScales; }
 
+    /**
+     * Returns the possibly NULL feature filter provider.
+     *
+     * A feature filter provider for filtering visible features or attributes.
+     * It is currently used by QGIS Server Access Control Plugins.
+     *
+     * \since QGIS 3.18
+     */
+    QgsFeatureFilterProvider *featureFilterProvider() const;
+
+    /**
+     * Sets feature filter provider to \a featureFilterProvider.
+     *
+     * A feature filter provider for filtering visible features or attributes.
+     * It is currently used by QGIS Server Access Control Plugins.
+     *
+     * \since QGIS 3.18
+     */
+    void setFeatureFilterProvider( QgsFeatureFilterProvider *featureFilterProvider );
+
   signals:
 
     /**
@@ -318,7 +343,7 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
 
   private:
 
-    Flags mFlags = nullptr;
+    Flags mFlags = Flags();
 
     QgsLayout *mLayout = nullptr;
 
@@ -333,13 +358,15 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
     bool mBoundingBoxesVisible = true;
     bool mPagesVisible = true;
 
-    QgsRenderContext::TextRenderFormat mTextRenderFormat = QgsRenderContext::TextFormatAlwaysOutlines;
+    Qgis::TextRenderFormat mTextRenderFormat = Qgis::TextRenderFormat::AlwaysOutlines;
 
     QStringList mExportThemes;
 
     QgsVectorSimplifyMethod mSimplifyMethod;
 
     QVector<qreal> mPredefinedScales;
+
+    QgsFeatureFilterProvider *mFeatureFilterProvider = nullptr;
 
     friend class QgsLayoutExporter;
     friend class TestQgsLayout;

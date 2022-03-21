@@ -24,6 +24,7 @@
 
 /**
  * \ingroup analysis
+ * \brief A duplicate geometry check error.
  */
 class ANALYSIS_EXPORT QgsGeometryDuplicateCheckError : public QgsGeometryCheckError
 {
@@ -55,9 +56,11 @@ class ANALYSIS_EXPORT QgsGeometryDuplicateCheckError : public QgsGeometryCheckEr
 
 /**
  * \ingroup analysis
+ * \brief A duplicate geometry check.
  */
 class ANALYSIS_EXPORT QgsGeometryDuplicateCheck : public QgsGeometryCheck
 {
+    Q_DECLARE_TR_FUNCTIONS( QgsGeometryDuplicateCheck )
   public:
     explicit QgsGeometryDuplicateCheck( QgsGeometryCheckContext *context, const QVariantMap &configuration )
       : QgsGeometryCheck( context, configuration ) {}

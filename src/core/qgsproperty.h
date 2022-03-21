@@ -19,7 +19,6 @@
 #include "qgis_sip.h"
 #include "qgsexpression.h"
 #include "qgsexpressioncontext.h"
-#include "qgscolorramp.h"
 
 #include <QVariant>
 #include <QHash>
@@ -28,6 +27,7 @@
 #include <QDomElement>
 #include <QDomDocument>
 #include <QColor>
+#include <QDateTime>
 
 class QgsPropertyTransformer;
 class QgsPropertyPrivate;
@@ -76,6 +76,7 @@ class CORE_EXPORT QgsPropertyDefinition
       VerticalAnchor, //!< Vertical anchor point
       SvgPath, //!< Path to an SVG file
       Offset, //!< 2D offset
+      DateTime, //!< DateTime value
       Custom = 3000, //!< Custom property types
     };
 
@@ -240,11 +241,26 @@ class CORE_EXPORT QgsProperty
     };
 
     /**
-     * Constructor for a QgsAbstractProperty. The property will be set to an InvalidProperty type.
+     * Convert a map of QgsProperty to a map of QVariant
+     * This is useful to save a map of properties
+     * \since QGIS 3.20
+     */
+    static QVariantMap propertyMapToVariantMap( const QMap<QString, QgsProperty> &propertyMap );
+
+    /**
+     * Convert a map of QVariant to a map of QgsProperty
+     * This is useful to restore a map of properties.
+     * The properties are created using QgsProperty::loadVariant
+     * \since QGIS 3.20
+     */
+    static QMap<QString, QgsProperty> variantMapToPropertyMap( const QVariantMap &variantMap );
+
+    /**
+     * Constructor for a QgsProperty. The property will be set to an InvalidProperty type.
      */
     QgsProperty();
 
-    virtual ~QgsProperty();
+    ~QgsProperty();
 
     /**
      * Returns a new ExpressionBasedProperty created from the specified expression.
@@ -284,6 +300,22 @@ class CORE_EXPORT QgsProperty
      * \see setActive()
      */
     bool isActive() const;
+
+    /**
+     * Returns TRUE if the property is effectively a static value
+     * in the specified \a context.
+     *
+     * I.e. if the property type is QgsProperty::ExpressionBasedProperty with
+     * a fixed value expression ('some static value'), this method will return
+     * TRUE.
+     *
+     * \param context expression context
+     * \param staticValue will be set to evaluated static value if property is effectively a static value
+     * \returns TRUE if property is a static value
+     *
+     * \since QGIS 3.24
+     */
+    bool isStaticValueInContext( const QgsExpressionContext &context, QVariant &staticValue SIP_OUT ) const;
 
     /**
      * Sets whether the property is currently active.
@@ -349,8 +381,11 @@ class CORE_EXPORT QgsProperty
     /**
      * Returns the set of any fields referenced by the property for a specified
      * expression context.
+     * \note The optional argument ignoreContext has been added in QGIS 3.14. When set to TRUE,
+     * even fields not set in context's fields() will be reported - this is useful e.g. with vector tiles
+     * where the actual available field names may not be known beforehand.
      */
-    QSet< QString > referencedFields( const QgsExpressionContext &context = QgsExpressionContext() ) const;
+    QSet< QString > referencedFields( const QgsExpressionContext &context = QgsExpressionContext(), bool ignoreContext = false ) const;
 
     /**
      * Returns TRUE if the property is set to a linked project color.
@@ -376,12 +411,29 @@ class CORE_EXPORT QgsProperty
     QVariant value( const QgsExpressionContext &context, const QVariant &defaultValue = QVariant(), bool *ok SIP_OUT = nullptr ) const;
 
     /**
+     * Calculates the current value of the property and interprets it as a datetime.
+     * \param context QgsExpressionContext to evaluate the property for.
+     * \param defaultDateTime default datetime to return if the property cannot be calculated as a datetime
+     * \param ok if specified, will be set to TRUE if conversion was successful
+     * \returns value parsed to datetime
+     * \see value()
+     * \see valueAsString()
+     * \see valueAsColor()
+     * \see valueAsDouble()
+     * \see valueAsInt()
+     * \see valueAsBool()
+     * \since QGIS 3.14
+     */
+    QDateTime valueAsDateTime( const QgsExpressionContext &context, const QDateTime &defaultDateTime = QDateTime(), bool *ok SIP_OUT = nullptr ) const;
+
+    /**
      * Calculates the current value of the property and interprets it as a string.
      * \param context QgsExpressionContext to evaluate the property for.
      * \param defaultString default string to return if the property cannot be calculated as a string
      * \param ok if specified, will be set to TRUE if conversion was successful
      * \returns value parsed to string
      * \see value()
+     * \see valueAsDateTime()
      * \see valueAsColor()
      * \see valueAsDouble()
      * \see valueAsInt()
@@ -396,6 +448,7 @@ class CORE_EXPORT QgsProperty
      * \param ok if specified, will be set to TRUE if conversion was successful
      * \returns value parsed to color
      * \see value()
+     * \see valueAsDateTime()
      * \see valueAsString()
      * \see valueAsDouble()
      * \see valueAsInt()
@@ -410,6 +463,7 @@ class CORE_EXPORT QgsProperty
      * \param ok if specified, will be set to TRUE if conversion was successful
      * \returns value parsed to double
      * \see value()
+     * \see valueAsDateTime()
      * \see valueAsString()
      * \see valueAsColor()
      * \see valueAsInt()
@@ -424,6 +478,7 @@ class CORE_EXPORT QgsProperty
      * \param ok if specified, will be set to TRUE if conversion was successful
      * \returns value parsed to integer
      * \see value()
+     * \see valueAsDateTime()
      * \see valueAsString()
      * \see valueAsColor()
      * \see valueAsDouble()
@@ -438,6 +493,7 @@ class CORE_EXPORT QgsProperty
      * \param ok if specified, will be set to TRUE if conversion was successful
      * \returns value parsed to boolean
      * \see value()
+     * \see valueAsDateTime()
      * \see valueAsString()
      * \see valueAsColor()
      * \see valueAsDouble()
@@ -488,6 +544,41 @@ class CORE_EXPORT QgsProperty
     {
       return QVariant::fromValue( *this );
     }
+
+
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    QString typeString;
+    QString definitionString;
+    switch ( sipCpp->propertyType() )
+    {
+      case QgsProperty::StaticProperty:
+        typeString = QStringLiteral( "static" );
+        definitionString = sipCpp->staticValue().toString();
+        break;
+
+      case QgsProperty::FieldBasedProperty:
+        typeString = QStringLiteral( "field" );
+        definitionString = sipCpp->field();
+        break;
+
+      case QgsProperty::ExpressionBasedProperty:
+        typeString = QStringLiteral( "expression" );
+        definitionString = sipCpp->expressionString();
+        break;
+
+      case QgsProperty::InvalidProperty:
+        typeString = QStringLiteral( "invalid" );
+        break;
+    }
+
+    QString str = QStringLiteral( "<QgsProperty: %1%2%3>" ).arg( !sipCpp->isActive() && sipCpp->propertyType() != QgsProperty::InvalidProperty ? QStringLiteral( "INACTIVE " ) : QString(),
+                  typeString,
+                  definitionString.isEmpty() ? QString() : QStringLiteral( " (%1)" ).arg( definitionString ) );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
 
   private:
 

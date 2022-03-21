@@ -1,0 +1,21 @@
+--- a/src/core/qgsjsonutils.h	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/qgsjsonutils.h	2022-03-07 23:14:46.000000000 +0300
+@@ -27,6 +27,9 @@
+ 
+ class QTextCodec;
+ 
++#include "cpl_json.h"
++using json = CPLJSONObject;
++
+ /**
+  * \ingroup core
+  * \class QgsJsonExporter
+@@ -356,7 +359,7 @@
+      * \note Not available in Python bindings
+      * \since QGIS 3.8
+      */
+-    static json jsonFromVariant( const QVariant &v ) SIP_SKIP;
++    // static json jsonFromVariant( const QVariant &v ) SIP_SKIP;
+ 
+     /**
+      * Converts JSON \a jsonString to a QVariant, in case of parsing error an invalid QVariant is returned and an

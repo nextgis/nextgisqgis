@@ -1,0 +1,19 @@
+--- a/src/core/geometry/qgsabstractgeometry.h	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/geometry/qgsabstractgeometry.h	2022-03-07 23:14:46.000000000 +0300
+@@ -26,10 +26,12 @@
+ #include "qgswkbtypes.h"
+ #include "qgswkbptr.h"
+ 
+-#ifndef SIP_RUN
+-#include "json_fwd.hpp"
+-using namespace nlohmann;
+-#endif
++// #ifndef SIP_RUN
++// #include "json_fwd.hpp"
++// using namespace nlohmann;
++// #endif
++#include "cpl_json.h"
++using json = CPLJSONObject;
+ 
+ class QgsMapToPixel;
+ class QgsCurve;

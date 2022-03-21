@@ -38,7 +38,7 @@ class CORE_EXPORT QgsCircularString: public QgsCurve
     /**
      * Constructs an empty circular string.
      */
-    QgsCircularString();
+    QgsCircularString() SIP_HOLDGIL;
 
     /**
      * Constructs a circular string with a single
@@ -48,7 +48,27 @@ class CORE_EXPORT QgsCircularString: public QgsCurve
      */
     QgsCircularString( const QgsPoint &p1,
                        const QgsPoint &p2,
-                       const QgsPoint &p3 );
+                       const QgsPoint &p3 ) SIP_HOLDGIL;
+
+    /**
+     * Construct a circular string from arrays of coordinates. If the z or m
+     * arrays are non-empty then the resultant circular string will have
+     * z and m types accordingly.
+     *
+     * This constructor is more efficient then calling setPoints().
+     *
+     * If the sizes of \a x and \a y are non-equal then the resultant circular string
+     * will be created using the minimum size of these arrays.
+     *
+     * \warning It is the caller's responsibility to ensure that the supplied arrays
+     * are of odd sizes.
+     *
+     * \since QGIS 3.20
+     */
+    QgsCircularString( const QVector<double> &x, const QVector<double> &y,
+                       const QVector<double> &z = QVector<double>(),
+                       const QVector<double> &m = QVector<double>() ) SIP_HOLDGIL;
+
 
     /**
      * Creates a circular string with a single arc representing
@@ -67,26 +87,29 @@ class CORE_EXPORT QgsCircularString: public QgsCurve
 
     bool equals( const QgsCurve &other ) const override;
 
-    QString geometryType() const override;
-    int dimension() const override;
+    QString geometryType() const override SIP_HOLDGIL;
+    int dimension() const override SIP_HOLDGIL;
     QgsCircularString *clone() const override SIP_FACTORY;
     void clear() override;
 
     bool fromWkb( QgsConstWkbPtr &wkb ) override;
     bool fromWkt( const QString &wkt ) override;
 
-    QByteArray asWkb() const override;
+    int wkbSize( QgsAbstractGeometry::WkbFlags flags = QgsAbstractGeometry::WkbFlags() ) const override;
+    QByteArray asWkb( QgsAbstractGeometry::WkbFlags flags = QgsAbstractGeometry::WkbFlags() ) const override;
     QString asWkt( int precision = 17 ) const override;
     QDomElement asGml2( QDomDocument &doc, int precision = 17, const QString &ns = "gml", QgsAbstractGeometry::AxisOrder axisOrder = QgsAbstractGeometry::AxisOrder::XY ) const override;
     QDomElement asGml3( QDomDocument &doc, int precision = 17, const QString &ns = "gml", QgsAbstractGeometry::AxisOrder axisOrder = QgsAbstractGeometry::AxisOrder::XY ) const override;
     json asJsonObject( int precision = 17 ) const override SIP_SKIP;
-    bool isEmpty() const override;
-    int numPoints() const override;
+    bool isEmpty() const override SIP_HOLDGIL;
+    bool isValid( QString &error SIP_OUT, Qgis::GeometryValidityFlags flags = Qgis::GeometryValidityFlags() ) const override;
+    int numPoints() const override SIP_HOLDGIL;
+    int indexOf( const QgsPoint &point ) const final;
 
     /**
      * Returns the point at index i within the circular string.
      */
-    QgsPoint pointN( int i ) const;
+    QgsPoint pointN( int i ) const SIP_HOLDGIL;
 
     void points( QgsPointSequence &pts SIP_OUT ) const override;
 
@@ -95,15 +118,27 @@ class CORE_EXPORT QgsCircularString: public QgsCurve
      */
     void setPoints( const QgsPointSequence &points );
 
+    /**
+     * Appends the contents of another circular \a string to the end of this circular string.
+     *
+     * \param string circular string to append. Ownership is not transferred.
+     *
+     * \warning It is the caller's responsibility to ensure that the first point in the appended
+     * \a string matches the last point in the existing curve, or the result will be undefined.
+     *
+     * \since QGIS 3.20
+     */
+    void append( const QgsCircularString *string );
+
     double length() const override;
-    QgsPoint startPoint() const override;
-    QgsPoint endPoint() const override;
+    QgsPoint startPoint() const override SIP_HOLDGIL;
+    QgsPoint endPoint() const override SIP_HOLDGIL;
     QgsLineString *curveToLine( double tolerance = M_PI_2 / 90, SegmentationToleranceType toleranceType = MaximumAngle ) const override SIP_FACTORY;
     QgsCircularString *snappedToGrid( double hSpacing, double vSpacing, double dSpacing = 0, double mSpacing = 0 ) const override SIP_FACTORY;
     bool removeDuplicateNodes( double epsilon = 4 * std::numeric_limits<double>::epsilon(), bool useZValues = false ) override;
 
     void draw( QPainter &p ) const override;
-    void transform( const QgsCoordinateTransform &ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform, bool transformZ = false ) override SIP_THROW( QgsCsException );
+    void transform( const QgsCoordinateTransform &ct, Qgis::TransformDirection d = Qgis::TransformDirection::Forward, bool transformZ = false ) override SIP_THROW( QgsCsException );
     void transform( const QTransform &t, double zTranslate = 0.0, double zScale = 1.0, double mTranslate = 0.0, double mScale = 1.0 ) override;
     void addToPainterPath( QPainterPath &path ) const override;
     void drawAsPolygon( QPainter &p ) const override;
@@ -111,7 +146,7 @@ class CORE_EXPORT QgsCircularString: public QgsCurve
     bool moveVertex( QgsVertexId position, const QgsPoint &newPos ) override;
     bool deleteVertex( QgsVertexId position ) override;
     double closestSegment( const QgsPoint &pt, QgsPoint &segmentPt SIP_OUT, QgsVertexId &vertexAfter SIP_OUT, int *leftOf SIP_OUT = nullptr, double epsilon = 4 * std::numeric_limits<double>::epsilon() ) const override;
-    bool pointAt( int node, QgsPoint &point, QgsVertexId::VertexType &type ) const override;
+    bool pointAt( int node, QgsPoint &point, Qgis::VertexType &type ) const override;
     void sumUpArea( double &sum SIP_OUT ) const override;
     bool hasCurvedSegments() const override;
     double vertexAngle( QgsVertexId vertex ) const override;
@@ -124,12 +159,16 @@ class CORE_EXPORT QgsCircularString: public QgsCurve
     bool dropZValue() override;
     bool dropMValue() override;
     void swapXy() override;
-    double xAt( int index ) const override;
-    double yAt( int index ) const override;
+    double xAt( int index ) const override SIP_HOLDGIL;
+    double yAt( int index ) const override SIP_HOLDGIL;
+
+    bool transform( QgsAbstractGeometryTransformer *transformer, QgsFeedback *feedback = nullptr ) override;
+    void scroll( int firstVertexIndex ) final;
 
 #ifndef SIP_RUN
     void filterVertices( const std::function< bool( const QgsPoint & ) > &filter ) override;
     void transformVertices( const std::function< QgsPoint( const QgsPoint & ) > &transform ) override;
+    std::tuple< std::unique_ptr< QgsCurve >, std::unique_ptr< QgsCurve > > splitCurveAtVertex( int index ) const final;
 
     /**
      * Cast the \a geom to a QgsCircularString.
@@ -138,7 +177,7 @@ class CORE_EXPORT QgsCircularString: public QgsCurve
      * \note Not available in Python. Objects will be automatically be converted to the appropriate target type.
      * \since QGIS 3.0
      */
-    inline const QgsCircularString *cast( const QgsAbstractGeometry *geom ) const
+    inline static const QgsCircularString *cast( const QgsAbstractGeometry *geom )
     {
       if ( geom && QgsWkbTypes::flatType( geom->wkbType() ) == QgsWkbTypes::CircularString )
         return static_cast<const QgsCircularString *>( geom );
@@ -161,6 +200,7 @@ class CORE_EXPORT QgsCircularString: public QgsCurve
 
   protected:
 
+    int compareToSameClass( const QgsAbstractGeometry *other ) const final;
     QgsRectangle calculateBoundingBox() const override;
 
   private:

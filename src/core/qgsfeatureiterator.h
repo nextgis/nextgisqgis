@@ -23,7 +23,7 @@ class QgsFeedback;
 
 /**
  * \ingroup core
- * Internal feature iterator to be implemented within data providers
+ * \brief Internal feature iterator to be implemented within data providers
  */
 class CORE_EXPORT QgsAbstractFeatureIterator
 {
@@ -91,6 +91,17 @@ class CORE_EXPORT QgsAbstractFeatureIterator
      */
     bool compileFailed() const;
 
+    /**
+     * Possible results from the updateRequestToSourceCrs() method.
+     *
+     * \since QGIS 3.22
+     */
+    enum class RequestToSourceCrsResult : int
+    {
+      Success, //!< Request was successfully updated to the source CRS, or no changes were required
+      DistanceWithinMustBeCheckedManually, //!< The distance within request cannot be losslessly updated to the source CRS, and callers will need to take appropriate steps to handle the distance within requirement manually during feature iteration
+    };
+
   protected:
 
     /**
@@ -149,6 +160,20 @@ class CORE_EXPORT QgsAbstractFeatureIterator
      */
     QgsRectangle filterRectToSourceCrs( const QgsCoordinateTransform &transform ) const SIP_THROW( QgsCsException );
 
+    /**
+     * Update a QgsFeatureRequest so that spatial filters are
+     * transformed to the source's coordinate reference system.
+     * Iterators should call this method against the request used for filtering
+     * features to ensure that any QgsFeatureRequest::destinationCrs() set on the request is respected.
+     *
+     * \returns result of operation. See QgsAbstractFeatureIterator::RequestToSourceCrsResult for interpretation.
+     *
+     * \throws QgsCsException if the rect cannot be transformed from the destination CRS.
+     *
+     * \since QGIS 3.22
+     */
+    RequestToSourceCrsResult updateRequestToSourceCrs( QgsFeatureRequest &request, const QgsCoordinateTransform &transform ) const SIP_THROW( QgsCsException );
+
     //! A copy of the feature request.
     QgsFeatureRequest mRequest;
 
@@ -164,9 +189,10 @@ class CORE_EXPORT QgsAbstractFeatureIterator
      */
     bool mZombie = false;
 
+    // TODO QGIS 4: make this private
+
     /**
      * reference counting (to allow seamless copying of QgsFeatureIterator instances)
-     * TODO QGIS3: make this private
      */
     int refs = 0;
     //! Add reference
@@ -176,7 +202,7 @@ class CORE_EXPORT QgsAbstractFeatureIterator
     friend class QgsFeatureIterator;
 
     //! Number of features already fetched by iterator
-    long mFetchedCount = 0;
+    long long mFetchedCount = 0;
 
     //! Status of compilation of filter expression
     CompileStatus mCompileStatus = NoCompilation;
@@ -226,7 +252,7 @@ class CORE_EXPORT QgsAbstractFeatureIterator
 
 /**
  * \ingroup core
- * Helper template that cares of two things: 1. automatic deletion of source if owned by iterator, 2. notification of open/closed iterator.
+ * \brief Helper template that cares of two things: 1. automatic deletion of source if owned by iterator, 2. notification of open/closed iterator.
  * \note not available in Python bindings (although present in SIP file)
 */
 template<typename T>
@@ -258,7 +284,7 @@ class QgsAbstractFeatureIteratorFromSource : public QgsAbstractFeatureIterator
 
 /**
  * \ingroup core
- * Wrapper for iterator of features from vector data provider or vector layer
+ * \brief Wrapper for iterator of features from vector data provider or vector layer
  */
 class CORE_EXPORT QgsFeatureIterator
 {
@@ -272,7 +298,7 @@ class CORE_EXPORT QgsFeatureIterator
 
     SIP_PYOBJECT __next__() SIP_TYPEHINT( QgsFeature );
     % MethodCode
-    std::unique_ptr< QgsFeature > f = qgis::make_unique< QgsFeature >();
+    std::unique_ptr< QgsFeature > f = std::make_unique< QgsFeature >();
     bool result = false;
     Py_BEGIN_ALLOW_THREADS
     result = ( sipCpp->nextFeature( *f ) );

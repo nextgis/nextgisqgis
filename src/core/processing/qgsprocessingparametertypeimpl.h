@@ -26,7 +26,7 @@
 #define SIP_NO_FILE
 
 /**
- * A raster layer parameter for processing algorithms.
+ * \brief A raster layer parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('raster')
@@ -80,7 +80,7 @@ class CORE_EXPORT QgsProcessingParameterTypeRasterLayer : public QgsProcessingPa
 };
 
 /**
- * A mesh layer parameter for processing algorithms.
+ * \brief A mesh layer parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('mesh')
@@ -187,7 +187,7 @@ class CORE_EXPORT QgsProcessingParameterTypeVectorLayer : public QgsProcessingPa
 };
 
 /**
- * A generic map layer parameter for processing algorithms.
+ * \brief A generic map layer parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('maplayer')
@@ -243,7 +243,7 @@ class CORE_EXPORT QgsProcessingParameterTypeMapLayer : public QgsProcessingParam
 };
 
 /**
- * A boolean parameter for processing algorithms.
+ * \brief A boolean parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('boolean')
@@ -297,7 +297,7 @@ class CORE_EXPORT QgsProcessingParameterTypeBoolean : public QgsProcessingParame
 };
 
 /**
- * An expression parameter for processing algorithms.
+ * \brief An expression parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('expression')
@@ -348,7 +348,7 @@ class CORE_EXPORT QgsProcessingParameterTypeExpression : public QgsProcessingPar
 };
 
 /**
- * A crs parameter for processing algorithms.
+ * \brief A crs parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('crs')
@@ -412,7 +412,7 @@ class CORE_EXPORT QgsProcessingParameterTypeCrs : public QgsProcessingParameterT
 };
 
 /**
- * A numeric range parameter for processing algorithms.
+ * \brief A numeric range parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('range')
@@ -465,7 +465,7 @@ class CORE_EXPORT QgsProcessingParameterTypeRange : public QgsProcessingParamete
 };
 
 /**
- * A point parameter for processing algorithms.
+ * \brief A point parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('point')
@@ -519,7 +519,59 @@ class CORE_EXPORT QgsProcessingParameterTypePoint : public QgsProcessingParamete
 };
 
 /**
- * An enum based parameter for processing algorithms, allowing for selection from predefined values.
+ * \brief A geometry parameter for processing algorithms.
+ *
+ * \ingroup core
+ * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('geometry')
+ * \since QGIS 3.16
+ */
+class CORE_EXPORT QgsProcessingParameterTypeGeometry : public QgsProcessingParameterType
+{
+    QgsProcessingParameterDefinition *create( const QString &name ) const override SIP_FACTORY
+    {
+      return new QgsProcessingParameterGeometry( name );
+    }
+
+    QString description() const override
+    {
+      return QCoreApplication::translate( "Processing", "A geometry parameter." );
+    }
+
+    QString name() const override
+    {
+      return QCoreApplication::translate( "Processing", "Geometry" );
+    }
+
+    QString id() const override
+    {
+      return QStringLiteral( "geometry" );
+    }
+
+    QString pythonImportString() const override
+    {
+      return QStringLiteral( "from qgis.core import QgsProcessingParameterGeometry" );
+    }
+
+    QString className() const override
+    {
+      return QStringLiteral( "QgsProcessingParameterGeometry" );
+    }
+
+    QStringList acceptedPythonTypes() const override
+    {
+      return QStringList() << QObject::tr( "str: as Well-Known Text string (WKT)" )
+             << QStringLiteral( "QgsGeometry" )
+             << QStringLiteral( "QgsProperty" );
+    }
+
+    QStringList acceptedStringValues() const override
+    {
+      return QStringList() << QObject::tr( "Well-Known Text string (WKT)" );
+    }
+};
+
+/**
+ * \brief An enum based parameter for processing algorithms, allowing for selection from predefined values.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('enum')
@@ -572,7 +624,7 @@ class CORE_EXPORT QgsProcessingParameterTypeEnum : public QgsProcessingParameter
 };
 
 /**
- * A rectangular map extent parameter for processing algorithms.
+ * \brief A rectangular map extent parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('extent')
@@ -620,7 +672,8 @@ class CORE_EXPORT QgsProcessingParameterTypeExtent : public QgsProcessingParamet
              << QObject::tr( "QgsProcessingFeatureSourceDefinition: Extent of source is used" )
              << QStringLiteral( "QgsProperty" )
              << QStringLiteral( "QgsRectangle" )
-             << QStringLiteral( "QgsReferencedRectangle" );
+             << QStringLiteral( "QgsReferencedRectangle" )
+             << QStringLiteral( "QgsGeometry: bounding box of geometry is used" );
     }
 
     QStringList acceptedStringValues() const override
@@ -631,7 +684,7 @@ class CORE_EXPORT QgsProcessingParameterTypeExtent : public QgsProcessingParamet
 };
 
 /**
- * A table (matrix) parameter for processing algorithms.
+ * \brief A table (matrix) parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('matrix')
@@ -683,7 +736,7 @@ class CORE_EXPORT QgsProcessingParameterTypeMatrix : public QgsProcessingParamet
 };
 
 /**
- * An input file or folder parameter for processing algorithms.
+ * \brief An input file or folder parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('file')
@@ -734,7 +787,7 @@ class CORE_EXPORT QgsProcessingParameterTypeFile : public QgsProcessingParameter
 };
 
 /**
- * A vector layer or feature source field parameter for processing algorithms.
+ * \brief A vector layer or feature source field parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('field')
@@ -786,7 +839,7 @@ class CORE_EXPORT QgsProcessingParameterTypeField : public QgsProcessingParamete
 };
 
 /**
- * A vector layer destination parameter, for specifying the destination path for a vector layer
+ * \brief A vector layer destination parameter, for specifying the destination path for a vector layer
  * created by the algorithm.
  *
  * \ingroup core
@@ -843,11 +896,10 @@ class CORE_EXPORT QgsProcessingParameterTypeVectorDestination : public QgsProces
     {
       return QStringList() << QObject::tr( "Path for new vector layer" );
     }
-
 };
 
 /**
- * A generic file based destination parameter, for specifying the destination path for a file (non-map layer)
+ * \brief A generic file based destination parameter, for specifying the destination path for a file (non-map layer)
  * created by the algorithm.
  *
  * \ingroup core
@@ -903,11 +955,10 @@ class CORE_EXPORT QgsProcessingParameterTypeFileDestination : public QgsProcessi
     {
       return QStringList() << QObject::tr( "Path for new file" );
     }
-
 };
 
 /**
- * A folder destination parameter, for specifying the destination path for a folder created
+ * \brief A folder destination parameter, for specifying the destination path for a folder created
  * by the algorithm or used for creating new files within the algorithm.
  * A folder output parameter.
  *
@@ -964,11 +1015,10 @@ class CORE_EXPORT QgsProcessingParameterTypeFolderDestination : public QgsProces
     {
       return QStringList() << QObject::tr( "Path for an existing or new folder" );
     }
-
 };
 
 /**
- * A raster layer destination parameter, for specifying the destination path for a raster layer
+ * \brief A raster layer destination parameter, for specifying the destination path for a raster layer
  * created by the algorithm.
  *
  * \ingroup core
@@ -1025,11 +1075,10 @@ class CORE_EXPORT QgsProcessingParameterTypeRasterDestination : public QgsProces
     {
       return QStringList() << QObject::tr( "Path for new raster layer" );
     }
-
 };
 
 /**
- * A string parameter for processing algorithms.
+ * \brief A string parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('string')
@@ -1077,11 +1126,10 @@ class CORE_EXPORT QgsProcessingParameterTypeString : public QgsProcessingParamet
     {
       return QStringList() << QObject::tr( "String value" );
     }
-
 };
 
 /**
- * A authentication configuration parameter for processing algorithms.
+ * \brief A authentication configuration parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('authcfg')
@@ -1128,11 +1176,10 @@ class CORE_EXPORT QgsProcessingParameterTypeAuthConfig : public QgsProcessingPar
     {
       return QStringList() << QObject::tr( "An existing QGIS authentication ID string" );
     }
-
 };
 
 /**
- * A parameter for processing algorithms which accepts multiple map layers.
+ * \brief A parameter for processing algorithms which accepts multiple map layers.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('multilayer')
@@ -1181,7 +1228,7 @@ class CORE_EXPORT QgsProcessingParameterTypeMultipleLayers : public QgsProcessin
 };
 
 /**
- * An input feature source (such as vector layers) parameter for processing algorithms.
+ * \brief An input feature source (such as vector layers) parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('source')
@@ -1233,11 +1280,10 @@ class CORE_EXPORT QgsProcessingParameterTypeFeatureSource : public QgsProcessing
     {
       return QStringList() << QObject::tr( "Path to a vector layer" );
     }
-
 };
 
 /**
- * A numeric parameter for processing algorithms.
+ * \brief A numeric parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('number')
@@ -1286,11 +1332,10 @@ class CORE_EXPORT QgsProcessingParameterTypeNumber : public QgsProcessingParamet
     {
       return QStringList() << QObject::tr( "A numeric value" );
     }
-
 };
 
 /**
- * A distance parameter for processing algorithms.
+ * \brief A distance parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('distance')
@@ -1339,13 +1384,62 @@ class CORE_EXPORT QgsProcessingParameterTypeDistance : public QgsProcessingParam
     {
       return QStringList() << QObject::tr( "A numeric value" );
     }
-
-
 };
 
+/**
+ * \brief A duration parameter for processing algorithms.
+ *
+ * \ingroup core
+ * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('duration')
+ * \since QGIS 3.22
+ */
+class CORE_EXPORT QgsProcessingParameterTypeDuration : public QgsProcessingParameterType
+{
+    QgsProcessingParameterDefinition *create( const QString &name ) const override SIP_FACTORY
+    {
+      return new QgsProcessingParameterDuration( name );
+    }
+
+    QString description() const override
+    {
+      return QCoreApplication::translate( "Processing", "A numeric parameter representing a duration measure." );
+    }
+
+    QString name() const override
+    {
+      return QCoreApplication::translate( "Processing", "Duration" );
+    }
+
+    QString id() const override
+    {
+      return QStringLiteral( "duration" );
+    }
+
+    QString pythonImportString() const override
+    {
+      return QStringLiteral( "from qgis.core import QgsProcessingParameterDuration" );
+    }
+
+    QString className() const override
+    {
+      return QStringLiteral( "QgsProcessingParameterDuration" );
+    }
+
+    QStringList acceptedPythonTypes() const override
+    {
+      return QStringList() << QStringLiteral( "int" )
+             << QStringLiteral( "float" )
+             << QStringLiteral( "QgsProperty" );
+    }
+
+    QStringList acceptedStringValues() const override
+    {
+      return QStringList() << QObject::tr( "A numeric value (unit type set by algorithms)" );
+    }
+};
 
 /**
- * A scale parameter for processing algorithms.
+ * \brief A scale parameter for processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('scale')
@@ -1394,12 +1488,10 @@ class CORE_EXPORT QgsProcessingParameterTypeScale : public QgsProcessingParamete
     {
       return QStringList() << QObject::tr( "A numeric value representing the scale denominator" );
     }
-
-
 };
 
 /**
- * A raster band parameter for Processing algorithms.
+ * \brief A raster band parameter for Processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('band')
@@ -1447,12 +1539,10 @@ class CORE_EXPORT QgsProcessingParameterTypeBand : public QgsProcessingParameter
     {
       return QStringList() << QObject::tr( "Integer value representing an existing raster band number" );
     }
-
-
 };
 
 /**
- * A feature sink parameter for Processing algorithms.
+ * \brief A feature sink parameter for Processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('band')
@@ -1510,13 +1600,10 @@ class CORE_EXPORT QgsProcessingParameterTypeFeatureSink : public QgsProcessingPa
     {
       return QStringList() << QObject::tr( "Path for new vector layer" );
     }
-
-
 };
 
-
 /**
- * A print layout parameter for Processing algorithms.
+ * \brief A print layout parameter for Processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('layout')
@@ -1564,14 +1651,10 @@ class CORE_EXPORT QgsProcessingParameterTypeLayout : public QgsProcessingParamet
     {
       return QStringList() << QObject::tr( "Name of print layout in current project" );
     }
-
-
 };
 
-
-
 /**
- * A print layout item parameter for Processing algorithms.
+ * \brief A print layout item parameter for Processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('layoutitem')
@@ -1620,13 +1703,10 @@ class CORE_EXPORT QgsProcessingParameterTypeLayoutItem : public QgsProcessingPar
     {
       return QStringList() << QObject::tr( "UUID or item id of layout item" );
     }
-
-
 };
 
-
 /**
- * A color parameter for Processing algorithms.
+ * \brief A color parameter for Processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('color')
@@ -1675,12 +1755,10 @@ class CORE_EXPORT QgsProcessingParameterTypeColor : public QgsProcessingParamete
     {
       return QStringList() << QObject::tr( "String representation of color, e.g #ff0000 or rgba(200,100,50,0.8)" );
     }
-
-
 };
 
 /**
- * A coordinate operation parameter for Processing algorithms.
+ * \brief A coordinate operation parameter for Processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('coordinateoperation')
@@ -1727,13 +1805,10 @@ class CORE_EXPORT QgsProcessingParameterTypeCoordinateOperation : public QgsProc
     {
       return QStringList() << QObject::tr( "String representation of Proj coordinate operation" );
     }
-
-
 };
 
-
 /**
- * A map theme parameter for Processing algorithms.
+ * \brief A map theme parameter for Processing algorithms.
  *
  * \ingroup core
  * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('maptheme')
@@ -1781,6 +1856,379 @@ class CORE_EXPORT QgsProcessingParameterTypeMapTheme: public QgsProcessingParame
     {
       return QStringList() << QObject::tr( "Name of an existing map theme" );
     }
-
 };
+
+/**
+ * \brief A datetime parameter for processing algorithms.
+ *
+ * \ingroup core
+ * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('datetime')
+ * \since QGIS 3.14
+ */
+class CORE_EXPORT QgsProcessingParameterTypeDateTime : public QgsProcessingParameterType
+{
+    QgsProcessingParameterDefinition *create( const QString &name ) const override SIP_FACTORY
+    {
+      return new QgsProcessingParameterDateTime( name );
+    }
+
+    QString description() const override
+    {
+      return QCoreApplication::translate( "Processing", "A datetime parameter, including datetime, date or time values." );
+    }
+
+    QString name() const override
+    {
+      return QCoreApplication::translate( "Processing", "Datetime" );
+    }
+
+    QString id() const override
+    {
+      return QStringLiteral( "datetime" );
+    }
+
+    QString pythonImportString() const override
+    {
+      return QStringLiteral( "from qgis.core import QgsProcessingParameterDateTime" );
+    }
+
+    QString className() const override
+    {
+      return QStringLiteral( "QgsProcessingParameterDateTime" );
+    }
+
+    QStringList acceptedPythonTypes() const override
+    {
+      return QStringList() << QStringLiteral( "str" )
+             << QStringLiteral( "QDateTime" )
+             << QStringLiteral( "QDate" )
+             << QStringLiteral( "QTime" )
+             << QStringLiteral( "QgsProperty" );
+    }
+
+    QStringList acceptedStringValues() const override
+    {
+      return QStringList() << QObject::tr( "A datetime value in ISO format" );
+    }
+};
+
+/**
+ * \brief A provider connection name parameter for processing algorithms.
+ *
+ * \ingroup core
+ * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('providerconnection')
+ * \since QGIS 3.14
+ */
+class CORE_EXPORT QgsProcessingParameterTypeProviderConnection : public QgsProcessingParameterType
+{
+    QgsProcessingParameterDefinition *create( const QString &name ) const override SIP_FACTORY
+    {
+      return new QgsProcessingParameterProviderConnection( name, QString(), QString() );
+    }
+
+    QString description() const override
+    {
+      return QCoreApplication::translate( "Processing", "A connection name parameter, for registered database connections." );
+    }
+
+    QString name() const override
+    {
+      return QCoreApplication::translate( "Processing", "Connection Name" );
+    }
+
+    QString id() const override
+    {
+      return QStringLiteral( "providerconnection" );
+    }
+
+    QString pythonImportString() const override
+    {
+      return QStringLiteral( "from qgis.core import QgsProcessingParameterProviderConnection" );
+    }
+
+    QString className() const override
+    {
+      return QStringLiteral( "QgsProcessingParameterProviderConnection" );
+    }
+
+    QStringList acceptedPythonTypes() const override
+    {
+      return QStringList() << QStringLiteral( "str" )
+             << QStringLiteral( "QgsProperty" );
+    }
+
+    QStringList acceptedStringValues() const override
+    {
+      return QStringList() << QObject::tr( "Name of registered database connection" );
+    }
+};
+
+/**
+ * \brief A database schema name parameter for processing algorithms.
+ *
+ * \ingroup core
+ * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('databaseschema')
+ * \since QGIS 3.14
+ */
+class CORE_EXPORT QgsProcessingParameterTypeDatabaseSchema : public QgsProcessingParameterType
+{
+    QgsProcessingParameterDefinition *create( const QString &name ) const override SIP_FACTORY
+    {
+      return new QgsProcessingParameterDatabaseSchema( name, QString(), QString() );
+    }
+
+    QString description() const override
+    {
+      return QCoreApplication::translate( "Processing", "A database schema parameter." );
+    }
+
+    QString name() const override
+    {
+      return QCoreApplication::translate( "Processing", "Database Schema" );
+    }
+
+    QString id() const override
+    {
+      return QStringLiteral( "databaseschema" );
+    }
+
+    QString pythonImportString() const override
+    {
+      return QStringLiteral( "from qgis.core import QgsProcessingParameterDatabaseSchema" );
+    }
+
+    QString className() const override
+    {
+      return QStringLiteral( "QgsProcessingParameterDatabaseSchema" );
+    }
+
+    QStringList acceptedPythonTypes() const override
+    {
+      return QStringList() << QStringLiteral( "str" )
+             << QStringLiteral( "QgsProperty" );
+    }
+
+    QStringList acceptedStringValues() const override
+    {
+      return QStringList() << QObject::tr( "Name of existing database schema" );
+    }
+};
+
+/**
+ * \brief A database table name parameter for processing algorithms.
+ *
+ * \ingroup core
+ * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('databasetable')
+ * \since QGIS 3.14
+ */
+class CORE_EXPORT QgsProcessingParameterTypeDatabaseTable: public QgsProcessingParameterType
+{
+    QgsProcessingParameterDefinition *create( const QString &name ) const override SIP_FACTORY
+    {
+      return new QgsProcessingParameterDatabaseTable( name, QString(), QString(), QString() );
+    }
+
+    QString description() const override
+    {
+      return QCoreApplication::translate( "Processing", "A database table parameter." );
+    }
+
+    QString name() const override
+    {
+      return QCoreApplication::translate( "Processing", "Database Table" );
+    }
+
+    QString id() const override
+    {
+      return QStringLiteral( "databasetable" );
+    }
+
+    QString pythonImportString() const override
+    {
+      return QStringLiteral( "from qgis.core import QgsProcessingParameterDatabaseTable" );
+    }
+
+    QString className() const override
+    {
+      return QStringLiteral( "QgsProcessingParameterDatabaseTable" );
+    }
+
+    QStringList acceptedPythonTypes() const override
+    {
+      return QStringList() << QStringLiteral( "str" )
+             << QStringLiteral( "QgsProperty" );
+    }
+
+    QStringList acceptedStringValues() const override
+    {
+      return QStringList() << QObject::tr( "Name of existing database table" );
+    }
+};
+
+/**
+ * \brief A point cloud layer parameter for processing algorithms.
+ *
+ * \ingroup core
+ * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('pointcloud')
+ * \since QGIS 3.22
+ */
+class CORE_EXPORT QgsProcessingParameterTypePointCloudLayer : public QgsProcessingParameterType
+{
+    QgsProcessingParameterDefinition *create( const QString &name ) const override SIP_FACTORY
+    {
+      return new QgsProcessingParameterPointCloudLayer( name );
+    }
+
+    QString description() const override
+    {
+      return QCoreApplication::translate( "Processing", "A point cloud layer parameter." );
+    }
+
+    QString name() const override
+    {
+      return QCoreApplication::translate( "Processing", "Point Cloud Layer" );
+    }
+
+    QString pythonImportString() const override
+    {
+      return QStringLiteral( "from qgis.core import QgsProcessingParameterPointCloudLayer" );
+    }
+
+    QString className() const override
+    {
+      return QStringLiteral( "QgsProcessingParameterPointCloudLayer" );
+    }
+
+    QString id() const override
+    {
+      return QStringLiteral( "pointcloud" );
+    }
+
+    QStringList acceptedPythonTypes() const override
+    {
+      return QStringList() << QObject::tr( "str: layer ID" )
+             << QObject::tr( "str: layer name" )
+             << QObject::tr( "str: layer source" )
+             << QStringLiteral( "QgsPointCloudLayer" );
+    }
+
+    QStringList acceptedStringValues() const override
+    {
+      return QStringList() << QObject::tr( "Path to a point cloud layer" );
+    }
+};
+
+/**
+ * \brief An annotation layer parameter for processing algorithms.
+ *
+ * \ingroup core
+ * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('annotation')
+ * \since QGIS 3.22
+ */
+class CORE_EXPORT QgsProcessingParameterTypeAnnotationLayer : public QgsProcessingParameterType
+{
+    QgsProcessingParameterDefinition *create( const QString &name ) const override SIP_FACTORY
+    {
+      return new QgsProcessingParameterAnnotationLayer( name );
+    }
+
+    QString description() const override
+    {
+      return QCoreApplication::translate( "Processing", "An annotation layer parameter." );
+    }
+
+    QString name() const override
+    {
+      return QCoreApplication::translate( "Processing", "Annotation Layer" );
+    }
+
+    QString pythonImportString() const override
+    {
+      return QStringLiteral( "from qgis.core import QgsProcessingParameterAnnotationLayer" );
+    }
+
+    QString className() const override
+    {
+      return QStringLiteral( "QgsProcessingParameterAnnotationLayer" );
+    }
+
+    QString id() const override
+    {
+      return QStringLiteral( "annotation" );
+    }
+
+    QStringList acceptedPythonTypes() const override
+    {
+      return QStringList() << QObject::tr( "str: layer ID" )
+             << QObject::tr( "str: layer name" )
+             << QObject::tr( "\"main\": main annotation layer for a project" )
+             << QStringLiteral( "QgsAnnotationLayer" );
+    }
+
+    QStringList acceptedStringValues() const override
+    {
+      return QStringList() << QObject::tr( "Layer ID for an annotation layer, or \"main\" for the main annotation layer in a project." );
+    }
+};
+
+/**
+ * \brief A pointcloud layer destination parameter, for specifying the destination path for a point cloud layer
+ * created by the algorithm.
+ *
+ * \ingroup core
+ * \note No Python bindings available. Get your copy from QgsApplication.processingRegistry().parameterType('pointCloudDestination')
+ * \since QGIS 3.2
+ */
+class CORE_EXPORT QgsProcessingParameterTypePointCloudDestination : public QgsProcessingParameterType
+{
+    QgsProcessingParameterDefinition *create( const QString &name ) const override SIP_FACTORY
+    {
+      return new QgsProcessingParameterPointCloudDestination( name );
+    }
+
+    QString description() const override
+    {
+      return QCoreApplication::translate( "Processing", "A point cloud layer destination parameter." );
+    }
+
+    QString name() const override
+    {
+      return QCoreApplication::translate( "Processing", "Point Cloud Destination" );
+    }
+
+    QString id() const override
+    {
+      return QStringLiteral( "pointCloudDestination" );
+    }
+
+    QString pythonImportString() const override
+    {
+      return QStringLiteral( "from qgis.core import QgsProcessingParameterPointCloudDestination" );
+    }
+
+    QString className() const override
+    {
+      return QStringLiteral( "QgsProcessingParameterPointCloudDestination" );
+    }
+
+    ParameterFlags flags() const override
+    {
+      ParameterFlags flags = QgsProcessingParameterType::flags();
+      flags.setFlag( ParameterFlag::ExposeToModeler, false );
+      return flags;
+    }
+
+    QStringList acceptedPythonTypes() const override
+    {
+      return QStringList() << QStringLiteral( "str" )
+             << QStringLiteral( "QgsProperty" )
+             << QStringLiteral( "QgsProcessingOutputLayerDefinition" );
+    }
+
+    QStringList acceptedStringValues() const override
+    {
+      return QStringList() << QObject::tr( "Path for new point cloud layer" );
+    }
+};
+
 #endif // QGSPROCESSINGPARAMETERTYPEIMPL_H

@@ -27,6 +27,11 @@ bool QgsAttributeTableConfig::isEmpty() const
   return mColumns.isEmpty();
 }
 
+int QgsAttributeTableConfig::size() const
+{
+  return mColumns.size();
+}
+
 int QgsAttributeTableConfig::mapVisibleColumnToIndex( int visibleColumn ) const
 {
   for ( int i = 0; i < mColumns.size(); ++i )
@@ -81,8 +86,14 @@ void QgsAttributeTableConfig::update( const QgsFields &fields )
       newColumn.hidden = false;
       newColumn.type = Field;
       newColumn.name = field.name();
-
-      mColumns.append( newColumn );
+      if ( containsActionColumn )
+      {
+        mColumns.insert( mColumns.size() - 1, newColumn );
+      }
+      else
+      {
+        mColumns.append( newColumn );
+      }
     }
   }
 
@@ -134,16 +145,16 @@ void QgsAttributeTableConfig::readXml( const QDomNode &node )
 {
   mColumns.clear();
 
-  QDomNode configNode = node.namedItem( QStringLiteral( "attributetableconfig" ) );
+  const QDomNode configNode = node.namedItem( QStringLiteral( "attributetableconfig" ) );
   if ( !configNode.isNull() )
   {
-    QDomNode columnsNode = configNode.toElement().namedItem( QStringLiteral( "columns" ) );
+    const QDomNode columnsNode = configNode.toElement().namedItem( QStringLiteral( "columns" ) );
 
-    QDomNodeList columns = columnsNode.childNodes();
+    const QDomNodeList columns = columnsNode.childNodes();
 
     for ( int i = 0; i < columns.size(); ++i )
     {
-      QDomElement columnElement = columns.at( i ).toElement();
+      const QDomElement columnElement = columns.at( i ).toElement();
 
       ColumnConfig column;
 
@@ -172,11 +183,11 @@ void QgsAttributeTableConfig::readXml( const QDomNode &node )
   {
     // Before QGIS 2.16 the attribute table would hide "Hidden" widgets.
     // They are migrated to hidden columns here.
-    QDomNodeList editTypeNodes = node.namedItem( QStringLiteral( "edittypes" ) ).childNodes();
+    const QDomNodeList editTypeNodes = node.namedItem( QStringLiteral( "edittypes" ) ).childNodes();
 
     for ( int i = 0; i < editTypeNodes.size(); i++ )
     {
-      QDomElement editTypeElement = editTypeNodes.at( i ).toElement();
+      const QDomElement editTypeElement = editTypeNodes.at( i ).toElement();
 
       if ( editTypeElement.attribute( QStringLiteral( "widgetv2type" ) ) == QLatin1String( "Hidden" ) )
       {
@@ -191,7 +202,7 @@ void QgsAttributeTableConfig::readXml( const QDomNode &node )
   }
 
   mSortExpression = configNode.toElement().attribute( QStringLiteral( "sortExpression" ) );
-  Qt::SortOrder sortOrder = static_cast<Qt::SortOrder>( configNode.toElement().attribute( QStringLiteral( "sortOrder" ) ).toInt() );
+  const Qt::SortOrder sortOrder = static_cast<Qt::SortOrder>( configNode.toElement().attribute( QStringLiteral( "sortOrder" ) ).toInt() );
   setSortOrder( sortOrder );
 }
 

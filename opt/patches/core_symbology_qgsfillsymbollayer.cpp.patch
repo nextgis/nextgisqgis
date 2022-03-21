@@ -1,0 +1,65 @@
+--- a/src/core/symbology/qgsfillsymbollayer.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/symbology/qgsfillsymbollayer.cpp	2022-03-07 23:14:46.000000000 +0300
+@@ -17,7 +17,7 @@
+ #include "qgslinesymbollayer.h"
+ #include "qgsmarkersymbollayer.h"
+ #include "qgssymbollayerutils.h"
+-#include "qgsdxfexport.h"
++// #include "qgsdxfexport.h"
+ #include "qgsexpression.h"
+ #include "qgsgeometry.h"
+ #include "qgsgeometrycollection.h"
+@@ -465,7 +465,7 @@
+   double offsetBleed = context.convertToPainterUnits( std::max( std::fabs( mOffset.x() ), std::fabs( mOffset.y() ) ), mOffsetUnit, mOffsetMapUnitScale );
+   return penBleed + offsetBleed;
+ }
+-
++/*
+ double QgsSimpleFillSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
+ {
+   double width = mStrokeWidth;
+@@ -518,7 +518,7 @@
+ {
+   return mBrushStyle;
+ }
+-
++*/
+ //QgsGradientFillSymbolLayer
+ 
+ QgsGradientFillSymbolLayer::QgsGradientFillSymbolLayer( const QColor &color, const QColor &color2,
+@@ -1773,7 +1773,7 @@
+ {
+   return mStrokeWidthMapUnitScale;
+ }
+-
++/*
+ double QgsImageFillSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
+ {
+   double width = mStrokeWidth;
+@@ -1799,7 +1799,7 @@
+   }
+ #endif //0
+ }
+-
++*/
+ QVariantMap QgsImageFillSymbolLayer::properties() const
+ {
+   QVariantMap map;
+@@ -2282,7 +2282,7 @@
+   }
+   return 0;
+ }
+-
++/*
+ QColor QgsSVGFillSymbolLayer::dxfColor( QgsSymbolRenderContext &context ) const
+ {
+   Q_UNUSED( context )
+@@ -2292,7 +2292,7 @@
+   }
+   return mStroke->color();
+ }
+-
++*/
+ QSet<QString> QgsSVGFillSymbolLayer::usedAttributes( const QgsRenderContext &context ) const
+ {
+   QSet<QString> attr = QgsImageFillSymbolLayer::usedAttributes( context );

@@ -24,11 +24,21 @@ email                : marco.hugentobler at sourcepole dot com
 
 #include <QJsonObject>
 #include <memory>
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 
 QgsMultiCurve::QgsMultiCurve()
 {
   mWkbType = QgsWkbTypes::MultiCurve;
+}
+
+QgsCurve *QgsMultiCurve::curveN( int index )
+{
+  return qgsgeometry_cast< QgsCurve * >( geometryN( index ) );
+}
+
+const QgsCurve *QgsMultiCurve::curveN( int index ) const
+{
+  return qgsgeometry_cast< const QgsCurve * >( geometryN( index ) );
 }
 
 QString QgsMultiCurve::geometryType() const
@@ -38,7 +48,7 @@ QString QgsMultiCurve::geometryType() const
 
 QgsMultiCurve *QgsMultiCurve::createEmptyWithSameType() const
 {
-  auto result = qgis::make_unique< QgsMultiCurve >();
+  auto result = std::make_unique< QgsMultiCurve >();
   result->mWkbType = mWkbType;
   return result.release();
 }
@@ -113,22 +123,21 @@ QDomElement QgsMultiCurve::asGml3( QDomDocument &doc, int precision, const QStri
 
 json QgsMultiCurve::asJsonObject( int precision ) const
 {
-  json coordinates( json::array( ) );
-  for ( const QgsAbstractGeometry *geom : qgis::as_const( mGeometries ) )
+  CPLJSONArray coordinates;
+  for ( const QgsAbstractGeometry *geom : std::as_const( mGeometries ) )
   {
     if ( qgsgeometry_cast<const QgsCurve *>( geom ) )
     {
       std::unique_ptr< QgsLineString > lineString( static_cast<const QgsCurve *>( geom )->curveToLine() );
       QgsPointSequence pts;
       lineString->points( pts );
-      coordinates.push_back( QgsGeometryUtils::pointsToJson( pts, precision ) );
+      coordinates.Add( QgsGeometryUtils::pointsToJson( pts, precision ) );
     }
   }
-  return
-  {
-    {  "type",  "MultiLineString"  },
-    {  "coordinates", coordinates }
-  };
+  json out;
+  out.Add("type",  "MultiLineString");
+  out.Add("coordinates", coordinates);
+  return out;
 }
 
 bool QgsMultiCurve::addGeometry( QgsAbstractGeometry *g )

@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.5.1.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -31,11 +31,12 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
-#ifndef YY_SQLSTATEMENT_HOME_USER_WORKSPACE_NEXTGIS_NEXTGISQGIS_NEXTGISQGIS_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED
-# define YY_SQLSTATEMENT_HOME_USER_WORKSPACE_NEXTGIS_NEXTGISQGIS_NEXTGISQGIS_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED
+#ifndef YY_SQLSTATEMENT_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED
+# define YY_SQLSTATEMENT_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -44,72 +45,77 @@
 extern int sqlstatement_debug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    OR = 258,
-    AND = 259,
-    EQ = 260,
-    NE = 261,
-    LE = 262,
-    GE = 263,
-    LT = 264,
-    GT = 265,
-    LIKE = 266,
-    IS = 267,
-    PLUS = 268,
-    MINUS = 269,
-    MUL_OR_STAR = 270,
-    DIV = 271,
-    INTDIV = 272,
-    MOD = 273,
-    CONCAT = 274,
-    POW = 275,
-    NOT = 276,
-    IN = 277,
-    BETWEEN = 278,
-    SELECT = 279,
-    ALL = 280,
-    DISTINCT = 281,
-    CAST = 282,
-    AS = 283,
-    JOIN = 284,
-    FROM = 285,
-    ON = 286,
-    USING = 287,
-    WHERE = 288,
-    ORDER = 289,
-    BY = 290,
-    ASC = 291,
-    DESC = 292,
-    LEFT = 293,
-    RIGHT = 294,
-    INNER = 295,
-    OUTER = 296,
-    CROSS = 297,
-    FULL = 298,
-    NATURAL = 299,
-    UNION = 300,
-    NUMBER_FLOAT = 301,
-    NUMBER_INT = 302,
-    NUMBER_INT64 = 303,
-    BOOLEAN = 304,
-    NULLVALUE = 305,
-    STRING = 306,
-    IDENTIFIER = 307,
-    COMMA = 308,
-    Unknown_CHARACTER = 309,
-    UMINUS = 310
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    OR = 258,                      /* OR  */
+    AND = 259,                     /* AND  */
+    EQ = 260,                      /* EQ  */
+    NE = 261,                      /* NE  */
+    LE = 262,                      /* LE  */
+    GE = 263,                      /* GE  */
+    LT = 264,                      /* LT  */
+    GT = 265,                      /* GT  */
+    LIKE = 266,                    /* LIKE  */
+    IS = 267,                      /* IS  */
+    PLUS = 268,                    /* PLUS  */
+    MINUS = 269,                   /* MINUS  */
+    MUL_OR_STAR = 270,             /* MUL_OR_STAR  */
+    DIV = 271,                     /* DIV  */
+    INTDIV = 272,                  /* INTDIV  */
+    MOD = 273,                     /* MOD  */
+    CONCAT = 274,                  /* CONCAT  */
+    POW = 275,                     /* POW  */
+    NOT = 276,                     /* NOT  */
+    IN = 277,                      /* IN  */
+    BETWEEN = 278,                 /* BETWEEN  */
+    SELECT = 279,                  /* SELECT  */
+    ALL = 280,                     /* ALL  */
+    DISTINCT = 281,                /* DISTINCT  */
+    CAST = 282,                    /* CAST  */
+    AS = 283,                      /* AS  */
+    JOIN = 284,                    /* JOIN  */
+    FROM = 285,                    /* FROM  */
+    ON = 286,                      /* ON  */
+    USING = 287,                   /* USING  */
+    WHERE = 288,                   /* WHERE  */
+    ORDER = 289,                   /* ORDER  */
+    BY = 290,                      /* BY  */
+    ASC = 291,                     /* ASC  */
+    DESC = 292,                    /* DESC  */
+    LEFT = 293,                    /* LEFT  */
+    RIGHT = 294,                   /* RIGHT  */
+    INNER = 295,                   /* INNER  */
+    OUTER = 296,                   /* OUTER  */
+    CROSS = 297,                   /* CROSS  */
+    FULL = 298,                    /* FULL  */
+    NATURAL = 299,                 /* NATURAL  */
+    UNION = 300,                   /* UNION  */
+    NUMBER_FLOAT = 301,            /* NUMBER_FLOAT  */
+    NUMBER_INT = 302,              /* NUMBER_INT  */
+    NUMBER_INT64 = 303,            /* NUMBER_INT64  */
+    BOOLEAN = 304,                 /* BOOLEAN  */
+    NULLVALUE = 305,               /* NULLVALUE  */
+    STRING = 306,                  /* STRING  */
+    IDENTIFIER = 307,              /* IDENTIFIER  */
+    COMMA = 308,                   /* COMMA  */
+    Unknown_CHARACTER = 309,       /* Unknown_CHARACTER  */
+    UMINUS = 310                   /* UMINUS  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 91 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+#line 93 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
 
   QgsSQLStatement::Node* node;
   QgsSQLStatement::NodeColumnRef* nodecolumnref;
@@ -133,7 +139,7 @@ union YYSTYPE
   QgsSQLStatement::JoinType jointype;
   QList<QString>* usinglist;
 
-#line 137 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.hpp"
+#line 143 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -143,6 +149,8 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
+
 int sqlstatement_parse (sqlstatement_parser_context* parser_ctx);
 
-#endif /* !YY_SQLSTATEMENT_HOME_USER_WORKSPACE_NEXTGIS_NEXTGISQGIS_NEXTGISQGIS_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED  */
+
+#endif /* !YY_SQLSTATEMENT_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED  */

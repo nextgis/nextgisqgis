@@ -43,12 +43,12 @@ bool QgsRasterChecker::runTest( const QString &verifiedKey, QString verifiedUri,
   mReport += QLatin1String( "\n\n" );
 
   //QgsRasterDataProvider* verifiedProvider = QgsRasterLayer::loadProvider( verifiedKey, verifiedUri );
-  QgsDataProvider::ProviderOptions options;
+  const QgsDataProvider::ProviderOptions options;
   QgsRasterDataProvider *verifiedProvider = qobject_cast< QgsRasterDataProvider * >( QgsProviderRegistry::instance()->createProvider( verifiedKey, verifiedUri, options ) );
   if ( !verifiedProvider || !verifiedProvider->isValid() )
   {
     error( QStringLiteral( "Cannot load provider %1 with URI: %2" ).arg( verifiedKey, verifiedUri ), mReport );
-    ok = false;
+    return false;
   }
 
   //QgsRasterDataProvider* expectedProvider = QgsRasterLayer::loadProvider( expectedKey, expectedUri );
@@ -56,10 +56,8 @@ bool QgsRasterChecker::runTest( const QString &verifiedKey, QString verifiedUri,
   if ( !expectedProvider || !expectedProvider->isValid() )
   {
     error( QStringLiteral( "Cannot load provider %1 with URI: %2" ).arg( expectedKey, expectedUri ), mReport );
-    ok = false;
+    return false;
   }
-
-  if ( !ok ) return false;
 
   mReport += QStringLiteral( "Verified URI: %1<br>" ).arg( verifiedUri.replace( '&', QLatin1String( "&amp;" ) ) );
   mReport += QStringLiteral( "Expected URI: %1<br>" ).arg( expectedUri.replace( '&', QLatin1String( "&amp;" ) ) );
@@ -103,8 +101,8 @@ bool QgsRasterChecker::runTest( const QString &verifiedKey, QString verifiedUri,
     }
 
     bool statsOk = true;
-    QgsRasterBandStats verifiedStats = verifiedProvider->bandStatistics( band );
-    QgsRasterBandStats expectedStats = expectedProvider->bandStatistics( band );
+    const QgsRasterBandStats verifiedStats = verifiedProvider->bandStatistics( band );
+    const QgsRasterBandStats expectedStats = expectedProvider->bandStatistics( band );
 
     // Min/max may 'slightly' differ, for big numbers however, the difference may
     // be quite big, for example for Float32 with max -3.332e+38, the difference is 1.47338e+24
@@ -140,8 +138,8 @@ bool QgsRasterChecker::runTest( const QString &verifiedKey, QString verifiedUri,
     mReport += QLatin1String( "</tr></table>" );
     mReport += QLatin1String( "<br>" );
 
-    int width = expectedProvider->xSize();
-    int height = expectedProvider->ySize();
+    const int width = expectedProvider->xSize();
+    const int height = expectedProvider->ySize();
     std::unique_ptr< QgsRasterBlock > expectedBlock( expectedProvider->block( band, expectedProvider->extent(), width, height ) );
     std::unique_ptr< QgsRasterBlock > verifiedBlock( verifiedProvider->block( band, expectedProvider->extent(), width, height ) );
 
@@ -161,13 +159,13 @@ bool QgsRasterChecker::runTest( const QString &verifiedKey, QString verifiedUri,
       for ( int col = 0; col < width; col ++ )
       {
         bool cellOk = true;
-        double verifiedVal = verifiedBlock->value( row, col );
-        double expectedVal = expectedBlock->value( row, col );
+        const double verifiedVal = verifiedBlock->value( row, col );
+        const double expectedVal = expectedBlock->value( row, col );
 
         QString valStr;
         if ( compare( verifiedVal, expectedVal, 0 ) )
         {
-          valStr = QStringLiteral( "%1" ).arg( verifiedVal );
+          valStr = QString::number( verifiedVal );
         }
         else
         {
@@ -211,8 +209,16 @@ QString QgsRasterChecker::compareHead()
 
 void QgsRasterChecker::compare( const QString &paramName, int verifiedVal, int expectedVal, QString &report, bool &ok )
 {
-  bool isEqual = verifiedVal == expectedVal;
+  const bool isEqual = verifiedVal == expectedVal;
   compareRow( paramName, QString::number( verifiedVal ), QString::number( expectedVal ), report, isEqual, QString::number( verifiedVal - expectedVal ) );
+  if ( !isEqual )
+    ok = false;
+}
+
+void QgsRasterChecker::compare( const QString &paramName, Qgis::DataType verifiedVal, Qgis::DataType expectedVal, QString &report, bool &ok )
+{
+  const bool isEqual = verifiedVal == expectedVal;
+  compareRow( paramName, QString::number( static_cast< int>( verifiedVal ) ), QString::number( static_cast< int >( expectedVal ) ), report, isEqual, QString::number( static_cast< int >( verifiedVal ) - static_cast< int>( expectedVal ) ) );
   if ( !isEqual )
     ok = false;
 }
@@ -225,7 +231,7 @@ bool QgsRasterChecker::compare( double verifiedVal, double expectedVal, double t
 
 void QgsRasterChecker::compare( const QString &paramName, double verifiedVal, double expectedVal, QString &report, bool &ok, double tolerance )
 {
-  bool isNearEqual = compare( verifiedVal, expectedVal, tolerance );
+  const bool isNearEqual = compare( verifiedVal, expectedVal, tolerance );
   compareRow( paramName, QString::number( verifiedVal ), QString::number( expectedVal ), report, isNearEqual, QString::number( verifiedVal - expectedVal ), QString::number( tolerance ) );
   if ( !isNearEqual )
     ok = false;

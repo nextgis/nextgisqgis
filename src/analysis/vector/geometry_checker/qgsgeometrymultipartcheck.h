@@ -22,9 +22,11 @@
 
 /**
  * \ingroup analysis
+ * \brief A multipark check.
  */
 class ANALYSIS_EXPORT QgsGeometryMultipartCheck : public QgsSingleGeometryCheck
 {
+    Q_DECLARE_TR_FUNCTIONS( QgsGeometryMultipartCheck )
   public:
     explicit QgsGeometryMultipartCheck( QgsGeometryCheckContext *context, const QVariantMap &configuration )
       : QgsSingleGeometryCheck( context,

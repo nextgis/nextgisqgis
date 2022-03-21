@@ -22,9 +22,11 @@
 
 /**
  * \ingroup analysis
+ * \brief A dangle check.
  */
 class ANALYSIS_EXPORT QgsGeometryDangleCheck : public QgsGeometryCheck
 {
+    Q_DECLARE_TR_FUNCTIONS( QgsGeometryDangleCheck )
   public:
     QgsGeometryDangleCheck( QgsGeometryCheckContext *context, const QVariantMap &configuration )
       : QgsGeometryCheck( context, configuration )

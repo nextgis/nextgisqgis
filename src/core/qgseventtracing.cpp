@@ -101,13 +101,13 @@ bool QgsEventTracing::writeTrace( const QString &fileName )
       f.write( ",\n" );
     else
       first = false;
-    char t = _eventTypeToChar( item.type );
+    const char t = _eventTypeToChar( item.type );
     QString msg = QStringLiteral( "  {\"cat\": \"%1\", \"pid\": 1, \"tid\": %2, \"ts\": %3, \"ph\": \"%4\", \"name\": \"%5\"" )
                   .arg( item.category ).arg( item.threadId ).arg( item.timestamp ).arg( t ).arg( item.name );
 
     // for instant events we always set them as global (currently not supporting instant events at thread scope)
     if ( item.type == Instant )
-      msg += QStringLiteral( ", \"s\": \"g\"" );
+      msg += QLatin1String( ", \"s\": \"g\"" );
 
     // async events also need to have ID associated
     if ( item.type == AsyncBegin || item.type == AsyncEnd )

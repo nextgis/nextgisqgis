@@ -1,0 +1,11 @@
+--- a/src/core/settings/qgssettingsregistry.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/settings/qgssettingsregistry.cpp	2022-03-09 17:05:17.000000000 +0300
+@@ -16,7 +16,7 @@
+ #include "qgssettingsregistry.h"
+ 
+ #include "qgslayout.h"
+-#include "qgslocator.h"
++// #include "qgslocator.h"
+ #include "qgsnetworkaccessmanager.h"
+ #include "qgsnewsfeedparser.h"
+ #include "qgsprocessing.h"

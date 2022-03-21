@@ -34,11 +34,11 @@ class QgsLayerTreeLayer;
 class QgsProject;
 
 /**
-  \class QgsMapThemeCollection
-  \ingroup core
-  \brief Container class that allows storage of map themes consisting of visible
-   map layers and layer styles.
-  \since QGIS 2.12
+ * \class QgsMapThemeCollection
+ * \ingroup core
+ * \brief Container class that allows storage of map themes consisting of visible
+ *  map layers and layer styles.
+ * \since QGIS 2.12
 */
 
 class CORE_EXPORT QgsMapThemeCollection : public QObject
@@ -52,7 +52,7 @@ class CORE_EXPORT QgsMapThemeCollection : public QObject
 
     /**
      * \ingroup core
-     * Individual record of a visible layer in a map theme record.
+     * \brief Individual record of a visible layer in a map theme record.
      * \since QGIS 3.0
      */
     class CORE_EXPORT MapThemeLayerRecord
@@ -61,6 +61,7 @@ class CORE_EXPORT QgsMapThemeCollection : public QObject
         //! Initialize layer record with a map layer - it will be stored as a weak pointer
         MapThemeLayerRecord( QgsMapLayer *l = nullptr ): mLayer( l ) {}
 
+        // TODO c++20 - replace with = default
         bool operator==( const QgsMapThemeCollection::MapThemeLayerRecord &other ) const
         {
           return mLayer == other.mLayer && isVisible == other.isVisible &&
@@ -113,7 +114,7 @@ class CORE_EXPORT QgsMapThemeCollection : public QObject
 
     /**
      * \ingroup core
-     * Individual map theme record of visible layers and styles.
+     * \brief Individual map theme record of visible layers and styles.
      *
      * \since QGIS 3.0, Previously called PresetRecord
      */
@@ -257,12 +258,19 @@ class CORE_EXPORT QgsMapThemeCollection : public QObject
     void update( const QString &name, const QgsMapThemeCollection::MapThemeRecord &state );
 
     /**
-     * Remove an existing map theme from collection.
+     * Removes an existing map theme from collection.
      * \since QGIS 3.0
      */
     void removeMapTheme( const QString &name );
 
-    //! Remove all map themes from the collection.
+    /**
+     * Renames the existing map theme called \a name to \a newName.
+     * Returns TRUE if the rename was successful, or FALSE if it failed (e.g. due to a duplicate name for \a newName).
+     * \since QGIS 3.14
+     */
+    bool renameMapTheme( const QString &name, const QString &newName );
+
+    //! Removes all map themes from the collection.
     void clear();
 
     /**
@@ -372,6 +380,12 @@ class CORE_EXPORT QgsMapThemeCollection : public QObject
      * \since QGIS 3.0
      */
     void mapThemeChanged( const QString &theme );
+
+    /**
+     * Emitted when a map theme within the collection is renamed.
+     * \since QGIS 3.14
+     */
+    void mapThemeRenamed( const QString &name, const QString &newName );
 
     /**
      * Emitted when the project changes

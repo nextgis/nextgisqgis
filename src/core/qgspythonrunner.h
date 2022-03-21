@@ -22,13 +22,12 @@
 
 /**
  * \ingroup core
-  Utility class for running Python commands from various parts of QGIS.
-  There is no direct Python support in the core library, so it is expected
-  that application with Python support creates a subclass that implements
-  pure virtual function(s) during the initialization. The static methods
-  will then work as expected.
-
-  Added in QGIS v?
+ * \brief Utility class for running Python commands from various parts of QGIS.
+ *
+ * There is no direct Python support in the core library, so it is expected
+ * that application with Python support creates a subclass that implements
+ * pure virtual function(s) during the initialization. The static methods
+ * will then work as expected.
  */
 class CORE_EXPORT QgsPythonRunner
 {
@@ -36,7 +35,8 @@ class CORE_EXPORT QgsPythonRunner
 
     /**
      * Returns TRUE if the runner has an instance
-        (and thus is able to run commands) */
+     * (and thus is able to run commands)
+    */
     static bool isValid();
 
     //! Execute a Python statement
@@ -47,8 +47,9 @@ class CORE_EXPORT QgsPythonRunner
 
     /**
      * Assign an instance of Python runner so that run() can be used.
-      This method should be called during app initialization.
-      Takes ownership of the object, deletes previous instance. */
+     * This method should be called during app initialization.
+     * Takes ownership of the object, deletes previous instance.
+    */
     static void setInstance( QgsPythonRunner *runner SIP_TRANSFER );
 
   protected:

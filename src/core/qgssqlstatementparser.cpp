@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.5.1.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -34,6 +34,10 @@
 /* C LALR(1) parser skeleton written by Richard Stallman, by
    simplifying the original so-called "semantic" parser.  */
 
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
 /* All symbols defined below should begin with yy or YY, to avoid
    infringing on user name space.  This should be done even for local
    variables, as they might otherwise be expanded by user macros.
@@ -41,14 +45,11 @@
    define necessary library symbols; they are noted "INFRINGES ON
    USER NAME SPACE" below.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* Identify Bison output, and Bison version.  */
+#define YYBISON 30802
 
-/* Identify Bison output.  */
-#define YYBISON 1
-
-/* Bison version.  */
-#define YYBISON_VERSION "3.5.1"
+/* Bison version string.  */
+#define YYBISON_VERSION "3.8.2"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -71,7 +72,7 @@
 #define yynerrs         sqlstatement_nerrs
 
 /* First part of user prologue.  */
-#line 18 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+#line 18 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
 
 #include <qglobal.h>
 #include <QList>
@@ -117,11 +118,13 @@ struct sqlstatement_parser_context
 
   QgsSQLStatement::Node* whereExp;
 
+  QgsSQLStatement::Node* expression;
+
   QList<QgsSQLStatement::NodeJoin*> joinList;
 
   QList<QgsSQLStatement::NodeColumnSorted*> orderByList;
 
-  sqlstatement_parser_context() : rootNode( nullptr ), whereExp( nullptr ) {}
+  sqlstatement_parser_context() : rootNode( nullptr ), whereExp( nullptr ), expression( nullptr ) {}
 
   void setWhere( QgsSQLStatement::Node* whereExp ) { this->whereExp = whereExp; }
 
@@ -138,7 +141,7 @@ struct sqlstatement_parser_context
 #define BINOP(x, y, z)  new QgsSQLStatement::NodeBinaryOperator(x, y, z)
 
 
-#line 142 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 145 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -161,128 +164,95 @@ struct sqlstatement_parser_context
 #  endif
 # endif
 
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 1
-#endif
-
-/* Use api.header.include to #include this header
-   instead of duplicating it here.  */
-#ifndef YY_SQLSTATEMENT_HOME_USER_WORKSPACE_NEXTGIS_NEXTGISQGIS_NEXTGISQGIS_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED
-# define YY_SQLSTATEMENT_HOME_USER_WORKSPACE_NEXTGIS_NEXTGISQGIS_NEXTGISQGIS_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED
-/* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-#if YYDEBUG
-extern int sqlstatement_debug;
-#endif
-
-/* Token type.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
-  {
-    OR = 258,
-    AND = 259,
-    EQ = 260,
-    NE = 261,
-    LE = 262,
-    GE = 263,
-    LT = 264,
-    GT = 265,
-    LIKE = 266,
-    IS = 267,
-    PLUS = 268,
-    MINUS = 269,
-    MUL_OR_STAR = 270,
-    DIV = 271,
-    INTDIV = 272,
-    MOD = 273,
-    CONCAT = 274,
-    POW = 275,
-    NOT = 276,
-    IN = 277,
-    BETWEEN = 278,
-    SELECT = 279,
-    ALL = 280,
-    DISTINCT = 281,
-    CAST = 282,
-    AS = 283,
-    JOIN = 284,
-    FROM = 285,
-    ON = 286,
-    USING = 287,
-    WHERE = 288,
-    ORDER = 289,
-    BY = 290,
-    ASC = 291,
-    DESC = 292,
-    LEFT = 293,
-    RIGHT = 294,
-    INNER = 295,
-    OUTER = 296,
-    CROSS = 297,
-    FULL = 298,
-    NATURAL = 299,
-    UNION = 300,
-    NUMBER_FLOAT = 301,
-    NUMBER_INT = 302,
-    NUMBER_INT64 = 303,
-    BOOLEAN = 304,
-    NULLVALUE = 305,
-    STRING = 306,
-    IDENTIFIER = 307,
-    COMMA = 308,
-    Unknown_CHARACTER = 309,
-    UMINUS = 310
-  };
-#endif
-
-/* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-union YYSTYPE
+#include "qgssqlstatementparser.hpp"
+/* Symbol kind.  */
+enum yysymbol_kind_t
 {
-#line 91 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
-
-  QgsSQLStatement::Node* node;
-  QgsSQLStatement::NodeColumnRef* nodecolumnref;
-  QgsSQLStatement::NodeSelectedColumn* nodeselectedcolumn;
-  QgsSQLStatement::NodeSelect* nodeselect;
-  QgsSQLStatement::NodeList* nodelist;
-  QgsSQLStatement::NodeJoin* nodejoin;
-  QgsSQLStatement::NodeTableDef* nodetabledef;
-  QgsSQLStatement::NodeColumnSorted* nodecolumnsorted;
-  QList<QgsSQLStatement::NodeColumnSorted*>* columnsortedlist;
-  QList<QgsSQLStatement::NodeJoin*>* joinlist;
-  QList<QgsSQLStatement::NodeTableDef*>* tablelist;
-  QList<QgsSQLStatement::NodeSelectedColumn*>* selectedcolumnlist;
-  double numberFloat;
-  int    numberInt;
-  qlonglong numberInt64;
-  bool   boolVal;
-  QString* text;
-  QgsSQLStatement::BinaryOperator b_op;
-  QgsSQLStatement::UnaryOperator u_op;
-  QgsSQLStatement::JoinType jointype;
-  QList<QString>* usinglist;
-
-#line 274 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
-
+  YYSYMBOL_YYEMPTY = -2,
+  YYSYMBOL_YYEOF = 0,                      /* "end of file"  */
+  YYSYMBOL_YYerror = 1,                    /* error  */
+  YYSYMBOL_YYUNDEF = 2,                    /* "invalid token"  */
+  YYSYMBOL_OR = 3,                         /* OR  */
+  YYSYMBOL_AND = 4,                        /* AND  */
+  YYSYMBOL_EQ = 5,                         /* EQ  */
+  YYSYMBOL_NE = 6,                         /* NE  */
+  YYSYMBOL_LE = 7,                         /* LE  */
+  YYSYMBOL_GE = 8,                         /* GE  */
+  YYSYMBOL_LT = 9,                         /* LT  */
+  YYSYMBOL_GT = 10,                        /* GT  */
+  YYSYMBOL_LIKE = 11,                      /* LIKE  */
+  YYSYMBOL_IS = 12,                        /* IS  */
+  YYSYMBOL_PLUS = 13,                      /* PLUS  */
+  YYSYMBOL_MINUS = 14,                     /* MINUS  */
+  YYSYMBOL_MUL_OR_STAR = 15,               /* MUL_OR_STAR  */
+  YYSYMBOL_DIV = 16,                       /* DIV  */
+  YYSYMBOL_INTDIV = 17,                    /* INTDIV  */
+  YYSYMBOL_MOD = 18,                       /* MOD  */
+  YYSYMBOL_CONCAT = 19,                    /* CONCAT  */
+  YYSYMBOL_POW = 20,                       /* POW  */
+  YYSYMBOL_NOT = 21,                       /* NOT  */
+  YYSYMBOL_IN = 22,                        /* IN  */
+  YYSYMBOL_BETWEEN = 23,                   /* BETWEEN  */
+  YYSYMBOL_SELECT = 24,                    /* SELECT  */
+  YYSYMBOL_ALL = 25,                       /* ALL  */
+  YYSYMBOL_DISTINCT = 26,                  /* DISTINCT  */
+  YYSYMBOL_CAST = 27,                      /* CAST  */
+  YYSYMBOL_AS = 28,                        /* AS  */
+  YYSYMBOL_JOIN = 29,                      /* JOIN  */
+  YYSYMBOL_FROM = 30,                      /* FROM  */
+  YYSYMBOL_ON = 31,                        /* ON  */
+  YYSYMBOL_USING = 32,                     /* USING  */
+  YYSYMBOL_WHERE = 33,                     /* WHERE  */
+  YYSYMBOL_ORDER = 34,                     /* ORDER  */
+  YYSYMBOL_BY = 35,                        /* BY  */
+  YYSYMBOL_ASC = 36,                       /* ASC  */
+  YYSYMBOL_DESC = 37,                      /* DESC  */
+  YYSYMBOL_LEFT = 38,                      /* LEFT  */
+  YYSYMBOL_RIGHT = 39,                     /* RIGHT  */
+  YYSYMBOL_INNER = 40,                     /* INNER  */
+  YYSYMBOL_OUTER = 41,                     /* OUTER  */
+  YYSYMBOL_CROSS = 42,                     /* CROSS  */
+  YYSYMBOL_FULL = 43,                      /* FULL  */
+  YYSYMBOL_NATURAL = 44,                   /* NATURAL  */
+  YYSYMBOL_UNION = 45,                     /* UNION  */
+  YYSYMBOL_NUMBER_FLOAT = 46,              /* NUMBER_FLOAT  */
+  YYSYMBOL_NUMBER_INT = 47,                /* NUMBER_INT  */
+  YYSYMBOL_NUMBER_INT64 = 48,              /* NUMBER_INT64  */
+  YYSYMBOL_BOOLEAN = 49,                   /* BOOLEAN  */
+  YYSYMBOL_NULLVALUE = 50,                 /* NULLVALUE  */
+  YYSYMBOL_STRING = 51,                    /* STRING  */
+  YYSYMBOL_IDENTIFIER = 52,                /* IDENTIFIER  */
+  YYSYMBOL_COMMA = 53,                     /* COMMA  */
+  YYSYMBOL_Unknown_CHARACTER = 54,         /* Unknown_CHARACTER  */
+  YYSYMBOL_UMINUS = 55,                    /* UMINUS  */
+  YYSYMBOL_56_ = 56,                       /* '('  */
+  YYSYMBOL_57_ = 57,                       /* ')'  */
+  YYSYMBOL_58_ = 58,                       /* '.'  */
+  YYSYMBOL_YYACCEPT = 59,                  /* $accept  */
+  YYSYMBOL_root = 60,                      /* root  */
+  YYSYMBOL_expr = 61,                      /* expr  */
+  YYSYMBOL_column_name = 62,               /* column_name  */
+  YYSYMBOL_expr_list = 63,                 /* expr_list  */
+  YYSYMBOL_expr_non_logical = 64,          /* expr_non_logical  */
+  YYSYMBOL_select_type = 65,               /* select_type  */
+  YYSYMBOL_select_statement = 66,          /* select_statement  */
+  YYSYMBOL_selected_column_list = 67,      /* selected_column_list  */
+  YYSYMBOL_selected_column = 68,           /* selected_column  */
+  YYSYMBOL_as_clause = 69,                 /* as_clause  */
+  YYSYMBOL_opt_where = 70,                 /* opt_where  */
+  YYSYMBOL_join_qualifier = 71,            /* join_qualifier  */
+  YYSYMBOL_join = 72,                      /* join  */
+  YYSYMBOL_using_list = 73,                /* using_list  */
+  YYSYMBOL_join_list = 74,                 /* join_list  */
+  YYSYMBOL_opt_joins = 75,                 /* opt_joins  */
+  YYSYMBOL_opt_order_by = 76,              /* opt_order_by  */
+  YYSYMBOL_sort_spec_list = 77,            /* sort_spec_list  */
+  YYSYMBOL_sort_spec = 78,                 /* sort_spec  */
+  YYSYMBOL_table_def = 79,                 /* table_def  */
+  YYSYMBOL_table_list = 80                 /* table_list  */
 };
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
-#endif
+typedef enum yysymbol_kind_t yysymbol_kind_t;
 
-
-
-int sqlstatement_parse (sqlstatement_parser_context* parser_ctx);
-
-#endif /* !YY_SQLSTATEMENT_HOME_USER_WORKSPACE_NEXTGIS_NEXTGISQGIS_NEXTGISQGIS_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED  */
 
 
 
@@ -321,6 +291,18 @@ typedef __INT_LEAST16_TYPE__ yytype_int16;
 typedef int_least16_t yytype_int16;
 #else
 typedef short yytype_int16;
+#endif
+
+/* Work around bug in HP-UX 11.23, which defines these macros
+   incorrectly for preprocessor constants.  This workaround can likely
+   be removed in 2023, as HPE has promised support for HP-UX 11.23
+   (aka HP-UX 11i v2) only through the end of 2022; see Table 2 of
+   <https://h20195.www2.hpe.com/V2/getpdf.aspx/4AA4-7673ENW.pdf>.  */
+#ifdef __hpux
+# undef UINT_LEAST8_MAX
+# undef UINT_LEAST16_MAX
+# define UINT_LEAST8_MAX 255
+# define UINT_LEAST16_MAX 65535
 #endif
 
 #if defined __UINT_LEAST8_MAX__ && __UINT_LEAST8_MAX__ <= __INT_MAX__
@@ -382,6 +364,7 @@ typedef int yytype_uint16;
 
 #define YYSIZEOF(X) YY_CAST (YYPTRDIFF_T, sizeof (X))
 
+
 /* Stored state numbers (used for stacks). */
 typedef yytype_uint8 yy_state_t;
 
@@ -399,6 +382,7 @@ typedef int yy_state_fast_t;
 #  define YY_(Msgid) Msgid
 # endif
 #endif
+
 
 #ifndef YY_ATTRIBUTE_PURE
 # if defined __GNUC__ && 2 < __GNUC__ + (96 <= __GNUC_MINOR__)
@@ -418,17 +402,23 @@ typedef int yy_state_fast_t;
 
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
-# define YYUSE(E) ((void) (E))
+# define YY_USE(E) ((void) (E))
 #else
-# define YYUSE(E) /* empty */
+# define YY_USE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
-# define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                            \
+#if defined __GNUC__ && ! defined __ICC && 406 <= __GNUC__ * 100 + __GNUC_MINOR__
+# if __GNUC__ * 100 + __GNUC_MINOR__ < 407
+#  define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                           \
+    _Pragma ("GCC diagnostic push")                                     \
+    _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")
+# else
+#  define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                           \
     _Pragma ("GCC diagnostic push")                                     \
     _Pragma ("GCC diagnostic ignored \"-Wuninitialized\"")              \
     _Pragma ("GCC diagnostic ignored \"-Wmaybe-uninitialized\"")
+# endif
 # define YY_IGNORE_MAYBE_UNINITIALIZED_END      \
     _Pragma ("GCC diagnostic pop")
 #else
@@ -457,7 +447,7 @@ typedef int yy_state_fast_t;
 
 #define YY_ASSERT(E) ((void) (0 && (E)))
 
-#if ! defined yyoverflow || YYERROR_VERBOSE
+#if 1
 
 /* The parser invokes alloca or malloc; define the necessary symbols.  */
 
@@ -522,8 +512,7 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 #   endif
 #  endif
 # endif
-#endif /* ! defined yyoverflow || YYERROR_VERBOSE */
-
+#endif /* 1 */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
@@ -586,27 +575,29 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  7
+#define YYFINAL  29
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   325
+#define YYLAST   366
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  59
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  22
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  88
+#define YYNRULES  89
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  166
+#define YYNSTATES  167
 
-#define YYUNDEFTOK  2
+/* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   310
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex, with out-of-bounds checking.  */
-#define YYTRANSLATE(YYX)                                                \
-  (0 <= (YYX) && (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
+#define YYTRANSLATE(YYX)                                \
+  (0 <= (YYX) && (YYX) <= YYMAXUTOK                     \
+   ? YY_CAST (yysymbol_kind_t, yytranslate[YYX])        \
+   : YYSYMBOL_YYUNDEF)
 
 /* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex.  */
@@ -647,57 +638,56 @@ static const yytype_int8 yytranslate[] =
 };
 
 #if YYDEBUG
-  /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
+/* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   205,   205,   212,   217,   218,   219,   220,   221,   222,
-     223,   224,   225,   226,   227,   229,   230,   232,   233,   238,
-     244,   253,   257,   263,   264,   265,   266,   267,   268,   270,
-     275,   277,   283,   289,   290,   291,   292,   293,   294,   295,
-     296,   297,   298,   300,   309,   313,   317,   324,   333,   337,
-     342,   347,   354,   359,   365,   381,   400,   419,   443,   448,
-     451,   452,   459,   463,   467,   471,   475,   479,   483,   487,
-     494,   498,   506,   511,   519,   523,   529,   530,   537,   538,
-     546,   550,   555,   559,   563,   570,   576,   585,   589
+       0,   207,   207,   208,   215,   220,   221,   222,   223,   224,
+     225,   226,   227,   228,   229,   230,   232,   233,   235,   236,
+     241,   247,   256,   260,   266,   267,   268,   269,   270,   271,
+     273,   278,   280,   286,   292,   293,   294,   295,   296,   297,
+     298,   299,   300,   301,   303,   312,   316,   320,   327,   336,
+     340,   345,   350,   357,   362,   368,   384,   403,   422,   446,
+     451,   454,   455,   462,   466,   470,   474,   478,   482,   486,
+     490,   497,   501,   509,   514,   522,   526,   532,   533,   540,
+     541,   549,   553,   558,   562,   566,   573,   579,   588,   592
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || 1
+/** Accessing symbol of state STATE.  */
+#define YY_ACCESSING_SYMBOL(State) YY_CAST (yysymbol_kind_t, yystos[State])
+
+#if 1
+/* The user-facing name of the symbol whose (internal) number is
+   YYSYMBOL.  No bounds checking.  */
+static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
+
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "OR", "AND", "EQ", "NE", "LE", "GE",
-  "LT", "GT", "LIKE", "IS", "PLUS", "MINUS", "MUL_OR_STAR", "DIV",
-  "INTDIV", "MOD", "CONCAT", "POW", "NOT", "IN", "BETWEEN", "SELECT",
-  "ALL", "DISTINCT", "CAST", "AS", "JOIN", "FROM", "ON", "USING", "WHERE",
-  "ORDER", "BY", "ASC", "DESC", "LEFT", "RIGHT", "INNER", "OUTER", "CROSS",
-  "FULL", "NATURAL", "UNION", "NUMBER_FLOAT", "NUMBER_INT", "NUMBER_INT64",
-  "BOOLEAN", "NULLVALUE", "STRING", "IDENTIFIER", "COMMA",
-  "Unknown_CHARACTER", "UMINUS", "'('", "')'", "'.'", "$accept", "root",
-  "expr", "column_name", "expr_list", "expr_non_logical", "select_type",
-  "select_statement", "selected_column_list", "selected_column",
-  "as_clause", "opt_where", "join_qualifier", "join", "using_list",
-  "join_list", "opt_joins", "opt_order_by", "sort_spec_list", "sort_spec",
-  "table_def", "table_list", YY_NULLPTR
+  "\"end of file\"", "error", "\"invalid token\"", "OR", "AND", "EQ",
+  "NE", "LE", "GE", "LT", "GT", "LIKE", "IS", "PLUS", "MINUS",
+  "MUL_OR_STAR", "DIV", "INTDIV", "MOD", "CONCAT", "POW", "NOT", "IN",
+  "BETWEEN", "SELECT", "ALL", "DISTINCT", "CAST", "AS", "JOIN", "FROM",
+  "ON", "USING", "WHERE", "ORDER", "BY", "ASC", "DESC", "LEFT", "RIGHT",
+  "INNER", "OUTER", "CROSS", "FULL", "NATURAL", "UNION", "NUMBER_FLOAT",
+  "NUMBER_INT", "NUMBER_INT64", "BOOLEAN", "NULLVALUE", "STRING",
+  "IDENTIFIER", "COMMA", "Unknown_CHARACTER", "UMINUS", "'('", "')'",
+  "'.'", "$accept", "root", "expr", "column_name", "expr_list",
+  "expr_non_logical", "select_type", "select_statement",
+  "selected_column_list", "selected_column", "as_clause", "opt_where",
+  "join_qualifier", "join", "using_list", "join_list", "opt_joins",
+  "opt_order_by", "sort_spec_list", "sort_spec", "table_def", "table_list", YY_NULLPTR
 };
+
+static const char *
+yysymbol_name (yysymbol_kind_t yysymbol)
+{
+  return yytname[yysymbol];
+}
 #endif
 
-# ifdef YYPRINT
-/* YYTOKNUM[NUM] -- (External) token number corresponding to the
-   (internal) symbol number NUM (which must be that of a token).  */
-static const yytype_int16 yytoknum[] =
-{
-       0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-     275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
-     285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
-     295,   296,   297,   298,   299,   300,   301,   302,   303,   304,
-     305,   306,   307,   308,   309,   310,    40,    41,    46
-};
-# endif
-
-#define YYPACT_NINF (-93)
+#define YYPACT_NINF (-99)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -707,206 +697,215 @@ static const yytype_int16 yytoknum[] =
 #define yytable_value_is_error(Yyn) \
   0
 
-  /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
-     STATE-NUM.  */
+/* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
+   STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-      -6,    29,    15,   166,   -93,   -93,   -93,   -93,    45,    45,
-     -93,   177,    20,   -93,   -93,   -93,   -93,   -93,   -93,   -46,
-     177,   100,   -93,   305,   -24,   -93,    59,   -93,   -93,   285,
-     177,   111,   -10,    57,   177,   177,   177,   177,   177,   177,
-     177,   177,   177,   177,    96,    25,    45,    46,   -93,   -93,
-      45,    45,    45,    45,    45,    45,    45,    45,    61,   166,
-     126,    64,   231,    70,    79,   -93,   257,   -44,   -93,   -93,
-     -93,   277,   285,   -93,   -93,   -93,   -93,   -93,   -93,   -93,
-     -93,    80,    45,   177,    69,   -93,   229,   229,   110,   110,
-     110,   110,   -93,   110,    -9,   -93,   157,   -93,    92,    -9,
-      90,    93,   177,   -93,   177,   297,     0,    45,   -93,   -93,
-     -15,   -13,   120,   122,   125,    61,    61,   -93,   -18,   123,
-      98,   -93,    -9,   257,    17,    45,   -93,   305,   -93,   135,
-     -93,   136,   -93,   -93,   -93,   -93,   102,   -93,   177,   132,
-     -93,   -93,   -93,   305,   -93,   -93,   177,   113,   257,   149,
-     -93,   257,   118,    79,   -93,    18,   105,   139,   -93,   119,
-     -93,   -93,   -93,    79,   -93,   -93
+     164,    13,    13,   219,    -2,   -40,   -99,   -99,   -99,   -99,
+     -99,   -99,   -41,   219,    10,   298,   -99,   346,   179,   -99,
+     -99,   -99,   326,   -99,   -99,   219,   124,   -23,    74,   -99,
+     219,   219,   219,   219,   219,   219,   219,   219,   219,   219,
+      45,    32,    13,    13,    13,    13,    13,    13,    13,    13,
+      13,   -99,    -1,    98,   -11,   -99,   251,   -99,   298,   -46,
+     -99,   -99,   318,   326,   -99,   -99,   -99,   -99,   -99,   -99,
+     -99,   -99,    38,    13,   219,   278,    55,    55,    79,    79,
+      79,    79,   -99,    79,   109,    -9,    59,   -99,   -99,    63,
+     179,    66,   219,   -99,   219,   338,     1,    13,    68,    77,
+     -99,   -99,    -8,   -99,   247,   -99,    75,   298,    34,    13,
+     -99,   346,    -8,    76,    83,   -99,   -99,   -27,   -20,   104,
+     110,   112,    63,    63,   -99,   205,   111,   -99,   -99,   346,
+     -99,    -8,   -99,   114,   -99,   117,   -99,   -99,   -99,   -99,
+      82,   -99,   219,   115,   -99,   -99,   -99,   219,    92,   298,
+     118,   -99,   298,   100,    77,   -99,    36,    80,   101,   -99,
+     116,   -99,   -99,   -99,    77,   -99,   -99
 };
 
-  /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
-     Performed when YYTABLE does not specify something else to do.  Zero
-     means the default is an error.  */
+/* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
+   Performed when YYTABLE does not specify something else to do.  Zero
+   means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,    44,     0,     0,     2,    45,    46,     1,     0,     0,
-      52,     0,     0,    23,    24,    25,    26,    28,    27,    19,
-       0,    50,    29,     3,     0,    49,    19,    41,    42,    14,
+       0,     0,     0,     0,    45,     0,    24,    25,    26,    27,
+      29,    28,    20,     0,     0,     3,    30,     4,     0,     2,
+      42,    43,    15,    46,    47,     0,     0,     0,     0,     1,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,    59,    51,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,    32,    22,     0,    53,    20,
-      30,     5,     4,     6,     7,     8,     9,    10,    11,    12,
-      13,     0,     0,     0,     0,    58,    33,    34,    35,    37,
-      36,    38,    40,    39,    85,    88,    76,    48,     0,    54,
-      19,     0,     0,    31,     0,     0,     0,     0,    86,    62,
-       0,     0,     0,     0,     0,     0,     0,    74,    77,    60,
-       0,    55,    56,    21,     0,     0,    15,    17,    63,     0,
-      65,     0,    69,    68,    67,    87,     0,    75,     0,    78,
-      43,    57,    16,    18,    64,    66,     0,     0,    61,     0,
-      47,    70,     0,     0,    72,     0,    82,    79,    81,     0,
-      71,    83,    84,     0,    73,    80
+       0,    53,    20,    51,     0,    50,     0,    33,    23,     0,
+      21,    31,     6,     5,     7,     8,     9,    10,    11,    12,
+      13,    14,     0,     0,     0,     0,    34,    35,    36,    38,
+      37,    39,    41,    40,     0,     0,     0,    60,    52,     0,
+       0,     0,     0,    32,     0,     0,     0,     0,     0,     0,
+      54,    59,    86,    89,    77,    49,     0,    22,     0,     0,
+      16,    18,    55,    20,     0,    87,    63,     0,     0,     0,
+       0,     0,     0,     0,    75,    78,    61,    44,    17,    19,
+      56,    57,    64,     0,    66,     0,    70,    69,    68,    88,
+       0,    76,     0,    79,    58,    65,    67,     0,     0,    62,
+       0,    48,    71,     0,     0,    73,     0,    83,    80,    82,
+       0,    72,    84,    85,     0,    74,    81
 };
 
-  /* YYPGOTO[NTERM-NUM].  */
-static const yytype_int16 yypgoto[] =
+/* YYPGOTO[NTERM-NUM].  */
+static const yytype_int8 yypgoto[] =
 {
-     -93,   -93,    -3,   -63,   -60,    -5,   -93,   -93,   -93,   129,
-     -92,   -93,   -93,    67,   -93,   -93,   -93,   -93,   -93,    26,
-      30,   -93
+     -99,   -99,     0,   -98,   -66,     3,   -99,   -99,   -99,    72,
+     -90,   -99,   -99,    39,   -99,   -99,   -99,   -99,   -99,    15,
+       5,   -99
 };
 
-  /* YYDEFGOTO[NTERM-NUM].  */
-static const yytype_int16 yydefgoto[] =
+/* YYDEFGOTO[NTERM-NUM].  */
+static const yytype_uint8 yydefgoto[] =
 {
-      -1,     2,    66,    22,    67,    23,     3,     4,    24,    25,
-      49,   139,   116,   117,   155,   118,   119,   150,   157,   158,
-      95,    96
+       0,    14,    58,    16,    59,    17,    18,    19,    54,    55,
+      88,   143,   123,   124,   156,   125,   126,   151,   158,   159,
+     103,   104
 };
 
-  /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
-     positive, shift that token.  If negative, reduce the rule whose
-     number is the opposite.  If YYTABLE_NINF, syntax error.  */
+/* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
+   positive, shift that token.  If negative, reduce the rule whose
+   number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
-      21,   101,   108,    27,    28,    68,    58,   121,    29,   102,
-      31,   109,    32,   103,   128,     7,   130,    33,     1,    47,
-     110,   111,   112,   106,   113,   114,   129,    62,   131,    59,
-     141,    71,    72,    73,    74,    75,    76,    77,    78,    79,
-      80,    84,    69,    48,   124,    86,    87,    88,    89,    90,
-      91,    92,    93,   102,     5,     6,    21,   126,     8,     9,
-      34,    35,    36,    37,    38,    39,    40,    41,    42,    43,
-     102,   159,    12,   107,   142,   160,    30,   105,    44,    45,
-      46,    83,    50,    51,    52,    53,    54,    55,    56,    57,
-     156,    13,    14,    15,    16,    17,    18,    26,    85,   123,
-     156,    20,   127,    34,    35,    36,    37,    38,    39,    40,
-      41,    42,    43,    94,    70,    60,    69,    61,    81,    82,
-     143,    44,    45,    46,     8,     9,    63,    99,    47,    56,
-      57,   100,    11,   146,   147,   148,   104,    64,    12,     8,
-       9,   161,   162,   151,   120,   135,   136,    11,    61,   132,
-     122,   133,    48,    12,   134,   140,   138,    13,    14,    15,
-      16,    17,    18,    26,   144,   145,   149,    20,    65,   152,
-     154,   164,    13,    14,    15,    16,    17,    18,    26,     8,
-       9,    10,    20,    65,   153,   137,   109,    11,    97,   165,
-       8,     9,   163,    12,     0,   110,   111,   112,    11,   113,
-     114,     0,     0,     0,    12,     0,     0,     0,     0,     0,
-     115,     0,    13,    14,    15,    16,    17,    18,    19,     0,
-       0,     0,    20,    13,    14,    15,    16,    17,    18,    26,
-       0,     0,     0,    20,    34,    35,    36,    37,    38,    39,
-      40,    41,    42,    43,    52,    53,    54,    55,    56,    57,
-       0,     0,    44,    45,    46,     0,     0,     0,     0,    98,
-      34,    35,    36,    37,    38,    39,    40,    41,    42,    43,
-       0,     0,     0,     0,     0,     0,     0,     0,    44,    45,
-      46,    35,    36,    37,    38,    39,    40,    41,    42,    43,
-      36,    37,    38,    39,    40,    41,    42,    43,    44,    45,
-      46,   125,     0,     0,     0,     0,    44,    45,    46,     0,
-      50,    51,    52,    53,    54,    55,    56,    57,    50,    51,
-      52,    53,    54,    55,    56,    57
+      15,   114,   132,    22,    20,    21,   100,    92,    96,   134,
+      29,    93,   115,    28,   133,    26,    25,    27,    53,    89,
+      86,   135,   130,    23,    24,    56,     1,     2,   108,    60,
+      62,    63,    64,    65,    66,    67,    68,    69,    70,    71,
+       5,   144,    90,    60,    87,    75,    76,    77,    78,    79,
+      80,    81,    82,    83,    92,    84,   157,    85,   110,     6,
+       7,     8,     9,    10,    11,    12,   157,    72,    73,    13,
+      45,    46,    47,    48,    49,    50,    95,    30,    31,    32,
+      33,    34,    35,    36,    37,    38,    39,    92,    74,   160,
+      53,   128,   107,   161,    94,    40,    41,    42,    49,    50,
+     111,    30,    31,    32,    33,    34,    35,    36,    37,    38,
+      39,   101,   129,   147,   148,   102,   162,   163,   106,    40,
+      41,    42,     1,     2,    98,   112,    86,   139,   140,   113,
+       3,    61,   127,   136,    27,    99,     5,     1,     2,   137,
+     131,   138,   149,   145,   142,     3,   146,   152,   153,   150,
+      87,     5,   155,   154,   164,     6,     7,     8,     9,    10,
+      11,    12,   105,     0,   141,    13,    57,     0,   165,     0,
+       6,     7,     8,     9,    10,    11,    12,     1,     2,   166,
+      13,    57,     0,     0,     0,     3,     0,     0,     4,     0,
+       0,     5,     1,     2,    51,     0,     0,     0,     0,     0,
+       3,     0,     0,     0,     0,     0,     5,     0,     0,     0,
+       6,     7,     8,     9,    10,    11,    12,     0,     0,     0,
+      13,     0,     0,     0,     0,     6,     7,     8,     9,    10,
+      11,    52,     1,     2,   116,    13,     0,     0,     0,     0,
+       3,     0,     0,   117,   118,   119,     5,   120,   121,     0,
+       0,     0,     0,     0,    30,    31,    32,    33,    34,    35,
+      36,    37,    38,    39,     0,     6,     7,     8,     9,    10,
+      11,    12,    40,    41,    42,    13,   116,     0,     0,    91,
+       0,     0,    97,     0,     0,   117,   118,   119,     0,   120,
+     121,    43,    44,    45,    46,    47,    48,    49,    50,     0,
+     122,    30,    31,    32,    33,    34,    35,    36,    37,    38,
+      39,     0,     0,     0,     0,     0,     0,     0,     0,    40,
+      41,    42,    31,    32,    33,    34,    35,    36,    37,    38,
+      39,    32,    33,    34,    35,    36,    37,    38,    39,    40,
+      41,    42,   109,     0,     0,     0,     0,    40,    41,    42,
+       0,    43,    44,    45,    46,    47,    48,    49,    50,    43,
+      44,    45,    46,    47,    48,    49,    50
 };
 
 static const yytype_int16 yycheck[] =
 {
-       3,    64,    94,     8,     9,    15,    30,    99,    11,    53,
-      56,    29,    58,    57,    29,     0,    29,    20,    24,    28,
-      38,    39,    40,    83,    42,    43,    41,    30,    41,    53,
-     122,    34,    35,    36,    37,    38,    39,    40,    41,    42,
-      43,    46,    52,    52,   104,    50,    51,    52,    53,    54,
-      55,    56,    57,    53,    25,    26,    59,    57,    13,    14,
-       3,     4,     5,     6,     7,     8,     9,    10,    11,    12,
-      53,    53,    27,     4,    57,    57,    56,    82,    21,    22,
-      23,    56,    13,    14,    15,    16,    17,    18,    19,    20,
-     153,    46,    47,    48,    49,    50,    51,    52,    52,   102,
-     163,    56,   107,     3,     4,     5,     6,     7,     8,     9,
-      10,    11,    12,    52,    57,    56,    52,    58,    22,    23,
-     125,    21,    22,    23,    13,    14,    15,    57,    28,    19,
-      20,    52,    21,    31,    32,   138,    56,    26,    27,    13,
-      14,    36,    37,   146,    52,   115,   116,    21,    58,    29,
-      57,    29,    52,    27,    29,    57,    33,    46,    47,    48,
-      49,    50,    51,    52,    29,    29,    34,    56,    57,    56,
-      52,    52,    46,    47,    48,    49,    50,    51,    52,    13,
-      14,    15,    56,    57,    35,   118,    29,    21,    59,   163,
-      13,    14,    53,    27,    -1,    38,    39,    40,    21,    42,
-      43,    -1,    -1,    -1,    27,    -1,    -1,    -1,    -1,    -1,
-      53,    -1,    46,    47,    48,    49,    50,    51,    52,    -1,
-      -1,    -1,    56,    46,    47,    48,    49,    50,    51,    52,
-      -1,    -1,    -1,    56,     3,     4,     5,     6,     7,     8,
-       9,    10,    11,    12,    15,    16,    17,    18,    19,    20,
-      -1,    -1,    21,    22,    23,    -1,    -1,    -1,    -1,    28,
-       3,     4,     5,     6,     7,     8,     9,    10,    11,    12,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    21,    22,
-      23,     4,     5,     6,     7,     8,     9,    10,    11,    12,
-       5,     6,     7,     8,     9,    10,    11,    12,    21,    22,
-      23,     4,    -1,    -1,    -1,    -1,    21,    22,    23,    -1,
-      13,    14,    15,    16,    17,    18,    19,    20,    13,    14,
-      15,    16,    17,    18,    19,    20
+       0,    99,    29,     3,     1,     2,    15,    53,    74,    29,
+       0,    57,   102,    13,    41,    56,    56,    58,    18,    30,
+      28,    41,   112,    25,    26,    25,    13,    14,    94,    52,
+      30,    31,    32,    33,    34,    35,    36,    37,    38,    39,
+      27,   131,    53,    52,    52,    42,    43,    44,    45,    46,
+      47,    48,    49,    50,    53,    56,   154,    58,    57,    46,
+      47,    48,    49,    50,    51,    52,   164,    22,    23,    56,
+      15,    16,    17,    18,    19,    20,    73,     3,     4,     5,
+       6,     7,     8,     9,    10,    11,    12,    53,    56,    53,
+      90,    57,    92,    57,    56,    21,    22,    23,    19,    20,
+      97,     3,     4,     5,     6,     7,     8,     9,    10,    11,
+      12,    52,   109,    31,    32,    52,    36,    37,    52,    21,
+      22,    23,    13,    14,    15,    57,    28,   122,   123,    52,
+      21,    57,    57,    29,    58,    26,    27,    13,    14,    29,
+      57,    29,   142,    29,    33,    21,    29,   147,    56,    34,
+      52,    27,    52,    35,    53,    46,    47,    48,    49,    50,
+      51,    52,    90,    -1,   125,    56,    57,    -1,    52,    -1,
+      46,    47,    48,    49,    50,    51,    52,    13,    14,   164,
+      56,    57,    -1,    -1,    -1,    21,    -1,    -1,    24,    -1,
+      -1,    27,    13,    14,    15,    -1,    -1,    -1,    -1,    -1,
+      21,    -1,    -1,    -1,    -1,    -1,    27,    -1,    -1,    -1,
+      46,    47,    48,    49,    50,    51,    52,    -1,    -1,    -1,
+      56,    -1,    -1,    -1,    -1,    46,    47,    48,    49,    50,
+      51,    52,    13,    14,    29,    56,    -1,    -1,    -1,    -1,
+      21,    -1,    -1,    38,    39,    40,    27,    42,    43,    -1,
+      -1,    -1,    -1,    -1,     3,     4,     5,     6,     7,     8,
+       9,    10,    11,    12,    -1,    46,    47,    48,    49,    50,
+      51,    52,    21,    22,    23,    56,    29,    -1,    -1,    28,
+      -1,    -1,     4,    -1,    -1,    38,    39,    40,    -1,    42,
+      43,    13,    14,    15,    16,    17,    18,    19,    20,    -1,
+      53,     3,     4,     5,     6,     7,     8,     9,    10,    11,
+      12,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    21,
+      22,    23,     4,     5,     6,     7,     8,     9,    10,    11,
+      12,     5,     6,     7,     8,     9,    10,    11,    12,    21,
+      22,    23,     4,    -1,    -1,    -1,    -1,    21,    22,    23,
+      -1,    13,    14,    15,    16,    17,    18,    19,    20,    13,
+      14,    15,    16,    17,    18,    19,    20
 };
 
-  /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
-     symbol of state STATE-NUM.  */
+/* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
+   state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,    24,    60,    65,    66,    25,    26,     0,    13,    14,
-      15,    21,    27,    46,    47,    48,    49,    50,    51,    52,
-      56,    61,    62,    64,    67,    68,    52,    64,    64,    61,
-      56,    56,    58,    61,     3,     4,     5,     6,     7,     8,
-       9,    10,    11,    12,    21,    22,    23,    28,    52,    69,
-      13,    14,    15,    16,    17,    18,    19,    20,    30,    53,
-      56,    58,    61,    15,    26,    57,    61,    63,    15,    52,
-      57,    61,    61,    61,    61,    61,    61,    61,    61,    61,
-      61,    22,    23,    56,    64,    52,    64,    64,    64,    64,
-      64,    64,    64,    64,    52,    79,    80,    68,    28,    57,
-      52,    62,    53,    57,    56,    64,    63,     4,    69,    29,
-      38,    39,    40,    42,    43,    53,    71,    72,    74,    75,
-      52,    69,    57,    61,    63,     4,    57,    64,    29,    41,
-      29,    41,    29,    29,    29,    79,    79,    72,    33,    70,
-      57,    69,    57,    64,    29,    29,    31,    32,    61,    34,
-      76,    61,    56,    35,    52,    73,    62,    77,    78,    53,
-      57,    36,    37,    53,    52,    78
+       0,    13,    14,    21,    24,    27,    46,    47,    48,    49,
+      50,    51,    52,    56,    60,    61,    62,    64,    65,    66,
+      64,    64,    61,    25,    26,    56,    56,    58,    61,     0,
+       3,     4,     5,     6,     7,     8,     9,    10,    11,    12,
+      21,    22,    23,    13,    14,    15,    16,    17,    18,    19,
+      20,    15,    52,    61,    67,    68,    61,    57,    61,    63,
+      52,    57,    61,    61,    61,    61,    61,    61,    61,    61,
+      61,    61,    22,    23,    56,    64,    64,    64,    64,    64,
+      64,    64,    64,    64,    56,    58,    28,    52,    69,    30,
+      53,    28,    53,    57,    56,    64,    63,     4,    15,    26,
+      15,    52,    52,    79,    80,    68,    52,    61,    63,     4,
+      57,    64,    57,    52,    62,    69,    29,    38,    39,    40,
+      42,    43,    53,    71,    72,    74,    75,    57,    57,    64,
+      69,    57,    29,    41,    29,    41,    29,    29,    29,    79,
+      79,    72,    33,    70,    69,    29,    29,    31,    32,    61,
+      34,    76,    61,    56,    35,    52,    73,    62,    77,    78,
+      53,    57,    36,    37,    53,    52,    78
 };
 
-  /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
+/* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    59,    60,    61,    61,    61,    61,    61,    61,    61,
-      61,    61,    61,    61,    61,    61,    61,    61,    61,    62,
-      62,    63,    63,    64,    64,    64,    64,    64,    64,    64,
+       0,    59,    60,    60,    61,    61,    61,    61,    61,    61,
+      61,    61,    61,    61,    61,    61,    61,    61,    61,    61,
+      62,    62,    63,    63,    64,    64,    64,    64,    64,    64,
       64,    64,    64,    64,    64,    64,    64,    64,    64,    64,
-      64,    64,    64,    64,    65,    65,    65,    66,    67,    67,
-      68,    68,    68,    68,    68,    68,    68,    68,    69,    69,
-      70,    70,    71,    71,    71,    71,    71,    71,    71,    71,
-      72,    72,    73,    73,    74,    74,    75,    75,    76,    76,
-      77,    77,    78,    78,    78,    79,    79,    80,    80
+      64,    64,    64,    64,    64,    65,    65,    65,    66,    67,
+      67,    68,    68,    68,    68,    68,    68,    68,    68,    69,
+      69,    70,    70,    71,    71,    71,    71,    71,    71,    71,
+      71,    72,    72,    73,    73,    74,    74,    75,    75,    76,
+      76,    77,    77,    78,    78,    78,    79,    79,    80,    80
 };
 
-  /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
+/* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     1,     1,     3,     3,     3,     3,     3,     3,
-       3,     3,     3,     3,     2,     5,     6,     5,     6,     1,
-       3,     3,     1,     1,     1,     1,     1,     1,     1,     1,
-       3,     4,     3,     3,     3,     3,     3,     3,     3,     3,
-       3,     2,     2,     6,     1,     2,     2,     7,     3,     1,
-       1,     2,     1,     3,     4,     5,     5,     6,     2,     1,
-       0,     2,     1,     2,     3,     2,     3,     2,     2,     2,
-       4,     6,     1,     3,     1,     2,     0,     1,     0,     3,
-       3,     1,     1,     2,     2,     1,     2,     3,     1
+       0,     2,     1,     1,     1,     3,     3,     3,     3,     3,
+       3,     3,     3,     3,     3,     2,     5,     6,     5,     6,
+       1,     3,     3,     1,     1,     1,     1,     1,     1,     1,
+       1,     3,     4,     3,     3,     3,     3,     3,     3,     3,
+       3,     3,     2,     2,     6,     1,     2,     2,     7,     3,
+       1,     1,     2,     1,     3,     4,     5,     5,     6,     2,
+       1,     0,     2,     1,     2,     3,     2,     3,     2,     2,
+       2,     4,     6,     1,     3,     1,     2,     0,     1,     0,
+       3,     3,     1,     1,     2,     2,     1,     2,     3,     1
 };
 
+
+enum { YYENOMEM = -2 };
 
 #define yyerrok         (yyerrstatus = 0)
 #define yyclearin       (yychar = YYEMPTY)
-#define YYEMPTY         (-2)
-#define YYEOF           0
 
 #define YYACCEPT        goto yyacceptlab
 #define YYABORT         goto yyabortlab
 #define YYERROR         goto yyerrorlab
+#define YYNOMEM         goto yyexhaustedlab
 
 
 #define YYRECOVERING()  (!!yyerrstatus)
@@ -928,10 +927,9 @@ static const yytype_int8 yyr2[] =
       }                                                           \
   while (0)
 
-/* Error token number */
-#define YYTERROR        1
-#define YYERRCODE       256
-
+/* Backward compatibility with an undocumented macro.
+   Use YYerror or YYUNDEF. */
+#define YYERRCODE YYUNDEF
 
 
 /* Enable debugging if requested.  */
@@ -948,19 +946,16 @@ do {                                            \
     YYFPRINTF Args;                             \
 } while (0)
 
-/* This macro is provided for backward compatibility. */
-#ifndef YY_LOCATION_PRINT
-# define YY_LOCATION_PRINT(File, Loc) ((void) 0)
-#endif
 
 
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)                    \
+
+# define YY_SYMBOL_PRINT(Title, Kind, Value, Location)                    \
 do {                                                                      \
   if (yydebug)                                                            \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Type, Value, parser_ctx); \
+                  Kind, Value, parser_ctx); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -971,19 +966,16 @@ do {                                                                      \
 `-----------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep, sqlstatement_parser_context* parser_ctx)
+yy_symbol_value_print (FILE *yyo,
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, sqlstatement_parser_context* parser_ctx)
 {
   FILE *yyoutput = yyo;
-  YYUSE (yyoutput);
-  YYUSE (parser_ctx);
+  YY_USE (yyoutput);
+  YY_USE (parser_ctx);
   if (!yyvaluep)
     return;
-# ifdef YYPRINT
-  if (yytype < YYNTOKENS)
-    YYPRINT (yyo, yytoknum[yytype], *yyvaluep);
-# endif
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yytype);
+  YY_USE (yykind);
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
@@ -993,12 +985,13 @@ yy_symbol_value_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep, sq
 `---------------------------*/
 
 static void
-yy_symbol_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep, sqlstatement_parser_context* parser_ctx)
+yy_symbol_print (FILE *yyo,
+                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, sqlstatement_parser_context* parser_ctx)
 {
   YYFPRINTF (yyo, "%s %s (",
-             yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
+             yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
 
-  yy_symbol_value_print (yyo, yytype, yyvaluep, parser_ctx);
+  yy_symbol_value_print (yyo, yykind, yyvaluep, parser_ctx);
   YYFPRINTF (yyo, ")");
 }
 
@@ -1031,7 +1024,8 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp, int yyrule, sqlstatement_parser_context* parser_ctx)
+yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
+                 int yyrule, sqlstatement_parser_context* parser_ctx)
 {
   int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -1043,9 +1037,8 @@ yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp, int yyrule, sqlstatement_par
     {
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr,
-                       yystos[+yyssp[yyi + 1 - yynrhs]],
-                       &yyvsp[(yyi + 1) - (yynrhs)]
-                                              , parser_ctx);
+                       YY_ACCESSING_SYMBOL (+yyssp[yyi + 1 - yynrhs]),
+                       &yyvsp[(yyi + 1) - (yynrhs)], parser_ctx);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -1060,8 +1053,8 @@ do {                                    \
    multiple parsers can coexist.  */
 int yydebug;
 #else /* !YYDEBUG */
-# define YYDPRINTF(Args)
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)
+# define YYDPRINTF(Args) ((void) 0)
+# define YY_SYMBOL_PRINT(Title, Kind, Value, Location)
 # define YY_STACK_PRINT(Bottom, Top)
 # define YY_REDUCE_PRINT(Rule)
 #endif /* !YYDEBUG */
@@ -1084,12 +1077,60 @@ int yydebug;
 #endif
 
 
-#if YYERROR_VERBOSE
+/* Context of a parse error.  */
+typedef struct
+{
+  yy_state_t *yyssp;
+  yysymbol_kind_t yytoken;
+} yypcontext_t;
 
-# ifndef yystrlen
-#  if defined __GLIBC__ && defined _STRING_H
-#   define yystrlen(S) (YY_CAST (YYPTRDIFF_T, strlen (S)))
-#  else
+/* Put in YYARG at most YYARGN of the expected tokens given the
+   current YYCTX, and return the number of tokens stored in YYARG.  If
+   YYARG is null, return the number of expected tokens (guaranteed to
+   be less than YYNTOKENS).  Return YYENOMEM on memory exhaustion.
+   Return 0 if there are more than YYARGN expected tokens, yet fill
+   YYARG up to YYARGN. */
+static int
+yypcontext_expected_tokens (const yypcontext_t *yyctx,
+                            yysymbol_kind_t yyarg[], int yyargn)
+{
+  /* Actual size of YYARG. */
+  int yycount = 0;
+  int yyn = yypact[+*yyctx->yyssp];
+  if (!yypact_value_is_default (yyn))
+    {
+      /* Start YYX at -YYN if negative to avoid negative indexes in
+         YYCHECK.  In other words, skip the first -YYN actions for
+         this state because they are default actions.  */
+      int yyxbegin = yyn < 0 ? -yyn : 0;
+      /* Stay within bounds of both yycheck and yytname.  */
+      int yychecklim = YYLAST - yyn + 1;
+      int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
+      int yyx;
+      for (yyx = yyxbegin; yyx < yyxend; ++yyx)
+        if (yycheck[yyx + yyn] == yyx && yyx != YYSYMBOL_YYerror
+            && !yytable_value_is_error (yytable[yyx + yyn]))
+          {
+            if (!yyarg)
+              ++yycount;
+            else if (yycount == yyargn)
+              return 0;
+            else
+              yyarg[yycount++] = YY_CAST (yysymbol_kind_t, yyx);
+          }
+    }
+  if (yyarg && yycount == 0 && 0 < yyargn)
+    yyarg[0] = YYSYMBOL_YYEMPTY;
+  return yycount;
+}
+
+
+
+
+#ifndef yystrlen
+# if defined __GLIBC__ && defined _STRING_H
+#  define yystrlen(S) (YY_CAST (YYPTRDIFF_T, strlen (S)))
+# else
 /* Return the length of YYSTR.  */
 static YYPTRDIFF_T
 yystrlen (const char *yystr)
@@ -1099,13 +1140,13 @@ yystrlen (const char *yystr)
     continue;
   return yylen;
 }
-#  endif
 # endif
+#endif
 
-# ifndef yystpcpy
-#  if defined __GLIBC__ && defined _STRING_H && defined _GNU_SOURCE
-#   define yystpcpy stpcpy
-#  else
+#ifndef yystpcpy
+# if defined __GLIBC__ && defined _STRING_H && defined _GNU_SOURCE
+#  define yystpcpy stpcpy
+# else
 /* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
    YYDEST.  */
 static char *
@@ -1119,10 +1160,10 @@ yystpcpy (char *yydest, const char *yysrc)
 
   return yyd - 1;
 }
-#  endif
 # endif
+#endif
 
-# ifndef yytnamerr
+#ifndef yytnamerr
 /* Copy to YYRES the contents of YYSTR after stripping away unnecessary
    quotes and backslashes, so that it's suitable for yyerror.  The
    heuristic is that double-quoting is unnecessary unless the string
@@ -1137,7 +1178,6 @@ yytnamerr (char *yyres, const char *yystr)
     {
       YYPTRDIFF_T yyn = 0;
       char const *yyp = yystr;
-
       for (;;)
         switch (*++yyp)
           {
@@ -1171,31 +1211,15 @@ yytnamerr (char *yyres, const char *yystr)
   else
     return yystrlen (yystr);
 }
-# endif
+#endif
 
-/* Copy into *YYMSG, which is of size *YYMSG_ALLOC, an error message
-   about the unexpected token YYTOKEN for the state stack whose top is
-   YYSSP.
 
-   Return 0 if *YYMSG was successfully written.  Return 1 if *YYMSG is
-   not large enough to hold the message.  In that case, also set
-   *YYMSG_ALLOC to the required number of bytes.  Return 2 if the
-   required number of bytes is too large to store.  */
 static int
-yysyntax_error (YYPTRDIFF_T *yymsg_alloc, char **yymsg,
-                yy_state_t *yyssp, int yytoken)
+yy_syntax_error_arguments (const yypcontext_t *yyctx,
+                           yysymbol_kind_t yyarg[], int yyargn)
 {
-  enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
-  /* Internationalized format string. */
-  const char *yyformat = YY_NULLPTR;
-  /* Arguments of yyformat: reported tokens (one for the "unexpected",
-     one per "expected"). */
-  char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
   /* Actual size of YYARG. */
   int yycount = 0;
-  /* Cumulated lengths of YYARG.  */
-  YYPTRDIFF_T yysize = 0;
-
   /* There are many possibilities here to consider:
      - If this state is a consistent state with a default action, then
        the only way this function was invoked is if the default action
@@ -1219,52 +1243,54 @@ yysyntax_error (YYPTRDIFF_T *yymsg_alloc, char **yymsg,
        one exception: it will still contain any token that will not be
        accepted due to an error action in a later state.
   */
-  if (yytoken != YYEMPTY)
+  if (yyctx->yytoken != YYSYMBOL_YYEMPTY)
     {
-      int yyn = yypact[+*yyssp];
-      YYPTRDIFF_T yysize0 = yytnamerr (YY_NULLPTR, yytname[yytoken]);
-      yysize = yysize0;
-      yyarg[yycount++] = yytname[yytoken];
-      if (!yypact_value_is_default (yyn))
-        {
-          /* Start YYX at -YYN if negative to avoid negative indexes in
-             YYCHECK.  In other words, skip the first -YYN actions for
-             this state because they are default actions.  */
-          int yyxbegin = yyn < 0 ? -yyn : 0;
-          /* Stay within bounds of both yycheck and yytname.  */
-          int yychecklim = YYLAST - yyn + 1;
-          int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-          int yyx;
-
-          for (yyx = yyxbegin; yyx < yyxend; ++yyx)
-            if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR
-                && !yytable_value_is_error (yytable[yyx + yyn]))
-              {
-                if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
-                  {
-                    yycount = 1;
-                    yysize = yysize0;
-                    break;
-                  }
-                yyarg[yycount++] = yytname[yyx];
-                {
-                  YYPTRDIFF_T yysize1
-                    = yysize + yytnamerr (YY_NULLPTR, yytname[yyx]);
-                  if (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM)
-                    yysize = yysize1;
-                  else
-                    return 2;
-                }
-              }
-        }
+      int yyn;
+      if (yyarg)
+        yyarg[yycount] = yyctx->yytoken;
+      ++yycount;
+      yyn = yypcontext_expected_tokens (yyctx,
+                                        yyarg ? yyarg + 1 : yyarg, yyargn - 1);
+      if (yyn == YYENOMEM)
+        return YYENOMEM;
+      else
+        yycount += yyn;
     }
+  return yycount;
+}
+
+/* Copy into *YYMSG, which is of size *YYMSG_ALLOC, an error message
+   about the unexpected token YYTOKEN for the state stack whose top is
+   YYSSP.
+
+   Return 0 if *YYMSG was successfully written.  Return -1 if *YYMSG is
+   not large enough to hold the message.  In that case, also set
+   *YYMSG_ALLOC to the required number of bytes.  Return YYENOMEM if the
+   required number of bytes is too large to store.  */
+static int
+yysyntax_error (YYPTRDIFF_T *yymsg_alloc, char **yymsg,
+                const yypcontext_t *yyctx)
+{
+  enum { YYARGS_MAX = 5 };
+  /* Internationalized format string. */
+  const char *yyformat = YY_NULLPTR;
+  /* Arguments of yyformat: reported tokens (one for the "unexpected",
+     one per "expected"). */
+  yysymbol_kind_t yyarg[YYARGS_MAX];
+  /* Cumulated lengths of YYARG.  */
+  YYPTRDIFF_T yysize = 0;
+
+  /* Actual size of YYARG. */
+  int yycount = yy_syntax_error_arguments (yyctx, yyarg, YYARGS_MAX);
+  if (yycount == YYENOMEM)
+    return YYENOMEM;
 
   switch (yycount)
     {
-# define YYCASE_(N, S)                      \
+#define YYCASE_(N, S)                       \
       case N:                               \
         yyformat = S;                       \
-      break
+        break
     default: /* Avoid compiler warnings. */
       YYCASE_(0, YY_("syntax error"));
       YYCASE_(1, YY_("syntax error, unexpected %s"));
@@ -1272,17 +1298,23 @@ yysyntax_error (YYPTRDIFF_T *yymsg_alloc, char **yymsg,
       YYCASE_(3, YY_("syntax error, unexpected %s, expecting %s or %s"));
       YYCASE_(4, YY_("syntax error, unexpected %s, expecting %s or %s or %s"));
       YYCASE_(5, YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s"));
-# undef YYCASE_
+#undef YYCASE_
     }
 
+  /* Compute error message size.  Don't count the "%s"s, but reserve
+     room for the terminator.  */
+  yysize = yystrlen (yyformat) - 2 * yycount + 1;
   {
-    /* Don't count the "%s"s in the final size, but reserve room for
-       the terminator.  */
-    YYPTRDIFF_T yysize1 = yysize + (yystrlen (yyformat) - 2 * yycount) + 1;
-    if (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM)
-      yysize = yysize1;
-    else
-      return 2;
+    int yyi;
+    for (yyi = 0; yyi < yycount; ++yyi)
+      {
+        YYPTRDIFF_T yysize1
+          = yysize + yytnamerr (YY_NULLPTR, yytname[yyarg[yyi]]);
+        if (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM)
+          yysize = yysize1;
+        else
+          return YYENOMEM;
+      }
   }
 
   if (*yymsg_alloc < yysize)
@@ -1291,7 +1323,7 @@ yysyntax_error (YYPTRDIFF_T *yymsg_alloc, char **yymsg,
       if (! (yysize <= *yymsg_alloc
              && *yymsg_alloc <= YYSTACK_ALLOC_MAXIMUM))
         *yymsg_alloc = YYSTACK_ALLOC_MAXIMUM;
-      return 1;
+      return -1;
     }
 
   /* Avoid sprintf, as that infringes on the user's name space.
@@ -1303,7 +1335,7 @@ yysyntax_error (YYPTRDIFF_T *yymsg_alloc, char **yymsg,
     while ((*yyp = *yyformat) != '\0')
       if (*yyp == '%' && yyformat[1] == 's' && yyi < yycount)
         {
-          yyp += yytnamerr (yyp, yyarg[yyi++]);
+          yyp += yytnamerr (yyp, yytname[yyarg[yyi++]]);
           yyformat += 2;
         }
       else
@@ -1314,124 +1346,125 @@ yysyntax_error (YYPTRDIFF_T *yymsg_alloc, char **yymsg,
   }
   return 0;
 }
-#endif /* YYERROR_VERBOSE */
+
 
 /*-----------------------------------------------.
 | Release the memory associated to this symbol.  |
 `-----------------------------------------------*/
 
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, sqlstatement_parser_context* parser_ctx)
+yydestruct (const char *yymsg,
+            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, sqlstatement_parser_context* parser_ctx)
 {
-  YYUSE (yyvaluep);
-  YYUSE (parser_ctx);
+  YY_USE (yyvaluep);
+  YY_USE (parser_ctx);
   if (!yymsg)
     yymsg = "Deleting";
-  YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
+  YY_SYMBOL_PRINT (yymsg, yykind, yyvaluep, yylocationp);
 
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  switch (yytype)
+  switch (yykind)
     {
-    case 51: /* STRING  */
-#line 191 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_STRING: /* STRING  */
+#line 193 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).text); }
-#line 1339 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1372 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 52: /* IDENTIFIER  */
-#line 191 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_IDENTIFIER: /* IDENTIFIER  */
+#line 193 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).text); }
-#line 1345 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1378 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 61: /* expr  */
-#line 188 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_expr: /* expr  */
+#line 190 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).node); }
-#line 1351 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1384 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 62: /* column_name  */
-#line 190 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_column_name: /* column_name  */
+#line 192 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).nodecolumnref); }
-#line 1357 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1390 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 63: /* expr_list  */
-#line 189 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_expr_list: /* expr_list  */
+#line 191 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).nodelist); }
-#line 1363 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1396 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 64: /* expr_non_logical  */
-#line 188 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_expr_non_logical: /* expr_non_logical  */
+#line 190 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).node); }
-#line 1369 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1402 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 66: /* select_statement  */
-#line 193 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_select_statement: /* select_statement  */
+#line 195 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).nodeselect); }
-#line 1375 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1408 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 67: /* selected_column_list  */
-#line 198 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_selected_column_list: /* selected_column_list  */
+#line 200 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { qDeleteAll(*((*yyvaluep).selectedcolumnlist)); delete ((*yyvaluep).selectedcolumnlist); }
-#line 1381 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1414 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 68: /* selected_column  */
-#line 194 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_selected_column: /* selected_column  */
+#line 196 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).nodeselectedcolumn); }
-#line 1387 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1420 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 69: /* as_clause  */
-#line 191 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_as_clause: /* as_clause  */
+#line 193 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).text); }
-#line 1393 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1426 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 72: /* join  */
-#line 196 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_join: /* join  */
+#line 198 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).nodejoin); }
-#line 1399 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1432 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 73: /* using_list  */
-#line 197 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_using_list: /* using_list  */
+#line 199 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).usinglist); }
-#line 1405 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1438 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 74: /* join_list  */
-#line 200 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_join_list: /* join_list  */
+#line 202 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { qDeleteAll(*((*yyvaluep).joinlist)); delete ((*yyvaluep).joinlist); }
-#line 1411 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1444 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 77: /* sort_spec_list  */
-#line 199 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_sort_spec_list: /* sort_spec_list  */
+#line 201 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { qDeleteAll(*((*yyvaluep).columnsortedlist)); delete ((*yyvaluep).columnsortedlist); }
-#line 1417 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1450 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 78: /* sort_spec  */
-#line 195 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_sort_spec: /* sort_spec  */
+#line 197 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).nodecolumnsorted); }
-#line 1423 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1456 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 79: /* table_def  */
-#line 192 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_table_def: /* table_def  */
+#line 194 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).nodetabledef); }
-#line 1429 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1462 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
-    case 80: /* table_list  */
-#line 201 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+    case YYSYMBOL_table_list: /* table_list  */
+#line 203 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
             { qDeleteAll(*((*yyvaluep).tablelist)); delete ((*yyvaluep).tablelist); }
-#line 1435 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1468 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
         break;
 
       default:
@@ -1443,6 +1476,8 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, sqlstatement_parse
 
 
 
+
+
 /*----------.
 | yyparse.  |
 `----------*/
@@ -1450,7 +1485,7 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, sqlstatement_parse
 int
 yyparse (sqlstatement_parser_context* parser_ctx)
 {
-/* The lookahead symbol.  */
+/* Lookahead token kind.  */
 int yychar;
 
 
@@ -1461,45 +1496,41 @@ YY_INITIAL_VALUE (static YYSTYPE yyval_default;)
 YYSTYPE yylval YY_INITIAL_VALUE (= yyval_default);
 
     /* Number of syntax errors so far.  */
-    int yynerrs;
+    int yynerrs = 0;
 
-    yy_state_fast_t yystate;
+    yy_state_fast_t yystate = 0;
     /* Number of tokens to shift before error messages enabled.  */
-    int yyerrstatus;
+    int yyerrstatus = 0;
 
-    /* The stacks and their tools:
-       'yyss': related to states.
-       'yyvs': related to semantic values.
-
-       Refer to the stacks through separate pointers, to allow yyoverflow
+    /* Refer to the stacks through separate pointers, to allow yyoverflow
        to reallocate them elsewhere.  */
 
-    /* The state stack.  */
+    /* Their size.  */
+    YYPTRDIFF_T yystacksize = YYINITDEPTH;
+
+    /* The state stack: array, bottom, top.  */
     yy_state_t yyssa[YYINITDEPTH];
-    yy_state_t *yyss;
-    yy_state_t *yyssp;
+    yy_state_t *yyss = yyssa;
+    yy_state_t *yyssp = yyss;
 
-    /* The semantic value stack.  */
+    /* The semantic value stack: array, bottom, top.  */
     YYSTYPE yyvsa[YYINITDEPTH];
-    YYSTYPE *yyvs;
-    YYSTYPE *yyvsp;
-
-    YYPTRDIFF_T yystacksize;
+    YYSTYPE *yyvs = yyvsa;
+    YYSTYPE *yyvsp = yyvs;
 
   int yyn;
+  /* The return value of yyparse.  */
   int yyresult;
-  /* Lookahead token as an internal (translated) token number.  */
-  int yytoken = 0;
+  /* Lookahead symbol kind.  */
+  yysymbol_kind_t yytoken = YYSYMBOL_YYEMPTY;
   /* The variables used to return semantic value and location from the
      action routines.  */
   YYSTYPE yyval;
 
-#if YYERROR_VERBOSE
   /* Buffer for error messages, and its allocated size.  */
   char yymsgbuf[128];
   char *yymsg = yymsgbuf;
   YYPTRDIFF_T yymsg_alloc = sizeof yymsgbuf;
-#endif
 
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
 
@@ -1507,16 +1538,10 @@ YYSTYPE yylval YY_INITIAL_VALUE (= yyval_default);
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
 
-  yyssp = yyss = yyssa;
-  yyvsp = yyvs = yyvsa;
-  yystacksize = YYINITDEPTH;
-
   YYDPRINTF ((stderr, "Starting parse\n"));
 
-  yystate = 0;
-  yyerrstatus = 0;
-  yynerrs = 0;
   yychar = YYEMPTY; /* Cause a token to be read.  */
+
   goto yysetstate;
 
 
@@ -1538,10 +1563,11 @@ yysetstate:
   YY_IGNORE_USELESS_CAST_BEGIN
   *yyssp = YY_CAST (yy_state_t, yystate);
   YY_IGNORE_USELESS_CAST_END
+  YY_STACK_PRINT (yyss, yyssp);
 
   if (yyss + yystacksize - 1 <= yyssp)
 #if !defined yyoverflow && !defined YYSTACK_RELOCATE
-    goto yyexhaustedlab;
+    YYNOMEM;
 #else
     {
       /* Get the current used size of the three stacks, in elements.  */
@@ -1569,7 +1595,7 @@ yysetstate:
 # else /* defined YYSTACK_RELOCATE */
       /* Extend the stack our own way.  */
       if (YYMAXDEPTH <= yystacksize)
-        goto yyexhaustedlab;
+        YYNOMEM;
       yystacksize *= 2;
       if (YYMAXDEPTH < yystacksize)
         yystacksize = YYMAXDEPTH;
@@ -1580,10 +1606,10 @@ yysetstate:
           YY_CAST (union yyalloc *,
                    YYSTACK_ALLOC (YY_CAST (YYSIZE_T, YYSTACK_BYTES (yystacksize))));
         if (! yyptr)
-          goto yyexhaustedlab;
+          YYNOMEM;
         YYSTACK_RELOCATE (yyss_alloc, yyss);
         YYSTACK_RELOCATE (yyvs_alloc, yyvs);
-# undef YYSTACK_RELOCATE
+#  undef YYSTACK_RELOCATE
         if (yyss1 != yyssa)
           YYSTACK_FREE (yyss1);
       }
@@ -1601,6 +1627,7 @@ yysetstate:
         YYABORT;
     }
 #endif /* !defined yyoverflow && !defined YYSTACK_RELOCATE */
+
 
   if (yystate == YYFINAL)
     YYACCEPT;
@@ -1622,17 +1649,28 @@ yybackup:
 
   /* Not known => get a lookahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
+  /* YYCHAR is either empty, or end-of-input, or a valid lookahead.  */
   if (yychar == YYEMPTY)
     {
-      YYDPRINTF ((stderr, "Reading a token: "));
+      YYDPRINTF ((stderr, "Reading a token\n"));
       yychar = yylex (&yylval, scanner);
     }
 
   if (yychar <= YYEOF)
     {
-      yychar = yytoken = YYEOF;
+      yychar = YYEOF;
+      yytoken = YYSYMBOL_YYEOF;
       YYDPRINTF ((stderr, "Now at end of input.\n"));
+    }
+  else if (yychar == YYerror)
+    {
+      /* The scanner already issued an error message, process directly
+         to error recovery.  But do not keep the error token as
+         lookahead, it is too special and may lead us to an endless
+         loop in error recovery. */
+      yychar = YYUNDEF;
+      yytoken = YYSYMBOL_YYerror;
+      goto yyerrlab1;
     }
   else
     {
@@ -1702,365 +1740,371 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-  case 2:
-#line 205 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 2: /* root: select_statement  */
+#line 207 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                        { parser_ctx->rootNode = (yyvsp[0].nodeselect); }
-#line 1709 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1747 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 3:
-#line 213 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 3: /* root: expr  */
+#line 208 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+             { parser_ctx->expression = (yyvsp[0].node); }
+#line 1753 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+    break;
+
+  case 4: /* expr: expr_non_logical  */
+#line 216 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.node) = (yyvsp[0].node);
         }
-#line 1717 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1761 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 4:
-#line 217 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 5: /* expr: expr AND expr  */
+#line 220 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1723 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1767 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 5:
-#line 218 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 6: /* expr: expr OR expr  */
+#line 221 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1729 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1773 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 6:
-#line 219 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 7: /* expr: expr EQ expr  */
+#line 222 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1735 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1779 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 7:
-#line 220 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 8: /* expr: expr NE expr  */
+#line 223 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1741 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1785 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 8:
-#line 221 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 9: /* expr: expr LE expr  */
+#line 224 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1747 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1791 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 9:
-#line 222 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 10: /* expr: expr GE expr  */
+#line 225 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1753 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1797 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 10:
-#line 223 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 11: /* expr: expr LT expr  */
+#line 226 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1759 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1803 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 11:
-#line 224 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 12: /* expr: expr GT expr  */
+#line 227 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1765 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1809 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 12:
-#line 225 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 13: /* expr: expr LIKE expr  */
+#line 228 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1771 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1815 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 13:
-#line 226 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 14: /* expr: expr IS expr  */
+#line 229 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1777 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1821 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 14:
-#line 227 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 15: /* expr: NOT expr  */
+#line 230 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                 { (yyval.node) = new QgsSQLStatement::NodeUnaryOperator((yyvsp[-1].u_op), (yyvsp[0].node)); }
-#line 1783 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1827 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 15:
-#line 229 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 16: /* expr: expr IN '(' expr_list ')'  */
+#line 232 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                     { (yyval.node) = new QgsSQLStatement::NodeInOperator((yyvsp[-4].node), (yyvsp[-1].nodelist), false);  }
-#line 1789 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1833 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 16:
-#line 230 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 17: /* expr: expr NOT IN '(' expr_list ')'  */
+#line 233 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                     { (yyval.node) = new QgsSQLStatement::NodeInOperator((yyvsp[-5].node), (yyvsp[-1].nodelist), true); }
-#line 1795 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1839 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 17:
-#line 232 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 18: /* expr: expr BETWEEN expr_non_logical AND expr_non_logical  */
+#line 235 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                                              { (yyval.node) = new QgsSQLStatement::NodeBetweenOperator((yyvsp[-4].node), (yyvsp[-2].node), (yyvsp[0].node), false);  }
-#line 1801 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1845 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 18:
-#line 233 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 19: /* expr: expr NOT BETWEEN expr_non_logical AND expr_non_logical  */
+#line 236 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                                                  { (yyval.node) = new QgsSQLStatement::NodeBetweenOperator((yyvsp[-5].node), (yyvsp[-2].node), (yyvsp[0].node), true);  }
-#line 1807 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1851 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 19:
-#line 239 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 20: /* column_name: IDENTIFIER  */
+#line 242 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodecolumnref) = new QgsSQLStatement::NodeColumnRef( *(yyvsp[0].text), false );
             delete (yyvsp[0].text);
         }
-#line 1816 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1860 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 20:
-#line 245 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 21: /* column_name: IDENTIFIER '.' IDENTIFIER  */
+#line 248 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodecolumnref) = new QgsSQLStatement::NodeColumnRef( *(yyvsp[-2].text), *(yyvsp[0].text), false );
             delete (yyvsp[-2].text);
             delete (yyvsp[0].text);
         }
-#line 1826 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1870 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 21:
-#line 254 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 22: /* expr_list: expr_list COMMA expr  */
+#line 257 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
        {
           (yyval.nodelist) = (yyvsp[-2].nodelist); (yyvsp[-2].nodelist)->append((yyvsp[0].node));
        }
-#line 1834 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1878 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 22:
-#line 257 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 23: /* expr_list: expr  */
+#line 260 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                         { (yyval.nodelist) = new QgsSQLStatement::NodeList(); (yyval.nodelist)->append((yyvsp[0].node)); }
-#line 1840 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1884 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 23:
-#line 263 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 24: /* expr_non_logical: NUMBER_FLOAT  */
+#line 266 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                   { (yyval.node) = new QgsSQLStatement::NodeLiteral( QVariant((yyvsp[0].numberFloat)) ); }
-#line 1846 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1890 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 24:
-#line 264 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 25: /* expr_non_logical: NUMBER_INT  */
+#line 267 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                   { (yyval.node) = new QgsSQLStatement::NodeLiteral( QVariant((yyvsp[0].numberInt)) ); }
-#line 1852 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1896 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 25:
-#line 265 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 26: /* expr_non_logical: NUMBER_INT64  */
+#line 268 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                   { (yyval.node) = new QgsSQLStatement::NodeLiteral( QVariant((yyvsp[0].numberInt64)) ); }
-#line 1858 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1902 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 26:
-#line 266 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 27: /* expr_non_logical: BOOLEAN  */
+#line 269 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                   { (yyval.node) = new QgsSQLStatement::NodeLiteral( QVariant((yyvsp[0].boolVal)) ); }
-#line 1864 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1908 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 27:
-#line 267 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 28: /* expr_non_logical: STRING  */
+#line 270 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                   { (yyval.node) = new QgsSQLStatement::NodeLiteral( QVariant(*(yyvsp[0].text)) ); delete (yyvsp[0].text); }
-#line 1870 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1914 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 28:
-#line 268 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 29: /* expr_non_logical: NULLVALUE  */
+#line 271 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                   { (yyval.node) = new QgsSQLStatement::NodeLiteral( QVariant() ); }
-#line 1876 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1920 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 29:
-#line 271 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 30: /* expr_non_logical: column_name  */
+#line 274 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.node) = (yyvsp[0].nodecolumnref);
         }
-#line 1884 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1928 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 30:
-#line 275 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 31: /* expr_non_logical: '(' expr ')'  */
+#line 278 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                 { (yyval.node) = (yyvsp[-1].node); }
-#line 1890 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1934 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 31:
-#line 278 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 32: /* expr_non_logical: IDENTIFIER '(' expr_list ')'  */
+#line 281 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
           (yyval.node) = new QgsSQLStatement::NodeFunction(*(yyvsp[-3].text), (yyvsp[-1].nodelist));
           delete (yyvsp[-3].text);
         }
-#line 1899 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1943 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 32:
-#line 284 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 33: /* expr_non_logical: IDENTIFIER '(' ')'  */
+#line 287 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
           (yyval.node) = new QgsSQLStatement::NodeFunction(*(yyvsp[-2].text), new QgsSQLStatement::NodeList());
           delete (yyvsp[-2].text);
         }
-#line 1908 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1952 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 33:
-#line 289 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 34: /* expr_non_logical: expr_non_logical PLUS expr_non_logical  */
+#line 292 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                                   { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1914 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1958 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 34:
-#line 290 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 35: /* expr_non_logical: expr_non_logical MINUS expr_non_logical  */
+#line 293 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                                   { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1920 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1964 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 35:
-#line 291 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 36: /* expr_non_logical: expr_non_logical MUL_OR_STAR expr_non_logical  */
+#line 294 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                                     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1926 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1970 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 36:
-#line 292 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 37: /* expr_non_logical: expr_non_logical INTDIV expr_non_logical  */
+#line 295 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                                   { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1932 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1976 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 37:
-#line 293 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 38: /* expr_non_logical: expr_non_logical DIV expr_non_logical  */
+#line 296 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                                   { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1938 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1982 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 38:
-#line 294 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 39: /* expr_non_logical: expr_non_logical MOD expr_non_logical  */
+#line 297 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                                   { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1944 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1988 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 39:
-#line 295 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 40: /* expr_non_logical: expr_non_logical POW expr_non_logical  */
+#line 298 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                                   { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1950 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 1994 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 40:
-#line 296 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 41: /* expr_non_logical: expr_non_logical CONCAT expr_non_logical  */
+#line 299 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                                   { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1956 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2000 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 41:
-#line 297 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 42: /* expr_non_logical: PLUS expr_non_logical  */
+#line 300 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                          { (yyval.node) = (yyvsp[0].node); }
-#line 1962 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2006 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 42:
-#line 298 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 43: /* expr_non_logical: MINUS expr_non_logical  */
+#line 301 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
                                           { (yyval.node) = new QgsSQLStatement::NodeUnaryOperator( QgsSQLStatement::uoMinus, (yyvsp[0].node)); }
-#line 1968 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2012 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 43:
-#line 301 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 44: /* expr_non_logical: CAST '(' expr AS IDENTIFIER ')'  */
+#line 304 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.node) = new QgsSQLStatement::NodeCast((yyvsp[-3].node), *(yyvsp[-1].text));
             delete (yyvsp[-1].text);
         }
-#line 1977 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2021 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 44:
-#line 310 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 45: /* select_type: SELECT  */
+#line 313 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.boolVal) = false;
         }
-#line 1985 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2029 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 45:
-#line 314 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 46: /* select_type: SELECT ALL  */
+#line 317 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.boolVal) = false;
         }
-#line 1993 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2037 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 46:
-#line 318 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 47: /* select_type: SELECT DISTINCT  */
+#line 321 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.boolVal) = true;
         }
-#line 2001 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2045 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 47:
-#line 325 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 48: /* select_statement: select_type selected_column_list FROM table_list opt_joins opt_where opt_order_by  */
+#line 328 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodeselect) = new QgsSQLStatement::NodeSelect(*(yyvsp[-3].tablelist), *(yyvsp[-5].selectedcolumnlist), (yyvsp[-6].boolVal));
             delete (yyvsp[-5].selectedcolumnlist);
             delete (yyvsp[-3].tablelist);
         }
-#line 2011 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2055 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 48:
-#line 334 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 49: /* selected_column_list: selected_column_list COMMA selected_column  */
+#line 337 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
        {
           (yyval.selectedcolumnlist) = (yyvsp[-2].selectedcolumnlist); (yyvsp[-2].selectedcolumnlist)->append((yyvsp[0].nodeselectedcolumn));
        }
-#line 2019 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2063 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 49:
-#line 338 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 50: /* selected_column_list: selected_column  */
+#line 341 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
       { (yyval.selectedcolumnlist) = new QList<QgsSQLStatement::NodeSelectedColumn*>(); (yyval.selectedcolumnlist)->append((yyvsp[0].nodeselectedcolumn)); }
-#line 2025 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2069 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 50:
-#line 343 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 51: /* selected_column: expr  */
+#line 346 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodeselectedcolumn) = new QgsSQLStatement::NodeSelectedColumn((yyvsp[0].node));
         }
-#line 2033 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2077 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 51:
-#line 348 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 52: /* selected_column: expr as_clause  */
+#line 351 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodeselectedcolumn) = new QgsSQLStatement::NodeSelectedColumn((yyvsp[-1].node));
             (yyval.nodeselectedcolumn)->setAlias(*(yyvsp[0].text));
             delete (yyvsp[0].text);
         }
-#line 2043 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2087 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 52:
-#line 355 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 53: /* selected_column: MUL_OR_STAR  */
+#line 358 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodeselectedcolumn) = new QgsSQLStatement::NodeSelectedColumn( new QgsSQLStatement::NodeColumnRef("*", true) );
         }
-#line 2051 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2095 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 53:
-#line 360 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 54: /* selected_column: IDENTIFIER '.' MUL_OR_STAR  */
+#line 363 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodeselectedcolumn) = new QgsSQLStatement::NodeSelectedColumn( new QgsSQLStatement::NodeColumnRef(*(yyvsp[-2].text), "*", true) );
             delete (yyvsp[-2].text);
         }
-#line 2060 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2104 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 54:
-#line 366 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 55: /* selected_column: IDENTIFIER '(' MUL_OR_STAR ')'  */
+#line 369 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             // special case for COUNT(*), confirm it.
             if( (yyvsp[-3].text)->compare("COUNT", Qt::CaseInsensitive) != 0 )
@@ -2075,11 +2119,11 @@ yyreduce:
             (yyval.nodeselectedcolumn) = new QgsSQLStatement::NodeSelectedColumn(
                     new QgsSQLStatement::NodeFunction( "COUNT", nodeList) );
         }
-#line 2079 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2123 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 55:
-#line 382 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 56: /* selected_column: IDENTIFIER '(' MUL_OR_STAR ')' as_clause  */
+#line 385 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             // special case for COUNT(*), confirm it.
             if( (yyvsp[-4].text)->compare("COUNT", Qt::CaseInsensitive) != 0 )
@@ -2097,11 +2141,11 @@ yyreduce:
             (yyval.nodeselectedcolumn)->setAlias(*(yyvsp[0].text));
             delete (yyvsp[0].text);
         }
-#line 2101 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2145 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 56:
-#line 401 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 57: /* selected_column: IDENTIFIER '(' DISTINCT column_name ')'  */
+#line 404 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             // special case for COUNT(DISTINCT x), confirm it.
             if( (yyvsp[-4].text)->compare("COUNT", Qt::CaseInsensitive) != 0 )
@@ -2119,11 +2163,11 @@ yyreduce:
             (yyval.nodeselectedcolumn) = new QgsSQLStatement::NodeSelectedColumn(
                     new QgsSQLStatement::NodeFunction( "COUNT", nodeList) );
         }
-#line 2123 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2167 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 57:
-#line 420 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 58: /* selected_column: IDENTIFIER '(' DISTINCT column_name ')' as_clause  */
+#line 423 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             // special case for COUNT(DISTINCT x), confirm it.
             if( (yyvsp[-5].text)->compare("COUNT", Qt::CaseInsensitive) != 0 )
@@ -2144,231 +2188,231 @@ yyreduce:
             (yyval.nodeselectedcolumn)->setAlias(*(yyvsp[0].text));
             delete (yyvsp[0].text);
         }
-#line 2148 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2192 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 58:
-#line 444 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 59: /* as_clause: AS IDENTIFIER  */
+#line 447 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.text) = (yyvsp[0].text);
         }
-#line 2156 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2200 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 61:
-#line 453 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 62: /* opt_where: WHERE expr  */
+#line 456 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             parser_ctx->setWhere((yyvsp[0].node));
         }
-#line 2164 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2208 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 62:
-#line 460 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 63: /* join_qualifier: JOIN  */
+#line 463 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtDefault;
         }
-#line 2172 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2216 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 63:
-#line 464 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 64: /* join_qualifier: LEFT JOIN  */
+#line 467 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtLeft;
         }
-#line 2180 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2224 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 64:
-#line 468 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 65: /* join_qualifier: LEFT OUTER JOIN  */
+#line 471 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtLeftOuter;
         }
-#line 2188 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2232 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 65:
-#line 472 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 66: /* join_qualifier: RIGHT JOIN  */
+#line 475 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtRight;
         }
-#line 2196 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2240 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 66:
-#line 476 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 67: /* join_qualifier: RIGHT OUTER JOIN  */
+#line 479 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtRightOuter;
         }
-#line 2204 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2248 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 67:
-#line 480 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 68: /* join_qualifier: FULL JOIN  */
+#line 483 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtFull;
         }
-#line 2212 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2256 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 68:
-#line 484 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 69: /* join_qualifier: CROSS JOIN  */
+#line 487 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtCross;
         }
-#line 2220 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2264 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 69:
-#line 488 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 70: /* join_qualifier: INNER JOIN  */
+#line 491 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtInner;
         }
-#line 2228 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2272 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 70:
-#line 495 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 71: /* join: join_qualifier table_def ON expr  */
+#line 498 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodejoin) = new QgsSQLStatement::NodeJoin((yyvsp[-2].nodetabledef), (yyvsp[0].node), (yyvsp[-3].jointype));
         }
-#line 2236 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2280 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 71:
-#line 499 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 72: /* join: join_qualifier table_def USING '(' using_list ')'  */
+#line 502 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodejoin) = new QgsSQLStatement::NodeJoin((yyvsp[-4].nodetabledef), *(yyvsp[-1].usinglist), (yyvsp[-5].jointype));
             delete (yyvsp[-1].usinglist);
         }
-#line 2245 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2289 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 72:
-#line 507 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 73: /* using_list: IDENTIFIER  */
+#line 510 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
           (yyval.usinglist) = new QList<QString>(); (yyval.usinglist)->push_back(*(yyvsp[0].text));
           delete (yyvsp[0].text);
         }
-#line 2254 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2298 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 73:
-#line 512 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 74: /* using_list: using_list COMMA IDENTIFIER  */
+#line 515 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
           (yyval.usinglist) = (yyvsp[-2].usinglist); (yyvsp[-2].usinglist)->push_back(*(yyvsp[0].text));
           delete (yyvsp[0].text);
         }
-#line 2263 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2307 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 74:
-#line 520 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 75: /* join_list: join  */
+#line 523 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
           (yyval.joinlist) = new QList<QgsSQLStatement::NodeJoin*>(); (yyval.joinlist)->push_back((yyvsp[0].nodejoin));
         }
-#line 2271 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2315 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 75:
-#line 524 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 76: /* join_list: join_list join  */
+#line 527 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
           (yyval.joinlist) = (yyvsp[-1].joinlist); (yyvsp[-1].joinlist)->push_back((yyvsp[0].nodejoin));
         }
-#line 2279 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2323 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 77:
-#line 531 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 78: /* opt_joins: join_list  */
+#line 534 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             parser_ctx->setJoins( *(yyvsp[0].joinlist) );
             delete (yyvsp[0].joinlist);
         }
-#line 2288 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2332 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 79:
-#line 539 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 80: /* opt_order_by: ORDER BY sort_spec_list  */
+#line 542 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
       {
           parser_ctx->setOrderBy(*(yyvsp[0].columnsortedlist));
           delete (yyvsp[0].columnsortedlist);
       }
-#line 2297 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2341 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 80:
-#line 547 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 81: /* sort_spec_list: sort_spec_list COMMA sort_spec  */
+#line 550 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
        {
           (yyval.columnsortedlist) = (yyvsp[-2].columnsortedlist); (yyvsp[-2].columnsortedlist)->push_back((yyvsp[0].nodecolumnsorted));
        }
-#line 2305 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2349 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 81:
-#line 551 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 82: /* sort_spec_list: sort_spec  */
+#line 554 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
       { (yyval.columnsortedlist) = new QList<QgsSQLStatement::NodeColumnSorted*>(); (yyval.columnsortedlist)->push_back((yyvsp[0].nodecolumnsorted)); }
-#line 2311 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2355 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 82:
-#line 556 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 83: /* sort_spec: column_name  */
+#line 559 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodecolumnsorted) = new QgsSQLStatement::NodeColumnSorted( (yyvsp[0].nodecolumnref), true );
         }
-#line 2319 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2363 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 83:
-#line 560 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 84: /* sort_spec: column_name ASC  */
+#line 563 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodecolumnsorted) = new QgsSQLStatement::NodeColumnSorted( (yyvsp[-1].nodecolumnref), true );
         }
-#line 2327 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2371 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 84:
-#line 564 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 85: /* sort_spec: column_name DESC  */
+#line 567 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodecolumnsorted) = new QgsSQLStatement::NodeColumnSorted( (yyvsp[-1].nodecolumnref), false );
         }
-#line 2335 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2379 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 85:
-#line 571 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 86: /* table_def: IDENTIFIER  */
+#line 574 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
     {
         (yyval.nodetabledef) = new QgsSQLStatement::NodeTableDef(*(yyvsp[0].text));
         delete (yyvsp[0].text);
     }
-#line 2344 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2388 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 86:
-#line 577 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 87: /* table_def: IDENTIFIER as_clause  */
+#line 580 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
     {
         (yyval.nodetabledef) = new QgsSQLStatement::NodeTableDef(*(yyvsp[-1].text), *(yyvsp[0].text));
         delete (yyvsp[-1].text);
         delete (yyvsp[0].text);
     }
-#line 2354 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2398 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 87:
-#line 586 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 88: /* table_list: table_list COMMA table_def  */
+#line 589 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
        {
           (yyval.tablelist) = (yyvsp[-2].tablelist); (yyvsp[-2].tablelist)->push_back((yyvsp[0].nodetabledef));
        }
-#line 2362 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2406 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 88:
-#line 590 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+  case 89: /* table_list: table_def  */
+#line 593 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
       { (yyval.tablelist) = new QList<QgsSQLStatement::NodeTableDef*>(); (yyval.tablelist)->push_back((yyvsp[0].nodetabledef)); }
-#line 2368 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2412 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
     break;
 
 
-#line 2372 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.cpp"
+#line 2416 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
 
       default: break;
     }
@@ -2383,11 +2427,10 @@ yyreduce:
      case of YYERROR or YYBACKUP, subsequent parser actions might lead
      to an incorrect destructor call or verbose syntax error message
      before the lookahead is translated.  */
-  YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
+  YY_SYMBOL_PRINT ("-> $$ =", YY_CAST (yysymbol_kind_t, yyr1[yyn]), &yyval, &yyloc);
 
   YYPOPSTACK (yylen);
   yylen = 0;
-  YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
 
@@ -2411,49 +2454,43 @@ yyreduce:
 yyerrlab:
   /* Make sure we have latest lookahead translation.  See comments at
      user semantic actions for why this is necessary.  */
-  yytoken = yychar == YYEMPTY ? YYEMPTY : YYTRANSLATE (yychar);
-
+  yytoken = yychar == YYEMPTY ? YYSYMBOL_YYEMPTY : YYTRANSLATE (yychar);
   /* If not already recovering from an error, report this error.  */
   if (!yyerrstatus)
     {
       ++yynerrs;
-#if ! YYERROR_VERBOSE
-      yyerror (parser_ctx, YY_("syntax error"));
-#else
-# define YYSYNTAX_ERROR yysyntax_error (&yymsg_alloc, &yymsg, \
-                                        yyssp, yytoken)
       {
+        yypcontext_t yyctx
+          = {yyssp, yytoken};
         char const *yymsgp = YY_("syntax error");
         int yysyntax_error_status;
-        yysyntax_error_status = YYSYNTAX_ERROR;
+        yysyntax_error_status = yysyntax_error (&yymsg_alloc, &yymsg, &yyctx);
         if (yysyntax_error_status == 0)
           yymsgp = yymsg;
-        else if (yysyntax_error_status == 1)
+        else if (yysyntax_error_status == -1)
           {
             if (yymsg != yymsgbuf)
               YYSTACK_FREE (yymsg);
-            yymsg = YY_CAST (char *, YYSTACK_ALLOC (YY_CAST (YYSIZE_T, yymsg_alloc)));
-            if (!yymsg)
+            yymsg = YY_CAST (char *,
+                             YYSTACK_ALLOC (YY_CAST (YYSIZE_T, yymsg_alloc)));
+            if (yymsg)
               {
-                yymsg = yymsgbuf;
-                yymsg_alloc = sizeof yymsgbuf;
-                yysyntax_error_status = 2;
+                yysyntax_error_status
+                  = yysyntax_error (&yymsg_alloc, &yymsg, &yyctx);
+                yymsgp = yymsg;
               }
             else
               {
-                yysyntax_error_status = YYSYNTAX_ERROR;
-                yymsgp = yymsg;
+                yymsg = yymsgbuf;
+                yymsg_alloc = sizeof yymsgbuf;
+                yysyntax_error_status = YYENOMEM;
               }
           }
         yyerror (parser_ctx, yymsgp);
-        if (yysyntax_error_status == 2)
-          goto yyexhaustedlab;
+        if (yysyntax_error_status == YYENOMEM)
+          YYNOMEM;
       }
-# undef YYSYNTAX_ERROR
-#endif
     }
-
-
 
   if (yyerrstatus == 3)
     {
@@ -2487,6 +2524,7 @@ yyerrorlab:
      label yyerrorlab therefore never appears in user code.  */
   if (0)
     YYERROR;
+  ++yynerrs;
 
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYERROR.  */
@@ -2503,13 +2541,14 @@ yyerrorlab:
 yyerrlab1:
   yyerrstatus = 3;      /* Each real token shifted decrements this.  */
 
+  /* Pop stack until we find a state that shifts the error token.  */
   for (;;)
     {
       yyn = yypact[yystate];
       if (!yypact_value_is_default (yyn))
         {
-          yyn += YYTERROR;
-          if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYTERROR)
+          yyn += YYSYMBOL_YYerror;
+          if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYSYMBOL_YYerror)
             {
               yyn = yytable[yyn];
               if (0 < yyn)
@@ -2523,7 +2562,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-                  yystos[yystate], yyvsp, parser_ctx);
+                  YY_ACCESSING_SYMBOL (yystate), yyvsp, parser_ctx);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -2535,7 +2574,7 @@ yyerrlab1:
 
 
   /* Shift the error token.  */
-  YY_SYMBOL_PRINT ("Shifting", yystos[yyn], yyvsp, yylsp);
+  YY_SYMBOL_PRINT ("Shifting", YY_ACCESSING_SYMBOL (yyn), yyvsp, yylsp);
 
   yystate = yyn;
   goto yynewstate;
@@ -2546,7 +2585,7 @@ yyerrlab1:
 `-------------------------------------*/
 yyacceptlab:
   yyresult = 0;
-  goto yyreturn;
+  goto yyreturnlab;
 
 
 /*-----------------------------------.
@@ -2554,24 +2593,22 @@ yyacceptlab:
 `-----------------------------------*/
 yyabortlab:
   yyresult = 1;
-  goto yyreturn;
+  goto yyreturnlab;
 
 
-#if !defined yyoverflow || YYERROR_VERBOSE
-/*-------------------------------------------------.
-| yyexhaustedlab -- memory exhaustion comes here.  |
-`-------------------------------------------------*/
+/*-----------------------------------------------------------.
+| yyexhaustedlab -- YYNOMEM (memory exhaustion) comes here.  |
+`-----------------------------------------------------------*/
 yyexhaustedlab:
   yyerror (parser_ctx, YY_("memory exhausted"));
   yyresult = 2;
-  /* Fall through.  */
-#endif
+  goto yyreturnlab;
 
 
-/*-----------------------------------------------------.
-| yyreturn -- parsing is finished, return the result.  |
-`-----------------------------------------------------*/
-yyreturn:
+/*----------------------------------------------------------.
+| yyreturnlab -- parsing is finished, clean up and return.  |
+`----------------------------------------------------------*/
+yyreturnlab:
   if (yychar != YYEMPTY)
     {
       /* Make sure we have latest lookahead translation.  See comments at
@@ -2587,25 +2624,24 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  yystos[+*yyssp], yyvsp, parser_ctx);
+                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp, parser_ctx);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
   if (yyss != yyssa)
     YYSTACK_FREE (yyss);
 #endif
-#if YYERROR_VERBOSE
   if (yymsg != yymsgbuf)
     YYSTACK_FREE (yymsg);
-#endif
   return yyresult;
 }
-#line 593 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementparser.yy"
+
+#line 596 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
 
 
 
 // returns parsed tree, otherwise returns nullptr and sets parserErrorMsg
-QgsSQLStatement::Node* parse(const QString& str, QString& parserErrorMsg)
+QgsSQLStatement::Node* parse(const QString& str, QString& parserErrorMsg, bool allowFragments )
 {
   sqlstatement_parser_context ctx;
   ctx.rootNode = 0;
@@ -2616,16 +2652,32 @@ QgsSQLStatement::Node* parse(const QString& str, QString& parserErrorMsg)
   sqlstatement_lex_destroy(ctx.flex_scanner);
 
   // list should be empty when parsing was OK
-  if (res == 0) // success?
+  if ( res == 0 && ( ctx.rootNode || ( allowFragments && ctx.expression ) ) ) // success?
   {
-    ctx.rootNode->setWhere(ctx.whereExp);
-    ctx.rootNode->setJoins(ctx.joinList);
-    ctx.rootNode->setOrderBy(ctx.orderByList);
-    return ctx.rootNode;
+    if ( ctx.rootNode )
+    {
+      ctx.rootNode->setWhere(ctx.whereExp);
+      ctx.rootNode->setJoins(ctx.joinList);
+      ctx.rootNode->setOrderBy(ctx.orderByList);
+      return ctx.rootNode;
+    }
+    else
+    {
+      //fragment
+      return ctx.expression;
+    }
   }
   else // error?
   {
-    parserErrorMsg = ctx.errorMsg;
+    if( !allowFragments && !ctx.rootNode &&
+        !str.startsWith("SELECT", Qt::CaseInsensitive) )
+    {
+      parserErrorMsg = QObject::tr("Expression must begin with SELECT");
+    }
+    else
+    {
+      parserErrorMsg = ctx.errorMsg;
+    }
     delete ctx.rootNode;
     delete ctx.whereExp;
     qDeleteAll(ctx.joinList);

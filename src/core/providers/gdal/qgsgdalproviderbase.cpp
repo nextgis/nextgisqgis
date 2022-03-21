@@ -20,6 +20,7 @@
 
 #define CPL_SUPRESS_CPLUSPLUS  //#spellok
 #include <cpl_conv.h>
+#include <cpl_string.h>
 
 #include "qgsapplication.h"
 #include "qgslogger.h"
@@ -27,6 +28,8 @@
 #include "qgssettings.h"
 
 #include <mutex>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 
 QgsGdalProviderBase::QgsGdalProviderBase()
 {
@@ -38,7 +41,7 @@ QgsGdalProviderBase::QgsGdalProviderBase()
 /**
  * \param bandNumber the number of the band for which you want a color table
  * \param list a pointer the object that will hold the color table
- * \return true of a color table was able to be read, false otherwise
+ * \return TRUE of a color table was able to be read, FALSE otherwise
  */
 QList<QgsColorRampShader::ColorRampItem> QgsGdalProviderBase::colorTable( GDALDatasetH gdalDataset, int bandNumber )const
 {
@@ -56,7 +59,7 @@ QList<QgsColorRampShader::ColorRampItem> QgsGdalProviderBase::colorTable( GDALDa
 
   if ( myGdalColorTable )
   {
-    QgsDebugMsg( QStringLiteral( "Color table found" ) );
+    QgsDebugMsgLevel( QStringLiteral( "Color table found" ), 2 );
 
     // load category labels
     char **categoryNames = GDALGetRasterCategoryNames( myGdalBand );
@@ -71,11 +74,11 @@ QList<QgsColorRampShader::ColorRampItem> QgsGdalProviderBase::colorTable( GDALDa
       }
     }
 
-    int myEntryCount = GDALGetColorEntryCount( myGdalColorTable );
-    GDALColorInterp myColorInterpretation = GDALGetRasterColorInterpretation( myGdalBand );
-    QgsDebugMsg( "Color Interpretation: " + QString::number( static_cast< int >( myColorInterpretation ) ) );
-    GDALPaletteInterp myPaletteInterpretation  = GDALGetPaletteInterpretation( myGdalColorTable );
-    QgsDebugMsg( "Palette Interpretation: " + QString::number( static_cast< int >( myPaletteInterpretation ) ) );
+    const int myEntryCount = GDALGetColorEntryCount( myGdalColorTable );
+    const GDALColorInterp myColorInterpretation = GDALGetRasterColorInterpretation( myGdalBand );
+    QgsDebugMsgLevel( "Color Interpretation: " + QString::number( static_cast< int >( myColorInterpretation ) ), 2 );
+    const GDALPaletteInterp myPaletteInterpretation  = GDALGetPaletteInterpretation( myGdalColorTable );
+    QgsDebugMsgLevel( "Palette Interpretation: " + QString::number( static_cast< int >( myPaletteInterpretation ) ), 2 );
 
     const GDALColorEntry *myColorEntry = nullptr;
     for ( int myIterator = 0; myIterator < myEntryCount; myIterator++ )
@@ -128,7 +131,7 @@ QList<QgsColorRampShader::ColorRampItem> QgsGdalProviderBase::colorTable( GDALDa
         }
         else
         {
-          QgsDebugMsg( QStringLiteral( "Color interpretation type not supported yet" ) );
+          QgsDebugMsgLevel( QStringLiteral( "Color interpretation type not supported yet" ), 2 );
           return ct;
         }
       }
@@ -136,11 +139,11 @@ QList<QgsColorRampShader::ColorRampItem> QgsGdalProviderBase::colorTable( GDALDa
   }
   else
   {
-    QgsDebugMsg( "No color table found for band " + QString::number( bandNumber ) );
+    QgsDebugMsgLevel( "No color table found for band " + QString::number( bandNumber ), 2 );
     return ct;
   }
 
-  QgsDebugMsg( QStringLiteral( "Color table loaded successfully" ) );
+  QgsDebugMsgLevel( QStringLiteral( "Color table loaded successfully" ), 2 );
   return ct;
 }
 
@@ -149,32 +152,32 @@ Qgis::DataType QgsGdalProviderBase::dataTypeFromGdal( const GDALDataType gdalDat
   switch ( gdalDataType )
   {
     case GDT_Byte:
-      return Qgis::Byte;
+      return Qgis::DataType::Byte;
     case GDT_UInt16:
-      return Qgis::UInt16;
+      return Qgis::DataType::UInt16;
     case GDT_Int16:
-      return Qgis::Int16;
+      return Qgis::DataType::Int16;
     case GDT_UInt32:
-      return Qgis::UInt32;
+      return Qgis::DataType::UInt32;
     case GDT_Int32:
-      return Qgis::Int32;
+      return Qgis::DataType::Int32;
     case GDT_Float32:
-      return Qgis::Float32;
+      return Qgis::DataType::Float32;
     case GDT_Float64:
-      return Qgis::Float64;
+      return Qgis::DataType::Float64;
     case GDT_CInt16:
-      return Qgis::CInt16;
+      return Qgis::DataType::CInt16;
     case GDT_CInt32:
-      return Qgis::CInt32;
+      return Qgis::DataType::CInt32;
     case GDT_CFloat32:
-      return Qgis::CFloat32;
+      return Qgis::DataType::CFloat32;
     case GDT_CFloat64:
-      return Qgis::CFloat64;
+      return Qgis::DataType::CFloat64;
     case GDT_Unknown:
     case GDT_TypeCount:
-      return Qgis::UnknownDataType;
+      return Qgis::DataType::UnknownDataType;
   }
-  return Qgis::UnknownDataType;
+  return Qgis::DataType::UnknownDataType;
 }
 
 int QgsGdalProviderBase::colorInterpretationFromGdal( const GDALColorInterp gdalColorInterpretation ) const
@@ -229,7 +232,7 @@ QgsRectangle QgsGdalProviderBase::extent( GDALDatasetH gdalDataset )const
 {
   double myGeoTransform[6];
 
-  bool myHasGeoTransform = GDALGetGeoTransform( gdalDataset, myGeoTransform ) == CE_None;
+  const bool myHasGeoTransform = GDALGetGeoTransform( gdalDataset, myGeoTransform ) == CE_None;
   if ( !myHasGeoTransform )
   {
     // Initialize the affine transform matrix
@@ -243,25 +246,39 @@ QgsRectangle QgsGdalProviderBase::extent( GDALDatasetH gdalDataset )const
 
   // Use the affine transform to get geo coordinates for
   // the corners of the raster
-  double myXMax = myGeoTransform[0] +
-                  GDALGetRasterXSize( gdalDataset ) * myGeoTransform[1] +
-                  GDALGetRasterYSize( gdalDataset ) * myGeoTransform[2];
-  double myYMin = myGeoTransform[3] +
-                  GDALGetRasterXSize( gdalDataset ) * myGeoTransform[4] +
-                  GDALGetRasterYSize( gdalDataset ) * myGeoTransform[5];
+  const double myXMax = myGeoTransform[0] +
+                        GDALGetRasterXSize( gdalDataset ) * myGeoTransform[1] +
+                        GDALGetRasterYSize( gdalDataset ) * myGeoTransform[2];
+  const double myYMin = myGeoTransform[3] +
+                        GDALGetRasterXSize( gdalDataset ) * myGeoTransform[4] +
+                        GDALGetRasterYSize( gdalDataset ) * myGeoTransform[5];
 
-  QgsRectangle extent( myGeoTransform[0], myYMin, myXMax, myGeoTransform[3] );
+  const QgsRectangle extent( myGeoTransform[0], myYMin, myXMax, myGeoTransform[3] );
   return extent;
 }
 
-GDALDatasetH QgsGdalProviderBase::gdalOpen( const char *pszFilename, GDALAccess eAccess )
+GDALDatasetH QgsGdalProviderBase::gdalOpen( const QString &uri, unsigned int nOpenFlags )
 {
-  bool modify_OGR_GPKG_FOREIGN_KEY_CHECK = !CPLGetConfigOption( "OGR_GPKG_FOREIGN_KEY_CHECK", nullptr );
+  QVariantMap parts = decodeGdalUri( uri );
+  const QStringList openOptions = parts.value( QStringLiteral( "openOptions" ) ).toStringList();
+  parts.remove( QStringLiteral( "openOptions" ) );
+
+  char **papszOpenOptions = nullptr;
+  for ( const QString &option : openOptions )
+  {
+    papszOpenOptions = CSLAddString( papszOpenOptions,
+                                     option.toUtf8().constData() );
+  }
+
+  const bool modify_OGR_GPKG_FOREIGN_KEY_CHECK = !CPLGetConfigOption( "OGR_GPKG_FOREIGN_KEY_CHECK", nullptr );
   if ( modify_OGR_GPKG_FOREIGN_KEY_CHECK )
   {
     CPLSetThreadLocalConfigOption( "OGR_GPKG_FOREIGN_KEY_CHECK", "NO" );
   }
-  GDALDatasetH hDS = GDALOpen( pszFilename, eAccess );
+
+  GDALDatasetH hDS = GDALOpenEx( encodeGdalUri( parts ).toUtf8().constData(), nOpenFlags, nullptr, papszOpenOptions, nullptr );
+  CSLDestroy( papszOpenOptions );
+
   if ( modify_OGR_GPKG_FOREIGN_KEY_CHECK )
   {
     CPLSetThreadLocalConfigOption( "OGR_GPKG_FOREIGN_KEY_CHECK", nullptr );
@@ -293,15 +310,125 @@ CPLErr QgsGdalProviderBase::gdalRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWF
     extra.pfnProgress = _gdalProgressFnWithFeedback;
     extra.pProgressData = ( void * ) feedback;
   }
-  CPLErr err = GDALRasterIOEx( hBand, eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize, eBufType, nPixelSpace, nLineSpace, &extra );
+  const CPLErr err = GDALRasterIOEx( hBand, eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize, eBufType, nPixelSpace, nLineSpace, &extra );
 
   return err;
 }
 
 int QgsGdalProviderBase::gdalGetOverviewCount( GDALRasterBandH hBand )
 {
-  int count = GDALGetOverviewCount( hBand );
+  const int count = GDALGetOverviewCount( hBand );
   return count;
+}
+
+QVariantMap QgsGdalProviderBase::decodeGdalUri( const QString &uri )
+{
+  QString path = uri;
+  QString layerName;
+  QString authcfg;
+  QStringList openOptions;
+
+  const QRegularExpression authcfgRegex( " authcfg='([^']+)'" );
+  QRegularExpressionMatch match;
+  if ( path.contains( authcfgRegex, &match ) )
+  {
+    path = path.remove( match.capturedStart( 0 ), match.capturedLength( 0 ) );
+    authcfg = match.captured( 1 );
+  }
+
+  QString vsiPrefix = qgsVsiPrefix( path );
+  QString vsiSuffix;
+  if ( path.startsWith( vsiPrefix, Qt::CaseInsensitive ) )
+  {
+    path = path.mid( vsiPrefix.count() );
+
+    const QRegularExpression vsiRegex( QStringLiteral( "(?:\\.zip|\\.tar|\\.gz|\\.tar\\.gz|\\.tgz)([^|]+)" ) );
+    const QRegularExpressionMatch match = vsiRegex.match( path );
+    if ( match.hasMatch() )
+    {
+      vsiSuffix = match.captured( 1 );
+      path = path.remove( match.capturedStart( 1 ), match.capturedLength( 1 ) );
+    }
+  }
+  else
+  {
+    vsiPrefix.clear();
+  }
+
+  if ( path.indexOf( ':' ) != -1 )
+  {
+    QStringList parts = path.split( ':' );
+    if ( parts[0].toLower() == QLatin1String( "gpkg" ) )
+    {
+      parts.removeFirst();
+      // Handle windows paths - which has an extra colon - and unix paths
+      if ( ( parts[0].length() > 1 && parts.count() > 1 ) || parts.count() > 2 )
+      {
+        layerName = parts[parts.length() - 1];
+        parts.removeLast();
+      }
+      path  = parts.join( ':' );
+    }
+  }
+
+  if ( path.contains( '|' ) )
+  {
+    const QRegularExpression openOptionRegex( QStringLiteral( "\\|option:([^|]*)" ) );
+    while ( true )
+    {
+      const QRegularExpressionMatch match = openOptionRegex.match( path );
+      if ( match.hasMatch() )
+      {
+        openOptions << match.captured( 1 );
+        path = path.remove( match.capturedStart( 0 ), match.capturedLength( 0 ) );
+      }
+      else
+      {
+        break;
+      }
+    }
+  }
+
+  QVariantMap uriComponents;
+  uriComponents.insert( QStringLiteral( "path" ), path );
+  uriComponents.insert( QStringLiteral( "layerName" ), layerName );
+  if ( !openOptions.isEmpty() )
+    uriComponents.insert( QStringLiteral( "openOptions" ), openOptions );
+  if ( !vsiPrefix.isEmpty() )
+    uriComponents.insert( QStringLiteral( "vsiPrefix" ), vsiPrefix );
+  if ( !vsiSuffix.isEmpty() )
+    uriComponents.insert( QStringLiteral( "vsiSuffix" ), vsiSuffix );
+  if ( !authcfg.isEmpty() )
+    uriComponents.insert( QStringLiteral( "authcfg" ), authcfg );
+  return uriComponents;
+}
+
+QString QgsGdalProviderBase::encodeGdalUri( const QVariantMap &parts )
+{
+  const QString vsiPrefix = parts.value( QStringLiteral( "vsiPrefix" ) ).toString();
+  const QString vsiSuffix = parts.value( QStringLiteral( "vsiSuffix" ) ).toString();
+  const QString path = parts.value( QStringLiteral( "path" ) ).toString();
+  const QString layerName = parts.value( QStringLiteral( "layerName" ) ).toString();
+  const QString authcfg = parts.value( QStringLiteral( "authcfg" ) ).toString();
+
+  QString uri = vsiPrefix + path + vsiSuffix;
+  if ( !layerName.isEmpty() && uri.endsWith( QLatin1String( "gpkg" ) ) )
+    uri = QStringLiteral( "GPKG:%1:%2" ).arg( uri, layerName );
+  else if ( !layerName.isEmpty() )
+    uri = uri + QStringLiteral( "|%1" ).arg( layerName );
+
+  const QStringList openOptions = parts.value( QStringLiteral( "openOptions" ) ).toStringList();
+
+  for ( const QString &openOption : openOptions )
+  {
+    uri += QLatin1String( "|option:" );
+    uri += openOption;
+  }
+
+  if ( !authcfg.isEmpty() )
+    uri += QStringLiteral( " authcfg='%1'" ).arg( authcfg );
+
+  return uri;
 }
 
 ///@endcond

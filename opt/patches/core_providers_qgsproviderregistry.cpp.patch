@@ -1,0 +1,28 @@
+--- a/src/core/providers/qgsproviderregistry.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/providers/qgsproviderregistry.cpp	2022-03-07 23:14:46.000000000 +0300
+@@ -26,7 +26,7 @@
+ #include "qgsmessagelog.h"
+ #include "qgsprovidermetadata.h"
+ #include "qgsvectorlayer.h"
+-#include "qgsvectortileprovidermetadata.h"
++// #include "qgsvectortileprovidermetadata.h"
+ #include "qgsproject.h"
+ #include "qgsprovidersublayerdetails.h"
+ #include "providers/memory/qgsmemoryprovider.h"
+@@ -185,11 +185,11 @@
+     const QgsScopedRuntimeProfile profile( QObject::tr( "Create OGR provider" ) );
+     mProviders[ QgsOgrProvider::providerKey() ] = new QgsOgrProviderMetadata();
+   }
+-  {
+-    const QgsScopedRuntimeProfile profile( QObject::tr( "Create vector tile provider" ) );
+-    QgsProviderMetadata *vt = new QgsVectorTileProviderMetadata();
+-    mProviders[ vt->key() ] = vt;
+-  }
++//   {
++//     const QgsScopedRuntimeProfile profile( QObject::tr( "Create vector tile provider" ) );
++//     QgsProviderMetadata *vt = new QgsVectorTileProviderMetadata();
++//     mProviders[ vt->key() ] = vt;
++//   }
+ #ifdef HAVE_EPT
+   {
+     const QgsScopedRuntimeProfile profile( QObject::tr( "Create EPT point cloud provider" ) );

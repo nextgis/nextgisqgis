@@ -23,7 +23,7 @@ email                : hugo dot mercier at oslandia dot com
 
 /**
  * \ingroup core
- * Class to manipulate the definition of a virtual layer
+ * \brief Class to manipulate the definition of a virtual layer
  *
  * It is used to extract parameters from an initial virtual layer definition as well as
  * to store the complete, expanded definition once types have been detected.
@@ -34,7 +34,7 @@ class CORE_EXPORT QgsVirtualLayerDefinition
 
     /**
      * \ingroup core
-     * A SourceLayer is either a reference to a live layer in the registry
+     * \brief A SourceLayer is either a reference to a live layer in the registry
      * or all the parameters needed to load it (provider key, source, etc.)
      */
     class CORE_EXPORT SourceLayer
@@ -95,6 +95,7 @@ class CORE_EXPORT QgsVirtualLayerDefinition
      * nogeometry                              is a flag to force the layer to be a non-geometry layer
      * query=sql                               represents the SQL query. Must be URL-encoded
      * field=column_name:[int|real|text]       represents a field with its name and its type
+     * subsetstring=subset_string              represents the subsetstring
      */
     static QgsVirtualLayerDefinition fromUrl( const QUrl &url );
 
@@ -185,6 +186,18 @@ class CORE_EXPORT QgsVirtualLayerDefinition
       return geometryWkbType() != QgsWkbTypes::NoGeometry && geometryWkbType() != QgsWkbTypes::Unknown;
     }
 
+    /**
+     * Returns the subset string.
+     * \since QGIS 3.16
+     */
+    QString subsetString() const;
+
+    /**
+     * Sets the \a subsetString
+     * \since QGIS 3.16
+     */
+    void setSubsetString( const QString &subsetString );
+
   private:
     SourceLayers mSourceLayers;
     QString mQuery;
@@ -195,6 +208,7 @@ class CORE_EXPORT QgsVirtualLayerDefinition
     bool mLazy = false;
     QgsWkbTypes::Type mGeometryWkbType = QgsWkbTypes::Unknown;
     long mGeometrySrid = 0;
+    QString mSubsetString;
 };
 
 // clazy:excludeall=qstring-allocations

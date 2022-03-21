@@ -1,0 +1,39 @@
+--- a/src/core/qgsmaplayerfactory.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/qgsmaplayerfactory.cpp	2022-03-07 23:14:46.000000000 +0300
+@@ -20,7 +20,7 @@
+ #include "qgsrasterlayer.h"
+ #include "qgsmeshlayer.h"
+ #include "qgspointcloudlayer.h"
+-#include "qgsvectortilelayer.h"
++// #include "qgsvectortilelayer.h"
+ #include "qgsannotationlayer.h"
+ #include "qgsgrouplayer.h"
+ 
+@@ -33,8 +33,8 @@
+     return QgsMapLayerType::RasterLayer;
+   else if ( string.compare( QLatin1String( "mesh" ), Qt::CaseInsensitive ) == 0 )
+     return QgsMapLayerType::MeshLayer;
+-  else if ( string.compare( QLatin1String( "vector-tile" ), Qt::CaseInsensitive ) == 0 )
+-    return QgsMapLayerType::VectorTileLayer;
++//   else if ( string.compare( QLatin1String( "vector-tile" ), Qt::CaseInsensitive ) == 0 )
++//     return QgsMapLayerType::VectorTileLayer;
+   else if ( string.compare( QLatin1String( "point-cloud" ), Qt::CaseInsensitive ) == 0 )
+     return QgsMapLayerType::PointCloudLayer;
+   else if ( string.compare( QLatin1String( "plugin" ), Qt::CaseInsensitive ) == 0 )
+@@ -100,11 +100,11 @@
+       return new QgsMeshLayer( uri, name, provider, meshOptions );
+     }
+ 
+-    case QgsMapLayerType::VectorTileLayer:
+-    {
+-      const QgsVectorTileLayer::LayerOptions vectorTileOptions( options.transformContext );
+-      return new QgsVectorTileLayer( uri, name, vectorTileOptions );
+-    }
++    // case QgsMapLayerType::VectorTileLayer:
++    // {
++    //   const QgsVectorTileLayer::LayerOptions vectorTileOptions( options.transformContext );
++    //   return new QgsVectorTileLayer( uri, name, vectorTileOptions );
++    // }
+ 
+     case QgsMapLayerType::AnnotationLayer:
+     {

@@ -17,6 +17,8 @@
 
 #include "qgsalgorithmnearestneighbouranalysis.h"
 #include "qgsapplication.h"
+#include "qgsdistancearea.h"
+#include <QTextStream>
 
 ///@cond PRIVATE
 
@@ -48,6 +50,7 @@ QString QgsNearestNeighbourAnalysisAlgorithm::groupId() const
 QString QgsNearestNeighbourAnalysisAlgorithm::shortHelpString() const
 {
   return QObject::tr( "This algorithm performs nearest neighbor analysis for a point layer.\n\n"
+                      "The output describes how the data are distributed (clustered, randomly or distributed).\n\n"
                       "Output is generated as an HTML file with the computed statistical values." );
 }
 
@@ -84,20 +87,20 @@ QVariantMap QgsNearestNeighbourAnalysisAlgorithm::processAlgorithm( const QVaria
   if ( !source )
     throw QgsProcessingException( invalidSourceError( parameters, QStringLiteral( "INPUT" ) ) );
 
-  QString outputFile = parameterAsFileOutput( parameters, QStringLiteral( "OUTPUT_HTML_FILE" ), context );
+  const QString outputFile = parameterAsFileOutput( parameters, QStringLiteral( "OUTPUT_HTML_FILE" ), context );
 
-  QgsSpatialIndex spatialIndex( *source, feedback, QgsSpatialIndex::FlagStoreFeatureGeometries );
+  const QgsSpatialIndex spatialIndex( *source, feedback, QgsSpatialIndex::FlagStoreFeatureGeometries );
   QgsDistanceArea da;
   da.setSourceCrs( source->sourceCrs(), context.transformContext() );
-  da.setEllipsoid( context.project()->ellipsoid() );
+  da.setEllipsoid( context.ellipsoid() );
 
-  double step = source->featureCount() ? 100.0 / source->featureCount() : 1;
+  const double step = source->featureCount() ? 100.0 / source->featureCount() : 1;
   QgsFeatureIterator it = source->getFeatures( QgsFeatureRequest().setSubsetOfAttributes( QList< int >() ) );
 
-  QgsFeatureRequest request;
-  QgsFeature neighbour;
+  const QgsFeatureRequest request;
+  const QgsFeature neighbour;
   double sumDist = 0.0;
-  double area = source->sourceExtent().width() * source->sourceExtent().height();
+  const double area = source->sourceExtent().width() * source->sourceExtent().height();
 
   int i = 0;
   QgsFeature f;
@@ -108,19 +111,19 @@ QVariantMap QgsNearestNeighbourAnalysisAlgorithm::processAlgorithm( const QVaria
       break;
     }
 
-    QgsFeatureId neighbourId = spatialIndex.nearestNeighbor( f.geometry().asPoint(), 2 ).at( 1 );
+    const QgsFeatureId neighbourId = spatialIndex.nearestNeighbor( f.geometry().asPoint(), 2 ).at( 1 );
     sumDist += da.measureLine( spatialIndex.geometry( neighbourId ).asPoint(), f.geometry().asPoint() );
 
     i++;
     feedback->setProgress( i * step );
   }
 
-  int count = source->featureCount() > 0 ? source->featureCount() : 1;
-  double observedDistance = sumDist / count;
-  double expectedDistance = 0.5 / std::sqrt( count / area );
-  double nnIndex = observedDistance / expectedDistance;
-  double se = 0.26136 / std::sqrt( std::pow( count, 2 ) / area );
-  double zScore = ( observedDistance - expectedDistance ) / se;
+  const long long count = source->featureCount() > 0 ? source->featureCount() : 1;
+  const double observedDistance = sumDist / count;
+  const double expectedDistance = 0.5 / std::sqrt( count / area );
+  const double nnIndex = observedDistance / expectedDistance;
+  const double se = 0.26136 / std::sqrt( std::pow( count, 2 ) / area );
+  const double zScore = ( observedDistance - expectedDistance ) / se;
 
   QVariantMap outputs;
   outputs.insert( QStringLiteral( "OBSERVED_MD" ), observedDistance );
@@ -132,9 +135,12 @@ QVariantMap QgsNearestNeighbourAnalysisAlgorithm::processAlgorithm( const QVaria
   if ( !outputFile.isEmpty() )
   {
     QFile file( outputFile );
-    if ( file.open( QIODevice::WriteOnly | QIODevice::Text ) )
+    if ( file.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
     {
       QTextStream out( &file );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+      out.setCodec( "UTF-8" );
+#endif
       out << QStringLiteral( "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"/></head><body>\n" );
       out << QObject::tr( "<p>Observed mean distance: %1</p>\n" ).arg( observedDistance, 0, 'f', 11 );
       out << QObject::tr( "<p>Expected mean distance: %1</p>\n" ).arg( expectedDistance, 0, 'f', 11 );

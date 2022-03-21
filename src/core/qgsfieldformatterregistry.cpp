@@ -13,6 +13,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+
 #include "qgsfieldformatterregistry.h"
 #include "qgsfieldformatter.h"
 
@@ -25,7 +26,7 @@
 #include "qgsrangefieldformatter.h"
 #include "qgscheckboxfieldformatter.h"
 #include "qgsfallbackfieldformatter.h"
-
+#include "qgsreadwritelocker.h"
 
 QgsFieldFormatterRegistry::QgsFieldFormatterRegistry( QObject *parent )
   : QObject( parent )
@@ -44,13 +45,16 @@ QgsFieldFormatterRegistry::QgsFieldFormatterRegistry( QObject *parent )
 
 QgsFieldFormatterRegistry::~QgsFieldFormatterRegistry()
 {
+  const QgsReadWriteLocker locker( mLock, QgsReadWriteLocker::Write );
   qDeleteAll( mFieldFormatters );
   delete mFallbackFieldFormatter;
 }
 
 void QgsFieldFormatterRegistry::addFieldFormatter( QgsFieldFormatter *formatter )
 {
+  QgsReadWriteLocker locker( mLock, QgsReadWriteLocker::Write );
   mFieldFormatters.insert( formatter->id(), formatter );
+  locker.unlock();
   emit fieldFormatterAdded( formatter );
 }
 
@@ -61,6 +65,7 @@ void QgsFieldFormatterRegistry::removeFieldFormatter( QgsFieldFormatter *formatt
 
 void QgsFieldFormatterRegistry::removeFieldFormatter( const QString &id )
 {
+  const QgsReadWriteLocker locker( mLock, QgsReadWriteLocker::Write );
   if ( QgsFieldFormatter *formatter = mFieldFormatters.take( id ) )
   {
     emit fieldFormatterRemoved( formatter );
@@ -70,6 +75,7 @@ void QgsFieldFormatterRegistry::removeFieldFormatter( const QString &id )
 
 QgsFieldFormatter *QgsFieldFormatterRegistry::fieldFormatter( const QString &id ) const
 {
+  const QgsReadWriteLocker locker( mLock, QgsReadWriteLocker::Read );
   return mFieldFormatters.value( id, mFallbackFieldFormatter );
 }
 

@@ -1,6 +1,6 @@
-#line 2 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/flex_qgsexpressionlexer.cpp"
+#line 1 "/Volumes/Data/work/projects/desktop/qgis3/src/core/flex_qgsexpressionlexer.cpp"
 
-#line 4 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/flex_qgsexpressionlexer.cpp"
+#line 3 "/Volumes/Data/work/projects/desktop/qgis3/src/core/flex_qgsexpressionlexer.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -281,6 +281,7 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
+typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -419,7 +420,7 @@ typedef size_t yy_size_t;
      */
     #define  YY_LESS_LINENO(n) \
             do { \
-                int yyl;\
+                yy_size_t yyl;\
                 for ( yyl = n; yyl < yyleng; ++yyl )\
                     if ( yytext[yyl] == '\n' )\
                         --yylineno;\
@@ -464,7 +465,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	int yy_n_chars;
+	yy_size_t yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -541,7 +542,7 @@ static void yy_init_buffer ( YY_BUFFER_STATE b, FILE *file , yyscan_t yyscanner 
 
 YY_BUFFER_STATE yy_scan_buffer ( char *base, yy_size_t size , yyscan_t yyscanner );
 YY_BUFFER_STATE yy_scan_string ( const char *yy_str , yyscan_t yyscanner );
-YY_BUFFER_STATE yy_scan_bytes ( const char *bytes, int len , yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_bytes ( const char *bytes, yy_size_t len , yyscan_t yyscanner );
 
 void *yyalloc ( yy_size_t , yyscan_t yyscanner );
 void *yyrealloc ( void *, yy_size_t , yyscan_t yyscanner );
@@ -588,7 +589,7 @@ static void yynoreturn yy_fatal_error ( const char* msg , yyscan_t yyscanner );
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (int) (yy_cp - yy_bp); \
+	yyleng = (yy_size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
@@ -1040,7 +1041,7 @@ static const flex_int32_t yy_rule_can_match_eol[54] =
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-#line 1 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 1 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 /***************************************************************************
                           qgsexpressionlexer.ll
                           --------------------
@@ -1055,7 +1056,7 @@ static const flex_int32_t yy_rule_can_match_eol[54] =
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-#line 22 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 22 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
  // this makes flex generate lexer with context + init/destroy functions
  // this makes Bison send yylex another argument to use instead of using the global variable yylval
  // ensure that lexer will be 8-bit (and not just 7-bit)
@@ -1145,9 +1146,9 @@ static QString stripColumnRef(QString text)
 // C locale for correct parsing of numbers even if the system locale is different
 Q_GLOBAL_STATIC_WITH_ARGS(QLocale, cLocale, ("C") )
 
-#line 1149 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/flex_qgsexpressionlexer.cpp"
+#line 1149 "/Volumes/Data/work/projects/desktop/qgis3/src/core/flex_qgsexpressionlexer.cpp"
 
-#line 1151 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/flex_qgsexpressionlexer.cpp"
+#line 1151 "/Volumes/Data/work/projects/desktop/qgis3/src/core/flex_qgsexpressionlexer.cpp"
 
 #define INITIAL 0
 #define BLOCK_COMMENT 1
@@ -1177,8 +1178,8 @@ struct yyguts_t
     size_t yy_buffer_stack_max; /**< capacity of stack. */
     YY_BUFFER_STATE * yy_buffer_stack; /**< Stack as an array. */
     char yy_hold_char;
-    int yy_n_chars;
-    int yyleng_r;
+    yy_size_t yy_n_chars;
+    yy_size_t yyleng_r;
     char *yy_c_buf_p;
     int yy_init;
     int yy_start;
@@ -1235,7 +1236,7 @@ FILE *yyget_out ( yyscan_t yyscanner );
 
 void yyset_out  ( FILE * _out_str , yyscan_t yyscanner );
 
-			int yyget_leng ( yyscan_t yyscanner );
+			yy_size_t yyget_leng ( yyscan_t yyscanner );
 
 char *yyget_text ( yyscan_t yyscanner );
 
@@ -1314,7 +1315,7 @@ static int input ( yyscan_t yyscanner );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		int n; \
+		yy_size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -1430,10 +1431,10 @@ YY_DECL
 		}
 
 	{
-#line 150 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 150 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 
 
-#line 1437 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/flex_qgsexpressionlexer.cpp"
+#line 1437 "/Volumes/Data/work/projects/desktop/qgis3/src/core/flex_qgsexpressionlexer.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1477,7 +1478,7 @@ yy_find_action:
 
 		if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )
 			{
-			int yyl;
+			yy_size_t yyl;
 			for ( yyl = 0; yyl < yyleng; ++yyl )
 				if ( yytext[yyl] == '\n' )
 					
@@ -1500,219 +1501,223 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 153 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 153 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 BEGIN(BLOCK_COMMENT);
 	YY_BREAK
 
 
 case 2:
 YY_RULE_SETUP
-#line 156 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 156 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 BEGIN(INITIAL);
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 157 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 157 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 // eat comment in chunks
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 158 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 158 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 // eat the lone star
 	YY_BREAK
 case 5:
 /* rule 5 can match eol */
 YY_RULE_SETUP
-#line 159 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 159 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 yylineno++;
 	YY_BREAK
 
 case 6:
 YY_RULE_SETUP
-#line 162 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 162 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { U_OP(uoNot); return NOT; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 163 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 163 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boAnd); return AND; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 164 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 164 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boOr);  return OR;  }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 166 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 166 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boEQ); return EQ; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 167 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 167 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boNE); return NE; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 168 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 168 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boLE); return LE; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 169 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 169 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boGE); return GE; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 170 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 170 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boNE); return NE; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 171 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 171 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boLT); return LT; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 172 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 172 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boGT); return GT; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 174 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 174 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boRegexp); return REGEXP; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 175 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 175 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boLike); return LIKE; }
 	YY_BREAK
 case 18:
 /* rule 18 can match eol */
 YY_RULE_SETUP
-#line 176 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 176 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boNotLike); return LIKE; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 177 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 177 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boILike); return LIKE; }
 	YY_BREAK
 case 20:
 /* rule 20 can match eol */
 YY_RULE_SETUP
-#line 178 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 178 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boNotILike); return LIKE; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 179 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 179 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boIs); return IS; }
 	YY_BREAK
 case 22:
 /* rule 22 can match eol */
 YY_RULE_SETUP
-#line 180 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 180 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boIsNot); return IS; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 181 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 181 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boConcat); return CONCAT; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 183 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 183 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boPlus); return PLUS; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 184 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 184 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boMinus); return MINUS; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 185 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 185 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boMul); return MUL; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 186 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 186 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boIntDiv); return INTDIV; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 187 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 187 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boDiv); return DIV; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 188 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 188 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boMod); return MOD; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 189 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 189 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { B_OP(boPow); return POW; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 191 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 191 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { return IN; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 193 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 193 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { return NULLVALUE; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 195 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 195 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { return CASE; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 196 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 196 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { return WHEN; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 197 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 197 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { return THEN; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 198 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 198 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { return ELSE; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 199 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 199 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { return END;  }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 201 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 201 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { return yytext[0]; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 203 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 203 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { return COMMA; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 205 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 205 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { yylval->numberFloat = cLocale()->toDouble( QString::fromLatin1(yytext) ); return NUMBER_FLOAT; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 206 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 206 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 {
 	bool ok;
 	yylval->numberInt = cLocale()->toInt( QString::fromLatin1(yytext), &ok );
 	if( ok )
 		return NUMBER_INT;
+
+  yylval->numberInt64 = cLocale()->toLongLong( QString::fromLatin1(yytext), &ok );
+  if( ok )
+    return NUMBER_INT64;
 
 	yylval->numberFloat = cLocale()->toDouble( QString::fromLatin1(yytext), &ok );
 	if( ok )
@@ -1723,70 +1728,70 @@ YY_RULE_SETUP
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 219 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 223 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { yylval->boolVal = QString( yytext ).compare( "true", Qt::CaseInsensitive ) == 0; return BOOLEAN; }
 	YY_BREAK
 case 43:
 /* rule 43 can match eol */
 YY_RULE_SETUP
-#line 221 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 225 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { TEXT_FILTER(stripText); return STRING; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 223 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 227 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { TEXT; return NAME; }
 	YY_BREAK
 case 45:
 /* rule 45 can match eol */
 YY_RULE_SETUP
-#line 225 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 229 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { TEXT_FILTER(stripNamedText); return NAMED_NODE; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 227 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 231 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { TEXT; return SPECIAL_COL; }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 229 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 233 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { TEXT; return VARIABLE; }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 231 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 235 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { TEXT; return NAME; }
 	YY_BREAK
 case 49:
 /* rule 49 can match eol */
 YY_RULE_SETUP
-#line 233 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 237 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { TEXT_FILTER(stripColumnRef); return QUOTED_COLUMN_REF; }
 	YY_BREAK
 case 50:
 /* rule 50 can match eol */
 YY_RULE_SETUP
-#line 235 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 239 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 /* skip blanks and tabs */
 	YY_BREAK
 case 51:
 /* rule 51 can match eol */
 YY_RULE_SETUP
-#line 237 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 241 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 /* skip line comments */
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 239 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 243 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 { return Unknown_CHARACTER; }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 242 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 246 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 ECHO;
 	YY_BREAK
-#line 1790 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/flex_qgsexpressionlexer.cpp"
+#line 1794 "/Volumes/Data/work/projects/desktop/qgis3/src/core/flex_qgsexpressionlexer.cpp"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(BLOCK_COMMENT):
 	yyterminate();
@@ -1976,7 +1981,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 	else
 		{
-			int num_to_read =
+			yy_size_t num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -1990,7 +1995,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 			if ( b->yy_is_our_buffer )
 				{
-				int new_size = b->yy_buf_size * 2;
+				yy_size_t new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -2048,7 +2053,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 	if ((yyg->yy_n_chars + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
-		int new_size = yyg->yy_n_chars + number_to_move + (yyg->yy_n_chars >> 1);
+		yy_size_t new_size = yyg->yy_n_chars + number_to_move + (yyg->yy_n_chars >> 1);
 		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yyrealloc(
 			(void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf, (yy_size_t) new_size , yyscanner );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
@@ -2155,7 +2160,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 		else
 			{ /* need more input */
-			int offset = (int) (yyg->yy_c_buf_p - yyg->yytext_ptr);
+			yy_size_t offset = yyg->yy_c_buf_p - yyg->yytext_ptr;
 			++yyg->yy_c_buf_p;
 
 			switch ( yy_get_next_buffer( yyscanner ) )
@@ -2540,12 +2545,12 @@ YY_BUFFER_STATE yy_scan_string (const char * yystr , yyscan_t yyscanner)
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len , yyscan_t yyscanner)
+YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, yy_size_t  _yybytes_len , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
 	char *buf;
 	yy_size_t n;
-	int i;
+	yy_size_t i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = (yy_size_t) (_yybytes_len + 2);
@@ -2589,7 +2594,7 @@ static void yynoreturn yy_fatal_error (const char* msg , yyscan_t yyscanner)
 	do \
 		{ \
 		/* Undo effects of setting up yytext. */ \
-        int yyless_macro_arg = (n); \
+        yy_size_t yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
 		yytext[yyleng] = yyg->yy_hold_char; \
 		yyg->yy_c_buf_p = yytext + yyless_macro_arg; \
@@ -2657,7 +2662,7 @@ FILE *yyget_out  (yyscan_t yyscanner)
 /** Get the length of the current token.
  * @param yyscanner The scanner object.
  */
-int yyget_leng  (yyscan_t yyscanner)
+yy_size_t yyget_leng  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yyleng;
@@ -2950,6 +2955,6 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 242 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgsexpressionlexer.ll"
+#line 246 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionlexer.ll"
 
 

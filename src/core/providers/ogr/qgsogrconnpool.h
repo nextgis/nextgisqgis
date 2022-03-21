@@ -17,9 +17,11 @@
 #define QGSOGRCONNPOOL_H
 
 #include "qgsconnectionpool.h"
-#include "qgsogrprovider.h"
+#include "qgsogrprovidermetadata.h"
+#include "qgsogrproviderutils.h"
 #include <gdal.h>
 #include "qgis_sip.h"
+#include <cpl_string.h>
 
 ///@cond PRIVATE
 #define SIP_NO_FILE
@@ -39,8 +41,20 @@ inline QString qgsConnectionPool_ConnectionToName( QgsOgrConn *c )
 inline void qgsConnectionPool_ConnectionCreate( const QString &connInfo, QgsOgrConn *&c )
 {
   c = new QgsOgrConn;
-  QString filePath = connInfo.left( connInfo.indexOf( QLatin1String( "|" ) ) );
-  c->ds = QgsOgrProviderUtils::GDALOpenWrapper( filePath.toUtf8().constData(), false, nullptr, nullptr );
+
+  const QVariantMap parts = QgsOgrProviderMetadata().decodeUri( connInfo );
+  const QString fullPath = parts.value( QStringLiteral( "vsiPrefix" ) ).toString()
+                           + parts.value( QStringLiteral( "path" ) ).toString()
+                           + parts.value( QStringLiteral( "vsiSuffix" ) ).toString();
+  const QStringList openOptions = parts.value( QStringLiteral( "openOptions" ) ).toStringList();
+  char **papszOpenOptions = nullptr;
+  for ( const QString &option : openOptions )
+  {
+    papszOpenOptions = CSLAddString( papszOpenOptions,
+                                     option.toUtf8().constData() );
+  }
+  c->ds = QgsOgrProviderUtils::GDALOpenWrapper( fullPath.toUtf8().constData(), false, papszOpenOptions, nullptr );
+  CSLDestroy( papszOpenOptions );
   c->path = connInfo;
   c->valid = true;
 }

@@ -19,6 +19,7 @@
 #include "qgis.h"
 #include "qgsapplication.h"
 #include "qgssettings.h"
+#include "qgsreferencedgeometry.h"
 
 #include <QDataStream>
 #include <QIcon>
@@ -45,8 +46,7 @@ QgsField::QgsField( QString nam, QString typ, int len, int prec, bool num,
 }
 #endif
 QgsField::QgsField( const QString &name, QVariant::Type type,
-                    const QString &typeName, int len, int prec, const QString &comment,
-                    QVariant::Type subType )
+                    const QString &typeName, int len, int prec, const QString &comment, QVariant::Type subType )
 {
   d = new QgsFieldPrivate( name, type, subType, typeName, len, prec, comment );
 }
@@ -101,6 +101,29 @@ QString QgsField::displayNameWithAlias() const
     return name();
   }
   return QStringLiteral( "%1 (%2)" ).arg( name() ).arg( alias() );
+}
+
+QString QgsField::displayType( const bool showConstraints ) const
+{
+  QString typeStr = typeName();
+
+  if ( length() > 0 && precision() > 0 )
+    typeStr += QStringLiteral( "(%1, %2)" ).arg( length() ).arg( precision() );
+  else if ( length() > 0 )
+    typeStr += QStringLiteral( "(%1)" ).arg( length() );
+
+  if ( showConstraints )
+  {
+    typeStr += ( constraints().constraints() & QgsFieldConstraints::ConstraintNotNull )
+               ? QStringLiteral( " NOT NULL" )
+               : QStringLiteral( " NULL" );
+
+    typeStr += ( constraints().constraints() & QgsFieldConstraints::ConstraintUnique )
+               ? QStringLiteral( " UNIQUE" )
+               : QString();
+  }
+
+  return typeStr;
 }
 
 QVariant::Type QgsField::type() const
@@ -213,6 +236,16 @@ void QgsField::setAlias( const QString &alias )
   d->alias = alias;
 }
 
+QgsField::ConfigurationFlags QgsField::configurationFlags() const
+{
+  return d->flags;
+}
+
+void QgsField::setConfigurationFlags( QgsField::ConfigurationFlags flags )
+{
+  d->flags = flags;
+}
+
 /***************************************************************************
  * This class is considered CRITICAL and any change MUST be accompanied with
  * full unit tests in testqgsfield.cpp.
@@ -226,9 +259,33 @@ QString QgsField::displayString( const QVariant &v ) const
     return QgsApplication::nullRepresentation();
   }
 
+  if ( v.userType() == QMetaType::type( "QgsReferencedGeometry" ) )
+  {
+    QgsReferencedGeometry geom = qvariant_cast<QgsReferencedGeometry>( v );
+    if ( geom.isNull() )
+      return QgsApplication::nullRepresentation();
+    else
+    {
+      QString wkt = geom.asWkt();
+      if ( wkt.length() >= 1050 )
+      {
+        wkt = wkt.left( 999 ) + QChar( 0x2026 );
+      }
+      QString formattedText = QStringLiteral( "%1 [%2]" ).arg( wkt, geom.crs().userFriendlyIdentifier() );
+      return formattedText;
+    }
+  }
+
   // Special treatment for numeric types if group separator is set or decimalPoint is not a dot
   if ( d->type == QVariant::Double )
   {
+    // if value doesn't contain a double (a default value expression for instance),
+    // apply no transformation
+    bool ok;
+    v.toDouble( &ok );
+    if ( !ok )
+      return v.toString();
+
     // Locales with decimal point != '.' or that require group separator: use QLocale
     if ( QLocale().decimalPoint() != '.' ||
          !( QLocale().numberOptions() & QLocale::NumberOption::OmitGroupSeparator ) )
@@ -248,8 +305,8 @@ QString QgsField::displayString( const QVariant &v ) const
       {
         // Precision is not set, let's guess it from the
         // standard conversion to string
-        QString s( v.toString() );
-        int dotPosition( s.indexOf( '.' ) );
+        const QString s( v.toString() );
+        const int dotPosition( s.indexOf( '.' ) );
         int precision;
         if ( dotPosition < 0 && s.indexOf( 'e' ) < 0 )
         {
@@ -273,7 +330,7 @@ QString QgsField::displayString( const QVariant &v ) const
       }
     }
     // Default for doubles with precision
-    else if ( d->type == QVariant::Double && d->precision > 0 )
+    else if ( d->precision > 0 )
     {
       if ( -1 < v.toDouble() && v.toDouble() < 1 )
       {
@@ -290,21 +347,50 @@ QString QgsField::displayString( const QVariant &v ) const
             !( QLocale().numberOptions() & QLocale::NumberOption::OmitGroupSeparator ) )
   {
     bool ok;
-    qlonglong converted( v.toLongLong( &ok ) );
+    const qlonglong converted( v.toLongLong( &ok ) );
     if ( ok )
       return QLocale().toString( converted );
   }
   else if ( d->typeName.compare( QLatin1String( "json" ), Qt::CaseInsensitive ) == 0 || d->typeName == QLatin1String( "jsonb" ) )
   {
-    QJsonDocument doc = QJsonDocument::fromVariant( v );
+    const QJsonDocument doc = QJsonDocument::fromVariant( v );
     return QString::fromUtf8( doc.toJson().data() );
   }
   else if ( d->type == QVariant::ByteArray )
   {
     return QObject::tr( "BLOB" );
   }
+  else if ( d->type == QVariant::StringList || d->type == QVariant::List )
+  {
+    QString result;
+    const QVariantList list = v.toList();
+    for ( const QVariant &var : list )
+    {
+      if ( !result.isEmpty() )
+        result.append( QStringLiteral( ", " ) );
+      result.append( var.toString() );
+    }
+    return result;
+  }
+
   // Fallback if special rules do not apply
   return v.toString();
+}
+
+QString QgsField::readableConfigurationFlag( QgsField::ConfigurationFlag flag )
+{
+  switch ( flag )
+  {
+    case ConfigurationFlag::None:
+      return QObject::tr( "None" );
+    case ConfigurationFlag::NotSearchable:
+      return QObject::tr( "Not searchable" );
+    case ConfigurationFlag::HideFromWms:
+      return QObject::tr( "Do not expose via WMS" );
+    case ConfigurationFlag::HideFromWfs:
+      return QObject::tr( "Do not expose via WFS" );
+  }
+  return QString();
 }
 
 /***************************************************************************
@@ -313,8 +399,12 @@ QString QgsField::displayString( const QVariant &v ) const
  * See details in QEP #17
  ****************************************************************************/
 
-bool QgsField::convertCompatible( QVariant &v ) const
+bool QgsField::convertCompatible( QVariant &v, QString *errorMessage ) const
 {
+  const QVariant original = v;
+  if ( errorMessage )
+    errorMessage->clear();
+
   if ( v.isNull() )
   {
     v.convert( d->type );
@@ -324,6 +414,8 @@ bool QgsField::convertCompatible( QVariant &v ) const
   if ( d->type == QVariant::Int && v.toInt() != v.toLongLong() )
   {
     v = QVariant( d->type );
+    if ( errorMessage )
+      *errorMessage = QObject::tr( "Value \"%1\" is too large for integer field" ).arg( original.toLongLong() );
     return false;
   }
 
@@ -363,7 +455,7 @@ bool QgsField::convertCompatible( QVariant &v ) const
     {
       // This might be a string with thousand separator: use locale to convert
       bool ok;
-      int i = qgsPermissiveToInt( v.toString(), ok );
+      const int i = qgsPermissiveToInt( v.toString(), ok );
       if ( ok )
       {
         v = QVariant( i );
@@ -380,7 +472,7 @@ bool QgsField::convertCompatible( QVariant &v ) const
     {
       // This might be a string with thousand separator: use locale to convert
       bool ok;
-      qlonglong l = qgsPermissiveToLongLong( v.toString(), ok );
+      const qlonglong l = qgsPermissiveToLongLong( v.toString(), ok );
       if ( ok )
       {
         v = QVariant( l );
@@ -394,19 +486,27 @@ bool QgsField::convertCompatible( QVariant &v ) const
   if ( d->type == QVariant::Int && v.canConvert( QVariant::Double ) )
   {
     bool ok = false;
-    double dbl = v.toDouble( &ok );
+    const double dbl = v.toDouble( &ok );
     if ( !ok )
     {
       //couldn't convert to number
       v = QVariant( d->type );
+
+      if ( errorMessage )
+        *errorMessage = QObject::tr( "Value \"%1\" is not a number" ).arg( original.toString() );
+
       return false;
     }
 
-    double round = std::round( dbl );
+    const double round = std::round( dbl );
     if ( round  > std::numeric_limits<int>::max() || round < -std::numeric_limits<int>::max() )
     {
       //double too large to fit in int
       v = QVariant( d->type );
+
+      if ( errorMessage )
+        *errorMessage = QObject::tr( "Value \"%1\" is too large for integer field" ).arg( original.toDouble() );
+
       return false;
     }
     v = QVariant( static_cast< int >( std::round( dbl ) ) );
@@ -422,19 +522,27 @@ bool QgsField::convertCompatible( QVariant &v ) const
     if ( !tmp.convert( d->type ) )
     {
       bool ok = false;
-      double dbl = v.toDouble( &ok );
+      const double dbl = v.toDouble( &ok );
       if ( !ok )
       {
         //couldn't convert to number
         v = QVariant( d->type );
+
+        if ( errorMessage )
+          *errorMessage = QObject::tr( "Value \"%1\" is not a number" ).arg( original.toString() );
+
         return false;
       }
 
-      double round = std::round( dbl );
-      if ( round  > std::numeric_limits<long long>::max() || round < -std::numeric_limits<long long>::max() )
+      const double round = std::round( dbl );
+      if ( round  > static_cast<double>( std::numeric_limits<long long>::max() ) || round < static_cast<double>( -std::numeric_limits<long long>::max() ) )
       {
         //double too large to fit in longlong
         v = QVariant( d->type );
+
+        if ( errorMessage )
+          *errorMessage = QObject::tr( "Value \"%1\" is too large for long long field" ).arg( original.toDouble() );
+
         return false;
       }
       v = QVariant( static_cast< long long >( std::round( dbl ) ) );
@@ -442,23 +550,44 @@ bool QgsField::convertCompatible( QVariant &v ) const
     }
   }
 
+  if ( d->type == QVariant::String && ( d->typeName.compare( QLatin1String( "json" ), Qt::CaseInsensitive ) == 0 || d->typeName == QLatin1String( "jsonb" ) ) )
+  {
+    const QJsonDocument doc = QJsonDocument::fromVariant( v );
+    if ( !doc.isNull() )
+    {
+      v = QString::fromUtf8( doc.toJson( QJsonDocument::Compact ).constData() );
+      return true;
+    }
+    v = QVariant( d->type );
+    return false;
+  }
+
   if ( !v.convert( d->type ) )
   {
     v = QVariant( d->type );
+
+    if ( errorMessage )
+      *errorMessage = QObject::tr( "Could not convert value \"%1\" to target type" ).arg( original.toString() );
+
     return false;
   }
 
   if ( d->type == QVariant::Double && d->precision > 0 )
   {
-    double s = std::pow( 10, d->precision );
-    double d = v.toDouble() * s;
+    const double s = std::pow( 10, d->precision );
+    const double d = v.toDouble() * s;
     v = QVariant( ( d < 0 ? std::ceil( d - 0.5 ) : std::floor( d + 0.5 ) ) / s );
     return true;
   }
 
   if ( d->type == QVariant::String && d->length > 0 && v.toString().length() > d->length )
   {
+    const int length = v.toString().length();
     v = v.toString().left( d->length );
+
+    if ( errorMessage )
+      *errorMessage = QObject::tr( "String of length %1 exceeds maximum field length (%2)" ).arg( length ).arg( d->length );
+
     return false;
   }
 
@@ -474,6 +603,17 @@ QgsEditorWidgetSetup QgsField::editorWidgetSetup() const
 {
   return d->editorWidgetSetup;
 }
+
+void QgsField::setReadOnly( bool readOnly )
+{
+  d->isReadOnly = readOnly;
+}
+
+bool QgsField::isReadOnly() const
+{
+  return d->isReadOnly;
+}
+
 
 /***************************************************************************
  * This class is considered CRITICAL and any change MUST be accompanied with

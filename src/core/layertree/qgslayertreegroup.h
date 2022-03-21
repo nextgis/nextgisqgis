@@ -19,15 +19,21 @@
 #include "qgis_core.h"
 #include "qgis_sip.h"
 #include "qgslayertreenode.h"
+#include "qgsmaplayerref.h"
+#include "qgsgrouplayer.h"
 
 class QgsMapLayer;
 class QgsLayerTreeLayer;
+class QgsGroupLayer;
 
 /**
  * \ingroup core
- * Layer tree group node serves as a container for layers and further groups.
+ * \brief Layer tree group node serves as a container for layers and further groups.
  *
  * Group names do not need to be unique within one tree nor within one parent.
+ *
+ * While a layer tree group is typically used for hierarchical organisation of a QgsProject,
+ * they can optionally be associated with a QgsGroupLayer for map rendering purposes.
  *
  * \since QGIS 2.4
  */
@@ -43,6 +49,14 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
 
 #ifndef SIP_RUN
     QgsLayerTreeGroup( const QgsLayerTreeGroup &other );
+#endif
+
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    QString str = QStringLiteral( "<QgsLayerTreeGroup: %1>" ).arg( sipCpp->name() );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
 #endif
 
     /**
@@ -131,6 +145,16 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
      */
     QList<QgsLayerTreeLayer *> findLayers() const;
 
+
+    /**
+     * Returns an ordered list of map layers in the group, ignoring any layers which
+     * are child layers of QgsGroupLayers. Searches recursively the whole sub-tree.
+     *
+     * \note Not available in Python bindings
+     * \since QGIS 3.24
+     */
+    QList<QgsMapLayer *> layerOrderRespectingGroupLayers() const SIP_SKIP;
+
     /**
      * Find layer IDs used in all layer nodes. Searches recursively the whole sub-tree.
      */
@@ -142,9 +166,9 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
     QgsLayerTreeGroup *findGroup( const QString &name );
 
     /**
-     * Find all group layer nodes
+     * Find group layer nodes. Searches recursively the whole sub-tree, if recursive is set.
     */
-    QList<QgsLayerTreeGroup *> findGroups() const;
+    QList<QgsLayerTreeGroup *> findGroups( bool recursive = false ) const;
 
     /**
      * Read group (tree) from XML element <layer-tree-group> and return the newly created group (or NULLPTR on error).
@@ -205,7 +229,47 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
      */
     void setIsMutuallyExclusive( bool enabled, int initialChildIndex = -1 );
 
+    /**
+     * Returns a reference to the associated group layer, if the layer tree group will be treated
+     * as group layer during map rendering.
+     *
+     * \see setGroupLayer()
+     * \see convertToGroupLayer()
+     * \since QGIS 3.24
+     */
+    QgsGroupLayer *groupLayer();
+
+    /**
+     * Sets the associated group \a layer, if the layer tree group will be treated
+     * as group layer during map rendering.
+     *
+     * This method does not take ownership of the group layer, and only a weak reference
+     * to the layer is stored.
+     *
+     * \see groupLayer()
+     * \see convertToGroupLayer()
+     * \since QGIS 3.24
+     */
+    void setGroupLayer( QgsGroupLayer *layer );
+
+    /**
+     * Converts the group to a QgsGroupLayer.
+     *
+     * This method will convert the layer tree group to an equivalent QgsGroupLayer, and
+     * return the result. The caller takes ownership of the returned layer, and it is the
+     * caller's responsibility to add the layer to the associated QgsProject.
+     *
+     * If the group is already associated with a group layer (see groupLayer()), NULLPTR
+     * will be returned.
+     *
+     * \see groupLayer()
+     * \see setGroupLayer()
+     * \since QGIS 3.24
+     */
+    QgsGroupLayer *convertToGroupLayer( const QgsGroupLayer::LayerOptions &options ) SIP_FACTORY;
+
   protected slots:
+
     void nodeVisibilityChanged( QgsLayerTreeNode *node );
 
   protected:
@@ -228,6 +292,9 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
      */
     int mMutuallyExclusiveChildIndex = -1;
 
+    //! Sets parent to NULLPTR and disconnects all external and forwarded signals
+    virtual void makeOrphan() override SIP_SKIP;
+
   private:
 
 #ifdef SIP_RUN
@@ -238,6 +305,13 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
     QgsLayerTreeGroup( const QgsLayerTreeGroup &other );
 #endif
 
+    QgsLayerTreeGroup &operator= ( const QgsLayerTreeGroup & ) = delete;
+
+    void init();
+    void updateGroupLayers();
+    void refreshParentGroupLayerMembers();
+
+    QgsMapLayerRef mGroupLayer;
 };
 
 

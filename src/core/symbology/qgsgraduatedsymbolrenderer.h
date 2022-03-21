@@ -18,16 +18,15 @@
 #include "qgis_core.h"
 #include "qgis_sip.h"
 #include "qgis.h"
-#include "qgssymbol.h"
 #include "qgsrenderer.h"
 #include "qgsrendererrange.h"
-#include "qgsexpression.h"
-#include "qgsdatadefinedsizelegend.h"
 #include "qgsclassificationmethod.h"
-
 
 class QgsVectorLayer;
 class QgsColorRamp;
+class QgsDataDefinedSizeLegend;
+class QgsSymbol;
+class QgsExpression;
 
 /**
  * \ingroup core
@@ -49,7 +48,7 @@ class CORE_EXPORT QgsGraduatedSymbolRenderer : public QgsFeatureRenderer
     bool filterNeedsGeometry() const override;
     QString dump() const override;
     QgsGraduatedSymbolRenderer *clone() const override SIP_FACTORY;
-    void toSld( QDomDocument &doc, QDomElement &element, const QgsStringMap &props = QgsStringMap() ) const override;
+    void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props = QVariantMap() ) const override;
     QgsFeatureRenderer::Capabilities capabilities() override { return SymbolLevels | Filter; }
     QgsSymbolList symbols( QgsRenderContext &context ) const override;
     bool accept( QgsStyleEntityVisitorInterface *visitor ) const override;
@@ -272,7 +271,7 @@ class CORE_EXPORT QgsGraduatedSymbolRenderer : public QgsFeatureRenderer
      * \returns new QgsGraduatedSymbolRenderer object
      * \deprecated since QGIS 3.10
      */
-    static Q_DECL_DEPRECATED QgsGraduatedSymbolRenderer *createRenderer( QgsVectorLayer *vlayer,
+    Q_DECL_DEPRECATED static QgsGraduatedSymbolRenderer *createRenderer( QgsVectorLayer *vlayer,
         const QString &attrName,
         int classes,
         Mode mode,
@@ -399,7 +398,7 @@ class CORE_EXPORT QgsGraduatedSymbolRenderer : public QgsFeatureRenderer
 
     /**
      * creates a QgsGraduatedSymbolRenderer from an existing renderer.
-     * \returns a new renderer if the conversion was possible, otherwise 0.
+     * \returns a new renderer if the conversion was possible, otherwise NULLPTR.
      * \since QGIS 2.6
      */
     static QgsGraduatedSymbolRenderer *convertFromRenderer( const QgsFeatureRenderer *renderer ) SIP_FACTORY;

@@ -30,9 +30,11 @@
 #include "qgslayoutitemmanualtable.h"
 #include "qgslayoutitemtexttable.h"
 #include "qgslayoutframe.h"
+#include "qgslayoutitemmarker.h"
 #include "qgsgloweffect.h"
 #include "qgseffectstack.h"
 #include "qgsvectorlayer.h"
+#include "qgssymbol.h"
 
 #include <QPainter>
 
@@ -76,6 +78,7 @@ bool QgsLayoutItemRegistry::populate()
     shape->setShapeType( QgsLayoutItemShape::Rectangle );
     return shape;
   } ) );
+  addLayoutItemType( new QgsLayoutItemMetadata( LayoutMarker, QObject::tr( "Marker" ), QObject::tr( "Markers" ), QgsLayoutItemMarker::create ) );
   addLayoutItemType( new QgsLayoutItemMetadata( LayoutPolygon, QObject::tr( "Polygon" ), QObject::tr( "Polygons" ), QgsLayoutItemPolygon::create ) );
   addLayoutItemType( new QgsLayoutItemMetadata( LayoutPolyline, QObject::tr( "Polyline" ), QObject::tr( "Polylines" ), QgsLayoutItemPolyline::create ) );
 

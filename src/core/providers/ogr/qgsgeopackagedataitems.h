@@ -15,9 +15,11 @@
 #ifndef QGSGEOPACKAGEDATAITEMS_H
 #define QGSGEOPACKAGEDATAITEMS_H
 
-#include "qgsdataitem.h"
+#include "qgsdatacollectionitem.h"
 #include "qgsdataitemprovider.h"
+#include "qgsconnectionsitem.h"
 #include "qgsdataprovider.h"
+#include "qgslayeritem.h"
 #include "qgstaskmanager.h"
 #include "qgis_sip.h"
 
@@ -41,7 +43,7 @@ class CORE_EXPORT QgsGeoPackageCollectionItem : public QgsDataCollectionItem
     bool equal( const QgsDataItem *other ) override;
 
     //! Returns the layer type from \a geometryType
-    static QgsLayerItem::LayerType layerTypeFromDb( const QString &geometryType );
+    static Qgis::BrowserLayerType layerTypeFromDb( const QString &geometryType );
 
     //! Deletes a geopackage raster layer
     bool deleteRasterLayer( const QString &layerName, QString &errCause );
@@ -54,13 +56,19 @@ class CORE_EXPORT QgsGeoPackageCollectionItem : public QgsDataCollectionItem
      * \param name DB connection name
      * \param path DB connection path
      * \param errCause contains the error message
-     * \return true on success
+     * \return TRUE on success
      */
     static bool vacuumGeoPackageDb( const QString &name, const QString &path, QString &errCause );
 
     void addConnection();
     void deleteConnection();
 
+
+    // QgsDataItem interface
+  public:
+    bool layerCollection() const override;
+    bool hasDragEnabled() const override;
+    QgsMimeDataUtils::UriList mimeUris() const override;
 };
 
 
@@ -95,7 +103,7 @@ class CORE_EXPORT QgsGeoPackageAbstractLayerItem : public QgsLayerItem
     QgsGeoPackageCollectionItem *collection() const;
 
   protected:
-    QgsGeoPackageAbstractLayerItem( QgsDataItem *parent, const QString &name, const QString &path, const QString &uri, LayerType layerType, const QString &providerKey );
+    QgsGeoPackageAbstractLayerItem( QgsDataItem *parent, const QString &name, const QString &path, const QString &uri, Qgis::BrowserLayerType layerType, const QString &providerKey );
 
   private:
 
@@ -119,9 +127,11 @@ class CORE_EXPORT QgsGeoPackageVectorLayerItem final: public QgsGeoPackageAbstra
     Q_OBJECT
 
   public:
-    QgsGeoPackageVectorLayerItem( QgsDataItem *parent, const QString &name, const QString &path, const QString &uri, LayerType layerType );
+    QgsGeoPackageVectorLayerItem( QgsDataItem *parent, const QString &name, const QString &path, const QString &uri, Qgis::BrowserLayerType layerType );
     bool executeDeleteLayer( QString &errCause ) override;
 
+    // QgsDataItem interface
+    QVector<QgsDataItem *> createChildren() override;
 };
 
 /**
@@ -138,7 +148,7 @@ class CORE_EXPORT QgsGeoPackageConnectionItem final: public QgsGeoPackageCollect
 };
 
 
-class CORE_EXPORT QgsGeoPackageRootItem final: public QgsDataCollectionItem
+class CORE_EXPORT QgsGeoPackageRootItem final: public QgsConnectionsRootItem
 {
     Q_OBJECT
 
@@ -160,6 +170,7 @@ class QgsGeoPackageDataItemProvider final: public QgsDataItemProvider
 {
   public:
     QString name() override;
+    QString dataProviderKey() const override;
     int capabilities() const override;
     QgsDataItem *createDataItem( const QString &path, QgsDataItem *parentItem ) override;
 };

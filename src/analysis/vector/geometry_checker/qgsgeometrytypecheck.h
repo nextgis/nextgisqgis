@@ -22,6 +22,7 @@
 
 /**
  * \ingroup analysis
+ * \brief A geometry type check error.
  */
 class ANALYSIS_EXPORT QgsGeometryTypeCheckError : public QgsSingleGeometryCheckError
 {
@@ -45,9 +46,11 @@ class ANALYSIS_EXPORT QgsGeometryTypeCheckError : public QgsSingleGeometryCheckE
 
 /**
  * \ingroup analysis
+ * \brief A geometry type check.
  */
 class ANALYSIS_EXPORT QgsGeometryTypeCheck : public QgsSingleGeometryCheck
 {
+    Q_DECLARE_TR_FUNCTIONS( QgsGeometryTypeCheck )
   public:
     QgsGeometryTypeCheck( QgsGeometryCheckContext *context, const QVariantMap &configuration, int allowedTypes )
       : QgsSingleGeometryCheck( context, configuration )

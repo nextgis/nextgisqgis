@@ -22,6 +22,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgis_core.h"
 #include "qgis_sip.h"
 #include "qgsabstractgeometry.h"
+#include "qgsrectangle.h"
 
 class QgsPoint;
 
@@ -35,7 +36,13 @@ class QgsPoint;
 class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
 {
   public:
-    QgsGeometryCollection();
+
+
+    /**
+     * Constructor for an empty geometry collection.
+     */
+    QgsGeometryCollection() SIP_HOLDGIL;
+
     QgsGeometryCollection( const QgsGeometryCollection &c );
     QgsGeometryCollection &operator=( const QgsGeometryCollection &c );
     ~QgsGeometryCollection() override;
@@ -48,7 +55,7 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
     /**
      * Returns the number of geometries within the collection.
      */
-    int numGeometries() const
+    int numGeometries() const SIP_HOLDGIL
     {
       return mGeometries.size();
     }
@@ -87,12 +94,13 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
      * Returns a geometry from within the collection.
      * \param n index of geometry to return
      */
-    QgsAbstractGeometry *geometryN( int n );
+    QgsAbstractGeometry *geometryN( int n ) SIP_HOLDGIL;
 #else
 
     /**
      * Returns a geometry from within the collection.
-     * \param n index of geometry to return. An IndexError will be raised if no geometry with the specified index exists.
+     * \param n index of geometry to return.
+     * \throws IndexError if no geometry with the specified index exists.
      */
     SIP_PYOBJECT geometryN( int n ) SIP_TYPEHINT( QgsAbstractGeometry );
     % MethodCode
@@ -110,15 +118,16 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
 
 
     //methods inherited from QgsAbstractGeometry
-    bool isEmpty() const override;
-    int dimension() const override;
-    QString geometryType() const override;
+    bool isEmpty() const override SIP_HOLDGIL;
+    int dimension() const override SIP_HOLDGIL;
+    QString geometryType() const override SIP_HOLDGIL;
     void clear() override;
     QgsGeometryCollection *snappedToGrid( double hSpacing, double vSpacing, double dSpacing = 0, double mSpacing = 0 ) const override SIP_FACTORY;
     bool removeDuplicateNodes( double epsilon = 4 * std::numeric_limits<double>::epsilon(), bool useZValues = false ) override;
     QgsAbstractGeometry *boundary() const override SIP_FACTORY;
     void adjacentVertices( QgsVertexId vertex, QgsVertexId &previousVertex SIP_OUT, QgsVertexId &nextVertex SIP_OUT ) const override;
     int vertexNumberFromVertexId( QgsVertexId id ) const override;
+    bool boundingBoxIntersects( const QgsRectangle &rectangle ) const override SIP_HOLDGIL;
 
     /**
      * Attempts to allocate memory for at least \a size geometries.
@@ -128,7 +137,7 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
      *
      * \since QGIS 3.10
      */
-    void reserve( int size );
+    void reserve( int size ) SIP_HOLDGIL;
 
     //! Adds a geometry and takes ownership. Returns TRUE in case of success.
     virtual bool addGeometry( QgsAbstractGeometry *g SIP_TRANSFER );
@@ -153,9 +162,8 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
     /**
      * Removes a geometry from the collection by index.
      *
-     * An IndexError will be raised if no geometry with the specified index exists.
-     *
      * \returns TRUE if removal was successful.
+     * \throws IndexError if no geometry with the specified index exists.
      */
     virtual bool removeGeometry( int nr );
     % MethodCode
@@ -172,14 +180,18 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
     % End
 #endif
 
-    void transform( const QgsCoordinateTransform &ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform, bool transformZ = false ) override SIP_THROW( QgsCsException );
+    void normalize() final SIP_HOLDGIL;
+    void transform( const QgsCoordinateTransform &ct, Qgis::TransformDirection d = Qgis::TransformDirection::Forward, bool transformZ = false ) override SIP_THROW( QgsCsException );
     void transform( const QTransform &t, double zTranslate = 0.0, double zScale = 1.0, double mTranslate = 0.0, double mScale = 1.0 ) override;
 
     void draw( QPainter &p ) const override;
+    QPainterPath asQPainterPath() const override;
 
     bool fromWkb( QgsConstWkbPtr &wkb ) override;
     bool fromWkt( const QString &wkt ) override;
-    QByteArray asWkb() const override;
+
+    int wkbSize( QgsAbstractGeometry::WkbFlags flags = QgsAbstractGeometry::WkbFlags() ) const override;
+    QByteArray asWkb( QgsAbstractGeometry::WkbFlags flags = QgsAbstractGeometry::WkbFlags() ) const override;
     QString asWkt( int precision = 17 ) const override;
     QDomElement asGml2( QDomDocument &doc, int precision = 17, const QString &ns = "gml", QgsAbstractGeometry::AxisOrder axisOrder = QgsAbstractGeometry::AxisOrder::XY ) const override;
     QDomElement asGml3( QDomDocument &doc, int precision = 17, const QString &ns = "gml", QgsAbstractGeometry::AxisOrder axisOrder = QgsAbstractGeometry::AxisOrder::XY ) const override;
@@ -199,16 +211,17 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
     bool moveVertex( QgsVertexId position, const QgsPoint &newPos ) override;
     bool deleteVertex( QgsVertexId position ) override;
 
-    double length() const override;
-    double area() const override;
-    double perimeter() const override;
+    double length() const override SIP_HOLDGIL;
+    double area() const override SIP_HOLDGIL;
+    double perimeter() const override SIP_HOLDGIL;
 
-    bool hasCurvedSegments() const override;
+    bool hasCurvedSegments() const override SIP_HOLDGIL;
 
     /**
      * Returns a geometry without curves. Caller takes ownership
      * \param tolerance segmentation tolerance
-     * \param toleranceType maximum segmentation angle or maximum difference between approximation and curve*/
+     * \param toleranceType maximum segmentation angle or maximum difference between approximation and curve
+    */
     QgsAbstractGeometry *segmentize( double tolerance = M_PI_2 / 90, SegmentationToleranceType toleranceType = MaximumAngle ) const override SIP_FACTORY;
 
     double vertexAngle( QgsVertexId vertex ) const override;
@@ -217,7 +230,7 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
     int ringCount( int part = 0 ) const override;
     int partCount() const override;
     QgsPoint vertexAt( QgsVertexId id ) const override;
-    bool isValid( QString &error SIP_OUT, int flags = 0 ) const override;
+    bool isValid( QString &error SIP_OUT, Qgis::GeometryValidityFlags flags = Qgis::GeometryValidityFlags() ) const override;
 
     bool addZValue( double zValue = 0 ) override;
     bool addMValue( double mValue = 0 ) override;
@@ -225,6 +238,9 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
     bool dropMValue() override;
     void swapXy() override;
     QgsGeometryCollection *toCurveType() const override SIP_FACTORY;
+    const QgsAbstractGeometry *simplifiedTypeRef() const override SIP_HOLDGIL;
+
+    bool transform( QgsAbstractGeometryTransformer *transformer, QgsFeedback *feedback = nullptr ) override;
 
 #ifndef SIP_RUN
     void filterVertices( const std::function< bool( const QgsPoint & ) > &filter ) override;
@@ -237,7 +253,7 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
      * \note Not available in Python. Objects will be automatically be converted to the appropriate target type.
      * \since QGIS 3.0
      */
-    inline const QgsGeometryCollection *cast( const QgsAbstractGeometry *geom ) const
+    inline static const QgsGeometryCollection *cast( const QgsAbstractGeometry *geom )
     {
       if ( geom && QgsWkbTypes::isMultiType( geom->wkbType() ) )
         return static_cast<const QgsGeometryCollection *>( geom );
@@ -249,10 +265,12 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
 #ifdef SIP_RUN
 
     /**
-    * Returns the geometry at the specified ``index``. An IndexError will be raised if no geometry with the specified ``index`` exists.
+    * Returns the geometry at the specified ``index``.
     *
     * Indexes can be less than 0, in which case they correspond to geometries from the end of the collect. E.g. an index of -1
     * corresponds to the last geometry in the collection.
+    *
+    * \throws IndexError if no geometry with the specified ``index`` exists.
     *
     * \since QGIS 3.6
     */
@@ -275,10 +293,12 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
     % End
 
     /**
-     * Deletes the geometry at the specified ``index``. A geometry at the ``index`` must already exist or an IndexError will be raised.
+     * Deletes the geometry at the specified ``index``.
      *
      * Indexes can be less than 0, in which case they correspond to geometries from the end of the collection. E.g. an index of -1
      * corresponds to the last geometry in the collection.
+     *
+     * \throws IndexError if no geometry at the ``index`` exists
      *
      * \since QGIS 3.6
      */
@@ -312,6 +332,7 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
   protected:
     int childCount() const override;
     QgsAbstractGeometry *childGeometry( int index ) const override;
+    int compareToSameClass( const QgsAbstractGeometry *other ) const final;
 
   protected:
     QVector< QgsAbstractGeometry * > mGeometries;

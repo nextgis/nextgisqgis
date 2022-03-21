@@ -16,7 +16,6 @@
 
 #include "qgsmimedatautils.h"
 
-#include "qgsdataitem.h"
 #include "qgslayertree.h"
 #include "qgslogger.h"
 #include "qgspluginlayer.h"
@@ -25,6 +24,8 @@
 #include "qgsvectordataprovider.h"
 #include "qgsvectorlayer.h"
 #include "qgsmeshlayer.h"
+
+#include <QRegularExpression>
 
 static const char *QGIS_URILIST_MIMETYPE = "application/x-vnd.qgis.qgis.uri";
 
@@ -57,6 +58,8 @@ QgsMimeDataUtils::Uri::Uri( const QString &encData )
     pId = decoded.at( 7 );
   if ( decoded.size() > 8 )
     wkbType = QgsWkbTypes::parseType( decoded.at( 8 ) );
+  if ( decoded.size() > 9 )
+    filePath = decoded.at( 9 );
 
   QgsDebugMsgLevel( QStringLiteral( "type:%1 key:%2 name:%3 uri:%4 supportedCRS:%5 supportedFormats:%6" )
                     .arg( layerType, providerKey, name, uri,
@@ -67,7 +70,7 @@ QgsMimeDataUtils::Uri::Uri( const QString &encData )
 QgsMimeDataUtils::Uri::Uri( QgsMapLayer *layer )
   : providerKey( layer->providerType() )
   , name( layer->name() )
-  , uri( layer->dataProvider()->dataSourceUri() )
+  , uri( layer->dataProvider() ? layer->dataProvider()->dataSourceUri() : layer->source() )
   , layerId( layer->id() )
   , pId( QString::number( QCoreApplication::applicationPid() ) )
 {
@@ -90,8 +93,20 @@ QgsMimeDataUtils::Uri::Uri( QgsMapLayer *layer )
       layerType = QStringLiteral( "mesh" );
       break;
     }
+    case QgsMapLayerType::PointCloudLayer:
+    {
+      layerType = QStringLiteral( "pointcloud" );
+      break;
+    }
+    case QgsMapLayerType::VectorTileLayer:
+    {
+      layerType = QStringLiteral( "vector-tile" );
+      break;
+    }
 
     case QgsMapLayerType::PluginLayer:
+    case QgsMapLayerType::GroupLayer:
+    case QgsMapLayerType::AnnotationLayer:
     {
       // plugin layers do not have a standard way of storing their URI...
       return;
@@ -101,7 +116,17 @@ QgsMimeDataUtils::Uri::Uri( QgsMapLayer *layer )
 
 QString QgsMimeDataUtils::Uri::data() const
 {
-  return encode( QStringList() << layerType << providerKey << name << uri << encode( supportedCrs ) << encode( supportedFormats ) << layerId << pId << QgsWkbTypes::displayString( wkbType ) );
+  return encode( { layerType,
+                   providerKey,
+                   name,
+                   uri,
+                   encode( supportedCrs ),
+                   encode( supportedFormats ),
+                   layerId,
+                   pId,
+                   QgsWkbTypes::displayString( wkbType ),
+                   filePath
+                 } );
 }
 
 QgsVectorLayer *QgsMimeDataUtils::Uri::vectorLayer( bool &owner, QString &error ) const
@@ -261,12 +286,12 @@ QString QgsMimeDataUtils::encode( const QStringList &items )
 {
   QString encoded;
   // Do not escape colon twice
-  QRegularExpression re( QStringLiteral( "(?<!\\\\):" ) );
+  const QRegularExpression re( QStringLiteral( "(?<!\\\\):" ) );
   const auto constItems = items;
   for ( const QString &item : constItems )
   {
     QString str = item;
-    str.replace( '\\', QStringLiteral( "\\\\" ) );
+    str.replace( '\\', QLatin1String( "\\\\" ) );
     str.replace( re, QStringLiteral( "\\:" ) );
     encoded += str + ':';
   }
@@ -279,7 +304,7 @@ QStringList QgsMimeDataUtils::decode( const QString &encoded )
   QString item;
   bool inEscape = false;
   const auto constEncoded = encoded;
-  for ( QChar c : constEncoded )
+  for ( const QChar c : constEncoded )
   {
     if ( c == '\\' && inEscape )
     {

@@ -22,9 +22,12 @@
 #include "qgis.h"
 #include "qgssymbollayer.h"
 
+class QgsLineSymbol;
+
 /**
  * \ingroup core
- * A symbol layer class for displaying displacement arrows based on point layer attributes*/
+ * \brief A symbol layer class for displaying displacement arrows based on point layer attributes.
+*/
 class CORE_EXPORT QgsVectorFieldSymbolLayer: public QgsMarkerSymbolLayer
 {
   public:
@@ -48,14 +51,16 @@ class CORE_EXPORT QgsVectorFieldSymbolLayer: public QgsMarkerSymbolLayer
     };
 
     QgsVectorFieldSymbolLayer();
+    ~QgsVectorFieldSymbolLayer() override;
 
-    static QgsSymbolLayer *create( const QgsStringMap &properties = QgsStringMap() );
+    //! Creates the symbol layer
+    static QgsSymbolLayer *create( const QVariantMap &properties = QVariantMap() );
     static QgsSymbolLayer *createFromSld( QDomElement &element );
 
     QString layerType() const override { return QStringLiteral( "VectorField" ); }
 
     bool setSubSymbol( QgsSymbol *symbol SIP_TRANSFER ) override;
-    QgsSymbol *subSymbol() override { return mLineSymbol.get(); }
+    QgsSymbol *subSymbol() override;
 
     void setColor( const QColor &color ) override;
     QColor color() const override;
@@ -65,9 +70,10 @@ class CORE_EXPORT QgsVectorFieldSymbolLayer: public QgsMarkerSymbolLayer
     void stopRender( QgsSymbolRenderContext &context ) override;
 
     QgsVectorFieldSymbolLayer *clone() const override SIP_FACTORY;
-    QgsStringMap properties() const override;
+    QVariantMap properties() const override;
+    bool usesMapUnits() const override;
 
-    void toSld( QDomDocument &doc, QDomElement &element, const QgsStringMap &props ) const override;
+    void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override;
 
     void drawPreviewIcon( QgsSymbolRenderContext &context, QSize size ) override;
 

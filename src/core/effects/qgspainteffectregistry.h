@@ -18,9 +18,10 @@
 
 #include "qgis_core.h"
 #include "qgis_sip.h"
-#include "qgssymbollayer.h"
 #include <QDomElement>
 #include <QDomDocument>
+#include <QMap>
+#include <QVariantMap>
 
 class QgsPaintEffect;
 class QgsPaintEffectWidget SIP_EXTERNAL;
@@ -68,7 +69,7 @@ class CORE_EXPORT QgsPaintEffectAbstractMetadata
      * \param map properties string map
      * \returns new paint effect
      */
-    virtual QgsPaintEffect *createPaintEffect( const QgsStringMap &map ) = 0 SIP_FACTORY;
+    virtual QgsPaintEffect *createPaintEffect( const QVariantMap &map ) = 0 SIP_FACTORY;
 
     /**
      * Create configuration widget for paint effect of this class. Can return NULLPTR
@@ -83,7 +84,7 @@ class CORE_EXPORT QgsPaintEffectAbstractMetadata
 
 };
 
-typedef QgsPaintEffect *( *QgsPaintEffectCreateFunc )( const QgsStringMap & ) SIP_SKIP;
+typedef QgsPaintEffect *( *QgsPaintEffectCreateFunc )( const QVariantMap & ) SIP_SKIP;
 typedef QgsPaintEffectWidget *( *QgsPaintEffectWidgetFunc )() SIP_SKIP;
 
 /**
@@ -145,7 +146,7 @@ class CORE_EXPORT QgsPaintEffectMetadata : public QgsPaintEffectAbstractMetadata
      * \note not available in Python bindings
      * \see createWidget
      */
-    QgsPaintEffect *createPaintEffect( const QgsStringMap &map ) override { return mCreateFunc ? mCreateFunc( map ) : nullptr; } SIP_SKIP
+    QgsPaintEffect *createPaintEffect( const QVariantMap &map ) override { return mCreateFunc ? mCreateFunc( map ) : nullptr; } SIP_SKIP
 
     /**
      * Creates a new paint effect properties widget for the metadata's effect class
@@ -204,7 +205,7 @@ class CORE_EXPORT QgsPaintEffectRegistry
      * \returns new paint effect of specified class, or NULLPTR if matching
      * paint effect could not be created
      */
-    QgsPaintEffect *createEffect( const QString &name, const QgsStringMap &properties = QgsStringMap() ) const SIP_FACTORY;
+    QgsPaintEffect *createEffect( const QString &name, const QVariantMap &properties = QVariantMap() ) const SIP_FACTORY;
 
     /**
      * Creates a new paint effect given a DOM element storing paint effect

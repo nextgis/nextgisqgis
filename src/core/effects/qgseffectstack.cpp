@@ -69,7 +69,7 @@ QgsEffectStack &QgsEffectStack::operator=( QgsEffectStack &&other )
   return *this;
 }
 
-QgsPaintEffect *QgsEffectStack::create( const QgsStringMap &map )
+QgsPaintEffect *QgsEffectStack::create( const QVariantMap &map )
 {
   QgsEffectStack *effect = new QgsEffectStack();
   effect->readProperties( map );
@@ -136,11 +136,9 @@ void QgsEffectStack::draw( QgsRenderContext &context )
     QPicture *pic = results.takeLast();
     if ( mEffectList.at( i )->drawMode() != QgsPaintEffect::Modifier )
     {
-      context.painter()->save();
+      const QgsScopedQPainterState painterState( context.painter() );
       fixQPictureDpi( context.painter() );
       context.painter()->drawPicture( 0, 0, *pic );
-      context.painter()->restore();
-
     }
     delete pic;
   }
@@ -186,10 +184,10 @@ bool QgsEffectStack::readProperties( const QDomElement &element )
   clearStack();
 
   //restore all child effects
-  QDomNodeList childNodes = element.childNodes();
+  const QDomNodeList childNodes = element.childNodes();
   for ( int i = 0; i < childNodes.size(); ++i )
   {
-    QDomElement childElement = childNodes.at( i ).toElement();
+    const QDomElement childElement = childNodes.at( i ).toElement();
     QgsPaintEffect *effect = QgsApplication::paintEffectRegistry()->createEffect( childElement );
     if ( effect )
       mEffectList << effect;
@@ -197,13 +195,13 @@ bool QgsEffectStack::readProperties( const QDomElement &element )
   return true;
 }
 
-QgsStringMap QgsEffectStack::properties() const
+QVariantMap QgsEffectStack::properties() const
 {
-  QgsStringMap props;
+  QVariantMap props;
   return props;
 }
 
-void QgsEffectStack::readProperties( const QgsStringMap &props )
+void QgsEffectStack::readProperties( const QVariantMap &props )
 {
   Q_UNUSED( props )
 }

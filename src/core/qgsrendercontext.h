@@ -21,11 +21,13 @@
 #include "qgis_core.h"
 #include "qgis_sip.h"
 #include <QColor>
+#include <QPainter>
 #include <memory>
 
 #include "qgscoordinatetransform.h"
 #include "qgsexpressioncontext.h"
 #include "qgsfeaturefilterprovider.h"
+#include "qgslabelsink.h"
 #include "qgsmaptopixel.h"
 #include "qgsmapunitscale.h"
 #include "qgsrectangle.h"
@@ -33,7 +35,7 @@
 #include "qgsdistancearea.h"
 #include "qgscoordinatetransformcontext.h"
 #include "qgspathresolver.h"
-#include "qgssymbollayerreference.h"
+#include "qgstemporalrangeobject.h"
 
 class QPainter;
 class QgsAbstractGeometry;
@@ -41,112 +43,50 @@ class QgsLabelingEngine;
 class QgsMapSettings;
 class QgsRenderedFeatureHandlerInterface;
 class QgsSymbolLayer;
-
 class QgsMaskIdProvider;
+class QgsMapClippingRegion;
 
 
 /**
  * \ingroup core
- * Contains information about the context of a rendering operation.
+ * \brief Contains information about the context of a rendering operation.
+ *
  * The context of a rendering operation defines properties such as
  * the conversion ratio between screen and map units, the extents
  * to be rendered etc.
- **/
-class CORE_EXPORT QgsRenderContext
+ */
+class CORE_EXPORT QgsRenderContext : public QgsTemporalRangeObject
 {
   public:
     QgsRenderContext();
+    ~QgsRenderContext() override;
 
     QgsRenderContext( const QgsRenderContext &rh );
     QgsRenderContext &operator=( const QgsRenderContext &rh );
 
     /**
-     * Enumeration of flags that affect rendering operations.
-     * \since QGIS 2.14
-     */
-    enum Flag
-    {
-      DrawEditingInfo          = 0x01,  //!< Enable drawing of vertex markers for layers in editing mode
-      ForceVectorOutput        = 0x02,  //!< Vector graphics should not be cached and drawn as raster images
-      UseAdvancedEffects       = 0x04,  //!< Enable layer opacity and blending effects
-      UseRenderingOptimization = 0x08,  //!< Enable vector simplification and other rendering optimizations
-      DrawSelection            = 0x10,  //!< Whether vector selections should be shown in the rendered map
-      DrawSymbolBounds         = 0x20,  //!< Draw bounds of symbols (for debugging/testing)
-      RenderMapTile            = 0x40,  //!< Draw map such that there are no problems between adjacent tiles
-      Antialiasing             = 0x80,  //!< Use antialiasing while drawing
-      RenderPartialOutput      = 0x100, //!< Whether to make extra effort to update map image with partially rendered layers (better for interactive map canvas). Added in QGIS 3.0
-      RenderPreviewJob         = 0x200, //!< Render is a 'canvas preview' render, and shortcuts should be taken to ensure fast rendering
-      RenderBlocking           = 0x400, //!< Render and load remote sources in the same thread to ensure rendering remote sources (svg and images). WARNING: this flag must NEVER be used from GUI based applications (like the main QGIS application) or crashes will result. Only for use in external scripts or QGIS server.
-    };
-    Q_DECLARE_FLAGS( Flags, Flag )
-
-    /**
-     * Options for rendering text.
-     * \since QGIS 3.4.3
-     */
-    enum TextRenderFormat
-    {
-      // refs for below dox: https://github.com/qgis/QGIS/pull/1286#issuecomment-39806854
-      // https://github.com/qgis/QGIS/pull/8573#issuecomment-445585826
-
-      /**
-       * Always render text using path objects (AKA outlines/curves).
-       *
-       * This setting guarantees the best quality rendering, even when using a raster paint surface
-       * (where sub-pixel path based text rendering is superior to sub-pixel text-based rendering).
-       * The downside is that text is converted to paths only, so users cannot open created vector
-       * outputs for post-processing in other applications and retain text editability.
-       *
-       * This setting also guarantees complete compatibility with the full range of formatting options available
-       * through QgsTextRenderer and QgsTextFormat, some of which may not be possible to reproduce when using
-       * a vector-based paint surface and TextFormatAlwaysText mode.
-       *
-       * A final benefit to this setting is that vector exports created using text as outlines do
-       * not require all users to have the original fonts installed in order to display the
-       * text in its original style.
-       */
-      TextFormatAlwaysOutlines,
-
-      /**
-       * Always render text as text objects.
-       *
-       * While this mode preserves text objects as text for post-processing in external vector editing applications,
-       * it can result in rendering artifacts or poor quality rendering, depending on the text format settings.
-       *
-       * Even with raster based paint devices, TextFormatAlwaysText can result in inferior rendering quality
-       * to TextFormatAlwaysOutlines.
-       *
-       * When rendering using TextFormatAlwaysText to a vector based device (e.g. PDF or SVG), care must be
-       * taken to ensure that the required fonts are available to users when opening the created files,
-       * or default fallback fonts will be used to display the output instead. (Although PDF exports MAY
-       * automatically embed some fonts when possible, depending on the user's platform).
-       */
-      TextFormatAlwaysText,
-    };
-
-    /**
      * Set combination of flags that will be used for rendering.
      * \since QGIS 2.14
      */
-    void setFlags( QgsRenderContext::Flags flags );
+    void setFlags( Qgis::RenderContextFlags flags );
 
     /**
      * Enable or disable a particular flag (other flags are not affected)
      * \since QGIS 2.14
      */
-    void setFlag( Flag flag, bool on = true );
+    void setFlag( Qgis::RenderContextFlag flag, bool on = true );
 
     /**
      * Returns combination of flags used for rendering.
      * \since QGIS 2.14
      */
-    Flags flags() const;
+    Qgis::RenderContextFlags flags() const;
 
     /**
      * Check whether a particular flag is enabled.
      * \since QGIS 2.14
      */
-    bool testFlag( Flag flag ) const;
+    bool testFlag( Qgis::RenderContextFlag flag ) const;
 
     /**
      * create initialized QgsRenderContext instance from given QgsMapSettings
@@ -179,6 +119,17 @@ class CORE_EXPORT QgsRenderContext
     */
     const QPainter *painter() const { return mPainter; }
 #endif
+
+    /**
+     * Sets relevant flags on a destination \a painter, using the flags and settings
+     * currently defined for the render context.
+     *
+     * If no \a painter is specified, then the flags will be applied to the render
+     * context's painter().
+     *
+     * \since QGIS 3.16
+     */
+    void setPainterFlagsUsingContext( QPainter *painter = nullptr ) const;
 
     /**
      * Returns a mask QPainter for the render operation.
@@ -314,12 +265,46 @@ class CORE_EXPORT QgsRenderContext
     double scaleFactor() const {return mScaleFactor;}
 
     /**
+     * Returns the targeted DPI for rendering.
+     *
+     * \see setDpiTarget()
+     * \since QGIS 3.20
+     */
+    double dpiTarget() const {return mDpiTarget;}
+
+    /**
      * Returns TRUE if the rendering operation has been stopped and any ongoing
      * rendering should be canceled immediately.
      *
+     * \note Since QGIS 3.22 the feedback() member exists as an alternative means of cancellation support.
+     *
      * \see setRenderingStopped()
+     * \see feedback()
      */
     bool renderingStopped() const {return mRenderingStopped;}
+
+    /**
+     * Attach a \a feedback object that can be queried regularly during rendering to check
+     * if rendering should be canceled.
+     *
+     * Ownership of \a feedback is NOT transferred, and the caller must take care that it exists
+     * for the lifetime of the render context.
+     *
+     * \see feedback()
+     *
+     * \since QGIS 3.22
+     */
+    void setFeedback( QgsFeedback *feedback );
+
+    /**
+     * Returns the feedback object that can be queried regularly during rendering to check
+     * if rendering should be canceled, if set. Maybe be NULLPTR.
+     *
+     * \see setFeedback()
+     *
+     * \since QGIS 3.22
+     */
+    QgsFeedback *feedback() const;
 
     /**
      * Returns TRUE if rendering operations should use vector operations instead
@@ -357,11 +342,36 @@ class CORE_EXPORT QgsRenderContext
      */
     double rendererScale() const {return mRendererScale;}
 
+
     /**
-     * Gets access to new labeling engine (may be NULLPTR)
-     * \note not available in Python bindings
+     * Returns the symbology reference scale.
+     *
+     * This represents the desired scale denominator for the rendered map, eg 1000.0 for a 1:1000 map render.
+     * A value of -1 indicates that symbology scaling by reference scale is disabled.
+     *
+     * The symbology reference scale is an optional property which specifies the reference
+     * scale at which symbology in paper units (such a millimeters or points) is fixed
+     * to. For instance, if the scale is 1000 then a 2mm thick line will be rendered at
+     * exactly 2mm thick when a map is rendered at 1:1000, or 1mm thick when rendered at 1:2000, or 4mm thick at 1:500.
+     *
+     * \see setSymbologyReferenceScale()
+     * \see rendererScale()
+     * \since QGIS 3.22
+     */
+    double symbologyReferenceScale() const { return mSymbologyReferenceScale; }
+
+    /**
+     * Gets access to new labeling engine (may be NULLPTR).
+     * \note Not available in Python bindings.
      */
     QgsLabelingEngine *labelingEngine() const { return mLabelingEngine; } SIP_SKIP
+
+    /**
+     * Returns the associated label sink, or NULLPTR if not set.
+     * \note Not available in Python bindings.
+     * \since QGIS 3.24
+     */
+    QgsLabelSink *labelSink() const { return mLabelSink; } SIP_SKIP
 
     /**
      * Returns the color to use when rendering selected features.
@@ -437,7 +447,11 @@ class CORE_EXPORT QgsRenderContext
      * Sets whether the rendering operation has been \a stopped and any ongoing
      * rendering should be canceled immediately.
      *
+     * \note Since QGIS 3.22 the feedback() member exists as an alternative means of cancellation support.
+     *
      * \see renderingStopped()
+     * \see feedback()
+     * \see setFeedback()
      */
     void setRenderingStopped( bool stopped ) {mRenderingStopped = stopped;}
 
@@ -457,11 +471,36 @@ class CORE_EXPORT QgsRenderContext
     void setScaleFactor( double factor ) {mScaleFactor = factor;}
 
     /**
+     * Sets the targeted \a dpi for rendering.
+     *
+     * \see dpiTarget()
+     * \since QGIS 3.20
+     */
+    void setDpiTarget( double dpi ) {mDpiTarget = dpi;}
+
+    /**
      * Sets the renderer map scale. This should match the desired scale denominator
      * for the rendered map, eg 1000.0 for a 1:1000 map render.
      * \see rendererScale()
      */
     void setRendererScale( double scale ) {mRendererScale = scale;}
+
+    /**
+     * Sets the symbology reference \a scale.
+     *
+     * This should match the desired scale denominator for the rendered map, eg 1000.0 for a 1:1000 map render.
+     * Set to -1 to disable symbology scaling by reference scale.
+     *
+     * The symbology reference scale is an optional property which specifies the reference
+     * scale at which symbology in paper units (such a millimeters or points) is fixed
+     * to. For instance, if \a scale is set to 1000 then a 2mm thick line will be rendered at
+     * exactly 2mm thick when a map is rendered at 1:1000, or 1mm thick when rendered at 1:2000, or 4mm thick at 1:500.
+     *
+     * \see symbologyReferenceScale()
+     * \see rendererScale()
+     * \since QGIS 3.22
+     */
+    void setSymbologyReferenceScale( double scale ) { mSymbologyReferenceScale = scale; }
 
     /**
      * Sets the destination QPainter for the render operation. Ownership of the painter
@@ -500,10 +539,18 @@ class CORE_EXPORT QgsRenderContext
     void setForceVectorOutput( bool force );
 
     /**
-     * Assign new labeling engine
-     * \note not available in Python bindings
+     * Assigns the labeling engine
+     * \note Not available in Python bindings.
      */
     void setLabelingEngine( QgsLabelingEngine *engine ) { mLabelingEngine = engine; } SIP_SKIP
+
+    /**
+     * Assigns the label sink which will take over responsibility for handling labels.
+     * \note Ownership is not transferred and the sink must exist for the lifetime of the map rendering job.
+     * \note Not available in Python bindings.
+     * \since QGIS 3.24
+     */
+    void setLabelSink( QgsLabelSink *sink ) { mLabelSink = sink; } SIP_SKIP
 
     /**
      * Sets the \a color to use when rendering selected features.
@@ -639,10 +686,15 @@ class CORE_EXPORT QgsRenderContext
     /**
      * Converts a size from the specified units to painter units (pixels). The conversion respects the limits
      * specified by the optional scale parameter.
+     *
+     * Since QGIS 3.22 the optional \a property argument can be used to specify the associated property. This
+     * is used in some contexts to refine the converted size. For example, a Qgis::RenderSubcomponentProperty::BlurSize
+     * property will be limited to a suitably fast range when the render context has the Qgis::RenderContextFlag::RenderSymbolPreview set.
+     *
      * \see convertToMapUnits()
      * \since QGIS 3.0
      */
-    double convertToPainterUnits( double size, QgsUnitTypes::RenderUnit unit, const QgsMapUnitScale &scale = QgsMapUnitScale() ) const;
+    double convertToPainterUnits( double size, QgsUnitTypes::RenderUnit unit, const QgsMapUnitScale &scale = QgsMapUnitScale(), Qgis::RenderSubcomponentProperty property = Qgis::RenderSubcomponentProperty::Generic ) const;
 
     /**
      * Converts a size from the specified units to map units. The conversion respects the limits
@@ -673,7 +725,7 @@ class CORE_EXPORT QgsRenderContext
      * \see setTextRenderFormat()
      * \since QGIS 3.4.3
      */
-    TextRenderFormat textRenderFormat() const
+    Qgis::TextRenderFormat textRenderFormat() const
     {
       return mTextRenderFormat;
     }
@@ -684,7 +736,7 @@ class CORE_EXPORT QgsRenderContext
      * \see textRenderFormat()
      * \since QGIS 3.4.3
      */
-    void setTextRenderFormat( TextRenderFormat format )
+    void setTextRenderFormat( Qgis::TextRenderFormat format )
     {
       mTextRenderFormat = format;
     }
@@ -783,9 +835,167 @@ class CORE_EXPORT QgsRenderContext
      */
     void clearCustomRenderingFlag( const QString &flag ) { mCustomRenderingFlags.remove( flag ); }
 
+    /**
+     * Returns the list of clipping regions to apply during the render.
+     *
+     * These regions are always in the final destination CRS for the map.
+     *
+     * \since QGIS 3.16
+     */
+    QList< QgsMapClippingRegion > clippingRegions() const;
+
+    /**
+     * Returns the geometry to use to clip features at render time.
+     *
+     * When vector features are rendered, they should be clipped to this geometry.
+     *
+     * \warning The clipping must take effect for rendering the feature's symbol only,
+     * and should never be applied directly to the feature being rendered. Doing so would
+     * impact the results of rendering rules which rely on feature geometry, such as
+     * a rule-based renderer using the feature's area.
+     *
+     * \see setFeatureClipGeometry()
+     *
+     * \since QGIS 3.16
+     */
+    QgsGeometry featureClipGeometry() const;
+
+    /**
+     * Sets a \a geometry to use to clip features at render time.
+     *
+     * \note This is not usually set directly, but rather specified by calling QgsMapSettings:addClippingRegion()
+     * prior to constructing a QgsRenderContext.
+     *
+     * \see featureClipGeometry()
+     * \since QGIS 3.16
+     */
+    void setFeatureClipGeometry( const QgsGeometry &geometry );
+
+    /**
+     * Returns the texture origin, which should be used as a brush transform when
+     * rendering using QBrush objects.
+     *
+     * \see setTextureOrigin()
+     * \since QGIS 3.16
+     */
+    QPointF textureOrigin() const;
+
+    /**
+     * Sets the texture \a origin, which should be used as a brush transform when
+     * rendering using QBrush objects.
+     *
+     * \see textureOrigin()
+     * \since QGIS 3.16
+     */
+    void setTextureOrigin( const QPointF &origin );
+
+    /**
+     * Returns the range of z-values which should be rendered.
+     *
+     * \see setZRange()
+     * \since QGIS 3.18
+     */
+    QgsDoubleRange zRange() const;
+
+    /**
+     * Sets the \a range of z-values which should be rendered.
+     *
+     * \see zRange()
+     * \since QGIS 3.18
+     */
+    void setZRange( const QgsDoubleRange &range );
+
+    /**
+     * Returns the size of the resulting rendered image, in pixels.
+     *
+     * \see deviceOutputSize()
+     * \see setOutputSize()
+     *
+     * \since QGIS 3.22
+     */
+    QSize outputSize() const;
+
+    /**
+     * Sets the \a size of the resulting rendered image, in pixels.
+     *
+     * \see outputSize()
+     * \since QGIS 3.22
+     */
+    void setOutputSize( QSize size );
+
+    /**
+     * Returns the device pixel ratio.
+     *
+     * Common values are 1 for normal-dpi displays and 2 for high-dpi "retina" displays.
+     *
+     * \see setDevicePixelRatio()
+     * \since QGIS 3.22
+     */
+    float devicePixelRatio() const;
+
+    /**
+     * Sets the device pixel \a ratio.
+     *
+     * Common values are 1 for normal-dpi displays and 2 for high-dpi "retina" displays.
+     *
+     * \see devicePixelRatio()
+     * \since QGIS 3.22
+     */
+    void setDevicePixelRatio( float ratio );
+
+    /**
+     * Returns the device output size of the render.
+     *
+     * This is equivalent to the output size multiplicated by the device pixel ratio.
+     *
+     * \see outputSize()
+     * \see devicePixelRatio()
+     * \see setOutputSize()
+     *
+     * \since QGIS 3.22
+     */
+    QSize deviceOutputSize() const;
+
+    /**
+     * Sets QImage \a format which should be used for QImages created
+     * during rendering.
+     *
+     * \see imageFormat()
+     * \since QGIS 3.22
+     */
+    void setImageFormat( QImage::Format format ) { mImageFormat = format; }
+
+    /**
+     * Returns the QImage format which should be used for QImages created
+     * during rendering.
+     *
+     * \see setImageFormat
+     * \since QGIS 3.22
+     */
+    QImage::Format imageFormat() const { return mImageFormat; }
+
+    /**
+    * Returns the renderer usage
+    *
+    * \see setRendererUsage()
+    * \since QGIS 3.24
+    */
+    Qgis::RendererUsage rendererUsage() const {return mRendererUsage;}
+
+    /**
+    * Sets the renderer usage
+    *
+    * \note This usage not alter how the map gets rendered but the intention is that data provider
+    * knows the context of rendering and may report that to the backend.
+    *
+    * \see rendererUsage()
+    * \since QGIS 3.24
+    */
+    void setRendererUsage( Qgis::RendererUsage usage ) {mRendererUsage = usage;}
+
   private:
 
-    Flags mFlags;
+    Qgis::RenderContextFlags mFlags;
 
     //! Painter for rendering operations
     QPainter *mPainter = nullptr;
@@ -835,14 +1045,25 @@ class CORE_EXPORT QgsRenderContext
     //! True if the rendering has been canceled
     bool mRenderingStopped = false;
 
+    //! Optional feedback object, as an alternative for mRenderingStopped for cancellation support
+    QgsFeedback *mFeedback = nullptr;
+
     //! Factor to scale line widths and point marker sizes
     double mScaleFactor = 1.0;
+
+    //! Targeted DPI
+    double mDpiTarget = -1.0;
 
     //! Map scale
     double mRendererScale = 1.0;
 
-    //! Newer labeling engine implementation (can be NULLPTR)
+    double mSymbologyReferenceScale = -1;
+
+    //! Labeling engine implementation (can be NULLPTR)
     QgsLabelingEngine *mLabelingEngine = nullptr;
+
+    //! Label sink (can be NULLPTR)
+    QgsLabelSink *mLabelSink = nullptr;
 
     //! Color used for features that are marked as selected
     QColor mSelectionColor;
@@ -867,18 +1088,269 @@ class CORE_EXPORT QgsRenderContext
 
     QgsPathResolver mPathResolver;
 
-    TextRenderFormat mTextRenderFormat = TextFormatAlwaysOutlines;
+    Qgis::TextRenderFormat mTextRenderFormat = Qgis::TextRenderFormat::AlwaysOutlines;
     QList< QgsRenderedFeatureHandlerInterface * > mRenderedFeatureHandlers;
     bool mHasRenderedFeatureHandlers = false;
     QVariantMap mCustomRenderingFlags;
 
     QSet<const QgsSymbolLayer *> mDisabledSymbolLayers;
 
+    QList< QgsMapClippingRegion > mClippingRegions;
+    QgsGeometry mFeatureClipGeometry;
+
+    QPointF mTextureOrigin;
+
+    QgsDoubleRange mZRange;
+
+    QSize mSize;
+    float mDevicePixelRatio = 1.0;
+    QImage::Format mImageFormat = QImage::Format_ARGB32_Premultiplied;
+
+    Qgis::RendererUsage mRendererUsage = Qgis::RendererUsage::Unknown;
+
 #ifdef QGISDEBUG
     bool mHasTransformContext = false;
 #endif
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS( QgsRenderContext::Flags )
+#ifndef SIP_RUN
+
+/**
+ * \ingroup core
+ *
+ * \brief Scoped object for temporary replacement of a QgsRenderContext destination painter.
+ *
+ * Temporarily swaps out the destination QPainter object for a QgsRenderContext for the lifetime of the object,
+ * before replacing it to the original painter on destruction.
+ *
+ * \note Not available in Python bindings
+ * \since QGIS 3.14
+ */
+class QgsScopedRenderContextPainterSwap
+{
+  public:
+
+    /**
+     * Constructor for QgsScopedRenderContextPainterSwap.
+     *
+     * Swaps the destination painter for \a context (set QgsRenderContext::setPainter() ) to
+     * \a temporaryPainter.
+     */
+    QgsScopedRenderContextPainterSwap( QgsRenderContext &context, QPainter *temporaryPainter )
+      : mContext( context )
+      , mPreviousPainter( context.painter() )
+    {
+      mContext.setPainter( temporaryPainter );
+    }
+
+    /**
+     * Resets the destination painter for the context back to the original QPainter object.
+     */
+    void reset()
+    {
+      if ( !mReleased )
+      {
+        mContext.setPainter( mPreviousPainter );
+        mReleased = true;
+      }
+    }
+
+    /**
+     * Returns the destination painter for the context back to the original QPainter object.
+     */
+    ~QgsScopedRenderContextPainterSwap()
+    {
+      reset();
+    }
+
+  private:
+
+    QgsRenderContext &mContext;
+    QPainter *mPreviousPainter = nullptr;
+    bool mReleased = false;
+};
+
+
+/**
+ * \ingroup core
+ *
+ * \brief Scoped object for temporary scaling of a QgsRenderContext for millimeter based rendering.
+ *
+ * Temporarily scales the destination QPainter for a QgsRenderContext to use millimeter based units for the lifetime of the object,
+ * before returning it to pixel based units on destruction.
+ *
+ * \note Not available in Python bindings
+ * \since QGIS 3.14
+ */
+class QgsScopedRenderContextScaleToMm
+{
+  public:
+
+    /**
+     * Constructor for QgsScopedRenderContextScaleToMm.
+     *
+     * Rescales the destination painter (see QgsRenderContext::painter() ) to use millimeter based units.
+     *
+     * \warning It is the caller's responsibility to ensure that \a context is initially scaled to use pixel based units!
+     */
+    QgsScopedRenderContextScaleToMm( QgsRenderContext &context )
+      : mContext( context )
+    {
+      if ( mContext.painter() )
+        mContext.painter()->scale( mContext.scaleFactor(), mContext.scaleFactor() );
+    }
+
+    /**
+     * Returns the destination painter back to pixel based units.
+     */
+    ~QgsScopedRenderContextScaleToMm()
+    {
+      if ( mContext.painter() )
+        mContext.painter()->scale( 1.0 / mContext.scaleFactor(), 1.0 / mContext.scaleFactor() );
+    }
+
+  private:
+
+    QgsRenderContext &mContext;
+};
+
+
+/**
+ * \ingroup core
+ *
+ * \brief Scoped object for temporary scaling of a QgsRenderContext for pixel based rendering.
+ *
+ * Temporarily scales the destination QPainter for a QgsRenderContext to use pixel based units for the lifetime of the object,
+ * before returning it to millimeter based units on destruction.
+ *
+ * \note Not available in Python bindings
+ * \since QGIS 3.14
+ */
+class QgsScopedRenderContextScaleToPixels
+{
+  public:
+
+    /**
+     * Constructor for QgsScopedRenderContextScaleToPixels.
+     *
+     * Rescales the destination painter (see QgsRenderContext::painter() ) to use pixel based units.
+     *
+     * \warning It is the caller's responsibility to ensure that \a context is initially scaled to use millimeter based units!
+     */
+    QgsScopedRenderContextScaleToPixels( QgsRenderContext &context )
+      : mContext( context )
+    {
+      if ( mContext.painter() )
+        mContext.painter()->scale( 1.0 / mContext.scaleFactor(), 1.0 / mContext.scaleFactor() );
+    }
+
+    /**
+     * Returns the destination painter back to millimeter based units.
+     */
+    ~QgsScopedRenderContextScaleToPixels()
+    {
+      if ( mContext.painter() )
+        mContext.painter()->scale( mContext.scaleFactor(), mContext.scaleFactor() );
+    }
+
+  private:
+
+    QgsRenderContext &mContext;
+};
+
+
+/**
+ * \ingroup core
+ *
+ * \brief Scoped object for saving and restoring a QPainter object's state.
+ *
+ * Temporarily saves the QPainter state for the lifetime of the object, before restoring it
+ * on destruction.
+ *
+ * \note Not available in Python bindings
+ * \since QGIS 3.16
+ */
+class QgsScopedQPainterState
+{
+  public:
+
+    /**
+     * Constructor for QgsScopedQPainterState.
+     *
+     * Saves the specified \a painter state.
+     */
+    QgsScopedQPainterState( QPainter *painter )
+      : mPainter( painter )
+    {
+      mPainter->save();
+    }
+
+    /**
+     * Restores the painter back to its original state.
+     */
+    ~QgsScopedQPainterState()
+    {
+      mPainter->restore();
+    }
+
+  private:
+
+    QPainter *mPainter = nullptr;
+};
+
+
+/**
+ * \ingroup core
+ *
+ * \brief Scoped object for temporary override of the symbologyReferenceScale property of a QgsRenderContext.
+ *
+ * Temporarily changes the symbologyReferenceScale, before returning it to the original value on destruction.
+ *
+ * \note Not available in Python bindings
+ * \since QGIS 3.22
+ */
+class QgsScopedRenderContextReferenceScaleOverride
+{
+  public:
+
+    /**
+     * Constructor for QgsScopedRenderContextReferenceScaleOverride.
+     *
+     * Temporarily sets the render \a context symbologyReferenceScale to \a scale for the lifetime of this object.
+     */
+    QgsScopedRenderContextReferenceScaleOverride( QgsRenderContext &context, double scale )
+      : mContext( &context )
+      , mOriginalScale( context.symbologyReferenceScale() )
+    {
+      mContext->setSymbologyReferenceScale( scale );
+    }
+
+    /**
+     * Move constructor.
+     */
+    QgsScopedRenderContextReferenceScaleOverride( QgsScopedRenderContextReferenceScaleOverride &&o ) noexcept
+      : mContext( o.mContext )
+      , mOriginalScale( o.mOriginalScale )
+    {
+      o.mContext = nullptr;
+    }
+
+    /**
+     * Returns the render context back to the original reference scale.
+     */
+    ~QgsScopedRenderContextReferenceScaleOverride()
+    {
+      if ( mContext )
+        mContext->setSymbologyReferenceScale( mOriginalScale );
+    }
+
+  private:
+
+    QgsRenderContext *mContext = nullptr;
+    double mOriginalScale = 0;
+};
+
+
+#endif
 
 #endif

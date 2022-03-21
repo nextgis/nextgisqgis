@@ -32,7 +32,7 @@ class QgsBox3d;
 
 /**
  * \ingroup core
- * A rectangle specified with double values.
+ * \brief A rectangle specified with double values.
  *
  * QgsRectangle is used to store a rectangle when double values are required.
  * Examples are storing a layer extent or the current view extent of a map
@@ -45,24 +45,39 @@ class CORE_EXPORT QgsRectangle
     //! Constructor for a null rectangle
     QgsRectangle() = default; // optimised constructor for null rectangle - no need to call normalize here
 
-    //! Constructor
-    explicit QgsRectangle( double xMin, double yMin = 0, double xMax = 0, double yMax = 0 )
-      : mXmin( xMin )
-      , mYmin( yMin )
-      , mXmax( xMax )
-      , mYmax( yMax )
+    /**
+     * Constructs a QgsRectangle from a set of x and y minimum and maximum coordinates.
+     *
+     * The rectangle will be normalized after creation. Since QGIS 3.20, if \a normalize is FALSE then
+     * the normalization step will not be applied automatically.
+     */
+    explicit QgsRectangle( double xMin, double yMin = 0, double xMax = 0, double yMax = 0, bool normalize = true ) SIP_HOLDGIL
+  : mXmin( xMin )
+    , mYmin( yMin )
+    , mXmax( xMax )
+    , mYmax( yMax )
     {
-      normalize();
+      if ( normalize )
+        QgsRectangle::normalize();
     }
 
-    //! Construct a rectangle from two points. The rectangle is normalized after construction.
-    QgsRectangle( const QgsPointXY &p1, const QgsPointXY &p2 )
+    /**
+     * Construct a rectangle from two points.
+     *
+     * The rectangle is normalized after construction. Since QGIS 3.20, if \a normalize is FALSE then
+     * the normalization step will not be applied automatically.
+     */
+    QgsRectangle( const QgsPointXY &p1, const QgsPointXY &p2, bool normalize = true ) SIP_HOLDGIL
     {
-      set( p1, p2 );
+      set( p1, p2, normalize );
     }
 
-    //! Construct a rectangle from a QRectF. The rectangle is normalized after construction.
-    QgsRectangle( const QRectF &qRectF )
+    /**
+     * Construct a rectangle from a QRectF.
+     *
+     * The rectangle is NOT normalized after construction.
+     */
+    QgsRectangle( const QRectF &qRectF ) SIP_HOLDGIL
     {
       mXmin = qRectF.topLeft().x();
       mYmin = qRectF.topLeft().y();
@@ -71,7 +86,7 @@ class CORE_EXPORT QgsRectangle
     }
 
     //! Copy constructor
-    QgsRectangle( const QgsRectangle &other )
+    QgsRectangle( const QgsRectangle &other ) SIP_HOLDGIL
     {
       mXmin = other.xMinimum();
       mYmin = other.yMinimum();
@@ -96,59 +111,65 @@ class CORE_EXPORT QgsRectangle
      * and \a width and \a height.
      * \since QGIS 3.0
      */
-    static QgsRectangle fromCenterAndSize( QgsPointXY center, double width, double height );
+    static QgsRectangle fromCenterAndSize( const QgsPointXY &center, double width, double height );
 
     /**
-     * Sets the rectangle from two QgsPoints. The rectangle is
-     * normalised after construction.
+     * Sets the rectangle from two QgsPoints.
+     *
+     * The rectangle is normalised after construction. Since QGIS 3.20, if \a normalize is FALSE then
+     * the normalization step will not be applied automatically.
      */
-    void set( const QgsPointXY &p1, const QgsPointXY &p2 )
+    void set( const QgsPointXY &p1, const QgsPointXY &p2, bool normalize = true )
     {
       mXmin = p1.x();
       mXmax = p2.x();
       mYmin = p1.y();
       mYmax = p2.y();
-      normalize();
+      if ( normalize )
+        QgsRectangle::normalize();
     }
 
     /**
-     * Sets the rectangle from four points. The rectangle is
-     * normalised after construction.
+     * Sets the rectangle from four points.
+     *
+     * The rectangle is normalised after construction. Since QGIS 3.20, if \a normalize is FALSE then
+     * the normalization step will not be applied automatically.
      */
-    void set( double xMin, double yMin, double xMax, double yMax )
+    void set( double xMin, double yMin, double xMax, double yMax, bool normalize = true )
     {
       mXmin = xMin;
       mYmin = yMin;
       mXmax = xMax;
       mYmax = yMax;
-      normalize();
+      if ( normalize )
+        QgsRectangle::normalize();
     }
 
     /**
      * Set the minimum x value.
      */
-    void setXMinimum( double x ) { mXmin = x; }
+    void setXMinimum( double x ) SIP_HOLDGIL { mXmin = x; }
 
     /**
      * Set the maximum x value.
      */
-    void setXMaximum( double x ) { mXmax = x; }
+    void setXMaximum( double x ) SIP_HOLDGIL { mXmax = x; }
 
     /**
      * Set the minimum y value.
      */
-    void setYMinimum( double y ) { mYmin = y; }
+    void setYMinimum( double y ) SIP_HOLDGIL { mYmin = y; }
 
     /**
      * Set the maximum y value.
      */
-    void setYMaximum( double y ) { mYmax = y; }
+    void setYMaximum( double y ) SIP_HOLDGIL { mYmax = y; }
 
     /**
      * Set a rectangle so that min corner is at max
      * and max corner is at min. It is NOT normalized.
      */
-    void setMinimal()
+    void setMinimal() SIP_HOLDGIL
     {
       mXmin = std::numeric_limits<double>::max();
       mYmin = std::numeric_limits<double>::max();
@@ -159,22 +180,22 @@ class CORE_EXPORT QgsRectangle
     /**
      * Returns the x maximum value (right side of rectangle).
      */
-    double xMaximum() const { return mXmax; }
+    double xMaximum() const SIP_HOLDGIL { return mXmax; }
 
     /**
      * Returns the x minimum value (left side of rectangle).
      */
-    double xMinimum() const { return mXmin; }
+    double xMinimum() const SIP_HOLDGIL { return mXmin; }
 
     /**
      * Returns the y maximum value (top side of rectangle).
      */
-    double yMaximum() const { return mYmax; }
+    double yMaximum() const SIP_HOLDGIL { return mYmax; }
 
     /**
      * Returns the y minimum value (bottom side of rectangle).
      */
-    double yMinimum() const { return mYmin; }
+    double yMinimum() const SIP_HOLDGIL { return mYmin; }
 
     /**
      * Normalize the rectangle so it has non-negative width/height.
@@ -199,14 +220,14 @@ class CORE_EXPORT QgsRectangle
      * \see height()
      * \see area()
      */
-    double width() const { return mXmax - mXmin; }
+    double width() const SIP_HOLDGIL { return mXmax - mXmin; }
 
     /**
      * Returns the height of the rectangle.
      * \see width()
      * \see area()
      */
-    double height() const { return mYmax - mYmin; }
+    double height() const SIP_HOLDGIL { return mYmax - mYmin; }
 
     /**
      * Returns the area of the rectangle.
@@ -215,19 +236,19 @@ class CORE_EXPORT QgsRectangle
      * \see perimeter()
      * \since QGIS 3.0
      */
-    double area() const { return ( mXmax - mXmin ) * ( mYmax - mYmin ); }
+    double area() const SIP_HOLDGIL { return ( mXmax - mXmin ) * ( mYmax - mYmin ); }
 
     /**
      * Returns the perimeter of the rectangle.
      * \see area()
      * \since QGIS 3.0
      */
-    double perimeter() const { return 2 * ( mXmax - mXmin ) + 2 * ( mYmax - mYmin ); }
+    double perimeter() const SIP_HOLDGIL { return 2 * ( mXmax - mXmin ) + 2 * ( mYmax - mYmin ); }
 
     /**
      * Returns the center point of the rectangle.
      */
-    QgsPointXY center() const { return QgsPointXY( mXmin + width() / 2, mYmin + height() / 2 ); }
+    QgsPointXY center() const SIP_HOLDGIL { return QgsPointXY( mXmax * 0.5 + mXmin * 0.5, mYmin * 0.5 + mYmax * 0.5 ); }
 
     /**
      * Scale the rectangle around its center point.
@@ -254,8 +275,8 @@ class CORE_EXPORT QgsRectangle
      */
     void scale( double scaleFactor, double centerX, double centerY )
     {
-      double newWidth = width() * scaleFactor;
-      double newHeight = height() * scaleFactor;
+      const double newWidth = width() * scaleFactor;
+      const double newHeight = height() * scaleFactor;
       mXmin = centerX - newWidth / 2.0;
       mXmax = centerX + newWidth / 2.0;
       mYmin = centerY - newHeight / 2.0;
@@ -287,7 +308,7 @@ class CORE_EXPORT QgsRectangle
     {
       if ( p.x() < xMinimum() )
         setXMinimum( p.x() );
-      else if ( p.x() > xMaximum() )
+      if ( p.x() > xMaximum() )
         setXMaximum( p.x() );
       if ( p.y() < yMinimum() )
         setYMinimum( p.y() );
@@ -325,21 +346,21 @@ class CORE_EXPORT QgsRectangle
     /**
      * Returns TRUE when rectangle intersects with other rectangle.
      */
-    bool intersects( const QgsRectangle &rect ) const
+    bool intersects( const QgsRectangle &rect ) const SIP_HOLDGIL
     {
-      double x1 = ( mXmin > rect.mXmin ? mXmin : rect.mXmin );
-      double x2 = ( mXmax < rect.mXmax ? mXmax : rect.mXmax );
+      const double x1 = ( mXmin > rect.mXmin ? mXmin : rect.mXmin );
+      const double x2 = ( mXmax < rect.mXmax ? mXmax : rect.mXmax );
       if ( x1 > x2 )
         return false;
-      double y1 = ( mYmin > rect.mYmin ? mYmin : rect.mYmin );
-      double y2 = ( mYmax < rect.mYmax ? mYmax : rect.mYmax );
+      const double y1 = ( mYmin > rect.mYmin ? mYmin : rect.mYmin );
+      const double y2 = ( mYmax < rect.mYmax ? mYmax : rect.mYmax );
       return y1 <= y2;
     }
 
     /**
      * Returns TRUE when rectangle contains other rectangle.
      */
-    bool contains( const QgsRectangle &rect ) const
+    bool contains( const QgsRectangle &rect ) const SIP_HOLDGIL
     {
       return ( rect.mXmin >= mXmin && rect.mXmax <= mXmax && rect.mYmin >= mYmin && rect.mYmax <= mYmax );
     }
@@ -347,10 +368,21 @@ class CORE_EXPORT QgsRectangle
     /**
      * Returns TRUE when rectangle contains a point.
      */
-    bool contains( const QgsPointXY &p ) const
+    bool contains( const QgsPointXY &p ) const SIP_HOLDGIL
     {
       return mXmin <= p.x() && p.x() <= mXmax &&
              mYmin <= p.y() && p.y() <= mYmax;
+    }
+
+    /**
+     * Returns TRUE when rectangle contains the point at (\a x, \a y).
+     *
+     * \since QGIS 3.20
+     */
+    bool contains( double x, double y ) const SIP_HOLDGIL
+    {
+      return mXmin <= x && x <= mXmax &&
+             mYmin <= y && y <= mYmax;
     }
 
     /**
@@ -365,7 +397,7 @@ class CORE_EXPORT QgsRectangle
         mXmin = std::min( mXmin, rect.xMinimum() );
         mXmax = std::max( mXmax, rect.xMaximum() );
         mYmin = std::min( mYmin, rect.yMinimum() );
-        mYmax = std::max( mYmax, rect.yMaximum() );;
+        mYmax = std::max( mYmax, rect.yMaximum() );
       }
     }
 
@@ -393,6 +425,17 @@ class CORE_EXPORT QgsRectangle
     void combineExtentWith( const QgsPointXY &point )
     {
       combineExtentWith( point.x(), point.y() );
+    }
+
+    /**
+     * Returns the distance from \a point to the nearest point on the boundary of the rectangle.
+     * \since QGIS 3.14
+     */
+    double distance( const QgsPointXY &point ) const
+    {
+      const double dx = std::max( std::max( mXmin - point.x(), 0.0 ), point.x() - mXmax );
+      const double dy = std::max( std::max( mYmin - point.y(), 0.0 ), point.y() - mYmax );
+      return std::sqrt( dx * dx + dy * dy );
     }
 
     /**

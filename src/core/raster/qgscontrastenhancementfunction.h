@@ -24,7 +24,7 @@ email                : ersts@amnh.org
 
 /**
  * \ingroup core
- * A contrast enhancement function is the base class for all raster contrast enhancements.
+ * \brief A contrast enhancement function is the base class for all raster contrast enhancements.
  *
  * The purpose of a contrast enhancement is to enhanceContrast or clip a pixel value into
  * a specified bounding range.
@@ -35,6 +35,7 @@ class CORE_EXPORT QgsContrastEnhancementFunction
   public:
     QgsContrastEnhancementFunction( Qgis::DataType, double, double );
     QgsContrastEnhancementFunction( const QgsContrastEnhancementFunction &f );
+    QgsContrastEnhancementFunction &operator=( const QgsContrastEnhancementFunction & ) = delete;
     virtual ~QgsContrastEnhancementFunction() = default;
 
     /**
@@ -93,6 +94,10 @@ class CORE_EXPORT QgsContrastEnhancementFunction
     double mMaximumValuePossible = std::numeric_limits< double >::max() SIP_SKIP;
     double mMinimumValuePossible = std::numeric_limits< double >::lowest() SIP_SKIP;
 
+  private:
+#ifdef SIP_RUN
+    QgsContrastEnhancementFunction &operator=( const QgsContrastEnhancementFunction & );
+#endif
 };
 
 #endif

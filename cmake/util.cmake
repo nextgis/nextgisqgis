@@ -3,7 +3,7 @@
 # Purpose:  CMake build scripts
 # Author:   Dmitry Baryshnikov, <dmitry.baryshnikov@nextgis.com>
 ################################################################################
-# Copyright (C) 2017-2019, NextGIS <info@nextgis.com>
+# Copyright (C) 2017-2022, NextGIS <info@nextgis.com>
 #
 # This script is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,9 +30,9 @@ function(check_version major minor patch qgis_major qgis_minor qgis_patch qgis_n
 
     # QGIS_PORT is the version of QGIS this release is bound to
     set(QGIS_MAJOR 3)
-    set(QGIS_MINOR 12)
-    set(QGIS_PATCH 3)
-    set(QGIS_NAME "București")
+    set(QGIS_MINOR 24)
+    set(QGIS_PATCH 0)
+    set(QGIS_NAME "Tisler")
 
 
     set(${major} ${VERSION_MAJOR} PARENT_SCOPE)
@@ -57,7 +57,7 @@ function(warning_msg text)
         set(Red         "${Esc}[31m")
         set(ColourReset "${Esc}[m")
 
-        message(STATUS "${Red}${text}${ColourReset}")
+        message("! ${Red}${text}${ColourReset}")
     endif()
 endfunction()
 
@@ -67,7 +67,7 @@ function(info_msg text)
         set(Red         "${Esc}[36m")
         set(ColourReset "${Esc}[m")
 
-        message(STATUS "${Red}${text}${ColourReset}")
+        message("* ${Red}${text}${ColourReset}")
     endif()
 endfunction()
 
@@ -76,7 +76,7 @@ function(report_version name ver)
     set(BoldYellow  "${Esc}[1;33m")
     set(ColourReset "${Esc}[m")
 
-    message("${BoldYellow}${name} version ${ver}${ColourReset}")
+    message("- ${BoldYellow}${name} version ${ver}${ColourReset}")
 endfunction()
 
 # macro to find packages on the host OS
@@ -159,7 +159,7 @@ function(get_compiler_version ver)
     endif()
 
     # DEBUG:
-    # set(COMPILER Clang-10.0)
+    set(COMPILER Clang-10.0)
 
     set(${ver} ${COMPILER} PARENT_SCOPE)
 endfunction()

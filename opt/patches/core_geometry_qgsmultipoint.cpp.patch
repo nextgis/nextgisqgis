@@ -1,0 +1,44 @@
+--- a/src/core/geometry/qgsmultipoint.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/geometry/qgsmultipoint.cpp	2022-03-09 16:39:26.000000000 +0300
+@@ -22,7 +22,7 @@
+ #include <QJsonArray>
+ #include <QJsonObject>
+ #include <QRegularExpression>
+-#include <nlohmann/json.hpp>
++// #include <nlohmann/json.hpp>
+ 
+ QgsMultiPoint::QgsMultiPoint()
+ {
+@@ -124,19 +124,25 @@
+ 
+ json QgsMultiPoint::asJsonObject( int precision ) const
+ {
+-  json j
+-  {
+-    { "type", "MultiPoint" },
+-    { "coordinates", json::array() },
+-  };
++  json j;
++  j.Add("type", "MultiPoint");
++  CPLJSONArray coordinates;
+   for ( const QgsAbstractGeometry *geom : std::as_const( mGeometries ) )
+   {
+     const QgsPoint *point = static_cast<const QgsPoint *>( geom );
+     if ( point->is3D() )
+-      j[ "coordinates" ].push_back( { qgsRound( point->x(), precision ), qgsRound( point->y(), precision ), qgsRound( point->z(), precision ) } );
++    {
++      coordinates.Add( qgsRound( point->x(), precision ) );
++      coordinates.Add( qgsRound( point->y(), precision ) );
++      coordinates.Add( qgsRound( point->z(), precision ) );
++    }
+     else
+-      j[ "coordinates" ].push_back( { qgsRound( point->x(), precision ), qgsRound( point->y(), precision ) } );
++    {
++      coordinates.Add( qgsRound( point->x(), precision ) );
++      coordinates.Add( qgsRound( point->y(), precision ) );
++    }
+   }
++  j.Add("coordinates", coordinates);
+   return j;
+ }
+ 

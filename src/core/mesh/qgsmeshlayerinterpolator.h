@@ -46,7 +46,7 @@ class QgsRenderContext;
 
 /**
  * \ingroup core
- * Interpolate mesh scalar dataset to raster block
+ * \brief Interpolate mesh scalar dataset to raster block
  *
  * \note not available in Python bindings
  * \since QGIS 3.2
@@ -58,7 +58,7 @@ class QgsMeshLayerInterpolator : public QgsRasterInterface SIP_SKIP
     QgsMeshLayerInterpolator( const QgsTriangularMesh &m,
                               const QVector<double> &datasetValues,
                               const QgsMeshDataBlock &activeFaceFlagValues,
-                              bool dataIsOnVertices,
+                              QgsMeshDatasetGroupMetadata::DataType dataType,
                               const QgsRenderContext &context,
                               const QSize &size );
     ~QgsMeshLayerInterpolator() override;
@@ -68,13 +68,16 @@ class QgsMeshLayerInterpolator : public QgsRasterInterface SIP_SKIP
     int bandCount() const override;
     QgsRasterBlock *block( int, const QgsRectangle &extent, int width, int height, QgsRasterBlockFeedback *feedback = nullptr ) override;
 
+    void setSpatialIndexActive( bool active );
+
   private:
     const QgsTriangularMesh &mTriangularMesh;
     const QVector<double> &mDatasetValues;
     const QgsMeshDataBlock &mActiveFaceFlagValues;
     const QgsRenderContext &mContext;
-    bool mDataOnVertices = true;
+    QgsMeshDatasetGroupMetadata::DataType mDataType = QgsMeshDatasetGroupMetadata::DataType::DataOnVertices;
     QSize mOutputSize;
+    bool mSpatialIndexActive = false;
 };
 
 ///@endcond
@@ -108,6 +111,33 @@ namespace QgsMeshUtils
     const QgsRectangle &extent,
     QgsRasterBlockFeedback *feedback = nullptr
   ) SIP_FACTORY;
+
+
+  /**
+   * Exports mesh layer's dataset values as raster block
+   *
+   * \param triangularMesh the triangular mesh of the mesh layer
+   * \param datasetValues dataset values used to build the raster block
+   * \param activeFlags active flag values
+   * \param dataType the data type iof the dataset values
+   * \param transform the coordinate transform used to export the raster block
+   * \param mapUnitsPerPixel map units per pixel for block
+   * \param extent extent of block in destination CRS
+   * \param feedback optional raster feedback object for cancellation/preview
+   * \returns raster block with Float::64 values. NULLPTR on error
+   *
+   * \since QGIS 3.18
+   */
+  CORE_EXPORT QgsRasterBlock *exportRasterBlock(
+    const QgsTriangularMesh &triangularMesh,
+    const QgsMeshDataBlock &datasetValues,
+    const QgsMeshDataBlock &activeFlags,
+    const QgsMeshDatasetGroupMetadata::DataType dataType,
+    const QgsCoordinateTransform &transform,
+    double mapUnitsPerPixel,
+    const QgsRectangle &extent,
+    QgsRasterBlockFeedback *feedback = nullptr
+  ) SIP_SKIP;
 };
 
 #endif // QGSMESHLAYERINTERPOLATOR_H

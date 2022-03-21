@@ -23,6 +23,7 @@
 #include <QString>
 
 #include "qgis_core.h"
+#include "qgis_sip.h"
 
 /***************************************************************************
  * This class is considered CRITICAL and any change MUST be accompanied with
@@ -45,16 +46,16 @@ class CORE_EXPORT QgsWkbTypes
     /**
      * The WKB type describes the number of dimensions a geometry has
      *
-     *  - Point
-     *  - LineString
-     *  - Polygon
+     * - Point
+     * - LineString
+     * - Polygon
      *
      * as well as the number of dimensions for each individual vertex
      *
-     *  - X (always)
-     *  - Y (always)
-     *  - Z (optional)
-     *  - M (measurement value, optional)
+     * - X (always)
+     * - Y (always)
+     * - Z (optional)
+     * - M (measurement value, optional)
      *
      * it also has values for multi types, collections, unknown geometry,
      * null geometry, no geometry and curve support.
@@ -153,7 +154,7 @@ class CORE_EXPORT QgsWkbTypes
      * \see curveType()
      * \see flatType()
      */
-    static Type singleType( Type type )
+    static Type singleType( Type type ) SIP_HOLDGIL
     {
       switch ( type )
       {
@@ -293,21 +294,32 @@ class CORE_EXPORT QgsWkbTypes
 
     /**
      * Returns the multi type for a WKB type. For example, for Polygon WKB types the multi type would be MultiPolygon.
+     *
+     * \see promoteNonPointTypesToMulti()
      * \see isMultiType()
      * \see singleType()
      * \see curveType()
      * \see flatType()
      */
-    static Type multiType( Type type )
+    static Type multiType( Type type ) SIP_HOLDGIL
     {
       switch ( type )
       {
         case Unknown:
-        case Triangle:
-        case TriangleZ:
-        case TriangleM:
-        case TriangleZM:
           return Unknown;
+
+        // until we support TIN types, use multipolygon
+        case Triangle:
+          return MultiPolygon;
+
+        case TriangleZ:
+          return MultiPolygonZ;
+
+        case TriangleM:
+          return MultiPolygonM;
+
+        case TriangleZM:
+          return MultiPolygonZM;
 
         case GeometryCollection:
           return GeometryCollection;
@@ -425,6 +437,34 @@ class CORE_EXPORT QgsWkbTypes
 
 
     /**
+     * Promotes a WKB geometry type to its multi-type equivalent, with the exception of point geometry types.
+     *
+     * Specifically, this method should be used to determine the most-permissive possible resultant WKB type which can result
+     * from subtracting parts of a geometry. A single-point geometry type can never become a multi-point geometry type as
+     * a result of a subtraction, but a single-line or single-polygon geometry CAN become a multipart geometry as a result of subtracting
+     * portions of the geometry.
+     *
+     * \see multiType()
+     * \see singleType()
+     * \since QGIS 3.24
+     */
+    static Type promoteNonPointTypesToMulti( Type type ) SIP_HOLDGIL
+    {
+      switch ( geometryType( type ) )
+      {
+        case QgsWkbTypes::PointGeometry:
+        case QgsWkbTypes::UnknownGeometry:
+        case QgsWkbTypes::NullGeometry:
+          return type;
+
+        case QgsWkbTypes::LineGeometry:
+        case QgsWkbTypes::PolygonGeometry:
+          return multiType( type );
+      }
+      return Unknown;
+    }
+
+    /**
      * Returns the curve type for a WKB type. For example, for Polygon WKB types the curve type would be CurvePolygon.
      *
      * \note Returns `CompoundCurve` for `CircularString` (and its Z/M variants)
@@ -438,7 +478,7 @@ class CORE_EXPORT QgsWkbTypes
      *
      * \since QGIS 3.10
      */
-    static Type curveType( Type type )
+    static Type curveType( Type type ) SIP_HOLDGIL
     {
       switch ( type )
       {
@@ -579,7 +619,7 @@ class CORE_EXPORT QgsWkbTypes
      *
      * \since QGIS 3.14
      */
-    static Type linearType( Type type )
+    static Type linearType( Type type ) SIP_HOLDGIL
     {
       switch ( type )
       {
@@ -689,7 +729,7 @@ class CORE_EXPORT QgsWkbTypes
      * \see multiType()
      * \see curveType()
      */
-    static Type flatType( Type type )
+    static Type flatType( Type type ) SIP_HOLDGIL
     {
       switch ( type )
       {
@@ -788,7 +828,7 @@ class CORE_EXPORT QgsWkbTypes
     }
 
     //! Returns the modified input geometry type according to hasZ / hasM
-    static Type zmType( Type type, bool hasZ, bool hasM )
+    static Type zmType( Type type, bool hasZ, bool hasM ) SIP_HOLDGIL
     {
       type = flatType( type );
       if ( hasZ )
@@ -809,7 +849,7 @@ class CORE_EXPORT QgsWkbTypes
      * \see isMultiType()
      * \see singleType()
      */
-    static bool isSingleType( Type type )
+    static bool isSingleType( Type type ) SIP_HOLDGIL
     {
       return ( type != Unknown && !isMultiType( type ) );
     }
@@ -819,7 +859,7 @@ class CORE_EXPORT QgsWkbTypes
      * \see isSingleType()
      * \see multiType()
      */
-    static bool isMultiType( Type type )
+    static bool isMultiType( Type type ) SIP_HOLDGIL
     {
       switch ( type )
       {
@@ -868,7 +908,7 @@ class CORE_EXPORT QgsWkbTypes
      * Returns TRUE if the WKB type is a curved type or can contain curved geometries.
      * \since QGIS 2.14
      */
-    static bool isCurvedType( Type type )
+    static bool isCurvedType( Type type ) SIP_HOLDGIL
     {
       switch ( flatType( type ) )
       {
@@ -891,9 +931,9 @@ class CORE_EXPORT QgsWkbTypes
      * Invalid geometry types will return a dimension of 0.
      * \see coordDimensions()
      */
-    static int wkbDimensions( Type type )
+    static int wkbDimensions( Type type ) SIP_HOLDGIL
     {
-      GeometryType gtype = geometryType( type );
+      const GeometryType gtype = geometryType( type );
       switch ( gtype )
       {
         case LineGeometry:
@@ -912,7 +952,7 @@ class CORE_EXPORT QgsWkbTypes
      * \see wkbDimensions()
      * \since QGIS 2.14
      */
-    static int coordDimensions( Type type )
+    static int coordDimensions( Type type ) SIP_HOLDGIL
     {
       if ( type == Unknown || type == NoGeometry )
         return 0;
@@ -925,7 +965,7 @@ class CORE_EXPORT QgsWkbTypes
      * PolygonGeometry geometry type.
      * GeometryCollections are reported as QgsWkbTypes::UnknownGeometry.
      */
-    static GeometryType geometryType( Type type )
+    static GeometryType geometryType( Type type ) SIP_HOLDGIL
     {
       switch ( type )
       {
@@ -1004,9 +1044,16 @@ class CORE_EXPORT QgsWkbTypes
     }
 
     /**
-     * Returns a display string type for a WKB type, e.g., the geometry name used in WKT geometry representations.
+     * Returns a non-translated display string type for a WKB type, e.g., the geometry name used in WKT geometry representations.
      */
-    static QString displayString( Type type );
+    static QString displayString( Type type ) SIP_HOLDGIL;
+
+    /**
+     * Returns a translated display string type for a WKB type, e.g., the geometry name used in WKT geometry representations.
+     *
+     * \since QGIS 3.18
+     */
+    static QString translatedDisplayString( Type type ) SIP_HOLDGIL;
 
     /**
      * Returns a display string for a geometry type.
@@ -1022,7 +1069,7 @@ class CORE_EXPORT QgsWkbTypes
      *
      * \since QGIS 3.0
      */
-    static QString geometryDisplayString( GeometryType type );
+    static QString geometryDisplayString( GeometryType type ) SIP_HOLDGIL;
 
     /**
      * Tests whether a WKB type contains the z-dimension.
@@ -1030,7 +1077,7 @@ class CORE_EXPORT QgsWkbTypes
      * \see addZ()
      * \see hasM()
      */
-    static bool hasZ( Type type )
+    static bool hasZ( Type type ) SIP_HOLDGIL
     {
       switch ( type )
       {
@@ -1080,7 +1127,7 @@ class CORE_EXPORT QgsWkbTypes
      * \see addM()
      * \see hasZ()
      */
-    static bool hasM( Type type )
+    static bool hasM( Type type ) SIP_HOLDGIL
     {
       switch ( type )
       {
@@ -1126,7 +1173,7 @@ class CORE_EXPORT QgsWkbTypes
      * \see hasZ()
      * \since QGIS 2.12
      */
-    static Type addZ( Type type )
+    static Type addZ( Type type ) SIP_HOLDGIL
     {
       if ( hasZ( type ) )
         return type;
@@ -1136,7 +1183,7 @@ class CORE_EXPORT QgsWkbTypes
         return NoGeometry;
 
       //upgrade with z dimension
-      Type flat = flatType( type );
+      const Type flat = flatType( type );
       if ( hasM( type ) )
         return static_cast< QgsWkbTypes::Type >( flat + 3000 );
       else
@@ -1151,7 +1198,7 @@ class CORE_EXPORT QgsWkbTypes
      * \see hasM()
      * \since QGIS 2.12
      */
-    static Type addM( Type type )
+    static Type addM( Type type ) SIP_HOLDGIL
     {
       if ( hasM( type ) )
         return type;
@@ -1159,16 +1206,21 @@ class CORE_EXPORT QgsWkbTypes
         return Unknown;
       else if ( type == NoGeometry )
         return NoGeometry;
-      else if ( type == Point25D ||
-                type == LineString25D ||
-                type == Polygon25D ||
-                type == MultiPoint25D ||
-                type == MultiLineString25D ||
-                type == MultiPolygon25D )
-        return type; //can't add M dimension to these types
+      else if ( type == Point25D )
+        return PointZM;
+      else if ( type == LineString25D )
+        return LineStringZM;
+      else if ( type == Polygon25D )
+        return PolygonZM;
+      else if ( type == MultiPoint25D )
+        return MultiPointZM;
+      else if ( type == MultiLineString25D )
+        return MultiLineStringZM;
+      else if ( type == MultiPolygon25D )
+        return MultiPolygonZM;
 
       //upgrade with m dimension
-      Type flat = flatType( type );
+      const Type flat = flatType( type );
       if ( hasZ( type ) )
         return static_cast< QgsWkbTypes::Type >( flat + 3000 );
       else
@@ -1182,7 +1234,7 @@ class CORE_EXPORT QgsWkbTypes
      * \see addZ()
      * \since QGIS 2.14
      */
-    static Type dropZ( Type type )
+    static Type dropZ( Type type ) SIP_HOLDGIL
     {
       if ( !hasZ( type ) )
         return type;
@@ -1200,7 +1252,7 @@ class CORE_EXPORT QgsWkbTypes
      * \see addM()
      * \since QGIS 2.14
      */
-    static Type dropM( Type type )
+    static Type dropM( Type type ) SIP_HOLDGIL
     {
       if ( !hasM( type ) )
         return type;
@@ -1216,12 +1268,12 @@ class CORE_EXPORT QgsWkbTypes
      * \param type The type to convert
      * \returns the 25D version of the type or Unknown
      */
-    static Type to25D( Type type )
+    static Type to25D( Type type ) SIP_HOLDGIL
     {
-      QgsWkbTypes::Type flat = flatType( type );
+      const QgsWkbTypes::Type flat = flatType( type );
 
       if ( flat >= Point && flat <= MultiPolygon )
-        return static_cast< QgsWkbTypes::Type >( flat + 0x80000000 );
+        return static_cast< QgsWkbTypes::Type >( static_cast<unsigned>( flat ) + 0x80000000U );
       else if ( type == QgsWkbTypes::NoGeometry )
         return QgsWkbTypes::NoGeometry;
       else

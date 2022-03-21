@@ -23,8 +23,8 @@ QgsActionScopeRegistry::QgsActionScopeRegistry( QObject *parent )
   // Register some default action scopes:
 
   QgsExpressionContextScope canvasScope;
-  canvasScope.addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "clicked_x" ), 25, true ) );
-  canvasScope.addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "clicked_y" ), 30, true ) );
+  canvasScope.addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "click_x" ), 25, true ) );
+  canvasScope.addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "click_y" ), 30, true ) );
   mActionScopes.insert( QgsActionScope( QStringLiteral( "Canvas" ), tr( "Canvas" ), tr( "Available for the action map tool on the canvas." ), canvasScope ) );
 
   QgsExpressionContextScope fieldScope;
@@ -32,9 +32,9 @@ QgsActionScopeRegistry::QgsActionScopeRegistry( QObject *parent )
   fieldScope.addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "field_name" ), "[field_name]", true ) );
   fieldScope.addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "field_value" ), "[field_value]", true ) );
 
-  mActionScopes.insert( QgsActionScope( QStringLiteral( "Field" ), tr( "Field Scope" ), tr( "Available for individual fields. For example in the attribute table." ), fieldScope ) );
-  mActionScopes.insert( QgsActionScope( QStringLiteral( "Feature" ), tr( "Feature Scope" ), tr( "Available for individual features. For example on feature forms or per row in the attribute table." ) ) );
-  mActionScopes.insert( QgsActionScope( QStringLiteral( "Layer" ), tr( "Layer Scope" ), tr( "Available as layer global action. For example on top of the attribute table." ) ) );
+  mActionScopes.insert( QgsActionScope( QStringLiteral( "Field" ), tr( "Field" ), tr( "Available for individual fields. For example in the attribute table." ), fieldScope ) );
+  mActionScopes.insert( QgsActionScope( QStringLiteral( "Feature" ), tr( "Feature" ), tr( "Available for individual features. For example on feature forms or per row in the attribute table." ) ) );
+  mActionScopes.insert( QgsActionScope( QStringLiteral( "Layer" ), tr( "Layer" ), tr( "Available as layer global action. For example on top of the attribute table." ) ) );
 }
 
 QSet<QgsActionScope> QgsActionScopeRegistry::actionScopes() const

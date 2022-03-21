@@ -40,7 +40,12 @@ const double QgsClipper::SMALL_NUM = 1e-12;
 
 QPolygonF QgsClipper::clippedLine( const QgsCurve &curve, const QgsRectangle &clipExtent )
 {
-  const int nPoints = curve.numPoints();
+  return clippedLine( curve.asQPolygonF(), clipExtent );
+}
+
+QPolygonF QgsClipper::clippedLine( const QPolygonF &curve, const QgsRectangle &clipExtent )
+{
+  const int nPoints = curve.size();
 
   double p0x, p0y, p1x = 0.0, p1y = 0.0; //original coordinates
   double p1x_c, p1y_c; //clipped end coordinates
@@ -49,28 +54,29 @@ QPolygonF QgsClipper::clippedLine( const QgsCurve &curve, const QgsRectangle &cl
   QPolygonF line;
   line.reserve( nPoints + 1 );
 
+  const QPointF *curveData = curve.data();
+
   for ( int i = 0; i < nPoints; ++i )
   {
     if ( i == 0 )
     {
-      p1x = curve.xAt( i );
-      p1y = curve.yAt( i );
-      continue;
+      p1x = curveData->x();
+      p1y = curveData->y();
     }
     else
     {
       p0x = p1x;
       p0y = p1y;
 
-      p1x = curve.xAt( i );
-      p1y = curve.yAt( i );
+      p1x = curveData->x();
+      p1y = curveData->y();
 
       p1x_c = p1x;
       p1y_c = p1y;
       if ( clipLineSegment( clipExtent.xMinimum(), clipExtent.xMaximum(), clipExtent.yMinimum(), clipExtent.yMaximum(),
                             p0x, p0y, p1x_c,  p1y_c ) )
       {
-        bool newLine = !line.isEmpty() && ( !qgsDoubleNear( p0x, lastClipX ) || !qgsDoubleNear( p0y, lastClipY ) );
+        const bool newLine = !line.isEmpty() && ( !qgsDoubleNear( p0x, lastClipX ) || !qgsDoubleNear( p0y, lastClipY ) );
         if ( newLine )
         {
           //add edge points to connect old and new line
@@ -88,6 +94,7 @@ QPolygonF QgsClipper::clippedLine( const QgsCurve &curve, const QgsRectangle &cl
         line << QPointF( p1x_c,  p1y_c );
       }
     }
+    curveData++;
   }
   return line;
 }

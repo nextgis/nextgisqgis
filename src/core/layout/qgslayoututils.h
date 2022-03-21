@@ -31,7 +31,7 @@ class QStyleOptionGraphicsItem;
 
 /**
  * \ingroup core
- * Utilities for layouts.
+ * \brief Utilities for layouts.
  * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutUtils
@@ -208,8 +208,17 @@ class CORE_EXPORT QgsLayoutUtils
 
     /**
      * Extracts the scale factor from an item \a style.
+     *
+     * \deprecated Use the variant with a QPainter argument instead
      */
-    static double scaleFactorFromItemStyle( const QStyleOptionGraphicsItem *style );
+    Q_DECL_DEPRECATED static double scaleFactorFromItemStyle( const QStyleOptionGraphicsItem *style ) SIP_DEPRECATED;
+
+    /**
+     * Extracts the scale factor from an item \a style and \a painter.
+     *
+     * \since QGIS 3.20
+     */
+    static double scaleFactorFromItemStyle( const QStyleOptionGraphicsItem *style, QPainter *painter );
 
     /**
      * Resolves a \a string into a map layer from a given \a project. Attempts different
@@ -231,6 +240,20 @@ class CORE_EXPORT QgsLayoutUtils
      * \since QGIS 3.10
      */
     static double calculatePrettySize( double minimumSize, double maximumSize );
+
+    /**
+     * Returns TRUE if an \a item is a clipping item for another layout item.
+     *
+     * \since QGIS 3.16
+     */
+    static bool itemIsAClippingSource( const QgsLayoutItem *item );
+
+    /**
+     * Returns a list of predefined scales associated with a \a layout.
+     *
+     * \since QGIS 3.20
+     */
+    static QVector< double > predefinedScales( const QgsLayout *layout );
 
   private:
 

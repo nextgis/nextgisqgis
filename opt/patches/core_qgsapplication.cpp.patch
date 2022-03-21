@@ -1,0 +1,139 @@
+--- a/src/core/qgsapplication.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/qgsapplication.cpp	2022-03-07 23:14:46.000000000 +0300
+@@ -41,7 +41,7 @@
+ #include "qgscolorschemeregistry.h"
+ #include "qgspainteffectregistry.h"
+ #include "qgsprojectstorageregistry.h"
+-#include "qgsexternalstorageregistry.h"
++// #include "qgsexternalstorageregistry.h"
+ #include "qgsrasterrendererregistry.h"
+ #include "qgsrendererregistry.h"
+ #include "qgspointcloudrendererregistry.h"
+@@ -74,11 +74,11 @@
+ #include "qgsremappingproxyfeaturesink.h"
+ #include "qgsmeshlayer.h"
+ #include "qgsfeaturestore.h"
+-#include "qgslocator.h"
++// #include "qgslocator.h"
+ #include "qgsreadwritelocker.h"
+-#include "qgsbabelformatregistry.h"
++// #include "qgsbabelformatregistry.h"
+ 
+-#include "gps/qgsgpsconnectionregistry.h"
++// #include "gps/qgsgpsconnectionregistry.h"
+ #include "processing/qgsprocessingregistry.h"
+ #include "processing/models/qgsprocessingmodelchildparametersource.h"
+ #include "processing/models/qgsprocessingmodelchilddependency.h"
+@@ -286,7 +286,7 @@
+     qRegisterMetaType<QgsDatumTransform::TransformDetails>( "QgsDatumTransform::TransformDetails" );
+     qRegisterMetaType<QgsNewsFeedParser::Entry>( "QgsNewsFeedParser::Entry" );
+     qRegisterMetaType<QgsRectangle>( "QgsRectangle" );
+-    qRegisterMetaType<QgsLocatorResult>( "QgsLocatorResult" );
++    // qRegisterMetaType<QgsLocatorResult>( "QgsLocatorResult" );
+     qRegisterMetaType<QgsProcessingModelChildParameterSource>( "QgsProcessingModelChildParameterSource" );
+ #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+     // Qt6 documentation says these are not needed anymore (https://www.qt.io/blog/whats-new-in-qmetatype-qvariant) #spellok
+@@ -2356,15 +2356,15 @@
+   return members()->mAnnotationItemRegistry;
+ }
+ 
+-QgsGpsConnectionRegistry *QgsApplication::gpsConnectionRegistry()
+-{
+-  return members()->mGpsConnectionRegistry;
+-}
+-
+-QgsBabelFormatRegistry *QgsApplication::gpsBabelFormatRegistry()
+-{
+-  return members()->mGpsBabelFormatRegistry;
+-}
++// QgsGpsConnectionRegistry *QgsApplication::gpsConnectionRegistry()
++// {
++//   return members()->mGpsConnectionRegistry;
++// }
++
++// QgsBabelFormatRegistry *QgsApplication::gpsBabelFormatRegistry()
++// {
++//   return members()->mGpsBabelFormatRegistry;
++// }
+ 
+ QgsPluginLayerRegistry *QgsApplication::pluginLayerRegistry()
+ {
+@@ -2451,10 +2451,10 @@
+   return members()->mProjectStorageRegistry.get();
+ }
+ 
+-QgsExternalStorageRegistry *QgsApplication::externalStorageRegistry()
+-{
+-  return members()->mExternalStorageRegistry;
+-}
++// QgsExternalStorageRegistry *QgsApplication::externalStorageRegistry()
++// {
++//   return members()->mExternalStorageRegistry;
++// }
+ 
+ QgsLocalizedDataPathRegistry *QgsApplication::localizedDataPathRegistry()
+ {
+@@ -2555,16 +2555,16 @@
+     mPointCloudRendererRegistry = new QgsPointCloudRendererRegistry();
+     profiler->end();
+   }
+-  {
+-    profiler->start( tr( "Setup GPS registry" ) );
+-    mGpsConnectionRegistry = new QgsGpsConnectionRegistry();
+-    profiler->end();
+-  }
+-  {
+-    profiler->start( tr( "Setup GPSBabel format registry" ) );
+-    mGpsBabelFormatRegistry = new QgsBabelFormatRegistry();
+-    profiler->end();
+-  }
++//   {
++//     profiler->start( tr( "Setup GPS registry" ) );
++//     mGpsConnectionRegistry = new QgsGpsConnectionRegistry();
++//     profiler->end();
++//   }
++//   {
++//     profiler->start( tr( "Setup GPSBabel format registry" ) );
++//     mGpsBabelFormatRegistry = new QgsBabelFormatRegistry();
++//     profiler->end();
++//   }
+   {
+     profiler->start( tr( "Setup plugin layer registry" ) );
+     mPluginLayerRegistry = new QgsPluginLayerRegistry();
+@@ -2608,11 +2608,11 @@
+     mProjectStorageRegistry.reset( new QgsProjectStorageRegistry() );
+     profiler->end();
+   }
+-  {
+-    profiler->start( tr( "Setup external storage registry" ) );
+-    mExternalStorageRegistry = new QgsExternalStorageRegistry();
+-    profiler->end();
+-  }
++//   {
++//     profiler->start( tr( "Setup external storage registry" ) );
++//     mExternalStorageRegistry = new QgsExternalStorageRegistry();
++//     profiler->end();
++//   }
+   {
+     profiler->start( tr( "Setup network content cache" ) );
+     mNetworkContentFetcherRegistry = new QgsNetworkContentFetcherRegistry();
+@@ -2657,8 +2657,8 @@
+   delete mAnnotationRegistry;
+   delete mColorSchemeRegistry;
+   delete mFieldFormatterRegistry;
+-  delete mGpsConnectionRegistry;
+-  delete mGpsBabelFormatRegistry;
++//   delete mGpsConnectionRegistry;
++//   delete mGpsBabelFormatRegistry;
+   delete mMessageLog;
+   delete mPaintEffectRegistry;
+   delete mPluginLayerRegistry;
+@@ -2675,7 +2675,7 @@
+   delete mCalloutRegistry;
+   delete mRecentStyleHandler;
+   delete mSymbolLayerRegistry;
+-  delete mExternalStorageRegistry;
++//   delete mExternalStorageRegistry;
+   delete mTaskManager;
+   delete mNetworkContentFetcherRegistry;
+   delete mClassificationMethodRegistry;

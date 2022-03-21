@@ -26,7 +26,7 @@
 
 void QgsBookmarksToLayerAlgorithm::initAlgorithm( const QVariantMap & )
 {
-  std::unique_ptr< QgsProcessingParameterEnum > sourceParam = qgis::make_unique<QgsProcessingParameterEnum >( QStringLiteral( "SOURCE" ), QObject::tr( "Bookmark source" ), QStringList() <<
+  std::unique_ptr< QgsProcessingParameterEnum > sourceParam = std::make_unique<QgsProcessingParameterEnum >( QStringLiteral( "SOURCE" ), QObject::tr( "Bookmark source" ), QStringList() <<
       QObject::tr( "Project bookmarks" ) << QObject::tr( "User bookmarks" ), true, QVariantList() << 0 << 1 );
   QVariantMap wrapperMetadata;
   wrapperMetadata.insert( QStringLiteral( "useCheckBoxes" ), true );
@@ -93,7 +93,11 @@ bool QgsBookmarksToLayerAlgorithm::prepareAlgorithm( const QVariantMap &paramete
 {
   QList< int > sources = parameterAsEnums( parameters, QStringLiteral( "SOURCE" ), context );
   if ( sources.contains( 0 ) )
+  {
+    if ( !context.project() )
+      throw QgsProcessingException( QObject::tr( "No project is available for bookmark extraction" ) );
     mBookmarks.append( context.project()->bookmarkManager()->bookmarks() );
+  }
   if ( sources.contains( 1 ) )
     mBookmarks.append( QgsApplication::bookmarkManager()->bookmarks() );
 
@@ -115,7 +119,7 @@ QVariantMap QgsBookmarksToLayerAlgorithm::processAlgorithm( const QVariantMap &p
   int current = 0;
   double step = count > 0 ? 100.0 / count : 1;
 
-  for ( const QgsBookmark &b : qgis::as_const( mBookmarks ) )
+  for ( const QgsBookmark &b : std::as_const( mBookmarks ) )
   {
     if ( feedback->isCanceled() )
     {
@@ -144,7 +148,8 @@ QVariantMap QgsBookmarksToLayerAlgorithm::processAlgorithm( const QVariantMap &p
 
     feat.setGeometry( geom );
 
-    sink->addFeature( feat, QgsFeatureSink::FastInsert );
+    if ( !sink->addFeature( feat, QgsFeatureSink::FastInsert ) )
+      throw QgsProcessingException( writeFeatureError( sink.get(), parameters, QStringLiteral( "OUTPUT" ) ) );
 
     feedback->setProgress( current++ * step );
   }
@@ -163,7 +168,7 @@ void QgsLayerToBookmarksAlgorithm::initAlgorithm( const QVariantMap & )
 {
   addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "INPUT" ), QObject::tr( "Input layer" ), QList< int >() << QgsProcessing::TypeVectorLine << QgsProcessing::TypeVectorPolygon ) );
 
-  std::unique_ptr< QgsProcessingParameterEnum > sourceParam = qgis::make_unique<QgsProcessingParameterEnum >( QStringLiteral( "DESTINATION" ), QObject::tr( "Bookmark destination" ), QStringList() <<
+  std::unique_ptr< QgsProcessingParameterEnum > sourceParam = std::make_unique<QgsProcessingParameterEnum >( QStringLiteral( "DESTINATION" ), QObject::tr( "Bookmark destination" ), QStringList() <<
       QObject::tr( "Project bookmarks" ) << QObject::tr( "User bookmarks" ), false, 0 );
   addParameter( sourceParam.release() );
 
@@ -246,7 +251,7 @@ QVariantMap QgsLayerToBookmarksAlgorithm::processAlgorithm( const QVariantMap &p
   std::unique_ptr< QgsExpression > groupExpression;
   if ( !groupExpressionString.isEmpty() )
   {
-    groupExpression = qgis::make_unique< QgsExpression >( groupExpressionString );
+    groupExpression = std::make_unique< QgsExpression >( groupExpressionString );
     if ( !groupExpression->prepare( &expressionContext ) )
       throw QgsProcessingException( QObject::tr( "Invalid group expression: %1" ).arg( groupExpression->parserErrorString() ) );
     requiredColumns.unite( groupExpression->referencedColumns() );
@@ -318,7 +323,7 @@ QVariantMap QgsLayerToBookmarksAlgorithm::postProcessAlgorithm( QgsProcessingCon
       break;
   }
 
-  for ( const QgsBookmark &b : qgis::as_const( mBookmarks ) )
+  for ( const QgsBookmark &b : std::as_const( mBookmarks ) )
     dest->addBookmark( b );
 
   QVariantMap res;

@@ -32,7 +32,9 @@ class QgsMapLayer;
 
 /**
  * \ingroup core
- * Management of styles for use with one map layer. Stored styles are identified by their names. The manager
+ * \brief Management of styles for use with one map layer
+ *
+ * Stored styles are identified by their names. The manager
  * always keep track of which style of the stored ones is currently active. When the current style is changed,
  * the new style is applied to the associated layer.
  *
@@ -135,6 +137,14 @@ class CORE_EXPORT QgsMapLayerStyleManager : public QObject
      * \since QGIS 3.0
      */
     bool isDefault( const QString &styleName ) const;
+
+    /**
+     * Copies all styles from \a other.
+     * In case there is already a style with the same name it will be overwritten.
+     *
+     * \since QGIS 3.14
+     */
+    void copyStylesFrom( QgsMapLayerStyleManager *other );
 
   signals:
     //! Emitted when a new style has been added

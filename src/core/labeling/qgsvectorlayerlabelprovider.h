@@ -21,6 +21,7 @@
 #include "qgis_core.h"
 #include "qgslabelingengine.h"
 #include "qgsrenderer.h"
+#include "qgstextrenderer.h"
 
 class QgsAbstractFeatureSource;
 class QgsFeatureRenderer;
@@ -45,6 +46,15 @@ class CORE_EXPORT QgsVectorLayerLabelProvider : public QgsAbstractLabelProvider
                                           const QString &providerId,
                                           bool withFeatureLoop,
                                           const QgsPalLayerSettings *settings,
+                                          const QString &layerName = QString() );
+
+    //! Constructor to initialize the provider from any map layer (e.g. vector tile layer)
+    explicit QgsVectorLayerLabelProvider( QgsWkbTypes::GeometryType geometryType,
+                                          const QgsFields &fields,
+                                          const QgsCoordinateReferenceSystem &crs,
+                                          const QString &providerId,
+                                          const QgsPalLayerSettings *settings,
+                                          QgsMapLayer *layer,
                                           const QString &layerName = QString() );
 
     ~QgsVectorLayerLabelProvider() override;
@@ -78,8 +88,10 @@ class CORE_EXPORT QgsVectorLayerLabelProvider : public QgsAbstractLabelProvider
      * symbol, the obstacle geometry should represent the bounds of the offset symbol). If not set,
      * the feature's original geometry will be used as an obstacle for labels.
      * \param symbol feature symbol to label (ownership is not transferred - the symbol must exist until after labeling is complete)
+     * \returns a list of the newly generated label features. Ownership of these label features is not transferred
+     * (it has already been assigned to the label provider).
      */
-    virtual void registerFeature( const QgsFeature &feature, QgsRenderContext &context, const QgsGeometry &obstacleGeometry = QgsGeometry(), const QgsSymbol *symbol = nullptr );
+    virtual QList< QgsLabelFeature * > registerFeature( const QgsFeature &feature, QgsRenderContext &context, const QgsGeometry &obstacleGeometry = QgsGeometry(), const QgsSymbol *symbol = nullptr );
 
     /**
      * Returns the geometry for a point feature which should be used as an obstacle for labels. This
@@ -97,6 +109,14 @@ class CORE_EXPORT QgsVectorLayerLabelProvider : public QgsAbstractLabelProvider
      * \since QGIS 3.10
      */
     const QgsPalLayerSettings &settings() const;
+
+    /**
+     * Sets fields of this label provider. Normally this is not needed, but when used for vector tiles,
+     * fields are not known at the time of creation of label providers. It should be called before
+     * a call to prepare() which uses the list of fields.
+     * \since QGIS 3.14
+     */
+    void setFields( const QgsFields &fields ) { mFields = fields; }
 
   protected:
     //! initialization method - called from constructors

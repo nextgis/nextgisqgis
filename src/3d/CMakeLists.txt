@@ -176,8 +176,8 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}/src/core/expression
   ${CMAKE_SOURCE_DIR}/src/core/layout
   ${CMAKE_SOURCE_DIR}/src/core/3d
-  ${CMAKE_SOURCE_DIR}/external
-  ${CMAKE_SOURCE_DIR}/external/nlohmann
+#   ${CMAKE_SOURCE_DIR}/external
+#   ${CMAKE_SOURCE_DIR}/external/nlohmann
 
   ${CMAKE_BINARY_DIR}/src/core
   ${CMAKE_BINARY_DIR}/src/3d
@@ -204,7 +204,7 @@ if (NOT PREPARE_ONLY)
         Qt5::3DRender 
         Qt5::3DInput 
         Qt5::3DLogic 
-	Qt5::3DExtras 
+	    Qt5::3DExtras 
         Qt5::Xml
         Qt5::Widgets
         Qt5::Concurrent

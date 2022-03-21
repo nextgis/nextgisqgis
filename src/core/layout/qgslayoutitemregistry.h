@@ -77,10 +77,25 @@ class CORE_EXPORT QgsLayoutItemAbstractMetadata
      */
     QString visiblePluralName() const { return mVisibleNamePlural; }
 
+    /*
+     * IMPORTANT: While it seems like /Factory/ would be the correct annotations here, that's not
+     * the case.
+     * As per Phil Thomson's advice on https://www.riverbankcomputing.com/pipermail/pyqt/2017-July/039450.html:
+     *
+     * "
+     * /Factory/ is used when the instance returned is guaranteed to be new to Python.
+     * In this case it isn't because it has already been seen when being returned by QgsProcessingAlgorithm::createInstance()
+     * (However for a different sub-class implemented in C++ then it would be the first time it was seen
+     * by Python so the /Factory/ on create() would be correct.)
+     *
+     * You might try using /TransferBack/ on create() instead - that might be the best compromise.
+     * "
+     */
+
     /**
      * Creates a layout item of this class for a specified \a layout.
      */
-    virtual QgsLayoutItem *createItem( QgsLayout *layout ) = 0 SIP_FACTORY;
+    virtual QgsLayoutItem *createItem( QgsLayout *layout ) = 0 SIP_TRANSFERBACK;
 
     /**
      * Resolve paths in the item's \a properties (if there are any paths).
@@ -113,7 +128,7 @@ typedef std::function<void( QVariantMap &, const QgsPathResolver &, bool )> QgsL
 
 /**
  * \ingroup core
- * Convenience metadata class that uses static functions to create layout items and their configuration widgets.
+ * \brief Convenience metadata class that uses static functions to create layout items and their configuration widgets.
  * \note not available in Python bindings
  * \since QGIS 3.0
  */
@@ -201,10 +216,25 @@ class CORE_EXPORT QgsLayoutMultiFrameAbstractMetadata
      */
     QString visibleName() const { return mVisibleName; }
 
+    /*
+     * IMPORTANT: While it seems like /Factory/ would be the correct annotations here, that's not
+     * the case.
+     * As per Phil Thomson's advice on https://www.riverbankcomputing.com/pipermail/pyqt/2017-July/039450.html:
+     *
+     * "
+     * /Factory/ is used when the instance returned is guaranteed to be new to Python.
+     * In this case it isn't because it has already been seen when being returned by QgsProcessingAlgorithm::createInstance()
+     * (However for a different sub-class implemented in C++ then it would be the first time it was seen
+     * by Python so the /Factory/ on create() would be correct.)
+     *
+     * You might try using /TransferBack/ on create() instead - that might be the best compromise.
+     * "
+     */
+
     /**
      * Creates a layout multiframe of this class for a specified \a layout.
      */
-    virtual QgsLayoutMultiFrame *createMultiFrame( QgsLayout *layout ) = 0 SIP_FACTORY;
+    virtual QgsLayoutMultiFrame *createMultiFrame( QgsLayout *layout ) = 0 SIP_TRANSFERBACK;
 
     /**
      * Resolve paths in the item's \a properties (if there are any paths).
@@ -236,7 +266,7 @@ typedef std::function<void( QVariantMap &, const QgsPathResolver &, bool )> QgsL
 
 /**
  * \ingroup core
- * Convenience metadata class that uses static functions to create layout multiframes and their configuration widgets.
+ * \brief Convenience metadata class that uses static functions to create layout multiframes and their configuration widgets.
  * \note not available in Python bindings
  * \since QGIS 3.0
  */
@@ -336,6 +366,7 @@ class CORE_EXPORT QgsLayoutItemRegistry : public QObject
       Layout3DMap,  //!< 3D map item
 
       LayoutManualTable,  //!< Manual (fixed) table
+      LayoutMarker, //!< Marker item
 
       // item types provided by plugins
       PluginItem = LayoutTextTable + 10000, //!< Starting point for plugin item types
@@ -378,6 +409,21 @@ class CORE_EXPORT QgsLayoutItemRegistry : public QObject
      */
     QgsLayoutMultiFrameAbstractMetadata *multiFrameMetadata( int type ) const;
 
+    /*
+     * IMPORTANT: While it seems like /Factory/ would be the correct annotations here, that's not
+     * the case.
+     * As per Phil Thomson's advice on https://www.riverbankcomputing.com/pipermail/pyqt/2017-July/039450.html:
+     *
+     * "
+     * /Factory/ is used when the instance returned is guaranteed to be new to Python.
+     * In this case it isn't because it has already been seen when being returned by QgsProcessingAlgorithm::createInstance()
+     * (However for a different sub-class implemented in C++ then it would be the first time it was seen
+     * by Python so the /Factory/ on create() would be correct.)
+     *
+     * You might try using /TransferBack/ on create() instead - that might be the best compromise.
+     * "
+     */
+
     /**
      * Registers a new layout item type. Takes ownership of the metadata instance.
      * \see addLayoutMultiFrameType()
@@ -394,13 +440,13 @@ class CORE_EXPORT QgsLayoutItemRegistry : public QObject
      * Creates a new instance of a layout item given the item \a type, and target \a layout.
      * \see createMultiFrame()
      */
-    QgsLayoutItem *createItem( int type, QgsLayout *layout ) const SIP_FACTORY;
+    QgsLayoutItem *createItem( int type, QgsLayout *layout ) const SIP_TRANSFERBACK;
 
     /**
      * Creates a new instance of a layout multiframe given the multiframe \a type, and target \a layout.
      * \see createItem()
      */
-    QgsLayoutMultiFrame *createMultiFrame( int type, QgsLayout *layout ) const SIP_FACTORY;
+    QgsLayoutMultiFrame *createMultiFrame( int type, QgsLayout *layout ) const SIP_TRANSFERBACK;
 
     /**
      * Resolve paths in properties of a particular symbol layer.

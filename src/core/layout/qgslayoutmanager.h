@@ -113,7 +113,7 @@ class CORE_EXPORT QgsLayoutManager : public QObject
     /**
      * Duplicates an existing \a layout from the manager. The new
      * layout will automatically be stored in the manager.
-     * Returns new the layout if duplication was successful.
+     * Returns the new layout if duplication was successful.
      */
     QgsMasterLayoutInterface *duplicateLayout( const QgsMasterLayoutInterface *layout, const QString &newName );
 
@@ -164,7 +164,7 @@ class CORE_EXPORT QgsLayoutManager : public QObject
  * \ingroup core
  * \class QgsLayoutManagerModel
  *
- * List model representing the print layouts and reports available in a
+ * \brief List model representing the print layouts and reports available in a
  * layout manager.
  *
  * \since QGIS 3.8
@@ -231,7 +231,7 @@ class CORE_EXPORT QgsLayoutManagerModel : public QAbstractListModel
  * \ingroup core
  * \class QgsLayoutManagerProxyModel
  *
- * QSortFilterProxyModel subclass for QgsLayoutManagerModel
+ * \brief QSortFilterProxyModel subclass for QgsLayoutManagerModel
  *
  * \since QGIS 3.8
  */

@@ -30,6 +30,8 @@
 #ifndef PAL_EXCEPTION_H
 #define PAL_EXCEPTION_H
 
+#define SIP_NO_FILE
+
 #include <exception>
 
 
@@ -110,9 +112,8 @@ namespace pal
        *
        *  It can be thrown by :
        *
-       *    - pal::Layer::setFeatureLabelSize if either the height or the width of the label is < 0
-       *
-       *    - pal::Layer::setFeatureDistlabel is distlable < 0
+       * - pal::Layer::setFeatureLabelSize if either the height or the width of the label is < 0
+       * - pal::Layer::setFeatureDistlabel is distlable < 0
        */
       class ValueNotInRange : public std::exception
       {

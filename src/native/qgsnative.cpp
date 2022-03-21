@@ -26,7 +26,7 @@ void QgsNative::cleanup()
 
 QgsNative::Capabilities QgsNative::capabilities() const
 {
-  return nullptr;
+  return QgsNative::Capabilities();
 }
 
 void QgsNative::initializeMainWindow( QWindow *,
@@ -43,8 +43,8 @@ void QgsNative::currentAppActivateIgnoringOtherApps()
 
 void QgsNative::openFileExplorerAndSelectFile( const QString &path )
 {
-  QFileInfo fi( path );
-  QString folder = fi.path();
+  const QFileInfo fi( path );
+  const QString folder = fi.path();
   QDesktopServices::openUrl( QUrl::fromLocalFile( folder ) );
 }
 

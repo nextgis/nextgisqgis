@@ -22,9 +22,11 @@
 
 /**
  * \ingroup analysis
+ * \brief A point in polygon check.
  */
 class ANALYSIS_EXPORT QgsGeometryPointInPolygonCheck : public QgsGeometryCheck
 {
+    Q_DECLARE_TR_FUNCTIONS( QgsGeometryPointInPolygonCheck )
   public:
     QgsGeometryPointInPolygonCheck( QgsGeometryCheckContext *context, const QVariantMap &configuration )
       : QgsGeometryCheck( context, configuration )

@@ -56,8 +56,7 @@ if(OSX_FRAMEWORK)
     set(_PLUGIN_SUBDIR "Library/Plugins/Qt5")
     set(QT5_PLUGINS_DIR Library/Plugins/Qt5)
     set(QT5_TRANSLATION_DIR Library/Translations/Qt5)
-    set(INSTALL_CMAKECONF_DIR ${INSTALL_LIB_DIR}/${PROJECT_NAME}.framework/Resources/CMake CACHE INTERNAL "Installation directory for cmake config files" FORCE)
-
+    
     set(INSTALL_PLUGIN_DIR ${_PLUGIN_SUBDIR}/${NG_PREFIX}${PROJECT_NAME} CACHE INTERNAL "Installation directory for plugins" FORCE)
     set(INSTALL_SHARE_DIR ${QGIS_DATA_SUBDIR} CACHE INTERNAL "Installation directory for share data" FORCE)
     set(INSTALL_MAN_DIR ${INSTALL_SHARE_DIR}/man CACHE INTERNAL "Installation directory for manual pages" FORCE)
@@ -92,15 +91,16 @@ else()
     set(QGIS_PLUGIN_SUBDIR "${INSTALL_LIB_DIR}/${NG_PREFIX}${PROJECT_NAME}/plugins")
     set(QGIS_LIB_SUBDIR ${INSTALL_LIB_DIR})
     set(QGIS_MACAPP_BUNDLE 0)
-    set(INSTALL_CMAKECONF_DIR ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/CMake CACHE INTERNAL "Installation directory for cmake config files" FORCE)
 endif()
 
 set(QT_PREFIX ${CMAKE_INSTALL_PREFIX})
 set(CMAKE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-if(CMAKE_GENERATOR_TOOLSET MATCHES "v([0-9]+)_xp")
-    add_definitions(-D_WIN32_WINNT=0x0501)
-endif()
+# set the default locations where the targets (executables, libraries) will land when compiled
+# this is to allow running qgis from the source tree without having to actually do a "make install"
+set (QGIS_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output)
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${QGIS_OUTPUT_DIRECTORY}/bin)
+set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${QGIS_OUTPUT_DIRECTORY}/lib)
 
 include(util)
 check_version(NGQGIS_MAJOR_VERSION NGQGIS_MINOR_VERSION NGQGIS_PATCH_VERSION CPACK_PACKAGE_VERSION_MAJOR CPACK_PACKAGE_VERSION_MINOR CPACK_PACKAGE_VERSION_PATCH RELEASE_NAME)
@@ -129,139 +129,372 @@ option(PREPARE_ONLY "Only generate flex and bison files" OFF)
 
 include(FindAnyProject)
 
-if(NOT PREPARE_ONLY)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
 
-    find_package(PythonLibrary REQUIRED)
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/symlinks)
 
-    find_anyproject(PROJ REQUIRED)
-    # if(PROJ_FOUND)
-    #     add_definitions(-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H)
-    # endif()
-    
-    find_anyproject(GEOS REQUIRED)
-    find_anyproject(GDAL REQUIRED)
-    find_anyproject(EXPAT REQUIRED)
-    find_anyproject(SpatialIndex REQUIRED)
-    find_anyproject(SQLite3 REQUIRED)
-    find_anyproject(Spatialite REQUIRED)
-    find_anyproject(Qca REQUIRED)
-    find_anyproject(LIBZIP REQUIRED)
-    find_anyproject(QTKEYCHAIN REQUIRED)
-
-    set(CMAKE_INCLUDE_CURRENT_DIR ON)
-    set(CMAKE_AUTOMOC ON)
-    
-    set(QT_REQUIRED_COMPONENTS Core Gui Widgets Network Xml Svg Concurrent PrintSupport Sql 3DCore 3DRender 3DInput 3DLogic 3DExtras)
-    if (MSVC)
-        set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} WinExtras)
-    endif()
-    
-    option(WITH_QTWEBKIT "Build support QT Webkit" OFF)
-    if(WITH_QTWEBKIT)
-        set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} WebKit)
-        add_definitions(-DWITH_QTWEBKIT)
-    endif()
-
-    # set(QT5_3DEXTRA_LIBRARY "/usr/lib/x86_64-linux-gnu/libQt53DExtras.so")
-    # set(QT5_3DEXTRA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
-    # set(Qt53DExtras_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers/cmake/Qt53DExtras")
-    # set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
-
-    find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
-    set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
-
+################################################################################
+# Find Qt5 packages
+set(QT_REQUIRED_COMPONENTS Core Gui Widgets Network Xml Svg Concurrent Test UiTools Sql PrintSupport)
+if (WITH_3D)
+    set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} 3DCore 3DRender 3DInput 3DLogic 3DExtras)
+endif()
+if (MSVC)
+    set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} WinExtras)
+endif()
+if (APPLE)
+    set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} MacExtras)
+endif()
+if (UNIX AND NOT APPLE)
+    set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} DBus)
 endif()
 
+option(WITH_QTWEBKIT "Build support QT Webkit" OFF)
+if(WITH_QTWEBKIT)
+    set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} WebKit WebKitWidgets)
+    add_definitions(-DWITH_QTWEBKIT)
+endif()
+
+set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
+
+# Need for synccrsdb
+find_anyproject(PROJ REQUIRED)
+# if(PROJ_FOUND)
+#     add_definitions(-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H)
+# endif()
+
+if (PROJ_FOUND)
+    string(REPLACE "." ";" VERSION_LIST ${PROJ_VERSION_STR})
+    list(GET VERSION_LIST 0 PROJ_VERSION_MAJOR)
+    list(GET VERSION_LIST 1 PROJ_VERSION_MINOR)
+    list(GET VERSION_LIST 2 PROJ_VERSION_PATCH)
+endif()
+
+find_anyproject(GDAL REQUIRED)
+find_anyproject(GEOS REQUIRED)
+find_anyproject(Qca REQUIRED)
+find_anyproject(QtKeychain REQUIRED)
+find_anyproject(SpatialIndex REQUIRED)
+find_anyproject(SQLite3 REQUIRED)
+find_anyproject(Spatialite REQUIRED)
+find_anyproject(LIBZIP REQUIRED)
+# find_anyproject(EXIV REQUIRED)
+find_anyproject(EXPAT REQUIRED)
+
+# if (APPLE)
+#     # Libtasn1 is for DER-encoded PKI ASN.1 parsing/extracting workarounds
+#     find_anyproject(Libtasn1 REQUIRED)
+# endif()
+
+# try` to configure and build POLY2TRI support
+set (WITH_INTERNAL_POLY2TRI TRUE CACHE BOOL "Determines whether POLY2TRI should be built from internal copy")
+
+if (NOT WITH_INTERNAL_POLY2TRI)
+    find_anyproject(Poly2Tri REQUIRED)
+endif()
+
+if(PREPARE_ONLY)
+    set(SKIP_INSTALL_LIBRARIES ON)
+    set(SKIP_INSTALL_ALL ON)
+
+    set(WITH_GUI OFF)
+    set(WITH_AUTH OFF)
+    set(WITH_ANALYSIS ON)
+    set(WITH_DESKTOP OFF)
+    set(WITH_3D OFF)
+    set(WITH_QGIS_PROCESS OFF)
+    set(WITH_BINDINGS OFF)
+    set(ENABLE_TESTS OFF)
+    set(WITH_THREAD_LOCAL OFF)
+else()
+    option(WITH_GUI "Determines whether QGIS GUI library (and everything built on top of it) should be built" ON)
+    option(WITH_AUTH "Determines whether QGIS authentication methods should be built" ON)
+    option(WITH_ANALYSIS "Determines whether QGIS analysis library should be built" ON)
+    option(WITH_DESKTOP "Determines whether QGIS desktop should be built" ON)
+    option(WITH_3D "Determines whether QGIS 3D library should be built" OFF)
+    option(WITH_QGIS_PROCESS "Determines whether the standalone \"qgis_process\" tool should be built" ON)
+    option(WITH_BINDINGS "Determines whether python bindings should be built" ON)
+    option(ENABLE_TESTS "Build unit tests?" OFF)
+
+    option(WITH_THREAD_LOCAL "Determines whether std::thread_local should be used" ON)
+    if (WITH_THREAD_LOCAL)
+        set (USE_THREAD_LOCAL TRUE)  # used in qgsconfig.h
+    endif()
+   
+    # find_anyproject(ZLIB REQUIRED)
+
+    if (WITH_GUI)
+        find_anyproject(Qwt REQUIRED)
+        find_anyproject(QScintilla REQUIRED)
+    endif()
+    set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} LinguistTools)
+   
+    find_package(OpenCL)
+    if(${OpenCL_FOUND})
+        set(USE_OPENCL TRUE)
+        set(HAVE_OPENCL TRUE)
+        # Fixup for standard FindOpenCL module not assigning proper framework headers directory
+        if (APPLE AND "${OpenCL_INCLUDE_DIR}" MATCHES "OpenCL\\.framework/?$")
+            set(OpenCL_INCLUDE_DIR "${OpenCL_INCLUDE_DIR}/Headers" CACHE PATH "" FORCE)
+            set(OpenCL_INCLUDE_DIRS ${OpenCL_INCLUDE_DIR})
+        endif()
+        find_package(OpenCLhpp)
+        if(NOT OPENCL_HPP_FOUND)
+            # Use internal headers copied from OpenCL-CLHPP project
+            set(OPENCL_HPP_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/external/opencl-clhpp/include CACHE PATH "" FORCE)
+            message(STATUS "Couldn't find OpenCL C++ headers, using internal: ${OPENCL_HPP_INCLUDE_DIR}")
+        endif()
+        set(OpenCL_INCLUDE_DIRS ${OpenCL_INCLUDE_DIRS} ${OPENCL_HPP_INCLUDE_DIR})
+    else()
+        message(STATUS "Couldn't find OpenCL: support DISABLED")
+    endif()
+endif()
+
+# set(QT5_3DEXTRA_LIBRARY "/usr/lib/x86_64-linux-gnu/libQt53DExtras.so")
+# set(QT5_3DEXTRA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
+# set(Qt53DExtras_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers/cmake/Qt53DExtras")
+# set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
+
+find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
+
 ############################################
+if (ENABLE_TESTS)
+    set(QT_USE_QTTEST TRUE)
+    enable_testing()
+
+    #create a variable to specify where our test data is
+    #so that unit tests can use TEST_DATA_DIR to locate
+    #the test data. See CMakeLists in test dirs for more info
+    #TEST_DATA_DIR is also used by QgsRenderChecker currently in core
+    set (TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/testdata")
+
+    add_subdirectory(tests)
+    set (CTEST_BINARY_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/output/bin" )
+    message (STATUS "Ctest Binary Directory set to: ${CTEST_BINARY_DIRECTORY}")
+endif()
 
 # Add binaries and libraries
+set(CMAKE_CXX_STANDARD 17)
 if(MSVC)
-  # disable macros that offend std::numeric_limits<T>::min()/max()
-  add_definitions(-DNOMINMAX)
 
-  if (MSVC_VERSION LESS 1900)
-    add_definitions(-D_ALLOW_KEYWORD_MACROS)
-    add_definitions("-Dnoexcept=")
-  endif()
-endif(MSVC)
+    # disable warnings
+    set(_warnings "${_warnings} /wd4091 ")  # 'typedef': ignored on left of '' when no variable is declared (occurs in MS DbgHelp.h header)
+    set(_warnings "${_warnings} /wd4100 ")  # unused formal parameters
+    set(_warnings "${_warnings} /wd4127 ")  # constant conditional expressions (used in Qt template classes)
+    set(_warnings "${_warnings} /wd4190 ")  # 'identifier' has C-linkage specified, but returns UDT 'identifier2' which is incompatible with C
+    set(_warnings "${_warnings} /wd4231 ")  # nonstandard extension used : 'identifier' before template explicit instantiation (used in Qt template classes)
+    set(_warnings "${_warnings} /wd4244 ")  # conversion from '...' to '...' possible loss of data
+    set(_warnings "${_warnings} /wd4251 ")  # needs to have dll-interface to be used by clients of class (occurs in Qt template classes)
+    set(_warnings "${_warnings} /wd4267 ")  # 'argument': conversion from 'size_t' to 'int', possible loss of data
+    set(_warnings "${_warnings} /wd4275 ")  # non dll-interface class '...' used as base for dll-interface class '...'
+    set(_warnings "${_warnings} /wd4290 ")  # c++ exception specification ignored except to indicate a function is not __declspec(nothrow) (occurs in sip generated bindings)
+    set(_warnings "${_warnings} /wd4456 ")  # declaration of '...' hides previous local declaration
+    set(_warnings "${_warnings} /wd4457 ")  # declaration of '...' hides a function parameter
+    set(_warnings "${_warnings} /wd4458 ")  # declaration of '...' hides class member
+    set(_warnings "${_warnings} /wd4505 ")  # unreferenced local function has been removed (QgsRasterDataProvider::extent)
+    set(_warnings "${_warnings} /wd4510 ")  # default constructor could not be generated (sqlite3_index_info, QMap)
+    set(_warnings "${_warnings} /wd4512 ")  # assignment operator could not be generated (sqlite3_index_info)
+    set(_warnings "${_warnings} /wd4610 ")  # user defined constructor required (sqlite3_index_info)
+    set(_warnings "${_warnings} /wd4706 ")  # assignment within conditional expression (pal)
+    set(_warnings "${_warnings} /wd4714 ")  # function '...' marked as __forceinline not inlined (QString::toLower/toUpper/trimmed)
+    set(_warnings "${_warnings} /wd4800 ")  # 'int' : forcing value to bool 'true' or 'false' (performance warning)
+    set(_warnings "${_warnings} /wd4996 ")  # '...': was declared deprecated (unfortunately triggered when implementing deprecated interfaces even when it is deprecated too)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${_warnings} /utf-8")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_warnings} /utf-8")
 
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8 /std:c++17")
+    # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8 /std:c++17")
+    # set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+    # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+    # disable macros that offend std::numeric_limits<T>::min()/max()
+    add_definitions(-DNOMINMAX)
+else()
+   # add warnings via flags (not as definitions as on Mac -Wall can not be overridden per language )
+   set(_warnings "-Wall -Wextra -Wno-long-long -Wformat-security -Wno-strict-aliasing")
+    # c++ only warnings
+
+    set(_warnings "${_warnings} -Wnon-virtual-dtor")
+
+    # unavoidable - we can't avoid these, as older, supported compilers do not support removing the redundant move
+    set(_warnings "${_warnings} -Wno-redundant-move")
+
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.9.999)
+        # heaps of these thrown by Qt headers at the moment (sep 2019)
+        set(_warnings "${_warnings} -Wno-deprecated-copy")
+    endif()
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_warnings}")
+
+    # Qt produces lots of warnings with strict aliasing (as of Qt 4.4.0 & GCC 4.3)
+    # There are redundant declarations in Qt and GDAL
+    # add_definitions( -fstrict-aliasing -Wstrict-aliasing=1 -Wredundant-decls )
+
+    if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wreturn-type-c-linkage -Woverloaded-virtual -Wimplicit-fallthrough")
+    endif()
+
+    # add any extra CXXFLAGS flags set by user. can be -D CXX_EXTRA_FLAGS or environment variable
+    # command line -D option overrides environment variable
+    # e.g. useful for suppressing transient upstream warnings in dependencies, like Qt
+    set(CXX_EXTRA_FLAGS "" CACHE STRING "Additional appended CXXFLAGS")
+    if ("${CXX_EXTRA_FLAGS}" STREQUAL "" AND DEFINED $ENV{CXX_EXTRA_FLAGS})
+        set(CXX_EXTRA_FLAGS "$ENV{CXX_EXTRA_FLAGS}")
+    endif()
+    if (NOT "${CXX_EXTRA_FLAGS}" STREQUAL "")
+        message (STATUS "Appending CXX_EXTRA_FLAGS")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_EXTRA_FLAGS}")
+    endif()
+
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Qunused-arguments")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Qunused-arguments")
+        set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Qunused-arguments")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Qunused-arguments")
+    endif()
+endif()
+
+if (CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
+    message (STATUS "Debug output enabled")
+    set(QGISDEBUG ON)
+else()
+    set(QGISDEBUG OFF)
+endif()
+
+# Prevent build when Qt api deprecated before this Qt version is used:
+add_definitions(-DQT_DEPRECATED_WARNINGS)
+# Unfortunately Qwt uses deprecated QString::null in headers, preventing this being raised above 5.8
+add_definitions(-DQT_DISABLE_DEPRECATED_BEFORE=0x050800)
+
+# For fast string concatenation
+add_definitions(-DQT_USE_QSTRINGBUILDER)
+
+if (WITH_ANALYSIS AND NOT PREPARE_ONLY)
+    find_anyproject(GSL REQUIRED)
+    set(HAVE_GSL TRUE)
+    set(HAVE_GEOREFERENCER TRUE)
+endif()
 
 math(EXPR QGIS_VERSION_INT "${CPACK_PACKAGE_VERSION_MAJOR}*10000+${CPACK_PACKAGE_VERSION_MINOR}*100+${CPACK_PACKAGE_VERSION_PATCH}")
 
 # POLICIES
-if(POLICY CMP0071)
-    cmake_policy(SET CMP0071 NEW)
-endif()
-
+cmake_policy(SET CMP0048 NEW)
+cmake_policy(SET CMP0053 NEW)
+cmake_policy(SET CMP0063 NEW)
+cmake_policy(SET CMP0071 NEW)
+cmake_policy(SET CMP0094 NEW)
 
 #############################################################
 
-IF(MSVC)
-  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-  # disable macros that offend std::numeric_limits<T>::min()/max()
-  add_definitions(-DNOMINMAX)
-  
+if(MSVC)
     # Turn on defines for non standard maths stuff
-  add_definitions(-D_USE_MATH_DEFINES)
+    add_definitions(-D_USE_MATH_DEFINES)
 
-  # Turn off deprecation warnings
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-  add_definitions(-D_CRT_NONSTDC_NO_WARNINGS)
-endif(MSVC)
+    # Turn off deprecation warnings
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    add_definitions(-D_CRT_NONSTDC_NO_WARNINGS)
+endif()
 
+if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
+set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--no-undefined")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--no-undefined")
+endif() #"${CMAKE_SYSTEM_NAME}"  MATCHES "Linux")
+
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+
+if (WITH_BINDINGS)
+    find_anyproject(Python VERSION 3.6 REQUIRED COMPONENTS Interpreter Development)
+    find_anyproject(SIP REQUIRED)
+    find_anyproject(PyQt5 REQUIRED)
+    set(PYQT_SIP_FLAGS ${PYQT5_SIP_FLAGS})
+    set(PYQT_SIP_DIR ${PYQT5_SIP_DIR})
+    separate_arguments(PYQT_SIP_FLAGS) # convert space separated values to a list
+
+    find_anyproject(Qsci REQUIRED)
+    include(PythonMacros)
+    include(PyQtMacros)
+    include(SIPMacros)
+
+    add_subdirectory(python)
+
+    if(NOT SUPPRESS_VERBOSE_OUTPUT)
+        message("-- Found Python executable: ${PYTHON_EXECUTABLE} (version ${PYTHON_VERSION})")
+        message("-- Python library: ${PYTHON_LIBRARIES}")
+        message("-- Python site-packages: ${PYTHON_SITEARCH}")
+    endif()
+else()
+    find_anyproject(Python3 REQUIRED COMPONENTS Interpreter)
+    message("Found python executable: ${PYTHON_EXECUTABLE} (version ${PYTHON_VERSION})")
+endif()
+
+if (PYTHON3_FOUND)
+    string(REPLACE "." ";" VERSION_LIST ${PYTHON_VERSION})
+    list(GET VERSION_LIST 0 Python_VERSION_MAJOR)
+    list(GET VERSION_LIST 1 Python_VERSION_MINOR)
+    list(GET VERSION_LIST 2 Python_VERSION_PATCH)
+    set(Python_VERSION ${PYTHON_VERSION})
+endif()
+
+#############################################################
+# create qgsconfig.h
+# installed with app target
+configure_file(${CMAKE_SOURCE_DIR}/cmake_templates/qgsconfig.h.in ${CMAKE_BINARY_DIR}/qgsconfig.h)
+include_directories(${CMAKE_BINARY_DIR})
+
+#############################################################
+# create qgsversion.h
+include(CreateQgsVersion)
+CREATE_QGSVERSION()
+
+#############################################################
 set(PACKAGE_NAME ${PROJECT_NAME})
 string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
 
 add_subdirectory(src)
-add_subdirectory(images)
-add_subdirectory(resources)
 
-add_custom_target(prepare_parser DEPENDS ${PREPARE_PARSER_TARGETS})
-
-add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
-
-# Export package ===============================================================
-
-# Add path to includes to build-tree export
-#target_include_directories(${TARGETS} PUBLIC
-# $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-# $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-#)
-
-# Add all targets to the build-tree export set
-export(TARGETS ${TARGETS}
-   FILE ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Targets.cmake)
-
-if(REGISTER_PACKAGE)
-   # Export the package for use from the build-tree
-   # (this registers the build-tree with a global CMake-registry)
-   export(PACKAGE ${PACKAGE_UPPER_NAME})
+if (NOT PREPARE_ONLY)
+    add_subdirectory(images)
+    add_subdirectory(resources)
+    add_subdirectory(i18n)
 endif()
 
-if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
-   # Install the export set for use with the install-tree
-   install(EXPORT ${PACKAGE_UPPER_NAME}Targets DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
+if (PREPARE_ONLY)
+    add_custom_target(prepare_parser DEPENDS ${PREPARE_PARSER_TARGETS})
+else()
+    add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+
+    # Export package ===============================================================
+
+    # Add all targets to the build-tree export set
+    # export(TARGETS ${TARGETS} FILE ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Targets.cmake)
+
+    # if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
+    # # Install the export set for use with the install-tree
+    # install(EXPORT ${PACKAGE_UPPER_NAME}Targets DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
+    # endif()
+
+    # Create the Config.cmake file
+    # configure_file(${CMAKE_SOURCE_DIR}/cmake/PackageConfig.cmake.in ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake @ONLY)
+
+    # Archiving ====================================================================
+
+    set(CPACK_PACKAGE_NAME "${PACKAGE_NAME}")
+    set(CPACK_PACKAGE_VENDOR "${PACKAGE_VENDOR}")
+    set(CPACK_PACKAGE_VERSION "${VERSION}")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PACKAGE_NAME} Installation")
+    set(CPACK_PACKAGE_RELOCATABLE TRUE)
+    set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
+    set(CPACK_GENERATOR "ZIP")
+    set(CPACK_MONOLITHIC_INSTALL ON)
+    set(CPACK_STRIP_FILES TRUE)
+
+    # Get cpack zip archive name
+    get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
+    set(CPACK_PACKAGE_FILE_NAME ${PROJECT_CPACK_FILENAME})
+
+    include(CPack)
 endif()
-
-# Create the Config.cmake file
-configure_file(${CMAKE_SOURCE_DIR}/cmake/PackageConfig.cmake.in
-   ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake @ONLY)
-
-# Archiving ====================================================================
-
-set(CPACK_PACKAGE_NAME "${PACKAGE_NAME}")
-set(CPACK_PACKAGE_VENDOR "${PACKAGE_VENDOR}")
-set(CPACK_PACKAGE_VERSION "${VERSION}")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PACKAGE_NAME} Installation")
-set(CPACK_PACKAGE_RELOCATABLE TRUE)
-set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
-set(CPACK_GENERATOR "ZIP")
-set(CPACK_MONOLITHIC_INSTALL ON)
-set(CPACK_STRIP_FILES TRUE)
-
-# Get cpack zip archive name
-get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
-set(CPACK_PACKAGE_FILE_NAME ${PROJECT_CPACK_FILENAME})
-
-include(CPack)

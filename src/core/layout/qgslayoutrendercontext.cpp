@@ -59,16 +59,21 @@ bool QgsLayoutRenderContext::testFlag( const QgsLayoutRenderContext::Flag flag )
   return mFlags.testFlag( flag );
 }
 
-QgsRenderContext::Flags QgsLayoutRenderContext::renderContextFlags() const
+Qgis::RenderContextFlags QgsLayoutRenderContext::renderContextFlags() const
 {
-  QgsRenderContext::Flags flags = nullptr;
+  Qgis::RenderContextFlags flags = Qgis::RenderContextFlags();
   if ( mFlags & FlagAntialiasing )
-    flags = flags | QgsRenderContext::Antialiasing;
+  {
+    flags = flags | Qgis::RenderContextFlag::Antialiasing;
+    flags = flags | Qgis::RenderContextFlag::HighQualityImageTransforms;
+  }
   if ( mFlags & FlagUseAdvancedEffects )
-    flags = flags | QgsRenderContext::UseAdvancedEffects;
+    flags = flags | Qgis::RenderContextFlag::UseAdvancedEffects;
+  if ( mFlags & FlagLosslessImageRendering )
+    flags = flags | Qgis::RenderContextFlag::LosslessImageRendering;
 
   // TODO - expose as layout context flag?
-  flags |= QgsRenderContext::ForceVectorOutput;
+  flags |= Qgis::RenderContextFlag::ForceVectorOutput;
   return flags;
 }
 
@@ -130,4 +135,14 @@ void QgsLayoutRenderContext::setPredefinedScales( const QVector<qreal> &scales )
   // make sure the list is sorted
   std::sort( mPredefinedScales.begin(), mPredefinedScales.end() ); // clazy:exclude=detaching-member
   emit predefinedScalesChanged();
+}
+
+QgsFeatureFilterProvider *QgsLayoutRenderContext::featureFilterProvider() const
+{
+  return mFeatureFilterProvider;
+}
+
+void QgsLayoutRenderContext::setFeatureFilterProvider( QgsFeatureFilterProvider *featureFilterProvider )
+{
+  mFeatureFilterProvider = featureFilterProvider;
 }

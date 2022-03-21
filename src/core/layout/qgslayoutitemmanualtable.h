@@ -25,7 +25,7 @@
 
 /**
  * \ingroup core
- * A layout table subclass that displays manually entered (and formatted) content.
+ * \brief A layout table subclass that displays manually entered (and formatted) content.
  * \since QGIS 3.12
 */
 class CORE_EXPORT QgsLayoutItemManualTable: public QgsLayoutTable
@@ -139,6 +139,10 @@ class CORE_EXPORT QgsLayoutItemManualTable: public QgsLayoutTable
     bool writePropertiesToElement( QDomElement &elem, QDomDocument &doc, const QgsReadWriteContext &context ) const override;
     bool readPropertiesFromElement( const QDomElement &itemElem, const QDomDocument &doc, const QgsReadWriteContext &context ) override;
     bool calculateMaxRowHeights() override;
+    QgsTextFormat textFormatForHeader( int column ) const override;
+    QgsTextFormat textFormatForCell( int row, int column ) const override;
+    Qt::Alignment horizontalAlignmentForCell( int row, int column ) const override;
+    Qt::Alignment verticalAlignmentForCell( int row, int column ) const override;
 
   private:
 

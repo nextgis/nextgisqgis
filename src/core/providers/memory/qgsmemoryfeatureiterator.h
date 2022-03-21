@@ -21,6 +21,7 @@
 #include "qgsexpressioncontext.h"
 #include "qgsfields.h"
 #include "qgsgeometry.h"
+#include "qgscoordinatetransform.h"
 
 ///@cond PRIVATE
 
@@ -38,12 +39,14 @@ class QgsMemoryFeatureSource final: public QgsAbstractFeatureSource
 
     QgsFeatureIterator getFeatures( const QgsFeatureRequest &request ) override;
 
+    QgsExpressionContext *expressionContext();
+
   private:
     QgsFields mFields;
     QgsFeatureMap mFeatures;
     std::unique_ptr< QgsSpatialIndex > mSpatialIndex;
     QString mSubsetString;
-    QgsExpressionContext mExpressionContext;
+    std::unique_ptr< QgsExpressionContext > mExpressionContext;
     QgsCoordinateReferenceSystem mCrs;
 
     friend class QgsMemoryFeatureIterator;
@@ -70,6 +73,8 @@ class QgsMemoryFeatureIterator final: public QgsAbstractFeatureIteratorFromSourc
 
     QgsGeometry mSelectRectGeom;
     std::unique_ptr< QgsGeometryEngine > mSelectRectEngine;
+    QgsGeometry mDistanceWithinGeom;
+    std::unique_ptr< QgsGeometryEngine > mDistanceWithinEngine;
     QgsRectangle mFilterRect;
     QgsFeatureMap::const_iterator mSelectIterator;
     bool mUsingFeatureIdList = false;

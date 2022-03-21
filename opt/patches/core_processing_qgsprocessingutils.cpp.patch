@@ -1,0 +1,37 @@
+--- a/src/core/processing/qgsprocessingutils.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/processing/qgsprocessingutils.cpp	2022-03-07 23:14:46.000000000 +0300
+@@ -34,7 +34,7 @@
+ #include "qgspluginlayer.h"
+ #include "qgsreferencedgeometry.h"
+ #include "qgsrasterfilewriter.h"
+-#include "qgsvectortilelayer.h"
++// #include "qgsvectortilelayer.h"
+ #include "qgspointcloudlayer.h"
+ #include "qgsannotationlayer.h"
+ #include <QRegularExpression>
+@@ -205,8 +205,8 @@
+         return true;
+       case QgsMapLayerType::MeshLayer:
+         return !canUseLayer( qobject_cast< QgsMeshLayer * >( layer ) );
+-      case QgsMapLayerType::VectorTileLayer:
+-        return !canUseLayer( qobject_cast< QgsVectorTileLayer * >( layer ) );
++    //   case QgsMapLayerType::VectorTileLayer:
++    //     return !canUseLayer( qobject_cast< QgsVectorTileLayer * >( layer ) );
+       case QgsMapLayerType::PointCloudLayer:
+         return !canUseLayer( qobject_cast< QgsPointCloudLayer * >( layer ) );
+       case QgsMapLayerType::AnnotationLayer:
+@@ -557,10 +557,10 @@
+   return layer && layer->isValid();
+ }
+ 
+-bool QgsProcessingUtils::canUseLayer( const QgsVectorTileLayer *layer )
+-{
+-  return layer && layer->isValid();
+-}
++// bool QgsProcessingUtils::canUseLayer( const QgsVectorTileLayer *layer )
++// {
++//   return layer && layer->isValid();
++// }
+ 
+ bool QgsProcessingUtils::canUseLayer( const QgsRasterLayer *layer )
+ {

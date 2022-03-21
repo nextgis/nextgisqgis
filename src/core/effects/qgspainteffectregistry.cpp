@@ -74,7 +74,7 @@ bool QgsPaintEffectRegistry::addEffectType( QgsPaintEffectAbstractMetadata *meta
   return true;
 }
 
-QgsPaintEffect *QgsPaintEffectRegistry::createEffect( const QString &name, const QgsStringMap &properties ) const
+QgsPaintEffect *QgsPaintEffectRegistry::createEffect( const QString &name, const QVariantMap &properties ) const
 {
   if ( !mMetadata.contains( name ) )
     return nullptr;
@@ -90,7 +90,7 @@ QgsPaintEffect *QgsPaintEffectRegistry::createEffect( const QDomElement &element
     return nullptr;
   }
 
-  QString type = element.attribute( QStringLiteral( "type" ) );
+  const QString type = element.attribute( QStringLiteral( "type" ) );
 
   QgsPaintEffect *effect = QgsApplication::paintEffectRegistry()->createEffect( type );
   if ( !effect )

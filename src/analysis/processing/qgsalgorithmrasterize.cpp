@@ -29,6 +29,7 @@
 #include "qgsmaprenderercustompainterjob.h"
 #include "gdal.h"
 #include "qgsgdalutils.h"
+#include "qgslayertree.h"
 
 #include <QtConcurrent>
 
@@ -47,6 +48,11 @@ QString QgsRasterizeAlgorithm::displayName() const
 QStringList QgsRasterizeAlgorithm::tags() const
 {
   return QObject::tr( "layer,raster,convert,file,map themes,tiles,render" ).split( ',' );
+}
+
+QgsProcessingAlgorithm::Flags QgsRasterizeAlgorithm::flags() const
+{
+  return QgsProcessingAlgorithm::flags() | FlagRequiresProject;
 }
 
 QString QgsRasterizeAlgorithm::group() const
@@ -95,7 +101,6 @@ void QgsRasterizeAlgorithm::initAlgorithm( const QVariantMap & )
                   QObject::tr( "Map theme to render" ),
                   QVariant(), true ) );
 
-  QList<QgsMapLayer *> projectLayers { QgsProject::instance()->mapLayers().values() };
   addParameter( new QgsProcessingParameterMultipleLayers(
                   QStringLiteral( "LAYERS" ),
                   QObject::tr( "Layers to render" ),
@@ -111,26 +116,16 @@ void QgsRasterizeAlgorithm::initAlgorithm( const QVariantMap & )
 
 QString QgsRasterizeAlgorithm::shortDescription() const
 {
-  return QObject::tr( R"(This algorithm rasterizes map canvas content.
-                      A map theme can be selected to render a predetermined set of layers with a defined style for each layer.
-                      Alternatively, a set of layers layer can be selected if no map theme is set.
-                      If neither map theme nor layer is set all the current project layers will be
-                      rendered.
-                      The minimum extent entered will internally be extended to be a multiple of the tile size.)" );
+  return QObject::tr( "Renders the map canvas to a raster file." );
 }
 
 QString QgsRasterizeAlgorithm::shortHelpString() const
 {
-  return QObject::tr( R"(This algorithm renders the map canvas to a raster file.
-                      It's possible to choose the following parameters:
-                          - Map theme to render
-                          - Layers to render
-                          - The minimum extent to render
-                          - The tile size
-                          - Map unit per pixel
-                          - The output (can be saved to a file or to a temporary file and
-                            automatically opened as layer in qgis)
-                      )" );
+  return QObject::tr( "This algorithm rasterizes map canvas content.\n\n"
+                      "A map theme can be selected to render a predetermined set of layers with a defined style for each layer. "
+                      "Alternatively, a set of layers can be selected if no map theme is set. "
+                      "If neither map theme nor layer is set, all the visible layers in the set extent will be rendered.\n\n"
+                      "The minimum extent entered will internally be extended to a multiple of the tile size." );
 }
 
 QgsRasterizeAlgorithm *QgsRasterizeAlgorithm::createInstance() const
@@ -173,7 +168,7 @@ QVariantMap QgsRasterizeAlgorithm::processAlgorithm( const QVariantMap &paramete
     throw QgsProcessingException( QObject::tr( "Error creating GDAL output layer" ) );
   }
 
-  GDALSetProjection( hOutputDataset.get(), context.project()->crs().toWkt( QgsCoordinateReferenceSystem::WKT2_2018 ).toLatin1().constData() );
+  GDALSetProjection( hOutputDataset.get(), context.project()->crs().toWkt( QgsCoordinateReferenceSystem::WKT_PREFERRED_GDAL ).toLatin1().constData() );
   double geoTransform[6];
   geoTransform[0] = extent.xMinimum();
   geoTransform[1] = mapUnitsPerPixel;
@@ -200,9 +195,10 @@ QVariantMap QgsRasterizeAlgorithm::processAlgorithm( const QVariantMap &paramete
   QgsMapSettings mapSettings;
   mapSettings.setOutputImageFormat( QImage::Format_ARGB32 );
   mapSettings.setDestinationCrs( context.project()->crs() );
-  mapSettings.setFlag( QgsMapSettings::Antialiasing, true );
-  mapSettings.setFlag( QgsMapSettings::RenderMapTile, true );
-  mapSettings.setFlag( QgsMapSettings::UseAdvancedEffects, true );
+  mapSettings.setFlag( Qgis::MapSettingsFlag::Antialiasing, true );
+  mapSettings.setFlag( Qgis::MapSettingsFlag::HighQualityImageTransforms, true );
+  mapSettings.setFlag( Qgis::MapSettingsFlag::RenderMapTile, true );
+  mapSettings.setFlag( Qgis::MapSettingsFlag::UseAdvancedEffects, true );
   mapSettings.setTransformContext( context.transformContext() );
   mapSettings.setExtentBuffer( extentBuffer );
   mapSettings.setBackgroundColor( bgColor );
@@ -219,7 +215,6 @@ QVariantMap QgsRasterizeAlgorithm::processAlgorithm( const QVariantMap &paramete
   // Start rendering
   const double extentRatio { mapUnitsPerPixel * tileSize };
   const int numTiles { xTileCount * yTileCount };
-  const QString fileExtension { QFileInfo( outputLayerFileName ).suffix() };
 
   // Custom deleter for CPL allocation
   struct CPLDelete
@@ -330,7 +325,7 @@ bool QgsRasterizeAlgorithm::prepareAlgorithm( const QVariantMap &parameters, Qgs
   }
   else if ( ! mapLayers.isEmpty() )
   {
-    for ( const QgsMapLayer *ml : qgis::as_const( mapLayers ) )
+    for ( const QgsMapLayer *ml : std::as_const( mapLayers ) )
     {
       mMapLayers.push_back( std::unique_ptr<QgsMapLayer>( ml->clone( ) ) );
     }
@@ -338,8 +333,16 @@ bool QgsRasterizeAlgorithm::prepareAlgorithm( const QVariantMap &parameters, Qgs
   // Still no layers? Get them all from the project
   if ( mMapLayers.size() == 0 )
   {
-    const auto constLayers { context.project()->mapLayers().values() };
-    for ( const QgsMapLayer *ml : constLayers )
+    QList<QgsMapLayer *> layers;
+    QgsLayerTree *root = context.project()->layerTreeRoot();
+    for ( QgsLayerTreeLayer *nodeLayer : root->findLayers() )
+    {
+      QgsMapLayer *layer = nodeLayer->layer();
+      if ( nodeLayer->isVisible() && root->layerOrder().contains( layer ) )
+        layers << layer;
+    }
+
+    for ( const QgsMapLayer *ml : std::as_const( layers ) )
     {
       mMapLayers.push_back( std::unique_ptr<QgsMapLayer>( ml->clone( ) ) );
     }

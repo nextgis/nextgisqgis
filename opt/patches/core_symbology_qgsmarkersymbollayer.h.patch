@@ -1,0 +1,20 @@
+--- a/src/core/symbology/qgsmarkersymbollayer.h	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/symbology/qgsmarkersymbollayer.h	2022-03-07 23:14:46.000000000 +0300
+@@ -222,7 +222,7 @@
+     QgsSimpleMarkerSymbolLayer *clone() const override SIP_FACTORY;
+     void writeSldMarker( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override;
+     QString ogrFeatureStyle( double mmScaleFactor, double mapUnitScaleFactor ) const override;
+-    bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const override;
++    // bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const override;
+     void setOutputUnit( QgsUnitTypes::RenderUnit unit ) override;
+     QgsUnitTypes::RenderUnit outputUnit() const override;
+     void setMapUnitScale( const QgsMapUnitScale &scale ) override;
+@@ -631,7 +631,7 @@
+     void setMapUnitScale( const QgsMapUnitScale &scale ) override;
+     QgsMapUnitScale mapUnitScale() const override;
+ 
+-    bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const override;
++    // bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const override;
+ 
+     QRectF bounds( QPointF point, QgsSymbolRenderContext &context ) override;
+ 

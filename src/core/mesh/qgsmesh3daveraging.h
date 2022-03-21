@@ -32,7 +32,7 @@ class QgsMeshRenderer3dAveragingSettings;
 
 /**
  * \ingroup core
- * Abstract class to interpolate 3d stacked mesh data to 2d data
+ * \brief Abstract class to interpolate 3d stacked mesh data to 2d data
  *
  * \since QGIS 3.12
  */
@@ -148,7 +148,7 @@ class CORE_EXPORT QgsMesh3dAveragingMethod SIP_ABSTRACT
 /**
  * \ingroup core
  *
- * Multi level averaging method specifies limits of vertical layers from the top layer down or reversed.
+ * \brief Multi level averaging method specifies limits of vertical layers from the top layer down or reversed.
  *
  * The limits will be truncated to the maximum number of vertical layers.
  * To pick value from a single layer, specify the upper and lower limit to be the same
@@ -165,16 +165,16 @@ class CORE_EXPORT QgsMeshMultiLevelsAveragingMethod: public QgsMesh3dAveragingMe
      * Constructs multi level averaging method
      * \param startLevel starting vertical level index numbered from 1
      * \param endLevel ending vertical level index numbered from 1 (higher or equal than startLevel)
-     * \param countedFromTop if true, the startLevel index is counted from surface (index 1 is the top layer).
-     *                       if false, the startLevel index is counted from the bed level (index 1 is the bottom layer)
+     * \param countedFromTop if TRUE, the startLevel index is counted from surface (index 1 is the top layer).
+     *                       if FALSE, the startLevel index is counted from the bed level (index 1 is the bottom layer)
      */
     QgsMeshMultiLevelsAveragingMethod( int startLevel, int endLevel, bool countedFromTop );
 
     /**
      * Constructs single level averaging method
      * \param verticalLevel vertical level index numbered from 1
-     * \param countedFromTop if true, the startLevel index is counted from surface (index 1 is the top layer).
-     *                       if false, the startLevel index is counted from the bed level (index 1 is the bottom layer)
+     * \param countedFromTop if TRUE, the startLevel index is counted from surface (index 1 is the top layer).
+     *                       if FALSE, the startLevel index is counted from the bed level (index 1 is the bottom layer)
      */
     QgsMeshMultiLevelsAveragingMethod( int verticalLevel, bool countedFromTop );
 
@@ -228,7 +228,7 @@ class CORE_EXPORT QgsMeshMultiLevelsAveragingMethod: public QgsMesh3dAveragingMe
 /**
  * \ingroup core
  *
- * Sigma averages over the values between 0 (bed level) and 1 (surface).
+ * \brief Sigma averages over the values between 0 (bed level) and 1 (surface).
  *
  * The fractions will be truncated to 0-1.
  * For example: the average of between a quarter and 3 quarters of the water column - Sigma from 0.25 to 0.75
@@ -283,7 +283,7 @@ class CORE_EXPORT QgsMeshSigmaAveragingMethod: public QgsMesh3dAveragingMethod
 /**
  * \ingroup core
  *
- * Relative height averaging method averages the values based on range defined relative to bed elevation or surface (when countedFromTop())
+ * \brief Relative height averaging method averages the values based on range defined relative to bed elevation or surface (when countedFromTop())
  * The range is defined in the same length units as defined by model (e.g. meters)
  *
  * if countedFromTop(), the method represents averaging based on depth below surface.
@@ -307,8 +307,8 @@ class CORE_EXPORT QgsMeshRelativeHeightAveragingMethod: public QgsMesh3dAveragin
      * Constructs the depth/height averaging method
      * \param startHeight starting depth/height, higher or equal than 0
      * \param endHeight ending depth/height, higher or equal than startDepth
-     * \param countedFromTop if true, the startLength and endLength is relative to surface (0 is surface level).
-     *                       if false, the startLength and endLength is relative to bed (0 is bed level).
+     * \param countedFromTop if TRUE, the startLength and endLength is relative to surface (0 is surface level).
+     *                       if FALSE, the startLength and endLength is relative to bed (0 is bed level).
      */
     QgsMeshRelativeHeightAveragingMethod( double startHeight, double endHeight, bool countedFromTop );
 
@@ -350,7 +350,7 @@ class CORE_EXPORT QgsMeshRelativeHeightAveragingMethod: public QgsMesh3dAveragin
 /**
  * \ingroup core
  *
- * Elevation averaging method averages the values based on range defined absolute value to the model's datum
+ * \brief Elevation averaging method averages the values based on range defined absolute value to the model's datum
  * The range is defined in the same length units as defined by model (e.g. meters)
  *
  * For example one can pull out results irrespective of water level change such as between -16m and -10m.

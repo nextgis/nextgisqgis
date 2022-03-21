@@ -24,6 +24,7 @@
 #include "qgslayoutguidecollection.h"
 #include "qgslayoutexporter.h"
 #include "qgsmasterlayoutinterface.h"
+#include "qgssettingsentry.h"
 
 class QgsLayoutItemMap;
 class QgsLayoutModel;
@@ -657,6 +658,11 @@ class CORE_EXPORT QgsLayout : public QGraphicsScene, public QgsExpressionContext
      */
     bool accept( QgsStyleEntityVisitorInterface *visitor ) const;
 
+#ifndef SIP_RUN
+    //! Settings entry search path for templates
+    static const inline QgsSettingsEntryStringList settingsSearchPathForTemplates = QgsSettingsEntryStringList( QStringLiteral( "Layout/searchPathsForTemplates" ), QgsSettings::Core, QStringList(), QObject::tr( "Search path for templates" ) );
+#endif
+
   public slots:
 
     /**
@@ -707,6 +713,13 @@ class CORE_EXPORT QgsLayout : public QGraphicsScene, public QgsExpressionContext
      */
     void backgroundTaskCountChanged( int total );
 
+    /**
+     * Emitted when an \a item was added to the layout.
+     *
+     * \since QGIS 3.20
+     */
+    void itemAdded( QgsLayoutItem *item );
+
   private slots:
     void itemBackgroundTaskCountChanged( int count );
 
@@ -753,6 +766,9 @@ class CORE_EXPORT QgsLayout : public QGraphicsScene, public QgsExpressionContext
 
     //! Calculates the item minimum position from an XML element
     QPointF minPointFromXml( const QDomElement &elem ) const;
+
+    QgsLayout( const QgsLayout & ) = delete;
+    QgsLayout &operator=( const QgsLayout & ) = delete;
 
     friend class QgsLayoutItemAddItemCommand;
     friend class QgsLayoutItemDeleteUndoCommand;

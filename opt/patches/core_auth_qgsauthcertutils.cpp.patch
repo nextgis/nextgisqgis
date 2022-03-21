@@ -1,0 +1,35 @@
+--- a/src/core/auth/qgsauthcertutils.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/auth/qgsauthcertutils.cpp	2022-03-07 23:14:46.000000000 +0300
+@@ -27,10 +27,10 @@
+ #include "qgsauthmanager.h"
+ #include "qgslogger.h"
+ 
+-#ifdef Q_OS_MAC
+-#include <string.h>
+-#include "libtasn1.h"
+-#endif
++// #ifdef Q_OS_MAC
++// #include <string.h>
++// #include "libtasn1.h"
++// #endif
+ 
+ 
+ QString QgsAuthCertUtils::getSslProtocolName( QSsl::SslProtocol protocol )
+@@ -302,7 +302,7 @@
+   return keyPemTxt.contains( pkcs8Header ) && keyPemTxt.contains( pkcs8Footer );
+ }
+ 
+-#ifdef Q_OS_MAC
++#ifdef UNUSED_TMP // Q_OS_MAC
+ QByteArray QgsAuthCertUtils::pkcs8PrivateKey( QByteArray &pkcs8Der )
+ {
+   QByteArray pkcs1;
+@@ -495,7 +495,7 @@
+   }
+ 
+   QString keyPem;
+-#ifdef Q_OS_MAC
++#ifdef UNUSED_TMP // Q_OS_MAC
+   if ( keyalg == QSsl::Rsa && QgsAuthCertUtils::pemIsPkcs8( bundle.privateKey().toPEM() ) )
+   {
+     QgsDebugMsgLevel( QStringLiteral( "Private key is PKCS#8: attempting conversion to PKCS#1..." ), 4 );

@@ -41,6 +41,11 @@ QString QgsProcessingProvider::svgIconPath() const
   return QgsApplication::iconPath( QStringLiteral( "processingAlgorithm.svg" ) );
 }
 
+QgsProcessingProvider::Flags QgsProcessingProvider::flags() const
+{
+  return QgsProcessingProvider::Flags();
+}
+
 QString QgsProcessingProvider::helpId() const
 {
   return QString();
@@ -59,6 +64,11 @@ QString QgsProcessingProvider::versionInfo() const
 QStringList QgsProcessingProvider::supportedOutputRasterLayerExtensions() const
 {
   return QgsRasterFileWriter::supportedFormatExtensions();
+}
+
+QStringList QgsProcessingProvider::supportedOutputPointCloudLayerExtensions() const
+{
+  return QStringList();
 }
 
 void QgsProcessingProvider::refreshAlgorithms()
@@ -171,9 +181,20 @@ bool QgsProcessingProvider::isSupportedOutputValue( const QVariant &outputValue,
   }
   else if ( parameter->type() == QgsProcessingParameterRasterDestination::typeName() )
   {
-    QFileInfo fi( outputPath );
+    const QFileInfo fi( outputPath );
     const QString extension = fi.completeSuffix();
     if ( !supportedOutputRasterLayerExtensions().contains( extension, Qt::CaseInsensitive ) )
+    {
+      error = tr( "“.%1” files are not supported as outputs for this algorithm" ).arg( extension );
+      return false;
+    }
+    return true;
+  }
+  else if ( parameter->type() == QgsProcessingParameterPointCloudDestination::typeName() )
+  {
+    const QFileInfo fi( outputPath );
+    const QString extension = fi.completeSuffix();
+    if ( !supportedOutputPointCloudLayerExtensions().contains( extension, Qt::CaseInsensitive ) )
     {
       error = tr( "“.%1” files are not supported as outputs for this algorithm" ).arg( extension );
       return false;
@@ -188,7 +209,6 @@ bool QgsProcessingProvider::isSupportedOutputValue( const QVariant &outputValue,
 
 QString QgsProcessingProvider::defaultVectorFileExtension( bool hasGeometry ) const
 {
-  QgsSettings settings;
   const QString userDefault = QgsProcessingUtils::defaultVectorExtension();
 
   const QStringList supportedExtensions = supportedOutputVectorLayerExtensions();
@@ -211,7 +231,6 @@ QString QgsProcessingProvider::defaultVectorFileExtension( bool hasGeometry ) co
 
 QString QgsProcessingProvider::defaultRasterFileExtension() const
 {
-  QgsSettings settings;
   const QString userDefault = QgsProcessingUtils::defaultRasterExtension();
 
   const QStringList supportedExtensions = supportedOutputRasterLayerExtensions();
@@ -228,6 +247,27 @@ QString QgsProcessingProvider::defaultRasterFileExtension() const
   {
     // who knows? provider says it has no file support at all...
     return QStringLiteral( "tif" );
+  }
+}
+
+QString QgsProcessingProvider::defaultPointCloudFileExtension() const
+{
+  const QString userDefault = QgsProcessingUtils::defaultPointCloudExtension();
+
+  const QStringList supportedExtensions = supportedOutputPointCloudLayerExtensions();
+  if ( supportedExtensions.contains( userDefault, Qt::CaseInsensitive ) )
+  {
+    // user set default is supported by provider, use that
+    return userDefault;
+  }
+  else if ( !supportedExtensions.empty() )
+  {
+    return supportedExtensions.at( 0 );
+  }
+  else
+  {
+    // who knows? provider says it has no file support at all...
+    return QStringLiteral( "las" );
   }
 }
 
