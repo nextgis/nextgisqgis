@@ -18,6 +18,7 @@
 #include "qgsalgorithmjoinwithlines.h"
 #include "qgslinestring.h"
 #include "qgsmultilinestring.h"
+#include "qgsdistancearea.h"
 
 ///@cond PRIVATE
 
@@ -70,7 +71,7 @@ void QgsJoinWithLinesAlgorithm::initAlgorithm( const QVariantMap & )
 
   addParameter( new QgsProcessingParameterBoolean( QStringLiteral( "GEODESIC" ), QObject::tr( "Create geodesic lines" ), false ) );
 
-  auto distanceParam = qgis::make_unique< QgsProcessingParameterDistance >( QStringLiteral( "GEODESIC_DISTANCE" ), QObject::tr( "Distance between vertices (geodesic lines only)" ), 1000 );
+  auto distanceParam = std::make_unique< QgsProcessingParameterDistance >( QStringLiteral( "GEODESIC_DISTANCE" ), QObject::tr( "Distance between vertices (geodesic lines only)" ), 1000 );
   distanceParam->setFlags( distanceParam->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
   distanceParam->setDefaultUnit( QgsUnitTypes::DistanceKilometers );
   distanceParam->setIsDynamic( true );
@@ -78,7 +79,7 @@ void QgsJoinWithLinesAlgorithm::initAlgorithm( const QVariantMap & )
   distanceParam->setDynamicLayerParameterName( QStringLiteral( "HUBS" ) );
   addParameter( distanceParam.release() );
 
-  auto breakParam = qgis::make_unique< QgsProcessingParameterBoolean >( QStringLiteral( "ANTIMERIDIAN_SPLIT" ), QObject::tr( "Split lines at antimeridian (±180 degrees longitude)" ), false );
+  auto breakParam = std::make_unique< QgsProcessingParameterBoolean >( QStringLiteral( "ANTIMERIDIAN_SPLIT" ), QObject::tr( "Split lines at antimeridian (±180 degrees longitude)" ), false );
   breakParam->setFlags( breakParam->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
   addParameter( breakParam.release() );
 
@@ -116,15 +117,15 @@ QVariantMap QgsJoinWithLinesAlgorithm::processAlgorithm( const QVariantMap &para
     throw QgsProcessingException( invalidSourceError( parameters, QStringLiteral( "HUBS" ) ) );
 
   std::unique_ptr< QgsProcessingFeatureSource > spokeSource( parameterAsSource( parameters, QStringLiteral( "SPOKES" ), context ) );
-  if ( !hubSource || !spokeSource )
+  if ( !spokeSource )
     throw QgsProcessingException( invalidSourceError( parameters, QStringLiteral( "SPOKES" ) ) );
 
-  QString fieldHubName = parameterAsString( parameters, QStringLiteral( "HUB_FIELD" ), context );
-  int fieldHubIndex = hubSource->fields().lookupField( fieldHubName );
+  const QString fieldHubName = parameterAsString( parameters, QStringLiteral( "HUB_FIELD" ), context );
+  const int fieldHubIndex = hubSource->fields().lookupField( fieldHubName );
   const QStringList hubFieldsToCopy = parameterAsFields( parameters, QStringLiteral( "HUB_FIELDS" ), context );
 
-  QString fieldSpokeName = parameterAsString( parameters, QStringLiteral( "SPOKE_FIELD" ), context );
-  int fieldSpokeIndex = spokeSource->fields().lookupField( fieldSpokeName );
+  const QString fieldSpokeName = parameterAsString( parameters, QStringLiteral( "SPOKE_FIELD" ), context );
+  const int fieldSpokeIndex = spokeSource->fields().lookupField( fieldSpokeName );
   const QStringList spokeFieldsToCopy = parameterAsFields( parameters, QStringLiteral( "SPOKE_FIELDS" ), context );
 
   if ( fieldHubIndex < 0 || fieldSpokeIndex < 0 )
@@ -132,7 +133,7 @@ QVariantMap QgsJoinWithLinesAlgorithm::processAlgorithm( const QVariantMap &para
 
   const bool geodesic = parameterAsBoolean( parameters, QStringLiteral( "GEODESIC" ), context );
   const double geodesicDistance = parameterAsDouble( parameters, QStringLiteral( "GEODESIC_DISTANCE" ), context ) * 1000;
-  bool dynamicGeodesicDistance = QgsProcessingParameters::isDynamic( parameters, QStringLiteral( "GEODESIC_DISTANCE" ) );
+  const bool dynamicGeodesicDistance = QgsProcessingParameters::isDynamic( parameters, QStringLiteral( "GEODESIC_DISTANCE" ) );
   QgsExpressionContext expressionContext = createExpressionContext( parameters, context, hubSource.get() );
   QgsProperty geodesicDistanceProperty;
   if ( dynamicGeodesicDistance )
@@ -143,7 +144,7 @@ QVariantMap QgsJoinWithLinesAlgorithm::processAlgorithm( const QVariantMap &para
   const bool splitAntimeridian = parameterAsBoolean( parameters, QStringLiteral( "ANTIMERIDIAN_SPLIT" ), context );
   QgsDistanceArea da;
   da.setSourceCrs( hubSource->sourceCrs(), context.transformContext() );
-  da.setEllipsoid( context.project()->ellipsoid() );
+  da.setEllipsoid( context.ellipsoid() );
 
   QgsFields hubOutFields;
   QgsAttributeList hubFieldIndices;
@@ -161,7 +162,7 @@ QVariantMap QgsJoinWithLinesAlgorithm::processAlgorithm( const QVariantMap &para
     hubFieldIndices.reserve( hubOutFields.count() );
     for ( const QString &field : hubFieldsToCopy )
     {
-      int index = hubSource->fields().lookupField( field );
+      const int index = hubSource->fields().lookupField( field );
       if ( index >= 0 )
       {
         hubFieldIndices << index;
@@ -188,7 +189,7 @@ QVariantMap QgsJoinWithLinesAlgorithm::processAlgorithm( const QVariantMap &para
   {
     for ( const QString &field : spokeFieldsToCopy )
     {
-      int index = spokeSource->fields().lookupField( field );
+      const int index = spokeSource->fields().lookupField( field );
       if ( index >= 0 )
       {
         spokeFieldIndices << index;
@@ -201,7 +202,7 @@ QVariantMap QgsJoinWithLinesAlgorithm::processAlgorithm( const QVariantMap &para
   spokeFields2Fetch << fieldSpokeIndex;
 
 
-  QgsFields fields = QgsProcessingUtils::combineFields( hubOutFields, spokeOutFields );
+  const QgsFields fields = QgsProcessingUtils::combineFields( hubOutFields, spokeOutFields );
 
   QgsWkbTypes::Type outType = geodesic ? QgsWkbTypes::MultiLineString : QgsWkbTypes::LineString;
   bool hasZ = false;
@@ -238,7 +239,7 @@ QVariantMap QgsJoinWithLinesAlgorithm::processAlgorithm( const QVariantMap &para
   };
 
   QgsFeatureIterator hubFeatures = hubSource->getFeatures( QgsFeatureRequest().setSubsetOfAttributes( hubFields2Fetch ), QgsProcessingFeatureSource::FlagSkipGeometryValidityChecks );
-  double step = hubSource->featureCount() > 0 ? 100.0 / hubSource->featureCount() : 1;
+  const double step = hubSource->featureCount() > 0 ? 100.0 / hubSource->featureCount() : 1;
   int i = 0;
   QgsFeature hubFeature;
   while ( hubFeatures.nextFeature( hubFeature ) )
@@ -254,7 +255,7 @@ QVariantMap QgsJoinWithLinesAlgorithm::processAlgorithm( const QVariantMap &para
     if ( !hubFeature.hasGeometry() )
       continue;
 
-    QgsPoint hubPoint = getPointFromFeature( hubFeature );
+    const QgsPoint hubPoint = getPointFromFeature( hubFeature );
 
     // only keep selected attributes
     QgsAttributes hubAttributes;
@@ -280,7 +281,7 @@ QVariantMap QgsJoinWithLinesAlgorithm::processAlgorithm( const QVariantMap &para
       if ( !spokeFeature.hasGeometry() )
         continue;
 
-      QgsPoint spokePoint = getPointFromFeature( spokeFeature );
+      const QgsPoint spokePoint = getPointFromFeature( spokeFeature );
       QgsGeometry line;
       if ( !geodesic )
       {
@@ -297,15 +298,15 @@ QVariantMap QgsJoinWithLinesAlgorithm::processAlgorithm( const QVariantMap &para
           distance = geodesicDistanceProperty.valueAsDouble( expressionContext, distance );
         }
 
-        std::unique_ptr< QgsMultiLineString > ml = qgis::make_unique< QgsMultiLineString >();
-        std::unique_ptr< QgsLineString > l = qgis::make_unique< QgsLineString >( QVector< QgsPoint >() << hubPoint );
-        QVector< QVector< QgsPointXY > > points = da.geodesicLine( QgsPointXY( hubPoint ), QgsPointXY( spokePoint ), distance, splitAntimeridian );
+        std::unique_ptr< QgsMultiLineString > ml = std::make_unique< QgsMultiLineString >();
+        std::unique_ptr< QgsLineString > l = std::make_unique< QgsLineString >( QVector< QgsPoint >() << hubPoint );
+        const QVector< QVector< QgsPointXY > > points = da.geodesicLine( QgsPointXY( hubPoint ), QgsPointXY( spokePoint ), distance, splitAntimeridian );
         QVector< QgsPointXY > points1 = points.at( 0 );
         points1.pop_front();
         if ( points.count() == 1 )
           points1.pop_back();
 
-        QgsLineString geodesicPoints( points1 );
+        const QgsLineString geodesicPoints( points1 );
         l->append( &geodesicPoints );
         if ( points.count() == 1 )
           l->addVertex( spokePoint );
@@ -315,7 +316,7 @@ QVariantMap QgsJoinWithLinesAlgorithm::processAlgorithm( const QVariantMap &para
         {
           QVector< QgsPointXY > points2 = points.at( 1 );
           points2.pop_back();
-          l = qgis::make_unique< QgsLineString >( points2 );
+          l = std::make_unique< QgsLineString >( points2 );
           if ( hasZ )
             l->addZValue( std::numeric_limits<double>::quiet_NaN() );
           if ( hasM )
@@ -342,7 +343,8 @@ QVariantMap QgsJoinWithLinesAlgorithm::processAlgorithm( const QVariantMap &para
       outAttributes.append( spokeAttributes );
       outFeature.setAttributes( outAttributes );
       outFeature.setGeometry( line );
-      sink->addFeature( outFeature, QgsFeatureSink::FastInsert );
+      if ( !sink->addFeature( outFeature, QgsFeatureSink::FastInsert ) )
+        throw QgsProcessingException( writeFeatureError( sink.get(), parameters, QStringLiteral( "OUTPUT" ) ) );
     }
   }
 

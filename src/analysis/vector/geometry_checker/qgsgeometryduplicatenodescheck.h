@@ -22,9 +22,11 @@
 
 /**
  * \ingroup analysis
+ * \brief A duplicate nodes check.
  */
 class ANALYSIS_EXPORT QgsGeometryDuplicateNodesCheck : public QgsGeometryCheck
 {
+    Q_DECLARE_TR_FUNCTIONS( QgsGeometryDuplicateNodesCheck )
   public:
     explicit QgsGeometryDuplicateNodesCheck( QgsGeometryCheckContext *context, const QVariantMap &configuration )
       : QgsGeometryCheck( context, configuration ) {}

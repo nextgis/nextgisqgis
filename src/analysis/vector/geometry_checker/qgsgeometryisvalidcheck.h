@@ -23,7 +23,8 @@ email                : matthias@opengis.ch
 /**
  * \ingroup analysis
  *
- * An error for a QgsGeometryIsValid check.
+ * \brief An error for a QgsGeometryIsValid check.
+ *
  * The description is delivered by the underlying check engine, either GEOS or QGIS internal.
  *
  * \since QGIS 3.4
@@ -46,13 +47,14 @@ class ANALYSIS_EXPORT QgsGeometryIsValidCheckError : public QgsSingleGeometryChe
 /**
  * \ingroup analysis
  *
- * Checks if geometries are valid using the backend configured in the QGIS settings.
+ * \brief Checks if geometries are valid using the backend configured in the QGIS settings.
  * This does not offer any fixes but makes sure that all geometries are valid.
  *
  * \since QGIS 3.4
  */
 class ANALYSIS_EXPORT QgsGeometryIsValidCheck : public QgsSingleGeometryCheck
 {
+    Q_DECLARE_TR_FUNCTIONS( QgsGeometryIsValidCheck )
   public:
 
     /**

@@ -29,7 +29,6 @@
 #include "qgsmeshlayerutils.h"
 #include "qgsmeshvectorrenderer.h"
 
-
 ///@cond PRIVATE
 
 #ifndef SIP_RUN
@@ -37,7 +36,7 @@
 /**
  * \ingroup core
  *
- * Abstract class used to interpolate the value of the vector for a pixel
+ * \brief Abstract class used to interpolate the value of the vector for a pixel
  *
  * \note not available in Python bindings
  * \since QGIS 3.12
@@ -63,7 +62,10 @@ class QgsMeshVectorValueInterpolator
     //! Destructor
     virtual ~QgsMeshVectorValueInterpolator() = default;
 
-    //! Returns the interpolated vector
+    /**
+     * Returns the interpolated vector
+     * \param point point in map coordinates
+     */
     virtual QgsVector vectorValue( const QgsPointXY &point ) const;
 
     //! Assignment operator
@@ -90,7 +92,7 @@ class QgsMeshVectorValueInterpolator
 /**
  * \ingroup core
  *
- * Class used to retrieve the value of the vector for a pixel from vertex
+ * \brief Class used to retrieve the value of the vector for a pixel from vertex
  *
  * \note not available in Python bindings
  * \since QGIS 3.12
@@ -123,7 +125,7 @@ class QgsMeshVectorValueInterpolatorFromVertex: public QgsMeshVectorValueInterpo
 /**
  * \ingroup core
  *
- * Class used to retrieve the value of the vector for a pixel from vertex
+ * \brief Class used to retrieve the value of the vector for a pixel from vertex
  *
  * \note not available in Python bindings
  * \since QGIS 3.12
@@ -156,7 +158,7 @@ class QgsMeshVectorValueInterpolatorFromFace: public QgsMeshVectorValueInterpola
 /**
  * \ingroup core
  *
- * Abstract class used to handle information about stream field
+ * \brief Abstract class used to handle information about stream field
  *
  * \note not available in Python bindings
  * \since QGIS 3.12
@@ -180,6 +182,7 @@ class QgsMeshStreamField
                         double magnitudeMaximum,
                         bool dataIsOnVertices,
                         const QgsRenderContext &rendererContext,
+                        const QgsInterpolatedLineColor &vectorColoring,
                         int resolution = 1 );
 
     //! Copy constructor
@@ -288,6 +291,7 @@ class QgsMeshStreamField
     QImage mTraceImage;
 
     QgsMapToPixel mMapToFieldPixel;
+    QgsInterpolatedLineColor mVectorColoring;
 
   private:
     int mPixelFillingCount = 0;
@@ -308,7 +312,7 @@ class QgsMeshStreamField
 /**
  * \ingroup core
  *
- * Class used to draw streamlines from vector field
+ * \brief Class used to draw streamlines from vector field
  *
  * \note not available in Python bindings
  * \since QGIS 3.12
@@ -321,7 +325,10 @@ class QgsMeshStreamlinesField: public QgsMeshStreamField
                              const QgsMeshDataBlock &datasetVectorValues,
                              const QgsMeshDataBlock &scalarActiveFaceFlagValues,
                              const QgsRectangle &layerExtent,
-                             double magMax, bool dataIsOnVertices, QgsRenderContext &rendererContext );
+                             double magMax,
+                             bool dataIsOnVertices,
+                             QgsRenderContext &rendererContext,
+                             const QgsInterpolatedLineColor vectorColoring );
 
     //! Copy constructor
     QgsMeshStreamlinesField( const QgsMeshStreamlinesField &other );
@@ -344,7 +351,7 @@ class QgsMeshParticleTracesField;
 /**
  * \ingroup core
  *
- * Used to simulation moving particle
+ * \brief Used to simulation moving particle
  *
  * \note not available in Python bindings
  * \since QGIS 3.12
@@ -360,7 +367,7 @@ struct QgsMeshTraceParticle
 /**
  * \ingroup core
  *
- * Class used to draw streamlines from vector field
+ * \brief Class used to draw streamlines from vector field
  *
  * \note not available in Python bindings
  * \since QGIS 3.12
@@ -375,7 +382,8 @@ class QgsMeshParticleTracesField: public QgsMeshStreamField
                                 const QgsRectangle &layerExtent,
                                 double magMax,
                                 bool dataIsOnVertices,
-                                const QgsRenderContext &rendererContext );
+                                const QgsRenderContext &rendererContext,
+                                const QgsInterpolatedLineColor vectorColoring );
 
     //! Copy constructor
     QgsMeshParticleTracesField( const QgsMeshParticleTracesField &other );
@@ -414,9 +422,6 @@ class QgsMeshParticleTracesField: public QgsMeshStreamField
     //! Sets the time step
     void setTimeStep( double timeStep );
 
-    //! Sets tihe color of the particles
-    void setParticleColor( const QColor &particleColor );
-
     //! Sets particles size (in px)
     void setParticleSize( double particleSize );
 
@@ -432,17 +437,20 @@ class QgsMeshParticleTracesField: public QgsMeshStreamField
     //! Sets if the particle has to be stumped dependiong on liketime
     void setStumpParticleWithLifeTime( bool stumpParticleWithLifeTime );
 
+    //! Sets the color of the particles, overwrite the color provided by vector settings
+    void setParticlesColor( const QColor &c );
   private:
     QPoint direction( QPoint position ) const;
 
     float time( QPoint position ) const;
+    float magnitude( QPoint position ) const;
 
     void drawParticleTrace( const QgsMeshTraceParticle &particle );
 
     void storeInField( const QPair<QPoint, FieldData> pixelData ) override;
     void initField() override;
     bool isTraceExists( const QPoint &pixel ) const override;
-    void drawChunkTrace( const std::list<QPair<QPoint, FieldData>> &chunkTrace ) override {Q_UNUSED( chunkTrace );}
+    void drawChunkTrace( const std::list<QPair<QPoint, FieldData>> &chunkTrace ) override {Q_UNUSED( chunkTrace )}
 
     /* Nondimensional time
      * This field store the time spent by the particle in the pixel
@@ -452,6 +460,7 @@ class QgsMeshParticleTracesField: public QgsMeshStreamField
      *
      */
     QVector<float> mTimeField;
+    QVector<float> mMagnitudeField;
 
     /*the direction for a pixel is defined with a char value
      *
@@ -484,7 +493,9 @@ class QgsMeshParticleTracesField: public QgsMeshStreamField
 /**
  * \ingroup core
  *
- * A class derived from QgsMeshVectorRenderer used to render the particles traces
+ * \brief A class derived from QgsMeshVectorRenderer used to render the particles traces
+ *
+ * Not available for data defined on edges
  *
  * \note not available in Python bindings
  * \since QGIS 3.12
@@ -513,7 +524,9 @@ class QgsMeshVectorStreamlineRenderer: public QgsMeshVectorRenderer
 /**
  * \ingroup core
  *
- * A class derived from QgsMeshVectorRenderer used to render the particles traces
+ * \brief A class derived from QgsMeshVectorRenderer used to render the particles traces.
+ *
+ * Not available for data defined on edges
  *
  * \note not available in Python bindings
  * \since QGIS 3.12
@@ -546,7 +559,7 @@ class QgsMeshVectorTraceRenderer: public QgsMeshVectorRenderer
 /**
  * \ingroup core
  *
- * A wrapper for QgsMeshParticuleTracesField used to render the particles. Available for Python binding
+ * \brief A wrapper for QgsMeshParticuleTracesField used to render the particles. Available for Python binding
  *
  * \since QGIS 3.12
  */
@@ -560,7 +573,8 @@ class CORE_EXPORT QgsMeshVectorTraceAnimationGenerator
                                           bool dataIsOnVertices,
                                           const QgsRenderContext &rendererContext,
                                           const QgsRectangle &layerExtent,
-                                          double magMax ) SIP_SKIP;
+                                          double magMax,
+                                          const QgsMeshRendererVectorSettings &vectorSettings ) SIP_SKIP;
 
     //!Constructor to use with Python binding
     QgsMeshVectorTraceAnimationGenerator( QgsMeshLayer *layer, const QgsRenderContext &rendererContext );

@@ -24,7 +24,7 @@
 /**
  * \class QgsDoubleBoxScaleBarRenderer
  * \ingroup core
- * Double box with alternating colors.
+ * \brief Double box with alternating colors.
  * \since QGIS 3.0
  */
 class CORE_EXPORT QgsDoubleBoxScaleBarRenderer: public QgsScaleBarRenderer
@@ -36,7 +36,11 @@ class CORE_EXPORT QgsDoubleBoxScaleBarRenderer: public QgsScaleBarRenderer
      */
     QgsDoubleBoxScaleBarRenderer() = default;
 
-    QString name() const override { return QStringLiteral( "Double Box" ); }
+    QString id() const override;
+    QString visibleName() const override;
+    Flags flags() const override;
+    int sortKey() const override;
+    QgsDoubleBoxScaleBarRenderer *clone() const override SIP_FACTORY;
 
     void draw( QgsRenderContext &context,
                const QgsScaleBarSettings &settings,

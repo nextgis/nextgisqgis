@@ -26,6 +26,7 @@
 #include "qgsproperty.h"
 #include "qgsspatialiteutils.h"
 #include "qgsvectorlayer.h"
+#include "qgscallout.h"
 #include <QString>
 
 class QgsProject;
@@ -35,7 +36,7 @@ class QgsProject;
  *
  * \ingroup core
  *
- * Class allowing to manage the auxiliary storage for a vector layer.
+ * \brief Class allowing to manage the auxiliary storage for a vector layer.
  *
  * Such auxiliary data are data used mostly for the needs of QGIS (symbology)
  * and have no real interest in being stored with the native raw geospatial
@@ -80,6 +81,19 @@ class CORE_EXPORT QgsAuxiliaryLayer : public QgsVectorLayer
 
     QgsAuxiliaryLayer &operator=( QgsAuxiliaryLayer const &rhs ) = delete;
 
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    QString str = QStringLiteral( "<QgsAuxiliaryLayer: '%1'>" ).arg( sipCpp->name() );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverloaded-virtual"
+#endif
+
     /**
      * Returns a new instance equivalent to this one. The underlying table
      * is duplicate for the layer given in parameter. Note that the current
@@ -88,6 +102,9 @@ class CORE_EXPORT QgsAuxiliaryLayer : public QgsVectorLayer
      * \param layer The layer for which the clone is made
      */
     QgsAuxiliaryLayer *clone( QgsVectorLayer *layer ) const SIP_FACTORY;
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
     /**
      * An auxiliary layer is not spatial. This method returns a spatial
@@ -194,10 +211,11 @@ class CORE_EXPORT QgsAuxiliaryLayer : public QgsVectorLayer
      *
      * \param property The property to create
      * \param vlayer The vector layer
+     * \param overwriteExisting since QGIS 3.22, controls whether an existing property should be completely overwritten or upgraded to a coalesce("new aux field", 'existing' || 'property' || 'expression') type property
      *
      * \returns The index of the auxiliary field or -1
      */
-    static int createProperty( QgsPalLayerSettings::Property property, QgsVectorLayer *vlayer );
+    static int createProperty( QgsPalLayerSettings::Property property, QgsVectorLayer *vlayer, bool overwriteExisting = true );
 
     /**
      * Creates if necessary a new auxiliary field for a diagram's property and
@@ -205,10 +223,24 @@ class CORE_EXPORT QgsAuxiliaryLayer : public QgsVectorLayer
      *
      * \param property The property to create
      * \param vlayer The vector layer
+     * \param overwriteExisting since QGIS 3.22, controls whether an existing property should be completely overwritten or upgraded to a coalesce("new aux field", 'existing' || 'property' || 'expression') type property
      *
      * \returns The index of the auxiliary field or -1
      */
-    static int createProperty( QgsDiagramLayerSettings::Property property, QgsVectorLayer *vlayer );
+    static int createProperty( QgsDiagramLayerSettings::Property property, QgsVectorLayer *vlayer, bool overwriteExisting = true );
+
+    /**
+     * Creates if necessary a new auxiliary field for a callout's property and
+     * activates this property in settings.
+     *
+     * \param property The property to create
+     * \param vlayer The vector layer
+     * \param overwriteExisting since QGIS 3.22, controls whether an existing property should be completely overwritten or upgraded to a coalesce("new aux field", 'existing' || 'property' || 'expression') type property
+     *
+     * \returns The index of the auxiliary field or -1
+     * \since QGIS 3.20
+     */
+    static int createProperty( QgsCallout::Property property, QgsVectorLayer *vlayer, bool overwriteExisting = true );
 
     /**
      * Creates a new auxiliary field from a property definition.
@@ -405,10 +437,10 @@ class CORE_EXPORT QgsAuxiliaryStorage
     static spatialite_database_unique_ptr createDB( const QString &filename );
     static spatialite_database_unique_ptr openDB( const QString &filename );
     static bool tableExists( const QString &table, sqlite3 *handler );
-    static bool createTable( const QString &type, const QString &table, sqlite3 *handler );
+    static bool createTable( const QString &type, const QString &table, sqlite3 *handler, QString &errorMsg );
 
     static bool exec( const QString &sql, sqlite3 *handler );
-    static void debugMsg( const QString &sql, sqlite3 *handler );
+    static QString debugMsg( const QString &sql, sqlite3 *handler );
 
     static QgsDataSourceUri parseOgrUri( const QgsDataSourceUri &uri );
 
@@ -416,7 +448,7 @@ class CORE_EXPORT QgsAuxiliaryStorage
     QString mFileName; // original filename
     QString mTmpFileName; // temporary filename used in copy mode
     bool mCopy = false;
-    QString mErrorString;
+    mutable QString mErrorString;
 };
 
 #endif

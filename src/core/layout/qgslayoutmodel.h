@@ -35,7 +35,7 @@ class QgsLayoutItem;
  * \class QgsLayoutModel
  * \ingroup core
  *
- * A model for items attached to a layout. The model also maintains the z-order for the
+ * \brief A model for items attached to a layout. The model also maintains the z-order for the
  * layout, and must be notified whenever item stacking changes.
  *
  * Internally, QgsLayoutModel maintains two lists. One contains a complete list of all items for
@@ -372,6 +372,26 @@ class CORE_EXPORT QgsLayoutProxyModel: public QSortFilterProxyModel
      */
     bool allowEmptyItem() const;
 
+    /**
+     * Sets layout item flags to use for filtering the available items.
+     *
+     * Set \a flags to NULLPTR to clear the flag based filtering.
+     *
+     * \see itemFlags()
+     * \since QGIS 3.16
+     */
+    void setItemFlags( QgsLayoutItem::Flags flags );
+
+    /**
+     * Returns the layout item flags used for filtering the available items.
+     *
+     * Returns NULLPTR if no flag based filtering is occurring.
+     *
+     * \see setItemFlags()
+     * \since QGIS 3.16
+     */
+    QgsLayoutItem::Flags itemFlags() const;
+
   protected:
     bool filterAcceptsRow( int sourceRow, const QModelIndex &sourceParent ) const override;
     bool lessThan( const QModelIndex &left, const QModelIndex &right ) const override;
@@ -381,6 +401,7 @@ class CORE_EXPORT QgsLayoutProxyModel: public QSortFilterProxyModel
     QgsLayoutItemRegistry::ItemType mItemTypeFilter;
     QList< QgsLayoutItem * > mExceptedList;
     bool mAllowEmpty = false;
+    QgsLayoutItem::Flags mItemFlags = QgsLayoutItem::Flags();
 
 };
 

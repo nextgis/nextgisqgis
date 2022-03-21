@@ -19,14 +19,14 @@
 
 #include "qgis_core.h"
 #include "qgslayoutitemnodeitem.h"
-#include "qgssymbol.h"
+
+class QgsFillSymbol;
 
 /**
  * \ingroup core
- * Layout item for node based polygon shapes.
+ * \brief Layout item for node based polygon shapes.
  * \since QGIS 3.0
  */
-
 class CORE_EXPORT QgsLayoutItemPolygon: public QgsLayoutNodesItem
 {
     Q_OBJECT
@@ -44,6 +44,8 @@ class CORE_EXPORT QgsLayoutItemPolygon: public QgsLayoutNodesItem
      */
     QgsLayoutItemPolygon( const QPolygonF &polygon, QgsLayout *layout );
 
+    ~QgsLayoutItemPolygon() override;
+
     /**
      * Returns a new polygon item for the specified \a layout.
      *
@@ -55,12 +57,14 @@ class CORE_EXPORT QgsLayoutItemPolygon: public QgsLayoutNodesItem
     QIcon icon() const override;
     QString displayName() const override;
     bool accept( QgsStyleEntityVisitorInterface *visitor ) const override;
+    QgsLayoutItem::Flags itemFlags() const override;
+    QgsGeometry clipPath() const override;
 
     /**
      * Returns the fill symbol used to draw the shape.
      * \see setSymbol()
      */
-    QgsFillSymbol *symbol() { return mPolygonStyleSymbol.get(); }
+    QgsFillSymbol *symbol();
 
     /**
      * Sets the \a symbol used to draw the shape.

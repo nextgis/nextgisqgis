@@ -24,7 +24,7 @@ email                : ersts@amnh.org
 
 /**
  * \ingroup core
- * A linear enhanceContrast enhancement that first clips to min max and then enhanceContrastes
+ * \brief A linear enhanceContrast enhancement that first clips to min max and then enhanceContrastes
  * linearly between min and max.
  */
 class CORE_EXPORT QgsLinearMinMaxEnhancementWithClip : public QgsContrastEnhancementFunction
@@ -36,6 +36,11 @@ class CORE_EXPORT QgsLinearMinMaxEnhancementWithClip : public QgsContrastEnhance
     int enhance( double ) override;
 
     bool isValueInDisplayableRange( double ) override;
+
+  private:
+#ifdef SIP_RUN
+    QgsLinearMinMaxEnhancementWithClip &operator=( const QgsLinearMinMaxEnhancementWithClip & );
+#endif
 };
 
 #endif

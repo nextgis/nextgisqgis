@@ -21,9 +21,12 @@
 #include <QTemporaryDir>
 #include <QMutex>
 #include <QDateTime>
+#include <QPainter>
+
 #include "qgsfeature.h"
 #include "qgsabstractmetadatabase.h"
 #include "qgspolygon.h"
+#include "qgscoordinatereferencesystem.h"
 
 #define SIP_NO_FILE
 
@@ -34,7 +37,7 @@ class QgsGeoPdfRenderedFeatureHandler;
  * \class QgsAbstractGeoPdfExporter
  * \ingroup core
  *
- * Abstract base class for GeoPDF exporters.
+ * \brief Abstract base class for GeoPDF exporters.
  *
  * The base class handles generic GeoPDF export setup, cleanup and processing steps.
  *
@@ -107,7 +110,7 @@ class CORE_EXPORT QgsAbstractGeoPdfExporter
     };
 
     /**
-     * Contains details of a particular input component to be used during PDF composition.
+     * \brief Contains details of a particular input component to be used during PDF composition.
      * \ingroup core
      * \since QGIS 3.10
      */
@@ -126,10 +129,16 @@ class CORE_EXPORT QgsAbstractGeoPdfExporter
       //! File path to the (already created) PDF to use as the source for this component layer
       QString sourcePdfPath;
 
+      //! Component composition mode
+      QPainter::CompositionMode compositionMode = QPainter::CompositionMode_SourceOver;
+
+      //! Component opacity
+      double opacity = 1.0;
+
     };
 
     /**
-     * Contains details of a control point used during georeferencing GeoPDF outputs.
+     * \brief Contains details of a control point used during georeferencing GeoPDF outputs.
      * \ingroup core
      * \since QGIS 3.10
      */
@@ -252,6 +261,30 @@ class CORE_EXPORT QgsAbstractGeoPdfExporter
        */
       QMap< QString, QString > customLayerTreeGroups;
 
+      /**
+       * Optional map of map layer ID to custom layer tree name to show in the created PDF file.
+       *
+       * \since QGIS 3.14
+       */
+      QMap< QString, QString > layerIdToPdfLayerTreeNameMap;
+
+      /**
+       * Optional map of map layer ID to initial visibility state. If a layer ID is not present in this,
+       * it will default to being initially visible when opening the PDF.
+       *
+       * \since QGIS 3.14
+       */
+      QMap< QString, bool > initialLayerVisibility;
+
+      /**
+       * Optional list of layer IDs, in the order desired to appear in the generated GeoPDF file.
+       *
+       * Layers appearing earlier in the list will show earlier in the GeoPDF layer tree list.
+       *
+       * \since QGIS 3.14
+       */
+      QStringList layerOrder;
+
     };
 
     /**
@@ -278,6 +311,14 @@ class CORE_EXPORT QgsAbstractGeoPdfExporter
      * Returns a file path to use for temporary files required for GeoPDF creation.
      */
     QString generateTemporaryFilepath( const QString &filename ) const;
+
+    /**
+     * Returns TRUE if the specified composition \a mode is supported for layers
+     * during GeoPDF exports.
+     *
+     * \since QGIS 3.14
+     */
+    static bool compositionModeSupported( QPainter::CompositionMode mode );
 
   protected:
 
@@ -321,9 +362,15 @@ class CORE_EXPORT QgsAbstractGeoPdfExporter
     QString mErrorMessage;
     QTemporaryDir mTemporaryDir;
 
+
     bool saveTemporaryLayers();
 
     QString createCompositionXml( const QList< QgsAbstractGeoPdfExporter::ComponentLayerDetail > &components, const ExportDetails &details );
+
+    /**
+     * Returns the GDAL string representation of the specified QPainter composition \a mode.
+     */
+    static QString compositionModeToString( QPainter::CompositionMode mode );
 
     friend class TestQgsLayoutGeoPdfExport;
     friend class TestQgsGeoPdfExport;

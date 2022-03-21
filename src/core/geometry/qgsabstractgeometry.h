@@ -16,18 +16,22 @@ email                : marco.hugentobler at sourcepole dot com
 #ifndef QGSABSTRACTGEOMETRYV2
 #define QGSABSTRACTGEOMETRYV2
 
+#include <array>
 #include <functional>
+#include <type_traits>
 #include <QString>
 
 #include "qgis_core.h"
-#include "qgscoordinatetransform.h"
+#include "qgis.h"
 #include "qgswkbtypes.h"
 #include "qgswkbptr.h"
 
-#ifndef SIP_RUN
-#include "json_fwd.hpp"
-using namespace nlohmann;
-#endif
+// #ifndef SIP_RUN
+// #include "json_fwd.hpp"
+// using namespace nlohmann;
+// #endif
+#include "cpl_json.h"
+using json = CPLJSONObject;
 
 class QgsMapToPixel;
 class QgsCurve;
@@ -42,6 +46,12 @@ class QDomElement;
 class QgsGeometryPartIterator;
 class QgsGeometryConstPartIterator;
 class QgsConstWkbPtr;
+class QPainterPath;
+class QgsAbstractGeometryTransformer;
+class QgsFeedback;
+class QgsCoordinateTransform;
+class QgsPoint;
+class QgsRectangle;
 
 typedef QVector< QgsPoint > QgsPointSequence;
 #ifndef SIP_RUN
@@ -114,12 +124,14 @@ class CORE_EXPORT QgsAbstractGeometry
 
       /**
        * Maximum angle between generating radii (lines from arc center
-       * to output vertices) */
+       * to output vertices)
+      */
       MaximumAngle = 0,
 
       /**
        * Maximum distance between an arbitrary point on the original
-       * curve and closest point on its approximation. */
+       * curve and closest point on its approximation.
+      */
       MaximumDifference
     };
     Q_ENUM( SegmentationToleranceType )
@@ -157,6 +169,13 @@ class CORE_EXPORT QgsAbstractGeometry
     virtual QgsAbstractGeometry *clone() const = 0 SIP_FACTORY;
 
     /**
+     * Comparator for sorting of geometry.
+     *
+     * \since QGIS 3.20
+     */
+    virtual int compareTo( const QgsAbstractGeometry *other ) const;
+
+    /**
      * Clears the geometry, ie reset it to a null geometry
      */
     virtual void clear() = 0;
@@ -186,7 +205,7 @@ class CORE_EXPORT QgsAbstractGeometry
      * \see geometryType
      * \see wktTypeStr
      */
-    inline QgsWkbTypes::Type wkbType() const { return mWkbType; }
+    inline QgsWkbTypes::Type wkbType() const SIP_HOLDGIL { return mWkbType; }
 
     /**
      * Returns the WKT type string of the geometry.
@@ -199,7 +218,7 @@ class CORE_EXPORT QgsAbstractGeometry
      * Returns TRUE if the geometry is 3D and contains a z-value.
      * \see isMeasure
      */
-    bool is3D() const
+    bool is3D() const SIP_HOLDGIL
     {
       return QgsWkbTypes::hasZ( mWkbType );
     }
@@ -208,7 +227,7 @@ class CORE_EXPORT QgsAbstractGeometry
      * Returns TRUE if the geometry contains m values.
      * \see is3D
      */
-    bool isMeasure() const
+    bool isMeasure() const SIP_HOLDGIL
     {
       return QgsWkbTypes::hasM( mWkbType );
     }
@@ -220,6 +239,17 @@ class CORE_EXPORT QgsAbstractGeometry
      * \since QGIS 3.0
      */
     virtual QgsAbstractGeometry *boundary() const = 0 SIP_FACTORY;
+
+    /**
+     * Reorganizes the geometry into a normalized form (or "canonical" form).
+     *
+     * Polygon rings will be rearranged so that their starting vertex is the lower left and ring orientation follows the
+     * right hand rule, collections are ordered by geometry type, and other normalization techniques are applied. The
+     * resultant geometry will be geometrically equivalent to the original geometry.
+     *
+     * \since QGIS 3.20
+     */
+    virtual void normalize() = 0;
 
     //import
 
@@ -239,14 +269,36 @@ class CORE_EXPORT QgsAbstractGeometry
     //export
 
     /**
+     * WKB export flags.
+     * \since QGIS 3.14
+     */
+    enum WkbFlag
+    {
+      FlagExportTrianglesAsPolygons = 1 << 0, //!< Triangles should be exported as polygon geometries
+    };
+    Q_DECLARE_FLAGS( WkbFlags, WkbFlag )
+
+    /**
+     * Returns the length of the QByteArray returned by asWkb()
+     *
+     * The optional \a flags argument specifies flags controlling WKB export behavior
+     *
+     * \since QGIS 3.16
+     */
+    virtual int wkbSize( QgsAbstractGeometry::WkbFlags flags = QgsAbstractGeometry::WkbFlags() ) const = 0;
+
+    /**
      * Returns a WKB representation of the geometry.
+     *
+     * The optional \a flags argument specifies flags controlling WKB export behavior (since QGIS 3.14).
+     *
      * \see asWkt
      * \see asGml2
      * \see asGml3
      * \see asJson()
      * \since QGIS 3.0
      */
-    virtual QByteArray asWkb() const = 0;
+    virtual QByteArray asWkb( WkbFlags flags = QgsAbstractGeometry::WkbFlags() ) const = 0;
 
     /**
      * Returns a WKT representation of the geometry.
@@ -326,7 +378,7 @@ class CORE_EXPORT QgsAbstractGeometry
      * units (generally meters). If FALSE, then z coordinates will not be changed by the
      * transform.
      */
-    virtual void transform( const QgsCoordinateTransform &ct, QgsCoordinateTransform::TransformDirection d = QgsCoordinateTransform::ForwardTransform, bool transformZ = false ) SIP_THROW( QgsCsException ) = 0;
+    virtual void transform( const QgsCoordinateTransform &ct, Qgis::TransformDirection d = Qgis::TransformDirection::Forward, bool transformZ = false ) SIP_THROW( QgsCsException ) = 0;
 
     /**
      * Transforms the x and y components of the geometry using a QTransform object \a t.
@@ -342,6 +394,16 @@ class CORE_EXPORT QgsAbstractGeometry
      * \param p destination QPainter
      */
     virtual void draw( QPainter &p ) const = 0;
+
+    /**
+     * Returns the geometry represented as a QPainterPath.
+     *
+     * \warning not all geometry subclasses can be represented by a QPainterPath, e.g.
+     * points and multipoint geometries will return an empty path.
+     *
+     * \since QGIS 3.16
+     */
+    virtual QPainterPath asQPainterPath() const = 0;
 
     /**
      * Returns the vertex number corresponding to a vertex \a id.
@@ -499,6 +561,16 @@ class CORE_EXPORT QgsAbstractGeometry
     virtual bool hasCurvedSegments() const;
 
     /**
+     * Returns TRUE if the bounding box of this geometry intersects with a \a rectangle.
+     *
+     * Since this test only considers the bounding box of the geometry, is is very fast to
+     * calculate and handles invalid geometries.
+     *
+     * \since QGIS 3.20
+     */
+    virtual bool boundingBoxIntersects( const QgsRectangle &rectangle ) const SIP_HOLDGIL;
+
+    /**
      * Returns a version of the geometry without curves. Caller takes ownership of
      * the returned geometry.
      * \param tolerance segmentation tolerance
@@ -521,10 +593,13 @@ class CORE_EXPORT QgsAbstractGeometry
      * If the gridified geometry could not be calculated NULLPTR will be returned.
      * It may generate an invalid geometry (in some corner cases).
      * It can also be thought as rounding the edges and it may be useful for removing errors.
+     *
      * Example:
-     * \code{.cpp}
-     * geometry->snappedToGrid(1, 1);
+     *
+     * \code{.py}
+     *   geometry.snappedToGrid(1, 1)
      * \endcode
+     *
      * In this case we use a 2D grid of 1x1 to gridify.
      * In this case, it can be thought like rounding the x and y of all the points/vertices to full units (remove all decimals).
      * \param hSpacing Horizontal spacing of the grid (x axis). 0 to disable.
@@ -637,17 +712,52 @@ class CORE_EXPORT QgsAbstractGeometry
     virtual bool convertTo( QgsWkbTypes::Type type );
 
     /**
+     * Returns a reference to the simplest lossless representation of this geometry,
+     * e.g. if the geometry is a multipart geometry type with a single member geometry,
+     * a reference to that part will be returned.
+     *
+     * This method employs the following logic:
+     *
+     * - For multipart geometries containing a single part only a direct reference to that part will be returned.
+     * - For compound curve geometries containing a single curve only a direct reference to that curve will be returned.
+     *
+     * This method returns a reference only, and does not involve any geometry cloning.
+     *
+     * \note Ownership of the returned geometry is NOT transferred, and remains with the original
+     * geometry object. Callers must take care to ensure that the original geometry object
+     * exists for the lifespan of the returned object.
+     *
+     * \since QGIS 3.20
+     */
+    virtual const QgsAbstractGeometry *simplifiedTypeRef() const SIP_HOLDGIL;
+
+    /**
      * Checks validity of the geometry, and returns TRUE if the geometry is valid.
      *
      * \param error will be set to the validity error message
      * \param flags indicates optional flags which control the type of validity checking performed
-     * (corresponding to QgsGeometry::ValidityFlags).
+     * (corresponding to Qgis::GeometryValidityFlags).
      *
      * \returns TRUE if geometry is valid
      *
      * \since QGIS 3.8
      */
-    virtual bool isValid( QString &error SIP_OUT, int flags = 0 ) const = 0;
+    virtual bool isValid( QString &error SIP_OUT, Qgis::GeometryValidityFlags flags = Qgis::GeometryValidityFlags() ) const = 0;
+
+    /**
+     * Transforms the vertices from the geometry in place, using the specified geometry \a transformer
+     * object.
+     *
+     * Depending on the \a transformer used, this may result in an invalid geometry.
+     *
+     * The optional \a feedback argument can be used to cancel the transformation before it completes.
+     * If this is done, the geometry will be left in a semi-transformed state.
+     *
+     * \returns TRUE if the geometry was successfully transformed.
+     *
+     * \since QGIS 3.18
+     */
+    virtual bool transform( QgsAbstractGeometryTransformer *transformer, QgsFeedback *feedback = nullptr ) = 0;
 
 #ifndef SIP_RUN
 
@@ -680,7 +790,7 @@ class CORE_EXPORT QgsAbstractGeometry
 
     /**
      * \ingroup core
-     * The part_iterator class provides STL-style iterator for geometry parts.
+     * \brief The part_iterator class provides STL-style iterator for geometry parts.
      * \since QGIS 3.6
      */
     class CORE_EXPORT part_iterator
@@ -750,7 +860,7 @@ class CORE_EXPORT QgsAbstractGeometry
 
     /**
      * \ingroup core
-     * The part_iterator class provides STL-style iterator for const references to geometry parts.
+     * \brief The part_iterator class provides STL-style iterator for const references to geometry parts.
      * \since QGIS 3.6
      */
     class CORE_EXPORT const_part_iterator
@@ -810,7 +920,7 @@ class CORE_EXPORT QgsAbstractGeometry
 
     /**
      * \ingroup core
-     * The vertex_iterator class provides STL-style iterator for vertices.
+     * \brief The vertex_iterator class provides STL-style iterator for vertices.
      * \since QGIS 3.0
      */
     class CORE_EXPORT vertex_iterator
@@ -826,10 +936,12 @@ class CORE_EXPORT QgsAbstractGeometry
         {
           const QgsAbstractGeometry *g = nullptr;  //!< Current geometry
           int index = 0;               //!< Ptr in the current geometry
+
+          bool operator==( const Level &other ) const;
         };
 
-        Level levels[3];  //!< Stack of levels - three levels should be sufficient (e.g. part index, ring index, vertex index)
-        int depth = -1;        //!< At what depth level are we right now
+        std::array<Level, 3> levels;  //!< Stack of levels - three levels should be sufficient (e.g. part index, ring index, vertex index)
+        int depth = -1;               //!< At what depth level are we right now
 
         void digDown();   //!< Prepare the stack of levels so that it points to a leaf child geometry
 
@@ -890,7 +1002,8 @@ class CORE_EXPORT QgsAbstractGeometry
      * Returns Java-style iterator for traversal of parts of the geometry. This iterator
      * can safely be used to modify parts of the geometry.
      *
-     * * Example:
+     * Example
+     *
      * \code{.py}
      *   # print the WKT representation of each part in a multi-point geometry
      *   geometry = QgsMultiPoint.fromWkt( 'MultiPoint( 0 0, 1 1, 2 2)' )
@@ -927,7 +1040,8 @@ class CORE_EXPORT QgsAbstractGeometry
      * \warning The iterator returns a copy of individual vertices, and accordingly geometries cannot be
      * modified using the iterator. See transformVertices() for a safe method to modify vertices "in-place".
      *
-     * * Example:
+     * Example
+     *
      * \code{.py}
      *   # print the x and y coordinate for each vertex in a LineString
      *   geometry = QgsLineString.fromWkt( 'LineString( 0 0, 1 1, 2 2)' )
@@ -954,6 +1068,26 @@ class CORE_EXPORT QgsAbstractGeometry
     virtual QgsAbstractGeometry *createEmptyWithSameType() const = 0 SIP_FACTORY;
 
   protected:
+
+    /**
+     * Returns the sort index for the geometry, used in the compareTo() method to compare
+     * geometries of different types.
+     *
+     * \since QGIS 3.20
+     */
+    int sortIndex() const;
+
+    /**
+     * Compares to an \a other geometry of the same class, and returns a integer
+     * for sorting of the two geometries.
+     *
+     * \note The actual logic for the sorting is an internal detail only and is subject to change
+     * between QGIS versions. The result should only be used for direct comparison of geometries
+     * and not stored for later use.
+     *
+     * \since QGIS 3.20
+     */
+    virtual int compareToSameClass( const QgsAbstractGeometry *other ) const = 0;
 
     /**
      * Returns whether the geometry has any child geometries (FALSE for point / curve, TRUE otherwise)
@@ -1006,71 +1140,12 @@ class CORE_EXPORT QgsAbstractGeometry
 };
 
 
-/**
- * \ingroup core
- * \class QgsVertexId
- * \brief Utility class for identifying a unique vertex within a geometry.
- * \since QGIS 2.10
- */
-struct CORE_EXPORT QgsVertexId
-{
-  enum VertexType
-  {
-    SegmentVertex = 1, //start / endpoint of a segment
-    CurveVertex
-  };
-
-  explicit QgsVertexId( int _part = -1, int _ring = -1, int _vertex = -1, VertexType _type = SegmentVertex )
-    : part( _part )
-    , ring( _ring )
-    , vertex( _vertex )
-    , type( _type )
-  {}
-
-  /**
-   * Returns TRUE if the vertex id is valid
-   */
-  bool isValid() const { return part >= 0 && ring >= 0 && vertex >= 0; }
-
-  bool operator==( QgsVertexId other ) const
-  {
-    return part == other.part && ring == other.ring && vertex == other.vertex;
-  }
-  bool operator!=( QgsVertexId other ) const
-  {
-    return part != other.part || ring != other.ring || vertex != other.vertex;
-  }
-  bool partEqual( QgsVertexId o ) const
-  {
-    return part >= 0 && o.part == part;
-  }
-  bool ringEqual( QgsVertexId o ) const
-  {
-    return partEqual( o ) && ( ring >= 0 && o.ring == ring );
-  }
-  bool vertexEqual( QgsVertexId o ) const
-  {
-    return ringEqual( o ) && ( vertex >= 0 && o.ring == ring );
-  }
-  bool isValid( const QgsAbstractGeometry *geom ) const
-  {
-    return ( part >= 0 && part < geom->partCount() ) &&
-           ( ring < geom->ringCount( part ) ) &&
-           ( vertex < 0 || vertex < geom->vertexCount( part, ring ) );
-  }
-
-  int part;
-  int ring;
-  int vertex;
-  VertexType type;
-};
-
 #ifndef SIP_RUN
 
 template <class T>
 inline T qgsgeometry_cast( const QgsAbstractGeometry *geom )
 {
-  return const_cast<T>( reinterpret_cast<T>( 0 )->cast( geom ) );
+  return const_cast<T>( std::remove_pointer<T>::type::cast( geom ) );
 }
 
 #endif
@@ -1146,7 +1221,7 @@ class CORE_EXPORT QgsGeometryPartIterator
     }
 
     //! Find out whether there are more parts
-    bool hasNext() const
+    bool hasNext() const SIP_HOLDGIL
     {
       return g && g->parts_end() != i;
     }
@@ -1196,7 +1271,7 @@ class CORE_EXPORT QgsGeometryConstPartIterator
     }
 
     //! Find out whether there are more parts
-    bool hasNext() const
+    bool hasNext() const SIP_HOLDGIL
     {
       return g && g->const_parts_end() != i;
     }
@@ -1224,5 +1299,7 @@ class CORE_EXPORT QgsGeometryConstPartIterator
     QgsAbstractGeometry::const_part_iterator i, n;
 
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS( QgsAbstractGeometry::WkbFlags )
 
 #endif //QGSABSTRACTGEOMETRYV2

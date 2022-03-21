@@ -31,10 +31,10 @@
 #include <QVector>
 
 #include "qgis_sip.h"
+#include "qgis.h"
 #include "qgsmaplayer.h"
 #include "qgsraster.h"
 #include "qgsrasterdataprovider.h"
-#include "qgsrasterpipe.h"
 #include "qgsrasterviewport.h"
 #include "qgsrasterminmaxorigin.h"
 #include "qgscontrastenhancement.h"
@@ -42,6 +42,12 @@
 class QgsMapToPixel;
 class QgsRasterRenderer;
 class QgsRectangle;
+class QgsRasterLayerTemporalProperties;
+class QgsRasterPipe;
+class QgsRasterResampleFilter;
+class QgsBrightnessContrastFilter;
+class QgsHueSaturationFilter;
+
 class QImage;
 class QPixmap;
 class QSlider;
@@ -51,7 +57,7 @@ typedef QList < QPair< QString, QColor > > QgsLegendColorList;
 /**
  * \ingroup core
  *
- * Represents a raster layer.
+ * \brief Represents a raster layer.
  *
  * A QgsRasterLayer is instantiated by specifying the name of a data provider,
  * such as "gdal" or "wms", and a url defining the specific data set to connect to.
@@ -61,10 +67,8 @@ typedef QList < QPair< QString, QColor > > QgsLegendColorList;
  *
  *  Sample usage of the QgsRasterLayer class:
  *
- * \code{.cpp}
- *     QString myFileNameQString = "/path/to/file";
- *     QString myBaseNameQString = "my layer";
- *     QgsRasterLayer *myRasterLayer = new QgsRasterLayer(myFileNameQString, myBaseNameQString);
+ * \code{.py}
+ *     my_raster_layer = QgsRasterLayer("/path/to/file.tif", "my layer")
  * \endcode
  */
 class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
@@ -144,21 +148,26 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
      * The main tasks carried out by the constructor are:
      *
      * - Load the rasters default style (.qml) file if it exists
-     *
      * - Populate the RasterStatsVector with initial values for each band.
-     *
      * - Calculate the layer extents
-     *
      * - Determine whether the layer is gray, paletted or multiband.
-     *
      * - Assign sensible defaults for the red, green, blue and gray bands.
-     * */
+     *
+     */
     explicit QgsRasterLayer( const QString &uri,
                              const QString &baseName = QString(),
                              const QString &providerType = "gdal",
                              const QgsRasterLayer::LayerOptions &options = QgsRasterLayer::LayerOptions() );
 
     ~QgsRasterLayer() override;
+
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    QString str = QStringLiteral( "<QgsRasterLayer: '%1' (%2)>" ).arg( sipCpp->name(), sipCpp->dataProvider() ? sipCpp->dataProvider()->name() : QStringLiteral( "Invalid" ) );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
 
     /**
      * Returns a new instance equivalent to this one. A new provider is
@@ -211,23 +220,10 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
      * Set the data provider.
      * \param provider provider key string, must match a valid QgsRasterDataProvider key. E.g. "gdal", "wms", etc.
      * \param options provider options
+     * \param flags provider flags since QGIS 3.16
      * \since QGIS 3.2
      */
-    void setDataProvider( const QString &provider, const QgsDataProvider::ProviderOptions &options );
-
-    /**
-     * Updates the data source of the layer. The layer's renderer and legend will be preserved only
-     * if the geometry type of the new data source matches the current geometry type of the layer.
-     * \param dataSource new layer data source
-     * \param baseName base name of the layer
-     * \param provider provider string
-     * \param options provider options
-     * \param loadDefaultStyleFlag set to TRUE to reset the layer's style to the default for the
-     * data source
-     * \see dataSourceChanged()
-     * \since QGIS 3.6
-     */
-    void setDataSource( const QString &dataSource, const QString &baseName, const QString &provider, const QgsDataProvider::ProviderOptions &options, bool loadDefaultStyleFlag = false ) override;
+    void setDataProvider( const QString &provider, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() );
 
     /**
      * Returns the raster layer type (which is a read only property).
@@ -245,7 +241,7 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
      *
      * \see setRenderer()
      */
-    QgsRasterRenderer *renderer() const { return mPipe.renderer(); }
+    QgsRasterRenderer *renderer() const;
 
     /**
      * Returns the raster's resample filter.
@@ -253,7 +249,7 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
      * \see brightnessFilter()
      * \see hueSaturationFilter()
      */
-    QgsRasterResampleFilter *resampleFilter() const { return mPipe.resampleFilter(); }
+    QgsRasterResampleFilter *resampleFilter() const;
 
     /**
      * Returns the raster's brightness/contrast filter.
@@ -261,7 +257,7 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
      * \see resampleFilter()
      * \see hueSaturationFilter()
      */
-    QgsBrightnessContrastFilter *brightnessFilter() const { return mPipe.brightnessFilter(); }
+    QgsBrightnessContrastFilter *brightnessFilter() const;
 
     /**
      * Returns the raster's hue/saturation filter.
@@ -269,12 +265,30 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
      * \see resampleFilter()
      * \see brightnessFilter()
      */
-    QgsHueSaturationFilter *hueSaturationFilter() const { return mPipe.hueSaturationFilter(); }
+    QgsHueSaturationFilter *hueSaturationFilter() const;
+
+    /**
+     * Select which stage of the pipe should apply resampling.
+     *
+     * \see QgsRasterPipe::setResamplingStage()
+     *
+     * \since QGIS 3.16
+     */
+    void setResamplingStage( Qgis::RasterResamplingStage stage );
+
+    /**
+     * Returns which stage of the pipe should apply resampling.
+     *
+     * \see QgsRasterPipe::resamplingStage()
+     *
+     * \since QGIS 3.16
+     */
+    Qgis::RasterResamplingStage resamplingStage() const;
 
     /**
      * Returns the raster pipe.
      */
-    QgsRasterPipe *pipe() { return &mPipe; }
+    QgsRasterPipe *pipe() { return mPipe.get(); }
 
     /**
      * Returns the width of the (unclipped) raster.
@@ -320,8 +334,12 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
                QgsRasterViewPort *myRasterViewPort,
                const QgsMapToPixel *qgsMapToPixel = nullptr );
 
-    //! Returns a list with classification items (Text and color)
-    QgsLegendColorList legendSymbologyItems() const;
+    /**
+     * Returns a list with classification items (Text and color).
+     *
+     * \deprecated use QgsRasterRenderer::createLegendNodes() instead.
+     */
+    Q_DECL_DEPRECATED QgsLegendColorList legendSymbologyItems() const SIP_DEPRECATED;
 
     bool isSpatial() const override { return true; }
 
@@ -355,15 +373,17 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
      */
     double rasterUnitsPerPixelY() const;
 
+    void setOpacity( double opacity ) FINAL;
+    double opacity() const FINAL;
+
     /**
      * \brief Set contrast enhancement algorithm
      *  \param algorithm Contrast enhancement algorithm
      *  \param limits Limits
      *  \param extent Extent used to calculate limits, if empty, use full layer extent
      *  \param sampleSize Size of data sample to calculate limits, if 0, use full resolution
-     *  \param generateLookupTableFlag Generate lookup table. */
-
-
+     *  \param generateLookupTableFlag Generate lookup table.
+    */
     void setContrastEnhancement( QgsContrastEnhancement::ContrastEnhancementAlgorithm algorithm,
                                  QgsRasterMinMaxOrigin::Limits limits = QgsRasterMinMaxOrigin::MinMax,
                                  const QgsRectangle &extent = QgsRectangle(),
@@ -383,6 +403,23 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
     void refreshRendererIfNeeded( QgsRasterRenderer *rasterRenderer, const QgsRectangle &extent ) SIP_SKIP;
 
     /**
+     * Returns the string (typically sql) used to define a subset of the layer.
+     * \returns The subset string or null QString if not implemented by the provider
+     * \since QGIS 3.12
+     */
+    virtual QString subsetString() const;
+
+    /**
+     * Sets the string (typically sql) used to define a subset of the layer
+     * \param subset The subset string. This may be the where clause of a sql statement
+     *               or other definition string specific to the underlying dataprovider
+     *               and data store.
+     * \returns TRUE, when setting the subset string was successful, FALSE otherwise
+     * \since QGIS 3.12
+     */
+    virtual bool setSubsetString( const QString &subset );
+
+    /**
      * Returns default contrast enhancement settings for that type of raster.
      *  \note not available in Python bindings
      */
@@ -397,7 +434,8 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
 
     /**
      * \brief Draws a preview of the rasterlayer into a QImage
-     \since QGIS 2.4 */
+     * \since QGIS 2.4
+    */
     QImage previewAsImage( QSize size, const QColor &bgColor = Qt::white,
                            QImage::Format format = QImage::Format_ARGB32_Premultiplied );
 
@@ -415,7 +453,7 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
      * \returns TRUE in case of success
      * \since QGIS 3.6
      */
-    bool writeSld( QDomNode &node, QDomDocument &doc, QString &errorMessage, const QgsStringMap &props = QgsStringMap() ) const;
+    bool writeSld( QDomNode &node, QDomDocument &doc, QString &errorMessage, const QVariantMap &props = QVariantMap() ) const;
 
     /**
      * If the ignoreExtent flag is set, the layer will also render outside the
@@ -427,6 +465,8 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
      */
     bool ignoreExtents() const;
 
+    QgsMapLayerTemporalProperties *temporalProperties() override;
+
   public slots:
     void showStatusMessage( const QString &message );
 
@@ -436,6 +476,15 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
      * \since QGIS 3.8
      */
     virtual void setTransformContext( const QgsCoordinateTransformContext &transformContext ) override;
+
+  signals:
+
+    /**
+     * Emitted when the layer's subset string has changed.
+     * \since QGIS 3.12
+     */
+    void subsetStringChanged();
+
 
   protected:
     bool readSymbology( const QDomNode &node, QString &errorMessage, QgsReadWriteContext &context, QgsMapLayer::StyleCategories categories = QgsMapLayer::AllStyleCategories ) override;
@@ -448,6 +497,7 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
     bool writeXml( QDomNode &layer_node, QDomDocument &doc, const QgsReadWriteContext &context ) const override;
     QString encodedSource( const QString &source, const QgsReadWriteContext &context ) const override;
     QString decodedSource( const QString &source, const QString &provider,  const QgsReadWriteContext &context ) const override;
+
   private:
     //! \brief Initialize default values
     void init();
@@ -468,12 +518,28 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
                                  bool generateLookupTableFlag,
                                  QgsRasterRenderer *rasterRenderer );
 
+    //! Refresh renderer
+    void refreshRenderer( QgsRasterRenderer *rasterRenderer, const QgsRectangle &extent );
+
     void computeMinMax( int band,
                         const QgsRasterMinMaxOrigin &mmo,
                         QgsRasterMinMaxOrigin::Limits limits,
                         const QgsRectangle &extent,
                         int sampleSize,
                         double &min, double &max );
+
+    /**
+     * Updates the data source of the layer. The layer's renderer and legend will be preserved only
+     * if the geometry type of the new data source matches the current geometry type of the layer.
+     * \param dataSource new layer data source
+     * \param baseName base name of the layer
+     * \param provider provider string
+     * \param options provider options
+     * \param flags provider read flags
+     * \see dataSourceChanged()
+     * \since QGIS 3.20
+     */
+    void setDataSourcePrivate( const QString &dataSource, const QString &baseName, const QString &provider, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags ) override;
 
     //! \brief  Constant defining flag for XML and a constant that signals property not used
     const QString QSTRING_NOT_SET;
@@ -482,14 +548,17 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer
     //! Pointer to data provider
     QgsRasterDataProvider *mDataProvider = nullptr;
 
+    //! Pointer to temporal properties
+    QgsRasterLayerTemporalProperties *mTemporalProperties = nullptr;
+
     //! [ data provider interface ] Timestamp, the last modified time of the data source when the layer was created
     QDateTime mLastModified;
 
     QgsRasterViewPort mLastViewPort;
 
-    LayerType mRasterType;
+    LayerType mRasterType = GrayOrUndefined;
 
-    QgsRasterPipe mPipe;
+    std::unique_ptr< QgsRasterPipe > mPipe;
 
     //! To save computations and possible infinite cycle of notifications
     QgsRectangle mLastRectangleUsedByRefreshContrastEnhancementIfNeeded;

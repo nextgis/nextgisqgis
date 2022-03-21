@@ -20,6 +20,7 @@
 
 #include "qgsrectangle.h"
 #include "qgscoordinatereferencesystem.h"
+#include "qgscoordinatetransformcontext.h"
 #include <QString>
 #include <QVector>
 #include "gdal.h"
@@ -33,7 +34,7 @@ class QgsFeedback;
 /**
  * \ingroup analysis
  * \class QgsRasterCalculatorEntry
- * Represents an individual raster layer/band number entry within a raster calculation.
+ * \brief Represents an individual raster layer/band number entry within a raster calculation.
  * \since QGIS 2.18
 */
 class ANALYSIS_EXPORT QgsRasterCalculatorEntry
@@ -71,7 +72,7 @@ class ANALYSIS_EXPORT QgsRasterCalculatorEntry
 
 /**
  * \ingroup analysis
- * Performs raster layer calculations.
+ * \brief Performs raster layer calculations.
 */
 class ANALYSIS_EXPORT QgsRasterCalculator
 {
@@ -180,17 +181,20 @@ class ANALYSIS_EXPORT QgsRasterCalculator
 
     /**
      * Opens the output driver and tests if it supports the creation of a new dataset
-      \returns nullptr on error and the driver handle on success*/
+     * \returns nullptr on error and the driver handle on success
+    */
     GDALDriverH openOutputDriver();
 
     /**
      * Opens the output file and sets the same geotransform and CRS as the input data
-      \returns the output dataset or nullptr in case of error*/
+     * \returns the output dataset or nullptr in case of error
+    */
     gdal::dataset_unique_ptr openOutputFile( GDALDriverH outputDriver );
 
     /**
      * Sets gdal 6 parameters array from mOutputRectangle, mNumOutputColumns, mNumOutputRows
-      \param transform double[6] array that receives the GDAL parameters*/
+     * \param transform double[6] array that receives the GDAL parameters
+    */
     void outputGeoTransform( double *transform ) const;
 
     //! Execute calculations on GPU

@@ -1,0 +1,37 @@
+--- a/src/core/symbology/qgssymbollayer.h	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/symbology/qgssymbollayer.h	2022-03-07 23:14:46.000000000 +0300
+@@ -36,7 +36,7 @@
+ class QSize;
+ class QPolygonF;
+ 
+-class QgsDxfExport;
++// class QgsDxfExport;
+ class QgsExpression;
+ class QgsRenderContext;
+ class QgsPaintEffect;
+@@ -483,6 +483,7 @@
+      */
+     virtual void setDataDefinedProperty( Property key, const QgsProperty &property );
+ 
++/*
+     //! write as DXF
+     virtual bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const;
+ 
+@@ -509,7 +510,7 @@
+ 
+     //! Gets brush/fill style
+     virtual Qt::BrushStyle dxfBrushStyle() const;
+-
++*/
+     /**
+      * Returns the current paint effect for the layer.
+      * \returns paint effect
+@@ -982,7 +983,7 @@
+     void setMapUnitScale( const QgsMapUnitScale &scale ) override;
+     QgsMapUnitScale mapUnitScale() const override;
+     void drawPreviewIcon( QgsSymbolRenderContext &context, QSize size ) override;
+-    double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
++    // double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
+ 
+     /**
+      * Renders the line symbol layer along the line joining \a points, using the given render \a context.

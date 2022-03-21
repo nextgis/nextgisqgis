@@ -1,0 +1,27 @@
+--- a/src/core/geometry/qgslinestring.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/geometry/qgslinestring.cpp	2022-03-09 16:25:35.000000000 +0300
+@@ -26,7 +26,7 @@
+ #include "qgsgeometrytransformer.h"
+ #include "qgsfeedback.h"
+ 
+-#include <nlohmann/json.hpp>
++// #include <nlohmann/json.hpp>
+ #include <cmath>
+ #include <memory>
+ #include <QPainter>
+@@ -731,11 +731,10 @@
+ {
+   QgsPointSequence pts;
+   points( pts );
+-  return
+-  {
+-    {  "type",  "LineString" },
+-    {  "coordinates",  QgsGeometryUtils::pointsToJson( pts, precision ) }
+-  };
++  json out;
++  out.Add("type",  "LineString");
++  out.Add("coordinates",  QgsGeometryUtils::pointsToJson( pts, precision ));
++  return out;
+ }
+ 
+ QString QgsLineString::asKml( int precision ) const

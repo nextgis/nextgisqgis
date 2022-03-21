@@ -38,10 +38,8 @@
 #include <QSettings>
 #include <QDesktopServices>
 #include <QUrl>
-#include <QDir>
 #include <QFileInfo>
 #include <QRegularExpression>
-
 
 QUuid QgsActionManager::addAction( QgsAction::ActionType type, const QString &name, const QString &command, bool capture )
 {
@@ -75,7 +73,7 @@ void QgsActionManager::addAction( const QgsAction &action )
 
 void QgsActionManager::onNotifyRunActions( const QString &message )
 {
-  for ( const QgsAction &act : qgis::as_const( mActions ) )
+  for ( const QgsAction &act : std::as_const( mActions ) )
   {
     if ( !act.notificationMessage().isEmpty() && QRegularExpression( act.notificationMessage() ).match( message ).hasMatch() )
     {
@@ -99,7 +97,7 @@ void QgsActionManager::onNotifyRunActions( const QString &message )
 void QgsActionManager::removeAction( QUuid actionId )
 {
   int i = 0;
-  for ( const QgsAction &action : qgis::as_const( mActions ) )
+  for ( const QgsAction &action : std::as_const( mActions ) )
   {
     if ( action.id() == actionId )
     {
@@ -112,7 +110,7 @@ void QgsActionManager::removeAction( QUuid actionId )
   if ( mOnNotifyConnected )
   {
     bool hasActionOnNotify = false;
-    for ( const QgsAction &action : qgis::as_const( mActions ) )
+    for ( const QgsAction &action : std::as_const( mActions ) )
       hasActionOnNotify |= !action.notificationMessage().isEmpty();
     if ( !hasActionOnNotify && mLayer && mLayer->dataProvider() )
     {
@@ -177,7 +175,7 @@ QList<QgsAction> QgsActionManager::actions( const QString &actionScope ) const
   {
     QList<QgsAction> actions;
 
-    for ( const QgsAction &action : qgis::as_const( mActions ) )
+    for ( const QgsAction &action : std::as_const( mActions ) )
     {
       if ( action.actionScopes().contains( actionScope ) )
         actions.append( action );
@@ -189,24 +187,34 @@ QList<QgsAction> QgsActionManager::actions( const QString &actionScope ) const
 
 void QgsActionManager::runAction( const QgsAction &action )
 {
-  if ( action.type() == QgsAction::OpenUrl )
+  switch ( action.type() )
   {
-    QFileInfo finfo( action.command() );
-    if ( finfo.exists() && finfo.isFile() )
-      QDesktopServices::openUrl( QUrl::fromLocalFile( action.command() ) );
-    else
-      QDesktopServices::openUrl( QUrl( action.command(), QUrl::TolerantMode ) );
-  }
-  else if ( action.type() == QgsAction::GenericPython )
-  {
-    // TODO: capture output from QgsPythonRunner (like QgsRunProcess does)
-    QgsPythonRunner::run( action.command() );
-  }
-  else
-  {
-    // The QgsRunProcess instance created by this static function
-    // deletes itself when no longer needed.
-    QgsRunProcess::create( action.command(), action.capture() );
+    case QgsAction::OpenUrl:
+    {
+      QFileInfo finfo( action.command() );
+      if ( finfo.exists() && finfo.isFile() )
+        QDesktopServices::openUrl( QUrl::fromLocalFile( action.command() ) );
+      else
+        QDesktopServices::openUrl( QUrl( action.command(), QUrl::TolerantMode ) );
+      break;
+    }
+    case QgsAction::GenericPython:
+    case QgsAction::SubmitUrlEncoded:
+    case QgsAction::SubmitUrlMultipart:
+    {
+      action.run( QgsExpressionContext() );
+      break;
+    }
+    case QgsAction::Generic:
+    case QgsAction::Mac:
+    case QgsAction::Unix:
+    case QgsAction::Windows:
+    {
+      // The QgsRunProcess instance created by this static function
+      // deletes itself when no longer needed.
+      QgsRunProcess::create( action.command(), action.capture() );
+      break;
+    }
   }
 }
 
@@ -232,7 +240,7 @@ bool QgsActionManager::writeXml( QDomNode &layer_node ) const
     aActions.appendChild( defaultActionElement );
   }
 
-  for ( const QgsAction &action : qgis::as_const( mActions ) )
+  for ( const QgsAction &action : std::as_const( mActions ) )
   {
     action.writeXml( aActions );
   }
@@ -262,15 +270,15 @@ bool QgsActionManager::readXml( const QDomNode &layer_node )
     for ( int i = 0; i < defaultActionNodes.size(); ++i )
     {
       QDomElement defaultValueElem = defaultActionNodes.at( i ).toElement();
-      mDefaultActions.insert( defaultValueElem.attribute( QStringLiteral( "key" ) ), defaultValueElem.attribute( QStringLiteral( "value" ) ) );
+      mDefaultActions.insert( defaultValueElem.attribute( QStringLiteral( "key" ) ), QUuid( defaultValueElem.attribute( QStringLiteral( "value" ) ) ) );
     }
   }
   return true;
 }
 
-QgsAction QgsActionManager::action( QUuid id )
+QgsAction QgsActionManager::action( QUuid id ) const
 {
-  for ( const QgsAction &action : qgis::as_const( mActions ) )
+  for ( const QgsAction &action : std::as_const( mActions ) )
   {
     if ( action.id() == id )
       return action;

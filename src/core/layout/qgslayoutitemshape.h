@@ -20,7 +20,6 @@
 #include "qgis_core.h"
 #include "qgslayoutitem.h"
 #include "qgslayoutitemregistry.h"
-#include "qgssymbol.h"
 #include "qgslayoutmeasurement.h"
 
 /**
@@ -49,6 +48,8 @@ class CORE_EXPORT QgsLayoutItemShape : public QgsLayoutItem
      */
     explicit QgsLayoutItemShape( QgsLayout *layout );
 
+    ~QgsLayoutItemShape() override;
+
     /**
      * Returns a new shape item for the specified \a layout.
      *
@@ -62,6 +63,7 @@ class CORE_EXPORT QgsLayoutItemShape : public QgsLayoutItem
 
     //Overridden to return shape type
     QString displayName() const override;
+    QgsLayoutItem::Flags itemFlags() const override;
 
     /**
      * Returns the type of shape (e.g. rectangle, ellipse, etc).
@@ -92,13 +94,15 @@ class CORE_EXPORT QgsLayoutItemShape : public QgsLayoutItem
      * Sets the corner \a radius for rounded rectangle corners.
      * \see cornerRadius()
      */
-    void setCornerRadius( QgsLayoutMeasurement radius ) { mCornerRadius = radius; }
+    void setCornerRadius( QgsLayoutMeasurement radius );
 
     /**
      * Returns the corner radius for rounded rectangle corners.
      * \see setCornerRadius()
      */
     QgsLayoutMeasurement cornerRadius() const { return mCornerRadius; }
+
+    QgsGeometry clipPath() const override;
 
     // Depending on the symbol style, the bounding rectangle can be larger than the shape
     QRectF boundingRect() const override;
@@ -121,8 +125,11 @@ class CORE_EXPORT QgsLayoutItemShape : public QgsLayoutItem
     /**
      * Should be called after the shape's symbol is changed. Redraws the shape and recalculates
      * its selection bounds.
+     *
+     * If \a redraw is FALSE than the symbol bounds will be recalculated only, without redrawing
+     * the item.
     */
-    void refreshSymbol();
+    void refreshSymbol( bool redraw );
 
     //! Updates the bounding rect of this item
     void updateBoundingRect();
@@ -138,6 +145,8 @@ class CORE_EXPORT QgsLayoutItemShape : public QgsLayoutItem
     QRectF mCurrentRectangle;
 
     QgsLayoutMeasurement mCornerRadius;
+
+    QPolygonF calculatePolygon( double scale ) const;
 };
 
 

@@ -17,7 +17,6 @@
 #define QGSPROJECTSNAPPINGSETTINGS_H
 
 #include <QHash>
-
 #include "qgis_core.h"
 #include "qgstolerance.h"
 
@@ -28,7 +27,7 @@ class QgsVectorLayer;
 
 /**
  * \ingroup core
- * This is a container for configuration of the snapping of the project
+ * \brief This is a container for configuration of the snapping of the project
  * \since QGIS 3.0
  */
 class CORE_EXPORT QgsSnappingConfig
@@ -52,6 +51,7 @@ class CORE_EXPORT QgsSnappingConfig
 
     /**
      * SnappingType defines on what object the snapping is performed
+     * \deprecated since QGIS 3.12 use SnappingTypeFlag instead.
      */
     enum SnappingType
     {
@@ -59,11 +59,59 @@ class CORE_EXPORT QgsSnappingConfig
       VertexAndSegment = 2, //!< Both on vertices and segments
       Segment = 3, //!< On segments only
     };
-    Q_ENUM( SnappingType )
+    // TODO QGIS 4: remove
+    // this could not be tagged with Q_DECL_DEPRECATED due to Doxygen warning
+    // might be fixed in newer Doxygen (does not on 1.8.15, might be ok on 1.8.16)
+
+    /**
+     * SnappingTypeFlag defines on what object the snapping is performed
+     * \since QGIS 3.12
+     */
+    enum SnappingTypes
+    {
+      NoSnapFlag = 0, //!< No snapping
+      VertexFlag = 1 << 0, //!< On vertices
+      SegmentFlag = 1 << 1, //!< On segments
+      AreaFlag = 1 << 2, //!< On Area
+      CentroidFlag = 1 << 3, //!< On centroid
+      MiddleOfSegmentFlag = 1 << 4, //!< On Middle segment
+      LineEndpointFlag = 1 << 5, //!< Start or end points of lines, or first vertex in polygon rings only (since QGIS 3.20)
+    };
+    Q_ENUM( SnappingTypes )
+    Q_DECLARE_FLAGS( SnappingTypeFlag, SnappingTypes )
+    Q_FLAG( SnappingTypeFlag )
+
+    /**
+     * ScaleDependencyMode the scale dependency mode of snapping
+     * \since QGIS 3.14
+     */
+    enum ScaleDependencyMode
+    {
+      Disabled = 0,//!< No scale dependency
+      Global = 1,//!< Scale dependency using global min max range
+      PerLayer = 2//!< Scale dependency using min max range per layer
+    };
+    Q_ENUM( ScaleDependencyMode )
+
+    /**
+     * Convenient method to returns the translated name of the enum type
+     * QgsSnappingConfig::SnappingTypeFlag.
+     *
+     * \since QGIS 3.12
+     */
+    static QString snappingTypeFlagToString( SnappingTypeFlag type );
+
+    /**
+     * Convenient method to return an icon corresponding to the enum type
+     * QgsSnappingConfig::SnappingTypeFlag.
+     *
+     * \since QGIS 3.20
+     */
+    static QIcon snappingTypeFlagToIcon( SnappingTypeFlag type );
 
     /**
      * \ingroup core
-     * This is a container of advanced configuration (per layer) of the snapping of the project
+     * \brief This is a container of advanced configuration (per layer) of the snapping of the project
      * \since QGIS 3.0
      */
     class CORE_EXPORT IndividualLayerSettings
@@ -76,8 +124,21 @@ class CORE_EXPORT QgsSnappingConfig
          * \param type
          * \param tolerance
          * \param units
+         * \deprecated since QGIS 3.12 use the method with SnappingTypeFlag instead.
          */
-        IndividualLayerSettings( bool enabled, QgsSnappingConfig::SnappingType type, double tolerance, QgsTolerance::UnitType units );
+        Q_DECL_DEPRECATED IndividualLayerSettings( bool enabled, SnappingType type, double tolerance, QgsTolerance::UnitType units ) SIP_DEPRECATED;
+
+        /**
+         * \brief IndividualLayerSettings
+         * \param enabled
+         * \param type
+         * \param tolerance
+         * \param units
+         * \param minScale 0.0 disable scale limit
+         * \param maxScale 0.0 disable scale limit
+         * \since QGIS 3.12
+         */
+        IndividualLayerSettings( bool enabled, SnappingTypeFlag type, double tolerance, QgsTolerance::UnitType units, double minScale = 0.0, double maxScale = 0.0 );
 
         /**
          * Constructs an invalid setting
@@ -93,11 +154,29 @@ class CORE_EXPORT QgsSnappingConfig
         //! enables the snapping
         void setEnabled( bool enabled );
 
-        //! Returns the type (vertices and/or segments)
-        QgsSnappingConfig::SnappingType type() const;
+        /**
+         * Returns the flags type (vertices | segments | area | centroid | middle)
+         * \since QGIS 3.12
+         */
+        QgsSnappingConfig::SnappingTypeFlag typeFlag() const;
 
-        //! define the type of snapping
-        void setType( QgsSnappingConfig::SnappingType type );
+        /**
+         * Returns the flags type (vertices | segments | area | centroid | middle)
+         * \deprecated since QGIS 3.12 use typeFlag instead.
+         */
+        Q_DECL_DEPRECATED QgsSnappingConfig::SnappingType type() const SIP_DEPRECATED;
+
+        /**
+         * define the type of snapping
+        * \deprecated since QGIS 3.12 use setTypeFlag instead.
+        */
+        Q_DECL_DEPRECATED void setType( QgsSnappingConfig::SnappingType type ) SIP_DEPRECATED;
+
+        /**
+         * define the type of snapping
+         * \since QGIS 3.12
+         */
+        void setTypeFlag( QgsSnappingConfig::SnappingTypeFlag type );
 
         //! Returns the tolerance
         double tolerance() const;
@@ -112,18 +191,45 @@ class CORE_EXPORT QgsSnappingConfig
         void setUnits( QgsTolerance::UnitType units );
 
         /**
+         * Returns minimum scale on which snapping is limited
+         * \since QGIS 3.14
+         */
+        double minimumScale() const;
+
+        /**
+         * Sets the min scale value on which snapping is used, 0.0 disable scale limit
+         * \since QGIS 3.14
+         */
+        void setMinimumScale( double minScale );
+
+        /**
+         * Returns max scale on which snapping is limited
+         * \since QGIS 3.14
+         */
+        double maximumScale() const;
+
+        /**
+         * Sets the max scale value on which snapping is used, 0.0 disable scale limit
+         * \since QGIS 3.14
+         */
+        void setMaximumScale( double maxScale );
+
+        /**
          * Compare this configuration to other.
          */
         bool operator!= ( const QgsSnappingConfig::IndividualLayerSettings &other ) const;
 
+        // TODO c++20 - replace with = default
         bool operator== ( const QgsSnappingConfig::IndividualLayerSettings &other ) const;
 
       private:
         bool mValid = false;
         bool mEnabled = false;
-        SnappingType mType = Vertex;
+        SnappingTypeFlag mType = VertexFlag;
         double mTolerance = 0;
         QgsTolerance::UnitType mUnits = QgsTolerance::Pixels;
+        double mMinimumScale = 0.0;
+        double mMaximumScale = 0.0;
     };
 
     /**
@@ -148,17 +254,71 @@ class CORE_EXPORT QgsSnappingConfig
     //! define the mode of snapping
     void setMode( SnappingMode mode );
 
-    //! Returns the type (vertices and/or segments)
-    SnappingType type() const;
+    /**
+     * Returns the flags type (vertices | segments | area | centroid | middle)
+     * \since QGIS 3.12
+     */
+    QgsSnappingConfig::SnappingTypeFlag typeFlag() const;
 
-    //! define the type of snapping
-    void setType( SnappingType type );
+    /**
+     * Returns the flags type (vertices | segments | area | centroid | middle)
+     * \deprecated since QGIS 3.12 use typeFlag instead.
+     */
+    Q_DECL_DEPRECATED QgsSnappingConfig::SnappingType type() const SIP_DEPRECATED;
+
+    /**
+     * define the type of snapping
+    * \deprecated since QGIS 3.12 use setTypeFlag instead.
+    */
+    Q_DECL_DEPRECATED void setType( QgsSnappingConfig::SnappingType type );
+
+    /**
+     * define the type of snapping
+     * \since QGIS 3.12
+     */
+    void setTypeFlag( QgsSnappingConfig::SnappingTypeFlag type );
 
     //! Returns the tolerance
     double tolerance() const;
 
     //! Sets the tolerance
     void setTolerance( double tolerance );
+
+    /**
+     * Returns the min scale (i.e. most \"zoomed out\" scale)
+     * \since QGIS 3.14
+     */
+    double minimumScale() const;
+
+    /**
+     * Sets the min scale on which snapping is enabled, 0.0 disable scale limit
+     * \since QGIS 3.14
+     */
+    void setMinimumScale( double minScale );
+
+    /**
+     * Returns the max scale (i.e. most \"zoomed in\" scale)
+     * \since QGIS 3.14
+     */
+    double maximumScale() const;
+
+    /**
+     * Set the max scale on which snapping is enabled, 0.0 disable scale limit
+     * \since QGIS 3.14
+     */
+    void setMaximumScale( double maxScale );
+
+    /**
+     * Set the scale dependency mode
+     * \since QGIS 3.14
+     */
+    void setScaleDependencyMode( ScaleDependencyMode mode );
+
+    /**
+     * Returns the scale dependency mode
+     * \since QGIS 3.14
+     */
+    ScaleDependencyMode scaleDependencyMode() const;
 
     //! Returns the type of units
     QgsTolerance::UnitType units() const;
@@ -171,6 +331,20 @@ class CORE_EXPORT QgsSnappingConfig
 
     //! Sets if the snapping on intersection is enabled
     void setIntersectionSnapping( bool enabled );
+
+    /**
+     * Returns if self snapping (snapping to the currently digitized feature) is enabled
+     *
+     * \since QGIS 3.14
+     */
+    bool selfSnapping() const;
+
+    /**
+     * Sets if self snapping (snapping to the currently digitized feature) is enabled
+     *
+     * \since QGIS 3.14
+     */
+    void setSelfSnapping( bool enabled );
 
     //! Returns individual snapping settings for all layers
 #ifndef SIP_RUN
@@ -223,6 +397,13 @@ class CORE_EXPORT QgsSnappingConfig
 
     //! Sets individual layer snappings settings (applied if mode is AdvancedConfiguration)
     void setIndividualLayerSettings( QgsVectorLayer *vl, const QgsSnappingConfig::IndividualLayerSettings &individualLayerSettings );
+
+    /**
+     * Removes all individual layer snapping settings
+     *
+     * \since QGIS 3.16
+     */
+    void clearIndividualLayerSettings();
 
     /**
      * Compare this configuration to other.
@@ -288,13 +469,18 @@ class CORE_EXPORT QgsSnappingConfig
     QgsProject *mProject = nullptr;
     bool mEnabled = false;
     SnappingMode mMode = ActiveLayer;
-    SnappingType mType = Vertex;
+    SnappingTypeFlag mType = VertexFlag;
     double mTolerance = 0.0;
+    ScaleDependencyMode mScaleDependencyMode = Disabled;
+    double mMinimumScale = 0.0;
+    double mMaximumScale = 0.0;
     QgsTolerance::UnitType mUnits = QgsTolerance::ProjectUnits;
     bool mIntersectionSnapping = false;
+    bool mSelfSnapping = false;
 
     QHash<QgsVectorLayer *, IndividualLayerSettings> mIndividualLayerSettings;
 
 };
+Q_DECLARE_OPERATORS_FOR_FLAGS( QgsSnappingConfig::SnappingTypeFlag )
 
 #endif // QGSPROJECTSNAPPINGSETTINGS_H

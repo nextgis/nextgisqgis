@@ -2,7 +2,7 @@
                           qgsactionmanager.h
 
  These classes store and control the management and execution of actions
- associated with a particular Qgis layer. Actions are defined to be
+ associated with a particular QGIS layer. Actions are defined to be
  external programs that are run with user-specified inputs that can
  depend on the contents of layer attributes.
 
@@ -28,6 +28,7 @@
 #include <QString>
 #include <QIcon>
 #include <QObject>
+#include <QUuid>
 
 #include "qgsaction.h"
 #include "qgsfeature.h"
@@ -42,7 +43,7 @@ class QgsExpressionContext;
 /**
  * \ingroup core
  * \class QgsActionManager
- * Storage and management of actions associated with a layer.
+ * \brief Storage and management of actions associated with a layer.
  *
  * Actions can trigger custom code or applications to be executed
  * based on attributes of a given feature.
@@ -134,7 +135,7 @@ class CORE_EXPORT QgsActionManager: public QObject
      *
      * \since QGIS 3.0
      */
-    QgsAction action( QUuid id );
+    QgsAction action( QUuid id ) const;
 
     /**
      * Each scope can have a default action. This will be saved in the project

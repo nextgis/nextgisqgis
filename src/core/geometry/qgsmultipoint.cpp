@@ -21,11 +21,22 @@ email                : marco.hugentobler at sourcepole dot com
 
 #include <QJsonArray>
 #include <QJsonObject>
-#include <nlohmann/json.hpp>
+#include <QRegularExpression>
+// #include <nlohmann/json.hpp>
 
 QgsMultiPoint::QgsMultiPoint()
 {
   mWkbType = QgsWkbTypes::MultiPoint;
+}
+
+QgsPoint *QgsMultiPoint::pointN( int index )
+{
+  return qgsgeometry_cast< QgsPoint * >( geometryN( index ) );
+}
+
+const QgsPoint *QgsMultiPoint::pointN( int index ) const
+{
+  return qgsgeometry_cast< const QgsPoint * >( geometryN( index ) );
 }
 
 QString QgsMultiPoint::geometryType() const
@@ -35,7 +46,7 @@ QString QgsMultiPoint::geometryType() const
 
 QgsMultiPoint *QgsMultiPoint::createEmptyWithSameType() const
 {
-  auto result = qgis::make_unique< QgsMultiPoint >();
+  auto result = std::make_unique< QgsMultiPoint >();
   result->mWkbType = mWkbType;
   return result.release();
 }
@@ -54,9 +65,9 @@ bool QgsMultiPoint::fromWkt( const QString &wkt )
 {
   QString collectionWkt( wkt );
   //test for non-standard MultiPoint(x1 y1, x2 y2) format
-  QRegExp regex( "^\\s*MultiPoint\\s*[ZM]*\\s*\\(\\s*[-\\d]" );
-  regex.setCaseSensitivity( Qt::CaseInsensitive );
-  if ( regex.indexIn( collectionWkt ) >= 0 )
+  const thread_local QRegularExpression regex( QStringLiteral( "^\\s*MultiPoint\\s*[ZM]*\\s*\\(\\s*[-\\d]" ), QRegularExpression::CaseInsensitiveOption );
+  const QRegularExpressionMatch match = regex.match( collectionWkt );
+  if ( match.hasMatch() )
   {
     //alternate style without extra brackets, upgrade to standard
     collectionWkt.replace( '(', QLatin1String( "((" ) ).replace( ')', QLatin1String( "))" ) ).replace( ',', QLatin1String( "),(" ) );
@@ -113,19 +124,25 @@ QDomElement QgsMultiPoint::asGml3( QDomDocument &doc, int precision, const QStri
 
 json QgsMultiPoint::asJsonObject( int precision ) const
 {
-  json j
-  {
-    { "type", "MultiPoint" },
-    { "coordinates", json::array() },
-  };
-  for ( const QgsAbstractGeometry *geom : qgis::as_const( mGeometries ) )
+  json j;
+  j.Add("type", "MultiPoint");
+  CPLJSONArray coordinates;
+  for ( const QgsAbstractGeometry *geom : std::as_const( mGeometries ) )
   {
     const QgsPoint *point = static_cast<const QgsPoint *>( geom );
     if ( point->is3D() )
-      j[ "coordinates" ].push_back( { qgsRound( point->x(), precision ), qgsRound( point->y(), precision ), qgsRound( point->z(), precision ) } );
+    {
+      coordinates.Add( qgsRound( point->x(), precision ) );
+      coordinates.Add( qgsRound( point->y(), precision ) );
+      coordinates.Add( qgsRound( point->z(), precision ) );
+    }
     else
-      j[ "coordinates" ].push_back( { qgsRound( point->x(), precision ), qgsRound( point->y(), precision ) } );
+    {
+      coordinates.Add( qgsRound( point->x(), precision ) );
+      coordinates.Add( qgsRound( point->y(), precision ) );
+    }
   }
+  j.Add("coordinates", coordinates);
   return j;
 }
 
@@ -187,7 +204,7 @@ double QgsMultiPoint::segmentLength( QgsVertexId ) const
   return 0.0;
 }
 
-bool QgsMultiPoint::isValid( QString &, int ) const
+bool QgsMultiPoint::isValid( QString &, Qgis::GeometryValidityFlags ) const
 {
   return true;
 }

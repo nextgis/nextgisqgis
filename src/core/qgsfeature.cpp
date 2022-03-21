@@ -18,9 +18,11 @@ email                : sherman at mrcc.com
 #include "qgsfields.h"
 #include "qgsgeometry.h"
 #include "qgsrectangle.h"
+#include "qgsfield_p.h" // for approximateMemoryUsage()
+#include "qgsfields_p.h" // for approximateMemoryUsage()
 
 #include "qgsmessagelog.h"
-
+#include "qgslogger.h"
 #include <QDataStream>
 
 /***************************************************************************
@@ -66,7 +68,8 @@ bool QgsFeature::operator ==( const QgsFeature &other ) const
        && d->valid == other.d->valid
        && d->fields == other.d->fields
        && d->attributes == other.d->attributes
-       && d->geometry.equals( other.d->geometry ) )
+       && d->geometry.equals( other.d->geometry )
+       && d->symbol == other.d->symbol )
     return true;
 
   return false;
@@ -122,6 +125,29 @@ void QgsFeature::setId( QgsFeatureId id )
 QgsAttributes QgsFeature::attributes() const
 {
   return d->attributes;
+}
+
+QVariantMap QgsFeature::attributeMap() const
+{
+  QVariantMap res;
+  const int fieldSize = d->fields.size();
+  const int attributeSize = d->attributes.size();
+  if ( fieldSize != attributeSize )
+  {
+    QgsDebugMsg( QStringLiteral( "Attribute size (%1) does not match number of fields (%2)" ).arg( attributeSize ).arg( fieldSize ) );
+    return QVariantMap();
+  }
+
+  for ( int i = 0; i < attributeSize; ++i )
+  {
+    res[d->fields.at( i ).name()] = d->attributes.at( i );
+  }
+  return res;
+}
+
+int QgsFeature::attributeCount() const
+{
+  return d->attributes.size();
 }
 
 void QgsFeature::setAttributes( const QgsAttributes &attrs )
@@ -208,11 +234,29 @@ void QgsFeature::initAttributes( int fieldCount )
   d->attributes.resize( fieldCount );
 }
 
+void QgsFeature::resizeAttributes( int fieldCount )
+{
+  if ( fieldCount == d->attributes.size() )
+    return;
+
+  d.detach();
+  d->attributes.resize( fieldCount );
+}
+
+void QgsFeature::padAttributes( int count )
+{
+  if ( count == 0 )
+    return;
+
+  d.detach();
+  d->attributes.resize( d->attributes.size() + count );
+}
+
 bool QgsFeature::setAttribute( int idx, const QVariant &value )
 {
   if ( idx < 0 || idx >= d->attributes.size() )
   {
-    QgsMessageLog::logMessage( QObject::tr( "Attribute index %1 out of bounds [0;%2]" ).arg( idx ).arg( d->attributes.size() ), QString(), Qgis::Warning );
+    QgsMessageLog::logMessage( QObject::tr( "Attribute index %1 out of bounds [0;%2]" ).arg( idx ).arg( d->attributes.size() ), QString(), Qgis::MessageLevel::Warning );
     return false;
   }
 
@@ -259,6 +303,20 @@ QVariant QgsFeature::attribute( int fieldIdx ) const
   return d->attributes.at( fieldIdx );
 }
 
+const QgsSymbol *QgsFeature::embeddedSymbol() const
+{
+  return d->symbol.get();
+}
+
+void QgsFeature::setEmbeddedSymbol( QgsSymbol *symbol )
+{
+  if ( symbol == d->symbol.get() )
+    return;
+
+  d.detach();
+  d->symbol.reset( symbol );
+}
+
 QVariant QgsFeature::attribute( const QString &name ) const
 {
   int fieldIdx = fieldNameIndex( name );
@@ -278,6 +336,58 @@ int QgsFeature::fieldNameIndex( const QString &fieldName ) const
 {
   return d->fields.lookupField( fieldName );
 }
+
+static size_t qgsQStringApproximateMemoryUsage( const QString &str )
+{
+  return sizeof( QString ) + str.size() * sizeof( QChar );
+}
+
+static size_t qgsQVariantApproximateMemoryUsage( const QVariant &v )
+{
+  // A QVariant has a private structure that is a union of things whose larger
+  // size if a long long, and a int
+  size_t s = sizeof( QVariant ) + sizeof( long long ) + sizeof( int );
+  if ( v.type() == QVariant::String )
+  {
+    s += qgsQStringApproximateMemoryUsage( v.toString() );
+  }
+  else if ( v.type() == QVariant::StringList )
+  {
+    for ( const QString &str : v.toStringList() )
+      s += qgsQStringApproximateMemoryUsage( str );
+  }
+  else if ( v.type() == QVariant::List )
+  {
+    for ( const QVariant &subV : v.toList() )
+      s += qgsQVariantApproximateMemoryUsage( subV );
+  }
+  return s;
+}
+
+int QgsFeature::approximateMemoryUsage() const
+{
+  size_t s = sizeof( *this ) + sizeof( *d );
+
+  // Attributes
+  for ( const QVariant &attr : std::as_const( d->attributes ) )
+  {
+    s += qgsQVariantApproximateMemoryUsage( attr );
+  }
+
+  // Geometry
+  s += sizeof( QAtomicInt ) + sizeof( void * ); // ~ sizeof(QgsGeometryPrivate)
+  // For simplicity we consider that the RAM usage is the one of the WKB
+  // representation
+  s += d->geometry.wkbSize();
+
+  // Fields
+  s += sizeof( QgsFieldsPrivate );
+  // TODO potentially: take into account the length of the name, comment, default value, etc...
+  s += d->fields.size() * ( sizeof( QgsField )  + sizeof( QgsFieldPrivate ) );
+
+  return static_cast<int>( s );
+}
+
 
 /***************************************************************************
  * This class is considered CRITICAL and any change MUST be accompanied with

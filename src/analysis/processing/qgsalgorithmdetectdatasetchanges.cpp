@@ -51,13 +51,13 @@ void QgsDetectVectorChangesAlgorithm::initAlgorithm( const QVariantMap & )
   addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "ORIGINAL" ), QObject::tr( "Original layer" ) ) );
   addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "REVISED" ), QObject::tr( "Revised layer" ) ) );
 
-  std::unique_ptr< QgsProcessingParameterField > compareAttributesParam = qgis::make_unique< QgsProcessingParameterField >( QStringLiteral( "COMPARE_ATTRIBUTES" ),
+  std::unique_ptr< QgsProcessingParameterField > compareAttributesParam = std::make_unique< QgsProcessingParameterField >( QStringLiteral( "COMPARE_ATTRIBUTES" ),
       QObject::tr( "Attributes to consider for match (or none to compare geometry only)" ), QVariant(),
       QStringLiteral( "ORIGINAL" ), QgsProcessingParameterField::Any, true, true );
   compareAttributesParam->setDefaultToAllFields( true );
   addParameter( compareAttributesParam.release() );
 
-  std::unique_ptr< QgsProcessingParameterDefinition > matchTypeParam = qgis::make_unique< QgsProcessingParameterEnum >( QStringLiteral( "MATCH_TYPE" ),
+  std::unique_ptr< QgsProcessingParameterDefinition > matchTypeParam = std::make_unique< QgsProcessingParameterEnum >( QStringLiteral( "MATCH_TYPE" ),
       QObject::tr( "Geometry comparison behavior" ),
       QStringList() << QObject::tr( "Exact Match" )
       << QObject::tr( "Tolerant Match (Topological Equality)" ),
@@ -69,7 +69,7 @@ void QgsDetectVectorChangesAlgorithm::initAlgorithm( const QVariantMap & )
   addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "ADDED" ), QObject::tr( "Added features" ), QgsProcessing::TypeVectorAnyGeometry, QVariant(), true, true ) );
   addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "DELETED" ), QObject::tr( "Deleted features" ), QgsProcessing::TypeVectorAnyGeometry, QVariant(), true, true ) );
 
-  addOutput( new QgsProcessingOutputNumber( QStringLiteral( "UNCHAGED_COUNT" ), QObject::tr( "Count of unchanged features" ) ) );
+  addOutput( new QgsProcessingOutputNumber( QStringLiteral( "UNCHANGED_COUNT" ), QObject::tr( "Count of unchanged features" ) ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "ADDED_COUNT" ), QObject::tr( "Count of features added in revised layer" ) ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "DELETED_COUNT" ), QObject::tr( "Count of features deleted from original layer" ) ) );
 }
@@ -199,7 +199,7 @@ QVariantMap QgsDetectVectorChangesAlgorithm::processAlgorithm( const QVariantMap
   QgsAttributes attrs;
   attrs.resize( mFieldsToCompare.size() );
 
-  QgsSpatialIndex index( it, [&]( const QgsFeature & f )->bool
+  const QgsSpatialIndex index( it, [&]( const QgsFeature & f )->bool
   {
     if ( feedback->isCanceled() )
       return false;
@@ -212,7 +212,7 @@ QVariantMap QgsDetectVectorChangesAlgorithm::processAlgorithm( const QVariantMap
     if ( !mFieldsToCompare.empty() )
     {
       int idx = 0;
-      for ( int field : mOriginalFieldsToCompareIndices )
+      for ( const int field : mOriginalFieldsToCompareIndices )
       {
         attrs[idx++] = f.attributes().at( field );
       }
@@ -255,7 +255,7 @@ QVariantMap QgsDetectVectorChangesAlgorithm::processAlgorithm( const QVariantMap
       break;
 
     int idx = 0;
-    for ( int field : mRevisedFieldsToCompareIndices )
+    for ( const int field : mRevisedFieldsToCompareIndices )
     {
       attrs[idx++] = revisedFeature.attributes().at( field );
     }
@@ -375,13 +375,19 @@ QVariantMap QgsDetectVectorChangesAlgorithm::processAlgorithm( const QVariantMap
     {
       // unchanged
       if ( unchangedSink )
-        unchangedSink->addFeature( f, QgsFeatureSink::FastInsert );
+      {
+        if ( !unchangedSink->addFeature( f, QgsFeatureSink::FastInsert ) )
+          throw QgsProcessingException( writeFeatureError( unchangedSink.get(), parameters, QStringLiteral( "UNCHANGED" ) ) );
+      }
     }
     else
     {
       // deleted feature
       if ( deletedSink )
-        deletedSink->addFeature( f, QgsFeatureSink::FastInsert );
+      {
+        if ( !deletedSink->addFeature( f, QgsFeatureSink::FastInsert ) )
+          throw QgsProcessingException( writeFeatureError( deletedSink.get(), parameters, QStringLiteral( "DELETED" ) ) );
+      }
       deleted++;
     }
 
@@ -406,7 +412,8 @@ QVariantMap QgsDetectVectorChangesAlgorithm::processAlgorithm( const QVariantMap
         break;
 
       // added feature
-      addedSink->addFeature( f, QgsFeatureSink::FastInsert );
+      if ( !addedSink->addFeature( f, QgsFeatureSink::FastInsert ) )
+        throw QgsProcessingException( writeFeatureError( addedSink.get(), parameters, QStringLiteral( "ADDED" ) ) );
 
       current++;
       feedback->setProgress( 0.10 * current * step + 90 ); // takes about 10% of time
@@ -414,9 +421,9 @@ QVariantMap QgsDetectVectorChangesAlgorithm::processAlgorithm( const QVariantMap
   }
   feedback->setProgress( 100 );
 
-  feedback->pushInfo( QObject::tr( "%1 features unchanged" ).arg( unchangedOriginalIds.size() ) );
-  feedback->pushInfo( QObject::tr( "%1 features added" ).arg( addedRevisedIds.size() ) );
-  feedback->pushInfo( QObject::tr( "%1 features deleted" ).arg( deleted ) );
+  feedback->pushInfo( QObject::tr( "%n feature(s) unchanged", nullptr, unchangedOriginalIds.size() ) );
+  feedback->pushInfo( QObject::tr( "%n feature(s) added", nullptr, addedRevisedIds.size() ) );
+  feedback->pushInfo( QObject::tr( "%n feature(s) deleted", nullptr, deleted ) );
 
   QVariantMap outputs;
   outputs.insert( QStringLiteral( "UNCHANGED" ), unchangedDestId );

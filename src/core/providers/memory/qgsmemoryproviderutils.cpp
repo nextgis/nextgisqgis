@@ -18,6 +18,7 @@
 #include "qgsmemoryproviderutils.h"
 #include "qgsfields.h"
 #include "qgsvectorlayer.h"
+#include <QUrl>
 
 QString memoryLayerFieldType( QVariant::Type type )
 {
@@ -65,15 +66,21 @@ QgsVectorLayer *QgsMemoryProviderUtils::createMemoryLayer( const QString &name, 
   QStringList parts;
   if ( crs.isValid() )
   {
-    parts << QStringLiteral( "crs=" ) + crs.authid();
+    if ( !crs.authid().isEmpty() )
+      parts << QStringLiteral( "crs=%1" ).arg( crs.authid() );
+    else
+      parts << QStringLiteral( "crs=wkt:%1" ).arg( crs.toWkt( QgsCoordinateReferenceSystem::WKT_PREFERRED ) );
   }
   for ( const auto &field : fields )
   {
     const QString lengthPrecision = QStringLiteral( "(%1,%2)" ).arg( field.length() ).arg( field.precision() );
-    parts << QStringLiteral( "field=%1:%2%3" ).arg( QString( QUrl::toPercentEncoding( field.name() ) ), memoryLayerFieldType( field.type() ), lengthPrecision );
+    parts << QStringLiteral( "field=%1:%2%3%4" ).arg( QString( QUrl::toPercentEncoding( field.name() ) ),
+          memoryLayerFieldType( field.type() == QVariant::List || field.type() == QVariant::StringList ? field.subType() : field.type() ),
+          lengthPrecision,
+          field.type() == QVariant::List || field.type() == QVariant::StringList ? QStringLiteral( "[]" ) : QString() );
   }
 
-  QString uri = geomType + '?' + parts.join( '&' );
+  const QString uri = geomType + '?' + parts.join( '&' );
   QgsVectorLayer::LayerOptions options{ QgsCoordinateTransformContext() };
   options.skipCrsValidation = true;
   return new QgsVectorLayer( uri, name, QStringLiteral( "memory" ), options );

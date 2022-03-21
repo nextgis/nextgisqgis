@@ -41,9 +41,9 @@ namespace QgsOverlayUtils
     OutputBA,  //!< Write attributes of both layers, inverted (first attributes of B, then attributes of A)
   };
 
-  void difference( const QgsFeatureSource &sourceA, const QgsFeatureSource &sourceB, QgsFeatureSink &sink, QgsProcessingContext &context, QgsProcessingFeedback *feedback, int &count, int totalCount, DifferenceOutput outputAttrs );
+  void difference( const QgsFeatureSource &sourceA, const QgsFeatureSource &sourceB, QgsFeatureSink &sink, QgsProcessingContext &context, QgsProcessingFeedback *feedback, long &count, long totalCount, DifferenceOutput outputAttrs );
 
-  void intersection( const QgsFeatureSource &sourceA, const QgsFeatureSource &sourceB, QgsFeatureSink &sink, QgsProcessingContext &context, QgsProcessingFeedback *feedback, int &count, int totalCount, const QList<int> &fieldIndicesA, const QList<int> &fieldIndicesB );
+  void intersection( const QgsFeatureSource &sourceA, const QgsFeatureSource &sourceB, QgsFeatureSink &sink, QgsProcessingContext &context, QgsProcessingFeedback *feedback, long &count, long totalCount, const QList<int> &fieldIndicesA, const QList<int> &fieldIndicesB );
 
   //! Makes sure that what came out from intersection of two geometries is good to be used in the output
   bool sanitizeIntersectionResult( QgsGeometry &geom, QgsWkbTypes::GeometryType geometryType );
@@ -51,9 +51,10 @@ namespace QgsOverlayUtils
   /**
    * Copies features from the source to the sink and resolves overlaps: for each pair of overlapping features A and B
    * it will produce:
-   * 1. a feature with geometry A - B with A's attributes
-   * 2. a feature with geometry B - A with B's attributes
-   * 3. two features with geometry intersection(A, B) - one with A's attributes, one with B's attributes.
+   *
+   * # a feature with geometry A - B with A's attributes
+   * # a feature with geometry B - A with B's attributes
+   * # two features with geometry intersection(A, B) - one with A's attributes, one with B's attributes.
    *
    * As a result, for all pairs of features in the output, a pair either has no common interior or their interior is the same.
    */

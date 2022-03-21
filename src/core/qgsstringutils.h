@@ -14,16 +14,19 @@
  ***************************************************************************/
 
 #include "qgis_core.h"
+#include "qgis.h"
+
 #include <QString>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QList>
 #include <QDomDocument>
-#include <QFont> // for enum values
-#include "qgis.h"
 
 #ifndef QGSSTRINGUTILS_H
 #define QGSSTRINGUTILS_H
 
+#define FUZZY_SCORE_WORD_MATCH 5
+#define FUZZY_SCORE_NEW_MATCH 3
+#define FUZZY_SCORE_CONSECUTIVE_MATCH 4
 
 /**
  * \ingroup core
@@ -98,7 +101,7 @@ class CORE_EXPORT QgsStringReplacement
 
     bool mWholeWordOnly;
 
-    QRegExp mRx;
+    QRegularExpression mRx;
 };
 
 
@@ -181,17 +184,6 @@ class CORE_EXPORT QgsStringUtils
 {
   public:
 
-    //! Capitalization options
-    enum Capitalization
-    {
-      MixedCase = QFont::MixedCase, //!< Mixed case, ie no change
-      AllUppercase = QFont::AllUppercase, //!< Convert all characters to uppercase
-      AllLowercase = QFont::AllLowercase,  //!< Convert all characters to lowercase
-      ForceFirstLetterToCapital = QFont::Capitalize, //!< Convert just the first letter of each word to uppercase, leave the rest untouched
-      TitleCase = QFont::Capitalize + 1000, //!< Simple title case conversion - does not fully grammatically parse the text and uses simple rules only. Note that this method does not convert any characters to lowercase, it only uppercases required letters. Callers must ensure that input strings are already lowercased.
-      UpperCamelCase = QFont::Capitalize + 1001, //!< Convert the string to upper camel case. Note that this method does not unaccent characters.
-    };
-
     /**
      * Converts a string by applying capitalization rules to the string.
      * \param string input string
@@ -199,7 +191,7 @@ class CORE_EXPORT QgsStringUtils
      * \returns capitalized string
      * \since QGIS 3.0
      */
-    static QString capitalize( const QString &string, Capitalization capitalization );
+    static QString capitalize( const QString &string, Qgis::Capitalization capitalization );
 
     /**
      * Makes a raw string safe for inclusion as a HTML/XML string literal.
@@ -253,6 +245,17 @@ class CORE_EXPORT QgsStringUtils
     static QString soundex( const QString &string );
 
     /**
+     * Tests a \a candidate string to see how likely it is a match for
+     * a specified \a search string. Values are normalized between 0 and 1.
+     * \param candidate candidate string
+     * \param search search term string
+     * \return Normalized value of how likely is the \a search to be in the \a candidate
+     * \note Use this function only to calculate the fuzzy score between two strings and later compare these values, but do not depend on the actual numbers. They are implementation detail that may change in a future release.
+     * \since 3.14
+     */
+    static double fuzzyScore( const QString &candidate, const QString &search );
+
+    /**
      * Returns a string with any URL (e.g., http(s)/ftp) and mailto: text converted to valid HTML <a ...>
      * links.
      * \param string string to insert links into
@@ -263,10 +266,18 @@ class CORE_EXPORT QgsStringUtils
     static QString insertLinks( const QString &string, bool *foundLinks = nullptr );
 
     /**
+     * Returns whether the string is a URL (http,https,ftp,file)
+     * \param string the string to check
+     * \returns whether the string is an URL
+     * \since QGIS 3.22
+     */
+    static bool isUrl( const QString &string );
+
+    /**
      * Automatically wraps a \a string by inserting new line characters at appropriate locations in the string.
      *
      * The \a length argument specifies either the minimum or maximum length of lines desired, depending
-     * on whether \a useMaxLineLength is true. If \a useMaxLineLength is TRUE, then the string will be wrapped
+     * on whether \a useMaxLineLength is TRUE. If \a useMaxLineLength is TRUE, then the string will be wrapped
      * so that each line ideally will not exceed \a length of characters. If \a useMaxLineLength is FALSE, then
      * the string will be wrapped so that each line will ideally exceed \a length of characters.
      *
@@ -291,6 +302,25 @@ class CORE_EXPORT QgsStringUtils
      * \since QGIS 3.10
      */
     static QString htmlToMarkdown( const QString &html );
+
+    /**
+     * Returns an escaped string matching the behavior of QRegExp::escape.
+     * \param string String to escape
+     * \returns Escaped string
+     * \since QGIS 3.22
+     */
+    static QString qRegExpEscape( const QString &string );
+
+    /**
+     * Truncates a \a string to the specified maximum character length.
+     *
+     * If the \a string exceeds the maximum character length, then the string
+     * will be truncated by removing characters from the middle of the string
+     * and replacing them with a horizontal ellipsis character.
+     *
+     * \since QGIS 3.22
+     */
+    static QString truncateMiddleOfString( const QString &string, int maxLength );
 
 };
 

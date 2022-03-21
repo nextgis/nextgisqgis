@@ -17,7 +17,7 @@
 
 #include "qgstaskmanager.h"
 #include "qgsproject.h"
-#include "qgsmaplayerlistutils.h"
+#include "qgsmaplayerlistutils_p.h"
 #include <mutex>
 #include <QtConcurrentRun>
 
@@ -389,7 +389,11 @@ class QgsTaskRunnableWrapper : public QRunnable
 
 QgsTaskManager::QgsTaskManager( QObject *parent )
   : QObject( parent )
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
   , mTaskMutex( new QMutex( QMutex::Recursive ) )
+#else
+  , mTaskMutex( new QRecursiveMutex() )
+#endif
 {
 
 }
@@ -464,7 +468,7 @@ long QgsTaskManager::addTaskPrivate( QgsTask *task, QgsTaskList dependencies, bo
   }
 
   // add all subtasks, must be done before dependency resolution
-  for ( const QgsTask::SubTask &subTask : qgis::as_const( task->mSubTasks ) )
+  for ( const QgsTask::SubTask &subTask : std::as_const( task->mSubTasks ) )
   {
     switch ( subTask.dependency )
     {
@@ -511,7 +515,7 @@ QgsTask *QgsTaskManager::task( long id ) const
 QList<QgsTask *> QgsTaskManager::tasks() const
 {
   QMutexLocker ml( mTaskMutex );
-  return mParentTasks.toList();
+  return qgis::setToList( mParentTasks );
 }
 
 int QgsTaskManager::count() const
@@ -654,7 +658,7 @@ QList<QgsTask *> QgsTaskManager::activeTasks() const
   QMutexLocker ml( mTaskMutex );
   QSet< QgsTask * > activeTasks = mActiveTasks;
   activeTasks.intersect( mParentTasks );
-  return activeTasks.toList();
+  return qgis::setToList( activeTasks );
 }
 
 int QgsTaskManager::countActiveTasks() const

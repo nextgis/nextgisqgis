@@ -23,12 +23,12 @@
 #include "qgis_sip.h"
 #include "qgsfields.h"
 #include "qgsfeedback.h"
-#include "qgssymbol.h"
 #include "qgstaskmanager.h"
 #include "qgsogrutils.h"
 #include "qgsrenderer.h"
 #include "qgsgeometryengine.h"
 #include "qgsfeaturesink.h"
+#include "qgsrendercontext.h"
 #include <ogr_api.h>
 
 class QgsSymbolLayer;
@@ -37,10 +37,12 @@ class QgsFeatureIterator;
 
 /**
  * \ingroup core
-  * A convenience class for writing vector files to disk.
- There are two possibilities how to use this class:
- 1. static call to QgsVectorFileWriter::writeAsVectorFormat(...) which saves the whole vector layer
- 2. create an instance of the class and issue calls to addFeature(...)
+ * \brief A convenience class for writing vector layers to disk based formats (e.g. Shapefiles, GeoPackage).
+ *
+ * There are two possibilities how to use this class:
+ *
+ * 1. A static call to QgsVectorFileWriter::writeAsVectorFormat(...) which saves the whole vector layer.
+ * 2. Create an instance of the class and issue calls to addFeature(...).
  */
 class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
 {
@@ -76,7 +78,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
       public:
         SetOption( const QString &docString, const QStringList &values, const QString &defaultValue, bool allowNone = false )
           : Option( docString, Set )
-          , values( values.toSet() )
+          , values( qgis::listToSet( values ) )
           , defaultValue( defaultValue )
           , allowNone( allowNone )
         {}
@@ -175,6 +177,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
       ErrProjection,
       ErrFeatureWriteFailed,
       ErrInvalidLayer,
+      ErrSavingMetadata, //!< Metadata saving failed
       Canceled, //!< Writing was interrupted by manual cancellation
     };
 
@@ -185,6 +188,16 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
       SymbolLayerSymbology //Exports one feature per symbol layer (considering symbol levels)
     };
 
+    /**
+     * Source for exported field names.
+     *
+     * \since QGIS 3.18
+     */
+    enum FieldNameSource
+    {
+      Original = 0, //!< Use original field names
+      PreferAlias, //!< Use the field alias as the exported field name, wherever one is set. Otherwise use the original field names.
+    };
 
     /**
      * Options for sorting and filtering vector formats.
@@ -199,7 +212,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
 
     /**
      * \ingroup core
-     * Interface to convert raw field values to their user-friendly value.
+     * \brief Interface to convert raw field values to their user-friendly value.
      * \since QGIS 2.16
      */
     class CORE_EXPORT FieldValueConverter
@@ -233,7 +246,8 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
 
     /**
      * Edition capability flags
-      * \since QGIS 3.0 */
+     * \since QGIS 3.0
+    */
     enum EditionCapability
     {
       //! Flag to indicate that a new layer can be added to the dataset
@@ -251,12 +265,13 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
 
     /**
      * Combination of CanAddNewLayer, CanAppendToExistingLayer, CanAddNewFieldsToExistingLayer or CanDeleteLayer
-      * \since QGIS 3.0 */
+     * \since QGIS 3.0.
+    */
     Q_DECLARE_FLAGS( EditionCapabilities, EditionCapability )
 
     /**
      * Enumeration to describe how to handle existing files
-        \since QGIS 3.0
+     * \since QGIS 3.0
      */
     enum ActionOnExistingFile
     {
@@ -437,7 +452,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
 
     /**
      * \ingroup core
-     * Options to pass to writeAsVectorFormat()
+     * \brief Options to pass to writeAsVectorFormat()
      * \since QGIS 3.0
      */
     class CORE_EXPORT SaveVectorOptions
@@ -462,7 +477,8 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
 
         /**
          * Transform to reproject exported geometries with, or invalid transform
-         * for no transformation */
+         * for no transformation
+        */
         QgsCoordinateTransform ct;
 
         //! Write only selected features of layer
@@ -491,7 +507,8 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
 
         /**
          * Set to a valid geometry type to override the default geometry type for the layer. This parameter
-         * allows for conversion of geometryless tables to null geometries, etc */
+         * allows for conversion of geometryless tables to null geometries, etc.
+        */
         QgsWkbTypes::Type overrideGeometryType = QgsWkbTypes::Unknown;
 
         //! Sets to TRUE to force creation of multi* geometries
@@ -510,6 +527,29 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
 
         //! Optional feedback object allowing cancellation of layer save
         QgsFeedback *feedback = nullptr;
+
+        /**
+         * Source for exported field names.
+         *
+         * \since QGIS 3.18
+         */
+        FieldNameSource fieldNameSource = Original;
+
+        /**
+         * Set to TRUE to save layer metadata for the exported vector file.
+         *
+         * \see layerMetadata
+         * \since QGIS 3.20
+         */
+        bool saveMetadata = false;
+
+        /**
+         * Layer metadata to save for the exported vector file. This will only be used if saveMetadata is TRUE.
+         *
+         * \see saveMetadata
+         * \since QGIS 3.20
+         */
+        QgsLayerMetadata layerMetadata;
     };
 
 #ifndef SIP_RUN
@@ -563,10 +603,11 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
                                            const QStringList &layerOptions = QStringList(),
                                            QString *newFilename = nullptr,
                                            QgsVectorFileWriter::SymbologyExport symbologyExport = QgsVectorFileWriter::NoSymbology,
-                                           QgsFeatureSink::SinkFlags sinkFlags = nullptr
+                                           QgsFeatureSink::SinkFlags sinkFlags = QgsFeatureSink::SinkFlags()
 #ifndef SIP_RUN
                                                , QString *newLayer = nullptr,
-                                           QgsCoordinateTransformContext transformContext = QgsCoordinateTransformContext()
+                                           const QgsCoordinateTransformContext &transformContext = QgsCoordinateTransformContext(),
+                                           FieldNameSource fieldNameSource = Original
 #endif
                                          ) SIP_DEPRECATED;
 
@@ -588,6 +629,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
      * \param newLayer potentially modified layer name (output parameter) (added in QGIS 3.4)
      * \param transformContext transform context, needed if the output file srs is forced to specific crs (added in QGIS 3.10.3)
      * \param sinkFlags feature sink flags (added in QGIS 3.10.3)
+     * \param fieldNameSource source for field names (since QGIS 3.18)
      * \note not available in Python bindings
      * \deprecated Use create() instead.
      */
@@ -605,8 +647,9 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
                                            const QString &layerName,
                                            QgsVectorFileWriter::ActionOnExistingFile action,
                                            QString *newLayer = nullptr,
-                                           QgsCoordinateTransformContext transformContext = QgsCoordinateTransformContext(),
-                                           QgsFeatureSink::SinkFlags sinkFlags = nullptr
+                                           const QgsCoordinateTransformContext &transformContext = QgsCoordinateTransformContext(),
+                                           QgsFeatureSink::SinkFlags sinkFlags = QgsFeatureSink::SinkFlags(),
+                                           FieldNameSource fieldNameSource = Original
                                          ) SIP_SKIP;
 
     //! QgsVectorFileWriter cannot be copied.
@@ -633,9 +676,9 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
                                         const QgsCoordinateReferenceSystem &srs,
                                         const QgsCoordinateTransformContext &transformContext,
                                         const QgsVectorFileWriter::SaveVectorOptions &options,
-                                        QgsFeatureSink::SinkFlags sinkFlags = nullptr,
+                                        QgsFeatureSink::SinkFlags sinkFlags = QgsFeatureSink::SinkFlags(),
                                         QString *newFilename = nullptr,
-                                        QString *newLayer = nullptr );
+                                        QString *newLayer = nullptr ) SIP_FACTORY;
 
     /**
      * Writes a layer out to a vector file.
@@ -647,15 +690,35 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
      * \param newLayer potentially modified layer name (output parameter)
      * \param errorMessage will be set to the error message text, if an error occurs while writing the layer
      * \returns Error message code, or QgsVectorFileWriter.NoError if the write operation was successful
-     * \since QGIS 3.10.3
+     * \deprecated since QGIS 3.20, use writeAsVectorFormatV3 instead
      */
-    static QgsVectorFileWriter::WriterError writeAsVectorFormatV2( QgsVectorLayer *layer,
+    Q_DECL_DEPRECATED static QgsVectorFileWriter::WriterError writeAsVectorFormatV2( QgsVectorLayer *layer,
         const QString &fileName,
         const QgsCoordinateTransformContext &transformContext,
         const QgsVectorFileWriter::SaveVectorOptions &options,
         QString *newFilename = nullptr,
         QString *newLayer = nullptr,
-        QString *errorMessage SIP_OUT = nullptr );
+        QString *errorMessage SIP_OUT = nullptr ) SIP_DEPRECATED;
+
+    /**
+     * Writes a layer out to a vector file.
+     * \param layer source layer to write
+     * \param fileName file name to write to
+     * \param transformContext coordinate transform context
+     * \param options save options
+     * \param newFilename potentially modified file name (output parameter)
+     * \param newLayer potentially modified layer name (output parameter)
+     * \param errorMessage will be set to the error message text, if an error occurs while writing the layer
+     * \returns Error message code, or QgsVectorFileWriter.NoError if the write operation was successful
+     * \since QGIS 3.20
+     */
+    static QgsVectorFileWriter::WriterError writeAsVectorFormatV3( QgsVectorLayer *layer,
+        const QString &fileName,
+        const QgsCoordinateTransformContext &transformContext,
+        const QgsVectorFileWriter::SaveVectorOptions &options,
+        QString *errorMessage SIP_OUT = nullptr,
+        QString *newFilename SIP_OUT = nullptr,
+        QString *newLayer SIP_OUT = nullptr );
 
     /**
      * Details of available filters and formats.
@@ -760,8 +823,9 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
     //! Retrieves error message
     QString errorMessage();
 
-    bool addFeature( QgsFeature &feature, QgsFeatureSink::Flags flags = nullptr ) override;
-    bool addFeatures( QgsFeatureList &features, QgsFeatureSink::Flags flags = nullptr ) override;
+    bool addFeature( QgsFeature &feature, QgsFeatureSink::Flags flags = QgsFeatureSink::Flags() ) override;
+    bool addFeatures( QgsFeatureList &features, QgsFeatureSink::Flags flags = QgsFeatureSink::Flags() ) override;
+    QString lastError() const override;
 
     /**
      * Adds a \a feature to the currently opened data source, using the style from a specified \a renderer.
@@ -895,7 +959,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
       QgsWkbTypes::Type sourceWkbType = QgsWkbTypes::Unknown;
       QgsFields sourceFields;
       QString providerType;
-      long featureCount = 0;
+      long long featureCount = 0;
       QgsFeatureIds selectedFeatureIds;
       QString dataSourceUri;
       QString storageType;
@@ -962,7 +1026,8 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
                QgsVectorFileWriter::FieldValueConverter *fieldValueConverter,
                const QString &layerName,
                QgsVectorFileWriter::ActionOnExistingFile action, QString *newLayer, QgsFeatureSink::SinkFlags sinkFlags,
-               const QgsCoordinateTransformContext &transformContext );
+               const QgsCoordinateTransformContext &transformContext,
+               FieldNameSource fieldNameSource );
     void resetMap( const QgsAttributeList &attributes );
 
     std::unique_ptr< QgsFeatureRenderer > mRenderer;
@@ -972,7 +1037,7 @@ class CORE_EXPORT QgsVectorFileWriter : public QgsFeatureSink
     std::unique_ptr< QgsCoordinateTransform > mCoordinateTransform;
 
     bool mUsingTransaction = false;
-    bool supportsStringList = false;
+    QSet< QVariant::Type > mSupportedListSubTypes;
 
     void createSymbolLayerTable( QgsVectorLayer *vl, const QgsCoordinateTransform &ct, OGRDataSourceH ds );
     gdal::ogr_feature_unique_ptr createFeature( const QgsFeature &feature );

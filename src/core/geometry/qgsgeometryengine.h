@@ -19,6 +19,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgis_core.h"
 #include "qgslinestring.h"
 #include "qgsgeometry.h"
+#include "qgslogger.h"
 
 #include <QVector>
 
@@ -27,7 +28,41 @@ class QgsAbstractGeometry;
 /**
  * \ingroup core
  * \class QgsGeometryEngine
- * \brief Contains geometry relation and modification algorithms.
+ * \brief A geometry engine is a low-level representation of a QgsAbstractGeometry object, optimised for use with external
+ * geometry libraries such as GEOS.
+ *
+ * QgsGeometryEngine objects provide a mechanism for optimized evaluation of geometric algorithms, including spatial relationships
+ * between geometries and operations such as buffers or clipping.
+ *
+ * QgsGeometryEngine objects are not created directly, but are instead created by calling QgsGeometry::createGeometryEngine().
+ *
+ * Many methods available in the QgsGeometryEngine class can benefit from pre-preparing geometries. For instance, whenever
+ * a large number of spatial relationships will be tested (such as calling intersects(), within(), etc) then the
+ * geometry should first be prepared by calling prepareGeometry() before performing the tests.
+ *
+ * ### Example
+ *
+ * \code{.py}
+ *   # polygon_geometry contains a complex polygon, with many vertices
+ *   polygon_geometry = QgsGeometry.fromWkt('Polygon((...))')
+ *
+ *   # create a QgsGeometryEngine representation of the polygon
+ *   polygon_geometry_engine = QgsGeometry.createGeometryEngine(polygon_geometry.constGet())
+ *
+ *   # since we'll be performing many intersects tests, we can speed up these tests considerably
+ *   # by first "preparing" the geometry engine
+ *   polygon_geometry_engine.prepareGeometry()
+ *
+ *   # now we are ready to quickly test intersection against many other objects
+ *   for feature in my_layer.getFeatures():
+ *       feature_geometry = feature.geometry()
+ *       # test whether the feature's geometry intersects our original complex polygon
+ *       if polygon_geometry_engine.intersects(feature_geometry.constGet()):
+ *           print('feature intersects the polygon!')
+ * \endcode
+ *
+ * QgsGeometryEngine operations are backed by the GEOS library (https://trac.osgeo.org/geos/).
+ *
  * \since QGIS 2.10
  */
 class CORE_EXPORT QgsGeometryEngine
@@ -112,7 +147,11 @@ class CORE_EXPORT QgsGeometryEngine
      */
     virtual QgsAbstractGeometry *symDifference( const QgsAbstractGeometry *geom, QString *errorMsg = nullptr ) const = 0 SIP_FACTORY;
     virtual QgsAbstractGeometry *buffer( double distance, int segments, QString *errorMsg = nullptr ) const = 0 SIP_FACTORY;
-    virtual QgsAbstractGeometry *buffer( double distance, int segments, int endCapStyle, int joinStyle, double miterLimit, QString *errorMsg = nullptr ) const = 0 SIP_FACTORY;
+
+    /**
+     * Buffers a geometry.
+     */
+    virtual QgsAbstractGeometry *buffer( double distance, int segments, Qgis::EndCapStyle endCapStyle, Qgis::JoinStyle joinStyle, double miterLimit, QString *errorMsg = nullptr ) const = 0 SIP_FACTORY;
     virtual QgsAbstractGeometry *simplify( double tolerance, QString *errorMsg = nullptr ) const = 0 SIP_FACTORY;
     virtual QgsAbstractGeometry *interpolate( double distance, QString *errorMsg = nullptr ) const = 0 SIP_FACTORY;
     virtual QgsAbstractGeometry *envelope( QString *errorMsg = nullptr ) const = 0 SIP_FACTORY;
@@ -144,6 +183,13 @@ class CORE_EXPORT QgsGeometryEngine
      * \since QGIS 3.0 \a geom is a pointer
      */
     virtual double distance( const QgsAbstractGeometry *geom, QString *errorMsg = nullptr ) const = 0;
+
+    /**
+     * Checks if \a geom is within \a maxdistance distance from this geometry
+     *
+     * \since QGIS 3.22
+     */
+    virtual bool distanceWithin( const QgsAbstractGeometry *geom, double maxdistance, QString *errorMsg = nullptr ) const = 0;
 
     /**
      * Checks if \a geom intersects this.
@@ -219,7 +265,7 @@ class CORE_EXPORT QgsGeometryEngine
     virtual double length( QString *errorMsg = nullptr ) const = 0;
 
     /**
-     * Returns true if the geometry is valid.
+     * Returns TRUE if the geometry is valid.
      *
      * If the geometry is invalid, \a errorMsg will be filled with the reported geometry error.
      *
@@ -253,25 +299,58 @@ class CORE_EXPORT QgsGeometryEngine
      * \param topological TRUE if topological editing is enabled
      * \param[out] topologyTestPoints points that need to be tested for topological completeness in the dataset
      * \param[out] errorMsg error messages emitted, if any
+     * \param skipIntersectionCheck set to TRUE to skip the potentially expensive initial intersection check. Only set this flag if an intersection
+     * test has already been performed by the caller!
      * \returns 0 in case of success, 1 if geometry has not been split, error else
     */
     virtual QgsGeometryEngine::EngineOperationResult splitGeometry( const QgsLineString &splitLine,
         QVector<QgsGeometry > &newGeometries SIP_OUT,
         bool topological,
-        QgsPointSequence &topologyTestPoints, QString *errorMsg = nullptr ) const
+        QgsPointSequence &topologyTestPoints, QString *errorMsg = nullptr, bool skipIntersectionCheck = false ) const
     {
       Q_UNUSED( splitLine )
       Q_UNUSED( newGeometries )
       Q_UNUSED( topological )
       Q_UNUSED( topologyTestPoints )
       Q_UNUSED( errorMsg )
+      Q_UNUSED( skipIntersectionCheck )
       return MethodNotImplemented;
     }
 
-    virtual QgsAbstractGeometry *offsetCurve( double distance, int segments, int joinStyle, double miterLimit, QString *errorMsg = nullptr ) const = 0 SIP_FACTORY;
+    /**
+     * Offsets a curve.
+     */
+    virtual QgsAbstractGeometry *offsetCurve( double distance, int segments, Qgis::JoinStyle joinStyle, double miterLimit, QString *errorMsg = nullptr ) const = 0 SIP_FACTORY;
+
+    /**
+     * Sets whether warnings and errors encountered during the geometry operations should be logged.
+     *
+     * By default these errors are logged to the console and in the QGIS UI. But for some operations errors are expected and logging
+     * these just results in noise. In this case setting \a enabled to FALSE will avoid the automatic error reporting.
+     *
+     * \since QGIS 3.16
+     */
+    void setLogErrors( bool enabled ) { mLogErrors = enabled; }
 
   protected:
     const QgsAbstractGeometry *mGeometry = nullptr;
+    bool mLogErrors = true;
+
+    /**
+     * Logs an error \a message encountered during an operation.
+     *
+     * \see setLogErrors()
+     *
+     * \since QGIS 3.16
+     */
+    void logError( const QString &engineName, const QString &message ) const
+    {
+      if ( mLogErrors )
+      {
+        QgsDebugMsg( QStringLiteral( "%1 notice: %2" ).arg( engineName, message ) );
+        qWarning( "%s exception: %s", engineName.toLocal8Bit().constData(), message.toLocal8Bit().constData() );
+      }
+    }
 
     QgsGeometryEngine( const QgsAbstractGeometry *geometry )
       : mGeometry( geometry )
@@ -279,3 +358,4 @@ class CORE_EXPORT QgsGeometryEngine
 };
 
 #endif // QGSGEOMETRYENGINE_H
+

@@ -22,8 +22,9 @@
 
 /**
  * \ingroup core
- * An action scope defines a "place" for an action to be shown and may add
+ * \brief An action scope defines a "place" for an action to be shown and may add
  * additional expression variables.
+ *
  * Each QgsAction can be available in one or several action scopes.
  *
  * Examples:
@@ -31,7 +32,7 @@
  *
  * <dl>
  *   <dt>Canvas</dt>
- *   <dd>Show for canvas tools. Adds `@clicked_x` and `@clicked_y` in map coordinates.</dd>
+ *   <dd>Show for canvas tools. Adds `@click_x` and `@click_y` in map coordinates.</dd>
  *   <dt>Feature</dt>
  *   <dd>Show in feature specific places like the attribute table or feature
  *   form.</dd>
@@ -46,6 +47,11 @@
 class CORE_EXPORT QgsActionScope
 {
   public:
+#ifdef SIP_RUN
+    % TypeCode
+#include <QHash>
+    % End
+#endif
 
     /**
      * Creates a new invalid action scope.
@@ -69,7 +75,7 @@ class CORE_EXPORT QgsActionScope
     /**
      * An expression scope may offer additional variables for an action scope.
      * This can be an `field_name` for the attribute which was clicked or
-     * `clicked_x` and `clicked_y` for actions which are available as map canvas clicks.
+     * `click_x` and `click_y` for actions which are available as map canvas clicks.
      *
      * \since QGIS 3.0
      */
@@ -117,6 +123,12 @@ class CORE_EXPORT QgsActionScope
      * \since QGIS 3.0
      */
     bool isValid() const;
+#ifdef SIP_RUN
+    long __hash__();
+    % MethodCode
+    sipRes = qHash( *sipCpp );
+    % End
+#endif
 
   private:
     QString mId;

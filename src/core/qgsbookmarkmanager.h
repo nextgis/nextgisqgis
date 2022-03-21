@@ -116,6 +116,7 @@ class CORE_EXPORT QgsBookmark
     % End
 #endif
 
+    // TODO c++20 - replace with = default
     bool operator==( const QgsBookmark &other );
     bool operator!=( const QgsBookmark &other );
 
@@ -165,7 +166,7 @@ class CORE_EXPORT QgsBookmarkManager : public QObject
     ~QgsBookmarkManager() override;
 
     /**
-     * @brief initialize
+     * Initializes the bookmark manager.
      */
     void initialize( const QString &filePath );
 

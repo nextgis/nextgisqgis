@@ -21,10 +21,12 @@
 #include "qgsvirtuallayerdefinition.h"
 #include "qgstaskmanager.h"
 
+#include <QWaitCondition>
+
 /**
  * \ingroup core
  *
- * A QgsTask shell which proxies progress reports.
+ * \brief A QgsTask shell which proxies progress reports.
  *
  * Simple task shell which runs until finalized and reports progress only.
  * This is usually used to expose a blocking operation's progress via
@@ -72,7 +74,7 @@ class CORE_EXPORT QgsProxyProgressTask : public QgsTask
 /**
  * \ingroup core
  *
- * Scoped QgsScopedProxyProgressTask, which automatically adds the proxy task
+ * \brief Scoped QgsScopedProxyProgressTask, which automatically adds the proxy task
  * to the application task manager on construction and finalizes the task
  * when it goes out of scope.
  *
@@ -98,6 +100,8 @@ class CORE_EXPORT QgsScopedProxyProgressTask
 
     QgsProxyProgressTask *mTask = nullptr;
 
+    // SIP generates .cpp code that doesn't compile if commenting out the legit following line.
+    // Q_DISABLE_COPY( QgsScopedProxyProgressTask )
 };
 
 #endif // QGSPROXYPROGRESSTASK_H

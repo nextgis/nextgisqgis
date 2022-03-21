@@ -96,9 +96,12 @@ class CORE_EXPORT QgsMimeDataUtils
        * Type of URI.
        *
        * Recognized types include
+       *
        * - "vector": vector layers
        * - "raster": raster layers
        * - "mesh": mesh layers
+       * - "pointcloud": point cloud layers
+       * - "vector-tile": vector tile layers
        * - "plugin": plugin layers
        * - "custom": custom types
        * - "project": QGS/QGZ project file
@@ -143,6 +146,12 @@ class CORE_EXPORT QgsMimeDataUtils
        * \since QGIS 3.8
        */
       QgsWkbTypes::Type wkbType = QgsWkbTypes::Unknown;
+
+      /**
+       * Path to file, if uri is associated with a file.
+       * \since QGIS 3.22
+       */
+      QString filePath;
 
 #ifdef SIP_RUN
       SIP_PYOBJECT __repr__();

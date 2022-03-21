@@ -33,12 +33,15 @@ QModelIndex QgsFieldModel::indexFromName( const QString &fieldName )
 {
   QString fldName( fieldName ); // we may need a copy
 
-  if ( mLayer )
+  // only non-empty names should be used here, as by default all fields
+  // have no aliases set and calling key() fill return just first value
+  // from the aliases map
+  if ( mLayer && !fldName.isEmpty() )
   {
     // the name could be an alias
     // it would be better to have "display name" directly in QgsFields
     // rather than having to consult layer in various places in code!
-    QString fieldNameWithAlias = mLayer->attributeAliases().key( fldName );
+    const QString fieldNameWithAlias = mLayer->attributeAliases().key( fldName );
     if ( !fieldNameWithAlias.isNull() )
       fldName = fieldNameWithAlias;
   }
@@ -61,7 +64,7 @@ QModelIndex QgsFieldModel::indexFromName( const QString &fieldName )
 
   if ( mAllowExpression )
   {
-    int exprIdx = mExpression.indexOf( fldName );
+    const int exprIdx = mExpression.indexOf( fldName );
     if ( exprIdx != -1 )
     {
       return index( ( mAllowEmpty ? 1 : 0 ) + mFields.count() + exprIdx, 0 );
@@ -73,7 +76,7 @@ QModelIndex QgsFieldModel::indexFromName( const QString &fieldName )
 
 bool QgsFieldModel::isField( const QString &expression ) const
 {
-  int index = mFields.indexFromName( expression );
+  const int index = mFields.indexFromName( expression );
   return index >= 0;
 }
 
@@ -104,10 +107,10 @@ void QgsFieldModel::layerDeleted()
 
 void QgsFieldModel::updateModel()
 {
-  int offset = mAllowEmpty ? 1 : 0;
+  const int offset = mAllowEmpty ? 1 : 0;
   if ( mLayer )
   {
-    QgsFields newFields = mLayer->fields();
+    const QgsFields newFields = mLayer->fields();
     if ( mFields.toList() != newFields.toList() )
     {
       // Try to handle two special cases: addition of a new field and removal of a field.
@@ -184,8 +187,8 @@ void QgsFieldModel::setAllowExpression( bool allowExpression )
 
   if ( !mAllowExpression )
   {
-    int start = mFields.count();
-    int end = start + mExpression.count() - 1;
+    const int start = mFields.count();
+    const int end = start + mExpression.count() - 1;
     beginRemoveRows( QModelIndex(), start, end );
     mExpression = QList<QString>();
     endRemoveRows();
@@ -217,7 +220,7 @@ void QgsFieldModel::setExpression( const QString &expression )
   if ( !mAllowExpression )
     return;
 
-  QModelIndex idx = indexFromName( expression );
+  const QModelIndex idx = indexFromName( expression );
   if ( idx.isValid() )
     return;
 
@@ -275,8 +278,8 @@ QVariant QgsFieldModel::data( const QModelIndex &index, int role ) const
   int exprIdx = index.row() - mFields.count();
   if ( mAllowEmpty )
     exprIdx--;
-  bool isEmpty = mAllowEmpty && index.row() == 0;
-  int fieldOffset = mAllowEmpty ? 1 : 0;
+  const bool isEmpty = mAllowEmpty && index.row() == 0;
+  const int fieldOffset = mAllowEmpty ? 1 : 0;
 
   switch ( role )
   {
@@ -284,9 +287,9 @@ QVariant QgsFieldModel::data( const QModelIndex &index, int role ) const
     {
       if ( isEmpty || exprIdx >= 0 )
       {
-        return "";
+        return QString();
       }
-      QgsField field = mFields.at( index.row() - fieldOffset );
+      const QgsField field = mFields.at( index.row() - fieldOffset );
       return field.name();
     }
 
@@ -302,7 +305,7 @@ QVariant QgsFieldModel::data( const QModelIndex &index, int role ) const
       }
       else
       {
-        QgsField field = mFields.at( index.row() - fieldOffset );
+        const QgsField field = mFields.at( index.row() - fieldOffset );
         return field.name();
       }
     }
@@ -340,7 +343,7 @@ QVariant QgsFieldModel::data( const QModelIndex &index, int role ) const
     {
       if ( exprIdx < 0 && !isEmpty )
       {
-        QgsField field = mFields.at( index.row() - fieldOffset );
+        const QgsField field = mFields.at( index.row() - fieldOffset );
         return static_cast< int >( field.type() );
       }
       return QVariant();
@@ -481,23 +484,37 @@ QString QgsFieldModel::fieldToolTip( const QgsField &field )
   {
     toolTip = QStringLiteral( "<b>%1</b>" ).arg( field.name() );
   }
-  QString typeString;
-  if ( field.length() > 0 )
+
+  toolTip += QStringLiteral( "<br><font style='font-family:monospace; white-space: nowrap;'>%3</font>" ).arg( field.displayType( true ) );
+
+  const QString comment = field.comment();
+
+  if ( ! comment.isEmpty() )
   {
-    if ( field.precision() > 0 )
-    {
-      typeString = QStringLiteral( "%1 (%2, %3)" ).arg( field.typeName() ).arg( field.length() ).arg( field.precision() );
-    }
-    else
-    {
-      typeString = QStringLiteral( "%1 (%2)" ).arg( field.typeName() ).arg( field.length() );
-    }
+    toolTip += QStringLiteral( "<br><em>%1</em>" ).arg( comment );
   }
-  else
+
+  return toolTip;
+}
+
+QString QgsFieldModel::fieldToolTipExtended( const QgsField &field, const QgsVectorLayer *layer )
+{
+  QString toolTip = QgsFieldModel::fieldToolTip( field );
+  const QgsFields fields = layer->fields();
+  const int fieldIdx = fields.indexOf( field.name() );
+
+  if ( fieldIdx < 0 )
+    return QString();
+
+  const QString expressionString = fields.fieldOrigin( fieldIdx ) == QgsFields::OriginExpression
+                                   ? layer->expressionField( fieldIdx )
+                                   : QString();
+
+  if ( !expressionString.isEmpty() )
   {
-    typeString = field.typeName();
+    toolTip += QStringLiteral( "<br><font style='font-family:monospace;'>%3</font>" ).arg( expressionString );
   }
-  toolTip += QStringLiteral( "<p>%1</p>" ).arg( typeString );
+
   return toolTip;
 }
 

@@ -14,6 +14,11 @@
  ***************************************************************************/
 #include "qgsfileutils.h"
 #include "qgis.h"
+#include "qgsexception.h"
+#include "qgsconfig.h"
+#include "qgsproviderregistry.h"
+#include "qgsprovidermetadata.h"
+
 #include <QObject>
 #include <QRegularExpression>
 #include <QFileInfo>
@@ -21,20 +26,33 @@
 #include <QSet>
 #include <QDirIterator>
 
+#ifdef Q_OS_UNIX
+// For getrlimit()
+#include <sys/resource.h>
+#include <sys/time.h>
+#endif
+
+#ifdef MSVC
+#include <Windows.h>
+#include <ShlObj.h>
+#pragma comment(lib,"Shell32.lib")
+#endif
+
 QString QgsFileUtils::representFileSize( qint64 bytes )
 {
   QStringList list;
   list << QObject::tr( "KB" ) << QObject::tr( "MB" ) << QObject::tr( "GB" ) << QObject::tr( "TB" );
 
   QStringListIterator i( list );
-  QString unit = QObject::tr( "bytes" );
+  QString unit = QObject::tr( "B" );
 
-  while ( bytes >= 1024.0 && i.hasNext() )
+  double fileSize = bytes;
+  while ( fileSize >= 1024.0 && i.hasNext() )
   {
+    fileSize /= 1024.0;
     unit = i.next();
-    bytes /= 1024.0;
   }
-  return QStringLiteral( "%1 %2" ).arg( QString::number( bytes ), unit );
+  return QStringLiteral( "%1 %2" ).arg( QString::number( fileSize, 'f', bytes >= 1048576 ? 2 : 0 ), unit );
 }
 
 QStringList QgsFileUtils::extensionsFromFilter( const QString &filter )
@@ -56,6 +74,40 @@ QStringList QgsFileUtils::extensionsFromFilter( const QString &filter )
   return extensions;
 }
 
+QString QgsFileUtils::wildcardsFromFilter( const QString &filter )
+{
+  const QRegularExpression globPatternsRx( QStringLiteral( ".*\\((.*?)\\)$" ) );
+  const QRegularExpressionMatch matches = globPatternsRx.match( filter );
+  if ( matches.hasMatch() )
+    return matches.captured( 1 );
+  else
+    return QString();
+}
+
+bool QgsFileUtils::fileMatchesFilter( const QString &fileName, const QString &filter )
+{
+  QFileInfo fi( fileName );
+  const QString name = fi.fileName();
+  const QStringList parts = filter.split( QStringLiteral( ";;" ) );
+  for ( const QString &part : parts )
+  {
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+    const QStringList globPatterns = wildcardsFromFilter( part ).split( ' ', QString::SkipEmptyParts );
+#else
+    const QStringList globPatterns = wildcardsFromFilter( part ).split( ' ', Qt::SkipEmptyParts );
+#endif
+    for ( const QString &glob : globPatterns )
+    {
+      const QString re = QRegularExpression::wildcardToRegularExpression( glob );
+
+      const QRegularExpression globRx( re );
+      if ( globRx.match( name ).hasMatch() )
+        return true;
+    }
+  }
+  return false;
+}
+
 QString QgsFileUtils::ensureFileNameHasExtension( const QString &f, const QStringList &extensions )
 {
   if ( extensions.empty() || f.isEmpty() )
@@ -63,7 +115,7 @@ QString QgsFileUtils::ensureFileNameHasExtension( const QString &f, const QStrin
 
   QString fileName = f;
   bool hasExt = false;
-  for ( const QString &extension : qgis::as_const( extensions ) )
+  for ( const QString &extension : std::as_const( extensions ) )
   {
     const QString extWithDot = extension.startsWith( '.' ) ? extension : '.' + extension;
     if ( fileName.endsWith( extWithDot, Qt::CaseInsensitive ) )
@@ -116,7 +168,7 @@ QString QgsFileUtils::findClosestExistingPath( const QString &path )
     if ( visited.contains( parentPath ) )
       return QString(); // break circular links
 
-    if ( parentPath.isEmpty() || parentPath == QStringLiteral( "." ) )
+    if ( parentPath.isEmpty() || parentPath == QLatin1String( "." ) )
       return QString();
     currentPath = QDir( parentPath );
     visited << parentPath;
@@ -127,7 +179,7 @@ QString QgsFileUtils::findClosestExistingPath( const QString &path )
   if ( res == QDir::currentPath() )
     return QString(); // avoid default to binary folder if a filename alone is specified
 
-  return res == QStringLiteral( "." ) ? QString() : res;
+  return res == QLatin1String( "." ) ? QString() : res;
 }
 
 QStringList QgsFileUtils::findFile( const QString &file, const QString &basePath, int maxClimbs, int searchCeilling, const QString &currentDir )
@@ -191,7 +243,7 @@ QStringList QgsFileUtils::findFile( const QString &file, const QString &basePath
 
 
     const QFileInfoList subdirs = folder.entryInfoList( QDir::AllDirs );
-    for ( const QFileInfo subdir : subdirs )
+    for ( const QFileInfo &subdir : subdirs )
     {
       if ( ! searchedFolder.contains( subdir.absolutePath() ) )
       {
@@ -228,3 +280,224 @@ QStringList QgsFileUtils::findFile( const QString &file, const QString &basePath
   return foundFiles;
 }
 
+#ifdef MSVC
+std::unique_ptr< wchar_t[] > pathToWChar( const QString &path )
+{
+  const QString nativePath = QDir::toNativeSeparators( path );
+
+  std::unique_ptr< wchar_t[] > pathArray( new wchar_t[static_cast< uint>( nativePath.length() + 1 )] );
+  nativePath.toWCharArray( pathArray.get() );
+  pathArray[static_cast< size_t >( nativePath.length() )] = 0;
+  return pathArray;
+}
+#endif
+
+Qgis::DriveType QgsFileUtils::driveType( const QString &path )
+{
+#ifdef MSVC
+  auto pathType = [ = ]( const QString & path ) -> DriveType
+  {
+    std::unique_ptr< wchar_t[] > pathArray = pathToWChar( path );
+    const UINT type = GetDriveTypeW( pathArray.get() );
+    switch ( type )
+    {
+      case DRIVE_UNKNOWN:
+        return Qgis::DriveType::Unknown;
+
+      case DRIVE_NO_ROOT_DIR:
+        return Qgis::DriveType::Invalid;
+
+      case DRIVE_REMOVABLE:
+        return Qgis::DriveType::Removable;
+
+      case DRIVE_FIXED:
+        return Qgis::DriveType::Fixed;
+
+      case DRIVE_REMOTE:
+        return Qgis::DriveType::Remote;
+
+      case DRIVE_CDROM:
+        return Qgis::DriveType::CdRom;
+
+      case DRIVE_RAMDISK:
+        return Qgis::DriveType::RamDisk;
+    }
+
+    return Unknown;
+
+  };
+
+  const QString originalPath = QDir::cleanPath( path );
+  QString currentPath = originalPath;
+  QString prevPath;
+  while ( currentPath != prevPath )
+  {
+    prevPath = currentPath;
+    currentPath = QFileInfo( currentPath ).path();
+    const DriveType type = pathType( currentPath );
+    if ( type != Unknown && type != Invalid )
+      return type;
+  }
+  return Unknown;
+
+#else
+  ( void )path;
+  throw QgsNotSupportedException( QStringLiteral( "Determining drive type is not supported on this platform" ) );
+#endif
+}
+
+bool QgsFileUtils::pathIsSlowDevice( const QString &path )
+{
+#ifdef ENABLE_TESTS
+  if ( path.contains( QLatin1String( "fake_slow_path_for_unit_tests" ) ) )
+    return true;
+#endif
+
+  try
+  {
+    const Qgis::DriveType type = driveType( path );
+    switch ( type )
+    {
+      case Qgis::DriveType::Unknown:
+      case Qgis::DriveType::Invalid:
+      case Qgis::DriveType::Fixed:
+      case Qgis::DriveType::RamDisk:
+        return false;
+
+      case Qgis::DriveType::Removable:
+      case Qgis::DriveType::Remote:
+      case Qgis::DriveType::CdRom:
+        return true;
+    }
+  }
+  catch ( QgsNotSupportedException & )
+  {
+
+  }
+  return false;
+}
+
+QSet<QString> QgsFileUtils::sidecarFilesForPath( const QString &path )
+{
+  QSet< QString > res;
+  const QStringList providers = QgsProviderRegistry::instance()->providerList();
+  for ( const QString &provider : providers )
+  {
+    const QgsProviderMetadata *metadata = QgsProviderRegistry::instance()->providerMetadata( provider );
+    if ( metadata->providerCapabilities() & QgsProviderMetadata::FileBasedUris )
+    {
+      const QStringList possibleSidecars = metadata->sidecarFilesForUri( path );
+      for ( const QString &possibleSidecar : possibleSidecars )
+      {
+        if ( QFile::exists( possibleSidecar ) )
+          res.insert( possibleSidecar );
+      }
+    }
+  }
+  return res;
+}
+
+bool QgsFileUtils::renameDataset( const QString &oldPath, const QString &newPath, QString &error, Qgis::FileOperationFlags flags )
+{
+  if ( !QFile::exists( oldPath ) )
+  {
+    error = QObject::tr( "File does not exist" );
+    return false;
+  }
+
+  const QFileInfo oldPathInfo( oldPath );
+  QSet< QString > sidecars = sidecarFilesForPath( oldPath );
+  if ( flags & Qgis::FileOperationFlag::IncludeMetadataFile )
+  {
+    const QString qmdPath = oldPathInfo.dir().filePath( oldPathInfo.completeBaseName() + QStringLiteral( ".qmd" ) );
+    if ( QFile::exists( qmdPath ) )
+      sidecars.insert( qmdPath );
+  }
+  if ( flags & Qgis::FileOperationFlag::IncludeStyleFile )
+  {
+    const QString qmlPath = oldPathInfo.dir().filePath( oldPathInfo.completeBaseName() + QStringLiteral( ".qml" ) );
+    if ( QFile::exists( qmlPath ) )
+      sidecars.insert( qmlPath );
+  }
+
+  const QFileInfo newPathInfo( newPath );
+
+  bool res = true;
+  QStringList errors;
+  errors.reserve( sidecars.size() );
+  // first check if all sidecars CAN be renamed -- we don't want to get partly through the rename and then find a clash
+  for ( const QString &sidecar : std::as_const( sidecars ) )
+  {
+    const QFileInfo sidecarInfo( sidecar );
+    const QString newSidecarName = newPathInfo.dir().filePath( newPathInfo.completeBaseName() + '.' + sidecarInfo.suffix() );
+    if ( newSidecarName != sidecar && QFile::exists( newSidecarName ) )
+    {
+      res = false;
+      errors.append( QDir::toNativeSeparators( newSidecarName ) );
+    }
+  }
+  if ( !res )
+  {
+    error = QObject::tr( "Destination files already exist %1" ).arg( errors.join( QLatin1String( ", " ) ) );
+    return false;
+  }
+
+  if ( !QFile::rename( oldPath, newPath ) )
+  {
+    error = QObject::tr( "Could not rename %1" ).arg( QDir::toNativeSeparators( oldPath ) );
+    return false;
+  }
+
+  for ( const QString &sidecar : std::as_const( sidecars ) )
+  {
+    const QFileInfo sidecarInfo( sidecar );
+    const QString newSidecarName = newPathInfo.dir().filePath( newPathInfo.completeBaseName() + '.' + sidecarInfo.suffix() );
+    if ( newSidecarName == sidecar )
+      continue;
+
+    if ( !QFile::rename( sidecar, newSidecarName ) )
+    {
+      errors.append( QDir::toNativeSeparators( sidecar ) );
+      res = false;
+    }
+  }
+  if ( !res )
+  {
+    error = QObject::tr( "Could not rename %1" ).arg( errors.join( QLatin1String( ", " ) ) );
+  }
+
+  return res;
+}
+
+int QgsFileUtils::openedFileLimit()
+{
+#ifdef Q_OS_UNIX
+  struct rlimit rescLimit;
+  if ( getrlimit( RLIMIT_NOFILE, &rescLimit ) == 0 )
+  {
+    return rescLimit.rlim_cur;
+  }
+#endif
+  return -1;
+}
+
+int QgsFileUtils::openedFileCount()
+{
+#ifdef Q_OS_LINUX
+  int res = static_cast<int>( QDir( "/proc/self/fd" ).entryList().size() );
+  if ( res == 0 )
+    res = -1;
+  return res;
+#else
+  return -1;
+#endif
+}
+
+bool QgsFileUtils::isCloseToLimitOfOpenedFiles( int filesToBeOpened )
+{
+  const int nFileLimit = QgsFileUtils::openedFileLimit();
+  const int nFileCount = QgsFileUtils::openedFileCount();
+  // We need some margin as Qt will crash if it cannot create some file descriptors
+  constexpr int SOME_MARGIN = 20;
+  return nFileCount > 0 && nFileLimit > 0 && nFileCount + filesToBeOpened > nFileLimit - SOME_MARGIN;
+}

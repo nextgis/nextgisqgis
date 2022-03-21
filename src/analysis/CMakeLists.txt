@@ -21,12 +21,10 @@
 ################################################################################
 
 # sources
-
-add_flex_files_prefix(raster raster/qgsrastercalclexer.ll)
-add_flex_files_prefix(mesh mesh/qgsmeshcalclexer.ll)
-
-add_bison_files_prefix(raster raster/qgsrastercalcparser.yy)
-add_bison_files_prefix(mesh mesh/qgsmeshcalcparser.yy)
+if (PREPARE_ONLY)
+    add_flex_files_prefix(raster raster/qgsrastercalclexer.ll)
+    add_bison_files_prefix(raster raster/qgsrastercalcparser.yy)
+else(PREPARE_ONLY)
 
 SET(QGIS_ANALYSIS_SRCS
   qgsanalysis.cpp
@@ -195,7 +193,7 @@ SET(QGIS_ANALYSIS_SRCS
   processing/qgsreclassifyutils.cpp
 
   raster/qgsalignraster.cpp
-  raster/qgsexiftools.cpp
+#   raster/qgsexiftools.cpp
   raster/qgsninecellfilter.cpp
   raster/qgsruggednessfilter.cpp
   raster/qgsderivativefilter.cpp
@@ -292,7 +290,7 @@ SET(QGIS_ANALYSIS_HDRS
   raster/qgsalignraster.h
   raster/qgsaspectfilter.h
   raster/qgsderivativefilter.h
-  raster/qgsexiftools.h
+#   raster/qgsexiftools.h
   raster/qgshillshadefilter.h
   raster/qgskde.h
   raster/qgsninecellfilter.h
@@ -345,7 +343,7 @@ SET(QGIS_ANALYSIS_HDRS
   vector/qgszonalstatistics.h
 )
 
-find_anyproject(EXIV REQUIRED)
+# find_anyproject(EXIV REQUIRED)
 
 INCLUDE_DIRECTORIES(SYSTEM ${SPATIALITE_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(SYSTEM ${SPATIALINDEX_INCLUDE_DIR})
@@ -396,8 +394,8 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}/src/core/metadata
   ${CMAKE_SOURCE_DIR}/src/core/expression
   ${CMAKE_SOURCE_DIR}/src/analysis/vector/geometry_checker
-  ${CMAKE_SOURCE_DIR}/external
-  ${CMAKE_SOURCE_DIR}/external/nlohmann
+#   ${CMAKE_SOURCE_DIR}/external
+#   ${CMAKE_SOURCE_DIR}/external/nlohmann
 
   ${CMAKE_BINARY_DIR}/src/core
   ${CMAKE_BINARY_DIR}/src/analysis
@@ -420,9 +418,6 @@ ENDIF(HAVE_OPENCL)
 
 #############################################################
 # qgis_analysis library
-
-if (NOT PREPARE_ONLY)
-
     SET(LIB_NAME ${NG_PREFIX}qgis_analysis)
     SET(TARGETS ${TARGETS} ${LIB_NAME} PARENT_SCOPE)
     
@@ -507,4 +502,4 @@ if (NOT PREPARE_ONLY)
             DESTINATION ${INSTALL_INC_DIR}
         )
     endif()
-endif(NOT PREPARE_ONLY)
+endif(PREPARE_ONLY)

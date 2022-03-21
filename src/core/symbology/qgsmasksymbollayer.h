@@ -19,9 +19,10 @@
 #include "qgis_core.h"
 #include "qgis.h"
 #include "qgssymbollayer.h"
-#include "qgssymbollayerreference.h"
 
 class QgsPaintEffect;
+class QgsMarkerSymbol;
+class QgsSymbolLayerReference;
 
 /**
  * \ingroup core
@@ -36,6 +37,8 @@ class CORE_EXPORT QgsMaskMarkerSymbolLayer : public QgsMarkerSymbolLayer
     //! Simple constructor
     QgsMaskMarkerSymbolLayer();
 
+    ~QgsMaskMarkerSymbolLayer() override;
+
     /**
      * Create a new QgsMaskMarkerSymbolLayer
      *
@@ -43,40 +46,41 @@ class CORE_EXPORT QgsMaskMarkerSymbolLayer : public QgsMarkerSymbolLayer
      *
      * \returns A new QgsMaskMarkerSymbolLayer
      */
-    static QgsSymbolLayer *create( const QgsStringMap &properties = QgsStringMap() ) SIP_FACTORY;
+    static QgsSymbolLayer *create( const QVariantMap &properties = QVariantMap() ) SIP_FACTORY;
 
     QgsMaskMarkerSymbolLayer *clone() const override SIP_FACTORY;
-    QgsSymbol *subSymbol() override { return mSymbol.get(); }
+    QgsSymbol *subSymbol() override;
     bool setSubSymbol( QgsSymbol *symbol SIP_TRANSFER ) override;
     QSet<QString> usedAttributes( const QgsRenderContext &context ) const override;
     bool hasDataDefinedProperties() const override;
 
-    QgsStringMap properties() const override;
+    QVariantMap properties() const override;
 
     QString layerType() const override;
     void startRender( QgsSymbolRenderContext &context ) override;
     void stopRender( QgsSymbolRenderContext &context ) override;
     void renderPoint( QPointF point, QgsSymbolRenderContext &context ) override;
     QRectF bounds( QPointF point, QgsSymbolRenderContext &context ) override;
+    bool usesMapUnits() const override;
 
     virtual void drawPreviewIcon( QgsSymbolRenderContext &context, QSize size ) override;
 
     //! Whether some masked symbol layers are defined
-    bool enabled() const { return ! mMaskedSymbolLayers.isEmpty(); }
+    bool enabled() const;
 
     /**
      * Returns a list of references to symbol layers that are masked by the sub symbol's shape.
      * \returns a list of references to masked symbol layers
      * \see setMasks
      */
-    QgsSymbolLayerReferenceList masks() const override { return mMaskedSymbolLayers; }
+    QList<QgsSymbolLayerReference> masks() const override;
 
     /**
      * Sets the symbol layers that will be masked by the sub symbol's shape.
      * \param maskedLayers list of references to symbol layers
      * \see masks
      */
-    void setMasks( QgsSymbolLayerReferenceList maskedLayers ) { mMaskedSymbolLayers = maskedLayers; }
+    void setMasks( const QList<QgsSymbolLayerReference> &maskedLayers );
 
   private:
 #ifdef SIP_RUN
@@ -87,7 +91,7 @@ class CORE_EXPORT QgsMaskMarkerSymbolLayer : public QgsMarkerSymbolLayer
     std::unique_ptr<QgsMarkerSymbol> mSymbol;
 
     //! List of symbol layers that will be masked
-    QgsSymbolLayerReferenceList mMaskedSymbolLayers;
+    QList<QgsSymbolLayerReference> mMaskedSymbolLayers;
 
     std::unique_ptr<QgsPaintEffect> mEffect;
 };

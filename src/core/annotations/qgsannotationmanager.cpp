@@ -64,7 +64,7 @@ bool QgsAnnotationManager::removeAnnotation( QgsAnnotation *annotation )
 
 void QgsAnnotationManager::clear()
 {
-  for ( auto *a : qgis::as_const( mAnnotations ) )
+  for ( auto *a : std::as_const( mAnnotations ) )
   {
     removeAnnotation( a );
   }
@@ -78,7 +78,7 @@ QList<QgsAnnotation *> QgsAnnotationManager::annotations() const
 QList<QgsAnnotation *> QgsAnnotationManager::cloneAnnotations() const
 {
   QList<QgsAnnotation *> results;
-  for ( const auto *a : qgis::as_const( mAnnotations ) )
+  for ( const auto *a : std::as_const( mAnnotations ) )
   {
     results << a->clone();
   }
@@ -93,32 +93,36 @@ bool QgsAnnotationManager::readXml( const QDomElement &element, const QgsReadWri
 
   QDomElement annotationsElem = element.firstChildElement( QStringLiteral( "Annotations" ) );
 
-  QDomNodeList annotationNodes = annotationsElem.elementsByTagName( QStringLiteral( "Annotation" ) );
-  for ( int i = 0; i < annotationNodes.size(); ++i )
+  QDomElement annotationElement = annotationsElem.firstChildElement( QStringLiteral( "Annotation" ) );
+  while ( ! annotationElement .isNull() )
   {
-    createAnnotationFromXml( annotationNodes.at( i ).toElement(), context );
+    createAnnotationFromXml( annotationElement, context );
+    annotationElement = annotationElement.nextSiblingElement( QStringLiteral( "Annotation" ) );
   }
 
   // restore old (pre 3.0) project annotations
-  QDomNodeList oldItemList = element.elementsByTagName( QStringLiteral( "TextAnnotationItem" ) );
-  for ( int i = 0; i < oldItemList.size(); ++i )
+  if ( annotationElement.isNull() )
   {
-    createAnnotationFromXml( oldItemList.at( i ).toElement(), context );
-  }
-  oldItemList = element.elementsByTagName( QStringLiteral( "FormAnnotationItem" ) );
-  for ( int i = 0; i < oldItemList.size(); ++i )
-  {
-    createAnnotationFromXml( oldItemList.at( i ).toElement(), context );
-  }
-  oldItemList = element.elementsByTagName( QStringLiteral( "HtmlAnnotationItem" ) );
-  for ( int i = 0; i < oldItemList.size(); ++i )
-  {
-    createAnnotationFromXml( oldItemList.at( i ).toElement(), context );
-  }
-  oldItemList = element.elementsByTagName( QStringLiteral( "SVGAnnotationItem" ) );
-  for ( int i = 0; i < oldItemList.size(); ++i )
-  {
-    createAnnotationFromXml( oldItemList.at( i ).toElement(), context );
+    QDomNodeList oldItemList = element.elementsByTagName( QStringLiteral( "TextAnnotationItem" ) );
+    for ( int i = 0; i < oldItemList.size(); ++i )
+    {
+      createAnnotationFromXml( oldItemList.at( i ).toElement(), context );
+    }
+    oldItemList = element.elementsByTagName( QStringLiteral( "FormAnnotationItem" ) );
+    for ( int i = 0; i < oldItemList.size(); ++i )
+    {
+      createAnnotationFromXml( oldItemList.at( i ).toElement(), context );
+    }
+    oldItemList = element.elementsByTagName( QStringLiteral( "HtmlAnnotationItem" ) );
+    for ( int i = 0; i < oldItemList.size(); ++i )
+    {
+      createAnnotationFromXml( oldItemList.at( i ).toElement(), context );
+    }
+    oldItemList = element.elementsByTagName( QStringLiteral( "SVGAnnotationItem" ) );
+    for ( int i = 0; i < oldItemList.size(); ++i )
+    {
+      createAnnotationFromXml( oldItemList.at( i ).toElement(), context );
+    }
   }
 
   return result;

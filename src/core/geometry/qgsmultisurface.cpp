@@ -24,11 +24,21 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsmulticurve.h"
 
 #include <QJsonObject>
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 
 QgsMultiSurface::QgsMultiSurface()
 {
   mWkbType = QgsWkbTypes::MultiSurface;
+}
+
+QgsSurface *QgsMultiSurface::surfaceN( int index )
+{
+  return qgsgeometry_cast< QgsSurface * >( geometryN( index ) );
+}
+
+const QgsSurface *QgsMultiSurface::surfaceN( int index ) const
+{
+  return qgsgeometry_cast< const QgsSurface * >( geometryN( index ) );
 }
 
 QString QgsMultiSurface::geometryType() const
@@ -44,7 +54,7 @@ void QgsMultiSurface::clear()
 
 QgsMultiSurface *QgsMultiSurface::createEmptyWithSameType() const
 {
-  auto result = qgis::make_unique< QgsMultiSurface >();
+  auto result = std::make_unique< QgsMultiSurface >();
   result->mWkbType = mWkbType;
   return result.release();
 }
@@ -112,17 +122,17 @@ QDomElement QgsMultiSurface::asGml3( QDomDocument &doc, int precision, const QSt
 
 json QgsMultiSurface::asJsonObject( int precision ) const
 {
-  json polygons( json::array( ) );
-  for ( const QgsAbstractGeometry *geom : qgis::as_const( mGeometries ) )
+  CPLJSONArray polygons;
+  for ( const QgsAbstractGeometry *geom : std::as_const( mGeometries ) )
   {
     if ( qgsgeometry_cast<const QgsSurface *>( geom ) )
     {
-      json coordinates( json::array( ) );
+      CPLJSONArray coordinates;
       std::unique_ptr< QgsPolygon >polygon( static_cast<const QgsSurface *>( geom )->surfaceToPolygon() );
       std::unique_ptr< QgsLineString > exteriorLineString( polygon->exteriorRing()->curveToLine() );
       QgsPointSequence exteriorPts;
       exteriorLineString->points( exteriorPts );
-      coordinates.push_back( QgsGeometryUtils::pointsToJson( exteriorPts, precision ) );
+      coordinates.Add( QgsGeometryUtils::pointsToJson( exteriorPts, precision ) );
 
       std::unique_ptr< QgsLineString > interiorLineString;
       for ( int i = 0, n = polygon->numInteriorRings(); i < n; ++i )
@@ -130,16 +140,15 @@ json QgsMultiSurface::asJsonObject( int precision ) const
         interiorLineString.reset( polygon->interiorRing( i )->curveToLine() );
         QgsPointSequence interiorPts;
         interiorLineString->points( interiorPts );
-        coordinates.push_back( QgsGeometryUtils::pointsToJson( interiorPts, precision ) );
+        coordinates.Add( QgsGeometryUtils::pointsToJson( interiorPts, precision ) );
       }
-      polygons.push_back( coordinates );
+      polygons.Add( coordinates );
     }
   }
-  return
-  {
-    {  "type",  "MultiPolygon" },
-    {  "coordinates", polygons }
-  };
+  json out;
+  out.Add("type",  "MultiPolygon");
+  out.Add("coordinates", polygons);
+  return out;
 }
 
 bool QgsMultiSurface::addGeometry( QgsAbstractGeometry *g )

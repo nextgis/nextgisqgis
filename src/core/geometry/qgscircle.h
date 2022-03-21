@@ -51,7 +51,7 @@ class CORE_EXPORT QgsCircle : public QgsEllipse
      * \param radius The radius of the circle.
      * \param azimuth Angle in degrees started from the North to the first quadrant.
      */
-    QgsCircle( const QgsPoint &center, double radius, double azimuth = 0 );
+    QgsCircle( const QgsPoint &center, double radius, double azimuth = 0 ) SIP_HOLDGIL;
 
     /**
      * Constructs a circle by 2 points on the circle.
@@ -63,7 +63,7 @@ class CORE_EXPORT QgsCircle : public QgsEllipse
      * \param pt1 First point.
      * \param pt2 Second point.
      */
-    static QgsCircle from2Points( const QgsPoint &pt1, const QgsPoint &pt2 );
+    static QgsCircle from2Points( const QgsPoint &pt1, const QgsPoint &pt2 ) SIP_HOLDGIL;
 
     /**
      * Constructs a circle by 3 points on the circle.
@@ -77,7 +77,7 @@ class CORE_EXPORT QgsCircle : public QgsEllipse
      * \param pt3 Third point.
      * \param epsilon Value used to compare point.
      */
-    static QgsCircle from3Points( const QgsPoint &pt1, const QgsPoint &pt2, const QgsPoint &pt3, double epsilon = 1E-8 );
+    static QgsCircle from3Points( const QgsPoint &pt1, const QgsPoint &pt2, const QgsPoint &pt3, double epsilon = 1E-8 ) SIP_HOLDGIL;
 
     /**
      * Constructs a circle by a center point and a diameter.
@@ -86,7 +86,7 @@ class CORE_EXPORT QgsCircle : public QgsEllipse
      * \param diameter Diameter of the circle.
      * \param azimuth Azimuth of the circle.
      */
-    static QgsCircle fromCenterDiameter( const QgsPoint &center, double diameter, double azimuth = 0 );
+    static QgsCircle fromCenterDiameter( const QgsPoint &center, double diameter, double azimuth = 0 ) SIP_HOLDGIL;
 
 
     /**
@@ -97,7 +97,7 @@ class CORE_EXPORT QgsCircle : public QgsEllipse
      * \param center Center point.
      * \param pt1 A point on the circle.
      */
-    static QgsCircle fromCenterPoint( const QgsPoint &center, const QgsPoint &pt1 );
+    static QgsCircle fromCenterPoint( const QgsPoint &center, const QgsPoint &pt1 ) SIP_HOLDGIL;
 
 
     /**
@@ -111,10 +111,74 @@ class CORE_EXPORT QgsCircle : public QgsEllipse
      * \param pt1_tg3 First point of the third tangent.
      * \param pt2_tg3 Second point of the third tangent.
      * \param epsilon Value used to compare point.
+     * \param pos Point to determine which circle use in case of multi return.
+     * If the solution is not unique and pos is an empty point, an empty circle is returned. -- This case happens only when two tangets are parallels. (since QGIS 3.18)
+     *
+     * \see from3TangentsMulti()
+     *
+     * ### Example
+     *
+     * \code{.py}
+     *  # [(0 0), (5 0)] and [(5 5), (10 5)] are parallels
+     *  QgsCircle.from3Tangents(QgsPoint(0, 0), QgsPoint(5, 0), QgsPoint(5, 5), QgsPoint(10, 5), QgsPoint(2.5, 0), QgsPoint(7.5, 5))
+     *  # <QgsCircle: Empty>
+     *  QgsCircle.from3Tangents(QgsPoint(0, 0), QgsPoint(5, 0), QgsPoint(5, 5), QgsPoint(10, 5), QgsPoint(2.5, 0), QgsPoint(7.5, 5), pos=QgsPoint(2, 0))
+     *  # <QgsCircle: Circle (Center: Point (1.46446609406726203 2.49999999999999911), Radius: 2.5, Azimuth: 0)>
+     *  QgsCircle.from3Tangents(QgsPoint(0, 0), QgsPoint(5, 0), QgsPoint(5, 5), QgsPoint(10, 5), QgsPoint(2.5, 0), QgsPoint(7.5, 5), pos=QgsPoint(3, 0))
+     *  # <QgsCircle: Circle (Center: Point (8.53553390593273775 2.5), Radius: 2.5, Azimuth: 0)>
+     * \endcode
      */
     static QgsCircle from3Tangents( const QgsPoint &pt1_tg1, const QgsPoint &pt2_tg1,
                                     const QgsPoint &pt1_tg2, const QgsPoint &pt2_tg2,
-                                    const QgsPoint &pt1_tg3, const QgsPoint &pt2_tg3, double epsilon = 1E-8 );
+                                    const QgsPoint &pt1_tg3, const QgsPoint &pt2_tg3,
+                                    double epsilon = 1E-8,
+                                    const QgsPoint &pos = QgsPoint() ) SIP_HOLDGIL;
+
+    /**
+     * Returns an array of circle constructed by 3 tangents on the circle (aka inscribed circle of a triangle).
+     *
+     * The vector can contain 0, 1 or 2 circles:
+     *
+     * - 0: Impossible to construct a circle from 3 tangents (three parallel tangents)
+     * - 1: The three tangents make a triangle or when two tangents are parallel there are two possible circles (see examples).
+     *   If pos is not an empty point, we use its coordinates to determine which circle will be returned.
+     *   More precisely the circle that will be returned will be the one whose center is on the same side as pos relative to the third tangent.
+     * - 2: Returns both solutions when two tangents are parallel (this implies that pos is an empty point).
+     *
+     * Z and m values are dropped for the center point.
+     * The azimuth always takes the default value.
+     * \param pt1_tg1 First point of the first tangent.
+     * \param pt2_tg1 Second point of the first tangent.
+     * \param pt1_tg2 First point of the second tangent.
+     * \param pt2_tg2 Second point of the second tangent.
+     * \param pt1_tg3 First point of the third tangent.
+     * \param pt2_tg3 Second point of the third tangent.
+     * \param epsilon Value used to compare point.
+     * \param pos (optional) Point to determine which circle use in case of multi return.
+     *
+     * \see from3Tangents()
+     *
+     * ### Example
+     *
+     * \code{.py}
+     *
+     *  # [(0 0), (5 0)] and [(5 5), (10 5)] are parallels
+     *  QgsCircle.from3TangentsMulti(QgsPoint(0, 0), QgsPoint(5, 0), QgsPoint(5, 5), QgsPoint(10, 5), QgsPoint(2.5, 0), QgsPoint(7.5, 5))
+     *  # [<QgsCircle: Circle (Center: Point (8.53553390593273775 2.5), Radius: 2.5, Azimuth: 0)>, <QgsCircle: Circle (Center: Point (1.46446609406726203 2.49999999999999911), Radius: 2.5, Azimuth: 0)>]
+     *  QgsCircle.from3TangentsMulti(QgsPoint(0, 0), QgsPoint(5, 0), QgsPoint(5, 5), QgsPoint(10, 5), QgsPoint(2.5, 0), QgsPoint(7.5, 5), pos=QgsPoint(2, 0))
+     *  # [<QgsCircle: Circle (Center: Point (1.46446609406726203 2.49999999999999911), Radius: 2.5, Azimuth: 0)>]
+     *  QgsCircle.from3TangentsMulti(QgsPoint(0, 0), QgsPoint(5, 0), QgsPoint(5, 5), QgsPoint(10, 5), QgsPoint(2.5, 0), QgsPoint(7.5, 5), pos=QgsPoint(3, 0))
+     *  # [<QgsCircle: Circle (Center: Point (8.53553390593273775 2.5), Radius: 2.5, Azimuth: 0)>]
+     *  # [(0 0), (5 0)], [(5 5), (10 5)] and [(15 5), (20 5)] are parallels
+     *  QgsCircle.from3TangentsMulti(QgsPoint(0, 0), QgsPoint(5, 0), QgsPoint(5, 5), QgsPoint(10, 5), QgsPoint(15, 5), QgsPoint(20, 5))
+     *  # []
+     * \endcode
+     */
+    static QVector<QgsCircle> from3TangentsMulti( const QgsPoint &pt1_tg1, const QgsPoint &pt2_tg1,
+        const QgsPoint &pt1_tg2, const QgsPoint &pt2_tg2,
+        const QgsPoint &pt1_tg3, const QgsPoint &pt2_tg3,
+        double epsilon = 1E-8,
+        const QgsPoint &pos = QgsPoint() ) SIP_HOLDGIL;
 
     /**
      * Constructs a circle by an extent (aka bounding box / QgsRectangle).
@@ -126,7 +190,7 @@ class CORE_EXPORT QgsCircle : public QgsEllipse
      * \param pt1 First corner.
      * \param pt2 Second corner.
      */
-    static QgsCircle fromExtent( const QgsPoint &pt1, const QgsPoint &pt2 );
+    static QgsCircle fromExtent( const QgsPoint &pt1, const QgsPoint &pt2 ) SIP_HOLDGIL;
 
     /**
      * Constructs the smallest circle from 3 points.
@@ -138,7 +202,7 @@ class CORE_EXPORT QgsCircle : public QgsEllipse
      * \param pt3 Third point.
      * \param epsilon Value used to compare point.
      */
-    static QgsCircle minimalCircleFrom3Points( const QgsPoint &pt1, const QgsPoint &pt2, const QgsPoint &pt3, double epsilon = 1E-8 );
+    static QgsCircle minimalCircleFrom3Points( const QgsPoint &pt1, const QgsPoint &pt2, const QgsPoint &pt3, double epsilon = 1E-8 ) SIP_HOLDGIL;
 
     /**
      * Calculates the intersections points between this circle and an \a other circle.
@@ -221,8 +285,8 @@ class CORE_EXPORT QgsCircle : public QgsEllipse
                        QgsPointXY &line1P1 SIP_OUT, QgsPointXY &line1P2 SIP_OUT,
                        QgsPointXY &line2P1 SIP_OUT, QgsPointXY &line2P2 SIP_OUT ) const;
 
-    double area() const override;
-    double perimeter() const override;
+    double area() const override SIP_HOLDGIL;
+    double perimeter() const override SIP_HOLDGIL;
 
     //inherited
     // void setAzimuth(const double azimuth);
@@ -234,19 +298,19 @@ class CORE_EXPORT QgsCircle : public QgsEllipse
      * \see radius()
      * \see setRadius()
      */
-    void setSemiMajorAxis( double semiMajorAxis ) override;
+    void setSemiMajorAxis( double semiMajorAxis ) override SIP_HOLDGIL;
 
     /**
      * Inherited method. Use setRadius instead.
      * \see radius()
      * \see setRadius()
      */
-    void setSemiMinorAxis( double semiMinorAxis ) override;
+    void setSemiMinorAxis( double semiMinorAxis ) override SIP_HOLDGIL;
 
     //! Returns the radius of the circle
-    double radius() const {return mSemiMajorAxis;}
+    double radius() const SIP_HOLDGIL {return mSemiMajorAxis;}
     //! Sets the radius of the circle
-    void setRadius( double radius )
+    void setRadius( double radius ) SIP_HOLDGIL
     {
       mSemiMajorAxis = std::fabs( radius );
       mSemiMinorAxis = mSemiMajorAxis;
@@ -272,6 +336,36 @@ class CORE_EXPORT QgsCircle : public QgsEllipse
     QgsRectangle boundingBox() const override;
 
     QString toString( int pointPrecision = 17, int radiusPrecision = 17, int azimuthPrecision = 2 ) const override;
+
+    /**
+     * Returns a GML2 representation of the geometry.
+     * Since GML2 does not supports curve, it will be converted to a LineString.
+     * \param doc DOM document
+     * \param precision number of decimal places for coordinates
+     * \param ns XML namespace
+     * \param axisOrder Axis order for generated GML
+     * \see asGml3()
+     */
+    QDomElement asGml2( QDomDocument &doc, int precision = 17, const QString &ns = "gml", QgsAbstractGeometry::AxisOrder axisOrder = QgsAbstractGeometry::AxisOrder::XY ) const;
+
+    /**
+     * Returns a GML3 representation of the geometry.
+     *
+     * From the GML3 description:
+     * A Circle is an arc whose ends coincide to form a simple closed loop.
+     * The three control points shall be distinct non-co-linear points for
+     * the circle to be unambiguously defined. The arc is simply extended
+     * past the third control point until the first control point is encountered.
+     *
+     * Coordinates are taken from quadrant North, East and South.
+     *
+     * \param doc DOM document
+     * \param precision number of decimal places for coordinates
+     * \param ns XML namespace
+     * \param axisOrder Axis order for generated GML
+     * \see asGml2()
+     */
+    QDomElement asGml3( QDomDocument &doc, int precision = 17, const QString &ns = "gml", QgsAbstractGeometry::AxisOrder axisOrder = QgsAbstractGeometry::AxisOrder::XY ) const;
 
 #ifdef SIP_RUN
     SIP_PYOBJECT __repr__();

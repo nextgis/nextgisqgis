@@ -22,9 +22,11 @@
 
 /**
  * \ingroup analysis
+ * \brief A self contact check.
  */
 class ANALYSIS_EXPORT QgsGeometrySelfContactCheck : public QgsSingleGeometryCheck
 {
+    Q_DECLARE_TR_FUNCTIONS( QgsGeometrySelfContactCheck )
   public:
     QgsGeometrySelfContactCheck( QgsGeometryCheckContext *context, const QVariantMap &configuration )
       : QgsSingleGeometryCheck( context, configuration ) {}

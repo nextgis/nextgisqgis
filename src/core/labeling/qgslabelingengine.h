@@ -24,8 +24,10 @@
 #include "qgspallabeling.h"
 #include "qgslabelingenginesettings.h"
 #include "qgslabeling.h"
+#include "qgsfeedback.h"
 
 class QgsLabelingEngine;
+class QgsLabelingResults;
 
 namespace pal
 {
@@ -126,7 +128,11 @@ class CORE_EXPORT QgsAbstractLabelProvider
     //! Returns ID of associated layer, or empty string if no layer is associated with the provider.
     QString layerId() const { return mLayerId; }
 
-    //! Returns the associated layer, or NULLPTR if no layer is associated with the provider.
+    /**
+     * Returns the associated layer, or NULLPTR if no layer is associated with the provider.
+     *
+     * \warning Accessing the layer is not thread safe, and this should never be called while the labeling engine is running from a background thread!
+     */
     QgsMapLayer *layer() const { return mLayer.data(); }
 
     /**
@@ -151,6 +157,20 @@ class CORE_EXPORT QgsAbstractLabelProvider
     //! How to handle labels that would be upside down
     QgsPalLayerSettings::UpsideDownLabels upsidedownLabels() const { return mUpsidedownLabels; }
 
+    /**
+     * Returns the expression context scope created from the layer associated with this provider.
+     *
+     * \since QGIS 3.22
+     */
+    QgsExpressionContextScope *layerExpressionContextScope() const;
+
+    /**
+     * Returns the symbology reference scale of the layer associated with this provider.
+     *
+     * \since QGIS 3.22
+     */
+    double layerReferenceScale() const { return mLayerReferenceScale; }
+
   protected:
     //! Associated labeling engine
     const QgsLabelingEngine *mEngine = nullptr;
@@ -173,10 +193,117 @@ class CORE_EXPORT QgsAbstractLabelProvider
     QgsLabelObstacleSettings::ObstacleType mObstacleType = QgsLabelObstacleSettings::PolygonBoundary;
     //! How to handle labels that would be upside down
     QgsPalLayerSettings::UpsideDownLabels mUpsidedownLabels;
+
+  private:
+
+    std::unique_ptr< QgsExpressionContextScope > mLayerExpressionContextScope;
+    double mLayerReferenceScale = -1;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS( QgsAbstractLabelProvider::Flags )
 
+
+/**
+ * \ingroup core
+ * \brief QgsFeedback subclass for granular reporting of labeling engine progress.
+ * \note not available in Python bindings
+ * \since QGIS 3.24
+ */
+class CORE_EXPORT QgsLabelingEngineFeedback : public QgsFeedback
+{
+    Q_OBJECT
+
+  public:
+
+    /**
+     * Constructor for QgsLabelingEngineFeedback, with the specified \a parent object.
+     */
+    QgsLabelingEngineFeedback( QObject *parent SIP_TRANSFERTHIS = nullptr )
+      : QgsFeedback( parent )
+    {}
+
+  signals:
+
+    /**
+     * Emitted when the label registration is about to begin.
+     */
+    void labelRegistrationAboutToBegin();
+
+    /**
+     * Emitted when the label registration has completed for all providers.
+     */
+    void labelRegistrationFinished();
+
+    /**
+     * Emitted when the label registration is about to begin for a \a provider.
+     */
+    void providerRegistrationAboutToBegin( QgsAbstractLabelProvider *provider );
+
+    /**
+     * Emitted when the label registration has completed for a \a provider.
+     */
+    void providerRegistrationFinished( QgsAbstractLabelProvider *provider );
+
+    /**
+     * Emitted when the label candidate creation is about to begin for a \a provider.
+     */
+    void candidateCreationAboutToBegin( QgsAbstractLabelProvider *provider );
+
+    /**
+     * Emitted when the label candidate creation has completed for a \a provider.
+     */
+    void candidateCreationFinished( QgsAbstractLabelProvider *provider );
+
+    /**
+     * Emitted when the obstacle costing is about to begin.
+     */
+    void obstacleCostingAboutToBegin();
+
+    /**
+     * Emitted when the obstacle costing has completed.
+     */
+    void obstacleCostingFinished();
+
+    /**
+     * Emitted when the conflict handling step is about to begin.
+     */
+    void calculatingConflictsAboutToBegin();
+
+    /**
+     * Emitted when the conflict handling step has completed.
+     */
+    void calculatingConflictsFinished();
+
+    /**
+     * Emitted when the label candidates are about to be finalized.
+     */
+    void finalizingCandidatesAboutToBegin();
+
+    /**
+     * Emitted when the label candidates are finalized.
+     */
+    void finalizingCandidatesFinished();
+
+    /**
+     * Emitted when the candidate reduction step is about to begin.
+     */
+    void reductionAboutToBegin();
+
+    /**
+     * Emitted when the candidate reduction step is finished.
+     */
+    void reductionFinished();
+
+    /**
+     * Emitted when the problem solving step is about to begin.
+     */
+    void solvingPlacementAboutToBegin();
+
+    /**
+     * Emitted when the problem solving step is finished.
+     */
+    void solvingPlacementFinished();
+};
 
 /**
  * \ingroup core
@@ -274,7 +401,6 @@ class CORE_EXPORT QgsLabelingEngine
      * Runs the label registration step.
      *
      * Must be called by subclasses prior to solve() and drawLabels()
-     *
      * \since QGIS 3.10
      */
     void registerLabels( QgsRenderContext &context );

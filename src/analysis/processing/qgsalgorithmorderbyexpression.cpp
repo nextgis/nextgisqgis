@@ -59,7 +59,10 @@ void QgsOrderByExpressionAlgorithm::initAlgorithm( const QVariantMap & )
 
 QString QgsOrderByExpressionAlgorithm::shortHelpString() const
 {
-  return QObject::tr( "This algorithm sorts a vector layer according to an expression. Be careful, it might not work as expected with some providers, the order might not be kept every time." );
+  return QObject::tr( "This algorithm sorts a vector layer according to an expression. Be careful, it might not work as expected with some providers, "
+                      "the order might not be kept every time.\n\n"
+                      "For help with QGIS expression functions, see the inbuilt help for specific functions "
+                      "which is available in the expression builder." );
 }
 
 QgsOrderByExpressionAlgorithm *QgsOrderByExpressionAlgorithm::createInstance() const
@@ -73,18 +76,18 @@ QVariantMap QgsOrderByExpressionAlgorithm::processAlgorithm( const QVariantMap &
   if ( !source )
     throw QgsProcessingException( invalidSourceError( parameters, QStringLiteral( "INPUT" ) ) );
 
-  QString expressionString = parameterAsExpression( parameters, QStringLiteral( "EXPRESSION" ), context );
+  const QString expressionString = parameterAsExpression( parameters, QStringLiteral( "EXPRESSION" ), context );
 
-  bool ascending = parameterAsBoolean( parameters, QStringLiteral( "ASCENDING" ), context );
-  bool nullsFirst = parameterAsBoolean( parameters, QStringLiteral( "NULLS_FIRST" ), context );
+  const bool ascending = parameterAsBoolean( parameters, QStringLiteral( "ASCENDING" ), context );
+  const bool nullsFirst = parameterAsBoolean( parameters, QStringLiteral( "NULLS_FIRST" ), context );
 
   QString sinkId;
   std::unique_ptr< QgsFeatureSink > sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, sinkId, source->fields(), source->wkbType(), source->sourceCrs() ) );
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
-  long count = source->featureCount();
-  double step = count > 0 ? 100.0 / count : 1;
+  const long count = source->featureCount();
+  const double step = count > 0 ? 100.0 / count : 1;
   int current = 0;
 
   QgsFeatureRequest request;
@@ -98,7 +101,8 @@ QVariantMap QgsOrderByExpressionAlgorithm::processAlgorithm( const QVariantMap &
     {
       break;
     }
-    sink->addFeature( inFeature );
+    if ( !sink->addFeature( inFeature ) )
+      throw QgsProcessingException( writeFeatureError( sink.get(), parameters, QStringLiteral( "OUTPUT" ) ) );
     feedback->setProgress( current * step );
     current++;
   }

@@ -53,7 +53,7 @@ class QgsFeatureSource;
  * \ingroup core
  * \class QgsSpatialIndex
  *
- * A spatial index for QgsFeature objects.
+ * \brief A spatial index for QgsFeature objects.
  *
  * QgsSpatialIndex objects are implicitly shared and can be inexpensively copied.
  *
@@ -81,7 +81,7 @@ class CORE_EXPORT QgsSpatialIndex : public QgsFeatureSink
     /**
      * Constructor for QgsSpatialIndex. Creates an empty R-tree index.
      */
-    QgsSpatialIndex( QgsSpatialIndex::Flags flags = nullptr );
+    QgsSpatialIndex( QgsSpatialIndex::Flags flags = QgsSpatialIndex::Flags() );
 
     /**
      * Constructor - creates R-tree and bulk loads it with features from the iterator.
@@ -93,7 +93,7 @@ class CORE_EXPORT QgsSpatialIndex : public QgsFeatureSink
      *
      * \since QGIS 2.8
      */
-    explicit QgsSpatialIndex( const QgsFeatureIterator &fi, QgsFeedback *feedback = nullptr, QgsSpatialIndex::Flags flags = nullptr );
+    explicit QgsSpatialIndex( const QgsFeatureIterator &fi, QgsFeedback *feedback = nullptr, QgsSpatialIndex::Flags flags = QgsSpatialIndex::Flags() );
 
 #ifndef SIP_RUN
 
@@ -109,7 +109,7 @@ class CORE_EXPORT QgsSpatialIndex : public QgsFeatureSink
      * \note Not available in Python bindings
      * \since QGIS 2.12
      */
-    explicit QgsSpatialIndex( const QgsFeatureIterator &fi, const std::function< bool( const QgsFeature & ) > &callback, QgsSpatialIndex::Flags flags = nullptr );
+    explicit QgsSpatialIndex( const QgsFeatureIterator &fi, const std::function< bool( const QgsFeature & ) > &callback, QgsSpatialIndex::Flags flags = QgsSpatialIndex::Flags() );
 #endif
 
     /**
@@ -123,7 +123,7 @@ class CORE_EXPORT QgsSpatialIndex : public QgsFeatureSink
      *
      * \since QGIS 3.0
      */
-    explicit QgsSpatialIndex( const QgsFeatureSource &source, QgsFeedback *feedback = nullptr, QgsSpatialIndex::Flags flags = nullptr );
+    explicit QgsSpatialIndex( const QgsFeatureSource &source, QgsFeedback *feedback = nullptr, QgsSpatialIndex::Flags flags = QgsSpatialIndex::Flags() );
 
     //! Copy constructor
     QgsSpatialIndex( const QgsSpatialIndex &other );
@@ -149,7 +149,7 @@ class CORE_EXPORT QgsSpatialIndex : public QgsFeatureSink
      *
      * \since QGIS 3.4
      */
-    bool addFeature( QgsFeature &feature, QgsFeatureSink::Flags flags = nullptr ) override;
+    bool addFeature( QgsFeature &feature, QgsFeatureSink::Flags flags = QgsFeatureSink::Flags() ) override;
 
     /**
      * Adds a list of \a features to the index.
@@ -158,7 +158,7 @@ class CORE_EXPORT QgsSpatialIndex : public QgsFeatureSink
      *
      * \see addFeature()
      */
-    bool addFeatures( QgsFeatureList &features, QgsFeatureSink::Flags flags = nullptr ) override;
+    bool addFeatures( QgsFeatureList &features, QgsFeatureSink::Flags flags = QgsFeatureSink::Flags() ) override;
 
     /**
      * Add a feature \a id to the index with a specified bounding box.
@@ -243,16 +243,17 @@ class CORE_EXPORT QgsSpatialIndex : public QgsFeatureSink
 #else
 
     /**
-     * Returns the stored geometry for the indexed feature with matching \a id. A KeyError will be raised if no
-     * geometry with the specified feature id exists in the index.
+     * Returns the stored geometry for the indexed feature with matching \a id.
      *
      * Geometry is only stored if the QgsSpatialIndex was created with the FlagStoreFeatureGeometries flag.
+     *
+     * \throws KeyError if no geometry with the specified feature id exists in the index.
      *
      * \since QGIS 3.6
      */
     SIP_PYOBJECT geometry( QgsFeatureId id ) const SIP_TYPEHINT( QgsGeometry );
     % MethodCode
-    std::unique_ptr< QgsGeometry > g = qgis::make_unique< QgsGeometry >( sipCpp->geometry( a0 ) );
+    std::unique_ptr< QgsGeometry > g = std::make_unique< QgsGeometry >( sipCpp->geometry( a0 ) );
     if ( g->isNull() )
     {
       PyErr_SetString( PyExc_KeyError, QStringLiteral( "No geometry with feature id %1 exists in the index." ).arg( a0 ).toUtf8().constData() );

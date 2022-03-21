@@ -22,9 +22,11 @@
 
 /**
  * \ingroup analysis
+ * \brief A line layer intersection check.
  */
 class ANALYSIS_EXPORT QgsGeometryLineLayerIntersectionCheck : public QgsGeometryCheck
 {
+    Q_DECLARE_TR_FUNCTIONS( QgsGeometryLineLayerIntersectionCheck )
   public:
     QgsGeometryLineLayerIntersectionCheck( QgsGeometryCheckContext *context, const QVariantMap &configuration )
       : QgsGeometryCheck( context, configuration )

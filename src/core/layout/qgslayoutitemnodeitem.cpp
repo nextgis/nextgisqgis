@@ -20,6 +20,8 @@
 #include "qgsmapsettings.h"
 #include "qgslayout.h"
 #include "qgslayoututils.h"
+#include "qgsmarkersymbol.h"
+
 #include <limits>
 #include <cmath>
 #include <QStyleOptionGraphicsItem>
@@ -28,6 +30,7 @@ void QgsLayoutNodesItem::setNodes( const QPolygonF &nodes )
 {
   mPolygon = nodes;
   updateSceneRect();
+  emit clipPathChanged();
 }
 
 QRectF QgsLayoutNodesItem::boundingRect() const
@@ -96,7 +99,7 @@ bool QgsLayoutNodesItem::addNode( QPointF pt,
 {
   const QPointF start = mapFromScene( pt );
   double minDistance = std::numeric_limits<double>::max();
-  double maxDistance = ( checkArea ) ? radius : minDistance;
+  const double maxDistance = ( checkArea ) ? radius : minDistance;
   bool rc = false;
   int idx = -1;
 
@@ -156,6 +159,7 @@ bool QgsLayoutNodesItem::addNode( QPointF pt,
   {
     rc = _addNode( idx, start, maxDistance );
     updateSceneRect();
+    emit clipPathChanged();
   }
 
   return rc;
@@ -165,9 +169,9 @@ void QgsLayoutNodesItem::drawNodes( QgsLayoutItemRenderContext &context ) const
 {
   context.renderContext().painter()->setRenderHint( QPainter::Antialiasing, false );
 
-  double rectSize = 9.0 / context.viewScaleFactor();
+  const double rectSize = 9.0 / context.viewScaleFactor();
 
-  QgsStringMap properties;
+  QVariantMap properties;
   properties.insert( QStringLiteral( "name" ), QStringLiteral( "cross" ) );
   properties.insert( QStringLiteral( "color_border" ), QStringLiteral( "red" ) );
 
@@ -177,7 +181,7 @@ void QgsLayoutNodesItem::drawNodes( QgsLayoutItemRenderContext &context ) const
   symbol->setAngle( 45 );
 
   symbol->startRender( context.renderContext() );
-  for ( QPointF pt : mPolygon )
+  for ( const QPointF pt : std::as_const( mPolygon ) )
     symbol->renderPoint( pt * context.viewScaleFactor(), nullptr, context.renderContext() );
   symbol->stopRender( context.renderContext() );
 
@@ -187,9 +191,9 @@ void QgsLayoutNodesItem::drawNodes( QgsLayoutItemRenderContext &context ) const
 
 void QgsLayoutNodesItem::drawSelectedNode( QgsLayoutItemRenderContext &context ) const
 {
-  double rectSize = 9.0 / context.viewScaleFactor();
+  const double rectSize = 9.0 / context.viewScaleFactor();
 
-  QgsStringMap properties;
+  QVariantMap properties;
   properties.insert( QStringLiteral( "name" ), QStringLiteral( "square" ) );
   properties.insert( QStringLiteral( "color" ), QStringLiteral( "0, 0, 0, 0" ) );
   properties.insert( QStringLiteral( "color_border" ), QStringLiteral( "blue" ) );
@@ -210,12 +214,12 @@ int QgsLayoutNodesItem::nodeAtPosition( QPointF node,
 {
   const QPointF pt = mapFromScene( node );
   double nearestDistance = std::numeric_limits<double>::max();
-  double maxDistance = ( searchInRadius ) ? radius : nearestDistance;
+  const double maxDistance = ( searchInRadius ) ? radius : nearestDistance;
   double distance = 0;
   int idx = -1;
 
   int i = 0;
-  for ( QPointF polyPt : mPolygon )
+  for ( const QPointF polyPt : std::as_const( mPolygon ) )
   {
     distance = computeDistance( pt, polyPt );
     if ( distance < nearestDistance && distance < maxDistance )
@@ -244,9 +248,12 @@ bool QgsLayoutNodesItem::nodePosition( const int index, QPointF &position ) cons
 
 bool QgsLayoutNodesItem::removeNode( const int index )
 {
-  bool rc = _removeNode( index );
+  const bool rc = _removeNode( index );
   if ( rc )
+  {
     updateSceneRect();
+    emit clipPathChanged();
+  }
   return rc;
 }
 
@@ -256,10 +263,10 @@ bool QgsLayoutNodesItem::moveNode( const int index, QPointF pt )
 
   if ( index >= 0 && index < mPolygon.size() )
   {
-    QPointF nodeItem = mapFromScene( pt );
+    const QPointF nodeItem = mapFromScene( pt );
     mPolygon.replace( index, nodeItem );
     updateSceneRect();
-
+    emit clipPathChanged();
     rc = true;
   }
 
@@ -270,16 +277,16 @@ bool QgsLayoutNodesItem::readPropertiesFromElement( const QDomElement &itemElem,
     const QDomDocument &, const QgsReadWriteContext &context )
 {
   // restore style
-  QDomElement styleSymbolElem = itemElem.firstChildElement( QStringLiteral( "symbol" ) );
+  const QDomElement styleSymbolElem = itemElem.firstChildElement( QStringLiteral( "symbol" ) );
   if ( !styleSymbolElem.isNull() )
     _readXmlStyle( styleSymbolElem, context );
 
   // restore nodes
   mPolygon.clear();
-  QDomNodeList nodesList = itemElem.elementsByTagName( QStringLiteral( "node" ) );
+  const QDomNodeList nodesList = itemElem.elementsByTagName( QStringLiteral( "node" ) );
   for ( int i = 0; i < nodesList.size(); i++ )
   {
-    QDomElement nodeElem = nodesList.at( i ).toElement();
+    const QDomElement nodeElem = nodesList.at( i ).toElement();
     QPointF newPt;
     newPt.setX( nodeElem.attribute( QStringLiteral( "x" ) ).toDouble() );
     newPt.setY( nodeElem.attribute( QStringLiteral( "y" ) ).toDouble() );
@@ -287,6 +294,7 @@ bool QgsLayoutNodesItem::readPropertiesFromElement( const QDomElement &itemElem,
   }
 
   emit changed();
+  emit clipPathChanged();
   return true;
 }
 
@@ -305,6 +313,7 @@ void QgsLayoutNodesItem::rescaleToFitBoundingBox()
   QTransform trans;
   trans = trans.scale( ratioX, ratioY );
   mPolygon = trans.map( mPolygon );
+  emit clipPathChanged();
 }
 
 bool QgsLayoutNodesItem::setSelectedNode( const int index )
@@ -351,7 +360,7 @@ bool QgsLayoutNodesItem::writePropertiesToElement( QDomElement &elem, QDomDocume
 
   // write nodes
   QDomElement nodesElem = doc.createElement( QStringLiteral( "nodes" ) );
-  for ( QPointF pt : mPolygon )
+  for ( const QPointF pt : std::as_const( mPolygon ) )
   {
     QDomElement nodeElem = doc.createElement( QStringLiteral( "node" ) );
     nodeElem.setAttribute( QStringLiteral( "x" ), QString::number( pt.x() ) );

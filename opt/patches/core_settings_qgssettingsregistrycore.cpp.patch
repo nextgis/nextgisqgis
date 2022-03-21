@@ -1,0 +1,24 @@
+--- a/src/core/settings/qgssettingsregistrycore.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/settings/qgssettingsregistrycore.cpp	2022-03-09 17:07:13.000000000 +0300
+@@ -16,7 +16,7 @@
+ #include "qgssettingsregistrycore.h"
+ 
+ #include "qgslayout.h"
+-#include "qgslocator.h"
++// #include "qgslocator.h"
+ #include "qgsnetworkaccessmanager.h"
+ #include "qgsnewsfeedparser.h"
+ #include "qgsprocessing.h"
+@@ -30,9 +30,9 @@
+ {
+   addSettingsEntry( &QgsLayout::settingsSearchPathForTemplates );
+ 
+-  addSettingsEntry( &QgsLocator::settingsLocatorFilterEnabled );
+-  addSettingsEntry( &QgsLocator::settingsLocatorFilterDefault );
+-  addSettingsEntry( &QgsLocator::settingsLocatorFilterPrefix );
++//   addSettingsEntry( &QgsLocator::settingsLocatorFilterEnabled );
++//   addSettingsEntry( &QgsLocator::settingsLocatorFilterDefault );
++//   addSettingsEntry( &QgsLocator::settingsLocatorFilterPrefix );
+ 
+   addSettingsEntry( &QgsNetworkAccessManager::settingsNetworkTimeout );
+ 

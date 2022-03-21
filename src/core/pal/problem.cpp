@@ -86,11 +86,17 @@ void Problem::reduce()
 
   while ( run )
   {
+    if ( pal->isCanceled() )
+      break;
+
     run = false;
     for ( i = 0; i < static_cast< int >( mFeatureCount ); i++ )
     {
+      if ( pal->isCanceled() )
+        break;
+
       // ok[i] = true;
-      for ( j = 0; j < mFeatNbLp[i]; j++ )  // foreach candidate
+      for ( j = 0; j < mFeatNbLp[i]; j++ )  // for each candidate
       {
         if ( !ok[mFeatStartId[i] + j] )
         {
@@ -112,9 +118,9 @@ void Problem::reduce()
               lp2->getBoundingBox( amin, amax );
 
               mNbOverlap -= lp2->getNumOverlaps();
-              mAllCandidatesIndex.intersects( QgsRectangle( amin[0], amin[1], amax[0], amax[1] ), [&lp2]( const LabelPosition * lp ) -> bool
+              mAllCandidatesIndex.intersects( QgsRectangle( amin[0], amin[1], amax[0], amax[1] ), [&lp2, this]( const LabelPosition * lp ) -> bool
               {
-                if ( lp2->isInConflict( lp ) )
+                if ( candidatesAreConflicting( lp2, lp ) )
                 {
                   const_cast< LabelPosition * >( lp )->decrementNumOverlaps();
                   lp2->decrementNumOverlaps();
@@ -137,7 +143,7 @@ void Problem::reduce()
   delete[] ok;
 }
 
-void ignoreLabel( const LabelPosition *lp, PriorityQueue &list, PalRtree< LabelPosition > &candidatesIndex )
+void Problem::ignoreLabel( const LabelPosition *lp, PriorityQueue &list, PalRtree< LabelPosition > &candidatesIndex )
 {
   if ( list.isIn( lp->getId() ) )
   {
@@ -146,9 +152,9 @@ void ignoreLabel( const LabelPosition *lp, PriorityQueue &list, PalRtree< LabelP
     double amin[2];
     double amax[2];
     lp->getBoundingBox( amin, amax );
-    candidatesIndex.intersects( QgsRectangle( amin[0], amin[1], amax[0], amax[1] ), [lp, &list]( const LabelPosition * lp2 )->bool
+    candidatesIndex.intersects( QgsRectangle( amin[0], amin[1], amax[0], amax[1] ), [lp, &list, this]( const LabelPosition * lp2 )->bool
     {
-      if ( lp2->getId() != lp->getId() && list.isIn( lp2->getId() ) && lp2->isInConflict( lp ) )
+      if ( lp2->getId() != lp->getId() && list.isIn( lp2->getId() ) && candidatesAreConflicting( lp2, lp ) )
       {
         list.decreaseKey( lp2->getId() );
       }
@@ -203,7 +209,7 @@ void Problem::init_sol_falp()
       //error
     }
 
-    int probFeatId = lp->getProblemFeatureId();
+    const int probFeatId = lp->getProblemFeatureId();
     mSol.activeLabelIds[probFeatId] = label;
 
     for ( int i = mFeatStartId[probFeatId]; i < mFeatStartId[probFeatId] + mFeatNbLp[probFeatId]; i++ )
@@ -215,9 +221,9 @@ void Problem::init_sol_falp()
     lp->getBoundingBox( amin, amax );
 
     std::vector< const LabelPosition * > conflictingPositions;
-    mAllCandidatesIndex.intersects( QgsRectangle( amin[0], amin[1], amax[0], amax[1] ), [lp, &conflictingPositions]( const LabelPosition * lp2 ) ->bool
+    mAllCandidatesIndex.intersects( QgsRectangle( amin[0], amin[1], amax[0], amax[1] ), [lp, &conflictingPositions, this]( const LabelPosition * lp2 ) ->bool
     {
-      if ( lp->isInConflict( lp2 ) )
+      if ( candidatesAreConflicting( lp, lp2 ) )
       {
         conflictingPositions.emplace_back( lp2 );
       }
@@ -253,9 +259,9 @@ void Problem::init_sol_falp()
           lp->getBoundingBox( amin, amax );
 
 
-          mActiveCandidatesIndex.intersects( QgsRectangle( amin[0], amin[1], amax[0], amax[1] ), [&lp]( const LabelPosition * lp2 )->bool
+          mActiveCandidatesIndex.intersects( QgsRectangle( amin[0], amin[1], amax[0], amax[1] ), [&lp, this]( const LabelPosition * lp2 )->bool
           {
-            if ( lp->isInConflict( lp2 ) )
+            if ( candidatesAreConflicting( lp, lp2 ) )
             {
               lp->incrementNumOverlaps();
             }
@@ -277,6 +283,11 @@ void Problem::init_sol_falp()
   }
 }
 
+bool Problem::candidatesAreConflicting( const LabelPosition *lp1, const LabelPosition *lp2 ) const
+{
+  return  pal->candidatesAreConflicting( lp1, lp2 );
+}
+
 inline Chain *Problem::chain( int seed )
 {
   int lid;
@@ -290,7 +301,7 @@ inline Chain *Problem::chain( int seed )
   int retainedLabel;
   Chain *retainedChain = nullptr;
 
-  int max_degree = pal->mEjChainDeg;
+  const int max_degree = pal->mEjChainDeg;
 
   int seedNbLp;
 
@@ -338,7 +349,7 @@ inline Chain *Problem::chain( int seed )
             lp->getBoundingBox( amin, amax );
             mActiveCandidatesIndex.intersects( QgsRectangle( amin[0], amin[1], amax[0], amax[1] ), [lp, &delta_tmp, &conflicts, &currentChain, this]( const LabelPosition * lp2 ) -> bool
             {
-              if ( lp2->isInConflict( lp ) )
+              if ( candidatesAreConflicting( lp2, lp ) )
               {
                 const int feat = lp2->getProblemFeatureId();
 
@@ -442,7 +453,7 @@ inline Chain *Problem::chain( int seed )
               // hide all conflictual candidates
               while ( !conflicts.isEmpty() )
               {
-                int ftid = conflicts.takeFirst();
+                const int ftid = conflicts.takeFirst();
                 newChain->feat[j] = ftid;
                 newChain->label[j] = -1;
                 newChain->delta += mInactiveCost[ftid];
@@ -503,7 +514,7 @@ inline Chain *Problem::chain( int seed )
       {
         conflicts.clear();
       }
-    } // end foreach labelposition
+    } // end for each labelposition
 
     if ( next_seed == -1 )
     {
@@ -534,6 +545,7 @@ inline Chain *Problem::chain( int seed )
 
 
       tmpsol[seed] = retainedLabel;
+      // cppcheck-suppress invalidFunctionArg
       delta += mLabelPositions.at( retainedLabel )->cost();
       seed = next_seed;
     }
@@ -558,7 +570,7 @@ inline Chain *Problem::chain( int seed )
 }
 
 
-void Problem::chain_search()
+void Problem::chainSearch( QgsRenderContext & )
 {
   if ( mFeatureCount == 0 )
     return;
@@ -574,11 +586,7 @@ void Problem::chain_search()
 
   std::fill( ok, ok + mFeatureCount, false );
 
-  //initialization();
   init_sol_falp();
-
-  //check_solution();
-  solution_cost();
 
   int iter = 0;
 
@@ -587,9 +595,6 @@ void Problem::chain_search()
 
   while ( true )
   {
-
-    //check_solution();
-
     for ( seed = ( iter + 1 ) % mFeatureCount;
           ok[seed] && seed != iter;
           seed = ( seed + 1 ) % mFeatureCount )
@@ -617,9 +622,9 @@ void Problem::chain_search()
           LabelPosition *old = mLabelPositions[ mSol.activeLabelIds[fid] ].get();
           old->removeFromIndex( mActiveCandidatesIndex );
           old->getBoundingBox( amin, amax );
-          mAllCandidatesIndex.intersects( QgsRectangle( amin[0], amin[1], amax[0], amax[1] ), [&ok, old]( const LabelPosition * lp ) ->bool
+          mAllCandidatesIndex.intersects( QgsRectangle( amin[0], amin[1], amax[0], amax[1] ), [&ok, old, this]( const LabelPosition * lp ) ->bool
           {
-            if ( old->isInConflict( lp ) )
+            if ( candidatesAreConflicting( old, lp ) )
             {
               ok[lp->getProblemFeatureId()] = false;
             }
@@ -637,11 +642,10 @@ void Problem::chain_search()
 
         ok[fid] = false;
       }
-      mSol.totalCost += retainedChain->delta;
     }
     else
     {
-      // no chain or the one is not god enough
+      // no chain or the one is not good enough
       ok[seed] = true;
     }
 
@@ -649,77 +653,48 @@ void Problem::chain_search()
     popit++;
   }
 
-  solution_cost();
   delete[] ok;
 }
 
 QList<LabelPosition *> Problem::getSolution( bool returnInactive, QList<LabelPosition *> *unlabeled )
 {
-  QList<LabelPosition *> solList;
+  QList<LabelPosition *> finalLabelPlacements;
+  finalLabelPlacements.reserve( mFeatureCount );
 
+  // loop through all features to be labeled
   for ( std::size_t i = 0; i < mFeatureCount; i++ )
   {
-    if ( mSol.activeLabelIds[i] != -1 )
+    const int labelId = mSol.activeLabelIds[i];
+    const bool foundNonOverlappingPlacement = labelId != -1;
+    const int startIndexForLabelPlacements = mFeatStartId[i];
+    const bool foundCandidatesForFeature = startIndexForLabelPlacements < static_cast< int >( mLabelPositions.size() );
+
+    if ( foundNonOverlappingPlacement )
     {
-      solList.push_back( mLabelPositions[ mSol.activeLabelIds[i] ].get() ); // active labels
+      finalLabelPlacements.push_back( mLabelPositions[ labelId ].get() ); // active labels
     }
-    else if ( returnInactive
-              || ( mFeatStartId[i] < static_cast< int >( mLabelPositions.size() ) &&
-                   ( mLabelPositions.at( mFeatStartId[i] )->getFeaturePart()->layer()->displayAll()
-                     || mLabelPositions.at( mFeatStartId[i] )->getFeaturePart()->alwaysShow() ) ) )
+    else if ( foundCandidatesForFeature &&
+              ( returnInactive // allowing any overlapping labels regardless of where they are from
+                || mLabelPositions.at( startIndexForLabelPlacements )->getFeaturePart()->layer()->displayAll() // allowing overlapping labels for the layer
+                || mLabelPositions.at( startIndexForLabelPlacements )->getFeaturePart()->alwaysShow() ) ) // allowing overlapping labels for the feature
     {
-      solList.push_back( mLabelPositions[ mFeatStartId[i] ].get() ); // unplaced label
+      finalLabelPlacements.push_back( mLabelPositions[ startIndexForLabelPlacements ].get() ); // unplaced label
     }
     else if ( unlabeled )
     {
-      const int startPos = mFeatStartId[i];
       // need to be careful here -- if the next feature's start id is the same as this one, then this feature had no candidates!
-      if ( startPos < static_cast< int >( mLabelPositions.size() ) && ( i == mFeatureCount - 1 || startPos != mFeatStartId[i + 1] ) )
-        unlabeled->push_back( mLabelPositions[ startPos ].get() );
+      if ( foundCandidatesForFeature && ( i == mFeatureCount - 1 || startIndexForLabelPlacements != mFeatStartId[i + 1] ) )
+        unlabeled->push_back( mLabelPositions[ startIndexForLabelPlacements ].get() );
     }
   }
 
   // unlabeled features also include those with no candidates
   if ( unlabeled )
   {
+    unlabeled->reserve( mPositionsWithNoCandidates.size() );
     for ( const std::unique_ptr< LabelPosition > &position : mPositionsWithNoCandidates )
       unlabeled->append( position.get() );
   }
 
-  return solList;
-}
-
-void Problem::solution_cost()
-{
-  mSol.totalCost = 0.0;
-
-  LabelPosition *lp = nullptr;
-
-  double amin[2];
-  double amax[2];
-
-  for ( std::size_t i = 0; i < mFeatureCount; i++ )
-  {
-    if ( mSol.activeLabelIds[i] == -1 )
-    {
-      mSol.totalCost += mInactiveCost[i];
-    }
-    else
-    {
-      lp = mLabelPositions[ mSol.activeLabelIds[i] ].get();
-
-      lp->getBoundingBox( amin, amax );
-      mActiveCandidatesIndex.intersects( QgsRectangle( amin[0], amin[1], amax[0], amax[1] ), [&lp, this]( const LabelPosition * lp2 )->bool
-      {
-        if ( lp->isInConflict( lp2 ) )
-        {
-          mSol.totalCost += mInactiveCost[lp2->getProblemFeatureId()] + lp2->cost();
-        }
-
-        return true;
-      } );
-
-      mSol.totalCost += lp->cost();
-    }
-  }
+  return finalLabelPlacements;
 }

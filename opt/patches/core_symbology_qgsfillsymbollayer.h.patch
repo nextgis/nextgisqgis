@@ -1,0 +1,43 @@
+--- a/src/core/symbology/qgsfillsymbollayer.h	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/symbology/qgsfillsymbollayer.h	2022-03-07 23:14:46.000000000 +0300
+@@ -172,13 +172,13 @@
+ 
+     double estimateMaxBleed( const QgsRenderContext &context ) const override;
+ 
+-    double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
+-    QColor dxfColor( QgsSymbolRenderContext &context ) const override;
+-    double dxfAngle( QgsSymbolRenderContext &context ) const override;
+-
+-    Qt::PenStyle dxfPenStyle() const override;
+-    QColor dxfBrushColor( QgsSymbolRenderContext &context ) const override;
+-    Qt::BrushStyle dxfBrushStyle() const override;
++    // double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
++    // QColor dxfColor( QgsSymbolRenderContext &context ) const override;
++    // double dxfAngle( QgsSymbolRenderContext &context ) const override;
++
++    // Qt::PenStyle dxfPenStyle() const override;
++    // QColor dxfBrushColor( QgsSymbolRenderContext &context ) const override;
++    // Qt::BrushStyle dxfBrushStyle() const override;
+ 
+   protected:
+     QBrush mBrush;
+@@ -837,8 +837,8 @@
+     QgsUnitTypes::RenderUnit outputUnit() const override;
+     void setMapUnitScale( const QgsMapUnitScale &scale ) override;
+     QgsMapUnitScale mapUnitScale() const override;
+-    double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
+-    Qt::PenStyle dxfPenStyle() const override;
++    // double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
++    // Qt::PenStyle dxfPenStyle() const override;
+     QVariantMap properties() const override;
+ 
+   protected:
+@@ -1144,7 +1144,7 @@
+     QgsSymbol *subSymbol() override;
+     bool setSubSymbol( QgsSymbol *symbol SIP_TRANSFER ) override;
+     double estimateMaxBleed( const QgsRenderContext &context ) const override;
+-    QColor dxfColor( QgsSymbolRenderContext &context ) const override;
++    // QColor dxfColor( QgsSymbolRenderContext &context ) const override;
+     QSet<QString> usedAttributes( const QgsRenderContext &context ) const override;
+     bool hasDataDefinedProperties() const override;
+ 

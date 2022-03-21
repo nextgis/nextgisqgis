@@ -18,6 +18,8 @@
 //
 // Ideally one day the implementation will go to GEOS library...
 
+#if ( GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR<8 )
+
 #include "qgsgeometry.h"
 #include "qgsgeos.h"
 #include "qgslogger.h"
@@ -815,7 +817,7 @@ static GEOSGeometry *LWGEOM_GEOS_makeValidCollection( const GEOSGeometry *gin, Q
   int nvgeoms = GEOSGetNumGeometries_r( handle, gin );
   if ( nvgeoms == -1 )
   {
-    errorMessage = QStringLiteral( "GEOSGetNumGeometries: %1" ).arg( QStringLiteral( "?" ) );
+    errorMessage = QStringLiteral( "GEOSGetNumGeometries: %1" ).arg( QLatin1String( "?" ) );
     return nullptr;
   }
 
@@ -968,3 +970,5 @@ std::unique_ptr< QgsAbstractGeometry > _qgis_lwgeom_make_valid( const QgsAbstrac
 
   return lwgeom_out;
 }
+
+#endif

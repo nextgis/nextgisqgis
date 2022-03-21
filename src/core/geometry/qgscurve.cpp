@@ -22,6 +22,7 @@
 #include "qgspoint.h"
 #include "qgsmultipoint.h"
 #include "qgsgeos.h"
+#include "qgsvertexid.h"
 
 bool QgsCurve::operator==( const QgsAbstractGeometry &other ) const
 {
@@ -37,25 +38,40 @@ bool QgsCurve::operator!=( const QgsAbstractGeometry &other ) const
   return !operator==( other );
 }
 
-bool QgsCurve::isClosed() const
+bool QgsCurve::isClosed2D() const
 {
   if ( numPoints() == 0 )
     return false;
 
   //don't consider M-coordinates when testing closedness
-  QgsPoint start = startPoint();
-  QgsPoint end = endPoint();
+  const QgsPoint start = startPoint();
+  const QgsPoint end = endPoint();
 
-  bool closed = qgsDoubleNear( start.x(), end.x(), 1E-8 ) &&
-                qgsDoubleNear( start.y(), end.y(), 1E-8 );
+  return qgsDoubleNear( start.x(), end.x() ) &&
+         qgsDoubleNear( start.y(), end.y() );
+}
+bool QgsCurve::isClosed() const
+{
+  bool closed = isClosed2D();
   if ( is3D() && closed )
-    closed &= qgsDoubleNear( start.z(), end.z(), 1E-8 ) || ( std::isnan( start.z() ) && std::isnan( end.z() ) );
+  {
+    const QgsPoint start = startPoint();
+    const QgsPoint end = endPoint();
+    closed &= qgsDoubleNear( start.z(), end.z() ) || ( std::isnan( start.z() ) && std::isnan( end.z() ) );
+  }
   return closed;
 }
 
 bool QgsCurve::isRing() const
 {
   return ( isClosed() && numPoints() >= 4 );
+}
+
+QPainterPath QgsCurve::asQPainterPath() const
+{
+  QPainterPath p;
+  addToPainterPath( p );
+  return p;
 }
 
 QgsCoordinateSequence QgsCurve::coordinateSequence() const
@@ -95,7 +111,7 @@ bool QgsCurve::nextVertex( QgsVertexId &id, QgsPoint &vertex ) const
 
 void QgsCurve::adjacentVertices( QgsVertexId vertex, QgsVertexId &previousVertex, QgsVertexId &nextVertex ) const
 {
-  int n = numPoints();
+  const int n = numPoints();
   if ( vertex.vertex < 0 || vertex.vertex >= n )
   {
     previousVertex = QgsVertexId();
@@ -182,7 +198,7 @@ int QgsCurve::partCount() const
 QgsPoint QgsCurve::vertexAt( QgsVertexId id ) const
 {
   QgsPoint v;
-  QgsVertexId::VertexType type;
+  Qgis::VertexType type;
   pointAt( id.vertex, v, type );
   return v;
 }
@@ -190,6 +206,33 @@ QgsPoint QgsCurve::vertexAt( QgsVertexId id ) const
 QgsCurve *QgsCurve::toCurveType() const
 {
   return clone();
+}
+
+void QgsCurve::normalize()
+{
+  if ( isEmpty() )
+    return;
+
+  if ( !isClosed() )
+  {
+    return;
+  }
+
+  int minCoordinateIndex = 0;
+  QgsPoint minCoord;
+  int i = 0;
+  for ( auto it = vertices_begin(); it != vertices_end(); ++it )
+  {
+    const QgsPoint vertex = *it;
+    if ( minCoord.isEmpty() || minCoord.compareTo( &vertex ) > 0 )
+    {
+      minCoord = vertex;
+      minCoordinateIndex = i;
+    }
+    i++;
+  }
+
+  scroll( minCoordinateIndex );
 }
 
 QgsRectangle QgsCurve::boundingBox() const
@@ -201,7 +244,7 @@ QgsRectangle QgsCurve::boundingBox() const
   return mBoundingBox;
 }
 
-bool QgsCurve::isValid( QString &error, int flags ) const
+bool QgsCurve::isValid( QString &error, Qgis::GeometryValidityFlags flags ) const
 {
   if ( flags == 0 && mHasCachedValidity )
   {
@@ -210,8 +253,8 @@ bool QgsCurve::isValid( QString &error, int flags ) const
     return error.isEmpty();
   }
 
-  QgsGeos geos( this );
-  bool res = geos.isValid( &error, flags & QgsGeometry::FlagAllowSelfTouchingHoles, nullptr );
+  const QgsGeos geos( this );
+  const bool res = geos.isValid( &error, flags & Qgis::GeometryValidityFlag::AllowSelfTouchingHoles, nullptr );
   if ( flags == 0 )
   {
     mValidityFailureReason = !res ? error : QString();
@@ -222,14 +265,8 @@ bool QgsCurve::isValid( QString &error, int flags ) const
 
 QPolygonF QgsCurve::asQPolygonF() const
 {
-  const int nb = numPoints();
-  QPolygonF points;
-  points.reserve( nb );
-  for ( int i = 0; i < nb; ++i )
-  {
-    points << QPointF( xAt( i ), yAt( i ) );
-  }
-  return points;
+  std::unique_ptr< QgsLineString > segmentized( curveToLine() );
+  return segmentized->asQPolygonF();
 }
 
 double QgsCurve::straightDistance2d() const
@@ -239,18 +276,18 @@ double QgsCurve::straightDistance2d() const
 
 double QgsCurve::sinuosity() const
 {
-  double d = straightDistance2d();
+  const double d = straightDistance2d();
   if ( qgsDoubleNear( d, 0.0 ) )
     return std::numeric_limits<double>::quiet_NaN();
 
   return length() / d;
 }
 
-QgsCurve::Orientation QgsCurve::orientation() const
+Qgis::AngularDirection QgsCurve::orientation() const
 {
   double a = 0;
   sumUpArea( a );
-  return a < 0 ? Clockwise : CounterClockwise;
+  return a < 0 ? Qgis::AngularDirection::Clockwise : Qgis::AngularDirection::CounterClockwise;
 }
 
 void QgsCurve::clearCache() const
@@ -269,8 +306,8 @@ int QgsCurve::childCount() const
 QgsPoint QgsCurve::childPoint( int index ) const
 {
   QgsPoint point;
-  QgsVertexId::VertexType type;
-  bool res = pointAt( index, point, type );
+  Qgis::VertexType type;
+  const bool res = pointAt( index, point, type );
   Q_ASSERT( res );
   Q_UNUSED( res )
   return point;
@@ -280,13 +317,13 @@ bool QgsCurve::snapToGridPrivate( double hSpacing, double vSpacing, double dSpac
                                   const QVector<double> &srcX, const QVector<double> &srcY, const QVector<double> &srcZ, const QVector<double> &srcM,
                                   QVector<double> &outX, QVector<double> &outY, QVector<double> &outZ, QVector<double> &outM ) const
 {
-  int length = numPoints();
+  const int length = numPoints();
 
   if ( length <= 0 )
     return false;
 
-  bool hasZ = is3D();
-  bool hasM = isMeasure();
+  const bool hasZ = is3D();
+  const bool hasM = isMeasure();
 
   // helper functions
   auto roundVertex = [hSpacing, vSpacing, dSpacing, mSpacing, hasZ, hasM, &srcX, &srcY, &srcZ, &srcM]( QgsPoint & out, int i )
@@ -341,7 +378,7 @@ bool QgsCurve::snapToGridPrivate( double hSpacing, double vSpacing, double dSpac
   };
 
   // temporary values
-  QgsWkbTypes::Type pointType = QgsWkbTypes::zmType( QgsWkbTypes::Point, hasZ, hasM );
+  const QgsWkbTypes::Type pointType = QgsWkbTypes::zmType( QgsWkbTypes::Point, hasZ, hasM );
   QgsPoint last( pointType );
   QgsPoint current( pointType );
 

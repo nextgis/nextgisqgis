@@ -19,7 +19,6 @@
 #include "qgis_core.h"
 #include "qgis_sip.h"
 #include "qgsstyle.h"
-#include "qgssymbol.h"
 #include <QAbstractItemModel>
 #include <QSortFilterProxyModel>
 #include <QIcon>
@@ -27,11 +26,73 @@
 
 class QgsSymbol;
 
+#ifndef SIP_RUN
+
+/**
+ * \ingroup core
+ * \class QgsAbstractStyleEntityIconGenerator
+ *
+ * \brief An abstract base class for icon generators for a QgsStyleModel.
+ *
+ * This base class allows for creation of specialized icon generators for
+ * entities in a style database, and allows for deferred icon generation.
+ *
+ * \note Not available in Python bindings
+ * \since QGIS 3.16
+ */
+class CORE_EXPORT QgsAbstractStyleEntityIconGenerator : public QObject
+{
+    Q_OBJECT
+
+  public:
+
+    /**
+     * Constructor for QgsAbstractStyleEntityIconGenerator, with the specified \a parent
+     * object.
+     */
+    QgsAbstractStyleEntityIconGenerator( QObject *parent );
+
+    /**
+     * Triggers generation of an icon for an entity from the specified \a style database,
+     * with matching entity \a type and \a name.
+     */
+    virtual void generateIcon( QgsStyle *style, QgsStyle::StyleEntity type, const QString &name ) = 0;
+
+    /**
+     * Sets the list of icon \a sizes to generate.
+     *
+     * \see iconSizes()
+     */
+    void setIconSizes( const QList< QSize > &sizes );
+
+    /**
+     * Returns the list of icon \a sizes to generate.
+     *
+     * \see setIconSizes()
+     */
+    QList< QSize > iconSizes() const;
+
+  signals:
+
+    /**
+     * Emitted when the \a icon for the style entity with matching \a type and \a name
+     * has been generated.
+     */
+    void iconGenerated( QgsStyle::StyleEntity type, const QString &name, const QIcon &icon );
+
+  private:
+
+    QList< QSize > mIconSizes;
+
+};
+
+#endif
+
 /**
  * \ingroup core
  * \class QgsStyleModel
  *
- * A QAbstractItemModel subclass for showing symbol and color ramp entities contained
+ * \brief A QAbstractItemModel subclass for showing symbol and color ramp entities contained
  * within a QgsStyle database.
  *
  * If you are creating a style model for the default application style (see QgsStyle::defaultStyle()),
@@ -60,9 +121,10 @@ class CORE_EXPORT QgsStyleModel: public QAbstractItemModel
     {
       TypeRole = Qt::UserRole + 1, //!< Style entity type, see QgsStyle::StyleEntity
       TagRole, //!< String list of tags
-      SymbolTypeRole, //!< Symbol type (for symbol entities)
+      SymbolTypeRole, //!< Symbol type (for symbol or legend patch shape entities)
       IsFavoriteRole, //!< Whether entity is flagged as a favorite
       LayerTypeRole, //!< Layer type (for label settings entities)
+      CompatibleGeometryTypesRole, //!< Compatible layer geometry types (for 3D symbols)
     };
 
     /**
@@ -98,46 +160,43 @@ class CORE_EXPORT QgsStyleModel: public QAbstractItemModel
      */
     void addDesiredIconSize( QSize size );
 
+    /**
+     * Sets the icon \a generator to use for deferred style entity icon generation.
+     *
+     * Currently this is used for 3D symbol icons only.
+     *
+     * \note Not available in Python bindings
+     * \since QGIS 3.16
+     */
+    static void setIconGenerator( QgsAbstractStyleEntityIconGenerator *generator ) SIP_SKIP;
+
   private slots:
 
-    void onSymbolAdded( const QString &name, QgsSymbol *symbol );
-    void onSymbolRemoved( const QString &name );
-    void onSymbolChanged( const QString &name );
-    void onSymbolRename( const QString &oldName, const QString &newName );
-    void onRampAdded( const QString &name );
-    void onRampRemoved( const QString &name );
-    void onRampChanged( const QString &name );
-    void onRampRename( const QString &oldName, const QString &newName );
-
-    void onTextFormatAdded( const QString &name );
-    void onTextFormatRemoved( const QString &name );
-    void onTextFormatChanged( const QString &name );
-    void onTextFormatRename( const QString &oldName, const QString &newName );
-
-    void onLabelSettingsAdded( const QString &name );
-    void onLabelSettingsRemoved( const QString &name );
-    void onLabelSettingsChanged( const QString &name );
-    void onLabelSettingsRename( const QString &oldName, const QString &newName );
-
+    void onEntityAdded( QgsStyle::StyleEntity type, const QString &name );
+    void onEntityRemoved( QgsStyle::StyleEntity type, const QString &name );
+    void onEntityChanged( QgsStyle::StyleEntity type, const QString &name );
+    void onEntityRename( QgsStyle::StyleEntity type, const QString &oldName, const QString &newName );
     void onTagsChanged( int entity, const QString &name, const QStringList &tags );
     void rebuildSymbolIcons();
+    void iconGenerated( QgsStyle::StyleEntity type, const QString &name, const QIcon &icon );
 
   private:
 
     QgsStyle *mStyle = nullptr;
-    QStringList mSymbolNames;
-    QStringList mRampNames;
-    QStringList mTextFormatNames;
-    QStringList mLabelSettingsNames;
+
+    QHash< QgsStyle::StyleEntity, QStringList > mEntityNames;
+
     QList< QSize > mAdditionalSizes;
     mutable std::unique_ptr< QgsExpressionContext > mExpressionContext;
 
-    mutable QHash< QString, QIcon > mSymbolIconCache;
-    mutable QHash< QString, QIcon > mColorRampIconCache;
-    mutable QHash< QString, QIcon > mTextFormatIconCache;
-    mutable QHash< QString, QIcon > mLabelSettingsIconCache;
+    mutable QHash< QgsStyle::StyleEntity, QHash< QString, QIcon > > mIconCache;
+
+    static QgsAbstractStyleEntityIconGenerator *sIconGenerator;
+    mutable QSet< QString > mPending3dSymbolIcons;
 
     QgsStyle::StyleEntity entityTypeFromRow( int row ) const;
+
+    int offsetForEntity( QgsStyle::StyleEntity entity ) const;
 
 };
 
@@ -145,7 +204,7 @@ class CORE_EXPORT QgsStyleModel: public QAbstractItemModel
  * \ingroup core
  * \class QgsStyleProxyModel
  *
- * A QSortFilterProxyModel subclass for showing filtered symbol and color ramps entries from a QgsStyle database.
+ * \brief A QSortFilterProxyModel subclass for showing filtered symbol and color ramps entries from a QgsStyle database.
  *
  * \see QgsStyleModel
  *
@@ -228,38 +287,38 @@ class CORE_EXPORT QgsStyleProxyModel: public QSortFilterProxyModel
     /**
      * Returns the symbol type filter.
      *
-     * \note This filter is only active if symbolTypeFilterEnabled() is TRUE, and has
+     * \note This filter is only active if Qgis::SymbolTypeFilterEnabled() is TRUE, and has
      * no effect on non-symbol entities (i.e. color ramps).
      *
      * \see setSymbolType()
      */
-    QgsSymbol::SymbolType symbolType() const;
+    Qgis::SymbolType symbolType() const;
 
     /**
      * Sets the symbol \a type filter.
      *
-     * \note This filter is only active if symbolTypeFilterEnabled() is TRUE.
+     * \note This filter is only active if Qgis::SymbolTypeFilterEnabled() is TRUE.
      *
-     * \see symbolType()
+     * \see Qgis::SymbolType()
      */
-    void setSymbolType( QgsSymbol::SymbolType type );
+    void setSymbolType( Qgis::SymbolType type );
 
     /**
      * Returns TRUE if filtering by symbol type is enabled.
      *
      * \see setSymbolTypeFilterEnabled()
-     * \see symbolType()
+     * \see Qgis::SymbolType()
      */
     bool symbolTypeFilterEnabled() const;
 
     /**
      * Sets whether filtering by symbol type is \a enabled.
      *
-     * If \a enabled is FALSE, then the value of symbolType() will have no
+     * If \a enabled is FALSE, then the value of Qgis::SymbolType() will have no
      * effect on the model filtering. This has
      * no effect on non-symbol entities (i.e. color ramps).
      *
-     * \see symbolTypeFilterEnabled()
+     * \see Qgis::SymbolTypeFilterEnabled()
      * \see setSymbolType()
      */
     void setSymbolTypeFilterEnabled( bool enabled );
@@ -268,7 +327,7 @@ class CORE_EXPORT QgsStyleProxyModel: public QSortFilterProxyModel
      * Returns the layer type filter, or QgsWkbTypes::UnknownGeometry if no
      * layer type filter is present.
      *
-     * This setting has no effect on non-label settings entities (i.e. color ramps).
+     * This setting has an effect on label settings entities and 3d symbols only.
      *
      * \see setLayerType()
      */
@@ -375,7 +434,7 @@ class CORE_EXPORT QgsStyleProxyModel: public QSortFilterProxyModel
     QList< QgsStyle::StyleEntity > mEntityFilters = QList< QgsStyle::StyleEntity >() << QgsStyle::SymbolEntity;
 
     bool mSymbolTypeFilterEnabled = false;
-    QgsSymbol::SymbolType mSymbolType = QgsSymbol::Marker;
+    Qgis::SymbolType mSymbolType = Qgis::SymbolType::Marker;
 
     QgsWkbTypes::GeometryType mLayerType = QgsWkbTypes::UnknownGeometry;
 

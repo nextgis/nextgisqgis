@@ -1,0 +1,28 @@
+--- a/src/core/geometry/qgsgeometry.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/geometry/qgsgeometry.cpp	2022-03-09 00:10:43.000000000 +0300
+@@ -17,7 +17,7 @@
+ #include <cstdarg>
+ #include <cstdio>
+ #include <cmath>
+-#include <nlohmann/json.hpp>
++// #include <nlohmann/json.hpp>
+ #include <QCache>
+ 
+ #include "qgis.h"
+@@ -1426,14 +1426,14 @@
+ 
+ QString QgsGeometry::asJson( int precision ) const
+ {
+-  return QString::fromStdString( asJsonObject( precision ).dump() );
++  return QString::fromStdString( asJsonObject( precision ).Format(CPLJSONObject::PrettyFormat::Plain) );
+ }
+ 
+ json QgsGeometry::asJsonObject( int precision ) const
+ {
+   if ( !d->geometry )
+   {
+-    return nullptr;
++    return CPLJSONObject();
+   }
+   return d->geometry->asJsonObject( precision );
+ 

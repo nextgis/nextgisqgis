@@ -22,9 +22,9 @@
 #include "qgis_sip.h"
 #include "qgsabstractgeometry.h"
 #include "qgsrectangle.h"
+#include <QPainterPath>
 
 class QgsLineString;
-class QPainterPath;
 
 /**
  * \ingroup core
@@ -32,7 +32,7 @@ class QPainterPath;
  * \brief Abstract base class for curved geometry type
  * \since QGIS 2.10
  */
-class CORE_EXPORT QgsCurve: public QgsAbstractGeometry
+class CORE_EXPORT QgsCurve: public QgsAbstractGeometry SIP_ABSTRACT
 {
   public:
 
@@ -66,13 +66,26 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry
 
     /**
      * Returns TRUE if the curve is closed.
+     *
+     * \see isClosed2D()
      */
-    virtual bool isClosed() const;
+    virtual bool isClosed() const SIP_HOLDGIL;
+
+    /**
+     * Returns true if the curve is closed.
+     *
+     * Unlike isClosed. It looks only for XY coordinates.
+     *
+     * \see isClosed()
+     *
+     * \since QGIS 3.20
+     */
+    virtual bool isClosed2D() const SIP_HOLDGIL;
 
     /**
      * Returns TRUE if the curve is a ring.
      */
-    virtual bool isRing() const;
+    virtual bool isRing() const SIP_HOLDGIL;
 
     /**
      * Returns a new line string geometry corresponding to a segmentized approximation
@@ -89,6 +102,7 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry
      * Adds a curve to a painter path.
      */
     virtual void addToPainterPath( QPainterPath &path ) const = 0;
+    QPainterPath asQPainterPath() const override;
 
     /**
      * Draws the curve as a polygon on the specified QPainter.
@@ -139,7 +153,19 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry
      * \param type will be set to the vertex type of the node
      * \returns TRUE if node exists within the curve
      */
-    virtual bool pointAt( int node, QgsPoint &point SIP_OUT, QgsVertexId::VertexType &type SIP_OUT ) const = 0;
+    virtual bool pointAt( int node, QgsPoint &point SIP_OUT, Qgis::VertexType &type SIP_OUT ) const = 0;
+
+    /**
+     * Returns the index of the first vertex matching the given \a point, or -1 if a matching
+     * vertex is not found.
+     *
+     * \note If the curve has m or z values then the search \a point must have exactly matching
+     * m and z values in order to be matched against the curve's vertices.
+     * \note This method only matches against segment vertices, not curve vertices.
+     *
+     * \since QGIS 3.20
+     */
+    virtual int indexOf( const QgsPoint &point ) const = 0;
 
     /**
      * Returns a reversed copy of the curve, where the direction of the curve has been flipped.
@@ -154,7 +180,8 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry
     /**
      * Returns a geometry without curves. Caller takes ownership
      * \param tolerance segmentation tolerance
-     * \param toleranceType maximum segmentation angle or maximum difference between approximation and curve*/
+     * \param toleranceType maximum segmentation angle or maximum difference between approximation and curve
+    */
     QgsCurve *segmentize( double tolerance = M_PI_2 / 90, SegmentationToleranceType toleranceType = MaximumAngle ) const override SIP_FACTORY;
 
     int vertexCount( int part = 0, int ring = 0 ) const override;
@@ -162,9 +189,10 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry
     int partCount() const override;
     QgsPoint vertexAt( QgsVertexId id ) const override;
     QgsCurve *toCurveType() const override SIP_FACTORY;
+    void normalize() final SIP_HOLDGIL;
 
     QgsRectangle boundingBox() const override;
-    bool isValid( QString &error SIP_OUT, int flags = 0 ) const override;
+    bool isValid( QString &error SIP_OUT, Qgis::GeometryValidityFlags flags = Qgis::GeometryValidityFlags() ) const override;
 
     /**
      * Returns the x-coordinate of the specified node in the line string.
@@ -232,13 +260,6 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry
      */
     double sinuosity() const;
 
-    //! Curve orientation
-    enum Orientation
-    {
-      Clockwise, //!< Clockwise orientation
-      CounterClockwise, //!< Counter-clockwise orientation
-    };
-
     /**
      * Returns the curve's orientation, e.g. clockwise or counter-clockwise.
      *
@@ -246,7 +267,20 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry
      *
      * \since QGIS 3.6
      */
-    Orientation orientation() const;
+    Qgis::AngularDirection orientation() const;
+
+    /**
+     * Scrolls the curve vertices so that they start with the vertex at the given index.
+     *
+     * \warning This should only be called on closed curves, or the shape of the curve will be altered and
+     * the result is undefined.
+     *
+     * \warning The \a firstVertexIndex must correspond to a segment vertex and not a curve point or the result
+     * is undefined.
+     *
+     * \since QGIS 3.20
+     */
+    virtual void scroll( int firstVertexIndex ) = 0;
 
 #ifndef SIP_RUN
 
@@ -257,18 +291,31 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry
      * \note Not available in Python. Objects will be automatically be converted to the appropriate target type.
      * \since QGIS 3.0
      */
-    inline const QgsCurve *cast( const QgsAbstractGeometry *geom ) const
+    inline static const QgsCurve *cast( const QgsAbstractGeometry *geom )
     {
       if ( !geom )
         return nullptr;
 
-      QgsWkbTypes::Type type = geom->wkbType();
+      const QgsWkbTypes::Type type = geom->wkbType();
       if ( QgsWkbTypes::geometryType( type ) == QgsWkbTypes::LineGeometry && QgsWkbTypes::isSingleType( type ) )
       {
         return static_cast<const QgsCurve *>( geom );
       }
       return nullptr;
     }
+
+    /**
+     * Splits the curve at the specified vertex \a index, returning two curves which represent the portion of the
+     * curve up to an including the vertex at \a index, and the portion of the curve from the vertex at \a index (inclusive)
+     * to the end of the curve.
+     *
+     * \note The vertex \a index must correspond to a segment vertex, not a curve vertex.
+     *
+     * \note Not available in Python bindings.
+     * \since QGIS 3.20
+     */
+    virtual std::tuple< std::unique_ptr< QgsCurve >, std::unique_ptr< QgsCurve > > splitCurveAtVertex( int index ) const = 0;
+
 #endif
 
 
@@ -278,7 +325,6 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry
 
     int childCount() const override;
     QgsPoint childPoint( int index ) const override;
-
 #ifndef SIP_RUN
 
     /**
@@ -290,12 +336,17 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry
                             QVector<double> &outX, QVector<double> &outY, QVector<double> &outZ, QVector<double> &outM ) const;
 #endif
 
-  private:
-
+    /**
+     * Cached bounding box.
+     */
     mutable QgsRectangle mBoundingBox;
+
+  private:
 
     mutable bool mHasCachedValidity = false;
     mutable QString mValidityFailureReason;
+
+    friend class TestQgsGeometry;
 };
 
 #endif // QGSCURVE_H

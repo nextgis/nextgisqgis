@@ -66,7 +66,7 @@ QgsGeometryCheckError::QgsGeometryCheckError( const QgsGeometryCheck *check,
     QgsVectorLayer *vl = layerFeature.layer().data();
     if ( vl )
     {
-      QgsCoordinateTransform ct( vl->crs(), check->context()->mapCrs, check->context()->transformContext );
+      const QgsCoordinateTransform ct( vl->crs(), check->context()->mapCrs, check->context()->transformContext );
       try
       {
         mGeometry.transform( ct );
@@ -215,7 +215,7 @@ void QgsGeometryCheckError::update( const QgsGeometryCheckError *other )
   mGeometry = other->mGeometry;
 }
 
-QgsGeometryCheck::LayerFeatureIds::LayerFeatureIds( const QMap<QString, QgsFeatureIds> &ids )
-  : ids( ids )
+QgsGeometryCheck::LayerFeatureIds::LayerFeatureIds( const QMap<QString, QgsFeatureIds> &idsIn )
+  : ids( idsIn )
 {
 }

@@ -17,14 +17,15 @@
 
 #include "qgis_core.h"
 #include "qgis_sip.h"
-#include "qgsrendercontext.h"
+#include "qgis.h"
 #include <QFlags>
+#include <QColor>
 
 class QgsProject;
 
 /**
  * \ingroup core
- * Stores global configuration for labeling engine
+ * \brief Stores global configuration for labeling engine
  * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLabelingEngineSettings
@@ -40,6 +41,7 @@ class CORE_EXPORT QgsLabelingEngineSettings
       DrawLabelRectOnly     = 1 << 4,  //!< Whether to only draw the label rect and not the actual label text (used for unit tests)
       DrawCandidates        = 1 << 5,  //!< Whether to draw rectangles of generated candidates (good for debugging)
       DrawUnplacedLabels    = 1 << 6,  //!< Whether to render unplaced labels as an indicator/warning for users
+      CollectUnplacedLabels = 1 << 7,  //!< Whether unplaced labels should be collected in the labeling results (regardless of whether they are being rendered). Since QGIS 3.20
     };
     Q_DECLARE_FLAGS( Flags, Flag )
 
@@ -164,7 +166,7 @@ class CORE_EXPORT QgsLabelingEngineSettings
      * \see setDefaultTextRenderFormat()
      * \since QGIS 3.4.3
      */
-    QgsRenderContext::TextRenderFormat defaultTextRenderFormat() const
+    Qgis::TextRenderFormat defaultTextRenderFormat() const
     {
       return mDefaultTextRenderFormat;
     }
@@ -175,7 +177,7 @@ class CORE_EXPORT QgsLabelingEngineSettings
      * \see defaultTextRenderFormat()
      * \since QGIS 3.4.3
      */
-    void setDefaultTextRenderFormat( QgsRenderContext::TextRenderFormat format )
+    void setDefaultTextRenderFormat( Qgis::TextRenderFormat format )
     {
       mDefaultTextRenderFormat = format;
     }
@@ -226,7 +228,7 @@ class CORE_EXPORT QgsLabelingEngineSettings
 
     PlacementEngineVersion mPlacementVersion = PlacementEngineVersion2;
 
-    QgsRenderContext::TextRenderFormat mDefaultTextRenderFormat = QgsRenderContext::TextFormatAlwaysOutlines;
+    Qgis::TextRenderFormat mDefaultTextRenderFormat = Qgis::TextRenderFormat::AlwaysOutlines;
 
 };
 

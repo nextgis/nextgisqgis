@@ -29,10 +29,12 @@ class QgsVectorLayer;
  * (when a symbol or a feature renderer is cloned for example).
  *
  * A symbol layer identifier consists of:
+ *
  * - an identifier to its symbol (given by the QgsFeatureRenderer)
  * - a path of indexes inside its symbol and subsymbols.
  *
  * For a symbol in a QgsSingleSymbolRenderer that has two symbol layers, it will give:
+ *
  * - "" for the symbol key
  * - [0] and [1] for the two symbol layer indexes
  *
@@ -40,6 +42,7 @@ class QgsVectorLayer;
  *
  * For a symbol with a symbol layer that has a sub symbol (say a QgsArrowSymbolLayer),
  * path to symbol layers of the sub symbol are given by a list of indexes:
+ *
  * - [0, 0] : first symbol layer of the sub symbol of the first symbol layer
  * - [0, 1] : second symbol layer of the sub symbol of the first symbol layer
  * - [2, 0] : first symbol layer of the sub symbol of the third symbol layer, etc.
@@ -55,14 +58,14 @@ class CORE_EXPORT QgsSymbolLayerId
     /**
      * QgsSymbolLayerId constructor with a symbol key and a unique symbol layer index
      */
-    QgsSymbolLayerId( QString key, int index )
+    QgsSymbolLayerId( const QString &key, int index )
       : mSymbolKey( key ), mIndexPath( { index } )
     {}
 
     /**
      * QgsSymbolLayerId constructor with a symbol key and an index path
      */
-    QgsSymbolLayerId( QString key, const QVector<int> &indexPath )
+    QgsSymbolLayerId( const QString &key, const QVector<int> &indexPath )
       : mSymbolKey( key ), mIndexPath( { indexPath } )
     {}
 
@@ -82,6 +85,8 @@ class CORE_EXPORT QgsSymbolLayerId
      */
     QVector<int> symbolLayerIndexPath() const { return mIndexPath; }
 
+    // TODO c++20 - replace with = default
+
     //! Equality operator
     bool operator==( const QgsSymbolLayerId &other ) const
     {
@@ -96,6 +101,20 @@ class CORE_EXPORT QgsSymbolLayerId
              : mSymbolKey < other.mSymbolKey;
     }
 
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+
+    QStringList pathString;
+    for ( int path : sipCpp->symbolLayerIndexPath() )
+    {
+      pathString.append( QString::number( path ) );
+    }
+    QString str = QStringLiteral( "<QgsSymbolLayerId: %1 (%2)>" ).arg( sipCpp->symbolKey(), pathString.join( ',' ) );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
+
   private:
     //! Symbol unique identifier (legend key)
     QString mSymbolKey;
@@ -108,7 +127,7 @@ class CORE_EXPORT QgsSymbolLayerId
  * \ingroup core
  * \class QgsSymbolLayerReference
  *
- * Type used to refer to a specific symbol layer in a symbol of a layer.
+ * \brief Type used to refer to a specific symbol layer in a symbol of a layer.
  * \since QGIS 3.12
  */
 class CORE_EXPORT QgsSymbolLayerReference
@@ -138,6 +157,20 @@ class CORE_EXPORT QgsSymbolLayerReference
       return mLayerId == other.mLayerId &&
              mSymbolLayerId == other.mSymbolLayerId;
     }
+
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+
+    QStringList pathString;
+    for ( int path : sipCpp->symbolLayerId().symbolLayerIndexPath() )
+    {
+      pathString.append( QString::number( path ) );
+    }
+    QString str = QStringLiteral( "<QgsSymbolLayerReference: %1 - %2 (%3)>" ).arg( sipCpp->layerId(), sipCpp->symbolLayerId().symbolKey(), pathString.join( ',' ) );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
 
   private:
     QString mLayerId;

@@ -165,6 +165,13 @@ function(find_anyproject name)
             set(Qt5Widgets_UIC_EXECUTABLE Qt5::uic PARENT_SCOPE)
             set(Qt5Core_RCC_EXECUTABLE Qt5::rcc PARENT_SCOPE)
 
+            # message(FATAL_ERROR "${Python_EXECUTABLE}")
+
+            set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE} PARENT_SCOPE)
+            set(PYTHON3_EXECUTABLE ${Python3_EXECUTABLE} PARENT_SCOPE)
+            set(PYTHON_VERSION ${Python3_VERSION} PARENT_SCOPE)
+            set(PYTHON3_VERSION ${Python3_VERSION} PARENT_SCOPE)
+
             # AUTOMOC enabled targets need to know the Qt major and minor version they’re working with.
             if (${name} STREQUAL "Qt5")
                 string(SUBSTRING ${QT5_VERSION} 0 1 Qt5Core_MAJOR)

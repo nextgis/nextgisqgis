@@ -26,8 +26,9 @@
 /**
  * \class QgsProcessingProvider
  * \ingroup core
- * Abstract base class for processing providers. An algorithm provider is a set of
- * related algorithms, typically from the same external application or related
+ * \brief Abstract base class for processing providers.
+ *
+ * An algorithm provider is a set of related algorithms, typically from the same external application or related
  * to a common area of analysis.
  * \since QGIS 3.0
  */
@@ -36,6 +37,16 @@ class CORE_EXPORT QgsProcessingProvider : public QObject
     Q_OBJECT
 
   public:
+
+    /**
+     * Flags indicating how and when an provider operates and should be exposed to users
+     * \since QGIS 3.14
+     */
+    enum Flag
+    {
+      FlagDeemphasiseSearchResults = 1 << 1, //!< Algorithms should be de-emphasised in the search results when searching for algorithms. Use for low-priority providers or those with substantial known issues.
+    };
+    Q_DECLARE_FLAGS( Flags, Flag )
 
     /**
      * Constructor for QgsProcessingProvider.
@@ -60,6 +71,13 @@ class CORE_EXPORT QgsProcessingProvider : public QObject
      * \see icon()
      */
     virtual QString svgIconPath() const;
+
+    /**
+     * Returns the flags indicating how and when the provider operates and should be exposed to users.
+     * Default is no flags.
+     * \since QGIS 3.14
+     */
+    virtual Flags flags() const;
 
     /**
      * Returns the unique provider id, used for identifying the provider. This string
@@ -144,8 +162,21 @@ class CORE_EXPORT QgsProcessingProvider : public QObject
      * \see defaultVectorFileExtension()
      * \see supportedOutputRasterLayerExtensions()
      * \see supportsNonFileBasedOutput()
+     * \see supportedOutputPointCloudLayerExtensions()
      */
     virtual QStringList supportedOutputVectorLayerExtensions() const;
+
+    /**
+     * Returns a list of the point cloud format file extensions supported by this provider.
+     * \see supportedOutputVectorLayerExtensions()
+     * \see supportedOutputRasterLayerExtensions()
+     * \see supportedOutputTableExtensions()
+     * \see defaultVectorFileExtension()
+     * \see supportsNonFileBasedOutput()
+     *
+     * \since QGIS 3.24
+     */
+    virtual QStringList supportedOutputPointCloudLayerExtensions() const;
 
     /**
      * Returns a list of the table (geometry-less vector layers) file extensions supported by this provider.
@@ -157,6 +188,7 @@ class CORE_EXPORT QgsProcessingProvider : public QObject
      * \see defaultVectorFileExtension()
      * \see supportedOutputRasterLayerExtensions()
      * \see supportsNonFileBasedOutput()
+     * \see supportedOutputPointCloudLayerExtensions()
      *
      * \since QGIS 3.4.3
      */
@@ -184,6 +216,7 @@ class CORE_EXPORT QgsProcessingProvider : public QObject
      *
      * \see supportedOutputVectorLayerExtensions()
      * \see defaultRasterFileExtension()
+     * \see defaultPointCloudFileExtension()
      */
     virtual QString defaultVectorFileExtension( bool hasGeometry = true ) const;
 
@@ -197,8 +230,25 @@ class CORE_EXPORT QgsProcessingProvider : public QObject
      *
      * \see supportedOutputRasterLayerExtensions()
      * \see defaultVectorFileExtension()
+     * \see defaultPointCloudFileExtension()
      */
     virtual QString defaultRasterFileExtension() const;
+
+    /**
+     * Returns the default file extension to use for point cloud outputs created by the
+     * provider.
+     *
+     * The default implementation returns the user's default Processing point cloud output format
+     * setting, if it's supported by the provider (see supportedOutputPointCloudLayerExtensions()).
+     * Otherwise the first reported supported point cloud format will be used.
+     *
+     * \see supportedOutputPointCloudLayerExtensions()
+     * \see defaultVectorFileExtension()
+     * \see defaultRasterFileExtension()
+     *
+     * \since QGIS 3.24
+     */
+    virtual QString defaultPointCloudFileExtension() const;
 
     /**
      * Returns TRUE if the provider supports non-file based outputs (such as memory layers
@@ -280,6 +330,8 @@ class CORE_EXPORT QgsProcessingProvider : public QObject
     QgsProcessingProvider( const QgsProcessingProvider &other );
 #endif
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS( QgsProcessingProvider::Flags )
 
 #endif // QGSPROCESSINGPROVIDER_H
 

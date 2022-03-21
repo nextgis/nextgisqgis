@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (C) 2020, NextGIS <info@nextgis.com>
+# Copyright (C) 2020-2022, NextGIS <info@nextgis.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -22,17 +22,17 @@
 
 # locate native libs
 
-IF (IOS)
-  # No native library for IOS
-  RETURN()
-ENDIF(IOS)
+# IF (IOS)
+#   # No native library for IOS
+#   RETURN()
+# ENDIF(IOS)
 
 
 SET(NATIVE_LINK_LIBS)
 
-IF(UNIX AND NOT APPLE AND NOT ANDROID)
-  FIND_PACKAGE(Qt5DBus REQUIRED)
-ENDIF(UNIX AND NOT APPLE AND NOT ANDROID)
+# IF(UNIX AND NOT APPLE AND NOT ANDROID)
+#   FIND_PACKAGE(Qt5DBus REQUIRED)
+# ENDIF(UNIX AND NOT APPLE AND NOT ANDROID)
 
 IF(APPLE)
   SET(APPLE_LIB_LIST ApplicationServices CoreFoundation IOKit AppKit)
@@ -116,15 +116,14 @@ ENDIF(MSVC)
 
 #############################################################
 # qgis_native library
-if (NOT PREPARE_ONLY)
 
     SET(LIB_NAME ${NG_PREFIX}qgis_native)
     SET(TARGETS ${TARGETS} ${LIB_NAME} PARENT_SCOPE)
     
-    ADD_LIBRARY(${LIB_NAME} SHARED ${QGIS_NATIVE_SRCS} ${QGIS_NATIVE_HDRS})
+    add_library(${LIB_NAME} SHARED ${QGIS_NATIVE_SRCS} ${QGIS_NATIVE_HDRS})
     SET_PROPERTY(TARGET ${LIB_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-    GENERATE_EXPORT_HEADER(
+    generate_export_header(
        ${LIB_NAME}
        BASE_NAME NATIVE
        EXPORT_FILE_NAME qgis_native.h
@@ -132,29 +131,23 @@ if (NOT PREPARE_ONLY)
 
     SET(QGIS_NATIVE_HDRS ${QGIS_NATIVE_HDRS} ${CMAKE_CURRENT_BINARY_DIR}/qgis_native.h)
 
-    IF(APPLE)
+    if(OSX_FRAMEWORK)
       SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES
         CLEAN_DIRECT_OUTPUT 1
-        FRAMEWORK 1
-        FRAMEWORK_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}"
-        MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/mac/framework.info.plist.in"
-        MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${COMPLETE_VERSION}
-        MACOSX_FRAMEWORK_IDENTIFIER org.qgis.qgis3_native
-        BUILD_WITH_INSTALL_RPATH TRUE
+        FRAMEWORK TRUE
+        FRAMEWORK_VERSION ${FRAMEWORK_VERSION}
+        MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${QGIS_VERSION}
+        MACOSX_FRAMEWORK_BUNDLE_VERSION ${QGIS_VERSION}
+        MACOSX_FRAMEWORK_IDENTIFIER "org.qgis.qgis${FRAMEWORK_VERSION}_native"
+        XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
         PUBLIC_HEADER "${QGIS_NATIVE_HDRS}"
         LINK_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}"
       )
-    ENDIF(APPLE)
+    endif()
 
-    #generate unversioned libs for android
-    IF(NOT ANDROID)
-      SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES
-        VERSION ${COMPLETE_VERSION}
-        SOVERSION ${COMPLETE_VERSION}
-      )
-    ENDIF(NOT ANDROID)
+    set_target_properties(${LIB_NAME} PROPERTIES VERSION ${QGIS_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
 
-    TARGET_LINK_LIBRARIES(${LIB_NAME}
+    target_link_libraries(${LIB_NAME}
         Qt5::Core
         Qt5::Gui
         "${NATIVE_LINK_LIBS}"
@@ -165,29 +158,47 @@ if (NOT PREPARE_ONLY)
     ENDIF (UNIX AND NOT APPLE AND NOT ANDROID)
 
     IF (APPLE)
-      FIND_PACKAGE(Qt5MacExtras)
+    #   FIND_PACKAGE(Qt5MacExtras)
 
       TARGET_LINK_LIBRARIES(${LIB_NAME} Qt5::MacExtras)
     ENDIF (APPLE)
 
     IF (MSVC)
-      TARGET_LINK_LIBRARIES(${LIB_NAME} shell32)
-      TARGET_LINK_LIBRARIES(${LIB_NAME} Qt5::Widgets ${QT_QTMAIN_LIBRARY})
-      TARGET_LINK_LIBRARIES(${LIB_NAME} Qt5::WinExtras)
+      TARGET_LINK_LIBRARIES(${LIB_NAME} 
+        shell32
+        Qt5::Widgets
+        Qt5::WinExtras)
     ENDIF (MSVC)
 
     # install
+    if(OSX_FRAMEWORK)
+        add_custom_command(TARGET ${LIB_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E create_symlink ../../Applications/${QGIS_APP_NAME}.app/Contents/Frameworks/${LIB_NAME}.framework ${PROJECT_BINARY_DIR}/symlinks/${LIB_NAME}.framework
+            VERBATIM
+        )
+    endif()
+
     if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)     
         install(TARGETS ${LIB_NAME} 
-            EXPORT ${PACKAGE_UPPER_NAME}Targets
-            RUNTIME DESTINATION ${INSTALL_BIN_DIR}
-            ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
-            LIBRARY DESTINATION ${INSTALL_LIB_DIR}
-            INCLUDES DESTINATION ${INSTALL_INC_DIR}
+            RUNTIME DESTINATION ${INSTALL_BIN_DIR} COMPONENT libraries
+            LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT libraries
+            ARCHIVE DESTINATION ${INSTALL_LIB_DIR} COMPONENT libraries
             FRAMEWORK DESTINATION ${INSTALL_LIB_DIR}
+            PUBLIC_HEADER DESTINATION ${INSTALL_INC_DIR} COMPONENT headers
+            # EXPORT ${PACKAGE_UPPER_NAME}Targets
+            # RUNTIME DESTINATION ${INSTALL_BIN_DIR}
+            # ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
+            # LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+            # INCLUDES DESTINATION ${INSTALL_INC_DIR}
+            # FRAMEWORK DESTINATION ${INSTALL_LIB_DIR}
         )
+        if(OSX_FRAMEWORK)
+            install(FILES ${PROJECT_BINARY_DIR}/symlinks/${LIB_NAME}.framework DESTINATION ${INSTALL_LIB_DIR2})
+        endif()
         
+    endif()
+
+    if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
         install(FILES ${QGIS_NATIVE_HDRS} DESTINATION ${INSTALL_INC_DIR})
     endif()
 
-endif(NOT PREPARE_ONLY)

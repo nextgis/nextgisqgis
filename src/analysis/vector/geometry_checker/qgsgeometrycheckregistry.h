@@ -30,7 +30,7 @@ class QgsGeometryCheckContext;
 
 /**
  * \ingroup analysis
- * This class manages all known geometry check factories.
+ * \brief This class manages all known geometry check factories.
  *
  * QgsGeometryCheckRegistry is not usually directly created, but rather accessed through
  * QgsAnalysis::geometryCheckRegistry().
@@ -69,7 +69,7 @@ class ANALYSIS_EXPORT QgsGeometryCheckRegistry
      *
      * \since QGIS 3.4
      */
-    QList<QgsGeometryCheckFactory *> geometryCheckFactories( QgsVectorLayer *layer,  QgsGeometryCheck::CheckType type, QgsGeometryCheck::Flags flags = nullptr ) const;
+    QList<QgsGeometryCheckFactory *> geometryCheckFactories( QgsVectorLayer *layer,  QgsGeometryCheck::CheckType type, QgsGeometryCheck::Flags flags = QgsGeometryCheck::Flags() ) const;
 
     /**
      * Registers a new geometry check factory.

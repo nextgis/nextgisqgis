@@ -1,0 +1,34 @@
+--- a/src/core/geometry/qgsgeometryutils.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/geometry/qgsgeometryutils.cpp	2022-03-09 12:10:19.000000000 +0300
+@@ -26,7 +26,7 @@
+ #include <QStringList>
+ #include <QVector>
+ #include <QRegularExpression>
+-#include <nlohmann/json.hpp>
++// #include <nlohmann/json.hpp>
+ 
+ QVector<QgsLineString *> QgsGeometryUtils::extractLineStrings( const QgsAbstractGeometry *geom )
+ {
+@@ -1303,16 +1303,19 @@
+ 
+ json QgsGeometryUtils::pointsToJson( const QgsPointSequence &points, int precision )
+ {
+-  json coordinates( json::array() );
++  CPLJSONArray coordinates;
+   for ( const QgsPoint &p : points )
+   {
+     if ( p.is3D() )
+     {
+-      coordinates.push_back( { qgsRound( p.x(), precision ), qgsRound( p.y(), precision ), qgsRound( p.z(), precision ) } );
++      coordinates.Add( qgsRound( p.x(), precision ) );
++      coordinates.Add( qgsRound( p.y(), precision ) );
++      coordinates.Add( qgsRound( p.z(), precision ) );
+     }
+     else
+     {
+-      coordinates.push_back( { qgsRound( p.x(), precision ), qgsRound( p.y(), precision ) } );
++      coordinates.Add( qgsRound( p.x(), precision ) );
++      coordinates.Add( qgsRound( p.y(), precision ) );
+     }
+   }
+   return coordinates;

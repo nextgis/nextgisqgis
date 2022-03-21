@@ -35,7 +35,7 @@ class QString;
 
 /**
  * \ingroup core
- * Manipulates raster pixel values so that they enhanceContrast or clip into a
+ * \brief Manipulates raster or point cloud pixel values so that they enhanceContrast or clip into a
  * specified numerical range according to the specified
  * ContrastEnhancementAlgorithm.
  */
@@ -47,51 +47,54 @@ class CORE_EXPORT QgsContrastEnhancement
     //! \brief This enumerator describes the types of contrast enhancement algorithms that can be used.
     enum ContrastEnhancementAlgorithm
     {
-      NoEnhancement,                  //this should be the default color scaling algorithm
-      StretchToMinimumMaximum,        //linear histogram enhanceContrast
+      NoEnhancement, //!< Default color scaling algorithm, no scaling is applied
+      StretchToMinimumMaximum, //!< Linear histogram
       StretchAndClipToMinimumMaximum,
       ClipToMinimumMaximum,
       UserDefinedEnhancement
     };
 
-    QgsContrastEnhancement( Qgis::DataType datatype = Qgis::Byte );
+    /**
+     * Constructor for QgsContrastEnhancement, for the specified data type.
+     */
+    QgsContrastEnhancement( Qgis::DataType datatype = Qgis::DataType::Byte );
     QgsContrastEnhancement( const QgsContrastEnhancement &ce );
     ~QgsContrastEnhancement();
 
     const QgsContrastEnhancement &operator=( const QgsContrastEnhancement & ) = delete;
 
     /**
-     * Helper function that returns the maximum possible value for a GDAL data type.
+     * Helper function that returns the maximum possible value for a data type.
      */
     static double maximumValuePossible( Qgis::DataType dataType )
     {
       switch ( dataType )
       {
-        case Qgis::Byte:
+        case Qgis::DataType::Byte:
           return std::numeric_limits<unsigned char>::max();
-        case Qgis::UInt16:
+        case Qgis::DataType::UInt16:
           return std::numeric_limits<unsigned short>::max();
-        case Qgis::Int16:
+        case Qgis::DataType::Int16:
           return std::numeric_limits<short>::max();
-        case Qgis::UInt32:
+        case Qgis::DataType::UInt32:
           return std::numeric_limits<unsigned int>::max();
-        case Qgis::Int32:
+        case Qgis::DataType::Int32:
           return std::numeric_limits<int>::max();
-        case Qgis::Float32:
+        case Qgis::DataType::Float32:
           return std::numeric_limits<float>::max();
-        case Qgis::Float64:
+        case Qgis::DataType::Float64:
           return std::numeric_limits<double>::max();
-        case Qgis::CInt16:
+        case Qgis::DataType::CInt16:
           return std::numeric_limits<short>::max();
-        case Qgis::CInt32:
+        case Qgis::DataType::CInt32:
           return std::numeric_limits<int>::max();
-        case Qgis::CFloat32:
+        case Qgis::DataType::CFloat32:
           return std::numeric_limits<float>::max();
-        case Qgis::CFloat64:
+        case Qgis::DataType::CFloat64:
           return std::numeric_limits<double>::max();
-        case Qgis::ARGB32:
-        case Qgis::ARGB32_Premultiplied:
-        case Qgis::UnknownDataType:
+        case Qgis::DataType::ARGB32:
+        case Qgis::DataType::ARGB32_Premultiplied:
+        case Qgis::DataType::UnknownDataType:
           // XXX - mloskot: not handled?
           break;
       }
@@ -100,37 +103,37 @@ class CORE_EXPORT QgsContrastEnhancement
     }
 
     /**
-     * Helper function that returns the minimum possible value for a GDAL data type.
+     * Helper function that returns the minimum possible value for a data type.
      */
     static double minimumValuePossible( Qgis::DataType dataType )
     {
       switch ( dataType )
       {
-        case Qgis::Byte:
+        case Qgis::DataType::Byte:
           return std::numeric_limits<unsigned char>::min();
-        case Qgis::UInt16:
+        case Qgis::DataType::UInt16:
           return std::numeric_limits<unsigned short>::min();
-        case Qgis::Int16:
+        case Qgis::DataType::Int16:
           return std::numeric_limits<short>::min();
-        case Qgis::UInt32:
+        case Qgis::DataType::UInt32:
           return std::numeric_limits<unsigned int>::min();
-        case Qgis::Int32:
+        case Qgis::DataType::Int32:
           return std::numeric_limits<int>::min();
-        case Qgis::Float32:
+        case Qgis::DataType::Float32:
           return std::numeric_limits<float>::max() * -1.0;
-        case Qgis::Float64:
+        case Qgis::DataType::Float64:
           return std::numeric_limits<double>::max() * -1.0;
-        case Qgis::CInt16:
+        case Qgis::DataType::CInt16:
           return std::numeric_limits<short>::min();
-        case Qgis::CInt32:
+        case Qgis::DataType::CInt32:
           return std::numeric_limits<int>::min();
-        case Qgis::CFloat32:
+        case Qgis::DataType::CFloat32:
           return std::numeric_limits<float>::max() * -1.0;
-        case Qgis::CFloat64:
+        case Qgis::DataType::CFloat64:
           return std::numeric_limits<double>::max() * -1.0;
-        case Qgis::ARGB32:
-        case Qgis::ARGB32_Premultiplied:
-        case Qgis::UnknownDataType:
+        case Qgis::DataType::ARGB32:
+        case Qgis::DataType::ARGB32_Premultiplied:
+        case Qgis::DataType::UnknownDataType:
           // XXX - mloskot: not handled?
           break;
       }
@@ -216,7 +219,8 @@ class CORE_EXPORT QgsContrastEnhancement
      * https://docs.geoserver.org/stable/en/user/styling/sld/reference/rastersymbolizer.html#contrastenhancement
      * Btw only sld:Normalize + vendor options are supported because there is no clear mapping
      * of ContrastEnhancement parameters to support sld:Histogram or sld:GammaValue
-     * \since QGIS 3.6  */
+     * \since QGIS 3.6
+    */
     void toSld( QDomDocument &doc, QDomElement &element ) const;
 
   private:

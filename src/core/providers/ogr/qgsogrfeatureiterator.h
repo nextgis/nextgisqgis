@@ -18,6 +18,8 @@
 #include "qgsfeatureiterator.h"
 #include "qgsogrconnpool.h"
 #include "qgsfields.h"
+#include "qgsogrutils.h"
+#include "qgscoordinatetransform.h"
 
 #include <ogr_api.h>
 
@@ -43,6 +45,7 @@ class QgsOgrFeatureSource final: public QgsAbstractFeatureSource
 
   private:
     QString mDataSource;
+    QString mAuthCfg;
     bool mShareSameDatasetAmongLayers;
     QString mLayerName;
     int mLayerIndex;
@@ -56,6 +59,7 @@ class QgsOgrFeatureSource final: public QgsAbstractFeatureSource
     QgsCoordinateReferenceSystem mCrs;
     QgsWkbTypes::Type mWkbType = QgsWkbTypes::Unknown;
     QgsOgrDatasetSharedPtr mSharedDS = nullptr;
+    QgsTransaction *mTransaction = nullptr;
 
     friend class QgsOgrFeatureIterator;
     friend class QgsOgrExpressionCompiler;
@@ -64,12 +68,14 @@ class QgsOgrFeatureSource final: public QgsAbstractFeatureSource
 class QgsOgrFeatureIterator final: public QgsAbstractFeatureIteratorFromSource<QgsOgrFeatureSource>
 {
   public:
-    QgsOgrFeatureIterator( QgsOgrFeatureSource *source, bool ownSource, const QgsFeatureRequest &request );
+    QgsOgrFeatureIterator( QgsOgrFeatureSource *source, bool ownSource, const QgsFeatureRequest &request, QgsTransaction *transaction );
 
     ~QgsOgrFeatureIterator() override;
 
     bool rewind() override;
     bool close() override;
+
+    void setInterruptionChecker( QgsFeedback *interruptionChecker ) override;
 
   protected:
     bool checkFeature( gdal::ogr_feature_unique_ptr &fet, QgsFeature &feature ) ;
@@ -78,7 +84,7 @@ class QgsOgrFeatureIterator final: public QgsAbstractFeatureIteratorFromSource<Q
 
   private:
 
-    bool readFeature( gdal::ogr_feature_unique_ptr fet, QgsFeature &feature ) const;
+    bool readFeature( const gdal::ogr_feature_unique_ptr &fet, QgsFeature &feature ) const;
 
     //! Gets an attribute associated with a feature
     void getFeatureAttribute( OGRFeatureH ogrFet, QgsFeature &f, int attindex ) const;
@@ -101,6 +107,19 @@ class QgsOgrFeatureIterator final: public QgsAbstractFeatureIteratorFromSource<Q
 
     bool mFirstFieldIsFid = false;
     QgsFields mFieldsWithoutFid;
+    QString mAuthCfg;
+
+    QgsFeedback *mInterruptionChecker = nullptr;
+
+    Qgis::SymbolType mSymbolType = Qgis::SymbolType::Hybrid;
+
+    /* This flag tells the iterator when to skip all calls that might reset the reading (rewind),
+     * to be used when the request is for a single fid or for a list of fids and we are inside
+     * a transaction for SQLITE-based layers */
+    bool mAllowResetReading = true;
+
+    QgsGeometry mDistanceWithinGeom;
+    std::unique_ptr< QgsGeometryEngine > mDistanceWithinEngine;
 
     bool fetchFeatureWithId( QgsFeatureId id, QgsFeature &feature ) const;
 

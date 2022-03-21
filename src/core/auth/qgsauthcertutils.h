@@ -172,7 +172,7 @@ class CORE_EXPORT QgsAuthCertUtils
      */
     static bool pemIsPkcs8( const QString &keyPemTxt );
 
-#ifdef Q_OS_MAC
+#ifdef UNUSED_TMP // Q_OS_MAC
 
     /**
      * Extract the PrivateKey ASN.1 element of a DER-encoded PKCS#8 private key
@@ -336,7 +336,7 @@ class CORE_EXPORT QgsAuthCertUtils
     static bool certIsCurrent( const QSslCertificate &cert );
 
     /**
-     * \brief certViabilityErrors checks basic characteristics (validity dates, blacklisting, etc.) of given \a cert
+     * \brief certViabilityErrors checks basic characteristics (validity dates, blocklisting, etc.) of given \a cert
      * \param cert certificate to be checked
      * \return list of QSslError (will return NO ERRORS if a null QSslCertificate is passed)
      */

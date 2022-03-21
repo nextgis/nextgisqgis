@@ -37,6 +37,7 @@
 #include <list>
 #include <QList>
 #include "palrtree.h"
+#include "qgsrendercontext.h"
 #include <memory>
 #include <vector>
 
@@ -45,10 +46,12 @@ namespace pal
 
   class LabelPosition;
   class Label;
+  class PriorityQueue;
 
   /**
    * \class pal::Sol
    * \ingroup core
+   * \brief Chain solution parameters.
    * \note not available in Python bindings
    */
 
@@ -115,13 +118,13 @@ namespace pal
       /**
        * \brief Test with very-large scale neighborhood
        */
-      void chain_search();
+      void chainSearch( QgsRenderContext &context );
 
       /**
        * Solves the labeling problem, selecting the best candidate locations for all labels and returns a list of these
        * calculated label positions.
        *
-       * If \a returnInactive is true, then the best positions for ALL labels will be returned, regardless of whether these
+       * If \a returnInactive is TRUE, then the best positions for ALL labels will be returned, regardless of whether these
        * labels overlap other labels.
        *
        * If the optional \a unlabeled list is specified, it will be filled with a list of all feature labels which could
@@ -155,6 +158,11 @@ namespace pal
     private:
 
       /**
+       * Returns TRUE if a labelling candidate \a lp1 conflicts with \a lp2.
+       */
+      bool candidatesAreConflicting( const LabelPosition *lp1, const LabelPosition *lp2 ) const;
+
+      /**
        * Total number of layers containing labels
        */
       int mLayerCount = 0;
@@ -170,7 +178,7 @@ namespace pal
       int mTotalCandidates = 0;
 
       /**
-       * # candidates (all, including)
+       * Number of candidates (all, including)
        */
       int mAllNblp = 0;
 
@@ -207,12 +215,9 @@ namespace pal
           //! Placeholder list for active labels. Will contain label id for active labels, or -1 for empty positions in list
           std::vector< int > activeLabelIds;
 
-          double totalCost = 0;
-
           void init( std::size_t featureCount )
           {
             activeLabelIds.resize( featureCount, -1 );
-            totalCost = 0;
           }
       };
 
@@ -224,6 +229,7 @@ namespace pal
       Pal *pal = nullptr;
 
       void solution_cost();
+      void ignoreLabel( const LabelPosition *lp, pal::PriorityQueue &list, PalRtree<LabelPosition> &candidatesIndex );
   };
 
 } // namespace

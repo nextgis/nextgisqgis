@@ -30,7 +30,7 @@
  * \class QgsProcessingOutputDefinition
  * \ingroup core
  *
- * Base class for the definition of processing outputs.
+ * \brief Base class for the definition of processing outputs.
  *
  * Output definitions encapsulate the properties regarding the outputs from algorithms, such
  * as generated layers or calculated values.
@@ -47,6 +47,8 @@ class CORE_EXPORT QgsProcessingOutputDefinition
       sipType = sipType_QgsProcessingOutputVectorLayer;
     else if ( sipCpp->type() == QgsProcessingOutputRasterLayer::typeName() )
       sipType = sipType_QgsProcessingOutputRasterLayer;
+    else if ( sipCpp->type() == QgsProcessingOutputPointCloudLayer::typeName() )
+      sipType = sipType_QgsProcessingOutputPointCloudLayer;
     else if ( sipCpp->type() == QgsProcessingOutputMapLayer::typeName() )
       sipType = sipType_QgsProcessingOutputMapLayer;
     else if ( sipCpp->type() == QgsProcessingOutputMultipleLayers::typeName() )
@@ -63,6 +65,8 @@ class CORE_EXPORT QgsProcessingOutputDefinition
       sipType = sipType_QgsProcessingOutputFolder;
     else if ( sipCpp->type() == QgsProcessingOutputFile::typeName() )
       sipType = sipType_QgsProcessingOutputFile;
+    else if ( sipCpp->type() == QgsProcessingOutputConditionalBranch::typeName() )
+      sipType = sipType_QgsProcessingOutputConditionalBranch;
     else
       sipType = nullptr;
     SIP_END
@@ -110,6 +114,21 @@ class CORE_EXPORT QgsProcessingOutputDefinition
      */
     void setDescription( const QString &description ) { mDescription = description; }
 
+    /**
+     * Sets whether an output was automatically created when adding a parameter.
+     * \param autoCreated set to TRUE if the output is to be considered as automatically created.
+     * \see autoCreated()
+     * \since QGIS 3.14
+     */
+    void setAutoCreated( bool autoCreated ) { mAutoCreated = autoCreated; }
+
+    /**
+     * Returns TRUE if the output was automatically created when adding a parameter.
+     * \see setAutoCreated()
+     * \since QGIS 3.14
+     */
+    bool autoCreated() const { return mAutoCreated; }
+
   protected:
 
     //! Output name
@@ -118,6 +137,7 @@ class CORE_EXPORT QgsProcessingOutputDefinition
     //! Output description
     QString mDescription;
 
+    bool mAutoCreated = false;
 };
 
 //! List of processing parameters
@@ -126,7 +146,7 @@ typedef QList< const QgsProcessingOutputDefinition * > QgsProcessingOutputDefini
 /**
  * \class QgsProcessingOutputMapLayer
  * \ingroup core
- * A map layer output for processing algorithms, where layers may be either vector or raster.
+ * \brief A map layer output for processing algorithms, where layers may be either vector or raster.
  *
  * If the actual layer output type is known (e.g. always vector or always raster), use
  * QgsProcessingOutputVectorLayer or QgsProcessingOutputRasterLayer instead.
@@ -148,13 +168,12 @@ class CORE_EXPORT QgsProcessingOutputMapLayer : public QgsProcessingOutputDefini
     static QString typeName() { return QStringLiteral( "outputLayer" ); }
 
     QString type() const override;
-
 };
 
 /**
  * \class QgsProcessingOutputVectorLayer
  * \ingroup core
- * A vector layer output for processing algorithms.
+ * \brief A vector layer output for processing algorithms.
   * \since QGIS 3.0
  */
 class CORE_EXPORT QgsProcessingOutputVectorLayer : public QgsProcessingOutputDefinition
@@ -192,7 +211,7 @@ class CORE_EXPORT QgsProcessingOutputVectorLayer : public QgsProcessingOutputDef
 /**
  * \class QgsProcessingOutputRasterLayer
  * \ingroup core
- * A raster layer output for processing algorithms.
+ * \brief A raster layer output for processing algorithms.
   * \since QGIS 3.0
  */
 class CORE_EXPORT QgsProcessingOutputRasterLayer : public QgsProcessingOutputDefinition
@@ -209,14 +228,34 @@ class CORE_EXPORT QgsProcessingOutputRasterLayer : public QgsProcessingOutputDef
      */
     static QString typeName() { return QStringLiteral( "outputRaster" ); }
     QString type() const override { return typeName(); }
+};
 
+/**
+ * \class QgsProcessingOutputPointCloudLayer
+ * \ingroup core
+ * \brief A pointcloud layer output for processing algorithms.
+  * \since QGIS 3.24
+ */
+class CORE_EXPORT QgsProcessingOutputPointCloudLayer : public QgsProcessingOutputDefinition
+{
+  public:
 
+    /**
+     * Constructor for QgsProcessingOutputPointCloudLayer.
+     */
+    QgsProcessingOutputPointCloudLayer( const QString &name, const QString &description = QString() );
+
+    /**
+     * Returns the type name for the output class.
+     */
+    static QString typeName() { return QStringLiteral( "outputPointCloud" ); }
+    QString type() const override { return typeName(); }
 };
 
 /**
  * \class QgsProcessingOutputMultipleLayers
  * \ingroup core
- * A multi-layer output for processing algorithms which create map layers, when
+ * \brief A multi-layer output for processing algorithms which create map layers, when
  * the number and nature of the output layers is not predefined.
  *
  * \note Always prefer to explicitly define QgsProcessingOutputVectorLayer,
@@ -240,13 +279,12 @@ class CORE_EXPORT QgsProcessingOutputMultipleLayers : public QgsProcessingOutput
      */
     static QString typeName() { return QStringLiteral( "outputMultilayer" ); }
     QString type() const override;
-
 };
 
 /**
  * \class QgsProcessingOutputHtml
  * \ingroup core
- * A HTML file output for processing algorithms.
+ * \brief A HTML file output for processing algorithms.
   * \since QGIS 3.0
  */
 class CORE_EXPORT QgsProcessingOutputHtml : public QgsProcessingOutputDefinition
@@ -263,13 +301,12 @@ class CORE_EXPORT QgsProcessingOutputHtml : public QgsProcessingOutputDefinition
      */
     static QString typeName() { return QStringLiteral( "outputHtml" ); }
     QString type() const override { return typeName(); }
-
 };
 
 /**
  * \class QgsProcessingOutputNumber
  * \ingroup core
- * A numeric output for processing algorithms.
+ * \brief A numeric output for processing algorithms.
   * \since QGIS 3.0
  */
 class CORE_EXPORT QgsProcessingOutputNumber : public QgsProcessingOutputDefinition
@@ -291,7 +328,7 @@ class CORE_EXPORT QgsProcessingOutputNumber : public QgsProcessingOutputDefiniti
 /**
  * \class QgsProcessingOutputString
  * \ingroup core
- * A string output for processing algorithms.
+ * \brief A string output for processing algorithms.
   * \since QGIS 3.0
  */
 class CORE_EXPORT QgsProcessingOutputString : public QgsProcessingOutputDefinition
@@ -308,13 +345,12 @@ class CORE_EXPORT QgsProcessingOutputString : public QgsProcessingOutputDefiniti
      */
     static QString typeName() { return QStringLiteral( "outputString" ); }
     QString type() const override { return typeName(); }
-
 };
 
 /**
  * \class QgsProcessingOutputBoolean
  * \ingroup core
- * A boolean output for processing algorithms.
+ * \brief A boolean output for processing algorithms.
   * \since QGIS 3.8
  */
 class CORE_EXPORT QgsProcessingOutputBoolean : public QgsProcessingOutputDefinition
@@ -336,7 +372,7 @@ class CORE_EXPORT QgsProcessingOutputBoolean : public QgsProcessingOutputDefinit
 /**
  * \class QgsProcessingOutputFolder
  * \ingroup core
- * A folder output for processing algorithms.
+ * \brief A folder output for processing algorithms.
   * \since QGIS 3.0
  */
 class CORE_EXPORT QgsProcessingOutputFolder : public QgsProcessingOutputDefinition
@@ -354,13 +390,12 @@ class CORE_EXPORT QgsProcessingOutputFolder : public QgsProcessingOutputDefiniti
      */
     static QString typeName() { return QStringLiteral( "outputFolder" ); }
     QString type() const override { return typeName(); }
-
 };
 
 /**
  * \class QgsProcessingOutputFile
  * \ingroup core
- * A file output for processing algorithms.
+ * \brief A file output for processing algorithms.
   * \since QGIS 3.0
  */
 class CORE_EXPORT QgsProcessingOutputFile : public QgsProcessingOutputDefinition
@@ -377,10 +412,29 @@ class CORE_EXPORT QgsProcessingOutputFile : public QgsProcessingOutputDefinition
      */
     static QString typeName() { return QStringLiteral( "outputFile" ); }
     QString type() const override { return typeName(); }
-
 };
 
+/**
+ * \class QgsProcessingOutputConditionalBranch
+ * \ingroup core
+ * \brief A conditional branch output for processing algorithms, which represents a possible model logic
+ * flow which branches out from this algorithm.
+  * \since QGIS 3.14
+ */
+class CORE_EXPORT QgsProcessingOutputConditionalBranch : public QgsProcessingOutputDefinition
+{
+  public:
+
+    /**
+     * Constructor for QgsProcessingOutputConditionalBranch.
+     */
+    QgsProcessingOutputConditionalBranch( const QString &name, const QString &description = QString() );
+
+    /**
+     * Returns the type name for the output class.
+     */
+    static QString typeName() { return QStringLiteral( "outputBranch" ); }
+    QString type() const override { return typeName(); }
+};
 
 #endif // QGSPROCESSINGOUTPUTS_H
-
-

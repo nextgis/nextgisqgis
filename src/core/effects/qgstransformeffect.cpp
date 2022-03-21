@@ -21,7 +21,7 @@
 #include <QPicture>
 #include <QTransform>
 
-QgsPaintEffect *QgsTransformEffect::create( const QgsStringMap &map )
+QgsPaintEffect *QgsTransformEffect::create( const QVariantMap &map )
 {
   QgsTransformEffect *newEffect = new QgsTransformEffect();
   newEffect->readProperties( map );
@@ -36,18 +36,16 @@ void QgsTransformEffect::draw( QgsRenderContext &context )
   QPainter *painter = context.painter();
 
   //apply transformations
-  painter->save();
+  const QgsScopedQPainterState painterState( painter );
 
-  QTransform t = createTransform( context );
+  const QTransform t = createTransform( context );
   painter->setTransform( t, true );
   drawSource( *painter );
-
-  painter->restore();
 }
 
-QgsStringMap QgsTransformEffect::properties() const
+QVariantMap QgsTransformEffect::properties() const
 {
-  QgsStringMap props;
+  QVariantMap props;
   props.insert( QStringLiteral( "reflect_x" ), mReflectX ? "1" : "0" );
   props.insert( QStringLiteral( "reflect_y" ), mReflectY ? "1" : "0" );
   props.insert( QStringLiteral( "scale_x" ), QString::number( mScaleX ) );
@@ -64,7 +62,7 @@ QgsStringMap QgsTransformEffect::properties() const
   return props;
 }
 
-void QgsTransformEffect::readProperties( const QgsStringMap &props )
+void QgsTransformEffect::readProperties( const QVariantMap &props )
 {
   mEnabled = props.value( QStringLiteral( "enabled" ), QStringLiteral( "1" ) ).toInt();
   mDrawMode = static_cast< QgsPaintEffect::DrawMode >( props.value( QStringLiteral( "draw_mode" ), QStringLiteral( "2" ) ).toInt() );
@@ -77,8 +75,8 @@ void QgsTransformEffect::readProperties( const QgsStringMap &props )
   mShearY = props.value( QStringLiteral( "shear_y" ), QStringLiteral( "0.0" ) ).toDouble();
   mTranslateX = props.value( QStringLiteral( "translate_x" ), QStringLiteral( "0.0" ) ).toDouble();
   mTranslateY = props.value( QStringLiteral( "translate_y" ), QStringLiteral( "0.0" ) ).toDouble();
-  mTranslateUnit = QgsUnitTypes::decodeRenderUnit( props.value( QStringLiteral( "translate_unit" ) ) );
-  mTranslateMapUnitScale = QgsSymbolLayerUtils::decodeMapUnitScale( props.value( QStringLiteral( "translate_unit_scale" ) ) );
+  mTranslateUnit = QgsUnitTypes::decodeRenderUnit( props.value( QStringLiteral( "translate_unit" ) ).toString() );
+  mTranslateMapUnitScale = QgsSymbolLayerUtils::decodeMapUnitScale( props.value( QStringLiteral( "translate_unit_scale" ) ).toString() );
 }
 
 QgsTransformEffect *QgsTransformEffect::clone() const
@@ -89,7 +87,7 @@ QgsTransformEffect *QgsTransformEffect::clone() const
 
 QRectF QgsTransformEffect::boundingRect( const QRectF &rect, const QgsRenderContext &context ) const
 {
-  QTransform t = createTransform( context );
+  const QTransform t = createTransform( context );
   return t.mapRect( rect );
 }
 
@@ -100,16 +98,16 @@ QTransform QgsTransformEffect::createTransform( const QgsRenderContext &context 
   if ( !source() )
     return t;
 
-  int width = source()->boundingRect().width();
-  int height = source()->boundingRect().height();
-  int top = source()->boundingRect().top();
-  int left = source()->boundingRect().left();
+  const int width = source()->boundingRect().width();
+  const int height = source()->boundingRect().height();
+  const int top = source()->boundingRect().top();
+  const int left = source()->boundingRect().left();
 
   //remember that the below operations are effectively performed in the opposite order
   //so, first the reflection applies, then scale, shear, rotate and lastly translation
 
-  double translateX = context.convertToPainterUnits( mTranslateX, mTranslateUnit, mTranslateMapUnitScale );
-  double translateY = context.convertToPainterUnits( mTranslateY, mTranslateUnit, mTranslateMapUnitScale );
+  const double translateX = context.convertToPainterUnits( mTranslateX, mTranslateUnit, mTranslateMapUnitScale );
+  const double translateY = context.convertToPainterUnits( mTranslateY, mTranslateUnit, mTranslateMapUnitScale );
 
   t.translate( translateX + left + width / 2.0,
                translateY + top + height / 2.0 );

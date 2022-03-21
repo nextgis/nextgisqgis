@@ -24,7 +24,7 @@
 /**
  * \class QgsSingleBoxScaleBarRenderer
  * \ingroup core
- * Scalebar style that draws a single box with alternating
+ * \brief Scalebar style that draws a single box with alternating
  * color for the segments.
  * \since QGIS 3.0
  */
@@ -37,7 +37,11 @@ class CORE_EXPORT QgsSingleBoxScaleBarRenderer: public QgsScaleBarRenderer
      */
     QgsSingleBoxScaleBarRenderer() = default;
 
-    QString name() const override { return QStringLiteral( "Single Box" ); }
+    QString id() const override;
+    QString visibleName() const override;
+    int sortKey() const override;
+    Flags flags() const override;
+    QgsSingleBoxScaleBarRenderer *clone() const override SIP_FACTORY;
 
     void draw( QgsRenderContext &context,
                const QgsScaleBarSettings &settings,

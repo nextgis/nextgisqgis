@@ -27,7 +27,7 @@ class QgsProcessingProvider;
 /**
  * \class QgsProcessingFeedback
  * \ingroup core
- * Base class for providing feedback from a processing algorithm.
+ * \brief Base class for providing feedback from a processing algorithm.
  *
  * This base class implementation silently ignores all feedback reported by algorithms.
  * Subclasses of QgsProcessingFeedback can be used to log this feedback or report
@@ -39,6 +39,14 @@ class CORE_EXPORT QgsProcessingFeedback : public QgsFeedback
     Q_OBJECT
 
   public:
+
+    /**
+     * Constructor for QgsProcessingFeedback.
+     *
+     * If \a logFeedback is TRUE, then all feedback received will be directed
+     * to QgsMessageLog.
+     */
+    QgsProcessingFeedback( bool logFeedback = true );
 
     /**
      * Sets a progress report text string. This can be used in conjunction with
@@ -56,9 +64,22 @@ class CORE_EXPORT QgsProcessingFeedback : public QgsFeedback
     virtual void reportError( const QString &error, bool fatalError = false );
 
     /**
+     * Pushes a warning informational message from the algorithm. This
+     * should only be used sparsely as to maintain the importance of visual
+     * queues associated to this type of message.
+     * \see pushInfo()
+     * \see pushCommandInfo()
+     * \see pushDebugInfo()
+     * \see pushConsoleInfo()
+     * \since QGIS 3.16.2
+     */
+    virtual void pushWarning( const QString &warning );
+
+    /**
      * Pushes a general informational message from the algorithm. This can
      * be used to report feedback which is neither a status report or an
      * error, such as "Found 47 matching features".
+     * \see pushWarning()
      * \see pushCommandInfo()
      * \see pushDebugInfo()
      * \see pushConsoleInfo()
@@ -69,6 +90,7 @@ class CORE_EXPORT QgsProcessingFeedback : public QgsFeedback
      * Pushes an informational message containing a command from the algorithm.
      * This is usually used to report commands which are executed in an external
      * application or as subprocesses.
+     * \see pushWarning()
      * \see pushInfo()
      * \see pushDebugInfo()
      * \see pushConsoleInfo()
@@ -78,6 +100,7 @@ class CORE_EXPORT QgsProcessingFeedback : public QgsFeedback
     /**
      * Pushes an informational message containing debugging helpers from
      * the algorithm.
+     * \see pushWarning()
      * \see pushInfo()
      * \see pushCommandInfo()
      * \see pushConsoleInfo()
@@ -87,6 +110,7 @@ class CORE_EXPORT QgsProcessingFeedback : public QgsFeedback
     /**
      * Pushes a console feedback message from the algorithm. This is used to
      * report the output from executing an external command or subprocess.
+     * \see pushWarning()
      * \see pushInfo()
      * \see pushDebugInfo()
      * \see pushCommandInfo()
@@ -99,6 +123,31 @@ class CORE_EXPORT QgsProcessingFeedback : public QgsFeedback
      */
     void pushVersionInfo( const QgsProcessingProvider *provider = nullptr );
 
+    /**
+     * Returns the HTML formatted contents of the log, which contains all messages pushed to the feedback object.
+     *
+     * \see textLog()
+     * \since QGIS 3.14
+     */
+    virtual QString htmlLog() const;
+
+    /**
+     * Returns the plain text contents of the log, which contains all messages pushed to the feedback object.
+     *
+     * \see htmlLog()
+     * \since QGIS 3.14
+     */
+    virtual QString textLog() const;
+
+  private:
+
+    void log( const QString &htmlMessage, const QString &textMessage );
+
+    bool mLogFeedback = true;
+    QString mHtmlLog;
+    QString mTextLog;
+    int mMessageLoggedCount = 0;
+
 };
 
 
@@ -106,7 +155,7 @@ class CORE_EXPORT QgsProcessingFeedback : public QgsFeedback
  * \class QgsProcessingMultiStepFeedback
  * \ingroup core
  *
- * Processing feedback object for multi-step operations.
+ * \brief Processing feedback object for multi-step operations.
  *
  * A processing feedback object which proxies its calls to an underlying
  * feedback object, but scales overall progress reports to account
@@ -135,11 +184,13 @@ class CORE_EXPORT QgsProcessingMultiStepFeedback : public QgsProcessingFeedback
 
     void setProgressText( const QString &text ) override;
     void reportError( const QString &error, bool fatalError = false ) override;
+    void pushWarning( const QString &warning ) override;
     void pushInfo( const QString &info ) override;
     void pushCommandInfo( const QString &info ) override;
     void pushDebugInfo( const QString &info ) override;
     void pushConsoleInfo( const QString &info ) override;
-
+    QString htmlLog() const override;
+    QString textLog() const override;
   private slots:
 
     void updateOverallProgress( double progress );
@@ -149,6 +200,7 @@ class CORE_EXPORT QgsProcessingMultiStepFeedback : public QgsProcessingFeedback
     int mChildSteps = 0;
     int mCurrentStep = 0;
     QgsProcessingFeedback *mFeedback = nullptr;
+
 };
 
 #endif // QGSPROCESSINGFEEDBACK_H

@@ -1,0 +1,49 @@
+--- a/src/core/symbology/qgsmarkersymbollayer.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/symbology/qgsmarkersymbollayer.cpp	2022-03-07 23:14:46.000000000 +0300
+@@ -16,8 +16,8 @@
+ #include "qgsmarkersymbollayer.h"
+ #include "qgssymbollayerutils.h"
+ 
+-#include "qgsdxfexport.h"
+-#include "qgsdxfpaintdevice.h"
++// #include "qgsdxfexport.h"
++// #include "qgsdxfpaintdevice.h"
+ #include "qgsexpression.h"
+ #include "qgsfontutils.h"
+ #include "qgsimagecache.h"
+@@ -1420,7 +1420,7 @@
+     p->drawPath( mPath );
+   }
+ }
+-
++/*
+ bool QgsSimpleMarkerSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift ) const
+ {
+   //data defined size?
+@@ -1611,7 +1611,7 @@
+ 
+   return true;
+ }
+-
++*/
+ 
+ void QgsSimpleMarkerSymbolLayer::setOutputUnit( QgsUnitTypes::RenderUnit unit )
+ {
+@@ -2565,7 +2565,7 @@
+   m->setOffset( offset );
+   return m;
+ }
+-
++/*
+ bool QgsSvgMarkerSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift ) const
+ {
+   //size
+@@ -2686,7 +2686,7 @@
+   p.end();
+   return true;
+ }
+-
++*/
+ QRectF QgsSvgMarkerSymbolLayer::bounds( QPointF point, QgsSymbolRenderContext &context )
+ {
+   bool hasDataDefinedSize = false;

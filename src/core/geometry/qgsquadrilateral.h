@@ -28,6 +28,7 @@
  * \ingroup core
  * \class QgsQuadrilateral
  * \brief Quadrilateral geometry type.
+ *
  * A quadrilateral is a polygon with four edges (or sides) and four vertices or corners.
  * This class allows the creation of simple quadrilateral (which does not self-intersect).
  * \since QGIS 3.6
@@ -35,7 +36,11 @@
 class CORE_EXPORT QgsQuadrilateral
 {
   public:
-    QgsQuadrilateral();
+
+    /**
+     * Constructor for an empty quadrilateral geometry.
+     */
+    QgsQuadrilateral() SIP_HOLDGIL;
 
     /**
      * Construct a QgsQuadrilateral from four QgsPoint.
@@ -45,7 +50,7 @@ class CORE_EXPORT QgsQuadrilateral
      * \param p4 fourth point
      * \see setPoints
      */
-    QgsQuadrilateral( const QgsPoint &p1, const QgsPoint &p2, const QgsPoint &p3, const QgsPoint &p4 );
+    QgsQuadrilateral( const QgsPoint &p1, const QgsPoint &p2, const QgsPoint &p3, const QgsPoint &p4 ) SIP_HOLDGIL;
 
     /**
      * Construct a QgsQuadrilateral from four QgsPointXY.
@@ -55,7 +60,7 @@ class CORE_EXPORT QgsQuadrilateral
      * \param p4 fourth point
      * \see setPoints
      */
-    explicit QgsQuadrilateral( const QgsPointXY &p1, const QgsPointXY &p2, const QgsPointXY &p3, const QgsPointXY &p4 );
+    explicit QgsQuadrilateral( const QgsPointXY &p1, const QgsPointXY &p2, const QgsPointXY &p3, const QgsPointXY &p4 ) SIP_HOLDGIL;
 
 
     /**
@@ -64,8 +69,8 @@ class CORE_EXPORT QgsQuadrilateral
      */
     enum ConstructionOption
     {
-      Distance, //<! Second distance is equal to the distance between 2nd and 3rd point
-      Projected, //<! Second distance is equal to the distance of the perpendicualr projection of the 3rd point on the segment or its extension.
+      Distance, //!< Second distance is equal to the distance between 2nd and 3rd point
+      Projected, //!< Second distance is equal to the distance of the perpendicular projection of the 3rd point on the segment or its extension.
     };
 
     /**
@@ -75,22 +80,24 @@ class CORE_EXPORT QgsQuadrilateral
      * the z used will be the one of the first point with a Z.
      * This ensures consistency in point types and the ability to export to a
      * Polygon or LineString.
+     * M is taken from point \a p1.
      * \param p1 first point
      * \param p2 second point
      * \param p3 third point
      * \param mode Construction mode to construct the rectangle from 3 points
      * \see ConstructionOption
      */
-    static QgsQuadrilateral rectangleFrom3Points( const QgsPoint &p1, const QgsPoint &p2, const QgsPoint &p3, ConstructionOption mode );
+    static QgsQuadrilateral rectangleFrom3Points( const QgsPoint &p1, const QgsPoint &p2, const QgsPoint &p3, ConstructionOption mode ) SIP_HOLDGIL;
 
     /**
      * Construct a QgsQuadrilateral as a rectangle from an extent, defined by
      * two opposite corner points.
-     * Z is taken from point \a p1.
+     * Z and M are taken from point \a p1.
+     * QgsQuadrilateral will have the same dimension as \a p1 dimension.
      * \param p1 first point
      * \param p2 second point
      */
-    static QgsQuadrilateral rectangleFromExtent( const QgsPoint &p1, const QgsPoint &p2 );
+    static QgsQuadrilateral rectangleFromExtent( const QgsPoint &p1, const QgsPoint &p2 ) SIP_HOLDGIL;
 
 #ifndef SIP_RUN
 
@@ -102,26 +109,28 @@ class CORE_EXPORT QgsQuadrilateral
 
     /**
      * Construct a QgsQuadrilateral as a square from a diagonal.
-     * Z is taken from point \a p1.
+     * Z and M are taken from point \a p1.
+     * QgsQuadrilateral will have the same dimension as \a p1 dimension.
      * \param p1 first point
      * \param p2 second point
      */
-    static QgsQuadrilateral squareFromDiagonal( const QgsPoint &p1, const QgsPoint &p2 );
+    static QgsQuadrilateral squareFromDiagonal( const QgsPoint &p1, const QgsPoint &p2 ) SIP_HOLDGIL;
 
     /**
      * Construct a QgsQuadrilateral as a rectangle from center point \a center
      * and another point \a point.
-     * Z is taken from \a center point.
+     * Z and M are taken from point \a p1.
+     * QgsQuadrilateral will have the same dimension as \a center dimension.
      * \param center center point
      * \param point corner point
      */
-    static QgsQuadrilateral rectangleFromCenterPoint( const QgsPoint &center, const QgsPoint &point );
+    static QgsQuadrilateral rectangleFromCenterPoint( const QgsPoint &center, const QgsPoint &point ) SIP_HOLDGIL;
 
     /**
      * Construct a QgsQuadrilateral as a rectangle from a QgsRectangle.
      * \param rectangle rectangle
      */
-    static QgsQuadrilateral fromRectangle( const QgsRectangle &rectangle );
+    static QgsQuadrilateral fromRectangle( const QgsRectangle &rectangle ) SIP_HOLDGIL;
 
     // TODO:
     // Rhombus
@@ -131,16 +140,16 @@ class CORE_EXPORT QgsQuadrilateral
      * \param other the QgsQuadrilateral to compare
      * \param epsilon the maximum difference allowed / tolerance
      */
-    bool equals( const QgsQuadrilateral &other, double epsilon = 4 * std::numeric_limits<double>::epsilon() ) const;
-    bool operator==( const QgsQuadrilateral &other ) const;
-    bool operator!=( const QgsQuadrilateral &other ) const;
+    bool equals( const QgsQuadrilateral &other, double epsilon = 4 * std::numeric_limits<double>::epsilon() ) const SIP_HOLDGIL;
+    bool operator==( const QgsQuadrilateral &other ) const SIP_HOLDGIL;
+    bool operator!=( const QgsQuadrilateral &other ) const SIP_HOLDGIL;
 
     /**
      * Convenient method to determine if a QgsQuadrilateral is valid.
      * A QgsQuadrilateral must be simple (not self-intersecting) and
      * cannot have collinear points.
      */
-    bool isValid() const;
+    bool isValid() const SIP_HOLDGIL;
 
     /**
      * Simple enumeration to ensure indices in setPoint
@@ -158,17 +167,18 @@ class CORE_EXPORT QgsQuadrilateral
      * Returns FALSE if the QgsQuadrilateral is not valid.
      * \see Point
      */
-    bool setPoint( const QgsPoint &newPoint, Point index );
+    bool setPoint( const QgsPoint &newPoint, Point index ) SIP_HOLDGIL;
 
     /**
      * Set all points
      * Returns FALSE if the QgsQuadrilateral is not valid:
+     *
      * - The points do not have the same type
      * - The quadrilateral would have auto intersections
      * - The quadrilateral has double points
      * - The quadrilateral has collinear points
      */
-    bool setPoints( const QgsPoint &p1, const QgsPoint &p2, const QgsPoint &p3, const QgsPoint &p4 );
+    bool setPoints( const QgsPoint &p1, const QgsPoint &p2, const QgsPoint &p3, const QgsPoint &p4 ) SIP_HOLDGIL;
 
     /**
      * Returns a list including the vertices of the quadrilateral.
@@ -194,12 +204,12 @@ class CORE_EXPORT QgsQuadrilateral
     /**
      * Returns the area of the quadrilateral, or 0 if the quadrilateral is empty.
      */
-    double area() const;
+    double area() const SIP_HOLDGIL;
 
     /**
      * Returns the perimeter of the quadrilateral, or 0 if the quadrilateral is empty.
      */
-    double perimeter() const;
+    double perimeter() const SIP_HOLDGIL;
 #ifdef SIP_RUN
     SIP_PYOBJECT __repr__();
     % MethodCode

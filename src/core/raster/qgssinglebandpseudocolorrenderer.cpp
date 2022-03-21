@@ -22,6 +22,7 @@
 #include "qgsrastertransparency.h"
 #include "qgsrasterviewport.h"
 #include "qgsstyleentityvisitor.h"
+#include "qgscolorramplegendnode.h"
 
 #include <QDomDocument>
 #include <QDomElement>
@@ -53,9 +54,9 @@ void QgsSingleBandPseudoColorRenderer::setBand( int bandNo )
 void QgsSingleBandPseudoColorRenderer::setClassificationMin( double min )
 {
   mClassificationMin = min;
-  if ( shader() )
+  if ( auto *lShader = shader() )
   {
-    QgsColorRampShader *colorRampShader = dynamic_cast<QgsColorRampShader *>( shader()->rasterShaderFunction() );
+    QgsColorRampShader *colorRampShader = dynamic_cast<QgsColorRampShader *>( lShader->rasterShaderFunction() );
     if ( colorRampShader )
     {
       colorRampShader->setMinimumValue( min );
@@ -66,9 +67,9 @@ void QgsSingleBandPseudoColorRenderer::setClassificationMin( double min )
 void QgsSingleBandPseudoColorRenderer::setClassificationMax( double max )
 {
   mClassificationMax = max;
-  if ( shader() )
+  if ( auto *lShader = shader() )
   {
-    QgsColorRampShader *colorRampShader = dynamic_cast<QgsColorRampShader *>( shader()->rasterShaderFunction() );
+    QgsColorRampShader *colorRampShader = dynamic_cast<QgsColorRampShader *>( lShader->rasterShaderFunction() );
     if ( colorRampShader )
     {
       colorRampShader->setMaximumValue( max );
@@ -89,16 +90,7 @@ QgsSingleBandPseudoColorRenderer *QgsSingleBandPseudoColorRenderer::clone() cons
 
     if ( origColorRampShader )
     {
-      QgsColorRampShader *colorRampShader = new QgsColorRampShader( mShader->minimumValue(), mShader->maximumValue() );
-
-      if ( origColorRampShader->sourceColorRamp() )
-      {
-        colorRampShader->setSourceColorRamp( origColorRampShader->sourceColorRamp()->clone() );
-      }
-      colorRampShader->setColorRampType( origColorRampShader->colorRampType() );
-      colorRampShader->setClassificationMode( origColorRampShader->classificationMode() );
-      colorRampShader->setClip( origColorRampShader->clip() );
-      colorRampShader->setColorRampItemList( origColorRampShader->colorRampItemList() );
+      QgsColorRampShader *colorRampShader = new QgsColorRampShader( *origColorRampShader );
       shader->setRasterShaderFunction( colorRampShader );
     }
   }
@@ -136,9 +128,9 @@ QgsRasterRenderer *QgsSingleBandPseudoColorRenderer::create( const QDomElement &
     return nullptr;
   }
 
-  int band = elem.attribute( QStringLiteral( "band" ), QStringLiteral( "-1" ) ).toInt();
+  const int band = elem.attribute( QStringLiteral( "band" ), QStringLiteral( "-1" ) ).toInt();
   QgsRasterShader *shader = nullptr;
-  QDomElement rasterShaderElem = elem.firstChildElement( QStringLiteral( "rastershader" ) );
+  const QDomElement rasterShaderElem = elem.firstChildElement( QStringLiteral( "rastershader" ) );
   if ( !rasterShaderElem.isNull() )
   {
     shader = new QgsRasterShader();
@@ -153,7 +145,7 @@ QgsRasterRenderer *QgsSingleBandPseudoColorRenderer::create( const QDomElement &
   r->setClassificationMax( elem.attribute( QStringLiteral( "classificationMax" ), QStringLiteral( "NaN" ) ).toDouble() );
 
   // Backward compatibility with serialization of QGIS 2.X era
-  QString minMaxOrigin = elem.attribute( QStringLiteral( "classificationMinMaxOrigin" ) );
+  const QString minMaxOrigin = elem.attribute( QStringLiteral( "classificationMinMaxOrigin" ) );
   if ( !minMaxOrigin.isEmpty() )
   {
     if ( minMaxOrigin.contains( QLatin1String( "MinMax" ) ) )
@@ -210,7 +202,7 @@ QgsRasterBlock *QgsSingleBandPseudoColorRenderer::block( int bandNo, QgsRectangl
   }
 
 
-  std::shared_ptr< QgsRasterBlock > inputBlock( mInput->block( mBand, extent, width, height, feedback ) );
+  const std::shared_ptr< QgsRasterBlock > inputBlock( mInput->block( mBand, extent, width, height, feedback ) );
   if ( !inputBlock || inputBlock->isEmpty() )
   {
     QgsDebugMsg( QStringLiteral( "No raster data!" ) );
@@ -218,7 +210,7 @@ QgsRasterBlock *QgsSingleBandPseudoColorRenderer::block( int bandNo, QgsRectangl
   }
 
   //rendering is faster without considering user-defined transparency
-  bool hasTransparency = usesTransparency();
+  const bool hasTransparency = usesTransparency();
 
   std::shared_ptr< QgsRasterBlock > alphaBlock;
   if ( mAlphaBand > 0 && mAlphaBand != mBand )
@@ -234,7 +226,7 @@ QgsRasterBlock *QgsSingleBandPseudoColorRenderer::block( int bandNo, QgsRectangl
     alphaBlock = inputBlock;
   }
 
-  if ( !outputBlock->reset( Qgis::ARGB32_Premultiplied, width, height ) )
+  if ( !outputBlock->reset( Qgis::DataType::ARGB32_Premultiplied, width, height ) )
   {
     return outputBlock.release();
   }
@@ -243,11 +235,11 @@ QgsRasterBlock *QgsSingleBandPseudoColorRenderer::block( int bandNo, QgsRectangl
   QRgb *outputBlockData = outputBlock->colorData();
   const QgsRasterShaderFunction *fcn = mShader->rasterShaderFunction();
 
-  qgssize count = ( qgssize )width * height;
+  const qgssize count = ( qgssize )width * height;
   bool isNoData = false;
   for ( qgssize i = 0; i < count; i++ )
   {
-    double val = inputBlock->valueAndNoData( i, isNoData );
+    const double val = inputBlock->valueAndNoData( i, isNoData );
     if ( isNoData )
     {
       outputBlockData[i] = myDefaultColor;
@@ -313,8 +305,9 @@ void QgsSingleBandPseudoColorRenderer::writeXml( QDomDocument &doc, QDomElement 
   parentElem.appendChild( rasterRendererElem );
 }
 
-void QgsSingleBandPseudoColorRenderer::legendSymbologyItems( QList< QPair< QString, QColor > > &symbolItems ) const
+QList< QPair< QString, QColor > > QgsSingleBandPseudoColorRenderer::legendSymbologyItems() const
 {
+  QList< QPair< QString, QColor > > symbolItems;
   if ( mShader )
   {
     QgsRasterShaderFunction *shaderFunction = mShader->rasterShaderFunction();
@@ -323,6 +316,7 @@ void QgsSingleBandPseudoColorRenderer::legendSymbologyItems( QList< QPair< QStri
       shaderFunction->legendSymbologyItems( symbolItems );
     }
   }
+  return symbolItems;
 }
 
 QList<int> QgsSingleBandPseudoColorRenderer::usesBands() const
@@ -335,13 +329,13 @@ QList<int> QgsSingleBandPseudoColorRenderer::usesBands() const
   return bandList;
 }
 
-void QgsSingleBandPseudoColorRenderer::toSld( QDomDocument &doc, QDomElement &element, const QgsStringMap &props ) const
+void QgsSingleBandPseudoColorRenderer::toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const
 {
   // create base structure
   QgsRasterRenderer::toSld( doc, element, props );
 
   // look for RasterSymbolizer tag
-  QDomNodeList elements = element.elementsByTagName( QStringLiteral( "sld:RasterSymbolizer" ) );
+  const QDomNodeList elements = element.elementsByTagName( QStringLiteral( "sld:RasterSymbolizer" ) );
   if ( elements.size() == 0 )
     return;
 
@@ -391,7 +385,7 @@ void QgsSingleBandPseudoColorRenderer::toSld( QDomDocument &doc, QDomElement &el
 
   // for each color set a ColorMapEntry tag nested into "sld:ColorMap" tag
   // e.g. <ColorMapEntry color="#EEBE2F" quantity="-300" label="label" opacity="0"/>
-  QList<QgsColorRampShader::ColorRampItem> classes = rampShader->colorRampItemList();
+  const QList<QgsColorRampShader::ColorRampItem> classes = rampShader->colorRampItemList();
   QList<QgsColorRampShader::ColorRampItem>::const_iterator classDataIt = classes.constBegin();
   for ( ; classDataIt != classes.constEnd();  ++classDataIt )
   {
@@ -419,4 +413,53 @@ bool QgsSingleBandPseudoColorRenderer::accept( QgsStyleEntityVisitorInterface *v
   }
 
   return true;
+}
+
+QList<QgsLayerTreeModelLegendNode *> QgsSingleBandPseudoColorRenderer::createLegendNodes( QgsLayerTreeLayer *nodeLayer )
+{
+  if ( !mShader )
+    return QList<QgsLayerTreeModelLegendNode *>();
+
+  const QgsColorRampShader *rampShader = dynamic_cast<const QgsColorRampShader *>( mShader->rasterShaderFunction() );
+  if ( !rampShader )
+    return QList<QgsLayerTreeModelLegendNode *>();
+
+  QList<QgsLayerTreeModelLegendNode *> res;
+
+  const QString name = displayBandName( mBand );
+  if ( !name.isEmpty() )
+  {
+    res << new QgsSimpleLegendNode( nodeLayer, name );
+  }
+
+  switch ( rampShader->colorRampType() )
+  {
+    case QgsColorRampShader::Interpolated:
+      // for interpolated shaders we use a ramp legend node unless the settings flag
+      // to use the continuous legend is not set, in that case we fall through
+      if ( ! rampShader->legendSettings() || rampShader->legendSettings()->useContinuousLegend() )
+      {
+        if ( !rampShader->colorRampItemList().isEmpty() )
+        {
+          res << new QgsColorRampLegendNode( nodeLayer, rampShader->createColorRamp(),
+                                             rampShader->legendSettings() ? *rampShader->legendSettings() : QgsColorRampLegendNodeSettings(),
+                                             rampShader->minimumValue(), rampShader->maximumValue() );
+        }
+        break;
+      }
+      Q_FALLTHROUGH();
+    case QgsColorRampShader::Discrete:
+    case QgsColorRampShader::Exact:
+    {
+      // for all others we use itemised lists
+      const QList< QPair< QString, QColor > > items = legendSymbologyItems();
+      res.reserve( items.size() );
+      for ( const QPair< QString, QColor > &item : items )
+      {
+        res << new QgsRasterSymbolLegendNode( nodeLayer, item.second, item.first );
+      }
+      break;
+    }
+  }
+  return res;
 }

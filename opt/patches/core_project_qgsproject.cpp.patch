@@ -1,0 +1,24 @@
+--- a/src/core/project/qgsproject.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/project/qgsproject.cpp	2022-03-07 23:14:46.000000000 +0300
+@@ -61,7 +61,7 @@
+ #include "qgsprojectviewsettings.h"
+ #include "qgsprojectdisplaysettings.h"
+ #include "qgsprojecttimesettings.h"
+-#include "qgsvectortilelayer.h"
++// #include "qgsvectortilelayer.h"
+ #include "qgsruntimeprofiler.h"
+ #include "qgsannotationlayer.h"
+ #include "qgspointcloudlayer.h"
+@@ -1203,9 +1203,9 @@
+       mapLayer = std::make_unique<QgsMeshLayer>();
+       break;
+ 
+-    case QgsMapLayerType::VectorTileLayer:
+-      mapLayer = std::make_unique<QgsVectorTileLayer>();
+-      break;
++    // case QgsMapLayerType::VectorTileLayer:
++    //   mapLayer = std::make_unique<QgsVectorTileLayer>();
++    //   break;
+ 
+     case QgsMapLayerType::PointCloudLayer:
+       mapLayer = std::make_unique<QgsPointCloudLayer>();

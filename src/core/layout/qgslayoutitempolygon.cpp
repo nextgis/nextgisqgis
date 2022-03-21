@@ -24,6 +24,7 @@
 #include "qgssymbol.h"
 #include "qgsmapsettings.h"
 #include "qgsstyleentityvisitor.h"
+#include "qgsfillsymbol.h"
 
 #include <limits>
 
@@ -38,6 +39,8 @@ QgsLayoutItemPolygon::QgsLayoutItemPolygon( const QPolygonF &polygon, QgsLayout 
 {
   createDefaultPolygonStyleSymbol();
 }
+
+QgsLayoutItemPolygon::~QgsLayoutItemPolygon() = default;
 
 QgsLayoutItemPolygon *QgsLayoutItemPolygon::create( QgsLayout *layout )
 {
@@ -65,7 +68,7 @@ bool QgsLayoutItemPolygon::_addNode( const int indexPoint,
 
 void QgsLayoutItemPolygon::createDefaultPolygonStyleSymbol()
 {
-  QgsStringMap properties;
+  QVariantMap properties;
   properties.insert( QStringLiteral( "color" ), QStringLiteral( "white" ) );
   properties.insert( QStringLiteral( "style" ), QStringLiteral( "solid" ) );
   properties.insert( QStringLiteral( "style_border" ), QStringLiteral( "solid" ) );
@@ -80,10 +83,10 @@ void QgsLayoutItemPolygon::createDefaultPolygonStyleSymbol()
 
 void QgsLayoutItemPolygon::refreshSymbol()
 {
-  if ( layout() )
+  if ( auto *lLayout = layout() )
   {
-    QgsRenderContext rc = QgsLayoutUtils::createRenderContextForLayout( layout(), nullptr, layout()->renderContext().dpi() );
-    mMaxSymbolBleed = ( 25.4 / layout()->renderContext().dpi() ) * QgsSymbolLayerUtils::estimateMaxSymbolBleed( mPolygonStyleSymbol.get(), rc );
+    const QgsRenderContext rc = QgsLayoutUtils::createRenderContextForLayout( lLayout, nullptr, lLayout->renderContext().dpi() );
+    mMaxSymbolBleed = ( 25.4 / lLayout->renderContext().dpi() ) * QgsSymbolLayerUtils::estimateMaxSymbolBleed( mPolygonStyleSymbol.get(), rc );
   }
 
   updateSceneRect();
@@ -111,13 +114,34 @@ bool QgsLayoutItemPolygon::accept( QgsStyleEntityVisitorInterface *visitor ) con
   return true;
 }
 
+QgsLayoutItem::Flags QgsLayoutItemPolygon::itemFlags() const
+{
+  QgsLayoutItem::Flags flags = QgsLayoutNodesItem::itemFlags();
+  flags |= QgsLayoutItem::FlagProvidesClipPath;
+  return flags;
+}
+
+QgsGeometry QgsLayoutItemPolygon::clipPath() const
+{
+  QPolygonF path = mapToScene( mPolygon );
+  // ensure polygon is closed
+  if ( path.at( 0 ) != path.constLast() )
+    path << path.at( 0 );
+  return QgsGeometry::fromQPolygonF( path );
+}
+
+QgsFillSymbol *QgsLayoutItemPolygon::symbol()
+{
+  return mPolygonStyleSymbol.get();
+}
+
 void QgsLayoutItemPolygon::_draw( QgsLayoutItemRenderContext &context, const QStyleOptionGraphicsItem * )
 {
   //setup painter scaling to dots so that raster symbology is drawn to scale
-  double scale = context.renderContext().convertToPainterUnits( 1, QgsUnitTypes::RenderMillimeters );
-  QTransform t = QTransform::fromScale( scale, scale );
+  const double scale = context.renderContext().convertToPainterUnits( 1, QgsUnitTypes::RenderMillimeters );
+  const QTransform t = QTransform::fromScale( scale, scale );
 
-  QList<QPolygonF> rings; //empty
+  const QVector<QPolygonF> rings; //empty
   QPainterPath polygonPath;
   polygonPath.addPolygon( mPolygon );
 
@@ -166,3 +190,4 @@ bool QgsLayoutItemPolygon::_removeNode( const int index )
 
   return true;
 }
+

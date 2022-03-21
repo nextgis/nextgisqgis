@@ -49,11 +49,6 @@ QString QgsSmoothAlgorithm::outputName() const
   return QObject::tr( "Smoothed" );
 }
 
-QgsProcessing::SourceType QgsSmoothAlgorithm::outputLayerType() const
-{
-  return QgsProcessing::TypeVectorLine;
-}
-
 QString QgsSmoothAlgorithm::shortHelpString() const
 {
   return QObject::tr( "This algorithm smooths the geometries in a line or polygon layer. It creates a new layer with the "
@@ -84,7 +79,7 @@ QList<int> QgsSmoothAlgorithm::inputLayerTypes() const
 
 void QgsSmoothAlgorithm::initParameters( const QVariantMap & )
 {
-  std::unique_ptr< QgsProcessingParameterNumber > iterations = qgis::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "ITERATIONS" ),
+  std::unique_ptr< QgsProcessingParameterNumber > iterations = std::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "ITERATIONS" ),
       QObject::tr( "Iterations" ), QgsProcessingParameterNumber::Integer,
       1, false, 1, 10 );
   iterations->setIsDynamic( true );
@@ -92,7 +87,7 @@ void QgsSmoothAlgorithm::initParameters( const QVariantMap & )
   iterations->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
   addParameter( iterations.release() );
 
-  std::unique_ptr< QgsProcessingParameterNumber > offset = qgis::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "OFFSET" ),
+  std::unique_ptr< QgsProcessingParameterNumber > offset = std::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "OFFSET" ),
       QObject::tr( "Offset" ), QgsProcessingParameterNumber::Double,
       0.25, false, 0.0, 0.5 );
   offset->setIsDynamic( true );
@@ -100,7 +95,7 @@ void QgsSmoothAlgorithm::initParameters( const QVariantMap & )
   offset->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
   addParameter( offset.release() );
 
-  std::unique_ptr< QgsProcessingParameterNumber > maxAngle = qgis::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "MAX_ANGLE" ),
+  std::unique_ptr< QgsProcessingParameterNumber > maxAngle = std::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "MAX_ANGLE" ),
       QObject::tr( "Maximum node angle to smooth" ), QgsProcessingParameterNumber::Double,
       180.0, false, 0.0, 180.0 );
   maxAngle->setIsDynamic( true );
@@ -146,7 +141,7 @@ QgsFeatureList QgsSmoothAlgorithm::processFeature( const QgsFeature &feature, Qg
     if ( mDynamicMaxAngle )
       maxAngle = mMaxAngleProperty.valueAsDouble( context.expressionContext(), maxAngle );
 
-    QgsGeometry outputGeometry = f.geometry().smooth( iterations, offset, -1, maxAngle );
+    const QgsGeometry outputGeometry = f.geometry().smooth( iterations, offset, -1, maxAngle );
     if ( outputGeometry.isNull() )
     {
       feedback->reportError( QObject::tr( "Error smoothing geometry %1" ).arg( feature.id() ) );

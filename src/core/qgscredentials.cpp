@@ -17,6 +17,7 @@
 #include "qgslogger.h"
 
 #include <QTextStream>
+#include <QIODevice>
 
 QgsCredentials *QgsCredentials::sInstance = nullptr;
 
@@ -41,10 +42,10 @@ QgsCredentials *QgsCredentials::instance()
 bool QgsCredentials::get( const QString &realm, QString &username, QString &password, const QString &message )
 {
   {
-    QMutexLocker locker( &mCacheMutex );
+    const QMutexLocker locker( &mCacheMutex );
     if ( mCredentialCache.contains( realm ) )
     {
-      QPair<QString, QString> credentials = mCredentialCache.take( realm );
+      const QPair<QString, QString> credentials = mCredentialCache.take( realm );
       username = credentials.first;
       password = credentials.second;
       QgsDebugMsgLevel( QStringLiteral( "retrieved realm:%1 username:%2" ).arg( realm, username ), 2 );
@@ -68,7 +69,7 @@ bool QgsCredentials::get( const QString &realm, QString &username, QString &pass
 
 void QgsCredentials::put( const QString &realm, const QString &username, const QString &password )
 {
-  QMutexLocker locker( &mCacheMutex );
+  const QMutexLocker locker( &mCacheMutex );
   QgsDebugMsgLevel( QStringLiteral( "inserting realm:%1 username:%2" ).arg( realm, username ), 2 );
   mCredentialCache.insert( realm, QPair<QString, QString>( username, password ) );
 }
@@ -131,9 +132,17 @@ bool QgsCredentialsConsole::request( const QString &realm, QString &username, QS
   QTextStream in( stdin, QIODevice::ReadOnly );
   QTextStream out( stdout, QIODevice::WriteOnly );
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
   out << "credentials for " << realm << endl;
+#else
+  out << "credentials for " << realm << Qt::endl;
+#endif
   if ( !message.isEmpty() )
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     out << "message: " << message << endl;
+#else
+    out << "message: " << message << Qt::endl;
+#endif
   out << "username: ";
   in >> username;
   out << "password: ";
@@ -149,7 +158,7 @@ bool QgsCredentialsConsole::requestMasterPassword( QString &password, bool store
   QTextStream in( stdin, QIODevice::ReadOnly );
   QTextStream out( stdout, QIODevice::WriteOnly );
 
-  QString msg( stored ? "Master password for authentication configs: " : "Set master password for authentication configs: " );
+  const QString msg( stored ? "Master password for authentication configs: " : "Set master password for authentication configs: " );
 
   out << msg;
   in >> password;

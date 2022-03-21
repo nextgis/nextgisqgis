@@ -53,9 +53,9 @@ QIcon QgsClassificationLogarithmic::icon() const
 
 QList<double> QgsClassificationLogarithmic::calculateBreaks( double &minimum, double &maximum, const QList<double> &values, int nclasses )
 {
-  QgsProcessingContext context;
+  const QgsProcessingContext context;
   const QgsProcessingParameterDefinition *def = parameterDefinition( QStringLiteral( "ZERO_NEG_VALUES_HANDLE" ) );
-  NegativeValueHandling nvh = static_cast< NegativeValueHandling >( QgsProcessingParameters::parameterAsEnum( def, parameterValues(), context ) );
+  const NegativeValueHandling nvh = static_cast< NegativeValueHandling >( QgsProcessingParameters::parameterAsEnum( def, parameterValues(), context ) );
 
   double positiveMinimum = std::numeric_limits<double>::max();
   if ( nvh != NegativeValueHandling::NoHandling && minimum <= 0 )
@@ -94,8 +94,8 @@ QList<double> QgsClassificationLogarithmic::calculateBreaks( double &minimum, do
   }
 
   // get the min/max in log10 scale
-  double logMin = std::floor( std::log10( positiveMinimum ) );
-  double logMax = std::ceil( std::log10( maximum ) );
+  const double logMin = std::floor( std::log10( positiveMinimum ) );
+  const double logMax = std::ceil( std::log10( maximum ) );
 
   // calculate pretty breaks
   breaks.append( QgsSymbolLayerUtils::prettyBreaks( logMin, logMax, nclasses ) );
@@ -110,9 +110,20 @@ QList<double> QgsClassificationLogarithmic::calculateBreaks( double &minimum, do
 QString QgsClassificationLogarithmic::valueToLabel( double value ) const
 {
   if ( value <= 0 )
-    return QString( QStringLiteral( "%1" ) ).arg( value );
+  {
+    return QLocale().toString( value );
+  }
   else
-    return QString( QStringLiteral( "10^%1" ) ).arg( std::log10( value ) );
+  {
+    if ( std::isnan( value ) )
+    {
+      return QObject::tr( "invalid (0 or negative values in the data)" );
+    }
+    else
+    {
+      return QString( QStringLiteral( "10^%1" ) ).arg( std::log10( value ) );
+    }
+  }
 }
 
 QString QgsClassificationLogarithmic::labelForRange( double lowerValue, double upperValue, QgsClassificationMethod::ClassPosition position ) const
@@ -136,9 +147,9 @@ QString QgsClassificationLogarithmic::labelForRange( double lowerValue, double u
 
 bool QgsClassificationLogarithmic::valuesRequired() const
 {
-  QgsProcessingContext context;
+  const QgsProcessingContext context;
   const QgsProcessingParameterDefinition *def = parameterDefinition( QStringLiteral( "ZERO_NEG_VALUES_HANDLE" ) );
-  NegativeValueHandling nvh = static_cast< NegativeValueHandling >( QgsProcessingParameters::parameterAsEnum( def, parameterValues(), context ) );
+  const NegativeValueHandling nvh = static_cast< NegativeValueHandling >( QgsProcessingParameters::parameterAsEnum( def, parameterValues(), context ) );
 
   return nvh != NegativeValueHandling::NoHandling;
 }

@@ -1,0 +1,34 @@
+--- a/src/core/geometry/qgsgeometrycollection.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/geometry/qgsgeometrycollection.cpp	2022-03-09 00:14:17.000000000 +0300
+@@ -29,7 +29,7 @@
+ #include "qgsgeos.h"
+ #include "qgsfeedback.h"
+ 
+-#include <nlohmann/json.hpp>
++// #include <nlohmann/json.hpp>
+ #include <memory>
+ 
+ QgsGeometryCollection::QgsGeometryCollection()
+@@ -505,16 +505,15 @@
+ 
+ json QgsGeometryCollection::asJsonObject( int precision ) const
+ {
+-  json coordinates( json::array( ) );
++  CPLJSONArray coordinates;
+   for ( const QgsAbstractGeometry *geom : std::as_const( mGeometries ) )
+   {
+-    coordinates.push_back( geom->asJsonObject( precision ) );
++    coordinates.Add( geom->asJsonObject( precision ) );
+   }
+-  return
+-  {
+-    { "type",  "GeometryCollection" },
+-    { "geometries", coordinates }
+-  };
++  CPLJSONObject out;
++  out.Add("type",  "GeometryCollection");
++  out.Add("geometries", coordinates);
++  return out;
+ }
+ 
+ QString QgsGeometryCollection::asKml( int precision ) const

@@ -1,7 +1,7 @@
 # Based on Macros for Bison
 # ~~~~~~~~~~~~~~~~
 # Copyright (c) 2007, Martin Dobias <wonder.sk at gmail.com>
-# Copyright (c) 2017, NextGIS <info@nextgis.com>
+# Copyright (c) 2017-2022, NextGIS <info@nextgis.com>
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 
@@ -16,10 +16,13 @@ macro(find_bison)
                 PATHS $ENV{LIB_DIR}/bin c:/cygwin/bin $ENV{PROGRAMFILES}/GnuWin32/bin
             )
         else ()
+            # For macOS and `brew install bison`
+            find_program(BISON_EXECUTABLE bison PATHS /usr/local/opt/bison/bin NO_DEFAULT_PATH)
             find_program(BISON_EXECUTABLE bison)
         endif ()
 
         if (BISON_EXECUTABLE)
+            message("Found bison executable: ${BISON_EXECUTABLE}")
             exec_program(${BISON_EXECUTABLE} ARGS --version OUTPUT_VARIABLE BISON_VERSION_STR)
             # get first line in case it's multiline
             string(REGEX REPLACE "([^\n]+).*" "\\1" FIRST_LINE "${BISON_VERSION_STR}")

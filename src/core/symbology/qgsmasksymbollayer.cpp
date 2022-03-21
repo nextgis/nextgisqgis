@@ -19,15 +19,24 @@
 #include "qgsvectorlayer.h"
 #include "qgspainteffect.h"
 #include "qgspainterswapper.h"
+#include "qgsmarkersymbol.h"
+#include "qgssymbollayerreference.h"
 
 QgsMaskMarkerSymbolLayer::QgsMaskMarkerSymbolLayer()
 {
-  mSymbol.reset( static_cast<QgsMarkerSymbol *>( QgsMarkerSymbol::createSimple( QgsStringMap() ) ) );
+  mSymbol.reset( static_cast<QgsMarkerSymbol *>( QgsMarkerSymbol::createSimple( QVariantMap() ) ) );
+}
+
+QgsMaskMarkerSymbolLayer::~QgsMaskMarkerSymbolLayer() = default;
+
+bool QgsMaskMarkerSymbolLayer::enabled() const
+{
+  return !mMaskedSymbolLayers.isEmpty();
 }
 
 bool QgsMaskMarkerSymbolLayer::setSubSymbol( QgsSymbol *symbol )
 {
-  if ( symbol && symbol->type() == QgsSymbol::Marker )
+  if ( symbol && symbol->type() == Qgis::SymbolType::Marker )
   {
     mSymbol.reset( static_cast<QgsMarkerSymbol *>( symbol ) );
     return true;
@@ -36,7 +45,7 @@ bool QgsMaskMarkerSymbolLayer::setSubSymbol( QgsSymbol *symbol )
   return false;
 }
 
-QgsSymbolLayer *QgsMaskMarkerSymbolLayer::create( const QgsStringMap &props )
+QgsSymbolLayer *QgsMaskMarkerSymbolLayer::create( const QVariantMap &props )
 {
   QgsMaskMarkerSymbolLayer *l = new QgsMaskMarkerSymbolLayer();
 
@@ -44,7 +53,7 @@ QgsSymbolLayer *QgsMaskMarkerSymbolLayer::create( const QgsStringMap &props )
 
   if ( props.contains( QStringLiteral( "mask_symbollayers" ) ) )
   {
-    l->setMasks( stringToSymbolLayerReferenceList( props[QStringLiteral( "mask_symbollayers" )] ) );
+    l->setMasks( stringToSymbolLayerReferenceList( props[QStringLiteral( "mask_symbollayers" )].toString() ) );
   }
   return l;
 }
@@ -59,14 +68,19 @@ QgsMaskMarkerSymbolLayer *QgsMaskMarkerSymbolLayer::clone() const
   return l;
 }
 
+QgsSymbol *QgsMaskMarkerSymbolLayer::subSymbol()
+{
+  return mSymbol.get();
+}
+
 QString QgsMaskMarkerSymbolLayer::layerType() const
 {
   return QStringLiteral( "MaskMarker" );
 }
 
-QgsStringMap QgsMaskMarkerSymbolLayer::properties() const
+QVariantMap QgsMaskMarkerSymbolLayer::properties() const
 {
-  QgsStringMap props;
+  QVariantMap props;
   props[QStringLiteral( "mask_symbollayers" )] = symbolLayerReferenceListToString( masks() );
   return props;
 }
@@ -93,9 +107,9 @@ void QgsMaskMarkerSymbolLayer::startRender( QgsSymbolRenderContext &context )
 {
   // since we need to swap the regular painter with the mask painter during rendering,
   // effects won't work. So we cheat by handling effects ourselves in renderPoint
-  if ( paintEffect() )
+  if ( auto *lPaintEffect = paintEffect() )
   {
-    mEffect.reset( paintEffect()->clone() );
+    mEffect.reset( lPaintEffect->clone() );
     setPaintEffect( nullptr );
   }
   mSymbol->startRender( context.renderContext() );
@@ -115,9 +129,25 @@ void QgsMaskMarkerSymbolLayer::drawPreviewIcon( QgsSymbolRenderContext &context,
   QgsMarkerSymbolLayer::drawPreviewIcon( context, size );
 }
 
+QList<QgsSymbolLayerReference> QgsMaskMarkerSymbolLayer::masks() const
+{
+  return mMaskedSymbolLayers;
+}
+
+void QgsMaskMarkerSymbolLayer::setMasks( const QList<QgsSymbolLayerReference> &maskedLayers )
+{
+  mMaskedSymbolLayers = maskedLayers;
+}
+
 QRectF QgsMaskMarkerSymbolLayer::bounds( QPointF point, QgsSymbolRenderContext &context )
 {
   return mSymbol->bounds( point, context.renderContext() );
+}
+
+bool QgsMaskMarkerSymbolLayer::usesMapUnits() const
+{
+  return mSizeUnit == QgsUnitTypes::RenderMapUnits || mSizeUnit == QgsUnitTypes::RenderMetersInMapUnits
+         || ( mSymbol && mSymbol->usesMapUnits() );
 }
 
 void QgsMaskMarkerSymbolLayer::renderPoint( QPointF point, QgsSymbolRenderContext &context )
@@ -139,7 +169,7 @@ void QgsMaskMarkerSymbolLayer::renderPoint( QPointF point, QgsSymbolRenderContex
 
   {
     // Otherwise switch to the mask painter before rendering
-    QgsPainterSwapper swapper( context.renderContext(), context.renderContext().maskPainter() );
+    const QgsPainterSwapper swapper( context.renderContext(), context.renderContext().maskPainter() );
 
     // Special case when an effect is defined on this mask symbol layer
     // (effects defined on sub symbol's layers do not need special handling)

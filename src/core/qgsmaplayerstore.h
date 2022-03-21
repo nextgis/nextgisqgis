@@ -27,7 +27,7 @@
 /**
  * \class QgsMapLayerStore
  * \ingroup core
- * A storage object for map layers, in which the layers are owned by the
+ * \brief A storage object for map layers, in which the layers are owned by the
  * store and have their lifetime bound to the store.
  * \since QGIS 3.0
 */
@@ -113,7 +113,7 @@ class CORE_EXPORT QgsMapLayerStore : public QObject
     /**
      * Returns a list of registered map layers with a specified layer type.
      *
-     * Example:
+     * ### Example
      *
      *     QVector<QgsVectorLayer*> vectorLayers = store->layers<QgsVectorLayer*>();
      *

@@ -41,7 +41,7 @@
  * \since QGIS 2.9
  */
 
-class CORE_EXPORT QgsEffectStack : public QgsPaintEffect
+class CORE_EXPORT QgsEffectStack : public QgsPaintEffect SIP_NODEFAULTCTORS
 {
 
   public:
@@ -52,7 +52,7 @@ class CORE_EXPORT QgsEffectStack : public QgsPaintEffect
      * \param map unused encoded properties string map
      * \returns new QgsEffectStack
      */
-    static QgsPaintEffect *create( const QgsStringMap &map ) SIP_FACTORY;
+    static QgsPaintEffect *create( const QVariantMap &map ) SIP_FACTORY;
 
     /**
      * Constructor for empty QgsEffectStack.
@@ -84,12 +84,12 @@ class CORE_EXPORT QgsEffectStack : public QgsPaintEffect
     /**
      * Unused for QgsEffectStack, will always return an empty string map
      */
-    QgsStringMap properties() const override;
+    QVariantMap properties() const override;
 
     /**
      * Unused for QgsEffectStack, props parameter will be ignored
      */
-    void readProperties( const QgsStringMap &props ) override;
+    void readProperties( const QVariantMap &props ) override;
 
     /**
      * Appends an effect to the end of the stack.

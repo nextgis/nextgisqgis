@@ -21,12 +21,13 @@
 #include "qgslayertreenode.h"
 #include "qgsmaplayerref.h"
 #include "qgsreadwritecontext.h"
+#include "qgslegendpatchshape.h"
 
 class QgsMapLayer;
 
 /**
  * \ingroup core
- * Layer tree node points to a map layer.
+ * \brief Layer tree node points to a map layer.
  *
  * The node can exist also without a valid instance of a layer (just ID). That
  * means the referenced layer does not need to be loaded in order to use it
@@ -53,6 +54,14 @@ class CORE_EXPORT QgsLayerTreeLayer : public QgsLayerTreeNode
      * Constructor for QgsLayerTreeLayer using weak references to layer ID, \a name, public \a source, and \a provider key.
      */
     explicit QgsLayerTreeLayer( const QString &layerId, const QString &name = QString(), const QString &source = QString(), const QString &provider = QString() );
+
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    QString str = QStringLiteral( "<QgsLayerTreeLayer: %1>" ).arg( sipCpp->name() );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
 
     /**
      * Returns the ID for the map layer associated with this node.
@@ -91,8 +100,8 @@ class CORE_EXPORT QgsLayerTreeLayer : public QgsLayerTreeNode
     void setName( const QString &n ) override;
 
     /**
-     * Uses the layer's name if \a use is true, or the name manually set if
-     * false.
+     * Uses the layer's name if \a use is TRUE, or the name manually set if
+     * FALSE.
      * \since QGIS 3.8
      */
     void setUseLayerName( bool use = true );
@@ -141,6 +150,76 @@ class CORE_EXPORT QgsLayerTreeLayer : public QgsLayerTreeNode
      * \since QGIS 3.10
      */
     QString labelExpression() const { return mLabelExpression; }
+
+    /**
+     * Returns the symbol patch shape to use when rendering the legend node symbol.
+     *
+     * \see setPatchShape()
+     * \since QGIS 3.14
+     */
+    QgsLegendPatchShape patchShape() const;
+
+    /**
+     * Sets the symbol patch \a shape to use when rendering the legend node symbol.
+     *
+     * \see patchShape()
+     * \since QGIS 3.14
+     */
+    void setPatchShape( const QgsLegendPatchShape &shape );
+
+    /**
+     * Returns the user (overridden) size for the legend node.
+     *
+     * If either the width or height are non-zero, they will be used when rendering the legend node instead of the default
+     * symbol width or height from QgsLegendSettings.
+     *
+     * \see setPatchSize()
+     * \since QGIS 3.14
+     */
+    QSizeF patchSize() const { return mPatchSize; }
+
+    /**
+     * Sets the user (overridden) \a size for the legend node.
+     *
+     * If either the width or height are non-zero, they will be used when rendering the legend node instead of the default
+     * symbol width or height from QgsLegendSettings.
+     *
+     * \see patchSize()
+     * \since QGIS 3.14
+     */
+    void setPatchSize( QSizeF size ) { mPatchSize = size; }
+
+    /**
+     * Legend node column split behavior.
+     *
+     * \since QGIS 3.14
+     */
+    enum LegendNodesSplitBehavior
+    {
+      UseDefaultLegendSetting, //!< Inherit default legend column splitting setting
+      AllowSplittingLegendNodesOverMultipleColumns, //!< Allow splitting node's legend nodes across multiple columns
+      PreventSplittingLegendNodesOverMultipleColumns, //!< Prevent splitting node's legend nodes across multiple columns
+    };
+
+    /**
+     * Returns the column split behavior for the node.
+     *
+     * This value controls how legend nodes belonging the to layer may be split over multiple columns in legends.
+     *
+     * \see setLegendSplitBehavior()
+     * \since QGIS 3.14
+     */
+    LegendNodesSplitBehavior legendSplitBehavior() const { return mSplitBehavior; }
+
+    /**
+     * Sets the column split \a behavior for the node.
+     *
+     * This value controls how legend nodes belonging the to layer may be split over multiple columns in legends.
+     *
+     * \see legendSplitBehavior()
+     * \since QGIS 3.14
+     */
+    void setLegendSplitBehavior( LegendNodesSplitBehavior behavior ) { mSplitBehavior = behavior; }
 
   signals:
 
@@ -191,6 +270,12 @@ class CORE_EXPORT QgsLayerTreeLayer : public QgsLayerTreeNode
      */
     QgsLayerTreeLayer( const QgsLayerTreeLayer &other );
 #endif
+
+    QgsLegendPatchShape mPatchShape;
+    QSizeF mPatchSize;
+    LegendNodesSplitBehavior mSplitBehavior = UseDefaultLegendSetting;
+
+    QgsLayerTreeLayer &operator=( const QgsLayerTreeLayer & ) = delete;
 };
 
 

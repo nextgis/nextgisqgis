@@ -19,6 +19,7 @@
 #include "qgsfontutils.h"
 #include "qgssettings.h"
 #include "qgis.h"
+#include "qgsreadwritecontext.h"
 
 #include <QFont>
 #include <QMap>
@@ -39,7 +40,7 @@ void QgsLegendStyle::setMargin( double margin )
   mMarginMap[Right] = margin;
 }
 
-void QgsLegendStyle::writeXml( const QString &name, QDomElement &elem, QDomDocument &doc ) const
+void QgsLegendStyle::writeXml( const QString &name, QDomElement &elem, QDomDocument &doc, const QgsReadWriteContext & ) const
 {
   if ( elem.isNull() )
     return;
@@ -48,6 +49,7 @@ void QgsLegendStyle::writeXml( const QString &name, QDomElement &elem, QDomDocum
 
   styleElem.setAttribute( QStringLiteral( "name" ), name );
   styleElem.setAttribute( QStringLiteral( "alignment" ), QString::number( mAlignment ) );
+  styleElem.setAttribute( QStringLiteral( "indent" ), QString::number( mIndent ) );
 
   if ( !qgsDoubleNear( mMarginMap[Top], 0.0 ) )
     styleElem.setAttribute( QStringLiteral( "marginTop" ), QString::number( mMarginMap[Top] ) );
@@ -63,7 +65,7 @@ void QgsLegendStyle::writeXml( const QString &name, QDomElement &elem, QDomDocum
   elem.appendChild( styleElem );
 }
 
-void QgsLegendStyle::readXml( const QDomElement &elem, const QDomDocument &doc )
+void QgsLegendStyle::readXml( const QDomElement &elem, const QDomDocument &doc, const QgsReadWriteContext & )
 {
   Q_UNUSED( doc )
   if ( elem.isNull() ) return;
@@ -79,6 +81,7 @@ void QgsLegendStyle::readXml( const QDomElement &elem, const QDomDocument &doc )
   mMarginMap[Right] = elem.attribute( QStringLiteral( "marginRight" ), QStringLiteral( "0" ) ).toDouble();
 
   mAlignment = static_cast< Qt::Alignment >( elem.attribute( QStringLiteral( "alignment" ), QString::number( Qt::AlignLeft ) ).toInt() );
+  mIndent = elem.attribute( QStringLiteral( "indent" ), QStringLiteral( "0" ) ).toDouble();
 }
 
 QString QgsLegendStyle::styleName( Style s )

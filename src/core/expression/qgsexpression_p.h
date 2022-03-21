@@ -46,10 +46,16 @@ class QgsExpressionPrivate
       , mEvalErrorString( other.mEvalErrorString )
       , mParserErrors( other.mParserErrors )
       , mExp( other.mExp )
+      , mDaEllipsoid( other.mDaEllipsoid )
       , mCalc( other.mCalc )
       , mDistanceUnit( other.mDistanceUnit )
       , mAreaUnit( other.mAreaUnit )
-    {}
+    {
+      if ( other.mDaCrs )
+        mDaCrs = std::make_unique<QgsCoordinateReferenceSystem>( *other.mDaCrs.get() );
+      if ( other.mDaTransformContext )
+        mDaTransformContext = std::make_unique<QgsCoordinateTransformContext>( *other.mDaTransformContext.get() );
+    }
 
     ~QgsExpressionPrivate()
     {
@@ -67,12 +73,18 @@ class QgsExpressionPrivate
 
     QString mExp;
 
+    QString mDaEllipsoid;
+    std::unique_ptr<QgsCoordinateReferenceSystem> mDaCrs;
+    std::unique_ptr<QgsCoordinateTransformContext> mDaTransformContext;
+
     std::shared_ptr<QgsDistanceArea> mCalc;
     QgsUnitTypes::DistanceUnit mDistanceUnit = QgsUnitTypes::DistanceUnknownUnit;
     QgsUnitTypes::AreaUnit mAreaUnit = QgsUnitTypes::AreaUnknownUnit;
 
     //! Whether prepare() has been called before evaluate()
     bool mIsPrepared = false;
+
+    QgsExpressionPrivate &operator= ( const QgsExpressionPrivate & ) = delete;
 };
 
 

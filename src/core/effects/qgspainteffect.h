@@ -19,7 +19,6 @@
 
 #include "qgis_core.h"
 #include "qgis_sip.h"
-#include "qgssymbollayer.h"
 #include <QPainter>
 #include <QDomDocument>
 #include <QDomElement>
@@ -50,7 +49,7 @@ class QgsRenderContext;
  * \since QGIS 2.9
  */
 
-class CORE_EXPORT QgsPaintEffect
+class CORE_EXPORT QgsPaintEffect SIP_NODEFAULTCTORS
 {
 
 #ifdef SIP_RUN
@@ -135,7 +134,7 @@ class CORE_EXPORT QgsPaintEffect
      * \see readProperties
      * \see saveProperties
      */
-    virtual QgsStringMap properties() const = 0;
+    virtual QVariantMap properties() const = 0;
 
     /**
      * Reads a string map of an effect's properties and restores the effect
@@ -143,7 +142,7 @@ class CORE_EXPORT QgsPaintEffect
      * \param props effect properties encoded in a string map
      * \see properties
      */
-    virtual void readProperties( const QgsStringMap &props ) = 0;
+    virtual void readProperties( const QVariantMap &props ) = 0;
 
     /**
      * Saves the current state of the effect to a DOM element. The default
@@ -308,6 +307,8 @@ class CORE_EXPORT QgsPaintEffect
 
     friend class QgsEffectStack;
 
+    QgsPaintEffect &operator= ( const QgsPaintEffect & ) = delete;
+
 };
 
 /**
@@ -323,7 +324,7 @@ class CORE_EXPORT QgsPaintEffect
  * \since QGIS 2.9
  */
 
-class CORE_EXPORT QgsDrawSourceEffect : public QgsPaintEffect
+class CORE_EXPORT QgsDrawSourceEffect : public QgsPaintEffect SIP_NODEFAULTCTORS
 {
   public:
 
@@ -335,12 +336,12 @@ class CORE_EXPORT QgsDrawSourceEffect : public QgsPaintEffect
      * \param map encoded properties string map
      * \returns new QgsDrawSourceEffect
      */
-    static QgsPaintEffect *create( const QgsStringMap &map ) SIP_FACTORY;
+    static QgsPaintEffect *create( const QVariantMap &map ) SIP_FACTORY;
 
     QString type() const override { return QStringLiteral( "drawSource" ); }
     QgsDrawSourceEffect *clone() const override SIP_FACTORY;
-    QgsStringMap properties() const override;
-    void readProperties( const QgsStringMap &props ) override;
+    QVariantMap properties() const override;
+    void readProperties( const QVariantMap &props ) override;
 
     /**
      * Sets the \a opacity for the effect.
@@ -431,6 +432,10 @@ class CORE_EXPORT QgsEffectPainter
     ///@endcond
 
   private:
+#ifdef SIP_RUN
+    const QgsEffectPainter &operator=( const QgsEffectPainter & );
+#endif
+
     QgsRenderContext &mRenderContext;
     QPainter *mPainter = nullptr;
     QgsPaintEffect *mEffect = nullptr;

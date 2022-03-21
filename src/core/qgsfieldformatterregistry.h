@@ -23,11 +23,15 @@
 #include "qgis_sip.h"
 #include "qgis_core.h"
 
+#include <QReadWriteLock>
+
 class QgsFieldFormatter;
+class QgsVectorLayer;
 
 /**
  * \ingroup core
- * The QgsFieldFormatterRegistry manages registered classes of QgsFieldFormatter.
+ * \brief The QgsFieldFormatterRegistry manages registered classes of QgsFieldFormatter.
+ *
  * A reference to the QgsFieldFormatterRegistry can be obtained from
  * QgsApplication::fieldFormatterRegistry().
  *
@@ -93,6 +97,7 @@ class CORE_EXPORT QgsFieldFormatterRegistry : public QObject
   private:
     QHash<QString, QgsFieldFormatter *> mFieldFormatters;
     QgsFieldFormatter *mFallbackFieldFormatter = nullptr;
+    mutable QReadWriteLock mLock;
 };
 
 #endif // QGSFIELDKITREGISTRY_H

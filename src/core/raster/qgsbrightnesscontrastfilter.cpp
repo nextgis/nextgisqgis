@@ -32,6 +32,7 @@ QgsBrightnessContrastFilter *QgsBrightnessContrastFilter::clone() const
   QgsBrightnessContrastFilter *filter = new QgsBrightnessContrastFilter( nullptr );
   filter->setBrightness( mBrightness );
   filter->setContrast( mContrast );
+  filter->setGamma( mGamma );
   return filter;
 }
 
@@ -54,7 +55,7 @@ Qgis::DataType QgsBrightnessContrastFilter::dataType( int bandNo ) const
 {
   if ( mOn )
   {
-    return Qgis::ARGB32_Premultiplied;
+    return Qgis::DataType::ARGB32_Premultiplied;
   }
 
   if ( mInput )
@@ -62,7 +63,7 @@ Qgis::DataType QgsBrightnessContrastFilter::dataType( int bandNo ) const
     return mInput->dataType( bandNo );
   }
 
-  return Qgis::UnknownDataType;
+  return Qgis::DataType::UnknownDataType;
 }
 
 bool QgsBrightnessContrastFilter::setInput( QgsRasterInterface *input )
@@ -90,8 +91,8 @@ bool QgsBrightnessContrastFilter::setInput( QgsRasterInterface *input )
     return false;
   }
 
-  if ( input->dataType( 1 ) != Qgis::ARGB32_Premultiplied &&
-       input->dataType( 1 ) != Qgis::ARGB32 )
+  if ( input->dataType( 1 ) != Qgis::DataType::ARGB32_Premultiplied &&
+       input->dataType( 1 ) != Qgis::DataType::ARGB32 )
   {
     QgsDebugMsg( QStringLiteral( "Unknown input data type" ) );
     return false;
@@ -122,13 +123,13 @@ QgsRasterBlock *QgsBrightnessContrastFilter::block( int bandNo, QgsRectangle  co
     return outputBlock.release();
   }
 
-  if ( mBrightness == 0 && mContrast == 0 )
+  if ( mBrightness == 0 && mContrast == 0 && mGamma == 1.0 )
   {
-    QgsDebugMsgLevel( QStringLiteral( "No brightness changes." ), 4 );
+    QgsDebugMsgLevel( QStringLiteral( "No brightness/contrast/gamma changes." ), 4 );
     return inputBlock.release();
   }
 
-  if ( !outputBlock->reset( Qgis::ARGB32_Premultiplied, width, height ) )
+  if ( !outputBlock->reset( Qgis::DataType::ARGB32_Premultiplied, width, height ) )
   {
     return outputBlock.release();
   }
@@ -139,6 +140,7 @@ QgsRasterBlock *QgsBrightnessContrastFilter::block( int bandNo, QgsRectangle  co
 
   int r, g, b, alpha;
   double f = std::pow( ( mContrast + 100 ) / 100.0, 2 );
+  double gammaCorrection = 1.0 / mGamma;
 
   for ( qgssize i = 0; i < ( qgssize )width * height; i++ )
   {
@@ -151,9 +153,9 @@ QgsRasterBlock *QgsBrightnessContrastFilter::block( int bandNo, QgsRectangle  co
     myColor = inputBlock->color( i );
     alpha = qAlpha( myColor );
 
-    r = adjustColorComponent( qRed( myColor ), alpha, mBrightness, f );
-    g = adjustColorComponent( qGreen( myColor ), alpha, mBrightness, f );
-    b = adjustColorComponent( qBlue( myColor ), alpha, mBrightness, f );
+    r = adjustColorComponent( qRed( myColor ), alpha, mBrightness, f, gammaCorrection );
+    g = adjustColorComponent( qGreen( myColor ), alpha, mBrightness, f, gammaCorrection );
+    b = adjustColorComponent( qBlue( myColor ), alpha, mBrightness, f, gammaCorrection );
 
     outputBlock->setColor( i, qRgba( r, g, b, alpha ) );
   }
@@ -161,12 +163,27 @@ QgsRasterBlock *QgsBrightnessContrastFilter::block( int bandNo, QgsRectangle  co
   return outputBlock.release();
 }
 
-int QgsBrightnessContrastFilter::adjustColorComponent( int colorComponent, int alpha, int brightness, double contrastFactor ) const
+void QgsBrightnessContrastFilter::setBrightness( int brightness )
+{
+  mBrightness = std::clamp( brightness, -255, 255 );
+}
+
+void QgsBrightnessContrastFilter::setContrast( int contrast )
+{
+  mContrast = std::clamp( contrast, -100, 100 );
+}
+
+void QgsBrightnessContrastFilter::setGamma( double gamma )
+{
+  mGamma = std::clamp( gamma, 0.1, 10.0 );
+}
+
+int QgsBrightnessContrastFilter::adjustColorComponent( int colorComponent, int alpha, int brightness, double contrastFactor, double gammaCorrection ) const
 {
   if ( alpha == 255 )
   {
     // Opaque pixel, do simpler math
-    return qBound( 0, ( int )( ( ( ( ( ( colorComponent / 255.0 ) - 0.5 ) * contrastFactor ) + 0.5 ) * 255 ) + brightness ), 255 );
+    return std::clamp( ( int )( 255 * std::pow( ( ( ( ( ( ( colorComponent / 255.0 ) - 0.5 ) * contrastFactor ) + 0.5 ) * 255 ) + brightness ) / 255.0, gammaCorrection ) ), 0, 255 );
   }
   else if ( alpha == 0 )
   {
@@ -175,13 +192,13 @@ int QgsBrightnessContrastFilter::adjustColorComponent( int colorComponent, int a
   }
   else
   {
-    // Semi-transparent pixel. We need to adjust the math since we are using Qgis::ARGB32_Premultiplied
+    // Semi-transparent pixel. We need to adjust the math since we are using Qgis::DataType::ARGB32_Premultiplied
     // and color values have been premultiplied by alpha
     double alphaFactor = alpha / 255.;
     double adjustedColor = colorComponent / alphaFactor;
 
     // Make sure to return a premultiplied color
-    return alphaFactor * qBound( 0., ( ( ( ( ( ( adjustedColor / 255.0 ) - 0.5 ) * contrastFactor ) + 0.5 ) * 255 ) + brightness ), 255. );
+    return alphaFactor * std::clamp( 255 * std::pow( ( ( ( ( ( ( adjustedColor / 255.0 ) - 0.5 ) * contrastFactor ) + 0.5 ) * 255 ) + brightness ) / 255, gammaCorrection ), 0., 255. );
   }
 }
 
@@ -196,6 +213,7 @@ void QgsBrightnessContrastFilter::writeXml( QDomDocument &doc, QDomElement &pare
 
   filterElem.setAttribute( QStringLiteral( "brightness" ), QString::number( mBrightness ) );
   filterElem.setAttribute( QStringLiteral( "contrast" ), QString::number( mContrast ) );
+  filterElem.setAttribute( QStringLiteral( "gamma" ), QString::number( mGamma ) );
   parentElem.appendChild( filterElem );
 }
 
@@ -208,4 +226,5 @@ void QgsBrightnessContrastFilter::readXml( const QDomElement &filterElem )
 
   mBrightness = filterElem.attribute( QStringLiteral( "brightness" ), QStringLiteral( "0" ) ).toInt();
   mContrast = filterElem.attribute( QStringLiteral( "contrast" ), QStringLiteral( "0" ) ).toInt();
+  mGamma = filterElem.attribute( QStringLiteral( "gamma" ), QStringLiteral( "1" ) ).toDouble();
 }

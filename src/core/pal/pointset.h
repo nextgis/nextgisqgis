@@ -42,6 +42,7 @@
 
 #include "qgis_core.h"
 #include "qgsrectangle.h"
+#include "qgsgeos.h"
 
 namespace pal
 {
@@ -52,7 +53,10 @@ namespace pal
 
   class PointSet;
 
-  struct CHullBox
+  /**
+   * Represents the minimum area, oriented bounding box surrounding a convex hull.
+   */
+  struct OrientedConvexHullBoundingBox
   {
     double x[4];
     double y[4];
@@ -65,6 +69,7 @@ namespace pal
 
   /**
    * \class pal::PointSet
+   * \brief The underlying raw pal geometry class.
    * \note not available in Python bindings
    * \ingroup core
    */
@@ -111,17 +116,16 @@ namespace pal
       bool containsLabelCandidate( double x, double y, double width, double height, double alpha = 0 ) const;
 
       /**
-       * Computes a con???? hull. Maybe convex, maybe concave. The person who wrote this
-       * had no care for anyone else ever reading their code.
+       * Computes an oriented bounding box for the shape's convex hull.
        */
-      CHullBox compute_chull_bbox();
+      OrientedConvexHullBoundingBox computeConvexHullOrientedBoundingBox( bool &ok );
 
       /**
-       * Split a concave shape into several convex shapes.
+       * Split a polygon using some random logic into some other polygons.
+       *
+       * \warning this code is completely unreadable and cannot be understood by mortals
        */
-      static void splitPolygons( QLinkedList<PointSet *> &inputShapes,
-                                 QLinkedList<PointSet *> &outputShapes,
-                                 double xrm, double yrm );
+      static QLinkedList<PointSet *> splitPolygons( PointSet *inputShape, double labelWidth, double labelHeight );
 
       /**
        * Extends linestrings by the specified amount at the start and end of the line,
@@ -132,6 +136,11 @@ namespace pal
        * of the line at its start and end points.
        */
       void extendLineByDistance( double startDistance, double endDistance, double smoothDistance );
+
+      /**
+       * Offsets linestrings by the specified \a distance.
+       */
+      void offsetCurveByDistance( double distance );
 
       /**
        * Returns the squared minimum distance between the point set geometry and the point (px,py)
@@ -178,6 +187,16 @@ namespace pal
       void getPointByDistance( double *d, double *ad, double dl, double *px, double *py );
 
       /**
+       * Returns a GEOS geometry representing the point interpolated on the shape by distance.
+       */
+      geos::unique_ptr interpolatePoint( double distance ) const;
+
+      /**
+       * Returns the distance along the geometry closest to the specified GEOS \a point.
+       */
+      double lineLocatePoint( const GEOSGeometry *point ) const;
+
+      /**
        * Returns the point set's GEOS geometry.
       */
       const GEOSGeometry *geos() const;
@@ -197,6 +216,16 @@ namespace pal
        */
       bool isClosed() const;
 
+      /**
+       * Returns a WKT representation of the point set.
+       */
+      QString toWkt() const;
+
+      /**
+       * Returns a vector of edge distances as well as its total length
+       */
+      std::tuple< std::vector< double >, double > edgeDistances() const;
+
       int nbPoints;
       std::vector< double > x;
       std::vector< double > y;   // points order is counterclockwise
@@ -205,8 +234,7 @@ namespace pal
       mutable GEOSGeometry *mGeos = nullptr;
       mutable bool mOwnsGeom = false;
 
-      int *cHull = nullptr;
-      int cHullSize = 0;
+      std::vector< int > convexHull;
 
       int type;
 
@@ -224,6 +252,7 @@ namespace pal
       void deleteCoords();
       void createGeosGeom() const;
       const GEOSPreparedGeometry *preparedGeom() const;
+
       void invalidateGeos();
 
       double xmin = std::numeric_limits<double>::max();
@@ -233,7 +262,13 @@ namespace pal
 
     private:
 
+      mutable const GEOSPreparedGeometry *mGeosPreparedBoundary = nullptr;
       mutable const GEOSPreparedGeometry *mPreparedGeom = nullptr;
+
+      mutable GEOSGeometry *mMultipartGeos = nullptr;
+      mutable const GEOSPreparedGeometry *mMultipartPreparedGeos = nullptr;
+
+      PointSet &operator= ( const PointSet & ) = delete;
 
   };
 

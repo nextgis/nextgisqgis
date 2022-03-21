@@ -35,8 +35,9 @@ class QgsRenderContext;
 /**
  * \ingroup core
  * \class QgsHistogramDiagram
+ * \brief A histogram style diagram.
  */
-class CORE_EXPORT QgsHistogramDiagram: public QgsDiagram
+class CORE_EXPORT QgsHistogramDiagram: public QgsDiagram SIP_NODEFAULTCTORS
 {
   public:
     QgsHistogramDiagram();

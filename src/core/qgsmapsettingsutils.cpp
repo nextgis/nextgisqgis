@@ -18,12 +18,13 @@
 #include "qgsmapsettings.h"
 #include "qgsmapsettingsutils.h"
 #include "qgspallabeling.h"
-#include "qgstextrenderer.h"
+#include "qgstextformat.h"
 #include "qgsvectorlayer.h"
+#include "qgsabstractgeopdfexporter.h"
 
 #include <QString>
 
-const QStringList QgsMapSettingsUtils::containsAdvancedEffects( const QgsMapSettings &mapSettings )
+QStringList QgsMapSettingsUtils::containsAdvancedEffects( const QgsMapSettings &mapSettings, EffectsCheckFlags flags )
 {
   QSet< QString > layers;
 
@@ -33,18 +34,33 @@ const QStringList QgsMapSettingsUtils::containsAdvancedEffects( const QgsMapSett
   {
     if ( layer && layer->isInScaleRange( mapSettings.scale() ) )
     {
+      bool layerHasAdvancedBlendMode = false;
       if ( layer->blendMode() != QPainter::CompositionMode_SourceOver )
+      {
+        if ( flags & EffectsCheckFlag::IgnoreGeoPdfSupportedEffects )
+        {
+          layerHasAdvancedBlendMode = !QgsAbstractGeoPdfExporter::compositionModeSupported( layer->blendMode() );
+        }
+        else
+        {
+          layerHasAdvancedBlendMode = true;
+        }
+      }
+
+      if ( layerHasAdvancedBlendMode )
       {
         layers << layer->name();
       }
       // if vector layer, check labels and feature blend mode
-      QgsVectorLayer *currentVectorLayer = qobject_cast<QgsVectorLayer *>( layer );
-      if ( currentVectorLayer )
+      if ( QgsVectorLayer *currentVectorLayer = qobject_cast<QgsVectorLayer *>( layer ) )
       {
-        if ( !qgsDoubleNear( currentVectorLayer->opacity(), 1.0 ) )
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+        // Qt < 5.15 does not correctly support layer level opacity in PDF exports -- see https://github.com/qgis/QGIS/issues/42698
+        if ( !qgsDoubleNear( currentVectorLayer->opacity(), 1.0 ) && !( flags & EffectsCheckFlag::IgnoreGeoPdfSupportedEffects ) )
         {
           layers << layer->name();
         }
+#endif
         if ( currentVectorLayer->featureBlendMode() != QPainter::CompositionMode_SourceOver )
         {
           layers << layer->name();
@@ -63,24 +79,24 @@ const QStringList QgsMapSettingsUtils::containsAdvancedEffects( const QgsMapSett
     }
   }
 
-  return layers.toList();
+  return qgis::setToList( layers );
 }
 
 void QgsMapSettingsUtils::worldFileParameters( const QgsMapSettings &mapSettings, double &a, double &b, double &c, double &d, double &e, double &f )
 {
   QgsMapSettings ms = mapSettings;
 
-  double rotation = ms.rotation();
-  double alpha = rotation / 180 * M_PI;
+  const double rotation = ms.rotation();
+  const double alpha = rotation / 180 * M_PI;
 
   // reset rotation to 0 to calculate world file parameters
   ms.setRotation( 0 );
 
-  double xOrigin = ms.visibleExtent().xMinimum() + ( ms.mapUnitsPerPixel() / 2 );
-  double yOrigin = ms.visibleExtent().yMaximum() - ( ms.mapUnitsPerPixel() / 2 );
+  const double xOrigin = ms.visibleExtent().xMinimum() + ( ms.mapUnitsPerPixel() / 2 );
+  const double yOrigin = ms.visibleExtent().yMaximum() - ( ms.mapUnitsPerPixel() / 2 );
 
-  double xCenter = ms.visibleExtent().center().x();
-  double yCenter = ms.visibleExtent().center().y();
+  const double xCenter = ms.visibleExtent().center().x();
+  const double yCenter = ms.visibleExtent().center().y();
 
   // scaling matrix
   double s[6];

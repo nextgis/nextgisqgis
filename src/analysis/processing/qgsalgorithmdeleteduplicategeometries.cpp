@@ -94,7 +94,7 @@ QVariantMap QgsDeleteDuplicateGeometriesAlgorithm::processAlgorithm( const QVari
   QHash< QgsFeatureId, QgsGeometry > geometries;
   QSet< QgsFeatureId > nullGeometryFeatures;
   long current = 0;
-  QgsSpatialIndex index( it, [&]( const QgsFeature & f ) ->bool
+  const QgsSpatialIndex index( it, [&]( const QgsFeature & f ) ->bool
   {
     if ( feedback->isCanceled() )
       return false;
@@ -164,11 +164,11 @@ QVariantMap QgsDeleteDuplicateGeometriesAlgorithm::processAlgorithm( const QVari
 
   // now, fetch all the feature attributes for the unique features only
   // be super-smart and don't re-fetch geometries
-  QSet< QgsFeatureId > outputFeatureIds = uniqueFeatures.keys().toSet();
+  QSet< QgsFeatureId > outputFeatureIds = qgis::listToSet( uniqueFeatures.keys() );
   outputFeatureIds.unite( nullGeometryFeatures );
   step = outputFeatureIds.empty() ? 1 : 100.0 / outputFeatureIds.size();
 
-  QgsFeatureRequest request = QgsFeatureRequest().setFilterFids( outputFeatureIds ).setFlags( QgsFeatureRequest::NoGeometry );
+  const QgsFeatureRequest request = QgsFeatureRequest().setFilterFids( outputFeatureIds ).setFlags( QgsFeatureRequest::NoGeometry );
   it = mSource->getFeatures( request );
   current = 0;
   while ( it.nextFeature( f ) )
@@ -181,13 +181,14 @@ QVariantMap QgsDeleteDuplicateGeometriesAlgorithm::processAlgorithm( const QVari
     {
       f.setGeometry( uniqueFeatures.value( f.id() ) );
     }
-    sink->addFeature( f, QgsFeatureSink::FastInsert );
+    if ( !sink->addFeature( f, QgsFeatureSink::FastInsert ) )
+      throw QgsProcessingException( writeFeatureError( sink.get(), parameters, QStringLiteral( "OUTPUT" ) ) );
 
     current++;
     feedback->setProgress( 0.10 * current * step + 90 ); // takes about 10% of time
   }
 
-  feedback->pushInfo( QObject::tr( "%1 duplicate features removed" ).arg( removed ) );
+  feedback->pushInfo( QObject::tr( "%n duplicate feature(s) removed", nullptr, removed ) );
 
   QVariantMap outputs;
   outputs.insert( QStringLiteral( "OUTPUT" ), destId );

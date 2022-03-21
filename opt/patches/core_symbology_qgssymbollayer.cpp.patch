@@ -1,0 +1,45 @@
+--- a/src/core/symbology/qgssymbollayer.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/symbology/qgssymbollayer.cpp	2022-03-07 23:14:46.000000000 +0300
+@@ -18,7 +18,7 @@
+ #include "qgsexpression.h"
+ #include "qgsrendercontext.h"
+ #include "qgsvectorlayer.h"
+-#include "qgsdxfexport.h"
++// #include "qgsdxfexport.h"
+ #include "qgsgeometrysimplifier.h"
+ #include "qgspainteffect.h"
+ #include "qgseffectstack.h"
+@@ -150,7 +150,7 @@
+   delete symbol;
+   return false;
+ }
+-
++/*
+ bool QgsSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift ) const
+ {
+   Q_UNUSED( e )
+@@ -208,7 +208,7 @@
+ {
+   return Qt::NoBrush;
+ }
+-
++*/
+ QgsPaintEffect *QgsSymbolLayer::paintEffect() const
+ {
+   return mPaintEffect.get();
+@@ -770,13 +770,13 @@
+ {
+   return context.convertToPainterUnits( mWidth, mWidthUnit, mWidthMapUnitScale );
+ }
+-
++/*
+ double QgsLineSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
+ {
+   Q_UNUSED( context )
+   return width() * QgsDxfExport::mapUnitScaleFactor( e.symbologyScale(), widthUnit(), e.mapUnits(), context.renderContext().mapToPixel().mapUnitsPerPixel() );
+ }
+-
++*/
+ 
+ void QgsFillSymbolLayer::drawPreviewIcon( QgsSymbolRenderContext &context, QSize size )
+ {

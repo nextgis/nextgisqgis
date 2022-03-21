@@ -60,6 +60,7 @@ class CORE_EXPORT QgsUnitTypes
       TypeArea, //!< Area unit
       TypeVolume, //!< Volume unit
       TypeUnknown, //!< Unknown unit type
+      TypeTemporal, //!< Temporal unit
     };
 
     //! Units of distance
@@ -140,6 +141,27 @@ class CORE_EXPORT QgsUnitTypes
       AngleUnknownUnit, //!< Unknown angle unit
     };
     Q_ENUM( AngleUnit )
+
+    /**
+     * Temporal units.
+     * \since QGIS 3.14
+     */
+    enum TemporalUnit
+    {
+      TemporalMilliseconds, //!< Milliseconds
+      TemporalSeconds, //!< Seconds
+      TemporalMinutes, //!< Minutes
+      TemporalHours, //!< Hours
+      TemporalDays, //!< Days
+      TemporalWeeks, //!< Weeks
+      TemporalMonths,  //!< Months
+      TemporalYears, //!< Years
+      TemporalDecades, //!< Decades
+      TemporalCenturies, //!< Centuries
+      TemporalIrregularStep, //!< Special "irregular step" time unit, used for temporal data which uses irregular, non-real-world unit steps (since QGIS 3.20)
+      TemporalUnknownUnit //!< Unknown time unit
+    };
+    Q_ENUM( TemporalUnit )
 
     //! Rendering size units
     enum RenderUnit
@@ -298,7 +320,7 @@ class CORE_EXPORT QgsUnitTypes
     /**
      * Returns the type for an areal unit.
     */
-    Q_INVOKABLE static QgsUnitTypes::DistanceUnitType unitType( QgsUnitTypes::AreaUnit unit );
+    static QgsUnitTypes::DistanceUnitType unitType( QgsUnitTypes::AreaUnit unit );
 
     /**
      * Encodes an areal unit to a string.
@@ -306,7 +328,7 @@ class CORE_EXPORT QgsUnitTypes
      * \returns encoded string
      * \see decodeAreaUnit()
     */
-    Q_INVOKABLE static QString encodeUnit( QgsUnitTypes::AreaUnit unit );
+    static QString encodeUnit( QgsUnitTypes::AreaUnit unit );
 
     /**
      * Decodes an areal unit from a string.
@@ -348,7 +370,7 @@ class CORE_EXPORT QgsUnitTypes
      * \param toUnit area unit to convert to
      * \returns multiplication factor to convert between units
      */
-    Q_INVOKABLE static double fromUnitToUnitFactor( QgsUnitTypes::AreaUnit fromUnit, QgsUnitTypes::AreaUnit toUnit );
+    static double fromUnitToUnitFactor( QgsUnitTypes::AreaUnit fromUnit, QgsUnitTypes::AreaUnit toUnit );
 
     /**
      * Converts a distance unit to its corresponding area unit, e.g., meters to square meters
@@ -365,13 +387,71 @@ class CORE_EXPORT QgsUnitTypes
      */
     Q_INVOKABLE static QgsUnitTypes::DistanceUnit areaToDistanceUnit( QgsUnitTypes::AreaUnit areaUnit );
 
+    // TEMPORAL UNITS
+
+    /**
+     * Encodes a temporal \a unit to a string.
+     * \returns encoded string
+     * \see decodeTemporalUnit()
+     * \since QGIS 3.14
+    */
+    static QString encodeUnit( QgsUnitTypes::TemporalUnit unit );
+
+    /**
+     * Decodes a temporal unit from a \a string.
+     * \param string string to decode
+     * \param ok optional boolean, will be set to TRUE if string was converted successfully
+     * \returns decoded units
+     * \see encodeUnit()
+     * \since QGIS 3.14
+    */
+    Q_INVOKABLE static QgsUnitTypes::TemporalUnit decodeTemporalUnit( const QString &string, bool *ok SIP_OUT = nullptr );
+
+    /**
+     * Returns a translated string representing a temporal \a unit.
+     * \see stringToTemporalUnit()
+     * \since QGIS 3.14
+     */
+    static QString toString( QgsUnitTypes::TemporalUnit unit );
+
+    /**
+     * Returns a translated abbreviation representing a temporal \a unit.
+     * \see stringToTemporalUnit()
+     *
+     * \since QGIS 3.14
+     */
+    static QString toAbbreviatedString( QgsUnitTypes::TemporalUnit unit );
+
+    /**
+     * Converts a translated \a string to a temporal unit.
+     * \param string string representing a volume unit
+     * \param ok optional boolean, will be set to TRUE if string was converted successfully
+     * \returns the temporal unit
+     * \see toString()
+     * \since QGIS 3.14
+     */
+    Q_INVOKABLE static QgsUnitTypes::TemporalUnit stringToTemporalUnit( const QString &string, bool *ok SIP_OUT = nullptr );
+
+    /**
+     * Returns the conversion factor between the specified temporal units.
+     *
+     * \note Conversion to or from month units assumes a 30 day month length.
+     * \note Conversion to or from year based units assumes a 365.25 day year length.
+     *
+     * \param fromUnit temporal unit to convert from
+     * \param toUnit temporal unit to convert to
+     * \returns multiplication factor to convert between units
+     * \since QGIS 3.14
+     */
+    static double fromUnitToUnitFactor( QgsUnitTypes::TemporalUnit fromUnit, QgsUnitTypes::TemporalUnit toUnit );
+
     // VOLUME UNITS
 
     /**
      * Returns the type for an volume unit.
      * \since QGIS 3.10
     */
-    Q_INVOKABLE static QgsUnitTypes::DistanceUnitType unitType( QgsUnitTypes::VolumeUnit unit );
+    static QgsUnitTypes::DistanceUnitType unitType( QgsUnitTypes::VolumeUnit unit );
 
     /**
      * Encodes a volume \a unit to a string.
@@ -379,7 +459,7 @@ class CORE_EXPORT QgsUnitTypes
      * \see decodeVolumeUnit()
      * \since QGIS 3.10
     */
-    Q_INVOKABLE static QString encodeUnit( QgsUnitTypes::VolumeUnit unit );
+    static QString encodeUnit( QgsUnitTypes::VolumeUnit unit );
 
     /**
      * Decodes a volume unit from a \a string.
@@ -407,7 +487,7 @@ class CORE_EXPORT QgsUnitTypes
     static QString toAbbreviatedString( QgsUnitTypes::VolumeUnit unit );
 
     /**
-     * Converts a translated\a  string to a volume unit.
+     * Converts a translated \a string to a volume unit.
      * \param string string representing a volume unit
      * \param ok optional boolean, will be set to TRUE if string was converted successfully
      * \returns the volume unit
@@ -423,7 +503,7 @@ class CORE_EXPORT QgsUnitTypes
      * \returns multiplication factor to convert between units
      * \since QGIS 3.10
      */
-    Q_INVOKABLE static double fromUnitToUnitFactor( QgsUnitTypes::VolumeUnit fromUnit, QgsUnitTypes::VolumeUnit toUnit );
+    static double fromUnitToUnitFactor( QgsUnitTypes::VolumeUnit fromUnit, QgsUnitTypes::VolumeUnit toUnit );
 
     /**
      * Converts a distance unit to its corresponding volume unit, e.g., meters to cubic meters
@@ -449,7 +529,7 @@ class CORE_EXPORT QgsUnitTypes
      * \returns encoded string
      * \see decodeAngleUnit()
     */
-    Q_INVOKABLE static QString encodeUnit( QgsUnitTypes::AngleUnit unit );
+    static QString encodeUnit( QgsUnitTypes::AngleUnit unit );
 
     /**
      * Decodes an angular unit from a string.
@@ -472,17 +552,16 @@ class CORE_EXPORT QgsUnitTypes
      * \param toUnit angle unit to convert to
      * \returns multiplication factor to convert between units
      */
-    Q_INVOKABLE static double fromUnitToUnitFactor( QgsUnitTypes::AngleUnit fromUnit, QgsUnitTypes::AngleUnit toUnit );
+    static double fromUnitToUnitFactor( QgsUnitTypes::AngleUnit fromUnit, QgsUnitTypes::AngleUnit toUnit );
 
     /**
      * Returns an angle formatted as a friendly string.
      * \param angle angle to format
-     * \param decimals number of decimal places to show
+     * \param decimals number of decimal places to show. A value of -1 indicates that an appropriate number of decimal places should automatically be selected.
      * \param unit unit of angle
      * \returns formatted angle string
      */
     Q_INVOKABLE static QString formatAngle( double angle, int decimals, QgsUnitTypes::AngleUnit unit );
-
 
     /**
      * Will convert a \a distance with a given \a unit to a distance value which is nice to display.
@@ -540,7 +619,7 @@ class CORE_EXPORT QgsUnitTypes
      * \returns encoded string
      * \see decodeRenderUnit()
      */
-    Q_INVOKABLE static QString encodeUnit( QgsUnitTypes::RenderUnit unit );
+    static QString encodeUnit( QgsUnitTypes::RenderUnit unit );
 
     /**
      * Decodes a render unit from a string.
@@ -576,7 +655,7 @@ class CORE_EXPORT QgsUnitTypes
      * \see decodeLayoutUnit()
      * \since QGIS 3.0
      */
-    Q_INVOKABLE static QString encodeUnit( QgsUnitTypes::LayoutUnit unit );
+    static QString encodeUnit( QgsUnitTypes::LayoutUnit unit );
 
     /**
      * Decodes a layout unit from a string.

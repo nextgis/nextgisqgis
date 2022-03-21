@@ -20,12 +20,11 @@
 #include "qgis_core.h"
 #include "qgis_sip.h"
 #include "qgis.h"
-#include "qgscolorramp.h"
+#include "qgscolorrampimpl.h"
 
 #include <QAbstractItemModel>
 #include <QIcon>
 #include <QMimeData>
-#include <QAction>
 
 class QgsCptCityColorRamp;
 class QgsCptCityDataItem;
@@ -144,9 +143,6 @@ class CORE_EXPORT QgsCptCityDataItem : public QObject
     virtual bool equal( const QgsCptCityDataItem *other );
 
     virtual QWidget *paramWidget() SIP_FACTORY { return nullptr; }
-
-    // list of actions provided by this item - usually used for popup menu on right-click
-    virtual QList<QAction *> actions() { return QList<QAction *>(); }
 
     // whether accepts drag&drop'd layers - e.g. for import
     virtual bool acceptDrop() { return false; }
@@ -283,7 +279,7 @@ class CORE_EXPORT QgsCptCityDirectoryItem : public QgsCptCityCollectionItem
 /**
  * \ingroup core
  * \class QgsCptCitySelectionItem
- * A selection: contains subdirectories and color ramps
+ * \brief A selection: contains subdirectories and color ramps
 */
 class CORE_EXPORT QgsCptCitySelectionItem : public QgsCptCityCollectionItem
 {
@@ -304,7 +300,7 @@ class CORE_EXPORT QgsCptCitySelectionItem : public QgsCptCityCollectionItem
 
 /**
  * \ingroup core
- * An "All ramps item", which contains all items in a flat hierarchy
+ * \brief An "All ramps item", which contains all items in a flat hierarchy
 */
 class CORE_EXPORT QgsCptCityAllRampsItem : public QgsCptCityCollectionItem
 {

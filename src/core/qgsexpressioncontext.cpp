@@ -24,6 +24,7 @@ const QString QgsExpressionContext::EXPR_SYMBOL_COLOR( QStringLiteral( "symbol_c
 const QString QgsExpressionContext::EXPR_SYMBOL_ANGLE( QStringLiteral( "symbol_angle" ) );
 const QString QgsExpressionContext::EXPR_GEOMETRY_PART_COUNT( QStringLiteral( "geometry_part_count" ) );
 const QString QgsExpressionContext::EXPR_GEOMETRY_PART_NUM( QStringLiteral( "geometry_part_num" ) );
+const QString QgsExpressionContext::EXPR_GEOMETRY_RING_NUM( QStringLiteral( "geometry_ring_num" ) );
 const QString QgsExpressionContext::EXPR_GEOMETRY_POINT_COUNT( QStringLiteral( "geometry_point_count" ) );
 const QString QgsExpressionContext::EXPR_GEOMETRY_POINT_NUM( QStringLiteral( "geometry_point_num" ) );
 const QString QgsExpressionContext::EXPR_CLUSTER_SIZE( QStringLiteral( "cluster_size" ) );
@@ -114,11 +115,6 @@ QStringList QgsExpressionContextScope::variableNames() const
 {
   QStringList names = mVariables.keys();
   return names;
-}
-
-bool QgsExpressionContextScope::variableNameSort( const QString &a, const QString &b )
-{
-  return QString::localeAwareCompare( a, b ) < 0;
 }
 
 /// @cond PRIVATE
@@ -239,7 +235,7 @@ QgsExpressionContext::QgsExpressionContext( const QList<QgsExpressionContextScop
 
 QgsExpressionContext::QgsExpressionContext( const QgsExpressionContext &other ) : mStack{}
 {
-  for ( const QgsExpressionContextScope *scope : qgis::as_const( other.mStack ) )
+  for ( const QgsExpressionContextScope *scope : std::as_const( other.mStack ) )
   {
     mStack << new QgsExpressionContextScope( *scope );
   }
@@ -266,9 +262,12 @@ QgsExpressionContext &QgsExpressionContext::operator=( QgsExpressionContext &&ot
 
 QgsExpressionContext &QgsExpressionContext::operator=( const QgsExpressionContext &other )
 {
+  if ( &other == this )
+    return *this;
+
   qDeleteAll( mStack );
   mStack.clear();
-  for ( const QgsExpressionContextScope *scope : qgis::as_const( other.mStack ) )
+  for ( const QgsExpressionContextScope *scope : std::as_const( other.mStack ) )
   {
     mStack << new QgsExpressionContextScope( *scope );
   }
@@ -410,7 +409,7 @@ QStringList QgsExpressionContext::variableNames() const
   {
     names << scope->variableNames();
   }
-  return names.toSet().toList();
+  return qgis::setToList( qgis::listToSet( names ) );
 }
 
 QStringList QgsExpressionContext::filteredVariableNames() const
@@ -466,7 +465,7 @@ QStringList QgsExpressionContext::functionNames() const
   {
     result << scope->functionNames();
   }
-  result = result.toSet().toList();
+  result = qgis::setToList( qgis::listToSet( result ) );
   result.sort();
   return result;
 }
@@ -592,4 +591,14 @@ QVariant QgsExpressionContext::cachedValue( const QString &key ) const
 void QgsExpressionContext::clearCachedValues() const
 {
   mCachedValues.clear();
+}
+
+void QgsExpressionContext::setFeedback( QgsFeedback *feedback )
+{
+  mFeedback = feedback;
+}
+
+QgsFeedback *QgsExpressionContext::feedback() const
+{
+  return mFeedback;
 }

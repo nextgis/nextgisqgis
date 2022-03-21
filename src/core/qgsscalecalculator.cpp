@@ -49,27 +49,58 @@ QgsUnitTypes::DistanceUnit QgsScaleCalculator::mapUnits() const
 
 double QgsScaleCalculator::calculate( const QgsRectangle &mapExtent, double canvasWidth )  const
 {
+  if ( qgsDoubleNear( canvasWidth, 0. ) || qgsDoubleNear( mDpi, 0.0 ) )
+  {
+    QgsDebugMsg( QStringLiteral( "Can't calculate scale from the input values" ) );
+    return 0;
+  }
+
   double conversionFactor = 0;
   double delta = 0;
-  // calculation is based on the map units and extent, the dpi of the
-  // users display, and the canvas width
+  calculateMetrics( mapExtent, delta, conversionFactor );
+
+  const double scale = ( delta * conversionFactor ) / ( static_cast< double >( canvasWidth ) / mDpi );
+  QgsDebugMsgLevel( QStringLiteral( "scale = %1 conversionFactor = %2" ).arg( scale ).arg( conversionFactor ), 4 );
+  return scale;
+}
+
+QSizeF QgsScaleCalculator::calculateImageSize( const QgsRectangle &mapExtent, double scale )  const
+{
+  if ( qgsDoubleNear( scale, 0.0 ) || qgsDoubleNear( mDpi, 0.0 ) )
+  {
+    QgsDebugMsg( QStringLiteral( "Can't calculate image size from the input values" ) );
+    return QSizeF();
+  }
+  double conversionFactor = 0;
+  double delta = 0;
+
+  calculateMetrics( mapExtent, delta, conversionFactor );
+  const double imageWidth = ( delta * conversionFactor ) / ( static_cast< double >( scale ) ) * mDpi;
+  const double deltaHeight = ( mapExtent.yMaximum() - mapExtent.yMinimum() ) * delta / ( mapExtent.xMaximum() - mapExtent.xMinimum() );
+  const double imageHeight = ( deltaHeight * conversionFactor ) / ( static_cast< double >( scale ) ) * mDpi;
+
+  QgsDebugMsgLevel( QStringLiteral( "imageWidth = %1 imageHeight = %2 conversionFactor = %3" )
+                    .arg( imageWidth ).arg( imageHeight ).arg( conversionFactor ), 4 );
+
+  return QSizeF( imageWidth, imageHeight );
+}
+
+void QgsScaleCalculator::calculateMetrics( const QgsRectangle &mapExtent, double &delta, double &conversionFactor ) const
+{
+  delta = mapExtent.xMaximum() - mapExtent.xMinimum();
   switch ( mMapUnits )
   {
     case QgsUnitTypes::DistanceMeters:
       // convert meters to inches
       conversionFactor = 39.3700787;
-      delta = mapExtent.xMaximum() - mapExtent.xMinimum();
       break;
     case QgsUnitTypes::DistanceFeet:
       conversionFactor = 12.0;
-      delta = mapExtent.xMaximum() - mapExtent.xMinimum();
       break;
     case QgsUnitTypes::DistanceNauticalMiles:
       // convert nautical miles to inches
       conversionFactor = 72913.4;
-      delta = mapExtent.xMaximum() - mapExtent.xMinimum();
       break;
-
     default:
     case QgsUnitTypes::DistanceDegrees:
       // degrees require conversion to meters first
@@ -77,16 +108,7 @@ double QgsScaleCalculator::calculate( const QgsRectangle &mapExtent, double canv
       delta = calculateGeographicDistance( mapExtent );
       break;
   }
-  if ( qgsDoubleNear( canvasWidth, 0. ) || qgsDoubleNear( mDpi, 0.0 ) )
-  {
-    QgsDebugMsg( QStringLiteral( "Can't calculate scale from the input values" ) );
-    return 0;
-  }
-  double scale = ( delta * conversionFactor ) / ( static_cast< double >( canvasWidth ) / mDpi );
-  QgsDebugMsgLevel( QStringLiteral( "scale = %1 conversionFactor = %2" ).arg( scale ).arg( conversionFactor ), 4 );
-  return scale;
 }
-
 
 double QgsScaleCalculator::calculateGeographicDistance( const QgsRectangle &mapExtent ) const
 {
@@ -114,17 +136,17 @@ double QgsScaleCalculator::calculateGeographicDistance( const QgsRectangle &mapE
 
 
   // For a longitude change of 180 degrees
-  double lat = ( mapExtent.yMaximum() + mapExtent.yMinimum() ) * 0.5;
+  const double lat = ( mapExtent.yMaximum() + mapExtent.yMinimum() ) * 0.5;
   static const double RADS = ( 4.0 * std::atan( 1.0 ) ) / 180.0;
-  double a = std::pow( std::cos( lat * RADS ), 2 );
-  double c = 2.0 * std::atan2( std::sqrt( a ), std::sqrt( 1.0 - a ) );
+  const double a = std::pow( std::cos( lat * RADS ), 2 );
+  const double c = 2.0 * std::atan2( std::sqrt( a ), std::sqrt( 1.0 - a ) );
   static const double RA = 6378000; // [m]
   // The eccentricity. This comes from sqrt(1.0 - rb*rb/(ra*ra)) with rb set
   // to 6357000 m.
   static const double E = 0.0810820288;
-  double radius = RA * ( 1.0 - E * E ) /
-                  std::pow( 1.0 - E * E * std::sin( lat * RADS ) * std::sin( lat * RADS ), 1.5 );
-  double meters = ( mapExtent.xMaximum() - mapExtent.xMinimum() ) / 180.0 * radius * c;
+  const double radius = RA * ( 1.0 - E * E ) /
+                        std::pow( 1.0 - E * E * std::sin( lat * RADS ) * std::sin( lat * RADS ), 1.5 );
+  const double meters = ( mapExtent.xMaximum() - mapExtent.xMinimum() ) / 180.0 * radius * c;
 
   QgsDebugMsgLevel( "Distance across map extent (m): " + QString::number( meters ), 4 );
 

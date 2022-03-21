@@ -24,6 +24,11 @@ QgsProcessingModelOutput::QgsProcessingModelOutput( const QString &name, const Q
   , mName( name )
 {}
 
+QgsProcessingModelOutput *QgsProcessingModelOutput::clone() const
+{
+  return new QgsProcessingModelOutput( *this );
+}
+
 QVariant QgsProcessingModelOutput::toVariant() const
 {
   QVariantMap map;
@@ -51,11 +56,11 @@ bool QgsProcessingModelOutput::loadVariant( const QVariantMap &map )
 {
   mName = map.value( QStringLiteral( "name" ) ).toString();
 
-  QVariant defaultValue = map.value( QStringLiteral( "default_value" ) );
+  const QVariant defaultValue = map.value( QStringLiteral( "default_value" ) );
   if ( defaultValue.type() == QVariant::Map )
   {
     QVariantMap defaultMap = defaultValue.toMap();
-    if ( defaultMap["class"] == QStringLiteral( "QgsProcessingOutputLayerDefinition" ) )
+    if ( defaultMap["class"] == QLatin1String( "QgsProcessingOutputLayerDefinition" ) )
     {
       QgsProcessingOutputLayerDefinition value;
       value.loadVariant( defaultMap );

@@ -22,15 +22,18 @@
 #include "gdal.h"
 #include "qgis_analysis.h"
 #include "qgsogrutils.h"
+#include "qgsconfig.h"
 
 class QgsFeedback;
 
 /**
  * \ingroup analysis
- * Base class for raster analysis methods that work with a 3x3 cell filter and calculate the value of each cell based on
-the cell value and the eight neighbour cells. Common examples are slope and aspect calculation in DEMs. Subclasses only implement
-the method that calculates the new value from the nine values. Everything else (reading file, writing file) is done by this subclass*/
-
+ * \brief Base class for raster analysis methods that work with a 3x3 cell filter and calculate the value of each cell based on
+ * the cell value and the eight neighbour cells.
+ *
+ * Common examples are slope and aspect calculation in DEMs. Subclasses only implement
+ * the method that calculates the new value from the nine values. Everything else (reading file, writing file) is done by this subclass
+ */
 class ANALYSIS_EXPORT QgsNineCellFilter
 {
   public:
@@ -89,12 +92,14 @@ class ANALYSIS_EXPORT QgsNineCellFilter
 
     /**
      * Opens the output driver and tests if it supports the creation of a new dataset
-      \returns nullptr on error and the driver handle on success*/
+     * \returns nullptr on error and the driver handle on success
+    */
     GDALDriverH openOutputDriver();
 
     /**
      * Opens the output file and sets the same geotransform and CRS as the input data
-      \returns the output dataset or nullptr in case of error*/
+     * \returns the output dataset or nullptr in case of error
+    */
     gdal::dataset_unique_ptr openOutputFile( GDALDatasetH inputDataset, GDALDriverH outputDriver );
 
     /**

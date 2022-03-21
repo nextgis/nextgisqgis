@@ -35,21 +35,21 @@ void QgsLabelingEngineSettings::readSettingsFromProject( QgsProject *prj )
   mMaxLineCandidatesPerCm = prj->readDoubleEntry( QStringLiteral( "PAL" ), QStringLiteral( "/CandidatesLinePerCM" ), 5, &saved );
   mMaxPolygonCandidatesPerCmSquared = prj->readDoubleEntry( QStringLiteral( "PAL" ), QStringLiteral( "/CandidatesPolygonPerCM" ), 2.5, &saved );
 
-  mFlags = nullptr;
+  mFlags = Flags();
   if ( prj->readBoolEntry( QStringLiteral( "PAL" ), QStringLiteral( "/ShowingCandidates" ), false, &saved ) ) mFlags |= DrawCandidates;
   if ( prj->readBoolEntry( QStringLiteral( "PAL" ), QStringLiteral( "/DrawRectOnly" ), false, &saved ) ) mFlags |= DrawLabelRectOnly;
   if ( prj->readBoolEntry( QStringLiteral( "PAL" ), QStringLiteral( "/ShowingAllLabels" ), false, &saved ) ) mFlags |= UseAllLabels;
   if ( prj->readBoolEntry( QStringLiteral( "PAL" ), QStringLiteral( "/ShowingPartialsLabels" ), true, &saved ) ) mFlags |= UsePartialCandidates;
   if ( prj->readBoolEntry( QStringLiteral( "PAL" ), QStringLiteral( "/DrawUnplaced" ), false, &saved ) ) mFlags |= DrawUnplacedLabels;
 
-  mDefaultTextRenderFormat = QgsRenderContext::TextFormatAlwaysOutlines;
+  mDefaultTextRenderFormat = Qgis::TextRenderFormat::AlwaysOutlines;
   // if users have disabled the older PAL "DrawOutlineLabels" setting, respect that
   if ( !prj->readBoolEntry( QStringLiteral( "PAL" ), QStringLiteral( "/DrawOutlineLabels" ), true ) )
-    mDefaultTextRenderFormat = QgsRenderContext::TextFormatAlwaysText;
+    mDefaultTextRenderFormat = Qgis::TextRenderFormat::AlwaysText;
   // otherwise, prefer the new setting
   const int projectTextFormat = prj->readNumEntry( QStringLiteral( "PAL" ), QStringLiteral( "/TextFormat" ), -1 );
   if ( projectTextFormat >= 0 )
-    mDefaultTextRenderFormat = static_cast< QgsRenderContext::TextRenderFormat >( projectTextFormat );
+    mDefaultTextRenderFormat = static_cast< Qgis::TextRenderFormat >( projectTextFormat );
 
   mUnplacedLabelColor = QgsSymbolLayerUtils::decodeColor( prj->readEntry( QStringLiteral( "PAL" ), QStringLiteral( "/UnplacedColor" ), QStringLiteral( "#ff0000" ) ) );
 

@@ -1,0 +1,42 @@
+--- a/src/core/browser/qgsfilebaseddataitemprovider.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/browser/qgsfilebaseddataitemprovider.cpp	2022-03-10 16:49:25.000000000 +0300
+@@ -26,8 +26,8 @@
+ #include "qgsprovidersublayerdetails.h"
+ #include "qgsfieldsitem.h"
+ #include "qgsproviderutils.h"
+-#include "qgsmbtiles.h"
+-#include "qgsvectortiledataitems.h"
++// #include "qgsmbtiles.h"
++// #include "qgsvectortiledataitems.h"
+ #include "qgsprovidermetadata.h"
+ #include <QUrlQuery>
+ 
+@@ -100,8 +100,8 @@
+     case QgsMapLayerType::MeshLayer:
+       return Qgis::BrowserLayerType::Mesh;
+ 
+-    case QgsMapLayerType::VectorTileLayer:
+-      return Qgis::BrowserLayerType::VectorTile;
++    // case QgsMapLayerType::VectorTileLayer:
++    //   return Qgis::BrowserLayerType::VectorTile;
+ 
+     case QgsMapLayerType::PointCloudLayer:
+       return Qgis::BrowserLayerType::PointCloud;
+@@ -286,7 +286,7 @@
+     suffix = QStringLiteral( "shp.zip" );
+   }
+   // special handling for mbtiles files
+-  else if ( suffix == QLatin1String( "mbtiles" ) )
++  /*else if ( suffix == QLatin1String( "mbtiles" ) )
+   {
+     QgsMbTiles reader( path );
+     if ( reader.open() )
+@@ -315,7 +315,7 @@
+         return item;
+       }
+     }
+-  }
++  }*/
+ 
+   // hide blocklisted URIs, such as .aux.xml files
+   if ( QgsProviderRegistry::instance()->uriIsBlocklisted( path ) )

@@ -26,7 +26,7 @@ QString QgsStringConcatenationAlgorithm::name() const
 
 QgsProcessingAlgorithm::Flags QgsStringConcatenationAlgorithm::flags() const
 {
-  return FlagHideFromToolbox;
+  return FlagHideFromToolbox | FlagSkipGenericModelLogging;
 }
 
 QString QgsStringConcatenationAlgorithm::displayName() const
@@ -68,11 +68,11 @@ void QgsStringConcatenationAlgorithm::initAlgorithm( const QVariantMap & )
 
 QVariantMap QgsStringConcatenationAlgorithm::processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback * )
 {
-  QString input_1 = parameterAsString( parameters, QStringLiteral( "INPUT_1" ), context );
-  QString input_2 = parameterAsString( parameters, QStringLiteral( "INPUT_2" ), context );
+  const QString input_1 = parameterAsString( parameters, QStringLiteral( "INPUT_1" ), context );
+  const QString input_2 = parameterAsString( parameters, QStringLiteral( "INPUT_2" ), context );
 
   QVariantMap outputs;
-  outputs.insert( QStringLiteral( "CONCATENATION" ), input_1 + input_2 );
+  outputs.insert( QStringLiteral( "CONCATENATION" ), QString( input_1 + input_2 ) );
   return outputs;
 }
 

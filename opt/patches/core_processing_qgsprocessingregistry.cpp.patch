@@ -1,0 +1,30 @@
+--- a/src/core/processing/qgsprocessingregistry.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/processing/qgsprocessingregistry.cpp	2022-03-07 23:14:46.000000000 +0300
+@@ -19,11 +19,11 @@
+ #include "qgsvectorfilewriter.h"
+ #include "qgsprocessingparametertypeimpl.h"
+ #include "qgsprocessingparametermeshdataset.h"
+-#include "qgsprocessingparametervectortilewriterlayers.h"
++// #include "qgsprocessingparametervectortilewriterlayers.h"
+ #include "qgsprocessingparametertininputlayers.h"
+ #include "qgsprocessingparameterfieldmap.h"
+ #include "qgsprocessingparameteraggregate.h"
+-#include "qgsprocessingparameterdxflayers.h"
++// #include "qgsprocessingparameterdxflayers.h"
+ 
+ QgsProcessingRegistry::QgsProcessingRegistry( QObject *parent SIP_TRANSFERTHIS )
+   : QObject( parent )
+@@ -66,11 +66,11 @@
+   addParameterType( new QgsProcessingParameterTypeProviderConnection() );
+   addParameterType( new QgsProcessingParameterTypeDatabaseSchema() );
+   addParameterType( new QgsProcessingParameterTypeDatabaseTable() );
+-  addParameterType( new QgsProcessingParameterTypeVectorTileWriterLayers() );
++//   addParameterType( new QgsProcessingParameterTypeVectorTileWriterLayers() );
+   addParameterType( new QgsProcessingParameterTypeFieldMapping() );
+   addParameterType( new QgsProcessingParameterTypeAggregate() );
+   addParameterType( new QgsProcessingParameterTypeTinInputLayers() );
+-  addParameterType( new QgsProcessingParameterTypeDxfLayers() );
++//   addParameterType( new QgsProcessingParameterTypeDxfLayers() );
+   addParameterType( new QgsProcessingParameterTypeMeshDatasetGroups() );
+   addParameterType( new QgsProcessingParameterTypeMeshDatasetTime() );
+   addParameterType( new QgsProcessingParameterTypePointCloudLayer() );

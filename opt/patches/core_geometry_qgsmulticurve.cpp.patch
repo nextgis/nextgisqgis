@@ -1,0 +1,40 @@
+--- a/src/core/geometry/qgsmulticurve.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/core/geometry/qgsmulticurve.cpp	2022-03-09 16:27:39.000000000 +0300
+@@ -24,7 +24,7 @@
+ 
+ #include <QJsonObject>
+ #include <memory>
+-#include <nlohmann/json.hpp>
++// #include <nlohmann/json.hpp>
+ 
+ QgsMultiCurve::QgsMultiCurve()
+ {
+@@ -123,7 +123,7 @@
+ 
+ json QgsMultiCurve::asJsonObject( int precision ) const
+ {
+-  json coordinates( json::array( ) );
++  CPLJSONArray coordinates;
+   for ( const QgsAbstractGeometry *geom : std::as_const( mGeometries ) )
+   {
+     if ( qgsgeometry_cast<const QgsCurve *>( geom ) )
+@@ -131,14 +131,13 @@
+       std::unique_ptr< QgsLineString > lineString( static_cast<const QgsCurve *>( geom )->curveToLine() );
+       QgsPointSequence pts;
+       lineString->points( pts );
+-      coordinates.push_back( QgsGeometryUtils::pointsToJson( pts, precision ) );
++      coordinates.Add( QgsGeometryUtils::pointsToJson( pts, precision ) );
+     }
+   }
+-  return
+-  {
+-    {  "type",  "MultiLineString"  },
+-    {  "coordinates", coordinates }
+-  };
++  json out;
++  out.Add("type",  "MultiLineString");
++  out.Add("coordinates", coordinates);
++  return out;
+ }
+ 
+ bool QgsMultiCurve::addGeometry( QgsAbstractGeometry *g )

@@ -20,9 +20,7 @@
 QgsProcessingOutputDefinition::QgsProcessingOutputDefinition( const QString &name, const QString &description )
   : mName( name )
   , mDescription( description )
-{
-
-}
+{}
 
 QgsProcessingOutputVectorLayer::QgsProcessingOutputVectorLayer( const QString &name, const QString &description, QgsProcessing::SourceType type )
   : QgsProcessingOutputDefinition( name, description )
@@ -40,6 +38,10 @@ void QgsProcessingOutputVectorLayer::setDataType( QgsProcessing::SourceType type
 }
 
 QgsProcessingOutputRasterLayer::QgsProcessingOutputRasterLayer( const QString &name, const QString &description )
+  : QgsProcessingOutputDefinition( name, description )
+{}
+
+QgsProcessingOutputPointCloudLayer::QgsProcessingOutputPointCloudLayer( const QString &name, const QString &description )
   : QgsProcessingOutputDefinition( name, description )
 {}
 
@@ -84,3 +86,7 @@ QString QgsProcessingOutputMultipleLayers::type() const
 {
   return typeName();
 }
+
+QgsProcessingOutputConditionalBranch::QgsProcessingOutputConditionalBranch( const QString &name, const QString &description )
+  : QgsProcessingOutputDefinition( name, description )
+{}

@@ -1,6 +1,6 @@
-#line 2 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/flex_qgssqlstatementlexer.cpp"
+#line 1 "/Volumes/Data/work/projects/desktop/qgis3/src/core/flex_qgssqlstatementlexer.cpp"
 
-#line 4 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/flex_qgssqlstatementlexer.cpp"
+#line 3 "/Volumes/Data/work/projects/desktop/qgis3/src/core/flex_qgssqlstatementlexer.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -269,6 +269,7 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
+typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -433,7 +434,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	int yy_n_chars;
+	yy_size_t yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -510,7 +511,7 @@ static void yy_init_buffer ( YY_BUFFER_STATE b, FILE *file , yyscan_t yyscanner 
 
 YY_BUFFER_STATE yy_scan_buffer ( char *base, yy_size_t size , yyscan_t yyscanner );
 YY_BUFFER_STATE yy_scan_string ( const char *yy_str , yyscan_t yyscanner );
-YY_BUFFER_STATE yy_scan_bytes ( const char *bytes, int len , yyscan_t yyscanner );
+YY_BUFFER_STATE yy_scan_bytes ( const char *bytes, yy_size_t len , yyscan_t yyscanner );
 
 void *yyalloc ( yy_size_t , yyscan_t yyscanner );
 void *yyrealloc ( void *, yy_size_t , yyscan_t yyscanner );
@@ -557,12 +558,12 @@ static void yynoreturn yy_fatal_error ( const char* msg , yyscan_t yyscanner );
  */
 #define YY_DO_BEFORE_ACTION \
 	yyg->yytext_ptr = yy_bp; \
-	yyleng = (int) (yy_cp - yy_bp); \
+	yyleng = (yy_size_t) (yy_cp - yy_bp); \
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
-#define YY_NUM_RULES 60
-#define YY_END_OF_BUFFER 61
+#define YY_NUM_RULES 61
+#define YY_END_OF_BUFFER 62
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -570,28 +571,28 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static const flex_int16_t yy_accept[183] =
+static const flex_int16_t yy_accept[191] =
     {   0,
-        0,    0,   61,   59,   58,   58,   59,   59,   23,   59,
-       50,   20,   18,   51,   19,   50,   22,   53,    9,    4,
-       10,   56,   56,   56,   56,   56,   56,   56,   56,   56,
-       56,   56,   56,   56,   56,   56,   56,   56,   24,   59,
-       58,    5,    0,   57,    0,   55,    0,    0,   53,    0,
-       52,   21,   53,   53,    6,    8,    7,   56,   56,   56,
-       32,   56,   39,   56,   56,   56,   56,    0,   52,   56,
-       56,   56,   56,   25,   15,   56,   56,   56,   56,   56,
-       56,   35,    3,   56,   56,   56,   56,   56,   56,   56,
-       17,   52,    0,   29,    2,   40,   56,   56,   56,   56,
+        0,    0,   62,   60,   59,   59,   60,   60,   60,   23,
+       60,   50,   20,   18,   51,   19,   50,   22,   53,    9,
+        4,   10,   56,   56,   56,   56,   56,   56,   56,   56,
+       56,   56,   56,   56,   56,   56,   56,   56,   56,   60,
+       24,   60,   59,    5,    0,   57,    0,   55,    0,    0,
+        0,   55,    0,    0,   53,    0,   52,   21,   53,   53,
+        6,    8,    7,   56,   56,   56,   32,   56,   39,   56,
+       56,   56,   56,    0,   52,   56,   56,   56,   56,   25,
+       15,   56,   56,   56,   56,   56,   56,   35,    3,   56,
+       56,   56,   56,   56,   56,   56,    0,   58,   17,   52,
 
-       56,   56,   56,   56,   56,   56,    0,   56,   56,   56,
-       56,    1,   56,   56,   56,   56,   56,   56,   56,   56,
-       56,    0,   52,   56,   31,   56,   41,   56,   56,   33,
-       47,   56,   56,    0,   34,   42,   11,   56,    0,   27,
-       56,   56,   56,   56,   54,   56,   56,   56,   56,   46,
-       56,   54,   13,   44,    0,   56,    0,    0,   38,   45,
-       43,   56,   49,   36,   37,   56,   56,   16,   56,    0,
-        0,   28,   26,   56,   48,    0,    0,   30,    0,   12,
-       14,    0
+        0,   29,    2,   40,   56,   56,   56,   56,   56,   56,
+       56,   56,   56,   56,    0,   56,   56,   56,   56,    1,
+       56,   56,   56,   56,   56,   56,   56,   56,   56,    0,
+       52,   56,   31,   56,   41,   56,   56,   33,   47,   56,
+       56,    0,   34,   42,   11,   56,    0,   27,   56,   56,
+       56,   56,   54,   56,   56,   56,   56,   46,   56,   54,
+       13,   44,    0,   56,    0,    0,   38,   45,   43,   56,
+       49,   36,   37,   56,   56,   16,   56,    0,    0,   28,
+       26,   56,   48,    0,    0,   30,    0,   12,   14,    0
     } ;
 
 static const YY_CHAR yy_ec[256] =
@@ -599,145 +600,152 @@ static const YY_CHAR yy_ec[256] =
         1,    1,    1,    1,    1,    1,    1,    1,    2,    3,
         1,    1,    2,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    2,    4,    5,    1,    1,    6,    1,    7,    8,
-        8,    9,   10,   11,   12,   13,   14,   15,   15,   15,
-       15,   15,   15,   15,   15,   15,   15,    1,    1,   16,
-       17,   18,    1,    1,   19,   20,   21,   22,   23,   24,
-       25,   26,   27,   28,   29,   30,   31,   32,   33,   34,
-       34,   35,   36,   37,   38,   34,   39,   34,   40,   34,
-        1,   41,    1,   42,   34,    1,   43,   44,   45,   46,
+        1,    2,    4,    5,    6,    1,    7,    1,    8,    9,
+        9,   10,   11,   12,   13,   14,   15,   16,   16,   16,
+       16,   16,   16,   16,   16,   16,   16,    1,    1,   17,
+       18,   19,    1,    1,   20,   21,   22,   23,   24,   25,
+       26,   27,   28,   29,   30,   31,   32,   33,   34,   35,
+       35,   36,   37,   38,   39,   35,   40,   35,   41,   35,
+       42,   43,   44,   45,   35,    1,   46,   47,   48,   49,
 
-       47,   48,   49,   50,   51,   52,   53,   54,   55,   56,
-       57,   34,   34,   58,   59,   60,   61,   34,   62,   34,
-       63,   34,    1,   64,    1,    1,    1,   65,   65,   65,
-       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
-       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
-       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
-       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
-       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
-       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
-       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
+       50,   51,   52,   53,   54,   55,   56,   57,   58,   59,
+       60,   35,   35,   61,   62,   63,   64,   35,   65,   35,
+       66,   35,    1,   67,    1,    1,    1,   68,   68,   68,
+       68,   68,   68,   68,   68,   68,   68,   68,   68,   68,
+       68,   68,   68,   68,   68,   68,   68,   68,   68,   68,
+       68,   68,   68,   68,   68,   68,   68,   68,   68,   68,
+       68,   68,   68,   68,   68,   68,   68,   68,   68,   68,
+       68,   68,   68,   68,   68,   68,   68,   68,   68,   68,
+       68,   68,   68,   68,   68,   68,   68,   68,   68,   68,
+       68,   68,   68,   68,   68,   68,   68,   68,   68,   68,
 
-       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
-       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
-       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
-       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
-       65,   65,   65,   65,   65,   65,   65,   65,   65,   65,
-       65,   65,   65,   65,   65
+       68,   68,   68,   68,   68,   68,   68,   68,   68,   68,
+       68,   68,   68,   68,   68,   68,   68,   68,   68,   68,
+       68,   68,   68,   68,   68,   68,   68,   68,   68,   68,
+       68,   68,   68,   68,   68,   68,   68,   68,   68,   68,
+       68,   68,   68,   68,   68,   68,   68,   68,   68,   68,
+       68,   68,   68,   68,   68
     } ;
 
-static const YY_CHAR yy_meta[66] =
+static const YY_CHAR yy_meta[69] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    2,    1,    3,    1,    1,    1,    3,    3,
+        1,    1,    1,    2,    1,    3,    1,    1,    1,    3,
         3,    3,    3,    3,    3,    3,    3,    3,    3,    3,
         3,    3,    3,    3,    3,    3,    3,    3,    3,    3,
-        1,    1,    3,    3,    3,    3,    3,    3,    3,    3,
+        3,    1,    1,    1,    1,    3,    3,    3,    3,    3,
         3,    3,    3,    3,    3,    3,    3,    3,    3,    3,
-        3,    3,    3,    1,    3
+        3,    3,    3,    3,    3,    3,    1,    3
     } ;
 
-static const flex_int16_t yy_base[187] =
+static const flex_int16_t yy_base[197] =
     {   0,
-        0,    0,  360,  370,   64,   66,  342,  353,  370,   63,
-      370,  370,  370,  370,   58,  340,  339,   59,   58,  370,
-      335,   53,   54,   60,   63,   81,   73,    0,   83,   45,
-       97,  102,   91,   71,  104,   95,  114,  106,  370,  287,
-       85,  370,  340,  337,   92,  310,  275,  128,  142,  126,
-      139,  370,  145,  154,  370,  370,  370,    0,  131,  146,
-      150,  137,    0,  139,  139,  140,  141,  113,  110,  148,
-      146,  150,  154,  150,  181,  160,  164,  161,  156,  157,
-      161,    0,  179,  170,  183,  179,  175,  183,  191,  196,
-      370,   85,  211,    0,    0,    0,  183,  187,  191,  199,
+        0,    0,  376,  395,   67,   69,  357,  368,   67,  395,
+       66,  395,  395,  395,  395,   62,  356,  356,   63,   62,
+      395,  352,   57,   58,   65,   67,   87,   84,    0,   94,
+       55,   68,  108,   96,   79,  112,   98,  104,  111,  321,
+      395,  296,   81,  395,  356,  352,  138,  144,  348,  340,
+       97,  326,  289,  195,  151,  158,  154,  395,  163,  169,
+      395,  395,  395,    0,  127,  150,  154,  123,    0,  151,
+      155,  154,  155,  174,  133,  162,  160,  164,  168,  164,
+      203,  170,  175,  173,  169,  170,  178,    0,  187,  174,
+      188,  187,  186,  199,  200,  206,   99,   95,  395,   90,
 
-      191,  193,  200,  205,  208,  215,  237,  209,  211,  223,
-      211,  251,  226,  234,  235,  234,  240,  241,  233,  235,
-      238,   82,   69,  245,    0,  238,    0,  248,  253,    0,
-        0,  254,  244,  250,    0,    0,    0,  250,  292,    0,
-      251,  254,  261,  282,    0,  272,  280,  283,  287,    0,
-      279,    0,    0,    0,  276,  295,  285,  289,    0,    0,
-        0,  281,    0,    0,    0,  288,  302,  370,  294,  298,
-      297,    0,    0,  294,    0,  303,  310,    0,  314,  370,
-      370,  370,  361,  364,  366,   77
+      230,    0,    0,    0,  194,  200,  202,  209,  204,  208,
+      215,  217,  219,  227,  258,  219,  217,  234,  223,  263,
+      237,  245,  247,  245,  252,  255,  247,  249,  249,   86,
+       81,  259,    0,  249,    0,  260,  265,    0,    0,  266,
+      257,  262,    0,    0,    0,  263,  298,    0,  267,  270,
+      274,  282,    0,  280,  293,  296,  297,    0,  290,    0,
+        0,    0,  287,  307,  301,  305,    0,    0,    0,  297,
+        0,    0,    0,  303,  316,  395,  309,  313,  312,    0,
+        0,  306,    0,  318,  327,    0,  330,  395,  395,  395,
+      380,  383,  386,  388,   90,  391
+
     } ;
 
-static const flex_int16_t yy_def[187] =
+static const flex_int16_t yy_def[197] =
     {   0,
-      182,    1,  182,  182,  182,  182,  182,  183,  182,  184,
-      182,  182,  182,  182,  182,  182,  182,  185,  182,  182,
-      182,  186,  186,  186,  186,  186,  186,  186,  186,  186,
-      186,  186,  186,  186,  186,  186,  186,  186,  182,  182,
-      182,  182,  183,  182,  184,  182,  184,  182,  185,  182,
-      182,  182,  185,  185,  182,  182,  182,  186,  186,  186,
-      186,  186,  186,  186,  186,  186,  186,  182,  186,  186,
-      186,  186,  186,  186,  186,  186,  186,  186,  186,  186,
-      186,  186,  186,  186,  186,  186,  186,  186,  186,  186,
-      182,  182,  182,  186,  186,  186,  186,  186,  186,  186,
+      190,    1,  190,  190,  190,  190,  190,  191,  192,  190,
+      193,  190,  190,  190,  190,  190,  190,  190,  194,  190,
+      190,  190,  195,  195,  195,  195,  195,  195,  195,  195,
+      195,  195,  195,  195,  195,  195,  195,  195,  195,  196,
+      190,  190,  190,  190,  191,  190,  192,  192,  190,  192,
+      193,  190,  193,  190,  194,  190,  190,  190,  194,  194,
+      190,  190,  190,  195,  195,  195,  195,  195,  195,  195,
+      195,  195,  195,  190,  195,  195,  195,  195,  195,  195,
+      195,  195,  195,  195,  195,  195,  195,  195,  195,  195,
+      195,  195,  195,  195,  195,  195,  196,  196,  190,  190,
 
-      186,  186,  186,  186,  186,  186,  182,  186,  186,  186,
-      186,  186,  186,  186,  186,  186,  186,  186,  186,  186,
-      186,  182,  182,  186,  186,  186,  186,  186,  186,  186,
-      186,  186,  186,  182,  186,  186,  186,  186,  182,  186,
-      186,  186,  186,  186,  186,  186,  186,  186,  186,  186,
-      186,  186,  186,  186,  182,  186,  182,  182,  186,  186,
-      186,  186,  186,  186,  186,  186,  186,  182,  186,  182,
-      182,  186,  186,  186,  186,  182,  182,  186,  182,  182,
-      182,    0,  182,  182,  182,  182
+      190,  195,  195,  195,  195,  195,  195,  195,  195,  195,
+      195,  195,  195,  195,  190,  195,  195,  195,  195,  195,
+      195,  195,  195,  195,  195,  195,  195,  195,  195,  190,
+      190,  195,  195,  195,  195,  195,  195,  195,  195,  195,
+      195,  190,  195,  195,  195,  195,  190,  195,  195,  195,
+      195,  195,  195,  195,  195,  195,  195,  195,  195,  195,
+      195,  195,  190,  195,  190,  190,  195,  195,  195,  195,
+      195,  195,  195,  195,  195,  190,  195,  190,  190,  195,
+      195,  195,  195,  190,  190,  195,  190,  190,  190,    0,
+      190,  190,  190,  190,  190,  190
+
     } ;
 
-static const flex_int16_t yy_nxt[436] =
+static const flex_int16_t yy_nxt[464] =
     {   0,
         4,    5,    6,    7,    8,    9,   10,   11,   12,   13,
        14,   15,   16,   17,   18,   19,   20,   21,   22,   23,
-       24,   25,   26,   27,   28,   28,   29,   30,   28,   31,
-       28,   32,   33,   28,   34,   35,   36,   37,   38,   28,
-        4,   39,   22,   23,   24,   25,   26,   27,   28,   28,
-       29,   30,   28,   31,   28,   32,   33,   34,   35,   36,
-       37,   38,   28,   40,   28,   41,   41,   41,   41,   46,
-       48,   48,   49,   49,   55,   56,   62,   76,   64,   58,
-       50,   54,   59,  123,   60,   66,   41,   41,   61,   67,
-       68,   70,   68,   63,   65,   69,  123,   85,   46,   92,
+       24,   25,   26,   27,   28,   29,   29,   30,   31,   29,
+       32,   29,   33,   34,   29,   35,   36,   37,   38,   39,
+       29,   40,    4,    4,   41,   23,   24,   25,   26,   27,
+       28,   29,   29,   30,   31,   29,   32,   29,   33,   34,
+       35,   36,   37,   38,   39,   29,   42,   29,   43,   43,
+       43,   43,   48,   52,   49,   54,   54,   55,   55,   61,
+       62,   68,   43,   43,   70,   56,   60,   65,   82,   66,
+       72,   83,   64,   67,   73,   84,  131,   74,   69,   74,
 
-       62,   76,   64,   47,   50,   54,   59,   71,   60,   66,
-       72,   61,   73,   67,   74,   70,   63,   65,   75,   77,
-       79,   85,   82,   78,   69,   83,   86,   92,   84,   87,
-       71,   90,   47,   72,   80,   68,   73,   68,   74,   81,
-       92,   75,   51,   77,   79,   88,   82,   78,   83,   89,
-       86,   84,   87,   51,   48,   90,   49,  182,   80,  182,
-       94,   93,   81,   68,   54,   68,  182,   95,   92,   88,
-       96,   99,   89,   97,   98,  100,  101,  102,  103,  104,
-      105,  106,  107,  107,   94,   93,  108,  109,   54,  110,
-      113,   95,  111,  112,   96,   99,   97,   98,  100,  101,
+       71,  131,   75,   76,   52,  100,   91,   68,   53,   50,
+       70,   56,   60,   65,   82,   66,   72,   83,   67,   77,
+       73,   84,   78,   69,   79,   71,   80,   85,   88,   76,
+       81,   89,   91,   93,   90,   92,   94,   96,   98,   53,
+       95,   86,   98,   48,   77,   49,   87,   78,   75,   48,
+       79,   49,   80,   85,   88,   81,   89,  102,   93,   90,
+      105,   92,   94,   96,   54,   95,   55,   86,   74,   57,
+       74,   87,  103,  100,   60,  104,  190,  101,  190,   74,
+       50,   74,  190,  102,  100,  105,   50,  106,  107,  100,
+      108,  109,  110,  111,  112,  113,  114,  116,  103,  117,
 
-      114,  102,  103,  104,  105,  106,  115,  116,  117,  119,
-      108,  109,  118,  110,  113,  111,  112,  120,  121,  127,
-      122,  124,  122,  125,  114,  123,  126,  128,  129,  115,
-      130,  116,  117,  119,  131,  118,  132,  133,  107,  107,
-      135,  120,  121,  127,  124,  137,  125,  136,  138,  126,
-      128,  129,  139,  139,  130,  140,  141,  142,  131,  143,
-      132,  133,  144,  145,  135,  146,  147,  149,  134,  137,
-      136,  138,  148,  150,  151,  152,  153,  182,  154,  140,
-      141,  142,  155,  143,  156,  159,  144,  145,  160,  146,
-      147,  149,  134,  139,  139,  148,  150,  161,  151,  152,
+       60,  104,  118,  101,  115,  115,  119,  120,  121,  122,
+       57,  123,  106,  124,  107,  108,  109,  125,  110,  111,
+      112,  113,  114,  116,  126,  117,  127,  128,  118,  129,
+      135,  119,  120,  132,  121,  122,  123,  133,  134,  124,
+      130,  136,  130,  125,  137,  131,  138,  139,  140,  126,
+      141,  143,  127,  128,  144,  129,  135,  145,  132,  115,
+      115,  146,  133,  134,  147,  147,  136,  148,  149,  137,
+      150,  151,  138,  139,  140,  152,  141,  143,  153,  144,
+      154,  155,  157,  145,  156,  158,  146,  159,  160,  161,
+      142,  190,  162,  148,  149,  163,  150,  151,  164,  147,
 
-      153,  154,  162,  163,  164,  165,  155,  156,  159,  166,
-      167,  160,  168,  169,  170,  171,   45,  172,  157,  173,
-      161,  158,  174,  175,  176,  177,  162,  163,  164,  165,
-      178,  179,  180,  166,  167,  168,  181,  169,  170,  171,
-      172,   43,  157,  173,   44,  158,  174,  175,  176,  177,
-       91,   57,   52,  178,   51,  179,  180,   44,   42,  182,
-      181,   43,   43,   43,   45,   45,   45,   53,   53,    3,
-      182,  182,  182,  182,  182,  182,  182,  182,  182,  182,
-      182,  182,  182,  182,  182,  182,  182,  182,  182,  182,
-      182,  182,  182,  182,  182,  182,  182,  182,  182,  182,
+      147,  152,  167,  170,  153,  168,  154,  155,  157,  156,
+      158,  169,  171,  159,  160,  161,  142,  162,  172,  173,
+      174,  163,  175,  164,  176,  165,  177,  167,  166,  170,
+      168,  178,  179,   51,  180,  181,  169,  182,  171,  183,
+      184,  185,  190,  186,  172,  173,  174,  187,  175,  176,
+      188,  165,  177,  189,  166,   47,   45,  178,  179,  180,
+       46,  181,   99,  182,   98,  183,  184,  185,  186,   63,
+       58,   57,   46,  187,   44,  190,  188,  190,  190,  189,
+       45,   45,   45,   47,   47,   47,   51,   51,   51,   59,
+       59,   97,  190,   97,    3,  190,  190,  190,  190,  190,
 
-      182,  182,  182,  182,  182,  182,  182,  182,  182,  182,
-      182,  182,  182,  182,  182,  182,  182,  182,  182,  182,
-      182,  182,  182,  182,  182,  182,  182,  182,  182,  182,
-      182,  182,  182,  182,  182
+      190,  190,  190,  190,  190,  190,  190,  190,  190,  190,
+      190,  190,  190,  190,  190,  190,  190,  190,  190,  190,
+      190,  190,  190,  190,  190,  190,  190,  190,  190,  190,
+      190,  190,  190,  190,  190,  190,  190,  190,  190,  190,
+      190,  190,  190,  190,  190,  190,  190,  190,  190,  190,
+      190,  190,  190,  190,  190,  190,  190,  190,  190,  190,
+      190,  190,  190
     } ;
 
-static const flex_int16_t yy_chk[436] =
+static const flex_int16_t yy_chk[464] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -745,48 +753,51 @@ static const flex_int16_t yy_chk[436] =
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    1,    5,    5,    6,    6,   10,
-       15,   18,   15,   18,   19,   19,   23,   30,   24,  186,
-       15,   18,   22,  123,   22,   25,   41,   41,   22,   25,
-       26,   27,   26,   23,   24,   26,  122,   34,   45,   92,
+        1,    1,    1,    1,    1,    1,    1,    1,    5,    5,
+        6,    6,    9,   11,    9,   16,   19,   16,   19,   20,
+       20,   24,   43,   43,   25,   16,   19,   23,   31,   23,
+       26,   32,  195,   23,   26,   32,  131,   27,   24,   27,
 
-       23,   30,   24,   10,   15,   18,   22,   27,   22,   25,
-       27,   22,   29,   25,   29,   27,   23,   24,   29,   31,
-       32,   34,   33,   31,   69,   33,   35,   68,   33,   36,
-       27,   38,   45,   27,   32,   50,   29,   50,   29,   32,
-       50,   29,   48,   31,   32,   37,   33,   31,   33,   37,
-       35,   33,   36,   51,   49,   38,   49,   53,   32,   53,
-       59,   51,   32,   54,   49,   54,   54,   60,   54,   37,
-       61,   65,   37,   62,   64,   66,   67,   70,   71,   72,
-       73,   74,   75,   75,   59,   51,   76,   77,   49,   78,
-       81,   60,   79,   80,   61,   65,   62,   64,   66,   67,
+       25,  130,   27,   28,   51,  100,   35,   24,   11,    9,
+       25,   16,   19,   23,   31,   23,   26,   32,   23,   28,
+       26,   32,   28,   24,   30,   25,   30,   33,   34,   28,
+       30,   34,   35,   37,   34,   36,   38,   39,   98,   51,
+       38,   33,   97,   47,   28,   47,   33,   28,   75,   48,
+       30,   48,   30,   33,   34,   30,   34,   65,   37,   34,
+       68,   36,   38,   39,   55,   38,   55,   33,   56,   57,
+       56,   33,   66,   56,   55,   67,   59,   57,   59,   60,
+       47,   60,   60,   65,   60,   68,   48,   70,   71,   74,
+       72,   73,   76,   77,   78,   79,   80,   82,   66,   83,
 
-       83,   70,   71,   72,   73,   74,   84,   85,   86,   88,
-       76,   77,   87,   78,   81,   79,   80,   89,   90,  100,
-       93,   97,   93,   98,   83,   93,   99,  101,  102,   84,
-      103,   85,   86,   88,  104,   87,  105,  106,  107,  107,
-      108,   89,   90,  100,   97,  110,   98,  109,  111,   99,
-      101,  102,  112,  112,  103,  113,  114,  115,  104,  116,
-      105,  106,  117,  118,  108,  119,  120,  124,  107,  110,
-      109,  111,  121,  126,  128,  129,  132,   47,  133,  113,
-      114,  115,  134,  116,  138,  141,  117,  118,  142,  119,
-      120,  124,  107,  139,  139,  121,  126,  143,  128,  129,
+       55,   67,   84,   57,   81,   81,   85,   86,   87,   89,
+       54,   90,   70,   91,   71,   72,   73,   92,   76,   77,
+       78,   79,   80,   82,   93,   83,   94,   95,   84,   96,
+      108,   85,   86,  105,   87,   89,   90,  106,  107,   91,
+      101,  109,  101,   92,  110,  101,  111,  112,  113,   93,
+      114,  116,   94,   95,  117,   96,  108,  118,  105,  115,
+      115,  119,  106,  107,  120,  120,  109,  121,  122,  110,
+      123,  124,  111,  112,  113,  125,  114,  116,  126,  117,
+      127,  128,  132,  118,  129,  134,  119,  136,  137,  140,
+      115,   53,  141,  121,  122,  142,  123,  124,  146,  147,
 
-      132,  133,  144,  146,  147,  148,  134,  138,  141,  149,
-      151,  142,  155,  156,  157,  158,   46,  162,  139,  166,
-      143,  139,  167,  169,  170,  171,  144,  146,  147,  148,
-      174,  176,  177,  149,  151,  155,  179,  156,  157,  158,
-      162,   44,  139,  166,   43,  139,  167,  169,  170,  171,
-       40,   21,   17,  174,   16,  176,  177,    8,    7,    3,
-      179,  183,  183,  183,  184,  184,  184,  185,  185,  182,
-      182,  182,  182,  182,  182,  182,  182,  182,  182,  182,
-      182,  182,  182,  182,  182,  182,  182,  182,  182,  182,
-      182,  182,  182,  182,  182,  182,  182,  182,  182,  182,
+      147,  125,  149,  152,  126,  150,  127,  128,  132,  129,
+      134,  151,  154,  136,  137,  140,  115,  141,  155,  156,
+      157,  142,  159,  146,  163,  147,  164,  149,  147,  152,
+      150,  165,  166,   52,  170,  174,  151,  175,  154,  177,
+      178,  179,   50,  182,  155,  156,  157,  184,  159,  163,
+      185,  147,  164,  187,  147,   49,   46,  165,  166,  170,
+       45,  174,   42,  175,   40,  177,  178,  179,  182,   22,
+       18,   17,    8,  184,    7,    3,  185,    0,    0,  187,
+      191,  191,  191,  192,  192,  192,  193,  193,  193,  194,
+      194,  196,    0,  196,  190,  190,  190,  190,  190,  190,
 
-      182,  182,  182,  182,  182,  182,  182,  182,  182,  182,
-      182,  182,  182,  182,  182,  182,  182,  182,  182,  182,
-      182,  182,  182,  182,  182,  182,  182,  182,  182,  182,
-      182,  182,  182,  182,  182
+      190,  190,  190,  190,  190,  190,  190,  190,  190,  190,
+      190,  190,  190,  190,  190,  190,  190,  190,  190,  190,
+      190,  190,  190,  190,  190,  190,  190,  190,  190,  190,
+      190,  190,  190,  190,  190,  190,  190,  190,  190,  190,
+      190,  190,  190,  190,  190,  190,  190,  190,  190,  190,
+      190,  190,  190,  190,  190,  190,  190,  190,  190,  190,
+      190,  190,  190
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -796,7 +807,7 @@ static const flex_int16_t yy_chk[436] =
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-#line 1 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 1 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 /***************************************************************************
                           qgssqlstatementlexer.ll
                           --------------------
@@ -812,7 +823,7 @@ static const flex_int16_t yy_chk[436] =
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-#line 23 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 23 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
  // this makes flex generate lexer with context + init/destroy functions
  // this makes Bison send yylex another argument to use instead of using the global variable yylval
  // ensure that lexer will be 8-bit (and not just 7-bit)
@@ -869,8 +880,8 @@ static QString stripText(QString text)
 // C locale for correct parsing of numbers even if the system locale is different
 Q_GLOBAL_STATIC_WITH_ARGS(QLocale, cLocale, ("C") )
 
-#line 873 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/flex_qgssqlstatementlexer.cpp"
-#line 874 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/flex_qgssqlstatementlexer.cpp"
+#line 883 "/Volumes/Data/work/projects/desktop/qgis3/src/core/flex_qgssqlstatementlexer.cpp"
+#line 884 "/Volumes/Data/work/projects/desktop/qgis3/src/core/flex_qgssqlstatementlexer.cpp"
 
 #define INITIAL 0
 
@@ -899,8 +910,8 @@ struct yyguts_t
     size_t yy_buffer_stack_max; /**< capacity of stack. */
     YY_BUFFER_STATE * yy_buffer_stack; /**< Stack as an array. */
     char yy_hold_char;
-    int yy_n_chars;
-    int yyleng_r;
+    yy_size_t yy_n_chars;
+    yy_size_t yyleng_r;
     char *yy_c_buf_p;
     int yy_init;
     int yy_start;
@@ -953,7 +964,7 @@ FILE *yyget_out ( yyscan_t yyscanner );
 
 void yyset_out  ( FILE * _out_str , yyscan_t yyscanner );
 
-			int yyget_leng ( yyscan_t yyscanner );
+			yy_size_t yyget_leng ( yyscan_t yyscanner );
 
 char *yyget_text ( yyscan_t yyscanner );
 
@@ -1028,7 +1039,7 @@ static int input ( yyscan_t yyscanner );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		int n; \
+		yy_size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -1142,10 +1153,10 @@ YY_DECL
 		}
 
 	{
-#line 105 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 107 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 
 
-#line 1149 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/flex_qgssqlstatementlexer.cpp"
+#line 1159 "/Volumes/Data/work/projects/desktop/qgis3/src/core/flex_qgssqlstatementlexer.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1172,13 +1183,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 183 )
+				if ( yy_current_state >= 191 )
 					yy_c = yy_meta[yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
-		while ( yy_current_state != 182 );
+		while ( yy_current_state != 190 );
 		yy_cp = yyg->yy_last_accepting_cpos;
 		yy_current_state = yyg->yy_last_accepting_state;
 
@@ -1200,270 +1211,270 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 107 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 109 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { U_OP(uoNot); return NOT; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 108 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 110 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boAnd); return AND; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 109 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 111 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boOr);  return OR;  }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 111 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 113 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boEQ); return EQ; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 112 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 114 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boNE); return NE; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 113 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 115 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boLE); return LE; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 114 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 116 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boGE); return GE; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 115 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 117 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boNE); return NE; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 116 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 118 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boLT); return LT; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 117 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 119 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boGT); return GT; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 119 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 121 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boLike); return LIKE; }
 	YY_BREAK
 case 12:
 /* rule 12 can match eol */
 YY_RULE_SETUP
-#line 120 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 122 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boNotLike); return LIKE; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 121 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 123 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boILike); return LIKE; }
 	YY_BREAK
 case 14:
 /* rule 14 can match eol */
 YY_RULE_SETUP
-#line 122 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 124 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boNotILike); return LIKE; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 123 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 125 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boIs); return IS; }
 	YY_BREAK
 case 16:
 /* rule 16 can match eol */
 YY_RULE_SETUP
-#line 124 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 126 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boIsNot); return IS; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 125 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 127 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boConcat); return CONCAT; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 127 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 129 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boPlus); return PLUS; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 128 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 130 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boMinus); return MINUS; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 129 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 131 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boMul); return MUL_OR_STAR; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 130 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 132 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boIntDiv); return INTDIV; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 131 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 133 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boDiv); return DIV; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 132 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 134 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boMod); return MOD; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 133 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 135 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { B_OP(boPow); return POW; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 135 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 137 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return IN; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 136 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 138 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return BETWEEN; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 138 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 140 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return NULLVALUE; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 140 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 142 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return SELECT; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 141 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 143 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return ALL; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 142 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 144 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return DISTINCT; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 143 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 145 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return CAST; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 144 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 146 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return AS; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 145 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 147 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return FROM; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 146 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 148 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return JOIN; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 147 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 149 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return ON; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 148 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 150 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return USING; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 149 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 151 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return WHERE; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 150 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 152 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return ORDER; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 151 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 153 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return BY; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 152 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 154 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return ASC; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 153 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 155 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return DESC; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 154 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 156 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return LEFT; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 155 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 157 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return RIGHT; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 156 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 158 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return INNER; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 157 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 159 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return OUTER; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 158 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 160 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return CROSS; }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 159 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 161 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return FULL; }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 160 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 162 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return NATURAL; }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 161 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 163 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return UNION; }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 163 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 165 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return yytext[0]; }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 165 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 167 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { return COMMA; }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 167 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 169 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { yylval->numberFloat = cLocale()->toDouble( QString::fromLatin1(yytext) ); return NUMBER_FLOAT; }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 168 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 170 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 {
         bool ok;
         yylval->numberInt = cLocale()->toInt( QString::fromLatin1(yytext), &ok );
@@ -1483,43 +1494,49 @@ YY_RULE_SETUP
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 185 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 187 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { yylval->boolVal = QString( yytext ).compare( "true", Qt::CaseInsensitive ) == 0; return BOOLEAN; }
 	YY_BREAK
 case 55:
 /* rule 55 can match eol */
 YY_RULE_SETUP
-#line 187 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 189 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { TEXT_FILTER(stripText); return STRING; }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 189 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 191 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { TEXT; return IDENTIFIER; }
 	YY_BREAK
 case 57:
 /* rule 57 can match eol */
 YY_RULE_SETUP
-#line 191 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 193 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 { TEXT_FILTER(QgsSQLStatement::stripQuotedIdentifier); return IDENTIFIER; }
 	YY_BREAK
 case 58:
 /* rule 58 can match eol */
 YY_RULE_SETUP
-#line 193 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
-/* skip blanks and tabs */
+#line 195 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
+{ TEXT_FILTER(QgsSQLStatement::stripMsQuotedIdentifier); return IDENTIFIER; }
 	YY_BREAK
 case 59:
+/* rule 59 can match eol */
 YY_RULE_SETUP
-#line 195 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
-{ return Unknown_CHARACTER; }
+#line 197 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
+/* skip blanks and tabs */
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 198 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 199 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
+{ return Unknown_CHARACTER; }
+	YY_BREAK
+case 61:
+YY_RULE_SETUP
+#line 202 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 ECHO;
 	YY_BREAK
-#line 1523 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/flex_qgssqlstatementlexer.cpp"
+#line 1539 "/Volumes/Data/work/projects/desktop/qgis3/src/core/flex_qgssqlstatementlexer.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1708,7 +1725,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 	else
 		{
-			int num_to_read =
+			yy_size_t num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -1722,7 +1739,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 			if ( b->yy_is_our_buffer )
 				{
-				int new_size = b->yy_buf_size * 2;
+				yy_size_t new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -1780,7 +1797,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 	if ((yyg->yy_n_chars + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
-		int new_size = yyg->yy_n_chars + number_to_move + (yyg->yy_n_chars >> 1);
+		yy_size_t new_size = yyg->yy_n_chars + number_to_move + (yyg->yy_n_chars >> 1);
 		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yyrealloc(
 			(void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf, (yy_size_t) new_size , yyscanner );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
@@ -1819,7 +1836,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 183 )
+			if ( yy_current_state >= 191 )
 				yy_c = yy_meta[yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
@@ -1848,11 +1865,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 183 )
+		if ( yy_current_state >= 191 )
 			yy_c = yy_meta[yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
-	yy_is_jam = (yy_current_state == 182);
+	yy_is_jam = (yy_current_state == 190);
 
 	(void)yyg;
 	return yy_is_jam ? 0 : yy_current_state;
@@ -1887,7 +1904,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 		else
 			{ /* need more input */
-			int offset = (int) (yyg->yy_c_buf_p - yyg->yytext_ptr);
+			yy_size_t offset = yyg->yy_c_buf_p - yyg->yytext_ptr;
 			++yyg->yy_c_buf_p;
 
 			switch ( yy_get_next_buffer( yyscanner ) )
@@ -2265,12 +2282,12 @@ YY_BUFFER_STATE yy_scan_string (const char * yystr , yyscan_t yyscanner)
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len , yyscan_t yyscanner)
+YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, yy_size_t  _yybytes_len , yyscan_t yyscanner)
 {
 	YY_BUFFER_STATE b;
 	char *buf;
 	yy_size_t n;
-	int i;
+	yy_size_t i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = (yy_size_t) (_yybytes_len + 2);
@@ -2314,7 +2331,7 @@ static void yynoreturn yy_fatal_error (const char* msg , yyscan_t yyscanner)
 	do \
 		{ \
 		/* Undo effects of setting up yytext. */ \
-        int yyless_macro_arg = (n); \
+        yy_size_t yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
 		yytext[yyleng] = yyg->yy_hold_char; \
 		yyg->yy_c_buf_p = yytext + yyless_macro_arg; \
@@ -2382,7 +2399,7 @@ FILE *yyget_out  (yyscan_t yyscanner)
 /** Get the length of the current token.
  * @param yyscanner The scanner object.
  */
-int yyget_leng  (yyscan_t yyscanner)
+yy_size_t yyget_leng  (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
     return yyleng;
@@ -2663,6 +2680,6 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 198 "/home/user/Workspace/NextGIS/nextgisqgis/nextgisqgis/src/core/qgssqlstatementlexer.ll"
+#line 202 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementlexer.ll"
 
 
