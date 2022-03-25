@@ -30,7 +30,7 @@
 #include <QCheckBox>
 #include <QTextStream>
 
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 
 //
 // QgsNetworkLoggerTreeView

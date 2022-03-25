@@ -29,7 +29,7 @@
 
 class QgsRasterLayer;
 class QgsVectorLayer;
-class QgsVectorTileLayer;
+// class QgsVectorTileLayer;
 class QgsMapLayer;
 class QgsMapCanvas;
 class QgsMeshLayer;
@@ -241,7 +241,7 @@ class GUI_EXPORT QgsMapToolIdentify : public QgsMapTool
     bool identifyRasterLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsRasterLayer *layer, const QgsGeometry &geometry, const QgsRectangle &viewExtent, double mapUnitsPerPixel, const QgsIdentifyContext &identifyContext = QgsIdentifyContext() );
     bool identifyVectorLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsVectorLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext = QgsIdentifyContext() );
     bool identifyMeshLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsMeshLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext = QgsIdentifyContext() );
-    bool identifyVectorTileLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsVectorTileLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext = QgsIdentifyContext() );
+    // bool identifyVectorTileLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsVectorTileLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext = QgsIdentifyContext() );
     bool identifyPointCloudLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsPointCloudLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext = QgsIdentifyContext() );
 
     /**

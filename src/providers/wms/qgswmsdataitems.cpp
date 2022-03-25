@@ -23,8 +23,8 @@
 #include "qgswmsconnection.h"
 #include "qgsxyzconnection.h"
 
-#include "qgsgeonodeconnection.h"
-#include "qgsgeonoderequest.h"
+// #include "qgsgeonodeconnection.h"
+// #include "qgsgeonoderequest.h"
 #include "qgssettings.h"
 
 
@@ -618,6 +618,7 @@ QgsXyzLayerItem::QgsXyzLayerItem( QgsDataItem *parent, QString name, QString pat
 QVector<QgsDataItem *> QgsWmsDataItemProvider::createDataItems( const QString &path, QgsDataItem *parentItem )
 {
   QVector<QgsDataItem *> items;
+/*
   if ( path.startsWith( QLatin1String( "geonode:/" ) ) )
   {
     QString connectionName = path.split( '/' ).last();
@@ -657,7 +658,7 @@ QVector<QgsDataItem *> QgsWmsDataItemProvider::createDataItems( const QString &p
       }
     }
   }
-
+*/
   return items;
 }
 
@@ -686,6 +687,7 @@ QgsDataItem *QgsXyzTileDataItemProvider::createDataItem( const QString &path, Qg
 QVector<QgsDataItem *> QgsXyzTileDataItemProvider::createDataItems( const QString &path, QgsDataItem *parentItem )
 {
   QVector<QgsDataItem *> items;
+/*
   if ( path.startsWith( QLatin1String( "geonode:/" ) ) )
   {
     QString connectionName = path.split( '/' ).last();
@@ -718,7 +720,7 @@ QVector<QgsDataItem *> QgsXyzTileDataItemProvider::createDataItems( const QStrin
       }
     }
   }
-
+*/
   return items;
 }
 

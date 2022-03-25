@@ -13,13 +13,15 @@
  *                                                                         *
  ***************************************************************************/
 
-#include <nlohmann/json.hpp>
-using namespace nlohmann;
+// #include <nlohmann/json.hpp>
+// using namespace nlohmann;
 
 #include "qgslogger.h"
 #include "qgsoapifapirequest.h"
 
 #include <QTextCodec>
+
+#include "qgsjsonutils.h"
 
 QgsOapifApiRequest::QgsOapifApiRequest( const QgsDataSourceUri &baseUri, const QString &url ):
   QgsBaseNetworkRequest( QgsAuthorizationSettings( baseUri.username(), baseUri.password(), baseUri.authConfigId() ), tr( "OAPIF" ) ),
@@ -79,89 +81,73 @@ void QgsOapifApiRequest::processReply()
     return;
   }
 
-  try
-  {
-    const json j = json::parse( utf8Text.toStdString() );
-    if ( j.is_object() && j.contains( "components" ) )
+    QString error;
+    const json j = QgsJsonUtils::parse(utf8Text.toStdString(), error);
+    if(!error.isEmpty())
+    {
+        mErrorCode = QgsBaseNetworkRequest::ApplicationLevelError;
+        mAppLevelError = ApplicationLevelError::JsonError;
+        mErrorMessage = errorMessageWithReason( error );
+        emit gotResponse();
+        return;
+    }
+
+    if ( QgsJsonUtils::is_object(j) )
     {
       const auto components = j["components"];
-      if ( components.is_object() && components.contains( "parameters" ) )
+      if ( components.IsValid() )
       {
         const auto parameters = components["parameters"];
-        if ( parameters.is_object() && parameters.contains( "limit" ) )
+        if ( parameters.IsValid() )
         {
           const auto limit = parameters["limit"];
-          if ( limit.is_object() && limit.contains( "schema" ) )
+          if ( limit.IsValid() )
           {
             const auto schema = limit["schema"];
-            if ( schema.is_object() )
+            if ( schema.IsValid() )
             {
-              if ( schema.contains( "maximum" ) )
-              {
                 const auto maximum = schema["maximum"];
-                if ( maximum.is_number_integer() )
+                if ( QgsJsonUtils::is_number_integer(maximum) )
                 {
-                  mMaxLimit = maximum.get<int>();
+                  mMaxLimit = maximum.ToInteger();
                 }
-              }
 
-              if ( schema.contains( "default" ) )
-              {
                 const auto defaultL = schema["default"];
-                if ( defaultL.is_number_integer() )
+                if ( QgsJsonUtils::is_number_integer(defaultL) )
                 {
-                  mDefaultLimit = defaultL.get<int>();
+                  mDefaultLimit = defaultL.ToInteger();
                 }
-              }
             }
           }
         }
       }
-    }
-
-    if ( j.is_object() && j.contains( "info" ) )
-    {
+      
       const auto info = j["info"];
-      if ( info.is_object() && info.contains( "contact" ) )
+      if ( QgsJsonUtils::is_object(info) )
       {
         const auto jContact = info["contact"];
-        if ( jContact.is_object() && jContact.contains( "name" ) )
+        if ( jContact.IsValid() )
         {
           const auto name = jContact["name"];
-          if ( name.is_string() )
+          if ( name.IsValid() )
           {
-            QgsAbstractMetadataBase::Contact contact( QString::fromStdString( name.get<std::string>() ) );
-            if ( jContact.contains( "email" ) )
+            QgsAbstractMetadataBase::Contact contact( QString::fromStdString( name.ToString() ) );
+            const auto email = jContact["email"];
+            if ( email.IsValid() )
             {
-              const auto email = jContact["email"];
-              if ( email.is_string() )
-              {
-                contact.email = QString::fromStdString( email.get<std::string>() );
-              }
+                contact.email = QString::fromStdString( email.ToString() );
             }
-            if ( jContact.contains( "url" ) )
+            const auto url = jContact["url"];
+            if ( url.IsValid() )
             {
-              const auto url = jContact["url"];
-              if ( url.is_string() )
-              {
                 // A bit of abuse to fill organization with url
-                contact.organization = QString::fromStdString( url.get<std::string>() );
-              }
+                contact.organization = QString::fromStdString( url.ToString() );
             }
             mMetadata.addContact( contact );
           }
         }
       }
     }
-  }
-  catch ( const json::parse_error &ex )
-  {
-    mErrorCode = QgsBaseNetworkRequest::ApplicationLevelError;
-    mAppLevelError = ApplicationLevelError::JsonError;
-    mErrorMessage = errorMessageWithReason( tr( "Cannot decode JSON document: %1" ).arg( QString::fromStdString( ex.what() ) ) );
-    emit gotResponse();
-    return;
-  }
 
   emit gotResponse();
 }

@@ -45,7 +45,7 @@ class QgsMessageBar;
 class QgsSubsetStringEditorProviderRegistry;
 class QgsProviderSourceWidgetProviderRegistry;
 class QgsRelationWidgetRegistry;
-class QgsHistoryProviderRegistry;
+// class QgsHistoryProviderRegistry;
 
 /**
  * \ingroup gui
@@ -196,7 +196,7 @@ class GUI_EXPORT QgsGui : public QObject
      * Returns the global history provider registry, used for tracking history providers.
      * \since QGIS 3.24
      */
-    static QgsHistoryProviderRegistry *historyProviderRegistry() SIP_KEEPREFERENCE;
+    // static QgsHistoryProviderRegistry *historyProviderRegistry() SIP_KEEPREFERENCE;
 
     /**
      * Register the widget to allow its position to be automatically saved and restored when open and closed.
@@ -304,7 +304,7 @@ class GUI_EXPORT QgsGui : public QObject
     QgsSubsetStringEditorProviderRegistry *mSubsetStringEditorProviderRegistry = nullptr;
     QgsProviderSourceWidgetProviderRegistry *mProviderSourceWidgetProviderRegistry = nullptr;
     QgsRelationWidgetRegistry *mRelationEditorRegistry = nullptr;
-    QgsHistoryProviderRegistry *mHistoryProviderRegistry = nullptr;
+    // QgsHistoryProviderRegistry *mHistoryProviderRegistry = nullptr;
     std::unique_ptr< QgsWindowManagerInterface > mWindowManager;
 
 #ifdef SIP_RUN

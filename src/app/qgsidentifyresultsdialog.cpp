@@ -91,7 +91,7 @@
 #include "qgspointcloudlayer.h"
 #include "qgscolorrampimpl.h"
 
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 
 QgsIdentifyResultsWebView::QgsIdentifyResultsWebView( QWidget *parent ) : QgsWebView( parent )
 {

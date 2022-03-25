@@ -113,10 +113,6 @@ endif()
 
 # For configure
 
-set(HAVE_SPATIALITE TRUE)
-#cmakedefine HAVE_MSSQL
-set(HAVE_ORACLE TRUE)
-
 include(GenerateExportHeader)
 include(configure)
 
@@ -132,6 +128,26 @@ include(FindAnyProject)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_AUTOUIC_SEARCH_PATHS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/symbollayer
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/editorwidgets
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/effects
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/labeling
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/layout
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/processing
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/auth
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/raster
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/styledock
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/mesh
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/pointcloud
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/3d
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/callouts
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/numericformats
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/attributeformconfig
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/georeferencer
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/annotations
+)
 set(CMAKE_AUTOMOC ON)
 
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/symlinks)
@@ -162,10 +178,6 @@ set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debu
 
 # Need for synccrsdb
 find_anyproject(PROJ REQUIRED)
-# if(PROJ_FOUND)
-#     add_definitions(-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H)
-# endif()
-
 if (PROJ_FOUND)
     string(REPLACE "." ";" VERSION_LIST ${PROJ_VERSION_STR})
     list(GET VERSION_LIST 0 PROJ_VERSION_MAJOR)
@@ -179,7 +191,6 @@ find_anyproject(Qca REQUIRED)
 find_anyproject(QtKeychain REQUIRED)
 find_anyproject(SpatialIndex REQUIRED)
 find_anyproject(SQLite3 REQUIRED)
-find_anyproject(Spatialite REQUIRED)
 find_anyproject(LIBZIP REQUIRED)
 # find_anyproject(EXIV REQUIRED)
 find_anyproject(EXPAT REQUIRED)
@@ -229,6 +240,9 @@ else()
     if (WITH_GUI)
         find_anyproject(Qwt REQUIRED)
         find_anyproject(QScintilla REQUIRED)
+        set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} Qml QuickWidgets)
+        add_definitions(-DWITH_QML)
+        set(HAVE_GUI TRUE)
     endif()
     set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} LinguistTools)
    
@@ -259,6 +273,8 @@ endif()
 # set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
 
 find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
+# if (WITH_QT6)
+set(QT_VERSION_BASE Qt5)
 
 ############################################
 if (ENABLE_TESTS)
@@ -279,7 +295,6 @@ endif()
 # Add binaries and libraries
 set(CMAKE_CXX_STANDARD 17)
 if(MSVC)
-
     # disable warnings
     set(_warnings "${_warnings} /wd4091 ")  # 'typedef': ignored on left of '' when no variable is declared (occurs in MS DbgHelp.h header)
     set(_warnings "${_warnings} /wd4100 ")  # unused formal parameters
@@ -378,6 +393,22 @@ if (WITH_ANALYSIS AND NOT PREPARE_ONLY)
     set(HAVE_GEOREFERENCER TRUE)
 endif()
 
+find_anyproject(Spatialite REQUIRED)
+if(SPATIALITE_FOUND)
+    set(HAVE_SPATIALITE TRUE)
+endif()
+
+find_anyproject(PostgreSQL DEFAULT ON NAMES PQ pq libpq)
+if(POSTGRESQL_FOUND)
+    set(HAVE_POSTGRESQL TRUE)
+endif()
+
+find_anyproject(OCI DEFAULT ON)
+if(OCI_FOUND)
+    include_directories(${OCI_INCLUDE_DIRS}/oci)
+    set(HAVE_ORACLE TRUE)
+endif()
+
 math(EXPR QGIS_VERSION_INT "${CPACK_PACKAGE_VERSION_MAJOR}*10000+${CPACK_PACKAGE_VERSION_MINOR}*100+${CPACK_PACKAGE_VERSION_PATCH}")
 
 # POLICIES
@@ -407,7 +438,7 @@ endif() #"${CMAKE_SYSTEM_NAME}"  MATCHES "Linux")
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 if (WITH_BINDINGS)
-    find_anyproject(Python VERSION 3.6 REQUIRED COMPONENTS Interpreter Development)
+    find_anyproject(Python3 REQUIRED COMPONENTS Interpreter Development)
     find_anyproject(SIP REQUIRED)
     find_anyproject(PyQt5 REQUIRED)
     set(PYQT_SIP_FLAGS ${PYQT5_SIP_FLAGS})
@@ -422,13 +453,13 @@ if (WITH_BINDINGS)
     add_subdirectory(python)
 
     if(NOT SUPPRESS_VERBOSE_OUTPUT)
-        message("-- Found Python executable: ${PYTHON_EXECUTABLE} (version ${PYTHON_VERSION})")
-        message("-- Python library: ${PYTHON_LIBRARIES}")
-        message("-- Python site-packages: ${PYTHON_SITEARCH}")
+        message("i Found Python executable: ${PYTHON_EXECUTABLE} (version ${PYTHON_VERSION})")
+        message("i Python library: ${PYTHON_LIBRARIES}")
+        message("i Python site-packages: ${PYTHON_SITEARCH}")
     endif()
 else()
     find_anyproject(Python3 REQUIRED COMPONENTS Interpreter)
-    message("Found python executable: ${PYTHON_EXECUTABLE} (version ${PYTHON_VERSION})")
+    message("i Found python executable: ${PYTHON_EXECUTABLE} (version ${PYTHON_VERSION})")
 endif()
 
 if (PYTHON3_FOUND)

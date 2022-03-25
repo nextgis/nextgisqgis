@@ -2262,6 +2262,46 @@ class QgsVectorFileWriterMetadataContainer
                              )
                            );
 
+      // SXF
+        datasetOptions.clear();
+        layerOptions.clear();
+
+        datasetOptions.insert( QStringLiteral("SXF_WRITE_RSC"), new QgsVectorFileWriter::BoolOption(
+                                QObject::tr( "Write correspondent RSC file. By default RSC file create."),
+                                true  // Default value
+                                ) );
+
+        datasetOptions.insert( QStringLiteral("SXF_MAP_NAME"), new QgsVectorFileWriter::StringOption(
+                                QObject::tr( "Write map name."),
+                                QStringLiteral("")
+                                ) );
+
+        datasetOptions.insert( QStringLiteral("SXF_SHEET_KEY"), new QgsVectorFileWriter::StringOption(
+                                QObject::tr( "Write sheet name."),
+                                QStringLiteral("")
+                                ) );
+
+        datasetOptions.insert( QStringLiteral("SXF_MAP_SCALE"), new QgsVectorFileWriter::IntOption(
+                                QObject::tr( "Write sheet scale."),
+                                1000000
+                                ) );
+
+        layerOptions.insert( QStringLiteral("SXF_NEW_BEHAVIOR"), new QgsVectorFileWriter::HiddenOption(
+                                QStringLiteral("YES")
+                            ) ); 
+
+        driverMetadata.insert( QStringLiteral( "SXF" ),
+                               QgsVectorFileWriter::MetaData(
+                                QStringLiteral( "Storage and eXchange Format" ),
+                                QObject::tr( "Storage and eXchange Format" ),
+                                QStringLiteral( "*.sxf" ),
+                                QStringLiteral( "sxf" ),
+                                datasetOptions,
+                                layerOptions,
+                                QStringLiteral( "UTF-8" )
+                                )
+                            );
+
     }
 
     QgsVectorFileWriterMetadataContainer( const QgsVectorFileWriterMetadataContainer &other ) = delete;

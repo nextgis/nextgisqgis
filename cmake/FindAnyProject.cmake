@@ -24,6 +24,16 @@ set(TARGET_LINK_LIB)
 set(WITHOPT ${WITHOPT} "")
 set(EXPORTS_PATHS)
 
+function(warn_message text)
+
+    string(ASCII 27 Esc)
+    set(BoldColour  "${Esc}[31m")
+    set(ColourReset "${Esc}[m")
+
+    message("! ${BoldColour}${text}${ColourReset}")
+
+endfunction()
+
 if(ANDROID)
     # Workaround for Android studio android.toolchain.cmake
     set(CMAKE_FIND_ROOT_PATH "${ANDROID_TOOLCHAIN_ROOT}/bin" "${ANDROID_TOOLCHAIN_ROOT}/${ANDROID_TOOLCHAIN_MACHINE_NAME}" "${ANDROID_SYSROOT}" "${CMAKE_INSTALL_PREFIX}" "${CMAKE_INSTALL_PREFIX}/share")
@@ -206,7 +216,7 @@ function(find_anyproject name)
         elseif(find_anyproject_REQUIRED)
             message(FATAL_ERROR "${name} is required in ${PROJECT_NAME}!")
         else()
-            message(WARNING "${name} not found and will be disabled in ${PROJECT_NAME}!")
+            warn_message("${name} not found and will be disabled in ${PROJECT_NAME}!")
         endif()
     endif()
 

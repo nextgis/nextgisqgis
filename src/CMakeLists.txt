@@ -19,7 +19,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
-
 include(prepare_parser)
 
 add_subdirectory(native) # native required for core
@@ -34,7 +33,7 @@ if (WITH_ANALYSIS)
 endif()
 
 if (WITH_GUI)
-  add_subdirectory(ui)
+#   add_subdirectory(ui) - not needed as AUTOUIC ON
   add_subdirectory(gui)
 endif()
 

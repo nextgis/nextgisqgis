@@ -13,8 +13,9 @@
  *                                                                         *
  ***************************************************************************/
 
-#include <nlohmann/json.hpp>
-using namespace nlohmann;
+// #include <nlohmann/json.hpp>
+// using namespace nlohmann;
+#include "qgsjsonutils.h"
 
 #include "qgslogger.h"
 #include "qgsoapiflandingpagerequest.h"
@@ -81,9 +82,17 @@ void QgsOapifLandingPageRequest::processReply()
     return;
   }
 
-  try
-  {
-    const json j = json::parse( utf8Text.toStdString() );
+    QString error;
+    const json j = QgsJsonUtils::parse( utf8Text.toStdString(), error );
+
+    if(!error.isEmpty())
+    {
+        mErrorCode = QgsBaseNetworkRequest::ApplicationLevelError;
+        mAppLevelError = ApplicationLevelError::JsonError;
+        mErrorMessage = errorMessageWithReason( tr( "Cannot decode JSON document: %1" ).arg( error ) );
+        emit gotResponse();
+        return;
+    }
 
     const auto links = QgsOAPIFJson::parseLinks( j );
     QStringList apiTypes;
@@ -124,15 +133,6 @@ void QgsOapifLandingPageRequest::processReply()
                         apiTypes );
     }
 #endif
-  }
-  catch ( const json::parse_error &ex )
-  {
-    mErrorCode = QgsBaseNetworkRequest::ApplicationLevelError;
-    mAppLevelError = ApplicationLevelError::JsonError;
-    mErrorMessage = errorMessageWithReason( tr( "Cannot decode JSON document: %1" ).arg( QString::fromStdString( ex.what() ) ) );
-    emit gotResponse();
-    return;
-  }
 
   // Strip off suffixes like /collections?f=json
   const auto posQuotationMark = mCollectionsUrl.indexOf( '?' );

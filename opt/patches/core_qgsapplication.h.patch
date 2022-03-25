@@ -1,5 +1,5 @@
 --- a/src/core/qgsapplication.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/qgsapplication.h	2022-03-07 23:14:46.000000000 +0300
++++ b/src/core/qgsapplication.h	2022-03-23 21:49:44.000000000 +0300
 @@ -37,7 +37,7 @@
  class QgsColorSchemeRegistry;
  class QgsPaintEffectRegistry;
@@ -20,7 +20,29 @@
  class QgsDataItemProviderRegistry;
  class QgsPluginLayerRegistry;
  class QgsClassificationMethodRegistry;
-@@ -772,13 +772,13 @@
+@@ -159,6 +159,9 @@
+     static const char *QGIS_ORGANIZATION_NAME;
+     static const char *QGIS_ORGANIZATION_DOMAIN;
+     static const char *QGIS_APPLICATION_NAME;
++    static const char *NGQGIS_ORGANIZATION_NAME;
++    static const char *NGQGIS_ORGANIZATION_DOMAIN;
++    static const char *NGQGIS_APPLICATION_NAME;
+ #ifndef SIP_RUN
+ 
+     /**
+@@ -581,9 +584,9 @@
+     static QString cfgIntDir() SIP_SKIP;
+ #endif
+     //! Returns path to the source directory. Valid only when running from build directory
+-    static QString buildSourcePath();
++    // static QString buildSourcePath();
+     //! Returns path to the build output directory. Valid only when running from build directory
+-    static QString buildOutputPath();
++    // static QString buildOutputPath();
+ 
+     /**
+      * Sets the GDAL_SKIP environment variable to include the specified driver
+@@ -772,13 +775,13 @@
       * Returns the application's GPS connection registry, used for managing GPS connections.
       * \since QGIS 3.0
       */
@@ -36,7 +58,7 @@
  
      /**
       * Returns the application's plugin layer registry, used for managing plugin layer types.
-@@ -914,7 +914,7 @@
+@@ -914,7 +917,7 @@
       * Returns registry of available external storage implementations.
       * \since QGIS 3.20
       */
@@ -45,7 +67,7 @@
  
      /**
       * Returns the registry of data repositories
-@@ -1097,8 +1097,8 @@
+@@ -1097,8 +1100,8 @@
        QgsLocalizedDataPathRegistry *mLocalizedDataPathRegistry = nullptr;
        QgsNumericFormatRegistry *mNumericFormatRegistry = nullptr;
        QgsFieldFormatterRegistry *mFieldFormatterRegistry = nullptr;
@@ -56,7 +78,7 @@
        QgsNetworkContentFetcherRegistry *mNetworkContentFetcherRegistry = nullptr;
        QgsScaleBarRendererRegistry *mScaleBarRendererRegistry = nullptr;
        QgsValidityCheckRegistry *mValidityCheckRegistry = nullptr;
-@@ -1109,7 +1109,7 @@
+@@ -1109,7 +1112,7 @@
        QgsProcessingRegistry *mProcessingRegistry = nullptr;
        QgsConnectionRegistry *mConnectionRegistry = nullptr;
        std::unique_ptr<QgsProjectStorageRegistry> mProjectStorageRegistry;
