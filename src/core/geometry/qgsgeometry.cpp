@@ -56,6 +56,8 @@ email                : morb at ozemail dot com dot au
 #include "qgscurve.h"
 #include "qgsreadwritelocker.h"
 
+#include "qgsjsonutils.h"
+
 struct QgsGeometryPrivate
 {
   QgsGeometryPrivate(): ref( 1 ) {}
@@ -1426,7 +1428,7 @@ QString QgsGeometry::asWkt( int precision ) const
 
 QString QgsGeometry::asJson( int precision ) const
 {
-  return QString::fromStdString( asJsonObject( precision ).Format(CPLJSONObject::PrettyFormat::Plain) );
+  return QgsJsonUtils::dump( asJsonObject( precision ) );
 }
 
 json QgsGeometry::asJsonObject( int precision ) const

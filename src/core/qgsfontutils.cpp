@@ -251,21 +251,21 @@ bool QgsFontUtils::loadStandardTestFonts( const QStringList &loadstyles )
     else
     {
       bool loaded = false;
-      if ( QgsApplication::isRunningFromBuildDir() )
-      {
-        // workaround for bugs with Qt 4.8.5 (other versions?) on Mac 10.9, where fonts
-        // from qrc resources load but fail to work and default font is substituted [LS]:
-        //   https://bugreports.qt.io/browse/QTBUG-30917
-        //   https://bugreports.qt.io/browse/QTBUG-32789
-        const QString fontPath( QgsApplication::buildSourcePath() + "/tests/testdata/font/" + fontpath );
-        const int fontID = QFontDatabase::addApplicationFont( fontPath );
-        loaded = ( fontID != -1 );
-        fontsLoaded = ( fontsLoaded || loaded );
-        QgsDebugMsgLevel( QStringLiteral( "Test font '%1 %2' %3 from filesystem [%4]" )
-                          .arg( fontFamily, fontstyle, loaded ? "loaded" : "FAILED to load", fontPath ), 2 );
-        QgsDebugMsgLevel( QStringLiteral( "font families in %1: %2" ).arg( fontID ).arg( QFontDatabase().applicationFontFamilies( fontID ).join( "," ) ), 2 );
-      }
-      else
+    //   if ( QgsApplication::isRunningFromBuildDir() )
+    //   {
+    //     // workaround for bugs with Qt 4.8.5 (other versions?) on Mac 10.9, where fonts
+    //     // from qrc resources load but fail to work and default font is substituted [LS]:
+    //     //   https://bugreports.qt.io/browse/QTBUG-30917
+    //     //   https://bugreports.qt.io/browse/QTBUG-32789
+    //     const QString fontPath( QgsApplication::buildSourcePath() + "/tests/testdata/font/" + fontpath );
+    //     const int fontID = QFontDatabase::addApplicationFont( fontPath );
+    //     loaded = ( fontID != -1 );
+    //     fontsLoaded = ( fontsLoaded || loaded );
+    //     QgsDebugMsgLevel( QStringLiteral( "Test font '%1 %2' %3 from filesystem [%4]" )
+    //                       .arg( fontFamily, fontstyle, loaded ? "loaded" : "FAILED to load", fontPath ), 2 );
+    //     QgsDebugMsgLevel( QStringLiteral( "font families in %1: %2" ).arg( fontID ).arg( QFontDatabase().applicationFontFamilies( fontID ).join( "," ) ), 2 );
+    //   }
+    //   else
       {
         QFile fontResource( ":/testdata/font/" + fontpath );
         if ( fontResource.open( QIODevice::ReadOnly ) )

@@ -38,7 +38,7 @@
 
 #include <climits>
 
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 
 // for htonl
 #ifdef Q_OS_WIN

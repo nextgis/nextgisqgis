@@ -28,7 +28,7 @@
 #include <QComboBox>
 #include "qgsgui.h"
 #include <gdal_version.h>
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 
 class TestQgsValueRelationWidgetWrapper : public QObject
 {

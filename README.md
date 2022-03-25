@@ -131,3 +131,12 @@ development and support for this software.
 2. Change poly2tri to cgal from gdal
 3. Change libzip to gdal vsizip
 4. ?
+
+python /Volumes/Data/work/projects/borsch/borsch/opt/tools.py organize --src /Volumes/Data/work/projects/borsch/original/QGIS-final-3_24_0 --dst_path /Volumes/Data/work/projects/desktop/qgis3
+
+python /Volumes/Data/work/projects/desktop/qgis3/scripts/create_patch_batch.py --src_dir /Volumes/Data/work/projects/borsch/original/QGIS-final-3_24_0 --dst_dir /Volumes/Data/work/projects/desktop/qgis3
+
+cmake --build . --config Release
+
+cmake -DOSX_FRAMEWORK=ON -DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 -DWITH_PROJ_EXTERNAL=ON -DWITH_GDAL_EXTERNAL=ON -DWITH_Qt5_EXTERNAL=ON -DWITH_GEOS_EXTERNAL=ON  -DWITH_Qca_EXTERNAL=ON -DWITH_QtKeychain_EXTERNAL=ON -DWITH_SpatialIndex_EXTERNAL=ON -DWITH_SQLite3_EXTERNAL=ON -DWITH_Spatialite_EXTERNAL=ON -DWITH_LIBZIP_EXTERNAL=ON -DWITH_EXPAT_EXTERNAL=ON -DWITH_Qwt_EXTERNAL=ON -DWITH_QScintilla_EXTERNAL=ON -DWITH_AUTH=OFF -DWITH_ANALYSIS=OFF -DWITH_DESKTOP=OFF -DWITH_3D=OFF -DWITH_QGIS_PROCESS=OFF -DWITH_BINDINGS=OFF ../../../desktop/qgis3
+

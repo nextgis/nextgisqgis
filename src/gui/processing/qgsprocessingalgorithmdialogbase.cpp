@@ -34,7 +34,7 @@
 #include <QFileDialog>
 #include <QMimeData>
 #include <QMenu>
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 
 
 ///@cond NOT_STABLE
@@ -207,7 +207,7 @@ QgsProcessingAlgorithmDialogBase::QgsProcessingAlgorithmDialogBase( QWidget *par
             return;
 
           const QVariantMap properties = alg->asMap( createProcessingParameters(), *context );
-          const QString json = QString::fromStdString( QgsJsonUtils::jsonFromVariant( properties ).dump( 2 ) );
+          const QString json = QString::fromStdString( QgsJsonUtils::jsonFromVariant( properties ).Format( CPLJSONObject::PrettyFormat::Pretty ) );
 
           QMimeData *m = new QMimeData();
           m->setText( json );

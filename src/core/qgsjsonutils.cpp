@@ -33,7 +33,7 @@
 #include <QTextCodec>
 // #include <nlohmann/json.hpp>
 
-static void AddjsonFromVariant( CPLJSONObject &obj, const std::string &name, const QVariant &val )
+static void AddjsonFromVariant( json &obj, const std::string &name, const QVariant &val )
 {
   if ( val.isNull() || ! val.isValid() )
   {
@@ -110,7 +110,7 @@ static void AddjsonFromVariant( CPLJSONObject &obj, const std::string &name, con
 //   return j;
 }
 
-static QVariant VariantFromJSON( const CPLJSONObject &obj )
+static QVariant VariantFromJSON( const json &obj )
 {
     QVariant v;
     if ( obj.GetType() == CPLJSONObject::Type::Array )
@@ -526,6 +526,19 @@ QVariant QgsJsonUtils::parseJson( const std::string &jsonString, QString &error 
     return VariantFromJSON(obj);
 }
 
+json QgsJsonUtils::parse( const std::string &jsonString, QString &error )
+{
+    CPLErrorReset();
+    CPLJSONDocument doc;
+    if(!doc.LoadMemory(jsonString))
+    {
+        error = QString::fromStdString(CPLGetLastErrorMsg());
+        return json();
+    }
+
+    return doc.GetRoot();
+}
+
 QVariant QgsJsonUtils::parseJson( const QString &jsonString )
 {
   return parseJson( jsonString.toStdString() );
@@ -549,4 +562,31 @@ json QgsJsonUtils::exportAttributesToJsonObject( const QgsFeature &feature, QgsV
     AddjsonFromVariant(attrs, fields.at( i ).name().toStdString(), val );
   }
   return attrs;
+}
+
+json QgsJsonUtils::jsonFromVariant( const QVariant &val )
+{
+    json out;
+    AddjsonFromVariant(out, "", val);
+    return out;
+}
+
+bool QgsJsonUtils::is_array(const json &obj)
+{
+    return obj.GetType() == CPLJSONObject::Type::Array;
+}
+
+bool QgsJsonUtils::is_object(const json &obj)
+{
+    return obj.GetType() == CPLJSONObject::Type::Object;
+}
+
+bool QgsJsonUtils::is_number_integer(const json &obj)
+{
+    return obj.GetType() == CPLJSONObject::Type::Integer || obj.GetType() == CPLJSONObject::Type::Long;
+}
+
+QString QgsJsonUtils::dump(const json &obj)
+{
+    return QString::fromStdString( obj.Format(CPLJSONObject::PrettyFormat::Plain) );
 }

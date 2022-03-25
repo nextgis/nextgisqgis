@@ -138,4 +138,4 @@ if os.path.exists(patches_path):
     for dirname, dirnames, filenames in os.walk(patches_path):
         for patch in filenames:
             color_print("Patch " + patch, False, 'LRED')
-            subprocess.call(['git', 'apply', '--ignore-whitespace', os.path.join(patches_path, patch)], cwd = "../")
+            subprocess.call(['git', 'apply', '--ignore-whitespace', '--whitespace=nowarn', os.path.join(patches_path, patch)], cwd = "../")
