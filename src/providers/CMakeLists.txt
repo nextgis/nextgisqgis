@@ -31,9 +31,12 @@ include_directories (
     # ${CMAKE_SOURCE_DIR}/src/core/raster
     # ${CMAKE_SOURCE_DIR}/src/core/symbology-ng
     ${CMAKE_SOURCE_DIR}/src/gui
+    ${CMAKE_SOURCE_DIR}/src/analysis/raster
     # ${CMAKE_SOURCE_DIR}/src/gui/auth
     # ${CMAKE_BINARY_DIR}/src/ui
     ${CMAKE_BINARY_DIR}/src/gui
+    ${CMAKE_BINARY_DIR}/src/gui/${NG_PREFIX}qgis_gui_autogen/include
+    ${CMAKE_BINARY_DIR}/src/analysis
 )
 
 set(PROV_PLUGINS
@@ -72,6 +75,7 @@ endif()
 if(POSTGRESQL_FOUND)
     set(PROV_PLUGINS ${PROV_PLUGINS}
         postgres
+        postgres/raster
     )
 endif()
 
@@ -114,33 +118,57 @@ macro(add_provider PLUGIN_NAME)
         # include_directories(../gdal)
     endif()
 
-    add_library(provider_${PLUGIN_NAME} MODULE ${PROV_${PLUGIN_NAME}_SOURCES} ${PROV_${PLUGIN_NAME}_HEADERS} ${PROV_${PLUGIN_NAME}_RCS}) # ${PROV_${PLUGIN_NAME}_MOC_SRCS} ${PROV_${PLUGIN_NAME}_RCC} ${PROV_${PLUGIN_NAME}_UI_H})
-
     if("${PLUGIN_NAME}" STREQUAL "postgres")
-        target_link_libraries(provider_${PLUGIN_NAME} PRIVATE ${POSTGRESQL_LIBRARIES})
+    #     set(PROV_${PLUGIN_NAME}_HEADERS ${PROV_${PLUGIN_NAME}_HEADERS}
+    #         ${CMAKE_SOURCE_DIR}/src/gui/auth/qgsauthsettingswidget.h
+    #     )
+        set(PROV_${PLUGIN_NAME}_SOURCES ${PROV_${PLUGIN_NAME}_SOURCES} 
+            ${CMAKE_CURRENT_SOURCE_DIR}/postgres/raster/qgspostgresrastertemporalsettingswidget.cpp
+        )
+        set(LIB_NAME provider_${PLUGIN_NAME})
+    elseif("${PLUGIN_NAME}" MATCHES "postgres/raster")
+        set(LIB_NAME "provider_postgres_raster")
+        set(PROV_${PLUGIN_NAME}_SOURCES ${PROV_${PLUGIN_NAME}_SOURCES} 
+            ${CMAKE_CURRENT_SOURCE_DIR}/postgres/qgspostgresconn.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/postgres/qgspostgresconnpool.cpp
+        )
+    else()
+        set(LIB_NAME provider_${PLUGIN_NAME})
+    endif()
+
+    # message("_SOURCES : ${PROV_${PLUGIN_NAME}_SOURCES}\n_HEADERS : ${PROV_${PLUGIN_NAME}_HEADERS}")
+    add_library(${LIB_NAME} MODULE ${PROV_${PLUGIN_NAME}_SOURCES} ${PROV_${PLUGIN_NAME}_HEADERS} ${PROV_${PLUGIN_NAME}_RCS}) # ${PROV_${PLUGIN_NAME}_MOC_SRCS} ${PROV_${PLUGIN_NAME}_RCC} ${PROV_${PLUGIN_NAME}_UI_H})
+
+    if("${PLUGIN_NAME}" MATCHES "postgres*")
+        target_link_libraries(${LIB_NAME} PRIVATE ${POSTGRESQL_LIBRARIES})
     endif()
 
     if("${PLUGIN_NAME}" STREQUAL "oracle" OR "${PLUGIN_NAME}" STREQUAL "mssql")
-        target_link_libraries(provider_${PLUGIN_NAME} PRIVATE Qt5::QtSql)
+        target_link_libraries(${LIB_NAME} PRIVATE ${QT_VERSION_BASE}::Sql)
     endif()
 
     if("${PLUGIN_NAME}" STREQUAL "virtual")
-        target_link_libraries(provider_${PLUGIN_NAME} PRIVATE ${QSCINTILLA_LIBRARIES})
+        target_link_libraries(${LIB_NAME} PRIVATE ${QSCINTILLA_LIBRARIES})
     endif()
 
-    # if("${PLUGIN_NAME}" STREQUAL "wms")
-    #     target_link_libraries(provider_${PLUGIN_NAME} PRIVATE Qt5::QtScript)
+    # if("${PLUGIN_NAME}" STREQUAL "virtualraster")
+    #     target_link_libraries(${LIB_NAME} PRIVATE ${NG_PREFIX}qgis_analysis)
     # endif()
 
-    target_link_libraries(provider_${PLUGIN_NAME} PRIVATE
+    # if("${PLUGIN_NAME}" STREQUAL "wms")
+    #     target_link_libraries(provider_${PLUGIN_NAME} PRIVATE ${QT_VERSION_BASE}::Script)
+    # endif()
+
+    target_link_libraries(${LIB_NAME} PRIVATE
         ${NG_PREFIX}qgis_core
-        ${NG_PREFIX}qgis_gui
+        ${NG_PREFIX}qgis_gui 
+        ${NG_PREFIX}qgis_analysis
     )
 
     # target_link_extlibraries(${PLUGIN_NAME}provider)
 
     if(OSX_FRAMEWORK)
-        set_target_properties(provider_${PLUGIN_NAME} PROPERTIES
+        set_target_properties(${LIB_NAME} PROPERTIES
             INSTALL_RPATH "@loader_path/../../../Frameworks/"
             SUFFIX ".so" # ".dylib" <- /src/app/qgspluginregistry.cpp:462
         )
@@ -148,7 +176,7 @@ macro(add_provider PLUGIN_NAME)
 
     # set_target_properties(provider_${PLUGIN_NAME} PROPERTIES CXX_STANDARD 11)
 
-    install(TARGETS provider_${PLUGIN_NAME}
+    install(TARGETS ${LIB_NAME}
         RUNTIME DESTINATION ${INSTALL_PLUGIN_DIR}
         LIBRARY DESTINATION ${INSTALL_PLUGIN_DIR}
     )

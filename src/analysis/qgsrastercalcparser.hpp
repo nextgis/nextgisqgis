@@ -42,7 +42,7 @@
 # define YYDEBUG 0
 #endif
 #if YYDEBUG
-extern int rasterdebug;
+extern int raster_debug;
 #endif
 
 /* Token kinds.  */
@@ -85,10 +85,10 @@ typedef union YYSTYPE YYSTYPE;
 #endif
 
 
-extern YYSTYPE rasterlval;
+extern YYSTYPE raster_lval;
 
 
-int rasterparse (void);
+int raster_parse (void);
 
 
 #endif /* !YY_RASTER_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_ANALYSIS_QGSRASTERCALCPARSER_HPP_INCLUDED  */
