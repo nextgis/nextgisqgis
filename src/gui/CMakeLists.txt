@@ -1426,7 +1426,7 @@ endif()
 
 set(LIB_NAME ${NG_PREFIX}qgis_gui)
 
-add_library(${LIB_NAME} SHARED ${QGIS_GUI_SRCS} ${QGIS_GUI_MOC_SRCS} ${QGIS_GUI_HDRS} ${QGIS_GUI_MOC_HDRS})
+add_library(${LIB_NAME} SHARED ${QGIS_GUI_SRCS} ${QGIS_GUI_HDRS})
 
 # require c++17
 target_compile_features(${LIB_NAME} PRIVATE cxx_std_17)
@@ -1563,9 +1563,11 @@ if(WIN32)
 endif()
 
 # install
+
 if(OSX_FRAMEWORK)
-    execute_process(
+    add_custom_command(TARGET ${LIB_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink ../../Applications/${QGIS_APP_NAME}.app/Contents/Frameworks/${LIB_NAME}.framework ${PROJECT_BINARY_DIR}/symlinks/${LIB_NAME}.framework
+        VERBATIM
     )
 endif()
 
@@ -1576,6 +1578,7 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
         ARCHIVE DESTINATION ${INSTALL_LIB_DIR} COMPONENT libraries
         FRAMEWORK DESTINATION ${INSTALL_LIB_DIR}
         PUBLIC_HEADER DESTINATION ${INSTALL_INC_DIR} COMPONENT headers
+        INCLUDES DESTINATION ${INSTALL_INC_DIR} COMPONENT headers
     )
 
     if(OSX_FRAMEWORK)
@@ -1584,5 +1587,5 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
 endif()
 
 if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
-    install(FILES ${QGIS_CORE_HDRS} ${QGIS_CORE_MOC_HDRS} DESTINATION ${INSTALL_INC_DIR})
+    install(FILES ${QGIS_GUI_HDRS} DESTINATION ${INSTALL_INC_DIR})
 endif()

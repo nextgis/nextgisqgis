@@ -65,13 +65,13 @@
 
 
 /* Substitute the variable and function names.  */
-#define yyparse         rasterparse
-#define yylex           rasterlex
-#define yyerror         rastererror
-#define yydebug         rasterdebug
-#define yynerrs         rasternerrs
-#define yylval          rasterlval
-#define yychar          rasterchar
+#define yyparse         raster_parse
+#define yylex           raster_lex
+#define yyerror         raster_error
+#define yydebug         raster_debug
+#define yynerrs         raster_nerrs
+#define yylval          raster_lval
+#define yychar          raster_char
 
 /* First part of user prologue.  */
 #line 19 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
