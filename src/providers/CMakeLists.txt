@@ -3,7 +3,7 @@
 # Purpose:  CMake build scripts
 # Author:   Dmitry Baryshnikov, dmitry.baryshnikov@nexgis.com
 ################################################################################
-# Copyright (C) 2017, NextGIS <info@nextgis.com>
+# Copyright (C) 2017-2022, NextGIS <info@nextgis.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -26,14 +26,8 @@
 
 include_directories (
     ${CMAKE_SOURCE_DIR}/src/core
-    # ${CMAKE_SOURCE_DIR}/src/core/auth
-    # ${CMAKE_SOURCE_DIR}/src/core/geometry
-    # ${CMAKE_SOURCE_DIR}/src/core/raster
-    # ${CMAKE_SOURCE_DIR}/src/core/symbology-ng
     ${CMAKE_SOURCE_DIR}/src/gui
     ${CMAKE_SOURCE_DIR}/src/analysis/raster
-    # ${CMAKE_SOURCE_DIR}/src/gui/auth
-    # ${CMAKE_BINARY_DIR}/src/ui
     ${CMAKE_BINARY_DIR}/src/gui
     ${CMAKE_BINARY_DIR}/src/gui/${NG_PREFIX}qgis_gui_autogen/include
     ${CMAKE_BINARY_DIR}/src/analysis
@@ -115,7 +109,6 @@ macro(add_provider PLUGIN_NAME)
         set(PROV_${PLUGIN_NAME}_SOURCES ${PROV_${PLUGIN_NAME}_SOURCES}
             ${CMAKE_SOURCE_DIR}/src/core/providers/gdal/qgsgdalproviderbase.cpp
         )
-        # include_directories(../gdal)
     endif()
 
     if("${PLUGIN_NAME}" STREQUAL "postgres")
@@ -155,10 +148,6 @@ macro(add_provider PLUGIN_NAME)
     #     target_link_libraries(${LIB_NAME} PRIVATE ${NG_PREFIX}qgis_analysis)
     # endif()
 
-    # if("${PLUGIN_NAME}" STREQUAL "wms")
-    #     target_link_libraries(provider_${PLUGIN_NAME} PRIVATE ${QT_VERSION_BASE}::Script)
-    # endif()
-
     target_link_libraries(${LIB_NAME} PRIVATE
         ${NG_PREFIX}qgis_core
         ${NG_PREFIX}qgis_gui 
@@ -173,8 +162,6 @@ macro(add_provider PLUGIN_NAME)
             SUFFIX ".so" # ".dylib" <- /src/app/qgspluginregistry.cpp:462
         )
     endif()
-
-    # set_target_properties(provider_${PLUGIN_NAME} PROPERTIES CXX_STANDARD 11)
 
     install(TARGETS ${LIB_NAME}
         RUNTIME DESTINATION ${INSTALL_PLUGIN_DIR}

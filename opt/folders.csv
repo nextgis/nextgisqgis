@@ -467,7 +467,7 @@ src/auth/maptiler_hmacsha256/core,src/auth/maptiler_hmacsha256/core,,"cpp,h"
 src/auth/maptiler_hmacsha256/gui,src/auth/maptiler_hmacsha256/gui,,"cpp,h,ui"
 src/auth/oauth2,src/auth/oauth2,,"cpp,h"
 src/auth/oauth2/core,src/auth/oauth2/core,,"cpp,h"
-src/auth/oauth2/gui,src/auth/oauth2/gui,,"cpp,h"
+src/auth/oauth2/gui,src/auth/oauth2/gui,,"cpp,h,ui"
 src/auth/oauth2/oauth2_config_samples,src/auth/oauth2/oauth2_config_samples,skip,*
 src/auth/oauth2/resources,src/auth/oauth2/resources,,"qrc,html"
 src/auth/oauth2/resources/svg,src/auth/oauth2/resources/svg,,svg
