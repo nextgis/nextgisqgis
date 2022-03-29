@@ -183,6 +183,7 @@ find_anyproject(Spatialite REQUIRED)
 find_anyproject(LIBZIP REQUIRED)
 # find_anyproject(EXIV REQUIRED)
 find_anyproject(EXPAT REQUIRED)
+find_anyproject(ZLIB REQUIRED)
 
 # if (APPLE)
 #     # Libtasn1 is for DER-encoded PKI ASN.1 parsing/extracting workarounds
@@ -259,6 +260,24 @@ endif()
 # set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
 
 find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
+
+if(WIN32)
+    get_target_property(RCC_PATH Qt5::lrelease IMPORTED_LOCATION)
+    get_filename_component(QT_BIN_DIR ${RCC_PATH} PATH)
+    
+    set(QT5_PLUGINS_DIR "${QT_BIN_DIR}/../plugins")
+    set(QT5_TRANSLATION_DIR "${QT_BIN_DIR}/../translation")
+    
+    # Copy zlib1.dll to make  moc.exe, rcc.exe, etc. working
+    if(${ZLIB_FOUND})
+        get_target_property(ZLIB_IMPORTED_LOCATION ${ZLIB_LIBRARIES} IMPORTED_LOCATION_RELEASE)
+        if(EXISTS ${ZLIB_IMPORTED_LOCATION})
+            file(COPY ${ZLIB_IMPORTED_LOCATION} DESTINATION ${QT_BIN_DIR})
+        endif()
+    endif()
+endif()
+
+configure_file(${CMAKE_SOURCE_DIR}/cmake/qt.conf.cmake.in ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qt.conf IMMEDIATE @ONLY)
 
 ############################################
 if (ENABLE_TESTS)

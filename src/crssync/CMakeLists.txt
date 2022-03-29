@@ -41,16 +41,25 @@ target_link_libraries(crssync
 
 if(OSX_FRAMEWORK)
     set(DST_PATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+else()
+    set(DST_PATH "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 endif()
 
 if(OSX_FRAMEWORK)
     set(PROJ_LIB ${DST_PATH}/proj.framework/Resources/proj)
+    
+    add_custom_target(synccrsdb
+        COMMENT "Running crssync"
+        COMMAND PROJ_LIB=${PROJ_LIB} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/crssync
+        DEPENDS crssync)
+else()
+    add_custom_target(synccrsdb
+        COMMENT "Running crssync"
+        COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/crssync
+        DEPENDS crssync)
 endif()
 
-add_custom_target(synccrsdb
-    COMMENT "Running crssync"
-    COMMAND PROJ_LIB=${PROJ_LIB} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/crssync
-    DEPENDS crssync)
+
 
 # Copy dependencies to bin dir
 set(RUN_DEPENDENCIES
@@ -79,6 +88,18 @@ set(RUN_DEPENDENCIES
     lib_szip
     lib_uriparser
     lib_z
+    lib_gdal
+    lib_qca
+    lib_qt5
+    lib_qtkeychain
+    lib_spatialindex
+    lib_expat
+    lib_zip
+    lib_geos
+    lib_sqlite
+    lib_iconv
+    lib_harfbuzz
+    lib_freetype
 )
 
 # if(WIN32)

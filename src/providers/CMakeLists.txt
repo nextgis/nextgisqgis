@@ -73,9 +73,8 @@ if(OCI_FOUND)
 endif()
 
 if(WIN32)
-    set(PROV_PLUGINS ${PROV_PLUGINS}
-        mssql
-    )
+    info_msg("Add provider mssql")
+    add_subdirectory(mssql)
 endif()
 
 macro(add_provider PLUGIN_NAME)
@@ -112,7 +111,7 @@ macro(add_provider PLUGIN_NAME)
     endif()
 
     if("${PLUGIN_NAME}" STREQUAL "oracle" OR "${PLUGIN_NAME}" STREQUAL "mssql")
-        target_link_libraries(${PLUGIN_NAME}provider PRIVATE Qt5::QtSql)
+        target_link_libraries(${PLUGIN_NAME}provider PRIVATE Qt5::Sql)
     endif()
 
     # if("${PLUGIN_NAME}" STREQUAL "virtual")

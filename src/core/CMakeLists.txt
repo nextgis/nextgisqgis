@@ -239,8 +239,8 @@ set(QGIS_CORE_SRCS
     network/qgsnetworkcontentfetchertask.cpp
     network/qgsnetworkreply.cpp
     network/qgsnetworkreplyparser.cpp
-    # network/qgsnewsfeedmodel.cpp
-    # network/qgsnewsfeedparser.cpp
+    network/qgsnewsfeedmodel.cpp
+    network/qgsnewsfeedparser.cpp
     network/qgshttpheaders.cpp
 
     processing/qgsprocessing.cpp
@@ -2073,11 +2073,11 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
     set_target_properties(${LIB_NAME} PROPERTIES VERSION ${QGIS_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
 
     # make sure to create qgsversion.h before compiling
-    #add_dependencies(${LIB_NAME} version)
+    add_dependencies(${LIB_NAME} version)
 
     # because of htonl
     if (WIN32)
-      target_link_libraries(${LIB_NAME} wsock32 setupapi dbghelp version)
+      target_link_libraries(${LIB_NAME} wsock32 setupapi dbghelp)
     endif (WIN32)
 
     if (APPLE)
