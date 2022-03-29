@@ -42,7 +42,7 @@ target_link_libraries(crssync
 if(OSX_FRAMEWORK)
     set(DST_PATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 else()
-    set(DST_PATH "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+    set(DST_PATH "${BINARY_DIR}")
 endif()
 
 if(OSX_FRAMEWORK)
@@ -50,13 +50,13 @@ if(OSX_FRAMEWORK)
     
     add_custom_target(synccrsdb
         COMMENT "Running crssync"
-        COMMAND PROJ_LIB=${PROJ_LIB} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/crssync
+        COMMAND PROJ_LIB=${PROJ_LIB} ${BINARY_DIR}/crssync
         DEPENDS crssync)
 else()
     add_custom_target(synccrsdb
-        COMMENT "Running crssync"
-        COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/crssync
-        DEPENDS crssync)
+    COMMENT "Running crssync"
+    COMMAND ${BINARY_DIR}/crssync
+    DEPENDS crssync)
 endif()
 
 
@@ -102,19 +102,7 @@ set(RUN_DEPENDENCIES
     lib_freetype
 )
 
-# if(WIN32)
-#     set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} lib_z)
-#     set(DST_PATH "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE}")
-
-#     add_custom_command(TARGET proj_errno_string_test
-#         POST_BUILD
-#         COMMAND ${CMAKE_COMMAND} -DDST_PATH=${DST_PATH} -DSRC_PATH="${PROJECT_BINARY_DIR}" -P ${PROJECT_SOURCE_DIR}/cmake/test_dependency_win.cmake
-#         COMMENT "Copy compiled dll files"
-#     )
-# else
-
 get_compiler_version(COMPILER)
-
 
 foreach(RUN_DEPENDENCY ${RUN_DEPENDENCIES})
     add_custom_command(TARGET crssync

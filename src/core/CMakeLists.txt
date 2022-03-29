@@ -1536,8 +1536,8 @@ set(QGIS_CORE_HDRS
     network/qgsnetworkdiskcache.h
     network/qgsnetworkreply.h
     network/qgsnetworkreplyparser.h
-    # network/qgsnewsfeedmodel.h
-    # network/qgsnewsfeedparser.h
+    network/qgsnewsfeedmodel.h
+    network/qgsnewsfeedparser.h
     network/qgshttpheaders.h
   
     numericformats/qgsbasicnumericformat.h
@@ -1940,7 +1940,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
     set(LIB_NAME ${NG_PREFIX}qgis_core)
     SET(TARGETS ${TARGETS} ${LIB_NAME} PARENT_SCOPE)
 
-    add_library(${LIB_NAME} SHARED ${QGIS_CORE_SRCS} ${QGIS_CORE_HDRS} ${QGIS_CORE_PRIVATE_HDRS})
+    add_library(${LIB_NAME} SHARED ${QGIS_CORE_SRCS} ${QGIS_CORE_HDRS} ${QGIS_CORE_PRIVATE_HDRS} ${IMAGE_RCCS})
 
     # require c++17
     target_compile_features(${LIB_NAME} PRIVATE cxx_std_17)

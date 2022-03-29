@@ -74,7 +74,6 @@
         <file>north_arrows/default.svg</file>
         <file>north_arrows/gpsarrow.svg</file>
         <file>north_arrows/gpsarrow2.svg</file>
-        <file>splash/splash.png</file>
         <file>composer/missing_image.png</file>
         <file>composer/missing_image.svg</file>
         <file>themes/default/checks/SliverOrGap.svg</file>
@@ -178,8 +177,6 @@
         <file>themes/default/copyright_label.svg</file>
         <file>themes/default/dbmanager.svg</file>
         <file>themes/default/extents.svg</file>
-        <file>themes/default/gpsicons/barchart.svg</file>
-        <file>themes/default/gpsicons/polarchart.svg</file>
         <file>themes/default/grass_location.svg</file>
         <file>themes/default/grass_mapset.svg</file>
         <file>themes/default/grass_mapset_open.svg</file>
@@ -880,14 +877,6 @@
         <file>themes/default/mIndicatorTemporal.svg</file>
         <file>themes/default/mIndicatorTimeFromProject.svg</file>
         <file>themes/default/mIndicatorOffline.svg</file>
-        <file>themes/default/temporal_navigation/back.svg</file>
-        <file>themes/default/temporal_navigation/forward.svg</file>
-        <file>themes/default/temporal_navigation/next.svg</file>
-        <file>themes/default/temporal_navigation/stop.svg</file>
-        <file>themes/default/temporal_navigation/previous.svg</file>
-        <file>themes/default/temporal_navigation/rewindToStart.svg</file>
-        <file>themes/default/temporal_navigation/skipToEnd.svg</file>
-        <file>themes/default/temporal_navigation/pause.svg</file>
         <file>themes/default/mIconIterate.svg</file>
         <file>themes/default/mIconNetworkLogger.svg</file>
         <file>themes/default/mActionAddMarker.svg</file>
