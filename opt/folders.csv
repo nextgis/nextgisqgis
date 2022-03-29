@@ -69,9 +69,9 @@ external/untwine/untwine,external/untwine/untwine,skip,*
 external/untwine/untwine/src,external/untwine/untwine/src,skip,*
 external/untwine/untwine/src/api,external/untwine/untwine/src/api,skip,*
 external/wintoast,external/wintoast,skip,*
-external/wintoast/src,external/wintoast/src,skip,*
-i18n,i18n,,"ts"
-images,images,,"qrc"
+external/wintoast/src,external/wintoast/src,,"h,cpp"
+i18n,i18n,,ts
+images,images,,qrc
 images/composer,images/composer,,svg
 images/flags,images/flags,,svg
 images/icons,images/icons,,"svg,png"
@@ -309,9 +309,9 @@ python/server/auto_additions,python/server/auto_additions,skip,*
 python/server/auto_generated,python/server/auto_generated,skip,*
 python/testing,python/testing,skip,*
 resources,resources,,"xml,sql,gpl,ini,xsd,db,2to3migration.txt,asn"
-resources/3d,resources/3d,,"*"
-resources/3d/textures,resources/3d/textures,,"*"
-resources/context_help,resources/context_help,,"*"
+resources/3d,resources/3d,,*
+resources/3d/textures,resources/3d/textures,,*
+resources/context_help,resources/context_help,,*
 resources/cpt-city-qgis-min,resources/cpt-city-qgis-min,skip,*
 resources/cpt-city-qgis-min/bhw,resources/cpt-city-qgis-min/bhw,skip,*
 resources/cpt-city-qgis-min/bhw/bhw1,resources/cpt-city-qgis-min/bhw/bhw1,skip,*
@@ -403,11 +403,11 @@ resources/metadata-ISO,resources/metadata-ISO,skip,*
 resources/opencl_programs,resources/opencl_programs,skip,*
 resources/palettes,resources/palettes,skip,*
 resources/server,resources/server,skip,*
-resources/themes,resources/themes,,"*"
-resources/themes/Blend of Gray,resources/themes/Blend of Gray,,"*"
-resources/themes/Blend of Gray/icons,resources/themes/Blend of Gray/icons,,"*"
-resources/themes/Night Mapping,resources/themes/Night Mapping,,"*"
-resources/themes/Night Mapping/icons,resources/themes/Night Mapping/icons,,"*"
+resources/themes,resources/themes,,*
+resources/themes/Blend of Gray,resources/themes/Blend of Gray,,*
+resources/themes/Blend of Gray/icons,resources/themes/Blend of Gray/icons,,*
+resources/themes/Night Mapping,resources/themes/Night Mapping,,*
+resources/themes/Night Mapping/icons,resources/themes/Night Mapping/icons,,*
 rpm,rpm,skip,
 scripts,scripts,,process_function_template.py
 src/3d,src/3d,skip,"h,cpp,qrc"
