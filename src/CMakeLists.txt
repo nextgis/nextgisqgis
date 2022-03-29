@@ -42,13 +42,8 @@ if (NOT PREPARE_ONLY)
    add_subdirectory(providers)
 endif()
 
-if (PREPARE_ONLY)
-    add_subdirectory(crssync)
-endif()
-
-if (ENABLE_TESTS)
-    add_subdirectory(test)
-endif()
+add_subdirectory(crssync)
+add_subdirectory(test)
 
 if (WITH_DESKTOP)
   add_subdirectory(app)
