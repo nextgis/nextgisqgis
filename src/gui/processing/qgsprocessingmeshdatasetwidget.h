@@ -54,7 +54,7 @@ class GUI_EXPORT QgsProcessingMeshDatasetGroupsWidget : public QWidget
     const QgsProcessingParameterMeshDatasetGroups *mParam = nullptr;
     QVariantList mValue;
 
-    QPointer<QLineEdit> mLineEdit = nullptr;
+    QPointer<QLineEdit> mLineEdit; // = QPointer<QLineEdit>(); // = nullptr;
     QPointer<QToolButton> mToolButton = nullptr;
     QPointer<QAction> mActionCurrentActiveDatasetGroups = nullptr;
     QPointer<QAction> mActionAvailableDatasetGroups = nullptr;

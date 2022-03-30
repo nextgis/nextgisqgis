@@ -23,8 +23,9 @@
 #include "qgsrectangle.h"
 #include "qgslayermetadata.h"
 
-#include <nlohmann/json.hpp>
-using namespace nlohmann;
+// #include <nlohmann/json.hpp>
+// using namespace nlohmann;
+#include "qgsjsonutils.h"
 #include <vector>
 
 //! Describes a collection

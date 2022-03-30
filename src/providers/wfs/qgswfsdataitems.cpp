@@ -29,8 +29,8 @@
 #include "qgswfsdatasourceuri.h"
 #include "qgswfsprovider.h"
 #include "qgssettings.h"
-#include "qgsgeonodeconnection.h"
-#include "qgsgeonoderequest.h"
+// #include "qgsgeonodeconnection.h"
+// #include "qgsgeonoderequest.h"
 #include "qgsstyle.h"
 
 #ifdef HAVE_GUI
@@ -75,59 +75,59 @@ QList<QMenu *> QgsWfsLayerItem::menus( QWidget *parent )
 
 void QgsWfsLayerItem::copyStyle()
 {
-  std::unique_ptr< QgsGeoNodeConnection > connection;
-  const QStringList connections = QgsGeoNodeConnectionUtils::connectionList();
-  for ( const QString &connName : connections )
-  {
-    connection.reset( new QgsGeoNodeConnection( connName ) );
-    if ( mBaseUri.contains( connection->uri().param( QStringLiteral( "url" ) ) ) )
-      break;
-    else
-      connection.reset( nullptr );
-  }
+//   std::unique_ptr< QgsGeoNodeConnection > connection;
+//   const QStringList connections = QgsGeoNodeConnectionUtils::connectionList();
+//   for ( const QString &connName : connections )
+//   {
+//     connection.reset( new QgsGeoNodeConnection( connName ) );
+//     if ( mBaseUri.contains( connection->uri().param( QStringLiteral( "url" ) ) ) )
+//       break;
+//     else
+//       connection.reset( nullptr );
+//   }
 
-  if ( !connection )
-  {
-#ifdef QGISDEBUG
-    const QString errorMsg( QStringLiteral( "Cannot get style for layer %1" ).arg( this->name() ) );
-    QgsDebugMsg( QStringLiteral( " Cannot get style: " ) + errorMsg );
-#endif
-#if 0
-    // TODO: how to emit message from provider (which does not know about QgisApp)
-    QgisApp::instance()->messageBar()->pushMessage( tr( "Cannot copy style" ),
-        errorMsg,
-        Qgis::MessageLevel::Critical, messageTimeout() );
-#endif
-    return;
-  }
+//   if ( !connection )
+//   {
+// #ifdef QGISDEBUG
+//     const QString errorMsg( QStringLiteral( "Cannot get style for layer %1" ).arg( this->name() ) );
+//     QgsDebugMsg( QStringLiteral( " Cannot get style: " ) + errorMsg );
+// #endif
+// #if 0
+//     // TODO: how to emit message from provider (which does not know about QgisApp)
+//     QgisApp::instance()->messageBar()->pushMessage( tr( "Cannot copy style" ),
+//         errorMsg,
+//         Qgis::MessageLevel::Critical, messageTimeout() );
+// #endif
+//     return;
+//   }
 
-  QString url( connection->uri().encodedUri() );
-  QgsGeoNodeRequest geoNodeRequest( url.replace( QLatin1String( "url=" ), QString() ), true );
-  const QgsGeoNodeStyle style = geoNodeRequest.fetchDefaultStyleBlocking( this->name() );
-  if ( style.name.isEmpty() )
-  {
-#ifdef QGISDEBUG
-    const QString errorMsg( QStringLiteral( "Cannot get style for layer %1" ).arg( this->name() ) );
-    QgsDebugMsg( " Cannot get style: " + errorMsg );
-#endif
-#if 0
-    // TODO: how to emit message from provider (which does not know about QgisApp)
-    QgisApp::instance()->messageBar()->pushMessage( tr( "Cannot copy style" ),
-        errorMsg,
-        Qgis::MessageLevel::Critical, messageTimeout() );
-#endif
-    return;
-  }
+//   QString url( connection->uri().encodedUri() );
+//   QgsGeoNodeRequest geoNodeRequest( url.replace( QLatin1String( "url=" ), QString() ), true );
+//   const QgsGeoNodeStyle style = geoNodeRequest.fetchDefaultStyleBlocking( this->name() );
+//   if ( style.name.isEmpty() )
+//   {
+// #ifdef QGISDEBUG
+//     const QString errorMsg( QStringLiteral( "Cannot get style for layer %1" ).arg( this->name() ) );
+//     QgsDebugMsg( " Cannot get style: " + errorMsg );
+// #endif
+// #if 0
+//     // TODO: how to emit message from provider (which does not know about QgisApp)
+//     QgisApp::instance()->messageBar()->pushMessage( tr( "Cannot copy style" ),
+//         errorMsg,
+//         Qgis::MessageLevel::Critical, messageTimeout() );
+// #endif
+//     return;
+//   }
 
-  QClipboard *clipboard = QApplication::clipboard();
+//   QClipboard *clipboard = QApplication::clipboard();
 
-  QMimeData *mdata = new QMimeData();
-  mdata->setData( QGSCLIPBOARD_STYLE_MIME, style.body.toByteArray() );
-  mdata->setText( style.body.toString() );
-  // Copies data in text form as well, so the XML can be pasted into a text editor
-  if ( clipboard->supportsSelection() )
-    clipboard->setMimeData( mdata, QClipboard::Selection );
-  clipboard->setMimeData( mdata, QClipboard::Clipboard );
+//   QMimeData *mdata = new QMimeData();
+//   mdata->setData( QGSCLIPBOARD_STYLE_MIME, style.body.toByteArray() );
+//   mdata->setText( style.body.toString() );
+//   // Copies data in text form as well, so the XML can be pasted into a text editor
+//   if ( clipboard->supportsSelection() )
+//     clipboard->setMimeData( mdata, QClipboard::Selection );
+//   clipboard->setMimeData( mdata, QClipboard::Clipboard );
   // Enables the paste menu element
   // actionPasteStyle->setEnabled( true );
 }
@@ -304,23 +304,23 @@ QgsDataItem *QgsWfsDataItemProvider::createDataItem( const QString &path, QgsDat
       return new QgsWfsConnectionItem( parentItem, QStringLiteral( "WFS" ), path, connection.uri().uri( false ) );
     }
   }
-  else if ( path.startsWith( QLatin1String( "geonode:/" ) ) )
-  {
-    const QString connectionName = path.split( '/' ).last();
-    if ( QgsGeoNodeConnectionUtils::connectionList().contains( connectionName ) )
-    {
-      const QgsGeoNodeConnection connection( connectionName );
+//   else if ( path.startsWith( QLatin1String( "geonode:/" ) ) )
+//   {
+//     const QString connectionName = path.split( '/' ).last();
+//     if ( QgsGeoNodeConnectionUtils::connectionList().contains( connectionName ) )
+//     {
+//       const QgsGeoNodeConnection connection( connectionName );
 
-      const QString url = connection.uri().param( QStringLiteral( "url" ) );
-      QgsGeoNodeRequest geonodeRequest( url, true );
+//       const QString url = connection.uri().param( QStringLiteral( "url" ) );
+//       QgsGeoNodeRequest geonodeRequest( url, true );
 
-      const QgsWFSDataSourceURI sourceUri( geonodeRequest.fetchServiceUrlsBlocking( QStringLiteral( "WFS" ) )[0] );
+//       const QgsWFSDataSourceURI sourceUri( geonodeRequest.fetchServiceUrlsBlocking( QStringLiteral( "WFS" ) )[0] );
 
-      QgsDebugMsgLevel( QStringLiteral( "WFS full uri: '%1'." ).arg( QString( sourceUri.uri() ) ), 4 );
+//       QgsDebugMsgLevel( QStringLiteral( "WFS full uri: '%1'." ).arg( QString( sourceUri.uri() ) ), 4 );
 
-      return new QgsWfsConnectionItem( parentItem, QStringLiteral( "WFS" ), path, sourceUri.uri() );
-    }
-  }
+//       return new QgsWfsConnectionItem( parentItem, QStringLiteral( "WFS" ), path, sourceUri.uri() );
+//     }
+//   }
 
   return nullptr;
 }
@@ -328,34 +328,34 @@ QgsDataItem *QgsWfsDataItemProvider::createDataItem( const QString &path, QgsDat
 QVector<QgsDataItem *> QgsWfsDataItemProvider::createDataItems( const QString &path, QgsDataItem *parentItem )
 {
   QVector<QgsDataItem *> items;
-  if ( path.startsWith( QLatin1String( "geonode:/" ) ) )
-  {
-    const QString connectionName = path.split( '/' ).last();
-    if ( QgsGeoNodeConnectionUtils::connectionList().contains( connectionName ) )
-    {
-      const QgsGeoNodeConnection connection( connectionName );
+//   if ( path.startsWith( QLatin1String( "geonode:/" ) ) )
+//   {
+//     const QString connectionName = path.split( '/' ).last();
+//     if ( QgsGeoNodeConnectionUtils::connectionList().contains( connectionName ) )
+//     {
+//       const QgsGeoNodeConnection connection( connectionName );
 
-      const QString url = connection.uri().param( QStringLiteral( "url" ) );
-      QgsGeoNodeRequest geonodeRequest( url, true );
+//       const QString url = connection.uri().param( QStringLiteral( "url" ) );
+//       QgsGeoNodeRequest geonodeRequest( url, true );
 
-      const QStringList encodedUris( geonodeRequest.fetchServiceUrlsBlocking( QStringLiteral( "WFS" ) ) );
+//       const QStringList encodedUris( geonodeRequest.fetchServiceUrlsBlocking( QStringLiteral( "WFS" ) ) );
 
-      if ( !encodedUris.isEmpty() )
-      {
-        for ( const QString &encodedUri : encodedUris )
-        {
-          const QgsWFSDataSourceURI uri( encodedUri );
-          QgsDebugMsgLevel( QStringLiteral( "WFS full uri: '%1'." ).arg( uri.uri() ), 4 );
+//       if ( !encodedUris.isEmpty() )
+//       {
+//         for ( const QString &encodedUri : encodedUris )
+//         {
+//           const QgsWFSDataSourceURI uri( encodedUri );
+//           QgsDebugMsgLevel( QStringLiteral( "WFS full uri: '%1'." ).arg( uri.uri() ), 4 );
 
-          QgsDataItem *item = new QgsWfsConnectionItem( parentItem, QStringLiteral( "WFS" ), path, uri.uri() );
-          if ( item )
-          {
-            items.append( item );
-          }
-        }
-      }
-    }
-  }
+//           QgsDataItem *item = new QgsWfsConnectionItem( parentItem, QStringLiteral( "WFS" ), path, uri.uri() );
+//           if ( item )
+//           {
+//             items.append( item );
+//           }
+//         }
+//       }
+//     }
+//   }
 
   return items;
 }

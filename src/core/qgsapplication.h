@@ -159,6 +159,9 @@ class CORE_EXPORT QgsApplication : public QApplication
     static const char *QGIS_ORGANIZATION_NAME;
     static const char *QGIS_ORGANIZATION_DOMAIN;
     static const char *QGIS_APPLICATION_NAME;
+    static const char *NGQGIS_ORGANIZATION_NAME;
+    static const char *NGQGIS_ORGANIZATION_DOMAIN;
+    static const char *NGQGIS_APPLICATION_NAME;
 #ifndef SIP_RUN
 
     /**
@@ -581,9 +584,9 @@ class CORE_EXPORT QgsApplication : public QApplication
     static QString cfgIntDir() SIP_SKIP;
 #endif
     //! Returns path to the source directory. Valid only when running from build directory
-    static QString buildSourcePath();
+    // static QString buildSourcePath();
     //! Returns path to the build output directory. Valid only when running from build directory
-    static QString buildOutputPath();
+    // static QString buildOutputPath();
 
     /**
      * Sets the GDAL_SKIP environment variable to include the specified driver

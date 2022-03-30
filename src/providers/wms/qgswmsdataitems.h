@@ -20,7 +20,7 @@
 #include "qgsdataitemprovider.h"
 #include "qgsdatasourceuri.h"
 #include "qgswmsprovider.h"
-#include "qgsgeonodeconnection.h"
+// #include "qgsgeonodeconnection.h"
 #include "qgsconnectionsitem.h"
 
 class QgsWmsCapabilitiesDownload;

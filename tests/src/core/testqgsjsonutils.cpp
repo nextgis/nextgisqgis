@@ -16,7 +16,7 @@
 #include "qgstest.h"
 
 #include <qgsjsonutils.h>
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 
 #include "qgsvectorlayer.h"
 #include "qgsfeature.h"

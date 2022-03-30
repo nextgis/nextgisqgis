@@ -63,7 +63,7 @@
 #include "qgsprovidersourcewidgetproviderregistry.h"
 #include "qgsrelationwidgetregistry.h"
 #include "qgssettingsregistrygui.h"
-#include "qgshistoryproviderregistry.h"
+// #include "qgshistoryproviderregistry.h"
 
 QgsGui *QgsGui::instance()
 {
@@ -166,10 +166,10 @@ QgsProviderGuiRegistry *QgsGui::providerGuiRegistry()
   return instance()->mProviderGuiRegistry;
 }
 
-QgsHistoryProviderRegistry *QgsGui::historyProviderRegistry()
-{
-  return instance()->mHistoryProviderRegistry;
-}
+// QgsHistoryProviderRegistry *QgsGui::historyProviderRegistry()
+// {
+//   return instance()->mHistoryProviderRegistry;
+// }
 
 void QgsGui::enableAutoGeometryRestore( QWidget *widget, const QString &key )
 {
@@ -213,7 +213,7 @@ QgsGui::~QgsGui()
   delete mEditorWidgetRegistry;
   delete mMapLayerActionRegistry;
   delete mSourceSelectProviderRegistry;
-  delete mHistoryProviderRegistry;
+//   delete mHistoryProviderRegistry;
   delete mShortcutsManager;
   delete mNative;
   delete mNumericFormatGuiRegistry;
@@ -275,8 +275,8 @@ QgsGui::QgsGui()
   mCodeEditorColorSchemeRegistry = new QgsCodeEditorColorSchemeRegistry();
 
   // provider gui registry initialize QgsProviderRegistry too
-  mHistoryProviderRegistry = new QgsHistoryProviderRegistry();
-  mHistoryProviderRegistry->addDefaultProviders();
+//   mHistoryProviderRegistry = new QgsHistoryProviderRegistry();
+//   mHistoryProviderRegistry->addDefaultProviders();
 
   mProviderGuiRegistry = new QgsProviderGuiRegistry( QgsApplication::pluginPath() );
   mProjectStorageGuiRegistry = new QgsProjectStorageGuiRegistry();

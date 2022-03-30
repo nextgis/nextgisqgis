@@ -359,7 +359,7 @@ class CORE_EXPORT QgsJsonUtils
      * \note Not available in Python bindings
      * \since QGIS 3.8
      */
-    // static json jsonFromVariant( const QVariant &v ) SIP_SKIP;
+    static json jsonFromVariant( const QVariant &v ) SIP_SKIP;
 
     /**
      * Converts JSON \a jsonString to a QVariant, in case of parsing error an invalid QVariant is returned and an
@@ -385,6 +385,12 @@ class CORE_EXPORT QgsJsonUtils
      * \since QGIS 3.8
      */
     static QVariant parseJson( const QString &jsonString ) SIP_SKIP;
+
+    static bool is_array(const json &obj) SIP_SKIP;
+    static bool is_object(const json &obj) SIP_SKIP;
+    static bool is_number_integer(const json &obj) SIP_SKIP;
+    static QString dump(const json &obj) SIP_SKIP;
+    static json parse( const std::string &jsonString, QString &error ) SIP_SKIP;
 
 };
 
