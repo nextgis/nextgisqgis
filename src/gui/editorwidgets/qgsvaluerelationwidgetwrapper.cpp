@@ -36,8 +36,8 @@
 #include <QCompleter>
 #include <QTimer>
 
-#include <nlohmann/json.hpp>
-using namespace nlohmann;
+// #include <nlohmann/json.hpp>
+// using namespace nlohmann;
 
 
 QgsValueRelationWidgetWrapper::QgsValueRelationWidgetWrapper( QgsVectorLayer *layer, int fieldIdx, QWidget *editor, QWidget *parent )

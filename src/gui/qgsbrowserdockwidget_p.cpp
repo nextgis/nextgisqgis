@@ -44,7 +44,7 @@
 #include "qgsnative.h"
 #include "qgsmaptoolpan.h"
 #include "qgsvectorlayercache.h"
-#include "qgsvectortilelayer.h"
+// #include "qgsvectortilelayer.h"
 #include "qgsattributetablemodel.h"
 #include "qgsattributetablefiltermodel.h"
 #include "qgsapplication.h"
@@ -213,12 +213,12 @@ void QgsBrowserLayerProperties::setItem( QgsDataItem *item )
       break;
     }
 
-    case QgsMapLayerType::VectorTileLayer:
-    {
-      QgsDebugMsgLevel( QStringLiteral( "creating vector tile layer" ), 2 );
-      mLayer = std::make_unique< QgsVectorTileLayer >( layerItem->uri(), layerItem->name() );
-      break;
-    }
+    // case QgsMapLayerType::VectorTileLayer:
+    // {
+    //   QgsDebugMsgLevel( QStringLiteral( "creating vector tile layer" ), 2 );
+    //   mLayer = std::make_unique< QgsVectorTileLayer >( layerItem->uri(), layerItem->name() );
+    //   break;
+    // }
 
     case QgsMapLayerType::PointCloudLayer:
     {

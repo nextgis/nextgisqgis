@@ -26,6 +26,8 @@ email                : marco.hugentobler at sourcepole dot com
 #include <limits>
 #include <QTransform>
 
+#include "qgsjsonutils.h"
+
 QgsAbstractGeometry::QgsAbstractGeometry( const QgsAbstractGeometry &geom )
 {
   mWkbType = geom.mWkbType;
@@ -190,7 +192,7 @@ QString QgsAbstractGeometry::wktTypeStr() const
 
 QString QgsAbstractGeometry::asJson( int precision )
 {
-  return QString::fromStdString( asJsonObject( precision ).Format(CPLJSONObject::PrettyFormat::Plain) );
+  return QgsJsonUtils::dump( asJsonObject( precision ) );
 }
 
 json QgsAbstractGeometry::asJsonObject( int precision ) const

@@ -3,7 +3,7 @@
 # Purpose:  CMake build scripts
 # Author:   Dmitry Baryshnikov, dmitry.baryshnikov@nexgis.com
 ################################################################################
-# Copyright (C) 2017, NextGIS <info@nextgis.com>
+# Copyright (C) 2017-2022, NextGIS <info@nextgis.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -26,21 +26,28 @@
 
 include_directories (
     ${CMAKE_SOURCE_DIR}/src/core
-    # ${CMAKE_SOURCE_DIR}/src/core/auth
-    # ${CMAKE_SOURCE_DIR}/src/core/geometry
-    # ${CMAKE_SOURCE_DIR}/src/core/raster
-    # ${CMAKE_SOURCE_DIR}/src/core/symbology-ng
     ${CMAKE_SOURCE_DIR}/src/gui
-    # ${CMAKE_SOURCE_DIR}/src/gui/auth
-    # ${CMAKE_BINARY_DIR}/src/ui
+    ${CMAKE_SOURCE_DIR}/src/analysis/raster
+    ${CMAKE_BINARY_DIR}/src/gui
+    ${CMAKE_BINARY_DIR}/src/gui/${NG_PREFIX}qgis_gui_autogen/include
+    ${CMAKE_BINARY_DIR}/src/analysis
 )
 
 set(PROV_PLUGINS
     # arcgisrest
-    gdal
-    ogr
-    memory
+    # db2
+    # geonode
+    # grass
+    # hana
+    # mdal
+    # pdal
 )
+
+if(WITH_ANALYSIS)
+    set(PROV_PLUGINS ${PROV_PLUGINS}
+        virtualraster
+)
+endif()
 
 if(WITH_GUI)
     set(PROV_PLUGINS ${PROV_PLUGINS}
@@ -49,7 +56,6 @@ if(WITH_GUI)
         wms
         wcs
         virtual
-        ows
         gpx
     )
 endif()
@@ -63,6 +69,7 @@ endif()
 if(POSTGRESQL_FOUND)
     set(PROV_PLUGINS ${PROV_PLUGINS}
         postgres
+        postgres/raster
     )
 endif()
 
@@ -81,7 +88,7 @@ macro(add_provider PLUGIN_NAME)
     include_directories (${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME})
     file(GLOB PROV_${PLUGIN_NAME}_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.h")
     file(GLOB PROV_${PLUGIN_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.cpp")
-    file(GLOB PROV_${PLUGIN_NAME}_UIS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.ui")
+    # file(GLOB PROV_${PLUGIN_NAME}_UIS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.ui")
     file(GLOB PROV_${PLUGIN_NAME}_RCS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.qrc")
 
     # if(NOT PREPARE_ONLY)
@@ -97,48 +104,65 @@ macro(add_provider PLUGIN_NAME)
 
     # endif()
 
-    # if("${PLUGIN_NAME}" STREQUAL "wcs")
-    #     set(PROV_${PLUGIN_NAME}_SOURCES ${PROV_${PLUGIN_NAME}_SOURCES}
-    #         ${CMAKE_CURRENT_SOURCE_DIR}/gdal/qgsgdalproviderbase.cpp
-    #     )
-    #     include_directories(../gdal)
-    # endif()
-
-    add_library(${PLUGIN_NAME}provider MODULE ${PROV_${PLUGIN_NAME}_SOURCES} ${PROV_${PLUGIN_NAME}_HEADERS} ${PROV_${PLUGIN_NAME}_MOC_SRCS}) # ${PROV_${PLUGIN_NAME}_RCC} ${PROV_${PLUGIN_NAME}_UI_H})
+    if("${PLUGIN_NAME}" STREQUAL "wcs")
+        set(PROV_${PLUGIN_NAME}_SOURCES ${PROV_${PLUGIN_NAME}_SOURCES}
+            ${CMAKE_SOURCE_DIR}/src/core/providers/gdal/qgsgdalproviderbase.cpp
+        )
+    endif()
 
     if("${PLUGIN_NAME}" STREQUAL "postgres")
-        target_link_libraries(${PLUGIN_NAME}provider PRIVATE ${POSTGRESQL_LIBRARIES})
+    #     set(PROV_${PLUGIN_NAME}_HEADERS ${PROV_${PLUGIN_NAME}_HEADERS}
+    #         ${CMAKE_SOURCE_DIR}/src/gui/auth/qgsauthsettingswidget.h
+    #     )
+        set(PROV_${PLUGIN_NAME}_SOURCES ${PROV_${PLUGIN_NAME}_SOURCES} 
+            ${CMAKE_CURRENT_SOURCE_DIR}/postgres/raster/qgspostgresrastertemporalsettingswidget.cpp
+        )
+        set(LIB_NAME provider_${PLUGIN_NAME})
+    elseif("${PLUGIN_NAME}" MATCHES "postgres/raster")
+        set(LIB_NAME "provider_postgres_raster")
+        set(PROV_${PLUGIN_NAME}_SOURCES ${PROV_${PLUGIN_NAME}_SOURCES} 
+            ${CMAKE_CURRENT_SOURCE_DIR}/postgres/qgspostgresconn.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/postgres/qgspostgresconnpool.cpp
+        )
+    else()
+        set(LIB_NAME provider_${PLUGIN_NAME})
+    endif()
+
+    # message("_SOURCES : ${PROV_${PLUGIN_NAME}_SOURCES}\n_HEADERS : ${PROV_${PLUGIN_NAME}_HEADERS}")
+    add_library(${LIB_NAME} MODULE ${PROV_${PLUGIN_NAME}_SOURCES} ${PROV_${PLUGIN_NAME}_HEADERS} ${PROV_${PLUGIN_NAME}_RCS}) # ${PROV_${PLUGIN_NAME}_MOC_SRCS} ${PROV_${PLUGIN_NAME}_RCC} ${PROV_${PLUGIN_NAME}_UI_H})
+
+    if("${PLUGIN_NAME}" MATCHES "postgres*")
+        target_link_libraries(${LIB_NAME} PRIVATE ${POSTGRESQL_LIBRARIES})
     endif()
 
     if("${PLUGIN_NAME}" STREQUAL "oracle" OR "${PLUGIN_NAME}" STREQUAL "mssql")
         target_link_libraries(${PLUGIN_NAME}provider PRIVATE Qt5::Sql)
     endif()
 
-    # if("${PLUGIN_NAME}" STREQUAL "virtual")
-    #     target_link_libraries(${PLUGIN_NAME}provider PRIVATE ${QSCINTILLA_LIBRARIES})
+    if("${PLUGIN_NAME}" STREQUAL "virtual")
+        target_link_libraries(${LIB_NAME} PRIVATE ${QSCINTILLA_LIBRARIES})
+    endif()
+
+    # if("${PLUGIN_NAME}" STREQUAL "virtualraster")
+    #     target_link_libraries(${LIB_NAME} PRIVATE ${NG_PREFIX}qgis_analysis)
     # endif()
 
-    # if("${PLUGIN_NAME}" STREQUAL "wms")
-    #     target_link_libraries(${PLUGIN_NAME}provider PRIVATE Qt5::QtScript)
-    # endif()
-
-    target_link_libraries(${PLUGIN_NAME}provider PRIVATE
+    target_link_libraries(${LIB_NAME} PRIVATE
         ${NG_PREFIX}qgis_core
-        # ${NG_PREFIX}qgis_gui
+        ${NG_PREFIX}qgis_gui 
+        ${NG_PREFIX}qgis_analysis
     )
 
     # target_link_extlibraries(${PLUGIN_NAME}provider)
 
     if(OSX_FRAMEWORK)
-        set_target_properties(${PLUGIN_NAME}provider PROPERTIES
+        set_target_properties(${LIB_NAME} PROPERTIES
             INSTALL_RPATH "@loader_path/../../../Frameworks/"
             SUFFIX ".so" # ".dylib" <- /src/app/qgspluginregistry.cpp:462
         )
     endif()
 
-    # set_target_properties(${PLUGIN_NAME}provider PROPERTIES CXX_STANDARD 11)
-
-    install(TARGETS ${PLUGIN_NAME}provider
+    install(TARGETS ${LIB_NAME}
         RUNTIME DESTINATION ${INSTALL_PLUGIN_DIR}
         LIBRARY DESTINATION ${INSTALL_PLUGIN_DIR}
     )

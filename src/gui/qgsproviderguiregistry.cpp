@@ -25,7 +25,7 @@
 #include "qgslogger.h"
 #include "qgsgdalguiprovider.h"
 #include "qgsogrguiprovider.h"
-#include "qgsvectortileproviderguimetadata.h"
+// #include "qgsvectortileproviderguimetadata.h"
 #include "qgspointcloudproviderguimetadata.h"
 #include "qgsmaplayerconfigwidgetfactory.h"
 
@@ -84,8 +84,8 @@ void QgsProviderGuiRegistry::loadStaticProviders( )
   QgsProviderGuiMetadata *ogr = new QgsOgrGuiProviderMetadata();
   mProviders[ ogr->key() ] = ogr;
 
-  QgsProviderGuiMetadata *vt = new QgsVectorTileProviderGuiMetadata();
-  mProviders[ vt->key() ] = vt;
+//   QgsProviderGuiMetadata *vt = new QgsVectorTileProviderGuiMetadata();
+//   mProviders[ vt->key() ] = vt;
 
 #ifdef HAVE_EPT
   QgsProviderGuiMetadata *ept = new QgsEptProviderGuiMetadata();

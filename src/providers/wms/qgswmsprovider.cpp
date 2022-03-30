@@ -37,7 +37,7 @@
 #include "qgsrectangle.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgsmapsettings.h"
-#include "qgsmbtiles.h"
+// #include "qgsmbtiles.h"
 #include "qgsmessageoutput.h"
 #include "qgsmessagelog.h"
 #include "qgsnetworkaccessmanager.h"
@@ -128,7 +128,7 @@ QgsWmsProvider::QgsWmsProvider( QString const &uri, const ProviderOptions &optio
     return;
 
   std::unique_ptr< QgsScopedRuntimeProfile > profile;
-
+/*
   if ( mSettings.mIsMBTiles )
   {
     if ( QgsApplication::profiler()->groupIsActive( QStringLiteral( "projectload" ) ) )
@@ -141,7 +141,8 @@ QgsWmsProvider::QgsWmsProvider( QString const &uri, const ProviderOptions &optio
       return;
     }
   }
-  else if ( mSettings.mXyz )
+  else */
+  if ( mSettings.mXyz )
   {
     if ( QgsApplication::profiler()->groupIsActive( QStringLiteral( "projectload" ) ) )
       profile = std::make_unique< QgsScopedRuntimeProfile >( tr( "Setup tile capabilities" ), QStringLiteral( "projectload" ) );
@@ -818,7 +819,7 @@ QImage *QgsWmsProvider::draw( QgsRectangle const &viewExtent, int pixelWidth, in
     int col0, col1, row0, row1;
     tm->viewExtentIntersection( viewExtent, tml, col0, row0, col1, row1 );
 
-#ifdef QGISDEBUG
+/*#ifdef QGISDEBUG
     int n = ( col1 - col0 + 1 ) * ( row1 - row0 + 1 );
     QgsDebugMsgLevel( QStringLiteral( "tile number: %1x%2 = %3" ).arg( col1 - col0 + 1 ).arg( row1 - row0 + 1 ).arg( n ), 3 );
     if ( n > 256 && !mSettings.mIsMBTiles )
@@ -826,7 +827,7 @@ QImage *QgsWmsProvider::draw( QgsRectangle const &viewExtent, int pixelWidth, in
       emit statusChanged( QStringLiteral( "current view would need %1 tiles. tile request per draw limited to 256." ).arg( n ) );
       return image;
     }
-#endif
+#endif*/
 
     TilePositions tiles;
     for ( int row = row0; row <= row1; row++ )
@@ -860,12 +861,12 @@ QImage *QgsWmsProvider::draw( QgsRectangle const &viewExtent, int pixelWidth, in
     QList<TileImage> tileImages;  // in the correct resolution
     QList<QRectF> missing;  // rectangles (in map coords) of missing tiles for this view
 
-    std::unique_ptr<QgsMbTiles> mbtilesReader;
-    if ( mSettings.mIsMBTiles )
-    {
-      mbtilesReader.reset( new QgsMbTiles( QUrl( mSettings.mBaseUrl ).path() ) );
-      mbtilesReader->open();
-    }
+    // std::unique_ptr<QgsMbTiles> mbtilesReader;
+    // if ( mSettings.mIsMBTiles )
+    // {
+    //   mbtilesReader.reset( new QgsMbTiles( QUrl( mSettings.mBaseUrl ).path() ) );
+    //   mbtilesReader->open();
+    // }
 
     QElapsedTimer t;
     t.start();
@@ -875,16 +876,16 @@ QImage *QgsWmsProvider::draw( QgsRectangle const &viewExtent, int pixelWidth, in
     {
       QImage localImage;
 
-      if ( mbtilesReader && !QgsTileCache::tile( r.url, localImage ) )
-      {
-        QUrlQuery query( r.url );
-        QImage img = mbtilesReader->tileDataAsImage( query.queryItemValue( "z" ).toInt(),
-                     query.queryItemValue( "x" ).toInt(),
-                     query.queryItemValue( "y" ).toInt() );
-        if ( img.isNull() )
-          continue;
-        QgsTileCache::insertTile( r.url, img );
-      }
+    //   if ( mbtilesReader && !QgsTileCache::tile( r.url, localImage ) )
+    //   {
+    //     QUrlQuery query( r.url );
+    //     QImage img = mbtilesReader->tileDataAsImage( query.queryItemValue( "z" ).toInt(),
+    //                  query.queryItemValue( "x" ).toInt(),
+    //                  query.queryItemValue( "y" ).toInt() );
+    //     if ( img.isNull() )
+    //       continue;
+    //     QgsTileCache::insertTile( r.url, img );
+    //   }
 
       if ( QgsTileCache::tile( r.url, localImage ) )
       {
@@ -1602,52 +1603,52 @@ void QgsWmsProvider::setupXyzCapabilities( const QString &uri, const QgsRectangl
 
 bool QgsWmsProvider::setupMBTilesCapabilities( const QString &uri )
 {
-  // if it is MBTiles source, let's prepare the reader to get some metadata
-  QgsMbTiles mbtilesReader( QUrl( mSettings.mBaseUrl ).path() );
-  if ( !mbtilesReader.open() )
+//   // if it is MBTiles source, let's prepare the reader to get some metadata
+//   QgsMbTiles mbtilesReader( QUrl( mSettings.mBaseUrl ).path() );
+//   if ( !mbtilesReader.open() )
     return false;
 
-  // We expect something like "mbtiles:///path/to/my/file.mbtiles" as the URL for tiles in MBTiles specs.
-  // Here we just add extra x,y,z query items as an implementation detail (it uses TMS tiling scheme - that's why {-y})
-  mSettings.mBaseUrl += "?x={x}&y={-y}&z={z}";
+//   // We expect something like "mbtiles:///path/to/my/file.mbtiles" as the URL for tiles in MBTiles specs.
+//   // Here we just add extra x,y,z query items as an implementation detail (it uses TMS tiling scheme - that's why {-y})
+//   mSettings.mBaseUrl += "?x={x}&y={-y}&z={z}";
 
-  QgsRectangle sourceExtent;
-  QgsRectangle sourceExtentWgs84 = mbtilesReader.extent();
-  if ( !sourceExtentWgs84.isNull() )
-  {
-    QgsPointXY customTopLeft, customBottomRight;
-    QgsCoordinateTransform ct( QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:4326" ) ), QgsCoordinateReferenceSystem( mSettings.mCrsId ),
-                               transformContext() );
-    try
-    {
-      customTopLeft = ct.transform( QgsPointXY( sourceExtentWgs84.xMinimum(), sourceExtentWgs84.yMaximum() ) );
-      customBottomRight = ct.transform( QgsPointXY( sourceExtentWgs84.xMaximum(), sourceExtentWgs84.yMinimum() ) );
-    }
-    catch ( const QgsCsException & )
-    {
-      QgsDebugMsg( QStringLiteral( "Failed to reproject extent from MBTiles metadata" ) );
-      return false;
-    }
-    sourceExtent = QgsRectangle( customTopLeft.x(), customBottomRight.y(), customBottomRight.x(), customTopLeft.y() );
-  }
+//   QgsRectangle sourceExtent;
+//   QgsRectangle sourceExtentWgs84 = mbtilesReader.extent();
+//   if ( !sourceExtentWgs84.isNull() )
+//   {
+//     QgsPointXY customTopLeft, customBottomRight;
+//     QgsCoordinateTransform ct( QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:4326" ) ), QgsCoordinateReferenceSystem( mSettings.mCrsId ),
+//                                transformContext() );
+//     try
+//     {
+//       customTopLeft = ct.transform( QgsPointXY( sourceExtentWgs84.xMinimum(), sourceExtentWgs84.yMaximum() ) );
+//       customBottomRight = ct.transform( QgsPointXY( sourceExtentWgs84.xMaximum(), sourceExtentWgs84.yMinimum() ) );
+//     }
+//     catch ( const QgsCsException & )
+//     {
+//       QgsDebugMsg( QStringLiteral( "Failed to reproject extent from MBTiles metadata" ) );
+//       return false;
+//     }
+//     sourceExtent = QgsRectangle( customTopLeft.x(), customBottomRight.y(), customBottomRight.x(), customTopLeft.y() );
+//   }
 
-  // minzoom/maxzoom SHOULD be in MBTiles (since spec v1.3) - but does not have to be there...
-  int sourceMinZoom = -1, sourceMaxZoom = -1;
-  QString sourceMinZoomStr = mbtilesReader.metadataValue( "minzoom" );
-  QString sourceMaxZoomStr = mbtilesReader.metadataValue( "maxzoom" );
-  if ( !sourceMinZoomStr.isEmpty() && !sourceMaxZoomStr.isEmpty() )
-  {
-    sourceMinZoom = sourceMinZoomStr.toInt();
-    sourceMaxZoom = sourceMaxZoomStr.toInt();
-  }
+//   // minzoom/maxzoom SHOULD be in MBTiles (since spec v1.3) - but does not have to be there...
+//   int sourceMinZoom = -1, sourceMaxZoom = -1;
+//   QString sourceMinZoomStr = mbtilesReader.metadataValue( "minzoom" );
+//   QString sourceMaxZoomStr = mbtilesReader.metadataValue( "maxzoom" );
+//   if ( !sourceMinZoomStr.isEmpty() && !sourceMaxZoomStr.isEmpty() )
+//   {
+//     sourceMinZoom = sourceMinZoomStr.toInt();
+//     sourceMaxZoom = sourceMaxZoomStr.toInt();
+//   }
 
-  // Assuming tiles with resolution of 256x256 pixels at 96 DPI.
-  // This can be overridden by "tilePixelRatio" in URI. Unfortunately
-  // MBTiles spec does not say anything about resolutions...
-  double sourceTilePixelRatio = 1;
+//   // Assuming tiles with resolution of 256x256 pixels at 96 DPI.
+//   // This can be overridden by "tilePixelRatio" in URI. Unfortunately
+//   // MBTiles spec does not say anything about resolutions...
+//   double sourceTilePixelRatio = 1;
 
-  setupXyzCapabilities( uri, sourceExtent, sourceMinZoom, sourceMaxZoom, sourceTilePixelRatio );
-  return true;
+//   setupXyzCapabilities( uri, sourceExtent, sourceMinZoom, sourceMaxZoom, sourceTilePixelRatio );
+//   return true;
 }
 
 

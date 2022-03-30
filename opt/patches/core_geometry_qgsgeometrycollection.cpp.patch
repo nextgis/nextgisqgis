@@ -1,5 +1,5 @@
 --- a/src/core/geometry/qgsgeometrycollection.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/geometry/qgsgeometrycollection.cpp	2022-03-09 00:14:17.000000000 +0300
++++ b/src/core/geometry/qgsgeometrycollection.cpp	2022-03-21 09:56:36.000000000 +0300
 @@ -29,7 +29,7 @@
  #include "qgsgeos.h"
  #include "qgsfeedback.h"

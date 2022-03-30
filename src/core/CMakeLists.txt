@@ -541,8 +541,8 @@ set(QGIS_CORE_SRCS
     qgstestutils.cpp
     qgsziputils.cpp
 
-#   browser/qgsbrowsermodel.cpp
-#   browser/qgsbrowserproxymodel.cpp
+  browser/qgsbrowsermodel.cpp
+  browser/qgsbrowserproxymodel.cpp
   browser/qgsconnectionsitem.cpp
   browser/qgsdatabaseschemaitem.cpp
   browser/qgsdatacollectionitem.cpp
@@ -1210,8 +1210,8 @@ set(QGIS_CORE_HDRS
     auth/qgsauthmethodmetadata.h
     auth/qgsauthmethodregistry.h
 
-    # browser/qgsbrowsermodel.h
-    # browser/qgsbrowserproxymodel.h
+    browser/qgsbrowsermodel.h
+    browser/qgsbrowserproxymodel.h
     browser/qgsconnectionsitem.h
     browser/qgsdatabaseschemaitem.h
     browser/qgsdatacollectionitem.h
@@ -1973,8 +1973,6 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
     endif()
   
     target_include_directories(${LIB_NAME} PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_BINARY_DIR}
         3d
         annotations
         auth
@@ -2029,8 +2027,11 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
         # ${CMAKE_SOURCE_DIR}/external/nmea
         ${CMAKE_SOURCE_DIR}/external/rtree/include
         ${CMAKE_SOURCE_DIR}/external/meshOptimizer
+
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_BINARY_DIR}
     )
-    
+   
     # if (WITH_EPT)
     #     target_include_directories(qgis_core PUBLIC
     #     ${CMAKE_SOURCE_DIR}/src/core/providers/ept)
@@ -2078,10 +2079,10 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
     # because of htonl
     if (WIN32)
       target_link_libraries(${LIB_NAME} wsock32 setupapi dbghelp)
-    endif (WIN32)
+    endif ()
 
     if (APPLE)
-      target_link_libraries(${LIB_NAME} ${LIBTASN1_LIBRARY} ${NG_PREFIX}qgis_native)
+      target_link_libraries(${LIB_NAME} ${LIBTASN1_LIBRARY})
     endif ()
 
     if (ADD_CLAZY_CHECKS)
@@ -2089,14 +2090,14 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
     endif (ADD_CLAZY_CHECKS)
 
     target_link_libraries(${LIB_NAME}
-      Qt5::Core
-      Qt5::Gui
-      Qt5::Xml
-      Qt5::Widgets
-      Qt5::Svg
-      Qt5::Network
-      Qt5::Sql
-      Qt5::Concurrent
+      ${QT_VERSION_BASE}::Core
+      ${QT_VERSION_BASE}::Gui
+      ${QT_VERSION_BASE}::Xml
+      ${QT_VERSION_BASE}::Widgets
+      ${QT_VERSION_BASE}::Svg
+      ${QT_VERSION_BASE}::Network
+      ${QT_VERSION_BASE}::Sql
+      ${QT_VERSION_BASE}::Concurrent
       ${OPTIONAL_QTWEBKIT}
       ${QCA_LIBRARY}
       ${QTKEYCHAIN_LIBRARY}
@@ -2111,7 +2112,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
     #   ${Protobuf_LITE_LIBRARY}
     #   ${ZLIB_LIBRARIES}
     #   ${EXIV2_LIBRARY}
-      Qt5::PrintSupport
+      ${QT_VERSION_BASE}::PrintSupport 
+      ${NG_PREFIX}qgis_native
     )
 
     if (WITH_EPT)
@@ -2119,7 +2121,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
     endif()
     
     if (WITH_WEBKIT)
-       target_link_libraries(${LIB_NAME} Qt5::WebKit)
+       target_link_libraries(${LIB_NAME} ${QT_VERSION_BASE}::WebKit)
     endif(WITH_WEBKIT)
 
     if (WITH_PDAL)
@@ -2203,6 +2205,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
             ARCHIVE DESTINATION ${INSTALL_LIB_DIR} COMPONENT libraries
             FRAMEWORK DESTINATION ${INSTALL_LIB_DIR}
             PUBLIC_HEADER DESTINATION ${INSTALL_INC_DIR} COMPONENT headers
+            INCLUDES DESTINATION ${INSTALL_INC_DIR} COMPONENT headers
         )
 
         if(OSX_FRAMEWORK)
@@ -2211,7 +2214,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
     endif()
 
     if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
-        install(FILES ${QGIS_CORE_HDRS} ${QGIS_CORE_MOC_HDRS} DESTINATION ${INSTALL_INC_DIR})
+        install(FILES ${QGIS_CORE_HDRS} DESTINATION ${INSTALL_INC_DIR})
     endif()
     
 # endif(PREPARE_ONLY)

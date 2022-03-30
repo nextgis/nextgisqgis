@@ -19,8 +19,8 @@
 #include "qgsdatasourceuri.h"
 #include "qgsowsconnection.h"
 
-#include "qgsgeonodeconnection.h"
-#include "qgsgeonoderequest.h"
+// #include "qgsgeonodeconnection.h"
+// #include "qgsgeonoderequest.h"
 #include "qgssettings.h"
 
 #ifdef HAVE_GUI
@@ -263,6 +263,7 @@ QgsDataItem *QgsWcsDataItemProvider::createDataItem( const QString &path, QgsDat
 QVector<QgsDataItem *> QgsWcsDataItemProvider::createDataItems( const QString &path, QgsDataItem *parentItem )
 {
   QVector<QgsDataItem *> items;
+  /*
   if ( path.startsWith( QLatin1String( "geonode:/" ) ) )
   {
     QString connectionName = path.split( '/' ).last();
@@ -302,6 +303,6 @@ QVector<QgsDataItem *> QgsWcsDataItemProvider::createDataItems( const QString &p
       }
     }
   }
-
+  */
   return items;
 }

@@ -24,7 +24,7 @@
 #include <QDesktopServices>
 #include <QApplication>
 #include <QClipboard>
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 
 //
 // QgsNetworkLoggerNode

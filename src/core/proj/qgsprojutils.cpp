@@ -18,6 +18,7 @@
 #include "qgis.h"
 #include "qgscoordinatetransform.h"
 #include "qgsexception.h"
+#include "qgsapplication.h"
 #include <QString>
 #include <QSet>
 #include <QRegularExpression>
@@ -408,26 +409,31 @@ QDate QgsProjUtils::ignfDatabaseDate()
 
 QStringList QgsProjUtils::searchPaths()
 {
-  const QString path( proj_info().searchpath );
-  QStringList paths;
-#ifdef Q_OS_WIN
-  paths = path.split( ';' );
-#else
-  paths = path.split( ':' );
-#endif
+//   const QString path( proj_info().searchpath );
+//   QStringList paths;
+// #ifdef Q_OS_WIN
+//   paths = path.split( ';' );
+// #else
+//   paths = path.split( ':' );
+// #endif
 
-  QSet<QString> existing;
-  // thin out duplicates from paths -- see https://github.com/OSGeo/proj.4/pull/1498
+//   QSet<QString> existing;
+//   // thin out duplicates from paths -- see https://github.com/OSGeo/proj.4/pull/1498
   QStringList res;
-  res.reserve( paths.count() );
-  for ( const QString &p : std::as_const( paths ) )
-  {
-    if ( existing.contains( p ) )
-      continue;
+#ifdef Q_OS_MACX
+    res << QgsApplication::prefixPath() + QStringLiteral("/Library/Frameworks/proj.framework/Resources/proj");
+#else
+    res << QgsApplication::prefixPath() + QStringLiteral("/usr/share/proj");
+#endif // Q_OS_MACX
+//   res.reserve( paths.count() );
+//   for ( const QString &p : std::as_const( paths ) )
+//   {
+//     if ( existing.contains( p ) )
+//       continue;
 
-    existing.insert( p );
-    res << p;
-  }
+//     existing.insert( p );
+//     res << p;
+//   }
   return res;
 }
 

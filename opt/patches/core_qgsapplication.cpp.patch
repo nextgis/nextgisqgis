@@ -1,5 +1,5 @@
 --- a/src/core/qgsapplication.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/qgsapplication.cpp	2022-03-07 23:14:46.000000000 +0300
++++ b/src/core/qgsapplication.cpp	2022-03-23 21:52:46.000000000 +0300
 @@ -41,7 +41,7 @@
  #include "qgscolorschemeregistry.h"
  #include "qgspainteffectregistry.h"
@@ -24,7 +24,77 @@
  #include "processing/qgsprocessingregistry.h"
  #include "processing/models/qgsprocessingmodelchildparametersource.h"
  #include "processing/models/qgsprocessingmodelchilddependency.h"
-@@ -286,7 +286,7 @@
+@@ -145,6 +145,9 @@
+ const char *QgsApplication::QGIS_ORGANIZATION_NAME = "QGIS";
+ const char *QgsApplication::QGIS_ORGANIZATION_DOMAIN = "qgis.org";
+ const char *QgsApplication::QGIS_APPLICATION_NAME = "QGIS3";
++const char *QgsApplication::NGQGIS_ORGANIZATION_NAME = VENDOR;
++const char *QgsApplication::NGQGIS_ORGANIZATION_DOMAIN = VENDOR_DOMAIN;
++const char *QgsApplication::NGQGIS_APPLICATION_NAME = APP_NAME;
+ QgsApplication::ApplicationMembers *QgsApplication::sApplicationMembers = nullptr;
+ QgsAuthManager *QgsApplication::sAuthManager = nullptr;
+ int ABISYM( QgsApplication::sMaxThreads ) = -1;
+@@ -163,11 +166,11 @@
+ Q_GLOBAL_STATIC( QgsStringMap, sSystemEnvVars )
+ Q_GLOBAL_STATIC( QString, sConfigPath )
+ 
+-Q_GLOBAL_STATIC( QString, sBuildSourcePath )
+-#if defined(_MSC_VER) && !defined(USING_NMAKE) && !defined(USING_NINJA)
+-Q_GLOBAL_STATIC( QString, sCfgIntDir )
+-#endif
+-Q_GLOBAL_STATIC( QString, sBuildOutputPath )
++// Q_GLOBAL_STATIC( QString, sBuildSourcePath )
++// #if defined(_MSC_VER) && !defined(USING_NMAKE) && !defined(USING_NINJA)
++// Q_GLOBAL_STATIC( QString, sCfgIntDir )
++// #endif
++// Q_GLOBAL_STATIC( QString, sBuildOutputPath )
+ Q_GLOBAL_STATIC( QStringList, sGdalSkipList )
+ Q_GLOBAL_STATIC( QStringList, sDeferredSkippedGdalDrivers )
+ Q_GLOBAL_STATIC( QString, sAuthDbDirPath )
+@@ -202,10 +205,10 @@
+      * These items must be translated identically in both qt_ and qgis_ files.
+      */
+     QString qtTranslationsPath = QLibraryInfo::location( QLibraryInfo::TranslationsPath );
+-#ifdef __MINGW32__
+-    QString prefix = QDir( QString( "%1/../" ).arg( QApplication::applicationDirPath() ) ).absolutePath();
+-    qtTranslationsPath = prefix + qtTranslationsPath.mid( QLibraryInfo::location( QLibraryInfo::PrefixPath ).length() );
+-#endif
++// #ifdef __MINGW32__
++//     QString prefix = QDir( QString( "%1/../" ).arg( QApplication::applicationDirPath() ) ).absolutePath();
++//     qtTranslationsPath = prefix + qtTranslationsPath.mid( QLibraryInfo::location( QLibraryInfo::PrefixPath ).length() );
++// #endif
+ 
+     mQtTranslator = new QTranslator();
+     if ( mQtTranslator->load( QStringLiteral( "qt_" ) + *sTranslation(), qtTranslationsPath ) )
+@@ -239,13 +242,21 @@
+ {
+   if ( profileFolder.isEmpty() )
+   {
+-    if ( getenv( "QGIS_CUSTOM_CONFIG_PATH" ) )
++      profileFolder = QString::fromLocal8Bit( qgetenv( "QGIS_CUSTOM_CONFIG_PATH" ) );
++    if( profileFolder.isEmpty() )
+     {
+-      profileFolder = getenv( "QGIS_CUSTOM_CONFIG_PATH" );
+-    }
+-    else
+-    {
+-      profileFolder = QStandardPaths::standardLocations( QStandardPaths::AppDataLocation ).value( 0 );
++        QString config;
++      #ifdef Q_OS_MAC
++        config = QLatin1String("Library/Application Support");
++      #else
++        config = QLatin1String(".config");
++      #endif
++        profileFolder = QString( "%1%2qgis%3" )
++                .arg( QDir::homePath() + QDir::separator() + config + QDir::separator())
++                .arg( QDir::separator() + QLatin1String(VENDOR) + QDir::separator() )
++                .arg( VERSION_INT / 10000 );
++        qputenv("QGIS_CUSTOM_CONFIG_PATH", profileFolder.toUtf8());        
++    //   profileFolder = QStandardPaths::standardLocations( QStandardPaths::AppDataLocation ).value( 0 );
+     }
+     // This will normally get here for custom scripts that use QgsApplication.
+     // This doesn't get this hit for QGIS Desktop because we setup the profile via main
+@@ -286,7 +297,7 @@
      qRegisterMetaType<QgsDatumTransform::TransformDetails>( "QgsDatumTransform::TransformDetails" );
      qRegisterMetaType<QgsNewsFeedParser::Entry>( "QgsNewsFeedParser::Entry" );
      qRegisterMetaType<QgsRectangle>( "QgsRectangle" );
@@ -33,7 +103,530 @@
      qRegisterMetaType<QgsProcessingModelChildParameterSource>( "QgsProcessingModelChildParameterSource" );
  #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
      // Qt6 documentation says these are not needed anymore (https://www.qt.io/blog/whats-new-in-qmetatype-qvariant) #spellok
-@@ -2356,15 +2356,15 @@
+@@ -310,69 +321,73 @@
+ 
+   ( void ) resolvePkgPath();
+ 
+-  if ( ABISYM( mRunningFromBuildDir ) )
+-  {
+-    // we run from source directory - not installed to destination (specified prefix)
+-    *sPrefixPath() = QString(); // set invalid path
+-#if defined(_MSC_VER) && !defined(USING_NMAKE) && !defined(USING_NINJA)
+-    setPluginPath( *sBuildOutputPath() + '/' + QString( QGIS_PLUGIN_SUBDIR ) + '/' + *sCfgIntDir() );
+-#else
+-    setPluginPath( *sBuildOutputPath() + '/' + QStringLiteral( QGIS_PLUGIN_SUBDIR ) );
+-#endif
+-    setPkgDataPath( *sBuildOutputPath() + QStringLiteral( "/data" ) ); // in buildDir/data - used for: doc, resources, svg
+-    *sLibraryPath() = *sBuildOutputPath() + '/' + QGIS_LIB_SUBDIR + '/';
+-#if defined(_MSC_VER) && !defined(USING_NMAKE) && !defined(USING_NINJA)
+-    *sLibexecPath() = *sBuildOutputPath() + '/' + QGIS_LIBEXEC_SUBDIR + '/' + *sCfgIntDir() + '/';
+-#else
+-    *sLibexecPath() = *sBuildOutputPath() + '/' + QGIS_LIBEXEC_SUBDIR + '/';
+-#endif
+-#if defined( HAVE_QUICK )
+-    *sQmlImportPath() = *sBuildOutputPath() + '/' + QGIS_QML_SUBDIR + '/';
+-#endif
+-  }
+-  else
+-  {
+-    char *prefixPath = getenv( "QGIS_PREFIX_PATH" );
+-    if ( !prefixPath )
+-    {
+-      if ( sPrefixPath()->isNull() )
+-      {
+-#if defined(Q_OS_MACX) || defined(Q_OS_WIN)
+-        setPrefixPath( applicationDirPath(), true );
+-#elif defined(ANDROID)
+-        // this is "/data/data/org.qgis.qgis" in android
+-        QDir myDir( QDir::homePath() );
+-        myDir.cdUp();
+-        QString myPrefix = myDir.absolutePath();
+-        setPrefixPath( myPrefix, true );
+-#else
+-        QDir myDir( applicationDirPath() );
+-        // Fix for server which is one level deeper in /usr/lib/cgi-bin
+-        if ( applicationDirPath().contains( QStringLiteral( "cgi-bin" ) ) )
+-        {
+-          myDir.cdUp();
+-        }
+-        myDir.cdUp(); // Go from /usr/bin or /usr/lib (for server) to /usr
+-        QString myPrefix = myDir.absolutePath();
+-        setPrefixPath( myPrefix, true );
+-#endif
+-      }
+-    }
+-    else
+-    {
+-      setPrefixPath( prefixPath, true );
+-    }
+-  }
++//   if ( ABISYM( mRunningFromBuildDir ) )
++//   {
++//     // we run from source directory - not installed to destination (specified prefix)
++//     *sPrefixPath() = QString(); // set invalid path
++// #if defined(_MSC_VER) && !defined(USING_NMAKE) && !defined(USING_NINJA)
++//     setPluginPath( *sBuildOutputPath() + '/' + QString( QGIS_PLUGIN_SUBDIR ) + '/' + *sCfgIntDir() );
++// #else
++//     setPluginPath( *sBuildOutputPath() + '/' + QStringLiteral( QGIS_PLUGIN_SUBDIR ) );
++// #endif
++//     setPkgDataPath( *sBuildOutputPath() + QStringLiteral( "/data" ) ); // in buildDir/data - used for: doc, resources, svg
++//     *sLibraryPath() = *sBuildOutputPath() + '/' + QGIS_LIB_SUBDIR + '/';
++// #if defined(_MSC_VER) && !defined(USING_NMAKE) && !defined(USING_NINJA)
++//     *sLibexecPath() = *sBuildOutputPath() + '/' + QGIS_LIBEXEC_SUBDIR + '/' + *sCfgIntDir() + '/';
++// #else
++//     *sLibexecPath() = *sBuildOutputPath() + '/' + QGIS_LIBEXEC_SUBDIR + '/';
++// #endif
++// #if defined( HAVE_QUICK )
++//     *sQmlImportPath() = *sBuildOutputPath() + '/' + QGIS_QML_SUBDIR + '/';
++// #endif
++//   }
++//   else
++//   {
++//     char *prefixPath = getenv( "QGIS_PREFIX_PATH" );
++//     if ( !prefixPath )
++//     {
++//       if ( sPrefixPath()->isNull() )
++//       {
++// #if defined(Q_OS_MACX) || defined(Q_OS_WIN)
++//         setPrefixPath( applicationDirPath(), true );
++// #elif defined(ANDROID)
++//         // this is "/data/data/org.qgis.qgis" in android
++//         QDir myDir( QDir::homePath() );
++//         myDir.cdUp();
++//         QString myPrefix = myDir.absolutePath();
++//         setPrefixPath( myPrefix, true );
++// #else
++//         QDir myDir( applicationDirPath() );
++//         // Fix for server which is one level deeper in /usr/lib/cgi-bin
++//         if ( applicationDirPath().contains( QStringLiteral( "cgi-bin" ) ) )
++//         {
++//           myDir.cdUp();
++//         }
++//         myDir.cdUp(); // Go from /usr/bin or /usr/lib (for server) to /usr
++//         QString myPrefix = myDir.absolutePath();
++//         setPrefixPath( myPrefix, true );
++// #endif
++//       }
++//     }
++//     else
++//     {
++//       setPrefixPath( prefixPath, true );
++//     }
++//   }
+ 
+   *sConfigPath() = profileFolder + '/'; // make sure trailing slash is included
+   *sDefaultSvgPaths() << qgisSettingsDirPath() + QStringLiteral( "svg/" );
+ 
+   *sAuthDbDirPath() = qgisSettingsDirPath();
+-  if ( getenv( "QGIS_AUTH_DB_DIR_PATH" ) )
++  QString authDBDirPath = QString::fromLocal8Bit( qgetenv( "QGIS_AUTH_DB_DIR_PATH" ) );
++  if (!authDBDirPath.isEmpty())
+   {
+-    setAuthDatabaseDirPath( getenv( "QGIS_AUTH_DB_DIR_PATH" ) );
++    setAuthDatabaseDirPath( authDBDirPath );
++  }
++  else
++  {
++    setAuthDatabaseDirPath( qgisSettingsDirPath() );
+   }
+-
+   // store system environment variables passed to application, before they are adjusted
+   QMap<QString, QString> systemEnvVarMap;
+   QString passfile( QStringLiteral( "QGIS_AUTH_PASSWORD_FILE" ) ); // QString, for comparison
+@@ -395,14 +410,15 @@
+   // append local user-writable folder as a proj search path
+   QStringList currentProjSearchPaths = QgsProjUtils::searchPaths();
+   currentProjSearchPaths.append( qgisSettingsDirPath() + QStringLiteral( "proj" ) );
+-#ifdef Q_OS_MACX
+-  // append bundled proj lib for MacOS
+-  QString projLib( QDir::cleanPath( pkgDataPath().append( "/proj" ) ) );
+-  if ( QFile::exists( projLib ) )
+-  {
+-    currentProjSearchPaths.append( projLib );
+-  }
+-#endif // Q_OS_MACX
++// #ifdef Q_OS_MACX
++//   // append bundled proj lib for MacOS
++//   // Library/Frameworks/proj.framework/Resources/proj
++//   QString projLib( QDir::cleanPath( pkgDataPath().append( "/proj" ) ) );
++//   if ( QFile::exists( projLib ) )
++//   {
++//     currentProjSearchPaths.append( projLib );
++//   }
++// #endif // Q_OS_MACX
+ 
+   char **newPaths = new char *[currentProjSearchPaths.length()];
+   for ( int i = 0; i < currentProjSearchPaths.count(); ++i )
+@@ -415,6 +431,7 @@
+     CPLFree( newPaths[i] );
+   }
+   delete [] newPaths;
++  qputenv("PROJ_LIB", currentProjSearchPaths[0].toUtf8());
+ 
+   // allow Qt to search for Qt plugins (e.g. sqldrivers) in our plugin directory
+   QCoreApplication::addLibraryPath( pluginPath() );
+@@ -561,12 +578,12 @@
+ void QgsApplication::setPrefixPath( const QString &prefixPath, bool useDefaultPaths )
+ {
+   *sPrefixPath() = prefixPath;
+-#if defined(Q_OS_WIN)
+-  if ( sPrefixPath()->endsWith( "/bin" ) )
+-  {
+-    sPrefixPath()->chop( 4 );
+-  }
+-#endif
++// #if defined(Q_OS_WIN)
++//   if ( sPrefixPath()->endsWith( "/bin" ) )
++//   {
++//     sPrefixPath()->chop( 4 );
++//   }
++// #endif
+   if ( useDefaultPaths && !ABISYM( mRunningFromBuildDir ) )
+   {
+     setPluginPath( *sPrefixPath() + '/' + QStringLiteral( QGIS_PLUGIN_SUBDIR ) );
+@@ -849,69 +866,94 @@
+     }
+   }
+ 
+-  if ( !appPath.isNull() || getenv( "QGIS_PREFIX_PATH" ) )
+-  {
+-    QString prefix = getenv( "QGIS_PREFIX_PATH" ) ? getenv( "QGIS_PREFIX_PATH" ) : appPath;
+-
+-    // check if QGIS is run from build directory (not the install directory)
+-    QFile f;
+-    // "/../../.." is for Mac bundled app in build directory
+-    static const QStringList paths { QStringList() << QString() << QStringLiteral( "/.." ) << QStringLiteral( "/bin" ) << QStringLiteral( "/../../.." ) };
+-    for ( const QString &path : paths )
+-    {
+-      f.setFileName( prefix + path + "/qgisbuildpath.txt" );
+-      if ( f.exists() )
+-        break;
+-    }
+-    if ( f.exists() && f.open( QIODevice::ReadOnly ) )
+-    {
+-      ABISYM( mRunningFromBuildDir ) = true;
+-      *sBuildSourcePath() = f.readLine().trimmed();
+-      *sBuildOutputPath() = f.readLine().trimmed();
+-      QgsDebugMsgLevel( QStringLiteral( "Running from build directory!" ), 4 );
+-      QgsDebugMsgLevel( QStringLiteral( "- source directory: %1" ).arg( sBuildSourcePath()->toUtf8().constData() ), 4 );
+-      QgsDebugMsgLevel( QStringLiteral( "- output directory of the build: %1" ).arg( sBuildOutputPath()->toUtf8().constData() ), 4 );
+-#if defined(_MSC_VER) && !defined(USING_NMAKE) && !defined(USING_NINJA)
+-      *sCfgIntDir() = prefix.split( '/', QString::SkipEmptyParts ).last();
+-      qDebug( "- cfg: %s", sCfgIntDir()->toUtf8().constData() );
+-#endif
+-    }
+-  }
++//   if ( !appPath.isNull() || getenv( "QGIS_PREFIX_PATH" ) )
++//   {
++//     QString prefix = getenv( "QGIS_PREFIX_PATH" ) ? getenv( "QGIS_PREFIX_PATH" ) : appPath;
++
++//     // check if QGIS is run from build directory (not the install directory)
++//     QFile f;
++//     // "/../../.." is for Mac bundled app in build directory
++//     static const QStringList paths { QStringList() << QString() << QStringLiteral( "/.." ) << QStringLiteral( "/bin" ) << QStringLiteral( "/../../.." ) };
++//     for ( const QString &path : paths )
++//     {
++//       f.setFileName( prefix + path + "/qgisbuildpath.txt" );
++//       if ( f.exists() )
++//         break;
++//     }
++//     if ( f.exists() && f.open( QIODevice::ReadOnly ) )
++//     {
++//       ABISYM( mRunningFromBuildDir ) = true;
++//       *sBuildSourcePath() = f.readLine().trimmed();
++//       *sBuildOutputPath() = f.readLine().trimmed();
++//       QgsDebugMsgLevel( QStringLiteral( "Running from build directory!" ), 4 );
++//       QgsDebugMsgLevel( QStringLiteral( "- source directory: %1" ).arg( sBuildSourcePath()->toUtf8().constData() ), 4 );
++//       QgsDebugMsgLevel( QStringLiteral( "- output directory of the build: %1" ).arg( sBuildOutputPath()->toUtf8().constData() ), 4 );
++// #if defined(_MSC_VER) && !defined(USING_NMAKE) && !defined(USING_NINJA)
++//       *sCfgIntDir() = prefix.split( '/', QString::SkipEmptyParts ).last();
++//       qDebug( "- cfg: %s", sCfgIntDir()->toUtf8().constData() );
++// #endif
++//     }
++//   }
++
++#ifdef Q_OS_WIN
++    QDir defaultPrefixDir(applicationDirPath() + QDir::separator() + "..");
++
++    // Add search gdal utilities paths
++    QString path = defaultPrefixDir.absolutePath();
++    qputenv("PATH", QString( "%1;%2" ).arg(path).arg(applicationDirPath()).toUtf8());
+ 
+-  QString prefixPath;
+-  if ( getenv( "QGIS_PREFIX_PATH" ) )
+-    prefixPath = getenv( "QGIS_PREFIX_PATH" );
+-  else
+-  {
+-#if defined(ANDROID)
+-    // this is "/data/data/org.qgis.qgis" in android
+-    QDir dir( QDir::homePath() );
+-    dir.cdUp();
+-    prefixPath = dir.absolutePath();
+-#else
+-
+-#if defined(Q_OS_MACX)
+-    prefixPath = appPath;
+-#elif defined(Q_OS_WIN)
+-    prefixPath = appPath;
+-    if ( prefixPath.endsWith( "/bin" ) )
+-      prefixPath.chop( 4 );
++#elif defined(Q_OS_MAC)
++    QDir defaultPrefixDir(applicationDirPath() + QDir::separator() + ".."
++                           + QDir::separator() + ".."
++                           + QDir::separator() + ".."
++                           + QDir::separator() + "..");
+ #else
+-    QDir dir( appPath );
+-    // Fix for server which is one level deeper in /usr/lib/cgi-bin
+-    if ( appPath.contains( QStringLiteral( "cgi-bin" ) ) )
+-    {
+-      dir.cdUp();
+-    }
+-    dir.cdUp(); // Go from /usr/bin or /usr/lib (for server) to /usr
+-    prefixPath = dir.absolutePath();
+-#endif
++    QDir defaultPrefixDir("/usr");
+ #endif
+-  }
++    QString defaultPrefixPath =  defaultPrefixDir.absolutePath();
+ 
+-  if ( ABISYM( mRunningFromBuildDir ) )
+-    return *sBuildOutputPath() + QStringLiteral( "/data" );
+-  else
++    QString envPrefixPath = QString::fromLocal8Bit( qgetenv( "QGIS_PREFIX_PATH" ) );
++    QString prefixPath( envPrefixPath.isEmpty() ?
++                            defaultPrefixPath : envPrefixPath );
++    QgsDebugMsg( QString( "prefixPath(): %1" ).arg( prefixPath ) );
++
++
++//   if ( getenv( "QGIS_PREFIX_PATH" ) )
++//     prefixPath = getenv( "QGIS_PREFIX_PATH" );
++//   else
++//   {
++// #if defined(ANDROID)
++//     // this is "/data/data/org.qgis.qgis" in android
++//     QDir dir( QDir::homePath() );
++//     dir.cdUp();
++//     prefixPath = dir.absolutePath();
++// #else
++
++// #if defined(Q_OS_MACX)
++//     prefixPath = appPath;
++// #elif defined(Q_OS_WIN)
++//     prefixPath = appPath;
++//     if ( prefixPath.endsWith( "/bin" ) )
++//       prefixPath.chop( 4 );
++// #else
++//     QDir dir( appPath );
++//     // Fix for server which is one level deeper in /usr/lib/cgi-bin
++//     if ( appPath.contains( QStringLiteral( "cgi-bin" ) ) )
++//     {
++//       dir.cdUp();
++//     }
++//     dir.cdUp(); // Go from /usr/bin or /usr/lib (for server) to /usr
++//     prefixPath = dir.absolutePath();
++// #endif
++// #endif
++//   }
++
++    setPrefixPath( prefixPath, true );
++    qputenv("QGIS_PREFIX_PATH", prefixPath.toUtf8());
++
++//   if ( ABISYM( mRunningFromBuildDir ) )
++//     return *sBuildOutputPath() + QStringLiteral( "/data" );
++//   else
+     return prefixPath + '/' + QStringLiteral( QGIS_DATA_SUBDIR );
+ }
+ 
+@@ -1070,9 +1112,9 @@
+ 
+ QString QgsApplication::i18nPath()
+ {
+-  if ( ABISYM( mRunningFromBuildDir ) )
+-    return *sBuildOutputPath() + QStringLiteral( "/i18n/" );
+-  else
++//   if ( ABISYM( mRunningFromBuildDir ) )
++//     return *sBuildOutputPath() + QStringLiteral( "/i18n/" );
++//   else
+     return pkgDataPath() + QStringLiteral( "/i18n/" );
+ }
+ 
+@@ -1113,25 +1155,25 @@
+ 
+ QString QgsApplication::srsDatabaseFilePath()
+ {
+-  if ( ABISYM( mRunningFromBuildDir ) )
+-  {
+-    QString tempCopy = QDir::tempPath() + "/srs6.db";
+-
+-    if ( !QFile( tempCopy ).exists() )
+-    {
+-      QFile f( buildSourcePath() + "/resources/srs6.db" );
+-      if ( !f.copy( tempCopy ) )
+-      {
+-        qFatal( "Could not create temporary copy" );
+-      }
+-    }
+-
+-    return tempCopy;
+-  }
+-  else
+-  {
++//   if ( ABISYM( mRunningFromBuildDir ) )
++//   {
++//     QString tempCopy = QDir::tempPath() + "/srs6.db";
++
++//     if ( !QFile( tempCopy ).exists() )
++//     {
++//       QFile f( buildSourcePath() + "/resources/srs6.db" );
++//       if ( !f.copy( tempCopy ) )
++//       {
++//         qFatal( "Could not create temporary copy" );
++//       }
++//     }
++
++//     return tempCopy;
++//   }
++//   else
++//   {
+     return pkgDataPath() + QStringLiteral( "/resources/srs.db" );
+-  }
++//   }
+ }
+ 
+ void QgsApplication::setSvgPaths( const QStringList &svgPaths )
+@@ -1224,12 +1266,12 @@
+     return *sUserName();
+ 
+   //backup plan - use environment variables
+-  *sUserName() = qgetenv( "USER" );
++  *sUserName() = QString::fromLocal8Bit(qgetenv( "USER" ));
+   if ( !sUserName()->isEmpty() )
+     return *sUserName();
+ 
+   //last resort
+-  *sUserName() = qgetenv( "USERNAME" );
++  *sUserName() = QString::fromLocal8Bit(qgetenv( "USERNAME" ));
+   return *sUserName();
+ }
+ 
+@@ -1251,8 +1293,8 @@
+   //fall back to login name
+   if ( sUserFullName()->isEmpty() )
+     *sUserFullName() = userLoginName();
+-#elif defined(Q_OS_ANDROID) || defined(__MINGW32__)
+-  *sUserFullName() = QStringLiteral( "Not available" );
++// #elif defined(Q_OS_ANDROID) || defined(__MINGW32__)
++//   *sUserFullName() = QStringLiteral( "Not available" );
+ #else
+   struct passwd *p = getpwuid( getuid() );
+ 
+@@ -1443,20 +1485,25 @@
+ 
+ QString QgsApplication::showSettings()
+ {
+-  QString myEnvironmentVar( getenv( "QGIS_PREFIX_PATH" ) );
++  QString myEnvironmentVar = QString::fromLocal8Bit(qgetenv( "QGIS_PREFIX_PATH" ) );
+   QString myState = tr( "Application state:\n"
+                         "QGIS_PREFIX_PATH env var:\t\t%1\n"
+                         "Prefix:\t\t%2\n"
+-                        "Plugin Path:\t\t%3\n"
+-                        "Package Data Path:\t%4\n"
+-                        "Active Theme Name:\t%5\n"
+-                        "Active Theme Path:\t%6\n"
+-                        "Default Theme Path:\t%7\n"
+-                        "SVG Search Paths:\t%8\n"
+-                        "User DB Path:\t%9\n"
+-                        "Auth DB Path:\t%10\n" )
++                        "Library Path:\t\t%3\n"
++                        "Plugin Path:\t\t%4\n"
++                        "Package Data Path:\t%5\n"
++                        "Active Theme Name:\t%6\n"
++                        "Active Theme Path:\t%7\n"
++                        "Default Theme Path:\t%8\n"
++                        "SVG Search Paths:\t%9\n"
++                        "User DB Path:\t%10\n"
++                        "Auth DB Path:\t%11\n"
++                        "Translations Path:\t%12\n"
++                        "SRS DB Path:\t%13\n"
++                        "Icons Path:\t%14\n"  )
+                     .arg( myEnvironmentVar,
+                           prefixPath(),
++                          libraryPath(),
+                           pluginPath(),
+                           pkgDataPath(),
+                           themeName(),
+@@ -1464,7 +1511,10 @@
+                           defaultThemePath(),
+                           svgPaths().join( tr( "\n\t\t", "match indentation of application state" ) ),
+                           qgisMasterDatabaseFilePath() )
+-                    .arg( qgisAuthDatabaseFilePath() );
++                    .arg( qgisAuthDatabaseFilePath(), 
++                          i18nPath(),
++                          srsDatabaseFilePath(),
++                          iconsPath() );
+   return myState;
+ }
+ 
+@@ -1752,22 +1802,22 @@
+   return targetElems.join( QLatin1Char( '/' ) );
+ }
+ 
+-QString QgsApplication::buildSourcePath()
+-{
+-  return *sBuildSourcePath();
+-}
+-
+-QString QgsApplication::buildOutputPath()
+-{
+-  return *sBuildOutputPath();
+-}
+-
+-#if defined(_MSC_VER) && !defined(USING_NMAKE) && !defined(USING_NINJA)
+-QString QgsApplication::cfgIntDir()
+-{
+-  return *sCfgIntDir();
+-}
+-#endif
++// QString QgsApplication::buildSourcePath()
++// {
++//   return *sBuildSourcePath();
++// }
++
++// QString QgsApplication::buildOutputPath()
++// {
++//   return *sBuildOutputPath();
++// }
++
++// #if defined(_MSC_VER) && !defined(USING_NMAKE) && !defined(USING_NINJA)
++// QString QgsApplication::cfgIntDir()
++// {
++//   return *sCfgIntDir();
++// }
++// #endif
+ 
+ void QgsApplication::skipGdalDriver( const QString &driver )
+ {
+@@ -1974,7 +2024,7 @@
+   ApplicationMembers *appMembers = members();
+   if ( appMembers->mNullRepresentation.isNull() )
+   {
+-    appMembers->mNullRepresentation = QgsSettings().value( QStringLiteral( "qgis/nullValue" ), QStringLiteral( "NULL" ) ).toString();
++    appMembers->mNullRepresentation = QgsSettings().value( QStringLiteral( "qgis/nullValue" ), QStringLiteral( "<NULL>" ) ).toString();
+   }
+   return appMembers->mNullRepresentation;
+ }
+@@ -2015,8 +2065,7 @@
+ #else
+   //under other OS's we use an environment var so the user can
+   //override the path if he likes
+-  int myChangeFlag = 0; //whether we want to force the env var to change
+-  setenv( "GDAL_PAM_PROXY_DIR", myPamPath.toUtf8(), myChangeFlag );
++  qputenv( "GDAL_PAM_PROXY_DIR", myPamPath.toUtf8() );
+ #endif
+ 
+   // Check qgis.db and make private copy if necessary
+@@ -2356,15 +2405,15 @@
    return members()->mAnnotationItemRegistry;
  }
  
@@ -58,7 +651,7 @@
  
  QgsPluginLayerRegistry *QgsApplication::pluginLayerRegistry()
  {
-@@ -2451,10 +2451,10 @@
+@@ -2451,10 +2500,10 @@
    return members()->mProjectStorageRegistry.get();
  }
  
@@ -73,7 +666,7 @@
  
  QgsLocalizedDataPathRegistry *QgsApplication::localizedDataPathRegistry()
  {
-@@ -2555,16 +2555,16 @@
+@@ -2555,16 +2604,16 @@
      mPointCloudRendererRegistry = new QgsPointCloudRendererRegistry();
      profiler->end();
    }
@@ -100,7 +693,7 @@
    {
      profiler->start( tr( "Setup plugin layer registry" ) );
      mPluginLayerRegistry = new QgsPluginLayerRegistry();
-@@ -2608,11 +2608,11 @@
+@@ -2608,11 +2657,11 @@
      mProjectStorageRegistry.reset( new QgsProjectStorageRegistry() );
      profiler->end();
    }
@@ -117,7 +710,7 @@
    {
      profiler->start( tr( "Setup network content cache" ) );
      mNetworkContentFetcherRegistry = new QgsNetworkContentFetcherRegistry();
-@@ -2657,8 +2657,8 @@
+@@ -2657,8 +2706,8 @@
    delete mAnnotationRegistry;
    delete mColorSchemeRegistry;
    delete mFieldFormatterRegistry;
@@ -128,7 +721,7 @@
    delete mMessageLog;
    delete mPaintEffectRegistry;
    delete mPluginLayerRegistry;
-@@ -2675,7 +2675,7 @@
+@@ -2675,7 +2724,7 @@
    delete mCalloutRegistry;
    delete mRecentStyleHandler;
    delete mSymbolLayerRegistry;

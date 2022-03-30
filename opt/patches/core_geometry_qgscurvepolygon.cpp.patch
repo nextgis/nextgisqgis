@@ -1,5 +1,5 @@
 --- a/src/core/geometry/qgscurvepolygon.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/geometry/qgscurvepolygon.cpp	2022-03-09 00:03:53.000000000 +0300
++++ b/src/core/geometry/qgscurvepolygon.cpp	2022-03-21 09:56:36.000000000 +0300
 @@ -31,7 +31,7 @@
  #include <QPainter>
  #include <QPainterPath>

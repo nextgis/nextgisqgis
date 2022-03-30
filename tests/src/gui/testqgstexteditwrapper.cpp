@@ -26,7 +26,7 @@
 #include <editorwidgets/qgstexteditwrapper.h>
 #include <QTableWidget>
 #include "qgsgui.h"
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 #include "qgsjsonutils.h"
 
 class TestQgsTextEditWrapper : public QObject

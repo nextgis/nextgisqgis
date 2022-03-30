@@ -38,7 +38,7 @@
 
 #include <climits>
 
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 
 // for htonl
 #ifdef Q_OS_WIN
@@ -1324,7 +1324,7 @@ QString QgsPostgresConn::quotedJsonValue( const QVariant &value )
     }
   }
   const auto j = QgsJsonUtils::jsonFromVariant( value );
-  return quotedString( QString::fromStdString( j.dump() ) );
+  return quotedString( QgsJsonUtils::dump(j) );
 }
 
 PGresult *QgsPostgresConn::PQexec( const QString &query, bool logError, bool retry ) const
