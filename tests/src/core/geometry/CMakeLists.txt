@@ -40,21 +40,21 @@ include_directories(
 
 set(TESTS
   testqgscircle.cpp
-  testqgscircularstring.cpp
-  testqgscompoundcurve.cpp
-  testqgscurvepolygon.cpp
+  #testqgscircularstring.cpp
+  #testqgscompoundcurve.cpp
+  #testqgscurvepolygon.cpp
   testqgsellipse.cpp
-  testqgslinestring.cpp
-  testqgsmulticurve.cpp
-  testqgsmultilinestring.cpp
-  testqgsmultipoint.cpp
-  testqgsmultipolygon.cpp
-  testqgsmultisurface.cpp
-  testqgspoint.cpp
-  testqgspointxy.cpp
-  testqgspolygon.cpp
+  #testqgslinestring.cpp
+  #testqgsmulticurve.cpp
+  #testqgsmultilinestring.cpp
+  #testqgsmultipoint.cpp
+  #testqgsmultipolygon.cpp
+  #testqgsmultisurface.cpp
+  #testqgspoint.cpp
+  #testqgspointxy.cpp
+  #testqgspolygon.cpp
   testqgsquadrilateral.cpp
-  testqgsrectangle.cpp
+  #testqgsrectangle.cpp
   testqgsregularpolygon.cpp
   testqgstriangle.cpp
   )
@@ -63,6 +63,6 @@ foreach(TESTSRC ${TESTS})
   add_qgis_test(${TESTSRC} MODULE core_geometry LINKEDLIBRARIES ${NG_PREFIX}qgis_core)
 endforeach(TESTSRC)
 
-add_qgis_test(testqgsgeometry.cpp MODULE core LINKEDLIBRARIES ${NG_PREFIX}qgis_core)
-add_qgis_test(testqgsgeometrycollection.cpp MODULE core LINKEDLIBRARIES ${NG_PREFIX}qgis_core)
+#add_qgis_test(testqgsgeometry.cpp MODULE core LINKEDLIBRARIES ${NG_PREFIX}qgis_core)
+#add_qgis_test(testqgsgeometrycollection.cpp MODULE core LINKEDLIBRARIES ${NG_PREFIX}qgis_core)
 add_qgis_test(testqgsgeometryutils.cpp MODULE core LINKEDLIBRARIES ${NG_PREFIX}qgis_core)
