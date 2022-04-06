@@ -94,6 +94,7 @@ subpaths = [
     "tests/src/gui/testqgsvaluerelationwidgetwrapper.cpp",
     "src/providers/wfs/qgswfsdataitems.cpp",
     "src/analysis/processing/qgsnativealgorithms.cpp",
+    "tests/src/gui/testprocessinggui.cpp",
 ]
 
 def run_shell(args):
