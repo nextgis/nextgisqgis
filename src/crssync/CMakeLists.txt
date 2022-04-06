@@ -100,6 +100,8 @@ set(RUN_DEPENDENCIES
     lib_iconv
     lib_harfbuzz
     lib_freetype
+    lib_qwt
+    lib_qscintilla
 )
 
 get_compiler_version(COMPILER)
