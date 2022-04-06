@@ -136,7 +136,7 @@ macro(add_provider PLUGIN_NAME)
     endif()
 
     if("${PLUGIN_NAME}" STREQUAL "oracle" OR "${PLUGIN_NAME}" STREQUAL "mssql")
-        target_link_libraries(${PLUGIN_NAME}provider PRIVATE Qt5::Sql)
+        target_link_libraries(${LIB_NAME} PRIVATE Qt5::Sql)
     endif()
 
     if("${PLUGIN_NAME}" STREQUAL "virtual")

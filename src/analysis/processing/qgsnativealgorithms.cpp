@@ -90,7 +90,7 @@
 #include "qgsalgorithmfuzzifyraster.h"
 #include "qgsalgorithmgeometrybyexpression.h"
 #if QT_CONFIG(process)
-#include "qgsalgorithmgpsbabeltools.h"
+//#include "qgsalgorithmgpsbabeltools.h"
 #endif
 #include "qgsalgorithmgrid.h"
 #include "qgsalgorithmhillshade.h"

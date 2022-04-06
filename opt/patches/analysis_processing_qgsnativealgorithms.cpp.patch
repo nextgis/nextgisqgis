@@ -1,0 +1,13 @@
+diff --git a/src/analysis/processing/qgsnativealgorithms.cpp b/src/analysis/processing/qgsnativealgorithms.cpp
+index 2e8c4199..5f01ccd1 100644
+--- a/src/analysis/processing/qgsnativealgorithms.cpp
++++ b/src/analysis/processing/qgsnativealgorithms.cpp
+@@ -90,7 +90,7 @@
+ #include "qgsalgorithmfuzzifyraster.h"
+ #include "qgsalgorithmgeometrybyexpression.h"
+ #if QT_CONFIG(process)
+-#include "qgsalgorithmgpsbabeltools.h"
++//#include "qgsalgorithmgpsbabeltools.h"
+ #endif
+ #include "qgsalgorithmgrid.h"
+ #include "qgsalgorithmhillshade.h"

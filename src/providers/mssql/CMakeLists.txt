@@ -31,7 +31,7 @@ include_directories(
     ${CMAKE_BINARY_DIR}/src/ui
 )
 
-set(PROVIDER mssqlprovider)
+set(PROVIDER provider_mssql)
 add_library(${PROVIDER} MODULE ${MSSQL_SRCS} ${MSSQL_HDRS})
 
 target_link_libraries(${PROVIDER}
@@ -43,7 +43,7 @@ if (WITH_GUI)
     target_link_libraries (${PROVIDER}
         ${NG_PREFIX}qgis_gui
     )
-    add_dependencies(${PROVIDER} ui)
+    #add_dependencies(${PROVIDER} ui)
 endif()
 
 if(OSX_FRAMEWORK)
