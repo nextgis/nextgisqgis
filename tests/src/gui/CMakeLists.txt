@@ -53,9 +53,9 @@ set(TESTS
   testqgsmaptoolzoom.cpp
   testqgsmaptooledit.cpp
   testqgscategorizedrendererwidget.cpp
-  testqgsdatumtransformdialog.cpp
+  #testqgsdatumtransformdialog.cpp
   testqgsdoublespinbox.cpp
-  testqgsdualview.cpp
+  #testqgsdualview.cpp
   testqgsattributeform.cpp
   testqgsdatetimeedit.cpp
   testqgsdockwidget.cpp
@@ -63,49 +63,49 @@ set(TESTS
   testqgsfilewidget.cpp
   #testqgsexternalstoragefilewidget.cpp
   testqgsfocuswatcher.cpp
-  testqgshtmlwidgetwrapper.cpp
-  testqgsmapcanvas.cpp
-  testqgsmaptoolcapture.cpp
+  #testqgshtmlwidgetwrapper.cpp
+  #testqgsmapcanvas.cpp
+  #testqgsmaptoolcapture.cpp
   testqgsmessagebar.cpp
   testprojectionissues.cpp
   testqgsgui.cpp
-  testprocessinggui.cpp
+  #testprocessinggui.cpp
   testqgsprocessingmodel.cpp
   testqgsrubberband.cpp
-  testqgsscalecombobox.cpp
+  #testqgsscalecombobox.cpp
   testqgsscalerangewidget.cpp
-  testqgsrangewidgetwrapper.cpp
+  #testqgsrangewidgetwrapper.cpp
   testqgsspinbox.cpp
   testqgssqlcomposerdialog.cpp
   testqgseditorwidgetregistry.cpp
   testqgskeyvaluewidget.cpp
-  testqgsfiledownloader.cpp
+  #testqgsfiledownloader.cpp
   testqgslayoutgui.cpp
   testqgslayoutview.cpp
   testqgsvaluemapwidgetwrapper.cpp
   testqgsvaluemapconfigdlg.cpp
-  testqgsvaluerelationwidgetwrapper.cpp
+  #testqgsvaluerelationwidgetwrapper.cpp
   testqgsrelationeditorwidget.cpp
-  testqgsrelationreferencewidget.cpp
+  #testqgsrelationreferencewidget.cpp
   testqgsfeaturelistcombobox.cpp
   testqgstexteditwrapper.cpp
   testqgstableeditor.cpp
-  testqgsnewdatabasetablewidget.cpp
-  testqgsogrprovidergui.cpp
+  #testqgsnewdatabasetablewidget.cpp
+  #testqgsogrprovidergui.cpp
   testqgssinglebandpseudocolorrendererwidget.cpp
   testqgsdoublevalidator.cpp
-  testqgsmeshlayerpropertiesdialog.cpp
+  #testqgsmeshlayerpropertiesdialog.cpp
   #testqgsexternalresourcewidgetwrapper.cpp
-  testqgsquerybuilder.cpp
-  testqgsqueryresultwidget.cpp
+  #testqgsquerybuilder.cpp
+  #testqgsqueryresultwidget.cpp
 )
 
 foreach(TESTSRC ${TESTS})
   add_qgis_test( ${TESTSRC} MODULE gui LINKEDLIBRARIES ${NG_PREFIX}qgis_gui ${NG_PREFIX}qgis_analysis)
 endforeach(TESTSRC)
 
-add_qgis_test(testqgsrasterlayersaveasdialog.cpp MODULE gui LINKEDLIBRARIES ${NG_PREFIX}qgis_gui ${NG_PREFIX}qgis_analysis)
-add_qgis_test(testqgslistwidget.cpp MODULE gui LINKEDLIBRARIES ${NG_PREFIX}qgis_gui ${NG_PREFIX}qgis_analysis LABELS "POSTGRES")
+#add_qgis_test(testqgsrasterlayersaveasdialog.cpp MODULE gui LINKEDLIBRARIES ${NG_PREFIX}qgis_gui ${NG_PREFIX}qgis_analysis)
+#add_qgis_test(testqgslistwidget.cpp MODULE gui LINKEDLIBRARIES ${NG_PREFIX}qgis_gui ${NG_PREFIX}qgis_analysis LABELS "POSTGRES")
 
 
 if (ENABLE_PGTEST)
