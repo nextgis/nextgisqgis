@@ -2,16 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- Hi quality fonts -key>NSPrincipalClass</key>
-    <string>NSApplication</string>
-    <key>NSHighResolutionCapable</key>
-    <string>True</string-->
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleName</key>
 	<string>${PACKAGE_VENDOR} QGIS</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.qgis.qgis2</string>
+	<string>org.qgis.qgis${FRAMEWORK_VERSION}</string>
 	<key>CFBundleExecutable</key>
 	<string>${QGIS_APP_NAME}</string>
 	<key>CFBundlePackageType</key>
@@ -46,6 +42,18 @@
 			<key>CFBundleTypeOSTypes</key>
 			<array>
 				<string>${PACKAGE_VENDOR} QGIS</string>
+			</array>
+		</dict>
+        <dict>
+			<key>CFBundleTypeName</key>
+			<string>${PACKAGE_VENDOR} QGIS Project zipped container</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeIconFile</key>
+			<string>qgz.icns</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>qgz</string>
 			</array>
 		</dict>
 		<dict>
@@ -209,9 +217,59 @@
 				<string>mldata</string>
 			</array>
 		</dict>
+
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>${PACKAGE_VENDOR} QGIS composer template</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeIconFile</key>
+			<string>qpt.icns</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>qpt</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>${PACKAGE_VENDOR} QGIS layer definition document</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeIconFile</key>
+			<string>qlr.icns</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>qlr</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>DXF document</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleTypeIconFile</key>
+			<string>dxf.icns</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>dxf</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>SQLite database</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeIconFile</key>
+			<string>sqlite.icns</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>sqlite</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleLocalizations</key>
 	<array>
+
 		<string>en</string>
 		<string>af</string>
 		<string>ar</string>
@@ -260,5 +318,14 @@
 		<string>zh_CN</string>
 		<string>zh_TW</string>
 	</array>
+	<key>LSEnvironment</key>
+	<dict>
+		<key>QT_AUTO_SCREEN_SCALE_FACTOR</key>
+		<string>1</string>
+	</dict>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSHighResolutionCapable</key>
+	<string>True</string>
 </dict>
 </plist>

@@ -1,6 +1,6 @@
 --- a/src/core/geometry/qgsabstractgeometry.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/geometry/qgsabstractgeometry.cpp	2022-03-21 09:56:36.000000000 +0300
-@@ -22,7 +22,7 @@
++++ b/src/core/geometry/qgsabstractgeometry.cpp	2022-04-06 18:40:09.000000000 +0300
+@@ -22,10 +22,12 @@
  #include "qgsgeometrycollection.h"
  #include "qgsvertexid.h"
  
@@ -9,12 +9,17 @@
  #include <limits>
  #include <QTransform>
  
-@@ -190,12 +190,12 @@
++#include "qgsjsonutils.h"
++
+ QgsAbstractGeometry::QgsAbstractGeometry( const QgsAbstractGeometry &geom )
+ {
+   mWkbType = geom.mWkbType;
+@@ -190,12 +192,12 @@
  
  QString QgsAbstractGeometry::asJson( int precision )
  {
 -  return QString::fromStdString( asJsonObject( precision ).dump() );
-+  return QString::fromStdString( asJsonObject( precision ).Format(CPLJSONObject::PrettyFormat::Plain) );
++  return QgsJsonUtils::dump( asJsonObject( precision ) );
  }
  
  json QgsAbstractGeometry::asJsonObject( int precision ) const

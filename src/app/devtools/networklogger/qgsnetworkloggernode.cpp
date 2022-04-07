@@ -327,7 +327,7 @@ QList<QAction *> QgsNetworkLoggerRequestGroup::actions( QObject *parent )
   QObject::connect( copyJsonAction, &QAction::triggered, openUrlAction, [ = ]
   {
     const QVariant value = toVariant();
-    const QString json = QString::fromStdString( QgsJsonUtils::jsonFromVariant( value ).dump( 2 ) );
+    const QString json = QgsJsonUtils::dump( QgsJsonUtils::jsonFromVariant( value ) );
     QApplication::clipboard()->setText( json );
 
   } );

@@ -1,0 +1,47 @@
+--- a/src/providers/wms/qgswmsdataitems.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/providers/wms/qgswmsdataitems.cpp	2022-04-06 18:40:09.000000000 +0300
+@@ -23,8 +23,8 @@
+ #include "qgswmsconnection.h"
+ #include "qgsxyzconnection.h"
+ 
+-#include "qgsgeonodeconnection.h"
+-#include "qgsgeonoderequest.h"
++// #include "qgsgeonodeconnection.h"
++// #include "qgsgeonoderequest.h"
+ #include "qgssettings.h"
+ 
+ 
+@@ -618,6 +618,7 @@
+ QVector<QgsDataItem *> QgsWmsDataItemProvider::createDataItems( const QString &path, QgsDataItem *parentItem )
+ {
+   QVector<QgsDataItem *> items;
++/*
+   if ( path.startsWith( QLatin1String( "geonode:/" ) ) )
+   {
+     QString connectionName = path.split( '/' ).last();
+@@ -657,7 +658,7 @@
+       }
+     }
+   }
+-
++*/
+   return items;
+ }
+ 
+@@ -686,6 +687,7 @@
+ QVector<QgsDataItem *> QgsXyzTileDataItemProvider::createDataItems( const QString &path, QgsDataItem *parentItem )
+ {
+   QVector<QgsDataItem *> items;
++/*
+   if ( path.startsWith( QLatin1String( "geonode:/" ) ) )
+   {
+     QString connectionName = path.split( '/' ).last();
+@@ -718,7 +720,7 @@
+       }
+     }
+   }
+-
++*/
+   return items;
+ }
+ 

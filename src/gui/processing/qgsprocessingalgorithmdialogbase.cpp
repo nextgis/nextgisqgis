@@ -207,7 +207,7 @@ QgsProcessingAlgorithmDialogBase::QgsProcessingAlgorithmDialogBase( QWidget *par
             return;
 
           const QVariantMap properties = alg->asMap( createProcessingParameters(), *context );
-          const QString json = QString::fromStdString( QgsJsonUtils::jsonFromVariant( properties ).Format( CPLJSONObject::PrettyFormat::Pretty ) );
+          const QString json = QgsJsonUtils::dump(QgsJsonUtils::jsonFromVariant( properties ));
 
           QMimeData *m = new QMimeData();
           m->setText( json );

@@ -1,5 +1,5 @@
 --- a/src/core/qgsjsonutils.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/qgsjsonutils.cpp	2022-03-21 09:56:35.000000000 +0300
++++ b/src/core/qgsjsonutils.cpp	2022-04-06 18:40:09.000000000 +0300
 @@ -31,7 +31,136 @@
  #include <QJsonDocument>
  #include <QJsonArray>
@@ -7,7 +7,7 @@
 -#include <nlohmann/json.hpp>
 +// #include <nlohmann/json.hpp>
 +
-+static void AddjsonFromVariant( CPLJSONObject &obj, const std::string &name, const QVariant &val )
++static void AddjsonFromVariant( json &obj, const std::string &name, const QVariant &val )
 +{
 +  if ( val.isNull() || ! val.isValid() )
 +  {
@@ -84,7 +84,7 @@
 +//   return j;
 +}
 +
-+static QVariant VariantFromJSON( const CPLJSONObject &obj )
++static QVariant VariantFromJSON( const json &obj )
 +{
 +    QVariant v;
 +    if ( obj.GetType() == CPLJSONObject::Type::Array )
@@ -288,17 +288,17 @@
 +    QVariantList result;
 +    CPLJSONDocument doc;
 +    if(!doc.LoadMemory(json.toStdString()))
++    {
++        throw "JSON value must be an array";
++    }
++    auto obj = doc.GetRoot();
++    auto array = obj.ToArray();
++    if(!array.IsValid())
      {
 -      throw json::parse_error::create( 0, 0, QStringLiteral( "JSON value must be an array" ).toStdString() );
 +        throw "JSON value must be an array";
      }
 -    for ( const auto &item : jObj )
-+    auto obj = doc.GetRoot();
-+    auto array = obj.ToArray();
-+    if(!array.IsValid())
-+    {
-+        throw "JSON value must be an array";
-+    }
 +
 +    for ( const auto &item : array )
      {
@@ -406,13 +406,20 @@
  QVariant QgsJsonUtils::parseJson( const std::string &jsonString )
  {
    QString error;
-@@ -468,84 +514,16 @@
+@@ -468,84 +514,29 @@
  
  QVariant QgsJsonUtils::parseJson( const std::string &jsonString, QString &error )
  {
 -  // tracks whether entire json string is a primitive
 -  bool isPrimitive = true;
--
++    CPLErrorReset();
++    CPLJSONDocument doc;
++    if(!doc.LoadMemory(jsonString))
++    {
++        error = QString::fromStdString(CPLGetLastErrorMsg());
++        return QVariant();
++    }
+ 
 -  std::function<QVariant( json )> _parser { [ & ]( json jObj ) -> QVariant {
 -      QVariant result;
 -      if ( jObj.is_array() )
@@ -474,12 +481,18 @@
 -        }
 -      }
 -      return result;
++    auto obj = doc.GetRoot();
++    return VariantFromJSON(obj);
++}
++
++json QgsJsonUtils::parse( const std::string &jsonString, QString &error )
++{
 +    CPLErrorReset();
 +    CPLJSONDocument doc;
 +    if(!doc.LoadMemory(jsonString))
 +    {
 +        error = QString::fromStdString(CPLGetLastErrorMsg());
-+        return QVariant();
++        return json();
      }
 -  };
  
@@ -494,12 +507,11 @@
 -    error = QString::fromStdString( ex.what() );
 -  }
 -  return QVariant();
-+    auto obj = doc.GetRoot();
-+    return VariantFromJSON(obj);
++    return doc.GetRoot();
  }
  
  QVariant QgsJsonUtils::parseJson( const QString &jsonString )
-@@ -568,7 +546,7 @@
+@@ -568,7 +559,34 @@
        if ( fieldFormatter != QgsApplication::fieldFormatterRegistry()->fallbackFieldFormatter() )
          val = fieldFormatter->representValue( layer, i, setup.config(), attributeWidgetCaches.count() >= i ? attributeWidgetCaches.at( i ) : QVariant(), val );
      }
@@ -508,3 +520,31 @@
    }
    return attrs;
  }
++
++json QgsJsonUtils::jsonFromVariant( const QVariant &val )
++{
++    json out;
++    AddjsonFromVariant(out, "", val);
++    return out;
++}
++
++bool QgsJsonUtils::is_array(const json &obj)
++{
++    return obj.GetType() == CPLJSONObject::Type::Array;
++}
++
++bool QgsJsonUtils::is_object(const json &obj)
++{
++    return obj.GetType() == CPLJSONObject::Type::Object;
++}
++
++bool QgsJsonUtils::is_number_integer(const json &obj)
++{
++    return obj.GetType() == CPLJSONObject::Type::Integer || obj.GetType() == CPLJSONObject::Type::Long;
++}
++
++QString QgsJsonUtils::dump(const json &obj)
++{
++    return QString::fromStdString( obj.Format(CPLJSONObject::PrettyFormat::Plain) );
++}
+\ No newline at end of file

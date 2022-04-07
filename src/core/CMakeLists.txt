@@ -72,12 +72,12 @@ set(QGIS_CORE_SRCS
     classification/qgsclassificationstandarddeviation.cpp
     classification/qgsclassificationlogarithmic.cpp
 
-    # geocoding/qgsabstractgeocoderlocatorfilter.cpp
-    # geocoding/qgsgeocoder.cpp
-    # geocoding/qgsgeocodercontext.cpp
-    # geocoding/qgsgeocoderresult.cpp
-    # geocoding/qgsnominatimgeocoder.cpp
-    # geocoding/qgsgooglemapsgeocoder.cpp
+    geocoding/qgsabstractgeocoderlocatorfilter.cpp
+    geocoding/qgsgeocoder.cpp
+    geocoding/qgsgeocodercontext.cpp
+    geocoding/qgsgeocoderresult.cpp
+    geocoding/qgsnominatimgeocoder.cpp
+    geocoding/qgsgooglemapsgeocoder.cpp
 
     # gps/qgsbabelformat.cpp
     # gps/qgsbabelformatregistry.cpp
@@ -225,10 +225,10 @@ set(QGIS_CORE_SRCS
     expression/qgsexpressionfunction.cpp
     expression/qgsexpressionutils.cpp
 
-    # locator/qgslocator.cpp
-    # locator/qgslocatorfilter.cpp
-    # locator/qgslocatormodel.cpp
-    # locator/qgslocatormodelbridge.cpp
+    locator/qgslocator.cpp
+    locator/qgslocatorfilter.cpp
+    locator/qgslocatormodel.cpp
+    locator/qgslocatormodelbridge.cpp
 
     network/qgsblockingnetworkrequest.cpp
     network/qgsfiledownloader.cpp
@@ -1289,10 +1289,10 @@ set(QGIS_CORE_HDRS
     # geocms/geonode/qgsgeonodeconnection.h
     # geocms/geonode/qgsgeonoderequest.h
 
-    # geocoding/qgsabstractgeocoderlocatorfilter.h
-    # geocoding/qgsgeocoder.h
-    # geocoding/qgsgeocodercontext.h
-    # geocoding/qgsgeocoderresult.h
+    geocoding/qgsabstractgeocoderlocatorfilter.h
+    geocoding/qgsgeocoder.h
+    geocoding/qgsgeocodercontext.h
+    geocoding/qgsgeocoderresult.h
     # geocoding/qgsnominatimgeocoder.h
     # geocoding/qgsgooglemapsgeocoder.h
   
@@ -1434,11 +1434,11 @@ set(QGIS_CORE_HDRS
     layout/qgsreportsectionfieldgroup.h
     layout/qgsreportsectionlayout.h
 
-    # locator/qgslocator.h
-    # locator/qgslocatorcontext.h
-    # locator/qgslocatorfilter.h
-    # locator/qgslocatormodel.h
-    # locator/qgslocatormodelbridge.h
+    locator/qgslocator.h
+    locator/qgslocatorcontext.h
+    locator/qgslocatorfilter.h
+    locator/qgslocatormodel.h
+    locator/qgslocatormodelbridge.h
   
     maprenderer/qgsmaprenderercache.h
     maprenderer/qgsmaprenderercustompainterjob.h
@@ -1940,7 +1940,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
     set(LIB_NAME ${NG_PREFIX}qgis_core)
     SET(TARGETS ${TARGETS} ${LIB_NAME} PARENT_SCOPE)
 
-    add_library(${LIB_NAME} SHARED ${QGIS_CORE_SRCS} ${QGIS_CORE_HDRS} ${QGIS_CORE_PRIVATE_HDRS})
+    add_library(${LIB_NAME} SHARED ${QGIS_CORE_SRCS} ${QGIS_CORE_HDRS} 
+        ${QGIS_CORE_PRIVATE_HDRS} ${IMAGE_RCCS})
 
     # require c++17
     target_compile_features(${LIB_NAME} PRIVATE cxx_std_17)
@@ -1966,7 +1967,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
         ${QTKEYCHAIN_INCLUDE_DIR}
     )
 
-    if (WITH_SPATIALITE)
+    if (HAVE_SPATIALITE)
         target_include_directories(${LIB_NAME} SYSTEM PUBLIC
             ${SPATIALITE_INCLUDE_DIR}
         )
@@ -1989,12 +1990,12 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
         geometry
         # geocms
         # geocms/geonode
-        # geocoding
+        geocoding
         # gps
         labeling
         layertree
         layout
-        # locator
+        locator
         maprenderer
         mesh
         metadata

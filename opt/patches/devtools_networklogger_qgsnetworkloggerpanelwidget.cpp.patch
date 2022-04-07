@@ -1,0 +1,20 @@
+--- a/src/app/devtools/networklogger/qgsnetworkloggerpanelwidget.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/app/devtools/networklogger/qgsnetworkloggerpanelwidget.cpp	2022-04-06 18:40:09.000000000 +0300
+@@ -30,7 +30,7 @@
+ #include <QCheckBox>
+ #include <QTextStream>
+ 
+-#include <nlohmann/json.hpp>
++// #include <nlohmann/json.hpp>
+ 
+ //
+ // QgsNetworkLoggerTreeView
+@@ -202,7 +202,7 @@
+     QTextStream fout( &exportFile );
+ 
+     const QVariant value = mLogger->rootGroup()->toVariant();
+-    const QString json = QString::fromStdString( QgsJsonUtils::jsonFromVariant( value ).dump( 2 ) );
++    const QString json = QgsJsonUtils::dump( QgsJsonUtils::jsonFromVariant( value ) );
+ 
+     fout << json;
+   } );

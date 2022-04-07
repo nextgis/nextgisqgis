@@ -1,0 +1,13 @@
+--- a/src/gui/editorwidgets/qgsvaluerelationwidgetwrapper.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/gui/editorwidgets/qgsvaluerelationwidgetwrapper.cpp	2022-04-06 18:40:09.000000000 +0300
+@@ -36,8 +36,8 @@
+ #include <QCompleter>
+ #include <QTimer>
+ 
+-#include <nlohmann/json.hpp>
+-using namespace nlohmann;
++// #include <nlohmann/json.hpp>
++// using namespace nlohmann;
+ 
+ 
+ QgsValueRelationWidgetWrapper::QgsValueRelationWidgetWrapper( QgsVectorLayer *layer, int fieldIdx, QWidget *editor, QWidget *parent )

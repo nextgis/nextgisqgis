@@ -94,7 +94,7 @@ else()
 endif()
 
 set(QT_PREFIX ${CMAKE_INSTALL_PREFIX})
-set(CMAKE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+# set(CMAKE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # set the default locations where the targets (executables, libraries) will land when compiled
 # this is to allow running qgis from the source tree without having to actually do a "make install"
@@ -229,6 +229,11 @@ else()
     option(WITH_QGIS_PROCESS "Determines whether the standalone \"qgis_process\" tool should be built" ON)
     option(WITH_BINDINGS "Determines whether python bindings should be built" ON)
     option(ENABLE_TESTS "Build unit tests?" OFF)
+    
+    option(WITH_OAUTH2_PLUGIN "Build OAuth2 authentication method plugin" ON)
+    if(WITH_OAUTH2_PLUGIN)
+        set(HAVE_OAUTH2_PLUGIN TRUE)
+    endif()
 
     option(WITH_THREAD_LOCAL "Determines whether std::thread_local should be used" ON)
     if (WITH_THREAD_LOCAL)
@@ -376,7 +381,8 @@ if (CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
     message (STATUS "Debug output enabled")
     set(QGISDEBUG ON)
 else()
-    set(QGISDEBUG OFF)
+    set(QGISDEBUG ON)
+    # set(QGISDEBUG OFF)
 endif()
 
 # Prevent build when Qt api deprecated before this Qt version is used:
@@ -393,7 +399,8 @@ if (WITH_ANALYSIS AND NOT PREPARE_ONLY)
     set(HAVE_GEOREFERENCER TRUE)
 endif()
 
-find_anyproject(Spatialite REQUIRED)
+
+find_anyproject(Spatialite DEFAULT ON)
 if(SPATIALITE_FOUND)
     set(HAVE_SPATIALITE TRUE)
 endif()
@@ -408,6 +415,11 @@ if(OCI_FOUND)
     include_directories(${OCI_INCLUDE_DIRS}/oci)
     set(HAVE_ORACLE TRUE)
 endif()
+
+if(QWT_FOUND)
+    add_definitions(-DQWT_VERSION_STR="${QWT_VERSION}")
+endif()
+
 
 math(EXPR QGIS_VERSION_INT "${CPACK_PACKAGE_VERSION_MAJOR}*10000+${CPACK_PACKAGE_VERSION_MINOR}*100+${CPACK_PACKAGE_VERSION_PATCH}")
 

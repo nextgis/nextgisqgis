@@ -67,14 +67,14 @@
 #include "qgsstyle.h"
 #include "qgsprojutils.h"
 #include "qgsvaliditycheckregistry.h"
-#include "qgsnewsfeedparser.h"
+// #include "qgsnewsfeedparser.h"
 #include "qgsbookmarkmanager.h"
 #include "qgsstylemodel.h"
 #include "qgsconnectionregistry.h"
 #include "qgsremappingproxyfeaturesink.h"
 #include "qgsmeshlayer.h"
 #include "qgsfeaturestore.h"
-// #include "qgslocator.h"
+#include "qgslocator.h"
 #include "qgsreadwritelocker.h"
 // #include "qgsbabelformatregistry.h"
 
@@ -136,6 +136,21 @@
 
 #include <proj.h>
 
+#ifdef Q_OS_MAC
+static void translationPath(const QString &basePath,
+                               QList<QString> &localePaths)
+{
+    QDir baseDir(basePath);
+    QStringList filters;
+    filters << QString("ngstd_*.framework");
+    QStringList list = baseDir.entryList(filters);
+    for (const QString &subPath : list) {
+        const QString &libTrPath = basePath + "/" + subPath +
+                "/Resources/translations";
+        localePaths.append(libTrPath);
+    }
+}
+#endif // Q_OS_MAC
 
 #define CONN_POOL_MAX_CONCURRENT_CONNS      4
 
@@ -187,48 +202,95 @@ QgsApplication::QgsApplication( int &argc, char **argv, bool GUIenabled, const Q
 {
   *sPlatformName() = platformName;
 
-  if ( *sTranslation() != QLatin1String( "C" ) )
+  if ( *sTranslation() != QStringLiteral( "C" ) )
   {
-    mQgisTranslator = new QTranslator();
-    if ( mQgisTranslator->load( QStringLiteral( "qgis_" ) + *sTranslation(), i18nPath() ) )
-    {
-      installTranslator( mQgisTranslator );
-    }
-    else
-    {
-      QgsDebugMsgLevel( QStringLiteral( "loading of qgis translation failed %1/qgis_%2" ).arg( i18nPath(), *sTranslation() ), 2 );
+
+      QList<QString> localePaths;
+      localePaths.append(i18nPath());
+      #ifdef Q_OS_MAC
+        translationPath(QApplication::applicationDirPath() +
+                             "/Contents/Frameworks/", localePaths);
+        translationPath(QApplication::applicationDirPath() +
+                             "/../../Contents/Frameworks/", localePaths);
+        translationPath(QApplication::applicationDirPath() +
+                             "/../Library/Frameworks/", localePaths);
+        translationPath(QApplication::applicationDirPath() +
+                             "/../../../../Library/Frameworks/", localePaths);
+      #else
+        const QString &libTrPath = QApplication::applicationDirPath()
+                  + QStringLiteral("/../share/translations");
+        localePaths.append(libTrPath);
+      #endif // Q_OS_MAC
+
+        localePaths.append(QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+
+
+    // mQgisTranslator = new QTranslator();
+    QStringList translationFilters;
+    translationFilters << QString("ngstd_*%1*").arg(*sTranslation());
+    translationFilters << QString("qt_%1*").arg(*sTranslation());
+    translationFilters << QString("qtbase_%1*").arg(*sTranslation());
+    translationFilters << QString("qgis_%1*").arg(*sTranslation());
+    translationFilters << QString("qscintilla_%1*").arg(*sTranslation());
+
+    for(const QString &localePath : localePaths) {
+        QDir localeDir(localePath);
+        QStringList libTrList = localeDir.entryList(translationFilters);
+        QgsDebugMsgLevel( QStringLiteral( "Translation path ") + localePath + QStringLiteral( " -- get translation files: "), 2);
+        for (const QString &trFileName : libTrList) {
+            QString loadFile = localeDir.absoluteFilePath(trFileName);
+            QTranslator *translator = new QTranslator;
+            if (translator->load(loadFile)) {
+                QgsDebugMsgLevel( QStringLiteral( "Loaded translation file ") +  loadFile, 2);
+                installTranslator(translator);
+                mTranslators.push_back(translator);
+            }
+            else {
+                QgsDebugMsgLevel(QStringLiteral("Loading of translation failed [") + loadFile + QStringLiteral("]"), 2);
+                delete translator;
+            }
+        }
     }
 
-    /* Translation file for Qt.
-     * The strings from the QMenuBar context section are used by Qt/Mac to shift
-     * the About, Preferences and Quit items to the Mac Application menu.
-     * These items must be translated identically in both qt_ and qgis_ files.
-     */
-    QString qtTranslationsPath = QLibraryInfo::location( QLibraryInfo::TranslationsPath );
-// #ifdef __MINGW32__
-//     QString prefix = QDir( QString( "%1/../" ).arg( QApplication::applicationDirPath() ) ).absolutePath();
-//     qtTranslationsPath = prefix + qtTranslationsPath.mid( QLibraryInfo::location( QLibraryInfo::PrefixPath ).length() );
-// #endif
+//     if ( mQgisTranslator->load( QStringLiteral( "qgis_" ) + *sTranslation(), i18nPath() ) )
+//     {
+//       installTranslator( mQgisTranslator );
+//     }
+//     else
+//     {
+//       QgsDebugMsgLevel( QStringLiteral( "loading of qgis translation failed %1/qgis_%2" ).arg( i18nPath(), *sTranslation() ), 2 );
+//     }
 
-    mQtTranslator = new QTranslator();
-    if ( mQtTranslator->load( QStringLiteral( "qt_" ) + *sTranslation(), qtTranslationsPath ) )
-    {
-      installTranslator( mQtTranslator );
-    }
-    else
-    {
-      QgsDebugMsgLevel( QStringLiteral( "loading of qt translation failed %1/qt_%2" ).arg( qtTranslationsPath, *sTranslation() ), 2 );
-    }
+//     /* Translation file for Qt.
+//      * The strings from the QMenuBar context section are used by Qt/Mac to shift
+//      * the About, Preferences and Quit items to the Mac Application menu.
+//      * These items must be translated identically in both qt_ and qgis_ files.
+//      */
+//     QString qtTranslationsPath = QLibraryInfo::location( QLibraryInfo::TranslationsPath );
+// // #ifdef __MINGW32__
+// //     QString prefix = QDir( QString( "%1/../" ).arg( QApplication::applicationDirPath() ) ).absolutePath();
+// //     qtTranslationsPath = prefix + qtTranslationsPath.mid( QLibraryInfo::location( QLibraryInfo::PrefixPath ).length() );
+// // #endif
 
-    mQtBaseTranslator = new QTranslator();
-    if ( mQtBaseTranslator->load( QStringLiteral( "qtbase_" ) + *sTranslation(), qtTranslationsPath ) )
-    {
-      installTranslator( mQtBaseTranslator );
-    }
-    else
-    {
-      QgsDebugMsgLevel( QStringLiteral( "loading of qtbase translation failed %1/qt_%2" ).arg( qtTranslationsPath, *sTranslation() ), 2 );
-    }
+//     mQtTranslator = new QTranslator();
+//     if ( mQtTranslator->load( QStringLiteral( "qt_" ) + *sTranslation(), qtTranslationsPath ) )
+//     {
+//       installTranslator( mQtTranslator );
+//     }
+//     else
+//     {
+//       QgsDebugMsgLevel( QStringLiteral( "loading of qt translation failed %1/qt_%2" ).arg( qtTranslationsPath, *sTranslation() ), 2 );
+//     }
+
+//     mQtBaseTranslator = new QTranslator();
+//     if ( mQtBaseTranslator->load( QStringLiteral( "qtbase_" ) + *sTranslation(), qtTranslationsPath ) )
+//     {
+//       installTranslator( mQtBaseTranslator );
+//     }
+//     else
+//     {
+//       QgsDebugMsgLevel( QStringLiteral( "loading of qtbase translation failed %1/qt_%2" ).arg( qtTranslationsPath, *sTranslation() ), 2 );
+//     }
   }
 
   mApplicationMembers = new ApplicationMembers();
@@ -247,13 +309,13 @@ void QgsApplication::init( QString profileFolder )
     {
         QString config;
       #ifdef Q_OS_MAC
-        config = QLatin1String("Library/Application Support");
+        config = QStringLiteral("Library/Application Support");
       #else
-        config = QLatin1String(".config");
+        config = QStringLiteral(".config");
       #endif
         profileFolder = QString( "%1%2qgis%3" )
                 .arg( QDir::homePath() + QDir::separator() + config + QDir::separator())
-                .arg( QDir::separator() + QLatin1String(VENDOR) + QDir::separator() )
+                .arg( QDir::separator() + QStringLiteral(VENDOR) + QDir::separator() )
                 .arg( VERSION_INT / 10000 );
         qputenv("QGIS_CUSTOM_CONFIG_PATH", profileFolder.toUtf8());        
     //   profileFolder = QStandardPaths::standardLocations( QStandardPaths::AppDataLocation ).value( 0 );
@@ -295,9 +357,9 @@ void QgsApplication::init( QString profileFolder )
     qRegisterMetaType<QgsGeometry>( "QgsGeometry" );
     qRegisterMetaType<QgsDatumTransform::GridDetails>( "QgsDatumTransform::GridDetails" );
     qRegisterMetaType<QgsDatumTransform::TransformDetails>( "QgsDatumTransform::TransformDetails" );
-    qRegisterMetaType<QgsNewsFeedParser::Entry>( "QgsNewsFeedParser::Entry" );
+    // qRegisterMetaType<QgsNewsFeedParser::Entry>( "QgsNewsFeedParser::Entry" );
     qRegisterMetaType<QgsRectangle>( "QgsRectangle" );
-    // qRegisterMetaType<QgsLocatorResult>( "QgsLocatorResult" );
+    qRegisterMetaType<QgsLocatorResult>( "QgsLocatorResult" );
     qRegisterMetaType<QgsProcessingModelChildParameterSource>( "QgsProcessingModelChildParameterSource" );
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     // Qt6 documentation says these are not needed anymore (https://www.qt.io/blog/whats-new-in-qmetatype-qvariant) #spellok
@@ -462,9 +524,12 @@ QgsApplication::~QgsApplication()
 {
   delete mDataItemProviderRegistry;
   delete mApplicationMembers;
-  delete mQgisTranslator;
-  delete mQtTranslator;
-  delete mQtBaseTranslator;
+//   delete mQgisTranslator;
+//   delete mQtTranslator;
+//   delete mQtBaseTranslator;
+  for (QTranslator *translator : mTranslators) {
+      delete translator;
+  }
 
   // we do this here as well as in exitQgis() -- it's safe to call as often as we want,
   // and there's just a *chance* that someone hasn't properly called exitQgis prior to
@@ -2754,4 +2819,9 @@ QgsApplication::ApplicationMembers *QgsApplication::members()
       sApplicationMembers = new ApplicationMembers();
     return sApplicationMembers;
   }
+}
+
+QString QgsApplication::fontsPath()
+{
+    return pkgDataPath() + QDir::separator() + QStringLiteral( "fonts" );
 }

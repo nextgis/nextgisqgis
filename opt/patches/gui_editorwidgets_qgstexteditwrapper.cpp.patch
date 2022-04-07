@@ -1,0 +1,24 @@
+--- a/src/gui/editorwidgets/qgstexteditwrapper.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/gui/editorwidgets/qgstexteditwrapper.cpp	2022-04-06 18:40:09.000000000 +0300
+@@ -24,7 +24,7 @@
+ #include "qgslogger.h"
+ 
+ #include <QSettings>
+-#include <nlohmann/json.hpp>
++// #include <nlohmann/json.hpp>
+ 
+ QgsTextEditWrapper::QgsTextEditWrapper( QgsVectorLayer *layer, int fieldIdx, QWidget *editor, QWidget *parent )
+   : QgsEditorWidgetWrapper( layer, fieldIdx, editor, parent )
+@@ -93,9 +93,10 @@
+       mInvalidJSON = false;
+       return qjson;
+     }
+-    if ( json::accept( v.toUtf8() ) )
++    QString error;
++    QVariant qjson = QgsJsonUtils::parseJson( v.toStdString(), error );
++    if ( error.isEmpty() )
+     {
+-      QVariant qjson = QgsJsonUtils::parseJson( v.toStdString() );
+       mInvalidJSON = false;
+       return qjson;
+     }

@@ -18,7 +18,7 @@
 #include "qgslayout.h"
 // #include "qgslocator.h"
 #include "qgsnetworkaccessmanager.h"
-#include "qgsnewsfeedparser.h"
+// #include "qgsnewsfeedparser.h"
 #include "qgsprocessing.h"
 #include "qgsapplication.h"
 #include "qgsgeometryoptions.h"

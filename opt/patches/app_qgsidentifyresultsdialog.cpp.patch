@@ -1,0 +1,90 @@
+--- a/src/app/qgsidentifyresultsdialog.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/app/qgsidentifyresultsdialog.cpp	2022-04-06 18:40:09.000000000 +0300
+@@ -72,7 +72,7 @@
+ #include "qgsrasterlayer.h"
+ #include "qgsvectorlayer.h"
+ #include "qgsvectordataprovider.h"
+-#include "qgsvectortilelayer.h"
++// #include "qgsvectortilelayer.h"
+ #include "qgsrelationmanager.h"
+ #include "qgswebview.h"
+ #include "qgswebframe.h"
+@@ -91,7 +91,7 @@
+ #include "qgspointcloudlayer.h"
+ #include "qgscolorrampimpl.h"
+ 
+-#include <nlohmann/json.hpp>
++// #include <nlohmann/json.hpp>
+ 
+ QgsIdentifyResultsWebView::QgsIdentifyResultsWebView( QWidget *parent ) : QgsWebView( parent )
+ {
+@@ -513,9 +513,9 @@
+       addFeature( qobject_cast<QgsMeshLayer *>( result.mLayer ), result.mLabel, result.mAttributes, result.mDerivedAttributes );
+       break;
+ 
+-    case QgsMapLayerType::VectorTileLayer:
+-      addFeature( qobject_cast<QgsVectorTileLayer *>( result.mLayer ), result.mLabel, result.mFields, result.mFeature, result.mDerivedAttributes );
+-      break;
++    // case QgsMapLayerType::VectorTileLayer:
++    //   addFeature( qobject_cast<QgsVectorTileLayer *>( result.mLayer ), result.mLabel, result.mFields, result.mFeature, result.mDerivedAttributes );
++    //   break;
+     case QgsMapLayerType::PointCloudLayer:
+       addFeature( qobject_cast<QgsPointCloudLayer *>( result.mLayer ), result.mLabel, result.mAttributes );
+       break;
+@@ -1030,7 +1030,7 @@
+         }
+         else
+         {
+-          formattedValue = QString::fromStdString( QgsJsonUtils::jsonFromVariant( value ).dump() );
++          formattedValue = QgsJsonUtils::dump( QgsJsonUtils::jsonFromVariant( value ) );
+         }
+       }
+       QTreeWidgetItem *attrItem = new QTreeWidgetItem( { fields.at( i ).name(), formattedValue } );
+@@ -1198,7 +1198,7 @@
+     }
+   }
+ }
+-
++/*
+ void QgsIdentifyResultsDialog::addFeature( QgsVectorTileLayer *layer,
+     const QString &label,
+     const QgsFields &fields,
+@@ -1284,7 +1284,7 @@
+ 
+   highlightFeature( featItem );
+ }
+-
++*/
+ void QgsIdentifyResultsDialog::addFeature( QgsPointCloudLayer *layer,
+     const QString &label,
+     const QMap< QString, QString > &attributes )
+@@ -1474,9 +1474,9 @@
+   QgsMapLayer *layer = QgsIdentifyResultsDialog::layer( item );
+   QgsVectorLayer *vlayer = vectorLayer( item );
+   QgsRasterLayer *rlayer = rasterLayer( item );
+-  QgsVectorTileLayer *vtlayer = vectorTileLayer( item );
++//   QgsVectorTileLayer *vtlayer = vectorTileLayer( item );
+   QgsPointCloudLayer *pclayer = pointCloudLayer( item );
+-  if ( !vlayer && !rlayer && !vtlayer && !pclayer )
++  if ( !vlayer && !rlayer && /*!vtlayer &&*/ !pclayer )
+   {
+     QgsDebugMsg( QStringLiteral( "Item does not belong to a layer." ) );
+     return;
+@@ -1859,7 +1859,7 @@
+     return nullptr;
+   return qobject_cast<QgsMeshLayer *>( item->data( 0, Qt::UserRole ).value<QObject *>() );
+ }
+-
++/*
+ QgsVectorTileLayer *QgsIdentifyResultsDialog::vectorTileLayer( QTreeWidgetItem *item )
+ {
+   item = layerItem( item );
+@@ -1867,7 +1867,7 @@
+     return nullptr;
+   return qobject_cast<QgsVectorTileLayer *>( item->data( 0, Qt::UserRole ).value<QObject *>() );
+ }
+-
++*/
+ QgsPointCloudLayer *QgsIdentifyResultsDialog::pointCloudLayer( QTreeWidgetItem *item )
+ {
+   item = layerItem( item );

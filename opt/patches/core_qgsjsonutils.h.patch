@@ -1,5 +1,5 @@
 --- a/src/core/qgsjsonutils.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/qgsjsonutils.h	2022-03-21 09:56:35.000000000 +0300
++++ b/src/core/qgsjsonutils.h	2022-04-06 18:40:08.000000000 +0300
 @@ -27,6 +27,9 @@
  
  class QTextCodec;
@@ -10,12 +10,16 @@
  /**
   * \ingroup core
   * \class QgsJsonExporter
-@@ -356,7 +359,7 @@
-      * \note Not available in Python bindings
-      * \since QGIS 3.8
+@@ -383,6 +386,12 @@
       */
--    static json jsonFromVariant( const QVariant &v ) SIP_SKIP;
-+    // static json jsonFromVariant( const QVariant &v ) SIP_SKIP;
+     static QVariant parseJson( const QString &jsonString ) SIP_SKIP;
  
-     /**
-      * Converts JSON \a jsonString to a QVariant, in case of parsing error an invalid QVariant is returned and an
++    static bool is_array(const json &obj) SIP_SKIP;
++    static bool is_object(const json &obj) SIP_SKIP;
++    static bool is_number_integer(const json &obj) SIP_SKIP;
++    static QString dump(const json &obj) SIP_SKIP;
++    static json parse( const std::string &jsonString, QString &error ) SIP_SKIP;
++
+ };
+ 
+ #endif // QGSJSONUTILS_H

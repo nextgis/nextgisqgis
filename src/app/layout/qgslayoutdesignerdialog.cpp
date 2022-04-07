@@ -76,7 +76,7 @@
 #include "qgsprojectviewsettings.h"
 #include "qgslayoutlabelwidget.h"
 #include "qgslabelingresults.h"
-#include "ui_defaults.h"
+#include "ngui_defaults.h"
 
 #include <QShortcut>
 #include <QComboBox>

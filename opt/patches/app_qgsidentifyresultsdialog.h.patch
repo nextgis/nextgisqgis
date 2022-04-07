@@ -1,0 +1,25 @@
+--- a/src/app/qgsidentifyresultsdialog.h	2022-02-18 15:06:10.000000000 +0300
++++ b/src/app/qgsidentifyresultsdialog.h	2022-04-06 18:40:09.000000000 +0300
+@@ -160,11 +160,11 @@
+      * Adds results from vector tile layer
+      * \since QGIS 3.14
+      */
+-    void addFeature( QgsVectorTileLayer *layer,
++    /*void addFeature( QgsVectorTileLayer *layer,
+                      const QString &label,
+                      const QgsFields &fields,
+                      const QgsFeature &feature,
+-                     const QMap< QString, QString > &derivedAttributes );
++                     const QMap< QString, QString > &derivedAttributes );*/
+ 
+     /**
+      * Adds results from point cloud layer
+@@ -300,7 +300,7 @@
+     QgsVectorLayer *vectorLayer( QTreeWidgetItem *item );
+     QgsRasterLayer *rasterLayer( QTreeWidgetItem *item );
+     QgsMeshLayer *meshLayer( QTreeWidgetItem *item );
+-    QgsVectorTileLayer *vectorTileLayer( QTreeWidgetItem *item );
++    // QgsVectorTileLayer *vectorTileLayer( QTreeWidgetItem *item );
+     QgsPointCloudLayer *pointCloudLayer( QTreeWidgetItem *item );
+     QTreeWidgetItem *featureItem( QTreeWidgetItem *item );
+     QTreeWidgetItem *layerItem( QTreeWidgetItem *item );

@@ -1,4 +1,4 @@
-include(CopyResources)
+# include(CopyResources)
 
 # OS X app/doc icons
 if (APPLE)
@@ -7,6 +7,10 @@ endif()
 
 file(GLOB_RECURSE ICON_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.png)
 
-ADD_QGIS_RESOURCES("${CMAKE_CURRENT_SOURCE_DIR}" "images/icons" DEST_ICON_FILES "${ICON_FILES}")
+# ADD_QGIS_RESOURCES("${CMAKE_CURRENT_SOURCE_DIR}" "images/icons" DEST_ICON_FILES "${ICON_FILES}")
 
-add_custom_target(icons ALL DEPENDS ${DEST_ICON_FILES})
+# add_custom_target(icons ALL DEPENDS ${DEST_ICON_FILES})
+
+if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL)
+    install(FILES ${ICON_FILES} DESTINATION ${INSTALL_SHARE_DIR}/images/icons)
+endif()

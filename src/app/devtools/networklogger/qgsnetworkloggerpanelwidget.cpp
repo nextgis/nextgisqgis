@@ -202,7 +202,7 @@ QgsNetworkLoggerPanelWidget::QgsNetworkLoggerPanelWidget( QgsNetworkLogger *logg
     QTextStream fout( &exportFile );
 
     const QVariant value = mLogger->rootGroup()->toVariant();
-    const QString json = QString::fromStdString( QgsJsonUtils::jsonFromVariant( value ).dump( 2 ) );
+    const QString json = QgsJsonUtils::dump( QgsJsonUtils::jsonFromVariant( value ) );
 
     fout << json;
   } );
