@@ -1,0 +1,20 @@
+--- a/src/app/devtools/networklogger/qgsnetworkloggernode.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/app/devtools/networklogger/qgsnetworkloggernode.cpp	2022-04-06 18:40:09.000000000 +0300
+@@ -24,7 +24,7 @@
+ #include <QDesktopServices>
+ #include <QApplication>
+ #include <QClipboard>
+-#include <nlohmann/json.hpp>
++// #include <nlohmann/json.hpp>
+ 
+ //
+ // QgsNetworkLoggerNode
+@@ -327,7 +327,7 @@
+   QObject::connect( copyJsonAction, &QAction::triggered, openUrlAction, [ = ]
+   {
+     const QVariant value = toVariant();
+-    const QString json = QString::fromStdString( QgsJsonUtils::jsonFromVariant( value ).dump( 2 ) );
++    const QString json = QgsJsonUtils::dump( QgsJsonUtils::jsonFromVariant( value ) );
+     QApplication::clipboard()->setText( json );
+ 
+   } );

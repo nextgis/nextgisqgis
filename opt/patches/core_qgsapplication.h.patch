@@ -1,5 +1,5 @@
 --- a/src/core/qgsapplication.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/qgsapplication.h	2022-03-23 21:49:44.000000000 +0300
++++ b/src/core/qgsapplication.h	2022-04-06 18:40:08.000000000 +0300
 @@ -37,7 +37,7 @@
  class QgsColorSchemeRegistry;
  class QgsPaintEffectRegistry;
@@ -30,7 +30,15 @@
  #ifndef SIP_RUN
  
      /**
-@@ -581,9 +584,9 @@
+@@ -369,6 +372,7 @@
+ 
+     //! Returns the common root path of all application data directories.
+     static QString pkgDataPath();
++    static QString fontsPath();
+ 
+     //! Returns the path to the currently active theme directory.
+     static QString activeThemePath();
+@@ -581,9 +585,9 @@
      static QString cfgIntDir() SIP_SKIP;
  #endif
      //! Returns path to the source directory. Valid only when running from build directory
@@ -42,7 +50,7 @@
  
      /**
       * Sets the GDAL_SKIP environment variable to include the specified driver
-@@ -772,13 +775,13 @@
+@@ -772,13 +776,13 @@
       * Returns the application's GPS connection registry, used for managing GPS connections.
       * \since QGIS 3.0
       */
@@ -58,7 +66,7 @@
  
      /**
       * Returns the application's plugin layer registry, used for managing plugin layer types.
-@@ -914,7 +917,7 @@
+@@ -914,7 +918,7 @@
       * Returns registry of available external storage implementations.
       * \since QGIS 3.20
       */
@@ -67,7 +75,21 @@
  
      /**
       * Returns the registry of data repositories
-@@ -1097,8 +1100,8 @@
+@@ -1078,9 +1082,10 @@
+     QMap<QString, QIcon> mIconCache;
+     QMap<Cursor, QCursor> mCursorCache;
+ 
+-    QTranslator *mQgisTranslator = nullptr;
+-    QTranslator *mQtTranslator = nullptr;
+-    QTranslator *mQtBaseTranslator = nullptr;
++    // QTranslator *mQgisTranslator = nullptr;
++    // QTranslator *mQtTranslator = nullptr;
++    // QTranslator *mQtBaseTranslator = nullptr;
++    QVector<QTranslator*> mTranslators;
+ 
+     QgsDataItemProviderRegistry *mDataItemProviderRegistry = nullptr;
+     QgsAuthManager *mAuthManager = nullptr;
+@@ -1097,8 +1102,8 @@
        QgsLocalizedDataPathRegistry *mLocalizedDataPathRegistry = nullptr;
        QgsNumericFormatRegistry *mNumericFormatRegistry = nullptr;
        QgsFieldFormatterRegistry *mFieldFormatterRegistry = nullptr;
@@ -78,7 +100,7 @@
        QgsNetworkContentFetcherRegistry *mNetworkContentFetcherRegistry = nullptr;
        QgsScaleBarRendererRegistry *mScaleBarRendererRegistry = nullptr;
        QgsValidityCheckRegistry *mValidityCheckRegistry = nullptr;
-@@ -1109,7 +1112,7 @@
+@@ -1109,7 +1114,7 @@
        QgsProcessingRegistry *mProcessingRegistry = nullptr;
        QgsConnectionRegistry *mConnectionRegistry = nullptr;
        std::unique_ptr<QgsProjectStorageRegistry> mProjectStorageRegistry;

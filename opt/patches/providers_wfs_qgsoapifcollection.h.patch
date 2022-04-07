@@ -1,0 +1,14 @@
+--- a/src/providers/wfs/qgsoapifcollection.h	2022-02-18 15:06:10.000000000 +0300
++++ b/src/providers/wfs/qgsoapifcollection.h	2022-04-06 18:40:09.000000000 +0300
+@@ -23,8 +23,9 @@
+ #include "qgsrectangle.h"
+ #include "qgslayermetadata.h"
+ 
+-#include <nlohmann/json.hpp>
+-using namespace nlohmann;
++// #include <nlohmann/json.hpp>
++// using namespace nlohmann;
++#include "qgsjsonutils.h"
+ #include <vector>
+ 
+ //! Describes a collection

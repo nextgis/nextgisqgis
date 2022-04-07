@@ -27,9 +27,9 @@ class QgsVersionInfo;
 class QListView;
 class QLabel;
 class QSplitter;
-class QgsNewsFeedParser;
-class QgsNewsFeedProxyModel;
-class QgsNewsItemListItemDelegate;
+// class QgsNewsFeedParser;
+// class QgsNewsFeedProxyModel;
+// class QgsNewsItemListItemDelegate;
 
 class QgsWelcomePage : public QWidget
 {
@@ -52,20 +52,20 @@ class QgsWelcomePage : public QWidget
     void projectPinned( int row );
     void projectUnpinned( int row );
 
-  protected:
-    bool eventFilter( QObject *obj, QEvent *event ) override;
+//   protected:
+//     bool eventFilter( QObject *obj, QEvent *event ) override;
 
   private slots:
     void recentProjectItemActivated( const QModelIndex &index );
     void templateProjectItemActivated( const QModelIndex &index );
-    void newsItemActivated( const QModelIndex &index );
+    // void newsItemActivated( const QModelIndex &index );
     void versionInfoReceived();
     void showContextMenuForProjects( QPoint point );
     void showContextMenuForTemplates( QPoint point );
-    void showContextMenuForNews( QPoint point );
+    // void showContextMenuForNews( QPoint point );
 
-  public slots:
-    void updateNewsFeedVisibility();
+//   public slots:
+//     void updateNewsFeedVisibility();
 
   private:
     QgsRecentProjectItemsModel *mRecentProjectsModel = nullptr;
@@ -77,11 +77,11 @@ class QgsWelcomePage : public QWidget
     QStandardItemModel *mTemplateProjectsModel = nullptr;
     QSplitter *mSplitter = nullptr;
     QSplitter *mSplitter2 = nullptr;
-    QLabel *mNewsFeedTitle = nullptr;
-    QgsNewsFeedParser *mNewsFeedParser = nullptr;
-    QgsNewsFeedProxyModel *mNewsFeedModel = nullptr;
-    QListView *mNewsFeedListView = nullptr;
-    QgsNewsItemListItemDelegate *mNewsDelegate = nullptr;
+    // QLabel *mNewsFeedTitle = nullptr;
+    // QgsNewsFeedParser *mNewsFeedParser = nullptr;
+    // QgsNewsFeedProxyModel *mNewsFeedModel = nullptr;
+    // QListView *mNewsFeedListView = nullptr;
+    // QgsNewsItemListItemDelegate *mNewsDelegate = nullptr;
 };
 
 #endif // QGSWELCOMEPAGE_H

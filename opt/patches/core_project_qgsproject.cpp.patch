@@ -1,5 +1,5 @@
 --- a/src/core/project/qgsproject.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/project/qgsproject.cpp	2022-03-21 09:56:36.000000000 +0300
++++ b/src/core/project/qgsproject.cpp	2022-04-06 18:40:09.000000000 +0300
 @@ -61,7 +61,7 @@
  #include "qgsprojectviewsettings.h"
  #include "qgsprojectdisplaysettings.h"

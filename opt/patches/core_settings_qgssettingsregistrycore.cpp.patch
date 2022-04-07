@@ -1,15 +1,18 @@
 --- a/src/core/settings/qgssettingsregistrycore.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/settings/qgssettingsregistrycore.cpp	2022-03-21 09:56:35.000000000 +0300
-@@ -16,7 +16,7 @@
++++ b/src/core/settings/qgssettingsregistrycore.cpp	2022-04-06 18:40:09.000000000 +0300
+@@ -16,9 +16,9 @@
  #include "qgssettingsregistrycore.h"
  
  #include "qgslayout.h"
 -#include "qgslocator.h"
 +// #include "qgslocator.h"
  #include "qgsnetworkaccessmanager.h"
- #include "qgsnewsfeedparser.h"
+-#include "qgsnewsfeedparser.h"
++// #include "qgsnewsfeedparser.h"
  #include "qgsprocessing.h"
-@@ -30,9 +30,9 @@
+ #include "qgsapplication.h"
+ #include "qgsgeometryoptions.h"
+@@ -30,16 +30,16 @@
  {
    addSettingsEntry( &QgsLayout::settingsSearchPathForTemplates );
  
@@ -22,3 +25,14 @@
  
    addSettingsEntry( &QgsNetworkAccessManager::settingsNetworkTimeout );
  
+-  addSettingsEntry( &QgsNewsFeedParser::settingsFeedLastFetchTime );
+-  addSettingsEntry( &QgsNewsFeedParser::settingsFeedLanguage );
+-  addSettingsEntry( &QgsNewsFeedParser::settingsFeedLatitude );
+-  addSettingsEntry( &QgsNewsFeedParser::settingsFeedLongitude );
++//   addSettingsEntry( &QgsNewsFeedParser::settingsFeedLastFetchTime );
++//   addSettingsEntry( &QgsNewsFeedParser::settingsFeedLanguage );
++//   addSettingsEntry( &QgsNewsFeedParser::settingsFeedLatitude );
++//   addSettingsEntry( &QgsNewsFeedParser::settingsFeedLongitude );
+ 
+   addSettingsEntry( &QgsProcessing::settingsPreferFilenameAsLayerName );
+   addSettingsEntry( &QgsProcessing::settingsTempPath );

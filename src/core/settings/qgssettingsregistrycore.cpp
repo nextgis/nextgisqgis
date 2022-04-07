@@ -18,7 +18,7 @@
 #include "qgslayout.h"
 // #include "qgslocator.h"
 #include "qgsnetworkaccessmanager.h"
-#include "qgsnewsfeedparser.h"
+// #include "qgsnewsfeedparser.h"
 #include "qgsprocessing.h"
 #include "qgsapplication.h"
 #include "qgsgeometryoptions.h"
@@ -36,10 +36,10 @@ QgsSettingsRegistryCore::QgsSettingsRegistryCore()
 
   addSettingsEntry( &QgsNetworkAccessManager::settingsNetworkTimeout );
 
-  addSettingsEntry( &QgsNewsFeedParser::settingsFeedLastFetchTime );
-  addSettingsEntry( &QgsNewsFeedParser::settingsFeedLanguage );
-  addSettingsEntry( &QgsNewsFeedParser::settingsFeedLatitude );
-  addSettingsEntry( &QgsNewsFeedParser::settingsFeedLongitude );
+//   addSettingsEntry( &QgsNewsFeedParser::settingsFeedLastFetchTime );
+//   addSettingsEntry( &QgsNewsFeedParser::settingsFeedLanguage );
+//   addSettingsEntry( &QgsNewsFeedParser::settingsFeedLatitude );
+//   addSettingsEntry( &QgsNewsFeedParser::settingsFeedLongitude );
 
   addSettingsEntry( &QgsProcessing::settingsPreferFilenameAsLayerName );
   addSettingsEntry( &QgsProcessing::settingsTempPath );

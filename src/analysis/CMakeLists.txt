@@ -28,6 +28,7 @@ if (PREPARE_ONLY)
 else(PREPARE_ONLY)
 
 set(QGIS_ANALYSIS_SRCS
+qgsanalysis.cpp
 
 georeferencing/qgsgcpgeometrytransformer.cpp
 georeferencing/qgsgcptransformer.cpp
@@ -62,8 +63,8 @@ processing/qgsalgorithmarraytranslatedfeatures.cpp
 processing/qgsalgorithmaspect.cpp
 processing/qgsalgorithmassignprojection.cpp
 processing/qgsalgorithmattributeindex.cpp
-# processing/qgsalgorithmbatchgeocode.cpp
-# processing/qgsalgorithmbatchnominatimgeocode.cpp
+processing/qgsalgorithmbatchgeocode.cpp
+processing/qgsalgorithmbatchnominatimgeocode.cpp
 processing/qgsalgorithmboundary.cpp
 processing/qgsalgorithmboundingbox.cpp
 processing/qgsalgorithmbuffer.cpp
@@ -499,7 +500,7 @@ target_include_directories(${LIB_NAME} PUBLIC
   ${CMAKE_BINARY_DIR}/src/analysis
 )
 
-GENERATE_EXPORT_HEADER(
+generate_export_header(
     ${LIB_NAME}
     BASE_NAME ANALYSIS
     EXPORT_FILE_NAME qgis_analysis.h

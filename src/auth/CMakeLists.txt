@@ -35,10 +35,13 @@ set(AUTH_PLUGINS
     esritoken
     identcert
     maptiler_hmacsha256
-    # oauth2
     pkipaths
     pkipkcs12
 )
+
+if(WITH_OAUTH2_PLUGIN)
+    set(AUTH_PLUGINS ${AUTH_PLUGINS} oauth2)
+endif()
 
 macro(add_provider PLUGIN_NAME)
     include_directories (${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/core)

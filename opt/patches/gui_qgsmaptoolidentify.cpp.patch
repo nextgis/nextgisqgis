@@ -1,0 +1,48 @@
+--- a/src/gui/qgsmaptoolidentify.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/gui/qgsmaptoolidentify.cpp	2022-04-06 18:40:09.000000000 +0300
+@@ -38,9 +38,9 @@
+ #include "qgsvectordataprovider.h"
+ #include "qgsvectorlayer.h"
+ #include "qgsvectorlayertemporalproperties.h"
+-#include "qgsvectortilelayer.h"
+-#include "qgsvectortilemvtdecoder.h"
+-#include "qgsvectortileutils.h"
++// #include "qgsvectortilelayer.h"
++// #include "qgsvectortilemvtdecoder.h"
++// #include "qgsvectortileutils.h"
+ #include "qgsproject.h"
+ #include "qgsrenderer.h"
+ #include "qgstiles.h"
+@@ -229,10 +229,10 @@
+   {
+     return identifyMeshLayer( results, qobject_cast<QgsMeshLayer *>( layer ), geometry, identifyContext );
+   }
+-  else if ( layer->type() == QgsMapLayerType::VectorTileLayer && layerType.testFlag( VectorTileLayer ) )
+-  {
+-    return identifyVectorTileLayer( results, qobject_cast<QgsVectorTileLayer *>( layer ), geometry, identifyContext );
+-  }
++//   else if ( layer->type() == QgsMapLayerType::VectorTileLayer && layerType.testFlag( VectorTileLayer ) )
++//   {
++//     return identifyVectorTileLayer( results, qobject_cast<QgsVectorTileLayer *>( layer ), geometry, identifyContext );
++//   }
+   else if ( layer->type() == QgsMapLayerType::PointCloudLayer && layerType.testFlag( PointCloudLayer ) )
+   {
+     return identifyPointCloudLayer( results, qobject_cast<QgsPointCloudLayer *>( layer ), geometry, identifyContext );
+@@ -383,7 +383,7 @@
+ 
+   return true;
+ }
+-
++/*
+ bool QgsMapToolIdentify::identifyVectorTileLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsVectorTileLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext )
+ {
+   Q_UNUSED( identifyContext )
+@@ -504,7 +504,7 @@
+ 
+   return featureCount > 0;
+ }
+-
++*/
+ bool QgsMapToolIdentify::identifyPointCloudLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsPointCloudLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext )
+ {
+   Q_UNUSED( identifyContext )

@@ -1,0 +1,11 @@
+--- a/src/providers/wms/qgswmsdataitems.h	2022-02-18 15:06:10.000000000 +0300
++++ b/src/providers/wms/qgswmsdataitems.h	2022-04-06 18:40:08.000000000 +0300
+@@ -20,7 +20,7 @@
+ #include "qgsdataitemprovider.h"
+ #include "qgsdatasourceuri.h"
+ #include "qgswmsprovider.h"
+-#include "qgsgeonodeconnection.h"
++// #include "qgsgeonodeconnection.h"
+ #include "qgsconnectionsitem.h"
+ 
+ class QgsWmsCapabilitiesDownload;

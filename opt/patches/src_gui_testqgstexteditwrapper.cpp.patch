@@ -1,0 +1,11 @@
+--- a/tests/src/gui/testqgstexteditwrapper.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/tests/src/gui/testqgstexteditwrapper.cpp	2022-04-06 18:40:09.000000000 +0300
+@@ -26,7 +26,7 @@
+ #include <editorwidgets/qgstexteditwrapper.h>
+ #include <QTableWidget>
+ #include "qgsgui.h"
+-#include <nlohmann/json.hpp>
++// #include <nlohmann/json.hpp>
+ #include "qgsjsonutils.h"
+ 
+ class TestQgsTextEditWrapper : public QObject

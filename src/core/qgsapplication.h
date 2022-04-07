@@ -372,6 +372,7 @@ class CORE_EXPORT QgsApplication : public QApplication
 
     //! Returns the common root path of all application data directories.
     static QString pkgDataPath();
+    static QString fontsPath();
 
     //! Returns the path to the currently active theme directory.
     static QString activeThemePath();
@@ -1081,9 +1082,10 @@ class CORE_EXPORT QgsApplication : public QApplication
     QMap<QString, QIcon> mIconCache;
     QMap<Cursor, QCursor> mCursorCache;
 
-    QTranslator *mQgisTranslator = nullptr;
-    QTranslator *mQtTranslator = nullptr;
-    QTranslator *mQtBaseTranslator = nullptr;
+    // QTranslator *mQgisTranslator = nullptr;
+    // QTranslator *mQtTranslator = nullptr;
+    // QTranslator *mQtBaseTranslator = nullptr;
+    QVector<QTranslator*> mTranslators;
 
     QgsDataItemProviderRegistry *mDataItemProviderRegistry = nullptr;
     QgsAuthManager *mAuthManager = nullptr;

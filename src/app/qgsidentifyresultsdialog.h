@@ -160,11 +160,11 @@ class APP_EXPORT QgsIdentifyResultsDialog: public QDialog, private Ui::QgsIdenti
      * Adds results from vector tile layer
      * \since QGIS 3.14
      */
-    void addFeature( QgsVectorTileLayer *layer,
+    /*void addFeature( QgsVectorTileLayer *layer,
                      const QString &label,
                      const QgsFields &fields,
                      const QgsFeature &feature,
-                     const QMap< QString, QString > &derivedAttributes );
+                     const QMap< QString, QString > &derivedAttributes );*/
 
     /**
      * Adds results from point cloud layer
@@ -300,7 +300,7 @@ class APP_EXPORT QgsIdentifyResultsDialog: public QDialog, private Ui::QgsIdenti
     QgsVectorLayer *vectorLayer( QTreeWidgetItem *item );
     QgsRasterLayer *rasterLayer( QTreeWidgetItem *item );
     QgsMeshLayer *meshLayer( QTreeWidgetItem *item );
-    QgsVectorTileLayer *vectorTileLayer( QTreeWidgetItem *item );
+    // QgsVectorTileLayer *vectorTileLayer( QTreeWidgetItem *item );
     QgsPointCloudLayer *pointCloudLayer( QTreeWidgetItem *item );
     QTreeWidgetItem *featureItem( QTreeWidgetItem *item );
     QTreeWidgetItem *layerItem( QTreeWidgetItem *item );

@@ -94,6 +94,21 @@ subpaths = [
     "tests/src/gui/testqgsvaluerelationwidgetwrapper.cpp",
     "src/providers/wfs/qgswfsdataitems.cpp",
     "src/analysis/processing/qgsnativealgorithms.cpp",
+    "src/gui/editorwidgets/qgsvaluerelationwidgetwrapper.cpp",
+    "src/gui/processing/qgsprocessingalgorithmdialogbase.cpp",
+    "src/app/qgisapp.cpp",
+    "src/app/qgisapp.h",
+    "src/app/layout/qgslayoutdesignerdialog.cpp",
+    "src/app/qgisappinterface.cpp",
+    "src/app/qgisappinterface.h",
+    "src/gui/qgisinterface.h",
+    "src/app/qgsidentifyresultsdialog.h",
+    "src/app/qgslayerstylingwidget.cpp",
+    "src/app/main.cpp",
+    "src/app/qgswelcomepage.cpp",
+    "src/app/qgswelcomepage.h",
+    "src/app/options/qgsoptions.cpp",
+    "src/app/qgsprojectlistitemdelegate.cpp", 
 ]
 
 def run_shell(args):

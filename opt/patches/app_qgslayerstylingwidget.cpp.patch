@@ -1,0 +1,105 @@
+--- a/src/app/qgslayerstylingwidget.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/app/qgslayerstylingwidget.cpp	2022-04-06 18:40:09.000000000 +0300
+@@ -36,9 +36,9 @@
+ #include "qgsstyle.h"
+ #include "qgsvectorlayer.h"
+ #include "qgspointcloudlayer.h"
+-#include "qgsvectortilelayer.h"
+-#include "qgsvectortilebasiclabelingwidget.h"
+-#include "qgsvectortilebasicrendererwidget.h"
++// #include "qgsvectortilelayer.h"
++// #include "qgsvectortilebasiclabelingwidget.h"
++// #include "qgsvectortilebasicrendererwidget.h"
+ #include "qgsmeshlayer.h"
+ #include "qgsproject.h"
+ #include "qgsundowidget.h"
+@@ -247,18 +247,18 @@
+       break;
+     }
+ 
+-    case QgsMapLayerType::VectorTileLayer:
+-    {
+-      QListWidgetItem *symbolItem = new QListWidgetItem( QgsApplication::getThemeIcon( QStringLiteral( "propertyicons/symbology.svg" ) ), QString() );
+-      symbolItem->setData( Qt::UserRole, Symbology );
+-      symbolItem->setToolTip( tr( "Symbology" ) );
+-      mOptionsListWidget->addItem( symbolItem );
+-      QListWidgetItem *labelItem = new QListWidgetItem( QgsApplication::getThemeIcon( QStringLiteral( "labelingSingle.svg" ) ), QString() );
+-      labelItem->setData( Qt::UserRole, VectorLabeling );
+-      labelItem->setToolTip( tr( "Labels" ) );
+-      mOptionsListWidget->addItem( labelItem );
+-      break;
+-    }
++    // case QgsMapLayerType::VectorTileLayer:
++    // {
++    //   QListWidgetItem *symbolItem = new QListWidgetItem( QgsApplication::getThemeIcon( QStringLiteral( "propertyicons/symbology.svg" ) ), QString() );
++    //   symbolItem->setData( Qt::UserRole, Symbology );
++    //   symbolItem->setToolTip( tr( "Symbology" ) );
++    //   mOptionsListWidget->addItem( symbolItem );
++    //   QListWidgetItem *labelItem = new QListWidgetItem( QgsApplication::getThemeIcon( QStringLiteral( "labelingSingle.svg" ) ), QString() );
++    //   labelItem->setData( Qt::UserRole, VectorLabeling );
++    //   labelItem->setToolTip( tr( "Labels" ) );
++    //   mOptionsListWidget->addItem( labelItem );
++    //   break;
++    // }
+ 
+     case QgsMapLayerType::PointCloudLayer:
+     case QgsMapLayerType::PluginLayer:
+@@ -652,32 +652,32 @@
+         break;
+       }
+ 
+-      case QgsMapLayerType::VectorTileLayer:
+-      {
+-        QgsVectorTileLayer *vtLayer = qobject_cast<QgsVectorTileLayer *>( mCurrentLayer );
+-        switch ( row )
+-        {
+-          case 0: // Style
+-          {
+-            mVectorTileStyleWidget = new QgsVectorTileBasicRendererWidget( vtLayer, mMapCanvas, mMessageBar, mWidgetStack );
+-            mVectorTileStyleWidget->setDockMode( true );
+-            connect( mVectorTileStyleWidget, &QgsPanelWidget::widgetChanged, this, &QgsLayerStylingWidget::autoApply );
+-            mWidgetStack->setMainPanel( mVectorTileStyleWidget );
+-            break;
+-          }
+-          case 1: // Labeling
+-          {
+-            mVectorTileLabelingWidget = new QgsVectorTileBasicLabelingWidget( vtLayer, mMapCanvas, mMessageBar, mWidgetStack );
+-            mVectorTileLabelingWidget->setDockMode( true );
+-            connect( mVectorTileLabelingWidget, &QgsPanelWidget::widgetChanged, this, &QgsLayerStylingWidget::autoApply );
+-            mWidgetStack->setMainPanel( mVectorTileLabelingWidget );
+-            break;
+-          }
+-          default:
+-            break;
+-        }
+-        break;
+-      }
++    //   case QgsMapLayerType::VectorTileLayer:
++    //   {
++    //     QgsVectorTileLayer *vtLayer = qobject_cast<QgsVectorTileLayer *>( mCurrentLayer );
++    //     switch ( row )
++    //     {
++    //       case 0: // Style
++    //       {
++    //         mVectorTileStyleWidget = new QgsVectorTileBasicRendererWidget( vtLayer, mMapCanvas, mMessageBar, mWidgetStack );
++    //         mVectorTileStyleWidget->setDockMode( true );
++    //         connect( mVectorTileStyleWidget, &QgsPanelWidget::widgetChanged, this, &QgsLayerStylingWidget::autoApply );
++    //         mWidgetStack->setMainPanel( mVectorTileStyleWidget );
++    //         break;
++    //       }
++    //       case 1: // Labeling
++    //       {
++    //         mVectorTileLabelingWidget = new QgsVectorTileBasicLabelingWidget( vtLayer, mMapCanvas, mMessageBar, mWidgetStack );
++    //         mVectorTileLabelingWidget->setDockMode( true );
++    //         connect( mVectorTileLabelingWidget, &QgsPanelWidget::widgetChanged, this, &QgsLayerStylingWidget::autoApply );
++    //         mWidgetStack->setMainPanel( mVectorTileLabelingWidget );
++    //         break;
++    //       }
++    //       default:
++    //         break;
++    //     }
++    //     break;
++    //   }
+ 
+       case QgsMapLayerType::PointCloudLayer:
+       case QgsMapLayerType::AnnotationLayer:

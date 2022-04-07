@@ -28,9 +28,9 @@ include_directories (
     ${CMAKE_SOURCE_DIR}/src/core
     ${CMAKE_SOURCE_DIR}/src/gui
     ${CMAKE_SOURCE_DIR}/src/analysis/raster
-    ${CMAKE_BINARY_DIR}/src/gui
     ${CMAKE_BINARY_DIR}/src/gui/${NG_PREFIX}qgis_gui_autogen/include
     ${CMAKE_BINARY_DIR}/src/analysis
+    ${CMAKE_SOURCE_DIR}/src/app
 )
 
 set(PROV_PLUGINS

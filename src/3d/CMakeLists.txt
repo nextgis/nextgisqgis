@@ -211,7 +211,7 @@ if (NOT PREPARE_ONLY)
         Qt5::PrintSupport
     )
 
-    GENERATE_EXPORT_HEADER(
+    generate_export_header(
        ${LIB_NAME}
        BASE_NAME 3D
        EXPORT_FILE_NAME qgis_3d.h

@@ -1,0 +1,107 @@
+--- a/src/app/qgswelcomepage.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/app/qgswelcomepage.cpp	2022-04-06 18:40:09.000000000 +0300
+@@ -26,8 +26,8 @@
+ #include "qgsfileutils.h"
+ #include "qgstemplateprojectsmodel.h"
+ #include "qgsprojectlistitemdelegate.h"
+-#include "qgsnewsfeedmodel.h"
+-#include "qgsnewsfeedparser.h"
++// #include "qgsnewsfeedmodel.h"
++// #include "qgsnewsfeedparser.h"
+ 
+ #include "qgsprojectstorage.h"
+ #include "qgsprojectstorageguiprovider.h"
+@@ -44,7 +44,7 @@
+ #include <QRegularExpression>
+ #include <QUrl>
+ 
+-#define FEED_URL "https://feed.qgis.org/"
++// #define FEED_URL "https://feed.qgis.org/"
+ 
+ QgsWelcomePage::QgsWelcomePage( bool skipVersionCheck, QWidget *parent )
+   : QWidget( parent )
+@@ -85,7 +85,7 @@
+   QWidget *rightContainer = new QWidget();
+   QVBoxLayout *rightLayout = new QVBoxLayout;
+   rightLayout->setContentsMargins( 0, 0, 0, 0 );
+-
++/*
+   if ( !QgsSettings().value( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QStringLiteral( FEED_URL ) ) ), false, QgsSettings::Core ).toBool() )
+   {
+     mSplitter2 = new QSplitter( Qt::Vertical );
+@@ -116,7 +116,7 @@
+     newsContainer->setLayout( newsLayout );
+     mSplitter2->addWidget( newsContainer );
+   }
+-
++*/
+   QWidget *templateContainer = new QWidget();
+   QVBoxLayout *templateLayout = new QVBoxLayout();
+   templateLayout->setContentsMargins( 0, 0, 0, 0 );
+@@ -177,15 +177,15 @@
+   connect( mRecentProjectsListView, &QAbstractItemView::activated, this, &QgsWelcomePage::recentProjectItemActivated );
+   connect( mTemplateProjectsListView, &QAbstractItemView::activated, this, &QgsWelcomePage::templateProjectItemActivated );
+ 
+-  updateNewsFeedVisibility();
++//   updateNewsFeedVisibility();
+ }
+ 
+ QgsWelcomePage::~QgsWelcomePage()
+ {
+   QgsSettings settings;
+   settings.setValue( QStringLiteral( "Windows/WelcomePage/SplitState" ), mSplitter->saveState(), QgsSettings::App );
+-  if ( mSplitter2 && mNewsFeedTitle->isVisible() )
+-    settings.setValue( QStringLiteral( "Windows/WelcomePage/SplitState2" ), mSplitter2->saveState(), QgsSettings::App );
++//   if ( mSplitter2 && mNewsFeedTitle->isVisible() )
++//     settings.setValue( QStringLiteral( "Windows/WelcomePage/SplitState2" ), mSplitter2->saveState(), QgsSettings::App );
+ 
+   delete mVersionInfo;
+ }
+@@ -194,12 +194,12 @@
+ {
+   mRecentProjectsModel->setRecentProjects( recentProjects );
+ }
+-
++/*
+ QString QgsWelcomePage::newsFeedUrl()
+ {
+   return QStringLiteral( FEED_URL );
+ }
+-
++*/
+ void QgsWelcomePage::recentProjectItemActivated( const QModelIndex &index )
+ {
+   QgisApp::instance()->openProject( mRecentProjectsModel->data( index, Qt::ToolTipRole ).toString() );
+@@ -212,7 +212,7 @@
+   else
+     QgisApp::instance()->fileNewFromTemplate( index.data( QgsProjectListItemDelegate::NativePathRole ).toString() );
+ }
+-
++/*
+ void QgsWelcomePage::newsItemActivated( const QModelIndex &index )
+ {
+   if ( !index.isValid() )
+@@ -221,7 +221,7 @@
+   const QUrl link = index.data( QgsNewsFeedModel::Link ).toUrl();
+   QDesktopServices::openUrl( link );
+ }
+-
++*/
+ void QgsWelcomePage::versionInfoReceived()
+ {
+   QgsVersionInfo *versionInfo = qobject_cast<QgsVersionInfo *>( sender() );
+@@ -370,7 +370,7 @@
+ 
+   menu->popup( mTemplateProjectsListView->mapToGlobal( point ) );
+ }
+-
++/*
+ void QgsWelcomePage::showContextMenuForNews( QPoint point )
+ {
+   const QModelIndex index = mNewsFeedListView->indexAt( point );
+@@ -454,4 +454,4 @@
+ 
+   return QWidget::eventFilter( obj, event );
+ }
+-
++*/

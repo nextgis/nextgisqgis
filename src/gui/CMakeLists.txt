@@ -160,8 +160,8 @@ codeeditors/qgscodeeditorpython.cpp
 codeeditors/qgscodeeditorsql.cpp
 codeeditors/qgscodeeditorexpression.cpp
 
-# devtools/qgsdevtoolwidget.cpp
-# devtools/qgsdevtoolwidgetfactory.cpp
+devtools/qgsdevtoolwidget.cpp
+devtools/qgsdevtoolwidgetfactory.cpp
 
 editorwidgets/core/qgseditorconfigwidget.cpp
 editorwidgets/core/qgseditorwidgetautoconf.cpp
@@ -312,7 +312,7 @@ layout/qgslayoutviewtooltemporarykeyzoom.cpp
 layout/qgslayoutviewtooltemporarymousepan.cpp
 layout/qgslayoutviewtoolzoom.cpp
 
-# locator/qgslocatorwidget.cpp
+locator/qgslocatorwidget.cpp
 
 mesh/qgsmeshlayerproperties.cpp
 mesh/qgsrenderermeshpropertieswidget.cpp
@@ -514,7 +514,7 @@ qgsfocuskeeper.cpp
 qgsfocuswatcher.cpp
 qgsfontbutton.cpp
 qgsformannotation.cpp
-# qgsgeocoderlocatorfilter.cpp
+qgsgeocoderlocatorfilter.cpp
 qgsgeometryrubberband.cpp
 qgsgradientcolorrampdialog.cpp
 qgsgradientstopeditor.cpp
@@ -772,7 +772,7 @@ set(QGIS_GUI_HDRS
   qgsfocuswatcher.h
   qgsfontbutton.h
   qgsformannotation.h
-#   qgsgeocoderlocatorfilter.h
+  qgsgeocoderlocatorfilter.h
   qgsgeometryrubberband.h
   qgsgradientcolorrampdialog.h
   qgsgradientstopeditor.h
@@ -990,8 +990,8 @@ set(QGIS_GUI_HDRS
   codeeditors/qgscodeeditorpython.h
   codeeditors/qgscodeeditorsql.h
 
-#   devtools/qgsdevtoolwidget.h
-#   devtools/qgsdevtoolwidgetfactory.h
+  devtools/qgsdevtoolwidget.h
+  devtools/qgsdevtoolwidgetfactory.h
 
   editorwidgets/core/qgseditorconfigwidget.h
   editorwidgets/core/qgseditorwidgetautoconf.h
@@ -1145,7 +1145,7 @@ set(QGIS_GUI_HDRS
   layout/qgslayoutviewtooltemporarymousepan.h
   layout/qgslayoutviewtoolzoom.h
 
-#   locator/qgslocatorwidget.h
+  locator/qgslocatorwidget.h
 
   mesh/qgsmeshlayerproperties.h
   mesh/qgsrenderermeshpropertieswidget.h
@@ -1449,7 +1449,7 @@ target_include_directories(${LIB_NAME} PUBLIC
     auth
     callouts
     codeeditors
-#   ${CMAKE_SOURCE_DIR}/src/gui/devtools
+    devtools
     editorwidgets
     editorwidgets/core
     effects
@@ -1457,7 +1457,7 @@ target_include_directories(${LIB_NAME} PUBLIC
     labeling
     layertree
     layout
-#   ${CMAKE_SOURCE_DIR}/src/gui/locator
+    locator
     mesh
     numericformats
     ogr
@@ -1502,7 +1502,7 @@ if (WITH_EPT)
   )
 endif()
 
-GENERATE_EXPORT_HEADER(
+generate_export_header(
     ${LIB_NAME}
     BASE_NAME GUI
     EXPORT_FILE_NAME qgis_gui.h

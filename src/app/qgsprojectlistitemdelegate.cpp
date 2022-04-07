@@ -15,7 +15,7 @@
 
 #include "qgsprojectlistitemdelegate.h"
 #include "qgis.h"
-#include "qgsnewsfeedmodel.h"
+// #include "qgsnewsfeedmodel.h"
 #include "qgswebframe.h"
 #include "qgsapplication.h"
 #include "qgsrendercontext.h"
@@ -229,13 +229,13 @@ void QgsNewsItemListItemDelegate::paint( QPainter *painter, const QStyleOptionVi
 
   const int titleSize = static_cast<int>( QApplication::fontMetrics().height() * 1.1 );
   const int textSize = static_cast<int>( titleSize * 0.85 );
-
+/*
   doc.setHtml( QStringLiteral( "<div style='font-size:%1px'><span style='font-size:%2px;font-weight:bold;'>%3%4</span>%5</div>" ).arg( textSize ).arg( QString::number( titleSize ),
                index.data( QgsNewsFeedModel::Title ).toString(),
                index.data( QgsNewsFeedModel::Sticky ).toBool() ? QStringLiteral( "<img src=\"qrc:/images/themes/default/pin.svg\">" ) : QString(),
                index.data( QgsNewsFeedModel::Content ).toString() ) );
 
-
+*/
   doc.setTextWidth( option.rect.width() - ( !icon.isNull() ? icon.width() + 4.375 * mRoundedRectSizePixels : 4.375 * mRoundedRectSizePixels ) );
 
   if ( !icon.isNull() )
@@ -271,10 +271,12 @@ QSize QgsNewsItemListItemDelegate::sizeHint( const QStyleOptionViewItem &option,
 
   const int titleSize = QApplication::fontMetrics().height() * 1.1;
   const int textSize = titleSize * 0.85;
+  /*
   doc.setHtml( QStringLiteral( "<div style='font-size:%1px'><span style='font-size:%2px;font-weight:bold;'>%3%4</span>%5</div>" ).arg( textSize ).arg( QString::number( titleSize ),
                index.data( QgsNewsFeedModel::Title ).toString(),
                index.data( QgsNewsFeedModel::Sticky ).toBool() ? QStringLiteral( "<img src=\"qrc:/images/themes/default/pin.svg\">" ) : QString(),
                index.data( QgsNewsFeedModel::Content ).toString() ) );
+               */
   doc.setTextWidth( width - ( !icon.isNull() ? icon.width() + 4.375 * mRoundedRectSizePixels : 4.375 * mRoundedRectSizePixels ) );
 
   return QSize( width, std::max( ( double ) doc.size().height() + 1.25 * mRoundedRectSizePixels, static_cast<double>( icon.height() ) ) + 2.5 * mRoundedRectSizePixels );
