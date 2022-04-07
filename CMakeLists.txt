@@ -102,6 +102,13 @@ set (QGIS_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output)
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${QGIS_OUTPUT_DIRECTORY}/bin)
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${QGIS_OUTPUT_DIRECTORY}/lib)
 
+get_property(IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if (IS_MULTI_CONFIG)
+    set (BINARY_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE})
+else()
+    set (BINARY_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+endif()
+
 include(util)
 check_version(NGQGIS_MAJOR_VERSION NGQGIS_MINOR_VERSION NGQGIS_PATCH_VERSION CPACK_PACKAGE_VERSION_MAJOR CPACK_PACKAGE_VERSION_MINOR CPACK_PACKAGE_VERSION_PATCH RELEASE_NAME)
 set(VERSION ${NGQGIS_MAJOR_VERSION}.${NGQGIS_MINOR_VERSION}.${NGQGIS_PATCH_VERSION})
@@ -194,6 +201,7 @@ find_anyproject(SQLite3 REQUIRED)
 find_anyproject(LIBZIP REQUIRED)
 # find_anyproject(EXIV REQUIRED)
 find_anyproject(EXPAT REQUIRED)
+find_anyproject(ZLIB REQUIRED)
 
 # if (APPLE)
 #     # Libtasn1 is for DER-encoded PKI ASN.1 parsing/extracting workarounds
@@ -280,6 +288,25 @@ endif()
 find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
 # if (WITH_QT6)
 set(QT_VERSION_BASE Qt5)
+
+if(WIN32)
+    get_target_property(RCC_PATH Qt5::lrelease IMPORTED_LOCATION)
+    get_filename_component(QT_BIN_DIR ${RCC_PATH} PATH)
+    
+    set(QT5_PLUGINS_DIR "${QT_BIN_DIR}/../plugins")
+    set(QT5_TRANSLATION_DIR "${QT_BIN_DIR}/../translation")
+    
+    # Copy zlib1.dll to make  moc.exe, rcc.exe, etc. working
+    if(${ZLIB_FOUND})
+        get_target_property(ZLIB_IMPORTED_LOCATION ${ZLIB_LIBRARIES} IMPORTED_LOCATION_RELEASE)
+        if(EXISTS ${ZLIB_IMPORTED_LOCATION})
+            file(COPY ${ZLIB_IMPORTED_LOCATION} DESTINATION ${QT_BIN_DIR})
+        endif()
+    endif()
+endif()
+
+
+configure_file(${CMAKE_SOURCE_DIR}/cmake/qt.conf.cmake.in ${BINARY_DIR}/qt.conf IMMEDIATE @ONLY)
 
 ############################################
 if (ENABLE_TESTS)
