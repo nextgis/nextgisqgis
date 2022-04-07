@@ -41,16 +41,25 @@ target_link_libraries(crssync
 
 if(OSX_FRAMEWORK)
     set(DST_PATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+else()
+    set(DST_PATH "${BINARY_DIR}")
 endif()
 
 if(OSX_FRAMEWORK)
     set(PROJ_LIB ${DST_PATH}/proj.framework/Resources/proj)
+    
+    add_custom_target(synccrsdb
+        COMMENT "Running crssync"
+        COMMAND PROJ_LIB=${PROJ_LIB} ${BINARY_DIR}/crssync
+        DEPENDS crssync)
+else()
+    add_custom_target(synccrsdb
+    COMMENT "Running crssync"
+    COMMAND ${BINARY_DIR}/crssync
+    DEPENDS crssync)
 endif()
 
-add_custom_target(synccrsdb
-    COMMENT "Running crssync"
-    COMMAND PROJ_LIB=${PROJ_LIB} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/crssync
-    DEPENDS crssync)
+
 
 # Copy dependencies to bin dir
 set(RUN_DEPENDENCIES
@@ -79,21 +88,23 @@ set(RUN_DEPENDENCIES
     lib_szip
     lib_uriparser
     lib_z
+    lib_gdal
+    lib_qca
+    lib_qt5
+    lib_qtkeychain
+    lib_spatialindex
+    lib_expat
+    lib_zip
+    lib_geos
+    lib_sqlite
+    lib_iconv
+    lib_harfbuzz
+    lib_freetype
+    lib_qwt
+    lib_qscintilla
 )
 
-# if(WIN32)
-#     set(TEST_DEPENDENCIES ${TEST_DEPENDENCIES} lib_z)
-#     set(DST_PATH "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE}")
-
-#     add_custom_command(TARGET proj_errno_string_test
-#         POST_BUILD
-#         COMMAND ${CMAKE_COMMAND} -DDST_PATH=${DST_PATH} -DSRC_PATH="${PROJECT_BINARY_DIR}" -P ${PROJECT_SOURCE_DIR}/cmake/test_dependency_win.cmake
-#         COMMENT "Copy compiled dll files"
-#     )
-# else
-
 get_compiler_version(COMPILER)
-
 
 foreach(RUN_DEPENDENCY ${RUN_DEPENDENCIES})
     add_custom_command(TARGET crssync

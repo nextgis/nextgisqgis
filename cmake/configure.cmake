@@ -201,5 +201,3 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in ${CMAKE_CURREN
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/qgsversion.h "#define QGSVERSION \"${VERSION}\"
 #define QGS_GIT_REMOTE_URL \"https://github.com/nextgis/nextgisqgis\" "
 )
-
-configure_file(${CMAKE_SOURCE_DIR}/cmake/qt.conf.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/qt.conf IMMEDIATE @ONLY)

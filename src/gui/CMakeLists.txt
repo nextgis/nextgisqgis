@@ -1473,14 +1473,30 @@ target_include_directories(${LIB_NAME} PUBLIC
     vector
 #   ${CMAKE_SOURCE_DIR}/src/gui/vectortile
 
-${CMAKE_SOURCE_DIR}/src/native
-${CMAKE_BINARY_DIR}/src/native
-${CMAKE_BINARY_DIR}/src/gui
-${CMAKE_BINARY_DIR}/src/ui
+    ${CMAKE_SOURCE_DIR}/src/native
+    ${CMAKE_BINARY_DIR}/src/native
+    ${CMAKE_BINARY_DIR}/src/gui
+    ${CMAKE_BINARY_DIR}/src/ui
 
-${CMAKE_CURRENT_SOURCE_DIR}
-${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}
+
+    ${QSCINTILLA_INCLUDE_DIRS}/qscintilla
+    
+    PRIVATE
+    ${QWT_INCLUDE_DIRS}/qwt
 )
+
+get_property(IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(IS_MULTI_CONFIG)
+    target_include_directories(${LIB_NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/${NG_PREFIX}qgis_gui_autogen/include_${CMAKE_BUILD_TYPE}>
+    )
+else()
+    target_include_directories(${LIB_NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/${NG_PREFIX}qgis_gui_autogen/include>
+    )
+endif()
 
 if(OSX_FRAMEWORK)
     target_include_directories(${LIB_NAME} PUBLIC
