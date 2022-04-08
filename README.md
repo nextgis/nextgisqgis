@@ -38,31 +38,7 @@ For ```opt/patches``` directory all patch files apply.
 
 ## Customization details
 
-The only few files of original sources were change:
-
-* main.cpp - the entry point of QGIS
-* qgisapp.h - private members made protected, several methods made virtual
-* qgisapplication.h - private members made protected, several methods made virtual
-* qgisapp.ui - remove some menus and buttons
-
-The full list of files can be found in opt/overwrite directory.
-
-There are special files with NextGIS customization:
-
-* [src/app/ngcustomization.cpp](https://github.com/nextgis/nextgisqgis/blob/master/src/app/ngcustomization.cpp)
-* [src/app/ngcustomization.h](https://github.com/nextgis/nextgisqgis/blob/master/src/app/ngcustomization.h)
-* [src/app/ngqgsapplication.cpp](https://github.com/nextgis/nextgisqgis/blob/master/src/app/ngqgsapplication.cpp)
-* [src/app/ngqgsapplication.h](https://github.com/nextgis/nextgisqgis/blob/master/src/app/ngqgsapplication.h)
-
-NGQgsApplication class inherited from QgsApplication. The NGQgsApplication class
-instantiated in main.cpp. The QgsApplication methods are overridden in NGQgsApplication.
-
-NGQgisApp class inherited from QgisApp. The NGQgisApp class
-instantiated in main.cpp. The QgisApp methods are overridden in NGQgisApp.
-
-To customize QGIS one have to modify the NGQgsApplication and NGQgisApp via
-overriding base class methods and adding own classes. It's not recommended to
-change QGIS sources as they will be overwritten next merge sources turn.
+For modifications see patches at opt directory.
 
 To add some QGIS components:
 
@@ -82,6 +58,7 @@ cmake --build . --config release --target synccrsdb
 ```
 
 * Spatial reference system database already filled and not generate in normal build.
+* Drop GPX, babel, VectorTiles, GeoCMS, Server, Android, QField, ArcGIS, json parser from thirdparty, EXIV2 ...
 
 ## Build
 

@@ -105,7 +105,7 @@ void TestQgsAuthCertUtils::testPkcsUtils()
   QVERIFY( QgsAuthCertUtils::pemIsPkcs8( QString( pkcs ) ) );
 
 
-#ifdef Q_OS_MAC
+#ifdef UNUSED_TMP // Q_OS_MAC
   QByteArray pkcs1;
   pkcs.clear();
 

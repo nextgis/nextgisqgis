@@ -76,10 +76,10 @@ endif()
 # Since the tests are not actually installed, but rather
 # run directly from the build/src/tests dir we need to
 # ensure the qgis libs can be found.
-if (APPLE)
+# if (APPLE)
   # For Mac OS X, the executable must be at the root of the bundle's executable folder
   #  set (CMAKE_INSTALL_NAME_DIR @executable_path/../../../src/core)
-endif()
+# endif()
 
 add_subdirectory(core)
 if (WITH_GUI)
@@ -106,6 +106,15 @@ endif()
 if (WITH_QUICK)
     add_subdirectory(quickgui)
 endif()
-if (WITH_SERVER)
-    add_subdirectory(server)
-endif()
+# if (WITH_SERVER)
+#     add_subdirectory(server)
+# endif()
+
+
+get_target_property(_PATH Qt5::qmake IMPORTED_LOCATION)
+get_filename_component(QT_BIN_DIR ${_PATH} PATH)
+get_filename_component(QT_ROOT_DIR ${QT_BIN_DIR} PATH)
+set(QT5_TRANSLATION_DEVDIR ${QT_ROOT_DIR}/translations)
+set(QT5_PLUGINS_DEVDIR ${QT_ROOT_DIR}/plugins)
+
+configure_file(${CMAKE_SOURCE_DIR}/cmake/qt.conf.cmake.tmp.in ${BINARY_DIR}/qt.conf IMMEDIATE @ONLY)

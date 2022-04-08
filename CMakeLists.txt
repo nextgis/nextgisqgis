@@ -132,6 +132,13 @@ option(PREPARE_ONLY "Only generate flex and bison files" OFF)
 
 include(FindAnyProject)
 
+# POLICIES
+cmake_policy(SET CMP0048 NEW)
+cmake_policy(SET CMP0053 NEW)
+cmake_policy(SET CMP0063 NEW)
+cmake_policy(SET CMP0071 NEW)
+cmake_policy(SET CMP0094 NEW)
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
@@ -290,8 +297,8 @@ find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
 set(QT_VERSION_BASE Qt5)
 
 if(WIN32)
-    get_target_property(RCC_PATH Qt5::lrelease IMPORTED_LOCATION)
-    get_filename_component(QT_BIN_DIR ${RCC_PATH} PATH)
+    get_target_property(LR_PATH Qt5::lrelease IMPORTED_LOCATION)
+    get_filename_component(QT_BIN_DIR ${LR_PATH} PATH)
     
     set(QT5_PLUGINS_DIR "${QT_BIN_DIR}/../plugins")
     set(QT5_TRANSLATION_DIR "${QT_BIN_DIR}/../translation")
@@ -305,12 +312,12 @@ if(WIN32)
     endif()
 endif()
 
-
-configure_file(${CMAKE_SOURCE_DIR}/cmake/qt.conf.cmake.in ${BINARY_DIR}/qt.conf IMMEDIATE @ONLY)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/qt.conf.cmake.in ${CMAKE_BINARY_DIR}/qt.conf IMMEDIATE @ONLY)
 
 ############################################
 if (ENABLE_TESTS)
     set(QT_USE_QTTEST TRUE)
+    set(GET_DEPENDENCIES ON)
     enable_testing()
 
     #create a variable to specify where our test data is
@@ -449,13 +456,6 @@ endif()
 
 
 math(EXPR QGIS_VERSION_INT "${CPACK_PACKAGE_VERSION_MAJOR}*10000+${CPACK_PACKAGE_VERSION_MINOR}*100+${CPACK_PACKAGE_VERSION_PATCH}")
-
-# POLICIES
-cmake_policy(SET CMP0048 NEW)
-cmake_policy(SET CMP0053 NEW)
-cmake_policy(SET CMP0063 NEW)
-cmake_policy(SET CMP0071 NEW)
-cmake_policy(SET CMP0094 NEW)
 
 #############################################################
 

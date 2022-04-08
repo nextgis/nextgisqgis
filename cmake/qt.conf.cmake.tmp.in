@@ -1,0 +1,3 @@
+[Paths]
+Translations = @QT5_TRANSLATION_DEVDIR@
+Plugins = @QT5_PLUGINS_DEVDIR@
