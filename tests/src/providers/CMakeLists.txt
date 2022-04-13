@@ -1,3 +1,28 @@
+################################################################################
+# Project:  NextGIS QGIS
+# Purpose:  CMake build scripts
+################################################################################
+# Copyright (C) 2017-2022, NextGIS <info@nextgis.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+################################################################################
+
 # Standard includes and utils to compile into all tests.
 
 #####################################################
@@ -23,23 +48,23 @@ include_directories(SYSTEM
 #############################################################
 # Tests:
 
-add_qgis_test(testqgswcsprovider.cpp MODULE provider LINKEDLIBRARIES ${NG_PREFIX}qgis_core)
+#add_qgis_test(testqgswcsprovider.cpp MODULE provider LINKEDLIBRARIES ${NG_PREFIX}qgis_core)
 
 # Temporarily set to old version until server is reconfigured
 #set(TEST_SERVER_URL "http://wcs.qgis.org/${COMPLETE_VERSION}")
 set(TEST_SERVER_URL "http://wcs.qgis.org/1.9.0")
 #add_definitions(-DTEST_SERVER_URL="${TEST_SERVER_URL}")
-set_target_properties(test_provider_wcsprovider PROPERTIES
-  COMPILE_FLAGS "-DTEST_SERVER_URL=\\\"${TEST_SERVER_URL}\\\""
-)
+#set_target_properties(test_provider_wcsprovider PROPERTIES
+#  COMPILE_FLAGS "-DTEST_SERVER_URL=\\\"${TEST_SERVER_URL}\\\""
+#)
 
 add_qgis_test(testqgswmscapabilities.cpp MODULE provider LINKEDLIBRARIES provider_wms_a ${NG_PREFIX}qgis_core)
 add_qgis_test(testqgswmsccapabilities.cpp MODULE provider LINKEDLIBRARIES provider_wms_a ${NG_PREFIX}qgis_core)
-add_qgis_test(testqgswmsprovider.cpp MODULE provider LINKEDLIBRARIES provider_wms_a ${NG_PREFIX}qgis_core)
+#add_qgis_test(testqgswmsprovider.cpp MODULE provider LINKEDLIBRARIES provider_wms_a ${NG_PREFIX}qgis_core)
 
 add_qgis_test(testqgspostgresexpressioncompiler.cpp MODULE provider LINKEDLIBRARIES provider_postgres_a ${NG_PREFIX}qgis_core)
 add_qgis_test(testqgspostgresprovider.cpp MODULE provider LINKEDLIBRARIES provider_postgres_a ${NG_PREFIX}qgis_core)
-add_qgis_test(testqgspostgresconn.cpp MODULE provider LINKEDLIBRARIES provider_postgres_a ${NG_PREFIX}qgis_core LABELS "POSTGRES")
+#add_qgis_test(testqgspostgresconn.cpp MODULE provider LINKEDLIBRARIES provider_postgres_a ${NG_PREFIX}qgis_core LABELS "POSTGRES")
 
 set(ENABLE_MSSQLTEST_CPP FALSE CACHE BOOL "Enable MSSQL provider C++ tests")
 if (ENABLE_MSSQLTEST_CPP)
@@ -49,9 +74,9 @@ if (ENABLE_MSSQLTEST_CPP)
 endif()
 
 if (NOT FORCE_STATIC_PROVIDERS)
-  add_qgis_test(testqgsmdalprovider.cpp MODULE provider LINKEDLIBRARIES ${NG_PREFIX}qgis_core)
+  #add_qgis_test(testqgsmdalprovider.cpp MODULE provider LINKEDLIBRARIES ${NG_PREFIX}qgis_core)
   if (WITH_ANALYSIS)
-    add_qgis_test(testqgsvirtualrasterprovider.cpp MODULE provider LINKEDLIBRARIES ${NG_PREFIX}qgis_core ${NG_PREFIX}qgis_analysis)
+    #add_qgis_test(testqgsvirtualrasterprovider.cpp MODULE provider LINKEDLIBRARIES ${NG_PREFIX}qgis_core ${NG_PREFIX}qgis_analysis)
   endif()
 endif()
 
