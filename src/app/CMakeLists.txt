@@ -502,9 +502,17 @@ target_include_directories(${LIB_NAME} PUBLIC
   ${CMAKE_SOURCE_DIR}/src/gui/devtools
 
   ${CMAKE_BINARY_DIR}/src/app
-
-  ${CMAKE_BINARY_DIR}/src/gui/${NG_PREFIX}qgis_gui_autogen/include
 )
+
+if(IS_MULTI_CONFIG_GENERATOR)
+    target_include_directories(${LIB_NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/src/gui/${NG_PREFIX}qgis_gui_autogen/include_${CMAKE_BUILD_TYPE}>
+    )
+else()
+    target_include_directories(${LIB_NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/src/gui/${NG_PREFIX}qgis_gui_autogen/include>
+    )
+endif()
 
 if (WITH_3D)
   target_include_directories(${LIB_NAME} PUBLIC

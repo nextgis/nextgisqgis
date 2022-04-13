@@ -1485,8 +1485,7 @@ target_include_directories(${LIB_NAME} PUBLIC
     ${QWT_INCLUDE_DIRS}/qwt
 )
 
-get_property(IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-if(IS_MULTI_CONFIG)
+if(IS_MULTI_CONFIG_GENERATOR)
     target_include_directories(${LIB_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/${NG_PREFIX}qgis_gui_autogen/include_${CMAKE_BUILD_TYPE}>
     )
