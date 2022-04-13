@@ -158,10 +158,10 @@ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
 
 
 #ifdef _MSC_VER
-  HINSTANCE hGetProcIDDLL = LoadLibrary( "qgis_app.dll" );
+  HINSTANCE hGetProcIDDLL = LoadLibrary( "ngqgis_app.dll" );
 #else
 // MinGW
-  HINSTANCE hGetProcIDDLL = LoadLibrary( "libqgis_app.dll" );
+  HINSTANCE hGetProcIDDLL = LoadLibrary( "libngqgis_app.dll" );
 #endif
 
   if ( !hGetProcIDDLL )
@@ -178,7 +178,7 @@ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
       0,
       NULL );
 
-    std::string message = "Could not load qgis_app.dll \n Windows Error: " + std::string( errorText )
+    std::string message = "Could not load ngqgis_app.dll \n Windows Error: " + std::string( errorText )
                           + "\n Help: \n\n Check " + basename + ".env for correct environment paths";
     showError( message, "Error loading QGIS" );
 
@@ -190,7 +190,7 @@ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
   int ( *realmain )( int, char *[] ) = ( int ( * )( int, char *[] ) ) GetProcAddress( hGetProcIDDLL, "main" );
   if ( !realmain )
   {
-    showError( "Could not locate main function in qgis_app.dll", "Error loading QGIS" );
+    showError( "Could not locate main function in ngqgis_app.dll", "Error loading QGIS" );
     return EXIT_FAILURE;
   }
 

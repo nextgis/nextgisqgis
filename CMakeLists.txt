@@ -287,6 +287,12 @@ else()
     endif()
 endif()
 
+if(WITH_DESKTOP)
+  if((WIN32 AND NOT MINGW) OR (UNIX AND NOT APPLE AND NOT ANDROID AND NOT IOS))
+    set(HAVE_CRASH_HANDLER TRUE) 
+  endif()
+endif()
+
 # set(QT5_3DEXTRA_LIBRARY "/usr/lib/x86_64-linux-gnu/libQt53DExtras.so")
 # set(QT5_3DEXTRA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
 # set(Qt53DExtras_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers/cmake/Qt53DExtras")
@@ -315,21 +321,6 @@ endif()
 configure_file(${CMAKE_SOURCE_DIR}/cmake/qt.conf.cmake.in ${CMAKE_BINARY_DIR}/qt.conf IMMEDIATE @ONLY)
 
 ############################################
-if (ENABLE_TESTS)
-    set(QT_USE_QTTEST TRUE)
-    set(GET_DEPENDENCIES ON)
-    enable_testing()
-
-    #create a variable to specify where our test data is
-    #so that unit tests can use TEST_DATA_DIR to locate
-    #the test data. See CMakeLists in test dirs for more info
-    #TEST_DATA_DIR is also used by QgsRenderChecker currently in core
-    set (TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/testdata")
-
-    add_subdirectory(tests)
-    set (CTEST_BINARY_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/output/bin" )
-    message (STATUS "Ctest Binary Directory set to: ${CTEST_BINARY_DIRECTORY}")
-endif()
 
 # Add binaries and libraries
 set(CMAKE_CXX_STANDARD 17)
@@ -524,7 +515,24 @@ CREATE_QGSVERSION()
 set(PACKAGE_NAME ${PROJECT_NAME})
 string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
 
+set(TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/testdata")
+    
 add_subdirectory(src)
+
+if (ENABLE_TESTS)
+    set(QT_USE_QTTEST TRUE)
+    set(GET_DEPENDENCIES ON)
+    enable_testing()
+
+    #create a variable to specify where our test data is
+    #so that unit tests can use TEST_DATA_DIR to locate
+    #the test data. See CMakeLists in test dirs for more info
+    #TEST_DATA_DIR is also used by QgsRenderChecker currently in core
+
+    add_subdirectory(tests)
+    set (CTEST_BINARY_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/output/bin" )
+    message (STATUS "Ctest Binary Directory set to: ${CTEST_BINARY_DIRECTORY}")
+endif()
 
 if (NOT PREPARE_ONLY)
     add_subdirectory(images)

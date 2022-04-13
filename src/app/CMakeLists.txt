@@ -399,11 +399,11 @@ else()
   set (QGIS_APPMAIN_SRCS main.cpp ${TEST_RCCS})
 endif()
 
-set (QGIS_APPMAIN_HEADERS 
-    qgscustomization.h
-    qgisapp.h
-    qgsfirstrundialog.h
-)
+set (QGIS_APPMAIN_HEADERS)
+#    qgscustomization.h
+#    qgisapp.h
+#    qgsfirstrundialog.h
+#)
 
 if(PEDANTIC)
   # disable deprecation warnings
@@ -532,7 +532,6 @@ set(TARGET_LINK_LIBEX ${TARGET_LINK_LIBEX}
     ${QWT_LIBRARY}
 #   ${QWTPOLAR_LIBRARY}
     ${QT_VERSION_BASE}::Sql
-    ${QT_VERSION_BASE}::UiTools
 #   ${OPTIONAL_QTWEBKIT}
   #should only be needed for win
     ${QT_QTMAIN_LIBRARY}
