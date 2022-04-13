@@ -102,6 +102,7 @@ set(RUN_DEPENDENCIES
     lib_freetype
     lib_qwt
     lib_qscintilla
+    lib_gsl
 )
 
 get_compiler_version(COMPILER)

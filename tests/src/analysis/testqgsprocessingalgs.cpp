@@ -193,7 +193,7 @@ class TestQgsProcessingAlgs: public QObject
 
     void rasterize();
 
-    void convertGpxFeatureType();
+    //void convertGpxFeatureType();
     void convertGpsData();
     void downloadGpsData();
     void uploadGpsData();
@@ -6747,6 +6747,7 @@ void TestQgsProcessingAlgs::rasterize()
   QVERIFY( checker.compareImages( "rasterize", 500 ) );
 }
 
+/*
 void TestQgsProcessingAlgs::convertGpxFeatureType()
 {
   // test generation of babel argument lists
@@ -6890,6 +6891,7 @@ void TestQgsProcessingAlgs::convertGpxFeatureType()
     QStringLiteral( "\"/home/me/my output file.gpx\"" )
   } ) );
 }
+*/
 
 void TestQgsProcessingAlgs::convertGpsData()
 {

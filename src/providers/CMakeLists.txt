@@ -130,17 +130,21 @@ macro(add_provider PLUGIN_NAME)
 
     # message("_SOURCES : ${PROV_${PLUGIN_NAME}_SOURCES}\n_HEADERS : ${PROV_${PLUGIN_NAME}_HEADERS}")
     add_library(${LIB_NAME} MODULE ${PROV_${PLUGIN_NAME}_SOURCES} ${PROV_${PLUGIN_NAME}_HEADERS} ${PROV_${PLUGIN_NAME}_RCS}) # ${PROV_${PLUGIN_NAME}_MOC_SRCS} ${PROV_${PLUGIN_NAME}_RCC} ${PROV_${PLUGIN_NAME}_UI_H})
+    add_library(${LIB_NAME}_a STATIC ${PROV_${PLUGIN_NAME}_SOURCES} ${PROV_${PLUGIN_NAME}_HEADERS} ${PROV_${PLUGIN_NAME}_RCS})
 
     if("${PLUGIN_NAME}" MATCHES "postgres*")
         target_link_libraries(${LIB_NAME} PRIVATE ${POSTGRESQL_LIBRARIES})
+        target_link_libraries(${LIB_NAME}_a PRIVATE ${POSTGRESQL_LIBRARIES})
     endif()
 
     if("${PLUGIN_NAME}" STREQUAL "oracle" OR "${PLUGIN_NAME}" STREQUAL "mssql")
         target_link_libraries(${LIB_NAME} PRIVATE Qt5::Sql)
+        target_link_libraries(${LIB_NAME}_a PRIVATE Qt5::Sql)
     endif()
 
     if("${PLUGIN_NAME}" STREQUAL "virtual")
         target_link_libraries(${LIB_NAME} PRIVATE ${QSCINTILLA_LIBRARIES})
+        target_link_libraries(${LIB_NAME}_a PRIVATE ${QSCINTILLA_LIBRARIES})
     endif()
 
     # if("${PLUGIN_NAME}" STREQUAL "virtualraster")
@@ -148,6 +152,12 @@ macro(add_provider PLUGIN_NAME)
     # endif()
 
     target_link_libraries(${LIB_NAME} PRIVATE
+        ${NG_PREFIX}qgis_core
+        ${NG_PREFIX}qgis_gui 
+        ${NG_PREFIX}qgis_analysis
+    )
+    
+    target_link_libraries(${LIB_NAME}_a PRIVATE
         ${NG_PREFIX}qgis_core
         ${NG_PREFIX}qgis_gui 
         ${NG_PREFIX}qgis_analysis

@@ -51,13 +51,13 @@
 #include "qgsprocessingparameterfieldmap.h"
 #include "qgsprocessingparameteraggregate.h"
 #include "qgsprocessingparametertininputlayers.h"
-#include "qgsprocessingparameterdxflayers.h"
+//#include "qgsprocessingparameterdxflayers.h"
 #include "qgsprocessingparametermeshdataset.h"
-#include "qgsdxfexport.h"
+//#include "qgsdxfexport.h"
 #include "qgspointcloudlayer.h"
 #include "qgsannotationlayer.h"
 #include "qgsjsonutils.h"
-#include "json.hpp"
+//#include "json.hpp"
 
 class DummyAlgorithm : public QgsProcessingAlgorithm
 {
@@ -414,27 +414,27 @@ class DummyAlgorithm : public QgsProcessingAlgorithm
       QString res;
       QCOMPARE( asMap( params, context ), QVariantMap( { {QStringLiteral( "inputs" ), QVariantMap()}} ) );
       params.insert( QStringLiteral( "p1" ), "a" );
-      res = QString::fromStdString( QgsJsonUtils::jsonFromVariant( asMap( params, context ) ).dump() );
+      res = QString::fromStdString( QgsJsonUtils::jsonFromVariant( asMap( params, context ) ).ToString() );
       QCOMPARE( res, QStringLiteral( "{\"inputs\":{\"p1\":\"a\"}}" ) );
       params.insert( QStringLiteral( "p2" ), QVariant() );
-      res = QString::fromStdString( QgsJsonUtils::jsonFromVariant( asMap( params, context ) ).dump() );
+      res = QString::fromStdString( QgsJsonUtils::jsonFromVariant( asMap( params, context ) ).ToString() );
       QCOMPARE( res, QStringLiteral( "{\"inputs\":{\"p1\":\"a\",\"p2\":null}}" ) );
       params.insert( "p2", "b" );
-      res = QString::fromStdString( QgsJsonUtils::jsonFromVariant( asMap( params, context ) ).dump() );
+      res = QString::fromStdString( QgsJsonUtils::jsonFromVariant( asMap( params, context ) ).ToString() );
       QCOMPARE( res, QStringLiteral( "{\"inputs\":{\"p1\":\"a\",\"p2\":\"b\"}}" ) );
 
       params.insert( "p2", QStringList( {"b", "c"} ) );
-      res = QString::fromStdString( QgsJsonUtils::jsonFromVariant( asMap( params, context ) ).dump() );
+      res = QString::fromStdString( QgsJsonUtils::jsonFromVariant( asMap( params, context ) ).ToString() );
       QCOMPARE( res, QStringLiteral( "{\"inputs\":{\"p1\":\"a\",\"p2\":[\"b\",\"c\"]}}" ) );
 
       // hidden, shouldn't be shown
       params.insert( "p3", "b" );
-      res = QString::fromStdString( QgsJsonUtils::jsonFromVariant( asMap( params, context ) ).dump() );
+      res = QString::fromStdString( QgsJsonUtils::jsonFromVariant( asMap( params, context ) ).ToString() );
       QCOMPARE( res, QStringLiteral( "{\"inputs\":{\"p1\":\"a\",\"p2\":[\"b\",\"c\"]}}" ) );
 
       // test inclusion of a context setting
       context.setDistanceUnit( QgsUnitTypes::DistanceMeters );
-      res = QString::fromStdString( QgsJsonUtils::jsonFromVariant( asMap( params, context ) ).dump() );
+      res = QString::fromStdString( QgsJsonUtils::jsonFromVariant( asMap( params, context ) ).ToString() );
       QCOMPARE( res, QStringLiteral( "{\"distance_units\":\"meters\",\"inputs\":{\"p1\":\"a\",\"p2\":[\"b\",\"c\"]}}" ) );
     }
 
@@ -766,7 +766,7 @@ class TestQgsProcessing: public QObject
     void parameterTinInputLayers();
     void parameterMeshDatasetGroups();
     void parameterMeshDatasetTime();
-    void parameterDxfLayers();
+    //void parameterDxfLayers();
 #ifdef HAVE_EPT
     void parameterPointCloudLayer();
 #endif
@@ -9645,7 +9645,7 @@ void TestQgsProcessing::parameterTinInputLayers()
   const QString valueAsPythonString = def->valueAsPythonString( layerList, context );
   QCOMPARE( valueAsPythonString, QStringLiteral( "[{'source': 'PointLayerForTin','type': 0,'attributeIndex': -1}]" ) );
 
-  QCOMPARE( QString::fromStdString( QgsJsonUtils::jsonFromVariant( def->valueAsJsonObject( layerList, context ) ).dump() ),
+  QCOMPARE( QString::fromStdString( QgsJsonUtils::jsonFromVariant( def->valueAsJsonObject( layerList, context ) ).ToString() ),
             QStringLiteral( "[{\"attributeIndex\":-1,\"source\":\"%1\",\"type\":0}]" ).arg( vectorLayer->source() ) );
 
   bool ok = false;
@@ -9812,7 +9812,7 @@ void TestQgsProcessing::parameterMeshDatasetTime()
   value[QStringLiteral( "type" )] = QStringLiteral( "current-context-time" );
   QVERIFY( def->checkValueIsAcceptable( value ) );
   QCOMPARE( def->valueAsPythonString( value, context ), QStringLiteral( "{'type': 'current-context-time'}" ) );
-  QCOMPARE( QString::fromStdString( QgsJsonUtils::jsonFromVariant( def->valueAsJsonObject( value, context ) ).dump() ),
+  QCOMPARE( QString::fromStdString( QgsJsonUtils::jsonFromVariant( def->valueAsJsonObject( value, context ) ).ToString() ),
             QStringLiteral( "{\"type\":\"current-context-time\"}" ) );
 
   QCOMPARE( def->valueAsString( value, context, ok ), QString() );
@@ -9825,7 +9825,7 @@ void TestQgsProcessing::parameterMeshDatasetTime()
   value[QStringLiteral( "value" )] = QDateTime( QDate( 2123, 1, 2 ), QTime( 1, 2, 3 ) );
   QVERIFY( def->checkValueIsAcceptable( value ) );
   QCOMPARE( def->valueAsPythonString( value, context ), QStringLiteral( "{'type': 'defined-date-time','value': QDateTime(QDate(2123, 1, 2), QTime(1, 2, 3))}" ) );
-  QCOMPARE( QString::fromStdString( QgsJsonUtils::jsonFromVariant( def->valueAsJsonObject( value, context ) ).dump() ),
+  QCOMPARE( QString::fromStdString( QgsJsonUtils::jsonFromVariant( def->valueAsJsonObject( value, context ) ).ToString() ),
             QStringLiteral( "{\"type\":\"defined-date-time\",\"value\":\"2123-01-02T01:02:03\"}" ) );
 
   QCOMPARE( def->valueAsString( value, context, ok ), QString() );
@@ -9841,7 +9841,7 @@ void TestQgsProcessing::parameterMeshDatasetTime()
   value[QStringLiteral( "value" )] = QVariantList() << 1 << 5;
   QVERIFY( def->checkValueIsAcceptable( value ) );
   QCOMPARE( def->valueAsPythonString( value, context ), QStringLiteral( "{'type': 'dataset-time-step','value': [1,5]}" ) );
-  QCOMPARE( QString::fromStdString( QgsJsonUtils::jsonFromVariant( def->valueAsJsonObject( value, context ) ).dump() ),
+  QCOMPARE( QString::fromStdString( QgsJsonUtils::jsonFromVariant( def->valueAsJsonObject( value, context ) ).ToString() ),
             QStringLiteral( "{\"type\":\"dataset-time-step\",\"value\":[1,5]}" ) );
 
   QCOMPARE( def->valueAsString( value, context, ok ), QString() );
@@ -10239,6 +10239,7 @@ void TestQgsProcessing::parameterDateTime()
   QVERIFY( !fromCode->defaultValue().isValid() );
 }
 
+/*
 void TestQgsProcessing::parameterDxfLayers()
 {
   QgsProcessingContext context;
@@ -10309,6 +10310,7 @@ void TestQgsProcessing::parameterDxfLayers()
   QCOMPARE( dxfList.at( 0 ).layer()->source(), dxfLayer.layer()->source() );
   QCOMPARE( dxfList.at( 0 ).layerOutputAttributeIndex(), dxfLayer.layerOutputAttributeIndex() );
 }
+*/
 
 void TestQgsProcessing::parameterAnnotationLayer()
 {

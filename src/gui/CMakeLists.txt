@@ -1482,8 +1482,6 @@ target_include_directories(${LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}
 
     ${QSCINTILLA_INCLUDE_DIRS}/qscintilla
-    
-    PRIVATE
     ${QWT_INCLUDE_DIRS}/qwt
 )
 

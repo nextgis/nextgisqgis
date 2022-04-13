@@ -1,0 +1,27 @@
+--- atests/src/analysis/testqgsprocessingalgs.cpp	2022-02-18 15:06:10.000000000 +0300
++++ btests/src/analysis/testqgsprocessingalgs.cpp	2022-04-12 10:04:06.875190600 +0300
+@@ -193,7 +193,7 @@
+ 
+     void rasterize();
+ 
+-    void convertGpxFeatureType();
++    //void convertGpxFeatureType();
+     void convertGpsData();
+     void downloadGpsData();
+     void uploadGpsData();
+@@ -6747,6 +6747,7 @@
+   QVERIFY( checker.compareImages( "rasterize", 500 ) );
+ }
+ 
++/*
+ void TestQgsProcessingAlgs::convertGpxFeatureType()
+ {
+   // test generation of babel argument lists
+@@ -6890,6 +6891,7 @@
+     QStringLiteral( "\"/home/me/my output file.gpx\"" )
+   } ) );
+ }
++*/
+ 
+ void TestQgsProcessingAlgs::convertGpsData()
+ {
