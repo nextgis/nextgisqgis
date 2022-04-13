@@ -36,38 +36,38 @@ include_directories(
 set(TESTS
   testqgisapp.cpp
   testqgsappbrowserproviders.cpp
-  testqgisappclipboard.cpp
+  #testqgisappclipboard.cpp
   testqgisappdockwidgets.cpp
-  testqgsattributetable.cpp
-  testqgsapplocatorfilters.cpp
-  testqgsdecorationscalebar.cpp
-  testqgsfieldcalculator.cpp
-  testqgsgeoreferencer.cpp
+  #testqgsattributetable.cpp
+  #testqgsapplocatorfilters.cpp
+  #testqgsdecorationscalebar.cpp
+  #testqgsfieldcalculator.cpp
+  #testqgsgeoreferencer.cpp
   testqgsmaptooleditannotation.cpp
   #testqgsmaptoolidentifyaction.cpp
   testqgsmaptoollabel.cpp
   testqgsmaptoolselect.cpp
-  testqgsmaptoolreshape.cpp
+  #testqgsmaptoolreshape.cpp
   testqgsmaptoolrotatefeature.cpp
-  testqgsmaptoolscalefeature.cpp
+  #testqgsmaptoolscalefeature.cpp
   testqgsmaptoolcircularstring.cpp
-  testqgsmaptooleditmesh.cpp
+  #testqgsmaptooleditmesh.cpp
   testqgsmaptoolmovefeature.cpp
   testqgsmaptoolellipse.cpp
   testqgsmaptoolcircle.cpp
   testqgsmaptoolrectangle.cpp
   testqgsmaptoolregularpolygon.cpp
   testqgsmaptoolsplitparts.cpp
-  testqgsmaptoolsplitfeatures.cpp
-  testqgsmeasuretool.cpp
-  testqgsmeasurebearingtool.cpp
-  testqgsvertextool.cpp
+  #testqgsmaptoolsplitfeatures.cpp
+  #testqgsmeasuretool.cpp
+  #testqgsmeasurebearingtool.cpp
+  #testqgsvertextool.cpp
   testqgsvectorlayersaveasdialog.cpp
   testqgsmaptoolreverseline.cpp
   testqgsmaptooltrimextendfeature.cpp
-  testqgsprojectproperties.cpp
+  #testqgsprojectproperties.cpp
   testqgsapplayoutvaliditychecks.cpp
-  testqgsmeshcalculatordialog.cpp
+  #testqgsmeshcalculatordialog.cpp
   #testqgsgpsinformationwidget.cpp
   testqgslabelpropertydialog.cpp
 )

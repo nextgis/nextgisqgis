@@ -45,16 +45,16 @@ endif()
 set(TESTS
  testqgsgeometrysnapper.cpp
  testqgsinterpolator.cpp
- testqgsprocessingalgs.cpp
- testqgsprocessingmodelalgorithm.cpp
+ #testqgsprocessingalgs.cpp
+ #testqgsprocessingmodelalgorithm.cpp
  testqgszonalstatistics.cpp
- testqgsrastercalculator.cpp
+ #testqgsrastercalculator.cpp
  testqgsreclassifyutils.cpp
- testqgsalignraster.cpp
+ #testqgsalignraster.cpp
  testqgsnetworkanalysis.cpp
  testqgsninecellfilters.cpp
- testqgsmeshcalculator.cpp
- testqgsmeshcontours.cpp
+ #testqgsmeshcalculator.cpp
+ #testqgsmeshcontours.cpp
  testqgstriangulation.cpp
 )
 if(HAVE_GSL)
@@ -64,4 +64,4 @@ endif()
 foreach(TESTSRC ${TESTS})
     add_qgis_test(${TESTSRC} MODULE analysis LINKEDLIBRARIES ${NG_PREFIX}qgis_analysis)
 endforeach(TESTSRC)
-add_qgis_test(testqgsprocessing.cpp MODULE analysis LINKEDLIBRARIES ${NG_PREFIX}qgis_analysis LABELS "POSTGRES")
+#add_qgis_test(testqgsprocessing.cpp MODULE analysis LINKEDLIBRARIES ${NG_PREFIX}qgis_analysis LABELS "POSTGRES")
