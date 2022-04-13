@@ -500,6 +500,8 @@ if (PYTHON3_FOUND)
     set(Python_VERSION ${PYTHON_VERSION})
 endif()
 
+get_property(IS_MULTI_CONFIG_GENERATOR GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+
 #############################################################
 # create qgsconfig.h
 # installed with app target

@@ -28,10 +28,18 @@
 include_directories(
   ${CMAKE_SOURCE_DIR}/src/test
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_BINARY_DIR}/src/app/${NG_PREFIX}qgis_app_autogen/include
+  
 )
 
-
+if(IS_MULTI_CONFIG_GENERATOR)
+    include_directories(
+        ${CMAKE_BINARY_DIR}/src/app/${NG_PREFIX}qgis_app_autogen/include_${CMAKE_BUILD_TYPE}
+    )
+else()
+    include_directories(
+        ${CMAKE_BINARY_DIR}/src/app/${NG_PREFIX}qgis_app_autogen/include
+    )
+endif()
 
 set(TESTS
   testqgisapp.cpp

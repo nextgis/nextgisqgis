@@ -28,10 +28,19 @@ include_directories (
     ${CMAKE_SOURCE_DIR}/src/core
     ${CMAKE_SOURCE_DIR}/src/gui
     ${CMAKE_SOURCE_DIR}/src/analysis/raster
-    ${CMAKE_BINARY_DIR}/src/gui/${NG_PREFIX}qgis_gui_autogen/include
     ${CMAKE_BINARY_DIR}/src/analysis
     ${CMAKE_SOURCE_DIR}/src/app
 )
+
+if(IS_MULTI_CONFIG_GENERATOR)
+    include_directories(
+        ${CMAKE_BINARY_DIR}/src/gui/${NG_PREFIX}qgis_gui_autogen/include_${CMAKE_BUILD_TYPE}
+    )
+else()
+    include_directories(
+        ${CMAKE_BINARY_DIR}/src/gui/${NG_PREFIX}qgis_gui_autogen/include
+    )
+endif()
 
 set(PROV_PLUGINS
     # arcgisrest
