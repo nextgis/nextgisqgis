@@ -200,7 +200,7 @@ set(TESTS
  testqgsstoredexpressionmanager.cpp
  #testqgsstringutils.cpp
  #testqgsstyle.cpp
- testqgssvgcache.cpp
+ #testqgssvgcache.cpp
  #testqgssvgmarker.cpp
  testqgssymbol.cpp
  testqgstaskmanager.cpp
