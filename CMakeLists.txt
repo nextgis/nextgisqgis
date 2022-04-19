@@ -137,6 +137,7 @@ cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0053 NEW)
 cmake_policy(SET CMP0063 NEW)
 cmake_policy(SET CMP0071 NEW)
+cmake_policy(SET CMP0075 NEW)
 cmake_policy(SET CMP0094 NEW)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
