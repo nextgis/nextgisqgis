@@ -433,7 +433,7 @@ endif()
 find_anyproject(PostgreSQL DEFAULT ON NAMES PQ pq libpq)
 if(POSTGRESQL_FOUND)
     set(HAVE_POSTGRESQL TRUE)
-    add_definitions(-DHAVE_POSTGRESQL)
+    add_definitions(-DHAVE_PGCONFIG=1 -DHAVE_POSTGRESQL)
 endif()
 
 find_anyproject(OCI DEFAULT ON)

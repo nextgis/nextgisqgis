@@ -360,12 +360,6 @@ endif()
 
 # set_property(SOURCE qgisapp.cpp PROPERTY SKIP_AUTOUIC ON)
 
-if (POSTGRES_FOUND)
-  if(HAVE_PGCONFIG)
-    add_definitions(-DHAVE_PGCONFIG=1)
-  endif()
-endif()
-
 # if(NGSTD_FOUND)
 
 #     set(QGIS_APP_SRCS ${QGIS_APP_SRCS}
