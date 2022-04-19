@@ -29,6 +29,7 @@ ELSE(QSCINTILLA_VERSION_STR)
     qscintilla2_qt5
     libqt5scintilla2
     libqscintilla2-qt5
+    libqscintilla2_qt5
     qt5scintilla2
     libqscintilla2-qt5.dylib
     qscintilla2
@@ -58,7 +59,9 @@ ELSE(QSCINTILLA_VERSION_STR)
       $ENV{LIB_DIR}/include
       /usr/local/include
       /usr/include
-    PATH_SUFFIXES qt
+    PATH_SUFFIXES 
+      qt 
+      qt5
     )
 
   IF(QSCINTILLA_LIBRARY AND QSCINTILLA_INCLUDE_DIR)
