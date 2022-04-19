@@ -276,6 +276,8 @@ set(QGIS_APP_SRCS
   mesh/qgsmaptooleditmeshframe.cpp
   mesh/qgsmeshtransformcoordinatesdockwidget.cpp
   mesh/qgsmeshselectbyexpressiondialog.cpp
+  
+  ngsaboutdialog.cpp
 )
 
 if (HAVE_SPATIALITE)
