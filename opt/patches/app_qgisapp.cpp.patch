@@ -1,5 +1,5 @@
---- asrc/app/qgisapp.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ "b\\src/app/qgisapp.cpp"	2022-04-19 15:00:53.770333900 +0300
+--- a/src/app/qgisapp.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/src/app/qgisapp.cpp	2022-04-19 15:00:53.770333900 +0300
 @@ -114,7 +114,7 @@
  #include "qgsgeometrycheckregistry.h"
  

@@ -1,5 +1,5 @@
 --- a/src/providers/wfs/qgsoapifutils.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/providers/wfs/qgsoapifutils.cpp	2022-04-06 18:40:08.000000000 +0300
++++ b/src/providers/wfs/qgsoapifutils.cpp	2022-04-20 02:30:28.994198900 +0300
 @@ -19,56 +19,44 @@
  
  std::vector<QgsOAPIFJson::Link> QgsOAPIFJson::parseLinks( const json &jParent )
@@ -28,7 +28,8 @@
 -            link.href = QString::fromStdString( href.get<std::string>() );
 -            link.rel = QString::fromStdString( rel.get<std::string>() );
 -            if ( jLink.contains( "type" ) )
--            {
++            for ( const auto &jLink : jLinks.ToArray() )
+             {
 -              const auto type = jLink["type"];
 -              if ( type.is_string() )
 -              {
@@ -44,8 +45,7 @@
 -              }
 -            }
 -            if ( jLink.contains( "length" ) )
-+            for ( const auto &jLink : jLinks.ToArray() )
-             {
+-            {
 -              const auto length = jLink["length"];
 -              if ( length.is_number_integer() )
 -              {

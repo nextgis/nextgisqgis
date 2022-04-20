@@ -89,9 +89,9 @@
 #include "qgsalgorithmforcerhr.h"
 #include "qgsalgorithmfuzzifyraster.h"
 #include "qgsalgorithmgeometrybyexpression.h"
-#if QT_CONFIG(process)
+//#if QT_CONFIG(process)
 //#include "qgsalgorithmgpsbabeltools.h"
-#endif
+//#endif
 #include "qgsalgorithmgrid.h"
 #include "qgsalgorithmhillshade.h"
 #include "qgsalgorithmjoinbyattribute.h"

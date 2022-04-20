@@ -110,7 +110,8 @@ subpaths = [
     "src/app/options/qgsoptions.cpp",
     "src/app/qgsprojectlistitemdelegate.cpp", 
     "tests/src/gui/testprocessinggui.cpp",
-    "src/core/testqgsauthcertutils.cpp",
+    "tests/src/core/testqgsauthcertutils.cpp",
+    "src/app/mainwin.cpp",
 ]
 
 def run_shell(args):

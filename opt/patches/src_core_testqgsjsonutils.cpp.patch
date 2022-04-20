@@ -1,5 +1,5 @@
---- atests/src/core/testqgsjsonutils.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ btests/src/core/testqgsjsonutils.cpp	2022-04-10 23:47:58.428679700 +0300
+--- a/tests/src/core/testqgsjsonutils.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/tests/src/core/testqgsjsonutils.cpp	2022-04-20 02:30:29.205635500 +0300
 @@ -16,7 +16,7 @@
  #include "qgstest.h"
  
