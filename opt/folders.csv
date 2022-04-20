@@ -71,7 +71,7 @@ external/untwine/untwine/src/api,external/untwine/untwine/src/api,skip,*
 external/wintoast,external/wintoast,skip,*
 external/wintoast/src,external/wintoast/src,skip,*
 i18n,i18n,,ts
-images,images,,qrc
+images,images,,
 images/composer,images/composer,,"svg,png"
 images/flags,images/flags,,"svg,png"
 images/icons,images/icons,skip,"svg,png"

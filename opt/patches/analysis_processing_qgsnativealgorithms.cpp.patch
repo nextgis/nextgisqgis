@@ -1,5 +1,5 @@
 --- a/src/analysis/processing/qgsnativealgorithms.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/analysis/processing/qgsnativealgorithms.cpp	2022-04-06 18:40:09.000000000 +0300
++++ b/src/analysis/processing/qgsnativealgorithms.cpp	2022-04-20 12:01:39.982142200 +0300
 @@ -43,7 +43,7 @@
  #include "qgsalgorithmconverttocurves.h"
  #include "qgsalgorithmconvexhull.h"
@@ -18,6 +18,19 @@
  #include "qgsalgorithmexecutepostgisquery.h"
  #include "qgsalgorithmexecutespatialitequery.h"
  #include "qgsalgorithmexecutespatialitequeryregistered.h"
+@@ -89,9 +89,9 @@
+ #include "qgsalgorithmforcerhr.h"
+ #include "qgsalgorithmfuzzifyraster.h"
+ #include "qgsalgorithmgeometrybyexpression.h"
+-#if QT_CONFIG(process)
+-#include "qgsalgorithmgpsbabeltools.h"
+-#endif
++//#if QT_CONFIG(process)
++//#include "qgsalgorithmgpsbabeltools.h"
++//#endif
+ #include "qgsalgorithmgrid.h"
+ #include "qgsalgorithmhillshade.h"
+ #include "qgsalgorithmjoinbyattribute.h"
 @@ -195,7 +195,7 @@
  #include "qgsalgorithmsplitlinesbylength.h"
  #include "qgsalgorithmsplitvectorlayer.h"
