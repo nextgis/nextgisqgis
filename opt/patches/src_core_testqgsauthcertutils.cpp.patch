@@ -1,5 +1,5 @@
---- atests/src/core/testqgsauthcertutils.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ btests/src/core/testqgsauthcertutils.cpp	2022-04-11 00:16:24.311356800 +0300
+--- a/tests/src/core/testqgsauthcertutils.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/tests/src/core/testqgsauthcertutils.cpp	2022-04-20 02:30:29.184690800 +0300
 @@ -105,7 +105,7 @@
    QVERIFY( QgsAuthCertUtils::pemIsPkcs8( QString( pkcs ) ) );
  
