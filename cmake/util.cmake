@@ -51,6 +51,12 @@ function(check_version major minor patch qgis_major qgis_minor qgis_patch qgis_n
 
 endfunction(check_version)
 
+function(set_policy check_policy policy_type)
+    if(POLICY ${check_policy})
+        cmake_policy(SET ${check_policy} ${policy_type})
+    endif()
+endfunction()
+
 function(warning_msg text)
     if(NOT SUPPRESS_VERBOSE_OUTPUT)
         string(ASCII 27 Esc)

@@ -1,5 +1,5 @@
 --- a/cmake_templates/qgsconfig.h.in	2022-02-18 15:06:10.000000000 +0300
-+++ b/cmake_templates/qgsconfig.h.in	2022-04-06 18:40:08.000000000 +0300
++++ b/cmake_templates/qgsconfig.h.in	2022-04-07 00:39:43.000000000 +0300
 @@ -33,6 +33,11 @@
  #define CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}"
  #define CMAKE_SOURCE_DIR "${CMAKE_SOURCE_DIR}"

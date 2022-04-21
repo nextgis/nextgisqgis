@@ -1,5 +1,5 @@
 --- a/src/core/qgsvectorfilewriter.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/qgsvectorfilewriter.cpp	2022-04-06 18:40:09.000000000 +0300
++++ b/src/core/qgsvectorfilewriter.cpp	2022-04-07 00:39:44.000000000 +0300
 @@ -2262,6 +2262,46 @@
                               )
                             );

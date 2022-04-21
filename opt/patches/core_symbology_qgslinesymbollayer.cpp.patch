@@ -1,5 +1,5 @@
 --- a/src/core/symbology/qgslinesymbollayer.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/symbology/qgslinesymbollayer.cpp	2022-04-06 18:40:08.000000000 +0300
++++ b/src/core/symbology/qgslinesymbollayer.cpp	2022-04-07 00:39:42.000000000 +0300
 @@ -16,7 +16,7 @@
  #include "qgslinesymbollayer.h"
  #include "qgscurve.h"
