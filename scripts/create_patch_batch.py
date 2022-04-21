@@ -112,6 +112,8 @@ subpaths = [
     "tests/src/gui/testprocessinggui.cpp",
     "src/core/testqgsauthcertutils.cpp",
     "src/native/linux/qgslinuxnative.cpp",
+    "tests/src/core/testqgsauthcertutils.cpp",
+    "src/app/mainwin.cpp",
 ]
 
 def run_shell(args):
