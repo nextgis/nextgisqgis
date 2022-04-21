@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Example:
-# python create_patch_batch.py --src_dir <some dir> --dst_dir <some dir>
+# python3 create_patch_batch.py --src_dir <some dir> --dst_dir <some dir>
 # 
 
 import argparse
@@ -111,6 +111,7 @@ subpaths = [
     "src/app/qgsprojectlistitemdelegate.cpp", 
     "tests/src/gui/testprocessinggui.cpp",
     "src/core/testqgsauthcertutils.cpp",
+    "src/native/linux/qgslinuxnative.cpp",
 ]
 
 def run_shell(args):
@@ -156,8 +157,8 @@ for subpath in subpaths:
     print('Patch path is: ' + output)
 
     out = run_shell(("diff", "-u", src_full_path, dst_full_path))
-    out = out.replace(args.src_dir, 'a')
-    out = out.replace(args.dst_dir, 'b')
+    out = out.replace(args.src_dir.encode(), 'a'.encode())
+    out = out.replace(args.dst_dir.encode(), 'b'.encode())
 
     with open(output, "w") as file:
-        file.write(out)
+        file.write(out.decode('utf8'))

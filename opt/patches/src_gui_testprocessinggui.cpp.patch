@@ -1,5 +1,5 @@
---- atests/src/gui/testprocessinggui.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ btests/src/gui/testprocessinggui.cpp	2022-04-10 23:47:58.506801400 +0300
+--- a/tests/src/gui/testprocessinggui.cpp	2022-02-18 15:06:10.000000000 +0300
++++ b/tests/src/gui/testprocessinggui.cpp	2022-04-07 11:28:40.000000000 +0300
 @@ -92,8 +92,8 @@
  #include "qgsprocessingparameteraggregate.h"
  #include "qgsprocessingparametertininputlayers.h"

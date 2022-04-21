@@ -1,5 +1,5 @@
 --- a/src/core/geometry/qgsabstractgeometry.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/geometry/qgsabstractgeometry.h	2022-04-06 18:40:08.000000000 +0300
++++ b/src/core/geometry/qgsabstractgeometry.h	2022-04-07 00:39:42.000000000 +0300
 @@ -26,10 +26,12 @@
  #include "qgswkbtypes.h"
  #include "qgswkbptr.h"

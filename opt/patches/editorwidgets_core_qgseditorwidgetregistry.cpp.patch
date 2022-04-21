@@ -1,5 +1,5 @@
 --- a/src/gui/editorwidgets/core/qgseditorwidgetregistry.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/gui/editorwidgets/core/qgseditorwidgetregistry.cpp	2022-04-06 18:40:09.000000000 +0300
++++ b/src/gui/editorwidgets/core/qgseditorwidgetregistry.cpp	2022-04-07 00:39:43.000000000 +0300
 @@ -30,7 +30,7 @@
  #include "qgscolorwidgetfactory.h"
  #include "qgsdatetimeeditfactory.h"

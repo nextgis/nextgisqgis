@@ -20,6 +20,7 @@
 #include <QEvent>
 #include <QStringList>
 #include <QColor>
+#include <QVector>
 
 #include <memory>
 #include "qgis_sip.h"
