@@ -278,6 +278,8 @@ set(QGIS_APP_SRCS
   mesh/qgsmeshselectbyexpressiondialog.cpp
   
   ngsaboutdialog.cpp
+  ngcustomization.cpp
+  ngupdater.cpp
 )
 
 if (HAVE_SPATIALITE)
@@ -498,6 +500,8 @@ target_include_directories(${LIB_NAME} PUBLIC
   ${CMAKE_SOURCE_DIR}/src/gui/devtools
 
   ${CMAKE_BINARY_DIR}/src/app
+  
+  ${NGSTD_INCLUDE_DIRS}
 )
 
 if(IS_MULTI_CONFIG_GENERATOR)
@@ -545,6 +549,7 @@ set(TARGET_LINK_LIBEX ${TARGET_LINK_LIBEX}
     ${NG_PREFIX}qgis_analysis
     ${NG_PREFIX}qgis_native
 #   libdxfrw
+    ${NGSTD_LIBRARIES}
 )
 
 target_link_libraries(${LIB_NAME} ${TARGET_LINK_LIBEX})
