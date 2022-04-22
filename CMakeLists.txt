@@ -211,6 +211,11 @@ find_anyproject(LIBZIP REQUIRED)
 find_anyproject(EXPAT REQUIRED)
 find_anyproject(ZLIB REQUIRED)
 
+find_anyproject(NGSTD REQUIRED COMPONENTS core5 framework5)
+if(NGSTD_FOUND)
+    add_definitions(-DNGSTD_USING)
+endif()
+
 # if (APPLE)
 #     # Libtasn1 is for DER-encoded PKI ASN.1 parsing/extracting workarounds
 #     find_anyproject(Libtasn1 REQUIRED)
