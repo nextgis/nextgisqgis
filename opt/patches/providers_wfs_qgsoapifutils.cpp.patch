@@ -28,8 +28,7 @@
 -            link.href = QString::fromStdString( href.get<std::string>() );
 -            link.rel = QString::fromStdString( rel.get<std::string>() );
 -            if ( jLink.contains( "type" ) )
-+            for ( const auto &jLink : jLinks.ToArray() )
-             {
+-            {
 -              const auto type = jLink["type"];
 -              if ( type.is_string() )
 -              {
@@ -45,7 +44,8 @@
 -              }
 -            }
 -            if ( jLink.contains( "length" ) )
--            {
++            for ( const auto &jLink : jLinks.ToArray() )
+             {
 -              const auto length = jLink["length"];
 -              if ( length.is_number_integer() )
 -              {
