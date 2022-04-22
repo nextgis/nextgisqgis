@@ -1,25 +1,18 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 # This will make apt-get install without question
 ARG DEBIAN_FRONTEND=noninteractive
-# ENV TZ 'UTC' ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && tzdata
 
-RUN apt-get update \
-  && apt-get install -y \
-    apt-transport-https ca-certificates \
-    python3-pip \
-    curl \
-    dumb-init \
-    # ninja-build \
-    git \
-    devscripts \
-    debhelper \
-    equivs \
-    build-essential \
+RUN apt-get update -y && \
+	apt-get -y install --no-install-recommends --yes language-pack-ru \
+	apt-transport-https ca-certificates curl gnupg && \
+	echo "deb https://rm.nextgis.com/api/repo/11/deb focal main" | tee -a /etc/apt/sources.list && \
+	curl -s -L https://rm.nextgis.com/api/repo/11/deb/key.gpg | apt-key add - && \
+	apt-get update -y && apt-get install -y \
     bash \
-    cmake \
-    # flex \
-    # bison \
+    git \    
+    build-essential \
+    cmake cmake-data \
     libproj-dev \
     libgeos-dev \
     libgdal-dev \
@@ -28,28 +21,50 @@ RUN apt-get update \
     libspatialite-dev \
     libqca-qt5-2-dev \
     libzip-dev \
+    libexpat1-dev \
+    libgsl-dev \
+    libpq-dev \
+    libspatialindex-dev \
+    libspatialite-dev \
+    opencl-headers \    
     libqt5svg5-dev \
     qt5keychain-dev \
     # libexiv2-dev \
     qt3d5-dev \
-    qt3d-assimpsceneimport-plugin \
-    qt3d-defaultgeometryloader-plugin \
-    qt3d-gltfsceneio-plugin \
-    qt3d-scene2d-plugin
+    # qt3d-assimpsceneimport-plugin \
+    # qt3d-defaultgeometryloader-plugin \
+    # qt3d-gltfsceneio-plugin \
+    # qt3d-scene2d-plugin \
+    libqca-qt5-2-dev \
+    # libqca-qt5-2-plugins \
+    libqscintilla2-qt5-dev \
+    libsqlite3-dev \
+    libqwt-qt5-dev \
+            #    libqt5xmlpatterns5-dev,
+    qt5keychain-dev \
+            #    qt3d-assimpsceneimport-plugin,
+            #    qt3d-defaultgeometryloader-plugin,
+            #    qt3d-gltfsceneio-plugin,
+            #    qt3d-scene2d-plugin,
+    qtbase5-dev \
+    qtbase5-private-dev \
+    qttools5-dev-tools \
+    qttools5-dev \
+    qtdeclarative5-dev \    
+    python3-dev
 
 COPY . /root/ngqgis/
 
 WORKDIR /root/ngqgis/build
 
 RUN cmake .. \
-        # -DQT5_3DEXTRA_LIBRARY="/usr/lib/x86_64-linux-gnu/libQt53DExtras.so" \
-        # -DQT5_3DEXTRA_INCLUDE_DIR="/root/ngqgis/external/qt3dextra-headers" \
-        # -DQt53DExtras_DIR="/root/ngqgis/external/qt3dextra-headers/cmake/Qt53DExtras" \
-        # -DCMAKE_PREFIX_PATH="/root/ngqgis/external/qt3dextra-headers" \
         -DCMAKE_INSTALL_PREFIX=install \
-        # -DUSING_NINJA=ON \
-        # -G Ninja \
+        -DSKIP_DEFAULTS=ON \
+        -DBUILD_SHARED_LIBS=ON \
+        -DPACKAGE_VENDOR=NextGIS \
+        -DBUILD_TESTING=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DWITH_BINDINGS=OFF -DWITH_OAUTH2_PLUGIN=OFF -DWITH_3D=OFF -DWITH_QGIS_PROCESS=OFF \
     && cmake --build . \
         --target install \
-        --config Release \
-        -- -j8
+        --config Release -- -j8

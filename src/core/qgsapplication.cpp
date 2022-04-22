@@ -1574,9 +1574,9 @@ QString QgsApplication::showSettings()
                           themeName(),
                           activeThemePath(),
                           defaultThemePath(),
-                          svgPaths().join( tr( "\n\t\t", "match indentation of application state" ) ),
-                          qgisMasterDatabaseFilePath() )
-                    .arg( qgisAuthDatabaseFilePath(), 
+                          svgPaths().join( tr( "\n\t\t", "match indentation of application state" ) ) )
+                    .arg( qgisMasterDatabaseFilePath(),
+                          qgisAuthDatabaseFilePath(), 
                           i18nPath(),
                           srsDatabaseFilePath(),
                           iconsPath() );

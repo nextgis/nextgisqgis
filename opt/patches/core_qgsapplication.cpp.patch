@@ -1,5 +1,5 @@
 --- a/src/core/qgsapplication.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/qgsapplication.cpp	2022-04-06 18:40:09.000000000 +0300
++++ b/src/core/qgsapplication.cpp	2022-04-21 23:47:25.000000000 +0300
 @@ -41,7 +41,7 @@
  #include "qgscolorschemeregistry.h"
  #include "qgspainteffectregistry.h"
@@ -684,7 +684,7 @@
  #else
    struct passwd *p = getpwuid( getuid() );
  
-@@ -1443,20 +1550,25 @@
+@@ -1443,28 +1550,36 @@
  
  QString QgsApplication::showSettings()
  {
@@ -719,12 +719,14 @@
                            pluginPath(),
                            pkgDataPath(),
                            themeName(),
-@@ -1464,7 +1576,10 @@
+                           activeThemePath(),
                            defaultThemePath(),
-                           svgPaths().join( tr( "\n\t\t", "match indentation of application state" ) ),
-                           qgisMasterDatabaseFilePath() )
+-                          svgPaths().join( tr( "\n\t\t", "match indentation of application state" ) ),
+-                          qgisMasterDatabaseFilePath() )
 -                    .arg( qgisAuthDatabaseFilePath() );
-+                    .arg( qgisAuthDatabaseFilePath(), 
++                          svgPaths().join( tr( "\n\t\t", "match indentation of application state" ) ) )
++                    .arg( qgisMasterDatabaseFilePath(),
++                          qgisAuthDatabaseFilePath(), 
 +                          i18nPath(),
 +                          srsDatabaseFilePath(),
 +                          iconsPath() );
