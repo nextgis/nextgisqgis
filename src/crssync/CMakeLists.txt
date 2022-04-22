@@ -103,6 +103,8 @@ set(RUN_DEPENDENCIES
     lib_qwt
     lib_qscintilla
     lib_gsl
+    lib_ngstd
+    lib_sentrynative
 )
 
 get_compiler_version(COMPILER)

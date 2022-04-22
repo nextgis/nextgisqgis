@@ -124,6 +124,8 @@ typedef SInt32 SRefCon;
 #include "qgsopenclutils.h"
 #endif
 
+#include "ngcustomization.h"
+
 /**
  * Print QGIS version
  */
@@ -1434,7 +1436,7 @@ int main( int argc, char *argv[] )
   // this should be done in QgsApplication::init() but it doesn't know the settings dir.
   QgsApplication::setMaxThreads( settings.value( QStringLiteral( "qgis/max_threads" ), -1 ).toInt() );
 
-  QgisApp *qgis = new QgisApp( mypSplash, myRestorePlugins, mySkipBadLayers, mySkipVersionCheck, rootProfileFolder, profileName ); // "QgisApp" used to find canonical instance
+  QgisApp *qgis = new NGQgisApp( mypSplash, myRestorePlugins, mySkipBadLayers, mySkipVersionCheck, rootProfileFolder, profileName ); // "QgisApp" used to find canonical instance
   qgis->setObjectName( QStringLiteral( "QgisApp" ) );
 
   QgsApplication::connect(

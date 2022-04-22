@@ -1,5 +1,5 @@
 --- a/src/app/qgisapp.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/qgisapp.h	2022-04-07 00:39:44.000000000 +0300
++++ b/src/app/qgisapp.h	2022-04-22 03:17:55.046017800 +0300
 @@ -95,7 +95,7 @@
  class QgsUserInputWidget;
  class QgsVectorLayer;
@@ -36,6 +36,15 @@
  class QgsLayoutCustomDropHandler;
  class QgsProxyProgressTask;
  class QgsNetworkRequestParameters;
+@@ -197,7 +197,7 @@
+  * \class QgisApp
+  * \brief Main window for the QGIS application
+  */
+-class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
++class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
+ {
+     Q_OBJECT
+   public:
 @@ -593,7 +593,7 @@
  #endif
      QAction *actionAddWmsLayer() { return mActionAddWmsLayer; }
@@ -63,6 +72,15 @@
  
      /**
       * Adds a vector tile layer directly without prompting user for location
+@@ -1364,7 +1364,7 @@
+     //! QGIS Sponsors
+     void sponsors();
+     //! About QGIS
+-    void about();
++    virtual void about();
+ 
+     //! Add a list of database layers to the map
+     void addDatabaseLayers( QStringList const &layerPathList, QString const &providerKey );
 @@ -1574,9 +1574,9 @@
      //! Save project as
      void fileSaveAs();
@@ -75,7 +93,46 @@
  
      /**
       * Open the project file corresponding to the
-@@ -2168,7 +2168,7 @@
+@@ -1692,7 +1692,7 @@
+     //! Open a url in the users configured browser
+     void openURL( QString url, bool useQgisDocDirectory = true );
+     //! Check qgis version against the qgis version server
+-    void checkQgisVersion();
++    virtual void checkQgisVersion();
+     //!Invoke the custom projection dialog
+     void customProjection();
+     //! configure shortcuts
+@@ -1960,9 +1960,6 @@
+     void renderDecorationItems( QPainter *p );
+     void projectReadDecorationItems();
+ 
+-    //! clear out any stuff from project
+-    void closeProject();
+-
+     //! trust and load project macros
+     void enableProjectMacros();
+ 
+@@ -2140,6 +2137,19 @@
+      */
+     void activeLayerChanged( QgsMapLayer *layer );
+ 
++protected:
++    /**
++     * Check to see if the current project file is dirty and if so, prompt the user to save it.
++     * \returns TRUE if saved or discarded, FALSE if canceled
++     */
++    bool saveDirty();
++    
++    //! clear out any stuff from project
++    void closeProject();
++    
++    //! list of recently opened/saved project files
++    QList<QgsRecentProjectItemsModel::RecentProjectData> mRecentProjects;
++    
+   private:
+ 
+     void createPreviewImage( const QString &path, const QIcon &overlayIcon = QIcon() );
+@@ -2168,7 +2178,7 @@
      void postProcessAddedLayer( QgsMapLayer *layer );
  
      //! Open a vector tile layer - this is the generic function which takes all parameters
@@ -84,7 +141,29 @@
  
      //! Open a point cloud layer - this is the generic function which takes all parameters
      QgsPointCloudLayer *addPointCloudLayerPrivate( const QString &uri,
-@@ -2661,7 +2661,7 @@
+@@ -2198,11 +2208,7 @@
+     //! shows the paste-transformations dialog
+     // void pasteTransformations();
+ 
+-    /**
+-     * Check to see if the current project file is dirty and if so, prompt the user to save it.
+-     * \returns TRUE if saved or discarded, FALSE if canceled
+-     */
+-    bool saveDirty();
++
+ 
+     /**
+      * Checks for unsaved changes in open layers and prompts the user to save
+@@ -2580,8 +2586,6 @@
+     QgisAppInterface *mQgisInterface = nullptr;
+ 
+     QSplashScreen *mSplash = nullptr;
+-    //! list of recently opened/saved project files
+-    QList<QgsRecentProjectItemsModel::RecentProjectData> mRecentProjects;
+ 
+     //! Currently open layout designer dialogs
+     QSet<QgsLayoutDesignerDialog *> mLayoutDesignerDialogs;
+@@ -2661,7 +2665,7 @@
      QList<QgsDecorationItem *> mDecorationItems;
  
      //! Persistent GPS toolbox

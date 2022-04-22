@@ -197,7 +197,7 @@ class QgsGeoreferencerMainWindow;
  * \class QgisApp
  * \brief Main window for the QGIS application
  */
-class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
+class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
 {
     Q_OBJECT
   public:
@@ -1364,7 +1364,7 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     //! QGIS Sponsors
     void sponsors();
     //! About QGIS
-    void about();
+    virtual void about();
 
     //! Add a list of database layers to the map
     void addDatabaseLayers( QStringList const &layerPathList, QString const &providerKey );
@@ -1692,7 +1692,7 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     //! Open a url in the users configured browser
     void openURL( QString url, bool useQgisDocDirectory = true );
     //! Check qgis version against the qgis version server
-    void checkQgisVersion();
+    virtual void checkQgisVersion();
     //!Invoke the custom projection dialog
     void customProjection();
     //! configure shortcuts
@@ -1960,9 +1960,6 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     void renderDecorationItems( QPainter *p );
     void projectReadDecorationItems();
 
-    //! clear out any stuff from project
-    void closeProject();
-
     //! trust and load project macros
     void enableProjectMacros();
 
@@ -2140,6 +2137,19 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
      */
     void activeLayerChanged( QgsMapLayer *layer );
 
+protected:
+    /**
+     * Check to see if the current project file is dirty and if so, prompt the user to save it.
+     * \returns TRUE if saved or discarded, FALSE if canceled
+     */
+    bool saveDirty();
+    
+    //! clear out any stuff from project
+    void closeProject();
+    
+    //! list of recently opened/saved project files
+    QList<QgsRecentProjectItemsModel::RecentProjectData> mRecentProjects;
+    
   private:
 
     void createPreviewImage( const QString &path, const QIcon &overlayIcon = QIcon() );
@@ -2198,11 +2208,7 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     //! shows the paste-transformations dialog
     // void pasteTransformations();
 
-    /**
-     * Check to see if the current project file is dirty and if so, prompt the user to save it.
-     * \returns TRUE if saved or discarded, FALSE if canceled
-     */
-    bool saveDirty();
+
 
     /**
      * Checks for unsaved changes in open layers and prompts the user to save
@@ -2580,8 +2586,6 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     QgisAppInterface *mQgisInterface = nullptr;
 
     QSplashScreen *mSplash = nullptr;
-    //! list of recently opened/saved project files
-    QList<QgsRecentProjectItemsModel::RecentProjectData> mRecentProjects;
 
     //! Currently open layout designer dialogs
     QSet<QgsLayoutDesignerDialog *> mLayoutDesignerDialogs;
