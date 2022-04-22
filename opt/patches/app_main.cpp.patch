@@ -1,5 +1,5 @@
 --- a/src/app/main.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/main.cpp	2022-04-07 00:39:45.000000000 +0300
++++ b/src/app/main.cpp	2022-04-21 14:12:01.488429300 +0300
 @@ -34,6 +34,7 @@
  #include <QImageReader>
  #include <QMessageBox>
@@ -17,7 +17,16 @@
  #include "qgsmapthemes.h"
  #include "qgsvectorlayer.h"
  #include "qgis_app.h"
-@@ -140,7 +141,8 @@
+@@ -123,6 +124,8 @@
+ #include "qgsopenclutils.h"
+ #endif
+ 
++#include "ngcustomization.h"
++
+ /**
+  * Print QGIS version
+  */
+@@ -140,7 +143,8 @@
    QStringList msg;
  
    msg
@@ -27,7 +36,7 @@
        << QStringLiteral( "Usage: " ) << appName <<  QStringLiteral( " [OPTION] [FILE]\n" )
        << QStringLiteral( "  OPTION:\n" )
        << QStringLiteral( "\t[-v, --version]\tdisplay version information and exit\n" )
-@@ -161,13 +163,13 @@
+@@ -161,13 +165,13 @@
        << QStringLiteral( "\t[-f, --code path]\trun the given python file on load\n" )
        << QStringLiteral( "\t[-d, --defaultui]\tstart by resetting user ui settings to default\n" )
        << QStringLiteral( "\t[--hide-browser]\thide the browser widget\n" )
@@ -48,7 +57,7 @@
        << QStringLiteral( "\t[--screenshots-categories categories]\tspecify the categories of screenshot to be used (see QgsAppScreenShots::Categories).\n" )
        << QStringLiteral( "\t[--profile name]\tload a named profile from the users profiles folder.\n" )
        << QStringLiteral( "\t[-s, --profiles-path path]\tpath to store user profile folders. Will create profiles inside a {path}\\profiles folder \n" )
-@@ -237,8 +239,8 @@
+@@ -237,8 +241,8 @@
  }
  
  static void dumpBacktrace( unsigned int depth )
@@ -59,7 +68,7 @@
      depth = 20;
  
  #ifdef QGIS_CRASH
-@@ -311,9 +313,9 @@
+@@ -311,9 +315,9 @@
    }
  #elif defined(Q_OS_WIN)
    // TODO Replace with incoming QgsStackTrace
@@ -71,7 +80,7 @@
  }
  
  #ifdef QGIS_CRASH
-@@ -585,12 +587,12 @@
+@@ -585,12 +589,12 @@
    bool mySkipBadLayers = false;
    bool myCustomization = true;
  
@@ -90,7 +99,7 @@
  
    bool takeScreenShots = false;
    QString screenShotsPath;
-@@ -745,91 +747,91 @@
+@@ -745,91 +749,91 @@
          {
            myRestoreDefaultWindowState = true;
          }
@@ -267,7 +276,7 @@
          else if ( arg == QLatin1String( "--take-screenshots" ) )
          {
            takeScreenShots = true;
-@@ -909,9 +911,12 @@
+@@ -909,9 +913,12 @@
      QgsCustomization::instance()->setEnabled( false );
    }
  
@@ -283,7 +292,7 @@
    QCoreApplication::setAttribute( Qt::AA_DontShowIconsInMenus, false );
    QCoreApplication::setAttribute( Qt::AA_DisableWindowContextHelpButton, true );
  
-@@ -924,6 +929,18 @@
+@@ -924,6 +931,18 @@
    QCoreApplication::setAttribute( Qt::AA_ShareOpenGLContexts, true );
  #endif
  
@@ -302,7 +311,7 @@
    // Set up the QgsSettings Global Settings:
    // - use the path specified with --globalsettingsfile path,
    // - use the environment if not found
-@@ -1058,6 +1075,8 @@
+@@ -1058,6 +1077,8 @@
  
    QgsApplication myApp( argc, argv, myUseGuiFlag, QString(), QStringLiteral( "desktop" ) );
  
@@ -311,7 +320,7 @@
    // Set locale to emit QgsApplication's localeChanged signal
    QgsApplication::setLocale( QLocale() );
  
-@@ -1115,12 +1134,12 @@
+@@ -1115,12 +1136,12 @@
    //            e.g. loading splash screen, setting window icon, etc.
    //            Always honor QT_PLUGIN_PATH env var or qt.conf, which will
    //            be part of libraryPaths just after QgsApplication creation.
@@ -330,7 +339,7 @@
  #if defined(Q_OS_UNIX)
    // Resulting libraryPaths has critical QGIS plugin paths first, then any Qt plugin paths, then
    // any dev-defined paths (in app's qt.conf) and/or user-defined paths (QT_PLUGIN_PATH env var).
-@@ -1228,10 +1247,10 @@
+@@ -1228,10 +1249,10 @@
    {
      // If the GDAL plugins are bundled with the application and GDAL_DRIVER_PATH
      // is not already defined, use the GDAL plugins in the application bundle.
@@ -344,7 +353,7 @@
      }
    }
  
-@@ -1254,15 +1273,27 @@
+@@ -1254,15 +1275,27 @@
    }
  
    // Point PYTHONHOME to embedded interpreter if present in the bundle
@@ -379,7 +388,16 @@
    // custom environment variables
    QMap<QString, QString> systemEnvVars = QgsApplication::systemEnvVars();
    bool useCustomVars = settings.value( QStringLiteral( "qgis/customEnvVarsUse" ), QVariant( false ) ).toBool();
-@@ -1535,7 +1566,7 @@
+@@ -1403,7 +1436,7 @@
+   // this should be done in QgsApplication::init() but it doesn't know the settings dir.
+   QgsApplication::setMaxThreads( settings.value( QStringLiteral( "qgis/max_threads" ), -1 ).toInt() );
+ 
+-  QgisApp *qgis = new QgisApp( mypSplash, myRestorePlugins, mySkipBadLayers, mySkipVersionCheck, rootProfileFolder, profileName ); // "QgisApp" used to find canonical instance
++  QgisApp *qgis = new NGQgisApp( mypSplash, myRestorePlugins, mySkipBadLayers, mySkipVersionCheck, rootProfileFolder, profileName ); // "QgisApp" used to find canonical instance
+   qgis->setObjectName( QStringLiteral( "QgisApp" ) );
+ 
+   QgsApplication::connect(
+@@ -1535,7 +1568,7 @@
  
      return 1;
    }
@@ -388,7 +406,7 @@
    if ( !dxfOutputFile.isEmpty() )
    {
      qgis->hide();
-@@ -1616,7 +1647,7 @@
+@@ -1616,7 +1649,7 @@
  
      return static_cast<int>( res );
    }
