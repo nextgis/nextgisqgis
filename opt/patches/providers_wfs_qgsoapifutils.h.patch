@@ -1,5 +1,5 @@
 --- a/src/providers/wfs/qgsoapifutils.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/providers/wfs/qgsoapifutils.h	2022-04-06 18:40:09.000000000 +0300
++++ b/src/providers/wfs/qgsoapifutils.h	2022-04-07 00:39:45.000000000 +0300
 @@ -16,8 +16,9 @@
  #ifndef QGSOAPIFUTILS_H
  #define QGSOAPIFUTILS_H

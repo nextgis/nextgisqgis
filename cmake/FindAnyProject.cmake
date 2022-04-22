@@ -3,8 +3,8 @@
 # Purpose:  CMake build scripts
 # Author:   Dmitry Baryshnikov, polimax@mail.ru
 ################################################################################
-# Copyright (C) 2015-2018, NextGIS <info@nextgis.com>
-# Copyright (C) 2015-2018 Dmitry Baryshnikov
+# Copyright (C) 2015-2022, NextGIS <info@nextgis.com>
+# Copyright (C) 2015-2022 Dmitry Baryshnikov
 #
 # This script is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,6 +46,7 @@ function(find_anyproject name)
     string(TOUPPER ${name} UPPER_NAME)
     set(IS_FOUND ${UPPER_NAME}_FOUND)
     set(VERSION_STRING ${UPPER_NAME}_VERSION_STRING)
+    set(VERSION ${UPPER_NAME}_VERSION)
     if(NOT DEFINED ${IS_FOUND}) #if the package was found anywhere
         set(${IS_FOUND} FALSE)
     endif()
@@ -136,6 +137,7 @@ function(find_anyproject name)
             endmacro()
 
             set_variables(${name}_FOUND ${UPPER_NAME}_FOUND)
+            set_variables(${name}_VERSION_STRING ${UPPER_NAME}_VERSION_STRING)
             set_variables(${name}_VERSION_STR ${UPPER_NAME}_VERSION_STR)
             set_variables(${name}_VERSION ${UPPER_NAME}_VERSION)
             set_variables(${name}_INCLUDE_DIRS ${UPPER_NAME}_INCLUDE_DIRS)
@@ -151,13 +153,13 @@ function(find_anyproject name)
         # message(STATUS "NGSTD_FOUND ${${IS_FOUND}}/${NGSTD_FOUND} ${NGSTD_NOT_FOUND_MESSAGE}")
         if(${IS_FOUND})
             set(${IS_FOUND} TRUE CACHE INTERNAL "use ${name}")
-            set(${VERSION_STRING} ${${VERSION_STRING}} CACHE INTERNAL "version ${name}")
+            # set(${VERSION_STRING} ${${VERSION_STRING}} CACHE INTERNAL "version ${name}")
             if(${UPPER_NAME}_INCLUDE_DIRS)
                 set(${UPPER_NAME}_INCLUDE_DIRS ${${UPPER_NAME}_INCLUDE_DIRS} CACHE INTERNAL "include directories ${name}")
                 set(${UPPER_NAME}_INCLUDE_DIR ${${UPPER_NAME}_INCLUDE_DIRS})
             endif()
             if(${UPPER_NAME}_INCLUDE_DIR)
-                set(${UPPER_NAME}_INCLUDE_DIR ${${UPPER_NAME}_INCLUDE_DIR} CACHE INTERNAL "include directories ${name}")
+                set(${UPPER_NAME}_INCLUDE_DIR ${${UPPER_NAME}_INCLUDE_DIR} CACHE INTERNAL "include directory ${name}")
                 set(${UPPER_NAME}_INCLUDE_DIRS ${${UPPER_NAME}_INCLUDE_DIR})
             endif()
 
@@ -175,12 +177,8 @@ function(find_anyproject name)
             set(Qt5Widgets_UIC_EXECUTABLE Qt5::uic PARENT_SCOPE)
             set(Qt5Core_RCC_EXECUTABLE Qt5::rcc PARENT_SCOPE)
 
-            # message(FATAL_ERROR "${Python_EXECUTABLE}")
-
             set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE} PARENT_SCOPE)
-            set(PYTHON3_EXECUTABLE ${Python3_EXECUTABLE} PARENT_SCOPE)
             set(PYTHON_VERSION ${Python3_VERSION} PARENT_SCOPE)
-            set(PYTHON3_VERSION ${Python3_VERSION} PARENT_SCOPE)
 
             # AUTOMOC enabled targets need to know the Qt major and minor version they’re working with.
             if (${name} STREQUAL "Qt5")
@@ -193,26 +191,40 @@ function(find_anyproject name)
             endif()
 
             if(${UPPER_NAME}_LIBRARIES)
-                set(${UPPER_NAME}_LIBRARIES ${${UPPER_NAME}_LIBRARIES} CACHE INTERNAL "library ${name}")
+                set(${UPPER_NAME}_LIBRARIES ${${UPPER_NAME}_LIBRARIES} CACHE INTERNAL "libraries ${name}")
                 set(${UPPER_NAME}_LIBRARY ${${UPPER_NAME}_LIBRARIES} CACHE INTERNAL "library ${name}")
             endif()
             if(${UPPER_NAME}_LIBRARY)
                 set(${UPPER_NAME}_LIBRARY ${${UPPER_NAME}_LIBRARY} CACHE INTERNAL "library ${name}")
-                set(${UPPER_NAME}_LIBRARIES ${${UPPER_NAME}_LIBRARY}  CACHE INTERNAL "library ${name}")
+                set(${UPPER_NAME}_LIBRARIES ${${UPPER_NAME}_LIBRARY} CACHE INTERNAL "libraries ${name}")
             endif()
             if(${UPPER_NAME}_VERSION)
                 set(${UPPER_NAME}_VERSION ${${UPPER_NAME}_VERSION} CACHE INTERNAL "library ${name} version")
-                set(${UPPER_NAME}_VERSION_STR ${${UPPER_NAME}_VERSION} CACHE INTERNAL "library ${name} version")
+                set(${UPPER_NAME}_VERSION_STR ${${UPPER_NAME}_VERSION} CACHE INTERNAL "library ${name} version string")
+                set(${UPPER_NAME}_VERSION_STRING ${${UPPER_NAME}_VERSION} CACHE INTERNAL "library ${name} version string")
+            endif()
+            if(${UPPER_NAME}_VERSION_STR)
+                set(${UPPER_NAME}_VERSION ${${UPPER_NAME}_VERSION_STR} CACHE INTERNAL "library ${name} version")
+                set(${UPPER_NAME}_VERSION_STR ${${UPPER_NAME}_VERSION_STR} CACHE INTERNAL "library ${name} version string")
+                set(${UPPER_NAME}_VERSION_STRING ${${UPPER_NAME}_VERSION_STR} CACHE INTERNAL "library ${name} version string")
+            endif()            
+            if(${UPPER_NAME}_VERSION_STRING)
+                set(${UPPER_NAME}_VERSION ${${UPPER_NAME}_VERSION_STRING} CACHE INTERNAL "library ${name} version")
+                set(${UPPER_NAME}_VERSION_STR ${${UPPER_NAME}_VERSION_STRING} CACHE INTERNAL "library ${name} version string")
+                set(${UPPER_NAME}_VERSION_STRING ${${UPPER_NAME}_VERSION_STRING} CACHE INTERNAL "library ${name} version string")
             endif()
 
-            mark_as_advanced(${IS_FOUND}
+            mark_as_advanced(
+                ${IS_FOUND}
                 ${UPPER_NAME}_INCLUDE_DIR
                 ${UPPER_NAME}_INCLUDE_DIRS
                 ${UPPER_NAME}_LIBRARY
                 ${UPPER_NAME}_LIBRARIES
                 ${UPPER_NAME}_VERSION
                 ${UPPER_NAME}_VERSION_STR
+                ${UPPER_NAME}_VERSION_STRING
             )
+
         elseif(find_anyproject_REQUIRED)
             message(FATAL_ERROR "${name} is required in ${PROJECT_NAME}!")
         else()
