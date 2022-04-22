@@ -110,7 +110,6 @@ subpaths = [
     "src/app/options/qgsoptions.cpp",
     "src/app/qgsprojectlistitemdelegate.cpp", 
     "tests/src/gui/testprocessinggui.cpp",
-    "src/core/testqgsauthcertutils.cpp",
     "src/native/linux/qgslinuxnative.cpp",
     "tests/src/core/testqgsauthcertutils.cpp",
     "src/app/mainwin.cpp",

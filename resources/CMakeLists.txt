@@ -23,10 +23,10 @@ set(RESOURCES_FILES
 )
 
 # OpenCL, also install opencl_programs
-if (HAVE_OPENCL)
-  file(GLOB_RECURSE OPENCL_PROGRAMS_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} opencl_programs/*)
-  set(RESOURCES_FILES ${RESOURCES_FILES} ${OPENCL_PROGRAMS_FILES})
-endif()
+# if (HAVE_OPENCL)
+#   file(GLOB_RECURSE OPENCL_PROGRAMS_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} opencl_programs/*)
+#   set(RESOURCES_FILES ${RESOURCES_FILES} ${OPENCL_PROGRAMS_FILES})
+# endif()
 
 # # Server, also install server subdirectory
 # if (WITH_SERVER)
@@ -77,18 +77,19 @@ set(SRSDB srs6.db)
 #   "${QGIS_OUTPUT_DIRECTORY}/data/srs.db")
 # install(FILES ${SRSDB} DESTINATION ${QGIS_DATA_DIR}/resources RENAME srs.db)
 
-add_custom_target(resources ALL DEPENDS ${DEST_RESOURCE_FILES})
+# add_custom_target(resources ALL DEPENDS ${DEST_RESOURCE_FILES})
 
 configure_file(ngqgis.desktop.in ${CMAKE_CURRENT_BINARY_DIR}/ngqgis.desktop @ONLY)
 
 if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL)
     install(FILES ${RESOURCES_FILES} DESTINATION ${INSTALL_SHARE_DIR}/resources)
     install(FILES ${SRSDB} DESTINATION ${INSTALL_SHARE_DIR}/resources RENAME srs.db)
-    #install(DIRECTORY cpt-city-qgis-min DESTINATION ${INSTALL_SHARE_DIR}/resources)
+    install(DIRECTORY cpt-city-qgis-min DESTINATION ${INSTALL_SHARE_DIR}/resources)
     install(DIRECTORY themes DESTINATION ${INSTALL_SHARE_DIR}/resources)
-    #install(DIRECTORY data DESTINATION ${INSTALL_SHARE_DIR}/resources)
-    #install(DIRECTORY metadata-ISO DESTINATION ${INSTALL_SHARE_DIR}/resources)
-    #install(DIRECTORY palettes DESTINATION ${INSTALL_SHARE_DIR}/resources)
+    install(DIRECTORY data DESTINATION ${INSTALL_SHARE_DIR}/resources)
+    install(DIRECTORY metadata-ISO DESTINATION ${INSTALL_SHARE_DIR}/resources)
+    install(DIRECTORY palettes DESTINATION ${INSTALL_SHARE_DIR}/resources)
+    install(DIRECTORY opencl_programs DESTINATION ${INSTALL_SHARE_DIR}/resources)
     # install(DIRECTORY fonts DESTINATION ${INSTALL_SHARE_DIR})
     # install(DIRECTORY composer_templates DESTINATION ${INSTALL_SHARE_DIR})
     install(FILES ${CMAKE_BINARY_DIR}/qt.conf DESTINATION ${INSTALL_SHARE_DIR})
