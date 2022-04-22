@@ -31,12 +31,12 @@ RUN apt-get update -y && \
     qt5keychain-dev \
     # libexiv2-dev \
     qt3d5-dev \
-    qt3d-assimpsceneimport-plugin \
-    qt3d-defaultgeometryloader-plugin \
-    qt3d-gltfsceneio-plugin \
-    qt3d-scene2d-plugin \
+    # qt3d-assimpsceneimport-plugin \
+    # qt3d-defaultgeometryloader-plugin \
+    # qt3d-gltfsceneio-plugin \
+    # qt3d-scene2d-plugin \
     libqca-qt5-2-dev \
-    libqca-qt5-2-plugins \
+    # libqca-qt5-2-plugins \
     libqscintilla2-qt5-dev \
     libsqlite3-dev \
     libqwt-qt5-dev \
