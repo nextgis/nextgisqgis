@@ -362,16 +362,11 @@ endif()
 
 # set_property(SOURCE qgisapp.cpp PROPERTY SKIP_AUTOUIC ON)
 
-# if(NGSTD_FOUND)
-
-#     set(QGIS_APP_SRCS ${QGIS_APP_SRCS}
-#         ngupdater.cpp
-#     )
-
-#     set(QGIS_APP_MOC_HDRS ${QGIS_APP_MOC_HDRS}
-#         ngupdater.h
-#     )
-# endif()
+if(NGSTD_FOUND)
+    set(QGIS_APP_SRCS ${QGIS_APP_SRCS}
+        ngupdater.cpp
+    )
+endif()
 
 # set(QGIS_APP_SRCS ${QGIS_APP_SRCS}
 #     ngcustomization.cpp
@@ -398,9 +393,9 @@ else()
 endif()
 
 set (QGIS_APPMAIN_HEADERS
-   qgscustomization.h
-   qgisapp.h
-   qgsfirstrundialog.h
+   #qgscustomization.h
+   #qgisapp.h
+   #qgsfirstrundialog.h
 )
 
 if(PEDANTIC)
