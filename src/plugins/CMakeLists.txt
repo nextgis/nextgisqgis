@@ -64,9 +64,10 @@ macro(add_plugin PLUGIN_NAME)
         ${NG_PREFIX}qgis_gui
     )
 
-    if("${PLUGIN_NAME}" STREQUAL "dtclassifier")
-        target_link_libraries(${PLUGIN_NAME}plugin PRIVATE ${OPENCV_LIBRARIES} ${NGSTD_LIBRARIES})
-    endif()
+    # dtclassifier disabled
+    # if("${PLUGIN_NAME}" STREQUAL "dtclassifier")
+    #     target_link_libraries(${PLUGIN_NAME}plugin PRIVATE ${OPENCV_LIBRARIES} ${NGSTD_LIBRARIES})
+    # endif()
 
     if(OSX_FRAMEWORK)
         set_target_properties(${PLUGIN_NAME}plugin PROPERTIES

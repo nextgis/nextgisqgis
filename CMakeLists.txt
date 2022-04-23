@@ -211,7 +211,7 @@ find_anyproject(LIBZIP REQUIRED)
 find_anyproject(EXPAT REQUIRED)
 find_anyproject(ZLIB REQUIRED)
 
-find_anyproject(NGSTD REQUIRED COMPONENTS core5 framework5)
+find_anyproject(NGSTD DEFAULT ON COMPONENTS core5 framework5)
 if(NGSTD_FOUND)
     add_definitions(-DNGSTD_USING)
 endif()
