@@ -24,10 +24,6 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-if(NOT OSX_FRAMEWORK)
-    add_subdirectory(man)
-endif()
-
 if(NOT SKIP_INSTALL_DOCS AND NOT SKIP_INSTALL_ALL)
     set(DOC_FILES CONTRIBUTORS
         DONORS
@@ -47,7 +43,7 @@ if(NOT SKIP_INSTALL_DOCS AND NOT SKIP_INSTALL_ALL)
 
     install(FILES ${DOC_FILES} DESTINATION ${INSTALL_DOC_DIR})
 
-    if(UNIX)
+    if(UNIX AND NOT OSX_FRAMEWORK)
         install (FILES qgis.1 DESTINATION ${INSTALL_MAN_DIR}/man1)
     endif()    
 endif()
