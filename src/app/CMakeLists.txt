@@ -393,9 +393,9 @@ else()
 endif()
 
 set (QGIS_APPMAIN_HEADERS
-   #qgscustomization.h
-   #qgisapp.h
-   #qgsfirstrundialog.h
+   qgscustomization.h
+   qgisapp.h
+   qgsfirstrundialog.h
 )
 
 if(PEDANTIC)
