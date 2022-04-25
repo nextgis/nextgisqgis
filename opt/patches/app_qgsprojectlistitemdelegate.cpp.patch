@@ -1,5 +1,5 @@
 --- a/src/app/qgsprojectlistitemdelegate.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/qgsprojectlistitemdelegate.cpp	2022-04-07 00:39:43.000000000 +0300
++++ b/src/app/qgsprojectlistitemdelegate.cpp	2022-04-25 18:33:16.000000000 +0300
 @@ -15,7 +15,7 @@
  
  #include "qgsprojectlistitemdelegate.h"

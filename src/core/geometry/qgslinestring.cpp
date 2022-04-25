@@ -26,7 +26,7 @@
 #include "qgsgeometrytransformer.h"
 #include "qgsfeedback.h"
 
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 #include <cmath>
 #include <memory>
 #include <QPainter>
@@ -731,10 +731,11 @@ json QgsLineString::asJsonObject( int precision ) const
 {
   QgsPointSequence pts;
   points( pts );
-  json out;
-  out.Add("type",  "LineString");
-  out.Add("coordinates",  QgsGeometryUtils::pointsToJson( pts, precision ));
-  return out;
+  return
+  {
+    {  "type",  "LineString" },
+    {  "coordinates",  QgsGeometryUtils::pointsToJson( pts, precision ) }
+  };
 }
 
 QString QgsLineString::asKml( int precision ) const

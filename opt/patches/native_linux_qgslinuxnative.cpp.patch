@@ -1,5 +1,5 @@
 --- a/src/native/linux/qgslinuxnative.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/native/linux/qgslinuxnative.cpp	2022-04-21 10:57:43.000000000 +0300
++++ b/src/native/linux/qgslinuxnative.cpp	2022-04-25 18:33:18.000000000 +0300
 @@ -221,7 +221,11 @@
    const int channels = i.isGrayscale() ? 1 : ( i.hasAlphaChannel() ? 4 : 3 );
    arg << i.depth() / channels;

@@ -26,12 +26,10 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgswkbtypes.h"
 #include "qgswkbptr.h"
 
-// #ifndef SIP_RUN
-// #include "json_fwd.hpp"
-// using namespace nlohmann;
-// #endif
-#include "cpl_json.h"
-using json = CPLJSONObject;
+#ifndef SIP_RUN
+#include "json_fwd.hpp"
+using namespace nlohmann;
+#endif
 
 class QgsMapToPixel;
 class QgsCurve;

@@ -31,7 +31,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <memory>
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 
 QgsCurvePolygon::QgsCurvePolygon()
 {
@@ -419,13 +419,13 @@ QDomElement QgsCurvePolygon::asGml3( QDomDocument &doc, int precision, const QSt
 
 json QgsCurvePolygon::asJsonObject( int precision ) const
 {
-  CPLJSONArray coordinates;
+  json coordinates( json::array( ) );
   if ( auto *lExteriorRing = exteriorRing() )
   {
     std::unique_ptr< QgsLineString > exteriorLineString( lExteriorRing->curveToLine() );
     QgsPointSequence exteriorPts;
     exteriorLineString->points( exteriorPts );
-    coordinates.Add( QgsGeometryUtils::pointsToJson( exteriorPts, precision ) );
+    coordinates.push_back( QgsGeometryUtils::pointsToJson( exteriorPts, precision ) );
 
     std::unique_ptr< QgsLineString > interiorLineString;
     for ( int i = 0, n = numInteriorRings(); i < n; ++i )
@@ -433,13 +433,14 @@ json QgsCurvePolygon::asJsonObject( int precision ) const
       interiorLineString.reset( interiorRing( i )->curveToLine() );
       QgsPointSequence interiorPts;
       interiorLineString->points( interiorPts );
-      coordinates.Add( QgsGeometryUtils::pointsToJson( interiorPts, precision ) );
+      coordinates.push_back( QgsGeometryUtils::pointsToJson( interiorPts, precision ) );
     }
   }
-  CPLJSONObject out;
-  out.Add("type", "Polygon");
-  out.Add("coordinates", coordinates);
-  return out;
+  return
+  {
+    {  "type", "Polygon"  },
+    { "coordinates", coordinates }
+  };
 }
 
 QString QgsCurvePolygon::asKml( int precision ) const

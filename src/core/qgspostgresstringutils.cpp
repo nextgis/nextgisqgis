@@ -18,9 +18,9 @@
 
 #include <QRegularExpression>
 
-// #include <nlohmann/json.hpp>
-// 
-// using namespace nlohmann;
+#include <nlohmann/json.hpp>
+
+using namespace nlohmann;
 
 static void jumpSpace( const QString &txt, int &i )
 {

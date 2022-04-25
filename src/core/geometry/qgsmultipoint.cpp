@@ -22,7 +22,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QRegularExpression>
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 
 QgsMultiPoint::QgsMultiPoint()
 {
@@ -124,25 +124,19 @@ QDomElement QgsMultiPoint::asGml3( QDomDocument &doc, int precision, const QStri
 
 json QgsMultiPoint::asJsonObject( int precision ) const
 {
-  json j;
-  j.Add("type", "MultiPoint");
-  CPLJSONArray coordinates;
+  json j
+  {
+    { "type", "MultiPoint" },
+    { "coordinates", json::array() },
+  };
   for ( const QgsAbstractGeometry *geom : std::as_const( mGeometries ) )
   {
     const QgsPoint *point = static_cast<const QgsPoint *>( geom );
     if ( point->is3D() )
-    {
-      coordinates.Add( qgsRound( point->x(), precision ) );
-      coordinates.Add( qgsRound( point->y(), precision ) );
-      coordinates.Add( qgsRound( point->z(), precision ) );
-    }
+      j[ "coordinates" ].push_back( { qgsRound( point->x(), precision ), qgsRound( point->y(), precision ), qgsRound( point->z(), precision ) } );
     else
-    {
-      coordinates.Add( qgsRound( point->x(), precision ) );
-      coordinates.Add( qgsRound( point->y(), precision ) );
-    }
+      j[ "coordinates" ].push_back( { qgsRound( point->x(), precision ), qgsRound( point->y(), precision ) } );
   }
-  j.Add("coordinates", coordinates);
   return j;
 }
 

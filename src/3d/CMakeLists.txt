@@ -176,8 +176,8 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}/src/core/expression
   ${CMAKE_SOURCE_DIR}/src/core/layout
   ${CMAKE_SOURCE_DIR}/src/core/3d
-#   ${CMAKE_SOURCE_DIR}/external
-#   ${CMAKE_SOURCE_DIR}/external/nlohmann
+  ${CMAKE_SOURCE_DIR}/external
+  ${CMAKE_SOURCE_DIR}/external/nlohmann
 
   ${CMAKE_BINARY_DIR}/src/core
   ${CMAKE_BINARY_DIR}/src/3d

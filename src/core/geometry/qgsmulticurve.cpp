@@ -24,7 +24,7 @@ email                : marco.hugentobler at sourcepole dot com
 
 #include <QJsonObject>
 #include <memory>
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 
 QgsMultiCurve::QgsMultiCurve()
 {
@@ -123,7 +123,7 @@ QDomElement QgsMultiCurve::asGml3( QDomDocument &doc, int precision, const QStri
 
 json QgsMultiCurve::asJsonObject( int precision ) const
 {
-  CPLJSONArray coordinates;
+  json coordinates( json::array( ) );
   for ( const QgsAbstractGeometry *geom : std::as_const( mGeometries ) )
   {
     if ( qgsgeometry_cast<const QgsCurve *>( geom ) )
@@ -131,13 +131,14 @@ json QgsMultiCurve::asJsonObject( int precision ) const
       std::unique_ptr< QgsLineString > lineString( static_cast<const QgsCurve *>( geom )->curveToLine() );
       QgsPointSequence pts;
       lineString->points( pts );
-      coordinates.Add( QgsGeometryUtils::pointsToJson( pts, precision ) );
+      coordinates.push_back( QgsGeometryUtils::pointsToJson( pts, precision ) );
     }
   }
-  json out;
-  out.Add("type",  "MultiLineString");
-  out.Add("coordinates", coordinates);
-  return out;
+  return
+  {
+    {  "type",  "MultiLineString"  },
+    {  "coordinates", coordinates }
+  };
 }
 
 bool QgsMultiCurve::addGeometry( QgsAbstractGeometry *g )

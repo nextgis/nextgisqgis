@@ -13,8 +13,8 @@
  *                                                                         *
  ***************************************************************************/
 
-// #include <nlohmann/json.hpp>
-// using namespace nlohmann;
+#include <nlohmann/json.hpp>
+using namespace nlohmann;
 
 #include "qgslogger.h"
 #include "qgsoapifcollection.h"
@@ -26,254 +26,278 @@
 
 bool QgsOapifCollection::deserialize( const json &j )
 {
-    if ( !QgsJsonUtils::is_object(j) )
-        return false;
-    std::string idPropertyName("id");
-    if ( !j["id"].IsValid() )
-    {
+  if ( !j.is_object() )
+    return false;
+  const char *idPropertyName = "id";
+  if ( !j.contains( "id" ) )
+  {
 #ifndef REMOVE_SUPPORT_DRAFT_VERSIONS
-        if ( j["name"].IsValid() )
-        {
-          idPropertyName = "name";
-        }
-        else
-#endif
-        {
-          QgsDebugMsg( QStringLiteral( "missing id in collection" ) );
-          return false;
-        }
-    }
-
-    const auto id = j[idPropertyName];
-    if ( !id.IsValid() )
-        return false;
-    mId = QString::fromStdString( id.ToString() );
-
-    mLayerMetadata.setType( QStringLiteral( "dataset" ) );
-
-    const auto links = QgsOAPIFJson::parseLinks( j );
-    const auto selfUrl = QgsOAPIFJson::findLink( links,
-                        QStringLiteral( "self" ),
-    { QStringLiteral( "application/json" ) } );
-    if ( !selfUrl.isEmpty() )
+    if ( j.contains( "name" ) )
     {
-        mLayerMetadata.setIdentifier( selfUrl );
+      idPropertyName = "name";
     }
     else
+#endif
     {
-        mLayerMetadata.setIdentifier( mId );
+      QgsDebugMsg( QStringLiteral( "missing id in collection" ) );
+      return false;
     }
+  }
+  const auto id = j[idPropertyName];
+  if ( !id.is_string() )
+    return false;
+  mId = QString::fromStdString( id.get<std::string>() );
 
-    const auto parentUrl = QgsOAPIFJson::findLink( links,
+  mLayerMetadata.setType( QStringLiteral( "dataset" ) );
+
+  const auto links = QgsOAPIFJson::parseLinks( j );
+  const auto selfUrl = QgsOAPIFJson::findLink( links,
+                       QStringLiteral( "self" ),
+  { QStringLiteral( "application/json" ) } );
+  if ( !selfUrl.isEmpty() )
+  {
+    mLayerMetadata.setIdentifier( selfUrl );
+  }
+  else
+  {
+    mLayerMetadata.setIdentifier( mId );
+  }
+
+  const auto parentUrl = QgsOAPIFJson::findLink( links,
                          QStringLiteral( "parent" ),
-    { QStringLiteral( "application/json" ) } );
-    if ( !parentUrl.isEmpty() )
-    {
-        mLayerMetadata.setParentIdentifier( parentUrl );
-    }
+  { QStringLiteral( "application/json" ) } );
+  if ( !parentUrl.isEmpty() )
+  {
+    mLayerMetadata.setParentIdentifier( parentUrl );
+  }
 
-    for ( const auto &link : links )
-    {
-        auto mdLink = QgsAbstractMetadataBase::Link( link.rel, QStringLiteral( "WWW:LINK" ), link.href );
-        mdLink.mimeType = link.type;
-        mdLink.description = link.title;
-        if ( link.length > 0 )
-            mdLink.size = QString::number( link.length );
-        mLayerMetadata.addLink( mdLink );
-    }
+  for ( const auto &link : links )
+  {
+    auto mdLink = QgsAbstractMetadataBase::Link( link.rel, QStringLiteral( "WWW:LINK" ), link.href );
+    mdLink.mimeType = link.type;
+    mdLink.description = link.title;
+    if ( link.length > 0 )
+      mdLink.size = QString::number( link.length );
+    mLayerMetadata.addLink( mdLink );
+  }
 
+  if ( j.contains( "title" ) )
+  {
     const auto title = j["title"];
-    if ( title.IsValid() )
+    if ( title.is_string() )
     {
-        mTitle = QString::fromStdString( title.ToString() );
-        mLayerMetadata.setTitle( mTitle );
+      mTitle = QString::fromStdString( title.get<std::string>() );
+      mLayerMetadata.setTitle( mTitle );
     }
+  }
 
+  if ( j.contains( "description" ) )
+  {
     const auto description = j["description"];
-    if ( description.IsValid() )
+    if ( description.is_string() )
     {
-        mDescription = QString::fromStdString( description.ToString() );
-        mLayerMetadata.setAbstract( mDescription );
+      mDescription = QString::fromStdString( description.get<std::string>() );
+      mLayerMetadata.setAbstract( mDescription );
     }
+  }
 
+  if ( j.contains( "extent" ) )
+  {
     QgsLayerMetadata::Extent metadataExtent;
     const auto extent = j["extent"];
-
-    const auto spatial = extent["spatial"];
-    if ( QgsJsonUtils::is_object(spatial) )
+    if ( extent.is_object() && extent.contains( "spatial" ) )
     {
+      const auto spatial = extent["spatial"];
+      if ( spatial.is_object() && spatial.contains( "bbox" ) )
+      {
         QgsCoordinateReferenceSystem crs( QgsCoordinateReferenceSystem::fromOgcWmsCrs(
                                             QStringLiteral( "http://www.opengis.net/def/crs/OGC/1.3/CRS84" ) ) );
-        const auto jCrs = spatial["crs"];
-        if ( jCrs.IsValid() )
+        if ( spatial.contains( "crs" ) )
         {
-            crs = QgsCoordinateReferenceSystem::fromOgcWmsCrs( QString::fromStdString( jCrs.ToString() ) );
+          const auto jCrs = spatial["crs"];
+          if ( jCrs.is_string() )
+          {
+            crs = QgsCoordinateReferenceSystem::fromOgcWmsCrs( QString::fromStdString( jCrs.get<std::string>() ) );
+          }
         }
-
         mLayerMetadata.setCrs( crs );
 
         const auto jBboxes = spatial["bbox"];
-        if ( QgsJsonUtils::is_array(jBboxes) )
+        if ( jBboxes.is_array() )
         {
-            QList< QgsLayerMetadata::SpatialExtent > spatialExtents;
-            bool firstBbox = true;
-            for ( const auto &jBbox : jBboxes.ToArray() )
+          QList<  QgsLayerMetadata::SpatialExtent > spatialExtents;
+          bool firstBbox = true;
+          for ( const auto &jBbox : jBboxes )
+          {
+            if ( jBbox.is_array() && ( jBbox.size() == 4 || jBbox.size() == 6 ) )
             {
-                if ( QgsJsonUtils::is_array(jBbox) )
+              std::vector<double> values;
+              for ( size_t i = 0; i < jBbox.size(); i++ )
+              {
+                if ( !jBbox[i].is_number() )
                 {
-                    auto jBboxA = jBbox.ToArray();
-                    if ( jBboxA.Size() == 4 || jBboxA.Size() == 6 ) 
-                    {
-                        std::vector<double> values;
-                        for ( int i = 0; i < jBboxA.Size(); i++ )
-                        {
-                            values.push_back( jBboxA[i].ToDouble() );
-                        }
-                        QgsLayerMetadata::SpatialExtent spatialExtent;
-                        spatialExtent.extentCrs = crs;
-                        if ( values.size() == 4 )
-                        {
-                            if ( firstBbox )
-                            {
-                                mBbox.set( values[0], values[1], values[2], values[3] );
-                            }
-                            spatialExtent.bounds = QgsBox3d( mBbox );
-                        }
-                        else if ( values.size() == 6 ) // with zmin at [2] and zmax at [5]
-                        {
-                            if ( firstBbox )
-                            {
-                                mBbox.set( values[0], values[1], values[3], values[4] );
-                            }
-                            spatialExtent.bounds = QgsBox3d( values[0], values[1], values[2],
-                                                            values[3], values[4], values[5] );
-                        }
-                        if ( values.size() == 4 || values.size() == 6 )
-                        {
-                            spatialExtents << spatialExtent;
-                            firstBbox = false;
-                        }
-                    }
+                  values.clear();
+                  break;
                 }
+                values.push_back( jBbox[i].get<double>() );
+              }
+              QgsLayerMetadata::SpatialExtent spatialExtent;
+              spatialExtent.extentCrs = crs;
+              if ( values.size() == 4 )
+              {
+                if ( firstBbox )
+                {
+                  mBbox.set( values[0], values[1], values[2], values[3] );
+                }
+                spatialExtent.bounds = QgsBox3d( mBbox );
+              }
+              else if ( values.size() == 6 ) // with zmin at [2] and zmax at [5]
+              {
+                if ( firstBbox )
+                {
+                  mBbox.set( values[0], values[1], values[3], values[4] );
+                }
+                spatialExtent.bounds = QgsBox3d( values[0], values[1], values[2],
+                                                 values[3], values[4], values[5] );
+              }
+              if ( values.size() == 4 || values.size() == 6 )
+              {
+                spatialExtents << spatialExtent;
+                firstBbox = false;
+              }
             }
-            metadataExtent.setSpatialExtents( spatialExtents );
+          }
+          metadataExtent.setSpatialExtents( spatialExtents );
         }
+      }
+    }
 #ifndef REMOVE_SUPPORT_DRAFT_VERSIONS
-        const auto bbox = extent["bbox"];
-        if ( QgsJsonUtils::is_array(bbox) )
+    else if ( extent.is_object() && extent.contains( "bbox" ) )
+    {
+      const auto bbox = extent["bbox"];
+      if ( bbox.is_array() && bbox.size() == 4 )
+      {
+        std::vector<double> values;
+        for ( size_t i = 0; i < bbox.size(); i++ )
         {
-            auto bboxA = bbox.ToArray();
-            if(bboxA.Size() == 4 )
-            {
-                std::vector<double> values;
-                for ( int i = 0; i < bboxA.Size(); i++ )
-                {
-                    values.push_back( bboxA[i].ToDouble() );
-                }
-                if ( values.size() == 4 )
-                {
-                    mBbox.set( values[0], values[1], values[2], values[3] );
-                    QgsLayerMetadata::SpatialExtent spatialExtent;
-                    spatialExtent.extentCrs = QgsCoordinateReferenceSystem::fromOgcWmsCrs(
-                                                QStringLiteral( "http://www.opengis.net/def/crs/OGC/1.3/CRS84" ) );
-                    mLayerMetadata.setCrs( spatialExtent.extentCrs );
-                    metadataExtent.setSpatialExtents( QList<  QgsLayerMetadata::SpatialExtent >() << spatialExtent );
-                }
-            }
+          if ( !bbox[i].is_number() )
+          {
+            values.clear();
+            break;
+          }
+          values.push_back( bbox[i].get<double>() );
         }
+        if ( values.size() == 4 )
+        {
+          mBbox.set( values[0], values[1], values[2], values[3] );
+          QgsLayerMetadata::SpatialExtent spatialExtent;
+          spatialExtent.extentCrs = QgsCoordinateReferenceSystem::fromOgcWmsCrs(
+                                      QStringLiteral( "http://www.opengis.net/def/crs/OGC/1.3/CRS84" ) );
+          mLayerMetadata.setCrs( spatialExtent.extentCrs );
+          metadataExtent.setSpatialExtents( QList<  QgsLayerMetadata::SpatialExtent >() << spatialExtent );
+        }
+      }
+    }
 #endif
 
-        const auto temporal = extent["temporal"];
-        if ( QgsJsonUtils::is_object(temporal) )
+    if ( extent.is_object() && extent.contains( "temporal" ) )
+    {
+      const auto temporal = extent["temporal"];
+      if ( temporal.is_object() && temporal.contains( "interval" ) )
+      {
+        const auto jIntervals = temporal["interval"];
+        if ( jIntervals.is_array() )
         {
-            const auto jIntervals = temporal["interval"];
-            if ( QgsJsonUtils::is_array(jIntervals) )
+          QList< QgsDateTimeRange > temporalExtents;
+          for ( const auto &jInterval : jIntervals )
+          {
+            if ( jInterval.is_array() && jInterval.size() == 2 )
             {
-                QList< QgsDateTimeRange > temporalExtents;
-                for ( const auto &jInterval : jIntervals.ToArray() )
+              QDateTime dt[2];
+              for ( int i = 0; i < 2; i++ )
+              {
+                if ( jInterval[i].is_string() )
                 {
-                    if ( QgsJsonUtils::is_array(jInterval) )
-                    {
-                        auto jIntervalA = jInterval.ToArray();
-                        if(jIntervalA.Size() == 2)
-                        {
-                            QDateTime dt[2];
-                            for ( int i = 0; i < 2; i++ )
-                            {
-                                if ( jIntervalA[i].IsValid() )
-                                {
-                                    dt[i] = QDateTime::fromString( QString::fromStdString( jIntervalA[i].ToString() ), Qt::ISODateWithMs );
-                                }
-                            }
-                            if ( !dt[0].isNull() || !dt[1].isNull() )
-                            {
-                                temporalExtents << QgsDateTimeRange( dt[0], dt[1] );
-                            }
-                        }
-                    }
+                  dt[i] = QDateTime::fromString( QString::fromStdString( jInterval[i].get<std::string>() ), Qt::ISODateWithMs );
                 }
-                metadataExtent.setTemporalExtents( temporalExtents );
+              }
+              if ( !dt[0].isNull() || !dt[1].isNull() )
+              {
+                temporalExtents << QgsDateTimeRange( dt[0], dt[1] );
+              }
             }
+          }
+          metadataExtent.setTemporalExtents( temporalExtents );
         }
-        mLayerMetadata.setExtent( metadataExtent );
+      }
     }
 
-    // From STAC specification ( https://stacspec.org/ )
-    bool isProprietaryLicense = false;
+    mLayerMetadata.setExtent( metadataExtent );
+  }
 
+  // From STAC specification ( https://stacspec.org/ )
+  bool isProprietaryLicense = false;
+  if ( j.contains( "license" ) )
+  {
     const auto jLicense = j["license"];
-    if ( jLicense.IsValid() )
+    if ( jLicense.is_string() )
     {
-        const auto license = QString::fromStdString( jLicense.ToString() );
-        if ( license == QLatin1String( "proprietary" ) )
-        {
-            isProprietaryLicense = true;
-        }
-        else if ( license != QLatin1String( "various" ) )
-        {
-            mLayerMetadata.setLicenses( { license } );
-        }
+      const auto license = QString::fromStdString( jLicense.get<std::string>() );
+      if ( license == QLatin1String( "proprietary" ) )
+      {
+        isProprietaryLicense = true;
+      }
+      else if ( license != QLatin1String( "various" ) )
+      {
+        mLayerMetadata.setLicenses( { license } );
+      }
     }
-
-    if ( mLayerMetadata.licenses().isEmpty() ) // standard OAPIF
+  }
+  if ( mLayerMetadata.licenses().isEmpty() ) // standard OAPIF
+  {
+    QStringList licenses;
+    std::set<QString> licenseSet;
+    for ( const auto &link : links )
     {
-        QStringList licenses;
-        std::set<QString> licenseSet;
-        for ( const auto &link : links )
+      if ( link.rel == QLatin1String( "license" ) )
+      {
+        const auto license =  !link.title.isEmpty() ? link.title : link.href;
+        if ( licenseSet.find( license ) == licenseSet.end() )
         {
-            if ( link.rel == QLatin1String( "license" ) )
-            {
-                const auto license =  !link.title.isEmpty() ? link.title : link.href;
-                if ( licenseSet.find( license ) == licenseSet.end() )
-                {
-                    licenseSet.insert( license );
-                    licenses << license;
-                }
-            }
+          licenseSet.insert( license );
+          licenses << license;
         }
-        if ( licenses.isEmpty() && isProprietaryLicense )
-        {
-            licenses << QStringLiteral( "proprietary" );
-        }
-        mLayerMetadata.setLicenses( licenses );
+      }
     }
+    if ( licenses.isEmpty() && isProprietaryLicense )
+    {
+      licenses << QStringLiteral( "proprietary" );
+    }
+    mLayerMetadata.setLicenses( licenses );
+  }
 
-    // From STAC specification
+  // From STAC specification
+  if ( j.contains( "keywords" ) )
+  {
     const auto jKeywords = j["keywords"];
-    if ( QgsJsonUtils::is_array(jKeywords) )
+    if ( jKeywords.is_array() )
     {
-        QStringList keywords;
-        for ( const auto &jKeyword : jKeywords.ToArray() )
+      QStringList keywords;
+      for ( const auto &jKeyword : jKeywords )
+      {
+        if ( jKeyword.is_string() )
         {
-            keywords << QString::fromStdString( jKeyword.ToString() );
+          keywords << QString::fromStdString( jKeyword.get<std::string>() );
         }
-        if ( !keywords.empty() )
-        {
-            mLayerMetadata.addKeywords( QStringLiteral( "keywords" ), keywords );
-        }
+      }
+      if ( !keywords.empty() )
+      {
+        mLayerMetadata.addKeywords( QStringLiteral( "keywords" ), keywords );
+      }
     }
+  }
 
-    return true;
+  return true;
 }
 
 // -----------------------------------------
@@ -336,61 +360,63 @@ void QgsOapifCollectionsRequest::processReply()
     return;
   }
 
-    QString error;
-    const json j = QgsJsonUtils::parse( utf8Text.toStdString(), error );
-    if( !error.isEmpty() )
-    {
-        mErrorCode = QgsBaseNetworkRequest::ApplicationLevelError;
-        mAppLevelError = ApplicationLevelError::JsonError;
-        mErrorMessage = errorMessageWithReason( tr( "Cannot decode JSON document: %1" ).arg( error ) );
-        emit gotResponse();
-        return;
-    }
+  try
+  {
+    const json j = json::parse( utf8Text.toStdString() );
 
     const auto links = QgsOAPIFJson::parseLinks( j );
     QStringList licenses;
     std::set<QString> licenseSet;
     for ( const auto &link : links )
     {
-        if ( link.rel == QLatin1String( "license" ) )
+      if ( link.rel == QLatin1String( "license" ) )
+      {
+        const auto license =  !link.title.isEmpty() ? link.title : link.href;
+        if ( licenseSet.find( license ) == licenseSet.end() )
         {
-            const auto license =  !link.title.isEmpty() ? link.title : link.href;
-            if ( licenseSet.find( license ) == licenseSet.end() )
-            {
-                licenseSet.insert( license );
-                licenses << license;
-            }
+          licenseSet.insert( license );
+          licenses << license;
         }
+      }
     }
 
-    if ( QgsJsonUtils::is_object(j) )
+    if ( j.is_object() && j.contains( "collections" ) )
     {
-        const auto collections = j["collections"];
-        if ( QgsJsonUtils::is_array(collections) )
+      const auto collections = j["collections"];
+      if ( collections.is_array() )
+      {
+        for ( const auto &jCollection : collections )
         {
-            for ( const auto &jCollection : collections.ToArray() )
+          QgsOapifCollection collection;
+          if ( collection.deserialize( jCollection ) )
+          {
+            if ( collection.mLayerMetadata.licenses().isEmpty() )
             {
-                QgsOapifCollection collection;
-                if ( collection.deserialize( jCollection ) )
-                {
-                    if ( collection.mLayerMetadata.licenses().isEmpty() )
-                    {
-                        // If there are not licenses from the collection description,
-                        // use the one from the collection set.
-                        collection.mLayerMetadata.setLicenses( licenses );
-                    }
-                    mCollections.emplace_back( collection );
-                }
+              // If there are not licenses from the collection description,
+              // use the one from the collection set.
+              collection.mLayerMetadata.setLicenses( licenses );
             }
+            mCollections.emplace_back( collection );
+          }
         }
+      }
     }
 
     // Paging informal extension used by api.planet.com/
     mNextUrl = QgsOAPIFJson::findLink( links,
                                        QStringLiteral( "next" ),
     {  QStringLiteral( "application/json" ) } );
-
+  }
+  catch ( const json::parse_error &ex )
+  {
+    mErrorCode = QgsBaseNetworkRequest::ApplicationLevelError;
+    mAppLevelError = ApplicationLevelError::JsonError;
+    mErrorMessage = errorMessageWithReason( tr( "Cannot decode JSON document: %1" ).arg( QString::fromStdString( ex.what() ) ) );
     emit gotResponse();
+    return;
+  }
+
+  emit gotResponse();
 }
 
 // -----------------------------------------
@@ -453,18 +479,19 @@ void QgsOapifCollectionRequest::processReply()
     return;
   }
 
-    QString error;
-    const json j = QgsJsonUtils::parse( utf8Text.toStdString(), error );
+  try
+  {
+    const json j = json::parse( utf8Text.toStdString() );
     mCollection.deserialize( j );
-
-    if(error.isEmpty())
-    {
-        mErrorCode = QgsBaseNetworkRequest::ApplicationLevelError;
-        mAppLevelError = ApplicationLevelError::JsonError;
-        mErrorMessage = errorMessageWithReason( tr( "Cannot decode JSON document: %1" ).arg( error ) );
-        emit gotResponse();
-        return;
-    }
-
+  }
+  catch ( const json::parse_error &ex )
+  {
+    mErrorCode = QgsBaseNetworkRequest::ApplicationLevelError;
+    mAppLevelError = ApplicationLevelError::JsonError;
+    mErrorMessage = errorMessageWithReason( tr( "Cannot decode JSON document: %1" ).arg( QString::fromStdString( ex.what() ) ) );
     emit gotResponse();
+    return;
+  }
+
+  emit gotResponse();
 }

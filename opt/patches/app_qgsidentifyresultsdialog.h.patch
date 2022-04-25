@@ -1,5 +1,5 @@
 --- a/src/app/qgsidentifyresultsdialog.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/qgsidentifyresultsdialog.h	2022-04-07 00:39:44.000000000 +0300
++++ b/src/app/qgsidentifyresultsdialog.h	2022-04-25 18:33:17.000000000 +0300
 @@ -160,11 +160,11 @@
       * Adds results from vector tile layer
       * \since QGIS 3.14

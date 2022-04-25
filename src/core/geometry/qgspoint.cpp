@@ -30,7 +30,7 @@
 #include <QRegularExpression>
 #include <QJsonObject>
 #include <QJsonArray>
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 
 /***************************************************************************
  * This class is considered CRITICAL and any change MUST be accompanied with
@@ -324,20 +324,20 @@ QDomElement QgsPoint::asGml3( QDomDocument &doc, int precision, const QString &n
 
 json QgsPoint::asJsonObject( int precision ) const
 {
-  json j;
-  j.Add("type", "Point");
-  CPLJSONArray coordinates;
-  
+  json j
+  {
+    { "type", "Point" },
+    { "coordinates", json::array() },
+  };
   if ( ! isEmpty() )
   {
-    coordinates.Add( qgsRound( mX, precision ) );
-    coordinates.Add( qgsRound( mY, precision ) );
+    j["coordinates"].push_back( qgsRound( mX, precision ) );
+    j["coordinates"].push_back( qgsRound( mY, precision ) );
     if ( is3D() )
     {
-      coordinates.Add( qgsRound( mZ, precision ) );
+      j["coordinates"].push_back( qgsRound( mZ, precision ) );
     }
   }
-  j.Add("coordinates", coordinates);
   return j;
 }
 

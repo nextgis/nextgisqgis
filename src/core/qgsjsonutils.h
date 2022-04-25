@@ -27,9 +27,6 @@
 
 class QTextCodec;
 
-#include "cpl_json.h"
-using json = CPLJSONObject;
-
 /**
  * \ingroup core
  * \class QgsJsonExporter
@@ -385,12 +382,6 @@ class CORE_EXPORT QgsJsonUtils
      * \since QGIS 3.8
      */
     static QVariant parseJson( const QString &jsonString ) SIP_SKIP;
-
-    static bool is_array(const json &obj) SIP_SKIP;
-    static bool is_object(const json &obj) SIP_SKIP;
-    static bool is_number_integer(const json &obj) SIP_SKIP;
-    static QString dump(const json &obj) SIP_SKIP;
-    static json parse( const std::string &jsonString, QString &error ) SIP_SKIP;
 
 };
 

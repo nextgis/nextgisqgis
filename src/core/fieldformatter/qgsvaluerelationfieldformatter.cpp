@@ -25,9 +25,8 @@
 #include "qgspostgresstringutils.h"
 #include "qgsmessagelog.h"
 
-// #include <nlohmann/json.hpp>
-// using namespace nlohmann;
-#include "qgsjsonutils.h"
+#include <nlohmann/json.hpp>
+using namespace nlohmann;
 
 #include <QSettings>
 
@@ -247,30 +246,29 @@ QStringList QgsValueRelationFieldFormatter::valueToStringList( const QVariant &v
       }
       else if ( newVal.toString().trimmed().startsWith( '[' ) )
       {
-          valuesList = QgsJsonUtils::parseArray(newVal.toString());
         //fallback, in case it's a json array
-        // try
-        // {
-        //   for ( auto &element : json::parse( newVal.toString().toStdString() ) )
-        //   {
-        //     if ( element.is_number_integer() )
-        //     {
-        //       valuesList.push_back( element.get<int>() );
-        //     }
-        //     else if ( element.is_number_unsigned() )
-        //     {
-        //       valuesList.push_back( element.get<unsigned>() );
-        //     }
-        //     else if ( element.is_string() )
-        //     {
-        //       valuesList.push_back( QString::fromStdString( element.get<std::string>() ) );
-        //     }
-        //   }
-        // }
-        // catch ( json::parse_error &ex )
-        // {
-        //   QgsMessageLog::logMessage( QObject::tr( "Cannot parse JSON like string '%1' Error: %2" ).arg( newVal.toString(), ex.what() ) );
-        // }
+        try
+        {
+          for ( auto &element : json::parse( newVal.toString().toStdString() ) )
+          {
+            if ( element.is_number_integer() )
+            {
+              valuesList.push_back( element.get<int>() );
+            }
+            else if ( element.is_number_unsigned() )
+            {
+              valuesList.push_back( element.get<unsigned>() );
+            }
+            else if ( element.is_string() )
+            {
+              valuesList.push_back( QString::fromStdString( element.get<std::string>() ) );
+            }
+          }
+        }
+        catch ( json::parse_error &ex )
+        {
+          QgsMessageLog::logMessage( QObject::tr( "Cannot parse JSON like string '%1' Error: %2" ).arg( newVal.toString(), ex.what() ) );
+        }
       }
     }
     else if ( value.type() == QVariant::List )

@@ -17,7 +17,7 @@ email                : morb at ozemail dot com dot au
 #include <cstdarg>
 #include <cstdio>
 #include <cmath>
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 #include <QCache>
 
 #include "qgis.h"
@@ -55,8 +55,6 @@ email                : morb at ozemail dot com dot au
 #include "qgscircle.h"
 #include "qgscurve.h"
 #include "qgsreadwritelocker.h"
-
-#include "qgsjsonutils.h"
 
 struct QgsGeometryPrivate
 {
@@ -1428,14 +1426,14 @@ QString QgsGeometry::asWkt( int precision ) const
 
 QString QgsGeometry::asJson( int precision ) const
 {
-  return QgsJsonUtils::dump( asJsonObject( precision ) );
+  return QString::fromStdString( asJsonObject( precision ).dump() );
 }
 
 json QgsGeometry::asJsonObject( int precision ) const
 {
   if ( !d->geometry )
   {
-    return CPLJSONObject();
+    return nullptr;
   }
   return d->geometry->asJsonObject( precision );
 

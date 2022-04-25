@@ -1,5 +1,5 @@
 --- a/src/app/main.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/main.cpp	2022-04-21 14:12:01.488429300 +0300
++++ b/src/app/main.cpp	2022-04-25 18:33:19.000000000 +0300
 @@ -34,6 +34,7 @@
  #include <QImageReader>
  #include <QMessageBox>

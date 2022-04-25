@@ -22,11 +22,9 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsgeometrycollection.h"
 #include "qgsvertexid.h"
 
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 #include <limits>
 #include <QTransform>
-
-#include "qgsjsonutils.h"
 
 QgsAbstractGeometry::QgsAbstractGeometry( const QgsAbstractGeometry &geom )
 {
@@ -192,12 +190,12 @@ QString QgsAbstractGeometry::wktTypeStr() const
 
 QString QgsAbstractGeometry::asJson( int precision )
 {
-  return QgsJsonUtils::dump( asJsonObject( precision ) );
+  return QString::fromStdString( asJsonObject( precision ).dump() );
 }
 
 json QgsAbstractGeometry::asJsonObject( int precision ) const
 {
-  Q_UNUSED( precision ) return json();
+  Q_UNUSED( precision ) return nullptr;
 }
 
 QgsPoint QgsAbstractGeometry::centroid() const

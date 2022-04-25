@@ -1,5 +1,5 @@
 --- a/src/core/qgsapplication.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/qgsapplication.cpp	2022-04-21 23:47:25.000000000 +0300
++++ b/src/core/qgsapplication.cpp	2022-04-25 18:33:18.000000000 +0300
 @@ -41,7 +41,7 @@
  #include "qgscolorschemeregistry.h"
  #include "qgspainteffectregistry.h"
