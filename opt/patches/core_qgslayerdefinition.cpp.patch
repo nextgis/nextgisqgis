@@ -1,5 +1,5 @@
 --- a/src/core/qgslayerdefinition.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/qgslayerdefinition.cpp	2022-04-07 00:39:45.000000000 +0300
++++ b/src/core/qgslayerdefinition.cpp	2022-04-25 18:33:18.000000000 +0300
 @@ -28,7 +28,7 @@
  #include "qgsrasterlayer.h"
  #include "qgsreadwritecontext.h"

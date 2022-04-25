@@ -31,136 +31,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QTextCodec>
-// #include <nlohmann/json.hpp>
-
-static void AddjsonFromVariant( json &obj, const std::string &name, const QVariant &val )
-{
-  if ( val.isNull() || ! val.isValid() )
-  {
-      obj.AddNull(name);
-      return;
-  }
-  json j;
-  if ( val.type() == QVariant::Type::Map )
-  {
-    const QVariantMap &vMap = val.toMap();
-    json jMap;
-    for ( auto it = vMap.constBegin(); it != vMap.constEnd(); it++ )
-    {
-        AddjsonFromVariant(jMap, it.key().toStdString(), it.value());
-    }
-    obj.Add(name, jMap);
-  }
-  else if ( val.type() == QVariant::Type::List || val.type() == QVariant::Type::StringList )
-  {
-    const QVariantList &vList = val.toList();
-    CPLJSONArray jList;
-    for ( const auto &v : vList )
-    {
-        switch ( v.userType() )
-        {
-        case QMetaType::Int:
-        case QMetaType::UInt:
-        case QMetaType::LongLong:
-        case QMetaType::ULongLong:
-            jList.Add(v.toLongLong());
-            break;
-        case QMetaType::Double:
-        case QMetaType::Float:
-            jList.Add(v.toDouble());
-            break;
-        case QMetaType::Bool:
-            jList.Add(v.toBool());
-            break;
-        case QMetaType::QByteArray:
-            jList.Add(v.toByteArray().toBase64().toStdString());
-            break;
-        default:
-            jList.Add(v.toString().toStdString());
-            break;
-        }
-    }
-    obj.Add(name, jList);
-  }
-  else
-  {
-    switch ( val.userType() )
-    {
-      case QMetaType::Int:
-      case QMetaType::UInt:
-      case QMetaType::LongLong:
-      case QMetaType::ULongLong:
-        obj.Add(name, val.toLongLong());
-        break;
-      case QMetaType::Double:
-      case QMetaType::Float:
-        obj.Add(name, val.toDouble());
-        break;
-      case QMetaType::Bool:
-        obj.Add(name, val.toBool());
-        break;
-      case QMetaType::QByteArray:
-        obj.Add(name, val.toByteArray().toBase64().toStdString());
-        break;
-      default:
-        obj.Add(name, val.toString().toStdString());
-        break;
-    }
-  }
-//   return j;
-}
-
-static QVariant VariantFromJSON( const json &obj )
-{
-    QVariant v;
-    if ( obj.GetType() == CPLJSONObject::Type::Array )
-    {
-        QVariantList results;
-        auto array = obj.ToArray();
-        for(const auto &item : array)
-        {
-            results.push_back( VariantFromJSON( item ) );
-        }
-        v = results;
-    }
-    else if ( obj.GetType() == CPLJSONObject::Type::Object )
-    {
-        QVariantMap results;
-        for ( const auto  &item : obj.GetChildren() )
-        {
-          const auto key { QString::fromStdString( item.GetName() ) };
-          const auto value {  VariantFromJSON( item ) };
-          results[ key ] = value;
-        }
-        v = results;
-    }
-    else if ( obj.GetType() == CPLJSONObject::Type::Integer )
-    {
-        v = obj.ToInteger();
-    }
-    else if ( obj.GetType() == CPLJSONObject::Type::Long )
-    {
-        v = obj.ToLong();
-    }
-    else if ( obj.GetType() == CPLJSONObject::Type::Double )
-    {
-        v = obj.ToDouble();
-    }
-    else if ( obj.GetType() == CPLJSONObject::Type::String )
-    {
-        v = QString::fromStdString( obj.ToString() );
-    }
-    else if ( obj.GetType() == CPLJSONObject::Type::Boolean )
-    {
-        v = obj.ToBool();
-    }
-    else if ( obj.GetType() == CPLJSONObject::Type::Null )
-    {
-        // Fallback to int
-        v = QVariant( QVariant::Type::Int );
-    }
-    return v;
-}
+#include <nlohmann/json.hpp>
 
 QgsJsonExporter::QgsJsonExporter( QgsVectorLayer *vectorLayer, int precision )
   : mPrecision( precision )
@@ -203,33 +74,35 @@ QgsCoordinateReferenceSystem QgsJsonExporter::sourceCrs() const
 QString QgsJsonExporter::exportFeature( const QgsFeature &feature, const QVariantMap &extraProperties,
                                         const QVariant &id, int indent ) const
 {
-  return QString::fromStdString( exportFeatureToJsonObject( feature, extraProperties, id ).Format( CPLJSONObject::PrettyFormat::Pretty ) );
+  return QString::fromStdString( exportFeatureToJsonObject( feature, extraProperties, id ).dump( indent ) );
 }
 
 json QgsJsonExporter::exportFeatureToJsonObject( const QgsFeature &feature, const QVariantMap &extraProperties, const QVariant &id ) const
 {
-  json featureJson;
-  featureJson.Add("type",  "Feature");
+  json featureJson
+  {
+    {  "type",  "Feature" },
+  };
   if ( id.isValid() )
   {
     bool ok = false;
     auto intId = id.toLongLong( &ok );
     if ( ok )
     {
-      featureJson.Add("id", intId);
+      featureJson["id"] = intId;
     }
     else
     {
-      featureJson.Add("id", id.toString().toStdString());
+      featureJson["id"] = id.toString().toStdString();
     }
   }
   else if ( FID_IS_NULL( feature.id() ) )
   {
-    featureJson.AddNull("id");
+    featureJson["id"] = nullptr;
   }
   else
   {
-    featureJson.Add("id", feature.id());
+    featureJson["id"] = feature.id();
   }
 
   QgsGeometry geom = feature.geometry();
@@ -252,18 +125,19 @@ json QgsJsonExporter::exportFeatureToJsonObject( const QgsFeature &feature, cons
 
     if ( QgsWkbTypes::flatType( geom.wkbType() ) != QgsWkbTypes::Point )
     {
-        CPLJSONArray bbox;
-        bbox.Add(qgsRound( box.xMinimum(), mPrecision ));
-        bbox.Add(qgsRound( box.xMaximum(), mPrecision ));
-        bbox.Add(qgsRound( box.xMaximum(), mPrecision ));
-        bbox.Add(qgsRound( box.yMaximum(), mPrecision ));
-      featureJson.Add("bbox", bbox);
+      featureJson[ "bbox" ] =
+      {
+        qgsRound( box.xMinimum(), mPrecision ),
+        qgsRound( box.yMinimum(), mPrecision ),
+        qgsRound( box.xMaximum(), mPrecision ),
+        qgsRound( box.yMaximum(), mPrecision )
+      };
     }
-    featureJson.Add("geometry", geom.asJsonObject( mPrecision ));
+    featureJson[ "geometry" ] = geom.asJsonObject( mPrecision );
   }
   else
   {
-    featureJson.AddNull("geometry");
+    featureJson[ "geometry"  ] = nullptr;
   }
 
   // build up properties element
@@ -302,7 +176,7 @@ json QgsJsonExporter::exportFeatureToJsonObject( const QgsFeature &feature, cons
         {
           name = mLayer->attributeDisplayName( i );
         }
-        AddjsonFromVariant(properties, name.toStdString(), val );
+        properties[ name.toStdString() ] = QgsJsonUtils::jsonFromVariant( val );
         attributeCounter++;
       }
     }
@@ -312,7 +186,7 @@ json QgsJsonExporter::exportFeatureToJsonObject( const QgsFeature &feature, cons
       QVariantMap::const_iterator it = extraProperties.constBegin();
       for ( ; it != extraProperties.constEnd(); ++it )
       {
-        AddjsonFromVariant(properties, it.key().toStdString(), it.value());
+        properties[ it.key().toStdString() ] = QgsJsonUtils::jsonFromVariant( it.value() );
         attributeCounter++;
       }
     }
@@ -343,36 +217,34 @@ json QgsJsonExporter::exportFeatureToJsonObject( const QgsFeature &feature, cons
           QgsFeature relatedFet;
           while ( it.nextFeature( relatedFet ) )
           {
-            for(auto relatedFeatureAttribute : QgsJsonUtils::exportAttributesToJsonObject( relatedFet, childLayer, attributeWidgetCaches ).GetChildren())
-            {
-                relatedFeatureAttributes.Add(relatedFeatureAttribute.GetName(), relatedFeatureAttribute);
-            }            
+            relatedFeatureAttributes += QgsJsonUtils::exportAttributesToJsonObject( relatedFet, childLayer, attributeWidgetCaches );
           }
         }
-        properties.Add(relation.name().toStdString(), relatedFeatureAttributes);
+        properties[ relation.name().toStdString() ] = relatedFeatureAttributes;
         attributeCounter++;
       }
     }
   }
-  featureJson.Add("properties", properties);
+  featureJson[ "properties" ] = properties;
   return featureJson;
 }
 
 QString QgsJsonExporter::exportFeatures( const QgsFeatureList &features, int indent ) const
 {
-  return QString::fromStdString( exportFeaturesToJsonObject( features ).Format( CPLJSONObject::PrettyFormat::Plain ) );
+  return QString::fromStdString( exportFeaturesToJsonObject( features ).dump( indent ) );
 }
 
 json QgsJsonExporter::exportFeaturesToJsonObject( const QgsFeatureList &features ) const
 {
-  json data;
-  data.Add("type", "FeatureCollection");
-  CPLJSONArray featuresArray;
+  json data
+  {
+    { "type", "FeatureCollection" },
+    { "features", json::array() }
+  };
   for ( const QgsFeature &feature : std::as_const( features ) )
   {
-      featuresArray.Add( exportFeatureToJsonObject( feature ) );
+    data["features"].push_back( exportFeatureToJsonObject( feature ) );
   }
-  data.Add("features", featuresArray);
   return data;
 }
 
@@ -459,24 +331,45 @@ QString QgsJsonUtils::exportAttributes( const QgsFeature &feature, QgsVectorLaye
 
 QVariantList QgsJsonUtils::parseArray( const QString &json, QVariant::Type type )
 {
-    QString errorMessage;
-    QVariantList result;
-    CPLJSONDocument doc;
-    if(!doc.LoadMemory(json.toStdString()))
+  QString errorMessage;
+  QVariantList result;
+  try
+  {
+    const auto jObj( json::parse( json.toStdString() ) );
+    if ( ! jObj.is_array() )
     {
-        throw "JSON value must be an array";
+      throw json::parse_error::create( 0, 0, QStringLiteral( "JSON value must be an array" ).toStdString() );
     }
-    auto obj = doc.GetRoot();
-    auto array = obj.ToArray();
-    if(!array.IsValid())
-    {
-        throw "JSON value must be an array";
-    }
-
-    for ( const auto &item : array )
+    for ( const auto &item : jObj )
     {
       // Create a QVariant from the array item
-      QVariant v = VariantFromJSON(item);
+      QVariant v;
+      if ( item.is_number_integer() )
+      {
+        v = item.get<int>();
+      }
+      else if ( item.is_number_unsigned() )
+      {
+        v = item.get<unsigned>();
+      }
+      else if ( item.is_number_float() )
+      {
+        // Note: it's a double and not a float on purpose
+        v = item.get<double>();
+      }
+      else if ( item.is_string() )
+      {
+        v = QString::fromStdString( item.get<std::string>() );
+      }
+      else if ( item.is_boolean() )
+      {
+        v = item.get<bool>();
+      }
+      else if ( item.is_null() )
+      {
+        // Fallback to int
+        v = QVariant( type == QVariant::Type::Invalid ? QVariant::Type::Int : type );
+      }
 
       // If a destination type was specified (it's not invalid), try to convert
       if ( type != QVariant::Invalid )
@@ -495,8 +388,69 @@ QVariantList QgsJsonUtils::parseArray( const QString &json, QVariant::Type type 
         result.push_back( v );
       }
     }
+  }
+  catch ( json::parse_error &ex )
+  {
+    errorMessage = ex.what();
+    QgsLogger::warning( QStringLiteral( "Cannot parse json (%1): %2" ).arg( ex.what(), json ) );
+  }
 
   return result;
+}
+
+json QgsJsonUtils::jsonFromVariant( const QVariant &val )
+{
+  if ( val.isNull() || ! val.isValid() )
+  {
+    return nullptr;
+  }
+  json j;
+  if ( val.type() == QVariant::Type::Map )
+  {
+    const QVariantMap &vMap = val.toMap();
+    json jMap = json::object();
+    for ( auto it = vMap.constBegin(); it != vMap.constEnd(); it++ )
+    {
+      jMap[ it.key().toStdString() ] = jsonFromVariant( it.value() );
+    }
+    j = jMap;
+  }
+  else if ( val.type() == QVariant::Type::List || val.type() == QVariant::Type::StringList )
+  {
+    const QVariantList &vList = val.toList();
+    json jList = json::array();
+    for ( const auto &v : vList )
+    {
+      jList.push_back( jsonFromVariant( v ) );
+    }
+    j = jList;
+  }
+  else
+  {
+    switch ( val.userType() )
+    {
+      case QMetaType::Int:
+      case QMetaType::UInt:
+      case QMetaType::LongLong:
+      case QMetaType::ULongLong:
+        j = val.toLongLong();
+        break;
+      case QMetaType::Double:
+      case QMetaType::Float:
+        j = val.toDouble();
+        break;
+      case QMetaType::Bool:
+        j = val.toBool();
+        break;
+      case QMetaType::QByteArray:
+        j = val.toByteArray().toBase64().toStdString();
+        break;
+      default:
+        j = val.toString().toStdString();
+        break;
+    }
+  }
+  return j;
 }
 
 QVariant QgsJsonUtils::parseJson( const std::string &jsonString )
@@ -514,29 +468,84 @@ QVariant QgsJsonUtils::parseJson( const std::string &jsonString )
 
 QVariant QgsJsonUtils::parseJson( const std::string &jsonString, QString &error )
 {
-    CPLErrorReset();
-    CPLJSONDocument doc;
-    if(!doc.LoadMemory(jsonString))
-    {
-        error = QString::fromStdString(CPLGetLastErrorMsg());
-        return QVariant();
+  // tracks whether entire json string is a primitive
+  bool isPrimitive = true;
+
+  std::function<QVariant( json )> _parser { [ & ]( json jObj ) -> QVariant {
+      QVariant result;
+      if ( jObj.is_array() )
+      {
+        isPrimitive = false;
+        QVariantList results;
+        results.reserve( jObj.size() );
+        for ( const auto &item : jObj )
+        {
+          results.push_back( _parser( item ) );
+        }
+        result = results;
+      }
+      else if ( jObj.is_object() )
+      {
+        isPrimitive = false;
+        QVariantMap results;
+        for ( const auto  &item : jObj.items() )
+        {
+          const auto key { QString::fromStdString( item.key() ) };
+          const auto value {  _parser( item.value() ) };
+          results[ key ] = value;
+        }
+        result = results;
+      }
+      else
+      {
+        if ( jObj.is_number_integer() )
+        {
+          result = jObj.get<int>();
+        }
+        else if ( jObj.is_number_unsigned() )
+        {
+          result = jObj.get<unsigned>();
+        }
+        else if ( jObj.is_boolean() )
+        {
+          result = jObj.get<bool>();
+        }
+        else if ( jObj.is_number_float() )
+        {
+          // Note: it's a double and not a float on purpose
+          result = jObj.get<double>();
+        }
+        else if ( jObj.is_string() )
+        {
+          if ( isPrimitive && jObj.get<std::string>().length() == 0 )
+          {
+            result = QString::fromStdString( jObj.get<std::string>() ).append( "\"" ).insert( 0, "\"" );
+          }
+          else
+          {
+            result = QString::fromStdString( jObj.get<std::string>() );
+          }
+        }
+        else if ( jObj.is_null() )
+        {
+          // Do nothing (leave invalid)
+        }
+      }
+      return result;
     }
+  };
 
-    auto obj = doc.GetRoot();
-    return VariantFromJSON(obj);
-}
-
-json QgsJsonUtils::parse( const std::string &jsonString, QString &error )
-{
-    CPLErrorReset();
-    CPLJSONDocument doc;
-    if(!doc.LoadMemory(jsonString))
-    {
-        error = QString::fromStdString(CPLGetLastErrorMsg());
-        return json();
-    }
-
-    return doc.GetRoot();
+  error.clear();
+  try
+  {
+    const json j = json::parse( jsonString );
+    return _parser( j );
+  }
+  catch ( json::parse_error &ex )
+  {
+    error = QString::fromStdString( ex.what() );
+  }
+  return QVariant();
 }
 
 QVariant QgsJsonUtils::parseJson( const QString &jsonString )
@@ -559,34 +568,7 @@ json QgsJsonUtils::exportAttributesToJsonObject( const QgsFeature &feature, QgsV
       if ( fieldFormatter != QgsApplication::fieldFormatterRegistry()->fallbackFieldFormatter() )
         val = fieldFormatter->representValue( layer, i, setup.config(), attributeWidgetCaches.count() >= i ? attributeWidgetCaches.at( i ) : QVariant(), val );
     }
-    AddjsonFromVariant(attrs, fields.at( i ).name().toStdString(), val );
+    attrs[fields.at( i ).name().toStdString()] = jsonFromVariant( val );
   }
   return attrs;
-}
-
-json QgsJsonUtils::jsonFromVariant( const QVariant &val )
-{
-    json out;
-    AddjsonFromVariant(out, "", val);
-    return out;
-}
-
-bool QgsJsonUtils::is_array(const json &obj)
-{
-    return obj.GetType() == CPLJSONObject::Type::Array;
-}
-
-bool QgsJsonUtils::is_object(const json &obj)
-{
-    return obj.GetType() == CPLJSONObject::Type::Object;
-}
-
-bool QgsJsonUtils::is_number_integer(const json &obj)
-{
-    return obj.GetType() == CPLJSONObject::Type::Integer || obj.GetType() == CPLJSONObject::Type::Long;
-}
-
-QString QgsJsonUtils::dump(const json &obj)
-{
-    return QString::fromStdString( obj.Format(CPLJSONObject::PrettyFormat::Plain) );
 }

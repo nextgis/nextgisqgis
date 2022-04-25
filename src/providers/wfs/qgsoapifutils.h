@@ -16,9 +16,8 @@
 #ifndef QGSOAPIFUTILS_H
 #define QGSOAPIFUTILS_H
 
-// #include <nlohmann/json.hpp>
-// using namespace nlohmann;
-#include "qgsjsonutils.h"
+#include <nlohmann/json.hpp>
+using namespace nlohmann;
 
 #include <QString>
 #include <QStringList>

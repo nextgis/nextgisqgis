@@ -26,7 +26,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include <QStringList>
 #include <QVector>
 #include <QRegularExpression>
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 
 QVector<QgsLineString *> QgsGeometryUtils::extractLineStrings( const QgsAbstractGeometry *geom )
 {
@@ -1303,19 +1303,16 @@ QString QgsGeometryUtils::pointsToJSON( const QgsPointSequence &points, int prec
 
 json QgsGeometryUtils::pointsToJson( const QgsPointSequence &points, int precision )
 {
-  CPLJSONArray coordinates;
+  json coordinates( json::array() );
   for ( const QgsPoint &p : points )
   {
     if ( p.is3D() )
     {
-      coordinates.Add( qgsRound( p.x(), precision ) );
-      coordinates.Add( qgsRound( p.y(), precision ) );
-      coordinates.Add( qgsRound( p.z(), precision ) );
+      coordinates.push_back( { qgsRound( p.x(), precision ), qgsRound( p.y(), precision ), qgsRound( p.z(), precision ) } );
     }
     else
     {
-      coordinates.Add( qgsRound( p.x(), precision ) );
-      coordinates.Add( qgsRound( p.y(), precision ) );
+      coordinates.push_back( { qgsRound( p.x(), precision ), qgsRound( p.y(), precision ) } );
     }
   }
   return coordinates;

@@ -24,7 +24,7 @@
 #include <QDesktopServices>
 #include <QApplication>
 #include <QClipboard>
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 
 //
 // QgsNetworkLoggerNode
@@ -327,7 +327,7 @@ QList<QAction *> QgsNetworkLoggerRequestGroup::actions( QObject *parent )
   QObject::connect( copyJsonAction, &QAction::triggered, openUrlAction, [ = ]
   {
     const QVariant value = toVariant();
-    const QString json = QgsJsonUtils::dump( QgsJsonUtils::jsonFromVariant( value ) );
+    const QString json = QString::fromStdString( QgsJsonUtils::jsonFromVariant( value ).dump( 2 ) );
     QApplication::clipboard()->setText( json );
 
   } );

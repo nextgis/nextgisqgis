@@ -938,7 +938,7 @@ if(MSVC)
 endif(MSVC)
 
 set(QGIS_CORE_HDRS
-    # ${CMAKE_SOURCE_DIR}/external/nlohmann/json_fwd.hpp
+    ${CMAKE_SOURCE_DIR}/external/nlohmann/json_fwd.hpp
     ${CMAKE_BINARY_DIR}/qgsconfig.h
 
     ../plugins/qgisplugin.h
@@ -2023,7 +2023,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
         vector
         # vectortile
         ${CMAKE_SOURCE_DIR}/external
-        # ${CMAKE_SOURCE_DIR}/external/nlohmann
+        ${CMAKE_SOURCE_DIR}/external/nlohmann
         # ${CMAKE_SOURCE_DIR}/external/kdbush/include
         # ${CMAKE_SOURCE_DIR}/external/nmea
         ${CMAKE_SOURCE_DIR}/external/rtree/include

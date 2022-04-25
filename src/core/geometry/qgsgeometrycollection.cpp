@@ -29,7 +29,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsgeos.h"
 #include "qgsfeedback.h"
 
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 #include <memory>
 
 QgsGeometryCollection::QgsGeometryCollection()
@@ -505,15 +505,16 @@ QDomElement QgsGeometryCollection::asGml3( QDomDocument &doc, int precision, con
 
 json QgsGeometryCollection::asJsonObject( int precision ) const
 {
-  CPLJSONArray coordinates;
+  json coordinates( json::array( ) );
   for ( const QgsAbstractGeometry *geom : std::as_const( mGeometries ) )
   {
-    coordinates.Add( geom->asJsonObject( precision ) );
+    coordinates.push_back( geom->asJsonObject( precision ) );
   }
-  CPLJSONObject out;
-  out.Add("type",  "GeometryCollection");
-  out.Add("geometries", coordinates);
-  return out;
+  return
+  {
+    { "type",  "GeometryCollection" },
+    { "geometries", coordinates }
+  };
 }
 
 QString QgsGeometryCollection::asKml( int precision ) const

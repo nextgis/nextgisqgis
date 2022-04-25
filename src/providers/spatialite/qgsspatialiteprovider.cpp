@@ -43,9 +43,8 @@ email                : a.furieri@lqt.it
 #include <QDir>
 #include <QRegularExpression>
 
-// #include <nlohmann/json.hpp>
-// using namespace nlohmann;
-#include "qgsjsonutils.h"
+#include <nlohmann/json.hpp>
+using namespace nlohmann;
 
 
 const QString QgsSpatiaLiteProvider::SPATIALITE_KEY = QStringLiteral( "spatialite" );
@@ -4676,18 +4675,25 @@ bool QgsSpatiaLiteProvider::changeAttributeValues( const QgsChangedAttributesMap
         {
           // binding an array value, parse JSON
           QString jRepr;
-          const auto jObj = QgsJsonUtils::jsonFromVariant( val );
-          if ( !QgsJsonUtils::is_array(jObj) )
+          try
           {
-            const auto errM { tr( "Field type is JSON but the value cannot be converted to JSON array" ) };
+            const auto jObj = QgsJsonUtils::jsonFromVariant( val );
+            if ( ! jObj.is_array() )
+            {
+              throw json::parse_error::create( 0, 0, tr( "JSON value must be an array" ).toStdString() );
+            }
+            jRepr = QString::fromStdString( jObj.dump( ) );
+            sql += QStringLiteral( "%1=%2" ).arg( QgsSqliteUtils::quotedIdentifier( fld.name() ),  QgsSqliteUtils::quotedString( jRepr ) );
+          }
+          catch ( json::exception &ex )
+          {
+            const auto errM { tr( "Field type is JSON but the value cannot be converted to JSON array: %1" ).arg( ex.what() ) };
             auto msgPtr { static_cast<char *>( sqlite3_malloc( errM.length() + 1 ) ) };
             strcpy( static_cast<char *>( msgPtr ), errM.toStdString().c_str() );
             errMsg = msgPtr;
             handleError( jRepr, errMsg, savepointId );
             return false;
           }
-          jRepr = QgsJsonUtils::dump(jObj);
-          sql += QStringLiteral( "%1=%2" ).arg( QgsSqliteUtils::quotedIdentifier( fld.name() ),  QgsSqliteUtils::quotedString( jRepr ) );
         }
         else if ( type == QVariant::ByteArray )
         {

@@ -1,5 +1,5 @@
 --- a/src/providers/wms/qgswmsdataitems.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/providers/wms/qgswmsdataitems.h	2022-04-07 00:39:42.000000000 +0300
++++ b/src/providers/wms/qgswmsdataitems.h	2022-04-25 18:33:16.000000000 +0300
 @@ -20,7 +20,7 @@
  #include "qgsdataitemprovider.h"
  #include "qgsdatasourceuri.h"

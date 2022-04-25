@@ -24,7 +24,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsmulticurve.h"
 
 #include <QJsonObject>
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 
 QgsMultiSurface::QgsMultiSurface()
 {
@@ -122,17 +122,17 @@ QDomElement QgsMultiSurface::asGml3( QDomDocument &doc, int precision, const QSt
 
 json QgsMultiSurface::asJsonObject( int precision ) const
 {
-  CPLJSONArray polygons;
+  json polygons( json::array( ) );
   for ( const QgsAbstractGeometry *geom : std::as_const( mGeometries ) )
   {
     if ( qgsgeometry_cast<const QgsSurface *>( geom ) )
     {
-      CPLJSONArray coordinates;
+      json coordinates( json::array( ) );
       std::unique_ptr< QgsPolygon >polygon( static_cast<const QgsSurface *>( geom )->surfaceToPolygon() );
       std::unique_ptr< QgsLineString > exteriorLineString( polygon->exteriorRing()->curveToLine() );
       QgsPointSequence exteriorPts;
       exteriorLineString->points( exteriorPts );
-      coordinates.Add( QgsGeometryUtils::pointsToJson( exteriorPts, precision ) );
+      coordinates.push_back( QgsGeometryUtils::pointsToJson( exteriorPts, precision ) );
 
       std::unique_ptr< QgsLineString > interiorLineString;
       for ( int i = 0, n = polygon->numInteriorRings(); i < n; ++i )
@@ -140,15 +140,16 @@ json QgsMultiSurface::asJsonObject( int precision ) const
         interiorLineString.reset( polygon->interiorRing( i )->curveToLine() );
         QgsPointSequence interiorPts;
         interiorLineString->points( interiorPts );
-        coordinates.Add( QgsGeometryUtils::pointsToJson( interiorPts, precision ) );
+        coordinates.push_back( QgsGeometryUtils::pointsToJson( interiorPts, precision ) );
       }
-      polygons.Add( coordinates );
+      polygons.push_back( coordinates );
     }
   }
-  json out;
-  out.Add("type",  "MultiPolygon");
-  out.Add("coordinates", polygons);
-  return out;
+  return
+  {
+    {  "type",  "MultiPolygon" },
+    {  "coordinates", polygons }
+  };
 }
 
 bool QgsMultiSurface::addGeometry( QgsAbstractGeometry *g )

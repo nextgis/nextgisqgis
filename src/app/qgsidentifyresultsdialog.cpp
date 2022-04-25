@@ -91,7 +91,7 @@
 #include "qgspointcloudlayer.h"
 #include "qgscolorrampimpl.h"
 
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 
 QgsIdentifyResultsWebView::QgsIdentifyResultsWebView( QWidget *parent ) : QgsWebView( parent )
 {
@@ -1030,7 +1030,7 @@ void QgsIdentifyResultsDialog::addFeature( QgsRasterLayer *layer,
         }
         else
         {
-          formattedValue = QgsJsonUtils::dump( QgsJsonUtils::jsonFromVariant( value ) );
+          formattedValue = QString::fromStdString( QgsJsonUtils::jsonFromVariant( value ).dump() );
         }
       }
       QTreeWidgetItem *attrItem = new QTreeWidgetItem( { fields.at( i ).name(), formattedValue } );
@@ -1476,7 +1476,7 @@ void QgsIdentifyResultsDialog::contextMenuEvent( QContextMenuEvent *event )
   QgsRasterLayer *rlayer = rasterLayer( item );
 //   QgsVectorTileLayer *vtlayer = vectorTileLayer( item );
   QgsPointCloudLayer *pclayer = pointCloudLayer( item );
-  if ( !vlayer && !rlayer && /*!vtlayer &&*/ !pclayer )
+  if ( !vlayer && !rlayer /*&& !vtlayer*/ && !pclayer )
   {
     QgsDebugMsg( QStringLiteral( "Item does not belong to a layer." ) );
     return;

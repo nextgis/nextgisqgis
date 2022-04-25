@@ -110,4 +110,5 @@ development and support for this software.
 4. Drop O2 oin favour ngstd
 5. In installer drop setting: export QCA_PLUGIN_PATH=/Users/Bishop/Applications/NextGIS/Library/Plugins/Qt4/
 6. Remove GPS tab from Options in QGIS
-7. ?
+7. Drop nlohmann/json.hpp in favour CPLJSONObject or QJSONObject 
+8. ?

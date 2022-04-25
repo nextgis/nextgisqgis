@@ -1,5 +1,5 @@
 --- a/src/app/qgisapp.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/qgisapp.h	2022-04-22 03:17:55.046017800 +0300
++++ b/src/app/qgisapp.h	2022-04-25 18:33:17.000000000 +0300
 @@ -95,7 +95,7 @@
  class QgsUserInputWidget;
  class QgsVectorLayer;

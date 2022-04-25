@@ -1,5 +1,5 @@
 --- a/src/gui/qgsmaptoolidentify.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/gui/qgsmaptoolidentify.h	2022-04-07 00:39:42.000000000 +0300
++++ b/src/gui/qgsmaptoolidentify.h	2022-04-25 18:33:16.000000000 +0300
 @@ -29,7 +29,7 @@
  
  class QgsRasterLayer;

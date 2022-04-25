@@ -30,7 +30,7 @@
 #include <QCheckBox>
 #include <QTextStream>
 
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 
 //
 // QgsNetworkLoggerTreeView
@@ -202,7 +202,7 @@ QgsNetworkLoggerPanelWidget::QgsNetworkLoggerPanelWidget( QgsNetworkLogger *logg
     QTextStream fout( &exportFile );
 
     const QVariant value = mLogger->rootGroup()->toVariant();
-    const QString json = QgsJsonUtils::dump( QgsJsonUtils::jsonFromVariant( value ) );
+    const QString json = QString::fromStdString( QgsJsonUtils::jsonFromVariant( value ).dump( 2 ) );
 
     fout << json;
   } );

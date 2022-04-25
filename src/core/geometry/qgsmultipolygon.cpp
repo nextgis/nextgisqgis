@@ -23,7 +23,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsmultilinestring.h"
 
 #include <QJsonObject>
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 
 QgsMultiPolygon::QgsMultiPolygon()
 {
@@ -111,18 +111,18 @@ QDomElement QgsMultiPolygon::asGml3( QDomDocument &doc, int precision, const QSt
 
 json QgsMultiPolygon::asJsonObject( int precision ) const
 {
-  CPLJSONArray polygons;
+  json polygons( json::array( ) );
   for ( const QgsAbstractGeometry *geom : std::as_const( mGeometries ) )
   {
     if ( qgsgeometry_cast<const QgsPolygon *>( geom ) )
     {
-      CPLJSONArray coordinates;
+      json coordinates( json::array( ) );
       const QgsPolygon *polygon = static_cast<const QgsPolygon *>( geom );
 
       std::unique_ptr< QgsLineString > exteriorLineString( polygon->exteriorRing()->curveToLine() );
       QgsPointSequence exteriorPts;
       exteriorLineString->points( exteriorPts );
-      coordinates.Add( QgsGeometryUtils::pointsToJson( exteriorPts, precision ) );
+      coordinates.push_back( QgsGeometryUtils::pointsToJson( exteriorPts, precision ) );
 
       std::unique_ptr< QgsLineString > interiorLineString;
       for ( int i = 0, n = polygon->numInteriorRings(); i < n; ++i )
@@ -130,15 +130,16 @@ json QgsMultiPolygon::asJsonObject( int precision ) const
         interiorLineString.reset( polygon->interiorRing( i )->curveToLine() );
         QgsPointSequence interiorPts;
         interiorLineString->points( interiorPts );
-        coordinates.Add( QgsGeometryUtils::pointsToJson( interiorPts, precision ) );
+        coordinates.push_back( QgsGeometryUtils::pointsToJson( interiorPts, precision ) );
       }
-      polygons.Add( coordinates );
+      polygons.push_back( coordinates );
     }
   }
-  json out;
-  out.Add("type", "MultiPolygon");
-  out.Add("coordinates", polygons);
-  return out;
+  return
+  {
+    { "type", "MultiPolygon" },
+    { "coordinates", polygons }
+  };
 }
 
 bool QgsMultiPolygon::addGeometry( QgsAbstractGeometry *g )

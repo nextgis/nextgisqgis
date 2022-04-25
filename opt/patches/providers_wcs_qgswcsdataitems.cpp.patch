@@ -1,5 +1,5 @@
 --- a/src/providers/wcs/qgswcsdataitems.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/providers/wcs/qgswcsdataitems.cpp	2022-04-07 00:39:44.000000000 +0300
++++ b/src/providers/wcs/qgswcsdataitems.cpp	2022-04-25 18:33:17.000000000 +0300
 @@ -19,8 +19,8 @@
  #include "qgsdatasourceuri.h"
  #include "qgsowsconnection.h"

@@ -13,9 +13,8 @@
  *                                                                         *
  ***************************************************************************/
 
-// #include <nlohmann/json.hpp>
-// using namespace nlohmann;
-#include "qgsjsonutils.h"
+#include <nlohmann/json.hpp>
+using namespace nlohmann;
 
 #include "qgslogger.h"
 #include "qgsoapifitemsrequest.h"
@@ -121,39 +120,31 @@ void QgsOapifItemsRequest::processReply()
   vectorProvider.reset();
   VSIUnlink( vsimemFilename.toUtf8().constData() );
 
-    QString error;
-    const json j = QgsJsonUtils::parse( utf8Text.toStdString(), error );
-    if(!error.isEmpty())
+  try
+  {
+    const json j = json::parse( utf8Text.toStdString() );
+    if ( j.is_object() && j.contains( "features" ) )
     {
-        mErrorCode = QgsBaseNetworkRequest::ApplicationLevelError;
-        mAppLevelError = ApplicationLevelError::JsonError;
-        mErrorMessage = errorMessageWithReason( tr( "Cannot decode JSON document: %1" ).arg( error ) );
-        emit gotResponse();
-        return;
-    }
-
-    if ( QgsJsonUtils::is_object(j) )
-    {
-        const json features = j["features"];
-        if ( QgsJsonUtils::is_array(features) )
+      const json features = j["features"];
+      if ( features.is_array() && features.size() == mFeatures.size() )
+      {
+        for ( size_t i = 0; i < features.size(); i++ )
         {
-            auto featuresA = features.ToArray();
-            if( featuresA.Size() == mFeatures.size() )
+          const json &jFeature = features[i];
+          if ( jFeature.is_object() && jFeature.contains( "id" ) )
+          {
+            const json id = jFeature["id"];
+            if ( id.is_string() )
             {
-                for ( int i = 0; i < featuresA.Size(); i++ )
-                {
-                    const json &jFeature = featuresA[i];
-                    if ( QgsJsonUtils::is_object(jFeature) )
-                    {
-                        const json id = jFeature["id"];
-                        if ( id.IsValid() )
-                        {
-                            mFeatures[i].second = QString::fromStdString( id.ToString() );
-                        }
-                    }
-                }
+              mFeatures[i].second = QString::fromStdString( id.get<std::string>() );
             }
+            else if ( id.is_number_integer() )
+            {
+              mFeatures[i].second = QString::number( id.get<qint64>() );
+            }
+          }
         }
+      }
     }
 
     const auto links = QgsOAPIFJson::parseLinks( j );
@@ -161,14 +152,23 @@ void QgsOapifItemsRequest::processReply()
                                        QStringLiteral( "next" ),
     {  QStringLiteral( "application/geo+json" ) } );
 
-    if ( QgsJsonUtils::is_object(j) )
+    if ( j.is_object() && j.contains( "numberMatched" ) )
     {
-        const auto numberMatched = j["numberMatched"];
-        if ( QgsJsonUtils::is_number_integer(numberMatched) )
-        {
-            mNumberMatched = numberMatched.ToInteger();
-        }
+      const auto numberMatched = j["numberMatched"];
+      if ( numberMatched.is_number_integer() )
+      {
+        mNumberMatched = numberMatched.get<int>();
+      }
     }
-
+  }
+  catch ( const json::parse_error &ex )
+  {
+    mErrorCode = QgsBaseNetworkRequest::ApplicationLevelError;
+    mAppLevelError = ApplicationLevelError::JsonError;
+    mErrorMessage = errorMessageWithReason( tr( "Cannot decode JSON document: %1" ).arg( QString::fromStdString( ex.what() ) ) );
     emit gotResponse();
+    return;
+  }
+
+  emit gotResponse();
 }

@@ -19,44 +19,56 @@
 
 std::vector<QgsOAPIFJson::Link> QgsOAPIFJson::parseLinks( const json &jParent )
 {
-    std::vector<Link> links;
-    if ( QgsJsonUtils::is_object(jParent) )
+  std::vector<Link> links;
+  if ( jParent.is_object() && jParent.contains( "links" ) )
+  {
+    const auto jLinks = jParent["links"];
+    if ( jLinks.is_array() )
     {
-        const auto jLinks = jParent["links"];
-        if ( QgsJsonUtils::is_array(jLinks) )
+      for ( const auto &jLink : jLinks )
+      {
+        if ( jLink.is_object() &&
+             jLink.contains( "href" ) &&
+             jLink.contains( "rel" ) )
         {
-            for ( const auto &jLink : jLinks.ToArray() )
+          const auto href = jLink["href"];
+          const auto rel = jLink["rel"];
+          if ( href.is_string() && rel.is_string() )
+          {
+            Link link;
+            link.href = QString::fromStdString( href.get<std::string>() );
+            link.rel = QString::fromStdString( rel.get<std::string>() );
+            if ( jLink.contains( "type" ) )
             {
-                if ( QgsJsonUtils::is_object(jLink) )
-                {
-                    const auto href = jLink["href"];
-                    const auto rel = jLink["rel"];
-          
-                    Link link;
-                    link.href = QString::fromStdString( href.ToString() );
-                    link.rel = QString::fromStdString( rel.ToString() );
-            
-                    const auto type = jLink["type"];
-                    if ( type.IsValid() )
-                    {
-                        link.type = QString::fromStdString( type.ToString() );
-                    }
-
-            
-                    const auto title = jLink["title"];
-                    link.title = QString::fromStdString( title.ToString() );
-
-                    const auto length = jLink["length"];
-                    if ( QgsJsonUtils::is_number_integer(length) )
-                    {
-                        link.length = length.ToLong();
-                    }
-                    links.push_back( link );
-                }
+              const auto type = jLink["type"];
+              if ( type.is_string() )
+              {
+                link.type = QString::fromStdString( type.get<std::string>() );
+              }
             }
+            if ( jLink.contains( "title" ) )
+            {
+              const auto title = jLink["title"];
+              if ( title.is_string() )
+              {
+                link.title = QString::fromStdString( title.get<std::string>() );
+              }
+            }
+            if ( jLink.contains( "length" ) )
+            {
+              const auto length = jLink["length"];
+              if ( length.is_number_integer() )
+              {
+                link.length = length.get<qint64>();
+              }
+            }
+            links.push_back( link );
+          }
         }
+      }
     }
-    return links;
+  }
+  return links;
 }
 
 QString QgsOAPIFJson::findLink( const std::vector<QgsOAPIFJson::Link> &links,

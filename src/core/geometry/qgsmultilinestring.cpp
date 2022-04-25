@@ -22,7 +22,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgslinestring.h"
 #include "qgsmulticurve.h"
 
-// #include <nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 #include <QJsonObject>
 
 QgsMultiLineString::QgsMultiLineString()
@@ -110,7 +110,7 @@ QDomElement QgsMultiLineString::asGml3( QDomDocument &doc, int precision, const 
 
 json QgsMultiLineString::asJsonObject( int precision ) const
 {
-  CPLJSONArray coordinates;
+  json coordinates( json::array( ) );
   for ( const QgsAbstractGeometry *geom : mGeometries )
   {
     if ( qgsgeometry_cast<const QgsCurve *>( geom ) )
@@ -118,13 +118,14 @@ json QgsMultiLineString::asJsonObject( int precision ) const
       const QgsLineString *lineString = static_cast<const QgsLineString *>( geom );
       QgsPointSequence pts;
       lineString->points( pts );
-      coordinates.Add( QgsGeometryUtils::pointsToJson( pts, precision ) );
+      coordinates.push_back( QgsGeometryUtils::pointsToJson( pts, precision ) );
     }
   }
-  json out;
-  out.Add("type",  "MultiLineString");
-  out.Add("coordinates", coordinates);
-  return out;
+  return
+  {
+    { "type",  "MultiLineString" },
+    { "coordinates", coordinates }
+  };
 }
 
 bool QgsMultiLineString::addGeometry( QgsAbstractGeometry *g )
