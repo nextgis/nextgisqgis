@@ -247,13 +247,13 @@ else()
     option(WITH_AUTH "Determines whether QGIS authentication methods should be built" ON)
     option(WITH_ANALYSIS "Determines whether QGIS analysis library should be built" ON)
     option(WITH_DESKTOP "Determines whether QGIS desktop should be built" ON)
-    option(WITH_3D "Determines whether QGIS 3D library should be built" OFF)
-    option(WITH_QGIS_PROCESS "Determines whether the standalone \"qgis_process\" tool should be built" ON)
-    option(WITH_BINDINGS "Determines whether python bindings should be built" OFF)
+    option(WITH_3D "Determines whether QGIS 3D library should be built" OFF) # TODO: Set ON
+    option(WITH_QGIS_PROCESS "Determines whether the standalone \"qgis_process\" tool should be built" OFF) # TODO: Set ON
+    option(WITH_BINDINGS "Determines whether python bindings should be built" OFF) # TODO: Set ON
     option(WITH_DOCS "Determines whether documents should be built" ON)
     option(ENABLE_TESTS "Build unit tests?" OFF)
     
-    option(WITH_OAUTH2_PLUGIN "Build OAuth2 authentication method plugin" OFF)
+    option(WITH_OAUTH2_PLUGIN "Build OAuth2 authentication method plugin" OFF) # TODO: Set ON
     if(WITH_OAUTH2_PLUGIN)
         set(HAVE_OAUTH2_PLUGIN TRUE)
     endif()
