@@ -392,11 +392,13 @@ else()
   set (QGIS_APPMAIN_SRCS main.cpp ${TEST_RCCS})
 endif()
 
-set (QGIS_APPMAIN_HEADERS
-   qgscustomization.h
-   qgisapp.h
-   qgsfirstrundialog.h
-)
+if(NOT WIN32)
+    set (QGIS_APPMAIN_HEADERS
+       qgscustomization.h
+       qgisapp.h
+       qgsfirstrundialog.h
+    )
+endif()
 
 if(PEDANTIC)
   # disable deprecation warnings
