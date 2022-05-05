@@ -24,12 +24,12 @@ ELSE(QSCI_MOD_VERSION_STR)
   IF(SIP_BUILD_EXECUTABLE)
     # SIP >= 5.0 path
 
-    FILE(GLOB _qsci_metadata "${Python_SITEARCH}/QScintilla*.dist-info/METADATA")
+    FILE(GLOB _qsci_metadata "${PYTHON_SITEARCH}/QScintilla*.dist-info/METADATA")
     IF(_qsci_metadata)
       FILE(READ ${_qsci_metadata} _qsci_metadata_contents)
       STRING(REGEX REPLACE ".*\nVersion: ([^\n]+).*$" "\\1" QSCI_MOD_VERSION_STR ${_qsci_metadata_contents})
     ELSE(_qsci_metadata)
-      EXECUTE_PROCESS(COMMAND ${Python_EXECUTABLE} -c "from PyQt5.Qsci import QSCINTILLA_VERSION_STR; print(QSCINTILLA_VERSION_STR)" OUTPUT_VARIABLE QSCI_MOD_VERSION_STR)
+      EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c "from PyQt5.Qsci import QSCINTILLA_VERSION_STR; print(QSCINTILLA_VERSION_STR)" OUTPUT_VARIABLE QSCI_MOD_VERSION_STR)
     ENDIF(_qsci_metadata)
 
     IF(QSCI_MOD_VERSION_STR)
@@ -44,7 +44,7 @@ ELSE(QSCI_MOD_VERSION_STR)
 
     SET(QSCI_VER 5)
 
-    EXECUTE_PROCESS(COMMAND ${Python_EXECUTABLE} ${_find_qsci_py} ${QSCI_VER} OUTPUT_VARIABLE qsci_ver)
+    EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} ${_find_qsci_py} ${QSCI_VER} OUTPUT_VARIABLE qsci_ver)
 
     IF(qsci_ver)
       STRING(REGEX REPLACE "^qsci_version_str:([^\n]+).*$" "\\1" QSCI_MOD_VERSION_STR ${qsci_ver})
