@@ -1,0 +1,44 @@
+/************************************************************************
+ * This file has been generated automatically from                      *
+ *                                                                      *
+ * src/gui/vector/qgsvectorlayerproperties.h                            *
+ *                                                                      *
+ * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ ************************************************************************/
+
+
+
+
+
+
+
+class QgsVectorLayerProperties : QgsOptionsDialogBase
+{
+
+%TypeHeaderCode
+#include "qgsvectorlayerproperties.h"
+%End
+  public:
+
+    QgsVectorLayerProperties( QgsMapCanvas *canvas, QgsMessageBar *messageBar, QgsVectorLayer *lyr = 0, QWidget *parent = 0, Qt::WindowFlags fl = QgsGuiUtils::ModalDialogFlags );
+
+    void addPropertiesPageFactory( const QgsMapLayerConfigWidgetFactory *factory );
+%Docstring
+Adds a properties page factory to the vector layer properties dialog.
+%End
+
+  protected slots:
+
+  signals:
+
+
+
+};
+
+/************************************************************************
+ * This file has been generated automatically from                      *
+ *                                                                      *
+ * src/gui/vector/qgsvectorlayerproperties.h                            *
+ *                                                                      *
+ * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ ************************************************************************/

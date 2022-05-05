@@ -1,0 +1,1096 @@
+/************************************************************************
+ * This file has been generated automatically from                      *
+ *                                                                      *
+ * src/core/qgis.h                                                      *
+ *                                                                      *
+ * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ ************************************************************************/
+
+
+
+
+
+
+%ModuleHeaderCode
+#include <qgis.h>
+%End
+
+%ModuleCode
+int QgisEvent = QEvent::User + 1;
+%End
+
+enum class QgsMapLayerType
+  {
+  VectorLayer,
+  RasterLayer,
+  PluginLayer,
+  MeshLayer,
+  VectorTileLayer,
+  AnnotationLayer,
+  PointCloudLayer,
+  GroupLayer,
+};
+
+
+class Qgis
+{
+%Docstring(signature="appended")
+The Qgis class provides global constants for use throughout the application.
+%End
+
+%TypeHeaderCode
+#include "qgis.h"
+%End
+  public:
+    static const QMetaObject staticMetaObject;
+
+  public:
+
+    static QString version();
+%Docstring
+Version string.
+
+.. versionadded:: 3.12
+%End
+
+    static int versionInt();
+%Docstring
+Version number used for comparing versions using the "Check QGIS Version" function
+
+.. versionadded:: 3.12
+%End
+
+    static QString releaseName();
+%Docstring
+Release name
+
+.. versionadded:: 3.12
+%End
+
+    static const char *QGIS_DEV_VERSION;
+
+    static QString devVersion();
+%Docstring
+The development version
+
+.. versionadded:: 3.12
+%End
+
+
+    enum MessageLevel
+    {
+      Info,
+      Warning,
+      Critical,
+      Success,
+      NoLevel,
+    };
+
+    enum class DataType
+      {
+      UnknownDataType,
+      Byte,
+      UInt16,
+      Int16,
+      UInt32,
+      Int32,
+      Float32,
+      Float64,
+      CInt16,
+      CInt32,
+      CFloat32,
+      CFloat64,
+      ARGB32,
+      ARGB32_Premultiplied
+    };
+
+    enum class VectorLayerTypeFlag
+    {
+      SqlQuery
+    };
+    typedef QFlags<Qgis::VectorLayerTypeFlag> VectorLayerTypeFlags;
+
+
+    enum class PythonMacroMode
+      {
+      Never,
+      Ask,
+      SessionOnly,
+      Always,
+      NotForThisSession,
+    };
+
+    enum class FeatureCountState
+      {
+      Uncounted,
+      UnknownCount,
+    };
+
+    enum class SymbolType
+      {
+      Marker,
+      Line,
+      Fill,
+      Hybrid
+    };
+
+    enum class ScaleMethod
+      {
+      ScaleArea,
+      ScaleDiameter
+    };
+
+    enum class SymbolRenderHint
+      {
+      DynamicRotation,
+    };
+    typedef QFlags<Qgis::SymbolRenderHint> SymbolRenderHints;
+
+
+
+    enum class SymbolFlag
+    {
+      RendererShouldUseSymbolLevels,
+    };
+    typedef QFlags<Qgis::SymbolFlag> SymbolFlags;
+
+
+    enum class SymbolPreviewFlag
+      {
+      FlagIncludeCrosshairsForMarkerSymbols,
+    };
+    typedef QFlags<Qgis::SymbolPreviewFlag> SymbolPreviewFlags;
+
+
+    enum class SymbolLayerFlag
+    {
+      DisableFeatureClipping,
+    };
+    typedef QFlags<Qgis::SymbolLayerFlag> SymbolLayerFlags;
+
+
+    enum class BrowserItemType
+      {
+      Collection,
+      Directory,
+      Layer,
+      Error,
+      Favorites,
+      Project,
+      Custom,
+      Fields,
+      Field,
+    };
+
+    enum class BrowserItemState
+      {
+      NotPopulated,
+      Populating,
+      Populated,
+    };
+
+    enum class BrowserItemCapability
+      {
+      NoCapabilities,
+      SetCrs,
+      Fertile,
+      Fast,
+      Collapse,
+      Rename,
+      Delete,
+      ItemRepresentsFile,
+    };
+    typedef QFlags<Qgis::BrowserItemCapability> BrowserItemCapabilities;
+
+
+    enum class BrowserLayerType
+      {
+      NoType,
+      Vector,
+      Raster,
+      Point,
+      Line,
+      Polygon,
+      TableLayer,
+      Database,
+      Table,
+      Plugin,
+      Mesh,
+      VectorTile,
+      PointCloud
+    };
+
+    enum class BrowserDirectoryMonitoring
+    {
+      Default,
+      NeverMonitor,
+      AlwaysMonitor,
+    };
+
+    enum class HttpMethod
+    {
+      Get,
+      Post
+    };
+
+    enum class VectorExportResult
+      {
+      Success,
+      ErrorCreatingDataSource,
+      ErrorCreatingLayer,
+      ErrorAttributeTypeUnsupported,
+      ErrorAttributeCreationFailed,
+      ErrorProjectingFeatures,
+      ErrorFeatureWriteFailed,
+      ErrorInvalidLayer,
+      ErrorInvalidProvider,
+      ErrorProviderUnsupportedFeature,
+      ErrorConnectionFailed,
+      UserCanceled,
+    };
+
+    enum class SqlLayerDefinitionCapability
+    {
+      SubsetStringFilter,
+      GeometryColumn,
+      PrimaryKeys,
+      UnstableFeatureIds
+    };
+    typedef QFlags<Qgis::SqlLayerDefinitionCapability> SqlLayerDefinitionCapabilities;
+
+
+    enum class SqlKeywordCategory
+    {
+      Keyword,
+      Constant,
+      Function,
+      Geospatial,
+      Operator,
+      Math,
+      Aggregate,
+      String,
+      Identifier
+    };
+
+    enum class DriveType
+    {
+      Unknown,
+      Invalid,
+      Removable,
+      Fixed,
+      Remote,
+      CdRom,
+      RamDisk,
+    };
+
+    enum class ActionStart
+      {
+      Deferred,
+      Immediate,
+    };
+
+    enum class UnplacedLabelVisibility
+    {
+      FollowEngineSetting,
+      NeverShow,
+    };
+
+    enum class SublayerQueryFlag
+    {
+      FastScan,
+      ResolveGeometryType,
+      CountFeatures,
+      IncludeSystemTables,
+    };
+    typedef QFlags<Qgis::SublayerQueryFlag> SublayerQueryFlags;
+
+
+    enum class SublayerFlag
+    {
+      SystemTable,
+    };
+    typedef QFlags<Qgis::SublayerFlag> SublayerFlags;
+
+
+    enum class RasterPipeInterfaceRole
+      {
+      Unknown,
+      Provider,
+      Renderer,
+      Brightness,
+      Resampler,
+      Projector,
+      Nuller,
+      HueSaturation,
+    };
+
+    enum class RasterResamplingStage
+      {
+      //! Resampling occurs in ResamplingFilter
+      ResampleFilter,
+      //! Resampling occurs in Provider
+      Provider
+    };
+
+    enum class MeshEditingErrorType
+    {
+      NoError,
+      InvalidFace,
+      TooManyVerticesInFace,
+      FlatFace,
+      UniqueSharedVertex,
+      InvalidVertex,
+      ManifoldFace,
+    };
+
+    enum class FilePathType
+    {
+      Absolute,
+      Relative,
+    };
+
+    enum class SublayerPromptMode
+    {
+      AlwaysAsk,
+      AskExcludingRasterBands,
+      NeverAskSkip,
+      NeverAskLoadAll,
+    };
+
+    enum class SelectBehavior
+      {
+      SetSelection,
+      AddToSelection,
+      IntersectSelection,
+      RemoveFromSelection,
+    };
+
+    enum class VectorEditResult
+      {
+      Success,
+      EmptyGeometry,
+      EditFailed,
+      FetchFeatureFailed,
+      InvalidLayer,
+    };
+
+    enum class VertexMarkerType
+      {
+      SemiTransparentCircle,
+      Cross,
+      NoMarker,
+    };
+
+    enum class ContentStatus
+    {
+      NotStarted,
+      Running,
+      Finished,
+      Failed,
+      Canceled,
+    };
+
+    enum class BabelFormatCapability
+    {
+      Import,
+      Export,
+      Waypoints,
+      Routes,
+      Tracks,
+    };
+    typedef QFlags<Qgis::BabelFormatCapability> BabelFormatCapabilities;
+
+
+    enum class BabelCommandFlag
+    {
+      QuoteFilePaths,
+    };
+    typedef QFlags<Qgis::BabelCommandFlag> BabelCommandFlags;
+
+
+    enum class GpsFeatureType
+    {
+      Waypoint,
+      Route,
+      Track,
+    };
+
+    enum class GeometryOperationResult
+      {
+      Success,
+      NothingHappened,
+      InvalidBaseGeometry,
+      InvalidInputGeometryType,
+      SelectionIsEmpty,
+      SelectionIsGreaterThanOne,
+      GeometryEngineError,
+      LayerNotEditable,
+      AddPartSelectedGeometryNotFound,
+      AddPartNotMultiGeometry,
+      AddRingNotClosed,
+      AddRingNotValid,
+      AddRingCrossesExistingRings,
+      AddRingNotInExistingFeature,
+      SplitCannotSplitPoint,
+    };
+
+    enum class GeometryValidityFlag
+      {
+      AllowSelfTouchingHoles,
+    };
+    typedef QFlags<Qgis::GeometryValidityFlag> GeometryValidityFlags;
+
+
+    enum class GeometryValidationEngine
+      {
+      QgisInternal,
+      Geos,
+    };
+
+    enum class BufferSide
+      {
+      Left,
+      Right,
+    };
+
+    enum class EndCapStyle
+      {
+      Round,
+      Flat,
+      Square,
+    };
+
+    enum class JoinStyle
+      {
+      Round,
+      Miter,
+      Bevel,
+    };
+
+    enum class SpatialFilterType
+    {
+      NoFilter,
+      BoundingBox,
+      DistanceWithin,
+    };
+
+    enum class FileOperationFlag
+    {
+      IncludeMetadataFile,
+      IncludeStyleFile,
+    };
+    typedef QFlags<Qgis::FileOperationFlag> FileOperationFlags;
+
+
+    enum class MapLayerProperty
+    {
+      UsersCannotToggleEditing,
+    };
+    typedef QFlags<Qgis::MapLayerProperty> MapLayerProperties;
+
+
+    enum class AnnotationItemFlag
+    {
+      ScaleDependentBoundingBox,
+    };
+    typedef QFlags<Qgis::AnnotationItemFlag> AnnotationItemFlags;
+
+
+    enum class AnnotationItemGuiFlag
+    {
+      FlagNoCreationTools,
+    };
+    typedef QFlags<Qgis::AnnotationItemGuiFlag> AnnotationItemGuiFlags;
+
+
+    enum class AnnotationItemNodeType
+    {
+      VertexHandle,
+    };
+
+    enum class AnnotationItemEditOperationResult
+    {
+      Success,
+      Invalid,
+      ItemCleared,
+    };
+
+    enum class VectorTemporalMode
+      {
+      FixedTemporalRange,
+      FeatureDateTimeInstantFromField,
+      FeatureDateTimeStartAndEndFromFields,
+      FeatureDateTimeStartAndDurationFromFields,
+      FeatureDateTimeStartAndEndFromExpressions,
+      RedrawLayerOnly,
+    };
+
+    enum class VectorTemporalLimitMode
+    {
+      IncludeBeginExcludeEnd,
+      IncludeBeginIncludeEnd,
+    };
+
+    enum class VectorDataProviderTemporalMode
+      {
+      HasFixedTemporalRange,
+      StoresFeatureDateTimeInstantInField,
+      StoresFeatureDateTimeStartAndEndInSeparateFields,
+    };
+
+    enum class RasterTemporalMode
+      {
+      FixedTemporalRange,
+      TemporalRangeFromDataProvider,
+      RedrawLayerOnly,
+    };
+
+    enum class TemporalIntervalMatchMethod
+      {
+      MatchUsingWholeRange,
+      MatchExactUsingStartOfRange,
+      MatchExactUsingEndOfRange,
+      FindClosestMatchToStartOfRange,
+      FindClosestMatchToEndOfRange
+    };
+
+    enum class TransformDirection
+      {
+      Forward,
+      Reverse
+    };
+
+    enum class MapSettingsFlag
+      {
+      Antialiasing,
+      DrawEditingInfo,
+      ForceVectorOutput,
+      UseAdvancedEffects,
+      DrawLabeling,
+      UseRenderingOptimization,
+      DrawSelection,
+      DrawSymbolBounds,
+      RenderMapTile,
+      RenderPartialOutput,
+      RenderPreviewJob,
+      RenderBlocking,
+      LosslessImageRendering,
+      Render3DMap,
+      HighQualityImageTransforms,
+      SkipSymbolRendering,
+    };
+    typedef QFlags<Qgis::MapSettingsFlag> MapSettingsFlags;
+
+
+    enum class RenderContextFlag
+      {
+      DrawEditingInfo,
+      ForceVectorOutput,
+      UseAdvancedEffects,
+      UseRenderingOptimization,
+      DrawSelection,
+      DrawSymbolBounds,
+      RenderMapTile,
+      Antialiasing,
+      RenderPartialOutput,
+      RenderPreviewJob,
+      RenderBlocking,
+      RenderSymbolPreview,
+      LosslessImageRendering,
+      ApplyScalingWorkaroundForTextRendering,
+      Render3DMap,
+      ApplyClipAfterReprojection,
+      RenderingSubSymbol,
+      HighQualityImageTransforms,
+      SkipSymbolRendering,
+    };
+    typedef QFlags<Qgis::RenderContextFlag> RenderContextFlags;
+
+
+
+    enum class TextRenderFormat
+      {
+      AlwaysOutlines,
+      AlwaysText,
+    };
+
+    enum class RenderSubcomponentProperty
+    {
+      Generic,
+      ShadowOffset,
+      BlurSize,
+      GlowSpread,
+    };
+
+    enum class VertexType
+      {
+      Segment,
+      Curve,
+    };
+
+    enum class MarkerShape
+      {
+      Square,
+      Diamond,
+      Pentagon,
+      Hexagon,
+      Triangle,
+      EquilateralTriangle,
+      Star,
+      Arrow,
+      Circle,
+      Cross,
+      CrossFill,
+      Cross2,
+      Line,
+      ArrowHead,
+      ArrowHeadFilled,
+      SemiCircle,
+      ThirdCircle,
+      QuarterCircle,
+      QuarterSquare,
+      HalfSquare,
+      DiagonalHalfSquare,
+      RightHalfTriangle,
+      LeftHalfTriangle,
+      Octagon,
+      SquareWithCorners,
+      AsteriskFill,
+      HalfArc,
+      ThirdArc,
+      QuarterArc,
+    };
+
+    enum class MarkerLinePlacement
+      {
+      Interval,
+      Vertex,
+      LastVertex,
+      FirstVertex,
+      CentralPoint,
+      CurvePoint,
+      SegmentCenter,
+      InnerVertices,
+    };
+    typedef QFlags<Qgis::MarkerLinePlacement> MarkerLinePlacements;
+
+
+    enum class GradientColorSource
+      {
+      SimpleTwoColor,
+      ColorRamp,
+    };
+
+    enum class GradientType
+      {
+      Linear,
+      Radial,
+      Conical,
+    };
+
+    enum class SymbolCoordinateReference
+      {
+      Feature,
+      Viewport,
+    };
+
+    enum class GradientSpread
+      {
+      Pad,
+      Reflect,
+      Repeat,
+    };
+
+    enum class PointCountMethod
+      {
+      Absolute,
+      DensityBased,
+    };
+
+    enum class MarkerClipMode
+    {
+      NoClipping,
+      Shape,
+      CentroidWithin,
+      CompletelyWithin,
+    };
+
+    enum class LineClipMode
+    {
+      ClipPainterOnly,
+      ClipToIntersection,
+      NoClipping,
+    };
+
+    enum class DashPatternLineEndingRule
+    {
+      NoRule,
+      FullDash,
+      HalfDash,
+      FullGap,
+      HalfGap,
+    };
+
+    enum class DashPatternSizeAdjustment
+    {
+      ScaleBothDashAndGap,
+      ScaleDashOnly,
+      ScaleGapOnly,
+    };
+
+
+
+    enum class Capitalization
+      {
+      MixedCase,
+      AllUppercase,
+      AllLowercase,
+      ForceFirstLetterToCapital,
+      SmallCaps,
+      TitleCase,
+      UpperCamelCase,
+      AllSmallCaps,
+    };
+
+    enum class TextRendererFlag
+    {
+      WrapLines,
+    };
+    typedef QFlags<Qgis::TextRendererFlag> TextRendererFlags;
+
+
+    enum class AngularDirection
+      {
+      Clockwise,
+      CounterClockwise,
+    };
+
+    enum class RendererUsage
+    {
+      View,
+      Export,
+      Unknown,
+    };
+
+    enum class HistoryProviderBackend
+    {
+      LocalProfile,
+//      Project = 1 << 1, //!< QGIS Project  (not yet implemented)
+    };
+    typedef QFlags<Qgis::HistoryProviderBackend> HistoryProviderBackends;
+
+
+    enum class CrsDefinitionFormat
+      {
+      Wkt,
+      Proj,
+    };
+
+    static const double DEFAULT_SEARCH_RADIUS_MM;
+
+    static const float DEFAULT_MAPTOPIXEL_THRESHOLD;
+
+    static const QColor DEFAULT_HIGHLIGHT_COLOR;
+
+    static const double DEFAULT_HIGHLIGHT_BUFFER_MM;
+
+    static const double DEFAULT_HIGHLIGHT_MIN_WIDTH_MM;
+
+    static const double SCALE_PRECISION;
+
+    static const double DEFAULT_Z_COORDINATE;
+
+    static const double DEFAULT_M_COORDINATE;
+
+    static const double UI_SCALE_FACTOR;
+
+    static const double DEFAULT_SNAP_TOLERANCE;
+
+    static const QgsTolerance::UnitType DEFAULT_SNAP_UNITS;
+
+    static QString defaultProjectScales();
+%Docstring
+A string with default project scales.
+
+.. versionadded:: 3.12
+%End
+
+    static int geosVersionInt();
+%Docstring
+GEOS version number linked
+
+.. versionadded:: 3.20
+%End
+
+    static int geosVersionMajor();
+%Docstring
+GEOS Major version number linked
+
+.. versionadded:: 3.20
+%End
+
+    static int geosVersionMinor();
+%Docstring
+GEOS Minor version number linked
+
+.. versionadded:: 3.20
+%End
+
+    static int geosVersionPatch();
+%Docstring
+GEOS Patch version number linked
+
+.. versionadded:: 3.20
+%End
+
+    static QString geosVersion();
+%Docstring
+GEOS string version linked
+
+.. versionadded:: 3.20
+%End
+};
+
+QFlags<Qgis::SymbolRenderHint> operator|(Qgis::SymbolRenderHint f1, QFlags<Qgis::SymbolRenderHint> f2);
+
+QFlags<Qgis::SymbolFlag> operator|(Qgis::SymbolFlag f1, QFlags<Qgis::SymbolFlag> f2);
+
+QFlags<Qgis::SymbolPreviewFlag> operator|(Qgis::SymbolPreviewFlag f1, QFlags<Qgis::SymbolPreviewFlag> f2);
+
+QFlags<Qgis::SymbolLayerFlag> operator|(Qgis::SymbolLayerFlag f1, QFlags<Qgis::SymbolLayerFlag> f2);
+
+QFlags<Qgis::BrowserItemCapability> operator|(Qgis::BrowserItemCapability f1, QFlags<Qgis::BrowserItemCapability> f2);
+
+QFlags<Qgis::SublayerQueryFlag> operator|(Qgis::SublayerQueryFlag f1, QFlags<Qgis::SublayerQueryFlag> f2);
+
+QFlags<Qgis::SublayerFlag> operator|(Qgis::SublayerFlag f1, QFlags<Qgis::SublayerFlag> f2);
+
+QFlags<Qgis::SqlLayerDefinitionCapability> operator|(Qgis::SqlLayerDefinitionCapability f1, QFlags<Qgis::SqlLayerDefinitionCapability> f2);
+
+QFlags<Qgis::BabelFormatCapability> operator|(Qgis::BabelFormatCapability f1, QFlags<Qgis::BabelFormatCapability> f2);
+
+QFlags<Qgis::BabelCommandFlag> operator|(Qgis::BabelCommandFlag f1, QFlags<Qgis::BabelCommandFlag> f2);
+
+QFlags<Qgis::GeometryValidityFlag> operator|(Qgis::GeometryValidityFlag f1, QFlags<Qgis::GeometryValidityFlag> f2);
+
+QFlags<Qgis::FileOperationFlag> operator|(Qgis::FileOperationFlag f1, QFlags<Qgis::FileOperationFlag> f2);
+
+QFlags<Qgis::AnnotationItemFlag> operator|(Qgis::AnnotationItemFlag f1, QFlags<Qgis::AnnotationItemFlag> f2);
+
+QFlags<Qgis::AnnotationItemGuiFlag> operator|(Qgis::AnnotationItemGuiFlag f1, QFlags<Qgis::AnnotationItemGuiFlag> f2);
+
+QFlags<Qgis::MapSettingsFlag> operator|(Qgis::MapSettingsFlag f1, QFlags<Qgis::MapSettingsFlag> f2);
+
+QFlags<Qgis::RenderContextFlag> operator|(Qgis::RenderContextFlag f1, QFlags<Qgis::RenderContextFlag> f2);
+
+QFlags<Qgis::VectorLayerTypeFlag> operator|(Qgis::VectorLayerTypeFlag f1, QFlags<Qgis::VectorLayerTypeFlag> f2);
+
+QFlags<Qgis::MarkerLinePlacement> operator|(Qgis::MarkerLinePlacement f1, QFlags<Qgis::MarkerLinePlacement> f2);
+
+QFlags<Qgis::TextRendererFlag> operator|(Qgis::TextRendererFlag f1, QFlags<Qgis::TextRendererFlag> f2);
+
+QFlags<Qgis::HistoryProviderBackend> operator|(Qgis::HistoryProviderBackend f1, QFlags<Qgis::HistoryProviderBackend> f2);
+
+
+
+
+
+
+
+uint qHash( const QVariant &variant );
+%Docstring
+Hash for QVariant
+%End
+
+QString qgsDoubleToString( double a, int precision = 17 );
+%Docstring
+Returns a string representation of a double
+
+:param a: double value
+:param precision: number of decimal places to retain
+%End
+
+bool qgsNanCompatibleEquals( double a, double b );
+%Docstring
+Compare two doubles, treating nan values as equal
+
+:param a: first double
+:param b: second double
+
+.. versionadded:: 3.20
+%End
+
+bool qgsDoubleNear( double a, double b, double epsilon = 4 * DBL_EPSILON );
+%Docstring
+Compare two doubles (but allow some difference)
+
+:param a: first double
+:param b: second double
+:param epsilon: maximum difference allowable between doubles
+%End
+
+bool qgsFloatNear( float a, float b, float epsilon = 4 * FLT_EPSILON );
+%Docstring
+Compare two floats (but allow some difference)
+
+:param a: first float
+:param b: second float
+:param epsilon: maximum difference allowable between floats
+%End
+
+bool qgsDoubleNearSig( double a, double b, int significantDigits = 10 );
+%Docstring
+Compare two doubles using specified number of significant digits
+%End
+
+double qgsRound( double number, int places );
+%Docstring
+Returns a double ``number``, rounded (as close as possible) to the specified number of ``places``.
+
+.. versionadded:: 3.0
+%End
+
+
+
+
+
+
+
+
+
+double qgsPermissiveToDouble( QString string, bool &ok );
+%Docstring
+Converts a string to a double in a permissive way, e.g., allowing for incorrect
+numbers of digits between thousand separators
+
+:param string: string to convert
+:param ok: will be set to ``True`` if conversion was successful
+
+:return: string converted to double if possible
+
+.. seealso:: :py:func:`permissiveToInt`
+
+.. versionadded:: 2.9
+%End
+
+int qgsPermissiveToInt( QString string, bool &ok );
+%Docstring
+Converts a string to an integer in a permissive way, e.g., allowing for incorrect
+numbers of digits between thousand separators
+
+:param string: string to convert
+:param ok: will be set to ``True`` if conversion was successful
+
+:return: string converted to int if possible
+
+.. seealso:: :py:func:`permissiveToDouble`
+
+.. versionadded:: 2.9
+%End
+
+qlonglong qgsPermissiveToLongLong( QString string, bool &ok );
+%Docstring
+Converts a string to an qlonglong in a permissive way, e.g., allowing for incorrect
+numbers of digits between thousand separators
+
+:param string: string to convert
+:param ok: will be set to ``True`` if conversion was successful
+
+:return: string converted to int if possible
+
+.. seealso:: :py:func:`permissiveToInt`
+
+.. versionadded:: 3.4
+%End
+
+bool qgsVariantLessThan( const QVariant &lhs, const QVariant &rhs );
+%Docstring
+Compares two QVariant values and returns whether the first is less than the second.
+Useful for sorting lists of variants, correctly handling sorting of the various
+QVariant data types (such as strings, numeric values, dates and times)
+
+Invalid < NULL < Values
+
+.. seealso:: :py:func:`qgsVariantGreaterThan`
+%End
+
+bool qgsVariantEqual( const QVariant &lhs, const QVariant &rhs );
+%Docstring
+Compares two QVariant values and returns whether they are equal, two NULL values are
+always treated as equal and 0 is not treated as equal with NULL
+
+:param lhs: first value
+:param rhs: second value
+
+:return: ``True`` if values are equal
+%End
+
+bool qgsVariantGreaterThan( const QVariant &lhs, const QVariant &rhs );
+%Docstring
+Compares two QVariant values and returns whether the first is greater than the second.
+Useful for sorting lists of variants, correctly handling sorting of the various
+QVariant data types (such as strings, numeric values, dates and times)
+
+.. seealso:: :py:func:`qgsVariantLessThan`
+%End
+
+
+bool operator> ( const QVariant &v1, const QVariant &v2 );
+
+bool operator< ( const QVariant &v1, const QVariant &v2 );
+
+
+
+
+QString qgsVsiPrefix( const QString &path );
+
+
+
+
+const long GEOSRID;
+
+const long GEOCRS_ID;
+
+const long GEO_EPSG_CRS_ID;
+
+const int USER_CRS_START_ID;
+
+
+const double DEFAULT_POINT_SIZE;
+const double DEFAULT_LINE_WIDTH;
+
+const double DEFAULT_SEGMENT_EPSILON;
+
+
+typedef unsigned long long qgssize;
+
+
+
+
+
+
+
+
+
+QString geoWkt();
+%Docstring
+Wkt string that represents a geographic coord sys
+\since QGIS GEOWkt
+%End
+
+//! PROJ4 string that represents a geographic coord sys
+QString geoProj4();
+
+//! Geographic coord sys from EPSG authority
+QString geoEpsgCrsAuthId();
+
+//! Constant that holds the string representation for "No ellips/No CRS"
+QString geoNone();
+
+/************************************************************************
+ * This file has been generated automatically from                      *
+ *                                                                      *
+ * src/core/qgis.h                                                      *
+ *                                                                      *
+ * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ ************************************************************************/

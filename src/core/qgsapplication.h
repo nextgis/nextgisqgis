@@ -586,9 +586,9 @@ class CORE_EXPORT QgsApplication : public QApplication
     static QString cfgIntDir() SIP_SKIP;
 #endif
     //! Returns path to the source directory. Valid only when running from build directory
-    // static QString buildSourcePath();
+     static QString buildSourcePath();
     //! Returns path to the build output directory. Valid only when running from build directory
-    // static QString buildOutputPath();
+     static QString buildOutputPath();
 
     /**
      * Sets the GDAL_SKIP environment variable to include the specified driver
