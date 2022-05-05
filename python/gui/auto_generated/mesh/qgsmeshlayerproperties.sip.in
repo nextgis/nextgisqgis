@@ -1,0 +1,56 @@
+/************************************************************************
+ * This file has been generated automatically from                      *
+ *                                                                      *
+ * src/gui/mesh/qgsmeshlayerproperties.h                                *
+ *                                                                      *
+ * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ ************************************************************************/
+
+
+
+
+
+class QgsMeshLayerProperties : QgsOptionsDialogBase
+{
+%Docstring(signature="appended")
+
+Property sheet for a mesh map layer.
+Contains information, source and style tabs
+
+.. versionadded:: 3.16
+%End
+
+%TypeHeaderCode
+#include "qgsmeshlayerproperties.h"
+%End
+  public:
+
+    QgsMeshLayerProperties( QgsMapLayer *lyr, QgsMapCanvas *canvas, QWidget *parent = 0, Qt::WindowFlags = QgsGuiUtils::ModalDialogFlags );
+%Docstring
+Constructor
+
+:param lyr: Mesh map layer for which properties will be displayed
+:param canvas: The map canvas
+:param parent: The parent widget
+:param fl: Window flags
+%End
+
+    void addPropertiesPageFactory( const QgsMapLayerConfigWidgetFactory *factory );
+%Docstring
+Adds properties page from a factory
+
+.. versionadded:: 3.16
+%End
+
+  protected slots:
+
+};
+
+
+/************************************************************************
+ * This file has been generated automatically from                      *
+ *                                                                      *
+ * src/gui/mesh/qgsmeshlayerproperties.h                                *
+ *                                                                      *
+ * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ ************************************************************************/
