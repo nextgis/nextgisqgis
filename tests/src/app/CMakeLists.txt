@@ -80,7 +80,7 @@ set(TESTS
   testqgslabelpropertydialog.cpp
 )
 if (WITH_BINDINGS)
-  set(TESTS ${TESTS} testqgisapppython.cpp)
+  #set(TESTS ${TESTS} testqgisapppython.cpp)
 endif()
 
 foreach(TESTSRC ${TESTS})
