@@ -509,9 +509,6 @@ if (WITH_BINDINGS)
     include(PyQtMacros)
     include(SIPMacros)
 
-    message("i PYQT5_SIP_DIR: ${PYQT5_SIP_DIR}")
-    message("i QSCI_SIP_DIR: ${QSCI_SIP_DIR}")
-
     add_subdirectory(python)
 
     if(NOT SUPPRESS_VERBOSE_OUTPUT)
