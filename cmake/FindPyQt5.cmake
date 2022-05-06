@@ -22,27 +22,27 @@ IF(EXISTS PYQT5_VERSION_STR)
   SET(PYQT5_FOUND TRUE)
 ELSE(EXISTS PYQT5_VERSION_STR)
 
-  IF(SIP_BUILD_EXECUTABLE)
-    # SIP >= 5.0 path
+  #IF(SIP_BUILD_EXECUTABLE)
+  #  # SIP >= 5.0 path
 
-    FILE(GLOB _pyqt5_metadata "${PYTHON_SITEARCH}/PyQt5-*.dist-info/METADATA")
-    IF(_pyqt5_metadata)
-      FILE(READ ${_pyqt5_metadata} _pyqt5_metadata_contents)
-      STRING(REGEX REPLACE ".*\nVersion: ([^\n]+).*$" "\\1" PYQT5_VERSION_STR ${_pyqt5_metadata_contents})
-    ELSE(_pyqt5_metadata)
-      EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c "from PyQt5.QtCore import PYQT_VERSION_STR; print(PYQT_VERSION_STR)" OUTPUT_VARIABLE PYQT5_VERSION_STR)
-    ENDIF(_pyqt5_metadata)
+  #  FILE(GLOB _pyqt5_metadata "${PYTHON_SITEARCH}/PyQt5-*.dist-info/METADATA")
+  #  IF(_pyqt5_metadata)
+  #    FILE(READ ${_pyqt5_metadata} _pyqt5_metadata_contents)
+  #    STRING(REGEX REPLACE ".*\nVersion: ([^\n]+).*$" "\\1" PYQT5_VERSION_STR ${_pyqt5_metadata_contents})
+  #  ELSE(_pyqt5_metadata)
+  #    EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c "from PyQt5.QtCore import PYQT_VERSION_STR; print(PYQT_VERSION_STR)" OUTPUT_VARIABLE PYQT5_VERSION_STR)
+  #  ENDIF(_pyqt5_metadata)
 
-    IF(PYQT5_VERSION_STR)
-      SET(PYQT5_MOD_DIR "${PYTHON_SITEARCH}/PyQt5")
-      SET(PYQT5_SIP_DIR "${PYTHON_SITEARCH}/PyQt5/bindings")
-      FIND_PROGRAM(__pyuic5 "pyuic5")
-      GET_FILENAME_COMPONENT(PYQT5_BIN_DIR ${__pyuic5} DIRECTORY)
+  #  IF(PYQT5_VERSION_STR)
+  #    SET(PYQT5_MOD_DIR "${PYTHON_SITEARCH}/PyQt5")
+  #    SET(PYQT5_SIP_DIR "${PYTHON_SITEARCH}/PyQt5/bindings")
+  #    FIND_PROGRAM(__pyuic5 "pyuic5")
+  #    GET_FILENAME_COMPONENT(PYQT5_BIN_DIR ${__pyuic5} DIRECTORY)
 
-      SET(PYQT5_FOUND TRUE)
-    ENDIF(PYQT5_VERSION_STR)
+  #    SET(PYQT5_FOUND TRUE)
+  #  ENDIF(PYQT5_VERSION_STR)
 
-  ELSE(SIP_BUILD_EXECUTABLE)
+  #ELSE(SIP_BUILD_EXECUTABLE)
     # SIP 4.x path
 
     FIND_FILE(_find_pyqt5_py FindPyQt5.py PATHS ${CMAKE_MODULE_PATH} NO_CMAKE_FIND_ROOT_PATH)
@@ -61,7 +61,7 @@ ELSE(EXISTS PYQT5_VERSION_STR)
       SET(PYQT5_FOUND TRUE)
     ENDIF(pyqt_config)
 
-  ENDIF(SIP_BUILD_EXECUTABLE)
+  #ENDIF(SIP_BUILD_EXECUTABLE)
 
   IF(PYQT5_FOUND)
     IF(NOT PyQt5_FIND_QUIETLY)
