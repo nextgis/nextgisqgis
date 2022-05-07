@@ -43,9 +43,9 @@ file(MAKE_DIRECTORY ${QGIS_PYTHON_OUTPUT_DIRECTORY})
 add_custom_target(staged-plugins)
 
 # Plugins can also be staged with CMake option at build time
-if(WITH_STAGED_PLUGINS)
-  add_custom_target(staged-plugins-on-build ALL DEPENDS staged-plugins)
-endif()
+#if(WITH_STAGED_PLUGINS)
+add_custom_target(staged-plugins-on-build ALL DEPENDS staged-plugins)
+#endif()
 
 # Non-default/non-option-controlled target to stage and compile plugins and extras
 add_custom_target(staged-plugins-pyc DEPENDS staged-plugins
