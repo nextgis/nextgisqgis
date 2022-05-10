@@ -50,6 +50,21 @@ std::string moduleExeBaseName( void )
   return basename;
 }
 
+std::string pythonPathEnvString()
+{
+  std::string pythonPathEnv;
+
+  const std::string &baseName = moduleExeBaseName();
+  const std::size_t binPathPos = baseName.rfind("bin");
+  if (binPathPos != std::string::npos)
+  {
+      const std::string &qgisRootPath = baseName.substr(0, binPathPos);
+      pythonPathEnv = "PYTHONPATH=" + qgisRootPath + "lib\\python38;";
+      pythonPathEnv += qgisRootPath + "lib\\python38\\site-packages;";
+  }
+  return pythonPathEnv;
+}
+
 int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
   std::string exename( moduleExeBaseName() );
@@ -127,6 +142,13 @@ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdL
     std::string message = "Could not read environment file " + basename + ".env" + " [" + e.what() + "]";
     showError( message, "Error loading QGIS" );
     return EXIT_FAILURE;
+  }
+
+  const std::string &pythonPathEnv = pythonPathEnvString();
+  if (_putenv(pythonPathEnv.c_str()) < 0)
+  {
+      showError("Could not set PYTHONPATH environment variable", "Error loading QGIS");
+      return EXIT_FAILURE;
   }
 
   HINSTANCE hKernelDLL = LoadLibrary( "kernel32.dll" );
