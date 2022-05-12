@@ -315,7 +315,7 @@ void QgsApplication::init( QString profileFolder )
       #endif
         profileFolder = QString( "%1%2qgis%3" )
                 .arg( QDir::homePath() + QDir::separator() + config + QDir::separator())
-                .arg( QDir::separator() + QStringLiteral(VENDOR) + QDir::separator() )
+                .arg( QStringLiteral(VENDOR) + QDir::separator() )
                 .arg( VERSION_INT / 10000 );
         qputenv("QGIS_CUSTOM_CONFIG_PATH", profileFolder.toUtf8());        
     //   profileFolder = QStandardPaths::standardLocations( QStandardPaths::AppDataLocation ).value( 0 );
@@ -470,8 +470,8 @@ void QgsApplication::init( QString profileFolder )
   *sSystemEnvVars() = systemEnvVarMap;
 
   // append local user-writable folder as a proj search path
-  QStringList currentProjSearchPaths = QgsProjUtils::searchPaths();
-  currentProjSearchPaths.append( qgisSettingsDirPath() + QStringLiteral( "proj" ) );
+//   QStringList currentProjSearchPaths = QgsProjUtils::searchPaths();
+//   currentProjSearchPaths.append( qgisSettingsDirPath() + QStringLiteral( "proj" ) );
 // #ifdef Q_OS_MACX
 //   // append bundled proj lib for MacOS
 //   // Library/Frameworks/proj.framework/Resources/proj
@@ -482,18 +482,18 @@ void QgsApplication::init( QString profileFolder )
 //   }
 // #endif // Q_OS_MACX
 
-  char **newPaths = new char *[currentProjSearchPaths.length()];
-  for ( int i = 0; i < currentProjSearchPaths.count(); ++i )
-  {
-    newPaths[i] = CPLStrdup( currentProjSearchPaths.at( i ).toUtf8().constData() );
-  }
-  proj_context_set_search_paths( nullptr, currentProjSearchPaths.count(), newPaths );
-  for ( int i = 0; i < currentProjSearchPaths.count(); ++i )
-  {
-    CPLFree( newPaths[i] );
-  }
-  delete [] newPaths;
-  qputenv("PROJ_LIB", currentProjSearchPaths[0].toUtf8());
+//   char **newPaths = new char *[currentProjSearchPaths.length()];
+//   for ( int i = 0; i < currentProjSearchPaths.count(); ++i )
+//   {
+//     newPaths[i] = CPLStrdup( currentProjSearchPaths.at( i ).toUtf8().constData() );
+//   }
+//   proj_context_set_search_paths( nullptr, currentProjSearchPaths.count(), newPaths );
+//   for ( int i = 0; i < currentProjSearchPaths.count(); ++i )
+//   {
+//     CPLFree( newPaths[i] );
+//   }
+//   delete [] newPaths;
+//   qputenv("PROJ_LIB", currentProjSearchPaths[0].toUtf8());
 
   // allow Qt to search for Qt plugins (e.g. sqldrivers) in our plugin directory
   QCoreApplication::addLibraryPath( pluginPath() );
