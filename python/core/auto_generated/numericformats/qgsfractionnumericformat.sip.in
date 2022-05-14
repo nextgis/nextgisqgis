@@ -64,7 +64,7 @@ particular fraction (e.g. ½, ¼).
 
     bool useUnicodeSuperSubscript() const;
 %Docstring
-Returns ``True`` if unicode superscript and subscript characters should be used, (e.g. "⁶/₇").
+Returns ``True`` if unicode superscript and subscript characters should be used, (e.g. "6/7").
 
 .. seealso:: :py:func:`setUseUnicodeSuperSubscript`
 
@@ -73,7 +73,7 @@ Returns ``True`` if unicode superscript and subscript characters should be used,
 
     void setUseUnicodeSuperSubscript( bool enabled );
 %Docstring
-Sets whether unicode superscript and subscript characters should be used, (e.g. "⁶/₇").
+Sets whether unicode superscript and subscript characters should be used, (e.g. "6/7").
 
 .. seealso:: :py:func:`useUnicodeSuperSubscript`
 

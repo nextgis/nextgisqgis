@@ -63,7 +63,7 @@ Caller is responsible to free the memory returned.
 
     void setBrightness( int brightness );
 %Docstring
-Set brightness level. Acceptable value range is -255…255
+Set brightness level. Acceptable value range is -255...255
 
 .. seealso:: :py:func:`brightness`
 %End
@@ -77,7 +77,7 @@ Returns current brightness level.
 
     void setContrast( int contrast );
 %Docstring
-Set contrast level. Acceptable value range is -100…100
+Set contrast level. Acceptable value range is -100...100
 
 .. seealso:: :py:func:`contrast`
 %End
@@ -91,7 +91,7 @@ Returns current contrast level.
 
     void setGamma( double gamma );
 %Docstring
-Set gamma value. Acceptable value range is -0.1…10
+Set gamma value. Acceptable value range is -0.1...10
 
 .. seealso:: :py:func:`gamma`
 

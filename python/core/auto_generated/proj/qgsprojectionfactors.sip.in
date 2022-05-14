@@ -28,32 +28,32 @@ Returns ``True`` if the factors are valid, or ``False`` if they could not be cal
 
     double meridionalScale() const;
 %Docstring
-Meridional scale at coordinate (λ,ϕ).
+Meridional scale at coordinate (Lambda, Phi).
 %End
 
     double parallelScale() const;
 %Docstring
-Parallel scale at coordinate (λ,ϕ).
+Parallel scale at coordinate (Lambda, Phi).
 %End
 
     double arealScale() const;
 %Docstring
-Areal scale factor at coordinate (λ,ϕ).
+Areal scale factor at coordinate (Lambda, Phi).
 %End
 
     double angularDistortion() const;
 %Docstring
-Angular distortion at coordinate (λ,ϕ).
+Angular distortion at coordinate (Lambda, Phi).
 %End
 
     double meridianParallelAngle() const;
 %Docstring
-Meridian/parallel angle (in degrees), θ′, at coordinate (λ,ϕ).
+Meridian/parallel angle (in degrees), θ′, at coordinate (Lambda, Phi).
 %End
 
     double meridianConvergence() const;
 %Docstring
-Meridian convergence (in degrees) at coordinate (λ,ϕ). Sometimes also described as grid declination.
+Meridian convergence (in degrees) at coordinate (Lambda, Phi). Sometimes also described as grid declination.
 %End
 
     double tissotSemimajor() const;
@@ -68,22 +68,22 @@ Minimum scale factor.
 
     double dxDlam() const;
 %Docstring
-Partial derivative ∂x/∂λ of coordinate (λ,ϕ).
+Partial derivative dx/dLambda of coordinate (Lambda, Phi).
 %End
 
     double dxDphi() const;
 %Docstring
-Partial derivative ∂x/∂ϕ of coordinate (λ,ϕ).
+Partial derivative dx/dPhi of coordinate (Lambda, Phi).
 %End
 
     double dyDlam() const;
 %Docstring
-Partial derivative ∂y/∂λ of coordinate (λ,ϕ).
+Partial derivative dy/dLambda of coordinate (Lambda, Phi).
 %End
 
     double dyDphi() const;
 %Docstring
-Partial derivative ∂y/∂ϕ of coordinate (λ,ϕ).
+Partial derivative dy/dPhi of coordinate (Lambda, Phi).
 %End
 
     SIP_PYOBJECT __repr__();
