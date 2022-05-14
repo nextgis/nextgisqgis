@@ -48,7 +48,7 @@ Angular distortion at coordinate (Lambda, Phi).
 
     double meridianParallelAngle() const;
 %Docstring
-Meridian/parallel angle (in degrees), θ′, at coordinate (Lambda, Phi).
+Meridian/parallel angle (in degrees), Theta', at coordinate (Lambda, Phi).
 %End
 
     double meridianConvergence() const;
