@@ -61,6 +61,7 @@ std::string pythonPathEnvString()
       const std::string &qgisRootPath = baseName.substr(0, binPathPos);
       pythonPathEnv = "PYTHONPATH=" + qgisRootPath + "lib\\python38;";
       pythonPathEnv += qgisRootPath + "lib\\python38\\site-packages;";
+      pythonPathEnv += qgisRootPath + "lib\\python38\\lib-dynload;";
   }
   return pythonPathEnv;
 }
