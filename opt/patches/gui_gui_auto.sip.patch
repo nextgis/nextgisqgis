@@ -1,0 +1,35 @@
+--- a/python/gui/gui_auto.sip	2022-02-18 15:06:10.000000000 +0300
++++ b/python/gui/gui_auto.sip	2022-04-29 11:15:09.519375100 +0300
+@@ -68,7 +68,6 @@
+ %Include auto_generated/qgsexpressiontreeview.sip
+ %Include auto_generated/qgsextentgroupbox.sip
+ %Include auto_generated/qgsextentwidget.sip
+-%Include auto_generated/qgsexternalresourcewidget.sip
+ %Include auto_generated/qgsfeaturepickerwidget.sip
+ %Include auto_generated/qgsfeaturelistcombobox.sip
+ %Include auto_generated/qgsfeatureselectiondlg.sip
+@@ -81,7 +80,6 @@
+ %Include auto_generated/qgsfilecontentsourcelineedit.sip
+ %Include auto_generated/qgsfiledownloaderdialog.sip
+ %Include auto_generated/qgsfilewidget.sip
+-%Include auto_generated/qgsexternalstoragefilewidget.sip
+ %Include auto_generated/qgsfilterlineedit.sip
+ %Include auto_generated/qgsfindfilesbypatternwidget.sip
+ %Include auto_generated/qgsfloatingwidget.sip
+@@ -318,8 +316,6 @@
+ %Include auto_generated/effects/qgseffectstackpropertieswidget.sip
+ %Include auto_generated/effects/qgspainteffectpropertieswidget.sip
+ %Include auto_generated/effects/qgspainteffectwidget.sip
+-%Include auto_generated/history/qgshistoryprovider.sip
+-%Include auto_generated/history/qgshistoryproviderregistry.sip
+ %Include auto_generated/labeling/qgslabellineanchorwidget.sip
+ %Include auto_generated/labeling/qgslabelobstaclesettingswidget.sip
+ %Include auto_generated/labeling/qgslabelsettingswidgetbase.sip
+@@ -366,7 +362,6 @@
+ %Include auto_generated/processing/qgsprocessingalgorithmdialogbase.sip
+ %Include auto_generated/processing/qgsprocessinggui.sip
+ %Include auto_generated/processing/qgsprocessingguiregistry.sip
+-%Include auto_generated/processing/qgsprocessinghistoryprovider.sip
+ %Include auto_generated/processing/qgsprocessingmaplayercombobox.sip
+ %Include auto_generated/processing/qgsprocessingmodelerparameterwidget.sip
+ %Include auto_generated/processing/qgsprocessingmultipleselectiondialog.sip

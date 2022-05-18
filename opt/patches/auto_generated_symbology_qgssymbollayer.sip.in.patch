@@ -1,0 +1,63 @@
+--- a/python/core/auto_generated/symbology/qgssymbollayer.sip.in	2022-02-18 15:06:10.000000000 +0300
++++ b/python/core/auto_generated/symbology/qgssymbollayer.sip.in	2022-04-30 15:45:15.030009200 +0300
+@@ -466,51 +466,6 @@
+ .. versionadded:: 3.0
+ %End
+ 
+-    virtual bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const;
+-%Docstring
+-write as DXF
+-%End
+-
+-    virtual double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const;
+-%Docstring
+-Gets line width
+-%End
+-
+-    virtual double dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const;
+-%Docstring
+-Gets offset
+-%End
+-
+-    virtual QColor dxfColor( QgsSymbolRenderContext &context ) const;
+-%Docstring
+-Gets color
+-%End
+-
+-    virtual double dxfAngle( QgsSymbolRenderContext &context ) const;
+-%Docstring
+-Gets angle
+-%End
+-
+-    virtual QVector<qreal> dxfCustomDashPattern( QgsUnitTypes::RenderUnit &unit ) const;
+-%Docstring
+-Gets dash pattern
+-%End
+-
+-    virtual Qt::PenStyle dxfPenStyle() const;
+-%Docstring
+-Gets pen style
+-%End
+-
+-    virtual QColor dxfBrushColor( QgsSymbolRenderContext &context ) const;
+-%Docstring
+-Gets brush/fill color
+-%End
+-
+-    virtual Qt::BrushStyle dxfBrushStyle() const;
+-%Docstring
+-Gets brush/fill style
+-%End
+-
+     QgsPaintEffect *paintEffect() const;
+ %Docstring
+ Returns the current paint effect for the layer.
+@@ -1034,8 +989,6 @@
+ 
+     virtual void drawPreviewIcon( QgsSymbolRenderContext &context, QSize size );
+ 
+-    virtual double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const;
+-
+ 
+     virtual void renderPolyline( const QPolygonF &points, QgsSymbolRenderContext &context ) = 0;
+ %Docstring

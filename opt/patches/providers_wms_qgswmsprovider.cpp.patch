@@ -1,5 +1,5 @@
 --- a/src/providers/wms/qgswmsprovider.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/providers/wms/qgswmsprovider.cpp	2022-04-25 18:33:18.000000000 +0300
++++ b/src/providers/wms/qgswmsprovider.cpp	2022-04-20 13:48:04.187562000 +0300
 @@ -37,7 +37,7 @@
  #include "qgsrectangle.h"
  #include "qgscoordinatereferencesystem.h"
@@ -107,26 +107,6 @@
 -  // We expect something like "mbtiles:///path/to/my/file.mbtiles" as the URL for tiles in MBTiles specs.
 -  // Here we just add extra x,y,z query items as an implementation detail (it uses TMS tiling scheme - that's why {-y})
 -  mSettings.mBaseUrl += "?x={x}&y={-y}&z={z}";
--
--  QgsRectangle sourceExtent;
--  QgsRectangle sourceExtentWgs84 = mbtilesReader.extent();
--  if ( !sourceExtentWgs84.isNull() )
--  {
--    QgsPointXY customTopLeft, customBottomRight;
--    QgsCoordinateTransform ct( QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:4326" ) ), QgsCoordinateReferenceSystem( mSettings.mCrsId ),
--                               transformContext() );
--    try
--    {
--      customTopLeft = ct.transform( QgsPointXY( sourceExtentWgs84.xMinimum(), sourceExtentWgs84.yMaximum() ) );
--      customBottomRight = ct.transform( QgsPointXY( sourceExtentWgs84.xMaximum(), sourceExtentWgs84.yMinimum() ) );
--    }
--    catch ( const QgsCsException & )
--    {
--      QgsDebugMsg( QStringLiteral( "Failed to reproject extent from MBTiles metadata" ) );
--      return false;
--    }
--    sourceExtent = QgsRectangle( customTopLeft.x(), customBottomRight.y(), customBottomRight.x(), customTopLeft.y() );
--  }
 +//   // We expect something like "mbtiles:///path/to/my/file.mbtiles" as the URL for tiles in MBTiles specs.
 +//   // Here we just add extra x,y,z query items as an implementation detail (it uses TMS tiling scheme - that's why {-y})
 +//   mSettings.mBaseUrl += "?x={x}&y={-y}&z={z}";
@@ -166,6 +146,26 @@
 +//   // MBTiles spec does not say anything about resolutions...
 +//   double sourceTilePixelRatio = 1;
  
+-  QgsRectangle sourceExtent;
+-  QgsRectangle sourceExtentWgs84 = mbtilesReader.extent();
+-  if ( !sourceExtentWgs84.isNull() )
+-  {
+-    QgsPointXY customTopLeft, customBottomRight;
+-    QgsCoordinateTransform ct( QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:4326" ) ), QgsCoordinateReferenceSystem( mSettings.mCrsId ),
+-                               transformContext() );
+-    try
+-    {
+-      customTopLeft = ct.transform( QgsPointXY( sourceExtentWgs84.xMinimum(), sourceExtentWgs84.yMaximum() ) );
+-      customBottomRight = ct.transform( QgsPointXY( sourceExtentWgs84.xMaximum(), sourceExtentWgs84.yMinimum() ) );
+-    }
+-    catch ( const QgsCsException & )
+-    {
+-      QgsDebugMsg( QStringLiteral( "Failed to reproject extent from MBTiles metadata" ) );
+-      return false;
+-    }
+-    sourceExtent = QgsRectangle( customTopLeft.x(), customBottomRight.y(), customBottomRight.x(), customTopLeft.y() );
+-  }
+-
 -  // minzoom/maxzoom SHOULD be in MBTiles (since spec v1.3) - but does not have to be there...
 -  int sourceMinZoom = -1, sourceMaxZoom = -1;
 -  QString sourceMinZoomStr = mbtilesReader.metadataValue( "minzoom" );

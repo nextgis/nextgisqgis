@@ -1,5 +1,5 @@
 --- a/src/core/raster/qgsexiftools.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/raster/qgsexiftools.cpp	2022-04-25 18:33:17.000000000 +0300
++++ b/src/core/raster/qgsexiftools.cpp	2022-04-20 13:48:03.066183000 +0300
 @@ -16,7 +16,9 @@
  #include "qgsexiftools.h"
  #include "qgspoint.h"
@@ -268,9 +268,7 @@
 +    {
 +        return QgsPoint();
 +    }
- 
--    double lat = readCoordinate( itLatVal->value() );
--    double lon = readCoordinate( itLonVal->value() );
++
 +    CPLStringList metadata( ds->GetMetadata(), TRUE );
 +    auto latitudeRef = metadata["Exif_GPSLatitudeRef"];
 +    if(latitudeRef == nullptr)
@@ -297,6 +295,9 @@
 +    const QString latRef = QString::fromStdString( latitudeRef );
 +    const QString lonRef = QString::fromStdString( longitudeRef );
  
+-    double lat = readCoordinate( itLatVal->value() );
+-    double lon = readCoordinate( itLonVal->value() );
+-
 -    const QString latRef = QString::fromStdString( itLatRef->value().toString() );
 -    const QString lonRef = QString::fromStdString( itLonRef->value().toString() );
      if ( latRef.compare( QLatin1String( "S" ), Qt::CaseInsensitive ) == 0 )
