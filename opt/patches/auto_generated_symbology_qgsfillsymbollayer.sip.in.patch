@@ -1,0 +1,43 @@
+--- a/python/core/auto_generated/symbology/qgsfillsymbollayer.sip.in	2022-02-18 15:06:10.000000000 +0300
++++ b/python/core/auto_generated/symbology/qgsfillsymbollayer.sip.in	2022-04-30 15:42:58.160229400 +0300
+@@ -173,20 +173,6 @@
+     virtual double estimateMaxBleed( const QgsRenderContext &context ) const;
+ 
+ 
+-    virtual double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const;
+-
+-    virtual QColor dxfColor( QgsSymbolRenderContext &context ) const;
+-
+-    virtual double dxfAngle( QgsSymbolRenderContext &context ) const;
+-
+-
+-    virtual Qt::PenStyle dxfPenStyle() const;
+-
+-    virtual QColor dxfBrushColor( QgsSymbolRenderContext &context ) const;
+-
+-    virtual Qt::BrushStyle dxfBrushStyle() const;
+-
+-
+   protected:
+ 
+ 
+@@ -888,10 +874,6 @@
+ 
+     virtual QgsMapUnitScale mapUnitScale() const;
+ 
+-    virtual double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const;
+-
+-    virtual Qt::PenStyle dxfPenStyle() const;
+-
+     virtual QVariantMap properties() const;
+ 
+ 
+@@ -1258,8 +1240,6 @@
+ 
+     virtual double estimateMaxBleed( const QgsRenderContext &context ) const;
+ 
+-    virtual QColor dxfColor( QgsSymbolRenderContext &context ) const;
+-
+     virtual QSet<QString> usedAttributes( const QgsRenderContext &context ) const;
+ 
+     virtual bool hasDataDefinedProperties() const;

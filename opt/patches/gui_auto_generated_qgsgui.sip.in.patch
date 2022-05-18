@@ -1,0 +1,17 @@
+--- a/python/gui/auto_generated/qgsgui.sip.in	2022-02-18 15:06:10.000000000 +0300
++++ b/python/gui/auto_generated/qgsgui.sip.in	2022-04-30 21:30:06.707097400 +0300
+@@ -153,14 +153,6 @@
+ .. versionadded:: 3.18
+ %End
+ 
+-
+-    static QgsHistoryProviderRegistry *historyProviderRegistry() /KeepReference/;
+-%Docstring
+-Returns the global history provider registry, used for tracking history providers.
+-
+-.. versionadded:: 3.24
+-%End
+-
+     static void enableAutoGeometryRestore( QWidget *widget, const QString &key = QString() );
+ %Docstring
+ Register the widget to allow its position to be automatically saved and restored when open and closed.
