@@ -132,6 +132,8 @@ subpaths = [
     "python/gui/gui_auto.sip",
     "python/gui/auto_generated/qgisinterface.sip.in",
     "python/gui/auto_generated/qgsgui.sip.in",
+     "python/core/auto_additions/qgsgeonoderequest.py",
+    "python/core/auto_additions/qgsdxfexport.py",
 ]
 
 def run_shell(args):
