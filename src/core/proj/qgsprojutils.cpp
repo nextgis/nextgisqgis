@@ -423,7 +423,7 @@ QStringList QgsProjUtils::searchPaths()
 #ifdef Q_OS_MACX
     res << QgsApplication::prefixPath() + QStringLiteral("/Library/Frameworks/proj.framework/Resources/proj");
 #else
-    res << QgsApplication::prefixPath() + QStringLiteral("/usr/share/proj");
+    res << QgsApplication::prefixPath() + QStringLiteral("/share/proj");
 #endif // Q_OS_MACX
 //   res.reserve( paths.count() );
 //   for ( const QString &p : std::as_const( paths ) )
