@@ -1,5 +1,0 @@
-r.topidx
-Creates topographic index layer from elevation raster layer
-Raster (r.*)
-QgsProcessingParameterRasterLayer|input|Input elevation layer|None|False
-QgsProcessingParameterRasterDestination|output|Topographic index

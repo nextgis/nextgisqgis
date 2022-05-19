@@ -1,0 +1,18 @@
+--- a/python/core/core.sip.in	2022-02-18 15:06:10.000000000 +0300
++++ b/python/core/core.sip.in	2022-05-05 14:09:53.479402000 +0300
+@@ -97,7 +97,6 @@
+ 
+ %Import QtPrintSupport/QtPrintSupportmod.sip
+ %Import QtWidgets/QtWidgetsmod.sip
+-%Import QtPositioning/QtPositioningmod.sip
+ 
+ %Feature HAVE_GUI
+ %Feature ANDROID
+@@ -108,7 +107,6 @@
+ %Include typedefs.sip
+ %Include std.sip
+ 
+-
+ %Include core_auto.sip
+ 
+ %VirtualErrorHandler processing_exception_handler

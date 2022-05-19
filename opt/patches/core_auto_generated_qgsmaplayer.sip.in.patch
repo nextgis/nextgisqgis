@@ -1,0 +1,12 @@
+--- a/python/core/auto_generated/qgsmaplayer.sip.in	2022-02-18 15:06:10.000000000 +0300
++++ b/python/core/auto_generated/qgsmaplayer.sip.in	2022-04-30 18:54:40.120879800 +0300
+@@ -45,9 +45,6 @@
+         case QgsMapLayerType::MeshLayer:
+           sipType = sipType_QgsMeshLayer;
+           break;
+-        case QgsMapLayerType::VectorTileLayer:
+-          sipType = sipType_QgsVectorTileLayer;
+-          break;
+         case QgsMapLayerType::AnnotationLayer:
+           sipType = sipType_QgsAnnotationLayer;
+           break;

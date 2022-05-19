@@ -1,0 +1,10 @@
+--- a/python/analysis/analysis_auto.sip	2022-02-18 15:06:10.000000000 +0300
++++ b/python/analysis/analysis_auto.sip	2022-04-29 11:31:16.989733200 +0300
+@@ -17,7 +17,6 @@
+ %Include auto_generated/network/qgsnetworkspeedstrategy.sip
+ %Include auto_generated/network/qgsnetworkstrategy.sip
+ %Include auto_generated/network/qgsvectorlayerdirector.sip
+-%Include auto_generated/processing/qgsalgorithmbatchgeocode.sip
+ %Include auto_generated/processing/qgsnativealgorithms.sip
+ %Include auto_generated/raster/qgsalignraster.sip
+ %Include auto_generated/raster/qgsaspectfilter.sip
