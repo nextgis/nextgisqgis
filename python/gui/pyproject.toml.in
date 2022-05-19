@@ -6,7 +6,7 @@ build-backend = "sipbuild.api"
 # Specify the PEP 566 metadata for the project.
 [tool.sip.metadata]
 name = "QGIS"
-version = "@VERSION@"
+version = "@COMPLETE_VERSION@"
 summary = "Python bindings for QGIS"
 home-page = "https://qgis.org"
 author = "The QGIS Community"
