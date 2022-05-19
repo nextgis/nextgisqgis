@@ -1,0 +1,11 @@
+--- a/python/core/auto_generated/symbology/qgsellipsesymbollayer.sip.in	2022-02-18 15:06:10.000000000 +0300
++++ b/python/core/auto_generated/symbology/qgsellipsesymbollayer.sip.in	2022-04-29 16:12:21.841465300 +0300
+@@ -75,8 +75,6 @@
+     virtual void writeSldMarker( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const;
+ 
+ 
+-    virtual bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const;
+-
+ 
+  void setSymbolName( const QString &name ) /Deprecated/;
+ %Docstring

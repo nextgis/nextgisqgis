@@ -1,0 +1,37 @@
+--- a/python/core/auto_generated/qgsapplication.sip.in	2022-02-18 15:06:10.000000000 +0300
++++ b/python/core/auto_generated/qgsapplication.sip.in	2022-04-29 16:02:24.745588400 +0300
+@@ -804,20 +804,6 @@
+ .. versionadded:: 3.16
+ %End
+ 
+-    static QgsGpsConnectionRegistry *gpsConnectionRegistry() /KeepReference/;
+-%Docstring
+-Returns the application's GPS connection registry, used for managing GPS connections.
+-
+-.. versionadded:: 3.0
+-%End
+-
+-    static QgsBabelFormatRegistry *gpsBabelFormatRegistry() /KeepReference/;
+-%Docstring
+-Returns the application's GPSBabel format registry, used for managing GPSBabel formats.
+-
+-.. versionadded:: 3.22
+-%End
+-
+     static QgsPluginLayerRegistry *pluginLayerRegistry() /KeepReference/;
+ %Docstring
+ Returns the application's plugin layer registry, used for managing plugin layer types.
+@@ -953,13 +939,6 @@
+ .. versionadded:: 3.2
+ %End
+ 
+-    static QgsExternalStorageRegistry *externalStorageRegistry() /KeepReference/;
+-%Docstring
+-Returns registry of available external storage implementations.
+-
+-.. versionadded:: 3.20
+-%End
+-
+     static QgsLocalizedDataPathRegistry *localizedDataPathRegistry() /KeepReference/;
+ %Docstring
+ Returns the registry of data repositories

@@ -1,6 +1,43 @@
 --- a/src/app/mainwin.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/mainwin.cpp	2022-04-25 18:33:17.000000000 +0300
-@@ -158,10 +158,10 @@
++++ b/src/app/mainwin.cpp	2022-05-15 12:20:36.570338600 +0300
+@@ -50,6 +50,22 @@
+   return basename;
+ }
+ 
++std::string pythonPathEnvString()
++{
++  std::string pythonPathEnv;
++
++  const std::string &baseName = moduleExeBaseName();
++  const std::size_t binPathPos = baseName.rfind("bin");
++  if (binPathPos != std::string::npos)
++  {
++      const std::string &qgisRootPath = baseName.substr(0, binPathPos);
++      pythonPathEnv = "PYTHONPATH=" + qgisRootPath + "lib\\python38;";
++      pythonPathEnv += qgisRootPath + "lib\\python38\\site-packages;";
++      pythonPathEnv += qgisRootPath + "lib\\python38\\lib-dynload;";
++  }
++  return pythonPathEnv;
++}
++
+ int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
+ {
+   std::string exename( moduleExeBaseName() );
+@@ -129,6 +145,13 @@
+     return EXIT_FAILURE;
+   }
+ 
++  const std::string &pythonPathEnv = pythonPathEnvString();
++  if (_putenv(pythonPathEnv.c_str()) < 0)
++  {
++      showError("Could not set PYTHONPATH environment variable", "Error loading QGIS");
++      return EXIT_FAILURE;
++  }
++
+   HINSTANCE hKernelDLL = LoadLibrary( "kernel32.dll" );
+   BOOL ( *SetDefaultDllDirectories )( DWORD ) = hKernelDLL ? reinterpret_cast<BOOL( * )( DWORD )>( GetProcAddress( hKernelDLL, "SetDefaultDllDirectories" ) ) : 0;
+   DLL_DIRECTORY_COOKIE( *AddDllDirectory )( PCWSTR ) = hKernelDLL ? reinterpret_cast<DLL_DIRECTORY_COOKIE( * )( PCWSTR )>( GetProcAddress( hKernelDLL, "AddDllDirectory" ) ) : 0;
+@@ -158,10 +181,10 @@
  
  
  #ifdef _MSC_VER
@@ -13,7 +50,7 @@
  #endif
  
    if ( !hGetProcIDDLL )
-@@ -178,7 +178,7 @@
+@@ -178,7 +201,7 @@
        0,
        NULL );
  
@@ -22,7 +59,7 @@
                            + "\n Help: \n\n Check " + basename + ".env for correct environment paths";
      showError( message, "Error loading QGIS" );
  
-@@ -190,7 +190,7 @@
+@@ -190,7 +213,7 @@
    int ( *realmain )( int, char *[] ) = ( int ( * )( int, char *[] ) ) GetProcAddress( hGetProcIDDLL, "main" );
    if ( !realmain )
    {

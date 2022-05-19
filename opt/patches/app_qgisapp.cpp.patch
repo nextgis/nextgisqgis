@@ -51,6 +51,17 @@
  #include "qgspointcloudlayerproperties.h"
  #include "qgsmapthemes.h"
  #include "qgsmessagelogviewer.h"
+@@ -525,8 +525,8 @@
+ #else
+ #include <shellapi.h>
+ #include <dbghelp.h>
+-#endif
+-
++#endif
++
+ class QTreeWidgetItem;
+ class QgsUserProfileManager;
+ class QgsUserProfile;
 @@ -1370,7 +1370,7 @@
  
    addDockWidget( Qt::LeftDockWidgetArea, mBookMarksDockWidget );
@@ -300,6 +311,15 @@
  
    QList< QgsProviderSublayerModel::NonLayerItem > nonLayerItems;
    if ( QgsProjectStorage *ps = QgsApplication::projectStorageRegistry()->projectStorageFromUri( fileName ) )
+@@ -13012,7 +13012,7 @@
+ {
+   QgsScopedRuntimeProfile profile( tr( "Loading Python support" ) );
+ 
+-  QString pythonlibName( QStringLiteral( "qgispython" ) );
++  QString pythonlibName( QStringLiteral( "ngqgispython" ) );
+ #if defined(Q_OS_UNIX)
+   pythonlibName.prepend( QgsApplication::libraryPath() );
+ #endif
 @@ -13321,7 +13321,7 @@
      mMagnifierWidget->setDefaultFactor( factor );
      mMagnifierWidget->updateMagnification( factor );

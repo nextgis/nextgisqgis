@@ -1,0 +1,21 @@
+--- a/python/core/auto_generated/symbology/qgsmarkersymbollayer.sip.in	2022-02-18 15:06:10.000000000 +0300
++++ b/python/core/auto_generated/symbology/qgsmarkersymbollayer.sip.in	2022-04-29 16:13:59.732543800 +0300
+@@ -228,8 +228,6 @@
+ 
+     virtual QString ogrFeatureStyle( double mmScaleFactor, double mapUnitScaleFactor ) const;
+ 
+-    virtual bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const;
+-
+     virtual void setOutputUnit( QgsUnitTypes::RenderUnit unit );
+ 
+     virtual QgsUnitTypes::RenderUnit outputUnit() const;
+@@ -715,9 +713,6 @@
+     virtual QgsMapUnitScale mapUnitScale() const;
+ 
+ 
+-    virtual bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const;
+-
+-
+     virtual QRectF bounds( QPointF point, QgsSymbolRenderContext &context );
+ 
+ 

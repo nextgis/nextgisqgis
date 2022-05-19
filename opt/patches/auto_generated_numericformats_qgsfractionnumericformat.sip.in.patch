@@ -1,0 +1,20 @@
+--- a/python/core/auto_generated/numericformats/qgsfractionnumericformat.sip.in	2022-02-18 15:06:10.000000000 +0300
++++ b/python/core/auto_generated/numericformats/qgsfractionnumericformat.sip.in	2022-05-14 20:17:12.822686400 +0300
+@@ -64,7 +64,7 @@
+ 
+     bool useUnicodeSuperSubscript() const;
+ %Docstring
+-Returns ``True`` if unicode superscript and subscript characters should be used, (e.g. "⁶/₇").
++Returns ``True`` if unicode superscript and subscript characters should be used, (e.g. "6/7").
+ 
+ .. seealso:: :py:func:`setUseUnicodeSuperSubscript`
+ 
+@@ -73,7 +73,7 @@
+ 
+     void setUseUnicodeSuperSubscript( bool enabled );
+ %Docstring
+-Sets whether unicode superscript and subscript characters should be used, (e.g. "⁶/₇").
++Sets whether unicode superscript and subscript characters should be used, (e.g. "6/7").
+ 
+ .. seealso:: :py:func:`useUnicodeSuperSubscript`
+ 
