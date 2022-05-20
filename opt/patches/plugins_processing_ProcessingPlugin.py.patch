@@ -1,0 +1,75 @@
+--- a/python/plugins/processing/ProcessingPlugin.py	2022-02-18 15:06:10.000000000 +0300
++++ b/python/plugins/processing/ProcessingPlugin.py	2022-05-20 12:12:32.060466800 +0300
+@@ -46,7 +46,7 @@
+ 
+ from processing.core.Processing import Processing
+ from processing.gui.ProcessingToolbox import ProcessingToolbox
+-from processing.gui.HistoryDialog import HistoryDialog
++#from processing.gui.HistoryDialog import HistoryDialog
+ from processing.gui.ConfigDialog import ConfigOptionsPage
+ from processing.gui.ResultsDock import ResultsDock
+ from processing.gui.MessageDialog import MessageDialog
+@@ -188,11 +188,11 @@
+     def initGui(self):
+         # port old log, ONCE ONLY!
+         settings = QgsSettings()
+-        if not settings.value("/Processing/hasPortedOldLog", False, bool):
+-            processing_history_provider = QgsGui.historyProviderRegistry().providerById('processing')
+-            if processing_history_provider:
+-                processing_history_provider.portOldLog()
+-                settings.setValue("/Processing/hasPortedOldLog", True)
++        #if not settings.value("/Processing/hasPortedOldLog", False, bool):
++        #    processing_history_provider = QgsGui.historyProviderRegistry().providerById('processing')
++        #    if processing_history_provider:
++        #        processing_history_provider.portOldLog()
++        #        settings.setValue("/Processing/hasPortedOldLog", True)
+ 
+         self.options_factory = ProcessingOptionsFactory()
+         self.options_factory.setTitle(self.tr('Processing'))
+@@ -243,15 +243,15 @@
+                                             QKeySequence('Ctrl+Alt+G').toString(QKeySequence.NativeText))
+         self.menu.addAction(self.modelerAction)
+ 
+-        self.historyAction = QAction(
+-            QgsApplication.getThemeIcon("/mIconHistory.svg"),
+-            QCoreApplication.translate('ProcessingPlugin', '&History…'), self.iface.mainWindow())
+-        self.historyAction.setObjectName('historyAction')
+-        self.historyAction.triggered.connect(self.openHistory)
+-        self.iface.registerMainWindowAction(self.historyAction,
+-                                            QKeySequence('Ctrl+Alt+H').toString(QKeySequence.NativeText))
+-        self.menu.addAction(self.historyAction)
+-        self.toolbox.processingToolbar.addAction(self.historyAction)
++        #self.historyAction = QAction(
++        #    QgsApplication.getThemeIcon("/mIconHistory.svg"),
++        #    QCoreApplication.translate('ProcessingPlugin', '&History…'), self.iface.mainWindow())
++        #self.historyAction.setObjectName('historyAction')
++        #self.historyAction.triggered.connect(self.openHistory)
++        #self.iface.registerMainWindowAction(self.historyAction,
++        #                                    QKeySequence('Ctrl+Alt+H').toString(QKeySequence.NativeText))
++        #self.menu.addAction(self.historyAction)
++        #self.toolbox.processingToolbar.addAction(self.historyAction)
+ 
+         self.resultsAction = QAction(
+             QgsApplication.getThemeIcon("/processingResult.svg"),
+@@ -442,7 +442,7 @@
+ 
+         self.iface.unregisterMainWindowAction(self.toolboxAction)
+         self.iface.unregisterMainWindowAction(self.modelerAction)
+-        self.iface.unregisterMainWindowAction(self.historyAction)
++        #self.iface.unregisterMainWindowAction(self.historyAction)
+         self.iface.unregisterMainWindowAction(self.resultsAction)
+ 
+         self.iface.unregisterOptionsWidgetFactory(self.options_factory)
+@@ -484,9 +484,9 @@
+         else:
+             self.resultsDock.show()
+ 
+-    def openHistory(self):
+-        dlg = HistoryDialog()
+-        dlg.exec_()
++    #def openHistory(self):
++    #    dlg = HistoryDialog()
++    #    dlg.exec_()
+ 
+     def tr(self, message, disambiguation=None, n=-1):
+         return QCoreApplication.translate('ProcessingPlugin', message, disambiguation=disambiguation, n=n)
