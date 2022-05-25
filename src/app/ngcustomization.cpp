@@ -43,6 +43,10 @@ NGQgisApp::NGQgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLa
     connect(mNGUpdater, SIGNAL(checkUpdatesStarted()), this, SLOT(updatesSearchStart()));
     connect(mNGUpdater, SIGNAL(checkUpdatesFinished(bool)), this, SLOT(updatesSearchStop(bool)));
 #endif // NGSTD_USING
+
+    QSettings settings;
+    if (settings.value("/qgis/checkVersion", true).toBool())
+        connect(this, SIGNAL(initializationCompleted()), this, SLOT(checkQgisVersion()));
 }
 
 NGQgisApp::~NGQgisApp()
