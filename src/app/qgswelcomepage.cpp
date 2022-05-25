@@ -167,7 +167,7 @@ QgsWelcomePage::QgsWelcomePage( bool skipVersionCheck, QWidget *parent )
        && settings.value( QStringLiteral( "qgis/checkVersion" ), true ).toBool() && !skipVersionCheck )
   {
     connect( mVersionInfo, &QgsVersionInfo::versionInfoAvailable, this, &QgsWelcomePage::versionInfoReceived );
-    mVersionInfo->checkVersion();
+    //mVersionInfo->checkVersion();
   }
 
   mSplitter->restoreState( settings.value( QStringLiteral( "Windows/WelcomePage/SplitState" ), QVariant(), QgsSettings::App ).toByteArray() );

@@ -1,5 +1,5 @@
 --- a/src/app/qgswelcomepage.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/qgswelcomepage.cpp	2022-04-25 18:33:18.000000000 +0300
++++ b/src/app/qgswelcomepage.cpp	2022-05-25 14:38:03.192787200 +0300
 @@ -26,8 +26,8 @@
  #include "qgsfileutils.h"
  #include "qgstemplateprojectsmodel.h"
@@ -38,6 +38,15 @@
    QWidget *templateContainer = new QWidget();
    QVBoxLayout *templateLayout = new QVBoxLayout();
    templateLayout->setContentsMargins( 0, 0, 0, 0 );
+@@ -167,7 +167,7 @@
+        && settings.value( QStringLiteral( "qgis/checkVersion" ), true ).toBool() && !skipVersionCheck )
+   {
+     connect( mVersionInfo, &QgsVersionInfo::versionInfoAvailable, this, &QgsWelcomePage::versionInfoReceived );
+-    mVersionInfo->checkVersion();
++    //mVersionInfo->checkVersion();
+   }
+ 
+   mSplitter->restoreState( settings.value( QStringLiteral( "Windows/WelcomePage/SplitState" ), QVariant(), QgsSettings::App ).toByteArray() );
 @@ -177,15 +177,15 @@
    connect( mRecentProjectsListView, &QAbstractItemView::activated, this, &QgsWelcomePage::recentProjectItemActivated );
    connect( mTemplateProjectsListView, &QAbstractItemView::activated, this, &QgsWelcomePage::templateProjectItemActivated );
