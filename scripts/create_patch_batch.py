@@ -135,6 +135,7 @@ subpaths = [
     "python/core/auto_additions/qgsgeonoderequest.py",
     "python/core/auto_additions/qgsdxfexport.py",
     "python/plugins/processing/ProcessingPlugin.py",
+    "python/plugins/processing/gui/AlgorithmDialog.py",
 ]
 
 def run_shell(args):
