@@ -78,3 +78,56 @@ endmacro (PLUGIN_INSTALL)
 add_subdirectory(processing)
 
 PY_COMPILE(staged-plugins "${PYTHON_OUTPUT_DIRECTORY}/plugins")
+
+# NOTE: Keep in sync with opt/ppa_prepare.py
+set(REMOTE_PLUGINS
+    "QuickMapServices"
+    "QTiles"
+    "NextGIS Connect"
+)
+
+# 1. get xml
+file(DOWNLOAD http://plugins.qgis.org/plugins/plugins.xml?qgis=${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR} ${CMAKE_CURRENT_BINARY_DIR}/repos/0.qgis_repo.xml)
+file(DOWNLOAD http://nextgis.ru/programs/qgis/qgis-repo.xml?qgis=${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR} ${CMAKE_CURRENT_BINARY_DIR}/repos/1.nextgis_repo.xml)
+
+file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
+
+foreach(PLUGIN ${REMOTE_PLUGINS})
+    info_msg("Add remote py plugin ${PLUGIN}")
+
+    string(REPLACE " " "_" OUT_NAME ${PLUGIN})
+
+    # Check local copy of plugins
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${OUT_NAME}.zip)
+        file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${OUT_NAME}.zip DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/zip_files)
+    else()
+
+        # 2. parse xml and get url to zips
+        execute_process(COMMAND ${PYTHON_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/scripts/process_repo_xml.py ${PLUGIN} ${CMAKE_CURRENT_BINARY_DIR}/repos
+            OUTPUT_VARIABLE PACKAGE_DETAILS
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+
+        list(GET PACKAGE_DETAILS 0 DOWNLOAD_URL)
+        list(GET PACKAGE_DETAILS 1 PLG_VERSION)
+
+        if(DOWNLOAD_URL)
+            # 3. download zips
+            if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip)
+                warning_msg("Download ${DOWNLOAD_URL} ...")
+                file(DOWNLOAD ${DOWNLOAD_URL} ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip SHOW_PROGRESS)
+            endif()
+        endif()
+    endif()
+
+    if(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf "${CMAKE_CURRENT_BINARY_DIR}/zip_files/${OUT_NAME}.zip"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
+    endif()
+
+endforeach()
+
+# 4. extract zips to install directory via install
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins/ DESTINATION ${QGIS_PYPLUGINS_DIR})
