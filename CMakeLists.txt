@@ -412,12 +412,12 @@ else()
     endif()
 endif()
 
-if (CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
+if (CMAKE_BUILD_TYPE MATCHES Debug)# OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
     message (STATUS "Debug output enabled")
     set(QGISDEBUG ON)
 else()
-    set(QGISDEBUG ON)
-    # set(QGISDEBUG OFF)
+    #set(QGISDEBUG ON)
+    set(QGISDEBUG OFF)
 endif()
 
 # Prevent build when Qt api deprecated before this Qt version is used:
