@@ -474,6 +474,29 @@
    <addaction name="mActionShowLayoutManager"/>
    <addaction name="mActionStyleManager"/>
   </widget>
+  <widget class="QToolBar" name="mNGAccountToolBar">
+   <property name="windowTitle">
+    <string>NextGIS Account Toolbar</string>
+   </property>
+   <property name="toolTip">
+    <string>NextGIS Account Toolbar</string>
+   </property>
+   <property name="movable">
+    <bool>true</bool>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::TopToolBarArea</set>
+   </property>
+   <property name="floatable">
+    <bool>false</bool>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
   <widget class="QToolBar" name="mLayerToolBar">
    <property name="windowTitle">
     <string>Manage Layers Toolbar</string>

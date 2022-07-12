@@ -39,6 +39,8 @@ public:
 protected:
     void about() override;
     void checkQgisVersion() override;
+    virtual void createToolBars() override;
+    virtual void functionProfileNG(void (NGQgisApp:: *fnc)(), NGQgisApp *instance, QString name);
     
 private:
     bool mUpdatesCheckStartByUser;
