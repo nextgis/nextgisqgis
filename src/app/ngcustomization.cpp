@@ -32,6 +32,8 @@
 #include "framework/access/signbutton.h"
 #endif // NGSTD_USING
 
+static const QString SENTRY_KEY = "https://71159235f0b542adb8ef214aa24f5aa6@sentry.nextgis.com/9";
+
 NGQgisApp::NGQgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLayers,
              bool skipVersionCheck, const QString &rootProfileLocation,
              const QString &activeProfile, QWidget *parent, Qt::WindowFlags fl )
@@ -47,6 +49,8 @@ NGQgisApp::NGQgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLa
     QSettings settings;
     if (settings.value("/qgis/checkVersion", true).toBool())
         connect(this, SIGNAL(initializationCompleted()), this, SLOT(checkQgisVersion()));
+
+    functionProfileNG(&NGQgisApp::createToolBars, this, "Create menus");
 }
 
 NGQgisApp::~NGQgisApp()
@@ -145,4 +149,54 @@ void NGQgisApp::startUpdate()
         }
     }
 #endif // NGSTD_USING
+}
+
+void NGQgisApp::createToolBars()
+{
+    QSettings settings;
+
+    // Add NextGIS account toolbar
+    QWidget *spacer = new QWidget();
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    mNGAccountToolBar->addWidget(spacer);
+
+#ifdef NGSTD_USING 
+#if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
+    QString endPointStr = settings.value("nextgis/endpoint",
+        NGAccess::instance().endPoint()).toString();
+    QString authEndPointStr = settings.value("nextgis/auth_endpoint",
+        NGAccess::instance().authEndpoint()).toString();
+    QString tokenEndPointStr = settings.value("nextgis/token_endpoint",
+        NGAccess::instance().tokenEndpoint()).toString();
+    QString userInfoEndPointStr = settings.value("nextgis/user_info_endpoint",
+        NGAccess::instance().userInfoEndpoint()).toString();
+    int authType = settings.value("nextgis/auth_type", 0).toInt();
+    NGAccess::AuthSourceType type = static_cast<NGAccess::AuthSourceType>(authType);
+    auto scopes = settings.value("nextgis/auth_scopes", "").toString();
+    NGAccess::instance().setAuthEndpoint(authEndPointStr);
+    NGAccess::instance().setTokenEndpoint(tokenEndPointStr);
+    NGAccess::instance().setUserInfoEndpoint(userInfoEndPointStr);
+    bool codeChallenge = settings.value("nextgis/use_code_challenge", "1").toBool();
+    NGAccess::instance().setUseCodeChallenge(codeChallenge);
+    NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
+        scopes, endPointStr, type);
+
+    QString version = QLatin1String(VENDOR_VERSION) + " (" + QLatin1String(VERSION) + ")";
+    NGAccess::instance().initSentry(settings.value("nextgis/send_crashes", "0").toBool(), SENTRY_KEY, version);
+#else
+    NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
+        QLatin1String("user_info.read"));
+#endif // NGLIB_VERSION_NUMBER > 1100
+    toolbAuth->setCursor(Qt::PointingHandCursor);
+    mNGAccountToolBar->addWidget(toolbAuth);
+    // TODO: QObject::connect(toolbAuth, SIGNAL(supportInfoUpdated()), this, SLOT(onSupportInfoUpdated()));
+#endif // NGSTD_USING
+}
+
+void NGQgisApp::functionProfileNG(void (NGQgisApp:: *fnc)(),
+    NGQgisApp *instance, QString name)
+{
+    startProfile(name);
+    (instance->*fnc)();
+    endProfile();
 }

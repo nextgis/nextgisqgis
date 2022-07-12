@@ -2150,12 +2150,13 @@ protected:
     //! list of recently opened/saved project files
     QList<QgsRecentProjectItemsModel::RecentProjectData> mRecentProjects;
     
-  private:
-
-    void createPreviewImage( const QString &path, const QIcon &overlayIcon = QIcon() );
     void startProfile( const QString &name );
     void endProfile();
     void functionProfile( void ( QgisApp::*fnc )(), QgisApp *instance, const QString &name );
+
+  private:
+
+    void createPreviewImage( const QString &path, const QIcon &overlayIcon = QIcon() );
 
     void showProgress( int progress, int totalSteps );
 
@@ -2294,7 +2295,7 @@ protected:
     void createActionGroups();
     void createMenus();
     void createProfileMenu();
-    void createToolBars();
+    virtual void createToolBars();
     void createStatusBar();
     void setupConnections();
     void initLayerTreeView();
