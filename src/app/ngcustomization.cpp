@@ -50,7 +50,7 @@ NGQgisApp::NGQgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLa
     if (settings.value("/qgis/checkVersion", true).toBool())
         connect(this, SIGNAL(initializationCompleted()), this, SLOT(checkQgisVersion()));
 
-    functionProfileNG(&NGQgisApp::createToolBars, this, "Create menus");
+    functionProfileNG(&NGQgisApp::createToolBars, this, "Toolbars");
 }
 
 NGQgisApp::~NGQgisApp()
