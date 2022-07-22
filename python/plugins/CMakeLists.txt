@@ -84,11 +84,12 @@ set(REMOTE_PLUGINS
     "QuickMapServices"
     "QTiles"
     "NextGIS Connect"
+    "NGQ Rosreestr Tools"
 )
 
 # 1. get xml
 file(DOWNLOAD http://plugins.qgis.org/plugins/plugins.xml?qgis=${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR} ${CMAKE_CURRENT_BINARY_DIR}/repos/0.qgis_repo.xml)
-file(DOWNLOAD http://nextgis.ru/programs/qgis/qgis-repo.xml?qgis=${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR} ${CMAKE_CURRENT_BINARY_DIR}/repos/1.nextgis_repo.xml)
+file(DOWNLOAD https://rm.nextgis.com/api/repo/1/qgis_xml?qgis=${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR} ${CMAKE_CURRENT_BINARY_DIR}/repos/1.nextgis_repo.xml)
 
 file(REMOVE_RECURSE ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/remote_plugins)
