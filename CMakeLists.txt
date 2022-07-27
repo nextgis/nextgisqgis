@@ -412,11 +412,11 @@ else()
     endif()
 endif()
 
-if (CMAKE_BUILD_TYPE MATCHES Debug)# OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
+if (CMAKE_BUILD_TYPE MATCHES Debug)
     message (STATUS "Debug output enabled")
     set(QGISDEBUG ON)
 else()
-    #set(QGISDEBUG ON)
+    message (STATUS "Debug output disabled")
     set(QGISDEBUG OFF)
 endif()
 
