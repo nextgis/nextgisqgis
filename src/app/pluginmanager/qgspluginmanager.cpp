@@ -901,7 +901,7 @@ void QgsPluginManager::showPluginDetails( QStandardItem *item )
       iconPath = "file://" + iconPath;
 #endif
     }
-    html += QStringLiteral( "<img src=\"%1\" style=\"float:right;max-width:64px;max-height:64px;\">" ).arg( iconPath );
+    html += QStringLiteral( "<img src=\"%1\" width=\"64\" style=\"float:right;max-width:64px;max-height:64px;\">" ).arg( iconPath );
   }
 
   const QRegularExpression stripHtml = QRegularExpression( QStringLiteral( "&lt;[^\\s].*?&gt;" ) );
