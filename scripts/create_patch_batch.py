@@ -136,6 +136,7 @@ subpaths = [
     "python/core/auto_additions/qgsdxfexport.py",
     "python/plugins/processing/ProcessingPlugin.py",
     "python/plugins/processing/gui/AlgorithmDialog.py",
+    "src/app/pluginmanager/qgspluginmanager.cpp",
 ]
 
 def run_shell(args):
