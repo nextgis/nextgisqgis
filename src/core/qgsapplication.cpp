@@ -234,13 +234,10 @@ QgsApplication::QgsApplication( int &argc, char **argv, bool GUIenabled, const Q
     translationFilters << QString("qscintilla_%1*").arg(*sTranslation());
 
     for(const QString &localePath : localePaths) {
-        QDir localeDir(localePath);
-        QStringList libTrList = localeDir.entryList(translationFilters);
         QgsDebugMsgLevel( QStringLiteral( "Translation path ") + localePath + QStringLiteral( " -- get translation files: "), 2);
-        for (const QString &trFileName : libTrList) {
-            QString loadFile = localeDir.absoluteFilePath(trFileName);
+        for (const QString &fileName : translationFilters) {
             QTranslator *translator = new QTranslator;
-            if (translator->load(loadFile)) {
+            if (translator->load(fileName, localePath)) {
                 QgsDebugMsgLevel( QStringLiteral( "Loaded translation file ") +  loadFile, 2);
                 installTranslator(translator);
                 mTranslators.push_back(translator);
