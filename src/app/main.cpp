@@ -1042,7 +1042,7 @@ int main( int argc, char *argv[] )
     {
       if ( !myLocaleOverrideFlag || myUserTranslation.isEmpty() )
       {
-        translationCode = QLocale().name().left( 2 );
+        translationCode = QLocale().name();
         //setting the locale/userLocale when the --lang= option is not set will allow third party
         //plugins to always use the same locale as the QGIS, otherwise they can be out of sync
         QgsApplication::settingsLocaleUserLocale.setValue( translationCode );
