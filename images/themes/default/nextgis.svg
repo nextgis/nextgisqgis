@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg width="512px" height="512px" id="svg2" version="1.1" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <g id="g-1" transform="matrix(1.05074, 0, 0, 1.030132, 33.152977, -918.084167)">
+    <path style="stroke: none; fill-opacity: 1; fill: rgb(248, 248, 248);" d="M 130.653 923.206 L 86.521 988.348 L 131.406 1053.942 L 83.022 1053.7 L 63.972 1023.279 L 42.743 1053.948 L -4.168 1053.584 L 40.346 988.777 L -3.762 923.57 L 40.648 923.024 L 63.288 955.571 L 85.942 922.661 L 130.653 923.206 Z" id="path-3"/>
+  </g>
+  <g id="layer1" transform="matrix(1, 0, 0, 1, 35.680893, -888.367737)">
+    <path style="fill:#231f20;stroke:none;fill-opacity:1" d="M 85.505 994.167 L 68.105 1019.016 L 88.811 1050.432 L 124.82 1050.316 L 85.505 994.167 Z" id="path4131-1"/>
+    <path style="fill:#176fc1;stroke:none;fill-opacity:1" d="m 37.937097,1050.3155 43.441677,-62.04106 -43.400633,-61.98253 -34.7985926,0 43.7526146,62.48521 -43.0896957,61.53838 z" id="path4131"/>
+    <path style="fill:#231f20;stroke:none;fill-opacity:1" d="M 90.685 926.292 L 68.349 958.191 L 85.396 982.537 L 124.779 926.292 L 90.685 926.292 Z" id="path4131-1-1"/>
+  </g>
+</svg>
