@@ -266,6 +266,11 @@ class APP_EXPORT QgsOptions : public QgsOptionsDialogBase, private Ui::QgsOption
 
     void addColor();
 
+    void onUserInfoUpdated();
+    void on_signinButton_clicked();
+    void on_defaultsButton_clicked();
+    void on_authTypeSelector_currentIndexChanged(int index);
+
   private slots:
     void removeLocalizedDataPath();
     void addLocalizedDataPath();
@@ -298,6 +303,10 @@ class APP_EXPORT QgsOptions : public QgsOptionsDialogBase, private Ui::QgsOption
     void updateSampleLocaleText();
 
     void customizeBearingFormat();
+
+    void ngInitControls();
+
+    void updateAuthControls(int type);
 
   protected:
     QgisAppStyleSheet *mStyleSheetBuilder = nullptr;
