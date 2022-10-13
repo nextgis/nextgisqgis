@@ -227,11 +227,11 @@ QgsApplication::QgsApplication( int &argc, char **argv, bool GUIenabled, const Q
 
     // mQgisTranslator = new QTranslator();
     QStringList translationFilters;
-    translationFilters << QString("ngstd_*%1*").arg(*sTranslation());
-    translationFilters << QString("qt_%1*").arg(*sTranslation());
-    translationFilters << QString("qtbase_%1*").arg(*sTranslation());
-    translationFilters << QString("qgis_%1*").arg(*sTranslation());
-    translationFilters << QString("qscintilla_%1*").arg(*sTranslation());
+    translationFilters << QString("ngstd_%1").arg(*sTranslation());
+    translationFilters << QString("qt_%1").arg(*sTranslation());
+    translationFilters << QString("qtbase_%1").arg(*sTranslation());
+    translationFilters << QString("qgis_%1").arg(*sTranslation());
+    translationFilters << QString("qscintilla_%1").arg(*sTranslation());
 
     for(const QString &localePath : localePaths) {
         QgsDebugMsgLevel( QStringLiteral( "Translation path ") + localePath + QStringLiteral( " -- get translation files: "), 2);
