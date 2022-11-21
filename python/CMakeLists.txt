@@ -323,10 +323,11 @@ if(WITH_CUSTOM_WIDGETS)
   install(FILES custom_widgets/qgis_customwidgets.py DESTINATION "${PYUIC_WIDGET_PLUGIN_DIRECTORY}")
 endif()
 
+configure_file(${CMAKE_SOURCE_DIR}/cmake/utils.py.in ${CMAKE_CURRENT_BINARY_DIR}/utils.py IMMEDIATE @ONLY)
 # Plugin utilities files to copy to staging or install
 set(PY_FILES
   __init__.py
-  utils.py
+  ${CMAKE_CURRENT_BINARY_DIR}/utils.py
   user.py
 )
 
