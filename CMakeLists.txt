@@ -172,6 +172,7 @@ file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/symlinks)
 set(QT_REQUIRED_COMPONENTS Core Gui Widgets Network Xml Svg Concurrent Test UiTools Sql PrintSupport)
 if (WITH_3D)
     set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} 3DCore 3DRender 3DInput 3DLogic 3DExtras)
+    set(HAVE_3D TRUE)  # used in qgsconfig.h
 endif()
 if (MSVC)
     set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} WinExtras)
