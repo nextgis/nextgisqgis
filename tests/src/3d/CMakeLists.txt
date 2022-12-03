@@ -47,8 +47,8 @@ add_subdirectory(sandbox)
 
 set(TESTS
   testqgs3dutils.cpp
-  testqgs3drendering.cpp
-  testqgslayout3dmap.cpp
+  #testqgs3drendering.cpp
+  #testqgslayout3dmap.cpp
   testqgsmaterialregistry.cpp
   testqgs3dmaterial.cpp
   testqgstessellator.cpp
