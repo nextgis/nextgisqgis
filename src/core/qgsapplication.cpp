@@ -227,7 +227,8 @@ QgsApplication::QgsApplication( int &argc, char **argv, bool GUIenabled, const Q
 
     // mQgisTranslator = new QTranslator();
     QStringList translationFilters;
-    translationFilters << QString("ngstd_%1").arg(*sTranslation());
+    translationFilters << QString("ngstd_core_%1").arg(*sTranslation());
+    translationFilters << QString("ngstd_framework_%1").arg(*sTranslation());
     translationFilters << QString("qt_%1").arg(*sTranslation());
     translationFilters << QString("qtbase_%1").arg(*sTranslation());
     translationFilters << QString("qgis_%1").arg(*sTranslation());
