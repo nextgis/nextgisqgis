@@ -243,7 +243,7 @@ void QgsPluginManager::setPythonUtils( QgsPythonUtils *pythonUtils )
   mCheckingOnStartIntervals << 0 << 1 << 3 << 7 << 14 << 30;
 
   // Initialize the "Settings" tab widgets
-  if ( settings.value( settingsGroup + "/checkOnStart", false ).toBool() )
+  if ( settings.value( settingsGroup + "/checkOnStart", true ).toBool() )
   {
     ckbCheckUpdates->setChecked( true );
   }
