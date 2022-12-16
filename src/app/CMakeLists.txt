@@ -280,6 +280,7 @@ set(QGIS_APP_SRCS
   ngsaboutdialog.cpp
   ngcustomization.cpp
   ngupdater.cpp
+  options/ngauthoptions.cpp
 )
 
 if (HAVE_SPATIALITE)
