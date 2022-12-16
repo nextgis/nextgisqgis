@@ -23,6 +23,7 @@
 #include "qgsmessagelogviewer.h"
 #include "qgsmessagebar.h"
 #include "qgsmessagebaritem.h"
+#include "qgsapplication.h"
 
 #include <QMessageBox>
 
@@ -33,6 +34,8 @@
 #endif // NGSTD_USING
 
 static const QString SENTRY_KEY = "https://71159235f0b542adb8ef214aa24f5aa6@sentry.nextgis.com/9";
+
+static const QString NextGIS = "NextGIS";
 
 NGQgisApp::NGQgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLayers,
              bool skipVersionCheck, const QString &rootProfileLocation,
@@ -51,6 +54,8 @@ NGQgisApp::NGQgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLa
         connect(this, SIGNAL(initializationCompleted()), this, SLOT(checkQgisVersion()));
 
     functionProfileNG(&NGQgisApp::createToolBars, this, "Toolbars");
+
+    addNextGISAuthentication();
 }
 
 NGQgisApp::~NGQgisApp()
@@ -199,4 +204,18 @@ void NGQgisApp::functionProfileNG(void (NGQgisApp:: *fnc)(),
     startProfile(name);
     (instance->*fnc)();
     endProfile();
+}
+
+void NGQgisApp::addNextGISAuthentication()
+{
+    QgsAuthManager *authManager = QgsApplication::authManager();
+    if (!authManager->configIds().contains(NextGIS))
+    {
+        QgsAuthMethodConfig config(NextGIS);
+        config.setName(NextGIS);
+        config.setId(NextGIS);
+        config.setConfig(NextGIS, NextGIS);
+
+        authManager->storeAuthenticationConfig(config);
+    }
 }

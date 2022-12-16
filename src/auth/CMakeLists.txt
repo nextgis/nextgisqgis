@@ -25,6 +25,7 @@
 ################################################################################
 
 include_directories (
+    ${CMAKE_SOURCE_DIR}/src/app
     ${CMAKE_SOURCE_DIR}/src/core
     ${CMAKE_BINARY_DIR}/src/gui
 )
@@ -39,6 +40,10 @@ set(AUTH_PLUGINS
     pkipkcs12
 )
 
+if(NGSTD_FOUND)
+    set(AUTH_PLUGINS ${AUTH_PLUGINS} nextgis)
+endif()
+
 if(WITH_OAUTH2_PLUGIN)
     set(AUTH_PLUGINS ${AUTH_PLUGINS} oauth2)
 endif()
@@ -47,14 +52,12 @@ macro(add_provider PLUGIN_NAME)
     include_directories (${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/core)
     file(GLOB PROV_${PLUGIN_NAME}_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/core/*.h")
     file(GLOB PROV_${PLUGIN_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/core/*.cpp")
-    # file(GLOB PROV_${PLUGIN_NAME}_UIS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/core/*.ui")
     file(GLOB PROV_${PLUGIN_NAME}_RCS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/core/*.qrc")
 
     if(WITH_GUI)
         include_directories (${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/gui)
         file(GLOB PROV_${PLUGIN_NAME}_HEADERS_G "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/gui/*.h")
         file(GLOB PROV_${PLUGIN_NAME}_SOURCES_G "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/gui/*.cpp")
-        # file(GLOB PROV_${PLUGIN_NAME}_UIS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/gui/*.ui")
         file(GLOB PROV_${PLUGIN_NAME}_RCS_G "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/gui/*.qrc")
         file(GLOB PROV_${PLUGIN_NAME}_RCS_H "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/resources/*.qrc")
 
@@ -65,12 +68,34 @@ macro(add_provider PLUGIN_NAME)
 
     set(LIB_NAME authmethod_${PLUGIN_NAME})
 
-    # message("_SOURCES : ${PROV_${PLUGIN_NAME}_SOURCES}\n_HEADERS : ${PROV_${PLUGIN_NAME}_HEADERS}")
     add_library(${LIB_NAME} MODULE ${PROV_${PLUGIN_NAME}_SOURCES} ${PROV_${PLUGIN_NAME}_HEADERS} ${PROV_${PLUGIN_NAME}_RCS})
 
     # if("${PLUGIN_NAME}" MATCHES "postgres*")
     #     target_link_libraries(${LIB_NAME} PRIVATE ${POSTGRESQL_LIBRARIES})
     # endif()
+
+    if("${PLUGIN_NAME}" MATCHES "nextgis")
+        target_include_directories(${LIB_NAME} PRIVATE 
+            ${NGSTD_INCLUDE_DIRS}
+        )
+
+        if(WITH_GUI)
+            target_link_libraries(${LIB_NAME} PRIVATE
+                ${NG_PREFIX}qgis_app
+                ${NGSTD_LIBRARIES}
+            )
+        endif()
+
+        if(IS_MULTI_CONFIG_GENERATOR)
+            target_include_directories(${LIB_NAME} PRIVATE
+                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/src/app/${NG_PREFIX}qgis_app_autogen/include_${CMAKE_BUILD_TYPE}>
+            )
+        else()
+            target_include_directories(${LIB_NAME} PRIVATE
+                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/src/app/${NG_PREFIX}qgis_app_autogen/include>
+            )
+        endif()
+    endif()
 
     target_link_libraries(${LIB_NAME} PRIVATE
         ${NG_PREFIX}qgis_core

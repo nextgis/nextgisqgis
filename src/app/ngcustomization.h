@@ -44,6 +44,7 @@ protected:
     
 private:
     bool mUpdatesCheckStartByUser;
+    void addNextGISAuthentication();
 #ifdef NGSTD_USING
     NGQgisUpdater* mNGUpdater;
 #endif // NGSTD_USING
