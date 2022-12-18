@@ -135,7 +135,7 @@ class CORE_EXPORT QgsAuthManager : public QObject
      * \note Do not emit verification signals when only comparing
      * \param compare Password to compare against
      */
-    bool verifyMasterPassword( const QString &compare = QString() );
+    virtual bool verifyMasterPassword( const QString &compare = QString() );
 
     //! Whether master password has be input and verified, i.e. authentication database is accessible
     bool masterPasswordIsSet() const;
@@ -682,7 +682,7 @@ class CORE_EXPORT QgsAuthManager : public QObject
      * Password helper enabled getter
      * \note Available in Python bindings since QGIS 3.8.0
      */
-    bool passwordHelperEnabled() const;
+    virtual bool passwordHelperEnabled() const;
 
     /**
      * Password helper enabled setter
@@ -786,8 +786,29 @@ class CORE_EXPORT QgsAuthManager : public QObject
      * Enforce singleton pattern
      * \note To set up the manager instance and initialize everything use QgsAuthManager::instance()->init()
      */
-    static QgsAuthManager *instance() SIP_SKIP;
+    template<typename T = QgsAuthManager>
+    static QgsAuthManager *instance() SIP_SKIP
+    {
+        static QMutex sMutex;
+        QMutexLocker locker(&sMutex);
+        if (!sInstance)
+        {
+            sInstance = new T;
+        }
+        return sInstance;
+    }
 
+    virtual bool masterPasswordInput();
+
+    //! Read Master password from the wallet
+    QString passwordHelperRead();
+
+    //! Store Master password in the wallet
+    bool passwordHelperWrite( const QString &password );
+
+    //! Store last error code (enum)
+    QKeychain::Error mPasswordHelperErrorCode = QKeychain::NoError;
+    QString mMasterPass;
 
 #ifdef Q_OS_WIN
   public:
@@ -808,12 +829,6 @@ class CORE_EXPORT QgsAuthManager : public QObject
     //! Print a debug message in QGIS
     void passwordHelperLog( const QString &msg ) const;
 
-    //! Read Master password from the wallet
-    QString passwordHelperRead();
-
-    //! Store Master password in the wallet
-    bool passwordHelperWrite( const QString &password );
-
     //! Error message setter
     void passwordHelperSetErrorMessage( const QString &errorMessage ) { mPasswordHelperErrorMessage = errorMessage; }
 
@@ -829,8 +844,6 @@ class CORE_EXPORT QgsAuthManager : public QObject
     bool createConfigTables();
 
     bool createCertTables();
-
-    bool masterPasswordInput();
 
     bool masterPasswordRowsInDb( int *rows ) const;
 
@@ -896,7 +909,6 @@ class CORE_EXPORT QgsAuthManager : public QObject
     QHash<QString, QString> mConfigAuthMethods;
     QHash<QString, QgsAuthMethod *> mAuthMethods;
 
-    QString mMasterPass;
     int mPassTries = 0;
     bool mAuthDisabled = false;
     QString mAuthDisabledMessage;
@@ -937,9 +949,6 @@ class CORE_EXPORT QgsAuthManager : public QObject
 
     //! Store last error message
     QString mPasswordHelperErrorMessage;
-
-    //! Store last error code (enum)
-    QKeychain::Error mPasswordHelperErrorCode = QKeychain::NoError;
 
     //! Enable logging
     bool mPasswordHelperLoggingEnabled = false;

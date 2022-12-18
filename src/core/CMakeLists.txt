@@ -201,6 +201,7 @@ set(QGIS_CORE_SRCS
     auth/qgsauthmethod.cpp
     auth/qgsauthmethodmetadata.cpp
     auth/qgsauthmethodregistry.cpp
+    auth/ngauthmanager.cpp
 
     annotations/qgsannotation.cpp
     annotations/qgsannotationitem.cpp
@@ -1209,6 +1210,7 @@ set(QGIS_CORE_HDRS
     auth/qgsauthmethod.h
     auth/qgsauthmethodmetadata.h
     auth/qgsauthmethodregistry.h
+    auth/ngauthmanager.h
 
     browser/qgsbrowsermodel.h
     browser/qgsbrowserproxymodel.h

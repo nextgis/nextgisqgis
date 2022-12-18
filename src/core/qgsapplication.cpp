@@ -136,6 +136,8 @@
 
 #include <proj.h>
 
+#include "ngauthmanager.h"
+
 #ifdef Q_OS_MAC
 static void translationPath(const QString &basePath,
                                QList<QString> &localePaths)
@@ -1498,6 +1500,7 @@ QgsAuthManager *QgsApplication::authManager()
   {
     if ( !lInstance->mAuthManager )
     {
+      NGAuthManager::initInstance();
       lInstance->mAuthManager = QgsAuthManager::instance();
     }
     return lInstance->mAuthManager;
@@ -1505,8 +1508,11 @@ QgsAuthManager *QgsApplication::authManager()
   else
   {
     // no QgsApplication instance
-    if ( !sAuthManager )
+    if (!sAuthManager)
+    {
+      NGAuthManager::initInstance();
       sAuthManager = QgsAuthManager::instance();
+    }
     return sAuthManager;
   }
 }
