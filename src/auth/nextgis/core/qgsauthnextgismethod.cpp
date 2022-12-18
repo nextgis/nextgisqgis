@@ -20,20 +20,11 @@
 
 #include "qgsauthnextgismethod.h"
 
-#include "qgsauthmanager.h"
-#include "qgslogger.h"
-#include "qgsapplication.h"
-
 #include "core/request.h"
 
 #ifdef HAVE_GUI
 #include "qgsauthnextgisedit.h"
 #endif
-
-#include <QNetworkProxy>
-#include <QMutexLocker>
-#include <QRegularExpression>
-#include <QUuid>
 
 const QString QgsAuthNextGISMethod::AUTH_METHOD_KEY = QStringLiteral( "NextGIS" );
 const QString QgsAuthNextGISMethod::AUTH_METHOD_DESCRIPTION = QStringLiteral( "NextGIS authentication" );

@@ -74,8 +74,8 @@ const QString QgsAuthManager::AUTH_MAN_TAG = QObject::tr( "Authentication Manage
 const QString QgsAuthManager::AUTH_CFG_REGEX = QStringLiteral( "authcfg=([a-z]|[A-Z]|[0-9]){7}" );
 
 
-const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_KEY_NAME( "QGIS-Master-Password" );
-const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_FOLDER_NAME( "QGIS" );
+const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_KEY_NAME( "NextGIS-Master-Password" );
+const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_FOLDER_NAME( "NextGIS" );
 
 
 
@@ -88,17 +88,6 @@ const QString QgsAuthManager::AUTH_PASSWORD_HELPER_DISPLAY_NAME( QStringLiteral(
 #else
 const QString QgsAuthManager::AUTH_PASSWORD_HELPER_DISPLAY_NAME( "Password Manager" );
 #endif
-
-QgsAuthManager *QgsAuthManager::instance()
-{
-  static QMutex sMutex;
-  QMutexLocker locker( &sMutex );
-  if ( !sInstance )
-  {
-    sInstance = new QgsAuthManager( );
-  }
-  return sInstance;
-}
 
 
 QgsAuthManager::QgsAuthManager()

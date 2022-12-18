@@ -115,8 +115,9 @@ QgsAuthEditorWidgets::QgsAuthEditorWidgets( QWidget *parent )
   if ( !QgsApplication::authManager()->isDisabled() )
   {
     wdgtConfigEditor->setRelayMessages( false );
-    wdgtConfigEditor->setShowUtilitiesButton( false );
-    setupUtilitiesMenu();
+    //wdgtConfigEditor->setShowUtilitiesButton( false );
+    //setupUtilitiesMenu();
+    btnAuthUtilities->hide();
   }
   else
   {
