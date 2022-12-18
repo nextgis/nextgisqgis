@@ -61,7 +61,6 @@ bool NGAuthManager::masterPasswordInput()
   if (!pass.isEmpty() && (mPasswordHelperErrorCode == QKeychain::NoError))
   {
       ok = true;
-      emit passwordHelperMessageOut(tr("Master password has been successfully read from your %1").arg(AUTH_PASSWORD_HELPER_DISPLAY_NAME), authManTag(), INFO);
   }
   else if (pass.isEmpty())
   {
@@ -81,3 +80,12 @@ bool NGAuthManager::masterPasswordInput()
 
   return false;
 }
+
+void NGAuthManager::passwordHelperProcessError()
+{
+    if (mPasswordHelperErrorCode != QKeychain::EntryNotFound)
+    {
+        QgsAuthManager::passwordHelperProcessError();
+    }
+}
+

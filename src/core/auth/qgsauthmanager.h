@@ -806,6 +806,12 @@ class CORE_EXPORT QgsAuthManager : public QObject
     //! Store Master password in the wallet
     bool passwordHelperWrite( const QString &password );
 
+    /**
+     * Process the error: show it and/or disable the password helper system in case of
+     * access denied or no backend, reset error flags at the end
+     */
+    virtual void passwordHelperProcessError();
+
     //! Store last error code (enum)
     QKeychain::Error mPasswordHelperErrorCode = QKeychain::NoError;
     QString mMasterPass;
@@ -835,11 +841,6 @@ class CORE_EXPORT QgsAuthManager : public QObject
     //! Clear error code and message
     void passwordHelperClearErrors();
 
-    /**
-     * Process the error: show it and/or disable the password helper system in case of
-     * access denied or no backend, reset error flags at the end
-     */
-    void passwordHelperProcessError();
 
     bool createConfigTables();
 

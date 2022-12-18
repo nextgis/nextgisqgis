@@ -30,6 +30,7 @@ class CORE_EXPORT NGAuthManager : public QgsAuthManager
 public:
     static void initInstance();
     bool verifyMasterPassword( const QString &compare = QString() ) override;
+    void passwordHelperProcessError() override;
 
 protected:
     bool passwordHelperEnabled() const override;
