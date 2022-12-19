@@ -20,7 +20,8 @@
 
 #include "qgsauthnextgismethod.h"
 
-#include "core/request.h"
+#include <core/request.h>
+#include <framework/access/access.h>
 
 #ifdef HAVE_GUI
 #include "qgsauthnextgisedit.h"
@@ -59,15 +60,16 @@ QString QgsAuthNextGISMethod::displayDescription() const
 bool QgsAuthNextGISMethod::updateNetworkRequest( QNetworkRequest &request, const QString &authcfg,
     const QString &dataprovider )
 {
-    Q_UNUSED(authcfg)
     Q_UNUSED(dataprovider)
 
-    QString authHeader = NGRequest::instance().authHeader(request.url().toString());
-    if (authHeader.isEmpty())
+    if (authcfg == AUTH_METHOD_KEY && request.url().toString() != NGAccess::instance().tokenEndpoint())
     {
-        return false;
+        QString authHeader = NGRequest::instance().authHeader(request.url().toString());
+        if (!authHeader.isEmpty())
+        {
+            request.setRawHeader("Authorization", authHeader.replace("Authorization: ", "").toUtf8());
+        }
     }
-    request.setRawHeader("Authorization", authHeader.replace("Authorization: ", "").toUtf8());
     return true;
 }
 
