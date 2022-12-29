@@ -246,7 +246,7 @@ else()
     option(WITH_DESKTOP "Determines whether QGIS desktop should be built" ON)
     option(WITH_3D "Determines whether QGIS 3D library should be built" ON)
     option(WITH_QGIS_PROCESS "Determines whether the standalone \"qgis_process\" tool should be built" OFF) # TODO: Set ON
-    option(WITH_BINDINGS "Determines whether python bindings should be built" OFF) # TODO: Set ON
+    option(WITH_BINDINGS "Determines whether python bindings should be built" ON)
     option(WITH_DOCS "Determines whether documents should be built" ON)
     option(ENABLE_TESTS "Build unit tests?" OFF)
     
