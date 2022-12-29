@@ -170,10 +170,6 @@ file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/symlinks)
 ################################################################################
 # Find Qt5 packages
 set(QT_REQUIRED_COMPONENTS Core Gui Widgets Network Xml Svg Concurrent Test UiTools Sql PrintSupport)
-if (WITH_3D)
-    set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} 3DCore 3DRender 3DInput 3DLogic 3DExtras)
-    set(HAVE_3D TRUE)  # used in qgsconfig.h
-endif()
 if (MSVC)
     set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} WinExtras)
 endif()
@@ -306,6 +302,11 @@ endif()
 # set(QT5_3DEXTRA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
 # set(Qt53DExtras_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers/cmake/Qt53DExtras")
 # set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/external/qt3dextra-headers")
+
+if (WITH_3D)
+    set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} 3DCore 3DRender 3DInput 3DLogic 3DExtras)
+    set(HAVE_3D TRUE)  # used in qgsconfig.h
+endif()
 
 find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
 # if (WITH_QT6)

@@ -209,7 +209,9 @@ void NGQgisApp::functionProfileNG(void (NGQgisApp:: *fnc)(),
 void NGQgisApp::addNextGISAuthentication()
 {
     QgsAuthManager *authManager = QgsApplication::authManager();
-    if (!authManager->configIds().contains(NextGIS))
+    auto pNextGISAuthMethod = authManager->authMethod(NextGIS);
+
+    if (pNextGISAuthMethod && !authManager->configIds().contains(NextGIS))
     {
         QgsAuthMethodConfig config(NextGIS);
         config.setName(NextGIS);
