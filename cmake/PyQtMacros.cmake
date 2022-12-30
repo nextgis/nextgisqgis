@@ -33,7 +33,14 @@ MACRO(PYQT_WRAP_UI outfiles )
     SET(PYUIC_WRAPPER_PYTHON_EXECUTABLE "")
   ELSE()
     # TODO osx
-    SET(PYUIC_WRAPPER "${CMAKE_SOURCE_DIR}/scripts/pyuic_wrapper.sh")
+    if (NOT EXISTS "${CMAKE_BINARY_DIR}/scripts/pyuic_wrapper.sh")
+        file(COPY ${CMAKE_SOURCE_DIR}/scripts/pyuic_wrapper.sh
+                  ${CMAKE_SOURCE_DIR}/scripts/pyuic_wrapper.py
+            DESTINATION ${CMAKE_BINARY_DIR}/scripts/
+            FILE_PERMISSIONS OWNER_EXECUTE
+        )
+    endif()
+    SET(PYUIC_WRAPPER "${CMAKE_BINARY_DIR}/scripts/pyuic_wrapper.sh")
     SET(PYUIC_WRAPPER_PATH "${QGIS_OUTPUT_DIRECTORY}/lib")
   ENDIF()
 
