@@ -252,10 +252,7 @@ set(QGIS_3D_HDRS ${QGIS_3D_HDRS} ${CMAKE_CURRENT_BINARY_DIR}/qgis_3d.h)
 
 #generate unversioned libs for android
 if (NOT ANDROID)
-  set_target_properties(${LIB_NAME} PROPERTIES
-    VERSION ${COMPLETE_VERSION}
-    SOVERSION ${COMPLETE_VERSION}
-    )
+  set_target_properties(${LIB_NAME} PROPERTIES VERSION ${QGIS_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
 endif()
 
 target_link_libraries(${LIB_NAME} ${NG_PREFIX}qgis_core)

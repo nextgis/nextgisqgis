@@ -43,10 +43,7 @@ set_target_properties(${NG_PREFIX}qgispython PROPERTIES
 
 #generate unversioned libs for android
 if (NOT ANDROID)
-  set_target_properties(${NG_PREFIX}qgispython PROPERTIES
-    VERSION ${COMPLETE_VERSION}
-    SOVERSION ${COMPLETE_VERSION}
-  )
+  set_target_properties(${NG_PREFIX}qgispython PROPERTIES VERSION ${QGIS_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
 endif()
 
 target_link_libraries(${NG_PREFIX}qgispython
