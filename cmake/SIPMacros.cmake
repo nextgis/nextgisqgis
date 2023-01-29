@@ -139,7 +139,14 @@ MACRO(GENERATE_SIP_PYTHON_MODULE_CODE MODULE_NAME MODULE_SIP SIP_FILES CPP_FILES
       ENDIF( ${CONCAT_NUM} LESS ${SIP_CONCAT_PARTS} )
     ENDFOREACH(CONCAT_NUM RANGE 0 ${SIP_CONCAT_PARTS} )
 
-    SET(SIPCMD ${SIP_BINARY_PATH} ${_sip_tags} -w -e ${_sip_x} ${SIP_EXTRA_OPTIONS} -j ${SIP_CONCAT_PARTS} -c ${CMAKE_CURRENT_BINARY_DIR}/${_module_path} -I ${CMAKE_CURRENT_BINARY_DIR}/${_module_path} ${_sip_includes} ${_configured_module_sip})
+    SET(_sip_options)
+    FOREACH (_opt ${SIP_EXTRA_OPTIONS})
+      STRING(REPLACE " " ";" _opt ${_opt})
+      LIST(APPEND _sip_options ${_opt})
+    ENDFOREACH (_opt )
+    
+    SET(SIPCMD ${SIP_BINARY_PATH} ${_sip_tags} -w ${_sip_x} ${_sip_options} -j ${SIP_CONCAT_PARTS} -c ${CMAKE_CURRENT_BINARY_DIR}/${_module_path} -I ${CMAKE_CURRENT_BINARY_DIR}/${_module_path} -I ${PYQT5_SIP_DIR} ${_sip_includes} ${_configured_module_sip})
+    
     ADD_CUSTOM_COMMAND(
       OUTPUT ${_sip_output_files}
       COMMAND ${CMAKE_COMMAND} -E echo ${message}
