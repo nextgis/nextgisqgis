@@ -241,12 +241,12 @@ QgsApplication::QgsApplication( int &argc, char **argv, bool GUIenabled, const Q
         for (const QString &fileName : translationFilters) {
             QTranslator *translator = new QTranslator;
             if (translator->load(fileName, localePath)) {
-                QgsDebugMsgLevel( QStringLiteral( "Loaded translation file ") +  loadFile, 2);
+                QgsDebugMsgLevel( QStringLiteral( "Loaded translation file ") +  fileName, 2);
                 installTranslator(translator);
                 mTranslators.push_back(translator);
             }
             else {
-                QgsDebugMsgLevel(QStringLiteral("Loading of translation failed [") + loadFile + QStringLiteral("]"), 2);
+                QgsDebugMsgLevel(QStringLiteral("Loading of translation failed [") + fileName + QStringLiteral("]"), 2);
                 delete translator;
             }
         }
