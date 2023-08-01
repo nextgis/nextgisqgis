@@ -1637,6 +1637,7 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLayers
     mActionAddAfsLayer->setVisible(providerNames.contains("arcgisfeatureserver"));
 //  if (mActionAddVectorTileLayer)
 //    mActionAddVectorTileLayer->setVisible(providerNames.contains("vectortile"));
+  mActionDxfExport->setVisible(false);
   endProfile();
 
   mSplash->showMessage( tr( "Populate saved styles" ), Qt::AlignHCenter | Qt::AlignBottom, splashTextColor );
@@ -2706,7 +2707,9 @@ void QgisApp::createActions()
   connect( mActionShowLayoutManager, &QAction::triggered, this, &QgisApp::showLayoutManager );
   connect( mActionExit, &QAction::triggered, this, &QgisApp::fileExit );
 //   connect( mActionDxfExport, &QAction::triggered, this, &QgisApp::dxfExport );
-//   connect( mActionDwgImport, &QAction::triggered, this, &QgisApp::dwgImport );
+  connect( mActionDwgImport, &QAction::triggered, this, [ = ] {
+    openFile(QFileDialog::getOpenFileName(this, tr("Open"), QString(), tr("AutoCAD DWG/DXF(*.dxf *.dwg)")));
+  });
 
   // Edit Menu Items
 
