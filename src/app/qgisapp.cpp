@@ -1635,8 +1635,8 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLayers
     providerNames << provider->name();
   if (mActionAddAfsLayer)
     mActionAddAfsLayer->setVisible(providerNames.contains("arcgisfeatureserver"));
-//  if (mActionAddVectorTileLayer)
 //    mActionAddVectorTileLayer->setVisible(providerNames.contains("vectortile"));
+  mActionAddVectorTileLayer->setVisible(false);
   mActionDxfExport->setVisible(false);
   endProfile();
 
@@ -2708,7 +2708,7 @@ void QgisApp::createActions()
   connect( mActionExit, &QAction::triggered, this, &QgisApp::fileExit );
 //   connect( mActionDxfExport, &QAction::triggered, this, &QgisApp::dxfExport );
   connect( mActionDwgImport, &QAction::triggered, this, [ = ] {
-    openFile(QFileDialog::getOpenFileName(this, tr("Open"), QString(), tr("AutoCAD DWG/DXF(*.dxf *.dwg)")));
+    openFile(QFileDialog::getOpenFileName(this, QString(), QString(), tr("AutoCAD DWG/DXF(*.dxf *.dwg)")));
   });
 
   // Edit Menu Items
