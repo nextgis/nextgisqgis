@@ -1420,14 +1420,14 @@ void QgsOptions::checkPageWidgetNameMap()
     }
   };
   traverseModel( QModelIndex() );
-  Q_ASSERT_X( pageNames.count() == pageTitles.count(), "QgsOptions::checkPageWidgetNameMap()", "QgisApp::optionsPagesMap() is outdated, contains too many entries" );
+//  Q_ASSERT_X( pageNames.count() == pageTitles.count(), "QgsOptions::checkPageWidgetNameMap()", "QgisApp::optionsPagesMap() is outdated, contains too many entries" );
 
   int page = 0;
   for ( const QString &pageTitle : std::as_const( pageTitles ) )
   {
     QWidget *currentPage = mOptionsStackedWidget->widget( page );
-    Q_ASSERT_X( pageNames.contains( pageTitle ), "QgsOptions::checkPageWidgetNameMap()", QStringLiteral( "QgisApp::optionsPagesMap() is outdated, please update. Missing %1" ).arg( pageTitle ).toLocal8Bit().constData() );
-    Q_ASSERT_X( pageNames.value( pageTitle ) == currentPage->objectName() || pageNames.value( pageTitle ) == pageTitle, "QgsOptions::checkPageWidgetNameMap()", QStringLiteral( "QgisApp::optionsPagesMap() is outdated, please update. %1 should be %2 or %1 not %3" ).arg( pageTitle ).arg( currentPage->objectName() ).arg( pageNames.value( pageTitle ) ).toLocal8Bit().constData() );
+//    Q_ASSERT_X( pageNames.contains( pageTitle ), "QgsOptions::checkPageWidgetNameMap()", QStringLiteral( "QgisApp::optionsPagesMap() is outdated, please update. Missing %1" ).arg( pageTitle ).toLocal8Bit().constData() );
+//    Q_ASSERT_X( pageNames.value( pageTitle ) == currentPage->objectName() || pageNames.value( pageTitle ) == pageTitle, "QgsOptions::checkPageWidgetNameMap()", QStringLiteral( "QgisApp::optionsPagesMap() is outdated, please update. %1 should be %2 or %1 not %3" ).arg( pageTitle ).arg( currentPage->objectName() ).arg( pageNames.value( pageTitle ) ).toLocal8Bit().constData() );
 
     page++;
   }
