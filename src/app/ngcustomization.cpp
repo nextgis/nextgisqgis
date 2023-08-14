@@ -185,7 +185,6 @@ void NGQgisApp::createToolBars()
     NGAccess::instance().setUseCodeChallenge(codeChallenge);
     NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
         scopes, endPointStr, type);
-    NGAccess::instance().setCheckEndpointTimeout(5000);
 
     QString version = QLatin1String(VENDOR_VERSION) + " (" + QLatin1String(VERSION) + ")";
     NGAccess::instance().initSentry(settings.value("nextgis/send_crashes", "0").toBool(), SENTRY_KEY, version);
