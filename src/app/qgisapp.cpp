@@ -1628,15 +1628,6 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLayers
   startProfile( tr( "Update customization on main window" ) );
   QgsCustomization::instance()->updateMainWindow( mToolbarMenu, mPanelMenu );
 
-  //check existing data source plugins
-  QSet<QString> providerNames;
-  const QList<QgsSourceSelectProvider *> sourceSelectProviders = QgsGui::sourceSelectProviderRegistry()->providers();
-  for ( QgsSourceSelectProvider *provider : sourceSelectProviders )
-    providerNames << provider->name();
-  if (mActionAddAfsLayer)
-    mActionAddAfsLayer->setVisible(providerNames.contains("arcgisfeatureserver"));
-//  if (mActionAddVectorTileLayer)
-//    mActionAddVectorTileLayer->setVisible(providerNames.contains("vectortile"));
   mActionDxfExport->setVisible(false);
   endProfile();
 
