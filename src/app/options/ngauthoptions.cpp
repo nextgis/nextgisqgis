@@ -132,7 +132,7 @@ void NGAuthOptions::init(QgsSettings *settings)
     });
     connect(endpointEdit, &QLineEdit::textChanged, &NGAccess::instance(), &NGAccess::checkEndpoint);
 
-    NGAccess::instance().checkEndpoint(NGAccess::instance().endPoint());
+    signinButton->installEventFilter(NGAccess::instance().getSignInEventFilter());
 #endif // NGSTD_USING
 }
 

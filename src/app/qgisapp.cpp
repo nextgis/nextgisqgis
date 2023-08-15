@@ -1627,17 +1627,6 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLayers
   // do main window customization - after window state has been restored, before the window is shown
   startProfile( tr( "Update customization on main window" ) );
   QgsCustomization::instance()->updateMainWindow( mToolbarMenu, mPanelMenu );
-
-  //check existing data source plugins
-  QSet<QString> providerNames;
-  const QList<QgsSourceSelectProvider *> sourceSelectProviders = QgsGui::sourceSelectProviderRegistry()->providers();
-  for ( QgsSourceSelectProvider *provider : sourceSelectProviders )
-    providerNames << provider->name();
-  if (mActionAddAfsLayer)
-    mActionAddAfsLayer->setVisible(providerNames.contains("arcgisfeatureserver"));
-//    mActionAddVectorTileLayer->setVisible(providerNames.contains("vectortile"));
-  mActionAddVectorTileLayer->setVisible(false);
-  mActionDxfExport->setVisible(false);
   endProfile();
 
   mSplash->showMessage( tr( "Populate saved styles" ), Qt::AlignHCenter | Qt::AlignBottom, splashTextColor );
@@ -2707,9 +2696,7 @@ void QgisApp::createActions()
   connect( mActionShowLayoutManager, &QAction::triggered, this, &QgisApp::showLayoutManager );
   connect( mActionExit, &QAction::triggered, this, &QgisApp::fileExit );
 //   connect( mActionDxfExport, &QAction::triggered, this, &QgisApp::dxfExport );
-  connect( mActionDwgImport, &QAction::triggered, this, [ = ] {
-    openFile(QFileDialog::getOpenFileName(this, QString(), QString(), tr("AutoCAD DWG/DXF(*.dxf *.dwg)")));
-  });
+//   connect( mActionDwgImport, &QAction::triggered, this, &QgisApp::dwgImport );
 
   // Edit Menu Items
 
