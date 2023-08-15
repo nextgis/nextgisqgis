@@ -1630,13 +1630,12 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLayers
 
   //check existing data source plugins
   QSet<QString> providerNames;
-  const QList<QgsSourceSelectProvider *> sourceSelectProviders = QgsGui::sourceSelectProviderRegistry()->providers();
+  auto sourceSelectProviders = QgsGui::sourceSelectProviderRegistry()->providers();
   for ( QgsSourceSelectProvider *provider : sourceSelectProviders )
     providerNames << provider->name();
   if (mActionAddAfsLayer)
     mActionAddAfsLayer->setVisible(providerNames.contains("arcgisfeatureserver"));
-//  if (mActionAddVectorTileLayer)
-//    mActionAddVectorTileLayer->setVisible(providerNames.contains("vectortile"));
+  mActionAddVectorTileLayer->setVisible(false);
   endProfile();
 
   mSplash->showMessage( tr( "Populate saved styles" ), Qt::AlignHCenter | Qt::AlignBottom, splashTextColor );
