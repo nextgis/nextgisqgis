@@ -41,7 +41,7 @@ class QgsFeedback;
  * \note not available in Python bindings
  * \since QGIS 3.18
  */
-class QgsCPLHTTPFetchOverrider
+class CORE_EXPORT QgsCPLHTTPFetchOverrider
 {
   public:
     //! Installs the redirection for the current thread
@@ -53,7 +53,7 @@ class QgsCPLHTTPFetchOverrider
     //! Define attribute that must be forwarded to the actual QNetworkRequest
     void setAttribute( QNetworkRequest::Attribute code, const QVariant &value );
 
-  private:
+  protected:
 
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,2,0)
     static CPLHTTPResult *callback( const char *pszURL,

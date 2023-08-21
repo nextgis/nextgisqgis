@@ -47,6 +47,7 @@ NGQgisApp::NGQgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLa
     mNGUpdater = new NGQgisUpdater(this);
     connect(mNGUpdater, SIGNAL(checkUpdatesStarted()), this, SLOT(updatesSearchStart()));
     connect(mNGUpdater, SIGNAL(checkUpdatesFinished(bool)), this, SLOT(updatesSearchStop(bool)));
+    m_CPLHTTPFetchOverrider = nullptr;
 #endif // NGSTD_USING
 
     QSettings settings;
@@ -62,6 +63,8 @@ NGQgisApp::~NGQgisApp()
 {
 #ifdef NGSTD_USING
     NGAccess::instance().save();
+    if (m_CPLHTTPFetchOverrider)
+        delete m_CPLHTTPFetchOverrider;
 #endif // NGSTD_USING
 }
 
@@ -220,4 +223,24 @@ void NGQgisApp::addNextGISAuthentication()
 
         authManager->storeAuthenticationConfig(config);
     }
+
+#ifdef NGSTD_USING
+//    m_oCPLHTTPFetcher = new QgsCPLHTTPFetchOverrider(NextGIS);
+    m_CPLHTTPFetchOverrider = new NGCPLHTTPFetchOverrider();
+
+    constexpr int sFilePrefixLength = CMAKE_SOURCE_DIR[sizeof( CMAKE_SOURCE_DIR ) - 1] == '/' ? sizeof( CMAKE_SOURCE_DIR ) + 1 : sizeof( CMAKE_SOURCE_DIR );
+    m_CPLHTTPFetchOverrider->setAttribute( static_cast< QNetworkRequest::Attribute >( QgsNetworkRequestParameters::AttributeInitiatorClass ), "NGRequest" );
+    m_CPLHTTPFetchOverrider->setAttribute( static_cast< QNetworkRequest::Attribute >( QgsNetworkRequestParameters::AttributeInitiatorRequestId ), QString(QString( __FILE__ ).mid( sFilePrefixLength ) + ':' + QString::number( __LINE__ ) + " (" + __FUNCTION__ + ")") );
+#endif
+}
+
+NGCPLHTTPFetchOverrider::NGCPLHTTPFetchOverrider( const QString &authCfg )
+{
+    mAuthCfg = authCfg;
+    CPLHTTPSetFetchCallback( NGCPLHTTPFetchOverrider::callback, this );
+}
+
+NGCPLHTTPFetchOverrider::~NGCPLHTTPFetchOverrider()
+{
+    CPLHTTPSetFetchCallback( nullptr, nullptr );
 }

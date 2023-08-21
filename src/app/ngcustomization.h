@@ -24,7 +24,15 @@
 
 #ifdef NGSTD_USING
 #include "ngupdater.h"
+#include "qgscplhttpfetchoverrider.h"
 #endif // NGSTD_USING
+
+class NGCPLHTTPFetchOverrider : public QgsCPLHTTPFetchOverrider
+{
+public:
+    explicit NGCPLHTTPFetchOverrider( const QString &authCfg = QString() );
+    ~NGCPLHTTPFetchOverrider();
+};
 
 class APP_EXPORT NGQgisApp : public QgisApp
 {
@@ -47,6 +55,7 @@ private:
     void addNextGISAuthentication();
 #ifdef NGSTD_USING
     NGQgisUpdater* mNGUpdater;
+    NGCPLHTTPFetchOverrider* m_CPLHTTPFetchOverrider;
 #endif // NGSTD_USING
 
 private slots:

@@ -130,7 +130,7 @@ void NGAuthOptions::init(QgsSettings *settings)
                                         : "Authorization server is not available!");
         signinButton->setEnabled(NGAccess::instance().isUserAuthorized() || NGAccess::instance().isEndpointAvailable());
     });
-    connect(endpointEdit, &QLineEdit::textChanged, &NGAccess::instance(), &NGAccess::checkEndpoint);
+    connect(endpointEdit, &QLineEdit::textChanged, &NGAccess::instance(), &NGAccess::checkEndpointAsync);
 
     signinButton->installEventFilter(NGAccess::instance().getSignInEventFilter());
 #endif // NGSTD_USING
