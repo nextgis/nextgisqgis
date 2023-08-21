@@ -223,7 +223,6 @@ void NGQgisApp::addNextGISAuthentication()
 
         authManager->storeAuthenticationConfig(config);
     }
-
 #ifdef NGSTD_USING
 //    m_oCPLHTTPFetcher = new QgsCPLHTTPFetchOverrider(NextGIS);
     m_CPLHTTPFetchOverrider = new NGCPLHTTPFetchOverrider();
@@ -244,3 +243,4 @@ NGCPLHTTPFetchOverrider::~NGCPLHTTPFetchOverrider()
 {
     CPLHTTPSetFetchCallback( nullptr, nullptr );
 }
+

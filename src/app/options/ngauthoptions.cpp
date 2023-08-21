@@ -35,7 +35,12 @@ NGAuthOptions::NGAuthOptions(QWidget *parent)
 
 void NGAuthOptions::onUserInfoUpdated()
 {
-#ifdef NGSTD_USING
+    ngInitControls();
+}
+
+void NGAuthOptions::ngInitControls()
+{
+#ifdef NGSTD_USING   
     if (NGAccess::instance().isEnterprise()) {
         authGroupBox->hide();
     }
@@ -61,14 +66,6 @@ void NGAuthOptions::onUserInfoUpdated()
         authGroupBox->show();
         signinButton->setText(tr("Sign in"));
     }
-#endif
-}
-
-void NGAuthOptions::ngInitControls()
-{
-#ifdef NGSTD_USING
-    onUserInfoUpdated();
-
 #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
     int index = mSettings->value("nextgis/auth_type", 0).toInt();
     authTypeSelector->setCurrentIndex(index);
@@ -122,7 +119,6 @@ void NGAuthOptions::init(QgsSettings *settings)
     // NextGIS settings
 #ifdef NGSTD_USING
     ngInitControls();
-
     connect(&NGAccess::instance(), SIGNAL(userInfoUpdated()), this, SLOT(onUserInfoUpdated()));
     connect(&NGAccess::instance(), &NGAccess::endpointAvailableUpdated, this, [ = ] () {
         availableEndpointLabel->setText(NGAccess::instance().isEndpointAvailable()
