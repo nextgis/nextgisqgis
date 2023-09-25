@@ -1627,13 +1627,7 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLayers
   // do main window customization - after window state has been restored, before the window is shown
   startProfile( tr( "Update customization on main window" ) );
   QgsCustomization::instance()->updateMainWindow( mToolbarMenu, mPanelMenu );
-  //check existing data source plugins
-  QSet<QString> providerNames;
-  auto sourceSelectProviders = QgsGui::sourceSelectProviderRegistry()->providers();
-  for ( QgsSourceSelectProvider *provider : sourceSelectProviders )
-    providerNames << provider->name();
-  if (mActionAddAfsLayer)
-    mActionAddAfsLayer->setVisible(providerNames.contains("arcgisfeatureserver"));
+  mActionAddAfsLayer->setVisible(false);
   mActionAddVectorTileLayer->setVisible(false);
   endProfile();
 
