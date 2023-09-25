@@ -2697,7 +2697,9 @@ void QgisApp::createActions()
   connect( mActionShowLayoutManager, &QAction::triggered, this, &QgisApp::showLayoutManager );
   connect( mActionExit, &QAction::triggered, this, &QgisApp::fileExit );
 //   connect( mActionDxfExport, &QAction::triggered, this, &QgisApp::dxfExport );
-//   connect( mActionDwgImport, &QAction::triggered, this, &QgisApp::dwgImport );
+  connect( mActionDwgImport, &QAction::triggered, this, [ = ] {
+    openFile(QFileDialog::getOpenFileName(this, tr("Open"), QString(), tr("AutoCAD DWG/DXF(*.dxf *.dwg)")));
+  });
 
   // Edit Menu Items
 
