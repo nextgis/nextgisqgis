@@ -1627,6 +1627,8 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLayers
   // do main window customization - after window state has been restored, before the window is shown
   startProfile( tr( "Update customization on main window" ) );
   QgsCustomization::instance()->updateMainWindow( mToolbarMenu, mPanelMenu );
+  mActionAddAfsLayer->setVisible(false);
+  mActionAddVectorTileLayer->setVisible(false);
   endProfile();
 
   mSplash->showMessage( tr( "Populate saved styles" ), Qt::AlignHCenter | Qt::AlignBottom, splashTextColor );
