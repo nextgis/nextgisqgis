@@ -120,6 +120,20 @@ void NGAuthOptions::init(QgsSettings *settings)
 #ifdef NGSTD_USING
     ngInitControls();
     connect(&NGAccess::instance(), SIGNAL(userInfoUpdated()), this, SLOT(onUserInfoUpdated()));
+    connect(&NGAccess::instance(), &NGAccess::endpointAvailableUpdated, this, [ = ] () {
+        const bool isUserAuthorized = NGAccess::instance().isUserAuthorized();
+        const bool isEndpointAvailable = NGAccess::instance().isEndpointAvailable();
+
+        availableEndpointLabel->setText(isEndpointAvailable
+                                        ? "Authorization server is ready."
+                                        : "Authorization server is not available!");
+
+
+        signinButton->setEnabled(isUserAuthorized || (!isUserAuthorized && isEndpointAvailable));
+    });
+    connect(endpointEdit, &QLineEdit::textChanged, &NGAccess::instance(), &NGAccess::checkEndpointAsync);
+
+    signinButton->installEventFilter(NGAccess::instance().getSignInEventFilter());
 #endif // NGSTD_USING
 }
 
