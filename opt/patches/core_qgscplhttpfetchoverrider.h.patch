@@ -1,0 +1,20 @@
+--- a/src/core/qgscplhttpfetchoverrider.h	2023-08-21 18:33:05.598309297 +0300
++++ b/src/core/qgscplhttpfetchoverrider.h	2023-08-14 17:23:43.431848163 +0300
+@@ -41,7 +41,7 @@
+  * \note not available in Python bindings
+  * \since QGIS 3.18
+  */
+-class QgsCPLHTTPFetchOverrider
++class CORE_EXPORT QgsCPLHTTPFetchOverrider
+ {
+   public:
+     //! Installs the redirection for the current thread
+@@ -53,7 +53,7 @@
+     //! Define attribute that must be forwarded to the actual QNetworkRequest
+     void setAttribute( QNetworkRequest::Attribute code, const QVariant &value );
+
+-  private: 
++  protected:
+ 
+ #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,2,0)
+     static CPLHTTPResult *callback( const char *pszURL,
