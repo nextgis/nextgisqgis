@@ -2702,7 +2702,7 @@ void QgisApp::createActions()
 //   connect( mActionDxfExport, &QAction::triggered, this, &QgisApp::dxfExport );
 //  connect( mActionDwgImport, &QAction::triggered, this, [ = ] {
 //    openFile(QFileDialog::getOpenFileName(this, tr("Open"), QString(), tr("AutoCAD DWG/DXF(*.dxf *.dwg)")));
-  });
+//  });
 
   // Edit Menu Items
 
