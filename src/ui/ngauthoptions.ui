@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>NGAuthOptions</class>
  <widget class="QWidget" name="NGAuthOptions">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>344</width>
+    <height>490</height>
+   </rect>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_23">
    <item>
     <widget class="QGroupBox" name="groupBox_29">
@@ -59,7 +67,7 @@
      <property name="title">
       <string>Authorize options</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_29">
+     <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <layout class="QGridLayout" name="gridLayout_23">
         <item row="3" column="0">
@@ -147,7 +155,7 @@
         <item row="5" column="1">
          <widget class="QCheckBox" name="codeChallengeCheckBox">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </widget>
         </item>
@@ -161,7 +169,14 @@
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="availableEndpointLabel">
+          <property name="text">
+           <string>Not available</string>
+          </property>
+         </widget>
+        </item>
         <item>
          <spacer name="horizontalSpacer_2">
           <property name="orientation">
@@ -169,7 +184,7 @@
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>40</width>
+            <width>17</width>
             <height>20</height>
            </size>
           </property>
@@ -225,4 +240,6 @@
    </item>
   </layout>
  </widget>
+ <resources/>
+ <connections/>
 </ui>
