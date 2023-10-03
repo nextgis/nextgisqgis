@@ -1627,6 +1627,8 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLayers
   // do main window customization - after window state has been restored, before the window is shown
   startProfile( tr( "Update customization on main window" ) );
   QgsCustomization::instance()->updateMainWindow( mToolbarMenu, mPanelMenu );
+  mActionAddAfsLayer->setVisible(false);
+  mActionAddVectorTileLayer->setVisible(false);
   mActionDxfExport->setVisible(false);
   mActionDwgImport->setVisible(false);
   endProfile();
