@@ -2050,6 +2050,7 @@ void QgsOptions::saveOptions()
         NGAccess::instance().setUseCodeChallenge(true);
     }
     NGAccess::instance().setEndPoint(mOptionsPageNextGIS->endpointEdit->text(), type);
+    NGAccess::instance().checkEndpointAsync(mOptionsPageNextGIS->endpointEdit->text());
 
     NGAccess::instance().initSentry(mOptionsPageNextGIS->sendCrashes->isChecked(), "");
 #endif // NGSTD_USING
