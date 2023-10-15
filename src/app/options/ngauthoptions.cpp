@@ -127,11 +127,7 @@ void NGAuthOptions::init(QgsSettings *settings)
         availableEndpointLabel->setText(isEndpointAvailable
                                         ? "Authorization server is ready."
                                         : "Authorization server is not available!");
-
-
-        signinButton->setEnabled(isUserAuthorized || (!isUserAuthorized && isEndpointAvailable));
     });
-    connect(endpointEdit, &QLineEdit::textChanged, &NGAccess::instance(), &NGAccess::checkEndpointAsync);
 
     signinButton->installEventFilter(NGAccess::instance().getSignInEventFilter());
 #endif // NGSTD_USING
@@ -161,6 +157,7 @@ void NGAuthOptions::on_signinButton_clicked()
             NGAccess::instance().setUseCodeChallenge(true);
         }
         NGAccess::instance().setEndPoint(endpointEdit->text(), type);
+        NGAccess::instance().checkEndpointAsync(endpointEdit->text());
 #endif // NGLIB_VERSION_NUMBER > 1100
         NGAccess::instance().authorize();
     }
