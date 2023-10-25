@@ -13533,7 +13533,7 @@ void QgisApp::reportaBug()
 {
   QgsSettings settings;
   QString reportaBugUrl = settings.value( QStringLiteral( "qgis/reportaBugUrl" ),
-                                          tr( "https://qgis.org/en/site/getinvolved/development/bugreporting.html" ) ).toString();
+                                          tr( "https://nextgis.com/" ) ).toString();
   openURL( reportaBugUrl, false );
 }
 

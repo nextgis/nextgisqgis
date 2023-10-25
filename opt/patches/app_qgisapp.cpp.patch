@@ -1,5 +1,5 @@
---- a/src/app/qgisapp.cpp
-+++ b/src/app/qgisapp.cpp
+--- a/src/app/qgisapp.cpp	2023-08-22 11:32:52.639350417 +0300
++++ b/src/app/qgisapp.cpp	2023-10-26 02:38:32.085885753 +0300
 @@ -114,7 +114,7 @@
  #include "qgsgeometrycheckregistry.h"
  
@@ -333,6 +333,15 @@
    }
  }
  
+@@ -13525,7 +13533,7 @@
+ {
+   QgsSettings settings;
+   QString reportaBugUrl = settings.value( QStringLiteral( "qgis/reportaBugUrl" ),
+-                                          tr( "https://qgis.org/en/site/getinvolved/development/bugreporting.html" ) ).toString();
++                                          tr( "https://nextgis.com/" ) ).toString();
+   openURL( reportaBugUrl, false );
+ }
+ 
 @@ -16163,7 +16171,7 @@
      }
  
@@ -369,4 +378,3 @@
      case QgsMapLayerType::PointCloudLayer:
      {
        QgsPointCloudLayerProperties pointCloudLayerPropertiesDialog( qobject_cast<QgsPointCloudLayer *>( mapLayer ), mMapCanvas, visibleMessageBar(), this );
-
