@@ -119,11 +119,7 @@ NgsAboutDialog::NgsAboutDialog(QWidget *parent) :
     details += tr( "Compiled against Qt" ) + ": " + QLatin1String(QT_VERSION_STR) + "<br>";
     details += tr( "Running against Qt" )  + ": " + qVersion() + "<br>";
 
-#ifdef WITH_BINDINGS
-    details += tr( "Python Version" )  + ": " + PYTHON_VERSION + "<br>";
-#else
     details += tr( "Python Version" )  + ": " + pythonEnviromentVersion() + "<br>";
-#endif
 
     details += tr( "Compiled against GDAL" ) + ": " + GDAL_RELEASE_NAME + "<br>";
     details += tr( "Running against GDAL" )  + ": " + GDALVersionInfo( "RELEASE_NAME" ) + "<br>";
