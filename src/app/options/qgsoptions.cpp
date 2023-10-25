@@ -141,7 +141,7 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
   gpsGroup->setData( QStringLiteral( "gps" ) );
   gpsGroup->setToolTip( tr( "GPS" ) );
   gpsGroup->setSelectable( false );
-  mTreeModel->appendRow( gpsGroup );
+//  mTreeModel->appendRow( gpsGroup );
 
   mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "Locator" ), tr( "Locator" ), QStringLiteral( "search.svg" ) ) );
   mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "Acceleration" ), tr( "GPU acceleration" ), QStringLiteral( "mIconGPU.svg" ) ) );
