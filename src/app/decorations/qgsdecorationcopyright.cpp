@@ -25,11 +25,9 @@ email                : tim@linfiniti.com
 #include "qgsdecorationcopyrightdialog.h"
 
 #include "qgisapp.h"
-#include "qgsapplication.h"
 #include "qgsexpression.h"
 #include "qgsexpressioncontext.h"
 #include "qgslogger.h"
-#include "qgsmapcanvas.h"
 #include "qgsproject.h"
 #include "qgsreadwritecontext.h"
 #include "qgssymbollayerutils.h"
@@ -39,7 +37,6 @@ email                : tim@linfiniti.com
 #include <QMenu>
 #include <QDate>
 #include <QDomDocument>
-#include <QMatrix>
 #include <QFile>
 
 //non qt includes
@@ -50,7 +47,7 @@ QgsDecorationCopyright::QgsDecorationCopyright( QObject *parent )
   : QgsDecorationItem( parent )
 {
   mPlacement = BottomRight;
-  mMarginUnit = QgsUnitTypes::RenderMillimeters;
+  mMarginUnit = Qgis::RenderUnit::Millimeters;
 
   setDisplayName( tr( "Copyright Label" ) );
   mConfigurationName = QStringLiteral( "CopyrightLabel" );
@@ -125,7 +122,7 @@ void QgsDecorationCopyright::render( const QgsMapSettings &mapSettings, QgsRende
   const QFontMetricsF textMetrics = QgsTextRenderer::fontMetrics( context, mTextFormat );
   const double textDescent = textMetrics.descent();
   const double textWidth = QgsTextRenderer::textWidth( context, mTextFormat, displayStringList );
-  const double textHeight = QgsTextRenderer::textHeight( context, mTextFormat, displayStringList, QgsTextRenderer::Point );
+  const double textHeight = QgsTextRenderer::textHeight( context, mTextFormat, displayStringList, Qgis::TextLayoutMode::Point );
 
   QPaintDevice *device = context.painter()->device();
   const int deviceHeight = device->height() / device->devicePixelRatioF();
@@ -136,7 +133,7 @@ void QgsDecorationCopyright::render( const QgsMapSettings &mapSettings, QgsRende
   // Set  margin according to selected units
   switch ( mMarginUnit )
   {
-    case QgsUnitTypes::RenderMillimeters:
+    case Qgis::RenderUnit::Millimeters:
     {
       const int pixelsInchX = context.painter()->device()->logicalDpiX();
       const int pixelsInchY = context.painter()->device()->logicalDpiY();
@@ -144,28 +141,28 @@ void QgsDecorationCopyright::render( const QgsMapSettings &mapSettings, QgsRende
       yOffset = pixelsInchY * INCHES_TO_MM * mMarginVertical;
       break;
     }
-    case QgsUnitTypes::RenderPixels:
+    case Qgis::RenderUnit::Pixels:
     {
       xOffset = mMarginHorizontal;
       yOffset = mMarginVertical;
       break;
     }
-    case QgsUnitTypes::RenderPercentage:
+    case Qgis::RenderUnit::Percentage:
     {
       xOffset = ( ( deviceWidth - textWidth ) / 100. ) * mMarginHorizontal;
       yOffset = ( ( deviceHeight - textHeight ) / 100. ) * mMarginVertical;
       break;
     }
-    case QgsUnitTypes::RenderMapUnits:
-    case QgsUnitTypes::RenderPoints:
-    case QgsUnitTypes::RenderInches:
-    case QgsUnitTypes::RenderUnknownUnit:
-    case QgsUnitTypes::RenderMetersInMapUnits:
+    case Qgis::RenderUnit::MapUnits:
+    case Qgis::RenderUnit::Points:
+    case Qgis::RenderUnit::Inches:
+    case Qgis::RenderUnit::Unknown:
+    case Qgis::RenderUnit::MetersInMapUnits:
       break;
   }
 
   // Determine placement of label from form combo box
-  QgsTextRenderer::HAlignment horizontalAlignment = QgsTextRenderer::AlignLeft;
+  Qgis::TextHorizontalAlignment horizontalAlignment = Qgis::TextHorizontalAlignment::Left;
   switch ( mPlacement )
   {
     case BottomLeft: // Bottom Left, xOffset is set above
@@ -177,25 +174,25 @@ void QgsDecorationCopyright::render( const QgsMapSettings &mapSettings, QgsRende
     case TopRight: // Top Right
       yOffset = yOffset + textHeight - textDescent;
       xOffset = deviceWidth - xOffset;
-      horizontalAlignment = QgsTextRenderer::AlignRight;
+      horizontalAlignment = Qgis::TextHorizontalAlignment::Right;
       break;
     case BottomRight: // Bottom Right
       yOffset = deviceHeight - yOffset - textDescent;
       xOffset = deviceWidth - xOffset;
-      horizontalAlignment = QgsTextRenderer::AlignRight;
+      horizontalAlignment = Qgis::TextHorizontalAlignment::Right;
       break;
     case TopCenter: // Top Center
       yOffset = yOffset + textHeight - textDescent;
       xOffset = deviceWidth / 2 + xOffset;
-      horizontalAlignment = QgsTextRenderer::AlignCenter;
+      horizontalAlignment = Qgis::TextHorizontalAlignment::Center;
       break;
     case BottomCenter: // Bottom Center
       yOffset = deviceHeight - yOffset - textDescent;
       xOffset = deviceWidth / 2 + xOffset;
-      horizontalAlignment = QgsTextRenderer::AlignCenter;
+      horizontalAlignment = Qgis::TextHorizontalAlignment::Center;
       break;
     default:
-      QgsDebugMsg( QStringLiteral( "Unsupported placement index of %1" ).arg( static_cast<int>( mPlacement ) ) );
+      QgsDebugError( QStringLiteral( "Unsupported placement index of %1" ).arg( static_cast<int>( mPlacement ) ) );
   }
 
   //Paint label to canvas

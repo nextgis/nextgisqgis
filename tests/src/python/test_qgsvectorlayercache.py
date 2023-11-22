@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsVectorLayerCache.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -11,30 +10,17 @@ __date__ = '08/06/2017'
 __copyright__ = 'Copyright 2017, The QGIS Project'
 
 import qgis  # NOQA
-
-import os
-
-from qgis.PyQt.QtCore import QVariant, Qt, QDateTime, QDate, QTime
-from qgis.PyQt.QtGui import QPainter
-from qgis.PyQt.QtXml import QDomDocument
-
-from qgis.core import (QgsWkbTypes,
-                       QgsVectorLayer,
-                       QgsVectorLayerCache,
-                       QgsRectangle,
-                       QgsFeature,
-                       QgsFeatureRequest,
-                       QgsGeometry,
-                       QgsPointXY,
-                       QgsField,
-                       QgsFields,
-                       QgsCoordinateReferenceSystem,
-                       QgsProject,
-                       QgsPoint,
-                       NULL)
+from qgis.PyQt.QtCore import QDate, QDateTime, QTime
+from qgis.core import (
+    NULL,
+    QgsFeature,
+    QgsGeometry,
+    QgsVectorLayer,
+    QgsVectorLayerCache,
+)
 from qgis.testing import start_app, unittest
+
 from featuresourcetestbase import FeatureSourceTestCase
-from utilities import unitTestDataPath
 
 start_app()
 
@@ -49,6 +35,7 @@ class TestQgsVectorLayerCache(unittest.TestCase, FeatureSourceTestCase):
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super(TestQgsVectorLayerCache, cls).setUpClass()
         # Create test layer for FeatureSourceTestCase
         cls.vl = QgsVectorLayer(
             'Point?crs=epsg:4326&field=pk:integer&field=cnt:integer&field=name:string(0)&field=name2:string(0)&field=num_char:string&field=dt:datetime&field=date:date&field=time:time&key=pk',

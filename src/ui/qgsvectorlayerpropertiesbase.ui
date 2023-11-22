@@ -439,8 +439,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>653</width>
-                <height>679</height>
+                <width>336</width>
+                <height>562</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -733,8 +733,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>653</width>
-                <height>679</height>
+                <width>100</width>
+                <height>30</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_18">
@@ -950,8 +950,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>653</width>
-                <height>679</height>
+                <width>164</width>
+                <height>103</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_23">
@@ -1345,8 +1345,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>653</width>
-                <height>679</height>
+                <width>100</width>
+                <height>30</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_21">
@@ -1449,7 +1449,20 @@
                </widget>
               </item>
               <item row="1" column="0">
-               <widget class="QGroupBox" name="groupBox_2">
+               <widget class="QCheckBox" name="mEnableMapTips">
+                <property name="toolTip">
+                 <string>Indicates whether map tips are displayed for this layer or not</string>
+                </property>
+                <property name="text">
+                 <string>Enable map tips</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QGroupBox" name="mHtmlMapTipGroupBox">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
                   <horstretch>0</horstretch>
@@ -1460,7 +1473,45 @@
                  <string>HTML Map Tip</string>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_8">
-                 <item row="1" column="2">
+                 <item row="0" column="0" colspan="2">
+                  <widget class="QSplitter" name="mMapTipSplitter">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <widget class="QgsCodeEditorHTML" name="mMapTipWidget" native="true">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>100</width>
+                      <height>100</height>
+                     </size>
+                    </property>
+                   </widget>
+                   <widget class="QGroupBox" name="mMapTipPreviewContainer">
+                    <property name="minimumSize">
+                     <size>
+                      <width>100</width>
+                      <height>100</height>
+                     </size>
+                    </property>
+                    <property name="title">
+                     <string>Preview</string>
+                    </property>
+                   </widget>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
                   <widget class="QPushButton" name="mInsertExpressionButton">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1476,39 +1527,23 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="0" column="0" colspan="3">
-                  <widget class="QgsCodeEditorHTML" name="mMapTipWidget" native="true">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>100</height>
-                    </size>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="0" colspan="2">
-                  <widget class="QgsFieldExpressionWidget" name="mMapTipExpressionFieldWidget" native="true">
-                   <property name="focusPolicy">
-                    <enum>Qt::StrongFocus</enum>
-                   </property>
-                   <property name="toolTip">
-                    <string>The valid attribute names for this layer</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="0" colspan="3">
+                 <item row="2" column="0" colspan="2">
                   <widget class="QLabel" name="labelMapTipInfo">
                    <property name="text">
                     <string>The HTML map tips are shown when moving mouse over features of the currently selected layer when the 'Show Map Tips' action is toggled on. If no HTML code is set, the feature display name is used.</string>
                    </property>
                    <property name="wordWrap">
                     <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QgsFieldExpressionWidget" name="mMapTipExpressionFieldWidget" native="true">
+                   <property name="focusPolicy">
+                    <enum>Qt::StrongFocus</enum>
+                   </property>
+                   <property name="toolTip">
+                    <string>The valid attribute names for this layer</string>
                    </property>
                   </widget>
                  </item>
@@ -1547,8 +1582,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>689</width>
-                <height>665</height>
+                <width>695</width>
+                <height>552</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_32">
@@ -2106,8 +2141,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>343</width>
-                <height>800</height>
+                <width>374</width>
+                <height>815</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -2709,6 +2744,8 @@
   <tabstop>mButtonRemoveWmsDimension</tabstop>
  </tabstops>
  <resources>
+  <include location="../../images/images.qrc"/>
+  <include location="../../images/images.qrc"/>
   <include location="../../images/images.qrc"/>
  </resources>
  <connections>

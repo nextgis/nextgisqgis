@@ -1,0 +1,15 @@
+--- a/src/app/qgspluginregistry.cpp	2023-08-22 11:32:52.683350866 +0300
++++ b/src/app/qgspluginregistry.cpp	2023-08-28 21:32:16.783599094 +0300
+@@ -570,6 +570,12 @@
+     corePlugins << QStringLiteral( "MetaSearch" );
+     corePlugins << QStringLiteral( "grassprovider" );
+ 
++    // NextGIS plugins
++    corePlugins << "qtiles";
++    corePlugins << "quick_map_services";
++    corePlugins << "nextgis_connect";
++    corePlugins << "ngq_rosreestr_tools";
++
+     // make the required core plugins enabled by default:
+     const auto constCorePlugins = corePlugins;
+     for ( const QString &corePlugin : constCorePlugins )

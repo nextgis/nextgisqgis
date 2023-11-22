@@ -18,12 +18,11 @@
 #include "qgspointclusterrenderer.h"
 #include "qgspointdisplacementrenderer.h"
 #include "qgssymbollayerutils.h"
-#include "qgspainteffectregistry.h"
-#include "qgspainteffect.h"
 #include "qgsmarkersymbollayer.h"
 #include "qgsproperty.h"
 #include "qgsstyleentityvisitor.h"
 #include "qgsmarkersymbol.h"
+#include "qgsunittypes.h"
 
 #include <cmath>
 
@@ -62,7 +61,7 @@ QgsPointClusterRenderer *QgsPointClusterRenderer::clone() const
   return r;
 }
 
-void QgsPointClusterRenderer::drawGroup( QPointF centerPoint, QgsRenderContext &context, const ClusteredGroup &group )
+void QgsPointClusterRenderer::drawGroup( QPointF centerPoint, QgsRenderContext &context, const ClusteredGroup &group ) const
 {
   if ( group.size() > 1 )
   {

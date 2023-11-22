@@ -71,6 +71,9 @@ Returns the layer id of the source layer.
 
 
 
+
+
+
   private:
     QgsVectorLayerFeatureSource( const QgsVectorLayerFeatureSource &other );
 };
@@ -192,7 +195,7 @@ the QgsVectorLayerSelectedFeatureSource will not be reflected.
 
     virtual QgsFields fields() const;
 
-    virtual QgsWkbTypes::Type wkbType() const;
+    virtual Qgis::WkbType wkbType() const;
 
     virtual long long featureCount() const;
 

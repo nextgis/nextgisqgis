@@ -354,7 +354,8 @@ QgsMeshSpatialIndex::QgsMeshSpatialIndex( const QgsMesh &mesh, QgsFeedback *feed
 }
 
 QgsMeshSpatialIndex::QgsMeshSpatialIndex( const QgsMeshSpatialIndex &other ) //NOLINT
-  : d( other.d )
+  : mElementType( other.mElementType )
+  , d( other.d )
 {
 }
 
@@ -363,7 +364,10 @@ QgsMeshSpatialIndex:: ~QgsMeshSpatialIndex() = default; //NOLINT
 QgsMeshSpatialIndex &QgsMeshSpatialIndex::operator=( const QgsMeshSpatialIndex &other )
 {
   if ( this != &other )
+  {
+    mElementType = other.mElementType;
     d = other.d;
+  }
   return *this;
 }
 
@@ -418,16 +422,16 @@ void QgsMeshSpatialIndex::addFace( int faceIndex, const QgsMesh &mesh )
   catch ( Tools::Exception &e )
   {
     Q_UNUSED( e )
-    QgsDebugMsg( QStringLiteral( "Tools::Exception caught: " ).arg( e.what().c_str() ) );
+    QgsDebugError( QStringLiteral( "Tools::Exception caught: " ).arg( e.what().c_str() ) );
   }
   catch ( const std::exception &e )
   {
     Q_UNUSED( e )
-    QgsDebugMsg( QStringLiteral( "std::exception caught: " ).arg( e.what() ) );
+    QgsDebugError( QStringLiteral( "std::exception caught: " ).arg( e.what() ) );
   }
   catch ( ... )
   {
-    QgsDebugMsg( QStringLiteral( "unknown spatial index exception caught" ) );
+    QgsDebugError( QStringLiteral( "unknown spatial index exception caught" ) );
   }
 }
 

@@ -25,6 +25,7 @@ class QgsWebView;
 
 #include <QWidget>
 #include <QUrl>
+#include <QTimer>
 #include "qgsfeature.h"
 #include "qgis_gui.h"
 
@@ -70,23 +71,33 @@ class GUI_EXPORT QgsMapTip : public QWidget
      */
     void showMapTip( QgsMapLayer *thepLayer,
                      QgsPointXY &mapPosition,
-                     QPoint &pixelPosition,
+                     const QPoint &pixelPosition,
                      QgsMapCanvas *mpMapCanvas );
 
     /**
      * Clear the current maptip if it exists
      * \param mpMapCanvas the canvas from which the tip should be cleared.
+     * \param msDelay optional time in ms to defer clearing the maptip (since QGIS 3.26)
      */
-    void clear( QgsMapCanvas *mpMapCanvas = nullptr );
+    void clear( QgsMapCanvas *mpMapCanvas = nullptr, int msDelay = 0 );
 
     /**
-     * Apply font family and size to match user settings
+     * Returns the html that would be displayed in a maptip for a given layer. If the layer has features, the first feature is used
+     * to evaluate the expressions.
+     * \since QGIS 3.32
      */
-    void applyFontSettings();
+    static QString vectorMapTipPreviewText( QgsMapLayer *layer, QgsMapCanvas *mapCanvas, const QString &mapTemplate, const QString &displayExpression );
+
+    /**
+     * Returns the html that would be displayed in a maptip for a given layer. The center pixel of the raster is used to
+     * evaluate the expressions.
+     * \since QGIS 3.32
+     */
+    static QString rasterMapTipPreviewText( QgsMapLayer *layer, QgsMapCanvas *mapCanvas, const QString &mapTemplate );
 
   private slots:
     void onLinkClicked( const QUrl &url );
-    void resizeContent();
+    void resizeAndMoveToolTip();
 
   private:
     // Fetch the feature to use for the maptip text.
@@ -95,18 +106,27 @@ class GUI_EXPORT QgsMapTip : public QWidget
                           QgsPointXY &mapPosition,
                           QgsMapCanvas *mapCanvas );
 
-    QString replaceText(
-      QString displayText, QgsVectorLayer *layer, QgsFeature &feat );
+    // Sample the raster and get the maptip text
+    QString fetchRaster( QgsMapLayer *layer,
+                         QgsPointXY &mapPosition,
+                         QgsMapCanvas *mapCanvas );
+
+    // Insert the raw map tip text into an HTML template and return the result
+    static QString htmlText( const QString &text, int maxWidth = -1 );
 
     // Flag to indicate if a maptip is currently being displayed
     bool mMapTipVisible;
 
-    QWidget *mWidget = nullptr;
     QgsWebView *mWebView = nullptr;
 
-    QString mFontFamily;
-    int mFontSize = 8;
+    static const int MARGIN_VALUE = 5;
 
-    const int MARGIN_VALUE = 5;
+    QTimer mDelayedClearTimer;
+
+    // Template for the actual HTML content that will be displayed in QgsWebView
+    static const QString sMapTipTemplate;
+
+    QPoint mPosition;
+    const QgsMapCanvas *mMapCanvas = nullptr;
 };
 #endif // QGSMAPTIP_H

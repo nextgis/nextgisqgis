@@ -18,7 +18,7 @@
 #include "qgsmapcanvasitem.h"
 #include "qgis_sip.h"
 #include "qgsgeometry.h"
-#include "qgscoordinatetransform.h"
+#include "qgscoordinatereferencesystem.h"
 
 #include <QBrush>
 #include <QVector>
@@ -30,6 +30,7 @@
 #include "qgis_gui.h"
 
 class QgsVectorLayer;
+class QgsMapLayer;
 class QPaintEvent;
 class QgsSymbol;
 
@@ -59,7 +60,13 @@ class GUI_EXPORT QgsRubberBand : public QgsMapCanvasItem
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
     if ( dynamic_cast<QgsRubberBand *>( sipCpp ) )
+    {
       sipType = sipType_QgsRubberBand;
+      // We need to tweak the pointer as sip believes it is single inheritance
+      // from QgsMapCanvasItem, but the raw address of QgsRubberBand (sipCpp)
+      // is actually a QObject
+      *sipCppRet = dynamic_cast<QgsRubberBand *>( sipCpp );
+    }
     else
       sipType = nullptr;
     SIP_END
@@ -131,9 +138,9 @@ class GUI_EXPORT QgsRubberBand : public QgsMapCanvasItem
      *         Its CRS will be used to map points onto screen coordinates.
      * The ownership is transferred to this canvas.
      *  \param geometryType Defines how the data should be drawn onto the screen.
-     *         QgsWkbTypes::LineGeometry, QgsWkbTypes::PolygonGeometry or QgsWkbTypes::PointGeometry
+     *         Qgis::GeometryType::Line, Qgis::GeometryType::Polygon or Qgis::GeometryType::Point
      */
-    QgsRubberBand( QgsMapCanvas *mapCanvas SIP_TRANSFERTHIS, QgsWkbTypes::GeometryType geometryType = QgsWkbTypes::LineGeometry );
+    QgsRubberBand( QgsMapCanvas *mapCanvas SIP_TRANSFERTHIS, Qgis::GeometryType geometryType = Qgis::GeometryType::Line );
     ~QgsRubberBand() override;
 
     /**
@@ -237,7 +244,7 @@ class GUI_EXPORT QgsRubberBand : public QgsMapCanvasItem
      * Sets the representation type according to geometryType.
      *  \param geometryType Defines how the data should be drawn onto the screen. (Use Qgis::Line, Qgis::Polygon or Qgis::Point)
      */
-    void reset( QgsWkbTypes::GeometryType geometryType = QgsWkbTypes::LineGeometry );
+    void reset( Qgis::GeometryType geometryType = Qgis::GeometryType::Line );
 
     /**
      * Adds a vertex to the rubberband and update canvas.
@@ -461,7 +468,7 @@ class GUI_EXPORT QgsRubberBand : public QgsMapCanvasItem
      * Nested lists used for multitypes
      */
     QVector< QVector< QVector <QgsPointXY> > > mPoints;
-    QgsWkbTypes::GeometryType mGeometryType = QgsWkbTypes::PolygonGeometry;
+    Qgis::GeometryType mGeometryType = Qgis::GeometryType::Polygon;
     double mTranslationOffsetX = 0.0;
     double mTranslationOffsetY = 0.0;
 

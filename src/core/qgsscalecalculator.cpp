@@ -18,10 +18,12 @@
 
 #include <cmath>
 #include "qgslogger.h"
-#include "qgsrectangle.h"
 #include "qgsscalecalculator.h"
+#include "qgsrectangle.h"
+#include "qgsunittypes.h"
+#include <QSizeF>
 
-QgsScaleCalculator::QgsScaleCalculator( double dpi, QgsUnitTypes::DistanceUnit mapUnits )
+QgsScaleCalculator::QgsScaleCalculator( double dpi, Qgis::DistanceUnit mapUnits )
   : mDpi( dpi )
   , mMapUnits( mapUnits )
 {}
@@ -30,20 +32,20 @@ void QgsScaleCalculator::setDpi( double dpi )
 {
   mDpi = dpi;
 }
-double QgsScaleCalculator::dpi()
+double QgsScaleCalculator::dpi() const
 {
   return mDpi;
 }
 
-void QgsScaleCalculator::setMapUnits( QgsUnitTypes::DistanceUnit mapUnits )
+void QgsScaleCalculator::setMapUnits( Qgis::DistanceUnit mapUnits )
 {
-  QgsDebugMsgLevel( QStringLiteral( "Map units set to %1" ).arg( QString::number( mapUnits ) ), 3 );
+  QgsDebugMsgLevel( QStringLiteral( "Map units set to %1" ).arg( qgsEnumValueToKey( mapUnits ) ), 3 );
   mMapUnits = mapUnits;
 }
 
-QgsUnitTypes::DistanceUnit QgsScaleCalculator::mapUnits() const
+Qgis::DistanceUnit QgsScaleCalculator::mapUnits() const
 {
-  QgsDebugMsgLevel( QStringLiteral( "Map units returned as %1" ).arg( QString::number( mMapUnits ) ), 4 );
+  QgsDebugMsgLevel( QStringLiteral( "Map units returned as %1" ).arg( qgsEnumValueToKey( mMapUnits ) ), 4 );
   return mMapUnits;
 }
 
@@ -51,7 +53,7 @@ double QgsScaleCalculator::calculate( const QgsRectangle &mapExtent, double canv
 {
   if ( qgsDoubleNear( canvasWidth, 0. ) || qgsDoubleNear( mDpi, 0.0 ) )
   {
-    QgsDebugMsg( QStringLiteral( "Can't calculate scale from the input values" ) );
+    QgsDebugError( QStringLiteral( "Can't calculate scale from the input values" ) );
     return 0;
   }
 
@@ -68,7 +70,7 @@ QSizeF QgsScaleCalculator::calculateImageSize( const QgsRectangle &mapExtent, do
 {
   if ( qgsDoubleNear( scale, 0.0 ) || qgsDoubleNear( mDpi, 0.0 ) )
   {
-    QgsDebugMsg( QStringLiteral( "Can't calculate image size from the input values" ) );
+    QgsDebugError( QStringLiteral( "Can't calculate image size from the input values" ) );
     return QSizeF();
   }
   double conversionFactor = 0;
@@ -88,21 +90,30 @@ QSizeF QgsScaleCalculator::calculateImageSize( const QgsRectangle &mapExtent, do
 void QgsScaleCalculator::calculateMetrics( const QgsRectangle &mapExtent, double &delta, double &conversionFactor ) const
 {
   delta = mapExtent.xMaximum() - mapExtent.xMinimum();
+
   switch ( mMapUnits )
   {
-    case QgsUnitTypes::DistanceMeters:
-      // convert meters to inches
-      conversionFactor = 39.3700787;
+    case Qgis::DistanceUnit::Inches:
+      conversionFactor = 1;
       break;
-    case QgsUnitTypes::DistanceFeet:
-      conversionFactor = 12.0;
+
+    case Qgis::DistanceUnit::Meters:
+    case Qgis::DistanceUnit::Kilometers:
+    case Qgis::DistanceUnit::Feet:
+    case Qgis::DistanceUnit::Yards:
+    case Qgis::DistanceUnit::Millimeters:
+    case Qgis::DistanceUnit::Centimeters:
+    case Qgis::DistanceUnit::Miles:
+    case Qgis::DistanceUnit::NauticalMiles:
+      // convert to inches
+      conversionFactor = QgsUnitTypes::fromUnitToUnitFactor( mMapUnits, Qgis::DistanceUnit::Inches );
       break;
-    case QgsUnitTypes::DistanceNauticalMiles:
-      // convert nautical miles to inches
-      conversionFactor = 72913.4;
-      break;
-    default:
-    case QgsUnitTypes::DistanceDegrees:
+
+    case Qgis::DistanceUnit::Unknown:
+      // assume degrees to maintain old API
+      FALLTHROUGH
+
+    case Qgis::DistanceUnit::Degrees:
       // degrees require conversion to meters first
       conversionFactor = 39.3700787;
       delta = calculateGeographicDistance( mapExtent );

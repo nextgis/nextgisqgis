@@ -20,10 +20,11 @@
 #include <Qt3DRender/QTexture>
 #include <Qt3DRender/QMaterial>
 
-#include "qgsmarkersymbollayer.h"
 #include "qgs3dmapsettings.h"
 
 #define SIP_NO_FILE
+
+class QgsMarkerSymbol;
 
 /**
  * \ingroup 3d
@@ -39,6 +40,7 @@ class QgsPoint3DBillboardMaterial : public Qt3DRender::QMaterial
 
   public:
     QgsPoint3DBillboardMaterial();
+    ~QgsPoint3DBillboardMaterial() override;
 
     //! Set the billboard size.
     void setSize( const QSizeF size );

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for auth manager Basic Auth OGR connection credentials injection
 
@@ -12,16 +11,10 @@ the Free Software Foundation; either version 2 of the License, or
 
 from qgis.core import (
     QgsApplication,
-    QgsAuthManager,
     QgsAuthMethodConfig,
-    QgsDataSourceUri,
     QgsProviderRegistry,
 )
-
-from qgis.testing import (
-    start_app,
-    unittest,
-)
+from qgis.testing import start_app, unittest
 
 __author__ = 'Alessandro Pasotti'
 __date__ = '14/11/2017'
@@ -67,6 +60,7 @@ class TestAuthManager(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         """Run before all tests:
         Creates an auth configuration"""
         cls.username = 'username'
@@ -74,11 +68,6 @@ class TestAuthManager(unittest.TestCase):
         cls.dbname = 'test_basic'
         cls.hostname = 'localhost'
         cls.setUpAuth()
-
-    @classmethod
-    def tearDownClass(cls):
-        """Run after all tests"""
-        pass
 
     def setUp(self):
         """Run before each test."""
@@ -95,7 +84,7 @@ class TestAuthManager(unittest.TestCase):
         pr = QgsProviderRegistry.instance().createProvider('ogr', '')
         for uri, expanded in TEST_URIS.items():
             pr.setDataSourceUri(uri % self.authcfg)
-            self.assertTrue(expanded in pr.dataSourceUri(True), "%s != %s" % (expanded, pr.dataSourceUri(True)))
+            self.assertTrue(expanded in pr.dataSourceUri(True), f"{expanded} != {pr.dataSourceUri(True)}")
 
         # Test sublayers
         for uri, expanded in TEST_URIS.items():

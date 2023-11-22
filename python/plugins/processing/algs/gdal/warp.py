@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     self.py
@@ -29,14 +27,13 @@ from qgis.core import (QgsRasterFileWriter,
                        QgsProcessingParameterDefinition,
                        QgsProcessingParameterRasterLayer,
                        QgsProcessingParameterCrs,
-                       QgsProcessingParameterString,
                        QgsProcessingParameterNumber,
                        QgsProcessingParameterEnum,
                        QgsProcessingParameterBoolean,
                        QgsProcessingParameterExtent,
                        QgsProcessingParameterString,
                        QgsProcessingParameterRasterDestination,
-                       QgsProcessingUtils)
+                       )
 from processing.algs.gdal.GdalAlgorithm import GdalAlgorithm
 from processing.algs.gdal.GdalUtils import GdalUtils
 
@@ -76,7 +73,7 @@ class warp(GdalAlgorithm):
                         (self.tr('First Quartile'), 'q1'),
                         (self.tr('Third Quartile'), 'q3'))
 
-        self.TYPES = [self.tr('Use Input Layer Data Type'), 'Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
+        self.TYPES = [self.tr('Use Input Layer Data Type'), 'Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64', 'Int8']
 
         self.addParameter(QgsProcessingParameterRasterLayer(self.INPUT, self.tr('Input layer')))
         self.addParameter(QgsProcessingParameterCrs(self.SOURCE_CRS,
@@ -166,7 +163,7 @@ class warp(GdalAlgorithm):
         return 'gdalwarp'
 
     def tags(self):
-        tags = self.tr('transform,reproject,crs,srs').split(',')
+        tags = self.tr('transform,reproject,crs,srs,resample').split(',')
         tags.extend(super().tags())
         return tags
 
@@ -183,7 +180,7 @@ class warp(GdalAlgorithm):
             nodata = None
         resolution = self.parameterAsDouble(parameters, self.TARGET_RESOLUTION, context)
 
-        arguments = []
+        arguments = ['-overwrite']
         if sourceCrs.isValid():
             arguments.append('-s_srs')
             arguments.append(GdalUtils.gdal_crs_string(sourceCrs))
@@ -222,6 +219,9 @@ class warp(GdalAlgorithm):
 
         data_type = self.parameterAsEnum(parameters, self.DATA_TYPE, context)
         if data_type:
+            if self.TYPES[data_type] == 'Int8' and GdalUtils.version() < 3070000:
+                raise QgsProcessingException(self.tr('Int8 data type requires GDAL version 3.7 or later'))
+
             arguments.append('-ot ' + self.TYPES[data_type])
 
         out = self.parameterAsOutputLayer(parameters, self.OUTPUT, context)

@@ -27,6 +27,7 @@
 #include <QSqlDatabase>
 #include <QTcpSocket>
 #include <QUrl>
+#include <QRegularExpression>
 
 #ifdef Q_OS_MACX
 QgsAbout::QgsAbout( QWidget *parent )
@@ -76,8 +77,10 @@ void QgsAbout::init()
   if ( file.open( QIODevice::ReadOnly ) )
   {
     QTextStream stream( &file );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     // Always use UTF-8
     stream.setCodec( "UTF-8" );
+#endif
     QString line;
     while ( !stream.atEnd() )
     {
@@ -110,8 +113,10 @@ void QgsAbout::init()
   if ( file2.open( QIODevice::ReadOnly ) )
   {
     QTextStream stream( &file2 );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     // Always use UTF-8
     stream.setCodec( "UTF-8" );
+#endif
     QString line;
     while ( !stream.atEnd() )
     {
@@ -170,7 +175,7 @@ void QgsAbout::init()
     txtDonors->clear();
     txtDonors->document()->setDefaultStyleSheet( QgsApplication::reportStyleSheet() );
     txtDonors->setHtml( donorsHTML );
-    QgsDebugMsg( QStringLiteral( "donorsHTML:%1" ).arg( donorsHTML.toLatin1().constData() ) );
+    QgsDebugMsgLevel( QStringLiteral( "donorsHTML:%1" ).arg( donorsHTML.toLatin1().constData() ), 2 );
   }
 
   // read the TRANSLATORS file and populate the text widget
@@ -180,7 +185,9 @@ void QgsAbout::init()
     QString translatorHTML;
     QTextStream translatorStream( &translatorFile );
     // Always use UTF-8
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     translatorStream.setCodec( "UTF-8" );
+#endif
     const QString myStyle = QgsApplication::reportStyleSheet();
     translatorHTML += "<style>" + myStyle + "</style>";
     while ( !translatorStream.atEnd() )
@@ -188,7 +195,7 @@ void QgsAbout::init()
       translatorHTML += translatorStream.readLine();
     }
     txtTranslators->setHtml( translatorHTML );
-    QgsDebugMsg( QStringLiteral( "translatorHTML:%1" ).arg( translatorHTML.toLatin1().constData() ) );
+    QgsDebugMsgLevel( QStringLiteral( "translatorHTML:%1" ).arg( translatorHTML.toLatin1().constData() ), 2 );
   }
   setWhatsNew();
   setLicence();
@@ -297,11 +304,13 @@ QString QgsAbout::fileSystemSafe( const QString &fileName )
     }
     else
     {
-      result = result + QString( c );
+      result = result + QChar( c );
     }
   }
-  result.replace( QRegExp( "[^a-z0-9A-Z]" ), QStringLiteral( "_" ) );
-  QgsDebugMsg( result );
+
+  const thread_local QRegularExpression sNonAlphaNumericRx( QStringLiteral( "[^a-zA-Z0-9]" ) );
+  result.replace( sNonAlphaNumericRx, QStringLiteral( "_" ) );
+  QgsDebugMsgLevel( result, 3 );
 
   return result;
 }

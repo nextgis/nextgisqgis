@@ -13,6 +13,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+#include "qgsdatasourceuri.h"
 #include "qgsprojectbadlayerhandler.h"
 #include "qgslogger.h"
 #include "qgsmessagelog.h"
@@ -22,11 +23,12 @@
 
 void QgsProjectBadLayerHandler::handleBadLayers( const QList<QDomNode> &layers )
 {
-  QgsMessageLog::logMessage( QObject::tr( "%n unavailable layer(s) found:", nullptr, layers.size() ) );
-  const auto constLayers = layers;
-  for ( const QDomNode &layer : constLayers )
+  if ( !layers.empty() )
+    QgsMessageLog::logMessage( QObject::tr( "%n unavailable layer(s) found:", nullptr, layers.size() ) );
+
+  for ( const QDomNode &layer : layers )
   {
-    QgsMessageLog::logMessage( QObject::tr( " * %1" ).arg( dataSource( layer ) ) );
+    QgsMessageLog::logMessage( QObject::tr( " * %1" ).arg( QgsDataSourceUri::removePassword( dataSource( layer ) ) ) );
   }
 }
 
@@ -36,25 +38,25 @@ QgsProjectBadLayerHandler::DataType QgsProjectBadLayerHandler::dataType( const Q
 
   if ( type.isNull() )
   {
-    QgsDebugMsg( QStringLiteral( "cannot find ``type'' attribute" ) );
+    QgsDebugError( QStringLiteral( "cannot find ``type'' attribute" ) );
 
     return IS_BOGUS;
   }
 
   if ( "raster" == type )
   {
-    QgsDebugMsg( QStringLiteral( "is a raster" ) );
+    QgsDebugMsgLevel( QStringLiteral( "is a raster" ), 2 );
 
     return IS_RASTER;
   }
   else if ( "vector" == type )
   {
-    QgsDebugMsg( QStringLiteral( "is a vector" ) );
+    QgsDebugMsgLevel( QStringLiteral( "is a vector" ), 2 );
 
     return IS_VECTOR;
   }
 
-  QgsDebugMsg( "is unknown type " + type );
+  QgsDebugMsgLevel( "is unknown type " + type, 2 );
 
   return IS_BOGUS;
 }
@@ -65,7 +67,7 @@ QString QgsProjectBadLayerHandler::dataSource( const QDomNode &layerNode )
 
   if ( dataSourceNode.isNull() )
   {
-    QgsDebugMsg( QStringLiteral( "cannot find datasource node" ) );
+    QgsDebugError( QStringLiteral( "cannot find datasource node" ) );
 
     return QString();
   }
@@ -83,7 +85,7 @@ QgsProjectBadLayerHandler::ProviderType QgsProjectBadLayerHandler::providerType(
     {
       const QString ds = dataSource( layerNode );
 
-      QgsDebugMsg( "datasource is " + ds );
+      QgsDebugMsgLevel( "datasource is " + ds, 2 );
 
       if ( ds.contains( QLatin1String( "host=" ) ) )
       {
@@ -104,7 +106,7 @@ QgsProjectBadLayerHandler::ProviderType QgsProjectBadLayerHandler::providerType(
       return IS_FILE;
 
     default:
-      QgsDebugMsg( QStringLiteral( "unknown ``type'' attribute" ) );
+      QgsDebugError( QStringLiteral( "unknown ``type'' attribute" ) );
   }
 
   return IS_Unknown;
@@ -116,9 +118,9 @@ void QgsProjectBadLayerHandler::setDataSource( QDomNode &layerNode, const QStrin
   const QDomElement dataSourceElement = dataSourceNode.toElement();
   QDomText dataSourceText = dataSourceElement.firstChild().toText();
 
-  QgsDebugMsg( "datasource changed from " + dataSourceText.data() );
+  QgsDebugMsgLevel( "datasource changed from " + dataSourceText.data(), 2 );
 
   dataSourceText.setData( dataSource );
 
-  QgsDebugMsg( "to " + dataSourceText.data() );
+  QgsDebugMsgLevel( "to " + dataSourceText.data(), 2 );
 }

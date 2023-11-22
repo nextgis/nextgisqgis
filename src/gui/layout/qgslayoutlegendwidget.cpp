@@ -20,8 +20,8 @@
 #include "qgslayoutlegendlayersdialog.h"
 #include "qgslayoutitemwidget.h"
 #include "qgslayoutitemmap.h"
-#include "qgslayout.h"
 #include "qgsguiutils.h"
+#include "qgslayoutdesignerinterface.h"
 
 #include "qgsapplication.h"
 #include "qgslayertree.h"
@@ -31,18 +31,16 @@
 #include "qgslegendrenderer.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayerlegend.h"
-#include "qgsproject.h"
 #include "qgsrenderer.h"
 #include "qgsvectorlayer.h"
 #include "qgslayoutatlas.h"
 #include "qgslayoutitemlegend.h"
 #include "qgslayoutmeasurementconverter.h"
-#include "qgsunittypes.h"
 #include "qgsexpressionbuilderdialog.h"
 #include "qgsexpressioncontextutils.h"
-#include "qgslegendpatchshapewidget.h"
-#include "qgslayertreefilterproxymodel.h"
 #include "qgscolorramplegendnodewidget.h"
+#include "qgssymbol.h"
+#include "qgslayoutundostack.h"
 
 #include <QMenu>
 #include <QMessageBox>
@@ -104,10 +102,8 @@ QgsLayoutLegendWidget::QgsLayoutLegendWidget( QgsLayoutItemLegend *legend, QgsMa
   connect( mSymbolSpaceSpinBox, static_cast < void ( QDoubleSpinBox::* )( double ) > ( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutLegendWidget::mSymbolSpaceSpinBox_valueChanged );
   connect( mSymbolSideSpaceSpinBox, static_cast < void ( QDoubleSpinBox::* )( double ) > ( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutLegendWidget::spaceSymbolSideChanged );
   connect( mIconLabelSpaceSpinBox, static_cast < void ( QDoubleSpinBox::* )( double ) > ( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutLegendWidget::mIconLabelSpaceSpinBox_valueChanged );
-  connect( mFontColorButton, &QgsColorButton::colorChanged, this, &QgsLayoutLegendWidget::mFontColorButton_colorChanged );
   connect( mBoxSpaceSpinBox, static_cast < void ( QDoubleSpinBox::* )( double ) > ( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutLegendWidget::mBoxSpaceSpinBox_valueChanged );
   connect( mColumnSpaceSpinBox, static_cast < void ( QDoubleSpinBox::* )( double ) > ( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutLegendWidget::mColumnSpaceSpinBox_valueChanged );
-  connect( mLineSpacingSpinBox, static_cast < void ( QDoubleSpinBox::* )( double ) > ( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutLegendWidget::mLineSpacingSpinBox_valueChanged );
   connect( mCheckBoxAutoUpdate, &QCheckBox::stateChanged, this, [ = ]( int state ) { mCheckBoxAutoUpdate_stateChanged( state ); } );
   connect( mCheckboxResizeContents, &QCheckBox::toggled, this, &QgsLayoutLegendWidget::mCheckboxResizeContents_toggled );
   connect( mRasterStrokeGroupBox, &QgsCollapsibleGroupBoxBasic::toggled, this, &QgsLayoutLegendWidget::mRasterStrokeGroupBox_toggled );
@@ -126,12 +122,21 @@ QgsLayoutLegendWidget::QgsLayoutLegendWidget( QgsLayoutItemLegend *legend, QgsMa
   connect( mAddGroupToolButton, &QToolButton::clicked, this, &QgsLayoutLegendWidget::mAddGroupToolButton_clicked );
   connect( mFilterLegendByAtlasCheckBox, &QCheckBox::toggled, this, &QgsLayoutLegendWidget::mFilterLegendByAtlasCheckBox_toggled );
   connect( mItemTreeView, &QgsLayerTreeView::doubleClicked, this, &QgsLayoutLegendWidget::mItemTreeView_doubleClicked );
+
+  connect( mFilterByMapCheckBox, &QCheckBox::toggled, mButtonLinkedMaps, &QWidget::setEnabled );
+  mButtonLinkedMaps->setEnabled( false );
+  connect( mButtonLinkedMaps, &QToolButton::clicked, this, [ = ]
+  {
+    mMapFilteringWidget = new QgsLayoutLegendMapFilteringWidget( mLegend );
+    openPanel( mMapFilteringWidget );
+  } );
+
   setPanelTitle( tr( "Legend Properties" ) );
 
-  mTitleFontButton->setMode( QgsFontButton::ModeQFont );
-  mGroupFontButton->setMode( QgsFontButton::ModeQFont );
-  mLayerFontButton->setMode( QgsFontButton::ModeQFont );
-  mItemFontButton->setMode( QgsFontButton::ModeQFont );
+  mTitleFontButton->setMode( QgsFontButton::ModeTextRenderer );
+  mGroupFontButton->setMode( QgsFontButton::ModeTextRenderer );
+  mLayerFontButton->setMode( QgsFontButton::ModeTextRenderer );
+  mItemFontButton->setMode( QgsFontButton::ModeTextRenderer );
 
   mTitleAlignCombo->setAvailableAlignments( Qt::AlignLeft | Qt::AlignHCenter | Qt::AlignRight );
   mGroupAlignCombo->setAvailableAlignments( Qt::AlignLeft | Qt::AlignHCenter | Qt::AlignRight );
@@ -168,9 +173,6 @@ QgsLayoutLegendWidget::QgsLayoutLegendWidget( QgsLayoutItemLegend *legend, QgsMa
   mExpressionFilterButton->setIconSize( QgsGuiUtils::iconSize( true ) );
   mLayerExpressionButton->setIconSize( QgsGuiUtils::iconSize( true ) );
 
-  mFontColorButton->setColorDialogTitle( tr( "Select Font Color" ) );
-  mFontColorButton->setContext( QStringLiteral( "composer" ) );
-
   mRasterStrokeColorButton->setColorDialogTitle( tr( "Select Stroke Color" ) );
   mRasterStrokeColorButton->setAllowOpacity( true );
   mRasterStrokeColorButton->setContext( QStringLiteral( "composer " ) );
@@ -197,6 +199,24 @@ QgsLayoutLegendWidget::QgsLayoutLegendWidget( QgsLayoutItemLegend *legend, QgsMa
   }
   connect( &legend->layout()->reportContext(), &QgsLayoutReportContext::layerChanged, this, &QgsLayoutLegendWidget::updateFilterLegendByAtlasButton );
 
+  mTitleFontButton->registerExpressionContextGenerator( this );
+  mGroupFontButton->registerExpressionContextGenerator( this );
+  mLayerFontButton->registerExpressionContextGenerator( this );
+  mItemFontButton->registerExpressionContextGenerator( this );
+  mExpressionFilterButton->registerExpressionContextGenerator( this );
+
+  mTitleFontButton->setLayer( coverageLayer() );
+  mGroupFontButton->setLayer( coverageLayer() );
+  mLayerFontButton->setLayer( coverageLayer() );
+  mItemFontButton->setLayer( coverageLayer() );
+  if ( mLegend->layout() )
+  {
+    connect( &mLegend->layout()->reportContext(), &QgsLayoutReportContext::layerChanged, mTitleFontButton, &QgsFontButton::setLayer );
+    connect( &mLegend->layout()->reportContext(), &QgsLayoutReportContext::layerChanged, mGroupFontButton, &QgsFontButton::setLayer );
+    connect( &mLegend->layout()->reportContext(), &QgsLayoutReportContext::layerChanged, mLayerFontButton, &QgsFontButton::setLayer );
+    connect( &mLegend->layout()->reportContext(), &QgsLayoutReportContext::layerChanged, mItemFontButton, &QgsFontButton::setLayer );
+  }
+
   registerDataDefinedButton( mLegendTitleDDBtn, QgsLayoutObject::LegendTitle );
   registerDataDefinedButton( mColumnsDDBtn, QgsLayoutObject::LegendColumnCount );
 
@@ -216,6 +236,15 @@ void QgsLayoutLegendWidget::setMasterLayout( QgsMasterLayoutInterface *masterLay
     mItemPropertiesWidget->setMasterLayout( masterLayout );
 }
 
+void QgsLayoutLegendWidget::setDesignerInterface( QgsLayoutDesignerInterface *iface )
+{
+  QgsLayoutItemBaseWidget::setDesignerInterface( iface );
+  mTitleFontButton->setMessageBar( iface->messageBar() );
+  mGroupFontButton->setMessageBar( iface->messageBar() );
+  mLayerFontButton->setMessageBar( iface->messageBar() );
+  mItemFontButton->setMessageBar( iface->messageBar() );
+}
+
 void QgsLayoutLegendWidget::setGuiElements()
 {
   if ( !mLegend )
@@ -231,6 +260,7 @@ void QgsLayoutLegendWidget::setGuiElements()
   whileBlocking( mItemAlignCombo )->setCurrentAlignment( mLegend->style( QgsLegendStyle::SymbolLabel ).alignment() );
   whileBlocking( mArrangementCombo )->setCurrentAlignment( mLegend->symbolAlignment() );
   mFilterByMapCheckBox->setChecked( mLegend->legendFilterByMapEnabled() );
+  mButtonLinkedMaps->setEnabled( mLegend->legendFilterByMapEnabled() );
   mColumnCountSpinBox->setValue( mLegend->columnCount() );
   mSplitLayerCheckBox->setChecked( mLegend->splitLayer() );
   mEqualColumnWidthCheckBox->setChecked( mLegend->equalColumnWidth() );
@@ -255,7 +285,6 @@ void QgsLayoutLegendWidget::setGuiElements()
   mSymbolSideSpaceSpinBox->setValue( mLegend->style( QgsLegendStyle::Symbol ).margin( QgsLegendStyle::Left ) );
   mBoxSpaceSpinBox->setValue( mLegend->boxSpace() );
   mColumnSpaceSpinBox->setValue( mLegend->columnSpace() );
-  mLineSpacingSpinBox->setValue( mLegend->lineSpacing() );
 
   mRasterStrokeGroupBox->setChecked( mLegend->drawRasterStroke() );
   mRasterStrokeWidthSpinBox->setValue( mLegend->rasterStrokeWidth() );
@@ -269,11 +298,10 @@ void QgsLayoutLegendWidget::setGuiElements()
 
   QgsLayoutItemMap *map = mLegend->linkedMap();
   mMapComboBox->setItem( map );
-  mFontColorButton->setColor( mLegend->fontColor() );
-  mTitleFontButton->setCurrentFont( mLegend->style( QgsLegendStyle::Title ).font() );
-  mGroupFontButton->setCurrentFont( mLegend->style( QgsLegendStyle::Group ).font() );
-  mLayerFontButton->setCurrentFont( mLegend->style( QgsLegendStyle::Subgroup ).font() );
-  mItemFontButton->setCurrentFont( mLegend->style( QgsLegendStyle::SymbolLabel ).font() );
+  mTitleFontButton->setTextFormat( mLegend->style( QgsLegendStyle::Title ).textFormat() );
+  mGroupFontButton->setTextFormat( mLegend->style( QgsLegendStyle::Group ).textFormat() );
+  mLayerFontButton->setTextFormat( mLegend->style( QgsLegendStyle::Subgroup ).textFormat() );
+  mItemFontButton->setTextFormat( mLegend->style( QgsLegendStyle::SymbolLabel ).textFormat() );
 
   blockAllSignals( false );
 
@@ -612,7 +640,7 @@ void QgsLayoutLegendWidget::titleFontChanged()
   if ( mLegend )
   {
     mLegend->beginCommand( tr( "Change Title Font" ), QgsLayoutItem::UndoLegendTitleFont );
-    mLegend->setStyleFont( QgsLegendStyle::Title, mTitleFontButton->currentFont() );
+    mLegend->rstyle( QgsLegendStyle::Title ).setTextFormat( mTitleFontButton->textFormat() );
     mLegend->adjustBoxSize();
     mLegend->update();
     mLegend->endCommand();
@@ -624,7 +652,7 @@ void QgsLayoutLegendWidget::groupFontChanged()
   if ( mLegend )
   {
     mLegend->beginCommand( tr( "Change Group Font" ), QgsLayoutItem::UndoLegendGroupFont );
-    mLegend->setStyleFont( QgsLegendStyle::Group, mGroupFontButton->currentFont() );
+    mLegend->rstyle( QgsLegendStyle::Group ).setTextFormat( mGroupFontButton->textFormat() );
     mLegend->adjustBoxSize();
     mLegend->update();
     mLegend->endCommand();
@@ -636,7 +664,7 @@ void QgsLayoutLegendWidget::layerFontChanged()
   if ( mLegend )
   {
     mLegend->beginCommand( tr( "Change Layer Font" ), QgsLayoutItem::UndoLegendLayerFont );
-    mLegend->setStyleFont( QgsLegendStyle::Subgroup, mLayerFontButton->currentFont() );
+    mLegend->rstyle( QgsLegendStyle::Subgroup ).setTextFormat( mLayerFontButton->textFormat() );
     mLegend->adjustBoxSize();
     mLegend->update();
     mLegend->endCommand();
@@ -648,7 +676,7 @@ void QgsLayoutLegendWidget::itemFontChanged()
   if ( mLegend )
   {
     mLegend->beginCommand( tr( "Change Item Font" ), QgsLayoutItem::UndoLegendItemFont );
-    mLegend->setStyleFont( QgsLegendStyle::SymbolLabel, mItemFontButton->currentFont() );
+    mLegend->rstyle( QgsLegendStyle::SymbolLabel ).setTextFormat( mItemFontButton->textFormat() );
     mLegend->adjustBoxSize();
     mLegend->update();
     mLegend->endCommand();
@@ -665,19 +693,6 @@ void QgsLayoutLegendWidget::spaceBelowSubGroupHeadingChanged( double space )
     mLegend->update();
     mLegend->endCommand();
   }
-}
-
-void QgsLayoutLegendWidget::mFontColorButton_colorChanged( const QColor &newFontColor )
-{
-  if ( !mLegend )
-  {
-    return;
-  }
-
-  mLegend->beginCommand( tr( "Change Font Color" ), QgsLayoutItem::UndoLegendFontColor );
-  mLegend->setFontColor( newFontColor );
-  mLegend->update();
-  mLegend->endCommand();
 }
 
 void QgsLayoutLegendWidget::mBoxSpaceSpinBox_valueChanged( double d )
@@ -698,18 +713,6 @@ void QgsLayoutLegendWidget::mColumnSpaceSpinBox_valueChanged( double d )
   {
     mLegend->beginCommand( tr( "Change Column Space" ), QgsLayoutItem::UndoLegendColumnSpace );
     mLegend->setColumnSpace( d );
-    mLegend->adjustBoxSize();
-    mLegend->update();
-    mLegend->endCommand();
-  }
-}
-
-void QgsLayoutLegendWidget::mLineSpacingSpinBox_valueChanged( double d )
-{
-  if ( mLegend )
-  {
-    mLegend->beginCommand( tr( "Change Line Space" ), QgsLayoutItem::UndoLegendLineSpacing );
-    mLegend->setLineSpacing( d );
     mLegend->adjustBoxSize();
     mLegend->update();
     mLegend->endCommand();
@@ -815,8 +818,7 @@ void QgsLayoutLegendWidget::mCheckBoxAutoUpdate_stateChanged( int state, bool us
     mLegend->beginCommand( tr( "Change Auto Update" ) );
 
     mLegend->setAutoUpdateModel( state == Qt::Checked );
-
-    mLegend->updateFilterByMap();
+    mLegend->update();
     mLegend->endCommand();
   }
 
@@ -853,7 +855,7 @@ void QgsLayoutLegendWidget::composerMapChanged( QgsLayoutItem *item )
   {
     mLegend->beginCommand( tr( "Change Legend Map" ) );
     mLegend->setLinkedMap( map );
-    mLegend->updateFilterByMap();
+    mLegend->update();
     mLegend->endCommand();
 
     setLegendMapViewData();
@@ -871,7 +873,7 @@ void QgsLayoutLegendWidget::mCheckboxResizeContents_toggled( bool checked )
   mLegend->setResizeToContents( checked );
   if ( checked )
     mLegend->adjustBoxSize();
-  mLegend->updateFilterByMap();
+  mLegend->update();
   mLegend->endCommand();
 }
 
@@ -1188,7 +1190,13 @@ void QgsLayoutLegendWidget::mLayerExpressionButton_clicked()
 
   legendContext.setHighlightedVariables( highlighted );
 
-  QgsExpressionBuilderDialog expressiondialog( vl, currentExpression, nullptr, QStringLiteral( "generic" ), legendContext );
+  // Passing the vector layer to expression dialog exposes the fields, but we still want generic
+  // layer variables
+  QgsExpressionContextScope *limitedLayerScope { QgsExpressionContextUtils::layerScope( vl ) };
+  limitedLayerScope->setFields( QgsFields() );
+  legendContext.appendScope( limitedLayerScope );
+
+  QgsExpressionBuilderDialog expressiondialog( nullptr, currentExpression, nullptr, QStringLiteral( "generic" ), legendContext );
   if ( expressiondialog.exec() )
     layerNode->setLabelExpression( expressiondialog.expressionText() );
 
@@ -1235,7 +1243,7 @@ void QgsLayoutLegendWidget::updateLegend()
     // this will reset the model completely, losing any changes
     mLegend->setAutoUpdateModel( true );
     mLegend->setAutoUpdateModel( false );
-    mLegend->updateFilterByMap();
+    mLegend->update();
     mLegend->endCommand();
   }
 }
@@ -1244,6 +1252,12 @@ void QgsLayoutLegendWidget::setReportTypeString( const QString &string )
 {
   mFilterLegendByAtlasCheckBox->setText( tr( "Only show items inside current %1 feature" ).arg( string ) );
   mFilterLegendByAtlasCheckBox->setToolTip( tr( "Filter out legend elements that lie outside the current %1 feature." ).arg( string ) );
+}
+
+QgsExpressionContext QgsLayoutLegendWidget::createExpressionContext() const
+{
+  QgsExpressionContext context = mLegend->createExpressionContext();
+  return context;
 }
 
 bool QgsLayoutLegendWidget::setNewItem( QgsLayoutItem *item )
@@ -1258,6 +1272,9 @@ bool QgsLayoutLegendWidget::setNewItem( QgsLayoutItem *item )
 
   mLegend = qobject_cast< QgsLayoutItemLegend * >( item );
   mItemPropertiesWidget->setItem( mLegend );
+
+  if ( mMapFilteringWidget )
+    mMapFilteringWidget->setItem( mLegend );
 
   if ( mLegend )
   {
@@ -1298,7 +1315,6 @@ void QgsLayoutLegendWidget::blockAllSignals( bool b )
   mIconLabelSpaceSpinBox->blockSignals( b );
   mBoxSpaceSpinBox->blockSignals( b );
   mColumnSpaceSpinBox->blockSignals( b );
-  mFontColorButton->blockSignals( b );
   mRasterStrokeGroupBox->blockSignals( b );
   mRasterStrokeColorButton->blockSignals( b );
   mRasterStrokeWidthSpinBox->blockSignals( b );
@@ -1312,7 +1328,6 @@ void QgsLayoutLegendWidget::blockAllSignals( bool b )
   mLayerFontButton->blockSignals( b );
   mItemFontButton->blockSignals( b );
   mWrapCharLineEdit->blockSignals( b );
-  mLineSpacingSpinBox->blockSignals( b );
 }
 
 void QgsLayoutLegendWidget::selectedChanged( const QModelIndex &current, const QModelIndex &previous )
@@ -1376,7 +1391,7 @@ void QgsLayoutLegendWidget::setCurrentNodeStyleFromAction()
     return;
 
   QgsLegendRenderer::setNodeLegendStyle( mItemTreeView->currentNode(), static_cast< QgsLegendStyle::Style >( a->data().toInt() ) );
-  mLegend->updateFilterByMap();
+  mLegend->update();
 }
 
 void QgsLayoutLegendWidget::setLegendMapViewData()
@@ -1386,8 +1401,8 @@ void QgsLayoutLegendWidget::setLegendMapViewData()
     int dpi = qt_defaultDpiX();
     QgsLayoutMeasurementConverter measurementConverter = QgsLayoutMeasurementConverter();
     measurementConverter.setDpi( dpi );
-    double mapWidth = measurementConverter.convert( mLegend->linkedMap()->sizeWithUnits(), QgsUnitTypes::LayoutPixels ).width();
-    double mapHeight = measurementConverter.convert( mLegend->linkedMap()->sizeWithUnits(), QgsUnitTypes::LayoutPixels ).height();
+    double mapWidth = measurementConverter.convert( mLegend->linkedMap()->sizeWithUnits(), Qgis::LayoutUnit::Pixels ).width();
+    double mapHeight = measurementConverter.convert( mLegend->linkedMap()->sizeWithUnits(), Qgis::LayoutUnit::Pixels ).height();
     double mapUnitsPerPixelX = mLegend->linkedMap()->extent().width() / mapWidth;
     double mapUnitsPerPixelY = mLegend->linkedMap()->extent().height() / mapHeight;
     mLegend->model()->setLegendMapViewData( ( mapUnitsPerPixelX > mapUnitsPerPixelY ? mapUnitsPerPixelX : mapUnitsPerPixelY ), dpi, mLegend->linkedMap()->scale() );
@@ -1398,7 +1413,7 @@ void QgsLayoutLegendWidget::updateFilterLegendByAtlasButton()
 {
   if ( QgsLayoutAtlas *atlas = layoutAtlas() )
   {
-    mFilterLegendByAtlasCheckBox->setEnabled( atlas->enabled() && mLegend->layout()->reportContext().layer() && mLegend->layout()->reportContext().layer()->geometryType() == QgsWkbTypes::PolygonGeometry );
+    mFilterLegendByAtlasCheckBox->setEnabled( atlas->enabled() && mLegend->layout()->reportContext().layer() && mLegend->layout()->reportContext().layer()->geometryType() == Qgis::GeometryType::Polygon );
   }
 }
 
@@ -1498,7 +1513,7 @@ QgsLayoutLegendNodeWidget::QgsLayoutLegendNodeWidget( QgsLayoutItemLegend *legen
   {
     currentLabel = mLayer->name();
     QVariant v = mLayer->customProperty( QStringLiteral( "legend/title-label" ) );
-    if ( !v.isNull() )
+    if ( !QgsVariantUtils::isNull( v ) )
       currentLabel = v.toString();
     mColumnBreakBeforeCheckBox->setChecked( mLayer->customProperty( QStringLiteral( "legend/column-break" ) ).toInt() );
 
@@ -1574,19 +1589,19 @@ QgsLayoutLegendNodeWidget::QgsLayoutLegendNodeWidget( QgsLayoutItemLegend *legen
     }
   }
 
-  if ( mLayer && mLayer->layer()  && mLayer->layer()->type() == QgsMapLayerType::VectorLayer )
+  if ( mLayer && mLayer->layer()  && mLayer->layer()->type() == Qgis::LayerType::Vector )
   {
     switch ( qobject_cast< QgsVectorLayer * >( mLayer->layer() )->geometryType() )
     {
-      case QgsWkbTypes::PolygonGeometry:
+      case Qgis::GeometryType::Polygon:
         mPatchShapeButton->setSymbolType( Qgis::SymbolType::Fill );
         break;
 
-      case QgsWkbTypes::LineGeometry:
+      case Qgis::GeometryType::Line:
         mPatchShapeButton->setSymbolType( Qgis::SymbolType::Line );
         break;
 
-      case QgsWkbTypes::PointGeometry:
+      case Qgis::GeometryType::Point:
         mPatchShapeButton->setSymbolType( Qgis::SymbolType::Marker );
         break;
 
@@ -1696,7 +1711,8 @@ void QgsLayoutLegendNodeWidget::labelChanged()
   }
 
   mLegend->adjustBoxSize();
-  mLegend->updateFilterByMap();
+  mLegend->invalidateCache();
+  mLegend->update();
   mLegend->endCommand();
 }
 
@@ -1722,7 +1738,7 @@ void QgsLayoutLegendNodeWidget::patchChanged()
   }
 
   mLegend->adjustBoxSize();
-  mLegend->updateFilterByMap();
+  mLegend->update();
   mLegend->endCommand();
 }
 
@@ -1794,7 +1810,7 @@ void QgsLayoutLegendNodeWidget::sizeChanged( double )
   }
 
   mLegend->adjustBoxSize();
-  mLegend->updateFilterByMap();
+  mLegend->update();
   mLegend->endCommand();
 }
 
@@ -1838,7 +1854,7 @@ void QgsLayoutLegendNodeWidget::customSymbolChanged()
   }
 
   mLegend->adjustBoxSize();
-  mLegend->updateFilterByMap();
+  mLegend->update();
   mLegend->endCommand();
 }
 
@@ -1851,7 +1867,7 @@ void QgsLayoutLegendNodeWidget::colorRampLegendChanged()
   mLegend->model()->refreshLayerLegend( mLayer );
 
   mLegend->adjustBoxSize();
-  mLegend->updateFilterByMap();
+  mLegend->update();
   mLegend->endCommand();
 }
 
@@ -1874,7 +1890,7 @@ void QgsLayoutLegendNodeWidget::columnBreakToggled( bool checked )
   }
 
   mLegend->adjustBoxSize();
-  mLegend->updateFilterByMap();
+  mLegend->update();
   mLegend->endCommand();
 }
 
@@ -1888,8 +1904,208 @@ void QgsLayoutLegendNodeWidget::columnSplitChanged()
   }
 
   mLegend->adjustBoxSize();
-  mLegend->updateFilterByMap();
+  mLegend->update();
   mLegend->endCommand();
 }
 
+//
+// QgsLayoutLegendMapFilteringWidget
+//
+
+QgsLayoutLegendMapFilteringWidget::QgsLayoutLegendMapFilteringWidget( QgsLayoutItemLegend *legend )
+  : QgsLayoutItemBaseWidget( nullptr, legend )
+  , mLegendItem( legend )
+{
+  setupUi( this );
+  setPanelTitle( tr( "Legend Filtering" ) );
+
+  setNewItem( legend );
+}
+
+bool QgsLayoutLegendMapFilteringWidget::setNewItem( QgsLayoutItem *item )
+{
+  if ( item->type() != QgsLayoutItemRegistry::LayoutLegend )
+    return false;
+
+  if ( mLegendItem )
+  {
+    disconnect( mLegendItem, &QgsLayoutObject::changed, this, &QgsLayoutLegendMapFilteringWidget::updateGuiElements );
+  }
+
+  mLegendItem = qobject_cast< QgsLayoutItemLegend * >( item );
+
+  if ( mLegendItem )
+  {
+    connect( mLegendItem, &QgsLayoutObject::changed, this, &QgsLayoutLegendMapFilteringWidget::updateGuiElements );
+  }
+
+  updateGuiElements();
+
+  return true;
+}
+
+void QgsLayoutLegendMapFilteringWidget::updateGuiElements()
+{
+  if ( mBlockUpdates )
+    return;
+
+  mBlockUpdates = true;
+
+  if ( mFilterMapItemsListView->model() )
+  {
+    QAbstractItemModel *oldModel = mFilterMapItemsListView->model();
+    mFilterMapItemsListView->setModel( nullptr );
+    oldModel->deleteLater();
+  }
+
+  QgsLayoutLegendMapFilteringModel *model = new QgsLayoutLegendMapFilteringModel( mLegendItem, mLegendItem->layout()->itemsModel(), mFilterMapItemsListView );
+  mFilterMapItemsListView->setModel( model );
+
+  mBlockUpdates = false;
+}
+
+//
+// QgsLayoutLegendMapFilteringModel
+//
+
+QgsLayoutLegendMapFilteringModel::QgsLayoutLegendMapFilteringModel( QgsLayoutItemLegend *legend, QgsLayoutModel *layoutModel, QObject *parent )
+  : QSortFilterProxyModel( parent )
+  , mLayoutModel( layoutModel )
+  , mLegendItem( legend )
+{
+  setSourceModel( layoutModel );
+}
+
+int QgsLayoutLegendMapFilteringModel::columnCount( const QModelIndex & ) const
+{
+  return 1;
+}
+
+QVariant QgsLayoutLegendMapFilteringModel::data( const QModelIndex &i, int role ) const
+{
+  if ( !i.isValid() )
+    return QVariant();
+
+  if ( i.column() != 0 )
+    return QVariant();
+
+  const QModelIndex sourceIndex = mapToSource( index( i.row(), QgsLayoutModel::ItemId, i.parent() ) );
+
+  QgsLayoutItemMap *mapItem = qobject_cast< QgsLayoutItemMap * >( mLayoutModel->itemFromIndex( mapToSource( i ) ) );
+  if ( !mapItem )
+  {
+    return QVariant();
+  }
+
+  switch ( role )
+  {
+    case Qt::CheckStateRole:
+      switch ( i.column() )
+      {
+        case 0:
+        {
+          if ( !mLegendItem )
+            return Qt::Unchecked;
+
+          return mLegendItem->filterByMapItems().contains( mapItem ) ? Qt::Checked : Qt::Unchecked;
+        }
+
+        default:
+          return QVariant();
+      }
+
+    default:
+      return mLayoutModel->data( sourceIndex, role );
+  }
+}
+
+bool QgsLayoutLegendMapFilteringModel::setData( const QModelIndex &index, const QVariant &value, int role )
+{
+  Q_UNUSED( role )
+
+  if ( !index.isValid() )
+    return false;
+
+  QgsLayoutItemMap *mapItem = qobject_cast< QgsLayoutItemMap * >( mLayoutModel->itemFromIndex( mapToSource( index ) ) );
+  if ( !mapItem || !mLegendItem )
+  {
+    return false;
+  }
+
+  mLegendItem->layout()->undoStack()->beginCommand( mLegendItem, tr( "Change Legend Linked Maps" ) );
+
+  QList< QgsLayoutItemMap * > linkedMaps = mLegendItem->filterByMapItems();
+  if ( value.toBool() )
+  {
+    if ( !linkedMaps.contains( mapItem ) )
+    {
+      linkedMaps.append( mapItem );
+      mLegendItem->setFilterByMapItems( linkedMaps );
+    }
+  }
+  else
+  {
+    linkedMaps.removeAll( mapItem );
+    mLegendItem->setFilterByMapItems( linkedMaps );
+  }
+  emit dataChanged( index, index, QVector<int>() << role );
+
+  mLegendItem->layout()->undoStack()->endCommand();
+  mLegendItem->invalidateCache();
+
+  return true;
+}
+
+Qt::ItemFlags QgsLayoutLegendMapFilteringModel::flags( const QModelIndex &index ) const
+{
+  Qt::ItemFlags flags = QSortFilterProxyModel::flags( index );
+
+  if ( ! index.isValid() )
+  {
+    return flags ;
+  }
+
+  QgsLayoutItemMap *mapItem = qobject_cast< QgsLayoutItemMap * >( mLayoutModel->itemFromIndex( mapToSource( index ) ) );
+  const bool isMainLinkedMapItem = mLegendItem ? ( mLegendItem->linkedMap() == mapItem ) : false;
+
+  // the main linked map item will always be considered checked in this panel.
+  // otherwise we have a potentially confusing user situation where they have selected a main linked map for their legend
+  // and enabled the filter by map option, but the filtering isn't applying to that main linked map (ie. things don't work
+  // as they did in < 3.32)
+  if ( !isMainLinkedMapItem )
+  {
+    flags |= Qt::ItemIsEnabled;
+  }
+  else
+  {
+    flags &= ~Qt::ItemIsEnabled;
+  }
+
+  switch ( index.column() )
+  {
+    case 0:
+      if ( !isMainLinkedMapItem )
+        return flags | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable;
+      else
+        return flags | Qt::ItemIsSelectable;
+
+    default:
+      return flags | Qt::ItemIsSelectable;
+  }
+}
+
+bool QgsLayoutLegendMapFilteringModel::filterAcceptsRow( int source_row, const QModelIndex &source_parent ) const
+{
+  QgsLayoutItem *item = mLayoutModel->itemFromIndex( mLayoutModel->index( source_row, 0, source_parent ) );
+  if ( !item || item->type() != QgsLayoutItemRegistry::ItemType::LayoutMap )
+  {
+    return false;
+  }
+
+  return true;
+}
+
+
 ///@endcond
+
+

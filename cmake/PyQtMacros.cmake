@@ -37,7 +37,8 @@ MACRO(PYQT_WRAP_UI outfiles )
         file(COPY ${CMAKE_SOURCE_DIR}/scripts/pyuic_wrapper.sh
                   ${CMAKE_SOURCE_DIR}/scripts/pyuic_wrapper.py
             DESTINATION ${CMAKE_BINARY_DIR}/scripts/
-            FILE_PERMISSIONS OWNER_EXECUTE
+            FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+                             GROUP_EXECUTE GROUP_READ
         )
     endif()
     SET(PYUIC_WRAPPER "${CMAKE_BINARY_DIR}/scripts/pyuic_wrapper.sh")

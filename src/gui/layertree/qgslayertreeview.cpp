@@ -23,13 +23,13 @@
 #include "qgslayertreeviewdefaultactions.h"
 #include "qgsmaplayer.h"
 #include "qgsmessagebar.h"
-#include "qgslayertreefilterproxymodel.h"
 
 #include "qgsgui.h"
 
 #include <QMenu>
 #include <QContextMenuEvent>
 #include <QHeaderView>
+#include <QMimeData>
 #include <QScrollBar>
 
 #ifdef ENABLE_MODELTEST
@@ -86,13 +86,15 @@ void QgsLayerTreeView::setModel( QAbstractItemModel *model )
     return;
 
   if ( mMessageBar )
-    connect( treeModel, &QgsLayerTreeModel::messageEmitted,
+    connect( treeModel, &QgsLayerTreeModel::messageEmitted, this,
              [ = ]( const QString & message, Qgis::MessageLevel level = Qgis::MessageLevel::Info, int duration = 5 )
   {
     Q_UNUSED( duration )
     mMessageBar->pushMessage( message, level );
   }
          );
+
+  treeModel->addTargetScreenProperties( QgsScreenProperties( screen() ) );
 
   mProxyModel = new QgsLayerTreeProxyModel( treeModel, this );
 
@@ -178,9 +180,14 @@ void QgsLayerTreeView::contextMenuEvent( QContextMenuEvent *event )
     setCurrentIndex( QModelIndex() );
 
   QMenu *menu = mMenuProvider->createContextMenu();
-  if ( menu && menu->actions().count() != 0 )
-    menu->exec( mapToGlobal( event->pos() ) );
-  delete menu;
+  if ( menu )
+  {
+    emit contextMenuAboutToShow( menu );
+
+    if ( menu->actions().count() != 0 )
+      menu->exec( mapToGlobal( event->pos() ) );
+    delete menu;
+  }
 }
 
 
@@ -425,7 +432,8 @@ QList<QgsLayerTreeNode *> QgsLayerTreeView::selectedNodes( bool skipInternal ) c
 QList<QgsLayerTreeLayer *> QgsLayerTreeView::selectedLayerNodes() const
 {
   QList<QgsLayerTreeLayer *> layerNodes;
-  const auto constSelectedNodes = selectedNodes();
+  const QList<QgsLayerTreeNode *> constSelectedNodes = selectedNodes();
+  layerNodes.reserve( constSelectedNodes.size() );
   for ( QgsLayerTreeNode *node : constSelectedNodes )
   {
     if ( QgsLayerTree::isLayer( node ) )
@@ -437,13 +445,31 @@ QList<QgsLayerTreeLayer *> QgsLayerTreeView::selectedLayerNodes() const
 QList<QgsMapLayer *> QgsLayerTreeView::selectedLayers() const
 {
   QList<QgsMapLayer *> list;
-  const auto constSelectedLayerNodes = selectedLayerNodes();
+  const QList<QgsLayerTreeLayer *> constSelectedLayerNodes = selectedLayerNodes();
+  list.reserve( constSelectedLayerNodes.size() );
   for ( QgsLayerTreeLayer *node : constSelectedLayerNodes )
   {
     if ( node->layer() )
       list << node->layer();
   }
   return list;
+}
+
+QList<QgsLayerTreeModelLegendNode *> QgsLayerTreeView::selectedLegendNodes() const
+{
+  QList<QgsLayerTreeModelLegendNode *> res;
+  const QModelIndexList selected = selectionModel()->selectedIndexes();
+  res.reserve( selected.size() );
+  for ( const QModelIndex &index : selected )
+  {
+    const QModelIndex &modelIndex = mProxyModel->mapToSource( index );
+    if ( QgsLayerTreeModelLegendNode *node = layerTreeModel()->index2legendNode( modelIndex ) )
+    {
+      res.push_back( node );
+    }
+  }
+
+  return res;
 }
 
 QList<QgsMapLayer *> QgsLayerTreeView::selectedLayersRecursive() const
@@ -555,7 +581,7 @@ void QgsLayerTreeView::setMessageBar( QgsMessageBar *messageBar )
   mMessageBar = messageBar;
 
   if ( mMessageBar )
-    connect( layerTreeModel(), &QgsLayerTreeModel::messageEmitted,
+    connect( layerTreeModel(), &QgsLayerTreeModel::messageEmitted, this,
              [ = ]( const QString & message, Qgis::MessageLevel level = Qgis::MessageLevel::Info, int duration = 5 )
   {
     Q_UNUSED( duration )
@@ -594,9 +620,9 @@ void QgsLayerTreeView::keyPressEvent( QKeyEvent *event )
 {
   if ( event->key() == Qt::Key_Space )
   {
-    const auto constSelectedNodes = selectedNodes();
+    const QList<QgsLayerTreeNode *> constSelectedNodes = selectedNodes();
 
-    if ( ! constSelectedNodes.isEmpty() )
+    if ( !constSelectedNodes.isEmpty() )
     {
       const bool isFirstNodeChecked = constSelectedNodes[0]->itemVisibilityChecked();
       for ( QgsLayerTreeNode *node : constSelectedNodes )
@@ -618,8 +644,53 @@ void QgsLayerTreeView::keyPressEvent( QKeyEvent *event )
   layerTreeModel()->setFlags( oldFlags );
 }
 
+void QgsLayerTreeView::dragEnterEvent( QDragEnterEvent *event )
+{
+  if ( event->mimeData()->hasUrls() || event->mimeData()->hasFormat( QStringLiteral( "application/x-vnd.qgis.qgis.uri" ) ) )
+  {
+    // the mime data are coming from layer tree, so ignore that, do not import those layers again
+    if ( !event->mimeData()->hasFormat( QStringLiteral( "application/qgis.layertreemodeldata" ) ) )
+    {
+      event->accept();
+      return;
+    }
+  }
+  QTreeView::dragEnterEvent( event );
+}
+
+void QgsLayerTreeView::dragMoveEvent( QDragMoveEvent *event )
+{
+  if ( event->mimeData()->hasUrls() || event->mimeData()->hasFormat( QStringLiteral( "application/x-vnd.qgis.qgis.uri" ) ) )
+  {
+    // the mime data are coming from layer tree, so ignore that, do not import those layers again
+    if ( !event->mimeData()->hasFormat( QStringLiteral( "application/qgis.layertreemodeldata" ) ) )
+    {
+      event->accept();
+      return;
+    }
+  }
+  QTreeView::dragMoveEvent( event );
+}
+
 void QgsLayerTreeView::dropEvent( QDropEvent *event )
 {
+  if ( event->mimeData()->hasUrls() || event->mimeData()->hasFormat( QStringLiteral( "application/x-vnd.qgis.qgis.uri" ) ) )
+  {
+    // the mime data are coming from layer tree, so ignore that, do not import those layers again
+    if ( !event->mimeData()->hasFormat( QStringLiteral( "application/qgis.layertreemodeldata" ) ) )
+    {
+      event->accept();
+
+      QModelIndex index = indexAt( event->pos() );
+      if ( index.isValid() )
+      {
+        setCurrentIndex( index );
+      }
+
+      emit datasetsDropped( event );
+      return;
+    }
+  }
   if ( event->keyboardModifiers() & Qt::AltModifier )
   {
     event->accept();

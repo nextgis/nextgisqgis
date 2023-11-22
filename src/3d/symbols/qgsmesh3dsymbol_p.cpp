@@ -26,6 +26,7 @@
 #include <Qt3DRender/QCullFace>
 
 #include "qgsmultipolygon.h"
+#include "qgspolygon.h"
 #include "qgsmeshlayer.h"
 #include "qgstriangularmesh.h"
 #include "qgsexpressioncontextutils.h"
@@ -56,7 +57,7 @@ QgsMesh3DSymbolEntity::QgsMesh3DSymbolEntity( const Qgs3DMapSettings &map,
 
   // build the entity
   QgsMesh3DSymbolEntityNode *entity = new QgsMesh3DSymbolEntityNode( map, layer, symbol );
-  entity->findChild<Qt3DRender::QGeometryRenderer *>()->setObjectName( QStringLiteral( "main" ) ); // temporary measure to distinguish between "selected" and "main"
+  entity->findChild<Qt3DRender::QGeometryRenderer *>()->setProperty( Qgs3DTypes::PROP_NAME_3D_RENDERER_FLAG,  Qgs3DTypes::Main3DRenderer ); // temporary measure to distinguish between "selected" and "main"
   entity->addComponent( mat );
   entity->addComponent( tform );
   entity->setParent( this );
@@ -65,7 +66,7 @@ QgsMesh3DSymbolEntity::QgsMesh3DSymbolEntity( const Qgs3DMapSettings &map,
 Qt3DRender::QMaterial *QgsMesh3DSymbolEntity::material( const QgsMesh3DSymbol &symbol ) const
 {
   const QgsMaterialContext context;
-  Qt3DRender::QMaterial *material = symbol.material()->toMaterial( QgsMaterialSettingsRenderingTechnique::Triangles, context );
+  Qt3DRender::QMaterial *material = symbol.materialSettings()->toMaterial( QgsMaterialSettingsRenderingTechnique::Triangles, context );
 
   // front/back side culling
   const auto techniques = material->effect()->techniques();
@@ -123,7 +124,7 @@ Qt3DRender::QGeometryRenderer *QgsMesh3DSymbolEntityNode::renderer( const Qgs3DM
       std::unique_ptr< QgsPolygon > polygon = QgsMeshUtils::toPolygon( triangle, vertices );
       Qgs3DUtils::clampAltitudes( polygon.get(),
                                   symbol.altitudeClamping(),
-                                  Qgs3DTypes::AltitudeBinding::AltBindVertex,
+                                  Qgis::AltitudeBinding::Vertex,
                                   height,
                                   map );
       polygons.append( polygon.release() );
@@ -135,7 +136,7 @@ Qt3DRender::QGeometryRenderer *QgsMesh3DSymbolEntityNode::renderer( const Qgs3DM
   // call QgsTessellatedPolygonGeometry to
   // use symbol settings for back faces, normals, etc
 
-  const QgsPhongTexturedMaterialSettings *texturedMaterialSettings = dynamic_cast< const QgsPhongTexturedMaterialSettings * >( symbol.material() );
+  const QgsPhongTexturedMaterialSettings *texturedMaterialSettings = dynamic_cast< const QgsPhongTexturedMaterialSettings * >( symbol.materialSettings() );
 
   mGeometry = new QgsTessellatedPolygonGeometry( true, false, symbol.addBackFaces(), texturedMaterialSettings ? texturedMaterialSettings->requiresTextureCoordinates() : false );
   const QList<float> extrusionHeightPerPolygon;

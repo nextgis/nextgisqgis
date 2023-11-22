@@ -28,7 +28,10 @@
 #include "qgsmapsettings.h"
 #include "qgswebpage.h"
 #include "qgswebframe.h"
+#include "qgslayoutitemlabel.h"
 #include "qgslayoutitemmap.h"
+#include "qgslayoutreportcontext.h"
+#include "qgslayoutrendercontext.h"
 
 #include <QCoreApplication>
 #include <QPainter>
@@ -97,6 +100,33 @@ QgsLayoutItemHtml *QgsLayoutItemHtml::create( QgsLayout *layout )
   return new QgsLayoutItemHtml( layout );
 }
 
+QgsLayoutItemHtml *QgsLayoutItemHtml::createFromLabel( QgsLayoutItemLabel *label )
+{
+  QgsLayoutItemHtml *html = new QgsLayoutItemHtml( label->layout() );
+  QgsLayoutFrame *frame = new QgsLayoutFrame( label->layout(), html );
+  frame->setVisible( label->isVisible() );
+  frame->setLocked( label->isLocked() );
+  frame->setItemOpacity( label->itemOpacity() );
+  frame->setRotation( label->rotation() );
+  frame->setReferencePoint( label->referencePoint() );
+  frame->attemptMove( label->positionWithUnits() );
+  frame->attemptResize( label->sizeWithUnits() );
+  frame->setZValue( label->zValue() );
+  frame->setParentGroup( label->parentGroup() );
+  frame->setBackgroundColor( label->backgroundColor() );
+  frame->setFrameEnabled( label->frameEnabled() );
+  frame->setFrameJoinStyle( label->frameJoinStyle() );
+  frame->setFrameStrokeWidth( label->frameStrokeWidth() );
+  frame->setFrameStrokeColor( label->frameStrokeColor() );
+  html->addFrame( frame );
+  html->setContentMode( QgsLayoutItemHtml::ManualHtml );
+  html->setHtml( label->currentText() );
+  html->setUserStylesheetEnabled( true );
+  html->setUserStylesheet( label->createStylesheet() );
+  html->loadHtml();
+  return html;
+}
+
 void QgsLayoutItemHtml::setUrl( const QUrl &url )
 {
   if ( !mWebPage )
@@ -149,7 +179,7 @@ void QgsLayoutItemHtml::loadHtml( const bool useCache, const QgsExpressionContex
       if ( ok )
       {
         currentUrl = currentUrl.trimmed();
-        QgsDebugMsg( QStringLiteral( "exprVal Source Url:%1" ).arg( currentUrl ) );
+        QgsDebugMsgLevel( QStringLiteral( "exprVal Source Url:%1" ).arg( currentUrl ), 2 );
       }
       if ( currentUrl.isEmpty() )
       {
@@ -323,7 +353,7 @@ double QgsLayoutItemHtml::htmlUnitsToLayoutUnits()
     return 1.0;
   }
 
-  return mLayout->convertToLayoutUnits( QgsLayoutMeasurement( mLayout->renderContext().dpi() / 72.0, QgsUnitTypes::LayoutMillimeters ) ); //webkit seems to assume a standard dpi of 96
+  return mLayout->convertToLayoutUnits( QgsLayoutMeasurement( mLayout->renderContext().dpi() / 72.0, Qgis::LayoutUnit::Millimeters ) ); //webkit seems to assume a standard dpi of 96
 }
 
 bool candidateSort( QPair<int, int> c1, QPair<int, int> c2 )

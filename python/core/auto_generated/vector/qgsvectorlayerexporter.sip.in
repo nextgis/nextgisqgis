@@ -58,7 +58,7 @@ Writes the contents of vector layer to a different datasource.
     QgsVectorLayerExporter( const QString &uri,
                             const QString &provider,
                             const QgsFields &fields,
-                            QgsWkbTypes::Type geometryType,
+                            Qgis::WkbType geometryType,
                             const QgsCoordinateReferenceSystem &crs,
                             bool overwrite = false,
                             const QMap<QString, QVariant> &options = QMap<QString, QVariant>(),
@@ -103,6 +103,13 @@ Returns the number of error messages encountered during the export.
 .. seealso:: :py:func:`errorMessage`
 
 .. seealso:: :py:func:`errorCode`
+%End
+
+    Qgis::VectorDataProviderAttributeEditCapabilities attributeEditCapabilities() const;
+%Docstring
+Returns the attribute capabilities of the exporter.
+
+.. versionadded:: 3.32
 %End
 
     virtual bool addFeatures( QgsFeatureList &features, QgsFeatureSink::Flags flags = QgsFeatureSink::Flags() );

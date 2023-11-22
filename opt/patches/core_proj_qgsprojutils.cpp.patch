@@ -1,5 +1,5 @@
---- a/src/core/proj/qgsprojutils.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/proj/qgsprojutils.cpp	2022-04-25 18:33:16.000000000 +0300
+--- a/src/core/proj/qgsprojutils.cpp	2023-08-21 19:39:45.711048104 +0300
++++ b/src/core/proj/qgsprojutils.cpp	2023-10-03 23:52:17.122826510 +0300
 @@ -18,6 +18,7 @@
  #include "qgis.h"
  #include "qgscoordinatetransform.h"
@@ -8,7 +8,7 @@
  #include <QString>
  #include <QSet>
  #include <QRegularExpression>
-@@ -408,26 +409,31 @@
+@@ -406,25 +407,30 @@
  
  QStringList QgsProjUtils::searchPaths()
  {
@@ -44,7 +44,7 @@
 +#ifdef Q_OS_MACX
 +    res << QgsApplication::prefixPath() + QStringLiteral("/Library/Frameworks/proj.framework/Resources/proj");
 +#else
-+    res << QgsApplication::prefixPath() + QStringLiteral("/usr/share/proj");
++    res << QgsApplication::prefixPath() + QStringLiteral("/share/proj");
 +#endif // Q_OS_MACX
 +//   res.reserve( paths.count() );
 +//   for ( const QString &p : std::as_const( paths ) )
@@ -57,4 +57,3 @@
 +//   }
    return res;
  }
- 

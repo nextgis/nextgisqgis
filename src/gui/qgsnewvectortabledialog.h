@@ -46,6 +46,7 @@ class QgsNewVectorTableFieldModel;
  */
 class GUI_EXPORT QgsNewVectorTableDialog : public QDialog, private Ui_QgsNewVectorTableDialogBase
 {
+    Q_OBJECT
   public:
 
     /**
@@ -68,7 +69,7 @@ class GUI_EXPORT QgsNewVectorTableDialog : public QDialog, private Ui_QgsNewVect
     /**
      * Sets the geometry \a type
      */
-    void setGeometryType( QgsWkbTypes::Type type );
+    void setGeometryType( Qgis::WkbType type );
 
     /**
      * Sets the CRS to \a crs
@@ -103,7 +104,7 @@ class GUI_EXPORT QgsNewVectorTableDialog : public QDialog, private Ui_QgsNewVect
     /**
      * Returns the geometry type
      */
-    QgsWkbTypes::Type geometryType() const;
+    Qgis::WkbType geometryType() const;
 
     /**
      * Sets the fields to \a fields
@@ -130,6 +131,8 @@ class GUI_EXPORT QgsNewVectorTableDialog : public QDialog, private Ui_QgsNewVect
     QStringList mTableNames;
     QStringList mValidationErrors;
 
+    QSet<QString> mIllegalFieldNames;
+
     void updateButtons();
     void selectRow( int row );
     void validate();
@@ -146,6 +149,7 @@ class GUI_EXPORT QgsNewVectorTableDialog : public QDialog, private Ui_QgsNewVect
 #ifndef SIP_RUN
 class QgsNewVectorTableDialogFieldsDelegate: public QStyledItemDelegate
 {
+    Q_OBJECT
   public:
 
     QgsNewVectorTableDialogFieldsDelegate( const QList< QgsVectorDataProvider::NativeType> &typeList, QObject *parent = nullptr );
@@ -168,6 +172,7 @@ class QgsNewVectorTableDialogFieldsDelegate: public QStyledItemDelegate
 
 class QgsNewVectorTableFieldModel: public QgsFieldModel
 {
+    Q_OBJECT
 
   public:
 

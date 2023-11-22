@@ -20,7 +20,7 @@
 +  return pythonPathEnv;
 +}
 +
- int CALLBACK WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
+ int CALLBACK WinMain( HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int /*nCmdShow*/ )
  {
    std::string exename( moduleExeBaseName() );
 @@ -129,6 +145,13 @@
@@ -34,10 +34,10 @@
 +      return EXIT_FAILURE;
 +  }
 +
-   HINSTANCE hKernelDLL = LoadLibrary( "kernel32.dll" );
-   BOOL ( *SetDefaultDllDirectories )( DWORD ) = hKernelDLL ? reinterpret_cast<BOOL( * )( DWORD )>( GetProcAddress( hKernelDLL, "SetDefaultDllDirectories" ) ) : 0;
-   DLL_DIRECTORY_COOKIE( *AddDllDirectory )( PCWSTR ) = hKernelDLL ? reinterpret_cast<DLL_DIRECTORY_COOKIE( * )( PCWSTR )>( GetProcAddress( hKernelDLL, "AddDllDirectory" ) ) : 0;
-@@ -158,10 +181,10 @@
+ #ifndef _MSC_VER // MinGW
+ #pragma GCC diagnostic ignored "-Wcast-function-type"
+ #endif
+@@ -168,10 +168,10 @@
  
  
  #ifdef _MSC_VER
@@ -50,7 +50,7 @@
  #endif
  
    if ( !hGetProcIDDLL )
-@@ -178,7 +201,7 @@
+@@ -188,7 +188,7 @@
        0,
        NULL );
  
@@ -59,8 +59,8 @@
                            + "\n Help: \n\n Check " + basename + ".env for correct environment paths";
      showError( message, "Error loading QGIS" );
  
-@@ -190,7 +213,7 @@
-   int ( *realmain )( int, char *[] ) = ( int ( * )( int, char *[] ) ) GetProcAddress( hGetProcIDDLL, "main" );
+@@ -207,7 +207,7 @@
+ 
    if ( !realmain )
    {
 -    showError( "Could not locate main function in qgis_app.dll", "Error loading QGIS" );

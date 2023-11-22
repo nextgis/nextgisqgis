@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsAnnotationPointTextItem.
 
 From build dir, run: ctest -R PyQgsAnnotationPointTextItem -V
@@ -13,39 +12,32 @@ __date__ = '10/08/2020'
 __copyright__ = 'Copyright 2020, The QGIS Project'
 
 import qgis  # NOQA
-
-from qgis.PyQt.QtCore import (QSize,
-                              QDir,
-                              Qt)
-from qgis.PyQt.QtGui import (QImage,
-                             QPainter,
-                             QColor,
-                             QTransform)
-from qgis.core import (QgsMapSettings,
-                       QgsCoordinateTransform,
-                       QgsProject,
-                       QgsPointXY,
-                       QgsCoordinateReferenceSystem,
-                       QgsMarkerSymbol,
-                       QgsRenderChecker,
-                       QgsReadWriteContext,
-                       QgsRenderContext,
-                       QgsAnnotationPointTextItem,
-                       QgsRectangle,
-                       QgsTextFormat,
-                       QgsAnnotationItemNode,
-                       Qgis,
-                       QgsVertexId,
-                       QgsAnnotationItemEditOperationMoveNode,
-                       QgsAnnotationItemEditOperationDeleteNode,
-                       QgsAnnotationItemEditOperationAddNode,
-                       QgsAnnotationItemEditOperationTranslateItem,
-                       QgsPoint
-                       )
+from qgis.PyQt.QtCore import QDir, QSize, Qt
+from qgis.PyQt.QtGui import QColor, QImage, QPainter
 from qgis.PyQt.QtXml import QDomDocument
-
+from qgis.core import (
+    Qgis,
+    QgsAnnotationItemEditOperationAddNode,
+    QgsAnnotationItemEditOperationDeleteNode,
+    QgsAnnotationItemEditOperationMoveNode,
+    QgsAnnotationItemEditOperationTranslateItem,
+    QgsAnnotationItemNode,
+    QgsAnnotationPointTextItem,
+    QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform,
+    QgsMapSettings,
+    QgsPoint,
+    QgsPointXY,
+    QgsProject,
+    QgsReadWriteContext,
+    QgsRectangle,
+    QgsRenderContext,
+    QgsTextFormat,
+    QgsVertexId,
+)
 from qgis.testing import start_app, unittest
-from utilities import unitTestDataPath, getTestFont
+
+from utilities import getTestFont, unitTestDataPath
 
 start_app()
 TEST_DATA_DIR = unitTestDataPath()
@@ -54,14 +46,8 @@ TEST_DATA_DIR = unitTestDataPath()
 class TestQgsAnnotationPointTextItem(unittest.TestCase):
 
     @classmethod
-    def setUpClass(cls):
-        cls.report = "<h1>Python QgsAnnotationPointTextItem Tests</h1>\n"
-
-    @classmethod
-    def tearDownClass(cls):
-        report_file_path = "%s/qgistest.html" % QDir.tempPath()
-        with open(report_file_path, 'a') as report_file:
-            report_file.write(cls.report)
+    def control_path_prefix(cls):
+        return "annotation_layer"
 
     def testBasic(self):
         item = QgsAnnotationPointTextItem('my text', QgsPointXY(12, 13))
@@ -74,6 +60,7 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         item.setPoint(QgsPointXY(1000, 2000))
         item.setAngle(55)
         item.setAlignment(Qt.AlignRight)
+        item.setRotationMode(Qgis.SymbolRotationMode.RespectMapRotation)
         item.setZIndex(11)
 
         format = QgsTextFormat()
@@ -87,6 +74,7 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         self.assertEqual(item.alignment(), Qt.AlignRight)
         self.assertEqual(item.zIndex(), 11)
         self.assertEqual(item.format().size(), 37)
+        self.assertEqual(item.rotationMode(), Qgis.SymbolRotationMode.RespectMapRotation)
 
     def test_nodes(self):
         """
@@ -146,6 +134,7 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         item.setFormat(format)
         item.setUseSymbologyReferenceScale(True)
         item.setSymbologyReferenceScale(5000)
+        item.setRotationMode(Qgis.SymbolRotationMode.RespectMapRotation)
 
         self.assertTrue(item.writeXml(elem, doc, QgsReadWriteContext()))
 
@@ -160,6 +149,7 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         self.assertEqual(s2.format().size(), 37)
         self.assertTrue(s2.useSymbologyReferenceScale())
         self.assertEqual(s2.symbologyReferenceScale(), 5000)
+        self.assertEqual(s2.rotationMode(), Qgis.SymbolRotationMode.RespectMapRotation)
 
     def testClone(self):
         item = QgsAnnotationPointTextItem('my text', QgsPointXY(12, 13))
@@ -171,6 +161,7 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         item.setFormat(format)
         item.setUseSymbologyReferenceScale(True)
         item.setSymbologyReferenceScale(5000)
+        item.setRotationMode(Qgis.SymbolRotationMode.RespectMapRotation)
 
         item2 = item.clone()
         self.assertEqual(item2.text(), 'my text')
@@ -182,6 +173,7 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         self.assertEqual(item2.format().size(), 37)
         self.assertTrue(item2.useSymbologyReferenceScale())
         self.assertEqual(item2.symbologyReferenceScale(), 5000)
+        self.assertEqual(item2.rotationMode(), Qgis.SymbolRotationMode.RespectMapRotation)
 
     def testRenderMarker(self):
         item = QgsAnnotationPointTextItem('my text', QgsPointXY(12.3, 13.2))
@@ -192,7 +184,7 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         format.setSize(20)
         item.setFormat(format)
 
-        item.setAngle(30)
+        item.setAngle(-30)
         item.setAlignment(Qt.AlignRight)
 
         settings = QgsMapSettings()
@@ -203,6 +195,7 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         settings.setFlag(QgsMapSettings.Antialiasing, False)
 
         rc = QgsRenderContext.fromMapSettings(settings)
+        rc.setScaleFactor(96 / 25.4)  # 96 DPI
         image = QImage(200, 200, QImage.Format_ARGB32)
         image.setDotsPerMeterX(int(96 / 25.4 * 1000))
         image.setDotsPerMeterY(int(96 / 25.4 * 1000))
@@ -215,7 +208,81 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         finally:
             painter.end()
 
-        self.assertTrue(self.imageCheck('pointtext_item', 'pointtext_item', image))
+        self.assertTrue(self.image_check('pointtext_item', 'pointtext_item', image))
+
+    def testRenderMapRotation(self):
+        item = QgsAnnotationPointTextItem('my text', QgsPointXY(12.3, 13.2))
+
+        format = QgsTextFormat.fromQFont(getTestFont('Bold'))
+        format.setColor(QColor(255, 0, 0))
+        format.setOpacity(150 / 255)
+        format.setSize(20)
+        item.setFormat(format)
+
+        item.setAngle(-30)
+        item.setAlignment(Qt.AlignRight)
+
+        settings = QgsMapSettings()
+        settings.setDestinationCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
+        settings.setExtent(QgsRectangle(10, 10, 16, 16))
+        settings.setOutputSize(QSize(300, 300))
+        settings.setRotation(90)
+
+        settings.setFlag(QgsMapSettings.Antialiasing, False)
+
+        rc = QgsRenderContext.fromMapSettings(settings)
+        rc.setScaleFactor(96 / 25.4)  # 96 DPI
+        image = QImage(200, 200, QImage.Format_ARGB32)
+        image.setDotsPerMeterX(int(96 / 25.4 * 1000))
+        image.setDotsPerMeterY(int(96 / 25.4 * 1000))
+        image.fill(QColor(255, 255, 255))
+        painter = QPainter(image)
+        rc.setPainter(painter)
+
+        try:
+            item.render(rc, None)
+        finally:
+            painter.end()
+
+        self.assertTrue(self.image_check('pointtext_item_ignore_map_rotation', 'pointtext_item_ignore_map_rotation', image))
+
+    def testRenderRespectMapRotation(self):
+        item = QgsAnnotationPointTextItem('my text', QgsPointXY(12.3, 13.2))
+
+        format = QgsTextFormat.fromQFont(getTestFont('Bold'))
+        format.setColor(QColor(255, 0, 0))
+        format.setOpacity(150 / 255)
+        format.setSize(20)
+        item.setRotationMode(Qgis.SymbolRotationMode.RespectMapRotation)
+
+        item.setFormat(format)
+
+        item.setAngle(-30)
+        item.setAlignment(Qt.AlignRight)
+
+        settings = QgsMapSettings()
+        settings.setDestinationCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
+        settings.setExtent(QgsRectangle(10, 10, 16, 16))
+        settings.setOutputSize(QSize(300, 300))
+        settings.setRotation(90)
+
+        settings.setFlag(QgsMapSettings.Antialiasing, False)
+
+        rc = QgsRenderContext.fromMapSettings(settings)
+        rc.setScaleFactor(96 / 25.4)  # 96 DPI
+        image = QImage(200, 200, QImage.Format_ARGB32)
+        image.setDotsPerMeterX(int(96 / 25.4 * 1000))
+        image.setDotsPerMeterY(int(96 / 25.4 * 1000))
+        image.fill(QColor(255, 255, 255))
+        painter = QPainter(image)
+        rc.setPainter(painter)
+
+        try:
+            item.render(rc, None)
+        finally:
+            painter.end()
+
+        self.assertTrue(self.image_check('pointtext_item_respect_map_rotation', 'pointtext_item_respect_map_rotation', image))
 
     def testRenderMarkerExpression(self):
         item = QgsAnnotationPointTextItem('[% 1 + 1.5 %]', QgsPointXY(12.3, 13.2))
@@ -226,7 +293,7 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         format.setSize(20)
         item.setFormat(format)
 
-        item.setAngle(30)
+        item.setAngle(-30)
         item.setAlignment(Qt.AlignRight)
 
         settings = QgsMapSettings()
@@ -237,6 +304,7 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         settings.setFlag(QgsMapSettings.Antialiasing, False)
 
         rc = QgsRenderContext.fromMapSettings(settings)
+        rc.setScaleFactor(96 / 25.4)  # 96 DPI
         image = QImage(200, 200, QImage.Format_ARGB32)
         image.setDotsPerMeterX(int(96 / 25.4 * 1000))
         image.setDotsPerMeterY(int(96 / 25.4 * 1000))
@@ -249,7 +317,7 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         finally:
             painter.end()
 
-        self.assertTrue(self.imageCheck('pointtext_item_expression', 'pointtext_item_expression', image))
+        self.assertTrue(self.image_check('pointtext_item_expression', 'pointtext_item_expression', image))
 
     def testRenderWithTransform(self):
         item = QgsAnnotationPointTextItem('my text', QgsPointXY(12.3, 13.2))
@@ -260,7 +328,7 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         format.setSize(20)
         item.setFormat(format)
 
-        item.setAngle(30)
+        item.setAngle(-30)
         item.setAlignment(Qt.AlignRight)
 
         settings = QgsMapSettings()
@@ -271,6 +339,7 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         settings.setFlag(QgsMapSettings.Antialiasing, False)
 
         rc = QgsRenderContext.fromMapSettings(settings)
+        rc.setScaleFactor(96 / 25.4)  # 96 DPI
         rc.setCoordinateTransform(QgsCoordinateTransform(QgsCoordinateReferenceSystem('EPSG:4326'), settings.destinationCrs(), QgsProject.instance()))
         image = QImage(200, 200, QImage.Format_ARGB32)
         image.setDotsPerMeterX(int(96 / 25.4 * 1000))
@@ -284,21 +353,7 @@ class TestQgsAnnotationPointTextItem(unittest.TestCase):
         finally:
             painter.end()
 
-        self.assertTrue(self.imageCheck('pointtext_item_transform', 'pointtext_item_transform', image))
-
-    def imageCheck(self, name, reference_image, image):
-        TestQgsAnnotationPointTextItem.report += "<h2>Render {}</h2>\n".format(name)
-        temp_dir = QDir.tempPath() + '/'
-        file_name = temp_dir + 'patch_' + name + ".png"
-        image.save(file_name, "PNG")
-        checker = QgsRenderChecker()
-        checker.setControlPathPrefix("annotation_layer")
-        checker.setControlName("expected_" + reference_image)
-        checker.setRenderedImage(file_name)
-        checker.setColorTolerance(2)
-        result = checker.compareImages(name, 20)
-        TestQgsAnnotationPointTextItem.report += checker.report()
-        return result
+        self.assertTrue(self.image_check('pointtext_item_transform', 'pointtext_item_transform', image))
 
 
 if __name__ == '__main__':

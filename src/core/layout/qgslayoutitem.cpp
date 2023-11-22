@@ -29,6 +29,8 @@
 #include "qgslayoutitempage.h"
 #include "qgsimageoperation.h"
 #include "qgsexpressioncontextutils.h"
+#include "qgslayoutrendercontext.h"
+#include "qgssvgcache.h"
 
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
@@ -57,7 +59,7 @@ QgsLayoutItem::QgsLayoutItem( QgsLayout *layout, bool manageZValue )
   setCacheMode( QGraphicsItem::DeviceCoordinateCache );
 
   //record initial position
-  const QgsUnitTypes::LayoutUnit initialUnits = layout ? layout->units() : QgsUnitTypes::LayoutMillimeters;
+  const Qgis::LayoutUnit initialUnits = layout ? layout->units() : Qgis::LayoutUnit::Millimeters;
   mItemPosition = QgsLayoutPoint( scenePos().x(), scenePos().y(), initialUnits );
   mItemSize = QgsLayoutSize( rect().width(), rect().height(), initialUnits );
 
@@ -124,6 +126,11 @@ QString QgsLayoutItem::displayName() const
 int QgsLayoutItem::type() const
 {
   return QgsLayoutItemRegistry::LayoutItem;
+}
+
+QIcon QgsLayoutItem::icon() const
+{
+  return QgsApplication::getThemeIcon( QStringLiteral( "/mLayoutItem.svg" ) );
 }
 
 QgsLayoutItem::Flags QgsLayoutItem::itemFlags() const
@@ -314,7 +321,7 @@ void QgsLayoutItem::paint( QPainter *painter, const QStyleOptionGraphicsItem *it
     }
     else
     {
-      const double layoutUnitsToPixels = mLayout ? mLayout->convertFromLayoutUnits( 1, QgsUnitTypes::LayoutPixels ).length() : destinationDpi / 25.4;
+      const double layoutUnitsToPixels = mLayout ? mLayout->convertFromLayoutUnits( 1, Qgis::LayoutUnit::Pixels ).length() : destinationDpi / 25.4;
       widthInPixels = boundingRect().width() * layoutUnitsToPixels;
       heightInPixels = boundingRect().height() * layoutUnitsToPixels;
     }
@@ -409,6 +416,11 @@ void QgsLayoutItem::paint( QPainter *painter, const QStyleOptionGraphicsItem *it
 
     painter->scale( context.scaleFactor(), context.scaleFactor() );
     drawFrame( context );
+  }
+
+  if ( isRefreshing() && previewRender )
+  {
+    drawRefreshingOverlay( painter, itemStyle );
   }
 }
 
@@ -674,7 +686,7 @@ bool QgsLayoutItem::writeXml( QDomElement &parentElement, QDomDocument &doc, con
   element.appendChild( bgColorElem );
 
   //blend mode
-  element.setAttribute( QStringLiteral( "blendMode" ), QgsPainting::getBlendModeEnum( mBlendMode ) );
+  element.setAttribute( QStringLiteral( "blendMode" ), static_cast< int >( QgsPainting::getBlendModeEnum( mBlendMode ) ) );
 
   //opacity
   element.setAttribute( QStringLiteral( "opacity" ), QString::number( mOpacity ) );
@@ -798,7 +810,7 @@ bool QgsLayoutItem::readXml( const QDomElement &element, const QDomDocument &doc
   }
 
   //blend mode
-  setBlendMode( QgsPainting::getCompositionMode( static_cast< QgsPainting::BlendMode >( element.attribute( QStringLiteral( "blendMode" ), QStringLiteral( "0" ) ).toUInt() ) ) );
+  setBlendMode( QgsPainting::getCompositionMode( static_cast< Qgis::BlendMode >( element.attribute( QStringLiteral( "blendMode" ), QStringLiteral( "0" ) ).toUInt() ) ) );
 
   //opacity
   if ( element.hasAttribute( QStringLiteral( "opacity" ) ) )
@@ -1156,6 +1168,11 @@ void QgsLayoutItem::rotateItem( const double angle, const QPointF transformOrigi
   refreshItemRotation( &itemTransformOrigin );
 }
 
+bool QgsLayoutItem::isRefreshing() const
+{
+  return false;
+}
+
 QgsExpressionContext QgsLayoutItem::createExpressionContext() const
 {
   QgsExpressionContext context = QgsLayoutObject::createExpressionContext();
@@ -1247,6 +1264,18 @@ void QgsLayoutItem::drawBackground( QgsRenderContext &context )
   context.setPainterFlagsUsingContext( p );
 
   p->drawPath( framePath() );
+}
+
+void QgsLayoutItem::drawRefreshingOverlay( QPainter *painter, const QStyleOptionGraphicsItem *itemStyle )
+{
+  const QgsScopedQPainterState painterState( painter );
+  bool fitsInCache = false;
+  const int xSize = QFontMetrics( QFont() ).horizontalAdvance( 'X' );
+  const QImage refreshingImage = QgsApplication::svgCache()->svgAsImage( QStringLiteral( ":/images/composer/refreshing_item.svg" ), xSize * 3, QColor(), QColor(), 1, 1, fitsInCache );
+
+  const double previewScaleFactor = QgsLayoutUtils::scaleFactorFromItemStyle( itemStyle, painter );
+  painter->scale( 1.0 / previewScaleFactor, 1.0 / previewScaleFactor );
+  painter->drawImage( xSize, xSize, refreshingImage );
 }
 
 void QgsLayoutItem::setFixedSize( const QgsLayoutSize &size )
@@ -1350,9 +1379,7 @@ void QgsLayoutItem::preparePainter( QPainter *painter )
 
   painter->setRenderHint( QPainter::Antialiasing, shouldDrawAntialiased() );
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
   painter->setRenderHint( QPainter::LosslessImageRendering, mLayout && mLayout->renderContext().testFlag( QgsLayoutRenderContext::FlagLosslessImageRendering ) );
-#endif
 }
 
 bool QgsLayoutItem::shouldDrawAntialiased() const
@@ -1490,6 +1517,12 @@ void QgsLayoutItem::refreshFrame( bool updateItem )
     update();
   }
 }
+
+QColor QgsLayoutItem::backgroundColor( bool useDataDefined ) const
+{
+  return useDataDefined ? brush().color() : mBackgroundColor;
+}
+
 
 void QgsLayoutItem::refreshBackgroundColor( bool updateItem )
 {

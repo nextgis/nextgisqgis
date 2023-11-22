@@ -43,6 +43,7 @@ class QgsZonalStatisticsAlgorithm : public QgsProcessingAlgorithm
     QString group() const override;
     QString groupId() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
     void initAlgorithm( const QVariantMap &configuration = QVariantMap() ) override;
     QgsZonalStatisticsAlgorithm *createInstance() const override SIP_FACTORY;
 
@@ -53,12 +54,12 @@ class QgsZonalStatisticsAlgorithm : public QgsProcessingAlgorithm
 
   private:
     std::unique_ptr< QgsRasterInterface > mInterface;
-    int mBand;
+    int mBand = 1;
     QString mPrefix;
     QgsZonalStatistics::Statistics mStats = QgsZonalStatistics::All;
     QgsCoordinateReferenceSystem mCrs;
-    double mPixelSizeX;
-    double mPixelSizeY;
+    double mPixelSizeX = 0;
+    double mPixelSizeY = 0;
 };
 
 ///@endcond PRIVATE

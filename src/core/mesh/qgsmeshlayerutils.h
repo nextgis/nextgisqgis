@@ -127,7 +127,8 @@ class CORE_EXPORT QgsMeshLayerUtils
       int &leftLim,
       int &rightLim,
       int &bottomLim,
-      int &topLim );
+      int &topLim,
+      double devicePixelRatio = 1.0 );
 
     /**
      * Transformes the bounding box to rectangle in screen coordinates (in pixels)
@@ -136,7 +137,8 @@ class CORE_EXPORT QgsMeshLayerUtils
      */
     static QgsRectangle boundingBoxToScreenRectangle(
       const QgsMapToPixel &mtp,
-      const QgsRectangle &bbox
+      const QgsRectangle &bbox,
+      double devicePixelRatio = 1.0
     );
 
     /**
@@ -175,6 +177,15 @@ class CORE_EXPORT QgsMeshLayerUtils
       const QgsPointXY &p1, const QgsPointXY &p2, const QgsPointXY &p3,
       double val1, double val2, double val3, const QgsPointXY &pt
     );
+
+    /**
+     * Interpolates the z value for a \a mesh at the specified point (\a x, \a y).
+     *
+     * Returns NaN if the z value cannot be calculated for the point.
+     *
+     * \since QGIS 3.26
+     */
+    static double interpolateZForPoint( const QgsTriangularMesh &mesh, double x, double y );
 
     /**
     * Interpolates vector based on known vector on the vertices of a triangle

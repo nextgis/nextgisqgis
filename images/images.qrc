@@ -130,6 +130,7 @@
         <file>themes/default/algorithms/mAlgorithmRegularPoints.svg</file>
         <file>themes/default/algorithms/mAlgorithmRoundRastervalues.svg</file>
         <file>themes/default/algorithms/mAlgorithmSelectLocation.svg</file>
+        <file>themes/default/algorithms/mAlgorithmSelectDistance.svg</file>
         <file>themes/default/algorithms/mAlgorithmSelectRandom.svg</file>
         <file>themes/default/algorithms/mAlgorithmSimplify.svg</file>
         <file>themes/default/algorithms/mAlgorithmSingleToMulti.svg</file>
@@ -165,6 +166,7 @@
         <file>themes/default/console/iconNewTabEditorConsole.svg</file>
         <file>themes/default/console/iconRestoreTabsConsole.svg</file>
         <file>themes/default/console/iconFileTabsMenuConsole.svg</file>
+        <file>themes/default/console/iconFormatCode.svg</file>
         <file>themes/default/console/iconShowEditorConsole.svg</file>
         <file>themes/default/console/iconCommentEditorConsole.svg</file>
         <file>themes/default/console/iconUncommentEditorConsole.svg</file>
@@ -179,6 +181,8 @@
         <file>themes/default/copyright_label.svg</file>
         <file>themes/default/dbmanager.svg</file>
         <file>themes/default/extents.svg</file>
+        <file>themes/default/gpsicons/barchart.svg</file>
+        <file>themes/default/gpsicons/polarchart.svg</file>
         <file>themes/default/grass_location.svg</file>
         <file>themes/default/grass_mapset.svg</file>
         <file>themes/default/grass_mapset_open.svg</file>
@@ -289,7 +293,9 @@
         <file>themes/default/mActionDeleteTable.svg</file>
         <file>themes/default/mActionDeselectAll.svg</file>
         <file>themes/default/mActionDeselectActiveLayer.svg</file>
+        <file>themes/default/mActionDigitizeShape.svg</file>
         <file>themes/default/mActionDigitizeWithCurve.svg</file>
+        <file>themes/default/mActionDigitizeWithSegment.svg</file>
         <file>themes/default/mActionDuplicateLayer.svg</file>
         <file>themes/default/mActionDuplicateComposer.svg</file>
         <file>themes/default/mActionEditCopy.svg</file>
@@ -366,6 +372,7 @@
         <file>themes/default/mActionOpenTable.svg</file>
         <file>themes/default/mActionOpenTableEdited.svg</file>
         <file>themes/default/mActionOpenTableSelected.svg</file>
+        <file>themes/default/mActionOpenTableInvalid.svg</file>
         <file>themes/default/mActionOpenTableVisible.svg</file>
         <file>themes/default/mActionAddTable.svg</file>
         <file>themes/default/mActionOffsetPointSymbols.svg</file>
@@ -462,6 +469,7 @@
         <file>themes/default/mActionZoomToSelected.svg</file>
         <file>themes/default/mActionFilterTableFields.svg</file>
         <file>themes/default/mActionFirst.svg</file>
+        <file>themes/default/mIcon3dAxis.svg</file>
         <file>themes/default/mIconAtlas.svg</file>
         <file>themes/default/mIconAutoPlacementSettings.svg</file>
         <file>themes/default/mIconCamera.svg</file>
@@ -590,6 +598,7 @@
         <file>themes/default/propertyicons/attributes.svg</file>
         <file>themes/default/propertyicons/CRS.svg</file>
         <file>themes/default/propertyicons/datadefined.svg</file>
+        <file>themes/default/propertyicons/database.svg</file>
         <file>themes/default/propertyicons/diagram.svg</file>
         <file>themes/default/propertyicons/digitizing.svg</file>
         <file>themes/default/propertyicons/display.svg</file>
@@ -635,6 +644,7 @@
         <file>themes/default/propertyicons/colors.svg</file>
         <file>themes/default/propertyicons/system.svg</file>
         <file>themes/default/propertyicons/transparency.svg</file>
+        <file>themes/default/propertyicons/sensor.svg</file>
         <file>themes/default/propertyicons/spacer.svg</file>
         <file>themes/default/propertyicons/relations.svg</file>
         <file>themes/default/rendererCategorizedSymbol.svg</file>
@@ -792,6 +802,7 @@
         <file>themes/default/mActionRegularPolygonCenterPoint.svg</file>
         <file>themes/default/3d.svg</file>
         <file>themes/default/mActionResizeSquare.svg</file>
+        <file>themes/default/mSensor.svg</file>
         <file>themes/default/mSourceFields.svg</file>
         <file>themes/default/cursors/mCapturePoint.svg</file>
         <file>themes/default/cursors/mCrossHair.svg</file>
@@ -879,6 +890,14 @@
         <file>themes/default/mIndicatorTemporal.svg</file>
         <file>themes/default/mIndicatorTimeFromProject.svg</file>
         <file>themes/default/mIndicatorOffline.svg</file>
+        <file>themes/default/temporal_navigation/back.svg</file>
+        <file>themes/default/temporal_navigation/forward.svg</file>
+        <file>themes/default/temporal_navigation/next.svg</file>
+        <file>themes/default/temporal_navigation/stop.svg</file>
+        <file>themes/default/temporal_navigation/previous.svg</file>
+        <file>themes/default/temporal_navigation/rewindToStart.svg</file>
+        <file>themes/default/temporal_navigation/skipToEnd.svg</file>
+        <file>themes/default/temporal_navigation/pause.svg</file>
         <file>themes/default/mIconIterate.svg</file>
         <file>themes/default/mIconNetworkLogger.svg</file>
         <file>themes/default/mActionAddMarker.svg</file>
@@ -895,6 +914,16 @@
         <file>themes/default/georeferencer/mActionDeleteGCPPoint.png</file>
         <file>themes/default/georeferencer/mActionMoveGCPPoint.png</file>
         <file>themes/default/georeferencer/mActionSaveGCPpointsAs.png</file>
+        <file>themes/default/georeferencer/mGeorefRun.svg</file>
+        <file>themes/default/georeferencer/mPushButtonPencil.svg</file>
+        <file>themes/default/georeferencer/mActionGDALScript.svg</file>
+        <file>themes/default/georeferencer/mActionLinkGeorefToQgis.svg</file>
+        <file>themes/default/georeferencer/mActionLinkQGisToGeoref.svg</file>
+        <file>themes/default/georeferencer/mActionLoadGCPpoints.svg</file>
+        <file>themes/default/georeferencer/mActionAddGCPPoint.svg</file>
+        <file>themes/default/georeferencer/mActionDeleteGCPPoint.svg</file>
+        <file>themes/default/georeferencer/mActionMoveGCPPoint.svg</file>
+        <file>themes/default/georeferencer/mActionSaveGCPpointsAs.svg</file>
         <file>themes/default/mIconAlignBottom.svg</file>
         <file>themes/default/mIconAlignTop.svg</file>
         <file>themes/default/mIconAlignVCenter.svg</file>
@@ -941,14 +970,37 @@
         <file>themes/default/mActionEditItalic.svg</file>
         <file>themes/default/mActionEditUnderline.svg</file>
         <file>themes/default/mActionStrikeOut.svg</file>
-        <file>themes/default/temporal_navigation/back.svg</file>
-        <file>themes/default/temporal_navigation/forward.svg</file>
-        <file>themes/default/temporal_navigation/next.svg</file>
-        <file>themes/default/temporal_navigation/stop.svg</file>
-        <file>themes/default/temporal_navigation/previous.svg</file>
-        <file>themes/default/temporal_navigation/rewindToStart.svg</file>
-        <file>themes/default/temporal_navigation/skipToEnd.svg</file>
-        <file>themes/default/temporal_navigation/pause.svg</file>
+        <file>themes/default/mActionZoomInXAxis.svg</file>
+        <file>themes/default/mActionCaptureCurveFromFeature.svg</file>
+        <file>themes/default/mIconLayerTree.svg</file>
+        <file>themes/default/mIconSurfaceElevationFillBelow.svg</file>
+        <file>themes/default/mIconSurfaceElevationLine.svg</file>
+        <file>themes/default/classification_methods/mClassificationFixedInterval.svg</file>
+        <file>themes/default/mIconDelimitedText.svg</file>
+        <file>themes/default/mIconGpx.svg</file>
+        <file>themes/default/mIconMemory.svg</file>
+        <file>themes/default/mIconTemporalRaster.svg</file>
+        <file>themes/default/mIconFonts.svg</file>
+        <file>themes/default/mActionNewFileGeodatabase.svg</file>
+        <file>themes/default/mIconBrowserRelations.svg</file>
+        <file>themes/default/mActionIdentifyByMouseOver.svg</file>
+        <file>themes/default/mShadingRenderer.svg</file>
+        <file>themes/default/gpsicons/mIconGpsConnect.svg</file>
+        <file>themes/default/gpsicons/mIconGpsDisconnect.svg</file>
+        <file>themes/default/gpsicons/mActionRecenter.svg</file>
+        <file>themes/default/gpsicons/mActionReset.svg</file>
+        <file>themes/default/gpsicons/mActionAddTrackPoint.svg</file>
+        <file>themes/default/gpsicons/mIconGpsDestinationLayer.svg</file>
+        <file>themes/default/mLayoutItemElevationProfile.svg</file>
+        <file>themes/default/mActionElevationProfile.svg</file>
+        <file>themes/default/mActionCopyProfileSettings.svg</file>
+        <file>themes/default/mIconFieldGeometry.svg</file>
+        <file>themes/default/algorithms/mAlgorithmRectanglesOvalsDiamonds.svg</file>
+        <file>themes/default/algorithms/mAlgorithmOffsetLines.svg</file>
+        <file>composer/refreshing_item.svg</file>
+        <file>themes/default/mActionTextAlongLine.svg</file>
+        <file>themes/default/mActionNewElevationProfile.svg</file>
+        <file>themes/default/mIconSurfaceElevationFillAbove.svg</file>
         <file>themes/default/nextgis.svg</file>
     </qresource>
     <qresource prefix="/images/tips">

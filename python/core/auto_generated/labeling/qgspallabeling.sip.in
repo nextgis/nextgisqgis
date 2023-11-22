@@ -27,43 +27,6 @@ Contains settings for how a map layer will be labeled.
 
 
 
-    enum Placement
-    {
-      AroundPoint,
-      OverPoint,
-      Line,
-      Curved,
-      Horizontal,
-      Free,
-      OrderedPositionsAroundPoint,
-      PerimeterCurved,
-      OutsidePolygons,
-    };
-
-    enum PredefinedPointPosition
-    {
-      TopLeft,
-      TopSlightlyLeft,
-      TopMiddle,
-      TopSlightlyRight,
-      TopRight,
-      MiddleLeft,
-      MiddleRight,
-      BottomLeft,
-      BottomSlightlyLeft,
-      BottomMiddle,
-      BottomSlightlyRight,
-      BottomRight,
-    };
-
-
-    enum OffsetType
-    {
-      FromPoint,
-      FromSymbolBounds,
-    };
-
-
     enum LinePlacementFlags
     {
       OnLine,
@@ -72,41 +35,11 @@ Contains settings for how a map layer will be labeled.
       MapOrientation,
     };
 
-    enum QuadrantPosition
-    {
-      QuadrantAboveLeft,
-      QuadrantAbove,
-      QuadrantAboveRight,
-      QuadrantLeft,
-      QuadrantOver,
-      QuadrantRight,
-      QuadrantBelowLeft,
-      QuadrantBelow,
-      QuadrantBelowRight,
-    };
-
-    enum UpsideDownLabels
-    {
-      Upright,
-      ShowDefined,
-      ShowAll
-    };
-
-
     enum DirectionSymbols
     {
       SymbolLeftRight,
       SymbolAbove,
       SymbolBelow
-    };
-
-    enum MultiLineAlign
-    {
-      MultiLeft,
-      MultiCenter,
-      MultiRight,
-      MultiFollowPlacement,
-      MultiJustify,
     };
 
 
@@ -233,6 +166,8 @@ Contains settings for how a map layer will be labeled.
       PolygonLabelOutside,
       LineAnchorPercent,
       LineAnchorClipping,
+      LineAnchorType,
+      LineAnchorTextPoint,
 
       // rendering
       ScaleVisibility,
@@ -247,6 +182,9 @@ Contains settings for how a map layer will be labeled.
       ObstacleFactor,
       ZIndex,
       CalloutDraw,
+
+      AllowDegradedPlacement,
+      OverlapHandling,
 
       // (data defined only)
       Show,
@@ -332,7 +270,7 @@ Returns the :py:class:`QgsExpression` for this label settings. May be ``None`` i
 
     bool useMaxLineLengthForAutoWrap;
 
-    MultiLineAlign multilineAlign;
+    Qgis::LabelMultiLineAlignment multilineAlign;
 
     bool formatNumbers;
 
@@ -341,9 +279,9 @@ Returns the :py:class:`QgsExpression` for this label settings. May be ``None`` i
     bool plusSign;
 
 
-    Placement placement;
+    Qgis::LabelPlacement placement;
 
-    QgsLabeling::PolygonPlacementFlags polygonPlacementFlags() const;
+    Qgis::LabelPolygonPlacementFlags polygonPlacementFlags() const;
 %Docstring
 Returns the polygon placement flags, which dictate how polygon labels can be placed.
 
@@ -352,7 +290,7 @@ Returns the polygon placement flags, which dictate how polygon labels can be pla
 .. versionadded:: 3.14
 %End
 
-    void setPolygonPlacementFlags( QgsLabeling::PolygonPlacementFlags flags );
+    void setPolygonPlacementFlags( Qgis::LabelPolygonPlacementFlags flags );
 %Docstring
 Sets the polygon placement ``flags``, which dictate how polygon labels can be placed.
 
@@ -370,25 +308,25 @@ Sets the polygon placement ``flags``, which dictate how polygon labels can be pl
 
     double dist;
 
-    QgsUnitTypes::RenderUnit distUnits;
+    Qgis::RenderUnit distUnits;
 
     QgsMapUnitScale distMapUnitScale;
 
-    OffsetType offsetType;
+    Qgis::LabelOffsetType offsetType;
 
     double repeatDistance;
 
-    QgsUnitTypes::RenderUnit repeatDistanceUnit;
+    Qgis::RenderUnit repeatDistanceUnit;
 
     QgsMapUnitScale repeatDistanceMapUnitScale;
 
-    QuadrantPosition quadOffset;
+    Qgis::LabelQuadrantPosition quadOffset;
 
     double xOffset;
 
     double yOffset;
 
-    QgsUnitTypes::RenderUnit offsetUnits;
+    Qgis::RenderUnit offsetUnits;
 
     QgsMapUnitScale labelOffsetMapUnitScale;
 
@@ -396,7 +334,7 @@ Sets the polygon placement ``flags``, which dictate how polygon labels can be pl
 
     bool preserveRotation;
 
-    QgsUnitTypes::AngleUnit rotationUnit() const;
+    Qgis::AngleUnit rotationUnit() const;
 %Docstring
 Unit for rotation of labels.
 
@@ -405,7 +343,7 @@ Unit for rotation of labels.
 .. versionadded:: 3.22
 %End
 
-    void setRotationUnit( QgsUnitTypes::AngleUnit angleUnit );
+    void setRotationUnit( Qgis::AngleUnit angleUnit );
 %Docstring
 Set unit for rotation of labels.
 
@@ -433,9 +371,7 @@ Set unit for rotation of labels.
 
     int fontMaxPixelSize;
 
-    bool displayAll;
-
-    UpsideDownLabels upsidedownLabels;
+    Qgis::UpsideDownLabelHandling upsidedownLabels;
 
     bool labelPerPart;
 
@@ -457,6 +393,7 @@ Set unit for rotation of labels.
 %Property( name = overrunDistance, get = _getOverrunDistance, set = _setOverrunDistance )
 %Property( name = overrunDistanceUnit, get = _getOverrunDistanceUnit, set = _setOverrunDistanceUnit )
 %Property( name = overrunDistanceMapUnitScale, get = _getOverrunDistanceMapUnitScale, set = _setOverrunDistanceMapUnitScale )
+%Property( name = displayAll, get = _getDisplayAll, set = _setDisplayAll )
 
     bool _limitNumLabels() const;
     void _setLimitNumLabels( bool limit );
@@ -486,20 +423,22 @@ Set unit for rotation of labels.
     void _setPlaceDirectionSymbol( DirectionSymbols placement );
     double _getOverrunDistance() const;
     void _setOverrunDistance( double distance );
-    QgsUnitTypes::RenderUnit _getOverrunDistanceUnit() const;
-    void _setOverrunDistanceUnit( QgsUnitTypes::RenderUnit unit );
+    Qgis::RenderUnit _getOverrunDistanceUnit() const;
+    void _setOverrunDistanceUnit( Qgis::RenderUnit unit );
     QgsMapUnitScale _getOverrunDistanceMapUnitScale() const;
     void _setOverrunDistanceMapUnitScale( const QgsMapUnitScale &scale );
+    bool _getDisplayAll() const;
+    void _setDisplayAll( bool display );
 
     double zIndex;
 
     QString geometryGenerator;
 
-    QgsWkbTypes::GeometryType geometryGeneratorType;
+    Qgis::GeometryType geometryGeneratorType;
 
     bool geometryGeneratorEnabled;
 
-    QgsWkbTypes::GeometryType layerType;
+    Qgis::GeometryType layerType;
 
     void setLegendString( const QString &legendString );
 %Docstring
@@ -678,7 +617,26 @@ Sets the label thinning ``settings``.
 .. versionadded:: 3.12
 %End
 
-    static QPixmap labelSettingsPreviewPixmap( const QgsPalLayerSettings &settings, QSize size, const QString &previewText = QString(), int padding = 0 );
+
+    QgsLabelPlacementSettings &placementSettings();
+%Docstring
+Returns the label placement settings.
+
+.. seealso:: :py:func:`setPlacementSettings`
+
+.. versionadded:: 3.26
+%End
+
+    void setPlacementSettings( const QgsLabelPlacementSettings &settings );
+%Docstring
+Sets the label placement ``settings``.
+
+.. seealso:: :py:func:`placementSettings`
+
+.. versionadded:: 3.26
+%End
+
+    static QPixmap labelSettingsPreviewPixmap( const QgsPalLayerSettings &settings, QSize size, const QString &previewText = QString(), int padding = 0, const QgsScreenProperties &screen = QgsScreenProperties() );
 %Docstring
 Returns a pixmap preview for label ``settings``.
 
@@ -686,6 +644,7 @@ Returns a pixmap preview for label ``settings``.
 :param size: target pixmap size
 :param previewText: text to render in preview, or empty for default text
 :param padding: space between icon edge and color ramp
+:param screen: can be used to specify the destination screen properties for the icon. This allows the icon to be generated using the correct DPI and device pixel ratio for the target screen (since QGIS 3.32)
 
 .. versionadded:: 3.10
 %End

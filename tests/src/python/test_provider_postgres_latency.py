@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for the remote PostgreSQL server.
 
 Note: The test makes sense if the network latency
@@ -12,19 +11,26 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 
 """
-from builtins import next
 
 __author__ = 'Daryna Dyka'
 __date__ = '2021-06-13'
 __copyright__ = 'Copyright 2021, The QGIS Project'
 
-import qgis  # NOQA
-import psycopg2
-
 import os
 import time
 
-from qgis.core import QgsVectorLayer, QgsFeatureRequest
+import psycopg2
+import qgis  # NOQA
+from qgis.PyQt.QtCore import (
+    QDir,
+    QTemporaryFile,
+)
+from qgis.core import (
+    QgsFeatureRequest,
+    QgsProject,
+    QgsSettingsTree,
+    QgsVectorLayer,
+)
 from qgis.testing import start_app, unittest
 
 QGISAPP = start_app()
@@ -35,6 +41,7 @@ class TestPyQgsPostgresProviderLatency(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super().setUpClass()
         cls.dbconn = 'service=qgis_test'
         if 'QGIS_PGTEST_DB' in os.environ:
             cls.dbconn = os.environ['QGIS_PGTEST_DB']
@@ -44,12 +51,13 @@ class TestPyQgsPostgresProviderLatency(unittest.TestCase):
     def tearDownClass(cls):
         """Run after all tests"""
         os.system('tc qdisc del dev eth0 root')
+        super().tearDownClass()
 
     def setDelay(self, delay_in_ms):
         if delay_in_ms == 0:
             os.system('tc qdisc del dev eth0 root')
         else:
-            os.system('tc qdisc add dev eth0 root netem delay {}ms'.format(delay_in_ms))
+            os.system(f'tc qdisc add dev eth0 root netem delay {delay_in_ms}ms')
 
     def getDelay(self):
         self.assertTrue(self.con)
@@ -84,7 +92,7 @@ class TestPyQgsPostgresProviderLatency(unittest.TestCase):
             self.setDelay(0)
             delay_delta[delay_ms] = round(delay_get[delay_ms] / 2.0 - delay_set[delay_ms], 1)
 
-        self.assertTrue(False, '\nset: {}\nget: {}\nget/2 - set: {}'.format(delay_set, delay_get, delay_delta))
+        self.assertTrue(False, f'\nset: {delay_set}\nget: {delay_get}\nget/2 - set: {delay_delta}')
 
     def testSetDelayToDB(self):
         """Test Set delay to remote DB"""
@@ -92,7 +100,7 @@ class TestPyQgsPostgresProviderLatency(unittest.TestCase):
         self.setDelay(100)
         delay_get = self.getDelay() / 2
         self.setDelay(0)
-        self.assertTrue(delay_get > 90 and delay_get < 110, 'set delay to 100ms - unsuccessful (got: {}ms)'.format(delay_get))
+        self.assertTrue(delay_get > 90 and delay_get < 110, f'set delay to 100ms - unsuccessful (got: {delay_get}ms)')
 
     def testSaveChangedGeometryToDB(self):
         """Test Save geometries to remote DB"""
@@ -128,6 +136,37 @@ class TestPyQgsPostgresProviderLatency(unittest.TestCase):
         duration = round(abs(time.time() - start_time), 1)
         self.setDelay(0)
         self.assertTrue(duration < 10, error_string.format(duration))
+
+    def testProjectOpenTime(self):
+        """ open project, provider-parallel-loading = False """
+
+        projectFile = QTemporaryFile(QDir.temp().absoluteFilePath("testProjectOpenTime.qgz"))
+        projectFile.open()
+
+        project = QgsProject()
+        set_new_layer = ' sslmode=disable key=\'pk\' srid=4326 type=POINT table="qgis_test"."someData" (geom) sql='
+        project.addMapLayer(QgsVectorLayer(self.dbconn + set_new_layer, 'test_vl_01', 'postgres'))
+        project.addMapLayer(QgsVectorLayer(self.dbconn + set_new_layer, 'test_vl_02', 'postgres'))
+        project.addMapLayer(QgsVectorLayer(self.dbconn + set_new_layer, 'test_vl_03', 'postgres'))
+        project.addMapLayer(QgsVectorLayer(self.dbconn + set_new_layer, 'test_vl_04', 'postgres'))
+        project.addMapLayer(QgsVectorLayer(self.dbconn + set_new_layer, 'test_vl_05', 'postgres'))
+        self.assertTrue(project.write(projectFile.fileName()))
+
+        settings = QgsSettingsTree.node('core').childSetting('provider-parallel-loading')
+        settings.setVariantValue(False)
+
+        davg = 8.8
+        dmin = round(davg - 0.2, 1)
+        dmax = round(davg + 0.3, 1)
+        error_string = 'expected from {0}s to {1}s, got {2}s\nHINT: set davg={2} to pass the test :)'
+
+        project = QgsProject()
+        self.setDelay(100)
+        start_time = time.time()
+        self.assertTrue(project.read(projectFile.fileName()))
+        duration = round(abs(time.time() - start_time), 1)
+        self.setDelay(0)
+        self.assertTrue(duration > dmin and duration < dmax, error_string.format(dmin, dmax, duration))
 
 
 if __name__ == '__main__':

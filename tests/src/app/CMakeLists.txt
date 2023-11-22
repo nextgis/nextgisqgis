@@ -46,11 +46,13 @@ set(TESTS
   testqgsappbrowserproviders.cpp
   #testqgisappclipboard.cpp
   testqgisappdockwidgets.cpp
+  #testqgsadvanceddigitizing.cpp
   #testqgsattributetable.cpp
   #testqgsapplocatorfilters.cpp
   #testqgsdecorationscalebar.cpp
+  #testqgsdwgimportdialog.cpp
   #testqgsfieldcalculator.cpp
-  #testqgsgeoreferencer.cpp
+  #testqgsmapcanvasdockwidget.cpp
   testqgsmaptooleditannotation.cpp
   #testqgsmaptoolidentifyaction.cpp
   testqgsmaptoollabel.cpp
@@ -69,6 +71,7 @@ set(TESTS
   #testqgsmaptoolsplitfeatures.cpp
   #testqgsmeasuretool.cpp
   #testqgsmeasurebearingtool.cpp
+  #testqgsvertexeditor.cpp
   #testqgsvertextool.cpp
   testqgsvectorlayersaveasdialog.cpp
   testqgsmaptoolreverseline.cpp
@@ -76,9 +79,15 @@ set(TESTS
   #testqgsprojectproperties.cpp
   testqgsapplayoutvaliditychecks.cpp
   #testqgsmeshcalculatordialog.cpp
-  #testqgsgpsinformationwidget.cpp
-  testqgslabelpropertydialog.cpp
+  #testqgsgpsintegration.cpp
+  #testqgslabelpropertydialog.cpp
+  #testqgsmergeattributesdialog.cpp
 )
+
+if (HAVE_GEOREFERENCER)
+  set(TESTS ${TESTS} testqgsgeoreferencer.cpp)
+endif()
+
 if (WITH_BINDINGS)
   #set(TESTS ${TESTS} testqgisapppython.cpp)
 endif()

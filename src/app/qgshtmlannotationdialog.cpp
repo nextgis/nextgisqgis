@@ -21,6 +21,8 @@
 #include "qgsannotationmanager.h"
 #include "qgsgui.h"
 #include "qgshelp.h"
+#include "qgssettingsentryimpl.h"
+
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGraphicsScene>
@@ -34,6 +36,10 @@ QgsHtmlAnnotationDialog::QgsHtmlAnnotationDialog( QgsMapCanvasAnnotationItem *it
   setupUi( this );
   connect( mBrowseToolButton, &QToolButton::clicked, this, &QgsHtmlAnnotationDialog::mBrowseToolButton_clicked );
   connect( mButtonBox, &QDialogButtonBox::clicked, this, &QgsHtmlAnnotationDialog::mButtonBox_clicked );
+
+  connect( mFileRadioButton, &QToolButton::toggled, this, &QgsHtmlAnnotationDialog::fileRadioButtonToggled );
+  connect( mSourceRadioButton, &QToolButton::toggled, this, &QgsHtmlAnnotationDialog::sourceRadioButtonToggled );
+
   setWindowTitle( tr( "HTML Annotation" ) );
   mEmbeddedWidget = new QgsAnnotationWidget( mItem );
   mStackedWidget->addWidget( mEmbeddedWidget );
@@ -60,6 +66,13 @@ QgsHtmlAnnotationDialog::QgsHtmlAnnotationDialog( QgsMapCanvasAnnotationItem *it
   QPushButton *deleteButton = new QPushButton( tr( "Delete" ) );
   QObject::connect( deleteButton, &QPushButton::clicked, this, &QgsHtmlAnnotationDialog::deleteItem );
   mButtonBox->addButton( deleteButton, QDialogButtonBox::RejectRole );
+
+  connect( mLiveCheckBox, &QCheckBox::toggled, this, &QgsHtmlAnnotationDialog::onLiveUpdateToggled );
+  mLiveCheckBox->setChecked( QgsAnnotationWidget::settingLiveUpdate->value() );
+  connect( mEmbeddedWidget, &QgsAnnotationWidget::changed, this, &QgsHtmlAnnotationDialog::onSettingsChanged );
+  connect( mHtmlSourceTextEdit, &QgsCodeEditorHTML::textChanged, this, &QgsHtmlAnnotationDialog::onSettingsChanged );
+  connect( mFileLineEdit, &QLineEdit::textChanged, this, &QgsHtmlAnnotationDialog::onSettingsChanged );
+  connect( mLiveCheckBox, &QCheckBox::toggled, this, &QgsHtmlAnnotationDialog::onSettingsChanged );
 
   QgsGui::enableAutoGeometryRestore( this );
 }
@@ -100,17 +113,23 @@ void QgsHtmlAnnotationDialog::mBrowseToolButton_clicked()
     directory = QDir::homePath();
   }
   const QString filename = QFileDialog::getOpenFileName( nullptr, tr( "html" ), directory, QStringLiteral( "HTML (*.html *.htm);;All files (*.*)" ) );
+  if ( filename.isEmpty() )
+  {
+    return;
+  }
   mFileLineEdit->setText( filename );
 }
 
-void QgsHtmlAnnotationDialog::on_mFileRadioButton_toggled( bool checked )
+void QgsHtmlAnnotationDialog::fileRadioButtonToggled( bool checked )
 {
   mFileLineEdit->setEnabled( checked );
+  onSettingsChanged();
 }
 
-void QgsHtmlAnnotationDialog::on_mSourceRadioButton_toggled( bool checked )
+void QgsHtmlAnnotationDialog::sourceRadioButtonToggled( bool checked )
 {
   mHtmlSourceTextEdit->setEnabled( checked );
+  onSettingsChanged();
 }
 
 void QgsHtmlAnnotationDialog::deleteItem()
@@ -130,5 +149,21 @@ void QgsHtmlAnnotationDialog::mButtonBox_clicked( QAbstractButton *button )
 
 void QgsHtmlAnnotationDialog::showHelp()
 {
-  QgsHelp::openHelp( QStringLiteral( "introduction/general_tools.html#annotation-tools" ) );
+  QgsHelp::openHelp( QStringLiteral( "map_views/map_view.html#sec-annotations" ) );
+}
+
+void QgsHtmlAnnotationDialog::onSettingsChanged()
+{
+  if ( mLiveCheckBox->isChecked() )
+  {
+    applySettingsToItem();
+  }
+}
+
+void QgsHtmlAnnotationDialog::onLiveUpdateToggled( bool checked )
+{
+  // Apply and Cancel buttons make no sense when live update is on
+  mButtonBox->button( QDialogButtonBox::Apply )->setHidden( checked );
+  mButtonBox->button( QDialogButtonBox::Cancel )->setHidden( checked );
+  QgsAnnotationWidget::settingLiveUpdate->setValue( checked );
 }

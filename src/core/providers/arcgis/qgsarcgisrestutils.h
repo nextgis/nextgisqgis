@@ -16,19 +16,21 @@
 #define QGSARCGISRESTUTILS_H
 
 #include "qgswkbtypes.h"
-#include "qgsrectangle.h"
-#include "qgsmarkersymbollayer.h"
+#include "qgscoordinatereferencesystem.h"
 
 #include "qgis_sip.h"
 
 #include <QStringList>
 #include <QVariant>
+#include <QTimeZone>
+
 #include <functional>
 #include <memory>
 
 class QNetworkReply;
 class QgsNetworkAccessManager;
-class QgsFields;
+class QgsField;
+class QgsGeometry;
 class QgsAbstractGeometry;
 class QgsAbstractVectorLayerLabeling;
 class QgsCoordinateReferenceSystem;
@@ -44,8 +46,62 @@ class QgsCircularString;
 class QgsCompoundCurve;
 class QgsMultiPoint;
 class QgsMultiSurface;
+class QgsMultiLineString;
 class QgsPolygon;
 class QgsMultiCurve;
+class QgsMultiPolygon;
+class QgsCurvePolygon;
+class QgsFeature;
+class QgsLineString;
+class QgsCurve;
+
+/**
+ * \ingroup core
+ * \brief Contains the context of a ArcGIS REST service operation.
+ *
+ * \see QgsArcGisRestUtils
+ *
+ * \since QGIS 3.28
+ */
+class CORE_EXPORT QgsArcGisRestContext
+{
+  public:
+
+    /**
+     * Sets the time \a zone for datetime values.
+     *
+     * \see timeZone()
+     */
+    void setTimeZone( const QTimeZone &zone ) { mTimeZone = zone; }
+
+    /**
+     * Returns the time zone for datetime values.
+     *
+     * \see setTimeZone()
+     */
+    QTimeZone timeZone() const { return mTimeZone; }
+
+    /**
+     * Sets the name of the objectId field.
+     *
+     * \see objectIdFieldName()
+     */
+    void setObjectIdFieldName( const QString &name ) { mObjectIdFieldName = name; }
+
+    /**
+     * Returns the name of the objectId field.
+     *
+     * \see setObjectIdFieldName()
+     */
+    QString objectIdFieldName() const { return mObjectIdFieldName; }
+
+  private:
+
+    QTimeZone mTimeZone;
+
+    QString mObjectIdFieldName;
+
+};
 
 /**
  * \ingroup core
@@ -57,6 +113,8 @@ class QgsMultiCurve;
  */
 class CORE_EXPORT QgsArcGisRestUtils
 {
+    Q_GADGET
+
   public:
 
     /**
@@ -67,7 +125,7 @@ class CORE_EXPORT QgsArcGisRestUtils
     /**
      * Converts an ESRI REST geometry \a type to a WKB type.
      */
-    static QgsWkbTypes::Type convertGeometryType( const QString &type );
+    static Qgis::WkbType convertGeometryType( const QString &type );
 
     /**
      * Converts an ESRI REST \a geometry JSON definition to a QgsAbstractGeometry.
@@ -135,44 +193,113 @@ class CORE_EXPORT QgsArcGisRestUtils
      */
     static QDateTime convertDateTime( const QVariant &value );
 
+    /**
+     * Converts a \a geometry to an ArcGIS REST JSON representation.
+     *
+     * Returns an empty map if the geometry cannot be converted.
+     *
+     * \since QGIS 3.28
+     */
+    static QVariantMap geometryToJson( const QgsGeometry &geometry, const QgsArcGisRestContext &context, const QgsCoordinateReferenceSystem &crs = QgsCoordinateReferenceSystem() );
+
+    /**
+     * Converts a \a crs to an ArcGIS REST JSON representation.
+     *
+     * Returns an empty map if the \a crs is not valid.
+     *
+     * \since QGIS 3.28
+     */
+    static QVariantMap crsToJson( const QgsCoordinateReferenceSystem &crs );
+
+    /**
+     * Flags which control the behavior of converting features to JSON.
+     *
+     * \since QGIS 3.28
+     */
+    enum class FeatureToJsonFlag : int
+    {
+      IncludeGeometry = 1 << 0, //!< Whether to include the geometry definition
+      IncludeNonObjectIdAttributes = 1 << 1, //!< Whether to include any non-objectId attributes
+    };
+    Q_ENUM( FeatureToJsonFlag );
+
+    /**
+     * Flags which control the behavior of converting features to JSON.
+     *
+     * \since QGIS 3.28
+     */
+    Q_DECLARE_FLAGS( FeatureToJsonFlags, FeatureToJsonFlag )
+    Q_FLAG( FeatureToJsonFlags )
+
+    /**
+     * Converts a \a feature to an ArcGIS REST JSON representation.
+     *
+     * \since QGIS 3.28
+     */
+    static QVariantMap featureToJson( const QgsFeature &feature,
+                                      const QgsArcGisRestContext &context,
+                                      const QgsCoordinateReferenceSystem &crs = QgsCoordinateReferenceSystem(),
+                                      QgsArcGisRestUtils::FeatureToJsonFlags flags = QgsArcGisRestUtils::FeatureToJsonFlags( static_cast< int >( QgsArcGisRestUtils::FeatureToJsonFlag::IncludeGeometry ) | static_cast< int >( QgsArcGisRestUtils::FeatureToJsonFlag::IncludeNonObjectIdAttributes ) ) );
+
+    /**
+     * Converts a variant to a REST attribute value.
+     *
+     * \since QGIS 3.28
+     */
+    static QVariant variantToAttributeValue( const QVariant &variant, QVariant::Type expectedType, const QgsArcGisRestContext &context );
+
+    /**
+     * Converts a \a field's definition to an ArcGIS REST JSON representation.
+     *
+     * \since QGIS 3.28
+     */
+    static QVariantMap fieldDefinitionToJson( const QgsField &field );
+
+    /**
+     * Converts a string value to a REST service type.
+     *
+     * \since QGIS 3.28
+     */
+    static Qgis::ArcGisRestServiceType serviceTypeFromString( const QString &type );
+
   private:
 
     /**
      * Converts a JSON \a list to a point geometry of the specified wkb \a type.
      */
-    static std::unique_ptr< QgsPoint > convertPoint( const QVariantList &list, QgsWkbTypes::Type type );
+    static std::unique_ptr< QgsPoint > convertPoint( const QVariantList &list, Qgis::WkbType type );
 
     /**
      * Converts circular string JSON \a data to a geometry object of the specified \a type.
      *
      * The \a startPoint argument must specify the starting point of the circular string.
      */
-    static std::unique_ptr< QgsCircularString > convertCircularString( const QVariantMap &data, QgsWkbTypes::Type type, const QgsPoint &startPoint );
+    static std::unique_ptr< QgsCircularString > convertCircularString( const QVariantMap &data, Qgis::WkbType type, const QgsPoint &startPoint );
 
     /**
      * Converts a compound curve JSON \a list to a geometry object of the specified \a type.
      */
-    static std::unique_ptr< QgsCompoundCurve > convertCompoundCurve( const QVariantList &list, QgsWkbTypes::Type type );
+    static std::unique_ptr< QgsCompoundCurve > convertCompoundCurve( const QVariantList &list, Qgis::WkbType type );
 
     /**
      * Converts point \a data to a point object of the specified \a type.
      */
-    static std::unique_ptr< QgsPoint > convertGeometryPoint( const QVariantMap &data, QgsWkbTypes::Type pointType );
+    static std::unique_ptr< QgsPoint > convertGeometryPoint( const QVariantMap &data, Qgis::WkbType pointType );
 
     /**
      * Converts multipoint \a data to a multipoint object of the specified \a type.
      */
-    static std::unique_ptr< QgsMultiPoint > convertMultiPoint( const QVariantMap &geometryData, QgsWkbTypes::Type pointType );
+    static std::unique_ptr< QgsMultiPoint > convertMultiPoint( const QVariantMap &geometryData, Qgis::WkbType pointType );
 
     /**
      * Converts polyline \a data to a curve object of the specified \a type.
      */
-    static std::unique_ptr< QgsMultiCurve > convertGeometryPolyline( const QVariantMap &data, QgsWkbTypes::Type pointType );
+    static std::unique_ptr< QgsMultiCurve > convertGeometryPolyline( const QVariantMap &data, Qgis::WkbType pointType );
 
     /**
      * Converts polygon \a data to a polygon object of the specified \a type.
      */
-    static std::unique_ptr< QgsMultiSurface > convertGeometryPolygon( const QVariantMap &data, QgsWkbTypes::Type pointType );
+    static std::unique_ptr< QgsMultiSurface > convertGeometryPolygon( const QVariantMap &data, Qgis::WkbType pointType );
 
     /**
      * Converts envelope \a data to a polygon object.
@@ -187,7 +314,24 @@ class CORE_EXPORT QgsArcGisRestUtils
 
     static Qgis::MarkerShape parseEsriMarkerShape( const QString &style );
 
+    static QVariantMap pointToJson( const QgsPoint *point );
+    static QVariantMap multiPointToJson( const QgsMultiPoint *multiPoint );
+    static QVariantList lineStringToJsonPath( const QgsLineString *line );
+    static QVariantList curveToJsonCurve( const QgsCurve *curve, bool includeStart );
+    static QVariantMap lineStringToJson( const QgsLineString *line );
+    static QVariantMap curveToJson( const QgsCurve *curve );
+    static QVariantMap multiLineStringToJson( const QgsMultiLineString *multiLine );
+    static QVariantMap multiCurveToJson( const QgsMultiCurve *multiCurve );
+    static QVariantList polygonToJsonRings( const QgsPolygon *polygon );
+    static QVariantList curvePolygonToJsonRings( const QgsCurvePolygon *polygon );
+    static QVariantMap polygonToJson( const QgsPolygon *polygon );
+    static QVariantMap curvePolygonToJson( const QgsCurvePolygon *polygon );
+    static QVariantMap multiPolygonToJson( const QgsMultiPolygon *polygon );
+    static QVariantMap multiSurfaceToJson( const QgsMultiSurface *multiSurface );
+
     friend class TestQgsArcGisRestUtils;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS( QgsArcGisRestUtils::FeatureToJsonFlags )
 
 #endif // QGSARCGISRESTUTILS_H

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsVectorLayer load/write named style.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -11,25 +10,14 @@ __author__ = 'Alessandro Pasotti'
 __date__ = '22/01/2020'
 __copyright__ = 'Copyright 2020, The QGIS Project'
 # This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '6b44a42058d8f4d3f994b915f72f08b6a3ab474d'
+__revision__ = '$Format:%H$'
 
-import tempfile
-from qgis.core import (
-    QgsVectorLayer,
-    QgsMapLayer,
-    QgsReadWriteContext,
-)
-from qgis.PyQt.QtXml import QDomDocument, QDomNode
-
+from qgis.PyQt.QtXml import QDomDocument
+from qgis.core import QgsMapLayer, QgsReadWriteContext, QgsVectorLayer
 from qgis.testing import unittest
 
 
 class TestPyQgsVectorLayerNamedStyle(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        """Run before all tests"""
-        pass
 
     def testLoadWriteRenderingScaleVisibility(self):
         """Test write and load scale visibility, see GH #33840"""
@@ -44,7 +32,7 @@ class TestPyQgsVectorLayerNamedStyle(unittest.TestCase):
         self.assertTrue(vl.writeStyle(node, style, "Error writing style", QgsReadWriteContext(), QgsMapLayer.Rendering))
 
         style_content = style.toString()
-        del(vl)
+        del vl
 
         # Read
         vl2 = QgsVectorLayer("LineString?crs=epsg:4326", "result", "memory")

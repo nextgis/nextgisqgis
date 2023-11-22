@@ -20,7 +20,6 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgsgeometrycollection.h"
 #include "qgslinestring.h"
 #include "qgswkbptr.h"
-#include "qgslogger.h"
 
 #include <memory>
 #include <QStringList>
@@ -156,6 +155,11 @@ bool QgsGeometryUtils::verticesAtDistance( const QgsAbstractGeometry &geometry, 
   previousVertex = QgsVertexId();
   nextVertex = QgsVertexId();
 
+  if ( geometry.isEmpty() )
+  {
+    return false;
+  }
+
   QgsPoint point;
   QgsPoint previousPoint;
 
@@ -237,6 +241,22 @@ double QgsGeometryUtils::sqrDistToLine( double ptX, double ptY, double x1, doubl
   }
 
   return dist;
+}
+
+double QgsGeometryUtils::distToInfiniteLine( const QgsPoint &point, const QgsPoint &linePoint1, const QgsPoint &linePoint2, double epsilon )
+{
+  const double area = std::abs(
+                        ( linePoint1.x() - linePoint2.x() ) * ( point.y() - linePoint2.y() ) -
+                        ( linePoint1.y() - linePoint2.y() ) * ( point.x() - linePoint2.x() )
+                      );
+
+  const double length = std::sqrt(
+                          std::pow( linePoint1.x() - linePoint2.x(), 2 ) +
+                          std::pow( linePoint1.y() - linePoint2.y(), 2 )
+                        );
+
+  const double distance = area / length;
+  return qgsDoubleNear( distance, 0.0, epsilon ) ? 0.0 : distance;
 }
 
 bool QgsGeometryUtils::lineIntersection( const QgsPoint &p1, QgsVector v1, const QgsPoint &p2, QgsVector v2, QgsPoint &intersection )
@@ -1030,7 +1050,7 @@ void QgsGeometryUtils::segmentizeArc( const QgsPoint &p1, const QgsPoint &p2, co
   stringPoints.insert( 0, circlePoint1 );
   if ( circlePoint2 != circlePoint3 && circlePoint1 != circlePoint2 ) //draw straight line segment if two points have the same position
   {
-    QgsWkbTypes::Type pointWkbType = QgsWkbTypes::Point;
+    Qgis::WkbType pointWkbType = Qgis::WkbType::Point;
     if ( hasZ )
       pointWkbType = QgsWkbTypes::addZ( pointWkbType );
     if ( hasM )
@@ -1178,20 +1198,20 @@ QgsPointSequence QgsGeometryUtils::pointsFromWKT( const QString &wktCoordinateLi
     if ( ( isMeasure || foundM ) && coordinates.length() > idx )
       m = coordinates[idx++].toDouble();
 
-    QgsWkbTypes::Type t = QgsWkbTypes::Point;
+    Qgis::WkbType t = Qgis::WkbType::Point;
     if ( is3D || foundZ )
     {
       if ( isMeasure || foundM )
-        t = QgsWkbTypes::PointZM;
+        t = Qgis::WkbType::PointZM;
       else
-        t = QgsWkbTypes::PointZ;
+        t = Qgis::WkbType::PointZ;
     }
     else
     {
       if ( isMeasure || foundM )
-        t = QgsWkbTypes::PointM;
+        t = Qgis::WkbType::PointM;
       else
-        t = QgsWkbTypes::Point;
+        t = Qgis::WkbType::Point;
     }
 
     points.append( QgsPoint( t, x, y, z, m ) );
@@ -1200,7 +1220,7 @@ QgsPointSequence QgsGeometryUtils::pointsFromWKT( const QString &wktCoordinateLi
   return points;
 }
 
-void QgsGeometryUtils::pointsToWKB( QgsWkbPtr &wkb, const QgsPointSequence &points, bool is3D, bool isMeasure )
+void QgsGeometryUtils::pointsToWKB( QgsWkbPtr &wkb, const QgsPointSequence &points, bool is3D, bool isMeasure, QgsAbstractGeometry::WkbFlags flags )
 {
   wkb << static_cast<quint32>( points.size() );
   for ( const QgsPoint &point : points )
@@ -1208,11 +1228,21 @@ void QgsGeometryUtils::pointsToWKB( QgsWkbPtr &wkb, const QgsPointSequence &poin
     wkb << point.x() << point.y();
     if ( is3D )
     {
-      wkb << point.z();
+      double z = point.z();
+      if ( flags & QgsAbstractGeometry::FlagExportNanAsDoubleMin
+           && std::isnan( z ) )
+        z = -std::numeric_limits<double>::max();
+
+      wkb << z;
     }
     if ( isMeasure )
     {
-      wkb << point.m();
+      double m = point.m();
+      if ( flags & QgsAbstractGeometry::FlagExportNanAsDoubleMin
+           && std::isnan( m ) )
+        m = -std::numeric_limits<double>::max();
+
+      wkb << m;
     }
   }
 }
@@ -1332,18 +1362,23 @@ double QgsGeometryUtils::normalizedAngle( double angle )
   return clippedAngle;
 }
 
-QPair<QgsWkbTypes::Type, QString> QgsGeometryUtils::wktReadBlock( const QString &wkt )
+QPair<Qgis::WkbType, QString> QgsGeometryUtils::wktReadBlock( const QString &wkt )
 {
   QString wktParsed = wkt;
   QString contents;
-  if ( wkt.contains( QLatin1String( "EMPTY" ), Qt::CaseInsensitive ) )
+  const QLatin1String empty { "EMPTY" };
+  if ( wkt.contains( empty, Qt::CaseInsensitive ) )
   {
-    const thread_local QRegularExpression sWktRegEx( QStringLiteral( "^\\s*(\\w+)\\s+(\\w+)\\s*$" ), QRegularExpression::DotMatchesEverythingOption );
-    const QRegularExpressionMatch match = sWktRegEx.match( wkt );
-    if ( match.hasMatch() )
+    const thread_local QRegularExpression whiteSpaces( "\\s" );
+    wktParsed.remove( whiteSpaces );
+    const int index = wktParsed.indexOf( empty, 0, Qt::CaseInsensitive );
+
+    if ( index == wktParsed.length() - empty.size() )
     {
-      wktParsed = match.captured( 1 );
-      contents = match.captured( 2 ).toUpper();
+      // "EMPTY" found at the end of the QString
+      // Extract the part of the QString to the left of "EMPTY"
+      wktParsed = wktParsed.left( index );
+      contents = empty;
     }
   }
   else
@@ -1360,7 +1395,7 @@ QPair<QgsWkbTypes::Type, QString> QgsGeometryUtils::wktReadBlock( const QString 
     const QRegularExpressionMatch match = cooRegEx.match( wktParsed );
     contents = match.hasMatch() ? match.captured( 1 ) : QString();
   }
-  const QgsWkbTypes::Type wkbType = QgsWkbTypes::parseType( wktParsed );
+  const Qgis::WkbType wkbType = QgsWkbTypes::parseType( wktParsed );
   return qMakePair( wkbType, contents );
 }
 
@@ -1483,7 +1518,7 @@ int QgsGeometryUtils::closestSideOfRectangle( double right, double bottom, doubl
 
 QgsPoint QgsGeometryUtils::midpoint( const QgsPoint &pt1, const QgsPoint &pt2 )
 {
-  QgsWkbTypes::Type pType( QgsWkbTypes::Point );
+  Qgis::WkbType pType( Qgis::WkbType::Point );
 
 
   const double x = ( pt1.x() + pt2.x() ) / 2.0;
@@ -1609,13 +1644,11 @@ void QgsGeometryUtils::perpendicularCenterSegment( double pointx, double pointy,
 {
   QgsVector segmentVector =  QgsVector( segmentPoint2x - segmentPoint1x, segmentPoint2y - segmentPoint1y );
   QgsVector perpendicularVector = segmentVector.perpVector();
-  if ( desiredSegmentLength )
+  if ( desiredSegmentLength != 0 )
   {
-    if ( desiredSegmentLength != 0 )
-    {
-      perpendicularVector = perpendicularVector.normalized() * ( desiredSegmentLength ) / 2;
-    }
+    perpendicularVector = perpendicularVector.normalized() * ( desiredSegmentLength ) / 2;
   }
+
   perpendicularSegmentPoint1x = pointx - perpendicularVector.x();
   perpendicularSegmentPoint1y = pointy - perpendicularVector.y();
   perpendicularSegmentPoint2x = pointx + perpendicularVector.x();
@@ -1806,6 +1839,17 @@ double QgsGeometryUtils::triangleArea( double aX, double aY, double bX, double b
   return 0.5 * std::abs( ( aX - cX ) * ( bY - aY ) - ( aX - bX ) * ( cY - aY ) );
 }
 
+double QgsGeometryUtils::pointFractionAlongLine( double x1, double y1, double x2, double y2, double px, double py )
+{
+  const double dxp = px - x1;
+  const double dyp = py - y1;
+
+  const double dxl = x2 - x1;
+  const double dyl = y2 - y1;
+
+  return std::sqrt( ( dxp * dxp ) + ( dyp * dyp ) ) / std::sqrt( ( dxl * dxl ) + ( dyl * dyl ) );
+}
+
 void QgsGeometryUtils::weightedPointInTriangle( const double aX, const double aY, const double bX, const double bY, const double cX, const double cY,
     double weightB, double weightC, double &pointX, double &pointY )
 {
@@ -1824,6 +1868,11 @@ void QgsGeometryUtils::weightedPointInTriangle( const double aX, const double aY
   pointX = rBx + rCx + aX;
   pointY = rBy + rCy + aY;
 }
+
+bool QgsGeometryUtils::pointsAreCollinear( double x1, double y1, double x2, double y2, double x3, double y3, double epsilon )
+{
+  return qgsDoubleNear( x1 * ( y2 - y3 ) + x2 * ( y3 - y1 ) + x3 * ( y1 - y2 ), 0, epsilon );
+};
 
 bool QgsGeometryUtils::transferFirstMValueToPoint( const QgsPointSequence &points, QgsPoint &point )
 {

@@ -16,7 +16,6 @@
 #include "qgs25drendererwidget.h"
 #include "qgs25drenderer.h"
 #include "qgsvectorlayer.h"
-#include "qgsmaplayerstylemanager.h"
 #include "qgsexpressioncontextutils.h"
 #include "qgssymbol.h"
 
@@ -28,7 +27,7 @@ Qgs25DRendererWidget::Qgs25DRendererWidget( QgsVectorLayer *layer, QgsStyle *sty
     return;
 
   // the renderer only applies to point vector layers
-  if ( layer->geometryType() != QgsWkbTypes::PolygonGeometry )
+  if ( layer->geometryType() != Qgis::GeometryType::Polygon )
   {
     //setup blank dialog
     QGridLayout *layout = new QGridLayout( this );
@@ -65,8 +64,8 @@ Qgs25DRendererWidget::Qgs25DRendererWidget( QgsVectorLayer *layer, QgsStyle *sty
   const QVariant angle = scope->variable( QStringLiteral( "qgis_25d_angle" ) );
   delete scope;
 
-  mHeightWidget->setField( height.isNull() ? QStringLiteral( "10" ) : height.toString() );
-  mAngleWidget->setValue( angle.isNull() ? 70 : angle.toDouble() );
+  mHeightWidget->setField( QgsVariantUtils::isNull( height ) ? QStringLiteral( "10" ) : height.toString() );
+  mAngleWidget->setValue( QgsVariantUtils::isNull( angle ) ? 70 : angle.toDouble() );
   mAngleWidget->setClearValue( 70 );
   mWallColorButton->setColor( mRenderer->wallColor() );
   mRoofColorButton->setColor( mRenderer->roofColor() );

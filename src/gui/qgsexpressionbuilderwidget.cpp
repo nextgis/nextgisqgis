@@ -209,16 +209,13 @@ QgsExpressionBuilderWidget::QgsExpressionBuilderWidget( QWidget *parent )
   mFunctionBuilderHelp->setReadOnly( true );
   mFunctionBuilderHelp->setText( tr( "\"\"\"Define a new function using the @qgsfunction decorator.\n\
 \n\
- The function accepts the following parameters\n\
+ Besides its normal arguments, the function may specify the following arguments in its signature\n\
+ Those will not need to be specified when calling the function, but will be automatically injected \n\
 \n\
- : param [any]: Define any parameters you want to pass to your function before\n\
- the following arguments.\n\
  : param feature: The current feature\n\
  : param parent: The QgsExpression object\n\
- : param context: If there is an argument called ``context`` found at the last\n\
-                   position, this variable will contain a ``QgsExpressionContext``\n\
-                   object, that gives access to various additional information like\n\
-                   expression variables. E.g. ``context.variable( 'layer_id' )``\n\
+ : param context: ``QgsExpressionContext`` object, that gives access to various additional information like\n\
+                  expression variables. E.g. ``context.variable( 'layer_id' )``\n\
  : returns: The result of the expression.\n\
 \n\
 \n\
@@ -226,9 +223,6 @@ QgsExpressionBuilderWidget::QgsExpressionBuilderWidget( QWidget *parent )
  The @qgsfunction decorator accepts the following arguments:\n\
 \n\
 \n\
- : param args: Defines the number of arguments. With ``args = 'auto'`` the number of\n\
-               arguments will automatically be extracted from the signature.\n\
-               With ``args = -1``, any number of arguments are accepted.\n\
  : param group: The name of the group under which this expression function will\n\
                 be listed.\n\
  : param handlesnull: Set this to True if your function has custom handling for NULL values.\n\
@@ -238,7 +232,9 @@ QgsExpressionBuilderWidget::QgsExpressionBuilderWidget( QWidget *parent )
                         feature.geometry(). Defaults to False.\n\
  : param referenced_columns: An array of attribute names that are required to run\n\
                              this function. Defaults to [QgsFeatureRequest.ALL_ATTRIBUTES].\n\
-     \"\"\"" ) );
+ : param params_as_list : Set this to True to pass the function parameters as a list. Can be used to mimic \n\
+                        behavior before 3.32, when args was not \"auto\". Defaults to False.\n\
+\"\"\"" ) );
 }
 
 
@@ -355,7 +351,7 @@ void QgsExpressionBuilderWidget::runPythonCode( const QString &code )
 QgsVectorLayer *QgsExpressionBuilderWidget::contextLayer( const QgsExpressionItem *item ) const
 {
   QgsVectorLayer *layer = nullptr;
-  if ( ! item->data( QgsExpressionItem::LAYER_ID_ROLE ).isNull() )
+  if ( ! QgsVariantUtils::isNull( item->data( QgsExpressionItem::LAYER_ID_ROLE ) ) )
   {
     layer = qobject_cast<QgsVectorLayer *>( QgsProject::instance()->mapLayer( item->data( QgsExpressionItem::LAYER_ID_ROLE ).toString() ) );
   }
@@ -385,11 +381,10 @@ void QgsExpressionBuilderWidget::saveFunctionFile( QString fileName )
   if ( myFile.open( QIODevice::WriteOnly | QFile::Truncate ) )
   {
     QTextStream myFileStream( &myFile );
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-    myFileStream << txtPython->text() << endl;
-#else
-    myFileStream << txtPython->text() << Qt::endl;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    myFileStream.setCodec( "UTF-8" );
 #endif
+    myFileStream << txtPython->text() << Qt::endl;
     myFile.close();
   }
 }
@@ -470,7 +465,7 @@ void QgsExpressionBuilderWidget::btnRemoveFile_pressed()
 
     if ( cmbFileNames->count() > 0 )
     {
-      cmbFileNames->setCurrentRow( currentRow > 0 ? currentRow - 1 : 0 );
+      whileBlocking( cmbFileNames )->setCurrentRow( currentRow > 0 ? currentRow - 1 : 0 );
       loadCodeFromFile( mFunctionsPath + QDir::separator() + cmbFileNames->currentItem()->text() );
     }
     else
@@ -558,7 +553,7 @@ void QgsExpressionBuilderWidget::fillFieldValues( const QString &fieldName, QgsV
   {
     QString strValue;
     bool forceRepresentedValue = false;
-    if ( value.isNull() )
+    if ( QgsVariantUtils::isNull( value ) )
       strValue = QStringLiteral( "NULL" );
     else if ( value.type() == QVariant::Int || value.type() == QVariant::Double || value.type() == QVariant::LongLong )
       strValue = value.toString();
@@ -572,6 +567,20 @@ void QgsExpressionBuilderWidget::fillFieldValues( const QString &fieldName, QgsV
           result.append( QStringLiteral( ", " ) );
 
         result.append( '\'' + str.replace( '\'', QLatin1String( "''" ) ) + '\'' );
+      }
+      strValue = QStringLiteral( "array(%1)" ).arg( result );
+      forceRepresentedValue = true;
+    }
+    else if ( value.type() == QVariant::List )
+    {
+      QString result;
+      const QList list = value.toList();
+      for ( const QVariant &item : list )
+      {
+        if ( !result.isEmpty() )
+          result.append( QStringLiteral( ", " ) );
+
+        result.append( item.toString() );
       }
       strValue = QStringLiteral( "array(%1)" ).arg( result );
       forceRepresentedValue = true;
@@ -775,6 +784,13 @@ void QgsExpressionBuilderWidget::createMarkers( const QgsExpressionNode *inNode 
     {
       const QgsExpressionNodeUnaryOperator *node = static_cast<const QgsExpressionNodeUnaryOperator *>( inNode );
       createMarkers( node->operand() );
+      break;
+    }
+    case QgsExpressionNode::NodeType::ntBetweenOperator:
+    {
+      const QgsExpressionNodeBetweenOperator *node = static_cast<const QgsExpressionNodeBetweenOperator *>( inNode );
+      createMarkers( node->lowerBound() );
+      createMarkers( node->higherBound() );
       break;
     }
     case QgsExpressionNode::NodeType::ntBinaryOperator:

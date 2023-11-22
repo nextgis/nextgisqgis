@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     BatchPanel.py
@@ -38,7 +36,7 @@ from qgis.PyQt.QtWidgets import (
     QAction
 )
 
-# adding to this list? also update the HistoryDialog.py executeAlgorithm imports!!
+# adding to this list? also update the QgsProcessingHistoryProvider executeAlgorithm imports!!
 
 from qgis.PyQt.QtCore import (
     QTime,  # NOQA - must be here for saved file evaluation
@@ -177,6 +175,19 @@ class BatchPanelFillWidget(QToolButton):
                 select_layer_action.triggered.connect(self.showLayerSelectionDialog)
                 self.menu.addAction(select_layer_action)
 
+    def findStartingRow(self):
+        first_row = 0
+        for row in range(self.panel.batchRowCount()):
+            wrapper = self.panel.wrappers[row][self.column]
+            if wrapper is None:
+                break
+            else:
+                value = wrapper.parameterValue()
+                if value is None:
+                    break
+                first_row += 1
+        return first_row
+
     def fillDown(self):
         """
         Copy the top value down
@@ -218,8 +229,7 @@ class BatchPanelFillWidget(QToolButton):
             files = dlg.files()
             context = dataobjects.createContext()
 
-            first_row = self.panel.batchRowCount() if self.panel.batchRowCount() > 1 else 0
-            self.panel.addRow(len(files))
+            first_row = self.findStartingRow()
             self.panel.tblParameters.setUpdatesEnabled(False)
             for row, file in enumerate(files):
                 self.setRowValue(first_row + row, file, context)
@@ -243,8 +253,7 @@ class BatchPanelFillWidget(QToolButton):
 
         context = dataobjects.createContext()
 
-        first_row = self.panel.batchRowCount() if self.panel.batchRowCount() > 1 else 0
-        self.panel.addRow(len(files))
+        first_row = self.findStartingRow()
         self.panel.tblParameters.setUpdatesEnabled(False)
         for row, file in enumerate(files):
             self.setRowValue(first_row + row, file, context)
@@ -284,8 +293,7 @@ class BatchPanelFillWidget(QToolButton):
 
         context = dataobjects.createContext()
 
-        first_row = self.panel.batchRowCount() if self.panel.batchRowCount() > 1 else 0
-        self.panel.addRow(len(files))
+        first_row = self.findStartingRow()
         self.panel.tblParameters.setUpdatesEnabled(False)
         for row, file in enumerate(files):
             self.setRowValue(first_row + row, file, context)
@@ -329,7 +337,7 @@ class BatchPanelFillWidget(QToolButton):
 
         context = dataobjects.createContext()
 
-        first_row = self.panel.batchRowCount() if self.panel.batchRowCount() > 1 else 0
+        first_row = self.findStartingRow()
         for row, selected_idx in enumerate(selected):
             value = layers[selected_idx].id()
             self.setRowValue(first_row + row, value, context)
@@ -386,8 +394,7 @@ class BatchPanelFillWidget(QToolButton):
             if type(res) is not list:
                 res = [res]
 
-            first_row = self.panel.batchRowCount() if self.panel.batchRowCount() > 1 else 0
-            self.panel.addRow(len(res))
+            first_row = self.findStartingRow()
             self.panel.tblParameters.setUpdatesEnabled(False)
             for row, value in enumerate(res):
                 self.setRowValue(row + first_row, value, context)
@@ -423,7 +430,7 @@ class BatchPanel(QgsPanelWidget, WIDGET):
     OUTPUTS = "OUTPUTS"
 
     def __init__(self, parent, alg):
-        super(BatchPanel, self).__init__(None)
+        super().__init__(None)
         self.setupUi(self)
 
         self.wrappers = []
@@ -712,6 +719,16 @@ class BatchPanel(QgsPanelWidget, WIDGET):
 
             del self.wrappers[row - 1]
             self.tblParameters.removeRow(row)
+
+        # resynchronize stored row numbers for table widgets
+        for row in range(1, self.tblParameters.rowCount()):
+            for col in range(0, self.tblParameters.columnCount()):
+                cell_widget = self.tblParameters.cellWidget(row, col)
+                if not cell_widget:
+                    continue
+
+                if isinstance(cell_widget, BatchOutputSelectionPanel):
+                    cell_widget.row = row
 
     def toggleAdvancedMode(self, checked):
         for param in self.alg.parameterDefinitions():

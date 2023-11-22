@@ -21,6 +21,7 @@
 #include "qgspointlocator.h"
 #include "qgsexpressioncontext.h"
 #include "qgsmeshdataprovider.h"
+
 #include <QString>
 #include <QVariantMap>
 
@@ -30,6 +31,7 @@ class QgsLayout;
 class QgsSymbol;
 class QgsLayoutAtlas;
 class QgsLayoutItem;
+class QgsMapSettings;
 class QgsProcessingAlgorithm;
 class QgsProcessingModelAlgorithm;
 class QgsProcessingContext;
@@ -187,6 +189,15 @@ class CORE_EXPORT QgsExpressionContextUtils
      * \since QGIS 3.0
      */
     static QgsExpressionContextScope *mapToolCaptureScope( const QList<QgsPointLocator::Match> &matches ) SIP_FACTORY;
+
+    /**
+     * Sets the expression context variables which are available for expressions triggered by moving the mouse over a feature
+     * of the currently selected layer.
+     * \param position map coordinates of the current pointer position in the CRS of the layer which triggered the action.
+     *
+     * \since QGIS 3.30
+     */
+    static QgsExpressionContextScope *mapLayerPositionScope( const QgsPointXY &position ) SIP_FACTORY;
 
     /**
      * Updates a symbol scope related to a QgsSymbol to an expression context.
@@ -349,6 +360,24 @@ class CORE_EXPORT QgsExpressionContextUtils
     friend class QgsLayoutItemMap; // needs access to GetLayerVisibility
 
 };
+
+///@cond PRIVATE
+#ifndef SIP_RUN
+class LoadLayerFunction : public QgsScopedExpressionFunction
+{
+  public:
+    LoadLayerFunction()
+      : QgsScopedExpressionFunction( QStringLiteral( "load_layer" ), QgsExpressionFunction::ParameterList() << QgsExpressionFunction::Parameter( QStringLiteral( "uri" ) ) << QgsExpressionFunction::Parameter( QStringLiteral( "provider" ) ), QStringLiteral( "Map Layers" ) )
+    {}
+
+    QVariant func( const QVariantList &, const QgsExpressionContext *, QgsExpression *parent, const QgsExpressionNodeFunction * ) override;
+    bool isStatic( const QgsExpressionNodeFunction *node, QgsExpression *parent, const QgsExpressionContext *context ) const override;
+
+    QgsScopedExpressionFunction *clone() const override;
+
+};
+#endif
+///@endcond
 
 #ifndef SIP_RUN
 

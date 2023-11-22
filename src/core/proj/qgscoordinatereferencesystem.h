@@ -32,8 +32,8 @@
 
 //qgis includes
 #include "qgis_sip.h"
+#include "qgis.h"
 #include "qgsconfig.h"
-#include "qgsunittypes.h"
 #include "qgsrectangle.h"
 #include "qgssqliteutils.h"
 
@@ -212,8 +212,10 @@ class CORE_EXPORT QgsCoordinateReferenceSystem
 {
     Q_GADGET
 
-    Q_PROPERTY( QgsUnitTypes::DistanceUnit mapUnits READ mapUnits )
+    Q_PROPERTY( Qgis::DistanceUnit mapUnits READ mapUnits )
     Q_PROPERTY( bool isGeographic READ isGeographic )
+    Q_PROPERTY( QString authid READ authid )
+    Q_PROPERTY( QString description READ description )
 
   public:
 
@@ -834,15 +836,63 @@ class CORE_EXPORT QgsCoordinateReferenceSystem
     QgsProjOperation operation() const;
 
     /**
-     * Returns whether axis is inverted (e.g., for WMS 1.3) for the CRS.
+     * Returns whether the axis order is inverted for the CRS compared to the order east/north (longitude/latitude).
+     * E.g. with WMS 1.3 the axis order for EPSG:4326 is north/east (latitude/longitude), i.e. inverted.
      * \returns TRUE if CRS axis is inverted
+     *
+     * \see axisOrdering()
      */
     bool hasAxisInverted() const;
 
     /**
+     * Returns an ordered list of the axis directions reflecting the native axis order for the CRS.
+     *
+     * \since QGIS 3.26
+     */
+#ifndef SIP_RUN
+    QList< Qgis::CrsAxisDirection > axisOrdering() const;
+#else
+    SIP_PYOBJECT axisOrdering() const SIP_TYPEHINT( List[Qgis.CrsAxisDirection] );
+    % MethodCode
+    // adapted from the qpymultimedia_qlist.sip file from the PyQt6 sources
+
+    const QList< Qgis::CrsAxisDirection > cppRes = sipCpp->axisOrdering();
+
+    PyObject *l = PyList_New( cppRes.size() );
+
+    if ( !l )
+      sipIsErr = 1;
+    else
+    {
+      for ( int i = 0; i < cppRes.size(); ++i )
+      {
+        PyObject *eobj = sipConvertFromEnum( static_cast<int>( cppRes.at( i ) ),
+                                             sipType_Qgis_CrsAxisDirection );
+
+        if ( !eobj )
+        {
+          sipIsErr = 1;
+        }
+
+        PyList_SetItem( l, i, eobj );
+      }
+
+      if ( !sipIsErr )
+      {
+        sipRes = l;
+      }
+      else
+      {
+        Py_DECREF( l );
+      }
+    }
+    % End
+#endif
+
+    /**
      * Returns the units for the projection used by the CRS.
      */
-    QgsUnitTypes::DistanceUnit mapUnits() const;
+    Qgis::DistanceUnit mapUnits() const;
 
     /**
      * Returns the approximate bounds for the region the CRS is usable within.
@@ -853,6 +903,14 @@ class CORE_EXPORT QgsCoordinateReferenceSystem
      * \since QGIS 3.0
      */
     QgsRectangle bounds() const;
+
+    /**
+     * Returns the crs as OGC URI (format: http://www.opengis.net/def/crs/OGC/1.3/CRS84)
+     * Returns an empty string on failure.
+     *
+     * \since QGIS 3.30
+     */
+    QString toOgcUri() const;
 
     // Mutators -----------------------------------
 
@@ -882,7 +940,7 @@ class CORE_EXPORT QgsCoordinateReferenceSystem
     /**
      * Gets user hint for validation
      */
-    QString validationHint();
+    QString validationHint() const;
 
     /**
      * Update proj.4 parameters in our database from proj.4
@@ -1007,6 +1065,18 @@ class CORE_EXPORT QgsCoordinateReferenceSystem
      * \since QGIS 3.10.3
      */
     static void pushRecentCoordinateReferenceSystem( const QgsCoordinateReferenceSystem &crs );
+
+    /**
+     * Removes a CRS from the list of recently used CRS.
+     * \since QGIS 3.32
+     */
+    static void removeRecentCoordinateReferenceSystem( const QgsCoordinateReferenceSystem &crs );
+
+    /**
+     * Cleans the list of recently used CRS.
+     * \since QGIS 3.32
+     */
+    static void clearRecentCoordinateReferenceSystems();
 
 #ifndef SIP_RUN
 

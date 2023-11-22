@@ -1,15 +1,15 @@
---- a/src/core/symbology/qgslinesymbollayer.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/symbology/qgslinesymbollayer.h	2022-04-25 18:33:17.000000000 +0300
+--- a/src/core/symbology/qgslinesymbollayer.h	2023-08-21 19:30:50.606255554 +0300
++++ b/src/core/symbology/qgslinesymbollayer.h	2023-10-04 10:14:13.132693807 +0300
 @@ -85,11 +85,11 @@
      void setMapUnitScale( const QgsMapUnitScale &scale ) override;
      QgsMapUnitScale mapUnitScale() const override;
      double estimateMaxBleed( const QgsRenderContext &context ) const override;
--    QVector<qreal> dxfCustomDashPattern( QgsUnitTypes::RenderUnit &unit ) const override;
+-    QVector<qreal> dxfCustomDashPattern( Qgis::RenderUnit &unit ) const override;
 -    Qt::PenStyle dxfPenStyle() const override;
 -    double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
 -    double dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
 -    QColor dxfColor( QgsSymbolRenderContext &context ) const override;
-+    // QVector<qreal> dxfCustomDashPattern( QgsUnitTypes::RenderUnit &unit ) const override;
++    // QVector<qreal> dxfCustomDashPattern( Qgis::RenderUnit &unit ) const override;
 +    // Qt::PenStyle dxfPenStyle() const override;
 +    // double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
 +    // double dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;

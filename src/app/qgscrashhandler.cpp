@@ -68,7 +68,7 @@ void QgsCrashHandler::handleCrash( int processID, int threadID,
                                    const QString &ptrStr )
 {
   QString fileName = QStandardPaths::standardLocations( QStandardPaths::TempLocation ).at( 0 ) + "/qgis-crash-info-" + QString::number( processID );
-  QgsDebugMsg( fileName );
+  QgsDebugMsgLevel( fileName, 2 );
 
   QStringList arguments;
   arguments = QCoreApplication::arguments();
@@ -102,13 +102,13 @@ void QgsCrashHandler::handleCrash( int processID, int threadID,
   if ( file.open( QIODevice::WriteOnly | QIODevice::Text ) )
   {
     QTextStream stream( &file );
-    stream << QString::number( processID ) << endl;
-    stream << QString::number( threadID ) << endl;
-    stream << ptrStr << endl;
-    stream << symbolPath << endl;
-    stream << sPythonCrashLogFile << endl;
-    stream << arguments.join( ' ' ) << endl;
-    stream << reportData.join( '\n' ) << endl;
+    stream << QString::number( processID ) << Qt::endl;
+    stream << QString::number( threadID ) << Qt::endl;
+    stream << ptrStr << Qt::endl;
+    stream << symbolPath << Qt::endl;
+    stream << sPythonCrashLogFile << Qt::endl;
+    stream << arguments.join( ' ' ) << Qt::endl;
+    stream << reportData.join( '\n' ) << Qt::endl;
   }
 
   file.close();
@@ -116,11 +116,11 @@ void QgsCrashHandler::handleCrash( int processID, int threadID,
   args << fileName;
 
   QString prefixPath( getenv( "QGIS_PREFIX_PATH" ) ? getenv( "QGIS_PREFIX_PATH" ) : QApplication::applicationDirPath() );
-#ifdef MSVC
+#ifdef _MSC_VER
   QString path = prefixPath + QStringLiteral( "/qgiscrashhandler.exe" );
 #else
   QString path = prefixPath + QStringLiteral( "/qgiscrashhandler" );
 #endif
-  QgsDebugMsg( path );
+  QgsDebugMsgLevel( path, 2 );
   QProcess::execute( path, args );
 }

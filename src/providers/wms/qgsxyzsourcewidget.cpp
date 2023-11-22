@@ -19,8 +19,6 @@
 #include "qgswmssourceselect.h"
 #include "qgsproviderregistry.h"
 
-#include "qgswmsprovider.h"
-
 QgsXyzSourceWidget::QgsXyzSourceWidget( QWidget *parent )
   : QgsProviderSourceWidget( parent )
 {
@@ -32,8 +30,22 @@ QgsXyzSourceWidget::QgsXyzSourceWidget( QWidget *parent )
   mSpinZMax->setClearValue( 18 );
 
   connect( mEditUrl, &QLineEdit::textChanged, this, &QgsXyzSourceWidget::validate );
+  connect( mEditUrl, &QLineEdit::textChanged, this, &QgsProviderSourceWidget::changed );
+
+  connect( mCheckBoxZMin, &QCheckBox::toggled, this, &QgsProviderSourceWidget::changed );
+  connect( mSpinZMin, qOverload< int >( &QSpinBox::valueChanged ), this, &QgsProviderSourceWidget::changed );
+  connect( mCheckBoxZMax, &QCheckBox::toggled, this, &QgsProviderSourceWidget::changed );
+  connect( mSpinZMax, qOverload< int >( &QSpinBox::valueChanged ), this, &QgsProviderSourceWidget::changed );
+  connect( mAuthSettings, &QgsAuthSettingsWidget::configIdChanged, this, &QgsProviderSourceWidget::changed );
+  connect( mAuthSettings, &QgsAuthSettingsWidget::usernameChanged, this, &QgsProviderSourceWidget::changed );
+  connect( mAuthSettings, &QgsAuthSettingsWidget::passwordChanged, this, &QgsProviderSourceWidget::changed );
+  connect( mEditReferer, &QLineEdit::textChanged, this, &QgsProviderSourceWidget::changed );
+  connect( mComboTileResolution, qOverload< int >( &QComboBox::currentIndexChanged ), this, &QgsProviderSourceWidget::changed );
+
   mInterpretationCombo = new QgsWmsInterpretationComboBox( this );
   mInterpretationLayout->addWidget( mInterpretationCombo );
+
+  connect( mInterpretationCombo, qOverload< int >( &QComboBox::currentIndexChanged ), this, &QgsProviderSourceWidget::changed );
 }
 
 void QgsXyzSourceWidget::setSourceUri( const QString &uri )
@@ -47,7 +59,7 @@ void QgsXyzSourceWidget::setSourceUri( const QString &uri )
   mSpinZMax->setValue( mCheckBoxZMax->isChecked() ? mSourceParts.value( QStringLiteral( "zmax" ) ).toInt() : 18 );
   mAuthSettings->setUsername( mSourceParts.value( QStringLiteral( "username" ) ).toString() );
   mAuthSettings->setPassword( mSourceParts.value( QStringLiteral( "password" ) ).toString() );
-  mEditReferer->setText( mSourceParts.value( QStringLiteral( "referer" ) ).toString() );
+  mEditReferer->setText( mSourceParts.value( QStringLiteral( "http-header:referer" ) ).toString() );
 
   int index = 0;  // default is "unknown"
   if ( mSourceParts.value( QStringLiteral( "tilePixelRatio" ) ).toInt() == 2. )
@@ -59,8 +71,6 @@ void QgsXyzSourceWidget::setSourceUri( const QString &uri )
   mAuthSettings->setConfigId( mSourceParts.value( QStringLiteral( "authcfg" ) ).toString() );
 
   setInterpretation( mSourceParts.value( QStringLiteral( "interpretation" ) ).toString() );
-
-  mIsValid = true;
 }
 
 QString QgsXyzSourceWidget::sourceUri() const

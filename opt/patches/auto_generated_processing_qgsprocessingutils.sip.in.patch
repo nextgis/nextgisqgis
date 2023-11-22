@@ -1,0 +1,166 @@
+--- a/python/core/auto_generated/processing/qgsprocessingutils.sip.in	2023-08-21 19:39:45.539060304 +0300
++++ b/python/core/auto_generated/processing/qgsprocessingutils.sip.in	2023-10-30 15:30:50.000000000 +0300
+@@ -43,8 +43,6 @@
+ 
+ .. seealso:: :py:func:`compatibleAnnotationLayers`
+ 
+-.. seealso:: :py:func:`compatibleVectorTileLayers`
+-
+ .. seealso:: :py:func:`compatibleLayers`
+ %End
+ 
+@@ -73,8 +71,6 @@
+ 
+ .. seealso:: :py:func:`compatibleAnnotationLayers`
+ 
+-.. seealso:: :py:func:`compatibleVectorTileLayers`
+-
+ .. seealso:: :py:func:`compatibleLayers`
+ %End
+ 
+@@ -96,8 +92,6 @@
+ 
+ .. seealso:: :py:func:`compatibleAnnotationLayers`
+ 
+-.. seealso:: :py:func:`compatibleVectorTileLayers`
+-
+ .. seealso:: :py:func:`compatibleLayers`
+ 
+ .. versionadded:: 3.6
+@@ -121,8 +115,6 @@
+ 
+ .. seealso:: :py:func:`compatibleAnnotationLayers`
+ 
+-.. seealso:: :py:func:`compatibleVectorTileLayers`
+-
+ .. seealso:: :py:func:`compatibleLayers`
+ 
+ .. versionadded:: 3.22
+@@ -146,8 +138,6 @@
+ 
+ .. seealso:: :py:func:`compatibleAnnotationLayers`
+ 
+-.. seealso:: :py:func:`compatibleVectorTileLayers`
+-
+ .. seealso:: :py:func:`compatibleLayers`
+ 
+ .. versionadded:: 3.22
+@@ -171,38 +161,11 @@
+ 
+ .. seealso:: :py:func:`compatiblePointCloudLayers`
+ 
+-.. seealso:: :py:func:`compatibleVectorTileLayers`
+-
+ .. seealso:: :py:func:`compatibleLayers`
+ 
+ .. versionadded:: 3.22
+ %End
+ 
+-    static QList<QgsVectorTileLayer *> compatibleVectorTileLayers( QgsProject *project, bool sort = true );
+-%Docstring
+-Returns a list of vector tile layers from a ``project`` which are compatible with the processing
+-framework.
+-
+-If the ``sort`` argument is ``True`` then the layers will be sorted by their :py:func:`QgsMapLayer.name()`
+-value.
+-
+-.. seealso:: :py:func:`compatibleRasterLayers`
+-
+-.. seealso:: :py:func:`compatibleVectorLayers`
+-
+-.. seealso:: :py:func:`compatibleMeshLayers`
+-
+-.. seealso:: :py:func:`compatiblePluginLayers`
+-
+-.. seealso:: :py:func:`compatiblePointCloudLayers`
+-
+-.. seealso:: :py:func:`compatibleAnnotationLayers`
+-
+-.. seealso:: :py:func:`compatibleLayers`
+-
+-.. versionadded:: 3.32
+-%End
+-
+     static QList< QgsMapLayer * > compatibleLayers( QgsProject *project, bool sort = true );
+ %Docstring
+ Returns a list of map layers from a ``project`` which are compatible with the processing
+@@ -246,7 +209,6 @@
+       Mesh,
+       PointCloud,
+       Annotation,
+-      VectorTile,
+     };
+ 
+     static QgsMapLayer *mapLayerFromString( const QString &string, QgsProcessingContext &context, bool allowLoadingNewLayers = true, QgsProcessingUtils::LayerHint typeHint = QgsProcessingUtils::LayerHint::UnknownType, QgsProcessing::LayerOptionsFlags flags = QgsProcessing::LayerOptionsFlags() );
+@@ -504,8 +466,6 @@
+ 
+ .. seealso:: :py:func:`defaultPointCloudExtension`
+ 
+-.. seealso:: :py:func:`defaultVectorTileExtension`
+-
+ .. versionadded:: 3.10
+ %End
+ 
+@@ -521,8 +481,6 @@
+ 
+ .. seealso:: :py:func:`defaultPointCloudExtension`
+ 
+-.. seealso:: :py:func:`defaultVectorTileExtension`
+-
+ .. versionadded:: 3.10
+ %End
+ 
+@@ -537,53 +495,9 @@
+ 
+ .. seealso:: :py:func:`defaultRasterExtension`
+ 
+-.. seealso:: :py:func:`defaultVectorTileExtension`
+-
+ .. versionadded:: 3.24
+ %End
+ 
+-    static QString defaultVectorTileExtension();
+-%Docstring
+-Returns the default vector tile extension to use, in the absence of all other constraints (e.g.
+-provider based support for extensions).
+-
+-This method returns a fallback value of "mbtiles".
+-
+-.. seealso:: :py:func:`defaultVectorExtension`
+-
+-.. seealso:: :py:func:`defaultRasterExtension`
+-
+-.. seealso:: :py:func:`defaultPointCloudExtension`
+-
+-.. versionadded:: 3.32
+-%End
+-
+-    static QVariantMap removePointerValuesFromMap( const QVariantMap &map );
+-%Docstring
+-Removes any raw pointer values from an input ``map``, replacing them with
+-appropriate string values where possible.
+-
+-.. versionadded:: 3.26
+-%End
+-
+-    static QVariantMap preprocessQgisProcessParameters( const QVariantMap &parameters, bool &ok, QString &error );
+-%Docstring
+-Pre-processes a set of ``parameter`` values for the qgis_process command.
+-
+-In particular, this function upgrades encoded data defined values to :py:class:`QgsProperty` objects.
+-
+-.. versionadded:: 3.30
+-%End
+-
+-    static QString resolveDefaultEncoding( const QString &defaultEncoding = "System" );
+-%Docstring
+-Returns the default encoding.
+-
+-The default encoding could be the one from "/Processing/encoding" or when it's not an allowed encoding name
+-like "System", the default encoding system (mostly UTF-8 on Unix-like, windows-1252 on Windows).
+-
+-.. versionadded:: 3.32
+-%End
+ 
+ };
+ 

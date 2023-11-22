@@ -17,16 +17,14 @@
  ***************************************************************************/
 
 #include "qgslayoutmapwidget.h"
+#include "qgssettingsregistrycore.h"
 #include "qgslayoutitemmap.h"
 #include "qgsproject.h"
 #include "qgsmapthemecollection.h"
 #include "qgslayout.h"
 #include "qgslayertree.h"
 #include "qgsmapcanvas.h"
-#include "qgssymbolselectordialog.h"
-#include "qgssymbollayerutils.h"
 #include "qgslayoutmapgridwidget.h"
-#include "qgsstyle.h"
 #include "qgslayoutundostack.h"
 #include "qgslayoutatlas.h"
 #include "qgslayoutdesignerinterface.h"
@@ -281,7 +279,7 @@ void QgsLayoutMapWidget::compositionAtlasToggled( bool atlasEnabled )
 {
   if ( atlasEnabled &&
        mMapItem && mMapItem->layout() && mMapItem->layout()->reportContext().layer()
-       && mMapItem->layout()->reportContext().layer()->wkbType() != QgsWkbTypes::NoGeometry )
+       && mMapItem->layout()->reportContext().layer()->wkbType() != Qgis::WkbType::NoGeometry )
   {
     mAtlasCheckBox->setEnabled( true );
   }
@@ -948,7 +946,7 @@ void QgsLayoutMapWidget::toggleAtlasScalingOptionsByLayerType()
     return;
   }
 
-  if ( QgsWkbTypes::geometryType( layer->wkbType() ) == QgsWkbTypes::PointGeometry )
+  if ( QgsWkbTypes::geometryType( layer->wkbType() ) == Qgis::GeometryType::Point )
   {
     //For point layers buffer setting makes no sense, so set "fixed scale" on and disable margin control
     if ( mMapItem->atlasScalingMode() == QgsLayoutItemMap::Auto )
@@ -1124,7 +1122,7 @@ void QgsLayoutMapWidget::mDrawCanvasItemsCheckBox_stateChanged( int state )
 
 void QgsLayoutMapWidget::atlasLayerChanged( QgsVectorLayer *layer )
 {
-  if ( !layer || layer->wkbType() == QgsWkbTypes::NoGeometry )
+  if ( !layer || layer->wkbType() == Qgis::WkbType::NoGeometry )
   {
     //geometryless layer, disable atlas control
     mAtlasCheckBox->setChecked( false );
@@ -1150,9 +1148,8 @@ bool QgsLayoutMapWidget::hasPredefinedScales() const
   {
     // default to global map tool scales
     const QgsSettings settings;
-    const QString scalesStr( settings.value( QStringLiteral( "Map/scales" ), Qgis::defaultProjectScales() ).toString() );
-    QStringList myScalesList = scalesStr.split( ',' );
-    return !myScalesList.isEmpty() && !myScalesList[0].isEmpty();
+    const QStringList scales = QgsSettingsRegistryCore::settingsMapScales->value();
+    return !scales.isEmpty() && !scales[0].isEmpty();
   }
   return true;
 }
@@ -1535,7 +1532,8 @@ void QgsLayoutMapWidget::storeCurrentLayerSet()
   if ( !mMapItem )
     return;
 
-  const QList<QgsMapLayer *> layers = mMapCanvas->mapSettings().layers();
+  QList<QgsMapLayer *> layers = mMapCanvas->mapSettings().layers();
+
   mMapItem->setLayers( layers );
 
   if ( mMapItem->keepLayerStyles() )
@@ -1747,7 +1745,7 @@ QgsLayoutMapLabelingWidget::QgsLayoutMapLabelingWidget( QgsLayoutItemMap *map )
   mLabelBoundaryUnitsCombo->linkToWidget( mLabelBoundarySpinBox );
   mLabelBoundaryUnitsCombo->setConverter( &mMapItem->layout()->renderContext().measurementConverter() );
 
-  connect( mLabelBoundaryUnitsCombo, &QgsLayoutUnitsComboBox::changed, this, &QgsLayoutMapLabelingWidget::labelMarginUnitsChanged );
+  connect( mLabelBoundaryUnitsCombo, &QgsLayoutUnitsComboBox::unitChanged, this, &QgsLayoutMapLabelingWidget::labelMarginUnitsChanged );
   connect( mLabelBoundarySpinBox, static_cast < void ( QDoubleSpinBox::* )( double ) > ( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutMapLabelingWidget::labelMarginChanged );
   connect( mShowPartialLabelsCheckBox, &QCheckBox::toggled, this, &QgsLayoutMapLabelingWidget::showPartialsToggled );
   connect( mShowUnplacedCheckBox, &QCheckBox::toggled, this, &QgsLayoutMapLabelingWidget::showUnplacedToggled );
@@ -1931,7 +1929,7 @@ bool QgsLayoutMapItemBlocksLabelsModel::setData( const QModelIndex &index, const
 
 Qt::ItemFlags QgsLayoutMapItemBlocksLabelsModel::flags( const QModelIndex &index ) const
 {
-  Qt::ItemFlags flags = QAbstractItemModel::flags( index );
+  Qt::ItemFlags flags = QSortFilterProxyModel::flags( index );
 
   if ( ! index.isValid() )
   {
@@ -2159,7 +2157,7 @@ void QgsLayoutMapClippingWidget::updateGuiElements()
 
 void QgsLayoutMapClippingWidget::atlasLayerChanged( QgsVectorLayer *layer )
 {
-  if ( !layer || layer->geometryType() != QgsWkbTypes::PolygonGeometry )
+  if ( !layer || layer->geometryType() != Qgis::GeometryType::Polygon )
   {
     //non-polygon layer, disable atlas control
     mClipToAtlasCheckBox->setChecked( false );
@@ -2176,7 +2174,7 @@ void QgsLayoutMapClippingWidget::atlasToggled( bool atlasEnabled )
 {
   if ( atlasEnabled &&
        mMapItem && mMapItem->layout() && mMapItem->layout()->reportContext().layer()
-       && mMapItem->layout()->reportContext().layer()->geometryType() == QgsWkbTypes::PolygonGeometry )
+       && mMapItem->layout()->reportContext().layer()->geometryType() == Qgis::GeometryType::Polygon )
   {
     mClipToAtlasCheckBox->setEnabled( true );
   }

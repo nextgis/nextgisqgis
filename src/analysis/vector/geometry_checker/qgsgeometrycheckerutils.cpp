@@ -35,9 +35,9 @@ QgsGeometryCheckerUtils::LayerFeature::LayerFeature( const QgsFeaturePool *pool,
     bool useMapCrs )
   : mFeaturePool( pool )
   , mFeature( feature )
+  , mGeometry( feature.geometry() )
   , mMapCrs( useMapCrs )
 {
-  mGeometry = feature.geometry();
   const QgsCoordinateTransform transform( pool->crs(), context->mapCrs, context->transformContext );
   if ( useMapCrs && context->mapCrs.isValid() && !transform.isShortCircuited() )
   {
@@ -47,7 +47,7 @@ QgsGeometryCheckerUtils::LayerFeature::LayerFeature( const QgsFeaturePool *pool,
     }
     catch ( const QgsCsException & )
     {
-      QgsDebugMsg( QStringLiteral( "Shrug. What shall we do with a geometry that cannot be converted?" ) );
+      QgsDebugError( QStringLiteral( "Shrug. What shall we do with a geometry that cannot be converted?" ) );
     }
   }
 }
@@ -98,11 +98,11 @@ QgsGeometryCheckerUtils::LayerFeatures::iterator::iterator( const QStringList::c
 }
 
 QgsGeometryCheckerUtils::LayerFeatures::iterator::iterator( const QgsGeometryCheckerUtils::LayerFeatures::iterator &rh )
+  : mLayerIt( rh.mLayerIt )
+  , mFeatureIt( rh.mFeatureIt )
+  , mParent( rh.mParent )
+  , mCurrentFeature( std::make_unique<LayerFeature>( *rh.mCurrentFeature.get() ) )
 {
-  mLayerIt = rh.mLayerIt;
-  mFeatureIt = rh.mFeatureIt;
-  mParent = rh.mParent;
-  mCurrentFeature = std::make_unique<LayerFeature>( *rh.mCurrentFeature.get() );
 }
 
 bool QgsGeometryCheckerUtils::LayerFeature::useMapCrs() const
@@ -126,7 +126,7 @@ const QgsGeometryCheckerUtils::LayerFeature &QgsGeometryCheckerUtils::LayerFeatu
   return *mCurrentFeature;
 }
 
-bool QgsGeometryCheckerUtils::LayerFeatures::iterator::operator!=( const QgsGeometryCheckerUtils::LayerFeatures::iterator &other )
+bool QgsGeometryCheckerUtils::LayerFeatures::iterator::operator!=( const QgsGeometryCheckerUtils::LayerFeatures::iterator &other ) const
 {
   return mLayerIt != other.mLayerIt || mFeatureIt != other.mFeatureIt;
 }
@@ -209,7 +209,7 @@ bool QgsGeometryCheckerUtils::LayerFeatures::iterator::nextFeature( bool begin )
 
 QgsGeometryCheckerUtils::LayerFeatures::LayerFeatures( const QMap<QString, QgsFeaturePool *> &featurePools,
     const QMap<QString, QgsFeatureIds> &featureIds,
-    const QList<QgsWkbTypes::GeometryType> &geometryTypes,
+    const QList<Qgis::GeometryType> &geometryTypes,
     QgsFeedback *feedback,
     const QgsGeometryCheckContext *context,
     bool useMapCrs )
@@ -224,7 +224,7 @@ QgsGeometryCheckerUtils::LayerFeatures::LayerFeatures( const QMap<QString, QgsFe
 
 QgsGeometryCheckerUtils::LayerFeatures::LayerFeatures( const QMap<QString, QgsFeaturePool *> &featurePools,
     const QList<QString> &layerIds, const QgsRectangle &extent,
-    const QList<QgsWkbTypes::GeometryType> &geometryTypes,
+    const QList<Qgis::GeometryType> &geometryTypes,
     const QgsGeometryCheckContext *context )
   : mFeaturePools( featurePools )
   , mLayerIds( layerIds )

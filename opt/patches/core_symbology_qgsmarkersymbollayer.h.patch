@@ -1,15 +1,15 @@
---- a/src/core/symbology/qgsmarkersymbollayer.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/symbology/qgsmarkersymbollayer.h	2022-04-25 18:33:18.000000000 +0300
+--- a/src/core/symbology/qgsmarkersymbollayer.h	2023-08-21 19:30:50.610256892 +0300
++++ b/src/core/symbology/qgsmarkersymbollayer.h	2023-10-04 13:28:23.863477925 +0300
 @@ -222,7 +222,7 @@
      QgsSimpleMarkerSymbolLayer *clone() const override SIP_FACTORY;
      void writeSldMarker( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override;
      QString ogrFeatureStyle( double mmScaleFactor, double mapUnitScaleFactor ) const override;
 -    bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const override;
 +    // bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const override;
-     void setOutputUnit( QgsUnitTypes::RenderUnit unit ) override;
-     QgsUnitTypes::RenderUnit outputUnit() const override;
+     void setOutputUnit( Qgis::RenderUnit unit ) override;
+     Qgis::RenderUnit outputUnit() const override;
      void setMapUnitScale( const QgsMapUnitScale &scale ) override;
-@@ -631,7 +631,7 @@
+@@ -632,7 +632,7 @@
      void setMapUnitScale( const QgsMapUnitScale &scale ) override;
      QgsMapUnitScale mapUnitScale() const override;
  

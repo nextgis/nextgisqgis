@@ -61,7 +61,7 @@ QgsSaveFeaturesAlgorithm *QgsSaveFeaturesAlgorithm::createInstance() const
 
 void QgsSaveFeaturesAlgorithm::initAlgorithm( const QVariantMap & )
 {
-  addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "INPUT" ), QObject::tr( "Vector features" ) ) );
+  addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "INPUT" ), QObject::tr( "Vector features" ), QList<int>() << QgsProcessing::TypeVector ) );
   addParameter( new QgsProcessingParameterFileDestination( QStringLiteral( "OUTPUT" ), QObject::tr( "Saved features" ), QgsVectorFileWriter::fileFilterString(), QVariant(), false ) );
 
   std::unique_ptr< QgsProcessingParameterString > param = std::make_unique< QgsProcessingParameterString >( QStringLiteral( "LAYER_NAME" ), QObject::tr( "Layer name" ), QVariant(), false, true );
@@ -127,7 +127,7 @@ QVariantMap QgsSaveFeaturesAlgorithm::processAlgorithm( const QVariantMap &param
   const int separatorIndex = dest.indexOf( '|' );
   if ( separatorIndex > -1 )
   {
-    const QRegularExpression layerNameRx( QStringLiteral( "\\|layername=([^\\|]*)" ) );
+    const thread_local QRegularExpression layerNameRx( QStringLiteral( "\\|layername=([^\\|]*)" ) );
     const QRegularExpressionMatch match = layerNameRx.match( dest );
     if ( match.hasMatch() )
     {

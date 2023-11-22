@@ -1,0 +1,31 @@
+--- a/src/app/layers/qgsapplayerhandling.cpp	2023-08-21 19:39:45.647052643 +0300
++++ b/src/app/layers/qgsapplayerhandling.cpp	2023-10-24 12:38:52.000000000 +0300
+@@ -41,7 +41,7 @@
+ #include "qgsgui.h"
+ #include "qgsmessagelog.h"
+ #include "qgsapplication.h"
+-#include "qgsvectortilelayer.h"
++// #include "qgsvectortilelayer.h"
+ #include "qgsprojectstorageregistry.h"
+ #include "qgsprojectstorage.h"
+ #include "qgsmaplayerfactory.h"
+@@ -562,7 +562,9 @@
+ 
+   QgsDebugMsgLevel( "completeBaseName: " + base, 2 );
+ 
+-  // create the layer
++  return nullptr;
++
++/*  // create the layer
+   const QgsVectorTileLayer::LayerOptions options( QgsProject::instance()->transformContext() );
+   std::unique_ptr<QgsVectorTileLayer> layer( new QgsVectorTileLayer( uri, base, options ) );
+ 
+@@ -583,7 +585,7 @@
+   QgsProject::instance()->addMapLayer( layer.get(), addToLegend );
+   QgisApp::instance()->activateDeactivateLayerRelatedActions( QgisApp::instance()->activeLayer() );
+ 
+-  return layer.release();
++  return layer.release();*/
+ }
+ 
+ bool QgsAppLayerHandling::askUserForZipItemLayers( const QString &path, const QList<Qgis::LayerType> &acceptableTypes )

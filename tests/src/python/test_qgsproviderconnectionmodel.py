@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for OGR GeoPackage QgsProviderConnectionModel.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -11,23 +10,21 @@ __author__ = 'Nyall Dawson'
 __date__ = '07/08/2020'
 __copyright__ = 'Copyright 2019, The QGIS Project'
 # This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '6b44a42058d8f4d3f994b915f72f08b6a3ab474d'
+__revision__ = '$Format:%H$'
 
 import os
 import shutil
 import tempfile
+
+from qgis.PyQt.QtCore import QCoreApplication, QModelIndex, Qt
 from qgis.core import (
-    QgsVectorLayer,
-    QgsProviderRegistry,
     QgsProviderConnectionModel,
-)
-from qgis.PyQt.QtCore import (
-    QModelIndex,
-    Qt,
-    QCoreApplication
+    QgsProviderRegistry,
+    QgsVectorLayer,
 )
 from qgis.testing import unittest
-from utilities import unitTestDataPath, start_app
+
+from utilities import start_app, unitTestDataPath
 
 TEST_DATA_DIR = unitTestDataPath()
 
@@ -37,22 +34,23 @@ class TestPyQgsProviderConnectionModel(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super().setUpClass()
         QCoreApplication.setOrganizationName("QGIS_Test")
         QCoreApplication.setOrganizationDomain(cls.__name__)
         QCoreApplication.setApplicationName(cls.__name__)
         start_app()
 
-        gpkg_original_path = '{}/qgis_server/test_project_wms_grouped_layers.gpkg'.format(TEST_DATA_DIR)
+        gpkg_original_path = f'{TEST_DATA_DIR}/qgis_server/test_project_wms_grouped_layers.gpkg'
         cls.basetestpath = tempfile.mkdtemp()
-        cls.gpkg_path = '{}/test_gpkg.gpkg'.format(cls.basetestpath)
+        cls.gpkg_path = f'{cls.basetestpath}/test_gpkg.gpkg'
         shutil.copy(gpkg_original_path, cls.gpkg_path)
-        vl = QgsVectorLayer('{}|layername=cdb_lines'.format(cls.gpkg_path), 'test', 'ogr')
+        vl = QgsVectorLayer(f'{cls.gpkg_path}|layername=cdb_lines', 'test', 'ogr')
         assert vl.isValid()
 
-        gpkg2_original_path = '{}/points_gpkg.gpkg'.format(TEST_DATA_DIR)
-        cls.gpkg_path2 = '{}/test_gpkg2.gpkg'.format(cls.basetestpath)
+        gpkg2_original_path = f'{TEST_DATA_DIR}/points_gpkg.gpkg'
+        cls.gpkg_path2 = f'{cls.basetestpath}/test_gpkg2.gpkg'
         shutil.copy(gpkg2_original_path, cls.gpkg_path2)
-        vl = QgsVectorLayer('{}'.format(cls.gpkg_path2), 'test', 'ogr')
+        vl = QgsVectorLayer(f'{cls.gpkg_path2}', 'test', 'ogr')
         assert vl.isValid()
 
     @classmethod
@@ -60,6 +58,7 @@ class TestPyQgsProviderConnectionModel(unittest.TestCase):
         """Run after all tests"""
         os.unlink(cls.gpkg_path)
         os.unlink(cls.gpkg_path2)
+        super().tearDownClass()
 
     def test_model(self):
         """Test model functionality"""

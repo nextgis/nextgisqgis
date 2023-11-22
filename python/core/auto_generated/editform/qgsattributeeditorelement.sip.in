@@ -8,6 +8,7 @@
 
 
 
+
 class QgsAttributeEditorElement /Abstract/
 {
 %Docstring(signature="appended")
@@ -26,16 +27,16 @@ layer.
 %ConvertToSubClassCode
     switch ( sipCpp->type() )
     {
-      case QgsAttributeEditorElement::AeTypeContainer:
+      case Qgis::AttributeEditorType::Container:
         sipType = sipType_QgsAttributeEditorContainer;
         break;
-      case QgsAttributeEditorElement::AeTypeField:
+      case Qgis::AttributeEditorType::Field:
         sipType = sipType_QgsAttributeEditorField;
         break;
-      case QgsAttributeEditorElement::AeTypeRelation:
+      case Qgis::AttributeEditorType::Relation:
         sipType = sipType_QgsAttributeEditorRelation;
         break;
-      case QgsAttributeEditorElement::AeTypeAction:
+      case Qgis::AttributeEditorType::Action:
         sipType = sipType_QgsAttributeEditorAction;
         break;
       default:
@@ -44,18 +45,23 @@ layer.
     }
 %End
   public:
-    enum AttributeEditorType
+
+    struct LabelStyle
     {
-      AeTypeContainer,
-      AeTypeField,
-      AeTypeRelation,
-      AeTypeInvalid,
-      AeTypeQmlElement,
-      AeTypeHtmlElement,
-      AeTypeAction
+
+      QColor color;
+
+      QFont font;
+
+      bool overrideColor;
+
+      bool overrideFont;
+
+
+
     };
 
-    QgsAttributeEditorElement( AttributeEditorType type, const QString &name, QgsAttributeEditorElement *parent = 0 );
+    QgsAttributeEditorElement( Qgis::AttributeEditorType type, const QString &name, QgsAttributeEditorElement *parent = 0 );
 %Docstring
 Constructor
 
@@ -80,7 +86,7 @@ Returns the name of this element
 :return: The name for this element
 %End
 
-    AttributeEditorType type() const;
+    Qgis::AttributeEditorType type() const;
 %Docstring
 The type of this element
 
@@ -123,6 +129,69 @@ Controls if this element should be labeled with a title (field, relation or grou
 
 .. versionadded:: 2.18
 %End
+
+    int horizontalStretch() const;
+%Docstring
+Returns the horizontal stretch factor for the element.
+
+.. seealso:: :py:func:`setHorizontalStretch`
+
+.. seealso:: :py:func:`verticalStretch`
+
+.. versionadded:: 3.32
+%End
+
+    void setHorizontalStretch( int stretch );
+%Docstring
+Sets the horizontal ``stretch`` factor for the element.
+
+.. seealso:: :py:func:`horizontalStretch`
+
+.. seealso:: :py:func:`setVerticalStretch`
+
+.. versionadded:: 3.32
+%End
+
+    int verticalStretch() const;
+%Docstring
+Returns the vertical stretch factor for the element.
+
+.. seealso:: :py:func:`setVerticalStretch`
+
+.. seealso:: :py:func:`horizontalStretch`
+
+.. versionadded:: 3.32
+%End
+
+    void setVerticalStretch( int stretch );
+%Docstring
+Sets the vertical ``stretch`` factor for the element.
+
+.. seealso:: :py:func:`verticalStretch`
+
+.. seealso:: :py:func:`setHorizontalStretch`
+
+.. versionadded:: 3.32
+%End
+
+    LabelStyle labelStyle() const;
+%Docstring
+Returns the label style.
+
+.. seealso:: :py:func:`setLabelStyle`
+
+.. versionadded:: 3.26
+%End
+
+    void setLabelStyle( const LabelStyle &labelStyle );
+%Docstring
+Sets the ``labelStyle``.
+
+.. seealso:: :py:func:`labelStyle`
+
+.. versionadded:: 3.26
+%End
+
 
   protected:
 

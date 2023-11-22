@@ -42,7 +42,10 @@ QgsJsonExporter::QgsJsonExporter( QgsVectorLayer *vectorLayer, int precision )
     mCrs = vectorLayer->crs();
     mTransform.setSourceCrs( mCrs );
   }
-  mTransform.setDestinationCrs( QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:4326" ) ) );
+
+  // Default 4326
+  mDestinationCrs = QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:4326" ) );
+  mTransform.setDestinationCrs( mDestinationCrs );
 }
 
 void QgsJsonExporter::setVectorLayer( QgsVectorLayer *vectorLayer )
@@ -123,7 +126,7 @@ json QgsJsonExporter::exportFeatureToJsonObject( const QgsFeature &feature, cons
     }
     QgsRectangle box = geom.boundingBox();
 
-    if ( QgsWkbTypes::flatType( geom.wkbType() ) != QgsWkbTypes::Point )
+    if ( QgsWkbTypes::flatType( geom.wkbType() ) != Qgis::WkbType::Point )
     {
       featureJson[ "bbox" ] =
       {
@@ -141,7 +144,6 @@ json QgsJsonExporter::exportFeatureToJsonObject( const QgsFeature &feature, cons
   }
 
   // build up properties element
-  int attributeCounter { 0 };
   json properties;
   if ( mIncludeAttributes || !extraProperties.isEmpty() )
   {
@@ -177,7 +179,6 @@ json QgsJsonExporter::exportFeatureToJsonObject( const QgsFeature &feature, cons
           name = mLayer->attributeDisplayName( i );
         }
         properties[ name.toStdString() ] = QgsJsonUtils::jsonFromVariant( val );
-        attributeCounter++;
       }
     }
 
@@ -187,7 +188,6 @@ json QgsJsonExporter::exportFeatureToJsonObject( const QgsFeature &feature, cons
       for ( ; it != extraProperties.constEnd(); ++it )
       {
         properties[ it.key().toStdString() ] = QgsJsonUtils::jsonFromVariant( it.value() );
-        attributeCounter++;
       }
     }
 
@@ -221,7 +221,6 @@ json QgsJsonExporter::exportFeatureToJsonObject( const QgsFeature &feature, cons
           }
         }
         properties[ relation.name().toStdString() ] = relatedFeatureAttributes;
-        attributeCounter++;
       }
     }
   }
@@ -248,6 +247,12 @@ json QgsJsonExporter::exportFeaturesToJsonObject( const QgsFeatureList &features
   return data;
 }
 
+void QgsJsonExporter::setDestinationCrs( const QgsCoordinateReferenceSystem &destinationCrs )
+{
+  mDestinationCrs = destinationCrs;
+  mTransform.setDestinationCrs( mDestinationCrs );
+}
+
 //
 // QgsJsonUtils
 //
@@ -270,7 +275,7 @@ QgsFields QgsJsonUtils::stringToFields( const QString &string, QTextCodec *encod
 
 QString QgsJsonUtils::encodeValue( const QVariant &value )
 {
-  if ( value.isNull() )
+  if ( QgsVariantUtils::isNull( value ) )
     return QStringLiteral( "null" );
 
   switch ( value.type() )
@@ -400,7 +405,7 @@ QVariantList QgsJsonUtils::parseArray( const QString &json, QVariant::Type type 
 
 json QgsJsonUtils::jsonFromVariant( const QVariant &val )
 {
-  if ( val.isNull() || ! val.isValid() )
+  if ( QgsVariantUtils::isNull( val ) )
   {
     return nullptr;
   }

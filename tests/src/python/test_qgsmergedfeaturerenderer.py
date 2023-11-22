@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsMergedFeatureRenderer
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -10,30 +9,29 @@ __author__ = 'Nyall Dawson'
 __date__ = '30/12/2020'
 __copyright__ = 'Copyright 2020, The QGIS Project'
 
-import qgis  # NOQA
-
 import os
 
-from qgis.PyQt.QtCore import QSize, QDir, Qt
+import qgis  # NOQA
+from qgis.PyQt.QtCore import QDir
 from qgis.PyQt.QtGui import QColor
-
-from qgis.core import (QgsRenderChecker,
-                       QgsMapSettings,
-                       QgsVectorLayer,
-                       QgsMergedFeatureRenderer,
-                       QgsSingleSymbolRenderer,
-                       QgsFillSymbol,
-                       QgsSimpleFillSymbolLayer,
-                       QgsCategorizedSymbolRenderer,
-                       QgsRendererCategory,
-                       QgsSimpleLineSymbolLayer,
-                       QgsMarkerLineSymbolLayer,
-                       QgsLineSymbol,
-                       QgsTemplatedLineSymbolLayerBase,
-                       QgsMarkerSymbol,
-                       QgsMarkerSymbolLayer
-                       )
+from qgis.core import (
+    QgsCategorizedSymbolRenderer,
+    QgsFillSymbol,
+    QgsLineSymbol,
+    QgsMapSettings,
+    QgsMarkerLineSymbolLayer,
+    QgsMarkerSymbol,
+    QgsMergedFeatureRenderer,
+    QgsRenderChecker,
+    QgsRendererCategory,
+    QgsSimpleFillSymbolLayer,
+    QgsSimpleLineSymbolLayer,
+    QgsSingleSymbolRenderer,
+    QgsTemplatedLineSymbolLayerBase,
+    QgsVectorLayer,
+)
 from qgis.testing import unittest
+
 from utilities import unitTestDataPath
 
 TEST_DATA_DIR = unitTestDataPath()
@@ -45,9 +43,19 @@ class TestQgsMergedFeatureRenderer(unittest.TestCase):
         self.report = "<h1>Python QgsMergedFeatureRenderer Tests</h1>\n"
 
     def tearDown(self):
-        report_file_path = "%s/qgistest.html" % QDir.tempPath()
+        report_file_path = f"{QDir.tempPath()}/qgistest.html"
         with open(report_file_path, 'a') as report_file:
             report_file.write(self.report)
+
+    def test_legend_keys(self):
+        symbol1 = QgsFillSymbol()
+        symbol2 = QgsFillSymbol()
+        sub_renderer = QgsCategorizedSymbolRenderer('cat', [QgsRendererCategory('cat1', symbol1, 'cat1'),
+                                                            QgsRendererCategory('cat2', symbol2, 'cat2')
+                                                            ])
+
+        renderer = QgsMergedFeatureRenderer(sub_renderer)
+        self.assertEqual(renderer.legendKeys(), {'0', '1'})
 
     def testSinglePolys(self):
         source = QgsVectorLayer(os.path.join(TEST_DATA_DIR, 'polys_overlapping.shp'))
@@ -157,9 +165,22 @@ class TestQgsMergedFeatureRenderer(unittest.TestCase):
 
         self.assertTrue(self.imageCheck('lines_categorized_subrenderer', 'lines_categorized_subrenderer', map_settings))
 
+    def test_legend_key_to_expression(self):
+        sym1 = QgsFillSymbol.createSimple({'color': '#fdbf6f', 'outline_color': 'black'})
+        sub_renderer = QgsSingleSymbolRenderer(sym1)
+
+        renderer = QgsMergedFeatureRenderer(sub_renderer)
+
+        exp, ok = renderer.legendKeyToExpression('0', None)
+        self.assertTrue(ok)
+        self.assertEqual(exp, 'TRUE')
+
+        exp, ok = renderer.legendKeyToExpression('xxxx', None)
+        self.assertFalse(ok)
+
     def imageCheck(self, name, reference_image, map_settings):
         map_settings.setOutputDpi(96)
-        self.report += "<h2>Render {}</h2>\n".format(name)
+        self.report += f"<h2>Render {name}</h2>\n"
 
         checker = QgsRenderChecker()
         checker.setControlPathPrefix("mergedfeaturerenderer")

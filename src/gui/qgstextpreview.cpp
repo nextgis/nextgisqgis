@@ -14,27 +14,33 @@
  ***************************************************************************/
 
 #include "qgstextpreview.h"
-#include "qgsapplication.h"
 #include "qgstextrenderer.h"
-#include <QDesktopWidget>
+#include "qgsscreenhelper.h"
+
 #include <QPainter>
 
 QgsTextPreview::QgsTextPreview( QWidget *parent )
   : QLabel( parent )
 {
+  mScreenHelper = new QgsScreenHelper( this );
+  connect( mScreenHelper, &QgsScreenHelper::screenDpiChanged, this, [ = ]( double dpi )
+  {
+    mContext.setScaleFactor( dpi / 25.4 );
+    updateContext();
+  } );
+
   // initially use a basic transform with no scale
   QgsMapToPixel newCoordXForm;
   newCoordXForm.setParameters( 1, 0, 0, 0, 0, 0 );
   mContext.setMapToPixel( newCoordXForm );
 
-  mContext.setScaleFactor( QgsApplication::desktop()->logicalDpiX() / 25.4 );
+  mContext.setScaleFactor( mScreenHelper->screenDpi() / 25.4 );
   mContext.setUseAdvancedEffects( true );
 
   mContext.setFlag( Qgis::RenderContextFlag::Antialiasing, true );
 
   mContext.setIsGuiPreview( true );
 }
-
 
 void QgsTextPreview::paintEvent( QPaintEvent *e )
 {
@@ -47,7 +53,7 @@ void QgsTextPreview::paintEvent( QPaintEvent *e )
   const double fontSize = mContext.convertToPainterUnits( mFormat.size(), mFormat.sizeUnit(), mFormat.sizeMapUnitScale() );
   double xtrans = 0;
   if ( mFormat.buffer().enabled() )
-    xtrans = mFormat.buffer().sizeUnit() == QgsUnitTypes::RenderPercentage
+    xtrans = mFormat.buffer().sizeUnit() == Qgis::RenderUnit::Percentage
              ? fontSize * mFormat.buffer().size() / 100
              : mContext.convertToPainterUnits( mFormat.buffer().size(), mFormat.buffer().sizeUnit(), mFormat.buffer().sizeMapUnitScale() );
   if ( mFormat.background().enabled() && mFormat.background().sizeType() != QgsTextBackgroundSettings::SizeFixed )
@@ -56,7 +62,7 @@ void QgsTextPreview::paintEvent( QPaintEvent *e )
 
   double ytrans = 0.0;
   if ( mFormat.buffer().enabled() )
-    ytrans = std::max( ytrans, mFormat.buffer().sizeUnit() == QgsUnitTypes::RenderPercentage
+    ytrans = std::max( ytrans, mFormat.buffer().sizeUnit() == Qgis::RenderUnit::Percentage
                        ? fontSize * mFormat.buffer().size() / 100
                        : mContext.convertToPainterUnits( mFormat.buffer().size(), mFormat.buffer().sizeUnit(), mFormat.buffer().sizeMapUnitScale() ) );
   if ( mFormat.background().enabled() )
@@ -73,7 +79,7 @@ void QgsTextPreview::paintEvent( QPaintEvent *e )
     textRect.setWidth( 2000 );
 
   mContext.setPainter( &p );
-  QgsTextRenderer::drawText( textRect, 0, QgsTextRenderer::AlignLeft, QStringList() << text(),
+  QgsTextRenderer::drawText( textRect, 0, Qgis::TextHorizontalAlignment::Left, QStringList() << text(),
                              mContext, mFormat );
 }
 
@@ -87,7 +93,7 @@ void QgsTextPreview::updateContext()
 {
   if ( mScale >= 0 )
   {
-    const QgsMapToPixel newCoordXForm = QgsMapToPixel::fromScale( mScale, mMapUnits, QgsApplication::desktop()->logicalDpiX() );
+    const QgsMapToPixel newCoordXForm = QgsMapToPixel::fromScale( mScale, mMapUnits, mScreenHelper->screenDpi() );
     mContext.setMapToPixel( newCoordXForm );
   }
   update();
@@ -99,7 +105,7 @@ void QgsTextPreview::setScale( double scale )
   updateContext();
 }
 
-void QgsTextPreview::setMapUnits( QgsUnitTypes::DistanceUnit unit )
+void QgsTextPreview::setMapUnits( Qgis::DistanceUnit unit )
 {
   mMapUnits = unit;
   updateContext();

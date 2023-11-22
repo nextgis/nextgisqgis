@@ -1,6 +1,6 @@
---- a/src/core/labeling/qgspallabeling.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/labeling/qgspallabeling.cpp	2022-04-25 18:33:16.000000000 +0300
-@@ -75,8 +75,8 @@
+--- a/src/core/labeling/qgspallabeling.cpp	2023-08-21 19:39:45.691049522 +0300
++++ b/src/core/labeling/qgspallabeling.cpp	2023-10-04 00:32:07.746213903 +0300
+@@ -56,8 +56,8 @@
  #include "qgsgeometrycollection.h"
  #include "callouts/qgscallout.h"
  #include "callouts/qgscalloutsregistry.h"
@@ -8,19 +8,19 @@
 -#include "qgsvectortilebasiclabeling.h"
 +// #include "qgsvectortilelayer.h"
 +// #include "qgsvectortilebasiclabeling.h"
+ #include "qgsfontmanager.h"
+ #include "qgsvariantutils.h"
  
- using namespace pal;
- 
-@@ -3736,17 +3736,17 @@
+@@ -3893,17 +3893,17 @@
        return vl->labelsEnabled() || vl->diagramsEnabled();
      }
  
--    case QgsMapLayerType::VectorTileLayer:
+-    case Qgis::LayerType::VectorTile:
 -    {
 -      const QgsVectorTileLayer *vl = qobject_cast< const QgsVectorTileLayer * >( layer );
 -      if ( !vl->labeling() )
 -        return false;
-+    // case QgsMapLayerType::VectorTileLayer:
++    // case Qgis::LayerType::VectorTile:
 +    // {
 +    //   const QgsVectorTileLayer *vl = qobject_cast< const QgsVectorTileLayer * >( layer );
 +    //   if ( !vl->labeling() )
@@ -36,5 +36,5 @@
 +    //   return false;
 +    // }
  
-     case QgsMapLayerType::RasterLayer:
-     case QgsMapLayerType::PluginLayer:
+     case Qgis::LayerType::Raster:
+     case Qgis::LayerType::Plugin:

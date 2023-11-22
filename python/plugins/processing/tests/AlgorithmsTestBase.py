@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     AlgorithmsTest.py
@@ -37,7 +35,9 @@ from osgeo.gdalconst import GA_ReadOnly
 from numpy import nan_to_num
 from copy import deepcopy
 
-from qgis.core import (QgsVectorLayer,
+from qgis.PyQt.QtCore import QT_VERSION
+from qgis.core import (Qgis,
+                       QgsVectorLayer,
                        QgsRasterLayer,
                        QgsCoordinateReferenceSystem,
                        QgsFeatureRequest,
@@ -56,21 +56,63 @@ from utilities import unitTestDataPath
 import processing
 
 
+def GDAL_COMPUTE_VERSION(maj, min, rev):
+    return ((maj) * 1000000 + (min) * 10000 + (rev) * 100)
+
+
 def processingTestDataPath():
     return os.path.join(os.path.dirname(__file__), 'testdata')
 
 
-class AlgorithmsTest(object):
+class AlgorithmsTest:
 
     def test_algorithms(self):
         """
         This is the main test function. All others will be executed based on the definitions in testdata/algorithm_tests.yaml
         """
-        with open(os.path.join(processingTestDataPath(), self.test_definition_file()), 'r') as stream:
+        with open(os.path.join(processingTestDataPath(), self.test_definition_file())) as stream:
             algorithm_tests = yaml.load(stream, Loader=yaml.SafeLoader)
 
         if 'tests' in algorithm_tests and algorithm_tests['tests'] is not None:
             for idx, algtest in enumerate(algorithm_tests['tests']):
+                condition = algtest.get('condition')
+                if condition:
+                    geos_condition = condition.get('geos')
+                    if geos_condition:
+                        less_than_condition = geos_condition.get('less_than')
+                        if less_than_condition:
+                            if Qgis.geosVersionInt() >= less_than_condition:
+                                print('!!! Skipping {}, requires GEOS < {}, have version {}'.format(algtest['name'], less_than_condition, Qgis.geosVersionInt()))
+                                continue
+                        at_least_condition = geos_condition.get('at_least')
+                        if at_least_condition:
+                            if Qgis.geosVersionInt() < at_least_condition:
+                                print('!!! Skipping {}, requires GEOS >= {}, have version {}'.format(algtest['name'], at_least_condition, Qgis.geosVersionInt()))
+                                continue
+                    gdal_condition = condition.get('gdal')
+                    if gdal_condition:
+                        less_than_condition = gdal_condition.get('less_than')
+                        if less_than_condition:
+                            if int(gdal.VersionInfo('VERSION_NUM')) >= less_than_condition:
+                                print('!!! Skipping {}, requires GDAL < {}, have version {}'.format(algtest['name'], less_than_condition, gdal.VersionInfo('VERSION_NUM')))
+                                continue
+                        at_least_condition = gdal_condition.get('at_least')
+                        if at_least_condition:
+                            if int(gdal.VersionInfo('VERSION_NUM')) < at_least_condition:
+                                print('!!! Skipping {}, requires GDAL >= {}, have version {}'.format(algtest['name'], at_least_condition, gdal.VersionInfo('VERSION_NUM')))
+                                continue
+                    qt_condition = condition.get('qt')
+                    if qt_condition:
+                        less_than_condition = qt_condition.get('less_than')
+                        if less_than_condition:
+                            if QT_VERSION >= less_than_condition:
+                                print('!!! Skipping {}, requires Qt < {}, have version {}'.format(algtest['name'], less_than_condition, QT_VERSION))
+                                continue
+                        at_least_condition = qt_condition.get('at_least')
+                        if at_least_condition:
+                            if QT_VERSION < at_least_condition:
+                                print('!!! Skipping {}, requires Qt >= {}, have version {}'.format(algtest['name'], at_least_condition, QT_VERSION))
+                                continue
                 print('About to start {} of {}: "{}"'.format(idx, len(algorithm_tests['tests']), algtest['name']))
                 yield self.check_algorithm, algtest['name'], algtest
 
@@ -132,11 +174,11 @@ class AlgorithmsTest(object):
 
         feedback = QgsProcessingFeedback()
 
-        print('Algorithm parameters are {}'.format(parameters))
+        print(f'Algorithm parameters are {parameters}')
 
         # first check that algorithm accepts the parameters we pass...
         ok, msg = alg.checkParameterValues(parameters, context)
-        self.assertTrue(ok, 'Algorithm failed checkParameterValues with result {}'.format(msg))
+        self.assertTrue(ok, f'Algorithm failed checkParameterValues with result {msg}')
 
         if expectFailure:
             try:
@@ -148,7 +190,7 @@ class AlgorithmsTest(object):
                 pass
         else:
             results, ok = alg.run(parameters, context, feedback)
-            self.assertTrue(ok, 'params: {}, results: {}'.format(parameters, results))
+            self.assertTrue(ok, f'params: {parameters}, results: {results}')
             self.check_results(results, context, parameters, defs['results'])
 
     def load_params(self, params):
@@ -212,10 +254,7 @@ class AlgorithmsTest(object):
         elif param['type'] == 'rasterhash':
             outdir = tempfile.mkdtemp()
             self.cleanup_paths.append(outdir)
-            if self.test_definition_file().lower().startswith('saga'):
-                basename = 'raster.sdat'
-            else:
-                basename = 'raster.tif'
+            basename = 'raster.tif'
             filepath = os.path.join(outdir, basename)
             return filepath
         elif param['type'] == 'directory':
@@ -251,7 +290,7 @@ class AlgorithmsTest(object):
             self.cleanup_paths.append(tmpdir)
             path, file_name = os.path.split(filepath)
             base, ext = os.path.splitext(file_name)
-            for file in glob.glob(os.path.join(path, '{}.*'.format(base))):
+            for file in glob.glob(os.path.join(path, f'{base}.*')):
                 shutil.copy(os.path.join(path, file), tmpdir)
             filepath = os.path.join(tmpdir, file_name)
             self.in_place_layers[id] = filepath
@@ -275,7 +314,7 @@ class AlgorithmsTest(object):
             options.loadDefaultStyle = False
             lyr = QgsRasterLayer(filepath, param['name'], 'gdal', options)
 
-        self.assertTrue(lyr.isValid(), 'Could not load layer "{}" from param {}'.format(filepath, param))
+        self.assertTrue(lyr.isValid(), f'Could not load layer "{filepath}" from param {param}')
         QgsProject.instance().addMapLayer(lyr)
         return lyr
 
@@ -301,7 +340,7 @@ class AlgorithmsTest(object):
         if filepath.startswith('ogr:'):
             if not prefix[-1] == os.path.sep:
                 prefix += os.path.sep
-            filepath = re.sub(r"dbname='", "dbname='{}".format(prefix), filepath)
+            filepath = re.sub(r"dbname='", f"dbname='{prefix}", filepath)
         else:
             filepath = os.path.join(prefix, filepath)
 
@@ -330,7 +369,7 @@ class AlgorithmsTest(object):
                     try:
                         results[id]
                     except KeyError as e:
-                        raise KeyError('Expected result {} does not exist in {}'.format(str(e), list(results.keys())))
+                        raise KeyError(f'Expected result {str(e)} does not exist in {list(results.keys())}')
 
                     if isinstance(results[id], QgsMapLayer):
                         result_lyr = results[id]
@@ -360,8 +399,8 @@ class AlgorithmsTest(object):
                     self.assertTrue(res, 'Could not find matching layer in expected results')
 
             elif 'rasterhash' == expected_result['type']:
-                print("id:{} result:{}".format(id, results[id]))
-                self.assertTrue(os.path.exists(results[id]), 'File does not exist: {}, {}'.format(results[id], params))
+                print(f"id:{id} result:{results[id]}")
+                self.assertTrue(os.path.exists(results[id]), f'File does not exist: {results[id]}, {params}')
                 dataset = gdal.Open(results[id], GA_ReadOnly)
                 dataArray = nan_to_num(dataset.ReadAsArray(0))
                 strhash = hashlib.sha224(dataArray.data).hexdigest()
@@ -390,7 +429,7 @@ class AlgorithmsTest(object):
 
                 self.assertDirectoriesEqual(expected_dirpath, result_dirpath)
             elif 'regex' == expected_result['type']:
-                with open(results[id], 'r') as file:
+                with open(results[id]) as file:
                     data = file.read()
 
                 for rule in expected_result.get('rules', []):
@@ -418,9 +457,9 @@ class GenericAlgorithmsTest(unittest.TestCase):
 
     def testAlgorithmCompliance(self):
         for p in QgsApplication.processingRegistry().providers():
-            print('testing provider {}'.format(p.id()))
+            print(f'testing provider {p.id()}')
             for a in p.algorithms():
-                print('testing algorithm {}'.format(a.id()))
+                print(f'testing algorithm {a.id()}')
                 self.check_algorithm(a)
 
     def check_algorithm(self, alg):

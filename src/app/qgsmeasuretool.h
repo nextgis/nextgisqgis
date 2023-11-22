@@ -62,6 +62,7 @@ class APP_EXPORT QgsMeasureTool : public QgsMapTool
     void canvasReleaseEvent( QgsMapMouseEvent *e ) override;
     void activate() override;
     void deactivate() override;
+    void reactivate() override;
     void keyPressEvent( QKeyEvent *e ) override;
 
   public slots:
@@ -99,6 +100,8 @@ class APP_EXPORT QgsMeasureTool : public QgsMapTool
 
     //! Removes the last vertex from mRubberBand
     void undo();
+
+    friend class TestQgsMeasureTool;
 };
 
 #endif

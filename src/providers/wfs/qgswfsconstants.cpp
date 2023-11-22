@@ -38,15 +38,12 @@ const QString QgsWFSConstants::URI_PARAM_IGNOREAXISORIENTATION( QStringLiteral( 
 const QString QgsWFSConstants::URI_PARAM_INVERTAXISORIENTATION( QStringLiteral( "InvertAxisOrientation" ) );
 const QString QgsWFSConstants::URI_PARAM_VALIDATESQLFUNCTIONS( QStringLiteral( "validateSQLFunctions" ) );
 const QString QgsWFSConstants::URI_PARAM_HIDEDOWNLOADPROGRESSDIALOG( QStringLiteral( "hideDownloadProgressDialog" ) );
-const QString QgsWFSConstants::URI_PARAM_PAGING_ENABLED( "pagingEnabled" );
-const QString QgsWFSConstants::URI_PARAM_PAGE_SIZE( "pageSize" );
-const QString QgsWFSConstants::URI_PARAM_WFST_1_1_PREFER_COORDINATES( "preferCoordinatesForWfsT11" );
+const QString QgsWFSConstants::URI_PARAM_PAGING_ENABLED( QStringLiteral( "pagingEnabled" ) );
+const QString QgsWFSConstants::URI_PARAM_PAGE_SIZE( QStringLiteral( "pageSize" ) );
+const QString QgsWFSConstants::URI_PARAM_WFST_1_1_PREFER_COORDINATES( QStringLiteral( "preferCoordinatesForWfsT11" ) );
+const QString QgsWFSConstants::URI_PARAM_SKIP_INITIAL_GET_FEATURE( QStringLiteral( "skipInitialGetFeature" ) );
+const QString QgsWFSConstants::URI_PARAM_GEOMETRY_TYPE_FILTER( QStringLiteral( "geometryTypeFilter" ) );
+const QString QgsWFSConstants::URI_PARAM_SQL( QStringLiteral( "sql" ) );
 
 const QString QgsWFSConstants::VERSION_AUTO( QStringLiteral( "auto" ) );
 
-const QString QgsWFSConstants::CONNECTIONS_WFS( QStringLiteral( "qgis/connections-wfs/" ) );
-const QString QgsWFSConstants::SETTINGS_VERSION( QStringLiteral( "version" ) );
-const QString QgsWFSConstants::SETTINGS_MAXNUMFEATURES( QStringLiteral( "maxnumfeatures" ) );
-const QString QgsWFSConstants::SETTINGS_PAGING_ENABLED( QStringLiteral( "pagingenabled" ) );
-const QString QgsWFSConstants::SETTINGS_PAGE_SIZE( QStringLiteral( "pagesize" ) );
-const QString QgsWFSConstants::SETTINGS_WFST_1_1_PREFER_COORDINATES( QStringLiteral( "preferCoordinatesForWfsT11" ) );

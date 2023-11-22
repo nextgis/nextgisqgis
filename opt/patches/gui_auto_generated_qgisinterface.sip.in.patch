@@ -1,6 +1,6 @@
 --- a/python/gui/auto_generated/qgisinterface.sip.in	2022-02-18 15:06:10.000000000 +0300
 +++ b/python/gui/auto_generated/qgisinterface.sip.in	2022-04-30 21:29:42.713993000 +0300
-@@ -582,13 +582,6 @@
+@@ -646,13 +646,6 @@
  .. versionadded:: 3.14
  %End
  
@@ -14,7 +14,7 @@
      virtual QAction *actionAddPointCloudLayer() = 0;
  %Docstring
  Returns the native Add Point Cloud Layer action.
-@@ -821,13 +814,6 @@
+@@ -956,13 +956,6 @@
  Adds a mesh layer to the current project.
  %End
  
@@ -28,11 +28,13 @@
      virtual QgsPointCloudLayer *addPointCloudLayer( const QString &url, const QString &baseName, const QString &providerKey ) = 0;
  %Docstring
  Adds a point cloud layer to the current project.
-@@ -1575,16 +1561,6 @@
- .. versionadded:: 3.4
- %End
+@@ -1709,16 +1709,6 @@
+ creating a new browser model for every use.
  
--    virtual void setGpsPanelConnection( QgsGpsConnection *connection ) = 0;
+ .. versionadded:: 3.4
+-%End
+-
+-    virtual void setGpsPanelConnection( QgsGpsConnection *connection /Transfer/ ) = 0;
 -%Docstring
 -Sets a GPS ``connection`` to use within the GPS Panel widget.
 -
@@ -40,8 +42,6 @@
 -is automatically registered within the :py:func:`QgsApplication.gpsConnectionRegistry()`.
 -
 -.. versionadded:: 3.16
--%End
--
-   signals:
+ %End
  
-     void currentLayerChanged( QgsMapLayer *layer );
+   signals:

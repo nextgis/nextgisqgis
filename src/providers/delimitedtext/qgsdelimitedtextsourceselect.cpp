@@ -13,7 +13,6 @@
  ***************************************************************************/
 #include "qgsdelimitedtextsourceselect.h"
 
-#include "qgisinterface.h"
 #include "qgslogger.h"
 #include "qgsvectordataprovider.h"
 #include "qgssettings.h"
@@ -56,9 +55,15 @@ QgsDelimitedTextSourceSelect::QgsDelimitedTextSourceSelect( QWidget *parent, Qt:
   bgGeomType->addButton( geomTypeWKT, swGeomType->indexOf( swpGeomWKT ) );
   bgGeomType->addButton( geomTypeNone, swGeomType->indexOf( swpGeomNone ) );
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
   connect( bgFileFormat, static_cast < void ( QButtonGroup::* )( int ) > ( &QButtonGroup::buttonClicked ), swFileFormat, &QStackedWidget::setCurrentIndex );
   connect( bgGeomType, static_cast < void ( QButtonGroup::* )( int ) > ( &QButtonGroup::buttonClicked ), swGeomType, &QStackedWidget::setCurrentIndex );
   connect( bgGeomType, static_cast < void ( QButtonGroup::* )( int ) > ( &QButtonGroup::buttonClicked ), this, &QgsDelimitedTextSourceSelect::updateCrsWidgetVisibility );
+#else
+  connect( bgFileFormat, &QButtonGroup::idClicked, swFileFormat, &QStackedWidget::setCurrentIndex );
+  connect( bgGeomType, &QButtonGroup::idClicked, swGeomType, &QStackedWidget::setCurrentIndex );
+  connect( bgGeomType, &QButtonGroup::idClicked, this, &QgsDelimitedTextSourceSelect::updateCrsWidgetVisibility );
+#endif
 
   cmbEncoding->clear();
   cmbEncoding->addItems( QgsVectorDataProvider::availableEncodings() );
@@ -403,7 +408,7 @@ void QgsDelimitedTextSourceSelect::updateFieldLists()
   int counter = 0;
   mBadRowCount = 0;
   QStringList values;
-  const QRegularExpression wktre( "^\\s*(?:MULTI)?(?:POINT|LINESTRING|POLYGON)\\s*Z?\\s*M?\\(", QRegularExpression::CaseInsensitiveOption );
+  const thread_local QRegularExpression wktre( "^\\s*(?:MULTI)?(?:POINT|LINESTRING|POLYGON)\\s*Z?\\s*M?\\(", QRegularExpression::CaseInsensitiveOption );
 
   while ( counter < mExampleRowCount )
   {
@@ -560,6 +565,10 @@ void QgsDelimitedTextSourceSelect::updateFieldLists()
   // As we ignore blank fields we need to map original index
   // of selected fields to index in combo box.
 
+  // Add an empty item for M and Z field
+  cmbMField->addItem( QString() );
+  cmbZField->addItem( QString() );
+
   int fieldNo = 0;
   for ( int i = 0; i < fieldList.size(); i++ )
   {
@@ -579,8 +588,8 @@ void QgsDelimitedTextSourceSelect::updateFieldLists()
   cmbWktField->setCurrentIndex( cmbWktField->findText( columnWkt ) );
   cmbXField->setCurrentIndex( cmbXField->findText( columnX ) );
   cmbYField->setCurrentIndex( cmbYField->findText( columnY ) );
-  cmbZField->setCurrentIndex( cmbYField->findText( columnZ ) );
-  cmbMField->setCurrentIndex( cmbYField->findText( columnM ) );
+  cmbZField->setCurrentIndex( cmbZField->findText( columnZ ) );
+  cmbMField->setCurrentIndex( cmbMField->findText( columnM ) );
 
   // Now try setting optional X,Y fields - will only reset the fields if
   // not already set.

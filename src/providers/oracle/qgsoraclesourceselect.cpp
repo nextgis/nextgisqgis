@@ -20,7 +20,6 @@ email                : jef at norbit dot de
 
 #include "qgslogger.h"
 #include "qgsapplication.h"
-#include "qgsoracleprovider.h"
 #include "qgsoraclenewconnection.h"
 #include "qgsoracletablecache.h"
 #include "qgsmanageconnectionsdialog.h"
@@ -29,12 +28,10 @@ email                : jef at norbit dot de
 #include "qgsvectorlayer.h"
 #include "qgsoraclecolumntypetask.h"
 #include "qgssettings.h"
-#include "qgsproxyprogresstask.h"
 #include "qgsgui.h"
 #include "qgsiconutils.h"
 #include "qgsoracletablemodel.h"
-#include "qgsdbfilterproxymodel.h"
-
+#include "qgsprovidermetadata.h"
 
 #include <QFileDialog>
 #include <QInputDialog>
@@ -60,18 +57,18 @@ QWidget *QgsOracleSourceSelectDelegate::createEditor( QWidget *parent, const QSt
   if ( index.column() == QgsOracleTableModel::DbtmType && index.data( Qt::UserRole + 1 ).toBool() )
   {
     QComboBox *cb = new QComboBox( parent );
-    for ( QgsWkbTypes::Type type :
+    for ( Qgis::WkbType type :
           {
-            QgsWkbTypes::Point,
-            QgsWkbTypes::LineString,
-            QgsWkbTypes::Polygon,
-            QgsWkbTypes::MultiPoint,
-            QgsWkbTypes::MultiLineString,
-            QgsWkbTypes::MultiPolygon,
-            QgsWkbTypes::NoGeometry
+            Qgis::WkbType::Point,
+            Qgis::WkbType::LineString,
+            Qgis::WkbType::Polygon,
+            Qgis::WkbType::MultiPoint,
+            Qgis::WkbType::MultiLineString,
+            Qgis::WkbType::MultiPolygon,
+            Qgis::WkbType::NoGeometry
           } )
     {
-      cb->addItem( QgsIconUtils::iconForWkbType( type ), QgsWkbTypes::translatedDisplayString( type ), type );
+      cb->addItem( QgsIconUtils::iconForWkbType( type ), QgsWkbTypes::translatedDisplayString( type ), static_cast< quint32>( type ) );
     }
     return cb;
   }
@@ -144,11 +141,11 @@ void QgsOracleSourceSelectDelegate::setModelData( QWidget *editor, QAbstractItem
   {
     if ( index.column() == QgsOracleTableModel::DbtmType )
     {
-      QgsWkbTypes::Type type = static_cast< QgsWkbTypes::Type >( cb->currentData().toInt() );
+      Qgis::WkbType type = static_cast< Qgis::WkbType >( cb->currentData().toInt() );
 
       model->setData( index, QgsIconUtils::iconForWkbType( type ), Qt::DecorationRole );
-      model->setData( index, type != QgsWkbTypes::Unknown ? QgsWkbTypes::translatedDisplayString( type ) : tr( "Select…" ) );
-      model->setData( index, type, Qt::UserRole + 2 );
+      model->setData( index, type != Qgis::WkbType::Unknown ? QgsWkbTypes::translatedDisplayString( type ) : tr( "Select…" ) );
+      model->setData( index, static_cast< quint32>( type ), Qt::UserRole + 2 );
     }
     else if ( index.column() == QgsOracleTableModel::DbtmPkCol )
     {
@@ -176,6 +173,16 @@ QgsOracleSourceSelect::QgsOracleSourceSelect( QWidget *parent, Qt::WindowFlags f
   : QgsAbstractDbSourceSelect( parent, fl, theWidgetMode )
 {
   QgsGui::instance()->enableAutoGeometryRestore( this );
+
+  connect( btnConnect, &QPushButton::clicked, this, &QgsOracleSourceSelect::btnConnect_clicked );
+  connect( cbxAllowGeometrylessTables, &QCheckBox::stateChanged, this, &QgsOracleSourceSelect::cbxAllowGeometrylessTables_stateChanged );
+  connect( btnNew, &QPushButton::clicked, this, &QgsOracleSourceSelect::btnNew_clicked );
+  connect( btnEdit, &QPushButton::clicked, this, &QgsOracleSourceSelect::btnEdit_clicked );
+  connect( btnDelete, &QPushButton::clicked, this, &QgsOracleSourceSelect::btnDelete_clicked );
+  connect( btnSave, &QPushButton::clicked, this, &QgsOracleSourceSelect::btnSave_clicked );
+  connect( btnLoad, &QPushButton::clicked, this, &QgsOracleSourceSelect::btnLoad_clicked );
+  connect( cmbConnections, &QComboBox::currentTextChanged, this, &QgsOracleSourceSelect::cmbConnections_currentIndexChanged );
+
   setupButtons( buttonBox );
   connect( buttonBox, &QDialogButtonBox::helpRequested, this, &QgsOracleSourceSelect::showHelp );
 
@@ -210,7 +217,7 @@ QgsOracleSourceSelect::QgsOracleSourceSelect( QWidget *parent, Qt::WindowFlags f
 }
 //! Autoconnected SLOTS
 // Slot for adding a new connection
-void QgsOracleSourceSelect::on_btnNew_clicked()
+void QgsOracleSourceSelect::btnNew_clicked()
 {
   QgsOracleNewConnection *nc = new QgsOracleNewConnection( this );
   if ( nc->exec() )
@@ -221,7 +228,7 @@ void QgsOracleSourceSelect::on_btnNew_clicked()
   delete nc;
 }
 // Slot for deleting an existing connection
-void QgsOracleSourceSelect::on_btnDelete_clicked()
+void QgsOracleSourceSelect::btnDelete_clicked()
 {
   QString msg = tr( "Are you sure you want to remove the %1 connection and all associated settings?" )
                 .arg( cmbConnections->currentText() );
@@ -237,13 +244,13 @@ void QgsOracleSourceSelect::on_btnDelete_clicked()
   emit connectionsChanged();
 }
 
-void QgsOracleSourceSelect::on_btnSave_clicked()
+void QgsOracleSourceSelect::btnSave_clicked()
 {
   QgsManageConnectionsDialog dlg( this, QgsManageConnectionsDialog::Export, QgsManageConnectionsDialog::Oracle );
   dlg.exec();
 }
 
-void QgsOracleSourceSelect::on_btnLoad_clicked()
+void QgsOracleSourceSelect::btnLoad_clicked()
 {
   QString fileName = QFileDialog::getOpenFileName( this, tr( "Load Connections" ), QStringLiteral( "." ),
                      tr( "XML files (*.xml *.XML)" ) );
@@ -258,7 +265,7 @@ void QgsOracleSourceSelect::on_btnLoad_clicked()
 }
 
 // Slot for editing a connection
-void QgsOracleSourceSelect::on_btnEdit_clicked()
+void QgsOracleSourceSelect::btnEdit_clicked()
 {
   QgsOracleNewConnection *nc = new QgsOracleNewConnection( this, cmbConnections->currentText() );
   if ( nc->exec() )
@@ -275,7 +282,7 @@ void QgsOracleSourceSelect::on_btnEdit_clicked()
 //! End Autoconnected SLOTS
 
 // Remember which database is selected
-void QgsOracleSourceSelect::on_cmbConnections_currentIndexChanged( const QString &text )
+void QgsOracleSourceSelect::cmbConnections_currentIndexChanged( const QString &text )
 {
   // Remember which database was selected.
   QgsOracleConn::setSelectedConnection( text );
@@ -287,15 +294,15 @@ void QgsOracleSourceSelect::on_cmbConnections_currentIndexChanged( const QString
   // populate the table list
   mConnInfo = QgsOracleConn::connUri( cmbConnections->currentText() );
 
-  QgsDebugMsg( "Connection info: " + mConnInfo.uri() );
+  QgsDebugMsgLevel( "Connection info: " + mConnInfo.uri(), 2 );
 
   loadTableFromCache();
 }
 
-void QgsOracleSourceSelect::on_cbxAllowGeometrylessTables_stateChanged( int )
+void QgsOracleSourceSelect::cbxAllowGeometrylessTables_stateChanged( int )
 {
   if ( mIsConnected )
-    on_btnConnect_clicked();
+    btnConnect_clicked();
 }
 
 void QgsOracleSourceSelect::setLayerType( const QgsOracleLayerProperty &layerProperty )
@@ -334,7 +341,7 @@ void QgsOracleSourceSelect::populateConnectionList()
   btnConnect->setDisabled( cmbConnections->count() == 0 );
   cmbConnections->setDisabled( cmbConnections->count() == 0 );
 
-  on_cmbConnections_currentIndexChanged( cmbConnections->currentText() );
+  cmbConnections_currentIndexChanged( cmbConnections->currentText() );
 }
 
 // Slot for performing action when the Add button is clicked
@@ -369,7 +376,7 @@ void QgsOracleSourceSelect::addButtonClicked()
   }
 }
 
-void QgsOracleSourceSelect::on_btnConnect_clicked()
+void QgsOracleSourceSelect::btnConnect_clicked()
 {
   cbxAllowGeometrylessTables->setEnabled( true );
 
@@ -458,17 +465,16 @@ void QgsOracleSourceSelect::setSql( const QModelIndex &index )
 {
   if ( !index.parent().isValid() )
   {
-    QgsDebugMsg( QStringLiteral( "no owner item found" ) );
+    QgsDebugError( QStringLiteral( "no owner item found" ) );
     return;
   }
 
-  QModelIndex idx = proxyModel()->mapToSource( index );
-  QString tableName = mTableModel->itemFromIndex( idx.sibling( idx.row(), QgsOracleTableModel::DbtmTable ) )->text();
+  QString tableName = mTableModel->itemFromIndex( index.sibling( index.row(), QgsOracleTableModel::DbtmTable ) )->text();
 
-  QString uri = mTableModel->layerURI( idx, mConnInfo );
+  QString uri = mTableModel->layerURI( index, mConnInfo );
   if ( uri.isNull() )
   {
-    QgsDebugMsg( QStringLiteral( "no uri" ) );
+    QgsDebugMsgLevel( QStringLiteral( "no uri" ), 2 );
     return;
   }
 
@@ -483,7 +489,7 @@ void QgsOracleSourceSelect::setSql( const QModelIndex &index )
   QgsQueryBuilder *gb = new QgsQueryBuilder( vlayer, this );
   if ( gb->exec() )
   {
-    mTableModel->setSql( proxyModel()->mapToSource( index ), gb->sql() );
+    mTableModel->setSql( index, gb->sql() );
   }
 
   delete gb;

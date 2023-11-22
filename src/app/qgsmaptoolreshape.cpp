@@ -76,21 +76,24 @@ void QgsMapToolReshape::cadCanvasReleaseEvent( QgsMapMouseEvent *e )
   }
 }
 
-bool QgsMapToolReshape::supportsTechnique( QgsMapToolCapture::CaptureTechnique technique ) const
+bool QgsMapToolReshape::supportsTechnique( Qgis::CaptureTechnique technique ) const
 {
   switch ( technique )
   {
-    case QgsMapToolCapture::StraightSegments:
-    case QgsMapToolCapture::CircularString:
-    case QgsMapToolCapture::Streaming:
+    case Qgis::CaptureTechnique::StraightSegments:
+    case Qgis::CaptureTechnique::CircularString:
+    case Qgis::CaptureTechnique::Streaming:
       return true;
+
+    case Qgis::CaptureTechnique::Shape:
+      return false;
   }
   return false;
 }
 
 bool QgsMapToolReshape::isBindingLine( QgsVectorLayer *vlayer, const QgsRectangle &bbox ) const
 {
-  if ( vlayer->geometryType() != QgsWkbTypes::LineGeometry )
+  if ( vlayer->geometryType() != Qgis::GeometryType::Line )
     return false;
 
   bool begin = false;
@@ -173,7 +176,7 @@ void QgsMapToolReshape::reshape( QgsVectorLayer *vlayer )
       if ( reshapeReturn == Qgis::GeometryOperationResult::Success )
       {
         //avoid intersections on polygon layers
-        if ( vlayer->geometryType() == QgsWkbTypes::PolygonGeometry )
+        if ( vlayer->geometryType() == Qgis::GeometryType::Polygon )
         {
           //ignore all current layer features as they should be reshaped too
           QHash<QgsVectorLayer *, QSet<QgsFeatureId> > ignoreFeatures;
@@ -182,13 +185,13 @@ void QgsMapToolReshape::reshape( QgsVectorLayer *vlayer )
           QList<QgsVectorLayer *>  avoidIntersectionsLayers;
           switch ( QgsProject::instance()->avoidIntersectionsMode() )
           {
-            case QgsProject::AvoidIntersectionsMode::AvoidIntersectionsCurrentLayer:
+            case Qgis::AvoidIntersectionsMode::AvoidIntersectionsCurrentLayer:
               avoidIntersectionsLayers.append( vlayer );
               break;
-            case QgsProject::AvoidIntersectionsMode::AvoidIntersectionsLayers:
+            case Qgis::AvoidIntersectionsMode::AvoidIntersectionsLayers:
               avoidIntersectionsLayers = QgsProject::instance()->avoidIntersectionsLayers();
               break;
-            case QgsProject::AvoidIntersectionsMode::AllowIntersections:
+            case Qgis::AvoidIntersectionsMode::AllowIntersections:
               break;
           }
           int res = -1;

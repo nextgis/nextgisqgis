@@ -23,7 +23,6 @@
 #include "qgsproject.h"
 #include "qgsexpressioncontext.h"
 #include "qgsfeaturerequest.h"
-#include "qgsexception.h"
 #include "qgsprocessingfeedback.h"
 #include "qgsprocessingutils.h"
 
@@ -88,6 +87,7 @@ class CORE_EXPORT QgsProcessingContext
       mProject = other.mProject;
       mTransformContext = other.mTransformContext;
       mExpressionContext = other.mExpressionContext;
+      mExpressionContext.setLoadedLayerStore( &tempLayerStore );
       mInvalidGeometryCallback = other.mInvalidGeometryCallback;
       mUseDefaultInvalidGeometryCallback = other.mUseDefaultInvalidGeometryCallback;
       mInvalidGeometryCheck = other.mInvalidGeometryCheck;
@@ -100,6 +100,8 @@ class CORE_EXPORT QgsProcessingContext
       mDistanceUnit = other.mDistanceUnit;
       mAreaUnit = other.mAreaUnit;
       mLogLevel = other.mLogLevel;
+      mTemporaryFolderOverride = other.mTemporaryFolderOverride;
+      mMaximumThreads = other.mMaximumThreads;
     }
 
     /**
@@ -136,9 +138,9 @@ class CORE_EXPORT QgsProcessingContext
         mTransformContext = mProject->transformContext();
         if ( mEllipsoid.isEmpty() )
           mEllipsoid = mProject->ellipsoid();
-        if ( mDistanceUnit == QgsUnitTypes::DistanceUnknownUnit )
+        if ( mDistanceUnit == Qgis::DistanceUnit::Unknown )
           mDistanceUnit = mProject->distanceUnits();
-        if ( mAreaUnit == QgsUnitTypes::AreaUnknownUnit )
+        if ( mAreaUnit == Qgis::AreaUnit::Unknown )
           mAreaUnit = mProject->areaUnits();
       }
     }
@@ -156,7 +158,7 @@ class CORE_EXPORT QgsProcessingContext
     /**
      * Sets the expression \a context.
      */
-    void setExpressionContext( const QgsExpressionContext &context ) { mExpressionContext = context; }
+    void setExpressionContext( const QgsExpressionContext &context );
 
     /**
      * Returns the coordinate transform context.
@@ -199,7 +201,7 @@ class CORE_EXPORT QgsProcessingContext
      * \see areaUnit()
      * \since QGIS 3.16
      */
-    QgsUnitTypes::DistanceUnit distanceUnit() const;
+    Qgis::DistanceUnit distanceUnit() const;
 
     /**
      * Sets the \a unit to use for distance calculations.
@@ -210,7 +212,7 @@ class CORE_EXPORT QgsProcessingContext
      * \see setAreaUnit()
      * \since QGIS 3.16
      */
-    void setDistanceUnit( QgsUnitTypes::DistanceUnit unit );
+    void setDistanceUnit( Qgis::DistanceUnit unit );
 
     /**
      * Returns the area unit to use for area calculations.
@@ -219,7 +221,7 @@ class CORE_EXPORT QgsProcessingContext
      * \see distanceUnit()
      * \since QGIS 3.16
      */
-    QgsUnitTypes::AreaUnit areaUnit() const;
+    Qgis::AreaUnit areaUnit() const;
 
     /**
      * Sets the \a unit to use for area calculations.
@@ -230,7 +232,7 @@ class CORE_EXPORT QgsProcessingContext
      * \see setDistanceUnit()
      * \since QGIS 3.16
      */
-    void setAreaUnit( QgsUnitTypes::AreaUnit areaUnit );
+    void setAreaUnit( Qgis::AreaUnit areaUnit );
 
     /**
      * Returns the current time range to use for temporal operations.
@@ -295,6 +297,22 @@ class CORE_EXPORT QgsProcessingContext
          * Associated output name from algorithm which generated the layer.
          */
         QString outputName;
+
+        /**
+         * Optional name for a layer tree group under which to place the layer when loading it into a project.
+         *
+         * \since QGIS 3.32
+         */
+        QString groupName;
+
+        /**
+         * Optional sorting key for sorting output layers when loading them into a project.
+         *
+         * Layers with a greater sort key will be placed over layers with a lesser sort key.
+         *
+         * \since QGIS 3.32
+         */
+        int layerSortKey = 0;
 
         /**
          * Layer type hint.
@@ -658,6 +676,58 @@ class CORE_EXPORT QgsProcessingContext
     void setLogLevel( LogLevel level );
 
     /**
+     * Returns the (optional) temporary folder to use when running algorithms.
+     *
+     * If set, this overrides the standard global Processing temporary folder and should be used
+     * for all temporary files created during algorithm execution.
+     *
+     * \see setTemporaryFolder()
+     * \since QGIS 3.32
+     */
+    QString temporaryFolder() const;
+
+    /**
+     * Sets the (optional) temporary \a folder to use when running algorithms.
+     *
+     * If set, this overrides the standard global Processing temporary folder and should be used
+     * for all temporary files created during algorithm execution.
+     *
+     * \see temporaryFolder()
+     * \since QGIS 3.32
+     */
+    void setTemporaryFolder( const QString &folder );
+
+    /**
+     * Returns the (optional) number of threads to use when running algorithms.
+     *
+     * \warning Not all algorithms which support multithreaded execution will
+     * respect this setting, depending on the multi-threading framework in use.
+     * Multithreaded algorithms must check this value and adapt their thread
+     * handling accordingly -- the setting will not be automatically applied.
+     *
+     * \see setMaximumThreads()
+     * \since QGIS 3.32
+     */
+    int maximumThreads() const;
+
+    /**
+     * Sets the (optional) number of \a threads to use when running algorithms.
+     *
+     * If set, this overrides the standard global Processing number of threads setting.
+     * Note that if algorithm implementation does not support multhreaded execution, this
+     * setting will be ignored.
+     *
+     * \warning Not all algorithms which support multithreaded execution will
+     * respect this setting, depending on the multi-threading framework in use.
+     * Multithreaded algorithms must check this value and adapt their thread
+     * handling accordingly -- the setting will not be automatically applied.
+     *
+     * \see maximumThreads()
+     * \since QGIS 3.32
+     */
+    void setMaximumThreads( int threads );
+
+    /**
      * Exports the context's settings to a variant map.
      *
      * \since QGIS 3.24
@@ -689,8 +759,8 @@ class CORE_EXPORT QgsProcessingContext
     QgsCoordinateTransformContext mTransformContext;
 
     QString mEllipsoid;
-    QgsUnitTypes::DistanceUnit mDistanceUnit = QgsUnitTypes::DistanceUnknownUnit;
-    QgsUnitTypes::AreaUnit mAreaUnit = QgsUnitTypes::AreaUnknownUnit;
+    Qgis::DistanceUnit mDistanceUnit = Qgis::DistanceUnit::Unknown;
+    Qgis::AreaUnit mAreaUnit = Qgis::AreaUnit::Unknown;
 
     QgsDateTimeRange mCurrentTimeRange;
 
@@ -712,6 +782,9 @@ class CORE_EXPORT QgsProcessingContext
     QString mPreferredRasterFormat;
 
     LogLevel mLogLevel = DefaultLevel;
+
+    QString mTemporaryFolderOverride;
+    int mMaximumThreads = QThread::idealThreadCount();
 
 #ifdef SIP_RUN
     QgsProcessingContext( const QgsProcessingContext &other );

@@ -1,26 +1,57 @@
---- a/src/core/providers/qgsproviderregistry.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/providers/qgsproviderregistry.cpp	2022-04-25 18:33:16.000000000 +0300
-@@ -26,7 +26,7 @@
+--- a/src/core/providers/qgsproviderregistry.cpp	2023-08-21 19:39:45.719047536 +0300
++++ b/src/core/providers/qgsproviderregistry.cpp	2023-10-16 11:34:48.000000000 +0300
+@@ -24,7 +24,7 @@
+ #include "qgslogger.h"
  #include "qgsmessagelog.h"
  #include "qgsprovidermetadata.h"
- #include "qgsvectorlayer.h"
 -#include "qgsvectortileprovidermetadata.h"
 +// #include "qgsvectortileprovidermetadata.h"
  #include "qgsproject.h"
  #include "qgsprovidersublayerdetails.h"
  #include "providers/memory/qgsmemoryprovider.h"
-@@ -185,11 +185,11 @@
+@@ -33,10 +33,10 @@
+ #include "providers/ogr/qgsogrprovider.h"
+ #include "providers/meshmemory/qgsmeshmemorydataprovider.h"
+ 
+-#include "qgsmbtilesvectortiledataprovider.h"
+-#include "qgsarcgisvectortileservicedataprovider.h"
+-#include "qgsxyzvectortiledataprovider.h"
+-#include "qgsvtpkvectortiledataprovider.h"
++// #include "qgsmbtilesvectortiledataprovider.h"
++// #include "qgsarcgisvectortileservicedataprovider.h"
++// #include "qgsxyzvectortiledataprovider.h"
++// #include "qgsvtpkvectortiledataprovider.h"
+ 
+ #ifdef HAVE_EPT
+ #include "providers/ept/qgseptprovider.h"
+@@ -192,19 +192,19 @@
      const QgsScopedRuntimeProfile profile( QObject::tr( "Create OGR provider" ) );
      mProviders[ QgsOgrProvider::providerKey() ] = new QgsOgrProviderMetadata();
    }
 -  {
--    const QgsScopedRuntimeProfile profile( QObject::tr( "Create vector tile provider" ) );
+-    const QgsScopedRuntimeProfile profile( QObject::tr( "Create vector tile providers" ) );
 -    QgsProviderMetadata *vt = new QgsVectorTileProviderMetadata();
+-    mProviders[ vt->key() ] = vt;
+-    vt = new QgsXyzVectorTileDataProviderMetadata();
+-    mProviders[ vt->key() ] = vt;
+-    vt = new QgsVtpkVectorTileDataProviderMetadata();
+-    mProviders[ vt->key() ] = vt;
+-    vt = new QgsArcGisVectorTileServiceDataProviderMetadata();
+-    mProviders[ vt->key() ] = vt;
+-    vt = new QgsMbTilesVectorTileDataProviderMetadata();
 -    mProviders[ vt->key() ] = vt;
 -  }
 +//   {
-+//     const QgsScopedRuntimeProfile profile( QObject::tr( "Create vector tile provider" ) );
++//     const QgsScopedRuntimeProfile profile( QObject::tr( "Create vector tile providers" ) );
 +//     QgsProviderMetadata *vt = new QgsVectorTileProviderMetadata();
++//     mProviders[ vt->key() ] = vt;
++//     vt = new QgsXyzVectorTileDataProviderMetadata();
++//     mProviders[ vt->key() ] = vt;
++//     vt = new QgsVtpkVectorTileDataProviderMetadata();
++//     mProviders[ vt->key() ] = vt;
++//     vt = new QgsArcGisVectorTileServiceDataProviderMetadata();
++//     mProviders[ vt->key() ] = vt;
++//     vt = new QgsMbTilesVectorTileDataProviderMetadata();
 +//     mProviders[ vt->key() ] = vt;
 +//   }
  #ifdef HAVE_EPT

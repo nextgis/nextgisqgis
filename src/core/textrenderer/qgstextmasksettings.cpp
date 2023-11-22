@@ -18,6 +18,8 @@
 #include "qgspallabeling.h"
 #include "qgssymbollayerutils.h"
 #include "qgspainteffectregistry.h"
+#include "qgsapplication.h"
+#include "qgsunittypes.h"
 
 QgsTextMaskSettings::QgsTextMaskSettings()
 {
@@ -92,12 +94,12 @@ void QgsTextMaskSettings::setSize( double size )
   d->size = size;
 }
 
-QgsUnitTypes::RenderUnit QgsTextMaskSettings::sizeUnit() const
+Qgis::RenderUnit QgsTextMaskSettings::sizeUnit() const
 {
   return d->sizeUnit;
 }
 
-void QgsTextMaskSettings::setSizeUnit( QgsUnitTypes::RenderUnit unit )
+void QgsTextMaskSettings::setSizeUnit( Qgis::RenderUnit unit )
 {
   d->sizeUnit = unit;
 }
@@ -159,13 +161,13 @@ void QgsTextMaskSettings::updateDataDefinedProperties( QgsRenderContext &context
   if ( properties.isActive( QgsPalLayerSettings::MaskBufferUnit ) )
   {
     const QVariant exprVal = properties.value( QgsPalLayerSettings::MaskBufferUnit, context.expressionContext() );
-    if ( !exprVal.isNull() )
+    if ( !QgsVariantUtils::isNull( exprVal ) )
     {
       const QString units = exprVal.toString();
       if ( !units.isEmpty() )
       {
         bool ok;
-        const QgsUnitTypes::RenderUnit res = QgsUnitTypes::decodeRenderUnit( units, &ok );
+        const Qgis::RenderUnit res = QgsUnitTypes::decodeRenderUnit( units, &ok );
         if ( ok )
           d->sizeUnit = res;
       }
@@ -176,7 +178,7 @@ void QgsTextMaskSettings::updateDataDefinedProperties( QgsRenderContext &context
   {
     context.expressionContext().setOriginalValueVariable( d->opacity * 100 );
     const QVariant val = properties.value( QgsPalLayerSettings::MaskOpacity, context.expressionContext(), d->opacity * 100 );
-    if ( !val.isNull() )
+    if ( !QgsVariantUtils::isNull( val ) )
     {
       d->opacity = val.toDouble() / 100.0;
     }

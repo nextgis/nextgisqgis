@@ -18,10 +18,10 @@
 QgsCoordinateBoundsPreviewMapWidget::QgsCoordinateBoundsPreviewMapWidget( QWidget *parent )
   : QgsMapCanvas( parent )
 {
-  mPreviewBand = new QgsRubberBand( this, QgsWkbTypes::PolygonGeometry );
+  mPreviewBand = new QgsRubberBand( this, Qgis::GeometryType::Polygon );
   mPreviewBand->setWidth( 4 );
 
-  mCanvasPreviewBand = new QgsRubberBand( this, QgsWkbTypes::PolygonGeometry );
+  mCanvasPreviewBand = new QgsRubberBand( this, Qgis::GeometryType::Polygon );
   mCanvasPreviewBand->setWidth( 4 );
   const QColor rectColor = QColor( 185, 84, 210, 60 );
   mCanvasPreviewBand->setColor( rectColor );
@@ -35,14 +35,21 @@ QgsCoordinateBoundsPreviewMapWidget::QgsCoordinateBoundsPreviewMapWidget( QWidge
   setDestinationCrs( srs );
 
   const QString layerPath = QgsApplication::pkgDataPath() + QStringLiteral( "/resources/data/world_map.gpkg|layername=countries" );
-  mLayers << new QgsVectorLayer( layerPath );
+  QgsVectorLayer::LayerOptions options;
+  options.forceReadOnly = true;
+  mLayers << new QgsVectorLayer( layerPath, tr( "World Map" ), QStringLiteral( "ogr" ), options );
   setLayers( mLayers );
-  setMapTool( new QgsMapToolPan( this ) );
+  mPanTool = new QgsMapToolPan( this );
+  setMapTool( mPanTool );
   setPreviewJobsEnabled( true );
 }
 
 QgsCoordinateBoundsPreviewMapWidget::~QgsCoordinateBoundsPreviewMapWidget()
 {
+  setMapTool( nullptr );
+  delete mPanTool;
+  mPanTool = nullptr;
+
   qDeleteAll( mLayers );
   delete mPreviewBand;
   delete mCanvasPreviewBand;

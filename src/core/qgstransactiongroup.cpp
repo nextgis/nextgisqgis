@@ -84,7 +84,7 @@ void QgsTransactionGroup::onEditingStarted()
   const auto constMLayers = mLayers;
   for ( QgsVectorLayer *layer : constMLayers )
   {
-    mTransaction->addLayer( layer );
+    mTransaction->addLayer( layer, true );
     layer->startEditing();
     connect( layer, &QgsVectorLayer::beforeCommitChanges, this, &QgsTransactionGroup::onBeforeCommitChanges );
     connect( layer, &QgsVectorLayer::beforeRollBack, this, &QgsTransactionGroup::onRollback );
@@ -125,7 +125,7 @@ void QgsTransactionGroup::onBeforeCommitChanges( bool stopEditing )
     {
       if ( ! mTransaction->begin( errMsg ) )
       {
-        QgsDebugMsg( QStringLiteral( "Could not restart a transaction for %1: %2" ).arg( triggeringLayer->name() ).arg( errMsg ) );
+        QgsDebugError( QStringLiteral( "Could not restart a transaction for %1: %2" ).arg( triggeringLayer->name() ).arg( errMsg ) );
       }
     }
 

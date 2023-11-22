@@ -128,8 +128,8 @@ QgsRasterCalculator::QgsRasterCalculator( const QString &formulaString, const QS
   , mNumOutputColumns( nOutputColumns )
   , mNumOutputRows( nOutputRows )
   , mRasterEntries( rasterEntries )
+  , mTransformContext( QgsProject::instance()->transformContext() )
 {
-  mTransformContext = QgsProject::instance()->transformContext();
 }
 
 QgsRasterCalculator::Result QgsRasterCalculator::processCalculation( QgsFeedback *feedback )
@@ -272,7 +272,7 @@ QgsRasterCalculator::Result QgsRasterCalculator::processCalculation( QgsFeedback
         std::copy( resultMatrix.data(), resultMatrix.data() + mNumOutputColumns, castedResult.begin() );
         if ( GDALRasterIO( outputRasterBand, GF_Write, 0, row, mNumOutputColumns, 1, castedResult.data(), mNumOutputColumns, 1, GDT_Float32, 0, 0 ) != CE_None )
         {
-          QgsDebugMsg( QStringLiteral( "RasterIO error!" ) );
+          QgsDebugError( QStringLiteral( "RasterIO error!" ) );
         }
       }
       else
@@ -355,7 +355,7 @@ QgsRasterCalculator::Result QgsRasterCalculator::processCalculation( QgsFeedback
         //write scanline to the dataset
         if ( GDALRasterIO( outputRasterBand, GF_Write, 0, i, mNumOutputColumns, 1, calcData, mNumOutputColumns, 1, GDT_Float32, 0, 0 ) != CE_None )
         {
-          QgsDebugMsg( QStringLiteral( "RasterIO error!" ) );
+          QgsDebugError( QStringLiteral( "RasterIO error!" ) );
         }
 
         delete[] calcData;
@@ -449,6 +449,9 @@ QgsRasterCalculator::Result QgsRasterCalculator::processCalculationGPU( std::uni
       case Qgis::DataType::Byte:
         entry.typeName = QStringLiteral( "unsigned char" );
         break;
+      case Qgis::DataType::Int8:
+        entry.typeName = QStringLiteral( "signed char" );
+        break;
       case Qgis::DataType::UInt16:
         entry.typeName = QStringLiteral( "unsigned int" );
         break;
@@ -470,7 +473,13 @@ QgsRasterCalculator::Result QgsRasterCalculator::processCalculationGPU( std::uni
       case Qgis::DataType::Float64:
         entry.typeName = QStringLiteral( "double" );
         break;
-      default:
+      case Qgis::DataType::CInt16:
+      case Qgis::DataType::CInt32:
+      case Qgis::DataType::CFloat32:
+      case Qgis::DataType::CFloat64:
+      case Qgis::DataType::ARGB32:
+      case Qgis::DataType::ARGB32_Premultiplied:
+      case Qgis::DataType::UnknownDataType:
         return BandError;
     }
     entry.bufferSize = entry.dataSize * mNumOutputColumns;

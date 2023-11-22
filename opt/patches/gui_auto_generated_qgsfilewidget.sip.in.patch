@@ -1,0 +1,16 @@
+--- a/python/gui/auto_generated/qgsfilewidget.sip.in	2023-08-22 11:32:51.891342776 +0300
++++ b/python/gui/auto_generated/qgsfilewidget.sip.in	2023-08-28 21:32:16.763599075 +0300
+@@ -6,9 +6,10 @@
+  * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+  ************************************************************************/
+ 
+-
+-
+-
++%ModuleHeaderCode
++// For ConvertToSubClassCode.
++#include "qgsfilewidget.h"
++%End
+ 
+ 
+ class QgsFileWidget : QWidget

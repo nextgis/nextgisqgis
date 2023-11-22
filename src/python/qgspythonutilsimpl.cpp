@@ -224,8 +224,10 @@ void QgsPythonUtilsImpl::initPython( QgisInterface *interface, const bool instal
     QString escapedPath = faultHandlerLogPath;
     escapedPath.replace( '\\', QLatin1String( "\\\\" ) );
     escapedPath.replace( '\'', QLatin1String( "\\'" ) );
-    runString( QStringLiteral( "fault_handler_file=open('%1', 'wt')" ).arg( escapedPath ) );
-    runString( QStringLiteral( "faulthandler.enable(file=fault_handler_file)" ) );
+    runString( QStringLiteral( "qgis.utils.__qgis_fault_handler_file_path='%1'" ).arg( escapedPath ) );
+    runString( QStringLiteral( "qgis.utils.__qgis_fault_handler_file=open('%1', 'wt')" ).arg( escapedPath ) );
+    runString( QStringLiteral( "faulthandler.enable(file=qgis.utils.__qgis_fault_handler_file)" ) );
+    mFaultHandlerLogPath = faultHandlerLogPath;
   }
 
   if ( interface )
@@ -282,8 +284,33 @@ bool QgsPythonUtilsImpl::startServerPlugin( QString packageName )
 
 void QgsPythonUtilsImpl::exitPython()
 {
+  // don't try to gracefully cleanup faulthandler on windows -- see https://github.com/qgis/QGIS/issues/53473
+#ifndef Q_OS_WIN
+  if ( !mFaultHandlerLogPath.isEmpty() )
+  {
+    runString( QStringLiteral( "faulthandler.disable()" ) );
+    runString( QStringLiteral( "qgis.utils.__qgis_fault_handler_file.close()" ) );
+
+    // remove fault handler log file only if it's empty
+    QFile faultHandlerFile( mFaultHandlerLogPath );
+    bool faultHandlerLogEmpty = false;
+    if ( faultHandlerFile.open( QIODevice::ReadOnly ) )
+    {
+      faultHandlerLogEmpty = faultHandlerFile.size() == 0;
+      faultHandlerFile.close();
+    }
+    if ( faultHandlerLogEmpty )
+    {
+      QFile::remove( mFaultHandlerLogPath );
+    }
+
+    mFaultHandlerLogPath.clear();
+  }
+#endif
+
   if ( mErrorHookInstalled )
     uninstallErrorHook();
+
   // causes segfault!
   //Py_Finalize();
   mMainModule = nullptr;
@@ -450,12 +477,12 @@ QString QgsPythonUtilsImpl::getTypeAsString( PyObject *obj )
 
   if ( PyType_Check( obj ) )
   {
-    QgsDebugMsg( QStringLiteral( "got type" ) );
+    QgsDebugMsgLevel( QStringLiteral( "got type" ), 2 );
     return QString( ( ( PyTypeObject * )obj )->tp_name );
   }
   else
   {
-    QgsDebugMsg( QStringLiteral( "got object" ) );
+    QgsDebugMsgLevel( QStringLiteral( "got object" ), 2 );
     return PyObjectToQString( obj );
   }
 }
@@ -529,7 +556,7 @@ QString QgsPythonUtilsImpl::PyObjectToQString( PyObject *obj )
   }
 
   // some problem with conversion to Unicode string
-  QgsDebugMsg( QStringLiteral( "unable to convert PyObject to a QString!" ) );
+  QgsDebugError( QStringLiteral( "unable to convert PyObject to a QString!" ) );
   return QStringLiteral( "(qgis error)" );
 }
 
@@ -631,7 +658,7 @@ QString QgsPythonUtilsImpl::getPluginMetadata( const QString &pluginName, const 
   QString res;
   const QString str = QStringLiteral( "qgis.utils.pluginMetadata('%1', '%2')" ).arg( pluginName, function );
   evalString( str, res );
-  //QgsDebugMsg("metadata "+pluginName+" - '"+function+"' = "+res);
+  //QgsDebugMsgLevel("metadata "+pluginName+" - '"+function+"' = "+res, 2);
   return res;
 }
 

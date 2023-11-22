@@ -28,7 +28,6 @@
 #include "qgsmaplayer.h"
 #include "qgsmaplayerlegend.h"
 #include "qgsmaplayerstylemanager.h"
-#include "qgsmeshlayer.h"
 #include "qgspathresolver.h"
 #include "qgsprojectfiletransform.h"
 #include "qgsproject.h"
@@ -36,8 +35,8 @@
 #include "qgsrasterlayer.h"
 #include "qgsreadwritecontext.h"
 #include "qgsrectangle.h"
+#include "qgssldexportcontext.h"
 #include "qgsvectorlayer.h"
-#include "qgsvectordataprovider.h"
 #include "qgsxmlutils.h"
 #include "qgsstringutils.h"
 #include "qgsmessagelog.h"
@@ -47,6 +46,8 @@
 #include "qgslayernotesutils.h"
 #include "qgsdatums.h"
 #include "qgsprojoperation.h"
+#include "qgsthreadingutils.h"
+#include "qgsunittypes.h"
 
 #include <QDir>
 #include <QDomDocument>
@@ -78,7 +79,7 @@ QString QgsMapLayer::extensionPropertyType( QgsMapLayer::PropertyType type )
   return QString();
 }
 
-QgsMapLayer::QgsMapLayer( QgsMapLayerType type,
+QgsMapLayer::QgsMapLayer( Qgis::LayerType type,
                           const QString &lyrname,
                           const QString &source )
   : mDataSource( source )
@@ -110,6 +111,8 @@ QgsMapLayer::~QgsMapLayer()
 
 void QgsMapLayer::clone( QgsMapLayer *layer ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   layer->setBlendMode( blendMode() );
 
   const auto constStyles = styleManager()->styles();
@@ -142,18 +145,25 @@ void QgsMapLayer::clone( QgsMapLayer *layer ) const
   layer->serverProperties()->copyTo( mServerProperties.get() );
 }
 
-QgsMapLayerType QgsMapLayer::type() const
+Qgis::LayerType QgsMapLayer::type() const
 {
+  // because QgsVirtualLayerProvider is not anywhere NEAR thread safe:
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS_NON_FATAL
+
   return mLayerType;
 }
 
 QgsMapLayer::LayerFlags QgsMapLayer::flags() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mFlags;
 }
 
 void QgsMapLayer::setFlags( QgsMapLayer::LayerFlags flags )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( flags == mFlags )
     return;
 
@@ -163,16 +173,23 @@ void QgsMapLayer::setFlags( QgsMapLayer::LayerFlags flags )
 
 Qgis::MapLayerProperties QgsMapLayer::properties() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return Qgis::MapLayerProperties();
 }
 
 QString QgsMapLayer::id() const
 {
+  // because QgsVirtualLayerProvider is not anywhere NEAR thread safe:
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS_NON_FATAL
+
   return mID;
 }
 
 void QgsMapLayer::setName( const QString &name )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( name == mLayerName )
     return;
 
@@ -183,27 +200,38 @@ void QgsMapLayer::setName( const QString &name )
 
 QString QgsMapLayer::name() const
 {
+  // because QgsVirtualLayerProvider is not anywhere NEAR thread safe:
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS_NON_FATAL
+
   QgsDebugMsgLevel( "returning name '" + mLayerName + '\'', 4 );
   return mLayerName;
 }
 
 QgsDataProvider *QgsMapLayer::dataProvider()
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return nullptr;
 }
 
 const QgsDataProvider *QgsMapLayer::dataProvider() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return nullptr;
 }
 
 QString QgsMapLayer::shortName() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mShortName;
 }
 
 void QgsMapLayer::setMetadataUrl( const QString &metaUrl )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QList<QgsMapLayerServerProperties::MetadataUrl> urls = serverProperties()->metadataUrls();
   if ( urls.isEmpty() )
   {
@@ -221,6 +249,8 @@ void QgsMapLayer::setMetadataUrl( const QString &metaUrl )
 
 QString QgsMapLayer::metadataUrl() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( mServerProperties->metadataUrls().isEmpty() )
   {
     return QLatin1String();
@@ -233,6 +263,8 @@ QString QgsMapLayer::metadataUrl() const
 
 void QgsMapLayer::setMetadataUrlType( const QString &metaUrlType )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QList<QgsMapLayerServerProperties::MetadataUrl> urls = mServerProperties->metadataUrls();
   if ( urls.isEmpty() )
   {
@@ -250,6 +282,8 @@ void QgsMapLayer::setMetadataUrlType( const QString &metaUrlType )
 
 QString QgsMapLayer::metadataUrlType() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( mServerProperties->metadataUrls().isEmpty() )
   {
     return QLatin1String();
@@ -262,6 +296,8 @@ QString QgsMapLayer::metadataUrlType() const
 
 void QgsMapLayer::setMetadataUrlFormat( const QString &metaUrlFormat )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QList<QgsMapLayerServerProperties::MetadataUrl> urls = mServerProperties->metadataUrls();
   if ( urls.isEmpty() )
   {
@@ -279,6 +315,8 @@ void QgsMapLayer::setMetadataUrlFormat( const QString &metaUrlFormat )
 
 QString QgsMapLayer::metadataUrlFormat() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( mServerProperties->metadataUrls().isEmpty() )
   {
     return QString();
@@ -291,6 +329,8 @@ QString QgsMapLayer::metadataUrlFormat() const
 
 QString QgsMapLayer::publicSource() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   // Redo this every time we're asked for it, as we don't know if
   // dataSource has changed.
   QString safeName = QgsDataSourceUri::removePassword( mDataSource );
@@ -299,16 +339,22 @@ QString QgsMapLayer::publicSource() const
 
 QString QgsMapLayer::source() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mDataSource;
 }
 
 QgsRectangle QgsMapLayer::extent() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mExtent;
 }
 
 void QgsMapLayer::setBlendMode( const QPainter::CompositionMode blendMode )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( mBlendMode == blendMode )
     return;
 
@@ -319,11 +365,16 @@ void QgsMapLayer::setBlendMode( const QPainter::CompositionMode blendMode )
 
 QPainter::CompositionMode QgsMapLayer::blendMode() const
 {
+  // non fatal for now -- the "rasterize" processing algorithm is not thread safe and calls this
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS_NON_FATAL
+
   return mBlendMode;
 }
 
 void QgsMapLayer::setOpacity( double opacity )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( qgsDoubleNear( mLayerOpacity, opacity ) )
     return;
   mLayerOpacity = opacity;
@@ -333,11 +384,18 @@ void QgsMapLayer::setOpacity( double opacity )
 
 double QgsMapLayer::opacity() const
 {
+  // non fatal for now -- the "rasterize" processing algorithm is not thread safe and calls this
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS_NON_FATAL
+
   return mLayerOpacity;
 }
 
-bool QgsMapLayer::readLayerXml( const QDomElement &layerElement, QgsReadWriteContext &context, QgsMapLayer::ReadFlags flags )
+bool QgsMapLayer::readLayerXml( const QDomElement &layerElement, QgsReadWriteContext &context, QgsMapLayer::ReadFlags flags, QgsDataProvider *preloadedProvider )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
+  mPreloadedProvider.reset( preloadedProvider );
+
   bool layerError;
   mReadFlags = flags;
 
@@ -378,7 +436,7 @@ bool QgsMapLayer::readLayerXml( const QDomElement &layerElement, QgsReadWriteCon
   const QDomNode srsNode = layerElement.namedItem( QStringLiteral( "srs" ) );
   mCRS.readXml( srsNode );
   mCRS.setValidationHint( tr( "Specify CRS for layer %1" ).arg( mne.text() ) );
-  if ( isSpatial() && type() != QgsMapLayerType::AnnotationLayer )
+  if ( isSpatial() && type() != Qgis::LayerType::Annotation )
     mCRS.validate();
   savedCRS = mCRS;
 
@@ -519,6 +577,8 @@ bool QgsMapLayer::readLayerXml( const QDomElement &layerElement, QgsReadWriteCon
 
 bool QgsMapLayer::readXml( const QDomNode &layer_node, QgsReadWriteContext &context )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   Q_UNUSED( layer_node )
   Q_UNUSED( context )
   // NOP by default; children will over-ride with behavior specific to them
@@ -539,6 +599,8 @@ bool QgsMapLayer::readXml( const QDomNode &layer_node, QgsReadWriteContext &cont
 
 bool QgsMapLayer::writeLayerXml( QDomElement &layerElement, QDomDocument &document, const QgsReadWriteContext &context ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( !extent().isNull() )
   {
     layerElement.appendChild( QgsXmlUtils::writeRectangle( mExtent, document ) );
@@ -679,6 +741,8 @@ bool QgsMapLayer::writeLayerXml( QDomElement &layerElement, QDomDocument &docume
 void QgsMapLayer::writeCommonStyle( QDomElement &layerElement, QDomDocument &document,
                                     const QgsReadWriteContext &context, QgsMapLayer::StyleCategories categories ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   // save categories
   const QMetaEnum metaEnum = QMetaEnum::fromType<QgsMapLayer::StyleCategories>();
   const QString categoriesKeys( metaEnum.valueToKeys( static_cast<int>( categories ) ) );
@@ -748,6 +812,8 @@ void QgsMapLayer::writeCommonStyle( QDomElement &layerElement, QDomDocument &doc
 
 bool QgsMapLayer::writeXml( QDomNode &layer_node, QDomDocument &document, const QgsReadWriteContext &context ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   Q_UNUSED( layer_node )
   Q_UNUSED( document )
   Q_UNUSED( context )
@@ -758,12 +824,16 @@ bool QgsMapLayer::writeXml( QDomNode &layer_node, QDomDocument &document, const 
 
 QString QgsMapLayer::encodedSource( const QString &source, const QgsReadWriteContext &context ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   Q_UNUSED( context )
   return source;
 }
 
 QString QgsMapLayer::decodedSource( const QString &source, const QString &dataProvider, const QgsReadWriteContext &context ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   Q_UNUSED( context )
   Q_UNUSED( dataProvider )
   return source;
@@ -771,6 +841,8 @@ QString QgsMapLayer::decodedSource( const QString &source, const QString &dataPr
 
 void QgsMapLayer::resolveReferences( QgsProject *project )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   emit beforeResolveReferences( project );
   if ( m3DRenderer )
     m3DRenderer->resolveReferences( *project );
@@ -779,6 +851,8 @@ void QgsMapLayer::resolveReferences( QgsProject *project )
 
 void QgsMapLayer::readCustomProperties( const QDomNode &layerNode, const QString &keyStartsWith )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   const QgsObjectCustomProperties oldKeys = mCustomProperties;
 
   mCustomProperties.readXml( layerNode, keyStartsWith );
@@ -794,11 +868,15 @@ void QgsMapLayer::readCustomProperties( const QDomNode &layerNode, const QString
 
 void QgsMapLayer::writeCustomProperties( QDomNode &layerNode, QDomDocument &doc ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   mCustomProperties.writeXml( layerNode, doc );
 }
 
 void QgsMapLayer::readStyleManager( const QDomNode &layerNode )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   const QDomElement styleMgrElem = layerNode.firstChildElement( QStringLiteral( "map-layer-style-manager" ) );
   if ( !styleMgrElem.isNull() )
     mStyleManager->readXml( styleMgrElem );
@@ -808,6 +886,8 @@ void QgsMapLayer::readStyleManager( const QDomNode &layerNode )
 
 void QgsMapLayer::writeStyleManager( QDomNode &layerNode, QDomDocument &doc ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( mStyleManager )
   {
     QDomElement styleMgrElem = doc.createElement( QStringLiteral( "map-layer-style-manager" ) );
@@ -816,8 +896,71 @@ void QgsMapLayer::writeStyleManager( QDomNode &layerNode, QDomDocument &doc ) co
   }
 }
 
+QString QgsMapLayer::mapTipTemplate() const
+{
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
+  return mMapTipTemplate;
+}
+
+void QgsMapLayer::setMapTipTemplate( const QString &mapTip )
+{
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
+  if ( mMapTipTemplate == mapTip )
+    return;
+
+  mMapTipTemplate = mapTip;
+  emit mapTipTemplateChanged();
+}
+
+void QgsMapLayer::setMapTipsEnabled( bool enabled )
+{
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
+  if ( mMapTipsEnabled == enabled )
+    return;
+
+  mMapTipsEnabled = enabled;
+  emit mapTipsEnabledChanged();
+}
+
+bool QgsMapLayer::mapTipsEnabled() const
+{
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
+  return mMapTipsEnabled;
+}
+
+QgsDataProvider::ReadFlags QgsMapLayer::providerReadFlags( const QDomNode &layerNode, QgsMapLayer::ReadFlags layerReadFlags )
+{
+  QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags();
+  if ( layerReadFlags & QgsMapLayer::FlagTrustLayerMetadata )
+  {
+    flags |= QgsDataProvider::FlagTrustDataSource;
+  }
+  if ( layerReadFlags & QgsMapLayer::FlagForceReadOnly )
+  {
+    flags |= QgsDataProvider::ForceReadOnly;
+  }
+
+  if ( layerReadFlags & QgsMapLayer::FlagReadExtentFromXml )
+  {
+    const QDomNode extentNode = layerNode.namedItem( QStringLiteral( "extent" ) );
+    if ( !extentNode.isNull() )
+    {
+      flags |= QgsDataProvider::SkipGetExtent;
+    }
+  }
+
+  return flags;
+}
+
 bool QgsMapLayer::isValid() const
 {
+  // because QgsVirtualLayerProvider is not anywhere NEAR thread safe:
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS_NON_FATAL
+
   return mValid;
 }
 
@@ -831,6 +974,9 @@ void QgsMapLayer::connectNotify( const char *signal )
 
 bool QgsMapLayer::isInScaleRange( double scale ) const
 {
+  // non fatal for now -- the "rasterize" processing algorithm is not thread safe and calls this
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS_NON_FATAL
+
   return !mScaleBasedVisibility ||
          ( ( mMinScale == 0 || mMinScale * Qgis::SCALE_PRECISION < scale )
            && ( mMaxScale == 0 || scale < mMaxScale ) );
@@ -838,21 +984,30 @@ bool QgsMapLayer::isInScaleRange( double scale ) const
 
 bool QgsMapLayer::hasScaleBasedVisibility() const
 {
+  // non fatal for now -- the "rasterize" processing algorithm is not thread safe and calls this
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS_NON_FATAL
+
   return mScaleBasedVisibility;
 }
 
 bool QgsMapLayer::hasAutoRefreshEnabled() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mRefreshTimer->isActive();
 }
 
 int QgsMapLayer::autoRefreshInterval() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mRefreshTimer->interval();
 }
 
 void QgsMapLayer::setAutoRefreshInterval( int interval )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( interval <= 0 )
   {
     mRefreshTimer->stop();
@@ -867,6 +1022,8 @@ void QgsMapLayer::setAutoRefreshInterval( int interval )
 
 void QgsMapLayer::setAutoRefreshEnabled( bool enabled )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( !enabled )
     mRefreshTimer->stop();
   else if ( mRefreshTimer->interval() > 0 )
@@ -877,68 +1034,90 @@ void QgsMapLayer::setAutoRefreshEnabled( bool enabled )
 
 const QgsLayerMetadata &QgsMapLayer::metadata() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mMetadata;
 }
 
 void QgsMapLayer::setMaximumScale( double scale )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   mMinScale = scale;
 }
 
 double QgsMapLayer::maximumScale() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mMinScale;
 }
 
-
 void QgsMapLayer::setMinimumScale( double scale )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   mMaxScale = scale;
 }
 
 void QgsMapLayer::setScaleBasedVisibility( const bool enabled )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   mScaleBasedVisibility = enabled;
 }
 
 double QgsMapLayer::minimumScale() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mMaxScale;
 }
 
 QStringList QgsMapLayer::subLayers() const
 {
-  return QStringList();  // Empty
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
+  return QStringList();
 }
 
 void QgsMapLayer::setLayerOrder( const QStringList &layers )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   Q_UNUSED( layers )
-  // NOOP
 }
 
 void QgsMapLayer::setSubLayerVisibility( const QString &name, bool vis )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   Q_UNUSED( name )
   Q_UNUSED( vis )
-  // NOOP
 }
 
 bool QgsMapLayer::supportsEditing() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return false;
 }
 
 QgsCoordinateReferenceSystem QgsMapLayer::crs() const
 {
+  // non fatal for now -- the "rasterize" processing algorithm is not thread safe and calls this
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS_NON_FATAL
+
   return mCRS;
 }
 
 void QgsMapLayer::setCrs( const QgsCoordinateReferenceSystem &srs, bool emitSignal )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   mCRS = srs;
 
-  if ( mShouldValidateCrs && isSpatial() && !mCRS.isValid() && type() != QgsMapLayerType::AnnotationLayer )
+  if ( mShouldValidateCrs && isSpatial() && !mCRS.isValid() && type() != Qgis::LayerType::Annotation )
   {
     mCRS.setValidationHint( tr( "Specify CRS for layer %1" ).arg( name() ) );
     mCRS.validate();
@@ -950,6 +1129,8 @@ void QgsMapLayer::setCrs( const QgsCoordinateReferenceSystem &srs, bool emitSign
 
 QgsCoordinateTransformContext QgsMapLayer::transformContext() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   const QgsDataProvider *lDataProvider = dataProvider();
   return lDataProvider ? lDataProvider->transformContext() : QgsCoordinateTransformContext();
 }
@@ -964,14 +1145,16 @@ QString QgsMapLayer::formatLayerName( const QString &name )
 
 QString QgsMapLayer::baseURI( PropertyType type ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QString myURI = publicSource();
 
   // first get base path for delimited text, spatialite and OGR layers,
   // as in these cases URI may contain layer name and/or additional
   // information. This also strips prefix in case if VSIFILE mechanism
   // is used
-  if ( providerType() == QLatin1String( "ogr" ) || providerType() == QLatin1String( "delimitedtext" ) ||
-       providerType() == QLatin1String( "spatialite" ) )
+  if ( providerType() == QLatin1String( "ogr" ) || providerType() == QLatin1String( "delimitedtext" )
+       || providerType() == QLatin1String( "gdal" ) || providerType() == QLatin1String( "spatialite" ) )
   {
     QVariantMap components = QgsProviderRegistry::instance()->decodeUri( providerType(), myURI );
     myURI = components["path"].toString();
@@ -1007,11 +1190,15 @@ QString QgsMapLayer::baseURI( PropertyType type ) const
 
 QString QgsMapLayer::metadataUri() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return baseURI( PropertyType::Metadata );
 }
 
 QString QgsMapLayer::saveDefaultMetadata( bool &resultFlag )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( const QgsProviderMetadata *metadata = QgsProviderRegistry::instance()->providerMetadata( providerType() ) )
   {
     if ( metadata->providerCapabilities() & QgsProviderMetadata::SaveLayerMetadata )
@@ -1039,31 +1226,43 @@ QString QgsMapLayer::saveDefaultMetadata( bool &resultFlag )
 
 QString QgsMapLayer::loadDefaultMetadata( bool &resultFlag )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return loadNamedMetadata( metadataUri(), resultFlag );
 }
 
 QString QgsMapLayer::styleURI() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return baseURI( PropertyType::Style );
 }
 
 QString QgsMapLayer::loadDefaultStyle( bool &resultFlag )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return loadNamedStyle( styleURI(), resultFlag );
 }
 
 bool QgsMapLayer::loadNamedMetadataFromDatabase( const QString &db, const QString &uri, QString &qmd )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return loadNamedPropertyFromDatabase( db, uri, qmd, PropertyType::Metadata );
 }
 
 bool QgsMapLayer::loadNamedStyleFromDatabase( const QString &db, const QString &uri, QString &qml )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return loadNamedPropertyFromDatabase( db, uri, qml, PropertyType::Style );
 }
 
 bool QgsMapLayer::loadNamedPropertyFromDatabase( const QString &db, const QString &uri, QString &xml, QgsMapLayer::PropertyType type )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QgsDebugMsgLevel( QStringLiteral( "db = %1 uri = %2" ).arg( db, uri ), 4 );
 
   bool resultFlag = false;
@@ -1115,14 +1314,20 @@ bool QgsMapLayer::loadNamedPropertyFromDatabase( const QString &db, const QStrin
 
 QString QgsMapLayer::loadNamedStyle( const QString &uri, bool &resultFlag, QgsMapLayer::StyleCategories categories )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return loadNamedProperty( uri, PropertyType::Style, resultFlag, categories );
 }
 
 QString QgsMapLayer::loadNamedProperty( const QString &uri, QgsMapLayer::PropertyType type, bool &resultFlag, StyleCategories categories )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QgsDebugMsgLevel( QStringLiteral( "uri = %1 myURI = %2" ).arg( uri, publicSource() ), 4 );
 
   resultFlag = false;
+  if ( uri.isEmpty() )
+    return QString();
 
   QDomDocument myDocument( QStringLiteral( "qgis" ) );
 
@@ -1212,6 +1417,8 @@ QString QgsMapLayer::loadNamedProperty( const QString &uri, QgsMapLayer::Propert
 
 bool QgsMapLayer::importNamedMetadata( QDomDocument &document, QString &errorMessage )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   const QDomElement myRoot = document.firstChildElement( QStringLiteral( "qgis" ) );
   if ( myRoot.isNull() )
   {
@@ -1224,6 +1431,8 @@ bool QgsMapLayer::importNamedMetadata( QDomDocument &document, QString &errorMes
 
 bool QgsMapLayer::importNamedStyle( QDomDocument &myDocument, QString &myErrorMessage, QgsMapLayer::StyleCategories categories )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   const QDomElement myRoot = myDocument.firstChildElement( QStringLiteral( "qgis" ) );
   if ( myRoot.isNull() )
   {
@@ -1248,11 +1457,11 @@ bool QgsMapLayer::importNamedStyle( QDomDocument &myDocument, QString &myErrorMe
   if ( ( sourceCategories.testFlag( QgsMapLayer::Symbology ) || sourceCategories.testFlag( QgsMapLayer::Symbology3D ) ) &&
        ( categories.testFlag( QgsMapLayer::Symbology ) || categories.testFlag( QgsMapLayer::Symbology3D ) ) )
   {
-    if ( type() == QgsMapLayerType::VectorLayer && !myRoot.firstChildElement( QStringLiteral( "layerGeometryType" ) ).isNull() )
+    if ( type() == Qgis::LayerType::Vector && !myRoot.firstChildElement( QStringLiteral( "layerGeometryType" ) ).isNull() )
     {
       QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( this );
-      const QgsWkbTypes::GeometryType importLayerGeometryType = static_cast<QgsWkbTypes::GeometryType>( myRoot.firstChildElement( QStringLiteral( "layerGeometryType" ) ).text().toInt() );
-      if ( importLayerGeometryType != QgsWkbTypes::GeometryType::UnknownGeometry && vl->geometryType() != importLayerGeometryType )
+      const Qgis::GeometryType importLayerGeometryType = static_cast<Qgis::GeometryType>( myRoot.firstChildElement( QStringLiteral( "layerGeometryType" ) ).text().toInt() );
+      if ( importLayerGeometryType != Qgis::GeometryType::Unknown && vl->geometryType() != importLayerGeometryType )
       {
         myErrorMessage = tr( "Cannot apply style with symbology to layer with a different geometry type" );
         return false;
@@ -1266,6 +1475,8 @@ bool QgsMapLayer::importNamedStyle( QDomDocument &myDocument, QString &myErrorMe
 
 void QgsMapLayer::exportNamedMetadata( QDomDocument &doc, QString &errorMsg ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QDomImplementation DomImplementation;
   const QDomDocumentType documentType = DomImplementation.createDocumentType( QStringLiteral( "qgis" ), QStringLiteral( "http://mrcc.com/qgis.dtd" ), QStringLiteral( "SYSTEM" ) );
   QDomDocument myDocument( documentType );
@@ -1285,6 +1496,8 @@ void QgsMapLayer::exportNamedMetadata( QDomDocument &doc, QString &errorMsg ) co
 
 void QgsMapLayer::exportNamedStyle( QDomDocument &doc, QString &errorMsg, const QgsReadWriteContext &context, QgsMapLayer::StyleCategories categories ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QDomImplementation DomImplementation;
   const QDomDocumentType documentType = DomImplementation.createDocumentType( QStringLiteral( "qgis" ), QStringLiteral( "http://mrcc.com/qgis.dtd" ), QStringLiteral( "SYSTEM" ) );
   QDomDocument myDocument( documentType );
@@ -1303,11 +1516,11 @@ void QgsMapLayer::exportNamedStyle( QDomDocument &doc, QString &errorMsg, const 
    * Check to see if the layer is vector - in which case we should also export its geometryType
    * to avoid eventually pasting to a layer with a different geometry
   */
-  if ( type() == QgsMapLayerType::VectorLayer )
+  if ( type() == Qgis::LayerType::Vector )
   {
     //Getting the selectionLayer geometry
     const QgsVectorLayer *vl = qobject_cast<const QgsVectorLayer *>( this );
-    const QString geoType = QString::number( vl->geometryType() );
+    const QString geoType = QString::number( static_cast<int>( vl->geometryType() ) );
 
     //Adding geometryinformation
     QDomElement layerGeometryType = myDocument.createElement( QStringLiteral( "layerGeometryType" ) );
@@ -1322,21 +1535,36 @@ void QgsMapLayer::exportNamedStyle( QDomDocument &doc, QString &errorMsg, const 
 
 QString QgsMapLayer::saveDefaultStyle( bool &resultFlag )
 {
-  return saveNamedStyle( styleURI(), resultFlag );
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
+  return saveDefaultStyle( resultFlag, AllStyleCategories );
+}
+
+QString QgsMapLayer::saveDefaultStyle( bool &resultFlag, StyleCategories categories )
+{
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
+  return saveNamedStyle( styleURI(), resultFlag, categories );
 }
 
 QString QgsMapLayer::saveNamedMetadata( const QString &uri, bool &resultFlag )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return saveNamedProperty( uri, QgsMapLayer::Metadata, resultFlag );
 }
 
 QString QgsMapLayer::loadNamedMetadata( const QString &uri, bool &resultFlag )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return loadNamedProperty( uri, QgsMapLayer::Metadata, resultFlag );
 }
 
 QString QgsMapLayer::saveNamedProperty( const QString &uri, QgsMapLayer::PropertyType type, bool &resultFlag, StyleCategories categories )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   // check if the uri is a file or ends with .qml/.qmd,
   // which indicates that it should become one
   // everything else goes to the database
@@ -1568,11 +1796,21 @@ QString QgsMapLayer::saveNamedProperty( const QString &uri, QgsMapLayer::Propert
 
 QString QgsMapLayer::saveNamedStyle( const QString &uri, bool &resultFlag, StyleCategories categories )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return saveNamedProperty( uri, QgsMapLayer::Style, resultFlag, categories );
 }
 
 void QgsMapLayer::exportSldStyle( QDomDocument &doc, QString &errorMsg ) const
 {
+
+  return exportSldStyleV2( doc, errorMsg, QgsSldExportContext() );
+}
+
+void QgsMapLayer::exportSldStyleV2( QDomDocument &doc, QString &errorMsg, const QgsSldExportContext &exportContext ) const
+{
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QDomDocument myDocument = QDomDocument();
 
   const QDomNode header = myDocument.createProcessingInstruction( QStringLiteral( "xml" ), QStringLiteral( "version=\"1.0\" encoding=\"UTF-8\"" ) );
@@ -1621,6 +1859,12 @@ void QgsMapLayer::exportSldStyle( QDomDocument &doc, QString &errorMsg ) const
   }
 
   QVariantMap props;
+
+  QVariant context;
+  context.setValue( exportContext );
+
+  props[ QStringLiteral( "SldExportContext" ) ] = context;
+
   if ( hasScaleBasedVisibility() )
   {
     props[ QStringLiteral( "scaleMinDenom" ) ] = QString::number( mMinScale );
@@ -1650,16 +1894,19 @@ void QgsMapLayer::exportSldStyle( QDomDocument &doc, QString &errorMsg ) const
 
 QString QgsMapLayer::saveSldStyle( const QString &uri, bool &resultFlag ) const
 {
+  QgsSldExportContext context;
+  context.setExportFilePath( uri );
+  return saveSldStyleV2( resultFlag, context );
+}
+
+QString QgsMapLayer::saveSldStyleV2( bool &resultFlag, const QgsSldExportContext &exportContext ) const
+{
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   const QgsMapLayer *mlayer = qobject_cast<const QgsMapLayer *>( this );
 
-  QString errorMsg;
-  QDomDocument myDocument;
-  mlayer->exportSldStyle( myDocument, errorMsg );
-  if ( !errorMsg.isNull() )
-  {
-    resultFlag = false;
-    return errorMsg;
-  }
+  const QString uri { exportContext.exportFilePath() };
+
   // check if the uri is a file or ends with .sld,
   // which indicates that it should become one
   QString filename;
@@ -1697,6 +1944,20 @@ QString QgsMapLayer::saveSldStyle( const QString &uri, bool &resultFlag ) const
     // now construct the file name for our .sld style file
     const QString myFileName = myFileInfo.path() + QDir::separator() + myFileInfo.completeBaseName() + ".sld";
 
+    QString errorMsg;
+    QDomDocument myDocument;
+
+    QgsSldExportContext context { exportContext };
+    context.setExportFilePath( myFileName );
+
+    mlayer->exportSldStyleV2( myDocument, errorMsg, context );
+
+    if ( !errorMsg.isNull() )
+    {
+      resultFlag = false;
+      return errorMsg;
+    }
+
     QFile myFile( myFileName );
     if ( myFile.open( QFile::WriteOnly | QFile::Truncate ) )
     {
@@ -1711,10 +1972,13 @@ QString QgsMapLayer::saveSldStyle( const QString &uri, bool &resultFlag ) const
 
   resultFlag = false;
   return tr( "ERROR: Failed to created SLD style file as %1. Check file permissions and retry." ).arg( filename );
+
 }
 
 QString QgsMapLayer::loadSldStyle( const QString &uri, bool &resultFlag )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   resultFlag = false;
 
   QDomDocument myDocument;
@@ -1774,6 +2038,8 @@ QString QgsMapLayer::loadSldStyle( const QString &uri, bool &resultFlag )
 
 bool QgsMapLayer::readStyle( const QDomNode &node, QString &errorMessage, QgsReadWriteContext &context, QgsMapLayer::StyleCategories categories )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   Q_UNUSED( node )
   Q_UNUSED( errorMessage )
   Q_UNUSED( context )
@@ -1784,6 +2050,8 @@ bool QgsMapLayer::readStyle( const QDomNode &node, QString &errorMessage, QgsRea
 bool QgsMapLayer::writeStyle( QDomNode &node, QDomDocument &doc, QString &errorMessage,
                               const QgsReadWriteContext &context, QgsMapLayer::StyleCategories categories ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   Q_UNUSED( node )
   Q_UNUSED( doc )
   Q_UNUSED( errorMessage )
@@ -1796,6 +2064,8 @@ bool QgsMapLayer::writeStyle( QDomNode &node, QDomDocument &doc, QString &errorM
 void QgsMapLayer::setDataSource( const QString &dataSource, const QString &baseName, const QString &provider,
                                  bool loadDefaultStyleFlag )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   const QgsDataProvider::ProviderOptions options;
 
   QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags();
@@ -1814,6 +2084,8 @@ void QgsMapLayer::setDataSource( const QString &dataSource, const QString &baseN
 void QgsMapLayer::setDataSource( const QString &dataSource, const QString &baseName, const QString &provider,
                                  const QgsDataProvider::ProviderOptions &options, bool loadDefaultStyleFlag )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags();
   if ( loadDefaultStyleFlag )
   {
@@ -1830,6 +2102,7 @@ void QgsMapLayer::setDataSource( const QString &dataSource, const QString &baseN
 void QgsMapLayer::setDataSource( const QString &dataSource, const QString &baseName, const QString &provider,
                                  const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
 
   if ( ( mReadFlags & QgsMapLayer::FlagTrustLayerMetadata ) &&
        !( flags & QgsDataProvider::FlagTrustDataSource ) )
@@ -1846,6 +2119,8 @@ void QgsMapLayer::setDataSource( const QString &dataSource, const QString &baseN
 void QgsMapLayer::setDataSourcePrivate( const QString &dataSource, const QString &baseName, const QString &provider,
                                         const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   Q_UNUSED( dataSource )
   Q_UNUSED( baseName )
   Q_UNUSED( provider )
@@ -1856,12 +2131,16 @@ void QgsMapLayer::setDataSourcePrivate( const QString &dataSource, const QString
 
 QString QgsMapLayer::providerType() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mProviderKey;
 }
 
 void QgsMapLayer::readCommonStyle( const QDomElement &layerElement, const QgsReadWriteContext &context,
                                    QgsMapLayer::StyleCategories categories )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( categories.testFlag( Symbology3D ) )
   {
     const QgsReadWriteContextCategoryPopper p = context.enterCategory( tr( "3D Symbology" ) );
@@ -1953,21 +2232,29 @@ void QgsMapLayer::readCommonStyle( const QDomElement &layerElement, const QgsRea
 
 QUndoStack *QgsMapLayer::undoStack()
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mUndoStack;
 }
 
 QUndoStack *QgsMapLayer::undoStackStyles()
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mUndoStackStyles;
 }
 
 QStringList QgsMapLayer::customPropertyKeys() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mCustomProperties.keys();
 }
 
 void QgsMapLayer::setCustomProperty( const QString &key, const QVariant &value )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( !mCustomProperties.contains( key ) || mCustomProperties.value( key ) != value )
   {
     mCustomProperties.setValue( key, value );
@@ -1977,6 +2264,8 @@ void QgsMapLayer::setCustomProperty( const QString &key, const QVariant &value )
 
 void QgsMapLayer::setCustomProperties( const QgsObjectCustomProperties &properties )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   mCustomProperties = properties;
   for ( const QString &key : mCustomProperties.keys() )
   {
@@ -1986,16 +2275,22 @@ void QgsMapLayer::setCustomProperties( const QgsObjectCustomProperties &properti
 
 const QgsObjectCustomProperties &QgsMapLayer::customProperties() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mCustomProperties;
 }
 
 QVariant QgsMapLayer::customProperty( const QString &value, const QVariant &defaultValue ) const
 {
+  // non fatal for now -- the "rasterize" processing algorithm is not thread safe and calls this
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS_NON_FATAL
+
   return mCustomProperties.value( value, defaultValue );
 }
 
 void QgsMapLayer::removeCustomProperty( const QString &key )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
 
   if ( mCustomProperties.contains( key ) )
   {
@@ -2006,28 +2301,36 @@ void QgsMapLayer::removeCustomProperty( const QString &key )
 
 QgsError QgsMapLayer::error() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mError;
 }
 
-
-
 bool QgsMapLayer::isEditable() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return false;
 }
 
 bool QgsMapLayer::isModified() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return false;
 }
 
 bool QgsMapLayer::isSpatial() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return true;
 }
 
 bool QgsMapLayer::isTemporary() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   // invalid layers are temporary? -- who knows?!
   if ( !isValid() )
     return false;
@@ -2053,6 +2356,8 @@ bool QgsMapLayer::isTemporary() const
 
 void QgsMapLayer::setValid( bool valid )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( mValid == valid )
     return;
 
@@ -2062,6 +2367,8 @@ void QgsMapLayer::setValid( bool valid )
 
 void QgsMapLayer::setLegend( QgsMapLayerLegend *legend )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( legend == mLegend )
     return;
 
@@ -2079,16 +2386,22 @@ void QgsMapLayer::setLegend( QgsMapLayerLegend *legend )
 
 QgsMapLayerLegend *QgsMapLayer::legend() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mLegend;
 }
 
 QgsMapLayerStyleManager *QgsMapLayer::styleManager() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mStyleManager;
 }
 
 void QgsMapLayer::setRenderer3D( QgsAbstract3DRenderer *renderer )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( renderer == m3DRenderer )
     return;
 
@@ -2101,11 +2414,15 @@ void QgsMapLayer::setRenderer3D( QgsAbstract3DRenderer *renderer )
 
 QgsAbstract3DRenderer *QgsMapLayer::renderer3D() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return m3DRenderer;
 }
 
 void QgsMapLayer::triggerRepaint( bool deferredUpdate )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( mRepaintRequestedFired )
     return;
   mRepaintRequestedFired = true;
@@ -2115,11 +2432,15 @@ void QgsMapLayer::triggerRepaint( bool deferredUpdate )
 
 void QgsMapLayer::trigger3DUpdate()
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   emit request3DUpdate();
 }
 
 void QgsMapLayer::setMetadata( const QgsLayerMetadata &metadata )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   mMetadata = metadata;
 //  mMetadata.saveToLayer( this );
   emit metadataChanged();
@@ -2127,37 +2448,51 @@ void QgsMapLayer::setMetadata( const QgsLayerMetadata &metadata )
 
 QString QgsMapLayer::htmlMetadata() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return QString();
 }
 
 QDateTime QgsMapLayer::timestamp() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return QDateTime();
 }
 
 void QgsMapLayer::emitStyleChanged()
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( !mBlockStyleChangedSignal )
     emit styleChanged();
 }
 
 void QgsMapLayer::setExtent( const QgsRectangle &extent )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   updateExtent( extent );
 }
 
 bool QgsMapLayer::isReadOnly() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return true;
 }
 
 QString QgsMapLayer::originalXmlProperties() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mOriginalXmlProperties;
 }
 
 void QgsMapLayer::setOriginalXmlProperties( const QString &originalXmlProperties )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   mOriginalXmlProperties = originalXmlProperties;
 }
 
@@ -2173,27 +2508,43 @@ QString QgsMapLayer::generateId( const QString &layerName )
   // underscore) with an underscore.
   // Note that the first backslash in the regular expression is
   // there for the compiler, so the pattern is actually \W
-  id.replace( QRegularExpression( "[\\W]" ), QStringLiteral( "_" ) );
+  const thread_local QRegularExpression idRx( QStringLiteral( "[\\W]" ) );
+  id.replace( idRx, QStringLiteral( "_" ) );
   return id;
 }
 
 bool QgsMapLayer::accept( QgsStyleEntityVisitorInterface * ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return true;
+}
+
+bool QgsMapLayer::hasMapTips() const
+{
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
+  return mapTipsEnabled() && !mMapTipTemplate.isEmpty();
 }
 
 void QgsMapLayer::setProviderType( const QString &providerType )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   mProviderKey = providerType;
 }
 
 QSet<QgsMapLayerDependency> QgsMapLayer::dependencies() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   return mDependencies;
 }
 
 bool QgsMapLayer::setDependencies( const QSet<QgsMapLayerDependency> &oDeps )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QSet<QgsMapLayerDependency> deps;
   const auto constODeps = oDeps;
   for ( const QgsMapLayerDependency &dep : constODeps )
@@ -2209,6 +2560,8 @@ bool QgsMapLayer::setDependencies( const QSet<QgsMapLayerDependency> &oDeps )
 
 void QgsMapLayer::setRefreshOnNotifyEnabled( bool enabled )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QgsDataProvider *lDataProvider = dataProvider();
 
   if ( !lDataProvider )
@@ -2229,6 +2582,8 @@ void QgsMapLayer::setRefreshOnNotifyEnabled( bool enabled )
 
 QgsProject *QgsMapLayer::project() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( QgsMapLayerStore *store = qobject_cast<QgsMapLayerStore *>( parent() ) )
   {
     return qobject_cast<QgsProject *>( store->parent() );
@@ -2238,6 +2593,8 @@ QgsProject *QgsMapLayer::project() const
 
 void QgsMapLayer::onNotified( const QString &message )
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( refreshOnNotifyMessage().isEmpty() || refreshOnNotifyMessage() == message )
   {
     triggerRepaint();
@@ -2247,6 +2604,8 @@ void QgsMapLayer::onNotified( const QString &message )
 
 QgsRectangle QgsMapLayer::wgs84Extent( bool forceRecalculate ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QgsRectangle wgs84Extent;
 
   if ( ! forceRecalculate && ! mWgs84Extent.isNull() )
@@ -2272,6 +2631,8 @@ QgsRectangle QgsMapLayer::wgs84Extent( bool forceRecalculate ) const
 
 void QgsMapLayer::updateExtent( const QgsRectangle &extent ) const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   if ( extent == mExtent )
     return;
 
@@ -2286,6 +2647,8 @@ void QgsMapLayer::updateExtent( const QgsRectangle &extent ) const
 
 void QgsMapLayer::invalidateWgs84Extent()
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   // do not update the wgs84 extent if we trust layer metadata
   if ( mReadFlags & QgsMapLayer::ReadFlag::FlagTrustLayerMetadata )
     return;
@@ -2295,6 +2658,8 @@ void QgsMapLayer::invalidateWgs84Extent()
 
 QString QgsMapLayer::generalHtmlMetadata() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QString metadata = QStringLiteral( "<h1>" ) + tr( "General" ) + QStringLiteral( "</h1>\n<hr>\n" ) + QStringLiteral( "<table class=\"list-view\">\n" );
 
   // name
@@ -2364,6 +2729,8 @@ QString QgsMapLayer::generalHtmlMetadata() const
 
 QString QgsMapLayer::crsHtmlMetadata() const
 {
+  QGIS_PROTECT_QOBJECT_THREAD_ACCESS
+
   QString metadata = QStringLiteral( "<h1>" ) + tr( "Coordinate Reference System (CRS)" ) + QStringLiteral( "</h1>\n<hr>\n" );
   metadata += QLatin1String( "<table class=\"list-view\">\n" );
 

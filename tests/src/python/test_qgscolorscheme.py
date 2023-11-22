@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsColorScheme.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -11,11 +10,16 @@ __date__ = '25/07/2014'
 __copyright__ = 'Copyright 2014, The QGIS Project'
 
 import qgis  # NOQA
-
-from qgis.testing import unittest, start_app
-from qgis.core import QgsColorScheme, QgsUserColorScheme, QgsRecentColorScheme, QgsSettings
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.PyQt.QtGui import QColor
+from qgis.core import (
+    QgsColorScheme,
+    QgsRecentColorScheme,
+    QgsSettings,
+    QgsUserColorScheme,
+)
+from qgis.testing import start_app, unittest
+
 
 # Make a dummy color scheme for testing
 
@@ -45,6 +49,7 @@ class TestQgsColorScheme(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super().setUpClass()
         QCoreApplication.setOrganizationName("QGIS_Test")
         QCoreApplication.setOrganizationDomain("QGIS_TestPyQgsColorScheme.com")
         QCoreApplication.setApplicationName("QGIS_TestPyQgsColorScheme")

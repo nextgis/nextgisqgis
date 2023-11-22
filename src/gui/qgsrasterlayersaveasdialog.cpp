@@ -22,14 +22,11 @@
 #include "qgsrasterformatsaveoptionswidget.h"
 #include "qgsrasterrenderer.h"
 #include "qgsrastertransparency.h"
-#include "qgsprojectionselectiondialog.h"
 #include "qgssettings.h"
 #include "qgsrasterfilewriter.h"
 #include "qgsvectorlayer.h"
-#include "cpl_string.h"
 #include "qgsproject.h"
 #include <gdal.h>
-#include "qgsmessagelog.h"
 #include "qgsgui.h"
 #include "qgsdoublevalidator.h"
 #include "qgsdatums.h"
@@ -132,6 +129,7 @@ QgsRasterLayerSaveAsDialog::QgsRasterLayerSaveAsDialog( QgsRasterLayer *rasterLa
   else
   {
     mPyramidsGroupBox->setEnabled( false );
+    mPyramidsGroupBox->setCollapsed( true );
   }
 
   // restore checked state for most groupboxes (default is to restore collapsed state)
@@ -664,6 +662,7 @@ QgsRasterLayerSaveAsDialog::Mode QgsRasterLayerSaveAsDialog::mode() const
 void QgsRasterLayerSaveAsDialog::mRawModeRadioButton_toggled( bool checked )
 {
   mNoDataGroupBox->setEnabled( checked && mDataProvider->bandCount() == 1 );
+  mNoDataGroupBox->setCollapsed( !mNoDataGroupBox->isEnabled() );
 }
 
 void QgsRasterLayerSaveAsDialog::mAddNoDataManuallyToolButton_clicked()
@@ -764,14 +763,14 @@ void QgsRasterLayerSaveAsDialog::noDataCellTextEdited( const QString &text )
     }
     if ( row != -1 ) break;
   }
-  QgsDebugMsg( QStringLiteral( "row = %1 column =%2" ).arg( row ).arg( column ) );
+  QgsDebugMsgLevel( QStringLiteral( "row = %1 column =%2" ).arg( row ).arg( column ), 2 );
 
   if ( column == 0 )
   {
     QLineEdit *toLineEdit = dynamic_cast<QLineEdit *>( mNoDataTableWidget->cellWidget( row, 1 ) );
     if ( !toLineEdit ) return;
     bool toChanged = mNoDataToEdited.value( row );
-    QgsDebugMsg( QStringLiteral( "toChanged = %1" ).arg( toChanged ) );
+    QgsDebugMsgLevel( QStringLiteral( "toChanged = %1" ).arg( toChanged ), 2 );
     if ( !toChanged )
     {
       toLineEdit->setText( lineEdit->text() );
@@ -903,14 +902,14 @@ QList<int> QgsRasterLayerSaveAsDialog::pyramidsList() const
   return mPyramidsGroupBox->isChecked() ? mPyramidsOptionsWidget->overviewList() : QList<int>();
 }
 
-QgsRaster::RasterBuildPyramids QgsRasterLayerSaveAsDialog::buildPyramidsFlag() const
+Qgis::RasterBuildPyramidOption QgsRasterLayerSaveAsDialog::buildPyramidsFlag() const
 {
   if ( ! mPyramidsGroupBox->isChecked() )
-    return QgsRaster::PyramidsFlagNo;
+    return Qgis::RasterBuildPyramidOption::No;
   else if ( mPyramidsUseExistingCheckBox->isChecked() )
-    return QgsRaster::PyramidsCopyExisting;
+    return Qgis::RasterBuildPyramidOption::CopyExisting;
   else
-    return QgsRaster::PyramidsFlagYes;
+    return Qgis::RasterBuildPyramidOption::Yes;
 }
 
 bool QgsRasterLayerSaveAsDialog::validate() const

@@ -22,6 +22,8 @@
 #include "qgslayoutundostack.h"
 #include "qgsvectorlayer.h"
 #include "qgsfillsymbol.h"
+#include "qgslayoutrendercontext.h"
+#include "qgslayoutreportcontext.h"
 
 QgsLayoutPagePropertiesWidget::QgsLayoutPagePropertiesWidget( QWidget *parent, QgsLayoutItem *layoutItem )
   : QgsLayoutItemBaseWidget( parent, layoutItem )
@@ -179,6 +181,7 @@ void QgsLayoutPagePropertiesWidget::setToCustomSize()
     return;
   whileBlocking( mPageSizeComboBox )->setCurrentIndex( mPageSizeComboBox->count() - 1 );
   mPageOrientationComboBox->setEnabled( false );
+  pageSizeChanged( mPageSizeComboBox->currentIndex() );
 }
 
 void QgsLayoutPagePropertiesWidget::symbolChanged()

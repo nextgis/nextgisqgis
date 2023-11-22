@@ -23,7 +23,7 @@
 #include "qgssymbollayerutils.h"
 #include "qgsxmlutils.h"
 #include "qgslinestring.h"
-#include "qgslogger.h"
+#include "qgsvariantutils.h"
 #include "qgsgeos.h"
 #include "qgsgeometryutils.h"
 #include "qgscircularstring.h"
@@ -31,6 +31,7 @@
 #include "qgspainting.h"
 #include "qgsfillsymbol.h"
 #include "qgslinesymbol.h"
+#include "qgsunittypes.h"
 
 #include <mutex>
 
@@ -82,7 +83,7 @@ QVariantMap QgsCallout::properties( const QgsReadWriteContext & ) const
   props.insert( QStringLiteral( "enabled" ), mEnabled ? "1" : "0" );
   props.insert( QStringLiteral( "anchorPoint" ), encodeAnchorPoint( mAnchorPoint ) );
   props.insert( QStringLiteral( "labelAnchorPoint" ), encodeLabelAnchorPoint( mLabelAnchorPoint ) );
-  props.insert( QStringLiteral( "blendMode" ), QgsPainting::getBlendModeEnum( mBlendMode ) );
+  props.insert( QStringLiteral( "blendMode" ), static_cast< int >( QgsPainting::getBlendModeEnum( mBlendMode ) ) );
   props.insert( QStringLiteral( "ddProperties" ), mDataDefinedProperties.toVariant( propertyDefinitions() ) );
   return props;
 }
@@ -93,7 +94,7 @@ void QgsCallout::readProperties( const QVariantMap &props, const QgsReadWriteCon
   mAnchorPoint = decodeAnchorPoint( props.value( QStringLiteral( "anchorPoint" ), QString() ).toString() );
   mLabelAnchorPoint = decodeLabelAnchorPoint( props.value( QStringLiteral( "labelAnchorPoint" ), QString() ).toString() );
   mBlendMode = QgsPainting::getCompositionMode(
-                 static_cast< QgsPainting::BlendMode >( props.value( QStringLiteral( "blendMode" ), QString::number( QgsPainting::BlendNormal ) ).toUInt() ) );
+                 static_cast< Qgis::BlendMode >( props.value( QStringLiteral( "blendMode" ), QString::number( static_cast< int >( Qgis::BlendMode::Normal ) ) ).toUInt() ) );
   mDataDefinedProperties.loadVariant( props.value( QStringLiteral( "ddProperties" ) ), propertyDefinitions() );
 }
 
@@ -440,7 +441,7 @@ QgsGeometry QgsCallout::calloutLineToPart( const QgsGeometry &labelGeometry, con
       if ( ok )
       {
         pinned = true;
-        tempPartAnchor = std::make_unique< QgsPoint >( QgsWkbTypes::Point, x, y );
+        tempPartAnchor = std::make_unique< QgsPoint >( Qgis::WkbType::Point, x, y );
         evaluatedPartAnchor = tempPartAnchor.get();
         try
         {
@@ -467,14 +468,14 @@ QgsGeometry QgsCallout::calloutLineToPart( const QgsGeometry &labelGeometry, con
 
   switch ( QgsWkbTypes::geometryType( evaluatedPartAnchor->wkbType() ) )
   {
-    case QgsWkbTypes::PointGeometry:
-    case QgsWkbTypes::LineGeometry:
+    case Qgis::GeometryType::Point:
+    case Qgis::GeometryType::Line:
     {
       line = labelGeos.shortestLine( evaluatedPartAnchor );
       break;
     }
 
-    case QgsWkbTypes::PolygonGeometry:
+    case Qgis::GeometryType::Polygon:
     {
       if ( labelGeos.intersects( evaluatedPartAnchor ) )
         return QgsGeometry();
@@ -500,8 +501,8 @@ QgsGeometry QgsCallout::calloutLineToPart( const QgsGeometry &labelGeometry, con
       break;
     }
 
-    case QgsWkbTypes::NullGeometry:
-    case QgsWkbTypes::UnknownGeometry:
+    case Qgis::GeometryType::Null:
+    case Qgis::GeometryType::Unknown:
       return QgsGeometry(); // shouldn't even get here..
   }
   return line;
@@ -1236,7 +1237,7 @@ QPolygonF QgsBalloonCallout::getPoints( QgsRenderContext &context, QgsPointXY or
   if ( dataDefinedProperties().isActive( QgsCallout::Margins ) )
   {
     const QVariant value = dataDefinedProperties().value( QgsCallout::Margins, context.expressionContext() );
-    if ( !value.isNull() )
+    if ( !QgsVariantUtils::isNull( value ) )
     {
       if ( value.type() == QVariant::List )
       {

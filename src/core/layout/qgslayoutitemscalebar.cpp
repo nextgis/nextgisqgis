@@ -23,7 +23,7 @@
 #include "qgsdistancearea.h"
 #include "qgssingleboxscalebarrenderer.h"
 #include "qgsscalebarrenderer.h"
-#include "qgsmapsettings.h"
+#include "qgsmessagelog.h"
 #include "qgsrectangle.h"
 #include "qgsproject.h"
 #include "qgssymbollayerutils.h"
@@ -37,6 +37,7 @@
 #include "qgsfillsymbollayer.h"
 #include "qgslinesymbol.h"
 #include "qgsfillsymbol.h"
+#include "qgslayoutrendercontext.h"
 
 #include <QDomDocument>
 #include <QDomElement>
@@ -70,7 +71,7 @@ QgsLayoutItemScaleBar *QgsLayoutItemScaleBar::create( QgsLayout *layout )
 QgsLayoutSize QgsLayoutItemScaleBar::minimumSize() const
 {
   QgsRenderContext context = QgsLayoutUtils::createRenderContextForLayout( mLayout, nullptr );
-  return QgsLayoutSize( mStyle->calculateBoxSize( context, mSettings, createScaleContext() ), QgsUnitTypes::LayoutMillimeters );
+  return QgsLayoutSize( mStyle->calculateBoxSize( context, mSettings, createScaleContext() ), Qgis::LayoutUnit::Millimeters );
 }
 
 void QgsLayoutItemScaleBar::draw( QgsLayoutItemRenderContext &context )
@@ -137,6 +138,7 @@ void QgsLayoutItemScaleBar::setUnitsPerSegment( double units )
   refreshSegmentMillimeters();
   resizeToMinimumWidth();
 }
+
 
 void QgsLayoutItemScaleBar::setSegmentSizeMode( QgsScaleBarSettings::SegmentSizeMode mode )
 {
@@ -288,12 +290,204 @@ void QgsLayoutItemScaleBar::disconnectCurrentMap()
   mMap = nullptr;
 }
 
+void QgsLayoutItemScaleBar::refreshUnitsPerSegment( const QgsExpressionContext *context )
+{
+  if ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarSegmentWidth ) )
+  {
+    double unitsPerSegment = mSettings.unitsPerSegment();
+    bool ok = false;
+    unitsPerSegment = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::ScalebarSegmentWidth, *context, unitsPerSegment, &ok );
+
+    if ( !ok )
+    {
+      QgsMessageLog::logMessage( tr( "Scalebar units per segment expression eval error" ) );
+    }
+    else
+    {
+      setUnitsPerSegment( unitsPerSegment );
+    }
+  }
+}
+
+void QgsLayoutItemScaleBar::refreshMinimumBarWidth( const QgsExpressionContext *context )
+{
+  if ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarMinimumWidth ) )
+  {
+    double minimumBarWidth = mSettings.minimumBarWidth();
+
+    bool ok = false;
+    minimumBarWidth = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::ScalebarMinimumWidth, *context, minimumBarWidth, &ok );
+
+    if ( !ok )
+    {
+      QgsMessageLog::logMessage( tr( "Scalebar minimum segment width expression eval error" ) );
+    }
+    else
+    {
+      setMinimumBarWidth( minimumBarWidth );
+    }
+  }
+}
+
+void QgsLayoutItemScaleBar::refreshMaximumBarWidth( const QgsExpressionContext *context )
+{
+  if ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarMaximumWidth ) )
+  {
+    double maximumBarWidth = mSettings.maximumBarWidth();
+
+    bool ok = false;
+    maximumBarWidth = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::ScalebarMaximumWidth, *context, maximumBarWidth, &ok );
+
+    if ( !ok )
+    {
+      QgsMessageLog::logMessage( tr( "Scalebar maximum segment width expression eval error" ) );
+    }
+    else
+    {
+      setMaximumBarWidth( maximumBarWidth );
+    }
+  }
+}
+
+void QgsLayoutItemScaleBar::refreshNumberOfSegmentsLeft( const QgsExpressionContext *context )
+{
+  if ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarLeftSegments ) )
+  {
+    int leftSegments = mSettings.numberOfSegmentsLeft();
+
+    bool ok = false;
+    leftSegments = mDataDefinedProperties.valueAsInt( QgsLayoutObject::ScalebarLeftSegments, *context, leftSegments, &ok );
+
+    if ( !ok )
+    {
+      QgsMessageLog::logMessage( tr( "Scalebar left segment count expression eval error" ) );
+    }
+    else
+    {
+      setNumberOfSegmentsLeft( leftSegments );
+    }
+  }
+}
+
+void QgsLayoutItemScaleBar::refreshNumberOfSegmentsRight( const QgsExpressionContext *context )
+{
+  if ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarRightSegments ) )
+  {
+    int rightSegments = mSettings.numberOfSegments();
+
+    bool ok = false;
+    rightSegments = mDataDefinedProperties.valueAsInt( QgsLayoutObject::ScalebarRightSegments, *context, rightSegments, &ok );
+
+    if ( !ok )
+    {
+      QgsMessageLog::logMessage( tr( "Scalebar left segment count expression eval error" ) );
+    }
+    else
+    {
+      setNumberOfSegments( rightSegments );
+    }
+  }
+}
+
 void QgsLayoutItemScaleBar::refreshDataDefinedProperty( const QgsLayoutObject::DataDefinedProperty property )
 {
   const QgsExpressionContext context = createExpressionContext();
 
   bool forceUpdate = false;
-  //updates data defined properties and redraws item to match
+
+  if ( ( property == QgsLayoutObject::ScalebarHeight || property == QgsLayoutObject::AllProperties )
+       && ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarHeight ) ) )
+  {
+    double height = mSettings.height();
+
+    bool ok = false;
+    height = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::ScalebarHeight, context, height, &ok );
+
+    if ( !ok )
+    {
+      QgsMessageLog::logMessage( tr( "Scalebar height expression eval error" ) );
+    }
+    else
+    {
+      setHeight( height );
+    }
+
+    forceUpdate = true;
+  }
+
+  if ( ( property == QgsLayoutObject::ScalebarSubdivisionHeight || property == QgsLayoutObject::AllProperties )
+       && ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarSubdivisionHeight ) ) )
+  {
+    double height = mSettings.subdivisionsHeight();
+
+    bool ok = false;
+    height = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::ScalebarSubdivisionHeight, context, height, &ok );
+
+    if ( !ok )
+    {
+      QgsMessageLog::logMessage( tr( "Scalebar subdivision height expression eval error" ) );
+    }
+    else
+    {
+      setSubdivisionsHeight( height );
+    }
+
+    forceUpdate = true;
+  }
+
+  if ( property == QgsLayoutObject::ScalebarLeftSegments || property == QgsLayoutObject::AllProperties )
+  {
+    refreshNumberOfSegmentsLeft( &context );
+    forceUpdate = true;
+  }
+
+  if ( property == QgsLayoutObject::ScalebarRightSegments || property == QgsLayoutObject::AllProperties )
+  {
+    refreshNumberOfSegmentsRight( &context );
+    forceUpdate = true;
+  }
+
+  if ( ( property == QgsLayoutObject::ScalebarRightSegmentSubdivisions || property == QgsLayoutObject::AllProperties )
+       && ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarRightSegmentSubdivisions ) ) )
+  {
+    int segments = mSettings.numberOfSubdivisions();
+
+    bool ok = false;
+    segments = mDataDefinedProperties.valueAsInt( QgsLayoutObject::ScalebarRightSegmentSubdivisions, context, segments, &ok );
+
+    if ( !ok )
+    {
+      QgsMessageLog::logMessage( tr( "Scalebar number of subdivisions expression eval error" ) );
+    }
+    else
+    {
+      setNumberOfSubdivisions( segments );
+    }
+
+    forceUpdate = true;
+  }
+
+
+  if ( property == QgsLayoutObject::ScalebarSegmentWidth || property == QgsLayoutObject::AllProperties )
+  {
+    refreshUnitsPerSegment( &context );
+    forceUpdate = true;
+  }
+
+  if ( property == QgsLayoutObject::ScalebarMinimumWidth || property == QgsLayoutObject::AllProperties )
+  {
+    refreshMinimumBarWidth( &context );
+    forceUpdate = true;
+  }
+
+  if ( property == QgsLayoutObject::ScalebarMaximumWidth || property == QgsLayoutObject::AllProperties )
+  {
+    refreshMaximumBarWidth( &context );
+    forceUpdate = true;
+  }
+
+  // updates data defined properties and redraws item to match
+  // -- Deprecated --
   if ( property == QgsLayoutObject::ScalebarFillColor || property == QgsLayoutObject::AllProperties )
   {
     forceUpdate = true;
@@ -310,6 +504,7 @@ void QgsLayoutItemScaleBar::refreshDataDefinedProperty( const QgsLayoutObject::D
   {
     forceUpdate = true;
   }
+
   if ( forceUpdate )
   {
     refreshItemSize();
@@ -364,7 +559,7 @@ double QgsLayoutItemScaleBar::mapWidth() const
   }
 
   const QgsRectangle mapExtent = mMap->extent();
-  if ( mSettings.units() == QgsUnitTypes::DistanceUnknownUnit )
+  if ( mSettings.units() == Qgis::DistanceUnit::Unknown )
   {
     return mapExtent.width();
   }
@@ -374,7 +569,7 @@ double QgsLayoutItemScaleBar::mapWidth() const
     da.setSourceCrs( mMap->crs(), mLayout->project()->transformContext() );
     da.setEllipsoid( mLayout->project()->ellipsoid() );
 
-    const QgsUnitTypes::DistanceUnit units = da.lengthUnits();
+    const Qgis::DistanceUnit units = da.lengthUnits();
     double measure = da.measureLine( QgsPointXY( mapExtent.xMinimum(), mapExtent.yMinimum() ),
                                      QgsPointXY( mapExtent.xMaximum(), mapExtent.yMinimum() ) );
     measure /= QgsUnitTypes::fromUnitToUnitFactor( mSettings.units(), units );
@@ -413,7 +608,7 @@ void QgsLayoutItemScaleBar::setAlignment( QgsScaleBarSettings::Alignment a )
   emit changed();
 }
 
-void QgsLayoutItemScaleBar::setUnits( QgsUnitTypes::DistanceUnit u )
+void QgsLayoutItemScaleBar::setUnits( Qgis::DistanceUnit u )
 {
   mSettings.setUnits( u );
   refreshSegmentMillimeters();
@@ -482,11 +677,11 @@ void QgsLayoutItemScaleBar::applyDefaultSettings()
   }
   format.setFont( f );
   format.setSize( 12.0 );
-  format.setSizeUnit( QgsUnitTypes::RenderPoints );
+  format.setSizeUnit( Qgis::RenderUnit::Points );
 
   mSettings.setTextFormat( format );
 
-  mSettings.setUnits( QgsUnitTypes::DistanceUnknownUnit );
+  mSettings.setUnits( Qgis::DistanceUnit::Unknown );
   refreshItemSize();
 
   emit changed();
@@ -497,18 +692,18 @@ bool QgsLayoutItemScaleBar::applyDefaultRendererSettings( QgsScaleBarRenderer *r
   return renderer->applyDefaultSettings( mSettings );
 }
 
-QgsUnitTypes::DistanceUnit QgsLayoutItemScaleBar::guessUnits() const
+Qgis::DistanceUnit QgsLayoutItemScaleBar::guessUnits() const
 {
   if ( !mMap )
-    return QgsUnitTypes::DistanceMeters;
+    return Qgis::DistanceUnit::Meters;
 
   const QgsCoordinateReferenceSystem crs = mMap->crs();
   // start with crs units
-  QgsUnitTypes::DistanceUnit unit = crs.mapUnits();
-  if ( unit == QgsUnitTypes::DistanceDegrees || unit == QgsUnitTypes::DistanceUnknownUnit )
+  Qgis::DistanceUnit unit = crs.mapUnits();
+  if ( unit == Qgis::DistanceUnit::Degrees || unit == Qgis::DistanceUnit::Unknown )
   {
     // geographic CRS, use metric units
-    unit = QgsUnitTypes::DistanceMeters;
+    unit = Qgis::DistanceUnit::Meters;
   }
 
   // try to pick reasonable choice between metric / imperial units
@@ -516,19 +711,19 @@ QgsUnitTypes::DistanceUnit QgsLayoutItemScaleBar::guessUnits() const
   const double initialUnitsPerSegment = widthInSelectedUnits / 10.0; //default scalebar width equals half the map width
   switch ( unit )
   {
-    case QgsUnitTypes::DistanceMeters:
+    case Qgis::DistanceUnit::Meters:
     {
       if ( initialUnitsPerSegment > 1000.0 )
       {
-        unit = QgsUnitTypes::DistanceKilometers;
+        unit = Qgis::DistanceUnit::Kilometers;
       }
       break;
     }
-    case QgsUnitTypes::DistanceFeet:
+    case Qgis::DistanceUnit::Feet:
     {
       if ( initialUnitsPerSegment > 5419.95 )
       {
-        unit = QgsUnitTypes::DistanceMiles;
+        unit = Qgis::DistanceUnit::Miles;
       }
       break;
     }
@@ -539,7 +734,7 @@ QgsUnitTypes::DistanceUnit QgsLayoutItemScaleBar::guessUnits() const
   return unit;
 }
 
-void QgsLayoutItemScaleBar::applyDefaultSize( QgsUnitTypes::DistanceUnit units )
+void QgsLayoutItemScaleBar::applyDefaultSize( Qgis::DistanceUnit units )
 {
   mSettings.setUnits( units );
   if ( mMap )
@@ -581,7 +776,7 @@ void QgsLayoutItemScaleBar::resizeToMinimumWidth()
   QgsRenderContext context = QgsLayoutUtils::createRenderContextForLayout( mLayout, nullptr );
   const double widthMM = mStyle->calculateBoxSize( context, mSettings, createScaleContext() ).width();
   QgsLayoutSize currentSize = sizeWithUnits();
-  currentSize.setWidth( mLayout->renderContext().measurementConverter().convert( QgsLayoutMeasurement( widthMM, QgsUnitTypes::LayoutMillimeters ), currentSize.units() ).length() );
+  currentSize.setWidth( mLayout->renderContext().measurementConverter().convert( QgsLayoutMeasurement( widthMM, Qgis::LayoutUnit::Millimeters ), currentSize.units() ).length() );
   attemptResize( currentSize );
   update();
   emit changed();
@@ -871,6 +1066,7 @@ bool QgsLayoutItemScaleBar::writePropertiesToElement( QDomElement &composerScale
   return true;
 }
 
+
 bool QgsLayoutItemScaleBar::readPropertiesFromElement( const QDomElement &itemElem, const QDomDocument &, const QgsReadWriteContext &context )
 {
   mSettings.setHeight( itemElem.attribute( QStringLiteral( "height" ), QStringLiteral( "5.0" ) ).toDouble() );
@@ -934,7 +1130,7 @@ bool QgsLayoutItemScaleBar::readPropertiesFromElement( const QDomElement &itemEl
     std::unique_ptr< QgsLineSymbol > lineSymbol = std::make_unique< QgsLineSymbol >();
     std::unique_ptr< QgsSimpleLineSymbolLayer > lineSymbolLayer = std::make_unique< QgsSimpleLineSymbolLayer >();
     lineSymbolLayer->setWidth( itemElem.attribute( QStringLiteral( "outlineWidth" ), QStringLiteral( "0.3" ) ).toDouble() );
-    lineSymbolLayer->setWidthUnit( QgsUnitTypes::RenderMillimeters );
+    lineSymbolLayer->setWidthUnit( Qgis::RenderUnit::Millimeters );
     lineSymbolLayer->setPenJoinStyle( QgsSymbolLayerUtils::decodePenJoinStyle( itemElem.attribute( QStringLiteral( "lineJoinStyle" ), QStringLiteral( "miter" ) ) ) );
     lineSymbolLayer->setPenCapStyle( QgsSymbolLayerUtils::decodePenCapStyle( itemElem.attribute( QStringLiteral( "lineCapStyle" ), QStringLiteral( "square" ) ) ) );
 
@@ -993,12 +1189,12 @@ bool QgsLayoutItemScaleBar::readPropertiesFromElement( const QDomElement &itemEl
     if ( f.pointSizeF() > 0 )
     {
       mSettings.textFormat().setSize( f.pointSizeF() );
-      mSettings.textFormat().setSizeUnit( QgsUnitTypes::RenderPoints );
+      mSettings.textFormat().setSizeUnit( Qgis::RenderUnit::Points );
     }
     else if ( f.pixelSize() > 0 )
     {
       mSettings.textFormat().setSize( f.pixelSize() );
-      mSettings.textFormat().setSizeUnit( QgsUnitTypes::RenderPixels );
+      mSettings.textFormat().setSizeUnit( Qgis::RenderUnit::Pixels );
     }
   }
 
@@ -1146,20 +1342,20 @@ bool QgsLayoutItemScaleBar::readPropertiesFromElement( const QDomElement &itemEl
 
   if ( itemElem.attribute( QStringLiteral( "unitType" ) ).isEmpty() )
   {
-    QgsUnitTypes::DistanceUnit u = QgsUnitTypes::DistanceUnknownUnit;
+    Qgis::DistanceUnit u = Qgis::DistanceUnit::Unknown;
     switch ( itemElem.attribute( QStringLiteral( "units" ) ).toInt() )
     {
       case 0:
-        u = QgsUnitTypes::DistanceUnknownUnit;
+        u = Qgis::DistanceUnit::Unknown;
         break;
       case 1:
-        u = QgsUnitTypes::DistanceMeters;
+        u = Qgis::DistanceUnit::Meters;
         break;
       case 2:
-        u = QgsUnitTypes::DistanceFeet;
+        u = Qgis::DistanceUnit::Feet;
         break;
       case 3:
-        u = QgsUnitTypes::DistanceNauticalMiles;
+        u = Qgis::DistanceUnit::NauticalMiles;
         break;
     }
     mSettings.setUnits( u );

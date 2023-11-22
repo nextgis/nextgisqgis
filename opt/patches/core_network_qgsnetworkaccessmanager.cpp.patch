@@ -1,0 +1,11 @@
+--- a/src/core/network/qgsnetworkaccessmanager.cpp	2023-08-21 19:30:50.370176576 +0300
++++ b/src/core/network/qgsnetworkaccessmanager.cpp	2023-10-03 22:46:13.498640041 +0300
+@@ -43,7 +43,7 @@
+ #include <QStandardPaths>
+ #include <QUuid>
+ 
+-const QgsSettingsEntryInteger *QgsNetworkAccessManager::settingsNetworkTimeout = new QgsSettingsEntryInteger( QStringLiteral( "network-timeout" ), QgsSettingsTree::sTreeNetwork, 60000, QObject::tr( "Network timeout" ) );
++const QgsSettingsEntryInteger *QgsNetworkAccessManager::settingsNetworkTimeout = new QgsSettingsEntryInteger( QStringLiteral( "network-timeout" ), QgsSettingsTree::sTreeNetwork, 300000, QObject::tr( "Network timeout" ) );
+ 
+ #ifndef QT_NO_SSL
+ #include <QSslConfiguration>

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for the attribute form
 
 
@@ -14,25 +13,23 @@ __author__ = 'Alessandro Pasotti'
 __date__ = '2019-06-06'
 __copyright__ = 'Copyright 2019, The QGIS Project'
 
-from qgis.testing import start_app, unittest
+from qgis.PyQt.QtCore import QVariant
 from qgis.core import (
-    QgsFields,
-    QgsVectorLayer,
-    QgsFeature,
-    QgsEditorWidgetSetup,
-    QgsEditFormConfig,
-    QgsAttributeEditorElement,
     QgsDefaultValue,
-    QgsField
+    QgsEditFormConfig,
+    QgsEditorWidgetSetup,
+    QgsFeature,
+    QgsField,
+    QgsVectorLayer,
 )
 from qgis.gui import (
+    QgsAttributeEditorContext,
     QgsAttributeForm,
+    QgsFilterLineEdit,
     QgsGui,
-    QgsEditorWidgetWrapper,
     QgsMapCanvas,
-    QgsAttributeEditorContext
 )
-from qgis.PyQt.QtCore import QVariant
+from qgis.testing import start_app, unittest
 
 QGISAPP = start_app()
 
@@ -41,12 +38,13 @@ class TestQgsAttributeForm(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.mCanvas = QgsMapCanvas()
         QgsGui.editorWidgetRegistry().initEditors(cls.mCanvas)
 
     @classmethod
     def createLayerWithOnePoint(cls, field_type):
-        layer = QgsVectorLayer("Point?field=fld:%s" % field_type,
+        layer = QgsVectorLayer(f"Point?field=fld:{field_type}",
                                "vl", "memory")
         pr = layer.dataProvider()
         f = QgsFeature()
@@ -119,6 +117,46 @@ class TestQgsAttributeForm(unittest.TestCase):
         for field_type, value in field_types.items():
             self.checkForm(field_type, value)
 
+    def test_duplicated_widgets_multiedit(self):
+        """
+        Test multiedit with duplicated widgets
+        """
+
+        field_type = 'integer'
+        vl = self.createLayerWithOnePoint(field_type)
+
+        # add another point
+        pr = vl.dataProvider()
+        f = QgsFeature()
+        assert pr.addFeatures([f])
+        assert vl.featureCount() == 2
+
+        assert vl.startEditing()
+
+        assert vl.changeAttributeValue(1, 0, 123)
+        assert vl.changeAttributeValue(2, 0, 456)
+
+        widget_type = 'TextEdit'
+        form = self.createFormWithDuplicateWidget(vl, field_type, widget_type)
+
+        fids = list()
+        for feature in vl.getFeatures():
+            fids.append(feature.id())
+
+        form.setMode(QgsAttributeEditorContext.MultiEditMode)
+        form.setMultiEditFeatureIds(fids)
+
+        for children in form.findChildren(QgsFilterLineEdit):
+            if children.objectName() == 'fld':
+                # As the values are mixed, the widget values should be empty
+                assert not children.text()
+
+        # After save the values should be unchanged
+        form.save()
+        featuresIterator = vl.getFeatures()
+        self.assertEqual(next(featuresIterator).attribute(0), 123)
+        self.assertEqual(next(featuresIterator).attribute(0), 456)
+
     def test_on_update(self):
         """Test live update"""
 
@@ -140,6 +178,38 @@ class TestQgsAttributeForm(unittest.TestCase):
         self.assertEqual(form.currentFormFeature()['numbers'], [1, 1])
         form.changeAttribute('age', 7)
         self.assertEqual(form.currentFormFeature()['numbers'], [1, 7])
+
+    def test_default_value_always_updated(self):
+        """Test that default values are not updated on every edit operation
+        when containing an 'attribute' expression"""
+
+        layer = QgsVectorLayer("Point?field=age:int&field=number:int", "vl", "memory")
+
+        layer.setEditorWidgetSetup(0, QgsEditorWidgetSetup('Range', {}))
+
+        # set default value for numbers to attribute("age"), it will depend on the field age and should not update
+        layer.setDefaultValueDefinition(1, QgsDefaultValue("attribute(@feature, 'age')", False))
+        layer.setEditorWidgetSetup(1, QgsEditorWidgetSetup('Range', {}))
+
+        layer.startEditing()
+
+        feature = QgsFeature(layer.fields())
+        feature.setAttribute('age', 15)
+
+        form = QgsAttributeForm(layer)
+        form.setMode(QgsAttributeEditorContext.AddFeatureMode)
+        form.setFeature(feature)
+
+        QGISAPP.processEvents()
+
+        self.assertEqual(form.currentFormFeature()['age'], 15)
+        self.assertEqual(form.currentFormFeature()['number'], 15)
+        # return
+        form.changeAttribute('number', 12)
+        form.changeAttribute('age', 1)
+        self.assertEqual(form.currentFormFeature()['number'], 12)
+        form.changeAttribute('age', 7)
+        self.assertEqual(form.currentFormFeature()['number'], 12)
 
 
 if __name__ == '__main__':

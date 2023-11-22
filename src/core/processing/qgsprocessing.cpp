@@ -17,4 +17,12 @@
 
 #include "qgsprocessing.h"
 
+const QgsSettingsEntryBool *QgsProcessing::settingsPreferFilenameAsLayerName = new QgsSettingsEntryBool( QStringLiteral( "prefer-filename-as-layer-name" ), sTreeConfiguration, true, QObject::tr( "Prefer filename as layer name" ) );
+
+const QgsSettingsEntryString *QgsProcessing::settingsTempPath = new QgsSettingsEntryString( QStringLiteral( "temp-path" ), sTreeConfiguration, QString(), QObject::tr( "Override temporary output folder path" ) );
+
+const QgsSettingsEntryInteger *QgsProcessing::settingsDefaultOutputVectorLayerExt = new QgsSettingsEntryInteger( QStringLiteral( "default-output-vector-layer-ext" ), sTreeConfiguration, -1, QObject::tr( "Default output vector layer extension" ) );
+
+const QgsSettingsEntryInteger *QgsProcessing::settingsDefaultOutputRasterLayerExt = new QgsSettingsEntryInteger( QStringLiteral( "default-output-raster-layer-ext" ), sTreeConfiguration, -1, QObject::tr( "Default output raster layer extension" ) );
+
 const QString QgsProcessing::TEMPORARY_OUTPUT = QStringLiteral( "TEMPORARY_OUTPUT" );

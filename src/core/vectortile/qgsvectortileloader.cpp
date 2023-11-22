@@ -14,25 +14,19 @@
  ***************************************************************************/
 
 #include "qgsvectortileloader.h"
+#include "qgslogger.h"
+#include "qgsvectortileutils.h"
+#include "qgsapplication.h"
+#include "qgsvectortiledataprovider.h"
+#include "qgsfeedback.h"
+#include "qgstiledownloadmanager.h"
 
 #include <QEventLoop>
 
-#include "qgsblockingnetworkrequest.h"
-#include "qgslogger.h"
-#include "qgsmbtiles.h"
-#include "qgsnetworkaccessmanager.h"
-#include "qgsvectortileutils.h"
-#include "qgsapplication.h"
-#include "qgsauthmanager.h"
-#include "qgsmessagelog.h"
 
-#include "qgstiledownloadmanager.h"
-
-QgsVectorTileLoader::QgsVectorTileLoader( const QString &uri, const QgsTileMatrix &tileMatrix, const QgsTileRange &range, const QPointF &viewCenter, const QString &authid, const QgsHttpHeaders &headers, QgsFeedback *feedback )
+QgsVectorTileLoader::QgsVectorTileLoader( const QgsVectorTileDataProvider *provider, const QgsTileMatrixSet &tileMatrixSet, const QgsTileRange &range, int zoomLevel, const QPointF &viewCenter, QgsFeedback *feedback, Qgis::RendererUsage usage )
   : mEventLoop( new QEventLoop )
   , mFeedback( feedback )
-  , mAuthCfg( authid )
-  , mHeaders( headers )
 {
   if ( feedback )
   {
@@ -45,11 +39,11 @@ QgsVectorTileLoader::QgsVectorTileLoader( const QString &uri, const QgsTileMatri
   }
 
   QgsDebugMsgLevel( QStringLiteral( "Starting network loader" ), 2 );
-  QVector<QgsTileXYZ> tiles = QgsVectorTileUtils::tilesInRange( range, tileMatrix.zoomLevel() );
+  QVector<QgsTileXYZ> tiles = tileMatrixSet.tilesInRange( range, zoomLevel );
   QgsVectorTileUtils::sortTilesByDistanceFromCenter( tiles, viewCenter );
   for ( QgsTileXYZ id : std::as_const( tiles ) )
   {
-    loadFromNetworkAsync( id, tileMatrix, uri );
+    loadFromNetworkAsync( id, tileMatrixSet, provider, usage );
   }
 }
 
@@ -82,26 +76,9 @@ void QgsVectorTileLoader::downloadBlocking()
   Q_ASSERT( mReplies.isEmpty() );
 }
 
-void QgsVectorTileLoader::loadFromNetworkAsync( const QgsTileXYZ &id, const QgsTileMatrix &tileMatrix, const QString &requestUrl )
+void QgsVectorTileLoader::loadFromNetworkAsync( const QgsTileXYZ &id, const QgsTileMatrixSet &tileMatrixSet, const QgsVectorTileDataProvider *provider, Qgis::RendererUsage usage )
 {
-  QString url = QgsVectorTileUtils::formatXYZUrlTemplate( requestUrl, id, tileMatrix );
-  QNetworkRequest request( url );
-  QgsSetRequestInitiatorClass( request, QStringLiteral( "QgsVectorTileLoader" ) );
-  QgsSetRequestInitiatorId( request, id.toString() );
-
-  request.setAttribute( static_cast<QNetworkRequest::Attribute>( QNetworkRequest::User + 1 ), id.column() );
-  request.setAttribute( static_cast<QNetworkRequest::Attribute>( QNetworkRequest::User + 2 ), id.row() );
-  request.setAttribute( static_cast<QNetworkRequest::Attribute>( QNetworkRequest::User + 3 ), id.zoomLevel() );
-
-  request.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache );
-  request.setAttribute( QNetworkRequest::CacheSaveControlAttribute, true );
-
-  mHeaders.updateNetworkRequest( request );
-
-  if ( !mAuthCfg.isEmpty() &&  !QgsApplication::authManager()->updateNetworkRequest( request, mAuthCfg ) )
-  {
-    QgsMessageLog::logMessage( tr( "network request update failed for authentication config" ), tr( "Network" ) );
-  }
+  QNetworkRequest request = provider->tileRequest( tileMatrixSet, id, usage );
 
   QgsTileDownloadManagerReply *reply = QgsApplication::tileDownloadManager()->get( request );
   connect( reply, &QgsTileDownloadManagerReply::finished, this, &QgsVectorTileLoader::tileReplyFinished );
@@ -138,7 +115,7 @@ void QgsVectorTileLoader::tileReplyFinished()
         mError = tr( "Access denied: %1" ).arg( QString( reply->data() ) );
     }
 
-    QgsDebugMsg( QStringLiteral( "Tile download failed! " ) + reply->errorString() );
+    QgsDebugError( QStringLiteral( "Tile download failed! " ) + reply->errorString() );
     mReplies.removeOne( reply );
     reply->deleteLater();
 
@@ -170,73 +147,16 @@ QString QgsVectorTileLoader::error() const
 
 //////
 
-QList<QgsVectorTileRawData> QgsVectorTileLoader::blockingFetchTileRawData( const QString &sourceType, const QString &sourcePath, const QgsTileMatrix &tileMatrix, const QPointF &viewCenter, const QgsTileRange &range, const QString &authid, const QgsHttpHeaders &headers )
+QList<QgsVectorTileRawData> QgsVectorTileLoader::blockingFetchTileRawData( const QgsVectorTileDataProvider *provider, const QgsTileMatrixSet &tileMatrixSet, const QPointF &viewCenter, const QgsTileRange &range, int zoomLevel, QgsFeedback *feedback, Qgis::RendererUsage usage )
 {
-  QList<QgsVectorTileRawData> rawTiles;
+  if ( feedback && feedback->isCanceled() )
+    return {};
 
-  QgsMbTiles mbReader( sourcePath );
-  bool isUrl = ( sourceType == QLatin1String( "xyz" ) );
-  if ( !isUrl )
-  {
-    bool res = mbReader.open();
-    Q_UNUSED( res );
-    Q_ASSERT( res );
-  }
+  QVector<QgsTileXYZ> tiles = tileMatrixSet.tilesInRange( range, zoomLevel );
 
-  QVector<QgsTileXYZ> tiles = QgsVectorTileUtils::tilesInRange( range, tileMatrix.zoomLevel() );
-  QgsVectorTileUtils::sortTilesByDistanceFromCenter( tiles, viewCenter );
-  for ( QgsTileXYZ id : std::as_const( tiles ) )
-  {
-    QByteArray rawData = isUrl ? loadFromNetwork( id, tileMatrix, sourcePath, authid, headers ) : loadFromMBTiles( id, mbReader );
-    if ( !rawData.isEmpty() )
-    {
-      rawTiles.append( QgsVectorTileRawData( id, rawData ) );
-    }
-  }
-  return rawTiles;
-}
+  // if a tile matrix results in a HUGE number of tile requests, we skip the sort -- it can be expensive
+  if ( tiles.size() < 10000 )
+    QgsVectorTileUtils::sortTilesByDistanceFromCenter( tiles, viewCenter );
 
-QByteArray QgsVectorTileLoader::loadFromNetwork( const QgsTileXYZ &id, const QgsTileMatrix &tileMatrix, const QString &requestUrl, const QString &authid, const QgsHttpHeaders &headers )
-{
-  QString url = QgsVectorTileUtils::formatXYZUrlTemplate( requestUrl, id, tileMatrix );
-  QNetworkRequest nr;
-  nr.setUrl( QUrl( url ) );
-
-  headers.updateNetworkRequest( nr );
-
-  QgsBlockingNetworkRequest req;
-  req.setAuthCfg( authid );
-  QgsDebugMsgLevel( QStringLiteral( "Blocking request: " ) + url, 2 );
-  QgsBlockingNetworkRequest::ErrorCode errCode = req.get( nr );
-  if ( errCode != QgsBlockingNetworkRequest::NoError )
-  {
-    QgsDebugMsg( QStringLiteral( "Request failed: " ) + url );
-    return QByteArray();
-  }
-  QgsNetworkReplyContent reply = req.reply();
-  QgsDebugMsgLevel( QStringLiteral( "Request successful, content size %1" ).arg( reply.content().size() ), 2 );
-  return reply.content();
-}
-
-
-QByteArray QgsVectorTileLoader::loadFromMBTiles( const QgsTileXYZ &id, QgsMbTiles &mbTileReader )
-{
-  // MBTiles uses TMS specs with Y starting at the bottom while XYZ uses Y starting at the top
-  int rowTMS = pow( 2, id.zoomLevel() ) - id.row() - 1;
-  QByteArray gzippedTileData = mbTileReader.tileData( id.zoomLevel(), id.column(), rowTMS );
-  if ( gzippedTileData.isEmpty() )
-  {
-    QgsDebugMsg( QStringLiteral( "Failed to get tile " ) + id.toString() );
-    return QByteArray();
-  }
-
-  QByteArray data;
-  if ( !QgsMbTiles::decodeGzip( gzippedTileData, data ) )
-  {
-    QgsDebugMsg( QStringLiteral( "Failed to decompress tile " ) + id.toString() );
-    return QByteArray();
-  }
-
-  QgsDebugMsgLevel( QStringLiteral( "Tile blob size %1 -> uncompressed size %2" ).arg( gzippedTileData.size() ).arg( data.size() ), 2 );
-  return data;
+  return provider->readTiles( tileMatrixSet, tiles, feedback, usage );
 }

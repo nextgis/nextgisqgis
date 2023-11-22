@@ -28,12 +28,12 @@
 //
 void QgsMapInfoSymbolConversionContext::pushWarning( const QString &warning )
 {
-  QgsDebugMsg( warning );
+  QgsDebugMsgLevel( warning, 2 );
   mWarnings << warning;
 }
 
 
-QgsLineSymbol *QgsMapInfoSymbolConverter::convertLineSymbol( int identifier, QgsMapInfoSymbolConversionContext &context, const QColor &foreColor, double size, QgsUnitTypes::RenderUnit sizeUnit, bool interleaved )
+QgsLineSymbol *QgsMapInfoSymbolConverter::convertLineSymbol( int identifier, QgsMapInfoSymbolConversionContext &context, const QColor &foreColor, double size, Qgis::RenderUnit sizeUnit, bool interleaved )
 {
   std::unique_ptr< QgsSimpleLineSymbolLayer > simpleLine = std::make_unique< QgsSimpleLineSymbolLayer >( foreColor, size );
   simpleLine->setWidthUnit( sizeUnit );
@@ -293,7 +293,7 @@ QgsLineSymbol *QgsMapInfoSymbolConverter::convertLineSymbol( int identifier, Qgs
       break;
 
     default:
-      QgsDebugMsg( QStringLiteral( "Unknown line symbol identifier %1" ).arg( identifier ) );
+      QgsDebugError( QStringLiteral( "Unknown line symbol identifier %1" ).arg( identifier ) );
       return nullptr;
   }
 
@@ -1372,11 +1372,11 @@ QgsFillSymbol *QgsMapInfoSymbolConverter::convertFillSymbol( int identifier, Qgs
     std::unique_ptr< QgsLinePatternFillSymbolLayer > lineFill = std::make_unique< QgsLinePatternFillSymbolLayer >();
 
     std::unique_ptr< QgsSimpleLineSymbolLayer > simpleLine = std::make_unique< QgsSimpleLineSymbolLayer >( foreColor, lineWidth );
-    simpleLine->setWidthUnit( QgsUnitTypes::RenderPoints );
+    simpleLine->setWidthUnit( Qgis::RenderUnit::Points );
     lineFill->setSubSymbol( new QgsLineSymbol( QgsSymbolLayerList() << simpleLine.release() ) );
 
     lineFill->setDistance( lineSpacing );
-    lineFill->setDistanceUnit( QgsUnitTypes::RenderPoints );
+    lineFill->setDistanceUnit( Qgis::RenderUnit::Points );
     lineFill->setLineAngle( lineAngle );
 
     if ( crossFill )
@@ -1391,7 +1391,7 @@ QgsFillSymbol *QgsMapInfoSymbolConverter::convertFillSymbol( int identifier, Qgs
   return new QgsFillSymbol( layers );
 }
 
-QgsMarkerSymbol *QgsMapInfoSymbolConverter::convertMarkerSymbol( int identifier, QgsMapInfoSymbolConversionContext &context, const QColor &color, double size, QgsUnitTypes::RenderUnit sizeUnit )
+QgsMarkerSymbol *QgsMapInfoSymbolConverter::convertMarkerSymbol( int identifier, QgsMapInfoSymbolConversionContext &context, const QColor &color, double size, Qgis::RenderUnit sizeUnit )
 {
   Qgis::MarkerShape shape;
   bool isFilled = true;
@@ -1517,6 +1517,8 @@ QgsMarkerSymbol *QgsMapInfoSymbolConverter::convertMarkerSymbol( int identifier,
   simpleMarker->setSizeUnit( sizeUnit );
   simpleMarker->setAngle( angle );
   simpleMarker->setVerticalAnchorPoint( vertAlign );
+  simpleMarker->setStrokeWidth( 1.0 );
+  simpleMarker->setStrokeWidthUnit( Qgis::RenderUnit::Points );
 
   if ( isNull )
   {
@@ -1527,7 +1529,6 @@ QgsMarkerSymbol *QgsMapInfoSymbolConverter::convertMarkerSymbol( int identifier,
   {
     simpleMarker->setColor( color );
     simpleMarker->setStrokeColor( QColor( 0, 0, 0 ) );
-    simpleMarker->setStrokeWidth( 0 );
   }
   else
   {

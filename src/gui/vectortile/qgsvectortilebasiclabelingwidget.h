@@ -20,8 +20,6 @@
 
 #include "ui_qgsvectortilebasiclabelingwidget.h"
 
-#include "qgswkbtypes.h"
-
 #include <memory>
 #include <QSortFilterProxyModel>
 
@@ -55,7 +53,7 @@ class GUI_EXPORT QgsVectorTileBasicLabelingWidget : public QgsMapLayerConfigWidg
     void apply() override;
 
   private slots:
-    void addStyle( QgsWkbTypes::GeometryType geomType );
+    void addStyle( Qgis::GeometryType geomType );
     //void addStyle();
     void editStyle();
     void editStyleAtIndex( const QModelIndex &index );
@@ -64,7 +62,7 @@ class GUI_EXPORT QgsVectorTileBasicLabelingWidget : public QgsMapLayerConfigWidg
     void updateLabelingFromWidget();
 
   private:
-    QgsVectorTileLayer *mVTLayer = nullptr;
+    QPointer< QgsVectorTileLayer > mVTLayer;
     std::unique_ptr<QgsVectorTileBasicLabeling> mLabeling;
     QgsVectorTileBasicLabelingListModel *mModel = nullptr;
     QgsVectorTileBasicLabelingProxyModel *mProxyModel = nullptr;
@@ -111,6 +109,9 @@ class QgsVectorTileBasicLabelingListModel : public QAbstractListModel
     {
       MinZoom = Qt::UserRole + 1,
       MaxZoom,
+      Label,
+      Layer,
+      Filter
     };
 
     QgsVectorTileBasicLabelingListModel( QgsVectorTileBasicLabeling *r, QObject *parent = nullptr );
@@ -144,12 +145,14 @@ class QgsVectorTileBasicLabelingProxyModel : public QSortFilterProxyModel
 
     void setCurrentZoom( int zoom );
     void setFilterVisible( bool enabled );
+    void setFilterString( const QString &string );
 
     bool filterAcceptsRow( int source_row, const QModelIndex &source_parent ) const override;
 
   private:
 
     bool mFilterVisible = false;
+    QString mFilterString;
     int mCurrentZoom = -1;
 };
 

@@ -41,39 +41,39 @@ QgsCustomProjectionOptionsWidget::QgsCustomProjectionOptionsWidget( QWidget *par
   // we just check whether there is our database [MD]
   if ( !QFileInfo::exists( QgsApplication::qgisSettingsDirPath() ) )
   {
-    QgsDebugMsg( QStringLiteral( "The qgis.db does not exist" ) );
+    QgsDebugError( QStringLiteral( "The qgis.db does not exist" ) );
   }
 
   populateList();
   if ( mDefinitions.empty() )
   {
-    // create an empty definition which corresponds to the initial state of the dialog
-    mDefinitions << Definition();
-    QTreeWidgetItem *newItem = new QTreeWidgetItem( leNameList, QStringList() );
-    newItem->setText( QgisCrsNameColumn, QString() );
-    newItem->setText( QgisCrsParametersColumn, QString() );
-  }
-  whileBlocking( leName )->setText( mDefinitions[0].name );
-
-  mBlockUpdates++;
-
-  QgsCoordinateReferenceSystem crs;
-  Qgis::CrsDefinitionFormat format;
-  if ( mDefinitions.at( 0 ).wkt.isEmpty() )
-  {
-    crs.createFromProj( mDefinitions[0].proj );
-    format = Qgis::CrsDefinitionFormat::Proj;
+    leName->setEnabled( false );
+    mCrsDefinitionWidget->setEnabled( false );
   }
   else
   {
-    crs.createFromWkt( mDefinitions[0].wkt );
-    format = Qgis::CrsDefinitionFormat::Wkt;
+    whileBlocking( leName )->setText( mDefinitions[0].name );
+
+    mBlockUpdates++;
+
+    QgsCoordinateReferenceSystem crs;
+    Qgis::CrsDefinitionFormat format;
+    if ( mDefinitions.at( 0 ).wkt.isEmpty() )
+    {
+      crs.createFromProj( mDefinitions[0].proj );
+      format = Qgis::CrsDefinitionFormat::Proj;
+    }
+    else
+    {
+      crs.createFromWkt( mDefinitions[0].wkt );
+      format = Qgis::CrsDefinitionFormat::Wkt;
+    }
+    mCrsDefinitionWidget->setCrs( crs, format );
+
+    mBlockUpdates--;
+
+    leNameList->setCurrentItem( leNameList->topLevelItem( 0 ) );
   }
-  mCrsDefinitionWidget->setCrs( crs, format );
-
-  mBlockUpdates--;
-
-  leNameList->setCurrentItem( leNameList->topLevelItem( 0 ) );
 
   leNameList->hideColumn( QgisCrsIdColumn );
 
@@ -155,6 +155,9 @@ void QgsCustomProjectionOptionsWidget::pbnAdd_clicked()
 
   QTreeWidgetItem *newItem = new QTreeWidgetItem( leNameList, QStringList() );
 
+  leName->setEnabled( true );
+  mCrsDefinitionWidget->setEnabled( true );
+
   newItem->setText( QgisCrsNameColumn, name );
   newItem->setText( QgisCrsIdColumn, QString() );
   newItem->setText( QgisCrsParametersColumn, QString() );
@@ -202,6 +205,12 @@ void QgsCustomProjectionOptionsWidget::pbnRemove_clicked()
       mDeletedCRSs.push_back( mDefinitions[row].id );
     }
     mDefinitions.erase( mDefinitions.begin() + row );
+  }
+
+  if ( mDefinitions.empty() )
+  {
+    leName->setEnabled( false );
+    mCrsDefinitionWidget->setEnabled( false );
   }
 }
 
@@ -358,7 +367,7 @@ void QgsCustomProjectionOptionsWidget::apply()
     }
     if ( ! saveSuccess )
     {
-      QgsDebugMsg( QStringLiteral( "Error when saving CRS '%1'" ).arg( def.name ) );
+      QgsDebugError( QStringLiteral( "Error when saving CRS '%1'" ).arg( def.name ) );
     }
   }
   QgsDebugMsgLevel( QStringLiteral( "We remove the deleted CRS." ), 4 );
@@ -367,7 +376,7 @@ void QgsCustomProjectionOptionsWidget::apply()
     saveSuccess &= QgsApplication::coordinateReferenceSystemRegistry()->removeUserCrs( mDeletedCRSs[i].toLong() );
     if ( ! saveSuccess )
     {
-      QgsDebugMsg( QStringLiteral( "Error deleting CRS for '%1'" ).arg( mDefinitions.at( i ).name ) );
+      QgsDebugError( QStringLiteral( "Error deleting CRS for '%1'" ).arg( mDefinitions.at( i ).name ) );
     }
   }
 }
@@ -404,8 +413,7 @@ void QgsCustomProjectionOptionsWidget::updateListFromCurrentItem()
 QString QgsCustomProjectionOptionsWidget::multiLineWktToSingleLine( const QString &wkt )
 {
   QString res = wkt;
-  QRegularExpression re( QStringLiteral( "\\s*\\n\\s*" ) );
-  re.setPatternOptions( QRegularExpression::MultilineOption );
+  const thread_local QRegularExpression re( QStringLiteral( "\\s*\\n\\s*" ), QRegularExpression::MultilineOption );
   res.replace( re, QString() );
   return res;
 }
@@ -420,7 +428,7 @@ QString QgsCustomProjectionOptionsWidget::helpKey() const
 // QgsCustomProjectionOptionsFactory
 //
 QgsCustomProjectionOptionsFactory::QgsCustomProjectionOptionsFactory()
-  : QgsOptionsWidgetFactory( tr( "User Defined CRS" ), QIcon() )
+  : QgsOptionsWidgetFactory( tr( "User Defined CRS" ), QIcon(), QStringLiteral( "user_defined_crs" ) )
 {
 
 }

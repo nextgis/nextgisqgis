@@ -79,7 +79,7 @@ QgsDataItem::~QgsDataItem()
   if ( mFutureWatcher && !mFutureWatcher->isFinished() )
   {
     // this should not usually happen (until the item was deleted directly when createChildren was running)
-    QgsDebugMsg( QStringLiteral( "mFutureWatcher not finished (should not happen) -> waitForFinished()" ) );
+    QgsDebugError( QStringLiteral( "mFutureWatcher not finished (should not happen) -> waitForFinished()" ) );
     mDeferredDelete = true;
     mFutureWatcher->waitForFinished();
   }
@@ -118,7 +118,7 @@ void QgsDataItem::deleteLater()
 
   if ( mFutureWatcher && !mFutureWatcher->isFinished() )
   {
-    QgsDebugMsg( QStringLiteral( "mFutureWatcher not finished -> schedule to delete later" ) );
+    QgsDebugMsgLevel( QStringLiteral( "mFutureWatcher not finished -> schedule to delete later" ), 2 );
     mDeferredDelete = true;
   }
   else
@@ -217,11 +217,10 @@ QVector<QgsDataItem *> QgsDataItem::runCreateChildren( QgsDataItem *item )
   QgsDebugMsgLevel( "path = " + item->path(), 2 );
   QElapsedTimer time;
   time.start();
-  QVector <QgsDataItem *> children = item->createChildren();
+  const QVector <QgsDataItem *> children = item->createChildren();
   QgsDebugMsgLevel( QStringLiteral( "%1 children created in %2 ms" ).arg( children.size() ).arg( time.elapsed() ), 3 );
   // Children objects must be pushed to main thread.
-  const auto constChildren = children;
-  for ( QgsDataItem *child : constChildren )
+  for ( QgsDataItem *child : children )
   {
     if ( !child ) // should not happen
       continue;
@@ -239,7 +238,7 @@ void QgsDataItem::childrenCreated()
 
   if ( deferredDelete() )
   {
-    QgsDebugMsg( QStringLiteral( "Item was scheduled to be deleted later" ) );
+    QgsDebugMsgLevel( QStringLiteral( "Item was scheduled to be deleted later" ), 2 );
     QObject::deleteLater();
     return;
   }
@@ -265,8 +264,7 @@ void QgsDataItem::populate( const QVector<QgsDataItem *> &children )
 {
   QgsDebugMsgLevel( "mPath = " + mPath, 3 );
 
-  const auto constChildren = children;
-  for ( QgsDataItem *child : constChildren )
+  for ( QgsDataItem *child : children )
   {
     if ( !child ) // should not happen
       continue;
@@ -351,8 +349,7 @@ void QgsDataItem::refresh( const QVector<QgsDataItem *> &children )
   }
 
   // Add new children
-  const auto constChildren = children;
-  for ( QgsDataItem *child : constChildren )
+  for ( QgsDataItem *child : children )
   {
     if ( !child ) // should not happen
       continue;
@@ -365,6 +362,11 @@ void QgsDataItem::refresh( const QVector<QgsDataItem *> &children )
       {
         // The child cannot createChildren() itself
         mChildren.value( index )->refresh( child->children() );
+      }
+      else if ( mChildren.value( index )->state() == Qgis::BrowserItemState::Populated
+                && ( child->capabilities2() & Qgis::BrowserItemCapability::RefreshChildrenWhenItemIsRefreshed ) )
+      {
+        mChildren.value( index )->refresh();
       }
 
       child->deleteLater();

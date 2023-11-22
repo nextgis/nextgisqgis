@@ -161,6 +161,8 @@ class CORE_EXPORT QgsCircularString: public QgsCurve
     void swapXy() override;
     double xAt( int index ) const override SIP_HOLDGIL;
     double yAt( int index ) const override SIP_HOLDGIL;
+    double zAt( int index ) const override SIP_HOLDGIL;
+    double mAt( int index ) const override SIP_HOLDGIL;
 
     bool transform( QgsAbstractGeometryTransformer *transformer, QgsFeedback *feedback = nullptr ) override;
     void scroll( int firstVertexIndex ) final;
@@ -179,7 +181,7 @@ class CORE_EXPORT QgsCircularString: public QgsCurve
      */
     inline static const QgsCircularString *cast( const QgsAbstractGeometry *geom )
     {
-      if ( geom && QgsWkbTypes::flatType( geom->wkbType() ) == QgsWkbTypes::CircularString )
+      if ( geom && QgsWkbTypes::flatType( geom->wkbType() ) == Qgis::WkbType::CircularString )
         return static_cast<const QgsCircularString *>( geom );
       return nullptr;
     }

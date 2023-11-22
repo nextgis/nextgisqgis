@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     AlgorithmDialog.py
@@ -161,13 +159,14 @@ class AlgorithmDialog(QgsProcessingAlgorithmDialogBase):
         if self.context is None:
             self.feedback = self.createFeedback()
             self.context = dataobjects.createContext(self.feedback)
-            self.context.setLogLevel(self.logLevel())
+
+        self.applyContextOverrides(self.context)
         return self.context
 
     def runAlgorithm(self):
         self.feedback = self.createFeedback()
         self.context = dataobjects.createContext(self.feedback)
-        self.context.setLogLevel(self.logLevel())
+        self.applyContextOverrides(self.context)
 
         checkCRS = ProcessingConfig.getSetting(ProcessingConfig.WARN_UNMATCHING_CRS)
         try:
@@ -205,7 +204,7 @@ class AlgorithmDialog(QgsProcessingAlgorithmDialogBase):
 
             self.clearProgress()
             self.feedback.pushVersionInfo(self.algorithm().provider())
-            if self.algorithm().provider().warningMessage():
+            if self.algorithm().provider() and self.algorithm().provider().warningMessage():
                 self.feedback.reportError(self.algorithm().provider().warningMessage())
 
             self.feedback.pushInfo(
@@ -244,10 +243,10 @@ class AlgorithmDialog(QgsProcessingAlgorithmDialogBase):
                     elapsed = '{0} {1:0.2f} {2} ({3} {4} {5:0.0f} {2})'.format(
                         result, delta_t, str_seconds, minutes, str_minutes, seconds)
                 else:
-                    elapsed = '{0} {1:0.2f} {2}'.format(
+                    elapsed = '{} {:0.2f} {}'.format(
                         result, delta_t, str_seconds)
 
-                return(elapsed)
+                return elapsed
 
             if self.iterateParam:
                 # Make sure the Log tab is visible before executing the algorithm
@@ -293,7 +292,10 @@ class AlgorithmDialog(QgsProcessingAlgorithmDialogBase):
                     self.feedback.pushInfo('')
 
                     if self.history_log_id is not None:
-                        self.history_details['results'] = results
+                        # can't deepcopy this!
+                        self.history_details['results'] = {k: v for k, v in results.items() if k != 'CHILD_INPUTS'}
+                        self.history_details['log'] = self.feedback.htmlLog()
+
                         #QgsGui.historyProviderRegistry().updateEntry(self.history_log_id, self.history_details)
 
                     if self.feedback_dialog is not None:
@@ -350,7 +352,11 @@ class AlgorithmDialog(QgsProcessingAlgorithmDialogBase):
                     resultsList.addResult(icon=self.algorithm().icon(), name=out.description(),
                                           timestamp=time.localtime(),
                                           result=result[out.name()])
-            if not handleAlgorithmResults(self.algorithm(), context, feedback, not keepOpen, result):
+            if not handleAlgorithmResults(
+                    self.algorithm(),
+                    context,
+                    feedback,
+                    result):
                 self.resetGui()
                 return
 

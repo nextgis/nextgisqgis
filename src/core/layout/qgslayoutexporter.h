@@ -21,6 +21,8 @@
 #include "qgslayoutrendercontext.h"
 #include "qgslayoutreportcontext.h"
 #include "qgslayoutitem.h"
+
+#include <QPdfWriter>
 #include <QPointer>
 #include <QSize>
 #include <QRectF>
@@ -29,6 +31,7 @@
 
 #ifndef QT_NO_PRINTER
 #include <QPrinter>
+#endif
 
 class QgsLayout;
 class QPainter;
@@ -459,6 +462,8 @@ class CORE_EXPORT QgsLayoutExporter
 
     };
 
+#ifndef QT_NO_PRINTER
+
     /**
      * Prints the layout to a \a printer, using the specified export \a settings.
      *
@@ -477,7 +482,7 @@ class CORE_EXPORT QgsLayoutExporter
     static ExportResult print( QgsAbstractLayoutIterator *iterator, QPrinter &printer,
                                const QgsLayoutExporter::PrintExportSettings &settings,
                                QString &error SIP_OUT, QgsFeedback *feedback = nullptr );
-
+#endif
 
     //! Contains settings relating to exporting layouts to SVG
     struct SvgExportSettings
@@ -719,28 +724,28 @@ class CORE_EXPORT QgsLayoutExporter
     void writeWorldFile( const QString &fileName, double a, double b, double c, double d, double e, double f ) const;
 
     /**
-     * Prepare a \a printer for printing a layout as a PDF, to the destination \a filePath.
+     * Prepare a \a device for printing a layout as a PDF, to the destination \a filePath.
      */
-    static void preparePrintAsPdf( QgsLayout *layout, QPrinter &printer, const QString &filePath );
+    static void preparePrintAsPdf( QgsLayout *layout, QPagedPaintDevice *device, const QString &filePath );
 
-    static void preparePrint( QgsLayout *layout, QPrinter &printer, bool setFirstPageSize = false );
+    static void preparePrint( QgsLayout *layout, QPagedPaintDevice *device, bool setFirstPageSize = false );
 
     /**
-     * Convenience function that prepares the printer and prints.
+     * Convenience function that prepares the \a device and prints.
      */
-    ExportResult print( QPrinter &printer );
+    ExportResult print( QPagedPaintDevice *device );
 
     /**
-     * Print on a preconfigured printer
-     * \param printer QPrinter destination
+     * Print on a preconfigured device
+     * \param device QPagedPaintDevice destination
      * \param painter QPainter source
      * \param startNewPage set to TRUE to begin the print on a new page
      * \param dpi set to a value > 0 to manually override the layout's default dpi
      * \param rasterize set to TRUE to force print as a raster image
      */
-    ExportResult printPrivate( QPrinter &printer, QPainter &painter, bool startNewPage = false, double dpi = -1, bool rasterize = false );
+    ExportResult printPrivate( QPagedPaintDevice *device, QPainter &painter, bool startNewPage = false, double dpi = -1, bool rasterize = false );
 
-    static void updatePrinterPageSize( QgsLayout *layout, QPrinter &printer, int page );
+    static void updatePrinterPageSize( QgsLayout *layout, QPagedPaintDevice *device, int page );
 
     ExportResult renderToLayeredSvg( const SvgExportSettings &settings, double width, double height, int page, const QRectF &bounds,
                                      const QString &filename, unsigned int svgLayerId, const QString &layerName,
@@ -758,8 +763,6 @@ class CORE_EXPORT QgsLayoutExporter
     friend class TestQgsLayoutExporter;
 
 };
-
-#endif // ! QT_NO_PRINTER
 
 #endif //QGSLAYOUTEXPORTER_H
 

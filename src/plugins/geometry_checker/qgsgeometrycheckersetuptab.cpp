@@ -17,7 +17,6 @@
 
 #include "qgsgeometrycheckcontext.h"
 #include "qgsgeometrycheckersetuptab.h"
-#include "qgsgeometrycheckerresulttab.h"
 #include "qgsgeometrychecker.h"
 #include "qgsgeometrycheckfactory.h"
 #include "qgsgeometrycheck.h"
@@ -28,10 +27,8 @@
 #include "qgisinterface.h"
 #include "qgsproject.h"
 #include "qgsvectorlayer.h"
-#include "qgsmapcanvas.h"
 #include "qgsvectorfilewriter.h"
 #include "qgsvectordataprovider.h"
-#include "qgsapplication.h"
 #include "qgsiconutils.h"
 
 #include <QAction>
@@ -71,7 +68,11 @@ QgsGeometryCheckerSetupTab::QgsGeometryCheckerSetupTab( QgisInterface *iface, QD
   connect( ui.pushButtonSelectAllLayers, &QAbstractButton::clicked, this, &QgsGeometryCheckerSetupTab::selectAllLayers );
   connect( ui.pushButtonDeselectAllLayers, &QAbstractButton::clicked, this, &QgsGeometryCheckerSetupTab::deselectAllLayers );
   connect( ui.radioButtonOutputNew, &QAbstractButton::toggled, ui.frameOutput, &QWidget::setEnabled );
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
   connect( ui.buttonGroupOutput, static_cast<void ( QButtonGroup::* )( int )>( &QButtonGroup::buttonClicked ), this, &QgsGeometryCheckerSetupTab::validateInput );
+#else
+  connect( ui.buttonGroupOutput, &QButtonGroup::idClicked, this, &QgsGeometryCheckerSetupTab::validateInput );
+#endif
   connect( ui.pushButtonOutputDirectory, &QAbstractButton::clicked, this, &QgsGeometryCheckerSetupTab::selectOutputDirectory );
   connect( ui.lineEditOutputDirectory, &QLineEdit::textChanged, this, &QgsGeometryCheckerSetupTab::validateInput );
   connect( ui.checkBoxSliverPolygons, &QAbstractButton::toggled, ui.widgetSliverThreshold, &QWidget::setEnabled );
@@ -125,16 +126,16 @@ void QgsGeometryCheckerSetupTab::updateLayers()
 
     QListWidgetItem *item = new QListWidgetItem( layer->name() );
     bool supportedGeometryType = true;
-    if ( layer->geometryType() == QgsWkbTypes::PointGeometry )
+    if ( layer->geometryType() == Qgis::GeometryType::Point )
     {
       item->setIcon( QgsIconUtils::iconPoint() );
     }
-    else if ( layer->geometryType() == QgsWkbTypes::LineGeometry )
+    else if ( layer->geometryType() == Qgis::GeometryType::Line )
     {
       item->setIcon( QgsIconUtils::iconLine() );
       ui.comboLineLayerIntersection->addItem( layer->name(), layer->id() );
     }
-    else if ( layer->geometryType() == QgsWkbTypes::PolygonGeometry )
+    else if ( layer->geometryType() == Qgis::GeometryType::Polygon )
     {
       item->setIcon( QgsIconUtils::iconPolygon() );
       ui.comboLineLayerIntersection->addItem( layer->name(), layer->id() );
@@ -216,16 +217,16 @@ void QgsGeometryCheckerSetupTab::validateInput()
   {
     for ( QgsVectorLayer *layer : layers )
     {
-      QgsWkbTypes::GeometryType geomType = layer->geometryType();
-      if ( geomType == QgsWkbTypes::PointGeometry )
+      Qgis::GeometryType geomType = layer->geometryType();
+      if ( geomType == Qgis::GeometryType::Point )
       {
         ++nPoint;
       }
-      else if ( geomType == QgsWkbTypes::LineGeometry )
+      else if ( geomType == Qgis::GeometryType::Line )
       {
         ++nLineString;
       }
-      else if ( geomType == QgsWkbTypes::PolygonGeometry )
+      else if ( geomType == Qgis::GeometryType::Polygon )
       {
         ++nPolygon;
       }
@@ -457,7 +458,7 @@ void QgsGeometryCheckerSetupTab::runChecks()
     featurePools.insert( layer->id(), new QgsVectorDataProviderFeaturePool( layer, selectedOnly ) );
   }
   // LineLayerIntersection check is enabled, make sure there is also a feature pool for that layer
-  if ( ui.checkLineLayerIntersection->isChecked() && !featurePools.keys().contains( ui.comboLineLayerIntersection->currentData().toString() ) )
+  if ( ui.checkLineLayerIntersection->isChecked() && !featurePools.contains( ui.comboLineLayerIntersection->currentData().toString() ) )
   {
     QgsVectorLayer *layer = QgsProject::instance()->mapLayer<QgsVectorLayer *>( ui.comboLineLayerIntersection->currentData().toString() );
     Q_ASSERT( layer );

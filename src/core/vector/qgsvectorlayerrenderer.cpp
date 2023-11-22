@@ -15,16 +15,13 @@
 
 #include "qgsvectorlayerrenderer.h"
 
-#include "diagram/qgsdiagram.h"
 
-#include "qgsdiagramrenderer.h"
 #include "qgsmessagelog.h"
 #include "qgspallabeling.h"
 #include "qgsrenderer.h"
 #include "qgsrendercontext.h"
 #include "qgssinglesymbolrenderer.h"
 #include "qgssymbollayer.h"
-#include "qgssymbollayerutils.h"
 #include "qgssymbol.h"
 #include "qgsvectorlayer.h"
 #include "qgsvectorlayerdiagramprovider.h"
@@ -42,6 +39,7 @@
 #include "qgsvectorlayertemporalproperties.h"
 #include "qgsmapclippingutils.h"
 #include "qgsfeaturerenderergenerator.h"
+#include "qgssettingsentryimpl.h"
 
 #include <QPicture>
 #include <QTimer>
@@ -52,6 +50,7 @@ QgsVectorLayerRenderer::QgsVectorLayerRenderer( QgsVectorLayer *layer, QgsRender
   , mLayer( layer )
   , mFields( layer->fields() )
   , mSource( std::make_unique< QgsVectorLayerFeatureSource >( layer ) )
+  , mNoSetLayerExpressionContext( layer->customProperty( QStringLiteral( "_noset_layer_expression_context" ) ).toBool() )
 {
   std::unique_ptr< QgsFeatureRenderer > mainRenderer( layer->renderer() ? layer->renderer()->clone() : nullptr );
 
@@ -66,6 +65,7 @@ QgsVectorLayerRenderer::QgsVectorLayerRenderer( QgsVectorLayer *layer, QgsRender
 
   bool insertedMainRenderer = false;
   double prevLevel = std::numeric_limits< double >::lowest();
+  // cppcheck-suppress danglingLifetime
   mRenderer = mainRenderer.get();
   for ( const QgsFeatureRendererGenerator *generator : std::as_const( generators ) )
   {
@@ -115,9 +115,9 @@ QgsVectorLayerRenderer::QgsVectorLayerRenderer( QgsVectorLayer *layer, QgsRender
     mSimplifyGeometry = layer->simplifyDrawingCanbeApplied( *renderContext(), QgsVectorSimplifyMethod::GeometrySimplification );
   }
 
-  mVertexMarkerOnlyForSelection = QgsSettingsRegistryCore::settingsDigitizingMarkerOnlyForSelected.value();
+  mVertexMarkerOnlyForSelection = QgsSettingsRegistryCore::settingsDigitizingMarkerOnlyForSelected->value();
 
-  QString markerTypeString = QgsSettingsRegistryCore::settingsDigitizingMarkerStyle.value();
+  QString markerTypeString = QgsSettingsRegistryCore::settingsDigitizingMarkerStyle->value();
   if ( markerTypeString == QLatin1String( "Cross" ) )
   {
     mVertexMarkerStyle = Qgis::VertexMarkerType::Cross;
@@ -131,8 +131,9 @@ QgsVectorLayerRenderer::QgsVectorLayerRenderer( QgsVectorLayer *layer, QgsRender
     mVertexMarkerStyle = Qgis::VertexMarkerType::NoMarker;
   }
 
-  mVertexMarkerSize = QgsSettingsRegistryCore::settingsDigitizingMarkerSizeMm.value();
+  mVertexMarkerSize = QgsSettingsRegistryCore::settingsDigitizingMarkerSizeMm->value();
 
+  // cppcheck-suppress danglingLifetime
   QgsDebugMsgLevel( "rendering v2:\n  " + mRenderer->dump(), 2 );
 
   if ( mDrawVertexMarkers )
@@ -140,7 +141,8 @@ QgsVectorLayerRenderer::QgsVectorLayerRenderer( QgsVectorLayer *layer, QgsRender
     // set editing vertex markers style (main renderer only)
     mRenderer->setVertexMarkerAppearance( mVertexMarkerStyle, mVertexMarkerSize );
   }
-  renderContext()->expressionContext() << QgsExpressionContextUtils::layerScope( layer );
+  if ( !mNoSetLayerExpressionContext )
+    renderContext()->expressionContext() << QgsExpressionContextUtils::layerScope( layer );
 
   for ( const std::unique_ptr< QgsFeatureRenderer > &renderer : mRenderers )
   {
@@ -196,7 +198,7 @@ bool QgsVectorLayerRenderer::forceRasterRender() const
 
 bool QgsVectorLayerRenderer::render()
 {
-  if ( mGeometryType == QgsWkbTypes::NullGeometry || mGeometryType == QgsWkbTypes::UnknownGeometry )
+  if ( mGeometryType == Qgis::GeometryType::Null || mGeometryType == Qgis::GeometryType::Unknown )
   {
     mReadyToCompose = true;
     return true;
@@ -262,6 +264,13 @@ bool QgsVectorLayerRenderer::renderInternal( QgsFeatureRenderer *renderer )
 
   renderer->startRender( context, mFields );
 
+  if ( renderer->canSkipRender() )
+  {
+    // nothing to draw for now...
+    renderer->stopRender( context );
+    return true;
+  }
+
   QString rendererFilter = renderer->filter( mFields );
 
   QgsRectangle requestExtent = context.extent();
@@ -273,7 +282,7 @@ bool QgsVectorLayerRenderer::renderInternal( QgsFeatureRenderer *renderer )
     mClipFeatureGeom = QgsMapClippingUtils::calculateFeatureIntersectionGeometry( mClippingRegions, context, mApplyClipGeometries );
 
     bool needsPainterClipPath = false;
-    const QPainterPath path = QgsMapClippingUtils::calculatePainterClipRegion( mClippingRegions, context, QgsMapLayerType::VectorLayer, needsPainterClipPath );
+    const QPainterPath path = QgsMapClippingUtils::calculatePainterClipRegion( mClippingRegions, context, Qgis::LayerType::Vector, needsPainterClipPath );
     if ( needsPainterClipPath )
       context.painter()->setClipPath( path, Qt::IntersectClip );
 
@@ -329,7 +338,7 @@ bool QgsVectorLayerRenderer::renderInternal( QgsFeatureRenderer *renderer )
       {
         QgsCoordinateTransform toleranceTransform = ct;
         QgsPointXY center = context.extent().center();
-        double rectSize = toleranceTransform.sourceCrs().mapUnits() == QgsUnitTypes::DistanceDegrees ? 0.0008983 /* ~100/(40075014/360=111319.4833) */ : 100;
+        double rectSize = toleranceTransform.sourceCrs().mapUnits() == Qgis::DistanceUnit::Degrees ? 0.0008983 /* ~100/(40075014/360=111319.4833) */ : 100;
 
         QgsRectangle sourceRect = QgsRectangle( center.x(), center.y(), center.x() + rectSize, center.y() + rectSize );
         toleranceTransform.setBallparkTransformsAreAppropriate( true );
@@ -456,7 +465,8 @@ void QgsVectorLayerRenderer::drawRenderer( QgsFeatureRenderer *renderer, QgsFeat
       if ( mApplyClipGeometries )
         context.setFeatureClipGeometry( mClipFeatureGeom );
 
-      context.expressionContext().setFeature( fet );
+      if ( ! mNoSetLayerExpressionContext )
+        context.expressionContext().setFeature( fet );
 
       bool sel = isMainRenderer && context.showSelection() && mSelectedFeatureIds.contains( fet.id() );
       bool drawMarker = isMainRenderer && ( mDrawVertexMarkers && context.drawEditingInformation() && ( !mVertexMarkerOnlyForSelection || sel ) );
@@ -489,7 +499,7 @@ void QgsVectorLayerRenderer::drawRenderer( QgsFeatureRenderer *renderer, QgsFeat
           QgsGeometry obstacleGeometry;
           QgsSymbolList symbols = renderer->originalSymbolsForFeature( fet, context );
           QgsSymbol *symbol = nullptr;
-          if ( !symbols.isEmpty() && fet.geometry().type() == QgsWkbTypes::PointGeometry )
+          if ( !symbols.isEmpty() && fet.geometry().type() == Qgis::GeometryType::Point )
           {
             obstacleGeometry = QgsVectorLayerLabelProvider::getPointObstacleGeometry( fet, context, symbols );
           }
@@ -520,8 +530,8 @@ void QgsVectorLayerRenderer::drawRenderer( QgsFeatureRenderer *renderer, QgsFeat
     catch ( const QgsCsException &cse )
     {
       Q_UNUSED( cse )
-      QgsDebugMsg( QStringLiteral( "Failed to transform a point while drawing a feature with ID '%1'. Ignoring this feature. %2" )
-                   .arg( fet.id() ).arg( cse.what() ) );
+      QgsDebugError( QStringLiteral( "Failed to transform a point while drawing a feature with ID '%1'. Ignoring this feature. %2" )
+                     .arg( fet.id() ).arg( cse.what() ) );
     }
   }
 
@@ -534,7 +544,28 @@ void QgsVectorLayerRenderer::drawRendererLevels( QgsFeatureRenderer *renderer, Q
 {
   const bool isMainRenderer = renderer == mRenderer;
 
-  QHash< QgsSymbol *, QList<QgsFeature> > features; // key = symbol, value = array of features
+  // We need to figure out in which order all the features should be rendered.
+  // Ordering is based on (a) a "level" which is determined by the configured
+  // feature rendering order" and (b) the symbol level. The "level" is
+  // determined by the values of the attributes defined in the feature
+  // rendering order settings. Each time the attribute(s) have a new distinct
+  // value, a new empty QHash is added to the "features" list. This QHash is
+  // then filled by mappings from the symbol to a list of all the features
+  // that should be rendered by that symbol.
+  //
+  // If orderBy is not enabled, this list will only ever contain a single
+  // element.
+  QList<QHash< QgsSymbol *, QList<QgsFeature> >> features;
+
+  // We have at least one "level" for the features.
+  features.push_back( {} );
+
+  QSet<int> orderByAttributeIdx;
+  if ( renderer->orderByEnabled() )
+  {
+    orderByAttributeIdx = renderer->orderBy().usedAttributeIndices( mSource->fields() );
+  }
+
   QgsRenderContext &context = *renderContext();
 
   QgsSingleSymbolRenderer *selRenderer = nullptr;
@@ -562,6 +593,7 @@ void QgsVectorLayerRenderer::drawRendererLevels( QgsFeatureRenderer *renderer, Q
 
   // 1. fetch features
   QgsFeature fet;
+  QVector<QVariant> prevValues; // previous values of ORDER BY attributes
   while ( fit.nextFeature( fet ) )
   {
     if ( context.renderingStopped() )
@@ -577,20 +609,41 @@ void QgsVectorLayerRenderer::drawRendererLevels( QgsFeatureRenderer *renderer, Q
     if ( clipEngine && !clipEngine->intersects( fet.geometry().constGet() ) )
       continue; // skip features outside of clipping region
 
-    context.expressionContext().setFeature( fet );
+    if ( ! mNoSetLayerExpressionContext )
+      context.expressionContext().setFeature( fet );
     QgsSymbol *sym = renderer->symbolForFeature( fet, context );
     if ( !sym )
     {
       continue;
     }
 
+    if ( renderer->orderByEnabled() )
+    {
+      QVector<QVariant> currentValues;
+      for ( auto const idx : orderByAttributeIdx )
+      {
+        currentValues.push_back( fet.attribute( idx ) );
+      }
+      if ( prevValues.empty() )
+      {
+        prevValues = std::move( currentValues );
+      }
+      else if ( currentValues != prevValues )
+      {
+        // Current values of ORDER BY attributes are different than previous
+        // values of these attributes. Start a new level.
+        prevValues = std::move( currentValues );
+        features.push_back( {} );
+      }
+    }
+
     if ( !context.testFlag( Qgis::RenderContextFlag::SkipSymbolRendering ) )
     {
-      if ( !features.contains( sym ) )
+      if ( !features.back().contains( sym ) )
       {
-        features.insert( sym, QList<QgsFeature>() );
+        features.back().insert( sym, QList<QgsFeature>() );
       }
-      features[sym].append( fet );
+      features.back()[sym].append( fet );
     }
 
     // new labeling engine
@@ -599,7 +652,7 @@ void QgsVectorLayerRenderer::drawRendererLevels( QgsFeatureRenderer *renderer, Q
       QgsGeometry obstacleGeometry;
       QgsSymbolList symbols = renderer->originalSymbolsForFeature( fet, context );
       QgsSymbol *symbol = nullptr;
-      if ( !symbols.isEmpty() && fet.geometry().type() == QgsWkbTypes::PointGeometry )
+      if ( !symbols.isEmpty() && fet.geometry().type() == Qgis::GeometryType::Point )
       {
         obstacleGeometry = QgsVectorLayerLabelProvider::getPointObstacleGeometry( fet, context, symbols );
       }
@@ -626,7 +679,7 @@ void QgsVectorLayerRenderer::drawRendererLevels( QgsFeatureRenderer *renderer, Q
 
   scopePopper.reset();
 
-  if ( features.empty() )
+  if ( features.back().empty() )
   {
     // nothing to draw
     stopRenderer( renderer, selRenderer );
@@ -655,51 +708,54 @@ void QgsVectorLayerRenderer::drawRendererLevels( QgsFeatureRenderer *renderer, Q
     context.setFeatureClipGeometry( mClipFeatureGeom );
 
   // 2. draw features in correct order
-  for ( int l = 0; l < levels.count(); l++ )
+  for ( auto &featureLists : features )
   {
-    QgsSymbolLevel &level = levels[l];
-    for ( int i = 0; i < level.count(); i++ )
+    for ( int l = 0; l < levels.count(); l++ )
     {
-      QgsSymbolLevelItem &item = level[i];
-      if ( !features.contains( item.symbol() ) )
+      const QgsSymbolLevel &level = levels[l];
+      for ( int i = 0; i < level.count(); i++ )
       {
-        QgsDebugMsg( QStringLiteral( "level item's symbol not found!" ) );
-        continue;
-      }
-      int layer = item.layer();
-      QList<QgsFeature> &lst = features[item.symbol()];
-      QList<QgsFeature>::iterator fit;
-      for ( fit = lst.begin(); fit != lst.end(); ++fit )
-      {
-        if ( context.renderingStopped() )
+        const QgsSymbolLevelItem &item = level[i];
+        if ( !featureLists.contains( item.symbol() ) )
         {
-          stopRenderer( renderer, selRenderer );
-          return;
+          QgsDebugError( QStringLiteral( "level item's symbol not found!" ) );
+          continue;
         }
-
-        bool sel = isMainRenderer && context.showSelection() && mSelectedFeatureIds.contains( fit->id() );
-        // maybe vertex markers should be drawn only during the last pass...
-        bool drawMarker = isMainRenderer && ( mDrawVertexMarkers && context.drawEditingInformation() && ( !mVertexMarkerOnlyForSelection || sel ) );
-
-        context.expressionContext().setFeature( *fit );
-
-        try
+        const int layer = item.layer();
+        const QList<QgsFeature> &lst = featureLists[item.symbol()];
+        for ( auto fit = lst.begin(); fit != lst.end(); ++fit )
         {
-          renderer->renderFeature( *fit, context, layer, sel, drawMarker );
-
-          // as soon as first feature is rendered, we can start showing layer updates.
-          // but if we are blocking render updates (so that a previously cached image is being shown), we wait
-          // at most e.g. 3 seconds before we start forcing progressive updates.
-          if ( !mBlockRenderUpdates || mElapsedTimer.elapsed() > MAX_TIME_TO_USE_CACHED_PREVIEW_IMAGE )
+          if ( context.renderingStopped() )
           {
-            mReadyToCompose = true;
+            stopRenderer( renderer, selRenderer );
+            return;
           }
-        }
-        catch ( const QgsCsException &cse )
-        {
-          Q_UNUSED( cse )
-          QgsDebugMsg( QStringLiteral( "Failed to transform a point while drawing a feature with ID '%1'. Ignoring this feature. %2" )
-                       .arg( fet.id() ).arg( cse.what() ) );
+
+          const bool sel = isMainRenderer && context.showSelection() && mSelectedFeatureIds.contains( fit->id() );
+          // maybe vertex markers should be drawn only during the last pass...
+          const bool drawMarker = isMainRenderer && ( mDrawVertexMarkers && context.drawEditingInformation() && ( !mVertexMarkerOnlyForSelection || sel ) );
+
+          if ( ! mNoSetLayerExpressionContext )
+            context.expressionContext().setFeature( *fit );
+
+          try
+          {
+            renderer->renderFeature( *fit, context, layer, sel, drawMarker );
+
+            // as soon as first feature is rendered, we can start showing layer updates.
+            // but if we are blocking render updates (so that a previously cached image is being shown), we wait
+            // at most e.g. 3 seconds before we start forcing progressive updates.
+            if ( !mBlockRenderUpdates || mElapsedTimer.elapsed() > MAX_TIME_TO_USE_CACHED_PREVIEW_IMAGE )
+            {
+              mReadyToCompose = true;
+            }
+          }
+          catch ( const QgsCsException &cse )
+          {
+            Q_UNUSED( cse )
+            QgsDebugError( QStringLiteral( "Failed to transform a point while drawing a feature with ID '%1'. Ignoring this feature. %2" )
+                           .arg( fet.id() ).arg( cse.what() ) );
+          }
         }
       }
     }

@@ -17,7 +17,7 @@
 
 #include "qgsauxiliarystorage.h"
 #include "qgslogger.h"
-#include "qgsspatialiteutils.h"
+#include "qgssqliteutils.h"
 #include "qgsproject.h"
 #include "qgsvectorlayerlabeling.h"
 #include "qgsdiagramrenderer.h"
@@ -30,7 +30,10 @@
 #define AS_JOINFIELD QStringLiteral( "ASPK" )
 #define AS_EXTENSION QStringLiteral( "qgd" )
 #define AS_JOINPREFIX QStringLiteral( "auxiliary_storage_" )
+
 typedef QVector<QgsPalLayerSettings::Property> PalPropertyList;
+typedef QVector<QgsSymbolLayer::Property> SymbolPropertyList;
+
 Q_GLOBAL_STATIC_WITH_ARGS( PalPropertyList, palHiddenProperties, (
 {
   QgsPalLayerSettings::PositionX,
@@ -58,6 +61,11 @@ Q_GLOBAL_STATIC_WITH_ARGS( PalPropertyList, palHiddenProperties, (
   QgsPalLayerSettings::AlwaysShow,
   QgsPalLayerSettings::CalloutDraw,
   QgsPalLayerSettings::LabelAllParts
+} ) )
+Q_GLOBAL_STATIC_WITH_ARGS( SymbolPropertyList, symbolHiddenProperties, (
+{
+  QgsSymbolLayer::PropertyAngle,
+  QgsSymbolLayer::PropertyOffset
 } ) )
 
 //
@@ -375,6 +383,19 @@ bool QgsAuxiliaryLayer::isHiddenProperty( int index ) const
       }
     }
   }
+  else if ( def.origin().compare( QLatin1String( "symbol" ) ) == 0 )
+  {
+    const SymbolPropertyList &symbolProps = *symbolHiddenProperties();
+    for ( const QgsSymbolLayer::Property &p : symbolProps )
+    {
+      const QString propName = QgsSymbolLayer::propertyDefinitions()[ p ].name();
+      if ( propName.compare( def.name() ) == 0 )
+      {
+        hidden = true;
+        break;
+      }
+    }
+  }
 
   return hidden;
 }
@@ -656,7 +677,7 @@ QgsAuxiliaryLayer *QgsAuxiliaryStorage::createAuxiliaryLayer( const QgsField &fi
   if ( mValid && layer )
   {
     const QString table( layer->id() );
-    spatialite_database_unique_ptr database;
+    sqlite3_database_unique_ptr database;
     database = openDB( currentFileName() );
 
     if ( !tableExists( table, database.get() ) )
@@ -681,7 +702,7 @@ bool QgsAuxiliaryStorage::deleteTable( const QgsDataSourceUri &ogrUri )
 
   if ( !uri.database().isEmpty() && !uri.table().isEmpty() )
   {
-    spatialite_database_unique_ptr database;
+    sqlite3_database_unique_ptr database;
     database = openDB( uri.database() );
 
     if ( database )
@@ -704,7 +725,7 @@ bool QgsAuxiliaryStorage::duplicateTable( const QgsDataSourceUri &ogrUri, const 
 
   if ( !uri.table().isEmpty() && !uri.database().isEmpty() )
   {
-    spatialite_database_unique_ptr database;
+    sqlite3_database_unique_ptr database;
     database = openDB( uri.database() );
 
     if ( database )
@@ -781,7 +802,7 @@ QString QgsAuxiliaryStorage::debugMsg( const QString &sql, sqlite3 *handler )
   const QString err = QString::fromUtf8( sqlite3_errmsg( handler ) );
   const QString msg = QObject::tr( "Unable to execute" );
   const QString errMsg = QObject::tr( "%1 '%2': %3" ).arg( msg, sql, err );
-  QgsDebugMsg( errMsg );
+  QgsDebugError( errMsg );
   return errMsg;
 }
 
@@ -798,9 +819,9 @@ bool QgsAuxiliaryStorage::createTable( const QString &type, const QString &table
   return true;
 }
 
-spatialite_database_unique_ptr QgsAuxiliaryStorage::createDB( const QString &filename )
+sqlite3_database_unique_ptr QgsAuxiliaryStorage::createDB( const QString &filename )
 {
-  spatialite_database_unique_ptr database;
+  sqlite3_database_unique_ptr database;
 
   int rc;
   rc = database.open_v2( filename, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr );
@@ -815,9 +836,9 @@ spatialite_database_unique_ptr QgsAuxiliaryStorage::createDB( const QString &fil
   return database;
 }
 
-spatialite_database_unique_ptr QgsAuxiliaryStorage::openDB( const QString &filename )
+sqlite3_database_unique_ptr QgsAuxiliaryStorage::openDB( const QString &filename )
 {
-  spatialite_database_unique_ptr database;
+  sqlite3_database_unique_ptr database;
   const int rc = database.open_v2( filename, SQLITE_OPEN_READWRITE, nullptr );
 
   if ( rc )
@@ -848,9 +869,9 @@ bool QgsAuxiliaryStorage::tableExists( const QString &table, sqlite3 *handler )
   return false;
 }
 
-spatialite_database_unique_ptr QgsAuxiliaryStorage::open( const QString &filename )
+sqlite3_database_unique_ptr QgsAuxiliaryStorage::open( const QString &filename )
 {
-  spatialite_database_unique_ptr database;
+  sqlite3_database_unique_ptr database;
 
   if ( filename.isEmpty() )
   {
@@ -874,7 +895,7 @@ spatialite_database_unique_ptr QgsAuxiliaryStorage::open( const QString &filenam
   return database;
 }
 
-spatialite_database_unique_ptr QgsAuxiliaryStorage::open( const QgsProject &project )
+sqlite3_database_unique_ptr QgsAuxiliaryStorage::open( const QgsProject &project )
 {
   return open( filenameForProject( project ) );
 }

@@ -1,0 +1,85 @@
+--- a/python/core/auto_additions/qgis.py	2023-08-21 19:39:45.527061155 +0300
++++ b/python/core/auto_additions/qgis.py	2023-11-06 18:48:24.000000000 +0300
+@@ -1278,7 +1278,7 @@
+ Qgis.ContentStatus.__doc__ = 'Status for fetched or stored content\n\n.. versionadded:: 3.22\n\n' + '* ``NotStarted``: ' + Qgis.ContentStatus.NotStarted.__doc__ + '\n' + '* ``Running``: ' + Qgis.ContentStatus.Running.__doc__ + '\n' + '* ``Finished``: ' + Qgis.ContentStatus.Finished.__doc__ + '\n' + '* ``Failed``: ' + Qgis.ContentStatus.Failed.__doc__ + '\n' + '* ``Canceled``: ' + Qgis.ContentStatus.Canceled.__doc__
+ # --
+ Qgis.ContentStatus.baseClass = Qgis
+-# monkey patching scoped based enum
++"""# monkey patching scoped based enum
+ Qgis.GpsConnectionType.Automatic.__doc__ = "Automatically detected GPS device connection"
+ Qgis.GpsConnectionType.Internal.__doc__ = "Internal GPS device"
+ Qgis.GpsConnectionType.Serial.__doc__ = "Serial port GPS device"
+@@ -1393,7 +1393,7 @@
+ Qgis.GpsFeatureType.Track.__doc__ = "Track"
+ Qgis.GpsFeatureType.__doc__ = 'GPS feature types.\n\n.. versionadded:: 3.22\n\n' + '* ``Waypoint``: ' + Qgis.GpsFeatureType.Waypoint.__doc__ + '\n' + '* ``Route``: ' + Qgis.GpsFeatureType.Route.__doc__ + '\n' + '* ``Track``: ' + Qgis.GpsFeatureType.Track.__doc__
+ # --
+-Qgis.GpsFeatureType.baseClass = Qgis
++Qgis.GpsFeatureType.baseClass = Qgis"""
+ QgsGeometry.OperationResult = Qgis.GeometryOperationResult
+ # monkey patching scoped based enum
+ QgsGeometry.Success = Qgis.GeometryOperationResult.Success
+@@ -2662,35 +2662,35 @@
+ Qgis.MapBoxGlStyleSourceType.__doc__ = 'Available MapBox GL style source types.\n\n.. versionadded:: 3.28\n\n' + '* ``Vector``: ' + Qgis.MapBoxGlStyleSourceType.Vector.__doc__ + '\n' + '* ``Raster``: ' + Qgis.MapBoxGlStyleSourceType.Raster.__doc__ + '\n' + '* ``RasterDem``: ' + Qgis.MapBoxGlStyleSourceType.RasterDem.__doc__ + '\n' + '* ``GeoJson``: ' + Qgis.MapBoxGlStyleSourceType.GeoJson.__doc__ + '\n' + '* ``Image``: ' + Qgis.MapBoxGlStyleSourceType.Image.__doc__ + '\n' + '* ``Video``: ' + Qgis.MapBoxGlStyleSourceType.Video.__doc__ + '\n' + '* ``Unknown``: ' + Qgis.MapBoxGlStyleSourceType.Unknown.__doc__
+ # --
+ Qgis.MapBoxGlStyleSourceType.baseClass = Qgis
+-QgsArcGisPortalUtils.ItemType = Qgis.ArcGisRestServiceType
+-# monkey patching scoped based enum
+-QgsArcGisPortalUtils.FeatureService = Qgis.ArcGisRestServiceType.FeatureServer
+-QgsArcGisPortalUtils.ItemType.FeatureService = Qgis.ArcGisRestServiceType.FeatureServer
+-QgsArcGisPortalUtils.FeatureService.is_monkey_patched = True
+-QgsArcGisPortalUtils.FeatureService.__doc__ = "FeatureServer"
+-QgsArcGisPortalUtils.MapService = Qgis.ArcGisRestServiceType.MapServer
+-QgsArcGisPortalUtils.ItemType.MapService = Qgis.ArcGisRestServiceType.MapServer
+-QgsArcGisPortalUtils.MapService.is_monkey_patched = True
+-QgsArcGisPortalUtils.MapService.__doc__ = "MapServer"
+-QgsArcGisPortalUtils.ImageService = Qgis.ArcGisRestServiceType.ImageServer
+-QgsArcGisPortalUtils.ItemType.ImageService = Qgis.ArcGisRestServiceType.ImageServer
+-QgsArcGisPortalUtils.ImageService.is_monkey_patched = True
+-QgsArcGisPortalUtils.ImageService.__doc__ = "ImageServer"
+-QgsArcGisPortalUtils.GlobeServer = Qgis.ArcGisRestServiceType.GlobeServer
+-QgsArcGisPortalUtils.GlobeServer.is_monkey_patched = True
+-QgsArcGisPortalUtils.GlobeServer.__doc__ = "GlobeServer"
+-QgsArcGisPortalUtils.GPServer = Qgis.ArcGisRestServiceType.GPServer
+-QgsArcGisPortalUtils.GPServer.is_monkey_patched = True
+-QgsArcGisPortalUtils.GPServer.__doc__ = "GPServer"
+-QgsArcGisPortalUtils.GeocodeServer = Qgis.ArcGisRestServiceType.GeocodeServer
+-QgsArcGisPortalUtils.GeocodeServer.is_monkey_patched = True
+-QgsArcGisPortalUtils.GeocodeServer.__doc__ = "GeocodeServer"
+-QgsArcGisPortalUtils.Unknown = Qgis.ArcGisRestServiceType.Unknown
+-QgsArcGisPortalUtils.Unknown.is_monkey_patched = True
+-QgsArcGisPortalUtils.Unknown.__doc__ = "Other unknown/unsupported type"
+-Qgis.ArcGisRestServiceType.__doc__ = 'Available ArcGIS REST service types.\n\n.. note::\n\n   Prior to QGIS 3.26 this was available as :py:class:`QgsArcGisPortalUtils`.ItemType.\n\n.. versionadded:: 3.28\n\n' + '* ``FeatureService``: ' + Qgis.ArcGisRestServiceType.FeatureServer.__doc__ + '\n' + '* ``MapService``: ' + Qgis.ArcGisRestServiceType.MapServer.__doc__ + '\n' + '* ``ImageService``: ' + Qgis.ArcGisRestServiceType.ImageServer.__doc__ + '\n' + '* ``GlobeServer``: ' + Qgis.ArcGisRestServiceType.GlobeServer.__doc__ + '\n' + '* ``GPServer``: ' + Qgis.ArcGisRestServiceType.GPServer.__doc__ + '\n' + '* ``GeocodeServer``: ' + Qgis.ArcGisRestServiceType.GeocodeServer.__doc__ + '\n' + '* ``Unknown``: ' + Qgis.ArcGisRestServiceType.Unknown.__doc__
+-# --
+-Qgis.ArcGisRestServiceType.baseClass = Qgis
++#QgsArcGisPortalUtils.ItemType = Qgis.ArcGisRestServiceType
++## monkey patching scoped based enum
++#QgsArcGisPortalUtils.FeatureService = Qgis.ArcGisRestServiceType.FeatureServer
++#QgsArcGisPortalUtils.ItemType.FeatureService = Qgis.ArcGisRestServiceType.FeatureServer
++#QgsArcGisPortalUtils.FeatureService.is_monkey_patched = True
++#QgsArcGisPortalUtils.FeatureService.__doc__ = "FeatureServer"
++#QgsArcGisPortalUtils.MapService = Qgis.ArcGisRestServiceType.MapServer
++#QgsArcGisPortalUtils.ItemType.MapService = Qgis.ArcGisRestServiceType.MapServer
++#QgsArcGisPortalUtils.MapService.is_monkey_patched = True
++#QgsArcGisPortalUtils.MapService.__doc__ = "MapServer"
++#QgsArcGisPortalUtils.ImageService = Qgis.ArcGisRestServiceType.ImageServer
++#QgsArcGisPortalUtils.ItemType.ImageService = Qgis.ArcGisRestServiceType.ImageServer
++#QgsArcGisPortalUtils.ImageService.is_monkey_patched = True
++#QgsArcGisPortalUtils.ImageService.__doc__ = "ImageServer"
++#QgsArcGisPortalUtils.GlobeServer = Qgis.ArcGisRestServiceType.GlobeServer
++#QgsArcGisPortalUtils.GlobeServer.is_monkey_patched = True
++#QgsArcGisPortalUtils.GlobeServer.__doc__ = "GlobeServer"
++#QgsArcGisPortalUtils.GPServer = Qgis.ArcGisRestServiceType.GPServer
++#QgsArcGisPortalUtils.GPServer.is_monkey_patched = True
++#QgsArcGisPortalUtils.GPServer.__doc__ = "GPServer"
++#QgsArcGisPortalUtils.GeocodeServer = Qgis.ArcGisRestServiceType.GeocodeServer
++#QgsArcGisPortalUtils.GeocodeServer.is_monkey_patched = True
++#QgsArcGisPortalUtils.GeocodeServer.__doc__ = "GeocodeServer"
++#QgsArcGisPortalUtils.Unknown = Qgis.ArcGisRestServiceType.Unknown
++#QgsArcGisPortalUtils.Unknown.is_monkey_patched = True
++#QgsArcGisPortalUtils.Unknown.__doc__ = "Other unknown/unsupported type"
++#Qgis.ArcGisRestServiceType.__doc__ = 'Available ArcGIS REST service types.\n\n.. note::\n\n   Prior to QGIS 3.26 this was available as :py:class:`QgsArcGisPortalUtils`.ItemType.\n\n.. versionadded:: 3.28\n\n' + '* ``FeatureService``: ' + Qgis.ArcGisRestServiceType.FeatureServer.__doc__ + '\n' + '* ``MapService``: ' + Qgis.ArcGisRestServiceType.MapServer.__doc__ + '\n' + '* ``ImageService``: ' + Qgis.ArcGisRestServiceType.ImageServer.__doc__ + '\n' + '* ``GlobeServer``: ' + Qgis.ArcGisRestServiceType.GlobeServer.__doc__ + '\n' + '* ``GPServer``: ' + Qgis.ArcGisRestServiceType.GPServer.__doc__ + '\n' + '* ``GeocodeServer``: ' + Qgis.ArcGisRestServiceType.GeocodeServer.__doc__ + '\n' + '* ``Unknown``: ' + Qgis.ArcGisRestServiceType.Unknown.__doc__
++## --
++#Qgis.ArcGisRestServiceType.baseClass = Qgis
+ QgsRelation.RelationType = Qgis.RelationshipType
+ # monkey patching scoped based enum
+ QgsRelation.Normal = Qgis.RelationshipType.Normal

@@ -33,12 +33,12 @@
 #include <functional>
 
 #include "qgsfilterlineedit.h"
-#include "qgsmessagebaritem.h"
 #include "qgslogger.h"
 #include "qgsoptionsdialoghighlightwidget.h"
 #include "qgsoptionswidgetfactory.h"
 #include "qgsguiutils.h"
 #include "qgsapplication.h"
+#include "qgsvariantutils.h"
 
 QgsOptionsDialogBase::QgsOptionsDialogBase( const QString &settingsKey, QWidget *parent, Qt::WindowFlags fl, QgsSettings *settings )
   : QDialog( parent, fl )
@@ -228,7 +228,7 @@ void QgsOptionsDialogBase::restoreOptionsBaseUi( const QString &title )
   if ( optView )
   {
     optView->setMaximumWidth(
-      mSettings->value( QStringLiteral( "/Windows/%1/splitState" ).arg( mOptsKey ) ).isNull() ? 150 : 16777215 );
+      QgsVariantUtils::isNull( mSettings->value( QStringLiteral( "/Windows/%1/splitState" ).arg( mOptsKey ) ) ) ? 150 : 16777215 );
     // get rid of annoying outer focus rect on Mac
     optView->setAttribute( Qt::WA_MacShowFocusRect, false );
   }
@@ -324,7 +324,7 @@ void QgsOptionsDialogBase::setCurrentPage( const QString &page )
   }
 }
 
-void QgsOptionsDialogBase::addPage( const QString &title, const QString &tooltip, const QIcon &icon, QWidget *widget, const QStringList &path )
+void QgsOptionsDialogBase::addPage( const QString &title, const QString &tooltip, const QIcon &icon, QWidget *widget, const QStringList &path, const QString &key )
 {
   int newPage = -1;
 
@@ -340,6 +340,10 @@ void QgsOptionsDialogBase::addPage( const QString &title, const QString &tooltip
   {
     QStandardItem *item = new QStandardItem( icon, title );
     item->setToolTip( tooltip );
+    if ( !key.isEmpty() )
+    {
+      item->setData( key );
+    }
 
     QModelIndex parent;
     QStandardItem *parentItem = nullptr;
@@ -398,7 +402,7 @@ void QgsOptionsDialogBase::addPage( const QString &title, const QString &tooltip
     mOptStackedWidget->insertWidget( newPage, widget );
 }
 
-void QgsOptionsDialogBase::insertPage( const QString &title, const QString &tooltip, const QIcon &icon, QWidget *widget, const QString &before, const QStringList &path )
+void QgsOptionsDialogBase::insertPage( const QString &title, const QString &tooltip, const QIcon &icon, QWidget *widget, const QString &before, const QStringList &path, const QString &key )
 {
   //find the page with a matching widget name
   for ( int page = 0; page < mOptStackedWidget->count(); ++page )
@@ -469,6 +473,10 @@ void QgsOptionsDialogBase::insertPage( const QString &title, const QString &tool
 
         QStandardItem *item = new QStandardItem( icon, title );
         item->setToolTip( tooltip );
+        if ( !key.isEmpty() )
+        {
+          item->setData( key );
+        }
         if ( parentItem )
         {
           if ( sourceBeforeIndices.empty() )
@@ -643,31 +651,34 @@ void QgsOptionsDialogBase::registerTextSearchWidgets()
 
   for ( int i = 0; i < mOptStackedWidget->count(); i++ )
   {
-
     const QList< QWidget * > widgets = mOptStackedWidget->widget( i )->findChildren<QWidget *>();
-    for ( QWidget *w : widgets )
+    for ( QWidget *widget : widgets )
     {
-      // get custom highlight widget in user added pages
-      QHash<QWidget *, QgsOptionsDialogHighlightWidget *> customHighlightWidgets;
-      QgsOptionsPageWidget *opw = qobject_cast<QgsOptionsPageWidget *>( mOptStackedWidget->widget( i ) );
-      if ( opw )
+      // see if the widget also inherits QgsOptionsDialogHighlightWidget
+      QgsOptionsDialogHighlightWidget *shw = dynamic_cast<QgsOptionsDialogHighlightWidget *>( widget );
+      if ( !shw )
       {
-        customHighlightWidgets = opw->registeredHighlightWidgets();
-      }
-      QgsOptionsDialogHighlightWidget *shw = nullptr;
-      // take custom if exists
-      if ( customHighlightWidgets.contains( w ) )
-      {
-        shw = customHighlightWidgets.value( w );
+        // get custom highlight widget in user added pages
+        QHash<QWidget *, QgsOptionsDialogHighlightWidget *> customHighlightWidgets;
+        QgsOptionsPageWidget *opw = qobject_cast<QgsOptionsPageWidget *>( mOptStackedWidget->widget( i ) );
+        if ( opw )
+        {
+          customHighlightWidgets = opw->registeredHighlightWidgets();
+        }
+        // take custom if exists
+        if ( customHighlightWidgets.contains( widget ) )
+        {
+          shw = customHighlightWidgets.value( widget );
+        }
       }
       // try to construct one otherwise
       if ( !shw || !shw->isValid() )
       {
-        shw = QgsOptionsDialogHighlightWidget::createWidget( w );
+        shw = QgsOptionsDialogHighlightWidget::createWidget( widget );
       }
       if ( shw && shw->isValid() )
       {
-        QgsDebugMsgLevel( QStringLiteral( "Registering: %1" ).arg( w->objectName() ), 4 );
+        QgsDebugMsgLevel( QStringLiteral( "Registering: %1" ).arg( widget->objectName() ), 4 );
         mRegisteredSearchWidgets.append( qMakePair( shw, i ) );
       }
       else

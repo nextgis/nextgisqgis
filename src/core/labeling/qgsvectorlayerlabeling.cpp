@@ -50,22 +50,23 @@ QgsPalLayerSettings QgsAbstractVectorLayerLabeling::defaultSettingsForLayer( con
 {
   QgsPalLayerSettings settings;
   settings.fieldName = layer->displayField();
+  settings.setFormat( QgsStyle::defaultTextFormatForProject( layer->project() ) );
 
   switch ( layer->geometryType() )
   {
-    case QgsWkbTypes::PointGeometry:
-      settings.placement = QgsPalLayerSettings::OrderedPositionsAroundPoint;
-      settings.offsetType = QgsPalLayerSettings::FromSymbolBounds;
+    case Qgis::GeometryType::Point:
+      settings.placement = Qgis::LabelPlacement::OrderedPositionsAroundPoint;
+      settings.offsetType = Qgis::LabelOffsetType::FromSymbolBounds;
       break;
-    case QgsWkbTypes::LineGeometry:
-      settings.placement = QgsPalLayerSettings::Line;
+    case Qgis::GeometryType::Line:
+      settings.placement = Qgis::LabelPlacement::Line;
       break;
-    case QgsWkbTypes::PolygonGeometry:
-      settings.placement = QgsPalLayerSettings::AroundPoint;
+    case Qgis::GeometryType::Polygon:
+      settings.placement = Qgis::LabelPlacement::AroundPoint;
       break;
 
-    case QgsWkbTypes::UnknownGeometry:
-    case QgsWkbTypes::NullGeometry:
+    case Qgis::GeometryType::Unknown:
+    case Qgis::GeometryType::Null:
       break;
   }
   return settings;
@@ -135,46 +136,46 @@ QgsVectorLayerSimpleLabeling *QgsVectorLayerSimpleLabeling::create( const QDomEl
   return new QgsVectorLayerSimpleLabeling( QgsPalLayerSettings() );
 }
 
-QPointF quadOffsetToSldAnchor( QgsPalLayerSettings::QuadrantPosition quadrantPosition )
+QPointF quadOffsetToSldAnchor( Qgis::LabelQuadrantPosition quadrantPosition )
 {
   double quadOffsetX = 0.5, quadOffsetY = 0.5;
 
   // adjust quadrant offset of labels
   switch ( quadrantPosition )
   {
-    case QgsPalLayerSettings::QuadrantAboveLeft:
+    case Qgis::LabelQuadrantPosition::AboveLeft:
       quadOffsetX = 1;
       quadOffsetY = 0;
       break;
-    case QgsPalLayerSettings::QuadrantAbove:
+    case Qgis::LabelQuadrantPosition::Above:
       quadOffsetX = 0.5;
       quadOffsetY = 0;
       break;
-    case QgsPalLayerSettings::QuadrantAboveRight:
+    case Qgis::LabelQuadrantPosition::AboveRight:
       quadOffsetX = 0;
       quadOffsetY = 0;
       break;
-    case QgsPalLayerSettings::QuadrantLeft:
+    case Qgis::LabelQuadrantPosition::Left:
       quadOffsetX = 1;
       quadOffsetY = 0.5;
       break;
-    case QgsPalLayerSettings::QuadrantRight:
+    case Qgis::LabelQuadrantPosition::Right:
       quadOffsetX = 0;
       quadOffsetY = 0.5;
       break;
-    case QgsPalLayerSettings::QuadrantBelowLeft:
+    case Qgis::LabelQuadrantPosition::BelowLeft:
       quadOffsetX = 1;
       quadOffsetY = 1;
       break;
-    case QgsPalLayerSettings::QuadrantBelow:
+    case Qgis::LabelQuadrantPosition::Below:
       quadOffsetX = 0.5;
       quadOffsetY = 1;
       break;
-    case QgsPalLayerSettings::QuadrantBelowRight:
+    case Qgis::LabelQuadrantPosition::BelowRight:
       quadOffsetX = 0;
       quadOffsetY = 1.0;
       break;
-    case QgsPalLayerSettings::QuadrantOver:
+    case Qgis::LabelQuadrantPosition::Over:
       break;
   }
 
@@ -339,7 +340,7 @@ void QgsAbstractVectorLayerLabeling::writeTextSymbolizer( QDomNode &parent, QgsP
   double repeatDistance = 0;
   switch ( settings.placement )
   {
-    case QgsPalLayerSettings::OverPoint:
+    case Qgis::LabelPlacement::OverPoint:
     {
       QDomElement pointPlacement = doc.createElement( "se:PointPlacement" );
       labelPlacement.appendChild( pointPlacement );
@@ -349,7 +350,7 @@ void QgsAbstractVectorLayerLabeling::writeTextSymbolizer( QDomNode &parent, QgsP
       // displacement
       if ( settings.xOffset > 0 || settings.yOffset > 0 )
       {
-        const QgsUnitTypes::RenderUnit offsetUnit =  settings.offsetUnits;
+        const Qgis::RenderUnit offsetUnit =  settings.offsetUnits;
         const double dx = QgsSymbolLayerUtils::rescaleUom( settings.xOffset, offsetUnit, props );
         const double dy = QgsSymbolLayerUtils::rescaleUom( settings.yOffset, offsetUnit, props );
         QgsSymbolLayerUtils::createDisplacementElement( doc, pointPlacement, QPointF( dx, dy ) );
@@ -363,8 +364,8 @@ void QgsAbstractVectorLayerLabeling::writeTextSymbolizer( QDomNode &parent, QgsP
       }
     }
     break;
-    case QgsPalLayerSettings::AroundPoint:
-    case QgsPalLayerSettings::OrderedPositionsAroundPoint:
+    case Qgis::LabelPlacement::AroundPoint:
+    case Qgis::LabelPlacement::OrderedPositionsAroundPoint:
     {
       QDomElement pointPlacement = doc.createElement( "se:PointPlacement" );
       labelPlacement.appendChild( pointPlacement );
@@ -372,29 +373,29 @@ void QgsAbstractVectorLayerLabeling::writeTextSymbolizer( QDomNode &parent, QgsP
       // SLD cannot do either, but let's do a best effort setting the distance using
       // anchor point and displacement
       QgsSymbolLayerUtils::createAnchorPointElement( doc, pointPlacement, QPointF( 0, 0.5 ) );
-      const QgsUnitTypes::RenderUnit distUnit = settings.distUnits;
+      const Qgis::RenderUnit distUnit = settings.distUnits;
       const double radius = QgsSymbolLayerUtils::rescaleUom( settings.dist, distUnit, props );
       const double offset = std::sqrt( radius * radius / 2 ); // make it start top/right
       maxDisplacement = radius + 1; // lock the distance
       QgsSymbolLayerUtils::createDisplacementElement( doc, pointPlacement, QPointF( offset, offset ) );
     }
     break;
-    case QgsPalLayerSettings::Horizontal:
-    case QgsPalLayerSettings::Free:
-    case QgsPalLayerSettings::OutsidePolygons:
+    case Qgis::LabelPlacement::Horizontal:
+    case Qgis::LabelPlacement::Free:
+    case Qgis::LabelPlacement::OutsidePolygons:
     {
       // still a point placement (for "free" it's a fallback, there is no SLD equivalent)
       QDomElement pointPlacement = doc.createElement( "se:PointPlacement" );
       labelPlacement.appendChild( pointPlacement );
       QgsSymbolLayerUtils::createAnchorPointElement( doc, pointPlacement, QPointF( 0.5, 0.5 ) );
-      const QgsUnitTypes::RenderUnit distUnit = settings.distUnits;
+      const Qgis::RenderUnit distUnit = settings.distUnits;
       const double dist = QgsSymbolLayerUtils::rescaleUom( settings.dist, distUnit, props );
       QgsSymbolLayerUtils::createDisplacementElement( doc, pointPlacement, QPointF( 0, dist ) );
       break;
     }
-    case QgsPalLayerSettings::Line:
-    case QgsPalLayerSettings::Curved:
-    case QgsPalLayerSettings::PerimeterCurved:
+    case Qgis::LabelPlacement::Line:
+    case Qgis::LabelPlacement::Curved:
+    case Qgis::LabelPlacement::PerimeterCurved:
     {
       QDomElement linePlacement = doc.createElement( "se:LinePlacement" );
       labelPlacement.appendChild( linePlacement );
@@ -402,7 +403,7 @@ void QgsAbstractVectorLayerLabeling::writeTextSymbolizer( QDomNode &parent, QgsP
       // perpendicular distance if required
       if ( settings.dist > 0 )
       {
-        const QgsUnitTypes::RenderUnit distUnit = settings.distUnits;
+        const Qgis::RenderUnit distUnit = settings.distUnits;
         const double dist = QgsSymbolLayerUtils::rescaleUom( settings.dist, distUnit, props );
         QDomElement perpendicular = doc.createElement( "se:PerpendicularOffset" );
         linePlacement.appendChild( perpendicular );
@@ -500,30 +501,51 @@ void QgsAbstractVectorLayerLabeling::writeTextSymbolizer( QDomNode &parent, QgsP
     const QDomElement vo =  QgsSymbolLayerUtils::createVendorOptionElement( doc, QStringLiteral( "maxDisplacement" ), qgsDoubleToString( maxDisplacement, 2 ) );
     textSymbolizerElement.appendChild( vo );
   }
-  if ( settings.placement == QgsPalLayerSettings::Curved || settings.placement == QgsPalLayerSettings::PerimeterCurved )
+
+  switch ( settings.placement )
   {
-    const QDomElement vo =  QgsSymbolLayerUtils::createVendorOptionElement( doc, QStringLiteral( "followLine" ), QStringLiteral( "true" ) );
-    textSymbolizerElement.appendChild( vo );
-    if ( settings.maxCurvedCharAngleIn > 0 || settings.maxCurvedCharAngleOut > 0 )
+    case Qgis::LabelPlacement::Curved:
+    case Qgis::LabelPlacement::PerimeterCurved:
     {
-      // SLD has no notion for this, the GeoTools ecosystem can only do a single angle
-      const double angle = std::min( std::fabs( settings.maxCurvedCharAngleIn ), std::fabs( settings.maxCurvedCharAngleOut ) );
-      const QDomElement vo =  QgsSymbolLayerUtils::createVendorOptionElement( doc, QStringLiteral( "maxAngleDelta" ), qgsDoubleToString( angle ) );
+      const QDomElement vo =  QgsSymbolLayerUtils::createVendorOptionElement( doc, QStringLiteral( "followLine" ), QStringLiteral( "true" ) );
       textSymbolizerElement.appendChild( vo );
+      if ( settings.maxCurvedCharAngleIn > 0 || settings.maxCurvedCharAngleOut > 0 )
+      {
+        // SLD has no notion for this, the GeoTools ecosystem can only do a single angle
+        const double angle = std::min( std::fabs( settings.maxCurvedCharAngleIn ), std::fabs( settings.maxCurvedCharAngleOut ) );
+        const QDomElement vo =  QgsSymbolLayerUtils::createVendorOptionElement( doc, QStringLiteral( "maxAngleDelta" ), qgsDoubleToString( angle ) );
+        textSymbolizerElement.appendChild( vo );
+      }
+      break;
     }
+
+    case Qgis::LabelPlacement::AroundPoint:
+    case Qgis::LabelPlacement::OverPoint:
+    case Qgis::LabelPlacement::Line:
+    case Qgis::LabelPlacement::Horizontal:
+    case Qgis::LabelPlacement::Free:
+    case Qgis::LabelPlacement::OrderedPositionsAroundPoint:
+    case Qgis::LabelPlacement::OutsidePolygons:
+      break;
   }
+
   if ( repeatDistance > 0 )
   {
     const QDomElement vo =  QgsSymbolLayerUtils::createVendorOptionElement( doc, QStringLiteral( "repeat" ), qgsDoubleToString( repeatDistance, 2 ) );
     textSymbolizerElement.appendChild( vo );
   }
   // miscellaneous options
-  if ( settings.displayAll )
+  switch ( settings.placementSettings().overlapHandling() )
   {
-    const QDomElement vo =  QgsSymbolLayerUtils::createVendorOptionElement( doc, QStringLiteral( "conflictResolution" ), QStringLiteral( "false" ) );
-    textSymbolizerElement.appendChild( vo );
+    case Qgis::LabelOverlapHandling::PreventOverlap:
+      break;
+    case Qgis::LabelOverlapHandling::AllowOverlapIfRequired:
+    case Qgis::LabelOverlapHandling::AllowOverlapAtNoCost:
+      const QDomElement vo =  QgsSymbolLayerUtils::createVendorOptionElement( doc, QStringLiteral( "conflictResolution" ), QStringLiteral( "false" ) );
+      textSymbolizerElement.appendChild( vo );
+      break;
   }
-  if ( settings.upsidedownLabels == QgsPalLayerSettings::ShowAll )
+  if ( settings.upsidedownLabels == Qgis::UpsideDownLabelHandling::AlwaysAllowUpsideDown )
   {
     const QDomElement vo =  QgsSymbolLayerUtils::createVendorOptionElement( doc, QStringLiteral( "forceLeftToRight" ), QStringLiteral( "false" ) );
     textSymbolizerElement.appendChild( vo );
@@ -610,7 +632,13 @@ void QgsVectorLayerSimpleLabeling::toSld( QDomNode &parent, const QVariantMap &p
     writeTextSymbolizer( ruleElement, *mSettings, props );
   }
 
+}
 
+void QgsVectorLayerSimpleLabeling::multiplyOpacity( double opacityFactor )
+{
+  QgsTextFormat format { mSettings->format() };
+  format.multiplyOpacity( opacityFactor );
+  mSettings->setFormat( format );
 }
 
 void QgsVectorLayerSimpleLabeling::setSettings( QgsPalLayerSettings *settings, const QString &providerId )

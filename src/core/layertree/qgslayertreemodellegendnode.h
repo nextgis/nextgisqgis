@@ -35,6 +35,9 @@ class QgsLegendSettings;
 class QgsMapSettings;
 class QgsSymbol;
 class QgsRenderContext;
+class QgsTextFormat;
+class QgsTextDocument;
+class QgsTextDocumentMetrics;
 
 /**
  * \ingroup core
@@ -232,6 +235,28 @@ class CORE_EXPORT QgsLayerTreeModelLegendNode : public QObject
        * \since QGIS 3.14
        */
       QSizeF patchSize;
+
+      /**
+       * Optional text document
+       *
+       * \since QGIS 3.30
+       */
+      const QgsTextDocument *textDocument = nullptr;
+
+      /**
+       * Optional text document metrics.
+       *
+       * \since QGIS 3.30
+       */
+      const QgsTextDocumentMetrics *textDocumentMetrics = nullptr;
+
+      /**
+       * Destination screen properties.
+       *
+       * \since QGIS 3.32
+       */
+      QgsScreenProperties screenProperties;
+
     };
 
     struct ItemMetrics
@@ -282,6 +307,14 @@ class CORE_EXPORT QgsLayerTreeModelLegendNode : public QObject
      * \returns Size of the label (may span multiple lines)
      */
     virtual QSizeF drawSymbolText( const QgsLegendSettings &settings, ItemContext *ctx, QSizeF symbolSize ) const;
+
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    QString str = QStringLiteral( "<QgsLayerTreeModelLegendNode: \"%1\">" ).arg( sipCpp->data( Qt::DisplayRole ).toString() );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
 
   public slots:
 
@@ -371,6 +404,7 @@ class CORE_EXPORT QgsSymbolLegendNode : public QgsLayerTreeModelLegendNode
      * \param parent attach a parent QObject to the legend node.
      */
     QgsSymbolLegendNode( QgsLayerTreeLayer *nodeLayer, const QgsLegendSymbolItem &item, QObject *parent SIP_TRANSFERTHIS = nullptr );
+    ~QgsSymbolLegendNode();
 
     Qt::ItemFlags flags() const override;
     QVariant data( int role ) const override;
@@ -392,7 +426,7 @@ class CORE_EXPORT QgsSymbolLegendNode : public QgsLayerTreeModelLegendNode
      * Set the icon size
      * \since QGIS 2.10
      */
-    void setIconSize( QSize sz ) { mIconSize = sz; }
+    void setIconSize( QSize sz );
     //! \since QGIS 2.10
     QSize iconSize() const { return mIconSize; }
 
@@ -507,6 +541,16 @@ class CORE_EXPORT QgsSymbolLegendNode : public QgsLayerTreeModelLegendNode
      */
     QString evaluateLabel( const QgsExpressionContext &context = QgsExpressionContext(), const QString &label = QString() );
 
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    QString str = QStringLiteral( "<QgsSymbolLegendNode: %1 \"%2\"" ).arg(
+                    sipCpp->data( QgsLayerTreeModelLegendNode::RuleKeyRole ).toString(),
+                    sipCpp->data( Qt::DisplayRole ).toString() );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
+
   private:
     void updateLabel();
 
@@ -559,6 +603,14 @@ class CORE_EXPORT QgsSimpleLegendNode : public QgsLayerTreeModelLegendNode
 
     QVariant data( int role ) const override;
 
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    QString str = QStringLiteral( "<QgsSimpleLegendNode: \"%1\">" ).arg( sipCpp->data( Qt::DisplayRole ).toString() );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
+
   private:
     QString mLabel;
     QString mId;
@@ -592,6 +644,14 @@ class CORE_EXPORT QgsImageLegendNode : public QgsLayerTreeModelLegendNode
     QSizeF drawSymbol( const QgsLegendSettings &settings, ItemContext *ctx, double itemHeight ) const override;
 
     QJsonObject exportSymbolToJson( const QgsLegendSettings &settings, const QgsRenderContext &context ) const override;
+
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    QString str = QStringLiteral( "<QgsImageLegendNode: \"%1\">" ).arg( sipCpp->data( Qt::DisplayRole ).toString() );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
 
   private:
     QImage mImage;
@@ -640,6 +700,14 @@ class CORE_EXPORT QgsRasterSymbolLegendNode : public QgsLayerTreeModelLegendNode
      */
     bool isCheckable() const { return mCheckable; }
 
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    QString str = QStringLiteral( "<QgsRasterSymbolLegendNode: \"%1\">" ).arg( sipCpp->data( Qt::DisplayRole ).toString() );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
+
   private:
     QColor mColor;
     QString mLabel;
@@ -677,6 +745,14 @@ class CORE_EXPORT QgsWmsLegendNode : public QgsLayerTreeModelLegendNode
     QJsonObject exportSymbolToJson( const QgsLegendSettings &settings, const QgsRenderContext &context ) const override;
 
     void invalidateMapBasedData() override;
+
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    QString str = QStringLiteral( "<QgsWmsLegendNode: \"%1\">" ).arg( sipCpp->data( Qt::DisplayRole ).toString() );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
 
   private slots:
 
@@ -717,6 +793,14 @@ class CORE_EXPORT QgsDataDefinedSizeLegendNode : public QgsLayerTreeModelLegendN
 
     ItemMetrics draw( const QgsLegendSettings &settings, ItemContext *ctx ) override;
 
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    QString str = QStringLiteral( "<QgsDataDefinedSizeLegendNode: \"%1\">" ).arg( sipCpp->data( Qt::DisplayRole ).toString() );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
+
   private:
     void cacheImage() const;
     QgsDataDefinedSizeLegend *mSettings = nullptr;
@@ -730,6 +814,7 @@ class CORE_EXPORT QgsDataDefinedSizeLegendNode : public QgsLayerTreeModelLegendN
  */
 class CORE_EXPORT QgsVectorLabelLegendNode : public QgsLayerTreeModelLegendNode
 {
+    Q_OBJECT
   public:
 
     /**
@@ -764,6 +849,14 @@ class CORE_EXPORT QgsVectorLabelLegendNode : public QgsLayerTreeModelLegendNode
      * \returns the json object
      */
     QJsonObject exportSymbolToJson( const QgsLegendSettings &settings, const QgsRenderContext &context ) const override;
+
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    QString str = QStringLiteral( "<QgsVectorLabelLegendNode: \"%1\">" ).arg( sipCpp->data( Qt::DisplayRole ).toString() );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
 
   private:
     QgsPalLayerSettings mLabelSettings;

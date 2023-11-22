@@ -22,13 +22,10 @@
 #include "qgsmapcanvassnappingutils.h"
 #include "qgssnappingconfig.h"
 #include "qgsmaptooladdfeature.h"
-#include "qgsmapcanvastracer.h"
 #include "qgsproject.h"
 #include "qgssettings.h"
 #include "qgssettingsregistrycore.h"
 #include "qgsvectorlayer.h"
-#include "qgswkbtypes.h"
-#include "qgsmapmouseevent.h"
 #include "testqgsmaptoolutils.h"
 
 bool operator==( const QgsGeometry &g1, const QgsGeometry &g2 )
@@ -125,7 +122,7 @@ void TestQgsMapToolAddFeatureLineM::initTestCase()
   QgsProject::instance()->addMapLayers( QList<QgsMapLayer *>() << mLayerLineM );
 
   QgsPolyline line2;
-  line2 << QgsPoint( QgsWkbTypes::PointM, 1, 1, 0, 0 ) << QgsPoint( QgsWkbTypes::PointM, 2, 1, 0, 1 ) << QgsPoint( QgsWkbTypes::PointM, 3, 2, 0, 2 ) << QgsPoint( QgsWkbTypes::PointM, 1, 2, 0, 3 ) << QgsPoint( QgsWkbTypes::PointM, 1, 1, 0, 0 );
+  line2 << QgsPoint( Qgis::WkbType::PointM, 1, 1, 0, 0 ) << QgsPoint( Qgis::WkbType::PointM, 2, 1, 0, 1 ) << QgsPoint( Qgis::WkbType::PointM, 3, 2, 0, 2 ) << QgsPoint( Qgis::WkbType::PointM, 1, 2, 0, 3 ) << QgsPoint( Qgis::WkbType::PointM, 1, 1, 0, 0 );
   QgsFeature lineF2;
   lineF2.setGeometry( QgsGeometry::fromPolyline( line2 ) );
 
@@ -158,7 +155,7 @@ void TestQgsMapToolAddFeatureLineM::initTestCase()
   mCanvas->setSnappingUtils( new QgsMapCanvasSnappingUtils( mCanvas, this ) );
 
   // create the tool
-  mCaptureTool = new QgsMapToolAddFeature( mCanvas, /*mAdvancedDigitizingDockWidget, */ QgsMapToolCapture::CaptureLine );
+  mCaptureTool = new QgsMapToolAddFeature( mCanvas, QgisApp::instance()->cadDockWidget(), QgsMapToolCapture::CaptureLine );
 
   mCanvas->setMapTool( mCaptureTool );
   mCanvas->setCurrentLayer( mLayerLine );
@@ -182,7 +179,7 @@ void TestQgsMapToolAddFeatureLineM::testM()
   mCanvas->setCurrentLayer( mLayerLineM );
 
   // test with default M value = 333
-  QgsSettingsRegistryCore::settingsDigitizingDefaultMValue.setValue( 333 );
+  QgsSettingsRegistryCore::settingsDigitizingDefaultMValue->setValue( 333 );
 
   QSet<QgsFeatureId> oldFids = utils.existingFeatureIds();
   utils.mouseClick( 4, 0, Qt::LeftButton );
@@ -198,7 +195,7 @@ void TestQgsMapToolAddFeatureLineM::testM()
   mLayerLine->undoStack()->undo();
 
   // test with default M value = 222
-  QgsSettingsRegistryCore::settingsDigitizingDefaultMValue.setValue( 222 );
+  QgsSettingsRegistryCore::settingsDigitizingDefaultMValue->setValue( 222 );
 
   oldFids = utils.existingFeatureIds();
   utils.mouseClick( 4, 0, Qt::LeftButton );
@@ -223,7 +220,7 @@ void TestQgsMapToolAddFeatureLineM::testTopologicalEditingM()
   mCanvas->setCurrentLayer( mLayerTopoM );
 
   // test with default M value = 333
-  QgsSettingsRegistryCore::settingsDigitizingDefaultMValue.setValue( 333 );
+  QgsSettingsRegistryCore::settingsDigitizingDefaultMValue->setValue( 333 );
 
   QSet<QgsFeatureId> oldFids = utils.existingFeatureIds();
 
@@ -231,7 +228,7 @@ void TestQgsMapToolAddFeatureLineM::testTopologicalEditingM()
   const bool topologicalEditing = cfg.project()->topologicalEditing();
   cfg.project()->setTopologicalEditing( true );
 
-  cfg.setMode( QgsSnappingConfig::AllLayers );
+  cfg.setMode( Qgis::SnappingMode::AllLayers );
   cfg.setEnabled( true );
   mCanvas->snappingUtils()->setConfig( cfg );
 
@@ -244,10 +241,10 @@ void TestQgsMapToolAddFeatureLineM::testTopologicalEditingM()
   utils.mouseClick( 8, 6.5, Qt::RightButton );
   const QgsFeatureId newFid = utils.newFeatureId( oldFids );
 
-  QString wkt = "LineStringM (6 6.5 333, 6.25 6.5 333, 6.75 6.5 333, 7.25 6.5 333, 7.5 6.5 333)";
+  QString wkt = "MultiLineStringM((6 6.5 333, 6.25 6.5 333, 6.75 6.5 333, 7.25 6.5 333, 7.5 6.5 333))";
   QCOMPARE( mLayerTopoM->getFeature( newFid ).geometry(), QgsGeometry::fromWkt( wkt ) );
   wkt = "MultiLineStringM ((7.25 6 0, 7.25 6.5 333, 7.25 7 0, 7.5 7 0, 7.5 6.5 333, 7.5 6 0, 7.25 6 0),(6 6 0, 6 6.5 333, 6 7 10, 7 7 0, 7 6 0, 6 6 0),(6.25 6.25 0, 6.75 6.25 0, 6.75 6.5 333, 6.75 6.75 0, 6.25 6.75 0, 6.25 6.5 333, 6.25 6.25 0))";
-  QCOMPARE( mLayerTopoM->getFeature( qgis::setToList( oldFids ).last() ).geometry(), QgsGeometry::fromWkt( wkt ) );
+  QCOMPARE( mLayerTopoM->getFeature( qgis::setToList( oldFids ).constLast() ).geometry(), QgsGeometry::fromWkt( wkt ) );
 
   mLayerLine->undoStack()->undo();
 

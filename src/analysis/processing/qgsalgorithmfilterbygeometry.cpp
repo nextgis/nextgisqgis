@@ -36,19 +36,12 @@ QStringList QgsFilterByGeometryAlgorithm::tags() const
 
 QString QgsFilterByGeometryAlgorithm::group() const
 {
-  return QObject::tr( "Modeler tools" );
+  return QObject::tr( "Vector selection" );
 }
 
 QString QgsFilterByGeometryAlgorithm::groupId() const
 {
-  return QStringLiteral( "modelertools" );
-}
-
-QgsProcessingAlgorithm::Flags QgsFilterByGeometryAlgorithm::flags() const
-{
-  Flags f = QgsProcessingAlgorithm::flags();
-  f |= QgsProcessingAlgorithm::FlagHideFromToolbox;
-  return f;
+  return QStringLiteral( "vectorselection" );
 }
 
 void QgsFilterByGeometryAlgorithm::initAlgorithm( const QVariantMap & )
@@ -99,9 +92,9 @@ QVariantMap QgsFilterByGeometryAlgorithm::processAlgorithm( const QVariantMap &p
   const bool hasM = QgsWkbTypes::hasM( source->wkbType() );
   const bool hasZ = QgsWkbTypes::hasZ( source->wkbType() );
 
-  QgsWkbTypes::Type pointType = QgsWkbTypes::Point;
-  QgsWkbTypes::Type lineType = QgsWkbTypes::LineString;
-  QgsWkbTypes::Type polygonType = QgsWkbTypes::Polygon;
+  Qgis::WkbType pointType = Qgis::WkbType::Point;
+  Qgis::WkbType lineType = Qgis::WkbType::LineString;
+  Qgis::WkbType polygonType = Qgis::WkbType::Polygon;
   if ( hasM )
   {
     pointType = QgsWkbTypes::addM( pointType );
@@ -135,7 +128,7 @@ QVariantMap QgsFilterByGeometryAlgorithm::processAlgorithm( const QVariantMap &p
 
   QString noGeomSinkId;
   std::unique_ptr< QgsFeatureSink > noGeomSink( parameterAsSink( parameters, QStringLiteral( "NO_GEOMETRY" ), context, noGeomSinkId, source->fields(),
-      QgsWkbTypes::NoGeometry ) );
+      Qgis::WkbType::NoGeometry ) );
   if ( parameters.value( QStringLiteral( "NO_GEOMETRY" ), QVariant() ).isValid() && !noGeomSink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "NO_GEOMETRY" ) ) );
 
@@ -161,7 +154,7 @@ QVariantMap QgsFilterByGeometryAlgorithm::processAlgorithm( const QVariantMap &p
     {
       switch ( f.geometry().type() )
       {
-        case QgsWkbTypes::PointGeometry:
+        case Qgis::GeometryType::Point:
           if ( pointSink )
           {
             if ( !pointSink->addFeature( f, QgsFeatureSink::FastInsert ) )
@@ -169,7 +162,7 @@ QVariantMap QgsFilterByGeometryAlgorithm::processAlgorithm( const QVariantMap &p
           }
           pointCount++;
           break;
-        case QgsWkbTypes::LineGeometry:
+        case Qgis::GeometryType::Line:
           if ( lineSink )
           {
             if ( !lineSink->addFeature( f, QgsFeatureSink::FastInsert ) )
@@ -177,7 +170,7 @@ QVariantMap QgsFilterByGeometryAlgorithm::processAlgorithm( const QVariantMap &p
           }
           lineCount++;
           break;
-        case QgsWkbTypes::PolygonGeometry:
+        case Qgis::GeometryType::Polygon:
           if ( polygonSink )
           {
             if ( !polygonSink->addFeature( f, QgsFeatureSink::FastInsert ) )
@@ -185,8 +178,8 @@ QVariantMap QgsFilterByGeometryAlgorithm::processAlgorithm( const QVariantMap &p
           }
           polygonCount++;
           break;
-        case QgsWkbTypes::NullGeometry:
-        case QgsWkbTypes::UnknownGeometry:
+        case Qgis::GeometryType::Null:
+        case Qgis::GeometryType::Unknown:
           break;
       }
     }
@@ -297,20 +290,20 @@ QVariantMap QgsFilterByLayerTypeAlgorithm::processAlgorithm( const QVariantMap &
 
   switch ( layer->type() )
   {
-    case QgsMapLayerType::VectorLayer:
+    case Qgis::LayerType::Vector:
       outputs.insert( QStringLiteral( "VECTOR" ), parameters.value( QStringLiteral( "INPUT" ) ) );
       break;
 
-    case QgsMapLayerType::RasterLayer:
+    case Qgis::LayerType::Raster:
       outputs.insert( QStringLiteral( "RASTER" ), parameters.value( QStringLiteral( "INPUT" ) ) );
       break;
 
-    case QgsMapLayerType::PluginLayer:
-    case QgsMapLayerType::MeshLayer:
-    case QgsMapLayerType::VectorTileLayer:
-    case QgsMapLayerType::AnnotationLayer:
-    case QgsMapLayerType::PointCloudLayer:
-    case QgsMapLayerType::GroupLayer:
+    case Qgis::LayerType::Plugin:
+    case Qgis::LayerType::Mesh:
+    case Qgis::LayerType::VectorTile:
+    case Qgis::LayerType::Annotation:
+    case Qgis::LayerType::PointCloud:
+    case Qgis::LayerType::Group:
       break;
   }
 

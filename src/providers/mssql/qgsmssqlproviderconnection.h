@@ -25,13 +25,13 @@
 struct QgssMssqlProviderResultIterator: public QgsAbstractDatabaseProviderConnection::QueryResult::QueryResultIterator
 {
 
-    QgssMssqlProviderResultIterator( bool resolveTypes, int columnCount, const QSqlQuery &query );
+    QgssMssqlProviderResultIterator( bool resolveTypes, int columnCount, std::unique_ptr<QSqlQuery> query );
 
   private:
 
     bool mResolveTypes = true;
     int mColumnCount = 0;
-    QSqlQuery mQuery;
+    std::unique_ptr<QSqlQuery> mQuery;
     QVariantList mNextRow;
 
     QVariantList nextRowPrivate() override;
@@ -59,7 +59,7 @@ class QgsMssqlProviderConnection : public QgsAbstractDatabaseProviderConnection
     void createVectorTable( const QString &schema,
                             const QString &name,
                             const QgsFields &fields,
-                            QgsWkbTypes::Type wkbType,
+                            Qgis::WkbType wkbType,
                             const QgsCoordinateReferenceSystem &srs, bool overwrite,
                             const QMap<QString, QVariant> *options ) const override;
 
@@ -69,12 +69,13 @@ class QgsMssqlProviderConnection : public QgsAbstractDatabaseProviderConnection
     void dropSchema( const QString &name, bool force = false ) const override;
     QgsAbstractDatabaseProviderConnection::QueryResult execSql( const QString &sql, QgsFeedback *feedback ) const override;
     QList<QgsAbstractDatabaseProviderConnection::TableProperty> tables( const QString &schema,
-        const TableFlags &flags = TableFlags() ) const override;
+        const TableFlags &flags = TableFlags(), QgsFeedback *feedback = nullptr ) const override;
     QStringList schemas( ) const override;
     void store( const QString &name ) const override;
     void remove( const QString &name ) const override;
     QIcon icon() const override;
     QList<QgsVectorDataProvider::NativeType> nativeTypes() const override;
+    QgsProviderSqlQueryBuilder *queryBuilder() const override;
 
   private:
 

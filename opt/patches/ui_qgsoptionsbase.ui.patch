@@ -1,0 +1,23 @@
+--- a/src/ui/qgsoptionsbase.ui	2023-08-22 11:32:53.719361419 +0300
++++ b/src/ui/qgsoptionsbase.ui	2023-08-28 21:32:16.847599155 +0300
+@@ -5941,6 +5941,7 @@
+            </item>
+           </layout>
+          </widget>
++         <widget class="NGAuthOptions" name="mOptionsPageNextGIS" native="true"/>
+         </widget>
+        </item>
+       </layout>
+@@ -6103,6 +6104,12 @@
+    <header>qgsautheditorwidgets.h</header>
+    <container>1</container>
+   </customwidget>
++  <customwidget>
++   <class>NGAuthOptions</class>
++   <extends>QWidget</extends>
++   <header>options/ngauthoptions.h</header>
++   <container>1</container>
++  </customwidget>
+  </customwidgets>
+  <tabstops>
+   <tabstop>mSearchLineEdit</tabstop>

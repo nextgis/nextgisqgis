@@ -25,6 +25,11 @@
 #include <QFileInfo>
 #include <QTime>
 
+//double readRationale( const Exiv2::Value &value, long n = 0 )
+//{
+//  const Exiv2::Rational rational = value.toRational( n );
+//  return static_cast< double >( rational.first ) / rational.second;
+//};
 
 double readCoordinate( const std::string &value )
 {
@@ -43,6 +48,98 @@ double readCoordinate( const std::string &value )
   }
   return res;
 };
+
+//TODO: Проверить где и как это работает в NGQGIS
+//необходимо привести decodeXmpData к виду decodeExifData?
+/*
+QVariant decodeXmpData( const QString &key, Exiv2::XmpData::const_iterator &it )
+{
+  QVariant val;
+  if ( key == QLatin1String( "Xmp.xmp.MetadataDate" ) ||
+       key == QLatin1String( "Xmp.xmp.CreateDate" ) ||
+       key == QLatin1String( "Xmp.xmp.ModifyDate" ) )
+  {
+    val = QVariant::fromValue( QDateTime::fromString( QString::fromStdString( it->toString() ), Qt::ISODate ) );
+  }
+  else
+  {
+    switch ( it->typeId() )
+    {
+      case Exiv2::asciiString:
+      case Exiv2::string:
+      case Exiv2::comment:
+      case Exiv2::directory:
+      case Exiv2::xmpText:
+        val = QString::fromStdString( it->toString() );
+        break;
+
+      case Exiv2::unsignedLong:
+      case Exiv2::signedLong:
+      case Exiv2::unsignedLongLong:
+      case Exiv2::signedLongLong:
+        val = QVariant::fromValue( it->toLong() );
+        break;
+
+      case Exiv2::tiffDouble:
+      case Exiv2::tiffFloat:
+        val = QVariant::fromValue( it->toFloat() );
+        break;
+
+      case Exiv2::unsignedShort:
+      case Exiv2::signedShort:
+      case Exiv2::unsignedByte:
+      case Exiv2::signedByte:
+      case Exiv2::tiffIfd:
+      case Exiv2::tiffIfd8:
+        val = QVariant::fromValue( static_cast< int >( it->toLong() ) );
+        break;
+
+      case Exiv2::date:
+      {
+        const Exiv2::DateValue::Date date = static_cast< const Exiv2::DateValue *>( &it->value() )->getDate();
+        val = QVariant::fromValue( QDate::fromString( QStringLiteral( "%1-%2-%3" ).arg( date.year )
+                                   .arg( QString::number( date.month ).rightJustified( 2, '0' ) )
+                                   .arg( QString::number( date.day ).rightJustified( 2, '0' ) ), QLatin1String( "yyyy-MM-dd" ) ) );
+        break;
+      }
+
+      case Exiv2::time:
+      {
+        const Exiv2::TimeValue::Time time = static_cast< const Exiv2::TimeValue *>( &it->value() )->getTime();
+        val = QVariant::fromValue( QTime::fromString( QStringLiteral( "%1:%2:%3" ).arg( QString::number( time.hour ).rightJustified( 2, '0' ) )
+                                   .arg( QString::number( time.minute ).rightJustified( 2, '0' ) )
+                                   .arg( QString::number( time.second ).rightJustified( 2, '0' ) ), QLatin1String( "hh:mm:ss" ) ) );
+        break;
+      }
+
+      case Exiv2::unsignedRational:
+      case Exiv2::signedRational:
+      {
+        if ( it->count() == 1 )
+        {
+          val = QVariant::fromValue( readRationale( it->value() ) );
+        }
+        else
+        {
+          val = QString::fromStdString( it->toString() );
+        }
+        break;
+      }
+
+      case Exiv2::undefined:
+      case Exiv2::xmpAlt:
+      case Exiv2::xmpBag:
+      case Exiv2::xmpSeq:
+      case Exiv2::langAlt:
+      case Exiv2::invalidTypeId:
+      case Exiv2::lastTypeId:
+        val = QString::fromStdString( it->toString() );
+        break;
+
+    }
+  }
+  return val;
+}*/
 
 QVariant decodeExifData( const QString &key, const std::string &value )
 {
@@ -126,11 +223,11 @@ QVariant decodeExifData( const QString &key, const std::string &value )
       {
         if ( it->count() == 1 )
         {
-          val = QVariant::fromValue( readRationale( value ) );
+          val = QVariant::fromValue( readRationale( it->value() ) );
         }
         else
         {
-          val = QString::fromStdString( value );
+          val = QString::fromStdString( it->toString() );
         }
         break;
       }
@@ -142,7 +239,7 @@ QVariant decodeExifData( const QString &key, const std::string &value )
       case Exiv2::langAlt:
       case Exiv2::invalidTypeId:
       case Exiv2::lastTypeId:
-        val = QString::fromStdString( value );
+        val = QString::fromStdString( it->toString() );
         break;
 
     }*/
@@ -163,51 +260,75 @@ QString doubleToExifCoordinateString( const double val )
 
 QVariant QgsExifTools::readTag( const QString &imagePath, const QString &key )
 {
-    if ( !QFileInfo::exists( imagePath ) )
+  if ( !QFileInfo::exists( imagePath ) )
+    return QVariant();
+
+/*  if ( key.startsWith( QLatin1String( "Xmp." ) ) )
+  {
+      std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toStdString() ) );
+      if ( !image || key.isEmpty() )
         return QVariant();
 
-    QVariant res;
-    GDALDataset *ds = reinterpret_cast<GDALDataset*>(
-        GDALOpenEx(imagePath.toStdString().c_str(),
-            GDAL_OF_RASTER | GDAL_OF_SHARED | GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
-            nullptr, nullptr, nullptr));
-    if (ds == nullptr)
-    {
-        return res;
-    }
+      image->readMetadata();
 
-    CPLStringList metadata( ds->GetMetadata(), TRUE );
-    return decodeExifData( key, metadata[key.toUtf8().constData()] );
+      image->readMetadata();
+
+      Exiv2::XmpData &xmpData = image->xmpData();
+      if ( xmpData.empty() )
+      {
+        return QVariant();
+      }
+      Exiv2::XmpData::const_iterator i = xmpData.findKey( Exiv2::XmpKey( key.toUtf8().constData() ) );
+      return i != xmpData.end() ? decodeXmpData( key, i ) : QVariant();
+  }
+  else*/
+  {
+      QVariant res;
+      GDALDataset *ds = reinterpret_cast<GDALDataset*>(
+          GDALOpenEx(imagePath.toStdString().c_str(),
+              GDAL_OF_RASTER | GDAL_OF_SHARED | GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
+              nullptr, nullptr, nullptr));
+      if (ds == nullptr)
+      {
+          return res;
+      }
+
+      CPLStringList metadata( ds->GetMetadata(), TRUE );
+      return decodeExifData( key, metadata[key.toUtf8().constData()] );
+  }
 }
 
 QVariantMap QgsExifTools::readTags( const QString &imagePath )
 {
-    if ( !QFileInfo::exists( imagePath ) )
-        return QVariantMap();
+  if ( !QFileInfo::exists( imagePath ) )
+    return QVariantMap();
 
-    QVariantMap res;
-    GDALDataset *ds = reinterpret_cast<GDALDataset*>(
-        GDALOpenEx(imagePath.toStdString().c_str(),
-            GDAL_OF_RASTER | GDAL_OF_SHARED | GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
-            nullptr, nullptr, nullptr));
-    if (ds == nullptr)
-    {
-        return res;
-    }
-    CPLStringList metadata( ds->GetMetadata(), TRUE );
-    for(int i = 0; i < metadata.size(); i++)
-    {
-        char *pszKey = nullptr;
-        const char *pszValue = CPLParseNameValue( metadata[i], &pszKey );
-        if( pszKey )
-        {
-            const QString key = QString::fromStdString( pszKey );
-            res.insert( key, decodeExifData( key, pszValue ) );
-            CPLFree( pszKey );
-        }
-        
-    }
-    return res;
+  QVariantMap res;
+  GDALDataset *ds = reinterpret_cast<GDALDataset*>(
+      GDALOpenEx(imagePath.toStdString().c_str(),
+          GDAL_OF_RASTER | GDAL_OF_SHARED | GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
+          nullptr, nullptr, nullptr));
+  if (ds == nullptr)
+  {
+      return res;
+  }
+  CPLStringList metadata( ds->GetMetadata(), TRUE );
+  for(int i = 0; i < metadata.size(); i++)
+  {
+      char *pszKey = nullptr;
+      const char *pszValue = CPLParseNameValue( metadata[i], &pszKey );
+      if( pszKey )
+      {
+          const QString key = QString::fromStdString( pszKey );
+          res.insert( key, decodeExifData( key, pszValue ) );
+          CPLFree( pszKey );
+      }
+
+      //TODO add decodeXmpData
+      //res.insert( key, decodeXmpData( key, i ) );
+  }
+
+  return res;
 }
 
 bool QgsExifTools::hasGeoTag( const QString &imagePath )
@@ -344,4 +465,136 @@ bool QgsExifTools::geoTagImage( const QString &imagePath, const QgsPointXY &loca
     GDALClose(ds);
 
   return true;
+}
+
+bool QgsExifTools::tagImage( const QString &imagePath, const QString &tag, const QVariant &value )
+{
+  //DEBUG:
+  return false;
+/*
+  try
+  {
+    std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toStdString() ) );
+    if ( !image )
+      return false;
+
+    QVariant actualValue;
+    if ( tag == QLatin1String( "Exif.GPSInfo.GPSLatitude" ) ||
+         tag == QLatin1String( "Exif.GPSInfo.GPSLongitude" ) ||
+         tag == QLatin1String( "Exif.GPSInfo.GPSDestLatitude" ) ||
+         tag == QLatin1String( "Exif.GPSInfo.GPSDestLongitude" ) )
+    {
+      actualValue = doubleToExifCoordinateString( value.toDouble() );
+    }
+    else if ( tag == QLatin1String( "Exif.GPSInfo.GPSAltitude" ) )
+    {
+      actualValue = QStringLiteral( "%1/1000" ).arg( static_cast< int>( std::floor( std::abs( value.toDouble() ) * 1000 ) ) );
+    }
+    else if ( value.type() == QVariant::DateTime )
+    {
+      const QDateTime dateTime = value.toDateTime();
+      if ( tag == QLatin1String( "Exif.Image.DateTime" ) ||
+           tag == QLatin1String( "Exif.Image.DateTime" ) ||
+           tag == QLatin1String( "Exif.Photo.DateTimeDigitized" ) ||
+           tag == QLatin1String( "Exif.Photo.DateTimeOriginal" ) )
+      {
+        actualValue = dateTime.toString( QStringLiteral( "yyyy:MM:dd hh:mm:ss" ) );
+      }
+      else
+      {
+        actualValue = dateTime.toString( Qt::ISODate );
+      }
+    }
+    else if ( value.type() == QVariant::Date )
+    {
+      const QDate date = value.toDate();
+      if ( tag == QLatin1String( "Exif.GPSInfo.GPSDateStamp" ) )
+      {
+        actualValue = date.toString( QStringLiteral( "yyyy:MM:dd" ) );
+      }
+      else
+      {
+        actualValue = date.toString( QStringLiteral( "yyyy-MM-dd" ) );
+      }
+    }
+    else if ( value.type() == QVariant::Time )
+    {
+      const QTime time = value.toTime();
+      if ( tag == QLatin1String( "Exif.GPSInfo.GPSTimeStamp" ) )
+      {
+        actualValue = QStringLiteral( "%1/1 %2/1 %3/1" ).arg( time.hour() ).arg( time.minute() ).arg( time.second() );
+      }
+      else
+      {
+        actualValue = time.toString( QStringLiteral( "HH:mm:ss" ) );
+      }
+    }
+    else
+    {
+      actualValue = value;
+    }
+
+    const bool isXmp = tag.startsWith( QLatin1String( "Xmp." ) );
+    image->readMetadata();
+    if ( actualValue.type() == QVariant::Int ||
+         actualValue.type() == QVariant::LongLong )
+    {
+      if ( isXmp )
+      {
+        Exiv2::XmpData &xmpData = image->xmpData();
+        xmpData[tag.toStdString()] = static_cast<uint32_t>( actualValue.toLongLong() );
+      }
+      else
+      {
+        Exiv2::ExifData &exifData = image->exifData();
+        exifData[tag.toStdString()] = static_cast<uint32_t>( actualValue.toLongLong() );
+      }
+    }
+    if ( actualValue.type() == QVariant::UInt ||
+         actualValue.type() ==  QVariant::ULongLong )
+    {
+      if ( isXmp )
+      {
+        Exiv2::XmpData &xmpData = image->xmpData();
+        xmpData[tag.toStdString()] = static_cast<int32_t>( actualValue.toULongLong() );
+      }
+      else
+      {
+        Exiv2::ExifData &exifData = image->exifData();
+        exifData[tag.toStdString()] = static_cast<int32_t>( actualValue.toULongLong() );
+      }
+    }
+    else if ( actualValue.type() == QVariant::Double )
+    {
+      if ( isXmp )
+      {
+        Exiv2::XmpData &xmpData = image->xmpData();
+        xmpData[tag.toStdString()] = Exiv2::floatToRationalCast( actualValue.toFloat() );
+      }
+      else
+      {
+        Exiv2::ExifData &exifData = image->exifData();
+        exifData[tag.toStdString()] = Exiv2::floatToRationalCast( actualValue.toFloat() );
+      }
+    }
+    else
+    {
+      if ( isXmp )
+      {
+        Exiv2::XmpData &xmpData = image->xmpData();
+        xmpData[tag.toStdString()] = actualValue.toString().toStdString();
+      }
+      else
+      {
+        Exiv2::ExifData &exifData = image->exifData();
+        exifData[tag.toStdString()] = actualValue.toString().toStdString();
+      }
+    }
+    image->writeMetadata();
+  }
+  catch ( ... )
+  {
+    return false;
+  }
+  return true;*/
 }

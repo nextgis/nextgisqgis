@@ -28,20 +28,19 @@
 #include <QDateTime>
 
 #include "qgis.h"
-#include "qgslogger.h"
 #include "qgsdatasourceuri.h"
 #include "qgsvectordataprovider.h"
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
-#include <QMutex>
+#include <QRecursiveMutex>
 
 class QgsField;
 
 // Oracle layer properties
 struct QgsOracleLayerProperty
 {
-  QList<QgsWkbTypes::Type> types;
+  QList<Qgis::WkbType> types;
   QList<int>           srids;
   QString              ownerName;
   QString              tableName;
@@ -54,7 +53,7 @@ struct QgsOracleLayerProperty
 
   int size() const { Q_ASSERT( types.size() == srids.size() ); return types.size(); }
 
-  bool operator==( const QgsOracleLayerProperty &other )
+  bool operator==( const QgsOracleLayerProperty &other ) const
   {
     return types == other.types && srids == other.srids && ownerName == other.ownerName &&
            tableName == other.tableName && geometryColName == other.geometryColName &&
@@ -84,11 +83,11 @@ struct QgsOracleLayerProperty
   {
     QString typeString;
     const auto constTypes = types;
-    for ( QgsWkbTypes::Type type : constTypes )
+    for ( Qgis::WkbType type : constTypes )
     {
       if ( !typeString.isEmpty() )
         typeString += "|";
-      typeString += QString::number( type );
+      typeString += QString::number( static_cast< quint32>( type ) );
     }
     QString sridString;
     const auto constSrids = srids;
@@ -111,6 +110,13 @@ struct QgsOracleLayerProperty
   }
 #endif
 };
+
+
+#include "qgsconfig.h"
+constexpr int sOracleConQueryLogFilePrefixLength = CMAKE_SOURCE_DIR[sizeof( CMAKE_SOURCE_DIR ) - 1] == '/' ? sizeof( CMAKE_SOURCE_DIR ) + 1 : sizeof( CMAKE_SOURCE_DIR );
+#define LoggedExec(_class, query) execLogged( query, true, nullptr, _class, QString(QString( __FILE__ ).mid( sOracleConQueryLogFilePrefixLength ) + ':' + QString::number( __LINE__ ) + " (" + __FUNCTION__ + ")") )
+#define LoggedExecPrivate(_class, query, sql, params ) execLogged( query, sql, params, _class, QString(QString( __FILE__ ).mid( sOracleConQueryLogFilePrefixLength ) + ':' + QString::number( __LINE__ ) + " (" + __FUNCTION__ + ")") )
+
 
 /**
  * Wraps acquireConnection() and releaseConnection() from a QgsOracleConnPool.
@@ -157,6 +163,7 @@ class QgsOracleConn : public QObject
     static QString quotedValue( const QVariant &value, QVariant::Type type = QVariant::Invalid );
 
     bool exec( const QString &query, bool logError = true, QString *errorMessage = nullptr );
+    bool execLogged( const QString &sql, bool logError = true, QString *errorMessage = nullptr, const QString &originatorClass = QString(), const QString &queryOrigin = QString() );
 
     bool begin( QSqlDatabase &db );
     bool commit( QSqlDatabase &db );
@@ -231,11 +238,11 @@ class QgsOracleConn : public QObject
 
     static const int sGeomTypeSelectLimit;
 
-    static QgsWkbTypes::Type wkbTypeFromDatabase( int gtype );
+    static Qgis::WkbType wkbTypeFromDatabase( int gtype );
 
-    static QString databaseTypeFilter( const QString &alias, QString geomCol, QgsWkbTypes::Type wkbType );
+    static QString databaseTypeFilter( const QString &alias, QString geomCol, Qgis::WkbType wkbType );
 
-    static QgsWkbTypes::Type wkbTypeFromGeomType( QgsWkbTypes::GeometryType geomType );
+    static Qgis::WkbType wkbTypeFromGeomType( Qgis::GeometryType geomType );
 
     static QStringList connectionList();
     static QString selectedConnection();
@@ -245,6 +252,7 @@ class QgsOracleConn : public QObject
     static QString restrictToSchema( const QString &connName );
     static bool geometryColumnsOnly( const QString &connName );
     static bool allowGeometrylessTables( const QString &connName );
+    static bool allowProjectsInDatabase( const QString &connName );
     static bool estimatedMetadata( const QString &connName );
     static bool onlyExistingTypes( const QString &connName );
     static void deleteConnection( const QString &connName );
@@ -253,11 +261,14 @@ class QgsOracleConn : public QObject
 
     operator QSqlDatabase() { return mDatabase; }
 
+    static QString getLastExecutedQuery( const QSqlQuery &query );
+
   private:
     explicit QgsOracleConn( QgsDataSourceUri uri, bool transaction );
     ~QgsOracleConn() override;
 
     bool exec( QSqlQuery &qry, const QString &sql, const QVariantList &params );
+    bool execLogged( QSqlQuery &qry, const QString &sql, const QVariantList &params, const QString &originatorClass = QString(), const QString &queryOrigin = QString() );
 
     //! reference count
     int mRef;
@@ -273,13 +284,16 @@ class QgsOracleConn : public QObject
     //! List of the supported layers
     QVector<QgsOracleLayerProperty> mLayersSupported;
 
-    mutable QMutex mLock;
+    mutable QRecursiveMutex mLock;
     bool mTransaction = false;
     int mSavePointId = 1;
 
-    static QMap<QString, QgsOracleConn *> sConnections;
+    static QMap<QPair<QString, QThread *>, QgsOracleConn *> sConnections;
     static int snConnections;
     static QMap<QString, QDateTime> sBrokenConnections;
+
+    // Connection URI string representation for query logger
+    QString mConnInfo;
 };
 
 #endif

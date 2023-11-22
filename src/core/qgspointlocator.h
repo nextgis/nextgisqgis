@@ -281,7 +281,7 @@ class CORE_EXPORT QgsPointLocator : public QObject
               }
               catch ( QgsCsException & )
               {
-                QgsDebugMsg( QStringLiteral( "transformation to layer coordinate failed" ) );
+                QgsDebugError( QStringLiteral( "transformation to layer coordinate failed" ) );
               }
             }
 
@@ -300,7 +300,7 @@ class CORE_EXPORT QgsPointLocator : public QObject
               }
               catch ( QgsCsException & )
               {
-                QgsDebugMsg( QStringLiteral( "transformation to destination coordinate failed" ) );
+                QgsDebugError( QStringLiteral( "transformation to destination coordinate failed" ) );
               }
             }
           }
@@ -317,7 +317,8 @@ class CORE_EXPORT QgsPointLocator : public QObject
                  mLayer == other.mLayer &&
                  mFid == other.mFid &&
                  mVertexIndex == other.mVertexIndex &&
-                 mEdgePoints == other.mEdgePoints &&
+                 mEdgePoints[0] == other.mEdgePoints[0] &&
+                 mEdgePoints[1] == other.mEdgePoints[1] &&
                  mCentroid == other.mCentroid &&
                  mMiddleOfSegment == other.mMiddleOfSegment;
         }

@@ -22,9 +22,11 @@
 
 #include "qgsproviderregistry.h"
 #include "ogr/qgsogrhelperfunctions.h"
+#include "qgsgdalutils.h"
 
 #include <gdal.h>
 #include <cpl_minixml.h>
+#include "qgshelp.h"
 
 QgsGdalSourceSelect::QgsGdalSourceSelect( QWidget *parent, Qt::WindowFlags fl, QgsProviderRegistry::WidgetMode widgetMode ):
   QgsAbstractDataSourceWidget( parent, fl, widgetMode )
@@ -32,9 +34,13 @@ QgsGdalSourceSelect::QgsGdalSourceSelect( QWidget *parent, Qt::WindowFlags fl, Q
   setupUi( this );
   setupButtons( buttonBox );
 
+  mOpenOptionsGroupBox->setCollapsed( false );
+
   connect( radioSrcFile, &QRadioButton::toggled, this, &QgsGdalSourceSelect::radioSrcFile_toggled );
+  connect( radioSrcOgcApi, &QRadioButton::toggled, this, &QgsGdalSourceSelect::radioSrcOgcApi_toggled );
   connect( radioSrcProtocol, &QRadioButton::toggled, this, &QgsGdalSourceSelect::radioSrcProtocol_toggled );
   connect( cmbProtocolTypes, &QComboBox::currentTextChanged, this, &QgsGdalSourceSelect::cmbProtocolTypes_currentIndexChanged );
+  connect( buttonBox, &QDialogButtonBox::helpRequested, this, &QgsGdalSourceSelect::showHelp );
 
   whileBlocking( radioSrcFile )->setChecked( true );
   protocolGroupBox->hide();
@@ -80,11 +86,12 @@ QgsGdalSourceSelect::QgsGdalSourceSelect( QWidget *parent, Qt::WindowFlags fl, Q
   mFileWidget->setOptions( QFileDialog::HideNameFilterDetails );
   connect( mFileWidget, &QgsFileWidget::fileChanged, this, [ = ]( const QString & path )
   {
-    mRasterPath = path;
+    mRasterPath = mIsOgcApi ? QStringLiteral( "OGCAPI:%1" ).arg( path ) : path;
     emit enableButtons( ! mRasterPath.isEmpty() );
     fillOpenOptions();
   } );
   mOpenOptionsGroupBox->setVisible( false );
+  mAuthSettingsProtocol->setDataprovider( QStringLiteral( "gdal" ) );
 }
 
 bool QgsGdalSourceSelect::isProtocolCloudType()
@@ -135,6 +142,27 @@ void QgsGdalSourceSelect::radioSrcFile_toggled( bool checked )
   }
 }
 
+void QgsGdalSourceSelect::radioSrcOgcApi_toggled( bool checked )
+{
+  mIsOgcApi = checked;
+  radioSrcFile_toggled( checked );
+  if ( checked )
+  {
+    rasterDatasetLabel->setText( tr( "OGC API Endpoint" ) );
+    const QString vectorPath = mFileWidget->filePath();
+    emit enableButtons( ! vectorPath.isEmpty() );
+    if ( mRasterPath.isEmpty() )
+    {
+      mRasterPath = QStringLiteral( "OGCAPI:" );
+    }
+    fillOpenOptions();
+  }
+  else
+  {
+    rasterDatasetLabel->setText( tr( "Raster dataset(s)" ) );
+  }
+}
+
 void QgsGdalSourceSelect::radioSrcProtocol_toggled( bool checked )
 {
   if ( checked )
@@ -162,12 +190,57 @@ void QgsGdalSourceSelect::addButtonClicked()
   if ( mDataSources.isEmpty() )
   {
     QMessageBox::information( this,
-                              tr( "Add raster layer" ),
+                              tr( "Add Raster Layer" ),
                               tr( "No layers selected." ) );
     return;
   }
 
-  emit addRasterLayers( mDataSources );
+  // validate sources
+  QStringList sources;
+  enum class PromoteToVsiCurlStatus
+  {
+    NotAsked,
+    AutoPromote,
+    DontPromote
+  };
+
+  PromoteToVsiCurlStatus promoteToVsiCurlStatus = PromoteToVsiCurlStatus::NotAsked;
+
+  for ( const QString &originalSource : std::as_const( mDataSources ) )
+  {
+    QVariantMap parts = QgsProviderRegistry::instance()->decodeUri( QStringLiteral( "gdal" ), originalSource );
+
+    const QString vsiPrefix = parts.value( QStringLiteral( "vsiPrefix" ) ).toString();
+    const QString scheme = QUrl( parts.value( QStringLiteral( "path" ) ).toString() ).scheme();
+    const bool isRemoteNonVsiCurlUrl = vsiPrefix.isEmpty() && ( scheme.startsWith( QLatin1String( "http" ) ) || scheme == QLatin1String( "ftp" ) );
+    if ( isRemoteNonVsiCurlUrl )
+    {
+      if ( promoteToVsiCurlStatus == PromoteToVsiCurlStatus::NotAsked )
+      {
+        if ( QMessageBox::warning( this,
+                                   tr( "Add Raster Layer" ),
+                                   tr( "Directly adding HTTP(S) or FTP sources can be very slow, as it requires a full download of the dataset.\n\n"
+                                       "Would you like to use a streaming method to access this dataset instead (recommended)?" ), QMessageBox::Button::Yes | QMessageBox::Button::No, QMessageBox::Button::Yes )
+             == QMessageBox::Yes )
+        {
+          promoteToVsiCurlStatus = PromoteToVsiCurlStatus::AutoPromote;
+        }
+        else
+        {
+          promoteToVsiCurlStatus = PromoteToVsiCurlStatus::DontPromote;
+        }
+      }
+
+      if ( promoteToVsiCurlStatus == PromoteToVsiCurlStatus::AutoPromote )
+      {
+        parts.insert( QStringLiteral( "vsiPrefix" ), QStringLiteral( "/vsicurl/" ) );
+      }
+    }
+
+    sources << QgsProviderRegistry::instance()->encodeUri( QStringLiteral( "gdal" ), parts );
+  }
+
+  emit addRasterLayers( sources );
 }
 
 void QgsGdalSourceSelect::computeDataSources()
@@ -192,7 +265,7 @@ void QgsGdalSourceSelect::computeDataSources()
     }
   }
 
-  if ( radioSrcFile->isChecked() )
+  if ( radioSrcFile->isChecked() || radioSrcOgcApi->isChecked() )
   {
     for ( const auto &filePath : QgsFileWidget::splitFilePaths( mRasterPath ) )
     {
@@ -258,8 +331,20 @@ void QgsGdalSourceSelect::fillOpenOptions()
   if ( mDataSources.isEmpty() )
     return;
 
+  const QString firstDataSource = mDataSources.at( 0 );
+  const QString vsiPrefix = QgsGdalUtils::vsiPrefixForPath( firstDataSource );
+  const QString scheme = QUrl( firstDataSource ).scheme();
+  const bool isRemoteNonVsiCurlUrl = vsiPrefix.isEmpty() && ( scheme.startsWith( QLatin1String( "http" ) ) || scheme == QLatin1String( "ftp" ) );
+  if ( isRemoteNonVsiCurlUrl )
+  {
+    // it can be very expensive to determine open options for non /vsicurl/ http uris -- it may require a full download of the remote dataset,
+    // so just be safe and don't show any open options. Users can always manually append the /vsicurl/ prefix if they desire these, OR
+    // correctly use the HTTP "Protocol" option instead.
+    return;
+  }
+
   GDALDriverH hDriver;
-  hDriver = GDALIdentifyDriverEx( mDataSources[0].toUtf8().toStdString().c_str(), GDAL_OF_RASTER, nullptr, nullptr );
+  hDriver = GDALIdentifyDriverEx( firstDataSource.toUtf8().toStdString().c_str(), GDAL_OF_RASTER, nullptr, nullptr );
   if ( hDriver == nullptr )
     return;
 
@@ -365,6 +450,12 @@ void QgsGdalSourceSelect::fillOpenOptions()
   }
 
   mOpenOptionsGroupBox->setVisible( !mOpenOptionsWidgets.empty() );
+
+}
+
+void QgsGdalSourceSelect::showHelp()
+{
+  QgsHelp::openHelp( QStringLiteral( "managing_data_source/opening_data.html#loading-a-layer-from-a-file" ) );
 }
 
 ///@endcond

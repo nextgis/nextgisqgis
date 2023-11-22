@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tests for auth manager WMS/WFS using QGIS Server through HTTP Basic
 enabled qgis_wrapped_server.py.
@@ -17,13 +16,14 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
 import os
-import sys
-import re
-import subprocess
-import tempfile
 import random
+import re
 import string
+import subprocess
+import sys
+import tempfile
 import urllib
+
 from functools import partial
 
 __author__ = 'Alessandro Pasotti'
@@ -32,23 +32,16 @@ __copyright__ = 'Copyright 2016, The QGIS Project'
 
 from shutil import rmtree
 
-from utilities import unitTestDataPath, waitServer
 from qgis.core import (
     QgsApplication,
     QgsAuthMethodConfig,
-    QgsVectorLayer,
-    QgsRasterLayer,
     QgsFileDownloader,
+    QgsRasterLayer,
+    QgsVectorLayer,
 )
-
-from qgis.testing import (
-    start_app,
-    unittest,
-)
-from qgis.PyQt.QtCore import (
-    QEventLoop,
-    QUrl,
-)
+from qgis.PyQt.QtCore import QEventLoop, QUrl
+from qgis.testing import start_app, unittest
+from utilities import unitTestDataPath, waitServer
 
 try:
     QGIS_SERVER_ENDPOINT_PORT = os.environ['QGIS_SERVER_ENDPOINT_PORT']
@@ -68,6 +61,7 @@ class TestAuthManager(unittest.TestCase):
     def setUpClass(cls):
         """Run before all tests:
         Creates an auth configuration"""
+        super().setUpClass()
         cls.port = QGIS_SERVER_ENDPOINT_PORT
         # Clean env just to be sure
         env_vars = ['QUERY_STRING', 'QGIS_PROJECT_FILE']
@@ -107,7 +101,7 @@ class TestAuthManager(unittest.TestCase):
         cls.port = int(re.findall(br':(\d+)', line)[0])
         assert cls.port != 0
         # Wait for the server process to start
-        assert waitServer('%s://%s:%s' % (cls.protocol, cls.hostname, cls.port)), "Server is not responding! %s://%s:%s" % (cls.protocol, cls.hostname, cls.port)
+        assert waitServer(f'{cls.protocol}://{cls.hostname}:{cls.port}'), f"Server is not responding! {cls.protocol}://{cls.hostname}:{cls.port}"
 
     @classmethod
     def tearDownClass(cls):
@@ -115,6 +109,7 @@ class TestAuthManager(unittest.TestCase):
         cls.server.terminate()
         rmtree(QGIS_AUTH_DB_DIR_PATH)
         del cls.server
+        super().tearDownClass()
 
     def setUp(self):
         """Run before each test."""
@@ -134,13 +129,13 @@ class TestAuthManager(unittest.TestCase):
         parms = {
             'srsname': 'EPSG:4326',
             'typename': type_name,
-            'url': '%s://%s:%s/?map=%s' % (cls.protocol, cls.hostname, cls.port, cls.project_path),
+            'url': f'{cls.protocol}://{cls.hostname}:{cls.port}/?map={cls.project_path}',
             'version': 'auto',
             'table': '',
         }
         if authcfg is not None:
             parms.update({'authcfg': authcfg})
-        uri = ' '.join([("%s='%s'" % (k, v)) for k, v in list(parms.items())])
+        uri = ' '.join([(f"{k}='{v}'") for k, v in list(parms.items())])
         wfs_layer = QgsVectorLayer(uri, layer_name, 'WFS')
         return wfs_layer
 
@@ -153,7 +148,7 @@ class TestAuthManager(unittest.TestCase):
             layer_name = 'wms_' + layers.replace(',', '')
         parms = {
             'crs': 'EPSG:4326',
-            'url': '%s://%s:%s/?map=%s' % (cls.protocol, cls.hostname, cls.port, cls.project_path),
+            'url': f'{cls.protocol}://{cls.hostname}:{cls.port}/?map={cls.project_path}',
             # This is needed because of a really weird implementation in QGIS Server, that
             # replaces _ in the the real layer name with spaces
             'layers': urllib.parse.quote(layers.replace('_', ' ')),
@@ -163,7 +158,7 @@ class TestAuthManager(unittest.TestCase):
         }
         if authcfg is not None:
             parms.update({'authcfg': authcfg})
-        uri = '&'.join([("%s=%s" % (k, v.replace('=', '%3D'))) for k, v in list(parms.items())])
+        uri = '&'.join([f"{k}={v.replace('=', '%3D')}" for k, v in list(parms.items())])
         wms_layer = QgsRasterLayer(uri, layer_name, 'wms')
         return wms_layer
 
@@ -174,9 +169,9 @@ class TestAuthManager(unittest.TestCase):
         """
         if layer_name is None:
             layer_name = 'geojson_' + type_name
-        uri = '%s://%s:%s/?MAP=%s&SERVICE=WFS&REQUEST=GetFeature&TYPENAME=%s&VERSION=2.0.0&OUTPUTFORMAT=geojson' % (cls.protocol, cls.hostname, cls.port, cls.project_path, urllib.parse.quote(type_name))
+        uri = f'{cls.protocol}://{cls.hostname}:{cls.port}/?MAP={cls.project_path}&SERVICE=WFS&REQUEST=GetFeature&TYPENAME={urllib.parse.quote(type_name)}&VERSION=2.0.0&OUTPUTFORMAT=geojson'
         if authcfg is not None:
-            uri += " authcfg='%s'" % authcfg
+            uri += f" authcfg='{authcfg}'"
         geojson_layer = QgsVectorLayer(uri, layer_name, 'ogr')
         return geojson_layer
 
@@ -219,7 +214,7 @@ class TestAuthManager(unittest.TestCase):
             "WIDTH": "500",
             "CRS": "EPSG:3857"
         }.items())])
-        url = '%s://%s:%s/%s' % (self.protocol, self.hostname, self.port, qs)
+        url = f'{self.protocol}://{self.hostname}:{self.port}/{qs}'
 
         destination = tempfile.mktemp()
         loop = QEventLoop()
@@ -236,7 +231,7 @@ class TestAuthManager(unittest.TestCase):
         loop.exec_()
 
         self.assertTrue(self.error_was_called)
-        self.assertTrue("Download failed: Host requires authentication" in str(self.error_args), "Error args is: %s" % str(self.error_args))
+        self.assertTrue("Download failed: Host requires authentication" in str(self.error_args), f"Error args is: {str(self.error_args)}")
 
     def testValidAuthFileDownload(self):
         """
@@ -255,7 +250,7 @@ class TestAuthManager(unittest.TestCase):
             "WIDTH": "500",
             "CRS": "EPSG:3857"
         }.items())])
-        url = '%s://%s:%s/%s' % (self.protocol, self.hostname, self.port, qs)
+        url = f'{self.protocol}://{self.hostname}:{self.port}/{qs}'
 
         destination = tempfile.mktemp()
         loop = QEventLoop()
@@ -273,7 +268,7 @@ class TestAuthManager(unittest.TestCase):
 
         # Check the we've got a likely PNG image
         self.assertTrue(self.completed_was_called)
-        self.assertTrue(os.path.getsize(destination) > 2000, "Image size: %s" % os.path.getsize(destination))  # > 1MB
+        self.assertTrue(os.path.getsize(destination) > 2000, f"Image size: {os.path.getsize(destination)}")  # > 1MB
         with open(destination, 'rb') as f:
             self.assertTrue(b'PNG' in f.read())  # is a PNG
 

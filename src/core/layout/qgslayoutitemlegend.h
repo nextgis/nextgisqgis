@@ -239,14 +239,18 @@ class CORE_EXPORT QgsLayoutItemLegend : public QgsLayoutItem
     /**
      * Returns the font settings for a legend \a component.
      * \see setStyleFont()
+     *
+     * \deprecated use QgsLegendStyle::textFormat() from style() instead.
      */
-    QFont styleFont( QgsLegendStyle::Style component ) const;
+    Q_DECL_DEPRECATED QFont styleFont( QgsLegendStyle::Style component ) const SIP_DEPRECATED;
 
     /**
      * Sets the style \a font for a legend \a component.
      * \see styleFont()
+     *
+     * \deprecated use QgsLegendStyle::setTextFormat() from style() instead.
      */
-    void setStyleFont( QgsLegendStyle::Style component, const QFont &font );
+    Q_DECL_DEPRECATED void setStyleFont( QgsLegendStyle::Style component, const QFont &font ) SIP_DEPRECATED;
 
     /**
      * Set the \a margin for a legend \a component.
@@ -261,14 +265,18 @@ class CORE_EXPORT QgsLayoutItemLegend : public QgsLayoutItem
     /**
      * Returns the spacing in-between lines in layout units.
      * \see setLineSpacing()
+     *
+     * \deprecated use QgsLegendStyle::textFormat() from style() instead.
      */
-    double lineSpacing() const;
+    Q_DECL_DEPRECATED double lineSpacing() const SIP_DEPRECATED;
 
     /**
      * Sets the \a spacing in-between multiple lines.
      * \see lineSpacing()
+     *
+     * \deprecated use QgsLegendStyle::setTextFormat() from style() instead.
      */
-    void setLineSpacing( double spacing );
+    Q_DECL_DEPRECATED void setLineSpacing( double spacing ) SIP_DEPRECATED;
 
     /**
      * Returns the legend box space.
@@ -297,14 +305,18 @@ class CORE_EXPORT QgsLayoutItemLegend : public QgsLayoutItem
     /**
      * Returns the legend font color.
      * \see setFontColor()
+     *
+     * \deprecated use QgsLegendStyle::setTextFormat() from style() instead.
      */
-    QColor fontColor() const;
+    Q_DECL_DEPRECATED QColor fontColor() const SIP_DEPRECATED;
 
     /**
      * Sets the legend font \a color.
      * \see fontColor()
+     *
+     * \deprecated use QgsLegendStyle::setTextFormat() from style() instead.
      */
-    void setFontColor( const QColor &color );
+    Q_DECL_DEPRECATED void setFontColor( const QColor &color ) SIP_DEPRECATED;
 
     /**
      * Returns the legend symbol width.
@@ -516,6 +528,7 @@ class CORE_EXPORT QgsLayoutItemLegend : public QgsLayoutItem
     /**
      * Sets the \a map to associate with the legend.
      * \see linkedMap()
+     * \see setFilterByMapItems()
      */
     void setLinkedMap( QgsLayoutItemMap *map );
 
@@ -524,6 +537,26 @@ class CORE_EXPORT QgsLayoutItemLegend : public QgsLayoutItem
      * \see setLinkedMap()
      */
     QgsLayoutItemMap *linkedMap() const { return mMap; }
+
+    /**
+     * Sets the \a maps to use when filtering legend content by map extents.
+     *
+     * \see filterByMapItems()
+     * \see setLinkedMap()
+     *
+     * \since QGIS 3.32
+     */
+    void setFilterByMapItems( const QList< QgsLayoutItemMap * > &maps );
+
+    /**
+     * Returns the maps to use when filtering legend content by map extents.
+     *
+     * \see setFilterByMapItems()
+     * \see setLinkedMap()
+     *
+     * \since QGIS 3.32
+     */
+    QList< QgsLayoutItemMap * > filterByMapItems() const;
 
     /**
      * Returns the name of the theme currently linked to the legend.
@@ -556,10 +589,12 @@ class CORE_EXPORT QgsLayoutItemLegend : public QgsLayoutItem
     QgsExpressionContext createExpressionContext() const override;
     ExportLayerBehavior exportLayerBehavior() const override;
     bool accept( QgsStyleEntityVisitorInterface *visitor ) const override;
+    bool isRefreshing() const override;
 
   public slots:
 
     void refresh() override;
+    void invalidateCache() override;
     void refreshDataDefinedProperty( QgsLayoutObject::DataDefinedProperty property = QgsLayoutObject::AllProperties ) override;
 
   protected:
@@ -609,6 +644,9 @@ class CORE_EXPORT QgsLayoutItemLegend : public QgsLayoutItem
 
     QString mMapUuid;
     QgsLayoutItemMap *mMap = nullptr;
+
+    QList< QString > mFilterByMapUuids;
+    QList< QPointer< QgsLayoutItemMap >> mFilterByMapItems;
 
     bool mLegendFilterByMap = false;
     bool mLegendFilterByExpression = false;

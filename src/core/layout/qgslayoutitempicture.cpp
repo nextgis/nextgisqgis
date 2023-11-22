@@ -22,9 +22,6 @@
 #include "qgslayoutreportcontext.h"
 #include "qgslayoutitemmap.h"
 #include "qgslayoututils.h"
-#include "qgsproject.h"
-#include "qgsexpression.h"
-#include "qgsvectorlayer.h"
 #include "qgsmessagelog.h"
 #include "qgspathresolver.h"
 #include "qgsproperty.h"
@@ -32,8 +29,6 @@
 #include "qgssymbollayerutils.h"
 #include "qgssvgcache.h"
 #include "qgslogger.h"
-#include "qgsbearingutils.h"
-#include "qgsmapsettings.h"
 #include "qgsreadwritecontext.h"
 #include "qgsimagecache.h"
 #include "qgslayoutnortharrowhandler.h"
@@ -127,8 +122,8 @@ void QgsLayoutItemPicture::draw( QgsLayoutItemRenderContext &context )
     {
       boundRectWidthMM = rect().width();
       boundRectHeightMM = rect().height();
-      imageRect = QRect( 0, 0, mLayout->convertFromLayoutUnits( rect().width(), QgsUnitTypes::LayoutMillimeters ).length() * mLayout->renderContext().dpi() / 25.4,
-                         mLayout->convertFromLayoutUnits( rect().height(), QgsUnitTypes::LayoutMillimeters ).length() * mLayout->renderContext().dpi() / 25.4 );
+      imageRect = QRect( 0, 0, mLayout->convertFromLayoutUnits( rect().width(), Qgis::LayoutUnit::Millimeters ).length() * mLayout->renderContext().dpi() / 25.4,
+                         mLayout->convertFromLayoutUnits( rect().height(), Qgis::LayoutUnit::Millimeters ).length() * mLayout->renderContext().dpi() / 25.4 );
     }
 
     //zoom mode - calculate anchor point and rotation
@@ -254,7 +249,7 @@ QSizeF QgsLayoutItemPicture::applyItemSizeConstraint( const QSizeF targetSize )
     {
       if ( !( currentPictureSize.isEmpty() ) )
       {
-        const QgsLayoutSize sizeMM = mLayout->convertFromLayoutUnits( currentPictureSize, QgsUnitTypes::LayoutMillimeters );
+        const QgsLayoutSize sizeMM = mLayout->convertFromLayoutUnits( currentPictureSize, Qgis::LayoutUnit::Millimeters );
         newSize.setWidth( sizeMM.width() * 25.4 / mLayout->renderContext().dpi() );
         newSize.setHeight( sizeMM.height() * 25.4 / mLayout->renderContext().dpi() );
       }
@@ -360,7 +355,10 @@ void QgsLayoutItemPicture::refreshPicture( const QgsExpressionContext *context )
     {
       mHasExpressionError = true;
       source = QString();
-      QgsMessageLog::logMessage( tr( "Picture expression eval error" ) );
+      if ( scopedContext.feature().isValid() )
+      {
+        QgsMessageLog::logMessage( QStringLiteral( "%1: %2" ).arg( tr( "Picture expression eval error" ), sourceProperty.asExpression() ) );
+      }
     }
     else if ( source.type() != QVariant::ByteArray )
     {
@@ -487,6 +485,7 @@ void QgsLayoutItemPicture::loadPictureUsingCache( const QString &path )
   if ( path.isEmpty() )
   {
     mImage = QImage();
+    mSVG.load( QByteArray() );
     return;
   }
 
@@ -499,7 +498,7 @@ void QgsLayoutItemPicture::loadPictureUsingCache( const QString &path )
     {
       bool fitsInCache = false;
       bool isMissing = false;
-      mImage = QgsApplication::imageCache()->pathAsImage( path, QSize(), true, 1, fitsInCache, true, mLayout->renderContext().dpi(), &isMissing );
+      mImage = QgsApplication::imageCache()->pathAsImage( path, QSize(), true, 1, fitsInCache, true, mLayout->renderContext().dpi(), -1, &isMissing );
       if ( mImage.isNull() || isMissing )
         mMode = FormatUnknown;
       break;
@@ -542,7 +541,6 @@ void QgsLayoutItemPicture::updateNorthArrowRotation( double rotation )
 
 void QgsLayoutItemPicture::loadPicture( const QVariant &data )
 {
-  const Format origFormat = mMode;
   mIsMissingImage = false;
   QVariant imageData( data );
   mEvaluatedPath = data.toString();
@@ -583,14 +581,14 @@ void QgsLayoutItemPicture::loadPicture( const QVariant &data )
   {
     //trying to load an invalid file or bad expression, show cross picture
     mIsMissingImage = true;
-    if ( origFormat == FormatRaster )
+    if ( mOriginalMode == FormatRaster )
     {
       const QString badFile( QStringLiteral( ":/images/composer/missing_image.png" ) );
       QImageReader imageReader( badFile );
       if ( imageReader.read( &mImage ) )
         mMode = FormatRaster;
     }
-    else
+    else if ( mOriginalMode == FormatSVG )
     {
       const QString badFile( QStringLiteral( ":/images/composer/missing_image.svg" ) );
       mSVG.load( badFile );
@@ -767,6 +765,7 @@ void QgsLayoutItemPicture::refreshDataDefinedProperty( const QgsLayoutObject::Da
 
 void QgsLayoutItemPicture::setPicturePath( const QString &path, Format format )
 {
+  mOriginalMode = format;
   mMode = format;
   mSourcePath = path;
   refreshPicture();
@@ -796,7 +795,7 @@ bool QgsLayoutItemPicture::writePropertiesToElement( QDomElement &elem, QDomDocu
   elem.setAttribute( QStringLiteral( "svgFillColor" ), QgsSymbolLayerUtils::encodeColor( mSvgFillColor ) );
   elem.setAttribute( QStringLiteral( "svgBorderColor" ), QgsSymbolLayerUtils::encodeColor( mSvgStrokeColor ) );
   elem.setAttribute( QStringLiteral( "svgBorderWidth" ), QString::number( mSvgStrokeWidth ) );
-  elem.setAttribute( QStringLiteral( "mode" ), mMode );
+  elem.setAttribute( QStringLiteral( "mode" ), mOriginalMode );
 
   //rotation
   elem.setAttribute( QStringLiteral( "pictureRotation" ), QString::number( mPictureRotation ) );
@@ -824,7 +823,8 @@ bool QgsLayoutItemPicture::readPropertiesFromElement( const QDomElement &itemEle
   mSvgFillColor = QgsSymbolLayerUtils::decodeColor( itemElem.attribute( QStringLiteral( "svgFillColor" ), QgsSymbolLayerUtils::encodeColor( QColor( 255, 255, 255 ) ) ) );
   mSvgStrokeColor = QgsSymbolLayerUtils::decodeColor( itemElem.attribute( QStringLiteral( "svgBorderColor" ), QgsSymbolLayerUtils::encodeColor( QColor( 0, 0, 0 ) ) ) );
   mSvgStrokeWidth = itemElem.attribute( QStringLiteral( "svgBorderWidth" ), QStringLiteral( "0.2" ) ).toDouble();
-  mMode = static_cast< Format >( itemElem.attribute( QStringLiteral( "mode" ), QString::number( FormatUnknown ) ).toInt() );
+  mOriginalMode = static_cast< Format >( itemElem.attribute( QStringLiteral( "mode" ), QString::number( FormatUnknown ) ).toInt() );
+  mMode = mOriginalMode;
 
   const QDomNodeList composerItemList = itemElem.elementsByTagName( QStringLiteral( "ComposerItem" ) );
   if ( !composerItemList.isEmpty() )
@@ -929,9 +929,10 @@ void QgsLayoutItemPicture::setSvgStrokeWidth( double width )
 
 void QgsLayoutItemPicture::setMode( QgsLayoutItemPicture::Format mode )
 {
-  if ( mMode == mode )
+  if ( mOriginalMode == mode )
     return;
 
+  mOriginalMode = mode;
   mMode = mode;
   refreshPicture();
 }

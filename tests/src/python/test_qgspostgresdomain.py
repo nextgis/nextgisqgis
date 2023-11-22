@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for Postgres domains.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -10,12 +9,10 @@ __author__ = 'Denis Rouzaud'
 __date__ = '10/02/2018'
 __copyright__ = 'Copyright 2018, The QGIS Project'
 
-import qgis  # NOQA
-
 import os
 
-from qgis.core import QgsVectorLayer, QgsProject
-
+import qgis  # NOQA
+from qgis.core import QgsProject, QgsVectorLayer
 from qgis.testing import start_app, unittest
 
 start_app()
@@ -29,6 +26,7 @@ class TestQgsPostgresDomain(unittest.TestCase):
         Setup the involved layer
         :return:
         """
+        super().setUpClass()
         cls.dbconn = 'service=\'qgis_test\''
         if 'QGIS_PGTEST_DB' in os.environ:
             cls.dbconn = os.environ['QGIS_PGTEST_DB']

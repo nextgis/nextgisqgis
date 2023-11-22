@@ -14,10 +14,7 @@
  ***************************************************************************/
 
 #include "qgsprocessingoutputdestinationwidget.h"
-#include "qgsgui.h"
 #include "qgsprocessingparameters.h"
-#include "qgsproviderregistry.h"
-#include "qgsprovidermetadata.h"
 #include "qgsnewdatabasetablenamewidget.h"
 #include "qgssettings.h"
 #include "qgsfileutils.h"
@@ -31,6 +28,8 @@
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QCheckBox>
+#include <QLocale>
+#include <QTextCodec>
 #include <QUrl>
 
 ///@cond NOT_STABLE
@@ -54,7 +53,8 @@ QgsProcessingLayerOutputDestinationWidget::QgsProcessingLayerOutputDestinationWi
   mSelectButton->setPopupMode( QToolButton::InstantPopup );
 
   QgsSettings settings;
-  mEncoding = settings.value( QStringLiteral( "/Processing/encoding" ), QStringLiteral( "System" ) ).toString();
+  mEncoding = QgsProcessingUtils::resolveDefaultEncoding( settings.value( QStringLiteral( "/Processing/encoding" ), QStringLiteral( "System" ) ).toString() );
+  settings.setValue( QStringLiteral( "/Processing/encoding" ), mEncoding );
 
   if ( !mParameter->defaultValueForGui().isValid() )
   {
@@ -97,7 +97,7 @@ void QgsProcessingLayerOutputDestinationWidget::setValue( const QVariant &value 
     {
       saveToTemporary();
     }
-    else if ( value.canConvert< QgsProcessingOutputLayerDefinition >() )
+    else if ( value.userType() == QMetaType::type( "QgsProcessingOutputLayerDefinition" ) )
     {
       const QgsProcessingOutputLayerDefinition def = value.value< QgsProcessingOutputLayerDefinition >();
       if ( def.sink.staticValue().toString() == QLatin1String( "memory:" ) || def.sink.staticValue().toString() == QgsProcessing::TEMPORARY_OUTPUT || def.sink.staticValue().toString().isEmpty() )
@@ -133,7 +133,7 @@ void QgsProcessingLayerOutputDestinationWidget::setValue( const QVariant &value 
       }
       else
       {
-        if ( !prev.canConvert<QgsProcessingOutputLayerDefinition>() ||
+        if ( prev.userType() != QMetaType::type( "QgsProcessingOutputLayerDefinition" ) ||
              !( prev.value< QgsProcessingOutputLayerDefinition >() == QgsProcessingLayerOutputDestinationWidget::value().value< QgsProcessingOutputLayerDefinition >() ) )
           emit destinationChanged();
       }
@@ -356,7 +356,7 @@ void QgsProcessingLayerOutputDestinationWidget::selectDirectory()
   if ( lastDir.isEmpty() )
     lastDir = settings.value( QStringLiteral( "/Processing/LastOutputPath" ), QDir::homePath() ).toString();
 
-  const QString dirName = QFileDialog::getExistingDirectory( this, tr( "Select Directory" ), lastDir, QFileDialog::ShowDirsOnly );
+  const QString dirName = QFileDialog::getExistingDirectory( this, tr( "Select Directory" ), lastDir, QFileDialog::Options() );
   if ( !dirName.isEmpty() )
   {
     leText->setText( QDir::toNativeSeparators( dirName ) );
@@ -389,6 +389,11 @@ void QgsProcessingLayerOutputDestinationWidget::selectFile()
   else if ( mParameter->type() == QgsProcessingParameterPointCloudDestination::typeName() )
   {
     lastExtPath = QStringLiteral( "/Processing/LastPointCloudOutputExt" );
+    lastExt = settings.value( lastExtPath, QStringLiteral( ".%1" ).arg( mParameter->defaultFileExtension() ) ).toString();
+  }
+  else if ( mParameter->type() == QgsProcessingParameterVectorTileDestination::typeName() )
+  {
+    lastExtPath = QStringLiteral( "/Processing/LastVectorTileOutputExt" );
     lastExt = settings.value( lastExtPath, QStringLiteral( ".%1" ).arg( mParameter->defaultFileExtension() ) ).toString();
   }
 
@@ -479,7 +484,8 @@ void QgsProcessingLayerOutputDestinationWidget::saveToDatabase()
         << QStringLiteral( "mssql" )
         << QStringLiteral( "ogr" )
         << QStringLiteral( "hana" )
-        << QStringLiteral( "spatialite" ), this );
+        << QStringLiteral( "spatialite" )
+        << QStringLiteral( "oracle" ), this );
     widget->setPanelTitle( tr( "Save “%1” to Database Table" ).arg( mParameter->description() ) );
     widget->setAcceptButtonVisible( true );
 
@@ -494,7 +500,7 @@ void QgsProcessingLayerOutputDestinationWidget::saveToDatabase()
       if ( const QgsProcessingParameterFeatureSink *sink = dynamic_cast< const QgsProcessingParameterFeatureSink * >( mParameter ) )
       {
         if ( sink->hasGeometry() )
-          geomColumn = QStringLiteral( "geom" );
+          geomColumn = widget->dataProviderKey() == QLatin1String( "oracle" ) ? QStringLiteral( "GEOM" ) : QStringLiteral( "geom" );
       }
 
       if ( widget->dataProviderKey() == QLatin1String( "ogr" ) )
@@ -532,7 +538,7 @@ void QgsProcessingLayerOutputDestinationWidget::appendToLayer()
 {
   if ( QgsPanelWidget *panel = QgsPanelWidget::findParentPanel( this ) )
   {
-    QgsDataSourceSelectWidget *widget = new QgsDataSourceSelectWidget( mBrowserModel, true, QgsMapLayerType::VectorLayer );
+    QgsDataSourceSelectWidget *widget = new QgsDataSourceSelectWidget( mBrowserModel, true, Qgis::LayerType::Vector );
     widget->setPanelTitle( tr( "Append \"%1\" to Layer" ).arg( mParameter->description() ) );
 
     panel->openPanel( widget );
@@ -599,9 +605,11 @@ void QgsProcessingLayerOutputDestinationWidget::selectEncoding()
   QgsEncodingSelectionDialog dialog( this, tr( "File encoding" ), mEncoding );
   if ( dialog.exec() )
   {
-    mEncoding = dialog.encoding();
+    mEncoding = QgsProcessingUtils::resolveDefaultEncoding( dialog.encoding() );
+
     QgsSettings settings;
     settings.setValue( QStringLiteral( "/Processing/encoding" ), mEncoding );
+
     emit destinationChanged();
   }
 }

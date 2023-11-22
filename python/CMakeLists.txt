@@ -123,6 +123,10 @@ if (WITH_GUI)
   )
 endif()
 
+if (WITH_PDAL)
+  include_directories(SYSTEM "${PDAL_INCLUDE_DIR}")
+endif()
+
 include_directories(
   ${CMAKE_SOURCE_DIR}/src/plugins
 
@@ -144,12 +148,26 @@ else()
   set(SIP_DISABLE_FEATURES ${SIP_DISABLE_FEATURES} ARM)
 endif()
 
+# SIP 4.19.7+ can:
+# * prepend auto-generated Python signature to existing Docstrings
+# * document template based classes
+set(DOCSTRINGSTEMPLATE "//")
+if(${SIP_VERSION_STR} VERSION_GREATER 4.19.6)
+  set(DEFAULTDOCSTRINGSIGNATURE "%DefaultDocstringSignature \"prepended\"")
+  set(DOCSTRINGSTEMPLATE "")
+endif()
 
 if(${SIP_VERSION_STR} VERSION_GREATER 4.19.0)
   set(SIP_FINAL "final")
 else()
   set(SIP_FINAL "")
 endif()
+
+IF(BUILD_WITH_QT6)
+  SET(QSCI_SIP_MOD_NAME Qsci/qscimod6.sip)
+ELSE()
+  SET(QSCI_SIP_MOD_NAME Qsci/qscimod5.sip)
+ENDIF()
 
 # core module
 file(GLOB_RECURSE sip_files_core core/*.sip core/*.sip.in)
@@ -173,6 +191,10 @@ if(NOT WITH_GUI)
   set(SIP_DISABLE_FEATURES ${SIP_DISABLE_FEATURES} HAVE_GUI)
 endif()
 
+if(NOT WITH_QTSERIALPORT)
+  set(SIP_DISABLE_FEATURES ${SIP_DISABLE_FEATURES} HAVE_QTSERIALPORT)
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/core/project.py.in ${CMAKE_CURRENT_BINARY_DIR}/core/project.py @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/core/pyproject.toml.in ${CMAKE_CURRENT_BINARY_DIR}/core/pyproject.toml @ONLY)
 GENERATE_SIP_PYTHON_MODULE_CODE(qgis._core core/core.sip "${sip_files_core}" cpp_files)
@@ -192,10 +214,14 @@ elseif((UNIX OR MINGW) AND SIP_VERSION_STR VERSION_GREATER_EQUAL 5.0)
   add_definitions(-Dprotected=public)
 endif()
 
-set(PY_MODULES core)
+set (PY_MODULES core)
 
 if(WITH_ANALYSIS)
   set(PY_MODULES ${PY_MODULES} analysis)
+
+  if (NOT WITH_PDAL OR (WITH_PDAL AND NOT PDAL_2_5_OR_HIGHER))
+    set(SIP_DISABLE_FEATURES ${SIP_DISABLE_FEATURES} HAVE_PDAL_PROVIDER)
+  endif()
 endif()
 
 # gui module
@@ -236,7 +262,7 @@ if (WITH_3D)
 
   file(GLOB_RECURSE sip_files_3d 3d/*.sip 3d/*.sip.in)
   set(SIP_EXTRA_FILES_DEPEND ${sip_files_core} ${sip_files_3d})
-  set(SIP_EXTRA_OPTIONS ${PYQT_SIP_FLAGS} -g -o -a ${CMAKE_BINARY_DIR}/python/qgis.qgis3d.api)
+  set(SIP_EXTRA_OPTIONS ${PYQT_SIP_FLAGS} -g -o -a ${CMAKE_BINARY_DIR}/python/qgis.3d.api)
   if((${SIP_VERSION_STR} VERSION_EQUAL 4.19.11) OR (${SIP_VERSION_STR} VERSION_GREATER 4.19.11))
     set(SIP_EXTRA_OPTIONS ${SIP_EXTRA_OPTIONS} -n ${PYQT5_SIP_IMPORT})
   endif()
@@ -263,6 +289,10 @@ if(WITH_ANALYSIS)
     ${CMAKE_BINARY_DIR}/src/analysis/raster
     ${CMAKE_BINARY_DIR}/src/analysis/network
     ${CMAKE_BINARY_DIR}/src/analysis/interpolation
+
+    if (WITH_PDAL AND NOT PDAL_2_5_OR_HIGHER)
+       ${CMAKE_SOURCE_DIR}/src/analysis/processing/pdal
+    endif()
   )
 
   # analysis module
@@ -287,36 +317,48 @@ if(WITH_ANALYSIS)
 endif()
 
 if(WITH_QSCIAPI)
-  # wait until after python module builds for api files to be available
-  set(QGIS_PYTHON_API_FILE "${CMAKE_BINARY_DIR}/python/qsci_apis/PyQGIS.api")
+  set(APIS_SRC_DIR "${CMAKE_SOURCE_DIR}/python/qsci_apis")
+  set(APIS_OUT_DIR "${CMAKE_BINARY_DIR}/python/qsci_apis")
 
-  add_custom_target(qsci-api ALL
-    DEPENDS python_module_qgis__gui python_module_qgis__core python_module_qgis__analysis)
+  # wait until after python module builds for api files to be available
+  set(QGIS_PYTHON_API_FILE "${APIS_OUT_DIR}/PyQGIS.api")
+  set(QGIS_PYTHON_PAP_FILE "${APIS_OUT_DIR}/PyQGIS.pap")
+
+  set(api_modules)
+  set(api_files)
+  foreach(module ${PY_MODULES})
+    set(api_modules ${api_modules} python_module_qgis__${module})
+    if(NOT SIP_BUILD_EXECUTABLE)
+      set(api_files ${api_files} "${CMAKE_BINARY_DIR}/python/qgis.${module}.api")
+    else()
+      set(api_files ${api_files} "${CMAKE_BINARY_DIR}/python/${module}/build/QGIS.api")
+    endif()
+  endforeach()
 
   # run update/concatenate command
-  add_custom_command(TARGET qsci-api
-    POST_BUILD
-    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_SOURCE_DIR}/cmake/QsciAPI.cmake"
+  add_custom_command(
+    OUTPUT "${QGIS_PYTHON_API_FILE}"
+    DEPENDS ${api_modules}
+    COMMAND "${CMAKE_COMMAND}" -D "APIS=${api_files}" -P "${CMAKE_SOURCE_DIR}/cmake/QsciAPI.cmake"
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
     COMMENT "Generating pyqgis api file" VERBATIM)
 
-  install(FILES ${QGIS_PYTHON_API_FILE} DESTINATION "${QGIS_DATA_DIR}/python/qsci_apis")
-
-  # create target for generating console auto-completion *.pap binary file
-  # takes too long to build (> 1 minute) for targets to have ALL property
-  set(APIS_SRC_DIR "${CMAKE_SOURCE_DIR}/python/qsci_apis")
-  set(APIS_BIN_DIR "${CMAKE_BINARY_DIR}/python/qsci_apis")
-
   # generate a .pap file to be immediately installed in QGIS source tree (the default .pap)
-  add_custom_target(qsci-pap-src
-    DEPENDS qsci-api ${QGIS_PYTHON_API_FILE})
-
-  set(PAP_NAME "pyqgis.pap")
-  add_custom_command(TARGET qsci-pap-src
-    POST_BUILD
-    COMMAND ${PYTHON_EXECUTABLE} "${APIS_SRC_DIR}/generate_console_pap.py" "${APIS_SRC_DIR}/${PAP_NAME}" "${APIS_SRC_DIR}" "${APIS_BIN_DIR}"
+  if(NATIVE_Python_EXECUTABLE)
+     set(_python ${NATIVE_Python_EXECUTABLE})
+  else()
+     set(_python ${Python_EXECUTABLE})
+  endif()
+  add_custom_command(
+    OUTPUT "${QGIS_PYTHON_PAP_FILE}"
+    DEPENDS "${QGIS_PYTHON_API_FILE}"
+    COMMAND ${_python} "${APIS_SRC_DIR}/generate_console_pap.py" -platform offscreen "${QGIS_PYTHON_PAP_FILE}" "${APIS_SRC_DIR}" "${APIS_OUT_DIR}"
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-    COMMENT "Generating ${PAP_NAME} for console auto-completion (MAY TAKE > 1 MINUTE!)" VERBATIM)
+    COMMENT "Generating pap file for console auto-completion" VERBATIM)
+
+  ADD_QGIS_RESOURCES("${APIS_OUT_DIR}" "python/qsci_apis" DEST_DATA_FILES "PyQGIS.api;PyQGIS.pap")
+
+  add_custom_target(pyqgis-pap ALL DEPENDS ${QGIS_PYTHON_API_FILE} ${QGIS_PYTHON_PAP_FILE} ${DEST_DATA_FILES})
 endif()
 
 if(WITH_CUSTOM_WIDGETS)

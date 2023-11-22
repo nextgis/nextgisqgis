@@ -21,7 +21,7 @@
 #include "qgis_core.h"
 #include "qgslabelingengine.h"
 #include "qgsrenderer.h"
-#include "qgstextrenderer.h"
+#include "qgspallabeling.h"
 
 class QgsAbstractFeatureSource;
 class QgsFeatureRenderer;
@@ -49,7 +49,7 @@ class CORE_EXPORT QgsVectorLayerLabelProvider : public QgsAbstractLabelProvider
                                           const QString &layerName = QString() );
 
     //! Constructor to initialize the provider from any map layer (e.g. vector tile layer)
-    explicit QgsVectorLayerLabelProvider( QgsWkbTypes::GeometryType geometryType,
+    explicit QgsVectorLayerLabelProvider( Qgis::GeometryType geometryType,
                                           const QgsFields &fields,
                                           const QgsCoordinateReferenceSystem &crs,
                                           const QString &providerId,
@@ -116,19 +116,19 @@ class CORE_EXPORT QgsVectorLayerLabelProvider : public QgsAbstractLabelProvider
      * a call to prepare() which uses the list of fields.
      * \since QGIS 3.14
      */
-    void setFields( const QgsFields &fields ) { mFields = fields; }
+    void setFields( const QgsFields &fields );
 
   protected:
     //! initialization method - called from constructors
     void init();
     //! Internal label drawing method
-    void drawLabelPrivate( pal::LabelPosition *label, QgsRenderContext &context, QgsPalLayerSettings &tmpLyr, QgsTextRenderer::TextPart drawType, double dpiRatio = 1.0 ) const;
+    void drawLabelPrivate( pal::LabelPosition *label, QgsRenderContext &context, QgsPalLayerSettings &tmpLyr, Qgis::TextComponent drawType, double dpiRatio = 1.0 ) const;
 
   protected:
     //! Layer's labeling configuration
     QgsPalLayerSettings mSettings;
     //! Geometry type of layer
-    QgsWkbTypes::GeometryType mLayerGeometryType;
+    Qgis::GeometryType mLayerGeometryType;
 
     QgsFeatureRenderer *mRenderer = nullptr;
 
@@ -147,6 +147,8 @@ class CORE_EXPORT QgsVectorLayerLabelProvider : public QgsAbstractLabelProvider
   private:
 
     friend class TestQgsLabelingEngine;
+    friend class QgsVectorTileBasicLabelProvider;
+
     void drawCallout( QgsRenderContext &context, pal::LabelPosition *label ) const;
 };
 

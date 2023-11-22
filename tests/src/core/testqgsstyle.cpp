@@ -24,13 +24,10 @@
 //qgis includes...
 #include "qgsmultirenderchecker.h"
 #include <qgsapplication.h>
-#include "qgsconfig.h"
 #include "qgslogger.h"
 #include "qgscolorramp.h"
 #include "qgscptcityarchive.h"
 #include "qgsvectorlayer.h"
-#include "qgslinesymbollayer.h"
-#include "qgsfillsymbollayer.h"
 #include "qgssinglesymbolrenderer.h"
 #include "qgsmarkersymbollayer.h"
 #include "qgsrulebasedrenderer.h"
@@ -49,7 +46,6 @@
 #include "qgstextannotation.h"
 #include "qgslayoutitemlegend.h"
 #include "qgslayertreelayer.h"
-#include "qgslayertreeutils.h"
 #include "qgsmaplayerlegend.h"
 #include "qgsabstract3dsymbol.h"
 #include "qgs3dsymbolregistry.h"
@@ -60,16 +56,14 @@
  * \ingroup UnitTests
  * This is a unit test to verify that styles are working correctly
  */
-class TestStyle : public QObject
+class TestStyle : public QgsTest
 {
     Q_OBJECT
 
   public:
-    TestStyle();
+    TestStyle() : QgsTest( QStringLiteral( "Style Tests" ) ) {}
 
   private:
-
-    QString mReport;
 
     QgsStyle *mStyle = nullptr;
     QString mTestDataDir;
@@ -104,6 +98,7 @@ class TestStyle : public QObject
     void cleanup() {}// will be called after every testfunction.
     // void initStyles();
 
+    void testProperties();
     void testCreateSymbols();
     void testCreateColorRamps();
     void testCreateTextFormats();
@@ -131,14 +126,11 @@ class Dummy3DSymbol : public QgsAbstract3DSymbol
     QgsAbstract3DSymbol *clone() const override { Dummy3DSymbol *res = new Dummy3DSymbol(); res->id = id; return res; }
     void readXml( const QDomElement &elem, const QgsReadWriteContext & ) override { id = elem.attribute( QStringLiteral( "id" ) ); }
     void writeXml( QDomElement &elem, const QgsReadWriteContext & ) const override { elem.setAttribute( QStringLiteral( "id" ), id ); }
-    QList<QgsWkbTypes::GeometryType> compatibleGeometryTypes() const override { return QList< QgsWkbTypes::GeometryType >() << QgsWkbTypes::PointGeometry << QgsWkbTypes::LineGeometry; }
+    QList<Qgis::GeometryType> compatibleGeometryTypes() const override { return QList< Qgis::GeometryType >() << Qgis::GeometryType::Point << Qgis::GeometryType::Line; }
 
     QString id;
 
 };
-
-
-TestStyle::TestStyle() = default;
 
 // slots
 void TestStyle::initTestCase()
@@ -167,8 +159,6 @@ void TestStyle::initTestCase()
   // cpt-city ramp, small selection available in <testdir>/cpt-city
   QgsCptCityArchive::initArchives();
 
-  mReport += QLatin1String( "<h1>Style Tests</h1>\n" );
-
   QgsApplication::symbol3DRegistry()->addSymbolType( new Qgs3DSymbolMetadata( QStringLiteral( "dummy" ), QObject::tr( "Dummy" ),
       &Dummy3DSymbol::create, nullptr, nullptr ) );
 }
@@ -183,16 +173,20 @@ void TestStyle::cleanupTestCase()
 
   QgsCptCityArchive::clearArchives();
   QgsApplication::exitQgis();
+}
 
-  const QString myReportFile = QDir::tempPath() + "/qgistest.html";
-  QFile myFile( myReportFile );
-  if ( myFile.open( QIODevice::WriteOnly | QIODevice::Append ) )
-  {
-    QTextStream myQTextStream( &myFile );
-    myQTextStream << mReport;
-    myFile.close();
-    //QDesktopServices::openUrl( "file:///" + myReportFile );
-  }
+void TestStyle::testProperties()
+{
+  QgsStyle s;
+  s.setName( QStringLiteral( "my name" ) );
+  QCOMPARE( s.name(), QStringLiteral( "my name" ) );
+
+  s.setFileName( QStringLiteral( "file name" ) );
+  QCOMPARE( s.fileName(), QStringLiteral( "file name" ) );
+
+  QVERIFY( !s.isReadOnly() );
+  s.setReadOnly( true );
+  QVERIFY( s.isReadOnly() );
 }
 
 void TestStyle::testCreateSymbols()
@@ -487,7 +481,7 @@ void TestStyle::testCreate3dSymbol()
   QVERIFY( mStyle->symbol3DNames().contains( QStringLiteral( "test_settings" ) ) );
   QCOMPARE( mStyle->symbol3DCount(), 1 );
   QVERIFY( mStyle->symbol3DCompatibleGeometryTypes( QStringLiteral( "blah" ) ).isEmpty() );
-  QCOMPARE( mStyle->symbol3DCompatibleGeometryTypes( QStringLiteral( "test_settings" ) ), QList< QgsWkbTypes::GeometryType >() << QgsWkbTypes::PointGeometry << QgsWkbTypes::LineGeometry );
+  QCOMPARE( mStyle->symbol3DCompatibleGeometryTypes( QStringLiteral( "test_settings" ) ), QList< Qgis::GeometryType >() << Qgis::GeometryType::Point << Qgis::GeometryType::Line );
   std::unique_ptr< Dummy3DSymbol > retrieved( dynamic_cast< Dummy3DSymbol * >( mStyle->symbol3D( QStringLiteral( "test_settings" ) ) ) );
   QCOMPARE( retrieved->id, QStringLiteral( "xxx" ) );
   symbol.id = QStringLiteral( "yyy" );
@@ -540,30 +534,30 @@ void TestStyle::testLoadColorRamps()
 
   // values for color tests
   QMultiMap< QString, QPair< double, QColor> > colorTests;
-  colorTests.insert( QStringLiteral( "test_gradient" ), qMakePair( 0.25, QColor( "#ff8080" ) ) );
-  colorTests.insert( QStringLiteral( "test_gradient" ), qMakePair( 0.66, QColor( "#aeaeff" ) ) );
+  colorTests.insert( QStringLiteral( "test_gradient" ), qMakePair( 0, QColor( "#ff0000" ) ) );
+  colorTests.insert( QStringLiteral( "test_gradient" ), qMakePair( 1, QColor( "#0000ff" ) ) );
   // cannot test random colors!
-  colorTests.insert( QStringLiteral( "test_cb1" ), qMakePair( 0.25, QColor( "#fdae61" ) ) );
-  colorTests.insert( QStringLiteral( "test_cb1" ), qMakePair( 0.66, QColor( "#abdda4" ) ) );
-  colorTests.insert( QStringLiteral( "test_cb2" ), qMakePair( 0.25, QColor( "#fc8d59" ) ) );
-  colorTests.insert( QStringLiteral( "test_cb2" ), qMakePair( 0.66, QColor( "#d9ef8b" ) ) );
+  colorTests.insert( QStringLiteral( "test_cb1" ), qMakePair( 0, QColor( "#d7191c" ) ) );
+  colorTests.insert( QStringLiteral( "test_cb1" ), qMakePair( 1, QColor( "#2b83ba" ) ) );
+  colorTests.insert( QStringLiteral( "test_cb2" ), qMakePair( 0, QColor( "#d73027" ) ) );
+  colorTests.insert( QStringLiteral( "test_cb2" ), qMakePair( 1, QColor( "#1a9850" ) ) );
 
   // cpt-city
   colorRampsTest << QStringLiteral( "test_cc1" );
-  colorTests.insert( QStringLiteral( "test_cc1" ), qMakePair( 0.25, QColor( "#d0d1e6" ) ) );
-  colorTests.insert( QStringLiteral( "test_cc1" ), qMakePair( 0.66, QColor( "#67a9cf" ) ) );
+  colorTests.insert( QStringLiteral( "test_cc1" ), qMakePair( 0, QColor( "#f6eff7" ) ) );
+  colorTests.insert( QStringLiteral( "test_cc1" ), qMakePair( 1, QColor( "#016c59" ) ) );
   colorRampsTest << QStringLiteral( "test_cc2" );
-  colorTests.insert( QStringLiteral( "test_cc2" ), qMakePair( 0.25, QColor( "#de77ae" ) ) );
-  colorTests.insert( QStringLiteral( "test_cc2" ), qMakePair( 0.66, QColor( "#b8e186" ) ) );
+  colorTests.insert( QStringLiteral( "test_cc2" ), qMakePair( 0, QColor( "#8e0152" ) ) );
+  colorTests.insert( QStringLiteral( "test_cc2" ), qMakePair( 1, QColor( "#276419" ) ) );
   colorRampsTest << QStringLiteral( "test_cc3" );
-  colorTests.insert( QStringLiteral( "test_cc3" ), qMakePair( 0.25, QColor( "#808080" ) ) );
-  colorTests.insert( QStringLiteral( "test_cc3" ), qMakePair( 0.66, QColor( "#ffae00" ) ) );
+  colorTests.insert( QStringLiteral( "test_cc3" ), qMakePair( 0, QColor( "#0000ff" ) ) );
+  colorTests.insert( QStringLiteral( "test_cc3" ), qMakePair( 1, QColor( "#ff0000" ) ) );
 
-  QgsDebugMsg( "loaded colorRamps: " + colorRamps.join( " " ) );
+  QgsDebugMsgLevel( QStringLiteral( "loaded colorRamps: " ) + colorRamps.join( ' ' ), 1 );
 
   for ( const QString &name : colorRampsTest )
   {
-    QgsDebugMsg( "colorRamp " + name );
+    QgsDebugMsgLevel( "colorRamp " + name, 1 );
     QVERIFY( colorRamps.contains( name ) );
     QgsColorRamp *ramp = mStyle->colorRamp( name );
     QVERIFY( ramp != nullptr );
@@ -585,13 +579,13 @@ void TestStyle::testSaveLoad()
 {
   // basic test to see that ramp is present
   const QStringList colorRamps = mStyle->colorRampNames();
-  QgsDebugMsg( "loaded colorRamps: " + colorRamps.join( " " ) );
+  QgsDebugMsgLevel( "loaded colorRamps: " + colorRamps.join( " " ), 1 );
 
   const QStringList colorRampsTest = QStringList() << QStringLiteral( "test_gradient" );
 
   for ( const QString &name : colorRampsTest )
   {
-    QgsDebugMsg( "colorRamp " + name );
+    QgsDebugMsgLevel( "colorRamp " + name, 1 );
     QVERIFY( colorRamps.contains( name ) );
     QgsColorRamp *ramp = mStyle->colorRamp( name );
     QVERIFY( ramp != nullptr );
@@ -1524,9 +1518,9 @@ void TestStyle::testVisitor()
   QgsVectorLayer *vl2 = new QgsVectorLayer( QStringLiteral( "Point?crs=epsg:4326&field=pk:int&field=col1:string" ), QStringLiteral( "vl2" ), QStringLiteral( "memory" ) );
   QVERIFY( vl2->isValid() );
   p.addMapLayer( vl2 );
-  QgsSymbol *s1 = QgsSymbol::defaultSymbol( QgsWkbTypes::PointGeometry );
+  QgsSymbol *s1 = QgsSymbol::defaultSymbol( Qgis::GeometryType::Point );
   s1->setColor( QColor( 0, 255, 0 ) );
-  QgsSymbol *s2 = QgsSymbol::defaultSymbol( QgsWkbTypes::PointGeometry );
+  QgsSymbol *s2 = QgsSymbol::defaultSymbol( Qgis::GeometryType::Point );
   s2->setColor( QColor( 0, 255, 255 ) );
   QgsRuleBasedRenderer::Rule *rootRule = new QgsRuleBasedRenderer::Rule( nullptr );
   QgsRuleBasedRenderer::Rule *rule2 = new QgsRuleBasedRenderer::Rule( s1, 0, 0, QStringLiteral( "fld >= 5 and fld <= 20" ) );
@@ -1618,7 +1612,6 @@ void TestStyle::testVisitor()
   l->addLayoutItem( legend );
   const QgsLegendPatchShape shape( Qgis::SymbolType::Marker, QgsGeometry::fromWkt( QStringLiteral( "Point( 3 4)" ) ) );
   qobject_cast< QgsLayerTreeLayer * >( legend->model()->index2node( legend->model()->index( 0, 0 ) ) )->setPatchShape( shape );
-  const QList<QgsLayerTreeModelLegendNode *> layerLegendNodes = legend->model()->layerLegendNodes( qobject_cast< QgsLayerTreeLayer * >( legend->model()->index2node( legend->model()->index( 1, 0 ) ) ), false );
   const QgsLegendPatchShape shape2( Qgis::SymbolType::Marker, QgsGeometry::fromWkt( QStringLiteral( "Point( 13 14)" ) ) );
   QCOMPARE( qobject_cast< QgsLayerTreeLayer * >( legend->model()->index2node( legend->model()->index( 1, 0 ) ) )->layer()->name(), QStringLiteral( "vl2" ) );
   QgsMapLayerLegendUtils::setLegendNodePatchShape( qobject_cast< QgsLayerTreeLayer * >( legend->model()->index2node( legend->model()->index( 1, 0 ) ) ), 1, shape2 );
@@ -1659,10 +1652,10 @@ void TestStyle::testVisitor()
 
   // with annotations
   QgsTextAnnotation *annotation = new QgsTextAnnotation();
-  QgsSymbol *a1 = QgsSymbol::defaultSymbol( QgsWkbTypes::PointGeometry );
+  QgsSymbol *a1 = QgsSymbol::defaultSymbol( Qgis::GeometryType::Point );
   a1->setColor( QColor( 0, 200, 0 ) );
   annotation->setMarkerSymbol( static_cast< QgsMarkerSymbol * >( a1 ) );
-  QgsSymbol *a2 = QgsSymbol::defaultSymbol( QgsWkbTypes::PolygonGeometry );
+  QgsSymbol *a2 = QgsSymbol::defaultSymbol( Qgis::GeometryType::Polygon );
   a2->setColor( QColor( 200, 200, 0 ) );
   annotation->setFillSymbol( static_cast< QgsFillSymbol * >( a2 ) );
   p.annotationManager()->addAnnotation( annotation );

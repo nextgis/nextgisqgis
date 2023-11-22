@@ -92,7 +92,7 @@ class ANALYSIS_EXPORT QgsBatchGeocodeAlgorithm : public QgsProcessingFeatureBase
     QgsFeatureList processFeature( const QgsFeature &feature,  QgsProcessingContext &, QgsProcessingFeedback *feedback ) override;
     QgsCoordinateReferenceSystem outputCrs( const QgsCoordinateReferenceSystem &inputCrs ) const override;
     QgsFields outputFields( const QgsFields &inputFields ) const override;
-    QgsWkbTypes::Type outputWkbType( QgsWkbTypes::Type inputWkbType ) const override;
+    Qgis::WkbType outputWkbType( Qgis::WkbType inputWkbType ) const override;
 
   private:
     bool mIsInPlace = false;
@@ -104,7 +104,6 @@ class ANALYSIS_EXPORT QgsBatchGeocodeAlgorithm : public QgsProcessingFeatureBase
 
 };
 
-///@endcond PRIVATE
 
 #endif // QGSALGORITHMBATCHGEOCODE_H
 

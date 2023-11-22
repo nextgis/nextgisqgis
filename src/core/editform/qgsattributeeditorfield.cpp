@@ -15,9 +15,12 @@
  ***************************************************************************/
 #include "qgsattributeeditorfield.h"
 
+#include <QDomElement>
+
 QgsAttributeEditorElement *QgsAttributeEditorField::clone( QgsAttributeEditorElement *parent ) const
 {
   QgsAttributeEditorField *element = new QgsAttributeEditorField( name(), mIdx, parent );
+  element->mLabelStyle = mLabelStyle;
   return element;
 }
 

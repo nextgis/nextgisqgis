@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for Postgres QgsAbastractProviderConnection API.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -11,26 +10,25 @@ __author__ = 'Alessandro Pasotti'
 __date__ = '10/08/2019'
 __copyright__ = 'Copyright 2019, The QGIS Project'
 # This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '6b44a42058d8f4d3f994b915f72f08b6a3ab474d'
+__revision__ = '$Format:%H$'
 
 import os
-import time
-from test_qgsproviderconnection_base import TestPyQgsProviderConnectionBase
+
+from qgis.PyQt.QtCore import QTemporaryDir
 from qgis.core import (
     Qgis,
-    QgsWkbTypes,
     QgsAbstractDatabaseProviderConnection,
-    QgsProviderConnectionException,
-    QgsVectorLayer,
-    QgsProviderRegistry,
-    QgsCoordinateReferenceSystem,
-    QgsRasterLayer,
     QgsDataSourceUri,
+    QgsProviderConnectionException,
+    QgsProviderRegistry,
+    QgsRasterLayer,
     QgsSettings,
+    QgsVectorLayer,
+    QgsWkbTypes,
 )
 from qgis.testing import unittest
-from osgeo import gdal
-from qgis.PyQt.QtCore import QTemporaryDir
+
+from test_qgsproviderconnection_base import TestPyQgsProviderConnectionBase
 
 
 class TestPyQgsProviderConnectionPostgres(unittest.TestCase, TestPyQgsProviderConnectionBase):
@@ -46,10 +44,12 @@ class TestPyQgsProviderConnectionPostgres(unittest.TestCase, TestPyQgsProviderCo
     # Provider test cases can define a schema and table name for SQL query layers test
     sqlVectorLayerSchema = 'qgis_test'
     sqlVectorLayerTable = 'someData'
+    sqlVectorLayerCrs = 'EPSG:4326'
 
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super(TestPyQgsProviderConnectionPostgres, cls).setUpClass()
 
         TestPyQgsProviderConnectionBase.setUpClass()
         cls.postgres_conn = "service='qgis_test'"
@@ -74,7 +74,7 @@ class TestPyQgsProviderConnectionPostgres(unittest.TestCase, TestPyQgsProviderCo
 
         # Test raster
         self.assertEqual(conn.tableUri('qgis_test', 'Raster1'),
-                         '%s table="qgis_test"."Raster1"' % self.uri)
+                         f'{self.uri} table="qgis_test"."Raster1"')
 
         rl = QgsRasterLayer(conn.tableUri('qgis_test', 'Raster1'), 'r1', 'postgresraster')
         self.assertTrue(rl.isValid())
@@ -220,10 +220,10 @@ class TestPyQgsProviderConnectionPostgres(unittest.TestCase, TestPyQgsProviderCo
         md.saveConnection(conn, 'qgis_test1')
 
         table = self._table_by_name(conn.tables('qgis_test', QgsAbstractDatabaseProviderConnection.Raster), 'Raster1')
-        self.assertTrue(QgsRasterLayer("PG: %s dbname='qgis_test' schema='qgis_test' column='%s' table='%s'" % (conn.uri(), table.geometryColumn(), table.tableName()), 'r1', 'gdal').isValid())
+        self.assertTrue(QgsRasterLayer(f"PG: {conn.uri()} dbname='qgis_test' schema='qgis_test' column='{table.geometryColumn()}' table='{table.tableName()}'", 'r1', 'gdal').isValid())
         conn.renameRasterTable('qgis_test', table.tableName(), 'Raster2')
         table = self._table_by_name(conn.tables('qgis_test', QgsAbstractDatabaseProviderConnection.Raster), 'Raster2')
-        self.assertTrue(QgsRasterLayer("PG: %s dbname='qgis_test' schema='qgis_test' column='%s' table='%s'" % (conn.uri(), table.geometryColumn(), table.tableName()), 'r1', 'gdal').isValid())
+        self.assertTrue(QgsRasterLayer(f"PG: {conn.uri()} dbname='qgis_test' schema='qgis_test' column='{table.geometryColumn()}' table='{table.tableName()}'", 'r1', 'gdal').isValid())
         table_names = self._table_names(conn.tables('qgis_test', QgsAbstractDatabaseProviderConnection.Raster))
         self.assertFalse('Raster1' in table_names)
         self.assertTrue('Raster2' in table_names)
@@ -295,7 +295,7 @@ CREATE FOREIGN TABLE IF NOT EXISTS points_csv (
 
         conn.executeSql(foreign_table_definition)
 
-        self.assertNotEquals(conn.tables('public', QgsAbstractDatabaseProviderConnection.Foreign | QgsAbstractDatabaseProviderConnection.Aspatial), [])
+        self.assertNotEqual(conn.tables('public', QgsAbstractDatabaseProviderConnection.Foreign | QgsAbstractDatabaseProviderConnection.Aspatial), [])
 
     @unittest.skipIf(os.environ.get('QGIS_CONTINUOUS_INTEGRATION_RUN', 'true'), 'Disabled on Travis')
     def test_foreign_table_server(self):
@@ -323,7 +323,7 @@ CREATE FOREIGN TABLE IF NOT EXISTS points_csv (
         INTO foreign_schema;
         """.format(host=host, user=user, port=port, dbname=dbname, password=password, service=service)
         conn.executeSql(foreign_table_definition)
-        self.assertEquals(conn.tables('foreign_schema', QgsAbstractDatabaseProviderConnection.Foreign)[0].tableName(), 'someData')
+        self.assertEqual(conn.tables('foreign_schema', QgsAbstractDatabaseProviderConnection.Foreign)[0].tableName(), 'someData')
 
     def test_fields(self):
         """Test fields"""

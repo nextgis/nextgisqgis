@@ -113,6 +113,8 @@ bool QgsProcessingAlgorithm::checkParameterValues( const QVariantMap &parameters
           *message = invalidSinkError( parameters, def->name() );
         else if ( def->type() == QgsProcessingParameterRasterLayer::typeName() )
           *message = invalidRasterError( parameters, def->name() );
+        else if ( def->type() == QgsProcessingParameterPointCloudLayer::typeName() )
+          *message = invalidPointCloudError( parameters, def->name() );
         else
           *message = QObject::tr( "Incorrect parameter value for %1" ).arg( def->name() );
       }
@@ -560,6 +562,7 @@ QVariantMap QgsProcessingAlgorithm::run( const QVariantMap &parameters, QgsProce
 
 bool QgsProcessingAlgorithm::prepare( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback )
 {
+  // cppcheck-suppress assertWithSideEffect
   Q_ASSERT_X( QThread::currentThread() == context.temporaryLayerStore()->thread(), "QgsProcessingAlgorithm::prepare", "prepare() must be called from the same thread as context was created in" );
   Q_ASSERT_X( !mHasPrepared, "QgsProcessingAlgorithm::prepare", "prepare() has already been called for the algorithm instance" );
   try
@@ -633,6 +636,7 @@ QVariantMap QgsProcessingAlgorithm::runPrepared( const QVariantMap &parameters, 
 
 QVariantMap QgsProcessingAlgorithm::postProcess( QgsProcessingContext &context, QgsProcessingFeedback *feedback )
 {
+  // cppcheck-suppress assertWithSideEffect
   Q_ASSERT_X( QThread::currentThread() == context.temporaryLayerStore()->thread(), "QgsProcessingAlgorithm::postProcess", "postProcess() must be called from the same thread the context was created in" );
   Q_ASSERT_X( mHasExecuted, "QgsProcessingAlgorithm::postProcess", QStringLiteral( "algorithm instance %1 was not executed" ).arg( name() ).toLatin1() );
   Q_ASSERT_X( !mHasPostProcessed, "QgsProcessingAlgorithm::postProcess", "postProcess() was already called for this algorithm instance" );
@@ -715,7 +719,7 @@ bool QgsProcessingAlgorithm::parameterAsBoolean( const QVariantMap &parameters, 
   return QgsProcessingParameters::parameterAsBool( parameterDefinition( name ), parameters, context );
 }
 
-QgsFeatureSink *QgsProcessingAlgorithm::parameterAsSink( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context, QString &destinationIdentifier, const QgsFields &fields, QgsWkbTypes::Type geometryType, const QgsCoordinateReferenceSystem &crs, QgsFeatureSink::SinkFlags sinkFlags, const QVariantMap &createOptions, const QStringList &datasourceOptions, const QStringList &layerOptions ) const
+QgsFeatureSink *QgsProcessingAlgorithm::parameterAsSink( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context, QString &destinationIdentifier, const QgsFields &fields, Qgis::WkbType geometryType, const QgsCoordinateReferenceSystem &crs, QgsFeatureSink::SinkFlags sinkFlags, const QVariantMap &createOptions, const QStringList &datasourceOptions, const QStringList &layerOptions ) const
 {
   if ( !parameterDefinition( name ) )
     throw QgsProcessingException( QObject::tr( "No parameter definition for the sink '%1'" ).arg( name ) );
@@ -728,12 +732,12 @@ QgsProcessingFeatureSource *QgsProcessingAlgorithm::parameterAsSource( const QVa
   return QgsProcessingParameters::parameterAsSource( parameterDefinition( name ), parameters, context );
 }
 
-QString QgsProcessingAlgorithm::parameterAsCompatibleSourceLayerPath( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context, const QStringList &compatibleFormats, const QString &preferredFormat, QgsProcessingFeedback *feedback )
+QString QgsProcessingAlgorithm::parameterAsCompatibleSourceLayerPath( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context, const QStringList &compatibleFormats, const QString &preferredFormat, QgsProcessingFeedback *feedback ) const
 {
   return QgsProcessingParameters::parameterAsCompatibleSourceLayerPath( parameterDefinition( name ), parameters, context, compatibleFormats, preferredFormat, feedback );
 }
 
-QString QgsProcessingAlgorithm::parameterAsCompatibleSourceLayerPathAndLayerName( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context, const QStringList &compatibleFormats, const QString &preferredFormat, QgsProcessingFeedback *feedback, QString *layerName )
+QString QgsProcessingAlgorithm::parameterAsCompatibleSourceLayerPathAndLayerName( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context, const QStringList &compatibleFormats, const QString &preferredFormat, QgsProcessingFeedback *feedback, QString *layerName ) const
 {
   return QgsProcessingParameters::parameterAsCompatibleSourceLayerPathAndLayerName( parameterDefinition( name ), parameters, context, compatibleFormats, preferredFormat, feedback, layerName );
 }
@@ -773,7 +777,7 @@ QgsCoordinateReferenceSystem QgsProcessingAlgorithm::parameterAsCrs( const QVari
   return QgsProcessingParameters::parameterAsCrs( parameterDefinition( name ), parameters, context );
 }
 
-QgsCoordinateReferenceSystem QgsProcessingAlgorithm::parameterAsExtentCrs( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context )
+QgsCoordinateReferenceSystem QgsProcessingAlgorithm::parameterAsExtentCrs( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context ) const
 {
   return QgsProcessingParameters::parameterAsExtentCrs( parameterDefinition( name ), parameters, context );
 }
@@ -783,7 +787,7 @@ QgsRectangle QgsProcessingAlgorithm::parameterAsExtent( const QVariantMap &param
   return QgsProcessingParameters::parameterAsExtent( parameterDefinition( name ), parameters, context, crs );
 }
 
-QgsGeometry QgsProcessingAlgorithm::parameterAsExtentGeometry( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context, const QgsCoordinateReferenceSystem &crs )
+QgsGeometry QgsProcessingAlgorithm::parameterAsExtentGeometry( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context, const QgsCoordinateReferenceSystem &crs ) const
 {
   return QgsProcessingParameters::parameterAsExtentGeometry( parameterDefinition( name ), parameters, context, crs );
 }
@@ -793,7 +797,7 @@ QgsPointXY QgsProcessingAlgorithm::parameterAsPoint( const QVariantMap &paramete
   return QgsProcessingParameters::parameterAsPoint( parameterDefinition( name ), parameters, context, crs );
 }
 
-QgsCoordinateReferenceSystem QgsProcessingAlgorithm::parameterAsPointCrs( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context )
+QgsCoordinateReferenceSystem QgsProcessingAlgorithm::parameterAsPointCrs( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context ) const
 {
   return QgsProcessingParameters::parameterAsPointCrs( parameterDefinition( name ), parameters, context );
 }
@@ -803,7 +807,7 @@ QgsGeometry QgsProcessingAlgorithm::parameterAsGeometry( const QVariantMap &para
   return QgsProcessingParameters::parameterAsGeometry( parameterDefinition( name ), parameters, context, crs );
 }
 
-QgsCoordinateReferenceSystem QgsProcessingAlgorithm::parameterAsGeometryCrs( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context )
+QgsCoordinateReferenceSystem QgsProcessingAlgorithm::parameterAsGeometryCrs( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context ) const
 {
   return QgsProcessingParameters::parameterAsGeometryCrs( parameterDefinition( name ), parameters, context );
 }
@@ -818,9 +822,9 @@ QVariantList QgsProcessingAlgorithm::parameterAsMatrix( const QVariantMap &param
   return QgsProcessingParameters::parameterAsMatrix( parameterDefinition( name ), parameters, context );
 }
 
-QList<QgsMapLayer *> QgsProcessingAlgorithm::parameterAsLayerList( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context ) const
+QList<QgsMapLayer *> QgsProcessingAlgorithm::parameterAsLayerList( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context, QgsProcessing::LayerOptionsFlags flags ) const
 {
-  return QgsProcessingParameters::parameterAsLayerList( parameterDefinition( name ), parameters, context );
+  return QgsProcessingParameters::parameterAsLayerList( parameterDefinition( name ), parameters, context, flags );
 }
 
 QStringList QgsProcessingAlgorithm::parameterAsFileList( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context ) const
@@ -835,7 +839,12 @@ QList<double> QgsProcessingAlgorithm::parameterAsRange( const QVariantMap &param
 
 QStringList QgsProcessingAlgorithm::parameterAsFields( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context ) const
 {
-  return QgsProcessingParameters::parameterAsFields( parameterDefinition( name ), parameters, context );
+  return QgsProcessingParameters::parameterAsStrings( parameterDefinition( name ), parameters, context );
+}
+
+QStringList QgsProcessingAlgorithm::parameterAsStrings( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context ) const
+{
+  return QgsProcessingParameters::parameterAsStrings( parameterDefinition( name ), parameters, context );
 }
 
 QgsPrintLayout *QgsProcessingAlgorithm::parameterAsLayout( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context )
@@ -848,34 +857,34 @@ QgsLayoutItem *QgsProcessingAlgorithm::parameterAsLayoutItem( const QVariantMap 
   return QgsProcessingParameters::parameterAsLayoutItem( parameterDefinition( name ), parameters, context, layout );
 }
 
-QColor QgsProcessingAlgorithm::parameterAsColor( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context )
+QColor QgsProcessingAlgorithm::parameterAsColor( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context ) const
 {
   return QgsProcessingParameters::parameterAsColor( parameterDefinition( name ), parameters, context );
 }
 
-QString QgsProcessingAlgorithm::parameterAsConnectionName( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context )
+QString QgsProcessingAlgorithm::parameterAsConnectionName( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context ) const
 {
   return QgsProcessingParameters::parameterAsConnectionName( parameterDefinition( name ), parameters, context );
 }
 
-QDateTime QgsProcessingAlgorithm::parameterAsDateTime( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context )
+QDateTime QgsProcessingAlgorithm::parameterAsDateTime( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context ) const
 {
   return QgsProcessingParameters::parameterAsDateTime( parameterDefinition( name ), parameters, context );
 }
 
-QString QgsProcessingAlgorithm::parameterAsSchema( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context )
+QString QgsProcessingAlgorithm::parameterAsSchema( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context ) const
 {
   return QgsProcessingParameters::parameterAsSchema( parameterDefinition( name ), parameters, context );
 }
 
-QString QgsProcessingAlgorithm::parameterAsDatabaseTableName( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context )
+QString QgsProcessingAlgorithm::parameterAsDatabaseTableName( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context ) const
 {
   return QgsProcessingParameters::parameterAsDatabaseTableName( parameterDefinition( name ), parameters, context );
 }
 
-QgsPointCloudLayer *QgsProcessingAlgorithm::parameterAsPointCloudLayer( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context ) const
+QgsPointCloudLayer *QgsProcessingAlgorithm::parameterAsPointCloudLayer( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context, QgsProcessing::LayerOptionsFlags flags ) const
 {
-  return QgsProcessingParameters::parameterAsPointCloudLayer( parameterDefinition( name ), parameters, context );
+  return QgsProcessingParameters::parameterAsPointCloudLayer( parameterDefinition( name ), parameters, context, flags );
 }
 
 QgsAnnotationLayer *QgsProcessingAlgorithm::parameterAsAnnotationLayer( const QVariantMap &parameters, const QString &name, QgsProcessingContext &context ) const
@@ -890,17 +899,17 @@ QString QgsProcessingAlgorithm::invalidSourceError( const QVariantMap &parameter
   else
   {
     QVariant var = parameters.value( name );
-    if ( var.canConvert<QgsProcessingFeatureSourceDefinition>() )
+    if ( var.userType() == QMetaType::type( "QgsProcessingFeatureSourceDefinition" ) )
     {
       QgsProcessingFeatureSourceDefinition fromVar = qvariant_cast<QgsProcessingFeatureSourceDefinition>( var );
       var = fromVar.source;
     }
-    else if ( var.canConvert<QgsProcessingOutputLayerDefinition>() )
+    else if ( var.userType() == QMetaType::type( "QgsProcessingOutputLayerDefinition" ) )
     {
       QgsProcessingOutputLayerDefinition fromVar = qvariant_cast<QgsProcessingOutputLayerDefinition>( var );
       var = fromVar.sink;
     }
-    if ( var.canConvert<QgsProperty>() )
+    if ( var.userType() == QMetaType::type( "QgsProperty" ) )
     {
       QgsProperty p = var.value< QgsProperty >();
       if ( p.propertyType() == QgsProperty::StaticProperty )
@@ -922,7 +931,7 @@ QString QgsProcessingAlgorithm::invalidRasterError( const QVariantMap &parameter
   else
   {
     QVariant var = parameters.value( name );
-    if ( var.canConvert<QgsProperty>() )
+    if ( var.userType() == QMetaType::type( "QgsProperty" ) )
     {
       QgsProperty p = var.value< QgsProperty >();
       if ( p.propertyType() == QgsProperty::StaticProperty )
@@ -944,12 +953,12 @@ QString QgsProcessingAlgorithm::invalidSinkError( const QVariantMap &parameters,
   else
   {
     QVariant var = parameters.value( name );
-    if ( var.canConvert<QgsProcessingOutputLayerDefinition>() )
+    if ( var.userType() == QMetaType::type( "QgsProcessingOutputLayerDefinition" ) )
     {
       QgsProcessingOutputLayerDefinition fromVar = qvariant_cast<QgsProcessingOutputLayerDefinition>( var );
       var = fromVar.sink;
     }
-    if ( var.canConvert<QgsProperty>() )
+    if ( var.userType() == QMetaType::type( "QgsProperty" ) )
     {
       QgsProperty p = var.value< QgsProperty >();
       if ( p.propertyType() == QgsProperty::StaticProperty )
@@ -961,6 +970,28 @@ QString QgsProcessingAlgorithm::invalidSinkError( const QVariantMap &parameters,
       return QObject::tr( "Could not create destination layer for %1: %2" ).arg( name, var.toString() );
     else
       return QObject::tr( "Could not create destination layer for %1: invalid value" ).arg( name );
+  }
+}
+
+QString QgsProcessingAlgorithm::invalidPointCloudError( const QVariantMap &parameters, const QString &name )
+{
+  if ( !parameters.contains( name ) )
+    return QObject::tr( "Could not load source layer for %1: no value specified for parameter" ).arg( name );
+  else
+  {
+    QVariant var = parameters.value( name );
+    if ( var.userType() == QMetaType::type( "QgsProperty" ) )
+    {
+      QgsProperty p = var.value< QgsProperty >();
+      if ( p.propertyType() == QgsProperty::StaticProperty )
+      {
+        var = p.staticValue();
+      }
+    }
+    if ( !var.toString().isEmpty() )
+      return QObject::tr( "Could not load source layer for %1: %2 not found" ).arg( name, var.toString() );
+    else
+      return QObject::tr( "Could not load source layer for %1: invalid value" ).arg( name );
   }
 }
 
@@ -1052,7 +1083,7 @@ QgsFeatureSink::SinkFlags QgsProcessingFeatureBasedAlgorithm::sinkFlags() const
   return QgsFeatureSink::SinkFlags();
 }
 
-QgsWkbTypes::Type QgsProcessingFeatureBasedAlgorithm::outputWkbType( QgsWkbTypes::Type inputWkbType ) const
+Qgis::WkbType QgsProcessingFeatureBasedAlgorithm::outputWkbType( Qgis::WkbType inputWkbType ) const
 {
   return inputWkbType;
 }
@@ -1142,22 +1173,22 @@ bool QgsProcessingFeatureBasedAlgorithm::supportInPlaceEdit( const QgsMapLayer *
   if ( !layer )
     return false;
 
-  QgsWkbTypes::GeometryType inPlaceGeometryType = layer->geometryType();
+  Qgis::GeometryType inPlaceGeometryType = layer->geometryType();
   if ( !inputLayerTypes().empty() &&
        !inputLayerTypes().contains( QgsProcessing::TypeVector ) &&
        !inputLayerTypes().contains( QgsProcessing::TypeVectorAnyGeometry ) &&
-       ( ( inPlaceGeometryType == QgsWkbTypes::PolygonGeometry && !inputLayerTypes().contains( QgsProcessing::TypeVectorPolygon ) ) ||
-         ( inPlaceGeometryType == QgsWkbTypes::LineGeometry && !inputLayerTypes().contains( QgsProcessing::TypeVectorLine ) ) ||
-         ( inPlaceGeometryType == QgsWkbTypes::PointGeometry && !inputLayerTypes().contains( QgsProcessing::TypeVectorPoint ) ) ) )
+       ( ( inPlaceGeometryType == Qgis::GeometryType::Polygon && !inputLayerTypes().contains( QgsProcessing::TypeVectorPolygon ) ) ||
+         ( inPlaceGeometryType == Qgis::GeometryType::Line && !inputLayerTypes().contains( QgsProcessing::TypeVectorLine ) ) ||
+         ( inPlaceGeometryType == Qgis::GeometryType::Point && !inputLayerTypes().contains( QgsProcessing::TypeVectorPoint ) ) ) )
     return false;
 
-  QgsWkbTypes::Type type = QgsWkbTypes::Unknown;
-  if ( inPlaceGeometryType == QgsWkbTypes::PointGeometry )
-    type = QgsWkbTypes::Point;
-  else if ( inPlaceGeometryType == QgsWkbTypes::LineGeometry )
-    type = QgsWkbTypes::LineString;
-  else if ( inPlaceGeometryType == QgsWkbTypes::PolygonGeometry )
-    type = QgsWkbTypes::Polygon;
+  Qgis::WkbType type = Qgis::WkbType::Unknown;
+  if ( inPlaceGeometryType == Qgis::GeometryType::Point )
+    type = Qgis::WkbType::Point;
+  else if ( inPlaceGeometryType == Qgis::GeometryType::Line )
+    type = Qgis::WkbType::LineString;
+  else if ( inPlaceGeometryType == Qgis::GeometryType::Polygon )
+    type = Qgis::WkbType::Polygon;
 
   if ( QgsWkbTypes::geometryType( outputWkbType( type ) ) != inPlaceGeometryType )
     return false;

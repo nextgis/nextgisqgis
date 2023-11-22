@@ -6,10 +6,10 @@
  #include "qgslabelingresults.h"
 -#include "qgsvectortileutils.h"
 +// #include "qgsvectortileutils.h"
+ #include "qgsunittypes.h"
  
  #include <QPainter>
- #include <QStyleOptionGraphicsItem>
-@@ -1677,8 +1677,8 @@
+@@ -1768,8 +1768,8 @@
    const double mapScale = scale();
    scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_scale" ), mapScale, true ) );
  

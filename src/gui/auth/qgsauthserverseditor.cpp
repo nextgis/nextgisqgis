@@ -28,6 +28,7 @@
 #include "qgsauthmanager.h"
 #include "qgsauthguiutils.h"
 #include "qgslogger.h"
+#include "qgsvariantutils.h"
 
 QgsAuthServersEditor::QgsAuthServersEditor( QWidget *parent )
   : QWidget( parent )
@@ -66,7 +67,7 @@ QgsAuthServersEditor::QgsAuthServersEditor( QWidget *parent )
 
     btnGroupByOrg->setChecked( false );
     const QVariant sortbyval = QgsApplication::authManager()->authSetting( QStringLiteral( "serverssortby" ), QVariant( false ) );
-    if ( !sortbyval.isNull() )
+    if ( !QgsVariantUtils::isNull( sortbyval ) )
       btnGroupByOrg->setChecked( sortbyval.toBool() );
 
     populateSslConfigsView();
@@ -290,7 +291,7 @@ void QgsAuthServersEditor::btnRemoveServer_clicked()
 
   if ( !item )
   {
-    QgsDebugMsg( QStringLiteral( "Current tree widget item not set" ) );
+    QgsDebugMsgLevel( QStringLiteral( "Current tree widget item not set" ), 2 );
     return;
   }
 
@@ -312,8 +313,8 @@ void QgsAuthServersEditor::btnRemoveServer_clicked()
 
   if ( !QgsApplication::authManager()->existsSslCertCustomConfig( digest, hostport ) )
   {
-    QgsDebugMsg( QStringLiteral( "SSL custom config does not exist in database for host:port, id %1:" )
-                 .arg( hostport, digest ) );
+    QgsDebugError( QStringLiteral( "SSL custom config does not exist in database for host:port, id %1:" )
+                   .arg( hostport, digest ) );
     return;
   }
 
@@ -346,7 +347,7 @@ void QgsAuthServersEditor::btnEditServer_clicked()
 
   if ( !item )
   {
-    QgsDebugMsg( QStringLiteral( "Current tree widget item not set" ) );
+    QgsDebugMsgLevel( QStringLiteral( "Current tree widget item not set" ), 2 );
     return;
   }
 
@@ -368,7 +369,7 @@ void QgsAuthServersEditor::btnEditServer_clicked()
 
   if ( !QgsApplication::authManager()->existsSslCertCustomConfig( digest, hostport ) )
   {
-    QgsDebugMsg( QStringLiteral( "SSL custom config does not exist in database" ) );
+    QgsDebugError( QStringLiteral( "SSL custom config does not exist in database" ) );
     return;
   }
 

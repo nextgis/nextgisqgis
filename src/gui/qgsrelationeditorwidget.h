@@ -207,12 +207,13 @@ class GUI_EXPORT QgsRelationEditorWidget : public QgsAbstractRelationEditorWidge
     void toggleEditing( bool state );
     void showContextMenu( QgsActionMenu *menu, QgsFeatureId fid );
     void mapToolDeactivated();
-    void onKeyPressed( QKeyEvent *e );
     void onDigitizingCompleted( const QgsFeature &feature );
-
+    void onDigitizingCanceled( );
     void multiEditItemSelectionChanged();
 
   private:
+
+    void digitizingFinished( );
 
     enum class MultiEditFeatureType : int
     {
@@ -259,6 +260,7 @@ class GUI_EXPORT QgsRelationEditorWidget : public QgsAbstractRelationEditorWidge
 
     Buttons mButtonsVisibility = Button::AllButtons;
     bool mShowFirstFeature = true;
+    bool mAllowAddChildFeatureWithNoGeometry = true;
 
     QList<QTreeWidgetItem *> mMultiEditPreviousSelectedItems;
     QgsFeatureIds mMultiEdit1NJustAddedIds;
@@ -292,14 +294,14 @@ class GUI_EXPORT QgsRelationEditorConfigWidget : public QgsAbstractRelationEdito
      *
      * \returns A widget configuration
      */
-    QVariantMap config();
+    QVariantMap config() override;
 
     /**
      * \brief Update the configuration widget to represent the given configuration.
      *
      * \param config The configuration which should be represented by this widget
      */
-    void setConfig( const QVariantMap &config );
+    void setConfig( const QVariantMap &config ) override;
 
 };
 

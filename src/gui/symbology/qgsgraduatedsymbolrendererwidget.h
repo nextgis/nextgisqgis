@@ -26,6 +26,7 @@
 #include "qgsprocessingwidgetwrapper.h"
 #include "qgsdoublevalidator.h"
 
+#include "qtimer.h"
 #include "ui_qgsgraduatedsymbolrendererwidget.h"
 
 #include "qgis_gui.h"
@@ -38,7 +39,7 @@ class GUI_EXPORT QgsGraduatedSymbolRendererModel : public QAbstractItemModel
 {
     Q_OBJECT
   public:
-    QgsGraduatedSymbolRendererModel( QObject *parent = nullptr );
+    QgsGraduatedSymbolRendererModel( QObject *parent = nullptr, QScreen *screen = nullptr );
     Qt::ItemFlags flags( const QModelIndex &index ) const override;
     Qt::DropActions supportedDropActions() const override;
     QVariant data( const QModelIndex &index, int role ) const override;
@@ -69,6 +70,7 @@ class GUI_EXPORT QgsGraduatedSymbolRendererModel : public QAbstractItemModel
   private:
     QgsGraduatedSymbolRenderer *mRenderer = nullptr;
     QString mMimeFormat;
+    QPointer< QScreen > mScreen;
 };
 
 // View style which shows drop indicator line between items
@@ -148,6 +150,7 @@ class GUI_EXPORT QgsGraduatedSymbolRendererWidget : public QgsRendererWidget, pr
     void changeGraduatedSymbol();
     void selectionChanged( const QItemSelection &selected, const QItemSelection &deselected );
     void symmetryPointEditingFinished();
+    void classifyGraduatedImpl();
 
   protected slots:
 
@@ -201,6 +204,10 @@ class GUI_EXPORT QgsGraduatedSymbolRendererWidget : public QgsRendererWidget, pr
     QgsDoubleValidator *mSymmetryPointValidator = nullptr;
     QAction *mActionLevels = nullptr;
     std::vector< std::unique_ptr< QgsAbstractProcessingParameterWidgetWrapper >> mParameterWidgetWrappers;
+
+    int mBlockUpdates = 0;
+
+    QTimer mUpdateTimer;
 };
 
 

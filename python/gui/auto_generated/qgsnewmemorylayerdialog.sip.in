@@ -32,7 +32,7 @@ Runs the dialog and creates a new memory layer
 New dialog constructor.
 %End
 
-    QgsWkbTypes::Type selectedType() const;
+    Qgis::WkbType selectedType() const;
 %Docstring
 Returns the selected geometry type
 %End
@@ -64,6 +64,9 @@ Returns attributes for the new layer.
 
 .. versionadded:: 3.14
 %End
+
+    virtual void accept();
+
 
 };
 

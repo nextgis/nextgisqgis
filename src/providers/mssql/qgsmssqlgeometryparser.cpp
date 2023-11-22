@@ -196,33 +196,33 @@ void QgsMssqlGeometryParser::DumpMemoryToLog( const char *pszMsg, unsigned char 
 #endif
 }
 
-QgsPoint QgsMssqlGeometryParser::readCoordinates( int iPoint )
+QgsPoint QgsMssqlGeometryParser::readCoordinates( int iPoint ) const
 {
   if ( mIsGeography )
   {
     if ( ( mProps & SP_HASZVALUES ) && ( mProps & SP_HASMVALUES ) )
-      return QgsPoint( QgsWkbTypes::PointZM, ReadY( iPoint ), ReadX( iPoint ), ReadZ( iPoint ), ReadM( iPoint ) );
+      return QgsPoint( Qgis::WkbType::PointZM, ReadY( iPoint ), ReadX( iPoint ), ReadZ( iPoint ), ReadM( iPoint ) );
     else if ( mProps & SP_HASZVALUES )
-      return QgsPoint( QgsWkbTypes::PointZ, ReadY( iPoint ), ReadX( iPoint ), ReadZ( iPoint ) );
+      return QgsPoint( Qgis::WkbType::PointZ, ReadY( iPoint ), ReadX( iPoint ), ReadZ( iPoint ) );
     else if ( mProps & SP_HASMVALUES )
-      return QgsPoint( QgsWkbTypes::PointM, ReadY( iPoint ), ReadX( iPoint ), 0.0, ReadZ( iPoint ) );
+      return QgsPoint( Qgis::WkbType::PointM, ReadY( iPoint ), ReadX( iPoint ), 0.0, ReadZ( iPoint ) );
     else
-      return QgsPoint( QgsWkbTypes::Point, ReadY( iPoint ), ReadX( iPoint ) );
+      return QgsPoint( Qgis::WkbType::Point, ReadY( iPoint ), ReadX( iPoint ) );
   }
   else
   {
     if ( ( mProps & SP_HASZVALUES ) && ( mProps & SP_HASMVALUES ) )
-      return QgsPoint( QgsWkbTypes::PointZM, ReadX( iPoint ), ReadY( iPoint ), ReadZ( iPoint ), ReadM( iPoint ) );
+      return QgsPoint( Qgis::WkbType::PointZM, ReadX( iPoint ), ReadY( iPoint ), ReadZ( iPoint ), ReadM( iPoint ) );
     else if ( mProps & SP_HASZVALUES )
-      return QgsPoint( QgsWkbTypes::PointZ, ReadX( iPoint ), ReadY( iPoint ), ReadZ( iPoint ) );
+      return QgsPoint( Qgis::WkbType::PointZ, ReadX( iPoint ), ReadY( iPoint ), ReadZ( iPoint ) );
     else if ( mProps & SP_HASMVALUES )
-      return QgsPoint( QgsWkbTypes::PointM, ReadX( iPoint ), ReadY( iPoint ), 0.0, ReadZ( iPoint ) );
+      return QgsPoint( Qgis::WkbType::PointM, ReadX( iPoint ), ReadY( iPoint ), 0.0, ReadZ( iPoint ) );
     else
-      return QgsPoint( QgsWkbTypes::Point, ReadX( iPoint ), ReadY( iPoint ) );
+      return QgsPoint( Qgis::WkbType::Point, ReadX( iPoint ), ReadY( iPoint ) );
   }
 }
 
-void QgsMssqlGeometryParser::readCoordinates( int iPoint, int iNextPoint, double *x, double *y, double *z, double *m )
+void QgsMssqlGeometryParser::readCoordinates( int iPoint, int iNextPoint, double *x, double *y, double *z, double *m ) const
 {
   int i = 0;
   if ( mIsGeography )
@@ -321,7 +321,7 @@ void QgsMssqlGeometryParser::readCoordinates( int iPoint, int iNextPoint, double
   }
 }
 
-const QgsPointSequence QgsMssqlGeometryParser::readPointSequence( int iPoint, int iNextPoint )
+const QgsPointSequence QgsMssqlGeometryParser::readPointSequence( int iPoint, int iNextPoint ) const
 {
   if ( iPoint >= iNextPoint )
     return QgsPointSequence();
@@ -603,7 +603,7 @@ std::unique_ptr<QgsAbstractGeometry> QgsMssqlGeometryParser::parseSqlGeometry( u
 {
   if ( nLen < 10 )
   {
-    QgsDebugMsg( QStringLiteral( "ParseSqlGeometry not enough data" ) );
+    QgsDebugError( QStringLiteral( "ParseSqlGeometry not enough data" ) );
     DumpMemoryToLog( "Not enough data", pszInput, nLen );
     return nullptr;
   }
@@ -617,7 +617,7 @@ std::unique_ptr<QgsAbstractGeometry> QgsMssqlGeometryParser::parseSqlGeometry( u
 
   if ( mVersion == 0 || mVersion > 2 )
   {
-    QgsDebugMsg( QStringLiteral( "ParseSqlGeometry corrupt data" ) );
+    QgsDebugError( QStringLiteral( "ParseSqlGeometry corrupt data" ) );
     DumpMemoryToLog( "Corrupt data", pszInput, nLen );
     return nullptr;
   }
@@ -641,7 +641,7 @@ std::unique_ptr<QgsAbstractGeometry> QgsMssqlGeometryParser::parseSqlGeometry( u
 
     if ( nLen < 6 + mPointSize )
     {
-      QgsDebugMsg( QStringLiteral( "ParseSqlGeometry not enough data" ) );
+      QgsDebugError( QStringLiteral( "ParseSqlGeometry not enough data" ) );
       DumpMemoryToLog( "Not enough data", pszInput, nLen );
       return nullptr;
     }
@@ -656,7 +656,7 @@ std::unique_ptr<QgsAbstractGeometry> QgsMssqlGeometryParser::parseSqlGeometry( u
 
     if ( nLen < 6 + 2 * mPointSize )
     {
-      QgsDebugMsg( QStringLiteral( "ParseSqlGeometry not enough data" ) );
+      QgsDebugError( QStringLiteral( "ParseSqlGeometry not enough data" ) );
       DumpMemoryToLog( "Not enough data", pszInput, nLen );
       return nullptr;
     }
@@ -681,7 +681,7 @@ std::unique_ptr<QgsAbstractGeometry> QgsMssqlGeometryParser::parseSqlGeometry( u
 
     if ( nLen < mFigurePos )
     {
-      QgsDebugMsg( QStringLiteral( "ParseSqlGeometry not enough data" ) );
+      QgsDebugError( QStringLiteral( "ParseSqlGeometry not enough data" ) );
       DumpMemoryToLog( "Not enough data", pszInput, nLen );
       return nullptr;
     }
@@ -698,7 +698,7 @@ std::unique_ptr<QgsAbstractGeometry> QgsMssqlGeometryParser::parseSqlGeometry( u
 
     if ( nLen < mShapePos )
     {
-      QgsDebugMsg( QStringLiteral( "ParseSqlGeometry not enough data" ) );
+      QgsDebugError( QStringLiteral( "ParseSqlGeometry not enough data" ) );
       DumpMemoryToLog( "Not enough data", pszInput, nLen );
       return nullptr;
     }
@@ -707,7 +707,7 @@ std::unique_ptr<QgsAbstractGeometry> QgsMssqlGeometryParser::parseSqlGeometry( u
 
     if ( nLen < mShapePos + 9 * mNumShapes )
     {
-      QgsDebugMsg( QStringLiteral( "ParseSqlGeometry not enough data" ) );
+      QgsDebugError( QStringLiteral( "ParseSqlGeometry not enough data" ) );
       DumpMemoryToLog( "Not enough data", pszInput, nLen );
       return nullptr;
     }
@@ -728,7 +728,7 @@ std::unique_ptr<QgsAbstractGeometry> QgsMssqlGeometryParser::parseSqlGeometry( u
         mNumSegments = ReadInt32( mSegmentPos - 4 );
         if ( nLen < mSegmentPos + mNumSegments )
         {
-          QgsDebugMsg( QStringLiteral( "ParseSqlGeometry not enough data" ) );
+          QgsDebugError( QStringLiteral( "ParseSqlGeometry not enough data" ) );
           DumpMemoryToLog( "Not enough data", pszInput, nLen );
           return nullptr;
         }
@@ -738,7 +738,7 @@ std::unique_ptr<QgsAbstractGeometry> QgsMssqlGeometryParser::parseSqlGeometry( u
     // pick up the root shape
     if ( ParentOffset( 0 ) != 0xFFFFFFFF )
     {
-      QgsDebugMsg( QStringLiteral( "ParseSqlGeometry corrupt data" ) );
+      QgsDebugError( QStringLiteral( "ParseSqlGeometry corrupt data" ) );
       DumpMemoryToLog( "Not enough data", pszInput, nLen );
       return nullptr;
     }
@@ -777,7 +777,7 @@ std::unique_ptr<QgsAbstractGeometry> QgsMssqlGeometryParser::parseSqlGeometry( u
         poGeom = readCurvePolygon( 0 );
         break;
       default:
-        QgsDebugMsg( QStringLiteral( "ParseSqlGeometry unsupported geometry type" ) );
+        QgsDebugError( QStringLiteral( "ParseSqlGeometry unsupported geometry type" ) );
         DumpMemoryToLog( "Unsupported geometry type", pszInput, nLen );
         return nullptr;
     }
@@ -785,4 +785,3 @@ std::unique_ptr<QgsAbstractGeometry> QgsMssqlGeometryParser::parseSqlGeometry( u
 
   return poGeom;
 }
-

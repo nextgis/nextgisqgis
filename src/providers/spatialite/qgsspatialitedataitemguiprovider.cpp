@@ -14,7 +14,6 @@
  ***************************************************************************/
 
 #include "qgsspatialitedataitemguiprovider.h"
-#include "qgsspatialiteconnection.h"
 #include "qgsspatialitedataitems.h"
 #include "qgsspatialitesourceselect.h"
 #include "qgsproviderregistry.h"
@@ -183,8 +182,8 @@ bool QgsSpatiaLiteDataItemGuiProvider::handleDropConnectionItem( QgsSLConnection
 
     if ( srcLayer->isValid() )
     {
-      destUri.setDataSource( QString(), u.name, srcLayer->geometryType() != QgsWkbTypes::NullGeometry ? QStringLiteral( "geom" ) : QString() );
-      QgsDebugMsg( "URI " + destUri.uri() );
+      destUri.setDataSource( QString(), u.name, srcLayer->geometryType() != Qgis::GeometryType::Null ? QStringLiteral( "geom" ) : QString() );
+      QgsDebugMsgLevel( "URI " + destUri.uri(), 2 );
 
       std::unique_ptr< QgsVectorLayerExporterTask > exportTask( new QgsVectorLayerExporterTask( srcLayer, destUri.uri(), QStringLiteral( "spatialite" ), srcLayer->crs(), QVariantMap(), owner ) );
 

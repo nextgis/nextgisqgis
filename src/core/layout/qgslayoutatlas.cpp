@@ -25,6 +25,9 @@
 #include "qgsfeatureiterator.h"
 #include "qgsvectorlayer.h"
 #include "qgsexpressioncontextutils.h"
+#include "qgsvariantutils.h"
+#include "qgslayoutreportcontext.h"
+#include "qgslayoutrendercontext.h"
 
 QgsLayoutAtlas::QgsLayoutAtlas( QgsLayout *layout )
   : QObject( layout )
@@ -35,7 +38,7 @@ QgsLayoutAtlas::QgsLayoutAtlas( QgsLayout *layout )
   //listen out for layer removal
   connect( mLayout->project(), static_cast < void ( QgsProject::* )( const QStringList & ) >( &QgsProject::layersWillBeRemoved ), this, &QgsLayoutAtlas::removeLayers );
 
-  if ( mLayout->customProperty( QStringLiteral( "singleFile" ) ).isNull() )
+  if ( QgsVariantUtils::isNull( mLayout->customProperty( QStringLiteral( "singleFile" ) ) ) )
     mLayout->setCustomProperty( QStringLiteral( "singleFile" ), true );
 }
 

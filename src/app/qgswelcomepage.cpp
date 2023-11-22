@@ -207,7 +207,7 @@ void QgsWelcomePage::recentProjectItemActivated( const QModelIndex &index )
 
 void QgsWelcomePage::templateProjectItemActivated( const QModelIndex &index )
 {
-  if ( index.data( QgsProjectListItemDelegate::NativePathRole ).isNull() )
+  if ( !index.data( QgsProjectListItemDelegate::NativePathRole ).isValid() )
     QgisApp::instance()->newProject();
   else
     QgisApp::instance()->fileNewFromTemplate( index.data( QgsProjectListItemDelegate::NativePathRole ).toString() );
@@ -303,7 +303,7 @@ void QgsWelcomePage::showContextMenuForProjects( QPoint point )
     bool showClosestPath = storage ? false : true;
     if ( storage && ( storage->type() == QLatin1String( "geopackage" ) ) )
     {
-      const QRegularExpression reGpkg( "^(geopackage:)([^\?]+)\?(.+)$", QRegularExpression::CaseInsensitiveOption );
+      const thread_local QRegularExpression reGpkg( "^(geopackage:)([^\?]+)\?(.+)$", QRegularExpression::CaseInsensitiveOption );
       const QRegularExpressionMatch matchGpkg = reGpkg.match( path );
       if ( matchGpkg.hasMatch() )
       {

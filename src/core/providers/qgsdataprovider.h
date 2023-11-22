@@ -31,6 +31,7 @@
 class QgsRectangle;
 class QgsCoordinateReferenceSystem;
 class QgsDataProviderTemporalCapabilities;
+class QgsDataProviderElevationProperties;
 
 
 /**
@@ -125,6 +126,9 @@ class CORE_EXPORT QgsDataProvider : public QObject
       FlagLoadDefaultStyle = 1 << 2, //!< Reset the layer's style to the default for the datasource
       SkipGetExtent = 1 << 3, //!< Skip the extent from provider
       SkipFullScan = 1 << 4, //!< Skip expensive full scan on files (i.e. on delimited text) (since QGIS 3.24)
+      ForceReadOnly = 1 << 5, //!< Open layer in a read-only mode (since QGIS 3.28)
+      SkipCredentialsRequest =  1 << 6, //! Skip credentials if the provided one are not valid, let the provider be invalid, avoiding to block the thread creating the provider if it is not the main thread (since QGIS 3.32).
+      ParallelThreadLoading = 1 << 7, //! Provider is created in a parallel thread than the one where it will live (since QGIS 3.32.1).
     };
     Q_DECLARE_FLAGS( ReadFlags, ReadFlag )
 
@@ -207,6 +211,13 @@ class CORE_EXPORT QgsDataProvider : public QObject
     }
 
     /**
+     * Returns the generic data provider flags.
+     *
+     * \since QGIS 3.26
+     */
+    virtual Qgis::DataProviderFlags flags() const;
+
+    /**
      * Returns the provider's temporal capabilities.
      *
      * This may be NULLPTR, depending on the data provider.
@@ -223,6 +234,24 @@ class CORE_EXPORT QgsDataProvider : public QObject
      * \since QGIS 3.14
      */
     virtual const QgsDataProviderTemporalCapabilities *temporalCapabilities() const SIP_SKIP;
+
+    /**
+     * Returns the provider's elevation properties.
+     *
+     * This may be NULLPTR, depending on the data provider.
+     *
+     * \since QGIS 3.32
+     */
+    virtual QgsDataProviderElevationProperties *elevationProperties();
+
+    /**
+     * Returns the provider's elevation properties.
+     *
+     * This may be NULLPTR, depending on the data provider.
+     *
+     * \since QGIS 3.32
+     */
+    virtual const QgsDataProviderElevationProperties *elevationProperties() const SIP_SKIP;
 
     /**
      * Returns the extent of the layer
@@ -679,6 +708,8 @@ class CORE_EXPORT QgsDataProvider : public QObject
      * \since QGIS 3.12
     */
     virtual void reloadProviderData() {}
+
+    friend class TestQgsProject;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS( QgsDataProvider::ReadFlags )

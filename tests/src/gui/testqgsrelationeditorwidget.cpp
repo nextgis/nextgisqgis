@@ -23,6 +23,7 @@
 #include <qgsrelationeditorwidget.h>
 #include <qgsrelationmanager.h>
 #include <qgsrelationreferencewidget.h>
+#include <qgstrackedvectorlayertools.h>
 
 #include <QTreeWidgetItem>
 
@@ -40,6 +41,7 @@ class TestQgsRelationEditorWidget : public QObject
 
     void testMultiEdit1N();
     void testMultiEditNM();
+    void testUpdateUi();
 
   private:
     std::unique_ptr<QgsVectorLayer> mLayer1;
@@ -280,6 +282,96 @@ void TestQgsRelationEditorWidget::testMultiEditNM()
   QCOMPARE( listChildrenItemsText, QStringList() << QStringLiteral( "Layer2-10" )
             << QStringLiteral( "Layer2-11" )
             << QStringLiteral( "Layer2-11" ) );
+
+}
+
+void TestQgsRelationEditorWidget::testUpdateUi()
+{
+  // Test that we don't recreate all the widget when only the request have been updated
+
+  QgsTrackedVectorLayerTools tools;
+
+  // Init a relation editor widget
+  QgsRelationEditorWidget relationEditorWidget( ( QVariantMap() ) );
+  relationEditorWidget.setRelations( *mRelation, QgsRelation() );
+  QgsAttributeEditorContext context;
+  context.setVectorLayerTools( &tools );
+  relationEditorWidget.setEditorContext( context );
+
+  QVERIFY( !relationEditorWidget.multiEditModeActive() );
+
+  relationEditorWidget.setVisible( true );
+
+  //get feature with pk 10
+  QgsFeature feat = mLayer2->getFeature( 1 );
+  QVERIFY( feat.isValid() );
+  relationEditorWidget.setFeature( feat );
+
+  QVERIFY( relationEditorWidget.mDualView );
+
+  QPointer<QAbstractItemModel> model = relationEditorWidget.mDualView->masterModel();
+  QVERIFY( model );
+
+  QCOMPARE( model->rowCount(), 1 );
+  //referencing feature on mLayer1 should be pk 0 (fid 1)
+  QCOMPARE( model->data( model->index( 0, 0 ) ), 0 );
+  //as well be found with FilteredSelectionManager (fid 1)
+  relationEditorWidget.relation().referencingLayer()->selectAll();
+  QVERIFY( relationEditorWidget.selectedChildFeatureIds().contains( 1 ) );
+
+  //get feature with pk 11
+  feat = mLayer2->getFeature( 2 );
+  QVERIFY( feat.isValid() );
+  relationEditorWidget.setFeature( feat );
+
+  // model hasn't changed (old one has not being destroyed)
+  QVERIFY( model );
+  QCOMPARE( model->rowCount(), 1 );
+  //referencing feature on mLayer1 should be pk 1 (fid 2)
+  QCOMPARE( model->data( model->index( 0, 0 ) ), 1 );
+  //as well be found with FilteredSelectionManager (fid 2)
+  relationEditorWidget.relation().referencingLayer()->selectAll();
+  QVERIFY( relationEditorWidget.selectedChildFeatureIds().contains( 2 ) );
+
+  // Now try with NM relations
+  relationEditorWidget.setRelations( *mRelationNM, *mRelation1N );
+  // model has not been destroyed (mLayer1 is still the displayed layer)
+  QVERIFY( model );
+
+  //get feature with pk 10
+  feat = mLayer2->getFeature( 1 );
+  QVERIFY( feat.isValid() );
+  relationEditorWidget.setFeature( feat );
+
+  // model not destroyed, set request only
+  QCOMPARE( model->rowCount(), 1 );
+  //referencing feature on mLayer1 should be pk 0 (fid 1)
+  QCOMPARE( model->data( model->index( 0, 0 ) ), 0 );
+  //as well be found with FilteredSelectionManager (fid 1)
+  relationEditorWidget.nmRelation().referencedLayer()->selectAll();
+  QVERIFY( relationEditorWidget.selectedChildFeatureIds().contains( 1 ) );
+
+  relationEditorWidget.setRelations( *mRelation1N, *mRelationNM );
+  // model has been destroyed (mLayer2 is now the displayed layer)
+  QVERIFY( !model );
+  model = relationEditorWidget.mDualView->masterModel();
+
+  //get feature with pk 0
+  feat = mLayer1->getFeature( 1 );
+  QVERIFY( feat.isValid() );
+  relationEditorWidget.setFeature( feat );
+
+  // model not destroyed, set request only
+  QVERIFY( model );
+  QCOMPARE( model->rowCount(), 2 );
+  //referencing feature on mLayer2 should be pk 10 (fid 1) and pk 11 (fid 2)
+  QCOMPARE( model->data( model->index( 0, 0 ) ), 10 );
+  QCOMPARE( model->data( model->index( 1, 0 ) ), 11 );
+
+  //as well be found with FilteredSelectionManager (fid 1 and fid 2)
+  relationEditorWidget.nmRelation().referencedLayer()->selectAll();
+  QVERIFY( relationEditorWidget.selectedChildFeatureIds().contains( 1 ) );
+  QVERIFY( relationEditorWidget.selectedChildFeatureIds().contains( 2 ) );
 
 }
 

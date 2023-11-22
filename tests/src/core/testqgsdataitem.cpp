@@ -112,7 +112,7 @@ void TestQgsDataItem::testValid()
 {
   if ( mDirItem )
   {
-    QgsDebugMsg( QStringLiteral( "dirItem has %1 children" ).arg( mDirItem->rowCount() ) );
+    QgsDebugMsgLevel( QStringLiteral( "dirItem has %1 children" ).arg( mDirItem->rowCount() ), 1 );
   }
   QVERIFY( isValidDirItem( mDirItem ) );
 }
@@ -155,7 +155,7 @@ void TestQgsDataItem::testDirItemChildren()
       QString lProvider = layerItem->providerKey();
       QString errStr = QStringLiteral( "layer #%1 - %2 provider = %3 tmpSetting = %4" ).arg( i ).arg( lFile, lProvider, tmpSetting );
 
-      QgsDebugMsg( QStringLiteral( "testing child name=%1 provider=%2 path=%3 tmpSetting = %4" ).arg( layerItem->name(), lProvider, lFile, tmpSetting ) );
+      QgsDebugMsgLevel( QStringLiteral( "testing child name=%1 provider=%2 path=%3 tmpSetting = %4" ).arg( layerItem->name(), lProvider, lFile, tmpSetting ), 1 );
 
       if ( lFile == QLatin1String( "landsat.tif" ) )
       {
@@ -216,13 +216,20 @@ void TestQgsDataItem::testDirItemMonitoring()
   QVERIFY( QDir().mkpath( child1 ) );
   QVERIFY( QDir().mkpath( child2 ) );
 
-  std::unique_ptr< QgsDirectoryItem > dirItem = std::make_unique< QgsDirectoryItem >( nullptr, QStringLiteral( "parent name" ), parentDir, QStringLiteral( "/" ) + parentDir );
+  std::unique_ptr< QgsDirectoryItem > dirItem = std::make_unique< QgsDirectoryItem >( nullptr, QStringLiteral( "parent name" ), parentDir, parentDir + '/' );
+  QCOMPARE( dirItem->path(), parentDir + '/' );
+  QCOMPARE( dirItem->dirPath(), parentDir );
+
   dirItem->populate( true );
   QCOMPARE( dirItem->rowCount(), 2 );
   QPointer< QgsDirectoryItem > childItem1( qobject_cast< QgsDirectoryItem * >( dirItem->children().at( 0 ) ) );
   QPointer< QgsDirectoryItem > childItem2( qobject_cast< QgsDirectoryItem * >( dirItem->children().at( 1 ) ) );
   QVERIFY( childItem1 );
+  QCOMPARE( childItem1->path(), child1 );
+  QCOMPARE( childItem1->dirPath(), child1 );
   QVERIFY( childItem2 );
+  QCOMPARE( childItem2->path(), child2 );
+  QCOMPARE( childItem2->dirPath(), child2 );
 
   QCOMPARE( dirItem->monitoring(), Qgis::BrowserDirectoryMonitoring::Default );
   QCOMPARE( childItem1->monitoring(), Qgis::BrowserDirectoryMonitoring::Default );

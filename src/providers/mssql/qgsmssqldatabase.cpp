@@ -24,11 +24,7 @@
 #include <QThread>
 
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-QMutex QgsMssqlDatabase::sMutex { QMutex::Recursive };
-#else
 QRecursiveMutex QgsMssqlDatabase::sMutex;
-#endif
 
 QMap<QString, std::weak_ptr<QgsMssqlDatabase> > QgsMssqlDatabase::sConnections;
 
@@ -43,7 +39,7 @@ QString QgsMssqlDatabase::connectionName( const QString &service, const QString 
 
     if ( database.isEmpty() )
     {
-      QgsDebugMsg( QStringLiteral( "QgsMssqlProvider database name not specified" ) );
+      QgsDebugError( QStringLiteral( "QgsMssqlProvider database name not specified" ) );
       return QString();
     }
 
@@ -97,18 +93,14 @@ QgsMssqlDatabase::QgsMssqlDatabase( const QSqlDatabase &db, bool transaction )
 
   if ( mTransaction )
   {
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-    mTransactionMutex.reset( new QMutex { QMutex::Recursive } );
-#else
     mTransactionMutex.reset( new QRecursiveMutex );
-#endif
   }
 
   if ( !mDB.isOpen() )
   {
     if ( !mDB.open() )
     {
-      QgsDebugMsg( "Failed to open MSSQL database: " + mDB.lastError().text() );
+      QgsDebugError( "Failed to open MSSQL database: " + mDB.lastError().text() );
     }
   }
 }
@@ -216,6 +208,6 @@ QSqlDatabase QgsMssqlDatabase::getDatabase( const QString &service, const QStrin
   db.setDatabaseName( connectionString );
 
   // only uncomment temporarily -- it can show connection password otherwise!
-  // QgsDebugMsg( connectionString );
+  // QgsDebugMsgLevel( connectionString, 2 );
   return db;
 }

@@ -237,12 +237,12 @@ class CORE_EXPORT QgsTemporalNavigationObject : public QgsTemporalController, pu
     /**
      * Emitted whenever the animation \a state changes.
      */
-    void stateChanged( AnimationState state );
+    void stateChanged( QgsTemporalNavigationObject::AnimationState state );
 
     /**
      * Emitted whenever the navigation \a mode changes.
      */
-    void navigationModeChanged( NavigationMode mode );
+    void navigationModeChanged( QgsTemporalNavigationObject::NavigationMode mode );
 
     /**
      * Emitted whenever the temporalExtent \a extent changes.
@@ -329,7 +329,7 @@ class CORE_EXPORT QgsTemporalNavigationObject : public QgsTemporalController, pu
     long long mCurrentFrameNumber = 0;
 
     //! Frame duration
-    QgsInterval mFrameDuration = QgsInterval( 1.0, QgsUnitTypes::TemporalUnit::TemporalHours );
+    QgsInterval mFrameDuration = QgsInterval( 1.0, Qgis::TemporalUnit::Hours );
 
     //! Member for frame rate
     double mFramesPerSecond = 1;

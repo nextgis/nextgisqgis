@@ -1,0 +1,73 @@
+--- a/src/app/qgsmaptoolselectutils.cpp	2023-08-21 19:39:45.671050940 +0300
++++ b/src/app/qgsmaptoolselectutils.cpp	2023-10-24 12:27:53.000000000 +0300
+@@ -21,7 +21,7 @@
+ #include "qgsmessagebar.h"
+ #include "qgsmapcanvas.h"
+ #include "qgsvectorlayer.h"
+-#include "qgsvectortilelayer.h"
++// #include "qgsvectortilelayer.h"
+ #include "qgsvectorlayerfeatureiterator.h"
+ #include "qgsfeature.h"
+ #include "qgsgeometry.h"
+@@ -50,9 +50,7 @@
+     switch ( layer->type() )
+     {
+       case Qgis::LayerType::Vector:
+-      case Qgis::LayerType::VectorTile:
+-        // supported
+-        break;
++//      case Qgis::LayerType::VectorTile:
+       case Qgis::LayerType::Raster:
+       case Qgis::LayerType::Plugin:
+       case Qgis::LayerType::Mesh:
+@@ -119,10 +117,10 @@
+         }
+         break;
+       }
+-      case Qgis::LayerType::VectorTile:
+-        // mixed layer type, so aim for somewhere between the vector layer polygon/point sizes
+-        boxSize = 2;
+-        break;
++//      case Qgis::LayerType::VectorTile:
++//        // mixed layer type, so aim for somewhere between the vector layer polygon/point sizes
++//        boxSize = 2;
++//        break;
+ 
+       case Qgis::LayerType::Raster:
+       case Qgis::LayerType::Plugin:
+@@ -251,7 +249,7 @@
+       vlayer->selectByIds( selectedFeatures, behavior );
+       break;
+     }
+-
++/*
+     case Qgis::LayerType::VectorTile:
+     {
+       QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer *>( layer );
+@@ -274,7 +272,7 @@
+ 
+       vtLayer->selectByGeometry( selectGeomTrans, context, behavior, Qgis::SelectGeometryRelationship::Intersect, flags, &renderContext );
+       break;
+-    }
++    }*/
+ 
+     case Qgis::LayerType::Raster:
+     case Qgis::LayerType::Plugin:
+@@ -309,7 +307,7 @@
+       vLayer->selectByIds( selectedFeatures, selectBehavior );
+       break;
+     }
+-
++/*
+     case Qgis::LayerType::VectorTile:
+     {
+       QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( layer );
+@@ -327,7 +325,7 @@
+ 
+       vtLayer->selectByGeometry( selectGeomTrans, context, selectBehavior, doContains ? Qgis::SelectGeometryRelationship::Within : Qgis::SelectGeometryRelationship::Intersect, Qgis::SelectionFlags(), &renderContext );
+       break;
+-    }
++    }*/
+ 
+     case Qgis::LayerType::Raster:
+     case Qgis::LayerType::Plugin:

@@ -1,0 +1,40 @@
+--- a/src/app/qgslayertreeviewindicatorprovider.cpp	2023-08-21 19:30:50.150102952 +0300
++++ b/src/app/qgslayertreeviewindicatorprovider.cpp	2023-10-24 12:12:34.000000000 +0300
+@@ -22,7 +22,7 @@
+ #include "qgsvectorlayer.h"
+ #include "qgsrasterlayer.h"
+ #include "qgspointcloudlayer.h"
+-#include "qgsvectortilelayer.h"
++// #include "qgsvectortilelayer.h"
+ #include "qgsmeshlayer.h"
+ #include "qgisapp.h"
+ #include "qgsapplication.h"
+@@ -103,8 +103,8 @@
+   if ( !( qobject_cast<QgsVectorLayer *>( layerNode->layer() ) ||
+           qobject_cast<QgsRasterLayer *>( layerNode->layer() ) ||
+           qobject_cast<QgsMeshLayer *>( layerNode->layer() ) ||
+-          qobject_cast<QgsPointCloudLayer *>( layerNode->layer() ) ||
+-          qobject_cast<QgsVectorTileLayer *>( layerNode->layer() ) ) )
++          qobject_cast<QgsPointCloudLayer *>( layerNode->layer() )/* ||
++          qobject_cast<QgsVectorTileLayer *>( layerNode->layer() )*/ ) )
+     return;
+ 
+   if ( QgsMapLayer *mapLayer = layerNode->layer() )
+@@ -132,7 +132,7 @@
+           || qobject_cast<QgsRasterLayer *>( layer )
+           || qobject_cast<QgsMeshLayer *>( layer )
+           || qobject_cast<QgsPointCloudLayer *>( layer )
+-          || qobject_cast<QgsVectorTileLayer *>( layer ) ) )
++          /*|| qobject_cast<QgsVectorTileLayer *>( layer ) */) )
+     return;
+ 
+   QgsMapLayer *mapLayer = layer;
+@@ -145,7 +145,7 @@
+           || qobject_cast<QgsRasterLayer *>( layer )
+           || qobject_cast<QgsMeshLayer *>( layer )
+           || qobject_cast<QgsPointCloudLayer *>( layer )
+-          || qobject_cast<QgsVectorTileLayer *>( layer ) ) )
++          /*|| qobject_cast<QgsVectorTileLayer *>( layer ) */) )
+     return;
+   QgsMapLayer *mapLayer = layer;
+   disconnect( mapLayer, &QgsMapLayer::dataSourceChanged, this, &QgsLayerTreeViewIndicatorProvider::onLayerChanged );

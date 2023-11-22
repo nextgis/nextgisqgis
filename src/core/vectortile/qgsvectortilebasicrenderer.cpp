@@ -22,12 +22,11 @@
 #include "qgslinesymbollayer.h"
 #include "qgsmarkersymbollayer.h"
 #include "qgssymbollayerutils.h"
-#include "qgsvectortileutils.h"
 #include "qgsfillsymbol.h"
 #include "qgslinesymbol.h"
 #include "qgsmarkersymbol.h"
 
-QgsVectorTileBasicRendererStyle::QgsVectorTileBasicRendererStyle( const QString &stName, const QString &laName, QgsWkbTypes::GeometryType geomType )
+QgsVectorTileBasicRendererStyle::QgsVectorTileBasicRendererStyle( const QString &stName, const QString &laName, Qgis::GeometryType geomType )
   : mStyleName( stName )
   , mLayerName( laName )
   , mGeometryType( geomType )
@@ -63,7 +62,7 @@ void QgsVectorTileBasicRendererStyle::writeXml( QDomElement &elem, const QgsRead
 {
   elem.setAttribute( QStringLiteral( "name" ), mStyleName );
   elem.setAttribute( QStringLiteral( "layer" ), mLayerName );
-  elem.setAttribute( QStringLiteral( "geometry" ), mGeometryType );
+  elem.setAttribute( QStringLiteral( "geometry" ), static_cast<int>( mGeometryType ) );
   elem.setAttribute( QStringLiteral( "enabled" ), mEnabled ? QStringLiteral( "1" ) : QStringLiteral( "0" ) );
   elem.setAttribute( QStringLiteral( "expression" ), mExpression );
   elem.setAttribute( QStringLiteral( "min-zoom" ), mMinZoomLevel );
@@ -80,7 +79,7 @@ void QgsVectorTileBasicRendererStyle::readXml( const QDomElement &elem, const Qg
 {
   mStyleName = elem.attribute( QStringLiteral( "name" ) );
   mLayerName = elem.attribute( QStringLiteral( "layer" ) );
-  mGeometryType = static_cast<QgsWkbTypes::GeometryType>( elem.attribute( QStringLiteral( "geometry" ) ).toInt() );
+  mGeometryType = static_cast<Qgis::GeometryType>( elem.attribute( QStringLiteral( "geometry" ) ).toInt() );
   mEnabled = elem.attribute( QStringLiteral( "enabled" ) ).toInt();
   mExpression = elem.attribute( QStringLiteral( "expression" ) );
   mMinZoomLevel = elem.attribute( QStringLiteral( "min-zoom" ) ).toInt();
@@ -163,14 +162,42 @@ void QgsVectorTileBasicRenderer::stopRender( QgsRenderContext &context )
   Q_UNUSED( context )
 }
 
+void QgsVectorTileBasicRenderer::renderBackground( QgsRenderContext &context )
+{
+  for ( const QgsVectorTileBasicRendererStyle &layerStyle : std::as_const( mStyles ) )
+  {
+    if ( !layerStyle.symbol() || layerStyle.layerName() != QLatin1String( "background" ) )
+      continue;
+
+    if ( layerStyle.isEnabled() )
+    {
+      QgsSymbol *sym = layerStyle.symbol();
+      sym->startRender( context, QgsFields() );
+
+      QgsFillSymbol *fillSym = dynamic_cast<QgsFillSymbol *>( sym );
+      if ( fillSym )
+      {
+        QPolygon polygon;
+        polygon << QPoint( 0, 0 );
+        polygon << QPoint( 0, context.outputSize().height() );
+        polygon << QPoint( context.outputSize().width(), context.outputSize().height() );
+        polygon << QPoint( context.outputSize().width(), 0 );
+        fillSym->renderPolygon( polygon, nullptr, nullptr, context );
+      }
+      sym->stopRender( context );
+    }
+    break;
+  }
+}
+
 void QgsVectorTileBasicRenderer::renderTile( const QgsVectorTileRendererData &tile, QgsRenderContext &context )
 {
   const QgsVectorTileFeatures tileData = tile.features();
-  int zoomLevel = tile.id().zoomLevel();
+  const int zoomLevel = tile.renderZoomLevel();
 
   for ( const QgsVectorTileBasicRendererStyle &layerStyle : std::as_const( mStyles ) )
   {
-    if ( !layerStyle.isActive( zoomLevel ) || !layerStyle.symbol() )
+    if ( !layerStyle.isActive( zoomLevel ) || !layerStyle.symbol() || layerStyle.layerName() == QLatin1String( "background" ) )
       continue;
 
     QgsExpressionContextScope *scope = new QgsExpressionContextScope( QObject::tr( "Layer" ) ); // will be deleted by popper
@@ -182,29 +209,23 @@ void QgsVectorTileBasicRenderer::renderTile( const QgsVectorTileRendererData &ti
 
     QgsSymbol *sym = layerStyle.symbol();
     sym->startRender( context, QgsFields() );
-    if ( layerStyle.layerName() == QLatin1String( "background" ) )
-    {
-      QgsFillSymbol *fillSym = dynamic_cast<QgsFillSymbol *>( sym );
-      if ( fillSym )
-        fillSym->renderPolygon( tile.tilePolygon(), nullptr, nullptr, context );
-    }
-    else if ( layerStyle.layerName().isEmpty() )
+    if ( layerStyle.layerName().isEmpty() )
     {
       // matching all layers
-      for ( QString layerName : tileData.keys() )
+      for ( const auto &features : tileData )
       {
-        for ( const QgsFeature &f : tileData[layerName] )
+        for ( const QgsFeature &f : features )
         {
           scope->setFeature( f );
           if ( filterExpression.isValid() && !filterExpression.evaluate( &context.expressionContext() ).toBool() )
             continue;
 
-          const QgsWkbTypes::GeometryType featureType = QgsWkbTypes::geometryType( f.geometry().wkbType() );
+          const Qgis::GeometryType featureType = QgsWkbTypes::geometryType( f.geometry().wkbType() );
           if ( featureType == layerStyle.geometryType() )
           {
             sym->renderFeature( f, context );
           }
-          else if ( featureType == QgsWkbTypes::PolygonGeometry && layerStyle.geometryType() == QgsWkbTypes::LineGeometry )
+          else if ( featureType == Qgis::GeometryType::Polygon && layerStyle.geometryType() == Qgis::GeometryType::Line )
           {
             // be tolerant and permit rendering polygons with a line layer style, as some style definitions use this approach
             // to render the polygon borders only
@@ -212,7 +233,7 @@ void QgsVectorTileBasicRenderer::renderTile( const QgsVectorTileRendererData &ti
             exterior.setGeometry( QgsGeometry( f.geometry().constGet()->boundary() ) );
             sym->renderFeature( exterior, context );
           }
-          else if ( featureType == QgsWkbTypes::PolygonGeometry && layerStyle.geometryType() == QgsWkbTypes::PointGeometry )
+          else if ( featureType == Qgis::GeometryType::Polygon && layerStyle.geometryType() == Qgis::GeometryType::Point )
           {
             // be tolerant and permit rendering polygons with a point layer style, as some style definitions use this approach
             // to render the polygon center
@@ -233,12 +254,12 @@ void QgsVectorTileBasicRenderer::renderTile( const QgsVectorTileRendererData &ti
         if ( filterExpression.isValid() && !filterExpression.evaluate( &context.expressionContext() ).toBool() )
           continue;
 
-        const QgsWkbTypes::GeometryType featureType = QgsWkbTypes::geometryType( f.geometry().wkbType() );
+        const Qgis::GeometryType featureType = QgsWkbTypes::geometryType( f.geometry().wkbType() );
         if ( featureType == layerStyle.geometryType() )
         {
           sym->renderFeature( f, context );
         }
-        else if ( featureType == QgsWkbTypes::PolygonGeometry && layerStyle.geometryType() == QgsWkbTypes::LineGeometry )
+        else if ( featureType == Qgis::GeometryType::Polygon && layerStyle.geometryType() == Qgis::GeometryType::Line )
         {
           // be tolerant and permit rendering polygons with a line layer style, as some style definitions use this approach
           // to render the polygon borders only
@@ -246,7 +267,7 @@ void QgsVectorTileBasicRenderer::renderTile( const QgsVectorTileRendererData &ti
           exterior.setGeometry( QgsGeometry( f.geometry().constGet()->boundary() ) );
           sym->renderFeature( exterior, context );
         }
-        else if ( featureType == QgsWkbTypes::PolygonGeometry && layerStyle.geometryType() == QgsWkbTypes::PointGeometry )
+        else if ( featureType == Qgis::GeometryType::Polygon && layerStyle.geometryType() == Qgis::GeometryType::Point )
         {
           // be tolerant and permit rendering polygons with a point layer style, as some style definitions use this approach
           // to render the polygon center
@@ -259,6 +280,119 @@ void QgsVectorTileBasicRenderer::renderTile( const QgsVectorTileRendererData &ti
     }
     sym->stopRender( context );
   }
+}
+
+void QgsVectorTileBasicRenderer::renderSelectedFeatures( const QList<QgsFeature> &selection, QgsRenderContext &context )
+{
+  QgsExpressionContextScope *scope = new QgsExpressionContextScope( QObject::tr( "Layer" ) ); // will be deleted by popper
+  QgsExpressionContextScopePopper popper( context.expressionContext(), scope );
+
+  for ( const QgsFeature &feature : selection )
+  {
+    bool ok = false;
+    int featureTileZoom = feature.attribute( QStringLiteral( "tile_zoom" ) ).toInt( &ok );
+    if ( !ok )
+      featureTileZoom = -1;
+    const QString featureTileLayer = feature.attribute( QStringLiteral( "tile_layer" ) ).toString();
+
+    for ( const QgsVectorTileBasicRendererStyle &layerStyle : std::as_const( mStyles ) )
+    {
+      if ( ( featureTileZoom >= 0 && !layerStyle.isActive( featureTileZoom ) )
+           || !layerStyle.symbol() || layerStyle.layerName() == QLatin1String( "background" ) )
+        continue;
+
+      if ( !layerStyle.layerName().isEmpty() && !featureTileLayer.isEmpty() && layerStyle.layerName() != featureTileLayer )
+        continue;
+
+      scope->setFields( feature.fields() );
+
+      QgsExpression filterExpression( layerStyle.filterExpression() );
+      filterExpression.prepare( &context.expressionContext() );
+
+      scope->setFeature( feature );
+      if ( filterExpression.isValid() && !filterExpression.evaluate( &context.expressionContext() ).toBool() )
+        continue;
+
+      QgsSymbol *sym = layerStyle.symbol();
+      sym->startRender( context, feature.fields() );
+
+      const Qgis::GeometryType featureType = feature.geometry().type();
+      bool renderedFeature = false;
+      if ( featureType == layerStyle.geometryType() )
+      {
+        sym->renderFeature( feature, context, -1, true );
+        renderedFeature = true;
+      }
+      else if ( featureType == Qgis::GeometryType::Polygon && layerStyle.geometryType() == Qgis::GeometryType::Line )
+      {
+        // be tolerant and permit rendering polygons with a line layer style, as some style definitions use this approach
+        // to render the polygon borders only
+        QgsFeature exterior = feature;
+        exterior.setGeometry( QgsGeometry( feature.geometry().constGet()->boundary() ) );
+        sym->renderFeature( exterior, context, -1, true );
+        renderedFeature = true;
+      }
+      else if ( featureType == Qgis::GeometryType::Polygon && layerStyle.geometryType() == Qgis::GeometryType::Point )
+      {
+        // be tolerant and permit rendering polygons with a point layer style, as some style definitions use this approach
+        // to render the polygon center
+        QgsFeature centroid = feature;
+        const QgsRectangle boundingBox = feature.geometry().boundingBox();
+        centroid.setGeometry( feature.geometry().poleOfInaccessibility( std::min( boundingBox.width(), boundingBox.height() ) / 20 ) );
+        sym->renderFeature( centroid, context, -1, true );
+        renderedFeature = true;
+      }
+      sym->stopRender( context );
+
+      if ( renderedFeature )
+        break;
+    }
+  }
+}
+
+bool QgsVectorTileBasicRenderer::willRenderFeature( const QgsFeature &feature, int tileZoom, const QString &layerName, QgsRenderContext &context )
+{
+  QgsExpressionContextScope *scope = new QgsExpressionContextScope( QObject::tr( "Layer" ) ); // will be deleted by popper
+  scope->setFields( feature.fields() );
+  scope->setFeature( feature );
+  QgsExpressionContextScopePopper popper( context.expressionContext(), scope );
+
+  for ( const QgsVectorTileBasicRendererStyle &layerStyle : std::as_const( mStyles ) )
+  {
+    if ( !layerStyle.isActive( tileZoom ) || !layerStyle.symbol() )
+      continue;
+
+    if ( layerStyle.layerName() == QLatin1String( "background" ) )
+      continue;
+
+    if ( !layerStyle.layerName().isEmpty() && layerStyle.layerName() != layerName )
+      continue;
+
+    QgsExpression filterExpression( layerStyle.filterExpression() );
+    filterExpression.prepare( &context.expressionContext() );
+
+    if ( filterExpression.isValid() && !filterExpression.evaluate( &context.expressionContext() ).toBool() )
+      continue;
+
+    const Qgis::GeometryType featureType = QgsWkbTypes::geometryType( feature.geometry().wkbType() );
+    if ( featureType == layerStyle.geometryType() )
+    {
+      return true;
+    }
+    else if ( featureType == Qgis::GeometryType::Polygon && layerStyle.geometryType() == Qgis::GeometryType::Line )
+    {
+      // be tolerant and permit rendering polygons with a line layer style, as some style definitions use this approach
+      // to render the polygon borders only
+      return true;
+    }
+    else if ( featureType == Qgis::GeometryType::Polygon && layerStyle.geometryType() == Qgis::GeometryType::Point )
+    {
+      // be tolerant and permit rendering polygons with a point layer style, as some style definitions use this approach
+      // to render the polygon center
+      return true;
+    }
+  }
+  return false;
 }
 
 void QgsVectorTileBasicRenderer::writeXml( QDomElement &elem, const QgsReadWriteContext &context ) const
@@ -341,15 +475,15 @@ QList<QgsVectorTileBasicRendererStyle> QgsVectorTileBasicRenderer::simpleStyle(
   markerSymbolLayer->setSize( pointSize );
   QgsMarkerSymbol *markerSymbol = new QgsMarkerSymbol( QgsSymbolLayerList() << markerSymbolLayer );
 
-  QgsVectorTileBasicRendererStyle st1( QStringLiteral( "Polygons" ), QString(), QgsWkbTypes::PolygonGeometry );
+  QgsVectorTileBasicRendererStyle st1( QStringLiteral( "Polygons" ), QString(), Qgis::GeometryType::Polygon );
   st1.setFilterExpression( QStringLiteral( "geometry_type($geometry)='Polygon'" ) );
   st1.setSymbol( fillSymbol );
 
-  QgsVectorTileBasicRendererStyle st2( QStringLiteral( "Lines" ), QString(), QgsWkbTypes::LineGeometry );
+  QgsVectorTileBasicRendererStyle st2( QStringLiteral( "Lines" ), QString(), Qgis::GeometryType::Line );
   st2.setFilterExpression( QStringLiteral( "geometry_type($geometry)='Line'" ) );
   st2.setSymbol( lineSymbol );
 
-  QgsVectorTileBasicRendererStyle st3( QStringLiteral( "Points" ), QString(), QgsWkbTypes::PointGeometry );
+  QgsVectorTileBasicRendererStyle st3( QStringLiteral( "Points" ), QString(), Qgis::GeometryType::Point );
   st3.setFilterExpression( QStringLiteral( "geometry_type($geometry)='Point'" ) );
   st3.setSymbol( markerSymbol );
 

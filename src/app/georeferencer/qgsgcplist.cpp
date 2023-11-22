@@ -16,7 +16,6 @@
 #include "qgspointxy.h"
 #include "qgsgeorefdatapoint.h"
 #include "qgscoordinatereferencesystem.h"
-#include "qgscoordinatetransform.h"
 #include "qgsproject.h"
 #include "qgsgeoreftransform.h"
 
@@ -65,7 +64,7 @@ int QgsGCPList::countEnabledPoints() const
   return s;
 }
 
-void QgsGCPList::updateResiduals( QgsGeorefTransform *georefTransform, const QgsCoordinateReferenceSystem &targetCrs, const QgsCoordinateTransformContext &context, QgsUnitTypes::RenderUnit residualUnit )
+void QgsGCPList::updateResiduals( QgsGeorefTransform *georefTransform, const QgsCoordinateReferenceSystem &targetCrs, const QgsCoordinateTransformContext &context, Qgis::RenderUnit residualUnit )
 {
   bool bTransformUpdated = false;
   QVector<QgsPointXY> sourceCoordinates;
@@ -96,7 +95,7 @@ void QgsGCPList::updateResiduals( QgsGeorefTransform *georefTransform, const Qgs
     {
       QgsPointXY dst;
       const QgsPointXY pixel = georefTransform->toSourcePixel( p->sourcePoint() );
-      if ( residualUnit == QgsUnitTypes::RenderPixels )
+      if ( residualUnit == Qgis::RenderUnit::Pixels )
       {
         // Transform from world to raster coordinate:
         // This is the transform direction used by the warp operation.
@@ -108,7 +107,7 @@ void QgsGCPList::updateResiduals( QgsGeorefTransform *georefTransform, const Qgs
           dY = -( dst.y() - pixel.y() );
         }
       }
-      else if ( residualUnit == QgsUnitTypes::RenderMapUnits )
+      else if ( residualUnit == Qgis::RenderUnit::MapUnits )
       {
         if ( georefTransform->transformRasterToWorld( pixel, dst ) )
         {
@@ -143,19 +142,11 @@ bool QgsGCPList::saveGcps( const QString &filePath, const QgsCoordinateReference
     if ( targetCrs.isValid() )
     {
       points << QStringLiteral( "#CRS: %1" ).arg( targetCrs.toWkt( QgsCoordinateReferenceSystem::WKT_PREFERRED ) );
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-      points << endl;
-#else
       points << Qt::endl;
-#endif
     }
 
     points << "mapX,mapY,sourceX,sourceY,enable,dX,dY,residual";
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-    points << endl;
-#else
     points << Qt::endl;
-#endif
 
     for ( QgsGeorefDataPoint *pt : *this )
     {
@@ -169,11 +160,7 @@ bool QgsGCPList::saveGcps( const QString &filePath, const QgsCoordinateReference
              .arg( qgsDoubleToString( pt->residual().x() ),
                    qgsDoubleToString( pt->residual().y() ),
                    qgsDoubleToString( std::sqrt( pt->residual().x() * pt->residual().x() + pt->residual().y() * pt->residual().y() ) ) );
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-      points << endl;
-#else
       points << Qt::endl;
-#endif
     }
     return true;
   }
@@ -199,7 +186,6 @@ QList<QgsGcpPoint> QgsGCPList::loadGcps( const QString &filePath, const QgsCoord
   QString line = points.readLine();
   lineNumber++;
 
-  int i = 0;
   if ( line.contains( QLatin1String( "#CRS: " ) ) )
   {
     const QString crsDef = line.remove( QStringLiteral( "#CRS: " ) );
@@ -242,8 +228,6 @@ QList<QgsGcpPoint> QgsGCPList::loadGcps( const QString &filePath, const QgsCoord
       enable = ls.at( 4 ).toInt();
     }
     res.append( QgsGcpPoint( sourcePoint, destinationPoint, actualDestinationCrs, enable ) );
-
-    ++i;
   }
   return res;
 }

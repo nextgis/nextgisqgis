@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 
 From build dir, run: ctest -R PyQgsServerModules -V
@@ -27,12 +25,11 @@ __copyright__ = '(C) 2016, David Marteau'
 """ QGIS test for server services
 """
 import os
+
 from qgis.PyQt.QtCore import QBuffer, QIODevice
-from qgis.testing import unittest
 from qgis.core import QgsApplication
-from qgis.server import (QgsServer,
-                         QgsService,
-                         QgsServerResponse)
+from qgis.server import QgsServer, QgsServerResponse, QgsService
+from qgis.testing import unittest
 
 from utilities import unitTestDataPath
 
@@ -82,11 +79,13 @@ class TestModules(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.app = QgsApplication([], False)
 
     @classmethod
     def tearDownClass(cls):
         cls.app.exitQgis()
+        super().tearDownClass()
 
     def setUp(self):
         """Create the server instance"""

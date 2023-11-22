@@ -17,6 +17,7 @@
 #include "qgstest.h"
 #include <QPushButton>
 #include <QLineEdit>
+#include <QSignalSpy>
 
 #include <editorwidgets/core/qgseditorwidgetregistry.h>
 #include "qgsattributeform.h"
@@ -32,7 +33,7 @@
 #include "qgsmultiedittoolbutton.h"
 #include "qgsattributeeditorfield.h"
 #include "qgsattributeeditorcontainer.h"
-#include <QSignalSpy>
+#include "qgsspinbox.h"
 
 class TestQgsAttributeForm : public QObject
 {
@@ -59,6 +60,7 @@ class TestQgsAttributeForm : public QObject
     void testDefaultValueUpdateRecursion();
     void testSameFieldSync();
     void testZeroDoubles();
+    void testMinimumWidth();
 
   private:
     QLabel *constraintsLabel( QgsAttributeForm *form, QgsEditorWidgetWrapper *ww )
@@ -600,15 +602,15 @@ void TestQgsAttributeForm::testEditableJoin()
 
   // test if widget is enabled for layerA
   ww = qobject_cast<QgsEditorWidgetWrapper *>( form.mWidgets[0] );
-  QCOMPARE( ww->widget()->isEnabled(), true );
+  QCOMPARE( qobject_cast<QgsSpinBox *>( ww->widget() )->isReadOnly(), false );
 
   // test if widget is enabled for layerB
   ww = qobject_cast<QgsEditorWidgetWrapper *>( form.mWidgets[1] );
-  QCOMPARE( ww->widget()->isEnabled(), true );
+  QCOMPARE( qobject_cast<QgsSpinBox *>( ww->widget() )->isReadOnly(), false );
 
   // test if widget is disabled for layerC
   ww = qobject_cast<QgsEditorWidgetWrapper *>( form.mWidgets[2] );
-  QCOMPARE( ww->widget()->isEnabled(), false );
+  QCOMPARE( qobject_cast<QgsSpinBox *>( ww->widget() )->isReadOnly(), true );
 
   // change attributes
   form.changeAttribute( QStringLiteral( "layerB_col0" ), QVariant( 333 ) );
@@ -982,9 +984,9 @@ void TestQgsAttributeForm::testDefaultValueUpdate()
   //col3 - "col2"
 
   // set constraints for each field
-  layer->setDefaultValueDefinition( 1, QgsDefaultValue( QStringLiteral( "\"col0\"+1" ) ) );
-  layer->setDefaultValueDefinition( 2, QgsDefaultValue( QStringLiteral( "\"col0\"+\"col1\"" ) ) );
-  layer->setDefaultValueDefinition( 3, QgsDefaultValue( QStringLiteral( "\"col2\"" ) ) );
+  layer->setDefaultValueDefinition( 1, QgsDefaultValue( QStringLiteral( "\"col0\"+1" ), true ) );
+  layer->setDefaultValueDefinition( 2, QgsDefaultValue( QStringLiteral( "\"col0\"+\"col1\"" ), true ) );
+  layer->setDefaultValueDefinition( 3, QgsDefaultValue( QStringLiteral( "\"col2\"" ), true ) );
 
   layer->startEditing();
 
@@ -1044,10 +1046,10 @@ void TestQgsAttributeForm::testDefaultValueUpdateRecursion()
   //col3 - COALESCE( 0, "col2"+1)
 
   // set constraints for each field
-  layer->setDefaultValueDefinition( 0, QgsDefaultValue( QStringLiteral( "\"col3\"+1" ) ) );
-  layer->setDefaultValueDefinition( 1, QgsDefaultValue( QStringLiteral( "\"col0\"+1" ) ) );
-  layer->setDefaultValueDefinition( 2, QgsDefaultValue( QStringLiteral( "\"col1\"+1" ) ) );
-  layer->setDefaultValueDefinition( 3, QgsDefaultValue( QStringLiteral( "\"col2\"+1" ) ) );
+  layer->setDefaultValueDefinition( 0, QgsDefaultValue( QStringLiteral( "\"col3\"+1" ), true ) );
+  layer->setDefaultValueDefinition( 1, QgsDefaultValue( QStringLiteral( "\"col0\"+1" ), true ) );
+  layer->setDefaultValueDefinition( 2, QgsDefaultValue( QStringLiteral( "\"col1\"+1" ), true ) );
+  layer->setDefaultValueDefinition( 3, QgsDefaultValue( QStringLiteral( "\"col2\"+1" ), true ) );
 
   layer->startEditing();
 
@@ -1127,7 +1129,7 @@ void TestQgsAttributeForm::testSameFieldSync()
   editFormConfig.clearTabs();
   editFormConfig.addTab( new QgsAttributeEditorField( "col0", 0, editFormConfig.invisibleRootContainer() ) );
   editFormConfig.addTab( new QgsAttributeEditorField( "col0", 0, editFormConfig.invisibleRootContainer() ) );
-  editFormConfig.setLayout( QgsEditFormConfig::TabLayout );
+  editFormConfig.setLayout( Qgis::AttributeFormLayout::DragAndDrop );
   layer->setEditFormConfig( editFormConfig );
 
   layer->startEditing();
@@ -1162,6 +1164,51 @@ void TestQgsAttributeForm::testZeroDoubles()
   const QList<QLineEdit *> les = form.findChildren<QLineEdit *>( "col0" );
   QCOMPARE( les.count(), 1 );
   QCOMPARE( les.at( 0 )->text(), QStringLiteral( "0" ) );
+}
+
+void TestQgsAttributeForm::testMinimumWidth()
+{
+  // ensure that the minimum width of editor widgets is as small as possible for the actual attribute form mode.
+  const QString def = QStringLiteral( "Point?field=col0:double" );
+  QgsVectorLayer layer { def, QStringLiteral( "test" ), QStringLiteral( "memory" ) };
+  layer.setEditorWidgetSetup( 0, QgsEditorWidgetSetup( QStringLiteral( "TextEdit" ), QVariantMap() ) );
+  QgsFeature ft( layer.dataProvider()->fields(), 1 );
+  ft.setAttribute( QStringLiteral( "col0" ), 0.0 );
+  QgsAttributeEditorContext context;
+  context.setAttributeFormMode( QgsAttributeEditorContext::SingleEditMode );
+  std::unique_ptr< QgsAttributeForm > form = std::make_unique< QgsAttributeForm >( &layer, QgsFeature(), context );
+  form->setFeature( ft );
+  form->show();
+  // we don't want the larger width requirement of the search wrappers to be enforced when the attribute form
+  // is not in search modes
+  QLineEdit le;
+  const QFontMetrics leMetrics( le.fontMetrics() );
+  QGSVERIFYLESSTHAN( form->minimumWidth(), leMetrics.horizontalAdvance( 'x' ) * 20 );
+
+  form->setMode( QgsAttributeEditorContext::SearchMode );
+  QGSVERIFYLESSTHAN( form->minimumWidth(), leMetrics.horizontalAdvance( 'x' ) * 150 );
+
+  context.setAttributeFormMode( QgsAttributeEditorContext::AddFeatureMode );
+  form = std::make_unique< QgsAttributeForm >( &layer, QgsFeature(), context );
+  form->setFeature( ft );
+  form->show();
+  form->setMode( QgsAttributeEditorContext::AddFeatureMode );
+  QGSVERIFYLESSTHAN( form->minimumWidth(), leMetrics.horizontalAdvance( 'x' ) * 20 );
+
+  context.setAttributeFormMode( QgsAttributeEditorContext::AggregateSearchMode );
+  form = std::make_unique< QgsAttributeForm >( &layer, QgsFeature(), context );
+  form->setFeature( ft );
+  form->show();
+  form->setMode( QgsAttributeEditorContext::AggregateSearchMode );
+  QGSVERIFYLESSTHAN( form->minimumWidth(), leMetrics.horizontalAdvance( 'x' ) * 150 );
+
+  context.setAttributeFormMode( QgsAttributeEditorContext::MultiEditMode );
+  form = std::make_unique< QgsAttributeForm >( &layer, QgsFeature(), context );
+  form->setFeature( ft );
+  form->setMode( QgsAttributeEditorContext::MultiEditMode );
+  form->show();
+  QGSVERIFYLESSTHAN( form->minimumWidth(), leMetrics.horizontalAdvance( 'x' ) * 100 );
+
 }
 
 QGSTEST_MAIN( TestQgsAttributeForm )

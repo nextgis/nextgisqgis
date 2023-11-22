@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for core additions
 
 From build dir, run: ctest -R PyCoreAdditions -V
@@ -13,11 +12,14 @@ __date__ = '15.5.2018'
 __copyright__ = 'Copyright 2015, The QGIS Project'
 
 import qgis  # NOQA
-import os
 
-from qgis.testing import unittest, start_app
-from qgis.core import metaEnumFromValue, metaEnumFromType, QgsTolerance, QgsMapLayer
-from qgis.PyQt import sip
+from qgis.core import (
+    Qgis,
+    QgsMapLayer,
+    QgsTolerance,
+    metaEnumFromValue,
+)
+from qgis.testing import start_app, unittest
 
 start_app()
 
@@ -25,14 +27,14 @@ start_app()
 class TestCoreAdditions(unittest.TestCase):
 
     def testMetaEnum(self):
-        me = metaEnumFromValue(QgsTolerance.Pixels)
+        me = metaEnumFromValue(Qgis.MapToolUnit.Pixels)
         self.assertIsNotNone(me)
-        self.assertEqual(me.valueToKey(QgsTolerance.Pixels), 'Pixels')
+        self.assertEqual(me.valueToKey(Qgis.MapToolUnit.Pixels), 'Pixels')
 
         # check that using same variable twice doesn't segfault
-        me = metaEnumFromValue(QgsTolerance.Pixels, QgsTolerance)
+        me = metaEnumFromValue(Qgis.MapToolUnit.Pixels, QgsTolerance)
         self.assertIsNotNone(me)
-        self.assertEqual(me.valueToKey(QgsTolerance.Pixels), 'Pixels')
+        self.assertEqual(me.valueToKey(Qgis.MapToolUnit.Pixels), 'Pixels')
 
         # do not raise error
         self.assertIsNone(metaEnumFromValue(1, QgsTolerance, False))

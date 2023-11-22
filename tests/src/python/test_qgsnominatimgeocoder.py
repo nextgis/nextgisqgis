@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsNominatimGeocoder.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -13,16 +12,11 @@ __copyright__ = 'Copyright 2020, The QGIS Project'
 import tempfile
 
 import qgis  # NOQA
-from qgis.PyQt.QtCore import (
-    QCoreApplication,
-    QUrl
-)
+from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (
-    QgsSettings,
-    QgsRectangle,
     QgsNominatimGeocoder,
-    QgsGeocoderContext,
-    QgsCoordinateTransformContext
+    QgsRectangle,
+    QgsSettings,
 )
 from qgis.testing import start_app, unittest
 
@@ -34,6 +28,7 @@ class TestQgsNominatimGeocoder(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super().setUpClass()
 
         QCoreApplication.setOrganizationName("QGIS_Test")
         QCoreApplication.setOrganizationDomain("TestQgsGeocoderLocatorFilter.com")
@@ -58,6 +53,7 @@ class TestQgsNominatimGeocoder(unittest.TestCase):
         """Run after all tests"""
         QgsSettings().clear()
         # shutil.rmtree(cls.basetestpath, True)
+        super().tearDownClass()
 
     def test_basic(self):
         """
@@ -77,6 +73,9 @@ class TestQgsNominatimGeocoder(unittest.TestCase):
         geocoder = QgsNominatimGeocoder('')
         self.assertEqual(geocoder.requestUrl('20 green st, twaddlingham', QgsRectangle(3, 5, 6, 8)).toString(),
                          'https://nominatim.qgis.org/search?format=json&addressdetails=1&viewbox=3,5,6,8&q=20 green st, twaddlingham')
+
+        self.assertEqual(geocoder.requestUrl('20 green st, twaddlingham', QgsRectangle(float('-inf'), float('-inf'), float('inf'), float('inf'))).toString(),
+                         'https://nominatim.qgis.org/search?format=json&addressdetails=1&q=20 green st, twaddlingham')
 
         geocoder = QgsNominatimGeocoder(countryCodes='ca,km', endpoint='https://my.server/search')
         self.assertEqual(geocoder.requestUrl('20 green st, twaddlingham', QgsRectangle(3, 5, 6, 8)).toString(),

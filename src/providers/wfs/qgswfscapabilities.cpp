@@ -41,7 +41,7 @@ QgsWfsCapabilities::QgsWfsCapabilities( const QString &uri, const QgsDataProvide
   connect( this, &QgsWfsRequest::downloadFinished, this, &QgsWfsCapabilities::capabilitiesReplyFinished, Qt::DirectConnection );
 }
 
-bool QgsWfsCapabilities::requestCapabilities( bool synchronous, bool forceRefresh )
+QUrl QgsWfsCapabilities::requestUrl() const
 {
   QUrl url( mUri.baseURL( ) );
   QUrlQuery query( url );
@@ -55,7 +55,12 @@ bool QgsWfsCapabilities::requestCapabilities( bool synchronous, bool forceRefres
     query.addQueryItem( QStringLiteral( "VERSION" ), version );
 
   url.setQuery( query );
-  if ( !sendGET( url, QString(), synchronous, forceRefresh ) )
+  return url;
+}
+
+bool QgsWfsCapabilities::requestCapabilities( bool synchronous, bool forceRefresh )
+{
+  if ( !sendGET( requestUrl(), QString(), synchronous, forceRefresh ) )
   {
     emit gotCapabilities();
     return false;
@@ -117,6 +122,36 @@ QString QgsWfsCapabilities::Capabilities::getNamespaceParameterValue( const QStr
            namespaces + ")";
   }
   return QString();
+}
+
+bool QgsWfsCapabilities::Capabilities::supportsGeometryTypeFilters() const
+{
+  // Detect servers, such as Deegree, that expose additional filter functions
+  // to test if a geometry is a (multi)point, (multi)curve or (multi)surface
+  // This can be used to figure out which geometry types are present in layers
+  // that describe a generic geometry type.
+  bool hasIsPoint = false;
+  bool hasIsCurve = false;
+  bool hasIsSurface = false;
+  for ( const auto &function : functionList )
+  {
+    if ( function.minArgs == 1 && function.maxArgs == 1 )
+    {
+      if ( function.name == QLatin1String( "IsPoint" ) )
+      {
+        hasIsPoint = true;
+      }
+      else if ( function.name == QLatin1String( "IsCurve" ) )
+      {
+        hasIsCurve = true;
+      }
+      else if ( function.name == QLatin1String( "IsSurface" ) )
+      {
+        hasIsSurface = true;
+      }
+    }
+  }
+  return hasIsPoint && hasIsCurve && hasIsSurface;
 }
 
 class CPLXMLTreeUniquePointer
@@ -268,7 +303,7 @@ void QgsWfsCapabilities::capabilitiesReplyFinished()
         if ( !value.isNull() )
         {
           mCaps.maxFeatures = value.text().toInt();
-          QgsDebugMsg( QStringLiteral( "maxFeatures: %1" ).arg( mCaps.maxFeatures ) );
+          QgsDebugMsgLevel( QStringLiteral( "maxFeatures: %1" ).arg( mCaps.maxFeatures ), 2 );
         }
       }
       else if ( contraint.attribute( QStringLiteral( "name" ) ) == QLatin1String( "CountDefault" ) /* WFS 2.0 (e.g. MapServer) */ )
@@ -277,7 +312,7 @@ void QgsWfsCapabilities::capabilitiesReplyFinished()
         if ( !value.isNull() )
         {
           mCaps.maxFeatures = value.text().toInt();
-          QgsDebugMsg( QStringLiteral( "maxFeatures: %1" ).arg( mCaps.maxFeatures ) );
+          QgsDebugMsgLevel( QStringLiteral( "maxFeatures: %1" ).arg( mCaps.maxFeatures ), 2 );
         }
       }
       else if ( contraint.attribute( QStringLiteral( "name" ) ) == QLatin1String( "ImplementsResultPaging" ) /* WFS 2.0 */ )
@@ -286,7 +321,7 @@ void QgsWfsCapabilities::capabilitiesReplyFinished()
         if ( !value.isNull() && value.text() == QLatin1String( "TRUE" ) )
         {
           mCaps.supportsPaging = true;
-          QgsDebugMsg( QStringLiteral( "Supports paging" ) );
+          QgsDebugMsgLevel( QStringLiteral( "Supports paging" ), 2 );
         }
       }
       else if ( contraint.attribute( QStringLiteral( "name" ) ) == QLatin1String( "ImplementsStandardJoins" ) ||
@@ -296,7 +331,7 @@ void QgsWfsCapabilities::capabilitiesReplyFinished()
         if ( !value.isNull() && value.text() == QLatin1String( "TRUE" ) )
         {
           mCaps.supportsJoins = true;
-          QgsDebugMsg( QStringLiteral( "Supports joins" ) );
+          QgsDebugMsgLevel( QStringLiteral( "Supports joins" ), 2 );
         }
       }
     }
@@ -340,7 +375,7 @@ void QgsWfsCapabilities::capabilitiesReplyFinished()
             if ( !value.isNull() )
             {
               mCaps.maxFeatures = value.text().toInt();
-              QgsDebugMsg( QStringLiteral( "maxFeatures: %1" ).arg( mCaps.maxFeatures ) );
+              QgsDebugMsgLevel( QStringLiteral( "maxFeatures: %1" ).arg( mCaps.maxFeatures ), 2 );
             }
             break;
           }
@@ -359,7 +394,7 @@ void QgsWfsCapabilities::capabilitiesReplyFinished()
               if ( value.text() == QLatin1String( "hits" ) )
               {
                 mCaps.supportsHits = true;
-                QgsDebugMsg( QStringLiteral( "Support hits" ) );
+                QgsDebugMsgLevel( QStringLiteral( "Support hits" ), 2 );
                 break;
               }
             }
@@ -551,16 +586,16 @@ void QgsWfsCapabilities::capabilitiesReplyFinished()
           QgsPointXY ptMax( featureType.bbox.xMaximum(), featureType.bbox.yMaximum() );
           QgsPointXY ptMaxBack( ct.transform( ct.transform( ptMax, Qgis::TransformDirection::Forward ), Qgis::TransformDirection::Reverse ) );
 
-          QgsDebugMsg( featureType.bbox.toString() );
-          QgsDebugMsg( ptMinBack.toString() );
-          QgsDebugMsg( ptMaxBack.toString() );
+          QgsDebugMsgLevel( featureType.bbox.toString(), 2 );
+          QgsDebugMsgLevel( ptMinBack.toString(), 2 );
+          QgsDebugMsgLevel( ptMaxBack.toString(), 2 );
 
           if ( std::fabs( featureType.bbox.xMinimum() - ptMinBack.x() ) < 1e-5 &&
                std::fabs( featureType.bbox.yMinimum() - ptMinBack.y() ) < 1e-5 &&
                std::fabs( featureType.bbox.xMaximum() - ptMaxBack.x() ) < 1e-5 &&
                std::fabs( featureType.bbox.yMaximum() - ptMaxBack.y() ) < 1e-5 )
           {
-            QgsDebugMsg( QStringLiteral( "Values of LatLongBoundingBox are consistent with WGS84 long/lat bounds, so as the CRS is projected, assume they are indeed in WGS84 and not in the CRS units" ) );
+            QgsDebugMsgLevel( QStringLiteral( "Values of LatLongBoundingBox are consistent with WGS84 long/lat bounds, so as the CRS is projected, assume they are indeed in WGS84 and not in the CRS units" ), 2 );
             featureType.bboxSRSIsWGS84 = true;
           }
         }
@@ -657,16 +692,12 @@ void QgsWfsCapabilities::capabilitiesReplyFinished()
 
 QString QgsWfsCapabilities::NormalizeSRSName( const QString &crsName )
 {
-  const QRegularExpression re( QRegularExpression::anchoredPattern( QStringLiteral( "urn:ogc:def:crs:([^:]+).+?([^:]+)" ) ), QRegularExpression::CaseInsensitiveOption );
-  if ( const QRegularExpressionMatch match = re.match( crsName ); match.hasMatch() )
+  QString authority;
+  QString code;
+  const QgsOgcCrsUtils::CRSFlavor crsFlavor = QgsOgcCrsUtils::parseCrsName( crsName, authority, code );
+  if ( crsFlavor !=  QgsOgcCrsUtils::CRSFlavor::UNKNOWN )
   {
-    return match.captured( 1 ) + ':' + match.captured( 2 );
-  }
-  // urn:x-ogc:def:crs:EPSG:xxxx as returned by http://maps.warwickshire.gov.uk/gs/ows? in WFS 1.1
-  const QRegularExpression re2( QRegularExpression::anchoredPattern( QStringLiteral( "urn:x-ogc:def:crs:([^:]+).+?([^:]+)" ) ), QRegularExpression::CaseInsensitiveOption );
-  if ( const QRegularExpressionMatch match = re2.match( crsName ); match.hasMatch() )
-  {
-    return match.captured( 1 ) + ':' + match.captured( 2 );
+    return authority + ':' + code;
   }
   return crsName;
 }

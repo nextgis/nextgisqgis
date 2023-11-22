@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsAggregateMapping widget and model.
 
 From build dir, run: ctest -R PyQgsAggregateMappingWidget -V
@@ -13,27 +12,17 @@ __author__ = 'Nyall Dawson'
 __date__ = '03/06/2020'
 __copyright__ = 'Copyright 2020, The QGIS Project'
 # This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '6b44a42058d8f4d3f994b915f72f08b6a3ab474d'
+__revision__ = '$Format:%H$'
 
-from qgis.core import (
-    QgsFields,
-    QgsField,
-    QgsFieldConstraints,
-)
-from qgis.gui import (
-    QgsAggregateMappingWidget,
-    QgsAggregateMappingModel,
-)
 from qgis.PyQt.Qt import Qt
 from qgis.PyQt.QtCore import (
     QCoreApplication,
-    QVariant,
-    QModelIndex,
     QItemSelectionModel,
+    QModelIndex,
+    QVariant,
 )
-from qgis.PyQt.QtGui import (
-    QColor
-)
+from qgis.core import QgsField, QgsFields
+from qgis.gui import QgsAggregateMappingModel, QgsAggregateMappingWidget
 from qgis.testing import start_app, unittest
 
 
@@ -42,6 +31,7 @@ class TestPyQgsAggregateMappingModel(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super().setUpClass()
 
         QCoreApplication.setOrganizationName("QGIS_Test")
         QCoreApplication.setOrganizationDomain(cls.__name__)

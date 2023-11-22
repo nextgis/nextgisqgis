@@ -1,6 +1,6 @@
---- a/src/core/processing/qgsprocessingutils.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/processing/qgsprocessingutils.cpp	2022-04-25 18:33:16.000000000 +0300
-@@ -34,7 +34,7 @@
+--- a/src/core/processing/qgsprocessingutils.cpp	2023-08-21 19:39:45.707048388 +0300
++++ b/src/core/processing/qgsprocessingutils.cpp	2023-10-04 14:34:32.102912793 +0300
+@@ -33,7 +33,7 @@
  #include "qgspluginlayer.h"
  #include "qgsreferencedgeometry.h"
  #include "qgsrasterfilewriter.h"
@@ -9,18 +9,66 @@
  #include "qgspointcloudlayer.h"
  #include "qgsannotationlayer.h"
  #include <QRegularExpression>
-@@ -205,8 +205,8 @@
+@@ -101,10 +101,10 @@
+   return res;
+ }
+ 
+-QList<QgsVectorTileLayer *> QgsProcessingUtils::compatibleVectorTileLayers( QgsProject *project, bool sort )
+-{
+-  return compatibleMapLayers< QgsVectorTileLayer >( project, sort );
+-}
++// QList<QgsVectorTileLayer *> QgsProcessingUtils::compatibleVectorTileLayers( QgsProject *project, bool sort )
++// {
++//   return compatibleMapLayers< QgsVectorTileLayer >( project, sort );
++// }
+ 
+ template<typename T> QList<T *> QgsProcessingUtils::compatibleMapLayers( QgsProject *project, bool sort )
+ {
+@@ -157,9 +157,9 @@
+     layers << al;
+   layers << project->mainAnnotationLayer();
+ 
+-  const auto vectorTileLayers = compatibleMapLayers< QgsVectorTileLayer >( project, false );
+-  for ( QgsVectorTileLayer *vtl : vectorTileLayers )
+-    layers << vtl;
++//  const auto vectorTileLayers = compatibleMapLayers< QgsVectorTileLayer >( project, false );
++//  for ( QgsVectorTileLayer *vtl : vectorTileLayers )
++//    layers << vtl;
+ 
+   const auto pluginLayers = compatibleMapLayers< QgsPluginLayer >( project, false );
+   for ( QgsPluginLayer *pl : pluginLayers )
+@@ -214,8 +214,8 @@
          return true;
-       case QgsMapLayerType::MeshLayer:
+       case Qgis::LayerType::Mesh:
          return !canUseLayer( qobject_cast< QgsMeshLayer * >( layer ) );
--      case QgsMapLayerType::VectorTileLayer:
+-      case Qgis::LayerType::VectorTile:
 -        return !canUseLayer( qobject_cast< QgsVectorTileLayer * >( layer ) );
-+    //   case QgsMapLayerType::VectorTileLayer:
++    //   case Qgis::LayerType::VectorTile:
 +    //     return !canUseLayer( qobject_cast< QgsVectorTileLayer * >( layer ) );
-       case QgsMapLayerType::PointCloudLayer:
+       case Qgis::LayerType::PointCloud:
          return !canUseLayer( qobject_cast< QgsPointCloudLayer * >( layer ) );
-       case QgsMapLayerType::AnnotationLayer:
-@@ -557,10 +557,10 @@
+       case Qgis::LayerType::Annotation:
+@@ -397,13 +397,13 @@
+     dsUri.setParam( "type", "mbtiles" );
+     dsUri.setParam( "url", uri );
+ 
+-    std::unique_ptr< QgsVectorTileLayer > tileLayer;
+-    tileLayer = std::make_unique< QgsVectorTileLayer >( dsUri.encodedUri(), name );
++//    std::unique_ptr< QgsVectorTileLayer > tileLayer;
++//    tileLayer = std::make_unique< QgsVectorTileLayer >( dsUri.encodedUri(), name );
+ 
+-    if ( tileLayer->isValid() )
+-    {
+-      return tileLayer.release();
+-    }
++//    if ( tileLayer->isValid() )
++//    {
++//      return tileLayer.release();
++//    }
+   }
+   return nullptr;
+ }
+@@ -594,10 +594,10 @@
    return layer && layer->isValid();
  }
  

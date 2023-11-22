@@ -22,6 +22,7 @@
 #include "qgis_sip.h"
 #include <QColor>
 #include <QPainter>
+#include <QPainterPath>
 #include <memory>
 
 #include "qgscoordinatetransform.h"
@@ -45,6 +46,7 @@ class QgsRenderedFeatureHandlerInterface;
 class QgsSymbolLayer;
 class QgsMaskIdProvider;
 class QgsMapClippingRegion;
+class QgsElevationMap;
 
 
 /**
@@ -142,6 +144,31 @@ class CORE_EXPORT QgsRenderContext : public QgsTemporalRangeObject
      */
     QPainter *maskPainter( int id = 0 ) { return mMaskPainter.value( id, nullptr ); }
 
+    // TODO QGIS 4 : remove the V2 from method name
+
+    /**
+     * When rendering a map layer in a second pass (for selective masking),
+     * some symbol layers may be disabled.
+     *
+     * Sets the list of disabled symbol layers.
+     * \see disabledSymbolLayers()
+     * \see isSymbolLayerEnabled()
+     * \since QGIS 3.12
+     * \deprecated since QGIS 3.30 and replaced with setDisabledSymbolLayersV2
+     */
+    Q_DECL_DEPRECATED void setDisabledSymbolLayers( const QSet<const QgsSymbolLayer *> &symbolLayers ) SIP_DEPRECATED;
+
+    /**
+     * When rendering a map layer in a second pass (for selective masking),
+     * some symbol layers may be disabled.
+     *
+     * Sets the list of disabled symbol layer ids.
+     * \see disabledSymbolLayersV2()
+     * \see isSymbolLayerEnabled()
+     * \since QGIS 3.30
+     */
+    void setDisabledSymbolLayersV2( const QSet<QString> &symbolLayers );
+
     /**
      * When rendering a map layer in a second pass (for selective masking),
      * some symbol layers may be disabled.
@@ -150,8 +177,20 @@ class CORE_EXPORT QgsRenderContext : public QgsTemporalRangeObject
      * \see setDisabledSymbolLayers()
      * \see isSymbolLayerEnabled()
      * \since QGIS 3.12
+     * \deprecated since QGIS 3.30 and replaced with disabledSymbolLayersV2
      */
-    QSet<const QgsSymbolLayer *> disabledSymbolLayers() const { return mDisabledSymbolLayers; }
+    Q_DECL_DEPRECATED QSet<const QgsSymbolLayer *> disabledSymbolLayers() const SIP_DEPRECATED;
+
+    /**
+     * When rendering a map layer in a second pass (for selective masking),
+     * some symbol layers may be disabled.
+     *
+     * Returns the list of disabled symbol layer ids.
+     * \see setDisabledSymbolLayers()
+     * \see isSymbolLayerEnabled()
+     * \since QGIS 3.30
+     */
+    QSet<QString> disabledSymbolLayersV2() const;
 
     /**
      * When rendering a map layer in a second pass (for selective masking),
@@ -162,7 +201,7 @@ class CORE_EXPORT QgsRenderContext : public QgsTemporalRangeObject
      * \see disabledSymbolLayers()
      * \since QGIS 3.12
      */
-    bool isSymbolLayerEnabled( const QgsSymbolLayer *layer ) const { return ! mDisabledSymbolLayers.contains( layer ); }
+    bool isSymbolLayerEnabled( const QgsSymbolLayer *layer ) const;
 
     /**
      * Returns the current coordinate transform for the context.
@@ -520,17 +559,6 @@ class CORE_EXPORT QgsRenderContext : public QgsTemporalRangeObject
     void setMaskPainter( QPainter *p, int id = 0 ) { mMaskPainter[id] = p; }
 
     /**
-     * When rendering a map layer in a second pass (for selective masking),
-     * some symbol layers may be disabled.
-     *
-     * Sets the list of disabled symbol layers.
-     * \see disabledSymbolLayers()
-     * \see isSymbolLayerEnabled()
-     * \since QGIS 3.12
-     */
-    void setDisabledSymbolLayers( const QSet<const QgsSymbolLayer *> &symbolLayers ) { mDisabledSymbolLayers = symbolLayers; }
-
-    /**
      * Sets whether rendering operations should use vector operations instead
      * of any faster raster shortcuts.
      *
@@ -694,7 +722,7 @@ class CORE_EXPORT QgsRenderContext : public QgsTemporalRangeObject
      * \see convertToMapUnits()
      * \since QGIS 3.0
      */
-    double convertToPainterUnits( double size, QgsUnitTypes::RenderUnit unit, const QgsMapUnitScale &scale = QgsMapUnitScale(), Qgis::RenderSubcomponentProperty property = Qgis::RenderSubcomponentProperty::Generic ) const;
+    double convertToPainterUnits( double size, Qgis::RenderUnit unit, const QgsMapUnitScale &scale = QgsMapUnitScale(), Qgis::RenderSubcomponentProperty property = Qgis::RenderSubcomponentProperty::Generic ) const;
 
     /**
      * Converts a size from the specified units to map units. The conversion respects the limits
@@ -702,14 +730,14 @@ class CORE_EXPORT QgsRenderContext : public QgsTemporalRangeObject
      * \see convertToPainterUnits()
      * \since QGIS 3.0
      */
-    double convertToMapUnits( double size, QgsUnitTypes::RenderUnit unit, const QgsMapUnitScale &scale = QgsMapUnitScale() ) const;
+    double convertToMapUnits( double size, Qgis::RenderUnit unit, const QgsMapUnitScale &scale = QgsMapUnitScale() ) const;
 
     /**
      * Converts a size from map units to the specified units.
      * \see convertToMapUnits()
      * \since QGIS 3.0
      */
-    double convertFromMapUnits( double sizeInMapUnits, QgsUnitTypes::RenderUnit outputUnit ) const;
+    double convertFromMapUnits( double sizeInMapUnits, Qgis::RenderUnit outputUnit ) const;
 
     /**
      * Convert meter distances to active MapUnit values for QgsUnitTypes::RenderMetersInMapUnits
@@ -890,6 +918,18 @@ class CORE_EXPORT QgsRenderContext : public QgsTemporalRangeObject
     void setTextureOrigin( const QPointF &origin );
 
     /**
+     * Add a clip \a path to be applied to the \a symbolLayer before rendering
+     * \since QGIS 3.26, arguments changed and public API since 3.30
+     */
+    void addSymbolLayerClipPath( const QString &symbolLayerId, QPainterPath path );
+
+    /**
+     * Returns clip paths to be applied to the \a symbolLayer before rendering
+     * \since QGIS 3.26, arguments changed and public API since 3.30
+     */
+    QList<QPainterPath> symbolLayerClipPaths( const QString &symbolLayerId ) const;
+
+    /**
      * Returns the range of z-values which should be rendered.
      *
      * \see setZRange()
@@ -993,6 +1033,65 @@ class CORE_EXPORT QgsRenderContext : public QgsTemporalRangeObject
     */
     void setRendererUsage( Qgis::RendererUsage usage ) {mRendererUsage = usage;}
 
+    /**
+     * Returns the frame rate of the map, for maps which are part of an animation.
+     *
+     * Returns -1 if the map is not associated with an animation.
+     *
+     * \see setFrameRate()
+     * \since QGIS 3.26
+     */
+    double frameRate() const;
+
+    /**
+     * Sets the frame \a rate of the map (in frames per second), for maps which are part of an animation.
+     *
+     * Defaults to -1 if the map is not associated with an animation.
+     *
+     * \see frameRate()
+     * \since QGIS 3.26
+     */
+    void setFrameRate( double rate );
+
+    /**
+     * Returns the current frame number of the map (in frames per second), for maps which are part of an animation.
+     *
+     * Returns -1 if the map is not associated with an animation.
+     *
+     * \see setCurrentFrame()
+     * \since QGIS 3.26
+     */
+    long long currentFrame() const;
+
+    /**
+     * Sets the current \a frame of the map, for maps which are part of an animation.
+     *
+     * Defaults to -1 if the map is not associated with an animation.
+     *
+     * \see currentFrame()
+     * \since QGIS 3.26
+     */
+    void setCurrentFrame( long long frame );
+
+
+    /**
+     * Returns the destination elevation map for the render operation.
+     *
+     * \see setElevationMap()
+     * \since QGIS 3.30
+     */
+    QgsElevationMap *elevationMap() const;
+
+    /**
+     * Sets the destination elevation \a map for the render operation. Ownership of the elevation map
+     * is not transferred and the QgsElevationMap destination must stay alive for the duration
+     * of any rendering operations.
+     *
+     * \see elevationMap()
+     * \since QGIS 3.30
+     */
+    void setElevationMap( QgsElevationMap *map );
+
   private:
 
     Qgis::RenderContextFlags mFlags;
@@ -1093,7 +1192,7 @@ class CORE_EXPORT QgsRenderContext : public QgsTemporalRangeObject
     bool mHasRenderedFeatureHandlers = false;
     QVariantMap mCustomRenderingFlags;
 
-    QSet<const QgsSymbolLayer *> mDisabledSymbolLayers;
+    QSet<QString> mDisabledSymbolLayers;
 
     QList< QgsMapClippingRegion > mClippingRegions;
     QgsGeometry mFeatureClipGeometry;
@@ -1108,9 +1207,17 @@ class CORE_EXPORT QgsRenderContext : public QgsTemporalRangeObject
 
     Qgis::RendererUsage mRendererUsage = Qgis::RendererUsage::Unknown;
 
+    double mFrameRate = -1;
+    long long mCurrentFrame = -1;
+
+    //! clip paths to be applied to the symbol layer before rendering
+    QMap< QString, QList<QPainterPath> > mSymbolLayerClipPaths;
+
 #ifdef QGISDEBUG
     bool mHasTransformContext = false;
 #endif
+
+    QgsElevationMap *mElevationMap = nullptr;
 };
 
 #ifndef SIP_RUN

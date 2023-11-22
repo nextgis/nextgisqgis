@@ -13,18 +13,15 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsoracledataitems.h"
-
-#include "qgsoracletablemodel.h"
 #include "qgsoraclenewconnection.h"
 #include "qgsoraclecolumntypetask.h"
 #include "qgsoracleprovider.h"
-
 #include "qgslogger.h"
 #include "qgsdatasourceuri.h"
 #include "qgsapplication.h"
 #include "qgsmessageoutput.h"
 #include "qgsvectorlayer.h"
-#include "qgsproxyprogresstask.h"
+#include "qgsdbquerylog.h"
 #include "qgsvectorlayerexporter.h"
 
 #include <QMessageBox>
@@ -34,7 +31,7 @@
 
 bool deleteLayer( const QString &uri, QString &errCause )
 {
-  QgsDebugMsg( "deleting layer " + uri );
+  QgsDebugMsgLevel( "deleting layer " + uri, 2 );
 
   QgsDataSourceUri dsUri( uri );
   QString ownerName = dsUri.schema();
@@ -60,10 +57,10 @@ bool deleteLayer( const QString &uri, QString &errCause )
   QSqlQuery qry( *conn );
 
   // check the geometry column count
-  if ( !QgsOracleProvider::exec( qry, QString( "SELECT count(*)"
-                                 " FROM user_tab_columns"
-                                 " WHERE table_name=? AND data_type='SDO_GEOMETRY' AND data_type_owner='MDSYS'" ),
-                                 QVariantList() << tableName )
+  if ( !QgsOracleProvider::execLoggedStatic( qry, QString( "SELECT count(*)"
+       " FROM user_tab_columns"
+       " WHERE table_name=? AND data_type='SDO_GEOMETRY' AND data_type_owner='MDSYS'" ),
+       QVariantList() << tableName, dsUri.uri(), QStringLiteral( "QgsOracleLayerItem" ), QGS_QUERY_LOG_ORIGIN )
        || !qry.next() )
   {
     errCause = QObject::tr( "Unable to determine number of geometry columns of layer %1.%2: \n%3" )
@@ -97,7 +94,7 @@ bool deleteLayer( const QString &uri, QString &errCause )
     args << tableName;
   }
 
-  if ( !QgsOracleProvider::exec( qry, dropTable, QVariantList() ) )
+  if ( !QgsOracleProvider::execLoggedStatic( qry, dropTable, QVariantList(), dsUri.uri(), QStringLiteral( "QgsOracleLayerItem" ), QGS_QUERY_LOG_ORIGIN ) )
   {
     errCause = QObject::tr( "Unable to delete layer %1.%2: \n%3" )
                .arg( ownerName )
@@ -107,7 +104,7 @@ bool deleteLayer( const QString &uri, QString &errCause )
     return false;
   }
 
-  if ( !QgsOracleProvider::exec( qry, cleanView, args ) )
+  if ( !QgsOracleProvider::execLoggedStatic( qry, cleanView, args, dsUri.uri(), QStringLiteral( "QgsOracleLayerItem" ), QGS_QUERY_LOG_ORIGIN ) )
   {
     errCause = QObject::tr( "Unable to clean metadata %1.%2: \n%3" )
                .arg( ownerName )
@@ -237,8 +234,8 @@ void QgsOracleConnectionItem::setLayerType( const QgsOracleLayerProperty &layerP
 
   for ( int i = 0 ; i < layerProperty.size(); i++ )
   {
-    QgsWkbTypes::Type wkbType = layerProperty.types.at( i );
-    if ( wkbType == QgsWkbTypes::Unknown )
+    Qgis::WkbType wkbType = layerProperty.types.at( i );
+    if ( wkbType == Qgis::WkbType::Unknown )
     {
       QgsDebugMsgLevel( QStringLiteral( "skip unknown geometry type" ), 3 );
       continue;
@@ -457,7 +454,7 @@ QString QgsOracleLayerItem::createUri()
 
   if ( !connItem )
   {
-    QgsDebugMsg( QStringLiteral( "connection item not found." ) );
+    QgsDebugError( QStringLiteral( "connection item not found." ) );
     return QString();
   }
 
@@ -491,32 +488,23 @@ void QgsOracleOwnerItem::addLayer( const QgsOracleLayerProperty &layerProperty )
   QgsDebugMsgLevel( layerProperty.toString(), 3 );
 
   Q_ASSERT( layerProperty.size() == 1 );
-  QgsWkbTypes::Type wkbType = layerProperty.types.at( 0 );
+  Qgis::WkbType wkbType = layerProperty.types.at( 0 );
   QString tip = tr( "%1 as %2 in %3" ).arg( layerProperty.geometryColName, QgsWkbTypes::translatedDisplayString( wkbType ) ).arg( layerProperty.srids.at( 0 ) );
 
   Qgis::BrowserLayerType layerType;
-  switch ( wkbType )
+  switch ( QgsWkbTypes::geometryType( wkbType ) )
   {
-    case QgsWkbTypes::Point:
-    case QgsWkbTypes::Point25D:
-    case QgsWkbTypes::MultiPoint:
-    case QgsWkbTypes::MultiPoint25D:
+    case Qgis::GeometryType::Point:
       layerType = Qgis::BrowserLayerType::Point;
       break;
-    case QgsWkbTypes::LineString:
-    case QgsWkbTypes::LineString25D:
-    case QgsWkbTypes::MultiLineString:
-    case QgsWkbTypes::MultiLineString25D:
+    case Qgis::GeometryType::Line:
       layerType = Qgis::BrowserLayerType::Line;
       break;
-    case QgsWkbTypes::Polygon:
-    case QgsWkbTypes::Polygon25D:
-    case QgsWkbTypes::MultiPolygon:
-    case QgsWkbTypes::MultiPolygon25D:
+    case Qgis::GeometryType::Polygon:
       layerType = Qgis::BrowserLayerType::Polygon;
       break;
     default:
-      if ( wkbType == QgsWkbTypes::NoGeometry && layerProperty.geometryColName.isEmpty() )
+      if ( wkbType == Qgis::WkbType::NoGeometry && layerProperty.geometryColName.isEmpty() )
       {
         layerType = Qgis::BrowserLayerType::TableLayer;
         tip = tr( "as geometryless table" );
@@ -544,7 +532,7 @@ QVector<QgsDataItem *> QgsOracleRootItem::createChildren()
 {
   QVector<QgsDataItem *> connections;
   const QStringList list = QgsOracleConn::connectionList();
-  for ( QString connName : list )
+  for ( const QString &connName : std::as_const( list ) )
   {
     connections << new QgsOracleConnectionItem( this, connName, mPath + '/' + connName );
   }

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for annotations.
 
 From build dir, run: ctest -R PyQgsAnnotation -V
@@ -13,37 +12,30 @@ __date__ = '24/1/2017'
 __copyright__ = 'Copyright 2017, The QGIS Project'
 
 import qgis  # NOQA
-
-from qgis.core import (QgsTextAnnotation,
-                       QgsSvgAnnotation,
-                       QgsHtmlAnnotation,
-                       QgsMapSettings,
-                       QgsRenderContext,
-                       QgsCoordinateReferenceSystem,
-                       QgsRectangle,
-                       QgsMultiRenderChecker,
-                       QgsRenderChecker,
-                       QgsVectorLayer,
-                       QgsFeature,
-                       QgsMargins,
-                       QgsFillSymbol,
-                       QgsProject,
-                       QgsLayout,
-                       QgsLayoutItemMap,
-                       QgsPointXY)
+from qgis.PyQt.QtCore import QDir, QPointF, QRectF, QSize, QSizeF
+from qgis.PyQt.QtGui import QColor, QImage, QPainter, QTextDocument
+from qgis.core import (
+    QgsCoordinateReferenceSystem,
+    QgsFeature,
+    QgsFillSymbol,
+    QgsHtmlAnnotation,
+    QgsLayout,
+    QgsLayoutItemMap,
+    QgsMapSettings,
+    QgsMargins,
+    QgsMultiRenderChecker,
+    QgsPointXY,
+    QgsProject,
+    QgsRectangle,
+    QgsRenderChecker,
+    QgsRenderContext,
+    QgsSvgAnnotation,
+    QgsTextAnnotation,
+    QgsVectorLayer,
+)
 from qgis.gui import QgsFormAnnotation
-from qgis.PyQt.QtCore import (QDir,
-                              QPointF,
-                              QSize,
-                              QSizeF,
-                              QRectF)
-from qgis.PyQt.QtGui import (QColor,
-                             QPainter,
-                             QImage,
-                             QTextDocument)
-from qgslayoutchecker import QgsLayoutChecker
-
 from qgis.testing import start_app, unittest
+
 from utilities import unitTestDataPath
 
 start_app()
@@ -52,11 +44,15 @@ TEST_DATA_DIR = unitTestDataPath()
 
 class TestQgsAnnotation(unittest.TestCase):
 
+    @classmethod
+    def control_path_prefix(cls):
+        return "annotations"
+
     def setUp(self):
         self.report = "<h1>Python QgsAnnotation Tests</h1>\n"
 
     def tearDown(self):
-        report_file_path = "%s/qgistest.html" % QDir.tempPath()
+        report_file_path = f"{QDir.tempPath()}/qgistest.html"
         with open(report_file_path, 'a') as report_file:
             report_file.write(self.report)
 
@@ -71,12 +67,16 @@ class TestQgsAnnotation(unittest.TestCase):
         doc.setHtml('<p style="font-family: arial; font-weight: bold; font-size: 40px;">test annotation</p>')
         a.setDocument(doc)
         im = self.renderAnnotation(a, QPointF(20, 30))
-        self.assertTrue(self.imageCheck('text_annotation', 'text_annotation', im))
+        self.assertTrue(
+            self.image_check('text_annotation', 'text_annotation', im)
+        )
 
         # check clone
         clone = a.clone()
         im = self.renderAnnotation(clone, QPointF(20, 30))
-        self.assertTrue(self.imageCheck('text_annotation', 'text_annotation', im))
+        self.assertTrue(
+            self.image_check('text_annotation', 'text_annotation', im)
+        )
 
     def testTextAnnotationInLayout(self):
         """ test rendering a text annotation"""
@@ -100,12 +100,16 @@ class TestQgsAnnotation(unittest.TestCase):
         svg = TEST_DATA_DIR + "/sample_svg.svg"
         a.setFilePath(svg)
         im = self.renderAnnotation(a, QPointF(20, 30))
-        self.assertTrue(self.imageCheck('svg_annotation', 'svg_annotation', im))
+        self.assertTrue(
+            self.image_check('svg_annotation', 'svg_annotation', im)
+        )
 
         # check clone
         clone = a.clone()
         im = self.renderAnnotation(clone, QPointF(20, 30))
-        self.assertTrue(self.imageCheck('svg_annotation', 'svg_annotation', im))
+        self.assertTrue(
+            self.image_check('svg_annotation', 'svg_annotation', im)
+        )
 
     def testSvgAnnotationInLayout(self):
         """ test rendering a svg annotation"""
@@ -128,12 +132,16 @@ class TestQgsAnnotation(unittest.TestCase):
         html = TEST_DATA_DIR + "/test_html.html"
         a.setSourceFile(html)
         im = self.renderAnnotation(a, QPointF(20, 30))
-        self.assertTrue(self.imageCheck('html_annotation', 'html_annotation', im))
+        self.assertTrue(
+            self.image_check('html_annotation', 'html_annotation', im)
+        )
 
         # check clone
         clone = a.clone()
         im = self.renderAnnotation(clone, QPointF(20, 30))
-        self.assertTrue(self.imageCheck('html_annotation', 'html_annotation', im))
+        self.assertTrue(
+            self.image_check('html_annotation', 'html_annotation', im)
+        )
 
     def testHtmlAnnotationSetHtmlSource(self):
         """ test rendering html annotation where the html is set directly (not from file)"""
@@ -142,11 +150,15 @@ class TestQgsAnnotation(unittest.TestCase):
         a.markerSymbol().symbolLayer(0).setStrokeColor(QColor(0, 0, 0))
         a.setFrameSizeMm(QSizeF(400 / 3.7795275, 250 / 3.7795275))
         a.setFrameOffsetFromReferencePointMm(QPointF(70 / 3.7795275, 90 / 3.7795275))
-        htmlFile = open(TEST_DATA_DIR + "/test_html.html")
-        htmlText = htmlFile.read()
+        with open(TEST_DATA_DIR + "/test_html.html") as f:
+            htmlText = f.read()
         a.setHtmlSource(htmlText)
         im = self.renderAnnotation(a, QPointF(20, 30))
-        self.assertTrue(self.imageCheck('html_annotation_html_source', 'html_annotation', im))
+        self.assertTrue(
+            self.image_check(
+                'html_annotation_html_source', 'html_annotation', im
+            )
+        )
 
     def testHtmlAnnotationInLayout(self):
         """ test rendering a svg annotation"""
@@ -173,13 +185,17 @@ class TestQgsAnnotation(unittest.TestCase):
         html = TEST_DATA_DIR + "/test_html_feature.html"
         a.setSourceFile(html)
         im = self.renderAnnotation(a, QPointF(20, 30))
-        self.assertTrue(self.imageCheck('html_nofeature', 'html_nofeature', im))
+        self.assertTrue(
+            self.image_check('html_nofeature', 'html_nofeature', im)
+        )
         f = QgsFeature(layer.fields())
         f.setValid(True)
         f.setAttributes(['hurstbridge', 'somewhere'])
         a.setAssociatedFeature(f)
         im = self.renderAnnotation(a, QPointF(20, 30))
-        self.assertTrue(self.imageCheck('html_feature', 'html_feature', im))
+        self.assertTrue(
+            self.image_check('html_feature', 'html_feature', im)
+        )
 
     def testFormAnnotation(self):
         """ test rendering a form annotation"""
@@ -191,12 +207,16 @@ class TestQgsAnnotation(unittest.TestCase):
         ui = TEST_DATA_DIR + "/test_form.ui"
         a.setDesignerForm(ui)
         im = self.renderAnnotation(a, QPointF(20, 30))
-        self.assertTrue(self.imageCheck('form_annotation', 'form_annotation', im))
+        self.assertTrue(
+            self.image_check('form_annotation', 'form_annotation', im)
+        )
 
         # check clone
         clone = a.clone()
         im = self.renderAnnotation(clone, QPointF(20, 30))
-        self.assertTrue(self.imageCheck('form_annotation', 'form_annotation', im))
+        self.assertTrue(
+            self.image_check('form_annotation', 'form_annotation', im)
+        )
 
     def testFormAnnotationInLayout(self):
         """ test rendering a form annotation"""
@@ -218,7 +238,9 @@ class TestQgsAnnotation(unittest.TestCase):
         html = TEST_DATA_DIR + "/test_html.html"
         a.setSourceFile(html)
         im = self.renderAnnotation(a, QPointF(20, 30))
-        self.assertTrue(self.imageCheck('relative_style', 'relative_style', im))
+        self.assertTrue(
+            self.image_check('relative_style', 'relative_style', im)
+        )
 
     def testMargins(self):
         """ test rendering an annotation with margins"""
@@ -230,7 +252,9 @@ class TestQgsAnnotation(unittest.TestCase):
         html = TEST_DATA_DIR + "/test_html.html"
         a.setSourceFile(html)
         im = self.renderAnnotation(a, QPointF(20, 30))
-        self.assertTrue(self.imageCheck('annotation_margins', 'annotation_margins', im))
+        self.assertTrue(
+            self.image_check('annotation_margins', 'annotation_margins', im)
+        )
 
     def testFillSymbol(self):
         """ test rendering an annotation with fill symbol"""
@@ -239,7 +263,11 @@ class TestQgsAnnotation(unittest.TestCase):
         a.setHasFixedMapPosition(False)
         a.setFillSymbol(QgsFillSymbol.createSimple({'color': 'blue', 'width_border': '5', 'outline_color': 'black'}))
         im = self.renderAnnotation(a, QPointF(20, 30))
-        self.assertTrue(self.imageCheck('annotation_fillstyle', 'annotation_fillstyle', im))
+        self.assertTrue(
+            self.image_check(
+                'annotation_fillstyle', 'annotation_fillstyle', im
+            )
+        )
 
     def renderAnnotation(self, annotation, offset):
         image = QImage(600, 400, QImage.Format_RGB32)
@@ -278,29 +306,11 @@ class TestQgsAnnotation(unittest.TestCase):
         annotation.setHasFixedMapPosition(True)
         pr.annotationManager().addAnnotation(annotation)
 
-        checker = QgsLayoutChecker(
-            test_name, l)
-        checker.dots_per_meter = 2 * 96 / 25.4 * 1000
-        checker.size = QSize(1122 * 2, 794 * 2)
-        checker.setControlPathPrefix("annotations")
-        result, message = checker.testLayout()
-        self.report += checker.report()
-        return result
-
-    def imageCheck(self, name, reference_image, image):
-        self.report += "<h2>Render {}</h2>\n".format(name)
-        temp_dir = QDir.tempPath() + '/'
-        file_name = temp_dir + 'annotation_' + name + ".png"
-        image.save(file_name, "PNG")
-        checker = QgsMultiRenderChecker()
-        checker.setControlPathPrefix("annotations")
-        checker.setControlName("expected_" + reference_image)
-        checker.setRenderedImage(file_name)
-        checker.setColorTolerance(2)
-        result = checker.runTest(name, 20)
-        self.report += checker.report()
-        print((self.report))
-        return result
+        return self.render_layout_check(
+            test_name,
+            layout=l,
+            size=QSize(1122 * 2, 794 * 2)
+        )
 
 
 if __name__ == '__main__':

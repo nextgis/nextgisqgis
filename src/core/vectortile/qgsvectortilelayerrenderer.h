@@ -19,14 +19,15 @@
 #define SIP_NO_FILE
 
 #include "qgsmaplayerrenderer.h"
+#include "qgsvectortilerenderer.h"
+#include "qgsmapclippingregion.h"
+#include "qgsvectortilematrixset.h"
 
 class QgsVectorTileLayer;
 class QgsVectorTileRawData;
 class QgsVectorTileLabelProvider;
+class QgsVectorTileDataProvider;
 
-#include "qgsvectortilerenderer.h"
-#include "qgsmapclippingregion.h"
-#include "qgshttpheaders.h"
 
 /**
  * \ingroup core
@@ -44,6 +45,7 @@ class QgsVectorTileLayerRenderer : public QgsMapLayerRenderer
   public:
     //! Creates the renderer. Always called from main thread, should copy whatever necessary from the layer
     QgsVectorTileLayerRenderer( QgsVectorTileLayer *layer, QgsRenderContext &context );
+    ~QgsVectorTileLayerRenderer() override;
 
     virtual bool render() override;
     virtual QgsFeedback *feedback() const override { return mFeedback.get(); }
@@ -54,18 +56,8 @@ class QgsVectorTileLayerRenderer : public QgsMapLayerRenderer
 
     // data coming from the vector tile layer
 
-    //! Type of the source from which we will be loading tiles (e.g. "xyz" or "mbtiles")
-    QString mSourceType;
-    //! Path/URL of the source. Format depends on source type
-    QString mSourcePath;
+    std::unique_ptr< QgsVectorTileDataProvider > mDataProvider;
 
-    QString mAuthCfg;
-    QgsHttpHeaders mHeaders;
-
-    //! Minimum zoom level at which source has any valid tiles (negative = unconstrained)
-    int mSourceMinZoom = -1;
-    //! Maximum zoom level at which source has any valid tiles (negative = unconstrained)
-    int mSourceMaxZoom = -1;
     //! Tile renderer object to do rendering of individual tiles
     std::unique_ptr<QgsVectorTileRenderer> mRenderer;
 
@@ -82,8 +74,11 @@ class QgsVectorTileLayerRenderer : public QgsMapLayerRenderer
 
     //! Feedback object that may be used by the caller to cancel the rendering
     std::unique_ptr<QgsFeedback> mFeedback;
+    //! Zoom level used to fetch tiles
+    int mTileZoomToFetch = 0;
     //! Zoom level at which we will be rendering
-    int mTileZoom = 0;
+    int mTileZoomToRender = 0;
+
     //! Definition of the tile matrix for our zoom level
     QgsTileMatrix mTileMatrix;
     //!< Block of tiles we will be rendering in that zoom level
@@ -94,6 +89,9 @@ class QgsVectorTileLayerRenderer : public QgsMapLayerRenderer
     //! Cached list of layers required for renderer and labeling
     QSet< QString > mRequiredLayers;
 
+    //! Selected features, to draw on top in a selected style
+    QList< QgsFeature > mSelectedFeatures;
+
     //! Counter of total elapsed time to decode tiles (ms)
     int mTotalDecodeTime = 0;
     //! Counter of total elapsed time to render tiles (ms)
@@ -101,6 +99,9 @@ class QgsVectorTileLayerRenderer : public QgsMapLayerRenderer
 
     QList< QgsMapClippingRegion > mClippingRegions;
     double mLayerOpacity = 1.0;
+
+    QgsVectorTileMatrixSet mTileMatrixSet;
+
 };
 
 

@@ -1,0 +1,24 @@
+--- a/src/gui/qgsmanageconnectionsdialog.h	2023-08-21 19:39:45.783042996 +0300
++++ b/src/gui/qgsmanageconnectionsdialog.h	2023-10-24 10:46:03.000000000 +0300
+@@ -75,8 +75,8 @@
+     QDomDocument saveOracleConnections( const QStringList &connections );
+     QDomDocument saveHanaConnections( const QStringList &connections );
+     QDomDocument saveXyzTilesConnections( const QStringList &connections );
+-    QDomDocument saveArcgisConnections( const QStringList &connections );
+-    QDomDocument saveVectorTileConnections( const QStringList &connections );
++//    QDomDocument saveArcgisConnections( const QStringList &connections );
++//    QDomDocument saveVectorTileConnections( const QStringList &connections );
+ 
+     void loadOWSConnections( const QDomDocument &doc, const QStringList &items, const QString &service );
+     void loadWfsConnections( const QDomDocument &doc, const QStringList &items );
+@@ -85,8 +85,8 @@
+     void loadOracleConnections( const QDomDocument &doc, const QStringList &items );
+     void loadHanaConnections( const QDomDocument &doc, const QStringList &items );
+     void loadXyzTilesConnections( const QDomDocument &doc, const QStringList &items );
+-    void loadArcgisConnections( const QDomDocument &doc, const QStringList &items, const QString &service );
+-    void loadVectorTileConnections( const QDomDocument &doc, const QStringList &items );
++//    void loadArcgisConnections( const QDomDocument &doc, const QStringList &items, const QString &service );
++//    void loadVectorTileConnections( const QDomDocument &doc, const QStringList &items );
+ 
+     QString mFileName;
+     Mode mDialogMode;

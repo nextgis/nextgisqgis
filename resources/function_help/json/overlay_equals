@@ -26,10 +26,10 @@
   }],
   "examples": [{
     "expression": "overlay_equals('regions')",
-    "returns": "true if the current feature is spatially equal to a region"
+    "returns": "TRUE if the current feature is spatially equal to a region"
   }, {
     "expression": "overlay_equals('regions', filter:= population > 10000)",
-    "returns": "true if the current feature is spatially equal to a region with a population greater than 10000"
+    "returns": "TRUE if the current feature is spatially equal to a region with a population greater than 10000"
   }, {
     "expression": "overlay_equals('regions', name)",
     "returns": "an array of names, for the regions spatially equal to the current feature"
@@ -40,7 +40,7 @@
     "expression": "array_sort(overlay_equals(layer:='regions', expression:=\"name\", filter:= population > 10000))",
     "returns": "an ordered array of names, for the regions spatially equal to the current feature and with a population greater than 10000"
   }, {
-    "expression": "overlay_equals(layer:='regions', expression:= geom_to_wkt($geometry), limit:=2)",
+    "expression": "overlay_equals(layer:='regions', expression:= geom_to_wkt(@geometry), limit:=2)",
     "returns": "an array of geometries (in WKT), for up to two regions spatially equal to the current feature"
   }],
   "tags": ["predicate", "current", "equals", "equal", "target", "array", "geos", "st_equals", "described", "underlying", "features"]

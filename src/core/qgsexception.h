@@ -42,6 +42,7 @@ class CORE_EXPORT QgsException
       : mWhat( message )
     {}
 
+    // cppcheck-suppress internalAstError
     virtual ~QgsException() throw() = default;
 
     //! \note not available in Python bindings
@@ -122,6 +123,22 @@ class CORE_EXPORT QgsNotSupportedException : public QgsException
      * Constructor for QgsNotSupportedException, with the specified error \a message.
      */
     QgsNotSupportedException( const QString &message ) : QgsException( message ) {}
+};
+
+/**
+ * \class QgsSettingsException
+ * \ingroup core
+ * \brief Custom exception class for settings related exceptions.
+ * \since QGIS 3.30
+ */
+class CORE_EXPORT QgsSettingsException : public QgsException
+{
+  public:
+
+    /**
+     * Constructor for QgsProcessingException, with the specified error \a message.
+     */
+    QgsSettingsException( const QString &message ) : QgsException( message ) {}
 
 };
 

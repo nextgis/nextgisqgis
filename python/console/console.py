@@ -43,7 +43,8 @@ from qgis.gui import (
     QgsHelp,
     QgsDockWidget,
     QgsGui,
-    QgsApplicationExitBlockerInterface
+    QgsApplicationExitBlockerInterface,
+    QgsCodeEditorDockWidget
 )
 from functools import partial
 
@@ -104,35 +105,38 @@ class ConsoleExitBlocker(QgsApplicationExitBlockerInterface):
         return self.console.allowExit()
 
 
-class PythonConsole(QgsDockWidget):
+class PythonConsole(QgsCodeEditorDockWidget):
 
     def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setObjectName("PythonConsole")
-        self.setWindowTitle(QCoreApplication.translate("PythonConsole", "Python Console"))
-        # self.setAllowedAreas(Qt.BottomDockWidgetArea)
+        super().__init__("PythonConsoleWindow", True)
+        self.setDockObjectName("PythonConsole")
+        self.setTitle(QCoreApplication.translate("PythonConsole", "Python Console"))
 
         self.console = PythonConsoleWidget(self)
         QgsGui.instance().optionsChanged.connect(self.console.updateSettings)
-        self.setWidget(self.console)
+        vl = QVBoxLayout()
+        vl.setContentsMargins(0, 0, 0, 0)
+        vl.addWidget(self.console)
+        self.setLayout(vl)
         self.setFocusProxy(self.console)
-
-        # try to restore position from stored main window state
-        if iface and not iface.mainWindow().restoreDockWidget(self):
-            iface.mainWindow().addDockWidget(Qt.BottomDockWidgetArea, self)
 
         # closeEvent is not always called for this widget -- so we also trigger a settings
         # save on application exit
-        QgsApplication.instance().aboutToQuit.connect(self.console.saveSettingsConsole)
+        QgsApplication.instance().aboutToQuit.connect(self.on_app_exit)
+
+    def on_app_exit(self):
+        self.console.saveSettingsConsole()
+        self.deleteLater()
 
     def activate(self):
         self.activateWindow()
         self.raise_()
-        QgsDockWidget.setFocus(self)
+        self.setFocus()
 
     def closeEvent(self, event):
         self.console.saveSettingsConsole()
-        QWidget.closeEvent(self, event)
+        self.hide()
+        event.ignore()
 
 
 class PythonConsoleWidget(QWidget):
@@ -167,13 +171,9 @@ class PythonConsoleWidget(QWidget):
         self.splitter.addWidget(self.shellOutWidget)
         self.splitter.addWidget(self.shell)
 
-        # self.splitterEditor.addWidget(self.tabEditorWidget)
-
         self.splitterObj = QSplitter(self.splitterEditor)
         self.splitterObj.setHandleWidth(3)
         self.splitterObj.setOrientation(Qt.Horizontal)
-        # self.splitterObj.setSizes([0, 0])
-        # self.splitterObj.setStretchFactor(0, 1)
 
         self.widgetEditor = QWidget(self.splitterObj)
         self.widgetFind = QWidget(self)
@@ -184,10 +184,6 @@ class PythonConsoleWidget(QWidget):
         self.listClassMethod.setHeaderLabels([objInspLabel, ''])
         self.listClassMethod.setColumnHidden(1, True)
         self.listClassMethod.setAlternatingRowColors(True)
-
-        # self.splitterEditor.addWidget(self.widgetEditor)
-        # self.splitterObj.addWidget(self.listClassMethod)
-        # self.splitterObj.addWidget(self.widgetEditor)
 
         # Hide side editor on start up
         self.splitterObj.hide()
@@ -286,26 +282,30 @@ class PythonConsoleWidget(QWidget):
         self.runScriptEditorButton.setIconVisibleInMenu(True)
         self.runScriptEditorButton.setToolTip(runScriptEditorBt)
         self.runScriptEditorButton.setText(runScriptEditorBt)
-        # Action Run Script (subprocess)
-        commentEditorBt = QCoreApplication.translate("PythonConsole", "Comment")
-        self.commentEditorButton = QAction(self)
-        self.commentEditorButton.setCheckable(False)
-        self.commentEditorButton.setEnabled(True)
-        self.commentEditorButton.setIcon(QgsApplication.getThemeIcon("console/iconCommentEditorConsole.svg"))
-        self.commentEditorButton.setMenuRole(QAction.PreferencesRole)
-        self.commentEditorButton.setIconVisibleInMenu(True)
-        self.commentEditorButton.setToolTip(commentEditorBt)
-        self.commentEditorButton.setText(commentEditorBt)
-        # Action Run Script (subprocess)
-        uncommentEditorBt = QCoreApplication.translate("PythonConsole", "Uncomment")
-        self.uncommentEditorButton = QAction(self)
-        self.uncommentEditorButton.setCheckable(False)
-        self.uncommentEditorButton.setEnabled(True)
-        self.uncommentEditorButton.setIcon(QgsApplication.getThemeIcon("console/iconUncommentEditorConsole.svg"))
-        self.uncommentEditorButton.setMenuRole(QAction.PreferencesRole)
-        self.uncommentEditorButton.setIconVisibleInMenu(True)
-        self.uncommentEditorButton.setToolTip(uncommentEditorBt)
-        self.uncommentEditorButton.setText(uncommentEditorBt)
+
+        # Action Toggle comment
+        toggleText = QCoreApplication.translate("PythonConsole", "Toggle Comment")
+        self.toggleCommentEditorButton = QAction(self)
+        self.toggleCommentEditorButton.setCheckable(False)
+        self.toggleCommentEditorButton.setEnabled(True)
+        self.toggleCommentEditorButton.setIcon(QgsApplication.getThemeIcon("console/iconCommentEditorConsole.svg"))
+        self.toggleCommentEditorButton.setMenuRole(QAction.PreferencesRole)
+        self.toggleCommentEditorButton.setIconVisibleInMenu(True)
+        self.toggleCommentEditorButton.setToolTip(toggleText + " <b>Ctrl+:</b>")
+        self.toggleCommentEditorButton.setText(toggleText)
+
+        # Action Format code
+        reformatCodeText = QCoreApplication.translate("PythonConsole", "Reformat Code")
+        self.reformatCodeEditorButton = QAction(self)
+        self.reformatCodeEditorButton.setCheckable(False)
+        self.reformatCodeEditorButton.setEnabled(True)
+        self.reformatCodeEditorButton.setIcon(QgsApplication.getThemeIcon("console/iconFormatCode.svg"))
+        self.reformatCodeEditorButton.setMenuRole(QAction.PreferencesRole)
+        self.reformatCodeEditorButton.setIconVisibleInMenu(True)
+        self.reformatCodeEditorButton.setToolTip(reformatCodeText + " <b>Ctrl+Alt+F</b>")
+        self.reformatCodeEditorButton.setShortcut("Ctrl+Alt+F")
+        self.reformatCodeEditorButton.setText(reformatCodeText)
+
         # Action for Object browser
         objList = QCoreApplication.translate("PythonConsole", "Object Inspector…")
         self.objectListButton = QAction(self)
@@ -410,6 +410,8 @@ class PythonConsoleWidget(QWidget):
         self.toolBar.addSeparator()
         self.toolBar.addAction(self.optionsButton)
         self.toolBar.addWidget(self.helpButton)
+        self.toolBar.addSeparator()
+        self.toolBar.addWidget(parent.dockToggleButton())
 
         self.toolBarEditor = QToolBar()
         self.toolBarEditor.setEnabled(False)
@@ -433,8 +435,8 @@ class PythonConsoleWidget(QWidget):
         self.toolBarEditor.addSeparator()
         self.toolBarEditor.addAction(self.findTextButton)
         self.toolBarEditor.addSeparator()
-        self.toolBarEditor.addAction(self.commentEditorButton)
-        self.toolBarEditor.addAction(self.uncommentEditorButton)
+        self.toolBarEditor.addAction(self.toggleCommentEditorButton)
+        self.toolBarEditor.addAction(self.reformatCodeEditorButton)
         self.toolBarEditor.addSeparator()
         self.toolBarEditor.addAction(self.objectListButton)
 
@@ -527,8 +529,8 @@ class PythonConsoleWidget(QWidget):
 
         self.findTextButton.triggered.connect(self._toggleFind)
         self.objectListButton.toggled.connect(self.toggleObjectListWidget)
-        self.commentEditorButton.triggered.connect(self.commentCode)
-        self.uncommentEditorButton.triggered.connect(self.uncommentCode)
+        self.toggleCommentEditorButton.triggered.connect(self.toggleComment)
+        self.reformatCodeEditorButton.triggered.connect(self.reformatCode)
         self.runScriptEditorButton.triggered.connect(self.runScriptEditor)
         self.cutEditorButton.triggered.connect(self.cutEditor)
         self.copyEditorButton.triggered.connect(self.copyEditor)
@@ -577,13 +579,13 @@ class PythonConsoleWidget(QWidget):
             # iterate backwards through tabs, as we may be closing some as we go
             tab_index = tab_count - i - 1
             tab_widget = self.tabEditorWidget.widget(tab_index)
-            if tab_widget.newEditor.isModified():
+            if tab_widget.isModified():
                 ret = QMessageBox.question(self, self.tr("Save {}").format(self.tabEditorWidget.tabText(tab_index)),
                                            self.tr("There are unsaved changes in this script. Do you want to keep those?"),
                                            QMessageBox.Save | QMessageBox.Cancel | QMessageBox.Discard, QMessageBox.Cancel)
                 if ret == QMessageBox.Save:
                     tab_widget.save()
-                    if tab_widget.newEditor.isModified():
+                    if tab_widget.isModified():
                         # save failed, treat as cancel
                         return False
                 elif ret == QMessageBox.Discard:
@@ -596,32 +598,32 @@ class PythonConsoleWidget(QWidget):
         return True
 
     def _toggleFind(self):
-        self.tabEditorWidget.currentWidget().newEditor.toggleFindWidget()
+        self.tabEditorWidget.currentWidget().toggleFindWidget()
 
     def _openFind(self):
-        self.tabEditorWidget.currentWidget().newEditor.openFindWidget()
+        self.tabEditorWidget.currentWidget().openFindWidget()
 
     def _closeFind(self):
-        self.tabEditorWidget.currentWidget().newEditor.closeFindWidget()
+        self.tabEditorWidget.currentWidget().closeFindWidget()
 
     def _findNext(self):
-        self.tabEditorWidget.currentWidget().newEditor.findText(True)
+        self.tabEditorWidget.currentWidget().findText(True)
 
     def _findPrev(self):
-        self.tabEditorWidget.currentWidget().newEditor.findText(False)
+        self.tabEditorWidget.currentWidget().findText(False)
 
     def _textFindChanged(self):
         if self.lineEditFind.text():
             self.findNextButton.setEnabled(True)
             self.findPrevButton.setEnabled(True)
-            self.tabEditorWidget.currentWidget().newEditor.findText(True, showMessage=False, findFirst=True)
+            self.tabEditorWidget.currentWidget().findText(True, showMessage=False, findFirst=True)
         else:
             self.lineEditFind.setStyleSheet('')
             self.findNextButton.setEnabled(False)
             self.findPrevButton.setEnabled(False)
 
     def onClickGoToLine(self, item, column):
-        tabEditor = self.tabEditorWidget.currentWidget().newEditor
+        tabEditor = self.tabEditorWidget.currentWidget()
         if item.text(1) == 'syntaxError':
             check = tabEditor.syntaxCheck()
             if check and not tabEditor.isReadOnly():
@@ -646,22 +648,22 @@ class PythonConsoleWidget(QWidget):
         self.listClassMethod.show() if checked else self.listClassMethod.hide()
 
     def pasteEditor(self):
-        self.tabEditorWidget.currentWidget().newEditor.paste()
+        self.tabEditorWidget.currentWidget().paste()
 
     def cutEditor(self):
-        self.tabEditorWidget.currentWidget().newEditor.cut()
+        self.tabEditorWidget.currentWidget().cut()
 
     def copyEditor(self):
-        self.tabEditorWidget.currentWidget().newEditor.copy()
+        self.tabEditorWidget.currentWidget().copy()
 
     def runScriptEditor(self):
-        self.tabEditorWidget.currentWidget().newEditor.runScriptCode()
+        self.tabEditorWidget.currentWidget().runScriptCode()
 
-    def commentCode(self):
-        self.tabEditorWidget.currentWidget().newEditor.commentEditorCode(True)
+    def toggleComment(self):
+        self.tabEditorWidget.currentWidget().toggleComment()
 
-    def uncommentCode(self):
-        self.tabEditorWidget.currentWidget().newEditor.commentEditorCode(False)
+    def reformatCode(self):
+        self.tabEditorWidget.currentWidget().reformatCode()
 
     def openScriptFileExtEditor(self):
         tabWidget = self.tabEditorWidget.currentWidget()
@@ -700,14 +702,14 @@ class PythonConsoleWidget(QWidget):
             msgText = QCoreApplication.translate('PythonConsole',
                                                  'The file <b>{0}</b> could not be saved. Error: {1}').format(tabWidget.path,
                                                                                                               error.strerror)
-            self.callWidgetMessageBarEditor(msgText, 2, False)
+            self.callWidgetMessageBarEditor(msgText, Qgis.Critical)
 
     def saveAsScriptFile(self, index=None):
         tabWidget = self.tabEditorWidget.currentWidget()
         if not index:
             index = self.tabEditorWidget.currentIndex()
         if not tabWidget.path:
-            fileName = self.tabEditorWidget.tabText(index) + '.py'
+            fileName = self.tabEditorWidget.tabText(index).replace('*', '') + '.py'
             folder = self.settings.value("pythonConsole/lastDirPath", QDir.homePath())
             pathFileName = os.path.join(folder, fileName)
             fileNone = True
@@ -727,7 +729,7 @@ class PythonConsoleWidget(QWidget):
                 msgText = QCoreApplication.translate('PythonConsole',
                                                      'The file <b>{0}</b> could not be saved. Error: {1}').format(tabWidget.path,
                                                                                                                   error.strerror)
-                self.callWidgetMessageBarEditor(msgText, 2, False)
+                self.callWidgetMessageBarEditor(msgText, Qgis.Critical)
                 if fileNone:
                     tabWidget.path = None
                 else:
@@ -761,8 +763,8 @@ class PythonConsoleWidget(QWidget):
     def callWidgetMessageBar(self, text):
         self.shellOut.widgetMessageBar(iface, text)
 
-    def callWidgetMessageBarEditor(self, text, level, timed):
-        self.tabEditorWidget.widgetMessageBar(iface, text, level, timed)
+    def callWidgetMessageBarEditor(self, text, level, timeout):
+        self.tabEditorWidget.showMessage(text, level, timeout)
 
     def updateTabListScript(self, script, action=None):
         if action == 'remove':
@@ -782,7 +784,7 @@ class PythonConsoleWidget(QWidget):
         self.settings.setValue("pythonConsole/splitterObj", self.splitterObj.saveState())
         self.settings.setValue("pythonConsole/splitterEditor", self.splitterEditor.saveState())
 
-        self.shell.writeHistoryFile(True)
+        self.shell.writeHistoryFile()
 
     def restoreSettingsConsole(self):
         storedTabScripts = self.settings.value("pythonConsole/tabScripts", [])

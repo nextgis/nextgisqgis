@@ -18,10 +18,8 @@
 #include "qgsdistancearea.h"
 #include "qgslogger.h"
 #include "qgsmapcanvas.h"
-#include "qgsmaptopixel.h"
 #include "qgsproject.h"
 #include "qgsrubberband.h"
-#include "qgssnappingutils.h"
 #include "qgssettings.h"
 #include "qgssnapindicator.h"
 #include "qgsmapmouseevent.h"
@@ -76,8 +74,8 @@ void QgsMapToolMeasureAngle::canvasMoveEvent( QgsMapMouseEvent *e )
 
     //angle calculation
     double resultAngle = azimuthTwo - azimuthOne;
-    QgsDebugMsg( QString::number( std::fabs( resultAngle ) ) );
-    QgsDebugMsg( QString::number( M_PI ) );
+    QgsDebugMsgLevel( QString::number( std::fabs( resultAngle ) ), 2 );
+    QgsDebugMsgLevel( QString::number( M_PI ), 2 );
     if ( std::fabs( resultAngle ) > M_PI )
     {
       if ( resultAngle < 0 )
@@ -182,7 +180,7 @@ void QgsMapToolMeasureAngle::deactivate()
 void QgsMapToolMeasureAngle::createRubberBand()
 {
   delete mRubberBand;
-  mRubberBand = new QgsRubberBand( mCanvas, QgsWkbTypes::LineGeometry );
+  mRubberBand = new QgsRubberBand( mCanvas, Qgis::GeometryType::Line );
 
   const QgsSettings settings;
   const int myRed = settings.value( QStringLiteral( "qgis/default_measure_color_red" ), 180 ).toInt();
@@ -215,8 +213,8 @@ void QgsMapToolMeasureAngle::updateSettings()
     return;
   }
   double resultAngle = azimuthTwo - azimuthOne;
-  QgsDebugMsg( QString::number( std::fabs( resultAngle ) ) );
-  QgsDebugMsg( QString::number( M_PI ) );
+  QgsDebugMsgLevel( QString::number( std::fabs( resultAngle ) ), 2 );
+  QgsDebugMsgLevel( QString::number( M_PI ), 2 );
   if ( std::fabs( resultAngle ) > M_PI )
   {
     if ( resultAngle < 0 )

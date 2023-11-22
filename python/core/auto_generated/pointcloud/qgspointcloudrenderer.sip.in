@@ -162,6 +162,7 @@ Returns the feedback object used to cancel rendering
 };
 
 
+
 class QgsPointCloudRenderer
 {
 %Docstring(signature="appended")
@@ -190,19 +191,6 @@ Abstract base class for 2d point cloud renderers.
       sipType = 0;
 %End
   public:
-
-    enum PointSymbol
-    {
-      Square,
-      Circle,
-    };
-
-    enum class DrawOrder
-    {
-      Default,
-      BottomToTop,
-      TopToBottom,
-    };
 
     QgsPointCloudRenderer();
 %Docstring
@@ -263,6 +251,7 @@ not be requested from the provider at rendering time.
    the "X" and "Y" attributes will always be fetched and do not need to be explicitly
    returned here.
 %End
+
 
     virtual void startRender( QgsPointCloudRenderContext &context );
 %Docstring
@@ -329,7 +318,7 @@ The point size units are retrieved by calling :py:func:`~QgsPointCloudRenderer.p
 .. seealso:: :py:func:`pointSizeMapUnitScale`
 %End
 
-    void setPointSizeUnit( const QgsUnitTypes::RenderUnit units );
+    void setPointSizeUnit( const Qgis::RenderUnit units );
 %Docstring
 Sets the ``units`` used for the point size.
 
@@ -340,7 +329,7 @@ Sets the ``units`` used for the point size.
 .. seealso:: :py:func:`setPointSizeMapUnitScale`
 %End
 
-    QgsUnitTypes::RenderUnit pointSizeUnit() const;
+    Qgis::RenderUnit pointSizeUnit() const;
 %Docstring
 Returns the units used for the point size.
 
@@ -373,7 +362,7 @@ Returns the map unit scale used for the point size.
 .. seealso:: :py:func:`pointSize`
 %End
 
-    DrawOrder drawOrder2d() const;
+    Qgis::PointCloudDrawOrder drawOrder2d() const;
 %Docstring
 Returns the drawing order used by the renderer for drawing points.
 
@@ -382,7 +371,7 @@ Returns the drawing order used by the renderer for drawing points.
 .. versionadded:: 3.24
 %End
 
-    void setDrawOrder2d( DrawOrder order );
+    void setDrawOrder2d( Qgis::PointCloudDrawOrder order );
 %Docstring
 Sets the drawing ``order`` used by the renderer for drawing points.
 
@@ -391,14 +380,14 @@ Sets the drawing ``order`` used by the renderer for drawing points.
 .. versionadded:: 3.24
 %End
 
-    PointSymbol pointSymbol() const;
+    Qgis::PointCloudSymbol pointSymbol() const;
 %Docstring
 Returns the symbol used by the renderer for drawing points.
 
 .. seealso:: :py:func:`setPointSymbol`
 %End
 
-    void setPointSymbol( PointSymbol symbol );
+    void setPointSymbol( Qgis::PointCloudSymbol symbol );
 %Docstring
 Sets the ``symbol`` used by the renderer for drawing points.
 
@@ -431,7 +420,7 @@ Units are set via :py:func:`~QgsPointCloudRenderer.setMaximumScreenErrorUnit`.
 .. seealso:: :py:func:`setMaximumScreenErrorUnit`
 %End
 
-    QgsUnitTypes::RenderUnit maximumScreenErrorUnit() const;
+    Qgis::RenderUnit maximumScreenErrorUnit() const;
 %Docstring
 Returns the unit for the maximum screen error allowed when rendering the point cloud.
 
@@ -440,7 +429,7 @@ Returns the unit for the maximum screen error allowed when rendering the point c
 .. seealso:: :py:func:`setMaximumScreenErrorUnit`
 %End
 
-    void setMaximumScreenErrorUnit( QgsUnitTypes::RenderUnit unit );
+    void setMaximumScreenErrorUnit( Qgis::RenderUnit unit );
 %Docstring
 Sets the ``unit`` for the maximum screen error allowed when rendering the point cloud.
 
@@ -475,6 +464,7 @@ Retrieves the z value for the point at index ``i``.
 %Docstring
 Draws a point using a ``color`` at the specified ``x`` and ``y`` (in map coordinates).
 %End
+
 
     void copyCommonProperties( QgsPointCloudRenderer *destination ) const;
 %Docstring

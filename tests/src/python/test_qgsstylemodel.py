@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsStyleModel.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -11,24 +10,26 @@ __date__ = '10/09/2018'
 __copyright__ = 'Copyright 2018, The QGIS Project'
 
 import qgis  # NOQA
-
-from qgis.core import (QgsSymbol,
-                       QgsFillSymbol,
-                       QgsMarkerSymbol,
-                       QgsLineSymbol,
-                       QgsLimitedRandomColorRamp,
-                       QgsStyleModel,
-                       QgsStyle,
-                       QgsStyleProxyModel,
-                       QgsTextFormat,
-                       QgsPalLayerSettings,
-                       QgsWkbTypes,
-                       QgsLegendPatchShape,
-                       QgsGeometry,
-                       QgsAbstract3DSymbol)
+from qgis.PyQt.QtCore import QModelIndex, QSize, Qt
 from qgis.testing import start_app, unittest
-from qgis.PyQt.QtCore import Qt, QSize, QModelIndex
 from qgis.PyQt.QtGui import QColor
+from qgis.core import (
+    QgsAbstract3DSymbol,
+    QgsFillSymbol,
+    QgsGeometry,
+    QgsLegendPatchShape,
+    QgsLimitedRandomColorRamp,
+    QgsLinePatternFillSymbolLayer,
+    QgsLineSymbol,
+    QgsMarkerSymbol,
+    QgsPalLayerSettings,
+    QgsStyle,
+    QgsStyleModel,
+    QgsStyleProxyModel,
+    QgsSymbol,
+    QgsTextFormat,
+    QgsWkbTypes,
+)
 
 start_app()
 
@@ -37,7 +38,7 @@ class Dummy3dSymbol(QgsAbstract3DSymbol):
 
     def __init__(self):
         super().__init__()
-        self.layer_types = [int(QgsWkbTypes.PointGeometry), int(QgsWkbTypes.LineGeometry)]
+        self.layer_types = [QgsWkbTypes.PointGeometry, QgsWkbTypes.LineGeometry]
 
     @staticmethod
     def create():
@@ -88,6 +89,8 @@ class TestQgsStyleModel(unittest.TestCase):
 
         style = QgsStyle()
         style.createMemoryDatabase()
+        style.setName('style name')
+        style.setFileName('/home/me/my.db')
 
         # style with only symbols
 
@@ -128,6 +131,13 @@ class TestQgsStyleModel(unittest.TestCase):
 
         self.assertFalse(model.flags(model.index(0, 1)) & Qt.ItemIsEditable)
         self.assertTrue(model.flags(model.index(0, 0)) & Qt.ItemIsEditable)
+
+        self.assertEqual(model.data(model.index(0, 0), QgsStyleModel.StyleName), 'style name')
+        self.assertEqual(model.data(model.index(0, 0), QgsStyleModel.StyleFileName), '/home/me/my.db')
+
+        self.assertEqual(model.data(model.index(0, 0), QgsStyleModel.EntityName), ' ----c/- ')
+        self.assertEqual(model.data(model.index(1, 0), QgsStyleModel.EntityName), 'B ')
+        self.assertEqual(model.data(model.index(2, 0), QgsStyleModel.EntityName), 'C')
 
         for role in (Qt.DisplayRole, Qt.EditRole):
             self.assertIsNone(model.data(model.index(-1, 0), role))
@@ -2013,10 +2023,10 @@ class TestQgsStyleModel(unittest.TestCase):
         self.assertTrue(style.addSymbol3D('sym3d a', symbol3d_a, True))
         style.tagSymbol(QgsStyle.Symbol3DEntity, 'sym3d a', ['tag 1', 'tag 2'])
         symbol3d_B = Dummy3dSymbol()
-        symbol3d_B.layer_types = [2]
+        symbol3d_B.layer_types = [QgsWkbTypes.PolygonGeometry]
         self.assertTrue(style.addSymbol3D('sym3d BB', symbol3d_B, True))
         symbol3d_B = Dummy3dSymbol()
-        symbol3d_B.layer_types = [1]
+        symbol3d_B.layer_types = [QgsWkbTypes.LineGeometry]
         self.assertTrue(style.addSymbol3D('sym3d c', symbol3d_B, True))
 
         model = QgsStyleProxyModel(style)
@@ -2214,7 +2224,7 @@ class TestQgsStyleModel(unittest.TestCase):
         model.setEntityFilterEnabled(False)
         self.assertEqual(model.rowCount(), 20)
 
-        # tag filter
+        # tag id filter
         self.assertEqual(model.tagId(), -1)
         tag_1_id = style.tagId('tag 1')
         tag_3_id = style.tagId('tag 3')
@@ -2298,6 +2308,90 @@ class TestQgsStyleModel(unittest.TestCase):
         self.assertEqual(model.rowCount(), 1)
         self.assertEqual(model.data(model.index(0, 0)), 'C')
         model.setTagId(-1)
+        self.assertEqual(model.rowCount(), 20)
+
+        # tag string filter
+        self.assertFalse(model.tagString())
+        model.setTagString('tag 1')
+        self.assertEqual(model.tagString(), 'tag 1')
+        self.assertEqual(model.rowCount(), 6)
+        self.assertEqual(model.data(model.index(0, 0)), 'a')
+        self.assertEqual(model.data(model.index(1, 0)), 'format a')
+        self.assertEqual(model.data(model.index(2, 0)), 'ramp a')
+        self.assertEqual(model.data(model.index(3, 0)), 'settings a')
+        self.assertEqual(model.data(model.index(4, 0)), 'shape a')
+        self.assertEqual(model.data(model.index(5, 0)), 'sym3d a')
+        model.setEntityFilterEnabled(True)
+        model.setEntityFilter(QgsStyle.ColorrampEntity)
+        self.assertEqual(model.rowCount(), 1)
+        self.assertEqual(model.data(model.index(0, 0)), 'ramp a')
+        model.setEntityFilter(QgsStyle.TextFormatEntity)
+        self.assertEqual(model.rowCount(), 1)
+        self.assertEqual(model.data(model.index(0, 0)), 'format a')
+        model.setEntityFilter(QgsStyle.LabelSettingsEntity)
+        self.assertEqual(model.rowCount(), 1)
+        self.assertEqual(model.data(model.index(0, 0)), 'settings a')
+        model.setEntityFilter(QgsStyle.LegendPatchShapeEntity)
+        self.assertEqual(model.rowCount(), 1)
+        self.assertEqual(model.data(model.index(0, 0)), 'shape a')
+        model.setEntityFilter(QgsStyle.Symbol3DEntity)
+        self.assertEqual(model.rowCount(), 1)
+        self.assertEqual(model.data(model.index(0, 0)), 'sym3d a')
+        model.setEntityFilterEnabled(False)
+        model.setFilterString('ra')
+        self.assertEqual(model.rowCount(), 1)
+        self.assertEqual(model.data(model.index(0, 0)), 'ramp a')
+        model.setFilterString('for')
+        self.assertEqual(model.rowCount(), 1)
+        self.assertEqual(model.data(model.index(0, 0)), 'format a')
+        model.setFilterString('set')
+        self.assertEqual(model.rowCount(), 1)
+        self.assertEqual(model.data(model.index(0, 0)), 'settings a')
+        model.setFilterString('hap')
+        self.assertEqual(model.rowCount(), 1)
+        self.assertEqual(model.data(model.index(0, 0)), 'shape a')
+        model.setFilterString('3d')
+        self.assertEqual(model.rowCount(), 1)
+        self.assertEqual(model.data(model.index(0, 0)), 'sym3d a')
+        model.setEntityFilterEnabled(False)
+        model.setFilterString('')
+        model.setTagString('')
+        self.assertEqual(model.rowCount(), 20)
+        model.setTagString('tag 3')
+        self.assertEqual(model.rowCount(), 1)
+        self.assertEqual(model.data(model.index(0, 0)), 'C')
+        style.tagSymbol(QgsStyle.ColorrampEntity, 'ramp c', ['tag 3'])
+        self.assertEqual(model.rowCount(), 2)
+        self.assertEqual(model.data(model.index(0, 0)), 'C')
+        self.assertEqual(model.data(model.index(1, 0)), 'ramp c')
+        style.detagSymbol(QgsStyle.ColorrampEntity, 'ramp c')
+        self.assertEqual(model.rowCount(), 1)
+        self.assertEqual(model.data(model.index(0, 0)), 'C')
+        style.tagSymbol(QgsStyle.TextFormatEntity, 'format c', ['tag 3'])
+        self.assertEqual(model.rowCount(), 2)
+        self.assertEqual(model.data(model.index(0, 0)), 'C')
+        self.assertEqual(model.data(model.index(1, 0)), 'format c')
+        style.detagSymbol(QgsStyle.TextFormatEntity, 'format c')
+        self.assertEqual(model.rowCount(), 1)
+        self.assertEqual(model.data(model.index(0, 0)), 'C')
+        style.tagSymbol(QgsStyle.LabelSettingsEntity, 'settings c', ['tag 3'])
+        self.assertEqual(model.rowCount(), 2)
+        self.assertEqual(model.data(model.index(0, 0)), 'C')
+        self.assertEqual(model.data(model.index(1, 0)), 'settings c')
+        style.detagSymbol(QgsStyle.LabelSettingsEntity, 'settings c')
+        style.tagSymbol(QgsStyle.LegendPatchShapeEntity, 'shape c', ['tag 3'])
+        self.assertEqual(model.rowCount(), 2)
+        self.assertEqual(model.data(model.index(0, 0)), 'C')
+        self.assertEqual(model.data(model.index(1, 0)), 'shape c')
+        style.detagSymbol(QgsStyle.LegendPatchShapeEntity, 'shape c')
+        style.tagSymbol(QgsStyle.Symbol3DEntity, 'sym3d c', ['tag 3'])
+        self.assertEqual(model.rowCount(), 2)
+        self.assertEqual(model.data(model.index(0, 0)), 'C')
+        self.assertEqual(model.data(model.index(1, 0)), 'sym3d c')
+        style.detagSymbol(QgsStyle.Symbol3DEntity, 'sym3d c')
+        self.assertEqual(model.rowCount(), 1)
+        self.assertEqual(model.data(model.index(0, 0)), 'C')
+        model.setTagString('')
         self.assertEqual(model.rowCount(), 20)
 
         # favorite filter
@@ -2638,6 +2732,37 @@ class TestQgsStyleModel(unittest.TestCase):
         self.assertTrue(model.setData(model.index(5, 0), 'symbol3d new name', Qt.EditRole))
         self.assertEqual(model.data(model.index(5, 0), Qt.DisplayRole), 'symbol3d new name')
         self.assertEqual(style.symbol3DNames(), ['symbol3d new name'])
+
+    def test_reset_symbollayer_ids(self):
+        """
+        Test that we have different symbol layer ids every time we get symbol from style
+        """
+        style = QgsStyle()
+        style.createMemoryDatabase()
+
+        layer = QgsLinePatternFillSymbolLayer()
+        fill_symbol = QgsFillSymbol([layer])
+
+        self.assertEqual(len(fill_symbol.symbolLayers()), 1)
+        subsymbol = fill_symbol.symbolLayers()[0].subSymbol()
+        self.assertTrue(subsymbol)
+        self.assertEqual(len(subsymbol.symbolLayers()), 1)
+        child_sl = subsymbol.symbolLayers()[0]
+        self.assertTrue(child_sl)
+        old_id = child_sl.id()
+        self.assertTrue(child_sl.id())
+
+        self.assertTrue(style.addSymbol('fillsymbol', fill_symbol, True))
+
+        new_fill_symbol = style.symbol('fillsymbol')
+        self.assertEqual(len(new_fill_symbol.symbolLayers()), 1)
+        subsymbol = new_fill_symbol.symbolLayers()[0].subSymbol()
+        self.assertTrue(subsymbol)
+        self.assertEqual(len(subsymbol.symbolLayers()), 1)
+        child_sl = subsymbol.symbolLayers()[0]
+        self.assertTrue(child_sl)
+        self.assertTrue(child_sl.id())
+        self.assertTrue(child_sl.id() != old_id)
 
 
 if __name__ == '__main__':

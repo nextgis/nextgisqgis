@@ -2,9 +2,9 @@
 +++ b/python/core/auto_generated/symbology/qgslinesymbollayer.sip.in	2022-04-30 15:18:19.872926300 +0300
 @@ -76,16 +76,6 @@
  
-     virtual double estimateMaxBleed( const QgsRenderContext &context ) const;
+    virtual double estimateMaxBleed( const QgsRenderContext &context ) const;
  
--    virtual QVector<qreal> dxfCustomDashPattern( QgsUnitTypes::RenderUnit &unit ) const;
+-    virtual QVector<qreal> dxfCustomDashPattern( Qgis::RenderUnit &unit ) const;
 -
 -    virtual Qt::PenStyle dxfPenStyle() const;
 -

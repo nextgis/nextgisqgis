@@ -7,18 +7,18 @@
 -#include "qgsdxfexport.h"
 +// #include "qgsdxfexport.h"
  #include "qgssymbollayerutils.h"
- #include "qgsexpression.h"
  #include "qgsrendercontext.h"
-@@ -1069,7 +1069,7 @@
+ #include "qgslogger.h"
+@@ -1072,7 +1072,7 @@
             context.convertToPainterUnits( std::fabs( mOffset ), mOffsetUnit, mOffsetMapUnitScale );
    }
  }
 -
 +/*
- QVector<qreal> QgsSimpleLineSymbolLayer::dxfCustomDashPattern( QgsUnitTypes::RenderUnit &unit ) const
+ QVector<qreal> QgsSimpleLineSymbolLayer::dxfCustomDashPattern( Qgis::RenderUnit &unit ) const
  {
    unit = mCustomDashPatternUnit;
-@@ -1107,7 +1107,7 @@
+@@ -1110,7 +1110,7 @@
    }
    return mColor;
  }
@@ -27,7 +27,7 @@
  bool QgsSimpleLineSymbolLayer::canCauseArtifactsBetweenAdjacentTiles() const
  {
    return mPenStyle != Qt::SolidLine || mUseCustomDashPattern;
-@@ -1132,7 +1132,7 @@
+@@ -1135,7 +1135,7 @@
  {
    mPatternCartographicTweakOnSharpCorners = enabled;
  }
@@ -36,7 +36,7 @@
  double QgsSimpleLineSymbolLayer::dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
  {
    double offset = mOffset;
-@@ -1150,7 +1150,7 @@
+@@ -1153,7 +1153,7 @@
    }
    return -offset; //direction seems to be inverse to symbology offset
  }

@@ -1,6 +1,6 @@
---- a/src/gui/qgisinterface.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/gui/qgisinterface.h	2022-04-25 18:33:18.000000000 +0300
-@@ -59,7 +59,7 @@
+--- a/src/gui/qgisinterface.h	2023-08-21 19:39:45.779043280 +0300
++++ b/src/gui/qgisinterface.h	2023-10-04 00:08:43.243958110 +0300
+@@ -58,7 +58,7 @@
  class QgsRasterLayer;
  class QgsVectorLayer;
  class QgsVectorLayerTools;
@@ -9,7 +9,7 @@
  class QgsPointCloudLayer;
  class QgsOptionsWidgetFactory;
  class QgsLocatorFilter;
-@@ -67,7 +67,7 @@
+@@ -66,7 +66,7 @@
  class QgsMeshLayer;
  class QgsBrowserGuiModel;
  class QgsDevToolWidgetFactory;
@@ -17,8 +17,8 @@
 +// class QgsGpsConnection;
  class QgsApplicationExitBlockerInterface;
  class QgsAbstractMapToolHandler;
- 
-@@ -530,7 +530,7 @@
+ class QgsUserProfileManager;
+@@ -585,7 +585,7 @@
       * Returns the native Add Vector Tile Layer action.
       * \since QGIS 3.14
       */
@@ -27,7 +27,7 @@
  
      /**
       * Returns the native Add Point Cloud Layer action.
-@@ -727,7 +727,7 @@
+@@ -852,7 +852,7 @@
       * Adds a vector tile layer to the current project.
       * \since QGIS 3.14
       */
@@ -36,11 +36,11 @@
  
      /**
       * Adds a point cloud layer to the current project.
-@@ -1323,7 +1323,7 @@
+@@ -1449,7 +1449,7 @@
       *
       * \since QGIS 3.16
       */
--    virtual void setGpsPanelConnection( QgsGpsConnection *connection ) = 0;
+-    virtual void setGpsPanelConnection( QgsGpsConnection *connection SIP_TRANSFER ) = 0;
 +    // virtual void setGpsPanelConnection( QgsGpsConnection *connection ) = 0;
  
    signals:

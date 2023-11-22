@@ -19,6 +19,7 @@
 #include <QFileSystemWatcher>
 
 
+#include "qgis.h"
 #include "qgis_sip.h"
 #include "qgis_core.h"
 #include "qgserror.h"
@@ -143,6 +144,31 @@ class CORE_EXPORT QgsUserProfileManager : public QObject
     void setDefaultFromActive();
 
     /**
+     * Returns the name of the most recently closed profile. Empty if its the first time QGIS has been run.
+     * \since QGIS 3.32
+     */
+    QString lastProfileName() const;
+
+    /**
+     * Updates the last closed profile name. Called when QGIS is closed.
+     * \since QGIS 3.32
+     */
+    void updateLastProfileName() SIP_SKIP;
+
+    /**
+     * Returns the user profile selection policy.
+     * \since QGIS 3.32
+     */
+    Qgis::UserProfileSelectionPolicy userProfileSelectionPolicy() const;
+
+    /**
+     * Sets the user profile selection policy.
+     * \param policy The policy to use when selecting a user profile.
+     * \since QGIS 3.32
+     */
+    void setUserProfileSelectionPolicy( Qgis::UserProfileSelectionPolicy policy );
+
+    /**
      * Returns the profile found for a given name.
      * \param name The name of the profile to return.
      * \return A QgsUserprofile pointing to the location of the user profile.
@@ -184,6 +210,12 @@ class CORE_EXPORT QgsUserProfileManager : public QObject
      * \param name The profile to start QGIS with.
      */
     void loadUserProfile( const QString &name );
+
+    /**
+     * Returns the settings for the profile manager.
+     * \since QGIS 3.32
+    */
+    QSettings *settings();
 
   signals:
 

@@ -1,15 +1,15 @@
---- a/src/core/symbology/qgsellipsesymbollayer.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/symbology/qgsellipsesymbollayer.cpp	2022-04-25 18:33:17.000000000 +0300
+--- a/src/core/symbology/qgsellipsesymbollayer.cpp	2023-08-21 19:39:45.743045834 +0300
++++ b/src/core/symbology/qgsellipsesymbollayer.cpp	2023-10-04 00:10:17.626961313 +0300
 @@ -13,7 +13,7 @@
   *                                                                         *
   ***************************************************************************/
  #include "qgsellipsesymbollayer.h"
 -#include "qgsdxfexport.h"
 +// #include "qgsdxfexport.h"
- #include "qgsexpression.h"
  #include "qgsfeature.h"
  #include "qgsrendercontext.h"
-@@ -827,7 +827,7 @@
+ #include "qgslogger.h"
+@@ -894,7 +894,7 @@
  
    return symbolBounds;
  }
@@ -18,7 +18,7 @@
  bool QgsEllipseSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift ) const
  {
    //width
-@@ -1011,7 +1011,7 @@
+@@ -1084,7 +1084,7 @@
  
    return false;
  }

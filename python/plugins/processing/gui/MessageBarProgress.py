@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     MessageBarProgress.py
@@ -35,14 +33,21 @@ class MessageBarProgress(QgsProcessingFeedback):
 
         self.msg = []
         self.progressMessageBar = \
-            iface.messageBar().createMessage(self.tr('Executing algorithm <i>{0}</i>'.format(algname if algname else '')))
+            iface.messageBar().createMessage(self.tr('Executing algorithm <i>{}</i>'.format(algname if algname else '')))
         self.progress = QProgressBar()
-        self.progressChanged.connect(self.progress.setValue)
+        self.progressChanged.connect(self.set_progress_bar_value)
         self.progress.setMaximum(100)
         self.progress.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self.progressMessageBar.layout().addWidget(self.progress)
         self.message_bar_item = iface.messageBar().pushWidget(self.progressMessageBar,
                                                               Qgis.Info)
+
+    def set_progress_bar_value(self, progress: float):
+        """
+        Sets the progress bar value to a rounded int of the algorithm's
+        progress
+        """
+        self.progress.setValue(int(progress))
 
     def reportError(self, msg, fatalError=False):
         self.msg.append(msg)

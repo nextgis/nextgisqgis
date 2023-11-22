@@ -40,17 +40,16 @@
  * \ingroup UnitTests
  * This is a unit test to verify that symbols are working correctly
  */
-class TestQgsSymbol : public QObject
+class TestQgsSymbol : public QgsTest
 {
     Q_OBJECT
 
   public:
 
-    TestQgsSymbol();
+    TestQgsSymbol() : QgsTest( QStringLiteral( "Symbol Tests" ) ) {}
 
   private:
 
-    QString mReport;
     QString mTestDataDir;
 
     QgsVectorLayer *mpPointsLayer = nullptr;
@@ -64,8 +63,6 @@ class TestQgsSymbol : public QObject
     // init / cleanup
     void initTestCase();// will be called before the first testfunction is executed.
     void cleanupTestCase();// will be called after the last testfunction was executed.
-    void init() {}// will be called before each testfunction is executed.
-    void cleanup() {}// will be called after every testfunction.
     // void initStyles();
 
     void testCanvasClip();
@@ -73,8 +70,6 @@ class TestQgsSymbol : public QObject
     void testParseColorList();
     void symbolProperties();
 };
-
-TestQgsSymbol::TestQgsSymbol() = default;
 
 // slots
 void TestQgsSymbol::initTestCase()
@@ -98,7 +93,7 @@ void TestQgsSymbol::initTestCase()
   if ( styleFile.exists() )
   {
     styleFile.remove();
-    QgsDebugMsg( "removed user style file " + styleFile.fileName() );
+    QgsDebugMsgLevel( "removed user style file " + styleFile.fileName(), 1 );
   }
 
   //
@@ -136,23 +131,11 @@ void TestQgsSymbol::initTestCase()
   // Register the layer with the registry
   QgsProject::instance()->addMapLayers(
     QList<QgsMapLayer *>() << mpLinesLayer );
-
-  mReport += QLatin1String( "<h1>StyleV2 Tests</h1>\n" );
 }
 
 void TestQgsSymbol::cleanupTestCase()
 {
   QgsApplication::exitQgis();
-
-  const QString myReportFile = QDir::tempPath() + "/qgistest.html";
-  QFile myFile( myReportFile );
-  if ( myFile.open( QIODevice::WriteOnly | QIODevice::Append ) )
-  {
-    QTextStream myQTextStream( &myFile );
-    myQTextStream << mReport;
-    myFile.close();
-    //QDesktopServices::openUrl( "file:///" + myReportFile );
-  }
 }
 
 bool TestQgsSymbol::imageCheck( QgsMapSettings &ms, const QString &testName )
@@ -175,7 +158,6 @@ void TestQgsSymbol::testCanvasClip()
   ms.setFlag( Qgis::MapSettingsFlag::ForceVectorOutput );
 
   //line
-  mReport += QLatin1String( "<h2>Line canvas clip</h2>\n" );
   ms.setLayers( QList<QgsMapLayer *>() << mpLinesLayer );
 
   QgsMarkerLineSymbolLayer *markerLine = new QgsMarkerLineSymbolLayer();
@@ -196,7 +178,6 @@ void TestQgsSymbol::testCanvasClip()
   QVERIFY( result );
 
   //poly
-  mReport += QLatin1String( "<h2>Polygon canvas clip</h2>\n" );
   ms.setLayers( QList<QgsMapLayer *>() << mpPolysLayer );
 
   QgsCentroidFillSymbolLayer *centroidFill = new QgsCentroidFillSymbolLayer();
@@ -298,7 +279,7 @@ void TestQgsSymbol::testParseColor()
   QMap<QString, QPair< QColor, bool> >::const_iterator i = colorTests.constBegin();
   while ( i != colorTests.constEnd() )
   {
-    QgsDebugMsg( "color string: " +  i.key() );
+    QgsDebugMsgLevel( "color string: " +  i.key(), 1 );
     bool hasAlpha = false;
     const QColor result = QgsSymbolLayerUtils::parseColorWithAlpha( i.key(), hasAlpha );
     QVERIFY( result == i.value().first );
@@ -379,7 +360,7 @@ void TestQgsSymbol::testParseColorList()
   QMap<QString, QColor >::const_iterator i = colorTests.constBegin();
   while ( i != colorTests.constEnd() )
   {
-    QgsDebugMsg( "color list string: " +  i.key() );
+    QgsDebugMsgLevel( "color list string: " +  i.key(), 1 );
     const QList< QColor > result = QgsSymbolLayerUtils::parseColorList( i.key() );
     if ( i.value().isValid() )
     {
@@ -417,7 +398,7 @@ void TestQgsSymbol::testParseColorList()
   QVector< QPair< QString, QList<QColor> > >::const_iterator it = colorListTests.constBegin();
   while ( it != colorListTests.constEnd() )
   {
-    QgsDebugMsg( "color list string: " + ( *it ).first );
+    QgsDebugMsgLevel( "color list string: " + ( *it ).first, 1 );
     const QList< QColor > result = QgsSymbolLayerUtils::parseColorList( ( *it ).first );
     if ( ( *it ).second.length() > 0 )
     {

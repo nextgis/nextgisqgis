@@ -264,14 +264,14 @@ Units are specified by :py:func:`~QgsVectorLayerTemporalProperties.setDurationUn
 .. seealso:: :py:func:`setDurationUnits`
 %End
 
-    QgsUnitTypes::TemporalUnit durationUnits() const;
+    Qgis::TemporalUnit durationUnits() const;
 %Docstring
 Returns the units of the event's duration.
 
 .. seealso:: :py:func:`setDurationUnits`
 %End
 
-    void setDurationUnits( QgsUnitTypes::TemporalUnit units );
+    void setDurationUnits( Qgis::TemporalUnit units );
 %Docstring
 Sets the ``units`` of the event's duration.
 
@@ -336,7 +336,7 @@ occur before or within the map's temporal range should be rendered).
 .. seealso:: :py:func:`accumulateFeatures`
 %End
 
-    QString createFilterString( QgsVectorLayerTemporalContext context, const QgsDateTimeRange &range ) const;
+    QString createFilterString( const QgsVectorLayerTemporalContext &context, const QgsDateTimeRange &range ) const;
 %Docstring
 Creates a QGIS expression filter string for filtering features within
 the specified ``context`` to those within the specified time ``range``.

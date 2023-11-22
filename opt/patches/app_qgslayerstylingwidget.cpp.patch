@@ -1,9 +1,9 @@
 --- a/src/app/qgslayerstylingwidget.cpp	2022-02-18 15:06:10.000000000 +0300
 +++ b/src/app/qgslayerstylingwidget.cpp	2022-04-25 18:33:17.000000000 +0300
-@@ -36,9 +36,9 @@
+@@ -37,9 +37,9 @@
+ #include "qgsmaplayerstylemanager.h"
  #include "qgsstyle.h"
  #include "qgsvectorlayer.h"
- #include "qgspointcloudlayer.h"
 -#include "qgsvectortilelayer.h"
 -#include "qgsvectortilebasiclabelingwidget.h"
 -#include "qgsvectortilebasicrendererwidget.h"
@@ -13,11 +13,11 @@
  #include "qgsmeshlayer.h"
  #include "qgsproject.h"
  #include "qgsundowidget.h"
-@@ -247,18 +247,18 @@
+@@ -257,18 +257,18 @@
        break;
      }
  
--    case QgsMapLayerType::VectorTileLayer:
+-    case Qgis::LayerType::VectorTile:
 -    {
 -      QListWidgetItem *symbolItem = new QListWidgetItem( QgsApplication::getThemeIcon( QStringLiteral( "propertyicons/symbology.svg" ) ), QString() );
 -      symbolItem->setData( Qt::UserRole, Symbology );
@@ -29,7 +29,7 @@
 -      mOptionsListWidget->addItem( labelItem );
 -      break;
 -    }
-+    // case QgsMapLayerType::VectorTileLayer:
++    // case Qgis::LayerType::VectorTile:
 +    // {
 +    //   QListWidgetItem *symbolItem = new QListWidgetItem( QgsApplication::getThemeIcon( QStringLiteral( "propertyicons/symbology.svg" ) ), QString() );
 +    //   symbolItem->setData( Qt::UserRole, Symbology );
@@ -42,13 +42,13 @@
 +    //   break;
 +    // }
  
-     case QgsMapLayerType::PointCloudLayer:
-     case QgsMapLayerType::PluginLayer:
-@@ -652,32 +652,32 @@
+     case Qgis::LayerType::PointCloud:
+     case Qgis::LayerType::Plugin:
+@@ -683,32 +683,32 @@
          break;
        }
  
--      case QgsMapLayerType::VectorTileLayer:
+-      case Qgis::LayerType::VectorTile:
 -      {
 -        QgsVectorTileLayer *vtLayer = qobject_cast<QgsVectorTileLayer *>( mCurrentLayer );
 -        switch ( row )
@@ -74,7 +74,7 @@
 -        }
 -        break;
 -      }
-+    //   case QgsMapLayerType::VectorTileLayer:
++    //   case Qgis::LayerType::VectorTile:
 +    //   {
 +    //     QgsVectorTileLayer *vtLayer = qobject_cast<QgsVectorTileLayer *>( mCurrentLayer );
 +    //     switch ( row )
@@ -101,5 +101,5 @@
 +    //     break;
 +    //   }
  
-       case QgsMapLayerType::PointCloudLayer:
-       case QgsMapLayerType::AnnotationLayer:
+       case Qgis::LayerType::PointCloud:
+       case Qgis::LayerType::Annotation:

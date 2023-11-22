@@ -1,0 +1,31 @@
+--- a/src/core/auth/qgsauthmanager.cpp	2023-08-22 11:32:52.719351233 +0300
++++ b/src/core/auth/qgsauthmanager.cpp	2023-08-28 21:32:16.787599097 +0300
+@@ -74,8 +74,8 @@
+ const QString QgsAuthManager::AUTH_CFG_REGEX = QStringLiteral( "authcfg=([a-z]|[A-Z]|[0-9]){7}" );
+ 
+ 
+-const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_KEY_NAME( "QGIS-Master-Password" );
+-const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_FOLDER_NAME( "QGIS" );
++const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_KEY_NAME( "NextGIS-Master-Password" );
++const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_FOLDER_NAME( "NextGIS" );
+ 
+ 
+ 
+@@ -89,17 +89,6 @@
+ const QString QgsAuthManager::AUTH_PASSWORD_HELPER_DISPLAY_NAME( "Password Manager" );
+ #endif
+ 
+-QgsAuthManager *QgsAuthManager::instance()
+-{
+-  static QMutex sMutex;
+-  QMutexLocker locker( &sMutex );
+-  if ( !sInstance )
+-  {
+-    sInstance = new QgsAuthManager( );
+-  }
+-  return sInstance;
+-}
+-
+ 
+ QgsAuthManager::QgsAuthManager()
+ {

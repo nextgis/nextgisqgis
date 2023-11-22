@@ -26,6 +26,9 @@ class QgsFeature;
 #include "vector_tile.pb.h"
 
 #include "qgsvectortilerenderer.h"
+#include "qgsvectortilematrixset.h"
+
+class QgsVectorTileRawData;
 
 /**
  * \ingroup core
@@ -36,11 +39,15 @@ class QgsFeature;
 class CORE_EXPORT QgsVectorTileMVTDecoder
 {
   public:
-    QgsVectorTileMVTDecoder();
+
+    /**
+     * Constructor for QgsVectorTileMVTDecoder, using the specified tile \a structure.
+     */
+    QgsVectorTileMVTDecoder( const QgsVectorTileMatrixSet &structure );
     ~QgsVectorTileMVTDecoder();
 
     //! Tries to decode raw tile data, returns true on success
-    bool decode( QgsTileXYZ tileID, const QByteArray &rawTileData );
+    bool decode( const QgsVectorTileRawData &rawTileData );
 
     //! Returns a list of sub-layer names in a tile. It can only be called after a successful decode()
     QStringList layers() const;
@@ -59,6 +66,7 @@ class CORE_EXPORT QgsVectorTileMVTDecoder
   private:
     vector_tile::Tile tile;
     QgsTileXYZ mTileID;
+    QgsVectorTileMatrixSet mStructure;
     QMap<QString, int> mLayerNameToIndex;
 };
 

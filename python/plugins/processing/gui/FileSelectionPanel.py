@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     FileSelectionPanel.py
@@ -41,7 +39,7 @@ with warnings.catch_warnings():
 class FileSelectionPanel(BASE, WIDGET):
 
     def __init__(self, isFolder, ext=None):
-        super(FileSelectionPanel, self).__init__(None)
+        super().__init__(None)
         self.setupUi(self)
 
         self.ext = ext or '*'
@@ -73,7 +71,7 @@ class FileSelectionPanel(BASE, WIDGET):
             filenames, selected_filter = QFileDialog.getOpenFileNames(self,
                                                                       self.tr('Select File'), path, self.tr('{} files').format(self.ext.upper()) + ' (*.' + self.ext + self.tr(');;All files (*.*)'))
             if filenames:
-                self.leText.setText(u';'.join(filenames))
+                self.leText.setText(';'.join(filenames))
                 settings.setValue('/Processing/LastInputPath',
                                   os.path.dirname(filenames[0]))
 

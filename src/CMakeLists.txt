@@ -35,6 +35,7 @@ endif()
 if (WITH_GUI)
 #   add_subdirectory(ui) - not needed as AUTOUIC ON
   add_subdirectory(gui)
+#  add_subdirectory(native)
 endif()
 
 if (NOT PREPARE_ONLY)
@@ -42,7 +43,10 @@ if (NOT PREPARE_ONLY)
 endif()
 
 add_subdirectory(crssync)
-add_subdirectory(test)
+
+if (ENABLE_TESTS)
+  add_subdirectory(test)
+endif()
 
 if (WITH_DESKTOP)
   add_subdirectory(app)

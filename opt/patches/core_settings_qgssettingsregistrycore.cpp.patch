@@ -1,38 +1,108 @@
---- a/src/core/settings/qgssettingsregistrycore.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/settings/qgssettingsregistrycore.cpp	2022-04-25 18:33:17.000000000 +0300
-@@ -16,9 +16,9 @@
- #include "qgssettingsregistrycore.h"
+--- a/src/core/settings/qgssettingsregistrycore.cpp	2023-08-21 19:39:45.743045834 +0300
++++ b/src/core/settings/qgssettingsregistrycore.cpp	2023-10-16 16:37:31.000000000 +0300
+@@ -22,14 +22,14 @@
+ #include "qgssettingsentryenumflag.h"
+ #include "qgssettings.h"
  
+-#include "qgsbabelformatregistry.h"
++//#include "qgsbabelformatregistry.h"
  #include "qgslayout.h"
--#include "qgslocator.h"
-+// #include "qgslocator.h"
+ #include "qgslocator.h"
  #include "qgsnetworkaccessmanager.h"
--#include "qgsnewsfeedparser.h"
-+// #include "qgsnewsfeedparser.h"
+ #include "qgsowsconnection.h"
  #include "qgsprocessing.h"
- #include "qgsapplication.h"
- #include "qgsgeometryoptions.h"
-@@ -30,16 +30,16 @@
- {
-   addSettingsEntry( &QgsLayout::settingsSearchPathForTemplates );
+-#include "qgsvectortileconnection.h"
+-#include "qgsgpsdetector.h"
++//#include "qgsvectortileconnection.h"
++//#include "qgsgpsdetector.h"
+ #include "qgsrasterlayer.h"
+ #include "qgsvectorlayer.h"
  
--  addSettingsEntry( &QgsLocator::settingsLocatorFilterEnabled );
--  addSettingsEntry( &QgsLocator::settingsLocatorFilterDefault );
--  addSettingsEntry( &QgsLocator::settingsLocatorFilterPrefix );
-+//   addSettingsEntry( &QgsLocator::settingsLocatorFilterEnabled );
-+//   addSettingsEntry( &QgsLocator::settingsLocatorFilterDefault );
-+//   addSettingsEntry( &QgsLocator::settingsLocatorFilterPrefix );
+@@ -140,12 +140,12 @@
  
-   addSettingsEntry( &QgsNetworkAccessManager::settingsNetworkTimeout );
+   settingsLayerTreeShowFeatureCountForNewLayers->copyValueFromKey( QStringLiteral( "core/layer-tree/show_feature_count_for_new_layers" ) );
  
--  addSettingsEntry( &QgsNewsFeedParser::settingsFeedLastFetchTime );
--  addSettingsEntry( &QgsNewsFeedParser::settingsFeedLanguage );
--  addSettingsEntry( &QgsNewsFeedParser::settingsFeedLatitude );
--  addSettingsEntry( &QgsNewsFeedParser::settingsFeedLongitude );
-+//   addSettingsEntry( &QgsNewsFeedParser::settingsFeedLastFetchTime );
-+//   addSettingsEntry( &QgsNewsFeedParser::settingsFeedLanguage );
-+//   addSettingsEntry( &QgsNewsFeedParser::settingsFeedLatitude );
-+//   addSettingsEntry( &QgsNewsFeedParser::settingsFeedLongitude );
+-#if defined( HAVE_QTSERIALPORT )
+-  QgsGpsDetector::settingsGpsStopBits->copyValueFromKey( QStringLiteral( "core/gps/stop_bits" ) );
+-  QgsGpsDetector::settingsGpsFlowControl->copyValueFromKey( QStringLiteral( "core/gps/flow_control" ) );
+-  QgsGpsDetector::settingsGpsDataBits->copyValueFromKey( QStringLiteral( "core/gps/data_bits" ) );
+-  QgsGpsDetector::settingsGpsParity->copyValueFromKey( QStringLiteral( "core/gps/parity" ) );
+-#endif
++//#if defined( HAVE_QTSERIALPORT )
++//  QgsGpsDetector::settingsGpsStopBits->copyValueFromKey( QStringLiteral( "core/gps/stop_bits" ) );
++//  QgsGpsDetector::settingsGpsFlowControl->copyValueFromKey( QStringLiteral( "core/gps/flow_control" ) );
++//  QgsGpsDetector::settingsGpsDataBits->copyValueFromKey( QStringLiteral( "core/gps/data_bits" ) );
++//  QgsGpsDetector::settingsGpsParity->copyValueFromKey( QStringLiteral( "core/gps/parity" ) );
++//#endif
  
-   addSettingsEntry( &QgsProcessing::settingsPreferFilenameAsLayerName );
-   addSettingsEntry( &QgsProcessing::settingsTempPath );
+   QgsRasterLayer::settingsRasterDefaultOversampling->copyValueFromKey( QStringLiteral( "Raster/defaultOversampling" ), true );
+   QgsRasterLayer::settingsRasterDefaultEarlyResampling->copyValueFromKey( QStringLiteral( "Raster/defaultEarlyResampling" ), true );
+@@ -275,7 +275,7 @@
+       QgsOwsConnection::sTreeOwsConnections->setSelectedItem( settings.value( QStringLiteral( "selected" ) ).toString(), {service.toLower()} );
+   }
+ 
+-  // Vector tile - added in 3.30
++/*  // Vector tile - added in 3.30
+   {
+     QgsSettings settings;
+     settings.beginGroup( QStringLiteral( "qgis/connections-vector-tile" ) );
+@@ -297,7 +297,7 @@
+       Q_NOWARN_DEPRECATED_POP
+     }
+   }
+-
++*/
+   // xyz - added in 3.30
+   {
+     QgsSettings settings;
+@@ -349,7 +349,7 @@
+     }
+   }
+ 
+-  // babel devices settings - added in 3.30
++/*  // babel devices settings - added in 3.30
+   {
+     if ( QgsBabelFormatRegistry::sTreeBabelDevices->items().count() == 0 )
+     {
+@@ -365,7 +365,7 @@
+         QgsBabelFormatRegistry::settingsBabelTrkUpload->copyValueFromKey( QStringLiteral( "/Plugin-GPS/devices/%1/trkupload" ), {device}, true );
+       }
+     }
+-  }
++  }*/
+ }
+ 
+ // TODO QGIS 4.0: Remove
+@@ -479,7 +479,7 @@
+     }
+   }
+ 
+-  // Vector tile - added in 3.30
++/*  // Vector tile - added in 3.30
+   {
+     QgsSettings settings;
+     settings.beginGroup( QStringLiteral( "qgis/connections-vector-tile" ) );
+@@ -504,6 +504,7 @@
+       Q_NOWARN_DEPRECATED_POP
+     }
+   }
++*/
+ 
+   // xyz - added in 3.30
+   {
+@@ -554,7 +555,7 @@
+     }
+   }
+ 
+-  // babel devices settings - added in 3.30
++/*  // babel devices settings - added in 3.30
+   {
+     const QStringList devices = QgsBabelFormatRegistry::sTreeBabelDevices->items();
+     QgsSettings().setValue( QStringLiteral( "/Plugin-GPS/devices/deviceList" ), devices );
+@@ -567,5 +568,5 @@
+       QgsBabelFormatRegistry::settingsBabelTrkDownload->copyValueToKey( QStringLiteral( "/Plugin-GPS/devices/%1/trkdownload" ), {device} );
+       QgsBabelFormatRegistry::settingsBabelTrkUpload->copyValueToKey( QStringLiteral( "/Plugin-GPS/devices/%1/trkupload" ), {device} );
+     }
+-  }
++  }*/
+ }

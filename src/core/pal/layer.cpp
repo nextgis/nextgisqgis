@@ -29,7 +29,6 @@
 
 #include "pal.h"
 #include "layer.h"
-#include "palexception.h"
 #include "internalexception.h"
 #include "feature.h"
 #include "geomfunction.h"
@@ -42,17 +41,13 @@
 
 using namespace pal;
 
-Layer::Layer( QgsAbstractLabelProvider *provider, const QString &name, QgsPalLayerSettings::Placement arrangement, double defaultPriority, bool active, bool toLabel, Pal *pal, bool displayAll )
+Layer::Layer( QgsAbstractLabelProvider *provider, const QString &name, Qgis::LabelPlacement arrangement, double defaultPriority, bool active, bool toLabel, Pal *pal )
   : mProvider( provider )
   , mName( name )
   , mPal( pal )
   , mActive( active )
   , mLabelLayer( toLabel )
-  , mDisplayAll( displayAll )
-  , mCentroidInside( false )
   , mArrangement( arrangement )
-  , mMergeLines( false )
-  , mUpsidedownLabels( Upright )
 {
   if ( defaultPriority < 0.0001 )
     mDefaultPriority = 0.0001;
@@ -204,7 +199,7 @@ bool Layer::registerFeature( QgsLabelFeature *lf )
 
       if ( !geom )
       {
-        QgsDebugMsg( QStringLiteral( "Obstacle geometry passed to PAL labeling engine could not be converted to GEOS! %1" ).arg( ( *it )->asWkt() ) );
+        QgsDebugError( QStringLiteral( "Obstacle geometry passed to PAL labeling engine could not be converted to GEOS! %1" ).arg( ( *it )->asWkt() ) );
         continue;
       }
 
@@ -212,7 +207,7 @@ bool Layer::registerFeature( QgsLabelFeature *lf )
       if ( GEOSisValid_r( geosctxt, geom.get() ) != 1 ) // 0=invalid, 1=valid, 2=exception
       {
         // this shouldn't happen -- we have already checked this while registering the feature
-        QgsDebugMsg( QStringLiteral( "Obstacle geometry passed to PAL labeling engine is not valid! %1" ).arg( ( *it )->asWkt() ) );
+        QgsDebugError( QStringLiteral( "Obstacle geometry passed to PAL labeling engine is not valid! %1" ).arg( ( *it )->asWkt() ) );
         continue;
       }
 
@@ -427,12 +422,7 @@ void Layer::chopFeaturesAtRepeatDistance()
       std::vector<Point> points( n );
       for ( unsigned int i = 0; i < n; ++i )
       {
-#if GEOS_VERSION_MAJOR>3 || GEOS_VERSION_MINOR>=8
         GEOSCoordSeq_getXY_r( geosctxt, cs, i, &points[i].x, &points[i].y );
-#else
-        GEOSCoordSeq_getX_r( geosctxt, cs, i, &points[i].x );
-        GEOSCoordSeq_getY_r( geosctxt, cs, i, &points[i].y );
-#endif
       }
 
       // Cumulative length vector
@@ -465,12 +455,7 @@ void Layer::chopFeaturesAtRepeatDistance()
           GEOSCoordSequence *cooSeq = GEOSCoordSeq_create_r( geosctxt, static_cast< unsigned int >( part.size() ), 2 );
           for ( unsigned int i = 0; i < part.size(); ++i )
           {
-#if GEOS_VERSION_MAJOR>3 || GEOS_VERSION_MINOR>=8
             GEOSCoordSeq_setXY_r( geosctxt, cooSeq, i, part[i].x, part[i].y );
-#else
-            GEOSCoordSeq_setX_r( geosctxt, cooSeq, i, part[i].x );
-            GEOSCoordSeq_setY_r( geosctxt, cooSeq, i, part[i].y );
-#endif
           }
           GEOSGeometry *newgeom = GEOSGeom_createLineString_r( geosctxt, cooSeq );
           std::unique_ptr< FeaturePart > newfpart = std::make_unique< FeaturePart >( fpart->feature(), newgeom );
@@ -486,12 +471,7 @@ void Layer::chopFeaturesAtRepeatDistance()
         GEOSCoordSequence *cooSeq = GEOSCoordSeq_create_r( geosctxt, static_cast< unsigned int >( part.size() ), 2 );
         for ( std::size_t i = 0; i < part.size(); ++i )
         {
-#if GEOS_VERSION_MAJOR>3 || GEOS_VERSION_MINOR>=8
           GEOSCoordSeq_setXY_r( geosctxt, cooSeq, i, part[i].x, part[i].y );
-#else
-          GEOSCoordSeq_setX_r( geosctxt, cooSeq, static_cast< unsigned int >( i ), part[i].x );
-          GEOSCoordSeq_setY_r( geosctxt, cooSeq, static_cast< unsigned int >( i ), part[i].y );
-#endif
         }
 
         GEOSGeometry *newgeom = GEOSGeom_createLineString_r( geosctxt, cooSeq );
@@ -502,8 +482,12 @@ void Layer::chopFeaturesAtRepeatDistance()
         part.push_back( p );
       }
 
+      // cppcheck-suppress invalidLifetime
       for ( FeaturePart *partPtr : repeatParts )
+      {
+        // cppcheck-suppress invalidLifetime
         partPtr->setTotalRepeats( repeatParts.count() );
+      }
     }
     else
     {

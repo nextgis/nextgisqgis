@@ -86,6 +86,8 @@ Constructor for QgsPointDistanceRenderer.
 
     virtual QSet< QString > legendKeysForFeature( const QgsFeature &feature, QgsRenderContext &context ) const;
 
+    virtual QString legendKeyToExpression( const QString &key, QgsVectorLayer *layer, bool &ok ) const;
+
     virtual bool willRenderFeature( const QgsFeature &feature, QgsRenderContext &context ) const;
 
     virtual void startRender( QgsRenderContext &context, const QgsFields &fields );
@@ -230,7 +232,7 @@ Returns the tolerance distance for grouping points. Units are retrieved using
 .. seealso:: :py:func:`toleranceUnit`
 %End
 
-    void setToleranceUnit( QgsUnitTypes::RenderUnit unit );
+    void setToleranceUnit( Qgis::RenderUnit unit );
 %Docstring
 Sets the units for the tolerance distance.
 
@@ -243,7 +245,7 @@ Sets the units for the tolerance distance.
 .. versionadded:: 2.12
 %End
 
-    QgsUnitTypes::RenderUnit toleranceUnit() const;
+    Qgis::RenderUnit toleranceUnit() const;
 %Docstring
 Returns the units for the tolerance distance.
 
@@ -287,7 +289,7 @@ Returns the map unit scale object for the distance tolerance. This is only used 
 
 
 
-    void drawLabels( QPointF centerPoint, QgsSymbolRenderContext &context, const QList<QPointF> &labelShifts, const ClusteredGroup &group );
+    void drawLabels( QPointF centerPoint, QgsSymbolRenderContext &context, const QList<QPointF> &labelShifts, const ClusteredGroup &group ) const;
 %Docstring
 Renders the labels for a group.
 
@@ -302,7 +304,7 @@ Renders the labels for a group.
 %End
 
   private:
-    virtual void drawGroup( QPointF centerPoint, QgsRenderContext &context, const ClusteredGroup &group ) = 0;
+    virtual void drawGroup( QPointF centerPoint, QgsRenderContext &context, const ClusteredGroup &group ) const = 0;
 %Docstring
 Draws a group of clustered points.
 

@@ -185,7 +185,7 @@ QgsFeatureRenderer *QgsSingleSymbolRenderer::create( QDomElement &element, const
   return r;
 }
 
-QgsFeatureRenderer *QgsSingleSymbolRenderer::createFromSld( QDomElement &element, QgsWkbTypes::GeometryType geomType )
+QgsFeatureRenderer *QgsSingleSymbolRenderer::createFromSld( QDomElement &element, Qgis::GeometryType geomType )
 {
   // XXX this renderer can handle only one Rule!
 
@@ -193,7 +193,7 @@ QgsFeatureRenderer *QgsSingleSymbolRenderer::createFromSld( QDomElement &element
   const QDomElement ruleElem = element.firstChildElement( QStringLiteral( "Rule" ) );
   if ( ruleElem.isNull() )
   {
-    QgsDebugMsg( QStringLiteral( "no Rule elements found!" ) );
+    QgsDebugError( QStringLiteral( "no Rule elements found!" ) );
     return nullptr;
   }
 
@@ -252,20 +252,20 @@ QgsFeatureRenderer *QgsSingleSymbolRenderer::createFromSld( QDomElement &element
   std::unique_ptr< QgsSymbol > symbol;
   switch ( geomType )
   {
-    case QgsWkbTypes::LineGeometry:
+    case Qgis::GeometryType::Line:
       symbol = std::make_unique< QgsLineSymbol >( layers );
       break;
 
-    case QgsWkbTypes::PolygonGeometry:
+    case Qgis::GeometryType::Polygon:
       symbol = std::make_unique< QgsFillSymbol >( layers );
       break;
 
-    case QgsWkbTypes::PointGeometry:
+    case Qgis::GeometryType::Point:
       symbol = std::make_unique< QgsMarkerSymbol >( layers );
       break;
 
     default:
-      QgsDebugMsg( QStringLiteral( "invalid geometry type: found %1" ).arg( geomType ) );
+      QgsDebugError( QStringLiteral( "invalid geometry type: found %1" ).arg( qgsEnumValueToKey( geomType ) ) );
       return nullptr;
   }
 
@@ -325,6 +325,20 @@ QSet< QString > QgsSingleSymbolRenderer::legendKeysForFeature( const QgsFeature 
   Q_UNUSED( feature )
   Q_UNUSED( context )
   return QSet< QString >() << QStringLiteral( "0" );
+}
+
+QString QgsSingleSymbolRenderer::legendKeyToExpression( const QString &key, QgsVectorLayer *, bool &ok ) const
+{
+  if ( key == QLatin1String( "0" ) )
+  {
+    ok = true;
+    return QStringLiteral( "TRUE" );
+  }
+  else
+  {
+    ok = false;
+    return QString();
+  }
 }
 
 void QgsSingleSymbolRenderer::setLegendSymbolItem( const QString &key, QgsSymbol *symbol )

@@ -1,0 +1,18 @@
+--- a/i18n/qgis_ru.ts	2023-08-21 19:39:45.231082150 +0300
++++ b/i18n/qgis_ru.ts	2023-10-04 13:38:56.957262634 +0300
+@@ -127138,7 +127138,7 @@
+         <location filename="../src/gui/qgsquerybuilder.cpp" line="261"/>
+         <source>The where clause returned %n row(s).</source>
+         <comment>returned test rows</comment>
+-        <translation><numerusform>Выражение where вернуло %s строку</numerusform><numerusform>Выражение where вернуло %s строк</numerusform><numerusform>Выражение where вернуло %s строк</numerusform><numerusform>Выражение where вернуло %s строк</numerusform></translation>
++        <translation><numerusform>Выражение where вернуло %n строку</numerusform><numerusform>Выражение where вернуло %n строк</numerusform><numerusform>Выражение where вернуло %n строк</numerusform><numerusform>Выражение where вернуло %n строк</numerusform></translation>
+     </message>
+     <message>
+         <location filename="../src/gui/qgsquerybuilder.cpp" line="297"/>
+@@ -157267,4 +157267,4 @@
+         <translation type="unfinished"/>
+     </message>
+ </context>
+-</TS>
+\ В конце файла нет новой строки
++</TS>

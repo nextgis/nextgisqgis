@@ -27,6 +27,9 @@
 // version without notice, or even be removed.
 //
 
+#include "qgsfeatureid.h"
+#include <QSize>
+#include <QVariantMap>
 #include <QVector3D>
 
 #define SIP_NO_FILE
@@ -93,20 +96,6 @@ namespace QgsRayCastingUtils
    */
   bool rayBoxIntersection( const Ray3D &r, const QgsAABB &aabb );
 
-  //! Represents a plane in 3D space
-  struct Plane3D
-  {
-    QVector3D center;  //!< A point that lies on the plane
-    QVector3D normal;  //!< Normal vector of the plane
-  };
-
-  /**
-   * Tests whether a plane is intersected by a ray.
-   * \note With switch to Qt 5.11 we may remove it and use QRayCaster/QScreenRayCaster instead.
-   * \since QGIS 3.4
-   */
-  bool rayPlaneIntersection( const Ray3D &r, const Plane3D &plane, QVector3D &pt );
-
   /**
    * Tests whether a triangle is intersected by a ray.
    * \note With switch to Qt 5.11 we may remove it and use QRayCaster/QScreenRayCaster instead.
@@ -120,21 +109,43 @@ namespace QgsRayCastingUtils
                                 float &t );
 
   /**
-   * Returns a ray coming out of camera
-   * \note With switch to Qt 5.11 we may remove it and use QRayCaster/QScreenRayCaster instead.
-   * \since QGIS 3.4
+   * Helper struct to store ray casting results.
    */
-  Ray3D rayForViewportAndCamera( const QSize &area,
-                                 const QPointF &pos,
-                                 const QRectF &relativeViewport,
-                                 const Qt3DRender::QCamera *camera );
+  struct RayHit
+  {
+    //! Constructor
+    RayHit( const float distance, const QVector3D pos, const QgsFeatureId fid = FID_NULL, const QVariantMap attributes = QVariantMap() )
+      : distance( distance )
+      , pos( pos )
+      , fid( fid )
+      , attributes( attributes )
+    {
+    }
+    float distance;  //!< Distance from ray's origin
+    QVector3D pos;  //!< Hit position in world coordinates
+    QgsFeatureId fid;  //!< Fid of feature hit closest to ray origin, FID_NULL if no features hit
+    QVariantMap attributes;  //!< Point cloud point attributes, empty map if no point cloud points hit
+  };
 
   /**
-   * Returns a ray coming out of center of camera
-   * \note With switch to Qt 5.11 we may remove it and use QRayCaster/QScreenRayCaster instead.
-   * \since QGIS 3.4
+   * Helper struct to store ray casting parameters.
    */
-  Ray3D rayForCameraCenter( const Qt3DRender::QCamera *camera );
+  struct RayCastContext
+  {
+    RayCastContext( bool singleResult = true, QSize screenSize = QSize(), float maxDistance = 0.f )
+      : singleResult( singleResult )
+      , screenSize( screenSize )
+      , maxDistance( maxDistance )
+    {}
+    bool singleResult;  //!< If set to TRUE, only the closest point cloud hit will be returned (other entities always return only closest hit)
+    QSize screenSize;  //!< QSize of the 3d engine window
+
+    /**
+     * The maximum distance from ray origin to look for hits when casting a ray.
+     * Should be normally set to far plane, to ignore data that will not get displayed in the 3D view
+     */
+    float maxDistance;
+  };
 }
 
 /// @endcond

@@ -40,6 +40,10 @@
 #include "qgsmapcanvas.h"
 #include "qgsproject.h"
 #include "qgsapplication.h"
+// #include "qgsvectortilelayer.h"
+#include "qgsvectorlayerutils.h"
+
+#include <nlohmann/json.hpp>
 
 QgsClipboard::QgsClipboard()
 {
@@ -55,21 +59,59 @@ void QgsClipboard::replaceWithCopyOf( QgsVectorLayer *src )
   mFeatureFields = src->fields();
   mFeatureClipboard = src->selectedFeatures();
   mCRS = src->crs();
-  mSrcLayer = src;
-  QgsDebugMsg( QStringLiteral( "replaced QGIS clipboard." ) );
+  QgsDebugMsgLevel( QStringLiteral( "replaced QGIS clipboard." ), 2 );
 
   setSystemClipboard();
   mUseSystemClipboard = false;
   emit changed();
 }
+/*
+void QgsClipboard::replaceWithCopyOf( QgsVectorTileLayer *src )
+{
+  if ( !src )
+    return;
+
+  // things are a bit tricky for vector tile features, as each will have different fields
+  // so we build a "super set" of fields first, and then make sure each feature has that superset present
+
+  const QList< QgsFeature > selectedFeatures = src->selectedFeatures();
+  QgsFields supersetFields;
+  for ( const QgsFeature &feature : selectedFeatures )
+  {
+    const QgsFields fields = feature.fields();
+    for ( const QgsField &field : fields )
+    {
+      if ( supersetFields.lookupField( field.name() ) == -1 )
+      {
+        supersetFields.append( field );
+      }
+    }
+  }
+
+  mFeatureFields = supersetFields;
+
+  mFeatureClipboard.clear();
+  for ( const QgsFeature &feature : selectedFeatures )
+  {
+    QgsFeature superSetFeature = feature;
+    QgsVectorLayerUtils::matchAttributesToFields( superSetFeature, mFeatureFields );
+    mFeatureClipboard.append( superSetFeature );
+  }
+
+  mCRS = src->crs();
+  QgsDebugMsgLevel( QStringLiteral( "replaced QGIS clipboard." ), 2 );
+
+  setSystemClipboard();
+  mUseSystemClipboard = false;
+  emit changed();
+}*/
 
 void QgsClipboard::replaceWithCopyOf( QgsFeatureStore &featureStore )
 {
-  QgsDebugMsg( QStringLiteral( "features count = %1" ).arg( featureStore.features().size() ) );
+  QgsDebugMsgLevel( QStringLiteral( "features count = %1" ).arg( featureStore.features().size() ), 2 );
   mFeatureFields = featureStore.fields();
   mFeatureClipboard = featureStore.features();
   mCRS = featureStore.crs();
-  mSrcLayer = nullptr;
   setSystemClipboard();
   mUseSystemClipboard = false;
   emit changed();
@@ -93,17 +135,22 @@ void QgsClipboard::generateClipboardText( QString &textContent, QString &htmlCon
       // first do the field names
       if ( format == AttributesWithWKT )
       {
-        textFields += QLatin1String( "wkt_geom" );
+        // only include the "wkt_geom" field IF we have other fields -- otherwise it's redundant and we should just set the clipboard to WKT text directly
+        if ( !mFeatureFields.isEmpty() )
+          textFields += QLatin1String( "wkt_geom" );
+
         htmlFields += QLatin1String( "<td>wkt_geom</td>" );
       }
 
-      const auto constMFeatureFields = mFeatureFields;
-      for ( const QgsField &field : constMFeatureFields )
+      textFields.reserve( mFeatureFields.size() );
+      htmlFields.reserve( mFeatureFields.size() );
+      for ( const QgsField &field : mFeatureFields )
       {
         textFields += field.name();
         htmlFields += QStringLiteral( "<td>%1</td>" ).arg( field.name() );
       }
-      textLines += textFields.join( QLatin1Char( '\t' ) );
+      if ( !textFields.empty() )
+        textLines += textFields.join( QLatin1Char( '\t' ) );
       htmlLines += htmlFields.join( QString() );
       textFields.clear();
       htmlFields.clear();
@@ -131,14 +178,33 @@ void QgsClipboard::generateClipboardText( QString &textContent, QString &htmlCon
 
         for ( int idx = 0; idx < attributes.count(); ++idx )
         {
-          QString value = attributes.at( idx ).toString();
+          QString value;
+          QVariant variant = attributes.at( idx );
+          const bool useJSONFromVariant = variant.type() == QVariant::StringList || variant.type() == QVariant::List || variant.type() == QVariant::Map;
+
+          if ( useJSONFromVariant )
+          {
+            value = QString::fromStdString( QgsJsonUtils::jsonFromVariant( attributes.at( idx ) ).dump() );
+          }
+          else
+          {
+            value = attributes.at( idx ).toString();
+          }
+
           if ( value.contains( '\n' ) || value.contains( '\t' ) )
             textFields += '"' + value.replace( '"', QLatin1String( "\"\"" ) ) + '\"';
           else
           {
             textFields += value;
           }
-          value = attributes.at( idx ).toString();
+          if ( useJSONFromVariant )
+          {
+            value = QString::fromStdString( QgsJsonUtils::jsonFromVariant( attributes.at( idx ) ).dump() );
+          }
+          else
+          {
+            value = attributes.at( idx ).toString();
+          }
           value.replace( '\n', QLatin1String( "<br>" ) ).replace( '\t', QLatin1String( "&emsp;" ) );
           htmlFields += QStringLiteral( "<td>%1</td>" ).arg( value );
         }
@@ -344,7 +410,7 @@ QgsFields QgsClipboard::retrieveFields() const
 
 QgsFeatureList QgsClipboard::copyOf( const QgsFields &fields ) const
 {
-  QgsDebugMsg( QStringLiteral( "returning clipboard." ) );
+  QgsDebugMsgLevel( QStringLiteral( "returning clipboard." ), 2 );
   if ( !mUseSystemClipboard )
     return mFeatureClipboard;
 
@@ -373,7 +439,7 @@ void QgsClipboard::clear()
 {
   mFeatureClipboard.clear();
 
-  QgsDebugMsg( QStringLiteral( "cleared clipboard." ) );
+  QgsDebugMsgLevel( QStringLiteral( "cleared clipboard." ), 2 );
   emit changed();
 }
 
@@ -404,7 +470,7 @@ QgsFeatureList QgsClipboard::transformedCopyOf( const QgsCoordinateReferenceSyst
   QgisApp::instance()->askUserForDatumTransform( crs(), destCRS );
   const QgsCoordinateTransform ct = QgsCoordinateTransform( crs(), destCRS, QgsProject::instance() );
 
-  QgsDebugMsg( QStringLiteral( "transforming clipboard." ) );
+  QgsDebugMsgLevel( QStringLiteral( "transforming clipboard." ), 2 );
   for ( QgsFeatureList::iterator iter = featureList.begin(); iter != featureList.end(); ++iter )
   {
     QgsGeometry g = iter->geometry();

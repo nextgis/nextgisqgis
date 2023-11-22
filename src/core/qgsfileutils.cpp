@@ -32,7 +32,7 @@
 #include <sys/time.h>
 #endif
 
-#ifdef MSVC
+#ifdef _MSC_VER
 #include <Windows.h>
 #include <ShlObj.h>
 #pragma comment(lib,"Shell32.lib")
@@ -57,7 +57,7 @@ QString QgsFileUtils::representFileSize( qint64 bytes )
 
 QStringList QgsFileUtils::extensionsFromFilter( const QString &filter )
 {
-  const QRegularExpression rx( QStringLiteral( "\\*\\.([a-zA-Z0-9]+)" ) );
+  const thread_local QRegularExpression rx( QStringLiteral( "\\*\\.([a-zA-Z0-9]+)" ) );
   QStringList extensions;
   QRegularExpressionMatchIterator matches = rx.globalMatch( filter );
 
@@ -76,7 +76,7 @@ QStringList QgsFileUtils::extensionsFromFilter( const QString &filter )
 
 QString QgsFileUtils::wildcardsFromFilter( const QString &filter )
 {
-  const QRegularExpression globPatternsRx( QStringLiteral( ".*\\((.*?)\\)$" ) );
+  const thread_local QRegularExpression globPatternsRx( QStringLiteral( ".*\\((.*?)\\)$" ) );
   const QRegularExpressionMatch matches = globPatternsRx.match( filter );
   if ( matches.hasMatch() )
     return matches.captured( 1 );
@@ -143,7 +143,7 @@ QString QgsFileUtils::addExtensionFromFilter( const QString &fileName, const QSt
 
 QString QgsFileUtils::stringToSafeFilename( const QString &string )
 {
-  QRegularExpression rx( QStringLiteral( "[/\\\\\\?%\\*\\:\\|\"<>]" ) );
+  const thread_local QRegularExpression rx( QStringLiteral( "[/\\\\\\?%\\*\\:\\|\"<>]" ) );
   QString s = string;
   s.replace( rx, QStringLiteral( "_" ) );
   return s;
@@ -280,7 +280,7 @@ QStringList QgsFileUtils::findFile( const QString &file, const QString &basePath
   return foundFiles;
 }
 
-#ifdef MSVC
+#ifdef _MSC_VER
 std::unique_ptr< wchar_t[] > pathToWChar( const QString &path )
 {
   const QString nativePath = QDir::toNativeSeparators( path );
@@ -290,12 +290,88 @@ std::unique_ptr< wchar_t[] > pathToWChar( const QString &path )
   pathArray[static_cast< size_t >( nativePath.length() )] = 0;
   return pathArray;
 }
+
+
+void fileAttributesOld( HANDLE handle, DWORD &fileAttributes, bool &hasFileAttributes )
+{
+  hasFileAttributes = false;
+  BY_HANDLE_FILE_INFORMATION info;
+  if ( GetFileInformationByHandle( handle, &info ) )
+  {
+    hasFileAttributes = true;
+    fileAttributes = info.dwFileAttributes;
+  }
+}
+
+// File attributes for Windows starting from version 8.
+void fileAttributesNew( HANDLE handle, DWORD &fileAttributes, bool &hasFileAttributes )
+{
+  hasFileAttributes = false;
+#if WINVER >= 0x0602
+  _FILE_BASIC_INFO infoEx;
+  if ( GetFileInformationByHandleEx(
+         handle,
+         FileBasicInfo,
+         &infoEx, sizeof( infoEx ) ) )
+  {
+    hasFileAttributes = true;
+    fileAttributes = infoEx.FileAttributes;
+  }
+  else
+  {
+    // GetFileInformationByHandleEx() is observed to fail for FAT32, QTBUG-74759
+    fileAttributesOld( handle, fileAttributes, hasFileAttributes );
+  }
+#else
+  fileAttributesOld( handle, fileAttributes, hasFileAttributes );
+#endif
+}
+
+bool pathIsLikelyCloudStorage( QString path )
+{
+  // For OneDrive detection need the attributes of a file from the path, not the directory itself.
+  // So just grab the first file in the path.
+  QDirIterator dirIt( path, QDir::Files );
+  if ( dirIt.hasNext() )
+  {
+    path = dirIt.next();
+  }
+
+  std::unique_ptr< wchar_t[] > pathArray = pathToWChar( path );
+  const HANDLE handle = CreateFileW( pathArray.get(), 0, FILE_SHARE_READ,
+                                     nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr );
+  if ( handle != INVALID_HANDLE_VALUE )
+  {
+    bool hasFileAttributes = false;
+    DWORD attributes = 0;
+    fileAttributesNew( handle, attributes, hasFileAttributes );
+    CloseHandle( handle );
+    if ( hasFileAttributes )
+    {
+      /* From the Win32 API documentation:
+         *
+         * FILE_ATTRIBUTE_RECALL_ON_OPEN:
+         * When this attribute is set, it means that the file or directory has no physical representation
+         * on the local system; the item is virtual. Opening the item will be more expensive than normal,
+         * e.g. it will cause at least some of it to be fetched from a remote store
+         *
+         * FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS
+         * When this attribute is set, it means that the file or directory is not fully present locally.
+         * For a file that means that not all of its data is on local storage (e.g. it may be sparse with
+         * some data still in remote storage).
+         */
+      return ( attributes & FILE_ATTRIBUTE_RECALL_ON_OPEN )
+             || ( attributes & FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS );
+    }
+  }
+  return false;
+}
 #endif
 
 Qgis::DriveType QgsFileUtils::driveType( const QString &path )
 {
-#ifdef MSVC
-  auto pathType = [ = ]( const QString & path ) -> DriveType
+#ifdef _MSC_VER
+  auto pathType = [ = ]( const QString & path ) -> Qgis::DriveType
   {
     std::unique_ptr< wchar_t[] > pathArray = pathToWChar( path );
     const UINT type = GetDriveTypeW( pathArray.get() );
@@ -323,7 +399,7 @@ Qgis::DriveType QgsFileUtils::driveType( const QString &path )
         return Qgis::DriveType::RamDisk;
     }
 
-    return Unknown;
+    return Qgis::DriveType::Unknown;
 
   };
 
@@ -332,13 +408,17 @@ Qgis::DriveType QgsFileUtils::driveType( const QString &path )
   QString prevPath;
   while ( currentPath != prevPath )
   {
+    if ( pathIsLikelyCloudStorage( currentPath ) )
+      return Qgis::DriveType::Cloud;
+
     prevPath = currentPath;
     currentPath = QFileInfo( currentPath ).path();
-    const DriveType type = pathType( currentPath );
-    if ( type != Unknown && type != Invalid )
+
+    const Qgis::DriveType type = pathType( currentPath );
+    if ( type != Qgis::DriveType::Unknown && type != Qgis::DriveType::Invalid )
       return type;
   }
-  return Unknown;
+  return Qgis::DriveType::Unknown;
 
 #else
   ( void )path;
@@ -367,6 +447,7 @@ bool QgsFileUtils::pathIsSlowDevice( const QString &path )
       case Qgis::DriveType::Removable:
       case Qgis::DriveType::Remote:
       case Qgis::DriveType::CdRom:
+      case Qgis::DriveType::Cloud:
         return true;
     }
   }
@@ -500,4 +581,52 @@ bool QgsFileUtils::isCloseToLimitOfOpenedFiles( int filesToBeOpened )
   // We need some margin as Qt will crash if it cannot create some file descriptors
   constexpr int SOME_MARGIN = 20;
   return nFileCount > 0 && nFileLimit > 0 && nFileCount + filesToBeOpened > nFileLimit - SOME_MARGIN;
+}
+
+QStringList QgsFileUtils::splitPathToComponents( const QString &input )
+{
+  QStringList result;
+  QString path = QDir::cleanPath( input );
+  if ( path.isEmpty() )
+    return result;
+
+  const QString fileName = QFileInfo( path ).fileName();
+  if ( !fileName.isEmpty() )
+    result << fileName;
+  else if ( QFileInfo( path ).path() == path )
+    result << path;
+
+  QString prevPath = path;
+  while ( ( path = QFileInfo( path ).path() ).length() < prevPath.length() )
+  {
+    const QString dirName = QDir( path ).dirName();
+    if ( dirName == QLatin1String( "." ) )
+      break;
+
+    result << ( !dirName.isEmpty() ? dirName : path );
+    prevPath = path;
+  }
+
+  std::reverse( result.begin(), result.end() );
+  return result;
+}
+
+QString QgsFileUtils::uniquePath( const QString &path )
+{
+  if ( ! QFileInfo::exists( path ) )
+  {
+    return path;
+  }
+
+  QFileInfo info { path };
+  const QString suffix { info.completeSuffix() };
+  const QString pathPattern { QString( suffix.isEmpty() ? path : path.chopped( suffix.length() + 1 ) ).append( suffix.isEmpty() ? QStringLiteral( "_%1" ) : QStringLiteral( "_%1." ) ).append( suffix ) };
+  int i { 2 };
+  QString uniquePath { pathPattern.arg( i ) };
+  while ( QFileInfo::exists( uniquePath ) )
+  {
+    ++i;
+    uniquePath = pathPattern.arg( i );
+  }
+  return uniquePath;
 }

@@ -23,6 +23,7 @@
 #include "qgsapplication.h"
 #include "qgsvectorlayer.h"
 #include "qgsfeedback.h"
+#include "qgsdbquerylog.h"
 
 #include <QRegularExpression>
 #include <QTextCodec>
@@ -83,7 +84,7 @@ QString QgsSpatiaLiteProviderConnection::tableUri( const QString &schema, const 
 void QgsSpatiaLiteProviderConnection::createVectorTable( const QString &schema,
     const QString &name,
     const QgsFields &fields,
-    QgsWkbTypes::Type wkbType,
+    Qgis::WkbType wkbType,
     const QgsCoordinateReferenceSystem &srs,
     bool overwrite,
     const QMap<QString, QVariant> *options ) const
@@ -180,8 +181,8 @@ void QgsSpatiaLiteProviderConnection::dropVectorTable( const QString &schema, co
       ret = sqlite3_exec( sqlite_handle, "VACUUM", nullptr, nullptr, nullptr );
       if ( ret != SQLITE_OK )
       {
-        QgsDebugMsg( QStringLiteral( "Failed to run VACUUM after deleting table on database %1" )
-                     .arg( pathFromUri() ) );
+        QgsDebugError( QStringLiteral( "Failed to run VACUUM after deleting table on database %1" )
+                       .arg( pathFromUri() ) );
       }
 
       QgsSqliteHandle::closeDb( hndl );
@@ -287,7 +288,7 @@ bool QgsSpatiaLiteProviderConnection::spatialIndexExists( const QString &schema,
   return !res.isEmpty() && !res.at( 0 ).isEmpty() && res.at( 0 ).at( 0 ).toInt() == 1;
 }
 
-QList<QgsSpatiaLiteProviderConnection::TableProperty> QgsSpatiaLiteProviderConnection::tables( const QString &schema, const TableFlags &flags ) const
+QList<QgsSpatiaLiteProviderConnection::TableProperty> QgsSpatiaLiteProviderConnection::tables( const QString &schema, const TableFlags &flags, QgsFeedback *feedback ) const
 {
   checkCapability( Capability::Tables );
   if ( ! schema.isEmpty() )
@@ -355,12 +356,16 @@ QList<QgsSpatiaLiteProviderConnection::TableProperty> QgsSpatiaLiteProviderConne
       const QList<QgsSpatiaLiteConnection::TableEntry> constTables = connection.tables();
       for ( const QgsSpatiaLiteConnection::TableEntry &entry : constTables )
       {
+        if ( feedback && feedback->isCanceled() )
+          break;
+
         QString tableName { tableNotLowercaseNames.value( entry.tableName, entry.tableName ) };
         dsUri.setDataSource( QString(), tableName, entry.column, QString(), QString() );
         QgsSpatiaLiteProviderConnection::TableProperty property;
         property.setTableName( tableName );
         // Create a layer and get information from it
-        std::unique_ptr< QgsVectorLayer > vl = std::make_unique<QgsVectorLayer>( dsUri.uri(), QString(), QLatin1String( "spatialite" ) );
+        // Use OGR because it's way faster
+        std::unique_ptr< QgsVectorLayer > vl = std::make_unique<QgsVectorLayer>( dsUri.database() + "|layername=" + dsUri.table(), QString(), QLatin1String( "ogr" ), QgsVectorLayer::LayerOptions( false, true ) );
         if ( vl->isValid() )
         {
           if ( vl->isSpatial() )
@@ -373,7 +378,7 @@ QList<QgsSpatiaLiteProviderConnection::TableProperty> QgsSpatiaLiteProviderConne
           else
           {
             property.setGeometryColumnCount( 0 );
-            property.setGeometryColumnTypes( {{ QgsWkbTypes::NoGeometry, QgsCoordinateReferenceSystem() }} );
+            property.setGeometryColumnTypes( {{ Qgis::WkbType::NoGeometry, QgsCoordinateReferenceSystem() }} );
             property.setFlag( QgsSpatiaLiteProviderConnection::TableFlag::Aspatial );
           }
 
@@ -452,7 +457,9 @@ void QgsSpatiaLiteProviderConnection::setDefaultCapabilities()
   {
     GeometryColumnCapability::Z,
     GeometryColumnCapability::M,
-    GeometryColumnCapability::SinglePart,
+    GeometryColumnCapability::SinglePoint,
+    GeometryColumnCapability::SingleLineString,
+    GeometryColumnCapability::SinglePolygon,
   };
   mSqlLayerDefinitionCapabilities =
   {
@@ -465,18 +472,22 @@ void QgsSpatiaLiteProviderConnection::setDefaultCapabilities()
 QgsAbstractDatabaseProviderConnection::QueryResult QgsSpatiaLiteProviderConnection::executeSqlPrivate( const QString &sql, QgsFeedback *feedback ) const
 {
 
+  QgsDatabaseQueryLogWrapper logWrapper( sql, uri(), providerKey(), QStringLiteral( "QgsSpatiaLiteProviderConnection" ), QGS_QUERY_LOG_ORIGIN );
+
   if ( feedback && feedback->isCanceled() )
   {
+    logWrapper.setCanceled();
     return QgsAbstractDatabaseProviderConnection::QueryResult();
   }
 
   QString errCause;
-  gdal::ogr_datasource_unique_ptr hDS( GDALOpenEx( pathFromUri().toUtf8().constData(), GDAL_OF_VECTOR | GDAL_OF_UPDATE, nullptr, nullptr, nullptr ) );
+  gdal::dataset_unique_ptr hDS( GDALOpenEx( pathFromUri().toUtf8().constData(), GDAL_OF_VECTOR | GDAL_OF_UPDATE, nullptr, nullptr, nullptr ) );
   if ( hDS )
   {
 
     if ( feedback && feedback->isCanceled() )
     {
+      logWrapper.setCanceled();
       return QgsAbstractDatabaseProviderConnection::QueryResult();
     }
 
@@ -539,6 +550,7 @@ QgsAbstractDatabaseProviderConnection::QueryResult QgsSpatiaLiteProviderConnecti
 
       if ( ! errCause.isEmpty() )
       {
+        logWrapper.setError( errCause );
         throw QgsProviderConnectionException( QObject::tr( "Error executing SQL statement %1: %2" ).arg( sql, errCause ) );
       }
 
@@ -561,6 +573,7 @@ QgsAbstractDatabaseProviderConnection::QueryResult QgsSpatiaLiteProviderConnecti
 
   if ( !errCause.isEmpty() )
   {
+    logWrapper.setError( errCause );
     throw QgsProviderConnectionException( QObject::tr( "Error executing SQL %1: %2" ).arg( sql, errCause ) );
   }
 
@@ -574,7 +587,7 @@ void QgsSpatialiteProviderResultIterator::setFields( const QgsFields &fields )
 }
 
 
-QgsSpatialiteProviderResultIterator::QgsSpatialiteProviderResultIterator( gdal::ogr_datasource_unique_ptr hDS, OGRLayerH ogrLayer )
+QgsSpatialiteProviderResultIterator::QgsSpatialiteProviderResultIterator( gdal::dataset_unique_ptr hDS, OGRLayerH ogrLayer )
   : mHDS( std::move( hDS ) )
   , mOgrLayer( ogrLayer )
 {

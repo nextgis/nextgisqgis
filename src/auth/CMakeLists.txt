@@ -38,6 +38,7 @@ set(AUTH_PLUGINS
     maptiler_hmacsha256
     pkipaths
     pkipkcs12
+    awss3
 )
 
 if(NGSTD_FOUND)

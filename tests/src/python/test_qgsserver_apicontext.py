@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsServerApiContext class.
 
 From build dir, run: ctest -R PyQgsServerApiContext -V
@@ -13,11 +12,9 @@ __author__ = 'Alessandro Pasotti'
 __date__ = '11/07/2019'
 __copyright__ = 'Copyright 2019, The QGIS Project'
 # This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '6b44a42058d8f4d3f994b915f72f08b6a3ab474d'
+__revision__ = '$Format:%H$'
 
 import os
-import json
-import re
 
 # Deterministic XML
 os.environ['QT_HASH_SEED'] = '1'
@@ -25,14 +22,9 @@ os.environ['QT_HASH_SEED'] = '1'
 from qgis.server import (
     QgsBufferServerRequest,
     QgsBufferServerResponse,
-    QgsServerApiContext
+    QgsServerApiContext,
 )
 from qgis.testing import unittest
-from utilities import unitTestDataPath
-from urllib import parse
-
-import tempfile
-
 from test_qgsserver import QgsServerTestBase
 
 

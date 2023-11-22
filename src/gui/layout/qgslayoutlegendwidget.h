@@ -23,10 +23,13 @@
 
 #include "qgis_gui.h"
 #include "ui_qgslayoutlegendwidgetbase.h"
+#include "ui_qgslayoutlegendmapfilteringwidgetbase.h"
 #include "qgslayoutitemwidget.h"
 #include "qgslayoutitemlegend.h"
 #include <QWidget>
 #include <QItemDelegate>
+
+class QgsLayoutLegendMapFilteringWidget;
 
 ///@cond PRIVATE
 
@@ -37,7 +40,7 @@
  * \note This class is not a part of public API
  * \since QGIS 3.12
  */
-class GUI_EXPORT QgsLayoutLegendWidget: public QgsLayoutItemBaseWidget, private Ui::QgsLayoutLegendWidgetBase
+class GUI_EXPORT QgsLayoutLegendWidget: public QgsLayoutItemBaseWidget, public QgsExpressionContextGenerator, private Ui::QgsLayoutLegendWidgetBase
 {
     Q_OBJECT
 
@@ -45,14 +48,14 @@ class GUI_EXPORT QgsLayoutLegendWidget: public QgsLayoutItemBaseWidget, private 
     //! constructor
     explicit QgsLayoutLegendWidget( QgsLayoutItemLegend *legend, QgsMapCanvas *mapCanvas );
     void setMasterLayout( QgsMasterLayoutInterface *masterLayout ) override;
-
+    void setDesignerInterface( QgsLayoutDesignerInterface *iface ) override;
     //! Updates the legend layers and groups
     void updateLegend();
 
     //! Returns the legend item associated to this widget
     QgsLayoutItemLegend *legend() { return mLegend; }
     void setReportTypeString( const QString &string ) override;
-
+    QgsExpressionContext createExpressionContext() const override;
   public slots:
     //! Reset a layer node to the default settings
     void resetLayerNodeToDefaults();
@@ -87,10 +90,8 @@ class GUI_EXPORT QgsLayoutLegendWidget: public QgsLayoutItemBaseWidget, private 
     void mLayerSpaceSpinBox_valueChanged( double d );
     void mSymbolSpaceSpinBox_valueChanged( double d );
     void mIconLabelSpaceSpinBox_valueChanged( double d );
-    void mFontColorButton_colorChanged( const QColor &newFontColor );
     void mBoxSpaceSpinBox_valueChanged( double d );
     void mColumnSpaceSpinBox_valueChanged( double d );
-    void mLineSpacingSpinBox_valueChanged( double d );
     void mCheckBoxAutoUpdate_stateChanged( int state, bool userTriggered = true );
     void composerMapChanged( QgsLayoutItem *item );
     void mCheckboxResizeContents_toggled( bool checked );
@@ -152,6 +153,8 @@ class GUI_EXPORT QgsLayoutLegendWidget: public QgsLayoutItemBaseWidget, private 
     QPointer< QgsLayoutItemLegend > mLegend;
     QgsMapCanvas *mMapCanvas = nullptr;
     QgsLayoutItemPropertiesWidget *mItemPropertiesWidget = nullptr;
+
+    QPointer< QgsLayoutLegendMapFilteringWidget > mMapFilteringWidget;
 };
 
 /**
@@ -213,6 +216,63 @@ class GUI_EXPORT QgsLayoutLegendNodeWidget: public QgsPanelWidget, private Ui::Q
     QgsLayerTreeModelLegendNode *mLegendNode = nullptr;
     int mOriginalLegendNodeIndex = -1;
 
+};
+
+
+/**
+ * \ingroup gui
+ * \brief Model for legend linked map items
+ *
+ * \note This class is not a part of public API
+ * \since QGIS 3.32
+ */
+class GUI_EXPORT QgsLayoutLegendMapFilteringModel : public QSortFilterProxyModel
+{
+    Q_OBJECT
+
+  public:
+    //! constructor
+    explicit QgsLayoutLegendMapFilteringModel( QgsLayoutItemLegend *legend, QgsLayoutModel *layoutModel, QObject *parent = nullptr );
+
+    int columnCount( const QModelIndex &parent = QModelIndex() ) const override;
+    QVariant data( const QModelIndex &index, int role ) const override;
+    bool setData( const QModelIndex &index, const QVariant &value, int role ) override;
+    Qt::ItemFlags flags( const QModelIndex &index ) const override;
+
+  protected:
+
+    bool filterAcceptsRow( int source_row, const QModelIndex &source_parent ) const override;
+
+  private:
+    QgsLayoutModel *mLayoutModel = nullptr;
+    QPointer< QgsLayoutItemLegend > mLegendItem;
+
+};
+
+/**
+ * \ingroup gui
+ * \brief Allows configuration of layout legend map filtering settings.
+ *
+ * \note This class is not a part of public API
+ * \since QGIS 3.32
+ */
+class GUI_EXPORT QgsLayoutLegendMapFilteringWidget: public QgsLayoutItemBaseWidget, private Ui::QgsLayoutLegendMapFilteringWidgetBase
+{
+    Q_OBJECT
+
+  public:
+    //! constructor
+    explicit QgsLayoutLegendMapFilteringWidget( QgsLayoutItemLegend *legend );
+
+  protected:
+    bool setNewItem( QgsLayoutItem *item ) final;
+
+  private slots:
+    void updateGuiElements();
+
+  private:
+    QPointer< QgsLayoutItemLegend > mLegendItem;
+    bool mBlockUpdates = false;
 };
 
 ///@endcond

@@ -20,11 +20,16 @@
 QgsTabWidget::QgsTabWidget( QWidget *parent )
   : QTabWidget( parent )
 {
+  QgsTabBar *qgsTabBar = new QgsTabBar( this );
+  setTabBar( qgsTabBar );
+  mTabBarStyle = new QgsTabBarProxyStyle( tabBar() );
+  qgsTabBar->setTabBarStyle( mTabBarStyle );
+  setStyle( mTabBarStyle );
 }
 
 void QgsTabWidget::hideTab( QWidget *tab )
 {
-  QgsDebugMsg( QStringLiteral( "Hide" ) );
+  QgsDebugMsgLevel( QStringLiteral( "Hide" ), 3 );
   TabInformation &info = mTabs[ realTabIndex( tab )];
   if ( info.visible )
   {
@@ -37,7 +42,7 @@ void QgsTabWidget::hideTab( QWidget *tab )
 
 void QgsTabWidget::showTab( QWidget *tab )
 {
-  QgsDebugMsg( QStringLiteral( "Show" ) );
+  QgsDebugMsgLevel( QStringLiteral( "Show" ), 3 );
   TabInformation &info = mTabs[ realTabIndex( tab )];
   if ( ! info.visible )
   {
@@ -67,6 +72,11 @@ int QgsTabWidget::realTabIndex( QWidget *widget )
     ++realIndex;
   }
   return -1;
+}
+
+void QgsTabWidget::setTabStyle( int tabIndex, const QgsAttributeEditorElement::LabelStyle &labelStyle )
+{
+  mTabBarStyle->addStyle( tabIndex, labelStyle );
 }
 
 void QgsTabWidget::tabInserted( int index )
@@ -125,7 +135,7 @@ void QgsTabWidget::tabRemoved( int index )
 
 void QgsTabWidget::synchronizeIndexes()
 {
-  QgsDebugMsg( QStringLiteral( "---------" ) );
+  QgsDebugMsgLevel( QStringLiteral( "---------" ), 3 );
   int i = -1;
   QWidget *nextWidget = widget( 0 );
 
@@ -139,7 +149,7 @@ void QgsTabWidget::synchronizeIndexes()
       nextWidget = widget( i + 1 );
     }
     it->sourceIndex = i;
-    QgsDebugMsg( QStringLiteral( "Tab %1 (%2): %3" ).arg( it->sourceIndex ).arg( it->label ).arg( i ) );
+    QgsDebugMsgLevel( QStringLiteral( "Tab %1 (%2): %3" ).arg( it->sourceIndex ).arg( it->label ).arg( i ), 3 );
   }
 }
 

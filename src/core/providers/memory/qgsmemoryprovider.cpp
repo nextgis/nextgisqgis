@@ -23,10 +23,12 @@
 #include "qgsspatialindex.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgsvariantutils.h"
+#include "qgsapplication.h"
 
 #include <QUrl>
 #include <QUrlQuery>
 #include <QRegularExpression>
+#include <QIcon>
 
 ///@cond PRIVATE
 
@@ -52,7 +54,7 @@ QgsMemoryProvider::QgsMemoryProvider( const QString &uri, const ProviderOptions 
 
   if ( geometry.compare( QLatin1String( "none" ), Qt::CaseInsensitive ) == 0 )
   {
-    mWkbType = QgsWkbTypes::NoGeometry;
+    mWkbType = Qgis::WkbType::NoGeometry;
   }
   else
   {
@@ -115,6 +117,9 @@ QgsMemoryProvider::QgsMemoryProvider( const QString &uri, const ProviderOptions 
                   << QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QVariant::List, QVariant::Double ), QStringLiteral( "doublelist" ), QVariant::List, 0, 0, 0, 0, QVariant::Double )
                   << QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QVariant::List, QVariant::LongLong ), QStringLiteral( "integer64list" ), QVariant::List, 0, 0, 0, 0, QVariant::LongLong )
 
+                  // complex types
+                  << QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QVariant::Map ), QStringLiteral( "map" ), QVariant::Map, -1, -1, -1, -1 )
+                  << QgsVectorDataProvider::NativeType( tr( "Geometry" ), QStringLiteral( "geometry" ), QVariant::UserType )
                 );
 
   if ( query.hasQueryItem( QStringLiteral( "field" ) ) )
@@ -241,13 +246,6 @@ QString QgsMemoryProvider::providerDescription()
   return TEXT_PROVIDER_DESCRIPTION;
 }
 
-QgsMemoryProvider *QgsMemoryProvider::createProvider( const QString &uri,
-    const ProviderOptions &options,
-    QgsDataProvider::ReadFlags flags )
-{
-  return new QgsMemoryProvider( uri, options, flags );
-}
-
 QgsAbstractFeatureSource *QgsMemoryProvider::featureSource() const
 {
   return new QgsMemoryFeatureSource( this );
@@ -369,7 +367,7 @@ QgsRectangle QgsMemoryProvider::extent() const
   return mExtent;
 }
 
-QgsWkbTypes::Type QgsMemoryProvider::wkbType() const
+Qgis::WkbType QgsMemoryProvider::wkbType() const
 {
   return mWkbType;
 }
@@ -397,7 +395,7 @@ QgsFields QgsMemoryProvider::fields() const
 
 bool QgsMemoryProvider::isValid() const
 {
-  return ( mWkbType != QgsWkbTypes::Unknown );
+  return ( mWkbType != Qgis::WkbType::Unknown );
 }
 
 QgsCoordinateReferenceSystem QgsMemoryProvider::crs() const
@@ -455,7 +453,7 @@ bool QgsMemoryProvider::addFeatures( QgsFeatureList &flist, Flags flags )
       it->setAttributes( attributes );
     }
 
-    if ( it->hasGeometry() && mWkbType == QgsWkbTypes::NoGeometry )
+    if ( it->hasGeometry() && mWkbType == Qgis::WkbType::NoGeometry )
     {
       it->clearGeometry();
     }
@@ -475,7 +473,7 @@ bool QgsMemoryProvider::addFeatures( QgsFeatureList &flist, Flags flags )
     {
       const QVariant originalValue = it->attribute( i );
       QVariant attrValue = originalValue;
-      if ( ! attrValue.isNull() && ! mFields.at( i ).convertCompatible( attrValue, &errorMessage ) )
+      if ( ! QgsVariantUtils::isNull( attrValue ) && ! mFields.at( i ).convertCompatible( attrValue, &errorMessage ) )
       {
         // Push first conversion error only
         if ( result )
@@ -563,6 +561,7 @@ bool QgsMemoryProvider::deleteFeatures( const QgsFeatureIds &id )
 
 bool QgsMemoryProvider::addAttributes( const QList<QgsField> &attributes )
 {
+  bool fieldWasAdded { false };
   for ( QgsField field : attributes )
   {
     if ( !supportedType( field ) )
@@ -597,6 +596,7 @@ bool QgsMemoryProvider::addAttributes( const QList<QgsField> &attributes )
 
     // add new field as a last one
     mFields.append( field );
+    fieldWasAdded = true;
 
     for ( QgsFeatureMap::iterator fit = mFeatures.begin(); fit != mFeatures.end(); ++fit )
     {
@@ -606,7 +606,7 @@ bool QgsMemoryProvider::addAttributes( const QList<QgsField> &attributes )
       f.setAttributes( attr );
     }
   }
-  return true;
+  return fieldWasAdded;
 }
 
 bool QgsMemoryProvider::renameAttributes( const QgsFieldNameMap &renamedAttributes )
@@ -635,7 +635,7 @@ bool QgsMemoryProvider::renameAttributes( const QgsFieldNameMap &renamedAttribut
 
 bool QgsMemoryProvider::deleteAttributes( const QgsAttributeIds &attributes )
 {
-  QList<int> attrIdx = qgis::setToList( attributes );
+  QList<int> attrIdx( attributes.begin(), attributes.end() );
   std::sort( attrIdx.begin(), attrIdx.end(), std::greater<int>() );
 
   // delete attributes one-by-one with decreasing index
@@ -677,7 +677,7 @@ bool QgsMemoryProvider::changeAttributeValues( const QgsChangedAttributesMap &at
     {
       QVariant attrValue = it2.value();
       // Check attribute conversion
-      const bool conversionError { ! attrValue.isNull()
+      const bool conversionError { ! QgsVariantUtils::isNull( attrValue )
                                    && ! mFields.at( it2.key() ).convertCompatible( attrValue, &errorMessage ) };
       if ( conversionError )
       {
@@ -808,6 +808,27 @@ QString QgsMemoryProvider::name() const
 QString QgsMemoryProvider::description() const
 {
   return TEXT_PROVIDER_DESCRIPTION;
+}
+
+
+QgsMemoryProviderMetadata::QgsMemoryProviderMetadata()
+  : QgsProviderMetadata( QgsMemoryProvider::providerKey(), QgsMemoryProvider::providerDescription() )
+{
+}
+
+QIcon QgsMemoryProviderMetadata::icon() const
+{
+  return QgsApplication::getThemeIcon( QStringLiteral( "mIconMemory.svg" ) );
+}
+
+QgsDataProvider *QgsMemoryProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags )
+{
+  return new QgsMemoryProvider( uri, options, flags );
+}
+
+QList<Qgis::LayerType> QgsMemoryProviderMetadata::supportedLayerTypes() const
+{
+  return { Qgis::LayerType::Vector };
 }
 
 ///@endcond

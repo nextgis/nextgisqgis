@@ -15,6 +15,8 @@
 
 #include "qgslabelingresults.h"
 #include "qgslabelsearchtree.h"
+#include "qgsmapsettings.h"
+
 
 QgsLabelingResults::QgsLabelingResults()
   : mLabelSearchTree( std::make_unique< QgsLabelSearchTree >() )
@@ -62,6 +64,19 @@ QList<QgsLabelPosition> QgsLabelingResults::labelsWithinRect( const QgsRectangle
     }
   }
 
+  return positions;
+}
+
+QList<QgsLabelPosition> QgsLabelingResults::groupedLabelPositions( long long groupId ) const
+{
+  QList<QgsLabelPosition> positions;
+  if ( mLabelSearchTree )
+  {
+    const QList<QgsLabelPosition *> positionPointers = mLabelSearchTree->groupedLabelPositions( groupId );
+    positions.reserve( positionPointers.size() );
+    for ( const QgsLabelPosition *pos : positionPointers )
+      positions.push_back( QgsLabelPosition( *pos ) );
+  }
   return positions;
 }
 

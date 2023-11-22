@@ -20,11 +20,9 @@
 #include "qgsgeometrysnapper.h"
 #include "qgsvectordataprovider.h"
 #include "qgsgeometryutils.h"
-#include "qgsmapsettings.h"
 #include "qgssurface.h"
 #include "qgsmultisurface.h"
 #include "qgscurve.h"
-#include "qgslinestring.h"
 
 #include <QtConcurrentMap>
 #include <geos_c.h>
@@ -86,7 +84,7 @@ bool QgsSnapIndex::SegmentSnapItem::getIntersection( const QgsPoint &p1, const Q
   return !( lambdaw < 0. + 1E-8 || lambdaw >= wl - 1E-8 );
 }
 
-bool QgsSnapIndex::SegmentSnapItem::getProjection( const QgsPoint &p, QgsPoint &pProj )
+bool QgsSnapIndex::SegmentSnapItem::getProjection( const QgsPoint &p, QgsPoint &pProj ) const
 {
   const QgsPoint &s1 = idxFrom->point();
   const QgsPoint &s2 = idxTo->point();
@@ -128,20 +126,10 @@ void QgsSnapIndex::addPoint( const CoordIdx *idx, bool isEndPoint )
   const QgsPoint p = idx->point();
 
   GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
-#if GEOS_VERSION_MAJOR>3 || GEOS_VERSION_MINOR>=8
   geos::unique_ptr point( GEOSGeom_createPointFromXY_r( geosctxt, p.x(), p.y() ) );
-#else
-  GEOSCoordSequence *seq = GEOSCoordSeq_create_r( geosctxt, 1, 2 );
-  GEOSCoordSeq_setX_r( geosctxt, seq, 0, p.x() );
-  GEOSCoordSeq_setY_r( geosctxt, seq, 0, p.y() );
-  geos::unique_ptr point( GEOSGeom_createPoint_r( geosctxt, seq ) );
-#endif
 
   PointSnapItem *item = new PointSnapItem( idx, isEndPoint );
   GEOSSTRtree_insert_r( geosctxt, mSTRTree, point.get(), item );
-#if GEOS_VERSION_MAJOR>3 || GEOS_VERSION_MINOR<9
-  mSTRTreeItems.emplace_back( std::move( point ) );
-#endif
   mSnapItems << item;
 }
 
@@ -153,22 +141,12 @@ void QgsSnapIndex::addSegment( const CoordIdx *idxFrom, const CoordIdx *idxTo )
   GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
 
   GEOSCoordSequence *coord = GEOSCoordSeq_create_r( geosctxt, 2, 2 );
-#if GEOS_VERSION_MAJOR>3 || GEOS_VERSION_MINOR>=8
   GEOSCoordSeq_setXY_r( geosctxt, coord, 0, pointFrom.x(), pointFrom.y() );
   GEOSCoordSeq_setXY_r( geosctxt, coord, 1, pointTo.x(), pointTo.y() );
-#else
-  GEOSCoordSeq_setX_r( geosctxt, coord, 0, pointFrom.x() );
-  GEOSCoordSeq_setY_r( geosctxt, coord, 0, pointFrom.y() );
-  GEOSCoordSeq_setX_r( geosctxt, coord, 1, pointTo.x() );
-  GEOSCoordSeq_setY_r( geosctxt, coord, 1, pointTo.y() );
-#endif
   geos::unique_ptr segment( GEOSGeom_createLineString_r( geosctxt, coord ) );
 
   SegmentSnapItem *item = new SegmentSnapItem( idxFrom, idxTo );
   GEOSSTRtree_insert_r( geosctxt, mSTRTree, segment.get(), item );
-#if GEOS_VERSION_MAJOR>3 || GEOS_VERSION_MINOR<9
-  mSTRTreeItems.push_back( std::move( segment ) );
-#endif
   mSnapItems << item;
 }
 
@@ -224,15 +202,8 @@ QgsPoint QgsSnapIndex::getClosestSnapToPoint( const QgsPoint &startPoint, const 
   double minDistance = std::numeric_limits<double>::max();
 
   GEOSCoordSequence *coord = GEOSCoordSeq_create_r( geosctxt, 2, 2 );
-#if GEOS_VERSION_MAJOR>3 || GEOS_VERSION_MINOR>=8
   GEOSCoordSeq_setXY_r( geosctxt, coord, 0, startPoint.x(), startPoint.y() );
   GEOSCoordSeq_setXY_r( geosctxt, coord, 1, endPoint.x(), endPoint.y() );
-#else
-  GEOSCoordSeq_setX_r( geosctxt, coord, 0, startPoint.x() );
-  GEOSCoordSeq_setY_r( geosctxt, coord, 0, startPoint.y() );
-  GEOSCoordSeq_setX_r( geosctxt, coord, 1, endPoint.x() );
-  GEOSCoordSeq_setY_r( geosctxt, coord, 1, endPoint.y() );
-#endif
   geos::unique_ptr searchDiagonal( GEOSGeom_createLineString_r( geosctxt, coord ) );
 
   QList<SnapItem *> items;
@@ -264,15 +235,8 @@ QgsSnapIndex::SnapItem *QgsSnapIndex::getSnapItem( const QgsPoint &pos, const do
   GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
 
   GEOSCoordSequence *coord = GEOSCoordSeq_create_r( geosctxt, 2, 2 );
-#if GEOS_VERSION_MAJOR>3 || GEOS_VERSION_MINOR>=8
   GEOSCoordSeq_setXY_r( geosctxt, coord, 0, pos.x() - tolerance, pos.y() - tolerance );
   GEOSCoordSeq_setXY_r( geosctxt, coord, 1, pos.x() + tolerance, pos.y() + tolerance );
-#else
-  GEOSCoordSeq_setX_r( geosctxt, coord, 0, pos.x() - tolerance );
-  GEOSCoordSeq_setY_r( geosctxt, coord, 0, pos.y() - tolerance );
-  GEOSCoordSeq_setX_r( geosctxt, coord, 1, pos.x() + tolerance );
-  GEOSCoordSeq_setY_r( geosctxt, coord, 1, pos.y() + tolerance );
-#endif
 
   geos::unique_ptr searchDiagonal( GEOSGeom_createLineString_r( geosctxt, coord ) );
 
@@ -397,7 +361,7 @@ QgsGeometry QgsGeometrySnapper::snapGeometry( const QgsGeometry &geometry, doubl
 
 QgsGeometry QgsGeometrySnapper::snapGeometry( const QgsGeometry &geometry, double snapTolerance, const QList<QgsGeometry> &referenceGeometries, QgsGeometrySnapper::SnapMode mode )
 {
-  if ( QgsWkbTypes::geometryType( geometry.wkbType() ) == QgsWkbTypes::PolygonGeometry &&
+  if ( QgsWkbTypes::geometryType( geometry.wkbType() ) == Qgis::GeometryType::Polygon &&
        ( mode == EndPointPreferClosest || mode == EndPointPreferNodes || mode == EndPointToEndPoint ) )
     return geometry;
 
@@ -426,7 +390,7 @@ QgsGeometry QgsGeometrySnapper::snapGeometry( const QgsGeometry &geometry, doubl
       for ( int iVert = 0, nVerts = polyLineSize( subjGeom, iPart, iRing ); iVert < nVerts; ++iVert )
       {
         if ( ( mode == EndPointPreferClosest || mode == EndPointPreferNodes || mode == EndPointToEndPoint ) &&
-             QgsWkbTypes::geometryType( subjGeom->wkbType() ) == QgsWkbTypes::LineGeometry && ( iVert > 0 && iVert < nVerts - 1 ) )
+             QgsWkbTypes::geometryType( subjGeom->wkbType() ) == Qgis::GeometryType::Line && ( iVert > 0 && iVert < nVerts - 1 ) )
         {
           //endpoint mode and not at an endpoint, skip
           subjPointFlags[iPart][iRing].append( Unsnapped );

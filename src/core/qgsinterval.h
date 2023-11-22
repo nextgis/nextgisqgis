@@ -23,10 +23,10 @@
  ****************************************************************************/
 
 #include <QVariant>
+#include <chrono>
 
 #include "qgis_sip.h"
 #include "qgis_core.h"
-#include "qgsunittypes.h"
 #include "qgis.h"
 
 class QString;
@@ -69,9 +69,15 @@ class CORE_EXPORT QgsInterval
     QgsInterval( double seconds );
 
     /**
+     * Constructor for QgsInterval.
+     * \param milliseconds duration of interval in milliseconds
+     */
+    QgsInterval( std::chrono::milliseconds milliseconds ) SIP_SKIP;
+
+    /**
      * Constructor for QgsInterval, using the specified \a duration and \a units.
      */
-    QgsInterval( double duration, QgsUnitTypes::TemporalUnit unit );
+    QgsInterval( double duration, Qgis::TemporalUnit unit );
 
     /**
      * Constructor for QgsInterval, using the specified \a years, \a months,
@@ -292,13 +298,13 @@ class CORE_EXPORT QgsInterval
      *
      * \since 3.18
      */
-    QgsUnitTypes::TemporalUnit originalUnit() const { return mOriginalUnit; }
+    Qgis::TemporalUnit originalUnit() const { return mOriginalUnit; }
 
     bool operator==( QgsInterval other ) const
     {
       if ( !mValid && !other.mValid )
         return true;
-      else if ( mValid && other.mValid && ( mOriginalUnit != QgsUnitTypes::TemporalUnknownUnit || other.mOriginalUnit != QgsUnitTypes::TemporalUnknownUnit ) )
+      else if ( mValid && other.mValid && ( mOriginalUnit != Qgis::TemporalUnit::Unknown || other.mOriginalUnit != Qgis::TemporalUnit::Unknown ) )
         return mOriginalUnit == other.mOriginalUnit && mOriginalDuration == other.mOriginalDuration;
       else if ( mValid && other.mValid )
         return qgsDoubleNear( mSeconds, other.mSeconds );
@@ -336,12 +342,14 @@ class CORE_EXPORT QgsInterval
     double mOriginalDuration = 0.0;
 
     //! Interval unit
-    QgsUnitTypes::TemporalUnit mOriginalUnit = QgsUnitTypes::TemporalUnknownUnit;
+    Qgis::TemporalUnit mOriginalUnit = Qgis::TemporalUnit::Unknown;
 };
 
 Q_DECLARE_METATYPE( QgsInterval )
 
 #ifndef SIP_RUN
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 4, 0)
 
 /**
  * Returns the interval between two datetimes.
@@ -351,6 +359,8 @@ Q_DECLARE_METATYPE( QgsInterval )
  * \since QGIS 2.16
  */
 QgsInterval CORE_EXPORT operator-( const QDateTime &datetime1, const QDateTime &datetime2 );
+
+#endif
 
 /**
  * Returns the interval between two dates.
@@ -381,7 +391,7 @@ QDateTime CORE_EXPORT operator+( const QDateTime &start, const QgsInterval &inte
 
 //! Debug string representation of interval
 QDebug CORE_EXPORT operator<<( QDebug dbg, const QgsInterval &interval );
-\
+
 #endif
 
 #endif // QGSINTERVAL_H

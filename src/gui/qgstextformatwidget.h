@@ -168,7 +168,7 @@ class GUI_EXPORT QgsTextFormatWidget : public QWidget, public QgsExpressionConte
      *
      * \since QGIS 3.16
      */
-    QgsWkbTypes::GeometryType labelGeometryType() const;
+    Qgis::GeometryType labelGeometryType() const;
 
     //! Text substitution list
     QgsStringReplacementCollection mSubstitutions;
@@ -196,7 +196,7 @@ class GUI_EXPORT QgsTextFormatWidget : public QWidget, public QgsExpressionConte
     QList<QgsSymbolLayerReference> mMaskedSymbolLayers;
 
     //! Geometry type for layer, if known
-    QgsWkbTypes::GeometryType mGeomType = QgsWkbTypes::UnknownGeometry;
+    Qgis::GeometryType mGeomType = Qgis::GeometryType::Unknown;
 
   protected slots:
 
@@ -210,7 +210,7 @@ class GUI_EXPORT QgsTextFormatWidget : public QWidget, public QgsExpressionConte
      * Sets the current text settings from a style entry.
      * \since QGIS 3.10
      */
-    virtual void setFormatFromStyle( const QString &name, QgsStyle::StyleEntity type );
+    virtual void setFormatFromStyle( const QString &name, QgsStyle::StyleEntity type, const QString &stylePath );
 
     /**
      * Saves the current text settings to a style entry.
@@ -314,6 +314,7 @@ class GUI_EXPORT QgsTextFormatWidget : public QWidget, public QgsExpressionConte
     void updateShadowFrameStatus();
     void updateCalloutFrameStatus();
     void updateDataDefinedAlignment();
+    void overlapModeChanged();
 };
 
 

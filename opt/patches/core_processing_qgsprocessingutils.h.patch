@@ -1,6 +1,6 @@
 --- a/src/core/processing/qgsprocessingutils.h	2022-02-18 15:06:10.000000000 +0300
 +++ b/src/core/processing/qgsprocessingutils.h	2022-04-25 18:33:17.000000000 +0300
-@@ -37,7 +37,7 @@
+@@ -35,10 +35,9 @@
  class QgsProcessingFeedback;
  class QgsProcessingFeatureSource;
  class QgsProcessingAlgorithm;
@@ -8,8 +8,11 @@
 +// class QgsVectorTileLayer;
  class QgsPointCloudLayer;
  class QgsAnnotationLayer;
+-class QgsVectorTileLayer;
  
-@@ -499,7 +499,7 @@
+ #include <QString>
+ #include <QVariant>
+@@ -574,7 +574,7 @@
      static bool canUseLayer( const QgsRasterLayer *layer );
      static bool canUseLayer( const QgsMeshLayer *layer );
      static bool canUseLayer( const QgsPluginLayer *layer );

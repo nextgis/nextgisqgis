@@ -13,8 +13,8 @@ __copyright__ = 'Copyright 2021, The QGIS Project'
 
 import os
 
-from qgis.testing import unittest, start_app
 from qgis import utils
+from qgis.testing import start_app, unittest
 
 from utilities import unitTestDataPath
 
@@ -23,6 +23,7 @@ class TestPythonUtils(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         start_app()
 
     def test_update_available_plugins(self):

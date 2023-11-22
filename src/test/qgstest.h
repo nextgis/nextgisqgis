@@ -17,6 +17,11 @@
 #define QGSTEST_H
 
 #include <QtTest/QTest>
+#include <QDir>
+#include <QFile>
+#include <QTextStream>
+//#include <QDesktopServices>
+
 #include "qgsapplication.h"
 
 #include "qgsabstractgeometry.h"
@@ -37,7 +42,12 @@
 #include "qgstriangle.h"
 #include "qgsrectangle.h"
 #include "qgsregularpolygon.h"
-
+#include "qgsrange.h"
+#include "qgsinterval.h"
+#include "qgsrenderchecker.h"
+#include "qgsmultirenderchecker.h"
+#include "qgsunittypes.h"
+#include "qgis_test.h"
 
 #define QGSTEST_MAIN(TestObject) \
   QT_BEGIN_NAMESPACE \
@@ -72,6 +82,15 @@
     QVERIFY( !qgsDoubleNear( value, not_expected, epsilon ) ); \
   }(void)(0)
 
+#define QGSVERIFYLESSTHAN(value,expected) { \
+    bool _xxxresult = ( value ) < ( expected ); \
+    if ( !_xxxresult  ) \
+    { \
+      qDebug( "Expecting < %.10f got %.10f", static_cast< double >( expected ), static_cast< double >( value ) ); \
+    } \
+    QVERIFY( ( value ) < ( expected ) ); \
+  }(void)(0)
+
 #define QGSCOMPARENEARPOINT(point1,point2,epsilon) { \
     QGSCOMPARENEAR( point1.x(), point2.x(), epsilon ); \
     QGSCOMPARENEAR( point1.y(), point2.y(), epsilon ); \
@@ -84,29 +103,148 @@
     QGSCOMPARENEAR( rectangle1.yMaximum(), rectangle2.yMaximum(), epsilon ); \
   }(void)(0)
 
+#define QGSCOMPARENEARVECTOR3D(v1,v2,epsilon) { \
+    QGSCOMPARENEAR( v1.x(), v2.x(), epsilon ); \
+    QGSCOMPARENEAR( v1.y(), v2.y(), epsilon ); \
+    QGSCOMPARENEAR( v1.z(), v2.z(), epsilon ); \
+  }(void)(0)
+
 //sometimes GML attributes are in a different order - but that's ok
 #define QGSCOMPAREGML(result,expected) { \
     QCOMPARE( result.replace( QStringLiteral("ts=\" \" cs=\",\""), QStringLiteral("cs=\",\" ts=\" \"") ), expected ); \
   }(void)(0)
 
+// Start your PostgreSQL-backend connection requiring test with this macro
+#define QGSTEST_NEED_PGTEST_DB() \
+  if ( getenv( "QGIS_PGTEST_DB_SKIP" ) ) \
+    QSKIP( "Test disabled due to QGIS_PGTEST_DB_SKIP env variable being set" );
+
 /**
- * QGIS unit test utilities.
- * \since QGIS 3.0
+ * Base class for tests.
+ *
+ * \since QGIS 3.28
  */
-namespace QgsTest
+class TEST_EXPORT QgsTest : public QObject
 {
+    Q_OBJECT
 
-  //! Returns TRUE if test is running on a CI infrastructure
-  bool isCIRun()
-  {
-    return qgetenv( "QGIS_CONTINUOUS_INTEGRATION_RUN" ) == QStringLiteral( "true" );
-  }
+  public:
 
-  bool runFlakyTests()
-  {
-    return qgetenv( "RUN_FLAKY_TESTS" ) == QStringLiteral( "true" );
-  }
-}
+    //! Returns TRUE if test is running on a CI infrastructure
+    static bool isCIRun()
+    {
+      return qgetenv( "QGIS_CONTINUOUS_INTEGRATION_RUN" ) == QStringLiteral( "true" );
+    }
+
+    static bool runFlakyTests()
+    {
+      return qgetenv( "RUN_FLAKY_TESTS" ) == QStringLiteral( "true" );
+    }
+
+    QgsTest( const QString &name, const QString &controlPathPrefix = QString() )
+      : mName( name )
+      , mControlPathPrefix( controlPathPrefix )
+    {}
+
+    ~QgsTest() override
+    {
+      if ( !mReport.isEmpty() )
+        writeLocalHtmlReport( mReport );
+    }
+
+  protected:
+
+    QString mName;
+    QString mReport;
+    QString mControlPathPrefix;
+
+    bool renderMapSettingsCheck( const QString &name, const QString &referenceImage, const QgsMapSettings &mapSettings )
+    {
+      //use the QgsRenderChecker test utility class to
+      //ensure the rendered output matches our control image
+      QgsMultiRenderChecker checker;
+      checker.setControlPathPrefix( mControlPathPrefix );
+      checker.setControlName( "expected_" + referenceImage );
+      checker.setMapSettings( mapSettings );
+      const bool result = checker.runTest( name );
+      if ( !result )
+      {
+        appendToReport( name, checker.report() );
+
+      }
+      return result;
+    }
+
+    bool imageCheck( const QString &name, const QString &referenceImage, const QImage &image, const QString &controlName = QString(), int allowedMismatch = 20, const QSize &sizeTolerance = QSize( 0, 0 ) )
+    {
+      const QString renderedFileName = QDir::tempPath() + '/' + name + ".png";
+      image.save( renderedFileName );
+
+      QgsMultiRenderChecker checker;
+      checker.setControlPathPrefix( mControlPathPrefix );
+      checker.setControlName( controlName.isEmpty() ? "expected_" + referenceImage : controlName );
+      checker.setRenderedImage( renderedFileName );
+      checker.setSizeTolerance( sizeTolerance.width(), sizeTolerance.height() );
+
+      const bool result = checker.runTest( name, allowedMismatch );
+      if ( !result )
+      {
+        appendToReport( name, checker.report() );
+      }
+      return result;
+    }
+
+    /**
+     * Appends some \a content to the test report.
+     *
+     * This should be used only for appending useful information when a test fails.
+     */
+    void appendToReport( const QString &testName, const QString &content )
+    {
+      QString testIdentifier;
+      if ( QTest::currentDataTag() )
+        testIdentifier = QStringLiteral( "%1 (%2: %3)" ).arg( testName, QTest::currentTestFunction(), QTest::currentDataTag() );
+      else
+        testIdentifier = QStringLiteral( "%1 (%2)" ).arg( testName, QTest::currentTestFunction() );
+      mReport += QStringLiteral( "<h2>%1</h2>\n" ).arg( testIdentifier );
+      mReport += content;
+    }
+
+  private:
+
+    /**
+     * Writes out a HTML report to a temporary file for visual comparison
+     * of test results on a local build.
+     */
+    void writeLocalHtmlReport( const QString &report )
+    {
+      const QDir reportDir = QgsRenderChecker::testReportDir();
+      if ( !reportDir.exists() )
+        QDir().mkpath( reportDir.path() );
+
+      const QString reportFile = reportDir.filePath( "index.html" );
+      QFile file( reportFile );
+
+      QFile::OpenMode mode = QIODevice::WriteOnly;
+      if ( qgetenv( "QGIS_CONTINUOUS_INTEGRATION_RUN" ) == QStringLiteral( "true" )
+           || qgetenv( "QGIS_APPEND_TO_TEST_REPORT" ) == QStringLiteral( "true" ) )
+        mode |= QIODevice::Append;
+      else
+        mode |= QIODevice::Truncate;
+
+      if ( file.open( mode ) )
+      {
+        QTextStream stream( &file );
+        stream << QStringLiteral( "<h1>%1</h1>\n" ).arg( mName );
+        stream << report;
+        file.close();
+
+//        if ( !isCIRun() )
+//          QDesktopServices::openUrl( QStringLiteral( "file:///%1" ).arg( reportFile ) );
+      }
+    }
+
+};
 
 /**
  * For QCOMPARE pretty printing
@@ -215,5 +353,20 @@ char *toString( const QgsCircle &geom )
 {
   return QTest::toString( geom.toString() );
 }
+
+char *toString( const QgsDateTimeRange &range )
+{
+  return QTest::toString( QStringLiteral( "<QgsDateTimeRange: %1%2, %3%4>" ).arg(
+                            range.includeBeginning() ? QStringLiteral( "[" ) : QStringLiteral( "(" ),
+                            range.begin().toString( Qt::ISODateWithMs ),
+                            range.end().toString( Qt::ISODateWithMs ),
+                            range.includeEnd() ? QStringLiteral( "]" ) : QStringLiteral( ")" ) ) );
+}
+
+char *toString( const QgsInterval &interval )
+{
+  return QTest::toString( QStringLiteral( "<QgsInterval: %1 %2>" ).arg( interval.originalDuration() ).arg( QgsUnitTypes::toString( interval.originalUnit() ) ) );
+}
+
 
 #endif // QGSTEST_H

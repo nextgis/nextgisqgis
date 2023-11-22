@@ -24,6 +24,7 @@
 #include "qgsgeometryoptions.h"
 #include "qgsmaplayercombobox.h"
 #include "qgsproject.h"
+#include "qgsunittypes.h"
 
 #include <QFormLayout>
 
@@ -31,6 +32,7 @@ QgsVectorLayerDigitizingPropertiesPage::QgsVectorLayerDigitizingPropertiesPage( 
   : QgsMapLayerConfigWidget( layer, canvas, parent )
 {
   setupUi( this );
+  setObjectName( QStringLiteral( "mOptsPage_Digitizing" ) );
 
   QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( mLayer );
 
@@ -180,5 +182,5 @@ QgsMapLayerConfigWidget *QgsVectorLayerDigitizingPropertiesFactory::createWidget
 
 bool QgsVectorLayerDigitizingPropertiesFactory::supportsLayer( QgsMapLayer *layer ) const
 {
-  return layer->type() == QgsMapLayerType::VectorLayer;
+  return layer->type() == Qgis::LayerType::Vector;
 }

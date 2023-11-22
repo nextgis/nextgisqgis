@@ -427,6 +427,15 @@ Returns a string name of the operating system QGIS is running on.
 .. versionadded:: 2.14
 %End
 
+    static int systemMemorySizeMb();
+%Docstring
+Returns the size of the system memory (RAM) in megabytes.
+
+This is only supported on some platforms, and will return -1 if not supported.
+
+.. versionadded:: 3.26
+%End
+
     static QString platform();
 %Docstring
 Returns the QGIS platform name, e.g., "desktop", "server", "qgis_process" or "external" (for external CLI scripts).
@@ -434,6 +443,21 @@ Returns the QGIS platform name, e.g., "desktop", "server", "qgis_process" or "ex
 .. seealso:: :py:func:`osName`
 
 .. versionadded:: 2.14
+%End
+
+
+    static QString applicationFullName();
+%Docstring
+Returns the QGIS application full name.
+
+It can be defined by the environment variable QGIS_APPLICATION_FULL_NAME or the /qgis/application_full_name
+in the QGIS config file.
+
+By default it is equal to :py:func:`~QgsApplication.applicationName`+' '+:py:func:`~QgsApplication.platform`
+
+.. seealso:: :py:func:`platform`
+
+.. versionadded:: 3.30
 %End
 
     static QString locale();
@@ -671,7 +695,7 @@ Set maximum concurrent thread count
 
 .. note::
 
-   must be between 1 and \#cores, -1 means use all available cores
+   must be between 2 and \#cores, -1 means use all available cores
 
 .. versionadded:: 2.4
 %End
@@ -684,11 +708,14 @@ wide background task handling.
 .. versionadded:: 3.0
 %End
 
-    static QgsSettingsRegistryCore *settingsRegistryCore() /KeepReference/;
+ static QgsSettingsRegistryCore *settingsRegistryCore() /KeepReference,Deprecated/;
 %Docstring
 Returns the application's settings registry, used for managing application settings.
 
 .. versionadded:: 3.20
+
+.. deprecated:: QGIS 3.30
+   use :py:func:`QgsSettings.treeRoot()` instead
 %End
 
     static QgsColorSchemeRegistry *colorSchemeRegistry() /KeepReference/;
@@ -833,6 +860,13 @@ Returns the handler for recently used style items.
 .. versionadded:: 3.22
 %End
 
+    static QgsDatabaseQueryLog *databaseQueryLog() /KeepReference/;
+%Docstring
+Returns the database query log.
+
+.. versionadded:: 3.24
+%End
+
     static QgsStyleModel *defaultStyleModel();
 %Docstring
 Returns a shared :py:class:`QgsStyleModel` containing the default style library (see :py:func:`QgsStyle.defaultStyle()`).
@@ -840,6 +874,20 @@ Returns a shared :py:class:`QgsStyleModel` containing the default style library 
 Using this shared model instead of creating a new :py:class:`QgsStyleModel` improves performance.
 
 .. versionadded:: 3.10
+%End
+
+    static QgsFontManager *fontManager() /KeepReference/;
+%Docstring
+Returns the application font manager, which manages available fonts and font installation for the QGIS instance.
+
+.. versionadded:: 3.28
+%End
+
+    static QgsSensorRegistry *sensorRegistry() /KeepReference/;
+%Docstring
+Returns the application's sensor registry, used for sensor types.
+
+.. versionadded:: 3.32
 %End
 
     static QgsMessageLog *messageLog();
@@ -937,6 +985,13 @@ Gets the registry of available scalebar renderers.
 Returns registry of available project storage implementations.
 
 .. versionadded:: 3.2
+%End
+
+    static QgsLayerMetadataProviderRegistry *layerMetadataProviderRegistry() /KeepReference/;
+%Docstring
+Returns registry of available layer metadata provider implementations.
+
+.. versionadded:: 3.28
 %End
 
     static QgsLocalizedDataPathRegistry *localizedDataPathRegistry() /KeepReference/;
@@ -1037,6 +1092,7 @@ Emits the signal to collect all the strings of .qgs to be included in ts file
 
 .. versionadded:: 3.4
 %End
+
 
 
 %If (ANDROID)

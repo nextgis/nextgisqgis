@@ -87,6 +87,18 @@ Returns the squared 2D distance between two points.
 Returns the squared distance between a point and a line.
 %End
 
+    static double distToInfiniteLine( const QgsPoint &point, const QgsPoint &linePoint1, const QgsPoint &linePoint2, double epsilon = 1e-7 );
+%Docstring
+Returns the distance between a point and an infinite line.
+
+:param point: The point to find the distance to the line
+:param linePoint1: The first point of the line
+:param linePoint2: The second point of the line
+:param epsilon: The tolerance to use
+
+.. versionadded:: 3.26
+%End
+
     static bool lineIntersection( const QgsPoint &p1, QgsVector v1, const QgsPoint &p2, QgsVector v2, QgsPoint &intersection /Out/ ) /HoldGIL/;
 %Docstring
 Computes the intersection between two lines. Z dimension is
@@ -754,6 +766,18 @@ Returns the area of the triangle denoted by the points (``aX``, ``aY``), (``bX``
 .. versionadded:: 3.10
 %End
 
+    static double pointFractionAlongLine( double x1, double y1, double x2, double y2, double px, double py );
+%Docstring
+Given the line (``x1``, ``y1``) to (``x2``, ``y2``) and a point (``px``, ``py``) returns the fraction
+of the line length at which the point lies.
+
+.. warning::
+
+   this method requires that the point definitely lies on the line!
+
+.. versionadded:: 3.32
+%End
+
     static void weightedPointInTriangle( double aX, double aY, double bX, double bY, double cX, double cY,
                                          double weightB, double weightC, double &pointX /Out/, double &pointY /Out/ ) /HoldGIL/;
 %Docstring
@@ -773,6 +797,14 @@ Returns a weighted point inside the triangle denoted by the points (``aX``, ``aY
          - pointY: y-coordinate of generated point
 
 .. versionadded:: 3.10
+%End
+
+    static bool pointsAreCollinear( double x1, double y1, double x2, double y2, double x3, double y3, double epsilon );
+%Docstring
+Given the points (``x1``, ``y1``), (``x2``, ``y2``) and (``x3``, ``y3``) returns ``True`` if these
+points can be considered collinear with a specified tolerance ``epsilon``.
+
+.. versionadded:: 3.32
 %End
 
  static bool setZValueFromPoints( const QgsPointSequence &points, QgsPoint &point ) /Deprecated/;

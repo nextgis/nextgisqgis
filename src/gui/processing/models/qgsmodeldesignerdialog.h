@@ -29,6 +29,7 @@ class QgsModelUndoCommand;
 class QUndoView;
 class QgsModelViewToolPan;
 class QgsModelViewToolSelect;
+class QgsScreenHelper;
 
 ///@cond NOT_STABLE
 
@@ -119,7 +120,9 @@ class GUI_EXPORT QgsModelDesignerDialog : public QMainWindow, public Ui::QgsMode
     // cppcheck-suppress pureVirtualCall
     virtual void repaintModel( bool showControls = true ) = 0;
     virtual void addAlgorithm( const QString &algorithmId, const QPointF &pos ) = 0;
+    // cppcheck-suppress pureVirtualCall
     virtual void addInput( const QString &inputId, const QPointF &pos ) = 0;
+    // cppcheck-suppress pureVirtualCall
     virtual void exportAsScriptAlgorithm() = 0;
     // cppcheck-suppress pureVirtualCall
     virtual bool saveModel( bool saveAs = false ) = 0;
@@ -127,7 +130,6 @@ class GUI_EXPORT QgsModelDesignerDialog : public QMainWindow, public Ui::QgsMode
     QToolBar *toolbar() { return mToolbar; }
     QAction *actionOpen() { return mActionOpen; }
     QAction *actionSaveInProject() { return mActionSaveInProject; }
-    QAction *actionEditHelp() { return mActionEditHelp; }
     QAction *actionRun() { return mActionRun; }
     QgsMessageBar *messageBar() { return mMessageBar; }
     QGraphicsView *view() { return mView; }
@@ -181,7 +183,9 @@ class GUI_EXPORT QgsModelDesignerDialog : public QMainWindow, public Ui::QgsMode
     void populateZoomToMenu();
     void validate();
     void reorderInputs();
+    void reorderOutputs();
     void setPanelVisibility( bool hidden );
+    void editHelp();
 
   private:
 
@@ -192,6 +196,8 @@ class GUI_EXPORT QgsModelDesignerDialog : public QMainWindow, public Ui::QgsMode
     };
 
     std::unique_ptr< QgsProcessingModelAlgorithm > mModel;
+
+    QgsScreenHelper *mScreenHelper = nullptr;
 
     QgsMessageBar *mMessageBar = nullptr;
     QgsModelerToolboxModel *mAlgorithmsModel = nullptr;

@@ -24,7 +24,7 @@
 #include "qgsdiagramrenderer.h"
 #include "qgsvectorlayerjoininfo.h"
 #include "qgsproperty.h"
-#include "qgsspatialiteutils.h"
+#include "qgssqliteutils.h"
 #include "qgsvectorlayer.h"
 #include "qgscallout.h"
 #include <QString>
@@ -89,9 +89,8 @@ class CORE_EXPORT QgsAuxiliaryLayer : public QgsVectorLayer
     % End
 #endif
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Woverloaded-virtual"
+#ifndef SIP_RUN
+    using QgsVectorLayer::clone;
 #endif
 
     /**
@@ -102,9 +101,6 @@ class CORE_EXPORT QgsAuxiliaryLayer : public QgsVectorLayer
      * \param layer The layer for which the clone is made
      */
     QgsAuxiliaryLayer *clone( QgsVectorLayer *layer ) const SIP_FACTORY;
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
 
     /**
      * An auxiliary layer is not spatial. This method returns a spatial
@@ -428,14 +424,14 @@ class CORE_EXPORT QgsAuxiliaryStorage
     static bool exists( const QgsProject &project );
 
   private:
-    spatialite_database_unique_ptr open( const QString &filename = QString() );
-    spatialite_database_unique_ptr open( const QgsProject &project );
+    sqlite3_database_unique_ptr open( const QString &filename = QString() );
+    sqlite3_database_unique_ptr open( const QgsProject &project );
 
     void initTmpFileName();
 
     static QString filenameForProject( const QgsProject &project );
-    static spatialite_database_unique_ptr createDB( const QString &filename );
-    static spatialite_database_unique_ptr openDB( const QString &filename );
+    static sqlite3_database_unique_ptr createDB( const QString &filename );
+    static sqlite3_database_unique_ptr openDB( const QString &filename );
     static bool tableExists( const QString &table, sqlite3 *handler );
     static bool createTable( const QString &type, const QString &table, sqlite3 *handler, QString &errorMsg );
 

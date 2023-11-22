@@ -20,10 +20,10 @@
 
 #include "qgis_core.h"
 #include "qgis_sip.h"
+#include "qgslayoutitemmap.h"
 #include "qgslayouttable.h"
 #include "qgsvectorlayerref.h"
 
-class QgsLayoutItemMap;
 class QgsVectorLayer;
 
 /**
@@ -279,6 +279,7 @@ class CORE_EXPORT QgsLayoutItemAttributeTable: public QgsLayoutTable
     bool getTableContents( QgsLayoutTableContents &contents ) override;
 
     QgsConditionalStyle conditionalCellStyle( int row, int column ) const override;
+    QgsTextFormat textFormatForCell( int row, int column ) const override;
     QgsExpressionContextScope *scopeForCell( int row, int column ) const override SIP_FACTORY;
 
     QgsExpressionContext createExpressionContext() const override;
@@ -330,7 +331,7 @@ class CORE_EXPORT QgsLayoutItemAttributeTable: public QgsLayoutTable
     QgsVectorLayer *mCurrentAtlasLayer = nullptr;
 
     //! Associated map (used to display the visible features)
-    QgsLayoutItemMap *mMap = nullptr;
+    QPointer< QgsLayoutItemMap > mMap = nullptr;
     QString mMapUuid;
 
     //! Maximum number of features that is displayed

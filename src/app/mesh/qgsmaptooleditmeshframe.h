@@ -98,7 +98,7 @@ class QgsMeshEditForceByLineAction : public QWidgetAction
     double toleranceValue() const;
 
     //! Returns the tolerance unit
-    QgsUnitTypes::RenderUnit toleranceUnit() const;
+    Qgis::RenderUnit toleranceUnit() const;
 
   private slots:
     void updateSettings();
@@ -165,6 +165,7 @@ class APP_EXPORT QgsMapToolEditMeshFrame : public QgsMapToolAdvancedDigitizing
     void selectByExpression( const QString &textExpression, Qgis::SelectBehavior behavior, QgsMesh::ElementType elementType );
     void onZoomToSelected();
     void reindexMesh();
+    void onUndoRedo();
 
   private:
 
@@ -219,16 +220,17 @@ class APP_EXPORT QgsMapToolEditMeshFrame : public QgsMapToolAdvancedDigitizing
 
     QgsPointXY newFaceMarkerPosition( int vertexIndex );
 
-    void addVertexToFaceCanditate( int vertexIndex );
-    bool testNewVertexInFaceCanditate( int vertexIndex );
+    void addVertexToFaceCanditate( int vertexIndex ); //for existing vertex
+    void addVertexToFaceCanditate( const QgsPointXY &vertexPosition );
+    bool testNewVertexInFaceCanditate( bool testLast, int vertexIndex, const QgsPointXY &mapPoint ) const;
 
     // selection methods
     void select( const QgsPointXY &mapPoint, Qt::KeyboardModifiers modifiers, double tolerance );
     void addNewSelectedVertex( int vertexIndex );
     void removeFromSelection( int vertexIndex );
     bool isFaceSelected( int faceIndex );
-    void setSelectedVertices( const QList<int> newSelectedVertices,  Qgis::SelectBehavior behavior );
-    void setSelectedFaces( const QList<int> newSelectedFaces,  Qgis::SelectBehavior behavior );
+    void setSelectedVertices( const QList<int> &newSelectedVertices,  Qgis::SelectBehavior behavior );
+    void setSelectedFaces( const QList<int> &newSelectedFaces,  Qgis::SelectBehavior behavior );
     void selectByGeometry( const QgsGeometry &geometry,  Qt::KeyboardModifiers modifiers );
     void selectTouchedByGeometry( const QgsGeometry &geometry, Qgis::SelectBehavior behavior );
     void selectContainedByGeometry( const QgsGeometry &geometry, Qgis::SelectBehavior behavior );
@@ -239,7 +241,7 @@ class APP_EXPORT QgsMapToolEditMeshFrame : public QgsMapToolAdvancedDigitizing
     void clearSelection();
 
     void setMovingRubberBandValidity( bool valid );
-    bool isSelectionGrapped( QgsPointXY &grappedPoint );
+    bool isSelectionGrapped( QgsPointXY &grappedPoint ) const;
 
     void forceByLineReleaseEvent( QgsMapMouseEvent *e );
     void forceByLineBySelectedFeature( QgsMapMouseEvent *e );
@@ -265,6 +267,7 @@ class APP_EXPORT QgsMapToolEditMeshFrame : public QgsMapToolAdvancedDigitizing
     Edge mCurrentEdge = {-1, -1};
     int mCurrentVertexIndex = -1;
     QList<int> mNewFaceCandidate;
+    QList<QgsMeshVertex> mNewVerticesForNewFaceCandidate;
     bool mDoubleClicks = false;
     QgsPointXY mFirstClickPoint; //the first click point when double clicks, we need it when the point is constraint by the cad tool, second click could not be constraint
     double mFirstClickZValue;
@@ -320,6 +323,8 @@ class APP_EXPORT QgsMapToolEditMeshFrame : public QgsMapToolAdvancedDigitizing
 
     //! members for split face
     int mSplittableFaceCount = 0;
+    //! menbers for refinement face
+    int mRefinableFaceCount = 0;
 
     // assiociated widget
     QgsZValueWidget *mZValueWidget = nullptr; //own by QgsUserInputWidget instance

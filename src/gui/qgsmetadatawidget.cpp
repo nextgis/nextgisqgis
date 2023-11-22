@@ -41,6 +41,9 @@ QgsMetadataWidget::QgsMetadataWidget( QWidget *parent, QgsMapLayer *layer )
   // Disable the encoding
   encodingFrame->setHidden( true );
 
+  spinBoxZMinimum->setClearValue( 0 );
+  spinBoxZMaximum->setClearValue( 0 );
+
   // Default categories, we want them translated, so we are not using a CSV.
   mDefaultCategories << tr( "Farming" ) << tr( "Climatology Meteorology Atmosphere" ) << tr( "Location" ) << tr( "Intelligence Military" ) << tr( "Transportation" ) << tr( "Structure" ) << tr( "Boundaries" );
   mDefaultCategories << tr( "Inland Waters" ) << tr( "Planning Cadastre" ) << tr( "Geoscientific Information" ) << tr( "Elevation" ) << tr( "Health" ) << tr( "Biota" ) << tr( "Oceans" ) << tr( "Environment" );
@@ -82,6 +85,19 @@ QgsMetadataWidget::QgsMetadataWidget( QWidget *parent, QgsMapLayer *layer )
   // History
   mHistoryModel = new QStringListModel( listHistory );
   listHistory->setModel( mHistoryModel );
+
+  for ( QgsDateTimeEdit *w :
+        {
+          mCreationDateTimeEdit,
+          mCreationDateTimeEdit2,
+          mPublishedDateTimeEdit,
+          mRevisedDateTimeEdit,
+          mSupersededDateTimeEdit
+        } )
+  {
+    w->setAllowNull( true );
+    w->setNullRepresentation( tr( "Not set" ) );
+  }
 
   // Connect signals and slots
   connect( tabWidget, &QTabWidget::currentChanged, this, &QgsMetadataWidget::updatePanel );
@@ -147,6 +163,23 @@ void QgsMetadataWidget::setMode( QgsMetadataWidget::Mode mode )
       tabWidget->removeTab( 4 );
       tabWidget->removeTab( 3 );
       btnAutoSource->setEnabled( true );
+
+      // these two widgets should be kept in sync
+      connect( mCreationDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, [ = ]( const QDateTime & value )
+      {
+        if ( value.isValid() )
+          mCreationDateTimeEdit2->setDateTime( value );
+        else if ( mCreationDateTimeEdit2->dateTime().isValid() )
+          mCreationDateTimeEdit2->clear();
+      } );
+      connect( mCreationDateTimeEdit2, &QDateTimeEdit::dateTimeChanged, this, [ = ]( const QDateTime & value )
+      {
+        if ( value.isValid() )
+          mCreationDateTimeEdit->setDateTime( value );
+        else if ( mCreationDateTimeEdit->dateTime().isValid() )
+          mCreationDateTimeEdit->clear();
+      } );
+
       break;
   }
 
@@ -583,7 +616,6 @@ void QgsMetadataWidget::setUiFromMetadata()
   else if ( QgsProjectMetadata *projectMetadata = dynamic_cast< QgsProjectMetadata * >( mMetadata.get() ) )
   {
     mLineEditAuthor->setText( projectMetadata->author() );
-    mCreationDateTimeEdit->setDateTime( projectMetadata->creationDateTime() );
   }
 
   // Contacts
@@ -635,6 +667,27 @@ void QgsMetadataWidget::setUiFromMetadata()
 
   // History
   mHistoryModel->setStringList( mMetadata->history() );
+
+  // dates
+  if ( mMetadata->dateTime( Qgis::MetadataDateType::Created ).isValid() )
+    mCreationDateTimeEdit2->setDateTime( mMetadata->dateTime( Qgis::MetadataDateType::Created ) );
+  else
+    mCreationDateTimeEdit2->clear();
+
+  if ( mMetadata->dateTime( Qgis::MetadataDateType::Published ).isValid() )
+    mPublishedDateTimeEdit->setDateTime( mMetadata->dateTime( Qgis::MetadataDateType::Published ) );
+  else
+    mPublishedDateTimeEdit->clear();
+
+  if ( mMetadata->dateTime( Qgis::MetadataDateType::Revised ).isValid() )
+    mRevisedDateTimeEdit->setDateTime( mMetadata->dateTime( Qgis::MetadataDateType::Revised ) );
+  else
+    mRevisedDateTimeEdit->clear();
+
+  if ( mMetadata->dateTime( Qgis::MetadataDateType::Superseded ).isValid() )
+    mSupersededDateTimeEdit->setDateTime( mMetadata->dateTime( Qgis::MetadataDateType::Superseded ) );
+  else
+    mSupersededDateTimeEdit->clear();
 }
 
 void QgsMetadataWidget::saveMetadata( QgsAbstractMetadataBase *metadata )
@@ -718,7 +771,6 @@ void QgsMetadataWidget::saveMetadata( QgsAbstractMetadataBase *metadata )
     {
       QgsProjectMetadata *projectMetadata = static_cast< QgsProjectMetadata * >( metadata );
       projectMetadata->setAuthor( mLineEditAuthor->text() );
-      projectMetadata->setCreationDateTime( mCreationDateTimeEdit->dateTime() );
       break;
     }
   }
@@ -770,6 +822,12 @@ void QgsMetadataWidget::saveMetadata( QgsAbstractMetadataBase *metadata )
 
   // History
   metadata->setHistory( mHistoryModel->stringList() );
+
+  // dates
+  metadata->setDateTime( Qgis::MetadataDateType::Created, mCreationDateTimeEdit2->dateTime() );
+  metadata->setDateTime( Qgis::MetadataDateType::Published, mPublishedDateTimeEdit->dateTime() );
+  metadata->setDateTime( Qgis::MetadataDateType::Revised, mRevisedDateTimeEdit->dateTime() );
+  metadata->setDateTime( Qgis::MetadataDateType::Superseded, mSupersededDateTimeEdit->dateTime() );
 }
 
 bool QgsMetadataWidget::checkMetadata()
@@ -797,7 +855,7 @@ bool QgsMetadataWidget::checkMetadata()
     for ( const QgsAbstractMetadataBaseValidator::ValidationResult &result : std::as_const( validationResults ) )
     {
       errors += QLatin1String( "<b>" ) % result.section;
-      if ( ! result._identifier().isNull() )
+      if ( ! QgsVariantUtils::isNull( result._identifier() ) )
       {
         errors += QLatin1Char( ' ' ) % QVariant( result._identifier().toInt() + 1 ).toString();
       }
@@ -827,7 +885,7 @@ QMap<QString, QString> QgsMetadataWidget::parseLanguages()
   QFile file( path );
   if ( !file.open( QIODevice::ReadOnly ) )
   {
-    QgsDebugMsg( QStringLiteral( "Error while opening the CSV file: %1, %2 " ).arg( path, file.errorString() ) );
+    QgsDebugError( QStringLiteral( "Error while opening the CSV file: %1, %2 " ).arg( path, file.errorString() ) );
     return countries;
   }
 
@@ -845,7 +903,7 @@ QMap<QString, QString> QgsMetadataWidget::parseLanguages()
   QFile secondFile( path );
   if ( !secondFile.open( QIODevice::ReadOnly ) )
   {
-    QgsDebugMsg( QStringLiteral( "Error while opening the CSV file: %1, %2 " ).arg( path, file.errorString() ) );
+    QgsDebugError( QStringLiteral( "Error while opening the CSV file: %1, %2 " ).arg( path, file.errorString() ) );
     return countries;
   }
 
@@ -870,7 +928,7 @@ QStringList QgsMetadataWidget::parseLicenses()
   QFile file( path );
   if ( !file.open( QIODevice::ReadOnly ) )
   {
-    QgsDebugMsg( QStringLiteral( "Error while opening the CSV file: %1, %2 " ).arg( path, file.errorString() ) );
+    QgsDebugError( QStringLiteral( "Error while opening the CSV file: %1, %2 " ).arg( path, file.errorString() ) );
     return wordList;
   }
 
@@ -894,7 +952,7 @@ QStringList QgsMetadataWidget::parseLinkTypes()
   QFile file( path );
   if ( !file.open( QIODevice::ReadOnly ) )
   {
-    QgsDebugMsg( QStringLiteral( "Error while opening the CSV file: %1, %2 " ).arg( path, file.errorString() ) );
+    QgsDebugError( QStringLiteral( "Error while opening the CSV file: %1, %2 " ).arg( path, file.errorString() ) );
     return wordList;
   }
 
@@ -918,7 +976,7 @@ QStringList QgsMetadataWidget::parseMimeTypes()
   QFile file( path );
   if ( !file.open( QIODevice::ReadOnly ) )
   {
-    QgsDebugMsg( QStringLiteral( "Error while opening the CSV file: %1, %2 " ).arg( path, file.errorString() ) );
+    QgsDebugError( QStringLiteral( "Error while opening the CSV file: %1, %2 " ).arg( path, file.errorString() ) );
     return wordList;
   }
 
@@ -939,7 +997,7 @@ QMap<QString, QString> QgsMetadataWidget::parseTypes()
   QFile file( path );
   if ( !file.open( QIODevice::ReadOnly ) )
   {
-    QgsDebugMsg( QStringLiteral( "Error while opening the CSV file: %1, %2 " ).arg( path, file.errorString() ) );
+    QgsDebugError( QStringLiteral( "Error while opening the CSV file: %1, %2 " ).arg( path, file.errorString() ) );
     return types;
   }
 

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     ModelerParameterDefinitionDialog.py
@@ -51,7 +49,8 @@ from qgis.core import (QgsApplication,
                        QgsProcessingParameterFileDestination,
                        QgsProcessingParameterFolderDestination,
                        QgsProcessingParameterRasterDestination,
-                       QgsProcessingParameterVectorDestination)
+                       QgsProcessingParameterVectorDestination,
+                       QgsProcessingModelAlgorithm)
 
 from processing.core import parameters
 from processing.modeler.exceptions import UndefinedParameterException
@@ -80,7 +79,7 @@ class ModelerParameterDefinitionDialog(QDialog):
     def closeEvent(self, event):
         settings = QgsSettings()
         settings.setValue("/Processing/modelParametersDefinitionDialogGeometry", self.saveGeometry())
-        super(ModelerParameterDefinitionDialog, self).closeEvent(event)
+        super().closeEvent(event)
 
     def switchToCommentTab(self):
         self.tab.setCurrentIndex(1)
@@ -129,9 +128,8 @@ class ModelerParameterDefinitionDialog(QDialog):
 
         # If child algorithm output is mandatory, disable checkbox
         if isinstance(self.param, QgsProcessingDestinationParameter):
-            provider_name, child_name, output_name = self.param.name().split(':')
-            child = self.alg.childAlgorithms()['{}:{}'.format(provider_name, child_name)]
-            model_output = child.modelOutput(output_name)
+            child = self.alg.childAlgorithms()[self.param.metadata()['_modelChildId']]
+            model_output = child.modelOutput(self.param.metadata()['_modelChildOutputName'])
             param_def = child.algorithm().parameterDefinition(model_output.childOutputName())
             if not (param_def.flags() & QgsProcessingParameterDefinition.FlagOptional):
                 self.requiredCheck.setEnabled(False)
@@ -198,17 +196,9 @@ class ModelerParameterDefinitionDialog(QDialog):
             QMessageBox.warning(self, self.tr('Unable to define parameter'),
                                 self.tr('Invalid parameter name'))
             return
-        if self.param is None:
-            validChars = \
-                'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-            safeName = ''.join(c for c in description if c in validChars)
-            name = safeName.lower()
-            i = 2
-            while self.alg.parameterDefinition(name):
-                name = safeName.lower() + str(i)
-                i += 1
-        else:
-            name = self.param.name()
+
+        safeName = QgsProcessingModelAlgorithm.safeName(description)
+        name = safeName.lower()
 
         # Destination parameter
         if (isinstance(self.param, QgsProcessingParameterFeatureSink)):
@@ -248,7 +238,7 @@ class ModelerParameterDefinitionDialog(QDialog):
 
             paramTypeDef = QgsApplication.instance().processingRegistry().parameterType(typeId)
             if not paramTypeDef:
-                msg = self.tr('The parameter `{}` is not registered, are you missing a required plugin?'.format(typeId))
+                msg = self.tr('The parameter `{}` is not registered, are you missing a required plugin?').format(typeId)
                 raise UndefinedParameterException(msg)
             self.param = paramTypeDef.create(name)
             self.param.setDescription(description)

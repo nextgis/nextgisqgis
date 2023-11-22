@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     dataobject.py
@@ -31,6 +29,7 @@ from qgis.core import (QgsDataProvider,
                        QgsProject,
                        QgsSettings,
                        QgsProcessingContext,
+                       QgsProcessingUtils,
                        QgsFeatureRequest,
                        QgsExpressionContext,
                        QgsExpressionContextUtils,
@@ -72,7 +71,7 @@ def createContext(feedback=None):
     context.setInvalidGeometryCheck(invalid_features_method)
 
     settings = QgsSettings()
-    context.setDefaultEncoding(settings.value("/Processing/encoding", "System"))
+    context.setDefaultEncoding(QgsProcessingUtils.resolveDefaultEncoding(settings.value("/Processing/encoding")))
 
     context.setExpressionContext(createExpressionContext())
 

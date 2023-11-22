@@ -59,7 +59,7 @@ void QgsDateTimeEditWrapper::initWidget( QWidget *editor )
 
   if ( !mQDateTimeEdit )
   {
-    QgsDebugMsg( QStringLiteral( "Date/time edit widget could not be initialized because provided widget is not a QDateTimeEdit." ) );
+    QgsDebugError( QStringLiteral( "Date/time edit widget could not be initialized because provided widget is not a QDateTimeEdit." ) );
     QgsMessageLog::logMessage( tr( "Date/time edit widget could not be initialized because provided widget is not a QDateTimeEdit." ), tr( "UI forms" ), Qgis::MessageLevel::Warning );
     return;
   }
@@ -181,6 +181,9 @@ QVariant QgsDateTimeEditWrapper::value() const
     dateTime = mQDateTimeEdit->dateTime();
   }
 
+  if ( dateTime.isNull() )
+    return QVariant( field().type() );
+
   switch ( field().type() )
   {
     case QVariant::DateTime:
@@ -281,5 +284,6 @@ void QgsDateTimeEditWrapper::setEnabled( bool enabled )
   if ( !mQDateTimeEdit )
     return;
 
-  mQDateTimeEdit->setEnabled( enabled );
+  mQDateTimeEdit->setReadOnly( !enabled );
+  mQDateTimeEdit->setFrame( enabled );
 }

@@ -61,31 +61,31 @@ QWidget *QgsPgSourceSelectDelegate::createEditor( QWidget *parent, const QStyleO
   if ( index.column() == QgsPgTableModel::DbtmType && index.data( Qt::UserRole + 1 ).toBool() )
   {
     QComboBox *cb = new QComboBox( parent );
-    static const QList<QgsWkbTypes::Type> types { QgsWkbTypes::Point,
-        QgsWkbTypes::LineString,
-        QgsWkbTypes::LineStringZ,
-        QgsWkbTypes::LineStringM,
-        QgsWkbTypes::LineStringZM,
-        QgsWkbTypes::Polygon,
-        QgsWkbTypes::PolygonZ,
-        QgsWkbTypes::PolygonM,
-        QgsWkbTypes::PolygonZM,
-        QgsWkbTypes::MultiPoint,
-        QgsWkbTypes::MultiPointZ,
-        QgsWkbTypes::MultiPointM,
-        QgsWkbTypes::MultiPointZM,
-        QgsWkbTypes::MultiLineString,
-        QgsWkbTypes::MultiLineStringZ,
-        QgsWkbTypes::MultiLineStringM,
-        QgsWkbTypes::MultiLineStringZM,
-        QgsWkbTypes::MultiPolygon,
-        QgsWkbTypes::MultiPolygonZ,
-        QgsWkbTypes::MultiPolygonM,
-        QgsWkbTypes::MultiPolygonZM,
-        QgsWkbTypes::NoGeometry };
-    for ( QgsWkbTypes::Type type : types )
+    static const QList<Qgis::WkbType> types { Qgis::WkbType::Point,
+        Qgis::WkbType::LineString,
+        Qgis::WkbType::LineStringZ,
+        Qgis::WkbType::LineStringM,
+        Qgis::WkbType::LineStringZM,
+        Qgis::WkbType::Polygon,
+        Qgis::WkbType::PolygonZ,
+        Qgis::WkbType::PolygonM,
+        Qgis::WkbType::PolygonZM,
+        Qgis::WkbType::MultiPoint,
+        Qgis::WkbType::MultiPointZ,
+        Qgis::WkbType::MultiPointM,
+        Qgis::WkbType::MultiPointZM,
+        Qgis::WkbType::MultiLineString,
+        Qgis::WkbType::MultiLineStringZ,
+        Qgis::WkbType::MultiLineStringM,
+        Qgis::WkbType::MultiLineStringZM,
+        Qgis::WkbType::MultiPolygon,
+        Qgis::WkbType::MultiPolygonZ,
+        Qgis::WkbType::MultiPolygonM,
+        Qgis::WkbType::MultiPolygonZM,
+        Qgis::WkbType::NoGeometry };
+    for ( Qgis::WkbType type : types )
     {
-      cb->addItem( QgsIconUtils::iconForWkbType( type ), QgsPostgresConn::displayStringForWkbType( type ), type );
+      cb->addItem( QgsIconUtils::iconForWkbType( type ), QgsPostgresConn::displayStringForWkbType( type ), static_cast< quint32>( type ) );
     }
     return cb;
   }
@@ -178,11 +178,11 @@ void QgsPgSourceSelectDelegate::setModelData( QWidget *editor, QAbstractItemMode
   {
     if ( index.column() == QgsPgTableModel::DbtmType )
     {
-      QgsWkbTypes::Type type = static_cast< QgsWkbTypes::Type >( cb->currentData().toInt() );
+      Qgis::WkbType type = static_cast< Qgis::WkbType >( cb->currentData().toInt() );
 
       model->setData( index, QgsIconUtils::iconForWkbType( type ), Qt::DecorationRole );
-      model->setData( index, type != QgsWkbTypes::Unknown ? QgsPostgresConn::displayStringForWkbType( type ) : tr( "Select…" ) );
-      model->setData( index, type, Qt::UserRole + 2 );
+      model->setData( index, type != Qgis::WkbType::Unknown ? QgsPostgresConn::displayStringForWkbType( type ) : tr( "Select…" ) );
+      model->setData( index, static_cast< quint32>( type ), Qt::UserRole + 2 );
     }
     else if ( index.column() == QgsPgTableModel::DbtmPkCol )
     {
@@ -451,7 +451,7 @@ void QgsPgSourceSelect::btnConnect_clicked()
   // populate the table list
   QgsDataSourceUri uri = QgsPostgresConn::connUri( cmbConnections->currentText() );
 
-  QgsDebugMsg( "Connection info: " + uri.connectionInfo( false ) );
+  QgsDebugMsgLevel( "Connection info: " + uri.connectionInfo( false ), 2 );
 
   mDataSrcUri = uri;
   mUseEstimatedMetadata = uri.useEstimatedMetadata();
@@ -526,7 +526,7 @@ void QgsPgSourceSelect::setSql( const QModelIndex &index )
 {
   if ( !index.parent().isValid() )
   {
-    QgsDebugMsg( QStringLiteral( "schema item found" ) );
+    QgsDebugMsgLevel( QStringLiteral( "schema item found" ), 2 );
     return;
   }
 
@@ -535,7 +535,7 @@ void QgsPgSourceSelect::setSql( const QModelIndex &index )
   QString uri = mTableModel->layerURI( index, connectionInfo( false ), mUseEstimatedMetadata );
   if ( uri.isNull() )
   {
-    QgsDebugMsg( QStringLiteral( "no uri" ) );
+    QgsDebugMsgLevel( QStringLiteral( "no uri" ), 2 );
     return;
   }
 
@@ -551,7 +551,7 @@ void QgsPgSourceSelect::setSql( const QModelIndex &index )
   QgsQueryBuilder *gb = new QgsQueryBuilder( vlayer, this );
   if ( gb->exec() )
   {
-    mTableModel->setSql( proxyModel()->mapToSource( index ), gb->sql() );
+    mTableModel->setSql( index, gb->sql() );
   }
 
   delete gb;

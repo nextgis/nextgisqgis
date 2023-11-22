@@ -22,9 +22,6 @@
 #include "qgspoint.h"
 #include "qgspolygon.h"
 #include "qgstriangle.h"
-#include "qgis_sip.h"
-#include "qgsgeometryengine.h"
-
 #include "poly2tri.h"
 
 #include <QtDebug>
@@ -479,7 +476,8 @@ void QgsTessellator::addPolygon( const QgsPolygon &polygon, float extrusionHeigh
     return;
 
   float zMin = std::numeric_limits<float>::max();
-  float zMax = std::numeric_limits<float>::min();
+  float zMaxBase = -std::numeric_limits<float>::max();
+  float zMaxExtruded = -std::numeric_limits<float>::max();
 
   const float scale = mBounds.isNull() ? 1.0 : std::max( 10000.0 / mBounds.width(), 10000.0 / mBounds.height() );
 
@@ -509,7 +507,7 @@ void QgsTessellator::addPolygon( const QgsPolygon &polygon, float extrusionHeigh
     }
 
     ptStart = QgsPoint( exterior->startPoint() );
-    pt0 = QgsPoint( QgsWkbTypes::PointZ, ptStart.x(), ptStart.y(), std::isnan( ptStart.z() ) ? 0 : ptStart.z() );
+    pt0 = QgsPoint( Qgis::WkbType::PointZ, ptStart.x(), ptStart.y(), std::isnan( ptStart.z() ) ? 0 : ptStart.z() );
 
     // subtract ptFirst from geometry for better numerical stability in triangulation
     // and apply new 3D vector base if the polygon is not horizontal
@@ -522,12 +520,13 @@ void QgsTessellator::addPolygon( const QgsPolygon &polygon, float extrusionHeigh
 
   const QVector3D upVector( 0, 0, 1 );
   const float pNormalUpVectorDotProduct = QVector3D::dotProduct( upVector, pNormal );
-  const float radsBetwwenUpNormal = qAcos( pNormalUpVectorDotProduct );
+  const float radsBetweenUpNormal = static_cast<float>( qAcos( pNormalUpVectorDotProduct ) );
 
   const float detectionDelta = qDegreesToRadians( 10.0f );
   int facade = 0;
-  if ( radsBetwwenUpNormal > M_PI_2 - detectionDelta && radsBetwwenUpNormal < M_PI_2 + detectionDelta ) facade = 1;
-  else if ( radsBetwwenUpNormal > - M_PI_2 - detectionDelta && radsBetwwenUpNormal < -M_PI_2 + detectionDelta ) facade = 1;
+  if ( ( radsBetweenUpNormal > M_PI_2 - detectionDelta && radsBetweenUpNormal < M_PI_2 + detectionDelta )
+       || ( radsBetweenUpNormal > - M_PI_2 - detectionDelta && radsBetweenUpNormal < -M_PI_2 + detectionDelta ) )
+    facade = 1;
   else facade = 2;
 
   if ( pCount == 4 && polygon.numInteriorRings() == 0 && ( mTessellatedFacade & facade ) )
@@ -546,11 +545,14 @@ void QgsTessellator::addPolygon( const QgsPolygon &polygon, float extrusionHeigh
     const double *zData = !mNoZ ? exterior->zData() : nullptr;
     for ( int i = 0; i < 3; i++ )
     {
-      const float z = !zData ? 0 : *zData;
-      if ( z < zMin )
-        zMin = z;
-      if ( z > zMax )
-        zMax = z;
+      const float baseHeight = !zData || mNoZ ? 0.0f : static_cast<float>( * zData );
+      const float z = mNoZ ? 0.0f : ( baseHeight + extrusionHeight );
+      if ( baseHeight < zMin )
+        zMin = baseHeight;
+      if ( baseHeight > zMaxBase )
+        zMaxBase = baseHeight;
+      if ( z > zMaxExtruded )
+        zMaxExtruded = z;
 
       mData << *xData - mOriginX << z << - *yData + mOriginY;
       if ( mAddNormals )
@@ -616,7 +618,7 @@ void QgsTessellator::addPolygon( const QgsPolygon &polygon, float extrusionHeigh
         return;
       }
       const QgsPolygon *polygonSimplifiedData = qgsgeometry_cast<const QgsPolygon *>( polygonSimplified.constGet() );
-      if ( _minimum_distance_between_coordinates( *polygonSimplifiedData ) < 0.001 )
+      if ( polygonSimplifiedData == nullptr || _minimum_distance_between_coordinates( *polygonSimplifiedData ) < 0.001 )
       {
         // Failed to fix that. It could be a really tiny geometry... or maybe they gave us
         // geometry in unprojected lat/lon coordinates
@@ -670,11 +672,14 @@ void QgsTessellator::addPolygon( const QgsPolygon &polygon, float extrusionHeigh
             pt = *toOldBase * pt;
           const double fx = ( pt.x() / scale ) - mOriginX + pt0.x();
           const double fy = ( pt.y() / scale ) - mOriginY + pt0.y();
+          const double baseHeight = mNoZ ? 0 : ( pt.z() + pt0.z() );
           const double fz = mNoZ ? 0 : ( pt.z() + extrusionHeight + pt0.z() );
-          if ( fz < zMin )
-            zMin = fz;
-          if ( fz > zMax )
-            zMax = fz;
+          if ( baseHeight < zMin )
+            zMin = baseHeight;
+          if ( baseHeight > zMaxBase )
+            zMaxBase = baseHeight;
+          if ( fz > zMaxExtruded )
+            zMaxExtruded = fz;
 
           mData << fx << fz << -fy;
           if ( mAddNormals )
@@ -727,13 +732,16 @@ void QgsTessellator::addPolygon( const QgsPolygon &polygon, float extrusionHeigh
     for ( int i = 0; i < polygon.numInteriorRings(); ++i )
       _makeWalls( *qgsgeometry_cast< const QgsLineString * >( polygon.interiorRing( i ) ), true, extrusionHeight, mData, mAddNormals, mAddTextureCoords, mOriginX, mOriginY, mTextureRotation );
 
-    zMax += extrusionHeight;
+    if ( zMaxBase + extrusionHeight > zMaxExtruded )
+      zMaxExtruded = zMaxBase + extrusionHeight;
   }
 
   if ( zMin < mZMin )
     mZMin = zMin;
-  if ( zMax > mZMax )
-    mZMax = zMax;
+  if ( zMaxExtruded > mZMax )
+    mZMax = zMaxExtruded;
+  if ( zMaxBase > mZMax )
+    mZMax = zMaxBase;
 }
 
 int QgsTessellator::dataVerticesCount() const

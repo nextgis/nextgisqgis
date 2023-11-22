@@ -14,14 +14,12 @@
  ***************************************************************************/
 
 #include "qgspolymorphicrelation.h"
-
-#include "qgsapplication.h"
-#include "qgsfeatureiterator.h"
 #include "qgslogger.h"
 #include "qgsproject.h"
 #include "qgsvectorlayer.h"
 #include "qgspolymorphicrelation_p.h"
-#include "qgsexpressioncontextutils.h"
+
+#include <QApplication>
 
 QgsPolymorphicRelation::QgsPolymorphicRelation()
   : d( new QgsPolymorphicRelationPrivate() )
@@ -78,7 +76,7 @@ QgsPolymorphicRelation QgsPolymorphicRelation::createFromXml( const QDomNode &no
   relation.d->mReferencedLayerIds = referencedLayerIds;
   relation.d->mRelationId = id;
   relation.d->mRelationName = name;
-  relation.d->mRelationStrength = qgsEnumKeyToValue<QgsRelation::RelationStrength>( relationStrength, QgsRelation::RelationStrength::Association );
+  relation.d->mRelationStrength = qgsEnumKeyToValue<Qgis::RelationshipStrength>( relationStrength, Qgis::RelationshipStrength::Association );
 
   QDomNodeList references = elem.elementsByTagName( QStringLiteral( "fieldRef" ) );
   for ( int i = 0; i < references.size(); ++i )
@@ -105,7 +103,7 @@ void QgsPolymorphicRelation::writeXml( QDomNode &node, QDomDocument &doc ) const
   elem.setAttribute( QStringLiteral( "referencedLayerField" ), d->mReferencedLayerField );
   elem.setAttribute( QStringLiteral( "referencedLayerExpression" ), d->mReferencedLayerExpression );
   elem.setAttribute( QStringLiteral( "referencedLayerIds" ), d->mReferencedLayerIds.join( "," ) );
-  elem.setAttribute( QStringLiteral( "relationStrength" ), qgsEnumValueToKey<QgsRelation::RelationStrength>( d->mRelationStrength ) );
+  elem.setAttribute( QStringLiteral( "relationStrength" ), qgsEnumValueToKey<Qgis::RelationshipStrength>( d->mRelationStrength ) );
 
   // note that a layer id can store a comma in theory. Luckyly, this is not easy to achieve, e.g. you need to modify the .qgs file manually
   for ( const QString &layerId : std::as_const( d->mReferencedLayerIds ) )
@@ -242,7 +240,7 @@ void QgsPolymorphicRelation::updateRelationStatus()
 
   if ( d->mRelationId.isEmpty() )
   {
-    QgsDebugMsg( QStringLiteral( "Invalid relation: no ID" ) );
+    QgsDebugError( QStringLiteral( "Invalid relation: no ID" ) );
     d->mValid = false;
     return;
   }
@@ -292,7 +290,7 @@ void QgsPolymorphicRelation::updateRelationStatus()
   {
     if ( d->mReferencingLayer->fields().lookupField( pair.first ) == -1 )
     {
-      QgsDebugMsg( QStringLiteral( "Invalid relation: field %1 does not exist in referencing layer %2" ).arg( pair.first, d->mReferencingLayer->name() ) );
+      QgsDebugError( QStringLiteral( "Invalid relation: field %1 does not exist in referencing layer %2" ).arg( pair.first, d->mReferencingLayer->name() ) );
       d->mValid = false;
       return;
     }
@@ -301,7 +299,7 @@ void QgsPolymorphicRelation::updateRelationStatus()
     {
       if ( d->mReferencedLayersMap[referencedLayerId]->fields().lookupField( pair.second ) == -1 )
       {
-        QgsDebugMsg( QStringLiteral( "Invalid relation: field %1 does not exist in referenced layer %2" ).arg( pair.second, d->mReferencedLayersMap[referencedLayerId]->name() ) );
+        QgsDebugError( QStringLiteral( "Invalid relation: field %1 does not exist in referenced layer %2" ).arg( pair.second, d->mReferencedLayersMap[referencedLayerId]->name() ) );
         d->mValid = false;
         return;
       }
@@ -363,12 +361,12 @@ QStringList QgsPolymorphicRelation::referencedLayerIds() const
   return d->mReferencedLayerIds;
 }
 
-QgsRelation::RelationStrength QgsPolymorphicRelation::strength() const
+Qgis::RelationshipStrength QgsPolymorphicRelation::strength() const
 {
   return d->mRelationStrength;
 }
 
-void QgsPolymorphicRelation::setRelationStrength( QgsRelation::RelationStrength relationStrength )
+void QgsPolymorphicRelation::setRelationStrength( Qgis::RelationshipStrength relationStrength )
 {
   d.detach();
   d->mRelationStrength = relationStrength;

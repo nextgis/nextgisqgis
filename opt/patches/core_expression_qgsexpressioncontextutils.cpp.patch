@@ -1,15 +1,15 @@
---- a/src/core/expression/qgsexpressioncontextutils.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/expression/qgsexpressioncontextutils.cpp	2022-04-25 18:33:18.000000000 +0300
-@@ -35,7 +35,7 @@
+--- a/src/core/expression/qgsexpressioncontextutils.cpp	2023-08-21 19:30:50.254137756 +0300
++++ b/src/core/expression/qgsexpressioncontextutils.cpp	2023-10-04 00:34:07.827720949 +0300
+@@ -33,7 +33,7 @@
  #include "qgsprojoperation.h"
  #include "qgsmarkersymbol.h"
  #include "qgstriangularmesh.h"
 -#include "qgsvectortileutils.h"
 +// #include "qgsvectortileutils.h"
- 
- QgsExpressionContextScope *QgsExpressionContextUtils::globalScope()
- {
-@@ -437,10 +437,10 @@
+ #include "qgsmeshlayer.h"
+ #include "qgslayoutreportcontext.h"
+ #include "qgsexpressionnodeimpl.h"
+@@ -461,10 +461,10 @@
    scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_id" ), "canvas", true ) );
    scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_rotation" ), mapSettings.rotation(), true ) );
    scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_scale" ), mapSettings.scale(), true ) );

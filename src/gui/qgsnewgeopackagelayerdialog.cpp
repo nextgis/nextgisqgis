@@ -21,12 +21,9 @@
 
 #include "qgis.h"
 #include "qgsapplication.h"
-#include "qgsproviderregistry.h"
 #include "qgsvectorlayer.h"
 #include "qgsproject.h"
 #include "qgscoordinatereferencesystem.h"
-#include "qgsprojectionselectiondialog.h"
-#include "qgslogger.h"
 #include "qgssettings.h"
 #include "qgshelp.h"
 #include "qgsogrutils.h"
@@ -72,7 +69,7 @@ QgsNewGeoPackageLayerDialog::QgsNewGeoPackageLayerDialog( QWidget *parent, Qt::W
 
   const auto addGeomItem = [this]( OGRwkbGeometryType ogrGeomType )
   {
-    const QgsWkbTypes::Type qgsType = QgsOgrUtils::ogrGeometryTypeToQgsWkbType( ogrGeomType );
+    const Qgis::WkbType qgsType = QgsOgrUtils::ogrGeometryTypeToQgsWkbType( ogrGeomType );
     mGeometryTypeBox->addItem( QgsIconUtils::iconForWkbType( qgsType ), QgsWkbTypes::translatedDisplayString( qgsType ), ogrGeomType );
   };
 
@@ -269,6 +266,33 @@ void QgsNewGeoPackageLayerDialog::buttonBox_rejected()
 
 bool QgsNewGeoPackageLayerDialog::apply()
 {
+  if ( !mFieldNameEdit->text().trimmed().isEmpty() )
+  {
+    const QString currentFieldName = mFieldNameEdit->text();
+    bool currentFound = false;
+    QTreeWidgetItemIterator it( mAttributeView );
+    while ( *it )
+    {
+      QTreeWidgetItem *item = *it;
+      if ( item->text( 0 ) == currentFieldName )
+      {
+        currentFound = true;
+        break;
+      }
+      ++it;
+    }
+
+    if ( !currentFound )
+    {
+      if ( QMessageBox::question( this, windowTitle(),
+                                  tr( "The field “%1” has not been added to the fields list. Are you sure you want to proceed and discard this field?" ).arg( currentFieldName ),
+                                  QMessageBox::Ok | QMessageBox::Cancel ) != QMessageBox::Ok )
+      {
+        return false;
+      }
+    }
+  }
+
   QString fileName( mDatabase->filePath() );
   if ( !fileName.endsWith( QLatin1String( ".gpkg" ), Qt::CaseInsensitive ) )
     fileName += QLatin1String( ".gpkg" );

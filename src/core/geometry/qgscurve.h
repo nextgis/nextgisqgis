@@ -209,6 +209,22 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry SIP_ABSTRACT
     virtual double yAt( int index ) const = 0;
 
     /**
+     * Returns the z-coordinate of the specified node in the line string.
+    * \param index index of node, where the first node in the line is 0
+    * \returns z-coordinate of node, or 0.0 if index is out of bounds
+    * \since QGIS 3.28
+    */
+    virtual double zAt( int index ) const = 0;
+
+    /**
+     * Returns the m-coordinate of the specified node in the line string.
+     * \param index index of node, where the first node in the line is 0
+     * \returns m-coordinate of node, or 0.0 if index is out of bounds
+     * \since QGIS 3.28
+     */
+    virtual double mAt( int index ) const = 0;
+
+    /**
      * Returns a QPolygonF representing the points.
      */
     virtual QPolygonF asQPolygonF() const;
@@ -296,8 +312,8 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry SIP_ABSTRACT
       if ( !geom )
         return nullptr;
 
-      const QgsWkbTypes::Type type = geom->wkbType();
-      if ( QgsWkbTypes::geometryType( type ) == QgsWkbTypes::LineGeometry && QgsWkbTypes::isSingleType( type ) )
+      const Qgis::WkbType type = geom->wkbType();
+      if ( QgsWkbTypes::geometryType( type ) == Qgis::GeometryType::Line && QgsWkbTypes::isSingleType( type ) )
       {
         return static_cast<const QgsCurve *>( geom );
       }
@@ -340,6 +356,9 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry SIP_ABSTRACT
      * Cached bounding box.
      */
     mutable QgsRectangle mBoundingBox;
+
+    mutable bool mHasCachedSummedUpArea = false;
+    mutable double mSummedUpArea = 0;
 
   private:
 

@@ -79,6 +79,9 @@ QgsStatisticalSummaryDockWidget::QgsStatisticalSummaryDockWidget( QWidget *paren
 
   mStatisticsMenu = new QMenu( mOptionsToolButton );
   mOptionsToolButton->setMenu( mStatisticsMenu );
+  mSyncAction = new QAction( tr( "Follow Selected Layer" ), this );
+  mSyncAction->setCheckable( true );
+  connect( mSyncAction, &QAction::toggled, this, &QgsStatisticalSummaryDockWidget::manageSyncLayer );
 
   mFieldType = DataType::Numeric;
   mPreviousFieldType = DataType::Numeric;
@@ -104,6 +107,7 @@ void QgsStatisticalSummaryDockWidget::fieldChanged()
   if ( mFieldExpressionWidget->expression() != mExpression )
   {
     mExpression = mFieldExpressionWidget->expression();
+    mLastExpression.insert( mLayerComboBox->currentLayer()->id(), mFieldExpressionWidget->currentText() );
     refreshStatistics();
   }
 }
@@ -133,6 +137,20 @@ void QgsStatisticalSummaryDockWidget::copyStatistics()
 
     QgsClipboard clipboard;
     clipboard.setData( QStringLiteral( "text/html" ), html.toUtf8(), text );
+  }
+}
+
+void QgsStatisticalSummaryDockWidget::manageSyncLayer( bool checked )
+{
+  mLayerComboBox->setEnabled( !checked );
+  if ( checked )
+  {
+    connect( QgisApp::instance(), &QgisApp::activeLayerChanged, mLayerComboBox, &QgsMapLayerComboBox::setLayer );
+    mLayerComboBox->setLayer( QgisApp::instance()->activeLayer() );
+  }
+  else
+  {
+    disconnect( QgisApp::instance(), &QgisApp::activeLayerChanged, mLayerComboBox, &QgsMapLayerComboBox::setLayer );
   }
 }
 
@@ -231,6 +249,7 @@ void QgsStatisticalSummaryDockWidget::refreshStatistics()
     mCancelButton->show();
     mCalculatingProgressBar->show();
 
+    // cppcheck-suppress danglingLifetime
     mGatherer = gatherer.get();
     QgsApplication::taskManager()->addTask( gatherer.release() );
   }
@@ -269,7 +288,7 @@ void QgsStatisticalSummaryDockWidget::updateNumericStatistics()
     const double val = value.toDouble( &convertOk );
     if ( convertOk )
       values << val;
-    else if ( value.isNull() )
+    else if ( QgsVariantUtils::isNull( value ) )
     {
       missingValues += 1;
     }
@@ -376,12 +395,12 @@ void QgsStatisticalSummaryDockWidget::layerChanged( QgsMapLayer *layer )
 
   mLayer = newLayer;
 
-  // clear expression, so that we don't force an unwanted recalculation
-  mFieldExpressionWidget->setExpression( QString() );
   mFieldExpressionWidget->setLayer( mLayer );
 
   if ( mLayer )
   {
+    // Get last expression
+    mFieldExpressionWidget->setExpression( mLastExpression.value( mLayer->id(), QString() ) );
     connect( mLayer, &QgsVectorLayer::selectionChanged, this, &QgsStatisticalSummaryDockWidget::layerSelectionChanged );
   }
 
@@ -438,6 +457,10 @@ void QgsStatisticalSummaryDockWidget::layersRemoved( const QStringList &layers )
   {
     disconnect( mLayer, &QgsVectorLayer::selectionChanged, this, &QgsStatisticalSummaryDockWidget::layerSelectionChanged );
     mLayer = nullptr;
+  }
+  for ( QString layerId : layers )
+  {
+    mLastExpression.remove( layerId );
   }
 }
 
@@ -582,6 +605,9 @@ void QgsStatisticalSummaryDockWidget::refreshStatisticsMenu()
       break;
     }
   }
+
+  mStatisticsMenu->addSeparator();
+  mStatisticsMenu->addAction( mSyncAction );
 }
 
 QgsStatisticalSummaryDockWidget::DataType QgsStatisticalSummaryDockWidget::fieldType( const QString &fieldName )

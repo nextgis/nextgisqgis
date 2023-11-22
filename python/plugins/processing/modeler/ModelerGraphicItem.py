@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     ModelerGraphicItem.py
@@ -25,6 +23,7 @@ from qgis.PyQt.QtCore import QCoreApplication
 
 from qgis.core import (QgsProcessingParameterDefinition,
                        QgsProcessingModelOutput,
+                       QgsProcessingModelAlgorithm,
                        QgsProject,
                        Qgis)
 from qgis.gui import (
@@ -80,6 +79,9 @@ class ModelerInputGraphicItem(QgsModelParameterGraphicItem):
 
     def edit(self, edit_comment=False):
         existing_param = self.model().parameterDefinition(self.component().parameterName())
+        old_name = existing_param.name()
+        old_description = existing_param.description()
+
         comment = self.component().comment().description()
         comment_color = self.component().comment().color()
         new_param = None
@@ -116,9 +118,28 @@ class ModelerInputGraphicItem(QgsModelParameterGraphicItem):
                 comment = dlg.comments()
                 comment_color = dlg.commentColor()
 
+                safeName = QgsProcessingModelAlgorithm.safeName(new_param.description())
+                new_param.setName(safeName.lower())
+
         if new_param is not None:
             self.aboutToChange.emit(self.tr('Edit {}').format(new_param.description()))
             self.model().removeModelParameter(self.component().parameterName())
+
+            if new_param.description() != old_description:
+                # only update name if user has changed the description -- we don't force this, as it may cause
+                # unwanted name updates which could potentially break the model's API
+                name = new_param.name()
+
+                base_name = name
+                i = 2
+                while self.model().parameterDefinition(name):
+                    name = base_name + str(i)
+                    i += 1
+
+                new_param.setName(name)
+
+                self.model().changeParameterName(old_name, new_param.name())
+
             self.component().setParameterName(new_param.name())
             self.component().setDescription(new_param.name())
             self.component().comment().setDescription(comment)
@@ -194,9 +215,8 @@ class ModelerOutputGraphicItem(QgsModelOutputGraphicItem):
 
     def edit(self, edit_comment=False):
         child_alg = self.model().childAlgorithm(self.component().childId())
-        param_name = '{}:{}'.format(self.component().childId(), self.component().name())
         dlg = ModelerParameterDefinitionDialog(self.model(),
-                                               param=self.model().parameterDefinition(param_name))
+                                               param=self.model().modelParameterFromChildIdAndOutputName(self.component().childId(), self.component().name()))
         dlg.setComments(self.component().comment().description())
         dlg.setCommentColor(self.component().comment().color())
         if edit_comment:

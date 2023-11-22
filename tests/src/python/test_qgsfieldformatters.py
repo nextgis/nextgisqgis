@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for field formatters.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -10,36 +9,36 @@ __author__ = 'Matthias Kuhn'
 __date__ = '05/12/2016'
 __copyright__ = 'Copyright 2016, The QGIS Project'
 
-import tempfile
 import os
+import tempfile
 
 import qgis  # NOQA
 from qgis.PyQt.QtCore import (
     QCoreApplication,
-    QLocale,
-    QVariant,
     QDate,
-    QTime,
     QDateTime,
-    Qt
+    QLocale,
+    Qt,
+    QTime,
+    QVariant,
 )
 from qgis.core import (
     QgsApplication,
-    QgsFeature,
-    QgsProject,
-    QgsRelation,
-    QgsVectorLayer,
-    QgsValueMapFieldFormatter,
-    QgsValueRelationFieldFormatter,
-    QgsRelationReferenceFieldFormatter,
-    QgsRangeFieldFormatter,
     QgsCheckBoxFieldFormatter,
-    QgsFallbackFieldFormatter,
     QgsDateTimeFieldFormatter,
-    QgsSettings,
+    QgsFallbackFieldFormatter,
+    QgsFeature,
     QgsGeometry,
     QgsPointXY,
-    QgsVectorFileWriter
+    QgsProject,
+    QgsRangeFieldFormatter,
+    QgsRelation,
+    QgsRelationReferenceFieldFormatter,
+    QgsSettings,
+    QgsValueMapFieldFormatter,
+    QgsValueRelationFieldFormatter,
+    QgsVectorFileWriter,
+    QgsVectorLayer,
 )
 from qgis.testing import start_app, unittest
 from qgis.utils import spatialite_connect
@@ -311,6 +310,7 @@ class TestQgsRangeFieldFormatter(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super().setUpClass()
         QCoreApplication.setOrganizationName("QGIS_Test")
         QCoreApplication.setOrganizationDomain("QGIS_TestPyQgsColorScheme.com")
         QCoreApplication.setApplicationName("QGIS_TestPyQgsColorScheme")
@@ -322,6 +322,7 @@ class TestQgsRangeFieldFormatter(unittest.TestCase):
     def tearDownClass(cls):
         """Reset locale"""
         QLocale.setDefault(QLocale(QLocale.English))
+        super().tearDownClass()
 
     def test_representValue(self):
         layer = QgsVectorLayer("point?field=int:integer&field=double:double&field=long:long",
@@ -411,6 +412,7 @@ class TestQgsCheckBoxFieldFormatter(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super().setUpClass()
         QCoreApplication.setOrganizationName("QGIS_Test")
         QCoreApplication.setOrganizationDomain("QGIS_TestPyQgsCheckBoxFieldFormatter.com")
         QCoreApplication.setApplicationName("QGIS_TestPyQgsCheckBoxFieldFormatter")
@@ -468,6 +470,7 @@ class TestQgsFallbackFieldFormatter(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super().setUpClass()
         QCoreApplication.setOrganizationName("QGIS_Test")
         QCoreApplication.setOrganizationDomain("QGIS_TestPyQgsFieldFormatter.com")
         QCoreApplication.setApplicationName("QGIS_TestPyQgsFieldFormatter")
@@ -479,6 +482,7 @@ class TestQgsFallbackFieldFormatter(unittest.TestCase):
     def tearDownClass(cls):
         """Reset locale"""
         QLocale.setDefault(QLocale(QLocale.English))
+        super().tearDownClass()
 
     def test_representValue(self):
 
@@ -670,6 +674,7 @@ class TestQgsDateTimeFieldFormatter(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super().setUpClass()
         QCoreApplication.setOrganizationName("QGIS_Test")
         QCoreApplication.setOrganizationDomain("QGIS_TestQgsDateTimeFieldFormatter.com")
         QCoreApplication.setApplicationName("QGIS_TestQgsDateTimeFieldFormatter")
@@ -681,6 +686,7 @@ class TestQgsDateTimeFieldFormatter(unittest.TestCase):
     def tearDownClass(cls):
         """Reset locale"""
         QgsApplication.setLocale(QLocale(QLocale.English))
+        super().tearDownClass()
 
     def test_representValue(self):
         layer = QgsVectorLayer("point?field=datetime:datetime&field=date:date&field=time:time",
@@ -720,9 +726,9 @@ class TestQgsDateTimeFieldFormatter(unittest.TestCase):
             QgsApplication.setLocale(locale)
             field_formatter = QgsDateTimeFieldFormatter()
 
-            self.assertEqual(field_formatter.defaultFormat(QVariant.Date), assertions["date_format"], locale.name())
-            self.assertEqual(field_formatter.defaultFormat(QVariant.Time), assertions["time_format"], locale.name())
-            self.assertEqual(field_formatter.defaultFormat(QVariant.DateTime), assertions["datetime_format"], locale.name())
+            self.assertEqual(field_formatter.defaultDisplayFormat(QVariant.Date), assertions["date_format"], locale.name())
+            self.assertEqual(field_formatter.defaultDisplayFormat(QVariant.Time), assertions["time_format"], locale.name())
+            self.assertEqual(field_formatter.defaultDisplayFormat(QVariant.DateTime), assertions["datetime_format"], locale.name())
 
             # default configuration should show timezone information
             config = {}

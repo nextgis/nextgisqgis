@@ -1,0 +1,14 @@
+--- a/src/gui/auth/qgsautheditorwidgets.cpp	2023-08-22 11:32:53.243356576 +0300
++++ b/src/gui/auth/qgsautheditorwidgets.cpp	2023-08-28 21:30:58.187518067 +0300
+@@ -115,8 +115,9 @@
+   if ( !QgsApplication::authManager()->isDisabled() )
+   {
+     wdgtConfigEditor->setRelayMessages( false );
+-    wdgtConfigEditor->setShowUtilitiesButton( false );
+-    setupUtilitiesMenu();
++    //wdgtConfigEditor->setShowUtilitiesButton( false );
++    //setupUtilitiesMenu();
++    btnAuthUtilities->hide();
+   }
+   else
+   {

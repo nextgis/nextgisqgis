@@ -48,9 +48,9 @@ class CORE_EXPORT QgsVectorTileBasicLabelingStyle
     QString layerName() const { return mLayerName; }
 
     //! Sets type of the geometry that will be used (point / line / polygon)
-    void setGeometryType( QgsWkbTypes::GeometryType geomType ) { mGeometryType = geomType; }
+    void setGeometryType( Qgis::GeometryType geomType ) { mGeometryType = geomType; }
     //! Returns type of the geometry that will be used (point / line / polygon)
-    QgsWkbTypes::GeometryType geometryType() const { return mGeometryType; }
+    Qgis::GeometryType geometryType() const { return mGeometryType; }
 
     //! Sets filter expression (empty filter means that all features match)
     void setFilterExpression( const QString &expr ) { mExpression = expr; }
@@ -62,15 +62,58 @@ class CORE_EXPORT QgsVectorTileBasicLabelingStyle
     //! Returns whether this style is enabled (used for rendering)
     bool isEnabled() const { return mEnabled; }
 
-    //! Sets minimum zoom level index (negative number means no limit)
+    /**
+     * Sets minimum zoom level index (negative number means no limit).
+     *
+     * The style will be rendered if the zoom level is greater than or equal
+     * to \a minZoom.
+     *
+     * \see minZoomLevel()
+     * \see setMaxZoomLevel()
+     */
     void setMinZoomLevel( int minZoom ) { mMinZoomLevel = minZoom; }
-    //! Returns minimum zoom level index (negative number means no limit)
+
+    /**
+     * Returns the minimum zoom level index (negative number means no limit).
+     *
+     * The style will be rendered if the zoom level is greater than or equal
+     * to the this level.
+     *
+     * \see setMinZoomLevel()
+     * \see maxZoomLevel()
+     */
     int minZoomLevel() const { return mMinZoomLevel; }
 
-    //! Sets maximum zoom level index (negative number means no limit)
+    /**
+     * Sets maximum zoom level index (negative number means no limit).
+     *
+     * The style will be rendered if the zoom level is less than or equal
+     * to \a maxZoom.
+     *
+     * \warning This differs from the handling of the max zoom as defined
+     * in the MapBox Style Specifications, where the style is rendered
+     * only if the zoom level is less than the maximum zoom.
+     *
+     * \see maxZoomLevel()
+     * \see setMinZoomLevel()
+     */
     void setMaxZoomLevel( int maxZoom ) { mMaxZoomLevel = maxZoom; }
-    //! Returns maxnimum zoom level index (negative number means no limit)
+
+    /**
+     * Returns the maximum zoom level index (negative number means no limit).
+     *
+     * The style will be rendered if the zoom level is less than or equal
+     * to the maximum zoom.
+     *
+     * \warning This differs from the handling of the max zoom as defined
+     * in the MapBox Style Specifications, where the style is rendered
+     * only if the zoom level is less than the maximum zoom.
+     *
+     * \see setMaxZoomLevel()
+     * \see minZoomLevel()
+     */
     int maxZoomLevel() const { return mMaxZoomLevel; }
+
 
     //! Returns whether the style is active at given zoom level (also checks "enabled" flag)
     bool isActive( int zoomLevel ) const
@@ -86,7 +129,7 @@ class CORE_EXPORT QgsVectorTileBasicLabelingStyle
   private:
     QString mStyleName;
     QString mLayerName;
-    QgsWkbTypes::GeometryType mGeometryType;
+    Qgis::GeometryType mGeometryType;
     bool mEnabled = true;
     QString mExpression;
     int mMinZoomLevel = -1;
@@ -164,7 +207,6 @@ class QgsVectorTileBasicLabelProvider : public QgsVectorTileLabelProvider
     QMap<QString, QgsFields> mPerLayerFields;
 };
 
-/// @endcond
 #endif
 
 

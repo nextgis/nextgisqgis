@@ -208,7 +208,7 @@ void QgsSourceFieldsProperties::setRow( int row, int idx, const QgsField &field 
 
   mFieldsList->setItem( row, AttrNameCol, new QTableWidgetItem( field.name() ) );
   mFieldsList->setItem( row, AttrAliasCol, new QTableWidgetItem( field.alias() ) );
-  mFieldsList->setItem( row, AttrTypeCol, new QTableWidgetItem( QVariant::typeToName( field.type() ) ) );
+  mFieldsList->setItem( row, AttrTypeCol, new QTableWidgetItem( field.friendlyTypeString() ) );
   mFieldsList->setItem( row, AttrTypeNameCol, new QTableWidgetItem( field.typeName() ) );
   mFieldsList->setItem( row, AttrLengthCol, new QTableWidgetItem( QString::number( field.length() ) ) );
   mFieldsList->setItem( row, AttrPrecCol, new QTableWidgetItem( QString::number( field.precision() ) ) );
@@ -224,7 +224,7 @@ void QgsSourceFieldsProperties::setRow( int row, int idx, const QgsField &field 
     expressionWidget->layout()->setContentsMargins( 0, 0, 0, 0 );
     expressionWidget->layout()->addWidget( editExpressionButton );
     expressionWidget->layout()->addWidget( new QLabel( mLayer->expressionField( idx ) ) );
-    expressionWidget->setStyleSheet( "background-color: rgb( 200, 200, 255 )" );
+    expressionWidget->setStyleSheet( "*[class~=\"QWidget\"] { background-color: rgba( 103, 0, 243, 0.12 ); } QToolButton { background-color: rgba( 203, 100, 243, 0.6 ); }" );
     mFieldsList->setCellWidget( row, AttrCommentCol, expressionWidget );
   }
   else
@@ -258,7 +258,7 @@ void QgsSourceFieldsProperties::setRow( int row, int idx, const QgsField &field 
 
   // Flags
   QgsCheckableComboBox *cb = new QgsCheckableComboBox( mFieldsList );
-  const QList<QgsField::ConfigurationFlag> flagList = qgsEnumMap<QgsField::ConfigurationFlag>().keys();
+  const QList<QgsField::ConfigurationFlag> flagList = qgsEnumList<QgsField::ConfigurationFlag>();
   for ( const QgsField::ConfigurationFlag flag : flagList )
   {
     if ( flag == QgsField::ConfigurationFlag::None )
@@ -273,7 +273,7 @@ void QgsSourceFieldsProperties::setRow( int row, int idx, const QgsField &field 
 
 bool QgsSourceFieldsProperties::addAttribute( const QgsField &field )
 {
-  QgsDebugMsg( "inserting attribute " + field.name() + " of type " + field.typeName() );
+  QgsDebugMsgLevel( "inserting attribute " + field.name() + " of type " + field.typeName(), 2 );
   mLayer->beginEditCommand( tr( "Added attribute" ) );
   if ( mLayer->addAttribute( field ) )
   {

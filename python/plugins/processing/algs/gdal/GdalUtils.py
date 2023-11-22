@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     GdalUtils.py
@@ -81,7 +79,7 @@ class GdalUtils:
         isDarwin = False
         try:
             isDarwin = platform.system() == 'Darwin'
-        except IOError:  # https://travis-ci.org/m-kuhn/QGIS#L1493-L1526
+        except OSError:  # https://travis-ci.org/m-kuhn/QGIS#L1493-L1526
             pass
         if isDarwin and os.path.isfile(os.path.join(QgsApplication.prefixPath(), "bin", "gdalinfo")):
             # Looks like there's a bundled gdal. Let's use it.
@@ -92,7 +90,7 @@ class GdalUtils:
             settings = QgsSettings()
             path = settings.value('/GdalTools/gdalPath', '')
             if not path.lower() in envval.lower().split(os.pathsep):
-                envval += '{}{}'.format(os.pathsep, path)
+                envval += f'{os.pathsep}{path}'
                 os.putenv('PATH', envval)
 
         fused_command = ' '.join([str(c) for c in commands])
@@ -102,6 +100,8 @@ class GdalUtils:
         feedback.pushInfo(GdalUtils.tr('GDAL command output:'))
 
         loglines = [GdalUtils.tr('GDAL execution console output')]
+        # create string list of number from 0 to 99
+        progress_string_list = [str(a) for a in range(0, 100)]
 
         def on_stdout(ba):
             val = ba.data().decode('UTF-8')
@@ -109,12 +109,20 @@ class GdalUtils:
             if val == '100 - done.':
                 on_stdout.progress = 100
                 feedback.setProgress(on_stdout.progress)
-            elif val in ('0', '10', '20', '30', '40', '50', '60', '70', '80', '90'):
-                on_stdout.progress = int(val)
-                feedback.setProgress(on_stdout.progress)
-            elif val == '.':
-                on_stdout.progress += 2.5
-                feedback.setProgress(on_stdout.progress)
+            else:
+                # remove any number of trailing "." or ".." strings
+                match = re.match(r'.*?(\d+)\.+\s*$', val)
+                found_number = False
+                if match:
+                    int_val = match.group(1)
+                    if int_val in progress_string_list:
+                        on_stdout.progress = int(int_val)
+                        feedback.setProgress(on_stdout.progress)
+                        found_number = True
+
+                if not found_number and val == '.':
+                    on_stdout.progress += 2.5
+                    feedback.setProgress(on_stdout.progress)
 
             on_stdout.buffer += val
             if on_stdout.buffer.endswith('\n') or on_stdout.buffer.endswith('\r'):
@@ -342,15 +350,15 @@ class GdalUtils:
             # #(Shape) sql='
             dsUri = layer.dataProvider().uri()
             ogrstr = 'MSSQL:'
-            ogrstr += 'database={0};'.format(dsUri.database())
-            ogrstr += 'server={0};'.format(dsUri.host())
+            ogrstr += f'database={dsUri.database()};'
+            ogrstr += f'server={dsUri.host()};'
             if dsUri.username() != "":
-                ogrstr += 'uid={0};'.format(dsUri.username())
+                ogrstr += f'uid={dsUri.username()};'
             else:
                 ogrstr += 'trusted_connection=yes;'
             if dsUri.password() != '':
-                ogrstr += 'pwd={0};'.format(dsUri.password())
-            ogrstr += 'tables={0}'.format(dsUri.table())
+                ogrstr += f'pwd={dsUri.password()};'
+            ogrstr += f'tables={dsUri.table()}'
             format = 'MSSQL'
         elif provider == "oracle":
             # OCI:user/password@host:port/service:table
@@ -385,7 +393,7 @@ class GdalUtils:
         elif provider.lower() == "wfs":
             uri = QgsDataSourceUri(layer.source())
             baseUrl = uri.param('url').split('?')[0]
-            ogrstr = "WFS:{}".format(baseUrl)
+            ogrstr = f"WFS:{baseUrl}"
             format = 'WFS'
         else:
             ogrstr = str(layer.source()).split("|")[0]
@@ -450,7 +458,7 @@ class GdalUtils:
 
     @staticmethod
     def writeLayerParameterToTextFile(filename, alg, parameters, parameter_name, context, quote=True, executing=False):
-        listFile = QgsProcessingUtils.generateTempFilename(filename)
+        listFile = QgsProcessingUtils.generateTempFilename(filename, context)
 
         if executing:
             layers = []

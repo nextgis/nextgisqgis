@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for Spatialite QgsAbastractProviderConnection API.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -11,24 +10,25 @@ __author__ = 'Alessandro Pasotti'
 __date__ = '28/10/2019'
 __copyright__ = 'Copyright 2019, The QGIS Project'
 # This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '6b44a42058d8f4d3f994b915f72f08b6a3ab474d'
+__revision__ = '$Format:%H$'
 
 import os
 import shutil
 import tempfile
-from test_qgsproviderconnection_base import TestPyQgsProviderConnectionBase
+
 from qgis.core import (
     Qgis,
-    QgsWkbTypes,
     QgsAbstractDatabaseProviderConnection,
-    QgsProviderConnectionException,
-    QgsVectorLayer,
-    QgsRasterLayer,
-    QgsProviderRegistry,
-    QgsFields,
     QgsCoordinateReferenceSystem,
+    QgsFields,
+    QgsProviderConnectionException,
+    QgsProviderRegistry,
+    QgsVectorLayer,
+    QgsWkbTypes,
 )
 from qgis.testing import unittest
+
+from test_qgsproviderconnection_base import TestPyQgsProviderConnectionBase
 from utilities import unitTestDataPath
 
 TEST_DATA_DIR = unitTestDataPath()
@@ -56,29 +56,32 @@ class TestPyQgsProviderConnectionSpatialite(unittest.TestCase, TestPyQgsProvider
     # Provider test cases can define a schema and table name for SQL query layers test
     sqlVectorLayerSchema = ''
     sqlVectorLayerTable = 'cdb_lines'
+    sqlVectorLayerCrs = 'EPSG:25832'
 
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super(TestPyQgsProviderConnectionSpatialite, cls).setUpClass()
         TestPyQgsProviderConnectionBase.setUpClass()
         cls.basetestpath = tempfile.mkdtemp()
-        spatialite_original_path = '{}/qgis_server/test_project_wms_grouped_layers.sqlite'.format(TEST_DATA_DIR)
+        spatialite_original_path = f'{TEST_DATA_DIR}/qgis_server/test_project_wms_grouped_layers.sqlite'
         cls.spatialite_path = os.path.join(cls.basetestpath, 'test.sqlite')
         shutil.copy(spatialite_original_path, cls.spatialite_path)
-        cls.uri = "dbname=\'%s\'" % cls.spatialite_path
-        vl = QgsVectorLayer('{} table=\'cdb_lines\''.format(cls.uri), 'test', 'spatialite')
+        cls.uri = f"dbname='{cls.spatialite_path}'"
+        vl = QgsVectorLayer(f'{cls.uri} table=\'cdb_lines\'', 'test', 'spatialite')
         assert vl.isValid()
 
     @classmethod
     def tearDownClass(cls):
         """Run after all tests"""
         os.unlink(cls.spatialite_path)
+        super(TestPyQgsProviderConnectionSpatialite, cls).tearDownClass()
 
     def test_spatialite_connections_from_uri(self):
         """Create a connection from a layer uri and retrieve it"""
 
         md = QgsProviderRegistry.instance().providerMetadata('spatialite')
-        vl = QgsVectorLayer('{} table=\'cdb_lines\''.format(self.uri), 'test', 'spatialite')
+        vl = QgsVectorLayer(f'{self.uri} table=\'cdb_lines\'', 'test', 'spatialite')
         self.assertTrue(vl.isValid())
         conn = md.createConnection(vl.dataProvider().uri().uri(), {})
         self.assertEqual(conn.uri(), self.uri)
@@ -89,7 +92,7 @@ class TestPyQgsProviderConnectionSpatialite(unittest.TestCase, TestPyQgsProvider
 
         md = QgsProviderRegistry.instance().providerMetadata('spatialite')
         conn = md.createConnection(self.uri, {})
-        self.assertEqual(conn.tableUri('', 'cdb_lines'), '{} table="cdb_lines"'.format(self.uri))
+        self.assertEqual(conn.tableUri('', 'cdb_lines'), f'{self.uri} table="cdb_lines"')
         vl = QgsVectorLayer(conn.tableUri('', 'cdb_lines'), 'lines', 'spatialite')
         self.assertTrue(vl.isValid())
 

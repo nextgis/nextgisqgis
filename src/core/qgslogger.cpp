@@ -51,6 +51,7 @@ void QgsLogger::init()
                 ;
 
   sPrefixLength = sizeof( CMAKE_SOURCE_DIR );
+  // cppcheck-suppress internalAstError
   if ( CMAKE_SOURCE_DIR[sPrefixLength - 1] == '/' )
     sPrefixLength++;
 }
@@ -101,7 +102,15 @@ void QgsLogger::debug( const QString &msg, int debuglevel, const char *file, con
 
   if ( sLogFile()->isEmpty() )
   {
-    qDebug( "%s", m.toUtf8().constData() );
+    if ( debuglevel == 0 )
+    {
+      // debug level 0 is for errors only, so highlight these by dumping them to stderr
+      std::cerr << m.toUtf8().constData() << std::endl;
+    }
+    else
+    {
+      qDebug( "%s", m.toUtf8().constData() );
+    }
   }
   else
   {

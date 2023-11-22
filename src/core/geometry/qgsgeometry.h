@@ -103,6 +103,45 @@ struct QgsGeometryPrivate;
 
 /**
  * \ingroup core
+ * \brief Encapsulates parameters under which a geometry operation is performed.
+ *
+ * \since QGIS 3.28
+ */
+class CORE_EXPORT QgsGeometryParameters
+{
+  public:
+
+    /**
+     * Returns the grid size which will be used to snap vertices of a geometry.
+     *
+     * This parameter is used to control the grid size (or precision) for GEOS geometry operations. Output
+     * geometry result vertices will be computed on that same precision grid.
+     *
+     * A value of -1 indicates that no precision reduction will be applied.
+     *
+     * \see setGridSize()
+     */
+    double gridSize() const { return mGridSize; }
+
+    /**
+     * Sets the grid \a size which will be used to snap vertices of a geometry.
+     *
+     * This parameter is used to control the grid size (or precision) for GEOS geometry operations. Output
+     * geometry result vertices will be computed on that same precision grid.
+     *
+     * A value of -1 indicates that no precision reduction will be applied.
+     *
+     * \see gridSize()
+     */
+    void setGridSize( double size ) { mGridSize = size; }
+
+  private:
+
+    double mGridSize = -1;
+};
+
+/**
+ * \ingroup core
  * \brief A geometry is the spatial representation of a feature.
  *
  * QgsGeometry acts as a generic container for geometry objects. QgsGeometry objects are implicitly shared,
@@ -125,7 +164,7 @@ class CORE_EXPORT QgsGeometry
 {
     Q_GADGET
     Q_PROPERTY( bool isNull READ isNull )
-    Q_PROPERTY( QgsWkbTypes::GeometryType type READ type )
+    Q_PROPERTY( Qgis::GeometryType type READ type )
 
   public:
 
@@ -200,8 +239,9 @@ class CORE_EXPORT QgsGeometry
 
     /**
      * Returns TRUE if the geometry is null (ie, contains no underlying geometry
-     * accessible via geometry() ).
+     * accessible via get() or constGet() ).
      * \see get
+     * \see constGet()
      * \see isEmpty()
      * \since QGIS 2.10
      */
@@ -315,13 +355,13 @@ class CORE_EXPORT QgsGeometry
      * Returns type of the geometry as a WKB type (point / linestring / polygon etc.)
      * \see type
      */
-    QgsWkbTypes::Type wkbType() const SIP_HOLDGIL;
+    Qgis::WkbType wkbType() const SIP_HOLDGIL;
 
     /**
-     * Returns type of the geometry as a QgsWkbTypes::GeometryType
+     * Returns type of the geometry as a Qgis::GeometryType
      * \see wkbType
      */
-    QgsWkbTypes::GeometryType type() const SIP_HOLDGIL;
+    Qgis::GeometryType type() const SIP_HOLDGIL;
 
     /**
      * Returns TRUE if the geometry is empty (eg a linestring with no vertices,
@@ -868,7 +908,7 @@ class CORE_EXPORT QgsGeometry
      * \param geomType default geometry type to create if no existing geometry
      * \returns OperationResult a result code: success or reason of failure
      */
-    Qgis::GeometryOperationResult addPart( const QVector<QgsPointXY> &points, QgsWkbTypes::GeometryType geomType = QgsWkbTypes::UnknownGeometry ) SIP_PYNAME( addPointsXY );
+    Qgis::GeometryOperationResult addPart( const QVector<QgsPointXY> &points, Qgis::GeometryType geomType = Qgis::GeometryType::Unknown ) SIP_PYNAME( addPointsXY );
 
     /**
      * Adds a new part to a the geometry.
@@ -876,7 +916,7 @@ class CORE_EXPORT QgsGeometry
      * \param geomType default geometry type to create if no existing geometry
      * \returns OperationResult a result code: success or reason of failure
      */
-    Qgis::GeometryOperationResult addPart( const QgsPointSequence &points, QgsWkbTypes::GeometryType geomType = QgsWkbTypes::UnknownGeometry ) SIP_PYNAME( addPoints );
+    Qgis::GeometryOperationResult addPart( const QgsPointSequence &points, Qgis::GeometryType geomType = Qgis::GeometryType::Unknown ) SIP_PYNAME( addPoints );
 
     /**
      * Adds a new part to this geometry.
@@ -884,7 +924,7 @@ class CORE_EXPORT QgsGeometry
      * \param geomType default geometry type to create if no existing geometry
      * \returns OperationResult a result code: success or reason of failure
      */
-    Qgis::GeometryOperationResult addPart( QgsAbstractGeometry *part SIP_TRANSFER, QgsWkbTypes::GeometryType geomType = QgsWkbTypes::UnknownGeometry );
+    Qgis::GeometryOperationResult addPart( QgsAbstractGeometry *part SIP_TRANSFER, Qgis::GeometryType geomType = Qgis::GeometryType::Unknown );
 
     /**
      * Adds a new island polygon to a multipolygon feature
@@ -948,10 +988,10 @@ class CORE_EXPORT QgsGeometry
      * \param topological TRUE if topological editing is enabled
      * \param[out] topologyTestPoints points that need to be tested for topological completeness in the dataset
      * \param splitFeature Set to TRUE if you want to split a feature, otherwise set to FALSE to split parts
-     * \returns OperationResult a result code: success or reason of failure
+     * \returns Qgis::GeometryOperationResult a result code: success or reason of failure
      * \deprecated since QGIS 3.12 - will be removed in QGIS 4.0. Use the variant which accepts QgsPoint objects instead of QgsPointXY.
      */
-    Q_DECL_DEPRECATED Qgis::GeometryOperationResult splitGeometry( const QVector<QgsPointXY> &splitLine, QVector<QgsGeometry> &newGeometries SIP_OUT, bool topological, QVector<QgsPointXY> &topologyTestPoints SIP_OUT, bool splitFeature = true ) SIP_DEPRECATED;
+    Q_DECL_DEPRECATED Qgis::GeometryOperationResult splitGeometry( const QVector<QgsPointXY> &splitLine, QVector<QgsGeometry> &newGeometries, bool topological, QVector<QgsPointXY> &topologyTestPoints, bool splitFeature = true ) SIP_SKIP;
 
     /**
      * Splits this geometry according to a given line.
@@ -963,7 +1003,7 @@ class CORE_EXPORT QgsGeometry
      * fix this bug?
      * \param skipIntersectionTest set to TRUE to skip the potentially expensive initial intersection check. Only set this flag if an intersection
      * test has already been performed by the caller! Not available in Python bindings.
-     * \returns OperationResult a result code: success or reason of failure
+     * \returns Qgis::GeometryOperationResult a result code: success or reason of failure
      *
      * Example:
      *
@@ -975,7 +1015,108 @@ class CORE_EXPORT QgsGeometry
      *  > LineStringZ (2749549.12 1262908.38 125.14, 2749557.82 1262920.06 200)
      * \endcode
      */
-    Qgis::GeometryOperationResult splitGeometry( const QgsPointSequence &splitLine, QVector<QgsGeometry> &newGeometries SIP_OUT, bool topological, QgsPointSequence &topologyTestPoints SIP_OUT, bool splitFeature = true, bool skipIntersectionTest SIP_PYARGREMOVE = false );
+    Qgis::GeometryOperationResult splitGeometry( const QgsPointSequence &splitLine, QVector<QgsGeometry> &newGeometries SIP_OUT, bool topological, QgsPointSequence &topologyTestPoints SIP_OUT, bool splitFeature = true, bool skipIntersectionTest SIP_PYARGREMOVE = false ) SIP_SKIP;
+
+
+    /*
+     This SIP code is to support overloaded methods of splitGeometry.
+     When the deprecated method is removed in QGIS 4.0 this code can be dropped
+     TODO QGIS 4 remove MethodCode
+    */
+#ifdef SIP_RUN
+
+    /**
+     * Splits this geometry according to a given line.
+     * \param splitLine the line that splits the geometry
+     * \param topological TRUE if topological editing is enabled
+     * \param splitFeature Set to TRUE if you want to split a feature, otherwise set to FALSE to split parts
+     *
+     * \returns a tuple (Qgis.GeometryOperationResult, List[QgsGeometry], List[Union[QgsPoint, QgsPointXY]]) (result code, list of new geometries, list of topological points)
+     *
+     * Example:
+     *
+     * \code{.py}
+     *  geometry = QgsGeometry.fromWkt('CompoundCurveZ ((2749546.2003820720128715 1262904.45356595050543547 100, 2749557.82053794478997588 1262920.05570670193992555 200))')
+     *  split_line = [QgsPoint(2749544.19, 1262914.79), QgsPoint(2749557.64, 1262897.30)]
+     *  result, new_geometries, point_xy = geometry.splitGeometry(split_line, False)
+     *  print(geometry.asWkt(2))
+     *  > LineStringZ (2749549.12 1262908.38 125.14, 2749557.82 1262920.06 200)
+     * \endcode
+     */
+    SIP_PYOBJECT splitGeometry( SIP_PYOBJECT splitLine SIP_TYPEHINT( List[Union[QgsPoint, QgsPointXY]] ), bool topological, bool splitFeature = true ) SIP_TYPEHINT( Tuple[Qgis.GeometryOperationResult, Union[List[QgsPoint], List[QgsPointXY]], Union[List[QgsPoint], List[QgsPointXY]]] );
+    % MethodCode
+    {
+      int sipIsErr = 0;
+      int state;
+
+      if ( PyList_Check( a0 ) && PyList_GET_SIZE( a0 ) )
+      {
+        PyObject *p0 = PyList_GetItem( a0, 0 );
+        if ( sipCanConvertToType( p0, sipType_QgsPointXY, SIP_NOT_NONE ) &&
+             sipCanConvertToType( a0, sipType_QVector_0100QgsPointXY, SIP_NOT_NONE ) )
+        {
+          QVector<QgsGeometry> newGeometries;
+          QVector<QgsPointXY> topologyTestPoints;
+
+          QVector<QgsPointXY> *splitLine = reinterpret_cast<QVector<QgsPointXY> *>( sipConvertToType( a0, sipType_QVector_0100QgsPointXY, 0, SIP_NOT_NONE, &state, &sipIsErr ) );
+          if ( sipIsErr )
+          {
+            sipReleaseType( splitLine, sipType_QVector_0100QgsPointXY, state );
+          }
+          else
+          {
+            Qgis::GeometryOperationResult result = sipCpp->splitGeometry( *splitLine, newGeometries, a1, topologyTestPoints, a2 );
+
+            PyObject *o0 = sipConvertFromEnum( static_cast<int>( result ), sipType_Qgis_GeometryOperationResult );
+            PyObject *o1 = sipConvertFromType( &newGeometries, sipType_QVector_0100QgsGeometry, Py_None );
+            PyObject *o2 = sipConvertFromType( &topologyTestPoints, sipType_QVector_0100QgsPointXY, Py_None );
+
+            sipRes = PyTuple_New( 3 );
+            PyTuple_SET_ITEM( sipRes, 0, o0 );
+            PyTuple_SET_ITEM( sipRes, 1, o1 );
+            PyTuple_SET_ITEM( sipRes, 2, o2 );
+          }
+        }
+
+        else if ( sipCanConvertToType( p0, sipType_QgsPoint, SIP_NOT_NONE ) &&
+                  sipCanConvertToType( a0, sipType_QVector_0100QgsPoint, SIP_NOT_NONE ) )
+        {
+          QVector<QgsGeometry> newGeometries;
+          QVector<QgsPoint> topologyTestPoints;
+
+          QVector<QgsPoint> *splitLine = reinterpret_cast<QVector<QgsPoint> *>( sipConvertToType( a0, sipType_QVector_0100QgsPoint, 0, SIP_NOT_NONE, &state, &sipIsErr ) );
+          if ( sipIsErr )
+          {
+            sipReleaseType( splitLine, sipType_QVector_0100QgsPoint, state );
+          }
+          else
+          {
+            Qgis::GeometryOperationResult result = sipCpp->splitGeometry( *splitLine, newGeometries, a1, topologyTestPoints, a2 );
+
+            PyObject *o0 = sipConvertFromEnum( static_cast<int>( result ), sipType_Qgis_GeometryOperationResult );
+            PyObject *o1 = sipConvertFromType( &newGeometries, sipType_QVector_0100QgsGeometry, Py_None );
+            PyObject *o2 = sipConvertFromType( &topologyTestPoints, sipType_QVector_0100QgsPoint, Py_None );
+
+            sipRes = PyTuple_New( 3 );
+            PyTuple_SET_ITEM( sipRes, 0, o0 );
+            PyTuple_SET_ITEM( sipRes, 1, o1 );
+            PyTuple_SET_ITEM( sipRes, 2, o2 );
+          }
+        }
+        else
+        {
+          sipIsErr = 1;
+          PyErr_SetString( PyExc_TypeError, QStringLiteral( "Could not convert first argument to a list of QgsPoint or QgsPointXY." ).toUtf8().constData() );
+        }
+      }
+      else
+      {
+        sipIsErr = 1;
+        PyErr_SetString( PyExc_TypeError, QStringLiteral( "First argument is not a list of points or is empty." ).toUtf8().constData() );
+      }
+    }
+    % End
+#endif
 
     /**
      * Splits this geometry according to a given curve.
@@ -1626,6 +1767,21 @@ class CORE_EXPORT QgsGeometry
     QgsGeometry convexHull() const;
 
     /**
+     * Returns a possibly concave polygon that contains all the points in the geometry.
+     *
+     * If the input is a NULL geometry, the output will also be a NULL geometry.
+     *
+     * If an error was encountered while creating the result, more information can be retrieved
+     * by calling lastError() on the returned geometry.
+     *
+     * \throws QgsNotSupportedException on QGIS builds based on GEOS 3.10 or earlier.
+     *
+     *
+     * \since QGIS 3.28
+     */
+    QgsGeometry concaveHull( double targetPercent, bool allowHoles = false ) const SIP_THROW( QgsNotSupportedException );
+
+    /**
      * Creates a Voronoi diagram for the nodes contained within the geometry.
      *
      * Returns the Voronoi polygons for the nodes contained within the geometry.
@@ -1698,9 +1854,12 @@ class CORE_EXPORT QgsGeometry
      * If an error was encountered while creating the result, more information can be retrieved
      * by calling lastError() on the returned geometry.
      *
+     * Since QGIS 3.28 the optional \a parameters argument can be used to specify parameters which
+     * control the subdivision results.
+     *
      * \since QGIS 3.0
      */
-    QgsGeometry subdivide( int maxNodes = 256 ) const;
+    QgsGeometry subdivide( int maxNodes = 256, const QgsGeometryParameters &parameters = QgsGeometryParameters() ) const;
 
     /**
      * Returns an interpolated point on the geometry at the specified \a distance.
@@ -1750,8 +1909,11 @@ class CORE_EXPORT QgsGeometry
      *
      * If an error was encountered while creating the result, more information can be retrieved
      * by calling lastError() on the returned geometry.
+     *
+     * Since QGIS 3.28 the optional \a parameters argument can be used to specify parameters which
+     * control the intersection results.
      */
-    QgsGeometry intersection( const QgsGeometry &geometry ) const;
+    QgsGeometry intersection( const QgsGeometry &geometry, const QgsGeometryParameters &parameters = QgsGeometryParameters() ) const;
 
     /**
      * Clips the geometry using the specified \a rectangle.
@@ -1772,8 +1934,11 @@ class CORE_EXPORT QgsGeometry
      * by calling lastError() on the returned geometry.
      *
      * \note this operation is not called union since its a reserved word in C++.
+     *
+     * Since QGIS 3.28 the optional \a parameters argument can be used to specify parameters which
+     * control the union results.
      */
-    QgsGeometry combine( const QgsGeometry &geometry ) const;
+    QgsGeometry combine( const QgsGeometry &geometry, const QgsGeometryParameters &parameters = QgsGeometryParameters() ) const;
 
     /**
      * Merges any connected lines in a LineString/MultiLineString geometry and
@@ -1792,8 +1957,11 @@ class CORE_EXPORT QgsGeometry
      *
      * If an error was encountered while creating the result, more information can be retrieved
      * by calling lastError() on the returned geometry.
+     *
+     * Since QGIS 3.28 the optional \a parameters argument can be used to specify parameters which
+     * control the difference results.
      */
-    QgsGeometry difference( const QgsGeometry &geometry ) const;
+    QgsGeometry difference( const QgsGeometry &geometry, const QgsGeometryParameters &parameters = QgsGeometryParameters() ) const;
 
     /**
      * Returns a geometry representing the points making up this geometry that do not make up other.
@@ -1802,8 +1970,11 @@ class CORE_EXPORT QgsGeometry
      *
      * If an error was encountered while creating the result, more information can be retrieved
      * by calling lastError() on the returned geometry.
+     *
+     * Since QGIS 3.28 the optional \a parameters argument can be used to specify parameters which
+     * control the difference results.
      */
-    QgsGeometry symDifference( const QgsGeometry &geometry ) const;
+    QgsGeometry symDifference( const QgsGeometry &geometry, const QgsGeometryParameters &parameters = QgsGeometryParameters() ) const;
 
     //! Returns an extruded version of this geometry.
     QgsGeometry extrude( double x, double y );
@@ -1865,13 +2036,13 @@ class CORE_EXPORT QgsGeometry
      */
     SIP_PYOBJECT randomPointsInPolygon( int count, unsigned long seed = 0 ) const SIP_TYPEHINT( QgsPolylineXY );
     % MethodCode
-    const QgsWkbTypes::GeometryType type = sipCpp->type();
+    const Qgis::GeometryType type = sipCpp->type();
     if ( sipCpp->isNull() )
     {
       PyErr_SetString( PyExc_ValueError, QStringLiteral( "Cannot generate points inside a null geometry." ).toUtf8().constData() );
       sipIsErr = 1;
     }
-    else if ( type != QgsWkbTypes::PolygonGeometry )
+    else if ( type != Qgis::GeometryType::Polygon )
     {
       PyErr_SetString( PyExc_TypeError, QStringLiteral( "Cannot generate points inside a %1 geometry. Only Polygon types are permitted." ).arg( QgsWkbTypes::displayString( sipCpp->wkbType() ) ).toUtf8().constData() );
       sipIsErr = 1;
@@ -1967,7 +2138,7 @@ class CORE_EXPORT QgsGeometry
      *
      * \since QGIS 3.14
      */
-    QVector< QgsGeometry > coerceToType( QgsWkbTypes::Type type, double defaultZ = 0, double defaultM = 0 ) const;
+    QVector< QgsGeometry > coerceToType( Qgis::WkbType type, double defaultZ = 0, double defaultM = 0 ) const;
 
     /**
      * Try to convert the geometry to the requested type
@@ -1981,7 +2152,7 @@ class CORE_EXPORT QgsGeometry
      *
      * \since QGIS 2.2
      */
-    QgsGeometry convertToType( QgsWkbTypes::GeometryType destType, bool destMultipart = false ) const;
+    QgsGeometry convertToType( Qgis::GeometryType destType, bool destMultipart = false ) const;
 
     /* Accessor functions for getting geometry data */
 
@@ -2018,7 +2189,7 @@ class CORE_EXPORT QgsGeometry
     else
     {
       const QgsAbstractGeometry *geom = sipCpp->constGet();
-      if ( QgsWkbTypes::flatType( geom->simplifiedTypeRef()->wkbType() ) != QgsWkbTypes::Point )
+      if ( QgsWkbTypes::flatType( geom->simplifiedTypeRef()->wkbType() ) != Qgis::WkbType::Point )
       {
         PyErr_SetString( PyExc_TypeError, QStringLiteral( "%1 geometry cannot be converted to a point. Only Point types are permitted." ).arg( QgsWkbTypes::displayString( geom->wkbType() ) ).toUtf8().constData() );
         sipIsErr = 1;
@@ -2057,13 +2228,13 @@ class CORE_EXPORT QgsGeometry
      */
     SIP_PYOBJECT asPolyline() const SIP_TYPEHINT( QgsPolylineXY );
     % MethodCode
-    const QgsWkbTypes::Type type = sipCpp->wkbType();
+    const Qgis::WkbType type = sipCpp->wkbType();
     if ( sipCpp->isNull() )
     {
       PyErr_SetString( PyExc_ValueError, QStringLiteral( "Null geometry cannot be converted to a polyline." ).toUtf8().constData() );
       sipIsErr = 1;
     }
-    else if ( QgsWkbTypes::geometryType( type ) != QgsWkbTypes::LineGeometry || QgsWkbTypes::isMultiType( type ) )
+    else if ( QgsWkbTypes::geometryType( type ) != Qgis::GeometryType::Line || QgsWkbTypes::isMultiType( type ) )
     {
       PyErr_SetString( PyExc_TypeError, QStringLiteral( "%1 geometry cannot be converted to a polyline. Only single line or curve types are permitted." ).arg( QgsWkbTypes::displayString( type ) ).toUtf8().constData() );
       sipIsErr = 1;
@@ -2102,13 +2273,13 @@ class CORE_EXPORT QgsGeometry
      */
     SIP_PYOBJECT asPolygon() const SIP_TYPEHINT( QgsPolygonXY );
     % MethodCode
-    const QgsWkbTypes::Type type = sipCpp->wkbType();
+    const Qgis::WkbType type = sipCpp->wkbType();
     if ( sipCpp->isNull() )
     {
       PyErr_SetString( PyExc_ValueError, QStringLiteral( "Null geometry cannot be converted to a polygon." ).toUtf8().constData() );
       sipIsErr = 1;
     }
-    else if ( QgsWkbTypes::geometryType( type ) != QgsWkbTypes::PolygonGeometry || QgsWkbTypes::isMultiType( type ) )
+    else if ( QgsWkbTypes::geometryType( type ) != Qgis::GeometryType::Polygon || QgsWkbTypes::isMultiType( type ) )
     {
       PyErr_SetString( PyExc_TypeError, QStringLiteral( "%1 geometry cannot be converted to a polygon. Only single polygon or curve polygon types are permitted." ).arg( QgsWkbTypes::displayString( type ) ).toUtf8().constData() );
       sipIsErr = 1;
@@ -2145,13 +2316,13 @@ class CORE_EXPORT QgsGeometry
      */
     SIP_PYOBJECT asMultiPoint() const SIP_TYPEHINT( QgsMultiPointXY );
     % MethodCode
-    const QgsWkbTypes::Type type = sipCpp->wkbType();
+    const Qgis::WkbType type = sipCpp->wkbType();
     if ( sipCpp->isNull() )
     {
       PyErr_SetString( PyExc_ValueError, QStringLiteral( "Null geometry cannot be converted to a multipoint." ).toUtf8().constData() );
       sipIsErr = 1;
     }
-    else if ( QgsWkbTypes::geometryType( type ) != QgsWkbTypes::PointGeometry || !QgsWkbTypes::isMultiType( type ) )
+    else if ( QgsWkbTypes::geometryType( type ) != Qgis::GeometryType::Point || !QgsWkbTypes::isMultiType( type ) )
     {
       PyErr_SetString( PyExc_TypeError, QStringLiteral( "%1 geometry cannot be converted to a multipoint. Only multipoint types are permitted." ).arg( QgsWkbTypes::displayString( type ) ).toUtf8().constData() );
       sipIsErr = 1;
@@ -2190,13 +2361,13 @@ class CORE_EXPORT QgsGeometry
      */
     SIP_PYOBJECT asMultiPolyline() const SIP_TYPEHINT( QgsMultiPolylineXY );
     % MethodCode
-    const QgsWkbTypes::Type type = sipCpp->wkbType();
+    const Qgis::WkbType type = sipCpp->wkbType();
     if ( sipCpp->isNull() )
     {
       PyErr_SetString( PyExc_ValueError, QStringLiteral( "Null geometry cannot be converted to a multilinestring." ).toUtf8().constData() );
       sipIsErr = 1;
     }
-    else if ( QgsWkbTypes::geometryType( type ) != QgsWkbTypes::LineGeometry || !QgsWkbTypes::isMultiType( type ) )
+    else if ( QgsWkbTypes::geometryType( type ) != Qgis::GeometryType::Line || !QgsWkbTypes::isMultiType( type ) )
     {
       PyErr_SetString( PyExc_TypeError, QStringLiteral( "%1 geometry cannot be converted to a multilinestring. Only multi linestring or curves are permitted." ).arg( QgsWkbTypes::displayString( type ) ).toUtf8().constData() );
       sipIsErr = 1;
@@ -2235,13 +2406,13 @@ class CORE_EXPORT QgsGeometry
      */
     SIP_PYOBJECT asMultiPolygon() const SIP_TYPEHINT( QgsMultiPolygonXY );
     % MethodCode
-    const QgsWkbTypes::Type type = sipCpp->wkbType();
+    const Qgis::WkbType type = sipCpp->wkbType();
     if ( sipCpp->isNull() )
     {
       PyErr_SetString( PyExc_ValueError, QStringLiteral( "Null geometry cannot be converted to a multipolygon." ).toUtf8().constData() );
       sipIsErr = 1;
     }
-    else if ( QgsWkbTypes::geometryType( type ) != QgsWkbTypes::PolygonGeometry || !QgsWkbTypes::isMultiType( type ) )
+    else if ( QgsWkbTypes::geometryType( type ) != Qgis::GeometryType::Polygon || !QgsWkbTypes::isMultiType( type ) )
     {
       PyErr_SetString( PyExc_TypeError, QStringLiteral( "%1 geometry cannot be converted to a multipolygon. Only multi polygon or curves are permitted." ).arg( QgsWkbTypes::displayString( type ) ).toUtf8().constData() );
       sipIsErr = 1;
@@ -2307,6 +2478,23 @@ class CORE_EXPORT QgsGeometry
     bool convertToMultiType();
 
     /**
+     * Converts a geometry into a multitype geometry of curve kind (when there
+     * is a corresponding curve type).
+     * e.g. a polygon into a multisurface geometry with one polygon,
+     * a multipolygon into a multisurface, a linestring into a multicurve
+     * geometry with one linestring, or a multilinestring into a multicurve.
+     * If it is already a multipart curve geometry, it will return TRUE and
+     * not change the geometry. It will also return TRUE and do nothing if
+     * the current geometry is a multipoint or a geometry collection. A single
+     * point will be transformed to a multipoint.
+     *
+     * \returns TRUE in case of success and FALSE else
+     *
+     * \since QGIS 3.30
+     */
+    bool convertToCurvedMultiType();
+
+    /**
      * Converts multi type geometry into single type geometry
      * e.g. a multipolygon into a polygon geometry. Only the first part of the
      * multi geometry will be retained.
@@ -2326,7 +2514,7 @@ class CORE_EXPORT QgsGeometry
      * \returns TRUE in case of success and FALSE else
      * \since QGIS 3.2
      */
-    bool convertGeometryCollectionToSubclass( QgsWkbTypes::GeometryType geomType );
+    bool convertGeometryCollectionToSubclass( Qgis::GeometryType geomType );
 
     /**
      * Modifies geometry to avoid intersections with the layers specified in project properties
@@ -2336,6 +2524,7 @@ class CORE_EXPORT QgsGeometry
      *          1 if geometry is not of polygon type,
      *          2 if avoid intersection would change the geometry type,
      *          3 at least one geometry intersected is invalid. The algorithm may not work and return the same geometry as the input. You must fix your intersecting geometries.
+     *          4 if the geometry is not intersected by one of the geometries present in the provided layers.
      * \since QGIS 1.5
      */
     int avoidIntersections( const QList<QgsVectorLayer *> &avoidIntersectionsLayers,
@@ -2353,15 +2542,16 @@ class CORE_EXPORT QgsGeometry
      * If an error was encountered during the process, more information can be retrieved
      * by calling lastError() on the returned geometry.
      *
+     * The \a method and \a keepCollapsed arguments are available since QGIS 3.28.
+     * They require builds based on GEOS 3.10 or later.
+     *
      * \returns new valid QgsGeometry or null geometry on error
      *
-     * \note For QGIS builds using GEOS library versions older than 3.8 this method calls
-     * an internal fork of PostGIS' ST_MakeValid() function. For builds based on GEOS 3.8 or
-     * later this method calls the GEOS MakeValid method directly.
+     * \throws QgsNotSupportedException on QGIS builds based on GEOS 3.9 or earlier when the \a method is not Qgis::MakeValidMethod::Linework or the \a keepCollapsed option is set.
      *
      * \since QGIS 3.0
      */
-    QgsGeometry makeValid() const;
+    QgsGeometry makeValid( Qgis::MakeValidMethod method = Qgis::MakeValidMethod::Linework, bool keepCollapsed = false ) const SIP_THROW( QgsNotSupportedException );
 
     /**
      * Forces geometries to respect the Right-Hand-Rule, in which the area that is bounded by a polygon
@@ -2477,8 +2667,11 @@ class CORE_EXPORT QgsGeometry
      * Compute the unary union on a list of \a geometries. May be faster than an iterative union on a set of geometries.
      * The returned geometry will be fully noded, i.e. a node will be created at every common intersection of the
      * input geometries. An empty geometry will be returned in the case of errors.
+     *
+     * Since QGIS 3.28 the optional \a parameters argument can be used to specify parameters which
+     * control the union results.
      */
-    static QgsGeometry unaryUnion( const QVector<QgsGeometry> &geometries );
+    static QgsGeometry unaryUnion( const QVector<QgsGeometry> &geometries, const QgsGeometryParameters &parameters = QgsGeometryParameters() );
 
     /**
      * Creates a GeometryCollection geometry containing possible polygons formed from the constituent

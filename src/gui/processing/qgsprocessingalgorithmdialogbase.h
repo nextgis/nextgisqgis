@@ -20,15 +20,19 @@
 #include "qgis_gui.h"
 #include "ui_qgsprocessingalgorithmdialogbase.h"
 #include "ui_qgsprocessingalgorithmprogressdialogbase.h"
-#include "processing/qgsprocessingcontext.h"
-#include "processing/qgsprocessingfeedback.h"
+#include "ui_qgsprocessingcontextoptionsbase.h"
+#include "qgsprocessingcontext.h"
+#include "qgsprocessingfeedback.h"
 #include "qgsprocessingwidgetwrapper.h"
+
+#include <QThread>
 
 ///@cond NOT_STABLE
 
 class QgsProcessingAlgorithm;
 class QToolButton;
 class QgsProcessingAlgorithmDialogBase;
+class QgsProcessingContextOptionsWidget;
 class QgsMessageBar;
 class QgsProcessingAlgRunnerTask;
 class QgsTask;
@@ -383,6 +387,22 @@ class GUI_EXPORT QgsProcessingAlgorithmDialogBase : public QDialog, public QgsPr
      */
     static QString formatStringForLog( const QString &string );
 
+    /**
+     * Returns TRUE if the dialog is all finalized and can be safely deleted.
+     *
+     * \since QGIS 3.26
+     */
+    virtual bool isFinalized();
+
+    /**
+     * Applies any defined overrides for Processing context settings to the specified \a context.
+     *
+     * This allows the dialog to override default Processing settings for an individual algorithm execution.
+     *
+     * \since QGIS 3.32
+     */
+    void applyContextOverrides( QgsProcessingContext *context );
+
   signals:
 
     /**
@@ -404,6 +424,13 @@ class GUI_EXPORT QgsProcessingAlgorithmDialogBase : public QDialog, public QgsPr
      */
     virtual void runAlgorithm();
 
+    /**
+     * Called when an algorithm task has completed.
+     *
+     * \since QGIS 3.26
+     */
+    virtual void algExecuted( bool successful, const QVariantMap &results );
+
   private slots:
 
     void openHelp();
@@ -412,7 +439,6 @@ class GUI_EXPORT QgsProcessingAlgorithmDialogBase : public QDialog, public QgsPr
     void splitterChanged( int pos, int index );
     void mTabWidget_currentChanged( int index );
     void linkClicked( const QUrl &url );
-    void algExecuted( bool successful, const QVariantMap &results );
     void taskTriggered( QgsTask *task );
     void closeClicked();
 
@@ -430,6 +456,7 @@ class GUI_EXPORT QgsProcessingAlgorithmDialogBase : public QDialog, public QgsPr
     QMenu *mAdvancedMenu = nullptr;
     QAction *mCopyAsQgisProcessCommand = nullptr;
     QAction *mPasteJsonAction = nullptr;
+    QAction *mContextSettingsAction = nullptr;
 
     bool mExecuted = false;
     bool mExecutedAnyResult = false;
@@ -443,6 +470,14 @@ class GUI_EXPORT QgsProcessingAlgorithmDialogBase : public QDialog, public QgsPr
     int mMessageLoggedCount = 0;
 
     QgsProcessingContext::LogLevel mLogLevel = QgsProcessingContext::DefaultLevel;
+
+    QPointer< QgsProcessingContextOptionsWidget > mContextOptionsWidget;
+    bool mOverrideDefaultContextSettings = false;
+    QgsFeatureRequest::InvalidGeometryCheck mGeometryCheck = QgsFeatureRequest::InvalidGeometryCheck::GeometryAbortOnInvalid;
+    Qgis::DistanceUnit mDistanceUnits = Qgis::DistanceUnit::Unknown;
+    Qgis::AreaUnit mAreaUnits = Qgis::AreaUnit::Unknown;
+    QString mTemporaryFolderOverride;
+    int mMaximumThreads = QThread::idealThreadCount();
 
     QString formatHelp( QgsProcessingAlgorithm *algorithm );
     void scrollToBottomOfLog();
@@ -488,6 +523,54 @@ class QgsProcessingAlgorithmProgressDialog : public QDialog, private Ui::QgsProc
 
     void reject() override;
 
+};
+
+/**
+ * \ingroup gui
+ * \brief Widget for configuring settings for a Processing context.
+ * \note Not stable API
+ * \since QGIS 3.32
+ */
+class GUI_EXPORT QgsProcessingContextOptionsWidget : public QgsPanelWidget, private Ui::QgsProcessingContextOptionsBase
+{
+    Q_OBJECT
+
+  public:
+
+    /**
+     * Constructor for QgsProcessingContextOptionsWidget, with the specified \a parent widget.
+     */
+    QgsProcessingContextOptionsWidget( QWidget *parent SIP_TRANSFERTHIS = nullptr );
+
+    /**
+     * Sets the widget state using the specified \a context.
+     */
+    void setFromContext( const QgsProcessingContext *context );
+
+    /**
+     * Returns the invalid geometry check selected in the widget.
+     */
+    QgsFeatureRequest::InvalidGeometryCheck invalidGeometryCheck() const;
+
+    /**
+     * Returns the distance unit selected in the widget.
+     */
+    Qgis::DistanceUnit distanceUnit() const;
+
+    /**
+     * Returns the area unit selected in the widget.
+     */
+    Qgis::AreaUnit areaUnit() const;
+
+    /**
+     * Returns the optional temporary folder override location.
+     */
+    QString temporaryFolder();
+
+    /**
+     * Returns the number of threads to use selected in the widget.
+     */
+    int maximumThreads() const;
 };
 
 #endif

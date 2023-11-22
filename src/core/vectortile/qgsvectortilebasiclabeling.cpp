@@ -19,7 +19,6 @@
 #include "qgslogger.h"
 #include "qgsvectortilelayer.h"
 #include "qgsvectortilerenderer.h"
-#include "qgsvectortileutils.h"
 #include "qgsrendercontext.h"
 
 
@@ -27,7 +26,7 @@ void QgsVectorTileBasicLabelingStyle::writeXml( QDomElement &elem, const QgsRead
 {
   elem.setAttribute( QStringLiteral( "name" ), mStyleName );
   elem.setAttribute( QStringLiteral( "layer" ), mLayerName );
-  elem.setAttribute( QStringLiteral( "geometry" ), mGeometryType );
+  elem.setAttribute( QStringLiteral( "geometry" ), static_cast<int>( mGeometryType ) );
   elem.setAttribute( QStringLiteral( "enabled" ), mEnabled ? QStringLiteral( "1" ) : QStringLiteral( "0" ) );
   elem.setAttribute( QStringLiteral( "expression" ), mExpression );
   elem.setAttribute( QStringLiteral( "min-zoom" ), mMinZoomLevel );
@@ -42,7 +41,7 @@ void QgsVectorTileBasicLabelingStyle::readXml( const QDomElement &elem, const Qg
 {
   mStyleName = elem.attribute( QStringLiteral( "name" ) );
   mLayerName = elem.attribute( QStringLiteral( "layer" ) );
-  mGeometryType = static_cast<QgsWkbTypes::GeometryType>( elem.attribute( QStringLiteral( "geometry" ) ).toInt() );
+  mGeometryType = static_cast<Qgis::GeometryType>( elem.attribute( QStringLiteral( "geometry" ) ).toInt() );
   mEnabled = elem.attribute( QStringLiteral( "enabled" ) ).toInt();
   mExpression = elem.attribute( QStringLiteral( "expression" ) );
   mMinZoomLevel = elem.attribute( QStringLiteral( "min-zoom" ) ).toInt();
@@ -187,9 +186,11 @@ bool QgsVectorTileBasicLabelProvider::prepare( QgsRenderContext &context, QSet<Q
     QgsExpressionContextScopePopper popper( context.expressionContext(), scope );
 
     mSubProviders[i]->setFields( fields );
+    // check is required as fields are not available through the GUI, which can lead to isExpression wrongly set to true
+    mSubProviders[i]->mSettings.isExpression = !fields.names().contains( mSubProviders[i]->mSettings.fieldName );
     if ( !mSubProviders[i]->prepare( context, attributeNames ) )
     {
-      QgsDebugMsg( QStringLiteral( "Failed to prepare labeling for style index" ) + QString::number( i ) );
+      QgsDebugError( QStringLiteral( "Failed to prepare labeling for style index" ) + QString::number( i ) );
       mSubProviders[i] = nullptr;
     }
   }
@@ -199,7 +200,7 @@ bool QgsVectorTileBasicLabelProvider::prepare( QgsRenderContext &context, QSet<Q
 void QgsVectorTileBasicLabelProvider::registerTileFeatures( const QgsVectorTileRendererData &tile, QgsRenderContext &context )
 {
   const QgsVectorTileFeatures tileData = tile.features();
-  int zoomLevel = tile.id().zoomLevel();
+  const int zoomLevel = tile.renderZoomLevel();
 
   for ( int i = 0; i < mStyles.count(); ++i )
   {
@@ -223,20 +224,20 @@ void QgsVectorTileBasicLabelProvider::registerTileFeatures( const QgsVectorTileR
     if ( layerStyle.layerName().isEmpty() )
     {
       // matching all layers
-      for ( QString layerName : tileData.keys() )
+      for ( const auto &features : tileData )
       {
-        for ( const QgsFeature &f : tileData[layerName] )
+        for ( const QgsFeature &f : features )
         {
           scope->setFeature( f );
           if ( filterExpression.isValid() && !filterExpression.evaluate( &context.expressionContext() ).toBool() )
             continue;
 
-          const QgsWkbTypes::GeometryType featureType = QgsWkbTypes::geometryType( f.geometry().wkbType() );
+          const Qgis::GeometryType featureType = QgsWkbTypes::geometryType( f.geometry().wkbType() );
           if ( featureType == layerStyle.geometryType() )
           {
             subProvider->registerFeature( f, context );
           }
-          else if ( featureType == QgsWkbTypes::PolygonGeometry && layerStyle.geometryType() == QgsWkbTypes::PointGeometry )
+          else if ( featureType == Qgis::GeometryType::Polygon && layerStyle.geometryType() == Qgis::GeometryType::Point )
           {
             // be tolerant and permit labeling polygons with a point layer style, as some style definitions use this approach
             // to label the polygon center
@@ -257,12 +258,12 @@ void QgsVectorTileBasicLabelProvider::registerTileFeatures( const QgsVectorTileR
         if ( filterExpression.isValid() && !filterExpression.evaluate( &context.expressionContext() ).toBool() )
           continue;
 
-        const QgsWkbTypes::GeometryType featureType = QgsWkbTypes::geometryType( f.geometry().wkbType() );
+        const Qgis::GeometryType featureType = QgsWkbTypes::geometryType( f.geometry().wkbType() );
         if ( featureType == layerStyle.geometryType() )
         {
           subProvider->registerFeature( f, context );
         }
-        else if ( featureType == QgsWkbTypes::PolygonGeometry && layerStyle.geometryType() == QgsWkbTypes::PointGeometry )
+        else if ( featureType == Qgis::GeometryType::Polygon && layerStyle.geometryType() == Qgis::GeometryType::Point )
         {
           // be tolerant and permit labeling polygons with a point layer style, as some style definitions use this approach
           // to label the polygon center

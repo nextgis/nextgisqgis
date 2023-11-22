@@ -1,23 +1,23 @@
 --- a/src/app/main.cpp	2022-02-18 15:06:10.000000000 +0300
 +++ b/src/app/main.cpp	2022-04-21 14:12:01.488429300 +0300
 @@ -34,6 +34,7 @@
- #include <QImageReader>
  #include <QMessageBox>
  #include <QStandardPaths>
+ #include <QScreen>
 +#include <QLibraryInfo>
  
  #include <cstdio>
  #include <cstdlib>
-@@ -103,7 +104,7 @@
+@@ -90,7 +90,7 @@
  #include "qgsproject.h"
  #include "qgsrectangle.h"
  #include "qgslogger.h"
 -#include "qgsdxfexport.h"
 +// #include "qgsdxfexport.h"
- #include "qgsmapthemes.h"
  #include "qgsvectorlayer.h"
  #include "qgis_app.h"
-@@ -123,6 +124,8 @@
+ #ifdef HAVE_CRASH_HANDLER
+@@ -111,6 +111,8 @@
  #include "qgsopenclutils.h"
  #endif
  
@@ -26,7 +26,7 @@
  /**
   * Print QGIS version
   */
-@@ -140,7 +143,8 @@
+@@ -128,7 +128,8 @@
    QStringList msg;
  
    msg
@@ -36,8 +36,8 @@
        << QStringLiteral( "Usage: " ) << appName <<  QStringLiteral( " [OPTION] [FILE]\n" )
        << QStringLiteral( "  OPTION:\n" )
        << QStringLiteral( "\t[-v, --version]\tdisplay version information and exit\n" )
-@@ -161,13 +165,13 @@
-       << QStringLiteral( "\t[-f, --code path]\trun the given python file on load\n" )
+@@ -150,13 +150,13 @@
+       << QStringLiteral( "\t[-F, --py-args arguments]\targuments for python. This arguments will be available for each python execution via 'sys.argv' included the file specified by '--code'. All arguments till '--' are passed to python and ignored by QGIS\n" )
        << QStringLiteral( "\t[-d, --defaultui]\tstart by resetting user ui settings to default\n" )
        << QStringLiteral( "\t[--hide-browser]\thide the browser widget\n" )
 -      << QStringLiteral( "\t[--dxf-export filename.dxf]\temit dxf output of loaded datasets to given file\n" )
@@ -56,19 +56,18 @@
 +    //   << QStringLiteral( "\t[--take-screenshots output_path]\ttake screen shots for the user documentation\n" )
        << QStringLiteral( "\t[--screenshots-categories categories]\tspecify the categories of screenshot to be used (see QgsAppScreenShots::Categories).\n" )
        << QStringLiteral( "\t[--profile name]\tload a named profile from the users profiles folder.\n" )
-       << QStringLiteral( "\t[-s, --profiles-path path]\tpath to store user profile folders. Will create profiles inside a {path}\\profiles folder \n" )
-@@ -237,8 +241,8 @@
+       << QStringLiteral( "\t[-S, --profiles-path path]\tpath to store user profile folders. Will create profiles inside a {path}\\profiles folder \n" )
+@@ -228,8 +228,8 @@
  }
  
  static void dumpBacktrace( unsigned int depth )
--{
+ {
 -  if ( depth == 0 )
-+{    
 +/*  if ( depth == 0 )
      depth = 20;
  
  #ifdef QGIS_CRASH
-@@ -311,9 +315,9 @@
+@@ -300,9 +300,9 @@
    }
  #elif defined(Q_OS_WIN)
    // TODO Replace with incoming QgsStackTrace
@@ -80,18 +79,18 @@
  }
  
  #ifdef QGIS_CRASH
-@@ -585,12 +589,12 @@
+@@ -578,12 +578,12 @@
    bool mySkipBadLayers = false;
    bool myCustomization = true;
  
 -  QString dxfOutputFile;
--  QgsDxfExport::SymbologyExport dxfSymbologyMode = QgsDxfExport::SymbolLayerSymbology;
+-  Qgis::FeatureSymbologyExport dxfSymbologyMode = Qgis::FeatureSymbologyExport::PerSymbolLayer;
 -  double dxfScale = 50000.0;
 -  QString dxfEncoding = QStringLiteral( "CP1252" );
 -  QString dxfMapTheme;
 -  QgsRectangle dxfExtent;
 +//   QString dxfOutputFile;
-+//   QgsDxfExport::SymbologyExport dxfSymbologyMode = QgsDxfExport::SymbolLayerSymbology;
++//   Qgis::FeatureSymbologyExport dxfSymbologyMode = Qgis::FeatureSymbologyExport::PerSymbolLayer;
 +//   double dxfScale = 50000.0;
 +//   QString dxfEncoding = QStringLiteral( "CP1252" );
 +//   QString dxfMapTheme;
@@ -99,7 +98,7 @@
  
    bool takeScreenShots = false;
    QString screenShotsPath;
-@@ -745,91 +749,91 @@
+@@ -752,91 +752,91 @@
          {
            myRestoreDefaultWindowState = true;
          }
@@ -153,15 +152,15 @@
 -          QString mode( args[++i] );
 -          if ( mode == QLatin1String( "none" ) )
 -          {
--            dxfSymbologyMode = QgsDxfExport::NoSymbology;
+-            dxfSymbologyMode = Qgis::FeatureSymbologyExport::NoSymbology;
 -          }
 -          else if ( mode == QLatin1String( "symbollayer" ) )
 -          {
--            dxfSymbologyMode = QgsDxfExport::SymbolLayerSymbology;
+-            dxfSymbologyMode = Qgis::FeatureSymbologyExport::PerSymbolLayer;
 -          }
 -          else if ( mode == QLatin1String( "feature" ) )
 -          {
--            dxfSymbologyMode = QgsDxfExport::FeatureSymbology;
+-            dxfSymbologyMode = Qgis::FeatureSymbologyExport::PerFeature;
 -          }
 -          else
 -          {
@@ -238,15 +237,15 @@
 +        //   QString mode( args[++i] );
 +        //   if ( mode == QLatin1String( "none" ) )
 +        //   {
-+        //     dxfSymbologyMode = QgsDxfExport::NoSymbology;
++        //     dxfSymbologyMode = Qgis::FeatureSymbologyExport::NoSymbology;
 +        //   }
 +        //   else if ( mode == QLatin1String( "symbollayer" ) )
 +        //   {
-+        //     dxfSymbologyMode = QgsDxfExport::SymbolLayerSymbology;
++        //     dxfSymbologyMode = Qgis::FeatureSymbologyExport::PerSymbolLayer;
 +        //   }
 +        //   else if ( mode == QLatin1String( "feature" ) )
 +        //   {
-+        //     dxfSymbologyMode = QgsDxfExport::FeatureSymbology;
++        //     dxfSymbologyMode = Qgis::FeatureSymbologyExport::PerFeature;
 +        //   }
 +        //   else
 +        //   {
@@ -276,7 +275,7 @@
          else if ( arg == QLatin1String( "--take-screenshots" ) )
          {
            takeScreenShots = true;
-@@ -909,9 +913,12 @@
+@@ -934,9 +934,12 @@
      QgsCustomization::instance()->setEnabled( false );
    }
  
@@ -289,11 +288,11 @@
 +  QCoreApplication::setOrganizationName( QgsApplication::NGQGIS_ORGANIZATION_NAME );
 +  QCoreApplication::setOrganizationDomain( QgsApplication::NGQGIS_ORGANIZATION_DOMAIN );
 +  QCoreApplication::setApplicationName( QgsApplication::NGQGIS_APPLICATION_NAME );
-   QCoreApplication::setAttribute( Qt::AA_DontShowIconsInMenus, false );
-   QCoreApplication::setAttribute( Qt::AA_DisableWindowContextHelpButton, true );
+  QCoreApplication::setAttribute( Qt::AA_DontShowIconsInMenus, false );
  
-@@ -924,6 +931,18 @@
-   QCoreApplication::setAttribute( Qt::AA_ShareOpenGLContexts, true );
+  // this is implicit in Qt 6 now
+@@ -958,6 +958,18 @@
+ #endif
  #endif
  
 +  // List font directory
@@ -311,16 +310,7 @@
    // Set up the QgsSettings Global Settings:
    // - use the path specified with --globalsettingsfile path,
    // - use the environment if not found
-@@ -1058,6 +1077,8 @@
- 
-   QgsApplication myApp( argc, argv, myUseGuiFlag, QString(), QStringLiteral( "desktop" ) );
- 
-+
-+
-   // Set locale to emit QgsApplication's localeChanged signal
-   QgsApplication::setLocale( QLocale() );
- 
-@@ -1115,12 +1136,12 @@
+@@ -1224,12 +1224,12 @@
    //            e.g. loading splash screen, setting window icon, etc.
    //            Always honor QT_PLUGIN_PATH env var or qt.conf, which will
    //            be part of libraryPaths just after QgsApplication creation.
@@ -339,7 +329,7 @@
  #if defined(Q_OS_UNIX)
    // Resulting libraryPaths has critical QGIS plugin paths first, then any Qt plugin paths, then
    // any dev-defined paths (in app's qt.conf) and/or user-defined paths (QT_PLUGIN_PATH env var).
-@@ -1228,10 +1249,10 @@
+@@ -1335,10 +1335,10 @@
    {
      // If the GDAL plugins are bundled with the application and GDAL_DRIVER_PATH
      // is not already defined, use the GDAL plugins in the application bundle.
@@ -353,7 +343,7 @@
      }
    }
  
-@@ -1254,15 +1275,27 @@
+@@ -1360,15 +1360,27 @@
    }
  
    // Point PYTHONHOME to embedded interpreter if present in the bundle
@@ -390,7 +380,7 @@
    // custom environment variables
    QMap<QString, QString> systemEnvVars = QgsApplication::systemEnvVars();
    bool useCustomVars = settings.value( QStringLiteral( "qgis/customEnvVarsUse" ), QVariant( false ) ).toBool();
-@@ -1403,7 +1436,7 @@
+@@ -1524,7 +1524,7 @@
    // this should be done in QgsApplication::init() but it doesn't know the settings dir.
    QgsApplication::setMaxThreads( settings.value( QStringLiteral( "qgis/max_threads" ), -1 ).toInt() );
  
@@ -399,7 +389,7 @@
    qgis->setObjectName( QStringLiteral( "QgisApp" ) );
  
    QgsApplication::connect(
-@@ -1535,7 +1568,7 @@
+@@ -1671,7 +1671,7 @@
  
      return 1;
    }
@@ -408,7 +398,7 @@
    if ( !dxfOutputFile.isEmpty() )
    {
      qgis->hide();
-@@ -1616,7 +1649,7 @@
+@@ -1752,7 +1725,7 @@
  
      return static_cast<int>( res );
    }

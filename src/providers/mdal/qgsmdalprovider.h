@@ -141,9 +141,11 @@ class QgsMdalProvider : public QgsMeshDataProvider
 
 class QgsMdalProviderMetadata: public QgsProviderMetadata
 {
+    Q_OBJECT
   public:
     QgsMdalProviderMetadata();
-    QString filters( FilterType type ) override;
+    QIcon icon() const override;
+    QString filters( Qgis::FileFilterType type ) override;
     QList<QgsMeshDriverMetadata> meshDriversMetadata() override;
     QgsMdalProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() ) override;
     bool createMeshData( const QgsMesh &mesh,
@@ -155,9 +157,12 @@ class QgsMdalProviderMetadata: public QgsProviderMetadata
                          const QgsCoordinateReferenceSystem &crs ) const override;
     QVariantMap decodeUri( const QString &uri ) const override;
     QString encodeUri( const QVariantMap &parts ) const override;
+    QString absoluteToRelativeUri( const QString &uri, const QgsReadWriteContext &context ) const override;
+    QString relativeToAbsoluteUri( const QString &uri, const QgsReadWriteContext &context ) const override;
     ProviderCapabilities providerCapabilities() const override;
     QgsProviderMetadata::ProviderMetadataCapabilities capabilities() const override;
     QList< QgsProviderSublayerDetails > querySublayers( const QString &uri, Qgis::SublayerQueryFlags flags = Qgis::SublayerQueryFlags(), QgsFeedback *feedback = nullptr ) const override;
+    QList< Qgis::LayerType > supportedLayerTypes() const override;
 };
 
 #endif //QGSMDALPROVIDER_H

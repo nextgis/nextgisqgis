@@ -18,6 +18,7 @@
 #include "qgstemporalnavigationobject.h"
 #include "qgis.h"
 #include "qgstemporalutils.h"
+#include "qgsunittypes.h"
 
 QgsTemporalNavigationObject::QgsTemporalNavigationObject( QObject *parent )
   : QgsTemporalController( parent )
@@ -77,10 +78,14 @@ QgsExpressionContextScope *QgsTemporalNavigationObject::createExpressionContextS
   scope->setVariable( QStringLiteral( "frame_number" ), mCurrentFrameNumber, true );
   scope->setVariable( QStringLiteral( "frame_duration" ), mFrameDuration, true );
   scope->setVariable( QStringLiteral( "frame_timestep" ), mFrameDuration.originalDuration(), true );
-  scope->setVariable( QStringLiteral( "frame_timestep_unit" ), mFrameDuration.originalUnit(), true );
+  scope->setVariable( QStringLiteral( "frame_timestep_unit" ), static_cast< int >( mFrameDuration.originalUnit() ), true );
+  scope->setVariable( QStringLiteral( "frame_timestep_units" ), QgsUnitTypes::toString( mFrameDuration.originalUnit() ), true );
   scope->setVariable( QStringLiteral( "animation_start_time" ), mTemporalExtents.begin(), true );
   scope->setVariable( QStringLiteral( "animation_end_time" ), mTemporalExtents.end(), true );
-  scope->setVariable( QStringLiteral( "animation_interval" ), mTemporalExtents.end() - mTemporalExtents.begin(), true );
+  scope->setVariable( QStringLiteral( "animation_interval" ), QgsInterval( mTemporalExtents.end() - mTemporalExtents.begin() ), true );
+
+  scope->addHiddenVariable( QStringLiteral( "frame_timestep_unit" ) );
+
   return scope.release();
 }
 
@@ -95,7 +100,7 @@ QgsDateTimeRange QgsTemporalNavigationObject::dateTimeRangeForFrameNumber( long 
 
   QDateTime begin;
   QDateTime end;
-  if ( mFrameDuration.originalUnit() == QgsUnitTypes::TemporalIrregularStep )
+  if ( mFrameDuration.originalUnit() == Qgis::TemporalUnit::IrregularStep )
   {
     if ( mAllRanges.empty() )
       return QgsDateTimeRange();
@@ -312,7 +317,7 @@ void QgsTemporalNavigationObject::skipToEnd()
 
 long long QgsTemporalNavigationObject::totalFrameCount() const
 {
-  if ( mFrameDuration.originalUnit() == QgsUnitTypes::TemporalIrregularStep )
+  if ( mFrameDuration.originalUnit() == Qgis::TemporalUnit::IrregularStep )
   {
     return mAllRanges.count();
   }
@@ -340,7 +345,7 @@ QgsTemporalNavigationObject::AnimationState QgsTemporalNavigationObject::animati
 long long QgsTemporalNavigationObject::findBestFrameNumberForFrameStart( const QDateTime &frameStart ) const
 {
   long long bestFrame = 0;
-  if ( mFrameDuration.originalUnit() == QgsUnitTypes::TemporalIrregularStep )
+  if ( mFrameDuration.originalUnit() == Qgis::TemporalUnit::IrregularStep )
   {
     for ( const QgsDateTimeRange &range : mAllRanges )
     {
@@ -361,13 +366,13 @@ long long QgsTemporalNavigationObject::findBestFrameNumberForFrameStart( const Q
     long long roughFrameEnd = totalFrameCount();
     // For the smaller step frames we calculate an educated guess, to prevent the loop becoming too
     // large, freezing the ui (eg having a mTemporalExtents of several months and the user selects milliseconds)
-    if ( mFrameDuration.originalUnit() != QgsUnitTypes::TemporalMonths && mFrameDuration.originalUnit() != QgsUnitTypes::TemporalYears && mFrameDuration.originalUnit() != QgsUnitTypes::TemporalDecades && mFrameDuration.originalUnit() != QgsUnitTypes::TemporalCenturies )
+    if ( mFrameDuration.originalUnit() != Qgis::TemporalUnit::Months && mFrameDuration.originalUnit() != Qgis::TemporalUnit::Years && mFrameDuration.originalUnit() != Qgis::TemporalUnit::Decades && mFrameDuration.originalUnit() != Qgis::TemporalUnit::Centuries )
     {
       // Only if we receive a valid frameStart, that is within current mTemporalExtents
       // We tend to receive a framestart of 'now()' upon startup for example
       if ( mTemporalExtents.contains( frameStart ) )
       {
-        roughFrameStart = static_cast< long long >( std::floor( ( frameStart - mTemporalExtents.begin() ).seconds() / mFrameDuration.seconds() ) );
+        roughFrameStart = static_cast< long long >( std::floor( QgsInterval( frameStart - mTemporalExtents.begin() ).seconds() / mFrameDuration.seconds() ) );
       }
       roughFrameEnd = roughFrameStart + 100; // just in case we miss the guess
     }

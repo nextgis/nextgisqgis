@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     ModelerDialog.py
@@ -42,6 +40,7 @@ from qgis.core import (Qgis,
                        QgsProcessing,
                        QgsProject,
                        QgsProcessingModelParameter,
+                       QgsProcessingModelAlgorithm,
                        QgsSettings,
                        QgsProcessingContext,
                        QgsFileUtils
@@ -55,7 +54,6 @@ from qgis.gui import (QgsProcessingParameterDefinitionDialog,
 from qgis.utils import iface
 
 from processing.gui.AlgorithmDialog import AlgorithmDialog
-from processing.gui.HelpEditionDialog import HelpEditionDialog
 from processing.modeler.ModelerParameterDefinitionDialog import ModelerParameterDefinitionDialog
 from processing.modeler.ModelerParametersDialog import ModelerParametersDialog
 from processing.modeler.ModelerScene import ModelerScene
@@ -102,7 +100,6 @@ class ModelerDialog(QgsModelDesignerDialog):
 
         self.actionOpen().triggered.connect(self.openModel)
         self.actionSaveInProject().triggered.connect(self.saveInProject)
-        self.actionEditHelp().triggered.connect(self.editHelp)
         self.actionRun().triggered.connect(self.runModel)
 
         if model is not None:
@@ -125,15 +122,6 @@ class ModelerDialog(QgsModelDesignerDialog):
 
         self.context_generator = ContextGenerator(self.processing_context)
 
-    def editHelp(self):
-        alg = self.model()
-        dlg = HelpEditionDialog(alg)
-        dlg.exec_()
-        if dlg.descriptions:
-            self.beginUndoCommand(self.tr('Edit Model Help'))
-            self.model().setHelpContent(dlg.descriptions)
-            self.endUndoCommand()
-
     def runModel(self):
         valid, errors = self.model().validate()
         if not valid:
@@ -147,7 +135,7 @@ class ModelerDialog(QgsModelDesignerDialog):
             error_string = ''
             for e in errors:
                 e = re.sub(r'<[^>]*>', '', e)
-                error_string += '• {}\n'.format(e)
+                error_string += f'• {e}\n'
 
             message_box.setDetailedText(error_string)
             if message_box.exec_() == QMessageBox.Cancel:
@@ -227,11 +215,9 @@ class ModelerDialog(QgsModelDesignerDialog):
 
         self.update_model.emit()
         if saveAs:
-            self.messageBar().pushMessage("", self.tr("Model was correctly saved to <a href=\"{}\">{}</a>").format(
+            self.messageBar().pushMessage("", self.tr("Model was saved to <a href=\"{}\">{}</a>").format(
                 QUrl.fromLocalFile(filename).toString(), QDir.toNativeSeparators(filename)), level=Qgis.Success,
                 duration=5)
-        else:
-            self.messageBar().pushMessage("", self.tr("Model was correctly saved"), level=Qgis.Success, duration=5)
 
         self.setDirty(False)
         return True
@@ -285,9 +271,7 @@ class ModelerDialog(QgsModelDesignerDialog):
         Automatically generates and sets a new parameter's name, based on the parameter's
         description and ensuring that it is unique for the model.
         """
-        validChars = \
-            'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-        safeName = ''.join(c for c in parameter.description() if c in validChars)
+        safeName = QgsProcessingModelAlgorithm.safeName(parameter.description())
         name = safeName.lower()
         i = 2
         while self.model().parameterDefinition(name):
@@ -406,7 +390,7 @@ class ModelerDialog(QgsModelDesignerDialog):
         return QPointF(newX, newY)
 
     def exportAsScriptAlgorithm(self):
-        dlg = ScriptEditorDialog(None)
+        dlg = ScriptEditorDialog(parent=iface.mainWindow())
 
         dlg.editor.setText('\n'.join(self.model().asPythonCode(QgsProcessing.PythonQgsProcessingAlgorithmSubclass, 4)))
         dlg.show()

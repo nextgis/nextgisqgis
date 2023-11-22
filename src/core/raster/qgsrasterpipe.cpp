@@ -63,6 +63,19 @@ QgsRasterPipe::~QgsRasterPipe()
   }
 }
 
+void QgsRasterPipe::moveToThread( QThread *thread )
+{
+  // only data provider is derived from QObject currently:
+  auto it = mRoleMap.find( Qgis::RasterPipeInterfaceRole::Provider );
+  if ( it != mRoleMap.end() )
+  {
+    if ( QgsRasterDataProvider *dp = dynamic_cast<QgsRasterDataProvider *>( mInterfaces.value( it.value() ) ) )
+    {
+      dp->moveToThread( thread );
+    }
+  }
+}
+
 bool QgsRasterPipe::connect( QVector<QgsRasterInterface *> interfaces )
 {
   QgsDebugMsgLevel( QStringLiteral( "Entered" ), 4 );
@@ -73,7 +86,7 @@ bool QgsRasterPipe::connect( QVector<QgsRasterInterface *> interfaces )
 #ifdef QGISDEBUG
       const QgsRasterInterface &a = *interfaces[i];
       const QgsRasterInterface &b = *interfaces[i - 1];
-      QgsDebugMsg( QStringLiteral( "cannot connect %1 to %2" ).arg( typeid( a ).name(), typeid( b ).name() ) );
+      QgsDebugError( QStringLiteral( "cannot connect %1 to %2" ).arg( typeid( a ).name(), typeid( b ).name() ) );
 #endif
       return false;
     }

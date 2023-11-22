@@ -25,7 +25,7 @@ void QgsCredentials::setInstance( QgsCredentials *instance )
 {
   if ( sInstance )
   {
-    QgsDebugMsg( QStringLiteral( "already registered an instance of QgsCredentials" ) );
+    QgsDebugError( QStringLiteral( "already registered an instance of QgsCredentials" ) );
   }
 
   sInstance = instance;
@@ -39,7 +39,7 @@ QgsCredentials *QgsCredentials::instance()
   return new QgsCredentialsNone();
 }
 
-bool QgsCredentials::get( const QString &realm, QString &username, QString &password, const QString &message )
+bool QgsCredentials::get( const QString &realm, QString &username, QString &password, const QString &message, bool requestCredentials )
 {
   {
     const QMutexLocker locker( &mCacheMutex );
@@ -55,7 +55,7 @@ bool QgsCredentials::get( const QString &realm, QString &username, QString &pass
     }
   }
 
-  if ( request( realm, username, password, message ) )
+  if ( requestCredentials && request( realm, username, password, message ) )
   {
     QgsDebugMsgLevel( QStringLiteral( "requested realm:%1 username:%2" ).arg( realm, username ), 2 );
     return true;
@@ -132,17 +132,9 @@ bool QgsCredentialsConsole::request( const QString &realm, QString &username, QS
   QTextStream in( stdin, QIODevice::ReadOnly );
   QTextStream out( stdout, QIODevice::WriteOnly );
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-  out << "credentials for " << realm << endl;
-#else
   out << "credentials for " << realm << Qt::endl;
-#endif
   if ( !message.isEmpty() )
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-    out << "message: " << message << endl;
-#else
     out << "message: " << message << Qt::endl;
-#endif
   out << "username: ";
   in >> username;
   out << "password: ";

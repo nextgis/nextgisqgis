@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgsalgorithmpointslayerfromtable.h"
+#include "qgsvariantutils.h"
 
 ///@cond PRIVATE
 
@@ -97,7 +98,7 @@ QVariantMap QgsPointsLayerFromTableAlgorithm::processAlgorithm( const QVariantMa
   if ( !fieldName.isEmpty() )
     mFieldIndex = fields.lookupField( fieldName );
 
-  QgsWkbTypes::Type outputWkbType = QgsWkbTypes::Point;
+  Qgis::WkbType outputWkbType = Qgis::WkbType::Point;
   if ( zFieldIndex >= 0 )
     outputWkbType = QgsWkbTypes::addZ( outputWkbType );
   if ( mFieldIndex >= 0 )
@@ -132,14 +133,14 @@ QVariantMap QgsPointsLayerFromTableAlgorithm::processAlgorithm( const QVariantMa
     const double x = attrs.at( xFieldIndex ).toDouble( &xOk );
     const double y = attrs.at( yFieldIndex ).toDouble( &yOk );
 
-    if ( ! attrs.at( xFieldIndex ).isNull() && ! attrs.at( yFieldIndex ).isNull() && xOk && yOk )
+    if ( ! QgsVariantUtils::isNull( attrs.at( xFieldIndex ) ) && ! QgsVariantUtils::isNull( attrs.at( yFieldIndex ) ) && xOk && yOk )
     {
       QgsPoint point( x, y );
 
-      if ( zFieldIndex >= 0 && ! attrs.at( zFieldIndex ).isNull() )
+      if ( zFieldIndex >= 0 && ! QgsVariantUtils::isNull( attrs.at( zFieldIndex ) ) )
         point.addZValue( attrs.at( zFieldIndex ).toDouble() );
 
-      if ( mFieldIndex >= 0 && ! attrs.at( mFieldIndex ).isNull() )
+      if ( mFieldIndex >= 0 && ! QgsVariantUtils::isNull( attrs.at( mFieldIndex ) ) )
         point.addMValue( attrs.at( mFieldIndex ).toDouble() );
 
       f.setGeometry( QgsGeometry( point.clone() ) );

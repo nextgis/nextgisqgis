@@ -77,6 +77,9 @@ Abstract base class for spatial data provider implementations.
       FlagLoadDefaultStyle,
       SkipGetExtent,
       SkipFullScan,
+      ForceReadOnly,
+      SkipCredentialsRequest,
+      ParallelThreadLoading,
     };
     typedef QFlags<QgsDataProvider::ReadFlag> ReadFlags;
 
@@ -147,6 +150,13 @@ Gets the data source specification.
 .. versionadded:: 3.0
 %End
 
+    virtual Qgis::DataProviderFlags flags() const;
+%Docstring
+Returns the generic data provider flags.
+
+.. versionadded:: 3.26
+%End
+
     virtual QgsDataProviderTemporalCapabilities *temporalCapabilities();
 %Docstring
 Returns the provider's temporal capabilities.
@@ -154,6 +164,16 @@ Returns the provider's temporal capabilities.
 This may be ``None``, depending on the data provider.
 
 .. versionadded:: 3.14
+%End
+
+
+    virtual QgsDataProviderElevationProperties *elevationProperties();
+%Docstring
+Returns the provider's elevation properties.
+
+This may be ``None``, depending on the data provider.
+
+.. versionadded:: 3.32
 %End
 
 

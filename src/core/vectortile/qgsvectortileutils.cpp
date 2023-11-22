@@ -27,10 +27,14 @@
 #include "qgsrectangle.h"
 #include "qgsvectorlayer.h"
 
+#include "qgsvectortileloader.h"
 #include "qgsvectortilemvtdecoder.h"
 #include "qgsvectortilelayer.h"
 #include "qgsvectortilerenderer.h"
-
+#include "qgsmapboxglstyleconverter.h"
+#include "qgsnetworkaccessmanager.h"
+#include "qgsblockingnetworkrequest.h"
+#include "qgsjsonutils.h"
 
 
 QPolygon QgsVectorTileUtils::tilePolygon( QgsTileXYZ id, const QgsCoordinateTransform &ct, const QgsTileMatrix &tm, const QgsMapToPixel &mtp )
@@ -48,7 +52,7 @@ QPolygon QgsVectorTileUtils::tilePolygon( QgsTileXYZ id, const QgsCoordinateTran
   return path;
 }
 
-QgsFields QgsVectorTileUtils::makeQgisFields( QSet<QString> flds )
+QgsFields QgsVectorTileUtils::makeQgisFields( const QSet<QString> &flds )
 {
   QgsFields fields;
   QStringList fieldsSorted = qgis::setToList( flds );
@@ -60,17 +64,17 @@ QgsFields QgsVectorTileUtils::makeQgisFields( QSet<QString> flds )
   return fields;
 }
 
-double QgsVectorTileUtils::scaleToZoom( double mapScale )
+double QgsVectorTileUtils::scaleToZoom( double mapScale, double z0Scale )
 {
-  double s0 = 559082264.0287178;   // scale denominator at zoom level 0 of GoogleCRS84Quad
+  double s0 = z0Scale;
   double tileZoom2 = log( s0 / mapScale ) / log( 2 );
   tileZoom2 -= 1;   // TODO: it seems that map scale is double (is that because of high-dpi screen?)
   return tileZoom2;
 }
 
-int QgsVectorTileUtils::scaleToZoomLevel( double mapScale, int sourceMinZoom, int sourceMaxZoom )
+int QgsVectorTileUtils::scaleToZoomLevel( double mapScale, int sourceMinZoom, int sourceMaxZoom, double z0Scale )
 {
-  int tileZoom = static_cast<int>( round( scaleToZoom( mapScale ) ) );
+  int tileZoom = static_cast<int>( round( scaleToZoom( mapScale, z0Scale ) ) );
 
   if ( tileZoom < sourceMinZoom )
     tileZoom = sourceMinZoom;
@@ -82,8 +86,9 @@ int QgsVectorTileUtils::scaleToZoomLevel( double mapScale, int sourceMinZoom, in
 
 QgsVectorLayer *QgsVectorTileUtils::makeVectorLayerForTile( QgsVectorTileLayer *mvt, QgsTileXYZ tileID, const QString &layerName )
 {
-  QgsVectorTileMVTDecoder decoder;
-  decoder.decode( tileID, mvt->getRawTile( tileID ) );
+  QgsVectorTileMVTDecoder decoder( mvt->tileMatrixSet() );
+  const QgsVectorTileRawData rawTile = mvt->getRawTile( tileID );
+  decoder.decode( rawTile );
   QSet<QString> fieldNames = qgis::listToSet( decoder.layerFieldNames( layerName ) );
   fieldNames << QStringLiteral( "_geom_type" );
   QMap<QString, QgsFields> perLayerFields;
@@ -112,7 +117,7 @@ QgsVectorLayer *QgsVectorTileUtils::makeVectorLayerForTile( QgsVectorTileLayer *
   vl->dataProvider()->addAttributes( fields.toList() );
   vl->updateFields();
   bool res = vl->dataProvider()->addFeatures( featuresList );
-  Q_UNUSED( res );
+  Q_UNUSED( res )
   Q_ASSERT( res );
   Q_ASSERT( featuresList.count() == vl->featureCount() );
   vl->updateExtents();
@@ -149,7 +154,7 @@ bool QgsVectorTileUtils::checkXYZUrlTemplate( const QString &url )
 struct LessThanTileRequest
 {
   QPointF center;  //!< Center in tile matrix (!) coordinates
-  bool operator()( const QgsTileXYZ &req1, const QgsTileXYZ &req2 )
+  bool operator()( QgsTileXYZ req1, QgsTileXYZ req2 )
   {
     QPointF p1( req1.column() + 0.5, req1.row() + 0.5 );
     QPointF p2( req2.column() + 0.5, req2.row() + 0.5 );
@@ -160,22 +165,76 @@ struct LessThanTileRequest
   }
 };
 
-QVector<QgsTileXYZ> QgsVectorTileUtils::tilesInRange( const QgsTileRange &range, int zoomLevel )
-{
-  QVector<QgsTileXYZ> tiles;
-  for ( int tileRow = range.startRow(); tileRow <= range.endRow(); ++tileRow )
-  {
-    for ( int tileColumn = range.startColumn(); tileColumn <= range.endColumn(); ++tileColumn )
-    {
-      tiles.append( QgsTileXYZ( tileColumn, tileRow, zoomLevel ) );
-    }
-  }
-  return tiles;
-}
-
-void QgsVectorTileUtils::sortTilesByDistanceFromCenter( QVector<QgsTileXYZ> &tiles, const QPointF &center )
+void QgsVectorTileUtils::sortTilesByDistanceFromCenter( QVector<QgsTileXYZ> &tiles, QPointF center )
 {
   LessThanTileRequest cmp;
   cmp.center = center;
   std::sort( tiles.begin(), tiles.end(), cmp );
 }
+
+void QgsVectorTileUtils::loadSprites( const QVariantMap &styleDefinition, QgsMapBoxGlStyleConversionContext &context, const QString &styleUrl )
+{
+  if ( styleDefinition.contains( QStringLiteral( "sprite" ) ) && ( context.spriteDefinitions().empty() || context.spriteImage().isNull() ) )
+  {
+    // retrieve sprite definition
+    QString spriteUriBase;
+    if ( styleDefinition.value( QStringLiteral( "sprite" ) ).toString().startsWith( QLatin1String( "http" ) ) )
+    {
+      spriteUriBase = styleDefinition.value( QStringLiteral( "sprite" ) ).toString();
+    }
+    else
+    {
+      spriteUriBase = styleUrl + '/' + styleDefinition.value( QStringLiteral( "sprite" ) ).toString();
+    }
+
+    for ( int resolution = 2; resolution > 0; resolution-- )
+    {
+      QUrl spriteUrl = QUrl( spriteUriBase );
+      spriteUrl.setPath( spriteUrl.path() + QStringLiteral( "%1.json" ).arg( resolution > 1 ? QStringLiteral( "@%1x" ).arg( resolution ) : QString() ) );
+      QNetworkRequest request = QNetworkRequest( spriteUrl );
+      QgsSetRequestInitiatorClass( request, QStringLiteral( "QgsVectorTileLayer" ) )
+      QgsBlockingNetworkRequest networkRequest;
+      switch ( networkRequest.get( request ) )
+      {
+        case QgsBlockingNetworkRequest::NoError:
+        {
+          const QgsNetworkReplyContent content = networkRequest.reply();
+          const QVariantMap spriteDefinition = QgsJsonUtils::parseJson( content.content() ).toMap();
+
+          // retrieve sprite images
+          QUrl spriteUrl = QUrl( spriteUriBase );
+          spriteUrl.setPath( spriteUrl.path() + QStringLiteral( "%1.png" ).arg( resolution > 1 ? QStringLiteral( "@%1x" ).arg( resolution ) : QString() ) );
+          QNetworkRequest request = QNetworkRequest( spriteUrl );
+          QgsSetRequestInitiatorClass( request, QStringLiteral( "QgsVectorTileLayer" ) )
+          QgsBlockingNetworkRequest networkRequest;
+          switch ( networkRequest.get( request ) )
+          {
+            case QgsBlockingNetworkRequest::NoError:
+            {
+              const QgsNetworkReplyContent imageContent = networkRequest.reply();
+              const QImage spriteImage( QImage::fromData( imageContent.content() ) );
+              context.setSprites( spriteImage, spriteDefinition );
+              break;
+            }
+
+            case QgsBlockingNetworkRequest::NetworkError:
+            case QgsBlockingNetworkRequest::TimeoutError:
+            case QgsBlockingNetworkRequest::ServerExceptionError:
+              break;
+          }
+
+          break;
+        }
+
+        case QgsBlockingNetworkRequest::NetworkError:
+        case QgsBlockingNetworkRequest::TimeoutError:
+        case QgsBlockingNetworkRequest::ServerExceptionError:
+          break;
+      }
+
+      if ( !context.spriteDefinitions().isEmpty() )
+        break;
+    }
+  }
+}
+

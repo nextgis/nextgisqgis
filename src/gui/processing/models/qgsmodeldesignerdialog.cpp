@@ -30,13 +30,15 @@
 #include "qgsmodelcomponentgraphicitem.h"
 #include "processing/models/qgsprocessingmodelgroupbox.h"
 #include "processing/models/qgsmodelinputreorderwidget.h"
+#include "processing/models/qgsmodeloutputreorderwidget.h"
 #include "qgsmessageviewer.h"
 #include "qgsmessagebaritem.h"
 #include "qgspanelwidget.h"
 #include "qgsprocessingmultipleselectiondialog.h"
+#include "qgsprocessinghelpeditorwidget.h"
+#include "qgsscreenhelper.h"
 
 #include <QShortcut>
-#include <QDesktopWidget>
 #include <QKeySequence>
 #include <QFileDialog>
 #include <QPrinter>
@@ -82,6 +84,8 @@ QgsModelDesignerDialog::QgsModelDesignerDialog( QWidget *parent, Qt::WindowFlags
   , mToolsActionGroup( new QActionGroup( this ) )
 {
   setupUi( this );
+
+  mScreenHelper = new QgsScreenHelper( this );
 
   setAttribute( Qt::WA_DeleteOnClose );
   setDockOptions( dockOptions() | QMainWindow::GroupedDragging );
@@ -149,6 +153,8 @@ QgsModelDesignerDialog::QgsModelDesignerDialog( QWidget *parent, Qt::WindowFlags
   connect( mActionSnapSelected, &QAction::triggered, mView, &QgsModelGraphicsView::snapSelected );
   connect( mActionValidate, &QAction::triggered, this, &QgsModelDesignerDialog::validate );
   connect( mActionReorderInputs, &QAction::triggered, this, &QgsModelDesignerDialog::reorderInputs );
+  connect( mActionReorderOutputs, &QAction::triggered, this, &QgsModelDesignerDialog::reorderOutputs );
+  connect( mActionEditHelp, &QAction::triggered, this, &QgsModelDesignerDialog::editHelp );
   connect( mReorderInputsButton, &QPushButton::clicked, this, &QgsModelDesignerDialog::reorderInputs );
 
   mActionSnappingEnabled->setChecked( settings.value( QStringLiteral( "/Processing/Modeler/enableSnapToGrid" ), false ).toBool() );
@@ -227,6 +233,9 @@ QgsModelDesignerDialog::QgsModelDesignerDialog( QWidget *parent, Qt::WindowFlags
   mMenuEdit->insertAction( mActionDeleteComponents, mActionPaste );
   mMenuEdit->insertSeparator( mActionDeleteComponents );
 
+  mAlgorithmsModel = new QgsModelerToolboxModel( this );
+  mAlgorithmsTree->setToolboxProxyModel( mAlgorithmsModel );
+
   QgsProcessingToolboxProxyModel::Filters filters = QgsProcessingToolboxProxyModel::FilterModeler;
   if ( settings.value( QStringLiteral( "Processing/Configuration/SHOW_ALGORITHMS_KNOWN_ISSUES" ), false ).toBool() )
   {
@@ -235,9 +244,6 @@ QgsModelDesignerDialog::QgsModelDesignerDialog( QWidget *parent, Qt::WindowFlags
   mAlgorithmsTree->setFilters( filters );
   mAlgorithmsTree->setDragDropMode( QTreeWidget::DragOnly );
   mAlgorithmsTree->setDropIndicatorShown( true );
-
-  mAlgorithmsModel = new QgsModelerToolboxModel( this );
-  mAlgorithmsTree->setToolboxProxyModel( mAlgorithmsModel );
 
   connect( mView, &QgsModelGraphicsView::algorithmDropped, this, [ = ]( const QString & algorithmId, const QPointF & pos )
   {
@@ -626,7 +632,7 @@ void QgsModelDesignerDialog::zoomActual()
 {
   QPointF point = mView->mapToScene( QPoint( mView->viewport()->width() / 2.0, mView->viewport()->height() / 2 ) );
   mView->resetTransform();
-  mView->scale( QgsApplication::desktop()->logicalDpiX() / 96, QgsApplication::desktop()->logicalDpiX() / 96 );
+  mView->scale( mScreenHelper->screenDpi() / 96, mScreenHelper->screenDpi() / 96 );
   mView->centerOn( point );
 }
 
@@ -649,11 +655,19 @@ void QgsModelDesignerDialog::newModel()
 
 void QgsModelDesignerDialog::exportToImage()
 {
-  QString filename = QFileDialog::getSaveFileName( this, tr( "Save Model as Image" ), tr( "PNG files (*.png *.PNG)" ) );
+  QgsSettings settings;
+  QString lastExportDir = settings.value( QStringLiteral( "lastModelDesignerExportDir" ), QDir::homePath(), QgsSettings::App ).toString();
+
+  QString filename = QFileDialog::getSaveFileName( this, tr( "Save Model as Image" ),
+                     lastExportDir,
+                     tr( "PNG files (*.png *.PNG)" ) );
   if ( filename.isEmpty() )
     return;
 
   filename = QgsFileUtils::ensureFileNameHasExtension( filename, QStringList() << QStringLiteral( "png" ) );
+
+  const QFileInfo saveFileInfo( filename );
+  settings.setValue( QStringLiteral( "lastModelDesignerExportDir" ), saveFileInfo.absolutePath(), QgsSettings::App );
 
   repaintModel( false );
 
@@ -678,11 +692,19 @@ void QgsModelDesignerDialog::exportToImage()
 
 void QgsModelDesignerDialog::exportToPdf()
 {
-  QString filename = QFileDialog::getSaveFileName( this, tr( "Save Model as PDF" ), tr( "PDF files (*.pdf *.PDF)" ) );
+  QgsSettings settings;
+  QString lastExportDir = settings.value( QStringLiteral( "lastModelDesignerExportDir" ), QDir::homePath(), QgsSettings::App ).toString();
+
+  QString filename = QFileDialog::getSaveFileName( this, tr( "Save Model as PDF" ),
+                     lastExportDir,
+                     tr( "PDF files (*.pdf *.PDF)" ) );
   if ( filename.isEmpty() )
     return;
 
   filename = QgsFileUtils::ensureFileNameHasExtension( filename, QStringList() << QStringLiteral( "pdf" ) );
+
+  const QFileInfo saveFileInfo( filename );
+  settings.setValue( QStringLiteral( "lastModelDesignerExportDir" ), saveFileInfo.absolutePath(), QgsSettings::App );
 
   repaintModel( false );
 
@@ -693,7 +715,15 @@ void QgsModelDesignerDialog::exportToPdf()
   QPrinter printer;
   printer.setOutputFormat( QPrinter::PdfFormat );
   printer.setOutputFileName( filename );
-  printer.setPaperSize( QSizeF( printerRect.width(), printerRect.height() ), QPrinter::DevicePixel );
+
+  const double scaleFactor = 96 / 25.4; // based on 96 dpi sizes
+
+  QPageLayout pageLayout( QPageSize( totalRect.size() / scaleFactor, QPageSize::Millimeter ),
+                          QPageLayout::Portrait,
+                          QMarginsF( 0, 0, 0, 0 ) );
+  pageLayout.setMode( QPageLayout::FullPageMode );
+  printer.setPageLayout( pageLayout );
+
   printer.setFullPage( true );
 
   QPainter painter( &printer );
@@ -707,11 +737,19 @@ void QgsModelDesignerDialog::exportToPdf()
 
 void QgsModelDesignerDialog::exportToSvg()
 {
-  QString filename = QFileDialog::getSaveFileName( this, tr( "Save Model as SVG" ), tr( "SVG files (*.svg *.SVG)" ) );
+  QgsSettings settings;
+  QString lastExportDir = settings.value( QStringLiteral( "lastModelDesignerExportDir" ), QDir::homePath(), QgsSettings::App ).toString();
+
+  QString filename = QFileDialog::getSaveFileName( this, tr( "Save Model as SVG" ),
+                     lastExportDir,
+                     tr( "SVG files (*.svg *.SVG)" ) );
   if ( filename.isEmpty() )
     return;
 
   filename = QgsFileUtils::ensureFileNameHasExtension( filename, QStringList() << QStringLiteral( "svg" ) );
+
+  const QFileInfo saveFileInfo( filename );
+  settings.setValue( QStringLiteral( "lastModelDesignerExportDir" ), saveFileInfo.absolutePath(), QgsSettings::App );
 
   repaintModel( false );
 
@@ -735,11 +773,19 @@ void QgsModelDesignerDialog::exportToSvg()
 
 void QgsModelDesignerDialog::exportAsPython()
 {
-  QString filename = QFileDialog::getSaveFileName( this, tr( "Save Model as Python Script" ), tr( "Processing scripts (*.py *.PY)" ) );
+  QgsSettings settings;
+  QString lastExportDir = settings.value( QStringLiteral( "lastModelDesignerExportDir" ), QDir::homePath(), QgsSettings::App ).toString();
+
+  QString filename = QFileDialog::getSaveFileName( this, tr( "Save Model as Python Script" ),
+                     lastExportDir,
+                     tr( "Processing scripts (*.py *.PY)" ) );
   if ( filename.isEmpty() )
     return;
 
   filename = QgsFileUtils::ensureFileNameHasExtension( filename, QStringList() << QStringLiteral( "py" ) );
+
+  const QFileInfo saveFileInfo( filename );
+  settings.setValue( QStringLiteral( "lastModelDesignerExportDir" ), saveFileInfo.absolutePath(), QgsSettings::App );
 
   const QString text = mModel->asPythonCode( QgsProcessing::PythonQgsProcessingAlgorithmSubclass, 4 ).join( '\n' );
 
@@ -926,6 +972,19 @@ void QgsModelDesignerDialog::setPanelVisibility( bool hidden )
   }
 }
 
+void QgsModelDesignerDialog::editHelp()
+{
+  QgsProcessingHelpEditorDialog dialog( this );
+  dialog.setWindowTitle( tr( "Edit Model Help" ) );
+  dialog.setAlgorithm( mModel.get() );
+  if ( dialog.exec() )
+  {
+    beginUndoCommand( tr( "Edit Model Help" ) );
+    mModel->setHelpContent( dialog.helpContent() );
+    endUndoCommand();
+  }
+}
+
 void QgsModelDesignerDialog::validate()
 {
   QStringList issues;
@@ -967,6 +1026,20 @@ void QgsModelDesignerDialog::reorderInputs()
     const QStringList inputOrder = dlg.inputOrder();
     beginUndoCommand( tr( "Reorder Inputs" ) );
     mModel->setParameterOrder( inputOrder );
+    endUndoCommand();
+  }
+}
+
+void QgsModelDesignerDialog::reorderOutputs()
+{
+  QgsModelOutputReorderDialog dlg( this );
+  dlg.setModel( mModel.get() );
+  if ( dlg.exec() )
+  {
+    const QStringList outputOrder = dlg.outputOrder();
+    beginUndoCommand( tr( "Reorder Outputs" ) );
+    mModel->setOutputOrder( outputOrder );
+    mModel->setOutputGroup( dlg.outputGroup() );
     endUndoCommand();
   }
 }

@@ -31,12 +31,9 @@
 #include "qgsmeshlayer.h"
 #include "qgsapplication.h"
 #include "qgsmaplayerlegend.h"
-#include "qgsproviderregistry.h"
 #include "qgsproject.h"
-#include "qgsmaprenderersequentialjob.h"
-#include "qgsmeshmemorydataprovider.h"
 #include "qgsmesh3daveraging.h"
-#include "qgsmeshlayertemporalproperties.h"
+#include "qgsmaplayertemporalproperties.h"
 
 //qgis test includes
 #include "qgsrenderchecker.h"
@@ -45,12 +42,12 @@
  * \ingroup UnitTests
  * This is a unit test for the different renderers for mesh layers.
  */
-class TestQgsMeshRenderer : public QObject
+class TestQgsMeshRenderer : public QgsTest
 {
     Q_OBJECT
 
   public:
-    TestQgsMeshRenderer() = default;
+    TestQgsMeshRenderer() : QgsTest( QStringLiteral( "Mesh Layer Rendering Tests" ) ) {}
 
   private:
     QString mDataDir;
@@ -59,13 +56,11 @@ class TestQgsMeshRenderer : public QObject
     QgsMeshLayer *mMdalLayer = nullptr;
     QgsMeshLayer *mMdal3DLayer = nullptr;
     QgsMapSettings *mMapSettings = nullptr;
-    QString mReport;
 
   private slots:
     void initTestCase();// will be called before the first testfunction is executed.
     void cleanupTestCase();// will be called after the last testfunction was executed.
     void init(); // will be called before each testfunction is executed.
-    void cleanup() {} // will be called after every testfunction.
     bool imageCheck( const QString &testType, QgsMeshLayer *layer, double rotation = 0.0 );
     QString readFile( const QString &fname ) const;
 
@@ -153,8 +148,6 @@ void TestQgsMeshRenderer::initTestCase()
   mDataDir = QString( TEST_DATA_DIR ); //defined in CmakeLists.txt
   mDataDir += "/mesh";
 
-  mReport = QStringLiteral( "<h1>Mesh Layer Rendering Tests</h1>\n" );
-
   mMapSettings = new QgsMapSettings();
 
   // Memory 1D layer
@@ -208,15 +201,6 @@ void TestQgsMeshRenderer::initTestCase()
 
 void TestQgsMeshRenderer::cleanupTestCase()
 {
-  const QString myReportFile = QDir::tempPath() + "/qgistest.html";
-  QFile myFile( myReportFile );
-  if ( myFile.open( QIODevice::WriteOnly | QIODevice::Append ) )
-  {
-    QTextStream myQTextStream( &myFile );
-    myQTextStream << mReport;
-    myFile.close();
-  }
-
   QgsApplication::exitQgis();
 }
 
@@ -231,7 +215,6 @@ QString TestQgsMeshRenderer::readFile( const QString &fname ) const
 
 bool TestQgsMeshRenderer::imageCheck( const QString &testType, QgsMeshLayer *layer, double rotation )
 {
-  mReport += "<h2>" + testType + "</h2>\n";
   mMapSettings->setDestinationCrs( layer->crs() );
   mMapSettings->setExtent( layer->extent() );
   mMapSettings->setRotation( rotation );
@@ -616,7 +599,7 @@ void TestQgsMeshRenderer::test_vertex_vector_traces()
   QgsMeshRendererVectorTracesSettings tracesSetting = settings.tracesSettings();
   tracesSetting.setParticlesCount( -1 );
   tracesSetting.setMaximumTailLength( 40 );
-  tracesSetting.setMaximumTailLengthUnit( QgsUnitTypes::RenderPixels );
+  tracesSetting.setMaximumTailLengthUnit( Qgis::RenderUnit::Pixels );
   settings.setTracesSettings( tracesSetting );
   rendererSettings.setVectorSettings( ds.group(), settings );
   mMemoryLayer->setRendererSettings( rendererSettings );
@@ -644,7 +627,7 @@ void TestQgsMeshRenderer::test_vertex_vector_traces_colorRamp()
   QgsMeshRendererVectorTracesSettings tracesSetting = settings.tracesSettings();
   tracesSetting.setParticlesCount( -1 );
   tracesSetting.setMaximumTailLength( 40 );
-  tracesSetting.setMaximumTailLengthUnit( QgsUnitTypes::RenderPixels );
+  tracesSetting.setMaximumTailLengthUnit( Qgis::RenderUnit::Pixels );
   settings.setTracesSettings( tracesSetting );
   rendererSettings.setVectorSettings( ds.group(), settings );
   mMemoryLayer->setRendererSettings( rendererSettings );

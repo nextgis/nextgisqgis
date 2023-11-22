@@ -38,22 +38,22 @@
 #include "qgslayoututils.h"
 #include "qgspallabeling.h"
 #include "qgstextrenderer.h"
+#include "qgslayoutreportcontext.h"
 
 #include <QObject>
 #include "qgstest.h"
 
-class TestQgsLayoutTable : public QObject
+class TestQgsLayoutTable : public QgsTest
 {
     Q_OBJECT
 
   public:
-    TestQgsLayoutTable() = default;
+    TestQgsLayoutTable() : QgsTest( QStringLiteral( "Layout Table Tests" ) ) {}
 
   private slots:
     void initTestCase();// will be called before the first testfunction is executed.
     void cleanupTestCase();// will be called after the last testfunction was executed.
     void init();// will be called before each testfunction is executed.
-    void cleanup();// will be called after every testfunction.
 
     void attributeTableHeadings(); //test retrieving attribute table headers
     void attributeTableRows(); //test retrieving attribute table rows
@@ -83,6 +83,7 @@ class TestQgsLayoutTable : public QObject
     void cellStyles(); //test cell styles
     void cellStylesRender(); //test rendering cell styles
     void conditionalFormatting(); //test rendering with conditional formatting
+    void conditionalFormattingWithTextFormatting(); //test rendering with conditional formatting with text formatting
     void dataDefinedSource();
     void wrappedText();
     void testBaseSort();
@@ -93,7 +94,6 @@ class TestQgsLayoutTable : public QObject
 
   private:
     QgsVectorLayer *mVectorLayer = nullptr;
-    QString mReport;
 
     //compares rows in table to expected rows
     void compareTable( QgsLayoutItemAttributeTable *table, const QVector<QStringList> &expectedRows );
@@ -111,21 +111,11 @@ void TestQgsLayoutTable::initTestCase()
                                      QStringLiteral( "ogr" ) );
   QgsProject::instance()->addMapLayer( mVectorLayer );
 
-  mReport = QStringLiteral( "<h1>Layout Table Tests</h1>\n" );
-
   QgsFontUtils::loadStandardTestFonts( QStringList() << QStringLiteral( "Bold" ) );
 }
 
 void TestQgsLayoutTable::cleanupTestCase()
 {
-  const QString myReportFile = QDir::tempPath() + "/qgistest.html";
-  QFile myFile( myReportFile );
-  if ( myFile.open( QIODevice::WriteOnly | QIODevice::Append ) )
-  {
-    QTextStream myQTextStream( &myFile );
-    myQTextStream << mReport;
-    myFile.close();
-  }
   QgsApplication::exitQgis();
 }
 
@@ -148,10 +138,6 @@ void TestQgsLayoutTable::init()
   table->setContentTextFormat( QgsTextFormat::fromQFont( QgsFontUtils::getStandardTestFont( QStringLiteral( "Bold" ) ) ) );
   table->setHeaderTextFormat( QgsTextFormat::fromQFont( QgsFontUtils::getStandardTestFont( QStringLiteral( "Bold" ) ) ) );
   table->setBackgroundColor( Qt::yellow );
-}
-
-void TestQgsLayoutTable::cleanup()
-{
 }
 
 void TestQgsLayoutTable::attributeTableHeadings()
@@ -1651,6 +1637,76 @@ void TestQgsLayoutTable::conditionalFormatting()
   QVERIFY( checker.testLayout( mReport, 0 ) );
 }
 
+void TestQgsLayoutTable::conditionalFormattingWithTextFormatting()
+{
+  QgsLayout l( QgsProject::instance() );
+  l.initializeDefaults();
+  QgsLayoutItemAttributeTable *table = new QgsLayoutItemAttributeTable( &l );
+  QgsLayoutFrame *frame1 = new QgsLayoutFrame( &l, table );
+  frame1->attemptSetSceneRect( QRectF( 5, 5, 100, 30 ) );
+  QgsLayoutFrame *frame2 = new QgsLayoutFrame( &l, table );
+  frame2->attemptSetSceneRect( QRectF( 5, 40, 100, 30 ) );
+  frame1->setFrameEnabled( true );
+  frame2->setFrameEnabled( true );
+  table->addFrame( frame1 );
+  table->addFrame( frame2 );
+  table->setVectorLayer( mVectorLayer );
+  table->setDisplayOnlyVisibleFeatures( false );
+  table->setMaximumNumberOfFeatures( 10 );
+  table->setContentTextFormat( QgsTextFormat::fromQFont( QgsFontUtils::getStandardTestFont( QStringLiteral( "Bold" ) ) ) );
+  table->setHeaderTextFormat( QgsTextFormat::fromQFont( QgsFontUtils::getStandardTestFont( QStringLiteral( "Bold" ) ) ) );
+  table->setBackgroundColor( Qt::yellow );
+
+  table->setMaximumNumberOfFeatures( 7 );
+  table->setShowEmptyRows( true );
+
+
+  QgsConditionalStyles rowStyles;
+  QgsConditionalStyle style1;
+  style1.setRule( QStringLiteral( "\"Heading\" >= 300" ) );
+  style1.setTextColor( QColor( 255, 255, 255 ) );
+  style1.setBackgroundColor( QColor( 0, 0, 0 ) );
+
+  QFont conditionalFont1 = QgsFontUtils::getStandardTestFont( QStringLiteral( "Bold Oblique" ) );
+  conditionalFont1.setStrikeOut( true );
+  conditionalFont1.setUnderline( true );
+  style1.setFont( conditionalFont1 );
+  rowStyles.append( style1 );
+  mVectorLayer->conditionalStyles()->setRowStyles( rowStyles );
+  QgsConditionalStyle style2;
+  style2.setRule( QStringLiteral( "@value > 5" ) );
+  style2.setTextColor( QColor( 255, 0, 0 ) );
+  style2.setBackgroundColor( QColor( 0, 0, 255 ) );
+  QFont conditionalFont2 = QgsFontUtils::getStandardTestFont( QStringLiteral( "Bold" ) );
+  conditionalFont2.setUnderline( true );
+  style2.setFont( conditionalFont2 );
+  mVectorLayer->conditionalStyles()->setFieldStyles( QStringLiteral( "Staff" ), QList< QgsConditionalStyle >() << style2 );
+
+  table->setUseConditionalStyling( true );
+
+  QgsLayoutTableStyle style;
+  style.enabled = true;
+  style.cellBackgroundColor = QColor( 25, 50, 75, 100 );
+  table->setCellStyle( QgsLayoutTable::OddColumns, style );
+  style.cellBackgroundColor = QColor( 90, 110, 150, 200 );
+  table->setCellStyle( QgsLayoutTable::EvenRows, style );
+  style.cellBackgroundColor = QColor( 150, 160, 210, 200 );
+  table->setCellStyle( QgsLayoutTable::HeaderRow, style );
+  style.cellBackgroundColor = QColor( 0, 200, 50, 200 );
+  table->setCellStyle( QgsLayoutTable::FirstColumn, style );
+  style.cellBackgroundColor = QColor( 200, 50, 0, 200 );
+  table->setCellStyle( QgsLayoutTable::LastColumn, style );
+  style.cellBackgroundColor = QColor( 200, 50, 200, 200 );
+  table->setCellStyle( QgsLayoutTable::FirstRow, style );
+  style.cellBackgroundColor = QColor( 50, 200, 200, 200 );
+  table->setCellStyle( QgsLayoutTable::LastRow, style );
+
+  QgsLayoutChecker checker( QStringLiteral( "composerattributetable_conditionalstyles_text" ), &l );
+  checker.setColorTolerance( 10 );
+  checker.setControlPathPrefix( QStringLiteral( "composer_table" ) );
+  QVERIFY( checker.testLayout( mReport, 0 ) );
+}
+
 void TestQgsLayoutTable::dataDefinedSource()
 {
   // add a couple of layers
@@ -1723,7 +1779,7 @@ void TestQgsLayoutTable::wrappedText()
   const QFont f;
   const QString sourceText( "Lorem ipsum dolor sit amet, consectetur adipisici elit, sed eiusmod tempor incidunt ut labore et dolore magna aliqua" );
   QgsRenderContext context = QgsLayoutUtils::createRenderContextForLayout( &l, nullptr );
-  const QString wrapText = QgsTextRenderer::wrappedText( context, sourceText, context.convertToPainterUnits( 101, QgsUnitTypes::RenderMillimeters ) /*columnWidth*/, QgsTextFormat::fromQFont( f ) ).join( '\n' );
+  const QString wrapText = QgsTextRenderer::wrappedText( context, sourceText, context.convertToPainterUnits( 101, Qgis::RenderUnit::Millimeters ) /*columnWidth*/, QgsTextFormat::fromQFont( f ) ).join( '\n' );
   //there should be no line break before the last word (bug #20546)
   QVERIFY( !wrapText.endsWith( "\naliqua" ) );
 }

@@ -26,7 +26,6 @@
 #include "qgsfeatureid.h"
 #include "qgsgeometry.h"
 #include "qgscustomdrophandler.h"
-#include "qgstemporalrangeobject.h"
 #include "qgsmapcanvasinteractionblocker.h"
 #include "qgsproject.h"
 #include "qgsdistancearea.h"
@@ -76,6 +75,7 @@ class QgsRenderedItemResults;
 class QgsTemporaryCursorOverride;
 
 class QgsTemporalController;
+class QgsScreenHelper;
 
 class QMenu;
 class QgsMapMouseEvent;
@@ -187,12 +187,20 @@ class GUI_EXPORT QgsMapCanvas : public QGraphicsView, public QgsExpressionContex
 
     /**
      * Set whether to cache images of rendered layers
+     *
+     * \see isCachingEnabled()
+     * \see cache()
+     *
      * \since QGIS 2.4
      */
     void setCachingEnabled( bool enabled );
 
     /**
      * Check whether images of rendered layers are curerently being cached
+     *
+     * \see setCachingEnabled()
+     * \see cache()
+     *
      * \since QGIS 2.4
      */
     bool isCachingEnabled() const;
@@ -202,6 +210,16 @@ class GUI_EXPORT QgsMapCanvas : public QGraphicsView, public QgsExpressionContex
      * \since QGIS 2.4
      */
     void clearCache();
+
+    /**
+     * Returns the map renderer cache, if caching is enabled.
+     *
+     * \see isCachingEnabled()
+     * \see setCachingEnabled()
+     *
+     * \since QGIS 3.32
+     */
+    QgsMapRendererCache *cache();
 
     /**
      * Cancel any rendering job, in a blocking way. Used for application closing.
@@ -366,8 +384,8 @@ class GUI_EXPORT QgsMapCanvas : public QGraphicsView, public QgsExpressionContex
      */
     void panToFeatureIds( QgsVectorLayer *layer, const QgsFeatureIds &ids, bool alwaysRecenter = true );
 
-    //! Pan to the selected features of current (vector) layer keeping same extent.
-    void panToSelected( QgsVectorLayer *layer = nullptr );
+    //! Pan to the selected features of current ayer keeping same extent.
+    void panToSelected( QgsMapLayer *layer = nullptr );
 
     /**
      * Pan to the combined extent of the selected features of all provided (vector) layers.
@@ -522,7 +540,7 @@ class GUI_EXPORT QgsMapCanvas : public QGraphicsView, public QgsExpressionContex
      * Convenience function for returning the current canvas map units. The map units
      * are dictated by the canvas' destinationCrs() map units.
      */
-    QgsUnitTypes::DistanceUnit mapUnits() const;
+    Qgis::DistanceUnit mapUnits() const;
 
     /**
      * Returns the stored overrides of styles for layers.
@@ -946,10 +964,10 @@ class GUI_EXPORT QgsMapCanvas : public QGraphicsView, public QgsExpressionContex
     void zoomOut();
 
     /**
-     * Zoom to the extent of the selected features of provided (vector) layer.
+     * Zoom to the extent of the selected features of provided map layer.
      * \param layer optionally specify different than current layer
      */
-    void zoomToSelected( QgsVectorLayer *layer = nullptr );
+    void zoomToSelected( QgsMapLayer *layer = nullptr );
 
     /**
      * Zoom to the combined extent of the selected features of all provided (vector) layers.
@@ -1021,6 +1039,8 @@ class GUI_EXPORT QgsMapCanvas : public QGraphicsView, public QgsExpressionContex
     void mapThemeRenamed( const QString &theme, const QString &newTheme );
 
     void updateDevicePixelFromScreen();
+
+    void onElevationShadingRendererChanged();
 
   signals:
 
@@ -1106,9 +1126,12 @@ class GUI_EXPORT QgsMapCanvas : public QGraphicsView, public QgsExpressionContex
      */
     void mapToolSet( QgsMapTool *newTool, QgsMapTool *oldTool );
 
-
-    //! Emitted when selection in any layer gets changed
-    void selectionChanged( QgsVectorLayer *layer );
+    /**
+     * Emitted when selection in any \a layer gets changed.
+     *
+     * \note Since QGIS 3.28 this signal is emitted for multiple layer types, including QgsVectorLayer and QgsVectorTileLayer
+     */
+    void selectionChanged( QgsMapLayer *layer );
 
     //! Emitted when zoom last status changed
     void zoomLastStatusChanged( bool );
@@ -1169,7 +1192,7 @@ class GUI_EXPORT QgsMapCanvas : public QGraphicsView, public QgsExpressionContex
      *
      * \since QGIS 3.12
      */
-    void panDistanceBearingChanged( double distance, QgsUnitTypes::DistanceUnit unit, double bearing );
+    void panDistanceBearingChanged( double distance, Qgis::DistanceUnit unit, double bearing );
 
     /**
      * Emitted whenever a tap and hold \a gesture occurs at the specified map point.
@@ -1224,6 +1247,13 @@ class GUI_EXPORT QgsMapCanvas : public QGraphicsView, public QgsExpressionContex
 
     void showEvent( QShowEvent *event ) override;
 
+    /**
+     * Emits the extentsChanged signal when appropriate.
+     *
+     * \since QGIS 3.30
+     */
+    void emitExtentsChanged();
+
     /// implementation struct
     class CanvasProperties;
 
@@ -1255,6 +1285,8 @@ class GUI_EXPORT QgsMapCanvas : public QGraphicsView, public QgsExpressionContex
 
     void startPreviewJob( int number );
 
+    void temporalControllerModeChanged();
+
   private:
 
     // Restore scale RAII
@@ -1284,6 +1316,8 @@ class GUI_EXPORT QgsMapCanvas : public QGraphicsView, public QgsExpressionContex
 
     //! owns pixmap with rendered map and controls rendering
     QgsMapCanvasMap *mMap = nullptr;
+
+    QgsScreenHelper *mScreenHelper = nullptr;
 
     /**
      * Temporal controller for tracking update of temporal objects
@@ -1418,8 +1452,8 @@ class GUI_EXPORT QgsMapCanvas : public QGraphicsView, public QgsExpressionContex
     QList< QgsMapCanvasInteractionBlocker * > mInteractionBlockers;
 
     int mBlockItemPositionUpdates = 0;
-
-    QMetaObject::Connection mScreenDpiChangedConnection;
+    int mBlockExtentChangedSignal = 0;
+    int mBlockScaleChangedSignal = 0;
 
     std::unique_ptr< QgsTemporaryCursorOverride > mTemporaryCursorOverride;
 
@@ -1457,6 +1491,15 @@ class GUI_EXPORT QgsMapCanvas : public QGraphicsView, public QgsExpressionContex
      * \since QGIS 2.16
      */
     void endZoomRect( QPoint pos );
+
+    //! Stop/cancel zooming via rectangle
+    void stopZoomRect();
+
+    //! Start map pan
+    void startPan();
+
+    //! Stop map pan
+    void stopPan();
 
     /**
      * Returns bounding box of feature list (in canvas coordinates)

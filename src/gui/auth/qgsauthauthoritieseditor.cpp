@@ -38,6 +38,7 @@
 #include "qgsauthmanager.h"
 #include "qgsauthtrustedcasdialog.h"
 #include "qgslogger.h"
+#include "qgsvariantutils.h"
 
 QgsAuthAuthoritiesEditor::QgsAuthAuthoritiesEditor( QWidget *parent )
   : QWidget( parent )
@@ -77,14 +78,14 @@ QgsAuthAuthoritiesEditor::QgsAuthAuthoritiesEditor( QWidget *parent )
     connect( btnViewRefresh, &QAbstractButton::clicked, this, &QgsAuthAuthoritiesEditor::refreshCaCertsView );
 
     const QVariant cafileval = QgsApplication::authManager()->authSetting( QStringLiteral( "cafile" ) );
-    if ( !cafileval.isNull() )
+    if ( !QgsVariantUtils::isNull( cafileval ) )
     {
       leCaFile->setText( cafileval.toString() );
     }
 
     btnGroupByOrg->setChecked( false );
     const QVariant sortbyval = QgsApplication::authManager()->authSetting( QStringLiteral( "casortby" ), QVariant( false ) );
-    if ( !sortbyval.isNull() )
+    if ( !QgsVariantUtils::isNull( sortbyval ) )
       btnGroupByOrg->setChecked( sortbyval.toBool() );
 
     mDefaultTrustPolicy = QgsApplication::authManager()->defaultCertTrustPolicy();
@@ -369,7 +370,7 @@ void QgsAuthAuthoritiesEditor::showCertInfo( QTreeWidgetItem *item )
 
   if ( !cacertscache.contains( digest ) )
   {
-    QgsDebugMsg( QStringLiteral( "Certificate Authority not in CA certs cache" ) );
+    QgsDebugError( QStringLiteral( "Certificate Authority not in CA certs cache" ) );
     return;
   }
 
@@ -491,7 +492,7 @@ void QgsAuthAuthoritiesEditor::btnRemoveCa_clicked()
 
   if ( !item )
   {
-    QgsDebugMsg( QStringLiteral( "Current tree widget item not set" ) );
+    QgsDebugMsgLevel( QStringLiteral( "Current tree widget item not set" ), 2 );
     return;
   }
 
@@ -509,7 +510,7 @@ void QgsAuthAuthoritiesEditor::btnRemoveCa_clicked()
 
   if ( !mappedcerts.contains( digest ) )
   {
-    QgsDebugMsg( QStringLiteral( "Certificate Authority not in mapped database CAs" ) );
+    QgsDebugError( QStringLiteral( "Certificate Authority not in mapped database CAs" ) );
     return;
   }
 

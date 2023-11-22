@@ -179,7 +179,7 @@ QList<int> QgsAnnotationItemGuiRegistry::itemMetadataIds() const
 void QgsAnnotationItemGuiRegistry::addDefaultItems()
 {
   addAnnotationItemGuiMetadata( new QgsAnnotationItemGuiMetadata( QStringLiteral( "polygon" ),
-                                QObject::tr( "Polygon" ),
+                                QObject::tr( "Polygon Annotation" ),
                                 QgsApplication::getThemeIcon( QStringLiteral( "/mActionAddPolygon.svg" ) ),
                                 [ = ]( QgsAnnotationItem * item )->QgsAnnotationItemBaseWidget *
   {
@@ -193,7 +193,7 @@ void QgsAnnotationItemGuiRegistry::addDefaultItems()
   } ) );
 
   addAnnotationItemGuiMetadata( new QgsAnnotationItemGuiMetadata( QStringLiteral( "linestring" ),
-                                QObject::tr( "Line" ),
+                                QObject::tr( "Line Annotation" ),
                                 QgsApplication::getThemeIcon( QStringLiteral( "/mActionAddPolyline.svg" ) ),
                                 [ = ]( QgsAnnotationItem * item )->QgsAnnotationItemBaseWidget *
   {
@@ -207,7 +207,7 @@ void QgsAnnotationItemGuiRegistry::addDefaultItems()
   } ) );
 
   addAnnotationItemGuiMetadata( new QgsAnnotationItemGuiMetadata( QStringLiteral( "marker" ),
-                                QObject::tr( "Marker" ),
+                                QObject::tr( "Marker Annotation" ),
                                 QgsApplication::getThemeIcon( QStringLiteral( "/mActionAddMarker.svg" ) ),
                                 [ = ]( QgsAnnotationItem * item )->QgsAnnotationItemBaseWidget *
   {
@@ -221,7 +221,7 @@ void QgsAnnotationItemGuiRegistry::addDefaultItems()
   } ) );
 
   addAnnotationItemGuiMetadata( new QgsAnnotationItemGuiMetadata( QStringLiteral( "pointtext" ),
-                                QObject::tr( "Text at Point" ),
+                                QObject::tr( "Text Annotation at Point" ),
                                 QgsApplication::getThemeIcon( QStringLiteral( "/mActionText.svg" ) ),
                                 [ = ]( QgsAnnotationItem * item )->QgsAnnotationItemBaseWidget *
   {
@@ -232,5 +232,19 @@ void QgsAnnotationItemGuiRegistry::addDefaultItems()
   [ = ]( QgsMapCanvas * canvas, QgsAdvancedDigitizingDockWidget * cadDockWidget )->QgsCreateAnnotationItemMapToolInterface *
   {
     return new QgsCreatePointTextItemMapTool( canvas, cadDockWidget );
+  } ) );
+
+  addAnnotationItemGuiMetadata( new QgsAnnotationItemGuiMetadata( QStringLiteral( "linetext" ),
+                                QObject::tr( "Text Annotation along Line" ),
+                                QgsApplication::getThemeIcon( QStringLiteral( "/mActionTextAlongLine.svg" ) ),
+                                [ = ]( QgsAnnotationItem * item )->QgsAnnotationItemBaseWidget *
+  {
+    QgsAnnotationLineTextItemWidget *widget = new QgsAnnotationLineTextItemWidget( nullptr );
+    widget->setItem( item );
+    return widget;
+  }, QString(), Qgis::AnnotationItemGuiFlags(), nullptr,
+  [ = ]( QgsMapCanvas * canvas, QgsAdvancedDigitizingDockWidget * cadDockWidget )->QgsCreateAnnotationItemMapToolInterface *
+  {
+    return new QgsCreateLineTextItemMapTool( canvas, cadDockWidget );
   } ) );
 }

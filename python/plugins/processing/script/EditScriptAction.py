@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     EditScriptAction.py
@@ -46,7 +44,7 @@ class EditScriptAction(ContextAction):
     def execute(self):
         filePath = ScriptUtils.findAlgorithmSource(self.itemData.name())
         if filePath is not None:
-            dlg = ScriptEditorDialog(filePath, iface.mainWindow())
+            dlg = ScriptEditorDialog(filePath, parent=iface.mainWindow())
             dlg.show()
         else:
             QMessageBox.warning(None,

@@ -97,8 +97,10 @@ done:
 
 %Import QtPrintSupport/QtPrintSupportmod.sip
 %Import QtWidgets/QtWidgetsmod.sip
+%Import QtPositioning/QtPositioningmod.sip
 
 %Feature HAVE_GUI
+%Feature HAVE_QTSERIALPORT
 %Feature ANDROID
 %Feature VECTOR_MAPPED_TYPE
 
@@ -106,6 +108,7 @@ done:
 %Include qgsexception.sip
 %Include typedefs.sip
 %Include std.sip
+
 
 %Include core_auto.sip
 

@@ -19,9 +19,9 @@
 QgsPropertiesDefinition QgsAbstract3DSymbol::sPropertyDefinitions;
 
 
-QList<QgsWkbTypes::GeometryType> QgsAbstract3DSymbol::compatibleGeometryTypes() const
+QList<Qgis::GeometryType> QgsAbstract3DSymbol::compatibleGeometryTypes() const
 {
-  return QList< QgsWkbTypes::GeometryType >();
+  return QList< Qgis::GeometryType >();
 }
 
 const QgsPropertiesDefinition &QgsAbstract3DSymbol::propertyDefinitions()
@@ -52,8 +52,13 @@ void QgsAbstract3DSymbol::initPropertyDefinitions()
 
 bool QgsAbstract3DSymbol::exportGeometries( Qgs3DSceneExporter *exporter, Qt3DCore::QEntity *entity, const QString &objectNamePrefix ) const
 {
-  Q_UNUSED( exporter );
-  Q_UNUSED( entity );
-  Q_UNUSED( objectNamePrefix );
+  Q_UNUSED( exporter )
+  Q_UNUSED( entity )
+  Q_UNUSED( objectNamePrefix )
   return false;
+}
+
+void QgsAbstract3DSymbol::setDefaultPropertiesFromLayer( const QgsVectorLayer * )
+{
+
 }

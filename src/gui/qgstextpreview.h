@@ -21,6 +21,8 @@
 #include <QLabel>
 #include "qgis_gui.h"
 
+class QgsScreenHelper;
+
 /**
  * \class QgsTextPreview
  * \ingroup gui
@@ -42,7 +44,7 @@ class GUI_EXPORT QgsTextPreview : public QLabel
 
     Q_PROPERTY( QgsTextFormat format READ format WRITE setFormat )
     Q_PROPERTY( double scale READ scale WRITE setScale )
-    Q_PROPERTY( QgsUnitTypes::DistanceUnit mapUnits READ mapUnits WRITE setMapUnits )
+    Q_PROPERTY( Qgis::DistanceUnit mapUnits READ mapUnits WRITE setMapUnits )
 
   public:
 
@@ -89,20 +91,23 @@ class GUI_EXPORT QgsTextPreview : public QLabel
      * \see mapUnits()
      * \see setScale()
      */
-    void setMapUnits( QgsUnitTypes::DistanceUnit unit );
+    void setMapUnits( Qgis::DistanceUnit unit );
 
     /**
      * Returns the map unit type used for previewing format sizes in map units.
      * \see setMapUnits()
      * \see scale()
      */
-    QgsUnitTypes::DistanceUnit mapUnits() const { return mMapUnits; }
+    Qgis::DistanceUnit mapUnits() const { return mMapUnits; }
 
   private:
+
+    QgsScreenHelper *mScreenHelper = nullptr;
+
     QgsTextFormat mFormat;
     QgsRenderContext mContext;
     double mScale = -1;
-    QgsUnitTypes::DistanceUnit mMapUnits = QgsUnitTypes::DistanceMeters;
+    Qgis::DistanceUnit mMapUnits = Qgis::DistanceUnit::Meters;
     void updateContext();
 };
 

@@ -35,6 +35,7 @@ Responsible for reading native point cloud data and returning the indexed data.
       ReadLayerMetadata,
       WriteLayerMetadata,
       CreateRenderer,
+      ContainSubIndexes,
     };
 
     typedef QFlags<QgsPointCloudDataProvider::Capability> Capabilities;
@@ -63,8 +64,6 @@ Returns the list of points of the point cloud according to a zoom level
 defined by ``maxError`` (in layer coordinates), an extent ``geometry`` in the 2D plane
 and a range ``extentZRange`` for z values. The function will try to limit
 the number of points returned to ``pointsLimit`` points
-
-``maxErrorPixels`` : maximum accepted error factor in pixels
 
 .. note::
 
@@ -123,6 +122,8 @@ Gets the current index generation state
 %End
 
 
+
+
     bool hasValidIndex() const;
 %Docstring
 Returns whether provider has index which is valid
@@ -168,6 +169,14 @@ This method returns a new renderer and the caller takes ownership of the returne
 Only providers which report the CreateRenderer capability will return a 2D renderer. Other
 providers will return ``None``.
 %End
+
+    virtual bool hasStatisticsMetadata() const;
+%Docstring
+Returns whether the dataset contains statistics metadata
+
+.. versionadded:: 3.26
+%End
+
 
     SIP_PYOBJECT metadataStatistic( const QString &attribute, QgsStatisticalSummary::Statistic statistic ) const;
 %Docstring
@@ -234,6 +243,20 @@ in the metadata, and even for sources with statistical metadata only some ``stat
     }
 %End
 
+
+    QgsPointCloudStatistics metadataStatistics();
+%Docstring
+Returns the object containings the statistics metadata extracted from the dataset
+
+.. versionadded:: 3.26
+%End
+
+    virtual bool supportsSubsetString() const;
+    virtual QString subsetString() const;
+
+    virtual bool setSubsetString( const QString &subset, bool updateFeatureCount = false );
+
+
     static QMap< int, QString > lasClassificationCodes();
 %Docstring
 Returns the map of LAS classification code to untranslated string value, corresponding to the ASPRS Standard
@@ -266,10 +289,12 @@ Returns the map of LAS data format ID to translated string value.
 
   signals:
 
-    void indexGenerationStateChanged( PointCloudIndexGenerationState state );
+    void indexGenerationStateChanged( QgsPointCloudDataProvider::PointCloudIndexGenerationState state );
 %Docstring
 Emitted when point cloud generation state is changed
 %End
+
+  protected:
 
 };
 

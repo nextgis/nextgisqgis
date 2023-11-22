@@ -199,13 +199,14 @@ QVector<double> QgsMeshLayerUtils::calculateMagnitudes( const QgsMeshDataBlock &
 
 QgsRectangle QgsMeshLayerUtils::boundingBoxToScreenRectangle(
   const QgsMapToPixel &mtp,
-  const QgsRectangle &bbox
+  const QgsRectangle &bbox,
+  double devicePixelRatio
 )
 {
-  const QgsPointXY topLeft = mtp.transform( bbox.xMinimum(), bbox.yMaximum() );
-  const QgsPointXY topRight = mtp.transform( bbox.xMaximum(), bbox.yMaximum() );
-  const QgsPointXY bottomLeft = mtp.transform( bbox.xMinimum(), bbox.yMinimum() );
-  const QgsPointXY bottomRight = mtp.transform( bbox.xMaximum(), bbox.yMinimum() );
+  const QgsPointXY topLeft = mtp.transform( bbox.xMinimum(), bbox.yMaximum() ) * devicePixelRatio;
+  const QgsPointXY topRight = mtp.transform( bbox.xMaximum(), bbox.yMaximum() ) * devicePixelRatio;
+  const QgsPointXY bottomLeft = mtp.transform( bbox.xMinimum(), bbox.yMinimum() ) * devicePixelRatio;
+  const QgsPointXY bottomRight = mtp.transform( bbox.xMaximum(), bbox.yMinimum() ) * devicePixelRatio;
 
   const double xMin = std::min( {topLeft.x(), topRight.x(), bottomLeft.x(), bottomRight.x()} );
   const double xMax = std::max( {topLeft.x(), topRight.x(), bottomLeft.x(), bottomRight.x()} );
@@ -223,9 +224,10 @@ void QgsMeshLayerUtils::boundingBoxToScreenRectangle(
   int &leftLim,
   int &rightLim,
   int &bottomLim,
-  int &topLim )
+  int &topLim,
+  double devicePixelRatio )
 {
-  const QgsRectangle screenBBox = boundingBoxToScreenRectangle( mtp, bbox );
+  const QgsRectangle screenBBox = boundingBoxToScreenRectangle( mtp, bbox, devicePixelRatio );
 
   bottomLim = std::max( int( screenBBox.yMinimum() ), 0 );
   topLim = std::min( int( screenBBox.yMaximum() ), outputSize.height() - 1 );
@@ -293,6 +295,22 @@ double QgsMeshLayerUtils::interpolateFromVerticesData( const QgsPointXY &p1, con
     return std::numeric_limits<double>::quiet_NaN();
 
   return lam1 * val3 + lam2 * val2 + lam3 * val1;
+}
+
+double QgsMeshLayerUtils::interpolateZForPoint( const QgsTriangularMesh &mesh, double x, double y )
+{
+  const QgsPointXY point( x, y );
+  const int faceIndex = mesh.faceIndexForPoint_v2( point );
+  if ( faceIndex < 0 || faceIndex >= mesh.triangles().count() )
+    return std::numeric_limits<float>::quiet_NaN();
+
+  const QgsMeshFace &face = mesh.triangles().at( faceIndex );
+
+  const QgsPoint p1 = mesh.vertices().at( face.at( 0 ) );
+  const QgsPoint p2 = mesh.vertices().at( face.at( 1 ) );
+  const QgsPoint p3 = mesh.vertices().at( face.at( 2 ) );
+
+  return QgsMeshLayerUtils::interpolateFromVerticesData( p1, p2, p3, p1.z(), p2.z(), p3.z(), point );
 }
 
 double QgsMeshLayerUtils::interpolateFromVerticesData( double fraction, double val1, double val2 )
@@ -642,6 +660,11 @@ QVector<QVector3D> QgsMeshLayerUtils::calculateNormals( const QgsTriangularMesh 
       const int index( face.at( i ) );
       const int index1( face.at( ( i + 1 ) % 3 ) );
       const int index2( face.at( ( i + 2 ) % 3 ) );
+
+      if ( std::isnan( verticalMagnitude[index] ) ||
+           std::isnan( verticalMagnitude[index1] ) ||
+           std::isnan( verticalMagnitude[index2] ) )
+        continue;
 
       const QgsMeshVertex &vert( triangularMesh.vertices().at( index ) );
       const QgsMeshVertex &otherVert1( triangularMesh.vertices().at( index1 ) );

@@ -60,7 +60,7 @@ class CORE_EXPORT QgsMultiRenderChecker
     /**
      * Constructor for QgsMultiRenderChecker.
      */
-    QgsMultiRenderChecker() = default;
+    QgsMultiRenderChecker();
 
     virtual ~QgsMultiRenderChecker() = default;
 
@@ -80,6 +80,13 @@ class CORE_EXPORT QgsMultiRenderChecker
      * \param renderedImagePath A path to the rendered image with which control images will be compared
      */
     void setRenderedImage( const QString &renderedImagePath ) { mRenderedImage = renderedImagePath; }
+
+    /**
+     * Sets whether the comparison is expected to fail.
+     *
+     * \since QGIS 3.28
+     */
+    void setExpectFail( bool expectFail ) { mExpectFail = expectFail; }
 
     /**
      * Set the map settings to use to render the image
@@ -121,9 +128,11 @@ class CORE_EXPORT QgsMultiRenderChecker
     bool runTest( const QString &testName, unsigned int mismatchCount = 0 );
 
     /**
-     * Returns a report for this test
+     * Returns a report for this test.
+     *
+     * The report will be empty if the test was successfully run.
      */
-    QString report() const { return mReport; }
+    QString report() const;
 
     /**
      * Returns the path to the control images.
@@ -137,6 +146,7 @@ class CORE_EXPORT QgsMultiRenderChecker
     static void drawBackground( QImage *image ) { QgsRenderChecker::drawBackground( image ); }
 
   private:
+    bool mResult = false;
     QString mReport;
     QString mRenderedImage;
     QString mControlName;
@@ -145,10 +155,10 @@ class CORE_EXPORT QgsMultiRenderChecker
     int mMaxSizeDifferenceX = 0;
     int mMaxSizeDifferenceY = 0;
     QgsMapSettings mMapSettings;
-};
+    bool mExpectFail = false;
 
-SIP_FEATURE( TESTS )
-SIP_IF_FEATURE( TESTS )
+    bool mIsCiRun = false;
+};
 
 ///@cond PRIVATE
 
@@ -184,9 +194,14 @@ class CORE_EXPORT QgsLayoutChecker : public QgsMultiRenderChecker
      * The page number is specified via \a page, where 0 corresponds to the first
      * page in the layout.
      *
-     * Returns FALSE if the rendered layout differs from the expected reference image.
+     * \param report will be set to generated test report
+     * \param page page number from layout to render and check
+     * \param pixelDiff number of pixels which are permitted to differ from reference image.
+     * \param createReferenceImage if TRUE, the rendered reference image will be regenerated instead of performing a comparison test with the existing image
+     *
+     * \returns TRUE if the rendered layout matches the expected reference image.
      */
-    bool testLayout( QString &report, int page = 0, int pixelDiff = 0, bool createReferenceImage = false );
+    bool testLayout( QString &report SIP_OUT, int page = 0, int pixelDiff = 0, bool createReferenceImage = false );
 
   private:
     QgsLayoutChecker() = delete;
@@ -197,8 +212,6 @@ class CORE_EXPORT QgsLayoutChecker : public QgsMultiRenderChecker
     int mDotsPerMeter;
 };
 ///@endcond
-
-SIP_END
 
 
 #endif // QGSMULTIRENDERCHECKER_H

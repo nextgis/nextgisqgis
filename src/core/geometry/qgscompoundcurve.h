@@ -157,6 +157,8 @@ class CORE_EXPORT QgsCompoundCurve: public QgsCurve
 
     double xAt( int index ) const override SIP_HOLDGIL;
     double yAt( int index ) const override SIP_HOLDGIL;
+    double zAt( int index ) const override SIP_HOLDGIL;
+    double mAt( int index ) const override SIP_HOLDGIL;
 
     bool transform( QgsAbstractGeometryTransformer *transformer, QgsFeedback *feedback = nullptr ) override;
     void scroll( int firstVertexIndex ) final;
@@ -175,7 +177,7 @@ class CORE_EXPORT QgsCompoundCurve: public QgsCurve
      */
     inline static const QgsCompoundCurve *cast( const QgsAbstractGeometry *geom )
     {
-      if ( geom && QgsWkbTypes::flatType( geom->wkbType() ) == QgsWkbTypes::CompoundCurve )
+      if ( geom && QgsWkbTypes::flatType( geom->wkbType() ) == Qgis::WkbType::CompoundCurve )
         return static_cast<const QgsCompoundCurve *>( geom );
       return nullptr;
     }

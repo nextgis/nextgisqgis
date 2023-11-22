@@ -27,12 +27,8 @@
  *
  */
 
-#include "layer.h"
-#include "internalexception.h"
+#include "qgsgeos.h"
 #include "util.h"
-#include "labelposition.h"
-#include "feature.h"
-#include "geomfunction.h"
 
 #include "qgslogger.h"
 #include <cfloat>
@@ -72,7 +68,7 @@ QLinkedList<const GEOSGeometry *> *pal::Util::unmulti( const GEOSGeometry *the_g
         final_queue->append( geom );
         break;
       default:
-        QgsDebugMsg( QStringLiteral( "unexpected geometry type:%1" ).arg( type ) );
+        QgsDebugError( QStringLiteral( "unexpected geometry type:%1" ).arg( type ) );
         delete final_queue;
         delete queue;
         return nullptr;

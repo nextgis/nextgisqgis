@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsGeometryValidator.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -10,18 +9,9 @@ __author__ = 'Nyall Dawson'
 __date__ = '03/10/2016'
 __copyright__ = 'Copyright 2016, The QGIS Project'
 
-from qgis.core import (
-    QgsGeometry,
-    QgsGeometryValidator,
-    QgsPointXY
-)
-
-from qgis.testing import (
-    unittest,
-    start_app
-)
-
 from qgis.PyQt.QtTest import QSignalSpy
+from qgis.core import QgsGeometry, QgsGeometryValidator, QgsPointXY
+from qgis.testing import start_app, unittest
 
 app = start_app()
 
@@ -293,6 +283,21 @@ class TestQgsGeometryValidator(unittest.TestCase):
 
         self.assertEqual(spy[0][0].where(), QgsPointXY())
         self.assertEqual(spy[0][0].what(), 'Polygon 1 lies inside polygon 0')
+
+    def test_multi_part_curve(self):
+        # A circle inside another one
+        g = QgsGeometry.fromWkt("MultiSurface (CurvePolygon (CircularString (0 5, 5 0, 0 -5, -5 0, 0 5)),CurvePolygon (CircularString (100 1, 100 0, 100 -1, 99 0, 100 1)))")
+        validator = QgsGeometryValidator(g)
+        spy = QSignalSpy(validator.errorFound)
+        validator.run()
+        self.assertEqual(len(spy), 0)
+
+        # converted as a straight polygon
+        g.convertToStraightSegment()
+        validator = QgsGeometryValidator(g)
+        spy = QSignalSpy(validator.errorFound)
+        validator.run()
+        self.assertEqual(len(spy), 0)
 
 
 if __name__ == '__main__':

@@ -30,11 +30,11 @@
 #include "qgslinesymbol.h"
 #include "qgsfillsymbol.h"
 
-class TestQgsRubberband : public QObject
+class TestQgsRubberband : public QgsTest
 {
     Q_OBJECT
   public:
-    TestQgsRubberband() = default;
+    TestQgsRubberband() : QgsTest( QStringLiteral( "Rubberband Tests" ) ) {}
 
   private slots:
     void initTestCase(); // will be called before the first testfunction is executed.
@@ -58,7 +58,6 @@ class TestQgsRubberband : public QObject
     QgsVectorLayer *mPolygonLayer = nullptr;
     QString mTestDataDir;
     QgsRubberBand *mRubberband = nullptr;
-    QString mReport;
 };
 
 void TestQgsRubberband::initTestCase()
@@ -86,7 +85,6 @@ void TestQgsRubberband::initTestCase()
   mCanvas->hide();
 
   mRubberband = nullptr;
-  mReport += QLatin1String( "<h1>Rubberband Tests</h1>\n" );
 }
 
 void TestQgsRubberband::cleanupTestCase()
@@ -94,15 +92,6 @@ void TestQgsRubberband::cleanupTestCase()
   delete mRubberband;
   delete mPolygonLayer;
   delete mCanvas;
-
-  const QString myReportFile = QDir::tempPath() + "/qgistest.html";
-  QFile myFile( myReportFile );
-  if ( myFile.open( QIODevice::WriteOnly | QIODevice::Append ) )
-  {
-    QTextStream myQTextStream( &myFile );
-    myQTextStream << mReport;
-    myFile.close();
-  }
 
   QgsApplication::exitQgis();
 }
@@ -134,7 +123,7 @@ void TestQgsRubberband::pointGeometryAddPoints()
 {
   // point geometry
   std::unique_ptr< QgsMapCanvas > canvas = std::make_unique< QgsMapCanvas >();
-  QgsRubberBand r1( canvas.get(), QgsWkbTypes::PointGeometry );
+  QgsRubberBand r1( canvas.get(), Qgis::GeometryType::Point );
   QVERIFY( r1.asGeometry().isEmpty() );
   r1.addPoint( QgsPointXY( 1, 2 ) );
   QCOMPARE( r1.asGeometry().asWkt(), QStringLiteral( "MultiPoint ((1 2))" ) );
@@ -142,7 +131,7 @@ void TestQgsRubberband::pointGeometryAddPoints()
   QCOMPARE( r1.asGeometry().asWkt(), QStringLiteral( "MultiPoint ((1 2),(2 3))" ) );
   r1.addPoint( QgsPointXY( 3, 4 ) );
   QCOMPARE( r1.asGeometry().asWkt(), QStringLiteral( "MultiPoint ((1 2),(2 3),(3 4))" ) );
-  r1.reset( QgsWkbTypes::PointGeometry );
+  r1.reset( Qgis::GeometryType::Point );
   QVERIFY( r1.asGeometry().isEmpty() );
   r1.addPoint( QgsPointXY( 1, 2 ) );
   QCOMPARE( r1.asGeometry().asWkt(), QStringLiteral( "MultiPoint ((1 2))" ) );
@@ -152,7 +141,7 @@ void TestQgsRubberband::pointGeometrySetGeometry()
 {
   // point geometry, set using setToGeometry
   std::unique_ptr< QgsMapCanvas > canvas = std::make_unique< QgsMapCanvas >();
-  QgsRubberBand r1( canvas.get(), QgsWkbTypes::PointGeometry );
+  QgsRubberBand r1( canvas.get(), Qgis::GeometryType::Point );
   QVERIFY( r1.asGeometry().isEmpty() );
   r1.setToGeometry( QgsGeometry::fromPointXY( QgsPointXY( 1, 2 ) ) );
   QCOMPARE( r1.asGeometry().asWkt(), QStringLiteral( "MultiPoint ((1 2))" ) );
@@ -166,7 +155,7 @@ void TestQgsRubberband::pointGeometrySetGeometry()
   QCOMPARE( r1.asGeometry().asWkt(), QStringLiteral( "MultiPoint ((1 2),(3 4),(5 7))" ) );
   r1.addGeometry( QgsGeometry::fromMultiPointXY( { QgsPointXY( 7, 8 ), QgsPointXY( 9, 10 )} ) );
   QCOMPARE( r1.asGeometry().asWkt(), QStringLiteral( "MultiPoint ((1 2),(3 4),(5 7),(7 8),(9 10))" ) );
-  r1.reset( QgsWkbTypes::PointGeometry );
+  r1.reset( Qgis::GeometryType::Point );
   r1.addGeometry( QgsGeometry::fromMultiPointXY( { QgsPointXY( 7, 8 ), QgsPointXY( 9, 10 )} ) );
   QCOMPARE( r1.asGeometry().asWkt(), QStringLiteral( "MultiPoint ((7 8),(9 10))" ) );
 }
@@ -174,7 +163,7 @@ void TestQgsRubberband::pointGeometrySetGeometry()
 void TestQgsRubberband::lineGeometryAddPoints()
 {
   std::unique_ptr< QgsMapCanvas > canvas = std::make_unique< QgsMapCanvas >();
-  QgsRubberBand r1( canvas.get(), QgsWkbTypes::LineGeometry );
+  QgsRubberBand r1( canvas.get(), Qgis::GeometryType::Line );
   QVERIFY( r1.asGeometry().isEmpty() );
   r1.addPoint( QgsPointXY( 1, 2 ) );
   QCOMPARE( r1.asGeometry().asWkt(), QStringLiteral( "LineString (1 2, 1 2)" ) );
@@ -182,7 +171,7 @@ void TestQgsRubberband::lineGeometryAddPoints()
   QCOMPARE( r1.asGeometry().asWkt(), QStringLiteral( "LineString (1 2, 2 3)" ) );
   r1.addPoint( QgsPointXY( 3, 4 ) );
   QCOMPARE( r1.asGeometry().asWkt(), QStringLiteral( "LineString (1 2, 2 3, 3 4)" ) );
-  r1.reset( QgsWkbTypes::LineGeometry );
+  r1.reset( Qgis::GeometryType::Line );
   QVERIFY( r1.asGeometry().isEmpty() );
   r1.addPoint( QgsPointXY( 1, 2 ) );
   QCOMPARE( r1.asGeometry().asWkt(), QStringLiteral( "LineString (1 2, 1 2)" ) );
@@ -191,17 +180,17 @@ void TestQgsRubberband::lineGeometryAddPoints()
 void TestQgsRubberband::copyPointsFrom()
 {
   std::unique_ptr< QgsMapCanvas > canvas = std::make_unique< QgsMapCanvas >();
-  QgsRubberBand r1( canvas.get(), QgsWkbTypes::PointGeometry );
+  QgsRubberBand r1( canvas.get(), Qgis::GeometryType::Point );
   r1.addPoint( QgsPointXY( 1, 2 ) );
   r1.addPoint( QgsPointXY( 3, 4 ) );
   QCOMPARE( r1.asGeometry().asWkt(), QStringLiteral( "MultiPoint ((1 2),(3 4))" ) );
 
-  QgsRubberBand r2( canvas.get(), QgsWkbTypes::LineGeometry );
+  QgsRubberBand r2( canvas.get(), Qgis::GeometryType::Line );
   r2.copyPointsFrom( &r1 );
   QCOMPARE( r2.asGeometry().asWkt(), QStringLiteral( "MultiPoint ((1 2),(3 4))" ) );
 
   // line geometry band
-  r1.reset( QgsWkbTypes::LineGeometry );
+  r1.reset( Qgis::GeometryType::Line );
   r1.addPoint( QgsPointXY( 1, 2 ) );
   r1.addPoint( QgsPointXY( 2, 3 ) );
   r1.addPoint( QgsPointXY( 3, 4 ) );
@@ -274,7 +263,7 @@ void TestQgsRubberband::testVisibility()
   QCOMPARE( mRubberband->isVisible(), true );
 
   // Add point without update
-  mRubberband->reset( QgsWkbTypes::PolygonGeometry );
+  mRubberband->reset( Qgis::GeometryType::Polygon );
   mRubberband->addPoint( QgsPointXY( 10, 10 ), false );
   QCOMPARE( mRubberband->isVisible(), false );
 
@@ -291,7 +280,7 @@ void TestQgsRubberband::testVisibility()
 
 void TestQgsRubberband::testClose()
 {
-  QgsRubberBand r( mCanvas, QgsWkbTypes::PolygonGeometry );
+  QgsRubberBand r( mCanvas, Qgis::GeometryType::Polygon );
 
   // try closing empty rubber band, don't want to crash
   r.closePoints();
@@ -326,7 +315,7 @@ void TestQgsRubberband::testLineSymbolRender()
   canvas->setExtent( QgsRectangle( 10, 30, 20, 35 ) );
   canvas->show();
 
-  QgsRubberBand r( canvas.get(), QgsWkbTypes::LineGeometry );
+  QgsRubberBand r( canvas.get(), Qgis::GeometryType::Line );
   r.addGeometry( QgsGeometry::fromWkt( QStringLiteral( "LineString( 12 32, 18 33)" ) ) );
 
   std::unique_ptr< QgsLineSymbol > lineSymbol( QgsLineSymbol::createSimple(
@@ -362,7 +351,7 @@ void TestQgsRubberband::testFillSymbolRender()
   canvas->setExtent( QgsRectangle( 10, 30, 20, 35 ) );
   canvas->show();
 
-  QgsRubberBand r( canvas.get(), QgsWkbTypes::LineGeometry );
+  QgsRubberBand r( canvas.get(), Qgis::GeometryType::Line );
   r.addGeometry( QgsGeometry::fromWkt( QStringLiteral( "Polygon((12 32, 12 35, 18 35, 12 32))" ) ) );
 
   std::unique_ptr< QgsFillSymbol > fillSymbol( QgsFillSymbol::createSimple(

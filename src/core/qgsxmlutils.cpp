@@ -16,23 +16,23 @@
 
 #include <QDomElement>
 
-#include "qgslogger.h"
 #include "qgsrectangle.h"
 #include "qgsproperty.h"
 #include "qgssymbollayerutils.h"
 #include "qgsprocessingparameters.h"
 #include "qgsremappingproxyfeaturesink.h"
+#include "qgsunittypes.h"
 
-QgsUnitTypes::DistanceUnit QgsXmlUtils::readMapUnits( const QDomElement &element )
+Qgis::DistanceUnit QgsXmlUtils::readMapUnits( const QDomElement &element )
 {
   if ( "unknown" == element.text() )
   {
-    return QgsUnitTypes::DistanceUnknownUnit;
+    return Qgis::DistanceUnit::Unknown;
   }
   else
   {
-    const QgsUnitTypes::DistanceUnit unit = QgsUnitTypes::decodeDistanceUnit( element.text() );
-    return unit == QgsUnitTypes::DistanceUnknownUnit ? QgsUnitTypes::DistanceDegrees : unit;
+    const Qgis::DistanceUnit unit = QgsUnitTypes::decodeDistanceUnit( element.text() );
+    return unit == Qgis::DistanceUnit::Unknown ? Qgis::DistanceUnit::Degrees : unit;
   }
 }
 
@@ -66,11 +66,11 @@ QgsRectangle QgsXmlUtils::readRectangle( const QDomElement &element )
 
 
 
-QDomElement QgsXmlUtils::writeMapUnits( QgsUnitTypes::DistanceUnit units, QDomDocument &doc )
+QDomElement QgsXmlUtils::writeMapUnits( Qgis::DistanceUnit units, QDomDocument &doc )
 {
   QString unitsString = QgsUnitTypes::encodeUnit( units );
   // maintain compatibility with old projects
-  if ( units == QgsUnitTypes::DistanceUnknownUnit )
+  if ( units == Qgis::DistanceUnit::Unknown )
     unitsString = QStringLiteral( "unknown" );
 
   QDomElement unitsNode = doc.createElement( QStringLiteral( "units" ) );
@@ -169,7 +169,7 @@ QDomElement QgsXmlUtils::writeVariant( const QVariant &value, QDomDocument &doc 
 
     case QVariant::Char:
       element.setAttribute( QStringLiteral( "type" ), QVariant::typeToName( value.type() ) );
-      element.setAttribute( QStringLiteral( "value" ), value.isNull() ? QString() : value.toString() );
+      element.setAttribute( QStringLiteral( "value" ), QgsVariantUtils::isNull( value ) ? QString() : QString( value.toChar() ) );
       break;
 
     case QVariant::Color:
@@ -194,42 +194,42 @@ QDomElement QgsXmlUtils::writeVariant( const QVariant &value, QDomDocument &doc 
 
     case QVariant::UserType:
     {
-      if ( value.canConvert< QgsProperty >() )
+      if ( value.userType() == QMetaType::type( "QgsProperty" ) )
       {
         element.setAttribute( QStringLiteral( "type" ), QStringLiteral( "QgsProperty" ) );
         const QDomElement propertyElem = QgsXmlUtils::writeVariant( value.value< QgsProperty >().toVariant(), doc );
         element.appendChild( propertyElem );
         break;
       }
-      else if ( value.canConvert< QgsCoordinateReferenceSystem >() )
+      else if ( value.userType() == QMetaType::type( "QgsCoordinateReferenceSystem" ) )
       {
         element.setAttribute( QStringLiteral( "type" ), QStringLiteral( "QgsCoordinateReferenceSystem" ) );
         const QgsCoordinateReferenceSystem crs = value.value< QgsCoordinateReferenceSystem >();
         crs.writeXml( element, doc );
         break;
       }
-      else if ( value.canConvert< QgsGeometry >() )
+      else if ( value.userType() == QMetaType::type( "QgsGeometry" ) )
       {
         element.setAttribute( QStringLiteral( "type" ), QStringLiteral( "QgsGeometry" ) );
         const QgsGeometry geom = value.value< QgsGeometry >();
         element.setAttribute( QStringLiteral( "value" ), geom.asWkt() );
         break;
       }
-      else if ( value.canConvert< QgsProcessingOutputLayerDefinition >() )
+      else if ( value.userType() == QMetaType::type( "QgsProcessingOutputLayerDefinition" ) )
       {
         const QDomElement valueElement = writeVariant( value.value< QgsProcessingOutputLayerDefinition >().toVariant(), doc );
         element.appendChild( valueElement );
         element.setAttribute( QStringLiteral( "type" ), QStringLiteral( "QgsProcessingOutputLayerDefinition" ) );
         break;
       }
-      else if ( value.canConvert< QgsProcessingFeatureSourceDefinition >() )
+      else if ( value.userType() == QMetaType::type( "QgsProcessingFeatureSourceDefinition" ) )
       {
         const QDomElement valueElement = writeVariant( value.value< QgsProcessingFeatureSourceDefinition >().toVariant(), doc );
         element.appendChild( valueElement );
         element.setAttribute( QStringLiteral( "type" ), QStringLiteral( "QgsProcessingFeatureSourceDefinition" ) );
         break;
       }
-      else if ( value.canConvert< QgsRemappingSinkDefinition >() )
+      else if ( value.userType() == QMetaType::type( "QgsRemappingSinkDefinition" ) )
       {
         const QDomElement valueElement = writeVariant( value.value< QgsRemappingSinkDefinition >().toVariant(), doc );
         element.appendChild( valueElement );

@@ -9,23 +9,23 @@
  #include "qgswebframe.h"
  #include "qgsapplication.h"
  #include "qgsrendercontext.h"
-@@ -229,13 +229,13 @@
- 
+@@ -237,13 +237,13 @@
    const int titleSize = static_cast<int>( QApplication::fontMetrics().height() * 1.1 );
    const int textSize = static_cast<int>( titleSize * 0.85 );
+   QSizeF iconSize = icon.size() / painter->device()->devicePixelRatio();
 -
 +/*
    doc.setHtml( QStringLiteral( "<div style='font-size:%1px'><span style='font-size:%2px;font-weight:bold;'>%3%4</span>%5</div>" ).arg( textSize ).arg( QString::number( titleSize ),
                 index.data( QgsNewsFeedModel::Title ).toString(),
-                index.data( QgsNewsFeedModel::Sticky ).toBool() ? QStringLiteral( "<img src=\"qrc:/images/themes/default/pin.svg\">" ) : QString(),
+                index.data( QgsNewsFeedModel::Sticky ).toBool() ? QStringLiteral( "<img src=\":/images/themes/default/pin.svg\">" ) : QString(),
                 index.data( QgsNewsFeedModel::Content ).toString() ) );
  
 -
 +*/
-   doc.setTextWidth( option.rect.width() - ( !icon.isNull() ? icon.width() + 4.375 * mRoundedRectSizePixels : 4.375 * mRoundedRectSizePixels ) );
+   doc.setTextWidth( option.rect.width() - ( !icon.isNull() ? iconSize.width() + 4.375 * mRoundedRectSizePixels : 4.375 * mRoundedRectSizePixels ) );
  
    if ( !icon.isNull() )
-@@ -271,10 +271,12 @@
+@ -271,10 +271,12 @@
  
    const int titleSize = QApplication::fontMetrics().height() * 1.1;
    const int textSize = titleSize * 0.85;

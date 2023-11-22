@@ -1,16 +1,21 @@
---- a/src/gui/qgsgui.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/gui/qgsgui.cpp	2022-04-25 18:33:18.000000000 +0300
-@@ -63,7 +63,7 @@
- #include "qgsprovidersourcewidgetproviderregistry.h"
+--- a/src/gui/qgsgui.cpp	2023-08-21 19:39:45.779043280 +0300
++++ b/src/gui/qgsgui.cpp	2023-10-24 16:17:54.000000000 +0300
+@@ -58,10 +58,10 @@
  #include "qgsrelationwidgetregistry.h"
+ #include "qgsmaptoolshaperegistry.h"
  #include "qgssettingsregistrygui.h"
 -#include "qgshistoryproviderregistry.h"
 +// #include "qgshistoryproviderregistry.h"
+ #include "qgslayermetadatasourceselectprovider.h"
+-#include "qgssensorguiregistry.h"
+-#include "qgshistoryentry.h"
++// #include "qgssensorguiregistry.h"
++// #include "qgshistoryentry.h"
  
- QgsGui *QgsGui::instance()
- {
-@@ -166,10 +166,10 @@
-   return instance()->mProviderGuiRegistry;
+ #include "qgssettingseditorwidgetregistry.h"
+ 
+@@ -180,10 +180,10 @@
+   return instance()->mSensorGuiRegistry;
  }
  
 -QgsHistoryProviderRegistry *QgsGui::historyProviderRegistry()
@@ -22,9 +27,9 @@
 +//   return instance()->mHistoryProviderRegistry;
 +// }
  
- void QgsGui::enableAutoGeometryRestore( QWidget *widget, const QString &key )
+ QgsSettingsEditorWidgetRegistry *QgsGui::settingsEditorWidgetRegistry()
  {
-@@ -213,7 +213,7 @@
+@@ -232,7 +232,7 @@
    delete mEditorWidgetRegistry;
    delete mMapLayerActionRegistry;
    delete mSourceSelectProviderRegistry;
@@ -33,10 +38,15 @@
    delete mShortcutsManager;
    delete mNative;
    delete mNumericFormatGuiRegistry;
-@@ -275,8 +275,8 @@
+@@ -302,11 +302,11 @@
    mCodeEditorColorSchemeRegistry = new QgsCodeEditorColorSchemeRegistry();
  
    // provider gui registry initialize QgsProviderRegistry too
+-  mSensorGuiRegistry = new QgsSensorGuiRegistry();
+-  mSensorGuiRegistry->populate();
++//   mSensorGuiRegistry = new QgsSensorGuiRegistry();
++//   mSensorGuiRegistry->populate();
+ 
 -  mHistoryProviderRegistry = new QgsHistoryProviderRegistry();
 -  mHistoryProviderRegistry->addDefaultProviders();
 +//   mHistoryProviderRegistry = new QgsHistoryProviderRegistry();
@@ -44,3 +54,12 @@
  
    mProviderGuiRegistry = new QgsProviderGuiRegistry( QgsApplication::pluginPath() );
    mProjectStorageGuiRegistry = new QgsProjectStorageGuiRegistry();
+@@ -338,7 +338,7 @@
+   mProcessingRecentAlgorithmLog = new QgsProcessingRecentAlgorithmLog();
+   mProcessingGuiRegistry = new QgsProcessingGuiRegistry();
+ 
+-  qRegisterMetaType< QgsHistoryEntry >( "QgsHistoryEntry" );
++//  qRegisterMetaType< QgsHistoryEntry >( "QgsHistoryEntry" );
+ }
+ 
+ bool QgsGui::pythonMacroAllowed( void ( *lambda )(), QgsMessageBar *messageBar )

@@ -26,7 +26,6 @@
 #include "qgscoordinatereferencesystem.h"
 #include "qgsvectorlayerexporter.h"
 #include "qgsproviderregistry.h"
-#include "qgsdatasourceuri.h"
 #include "qgsexception.h"
 #include "qgsvectordataprovider.h"
 #include "qgsvectorlayer.h"
@@ -38,7 +37,7 @@
 typedef Qgis::VectorExportResult createEmptyLayer_t(
   const QString &uri,
   const QgsFields &fields,
-  QgsWkbTypes::Type geometryType,
+  Qgis::WkbType geometryType,
   const QgsCoordinateReferenceSystem &destCRS,
   bool overwrite,
   QMap<int, int> *oldToNewAttrIdx,
@@ -50,7 +49,7 @@ typedef Qgis::VectorExportResult createEmptyLayer_t(
 QgsVectorLayerExporter::QgsVectorLayerExporter( const QString &uri,
     const QString &providerKey,
     const QgsFields &fields,
-    QgsWkbTypes::Type geometryType,
+    Qgis::WkbType geometryType,
     const QgsCoordinateReferenceSystem &crs,
     bool overwrite,
     const QMap<QString, QVariant> &options,
@@ -68,7 +67,7 @@ QgsVectorLayerExporter::QgsVectorLayerExporter( const QString &uri,
        ( options[ QStringLiteral( "driverName" ) ].toString().compare( QLatin1String( "GPKG" ), Qt::CaseInsensitive ) == 0 ||
          options[ QStringLiteral( "driverName" ) ].toString().compare( QLatin1String( "SQLite" ), Qt::CaseInsensitive ) == 0 ) )
   {
-    if ( geometryType != QgsWkbTypes::NoGeometry )
+    if ( geometryType != Qgis::WkbType::NoGeometry )
     {
       // For GPKG/Spatialite, we explicitly ask not to create a spatial index at
       // layer creation since this would slow down inserts. Defer its creation
@@ -201,6 +200,11 @@ QString QgsVectorLayerExporter::errorMessage() const
   return mErrorMessage;
 }
 
+Qgis::VectorDataProviderAttributeEditCapabilities QgsVectorLayerExporter::attributeEditCapabilities() const
+{
+  return mProvider ? mProvider->attributeEditCapabilities() : Qgis::VectorDataProviderAttributeEditCapabilities();
+}
+
 bool QgsVectorLayerExporter::addFeatures( QgsFeatureList &features, Flags flags )
 {
   QgsFeatureList::iterator fIt = features.begin();
@@ -270,7 +274,7 @@ bool QgsVectorLayerExporter::flushBuffer()
     mErrorCount += mFeatureBuffer.count();
 
     mFeatureBuffer.clear();
-    QgsDebugMsg( mErrorMessage );
+    QgsDebugError( mErrorMessage );
     return false;
   }
 
@@ -331,7 +335,7 @@ Qgis::VectorExportResult QgsVectorLayerExporter::exportLayer( QgsVectorLayer *la
 
   QgsFields fields = layer->fields();
 
-  QgsWkbTypes::Type wkbType = layer->wkbType();
+  Qgis::WkbType wkbType = layer->wkbType();
 
   // Special handling for Shapefiles
   if ( layer->providerType() == QLatin1String( "ogr" ) && layer->storageType() == QLatin1String( "ESRI Shapefile" ) )
@@ -371,7 +375,7 @@ Qgis::VectorExportResult QgsVectorLayerExporter::exportLayer( QgsVectorLayer *la
   QgsFeature fet;
 
   QgsFeatureRequest req;
-  if ( wkbType == QgsWkbTypes::NoGeometry )
+  if ( wkbType == Qgis::WkbType::NoGeometry )
     req.setFlags( QgsFeatureRequest::NoGeometry );
   if ( onlySelected )
     req.setFilterFids( layer->selectedFeatureIds() );

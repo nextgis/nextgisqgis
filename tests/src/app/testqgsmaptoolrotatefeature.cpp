@@ -105,9 +105,9 @@ void TestQgsMapToolRotateFeature::initTestCase()
   QCOMPARE( mLayerBase->getFeature( 2 ).geometry().asWkt( 1 ), wkt2 );
 
   QgsSnappingConfig cfg = mCanvas->snappingUtils()->config();
-  cfg.setMode( QgsSnappingConfig::AllLayers );
+  cfg.setMode( Qgis::SnappingMode::AllLayers );
   cfg.setTolerance( 1 );
-  cfg.setTypeFlag( static_cast<QgsSnappingConfig::SnappingTypeFlag>( QgsSnappingConfig::VertexFlag | QgsSnappingConfig::SegmentFlag ) );
+  cfg.setTypeFlag( static_cast<Qgis::SnappingTypes>( Qgis::SnappingType::Vertex | Qgis::SnappingType::Segment ) );
   cfg.setEnabled( true );
   mCanvas->snappingUtils()->setConfig( cfg );
 
@@ -214,9 +214,9 @@ void TestQgsMapToolRotateFeature::testRotateFeatureManualAnchorSnapping()
 
   QgsSnappingConfig cfg = mCanvas->snappingUtils()->config();
   const double tolerance = cfg.tolerance();
-  const QgsTolerance::UnitType units = cfg.units();
+  const Qgis::MapToolUnit units = cfg.units();
   cfg.setTolerance( 0.5 );
-  cfg.setUnits( QgsTolerance::LayerUnits );
+  cfg.setUnits( Qgis::MapToolUnit::Layer );
   mCanvas->snappingUtils()->setConfig( cfg );
 
   // set anchor point, should snap to (1.1, 5)

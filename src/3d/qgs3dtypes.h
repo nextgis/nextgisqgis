@@ -30,20 +30,6 @@
 class _3D_EXPORT Qgs3DTypes
 {
   public:
-    //! how to handle altitude of vector features
-    enum AltitudeClamping
-    {
-      AltClampAbsolute,   //!< Z_final = z_geometry
-      AltClampRelative,   //!< Z_final = z_terrain + z_geometry
-      AltClampTerrain,    //!< Z_final = z_terrain
-    };
-
-    //! how to handle clamping of vertices of individual features
-    enum AltitudeBinding
-    {
-      AltBindVertex,      //!< Clamp every vertex of feature
-      AltBindCentroid,    //!< Clamp just centroid of feature
-    };
 
     //! Triangle culling mode
     enum CullingMode
@@ -53,6 +39,18 @@ class _3D_EXPORT Qgs3DTypes
       Back,          //!< Will render only front faces of triangles (recommended when input data are consistent)
       FrontAndBack   //!< Will not render anything
     };
+
+    //! Qt property name to hold the 3D geometry renderer flag
+    static const char *PROP_NAME_3D_RENDERER_FLAG;
+
+    //! 3D geometry renderer flag
+    enum Flag3DRenderer
+    {
+      Main3DRenderer = 0,       //!< Renderer for normal entities
+      Selected3DRenderer,  //!< Renderer for selected entities
+    };
+
+
 };
 
 #endif // QGS3DTYPES_H

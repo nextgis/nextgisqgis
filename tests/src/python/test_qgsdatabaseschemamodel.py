@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsDatabaseSchemaModel
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -11,19 +10,13 @@ __author__ = 'Nyall Dawson'
 __date__ = '07/03/2020'
 __copyright__ = 'Copyright 2020, The QGIS Project'
 # This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '6b44a42058d8f4d3f994b915f72f08b6a3ab474d'
+__revision__ = '$Format:%H$'
 
 import os
-from qgis.core import (
-    QgsDatabaseSchemaModel,
-    QgsProviderRegistry,
-)
-from qgis.PyQt.QtCore import (
-    QCoreApplication,
-    QModelIndex,
-    Qt
-)
-from qgis.testing import unittest, start_app
+
+from qgis.PyQt.QtCore import QCoreApplication, QModelIndex, Qt
+from qgis.core import QgsDatabaseSchemaModel, QgsProviderRegistry
+from qgis.testing import start_app, unittest
 
 
 class TestPyQgsDatabaseSchemaModel(unittest.TestCase):
@@ -36,6 +29,7 @@ class TestPyQgsDatabaseSchemaModel(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super().setUpClass()
 
         QCoreApplication.setOrganizationName("QGIS_Test")
         QCoreApplication.setOrganizationDomain(cls.__name__)

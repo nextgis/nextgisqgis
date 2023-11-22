@@ -14,20 +14,14 @@
  ***************************************************************************/
 
 #include "qgssymbollayer.h"
-#include "qgsclipper.h"
-#include "qgsexpression.h"
 #include "qgsrendercontext.h"
-#include "qgsvectorlayer.h"
 // #include "qgsdxfexport.h"
 #include "qgsgeometrysimplifier.h"
 #include "qgspainteffect.h"
-#include "qgseffectstack.h"
 #include "qgspainteffectregistry.h"
 #include "qgsproperty.h"
 #include "qgsexpressioncontext.h"
 #include "qgssymbollayerutils.h"
-#include "qgsapplication.h"
-#include "qgsmultipoint.h"
 #include "qgslegendpatchshape.h"
 #include "qgsstyle.h"
 #include "qgsexpressioncontextutils.h"
@@ -38,6 +32,7 @@
 #include <QPainter>
 #include <QPointF>
 #include <QPolygonF>
+#include <QUuid>
 
 QgsPropertiesDefinition QgsSymbolLayer::sPropertyDefinitions;
 
@@ -130,6 +125,8 @@ void QgsSymbolLayer::setDataDefinedProperty( QgsSymbolLayer::Property key, const
 
 void QgsSymbolLayer::startFeatureRender( const QgsFeature &feature, QgsRenderContext &context )
 {
+  installMasks( context, false );
+
   if ( QgsSymbol *lSubSymbol = subSymbol() )
     lSubSymbol->startFeatureRender( feature, context );
 }
@@ -138,6 +135,8 @@ void QgsSymbolLayer::stopFeatureRender( const QgsFeature &feature, QgsRenderCont
 {
   if ( QgsSymbol *lSubSymbol = subSymbol() )
     lSubSymbol->stopFeatureRender( feature, context );
+
+  removeMasks( context, false );
 }
 
 QgsSymbol *QgsSymbolLayer::subSymbol()
@@ -168,6 +167,13 @@ double QgsSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &
   return 1.0;
 }
 
+double QgsSymbolLayer::dxfSize( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
+{
+  Q_UNUSED( e )
+  Q_UNUSED( context )
+  return 1.0;
+}
+
 double QgsSymbolLayer::dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
 {
   Q_UNUSED( e )
@@ -187,7 +193,7 @@ double QgsSymbolLayer::dxfAngle( QgsSymbolRenderContext &context ) const
   return 0.0;
 }
 
-QVector<qreal> QgsSymbolLayer::dxfCustomDashPattern( QgsUnitTypes::RenderUnit &unit ) const
+QVector<qreal> QgsSymbolLayer::dxfCustomDashPattern( Qgis::RenderUnit &unit ) const
 {
   Q_UNUSED( unit )
   return QVector<qreal>();
@@ -225,12 +231,42 @@ void QgsSymbolLayer::setPaintEffect( QgsPaintEffect *effect )
 QgsSymbolLayer::QgsSymbolLayer( Qgis::SymbolType type, bool locked )
   : mType( type )
   , mLocked( locked )
+  , mId( QUuid::createUuid().toString() )
 {
 }
 
 Qgis::SymbolLayerFlags QgsSymbolLayer::flags() const
 {
   return Qgis::SymbolLayerFlags();
+}
+
+QColor QgsSymbolLayer::color() const
+{
+  return mColor;
+}
+
+void QgsSymbolLayer::setColor( const QColor &color )
+{
+  mColor = color;
+}
+
+void QgsSymbolLayer::setStrokeColor( const QColor & )
+{
+
+}
+
+QColor QgsSymbolLayer::strokeColor() const
+{
+  return QColor();
+}
+
+void QgsSymbolLayer::setFillColor( const QColor & )
+{
+}
+
+QColor QgsSymbolLayer::fillColor() const
+{
+  return QColor();
 }
 
 void QgsSymbolLayer::prepareExpressions( const QgsSymbolRenderContext &context )
@@ -526,7 +562,7 @@ void QgsMarkerSymbolLayer::markerOffset( QgsSymbolRenderContext &context, double
 }
 
 void QgsMarkerSymbolLayer::markerOffset( QgsSymbolRenderContext &context, double width, double height,
-    QgsUnitTypes::RenderUnit widthUnit, QgsUnitTypes::RenderUnit heightUnit,
+    Qgis::RenderUnit widthUnit, Qgis::RenderUnit heightUnit,
     double &offsetX, double &offsetY, const QgsMapUnitScale &widthMapUnitScale, const QgsMapUnitScale &heightMapUnitScale ) const
 {
   offsetX = mOffset.x();
@@ -553,7 +589,7 @@ void QgsMarkerSymbolLayer::markerOffset( QgsSymbolRenderContext &context, double
   if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyHorizontalAnchor ) )
   {
     QVariant exprVal = mDataDefinedProperties.value( QgsSymbolLayer::PropertyHorizontalAnchor, context.renderContext().expressionContext() );
-    if ( !exprVal.isNull() )
+    if ( !QgsVariantUtils::isNull( exprVal ) )
     {
       horizontalAnchorPoint = decodeHorizontalAnchorPoint( exprVal.toString() );
     }
@@ -561,7 +597,7 @@ void QgsMarkerSymbolLayer::markerOffset( QgsSymbolRenderContext &context, double
   if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyVerticalAnchor ) )
   {
     QVariant exprVal = mDataDefinedProperties.value( QgsSymbolLayer::PropertyVerticalAnchor, context.renderContext().expressionContext() );
-    if ( !exprVal.isNull() )
+    if ( !QgsVariantUtils::isNull( exprVal ) )
     {
       verticalAnchorPoint = decodeVerticalAnchorPoint( exprVal.toString() );
     }
@@ -574,19 +610,19 @@ void QgsMarkerSymbolLayer::markerOffset( QgsSymbolRenderContext &context, double
   }
 
   double anchorPointCorrectionX = context.renderContext().convertToPainterUnits( width, widthUnit, widthMapUnitScale ) / 2.0;
-  if ( widthUnit == QgsUnitTypes::RenderMetersInMapUnits && context.renderContext().flags() & Qgis::RenderContextFlag::RenderSymbolPreview )
+  if ( widthUnit == Qgis::RenderUnit::MetersInMapUnits && context.renderContext().flags() & Qgis::RenderContextFlag::RenderSymbolPreview )
   {
     // rendering for symbol previews -- an size in meters in map units can't be calculated, so treat the size as millimeters
     // and clamp it to a reasonable range. It's the best we can do in this situation!
-    anchorPointCorrectionX = std::min( std::max( context.renderContext().convertToPainterUnits( width, QgsUnitTypes::RenderMillimeters ), 3.0 ), 100.0 ) / 2.0;
+    anchorPointCorrectionX = std::min( std::max( context.renderContext().convertToPainterUnits( width, Qgis::RenderUnit::Millimeters ), 3.0 ), 100.0 ) / 2.0;
   }
 
   double anchorPointCorrectionY = context.renderContext().convertToPainterUnits( height, heightUnit, heightMapUnitScale ) / 2.0;
-  if ( heightUnit == QgsUnitTypes::RenderMetersInMapUnits && context.renderContext().flags() & Qgis::RenderContextFlag::RenderSymbolPreview )
+  if ( heightUnit == Qgis::RenderUnit::MetersInMapUnits && context.renderContext().flags() & Qgis::RenderContextFlag::RenderSymbolPreview )
   {
     // rendering for symbol previews -- an size in meters in map units can't be calculated, so treat the size as millimeters
     // and clamp it to a reasonable range. It's the best we can do in this situation!
-    anchorPointCorrectionY = std::min( std::max( context.renderContext().convertToPainterUnits( height, QgsUnitTypes::RenderMillimeters ), 3.0 ), 100.0 ) / 2.0;
+    anchorPointCorrectionY = std::min( std::max( context.renderContext().convertToPainterUnits( height, Qgis::RenderUnit::Millimeters ), 3.0 ), 100.0 ) / 2.0;
   }
 
   if ( horizontalAnchorPoint == Left )
@@ -648,17 +684,17 @@ QgsMarkerSymbolLayer::VerticalAnchorPoint QgsMarkerSymbolLayer::decodeVerticalAn
   }
 }
 
-void QgsMarkerSymbolLayer::setOutputUnit( QgsUnitTypes::RenderUnit unit )
+void QgsMarkerSymbolLayer::setOutputUnit( Qgis::RenderUnit unit )
 {
   mSizeUnit = unit;
   mOffsetUnit = unit;
 }
 
-QgsUnitTypes::RenderUnit QgsMarkerSymbolLayer::outputUnit() const
+Qgis::RenderUnit QgsMarkerSymbolLayer::outputUnit() const
 {
   if ( mOffsetUnit != mSizeUnit )
   {
-    return QgsUnitTypes::RenderUnknownUnit;
+    return Qgis::RenderUnit::Unknown;
   }
   return mOffsetUnit;
 }
@@ -678,12 +714,13 @@ QgsMapUnitScale QgsMarkerSymbolLayer::mapUnitScale() const
   return QgsMapUnitScale();
 }
 
-void QgsLineSymbolLayer::setOutputUnit( QgsUnitTypes::RenderUnit unit )
+void QgsLineSymbolLayer::setOutputUnit( Qgis::RenderUnit unit )
 {
   mWidthUnit = unit;
+  mOffsetUnit = unit;
 }
 
-QgsUnitTypes::RenderUnit QgsLineSymbolLayer::outputUnit() const
+Qgis::RenderUnit QgsLineSymbolLayer::outputUnit() const
 {
   return mWidthUnit;
 }
@@ -803,6 +840,11 @@ void QgsFillSymbolLayer::drawPreviewIcon( QgsSymbolRenderContext &context, QSize
   stopRender( context );
 }
 
+QImage QgsFillSymbolLayer::toTiledPatternImage() const
+{
+  return QImage();
+}
+
 void QgsFillSymbolLayer::_renderPolygon( QPainter *p, const QPolygonF &points, const QVector<QPolygonF> *rings, QgsSymbolRenderContext &context )
 {
   if ( !p )
@@ -865,4 +907,101 @@ QList<QgsSymbolLayerReference> QgsSymbolLayer::masks() const
 {
   return {};
 }
+/*
+double QgsMarkerSymbolLayer::dxfSize( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
+{
+  double size = mSize;
+  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertySize ) )
+  {
+    bool ok = false;
+    size = mDataDefinedProperties.valueAsDouble( QgsSymbolLayer::PropertySize, context.renderContext().expressionContext(), mSize, &ok );
 
+    if ( ok )
+    {
+      switch ( mScaleMethod )
+      {
+        case Qgis::ScaleMethod::ScaleArea:
+          size = std::sqrt( size );
+          break;
+        case Qgis::ScaleMethod::ScaleDiameter:
+          break;
+      }
+    }
+  }
+  return size * QgsDxfExport::mapUnitScaleFactor( e.symbologyScale(), mSizeUnit, e.mapUnits(), context.renderContext().mapToPixel().mapUnitsPerPixel() );
+}
+
+double QgsMarkerSymbolLayer::dxfAngle( QgsSymbolRenderContext &context ) const
+{
+  double angle = mAngle;
+  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyAngle ) )
+  {
+    context.setOriginalValueVariable( mAngle );
+    angle = mDataDefinedProperties.valueAsDouble( QgsSymbolLayer::PropertyAngle, context.renderContext().expressionContext(), mAngle );
+  }
+  return angle;
+}
+*/
+void QgsSymbolLayer::prepareMasks( const QgsSymbolRenderContext &context )
+{
+  mClipPath.clear();
+
+  const QgsRenderContext &renderContext = context.renderContext();
+  const QList<QPainterPath> clipPaths = renderContext.symbolLayerClipPaths( id() );
+  if ( !clipPaths.isEmpty() )
+  {
+    QPainterPath mergedPaths;
+    mergedPaths.setFillRule( Qt::WindingFill );
+    for ( QPainterPath path : clipPaths )
+    {
+      mergedPaths.addPath( path );
+    }
+
+    if ( !mergedPaths.isEmpty() )
+    {
+      mClipPath.addRect( 0, 0, renderContext.outputSize().width(),
+                         renderContext.outputSize().height() );
+      mClipPath = mClipPath.subtracted( mergedPaths );
+    }
+  }
+}
+
+void QgsSymbolLayer::installMasks( QgsRenderContext &context, bool recursive )
+{
+  if ( !mClipPath.isEmpty() )
+  {
+    context.painter()->save();
+    context.painter()->setClipPath( mClipPath, Qt::IntersectClip );
+  }
+
+  if ( QgsSymbol *lSubSymbol = recursive ? subSymbol() : nullptr )
+  {
+    for ( QgsSymbolLayer *sl : lSubSymbol->symbolLayers() )
+      sl->installMasks( context, true );
+  }
+}
+
+void QgsSymbolLayer::removeMasks( QgsRenderContext &context, bool recursive )
+{
+  if ( !mClipPath.isEmpty() )
+  {
+    context.painter()->restore();
+  }
+
+  if ( QgsSymbol *lSubSymbol = recursive ? subSymbol() : nullptr )
+  {
+    for ( QgsSymbolLayer *sl : lSubSymbol->symbolLayers() )
+      sl->removeMasks( context, true );
+  }
+}
+
+
+void QgsSymbolLayer::setId( const QString &id )
+{
+  mId = id;
+}
+
+QString QgsSymbolLayer::id() const
+{
+  return mId;
+}

@@ -28,6 +28,7 @@ Makefile*
 # QtCreator
 
 *.autosave
+.idea/
 
 # QtCtreator Qml
 *.qmlproject.user
@@ -38,6 +39,7 @@ CMakeLists.txt.user
 
 # Installer
 build/
+build_release/
 inst/
 debian/
 obj-*-linux-gnu/

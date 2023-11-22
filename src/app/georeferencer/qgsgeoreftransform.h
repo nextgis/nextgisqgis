@@ -19,7 +19,6 @@
 
 #include <gdal_alg.h>
 #include "qgis_app.h"
-#include "qgspoint.h"
 #include "qgsgcptransformer.h"
 #include "qgsrasterchangecoords.h"
 
@@ -45,7 +44,7 @@ class APP_EXPORT QgsGeorefTransform : public QgsGcpTransformerInterface
     /**
      * Switches the used transform type to the given parametrisation.
      */
-    void selectTransformParametrisation( TransformMethod parametrisation );
+    void setMethod( TransformMethod parametrisation );
 
     /**
      * Loads an existing raster image so that the source pixel to source layer conversion

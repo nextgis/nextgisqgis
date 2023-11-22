@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for zip functions.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -11,10 +10,12 @@ __date__ = '06/7/2017'
 __copyright__ = 'Copyright 2017, The QGIS Project'
 
 import os
+
+from qgis.PyQt.QtCore import QTemporaryDir, QTemporaryFile
 from qgis.core import QgsZipUtils
 from qgis.testing import unittest
+
 from utilities import unitTestDataPath
-from qgis.PyQt.QtCore import QTemporaryFile, QTemporaryDir
 
 
 def tmpPath():
@@ -30,6 +31,7 @@ class TestQgsZip(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.zipDir = os.path.join(unitTestDataPath(), "zip")
 
     def test_zip_ok(self):
@@ -119,6 +121,19 @@ class TestQgsZip(unittest.TestCase):
 
         self.assertTrue(rc)
         self.assertEqual(len(files), 3)
+
+    def test_zip_files(self):
+        zip = tmpPath()
+
+        f0 = os.path.join(unitTestDataPath(), 'multipoint.shp')
+        f1 = os.path.join(unitTestDataPath(), 'lines.shp')
+        f2 = os.path.join(unitTestDataPath(), 'joins.qgs')
+
+        rc = QgsZipUtils.zip(zip, [f0, f1, f2])
+        self.assertTrue(rc)
+
+        files = QgsZipUtils.files(zip)
+        self.assertEqual(files, ['multipoint.shp', 'lines.shp', 'joins.qgs'])
 
 
 if __name__ == '__main__':

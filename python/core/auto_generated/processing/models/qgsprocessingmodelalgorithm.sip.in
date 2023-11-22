@@ -22,6 +22,9 @@ Model based algorithm with processing.
 #include "qgsprocessingmodelalgorithm.h"
 %End
   public:
+    static const QMetaObject staticMetaObject;
+
+  public:
 
     QgsProcessingModelAlgorithm( const QString &name = QString(), const QString &group = QString(), const QString &groupId = QString() );
 %Docstring
@@ -48,8 +51,6 @@ Constructor for QgsProcessingModelAlgorithm.
     virtual QString shortDescription() const;
 
     virtual QString helpUrl() const;
-
-    virtual Flags flags() const;
 
 
     virtual bool canExecute( QString *errorMessage /Out/ = 0 ) const;
@@ -247,6 +248,15 @@ is deleted.
 .. seealso:: :py:func:`updateModelParameter`
 %End
 
+    void changeParameterName( const QString &oldName, const QString &newName );
+%Docstring
+Changes a model parameter's internal name from ``oldName`` to ``newName``.
+
+This method will automatically update all model components to relink using the new name.
+
+.. versionadded:: 3.26
+%End
+
     bool childAlgorithmsDependOnParameter( const QString &name ) const;
 %Docstring
 Returns ``True`` if any child algorithms depend on the model parameter
@@ -330,6 +340,45 @@ model :py:func:`~QgsProcessingModelAlgorithm.parameterComponents`.
 .. seealso:: :py:func:`orderedParameters`
 
 .. versionadded:: 3.14
+%End
+
+    QList< QgsProcessingModelOutput > orderedOutputs() const;
+%Docstring
+Returns an ordered list of outputs for the model.
+
+.. seealso:: :py:func:`setOutputOrder`
+
+.. versionadded:: 3.32
+%End
+
+    void setOutputOrder( const QStringList &order );
+%Docstring
+Sets the ``order`` for sorting outputs for the model.
+
+The ``order`` list should consist of "output child algorithm id:output name" formatted strings corresponding to existing
+model outputs.
+
+.. seealso:: :py:func:`orderedOutputs`
+
+.. versionadded:: 3.32
+%End
+
+    QString outputGroup() const;
+%Docstring
+Returns the destination layer tree group name for outputs created by the model.
+
+.. seealso:: :py:func:`setOutputGroup`
+
+.. versionadded:: 3.32
+%End
+
+    void setOutputGroup( const QString &group );
+%Docstring
+Sets the destination layer tree ``group`` name for outputs created by the model.
+
+.. seealso:: :py:func:`outputGroup`
+
+.. versionadded:: 3.32
 %End
 
     void updateDestinationParameters();
@@ -565,6 +614,23 @@ run through the designer.
 
 .. versionadded:: 3.14
 %End
+
+    const QgsProcessingParameterDefinition *modelParameterFromChildIdAndOutputName( const QString &childId, const QString &childOutputName ) const;
+%Docstring
+Given a child algorithm ID and output name, attempts to match it to a parameter definition from the overall model.
+
+.. versionadded:: 3.26
+%End
+
+    static QString safeName( const QString &name, bool capitalize = false );
+%Docstring
+Makes a name "safe", by replacing any non-alphanumeric characters with underscores.
+
+If ``capitalize`` is ``True`` then the string will be converted to a camel case string.
+
+.. versionadded:: 3.26
+%End
+
 
   protected:
 

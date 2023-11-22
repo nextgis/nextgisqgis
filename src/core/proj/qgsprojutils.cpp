@@ -65,7 +65,7 @@ PJ_CONTEXT *QgsProjContext::get()
 #endif
 }
 
-void QgsProjUtils::ProjPJDeleter::operator()( PJ *object )
+void QgsProjUtils::ProjPJDeleter::operator()( PJ *object ) const
 {
   proj_destroy( object );
 }
@@ -164,7 +164,6 @@ bool QgsProjUtils::isDynamic( const PJ *crs )
       }
     }
   }
-#if PROJ_VERSION_MAJOR > 7 || (PROJ_VERSION_MAJOR == 7 && PROJ_VERSION_MINOR >= 2)
   else
   {
     proj_pj_unique_ptr ensemble( horiz ? proj_crs_get_datum_ensemble( context, horiz.get() ) : nullptr );
@@ -179,7 +178,6 @@ bool QgsProjUtils::isDynamic( const PJ *crs )
       }
     }
   }
-#endif
   return isDynamic;
 }
 
@@ -230,7 +228,7 @@ QgsProjUtils::proj_pj_unique_ptr QgsProjUtils::crsToDatumEnsemble( const PJ *crs
 
   return QgsProjUtils::proj_pj_unique_ptr( proj_crs_get_datum_ensemble( context, singleCrs.get() ) );
 #else
-  throw QgsNotSupportedException( QStringLiteral( "Calculating datum ensembles requires a QGIS build based on PROJ 8.0 or later" ) );
+  throw QgsNotSupportedException( QObject::tr( "Calculating datum ensembles requires a QGIS build based on PROJ 8.0 or later" ) );
 #endif
 }
 
@@ -436,4 +434,3 @@ QStringList QgsProjUtils::searchPaths()
 //   }
   return res;
 }
-

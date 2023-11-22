@@ -350,7 +350,7 @@ void QgsMapSaveDialog::applyMapSettings( QgsMapSettings &mapSettings )
   mapSettings.setPathResolver( QgsProject::instance()->pathResolver() );
   mapSettings.setTemporalRange( mMapCanvas->mapSettings().temporalRange() );
   mapSettings.setIsTemporal( mMapCanvas->mapSettings().isTemporal() );
-
+  mapSettings.setElevationShadingRenderer( mMapCanvas->mapSettings().elevationShadingRenderer() );
 
   //build the expression context
   QgsExpressionContext expressionContext;
@@ -541,7 +541,7 @@ void QgsMapSaveDialog::onAccepted()
 
           geoPdfExportDetails.includeFeatures = mExportGeoPdfFeaturesCheckBox->isChecked();
         }
-        QgsMapRendererTask *mapRendererTask = new QgsMapRendererTask( ms, fileName, QStringLiteral( "PDF" ), saveAsRaster(), mGeoPDFGroupBox->isChecked(), geoPdfExportDetails );
+        QgsMapRendererTask *mapRendererTask = new QgsMapRendererTask( ms, fileName, QStringLiteral( "PDF" ), saveAsRaster(), QgsTask::CanCancel, mGeoPDFGroupBox->isChecked(), geoPdfExportDetails );
 
         if ( drawAnnotations() )
         {
@@ -596,5 +596,5 @@ void QgsMapSaveDialog::updatePdfExportWarning()
 
 void QgsMapSaveDialog::showHelp()
 {
-  QgsHelp::openHelp( QStringLiteral( "introduction/qgis_gui.html#exporting-the-map-view" ) );
+  QgsHelp::openHelp( QStringLiteral( "map_views/map_view.html#exportingmapcanvas" ) );
 }

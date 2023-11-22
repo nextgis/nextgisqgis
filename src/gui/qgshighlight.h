@@ -70,7 +70,13 @@ class GUI_EXPORT QgsHighlight : public QgsMapCanvasItem
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
     if ( dynamic_cast<QgsHighlight *>( sipCpp ) )
+    {
       sipType = sipType_QgsHighlight;
+      // We need to tweak the pointer as sip believes it is single inheritance
+      // from QgsMapCanvasItem, but the raw address of QgsHighlight (sipCpp)
+      // is actually a QObject
+      *sipCppRet = dynamic_cast<QgsHighlight *>( sipCpp );
+    }
     else
       sipType = nullptr;
     SIP_END
@@ -166,6 +172,13 @@ class GUI_EXPORT QgsHighlight : public QgsMapCanvasItem
 
     void updatePosition() override;
 
+    /**
+     * Applies the default style from the user settings to the highlight.
+     *
+     * \since QGIS 3.30
+     */
+    void applyDefaultStyle();
+
   protected:
     void paint( QPainter *p ) override;
 
@@ -184,10 +197,10 @@ class GUI_EXPORT QgsHighlight : public QgsMapCanvasItem
 
     void init();
     void setSymbol( QgsSymbol *symbol, const QgsRenderContext &context, const QColor &color, const QColor &fillColor );
-    double getSymbolWidth( const QgsRenderContext &context, double width, QgsUnitTypes::RenderUnit unit );
+    double getSymbolWidth( const QgsRenderContext &context, double width, Qgis::RenderUnit unit );
     //! Gets renderer for current color mode and colors. The renderer should be freed by caller.
     std::unique_ptr< QgsFeatureRenderer > createRenderer( QgsRenderContext &context, const QColor &color, const QColor &fillColor );
-    void paintPoint( QgsRenderContext &context, const QgsPoint *point, double size, QgsUnitTypes::RenderUnit sizeUnit, PointSymbol symbol );
+    void paintPoint( QgsRenderContext &context, const QgsPoint *point, double size, Qgis::RenderUnit sizeUnit, PointSymbol symbol );
     void paintLine( QPainter *p, QgsPolylineXY line );
     void paintPolygon( QPainter *p, const QgsPolygonXY &polygon );
     QgsRenderContext createRenderContext();
@@ -204,6 +217,12 @@ class GUI_EXPORT QgsHighlight : public QgsMapCanvasItem
     double mBuffer = 0; // line / stroke buffer in pixels
     double mMinWidth = 0; // line / stroke minimum width in pixels
     QgsRenderContext mRenderContext;
+
+    // we don't want to make PointSymbol public for now, so just grant access selectively via a friend
+    friend class QgsMapToolAddFeature;
+    friend class QgsUpdateGpsDetailsAction;
+    double mPointSizeRadiusMM = 1.5;
+    PointSymbol mPointSymbol = PointSymbol::Square;
 };
 
 #endif

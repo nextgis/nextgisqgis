@@ -23,12 +23,18 @@
 #ifdef HAVE_3D
 #include "qgs3dalgorithms.h"
 #endif
+#ifdef HAVE_PDAL_QGIS
+#if PDAL_VERSION_MAJOR_INT > 2 || (PDAL_VERSION_MAJOR_INT == 2 && PDAL_VERSION_MINOR_INT >= 5)
+#include "qgspdalalgorithms.h"
+#endif
+#endif
 #include "qgssettings.h"
 #include "qgsapplication.h"
 #include "qgsprocessingparametertype.h"
 #include "processing/models/qgsprocessingmodelalgorithm.h"
 #include "qgsproject.h"
 #include "qgsgeos.h"
+#include "qgsunittypes.h"
 #include "qgsjsonutils.h"
 
 #if defined(Q_OS_UNIX) && !defined(Q_OS_ANDROID)
@@ -187,7 +193,7 @@ std::unique_ptr< QgsPythonUtils > QgsProcessingExec::loadPythonSupport()
   pythonlibName.prepend( "lib" );
 #endif
   QString version = QStringLiteral( "%1.%2.%3" ).arg( Qgis::versionInt() / 10000 ).arg( Qgis::versionInt() / 100 % 100 ).arg( Qgis::versionInt() % 100 );
-  QgsDebugMsg( QStringLiteral( "load library %1 (%2)" ).arg( pythonlibName, version ) );
+  QgsDebugMsgLevel( QStringLiteral( "load library %1 (%2)" ).arg( pythonlibName, version ), 1 );
   QLibrary pythonlib( pythonlibName, version );
   // It's necessary to set these two load hints, otherwise Python library won't work correctly
   // see http://lists.kde.org/?l=pykde&m=117190116820758&w=2
@@ -274,6 +280,12 @@ int QgsProcessingExec::run( const QStringList &constArgs )
   QgsApplication::processingRegistry()->addProvider( new Qgs3DAlgorithms( QgsApplication::processingRegistry() ) );
 #endif
 
+#ifdef HAVE_PDAL_QGIS
+#if PDAL_VERSION_MAJOR_INT > 1 && PDAL_VERSION_MINOR_INT >= 5
+  QgsApplication::processingRegistry()->addProvider( new QgsPdalAlgorithms( QgsApplication::processingRegistry() ) );
+#endif
+#endif
+
 #ifdef WITH_BINDINGS
   if ( !mSkipPython )
   {
@@ -349,8 +361,8 @@ int QgsProcessingExec::run( const QStringList &constArgs )
 
     // build parameter map
     QString ellipsoid;
-    QgsUnitTypes::DistanceUnit distanceUnit = QgsUnitTypes::DistanceUnknownUnit;
-    QgsUnitTypes::AreaUnit areaUnit = QgsUnitTypes::AreaUnknownUnit;
+    Qgis::DistanceUnit distanceUnit = Qgis::DistanceUnit::Unknown;
+    Qgis::AreaUnit areaUnit = Qgis::AreaUnit::Unknown;
     QString projectPath;
     QVariantMap params;
 
@@ -543,7 +555,8 @@ void QgsProcessingExec::showUsage( const QString &appName )
       << "\trun\t\truns an algorithm. The algorithm id or a path to a model file and parameter values must be specified. Parameter values are specified after -- with PARAMETER=VALUE syntax. Ordered list values for a parameter can be created by specifying the parameter multiple times, e.g. --LAYERS=layer1.shp --LAYERS=layer2.shp\n"
       << "\t\t\tAlternatively, a '-' character in place of the parameters argument indicates that the parameters should be read from STDIN as a JSON object. The JSON should be structured as a map containing at least the \"inputs\" key specifying a map of input parameter values. This implies the --json option for output as a JSON object.\n"
       << "\t\t\tIf required, the ellipsoid to use for distance and area calculations can be specified via the \"--ELLIPSOID=name\" argument.\n"
-      << "\t\t\tIf required, an existing QGIS project to use during the algorithm execution can be specified via the \"--PROJECT_PATH=path\" argument.\n";
+      << "\t\t\tIf required, an existing QGIS project to use during the algorithm execution can be specified via the \"--PROJECT_PATH=path\" argument.\n"
+      << "\t\t\tWhen passing parameters as a JSON object from STDIN, these extra arguments can be provided as an \"ellipsoid\" and a \"project_path\" key respectively.\n";
 
   std::cout << msg.join( QString() ).toLocal8Bit().constData();
 }
@@ -805,13 +818,41 @@ int QgsProcessingExec::showAlgorithmHelp( const QString &inputId, bool useJson )
   if ( !useJson )
   {
     std::cout << QStringLiteral( "%1 (%2)\n" ).arg( alg->displayName(), alg->id() ).toLocal8Bit().constData();
+
     std::cout << "\n----------------\n";
     std::cout << "Description\n";
     std::cout << "----------------\n";
-    if ( !alg->shortDescription().isEmpty() )
-      std::cout << alg->shortDescription().toLocal8Bit().constData() << '\n';
-    if ( !alg->shortHelpString().isEmpty() && alg->shortHelpString() != alg->shortDescription() )
-      std::cout << alg->shortHelpString().toLocal8Bit().constData() << '\n';
+
+    if ( const QgsProcessingModelAlgorithm *model = dynamic_cast< const QgsProcessingModelAlgorithm * >( alg ) )
+    {
+      // show finer help content for models
+      const QVariantMap help = model->helpContent();
+      std::cout << help.value( QStringLiteral( "ALG_DESC" ) ).toString().toLocal8Bit().constData() << '\n';
+
+      if ( !help.value( QStringLiteral( "ALG_CREATOR" ) ).toString().isEmpty() ||
+           !help.value( QStringLiteral( "ALG_VERSION" ) ).toString().isEmpty() )
+        std::cout << '\n';
+
+      if ( !help.value( QStringLiteral( "ALG_CREATOR" ) ).toString().isEmpty() )
+        std::cout << "Algorithm author:\t" << help.value( QStringLiteral( "ALG_CREATOR" ) ).toString().toLocal8Bit().constData() << '\n';
+      if ( !help.value( QStringLiteral( "ALG_VERSION" ) ).toString().isEmpty() )
+        std::cout << "Algorithm version:\t" << help.value( QStringLiteral( "ALG_VERSION" ) ).toString().toLocal8Bit().constData() << '\n';
+
+      if ( !help.value( QStringLiteral( "EXAMPLES" ) ).toString().isEmpty() )
+      {
+        std::cout << "\n----------------\n";
+        std::cout << "Examples\n";
+        std::cout << "----------------\n";
+        std::cout << help.value( QStringLiteral( "EXAMPLES" ) ).toString().toLocal8Bit().constData() << '\n';
+      }
+    }
+    else
+    {
+      if ( !alg->shortDescription().isEmpty() )
+        std::cout << alg->shortDescription().toLocal8Bit().constData() << '\n';
+      if ( !alg->shortHelpString().isEmpty() && alg->shortHelpString() != alg->shortDescription() )
+        std::cout << alg->shortHelpString().toLocal8Bit().constData() << '\n';
+    }
 
     std::cout << "\n----------------\n";
     std::cout << "Arguments\n";
@@ -826,11 +867,12 @@ int QgsProcessingExec::showAlgorithmHelp( const QString &inputId, bool useJson )
     addAlgorithmInformation( algorithmDetails, alg );
     json.insert( QStringLiteral( "algorithm_details" ), algorithmDetails );
     QVariantMap providerJson;
-    addProviderInformation( providerJson, alg->provider() );
+    if ( alg->provider() )
+      addProviderInformation( providerJson, alg->provider() );
     json.insert( QStringLiteral( "provider_details" ), providerJson );
   }
 
-
+  QgsProcessingContext context;
   QVariantMap parametersJson;
   const QgsProcessingParameterDefinitions defs = alg->parameterDefinitions();
   for ( const QgsProcessingParameterDefinition *p : defs )
@@ -841,7 +883,18 @@ int QgsProcessingExec::showAlgorithmHelp( const QString &inputId, bool useJson )
     QVariantMap parameterJson;
 
     if ( !useJson )
-      std::cout << QStringLiteral( "%1: %2\n" ).arg( p->name(), p->description() ).toLocal8Bit().constData();
+    {
+      QString line = QStringLiteral( "%1: %2" ).arg( p->name(), p->description() );
+      if ( p->flags() & QgsProcessingParameterDefinition::FlagOptional )
+        line += QLatin1String( " (optional)" );
+      std::cout << QStringLiteral( "%1\n" ).arg( line ).toLocal8Bit().constData();
+
+      if ( p->defaultValue().isValid() )
+      {
+        bool ok = false;
+        std::cout << QStringLiteral( "\tDefault value:\t%1\n" ).arg( p->valueAsString( p->defaultValue(), context, ok ) ).toLocal8Bit().constData();
+      }
+    }
     else
     {
       parameterJson.insert( QStringLiteral( "name" ), p->name() );
@@ -958,12 +1011,21 @@ int QgsProcessingExec::showAlgorithmHelp( const QString &inputId, bool useJson )
   return 0;
 }
 
-int QgsProcessingExec::execute( const QString &inputId, const QVariantMap &params, const QString &ellipsoid, QgsUnitTypes::DistanceUnit distanceUnit, QgsUnitTypes::AreaUnit areaUnit, QgsProcessingContext::LogLevel logLevel, bool useJson, const QString &projectPath )
+int QgsProcessingExec::execute( const QString &inputId, const QVariantMap &inputs, const QString &ellipsoid, Qgis::DistanceUnit distanceUnit, Qgis::AreaUnit areaUnit, QgsProcessingContext::LogLevel logLevel, bool useJson, const QString &projectPath )
 {
   QVariantMap json;
   if ( useJson )
   {
     addVersionInformation( json );
+  }
+
+  bool ok = false;
+  QString error;
+  const QVariantMap params = QgsProcessingUtils::preprocessQgisProcessParameters( inputs, ok, error );
+  if ( !ok )
+  {
+    std::cerr << error.toLocal8Bit().constData();
+    return 1;
   }
 
   QString id = inputId;
@@ -1046,16 +1108,15 @@ int QgsProcessingExec::execute( const QString &inputId, const QVariantMap &param
     }
   }
 
-  std::unique_ptr< QgsProject > project;
+  QgsProject *project = nullptr;
   if ( !projectPath.isEmpty() )
   {
-    project = std::make_unique< QgsProject >();
+    project = QgsProject::instance();
     if ( !project->read( projectPath ) )
     {
       std::cerr << QStringLiteral( "Could not load the QGIS project \"%1\"\n" ).arg( projectPath ).toLocal8Bit().constData();
       return 1;
     }
-    QgsProject::setInstance( project.get() );
     json.insert( QStringLiteral( "project_path" ), projectPath );
   }
 
@@ -1066,7 +1127,7 @@ int QgsProcessingExec::execute( const QString &inputId, const QVariantMap &param
     std::cout << "----------------\n\n";
   }
   QVariantMap inputsJson;
-  for ( auto it = params.constBegin(); it != params.constEnd(); ++it )
+  for ( auto it = inputs.constBegin(); it != inputs.constEnd(); ++it )
   {
     if ( !useJson )
       std::cout << it.key().toLocal8Bit().constData() << ":\t" << it.value().toString().toLocal8Bit().constData() << '\n';
@@ -1085,14 +1146,14 @@ int QgsProcessingExec::execute( const QString &inputId, const QVariantMap &param
     else
       json.insert( QStringLiteral( "ellipsoid" ), ellipsoid );
   }
-  if ( distanceUnit != QgsUnitTypes::DistanceUnknownUnit )
+  if ( distanceUnit != Qgis::DistanceUnit::Unknown )
   {
     if ( !useJson )
       std::cout << "Using distance unit:\t" << QgsUnitTypes::toString( distanceUnit ).toLocal8Bit().constData() << '\n';
     else
       json.insert( QStringLiteral( "distance_unit" ), QgsUnitTypes::toString( distanceUnit ) );
   }
-  if ( areaUnit != QgsUnitTypes::AreaUnknownUnit )
+  if ( areaUnit != Qgis::AreaUnit::Unknown )
   {
     if ( !useJson )
       std::cout << "Using area unit:\t" << QgsUnitTypes::toString( areaUnit ).toLocal8Bit().constData() << '\n';
@@ -1105,7 +1166,8 @@ int QgsProcessingExec::execute( const QString &inputId, const QVariantMap &param
   context.setEllipsoid( ellipsoid );
   context.setDistanceUnit( distanceUnit );
   context.setAreaUnit( areaUnit );
-  context.setProject( project.get() );
+  if ( project )
+    context.setProject( project );
   context.setLogLevel( logLevel );
 
   const QgsProcessingParameterDefinitions defs = alg->parameterDefinitions();
@@ -1160,7 +1222,7 @@ int QgsProcessingExec::execute( const QString &inputId, const QVariantMap &param
   } );
 #endif
 
-  bool ok = false;
+  ok = false;
   if ( !useJson )
     std::cout << "\n";
 

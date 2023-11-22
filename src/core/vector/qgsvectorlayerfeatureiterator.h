@@ -94,7 +94,35 @@ class CORE_EXPORT QgsVectorLayerFeatureSource : public QgsAbstractFeatureSource
   protected:
 
     std::unique_ptr< QgsAbstractFeatureSource > mProviderFeatureSource;
+
     std::unique_ptr< QgsVectorLayerJoinBuffer > mJoinBuffer;
+
+#ifndef SIP_RUN
+
+    /**
+     * Contains join layer source information prepared in a thread-safe way, ready for vector
+     * layer feature iterators with joins to utilize.
+     *
+     * \since QGIS 3.30
+     */
+    struct JoinLayerSource
+    {
+
+      /**
+       * Feature source for join
+       */
+      std::shared_ptr< QgsVectorLayerFeatureSource > joinSource;
+
+      /**
+       * Fields from joined layer.
+       */
+      QgsFields joinLayerFields;
+    };
+
+    //! Contains prepared join sources by layer ID
+    QMap< QString, JoinLayerSource > mJoinSources;
+#endif
+
     std::unique_ptr< QgsExpressionFieldBuffer > mExpressionFieldBuffer;
 
     QgsFields mFields;
@@ -270,6 +298,7 @@ class CORE_EXPORT QgsVectorLayerFeatureIterator : public QgsAbstractFeatureItera
 
     // filter bounding box constraint, in SOURCE CRS
     QgsRectangle mFilterRect;
+    bool mHasValidTransform = false;
     QgsCoordinateTransform mTransform;
 
     // distance within constraint reference geometry and distance IN DESTINATION CRS
@@ -361,7 +390,7 @@ class CORE_EXPORT QgsVectorLayerSelectedFeatureSource : public QgsFeatureSource,
     QgsFeatureIterator getFeatures( const QgsFeatureRequest &request = QgsFeatureRequest() ) const override;
     QgsCoordinateReferenceSystem sourceCrs() const override;
     QgsFields fields() const override;
-    QgsWkbTypes::Type wkbType() const override;
+    Qgis::WkbType wkbType() const override;
     long long featureCount() const override;
     QString sourceName() const override;
     QgsExpressionContextScope *createExpressionContextScope() const override;
@@ -376,7 +405,7 @@ class CORE_EXPORT QgsVectorLayerSelectedFeatureSource : public QgsFeatureSource,
     // ideally this wouldn't be mutable, but QgsVectorLayerFeatureSource has non-const getFeatures()
     mutable QgsVectorLayerFeatureSource mSource;
     QgsFeatureIds mSelectedFeatureIds;
-    QgsWkbTypes::Type mWkbType = QgsWkbTypes::Unknown;
+    Qgis::WkbType mWkbType = Qgis::WkbType::Unknown;
     QString mName;
     QPointer< QgsVectorLayer > mLayer;
 

@@ -69,6 +69,7 @@ class TestQgsRelationReferenceWidget : public QObject
     void testDependencies(); // Test relation datasource, id etc. config storage
     void testSetFilterExpression();
     void testSetFilterExpressionWithOrClause();
+    void testComboLimit();
 
   private:
     std::unique_ptr<QgsVectorLayer> mLayer1;
@@ -203,7 +204,6 @@ void TestQgsRelationReferenceWidget::testChainFilter()
   }
 
   loop.exec();
-  QStringList items = getComboBoxItems( w.mComboBox );
   QCOMPARE( w.mComboBox->currentText(), allowNull ? QString( "NULL" ) : QString( "10" ) );
 
   // set first filter
@@ -582,8 +582,11 @@ void TestQgsRelationReferenceWidget::testIdentifyOnMap()
 // referenced layer
 class DummyVectorLayerTools : public QgsVectorLayerTools // clazy:exclude=missing-qobject-macro
 {
-    bool addFeature( QgsVectorLayer *layer, const QgsAttributeMap &, const QgsGeometry &, QgsFeature *feat = nullptr ) const override
+    bool addFeature( QgsVectorLayer *layer, const QgsAttributeMap &, const QgsGeometry &, QgsFeature *feat = nullptr, QWidget *parentWidget = nullptr, bool showModal = true, bool hideParent = false ) const override
     {
+      Q_UNUSED( parentWidget );
+      Q_UNUSED( showModal );
+      Q_UNUSED( hideParent );
       feat->setAttribute( QStringLiteral( "pk" ), 13 );
       feat->setAttribute( QStringLiteral( "material" ), QStringLiteral( "steel" ) );
       feat->setAttribute( QStringLiteral( "diameter" ), 140 );
@@ -619,7 +622,7 @@ void TestQgsRelationReferenceWidget::testAddEntry()
 
   QVERIFY( w.mCurrentMapTool );
   QgsFeature feat( mLayer1->fields() );
-  w.mMapToolDigitize->digitized( feat );
+  emit w.mMapToolDigitize->digitizingCompleted( feat );
 
   QCOMPARE( w.mComboBox->identifierValues().at( 0 ).toInt(), 13 );
 }
@@ -722,7 +725,6 @@ void TestQgsRelationReferenceWidget::testSetFilterExpression()
   w.init();
 
   loop.exec();
-  QStringList items = getComboBoxItems( w.mComboBox );
   QCOMPARE( w.mComboBox->currentText(), QStringLiteral( "NULL" ) );
   // in case there is no filter, the number of filtered features will be 4
   QCOMPARE( w.mComboBox->count(), 3 );
@@ -748,8 +750,6 @@ void TestQgsRelationReferenceWidget::testSetFilterExpressionWithOrClause()
   w.setFilterExpression( QStringLiteral( " \"raccord\" = 'sleeve' OR FALSE " ) );
   w.init();
 
-  QStringList items = getComboBoxItems( w.mComboBox );
-
   loop.exec();
 
   // in case there is no filter, the number of filtered features will be 4
@@ -763,6 +763,113 @@ void TestQgsRelationReferenceWidget::testSetFilterExpressionWithOrClause()
   QCOMPARE( w.mComboBox->currentText(), QStringLiteral( "NULL" ) );
   // in case there is no field filter, the number of filtered features will be 2
   QCOMPARE( w.mComboBox->count(), 1 );
+}
+
+void TestQgsRelationReferenceWidget::testComboLimit()
+{
+  // create layer
+  QgsVectorLayer childLayer( QStringLiteral( "LineString?crs=epsg:3111&field=pk:int&field=fk:int" ), QStringLiteral( "vlchild" ), QStringLiteral( "memory" ) );
+  QgsProject::instance()->addMapLayer( &childLayer, false, false );
+
+  QgsVectorLayer parentLayer( QStringLiteral( "LineString?field=pk:int&field=material:string&field=diameter:int&field=raccord:string" ), QStringLiteral( "vlparent" ), QStringLiteral( "memory" ) );
+  QgsProject::instance()->addMapLayer( &parentLayer, false, false );
+
+  // create relation
+  QgsRelation mRelation;
+  mRelation.setId( QStringLiteral( "vlchild.vlparent" ) );
+  mRelation.setName( QStringLiteral( "vlchild.vlparent" ) );
+  mRelation.setReferencingLayer( childLayer.id() );
+  mRelation.setReferencedLayer( parentLayer.id() );
+  mRelation.addFieldPair( QStringLiteral( "fk" ), QStringLiteral( "pk" ) );
+  QVERIFY( mRelation.isValid() );
+  QgsProject::instance()->relationManager()->addRelation( mRelation );
+
+  // add features
+  QgsFeature ft0( childLayer.fields() );
+  ft0.setAttribute( QStringLiteral( "pk" ), 0 );
+  ft0.setAttribute( QStringLiteral( "fk" ), 0 );
+  childLayer.startEditing();
+  childLayer.addFeature( ft0 );
+  childLayer.commitChanges();
+
+  QgsFeature ft1( childLayer.fields() );
+  ft1.setAttribute( QStringLiteral( "pk" ), 1 );
+  ft1.setAttribute( QStringLiteral( "fk" ), 1 );
+  childLayer.startEditing();
+  childLayer.addFeature( ft1 );
+  childLayer.commitChanges();
+
+  for ( int i = 0; i < 200; i++ )
+  {
+    QgsFeature ft( parentLayer.fields() );
+    ft.setAttribute( QStringLiteral( "pk" ), i );
+    ft.setAttribute( QStringLiteral( "material" ), QStringLiteral( "material %1" ).arg( i ) );
+    ft.setAttribute( QStringLiteral( "diameter" ), 100 );
+    ft.setAttribute( QStringLiteral( "raccord" ), QStringLiteral( "raccord %1" ).arg( i ) );
+    parentLayer.startEditing();
+    parentLayer.addFeature( ft );
+    parentLayer.commitChanges();
+  }
+
+  QCOMPARE( parentLayer.featureCount(), 200 );
+
+  QWidget parentWidget;
+  QgsRelationReferenceWidget w( &parentWidget );
+  QEventLoop loop;
+  connect( qobject_cast<QgsFeatureFilterModel *>( w.mComboBox->model() ), &QgsFeatureFilterModel::filterJobCompleted, &loop, &QEventLoop::quit );
+  w.setRelation( mRelation, false );
+  loop.exec();
+  QVERIFY( w.relation().isValid() );
+
+  // check fetch limit of combobox directly
+  QSignalSpy spy( w.mComboBox, &QgsFeatureListComboBox::modelUpdated );
+
+  w.mComboBox->setFetchLimit( 20 );
+  spy.wait();
+  QCOMPARE( w.mComboBox->count(), 20 );
+
+  w.mComboBox->setFetchLimit( -1 );
+  spy.wait();
+  QCOMPARE( w.mComboBox->count(), 200 );
+
+  w.mComboBox->setFetchLimit( 120 );
+  spy.wait();
+  QCOMPARE( w.mComboBox->count(), 120 );
+
+  w.mComboBox->setFetchLimit( 0 );
+  spy.wait();
+  QCOMPARE( w.mComboBox->count(), 200 );
+
+  w.mComboBox->setFetchLimit( 300 );
+  spy.wait();
+  QCOMPARE( w.mComboBox->count(), 200 );
+
+  // check the setting in relation reference
+  w.setFetchLimit( 22 );
+  w.init();
+  spy.wait();
+  QCOMPARE( w.mComboBox->count(), 22 );
+
+  w.setFetchLimit( -1 );
+  w.init();
+  spy.wait();
+  QCOMPARE( w.mComboBox->count(), 200 );
+
+  w.setFetchLimit( 122 );
+  w.init();
+  spy.wait();
+  QCOMPARE( w.mComboBox->count(), 122 );
+
+  w.setFetchLimit( 0 );
+  w.setRelation( mRelation, false );
+  spy.wait();
+  QCOMPARE( w.mComboBox->count(), 200 );
+
+  w.setFetchLimit( 300 );
+  w.setRelation( mRelation, true );
+  spy.wait();
+  QCOMPARE( w.mComboBox->count(), 201 );
+
 }
 
 QGSTEST_MAIN( TestQgsRelationReferenceWidget )

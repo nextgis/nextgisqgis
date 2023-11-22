@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for Oracle QgsAbastractProviderConnection API.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -11,20 +10,20 @@ __author__ = 'Julien Cabieces'
 __date__ = '28/12/2020'
 __copyright__ = 'Copyright 2020, The QGIS Project'
 # This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '6b44a42058d8f4d3f994b915f72f08b6a3ab474d'
+__revision__ = '$Format:%H$'
 
 import os
-from test_qgsproviderconnection_base import TestPyQgsProviderConnectionBase
-from qgis.core import (
-    QgsVectorLayer,
-    QgsProviderRegistry,
-    QgsDataSourceUri,
-    QgsAbstractDatabaseProviderConnection,
-    QgsProviderConnectionException,
 
+from qgis.PyQt.QtSql import QSqlDatabase, QSqlQuery
+from qgis.core import (
+    QgsAbstractDatabaseProviderConnection,
+    QgsDataSourceUri,
+    QgsProviderConnectionException,
+    QgsProviderRegistry,
 )
 from qgis.testing import unittest
-from qgis.PyQt.QtSql import QSqlDatabase, QSqlQuery
+
+from test_qgsproviderconnection_base import TestPyQgsProviderConnectionBase
 
 
 class TestPyQgsProviderConnectionOracle(unittest.TestCase, TestPyQgsProviderConnectionBase):
@@ -49,6 +48,7 @@ class TestPyQgsProviderConnectionOracle(unittest.TestCase, TestPyQgsProviderConn
     # Provider test cases can define a schema and table name for SQL query layers test
     sqlVectorLayerSchema = 'QGIS'
     sqlVectorLayerTable = 'SOME_DATA'
+    sqlVectorLayerCrs = 'EPSG:4326'
 
     def execSQLCommand(self, sql, ignore_errors=False):
         self.assertTrue(self.conn)
@@ -61,6 +61,7 @@ class TestPyQgsProviderConnectionOracle(unittest.TestCase, TestPyQgsProviderConn
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super(TestPyQgsProviderConnectionOracle, cls).setUpClass()
 
         TestPyQgsProviderConnectionBase.setUpClass()
 
@@ -183,7 +184,7 @@ class TestPyQgsProviderConnectionOracle(unittest.TestCase, TestPyQgsProviderConn
         conn = md.createConnection(self.uri, {})
         tables = conn.tables('QGIS')
 
-        tables_dict = dict([(table.tableName(), table.primaryKeyColumns()) for table in tables])
+        tables_dict = {table.tableName(): table.primaryKeyColumns() for table in tables}
 
         self.assertEqual(sorted(tables_dict['SOME_DATA_VIEW']), ['GEOM', 'cnt', 'date', 'dt', 'name', 'name2', 'num_char', 'pk', 'time'])
         self.assertEqual(sorted(tables_dict['SOME_DATA']), ['pk'])
@@ -192,9 +193,12 @@ class TestPyQgsProviderConnectionOracle(unittest.TestCase, TestPyQgsProviderConn
     def test_schemas(self):
         """Test schemas retrieval"""
 
+        # may be added by previous test
+        self.execSQLCommand('DROP USER OTHER_USER CASCADE', ignore_errors=True)
+
         md = QgsProviderRegistry.instance().providerMetadata('oracle')
         conn = md.createConnection(self.uri, {})
-        self.assertTrue('QGIS' in conn.schemas())
+        self.assertEqual(conn.schemas(), ['QGIS'])
 
 
 if __name__ == '__main__':

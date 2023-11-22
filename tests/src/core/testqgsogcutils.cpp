@@ -75,6 +75,9 @@ class TestQgsOgcUtils : public QObject
 
     void testSQLStatementToOgcFilter();
     void testSQLStatementToOgcFilter_data();
+
+    void testParseCrsName();
+    void testParseCrsName_data();
 };
 
 
@@ -83,23 +86,23 @@ void TestQgsOgcUtils::testGeometryFromGML()
   // Test GML2
   QgsGeometry geom( QgsOgcUtils::geometryFromGML( QStringLiteral( "<Point><coordinates>123,456</coordinates></Point>" ) ) );
   QVERIFY( !geom.isNull() );
-  QVERIFY( geom.wkbType() == QgsWkbTypes::Point );
+  QVERIFY( geom.wkbType() == Qgis::WkbType::Point );
   QVERIFY( geom.asPoint() == QgsPointXY( 123, 456 ) );
 
   QgsGeometry geomBox( QgsOgcUtils::geometryFromGML( QStringLiteral( "<gml:Box srsName=\"foo\"><gml:coordinates>135.2239,34.4879 135.8578,34.8471</gml:coordinates></gml:Box>" ) ) );
   QVERIFY( !geomBox.isNull() );
-  QVERIFY( geomBox.wkbType() == QgsWkbTypes::Polygon );
+  QVERIFY( geomBox.wkbType() == Qgis::WkbType::Polygon );
 
 
   // Test GML3
   geom = QgsOgcUtils::geometryFromGML( QStringLiteral( "<Point><pos>123 456</pos></Point>" ) );
   QVERIFY( !geom.isNull() );
-  QVERIFY( geom.wkbType() == QgsWkbTypes::Point );
+  QVERIFY( geom.wkbType() == Qgis::WkbType::Point );
   QVERIFY( geom.asPoint() == QgsPointXY( 123, 456 ) );
 
   geomBox = QgsOgcUtils::geometryFromGML( QStringLiteral( "<gml:Envelope srsName=\"foo\"><gml:lowerCorner>135.2239 34.4879</gml:lowerCorner><gml:upperCorner>135.8578 34.8471</gml:upperCorner></gml:Envelope>" ) );
   QVERIFY( !geomBox.isNull() );
-  QVERIFY( geomBox.wkbType() == QgsWkbTypes::Polygon );
+  QVERIFY( geomBox.wkbType() == Qgis::WkbType::Polygon );
 }
 
 static bool compareElements( QDomElement &element1, QDomElement &element2 )
@@ -697,6 +700,24 @@ void TestQgsOgcUtils::testExpressionToOgcFilter_data()
                               "</ogc:Not>"
                               "</ogc:Filter>" );
 
+  QTest::newRow( "in" ) << QStringLiteral( "A IN (10)" ) << QString(
+                          "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\">"
+                          "<ogc:PropertyIsEqualTo>"
+                          "<ogc:PropertyName>A</ogc:PropertyName>"
+                          "<ogc:Literal>10</ogc:Literal>"
+                          "</ogc:PropertyIsEqualTo>"
+                          "</ogc:Filter>" );
+
+  QTest::newRow( "not in" ) << QStringLiteral( "A NOT IN (10)" ) << QString(
+                              "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\">"
+                              "<ogc:Not>"
+                              "<ogc:PropertyIsEqualTo>"
+                              "<ogc:PropertyName>A</ogc:PropertyName>"
+                              "<ogc:Literal>10</ogc:Literal>"
+                              "</ogc:PropertyIsEqualTo>"
+                              "</ogc:Not>"
+                              "</ogc:Filter>" );
+
   QTest::newRow( "intersects_bbox" ) << QStringLiteral( "intersects_bbox($geometry, geomFromWKT('POINT (5 6)'))" ) << QString(
                                        "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\">"
                                        "<ogc:BBOX>"
@@ -734,7 +755,9 @@ void TestQgsOgcUtils::testExpressionToOgcFilterWFS11()
   QString errorMsg;
   QDomDocument doc;
   const QDomElement filterElem = QgsOgcUtils::expressionToOgcFilter( exp, doc,
-                                 QgsOgcUtils::GML_3_1_0, QgsOgcUtils::FILTER_OGC_1_1, QStringLiteral( "my_geometry_name" ), srsName, true, false, &errorMsg );
+                                 QgsOgcUtils::GML_3_1_0, QgsOgcUtils::FILTER_OGC_1_1,
+                                 QString(), QString(),
+                                 QStringLiteral( "my_geometry_name" ), srsName, true, false, &errorMsg );
 
   if ( !errorMsg.isEmpty() )
     qDebug( "ERROR: %s", errorMsg.toLatin1().data() );
@@ -779,6 +802,8 @@ void TestQgsOgcUtils::testExpressionToOgcFilterWFS20()
   QFETCH( QString, exprText );
   QFETCH( QString, srsName );
   QFETCH( QString, xmlText );
+  QFETCH( QString, namespacePrefix );
+  QFETCH( QString, namespaceURI );
 
   const QgsExpression exp( exprText );
   QVERIFY( !exp.hasParserError() );
@@ -786,7 +811,9 @@ void TestQgsOgcUtils::testExpressionToOgcFilterWFS20()
   QString errorMsg;
   QDomDocument doc;
   const QDomElement filterElem = QgsOgcUtils::expressionToOgcFilter( exp, doc,
-                                 QgsOgcUtils::GML_3_2_1, QgsOgcUtils::FILTER_FES_2_0, QStringLiteral( "my_geometry_name" ), srsName, true, false, &errorMsg );
+                                 QgsOgcUtils::GML_3_2_1, QgsOgcUtils::FILTER_FES_2_0,
+                                 namespacePrefix, namespaceURI,
+                                 QStringLiteral( "my_geometry_name" ), srsName, true, false, &errorMsg );
 
   if ( !errorMsg.isEmpty() )
     qDebug( "ERROR: %s", errorMsg.toLatin1().data() );
@@ -809,13 +836,24 @@ void TestQgsOgcUtils::testExpressionToOgcFilterWFS20_data()
   QTest::addColumn<QString>( "exprText" );
   QTest::addColumn<QString>( "srsName" );
   QTest::addColumn<QString>( "xmlText" );
+  QTest::addColumn<QString>( "namespacePrefix" );
+  QTest::addColumn<QString>( "namespaceURI" );
 
   QTest::newRow( "=" ) << QStringLiteral( "NAME = 'New York'" ) << QString() << QString(
                          "<fes:Filter xmlns:fes=\"http://www.opengis.net/fes/2.0\">"
                          "<fes:PropertyIsEqualTo>"
                          "<fes:ValueReference>NAME</fes:ValueReference>"
                          "<fes:Literal>New York</fes:Literal>"
-                         "</fes:PropertyIsEqualTo></fes:Filter>" );
+                         "</fes:PropertyIsEqualTo></fes:Filter>" )
+                       << QString() << QString();
+
+  QTest::newRow( "= with namespace" ) << QStringLiteral( "NAME = 'New York'" ) << QString() << QString(
+                                        "<fes:Filter xmlns:fes=\"http://www.opengis.net/fes/2.0\" xmlns:myns=\"http://example.com/myns\">"
+                                        "<fes:PropertyIsEqualTo>"
+                                        "<fes:ValueReference>myns:NAME</fes:ValueReference>"
+                                        "<fes:Literal>New York</fes:Literal>"
+                                        "</fes:PropertyIsEqualTo></fes:Filter>" )
+                                      << QStringLiteral( "myns" ) << QStringLiteral( "http://example.com/myns" );
 
   QTest::newRow( "bbox" )
       << QStringLiteral( "intersects_bbox($geometry, geomFromWKT('POLYGON((2 49,2 50,3 50,3 49,2 49))'))" )
@@ -829,7 +867,23 @@ void TestQgsOgcUtils::testExpressionToOgcFilterWFS20_data()
         "<gml:upperCorner>50 3</gml:upperCorner>"
         "</gml:Envelope>"
         "</fes:BBOX>"
-        "</fes:Filter>" );
+        "</fes:Filter>" )
+      << QString() << QString();
+
+  QTest::newRow( "bbox with namespace" )
+      << QStringLiteral( "intersects_bbox($geometry, geomFromWKT('POLYGON((2 49,2 50,3 50,3 49,2 49))'))" )
+      << QStringLiteral( "urn:ogc:def:crs:EPSG::4326" )
+      << QString(
+        "<fes:Filter xmlns:fes=\"http://www.opengis.net/fes/2.0\" xmlns:gml=\"http://www.opengis.net/gml/3.2\" xmlns:myns=\"http://example.com/myns\">"
+        "<fes:BBOX>"
+        "<fes:ValueReference>myns:my_geometry_name</fes:ValueReference>"
+        "<gml:Envelope srsName=\"urn:ogc:def:crs:EPSG::4326\">"
+        "<gml:lowerCorner>49 2</gml:lowerCorner>"
+        "<gml:upperCorner>50 3</gml:upperCorner>"
+        "</gml:Envelope>"
+        "</fes:BBOX>"
+        "</fes:Filter>" )
+      << QStringLiteral( "myns" ) << QStringLiteral( "http://example.com/myns" );
 
   QTest::newRow( "intersects" )
       << QStringLiteral( "intersects($geometry, geomFromWKT('POLYGON((2 49,2 50,3 50,3 49,2 49))'))" )
@@ -846,7 +900,8 @@ void TestQgsOgcUtils::testExpressionToOgcFilterWFS20_data()
         "</gml:exterior>"
         "</gml:Polygon>"
         "</fes:Intersects>"
-        "</fes:Filter>" );
+        "</fes:Filter>" )
+      << QString() << QString();
 }
 
 Q_DECLARE_METATYPE( QgsOgcUtils::GMLVersion )
@@ -1021,6 +1076,26 @@ void TestQgsOgcUtils::testSQLStatementToOgcFilter_data()
                               "<ogc:Literal>30</ogc:Literal>"
                               "</ogc:PropertyIsEqualTo>"
                               "</ogc:Or>"
+                              "</ogc:Not>"
+                              "</ogc:Filter>" );
+
+  QTest::newRow( "in" ) << QStringLiteral( "SELECT * FROM t WHERE A IN (10)" ) <<
+                        QgsOgcUtils::GML_2_1_2 << QgsOgcUtils::FILTER_OGC_1_0 << layerProperties << QString(
+                          "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\">"
+                          "<ogc:PropertyIsEqualTo>"
+                          "<ogc:PropertyName>A</ogc:PropertyName>"
+                          "<ogc:Literal>10</ogc:Literal>"
+                          "</ogc:PropertyIsEqualTo>"
+                          "</ogc:Filter>" );
+
+  QTest::newRow( "not in" ) << QStringLiteral( "SELECT * FROM t WHERE A NOT IN (10)" ) <<
+                            QgsOgcUtils::GML_2_1_2 << QgsOgcUtils::FILTER_OGC_1_0 << layerProperties << QString(
+                              "<ogc:Filter xmlns:ogc=\"http://www.opengis.net/ogc\">"
+                              "<ogc:Not>"
+                              "<ogc:PropertyIsEqualTo>"
+                              "<ogc:PropertyName>A</ogc:PropertyName>"
+                              "<ogc:Literal>10</ogc:Literal>"
+                              "</ogc:PropertyIsEqualTo>"
                               "</ogc:Not>"
                               "</ogc:Filter>" );
 
@@ -1212,6 +1287,41 @@ void TestQgsOgcUtils::testSQLStatementToOgcFilter_data()
                                  "</fes:PropertyIsEqualTo>"
                                  "</fes:Filter>" );
 }
+
+
+void TestQgsOgcUtils::testParseCrsName()
+{
+  QFETCH( QString, crsName );
+  QFETCH( QgsOgcCrsUtils::CRSFlavor, expectedFlavor );
+  QFETCH( QString, expectedAuthority );
+  QFETCH( QString, expectedCode );
+
+  QString authority;
+  QString code;
+  const QgsOgcCrsUtils::CRSFlavor crsFlavor = QgsOgcCrsUtils::parseCrsName( crsName, authority, code );
+  QCOMPARE( expectedFlavor, crsFlavor );
+  QCOMPARE( expectedAuthority, authority );
+  QCOMPARE( expectedCode, code );
+}
+
+void TestQgsOgcUtils::testParseCrsName_data()
+{
+  QTest::addColumn<QString>( "crsName" );
+  QTest::addColumn<QgsOgcCrsUtils::CRSFlavor>( "expectedFlavor" );
+  QTest::addColumn<QString>( "expectedAuthority" );
+  QTest::addColumn<QString>( "expectedCode" );
+
+  QTest::newRow( "unknown" ) << QStringLiteral( "foo" ) << QgsOgcCrsUtils::CRSFlavor::UNKNOWN << QString() << QString();
+  QTest::newRow( "unknown2" ) << QStringLiteral( "EPSG:" ) << QgsOgcCrsUtils::CRSFlavor::UNKNOWN << QString() << QString();
+  QTest::newRow( "AUTH_CODE" ) << QStringLiteral( "EPSG:1234" ) << QgsOgcCrsUtils::CRSFlavor::AUTH_CODE << QStringLiteral( "EPSG" ) << QStringLiteral( "1234" );
+  QTest::newRow( "HTTP_EPSG_DOT_XML" ) << QStringLiteral( "http://www.opengis.net/gml/srs/epsg.xml#1234" ) << QgsOgcCrsUtils::CRSFlavor::HTTP_EPSG_DOT_XML << QStringLiteral( "EPSG" ) << QStringLiteral( "1234" );
+  QTest::newRow( "OGC_URN" ) << QStringLiteral( "urn:ogc:def:crs:EPSG::1234" ) << QgsOgcCrsUtils::CRSFlavor::OGC_URN << QStringLiteral( "EPSG" ) << QStringLiteral( "1234" );
+  QTest::newRow( "OGC_URN missing col" ) << QStringLiteral( "urn:ogc:def:crs:EPSG:1234" ) << QgsOgcCrsUtils::CRSFlavor::OGC_URN << QStringLiteral( "EPSG" ) << QStringLiteral( "1234" );
+  QTest::newRow( "X_OGC_URN" ) << QStringLiteral( "urn:x-ogc:def:crs:EPSG::1234" ) << QgsOgcCrsUtils::CRSFlavor::X_OGC_URN << QStringLiteral( "EPSG" ) << QStringLiteral( "1234" );
+  QTest::newRow( "X_OGC_URN missing col" ) << QStringLiteral( "urn:x-ogc:def:crs:EPSG:1234" ) << QgsOgcCrsUtils::CRSFlavor::X_OGC_URN << QStringLiteral( "EPSG" ) << QStringLiteral( "1234" );
+  QTest::newRow( "OGC_HTTP_URI" ) << QStringLiteral( "http://www.opengis.net/def/crs/EPSG/0/1234" ) << QgsOgcCrsUtils::CRSFlavor::OGC_HTTP_URI << QStringLiteral( "EPSG" ) << QStringLiteral( "1234" );
+}
+
 
 QGSTEST_MAIN( TestQgsOgcUtils )
 #include "testqgsogcutils.moc"

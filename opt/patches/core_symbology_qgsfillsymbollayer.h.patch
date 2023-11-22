@@ -1,6 +1,6 @@
---- a/src/core/symbology/qgsfillsymbollayer.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/symbology/qgsfillsymbollayer.h	2022-04-25 18:33:16.000000000 +0300
-@@ -172,13 +172,13 @@
+--- a/src/core/symbology/qgsfillsymbollayer.h	2023-08-21 19:39:45.747045550 +0300
++++ b/src/core/symbology/qgsfillsymbollayer.h	2023-10-04 11:49:32.015303279 +0300
+@@ -172,14 +172,14 @@
  
      double estimateMaxBleed( const QgsRenderContext &context ) const override;
  
@@ -11,6 +11,7 @@
 -    Qt::PenStyle dxfPenStyle() const override;
 -    QColor dxfBrushColor( QgsSymbolRenderContext &context ) const override;
 -    Qt::BrushStyle dxfBrushStyle() const override;
+-    QImage toTiledPatternImage( ) const override;
 +    // double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
 +    // QColor dxfColor( QgsSymbolRenderContext &context ) const override;
 +    // double dxfAngle( QgsSymbolRenderContext &context ) const override;
@@ -18,11 +19,12 @@
 +    // Qt::PenStyle dxfPenStyle() const override;
 +    // QColor dxfBrushColor( QgsSymbolRenderContext &context ) const override;
 +    // Qt::BrushStyle dxfBrushStyle() const override;
++    // QImage toTiledPatternImage( ) const override;
  
    protected:
      QBrush mBrush;
-@@ -837,8 +837,8 @@
-     QgsUnitTypes::RenderUnit outputUnit() const override;
+@@ -839,8 +839,8 @@
+     Qgis::RenderUnit outputUnit() const override;
      void setMapUnitScale( const QgsMapUnitScale &scale ) override;
      QgsMapUnitScale mapUnitScale() const override;
 -    double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
@@ -32,7 +34,7 @@
      QVariantMap properties() const override;
  
    protected:
-@@ -1144,7 +1144,7 @@
+@@ -1155,7 +1155,7 @@
      QgsSymbol *subSymbol() override;
      bool setSubSymbol( QgsSymbol *symbol SIP_TRANSFER ) override;
      double estimateMaxBleed( const QgsRenderContext &context ) const override;

@@ -13,14 +13,9 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "qgsdistancearea.h"
 #include "qgslogger.h"
 #include "qgsmapcanvas.h"
-#include "qgsmaptopixel.h"
 #include "qgsrubberband.h"
-#include "qgsvectorlayer.h"
-#include "qgssnappingutils.h"
-#include "qgstolerance.h"
 #include "qgsexception.h"
 #include "qgsmeasuredialog.h"
 #include "qgsmeasuretool.h"
@@ -38,11 +33,9 @@ QgsMeasureTool::QgsMeasureTool( QgsMapCanvas *canvas, bool measureArea )
   , mMeasureArea( measureArea )
   , mSnapIndicator( new QgsSnapIndicator( canvas ) )
 {
-  mRubberBand = new QgsRubberBand( canvas, mMeasureArea ? QgsWkbTypes::PolygonGeometry : QgsWkbTypes::LineGeometry );
-  mRubberBandPoints = new QgsRubberBand( canvas, QgsWkbTypes::PointGeometry );
+  mRubberBand = new QgsRubberBand( canvas, mMeasureArea ? Qgis::GeometryType::Polygon : Qgis::GeometryType::Line );
+  mRubberBandPoints = new QgsRubberBand( canvas, Qgis::GeometryType::Point );
 
-  // Append point we will move
-  mPoints.append( QgsPointXY( 0, 0 ) );
   mDestinationCrs = canvas->mapSettings().destinationCrs();
 
   mDialog = new QgsMeasureDialog( this );
@@ -105,12 +98,20 @@ void QgsMeasureTool::deactivate()
   QgsMapTool::deactivate();
 }
 
+void QgsMeasureTool::reactivate()
+{
+  // User clicked on the measure action while it was already active
+  // Only ensure that the dialog is visible
+  mDialog->show();
+  QgsMapTool::reactivate();
+}
+
 void QgsMeasureTool::restart()
 {
   mPoints.clear();
 
-  mRubberBand->reset( mMeasureArea ? QgsWkbTypes::PolygonGeometry : QgsWkbTypes::LineGeometry );
-  mRubberBandPoints->reset( QgsWkbTypes::PointGeometry );
+  mRubberBand->reset( mMeasureArea ? Qgis::GeometryType::Polygon : Qgis::GeometryType::Line );
+  mRubberBandPoints->reset( Qgis::GeometryType::Point );
 
   mDone = true;
   mWrongProjectProjection = false;
@@ -157,18 +158,20 @@ void QgsMeasureTool::updateSettings()
     }
 
     mRubberBand->updatePosition();
-    mRubberBand->update();
     mRubberBandPoints->updatePosition();
-    mRubberBandPoints->update();
   }
   mDestinationCrs = mCanvas->mapSettings().destinationCrs();
 
+  // Update the dialog. This will clear then re-populate the table
   mDialog->updateSettings();
 
-  if ( !mDone && mRubberBand->size() > 0 )
+  int nbTempVertices = mRubberBand->numberOfVertices();
+  int nbVertices = mRubberBandPoints->numberOfVertices();
+
+  // Add a temporary point to the rubber band if the user is currently measuring
+  if ( !mDone && mRubberBand->size() > 0  && nbTempVertices <= nbVertices )
   {
     mRubberBand->addPoint( mPoints.last() );
-    mDialog->addPoint();
   }
   if ( mRubberBand->size() > 0 )
   {
@@ -271,7 +274,7 @@ void QgsMeasureTool::keyPressEvent( QKeyEvent *e )
 
 void QgsMeasureTool::addPoint( const QgsPointXY &point )
 {
-  QgsDebugMsg( "point=" + point.toString() );
+  QgsDebugMsgLevel( "point=" + point.toString(), 2 );
 
   // don't add points with the same coordinates
   if ( !mPoints.isEmpty() && mPoints.last() == point )
@@ -283,6 +286,7 @@ void QgsMeasureTool::addPoint( const QgsPointXY &point )
   // Append point that we will be moving.
   mPoints.append( pnt );
 
+  mRubberBand->movePoint( point );
   mRubberBand->addPoint( point );
   mRubberBandPoints->addPoint( point );
   if ( ! mDone )    // Prevent the insertion of a new item in segments measure table

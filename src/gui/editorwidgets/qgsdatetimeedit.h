@@ -115,6 +115,14 @@ class GUI_EXPORT QgsDateTimeEdit : public QDateTimeEdit
      */
     void setNullRepresentation( const QString &null );
 
+    /**
+     * Reimplemented to enable/disable the clear action
+     * depending on read-only status
+     *
+     * \since QGIS 3.34
+     */
+    bool event( QEvent *event ) override;
+
   signals:
 
     /**
@@ -204,10 +212,7 @@ class GUI_EXPORT QgsDateTimeEdit : public QDateTimeEdit
     * \note not available in Python bindings
     * \since QGIS 3.0
     */
-    void setMinimumEditDateTime()
-    {
-      setDateTimeRange( QDateTime( QDate( 1, 1, 1 ), QTime( 0, 0, 0 ) ), maximumDateTime() );
-    }
+    void setMinimumEditDateTime();
 
     friend class TestQgsDateTimeEdit;
 };

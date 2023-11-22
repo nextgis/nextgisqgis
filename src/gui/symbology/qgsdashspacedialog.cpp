@@ -27,13 +27,13 @@ QgsDashSpaceWidget::QgsDashSpaceWidget( const QVector<qreal> &vectorPattern, QWi
   mAddButton->setIcon( QgsApplication::getThemeIcon( "symbologyAdd.svg" ) );
   mRemoveButton->setIcon( QgsApplication::getThemeIcon( "symbologyRemove.svg" ) );
 
-  double dash = 0;
-  double space = 0;
+  double total = 0;
   for ( int i = 0; i < ( vectorPattern.size() - 1 ); ++i )
   {
-    dash = vectorPattern.at( i );
+    const double dash = vectorPattern.at( i );
     ++i;
-    space = vectorPattern.at( i );
+    const double space = vectorPattern.at( i );
+    total += dash + space;
     QTreeWidgetItem *entry = new QTreeWidgetItem();
     entry->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled );
     entry->setText( 0, QLocale().toString( dash ) );
@@ -41,9 +41,22 @@ QgsDashSpaceWidget::QgsDashSpaceWidget( const QVector<qreal> &vectorPattern, QWi
     mDashSpaceTreeWidget->addTopLevelItem( entry );
   }
 
+  mPatternLengthLabel->setText( QLocale().toString( total, 'f', 6 ) );
+
   connect( mAddButton, &QPushButton::clicked, this, &QgsDashSpaceWidget::mAddButton_clicked );
   connect( mRemoveButton, &QPushButton::clicked, this, &QgsDashSpaceWidget::mRemoveButton_clicked );
   connect( mDashSpaceTreeWidget, &QTreeWidget::itemChanged, this, [ this ] { emit widgetChanged(); } );
+
+  connect( this, &QgsPanelWidget::widgetChanged, this, [ = ]
+  {
+    const QVector<qreal> pattern = dashDotVector();
+    double total = 0;
+    for ( qreal part : pattern )
+    {
+      total += part;
+    }
+    mPatternLengthLabel->setText( QLocale().toString( total, 'f', 6 ) );
+  } );
 }
 
 void QgsDashSpaceWidget::mAddButton_clicked()
@@ -72,6 +85,7 @@ QVector<qreal> QgsDashSpaceWidget::dashDotVector() const
 {
   QVector<qreal> dashVector;
   const int nTopLevelItems = mDashSpaceTreeWidget->topLevelItemCount();
+  dashVector.reserve( nTopLevelItems * 2 );
   for ( int i = 0; i < nTopLevelItems; ++i )
   {
     QTreeWidgetItem *currentItem = mDashSpaceTreeWidget->topLevelItem( i );
@@ -83,7 +97,7 @@ QVector<qreal> QgsDashSpaceWidget::dashDotVector() const
   return dashVector;
 }
 
-void QgsDashSpaceWidget::setUnit( QgsUnitTypes::RenderUnit unit )
+void QgsDashSpaceWidget::setUnit( Qgis::RenderUnit unit )
 {
   QTreeWidgetItem *headerItem = mDashSpaceTreeWidget->headerItem();
   headerItem->setText( 0, QStringLiteral( "%1 (%2)" ).arg( tr( "Dash" ), QgsUnitTypes::toAbbreviatedString( unit ) ) );
@@ -108,7 +122,7 @@ QVector<qreal> QgsDashSpaceDialog::dashDotVector() const
   return mWidget->dashDotVector();
 }
 
-void QgsDashSpaceDialog::setUnit( QgsUnitTypes::RenderUnit unit )
+void QgsDashSpaceDialog::setUnit( Qgis::RenderUnit unit )
 {
   mWidget->setUnit( unit );
 }

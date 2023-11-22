@@ -53,9 +53,9 @@ Sets the ``type`` of symbols to show in the widget.
 .. seealso:: :py:func:`setEntityType`
 %End
 
-    void setLayerType( QgsWkbTypes::GeometryType type );
+    void setLayerType( Qgis::GeometryType type );
 %Docstring
-Sets the layer ``type`` to show in the widget. Set ``type`` to :py:class:`QgsWkbTypes`.UnknownGeometry if no
+Sets the layer ``type`` to show in the widget. Set ``type`` to :py:class:`Qgis`.GeometryType.Unknown if no
 layer type filter is desired.
 
 This setting only applies to label settings and 3d style entities.
@@ -94,6 +94,17 @@ Emitted when the selected item is changed in the widget.
 
 :param name: Newly selected item name
 :param type: Newly selected item type
+%End
+
+    void selectionChangedWithStylePath( const QString &name, QgsStyle::StyleEntity type, const QString &stylePath );
+%Docstring
+Emitted when the selected item is changed in the widget.
+
+:param name: Newly selected item name
+:param type: Newly selected item type
+:param stylePath: file path to associated style database
+
+.. versionadded:: 3.26
 %End
 
     void saveEntity();

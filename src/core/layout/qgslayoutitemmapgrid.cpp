@@ -18,12 +18,8 @@
 #include "qgsmessagelog.h"
 #include "qgslayoutitemmapgrid.h"
 #include "qgslayoututils.h"
-#include "qgsclipper.h"
 #include "qgsgeometry.h"
 #include "qgslayoutitemmap.h"
-#include "qgslayout.h"
-#include "qgsmapsettings.h"
-#include "qgspathresolver.h"
 #include "qgsreadwritecontext.h"
 #include "qgsrendercontext.h"
 #include "qgssymbollayerutils.h"
@@ -39,6 +35,9 @@
 #include "qgstextrenderer.h"
 #include "qgslinesymbol.h"
 #include "qgsmarkersymbol.h"
+#include "qgslayout.h"
+#include "qgsunittypes.h"
+#include "qgslayoutrendercontext.h"
 
 #include <QVector2D>
 #include <math.h>
@@ -431,7 +430,7 @@ bool QgsLayoutItemMapGrid::readXml( const QDomElement &itemElem, const QDomDocum
     }
     mAnnotationFormat.setFont( font );
     mAnnotationFormat.setSize( font.pointSizeF() );
-    mAnnotationFormat.setSizeUnit( QgsUnitTypes::RenderPoints );
+    mAnnotationFormat.setSizeUnit( Qgis::RenderUnit::Points );
     mAnnotationFormat.setColor( QgsSymbolLayerUtils::decodeColor( itemElem.attribute( "annotationFontColor", "0,0,0,255" ) ) );
   }
 
@@ -745,11 +744,7 @@ void QgsLayoutItemMapGrid::drawGridNoTransform( QgsRenderContext &context, doubl
 
         l2 = QLineF( hIt->line.first(), hIt->line.last() );
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-        if ( l2.intersect( l1, &intersectionPoint ) == QLineF::BoundedIntersection )
-#else
         if ( l2.intersects( l1, &intersectionPoint ) == QLineF::BoundedIntersection )
-#endif
         {
           if ( mGridStyle == QgsLayoutItemMapGrid::Cross )
           {
@@ -791,11 +786,7 @@ void QgsLayoutItemMapGrid::drawGridNoTransform( QgsRenderContext &context, doubl
 
         l2 = QLineF( vIt->line.first(), vIt->line.last() );
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-        if ( l2.intersect( l1, &intersectionPoint ) == QLineF::BoundedIntersection )
-#else
         if ( l2.intersects( l1, &intersectionPoint ) == QLineF::BoundedIntersection )
-#endif
         {
           //apply a threshold to avoid calculate point if the two points are very close together (can lead to artifacts)
           crossEnd1 = ( ( intersectionPoint - l1.p1() ).manhattanLength() > 0.01 ) ?
@@ -1225,13 +1216,13 @@ void QgsLayoutItemMapGrid::drawCoordinateAnnotation( QgsRenderContext &context, 
     return;
 
   const QgsLayoutItemMapGrid::BorderSide frameBorder = annot.border;
-  double textWidth = QgsTextRenderer::textWidth( context, mAnnotationFormat, QStringList() << annotationString ) / context.convertToPainterUnits( 1, QgsUnitTypes::RenderMillimeters );
+  double textWidth = QgsTextRenderer::textWidth( context, mAnnotationFormat, QStringList() << annotationString ) / context.convertToPainterUnits( 1, Qgis::RenderUnit::Millimeters );
   if ( extension )
     textWidth *= 1.1; // little bit of extra padding when we are calculating the bounding rect, to account for antialiasing
 
   //relevant for annotations is the height of digits
   const double textHeight = ( extension ? ( QgsTextRenderer::textHeight( context, mAnnotationFormat, QChar(), true ) )
-                              : ( QgsTextRenderer::textHeight( context, mAnnotationFormat, '0', false ) ) ) / context.convertToPainterUnits( 1, QgsUnitTypes::RenderMillimeters );
+                              : ( QgsTextRenderer::textHeight( context, mAnnotationFormat, '0', false ) ) ) / context.convertToPainterUnits( 1, Qgis::RenderUnit::Millimeters );
 
   double xpos = annot.position.x();
   double ypos = annot.position.y();
@@ -1392,7 +1383,7 @@ void QgsLayoutItemMapGrid::drawCoordinateAnnotation( QgsRenderContext &context, 
   context.painter()->rotate( rotation );
   context.painter()->translate( -anchor );
   const QgsScopedRenderContextScaleToPixels scale( context );
-  QgsTextRenderer::drawText( QPointF( 0, 0 ), 0, QgsTextRenderer::AlignLeft, QStringList() << annotationString, context, mAnnotationFormat );
+  QgsTextRenderer::drawText( QPointF( 0, 0 ), 0, Qgis::TextHorizontalAlignment::Left, annotationString.split( '\n' ), context, mAnnotationFormat );
 }
 
 QString QgsLayoutItemMapGrid::gridAnnotationString( double value, QgsLayoutItemMapGrid::AnnotationCoordinate coord, QgsExpressionContext &expressionContext ) const
@@ -1598,11 +1589,7 @@ int QgsLayoutItemMapGrid::xGridLines() const
     for ( ; it != borderLines.constEnd(); ++it )
     {
       QPointF intersectionPoint;
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-      if ( it->intersect( gridLine, &intersectionPoint ) == QLineF::BoundedIntersection )
-#else
       if ( it->intersects( gridLine, &intersectionPoint ) == QLineF::BoundedIntersection )
-#endif
       {
         intersectionList.push_back( intersectionPoint );
         if ( intersectionList.size() >= 2 )
@@ -1703,11 +1690,7 @@ int QgsLayoutItemMapGrid::yGridLines() const
     for ( ; it != borderLines.constEnd(); ++it )
     {
       QPointF intersectionPoint;
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-      if ( it->intersect( gridLine, &intersectionPoint ) == QLineF::BoundedIntersection )
-#else
       if ( it->intersects( gridLine, &intersectionPoint ) == QLineF::BoundedIntersection )
-#endif
       {
         intersectionList.push_back( intersectionPoint );
         if ( intersectionList.size() >= 2 )
@@ -1779,7 +1762,7 @@ int QgsLayoutItemMapGrid::xGridLinesCrsTransform( const QgsRectangle &bbox, cons
       catch ( QgsCsException &cse )
       {
         Q_UNUSED( cse )
-        QgsDebugMsg( QStringLiteral( "Caught CRS exception %1" ).arg( cse.what() ) );
+        QgsDebugError( QStringLiteral( "Caught CRS exception %1" ).arg( cse.what() ) );
       }
 
       currentX += step;
@@ -1858,7 +1841,7 @@ int QgsLayoutItemMapGrid::yGridLinesCrsTransform( const QgsRectangle &bbox, cons
       catch ( QgsCsException &cse )
       {
         Q_UNUSED( cse )
-        QgsDebugMsg( QStringLiteral( "Caught CRS exception %1" ).arg( cse.what() ) );
+        QgsDebugError( QStringLiteral( "Caught CRS exception %1" ).arg( cse.what() ) );
       }
 
       currentY += step;
@@ -1975,7 +1958,7 @@ void QgsLayoutItemMapGrid::refreshDataDefinedProperties()
       }
       else
       {
-        const double mapWidthMm = mLayout->renderContext().measurementConverter().convert( mMap->sizeWithUnits(), QgsUnitTypes::LayoutMillimeters ).width();
+        const double mapWidthMm = mLayout->renderContext().measurementConverter().convert( mMap->sizeWithUnits(), Qgis::LayoutUnit::Millimeters ).width();
         const double mapWidthMapUnits = mapWidth();
         const double minUnitsPerSeg = ( mMinimumIntervalWidth * mapWidthMapUnits ) / mapWidthMm;
         const double maxUnitsPerSeg = ( mMaximumIntervalWidth * mapWidthMapUnits ) / mapWidthMm;
@@ -2013,8 +1996,8 @@ double QgsLayoutItemMapGrid::mapWidth() const
   }
 
   const QgsRectangle mapExtent = mMap->extent();
-  const QgsUnitTypes::DistanceUnit distanceUnit = mCRS.isValid() ? mCRS.mapUnits() : mMap->crs().mapUnits();
-  if ( distanceUnit == QgsUnitTypes::DistanceUnknownUnit )
+  const Qgis::DistanceUnit distanceUnit = mCRS.isValid() ? mCRS.mapUnits() : mMap->crs().mapUnits();
+  if ( distanceUnit == Qgis::DistanceUnit::Unknown )
   {
     return mapExtent.width();
   }
@@ -2025,7 +2008,7 @@ double QgsLayoutItemMapGrid::mapWidth() const
     da.setSourceCrs( mMap->crs(), mLayout->project()->transformContext() );
     da.setEllipsoid( mLayout->project()->ellipsoid() );
 
-    const QgsUnitTypes::DistanceUnit units = da.lengthUnits();
+    const Qgis::DistanceUnit units = da.lengthUnits();
     double measure = da.measureLine( QgsPointXY( mapExtent.xMinimum(), mapExtent.yMinimum() ),
                                      QgsPointXY( mapExtent.xMaximum(), mapExtent.yMinimum() ) );
     measure /= QgsUnitTypes::fromUnitToUnitFactor( distanceUnit, units );
@@ -2126,12 +2109,12 @@ void QgsLayoutItemMapGrid::setAnnotationFont( const QFont &font )
   if ( font.pointSizeF() > 0 )
   {
     mAnnotationFormat.setSize( font.pointSizeF() );
-    mAnnotationFormat.setSizeUnit( QgsUnitTypes::RenderPoints );
+    mAnnotationFormat.setSizeUnit( Qgis::RenderUnit::Points );
   }
   else if ( font.pixelSize() > 0 )
   {
     mAnnotationFormat.setSize( font.pixelSize() );
-    mAnnotationFormat.setSizeUnit( QgsUnitTypes::RenderPixels );
+    mAnnotationFormat.setSizeUnit( Qgis::RenderUnit::Pixels );
   }
 }
 
@@ -2536,6 +2519,12 @@ QgsLayoutItemMapGrid::AnnotationDirection QgsLayoutItemMapGrid::annotationDirect
   return mLeftGridAnnotationDirection; // no warnings
 }
 
+void QgsLayoutItemMapGrid::setAnnotationExpression( const QString &expression )
+{
+  mGridAnnotationExpressionString = expression;
+  mGridAnnotationExpression.reset();
+}
+
 void QgsLayoutItemMapGrid::setFrameDivisions( const QgsLayoutItemMapGrid::DisplayMode divisions, const QgsLayoutItemMapGrid::BorderSide border )
 {
   switch ( border )
@@ -2625,7 +2614,7 @@ int QgsLayoutItemMapGrid::crsGridParams( QgsRectangle &crsRect, QgsCoordinateTra
   catch ( QgsCsException &cse )
   {
     Q_UNUSED( cse )
-    QgsDebugMsg( QStringLiteral( "Caught CRS exception %1" ).arg( cse.what() ) );
+    QgsDebugError( QStringLiteral( "Caught CRS exception %1" ).arg( cse.what() ) );
     return 1;
   }
   return 0;

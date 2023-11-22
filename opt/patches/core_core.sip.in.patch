@@ -7,12 +7,4 @@
 -%Import QtPositioning/QtPositioningmod.sip
  
  %Feature HAVE_GUI
- %Feature ANDROID
-@@ -108,7 +107,6 @@
- %Include typedefs.sip
- %Include std.sip
- 
--
- %Include core_auto.sip
- 
- %VirtualErrorHandler processing_exception_handler
+ %Feature HAVE_QTSERIALPORT

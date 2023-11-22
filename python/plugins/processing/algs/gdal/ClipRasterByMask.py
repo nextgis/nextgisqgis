@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     ClipRasterByMask.py
@@ -68,7 +66,7 @@ class ClipRasterByMask(GdalAlgorithm):
 
     def initAlgorithm(self, config=None):
 
-        self.TYPES = [self.tr('Use Input Layer Data Type'), 'Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
+        self.TYPES = [self.tr('Use Input Layer Data Type'), 'Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64', 'Int8']
 
         self.addParameter(QgsProcessingParameterRasterLayer(self.INPUT,
                                                             self.tr('Input layer')))
@@ -206,6 +204,9 @@ class ClipRasterByMask(GdalAlgorithm):
 
         data_type = self.parameterAsEnum(parameters, self.DATA_TYPE, context)
         if data_type:
+            if self.TYPES[data_type] == 'Int8' and GdalUtils.version() < 3070000:
+                raise QgsProcessingException(self.tr('Int8 data type requires GDAL version 3.7 or later'))
+
             arguments.append('-ot ' + self.TYPES[data_type])
 
         arguments.append('-of')
@@ -221,12 +222,12 @@ class ClipRasterByMask(GdalAlgorithm):
             arguments.append('-tr')
             if self.X_RESOLUTION in parameters and parameters[self.X_RESOLUTION] is not None:
                 xres = self.parameterAsDouble(parameters, self.X_RESOLUTION, context)
-                arguments.append('{}'.format(xres))
+                arguments.append(f'{xres}')
             else:
                 arguments.append(str(inLayer.rasterUnitsPerPixelX()))
             if self.Y_RESOLUTION in parameters and parameters[self.Y_RESOLUTION] is not None:
                 yres = self.parameterAsDouble(parameters, self.Y_RESOLUTION, context)
-                arguments.append('{}'.format(yres))
+                arguments.append(f'{yres}')
             else:
                 arguments.append(str(-inLayer.rasterUnitsPerPixelY()))
             arguments.append('-tap')
@@ -243,7 +244,7 @@ class ClipRasterByMask(GdalAlgorithm):
             arguments.append('-dstalpha')
 
         if nodata is not None:
-            arguments.append('-dstnodata {}'.format(nodata))
+            arguments.append(f'-dstnodata {nodata}')
 
         if self.parameterAsBoolean(parameters, self.MULTITHREADING, context):
             arguments.append('-multi')

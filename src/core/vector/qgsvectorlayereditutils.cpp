@@ -14,19 +14,21 @@
  ***************************************************************************/
 #include "qgsvectorlayereditutils.h"
 
+#include "qgsunsetattributevalue.h"
 #include "qgsvectordataprovider.h"
 #include "qgsfeatureiterator.h"
 #include "qgsvectorlayereditbuffer.h"
 #include "qgslinestring.h"
 #include "qgslogger.h"
 #include "qgspoint.h"
-#include "qgsgeometryfactory.h"
 #include "qgis.h"
 #include "qgswkbtypes.h"
 #include "qgsvectorlayerutils.h"
 #include "qgsvectorlayer.h"
 #include "qgsgeometryoptions.h"
 #include "qgsabstractgeometry.h"
+#include "qgssettingsregistrycore.h"
+#include "qgssettingsentryimpl.h"
 
 #include <limits>
 
@@ -87,12 +89,25 @@ bool QgsVectorLayerEditUtils::moveVertex( const QgsPoint &p, QgsFeatureId atFeat
 
   QgsGeometry geometry = f.geometry();
 
-  geometry.moveVertex( p, atVertex );
+  // If original point is not 3D but destination yes, check if it can be promoted
+  if ( p.is3D() && !geometry.constGet()->is3D() && QgsWkbTypes::hasZ( mLayer->wkbType() ) )
+  {
+    if ( !geometry.get()->addZValue( QgsSettingsRegistryCore::settingsDigitizingDefaultZValue->value() ) )
+      return false;
+  }
 
-  mLayer->changeGeometry( atFeatureId, geometry );
-  return true;
+  // If original point has not M-value but destination yes, check if it can be promoted
+  if ( p.isMeasure() && !geometry.constGet()->isMeasure() && QgsWkbTypes::hasM( mLayer->wkbType() ) )
+  {
+    if ( !geometry.get()->addMValue( QgsSettingsRegistryCore::settingsDigitizingDefaultMValue->value() ) )
+      return false;
+  }
+
+  if ( !geometry.moveVertex( p, atVertex ) )
+    return false;
+
+  return mLayer->changeGeometry( atFeatureId, geometry );
 }
-
 
 Qgis::VectorEditResult QgsVectorLayerEditUtils::deleteVertex( QgsFeatureId featureId, int vertex )
 {
@@ -118,6 +133,75 @@ Qgis::VectorEditResult QgsVectorLayerEditUtils::deleteVertex( QgsFeatureId featu
   return !geometry.isNull() ? Qgis::VectorEditResult::Success : Qgis::VectorEditResult::EmptyGeometry;
 }
 
+
+static
+Qgis::GeometryOperationResult staticAddRing( QgsVectorLayer *layer, std::unique_ptr< QgsCurve > &ring, const QgsFeatureIds &targetFeatureIds, QgsFeatureIds *modifiedFeatureIds, bool firstOne = true )
+{
+
+  if ( !layer || !layer->isSpatial() )
+  {
+    return Qgis::GeometryOperationResult::AddRingNotInExistingFeature;
+  }
+
+  if ( !ring )
+  {
+    return Qgis::GeometryOperationResult::InvalidInputGeometryType;
+  }
+
+  if ( !ring->isClosed() )
+  {
+    return Qgis::GeometryOperationResult::AddRingNotClosed;
+  }
+
+  if ( !layer->isValid() || !layer->editBuffer() || !layer->dataProvider() )
+  {
+    return Qgis::GeometryOperationResult::LayerNotEditable;
+  }
+
+  Qgis::GeometryOperationResult addRingReturnCode = Qgis::GeometryOperationResult::AddRingNotInExistingFeature; //default: return code for 'ring not inserted'
+  QgsFeature f;
+
+  QgsFeatureIterator fit;
+  if ( !targetFeatureIds.isEmpty() )
+  {
+    //check only specified features
+    fit = layer->getFeatures( QgsFeatureRequest().setFilterFids( targetFeatureIds ) );
+  }
+  else
+  {
+    //check all intersecting features
+    QgsRectangle bBox = ring->boundingBox();
+    fit = layer->getFeatures( QgsFeatureRequest().setFilterRect( bBox ).setFlags( QgsFeatureRequest::ExactIntersect ) );
+  }
+
+  //find first valid feature we can add the ring to
+  while ( fit.nextFeature( f ) )
+  {
+    if ( !f.hasGeometry() )
+      continue;
+
+    //add ring takes ownership of ring, and deletes it if there's an error
+    QgsGeometry g = f.geometry();
+
+    addRingReturnCode = g.addRing( static_cast< QgsCurve * >( ring->clone() ) );
+    if ( addRingReturnCode == Qgis::GeometryOperationResult::Success )
+    {
+      layer->changeGeometry( f.id(), g );
+      if ( modifiedFeatureIds )
+      {
+        modifiedFeatureIds->insert( f.id() );
+        if ( firstOne )
+        {
+          break;
+        }
+      }
+
+    }
+  }
+
+  return addRingReturnCode;
+}
+
 Qgis::GeometryOperationResult QgsVectorLayerEditUtils::addRing( const QVector<QgsPointXY> &ring, const QgsFeatureIds &targetFeatureIds, QgsFeatureId *modifiedFeatureId )
 {
   QgsPointSequence l;
@@ -136,52 +220,25 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::addRing( const QgsPointSe
 
 Qgis::GeometryOperationResult QgsVectorLayerEditUtils::addRing( QgsCurve *ring, const QgsFeatureIds &targetFeatureIds, QgsFeatureId *modifiedFeatureId )
 {
-  if ( !mLayer->isSpatial() )
+  std::unique_ptr<QgsCurve> uniquePtrRing( ring );
+  if ( modifiedFeatureId )
   {
-    delete ring;
-    return Qgis::GeometryOperationResult::AddRingNotInExistingFeature;
+    QgsFeatureIds *modifiedFeatureIds = new QgsFeatureIds;
+    Qgis::GeometryOperationResult result = staticAddRing( mLayer, uniquePtrRing, targetFeatureIds, modifiedFeatureIds, true );
+    *modifiedFeatureId = *modifiedFeatureIds->begin();
+    return result;
   }
-
-  Qgis::GeometryOperationResult addRingReturnCode = Qgis::GeometryOperationResult::AddRingNotInExistingFeature; //default: return code for 'ring not inserted'
-  QgsFeature f;
-
-  QgsFeatureIterator fit;
-  if ( !targetFeatureIds.isEmpty() )
-  {
-    //check only specified features
-    fit = mLayer->getFeatures( QgsFeatureRequest().setFilterFids( targetFeatureIds ) );
-  }
-  else
-  {
-    //check all intersecting features
-    QgsRectangle bBox = ring->boundingBox();
-    fit = mLayer->getFeatures( QgsFeatureRequest().setFilterRect( bBox ).setFlags( QgsFeatureRequest::ExactIntersect ) );
-  }
-
-  //find first valid feature we can add the ring to
-  while ( fit.nextFeature( f ) )
-  {
-    if ( !f.hasGeometry() )
-      continue;
-
-    //add ring takes ownership of ring, and deletes it if there's an error
-    QgsGeometry g = f.geometry();
-
-    addRingReturnCode = g.addRing( static_cast< QgsCurve * >( ring->clone() ) );
-    if ( addRingReturnCode == Qgis::GeometryOperationResult::Success )
-    {
-      mLayer->changeGeometry( f.id(), g );
-      if ( modifiedFeatureId )
-        *modifiedFeatureId = f.id();
-
-      //setModified( true, true );
-      break;
-    }
-  }
-
-  delete ring;
-  return addRingReturnCode;
+  return staticAddRing( mLayer, uniquePtrRing, targetFeatureIds, nullptr, true );
 }
+
+Qgis::GeometryOperationResult QgsVectorLayerEditUtils::addRingV2( QgsCurve *ring, const QgsFeatureIds &targetFeatureIds, QgsFeatureIds *modifiedFeatureIds )
+{
+
+  std::unique_ptr<QgsCurve> uniquePtrRing( ring );
+  return staticAddRing( mLayer, uniquePtrRing, targetFeatureIds, modifiedFeatureIds, false );
+}
+
+
 
 Qgis::GeometryOperationResult QgsVectorLayerEditUtils::addPart( const QVector<QgsPointXY> &points, QgsFeatureId featureId )
 {
@@ -357,6 +414,8 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
 
   QgsVectorLayerUtils::QgsFeaturesDataList featuresDataToAdd;
 
+  const int fieldCount = mLayer->fields().count();
+
   QgsFeature feat;
   while ( features.nextFeature( feat ) )
   {
@@ -366,7 +425,8 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
     }
     QVector<QgsGeometry> newGeometries;
     QgsPointSequence featureTopologyTestPoints;
-    QgsGeometry featureGeom = feat.geometry();
+    const QgsGeometry originalGeom = feat.geometry();
+    QgsGeometry featureGeom = originalGeom;
     splitFunctionReturn = featureGeom.splitGeometry( curve, newGeometries, preserveCircular, topologicalEditing, featureTopologyTestPoints );
     topologyTestPoints.append( featureTopologyTestPoints );
     if ( splitFunctionReturn == Qgis::GeometryOperationResult::Success )
@@ -374,10 +434,142 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
       //change this geometry
       mLayer->changeGeometry( feat.id(), featureGeom );
 
+      //update any attributes for original feature which are set to GeometryRatio split policy
+      QgsAttributeMap attributeMap;
+      for ( int fieldIdx = 0; fieldIdx < fieldCount; ++fieldIdx )
+      {
+        const QgsField field = mLayer->fields().at( fieldIdx );
+        switch ( field.splitPolicy() )
+        {
+          case Qgis::FieldDomainSplitPolicy::DefaultValue:
+          case Qgis::FieldDomainSplitPolicy::Duplicate:
+          case Qgis::FieldDomainSplitPolicy::UnsetField:
+            break;
+
+          case Qgis::FieldDomainSplitPolicy::GeometryRatio:
+          {
+            if ( field.isNumeric() )
+            {
+              const double originalValue = feat.attribute( fieldIdx ).toDouble();
+
+              double originalSize = 0;
+
+              switch ( originalGeom.type() )
+              {
+                case Qgis::GeometryType::Point:
+                case Qgis::GeometryType::Unknown:
+                case Qgis::GeometryType::Null:
+                  originalSize = 0;
+                  break;
+                case Qgis::GeometryType::Line:
+                  originalSize = originalGeom.length();
+                  break;
+                case Qgis::GeometryType::Polygon:
+                  originalSize = originalGeom.area();
+                  break;
+              }
+
+              double newSize = 0;
+              switch ( featureGeom.type() )
+              {
+                case Qgis::GeometryType::Point:
+                case Qgis::GeometryType::Unknown:
+                case Qgis::GeometryType::Null:
+                  newSize = 0;
+                  break;
+                case Qgis::GeometryType::Line:
+                  newSize = featureGeom.length();
+                  break;
+                case Qgis::GeometryType::Polygon:
+                  newSize = featureGeom.area();
+                  break;
+              }
+
+              attributeMap.insert( fieldIdx, originalSize > 0 ? ( originalValue * newSize / originalSize ) : originalValue );
+            }
+            break;
+          }
+        }
+      }
+
+      if ( !attributeMap.isEmpty() )
+      {
+        mLayer->changeAttributeValues( feat.id(), attributeMap );
+      }
+
       //insert new features
-      QgsAttributeMap attributeMap = feat.attributes().toMap();
       for ( const QgsGeometry &geom : std::as_const( newGeometries ) )
       {
+        QgsAttributeMap attributeMap;
+        for ( int fieldIdx = 0; fieldIdx < fieldCount; ++fieldIdx )
+        {
+          const QgsField field = mLayer->fields().at( fieldIdx );
+          // respect field split policy
+          switch ( field.splitPolicy() )
+          {
+            case Qgis::FieldDomainSplitPolicy::DefaultValue:
+              // TODO!!!
+
+              break;
+
+            case Qgis::FieldDomainSplitPolicy::Duplicate:
+              attributeMap.insert( fieldIdx, feat.attribute( fieldIdx ) );
+              break;
+
+            case Qgis::FieldDomainSplitPolicy::GeometryRatio:
+            {
+              if ( !field.isNumeric() )
+              {
+                attributeMap.insert( fieldIdx, feat.attribute( fieldIdx ) );
+              }
+              else
+              {
+                const double originalValue = feat.attribute( fieldIdx ).toDouble();
+
+                double originalSize = 0;
+
+                switch ( originalGeom.type() )
+                {
+                  case Qgis::GeometryType::Point:
+                  case Qgis::GeometryType::Unknown:
+                  case Qgis::GeometryType::Null:
+                    originalSize = 0;
+                    break;
+                  case Qgis::GeometryType::Line:
+                    originalSize = originalGeom.length();
+                    break;
+                  case Qgis::GeometryType::Polygon:
+                    originalSize = originalGeom.area();
+                    break;
+                }
+
+                double newSize = 0;
+                switch ( geom.type() )
+                {
+                  case Qgis::GeometryType::Point:
+                  case Qgis::GeometryType::Unknown:
+                  case Qgis::GeometryType::Null:
+                    newSize = 0;
+                    break;
+                  case Qgis::GeometryType::Line:
+                    newSize = geom.length();
+                    break;
+                  case Qgis::GeometryType::Polygon:
+                    newSize = geom.area();
+                    break;
+                }
+
+                attributeMap.insert( fieldIdx, originalSize > 0 ? ( originalValue * newSize / originalSize ) : originalValue );
+              }
+              break;
+            }
+
+            case Qgis::FieldDomainSplitPolicy::UnsetField:
+              attributeMap.insert( fieldIdx, QgsUnsetAttributeValue() );
+              break;
+          }
+        }
+
         featuresDataToAdd << QgsVectorLayerUtils::QgsFeatureData( geom, attributeMap );
       }
 
@@ -430,8 +622,6 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitParts( const QgsPoin
 
   double xMin, yMin, xMax, yMax;
   QgsRectangle bBox; //bounding box of the split line
-  Qgis::GeometryOperationResult returnCode = Qgis::GeometryOperationResult::Success;
-  Qgis::GeometryOperationResult splitFunctionReturn; //return code of QgsGeometry::splitGeometry
   int numberOfSplitParts = 0;
 
   QgsFeatureIterator fit;
@@ -486,49 +676,64 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitParts( const QgsPoin
   QgsFeature feat;
   while ( fit.nextFeature( feat ) )
   {
-    QVector<QgsGeometry> newGeometries;
-    QgsPointSequence topologyTestPoints;
     QgsGeometry featureGeom = feat.geometry();
-    splitFunctionReturn = featureGeom.splitGeometry( splitLine, newGeometries, topologicalEditing, topologyTestPoints, false );
 
-    if ( splitFunctionReturn == Qgis::GeometryOperationResult::Success && !newGeometries.isEmpty() )
+    const QVector<QgsGeometry> geomCollection = featureGeom.asGeometryCollection();
+    QVector<QgsGeometry> resultCollection;
+    QgsPointSequence topologyTestPoints;
+    for ( QgsGeometry part : geomCollection )
     {
-      QgsGeometry newGeom( newGeometries.at( 0 ) );
-      newGeom.convertToMultiType();
+      QVector<QgsGeometry> newGeometries;
+      QgsPointSequence partTopologyTestPoints;
 
-      for ( int i = 1; i < newGeometries.size(); ++i )
+      const Qgis::GeometryOperationResult splitFunctionReturn = part.splitGeometry( splitLine, newGeometries, topologicalEditing, partTopologyTestPoints, false );
+
+      if ( splitFunctionReturn == Qgis::GeometryOperationResult::Success && !newGeometries.isEmpty() )
       {
-        QgsGeometry part = newGeometries.at( i );
-        part.convertToSingleType();
-        newGeom.addPart( part );
-      }
-
-      mLayer->changeGeometry( feat.id(), newGeom );
-
-      if ( topologicalEditing )
-      {
-        QgsPointSequence::const_iterator topol_it = topologyTestPoints.constBegin();
-        for ( ; topol_it != topologyTestPoints.constEnd(); ++topol_it )
+        for ( int i = 0; i < newGeometries.size(); ++i )
         {
-          addTopologicalPoints( *topol_it );
+          resultCollection.append( newGeometries.at( i ).asGeometryCollection() );
         }
-      }
-      ++numberOfSplitParts;
-    }
-    else if ( splitFunctionReturn != Qgis::GeometryOperationResult::Success && splitFunctionReturn != Qgis::GeometryOperationResult::NothingHappened )
-    {
-      returnCode = splitFunctionReturn;
-    }
-  }
 
-  if ( numberOfSplitParts == 0 && mLayer->selectedFeatureCount() > 0  && returnCode == Qgis::GeometryOperationResult::Success )
+        topologyTestPoints.append( partTopologyTestPoints );
+
+        ++numberOfSplitParts;
+      }
+      // Note: For multilinestring layers, when the split line does not intersect the feature part,
+      // QgsGeometry::splitGeometry returns InvalidBaseGeometry instead of NothingHappened
+      else if ( splitFunctionReturn == Qgis::GeometryOperationResult::NothingHappened ||
+                splitFunctionReturn == Qgis::GeometryOperationResult::InvalidBaseGeometry )
+      {
+        // Add part as is
+        resultCollection.append( part );
+      }
+      else if ( splitFunctionReturn != Qgis::GeometryOperationResult::Success )
+      {
+        return splitFunctionReturn;
+      }
+    }
+
+    QgsGeometry newGeom = QgsGeometry::collectGeometry( resultCollection );
+    mLayer->changeGeometry( feat.id(), newGeom ) ;
+
+    if ( topologicalEditing )
+    {
+      QgsPointSequence::const_iterator topol_it = topologyTestPoints.constBegin();
+      for ( ; topol_it != topologyTestPoints.constEnd(); ++topol_it )
+      {
+        addTopologicalPoints( *topol_it );
+      }
+    }
+
+  }
+  if ( numberOfSplitParts == 0 && mLayer->selectedFeatureCount() > 0 )
   {
     //There is a selection but no feature has been split.
     //Maybe user forgot that only the selected features are split
-    returnCode = Qgis::GeometryOperationResult::NothingHappened;
+    return Qgis::GeometryOperationResult::NothingHappened;
   }
 
-  return returnCode;
+  return Qgis::GeometryOperationResult::Success;
 }
 
 
@@ -571,11 +776,11 @@ int QgsVectorLayerEditUtils::addTopologicalPoints( const QgsPoint &p )
   {
     threshold = 0.0000001;
 
-    if ( mLayer->crs().mapUnits() == QgsUnitTypes::DistanceMeters )
+    if ( mLayer->crs().mapUnits() == Qgis::DistanceUnit::Meters )
     {
       threshold = 0.001;
     }
-    else if ( mLayer->crs().mapUnits() == QgsUnitTypes::DistanceFeet )
+    else if ( mLayer->crs().mapUnits() == Qgis::DistanceUnit::Feet )
     {
       threshold = 0.0001;
     }
@@ -625,7 +830,7 @@ int QgsVectorLayerEditUtils::addTopologicalPoints( const QgsPoint &p )
 
     if ( !mLayer->insertVertex( p, fid, segmentAfterVertex ) )
     {
-      QgsDebugMsg( QStringLiteral( "failed to insert topo point" ) );
+      QgsDebugError( QStringLiteral( "failed to insert topo point" ) );
     }
     else
     {
@@ -666,6 +871,64 @@ int QgsVectorLayerEditUtils::addTopologicalPoints( const QgsPointXY &p )
   return addTopologicalPoints( QgsPoint( p ) );
 }
 
+bool QgsVectorLayerEditUtils::mergeFeatures( const QgsFeatureId &targetFeatureId, const QgsFeatureIds &mergeFeatureIds, const QgsAttributes &mergeAttributes, const QgsGeometry &unionGeometry, QString &errorMessage )
+{
+  errorMessage.clear();
+
+  if ( mergeFeatureIds.isEmpty() )
+  {
+    errorMessage = QObject::tr( "List of features to merge is empty" );
+    return false;
+  }
+
+  QgsAttributeMap newAttributes;
+  for ( int i = 0; i < mergeAttributes.count(); ++i )
+  {
+    QVariant val = mergeAttributes.at( i );
+
+    bool isDefaultValue = mLayer->fields().fieldOrigin( i ) == QgsFields::OriginProvider &&
+                          mLayer->dataProvider() &&
+                          mLayer->dataProvider()->defaultValueClause( mLayer->fields().fieldOriginIndex( i ) ) == val;
+
+    // convert to destination data type
+    QString errorMessageConvertCompatible;
+    if ( !isDefaultValue && !mLayer->fields().at( i ).convertCompatible( val, &errorMessageConvertCompatible ) )
+    {
+      if ( errorMessage.isEmpty() )
+        errorMessage = QObject::tr( "Could not store value '%1' in field of type %2: %3" ).arg( mergeAttributes.at( i ).toString(), mLayer->fields().at( i ).typeName(), errorMessageConvertCompatible );
+    }
+    newAttributes[ i ] = val;
+  }
+
+  mLayer->beginEditCommand( QObject::tr( "Merged features" ) );
+
+  // Delete other features but the target feature
+  QgsFeatureIds::const_iterator feature_it = mergeFeatureIds.constBegin();
+  for ( ; feature_it != mergeFeatureIds.constEnd(); ++feature_it )
+  {
+    if ( *feature_it != targetFeatureId )
+      mLayer->deleteFeature( *feature_it );
+  }
+
+  // Modify target feature or create a new one if invalid
+  QgsGeometry mergeGeometry = unionGeometry;
+  if ( targetFeatureId == FID_NULL )
+  {
+    QgsFeature mergeFeature = QgsVectorLayerUtils::createFeature( mLayer, mergeGeometry, newAttributes );
+    mLayer->addFeature( mergeFeature );
+  }
+  else
+  {
+    mLayer->changeGeometry( targetFeatureId, mergeGeometry );
+    mLayer->changeAttributeValues( targetFeatureId, newAttributes );
+  }
+
+  mLayer->endEditCommand();
+
+  mLayer->triggerRepaint();
+
+  return true;
+}
 
 bool QgsVectorLayerEditUtils::boundingBoxFromPointList( const QgsPointSequence &list, double &xmin, double &ymin, double &xmax, double &ymax ) const
 {

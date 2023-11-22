@@ -71,6 +71,11 @@ QStringList QgsProcessingProvider::supportedOutputPointCloudLayerExtensions() co
   return QStringList();
 }
 
+QStringList QgsProcessingProvider::supportedOutputVectorTileLayerExtensions() const
+{
+  return QStringList() << QgsProcessingUtils::defaultVectorTileExtension();
+}
+
 void QgsProcessingProvider::refreshAlgorithms()
 {
   qDeleteAll( mAlgorithms );
@@ -182,7 +187,7 @@ bool QgsProcessingProvider::isSupportedOutputValue( const QVariant &outputValue,
   else if ( parameter->type() == QgsProcessingParameterRasterDestination::typeName() )
   {
     const QFileInfo fi( outputPath );
-    const QString extension = fi.completeSuffix();
+    const QString extension = fi.suffix();
     if ( !supportedOutputRasterLayerExtensions().contains( extension, Qt::CaseInsensitive ) )
     {
       error = tr( "“.%1” files are not supported as outputs for this algorithm" ).arg( extension );
@@ -195,6 +200,17 @@ bool QgsProcessingProvider::isSupportedOutputValue( const QVariant &outputValue,
     const QFileInfo fi( outputPath );
     const QString extension = fi.completeSuffix();
     if ( !supportedOutputPointCloudLayerExtensions().contains( extension, Qt::CaseInsensitive ) )
+    {
+      error = tr( "“.%1” files are not supported as outputs for this algorithm" ).arg( extension );
+      return false;
+    }
+    return true;
+  }
+  else if ( parameter->type() == QgsProcessingParameterVectorTileDestination::typeName() )
+  {
+    const QFileInfo fi( outputPath );
+    const QString extension = fi.completeSuffix();
+    if ( !supportedOutputVectorTileLayerExtensions().contains( extension, Qt::CaseInsensitive ) )
     {
       error = tr( "“.%1” files are not supported as outputs for this algorithm" ).arg( extension );
       return false;
@@ -268,6 +284,27 @@ QString QgsProcessingProvider::defaultPointCloudFileExtension() const
   {
     // who knows? provider says it has no file support at all...
     return QStringLiteral( "las" );
+  }
+}
+
+QString QgsProcessingProvider::defaultVectorTileFileExtension() const
+{
+  const QString userDefault = QgsProcessingUtils::defaultVectorTileExtension();
+
+  const QStringList supportedExtensions = supportedOutputVectorTileLayerExtensions();
+  if ( supportedExtensions.contains( userDefault, Qt::CaseInsensitive ) )
+  {
+    // user set default is supported by provider, use that
+    return userDefault;
+  }
+  else if ( !supportedExtensions.empty() )
+  {
+    return supportedExtensions.at( 0 );
+  }
+  else
+  {
+    // who knows? provider says it has no file support at all...
+    return QStringLiteral( "mbtiles" );
   }
 }
 

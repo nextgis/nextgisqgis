@@ -1,0 +1,134 @@
+--- a/src/gui/qgsmanageconnectionsdialog.cpp	2023-08-21 19:39:45.783042996 +0300
++++ b/src/gui/qgsmanageconnectionsdialog.cpp	2023-10-24 10:47:50.000000000 +0300
+@@ -24,7 +24,7 @@
+ #include "qgsmanageconnectionsdialog.h"
+ #include "qgshttpheaders.h"
+ #include "qgsowsconnection.h"
+-#include "qgsvectortileconnection.h"
++// #include "qgsvectortileconnection.h"
+ #include "qgssettingsentryimpl.h"
+ #include "qgssettingsentryenumflag.h"
+ 
+@@ -139,13 +139,13 @@
+       case XyzTiles:
+         doc = saveXyzTilesConnections( items );
+         break;
+-      case ArcgisMapServer:
+-      case ArcgisFeatureServer:
+-        doc = saveArcgisConnections( items );
+-        break;
+-      case VectorTile:
+-        doc = saveVectorTileConnections( items );
+-        break;
++//      case ArcgisMapServer:
++//      case ArcgisFeatureServer:
++//        doc = saveArcgisConnections( items );
++//        break;
++//      case VectorTile:
++//        doc = saveVectorTileConnections( items );
++//        break;
+     }
+ 
+     QFile file( mFileName );
+@@ -214,15 +214,15 @@
+       case XyzTiles:
+         loadXyzTilesConnections( doc, items );
+         break;
+-      case ArcgisMapServer:
+-        loadArcgisConnections( doc, items, QStringLiteral( "ARCGISMAPSERVER" ) );
+-        break;
+-      case ArcgisFeatureServer:
+-        loadArcgisConnections( doc, items, QStringLiteral( "ARCGISFEATURESERVER" ) );
+-        break;
+-      case VectorTile:
+-        loadVectorTileConnections( doc, items );
+-        break;
++//      case ArcgisMapServer:
++//        loadArcgisConnections( doc, items, QStringLiteral( "ARCGISMAPSERVER" ) );
++//        break;
++//      case ArcgisFeatureServer:
++//        loadArcgisConnections( doc, items, QStringLiteral( "ARCGISFEATURESERVER" ) );
++//        break;
++//      case VectorTile:
++//        loadVectorTileConnections( doc, items );
++//        break;
+     }
+     // clear connections list and close window
+     listConnections->clear();
+@@ -269,13 +269,13 @@
+       case XyzTiles:
+         connections = QgsXyzConnectionSettings::sTreeXyzConnections->items();
+         break;
+-      case ArcgisMapServer:
+-      case ArcgisFeatureServer:
+-        connections = QgsArcGisConnectionSettings::sTreeConnectionArcgis->items();
+-        break;
+-      case VectorTile:
+-        connections = QgsVectorTileProviderConnection::sTreeConnectionVectorTile->items();
+-        break;
++//      case ArcgisMapServer:
++//      case ArcgisFeatureServer:
++//        connections = QgsArcGisConnectionSettings::sTreeConnectionArcgis->items();
++//        break;
++//      case VectorTile:
++//        connections = QgsVectorTileProviderConnection::sTreeConnectionVectorTile->items();
++//        break;
+     }
+     for ( const QString &connection : std::as_const( connections ) )
+     {
+@@ -692,7 +692,7 @@
+ 
+   return doc;
+ }
+-
++/*
+ QDomDocument QgsManageConnectionsDialog::saveArcgisConnections( const QStringList &connections )
+ {
+   QDomDocument doc( QStringLiteral( "connections" ) );
+@@ -717,8 +717,8 @@
+   }
+ 
+   return doc;
+-}
+-
++}*/
++/*
+ QDomDocument QgsManageConnectionsDialog::saveVectorTileConnections( const QStringList &connections )
+ {
+   QDomDocument doc( QStringLiteral( "connections" ) );
+@@ -748,6 +748,7 @@
+ 
+   return doc;
+ }
++*/
+ 
+ void QgsManageConnectionsDialog::loadOWSConnections( const QDomDocument &doc, const QStringList &items, const QString &service )
+ {
+@@ -1390,7 +1391,7 @@
+     child = child.nextSiblingElement();
+   }
+ }
+-
++/*
+ void QgsManageConnectionsDialog::loadArcgisConnections( const QDomDocument &doc, const QStringList &items, const QString &service )
+ {
+   const QDomElement root = doc.documentElement();
+@@ -1471,8 +1472,8 @@
+ 
+     child = child.nextSiblingElement();
+   }
+-}
+-
++}*/
++/*
+ void QgsManageConnectionsDialog::loadVectorTileConnections( const QDomDocument &doc, const QStringList &items )
+ {
+   const QDomElement root = doc.documentElement();
+@@ -1559,6 +1560,7 @@
+     child = child.nextSiblingElement();
+   }
+ }
++*/
+ 
+ void QgsManageConnectionsDialog::selectAll()
+ {

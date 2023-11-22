@@ -30,6 +30,11 @@ QgsMapRendererParallelJob::QgsMapRendererParallelJob( const QgsMapSettings &sett
   : QgsMapRendererQImageJob( settings )
   , mStatus( Idle )
 {
+  if ( mSettings.testFlag( Qgis::MapSettingsFlag::ForceVectorOutput ) )
+  {
+    QgsLogger::warning( QStringLiteral( "Vector rendering in parallel job is not supported, so Qgis::MapSettingsFlag::ForceVectorOutput option will be ignored!" ) );
+    mSettings.setFlag( Qgis::MapSettingsFlag::ForceVectorOutput, false );
+  }
 }
 
 QgsMapRendererParallelJob::~QgsMapRendererParallelJob()
@@ -181,7 +186,7 @@ void QgsMapRendererParallelJob::waitForFinished()
 
     mSecondPassFutureWatcher.waitForFinished();
 
-    QgsDebugMsg( QStringLiteral( "waitForFinished (1): %1 ms" ).arg( t.elapsed() / 1000.0 ) );
+    QgsDebugMsgLevel( QStringLiteral( "waitForFinished (1): %1 ms" ).arg( t.elapsed() / 1000.0 ), 2 );
 
     renderLayersSecondPassFinished();
   }
@@ -286,6 +291,8 @@ void QgsMapRendererParallelJob::renderingFinished()
 #endif
   if ( ! mSecondPassLayerJobs.empty() )
   {
+    initSecondPassJobs( mSecondPassLayerJobs, mLabelJob );
+
     mStatus = RenderingSecondPass;
     // We have a second pass to do.
     connect( &mSecondPassFutureWatcher, &QFutureWatcher<void>::finished, this, &QgsMapRendererParallelJob::renderLayersSecondPassFinished );
@@ -368,16 +375,16 @@ void QgsMapRendererParallelJob::renderLayerStatic( LayerRenderJob &job )
   catch ( QgsException &e )
   {
     Q_UNUSED( e )
-    QgsDebugMsg( "Caught unhandled QgsException: " + e.what() );
+    QgsDebugError( "Caught unhandled QgsException: " + e.what() );
   }
   catch ( std::exception &e )
   {
     Q_UNUSED( e )
-    QgsDebugMsg( "Caught unhandled std::exception: " + QString::fromLatin1( e.what() ) );
+    QgsDebugError( "Caught unhandled std::exception: " + QString::fromLatin1( e.what() ) );
   }
   catch ( ... )
   {
-    QgsDebugMsg( QStringLiteral( "Caught unhandled unknown exception" ) );
+    QgsDebugError( QStringLiteral( "Caught unhandled unknown exception" ) );
   }
 
   job.errors = job.renderer->errors();
@@ -414,16 +421,16 @@ void QgsMapRendererParallelJob::renderLabelsStatic( QgsMapRendererParallelJob *s
     catch ( QgsException &e )
     {
       Q_UNUSED( e )
-      QgsDebugMsg( "Caught unhandled QgsException: " + e.what() );
+      QgsDebugError( "Caught unhandled QgsException: " + e.what() );
     }
     catch ( std::exception &e )
     {
       Q_UNUSED( e )
-      QgsDebugMsg( "Caught unhandled std::exception: " + QString::fromLatin1( e.what() ) );
+      QgsDebugError( "Caught unhandled std::exception: " + QString::fromLatin1( e.what() ) );
     }
     catch ( ... )
     {
-      QgsDebugMsg( QStringLiteral( "Caught unhandled unknown exception" ) );
+      QgsDebugError( QStringLiteral( "Caught unhandled unknown exception" ) );
     }
 
     painter.end();
@@ -437,4 +444,3 @@ void QgsMapRendererParallelJob::renderLabelsStatic( QgsMapRendererParallelJob *s
     }
   }
 }
-

@@ -40,7 +40,14 @@ QVariant QgsTextEditWrapper::value() const
   {
     if ( config( QStringLiteral( "UseHtml" ) ).toBool() )
     {
-      v = mTextEdit->toHtml();
+      if ( mTextEdit->toPlainText().isEmpty() )
+      {
+        v = QString();
+      }
+      else
+      {
+        v = mTextEdit->toHtml();
+      }
     }
     else
     {
@@ -67,7 +74,7 @@ QVariant QgsTextEditWrapper::value() const
     return QVariant( field().type() );
   }
 
-  if ( !defaultValue().isNull() && v == defaultValue().toString() )
+  if ( !QgsVariantUtils::isNull( defaultValue() ) && v == defaultValue().toString() )
   {
     return defaultValue();
   }
@@ -93,7 +100,7 @@ QVariant QgsTextEditWrapper::value() const
       mInvalidJSON = false;
       return qjson;
     }
-    if ( json::accept( v.toUtf8() ) )
+    if ( json::accept( v.toStdString() ) )
     {
       QVariant qjson = QgsJsonUtils::parseJson( v.toStdString() );
       mInvalidJSON = false;
@@ -158,7 +165,7 @@ void QgsTextEditWrapper::initWidget( QWidget *editor )
     mLineEdit->setValidator( new QgsFieldValidator( mLineEdit, field(), defaultValue().toString() ) );
 
     QVariant defVal = defaultValue();
-    if ( defVal.isNull() )
+    if ( QgsVariantUtils::isNull( defVal ) )
     {
       defVal = QgsApplication::nullRepresentation();
     }
@@ -182,9 +189,6 @@ void QgsTextEditWrapper::initWidget( QWidget *editor )
       emit valuesChanged( value );
     } );
     connect( mLineEdit, &QLineEdit::textChanged, this, &QgsTextEditWrapper::textChanged );
-
-    mWritablePalette = mLineEdit->palette();
-    mReadOnlyPalette = mLineEdit->palette();
   }
 }
 
@@ -208,7 +212,7 @@ void QgsTextEditWrapper::showIndeterminateState()
   }
 
   //note - this is deliberately a zero length string, not a null string!
-  setWidgetValue( QStringLiteral( "" ) );  // skip-keyword-check
+  setWidgetValue( QLatin1String( "" ) );  // skip-keyword-check
 
   if ( mTextEdit )
     mTextEdit->blockSignals( false );
@@ -251,15 +255,6 @@ void QgsTextEditWrapper::setEnabled( bool enabled )
   if ( mLineEdit )
   {
     mLineEdit->setReadOnly( !enabled );
-    if ( enabled )
-      mLineEdit->setPalette( mWritablePalette );
-    else
-    {
-      mLineEdit->setPalette( mReadOnlyPalette );
-      // removing frame + setting transparent background to distinguish the readonly lineEdit from a normal one
-      // did not get this working via the Palette:
-      mLineEdit->setStyleSheet( QStringLiteral( "QLineEdit { background-color: rgba(255, 255, 255, 75%); }" ) );
-    }
     mLineEdit->setFrame( enabled );
   }
 }
@@ -281,7 +276,7 @@ void QgsTextEditWrapper::textChanged( const QString & )
 void QgsTextEditWrapper::setWidgetValue( const QVariant &val )
 {
   QString v;
-  if ( val.isNull() )
+  if ( QgsVariantUtils::isNull( val ) )
   {
     if ( !( field().type() == QVariant::Int || field().type() == QVariant::Double || field().type() == QVariant::LongLong || field().type() == QVariant::Date ) )
       v = QgsApplication::nullRepresentation();
@@ -331,7 +326,7 @@ void QgsTextEditWrapper::setWidgetValue( const QVariant &val )
   const QVariant currentValue = value( );
   // Note: comparing QVariants leads to funny (and wrong) results:
   // QVariant(0.0) == QVariant(QVariant.Double) -> True
-  const bool changed { val != currentValue || val.isNull() != currentValue.isNull() };
+  const bool changed { val != currentValue || QgsVariantUtils::isNull( val ) != QgsVariantUtils::isNull( currentValue ) };
 
   if ( changed )
   {

@@ -39,13 +39,21 @@ and parameters.
       TypeMesh,
       TypePlugin,
       TypePointCloud,
-      TypeAnnotation
+      TypeAnnotation,
+      TypeVectorTile
     };
 
     enum PythonOutputType
     {
       PythonQgsProcessingAlgorithmSubclass,
     };
+
+    enum class LayerOptionsFlag
+    {
+      SkipIndexGeneration,
+    };
+    typedef QFlags<QgsProcessing::LayerOptionsFlag> LayerOptionsFlags;
+
 
     static QString sourceTypeToString( SourceType type );
 %Docstring

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     TilesXYZ.py
@@ -39,6 +37,7 @@ from qgis.core import (QgsProcessingException,
                        QgsProcessingParameterExtent,
                        QgsProcessingParameterColor,
                        QgsProcessingOutputFile,
+                       QgsProcessingParameterDefinition,
                        QgsProcessingParameterFileDestination,
                        QgsProcessingParameterFolderDestination,
                        QgsGeometry,
@@ -126,7 +125,7 @@ def get_metatiles(extent, zoom, size=4):
     metatiles = {}
     for i, x in enumerate(range(left_tile, right_tile + 1)):
         for j, y in enumerate(range(top_tile, bottom_tile + 1)):
-            meta_key = '{}:{}'.format(int(i / size), int(j / size))
+            meta_key = f'{int(i / size)}:{int(j / size)}'
             if meta_key not in metatiles:
                 metatiles[meta_key] = MetaTile()
             metatile = metatiles[meta_key]
@@ -238,7 +237,14 @@ class TilesXYZAlgorithmBase(QgisAlgorithm):
         self.feedback = feedback
         feedback.setProgress(1)
 
-        extent = self.parameterAsExtent(parameters, self.EXTENT, context)
+        project = context.project()
+
+        # Transform extent to match project CRS
+        extent_original = self.parameterAsExtent(parameters, self.EXTENT, context)
+        extent_crs = self.parameterAsExtentCrs(parameters, self.EXTENT, context)
+        extent_crs_to_project_crs = QgsCoordinateTransform(extent_crs, project.crs(), context.transformContext())
+        extent = extent_crs_to_project_crs.transformBoundingBox(extent_original)
+
         self.min_zoom = self.parameterAsInt(parameters, self.ZOOM_MIN, context)
         self.max_zoom = self.parameterAsInt(parameters, self.ZOOM_MAX, context)
         dpi = self.parameterAsInt(parameters, self.DPI, context)
@@ -246,7 +252,7 @@ class TilesXYZAlgorithmBase(QgisAlgorithm):
         self.tile_format = self.formats[self.parameterAsEnum(parameters, self.TILE_FORMAT, context)]
         self.quality = self.parameterAsInt(parameters, self.QUALITY, context)
         self.metatilesize = self.parameterAsInt(parameters, self.METATILESIZE, context)
-        self.maxThreads = int(ProcessingConfig.getSetting(ProcessingConfig.MAX_THREADS))
+        self.maxThreads = context.maximumThreads()
         try:
             self.tile_width = self.parameterAsInt(parameters, self.TILE_WIDTH, context)
             self.tile_height = self.parameterAsInt(parameters, self.TILE_HEIGHT, context)
@@ -257,7 +263,6 @@ class TilesXYZAlgorithmBase(QgisAlgorithm):
         wgs_crs = QgsCoordinateReferenceSystem('EPSG:4326')
         dest_crs = QgsCoordinateReferenceSystem('EPSG:3857')
 
-        project = context.project()
         self.src_to_wgs = QgsCoordinateTransform(project.crs(), wgs_crs, context.transformContext())
         self.wgs_to_dest = QgsCoordinateTransform(wgs_crs, dest_crs, context.transformContext())
         # without re-writing, we need a different settings for each thread to stop async errors
@@ -265,6 +270,7 @@ class TilesXYZAlgorithmBase(QgisAlgorithm):
         self.settingsDictionary = {str(i): QgsMapSettings() for i in range(self.maxThreads)}
         for thread in self.settingsDictionary:
             self.settingsDictionary[thread].setOutputImageFormat(QImage.Format_ARGB32_Premultiplied)
+            self.settingsDictionary[thread].setTransformContext(context.transformContext())
             self.settingsDictionary[thread].setDestinationCrs(dest_crs)
             self.settingsDictionary[thread].setLayers(self.layers)
             self.settingsDictionary[thread].setOutputDpi(dpi)
@@ -359,6 +365,9 @@ class MBTilesWriter:
         ds = driver.Create(self.filename, 1, 1, 1, options=['TILE_FORMAT=%s' % tile_format] + options)
         ds = None
 
+        # faster sqlite processing for parallel access https://stackoverflow.com/questions/15143871/simplest-way-to-retry-sqlite-query-if-db-is-locked
+        self._execute_sqlite("PRAGMA journal_mode=WAL")
+
         self._execute_sqlite(
             "INSERT INTO metadata(name, value) VALUES ('{}', '{}');".format('minzoom', self.min_zoom),
             "INSERT INTO metadata(name, value) VALUES ('{}', '{}');".format('maxzoom', self.max_zoom),
@@ -368,7 +377,9 @@ class MBTilesWriter:
         self._zoom = None
 
     def _execute_sqlite(self, *commands):
-        conn = sqlite3.connect(self.filename)
+        # wait_timeout = default timeout is 5 seconds increase it for slower disk access and more Threads to 120 seconds
+        # isolation_level = None Uses sqlite AutoCommit and disable phyton transaction management feature. https://docs.python.org/3/library/sqlite3.html#sqlite3-controlling-transactions
+        conn = sqlite3.connect(self.filename, timeout=120, isolation_level=None)
         for cmd in commands:
             conn.execute(cmd)
         conn.commit()
@@ -390,7 +401,7 @@ class MBTilesWriter:
         ]
 
         bounds = ','.join(map(str, zoom_extent))
-        self._execute_sqlite("UPDATE metadata SET value='{}' WHERE name='bounds'".format(bounds))
+        self._execute_sqlite(f"UPDATE metadata SET value='{bounds}' WHERE name='bounds'")
 
         self._zoom_ds = gdal.OpenEx(self.filename, 1, open_options=['ZOOM_LEVEL=%s' % first_tile.z])
         self._first_tile = first_tile
@@ -418,14 +429,16 @@ class MBTilesWriter:
     def close(self):
         self._zoom_ds = None
         bounds = ','.join(map(str, self.extent))
-        self._execute_sqlite("UPDATE metadata SET value='{}' WHERE name='bounds'".format(bounds))
+        self._execute_sqlite(f"UPDATE metadata SET value='{bounds}' WHERE name='bounds'")
+        # Set Journal Mode back to default
+        self._execute_sqlite("PRAGMA journal_mode=DELETE")
 
 
 class TilesXYZAlgorithmMBTiles(TilesXYZAlgorithmBase):
     OUTPUT_FILE = 'OUTPUT_FILE'
 
     def initAlgorithm(self, config=None):
-        super(TilesXYZAlgorithmMBTiles, self).initAlgorithm()
+        super().initAlgorithm()
         self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT_FILE,
                                                                 self.tr('Output file (for MBTiles)'),
                                                                 self.tr('MBTiles files (*.mbtiles)'),
@@ -469,11 +482,11 @@ LEAFLET_TEMPLATE = '''
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css"
-   integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+   integrity="sha384-o/2yZuJZWGJ4s/adjxVW71R+EO/LyCwdQfP5UWSgX/w87iiTXuvDZaejd3TsN7mf"
    crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"
-   integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og=="
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+   integrity="sha384-okbbMvvx/qfQkmiQKfd5VifbKZ/W8p1qIsWvE1ROPUfHWsDcC8/BnHohF7vPg2T6"
    crossorigin=""></script>
   <style type="text/css">
     body {{
@@ -489,16 +502,26 @@ LEAFLET_TEMPLATE = '''
 <body>
   <div id="map"></div>
   <script>
-      var map = L.map('map').setView([{centery}, {centerx}], {avgzoom});
-      L.tileLayer({tilesource}, {{
+      var map = L.map('map', {{ attributionControl: false }} ).setView([{centery}, {centerx}], {avgzoom});
+      L.control.attribution( {{ prefix: false }} ).addTo( map );
+      {osm}
+      var tilesource_layer = L.tileLayer({tilesource}, {{
         minZoom: {minzoom},
         maxZoom: {maxzoom},
         tms: {tms},
-        attribution: 'Generated by TilesXYZ'
+        attribution: '{attribution}'
       }}).addTo(map);
   </script>
 </body>
 </html>
+'''
+
+OSM_TEMPLATE = '''
+      var osm_layer = L.tileLayer('https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
+        minZoom: {minzoom},
+        maxZoom: {maxzoom},
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }}).addTo(map);
 '''
 
 
@@ -518,7 +541,7 @@ class DirectoryWriter:
         ytile = tile.y
         if self.is_tms:
             ytile = tms(ytile, tile.z)
-        path = os.path.join(directory, '{}.{}'.format(ytile, self.format.lower()))
+        path = os.path.join(directory, f'{ytile}.{self.format.lower()}')
         image.save(path, self.format, self.quality)
         return path
 
@@ -532,9 +555,12 @@ class TilesXYZAlgorithmDirectory(TilesXYZAlgorithmBase):
     OUTPUT_HTML = 'OUTPUT_HTML'
     TILE_WIDTH = 'TILE_WIDTH'
     TILE_HEIGHT = 'TILE_HEIGHT'
+    HTML_TITLE = 'HTML_TITLE'
+    HTML_ATTRIBUTION = 'HTML_ATTRIBUTION'
+    HTML_OSM = 'HTML_OSM'
 
     def initAlgorithm(self, config=None):
-        super(TilesXYZAlgorithmDirectory, self).initAlgorithm()
+        super().initAlgorithm()
         self.addParameter(QgsProcessingParameterNumber(self.TILE_WIDTH,
                                                        self.tr('Tile width'),
                                                        minValue=1,
@@ -556,6 +582,21 @@ class TilesXYZAlgorithmDirectory(TilesXYZAlgorithmBase):
                                                                 self.tr('Output html (Leaflet)'),
                                                                 self.tr('HTML files (*.html)'),
                                                                 optional=True))
+        html_title_param = QgsProcessingParameterString(self.HTML_TITLE,
+                                                        self.tr('Leaflet HTML output title'),
+                                                        optional=True,
+                                                        defaultValue='')
+        html_attrib_param = QgsProcessingParameterString(self.HTML_ATTRIBUTION,
+                                                         self.tr('Leaflet HTML output attribution'),
+                                                         optional=True,
+                                                         defaultValue='')
+        html_osm_param = QgsProcessingParameterBoolean(self.HTML_OSM,
+                                                       self.tr('Include OpenStreetMap basemap in Leaflet HTML output'),
+                                                       defaultValue=False,
+                                                       optional=True)
+        for param in (html_title_param, html_attrib_param, html_osm_param):
+            param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+            self.addParameter(param)
 
     def name(self):
         return 'tilesxyzdirectory'
@@ -573,6 +614,9 @@ class TilesXYZAlgorithmDirectory(TilesXYZAlgorithmBase):
         is_tms = self.parameterAsBoolean(parameters, self.TMS_CONVENTION, context)
         output_html = self.parameterAsString(parameters, self.OUTPUT_HTML, context)
         output_dir = self.parameterAsString(parameters, self.OUTPUT_DIRECTORY, context)
+        html_title = self.parameterAsString(parameters, self.HTML_TITLE, context)
+        html_attribution = self.parameterAsString(parameters, self.HTML_ATTRIBUTION, context)
+        is_osm = self.parameterAsBoolean(parameters, self.HTML_OSM, context)
         if not output_dir:
             raise QgsProcessingException(self.tr('You need to specify output directory.'))
 
@@ -584,14 +628,19 @@ class TilesXYZAlgorithmDirectory(TilesXYZAlgorithmBase):
         if output_html:
             output_dir_safe = urllib.parse.quote(output_dir.replace('\\', '/'))
             html_code = LEAFLET_TEMPLATE.format(
-                tilesetname="Leaflet Preview",
+                tilesetname=html_title if html_title else "Leaflet Preview",
                 centerx=self.wgs_extent[0] + (self.wgs_extent[2] - self.wgs_extent[0]) / 2,
                 centery=self.wgs_extent[1] + (self.wgs_extent[3] - self.wgs_extent[1]) / 2,
                 avgzoom=(self.max_zoom + self.min_zoom) / 2,
-                tilesource="'file:///{}/{{z}}/{{x}}/{{y}}.{}'".format(output_dir_safe, self.tile_format.lower()),
+                tilesource=f"'file:///{output_dir_safe}/{{z}}/{{x}}/{{y}}.{self.tile_format.lower()}'",
                 minzoom=self.min_zoom,
                 maxzoom=self.max_zoom,
-                tms='true' if is_tms else 'false'
+                tms='true' if is_tms else 'false',
+                attribution=html_attribution if html_attribution else self.tr('Created by QGIS algorithm:') + ' ' + self.displayName(),
+                osm=OSM_TEMPLATE.format(
+                    minzoom=self.min_zoom,
+                    maxzoom=self.max_zoom
+                ) if is_osm else ''
             )
             with open(output_html, "w") as fh:
                 fh.write(html_code)

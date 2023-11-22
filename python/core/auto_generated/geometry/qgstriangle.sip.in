@@ -54,8 +54,10 @@ Construct a QgsTriangle from three QPointF.
 :param p3: third point
 %End
 
-    bool operator==( const QgsTriangle &other ) const /HoldGIL/;
-    bool operator!=( const QgsTriangle &other ) const /HoldGIL/;
+    virtual bool operator==( const QgsAbstractGeometry &other ) const /HoldGIL/;
+
+    virtual bool operator!=( const QgsAbstractGeometry &other ) const /HoldGIL/;
+
 
     virtual QString geometryType() const /HoldGIL/;
 
@@ -154,7 +156,7 @@ Example
        # []
 %End
 
-    bool isDegenerate() /HoldGIL/;
+    bool isDegenerate() const /HoldGIL/;
 %Docstring
 Convenient method checking if the geometry is degenerate (have duplicate or colinear point(s)).
 

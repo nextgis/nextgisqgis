@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for HANA QgsAbastractProviderConnection API.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -11,16 +10,18 @@ __author__ = 'Maxim Rylov'
 __date__ = '02/04/2020'
 __copyright__ = 'Copyright 2020, The QGIS Project'
 # This will get replaced with a git SHA1 when you do a git archive
-__revision__ = '6b44a42058d8f4d3f994b915f72f08b6a3ab474d'
+__revision__ = '$Format:%H$'
 
 import os
+
 from qgis.core import (
     QgsAbstractDatabaseProviderConnection,
-    QgsDataSourceUri,
-    QgsProviderRegistry)
+    QgsProviderRegistry,
+)
 from qgis.testing import unittest
-from test_qgsproviderconnection_base import TestPyQgsProviderConnectionBase
+
 from test_hana_utils import QgsHanaProviderUtils
+from test_qgsproviderconnection_base import TestPyQgsProviderConnectionBase
 
 
 class TestPyQgsProviderConnectionHana(unittest.TestCase, TestPyQgsProviderConnectionBase):
@@ -36,6 +37,7 @@ class TestPyQgsProviderConnectionHana(unittest.TestCase, TestPyQgsProviderConnec
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super(TestPyQgsProviderConnectionHana, cls).setUpClass()
 
         TestPyQgsProviderConnectionBase.setUpClass()
 
@@ -57,6 +59,7 @@ class TestPyQgsProviderConnectionHana(unittest.TestCase, TestPyQgsProviderConnec
 
         QgsHanaProviderUtils.cleanUp(cls.conn, cls.schemaName)
         cls.conn.close()
+        super(TestPyQgsProviderConnectionHana, cls).tearDownClass()
 
     def getUniqueSchemaName(self, name):
         return 'qgis_test_' + QgsHanaProviderUtils.generateSchemaName(self.conn, name)

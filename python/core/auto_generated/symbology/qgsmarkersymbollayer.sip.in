@@ -228,9 +228,9 @@ Creates a new QgsSimpleMarkerSymbolLayer from an SLD XML element.
 
     virtual QString ogrFeatureStyle( double mmScaleFactor, double mapUnitScaleFactor ) const;
 
-    virtual void setOutputUnit( QgsUnitTypes::RenderUnit unit );
+    virtual void setOutputUnit( Qgis::RenderUnit unit );
 
-    virtual QgsUnitTypes::RenderUnit outputUnit() const;
+    virtual Qgis::RenderUnit outputUnit() const;
 
     virtual void setMapUnitScale( const QgsMapUnitScale &scale );
 
@@ -386,7 +386,7 @@ Sets the width of the marker's stroke.
 .. seealso:: :py:func:`setStrokeWidthMapUnitScale`
 %End
 
-    void setStrokeWidthUnit( QgsUnitTypes::RenderUnit u );
+    void setStrokeWidthUnit( Qgis::RenderUnit u );
 %Docstring
 Sets the unit for the width of the marker's stroke.
 
@@ -399,7 +399,7 @@ Sets the unit for the width of the marker's stroke.
 .. seealso:: :py:func:`setStrokeWidthMapUnitScale`
 %End
 
-    QgsUnitTypes::RenderUnit strokeWidthUnit() const;
+    Qgis::RenderUnit strokeWidthUnit() const;
 %Docstring
 Returns the unit for the width of the marker's stroke.
 
@@ -527,6 +527,8 @@ Creates a new QgsFilledMarkerSymbolLayer.
     virtual QColor color() const;
 
     virtual bool usesMapUnits() const;
+
+    virtual void setOutputUnit( Qgis::RenderUnit unit );
 
 
   private:
@@ -684,7 +686,7 @@ Sets the dynamic SVG parameters
 .. versionadded:: 3.18
 %End
 
-    void setStrokeWidthUnit( QgsUnitTypes::RenderUnit unit );
+    void setStrokeWidthUnit( Qgis::RenderUnit unit );
 %Docstring
 Sets the units for the stroke width.
 
@@ -693,7 +695,7 @@ Sets the units for the stroke width.
 .. seealso:: :py:func:`strokeWidthUnit`
 %End
 
-    QgsUnitTypes::RenderUnit strokeWidthUnit() const;
+    Qgis::RenderUnit strokeWidthUnit() const;
 %Docstring
 Returns the units for the stroke width.
 
@@ -703,9 +705,9 @@ Returns the units for the stroke width.
     void setStrokeWidthMapUnitScale( const QgsMapUnitScale &scale );
     const QgsMapUnitScale &strokeWidthMapUnitScale() const;
 
-    virtual void setOutputUnit( QgsUnitTypes::RenderUnit unit );
+    virtual void setOutputUnit( Qgis::RenderUnit unit );
 
-    virtual QgsUnitTypes::RenderUnit outputUnit() const;
+    virtual Qgis::RenderUnit outputUnit() const;
 
 
     virtual void setMapUnitScale( const QgsMapUnitScale &scale );
@@ -785,13 +787,13 @@ Used internally when reading/writing symbols.
 
     virtual void renderPoint( QPointF point, QgsSymbolRenderContext &context );
 
-
     virtual QVariantMap properties() const;
-
 
     virtual QgsRasterMarkerSymbolLayer *clone() const /Factory/;
 
     virtual bool usesMapUnits() const;
+
+    virtual QColor color() const;
 
 
     double calculateAspectRatio( QgsSymbolRenderContext &context, double scaledSize, bool &hasDataDefinedAspectRatio ) const;
@@ -899,6 +901,21 @@ if the value set is lower or equal to 0 the aspect ratio will be preserved in re
 
   protected:
 
+    void setCommonProperties( const QVariantMap &properties );
+%Docstring
+Sets common class properties from a ``properties`` map.
+
+.. versionadded:: 3.26
+%End
+
+    void copyCommonProperties( QgsRasterMarkerSymbolLayer *other ) const;
+%Docstring
+Copies common properties to another layer.
+
+.. versionadded:: 3.26
+%End
+
+
 
 };
 
@@ -966,6 +983,8 @@ required fonts are not available on the system.
     virtual void writeSldMarker( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const;
 
     virtual bool usesMapUnits() const;
+
+    virtual void setOutputUnit( Qgis::RenderUnit unit );
 
 
 
@@ -1044,7 +1063,7 @@ Set's the marker's stroke ``width``. Units are set by :py:func:`~QgsFontMarkerSy
 .. versionadded:: 2.16
 %End
 
-    QgsUnitTypes::RenderUnit strokeWidthUnit() const;
+    Qgis::RenderUnit strokeWidthUnit() const;
 %Docstring
 Returns the stroke width unit.
 
@@ -1057,7 +1076,7 @@ Returns the stroke width unit.
 .. versionadded:: 2.16
 %End
 
-    void setStrokeWidthUnit( QgsUnitTypes::RenderUnit unit );
+    void setStrokeWidthUnit( Qgis::RenderUnit unit );
 %Docstring
 Sets the stroke width ``unit``.
 
@@ -1116,6 +1135,67 @@ Sets the stroke join ``style``.
 
     virtual QRectF bounds( QPointF point, QgsSymbolRenderContext &context );
 
+
+};
+
+
+class QgsAnimatedMarkerSymbolLayer : QgsRasterMarkerSymbolLayer
+{
+%Docstring(signature="appended")
+Animated marker symbol layer class.
+
+The :py:class:`QgsAnimatedMarkerSymbolLayer` class renders frames from an animated raster image source (e.g.
+an animated GIF) during temporal animations or map exports.
+
+.. versionadded:: 3.26
+%End
+
+%TypeHeaderCode
+#include "qgsmarkersymbollayer.h"
+%End
+  public:
+
+    QgsAnimatedMarkerSymbolLayer( const QString &path = QString(),
+                                  double size = DEFAULT_RASTERMARKER_SIZE,
+                                  double angle = DEFAULT_RASTERMARKER_ANGLE );
+%Docstring
+Constructor for animated marker symbol layer using the specified source image ``path``.
+%End
+
+    ~QgsAnimatedMarkerSymbolLayer();
+
+
+    static QgsSymbolLayer *create( const QVariantMap &properties = QVariantMap() ) /Factory/;
+%Docstring
+Creates an animated marker symbol layer from a string map of ``properties``.
+%End
+
+
+    virtual QString layerType() const;
+
+    virtual QVariantMap properties() const;
+
+    virtual QgsAnimatedMarkerSymbolLayer *clone() const /Factory/;
+
+
+    void setFrameRate( double rate );
+%Docstring
+Sets the marker frame ``rate`` in frame per second.
+
+.. seealso:: :py:func:`frameRate`
+%End
+
+    double frameRate() const;
+%Docstring
+Returns the marker frame rate in frame per second.
+
+.. seealso:: :py:func:`setFrameRate`
+%End
+
+    virtual void startRender( QgsSymbolRenderContext &context );
+
+
+  protected:
 
 };
 

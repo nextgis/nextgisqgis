@@ -1,15 +1,17 @@
---- a/python/plugins/processing/ProcessingPlugin.py	2022-02-18 15:06:10.000000000 +0300
-+++ b/python/plugins/processing/ProcessingPlugin.py	2022-05-20 12:12:32.060466800 +0300
-@@ -46,7 +46,7 @@
- 
- from processing.core.Processing import Processing
- from processing.gui.ProcessingToolbox import ProcessingToolbox
--from processing.gui.HistoryDialog import HistoryDialog
-+#from processing.gui.HistoryDialog import HistoryDialog
- from processing.gui.ConfigDialog import ConfigOptionsPage
- from processing.gui.ResultsDock import ResultsDock
- from processing.gui.MessageDialog import MessageDialog
-@@ -188,11 +188,11 @@
+--- a/python/plugins/processing/ProcessingPlugin.py	2023-08-21 19:39:45.571058034 +0300
++++ b/python/plugins/processing/ProcessingPlugin.py	2023-11-06 20:01:10.000000000 +0300
+@@ -37,8 +37,8 @@
+                        QgsSettings)
+ from qgis.gui import (QgsGui,
+                       QgsOptionsWidgetFactory,
+-                      QgsCustomDropHandler,
+-                      QgsProcessingHistoryDialog)
++                      QgsCustomDropHandler)
++#                      QgsProcessingHistoryDialog)
+ from qgis.PyQt.QtCore import (
+     QObject,
+     Qt,
+@@ -205,11 +205,11 @@
      def initGui(self):
          # port old log, ONCE ONLY!
          settings = QgsSettings()
@@ -26,7 +28,26 @@
  
          self.options_factory = ProcessingOptionsFactory()
          self.options_factory.setTitle(self.tr('Processing'))
-@@ -243,15 +243,15 @@
+@@ -227,12 +227,12 @@
+         self.edit_features_locator_filter = InPlaceAlgorithmLocatorFilter()
+         iface.registerLocatorFilter(self.edit_features_locator_filter)
+ 
+-        QgsGui.historyProviderRegistry().providerById('processing').executePython.connect(
+-            self._execute_history_commands
+-        )
+-        QgsGui.historyProviderRegistry().providerById('processing').createTest.connect(
+-            self.create_test
+-        )
++#        QgsGui.historyProviderRegistry().providerById('processing').executePython.connect(
++#            self._execute_history_commands
++#        )
++#        QgsGui.historyProviderRegistry().providerById('processing').createTest.connect(
++#            self.create_test
++#        )
+ 
+         self.toolbox = ProcessingToolbox()
+         self.iface.addDockWidget(Qt.RightDockWidgetArea, self.toolbox)
+@@ -269,15 +269,15 @@
                                              QKeySequence('Ctrl+Alt+G').toString(QKeySequence.NativeText))
          self.menu.addAction(self.modelerAction)
  
@@ -51,7 +72,7 @@
  
          self.resultsAction = QAction(
              QgsApplication.getThemeIcon("/processingResult.svg"),
-@@ -442,7 +442,7 @@
+@@ -485,7 +485,7 @@
  
          self.iface.unregisterMainWindowAction(self.toolboxAction)
          self.iface.unregisterMainWindowAction(self.modelerAction)
@@ -60,16 +81,18 @@
          self.iface.unregisterMainWindowAction(self.resultsAction)
  
          self.iface.unregisterOptionsWidgetFactory(self.options_factory)
-@@ -484,9 +484,9 @@
+@@ -534,10 +534,10 @@
          else:
              self.resultsDock.show()
  
 -    def openHistory(self):
--        dlg = HistoryDialog()
--        dlg.exec_()
+-        dlg = QgsProcessingHistoryDialog(self.iface.mainWindow())
+-        dlg.setAttribute(Qt.WA_DeleteOnClose)
+-        dlg.show()
 +    #def openHistory(self):
-+    #    dlg = HistoryDialog()
-+    #    dlg.exec_()
++    #    dlg = QgsProcessingHistoryDialog(self.iface.mainWindow())
++    #    dlg.setAttribute(Qt.WA_DeleteOnClose)
++    #    dlg.show()
  
      def tr(self, message, disambiguation=None, n=-1):
          return QCoreApplication.translate('ProcessingPlugin', message, disambiguation=disambiguation, n=n)

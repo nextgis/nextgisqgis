@@ -1,6 +1,6 @@
 --- a/src/app/pluginmanager/qgspluginmanager.cpp	2022-02-18 15:06:10.000000000 +0300
 +++ b/src/app/pluginmanager/qgspluginmanager.cpp	2022-08-11 17:22:42.887502300 +0300
-@@ -901,7 +901,7 @@
+@@ -905,7 +905,7 @@
        iconPath = "file://" + iconPath;
  #endif
      }
@@ -8,4 +8,4 @@
 +    html += QStringLiteral( "<img src=\"%1\" width=\"64\" style=\"float:right;max-width:64px;max-height:64px;\">" ).arg( iconPath );
    }
  
-   const QRegularExpression stripHtml = QRegularExpression( QStringLiteral( "&lt;[^\\s].*?&gt;" ) );
+   const thread_local QRegularExpression stripHtml = QRegularExpression( QStringLiteral( "&lt;[^\\s].*?&gt;" ) );

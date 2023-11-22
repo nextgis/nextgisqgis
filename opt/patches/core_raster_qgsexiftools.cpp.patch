@@ -1,6 +1,6 @@
---- a/src/core/raster/qgsexiftools.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/raster/qgsexiftools.cpp	2022-04-20 13:48:03.066183000 +0300
-@@ -16,7 +16,9 @@
+--- a/src/core/raster/qgsexiftools.cpp	2023-08-21 19:39:45.739046118 +0300
++++ b/src/core/raster/qgsexiftools.cpp	2023-10-24 12:21:59.000000000 +0300
+@@ -16,31 +16,42 @@
  #include "qgsexiftools.h"
  #include "qgspoint.h"
  
@@ -11,16 +11,20 @@
  
  #include <QDate>
  #include <QRegularExpression>
-@@ -24,63 +26,53 @@
+ #include <QFileInfo>
  #include <QTime>
- 
  
 -double readRationale( const Exiv2::Value &value, long n = 0 )
 -{
 -  const Exiv2::Rational rational = value.toRational( n );
 -  return static_cast< double >( rational.first ) / rational.second;
 -};
--
++//double readRationale( const Exiv2::Value &value, long n = 0 )
++//{
++//  const Exiv2::Rational rational = value.toRational( n );
++//  return static_cast< double >( rational.first ) / rational.second;
++//};
+ 
 -double readCoordinate( const Exiv2::Value &value )
 +double readCoordinate( const std::string &value )
  {
@@ -41,6 +45,19 @@
    }
    return res;
  };
+ 
++//TODO: Проверить где и как это работает в NGQGIS
++//необходимо привести decodeXmpData к виду decodeExifData?
++/*
+ QVariant decodeXmpData( const QString &key, Exiv2::XmpData::const_iterator &it )
+ {
+   QVariant val;
+@@ -128,47 +139,37 @@
+     }
+   }
+   return val;
+-}
++}*/
  
 -QVariant decodeExifData( const QString &key, Exiv2::ExifData::const_iterator &it )
 +QVariant decodeExifData( const QString &key, const std::string &value )
@@ -100,35 +117,18 @@
      {
        case Exiv2::asciiString:
        case Exiv2::string:
-@@ -134,11 +126,11 @@
-       {
-         if ( it->count() == 1 )
-         {
--          val = QVariant::fromValue( readRationale( it->value() ) );
-+          val = QVariant::fromValue( readRationale( value ) );
-         }
-         else
-         {
--          val = QString::fromStdString( it->toString() );
-+          val = QString::fromStdString( value );
-         }
-         break;
-       }
-@@ -150,10 +142,11 @@
-       case Exiv2::langAlt:
-       case Exiv2::invalidTypeId:
+@@ -240,7 +241,9 @@
        case Exiv2::lastTypeId:
--        val = QString::fromStdString( it->toString() );
-+        val = QString::fromStdString( value );
+         val = QString::fromStdString( it->toString() );
          break;
- 
 -    }
++
 +    }*/
 +    val = QString::fromStdString( value );
    }
    return val;
  }
-@@ -165,68 +158,56 @@
+@@ -252,8 +255,7 @@
    const double m = 60 * ( d - degrees );
    const int minutes = static_cast< int >( std::floor( m ) );
    const double s = 60 * ( m - minutes );
@@ -138,98 +138,130 @@
  }
  
  QVariant QgsExifTools::readTag( const QString &imagePath, const QString &key )
- {
--  if ( !QFileInfo::exists( imagePath ) )
--    return QVariant();
-+    if ( !QFileInfo::exists( imagePath ) )
-+        return QVariant();
+@@ -261,16 +263,16 @@
+   if ( !QFileInfo::exists( imagePath ) )
+     return QVariant();
  
 -  try
--  {
++/*  if ( key.startsWith( QLatin1String( "Xmp." ) ) )
+   {
 -    std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toStdString() ) );
 -    if ( !image || key.isEmpty() )
 -      return QVariant();
--
--    image->readMetadata();
--    Exiv2::ExifData &exifData = image->exifData();
--    if ( exifData.empty() )
-+    QVariant res;
-+    GDALDataset *ds = reinterpret_cast<GDALDataset*>(
-+        GDALOpenEx(imagePath.toStdString().c_str(),
-+            GDAL_OF_RASTER | GDAL_OF_SHARED | GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
-+            nullptr, nullptr, nullptr));
-+    if (ds == nullptr)
-     {
--      return QVariant();
-+        return res;
-     }
++      std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toStdString() ) );
++      if ( !image || key.isEmpty() )
++        return QVariant();
  
--    Exiv2::ExifData::const_iterator i = exifData.findKey( Exiv2::ExifKey( key.toUtf8().constData() ) );
--    return i != exifData.end() ? decodeExifData( key, i ) : QVariant();
--  }
+-    image->readMetadata();
++      image->readMetadata();
++
++      image->readMetadata();
+ 
+-    if ( key.startsWith( QLatin1String( "Xmp." ) ) )
+-    {
+       Exiv2::XmpData &xmpData = image->xmpData();
+       if ( xmpData.empty() )
+       {
+@@ -278,21 +280,21 @@
+       }
+       Exiv2::XmpData::const_iterator i = xmpData.findKey( Exiv2::XmpKey( key.toUtf8().constData() ) );
+       return i != xmpData.end() ? decodeXmpData( key, i ) : QVariant();
+-    }
+-    else
+-    {
+-      Exiv2::ExifData &exifData = image->exifData();
+-      if ( exifData.empty() )
+-      {
+-        return QVariant();
+-      }
+-      Exiv2::ExifData::const_iterator i = exifData.findKey( Exiv2::ExifKey( key.toUtf8().constData() ) );
+-      return i != exifData.end() ? decodeExifData( key, i ) : QVariant();
+-    }
+   }
 -  catch ( ... )
--  {
++  else*/
+   {
 -    return QVariant();
--  }
-+    CPLStringList metadata( ds->GetMetadata(), TRUE );
-+    return decodeExifData( key, metadata[key.toUtf8().constData()] );
++      QVariant res;
++      GDALDataset *ds = reinterpret_cast<GDALDataset*>(
++          GDALOpenEx(imagePath.toStdString().c_str(),
++              GDAL_OF_RASTER | GDAL_OF_SHARED | GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
++              nullptr, nullptr, nullptr));
++      if (ds == nullptr)
++      {
++          return res;
++      }
++
++      CPLStringList metadata( ds->GetMetadata(), TRUE );
++      return decodeExifData( key, metadata[key.toUtf8().constData()] );
+   }
  }
  
- QVariantMap QgsExifTools::readTags( const QString &imagePath )
- {
--  if ( !QFileInfo::exists( imagePath ) )
--    return QVariantMap();
-+    if ( !QFileInfo::exists( imagePath ) )
-+        return QVariantMap();
+@@ -301,42 +303,32 @@
+   if ( !QFileInfo::exists( imagePath ) )
+     return QVariantMap();
  
 -  try
--  {
++  QVariantMap res;
++  GDALDataset *ds = reinterpret_cast<GDALDataset*>(
++      GDALOpenEx(imagePath.toStdString().c_str(),
++          GDAL_OF_RASTER | GDAL_OF_SHARED | GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
++          nullptr, nullptr, nullptr));
++  if (ds == nullptr)
+   {
+-    QVariantMap res;
 -    std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toStdString() ) );
 -    if ( !image )
 -      return QVariantMap();
--
 -    image->readMetadata();
--    Exiv2::ExifData &exifData = image->exifData();
--    if ( exifData.empty() )
-+    QVariantMap res;
-+    GDALDataset *ds = reinterpret_cast<GDALDataset*>(
-+        GDALOpenEx(imagePath.toStdString().c_str(),
-+            GDAL_OF_RASTER | GDAL_OF_SHARED | GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
-+            nullptr, nullptr, nullptr));
-+    if (ds == nullptr)
-     {
--      return QVariantMap();
-+        return res;
-     }
 -
--    QVariantMap res;
--    const Exiv2::ExifData::const_iterator end = exifData.end();
--    for ( Exiv2::ExifData::const_iterator i = exifData.begin(); i != end; ++i )
-+    CPLStringList metadata( ds->GetMetadata(), TRUE );
-+    for(int i = 0; i < metadata.size(); i++)
-     {
--      const QString key = QString::fromStdString( i->key() );
--      res.insert( key, decodeExifData( key, i ) );
-+        char *pszKey = nullptr;
-+        const char *pszValue = CPLParseNameValue( metadata[i], &pszKey );
-+        if( pszKey )
-+        {
-+            const QString key = QString::fromStdString( pszKey );
-+            res.insert( key, decodeExifData( key, pszValue ) );
-+            CPLFree( pszKey );
-+        }
-+        
-     }
-     return res;
+-    Exiv2::ExifData &exifData = image->exifData();
+-    if ( !exifData.empty() )
+-    {
+-      const Exiv2::ExifData::const_iterator end = exifData.end();
+-      for ( Exiv2::ExifData::const_iterator i = exifData.begin(); i != end; ++i )
+-      {
+-        const QString key = QString::fromStdString( i->key() );
+-        res.insert( key, decodeExifData( key, i ) );
+-      }
+-    }
+-
+-    Exiv2::XmpData &xmpData = image->xmpData();
+-    if ( !xmpData.empty() )
+-    {
+-      const Exiv2::XmpData::const_iterator end = xmpData.end();
+-      for ( Exiv2::XmpData::const_iterator i = xmpData.begin(); i != end; ++i )
++      return res;
++  }
++  CPLStringList metadata( ds->GetMetadata(), TRUE );
++  for(int i = 0; i < metadata.size(); i++)
++  {
++      char *pszKey = nullptr;
++      const char *pszValue = CPLParseNameValue( metadata[i], &pszKey );
++      if( pszKey )
+       {
+-        const QString key = QString::fromStdString( i->key() );
+-        res.insert( key, decodeXmpData( key, i ) );
++          const QString key = QString::fromStdString( pszKey );
++          res.insert( key, decodeExifData( key, pszValue ) );
++          CPLFree( pszKey );
+       }
+-    }
+ 
+-    return res;
 -  }
 -  catch ( ... )
 -  {
 -    return QVariantMap();
--  }
++      //TODO add decodeXmpData
++      //res.insert( key, decodeXmpData( key, i ) );
+   }
++
++  return res;
  }
  
  bool QgsExifTools::hasGeoTag( const QString &imagePath )
-@@ -238,35 +219,45 @@
+@@ -348,35 +340,45 @@
  
  QgsPoint QgsExifTools::getGeoTag( const QString &imagePath, bool &ok )
  {
@@ -244,7 +276,10 @@
 -
 -    image->readMetadata();
 -    Exiv2::ExifData &exifData = image->exifData();
--
++    ok = false;
++    if ( !QFileInfo::exists( imagePath ) )
++        return QgsPoint();
+ 
 -    if ( exifData.empty() )
 -      return QgsPoint();
 -
@@ -256,10 +291,6 @@
 -    if ( itLatRef == exifData.end() || itLatVal == exifData.end() ||
 -         itLonRef == exifData.end() || itLonVal == exifData.end() )
 -      return QgsPoint();
-+    ok = false;
-+    if ( !QFileInfo::exists( imagePath ) )
-+        return QgsPoint();
-+
 +    GDALDataset *ds = reinterpret_cast<GDALDataset*>(
 +        GDALOpenEx(imagePath.toStdString().c_str(),
 +            GDAL_OF_RASTER | GDAL_OF_SHARED | GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR,
@@ -268,7 +299,9 @@
 +    {
 +        return QgsPoint();
 +    }
-+
+ 
+-    double lat = readCoordinate( itLatVal->value() );
+-    double lon = readCoordinate( itLonVal->value() );
 +    CPLStringList metadata( ds->GetMetadata(), TRUE );
 +    auto latitudeRef = metadata["Exif_GPSLatitudeRef"];
 +    if(latitudeRef == nullptr)
@@ -295,15 +328,12 @@
 +    const QString latRef = QString::fromStdString( latitudeRef );
 +    const QString lonRef = QString::fromStdString( longitudeRef );
  
--    double lat = readCoordinate( itLatVal->value() );
--    double lon = readCoordinate( itLonVal->value() );
--
 -    const QString latRef = QString::fromStdString( itLatRef->value().toString() );
 -    const QString lonRef = QString::fromStdString( itLonRef->value().toString() );
      if ( latRef.compare( QLatin1String( "S" ), Qt::CaseInsensitive ) == 0 )
      {
        lat *= -1;
-@@ -278,14 +269,15 @@
+@@ -388,14 +390,15 @@
  
      ok = true;
  
@@ -325,7 +355,7 @@
          if ( elevRef.compare( QLatin1String( "1" ), Qt::CaseInsensitive ) == 0 )
          {
            elev *= -1;
-@@ -297,42 +289,59 @@
+@@ -407,48 +410,68 @@
      {
        return QgsPoint( lon, lat );
      }
@@ -415,4 +445,20 @@
 +    GDALClose(ds);
 +
    return true;
+ }
+ 
+ bool QgsExifTools::tagImage( const QString &imagePath, const QString &tag, const QVariant &value )
+ {
++  //DEBUG:
++  return false;
++/*
+   try
+   {
+     std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toStdString() ) );
+@@ -573,5 +596,5 @@
+   {
+     return false;
+   }
+-  return true;
++  return true;*/
  }

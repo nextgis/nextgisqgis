@@ -33,25 +33,25 @@ This is the base class for all map layer types (vector, raster).
     {
       switch ( layer->type() )
       {
-        case QgsMapLayerType::VectorLayer:
+        case Qgis::LayerType::Vector:
           sipType = sipType_QgsVectorLayer;
           break;
-        case QgsMapLayerType::RasterLayer:
+        case Qgis::LayerType::Raster:
           sipType = sipType_QgsRasterLayer;
           break;
-        case QgsMapLayerType::PluginLayer:
+        case Qgis::LayerType::Plugin:
           sipType = sipType_QgsPluginLayer;
           break;
-        case QgsMapLayerType::MeshLayer:
+        case Qgis::LayerType::Mesh:
           sipType = sipType_QgsMeshLayer;
           break;
-        case QgsMapLayerType::AnnotationLayer:
+        case Qgis::LayerType::Annotation:
           sipType = sipType_QgsAnnotationLayer;
           break;
-        case QgsMapLayerType::PointCloudLayer:
+        case Qgis::LayerType::PointCloud:
           sipType = sipType_QgsPointCloudLayer;
           break;
-        case QgsMapLayerType::GroupLayer:
+        case Qgis::LayerType::Group:
           sipType = sipType_QgsGroupLayer;
           break;
         default:
@@ -103,7 +103,7 @@ This is the base class for all map layer types (vector, raster).
     typedef QFlags<QgsMapLayer::StyleCategory> StyleCategories;
 
 
-    QgsMapLayer( QgsMapLayerType type = QgsMapLayerType::VectorLayer, const QString &name = QString(), const QString &source = QString() );
+    QgsMapLayer( Qgis::LayerType type = Qgis::LayerType::Vector, const QString &name = QString(), const QString &source = QString() );
 %Docstring
 Constructor for QgsMapLayer
 
@@ -125,7 +125,7 @@ is still unique.
 .. versionadded:: 3.0
 %End
 
-    QgsMapLayerType type() const;
+    Qgis::LayerType type() const;
 %Docstring
 Returns the type of the layer.
 %End
@@ -214,8 +214,6 @@ Returns the layer's data provider, it may be ``None``.
 Sets the short name of the layer
 used by QGIS Server to identify the layer.
 
-:return: the layer short name
-
 .. seealso:: :py:func:`shortName`
 %End
 
@@ -250,8 +248,6 @@ used by QGIS Server in GetCapabilities request.
 Sets the abstract of the layer
 used by QGIS Server in GetCapabilities request.
 
-:return: the layer abstract
-
 .. seealso:: :py:func:`abstract`
 %End
 
@@ -269,8 +265,6 @@ used by QGIS Server in GetCapabilities request.
 %Docstring
 Sets the keyword list of the layer
 used by QGIS Server in GetCapabilities request.
-
-:return: the layer keyword list
 
 .. seealso:: :py:func:`keywordList`
 %End
@@ -292,8 +286,6 @@ Sets the DataUrl of the layer
 used by QGIS Server in GetCapabilities request.
 DataUrl is a a link to the underlying data represented by a particular layer.
 
-:return: the layer DataUrl
-
 .. seealso:: :py:func:`dataUrl`
 %End
 
@@ -313,8 +305,6 @@ DataUrl is a a link to the underlying data represented by a particular layer.
 Sets the DataUrl format of the layer
 used by QGIS Server in GetCapabilities request.
 DataUrl is a a link to the underlying data represented by a particular layer.
-
-:return: the layer DataUrl format
 
 .. seealso:: :py:func:`dataUrlFormat`
 %End
@@ -337,8 +327,6 @@ Sets the attribution of the layer
 used by QGIS Server in GetCapabilities request.
 Attribution indicates the provider of a layer or collection of layers.
 
-:return: the layer attribution
-
 .. seealso:: :py:func:`attribution`
 %End
 
@@ -358,8 +346,6 @@ Attribution indicates the provider of a layer or collection of layers.
 Sets the attribution URL of the layer
 used by QGIS Server in GetCapabilities request.
 Attribution indicates the provider of a layer or collection of layers.
-
-:return: the layer attribution URL
 
 .. seealso:: :py:func:`attributionUrl`
 %End
@@ -414,8 +400,6 @@ Set the metadata type of the layer
 used by QGIS Server in GetCapabilities request
 MetadataUrlType indicates the standard to which the metadata complies.
 Since QGIS 3.22, it edits the first metadata URL type.
-
-:return: the layer metadata type
 
 .. seealso:: :py:func:`serverProperties`
 
@@ -641,17 +625,20 @@ or layer with temporary data (as temporary mesh layer dataset)
       FlagDontResolveLayers,
       FlagTrustLayerMetadata,
       FlagReadExtentFromXml,
+      FlagForceReadOnly,
     };
     typedef QFlags<QgsMapLayer::ReadFlag> ReadFlags;
 
 
-    bool readLayerXml( const QDomElement &layerElement, QgsReadWriteContext &context, QgsMapLayer::ReadFlags flags = QgsMapLayer::ReadFlags() );
+    bool readLayerXml( const QDomElement &layerElement, QgsReadWriteContext &context,
+                       QgsMapLayer::ReadFlags flags = QgsMapLayer::ReadFlags(), QgsDataProvider *preloadedProvider /Transfer/ = 0 );
 %Docstring
 Sets state from DOM document
 
 :param layerElement: The DOM element corresponding to ``maplayer'' tag
 :param context: writing context (e.g. for conversion between relative and absolute paths)
 :param flags: optional argument which can be used to control layer reading behavior.
+:param preloadedProvider: optional preloaded data provider that will be used as data provider for this layer, takes ownership (since QGIS 3.32)
 \note
 
 The DOM node corresponds to a DOM document project file XML element read
@@ -895,7 +882,9 @@ record in the users style table in their personal qgis.db)
 
 :return: a QString with the style file name
 
-.. seealso:: :py:func:`also`
+.. seealso:: :py:func:`loadNamedStyle`
+
+.. seealso:: :py:func:`saveNamedStyle`
 %End
 
     virtual QString loadDefaultStyle( bool &resultFlag /Out/ );
@@ -908,7 +897,7 @@ record in the users style table in their personal qgis.db)
 :return: - a QString with any status messages
          - resultFlag: a reference to a flag that will be set to ``False`` if we did not manage to load the default style.
 
-.. seealso:: :py:func:`also`
+.. seealso:: :py:func:`loadNamedStyle`
 %End
 
     virtual QString loadNamedStyle( const QString &uri, bool &resultFlag /Out/, QgsMapLayer::StyleCategories categories = QgsMapLayer::AllStyleCategories );
@@ -927,7 +916,7 @@ record in the users style table in their personal qgis.db)
 :return: - a QString with any status messages
          - resultFlag: a reference to a flag that will be set to ``False`` if we did not manage to load the default style.
 
-.. seealso:: :py:func:`also`
+.. seealso:: :py:func:`loadDefaultStyle`
 %End
 
     virtual bool loadNamedStyleFromDatabase( const QString &db, const QString &uri, QString &qml /Out/ );
@@ -976,9 +965,39 @@ Export the properties of this layer as SLD style in a QDomDocument
 :param doc: the target QDomDocument
 :param errorMsg: this QString will be initialized on error
                  during the execution of writeSymbology
+
+.. seealso:: :py:func:`exportSldStyleV2`
 %End
 
-    virtual QString saveDefaultStyle( bool &resultFlag /Out/ );
+    virtual void exportSldStyleV2( QDomDocument &doc, QString &errorMsg, const QgsSldExportContext &exportContext ) const;
+%Docstring
+Export the properties of this layer as SLD style in a QDomDocument
+
+:param doc: the target QDomDocument
+:param errorMsg: this QString will be initialized on error
+                 during the execution of writeSymbology
+:param exportContext: SLD export context
+
+.. versionadded:: 3.30
+%End
+
+    virtual QString saveDefaultStyle( bool &resultFlag /Out/, StyleCategories categories );
+%Docstring
+Save the properties of this layer as the default style
+(either as a .qml file on disk or as a
+record in the users style table in their personal qgis.db)
+
+:param categories: the style categories to be saved (since QGIS 3.26)
+
+:return: - a QString with any status messages
+         - resultFlag: a reference to a flag that will be set to ``False`` if we did not manage to save the default style.
+
+.. seealso:: :py:func:`loadNamedStyle`
+
+.. seealso:: :py:func:`saveNamedStyle`
+%End
+
+ virtual QString saveDefaultStyle( bool &resultFlag /Out/ ) /Deprecated/;
 %Docstring
 Save the properties of this layer as the default style
 (either as a .qml file on disk or as a
@@ -989,6 +1008,10 @@ record in the users style table in their personal qgis.db)
          - resultFlag: a reference to a flag that will be set to ``False`` if we did not manage to save the default style.
 
 .. seealso:: :py:func:`loadNamedStyle`
+
+.. seealso:: :py:func:`saveNamedStyle`
+
+.. deprecated:: QGIS 3.26
 %End
 
     virtual QString saveNamedStyle( const QString &uri, bool &resultFlag /Out/, StyleCategories categories = AllStyleCategories );
@@ -1021,6 +1044,22 @@ Saves the properties of this layer to an SLD format file.
 :return: a string with any status or error messages
 
 .. seealso:: :py:func:`loadSldStyle`
+
+.. seealso:: :py:func:`saveSldStyleV2`
+%End
+
+    virtual QString saveSldStyleV2( bool &resultFlag /Out/, const QgsSldExportContext &exportContext ) const;
+%Docstring
+Saves the properties of this layer to an SLD format file.
+
+:param exportContext: SLD export context
+
+:return: - a string with any status or error messages
+         - resultFlag: a reference to a flag that will be set to ``False`` if the SLD file could not be generated
+
+.. seealso:: :py:func:`loadSldStyle`
+
+.. versionadded:: 3.30
 %End
 
     virtual QString loadSldStyle( const QString &uri, bool &resultFlag );
@@ -1488,6 +1527,66 @@ Set placeholder image for legend. If the string is empty, a generated legend wil
 .. versionadded:: 3.22
 %End
 
+    virtual bool hasMapTips() const;
+%Docstring
+Returns ``True`` if the layer contains map tips.
+
+.. seealso:: :py:func:`mapTipTemplate`
+
+.. seealso:: :py:func:`setMapTipTemplate`
+%End
+
+    QString mapTipTemplate() const;
+%Docstring
+The mapTip is a pretty, html representation for feature information.
+
+It may also contain embedded expressions.
+
+.. note::
+
+   this method was only available for vector layers since QGIS 3.0
+
+.. versionadded:: 3.30
+%End
+
+    void setMapTipTemplate( const QString &mapTipTemplate );
+%Docstring
+The mapTip is a pretty, html representation for feature information.
+
+It may also contain embedded expressions.
+
+.. note::
+
+   this method was only available for vector layers since QGIS 3.0
+
+.. versionadded:: 3.30
+%End
+
+    void setMapTipsEnabled( bool enabled );
+%Docstring
+Enable or disable map tips for this layer
+
+:param enabled: Whether map tips are enabled for this layer
+
+.. versionadded:: 3.32
+%End
+
+    bool mapTipsEnabled() const;
+%Docstring
+Returns true if map tips are enabled for this layer
+
+.. versionadded:: 3.32
+%End
+
+    static QgsDataProvider::ReadFlags providerReadFlags( const QDomNode &layerNode, QgsMapLayer::ReadFlags layerReadFlags );
+%Docstring
+Returns provider read flag deduced from layer read flags ``layerReadFlags`` and a dom node ``layerNode``
+that describes a layer (corresponding to ``maplayer'' tag in a DOM document project file read by :py:class:`QgsProject`).
+This static method is used when loading a project.
+
+.. versionadded:: 3.32
+%End
+
   public slots:
 
     void setMinimumScale( double scale );
@@ -1828,6 +1927,26 @@ Emitted when modifications has been done on layer
 .. versionadded:: 3.22
 %End
 
+    void mapTipTemplateChanged();
+%Docstring
+Emitted when the map tip template changes
+
+.. note::
+
+   this method was only available for vector layers since QGIS 3.0
+
+.. versionadded:: 3.30
+%End
+
+    void mapTipsEnabledChanged();
+%Docstring
+Emitted when map tips are enabled or disabled for the layer.
+
+.. seealso:: :py:func:`setMapTipsEnabled`
+
+.. versionadded:: 3.32
+%End
+
   protected:
 
     void clone( QgsMapLayer *layer ) const;
@@ -1970,6 +2089,7 @@ this method is now deprecated and always return ``False``, because circular depe
 
 .. deprecated:: QGIS 3.10
 %End
+
 
 
 

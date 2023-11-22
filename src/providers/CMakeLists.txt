@@ -132,6 +132,7 @@ macro(add_provider PLUGIN_NAME)
         set(PROV_${PLUGIN_NAME}_SOURCES ${PROV_${PLUGIN_NAME}_SOURCES} 
             ${CMAKE_CURRENT_SOURCE_DIR}/postgres/qgspostgresconn.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/postgres/qgspostgresconnpool.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/postgres/qgspostgresprovidermetadatautils.cpp
         )
     else()
         set(LIB_NAME provider_${PLUGIN_NAME})

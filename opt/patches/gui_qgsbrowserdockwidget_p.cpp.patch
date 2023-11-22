@@ -9,22 +9,22 @@
  #include "qgsattributetablemodel.h"
  #include "qgsattributetablefiltermodel.h"
  #include "qgsapplication.h"
-@@ -213,12 +213,12 @@
+@@ -215,12 +215,12 @@
        break;
      }
  
--    case QgsMapLayerType::VectorTileLayer:
+-    case Qgis::LayerType::VectorTile:
 -    {
 -      QgsDebugMsgLevel( QStringLiteral( "creating vector tile layer" ), 2 );
 -      mLayer = std::make_unique< QgsVectorTileLayer >( layerItem->uri(), layerItem->name() );
 -      break;
 -    }
-+    // case QgsMapLayerType::VectorTileLayer:
++    // case Qgis::LayerType::VectorTile:
 +    // {
 +    //   QgsDebugMsgLevel( QStringLiteral( "creating vector tile layer" ), 2 );
 +    //   mLayer = std::make_unique< QgsVectorTileLayer >( layerItem->uri(), layerItem->name() );
 +    //   break;
 +    // }
  
-     case QgsMapLayerType::PointCloudLayer:
+     case Qgis::LayerType::PointCloud:
      {

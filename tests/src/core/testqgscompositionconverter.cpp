@@ -22,13 +22,7 @@
 #include "qgscompositionconverter.h"
 #include "qgsproject.h"
 #include "qgsreadwritecontext.h"
-#include "qgslayoutexporter.h"
 #include "qgsmultirenderchecker.h"
-#include "qgssettings.h"
-
-#include "qgsmultibandcolorrenderer.h"
-#include "qgsrasterlayer.h"
-
 #include "qgslayoutmanager.h"
 #include "qgslayoutpagecollection.h"
 #include "qgslayoutitemlabel.h"
@@ -43,7 +37,7 @@
 #include "qgslayoutatlas.h"
 #include "qgslayoutitemhtml.h"
 #include "qgslayoutitemattributetable.h"
-
+#include "qgslayoutrendercontext.h"
 
 // Debug output for dom nodes
 QDebug operator<<( QDebug dbg, const QDomNode &node )
@@ -55,15 +49,15 @@ QDebug operator<<( QDebug dbg, const QDomNode &node )
   return dbg;
 }
 
-class TestQgsCompositionConverter: public QObject
+class TestQgsCompositionConverter: public QgsTest
 {
     Q_OBJECT
 
-
+  public:
+    TestQgsCompositionConverter() : QgsTest( QStringLiteral( "Composition Converter Tests" ) ) {}
 
   private slots:
     void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
     void init();// will be called before each testfunction is executed.
     void cleanup();// will be called after every testfunction.
 
@@ -160,28 +154,13 @@ class TestQgsCompositionConverter: public QObject
 
     QDomElement loadComposer( const QString &name );
 
-    QString mReport;
-
 };
 
 void TestQgsCompositionConverter::initTestCase()
 {
   QgsApplication::init();
   QgsApplication::initQgis();
-  mReport = QStringLiteral( "<h1>Layout Tests</h1>\n" );
-  QgsApplication::settingsSearchPathsForSVG.setValue( QStringList() << QStringLiteral( TEST_DATA_DIR ) );
-}
-
-void TestQgsCompositionConverter::cleanupTestCase()
-{
-  QString myReportFile = QDir::tempPath() + QDir::separator() + "qgistest.html";
-  QFile myFile( myReportFile );
-  if ( myFile.open( QIODevice::WriteOnly | QIODevice::Append ) )
-  {
-    QTextStream myQTextStream( &myFile );
-    myQTextStream << mReport;
-    myFile.close();
-  }
+  QgsApplication::settingsSearchPathsForSVG->setValue( QStringList() << QStringLiteral( TEST_DATA_DIR ) );
 }
 
 void TestQgsCompositionConverter::init()
@@ -250,7 +229,7 @@ void TestQgsCompositionConverter::importComposerTemplateShape()
   QCOMPARE( shape->pos().y(), 83.1791 );
   QCOMPARE( shape->sizeWithUnits().width(), 12.0988 );
   QCOMPARE( shape->sizeWithUnits().height(), 33.2716 );
-  QCOMPARE( shape->sizeWithUnits().units(), QgsUnitTypes::LayoutUnit::LayoutMillimeters );
+  QCOMPARE( shape->sizeWithUnits().units(), Qgis::LayoutUnit::Millimeters );
   QCOMPARE( shape->referencePoint(), QgsLayoutItem::ReferencePoint::MiddleRight );
   QCOMPARE( shape->frameStrokeColor(), QColor( 0, 0, 0, 255 ) );
   QCOMPARE( shape->frameStrokeWidth().length(), 0.3 );
@@ -400,7 +379,7 @@ void TestQgsCompositionConverter::importComposerTemplateMap()
 
   item->setLayers( project.mapLayers().values() );
 
-  for ( auto const &l : project.mapLayers().values() )
+  for ( auto const &l : project.mapLayers() )
   {
     QVERIFY( l->isValid() );
   }
@@ -747,7 +726,7 @@ QDomElement TestQgsCompositionConverter::loadComposer( const QString &name )
   QFile file( templatePath );
   bool res = file.open( QIODevice::ReadOnly );
   Q_ASSERT( res );
-  res = doc.setContent( &file );
+  res = static_cast< bool >( doc.setContent( &file ) );
   Q_ASSERT( res );
   file.close();
   QDomNodeList nodes( doc.elementsByTagName( QStringLiteral( "Composer" ) ) );

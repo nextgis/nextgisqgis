@@ -1,21 +1,19 @@
---- a/python/core/auto_generated/vector/qgsvectorlayer.sip.in	2022-02-18 15:06:10.000000000 +0300
-+++ b/python/core/auto_generated/vector/qgsvectorlayer.sip.in	2022-05-14 23:48:32.136463800 +0300
-@@ -136,13 +136,13 @@
+--- a/python/core/auto_generated/vector/qgsvectorlayer.sip.in	2023-08-21 19:39:45.555059168 +0300
++++ b/python/core/auto_generated/vector/qgsvectorlayer.sip.in	2023-10-04 10:58:25.248654108 +0300
+@@ -136,12 +136,12 @@
  - InvertAxisOrientation=1: to invert axis order
  - hideDownloadProgressDialog=1: to hide the download progress dialog
  
--The ‘FILTER’ query string parameter can be used to filter
--the WFS feature type. The ‘FILTER’ key value can either be a QGIS expression
-+The 'FILTER' query string parameter can be used to filter
-+the WFS feature type. The 'FILTER' key value can either be a QGIS expression
+-The ‘filter’ key value can either be a QGIS expression
++The 'filter' key value can either be a QGIS expression
  or an OGC XML filter. If the value is set to a QGIS expression the driver will
  turn it into OGC XML filter before passing it to the WFS server. Beware the
 -QGIS expression filter only supports” =, !=, <, >, <=, >=, AND, OR, NOT, LIKE, IS NULL”
 -attribute operators, “BBOX, Disjoint, Intersects, Touches, Crosses, Contains, Overlaps, Within”
 -spatial binary operators and the QGIS local “geomFromWKT, geomFromGML”
-+QGIS expression filter only supports" =, !=, <, >, <=, >=m AND, OR, NOT, LIKE, IS NULL"
++QGIS expression filter only supports" =, !=, <, >, <=, >=m, AND, OR, NOT, LIKE, IS NULL"
 +attribute operators, "BBOX, Disjoint, Intersects, Touches, Crosses, Contains, Overlaps, Within"
 +spatial binary operators and the QGIS local "geomFromWKT, geomFromGML"
  geometry constructor functions.
  
- OGC API - Features data provider (oapif)
+ OGC API Features data provider (oapif)

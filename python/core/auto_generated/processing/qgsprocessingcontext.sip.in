@@ -136,7 +136,7 @@ If not explicitly set, the ellipsoid will default to the :py:func:`~QgsProcessin
 .. versionadded:: 3.16
 %End
 
-    QgsUnitTypes::DistanceUnit distanceUnit() const;
+    Qgis::DistanceUnit distanceUnit() const;
 %Docstring
 Returns the distance unit to use for distance calculations.
 
@@ -147,7 +147,7 @@ Returns the distance unit to use for distance calculations.
 .. versionadded:: 3.16
 %End
 
-    void setDistanceUnit( QgsUnitTypes::DistanceUnit unit );
+    void setDistanceUnit( Qgis::DistanceUnit unit );
 %Docstring
 Sets the ``unit`` to use for distance calculations.
 
@@ -160,7 +160,7 @@ If not explicitly set, the unit will default to the :py:func:`~QgsProcessingCont
 .. versionadded:: 3.16
 %End
 
-    QgsUnitTypes::AreaUnit areaUnit() const;
+    Qgis::AreaUnit areaUnit() const;
 %Docstring
 Returns the area unit to use for area calculations.
 
@@ -171,7 +171,7 @@ Returns the area unit to use for area calculations.
 .. versionadded:: 3.16
 %End
 
-    void setAreaUnit( QgsUnitTypes::AreaUnit areaUnit );
+    void setAreaUnit( Qgis::AreaUnit areaUnit );
 %Docstring
 Sets the ``unit`` to use for area calculations.
 
@@ -236,6 +236,10 @@ Default constructor
         bool forceName;
 
         QString outputName;
+
+        QString groupName;
+
+        int layerSortKey;
 
         QgsProcessingUtils::LayerHint layerTypeHint;
 
@@ -585,6 +589,66 @@ Sets the logging ``level`` for algorithms to use when pushing feedback messages 
 .. seealso:: :py:func:`logLevel`
 
 .. versionadded:: 3.20
+%End
+
+    QString temporaryFolder() const;
+%Docstring
+Returns the (optional) temporary folder to use when running algorithms.
+
+If set, this overrides the standard global Processing temporary folder and should be used
+for all temporary files created during algorithm execution.
+
+.. seealso:: :py:func:`setTemporaryFolder`
+
+.. versionadded:: 3.32
+%End
+
+    void setTemporaryFolder( const QString &folder );
+%Docstring
+Sets the (optional) temporary ``folder`` to use when running algorithms.
+
+If set, this overrides the standard global Processing temporary folder and should be used
+for all temporary files created during algorithm execution.
+
+.. seealso:: :py:func:`temporaryFolder`
+
+.. versionadded:: 3.32
+%End
+
+    int maximumThreads() const;
+%Docstring
+Returns the (optional) number of threads to use when running algorithms.
+
+.. warning::
+
+   Not all algorithms which support multithreaded execution will
+   respect this setting, depending on the multi-threading framework in use.
+   Multithreaded algorithms must check this value and adapt their thread
+   handling accordingly -- the setting will not be automatically applied.
+
+.. seealso:: :py:func:`setMaximumThreads`
+
+.. versionadded:: 3.32
+%End
+
+    void setMaximumThreads( int threads );
+%Docstring
+Sets the (optional) number of ``threads`` to use when running algorithms.
+
+If set, this overrides the standard global Processing number of threads setting.
+Note that if algorithm implementation does not support multhreaded execution, this
+setting will be ignored.
+
+.. warning::
+
+   Not all algorithms which support multithreaded execution will
+   respect this setting, depending on the multi-threading framework in use.
+   Multithreaded algorithms must check this value and adapt their thread
+   handling accordingly -- the setting will not be automatically applied.
+
+.. seealso:: :py:func:`maximumThreads`
+
+.. versionadded:: 3.32
 %End
 
     QVariantMap exportToMap() const;

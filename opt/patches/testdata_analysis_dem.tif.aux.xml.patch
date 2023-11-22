@@ -1,0 +1,10 @@
+--- a/tests/testdata/analysis/dem.tif.aux.xml	2023-08-14 16:45:08.905267147 +0300
++++ b/tests/testdata/analysis/dem.tif.aux.xml	2023-08-28 21:30:58.191518071 +0300
+@@ -11,6 +11,7 @@
+       <MDI key="STATISTICS_MEAN">2335.8976949608</MDI>
+       <MDI key="STATISTICS_MINIMUM">1586.3486328125</MDI>
+       <MDI key="STATISTICS_STDDEV">323.62312867371</MDI>
++      <MDI key="STATISTICS_VALID_PERCENT">100</MDI>
+     </Metadata>
+   </PAMRasterBand>
+ </PAMDataset>

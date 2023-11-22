@@ -24,17 +24,13 @@
 #include "qgscallout.h"
 #include "qgscalloutsregistry.h"
 #include "qgsmaprenderersequentialjob.h"
-#include "qgssymbollayerutils.h"
 #include "qgsmapsettings.h"
 #include "qgsvectorlayer.h"
 #include "qgsapplication.h"
 #include "qgsproject.h"
 #include "qgssymbol.h"
 #include "qgssinglesymbolrenderer.h"
-#include "qgsfillsymbollayer.h"
-#include "qgslinesymbollayer.h"
 #include "qgsmarkersymbollayer.h"
-#include "qgslayout.h"
 #include "qgslayoutitempage.h"
 #include "qgslayoutitemmap.h"
 #include "qgslayoutpagecollection.h"
@@ -46,6 +42,7 @@
 #include "qgslinesymbol.h"
 #include "qgsfillsymbol.h"
 #include "qgsmarkersymbol.h"
+#include "qgslayoutexporter.h"
 
 //qgis test includes
 #include "qgsmultirenderchecker.h"
@@ -108,12 +105,12 @@ class TestSimpleCalloutUnder : public QgsSimpleLineCallout
 };
 
 
-class TestQgsCallout: public QObject
+class TestQgsCallout: public QgsTest
 {
     Q_OBJECT
 
   public:
-    TestQgsCallout();
+    TestQgsCallout() : QgsTest( QStringLiteral( "Callout Tests" ) ) {}
 
   private slots:
     void initTestCase();// will be called before the first testfunction is executed.
@@ -184,21 +181,15 @@ class TestQgsCallout: public QObject
   private:
     bool imageCheck( const QString &testName, QImage &image, unsigned int mismatchCount = 0 );
 
-    QString mReport;
     QString mTestDataDir;
     QgsVectorLayer *vl = nullptr;
 
 };
 
-
-TestQgsCallout::TestQgsCallout() = default;
-
 void TestQgsCallout::initTestCase()
 {
   QgsApplication::init();
   QgsApplication::initQgis();
-
-  mReport += QLatin1String( "<h1>Callout Tests</h1>\n" );
 
   QgsCalloutRegistry *registry = QgsApplication::calloutRegistry();
   registry->addCalloutType( new QgsCalloutMetadata( QStringLiteral( "Dummy" ), QStringLiteral( "Dummy callout" ), QIcon(), DummyCallout::create ) );
@@ -209,14 +200,6 @@ void TestQgsCallout::initTestCase()
 
 void TestQgsCallout::cleanupTestCase()
 {
-  const QString myReportFile = QDir::tempPath() + "/qgistest.html";
-  QFile myFile( myReportFile );
-  if ( myFile.open( QIODevice::WriteOnly | QIODevice::Append ) )
-  {
-    QTextStream myQTextStream( &myFile );
-    myQTextStream << mReport;
-    myFile.close();
-  }
   QgsApplication::exitQgis();
 }
 
@@ -225,7 +208,7 @@ void TestQgsCallout::init()
   const QString filename = QStringLiteral( TEST_DATA_DIR ) + "/points.shp";
   vl = new QgsVectorLayer( filename, QStringLiteral( "points" ), QStringLiteral( "ogr" ) );
   QVERIFY( vl->isValid() );
-  QgsMarkerSymbol *marker = static_cast< QgsMarkerSymbol * >( QgsSymbol::defaultSymbol( QgsWkbTypes::PointGeometry ) );
+  QgsMarkerSymbol *marker = static_cast< QgsMarkerSymbol * >( QgsSymbol::defaultSymbol( Qgis::GeometryType::Point ) );
   marker->setColor( QColor( 255, 0, 0 ) );
   marker->setSize( 3 );
   static_cast< QgsSimpleMarkerSymbolLayer * >( marker->symbolLayer( 0 ) )->setStrokeStyle( Qt::NoPen );
@@ -268,18 +251,18 @@ void TestQgsCallout::saveRestore()
   QCOMPARE( calloutElem.attribute( "type" ), QString( "Dummy" ) );
 
   //test reading empty node
-  QgsCallout *restoredCallout = QgsApplication::calloutRegistry()->createCallout( QStringLiteral( "Dummy" ), noNode, QgsReadWriteContext() );
+  std::unique_ptr< QgsCallout > restoredCallout( QgsApplication::calloutRegistry()->createCallout( QStringLiteral( "Dummy" ), noNode, QgsReadWriteContext() ) );
   QVERIFY( restoredCallout );
 
   //test reading bad node
   const QDomElement badCalloutElem = doc.createElement( QStringLiteral( "parent" ) );
-  restoredCallout = QgsApplication::calloutRegistry()->createCallout( QStringLiteral( "Dummy" ), badCalloutElem, QgsReadWriteContext() );
+  restoredCallout.reset( QgsApplication::calloutRegistry()->createCallout( QStringLiteral( "Dummy" ), badCalloutElem, QgsReadWriteContext() ) );
   QVERIFY( restoredCallout );
 
   //test reading node
-  restoredCallout = QgsApplication::calloutRegistry()->createCallout( QStringLiteral( "Dummy" ), calloutElem, QgsReadWriteContext() );
+  restoredCallout.reset( QgsApplication::calloutRegistry()->createCallout( QStringLiteral( "Dummy" ), calloutElem, QgsReadWriteContext() ) );
   QVERIFY( restoredCallout );
-  DummyCallout *restoredDummyCallout = dynamic_cast<DummyCallout *>( restoredCallout );
+  DummyCallout *restoredDummyCallout = dynamic_cast<DummyCallout *>( restoredCallout.get() );
   QVERIFY( restoredDummyCallout );
 
   //test properties
@@ -287,7 +270,6 @@ void TestQgsCallout::saveRestore()
   QCOMPARE( restoredDummyCallout->prop2(), callout->prop2() );
 
   delete callout;
-  delete restoredCallout;
 }
 
 void TestQgsCallout::calloutsInLabeling()
@@ -313,7 +295,7 @@ void TestQgsCallout::calloutsInLabeling()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 20;
 
   QgsTextFormat format;
@@ -376,7 +358,7 @@ void TestQgsCallout::calloutsBlend()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 20;
 
   QgsTextFormat format;
@@ -429,7 +411,7 @@ void TestQgsCallout::calloutsWithRotation()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 20;
 
   QgsTextFormat format;
@@ -468,7 +450,7 @@ void TestQgsCallout::calloutsInLayout()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 5;
 
   QgsTextFormat format;
@@ -528,7 +510,7 @@ void TestQgsCallout::calloutsDisabled()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 20;
 
   QgsTextFormat format;
@@ -579,7 +561,7 @@ void TestQgsCallout::calloutsDataDefinedDisabled()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 20;
 
   QgsTextFormat format;
@@ -631,7 +613,7 @@ void TestQgsCallout::calloutDataDefinedSymbol()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 20;
 
   QgsTextFormat format;
@@ -683,7 +665,7 @@ void TestQgsCallout::calloutDataDefinedSymbolColor()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 20;
 
   QgsTextFormat format;
@@ -735,7 +717,7 @@ void TestQgsCallout::calloutMinimumDistance()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::LabelDistance, QgsProperty::fromExpression( QStringLiteral( "case when Class='Jet' then 20 else 5 end" ) ) );
 
   QgsTextFormat format;
@@ -787,7 +769,7 @@ void TestQgsCallout::calloutDataDefinedMinimumDistance()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 20;
 
   QgsTextFormat format;
@@ -840,7 +822,7 @@ void TestQgsCallout::calloutOffsetFromAnchor()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -892,7 +874,7 @@ void TestQgsCallout::calloutDataDefinedOffsetFromAnchor()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -944,7 +926,7 @@ void TestQgsCallout::calloutOffsetFromLabel()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -997,7 +979,7 @@ void TestQgsCallout::calloutDataDefinedOffsetFromLabel()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -1050,7 +1032,7 @@ void TestQgsCallout::calloutLabelAnchorTopRight()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -1081,7 +1063,7 @@ void TestQgsCallout::calloutLabelAnchorTopRight()
 
   img = job.renderedImage();
   p.begin( &img );
-  settings.placement = QgsPalLayerSettings::OverPoint;
+  settings.placement = Qgis::LabelPlacement::OverPoint;
   settings.xOffset = 6;
   settings.yOffset = -6;
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::LabelRotation, QgsProperty::fromValue( 15 ) );
@@ -1119,7 +1101,7 @@ void TestQgsCallout::calloutLabelAnchorTopLeft()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -1150,7 +1132,7 @@ void TestQgsCallout::calloutLabelAnchorTopLeft()
 
   img = job.renderedImage();
   p.begin( &img );
-  settings.placement = QgsPalLayerSettings::OverPoint;
+  settings.placement = Qgis::LabelPlacement::OverPoint;
   settings.xOffset = 6;
   settings.yOffset = -6;
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::LabelRotation, QgsProperty::fromValue( 15 ) );
@@ -1187,7 +1169,7 @@ void TestQgsCallout::calloutLabelAnchorTop()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -1218,7 +1200,7 @@ void TestQgsCallout::calloutLabelAnchorTop()
 
   img = job.renderedImage();
   p.begin( &img );
-  settings.placement = QgsPalLayerSettings::OverPoint;
+  settings.placement = Qgis::LabelPlacement::OverPoint;
   settings.xOffset = 6;
   settings.yOffset = -6;
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::LabelRotation, QgsProperty::fromValue( 15 ) );
@@ -1255,7 +1237,7 @@ void TestQgsCallout::calloutLabelAnchorBottomLeft()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -1286,7 +1268,7 @@ void TestQgsCallout::calloutLabelAnchorBottomLeft()
 
   img = job.renderedImage();
   p.begin( &img );
-  settings.placement = QgsPalLayerSettings::OverPoint;
+  settings.placement = Qgis::LabelPlacement::OverPoint;
   settings.xOffset = 6;
   settings.yOffset = -6;
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::LabelRotation, QgsProperty::fromValue( 15 ) );
@@ -1323,7 +1305,7 @@ void TestQgsCallout::calloutLabelAnchorBottom()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -1354,7 +1336,7 @@ void TestQgsCallout::calloutLabelAnchorBottom()
 
   img = job.renderedImage();
   p.begin( &img );
-  settings.placement = QgsPalLayerSettings::OverPoint;
+  settings.placement = Qgis::LabelPlacement::OverPoint;
   settings.xOffset = 6;
   settings.yOffset = -6;
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::LabelRotation, QgsProperty::fromValue( 15 ) );
@@ -1391,7 +1373,7 @@ void TestQgsCallout::calloutLabelAnchorBottomRight()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -1422,7 +1404,7 @@ void TestQgsCallout::calloutLabelAnchorBottomRight()
 
   img = job.renderedImage();
   p.begin( &img );
-  settings.placement = QgsPalLayerSettings::OverPoint;
+  settings.placement = Qgis::LabelPlacement::OverPoint;
   settings.xOffset = 6;
   settings.yOffset = -6;
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::LabelRotation, QgsProperty::fromValue( 15 ) );
@@ -1459,7 +1441,7 @@ void TestQgsCallout::calloutLabelAnchorLeft()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -1490,7 +1472,7 @@ void TestQgsCallout::calloutLabelAnchorLeft()
 
   img = job.renderedImage();
   p.begin( &img );
-  settings.placement = QgsPalLayerSettings::OverPoint;
+  settings.placement = Qgis::LabelPlacement::OverPoint;
   settings.xOffset = 6;
   settings.yOffset = -6;
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::LabelRotation, QgsProperty::fromValue( 15 ) );
@@ -1527,7 +1509,7 @@ void TestQgsCallout::calloutLabelAnchorRight()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -1558,7 +1540,7 @@ void TestQgsCallout::calloutLabelAnchorRight()
 
   img = job.renderedImage();
   p.begin( &img );
-  settings.placement = QgsPalLayerSettings::OverPoint;
+  settings.placement = Qgis::LabelPlacement::OverPoint;
   settings.xOffset = 6;
   settings.yOffset = -6;
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::LabelRotation, QgsProperty::fromValue( 15 ) );
@@ -1595,7 +1577,7 @@ void TestQgsCallout::calloutLabelAnchorCentroid()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -1626,7 +1608,7 @@ void TestQgsCallout::calloutLabelAnchorCentroid()
 
   img = job.renderedImage();
   p.begin( &img );
-  settings.placement = QgsPalLayerSettings::OverPoint;
+  settings.placement = Qgis::LabelPlacement::OverPoint;
   settings.xOffset = 6;
   settings.yOffset = -6;
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::LabelRotation, QgsProperty::fromValue( 15 ) );
@@ -1663,7 +1645,7 @@ void TestQgsCallout::calloutLabelDataDefinedAnchor()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -1717,7 +1699,7 @@ void TestQgsCallout::calloutBehindLabel()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::PositionX, QgsProperty::fromExpression( QStringLiteral( "case when $id = 1 then %1 end" ).arg( mapSettings.extent().center().x() ) ) );
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::PositionY, QgsProperty::fromExpression( QStringLiteral( "case when $id = 1 then %1 end" ).arg( mapSettings.extent().center().y() ) ) );
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::ZIndex, QgsProperty::fromExpression( QStringLiteral( "100 - $id" ) ) );
@@ -1773,7 +1755,7 @@ void TestQgsCallout::calloutBehindIndividualLabels()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::PositionX, QgsProperty::fromExpression( QStringLiteral( "case when $id = 1 then %1 end" ).arg( mapSettings.extent().center().x() ) ) );
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::PositionY, QgsProperty::fromExpression( QStringLiteral( "case when $id = 1 then %1 end" ).arg( mapSettings.extent().center().y() ) ) );
   settings.dataDefinedProperties().setProperty( QgsPalLayerSettings::ZIndex, QgsProperty::fromExpression( QStringLiteral( "100 - $id" ) ) );
@@ -1809,7 +1791,7 @@ void TestQgsCallout::calloutBehindIndividualLabels()
 void TestQgsCallout::calloutNoDrawToAllParts()
 {
   std::unique_ptr< QgsVectorLayer> vl2( new QgsVectorLayer( QStringLiteral( "MultiPoint?crs=epsg:3946&field=id:integer&field=labelx:integer&field=labely:integer" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) ) );
-  QgsMarkerSymbol *marker = static_cast< QgsMarkerSymbol * >( QgsSymbol::defaultSymbol( QgsWkbTypes::PointGeometry ) );
+  QgsMarkerSymbol *marker = static_cast< QgsMarkerSymbol * >( QgsSymbol::defaultSymbol( Qgis::GeometryType::Point ) );
   marker->setColor( QColor( 255, 0, 0 ) );
   marker->setSize( 3 );
   static_cast< QgsSimpleMarkerSymbolLayer * >( marker->symbolLayer( 0 ) )->setStrokeStyle( Qt::NoPen );
@@ -1877,7 +1859,7 @@ void TestQgsCallout::calloutNoDrawToAllParts()
 void TestQgsCallout::calloutDrawToAllParts()
 {
   std::unique_ptr< QgsVectorLayer> vl2( new QgsVectorLayer( QStringLiteral( "MultiPoint?crs=epsg:3946&field=id:integer&field=labelx:integer&field=labely:integer" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) ) );
-  QgsMarkerSymbol *marker = static_cast< QgsMarkerSymbol * >( QgsSymbol::defaultSymbol( QgsWkbTypes::PointGeometry ) );
+  QgsMarkerSymbol *marker = static_cast< QgsMarkerSymbol * >( QgsSymbol::defaultSymbol( Qgis::GeometryType::Point ) );
   marker->setColor( QColor( 255, 0, 0 ) );
   marker->setSize( 3 );
   static_cast< QgsSimpleMarkerSymbolLayer * >( marker->symbolLayer( 0 ) )->setStrokeStyle( Qt::NoPen );
@@ -1946,7 +1928,7 @@ void TestQgsCallout::calloutDrawToAllParts()
 void TestQgsCallout::calloutDataDefinedDrawToAllParts()
 {
   std::unique_ptr< QgsVectorLayer> vl2( new QgsVectorLayer( QStringLiteral( "MultiPoint?crs=epsg:3946&field=id:integer&field=labelx:integer&field=labely:integer" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) ) );
-  QgsMarkerSymbol *marker = static_cast< QgsMarkerSymbol * >( QgsSymbol::defaultSymbol( QgsWkbTypes::PointGeometry ) );
+  QgsMarkerSymbol *marker = static_cast< QgsMarkerSymbol * >( QgsSymbol::defaultSymbol( Qgis::GeometryType::Point ) );
   marker->setColor( QColor( 255, 0, 0 ) );
   marker->setSize( 3 );
   static_cast< QgsSimpleMarkerSymbolLayer * >( marker->symbolLayer( 0 ) )->setStrokeStyle( Qt::NoPen );
@@ -2015,7 +1997,7 @@ void TestQgsCallout::calloutDataDefinedDrawToAllParts()
 void TestQgsCallout::calloutPointOnExterior()
 {
   std::unique_ptr< QgsVectorLayer> vl2( new QgsVectorLayer( QStringLiteral( "Polygon?crs=epsg:3946&field=id:integer&field=labelx:integer&field=labely:integer" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) ) );
-  QgsFillSymbol *fill = static_cast< QgsFillSymbol * >( QgsSymbol::defaultSymbol( QgsWkbTypes::PolygonGeometry ) );
+  QgsFillSymbol *fill = static_cast< QgsFillSymbol * >( QgsSymbol::defaultSymbol( Qgis::GeometryType::Polygon ) );
   fill->setColor( QColor( 255, 0, 0 ) );
   vl2->setRenderer( new QgsSingleSymbolRenderer( fill ) );
 
@@ -2078,7 +2060,7 @@ void TestQgsCallout::calloutPointOnExterior()
 void TestQgsCallout::calloutDataDefinedAnchorPoint()
 {
   std::unique_ptr< QgsVectorLayer> vl2( new QgsVectorLayer( QStringLiteral( "Polygon?crs=epsg:3946&field=id:integer&field=labelx:integer&field=labely:integer" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) ) );
-  QgsFillSymbol *fill = static_cast< QgsFillSymbol * >( QgsSymbol::defaultSymbol( QgsWkbTypes::PolygonGeometry ) );
+  QgsFillSymbol *fill = static_cast< QgsFillSymbol * >( QgsSymbol::defaultSymbol( Qgis::GeometryType::Polygon ) );
   fill->setColor( QColor( 255, 0, 0 ) );
   vl2->setRenderer( new QgsSingleSymbolRenderer( fill ) );
 
@@ -2141,7 +2123,7 @@ void TestQgsCallout::calloutDataDefinedAnchorPoint()
 void TestQgsCallout::calloutDataDefinedDestination()
 {
   std::unique_ptr< QgsVectorLayer> vl2( new QgsVectorLayer( QStringLiteral( "Polygon?crs=epsg:3946&field=id:integer&field=labelx:integer&field=labely:integer" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) ) );
-  QgsFillSymbol *fill = static_cast< QgsFillSymbol * >( QgsSymbol::defaultSymbol( QgsWkbTypes::PolygonGeometry ) );
+  QgsFillSymbol *fill = static_cast< QgsFillSymbol * >( QgsSymbol::defaultSymbol( Qgis::GeometryType::Polygon ) );
   fill->setColor( QColor( 255, 0, 0 ) );
   vl2->setRenderer( new QgsSingleSymbolRenderer( fill ) );
 
@@ -2206,7 +2188,7 @@ void TestQgsCallout::calloutDataDefinedDestination()
 void TestQgsCallout::calloutDataDefinedOrigin()
 {
   std::unique_ptr< QgsVectorLayer> vl2( new QgsVectorLayer( QStringLiteral( "Polygon?crs=epsg:3946&field=id:integer&field=labelx:integer&field=labely:integer" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) ) );
-  QgsFillSymbol *fill = static_cast< QgsFillSymbol * >( QgsSymbol::defaultSymbol( QgsWkbTypes::PolygonGeometry ) );
+  QgsFillSymbol *fill = static_cast< QgsFillSymbol * >( QgsSymbol::defaultSymbol( Qgis::GeometryType::Polygon ) );
   fill->setColor( QColor( 255, 0, 0 ) );
   vl2->setRenderer( new QgsSingleSymbolRenderer( fill ) );
 
@@ -2291,7 +2273,7 @@ void TestQgsCallout::manhattan()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 20;
 
   QgsTextFormat format;
@@ -2344,7 +2326,7 @@ void TestQgsCallout::manhattanRotated()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 20;
 
   QgsTextFormat format;
@@ -2376,7 +2358,7 @@ void TestQgsCallout::manhattanRotated()
 void TestQgsCallout::manhattanNoDrawToAllParts()
 {
   std::unique_ptr< QgsVectorLayer> vl2( new QgsVectorLayer( QStringLiteral( "MultiPoint?crs=epsg:3946&field=id:integer&field=labelx:integer&field=labely:integer" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) ) );
-  QgsMarkerSymbol *marker = static_cast< QgsMarkerSymbol * >( QgsSymbol::defaultSymbol( QgsWkbTypes::PointGeometry ) );
+  QgsMarkerSymbol *marker = static_cast< QgsMarkerSymbol * >( QgsSymbol::defaultSymbol( Qgis::GeometryType::Point ) );
   marker->setColor( QColor( 255, 0, 0 ) );
   marker->setSize( 3 );
   static_cast< QgsSimpleMarkerSymbolLayer * >( marker->symbolLayer( 0 ) )->setStrokeStyle( Qt::NoPen );
@@ -2444,7 +2426,7 @@ void TestQgsCallout::manhattanNoDrawToAllParts()
 void TestQgsCallout::manhattanDrawToAllParts()
 {
   std::unique_ptr< QgsVectorLayer> vl2( new QgsVectorLayer( QStringLiteral( "MultiPoint?crs=epsg:3946&field=id:integer&field=labelx:integer&field=labely:integer" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) ) );
-  QgsMarkerSymbol *marker = static_cast< QgsMarkerSymbol * >( QgsSymbol::defaultSymbol( QgsWkbTypes::PointGeometry ) );
+  QgsMarkerSymbol *marker = static_cast< QgsMarkerSymbol * >( QgsSymbol::defaultSymbol( Qgis::GeometryType::Point ) );
   marker->setColor( QColor( 255, 0, 0 ) );
   marker->setSize( 3 );
   static_cast< QgsSimpleMarkerSymbolLayer * >( marker->symbolLayer( 0 ) )->setStrokeStyle( Qt::NoPen );
@@ -2513,7 +2495,7 @@ void TestQgsCallout::manhattanDrawToAllParts()
 void TestQgsCallout::manhattanDataDefinedDrawToAllParts()
 {
   std::unique_ptr< QgsVectorLayer> vl2( new QgsVectorLayer( QStringLiteral( "MultiPoint?crs=epsg:3946&field=id:integer&field=labelx:integer&field=labely:integer" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) ) );
-  QgsMarkerSymbol *marker = static_cast< QgsMarkerSymbol * >( QgsSymbol::defaultSymbol( QgsWkbTypes::PointGeometry ) );
+  QgsMarkerSymbol *marker = static_cast< QgsMarkerSymbol * >( QgsSymbol::defaultSymbol( Qgis::GeometryType::Point ) );
   marker->setColor( QColor( 255, 0, 0 ) );
   marker->setSize( 3 );
   static_cast< QgsSimpleMarkerSymbolLayer * >( marker->symbolLayer( 0 ) )->setStrokeStyle( Qt::NoPen );
@@ -2582,7 +2564,7 @@ void TestQgsCallout::manhattanDataDefinedDrawToAllParts()
 void TestQgsCallout::manhattanDataDefinedDestination()
 {
   std::unique_ptr< QgsVectorLayer> vl2( new QgsVectorLayer( QStringLiteral( "Polygon?crs=epsg:3946&field=id:integer&field=labelx:integer&field=labely:integer" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) ) );
-  QgsFillSymbol *fill = static_cast< QgsFillSymbol * >( QgsSymbol::defaultSymbol( QgsWkbTypes::PolygonGeometry ) );
+  QgsFillSymbol *fill = static_cast< QgsFillSymbol * >( QgsSymbol::defaultSymbol( Qgis::GeometryType::Polygon ) );
   fill->setColor( QColor( 255, 0, 0 ) );
   vl2->setRenderer( new QgsSingleSymbolRenderer( fill ) );
 
@@ -2647,7 +2629,7 @@ void TestQgsCallout::manhattanDataDefinedDestination()
 void TestQgsCallout::manhattanDataDefinedOrigin()
 {
   std::unique_ptr< QgsVectorLayer> vl2( new QgsVectorLayer( QStringLiteral( "Polygon?crs=epsg:3946&field=id:integer&field=labelx:integer&field=labely:integer" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) ) );
-  QgsFillSymbol *fill = static_cast< QgsFillSymbol * >( QgsSymbol::defaultSymbol( QgsWkbTypes::PolygonGeometry ) );
+  QgsFillSymbol *fill = static_cast< QgsFillSymbol * >( QgsSymbol::defaultSymbol( Qgis::GeometryType::Polygon ) );
   fill->setColor( QColor( 255, 0, 0 ) );
   vl2->setRenderer( new QgsSingleSymbolRenderer( fill ) );
 
@@ -3971,7 +3953,7 @@ void TestQgsCallout::balloonCallout()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 7;
 
   QgsTextFormat format;
@@ -4025,7 +4007,7 @@ void TestQgsCallout::balloonCalloutMargin()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -4080,7 +4062,7 @@ void TestQgsCallout::balloonCalloutWedgeWidth()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -4135,7 +4117,7 @@ void TestQgsCallout::balloonCalloutCornerRadius()
 
   QgsPalLayerSettings settings;
   settings.fieldName = QStringLiteral( "Class" );
-  settings.placement = QgsPalLayerSettings::AroundPoint;
+  settings.placement = Qgis::LabelPlacement::AroundPoint;
   settings.dist = 10;
 
   QgsTextFormat format;
@@ -4169,7 +4151,7 @@ void TestQgsCallout::balloonCalloutCornerRadius()
 
 void TestQgsCallout::blendMode()
 {
-  QgsManhattanLineCallout *callout = new QgsManhattanLineCallout();
+  std::unique_ptr< QgsManhattanLineCallout > callout = std::make_unique< QgsManhattanLineCallout >();
   QCOMPARE( callout->containsAdvancedEffects(), false );
 
   callout->setBlendMode( QPainter::CompositionMode_Multiply );
@@ -4196,7 +4178,6 @@ bool TestQgsCallout::imageCheck( const QString &testName, QImage &image, unsigne
   painter.drawImage( 0, 0, image );
   painter.end();
 
-  mReport += "<h2>" + testName + "</h2>\n";
   const QString tempDir = QDir::tempPath() + '/';
   const QString fileName = tempDir + testName + ".png";
   imageWithBackground.save( fileName, "PNG" );

@@ -19,7 +19,6 @@
 #include <typeinfo>
 
 #include "qgsapplication.h"
-#include "qgscoordinatetransform.h"
 #include "qgsfileutils.h"
 #include "qgshelp.h"
 #include "qgslogger.h"
@@ -30,12 +29,9 @@
 #include "qgsmeshlayerproperties.h"
 #include "qgsmeshstaticdatasetwidget.h"
 #include "qgsproject.h"
-#include "qgsprojectionselectiondialog.h"
 #include "qgsrenderermeshpropertieswidget.h"
 #include "qgsmeshlayertemporalproperties.h"
 #include "qgssettings.h"
-#include "qgsprojecttimesettings.h"
-#include "qgsproviderregistry.h"
 #include "qgsdatumtransformdialog.h"
 #include "qgsmaplayerconfigwidgetfactory.h"
 #include "qgsgui.h"
@@ -64,10 +60,10 @@ QgsMeshLayerProperties::QgsMeshLayerProperties( QgsMapLayer *lyr, QgsMapCanvas *
   mStaticDatasetWidget->setLayer( mMeshLayer );
   mIsMapSettingsTemporal = mMeshLayer && canvas && canvas->mapSettings().isTemporal();
 
-  mTemporalProviderTimeUnitComboBox->addItem( tr( "Seconds" ), QgsUnitTypes::TemporalSeconds );
-  mTemporalProviderTimeUnitComboBox->addItem( tr( "Minutes" ), QgsUnitTypes::TemporalMinutes );
-  mTemporalProviderTimeUnitComboBox->addItem( tr( "Hours" ), QgsUnitTypes::TemporalHours );
-  mTemporalProviderTimeUnitComboBox->addItem( tr( "Days" ), QgsUnitTypes::TemporalDays );
+  mTemporalProviderTimeUnitComboBox->addItem( tr( "Seconds" ), static_cast< int >( Qgis::TemporalUnit::Seconds ) );
+  mTemporalProviderTimeUnitComboBox->addItem( tr( "Minutes" ), static_cast< int >( Qgis::TemporalUnit::Minutes ) );
+  mTemporalProviderTimeUnitComboBox->addItem( tr( "Hours" ), static_cast< int >( Qgis::TemporalUnit::Hours ) );
+  mTemporalProviderTimeUnitComboBox->addItem( tr( "Days" ), static_cast< int >( Qgis::TemporalUnit::Days ) );
 
   connect( mCrsSelector, &QgsProjectionSelectionWidget::crsChanged, this, &QgsMeshLayerProperties::changeCrs );
   connect( mDatasetGroupTreeWidget, &QgsMeshDatasetGroupTreeWidget::datasetGroupAdded, this, &QgsMeshLayerProperties::syncToLayer );
@@ -90,6 +86,17 @@ QgsMeshLayerProperties::QgsMeshLayerProperties( QgsMapLayer *lyr, QgsMapCanvas *
   connect( mTemporalDateTimeReference, &QDateTimeEdit::dateTimeChanged, this, &QgsMeshLayerProperties::onTimeReferenceChange );
   connect( mMeshLayer, &QgsMeshLayer::activeScalarDatasetGroupChanged, mStaticDatasetWidget, &QgsMeshStaticDatasetWidget::setScalarDatasetGroup );
   connect( mMeshLayer, &QgsMeshLayer::activeVectorDatasetGroupChanged, mStaticDatasetWidget, &QgsMeshStaticDatasetWidget::setVectorDatasetGroup );
+
+  mScaleRangeWidget->setMapCanvas( mCanvas );
+  chkUseScaleDependentRendering->setChecked( lyr->hasScaleBasedVisibility() );
+  mScaleRangeWidget->setScaleRange( lyr->minimumScale(), lyr->maximumScale() );
+
+  connect( mAlwaysTimeFromSourceCheckBox, &QCheckBox::stateChanged, this, [this]
+  {
+    mTemporalDateTimeReference->setEnabled( !mAlwaysTimeFromSourceCheckBox->isChecked() );
+    if ( mAlwaysTimeFromSourceCheckBox->isChecked() )
+      reloadTemporalProperties();
+  } );
 
   mComboBoxTemporalDatasetMatchingMethod->addItem( tr( "Find Closest Dataset Before Requested Time" ),
       QgsMeshDataProviderTemporalCapabilities::FindClosestDatasetBeforeStartRangeTime );
@@ -128,6 +135,8 @@ QgsMeshLayerProperties::QgsMeshLayerProperties( QgsMapLayer *lyr, QgsMapCanvas *
   mOptsPage_Source->setProperty( "helpPage", QStringLiteral( "working_with_mesh/mesh_properties.html#source-properties" ) );
   mOptsPage_Style->setProperty( "helpPage", QStringLiteral( "working_with_mesh/mesh_properties.html#symbology-properties" ) );
   mOptsPage_Rendering->setProperty( "helpPage", QStringLiteral( "working_with_mesh/mesh_properties.html#rendering-properties" ) );
+  mOptsPage_Temporal->setProperty( "helpPage", QStringLiteral( "working_with_mesh/mesh_properties.html#temporal-properties" ) );
+  mOptsPage_Metadata->setProperty( "helpPage", QStringLiteral( "working_with_mesh/mesh_properties.html#metadata-properties" ) );
 
   mBtnStyle = new QPushButton( tr( "Style" ) );
   QMenu *menuStyle = new QMenu( this );
@@ -164,8 +173,6 @@ void QgsMeshLayerProperties::addPropertiesPageFactory( const QgsMapLayerConfigWi
 
   QgsMapLayerConfigWidget *page = factory->createWidget( mMeshLayer, mCanvas, false, this );
   mConfigWidgets << page;
-
-  page->setProperty( "helpPage", QStringLiteral( "working_with_mesh/mesh_properties.html#d-view-properties" ) );
 
   const QString beforePage = factory->layerPropertiesPagePositionHint();
   if ( beforePage.isEmpty() )
@@ -209,8 +216,7 @@ void QgsMeshLayerProperties::syncToLayer()
   mLayerOrigNameLineEd->setText( mMeshLayer->name() );
   whileBlocking( mCrsSelector )->setCrs( mMeshLayer->crs() );
 
-  if ( mMeshLayer )
-    mDatasetGroupTreeWidget->syncToLayer( mMeshLayer );
+  mDatasetGroupTreeWidget->syncToLayer( mMeshLayer );
 
   QgsDebugMsgLevel( QStringLiteral( "populate config tab" ), 4 );
   for ( QgsMapLayerConfigWidget *w : std::as_const( mConfigWidgets ) )
@@ -234,8 +240,9 @@ void QgsMeshLayerProperties::syncToLayer()
   if ( mMeshLayer->dataProvider() )
   {
     mTemporalProviderTimeUnitComboBox->setCurrentIndex(
-      mTemporalProviderTimeUnitComboBox->findData( mMeshLayer->dataProvider()->temporalCapabilities()->temporalUnit() ) );
+      mTemporalProviderTimeUnitComboBox->findData( static_cast< int >( mMeshLayer->dataProvider()->temporalCapabilities()->temporalUnit() ) ) );
   }
+  mAlwaysTimeFromSourceCheckBox->setChecked( temporalProperties->alwaysLoadReferenceTimeFromSource() );
   mComboBoxTemporalDatasetMatchingMethod->setCurrentIndex(
     mComboBoxTemporalDatasetMatchingMethod->findData( temporalProperties->matchingMethod() ) );
 
@@ -251,6 +258,7 @@ void QgsMeshLayerProperties::loadDefaultStyle()
   if ( defaultLoadedFlag )
   {
     syncToLayer();
+    apply();
   }
   else
   {
@@ -268,9 +276,13 @@ void QgsMeshLayerProperties::saveDefaultStyle()
 
   // a flag passed by reference
   bool defaultSavedFlag = false;
+  // TODO Once the deprecated `saveDefaultStyle()` method is gone, just
+  // remove the NOWARN_DEPRECATED tags
+  Q_NOWARN_DEPRECATED_PUSH
   // after calling this the above flag will be set true for success
   // or false if the save operation failed
   QString myMessage = mMeshLayer->saveDefaultStyle( defaultSavedFlag );
+  Q_NOWARN_DEPRECATED_POP
   if ( !defaultSavedFlag )
   {
     // let the user know what went wrong
@@ -306,6 +318,7 @@ void QgsMeshLayerProperties::loadStyle()
   {
     settings.setValue( QStringLiteral( "style/lastStyleDir" ), QFileInfo( fileName ).absolutePath() );
     syncToLayer();
+    apply();
   }
   else
   {
@@ -378,6 +391,10 @@ void QgsMeshLayerProperties::apply()
 
   mMeshLayer->setMeshSimplificationSettings( simplifySettings );
 
+  mMeshLayer->setScaleBasedVisibility( chkUseScaleDependentRendering->isChecked() );
+  mMeshLayer->setMinimumScale( mScaleRangeWidget->minimumScale() );
+  mMeshLayer->setMaximumScale( mScaleRangeWidget->maximumScale() );
+
   QgsDebugMsgLevel( QStringLiteral( "processing temporal tab" ), 4 );
   /*
    * Temporal Tab
@@ -386,13 +403,15 @@ void QgsMeshLayerProperties::apply()
   mMeshLayer->setReferenceTime( mTemporalDateTimeReference->dateTime() );
   if ( mMeshLayer->dataProvider() )
     mMeshLayer->dataProvider()->setTemporalUnit(
-      static_cast<QgsUnitTypes::TemporalUnit>( mTemporalProviderTimeUnitComboBox->currentData().toInt() ) );
+      static_cast<Qgis::TemporalUnit>( mTemporalProviderTimeUnitComboBox->currentData().toInt() ) );
 
   mStaticDatasetWidget->apply();
   bool needEmitRendererChanged = mMeshLayer->temporalProperties()->isActive() == mStaticDatasetGroupBox->isChecked();
   mMeshLayer->temporalProperties()->setIsActive( !mStaticDatasetGroupBox->isChecked() );
   mMeshLayer->setTemporalMatchingMethod( static_cast<QgsMeshDataProviderTemporalCapabilities::MatchingTemporalDatasetMethod>(
       mComboBoxTemporalDatasetMatchingMethod->currentData().toInt() ) );
+  static_cast<QgsMeshLayerTemporalProperties *>(
+    mMeshLayer->temporalProperties() )->setAlwaysLoadReferenceTimeFromSource( mAlwaysTimeFromSourceCheckBox->isChecked() );
 
   mMetadataWidget->acceptMetadata();
 

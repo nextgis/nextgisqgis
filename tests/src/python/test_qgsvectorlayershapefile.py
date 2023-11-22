@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsVectorLayer.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -39,6 +38,7 @@ class TestQgsVectorLayerShapefile(unittest.TestCase, FeatureSourceTestCase):
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super(TestQgsVectorLayerShapefile, cls).setUpClass()
         QgsGui.editorWidgetRegistry().initEditors()
         # Create test layer for FeatureSourceTestCase
         cls.source = cls.getSource()
@@ -46,6 +46,7 @@ class TestQgsVectorLayerShapefile(unittest.TestCase, FeatureSourceTestCase):
     @classmethod
     def tearDownClass(cls):
         cls.source = None
+        super(TestQgsVectorLayerShapefile, cls).tearDownClass()
 
     def treat_time_as_string(self):
         return True

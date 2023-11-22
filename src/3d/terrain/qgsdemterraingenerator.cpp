@@ -17,6 +17,7 @@
 
 #include "qgsdemterraintileloader_p.h"
 
+#include "qgs3dutils.h"
 #include "qgsrasterlayer.h"
 #include "qgscoordinatetransform.h"
 
@@ -51,6 +52,7 @@ QgsTerrainGenerator *QgsDemTerrainGenerator::clone() const
   cloned->mLayer = mLayer;
   cloned->mResolution = mResolution;
   cloned->mSkirtHeight = mSkirtHeight;
+  cloned->mExtent = mExtent;
   cloned->updateGenerator();
   return cloned;
 }
@@ -60,7 +62,7 @@ QgsTerrainGenerator::Type QgsDemTerrainGenerator::type() const
   return QgsTerrainGenerator::Dem;
 }
 
-QgsRectangle QgsDemTerrainGenerator::extent() const
+QgsRectangle QgsDemTerrainGenerator::rootChunkExtent() const
 {
   return mTerrainTilingScheme.tileToExtent( 0, 0, 0 );
 }
@@ -95,7 +97,8 @@ void QgsDemTerrainGenerator::readXml( const QDomElement &elem )
 void QgsDemTerrainGenerator::resolveReferences( const QgsProject &project )
 {
   mLayer = QgsMapLayerRef( project.mapLayer( mLayer.layerId ) );
-  updateGenerator();
+  // now that we have the layer, call setExtent() again so we can keep the intersection of mExtent and layer's extent
+  setExtent( mExtent );
 }
 
 QgsChunkLoader *QgsDemTerrainGenerator::createChunkLoader( QgsChunkNode *node ) const
@@ -104,17 +107,27 @@ QgsChunkLoader *QgsDemTerrainGenerator::createChunkLoader( QgsChunkNode *node ) 
   return new QgsDemTerrainTileLoader( mTerrain, node, const_cast<QgsDemTerrainGenerator *>( this ) );
 }
 
+void QgsDemTerrainGenerator::setExtent( const QgsRectangle &extent )
+{
+  if ( !mLayer )
+  {
+    // Keep the whole extent for now and setExtent() will be called by again by resolveReferences()
+    mExtent = extent;
+    return;
+  }
+
+  QgsRectangle layerExtent = Qgs3DUtils::tryReprojectExtent2D( mLayer->extent(), mLayer->crs(), mCrs, mTransformContext );
+  // no need to have an mExtent larger than the actual layer's extent
+  mExtent = extent.intersect( layerExtent );
+  updateGenerator();
+}
+
 void QgsDemTerrainGenerator::updateGenerator()
 {
   QgsRasterLayer *dem = layer();
   if ( dem )
   {
-    QgsRectangle te = dem->extent();
-    QgsCoordinateTransform terrainToMapTransform( dem->crs(), mCrs, mTransformContext );
-    terrainToMapTransform.setBallparkTransformsAreAppropriate( true );
-    te = terrainToMapTransform.transformBoundingBox( te );
-
-    mTerrainTilingScheme = QgsTilingScheme( te, mCrs );
+    mTerrainTilingScheme = QgsTilingScheme( mExtent, mCrs );
     delete mHeightMapGenerator;
     mHeightMapGenerator = new QgsDemHeightMapGenerator( dem, mTerrainTilingScheme, mResolution, mTransformContext );
     mIsValid = true;

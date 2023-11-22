@@ -31,6 +31,7 @@
 #include <QDomDocument>
 #include <QDomElement>
 #include <QPainterPath>
+#include <QImage>
 
 class QPainter;
 class QSize;
@@ -74,6 +75,8 @@ class CORE_EXPORT QgsSymbolLayer
           sipType = sipType_QgsSvgMarkerSymbolLayer;
         else if ( sipCpp->layerType() == "RasterMarker" )
           sipType = sipType_QgsRasterMarkerSymbolLayer;
+        else if ( sipCpp->layerType() == "AnimatedMarker" )
+          sipType = sipType_QgsAnimatedMarkerSymbolLayer;
         else if ( sipCpp->layerType() == "VectorField" )
           sipType = sipType_QgsVectorFieldSymbolLayer;
         else if ( sipCpp->layerType() == "MaskMarker" )
@@ -248,38 +251,87 @@ class CORE_EXPORT QgsSymbolLayer
     void setEnabled( bool enabled ) { mEnabled = enabled; }
 
     /**
-     * The fill color.
+     * Returns the "representative" color of the symbol layer.
+     *
+     * Depending on the symbol layer type, this will have different meaning. For instance, a line
+     * symbol layer will generally return the stroke color of the layer, while a fill symbol layer
+     * will return the "fill" color instead of stroke.
+     *
+     * Some symbol layer types will return an invalid QColor if they have no representative
+     * color associated (e.g. raster image based symbol layers).
+     *
+     * \see setColor()
+     * \see strokeColor()
+     * \see fillColor()
      */
-    virtual QColor color() const { return mColor; }
+    virtual QColor color() const;
 
     /**
-     * The fill color.
+     * Sets the "representative" color for the symbol layer.
+     *
+     * Depending on the symbol layer type, this will have different meaning. For instance, a line
+     * symbol layer will generally set the stroke color of the layer, while a fill symbol layer
+     * will set the "fill" color instead of stroke.
+     *
+     * \see color()
+     * \see setStrokeColor()
+     * \see setFillColor()
      */
-    virtual void setColor( const QColor &color ) { mColor = color; }
+    virtual void setColor( const QColor &color );
 
     /**
-     * Set stroke color. Supported by marker and fill layers.
+     * Sets the stroke \a color for the symbol layer.
+     *
+     * This property is not supported by all symbol layer types, only those with a stroke component.
+     *
+     * \see strokeColor()
+     * \see setColor()
+     * \see setFillColor()
+     *
      * \since QGIS 2.1
     */
-    virtual void setStrokeColor( const QColor &color ) { Q_UNUSED( color ) }
+    virtual void setStrokeColor( const QColor &color );
 
     /**
-     * Gets stroke color. Supported by marker and fill layers.
+     * Returns the stroke color for the symbol layer.
+     *
+     * This property is not supported by all symbol layer types, only those with a stroke component. Symbol
+     * layers without a stroke component will return an invalid QColor.
+     *
+     * \see setStrokeColor()
+     * \see color()
+     * \see fillColor()
+     *
      * \since QGIS 2.1
     */
-    virtual QColor strokeColor() const { return QColor(); }
+    virtual QColor strokeColor() const;
 
     /**
-     * Set fill color. Supported by marker and fill layers.
+     * Sets the fill \a color for the symbol layer.
+     *
+     * This property is not supported by all symbol layer types, only those with a fill component.
+     *
+     * \see fillColor()
+     * \see setColor()
+     * \see setStrokeColor()
+     *
      * \since QGIS 2.1
     */
-    virtual void setFillColor( const QColor &color ) { Q_UNUSED( color ) }
+    virtual void setFillColor( const QColor &color );
 
     /**
-     * Gets fill color. Supported by marker and fill layers.
+     * Returns the fill color for the symbol layer.
+     *
+     * This property is not supported by all symbol layer types, only those with a fill component. Symbol
+     * layers without a fill component will return an invalid QColor.
+     *
+     * \see setFillColor()
+     * \see color()
+     * \see strokeColor()
+     *
      * \since QGIS 2.1
     */
-    virtual QColor fillColor() const { return QColor(); }
+    virtual QColor fillColor() const;
 
     /**
      * Returns a string that represents this layer type. Used for serialization.
@@ -430,7 +482,7 @@ class CORE_EXPORT QgsSymbolLayer
      * \param unit output units
      * \see outputUnit()
      */
-    virtual void setOutputUnit( QgsUnitTypes::RenderUnit unit ) { Q_UNUSED( unit ) }
+    virtual void setOutputUnit( Qgis::RenderUnit unit ) { Q_UNUSED( unit ) }
 
     /**
      * Returns the units to use for sizes and widths within the symbol layer. Individual
@@ -440,7 +492,7 @@ class CORE_EXPORT QgsSymbolLayer
      * \returns output unit, or QgsUnitTypes::RenderUnknownUnit if the symbol layer contains mixed units
      * \see setOutputUnit()
      */
-    virtual QgsUnitTypes::RenderUnit outputUnit() const { return QgsUnitTypes::RenderUnknownUnit; }
+    virtual Qgis::RenderUnit outputUnit() const { return Qgis::RenderUnit::Unknown; }
 
     /**
      * Returns TRUE if the symbol layer has any components which use map unit based sizes.
@@ -490,6 +542,9 @@ class CORE_EXPORT QgsSymbolLayer
     //! Gets line width
     virtual double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const;
 
+    //! Gets marker size
+    virtual double dxfSize( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const;
+
     //! Gets offset
     virtual double dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const;
 
@@ -500,7 +555,7 @@ class CORE_EXPORT QgsSymbolLayer
     virtual double dxfAngle( QgsSymbolRenderContext &context ) const;
 
     //! Gets dash pattern
-    virtual QVector<qreal> dxfCustomDashPattern( QgsUnitTypes::RenderUnit &unit ) const;
+    virtual QVector<qreal> dxfCustomDashPattern( Qgis::RenderUnit &unit ) const;
 
     //! Gets pen style
     virtual Qt::PenStyle dxfPenStyle() const;
@@ -572,6 +627,29 @@ class CORE_EXPORT QgsSymbolLayer
      */
     virtual QList<QgsSymbolLayerReference> masks() const;
 
+    /**
+     * Prepares all mask internal objects according to what is defined in \a context
+     * This should be called prior to calling startRender() method.
+     * \see QgsRenderContext::addSymbolLayerClipPath()
+     * \see QgsRenderContext::symbolLayerClipPaths()
+     * \since QGIS 3.26
+     */
+    virtual void prepareMasks( const QgsSymbolRenderContext &context );
+
+    /**
+     * Set symbol layer identifier
+     * This id has to be unique in the whole project
+     * \since QGIS 3.30
+     */
+    void setId( const QString &id );
+
+    /**
+     * Returns symbol layer identifier
+     * This id is unique in the whole project
+     * \since QGIS 3.30
+     */
+    QString id() const;
+
   protected:
 
     /**
@@ -589,11 +667,14 @@ class CORE_EXPORT QgsSymbolLayer
     bool mLocked = false;
     QColor mColor;
     int mRenderingPass = 0;
-
+    QString mId;
     QgsPropertyCollection mDataDefinedProperties;
 
     std::unique_ptr< QgsPaintEffect > mPaintEffect;
     QgsFields mFields;
+
+    // clip path to be used during rendering
+    QPainterPath mClipPath;
 
     // Configuration of selected symbology implementation
     //! Whether styles for selected features ignore symbol alpha
@@ -621,6 +702,24 @@ class CORE_EXPORT QgsSymbolLayer
      * \since QGIS 2.9
      */
     void copyPaintEffect( QgsSymbolLayer *destLayer ) const;
+
+    /**
+     * When rendering, install masks on \a context painter
+     * if \a recursive is TRUE masks are installed recursively for all children symbol layers
+     * \see prepareMasks()
+     * \see removeMasks()
+     * \since QGIS 3.30
+     */
+    void installMasks( QgsRenderContext &context, bool recursive );
+
+    /**
+     * When rendering, remove previously installed masks from \a context painter
+     * if \a recursive is TRUE masks are removed recursively for all children symbol layers
+     * \see prepareMasks()
+     * \see installMasks()
+     * \since QGIS 3.30
+     */
+    void removeMasks( QgsRenderContext &context, bool recursive );
 
   private:
     static void initPropertyDefinitions();
@@ -730,7 +829,7 @@ class CORE_EXPORT QgsMarkerSymbolLayer : public QgsSymbolLayer
      * \see setSize()
      * \see setSizeMapUnitScale()
      */
-    void setSizeUnit( QgsUnitTypes::RenderUnit unit ) { mSizeUnit = unit; }
+    void setSizeUnit( Qgis::RenderUnit unit ) { mSizeUnit = unit; }
 
     /**
      * Returns the units for the symbol's size.
@@ -738,7 +837,7 @@ class CORE_EXPORT QgsMarkerSymbolLayer : public QgsSymbolLayer
      * \see size()
      * \see sizeMapUnitScale()
      */
-    QgsUnitTypes::RenderUnit sizeUnit() const { return mSizeUnit; }
+    Qgis::RenderUnit sizeUnit() const { return mSizeUnit; }
 
     /**
      * Sets the map unit scale for the symbol's size.
@@ -796,7 +895,7 @@ class CORE_EXPORT QgsMarkerSymbolLayer : public QgsSymbolLayer
      * \see setOffset()
      * \see setOffsetMapUnitScale()
      */
-    void setOffsetUnit( QgsUnitTypes::RenderUnit unit ) { mOffsetUnit = unit; }
+    void setOffsetUnit( Qgis::RenderUnit unit ) { mOffsetUnit = unit; }
 
     /**
      * Returns the units for the symbol's offset.
@@ -804,7 +903,7 @@ class CORE_EXPORT QgsMarkerSymbolLayer : public QgsSymbolLayer
      * \see offset()
      * \see offsetMapUnitScale()
      */
-    QgsUnitTypes::RenderUnit offsetUnit() const { return mOffsetUnit; }
+    Qgis::RenderUnit offsetUnit() const { return mOffsetUnit; }
 
     /**
      * Sets the map unit scale for the symbol's offset.
@@ -868,10 +967,12 @@ class CORE_EXPORT QgsMarkerSymbolLayer : public QgsSymbolLayer
     virtual void writeSldMarker( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const
     { Q_UNUSED( props ) element.appendChild( doc.createComment( QStringLiteral( "QgsMarkerSymbolLayer %1 not implemented yet" ).arg( layerType() ) ) ); }
 
-    void setOutputUnit( QgsUnitTypes::RenderUnit unit ) override;
-    QgsUnitTypes::RenderUnit outputUnit() const override;
+    void setOutputUnit( Qgis::RenderUnit unit ) override;
+    Qgis::RenderUnit outputUnit() const override;
     void setMapUnitScale( const QgsMapUnitScale &scale ) override;
     QgsMapUnitScale mapUnitScale() const override;
+    // virtual double dxfSize( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
+    // virtual double dxfAngle( QgsSymbolRenderContext &context ) const override;
 
     /**
      * Returns the approximate bounding box of the marker symbol layer, taking into account
@@ -912,7 +1013,7 @@ class CORE_EXPORT QgsMarkerSymbolLayer : public QgsSymbolLayer
 
     //! \note available in Python bindings as markerOffset2
     void markerOffset( QgsSymbolRenderContext &context, double width, double height,
-                       QgsUnitTypes::RenderUnit widthUnit, QgsUnitTypes::RenderUnit heightUnit,
+                       Qgis::RenderUnit widthUnit, Qgis::RenderUnit heightUnit,
                        double &offsetX, double &offsetY,
                        const QgsMapUnitScale &widthMapUnitScale, const QgsMapUnitScale &heightMapUnitScale ) const SIP_PYNAME( markerOffset2 );
 
@@ -931,13 +1032,13 @@ class CORE_EXPORT QgsMarkerSymbolLayer : public QgsSymbolLayer
     //! Marker size
     double mSize = 2.0;
     //! Marker size unit
-    QgsUnitTypes::RenderUnit mSizeUnit = QgsUnitTypes::RenderMillimeters;
+    Qgis::RenderUnit mSizeUnit = Qgis::RenderUnit::Millimeters;
     //! Marker size map unit scale
     QgsMapUnitScale mSizeMapUnitScale;
     //! Marker offset
     QPointF mOffset;
     //! Offset units
-    QgsUnitTypes::RenderUnit mOffsetUnit = QgsUnitTypes::RenderMillimeters;
+    Qgis::RenderUnit mOffsetUnit = Qgis::RenderUnit::Millimeters;
     //! Offset map unit scale
     QgsMapUnitScale mOffsetMapUnitScale;
     //! Marker size scaling method
@@ -978,8 +1079,8 @@ class CORE_EXPORT QgsLineSymbolLayer : public QgsSymbolLayer
     //! QgsLineSymbolLayer cannot be copied
     QgsLineSymbolLayer &operator=( const QgsLineSymbolLayer &other ) = delete;
 
-    void setOutputUnit( QgsUnitTypes::RenderUnit unit ) override;
-    QgsUnitTypes::RenderUnit outputUnit() const override;
+    void setOutputUnit( Qgis::RenderUnit unit ) override;
+    Qgis::RenderUnit outputUnit() const override;
     void setMapUnitScale( const QgsMapUnitScale &scale ) override;
     QgsMapUnitScale mapUnitScale() const override;
     void drawPreviewIcon( QgsSymbolRenderContext &context, QSize size ) override;
@@ -1067,7 +1168,7 @@ class CORE_EXPORT QgsLineSymbolLayer : public QgsSymbolLayer
      * \see setOffset()
      * \see setOffsetMapUnitScale()
     */
-    void setOffsetUnit( QgsUnitTypes::RenderUnit unit ) { mOffsetUnit = unit; }
+    void setOffsetUnit( Qgis::RenderUnit unit ) { mOffsetUnit = unit; }
 
     /**
      * Returns the units for the line's offset.
@@ -1075,7 +1176,7 @@ class CORE_EXPORT QgsLineSymbolLayer : public QgsSymbolLayer
      * \see offset()
      * \see offsetMapUnitScale()
     */
-    QgsUnitTypes::RenderUnit offsetUnit() const { return mOffsetUnit; }
+    Qgis::RenderUnit offsetUnit() const { return mOffsetUnit; }
 
     /**
      * Sets the map unit \a scale for the line's offset.
@@ -1101,13 +1202,13 @@ class CORE_EXPORT QgsLineSymbolLayer : public QgsSymbolLayer
      * \param unit width units
      * \see widthUnit()
     */
-    void setWidthUnit( QgsUnitTypes::RenderUnit unit ) { mWidthUnit = unit; }
+    void setWidthUnit( Qgis::RenderUnit unit ) { mWidthUnit = unit; }
 
     /**
      * Returns the units for the line's width.
      * \see setWidthUnit()
     */
-    QgsUnitTypes::RenderUnit widthUnit() const { return mWidthUnit; }
+    Qgis::RenderUnit widthUnit() const { return mWidthUnit; }
 
     void setWidthMapUnitScale( const QgsMapUnitScale &scale ) { mWidthMapUnitScale = scale; }
     const QgsMapUnitScale &widthMapUnitScale() const { return mWidthMapUnitScale; }
@@ -1140,10 +1241,10 @@ class CORE_EXPORT QgsLineSymbolLayer : public QgsSymbolLayer
     QgsLineSymbolLayer( bool locked = false );
 
     double mWidth = 0;
-    QgsUnitTypes::RenderUnit mWidthUnit = QgsUnitTypes::RenderMillimeters;
+    Qgis::RenderUnit mWidthUnit = Qgis::RenderUnit::Millimeters;
     QgsMapUnitScale mWidthMapUnitScale;
     double mOffset = 0;
-    QgsUnitTypes::RenderUnit mOffsetUnit = QgsUnitTypes::RenderMillimeters;
+    Qgis::RenderUnit mOffsetUnit = Qgis::RenderUnit::Millimeters;
     QgsMapUnitScale mOffsetMapUnitScale;
 
     RenderRingFilter mRingFilter = AllRings;
@@ -1177,8 +1278,35 @@ class CORE_EXPORT QgsFillSymbolLayer : public QgsSymbolLayer
 
     void drawPreviewIcon( QgsSymbolRenderContext &context, QSize size ) override;
 
+    /**
+     * Sets the rotation \a angle of the pattern, in degrees clockwise.
+     *
+     * \note Not all fill symbol layers support rotation.
+     *
+     * \see angle()
+     */
     void setAngle( double angle ) { mAngle = angle; }
+
+    /**
+     * Returns the rotation angle of the fill symbol, in degrees clockwise.
+     *
+     * \note Not all fill symbol layers support rotation.
+     *
+     * \see setAngle()
+     */
     double angle() const { return mAngle; }
+
+    /**
+     * Renders the symbol layer as an image that can be used as a seamless pattern fill
+     * for polygons, this method is used by SLD export to generate image tiles for
+     * ExternalGraphic polygon fills.
+     *
+     * The default implementation returns a null image.
+     *
+     * \return the tile image (not necessarily a square) or a null image if not implemented.
+     * \since QGIS 3.30
+     */
+    virtual QImage toTiledPatternImage( ) const;
 
   protected:
     QgsFillSymbolLayer( bool locked = false );
@@ -1196,5 +1324,3 @@ class CORE_EXPORT QgsFillSymbolLayer : public QgsSymbolLayer
 class QgsSymbolLayerWidget;  // why does SIP fail, when this isn't here
 
 #endif
-
-

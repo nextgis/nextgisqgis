@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     GridDataMetrics.py
@@ -27,6 +25,7 @@ from qgis.PyQt.QtGui import QIcon
 
 from qgis.core import (QgsRasterFileWriter,
                        QgsProcessing,
+                       QgsProcessingException,
                        QgsProcessingParameterDefinition,
                        QgsProcessingParameterFeatureSource,
                        QgsProcessingParameterEnum,
@@ -54,7 +53,7 @@ class GridDataMetrics(GdalAlgorithm):
     DATA_TYPE = 'DATA_TYPE'
     OUTPUT = 'OUTPUT'
 
-    TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64']
+    TYPES = ['Byte', 'Int16', 'UInt16', 'UInt32', 'Int32', 'Float32', 'Float64', 'CInt16', 'CInt32', 'CFloat32', 'CFloat64', 'Int8']
 
     def __init__(self):
         super().__init__()
@@ -170,16 +169,20 @@ class GridDataMetrics(GdalAlgorithm):
             arguments.append(fieldName)
 
         params = self.metrics[self.parameterAsEnum(parameters, self.METRIC, context)][1]
-        params += ':radius1={}'.format(self.parameterAsDouble(parameters, self.RADIUS_1, context))
-        params += ':radius2={}'.format(self.parameterAsDouble(parameters, self.RADIUS_2, context))
-        params += ':angle={}'.format(self.parameterAsDouble(parameters, self.ANGLE, context))
-        params += ':min_points={}'.format(self.parameterAsInt(parameters, self.MIN_POINTS, context))
-        params += ':nodata={}'.format(self.parameterAsDouble(parameters, self.NODATA, context))
+        params += f':radius1={self.parameterAsDouble(parameters, self.RADIUS_1, context)}'
+        params += f':radius2={self.parameterAsDouble(parameters, self.RADIUS_2, context)}'
+        params += f':angle={self.parameterAsDouble(parameters, self.ANGLE, context)}'
+        params += f':min_points={self.parameterAsInt(parameters, self.MIN_POINTS, context)}'
+        params += f':nodata={self.parameterAsDouble(parameters, self.NODATA, context)}'
 
         arguments.append('-a')
         arguments.append(params)
-        arguments.append('-ot')
-        arguments.append(self.TYPES[self.parameterAsEnum(parameters, self.DATA_TYPE, context)])
+
+        data_type = self.parameterAsEnum(parameters, self.DATA_TYPE, context)
+        if self.TYPES[data_type] == 'Int8' and GdalUtils.version() < 3070000:
+            raise QgsProcessingException(self.tr('Int8 data type requires GDAL version 3.7 or later'))
+
+        arguments.append('-ot ' + self.TYPES[data_type])
 
         out = self.parameterAsOutputLayer(parameters, self.OUTPUT, context)
         self.setOutputValue(self.OUTPUT, out)

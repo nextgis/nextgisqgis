@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     EditScriptDialog.py
@@ -30,8 +28,11 @@ import warnings
 from qgis.PyQt import uic, sip
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QCursor
-from qgis.PyQt.QtWidgets import (QMessageBox,
-                                 QFileDialog)
+from qgis.PyQt.QtWidgets import (
+    QMessageBox,
+    QFileDialog,
+    QVBoxLayout
+)
 
 from qgis.gui import QgsGui, QgsErrorDialog
 from qgis.core import (QgsApplication,
@@ -45,6 +46,8 @@ from qgis.processing import alg as algfactory
 from processing.gui.AlgorithmDialog import AlgorithmDialog
 from processing.script import ScriptUtils
 
+from .ScriptEdit import ScriptEdit
+
 pluginPath = os.path.split(os.path.dirname(__file__))[0]
 
 with warnings.catch_warnings():
@@ -56,11 +59,34 @@ with warnings.catch_warnings():
 class ScriptEditorDialog(BASE, WIDGET):
     hasChanged = False
 
+    DIALOG_STORE = []
+
     def __init__(self, filePath=None, parent=None):
-        super(ScriptEditorDialog, self).__init__(parent)
+        super().__init__(parent)
+        # SIP is totally messed up here -- the dialog wrapper or something
+        # is always prematurely cleaned which results in broken QObject
+        # connections throughout.
+        # Hack around this by storing dialog instances in a global list to
+        # prevent too early wrapper garbage collection
+        ScriptEditorDialog.DIALOG_STORE.append(self)
+
+        def clean_up_store():
+            ScriptEditorDialog.DIALOG_STORE =\
+                [d for d in ScriptEditorDialog.DIALOG_STORE if d != self]
+
+        self.destroyed.connect(clean_up_store)
+
         self.setupUi(self)
+        self.setAttribute(Qt.WA_DeleteOnClose)
 
         QgsGui.instance().enableAutoGeometryRestore(self)
+
+        vl = QVBoxLayout()
+        vl.setContentsMargins(0, 0, 0, 0)
+        self.editor_container.setLayout(vl)
+
+        self.editor = ScriptEdit()
+        vl.addWidget(self.editor)
 
         self.searchWidget.setVisible(False)
 
@@ -92,6 +118,8 @@ class ScriptEditorDialog(BASE, WIDGET):
             QgsApplication.getThemeIcon('/mActionIncreaseFont.svg'))
         self.actionDecreaseFontSize.setIcon(
             QgsApplication.getThemeIcon('/mActionDecreaseFont.svg'))
+        self.actionToggleComment.setIcon(
+            QgsApplication.getThemeIcon('console/iconCommentEditorConsole.svg'))
 
         # Connect signals and slots
         self.actionOpenScript.triggered.connect(self.openScript)
@@ -106,7 +134,8 @@ class ScriptEditorDialog(BASE, WIDGET):
         self.actionFindReplace.toggled.connect(self.toggleSearchBox)
         self.actionIncreaseFontSize.triggered.connect(self.editor.zoomIn)
         self.actionDecreaseFontSize.triggered.connect(self.editor.zoomOut)
-        self.editor.textChanged.connect(lambda: self.setHasChanged(True))
+        self.actionToggleComment.triggered.connect(self.editor.toggleComment)
+        self.editor.textChanged.connect(self._on_text_modified)
 
         self.leFindText.returnPressed.connect(self.find)
         self.btnFind.clicked.connect(self.find)
@@ -202,7 +231,7 @@ class ScriptEditorDialog(BASE, WIDGET):
             try:
                 with codecs.open(self.filePath, "w", encoding="utf-8") as f:
                     f.write(text)
-            except IOError as e:
+            except OSError as e:
                 QMessageBox.warning(self,
                                     self.tr("I/O error"),
                                     self.tr("Unable to save edits:\n{}").format(str(e))
@@ -212,6 +241,9 @@ class ScriptEditorDialog(BASE, WIDGET):
             self.setHasChanged(False)
 
         QgsApplication.processingRegistry().providerById("script").refreshAlgorithms()
+
+    def _on_text_modified(self):
+        self.setHasChanged(True)
 
     def setHasChanged(self, hasChanged):
         self.hasChanged = hasChanged

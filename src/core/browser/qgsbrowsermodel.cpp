@@ -36,6 +36,7 @@
 #include "qgsprojectitem.h"
 #include "qgslayeritem.h"
 #include "qgsfavoritesitem.h"
+#include "qgslayermetadata.h"
 
 #define PROJECT_HOME_PREFIX "project:"
 #define HOME_PREFIX "home:"
@@ -325,6 +326,15 @@ QVariant QgsBrowserModel::data( const QModelIndex &index, int role ) const
     }
     return QVariant();
   }
+  else if ( role == QgsBrowserModel::LayerMetadataRole )
+  {
+    if ( item->type() == Qgis::BrowserItemType::Layer )
+    {
+      QgsLayerItem *lyrItem = qobject_cast<QgsLayerItem *>( item );
+      return QVariant::fromValue( lyrItem->layerMetadata() );
+    }
+    return QVariant();
+  }
   else if ( role == QgsBrowserModel::ProviderKeyRole )
   {
     return item->providerKey();
@@ -377,7 +387,7 @@ QVariant QgsBrowserModel::headerData( int section, Qt::Orientation orientation, 
 
 int QgsBrowserModel::rowCount( const QModelIndex &parent ) const
 {
-  //QgsDebugMsg(QString("isValid = %1 row = %2 column = %3").arg(parent.isValid()).arg(parent.row()).arg(parent.column()));
+  //QgsDebugMsgLevel(QString("isValid = %1 row = %2 column = %3").arg(parent.isValid()).arg(parent.row()).arg(parent.column()), 2);
 
   if ( !parent.isValid() )
   {
@@ -388,7 +398,7 @@ int QgsBrowserModel::rowCount( const QModelIndex &parent ) const
   {
     // ordinary item: number of its children
     QgsDataItem *item = dataItem( parent );
-    //if ( item ) QgsDebugMsg(QString("path = %1 rowCount = %2").arg(item->path()).arg(item->rowCount()) );
+    //if ( item ) QgsDebugMsgLevel(QString("path = %1 rowCount = %2").arg(item->path()).arg(item->rowCount()), 2);
     return item ? item->rowCount() : 0;
   }
 }
@@ -559,7 +569,7 @@ QModelIndex QgsBrowserModel::parent( const QModelIndex &index ) const
   if ( !item )
     return QModelIndex();
 
-  return findItem( item->parent() );
+  return findItem( item->parent(), item->parent() ? item->parent()->parent() : nullptr );
 }
 
 QModelIndex QgsBrowserModel::findItem( QgsDataItem *item, QgsDataItem *parent ) const
@@ -704,7 +714,7 @@ bool QgsBrowserModel::canFetchMore( const QModelIndex &parent ) const
 {
   QgsDataItem *item = dataItem( parent );
   // if ( item )
-  //   QgsDebugMsg( QStringLiteral( "path = %1 canFetchMore = %2" ).arg( item->path() ).arg( item && ! item->isPopulated() ) );
+  //   QgsDebugMsgLevel( QStringLiteral( "path = %1 canFetchMore = %2" ).arg( item->path() ).arg( item && ! item->isPopulated() ), 2 );
   return ( item && item->state() == Qgis::BrowserItemState::NotPopulated );
 }
 

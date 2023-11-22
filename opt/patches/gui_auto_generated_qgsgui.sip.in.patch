@@ -1,6 +1,6 @@
 --- a/python/gui/auto_generated/qgsgui.sip.in	2022-02-18 15:06:10.000000000 +0300
 +++ b/python/gui/auto_generated/qgsgui.sip.in	2022-04-30 21:30:06.707097400 +0300
-@@ -153,14 +153,6 @@
+@@ -160,14 +160,6 @@
  .. versionadded:: 3.18
  %End
  
@@ -12,6 +12,6 @@
 -.. versionadded:: 3.24
 -%End
 -
-     static void enableAutoGeometryRestore( QWidget *widget, const QString &key = QString() );
+     static QgsSettingsEditorWidgetRegistry *settingsEditorWidgetRegistry() /KeepReference/;
  %Docstring
- Register the widget to allow its position to be automatically saved and restored when open and closed.
+ Returns the registry of settings editors.

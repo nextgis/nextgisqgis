@@ -23,14 +23,12 @@
 #include "qgsrectangle.h"
 #include "qgsmapsettings.h"
 #include "qgspointxy.h"
-#include "qgslogger.h"
 #include "qgsapplication.h"
 #include "qgsmaplayerlistutils_p.h"
 #include "qgsvectorlayer.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgsexpressioncontextutils.h"
 #include "qgsrenderedfeaturehandlerinterface.h"
-#include "qgsrendercontext.h"
 #include "qgsgrouplayer.h"
 
 class TestHandler : public QgsRenderedFeatureHandlerInterface
@@ -127,6 +125,14 @@ void TestQgsMapSettings::testGettersSetters()
   QVERIFY( ms.zRange().isInfinite() );
   ms.setZRange( QgsDoubleRange( 1, 10 ) );
   QCOMPARE( ms.zRange(), QgsDoubleRange( 1, 10 ) );
+
+  QCOMPARE( ms.frameRate(), -1.0 );
+  ms.setFrameRate( 30.0 );
+  QCOMPARE( ms.frameRate(), 30.0 );
+
+  QCOMPARE( ms.currentFrame(), -1 );
+  ms.setCurrentFrame( 6 );
+  QCOMPARE( ms.currentFrame(), 6LL );
 }
 
 void TestQgsMapSettings::testLabelingEngineSettings()
@@ -230,7 +236,7 @@ void TestQgsMapSettings::testDevicePixelRatio()
   ms.setDevicePixelRatio( 1.5 );
   ms.setExtent( QgsRectangle( 0, 0, 100, 100 ) );
   QCOMPARE( ms.outputSize() * 1.5, ms.deviceOutputSize() );
-  QCOMPARE( scale * 1.5, ms.scale() );
+  QCOMPARE( scale, ms.scale() );
 }
 
 void TestQgsMapSettings::visiblePolygon()
@@ -586,6 +592,9 @@ void TestQgsMapSettings::testExpressionContext()
   r = e.evaluate( &c );
   QVERIFY( !r.isValid() );
 
+  QVERIFY( !c.variable( QStringLiteral( "frame_rate" ) ).isValid() );
+  QVERIFY( !c.variable( QStringLiteral( "frame_number" ) ).isValid() );
+
   ms.setTemporalRange( QgsDateTimeRange( QDateTime( QDate( 2002, 3, 4 ), QTime( 0, 0, 0 ) ), QDateTime( QDate( 2010, 6, 7 ), QTime( 0, 0, 0 ) ) ) );
   c = QgsExpressionContext();
   c << QgsExpressionContextUtils::mapSettingsScope( ms );
@@ -598,6 +607,22 @@ void TestQgsMapSettings::testExpressionContext()
   e = QgsExpression( QStringLiteral( "@map_interval" ) );
   r = e.evaluate( &c );
   QCOMPARE( r.value< QgsInterval >(), QgsInterval( QDateTime( QDate( 2010, 6, 7 ), QTime( 0, 0, 0 ) ) - QDateTime( QDate( 2002, 3, 4 ), QTime( 0, 0, 0 ) ) ) );
+
+  QVERIFY( !c.variable( QStringLiteral( "frame_rate" ) ).isValid() );
+  QVERIFY( !c.variable( QStringLiteral( "frame_number" ) ).isValid() );
+
+  ms.setFrameRate( 30 );
+  ms.setCurrentFrame( 5 );
+  c = QgsExpressionContext();
+  c << QgsExpressionContextUtils::mapSettingsScope( ms );
+  QVERIFY( c.variable( QStringLiteral( "frame_rate" ) ).isValid() );
+  QVERIFY( c.variable( QStringLiteral( "frame_number" ) ).isValid() );
+  e = QgsExpression( QStringLiteral( "@frame_rate" ) );
+  r = e.evaluate( &c );
+  QCOMPARE( r.toDouble(), 30.0 );
+  e = QgsExpression( QStringLiteral( "@frame_number" ) );
+  r = e.evaluate( &c );
+  QCOMPARE( r.toLongLong(), 5LL );
 }
 
 void TestQgsMapSettings::testRenderedFeatureHandlers()
@@ -675,7 +700,7 @@ void TestQgsMapSettings::testComputeExtentForScale()
 
   //                   [                   output width in inches                   ] * [scale]
   const double widthInches = settings.outputSize().width() / double( settings.outputDpi() ) * 500;
-  const double widthMapUnits = widthInches * QgsUnitTypes::fromUnitToUnitFactor( QgsUnitTypes::DistanceFeet, settings.mapUnits() ) / 12;
+  const double widthMapUnits = widthInches * QgsUnitTypes::fromUnitToUnitFactor( Qgis::DistanceUnit::Feet, settings.mapUnits() ) / 12;
   QGSCOMPARENEARRECTANGLE( rect, QgsRectangle( - 0.5 * widthMapUnits, - 0.5 * widthMapUnits, 0.5 * widthMapUnits, 0.5 * widthMapUnits ), 0.0001 );
 
 }
@@ -690,7 +715,7 @@ void TestQgsMapSettings::testComputeScaleForExtent()
 
   const double scale = settings.computeScaleForExtent( QgsRectangle( -500., -500., 500., 500. ) );
 
-  const double widthInches = 1000 * QgsUnitTypes::fromUnitToUnitFactor( settings.mapUnits(), QgsUnitTypes::DistanceFeet ) * 12;
+  const double widthInches = 1000 * QgsUnitTypes::fromUnitToUnitFactor( settings.mapUnits(), Qgis::DistanceUnit::Feet ) * 12;
   const double testScale = widthInches * settings.outputDpi() / double( settings.outputSize().width() );
   QGSCOMPARENEAR( scale, testScale, 0.001 );
 }

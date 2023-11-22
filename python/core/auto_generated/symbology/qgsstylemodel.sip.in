@@ -41,10 +41,14 @@ instead.
     {
       TypeRole,
       TagRole,
+      EntityName,
       SymbolTypeRole,
       IsFavoriteRole,
       LayerTypeRole,
       CompatibleGeometryTypesRole,
+      StyleName,
+      StyleFileName,
+      IsTitleRole,
     };
 
     explicit QgsStyleModel( QgsStyle *style, QObject *parent /TransferThis/ = 0 );
@@ -86,6 +90,16 @@ This allows style icons to be generated at an icon size which
 corresponds exactly to the view's icon size in which this model is used.
 %End
 
+    void addTargetScreenProperties( const QgsScreenProperties &properties );
+%Docstring
+Adds additional target screen ``properties`` to use when generating icons for Qt.DecorationRole data.
+
+This allows style icons to be generated at an icon device pixel ratio and DPI which
+corresponds exactly to the view's screen properties in which this model is used.
+
+.. versionadded:: 3.32
+%End
+
 
 };
 
@@ -117,6 +131,19 @@ The ``style`` object must exist for the lifetime of this model.
 Constructor for QgsStyleProxyModel, using the specified source ``model`` and ``parent`` object.
 
 The source ``model`` object must exist for the lifetime of this model.
+%End
+
+    explicit QgsStyleProxyModel( QgsCombinedStyleModel *model, QObject *parent /TransferThis/ = 0 );
+%Docstring
+Constructor for QgsStyleProxyModel, using the specified source combined ``model`` and ``parent`` object.
+
+The source ``model`` object must exist for the lifetime of this model.
+
+.. note::
+
+   This is only available on builds based on Qt 5.13 or later.
+
+.. versionadded:: 3.26
 %End
 
     QString filterString() const;
@@ -176,7 +203,7 @@ Returns the symbol type filter.
 
 .. note::
 
-   This filter is only active if Qgis.SymbolTypeFilterEnabled() is ``True``, and has
+   This filter is only active if :py:class:`Qgis`.SymbolTypeFilterEnabled() is ``True``, and has
    no effect on non-symbol entities (i.e. color ramps).
 
 .. seealso:: :py:func:`setSymbolType`
@@ -188,7 +215,7 @@ Sets the symbol ``type`` filter.
 
 .. note::
 
-   This filter is only active if Qgis.SymbolTypeFilterEnabled() is ``True``.
+   This filter is only active if :py:class:`Qgis`.SymbolTypeFilterEnabled() is ``True``.
 
 .. seealso:: Qgis.SymbolType
 %End
@@ -206,7 +233,7 @@ Returns ``True`` if filtering by symbol type is enabled.
 %Docstring
 Sets whether filtering by symbol type is ``enabled``.
 
-If ``enabled`` is ``False``, then the value of Qgis.SymbolType() will have no
+If ``enabled`` is ``False``, then the value of :py:class:`Qgis`.SymbolType() will have no
 effect on the model filtering. This has
 no effect on non-symbol entities (i.e. color ramps).
 
@@ -215,9 +242,9 @@ no effect on non-symbol entities (i.e. color ramps).
 .. seealso:: :py:func:`setSymbolType`
 %End
 
-    QgsWkbTypes::GeometryType layerType() const;
+    Qgis::GeometryType layerType() const;
 %Docstring
-Returns the layer type filter, or :py:class:`QgsWkbTypes`.UnknownGeometry if no
+Returns the layer type filter, or :py:class:`Qgis`.GeometryType.Unknown if no
 layer type filter is present.
 
 This setting has an effect on label settings entities and 3d symbols only.
@@ -225,9 +252,9 @@ This setting has an effect on label settings entities and 3d symbols only.
 .. seealso:: :py:func:`setLayerType`
 %End
 
-    void setLayerType( QgsWkbTypes::GeometryType type );
+    void setLayerType( Qgis::GeometryType type );
 %Docstring
-Sets the layer ``type`` filter. Set ``type`` to :py:class:`QgsWkbTypes`.UnknownGeometry if no
+Sets the layer ``type`` filter. Set ``type`` to :py:class:`Qgis`.GeometryType.Unknown if no
 layer type filter is desired.
 
 .. seealso:: :py:func:`layerType`
@@ -240,6 +267,10 @@ tag will be shown in the model.
 
 Set ``id`` to -1 to disable tag filtering.
 
+.. note::
+
+   This method has no effect for models created using :py:class:`QgsCombinedStyleModel` source models. Use :py:func:`~QgsStyleProxyModel.setTagString` instead.
+
 .. seealso:: :py:func:`tagId`
 %End
 
@@ -249,7 +280,34 @@ Returns the tag id used to filter style entities by.
 
 If returned value is -1, then no tag filtering is being conducted.
 
+.. note::
+
+   This method has no effect for models created using :py:class:`QgsCombinedStyleModel` source models. Use :py:func:`~QgsStyleProxyModel.tagString` instead.
+
 .. seealso:: :py:func:`setTagId`
+%End
+
+    void setTagString( const QString &tag );
+%Docstring
+Sets a ``tag`` to filter style entities by. Only entities with the given
+tag will be shown in the model.
+
+Set ``tag`` to an empty string to disable tag filtering.
+
+.. seealso:: :py:func:`tagString`
+
+.. versionadded:: 3.26
+%End
+
+    QString tagString() const;
+%Docstring
+Returns the tag string used to filter style entities by.
+
+If returned value is empty, then no tag filtering is being conducted.
+
+.. seealso:: :py:func:`setTagString`
+
+.. versionadded:: 3.26
 %End
 
     void setSmartGroupId( int id );
@@ -258,6 +316,10 @@ Sets a smart group ``id`` to filter style entities by. Only entities within the 
 smart group will be shown in the model.
 
 Set ``id`` to -1 to disable smart group filtering.
+
+.. note::
+
+   This method has no effect for models created using :py:class:`QgsCombinedStyleModel` source models.
 
 .. seealso:: :py:func:`smartGroupId`
 %End
@@ -268,10 +330,16 @@ Returns the smart group id used to filter style entities by.
 
 If returned value is -1, then no smart group filtering is being conducted.
 
+.. note::
+
+   This method has no effect for models created using :py:class:`QgsCombinedStyleModel` source models.
+
 .. seealso:: :py:func:`setSmartGroupId`
 %End
 
     virtual bool filterAcceptsRow( int source_row, const QModelIndex &source_parent ) const;
+
+    virtual bool lessThan( const QModelIndex &left, const QModelIndex &right ) const;
 
 
     bool favoritesOnly() const;
@@ -294,6 +362,16 @@ Adds an additional icon ``size`` to generate for Qt.DecorationRole data.
 
 This allows style icons to be generated at an icon size which
 corresponds exactly to the view's icon size in which this model is used.
+%End
+
+    void addTargetScreenProperties( const QgsScreenProperties &properties );
+%Docstring
+Adds additional target screen ``properties`` to use when generating icons for Qt.DecorationRole data.
+
+This allows style icons to be generated at an icon device pixel ratio and DPI which
+corresponds exactly to the view's screen properties in which this model is used.
+
+.. versionadded:: 3.32
 %End
 
   public slots:

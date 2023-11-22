@@ -25,6 +25,7 @@ class QgsGeometryValidationModel;
 class QgsGeometryValidationService;
 class QgsRubberBand;
 class QgisApp;
+class QgsMapLayer;
 class QgsVectorLayer;
 
 /**
@@ -54,7 +55,6 @@ class QgsGeometryValidationDock : public QgsDockWidget, public Ui_QgsGeometryVal
     void gotoPreviousError();
     void zoomToProblem();
     void zoomToFeature();
-    void updateLayerTransform();
     void onDataChanged( const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles );
     void onRowsInserted();
     void showErrorContextMenu( const QPoint &pos );
@@ -69,13 +69,14 @@ class QgsGeometryValidationDock : public QgsDockWidget, public Ui_QgsGeometryVal
 
     void showHighlight( const QModelIndex &current );
 
+    QgsCoordinateTransform layerTransform() const;
+
     ZoomToAction mLastZoomToAction = ZoomToFeature;
     QgsGeometryValidationModel *mGeometryValidationModel = nullptr;
     QgsGeometryValidationService *mGeometryValidationService = nullptr;
     QButtonGroup *mZoomToButtonGroup = nullptr;
     QgsMapCanvas *mMapCanvas = nullptr;
     QgisApp *mQgisApp = nullptr;
-    QgsCoordinateTransform mLayerTransform;
     QModelIndex currentIndex() const;
     QgsRubberBand *mFeatureRubberband = nullptr;
     QgsRubberBand *mErrorRubberband = nullptr;

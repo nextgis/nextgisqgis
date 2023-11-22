@@ -1,6 +1,6 @@
---- a/python/core/auto_generated/symbology/qgsfillsymbollayer.sip.in	2022-02-18 15:06:10.000000000 +0300
-+++ b/python/core/auto_generated/symbology/qgsfillsymbollayer.sip.in	2022-04-30 15:42:58.160229400 +0300
-@@ -173,20 +173,6 @@
+--- a/python/core/auto_generated/symbology/qgsfillsymbollayer.sip.in	2023-08-21 19:30:48.705620174 +0300
++++ b/python/core/auto_generated/symbology/qgsfillsymbollayer.sip.in	2023-10-04 00:28:34.632754956 +0300
+@@ -173,22 +173,6 @@
      virtual double estimateMaxBleed( const QgsRenderContext &context ) const;
  
  
@@ -17,11 +17,13 @@
 -
 -    virtual Qt::BrushStyle dxfBrushStyle() const;
 -
+-    virtual QImage toTiledPatternImage( ) const;
+-
 -
    protected:
  
  
-@@ -888,10 +874,6 @@
+@@ -890,10 +874,6 @@
  
      virtual QgsMapUnitScale mapUnitScale() const;
  
@@ -32,7 +34,7 @@
      virtual QVariantMap properties() const;
  
  
-@@ -1258,8 +1240,6 @@
+@@ -1272,8 +1252,6 @@
  
      virtual double estimateMaxBleed( const QgsRenderContext &context ) const;
  

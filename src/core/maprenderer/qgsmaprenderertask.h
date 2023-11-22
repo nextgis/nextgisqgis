@@ -29,9 +29,7 @@
 #include "qgsabstractgeopdfexporter.h"
 
 #include <QPainter>
-#ifndef QT_NO_PRINTER
-#include <QPrinter>
-#endif
+#include <QPdfWriter>
 
 class QgsMapRendererCustomPainterJob;
 class QgsAbstractGeoPdfExporter;
@@ -57,23 +55,34 @@ class CORE_EXPORT QgsMapRendererTask : public QgsTask
       ImageUnsupportedFormat //!< Format is unsupported on the platform \since QGIS 3.4
     };
 
+#ifndef SIP_RUN
+
     /**
      * Constructor for QgsMapRendererTask to render a map to an image file.
      *
      * If the output \a fileFormat is set to PDF, the \a geoPdf argument controls whether a GeoPDF file is created.
      * See QgsAbstractGeoPdfExporter::geoPDFCreationAvailable() for conditions on GeoPDF creation availability.
+     *
+     * Since QGIS 3.26 the optional \a flags argument can be used to control the task flags.
      */
-#ifndef SIP_RUN
     QgsMapRendererTask( const QgsMapSettings &ms,
                         const QString &fileName,
                         const QString &fileFormat = QString( "PNG" ),
                         bool forceRaster = false,
-                        bool geoPdf = false, const QgsAbstractGeoPdfExporter::ExportDetails &geoPdfExportDetails = QgsAbstractGeoPdfExporter::ExportDetails() );
+                        QgsTask::Flags flags = QgsTask::CanCancel, bool geoPdf = false, const QgsAbstractGeoPdfExporter::ExportDetails &geoPdfExportDetails = QgsAbstractGeoPdfExporter::ExportDetails()
+                      );
 #else
+
+    /**
+     * Constructor for QgsMapRendererTask to render a map to an image file.
+     *
+     * Since QGIS 3.26 the optional \a flags argument can be used to control the task flags.
+     */
     QgsMapRendererTask( const QgsMapSettings &ms,
                         const QString &fileName,
                         const QString &fileFormat = QString( "PNG" ),
-                        bool forceRaster = false );
+                        bool forceRaster = false,
+                        QgsTask::Flags flags = QgsTask::CanCancel );
 #endif
 
     /**
@@ -140,9 +149,7 @@ class CORE_EXPORT QgsMapRendererTask : public QgsTask
     QPainter *mPainter = nullptr;
     QPainter *mDestPainter = nullptr;
     QImage mImage;
-#ifndef QT_NO_PRINTER
-    std::unique_ptr< QPrinter > mPrinter;
-#endif // ! QT_NO_PRINTER
+    std::unique_ptr< QPdfWriter > mPdfWriter;
 
     std::unique_ptr< QPainter > mTempPainter;
 

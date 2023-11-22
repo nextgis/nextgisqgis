@@ -17,33 +17,27 @@
 
 #include "qgslayoutitemlabel.h"
 #include "qgslayoutitemregistry.h"
-#include "qgslayout.h"
 #include "qgslayoututils.h"
 #include "qgslayoutmodel.h"
 #include "qgsexpression.h"
 #include "qgsnetworkaccessmanager.h"
 #include "qgsvectorlayer.h"
-#include "qgsproject.h"
 #include "qgsdistancearea.h"
 #include "qgsfontutils.h"
 #include "qgstextformat.h"
 #include "qgstextrenderer.h"
 #include "qgsexpressioncontext.h"
-#include "qgsmapsettings.h"
 #include "qgslayoutitemmap.h"
 #include "qgssettings.h"
-
-#include "qgswebview.h"
-#include "qgswebframe.h"
-#include "qgswebpage.h"
+#include "qgslayout.h"
+#include "qgslayoutrendercontext.h"
+#include "qgslayoutreportcontext.h"
 
 #include <QCoreApplication>
 #include <QDate>
 #include <QDomElement>
 #include <QPainter>
-#include <QTimer>
-#include <QEventLoop>
-#include <QThread>
+#include <QTextDocument>
 
 QgsLayoutItemLabel::QgsLayoutItemLabel( QgsLayout *layout )
   : QgsLayoutItem( layout )
@@ -63,7 +57,7 @@ QgsLayoutItemLabel::QgsLayoutItemLabel( QgsLayout *layout )
 
   //default to a 10 point font size
   mFormat.setSize( 10 );
-  mFormat.setSizeUnit( QgsUnitTypes::RenderPoints );
+  mFormat.setSizeUnit( Qgis::RenderUnit::Points );
 
   //default to no background
   setBackgroundEnabled( false );
@@ -71,32 +65,6 @@ QgsLayoutItemLabel::QgsLayoutItemLabel( QgsLayout *layout )
   //a label added while atlas preview is enabled needs to have the expression context set,
   //otherwise fields in the label aren't correctly evaluated until atlas preview feature changes (#9457)
   refreshExpressionContext();
-
-  // only possible on the main thread!
-  if ( QThread::currentThread() == QApplication::instance()->thread() )
-  {
-    mWebPage.reset( new QgsWebPage( this ) );
-  }
-  else
-  {
-    QgsMessageLog::logMessage( QObject::tr( "Cannot load HTML based item label in background threads" ) );
-  }
-  if ( mWebPage )
-  {
-    mWebPage->setIdentifier( tr( "Layout label item" ) );
-    mWebPage->setNetworkAccessManager( QgsNetworkAccessManager::instance() );
-
-    //This makes the background transparent. Found on http://blog.qt.digia.com/blog/2009/06/30/transparent-qwebview-or-qwebpage/
-    QPalette palette = mWebPage->palette();
-    palette.setBrush( QPalette::Base, Qt::transparent );
-    mWebPage->setPalette( palette );
-
-    mWebPage->mainFrame()->setZoomFactor( 10.0 );
-    mWebPage->mainFrame()->setScrollBarPolicy( Qt::Horizontal, Qt::ScrollBarAlwaysOff );
-    mWebPage->mainFrame()->setScrollBarPolicy( Qt::Vertical, Qt::ScrollBarAlwaysOff );
-
-    connect( mWebPage.get(), &QWebPage::loadFinished, this, &QgsLayoutItemLabel::loadingHtmlFinished );
-  }
 }
 
 QgsLayoutItemLabel *QgsLayoutItemLabel::create( QgsLayout *layout )
@@ -119,42 +87,49 @@ void QgsLayoutItemLabel::draw( QgsLayoutItemRenderContext &context )
   QPainter *painter = context.renderContext().painter();
   const QgsScopedQPainterState painterState( painter );
 
-  double rectScale = 1.0;
-  if ( mMode == QgsLayoutItemLabel::ModeFont )
-  {
-    rectScale = context.renderContext().scaleFactor();
-  }
-  else
-  {
-    // painter is scaled to dots, so scale back to layout units
-    painter->scale( context.renderContext().scaleFactor(), context.renderContext().scaleFactor() );
-  }
-
   const double penWidth = frameEnabled() ? ( pen().widthF() / 2.0 ) : 0;
   const double xPenAdjust = mMarginX < 0 ? -penWidth : penWidth;
   const double yPenAdjust = mMarginY < 0 ? -penWidth : penWidth;
-  const QRectF painterRect( ( xPenAdjust + mMarginX ) * rectScale,
-                            ( yPenAdjust + mMarginY ) * rectScale,
-                            ( rect().width() - 2 * xPenAdjust - 2 * mMarginX ) * rectScale,
-                            ( rect().height() - 2 * yPenAdjust - 2 * mMarginY ) * rectScale );
+
+  QRectF painterRect;
+  if ( mMode == QgsLayoutItemLabel::ModeFont )
+  {
+    const double rectScale = context.renderContext().scaleFactor();
+    painterRect = QRectF( ( xPenAdjust + mMarginX ) * rectScale,
+                          ( yPenAdjust + mMarginY ) * rectScale,
+                          ( rect().width() - 2 * xPenAdjust - 2 * mMarginX ) * rectScale,
+                          ( rect().height() - 2 * yPenAdjust - 2 * mMarginY ) * rectScale );
+  }
+  else
+  {
+    // The 3.77 adjustment value was found through trial and error, the author has however no clue as to where it comes from
+    const double adjustmentFactor = 3.77;
+    const double rectScale = context.renderContext().scaleFactor() * adjustmentFactor;
+    // The left/right margin is handled by the stylesheet while the top/bottom margin is ignored by QTextDocument
+    painterRect = QRectF( 0, 0,
+                          ( rect().width() ) * rectScale,
+                          ( rect().height() - yPenAdjust - mMarginY ) * rectScale );
+    painter->translate( 0, ( yPenAdjust + mMarginY ) * context.renderContext().scaleFactor() );
+    painter->scale( context.renderContext().scaleFactor() / adjustmentFactor, context.renderContext().scaleFactor() / adjustmentFactor );
+  }
 
   switch ( mMode )
   {
     case ModeHtml:
     {
-      if ( mFirstRender )
-      {
-        contentChanged();
-        mFirstRender = false;
-      }
+      QTextDocument document;
+      document.setDocumentMargin( 0 );
+      document.setPageSize( QSizeF( painterRect.width() / context.renderContext().scaleFactor(), painterRect.height() / context.renderContext().scaleFactor() ) );
+      document.setDefaultStyleSheet( createStylesheet() );
 
-      if ( mWebPage )
-      {
-        painter->scale( 1.0 / mHtmlUnitsToLayoutUnits / 10.0, 1.0 / mHtmlUnitsToLayoutUnits / 10.0 );
-        mWebPage->setViewportSize( QSize( painterRect.width() * mHtmlUnitsToLayoutUnits * 10.0, painterRect.height() * mHtmlUnitsToLayoutUnits * 10.0 ) );
-        mWebPage->settings()->setUserStyleSheetUrl( createStylesheetUrl() );
-        mWebPage->mainFrame()->render( painter );
-      }
+      document.setDefaultFont( createDefaultFont() );
+
+      QTextOption textOption = document.defaultTextOption();
+      textOption.setAlignment( mHAlignment );
+      document.setDefaultTextOption( textOption );
+
+      document.setHtml( QStringLiteral( "<body>%1</body>" ).arg( currentText() ) );
+      document.drawContents( painter, painterRect );
       break;
     }
 
@@ -180,69 +155,13 @@ void QgsLayoutItemLabel::contentChanged()
   {
     case ModeHtml:
     {
-      const QString textToDraw = currentText();
-      if ( !mWebPage )
-      {
-        mHtmlLoaded = true;
-        return;
-      }
-
-      //mHtmlLoaded tracks whether the QWebPage has completed loading
-      //its html contents, set it initially to false. The loadingHtmlFinished slot will
-      //set this to true after html is loaded.
-      mHtmlLoaded = false;
-
-      const QUrl baseUrl = QUrl::fromLocalFile( mLayout->project()->absoluteFilePath() );
-      mWebPage->mainFrame()->setHtml( textToDraw, baseUrl );
-
-      //For very basic html labels with no external assets, the html load will already be
-      //complete before we even get a chance to start the QEventLoop. Make sure we check
-      //this before starting the loop
-
-      // important -- we CAN'T do this when it's a render inside the designer, otherwise the
-      // event loop will mess with the paint event and cause it to be deleted, and BOOM!
-      if ( !mHtmlLoaded && ( !mLayout || !mLayout->renderContext().isPreviewRender() ) )
-      {
-        //Setup event loop and timeout for rendering html
-        QEventLoop loop;
-
-        //Connect timeout and webpage loadFinished signals to loop
-        connect( mWebPage.get(), &QWebPage::loadFinished, &loop, &QEventLoop::quit );
-
-        // Start a 20 second timeout in case html loading will never complete
-        QTimer timeoutTimer;
-        timeoutTimer.setSingleShot( true );
-        connect( &timeoutTimer, &QTimer::timeout, &loop, &QEventLoop::quit );
-        timeoutTimer.start( 20000 );
-
-        // Pause until html is loaded
-        loop.exec( QEventLoop::ExcludeUserInputEvents );
-      }
+      invalidateCache();
       break;
     }
     case ModeFont:
       invalidateCache();
       break;
   }
-}
-
-void QgsLayoutItemLabel::loadingHtmlFinished( bool result )
-{
-  Q_UNUSED( result )
-  mHtmlLoaded = true;
-  invalidateCache();
-  update();
-}
-
-double QgsLayoutItemLabel::htmlUnitsToLayoutUnits()
-{
-  if ( !mLayout )
-  {
-    return 1.0;
-  }
-
-  //TODO : fix this more precisely so that the label's default text size is the same with or without "display as html"
-  return mLayout->convertToLayoutUnits( QgsLayoutMeasurement( mLayout->renderContext().dpi() / 72.0, QgsUnitTypes::LayoutMillimeters ) ); //webkit seems to assume a standard dpi of 72
 }
 
 void QgsLayoutItemLabel::setText( const QString &text )
@@ -390,15 +309,15 @@ QSizeF QgsLayoutItemLabel::sizeForText() const
   QgsRenderContext context = QgsLayoutUtils::createRenderContextForLayout( mLayout, nullptr );
 
   const QStringList lines = currentText().split( '\n' );
-  const double textWidth = QgsTextRenderer::textWidth( context, mFormat, lines ) / context.convertToPainterUnits( 1, QgsUnitTypes::RenderMillimeters );
-  const double fontHeight = QgsTextRenderer::textHeight( context, mFormat, lines ) / context.convertToPainterUnits( 1, QgsUnitTypes::RenderMillimeters );
+  const double textWidth = QgsTextRenderer::textWidth( context, mFormat, lines ) / context.convertToPainterUnits( 1, Qgis::RenderUnit::Millimeters );
+  const double fontHeight = QgsTextRenderer::textHeight( context, mFormat, lines ) / context.convertToPainterUnits( 1, Qgis::RenderUnit::Millimeters );
 
   const double penWidth = frameEnabled() ? ( pen().widthF() / 2.0 ) : 0;
 
   const double width = textWidth + 2 * mMarginX + 2 * penWidth;
   const double height = fontHeight + 2 * mMarginY + 2 * penWidth;
 
-  return mLayout->convertToLayoutUnits( QgsLayoutSize( width, height, QgsUnitTypes::LayoutMillimeters ) );
+  return mLayout->convertToLayoutUnits( QgsLayoutSize( width, height, Qgis::LayoutUnit::Millimeters ) );
 }
 
 QFont QgsLayoutItemLabel::font() const
@@ -469,12 +388,12 @@ bool QgsLayoutItemLabel::readPropertiesFromElement( const QDomElement &itemElem,
     if ( f.pointSizeF() > 0 )
     {
       mFormat.setSize( f.pointSizeF() );
-      mFormat.setSizeUnit( QgsUnitTypes::RenderPoints );
+      mFormat.setSizeUnit( Qgis::RenderUnit::Points );
     }
     else if ( f.pixelSize() > 0 )
     {
       mFormat.setSize( f.pixelSize() );
-      mFormat.setSizeUnit( QgsUnitTypes::RenderPixels );
+      mFormat.setSizeUnit( Qgis::RenderUnit::Pixels );
     }
 
     //font color
@@ -664,38 +583,61 @@ void QgsLayoutItemLabel::itemShiftAdjustSize( double newWidth, double newHeight,
   }
 }
 
-QUrl QgsLayoutItemLabel::createStylesheetUrl() const
+QFont QgsLayoutItemLabel::createDefaultFont() const
 {
-  QString stylesheet;
-  stylesheet += QStringLiteral( "body { margin: %1 %2;" ).arg( std::max( mMarginY * mHtmlUnitsToLayoutUnits, 0.0 ) ).arg( std::max( mMarginX * mHtmlUnitsToLayoutUnits, 0.0 ) );
   QFont f = mFormat.font();
   switch ( mFormat.sizeUnit() )
   {
-    case QgsUnitTypes::RenderMillimeters:
+    case Qgis::RenderUnit::Millimeters:
       f.setPointSizeF( mFormat.size() / 0.352778 );
       break;
-    case QgsUnitTypes::RenderPixels:
+    case Qgis::RenderUnit::Pixels:
       f.setPixelSize( mFormat.size() );
       break;
-    case QgsUnitTypes::RenderPoints:
+    case Qgis::RenderUnit::Points:
       f.setPointSizeF( mFormat.size() );
       break;
-    case QgsUnitTypes::RenderInches:
+    case Qgis::RenderUnit::Inches:
       f.setPointSizeF( mFormat.size() * 72 );
       break;
-    case QgsUnitTypes::RenderUnknownUnit:
-    case QgsUnitTypes::RenderPercentage:
-    case QgsUnitTypes::RenderMetersInMapUnits:
-    case QgsUnitTypes::RenderMapUnits:
+    case Qgis::RenderUnit::Unknown:
+    case Qgis::RenderUnit::Percentage:
+    case Qgis::RenderUnit::MetersInMapUnits:
+    case Qgis::RenderUnit::MapUnits:
       break;
   }
+  return f;
+}
 
+double QgsLayoutItemLabel::htmlUnitsToLayoutUnits()
+{
+  if ( !mLayout )
+  {
+    return 1.0;
+  }
+
+  //TODO : fix this more precisely so that the label's default text size is the same with or without "display as html"
+  return mLayout->convertToLayoutUnits( QgsLayoutMeasurement( mLayout->renderContext().dpi() / 72.0, Qgis::LayoutUnit::Millimeters ) ); //webkit seems to assume a standard dpi of 72
+}
+
+QString QgsLayoutItemLabel::createStylesheet() const
+{
+  QString stylesheet;
+  stylesheet += QStringLiteral( "body { margin: %1 %2;" ).arg( std::max( mMarginY * mHtmlUnitsToLayoutUnits, 0.0 ) ).arg( std::max( mMarginX * mHtmlUnitsToLayoutUnits, 0.0 ) );
+
+  QFont f = createDefaultFont();
   stylesheet += QgsFontUtils::asCSS( f, 0.352778 * mHtmlUnitsToLayoutUnits );
+
   stylesheet += QStringLiteral( "color: rgba(%1,%2,%3,%4);" ).arg( mFormat.color().red() ).arg( mFormat.color().green() ).arg( mFormat.color().blue() ).arg( QString::number( mFormat.color().alphaF(), 'f', 4 ) );
   stylesheet += QStringLiteral( "text-align: %1; }" ).arg( mHAlignment == Qt::AlignLeft ? QStringLiteral( "left" ) : mHAlignment == Qt::AlignRight ? QStringLiteral( "right" ) : mHAlignment == Qt::AlignHCenter ? QStringLiteral( "center" ) : QStringLiteral( "justify" ) );
 
+  return stylesheet;
+}
+
+QUrl QgsLayoutItemLabel::createStylesheetUrl() const
+{
   QByteArray ba;
-  ba.append( stylesheet.toUtf8() );
+  ba.append( createStylesheet().toUtf8() );
   QUrl cssFileURL = QUrl( QString( "data:text/css;charset=utf-8;base64," + ba.toBase64() ) );
 
   return cssFileURL;

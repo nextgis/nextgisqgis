@@ -193,13 +193,12 @@ int QgsStringUtils::levenshteinDistance( const QString &string1, const QString &
   }
 
   //levenshtein algorithm begins here
-  QVector< int > col;
-  col.fill( 0, length2 + 1 );
-  QVector< int > prevCol;
+  std::vector< int > col( length2 + 1, 0 );
+  std::vector< int > prevCol;
   prevCol.reserve( length2 + 1 );
   for ( int i = 0; i < length2 + 1; ++i )
   {
-    prevCol << i;
+    prevCol.emplace_back( i );
   }
   const QChar *s2start = s2Char;
   for ( int i = 0; i < length1; ++i )
@@ -525,9 +524,9 @@ QString QgsStringUtils::insertLinks( const QString &string, bool *foundLinks )
 
   // http://alanstorm.com/url_regex_explained
   // note - there's more robust implementations available
-  static thread_local QRegularExpression urlRegEx( QStringLiteral( "(\\b(([\\w-]+://?|www[.])[^\\s()<>]+(?:\\([\\w\\d]+\\)|([^!\"#$%&'()*+,\\-./:;<=>?@[\\\\\\]^_`{|}~\\s]|/))))" ) );
-  static thread_local QRegularExpression protoRegEx( QStringLiteral( "^(?:f|ht)tps?://|file://" ) );
-  static thread_local QRegularExpression emailRegEx( QStringLiteral( "([\\w._%+-]+@[\\w.-]+\\.[A-Za-z]+)" ) );
+  const thread_local QRegularExpression urlRegEx( QStringLiteral( "(\\b(([\\w-]+://?|www[.])[^\\s()<>]+(?:\\([\\w\\d]+\\)|([^!\"#$%&'()*+,\\-./:;<=>?@[\\\\\\]^_`{|}~\\s]|/))))" ) );
+  const thread_local QRegularExpression protoRegEx( QStringLiteral( "^(?:f|ht)tps?://|file://" ) );
+  const thread_local QRegularExpression emailRegEx( QStringLiteral( "([\\w._%+-]+@[\\w.-]+\\.[A-Za-z]+)" ) );
 
   int offset = 0;
   bool found = false;
@@ -581,7 +580,7 @@ QString QgsStringUtils::htmlToMarkdown( const QString &html )
   converted.replace( QLatin1String( "<pre>" ), QLatin1String( "\n```\n" ) );
   converted.replace( QLatin1String( "</pre>" ), QLatin1String( "```\n" ) );
 
-  static thread_local QRegularExpression hrefRegEx( QStringLiteral( "<a\\s+href\\s*=\\s*([^<>]*)\\s*>([^<>]*)</a>" ) );
+  const thread_local QRegularExpression hrefRegEx( QStringLiteral( "<a\\s+href\\s*=\\s*([^<>]*)\\s*>([^<>]*)</a>" ) );
 
   int offset = 0;
   QRegularExpressionMatch match = hrefRegEx.match( converted );

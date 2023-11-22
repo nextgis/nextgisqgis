@@ -24,13 +24,10 @@
 #include "qgsoptionsdialogbase.h"
 #include "ui_qgsvectorlayerpropertiesbase.h"
 #include "qgsguiutils.h"
-#include "qgshelp.h"
-#include "qgsmaplayerstylemanager.h"
 #include "qgsmaplayerserverproperties.h"
 #include "qgsvectorlayerjoininfo.h"
-#include "qgslayertree.h"
-#include "qgslayertreemodel.h"
 #include "qgslayertreefilterproxymodel.h"
+#include "qgsmaplayerstyle.h"
 
 class QgsMapLayer;
 
@@ -52,6 +49,7 @@ class QgsDoubleSpinBox;
 class QgsMaskingWidget;
 class QgsVectorLayerTemporalPropertiesWidget;
 class QgsProviderSourceWidget;
+class QgsWebView;
 
 /**
  * \ingroup gui
@@ -68,6 +66,7 @@ class GUI_EXPORT QgsVectorLayerProperties : public QgsOptionsDialogBase, private
       QML,
       SLD,
       DB,
+      Local,
     };
     Q_ENUM( StyleType )
 #endif
@@ -77,8 +76,38 @@ class GUI_EXPORT QgsVectorLayerProperties : public QgsOptionsDialogBase, private
     //! Adds a properties page factory to the vector layer properties dialog.
     void addPropertiesPageFactory( const QgsMapLayerConfigWidgetFactory *factory );
 
+    bool eventFilter( QObject *obj, QEvent *ev ) override;
+
+    /**
+     * Loads the default style when appropriate button is pressed
+     *
+     * \since QGIS 3.30
+     */
+    void loadDefaultStyle();
+
+    /**
+     * Saves the default style when appropriate button is pressed
+     *
+     * \since QGIS 3.30
+     */
+    void saveDefaultStyle();
+
+    /**
+     * Loads a saved style when appropriate button is pressed
+     *
+     * \since QGIS 3.30
+     */
+    void loadStyle();
+
+    /**
+     * Saves a style when appriate button is pressed
+     *
+     * \since QGIS 3.30
+     */
+    void saveStyleAs();
+
   protected slots:
-    void optionsStackedWidget_CurrentChanged( int index ) override SIP_SKIP;
+    void optionsStackedWidget_CurrentChanged( int index ) final;
 
   private slots:
 
@@ -103,8 +132,6 @@ class GUI_EXPORT QgsVectorLayerProperties : public QgsOptionsDialogBase, private
     void pbnQueryBuilder_clicked();
     void pbnIndex_clicked();
     void mCrsSelector_crsChanged( const QgsCoordinateReferenceSystem &crs );
-    void loadDefaultStyle_clicked();
-    void saveDefaultStyle_clicked();
     void loadMetadata();
     void saveMetadataAs();
     void saveDefaultMetadata();
@@ -136,14 +163,8 @@ class GUI_EXPORT QgsVectorLayerProperties : public QgsOptionsDialogBase, private
     //! Toggle editing of layer
     void toggleEditing();
 
-    //! Save the style
-    void saveStyleAs();
-
     //! Save multiple styles
     void saveMultipleStylesAs();
-
-    //! Load the style
-    void loadStyle();
 
     void aboutToShowStyleMenu();
 
@@ -163,6 +184,11 @@ class GUI_EXPORT QgsVectorLayerProperties : public QgsOptionsDialogBase, private
     void onAuxiliaryLayerAddField();
 
     void urlClicked( const QUrl &url );
+
+    // Update the preview of the map tip
+    void updateMapTipPreview();
+    // Resize the map tip preview
+    void resizeMapTip();
 
   private:
 
@@ -256,6 +282,10 @@ class GUI_EXPORT QgsVectorLayerProperties : public QgsOptionsDialogBase, private
     QgsProviderSourceWidget *mSourceWidget = nullptr;
 
     QgsCoordinateReferenceSystem mBackupCrs;
+
+    void initMapTipPreview();
+
+    QgsWebView *mMapTipPreview = nullptr;
 
   private slots:
     void openPanel( QgsPanelWidget *panel );

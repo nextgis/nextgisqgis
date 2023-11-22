@@ -19,6 +19,7 @@
 #include "qgspointcloudlayer.h"
 #include "qgspointcloudindex.h"
 #include "qgsapplication.h"
+#include "qgsvariantutils.h"
 
 QgsPointCloudAttributeModel::QgsPointCloudAttributeModel( QObject *parent )
   : QAbstractItemModel( parent )
@@ -34,7 +35,10 @@ void QgsPointCloudAttributeModel::setLayer( QgsPointCloudLayer *layer )
     setAttributes( layer->attributes() );
   }
   else
+  {
+    mLayer = nullptr;
     setAttributes( QgsPointCloudAttributeCollection() );
+  }
 }
 
 QgsPointCloudLayer *QgsPointCloudAttributeModel::layer()
@@ -232,6 +236,8 @@ QIcon QgsPointCloudAttributeModel::iconForAttributeType( QgsPointCloudAttribute:
     case QgsPointCloudAttribute::Int64:
     case QgsPointCloudAttribute::UInt32:
     case QgsPointCloudAttribute::UInt64:
+    case QgsPointCloudAttribute::Char:
+    case QgsPointCloudAttribute::UChar:
     {
       return QgsApplication::getThemeIcon( "/mIconFieldInteger.svg" );
     }
@@ -239,11 +245,6 @@ QIcon QgsPointCloudAttributeModel::iconForAttributeType( QgsPointCloudAttribute:
     case QgsPointCloudAttribute::Double:
     {
       return QgsApplication::getThemeIcon( "/mIconFieldFloat.svg" );
-    }
-    case QgsPointCloudAttribute::Char:
-    case QgsPointCloudAttribute::UChar:
-    {
-      return QgsApplication::getThemeIcon( "/mIconFieldText.svg" );
     }
 
   }
@@ -276,7 +277,7 @@ bool QgsPointCloudAttributeProxyModel::filterAcceptsRow( int source_row, const Q
     return true;
 
   const QVariant typeVar = mModel->data( index, QgsPointCloudAttributeModel::AttributeTypeRole );
-  if ( typeVar.isNull() )
+  if ( QgsVariantUtils::isNull( typeVar ) )
     return true;
 
   bool ok;

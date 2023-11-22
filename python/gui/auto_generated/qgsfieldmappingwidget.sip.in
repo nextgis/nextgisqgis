@@ -146,9 +146,16 @@ Moves up currently selected field
 Moves down the currently selected field
 %End
 
-      public:
-      public:
+    void invertSelection( );
+%Docstring
+Invert the field selection state.
+
+.. versionadded:: 3.32
+%End
+
 };
+
+
 
 
 /************************************************************************

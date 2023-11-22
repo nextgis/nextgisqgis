@@ -16,22 +16,17 @@
  ***************************************************************************/
 
 #include "qgslayoutmapgridwidget.h"
-#include "qgssymbolselectordialog.h"
+#include "qgssettingsregistrycore.h"
 #include "qgssymbol.h"
 #include "qgslayoutitemmap.h"
 #include "qgsproject.h"
-#include "qgssymbollayerutils.h"
-#include "qgsstyle.h"
-#include "qgsprojectionselectiondialog.h"
 #include "qgslayout.h"
-#include "qgsmapsettings.h"
 #include "qgsexpressionbuilderdialog.h"
 #include "qgsvectorlayer.h"
 #include "qgsprojectviewsettings.h"
-#include "qgstextformatwidget.h"
-#include "qgsguiutils.h"
 #include "qgsmarkersymbol.h"
 #include "qgslinesymbol.h"
+#include "qgslayoutreportcontext.h"
 
 QgsLayoutMapGridWidget::QgsLayoutMapGridWidget( QgsLayoutItemMapGrid *mapGrid, QgsLayoutItemMap *map )
   : QgsLayoutItemBaseWidget( nullptr, mapGrid )
@@ -472,10 +467,8 @@ bool QgsLayoutMapGridWidget::hasPredefinedScales() const
   if ( !hasProjectScales || scales.isEmpty() )
   {
     // default to global map tool scales
-    const QgsSettings settings;
-    const QString scalesStr( settings.value( QStringLiteral( "Map/scales" ), Qgis::defaultProjectScales() ).toString() );
-    QStringList myScalesList = scalesStr.split( ',' );
-    return !myScalesList.isEmpty() && !myScalesList[0].isEmpty();
+    const QStringList scales = QgsSettingsRegistryCore::settingsMapScales->value();
+    return !scales.isEmpty() && !scales[0].isEmpty();
   }
   return true;
 }
@@ -526,6 +519,7 @@ void QgsLayoutMapGridWidget::setGridItems()
       mGridLineStyleButton->setVisible( false );
       mLineStyleLabel->setVisible( false );
       mGridMarkerStyleButton->setVisible( true );
+      mMarkerStyleFrame->setVisible( true );
       mMarkerStyleLabel->setVisible( true );
       mGridBlendComboBox->setVisible( true );
       mGridBlendLabel->setVisible( true );
@@ -537,6 +531,7 @@ void QgsLayoutMapGridWidget::setGridItems()
       mGridLineStyleButton->setVisible( true );
       mLineStyleLabel->setVisible( true );
       mGridMarkerStyleButton->setVisible( false );
+      mMarkerStyleFrame->setVisible( false );
       mMarkerStyleLabel->setVisible( false );
       mGridBlendComboBox->setVisible( true );
       mGridBlendLabel->setVisible( true );
@@ -548,6 +543,7 @@ void QgsLayoutMapGridWidget::setGridItems()
       mGridLineStyleButton->setVisible( false );
       mLineStyleLabel->setVisible( false );
       mGridMarkerStyleButton->setVisible( false );
+      mMarkerStyleFrame->setVisible( false );
       mMarkerStyleLabel->setVisible( false );
       mGridBlendComboBox->setVisible( false );
       mGridBlendLabel->setVisible( false );
@@ -1090,18 +1086,19 @@ void QgsLayoutMapGridWidget::onCrsChanged()
   const QgsCoordinateReferenceSystem crs = mMapGrid->crs().isValid() ? mMapGrid->crs() : mMap->crs();
   switch ( crs.mapUnits() )
   {
-    case QgsUnitTypes::DistanceMeters:
-    case QgsUnitTypes::DistanceKilometers:
-    case QgsUnitTypes::DistanceFeet:
-    case QgsUnitTypes::DistanceNauticalMiles:
-    case QgsUnitTypes::DistanceYards:
-    case QgsUnitTypes::DistanceMiles:
-    case QgsUnitTypes::DistanceCentimeters:
-    case QgsUnitTypes::DistanceMillimeters:
+    case Qgis::DistanceUnit::Meters:
+    case Qgis::DistanceUnit::Kilometers:
+    case Qgis::DistanceUnit::Feet:
+    case Qgis::DistanceUnit::NauticalMiles:
+    case Qgis::DistanceUnit::Yards:
+    case Qgis::DistanceUnit::Miles:
+    case Qgis::DistanceUnit::Centimeters:
+    case Qgis::DistanceUnit::Millimeters:
+    case Qgis::DistanceUnit::Inches:
       break;
 
-    case QgsUnitTypes::DistanceDegrees:
-    case QgsUnitTypes::DistanceUnknownUnit:
+    case Qgis::DistanceUnit::Degrees:
+    case Qgis::DistanceUnit::Unknown:
       mAnnotationFormatComboBox->addItem( tr( "Degree, Minute" ), QgsLayoutItemMapGrid::DegreeMinuteNoSuffix );
       mAnnotationFormatComboBox->addItem( tr( "Degree, Minute with Suffix" ), QgsLayoutItemMapGrid::DegreeMinute );
       mAnnotationFormatComboBox->addItem( tr( "Degree, Minute Aligned" ), QgsLayoutItemMapGrid::DegreeMinutePadded );
@@ -1157,6 +1154,8 @@ void QgsLayoutMapGridWidget::mGridTypeComboBox_currentIndexChanged( int )
       mGridLineStyleButton->setVisible( true );
       mLineStyleLabel->setVisible( true );
       mGridMarkerStyleButton->setVisible( false );
+      mMarkerStyleFrame->setVisible( false );
+      mMarkerStyleFrame->setVisible( false );
       mMarkerStyleLabel->setVisible( false );
       mGridBlendComboBox->setVisible( true );
       mGridBlendLabel->setVisible( true );
@@ -1170,6 +1169,7 @@ void QgsLayoutMapGridWidget::mGridTypeComboBox_currentIndexChanged( int )
       mGridLineStyleButton->setVisible( false );
       mLineStyleLabel->setVisible( false );
       mGridMarkerStyleButton->setVisible( true );
+      mMarkerStyleFrame->setVisible( true );
       mMarkerStyleLabel->setVisible( true );
       mGridBlendComboBox->setVisible( true );
       mGridBlendLabel->setVisible( true );
@@ -1183,6 +1183,7 @@ void QgsLayoutMapGridWidget::mGridTypeComboBox_currentIndexChanged( int )
       mGridLineStyleButton->setVisible( true );
       mLineStyleLabel->setVisible( true );
       mGridMarkerStyleButton->setVisible( false );
+      mMarkerStyleFrame->setVisible( false );
       mMarkerStyleLabel->setVisible( false );
       mGridBlendComboBox->setVisible( true );
       mGridBlendLabel->setVisible( true );
@@ -1196,6 +1197,7 @@ void QgsLayoutMapGridWidget::mGridTypeComboBox_currentIndexChanged( int )
       mGridLineStyleButton->setVisible( false );
       mLineStyleLabel->setVisible( false );
       mGridMarkerStyleButton->setVisible( false );
+      mMarkerStyleFrame->setVisible( false );
       mMarkerStyleLabel->setVisible( false );
       mGridBlendComboBox->setVisible( false );
       mGridBlendLabel->setVisible( false );
@@ -1248,7 +1250,7 @@ void QgsLayoutMapGridWidget::mAnnotationFormatButton_clicked()
   QgsExpressionContext expressionContext = mMapGrid->createExpressionContext();
   expressionContext.setHighlightedFunctions( QStringList() << QStringLiteral( "to_dms" ) << QStringLiteral( "to_dm" ) );
 
-  QgsExpressionBuilderDialog exprDlg( nullptr, mMapGrid->annotationExpression(), this, QStringLiteral( "generic" ), expressionContext );
+  QgsExpressionBuilderDialog exprDlg( coverageLayer(), mMapGrid->annotationExpression(), this, QStringLiteral( "generic" ), expressionContext );
   exprDlg.setWindowTitle( tr( "Expression Based Annotation" ) );
 
   if ( exprDlg.exec() == QDialog::Accepted )

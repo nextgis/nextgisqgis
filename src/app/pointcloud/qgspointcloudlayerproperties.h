@@ -85,7 +85,7 @@ class QgsPointCloudClassificationStatisticsModel : public QAbstractTableModel
 
     QgsPointCloudLayer *mLayer = nullptr;
     QString mAttribute;
-    QVariantList mClassifications;
+    QList<int> mClassifications;
 };
 
 class QgsPointCloudLayerProperties : public QgsOptionsDialogBase, private Ui::QgsPointCloudLayerPropertiesBase
@@ -97,14 +97,38 @@ class QgsPointCloudLayerProperties : public QgsOptionsDialogBase, private Ui::Qg
 
     void addPropertiesPageFactory( const QgsMapLayerConfigWidgetFactory *factory );
 
+    /**
+     * Loads the default style when appropriate button is pressed
+     *
+     * \since QGIS 3.30
+     */
+    void loadDefaultStyle();
+
+    /**
+     * Saves the default style when appropriate button is pressed
+     *
+     * \since QGIS 3.30
+     */
+    void saveDefaultStyle();
+
+    /**
+     * Loads a saved style when appropriate button is pressed
+     *
+     * \since QGIS 3.30
+     */
+    void loadStyle();
+
+    /**
+     * Saves a style when appriate button is pressed
+     *
+     * \since QGIS 3.30
+     */
+    void saveStyleAs();
+
   private slots:
     void apply();
     void onCancel();
 
-    void loadDefaultStyle();
-    void saveDefaultStyle();
-    void loadStyle();
-    void saveStyleAs();
     void aboutToShowStyleMenu();
     void loadMetadata();
     void saveMetadataAs();
@@ -112,6 +136,7 @@ class QgsPointCloudLayerProperties : public QgsOptionsDialogBase, private Ui::Qg
     void loadDefaultMetadata();
     void showHelp();
     void urlClicked( const QUrl &url );
+    void pbnQueryBuilder_clicked();
     void crsChanged( const QgsCoordinateReferenceSystem &crs );
 
   protected slots:

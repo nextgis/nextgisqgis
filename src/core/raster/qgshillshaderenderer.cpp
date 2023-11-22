@@ -53,6 +53,11 @@ QgsHillshadeRenderer *QgsHillshadeRenderer::clone() const
   return r;
 }
 
+Qgis::RasterRendererFlags QgsHillshadeRenderer::flags() const
+{
+  return Qgis::RasterRendererFlag::InternalLayerOpacityHandling;
+}
+
 QgsRasterRenderer *QgsHillshadeRenderer::create( const QDomElement &elem, QgsRasterInterface *input )
 {
   if ( elem.isNull() )
@@ -97,7 +102,7 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
   std::unique_ptr< QgsRasterBlock > outputBlock( new QgsRasterBlock() );
   if ( !mInput )
   {
-    QgsDebugMsg( QStringLiteral( "No input raster!" ) );
+    QgsDebugError( QStringLiteral( "No input raster!" ) );
     return outputBlock.release();
   }
 
@@ -105,7 +110,7 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
 
   if ( !inputBlock || inputBlock->isEmpty() )
   {
-    QgsDebugMsg( QStringLiteral( "No raster data!" ) );
+    QgsDebugError( QStringLiteral( "No raster data!" ) );
     return outputBlock.release();
   }
 

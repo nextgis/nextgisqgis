@@ -98,7 +98,7 @@ static QList<int> _makeNodeOrder( QgsLayerTreeLayer *nodeLayer )
 {
   if ( !nodeLayer->layer() || !nodeLayer->layer()->legend() )
   {
-    QgsDebugMsg( QStringLiteral( "Legend node order manipulation is invalid without existing legend" ) );
+    QgsDebugError( QStringLiteral( "Legend node order manipulation is invalid without existing legend" ) );
     return QList<int>();
   }
 
@@ -326,7 +326,7 @@ void QgsMapLayerLegendUtils::applyLayerNodeProperties( QgsLayerTreeLayer *nodeLa
     {
       if ( usedIndices.contains( idx ) )
       {
-        QgsDebugMsg( QStringLiteral( "invalid node order. ignoring." ) );
+        QgsDebugError( QStringLiteral( "invalid node order. ignoring." ) );
         return;
       }
 
@@ -359,17 +359,16 @@ QgsDefaultVectorLayerLegend::QgsDefaultVectorLayerLegend( QgsVectorLayer *vl )
 QList<QgsLayerTreeModelLegendNode *> QgsDefaultVectorLayerLegend::createLayerTreeModelLegendNodes( QgsLayerTreeLayer *nodeLayer )
 {
   QList<QgsLayerTreeModelLegendNode *> nodes;
+  if ( !mLayer )
+    return nodes;
 
-  if ( mLayer )
+  const QString placeholderImage = mLayer->legendPlaceholderImage();
+  if ( !placeholderImage.isEmpty() )
   {
-    const QString placeholderImage = mLayer->legendPlaceholderImage();
-    if ( !placeholderImage.isEmpty() )
-    {
-      bool fitsInCache;
-      const QImage img = QgsApplication::imageCache()->pathAsImage( placeholderImage, QSize(), false, 1.0, fitsInCache );
-      nodes << new QgsImageLegendNode( nodeLayer, img );
-      return nodes;
-    }
+    bool fitsInCache;
+    const QImage img = QgsApplication::imageCache()->pathAsImage( placeholderImage, QSize(), false, 1.0, fitsInCache );
+    nodes << new QgsImageLegendNode( nodeLayer, img );
+    return nodes;
   }
 
   QgsFeatureRenderer *r = mLayer->renderer();

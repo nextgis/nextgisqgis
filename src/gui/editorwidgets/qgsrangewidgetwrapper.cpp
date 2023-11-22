@@ -275,7 +275,7 @@ void QgsRangeWidgetWrapper::updateValues( const QVariant &value, const QVariantL
 {
   if ( mDoubleSpinBox )
   {
-    if ( value.isNull() && config( QStringLiteral( "AllowNull" ), true ).toBool() )
+    if ( QgsVariantUtils::isNull( value ) && config( QStringLiteral( "AllowNull" ), true ).toBool() )
     {
       mDoubleSpinBox->setValue( mDoubleSpinBox->minimum() );
     }
@@ -287,7 +287,7 @@ void QgsRangeWidgetWrapper::updateValues( const QVariant &value, const QVariantL
 
   if ( mIntSpinBox )
   {
-    if ( value.isNull() && config( QStringLiteral( "AllowNull" ), true ).toBool() )
+    if ( QgsVariantUtils::isNull( value ) && config( QStringLiteral( "AllowNull" ), true ).toBool() )
     {
       mIntSpinBox->setValue( mIntSpinBox->minimum() );
     }
@@ -314,3 +314,22 @@ void QgsRangeWidgetWrapper::updateValues( const QVariant &value, const QVariantL
     mSlider->setValue( value.toInt() );
   }
 }
+
+void QgsRangeWidgetWrapper::setEnabled( bool enabled )
+{
+  if ( mDoubleSpinBox )
+  {
+    mDoubleSpinBox->setReadOnly( !enabled );
+    mDoubleSpinBox->setFrame( enabled );
+  }
+  else if ( mIntSpinBox )
+  {
+    mIntSpinBox->setReadOnly( !enabled );
+    mIntSpinBox->setFrame( enabled );
+  }
+  else
+  {
+    QgsEditorWidgetWrapper::setEnabled( enabled );
+  }
+}
+

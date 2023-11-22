@@ -94,6 +94,16 @@ class CORE_EXPORT QgsGeometryUtils
     static double sqrDistToLine( double ptX, double ptY, double x1, double y1, double x2, double y2, double &minDistX SIP_OUT, double &minDistY SIP_OUT, double epsilon ) SIP_HOLDGIL;
 
     /**
+     * Returns the distance between a point and an infinite line.
+     * \param point The point to find the distance to the line
+     * \param linePoint1 The first point of the line
+     * \param linePoint2 The second point of the line
+     * \param epsilon The tolerance to use
+     * \since QGIS 3.26
+     */
+    static double distToInfiniteLine( const QgsPoint &point, const QgsPoint &linePoint1, const QgsPoint &linePoint2, double epsilon = 1e-7 );
+
+    /**
      * Computes the intersection between two lines. Z dimension is
      * supported and is retrieved from the first 3D point amongst \a p1 and
      * \a p2.
@@ -445,7 +455,7 @@ class CORE_EXPORT QgsGeometryUtils
      * Returns a LinearRing { uint32 numPoints; Point points[numPoints]; }
      * \note not available in Python bindings
      */
-    static void pointsToWKB( QgsWkbPtr &wkb, const QgsPointSequence &points, bool is3D, bool isMeasure ) SIP_SKIP;
+    static void pointsToWKB( QgsWkbPtr &wkb, const QgsPointSequence &points, bool is3D, bool isMeasure, QgsAbstractGeometry::WkbFlags flags ) SIP_SKIP;
 
     /**
      * Returns a WKT coordinate list
@@ -537,7 +547,7 @@ class CORE_EXPORT QgsGeometryUtils
      * Parses a WKT block of the format "TYPE( contents )" and returns a pair of geometry type to contents ("Pair(wkbType, "contents")")
      * \note not available in Python bindings
      */
-    static QPair<QgsWkbTypes::Type, QString> wktReadBlock( const QString &wkt ) SIP_SKIP;
+    static QPair<Qgis::WkbType, QString> wktReadBlock( const QString &wkt ) SIP_SKIP;
 
     /**
      * Parses a WKT string and returns of list of blocks contained in the WKT.
@@ -780,6 +790,16 @@ class CORE_EXPORT QgsGeometryUtils
     static double triangleArea( double aX, double aY, double bX, double bY, double cX, double cY ) SIP_HOLDGIL;
 
     /**
+     * Given the line (\a x1, \a y1) to (\a x2, \a y2) and a point (\a px, \a py) returns the fraction
+     * of the line length at which the point lies.
+     *
+     * \warning this method requires that the point definitely lies on the line!
+     *
+     * \since QGIS 3.32
+     */
+    static double pointFractionAlongLine( double x1, double y1, double x2, double y2, double px, double py );
+
+    /**
      * Returns a weighted point inside the triangle denoted by the points (\a aX, \a aY), (\a bX, \a bY) and
      * (\a cX, \a cY).
      *
@@ -798,6 +818,14 @@ class CORE_EXPORT QgsGeometryUtils
      */
     static void weightedPointInTriangle( double aX, double aY, double bX, double bY, double cX, double cY,
                                          double weightB, double weightC, double &pointX SIP_OUT, double &pointY SIP_OUT ) SIP_HOLDGIL;
+
+    /**
+     * Given the points (\a x1, \a y1), (\a x2, \a y2) and (\a x3, \a y3) returns TRUE if these
+     * points can be considered collinear with a specified tolerance \a epsilon.
+     *
+     * \since QGIS 3.32
+     */
+    static bool pointsAreCollinear( double x1, double y1, double x2, double y2, double x3, double y3, double epsilon );
 
     /**
      * A Z dimension is added to \a point if one of the point in the list

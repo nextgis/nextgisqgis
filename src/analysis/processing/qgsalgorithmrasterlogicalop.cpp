@@ -15,6 +15,7 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "gdal.h"
 #include "qgsalgorithmrasterlogicalop.h"
 #include "qgsrasterprojector.h"
 #include "qgsrasterfilewriter.h"
@@ -82,6 +83,8 @@ bool QgsRasterBooleanLogicAlgorithmBase::prepareAlgorithm( const QVariantMap &pa
   mExtent = referenceLayer->extent();
   mNoDataValue = parameterAsDouble( parameters, QStringLiteral( "NO_DATA" ), context );
   mDataType = QgsRasterAnalysisUtils::rasterTypeChoiceToDataType( parameterAsEnum( parameters, QStringLiteral( "DATA_TYPE" ), context ) );
+  if ( mDataType == Qgis::DataType::Int8 && atoi( GDALVersionInfo( "VERSION_NUM" ) ) < GDAL_COMPUTE_VERSION( 3, 7, 0 ) )
+    throw QgsProcessingException( QObject::tr( "Int8 data type requires GDAL version 3.7 or later" ) );
 
   mTreatNodataAsFalse = parameterAsBoolean( parameters, QStringLiteral( "NODATA_AS_FALSE" ), context );
 
@@ -90,7 +93,7 @@ bool QgsRasterBooleanLogicAlgorithmBase::prepareAlgorithm( const QVariantMap &pa
   rasterLayers.reserve( layers.count() );
   for ( QgsMapLayer *l : layers )
   {
-    if ( l->type() == QgsMapLayerType::RasterLayer )
+    if ( l->type() == Qgis::LayerType::Raster )
     {
       QgsRasterLayer *layer = qobject_cast< QgsRasterLayer * >( l );
       QgsRasterAnalysisUtils::RasterLogicInput input;

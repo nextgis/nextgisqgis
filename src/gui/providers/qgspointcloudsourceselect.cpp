@@ -20,6 +20,7 @@
 #include "qgspointcloudsourceselect.h"
 #include "qgsproviderregistry.h"
 #include "qgsprovidermetadata.h"
+#include "qgshelp.h"
 
 ///@cond PRIVATE
 
@@ -32,6 +33,7 @@ QgsPointCloudSourceSelect::QgsPointCloudSourceSelect( QWidget *parent, Qt::Windo
   connect( mRadioSrcFile, &QRadioButton::toggled, this, &QgsPointCloudSourceSelect::radioSrcFile_toggled );
   connect( mRadioSrcProtocol, &QRadioButton::toggled, this, &QgsPointCloudSourceSelect::radioSrcProtocol_toggled );
   connect( cmbProtocolTypes, &QComboBox::currentTextChanged, this, &QgsPointCloudSourceSelect::cmbProtocolTypes_currentIndexChanged );
+  connect( buttonBox, &QDialogButtonBox::helpRequested, this, &QgsPointCloudSourceSelect::showHelp );
 
   radioSrcFile_toggled( true );
   setProtocolWidgetsVisibility();
@@ -77,7 +79,7 @@ void QgsPointCloudSourceSelect::addButtonClicked()
     {
       // auto determine preferred provider for each path
 
-      const QList< QgsProviderRegistry::ProviderCandidateDetails > preferredProviders = QgsProviderRegistry::instance()->preferredProvidersForUri( mPath );
+      const QList< QgsProviderRegistry::ProviderCandidateDetails > preferredProviders = QgsProviderRegistry::instance()->preferredProvidersForUri( path );
       // maybe we should raise an assert if preferredProviders size is 0 or >1? Play it safe for now...
       if ( preferredProviders.empty() )
         continue;
@@ -94,11 +96,14 @@ void QgsPointCloudSourceSelect::addButtonClicked()
       return;
     }
 
-    if ( !mPath.endsWith( QLatin1String( "/ept.json" ) ) )
+    QUrl url = QUrl::fromUserInput( mPath );
+    QString fileName = url.fileName();
+
+    if ( fileName.compare( QLatin1String( "ept.json" ), Qt::CaseInsensitive ) != 0 && !fileName.endsWith( QLatin1String( ".copc.laz" ), Qt::CaseInsensitive ) )
     {
       QMessageBox::information( this,
                                 tr( "Add Point Cloud Layers" ),
-                                tr( "Invalid point cloud URL \"%1\", please make sure your URL ends with /ept.json" ).arg( mPath ) );
+                                tr( "Invalid point cloud URL \"%1\", please make sure your URL ends with /ept.json or .copc.laz" ).arg( mPath ) );
       return;
     }
 
@@ -108,9 +113,16 @@ void QgsPointCloudSourceSelect::addButtonClicked()
     if ( !preferredProviders.empty() )
     {
       QString baseName = QStringLiteral( "remote ept layer" );
-      QStringList separatedPath = mPath.split( '/' );
-      if ( separatedPath.size() >= 2 )
-        baseName = separatedPath[ separatedPath.size() - 2 ];
+      if ( mPath.endsWith( QLatin1String( "/ept.json" ), Qt::CaseInsensitive ) )
+      {
+        QStringList separatedPath = mPath.split( '/' );
+        if ( separatedPath.size() >= 2 )
+          baseName = separatedPath[ separatedPath.size() - 2 ];
+      }
+      if ( mPath.endsWith( QLatin1String( ".copc.laz" ), Qt::CaseInsensitive ) )
+      {
+        baseName = QFileInfo( mPath ).baseName();
+      }
       emit addPointCloudLayer( mPath, baseName, preferredProviders.at( 0 ).metadata()->key() ) ;
     }
   }
@@ -164,6 +176,11 @@ void QgsPointCloudSourceSelect::setProtocolWidgetsVisibility()
   labelKey->hide();
   mKey->hide();
   mAuthWarning->hide();
+}
+
+void QgsPointCloudSourceSelect::showHelp()
+{
+  QgsHelp::openHelp( QStringLiteral( "managing_data_source/opening_data.html#loading-a-layer-from-a-file" ) );
 }
 
 ///@endcond

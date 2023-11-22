@@ -1,15 +1,15 @@
---- a/src/core/symbology/qgsfillsymbollayer.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/symbology/qgsfillsymbollayer.cpp	2022-04-25 18:33:17.000000000 +0300
-@@ -17,7 +17,7 @@
+--- a/src/core/symbology/qgsfillsymbollayer.cpp	2023-08-21 19:39:45.747045550 +0300
++++ b/src/core/symbology/qgsfillsymbollayer.cpp	2023-10-04 13:31:32.316481597 +0300
+@@ -18,7 +18,7 @@
  #include "qgslinesymbollayer.h"
- #include "qgsmarkersymbollayer.h"
+ #include "qgssldexportcontext.h"
  #include "qgssymbollayerutils.h"
 -#include "qgsdxfexport.h"
 +// #include "qgsdxfexport.h"
- #include "qgsexpression.h"
  #include "qgsgeometry.h"
- #include "qgsgeometrycollection.h"
-@@ -465,7 +465,7 @@
+ #include "qgsimagecache.h"
+ #include "qgsrendercontext.h"
+@@ -514,7 +514,7 @@
    double offsetBleed = context.convertToPainterUnits( std::max( std::fabs( mOffset.x() ), std::fabs( mOffset.y() ) ), mOffsetUnit, mOffsetMapUnitScale );
    return penBleed + offsetBleed;
  }
@@ -18,16 +18,16 @@
  double QgsSimpleFillSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
  {
    double width = mStrokeWidth;
-@@ -518,7 +518,7 @@
- {
-   return mBrushStyle;
+@@ -588,7 +588,7 @@
+   painter.end();
+   return pixmap.toImage();
  }
 -
 +*/
  //QgsGradientFillSymbolLayer
  
  QgsGradientFillSymbolLayer::QgsGradientFillSymbolLayer( const QColor &color, const QColor &color2,
-@@ -1773,7 +1773,7 @@
+@@ -1843,7 +1843,7 @@
  {
    return mStrokeWidthMapUnitScale;
  }
@@ -36,7 +36,7 @@
  double QgsImageFillSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
  {
    double width = mStrokeWidth;
-@@ -1799,7 +1799,7 @@
+@@ -1869,7 +1869,7 @@
    }
  #endif //0
  }
@@ -45,7 +45,7 @@
  QVariantMap QgsImageFillSymbolLayer::properties() const
  {
    QVariantMap map;
-@@ -2282,7 +2282,7 @@
+@@ -2351,7 +2351,7 @@
    }
    return 0;
  }
@@ -54,7 +54,7 @@
  QColor QgsSVGFillSymbolLayer::dxfColor( QgsSymbolRenderContext &context ) const
  {
    Q_UNUSED( context )
-@@ -2292,7 +2292,7 @@
+@@ -2361,7 +2361,7 @@
    }
    return mStroke->color();
  }

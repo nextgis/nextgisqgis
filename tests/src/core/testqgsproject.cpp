@@ -29,6 +29,9 @@
 #include "qgssymbollayerutils.h"
 #include "qgslayoutmanager.h"
 #include "qgsmarkersymbol.h"
+#include "qgsrasterlayer.h"
+#include "qgssettingsregistrycore.h"
+
 
 class TestQgsProject : public QObject
 {
@@ -60,6 +63,7 @@ class TestQgsProject : public QObject
     void testAttachmentsQgz();
     void testAttachmentIdentifier();
     void testEmbeddedGroupWithJoins();
+    void testAsynchronousLayerLoading();
 };
 
 void TestQgsProject::init()
@@ -193,7 +197,7 @@ static QString _getLayerSvgMarkerPath( const QgsProject &prj, const QString &lay
 {
   QList<QgsMapLayer *> layers = prj.mapLayersByName( layerName );
   Q_ASSERT( layers.count() == 1 );
-  Q_ASSERT( layers[0]->type() == QgsMapLayerType::VectorLayer );
+  Q_ASSERT( layers[0]->type() == Qgis::LayerType::Vector );
   QgsVectorLayer *layer = qobject_cast<QgsVectorLayer *>( layers[0] );
   Q_ASSERT( layer->renderer() );
   Q_ASSERT( layer->renderer()->type() == "singleSymbol" );
@@ -213,7 +217,7 @@ static QHash<QString, QString> _parseSvgPathsForLayers( const QString &projectFi
   QFile projectFile( projectFilename );
   bool res = projectFile.open( QIODevice::ReadOnly );
   Q_ASSERT( res );
-  res = doc.setContent( &projectFile );
+  res = static_cast< bool >( doc.setContent( &projectFile ) );
   Q_ASSERT( res );
   projectFile.close();
 
@@ -223,18 +227,9 @@ static QHash<QString, QString> _parseSvgPathsForLayers( const QString &projectFi
   while ( !layerElem.isNull() )
   {
     const QString layerName = layerElem.firstChildElement( QStringLiteral( "layername" ) ).text();
-    QString svgPath;
     const QDomElement symbolElem = layerElem.firstChildElement( QStringLiteral( "renderer-v2" ) ).firstChildElement( QStringLiteral( "symbols" ) ).firstChildElement( QStringLiteral( "symbol" ) ).firstChildElement( QStringLiteral( "layer" ) );
-    QDomElement propElem = symbolElem.firstChildElement( QStringLiteral( "prop" ) );
-    while ( !propElem.isNull() )
-    {
-      if ( propElem.attribute( QStringLiteral( "k" ) ) == QLatin1String( "name" ) )
-      {
-        svgPath = propElem.attribute( QStringLiteral( "v" ) );
-        break;
-      }
-      propElem = propElem.nextSiblingElement( QStringLiteral( "prop" ) );
-    }
+    QVariantMap props = QgsSymbolLayerUtils::parseProperties( symbolElem );
+    QString svgPath = props.value( QLatin1String( "name" ) ).toString();
     projectFileSvgPaths[layerName] = svgPath;
     layerElem = layerElem.nextSiblingElement();
   }
@@ -340,37 +335,37 @@ void TestQgsProject::testProjectUnits()
 
   //first set a default QGIS distance unit
   QgsSettings s;
-  s.setValue( QStringLiteral( "/qgis/measure/displayunits" ), QgsUnitTypes::encodeUnit( QgsUnitTypes::DistanceFeet ) );
+  s.setValue( QStringLiteral( "/qgis/measure/displayunits" ), QgsUnitTypes::encodeUnit( Qgis::DistanceUnit::Feet ) );
 
   QgsProject *prj = new QgsProject;
   // new project should inherit QGIS default distance unit
   prj->clear();
-  QCOMPARE( prj->distanceUnits(), QgsUnitTypes::DistanceFeet );
+  QCOMPARE( prj->distanceUnits(), Qgis::DistanceUnit::Feet );
 
   //changing default QGIS unit should not affect existing project
-  s.setValue( QStringLiteral( "/qgis/measure/displayunits" ), QgsUnitTypes::encodeUnit( QgsUnitTypes::DistanceNauticalMiles ) );
-  QCOMPARE( prj->distanceUnits(), QgsUnitTypes::DistanceFeet );
+  s.setValue( QStringLiteral( "/qgis/measure/displayunits" ), QgsUnitTypes::encodeUnit( Qgis::DistanceUnit::NauticalMiles ) );
+  QCOMPARE( prj->distanceUnits(), Qgis::DistanceUnit::Feet );
 
   //test setting new units for project
-  prj->setDistanceUnits( QgsUnitTypes::DistanceNauticalMiles );
-  QCOMPARE( prj->distanceUnits(), QgsUnitTypes::DistanceNauticalMiles );
+  prj->setDistanceUnits( Qgis::DistanceUnit::NauticalMiles );
+  QCOMPARE( prj->distanceUnits(), Qgis::DistanceUnit::NauticalMiles );
 
   // AREA
 
   //first set a default QGIS area unit
-  s.setValue( QStringLiteral( "/qgis/measure/areaunits" ), QgsUnitTypes::encodeUnit( QgsUnitTypes::AreaSquareYards ) );
+  s.setValue( QStringLiteral( "/qgis/measure/areaunits" ), QgsUnitTypes::encodeUnit( Qgis::AreaUnit::SquareYards ) );
 
   // new project should inherit QGIS default area unit
   prj->clear();
-  QCOMPARE( prj->areaUnits(), QgsUnitTypes::AreaSquareYards );
+  QCOMPARE( prj->areaUnits(), Qgis::AreaUnit::SquareYards );
 
   //changing default QGIS unit should not affect existing project
-  s.setValue( QStringLiteral( "/qgis/measure/areaunits" ), QgsUnitTypes::encodeUnit( QgsUnitTypes::AreaAcres ) );
-  QCOMPARE( prj->areaUnits(), QgsUnitTypes::AreaSquareYards );
+  s.setValue( QStringLiteral( "/qgis/measure/areaunits" ), QgsUnitTypes::encodeUnit( Qgis::AreaUnit::Acres ) );
+  QCOMPARE( prj->areaUnits(), Qgis::AreaUnit::SquareYards );
 
   //test setting new units for project
-  prj->setAreaUnits( QgsUnitTypes::AreaAcres );
-  QCOMPARE( prj->areaUnits(), QgsUnitTypes::AreaAcres );
+  prj->setAreaUnits( Qgis::AreaUnit::Acres );
+  QCOMPARE( prj->areaUnits(), Qgis::AreaUnit::Acres );
 
   delete prj;
 }
@@ -411,9 +406,37 @@ void TestQgsProject::testLayerFlags()
   QgsProject prj2;
   prj2.setFileName( f.fileName() );
   QVERIFY( prj2.read() );
-  QgsMapLayer *layer = prj.mapLayer( layer2id );
+  QgsMapLayer *layer = prj2.mapLayer( layer2id );
   QVERIFY( layer );
   QVERIFY( !layer->flags().testFlag( QgsMapLayer::Removable ) );
+
+  // test setFlags modifies correctly existing layer settings
+  QVERIFY( !prj2.isDirty() );
+  prj2.setFlag( Qgis::ProjectFlag::TrustStoredLayerStatistics, true );
+  prj2.setFlag( Qgis::ProjectFlag::EvaluateDefaultValuesOnProviderSide, true );
+  QVERIFY( prj2.isDirty() );
+  QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( prj2.mapLayer( layer2id ) );
+  QVERIFY( vlayer->readExtentFromXml() );
+  // vlayer doesn't have trust because it will be done for new layer or when reloading the project
+  // no need to set trust on a layer which has already loaded everything
+  QVERIFY( !vlayer->dataProvider()->mReadFlags.testFlag( QgsDataProvider::FlagTrustDataSource ) );
+  QVERIFY( vlayer->dataProvider()->providerProperty( QgsVectorDataProvider::EvaluateDefaultValues ).toBool() );
+
+  prj2.write();
+
+  // check reload of project sets the correct flags and layer properties
+  QgsProject prj3;
+  prj3.setFileName( f.fileName() );
+  QVERIFY( prj3.read() );
+  QVERIFY( prj3.flags().testFlag( Qgis::ProjectFlag::TrustStoredLayerStatistics ) );
+  QVERIFY( prj3.flags().testFlag( Qgis::ProjectFlag::EvaluateDefaultValuesOnProviderSide ) );
+  vlayer = qobject_cast<QgsVectorLayer *>( prj3.mapLayer( layer2id ) );
+  QVERIFY( vlayer );
+  QVERIFY( !vlayer->flags().testFlag( QgsMapLayer::Removable ) );
+  QVERIFY( !prj3.isDirty() );
+  QVERIFY( vlayer->readExtentFromXml() );
+  QVERIFY( vlayer->dataProvider()->mReadFlags.testFlag( QgsDataProvider::FlagTrustDataSource ) );
+  QVERIFY( vlayer->dataProvider()->providerProperty( QgsVectorDataProvider::EvaluateDefaultValues ).toBool() );
 }
 
 void TestQgsProject::testLocalFiles()
@@ -459,7 +482,7 @@ void TestQgsProject::testReadFlags()
 {
   const QString project1Path = QString( TEST_DATA_DIR ) + QStringLiteral( "/embedded_groups/project1.qgs" );
   QgsProject p;
-  QVERIFY( p.read( project1Path, QgsProject::ReadFlag::FlagDontResolveLayers ) );
+  QVERIFY( p.read( project1Path, Qgis::ProjectReadFlag::DontResolveLayers ) );
   auto layers = p.mapLayers();
   QCOMPARE( layers.count(), 3 );
   // layers should be invalid - we skipped loading them!
@@ -474,14 +497,14 @@ void TestQgsProject::testReadFlags()
   QVERIFY( ! layers.value( QStringLiteral( "polys20170310142652234" ) )->originalXmlProperties().isEmpty() );
 
   // do not store styles
-  QVERIFY( p.read( project1Path, QgsProject::ReadFlag::FlagDontStoreOriginalStyles ) );
+  QVERIFY( p.read( project1Path, Qgis::ProjectReadFlag::DontStoreOriginalStyles ) );
   layers = p.mapLayers();
   QVERIFY( layers.value( QStringLiteral( "polys20170310142652234" ) )->originalXmlProperties().isEmpty() );
 
   // project with embedded groups
   const QString project2Path = QString( TEST_DATA_DIR ) + QStringLiteral( "/embedded_groups/project2.qgs" );
   QgsProject p2;
-  QVERIFY( p2.read( project2Path, QgsProject::ReadFlag::FlagDontResolveLayers ) );
+  QVERIFY( p2.read( project2Path, Qgis::ProjectReadFlag::DontResolveLayers ) );
   // layers should be invalid - we skipped loading them!
   layers = p2.mapLayers();
   QCOMPARE( layers.count(), 2 );
@@ -493,7 +516,7 @@ void TestQgsProject::testReadFlags()
 
   const QString project3Path = QString( TEST_DATA_DIR ) + QStringLiteral( "/layouts/layout_casting.qgs" );
   QgsProject p3;
-  QVERIFY( p3.read( project3Path, QgsProject::ReadFlag::FlagDontLoadLayouts ) );
+  QVERIFY( p3.read( project3Path, Qgis::ProjectReadFlag::DontLoadLayouts ) );
   QCOMPARE( p3.layoutManager()->layouts().count(), 0 );
 }
 
@@ -742,8 +765,10 @@ void TestQgsProject::testDefaultRelativePaths()
 void TestQgsProject::testAttachmentsQgs()
 {
   // Test QgsProject::{createAttachedFile,attachedFiles,removeAttachedFile}
+  int defaultAttachmentSize = 0;
   {
     QgsProject p;
+    defaultAttachmentSize = p.attachedFiles().size();
 
     const QString fileName = p.createAttachedFile( "myattachment" );
     QVERIFY( QFile( fileName ).exists() );
@@ -751,6 +776,7 @@ void TestQgsProject::testAttachmentsQgs()
     QVERIFY( p.removeAttachedFile( fileName ) );
     QVERIFY( !p.attachedFiles().contains( fileName ) );
     QVERIFY( !p.removeAttachedFile( fileName ) );
+    QCOMPARE( p.attachedFiles().size(), defaultAttachmentSize );
   }
 
   // Verify that attachment is exists after re-reading project
@@ -775,9 +801,9 @@ void TestQgsProject::testAttachmentsQgs()
 
     QgsProject p2;
     p2.read( projFile.fileName() );
-    QVERIFY( p2.attachedFiles().size() == 1 );
+    QCOMPARE( p2.attachedFiles().size(), defaultAttachmentSize + 1 );
 
-    file.setFileName( p2.attachedFiles().at( 0 ) );
+    file.setFileName( p2.attachedFiles().at( defaultAttachmentSize ) );
     QVERIFY( file.open( QIODevice::ReadOnly ) );
     QVERIFY( file.readAll() == QByteArray( "Attachment" ) );
   }
@@ -810,9 +836,9 @@ void TestQgsProject::testAttachmentsQgs()
 
     QgsProject p2;
     p2.read( projFile.fileName() );
-    QVERIFY( p2.attachedFiles().size() == 1 );
-    QVERIFY( p2.mapLayers().size() == 1 );
-    QVERIFY( p2.mapLayer( p2.mapLayers().firstKey() )->source() == p2.attachedFiles().first() );
+    QCOMPARE( p2.attachedFiles().size(), defaultAttachmentSize + 1 );
+    QCOMPARE( p2.mapLayers().size(), 1 );
+    QCOMPARE( p2.mapLayer( p2.mapLayers().firstKey() )->source(), p2.attachedFiles().at( defaultAttachmentSize ) );
 
     // Verify that attachment file is removed when layer is deleted
     QgsMapLayer *p2layer = p2.mapLayer( p2.mapLayers().firstKey() );
@@ -826,9 +852,11 @@ void TestQgsProject::testAttachmentsQgs()
 
 void TestQgsProject::testAttachmentsQgz()
 {
+  int defaultAttachmentSize = 0;
   // Test QgsProject::{createAttachedFile,attachedFiles,removeAttachedFile}
   {
     QgsProject p;
+    defaultAttachmentSize = p.attachedFiles().size();
 
     const QString fileName = p.createAttachedFile( "myattachment" );
     QVERIFY( QFile( fileName ).exists() );
@@ -836,6 +864,7 @@ void TestQgsProject::testAttachmentsQgz()
     QVERIFY( p.removeAttachedFile( fileName ) );
     QVERIFY( !p.attachedFiles().contains( fileName ) );
     QVERIFY( !p.removeAttachedFile( fileName ) );
+    QCOMPARE( p.attachedFiles().size(), defaultAttachmentSize );
   }
 
   // Verify that attachment is exists after re-reading project
@@ -856,9 +885,9 @@ void TestQgsProject::testAttachmentsQgz()
 
     QgsProject p2;
     p2.read( projFile.fileName() );
-    QVERIFY( p2.attachedFiles().size() == 1 );
+    QCOMPARE( p2.attachedFiles().size(), defaultAttachmentSize + 1 );
 
-    file.setFileName( p2.attachedFiles().at( 0 ) );
+    file.setFileName( p2.attachedFiles().at( defaultAttachmentSize ) );
     QVERIFY( file.open( QIODevice::ReadOnly ) );
     QVERIFY( file.readAll() == QByteArray( "Attachment" ) );
   }
@@ -887,9 +916,9 @@ void TestQgsProject::testAttachmentsQgz()
 
     QgsProject p2;
     p2.read( projFile.fileName() );
-    QVERIFY( p2.attachedFiles().size() == 1 );
-    QVERIFY( p2.mapLayers().size() == 1 );
-    QVERIFY( p2.mapLayer( p2.mapLayers().firstKey() )->source() == p2.attachedFiles().first() );
+    QCOMPARE( p2.attachedFiles().size(), defaultAttachmentSize + 1 );
+    QCOMPARE( p2.mapLayers().size(), 1 );
+    QCOMPARE( p2.mapLayer( p2.mapLayers().firstKey() )->source(), p2.attachedFiles().at( defaultAttachmentSize ) );
 
     // Verify that attachment file is removed when layer is deleted
     QgsMapLayer *p2layer = p2.mapLayer( p2.mapLayers().firstKey() );
@@ -931,6 +960,127 @@ void TestQgsProject::testEmbeddedGroupWithJoins()
 
   QgsVectorLayer *vl = p.mapLayer<QgsVectorLayer *>( QStringLiteral( "polys_with_id_32002f94_eebe_40a5_a182_44198ba1bc5a" ) );
   QCOMPARE( vl->fields().count(), 5 );
+}
+
+void TestQgsProject::testAsynchronousLayerLoading()
+{
+  std::unique_ptr<QgsProject> project = std::make_unique<QgsProject>();
+
+  QStringList meshFilters;
+  meshFilters << QStringLiteral( "*.nc" ) << QStringLiteral( "*.2dm" );
+  QStringList rasterFilters;
+  rasterFilters << QStringLiteral( "*.asc" ) << QStringLiteral( "*.tif" );
+  QStringList vectorFilters;
+  vectorFilters << QStringLiteral( "*.shp" );
+
+  QStringList rasterFiles;
+  rasterFiles << QStringLiteral( "band1_byte_attribute_table_epsg4326.tif" )
+              << QStringLiteral( "band1_byte_ct_epsg4326.tif" )
+              << QStringLiteral( "band1_byte_noct_epsg4326.tif" )
+              << QStringLiteral( "band1_int16_noct_epsg4326.tif" )
+              << QStringLiteral( "band3_byte_noct_epsg4326.tif" )
+              << QStringLiteral( "band3_float32_noct_epsg4326.tif" )
+              << QStringLiteral( "band3_int16_noct_epsg4326.tif" )
+              << QStringLiteral( "byte.tif" )
+              << QStringLiteral( "byte_with_nan_nodata.tif" )
+              << QStringLiteral( "dem.tif" )
+              << QStringLiteral( "gtiff_desc.tif" )
+              << QStringLiteral( "gtiff_tags.tif" )
+              << QStringLiteral( "raster_shading.tif" )
+              << QStringLiteral( "rgb_with_mask.tif" )
+              << QStringLiteral( "rnd_percentile_raster1_byte.tif" )
+              << QStringLiteral( "rnd_percentile_raster1_float64.tif" )
+              << QStringLiteral( "rnd_percentile_raster2_byte.tif" )
+              << QStringLiteral( "rnd_percentile_raster2_float64.tif" )
+              << QStringLiteral( "rnd_percentile_raster3_byte.tif" )
+              << QStringLiteral( "rnd_percentile_raster3_float64.tif" )
+              << QStringLiteral( "rnd_percentile_raster4_byte.tif" )
+              << QStringLiteral( "rnd_percentile_raster4_float64.tif" )
+              << QStringLiteral( "rnd_percentile_raster5_byte.tif" )
+              << QStringLiteral( "rnd_percentile_raster5_float64.tif" )
+              << QStringLiteral( "rnd_percentrank_valueraster_float64.tif" )
+              << QStringLiteral( "scale0ingdal23.tif" )
+              << QStringLiteral( "statisticsRas1_float64.asc" )
+              << QStringLiteral( "statisticsRas1_int32.tif" )
+              << QStringLiteral( "statistXXXX_XXXXXX.asc" ) //invalid name
+              << QStringLiteral( "statisticsRas2_float64.asc" )
+              << QStringLiteral( "statisticsRas2_int32.tif" )
+              << QStringLiteral( "statisticsRas3_float64.asc" )
+              << QStringLiteral( "statisticsRas3_int32.tif" )
+              << QStringLiteral( "statisticsRas4_float64.asc" )
+              << QStringLiteral( "test.asc" )
+              << QStringLiteral( "unique_1.tif" )
+              << QStringLiteral( "valueRas1_float64.asc" )
+              << QStringLiteral( "valueRas2_float64.asc" )
+              << QStringLiteral( "valueRas3_float64.asc" )
+              << QStringLiteral( "with_color_table.tif" );
+  QStringList vectorFiles;
+  vectorFiles << QStringLiteral( "bug5598.shp" )
+              << QStringLiteral( "empty_spatial_layer.shp" )
+              << QStringLiteral( "filter_test.shp" )
+              << QStringLiteral( "france_parts.shp" )
+              << QStringLiteral( "lines.shp" )
+              << QStringLiteral( "lines_cardinals.shp" )
+              << QStringLiteral( "lines_touching.shp" )
+              << QStringLiteral( "linestXXXX_XXXXXX.shp" )  //invalid name
+              << QStringLiteral( "multipatch.shp" )
+              << QStringLiteral( "multipoint.shp" )
+              << QStringLiteral( "points.shp" )
+              << QStringLiteral( "points_relations.shp" )
+              << QStringLiteral( "polys.shp" )
+              << QStringLiteral( "polys_overlapping.shp" )
+              << QStringLiteral( "polys_overlapping_with_cat.shp" )
+              << QStringLiteral( "polys_overlapping_with_id.shp" )
+              << QStringLiteral( "polys_with_id.shp" )
+              << QStringLiteral( "rectangles.shp" )
+              << QStringLiteral( "test_852.shp" );
+
+
+  QList<QgsMapLayer *> layers;
+
+  for ( const QString &rasterFile : std::as_const( rasterFiles ) )
+  {
+    layers << new QgsRasterLayer( QString( TEST_DATA_DIR ) + QStringLiteral( "/raster/" ) + rasterFile, rasterFile, QStringLiteral( "gdal" ) );
+    if ( layers.last()->name() == QStringLiteral( "statistXXXX_XXXXXX.asc" ) )
+      QVERIFY( !layers.last()->isValid() );
+    else
+      QVERIFY( layers.last()->isValid() );
+  }
+
+  for ( const QString &vectorFile : std::as_const( vectorFiles ) )
+  {
+    layers << new QgsVectorLayer( QString( TEST_DATA_DIR ) + QString( '/' ) + vectorFile, vectorFile, QStringLiteral( "ogr" ) );
+    if ( layers.last()->name() == QStringLiteral( "linestXXXX_XXXXXX.shp" ) )
+      QVERIFY( ! layers.last()->isValid() );
+    else
+      QVERIFY( layers.last()->isValid() );
+  }
+
+  int layersCount = layers.count();
+
+  project->addMapLayers( layers );
+
+  QCOMPARE( project->mapLayers( true ).count(), layersCount - 2 );
+  QCOMPARE( project->mapLayers( false ).count(), layersCount );
+
+  QTemporaryFile projFile( QDir::temp().absoluteFilePath( "XXXXXX_test.qgs" ) );
+  projFile.open();
+  QVERIFY( project->write( projFile.fileName() ) );
+
+  project = std::make_unique<QgsProject>();
+  QgsSettingsRegistryCore::settingsLayerParallelLoading->setValue( false );
+
+  QVERIFY( project->readProjectFile( projFile.fileName() ) );
+  QCOMPARE( project->mapLayers( true ).count(), layersCount - 2 );
+  QCOMPARE( project->mapLayers( false ).count(), layersCount );
+
+  QVERIFY( project->write( projFile.fileName() ) );
+  project = std::make_unique<QgsProject>();
+
+  QgsSettingsRegistryCore::settingsLayerParallelLoading->setValue( true );
+  QVERIFY( project->readProjectFile( projFile.fileName() ) );
+  QCOMPARE( project->mapLayers( true ).count(), layersCount - 2 );
+  QCOMPARE( project->mapLayers( false ).count(), layersCount );
 }
 
 

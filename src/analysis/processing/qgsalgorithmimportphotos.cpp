@@ -65,7 +65,7 @@ void QgsImportPhotosAlgorithm::initAlgorithm( const QVariantMap & )
 
 QString QgsImportPhotosAlgorithm::shortHelpString() const
 {
-  return QObject::tr( "Creates a point layer corresponding to the geotagged locations from JPEG images from a source folder. Optionally the folder can be recursively scanned.\n\n"
+  return QObject::tr( "Creates a point layer corresponding to the geotagged locations from JPEG or HEIF/HEIC images from a source folder. Optionally the folder can be recursively scanned.\n\n"
                       "The point layer will contain a single PointZ feature per input file from which the geotags could be read. Any altitude information from the geotags will be used "
                       "to set the point's Z value.\n\n"
                       "Optionally, a table of unreadable or non-geotagged photos can also be created." );
@@ -78,7 +78,7 @@ QgsImportPhotosAlgorithm *QgsImportPhotosAlgorithm::createInstance() const
 
 QVariant QgsImportPhotosAlgorithm::parseMetadataValue( const QString &value )
 {
-  const QRegularExpression numRx( QStringLiteral( "^\\s*\\(\\s*([-\\.\\d]+)\\s*\\)\\s*$" ) );
+  const thread_local QRegularExpression numRx( QStringLiteral( "^\\s*\\(\\s*([-\\.\\d]+)\\s*\\)\\s*$" ) );
   const QRegularExpressionMatch numMatch = numRx.match( value );
   if ( numMatch.hasMatch() )
   {
@@ -221,7 +221,7 @@ QVariant QgsImportPhotosAlgorithm::extractTimestampFromMetadata( const QVariantM
   if ( !ts.isValid() )
     return ts;
 
-  const QRegularExpression dsRegEx( QStringLiteral( "(\\d+):(\\d+):(\\d+)\\s+(\\d+):(\\d+):(\\d+)" ) );
+  const thread_local QRegularExpression dsRegEx( QStringLiteral( "(\\d+):(\\d+):(\\d+)\\s+(\\d+):(\\d+):(\\d+)" ) );
   const QRegularExpressionMatch dsMatch = dsRegEx.match( ts.toString() );
   if ( dsMatch.hasMatch() )
   {
@@ -241,7 +241,7 @@ QVariant QgsImportPhotosAlgorithm::extractTimestampFromMetadata( const QVariantM
 
 QVariant QgsImportPhotosAlgorithm::parseCoord( const QString &string )
 {
-  const QRegularExpression coordRx( QStringLiteral( "^\\s*\\(\\s*([-\\.\\d]+)\\s*\\)\\s*\\(\\s*([-\\.\\d]+)\\s*\\)\\s*\\(\\s*([-\\.\\d]+)\\s*\\)\\s*$" ) );
+  const thread_local QRegularExpression coordRx( QStringLiteral( "^\\s*\\(\\s*([-\\.\\d]+)\\s*\\)\\s*\\(\\s*([-\\.\\d]+)\\s*\\)\\s*\\(\\s*([-\\.\\d]+)\\s*\\)\\s*$" ) );
   const QRegularExpressionMatch coordMatch = coordRx.match( string );
   if ( coordMatch.hasMatch() )
   {
@@ -259,7 +259,7 @@ QVariant QgsImportPhotosAlgorithm::parseCoord( const QString &string )
 QVariantMap QgsImportPhotosAlgorithm::parseMetadataList( const QStringList &input )
 {
   QVariantMap results;
-  const QRegularExpression splitRx( QStringLiteral( "(.*?)=(.*)" ) );
+  const thread_local QRegularExpression splitRx( QStringLiteral( "(.*?)=(.*)" ) );
   for ( const QString &item : input )
   {
     const QRegularExpressionMatch match = splitRx.match( item );
@@ -328,7 +328,7 @@ QVariantMap QgsImportPhotosAlgorithm::processAlgorithm( const QVariantMap &param
   outFields.append( QgsField( QStringLiteral( "timestamp" ), QVariant::DateTime ) );
   QString outputDest;
   std::unique_ptr< QgsFeatureSink > outputSink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, outputDest, outFields,
-      QgsWkbTypes::PointZ, QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:4326" ) ) ) );
+      Qgis::WkbType::PointZ, QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:4326" ) ) ) );
 
   QgsFields invalidFields;
   invalidFields.append( QgsField( QStringLiteral( "photo" ), QVariant::String ) );
@@ -338,7 +338,7 @@ QVariantMap QgsImportPhotosAlgorithm::processAlgorithm( const QVariantMap &param
   QString invalidDest;
   std::unique_ptr< QgsFeatureSink > invalidSink( parameterAsSink( parameters, QStringLiteral( "INVALID" ), context, invalidDest, invalidFields ) );
 
-  const QStringList nameFilters { "*.jpeg", "*.jpg" };
+  const QStringList nameFilters { "*.jpeg", "*.jpg", "*.heic" };
   QStringList files;
 
   if ( !recurse )
@@ -397,7 +397,17 @@ QVariantMap QgsImportPhotosAlgorithm::processAlgorithm( const QVariantMap &param
       continue;
     }
 
-    if ( char **GDALmetadata = GDALGetMetadata( hDS.get(), nullptr ) )
+    char **GDALmetadata = GDALGetMetadata( hDS.get(), nullptr );
+    if ( ! GDALmetadata )
+    {
+      GDALmetadata = GDALGetMetadata( hDS.get(), "EXIF" );
+    }
+    if ( ! GDALmetadata )
+    {
+      feedback->reportError( QObject::tr( "No metadata found in %1" ).arg( QDir::toNativeSeparators( file ) ) );
+      saveInvalidFile( attributes, true );
+    }
+    else
     {
       if ( !outputSink )
         continue;
@@ -415,7 +425,7 @@ QVariantMap QgsImportPhotosAlgorithm::processAlgorithm( const QVariantMap &param
       }
 
       const QVariant altitude = extractAltitudeFromMetadata( metadata );
-      const QgsGeometry p = QgsGeometry( new QgsPoint( tag.x(), tag.y(), altitude.toDouble(), 0, QgsWkbTypes::PointZ ) );
+      const QgsGeometry p = QgsGeometry( new QgsPoint( tag.x(), tag.y(), altitude.toDouble(), 0, Qgis::WkbType::PointZ ) );
       f.setGeometry( p );
 
       attributes
@@ -428,11 +438,6 @@ QVariantMap QgsImportPhotosAlgorithm::processAlgorithm( const QVariantMap &param
       f.setAttributes( attributes );
       if ( !outputSink->addFeature( f, QgsFeatureSink::FastInsert ) )
         throw QgsProcessingException( writeFeatureError( outputSink.get(), parameters, QStringLiteral( "OUTPUT" ) ) );
-    }
-    else
-    {
-      feedback->reportError( QObject::tr( "No metadata found in %1" ).arg( QDir::toNativeSeparators( file ) ) );
-      saveInvalidFile( attributes, true );
     }
   }
 

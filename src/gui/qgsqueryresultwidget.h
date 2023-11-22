@@ -57,9 +57,10 @@ class GUI_EXPORT QgsConnectionsApiFetcher: public QObject
 
   public:
 
-    //! Constructs a result fetcher from \a connection.
-    QgsConnectionsApiFetcher( const QgsAbstractDatabaseProviderConnection *connection )
-      : mConnection( connection )
+    //! Constructs a result fetcher from connection with the specified \a uri and \a providerKey.
+    QgsConnectionsApiFetcher( const QString &uri, const QString &providerKey )
+      : mUri( uri )
+      , mProviderKey( providerKey )
     {}
 
     //! Start fetching
@@ -78,8 +79,10 @@ class GUI_EXPORT QgsConnectionsApiFetcher: public QObject
 
   private:
 
-    const QgsAbstractDatabaseProviderConnection *mConnection = nullptr;
+    QString mUri;
+    QString mProviderKey;
     QAtomicInt mStopFetching = 0;
+    std::unique_ptr< QgsFeedback > mFeedback;
 
 };
 
@@ -170,6 +173,20 @@ class GUI_EXPORT QgsQueryResultWidget: public QWidget, private Ui::QgsQueryResul
      */
     void tokensReady( const QStringList &tokens );
 
+    /**
+     * Copies the query results to the clipboard, as a formatted table.
+     *
+     * \since QGIS 3.32
+     */
+    void copyResults();
+
+    /**
+     * Copies a range of the query results to the clipboard, as a formatted table.
+     *
+     * \since QGIS 3.32
+     */
+    void copyResults( int fromRow, int toRow, int fromColumn, int toColumn );
+
   signals:
 
     /**
@@ -193,13 +210,18 @@ class GUI_EXPORT QgsQueryResultWidget: public QWidget, private Ui::QgsQueryResul
      */
     void updateButtons();
 
+    void showCellContextMenu( QPoint point );
+
+    void copySelection();
+
   private:
 
     std::unique_ptr<QgsAbstractDatabaseProviderConnection> mConnection;
     std::unique_ptr<QgsQueryResultModel> mModel;
     std::unique_ptr<QgsFeedback> mFeedback;
-    std::unique_ptr<QgsConnectionsApiFetcher> mApiFetcher;
-    QThread mApiFetcherWorkerThread;
+
+    QPointer< QgsConnectionsApiFetcher > mApiFetcher;
+
     bool mWasCanceled = false;
     mutable QgsAbstractDatabaseProviderConnection::SqlVectorLayerOptions mSqlVectorLayerOptions;
     bool mFirstRowFetched = false;
@@ -208,6 +230,7 @@ class GUI_EXPORT QgsQueryResultWidget: public QWidget, private Ui::QgsQueryResul
     long long mActualRowCount = -1;
     long long mFetchedRowsBatchCount = 0;
     QueryWidgetMode mQueryWidgetMode = QueryWidgetMode::SqlQueryMode;
+    long long mCurrentHistoryEntryId = -1;
 
     /**
      * Updates SQL layer columns.

@@ -1,0 +1,46 @@
+--- a/src/3d/qgspointcloudlayer3drenderer.cpp	2023-08-21 19:30:49.841999926 +0300
++++ b/src/3d/qgspointcloudlayer3drenderer.cpp	2023-11-02 15:27:39.000000000 +0300
+@@ -21,7 +21,7 @@
+ 
+ #include "qgspointcloudindex.h"
+ #include "qgspointcloudlayer.h"
+-#include "qgsvirtualpointcloudentity_p.h"
++//#include "qgsvirtualpointcloudentity_p.h"
+ #include "qgsxmlutils.h"
+ #include "qgsapplication.h"
+ #include "qgs3dsymbolregistry.h"
+@@ -161,18 +161,22 @@
+   const QgsCoordinateTransform coordinateTransform( pcl->crs(), map.crs(), map.transformContext() );
+ 
+   Qt3DCore::QEntity *entity = nullptr;
+-  if ( pcl->dataProvider()->index() )
+-  {
+-    entity = new QgsPointCloudLayerChunkedEntity( pcl->dataProvider()->index(), map, coordinateTransform, dynamic_cast<QgsPointCloud3DSymbol *>( mSymbol->clone() ), maximumScreenError(), showBoundingBoxes(),
+-        static_cast< const QgsPointCloudLayerElevationProperties * >( pcl->elevationProperties() )->zScale(),
+-        static_cast< const QgsPointCloudLayerElevationProperties * >( pcl->elevationProperties() )->zOffset(), mPointBudget );
+-  }
+-  else if ( !pcl->dataProvider()->subIndexes().isEmpty() )
+-  {
+-    entity = new QgsVirtualPointCloudEntity( pcl, map, coordinateTransform, dynamic_cast<QgsPointCloud3DSymbol *>( mSymbol->clone() ), maximumScreenError(), showBoundingBoxes(),
+-        static_cast< const QgsPointCloudLayerElevationProperties * >( pcl->elevationProperties() )->zScale(),
+-        static_cast< const QgsPointCloudLayerElevationProperties * >( pcl->elevationProperties() )->zOffset(), mPointBudget );
+-  }
++//  if ( pcl->dataProvider()->index() )
++//  {
++//    entity = new QgsPointCloudLayerChunkedEntity( pcl->dataProvider()->index(), map, coordinateTransform, dynamic_cast<QgsPointCloud3DSymbol *>( mSymbol->clone() ), maximumScreenError(), showBoundingBoxes(),
++//        static_cast< const QgsPointCloudLayerElevationProperties * >( pcl->elevationProperties() )->zScale(),
++//        static_cast< const QgsPointCloudLayerElevationProperties * >( pcl->elevationProperties() )->zOffset(), mPointBudget );
++//  }
++//  else if ( !pcl->dataProvider()->subIndexes().isEmpty() )
++//  {
++//    entity = new QgsVirtualPointCloudEntity( pcl, map, coordinateTransform, dynamic_cast<QgsPointCloud3DSymbol *>( mSymbol->clone() ), maximumScreenError(), showBoundingBoxes(),
++//        static_cast< const QgsPointCloudLayerElevationProperties * >( pcl->elevationProperties() )->zScale(),
++//        static_cast< const QgsPointCloudLayerElevationProperties * >( pcl->elevationProperties() )->zOffset(), mPointBudget );
++//  }
++  entity = new QgsPointCloudLayerChunkedEntity( pcl->dataProvider()->index(), map, coordinateTransform, dynamic_cast<QgsPointCloud3DSymbol *>( mSymbol->clone() ), maximumScreenError(), showBoundingBoxes(),
++      static_cast< const QgsPointCloudLayerElevationProperties * >( pcl->elevationProperties() )->zScale(),
++      static_cast< const QgsPointCloudLayerElevationProperties * >( pcl->elevationProperties() )->zOffset(), mPointBudget );
++
+   return entity;
+ }
+ 

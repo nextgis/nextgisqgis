@@ -68,8 +68,8 @@ void QgsDistanceWithinAlgorithm::process( const QgsProcessingContext &context, Q
 
     // if reference is POINTs and target is not, we prefer iterating
     // over target, to benefit from preparation
-    if ( referenceSource->wkbType() == QgsWkbTypes::Point &&
-         targetSource->wkbType() != QgsWkbTypes::Point )
+    if ( referenceSource->wkbType() == Qgis::WkbType::Point &&
+         targetSource->wkbType() != Qgis::WkbType::Point )
     {
       iterateOverTarget = true;
       break;
@@ -245,7 +245,7 @@ QString QgsSelectWithinDistanceAlgorithm::displayName() const
 
 QStringList QgsSelectWithinDistanceAlgorithm::tags() const
 {
-  return QObject::tr( "select,maximum,buffer" ).split( ',' );
+  return QObject::tr( "select,by,maximum,buffer" ).split( ',' );
 }
 
 QString QgsSelectWithinDistanceAlgorithm::group() const
@@ -331,7 +331,7 @@ QString QgsExtractWithinDistanceAlgorithm::displayName() const
 
 QStringList QgsExtractWithinDistanceAlgorithm::tags() const
 {
-  return QObject::tr( "extract,filter,select,maximum,buffer" ).split( ',' );
+  return QObject::tr( "extract,by,filter,select,maximum,buffer" ).split( ',' );
 }
 
 QString QgsExtractWithinDistanceAlgorithm::group() const

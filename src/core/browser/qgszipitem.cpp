@@ -19,6 +19,9 @@
 #include "qgsapplication.h"
 #include "qgsdataitemprovider.h"
 #include "qgsdataitemproviderregistry.h"
+#include "qgssettings.h"
+#include "qgsgdalutils.h"
+
 #include <QFileInfo>
 
 #include <cpl_vsi.h>
@@ -55,7 +58,7 @@ void QgsZipItem::init()
 {
   mType = Qgis::BrowserItemType::Collection; //Zip??
   mIconName = QStringLiteral( "/mIconZip.svg" );
-  mVsiPrefix = vsiPrefix( mFilePath );
+  mVsiPrefix = QgsGdalUtils::vsiPrefixForPath( mFilePath );
 
   setCapabilities( capabilities2() | Qgis::BrowserItemCapability::ItemRepresentsFile );
 
@@ -78,6 +81,11 @@ QgsMimeDataUtils::UriList QgsZipItem::mimeUris() const
   u.uri = path();
   u.filePath = path();
   return { u };
+}
+
+QString QgsZipItem::vsiPrefix( const QString &uri )
+{
+  return QgsGdalUtils::vsiPrefixForPath( uri );
 }
 
 QVector<QgsDataItem *> QgsZipItem::createChildren()
@@ -157,7 +165,7 @@ QgsDataItem *QgsZipItem::itemFromPath( QgsDataItem *parent, const QString &fileP
   const QgsSettings settings;
   const QString scanZipSetting = settings.value( QStringLiteral( "qgis/scanZipInBrowser2" ), "basic" ).toString();
   QStringList zipFileList;
-  const QString vsiPrefix = QgsZipItem::vsiPrefix( filePath );
+  const QString vsiPrefix = QgsGdalUtils::vsiPrefixForPath( filePath );
   QgsZipItem *zipItem = nullptr;
   bool populated = false;
 
@@ -167,8 +175,8 @@ QgsDataItem *QgsZipItem::itemFromPath( QgsDataItem *parent, const QString &fileP
   if ( scanZipSetting == QLatin1String( "no" ) )
     return nullptr;
 
-  // don't scan if this file is not a /vsizip/ or /vsitar/ item
-  if ( ( vsiPrefix != QLatin1String( "/vsizip/" ) && vsiPrefix != QLatin1String( "/vsitar/" ) ) )
+  // don't scan if this file is not a vsi container archive item
+  if ( !QgsGdalUtils::isVsiArchivePrefix( vsiPrefix ) )
     return nullptr;
 
   zipItem = new QgsZipItem( parent, name, filePath, path );
@@ -228,7 +236,7 @@ QStringList QgsZipItem::getZipFileList()
 
   // get list of files inside zip file
   QgsDebugMsgLevel( QStringLiteral( "Open file %1 with gdal vsi" ).arg( mVsiPrefix + mFilePath ), 3 );
-  char **papszSiblingFiles = VSIReadDirRecursive( QString( mVsiPrefix + mFilePath ).toLocal8Bit().constData() );
+  char **papszSiblingFiles = VSIReadDirRecursive( QString( mVsiPrefix + mFilePath ).toUtf8().constData() );
   if ( papszSiblingFiles )
   {
     for ( int i = 0; papszSiblingFiles[i]; i++ )
@@ -243,7 +251,7 @@ QStringList QgsZipItem::getZipFileList()
   }
   else
   {
-    QgsDebugMsg( QStringLiteral( "Error reading %1" ).arg( mFilePath ) );
+    QgsDebugError( QStringLiteral( "Error reading %1" ).arg( mFilePath ) );
   }
 
   return mZipFileList;

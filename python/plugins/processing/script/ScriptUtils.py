@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     ScriptUtils.py
@@ -27,7 +25,7 @@ import os
 import inspect
 import importlib.util
 
-from qgis.PyQt.QtCore import QCoreApplication
+from qgis.PyQt.QtCore import QCoreApplication, QDir
 
 from qgis.core import (Qgis,
                        QgsApplication,
@@ -110,7 +108,7 @@ def resetScriptFolder(folder):
     # isolate "QGIS3/profiles/"
     appIndex = -4
     profileIndex = -3
-    currentSettingPath = QgsApplication.qgisSettingsDirPath()
+    currentSettingPath = QDir.toNativeSeparators(QgsApplication.qgisSettingsDirPath())
     paths = currentSettingPath.split(os.sep)
     commonSettingPath = os.path.join(paths[appIndex], paths[profileIndex])
 

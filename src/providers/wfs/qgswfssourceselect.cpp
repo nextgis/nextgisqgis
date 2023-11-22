@@ -36,6 +36,7 @@
 #include "qgsquerybuilder.h"
 #include "qgswfsguiutils.h"
 #include "qgswfssubsetstringeditor.h"
+#include "qgsguiutils.h"
 
 #include <QDomDocument>
 #include <QListWidgetItem>
@@ -175,35 +176,33 @@ void QgsWFSSourceSelect::populateConnectionList()
   changeConnection();
 }
 
-QString QgsWFSSourceSelect::getPreferredCrs( const QSet<QString> &crsSet ) const
+QString QgsWFSSourceSelect::getPreferredCrs( const QList<QString> &crsList ) const
 {
-  if ( crsSet.size() < 1 )
+  if ( crsList.size() < 1 )
   {
     return QString();
   }
 
-  //first: project CRS
-  QgsCoordinateReferenceSystem projectRefSys = QgsProject::instance()->crs();
-  //convert to EPSG
-  QString ProjectCRS;
-  if ( projectRefSys.isValid() )
+  //first: project CRS (if the project is not empty)
+  QgsProject *project = QgsProject::instance();
+  if ( !project->mapLayers().isEmpty() )
   {
-    ProjectCRS = projectRefSys.authid();
+    QgsCoordinateReferenceSystem projectRefSys = QgsProject::instance()->crs();
+    //convert to EPSG
+    QString projectCRS;
+    if ( projectRefSys.isValid() )
+    {
+      projectCRS = projectRefSys.authid();
+    }
+
+    if ( !projectCRS.isEmpty() && crsList.contains( projectCRS ) )
+    {
+      return projectCRS;
+    }
   }
 
-  if ( !ProjectCRS.isEmpty() && crsSet.contains( ProjectCRS ) )
-  {
-    return ProjectCRS;
-  }
-
-  //second: WGS84
-  if ( crsSet.contains( geoEpsgCrsAuthId() ) )
-  {
-    return geoEpsgCrsAuthId();
-  }
-
-  //third: first entry in set
-  return *( crsSet.constBegin() );
+  //otherwise: first entry in set
+  return crsList[0];
 }
 
 void QgsWFSSourceSelect::refresh()
@@ -379,6 +378,7 @@ void QgsWFSSourceSelect::oapifCollectionsReplyFinished()
     return;
   }
 
+  mAvailableCRS.clear();
   for ( const auto &collection : mOAPIFCollections->collections() )
   {
     // insert the typenames, titles and abstracts into the tree view
@@ -391,6 +391,9 @@ void QgsWFSSourceSelect::oapifCollectionsReplyFinished()
 
     typedef QList< QStandardItem * > StandardItemList;
     mModel->appendRow( StandardItemList() << titleItem << nameItem << abstractItem << filterItem );
+
+    // insert the available CRS into mAvailableCRS
+    mAvailableCRS.insert( collection.mId, collection.mCrsList );
   }
 
   if ( !mOAPIFCollections->nextUrl().isEmpty() )
@@ -491,11 +494,15 @@ void QgsWFSSourceSelect::connectToServer()
     mCapabilities->requestCapabilities( synchronous, forceRefresh );
     QApplication::setOverrideCursor( Qt::WaitCursor );
   }
+
+  gbCRS->setEnabled( true );
 }
 
 
 void QgsWFSSourceSelect::addButtonClicked()
 {
+  QgsTemporaryCursorOverride cursorOverride( Qt::WaitCursor );
+
   //get selected entry in treeview
   QModelIndex currentIndex = treeView->selectionModel()->currentIndex();
   if ( !currentIndex.isValid() )
@@ -505,7 +512,9 @@ void QgsWFSSourceSelect::addButtonClicked()
 
   QgsWfsConnection connection( cmbConnections->currentText() );
 
-  QString pCrsString( labelCoordRefSys->text() );
+  QString pCrsString;
+  if ( gbCRS->isEnabled() )
+    pCrsString = labelCoordRefSys->text();
 
   //create layers that user selected from this WFS source
   QModelIndexList list = treeView->selectionModel()->selectedRows();
@@ -556,6 +565,11 @@ void QgsWFSSourceSelect::buildQuery( const QModelIndex &index )
   QgsWfsConnection connection( cmbConnections->currentText() );
   QgsWFSDataSourceURI uri( connection.uri().uri( false ) );
   uri.setTypeName( typeName );
+  if ( gbCRS->isEnabled() )
+  {
+    QString crsString = labelCoordRefSys->text();
+    uri.setSRSName( crsString );
+  }
 
   QModelIndex filterIndex = index.sibling( index.row(), MODEL_IDX_SQL );
   QString sql( filterIndex.data().toString() );
@@ -586,8 +600,16 @@ void QgsWFSSourceSelect::buildQuery( const QModelIndex &index )
       }
       else if ( provider->filterTranslatedState() == QgsOapifProvider::FilterTranslationState::PARTIAL )
       {
-        QMessageBox::information( nullptr, tr( "Filter" ),
-                                  tr( "The following part of the filter will be evaluated on client side : %1" ).arg( provider->clientSideFilterExpression() ) );
+        if ( provider->clientSideFilterExpression().isEmpty() )
+        {
+          QMessageBox::information( nullptr, tr( "Filter" ),
+                                    tr( "The filter will partially evaluated on client side." ) );
+        }
+        else
+        {
+          QMessageBox::information( nullptr, tr( "Filter" ),
+                                    tr( "The following part of the filter will be evaluated on client side : %1" ).arg( provider->clientSideFilterExpression() ) );
+        }
       }
       mModelProxy->setData( filterIndex, QVariant( gb.sql() ) );
     }
@@ -688,18 +710,21 @@ void QgsWFSSourceSelect::changeCRSFilter()
     {
       QSet<QString> crsNames( qgis::listToSet( *crsIterator ) );
 
-      if ( mProjectionSelector )
-      {
-        mProjectionSelector->setOgcWmsCrsFilter( crsNames );
-        QString preferredCRS = getPreferredCrs( crsNames ); //get preferred EPSG system
-        if ( !preferredCRS.isEmpty() )
-        {
-          QgsCoordinateReferenceSystem refSys = QgsCoordinateReferenceSystem::fromOgcWmsCrs( preferredCRS );
-          mProjectionSelector->setCrs( refSys );
+      // Delete and recreate mProjectionSelector as setOgcWmsCrsFilter()
+      // behavior is undefined after the dialog has been shown.
+      delete mProjectionSelector;
+      mProjectionSelector = new QgsProjectionSelectionDialog( this );
 
-          labelCoordRefSys->setText( preferredCRS );
-        }
+      mProjectionSelector->setOgcWmsCrsFilter( crsNames );
+      QString preferredCRS = getPreferredCrs( *crsIterator ); //get preferred EPSG system
+      if ( !preferredCRS.isEmpty() )
+      {
+        QgsCoordinateReferenceSystem refSys = QgsCoordinateReferenceSystem::fromOgcWmsCrs( preferredCRS );
+        mProjectionSelector->setCrs( refSys );
+
+        labelCoordRefSys->setText( preferredCRS );
       }
+
     }
   }
 }
@@ -771,7 +796,7 @@ QSize QgsWFSItemDelegate::sizeHint( const QStyleOptionViewItem &option, const QM
 {
   QVariant indexData;
   indexData = index.data( Qt::DisplayRole );
-  if ( indexData.isNull() )
+  if ( QgsVariantUtils::isNull( indexData ) )
   {
     return QSize();
   }

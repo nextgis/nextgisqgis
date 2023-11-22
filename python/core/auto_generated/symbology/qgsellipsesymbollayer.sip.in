@@ -32,6 +32,12 @@ A symbol layer for rendering objects with major and minor axis (e.g. ellipse, re
       RightHalfTriangle,
       LeftHalfTriangle,
       SemiCircle,
+      ThirdCircle,
+      QuarterCircle,
+      Pentagon,
+      Hexagon,
+      Octagon,
+      Star,
     };
 
     static QList< QgsEllipseSymbolLayer::Shape > availableShapes();
@@ -211,7 +217,7 @@ Sets the marker's stroke cap ``style`` (e.g., flat, round, etc).
     virtual void setStrokeColor( const QColor &c );
     virtual QColor strokeColor() const;
 
-    void setSymbolWidthUnit( QgsUnitTypes::RenderUnit unit );
+    void setSymbolWidthUnit( Qgis::RenderUnit unit );
 %Docstring
 Sets the units for the symbol's width.
 
@@ -222,7 +228,7 @@ Sets the units for the symbol's width.
 .. seealso:: :py:func:`setSymbolHeightUnit`
 %End
 
-    QgsUnitTypes::RenderUnit symbolWidthUnit() const;
+    Qgis::RenderUnit symbolWidthUnit() const;
 %Docstring
 Returns the units for the symbol's width.
 
@@ -234,7 +240,7 @@ Returns the units for the symbol's width.
     void setSymbolWidthMapUnitScale( const QgsMapUnitScale &scale );
     const QgsMapUnitScale &symbolWidthMapUnitScale() const;
 
-    void setSymbolHeightUnit( QgsUnitTypes::RenderUnit unit );
+    void setSymbolHeightUnit( Qgis::RenderUnit unit );
 %Docstring
 Sets the units for the symbol's height.
 
@@ -245,7 +251,7 @@ Sets the units for the symbol's height.
 .. seealso:: :py:func:`setSymbolWidthUnit`
 %End
 
-    QgsUnitTypes::RenderUnit symbolHeightUnit() const;
+    Qgis::RenderUnit symbolHeightUnit() const;
 %Docstring
 Returns the units for the symbol's height.
 
@@ -257,7 +263,7 @@ Returns the units for the symbol's height.
     void setSymbolHeightMapUnitScale( const QgsMapUnitScale &scale );
     const QgsMapUnitScale &symbolHeightMapUnitScale() const;
 
-    void setStrokeWidthUnit( QgsUnitTypes::RenderUnit unit );
+    void setStrokeWidthUnit( Qgis::RenderUnit unit );
 %Docstring
 Sets the units for the symbol's stroke width.
 
@@ -266,7 +272,7 @@ Sets the units for the symbol's stroke width.
 .. seealso:: :py:func:`strokeWidthUnit`
 %End
 
-    QgsUnitTypes::RenderUnit strokeWidthUnit() const;
+    Qgis::RenderUnit strokeWidthUnit() const;
 %Docstring
 Returns the units for the symbol's stroke width.
 
@@ -276,9 +282,9 @@ Returns the units for the symbol's stroke width.
     void setStrokeWidthMapUnitScale( const QgsMapUnitScale &scale );
     const QgsMapUnitScale &strokeWidthMapUnitScale() const;
 
-    virtual void setOutputUnit( QgsUnitTypes::RenderUnit unit );
+    virtual void setOutputUnit( Qgis::RenderUnit unit );
 
-    virtual QgsUnitTypes::RenderUnit outputUnit() const;
+    virtual Qgis::RenderUnit outputUnit() const;
 
     virtual bool usesMapUnits() const;
 

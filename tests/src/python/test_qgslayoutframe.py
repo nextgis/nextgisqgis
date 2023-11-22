@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsLayoutFrame.
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -11,9 +10,8 @@ __date__ = '23/10/2017'
 __copyright__ = 'Copyright 2017, The QGIS Project'
 
 import qgis  # NOQA
-
-from qgis.testing import start_app, unittest
 from qgis.core import QgsLayoutFrame, QgsLayoutItemHtml
+from qgis.testing import start_app, unittest
 
 from test_qgslayoutitem import LayoutItemTestCase
 
@@ -24,6 +22,7 @@ class TestQgsLayoutFrame(unittest.TestCase, LayoutItemTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestQgsLayoutFrame, cls).setUpClass()
         cls.mf = None
 
     @classmethod

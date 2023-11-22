@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>721</width>
+    <width>600</width>
     <height>578</height>
    </rect>
   </property>
@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="ScriptEdit" name="editor"/>
+     <widget class="QWidget" name="editor_container"/>
     </item>
     <item row="1" column="0">
      <widget class="QWidget" name="searchWidget" native="true">
@@ -120,6 +120,8 @@
    <addaction name="separator"/>
    <addaction name="actionIncreaseFontSize"/>
    <addaction name="actionDecreaseFontSize"/>
+   <addaction name="separator"/>
+   <addaction name="actionToggleComment"/>
   </widget>
   <action name="actionOpenScript">
    <property name="text">
@@ -240,21 +242,19 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+F</string>
-   </property>
    <property name="text">
     <string>Find &amp;&amp; &amp;Replace</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+F</string>
+   </property>
+  </action>
+  <action name="actionToggleComment">
+   <property name="text">
+    <string>Toggle Comment</string>
+   </property>
   </action>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>ScriptEdit</class>
-   <extends>QTextEdit</extends>
-   <header location="global">processing.script.ScriptEdit</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

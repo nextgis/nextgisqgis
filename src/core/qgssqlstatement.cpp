@@ -16,6 +16,7 @@
 
 #include "qgssqlstatement.h"
 #include "qgis.h"
+#include "qgsvariantutils.h"
 
 #include <QRegularExpression>
 
@@ -91,7 +92,7 @@ QString QgsSQLStatement::quotedIdentifierIfNeeded( const QString &name )
       return quotedIdentifier( name );
     }
   }
-  const thread_local QRegularExpression IDENTIFIER_RE( "^[A-Za-z_\x80-\xff][A-Za-z0-9_\x80-\xff]*$" );
+  const thread_local QRegularExpression IDENTIFIER_RE( "^[A-Za-z_\\x80-\\xff][A-Za-z0-9_\\x80-\\xff]*$" );
   return IDENTIFIER_RE.match( name ).hasMatch() ? name : quotedIdentifier( name );
 }
 
@@ -140,9 +141,10 @@ QgsSQLStatement::QgsSQLStatement( const QString &expr, bool allowFragments )
 }
 
 QgsSQLStatement::QgsSQLStatement( const QgsSQLStatement &other )
+  : mAllowFragments( other.mAllowFragments )
+  , mStatement( other.mStatement )
 {
-  mRootNode = ::parse( other.mStatement, mParserErrorString, other.mAllowFragments );
-  mStatement = other.mStatement;
+  mRootNode = ::parse( mStatement, mParserErrorString, mAllowFragments );
 }
 
 QgsSQLStatement &QgsSQLStatement::operator=( const QgsSQLStatement &other )
@@ -151,8 +153,9 @@ QgsSQLStatement &QgsSQLStatement::operator=( const QgsSQLStatement &other )
   {
     delete mRootNode;
     mParserErrorString.clear();
-    mRootNode = ::parse( other.mStatement, mParserErrorString, other.mAllowFragments );
     mStatement = other.mStatement;
+    mAllowFragments = other.mAllowFragments;
+    mRootNode = ::parse( mStatement, mParserErrorString, mAllowFragments );
   }
   return *this;
 }
@@ -243,7 +246,7 @@ void QgsSQLStatementCollectTableNames::visit( const QgsSQLStatement::NodeColumnR
 
 void QgsSQLStatementCollectTableNames::visit( const QgsSQLStatement::NodeTableDef &n )
 {
-  tableNamesDeclared.insert( n.alias().isEmpty() ? n.name() : n.alias() );
+  tableNamesDeclared.insert( n.alias().isEmpty() ? ( n.schema().isEmpty() ? n.name() : n.schema() + '.' + n.name() ) : n.alias() );
   QgsSQLStatement::RecursiveVisitor::visit( n );
 }
 
@@ -479,7 +482,7 @@ QgsSQLStatement::Node *QgsSQLStatement::NodeFunction::clone() const
 
 QString QgsSQLStatement::NodeLiteral::dump() const
 {
-  if ( mValue.isNull() )
+  if ( QgsVariantUtils::isNull( mValue ) )
     return QStringLiteral( "NULL" );
 
   switch ( mValue.type() )
@@ -562,7 +565,10 @@ QgsSQLStatement::Node *QgsSQLStatement::NodeSelectedColumn::clone() const
 QString QgsSQLStatement::NodeTableDef::dump() const
 {
   QString ret;
-  ret = quotedIdentifierIfNeeded( mName );
+  if ( !mSchema.isEmpty() )
+    ret += mSchema + '.';
+
+  ret += quotedIdentifierIfNeeded( mName );
   if ( !mAlias.isEmpty() )
   {
     ret += QLatin1String( " AS " );
@@ -573,7 +579,7 @@ QString QgsSQLStatement::NodeTableDef::dump() const
 
 QgsSQLStatement::NodeTableDef *QgsSQLStatement::NodeTableDef::cloneThis() const
 {
-  return new NodeTableDef( mName, mAlias );
+  return new NodeTableDef( mSchema, mName, mAlias );
 }
 
 QgsSQLStatement::Node *QgsSQLStatement::NodeTableDef::clone() const

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 ***************************************************************************
     AlgorithmLocatorFilter.py
@@ -42,7 +40,7 @@ from processing.core.ProcessingConfig import ProcessingConfig
 class AlgorithmLocatorFilter(QgsLocatorFilter):
 
     def __init__(self, parent=None):
-        super(AlgorithmLocatorFilter, self).__init__(parent)
+        super().__init__(parent)
 
     def clone(self):
         return AlgorithmLocatorFilter()
@@ -87,7 +85,11 @@ class AlgorithmLocatorFilter(QgsLocatorFilter):
 
             string = string.lower()
             tagScore = 0
-            tags = [*a.tags(), a.provider().name()]
+            if a.provider():
+                tags = [*a.tags(), a.provider().name()]
+            else:
+                tags = a.tags()
+
             if a.group():
                 tags.append(a.group())
 
@@ -123,7 +125,10 @@ class AlgorithmLocatorFilter(QgsLocatorFilter):
                     canvas.mapTool().reset()
                 except:
                     pass
-                canvas.setMapTool(prevMapTool)
+                try:
+                    canvas.setMapTool(prevMapTool)
+                except RuntimeError:
+                    pass
 
 
 class InPlaceAlgorithmLocatorFilter(QgsLocatorFilter):
@@ -178,7 +183,11 @@ class InPlaceAlgorithmLocatorFilter(QgsLocatorFilter):
 
             string = string.lower()
             tagScore = 0
-            tags = [*a.tags(), a.provider().name()]
+            if a.provider():
+                tags = [*a.tags(), a.provider().name()]
+            else:
+                tags = a.tags()
+
             if a.group():
                 tags.append(a.group())
 

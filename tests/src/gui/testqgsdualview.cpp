@@ -58,8 +58,10 @@ class TestQgsDualView : public QObject
     void testAttributeFormSharedValueScanning();
     void testNoGeom();
 
+#ifdef WITH_QTWEBKIT
     void testHtmlWidget_data();
     void testHtmlWidget();
+#endif
 
   private:
     QgsMapCanvas *mCanvas = nullptr;
@@ -344,6 +346,8 @@ void TestQgsDualView::testNoGeom()
   QVERIFY( ( model->request().flags() & QgsFeatureRequest::NoGeometry ) );
 }
 
+#ifdef WITH_QTWEBKIT
+
 void TestQgsDualView::testHtmlWidget_data()
 {
   QTest::addColumn<QString>( "expression" );
@@ -374,7 +378,7 @@ void TestQgsDualView::testHtmlWidget()
   QgsAttributeEditorHtmlElement *htmlElement = new QgsAttributeEditorHtmlElement( "HtmlWidget", nullptr );
   htmlElement->setHtmlCode( QStringLiteral( "The text is '<script>document.write(expression.evaluate(\"%1\"));</script>'" ).arg( expression ) );
   editFormConfig.addTab( htmlElement );
-  editFormConfig.setLayout( QgsEditFormConfig::TabLayout );
+  editFormConfig.setLayout( Qgis::AttributeFormLayout::DragAndDrop );
   layer.setEditFormConfig( editFormConfig );
 
   QgsFeatureRequest request;
@@ -387,6 +391,7 @@ void TestQgsDualView::testHtmlWidget()
 
   QgsProject::instance()->removeMapLayer( &layer );
 }
+#endif
 
 QGSTEST_MAIN( TestQgsDualView )
 #include "testqgsdualview.moc"

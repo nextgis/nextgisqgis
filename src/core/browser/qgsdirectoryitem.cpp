@@ -24,6 +24,7 @@
 #include "qgszipitem.h"
 #include "qgsprojectitem.h"
 #include "qgsfileutils.h"
+#include "qgsgdalutils.h"
 #include <QFileSystemWatcher>
 #include <QDir>
 #include <QMouseEvent>
@@ -39,7 +40,7 @@ QgsDirectoryItem::QgsDirectoryItem( QgsDataItem *parent, const QString &name, co
   : QgsDataCollectionItem( parent, QDir::toNativeSeparators( name ), path )
   , mDirPath( path )
 {
-  init();
+  init( name );
 }
 
 QgsDirectoryItem::QgsDirectoryItem( QgsDataItem *parent, const QString &name,
@@ -48,10 +49,10 @@ QgsDirectoryItem::QgsDirectoryItem( QgsDataItem *parent, const QString &name,
   : QgsDataCollectionItem( parent, QDir::toNativeSeparators( name ), path, providerKey )
   , mDirPath( dirPath )
 {
-  init();
+  init( name );
 }
 
-void QgsDirectoryItem::init()
+void QgsDirectoryItem::init( const QString &dirName )
 {
   mType = Qgis::BrowserItemType::Directory;
   setToolTip( QDir::toNativeSeparators( mDirPath ) );
@@ -81,6 +82,9 @@ void QgsDirectoryItem::init()
     mIconColor = QColor( colorString );
   }
   settings.endGroup();
+
+  // we want directories shown before files
+  setSortKey( QStringLiteral( "  %1" ).arg( dirName ) );
 }
 
 void QgsDirectoryItem::reevaluateMonitoring()
@@ -266,14 +270,14 @@ QVector<QgsDataItem *> QgsDirectoryItem::createChildren()
 
     QgsDebugMsgLevel( QStringLiteral( "creating subdir: %1" ).arg( subdirPath ), 2 );
 
-    const QString path = mPath + '/' + subdir; // may differ from subdirPath
+    const QString path = mPath + ( mPath.endsWith( '/' ) ? QString() : QStringLiteral( "/" ) ) + subdir; // may differ from subdirPath
     if ( QgsDirectoryItem::hiddenPath( path ) )
       continue;
 
     bool handledByProvider = false;
     for ( QgsDataItemProvider *provider : providers )
     {
-      if ( provider->handlesDirectoryPath( path ) )
+      if ( provider->handlesDirectoryPath( subdirPath ) )
       {
         handledByProvider = true;
         break;
@@ -283,9 +287,6 @@ QVector<QgsDataItem *> QgsDirectoryItem::createChildren()
       continue;
 
     QgsDirectoryItem *item = new QgsDirectoryItem( this, subdir, subdirPath, path );
-
-    // we want directories shown before files
-    item->setSortKey( QStringLiteral( "  %1" ).arg( subdir ) );
 
     // propagate signals up to top
 
@@ -304,11 +305,9 @@ QVector<QgsDataItem *> QgsDirectoryItem::createChildren()
     const QString path = dir.absoluteFilePath( name );
     const QFileInfo fileInfo( path );
 
-    if ( fileInfo.suffix().compare( QLatin1String( "zip" ), Qt::CaseInsensitive ) == 0 ||
-         fileInfo.suffix().compare( QLatin1String( "tar" ), Qt::CaseInsensitive ) == 0 )
+    if ( QgsGdalUtils::isVsiArchiveFileExtension( fileInfo.suffix() ) )
     {
-      QgsDataItem *item = QgsZipItem::itemFromPath( this, path, name, path );
-      if ( item )
+      if ( QgsDataItem *item = QgsZipItem::itemFromPath( this, path, name, path ) )
       {
         children.append( item );
         continue;
@@ -488,7 +487,11 @@ bool QgsDirectoryItem::equal( const QgsDataItem *other )
   {
     return false;
   }
-  return ( path() == other->path() );
+  const QgsDirectoryItem *otherDirItem = qobject_cast< const QgsDirectoryItem * >( other );
+  if ( !otherDirItem )
+    return false;
+
+  return dirPath() == otherDirItem->dirPath();
 }
 
 QWidget *QgsDirectoryItem::paramWidget()

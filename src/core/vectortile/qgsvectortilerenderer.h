@@ -42,6 +42,7 @@ class CORE_EXPORT QgsVectorTileRendererData
     //! Constructs the object
     explicit QgsVectorTileRendererData( QgsTileXYZ id )
       : mId( id )
+      , mRenderZoomLevel( id.zoomLevel() )
     {}
 
     //! Returns coordinates of the tile
@@ -51,6 +52,28 @@ class CORE_EXPORT QgsVectorTileRendererData
     void setTilePolygon( QPolygon polygon ) { mTilePolygon = polygon; }
     //! Returns polygon (made out of four corners of the tile) in screen coordinates calculated from render context
     QPolygon tilePolygon() const { return mTilePolygon; }
+
+    /**
+     * Sets the zoom level corresponding to the target render.
+     *
+     * This may differ from the tile's actual zoom leve when indexed tiles cause replacement of
+     * higher zoom level tiles with data from lower zoom level tiles.
+     *
+     * \see renderZoomLevel()
+     * \since QGIS 3.32
+     */
+    void setRenderZoomLevel( int level ) { mRenderZoomLevel = level; }
+
+    /**
+     * Returns the zoom level corresponding to the target render.
+     *
+     * This may differ from the tile's actual zoom leve when indexed tiles cause replacement of
+     * higher zoom level tiles with data from lower zoom level tiles.
+     *
+     * \see setRenderZoomLevel()
+     * \since QGIS 3.32
+     */
+    int renderZoomLevel() const { return mRenderZoomLevel; }
 
     //! Sets per-layer fields
     void setFields( const QMap<QString, QgsFields> &fields ) { mFields = fields; }
@@ -69,6 +92,13 @@ class CORE_EXPORT QgsVectorTileRendererData
   private:
     //! Position of the tile in the tile matrix set
     QgsTileXYZ mId;
+
+    /**
+     * Zoom level corresponding to the target render. This may differ from the tile's actual zoom leve when indexed tiles cause replacement of
+     * higher zoom level tiles with data from lower zoom level tiles.
+     */
+    int mRenderZoomLevel = -1;
+
     //! Per-layer fields
     QMap<QString, QgsFields> mFields;
     //! Features of the tile grouped into sub-layers
@@ -135,8 +165,27 @@ class CORE_EXPORT QgsVectorTileRenderer
     //! Finishes rendering and cleans up any resources
     virtual void stopRender( QgsRenderContext &context ) = 0;
 
+    //! Renders the background if defined
+    virtual void renderBackground( QgsRenderContext &context ) = 0;
+
     //! Renders given vector tile. Must be called between startRender/stopRender.
     virtual void renderTile( const QgsVectorTileRendererData &tile, QgsRenderContext &context ) = 0;
+
+    /**
+     * Returns TRUE if the specified \a feature will be rendered in the given render \a context.
+     *
+     * \since QGIS 3.28
+     */
+    virtual bool willRenderFeature( const QgsFeature &feature, int tileZoom, const QString &layerName, QgsRenderContext &context ) = 0;
+
+    /**
+     * Renders the specified features in a selected state.
+     *
+     * This will be called after rendering the tiles, so that the selected features are always visible on the top of the layer.
+     *
+     * \since QGIS 3.28
+     */
+    virtual void renderSelectedFeatures( const QList< QgsFeature > &selection, QgsRenderContext &context ) = 0;
 
     //! Writes renderer's properties to given XML element
     virtual void writeXml( QDomElement &elem, const QgsReadWriteContext &context ) const = 0;

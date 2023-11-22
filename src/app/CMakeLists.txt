@@ -51,6 +51,7 @@ set(QGIS_APP_SRCS
   qgsdevtoolspanelwidget.cpp
   qgsdiscoverrelationsdialog.cpp
 #   qgsdxfexportdialog.cpp
+  qgselevationshadingrenderersettingswidget.cpp
   qgsformannotationdialog.cpp
   qgsguivectorlayertools.cpp
   qgshtmlannotationdialog.cpp
@@ -80,9 +81,9 @@ set(QGIS_APP_SRCS
   qgsmapcanvasdockwidget.cpp
   qgsmapsavedialog.cpp
   qgsprojectlistitemdelegate.cpp
-  qgsprovidersublayersdialog.cpp
   qgspuzzlewidget.cpp
   qgsversionmigration.cpp
+  qgsrasterattributetableapputils.cpp
   qgssnappinglayertreemodel.cpp
   qgssnappingwidget.cpp
   qgsstatusbarcoordinateswidget.cpp
@@ -94,7 +95,6 @@ set(QGIS_APP_SRCS
   qgsrecentprojectsitemsmodel.cpp
   qgsvectorlayerdigitizingproperties.cpp
   qgswelcomepage.cpp
-  qgsdockablewidgethelper.cpp
 
   qgsmaptooladdfeature.cpp
   qgsmaptooladdpart.cpp
@@ -131,6 +131,8 @@ set(QGIS_APP_SRCS
   annotations/qgsannotationitempropertieswidget.cpp
   annotations/qgsannotationlayerproperties.cpp
 
+  canvas/qgscanvasrefreshblocker.cpp
+
   decorations/qgsdecorationitem.cpp
   decorations/qgsdecorationtitle.cpp
   decorations/qgsdecorationtitledialog.cpp
@@ -151,7 +153,7 @@ set(QGIS_APP_SRCS
   pointcloud/qgspointcloudlayerproperties.cpp
   pointcloud/qgspointcloudlayerstylewidget.cpp
 
-#   vectortile/qgsvectortilelayerproperties.cpp
+  raster/qgsrasterelevationpropertieswidget.cpp
 
   vertextool/qgslockedfeature.cpp
   vertextool/qgsvertexeditor.cpp
@@ -178,39 +180,33 @@ set(QGIS_APP_SRCS
   qgsundowidget.cpp
   qgsmapthemes.cpp
   qgshandlebadlayers.cpp
-  qgsmaptooladdabstract.cpp
-  qgsmaptooladdcircularstring.cpp
-  qgsmaptoolcircularstringcurvepoint.cpp
-  qgsmaptoolcircularstringradius.cpp
-  qgsmaptooladdcircle.cpp
-  qgsmaptoolcircle2points.cpp
-  qgsmaptoolcircle3points.cpp
-  qgsmaptoolcircle3tangents.cpp
-  qgsmaptoolcircle2tangentspoint.cpp
-  qgsmaptoolcirclecenterpoint.cpp
-  qgsmaptooladdellipse.cpp
-  qgsmaptoolellipsefoci.cpp
-  qgsmaptoolellipseextent.cpp
-  qgsmaptoolellipsecenterpoint.cpp
-  qgsmaptoolellipsecenter2points.cpp
-  qgsmaptooladdrectangle.cpp
-  qgsmaptooladdregularpolygon.cpp
-  qgsmaptoolrectanglecenter.cpp
-  qgsmaptoolrectangleextent.cpp
-  qgsmaptoolrectangle3points.cpp
-  qgsmaptoolregularpolygon2points.cpp
-  qgsmaptoolregularpolygoncenterpoint.cpp
-  qgsmaptoolregularpolygoncentercorner.cpp
 
   browser/qgsinbuiltdataitemproviders.cpp
 
   devtools/qgsappdevtoolutils.cpp
+  devtools/qgsdevtoolsmodelnode.cpp
   devtools/networklogger/qgsnetworklogger.cpp
   devtools/networklogger/qgsnetworkloggernode.cpp
   devtools/networklogger/qgsnetworkloggerpanelwidget.cpp
   devtools/networklogger/qgsnetworkloggerwidgetfactory.cpp
   devtools/profiler/qgsprofilerpanelwidget.cpp
   devtools/profiler/qgsprofilerwidgetfactory.cpp
+  devtools/querylogger/qgsappquerylogger.cpp
+  devtools/querylogger/qgsdatabasequeryloggernode.cpp
+  devtools/querylogger/qgsqueryloggerpanelwidget.cpp
+  devtools/querylogger/qgsqueryloggerwidgetfactory.cpp
+
+#  dwg/qgsdwgimportdialog.cpp
+#  dwg/qgsdwgimporter.cpp
+
+  elevation/qgselevationprofileexportsettingswidget.cpp
+  elevation/qgselevationprofileimageexportdialog.cpp
+  elevation/qgselevationprofilepdfexportdialog.cpp
+  elevation/qgselevationprofiletoolidentify.cpp
+  elevation/qgselevationprofiletoolmeasure.cpp
+  elevation/qgselevationprofilewidget.cpp
+  elevation/qgsmaptoolprofilecurve.cpp
+  elevation/qgsmaptoolprofilecurvefromfeature.cpp
 
   georeferencer/qgsvalidateddoublespinbox.cpp
 
@@ -221,6 +217,8 @@ set(QGIS_APP_SRCS
   labeling/qgsmaptoollabel.cpp
   labeling/qgsmaptoolmovelabel.cpp
   labeling/qgsmaptoolrotatelabel.cpp
+
+  layers/qgsapplayerhandling.cpp
 
   layout/qgslayoutappmenuprovider.cpp
   layout/qgslayoutdesignerdialog.cpp
@@ -234,6 +232,7 @@ set(QGIS_APP_SRCS
 
   locator/qgsactionlocatorfilter.cpp
   locator/qgsactivelayerfeatureslocatorfilter.cpp
+  locator/qgslayermetadatalocatorfilter.cpp
   locator/qgsalllayersfeatureslocatorfilter.cpp
   locator/qgsbookmarklocatorfilter.cpp
   locator/qgsexpressioncalculatorlocatorfilter.cpp
@@ -246,20 +245,59 @@ set(QGIS_APP_SRCS
   locator/qgslocatoroptionswidget.cpp
 
   maptools/qgsappmaptools.cpp
+  maptools/qgsmaptoolsdigitizingtechniquemanager.cpp
+
+  maptools/qgsmaptoolshapecircleabstract.cpp
+  maptools/qgsmaptoolshapecircularstringabstract.cpp
+  maptools/qgsmaptoolshapeellipseabstract.cpp
+  maptools/qgsmaptoolshaperectangleabstract.cpp
+  maptools/qgsmaptoolshaperegularpolygonabstract.cpp
+
+  maptools/qgsmaptoolshapecircle2points.cpp
+  maptools/qgsmaptoolshapecircle2tangentspoint.cpp
+  maptools/qgsmaptoolshapecircle3points.cpp
+  maptools/qgsmaptoolshapecircle3tangents.cpp
+  maptools/qgsmaptoolshapecirclecenterpoint.cpp
+  maptools/qgsmaptoolshapecircularstringradius.cpp
+  maptools/qgsmaptoolshapeellipsecenter2points.cpp
+  maptools/qgsmaptoolshapeellipsecenterpoint.cpp
+  maptools/qgsmaptoolshapeellipseextent.cpp
+  maptools/qgsmaptoolshapeellipsefoci.cpp
+  maptools/qgsmaptoolshaperectangle3points.cpp
+  maptools/qgsmaptoolshaperectanglecenter.cpp
+  maptools/qgsmaptoolshaperectangleextent.cpp
+  maptools/qgsmaptoolshaperegularpolygon2points.cpp
+  maptools/qgsmaptoolshaperegularpolygoncentercorner.cpp
+  maptools/qgsmaptoolshaperegularpolygoncenterpoint.cpp
 
   options/qgsadvancedoptions.cpp
   options/qgscodeeditoroptions.cpp
   options/qgscustomprojectionoptions.cpp
-#   options/qgsgpsdeviceoptions.cpp
+  options/qgsfontoptions.cpp
+#  options/qgsgpsdeviceoptions.cpp
+#  options/qgsgpsoptions.cpp
   options/qgsoptions.cpp
   options/qgsoptionsutils.cpp
+  options/qgsrasterrenderingoptions.cpp
+  options/qgsrenderingoptions.cpp
+  options/qgsvectorrenderingoptions.cpp
+  options/qgsuserprofileoptions.cpp
+  options/qgsuserprofileselectiondialog.cpp
 
-#   gps/qgsgpsbearingitem.cpp
-#   gps/qgsgpsinformationwidget.cpp
-#   gps/qgsgpsmarker.cpp
+#  gps/qgsappgpsconnection.cpp
+#  gps/qgsappgpsdigitizing.cpp
+#  gps/qgsappgpslogging.cpp
+#  gps/qgsappgpssettingsmenu.cpp
+#  gps/qgsgpsbearingitem.cpp
+#  gps/qgsgpscanvasbridge.cpp
+#  gps/qgsgpsinformationwidget.cpp
+#  gps/qgsgpsmarker.cpp
+#  gps/qgsgpstoolbar.cpp
 
-#   dwg/qgsdwgimportdialog.cpp
-#   dwg/qgsdwgimporter.cpp
+  sensor/qgssensortablewidget.cpp
+  sensor/qgsprojectsensorsettingswidget.cpp
+
+  project/qgsprojectelevationsettingswidget.cpp
 
   pluginmanager/qgspluginmanager.cpp
   pluginmanager/qgspluginmanager_texts.cpp
@@ -267,16 +305,20 @@ set(QGIS_APP_SRCS
   pluginmanager/qgspluginsortfilterproxymodel.cpp
   pluginmanager/qgspluginitemdelegate.cpp
 
-  qgssettingstree.cpp
+  qgssettingstreewidgetold.cpp
+  qgssettingsregistryapp.cpp
   qgsvariantdelegate.cpp
   qgscrashhandler.cpp
 
   mesh/qgsmeshcalculatordialog.cpp
   mesh/qgsnewmeshlayerdialog.cpp
   mesh/qgsmaptooleditmeshframe.cpp
+  mesh/qgsmeshelevationpropertieswidget.cpp
   mesh/qgsmeshtransformcoordinatesdockwidget.cpp
   mesh/qgsmeshselectbyexpressiondialog.cpp
-  
+
+  vector/qgsvectorelevationpropertieswidget.cpp
+
   ngsaboutdialog.cpp
   ngcustomization.cpp
   ngupdater.cpp
@@ -347,6 +389,7 @@ if (WITH_3D)
     layout/qgslayout3dmapwidget.cpp
     3d/qgsskyboxrenderingsettingswidget.cpp
     3d/qgsshadowrenderingsettingswidget.cpp
+    3d/qgsambientocclusionsettingswidget.cpp
     3d/qgspointcloud3dsymbolwidget.cpp
     3d/qgspointcloudlayer3drendererwidget.cpp
     3d/qgs3dmapcanvaswidget.cpp
@@ -480,16 +523,20 @@ target_include_directories(${LIB_NAME} PUBLIC
 
   ${CMAKE_SOURCE_DIR}/src/app
   decorations
+  devtools
   devtools/networklogger
   labeling
   layout
   pluginmanager
 #   ${CMAKE_SOURCE_DIR}/src/app/gps
+  sensor
 #   ${CMAKE_SOURCE_DIR}/src/app/dwg
   maptools
   mesh
   locator
+  options
   pointcloud
+  settings
 #   ${CMAKE_SOURCE_DIR}/src/app/vectortile
   ${CMAKE_SOURCE_DIR}/src/plugins
   ${CMAKE_SOURCE_DIR}/src/python
@@ -505,10 +552,12 @@ target_include_directories(${LIB_NAME} PUBLIC
 if(IS_MULTI_CONFIG_GENERATOR)
     target_include_directories(${LIB_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/src/gui/${NG_PREFIX}qgis_gui_autogen/include_${CMAKE_BUILD_TYPE}>
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/src/app/${NG_PREFIX}qgis_app_autogen/include_${CMAKE_BUILD_TYPE}>
     )
 else()
     target_include_directories(${LIB_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/src/gui/${NG_PREFIX}qgis_gui_autogen/include>
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/src/app/${NG_PREFIX}qgis_app_autogen/include>
     )
 endif()
 

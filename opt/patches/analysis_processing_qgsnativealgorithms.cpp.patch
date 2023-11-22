@@ -1,5 +1,5 @@
---- a/src/analysis/processing/qgsnativealgorithms.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/analysis/processing/qgsnativealgorithms.cpp	2022-04-25 18:33:18.000000000 +0300
+--- a/src/analysis/processing/qgsnativealgorithms.cpp	2023-08-21 19:39:45.635053494 +0300
++++ b/src/analysis/processing/qgsnativealgorithms.cpp	2023-11-22 14:44:57.102838324 +0300
 @@ -43,7 +43,7 @@
  #include "qgsalgorithmconverttocurves.h"
  #include "qgsalgorithmconvexhull.h"
@@ -9,7 +9,13 @@
  #include "qgsalgorithmdeleteduplicategeometries.h"
  #include "qgsalgorithmdensifygeometriesbycount.h"
  #include "qgsalgorithmdensifygeometriesbyinterval.h"
-@@ -55,7 +55,7 @@
+@@ -51,12 +51,12 @@
+ #include "qgsalgorithmdifference.h"
+ #include "qgsalgorithmdissolve.h"
+ #include "qgsalgorithmdistancewithin.h"
+-#include "qgsalgorithmdownloadvectortiles.h"
++//#include "qgsalgorithmdownloadvectortiles.h"
+ #include "qgsalgorithmdrape.h"
  #include "qgsalgorithmdropfields.h"
  #include "qgsalgorithmdropgeometry.h"
  #include "qgsalgorithmdropmzvalues.h"
@@ -18,7 +24,7 @@
  #include "qgsalgorithmexecutepostgisquery.h"
  #include "qgsalgorithmexecutespatialitequery.h"
  #include "qgsalgorithmexecutespatialitequeryregistered.h"
-@@ -89,9 +89,9 @@
+@@ -90,9 +90,9 @@
  #include "qgsalgorithmforcerhr.h"
  #include "qgsalgorithmfuzzifyraster.h"
  #include "qgsalgorithmgeometrybyexpression.h"
@@ -31,7 +37,7 @@
  #include "qgsalgorithmgrid.h"
  #include "qgsalgorithmhillshade.h"
  #include "qgsalgorithmjoinbyattribute.h"
-@@ -195,7 +195,7 @@
+@@ -199,7 +199,7 @@
  #include "qgsalgorithmsplitlinesbylength.h"
  #include "qgsalgorithmsplitvectorlayer.h"
  #include "qgsalgorithmsplitwithlines.h"
@@ -40,7 +46,7 @@
  #include "qgsalgorithmstringconcatenation.h"
  #include "qgsalgorithmsubdivide.h"
  #include "qgsalgorithmsumlinelength.h"
-@@ -211,7 +211,7 @@
+@@ -215,7 +215,7 @@
  #include "qgsalgorithmuniquevalueindex.h"
  #include "qgsalgorithmvectorize.h"
  #include "qgsalgorithmwedgebuffers.h"
@@ -49,7 +55,7 @@
  #include "qgsalgorithmzonalhistogram.h"
  #include "qgsalgorithmzonalstatistics.h"
  #include "qgsalgorithmzonalstatisticsfeaturebased.h"
-@@ -291,7 +291,7 @@
+@@ -295,18 +295,18 @@
    addAlgorithm( new QgsConvertToCurvesAlgorithm() );
    addAlgorithm( new QgsConvexHullAlgorithm() );
    addAlgorithm( new QgsCreateDirectoryAlgorithm() );
@@ -58,7 +64,11 @@
    addAlgorithm( new QgsDeleteDuplicateGeometriesAlgorithm() );
    addAlgorithm( new QgsDetectVectorChangesAlgorithm() );
    addAlgorithm( new QgsDifferenceAlgorithm() );
-@@ -301,7 +301,7 @@
+   addAlgorithm( new QgsDissolveAlgorithm() );
+-  addAlgorithm( new QgsDownloadVectorTilesAlgorithm() );
++//   addAlgorithm( new QgsDownloadVectorTilesAlgorithm() );
+   addAlgorithm( new QgsDrapeToMAlgorithm() );
+   addAlgorithm( new QgsDrapeToZAlgorithm() );
    addAlgorithm( new QgsDropTableFieldsAlgorithm() );
    addAlgorithm( new QgsDropGeometryAlgorithm() );
    addAlgorithm( new QgsDropMZValuesAlgorithm() );
@@ -67,7 +77,7 @@
    addAlgorithm( new QgsExecutePostgisQueryAlgorithm() );
    addAlgorithm( new QgsExecuteRegisteredSpatialiteQueryAlgorithm() );
    addAlgorithm( new QgsExecuteSpatialiteQueryAlgorithm() );
-@@ -346,12 +346,12 @@
+@@ -351,12 +351,12 @@
    addAlgorithm( new QgsFuzzifyRasterGaussianMembershipAlgorithm() );
    addAlgorithm( new QgsFuzzifyRasterNearMembershipAlgorithm() );
    addAlgorithm( new QgsGeometryByExpressionAlgorithm() );
@@ -86,7 +96,7 @@
    addAlgorithm( new QgsGridAlgorithm() );
    addAlgorithm( new QgsHillshadeAlgorithm() );
    addAlgorithm( new QgsImportPhotosAlgorithm() );
-@@ -481,7 +481,7 @@
+@@ -490,7 +490,7 @@
    addAlgorithm( new QgsSplitLinesByLengthAlgorithm() );
    addAlgorithm( new QgsSplitVectorLayerAlgorithm() );
    addAlgorithm( new QgsSplitWithLinesAlgorithm() );
@@ -95,7 +105,7 @@
    addAlgorithm( new QgsStringConcatenationAlgorithm() );
    addAlgorithm( new QgsStyleFromProjectAlgorithm() );
    addAlgorithm( new QgsSubdivideAlgorithm() );
-@@ -498,8 +498,8 @@
+@@ -507,8 +507,8 @@
    addAlgorithm( new QgsUnionAlgorithm() );
    addAlgorithm( new QgsVariableWidthBufferByMAlgorithm() );
    addAlgorithm( new QgsWedgeBuffersAlgorithm() );

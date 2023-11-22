@@ -25,12 +25,10 @@
 #include <QDomDocument>
 
 #include "qgsexpressioncontext.h"
-#include "qgsfields.h"
 #include "qgscoordinatetransform.h"
-#include "qgsproperty.h"
 #include "qgspropertycollection.h"
 
-#include "diagram/qgsdiagram.h"
+#include "qgsdiagram.h"
 #include "qgsreadwritecontext.h"
 #include "qgsmapunitscale.h"
 
@@ -427,7 +425,7 @@ class CORE_EXPORT QgsDiagramSettings
     /**
      * Diagram size unit
      */
-    QgsUnitTypes::RenderUnit sizeType = QgsUnitTypes::RenderMillimeters;
+    Qgis::RenderUnit sizeType = Qgis::RenderUnit::Millimeters;
 
     /**
      * Diagram size unit scale
@@ -439,7 +437,7 @@ class CORE_EXPORT QgsDiagramSettings
      * Line unit index
      * \since QGIS 2.16
      */
-    QgsUnitTypes::RenderUnit lineSizeUnit = QgsUnitTypes::RenderMillimeters;
+    Qgis::RenderUnit lineSizeUnit = Qgis::RenderUnit::Millimeters;
 
     /**
      * Line unit scale
@@ -520,7 +518,7 @@ class CORE_EXPORT QgsDiagramSettings
      *
      * \since QGIS 3.12
     */
-    void setSpacingUnit( QgsUnitTypes::RenderUnit unit ) { mSpacingUnit = unit; }
+    void setSpacingUnit( Qgis::RenderUnit unit ) { mSpacingUnit = unit; }
 
     /**
      * Returns the units for the content spacing.
@@ -529,7 +527,7 @@ class CORE_EXPORT QgsDiagramSettings
      * \see spacingMapUnitScale()
      * \since QGIS 3.12
     */
-    QgsUnitTypes::RenderUnit spacingUnit() const { return mSpacingUnit; }
+    Qgis::RenderUnit spacingUnit() const { return mSpacingUnit; }
 
     /**
      * Sets the map unit \a scale for the content spacing.
@@ -644,7 +642,7 @@ class CORE_EXPORT QgsDiagramSettings
   private:
 
     double mSpacing = 0;
-    QgsUnitTypes::RenderUnit mSpacingUnit = QgsUnitTypes::RenderMillimeters;
+    Qgis::RenderUnit mSpacingUnit = Qgis::RenderUnit::Millimeters;
     QgsMapUnitScale mSpacingMapUnitScale;
     Direction mDirection = Counterclockwise;
 

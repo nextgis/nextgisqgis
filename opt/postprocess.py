@@ -118,7 +118,7 @@ for line in fileinput.input(utilfile, inplace = 1):
     elif "set(VERSION_PATCH " in line:
         print ("    set(VERSION_PATCH 0)")
     else:
-        print (line),
+        print (line, end='')
 
 # overwrite files
 ovr_path = os.path.join(os.getcwd(), 'overwrite')
@@ -137,7 +137,14 @@ patches_path = os.path.join(os.getcwd(), 'patches')
 if os.path.exists(patches_path):
     for dirname, dirnames, filenames in os.walk(patches_path):
         for patch in filenames:
-            color_print("Patch " + patch, False, 'LRED')
-            subprocess.call(['git', 'apply', '--ignore-whitespace', '--whitespace=nowarn', os.path.join(patches_path, patch)], cwd = "../")
+            pCode = subprocess.call(['git', 'apply', '--check', '--reverse', '--ignore-whitespace', '--whitespace=nowarn', os.path.join(patches_path, patch)],
+                                    cwd="../",
+                                    stdout=subprocess.DEVNULL,
+                                    stderr=subprocess.DEVNULL)
+            if pCode == 0:
+                color_print(f'Patch {patch} ... already been applied', False, 'LBLUE')
+            else:
+                color_print("Patch " + patch, False, 'LRED')
+                subprocess.call(['git', 'apply', '--ignore-whitespace', '--whitespace=nowarn', os.path.join(patches_path, patch)], cwd = "../")
 
 os.rename('../src/app/ui_defaults.h', '../src/app/ngui_defaults.h')

@@ -19,12 +19,12 @@
 #include "qgslayoutitemscalebar.h"
 #include "qgsscalebarrendererregistry.h"
 #include "qgslayout.h"
-#include "qgsguiutils.h"
 #include "qgsvectorlayer.h"
 #include "qgsnumericformatselectorwidget.h"
 #include "qgslayoutundostack.h"
 #include "qgsfillsymbol.h"
 #include "qgslinesymbol.h"
+#include "qgslayoutreportcontext.h"
 
 #include <QColorDialog>
 #include <QFontDialog>
@@ -56,6 +56,22 @@ QgsLayoutScaleBarWidget::QgsLayoutScaleBarWidget( QgsLayoutItemScaleBar *scaleBa
   connect( mMinWidthSpinBox, static_cast < void ( QDoubleSpinBox::* )( double ) > ( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutScaleBarWidget::mMinWidthSpinBox_valueChanged );
   connect( mMaxWidthSpinBox, static_cast < void ( QDoubleSpinBox::* )( double ) > ( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutScaleBarWidget::mMaxWidthSpinBox_valueChanged );
   connect( mNumberFormatPushButton, &QPushButton::clicked, this, &QgsLayoutScaleBarWidget::changeNumberFormat );
+
+  registerDataDefinedButton( mSegmentsLeftDDBtn, QgsLayoutObject::ScalebarLeftSegments );
+  registerDataDefinedButton( mSegmentsRightDDBtn, QgsLayoutObject::ScalebarRightSegments );
+  registerDataDefinedButton( mSegmentSizeDDBtn, QgsLayoutObject::ScalebarSegmentWidth );
+  registerDataDefinedButton( mMinWidthDDBtn, QgsLayoutObject::ScalebarMinimumWidth );
+  registerDataDefinedButton( mMaxWidthDDBtn, QgsLayoutObject::ScalebarMaximumWidth );
+  registerDataDefinedButton( mHeightDDBtn, QgsLayoutObject::ScalebarHeight );
+  registerDataDefinedButton( mSubdivisionHeightDDBtn, QgsLayoutObject::ScalebarSubdivisionHeight );
+  registerDataDefinedButton( mRightSegmentSubdivisionsDDBtn, QgsLayoutObject::ScalebarRightSegmentSubdivisions );
+
+  mSegmentsLeftDDBtn->registerEnabledWidget( mSegmentsLeftSpinBox, false );
+  mSegmentsRightDDBtn->registerEnabledWidget( mNumberOfSegmentsSpinBox, false );
+  mSegmentSizeDDBtn->registerEnabledWidget( mSegmentSizeSpinBox, false );
+  mMinWidthDDBtn->registerEnabledWidget( mMinWidthSpinBox, false );
+  mMaxWidthDDBtn->registerEnabledWidget( mMaxWidthSpinBox, false );
+
   setPanelTitle( tr( "Scalebar Properties" ) );
 
   mFontButton->registerExpressionContextGenerator( this );
@@ -89,15 +105,16 @@ QgsLayoutScaleBarWidget::QgsLayoutScaleBarWidget( QgsLayoutItemScaleBar *scaleBa
   mAlignmentComboBox->setAvailableAlignments( Qt::AlignLeft | Qt::AlignHCenter | Qt::AlignRight );
 
   //units combo box
-  mUnitsComboBox->addItem( tr( "Map units" ), QgsUnitTypes::DistanceUnknownUnit );
-  mUnitsComboBox->addItem( tr( "Meters" ), QgsUnitTypes::DistanceMeters );
-  mUnitsComboBox->addItem( tr( "Kilometers" ), QgsUnitTypes::DistanceKilometers );
-  mUnitsComboBox->addItem( tr( "Feet" ), QgsUnitTypes::DistanceFeet );
-  mUnitsComboBox->addItem( tr( "Yards" ), QgsUnitTypes::DistanceYards );
-  mUnitsComboBox->addItem( tr( "Miles" ), QgsUnitTypes::DistanceMiles );
-  mUnitsComboBox->addItem( tr( "Nautical Miles" ), QgsUnitTypes::DistanceNauticalMiles );
-  mUnitsComboBox->addItem( tr( "Centimeters" ), QgsUnitTypes::DistanceCentimeters );
-  mUnitsComboBox->addItem( tr( "Millimeters" ), QgsUnitTypes::DistanceMillimeters );
+  mUnitsComboBox->addItem( tr( "Map units" ), static_cast< int >( Qgis::DistanceUnit::Unknown ) );
+  mUnitsComboBox->addItem( tr( "Meters" ), static_cast< int >( Qgis::DistanceUnit::Meters ) );
+  mUnitsComboBox->addItem( tr( "Kilometers" ), static_cast< int >( Qgis::DistanceUnit::Kilometers ) );
+  mUnitsComboBox->addItem( tr( "Feet" ), static_cast< int >( Qgis::DistanceUnit::Feet ) );
+  mUnitsComboBox->addItem( tr( "Yards" ), static_cast< int >( Qgis::DistanceUnit::Yards ) );
+  mUnitsComboBox->addItem( tr( "Miles" ), static_cast< int >( Qgis::DistanceUnit::Miles ) );
+  mUnitsComboBox->addItem( tr( "Nautical Miles" ), static_cast< int >( Qgis::DistanceUnit::NauticalMiles ) );
+  mUnitsComboBox->addItem( tr( "Centimeters" ), static_cast< int >( Qgis::DistanceUnit::Centimeters ) );
+  mUnitsComboBox->addItem( tr( "Millimeters" ), static_cast< int >( Qgis::DistanceUnit::Millimeters ) );
+  mUnitsComboBox->addItem( tr( "Inches" ), static_cast< int >( Qgis::DistanceUnit::Inches ) );
 
   mLineStyleButton->setSymbolType( Qgis::SymbolType::Line );
   connect( mLineStyleButton, &QgsSymbolButton::changed, this, &QgsLayoutScaleBarWidget::lineSymbolChanged );
@@ -313,19 +330,22 @@ void QgsLayoutScaleBarWidget::setGuiElements()
   if ( mScalebar->segmentSizeMode() == QgsScaleBarSettings::SegmentSizeFixed )
   {
     mFixedSizeRadio->setChecked( true );
-    mSegmentSizeSpinBox->setEnabled( true );
-    mMinWidthSpinBox->setEnabled( false );
-    mMaxWidthSpinBox->setEnabled( false );
+    mSegmentSizeWidget->setEnabled( true );
+    mMinWidthWidget->setEnabled( false );
+    mMaxWidthWidget->setEnabled( false );
   }
   else /*if(mComposerScaleBar->segmentSizeMode() == QgsComposerScaleBar::SegmentSizeFitWidth)*/
   {
     mFitWidthRadio->setChecked( true );
-    mSegmentSizeSpinBox->setEnabled( false );
-    mMinWidthSpinBox->setEnabled( true );
-    mMaxWidthSpinBox->setEnabled( true );
+    mSegmentSizeWidget->setEnabled( false );
+    mMinWidthWidget->setEnabled( true );
+    mMaxWidthWidget->setEnabled( true );
   }
   mMinWidthSpinBox->setValue( mScalebar->minimumBarWidth() );
   mMaxWidthSpinBox->setValue( mScalebar->maximumBarWidth() );
+
+  populateDataDefinedButtons();
+
   blockMemberSignals( false );
 }
 
@@ -649,7 +669,7 @@ void QgsLayoutScaleBarWidget::mUnitsComboBox_currentIndexChanged( int index )
 
   disconnectUpdateSignal();
   mScalebar->beginCommand( tr( "Set Scalebar Units" ) );
-  mScalebar->applyDefaultSize( static_cast<  QgsUnitTypes::DistanceUnit >( unitData.toInt() ) );
+  mScalebar->applyDefaultSize( static_cast<  Qgis::DistanceUnit >( unitData.toInt() ) );
   mScalebar->update();
 
   mNumberOfSegmentsSpinBox->setValue( mScalebar->numberOfSegments() );
@@ -710,9 +730,9 @@ void QgsLayoutScaleBarWidget::disconnectUpdateSignal()
 void QgsLayoutScaleBarWidget::segmentSizeRadioChanged( QAbstractButton *radio )
 {
   const bool fixedSizeMode = radio == mFixedSizeRadio;
-  mMinWidthSpinBox->setEnabled( !fixedSizeMode );
-  mMaxWidthSpinBox->setEnabled( !fixedSizeMode );
-  mSegmentSizeSpinBox->setEnabled( fixedSizeMode );
+  mMinWidthWidget->setEnabled( !fixedSizeMode );
+  mMaxWidthWidget->setEnabled( !fixedSizeMode );
+  mSegmentSizeWidget->setEnabled( fixedSizeMode );
 
   if ( !mScalebar )
   {
@@ -780,4 +800,16 @@ void QgsLayoutScaleBarWidget::mMaxWidthSpinBox_valueChanged( double )
   mScalebar->update();
   connectUpdateSignal();
   mScalebar->endCommand();
+}
+
+void QgsLayoutScaleBarWidget::populateDataDefinedButtons()
+{
+  updateDataDefinedButton( mSegmentsLeftDDBtn );
+  updateDataDefinedButton( mSegmentsRightDDBtn );
+  updateDataDefinedButton( mSegmentSizeDDBtn );
+  updateDataDefinedButton( mMinWidthDDBtn );
+  updateDataDefinedButton( mMaxWidthDDBtn );
+  updateDataDefinedButton( mHeightDDBtn );
+  updateDataDefinedButton( mSubdivisionHeightDDBtn );
+  updateDataDefinedButton( mRightSegmentSubdivisionsDDBtn );
 }

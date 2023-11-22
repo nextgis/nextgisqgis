@@ -17,7 +17,6 @@
 
 #include <QVector3D>
 
-#include "qgspoint.h"
 #include "qgspolygon.h"
 #include "qgstessellator.h"
 #include "qgsmultipolygon.h"
@@ -133,6 +132,8 @@ class TestQgsTessellator : public QObject
     void testBasic();
     void testWalls();
     void testBackEdges();
+    void test2DTriangle();
+    void test3DTriangle();
     void asMultiPolygon();
     void testBadCoordinates();
     void testIssue17745();
@@ -163,16 +164,24 @@ void TestQgsTessellator::testBasic()
   polygon.fromWkt( "POLYGON((1 1, 2 1, 3 2, 1 2, 1 1))" );
 
   QgsPolygon polygonZ;
-  polygonZ.fromWkt( "POLYGONZ((1 1 0, 2 1 0, 3 2 0, 1 2 0, 1 1 0))" );
+  polygonZ.fromWkt( "POLYGONZ((1 1 3, 2 1 3, 3 2 3, 1 2 3, 1 1 3))" );
 
   QList<TriangleCoords> tc;
   tc << TriangleCoords( QVector3D( 1, 2, 0 ), QVector3D( 2, 1, 0 ), QVector3D( 3, 2, 0 ) );
   tc << TriangleCoords( QVector3D( 1, 2, 0 ), QVector3D( 1, 1, 0 ), QVector3D( 2, 1, 0 ) );
 
+  QList<TriangleCoords> tcZ;
+  tcZ << TriangleCoords( QVector3D( 1, 2, 3 ), QVector3D( 2, 1, 3 ), QVector3D( 3, 2, 3 ) );
+  tcZ << TriangleCoords( QVector3D( 1, 2, 3 ), QVector3D( 1, 1, 3 ), QVector3D( 2, 1, 3 ) );
+
   const QVector3D up( 0, 0, 1 );  // surface normal pointing straight up
   QList<TriangleCoords> tcNormals;
   tcNormals << TriangleCoords( QVector3D( 1, 2, 0 ), QVector3D( 2, 1, 0 ), QVector3D( 3, 2, 0 ), up, up, up );
   tcNormals << TriangleCoords( QVector3D( 1, 2, 0 ), QVector3D( 1, 1, 0 ), QVector3D( 2, 1, 0 ), up, up, up );
+
+  QList<TriangleCoords> tcNormalsZ;
+  tcNormalsZ << TriangleCoords( QVector3D( 1, 2, 3 ), QVector3D( 2, 1, 3 ), QVector3D( 3, 2, 3 ), up, up, up );
+  tcNormalsZ << TriangleCoords( QVector3D( 1, 2, 3 ), QVector3D( 1, 1, 3 ), QVector3D( 2, 1, 3 ), up, up, up );
 
   // without normals
 
@@ -180,9 +189,15 @@ void TestQgsTessellator::testBasic()
   t.addPolygon( polygon, 0 );
   QVERIFY( checkTriangleOutput( t.data(), false, tc ) );
 
+  QCOMPARE( t.zMinimum(), 0 );
+  QCOMPARE( t.zMaximum(), 0 );
+
   QgsTessellator tZ( 0, 0, false );
   tZ.addPolygon( polygonZ, 0 );
-  QVERIFY( checkTriangleOutput( tZ.data(), false, tc ) );
+  QVERIFY( checkTriangleOutput( tZ.data(), false, tcZ ) );
+
+  QCOMPARE( tZ.zMinimum(), 3 );
+  QCOMPARE( tZ.zMaximum(), 3 );
 
   // with normals
 
@@ -190,9 +205,15 @@ void TestQgsTessellator::testBasic()
   tN.addPolygon( polygon, 0 );
   QVERIFY( checkTriangleOutput( tN.data(), true, tcNormals ) );
 
+  QCOMPARE( tN.zMinimum(), 0 );
+  QCOMPARE( tN.zMaximum(), 0 );
+
   QgsTessellator tNZ( 0, 0, true );
   tNZ.addPolygon( polygonZ, 0 );
-  QVERIFY( checkTriangleOutput( tNZ.data(), true, tcNormals ) );
+  QVERIFY( checkTriangleOutput( tNZ.data(), true, tcNormalsZ ) );
+
+  QCOMPARE( tNZ.zMinimum(), 3 );
+  QCOMPARE( tNZ.zMaximum(), 3 );
 }
 
 void TestQgsTessellator::testWalls()
@@ -221,6 +242,8 @@ void TestQgsTessellator::testWalls()
   QgsTessellator tRect( 0, 0, true );
   tRect.addPolygon( rect, 1 );
   QVERIFY( checkTriangleOutput( tRect.data(), true, tcRect ) );
+  QCOMPARE( tRect.zMinimum(), 0 );
+  QCOMPARE( tRect.zMaximum(), 1 );
 
   // try to extrude a polygon with reverse (clock-wise) order of vertices and check it is still fine
 
@@ -230,6 +253,8 @@ void TestQgsTessellator::testWalls()
   QgsTessellator tRectRev( 0, 0, true );
   tRectRev.addPolygon( rectRev, 1 );
   QVERIFY( checkTriangleOutput( tRectRev.data(), true, tcRect ) );
+  QCOMPARE( tRectRev.zMinimum(), 0 );
+  QCOMPARE( tRectRev.zMaximum(), 1 );
 
   // this is a more complicated polygon with Z coordinates where the "roof" is not in one plane
 
@@ -253,6 +278,9 @@ void TestQgsTessellator::testWalls()
   QgsTessellator tZ( 0, 0, false );
   tZ.addPolygon( polygonZ, 10 );
   QVERIFY( checkTriangleOutput( tZ.data(), false, tc ) );
+
+  QCOMPARE( tZ.zMinimum(), 1 );
+  QCOMPARE( tZ.zMaximum(), 14 );
 }
 
 void TestQgsTessellator::testBackEdges()
@@ -271,6 +299,101 @@ void TestQgsTessellator::testBackEdges()
   QgsTessellator tN( 0, 0, true, false, true );
   tN.addPolygon( polygon, 0 );
   QVERIFY( checkTriangleOutput( tN.data(), true, tcNormals ) );
+
+  QCOMPARE( tN.zMinimum(), 0 );
+  QCOMPARE( tN.zMaximum(), 0 );
+}
+
+void TestQgsTessellator::test2DTriangle()
+{
+  QgsPolygon polygon;
+  polygon.fromWkt( "POLYGON((1 1, 2 1, 1 2, 1 1))" );
+
+  const QVector3D up( 0, 0, 1 );  // surface normal pointing straight up
+  const QVector3D left( -1, 0, 0 );  // surface normal pointing straight down for back faces
+  const QVector3D ne( 0.707107, 0.707107, 0 );
+  const QVector3D bt( 0, -1, 0 );  // surface normal pointing straight down for back faces
+
+  {
+    // NO extrusion
+    QList<TriangleCoords> tcNormals;
+    tcNormals << TriangleCoords( QVector3D( 1, 1, 0 ), QVector3D( 2, 1, 0 ), QVector3D( 1, 2, 0 ), up, up, up );
+
+    QgsTessellator tN( 0, 0, true, false, false );
+    tN.addPolygon( polygon, 0 );
+    QVERIFY( checkTriangleOutput( tN.data(), true, tcNormals ) );
+
+    QCOMPARE( tN.zMinimum(), 0 );
+    QCOMPARE( tN.zMaximum(), 0 );
+  }
+
+  {
+    // WITH extrusion
+    QList<TriangleCoords> tcNormals;
+    tcNormals << TriangleCoords( QVector3D( 1, 1, 7 ), QVector3D( 2, 1, 7 ), QVector3D( 1, 2, 7 ), up, up, up );
+
+    tcNormals << TriangleCoords( QVector3D( 1, 1, 7 ), QVector3D( 1, 2, 7 ), QVector3D( 1, 1, 0 ), left, left, left );
+    tcNormals << TriangleCoords( QVector3D( 1, 1, 0 ), QVector3D( 1, 2, 7 ), QVector3D( 1, 2, 0 ), left, left, left );
+
+    tcNormals << TriangleCoords( QVector3D( 1, 2, 7 ), QVector3D( 2, 1, 7 ), QVector3D( 1, 2, 0 ), ne, ne, ne );
+    tcNormals << TriangleCoords( QVector3D( 1, 2, 0 ), QVector3D( 2, 1, 7 ), QVector3D( 2, 1, 0 ), ne, ne, ne );
+
+    tcNormals << TriangleCoords( QVector3D( 2, 1, 7 ), QVector3D( 1, 1, 7 ), QVector3D( 2, 1, 0 ), bt, bt, bt );
+    tcNormals << TriangleCoords( QVector3D( 2, 1, 0 ), QVector3D( 1, 1, 7 ), QVector3D( 1, 1, 0 ), bt, bt, bt );
+
+    QgsTessellator tN( 0, 0, true, false, false );
+    tN.addPolygon( polygon, 7 );
+    QVERIFY( checkTriangleOutput( tN.data(), true, tcNormals ) );
+
+    QCOMPARE( tN.zMinimum(), 0 );
+    QCOMPARE( tN.zMaximum(), 7 );
+  }
+}
+
+void TestQgsTessellator::test3DTriangle()
+{
+  QgsPolygon polygon;
+  polygon.fromWkt( "POLYGONZ((1 1 5, 2 1 5, 1 2 5, 1 1 5))" );
+
+  const QVector3D up( 0, 0, 1 );  // surface normal pointing straight up
+  const QVector3D left( -1, 0, 0 );  // surface normal pointing straight down for back faces
+  const QVector3D ne( 0.707107, 0.707107, 0 );
+  const QVector3D bt( 0, -1, 0 );  // surface normal pointing straight down for back faces
+
+  {
+    // NO extrusion
+    QList<TriangleCoords> tcNormals;
+    tcNormals << TriangleCoords( QVector3D( 1, 1, 5 ), QVector3D( 2, 1, 5 ), QVector3D( 1, 2, 5 ), up, up, up );
+
+    QgsTessellator tN( 0, 0, true, false, false );
+    tN.addPolygon( polygon, 0 );
+    QVERIFY( checkTriangleOutput( tN.data(), true, tcNormals ) );
+
+    QCOMPARE( tN.zMinimum(), 5 );
+    QCOMPARE( tN.zMaximum(), 5 );
+  }
+
+  {
+    // WITH extrusion
+    QList<TriangleCoords> tcNormals;
+    tcNormals << TriangleCoords( QVector3D( 1, 1, 5 + 7 ), QVector3D( 2, 1, 5 + 7 ), QVector3D( 1, 2, 5 + 7 ), up, up, up );
+
+    tcNormals << TriangleCoords( QVector3D( 1, 1, 5 + 7 ), QVector3D( 1, 2, 5 + 7 ), QVector3D( 1, 1, 5 ), left, left, left );
+    tcNormals << TriangleCoords( QVector3D( 1, 1, 5 ), QVector3D( 1, 2, 5 + 7 ), QVector3D( 1, 2, 5 ), left, left, left );
+
+    tcNormals << TriangleCoords( QVector3D( 1, 2, 5 + 7 ), QVector3D( 2, 1, 5 + 7 ), QVector3D( 1, 2, 5 ), ne, ne, ne );
+    tcNormals << TriangleCoords( QVector3D( 1, 2, 5 ), QVector3D( 2, 1, 5 + 7 ), QVector3D( 2, 1, 5 ), ne, ne, ne );
+
+    tcNormals << TriangleCoords( QVector3D( 2, 1, 5 + 7 ), QVector3D( 1, 1, 5 + 7 ), QVector3D( 2, 1, 5 ), bt, bt, bt );
+    tcNormals << TriangleCoords( QVector3D( 2, 1, 5 ), QVector3D( 1, 1, 5 + 7 ), QVector3D( 1, 1, 5 ), bt, bt, bt );
+
+    QgsTessellator tN( 0, 0, true, false, false );
+    tN.addPolygon( polygon, 7 );
+    QVERIFY( checkTriangleOutput( tN.data(), true, tcNormals ) );
+
+    QCOMPARE( tN.zMinimum(), 5 );
+    QCOMPARE( tN.zMaximum(), 5 + 7 );
+  }
 }
 
 void TestQgsTessellator::asMultiPolygon()
@@ -287,7 +410,7 @@ void TestQgsTessellator::asMultiPolygon()
 
   QgsTessellator t2( 0, 0, false );
   t2.addPolygon( polygonZ, 0 );
-  QCOMPARE( t2.asMultiPolygon()->asWkt(), QStringLiteral( "MultiPolygonZ (((1 2 4, 2 1 2, 3 2 3, 1 2 4)),((1 2 4, 1 1 1, 2 1 2, 1 2 4)))" ) );
+  QCOMPARE( t2.asMultiPolygon()->asWkt( 6 ), QStringLiteral( "MultiPolygonZ (((1 2 4, 2 1 2, 3 2 3, 1 2 4)),((1 2 4, 1 1 1, 2 1 2, 1 2 4)))" ) );
 }
 
 void TestQgsTessellator::testBadCoordinates()
@@ -305,6 +428,9 @@ void TestQgsTessellator::testBadCoordinates()
   tZ.addPolygon( polygonZ, 0 );
   QVERIFY( checkTriangleOutput( tZ.data(), false, tcZ ) );
 
+  QCOMPARE( tZ.zMinimum(), 1.0f );
+  QCOMPARE( tZ.zMaximum(), 2.0f );
+
   // triangulation would crash for me with this polygon if there is no simplification
   // to remove the coordinates that are very close to each other
   QgsPolygon polygon;
@@ -317,6 +443,9 @@ void TestQgsTessellator::testBadCoordinates()
   QgsTessellator t( 0, 0, false );
   t.addPolygon( polygon, 0 );
   QVERIFY( checkTriangleOutput( t.data(), false, tc ) );
+
+  QCOMPARE( t.zMinimum(), 0 );
+  QCOMPARE( t.zMaximum(), 0 );
 }
 
 void TestQgsTessellator::testIssue17745()
@@ -374,6 +503,8 @@ void TestQgsTessellator::testBoundsScaling()
   QgsTessellator t2( polygon.boundingBox(), true );
   t2.addPolygon( polygon, 0 );
   QVERIFY( checkTriangleOutput( t2.data(), true, tc ) );
+  QCOMPARE( t2.zMinimum(), 0 );
+  QCOMPARE( t2.zMaximum(), 0 );
 }
 
 void TestQgsTessellator::testNoZ()
@@ -389,6 +520,8 @@ void TestQgsTessellator::testNoZ()
   QgsTessellator t( polygonZ.boundingBox(), false, false, false, true );
   t.addPolygon( polygonZ, 0 );
   QVERIFY( checkTriangleOutput( t.data(), false, tc ) );
+  QCOMPARE( t.zMinimum(), 0 );
+  QCOMPARE( t.zMaximum(), 0 );
 }
 
 void TestQgsTessellator::testTriangulationDoesNotCrash()
@@ -421,7 +554,7 @@ void TestQgsTessellator::narrowPolygon()
   t.addPolygon( polygon, 0 );
   QgsGeometry res( t.asMultiPolygon() );
   res.translate( polygon.boundingBox().xMinimum(), polygon.boundingBox().yMinimum() );
-  QgsDebugMsg( res.asWkt( 0 ) );
+  QgsDebugMsgLevel( res.asWkt( 0 ), 1 );
   QCOMPARE( res.asWkt( 0 ), QStringLiteral( "MultiPolygonZ (((383357 4902094 0, 383356 4902092 0, 383356 4902091 0, 383357 4902094 0)),((383357 4902088 0, 383357 4902094 0, 383356 4902091 0, 383357 4902088 0)),((383357 4902088 0, 383361 4902086 0, 383357 4902094 0, 383357 4902088 0)),((383357 4902094 0, 383361 4902086 0, 383360 4902094 0, 383357 4902094 0)),((383363 4902094 0, 383360 4902094 0, 383361 4902086 0, 383363 4902094 0)),((383368 4902093 0, 383363 4902094 0, 383361 4902086 0, 383368 4902093 0)),((383368 4902093 0, 383361 4902086 0, 383369 4902085 0, 383368 4902093 0)),((383368 4902093 0, 383369 4902085 0, 383375 4902093 0, 383368 4902093 0)),((383375 4902093 0, 383369 4902085 0, 383380 4902084 0, 383375 4902093 0)),((383375 4902093 0, 383380 4902084 0, 383384 4902093 0, 383375 4902093 0)),((383384 4902093 0, 383380 4902084 0, 383396 4902084 0, 383384 4902093 0)),((383394 4902094 0, 383384 4902093 0, 383396 4902084 0, 383394 4902094 0)),((383403 4902094 0, 383394 4902094 0, 383396 4902084 0, 383403 4902094 0)),((383396 4902084 0, 383407 4902084 0, 383403 4902094 0, 383396 4902084 0)),((383411 4902094 0, 383403 4902094 0, 383407 4902084 0, 383411 4902094 0)),((383411 4902094 0, 383407 4902084 0, 383413 4902085 0, 383411 4902094 0)),((383411 4902094 0, 383413 4902085 0, 383416 4902093 0, 383411 4902094 0)),((383416 4902093 0, 383413 4902085 0, 383417 4902086 0, 383416 4902093 0)),((383419 4902088 0, 383416 4902093 0, 383417 4902086 0, 383419 4902088 0)),((383418 4902092 0, 383416 4902093 0, 383419 4902088 0, 383418 4902092 0)),((383418 4902092 0, 383419 4902088 0, 383419 4902091 0, 383418 4902092 0)),((383419 4902091 0, 383419 4902088 0, 383420 4902090 0, 383419 4902091 0)))" ) );
 }
 

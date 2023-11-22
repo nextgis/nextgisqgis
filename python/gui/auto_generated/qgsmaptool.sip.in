@@ -11,7 +11,6 @@
 
 
 
-
 %ModuleHeaderCode
 // fix to allow compilation with sip 4.7 that for some reason
 // doesn't add these includes to the file where the code from
@@ -61,8 +60,10 @@ implemented as map tools.
       sipType = sipType_QgsMapToolAdvancedDigitizing;
     else if ( dynamic_cast<QgsMapToolEdit *>( sipCpp ) != NULL )
       sipType = sipType_QgsMapToolEdit;
+    else if ( sipCpp->inherits( "QgsMapTool" ) ) // e.g. map tools from QGIS app library, which aren't exposed to SIP
+      sipType = sipType_QgsMapTool;
     else
-      sipType = NULL;
+      sipType = nullptr;
 %End
   public:
 
@@ -179,6 +180,15 @@ called when set as currently active map tool
 called when map tool is being deactivated
 %End
 
+    virtual void reactivate();
+%Docstring
+Called when the map tool is being activated while it is already active.
+
+The default implementation emits the reactivated () signal.
+
+.. versionadded:: 3.32
+%End
+
     virtual void clean();
 %Docstring
 convenient method to clean members
@@ -202,7 +212,7 @@ Emit map tool changed with the old tool
 %Docstring
 Gets search radius in mm. Used by identify, tip etc.
 The values is currently set in identify tool options (move somewhere else?)
-and defaults to Qgis.DEFAULT_SEARCH_RADIUS_MM.
+and defaults to :py:class:`Qgis`.DEFAULT_SEARCH_RADIUS_MM.
 
 .. versionadded:: 2.3
 %End
@@ -263,6 +273,11 @@ The default implementation does nothing and returns false.
 .. versionadded:: 3.18
 %End
 
+    QgsPointXY toMapCoordinates( QPoint point );
+%Docstring
+Transforms a ``point`` from screen coordinates to map coordinates.
+%End
+
   signals:
     void messageEmitted( const QString &message, Qgis::MessageLevel = Qgis::MessageLevel::Info );
 %Docstring
@@ -284,16 +299,17 @@ signal emitted once the map tool is activated
 signal emitted once the map tool is deactivated
 %End
 
+    void reactivated();
+%Docstring
+
+.. versionadded:: 3.32
+%End
+
   protected:
 
     QgsMapTool( QgsMapCanvas *canvas /TransferThis/ );
 %Docstring
 Constructor takes a map canvas as a parameter.
-%End
-
-    QgsPointXY toMapCoordinates( QPoint point );
-%Docstring
-Transforms a ``point`` from screen coordinates to map coordinates.
 %End
 
     QgsPoint toLayerCoordinates( const QgsMapLayer *layer, const QgsPoint &point ) /PyName=toLayerCoordinatesV2/;

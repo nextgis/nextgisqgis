@@ -68,6 +68,11 @@ void QgsLayoutMapExtentToLayerAlgorithm::initAlgorithm( const QVariantMap & )
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "ROTATION" ), QObject::tr( "Map rotation" ) ) );
 }
 
+QgsProcessingAlgorithm::Flags QgsLayoutMapExtentToLayerAlgorithm::flags() const
+{
+  return QgsProcessingAlgorithm::flags() | FlagRequiresProject;
+}
+
 QString QgsLayoutMapExtentToLayerAlgorithm::shortHelpString() const
 {
   return QObject::tr( "This algorithm creates a polygon layer containing the extent of a print layout map item (or items), "
@@ -146,7 +151,7 @@ QVariantMap QgsLayoutMapExtentToLayerAlgorithm::processAlgorithm( const QVariant
   fields.append( QgsField( QStringLiteral( "rotation" ), QVariant::Double ) );
 
   QString dest;
-  std::unique_ptr< QgsFeatureSink > sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, fields, QgsWkbTypes::Polygon, mCrs ) );
+  std::unique_ptr< QgsFeatureSink > sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, fields, Qgis::WkbType::Polygon, mCrs ) );
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 

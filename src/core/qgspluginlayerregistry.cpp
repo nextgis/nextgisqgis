@@ -26,7 +26,7 @@ QgsPluginLayerType::QgsPluginLayerType( const QString &name )
 {
 }
 
-QString QgsPluginLayerType::name()
+QString QgsPluginLayerType::name() const
 {
   return mName;
 }
@@ -56,7 +56,7 @@ QgsPluginLayerRegistry::~QgsPluginLayerRegistry()
 {
   if ( !mPluginLayerTypes.isEmpty() )
   {
-    QgsDebugMsg( QStringLiteral( "QgsPluginLayerRegistry::~QgsPluginLayerRegistry(): creator list not empty" ) );
+    QgsDebugMsgLevel( QStringLiteral( "QgsPluginLayerRegistry::~QgsPluginLayerRegistry(): creator list not empty" ), 2 );
     const QStringList keys = mPluginLayerTypes.keys();
     for ( const QString &key : keys )
     {
@@ -93,7 +93,7 @@ bool QgsPluginLayerRegistry::removePluginLayerType( const QString &typeName )
   const auto constLayers = layers;
   for ( QgsMapLayer *layer : constLayers )
   {
-    if ( layer->type() == QgsMapLayerType::PluginLayer )
+    if ( layer->type() == Qgis::LayerType::Plugin )
     {
       QgsPluginLayer *pl = qobject_cast<QgsPluginLayer *>( layer );
       if ( pl->pluginLayerType() == typeName )
@@ -119,7 +119,7 @@ QgsPluginLayer *QgsPluginLayerRegistry::createLayer( const QString &typeName, co
   QgsPluginLayerType *type = pluginLayerType( typeName );
   if ( !type )
   {
-    QgsDebugMsg( "Unknown plugin layer type: " + typeName );
+    QgsDebugError( "Unknown plugin layer type: " + typeName );
     return nullptr;
   }
 

@@ -93,6 +93,7 @@ class CORE_EXPORT QgsPointDistanceRenderer: public QgsFeatureRenderer
     QgsSymbolList symbolsForFeature( const QgsFeature &feature, QgsRenderContext &context ) const override;
     QgsSymbolList originalSymbolsForFeature( const QgsFeature &feature, QgsRenderContext &context ) const override;
     QSet< QString > legendKeysForFeature( const QgsFeature &feature, QgsRenderContext &context ) const override;
+    QString legendKeyToExpression( const QString &key, QgsVectorLayer *layer, bool &ok ) const override;
     bool willRenderFeature( const QgsFeature &feature, QgsRenderContext &context ) const override;
     void startRender( QgsRenderContext &context, const QgsFields &fields ) override;
     void stopRender( QgsRenderContext &context ) override;
@@ -200,7 +201,7 @@ class CORE_EXPORT QgsPointDistanceRenderer: public QgsFeatureRenderer
      * \see toleranceUnit()
      * \since QGIS 2.12
      */
-    void setToleranceUnit( QgsUnitTypes::RenderUnit unit ) { mToleranceUnit = unit; }
+    void setToleranceUnit( Qgis::RenderUnit unit ) { mToleranceUnit = unit; }
 
     /**
      * Returns the units for the tolerance distance.
@@ -208,7 +209,7 @@ class CORE_EXPORT QgsPointDistanceRenderer: public QgsFeatureRenderer
      * \see setToleranceUnit()
      * \since QGIS 2.12
      */
-    QgsUnitTypes::RenderUnit toleranceUnit() const { return mToleranceUnit; }
+    Qgis::RenderUnit toleranceUnit() const { return mToleranceUnit; }
 
     /**
      * Sets the map unit scale object for the distance tolerance. This is only used if the
@@ -241,7 +242,7 @@ class CORE_EXPORT QgsPointDistanceRenderer: public QgsFeatureRenderer
     //! Distance tolerance. Points that are closer together than this distance are considered clustered.
     double mTolerance;
     //! Unit for distance tolerance.
-    QgsUnitTypes::RenderUnit mToleranceUnit;
+    Qgis::RenderUnit mToleranceUnit;
     //! Map unit scale for distance tolerance.
     QgsMapUnitScale mToleranceMapUnitScale;
 
@@ -274,7 +275,7 @@ class CORE_EXPORT QgsPointDistanceRenderer: public QgsFeatureRenderer
      * \param group group of clustered features to label
      * \note may not be available in Python bindings on some platforms
      */
-    void drawLabels( QPointF centerPoint, QgsSymbolRenderContext &context, const QList<QPointF> &labelShifts, const ClusteredGroup &group );
+    void drawLabels( QPointF centerPoint, QgsSymbolRenderContext &context, const QList<QPointF> &labelShifts, const ClusteredGroup &group ) const;
 
   private:
 
@@ -284,10 +285,10 @@ class CORE_EXPORT QgsPointDistanceRenderer: public QgsFeatureRenderer
      * \param context destination render context
      * \param group contents of group
      */
-    virtual void drawGroup( QPointF centerPoint, QgsRenderContext &context, const ClusteredGroup &group ) = 0 SIP_FORCE;
+    virtual void drawGroup( QPointF centerPoint, QgsRenderContext &context, const ClusteredGroup &group ) const = 0 SIP_FORCE;
 
     //! Creates a search rectangle with specified distance tolerance.
-    QgsRectangle searchRect( const QgsPointXY &p, double distance ) const;
+    QgsRectangle searchRect( const QgsPoint *p, double distance ) const;
 
     //! Debugging function to check the entries in the clustered groups
     void printGroupInfo() const;
@@ -296,7 +297,7 @@ class CORE_EXPORT QgsPointDistanceRenderer: public QgsFeatureRenderer
     QString getLabel( const QgsFeature &feature ) const;
 
     //! Internal group rendering helper
-    void drawGroup( const ClusteredGroup &group, QgsRenderContext &context );
+    void drawGroup( const ClusteredGroup &group, QgsRenderContext &context ) const;
 
     /**
      * Returns first symbol from the embedded renderer for a feature or NULLPTR if none

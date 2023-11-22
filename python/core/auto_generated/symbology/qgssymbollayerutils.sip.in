@@ -224,7 +224,7 @@ Converts a ``value`` to a size.
     static QString encodeSldRealVector( const QVector<qreal> &v );
     static QVector<qreal> decodeSldRealVector( const QString &s );
 
-    static QString encodeSldUom( QgsUnitTypes::RenderUnit unit, double *scaleFactor );
+    static QString encodeSldUom( Qgis::RenderUnit unit, double *scaleFactor );
 %Docstring
 Encodes a render unit into an SLD unit of measure string.
 
@@ -236,7 +236,7 @@ Encodes a render unit into an SLD unit of measure string.
 .. seealso:: :py:func:`decodeSldUom`
 %End
 
-    static QgsUnitTypes::RenderUnit decodeSldUom( const QString &str, double *scaleFactor = 0 );
+    static Qgis::RenderUnit decodeSldUom( const QString &str, double *scaleFactor = 0 );
 %Docstring
 Decodes a SLD unit of measure string to a render unit.
 
@@ -276,7 +276,7 @@ Decodes a symbol scale method from a string.
 
     static QPainter::CompositionMode decodeBlendMode( const QString &s );
 
-    static QIcon symbolPreviewIcon( const QgsSymbol *symbol, QSize size, int padding = 0, QgsLegendPatchShape *shape = 0 );
+    static QIcon symbolPreviewIcon( const QgsSymbol *symbol, QSize size, int padding = 0, QgsLegendPatchShape *shape = 0, const QgsScreenProperties &screen = QgsScreenProperties() );
 %Docstring
 Returns an icon preview for a color ramp.
 
@@ -284,44 +284,31 @@ Returns an icon preview for a color ramp.
 :param size: target pixmap size
 :param padding: space between icon edge and symbol
 :param shape: optional legend patch shape to use for rendering the preview icon
+:param screen: can be used to specify the destination screen properties for the icon. This allows the icon to be generated using the correct DPI and device pixel ratio for the target screen (since QGIS 3.32)
 
 .. seealso:: :py:func:`symbolPreviewPixmap`
 %End
 
     static QPixmap symbolPreviewPixmap( const QgsSymbol *symbol, QSize size, int padding = 0, QgsRenderContext *customContext = 0, bool selected = false,
                                         const QgsExpressionContext *expressionContext = 0,
-                                        const QgsLegendPatchShape *shape = 0 );
+                                        const QgsLegendPatchShape *shape = 0,
+                                        const QgsScreenProperties &screen = QgsScreenProperties() );
 %Docstring
 Returns a pixmap preview for a color ramp.
 
 :param symbol: symbol
 :param size: target pixmap size
 :param padding: space between icon edge and symbol
-:param customContext: render context to use when rendering symbol
-:param selected: set to ``True`` to render the symbol in a selected state
-:param expressionContext: optional custom expression context
-:param shape: optional legend patch shape to use for rendering the preview icon
-
-.. note::
-
-   Parameter customContext added in QGIS 2.6
-
-.. note::
-
-   Parameter selected added in QGIS 3.10
-
-.. note::
-
-   Parameter expressionContext added in QGIS 3.10
-
-.. note::
-
-   Parameter shape added in QGIS 3.14
+:param customContext: render context to use when rendering symbol (since QGIS 2.6)
+:param selected: set to ``True`` to render the symbol in a selected state (since QGIS 3.10)
+:param expressionContext: optional custom expression context (since QGIS 3.10)
+:param shape: optional legend patch shape to use for rendering the preview icon (since QGIS 3.14)
+:param screen: can be used to specify the destination screen properties for the icon. This allows the icon to be generated using the correct DPI and device pixel ratio for the target screen (since QGIS 3.32)
 
 .. seealso:: :py:func:`symbolPreviewIcon`
 %End
 
-    static QPicture symbolLayerPreviewPicture( const QgsSymbolLayer *layer, QgsUnitTypes::RenderUnit units, QSize size, const QgsMapUnitScale &scale = QgsMapUnitScale(), Qgis::SymbolType parentSymbolType = Qgis::SymbolType::Hybrid );
+    static QPicture symbolLayerPreviewPicture( const QgsSymbolLayer *layer, Qgis::RenderUnit units, QSize size, const QgsMapUnitScale &scale = QgsMapUnitScale(), Qgis::SymbolType parentSymbolType = Qgis::SymbolType::Hybrid );
 %Docstring
 Draws a symbol layer preview to a QPicture
 
@@ -338,7 +325,7 @@ Draws a symbol layer preview to a QPicture
 .. versionadded:: 2.9
 %End
 
-    static QIcon symbolLayerPreviewIcon( const QgsSymbolLayer *layer, QgsUnitTypes::RenderUnit u, QSize size, const QgsMapUnitScale &scale = QgsMapUnitScale(), Qgis::SymbolType parentSymbolType = Qgis::SymbolType::Hybrid );
+    static QIcon symbolLayerPreviewIcon( const QgsSymbolLayer *layer, Qgis::RenderUnit u, QSize size, const QgsMapUnitScale &scale = QgsMapUnitScale(), Qgis::SymbolType parentSymbolType = Qgis::SymbolType::Hybrid, QgsMapLayer *mapLayer = 0, const QgsScreenProperties &screen = QgsScreenProperties() );
 %Docstring
 Draws a symbol layer preview to an icon.
 
@@ -347,6 +334,8 @@ Draws a symbol layer preview to an icon.
 :param size: target size of preview icon
 :param scale: map unit scale for preview
 :param parentSymbolType: since QGIS 3.22, can be used to specify the parent symbol type so that geometry generator preview icons are correctly calculated
+:param mapLayer: since QGIS 3.28, can be used to specify the associated map layer so that layer related expressions are correctly calculated
+:param screen: since QGIS 3.32, can be used to specify the destination screen properties for the icon. This allows the icon to be generated using the correct DPI and device pixel ratio for the target screen.
 
 :return: icon containing symbol layer preview
 
@@ -423,7 +412,7 @@ between symbols.
 .. versionadded:: 2.12
 %End
 
-    static bool createSymbolLayerListFromSld( QDomElement &element, QgsWkbTypes::GeometryType geomType, QList<QgsSymbolLayer *> &layers );
+    static bool createSymbolLayerListFromSld( QDomElement &element, Qgis::GeometryType geomType, QList<QgsSymbolLayer *> &layers );
 %Docstring
 Creates a symbol layer list from a DOM ``element``.
 %End
@@ -436,7 +425,21 @@ Creates a symbol layer list from a DOM ``element``.
 %Docstring
 Converts a polygon symbolizer ``element`` to a list of marker symbol layers.
 %End
+
     static bool hasExternalGraphic( QDomElement &element );
+%Docstring
+Checks if ``element`` contains an ExternalGraphic element with format "image/svg+xml"
+@return ``True`` if the ExternalGraphic with format "image/svg+xml" is found .
+%End
+
+    static bool hasExternalGraphicV2( QDomElement &element, const QString format = QString() );
+%Docstring
+Checks if ``element`` contains an ExternalGraphic element, if the optional ``format`` is specified it will also be checked.
+@return ``True`` if the ExternalGraphic element is found and the optionally specified format matches.
+
+.. versionadded:: 3.30
+%End
+
     static bool hasWellKnownMark( QDomElement &element );
 
     static bool needFontMarker( QDomElement &element );
@@ -446,6 +449,14 @@ Converts a polygon symbolizer ``element`` to a list of marker symbol layers.
     static bool needLinePatternFill( QDomElement &element );
     static bool needPointPatternFill( QDomElement &element );
     static bool needSvgFill( QDomElement &element );
+
+    static bool needRasterImageFill( QDomElement &element );
+%Docstring
+Checks if ``element`` contains a graphic fill with a raster image of type PNG, JPEG or GIF.
+@return ``True`` if element contains a graphic fill with a raster image.
+
+.. versionadded:: 3.30
+%End
 
     static void fillToSld( QDomDocument &doc, QDomElement &element,
                            Qt::BrushStyle brushStyle, const QColor &color = QColor() );
@@ -899,7 +910,7 @@ The values are chosen so that they are 1, 2 or 5 times a power of 10.
 .. versionadded:: 2.10
 %End
 
-    static double rescaleUom( double size, QgsUnitTypes::RenderUnit unit, const QVariantMap &props );
+    static double rescaleUom( double size, Qgis::RenderUnit unit, const QVariantMap &props );
 %Docstring
 Rescales the given size based on the uomScale found in the props, if any is found, otherwise
 returns the value un-modified
@@ -907,7 +918,7 @@ returns the value un-modified
 .. versionadded:: 3.0
 %End
 
-    static QPointF rescaleUom( QPointF point, QgsUnitTypes::RenderUnit unit, const QVariantMap &props ) /PyName=rescalePointUom/;
+    static QPointF rescaleUom( QPointF point, Qgis::RenderUnit unit, const QVariantMap &props ) /PyName=rescalePointUom/;
 %Docstring
 Rescales the given point based on the uomScale found in the props, if any is found, otherwise
 returns a copy of the original point
@@ -915,7 +926,7 @@ returns a copy of the original point
 .. versionadded:: 3.0
 %End
 
-    static QVector<qreal> rescaleUom( const QVector<qreal> &array, QgsUnitTypes::RenderUnit unit, const QVariantMap &props ) /PyName=rescaleArrayUom/;
+    static QVector<qreal> rescaleUom( const QVector<qreal> &array, Qgis::RenderUnit unit, const QVariantMap &props ) /PyName=rescaleArrayUom/;
 %Docstring
 Rescales the given array based on the uomScale found in the props, if any is found, otherwise
 returns a copy of the original point
@@ -955,14 +966,26 @@ Encodes a reference to a parametric SVG into a path with parameters according to
 .. versionadded:: 3.0
 %End
 
-    static QSet<const QgsSymbolLayer *> toSymbolLayerPointers( QgsFeatureRenderer *renderer, const QSet<QgsSymbolLayerId> &symbolLayerIds );
+ static QSet<const QgsSymbolLayer *> toSymbolLayerPointers( const QgsFeatureRenderer *renderer, const QSet<QgsSymbolLayerId> &symbolLayerIds );
 %Docstring
 Converts a set of symbol layer id to a set of pointers to actual symbol layers carried by the feature renderer.
 
 .. versionadded:: 3.12
+
+.. deprecated:: QGIS 3.30
+   because it was related to old :py:class:`QgsSymbolLayerReference` system
 %End
 
-    static QgsSymbol *restrictedSizeSymbol( const QgsSymbol *s, double minSize, double maxSize, QgsRenderContext *context, double &width, double &height );
+    static double rendererFrameRate( const QgsFeatureRenderer *renderer );
+%Docstring
+Calculates the frame rate (in frames per second) at which the given ``renderer`` must be redrawn.
+
+Returns -1 if the ``renderer`` is not animated.
+
+.. versionadded:: 3.26
+%End
+
+    static QgsSymbol *restrictedSizeSymbol( const QgsSymbol *s, double minSize, double maxSize, QgsRenderContext *context, double &width, double &height, bool *ok = 0 );
 %Docstring
 Creates a new symbol with size restricted to min/max size if original size is out of min/max range
 
@@ -971,9 +994,13 @@ Creates a new symbol with size restricted to min/max size if original size is ou
 :param maxSize: the maximum size in mm
 :param context: the render context
 :param width: expected width, can be changed by the function
-:param height: expected height, can be changed by this function
+:param height: expected height, can be changed by the function
+:param ok: if not None, ok is set to false if it's not possible to compute a restricted symbol (if geometry generators
+           are involved for instance)
 
-:return: 0 if size is within minSize/maxSize range. New symbol if size was out of min/max range. Caller takes ownership
+:return: None if size is within minSize/maxSize range or if it's not possible to compute a
+         restricted size symbol. New symbol if size was out of min/max range.
+         Caller takes ownership
 %End
 
     static QgsStringMap evaluatePropertiesMap( const QMap<QString, QgsProperty> &propertiesMap, const QgsExpressionContext &context );
@@ -983,10 +1010,50 @@ Evaluates a map of properties using the given ``context`` and returns a variant 
 .. versionadded:: 3.18
 %End
 
+    static QSize tileSize( int width, int height, double &angleRad /In,Out/ );
+%Docstring
+Calculate the minimum size in pixels of a symbol tile given the symbol ``width`` and ``height`` and the symbol layer rotation ``angleRad`` in radians (counter clockwise).
+The method makes approximations and can modify ``angle`` in order to generate the smallest possible tile.
+
+:param width: marker width, including margins
+:param height: marker height, including margins
+:param angleRad: symbol layer rotation angle in radians (counter clockwise), it may be approximated by the method to minimize the tile size.
+
+:return: the size of the tile
+
+.. versionadded:: 3.30
+%End
+
+    static void clearSymbolLayerIds( QgsSymbol *symbol );
+%Docstring
+Remove recursively unique id from all ``symbol`` symbol layers and set an empty string instead
+
+.. versionadded:: 3.30
+%End
+
+    static void clearSymbolLayerIds( QgsSymbolLayer *symbolLayer );
+%Docstring
+Remove recursively unique id from ``symbolLayer`` and its children and set an empty string instead
+
+.. versionadded:: 3.30
+%End
+
+    static void resetSymbolLayerIds( QgsSymbol *symbol );
+%Docstring
+Regenerate recursively unique id from all ``symbol`` symbol layers
+
+.. versionadded:: 3.30
+%End
+
+    static void resetSymbolLayerIds( QgsSymbolLayer *symbolLayer );
+%Docstring
+Regenerate recursively unique id from ``symbolLayer`` and its children
+
+.. versionadded:: 3.30
+%End
+
 
 };
-
-
 
 
 

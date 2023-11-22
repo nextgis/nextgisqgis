@@ -24,17 +24,12 @@
 #include <QRegularExpression>
 #include <QProgressBar>
 
-#include "qgssettings.h"
-#include "qgsfilterlineedit.h"
-#include "qgsfocuskeeper.h"
 #include "qgslogger.h"
-#include "qgsproject.h"
 #include "qgsapplication.h"
-#include "qgsfileutils.h"
-#include "qgsmimedatautils.h"
 #include "qgsexternalstorage.h"
 #include "qgsexternalstorageregistry.h"
 #include "qgsmessagebar.h"
+#include "qgsexpression.h"
 
 #define FILEPATH_VARIABLE "selected_file_path"
 
@@ -67,7 +62,7 @@ void QgsExternalStorageFileWidget::setStorageType( const QString &storageType )
     mExternalStorage = QgsApplication::externalStorageRegistry()->externalStorageFromType( storageType );
     if ( !mExternalStorage )
     {
-      QgsDebugMsg( QStringLiteral( "Invalid storage type: %1" ).arg( storageType ) );
+      QgsDebugError( QStringLiteral( "Invalid storage type: %1" ).arg( storageType ) );
     }
     else
     {
@@ -202,7 +197,7 @@ void QgsExternalStorageFileWidget::setSelectedFileNames( QStringList fileNames )
                                    tr( "Storage URL expression is invalid : %1" ).arg( mStorageUrlExpression->evalErrorString() ) );
       }
 
-      QgsDebugMsg( tr( "Storage URL expression is invalid : %1" ).arg( mStorageUrlExpression->evalErrorString() ) );
+      QgsDebugError( QStringLiteral( "Storage URL expression is invalid : %1" ).arg( mStorageUrlExpression->evalErrorString() ) );
       return;
     }
 

@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "qgslayoutview.h"
-#include "qgslayout.h"
 #include "qgslayoutframe.h"
 #include "qgslayoutmultiframe.h"
 #include "qgslayoutviewtool.h"
@@ -24,25 +23,22 @@
 #include "qgslayoutviewtooltemporarykeypan.h"
 #include "qgslayoutviewtooltemporarykeyzoom.h"
 #include "qgslayoutviewtooltemporarymousepan.h"
-#include "qgslayoutmousehandles.h"
 #include "qgslayoutruler.h"
 #include "qgslayoutmodel.h"
 #include "qgssettings.h"
 #include "qgsrectangle.h"
-#include "qgsapplication.h"
-#include "qgslayoutitemundocommand.h"
 #include "qgsproject.h"
 #include "qgslayoutitemgroup.h"
 #include "qgslayoutpagecollection.h"
 #include "qgslayoutundostack.h"
 #include "qgslayoutreportsectionlabel.h"
 #include "qgsreadwritecontext.h"
+#include "qgsscreenhelper.h"
+
 #include <memory>
 #include <QMenu>
 #include <QClipboard>
 #include <QMimeData>
-#include <QWindow>
-#include <QScreen>
 
 #define MIN_VIEW_SCALE 0.05
 #define MAX_VIEW_SCALE 1000.0
@@ -68,6 +64,8 @@ QgsLayoutView::QgsLayoutView( QWidget *parent )
   viewport()->setGraphicsEffect( mPreviewEffect );
 
   connect( this, &QgsLayoutView::zoomLevelChanged, this, &QgsLayoutView::invalidateCachedRenders );
+
+  mScreenHelper = new QgsScreenHelper( this );
 }
 
 QgsLayoutView::~QgsLayoutView()
@@ -202,20 +200,17 @@ void QgsLayoutView::setZoomLevel( double level )
   if ( !currentLayout() )
     return;
 
-  if ( currentLayout()->units() == QgsUnitTypes::LayoutPixels )
+  if ( currentLayout()->units() == Qgis::LayoutUnit::Pixels )
   {
     setTransform( QTransform::fromScale( level, level ) );
   }
   else
   {
-    double dpi = mScreenDpi;
-    //monitor dpi is not always correct - so make sure the value is sane
-    if ( ( dpi < 60 ) || ( dpi > 1200 ) )
-      dpi = 72;
+    const double dpi = mScreenHelper->screenDpi();
 
     //desired pixel width for 1mm on screen
     level = std::clamp( level, MIN_VIEW_SCALE, MAX_VIEW_SCALE );
-    double mmLevel = currentLayout()->convertFromLayoutUnits( level, QgsUnitTypes::LayoutMillimeters ).length() * dpi / 25.4;
+    double mmLevel = currentLayout()->convertFromLayoutUnits( level, Qgis::LayoutUnit::Millimeters ).length() * dpi / 25.4;
     setTransform( QTransform::fromScale( mmLevel, mmLevel ) );
   }
   emit zoomLevelChanged();
@@ -1155,25 +1150,6 @@ void QgsLayoutView::paintEvent( QPaintEvent *event )
   }
 }
 
-void QgsLayoutView::showEvent( QShowEvent *event )
-{
-  QGraphicsView::showEvent( event );
-
-  updateDevicePixelFromScreen();
-  // keep device pixel ratio up to date on screen or resolution change
-  if ( window()->windowHandle() )
-  {
-    connect( window()->windowHandle(), &QWindow::screenChanged, this, [ = ]( QScreen * )
-    {
-      disconnect( mScreenDpiChangedConnection );
-      mScreenDpiChangedConnection = connect( window()->windowHandle()->screen(), &QScreen::physicalDotsPerInchChanged, this, &QgsLayoutView::updateDevicePixelFromScreen );
-      updateDevicePixelFromScreen();
-    } );
-
-    mScreenDpiChangedConnection = connect( window()->windowHandle()->screen(), &QScreen::physicalDotsPerInchChanged, this, &QgsLayoutView::updateDevicePixelFromScreen );
-  }
-}
-
 void QgsLayoutView::invalidateCachedRenders()
 {
   if ( !currentLayout() )
@@ -1187,12 +1163,6 @@ void QgsLayoutView::invalidateCachedRenders()
   {
     item->invalidateCache();
   }
-}
-
-void QgsLayoutView::updateDevicePixelFromScreen()
-{
-  if ( window()->windowHandle() )
-    mScreenDpi = window()->windowHandle()->screen()->physicalDotsPerInch();
 }
 
 void QgsLayoutView::viewChanged()
@@ -1232,6 +1202,8 @@ void QgsLayoutView::wheelZoom( QWheelEvent *event )
   //get mouse wheel zoom behavior settings
   QgsSettings settings;
   double zoomFactor = settings.value( QStringLiteral( "qgis/zoom_factor" ), 2 ).toDouble();
+  bool reverseZoom = settings.value( QStringLiteral( "qgis/reverse_wheel_zoom" ), false ).toBool();
+  bool zoomIn = reverseZoom ? event->angleDelta().y() < 0 : event->angleDelta().y() > 0;
 
   // "Normal" mouse have an angle delta of 120, precision mouses provide data faster, in smaller steps
   zoomFactor = 1.0 + ( zoomFactor - 1.0 ) / 120.0 * std::fabs( event->angleDelta().y() );
@@ -1243,7 +1215,6 @@ void QgsLayoutView::wheelZoom( QWheelEvent *event )
   }
 
   //calculate zoom scale factor
-  bool zoomIn = event->angleDelta().y() > 0;
   double scaleFactor = ( zoomIn ? 1 / zoomFactor : zoomFactor );
 
   //get current visible part of scene

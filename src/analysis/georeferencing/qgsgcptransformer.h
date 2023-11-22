@@ -32,6 +32,8 @@
 */
 class ANALYSIS_EXPORT QgsGcpTransformerInterface SIP_ABSTRACT
 {
+    Q_GADGET
+
   public:
 
     /**
@@ -48,6 +50,7 @@ class ANALYSIS_EXPORT QgsGcpTransformerInterface SIP_ABSTRACT
       Projective, //!< Projective
       InvalidTransform = 65535 //!< Invalid transform
     };
+    Q_ENUM( TransformMethod )
 
     //! Constructor for QgsGcpTransformerInterface
     QgsGcpTransformerInterface() = default;
@@ -208,8 +211,8 @@ class ANALYSIS_EXPORT QgsHelmertGeorefTransform : public QgsGcpTransformerInterf
     struct HelmertParameters
     {
       QgsPointXY origin;
-      double scale;
-      double angle;
+      double scale = 0;
+      double angle = 0;
       bool invertYAxis = false;
     };
     HelmertParameters mHelmertParameters;

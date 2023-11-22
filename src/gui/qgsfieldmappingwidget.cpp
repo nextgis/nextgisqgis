@@ -20,6 +20,7 @@
 #include "qgsprocessingaggregatewidgets.h"
 #include "qgsvectorlayer.h"
 #include "qgsvectordataprovider.h"
+#include "QItemSelectionModel"
 
 #include <QTableView>
 #include <QVBoxLayout>
@@ -47,8 +48,8 @@ QgsFieldMappingWidget::QgsFieldMappingWidget( QWidget *parent,
 #endif
 
   mTableView->setModel( mModel );
-  mTableView->setItemDelegateForColumn( static_cast<int>( QgsFieldMappingModel::ColumnDataIndex::SourceExpression ), new ExpressionDelegate( this ) );
-  mTableView->setItemDelegateForColumn( static_cast<int>( QgsFieldMappingModel::ColumnDataIndex::DestinationType ), new TypeDelegate( mTableView ) );
+  mTableView->setItemDelegateForColumn( static_cast<int>( QgsFieldMappingModel::ColumnDataIndex::SourceExpression ), new QgsFieldMappingExpressionDelegate( this ) );
+  mTableView->setItemDelegateForColumn( static_cast<int>( QgsFieldMappingModel::ColumnDataIndex::DestinationType ), new QgsFieldMappingTypeDelegate( mTableView ) );
   updateColumns();
   // Make sure columns are updated when rows are added
   connect( mModel, &QgsFieldMappingModel::rowsInserted, this, [ = ] { updateColumns(); } );
@@ -147,6 +148,18 @@ bool QgsFieldMappingWidget::removeSelectedFields()
   return true;
 }
 
+void QgsFieldMappingWidget::invertSelection()
+{
+  for ( int i = 0; i < mTableView->model()->rowCount(); ++i )
+  {
+    for ( int j = 0; j < mTableView->model()->columnCount(); j++ )
+    {
+      QModelIndex index = mTableView->model()->index( i, j );
+      mTableView->selectionModel()->select( index, QItemSelectionModel::Toggle );
+    }
+  }
+}
+
 bool QgsFieldMappingWidget::moveSelectedFieldsUp()
 {
   if ( ! mTableView->selectionModel()->hasSelection() )
@@ -210,16 +223,18 @@ std::list<int> QgsFieldMappingWidget::selectedRows()
   return rows;
 }
 
+/// @cond PRIVATE
+
 //
-// ExpressionDelegate
+// QgsFieldMappingExpressionDelegate
 //
 
-QgsFieldMappingWidget::ExpressionDelegate::ExpressionDelegate( QObject *parent )
+QgsFieldMappingExpressionDelegate::QgsFieldMappingExpressionDelegate( QObject *parent )
   : QStyledItemDelegate( parent )
 {
 }
 
-void QgsFieldMappingWidget::ExpressionDelegate::setModelData( QWidget *editor, QAbstractItemModel *model, const QModelIndex &index ) const
+void QgsFieldMappingExpressionDelegate::setModelData( QWidget *editor, QAbstractItemModel *model, const QModelIndex &index ) const
 {
   QgsFieldExpressionWidget *editorWidget { qobject_cast<QgsFieldExpressionWidget *>( editor ) };
   if ( ! editorWidget )
@@ -238,7 +253,7 @@ void QgsFieldMappingWidget::ExpressionDelegate::setModelData( QWidget *editor, Q
   }
 }
 
-void QgsFieldMappingWidget::ExpressionDelegate::setEditorData( QWidget *editor, const QModelIndex &index ) const
+void QgsFieldMappingExpressionDelegate::setEditorData( QWidget *editor, const QModelIndex &index ) const
 {
   QgsFieldExpressionWidget *editorWidget { qobject_cast<QgsFieldExpressionWidget *>( editor ) };
   if ( ! editorWidget )
@@ -248,7 +263,7 @@ void QgsFieldMappingWidget::ExpressionDelegate::setEditorData( QWidget *editor, 
   editorWidget->setField( value.toString() );
 }
 
-QWidget *QgsFieldMappingWidget::ExpressionDelegate::createEditor( QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index ) const
+QWidget *QgsFieldMappingExpressionDelegate::createEditor( QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index ) const
 {
   Q_UNUSED( option )
   QgsFieldExpressionWidget *editor = new QgsFieldExpressionWidget( parent );
@@ -269,12 +284,12 @@ QWidget *QgsFieldMappingWidget::ExpressionDelegate::createEditor( QWidget *paren
     Q_ASSERT( false );
   }
 
-  if ( QgsFieldMappingWidget *mappingWidget = qobject_cast< QgsFieldMappingWidget *>( ExpressionDelegate::parent() ) )
+  if ( QgsFieldMappingWidget *mappingWidget = qobject_cast< QgsFieldMappingWidget *>( QgsFieldMappingExpressionDelegate::parent() ) )
   {
     if ( mappingWidget->sourceLayer() )
       editor->setLayer( mappingWidget->sourceLayer() );
   }
-  else if ( QgsAggregateMappingWidget *aggregateWidget = qobject_cast< QgsAggregateMappingWidget *>( ExpressionDelegate::parent() ) )
+  else if ( QgsAggregateMappingWidget *aggregateWidget = qobject_cast< QgsAggregateMappingWidget *>( QgsFieldMappingExpressionDelegate::parent() ) )
   {
     if ( aggregateWidget->sourceLayer() )
       editor->setLayer( aggregateWidget->sourceLayer() );
@@ -282,28 +297,27 @@ QWidget *QgsFieldMappingWidget::ExpressionDelegate::createEditor( QWidget *paren
 
   editor->setField( index.model()->data( index, Qt::DisplayRole ).toString() );
   connect( editor,
-           qOverload<const  QString &, bool >( &QgsFieldExpressionWidget::fieldChanged ),
+           qOverload<const  QString & >( &QgsFieldExpressionWidget::fieldChanged ),
            this,
-           [ = ]( const QString & fieldName, bool isValid )
+           [ = ]( const QString & fieldName )
   {
     Q_UNUSED( fieldName )
-    Q_UNUSED( isValid )
-    const_cast< QgsFieldMappingWidget::ExpressionDelegate *>( this )->emit commitData( editor );
+    const_cast< QgsFieldMappingExpressionDelegate *>( this )->emit commitData( editor );
   } );
   return editor;
 }
 
 
 //
-// TypeDelegate
+// QgsFieldMappingTypeDelegate
 //
 
-QgsFieldMappingWidget::TypeDelegate::TypeDelegate( QObject *parent )
+QgsFieldMappingTypeDelegate::QgsFieldMappingTypeDelegate( QObject *parent )
   : QStyledItemDelegate( parent )
 {
 }
 
-QWidget *QgsFieldMappingWidget::TypeDelegate::createEditor( QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index ) const
+QWidget *QgsFieldMappingTypeDelegate::createEditor( QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index ) const
 {
   Q_UNUSED( option )
   QComboBox *editor = new QComboBox( parent );
@@ -311,7 +325,7 @@ QWidget *QgsFieldMappingWidget::TypeDelegate::createEditor( QWidget *parent, con
   const QList<QgsVectorDataProvider::NativeType> typeList = QgsFieldMappingModel::supportedDataTypes();
   for ( int i = 0; i < typeList.size(); i++ )
   {
-    editor->addItem( QgsFields::iconForFieldType( typeList[i].mType, typeList[i].mSubType ), typeList[i].mTypeDesc );
+    editor->addItem( QgsFields::iconForFieldType( typeList[i].mType, typeList[i].mSubType, typeList[i].mTypeName ), typeList[i].mTypeDesc );
     editor->setItemData( i, typeList[i].mTypeName, Qt::UserRole );
   }
 
@@ -329,13 +343,13 @@ QWidget *QgsFieldMappingWidget::TypeDelegate::createEditor( QWidget *parent, con
              [ = ]( int currentIndex )
     {
       Q_UNUSED( currentIndex )
-      const_cast< QgsFieldMappingWidget::TypeDelegate *>( this )->emit commitData( editor );
+      const_cast< QgsFieldMappingTypeDelegate *>( this )->emit commitData( editor );
     } );
   }
   return editor;
 }
 
-void QgsFieldMappingWidget::TypeDelegate::setEditorData( QWidget *editor, const QModelIndex &index ) const
+void QgsFieldMappingTypeDelegate::setEditorData( QWidget *editor, const QModelIndex &index ) const
 {
   QComboBox *editorWidget { qobject_cast<QComboBox *>( editor ) };
   if ( ! editorWidget )
@@ -345,7 +359,7 @@ void QgsFieldMappingWidget::TypeDelegate::setEditorData( QWidget *editor, const 
   editorWidget->setCurrentIndex( editorWidget->findData( value ) );
 }
 
-void QgsFieldMappingWidget::TypeDelegate::setModelData( QWidget *editor, QAbstractItemModel *model, const QModelIndex &index ) const
+void QgsFieldMappingTypeDelegate::setModelData( QWidget *editor, QAbstractItemModel *model, const QModelIndex &index ) const
 {
   QComboBox *editorWidget { qobject_cast<QComboBox *>( editor ) };
   if ( ! editorWidget )
@@ -354,3 +368,5 @@ void QgsFieldMappingWidget::TypeDelegate::setModelData( QWidget *editor, QAbstra
   const QVariant currentValue = editorWidget->currentData( );
   model->setData( index, currentValue, Qt::EditRole );
 }
+
+/// @endcond

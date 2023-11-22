@@ -86,6 +86,7 @@ class CORE_EXPORT QgsRasterBlock
       switch ( dataType )
       {
         case Qgis::DataType::Byte:
+        case Qgis::DataType::Int8:
           return 1;
 
         case Qgis::DataType::UInt16:
@@ -110,9 +111,10 @@ class CORE_EXPORT QgsRasterBlock
         case Qgis::DataType::ARGB32_Premultiplied:
           return 4;
 
-        default:
-          return 0;
+        case Qgis::DataType::UnknownDataType:
+          break;
       }
+      return 0;
     }
 
     /**
@@ -312,7 +314,7 @@ class CORE_EXPORT QgsRasterBlock
         return false;
       if ( index >= static_cast< qgssize >( mWidth )*mHeight )
       {
-        QgsDebugMsg( QStringLiteral( "Index %1 out of range (%2 x %3)" ).arg( index ).arg( mWidth ).arg( mHeight ) );
+        QgsDebugError( QStringLiteral( "Index %1 out of range (%2 x %3)" ).arg( index ).arg( mWidth ).arg( mHeight ) );
         return true; // we consider no data if outside
       }
       if ( mHasNoDataValue )
@@ -359,12 +361,12 @@ class CORE_EXPORT QgsRasterBlock
     {
       if ( !mData )
       {
-        QgsDebugMsg( QStringLiteral( "Data block not allocated" ) );
+        QgsDebugError( QStringLiteral( "Data block not allocated" ) );
         return false;
       }
       if ( index >= static_cast< qgssize >( mWidth ) *mHeight )
       {
-        QgsDebugMsg( QStringLiteral( "Index %1 out of range (%2 x %3)" ).arg( index ).arg( mWidth ).arg( mHeight ) );
+        QgsDebugError( QStringLiteral( "Index %1 out of range (%2 x %3)" ).arg( index ).arg( mWidth ).arg( mHeight ) );
         return false;
       }
       writeValue( mData, mDataType, index, value );
@@ -393,13 +395,13 @@ class CORE_EXPORT QgsRasterBlock
     {
       if ( !mImage )
       {
-        QgsDebugMsg( QStringLiteral( "Image not allocated" ) );
+        QgsDebugError( QStringLiteral( "Image not allocated" ) );
         return false;
       }
 
       if ( index >= static_cast< qgssize >( mImage->width() ) * mImage->height() )
       {
-        QgsDebugMsg( QStringLiteral( "index %1 out of range" ).arg( index ) );
+        QgsDebugError( QStringLiteral( "index %1 out of range" ).arg( index ) );
         return false;
       }
 
@@ -748,6 +750,8 @@ inline double QgsRasterBlock::readValue( void *data, Qgis::DataType type, qgssiz
   {
     case Qgis::DataType::Byte:
       return static_cast< double >( ( static_cast< quint8 * >( data ) )[index] );
+    case Qgis::DataType::Int8:
+      return static_cast< double >( ( static_cast< qint8 * >( data ) )[index] );
     case Qgis::DataType::UInt16:
       return static_cast< double >( ( static_cast< quint16 * >( data ) )[index] );
     case Qgis::DataType::Int16:
@@ -760,8 +764,14 @@ inline double QgsRasterBlock::readValue( void *data, Qgis::DataType type, qgssiz
       return static_cast< double >( ( static_cast< float * >( data ) )[index] );
     case Qgis::DataType::Float64:
       return static_cast< double >( ( static_cast< double * >( data ) )[index] );
-    default:
-      QgsDebugMsg( QStringLiteral( "Data type %1 is not supported" ).arg( qgsEnumValueToKey< Qgis::DataType >( type ) ) );
+    case Qgis::DataType::CInt16:
+    case Qgis::DataType::CInt32:
+    case Qgis::DataType::CFloat32:
+    case Qgis::DataType::CFloat64:
+    case Qgis::DataType::ARGB32:
+    case Qgis::DataType::ARGB32_Premultiplied:
+    case Qgis::DataType::UnknownDataType:
+      QgsDebugError( QStringLiteral( "Data type %1 is not supported" ).arg( qgsEnumValueToKey< Qgis::DataType >( type ) ) );
       break;
   }
 
@@ -776,6 +786,9 @@ inline void QgsRasterBlock::writeValue( void *data, Qgis::DataType type, qgssize
   {
     case Qgis::DataType::Byte:
       ( static_cast< quint8 * >( data ) )[index] = static_cast< quint8 >( value );
+      break;
+    case Qgis::DataType::Int8:
+      ( static_cast< qint8 * >( data ) )[index] = static_cast< qint8 >( value );
       break;
     case Qgis::DataType::UInt16:
       ( static_cast< quint16 * >( data ) )[index] = static_cast< quint16 >( value );
@@ -795,8 +808,14 @@ inline void QgsRasterBlock::writeValue( void *data, Qgis::DataType type, qgssize
     case Qgis::DataType::Float64:
       ( static_cast< double * >( data ) )[index] = value;
       break;
-    default:
-      QgsDebugMsg( QStringLiteral( "Data type %1 is not supported" ).arg( qgsEnumValueToKey< Qgis::DataType >( type ) ) );
+    case Qgis::DataType::CInt16:
+    case Qgis::DataType::CInt32:
+    case Qgis::DataType::CFloat32:
+    case Qgis::DataType::CFloat64:
+    case Qgis::DataType::ARGB32:
+    case Qgis::DataType::ARGB32_Premultiplied:
+    case Qgis::DataType::UnknownDataType:
+      QgsDebugError( QStringLiteral( "Data type %1 is not supported" ).arg( qgsEnumValueToKey< Qgis::DataType >( type ) ) );
       break;
   }
 }
@@ -805,7 +824,7 @@ inline double QgsRasterBlock::value( qgssize index ) const SIP_SKIP
 {
   if ( !mData )
   {
-    QgsDebugMsg( QStringLiteral( "Data block not allocated" ) );
+    QgsDebugError( QStringLiteral( "Data block not allocated" ) );
     return std::numeric_limits<double>::quiet_NaN();
   }
   return readValue( mData, mDataType, index );
@@ -815,13 +834,13 @@ inline double QgsRasterBlock::valueAndNoData( qgssize index, bool &isNoData ) co
 {
   if ( !mData )
   {
-    QgsDebugMsg( QStringLiteral( "Data block not allocated" ) );
+    QgsDebugError( QStringLiteral( "Data block not allocated" ) );
     isNoData = true;
     return std::numeric_limits<double>::quiet_NaN();
   }
   if ( index >= static_cast< qgssize >( mWidth )*mHeight )
   {
-    QgsDebugMsg( QStringLiteral( "Index %1 out of range (%2 x %3)" ).arg( index ).arg( mWidth ).arg( mHeight ) );
+    QgsDebugError( QStringLiteral( "Index %1 out of range (%2 x %3)" ).arg( index ).arg( mWidth ).arg( mHeight ) );
     isNoData = true; // we consider no data if outside
     return std::numeric_limits<double>::quiet_NaN();
   }

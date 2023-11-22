@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for QgsSpatialiteProvider
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -10,14 +9,11 @@ __author__ = 'Vincent Mora'
 __date__ = '09/07/2013'
 __copyright__ = 'Copyright 2013, The QGIS Project'
 
-import qgis  # NOQA
-
 import os
 
+import qgis  # NOQA
 from qgis.core import QgsPointXY, QgsVectorLayer
-
 from qgis.testing import start_app, unittest
-
 from qgis.utils import spatialite_connect
 
 # Convenience instances in case you may need them
@@ -33,6 +29,7 @@ class TestQgsSpatialiteProvider(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
+        super().setUpClass()
         # create test db
         if os.path.exists("test.sqlite"):
             os.remove("test.sqlite")
@@ -78,7 +75,7 @@ class TestQgsSpatialiteProvider(unittest.TestCase):
         # for the time being, keep the file to check with qgis
         # if os.path.exists("test.sqlite") :
         #    os.remove("test.sqlite")
-        pass
+        super().tearDownClass()
 
     def setUp(self):
         """Run before each test."""
@@ -91,8 +88,8 @@ class TestQgsSpatialiteProvider(unittest.TestCase):
     def test_SplitMultipolygon(self):
         """Split multipolygon"""
         layer = QgsVectorLayer("dbname=test.sqlite table=test_mpg (geometry)", "test_mpg", "spatialite")
-        assert(layer.isValid())
-        assert(layer.isSpatial())
+        assert layer.isValid()
+        assert layer.isSpatial()
         layer.featureCount() == 1 or die("wrong number of features")
         layer.startEditing()
         layer.splitFeatures([QgsPointXY(0.5, -0.5), QgsPointXY(0.5, 1.5)], 0) == 0 or die("error in split of one polygon of multipolygon")
@@ -103,8 +100,8 @@ class TestQgsSpatialiteProvider(unittest.TestCase):
     def test_SplitTruToCreateCutEdge(self):
         """Try to creat a cut edge"""
         layer = QgsVectorLayer("dbname=test.sqlite table=test_pg (geometry)", "test_pg", "spatialite")
-        assert(layer.isValid())
-        assert(layer.isSpatial())
+        assert layer.isValid()
+        assert layer.isSpatial()
         layer.featureCount() == 1 or die("wrong number of features")
         layer.startEditing()
         layer.splitFeatures([QgsPointXY(1.5, -0.5), QgsPointXY(1.5, 1.5)], 0) == 0 or die("error when trying to create an invalid polygon in split")

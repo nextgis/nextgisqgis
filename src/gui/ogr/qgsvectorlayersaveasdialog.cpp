@@ -17,7 +17,6 @@
  ***************************************************************************/
 #include "qgslogger.h"
 #include "qgsvectorlayersaveasdialog.h"
-#include "qgsprojectionselectiondialog.h"
 #include "qgsvectordataprovider.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgseditorwidgetfactory.h"
@@ -25,37 +24,31 @@
 #include "qgssettings.h"
 #include "qgsmapcanvas.h"
 #include "qgsgui.h"
-#include "qgsapplication.h"
+#include "qgsmaplayerutils.h"
+#include "qgshelp.h"
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QTextCodec>
 #include <QSpinBox>
 #include <QRegularExpression>
+#include <limits>
 #include "gdal.h"
 #include "qgsdatums.h"
 #include "qgsiconutils.h"
 #include "qgsproviderregistry.h"
 #include "qgsprovidersublayerdetails.h"
 
-static const int COLUMN_IDX_NAME = 0;
-static const int COLUMN_IDX_TYPE = 1;
-static const int COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE = 2;
-
 QgsVectorLayerSaveAsDialog::QgsVectorLayerSaveAsDialog( long srsid, QWidget *parent, Qt::WindowFlags fl )
   : QDialog( parent, fl )
   , mSelectedCrs( QgsCoordinateReferenceSystem::fromSrsId( srsid ) )
-  , mAttributeTableItemChangedSlotEnabled( true )
-  , mReplaceRawFieldValuesStateChangedSlotEnabled( true )
   , mActionOnExistingFile( QgsVectorFileWriter::CreateOrOverwriteFile )
 {
   setup();
 }
 
-QgsVectorLayerSaveAsDialog::QgsVectorLayerSaveAsDialog( QgsVectorLayer *layer, Options options, QWidget *parent, Qt::WindowFlags fl )
+QgsVectorLayerSaveAsDialog::QgsVectorLayerSaveAsDialog( QgsVectorLayer *layer, QgsVectorLayerSaveAsDialog::Options options, QWidget *parent, Qt::WindowFlags fl )
   : QDialog( parent, fl )
   , mLayer( layer )
-  , mAttributeTableItemChangedSlotEnabled( true )
-  , mReplaceRawFieldValuesStateChangedSlotEnabled( true )
   , mActionOnExistingFile( QgsVectorFileWriter::CreateOrOverwriteFile )
   , mOptions( options )
 {
@@ -66,7 +59,16 @@ QgsVectorLayerSaveAsDialog::QgsVectorLayerSaveAsDialog( QgsVectorLayer *layer, O
   }
   setup();
 
-  if ( !( mOptions & Symbology ) )
+  if ( layer )
+  {
+    mDefaultOutputLayerNameFromInputLayerName = QgsMapLayerUtils::launderLayerName( layer->name() );
+    leLayername->setDefaultValue( mDefaultOutputLayerNameFromInputLayerName );
+    leLayername->setClearMode( QgsFilterLineEdit::ClearToDefault );
+    if ( leLayername->isEnabled() )
+      leLayername->setText( mDefaultOutputLayerNameFromInputLayerName );
+  }
+
+  if ( !( mOptions & Option::Symbology ) )
   {
     mSymbologyExportLabel->hide();
     mSymbologyExportComboBox->hide();
@@ -74,27 +76,27 @@ QgsVectorLayerSaveAsDialog::QgsVectorLayerSaveAsDialog( QgsVectorLayer *layer, O
     mScaleWidget->hide();
   }
 
-  if ( !( mOptions & DestinationCrs ) )
+  if ( !( mOptions & Option::DestinationCrs ) )
   {
     mCrsLabel->hide();
     mCrsSelector->hide();
   }
-  if ( !( mOptions & Fields ) )
+  if ( !( mOptions & Option::Fields ) )
     mAttributesSelection->hide();
 
-  if ( !( mOptions & SelectedOnly ) )
+  if ( !( mOptions & Option::SelectedOnly ) )
     mSelectedOnly->hide();
 
-  if ( !( mOptions & AddToCanvas ) )
+  if ( !( mOptions & Option::AddToCanvas ) )
     mAddToCanvas->hide();
 
-  if ( !( mOptions & GeometryType ) )
+  if ( !( mOptions & Option::GeometryType ) )
     mGeometryGroupBox->hide();
 
-  if ( !( mOptions & Extent ) )
+  if ( !( mOptions & Option::Extent ) )
     mExtentGroupBox->hide();
 
-  if ( !( mOptions & Metadata ) )
+  if ( !( mOptions & Option::Metadata ) )
   {
     mCheckPersistMetadata->setChecked( false );
     mCheckPersistMetadata->hide();
@@ -115,6 +117,7 @@ void QgsVectorLayerSaveAsDialog::setup()
   connect( mGeometryTypeComboBox, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, &QgsVectorLayerSaveAsDialog::mGeometryTypeComboBox_currentIndexChanged );
   connect( mSelectAllAttributes, &QPushButton::clicked, this, &QgsVectorLayerSaveAsDialog::mSelectAllAttributes_clicked );
   connect( mDeselectAllAttributes, &QPushButton::clicked, this, &QgsVectorLayerSaveAsDialog::mDeselectAllAttributes_clicked );
+  connect( mUseAliasesForExportedName, &QCheckBox::stateChanged, this, &QgsVectorLayerSaveAsDialog::mUseAliasesForExportedName_stateChanged );
   connect( mReplaceRawFieldValues, &QCheckBox::stateChanged, this, &QgsVectorLayerSaveAsDialog::mReplaceRawFieldValues_stateChanged );
   connect( mAttributeTable, &QTableWidget::itemChanged, this, &QgsVectorLayerSaveAsDialog::mAttributeTable_itemChanged );
 
@@ -140,18 +143,18 @@ void QgsVectorLayerSaveAsDialog::setup()
   mFormatComboBox->setCurrentIndex( mFormatComboBox->findData( format ) );
   mFormatComboBox->blockSignals( false );
 
-  const auto addGeomItem = [this]( QgsWkbTypes::Type type )
+  const auto addGeomItem = [this]( Qgis::WkbType type )
   {
-    mGeometryTypeComboBox->addItem( QgsIconUtils::iconForWkbType( type ), QgsWkbTypes::translatedDisplayString( type ), type );
+    mGeometryTypeComboBox->addItem( QgsIconUtils::iconForWkbType( type ), QgsWkbTypes::translatedDisplayString( type ), static_cast< quint32>( type ) );
   };
 
   //add geometry types to combobox
   mGeometryTypeComboBox->addItem( tr( "Automatic" ), -1 );
-  addGeomItem( QgsWkbTypes::Point );
-  addGeomItem( QgsWkbTypes::LineString );
-  addGeomItem( QgsWkbTypes::Polygon );
-  mGeometryTypeComboBox->addItem( QgsWkbTypes::translatedDisplayString( QgsWkbTypes::GeometryCollection ), QgsWkbTypes::GeometryCollection );
-  addGeomItem( QgsWkbTypes::NoGeometry );
+  addGeomItem( Qgis::WkbType::Point );
+  addGeomItem( Qgis::WkbType::LineString );
+  addGeomItem( Qgis::WkbType::Polygon );
+  mGeometryTypeComboBox->addItem( QgsWkbTypes::translatedDisplayString( Qgis::WkbType::GeometryCollection ), static_cast< quint32>( Qgis::WkbType::GeometryCollection ) );
+  addGeomItem( Qgis::WkbType::NoGeometry );
   mGeometryTypeComboBox->setCurrentIndex( mGeometryTypeComboBox->findData( -1 ) );
 
   mEncodingComboBox->addItems( QgsVectorDataProvider::availableEncodings() );
@@ -173,9 +176,9 @@ void QgsVectorLayerSaveAsDialog::setup()
   mFormatComboBox_currentIndexChanged( mFormatComboBox->currentIndex() );
 
   //symbology export combo box
-  mSymbologyExportComboBox->addItem( tr( "No Symbology" ), QgsVectorFileWriter::NoSymbology );
-  mSymbologyExportComboBox->addItem( tr( "Feature Symbology" ), QgsVectorFileWriter::FeatureSymbology );
-  mSymbologyExportComboBox->addItem( tr( "Symbol Layer Symbology" ), QgsVectorFileWriter::SymbolLayerSymbology );
+  mSymbologyExportComboBox->addItem( tr( "No Symbology" ), QVariant::fromValue( Qgis::FeatureSymbologyExport::NoSymbology ) );
+  mSymbologyExportComboBox->addItem( tr( "Feature Symbology" ), QVariant::fromValue( Qgis::FeatureSymbologyExport::PerFeature ) );
+  mSymbologyExportComboBox->addItem( tr( "Symbol Layer Symbology" ), QVariant::fromValue( Qgis::FeatureSymbologyExport::PerSymbolLayer ) );
   mSymbologyExportComboBox_currentIndexChanged( mSymbologyExportComboBox->currentText() );
 
   // extent group box
@@ -195,10 +198,16 @@ void QgsVectorLayerSaveAsDialog::setup()
     QgsSettings settings;
     QFileInfo tmplFileInfo( filePath );
     settings.setValue( QStringLiteral( "UI/lastVectorFileFilterDir" ), tmplFileInfo.absolutePath() );
-    if ( !filePath.isEmpty() && leLayername->isEnabled() )
+
+    const QFileInfo fileInfo( filePath );
+    const QString suggestedLayerName = QgsMapLayerUtils::launderLayerName( fileInfo.completeBaseName() );
+    if ( mDefaultOutputLayerNameFromInputLayerName.isEmpty() )
+      leLayername->setDefaultValue( suggestedLayerName );
+
+    // if no layer name set, then automatically match the output layer name to the file name
+    if ( leLayername->text().isEmpty() && !filePath.isEmpty() && leLayername->isEnabled() )
     {
-      QFileInfo fileInfo( filePath );
-      leLayername->setText( fileInfo.completeBaseName() );
+      leLayername->setText( suggestedLayerName );
     }
     mButtonBox->button( QDialogButtonBox::Ok )->setEnabled( !filePath.isEmpty() );
   } );
@@ -237,6 +246,7 @@ QList<QPair<QLabel *, QWidget *> > QgsVectorLayerSaveAsDialog::createControls( c
         {
           QSpinBox *sb = new QSpinBox();
           sb->setObjectName( it.key() );
+          sb->setMaximum( std::numeric_limits<int>::max() ); // the default is 99
           sb->setValue( opt->defaultValue );
           control = sb;
         }
@@ -297,12 +307,12 @@ QList<QPair<QLabel *, QWidget *> > QgsVectorLayerSaveAsDialog::createControls( c
 
 void QgsVectorLayerSaveAsDialog::accept()
 {
-  if ( QFile::exists( filename() ) )
+  if ( QFile::exists( fileName() ) )
   {
     QgsVectorFileWriter::EditionCapabilities caps =
-      QgsVectorFileWriter::editionCapabilities( filename() );
-    bool layerExists = QgsVectorFileWriter::targetLayerExists( filename(),
-                       layername() );
+      QgsVectorFileWriter::editionCapabilities( fileName() );
+    bool layerExists = QgsVectorFileWriter::targetLayerExists( fileName(),
+                       layerName() );
     QMessageBox msgBox;
     msgBox.setIcon( QMessageBox::Question );
     msgBox.setWindowTitle( tr( "Save Vector Layer As" ) );
@@ -376,7 +386,7 @@ void QgsVectorLayerSaveAsDialog::accept()
 
   if ( mActionOnExistingFile == QgsVectorFileWriter::AppendToLayerNoNewFields )
   {
-    if ( QgsVectorFileWriter::areThereNewFieldsToCreate( filename(), layername(), mLayer, selectedAttributes() ) )
+    if ( QgsVectorFileWriter::areThereNewFieldsToCreate( fileName(), layerName(), mLayer, selectedAttributes() ) )
     {
       if ( QMessageBox::question( this,
                                   tr( "Save Vector Layer As" ),
@@ -386,9 +396,9 @@ void QgsVectorLayerSaveAsDialog::accept()
       }
     }
   }
-  else if ( mActionOnExistingFile == QgsVectorFileWriter::CreateOrOverwriteFile && QFile::exists( filename() ) )
+  else if ( mActionOnExistingFile == QgsVectorFileWriter::CreateOrOverwriteFile && QFile::exists( fileName() ) )
   {
-    const QList<QgsProviderSublayerDetails> sublayers = QgsProviderRegistry::instance()->querySublayers( filename() );
+    const QList<QgsProviderSublayerDetails> sublayers = QgsProviderRegistry::instance()->querySublayers( fileName() );
     QStringList layerList;
     layerList.reserve( sublayers.size() );
     for ( const QgsProviderSublayerDetails &sublayer : sublayers )
@@ -410,7 +420,7 @@ void QgsVectorLayerSaveAsDialog::accept()
   }
 
   QgsSettings settings;
-  settings.setValue( QStringLiteral( "UI/lastVectorFileFilterDir" ), QFileInfo( filename() ).absolutePath() );
+  settings.setValue( QStringLiteral( "UI/lastVectorFileFilterDir" ), QFileInfo( fileName() ).absolutePath() );
   settings.setValue( QStringLiteral( "UI/lastVectorFormat" ), format() );
   settings.setValue( QStringLiteral( "UI/encoding" ), encoding() );
   QDialog::accept();
@@ -427,13 +437,12 @@ void QgsVectorLayerSaveAsDialog::mFormatComboBox_currentIndexChanged( int idx )
   // to avoid double extensions like .gpkg.shp
   if ( !mFilename->filePath().isEmpty() )
   {
-    QRegularExpression rx( "\\.(.*?)[\\s]" );
-    QString ext;
-    ext = rx.match( QgsVectorFileWriter::filterForDriver( format() ) ).captured( 1 );
+    const thread_local QRegularExpression rx( "\\.(.*?)[\\s]" );
+    const QString ext = rx.match( QgsVectorFileWriter::filterForDriver( format() ) ).captured( 1 );
     if ( !ext.isEmpty() )
     {
       QFileInfo fi( mFilename->filePath() );
-      mFilename->setFilePath( QStringLiteral( "%1/%2.%3" ).arg( fi.path() ).arg( fi.baseName() ).arg( ext ) );
+      mFilename->setFilePath( QStringLiteral( "%1/%2.%3" ).arg( fi.path(), fi.baseName(), ext ) );
     }
   }
 
@@ -452,7 +461,7 @@ void QgsVectorLayerSaveAsDialog::mFormatComboBox_currentIndexChanged( int idx )
   }
   else
   {
-    if ( mOptions & Fields )
+    if ( mOptions & Option::Fields )
     {
       mAttributesSelection->setVisible( true );
       isFormatForFieldsAsDisplayedValues = ( sFormat == QLatin1String( "CSV" ) ||
@@ -463,7 +472,7 @@ void QgsVectorLayerSaveAsDialog::mFormatComboBox_currentIndexChanged( int idx )
   }
 
   // Show symbology options only for some formats
-  if ( QgsVectorFileWriter::supportsFeatureStyles( sFormat ) && ( mOptions & Symbology ) )
+  if ( QgsVectorFileWriter::supportsFeatureStyles( sFormat ) && ( mOptions & Option::Symbology ) )
   {
     mSymbologyExportLabel->setVisible( true );
     mSymbologyExportComboBox->setVisible( true );
@@ -483,6 +492,7 @@ void QgsVectorLayerSaveAsDialog::mFormatComboBox_currentIndexChanged( int idx )
                            sFormat == QLatin1String( "XLSX" ) ||
                            sFormat == QLatin1String( "ODS" ) ||
                            sFormat == QLatin1String( "FileGDB" ) ||
+                           sFormat == QLatin1String( "OpenFileGDB" ) ||
                            sFormat == QLatin1String( "SQLite" ) ||
                            sFormat == QLatin1String( "SpatiaLite" ) );
 
@@ -493,16 +503,26 @@ void QgsVectorLayerSaveAsDialog::mFormatComboBox_currentIndexChanged( int idx )
 
   if ( !leLayername->isEnabled() )
     leLayername->setText( QString() );
-  else if ( leLayername->text().isEmpty() &&
-            !mFilename->filePath().isEmpty() )
+  else if ( leLayername->text().isEmpty() )
   {
-    QString layerName = QFileInfo( mFilename->filePath() ).baseName();
+    QString layerName = mDefaultOutputLayerNameFromInputLayerName;
+    if ( layerName.isEmpty() && !mFilename->filePath().isEmpty() )
+    {
+      layerName = QFileInfo( mFilename->filePath() ).baseName();
+      leLayername->setDefaultValue( layerName );
+    }
+    if ( layerName.isEmpty() )
+      layerName = tr( "new_layer" );
     leLayername->setText( layerName );
   }
 
   if ( mLayer )
   {
     mAttributeTable->setRowCount( mLayer->fields().count() );
+
+    QStringList horizontalHeaders = QStringList() << tr( "Name" )  << tr( "Export name" ) << tr( "Type" ) << tr( "Replace with displayed values" );
+    mAttributeTable->setColumnCount( horizontalHeaders.size() );
+    mAttributeTable->setHorizontalHeaderLabels( horizontalHeaders );
 
     bool foundFieldThatCanBeExportedAsDisplayedValue = false;
     for ( int i = 0; i < mLayer->fields().size(); ++i )
@@ -515,69 +535,63 @@ void QgsVectorLayerSaveAsDialog::mFormatComboBox_currentIndexChanged( int idx )
         break;
       }
     }
-    if ( foundFieldThatCanBeExportedAsDisplayedValue )
-    {
-      mAttributeTable->setColumnCount( 3 );
-      mAttributeTable->setHorizontalHeaderLabels( QStringList() << tr( "Name" ) << tr( "Type" ) << tr( "Replace with displayed values" ) );
-    }
-    else
-    {
-      mAttributeTable->setColumnCount( 2 );
-      mAttributeTable->setHorizontalHeaderLabels( QStringList() << tr( "Name" ) << tr( "Type" ) );
-    }
-
-    mAttributeTableItemChangedSlotEnabled = false;
+    mAttributeTable->setColumnHidden( static_cast<int>( ColumnIndex::ExportAsDisplayedValue ),
+                                      ! foundFieldThatCanBeExportedAsDisplayedValue );
 
     bool checkReplaceRawFieldValues = selectAllFields && isFormatForFieldsAsDisplayedValues;
-    for ( int i = 0; i < mLayer->fields().size(); ++i )
+    const QSignalBlocker signalBlockerAttributeTable( mAttributeTable );
     {
-      QgsField fld = mLayer->fields().at( i );
-      Qt::ItemFlags flags = mLayer->providerType() != QLatin1String( "oracle" ) || !fld.typeName().contains( QLatin1String( "SDO_GEOMETRY" ) ) ? Qt::ItemIsEnabled : Qt::NoItemFlags;
-      QTableWidgetItem *item = nullptr;
-      item = new QTableWidgetItem( fld.name() );
-      item->setFlags( flags | Qt::ItemIsUserCheckable );
-      item->setCheckState( ( selectAllFields ) ? Qt::Checked : Qt::Unchecked );
-      mAttributeTable->setItem( i, COLUMN_IDX_NAME, item );
-
-      item = new QTableWidgetItem( fld.typeName() );
-      item->setFlags( flags );
-      mAttributeTable->setItem( i, COLUMN_IDX_TYPE, item );
-
-      if ( foundFieldThatCanBeExportedAsDisplayedValue )
+      for ( int i = 0; i < mLayer->fields().size(); ++i )
       {
-        const QgsEditorWidgetSetup setup = QgsGui::editorWidgetRegistry()->findBest( mLayer, mLayer->fields()[i].name() );
-        QgsEditorWidgetFactory *factory = nullptr;
-        const QString widgetId( setup.type() );
-        if ( flags == Qt::ItemIsEnabled &&
-             widgetId != QLatin1String( "TextEdit" ) &&
-             ( factory = QgsGui::editorWidgetRegistry()->factory( widgetId ) ) )
+        QgsField fld = mLayer->fields().at( i );
+        Qt::ItemFlags flags = mLayer->providerType() != QLatin1String( "oracle" ) || !fld.typeName().contains( QLatin1String( "SDO_GEOMETRY" ) ) ? Qt::ItemIsEnabled : Qt::NoItemFlags;
+        QTableWidgetItem *item = nullptr;
+        item = new QTableWidgetItem( fld.name() );
+        item->setFlags( flags | Qt::ItemIsUserCheckable );
+        item->setCheckState( ( selectAllFields ) ? Qt::Checked : Qt::Unchecked );
+        mAttributeTable->setItem( i, static_cast<int>( ColumnIndex::Name ), item );
+
+        item = new QTableWidgetItem( fld.name() );
+        item->setFlags( flags | Qt::ItemIsEditable );
+        item->setData( Qt::UserRole, fld.displayName() );
+        mAttributeTable->setItem( i, static_cast<int>( ColumnIndex::ExportName ), item );
+
+        item = new QTableWidgetItem( fld.typeName() );
+        item->setFlags( flags );
+        mAttributeTable->setItem( i, static_cast<int>( ColumnIndex::Type ), item );
+
+        if ( foundFieldThatCanBeExportedAsDisplayedValue )
         {
-          item = new QTableWidgetItem( tr( "Use %1" ).arg( factory->name() ) );
-          item->setFlags( ( selectAllFields ) ? ( Qt::ItemIsEnabled | Qt::ItemIsUserCheckable ) : Qt::ItemIsUserCheckable );
-          const bool checkItem = ( selectAllFields && isFormatForFieldsAsDisplayedValues &&
-                                   ( widgetId == QLatin1String( "ValueMap" ) ||
-                                     widgetId == QLatin1String( "ValueRelation" ) ||
-                                     widgetId == QLatin1String( "CheckBox" ) ||
-                                     widgetId == QLatin1String( "RelationReference" ) ) );
-          checkReplaceRawFieldValues &= checkItem;
-          item->setCheckState( checkItem ?
-                               Qt::Checked : Qt::Unchecked );
-          mAttributeTable->setItem( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE, item );
-        }
-        else
-        {
-          item = new QTableWidgetItem();
-          item->setFlags( Qt::NoItemFlags );
-          mAttributeTable->setItem( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE, item );
+          const QgsEditorWidgetSetup setup = QgsGui::editorWidgetRegistry()->findBest( mLayer, mLayer->fields()[i].name() );
+          QgsEditorWidgetFactory *factory = nullptr;
+          const QString widgetId( setup.type() );
+          if ( flags == Qt::ItemIsEnabled &&
+               widgetId != QLatin1String( "TextEdit" ) &&
+               ( factory = QgsGui::editorWidgetRegistry()->factory( widgetId ) ) )
+          {
+            item = new QTableWidgetItem( tr( "Use %1" ).arg( factory->name() ) );
+            item->setFlags( ( selectAllFields ) ? ( Qt::ItemIsEnabled | Qt::ItemIsUserCheckable ) : Qt::ItemIsUserCheckable );
+            const bool checkItem = ( selectAllFields && isFormatForFieldsAsDisplayedValues &&
+                                     ( widgetId == QLatin1String( "ValueMap" ) ||
+                                       widgetId == QLatin1String( "ValueRelation" ) ||
+                                       widgetId == QLatin1String( "CheckBox" ) ||
+                                       widgetId == QLatin1String( "RelationReference" ) ) );
+            checkReplaceRawFieldValues &= checkItem;
+            item->setCheckState( checkItem ?
+                                 Qt::Checked : Qt::Unchecked );
+            mAttributeTable->setItem( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ), item );
+          }
+          else
+          {
+            item = new QTableWidgetItem();
+            item->setFlags( Qt::NoItemFlags );
+            mAttributeTable->setItem( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ), item );
+          }
         }
       }
     }
 
-    mAttributeTableItemChangedSlotEnabled = true;
-
-    mReplaceRawFieldValuesStateChangedSlotEnabled = false;
-    mReplaceRawFieldValues->setChecked( checkReplaceRawFieldValues );
-    mReplaceRawFieldValuesStateChangedSlotEnabled = true;
+    whileBlocking( mReplaceRawFieldValues )->setChecked( checkReplaceRawFieldValues );
     mReplaceRawFieldValues->setEnabled( selectAllFields );
     mReplaceRawFieldValues->setVisible( foundFieldThatCanBeExportedAsDisplayedValue );
 
@@ -671,90 +685,191 @@ void QgsVectorLayerSaveAsDialog::mFormatComboBox_currentIndexChanged( int idx )
   }
 }
 
+void QgsVectorLayerSaveAsDialog::mUseAliasesForExportedName_stateChanged( int state )
+{
+  const QSignalBlocker signalBlocker( mAttributeTable );
+
+  switch ( state )
+  {
+    case Qt::Unchecked:
+    {
+      // Check for modified entries
+      bool modifiedEntries = false;
+      for ( int i = 0; i < mAttributeTable->rowCount(); i++ )
+      {
+        if ( mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportName ) )->text()
+             != mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportName ) )->data( Qt::UserRole ).toString() )
+        {
+          modifiedEntries = true;
+          break;
+        }
+      }
+
+      if ( modifiedEntries )
+      {
+        if ( QMessageBox::question( this,
+                                    tr( "Modified names" ),
+                                    tr( "Some names were modified and will be overridden. Do you want to continue?" ) )
+             == QMessageBox::No )
+        {
+          whileBlocking( mUseAliasesForExportedName )->setCheckState( Qt::PartiallyChecked );
+          return;
+        }
+      }
+
+      for ( int i = 0; i < mAttributeTable->rowCount(); i++ )
+      {
+        mUseAliasesForExportedName->setTristate( false );
+        mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportName ) )->setText( mAttributeTable->item( i, static_cast<int>( ColumnIndex::Name ) )->text() );
+      }
+    }
+    break;
+    case Qt::Checked:
+    {
+      // Check for modified entries
+      bool modifiedEntries = false;
+      for ( int i = 0; i < mAttributeTable->rowCount(); i++ )
+      {
+        if ( mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportName ) )->text()
+             != mAttributeTable->item( i, static_cast<int>( ColumnIndex::Name ) )->text() )
+          modifiedEntries = true;
+      }
+
+      if ( modifiedEntries )
+      {
+        if ( QMessageBox::question( this,
+                                    tr( "Modified names" ),
+                                    tr( "Some names were modified and will be overridden. Do you want to continue?" ) )
+             == QMessageBox::No )
+        {
+          whileBlocking( mUseAliasesForExportedName )->setCheckState( Qt::PartiallyChecked );
+          return;
+        }
+      }
+
+      for ( int i = 0; i < mAttributeTable->rowCount(); i++ )
+      {
+        mUseAliasesForExportedName->setTristate( false );
+        const QString alias = mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportName ) )->data( Qt::UserRole ).toString();
+        mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportName ) )->setText( alias );
+      }
+    }
+    break;
+    case Qt::PartiallyChecked:
+      // Do nothing
+      break;
+  }
+}
+
 void QgsVectorLayerSaveAsDialog::mReplaceRawFieldValues_stateChanged( int )
 {
-  if ( !mReplaceRawFieldValuesStateChangedSlotEnabled )
+  if ( mAttributeTable->isColumnHidden( static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) ) )
     return;
-  if ( mAttributeTable->columnCount() != 3 )
-    return;
-  mReplaceRawFieldValuesStateChangedSlotEnabled = false;
-  mAttributeTableItemChangedSlotEnabled = false;
+
+  const QSignalBlocker signalBlockerAttributeTable( mAttributeTable );
+  const QSignalBlocker signalBlockerReplaceRawFieldValues( mReplaceRawFieldValues );
+
   if ( mReplaceRawFieldValues->checkState() != Qt::PartiallyChecked )
   {
     for ( int i = 0; i < mAttributeTable->rowCount(); i++ )
     {
-      if ( mAttributeTable->item( i, COLUMN_IDX_NAME )->checkState() == Qt::Checked &&
-           mAttributeTable->item( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE ) &&
-           mAttributeTable->item( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->flags() & Qt::ItemIsEnabled )
+      if ( mAttributeTable->item( i, static_cast<int>( ColumnIndex::Name ) )->checkState() == Qt::Checked &&
+           mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) ) &&
+           mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->flags() & Qt::ItemIsEnabled )
       {
-        mAttributeTable->item( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->setCheckState( mReplaceRawFieldValues->checkState() );
+        mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->setCheckState( mReplaceRawFieldValues->checkState() );
       }
     }
   }
   mReplaceRawFieldValues->setTristate( false );
-  mAttributeTableItemChangedSlotEnabled = true;
-  mReplaceRawFieldValuesStateChangedSlotEnabled = true;
 }
 
 void QgsVectorLayerSaveAsDialog::mAttributeTable_itemChanged( QTableWidgetItem *item )
 {
-  if ( !mAttributeTableItemChangedSlotEnabled )
-    return;
-  mReplaceRawFieldValuesStateChangedSlotEnabled = false;
-  mAttributeTableItemChangedSlotEnabled = false;
+  const QSignalBlocker signalBlockerAttributeTable( mAttributeTable );
+  const QSignalBlocker signalBlockerReplaceRawFieldValues( mReplaceRawFieldValues );
+
   int row = item->row();
   int column = item->column();
-  if ( column == COLUMN_IDX_NAME &&
-       mAttributeTable->item( row, column )->checkState() == Qt::Unchecked &&
-       mAttributeTable->columnCount() == 3 &&
-       mAttributeTable->item( row, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE ) &&
-       ( mAttributeTable->item( row, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->flags() & Qt::ItemIsUserCheckable ) )
+
+  switch ( static_cast<ColumnIndex>( column ) )
   {
-    mAttributeTable->item( row, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->setCheckState( Qt::Unchecked );
-    mAttributeTable->item( row, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->setFlags( Qt::ItemIsUserCheckable );
-    bool checkBoxEnabled = false;
-    for ( int i = 0; i < mAttributeTable->rowCount(); i++ )
+    case ColumnIndex::Name:
     {
-      if ( mAttributeTable->item( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE ) &&
-           mAttributeTable->item( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->flags() & Qt::ItemIsEnabled )
+      if ( mAttributeTable->isColumnHidden( static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) ) ||
+           ! mAttributeTable->item( row, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) ) ||
+           !( mAttributeTable->item( row, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->flags() & Qt::ItemIsUserCheckable ) )
+        return;
+
+      if ( mAttributeTable->item( row, column )->checkState() == Qt::Unchecked )
       {
-        checkBoxEnabled = true;
-        break;
+        mAttributeTable->item( row, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->setCheckState( Qt::Unchecked );
+        mAttributeTable->item( row, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->setFlags( Qt::ItemIsUserCheckable );
+        bool checkBoxEnabled = false;
+        for ( int i = 0; i < mAttributeTable->rowCount(); i++ )
+        {
+          if ( mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) ) &&
+               mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->flags() & Qt::ItemIsEnabled )
+          {
+            checkBoxEnabled = true;
+            break;
+          }
+        }
+        mReplaceRawFieldValues->setEnabled( checkBoxEnabled );
+        if ( !checkBoxEnabled )
+          mReplaceRawFieldValues->setCheckState( Qt::Unchecked );
+      }
+      else if ( mAttributeTable->item( row, column )->checkState() == Qt::Checked )
+      {
+        mAttributeTable->item( row, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->setFlags( Qt::ItemIsUserCheckable | Qt::ItemIsEnabled );
+        mReplaceRawFieldValues->setEnabled( true );
       }
     }
-    mReplaceRawFieldValues->setEnabled( checkBoxEnabled );
-    if ( !checkBoxEnabled )
-      mReplaceRawFieldValues->setCheckState( Qt::Unchecked );
-  }
-  else if ( column == COLUMN_IDX_NAME &&
-            mAttributeTable->item( row, column )->checkState() == Qt::Checked &&
-            mAttributeTable->columnCount() == 3 &&
-            mAttributeTable->item( row, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE ) &&
-            ( mAttributeTable->item( row, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->flags() & Qt::ItemIsUserCheckable ) )
-  {
-    mAttributeTable->item( row, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->setFlags( Qt::ItemIsUserCheckable | Qt::ItemIsEnabled );
-    mReplaceRawFieldValues->setEnabled( true );
-  }
-  else if ( column == COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE &&
-            ( mAttributeTable->item( row, column )->flags() & Qt::ItemIsUserCheckable ) )
-  {
-    bool allChecked = true;
-    bool allUnchecked = true;
-    for ( int i = 0; i < mAttributeTable->rowCount(); i++ )
+    break;
+    case ColumnIndex::ExportName:
     {
-      if ( mAttributeTable->item( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE ) &&
-           mAttributeTable->item( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->flags() & Qt::ItemIsEnabled )
+      // Check empty export name
+      if ( item->text().isEmpty() )
       {
-        if ( mAttributeTable->item( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->checkState() == Qt::Unchecked )
-          allChecked = false;
-        else
-          allUnchecked = false;
+        QMessageBox::warning( this,
+                              tr( "Empty export name" ),
+                              tr( "Empty export name are not allowed." ) );
+        return;
+      }
+
+      // Rename eventually duplicated names
+      QStringList names = attributesExportNames();
+      while ( names.count( item->text() ) > 1 )
+        item->setText( QString( "%1_2" ).arg( item->text() ) );
+
+      mUseAliasesForExportedName->setCheckState( Qt::PartiallyChecked );
+    }
+    break;
+    case ColumnIndex::Type:
+      // Nothing to do
+      break;
+    case ColumnIndex::ExportAsDisplayedValue:
+    {
+      if ( mAttributeTable->item( row, column )->flags() & Qt::ItemIsUserCheckable )
+      {
+        bool allChecked = true;
+        bool allUnchecked = true;
+        for ( int i = 0; i < mAttributeTable->rowCount(); i++ )
+        {
+          if ( mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) ) &&
+               mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->flags() & Qt::ItemIsEnabled )
+          {
+            if ( mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->checkState() == Qt::Unchecked )
+              allChecked = false;
+            else
+              allUnchecked = false;
+          }
+        }
+        mReplaceRawFieldValues->setCheckState( ( !allChecked && !allUnchecked ) ? Qt::PartiallyChecked : ( allChecked ) ? Qt::Checked : Qt::Unchecked );
       }
     }
-    mReplaceRawFieldValues->setCheckState( ( !allChecked && !allUnchecked ) ? Qt::PartiallyChecked : ( allChecked ) ? Qt::Checked : Qt::Unchecked );
+    break;
   }
-  mAttributeTableItemChangedSlotEnabled = true;
-  mReplaceRawFieldValuesStateChangedSlotEnabled = true;
 }
 
 void QgsVectorLayerSaveAsDialog::mCrsSelector_crsChanged( const QgsCoordinateReferenceSystem &crs )
@@ -763,12 +878,12 @@ void QgsVectorLayerSaveAsDialog::mCrsSelector_crsChanged( const QgsCoordinateRef
   mExtentGroupBox->setOutputCrs( mSelectedCrs );
 }
 
-QString QgsVectorLayerSaveAsDialog::filename() const
+QString QgsVectorLayerSaveAsDialog::fileName() const
 {
   return mFilename->filePath();
 }
 
-QString QgsVectorLayerSaveAsDialog::layername() const
+QString QgsVectorLayerSaveAsDialog::layerName() const
 {
   return leLayername->text();
 }
@@ -783,12 +898,7 @@ QString QgsVectorLayerSaveAsDialog::format() const
   return mFormatComboBox->currentData().toString();
 }
 
-long QgsVectorLayerSaveAsDialog::crs() const
-{
-  return mSelectedCrs.srsid();
-}
-
-QgsCoordinateReferenceSystem QgsVectorLayerSaveAsDialog::crsObject() const
+QgsCoordinateReferenceSystem QgsVectorLayerSaveAsDialog::crs() const
 {
   return mSelectedCrs;
 }
@@ -917,7 +1027,7 @@ QgsAttributeList QgsVectorLayerSaveAsDialog::selectedAttributes() const
 
   for ( int i = 0; i < mAttributeTable->rowCount(); i++ )
   {
-    if ( mAttributeTable->item( i, COLUMN_IDX_NAME )->checkState() == Qt::Checked )
+    if ( mAttributeTable->item( i, static_cast<int>( ColumnIndex::Name ) )->checkState() == Qt::Checked )
     {
       attributes.append( i );
     }
@@ -932,15 +1042,24 @@ QgsAttributeList QgsVectorLayerSaveAsDialog::attributesAsDisplayedValues() const
 
   for ( int i = 0; i < mAttributeTable->rowCount(); i++ )
   {
-    if ( mAttributeTable->item( i, COLUMN_IDX_NAME )->checkState() == Qt::Checked &&
-         mAttributeTable->columnCount() == 3 &&
-         mAttributeTable->item( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->checkState() == Qt::Checked )
+    if ( mAttributeTable->item( i, static_cast<int>( ColumnIndex::Name ) )->checkState() == Qt::Checked &&
+         ! mAttributeTable->isColumnHidden( static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) ) &&
+         mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->checkState() == Qt::Checked )
     {
       attributes.append( i );
     }
   }
 
   return attributes;
+}
+
+QStringList QgsVectorLayerSaveAsDialog::attributesExportNames() const
+{
+  QStringList exportNames;
+  for ( int i = 0; i < mAttributeTable->rowCount(); i++ )
+    exportNames.append( mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportName ) )->text() );
+
+  return exportNames;
 }
 
 bool QgsVectorLayerSaveAsDialog::addToCanvas() const
@@ -953,9 +1072,9 @@ void QgsVectorLayerSaveAsDialog::setAddToCanvas( bool enabled )
   mAddToCanvas->setChecked( enabled );
 }
 
-int QgsVectorLayerSaveAsDialog::symbologyExport() const
+Qgis::FeatureSymbologyExport QgsVectorLayerSaveAsDialog::symbologyExport() const
 {
-  return mSymbologyExportComboBox->currentData().toInt();
+  return mSymbologyExportComboBox->currentData().value< Qgis::FeatureSymbologyExport >();
 }
 
 double QgsVectorLayerSaveAsDialog::scale() const
@@ -996,16 +1115,16 @@ bool QgsVectorLayerSaveAsDialog::persistMetadata() const
   return mCheckPersistMetadata->isChecked();
 }
 
-QgsWkbTypes::Type QgsVectorLayerSaveAsDialog::geometryType() const
+Qgis::WkbType QgsVectorLayerSaveAsDialog::geometryType() const
 {
   int currentIndexData = mGeometryTypeComboBox->currentData().toInt();
   if ( currentIndexData == -1 )
   {
     //automatic
-    return QgsWkbTypes::Unknown;
+    return Qgis::WkbType::Unknown;
   }
 
-  return static_cast< QgsWkbTypes::Type >( currentIndexData );
+  return static_cast< Qgis::WkbType >( currentIndexData );
 }
 
 bool QgsVectorLayerSaveAsDialog::automaticGeometryType() const
@@ -1050,11 +1169,11 @@ void QgsVectorLayerSaveAsDialog::mSymbologyExportComboBox_currentIndexChanged( c
   mScaleLabel->setEnabled( scaleEnabled );
 }
 
-void QgsVectorLayerSaveAsDialog::mGeometryTypeComboBox_currentIndexChanged( int index )
+void QgsVectorLayerSaveAsDialog::mGeometryTypeComboBox_currentIndexChanged( int )
 {
-  int currentIndexData = mGeometryTypeComboBox->itemData( index ).toInt();
+  Qgis::WkbType currentIndexData = static_cast< Qgis::WkbType >( mGeometryTypeComboBox->currentData().toInt() );
 
-  if ( currentIndexData != -1 && currentIndexData != QgsWkbTypes::NoGeometry )
+  if ( mGeometryTypeComboBox->currentIndex() != -1 && currentIndexData != Qgis::WkbType::NoGeometry )
   {
     mForceMultiCheckBox->setEnabled( true );
     mIncludeZCheckBox->setEnabled( true );
@@ -1070,49 +1189,47 @@ void QgsVectorLayerSaveAsDialog::mGeometryTypeComboBox_currentIndexChanged( int 
 
 void QgsVectorLayerSaveAsDialog::mSelectAllAttributes_clicked()
 {
-  mAttributeTableItemChangedSlotEnabled = false;
-  mReplaceRawFieldValuesStateChangedSlotEnabled = false;
+  const QSignalBlocker signalBlockerAttributeTable( mAttributeTable );
+  const QSignalBlocker signalBlockerReplaceRawFieldValues( mReplaceRawFieldValues );
+
   for ( int i = 0; i < mAttributeTable->rowCount(); i++ )
   {
-    if ( mAttributeTable->item( i, COLUMN_IDX_NAME )->flags() & Qt::ItemIsEnabled )
+    if ( mAttributeTable->item( i, static_cast<int>( ColumnIndex::Name ) )->flags() & Qt::ItemIsEnabled )
     {
-      if ( mAttributeTable->columnCount() == 3 &&
-           ( mAttributeTable->item( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->flags() & Qt::ItemIsUserCheckable ) )
+      if ( ! mAttributeTable->isColumnHidden( static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) ) &&
+           ( mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->flags() & Qt::ItemIsUserCheckable ) )
       {
-        mAttributeTable->item( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->setFlags( Qt::ItemIsUserCheckable | Qt::ItemIsEnabled );
+        mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->setFlags( Qt::ItemIsUserCheckable | Qt::ItemIsEnabled );
       }
-      mAttributeTable->item( i, COLUMN_IDX_NAME )->setCheckState( Qt::Checked );
+      mAttributeTable->item( i, static_cast<int>( ColumnIndex::Name ) )->setCheckState( Qt::Checked );
     }
   }
-  if ( mAttributeTable->columnCount() == 3 )
+  if ( ! mAttributeTable->isColumnHidden( static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) ) )
   {
     mReplaceRawFieldValues->setEnabled( true );
   }
-  mAttributeTableItemChangedSlotEnabled = true;
-  mReplaceRawFieldValuesStateChangedSlotEnabled = true;
 }
 
 void QgsVectorLayerSaveAsDialog::mDeselectAllAttributes_clicked()
 {
-  mAttributeTableItemChangedSlotEnabled = false;
-  mReplaceRawFieldValuesStateChangedSlotEnabled = false;
+  const QSignalBlocker signalBlockerAttributeTable( mAttributeTable );
+  const QSignalBlocker signalBlockerReplaceRawFieldValues( mReplaceRawFieldValues );
+
   for ( int i = 0; i < mAttributeTable->rowCount(); i++ )
   {
-    mAttributeTable->item( i, COLUMN_IDX_NAME )->setCheckState( Qt::Unchecked );
-    if ( mAttributeTable->columnCount() == 3 &&
-         ( mAttributeTable->item( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->flags() & Qt::ItemIsUserCheckable ) )
+    mAttributeTable->item( i, static_cast<int>( ColumnIndex::Name ) )->setCheckState( Qt::Unchecked );
+    if ( ! mAttributeTable->isColumnHidden( static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) ) &&
+         ( mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->flags() & Qt::ItemIsUserCheckable ) )
     {
-      mAttributeTable->item( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->setFlags( Qt::ItemIsUserCheckable );
-      mAttributeTable->item( i, COLUMN_IDX_EXPORT_AS_DISPLAYED_VALUE )->setCheckState( Qt::Unchecked );
+      mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->setFlags( Qt::ItemIsUserCheckable );
+      mAttributeTable->item( i, static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) )->setCheckState( Qt::Unchecked );
     }
   }
-  if ( mAttributeTable->columnCount() == 3 )
+  if ( ! mAttributeTable->isColumnHidden( static_cast<int>( ColumnIndex::ExportAsDisplayedValue ) ) )
   {
     mReplaceRawFieldValues->setCheckState( Qt::Unchecked );
     mReplaceRawFieldValues->setEnabled( false );
   }
-  mAttributeTableItemChangedSlotEnabled = true;
-  mReplaceRawFieldValuesStateChangedSlotEnabled = true;
 }
 
 void QgsVectorLayerSaveAsDialog::showHelp()

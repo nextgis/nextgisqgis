@@ -21,8 +21,8 @@
      static QgsPluginLayerRegistry *pluginLayerRegistry() /KeepReference/;
  %Docstring
  Returns the application's plugin layer registry, used for managing plugin layer types.
-@@ -953,13 +939,6 @@
- .. versionadded:: 3.2
+@@ -1008,13 +1008,6 @@
+ .. versionadded:: 3.28
  %End
  
 -    static QgsExternalStorageRegistry *externalStorageRegistry() /KeepReference/;

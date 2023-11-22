@@ -27,6 +27,7 @@
 #include "qgscoordinatereferencesystem.h"
 #include "qgis_gui.h"
 
+class QgsMapLayer;
 class QgsHighlightableComboBox;
 class QgsCrsSelectionWidget;
 class QLabel;
@@ -156,6 +157,13 @@ class GUI_EXPORT QgsProjectionSelectionWidget : public QWidget
      */
     QString dialogTitle() const;
 
+    /**
+     * Sets a filtered list of CRSes to show in the widget.
+     *
+     * \since QGIS 3.28
+     */
+    void setFilter( const QList< QgsCoordinateReferenceSystem > &crses );
+
   signals:
 
     /**
@@ -217,6 +225,8 @@ class GUI_EXPORT QgsProjectionSelectionWidget : public QWidget
 
     QString mDialogTitle;
 
+    QList<QgsCoordinateReferenceSystem> mFilter;
+
     void addNotSetOption();
     void addProjectCrsOption();
     void addDefaultCrsOption();
@@ -229,6 +239,7 @@ class GUI_EXPORT QgsProjectionSelectionWidget : public QWidget
     void updateTooltip();
 
     QgsMapLayer *mapLayerFromMimeData( const QMimeData *data ) const;
+    QgsCoordinateReferenceSystem crsAtIndex( int index ) const;
 
   private slots:
 

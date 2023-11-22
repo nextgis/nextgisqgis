@@ -25,14 +25,7 @@
 // the widgets
 #include "qgssymbolslistwidget.h"
 #include "qgslayerpropertieswidget.h"
-#include "qgssymbollayerwidget.h"
-#include "qgsellipsesymbollayerwidget.h"
-#include "qgsvectorfieldsymbollayerwidget.h"
-
-#include "qgslogger.h"
 #include "qgsapplication.h"
-#include "qgssettings.h"
-#include "qgsfeatureiterator.h"
 #include "qgsvectorlayer.h"
 #include "qgssvgcache.h"
 #include "qgsimagecache.h"
@@ -40,8 +33,8 @@
 #include "qgsguiutils.h"
 #include "qgsgui.h"
 #include "qgsmarkersymbol.h"
-#include "qgsfillsymbol.h"
 #include "qgslinesymbol.h"
+#include "qscreen.h"
 
 #include <QColorDialog>
 #include <QPainter>
@@ -125,12 +118,16 @@ void DataDefinedRestorer::restore()
 class SymbolLayerItem : public QStandardItem
 {
   public:
-    explicit SymbolLayerItem( QgsSymbolLayer *layer, Qgis::SymbolType symbolType )
+    explicit SymbolLayerItem( QgsSymbolLayer *layer, Qgis::SymbolType symbolType, QgsVectorLayer *vectorLayer, QScreen *screen )
+      : mVectorLayer( vectorLayer )
+      , mScreen( screen )
     {
       setLayer( layer, symbolType );
     }
 
-    explicit SymbolLayerItem( QgsSymbol *symbol )
+    explicit SymbolLayerItem( QgsSymbol *symbol, QgsVectorLayer *vectorLayer, QScreen *screen )
+      : mVectorLayer( vectorLayer )
+      , mScreen( screen )
     {
       setSymbol( symbol );
     }
@@ -161,9 +158,13 @@ class SymbolLayerItem : public QStandardItem
       }
       QIcon icon;
       if ( mIsLayer )
-        icon = QgsSymbolLayerUtils::symbolLayerPreviewIcon( mLayer, QgsUnitTypes::RenderMillimeters, mSize, QgsMapUnitScale(), mSymbol ? mSymbol->type() : mSymbolType ); //todo: make unit a parameter
+        icon = QgsSymbolLayerUtils::symbolLayerPreviewIcon( mLayer, Qgis::RenderUnit::Millimeters, mSize, QgsMapUnitScale(), mSymbol ? mSymbol->type() : mSymbolType, mVectorLayer, QgsScreenProperties( mScreen.data() ) );
       else
-        icon = QgsSymbolLayerUtils::symbolPreviewIcon( mSymbol, mSize );
+      {
+        QgsExpressionContext expContext;
+        expContext.appendScopes( QgsExpressionContextUtils::globalProjectLayerScopes( mVectorLayer ) );
+        icon = QIcon( QgsSymbolLayerUtils::symbolPreviewPixmap( mSymbol, mSize, 0, nullptr, false, &expContext, nullptr, QgsScreenProperties( mScreen.data() ) ) );
+      }
       setIcon( icon );
 
       if ( auto *lParent = parent() )
@@ -236,9 +237,11 @@ class SymbolLayerItem : public QStandardItem
   protected:
     QgsSymbolLayer *mLayer = nullptr;
     QgsSymbol *mSymbol = nullptr;
-    bool mIsLayer;
+    QPointer< QgsVectorLayer > mVectorLayer;
+    bool mIsLayer = false;
     QSize mSize;
     Qgis::SymbolType mSymbolType = Qgis::SymbolType::Hybrid;
+    QPointer< QScreen > mScreen;
 };
 
 ///@endcond
@@ -392,7 +395,7 @@ void QgsSymbolSelectorWidget::loadSymbol( QgsSymbol *symbol, SymbolLayerItem *pa
     parent = static_cast<SymbolLayerItem *>( mSymbolLayersModel->invisibleRootItem() );
   }
 
-  SymbolLayerItem *symbolItem = new SymbolLayerItem( symbol );
+  SymbolLayerItem *symbolItem = new SymbolLayerItem( symbol, mVectorLayer, screen() );
   QFont boldFont = symbolItem->font();
   boldFont.setBold( true );
   symbolItem->setFont( boldFont );
@@ -401,7 +404,7 @@ void QgsSymbolSelectorWidget::loadSymbol( QgsSymbol *symbol, SymbolLayerItem *pa
   const int count = symbol->symbolLayerCount();
   for ( int i = count - 1; i >= 0; i-- )
   {
-    SymbolLayerItem *layerItem = new SymbolLayerItem( symbol->symbolLayer( i ), symbol->type() );
+    SymbolLayerItem *layerItem = new SymbolLayerItem( symbol->symbolLayer( i ), symbol->type(), mVectorLayer, screen() );
     layerItem->setEditable( false );
     symbolItem->appendRow( layerItem );
     if ( symbol->symbolLayer( i )->subSymbol() )
@@ -458,7 +461,7 @@ void QgsSymbolSelectorWidget::updatePreview()
     return;
 
   std::unique_ptr< QgsSymbol > symbolClone( mSymbol->clone() );
-  const QImage preview = symbolClone->bigSymbolPreviewImage( &mPreviewExpressionContext, Qgis::SymbolPreviewFlags() );
+  const QImage preview = symbolClone->bigSymbolPreviewImage( &mPreviewExpressionContext, Qgis::SymbolPreviewFlag::FlagIncludeCrosshairsForMarkerSymbols, QgsScreenProperties( screen() ) );
   lblPreview->setPixmap( QPixmap::fromImage( preview ) );
   // Hope this is a appropriate place
   if ( !mBlockModified )
@@ -628,7 +631,7 @@ void QgsSymbolSelectorWidget::addLayer()
   if ( ddWidth )
     static_cast<QgsLineSymbol *>( parentSymbol )->setDataDefinedWidth( ddWidth );
 
-  SymbolLayerItem *newLayerItem = new SymbolLayerItem( newLayer, parentSymbol->type() );
+  SymbolLayerItem *newLayerItem = new SymbolLayerItem( newLayer, parentSymbol->type(), mVectorLayer, screen() );
   item->insertRow( insertIdx == -1 ? 0 : insertIdx, newLayerItem );
   item->updatePreview();
 
@@ -722,12 +725,13 @@ void QgsSymbolSelectorWidget::duplicateLayer()
   QgsSymbol *parentSymbol = item->symbol();
 
   QgsSymbolLayer *newLayer = source->clone();
+  QgsSymbolLayerUtils::resetSymbolLayerIds( newLayer );
   if ( insertIdx == -1 )
     parentSymbol->appendSymbolLayer( newLayer );
   else
     parentSymbol->insertSymbolLayer( item->rowCount() - insertIdx, newLayer );
 
-  SymbolLayerItem *newLayerItem = new SymbolLayerItem( newLayer, parentSymbol->type() );
+  SymbolLayerItem *newLayerItem = new SymbolLayerItem( newLayer, parentSymbol->type(), mVectorLayer, screen() );
   item->insertRow( insertIdx == -1 ? 0 : insertIdx, newLayerItem );
   if ( newLayer->subSymbol() )
   {

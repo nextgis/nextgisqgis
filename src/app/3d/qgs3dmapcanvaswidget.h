@@ -19,7 +19,11 @@
 #include "qmenu.h"
 #include "qgsdockwidget.h"
 #include "qgis_app.h"
+#include "qobjectuniqueptr.h"
 #include "qtoolbutton.h"
+#include "qgsrectangle.h"
+
+#include <QPointer>
 
 #define SIP_NO_FILE
 
@@ -33,6 +37,7 @@ class Qgs3DMapToolIdentify;
 class Qgs3DMapToolMeasureLine;
 class QgsMapCanvas;
 class QgsDockableWidgetHelper;
+class QgsRubberBand;
 
 class APP_EXPORT Qgs3DMapCanvasWidget : public QWidget
 {
@@ -56,9 +61,6 @@ class APP_EXPORT Qgs3DMapCanvasWidget : public QWidget
 
     void setCanvasName( const QString &name );
     QString canvasName() const { return mCanvasName; }
-
-  signals:
-    void toggleDockModeRequested( bool docked );
 
   protected:
     void resizeEvent( QResizeEvent *event ) override;
@@ -84,6 +86,11 @@ class APP_EXPORT Qgs3DMapCanvasWidget : public QWidget
     //! Renames the active map theme called \a theme to \a newTheme
     void currentMapThemeRenamed( const QString &theme, const QString &newTheme );
 
+    void onMainMapCanvasExtentChanged();
+    void onViewed2DExtentFrom3DChanged( QVector<QgsPointXY> extent );
+    void onViewFrustumVisualizationEnabledChanged();
+    void onExtentChanged();
+
   private:
     QString mCanvasName;
     Qgs3DMapCanvas *mCanvas = nullptr;
@@ -102,8 +109,15 @@ class APP_EXPORT Qgs3DMapCanvasWidget : public QWidget
     QToolButton *mBtnMapThemes = nullptr;
     QAction *mActionEnableShadows = nullptr;
     QAction *mActionEnableEyeDome = nullptr;
+    QAction *mActionEnableAmbientOcclusion = nullptr;
+    QAction *mActionSync2DNavTo3D = nullptr;
+    QAction *mActionSync3DNavTo2D = nullptr;
+    QAction *mShowFrustumPolyogon = nullptr;
     QToolButton *mBtnOptions = nullptr;
     QgsDockableWidgetHelper *mDockableWidgetHelper = nullptr;
+    QObjectUniquePtr< QgsRubberBand > mViewFrustumHighlight;
+    QObjectUniquePtr< QgsRubberBand > mViewExtentHighlight;
+    QPointer<QDialog> mConfigureDialog;
 };
 
 #endif // QGS3DMAPCANVASWIDGET_H

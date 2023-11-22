@@ -137,15 +137,6 @@ void QgsMultiBandColorRendererWidget::setCustomMinMaxValues( QgsMultiBandColorRe
     return;
   }
 
-  if ( mContrastEnhancementAlgorithmComboBox->currentData().toInt() ==
-       QgsContrastEnhancement::NoEnhancement )
-  {
-    r->setRedContrastEnhancement( nullptr );
-    r->setGreenContrastEnhancement( nullptr );
-    r->setBlueContrastEnhancement( nullptr );
-    return;
-  }
-
   QgsContrastEnhancement *redEnhancement = nullptr;
   QgsContrastEnhancement *greenEnhancement = nullptr;
   QgsContrastEnhancement *blueEnhancement = nullptr;
@@ -261,7 +252,7 @@ void QgsMultiBandColorRendererWidget::minMaxModified()
 
 void QgsMultiBandColorRendererWidget::loadMinMax( int bandNo, double min, double max )
 {
-  QgsDebugMsg( QStringLiteral( "theBandNo = %1 min = %2 max = %3" ).arg( bandNo ).arg( min ).arg( max ) );
+  QgsDebugMsgLevel( QStringLiteral( "theBandNo = %1 min = %2 max = %3" ).arg( bandNo ).arg( min ).arg( max ), 2 );
 
   QLineEdit *myMinLineEdit, *myMaxLineEdit;
 
@@ -282,7 +273,7 @@ void QgsMultiBandColorRendererWidget::loadMinMax( int bandNo, double min, double
   }
   else // should not happen
   {
-    QgsDebugMsg( QStringLiteral( "Band not found" ) );
+    QgsDebugError( QStringLiteral( "Band not found" ) );
     return;
   }
 
@@ -451,4 +442,16 @@ int QgsMultiBandColorRendererWidget::selectedBand( int index )
       break;
   }
   return -1;
+}
+
+QgsContrastEnhancement::ContrastEnhancementAlgorithm QgsMultiBandColorRendererWidget::contrastEnhancementAlgorithm() const
+{
+  return static_cast<QgsContrastEnhancement::ContrastEnhancementAlgorithm>( mContrastEnhancementAlgorithmComboBox->currentData().toInt() );
+}
+
+void QgsMultiBandColorRendererWidget::setContrastEnhancementAlgorithm( QgsContrastEnhancement::ContrastEnhancementAlgorithm algorithm )
+{
+  mDisableMinMaxWidgetRefresh = true;
+  mContrastEnhancementAlgorithmComboBox->setCurrentIndex( mContrastEnhancementAlgorithmComboBox->findData( static_cast<int>( algorithm ) ) );
+  mDisableMinMaxWidgetRefresh = false;
 }

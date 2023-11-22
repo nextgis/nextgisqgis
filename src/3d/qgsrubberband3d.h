@@ -33,21 +33,32 @@
 
 #include "qgslinestring.h"
 
-class QgsCameraController;
+class QgsWindow3DEngine;
 class QgsLineMaterial;
 class Qgs3DMapSettings;
+class QgsBillboardGeometry;
+class QgsMarkerSymbol;
+class QgsPoint3DBillboardMaterial;
 
 namespace Qt3DCore
 {
   class QEntity;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+  class QBuffer;
+  class QGeometry;
+  class QAttribute;
+#endif
 }
+
 namespace Qt3DRender
 {
-  class QGeometry;
-  class QGeometryRenderer;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
   class QBuffer;
-  class QMaterial;
+  class QGeometry;
   class QAttribute;
+#endif
+  class QGeometryRenderer;
+  class QMaterial;
 }
 
 /**
@@ -64,7 +75,7 @@ namespace Qt3DRender
 class _3D_EXPORT QgsRubberBand3D
 {
   public:
-    QgsRubberBand3D( Qgs3DMapSettings &map, QgsCameraController *cameraController, Qt3DCore::QEntity *parentEntity );
+    QgsRubberBand3D( Qgs3DMapSettings &map, QgsWindow3DEngine *engine, Qt3DCore::QEntity *parentEntity );
     ~QgsRubberBand3D();
 
     float width() const;
@@ -79,22 +90,43 @@ class _3D_EXPORT QgsRubberBand3D
 
     void removeLastPoint();
 
+    void moveLastPoint( const QgsPoint &pt );
+
+    //! Sets whether the marker on the last vertex is displayed. We typically do not want it displayed while it is still tracked by the mouse.
+    void setShowLastMarker( bool show ) { mShowLastMarker = show; }
+
   private:
     void updateGeometry();
+    void updateMarkerMaterial();
 
   private:
     QgsLineString mLineString;
+    bool mShowLastMarker = false;
 
     Qgs3DMapSettings *mMapSettings = nullptr;  // not owned
+    QgsWindow3DEngine *mEngine = nullptr;
 
-    Qt3DCore::QEntity *mEntity = nullptr;  // owned by parentEntity (from constructor)
+    Qt3DCore::QEntity *mLineEntity = nullptr;  // owned by parentEntity (from constructor)
+    Qt3DCore::QEntity *mMarkerEntity = nullptr; // owned by parentEntity (from constructor)
 
-    // all these are owned by mEntity
+    // all these are owned by mLineEntity
     Qt3DRender::QGeometryRenderer *mGeomRenderer = nullptr;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     Qt3DRender::QGeometry *mGeometry = nullptr;
     Qt3DRender::QAttribute *mPositionAttribute = nullptr;
     Qt3DRender::QAttribute *mIndexAttribute = nullptr;
+#else
+    Qt3DCore::QGeometry *mGeometry = nullptr;
+    Qt3DCore::QAttribute *mPositionAttribute = nullptr;
+    Qt3DCore::QAttribute *mIndexAttribute = nullptr;
+#endif
     QgsLineMaterial *mLineMaterial = nullptr;
+
+    // and these are owned by mMarkerEntity
+    Qt3DRender::QGeometryRenderer *mMarkerGeometryRenderer = nullptr;
+    QgsBillboardGeometry *mMarkerGeometry = nullptr;
+    QgsPoint3DBillboardMaterial *mMarkerMaterial = nullptr;
+    QgsMarkerSymbol *mMarkerSymbol = nullptr;
 
     // Disable copying as we have pointer members.
     QgsRubberBand3D( const QgsRubberBand3D & ) = delete;

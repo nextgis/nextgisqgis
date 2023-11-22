@@ -43,7 +43,7 @@ QgsTransaction *QgsTransaction::create( const QSet<QgsVectorLayer *> &layers )
   {
     for ( QgsVectorLayer *layer : layers )
     {
-      if ( !transaction->addLayer( layer ) )
+      if ( !transaction->addLayer( layer, false ) )
       {
         transaction.reset();
         break;
@@ -66,15 +66,27 @@ QgsTransaction::~QgsTransaction()
   setLayerTransactionIds( nullptr );
 }
 
+QString QgsTransaction::connectionString() const
+{
+  return mConnString;
+}
+
 // For the needs of the OGR provider with GeoPackage datasources, remove
-// any reference to layers in the connection string
-QString QgsTransaction::removeLayerIdOrName( const QString &str )
+// any reference to layers and filters in the connection string
+QString QgsTransaction::cleanupConnectionString( const QString &str )
 {
   QString res( str );
 
-  for ( int i = 0; i < 2; i++ )
+  static const QStringList toRemove
   {
-    const int pos = res.indexOf( i == 0 ? QLatin1String( "|layername=" ) :  QLatin1String( "|layerid=" ) );
+    { QStringLiteral( "|layername=" )},
+    { QStringLiteral( "|layerid=" )},
+    { QStringLiteral( "|subset=" )},
+  };
+
+  for ( const auto &strToRm : std::as_const( toRemove ) )
+  {
+    const int pos = res.indexOf( strToRm );
     if ( pos >= 0 )
     {
       const int end = res.indexOf( '|', pos + 1 );
@@ -100,18 +112,19 @@ QString QgsTransaction::connectionString( const QString &layerUri )
   // reference to layers from it.
   if ( connString.isEmpty() )
   {
-    connString = removeLayerIdOrName( layerUri );
+    connString = cleanupConnectionString( layerUri );
   }
   return connString;
 }
 ///@endcond
 
-bool QgsTransaction::addLayer( QgsVectorLayer *layer )
+bool QgsTransaction::addLayer( QgsVectorLayer *layer, bool addLayersInEditMode )
 {
   if ( !layer )
     return false;
 
-  if ( layer->isEditable() )
+  if ( ! addLayersInEditMode
+       && layer->isEditable() )
     return false;
 
   //test if provider supports transactions
@@ -125,8 +138,8 @@ bool QgsTransaction::addLayer( QgsVectorLayer *layer )
 
   if ( connectionString( layer->source() ) != mConnString )
   {
-    QgsDebugMsg( QStringLiteral( "Couldn't start transaction because connection string for layer %1 : '%2' does not match '%3'" ).arg(
-                   layer->id(), connectionString( layer->source() ), mConnString ) );
+    QgsDebugError( QStringLiteral( "Couldn't start transaction because connection string for layer %1 : '%2' does not match '%3'" ).arg(
+                     layer->id(), connectionString( layer->source() ), mConnString ) );
     return false;
   }
 

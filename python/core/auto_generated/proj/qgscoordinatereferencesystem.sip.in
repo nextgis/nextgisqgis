@@ -915,12 +915,56 @@ the projection method used by the CRS.
 
     bool hasAxisInverted() const;
 %Docstring
-Returns whether axis is inverted (e.g., for WMS 1.3) for the CRS.
+Returns whether the axis order is inverted for the CRS compared to the order east/north (longitude/latitude).
+E.g. with WMS 1.3 the axis order for EPSG:4326 is north/east (latitude/longitude), i.e. inverted.
 
 :return: ``True`` if CRS axis is inverted
+
+.. seealso:: :py:func:`axisOrdering`
 %End
 
-    QgsUnitTypes::DistanceUnit mapUnits() const;
+    SIP_PYOBJECT axisOrdering() const /TypeHint="List[Qgis.CrsAxisDirection]"/;
+%Docstring
+Returns an ordered list of the axis directions reflecting the native axis order for the CRS.
+
+.. versionadded:: 3.26
+%End
+%MethodCode
+    // adapted from the qpymultimedia_qlist.sip file from the PyQt6 sources
+
+    const QList< Qgis::CrsAxisDirection > cppRes = sipCpp->axisOrdering();
+
+    PyObject *l = PyList_New( cppRes.size() );
+
+    if ( !l )
+      sipIsErr = 1;
+    else
+    {
+      for ( int i = 0; i < cppRes.size(); ++i )
+      {
+        PyObject *eobj = sipConvertFromEnum( static_cast<int>( cppRes.at( i ) ),
+                                             sipType_Qgis_CrsAxisDirection );
+
+        if ( !eobj )
+        {
+          sipIsErr = 1;
+        }
+
+        PyList_SetItem( l, i, eobj );
+      }
+
+      if ( !sipIsErr )
+      {
+        sipRes = l;
+      }
+      else
+      {
+        Py_DECREF( l );
+      }
+    }
+%End
+
+    Qgis::DistanceUnit mapUnits() const;
 %Docstring
 Returns the units for the projection used by the CRS.
 %End
@@ -933,6 +977,14 @@ The returned bounds represent the latitude and longitude extent for the
 projection in the WGS 84 CRS.
 
 .. versionadded:: 3.0
+%End
+
+    QString toOgcUri() const;
+%Docstring
+Returns the crs as OGC URI (format: http://www.opengis.net/def/crs/OGC/1.3/CRS84)
+Returns an empty string on failure.
+
+.. versionadded:: 3.30
 %End
 
 
@@ -959,7 +1011,7 @@ CRSes to their new definitions.
 Set user hint for validation
 %End
 
-    QString validationHint();
+    QString validationHint() const;
 %Docstring
 Gets user hint for validation
 %End
@@ -1072,6 +1124,20 @@ Returns a list of recently used CRS.
 Pushes a recently used CRS to the top of the recent CRS list.
 
 .. versionadded:: 3.10.3
+%End
+
+    static void removeRecentCoordinateReferenceSystem( const QgsCoordinateReferenceSystem &crs );
+%Docstring
+Removes a CRS from the list of recently used CRS.
+
+.. versionadded:: 3.32
+%End
+
+    static void clearRecentCoordinateReferenceSystems();
+%Docstring
+Cleans the list of recently used CRS.
+
+.. versionadded:: 3.32
 %End
 
 

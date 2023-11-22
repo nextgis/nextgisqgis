@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """QGIS Unit tests for Simple copy external storage
 
 .. note:: This program is free software; you can redistribute it and/or modify
@@ -11,25 +10,10 @@ __author__ = 'Julien Cabieces'
 __date__ = '31/03/2021'
 __copyright__ = 'Copyright 2021, The QGIS Project'
 
-from shutil import rmtree
-import os
-import tempfile
-import time
+from qgis.PyQt.QtCore import QTemporaryDir
+from qgis.testing import unittest
 
-from utilities import unitTestDataPath, waitServer
 from test_qgsexternalstorage_base import TestPyQgsExternalStorageBase
-
-from qgis.PyQt.QtCore import QCoreApplication, QEventLoop, QUrl, QTemporaryDir
-
-from qgis.core import (
-    QgsApplication,
-    QgsAuthMethodConfig,
-    QgsExternalStorageFetchedContent)
-
-from qgis.testing import (
-    start_app,
-    unittest,
-)
 
 
 class TestPyQgsExternalStorageSimpleCopy(TestPyQgsExternalStorageBase, unittest.TestCase):
@@ -40,17 +24,18 @@ class TestPyQgsExternalStorageSimpleCopy(TestPyQgsExternalStorageBase, unittest.
     @classmethod
     def setUpClass(cls):
         """Run before all tests:"""
+        super(TestPyQgsExternalStorageSimpleCopy, cls).setUpClass()
+        unittest.TestCase.setUpClass()
 
         cls.temp_dir = QTemporaryDir()
         cls.url = cls.temp_dir.path()
 
-        super().setUpClass()
-
     @classmethod
     def tearDownClass(cls):
         """Run after all tests"""
-        super().tearDownClass()
         cls.temp_dir = None
+        super(TestPyQgsExternalStorageSimpleCopy, cls).tearDownClass()
+        unittest.TestCase.tearDownClass()
 
     def testStoreMissingAuth(self):
         """Override this one because there is authentication for SimpleCopy external storage"""

@@ -55,6 +55,10 @@ class QgsDrapeAlgorithmBase : public QgsProcessingFeatureBasedAlgorithm
     bool mDynamicScale = false;
     QgsProperty mScaleProperty;
 
+    double mOffset = 0.0;
+    bool mDynamicOffset = false;
+    QgsProperty mOffsetProperty;
+
     std::unique_ptr< QgsRasterDataProvider > mRasterProvider;
     int mBand = 1;
     QgsRectangle mRasterExtent;
@@ -77,7 +81,7 @@ class QgsDrapeToZAlgorithm : public QgsDrapeAlgorithmBase
 
   protected:
 
-    QgsWkbTypes::Type outputWkbType( QgsWkbTypes::Type inputWkbType ) const override;
+    Qgis::WkbType outputWkbType( Qgis::WkbType inputWkbType ) const override;
 
   private:
     void prepareGeometry( QgsGeometry &geometry, double defaultVal ) const override;
@@ -101,7 +105,7 @@ class QgsDrapeToMAlgorithm : public QgsDrapeAlgorithmBase
 
   protected:
 
-    QgsWkbTypes::Type outputWkbType( QgsWkbTypes::Type inputWkbType ) const override;
+    Qgis::WkbType outputWkbType( Qgis::WkbType inputWkbType ) const override;
 
   private:
     void prepareGeometry( QgsGeometry &geometry, double defaultVal ) const override;
