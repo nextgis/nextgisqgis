@@ -148,6 +148,7 @@ include(FindAnyProject)
 # POLICIES
 set_policy(CMP0048 NEW)
 set_policy(CMP0053 NEW)
+set_policy(CMP0058 NEW)
 set_policy(CMP0063 NEW)
 set_policy(CMP0071 NEW)
 set_policy(CMP0075 NEW)
@@ -175,6 +176,7 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_AUTOUIC_SEARCH_PATHS}
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/attributeformconfig
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/georeferencer
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/annotations
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/sensor
 )
 set(CMAKE_AUTOMOC ON)
 
@@ -183,6 +185,10 @@ file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/symlinks)
 ################################################################################
 # Find Qt5 packages
 set(QT_REQUIRED_COMPONENTS Core Gui Widgets Network Xml Svg Concurrent Test UiTools Sql PrintSupport)
+
+# For gui.multimedia
+set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} Multimedia MultimediaWidgets)
+
 if (MSVC)
     set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} WinExtras)
 endif()
@@ -322,8 +328,9 @@ if (WITH_3D)
 endif()
 
 find_anyproject(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_COMPONENTS})
-# if (WITH_QT6)
+# if (BUILD_WITH_QT6)
 set(QT_VERSION_BASE Qt5)
+set(QT_VERSION_BASE_LOWER qt5)
 
 get_target_property(QMAKE_EXECUTABLE ${QT_VERSION_BASE}::qmake LOCATION)
 

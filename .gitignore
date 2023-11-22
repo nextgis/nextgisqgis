@@ -50,7 +50,8 @@ src/core/qgscontexthelp_texts.cpp
 src/core/qgsexpression_texts.cpp
 
 .vscode
-
+.vs/
+out/
 
 # pyenv
 .python-version
