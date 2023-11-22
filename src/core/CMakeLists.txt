@@ -2031,7 +2031,12 @@ if (HAVE_OPENCL)
 endif (HAVE_OPENCL)
 
 if(MSVC)
-    set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp PROPERTIES COMPILE_FLAGS "/bigobj")
+  set_source_files_properties(
+      ${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp
+      ${CMAKE_CURRENT_BINARY_DIR}/qgis_core_autogen/mocs_compilation.cpp
+      proj/qgscoordinatereferencesystem.cpp
+      PROPERTIES COMPILE_FLAGS "/bigobj"
+  )
 else()
     if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE MATCHES Release OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo))
     set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/qgsexpression_texts.cpp PROPERTIES COMPILE_FLAGS "-O1")
@@ -2060,6 +2065,9 @@ endif()
 #   include_directories(SYSTEM
 #     ${PDAL_INCLUDE_DIR}
 #   )
+#  if(MSVC)
+#    add_definitions(-DWIN32_LEAN_AND_MEAN)
+#  endif()
 # endif()
 
 

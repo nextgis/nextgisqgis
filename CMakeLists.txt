@@ -49,6 +49,19 @@ else()
     set(QGIS_APP_NAME ${NG_PREFIX}${PROJECT_NAME})
 endif()
 
+# Configure CCache if available
+if(NOT MSVC)
+  option(USE_CCACHE "Use ccache" ON)
+  if (USE_CCACHE)
+    find_program(CCACHE_FOUND ccache)
+    if(CCACHE_FOUND)
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+        message(STATUS "ccache found")
+    endif(CCACHE_FOUND)
+  endif(USE_CCACHE)
+endif(NOT MSVC)
+
 if(OSX_FRAMEWORK)
     set(QGIS_DATA_SUBDIR "Applications/${QGIS_APP_NAME}.app/Contents/Resources")
     set(INSTALL_BIN_DIR "Applications" CACHE INTERNAL "Installation directory for executables" FORCE)
@@ -337,6 +350,11 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/qt.conf.cmake.in ${CMAKE_BINARY_DIR}/qt
 # Add binaries and libraries
 set(CMAKE_CXX_STANDARD 17)
 if(MSVC)
+    set(_warnings "")
+    if (NOT USING_NMAKE AND NOT USING_NINJA)
+      set(_warnings "${_warnings} /W4" )
+    endif()
+
     # disable warnings
     set(_warnings "${_warnings} /wd4091 ")  # 'typedef': ignored on left of '' when no variable is declared (occurs in MS DbgHelp.h header)
     set(_warnings "${_warnings} /wd4100 ")  # unused formal parameters
@@ -414,12 +432,22 @@ else()
     endif()
 endif()
 
-if (CMAKE_BUILD_TYPE MATCHES Debug)
-    message (STATUS "Debug output enabled")
-    set(QGISDEBUG ON)
+if (CMAKE_BUILD_TYPE MATCHES Debug OR CMAKE_BUILD_TYPE MATCHES RelWithDebInfo)
+  message (STATUS "Debug output enabled")
+  set(QGISDEBUG TRUE)
 else()
-    message (STATUS "Debug output disabled")
-    set(QGISDEBUG OFF)
+  set(QGISDEBUG FALSE)
+endif()
+
+set (AGGRESSIVE_SAFE_MODE FALSE CACHE BOOL "Forces a aggressive safe mode where issues like unsafe thread access will resort in fatal exceptions")
+
+if(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8 /std:c++17")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8 /std:c++17")
+  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+  # disable macros that offend std::numeric_limits<T>::min()/max()
+  add_definitions(-DNOMINMAX)
 endif()
 
 # Prevent build when Qt api deprecated before this Qt version is used:
