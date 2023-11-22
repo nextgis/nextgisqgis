@@ -88,10 +88,11 @@ if(OCI_FOUND)
     )
 endif()
 
-if(WIN32)
-    info_msg("Add provider mssql")
-    add_subdirectory(mssql)
-endif()
+#DEBUG:
+#if(WIN32)
+#    info_msg("Add provider mssql")
+#    add_subdirectory(mssql)
+#endif()
 
 macro(add_provider PLUGIN_NAME)
     include_directories (${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME})
