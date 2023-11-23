@@ -38,6 +38,40 @@ set(CMAKE_COLOR_MAKEFILE ON)
 # Set path to additional CMake modules
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
+#platform build settings
+cmake_host_system_information(RESULT NUMBER_OF_PHYSICAL_CORES QUERY NUMBER_OF_PHYSICAL_CORES)
+message(STATUS "CMake ${CMAKE_VERSION} using ${NUMBER_OF_PHYSICAL_CORES} threads")
+cmake_host_system_information(RESULT NUMBER_OF_LOGICAL_CORES QUERY NUMBER_OF_LOGICAL_CORES)
+message(STATUS "CMake ${CMAKE_VERSION} using ${NUMBER_OF_LOGICAL_CORES} threads")
+
+#set multithread build for MSVC generator
+if(CMAKE_GENERATOR MATCHES "Visual Studio")
+    add_compile_options(/MP${NUMBER_OF_PHYSICAL_CORES})
+    set(MAKE_BUILD_PARALLEL_LEVEL ${NUMBER_OF_PHYSICAL_CORES})
+endif()
+
+#DEBUG: fix for build from IDE with MSVC
+if(NOT CMAKE_BUILD_TYPE)
+  if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.8)
+    set(CMAKE_BUILD_TYPE $<CONFIGURATION>)
+  else()
+    set(CMAKE_BUILD_TYPE ${CMAKE_CFG_INTDIR})
+  endif()
+endif()
+
+# Configure CCache if available
+if(NOT MSVC)
+  option(USE_CCACHE "Use ccache" ON)
+  if (USE_CCACHE)
+  find_program(CCACHE_FOUND ccache)
+    if(CCACHE_FOUND)
+      set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+      set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+      message(STATUS "ccache found")
+    endif(CCACHE_FOUND)
+  endif(USE_CCACHE)
+endif(NOT MSVC)
+
 if(OSX_FRAMEWORK AND (BUILD_SHARED_LIBS OR BUILD_STATIC_LIBS))
   message(FATAL_ERROR "Only OSX_FRAMEWORK key or any or both BUILD_SHARED_LIBS
                        and BUILD_STATIC_LIBS keys are permitted")
