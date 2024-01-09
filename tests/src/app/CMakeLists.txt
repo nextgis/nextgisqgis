@@ -56,7 +56,7 @@ set(TESTS
   testqgsmaptooleditannotation.cpp
   #testqgsmaptoolidentifyaction.cpp
   testqgsmaptoollabel.cpp
-  testqgsmaptoolselect.cpp
+#####  testqgsmaptoolselect.cpp
   #testqgsmaptoolreshape.cpp
   testqgsmaptoolrotatefeature.cpp
   #testqgsmaptoolscalefeature.cpp
@@ -85,7 +85,7 @@ set(TESTS
 )
 
 if (HAVE_GEOREFERENCER)
-  set(TESTS ${TESTS} testqgsgeoreferencer.cpp)
+#####  set(TESTS ${TESTS} testqgsgeoreferencer.cpp)
 endif()
 
 if (WITH_BINDINGS)

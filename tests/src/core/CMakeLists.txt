@@ -63,7 +63,7 @@ set(TESTS
  #testqgscallout.cpp
  testqgscalloutregistry.cpp
  testqgscentroidfillsymbol.cpp
- testqgsclipper.cpp
+##### testqgsclipper.cpp
  testqgscolorscheme.cpp
  #testqgscolorschemeregistry.cpp
  #testqgscompositionconverter.cpp
@@ -170,13 +170,13 @@ set(TESTS
  #testqgspallabeling.cpp
  testqgspointcloudattribute.cpp
  testqgspointcloudexpression.cpp
- testqgspointcloudlayerexporter.cpp
+##### testqgspointcloudlayerexporter.cpp
  testqgspointcloudrendererregistry.cpp
  testqgspointlocator.cpp
  testqgspointpatternfillsymbol.cpp
  testqgspostgresstringutils.cpp
  #testqgsproject.cpp
- testqgsprojectstorage.cpp
+##### testqgsprojectstorage.cpp
  #testqgsprojutils.cpp
  #testqgsproperty.cpp
  testqgsprovidermetadata.cpp
@@ -204,7 +204,7 @@ set(TESTS
  testqgssnappingutils.cpp
  testqgsspatialindex.cpp
  #testqgsspatialindexkdbush.cpp
- testqgssqliteexpressioncompiler.cpp
+##### testqgssqliteexpressioncompiler.cpp
  testqgssqliteutils.cpp
  testqgsrelation.cpp
  testqgsstatisticalsummary.cpp

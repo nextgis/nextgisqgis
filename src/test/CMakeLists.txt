@@ -47,18 +47,6 @@ target_include_directories(qgis_test PUBLIC
   ${QTKEYCHAIN_INCLUDE_DIR}
 )
 
-message(STATUS "QT_INCLUDE_DIR = '${QT_INCLUDE_DIR}'")
-
-get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
-foreach(dir ${dirs})
-  message(STATUS "INCLUDE_DIRECTORIES='${dir}'")
-endforeach()
-
-get_target_property(target_includes ${NG_PREFIX}qgis_core INCLUDE_DIRECTORIES)
-foreach(tdir ${target_includes})
-  message(STATUS "TARGET_DIRECTORIES='${tdir}'")
-endforeach()
-
 add_dependencies(qgis_test ${NG_PREFIX}qgis_core)
 
 target_link_libraries(qgis_test ${NG_PREFIX}qgis_core

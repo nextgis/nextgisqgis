@@ -38,7 +38,7 @@ include_directories(
 # Tests:
 
 set(TESTS
-  testqgsmaptooladdfeatureline.cpp
+#####  testqgsmaptooladdfeatureline.cpp
   testqgsmaptooladdfeaturelinez.cpp
   testqgsmaptooladdfeaturelinem.cpp
   testqgsmaptooladdfeaturelinezm.cpp

@@ -50,9 +50,16 @@ if (ENABLE_TESTS)
       if (DEFINED ARG_QGIS_TEST_LABELS)
         set_tests_properties(${TESTNAME} PROPERTIES LABELS ${ARG_QGIS_TEST_LABELS})
       endif()
-  endmacro()
 
-
+      if (NOT PROJ_DB_POSITION)
+        string(REGEX REPLACE ".*/(.*)" "\\1" LAST_PART_DB_POSITION "${PROJ_INCLUDE_DIR}")
+        if(${LAST_PART_DB_POSITION} STREQUAL "include")
+          string(REPLACE "/include" "/share/proj" PROJ_DB_POSITION "${PROJ_INCLUDE_DIR}")
+        endif()
+        message("PROJ_LIB database position for CTest set as ${PROJ_DB_POSITION}")
+      endif()
+      set_tests_properties(${TESTNAME} PROPERTIES ENVIRONMENT "PROJ_LIB=${PROJ_DB_POSITION}")
+    endmacro()
 
   #############################################################
   # Compiler defines

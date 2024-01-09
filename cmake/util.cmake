@@ -153,7 +153,7 @@ function(get_compiler_version ver)
     endif()
 
     # DEBUG:
-    # set(COMPILER Clang-10.0)
+    set(COMPILER MSVC-19.29-64bit)
     set(${ver} ${COMPILER} PARENT_SCOPE)
 endfunction()
 

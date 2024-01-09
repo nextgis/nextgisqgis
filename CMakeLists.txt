@@ -24,7 +24,7 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12.0)
 project(qgis)
 
 if(NOT SKIP_PREFIX)
@@ -38,6 +38,30 @@ set(CMAKE_COLOR_MAKEFILE ON)
 # Set path to additional CMake modules
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
+#platform build settings
+cmake_host_system_information(RESULT NUMBER_OF_PHYSICAL_CORES QUERY NUMBER_OF_PHYSICAL_CORES)
+message(STATUS "CMake ${CMAKE_VERSION} using ${NUMBER_OF_PHYSICAL_CORES} cores")
+cmake_host_system_information(RESULT NUMBER_OF_LOGICAL_CORES QUERY NUMBER_OF_LOGICAL_CORES)
+message(STATUS "CMake ${CMAKE_VERSION} using ${NUMBER_OF_LOGICAL_CORES} threads")
+
+#set multithread build for MSVC generator
+if(CMAKE_GENERATOR MATCHES "Visual Studio")
+    add_compile_options(/MP${NUMBER_OF_LOGICAL_CORES})
+    set(MAKE_BUILD_PARALLEL_LEVEL ${NUMBER_OF_LOGICAL_CORES})
+endif()
+
+#Configure use CCache if heed
+if (USE_CCACHE)
+  find_program(CCACHE_FOUND ccache)
+  if(CCACHE_FOUND)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+    message("ccache found")
+  else()
+    message("ccache not found!")
+  endif(CCACHE_FOUND)
+endif()
+
 if(OSX_FRAMEWORK AND (BUILD_SHARED_LIBS OR BUILD_STATIC_LIBS))
   message(FATAL_ERROR "Only OSX_FRAMEWORK key or any or both BUILD_SHARED_LIBS
                        and BUILD_STATIC_LIBS keys are permitted")
@@ -48,19 +72,6 @@ if(OSX_FRAMEWORK)
 else()
     set(QGIS_APP_NAME ${NG_PREFIX}${PROJECT_NAME})
 endif()
-
-# Configure CCache if available
-if(NOT MSVC)
-  option(USE_CCACHE "Use ccache" ON)
-  if (USE_CCACHE)
-    find_program(CCACHE_FOUND ccache)
-    if(CCACHE_FOUND)
-        set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-        set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
-        message(STATUS "ccache found")
-    endif(CCACHE_FOUND)
-  endif(USE_CCACHE)
-endif(NOT MSVC)
 
 if(OSX_FRAMEWORK)
     set(QGIS_DATA_SUBDIR "Applications/${QGIS_APP_NAME}.app/Contents/Resources")
@@ -152,6 +163,7 @@ set_policy(CMP0058 NEW)
 set_policy(CMP0063 NEW)
 set_policy(CMP0071 NEW)
 set_policy(CMP0075 NEW)
+set_policy(CMP0077 NEW)
 set_policy(CMP0094 NEW)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
