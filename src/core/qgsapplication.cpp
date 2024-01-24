@@ -42,7 +42,7 @@
 #include "qgscolorschemeregistry.h"
 #include "qgspainteffectregistry.h"
 #include "qgsprojectstorageregistry.h"
-// #include "qgsexternalstorageregistry.h"
+#include "qgsexternalstorageregistry.h"
 #include "qgsrasterrendererregistry.h"
 #include "qgsrendererregistry.h"
 #include "qgspointcloudrendererregistry.h"
@@ -2736,10 +2736,10 @@ QgsProjectStorageRegistry *QgsApplication::projectStorageRegistry()
   return members()->mProjectStorageRegistry;
 }
 
-// QgsExternalStorageRegistry *QgsApplication::externalStorageRegistry()
-// {
-//   return members()->mExternalStorageRegistry;
-// }
+QgsExternalStorageRegistry *QgsApplication::externalStorageRegistry()
+{
+  return members()->mExternalStorageRegistry;
+}
 
 QgsLocalizedDataPathRegistry *QgsApplication::localizedDataPathRegistry()
 {
@@ -2914,11 +2914,11 @@ QgsApplication::ApplicationMembers::ApplicationMembers()
     m3DRendererRegistry = new Qgs3DRendererRegistry();
     profiler->end();
   }
-//   {
-//     profiler->start( tr( "Setup external storage registry" ) );
-//     mExternalStorageRegistry = new QgsExternalStorageRegistry();
-//     profiler->end();
-//   }
+  {
+    profiler->start( tr( "Setup external storage registry" ) );
+    mExternalStorageRegistry = new QgsExternalStorageRegistry();
+    profiler->end();
+  }
   {
     profiler->start( tr( "Setup network content cache" ) );
     mNetworkContentFetcherRegistry = new QgsNetworkContentFetcherRegistry();
@@ -2982,7 +2982,7 @@ QgsApplication::ApplicationMembers::~ApplicationMembers()
   delete mCalloutRegistry;
   delete mRecentStyleHandler;
   delete mSymbolLayerRegistry;
-//   delete mExternalStorageRegistry;
+  delete mExternalStorageRegistry;
   delete mTaskManager;
   delete mNetworkContentFetcherRegistry;
   delete mClassificationMethodRegistry;

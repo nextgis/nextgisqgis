@@ -182,10 +182,10 @@ set(QGIS_CORE_SRCS
     effects/qgsshadoweffect.cpp
     effects/qgstransformeffect.cpp
 
-    # externalstorage/qgsexternalstorage.cpp
-    # externalstorage/qgsexternalstorageregistry.cpp
-    # externalstorage/qgssimplecopyexternalstorage.cpp
-    # externalstorage/qgswebdavexternalstorage.cpp
+    externalstorage/qgsexternalstorage.cpp
+    externalstorage/qgsexternalstorageregistry.cpp
+    externalstorage/qgssimplecopyexternalstorage.cpp
+    externalstorage/qgshttpexternalstorage.cpp
 
     layertree/qgscolorramplegendnode.cpp
     layertree/qgscolorramplegendnodesettings.cpp
@@ -1378,8 +1378,8 @@ set(QGIS_CORE_HDRS
     elevation/qgsprofilesnapping.h
     elevation/qgsterrainprovider.h
 
-    # externalstorage/qgsexternalstorage.h
-    # externalstorage/qgsexternalstorageregistry.h
+    externalstorage/qgsexternalstorage.h
+    externalstorage/qgsexternalstorageregistry.h
 
     effects/qgsblureffect.h
     effects/qgscoloreffect.h
@@ -1995,8 +1995,8 @@ set(QGIS_CORE_PRIVATE_HDRS
 
     expression/qgsexpression_p.h
 
-    # externalstorage/qgssimplecopyexternalstorage_p.h
-    # externalstorage/qgswebdavexternalstorage_p.h
+    externalstorage/qgssimplecopyexternalstorage_p.h
+    externalstorage/qgshttpexternalstorage_p.h
 
     proj/qgscoordinatereferencesystem_p.h
     proj/qgscoordinatetransformcontext_p.h
@@ -2243,7 +2243,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
         effects
         elevation
         expression
-        # externalstorage
+        externalstorage
         fieldformatter
         geometry
         # geocms

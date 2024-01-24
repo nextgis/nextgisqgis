@@ -210,9 +210,9 @@ set(QGIS_GUI_SRCS
   editorwidgets/qgsdummyconfigdlg.cpp
   editorwidgets/qgsenumerationwidgetwrapper.cpp
   editorwidgets/qgsenumerationwidgetfactory.cpp
-  # editorwidgets/qgsexternalresourceconfigdlg.cpp
-  # editorwidgets/qgsexternalresourcewidgetwrapper.cpp
-  # editorwidgets/qgsexternalresourcewidgetfactory.cpp
+  editorwidgets/qgsexternalresourceconfigdlg.cpp
+  editorwidgets/qgsexternalresourcewidgetwrapper.cpp
+  editorwidgets/qgsexternalresourcewidgetfactory.cpp
   editorwidgets/qgsgeometrywidgetfactory.cpp
   editorwidgets/qgsgeometrywidgetwrapper.cpp
   editorwidgets/qgshiddenwidgetwrapper.cpp
@@ -563,7 +563,7 @@ set(QGIS_GUI_SRCS
   qgsexpressiontreeview.cpp
   qgsextentgroupbox.cpp
   qgsextentwidget.cpp
-  # qgsexternalresourcewidget.cpp
+  qgsexternalresourcewidget.cpp
   qgsfeatureselectiondlg.cpp
   qgsfieldcombobox.cpp
   qgsfieldexpressionwidget.cpp
@@ -576,7 +576,7 @@ set(QGIS_GUI_SRCS
   qgsfieldvalueslineedit.cpp
   qgsfilecontentsourcelineedit.cpp
   qgsfilewidget.cpp
-  # qgsexternalstoragefilewidget.cpp
+  qgsexternalstoragefilewidget.cpp
   qgsfilterlineedit.cpp
   qgsfindfilesbypatternwidget.cpp
   qgsfloatingwidget.cpp
@@ -839,7 +839,7 @@ set(QGIS_GUI_HDRS
   qgsexpressiontreeview.h
   qgsextentgroupbox.h
   qgsextentwidget.h
-#   qgsexternalresourcewidget.h
+  qgsexternalresourcewidget.h
   qgsfeaturepickerwidget.h
   qgsfeaturelistcombobox.h
   qgsfeatureselectiondlg.h
@@ -853,7 +853,7 @@ set(QGIS_GUI_HDRS
   qgsfilecontentsourcelineedit.h
   qgsfiledownloaderdialog.h
   qgsfilewidget.h
-#   qgsexternalstoragefilewidget.h
+  qgsexternalstoragefilewidget.h
   qgsfilterlineedit.h
   qgsfindfilesbypatternwidget.h
   qgsfloatingwidget.h
@@ -1133,9 +1133,9 @@ set(QGIS_GUI_HDRS
   editorwidgets/qgsdummyconfigdlg.h
   editorwidgets/qgsenumerationwidgetfactory.h
   editorwidgets/qgsenumerationwidgetwrapper.h
-#   editorwidgets/qgsexternalresourceconfigdlg.h
-#   editorwidgets/qgsexternalresourcewidgetfactory.h
-#   editorwidgets/qgsexternalresourcewidgetwrapper.h
+  editorwidgets/qgsexternalresourceconfigdlg.h
+  editorwidgets/qgsexternalresourcewidgetfactory.h
+  editorwidgets/qgsexternalresourcewidgetwrapper.h
   editorwidgets/qgsgeometrywidgetfactory.h
   editorwidgets/qgsgeometrywidgetwrapper.h
   editorwidgets/qgshiddenwidgetfactory.h

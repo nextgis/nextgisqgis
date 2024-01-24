@@ -38,7 +38,7 @@ class QgsFieldFormatterRegistry;
 class QgsColorSchemeRegistry;
 class QgsPaintEffectRegistry;
 class QgsProjectStorageRegistry;
-// class QgsExternalStorageRegistry;
+class QgsExternalStorageRegistry;
 class QgsLocalizedDataPathRegistry;
 class QgsLayerMetadataProviderRegistry;
 class QgsRendererRegistry;
@@ -973,7 +973,7 @@ class CORE_EXPORT QgsApplication : public QApplication
      * Returns registry of available external storage implementations.
      * \since QGIS 3.20
      */
-    // static QgsExternalStorageRegistry *externalStorageRegistry() SIP_KEEPREFERENCE;
+    static QgsExternalStorageRegistry *externalStorageRegistry() SIP_KEEPREFERENCE;
 
     /**
      * Returns the registry of data repositories
@@ -1171,7 +1171,7 @@ class CORE_EXPORT QgsApplication : public QApplication
       QgsConnectionRegistry *mConnectionRegistry = nullptr;
       QgsProjectStorageRegistry *mProjectStorageRegistry = nullptr;
       QgsLayerMetadataProviderRegistry *mLayerMetadataProviderRegistry = nullptr;
-      // QgsExternalStorageRegistry *mExternalStorageRegistry = nullptr;
+      QgsExternalStorageRegistry *mExternalStorageRegistry = nullptr;
       QgsPageSizeRegistry *mPageSizeRegistry = nullptr;
       QgsRasterRendererRegistry *mRasterRendererRegistry = nullptr;
       QgsRendererRegistry *mRendererRegistry = nullptr;
