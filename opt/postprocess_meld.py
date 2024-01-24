@@ -16,6 +16,7 @@ import os
 import sys
 import shutil
 import subprocess
+import re
 
 cmake_src_path = os.path.join(sys.argv[1], 'CMakeLists.txt')
 
@@ -58,9 +59,9 @@ def extract_value(text):
     val_text = text.split("\"")
     return val_text[1]
 
-def color_print(text, bold, color):
+def color_print(text, bold, color, endl=True):
     if sys.platform == 'win32':
-        print (text)
+        print (text, end = '\n' if endl else '')
     else:
         out_text = ''
         if bold:
@@ -86,7 +87,7 @@ def color_print(text, bold, color):
         else:
             out_text += bcolors.OKGRAY
         out_text += text + bcolors.ENDC
-        print (out_text)
+        print (out_text, end = '\n' if endl else '')
 
 with open(cmake_src_path) as f:
     for line in f:
@@ -137,14 +138,36 @@ patches_path = os.path.join(os.getcwd(), 'patches')
 if os.path.exists(patches_path):
     for dirname, dirnames, filenames in os.walk(patches_path):
         for patch in filenames:
+            color_print(f'Patch {patch} ... ', False, 'LRED', False)
             pCode = subprocess.call(['git', 'apply', '--check', '--reverse', '--ignore-whitespace', '--whitespace=nowarn', os.path.join(patches_path, patch)],
                                     cwd="../",
                                     stdout=subprocess.DEVNULL,
                                     stderr=subprocess.DEVNULL)
             if pCode == 0:
-                color_print(f'Patch {patch} ... already been applied', False, 'LBLUE')
+                color_print(f'already patched', False, 'LBLUE')
             else:
-                color_print("Patch " + patch, False, 'LRED')
-                subprocess.call(['git', 'apply', '--ignore-whitespace', '--whitespace=nowarn', os.path.join(patches_path, patch)], cwd = "../")
+                pCode = subprocess.call(['git', 'apply', '--ignore-whitespace', '--whitespace=nowarn', os.path.join(patches_path, patch)], cwd="../")
+
+                if pCode == 0:
+                    color_print(f'done.', False, 'LGREEN')
+                else:
+#                    color_print(f'error', False, 'LRED')
+
+                    #DEBUG
+                    pattern = re.compile(r"--- a/(.+?)(\t|\s|$)")
+                    subpath = ''
+                    with open(os.path.join(dirname, patch), 'r') as f_path:
+                        first_line = f_path.readline()
+                        match = pattern.search(first_line)
+                        if match:
+                            subpath = match.group(1)
+                    subprocess.run(['meld',
+                                    os.path.join('/home/user/develop/qgis.base/', subpath),
+                                    os.path.join('/home/user/develop/nextgismini/', subpath),
+                                    os.path.join('/home/user/develop/nextgisqgis/', subpath)],
+                                    stdout=subprocess.DEVNULL,
+                                    stderr=subprocess.DEVNULL)
+
+                    exit(f'Error patching {os.getcwd()}/{subpath}')
 
 os.rename('../src/app/ui_defaults.h', '../src/app/ngui_defaults.h')
