@@ -103,7 +103,7 @@ class HistoryDialog(BASE, WIDGET):
                                      QMessageBox.No
                                      )
         if reply == QMessageBox.Yes:
-            QgsGui.historyProviderRegistry().clearHistory(Qgis.HistoryProviderBackend.LocalProfile)
+#            QgsGui.historyProviderRegistry().clearHistory(Qgis.HistoryProviderBackend.LocalProfile)
             self.fillTree()
 
     def saveLog(self):
@@ -116,13 +116,13 @@ class HistoryDialog(BASE, WIDGET):
         if not fileName.lower().endswith('.log'):
             fileName += '.log'
 
-        entries = QgsGui.historyProviderRegistry().queryEntries(providerId='processing')
-        with open(fileName, 'w', encoding='utf-8') as f:
-            for entry in entries:
-                f.write('ALGORITHM{}{}{}{}\n'.format(HistoryDialog.LOG_SEPARATOR,
-                                                     entry.timestamp.toString("YYYY-mm-dd HH:MM:SS"),
-                                                     HistoryDialog.LOG_SEPARATOR,
-                                                     entry.entry.get('python_command')))
+#        entries = QgsGui.historyProviderRegistry().queryEntries(providerId='processing')
+#        with open(fileName, 'w', encoding='utf-8') as f:
+#            for entry in entries:
+#                f.write('ALGORITHM{}{}{}{}\n'.format(HistoryDialog.LOG_SEPARATOR,
+#                                                     entry.timestamp.toString("YYYY-mm-dd HH:MM:SS"),
+#                                                     HistoryDialog.LOG_SEPARATOR,
+#                                                     entry.entry.get('python_command')))
 
     def openHelp(self):
         QgsHelp.openHelp("processing/history.html")
@@ -145,7 +145,7 @@ class HistoryDialog(BASE, WIDGET):
 
     def fillTree(self):
         self.tree.clear()
-        entries = QgsGui.historyProviderRegistry().queryEntries(providerId='processing')
+#        entries = QgsGui.historyProviderRegistry().queryEntries(providerId='processing')
 
         if not entries:
             return

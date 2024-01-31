@@ -179,7 +179,7 @@ class CORE_EXPORT QgsSimpleFillSymbolLayer : public QgsFillSymbolLayer
     // Qt::PenStyle dxfPenStyle() const override;
     // QColor dxfBrushColor( QgsSymbolRenderContext &context ) const override;
     // Qt::BrushStyle dxfBrushStyle() const override;
-    // QImage toTiledPatternImage( ) const override;
+    QImage toTiledPatternImage( ) const override;
 
   protected:
     QBrush mBrush;

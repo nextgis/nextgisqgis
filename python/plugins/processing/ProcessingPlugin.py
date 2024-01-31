@@ -504,12 +504,12 @@ class ProcessingPlugin(QObject):
             self.iface.projectMenu().removeAction(self.projectMenuSeparator)
             self.projectMenuSeparator = None
 
-        QgsGui.historyProviderRegistry().providerById('processing').executePython.disconnect(
-            self._execute_history_commands
-        )
-        QgsGui.historyProviderRegistry().providerById('processing').createTest.disconnect(
-            self.create_test
-        )
+#        QgsGui.historyProviderRegistry().providerById('processing').executePython.disconnect(
+#            self._execute_history_commands
+#        )
+#        QgsGui.historyProviderRegistry().providerById('processing').createTest.disconnect(
+#            self.create_test
+#        )
 
         Processing.deinitialize()
 

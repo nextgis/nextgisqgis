@@ -172,6 +172,7 @@ Returns the map unit scale for the fill's offset.
 
     virtual double estimateMaxBleed( const QgsRenderContext &context ) const;
 
+    virtual QImage toTiledPatternImage( ) const;
 
   protected:
 

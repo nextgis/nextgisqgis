@@ -567,7 +567,7 @@ Qt::BrushStyle QgsSimpleFillSymbolLayer::dxfBrushStyle() const
 {
   return mBrushStyle;
 }
-
+*/
 QImage QgsSimpleFillSymbolLayer::toTiledPatternImage( ) const
 {
   QPixmap pixmap( QSize( 32, 32 ) );
@@ -588,7 +588,7 @@ QImage QgsSimpleFillSymbolLayer::toTiledPatternImage( ) const
   painter.end();
   return pixmap.toImage();
 }
-*/
+
 //QgsGradientFillSymbolLayer
 
 QgsGradientFillSymbolLayer::QgsGradientFillSymbolLayer( const QColor &color, const QColor &color2,

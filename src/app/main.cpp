@@ -925,7 +925,7 @@ int main( int argc, char *argv[] )
 
 // Set up for high displays
 // The following values are set by default in Qt6
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION_MAJOR < 6
   QCoreApplication::setAttribute( Qt::AA_EnableHighDpiScaling, true );
   QCoreApplication::setAttribute( Qt::AA_UseHighDpiPixmaps );
   QGuiApplication::setHighDpiScaleFactorRoundingPolicy( Qt::HighDpiScaleFactorRoundingPolicy::PassThrough );
@@ -965,18 +965,6 @@ int main( int argc, char *argv[] )
   QCoreApplication::setAttribute( Qt::AA_ShareOpenGLContexts, true );
 #endif
 #endif
-
-  // List font directory
-  QDir fontsDir(QgsApplication::fontsPath());
-  QStringList filters;
-  filters << "*.ttf" << "*.otf";
-  QStringList fontsList = fontsDir.entryList(filters,  QDir::Files);
-  // Add font to database
-  QStringList::Iterator it = fontsList.begin();
-  while (it != fontsList.end()) {
-      QFontDatabase::addApplicationFont( fontsDir.filePath(*it) );
-      ++it;
-  }
 
   // Set up the QgsSettings Global Settings:
   // - use the path specified with --globalsettingsfile path,
@@ -1042,6 +1030,18 @@ int main( int argc, char *argv[] )
   // But we need the Qt Application to be created to be able to display the
   // profile selection dialog if needed
   QgsApplication myApp( argc, argv, myUseGuiFlag, QString(), QStringLiteral( "desktop" ) );
+
+  // List font directory
+  QDir fontsDir(QgsApplication::fontsPath());
+  QStringList filters;
+  filters << "*.ttf" << "*.otf";
+  QStringList fontsList = fontsDir.entryList(filters,  QDir::Files);
+  // Add font to database
+  QStringList::Iterator it = fontsList.begin();
+  while (it != fontsList.end()) {
+      QFontDatabase::addApplicationFont( fontsDir.filePath(*it) );
+      ++it;
+  }
 
   // Preload the translation. The GUI is not yet initilaized, so only
   // the profile selection dialog will be translated with the system locale, or

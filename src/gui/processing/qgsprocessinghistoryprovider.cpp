@@ -77,7 +77,7 @@ void QgsProcessingHistoryProvider::portOldLog()
       }
     }
 
-    QgsGui::historyProviderRegistry()->addEntries( entries );
+//    QgsGui::historyProviderRegistry()->addEntries( entries );
   }
 }
 

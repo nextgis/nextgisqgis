@@ -1,21 +1,5 @@
 --- a/python/gui/gui_auto.sip	2023-08-21 19:39:45.567058318 +0300
 +++ b/python/gui/gui_auto.sip	2023-11-06 17:39:54.000000000 +0300
-@@ -70,7 +70,6 @@
- %Include auto_generated/qgsexpressiontreeview.sip
- %Include auto_generated/qgsextentgroupbox.sip
- %Include auto_generated/qgsextentwidget.sip
--%Include auto_generated/qgsexternalresourcewidget.sip
- %Include auto_generated/qgsfeaturepickerwidget.sip
- %Include auto_generated/qgsfeaturelistcombobox.sip
- %Include auto_generated/qgsfeatureselectiondlg.sip
-@@ -84,7 +83,6 @@
- %Include auto_generated/qgsfilecontentsourcelineedit.sip
- %Include auto_generated/qgsfiledownloaderdialog.sip
- %Include auto_generated/qgsfilewidget.sip
--%Include auto_generated/qgsexternalstoragefilewidget.sip
- %Include auto_generated/qgsfilterlineedit.sip
- %Include auto_generated/qgsfindfilesbypatternwidget.sip
- %Include auto_generated/qgsfloatingwidget.sip
 @@ -345,13 +343,6 @@
  %Include auto_generated/effects/qgspainteffectpropertieswidget.sip
  %Include auto_generated/effects/qgspainteffectwidget.sip
