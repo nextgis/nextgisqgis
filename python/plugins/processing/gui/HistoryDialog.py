@@ -104,7 +104,8 @@ class HistoryDialog(BASE, WIDGET):
                                      )
         if reply == QMessageBox.Yes:
 #            QgsGui.historyProviderRegistry().clearHistory(Qgis.HistoryProviderBackend.LocalProfile)
-            self.fillTree()
+#            self.fillTree()
+          pass
 
     def saveLog(self):
         fileName, filter = QFileDialog.getSaveFileName(self,
