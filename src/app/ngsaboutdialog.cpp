@@ -23,6 +23,7 @@
 #include "qgsconfig.h"
 
 #include <QSysInfo>
+#include <QProcess>
 
 //
 // GDAL/OGR includes
@@ -59,6 +60,39 @@ static QString platformStr()
     return os;
 }
 
+static QString pythonEnviromentVersion()
+{
+  QString versionNumber;
+
+#ifdef WITH_BINDINGS
+  versionNumber = PYTHON_VERSION;
+#endif
+
+  if (versionNumber.isEmpty()) {
+    QProcess process;
+    QByteArray version;
+    QString pythonInterp("python");
+
+#ifdef Q_OS_LINUX
+    pythonInterp.append('3');
+#endif
+
+    process.start(pythonInterp, QStringList() << "--version");
+    if (process.waitForStarted(300)) {
+      process.waitForFinished(300);
+      version = process.readAllStandardOutput();
+      version = version.trimmed();
+      int index = version.indexOf(' ');
+      if (index != -1) {
+        version = version.mid(index + 1);
+        versionNumber = QString(version);
+      }
+    }
+  }
+
+  return versionNumber;
+}
+
 NgsAboutDialog::NgsAboutDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::NgsAboutDialog)
@@ -84,6 +118,8 @@ NgsAboutDialog::NgsAboutDialog(QWidget *parent) :
     details += tr( "Platform" ) + ": " + platformStr() + "<br>";
     details += tr( "Compiled against Qt" ) + ": " + QLatin1String(QT_VERSION_STR) + "<br>";
     details += tr( "Running against Qt" )  + ": " + qVersion() + "<br>";
+
+    details += tr( "Python Version" )  + ": " + pythonEnviromentVersion() + "<br>";
 
     details += tr( "Compiled against GDAL" ) + ": " + GDAL_RELEASE_NAME + "<br>";
     details += tr( "Running against GDAL" )  + ": " + GDALVersionInfo( "RELEASE_NAME" ) + "<br>";

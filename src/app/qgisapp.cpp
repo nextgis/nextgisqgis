@@ -1719,6 +1719,12 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLayers
   // do main window customization - after window state has been restored, before the window is shown
   startProfile( tr( "Update customization on main window" ) );
   QgsCustomization::instance()->updateMainWindow( mToolbarMenu, mPanelMenu );
+  mActionNewMeshLayer->setVisible(false);
+  mActionAddMeshLayer->setVisible(false);
+  mActionAddAfsLayer->setVisible(false);
+  mActionAddVectorTileLayer->setVisible(false);
+  mActionDxfExport->setVisible(false);
+  mActionDwgImport->setVisible(false);
   endProfile();
 
   mSplash->showMessage( tr( "Populate saved styles" ), Qt::AlignHCenter | Qt::AlignBottom, splashTextColor );
@@ -2822,7 +2828,9 @@ void QgisApp::createActions()
   connect( mActionShowLayoutManager, &QAction::triggered, this, &QgisApp::showLayoutManager );
   connect( mActionExit, &QAction::triggered, this, &QgisApp::fileExit );
 //   connect( mActionDxfExport, &QAction::triggered, this, &QgisApp::dxfExport );
-//   connect( mActionDwgImport, &QAction::triggered, this, &QgisApp::dwgImport );
+//  connect( mActionDwgImport, &QAction::triggered, this, [ = ] {
+//    openFile(QFileDialog::getOpenFileName(this, tr("Open"), QString(), tr("AutoCAD DWG/DXF(*.dxf *.dwg)")));
+//  });
 
   // Edit Menu Items
 
@@ -12712,7 +12720,7 @@ void QgisApp::reportaBug()
 {
   QgsSettings settings;
   QString reportaBugUrl = settings.value( QStringLiteral( "qgis/reportaBugUrl" ),
-                                          tr( "https://qgis.org/en/site/getinvolved/development/bugreporting.html" ) ).toString();
+                                          tr( "https://nextgis.com/" ) ).toString();
   openURL( reportaBugUrl, false );
 }
 
