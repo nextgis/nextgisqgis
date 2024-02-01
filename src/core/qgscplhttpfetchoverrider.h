@@ -68,7 +68,7 @@ class CORE_EXPORT QgsCPLHTTPFetchOverrider
      */
     QThread *thread() const;
 
-  private:
+  protected:
 
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,2,0)
     static CPLHTTPResult *callback( const char *pszURL,

@@ -1723,8 +1723,10 @@ QgisApp::QgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLayers
   mActionAddMeshLayer->setVisible(false);
   mActionAddAfsLayer->setVisible(false);
   mActionAddVectorTileLayer->setVisible(false);
+  mActionAddPointCloudLayer->setVisible(false);
   mActionDxfExport->setVisible(false);
   mActionDwgImport->setVisible(false);
+  getMeshMenu(QStringLiteral())->menuAction()->setVisible(false);
   endProfile();
 
   mSplash->showMessage( tr( "Populate saved styles" ), Qt::AlignHCenter | Qt::AlignBottom, splashTextColor );
@@ -2958,7 +2960,7 @@ void QgisApp::createActions()
   connect( mActionAddWmsLayer, &QAction::triggered, this, [ = ] { dataSourceManager( QStringLiteral( "wms" ) ); } );
   connect( mActionAddXyzLayer, &QAction::triggered, this, [ = ] { dataSourceManager( QStringLiteral( "xyz" ) ); } );
 //   connect( mActionAddVectorTileLayer, &QAction::triggered, this, [ = ] { dataSourceManager( QStringLiteral( "vectortile" ) ); } );
-  connect( mActionAddPointCloudLayer, &QAction::triggered, this, [ = ] { dataSourceManager( QStringLiteral( "pointcloud" ) ); } );
+//   connect( mActionAddPointCloudLayer, &QAction::triggered, this, [ = ] { dataSourceManager( QStringLiteral( "pointcloud" ) ); } );
 //   connect( mActionAddGpsLayer, &QAction::triggered, this, [ = ] { dataSourceManager( QStringLiteral( "gpx" ) ); } );
   connect( mActionAddWcsLayer, &QAction::triggered, this, [ = ] { dataSourceManager( QStringLiteral( "wcs" ) ); } );
 #ifdef HAVE_SPATIALITE
@@ -12720,7 +12722,7 @@ void QgisApp::reportaBug()
 {
   QgsSettings settings;
   QString reportaBugUrl = settings.value( QStringLiteral( "qgis/reportaBugUrl" ),
-                                          tr( "https://nextgis.com/" ) ).toString();
+                                          tr( "https://nextgis.com/support" ) ).toString();
   openURL( reportaBugUrl, false );
 }
 
