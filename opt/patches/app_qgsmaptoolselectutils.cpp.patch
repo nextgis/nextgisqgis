@@ -1,5 +1,5 @@
---- a/src/app/qgsmaptoolselectutils.cpp	2023-08-21 19:39:45.671050940 +0300
-+++ b/src/app/qgsmaptoolselectutils.cpp	2023-10-24 12:27:53.000000000 +0300
+--- a/src/app/qgsmaptoolselectutils.cpp
++++ b/src/app/qgsmaptoolselectutils.cpp
 @@ -21,7 +21,7 @@
  #include "qgsmessagebar.h"
  #include "qgsmapcanvas.h"
@@ -9,18 +9,31 @@
  #include "qgsvectorlayerfeatureiterator.h"
  #include "qgsfeature.h"
  #include "qgsgeometry.h"
-@@ -50,9 +50,7 @@
+@@ -50,14 +50,20 @@
      switch ( layer->type() )
      {
        case Qgis::LayerType::Vector:
 -      case Qgis::LayerType::VectorTile:
 -        // supported
 -        break;
-+//      case Qgis::LayerType::VectorTile:
++        break;
++//      case (int)Qgis::LayerType::VectorTile:
++//        // supported
++//        break;
        case Qgis::LayerType::Raster:
++        break;
        case Qgis::LayerType::Plugin:
++        break;
        case Qgis::LayerType::Mesh:
-@@ -119,10 +117,10 @@
++        break;
+       case Qgis::LayerType::Annotation:
++        break;
+       case Qgis::LayerType::PointCloud:
++        break;
+       case Qgis::LayerType::Group:
+         layer = nullptr; //not supported
+         break;
+@@ -119,10 +125,10 @@
          }
          break;
        }
@@ -35,7 +48,7 @@
  
        case Qgis::LayerType::Raster:
        case Qgis::LayerType::Plugin:
-@@ -251,7 +249,7 @@
+@@ -251,7 +257,7 @@
        vlayer->selectByIds( selectedFeatures, behavior );
        break;
      }
@@ -44,7 +57,7 @@
      case Qgis::LayerType::VectorTile:
      {
        QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer *>( layer );
-@@ -274,7 +272,7 @@
+@@ -274,7 +280,7 @@
  
        vtLayer->selectByGeometry( selectGeomTrans, context, behavior, Qgis::SelectGeometryRelationship::Intersect, flags, &renderContext );
        break;
@@ -53,7 +66,7 @@
  
      case Qgis::LayerType::Raster:
      case Qgis::LayerType::Plugin:
-@@ -309,7 +307,7 @@
+@@ -309,7 +315,7 @@
        vLayer->selectByIds( selectedFeatures, selectBehavior );
        break;
      }
@@ -62,7 +75,7 @@
      case Qgis::LayerType::VectorTile:
      {
        QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( layer );
-@@ -327,7 +325,7 @@
+@@ -327,7 +333,7 @@
  
        vtLayer->selectByGeometry( selectGeomTrans, context, selectBehavior, doContains ? Qgis::SelectGeometryRelationship::Within : Qgis::SelectGeometryRelationship::Intersect, Qgis::SelectionFlags(), &renderContext );
        break;
@@ -71,3 +84,4 @@
  
      case Qgis::LayerType::Raster:
      case Qgis::LayerType::Plugin:
+

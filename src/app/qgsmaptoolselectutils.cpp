@@ -50,12 +50,20 @@ QgsMapLayer *QgsMapToolSelectUtils::getCurrentTargetLayer( QgsMapCanvas *canvas 
     switch ( layer->type() )
     {
       case Qgis::LayerType::Vector:
-//      case Qgis::LayerType::VectorTile:
+        break;
+//      case (int)Qgis::LayerType::VectorTile:
+//        // supported
+//        break;
       case Qgis::LayerType::Raster:
+        break;
       case Qgis::LayerType::Plugin:
+        break;
       case Qgis::LayerType::Mesh:
+        break;
       case Qgis::LayerType::Annotation:
+        break;
       case Qgis::LayerType::PointCloud:
+        break;
       case Qgis::LayerType::Group:
         layer = nullptr; //not supported
         break;
