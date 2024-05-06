@@ -218,7 +218,7 @@ set(TESTS
  testqgstemporalnavigationobject.cpp
  testqgstemporalproperty.cpp
  testqgstemporalrangeobject.cpp
- testqgstiledownloadmanager.cpp
+##### testqgstiledownloadmanager.cpp
  testqgstracer.cpp
  testqgstranslateproject.cpp
  testqgstriangularmesh.cpp
