@@ -82,7 +82,6 @@ PY_COMPILE(staged-plugins "${PYTHON_OUTPUT_DIRECTORY}/plugins")
 # NOTE: Keep in sync with opt/ppa_prepare.py
 set(REMOTE_PLUGINS
     "QuickMapServices"
-    "QTiles"
     "NextGIS Connect"
     "NGQ Rosreestr Tools"
 )
