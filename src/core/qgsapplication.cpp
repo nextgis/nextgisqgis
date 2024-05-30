@@ -114,7 +114,13 @@
 #include <QTextStream>
 #include <QScreen>
 #include <QAuthenticator>
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+#include <QMutex>
+typedef QMutex QRecursiveMutex
+#else
 #include <QRecursiveMutex>
+#endif
+
 
 const QgsSettingsEntryString *QgsApplication::settingsLocaleUserLocale = new QgsSettingsEntryString( QStringLiteral( "userLocale" ), QgsSettingsTree::sTreeLocale, QString() );
 

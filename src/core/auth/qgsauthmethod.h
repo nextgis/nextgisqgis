@@ -23,7 +23,12 @@
 #include <QNetworkRequest>
 #include <QStringList>
 #include <QUrl>
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+#include <QMutex>
+typedef QMutex QRecursiveMutex 
+#else
 #include <QRecursiveMutex>
+#endif
 
 #include "qgsconfig.h"
 #include "qgis_core.h"

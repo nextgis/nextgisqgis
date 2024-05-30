@@ -26,7 +26,13 @@ email                : nyall dot dawson at gmail dot com
 #include <QString>
 #include <QStringList>
 #include <QMap>
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+#include <QMutex>
+typedef QMutex QRecursiveMutex 
+#else
 #include <QRecursiveMutex>
+#endif
 
 class QgsOgrLayer;
 class QgsCoordinateReferenceSystem;

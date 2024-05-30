@@ -28,7 +28,14 @@
 #include "qgsvariantutils.h"
 
 #include <QObject>
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+#include <QMutex>
+typedef QRecursiveMutex QMutex
+#else
 #include <QRecursiveMutex>
+#endif
+
 #include <QCache>
 #include <QSet>
 #include <QDateTime>

@@ -33,7 +33,13 @@
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+#include <QMutex>
+typedef QMutex QRecursiveMutex
+#else
 #include <QRecursiveMutex>
+#endif
 
 class QgsField;
 
