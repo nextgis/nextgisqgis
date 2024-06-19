@@ -191,9 +191,10 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
 
   connect( mFontFamilyRadioCustom, &QAbstractButton::toggled, mFontFamilyComboBox, &QWidget::setEnabled );
 
-  connect( cmbIconSize, qOverload< int >( &QComboBox::activated ), this, &QgsOptions::iconSizeChanged );
-  connect( cmbIconSize, qOverload< int >( &QComboBox::highlighted ), this, &QgsOptions::iconSizeChanged );
-  connect( cmbIconSize, &QComboBox::editTextChanged, this, &QgsOptions::iconSizeChanged );
+  //connect( cmbIconSize, qOverload< int >( &QComboBox::activated ), this, &QgsOptions::iconSizeChanged );
+  //connect( cmbIconSize, qOverload< int >( &QComboBox::highlighted ), this, &QgsOptions::iconSizeChanged );
+  //connect( cmbIconSize, &QComboBox::editTextChanged, this, &QgsOptions::iconSizeChanged );
+  connect( cmbIconSize, &QComboBox::currentTextChanged, this, &QgsOptions::iconSizeChanged );
 
   connect( this, &QDialog::accepted, this, &QgsOptions::saveOptions );
   connect( this, &QDialog::rejected, this, &QgsOptions::rejectOptions );
