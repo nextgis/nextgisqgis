@@ -3472,6 +3472,7 @@ void QgisApp::createToolBars()
                       << mSelectionToolBar
                       << mPluginToolBar
                       << mHelpToolBar
+                      << mNGAccountToolBar
                       << mRasterToolBar
                       << mVectorToolBar
                       << mDatabaseToolBar
