@@ -3472,6 +3472,7 @@ void QgisApp::createToolBars()
                       << mSelectionToolBar
                       << mPluginToolBar
                       << mHelpToolBar
+                      << mNGAccountToolBar
                       << mRasterToolBar
                       << mVectorToolBar
                       << mDatabaseToolBar
@@ -4076,7 +4077,9 @@ void QgisApp::setIconSizes( int size )
   for ( QToolBar *toolbar : constToolbars )
   {
     QString className = toolbar->parent()->metaObject()->className();
-    if ( className == QLatin1String( "QgisApp" ) )
+    QString objectName = toolbar->parent()->objectName();
+
+    if ( className == QLatin1String( "QgisApp" ) || objectName == QLatin1String( "QgisApp" ))
     {
       toolbar->setIconSize( iconSize );
     }

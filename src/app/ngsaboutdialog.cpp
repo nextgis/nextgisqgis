@@ -24,6 +24,7 @@
 
 #include <QSysInfo>
 #include <QProcess>
+#include <QScreen>
 
 //
 // GDAL/OGR includes
@@ -99,6 +100,8 @@ NgsAboutDialog::NgsAboutDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    setWindowFlag(Qt::MSWindowsFixedSizeDialogHint, true);
+
     QString version(VENDOR " QGIS");
 
     QFont font = ui->appText->font();
@@ -157,5 +160,21 @@ NgsAboutDialog::NgsAboutDialog(QWidget *parent) :
 
 NgsAboutDialog::~NgsAboutDialog()
 {
-    delete ui;
+  delete ui;
+}
+
+void NgsAboutDialog::showEvent(QShowEvent *event)
+{
+  qreal height = ui->textBrowser->document()->size().height();
+
+  if ( QScreen *screen = QGuiApplication::primaryScreen() )
+    if (height > screen->availableSize().height())
+      height = screen->availableSize().height();
+
+  ui->textBrowser->setMinimumHeight(ui->textBrowser->document()->size().height());
+
+  adjustSize();
+  setFixedSize(size());
+
+  QDialog::showEvent(event);
 }

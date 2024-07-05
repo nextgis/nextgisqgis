@@ -37,6 +37,9 @@ public:
 
 private:
     Ui::NgsAboutDialog *ui;
+
+protected:
+    void showEvent( QShowEvent *event ) override;
 };
 
 #endif // NGSABOUTDIALOG_H
