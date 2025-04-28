@@ -1,0 +1,20 @@
+--- a/src/core/textrenderer/qgsfontmanager.cpp	2025-04-25 19:26:54.015236535 +0300
++++ b/src/core/textrenderer/qgsfontmanager.cpp	2025-04-02 18:34:56.636838767 +0300
+@@ -200,7 +200,7 @@
+ 
+ QString QgsFontManager::urlForFontDownload( const QString &family, QString &matchedFamily ) const
+ {
+-  const thread_local QStringList sGoogleFonts
++/*  const thread_local QStringList sGoogleFonts
+   {
+     QStringLiteral( "ABeeZee" ),
+     QStringLiteral( "Abel" ),
+@@ -946,7 +946,7 @@
+       matchedFamily = candidate;
+       return QStringLiteral( "https://fonts.google.com/download?family=%1" ).arg( paramName );
+     }
+-  }
++  }*/
+   return QString();
+ }
+ 
