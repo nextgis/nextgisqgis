@@ -1,5 +1,5 @@
---- a/python/plugins/processing/ProcessingPlugin.py	2023-08-21 19:39:45.571058034 +0300
-+++ b/python/plugins/processing/ProcessingPlugin.py	2023-11-06 20:01:10.000000000 +0300
+--- a/python/plugins/processing/ProcessingPlugin.py	2025-04-25 19:26:53.383222662 +0300
++++ b/python/plugins/processing/ProcessingPlugin.py	2025-04-02 18:34:55.792916677 +0300
 @@ -37,8 +37,8 @@
                         QgsSettings)
  from qgis.gui import (QgsGui,
@@ -81,6 +81,25 @@
          self.iface.unregisterMainWindowAction(self.resultsAction)
  
          self.iface.unregisterOptionsWidgetFactory(self.options_factory)
+@@ -504,12 +504,12 @@
+             self.iface.projectMenu().removeAction(self.projectMenuSeparator)
+             self.projectMenuSeparator = None
+ 
+-        QgsGui.historyProviderRegistry().providerById('processing').executePython.disconnect(
+-            self._execute_history_commands
+-        )
+-        QgsGui.historyProviderRegistry().providerById('processing').createTest.disconnect(
+-            self.create_test
+-        )
++#        QgsGui.historyProviderRegistry().providerById('processing').executePython.disconnect(
++#            self._execute_history_commands
++#        )
++#        QgsGui.historyProviderRegistry().providerById('processing').createTest.disconnect(
++#            self.create_test
++#        )
+ 
+         Processing.deinitialize()
+ 
 @@ -534,10 +534,10 @@
          else:
              self.resultsDock.show()

@@ -1,5 +1,14 @@
---- a/i18n/qgis_ru.ts	2023-08-21 19:39:45.231082150 +0300
-+++ b/i18n/qgis_ru.ts	2023-10-04 13:38:56.957262634 +0300
+--- a/i18n/qgis_ru.ts	2025-04-25 19:26:52.974213684 +0300
++++ b/i18n/qgis_ru.ts	2025-04-02 18:34:55.504989468 +0300
+@@ -43758,7 +43758,7 @@
+     <message>
+         <location filename="../src/app/qgisapp.cpp" line="1659"/>
+         <source>Updating recent project paths</source>
+-        <translation>Обновление путей предыдщих проектов</translation>
++        <translation>Обновление путей предыдущих проектов</translation>
+     </message>
+     <message>
+         <location filename="../src/app/qgisapp.cpp" line="1661"/>
 @@ -127138,7 +127138,7 @@
          <location filename="../src/gui/qgsquerybuilder.cpp" line="261"/>
          <source>The where clause returned %n row(s).</source>
@@ -14,5 +23,5 @@
      </message>
  </context>
 -</TS>
-\ В конце файла нет новой строки
+\ No newline at end of file
 +</TS>

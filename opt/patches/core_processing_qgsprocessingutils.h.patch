@@ -1,5 +1,5 @@
---- a/src/core/processing/qgsprocessingutils.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/processing/qgsprocessingutils.h	2022-04-25 18:33:17.000000000 +0300
+--- a/src/core/processing/qgsprocessingutils.h	2025-04-25 19:26:53.863233198 +0300
++++ b/src/core/processing/qgsprocessingutils.h	2025-04-02 18:34:56.534461817 +0300
 @@ -35,10 +35,9 @@
  class QgsProcessingFeedback;
  class QgsProcessingFeatureSource;
@@ -12,7 +12,16 @@
  
  #include <QString>
  #include <QVariant>
-@@ -574,7 +574,7 @@
+@@ -185,7 +184,7 @@
+      *
+      * \since QGIS 3.32
+      */
+-    static QList<QgsVectorTileLayer *> compatibleVectorTileLayers( QgsProject *project, bool sort = true );
++    // static QList<QgsVectorTileLayer *> compatibleVectorTileLayers( QgsProject *project, bool sort = true );
+ 
+     /**
+      * Returns a list of map layers from a \a project which are compatible with the processing
+@@ -574,7 +573,7 @@
      static bool canUseLayer( const QgsRasterLayer *layer );
      static bool canUseLayer( const QgsMeshLayer *layer );
      static bool canUseLayer( const QgsPluginLayer *layer );

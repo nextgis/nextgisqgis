@@ -1,5 +1,5 @@
---- a/src/core/qgsapplication.h	2023-08-21 19:39:45.727046968 +0300
-+++ b/src/core/qgsapplication.h	2023-10-16 14:56:20.000000000 +0300
+--- a/src/core/qgsapplication.h	2025-04-25 19:26:53.907234164 +0300
++++ b/src/core/qgsapplication.h	2025-04-02 18:34:56.554011851 +0300
 @@ -20,6 +20,7 @@
  #include <QEvent>
  #include <QStringList>
@@ -8,15 +8,6 @@
  
  #include <memory>
  #include "qgis_sip.h"
-@@ -37,7 +38,7 @@
- class QgsColorSchemeRegistry;
- class QgsPaintEffectRegistry;
- class QgsProjectStorageRegistry;
--class QgsExternalStorageRegistry;
-+// class QgsExternalStorageRegistry;
- class QgsLocalizedDataPathRegistry;
- class QgsLayerMetadataProviderRegistry;
- class QgsRendererRegistry;
 @@ -46,8 +47,8 @@
  class QgsSourceCache;
  class QgsSymbolLayerRegistry;
@@ -62,15 +53,6 @@
  
      /**
       * Returns the application's plugin layer registry, used for managing plugin layer types.
-@@ -968,7 +973,7 @@
-      * Returns registry of available external storage implementations.
-      * \since QGIS 3.20
-      */
--    static QgsExternalStorageRegistry *externalStorageRegistry() SIP_KEEPREFERENCE;
-+    // static QgsExternalStorageRegistry *externalStorageRegistry() SIP_KEEPREFERENCE;
- 
-     /**
-      * Returns the registry of data repositories
 @@ -1133,9 +1138,10 @@
      QMap<QString, QIcon> mIconCache;
      QMap<Cursor, QCursor> mCursorCache;
@@ -96,12 +78,3 @@
        QgsNetworkContentFetcherRegistry *mNetworkContentFetcherRegistry = nullptr;
        QgsScaleBarRendererRegistry *mScaleBarRendererRegistry = nullptr;
        QgsValidityCheckRegistry *mValidityCheckRegistry = nullptr;
-@@ -1165,7 +1171,7 @@
-       QgsConnectionRegistry *mConnectionRegistry = nullptr;
-       QgsProjectStorageRegistry *mProjectStorageRegistry = nullptr;
-       QgsLayerMetadataProviderRegistry *mLayerMetadataProviderRegistry = nullptr;
--      QgsExternalStorageRegistry *mExternalStorageRegistry = nullptr;
-+      // QgsExternalStorageRegistry *mExternalStorageRegistry = nullptr;
-       QgsPageSizeRegistry *mPageSizeRegistry = nullptr;
-       QgsRasterRendererRegistry *mRasterRendererRegistry = nullptr;
-       QgsRendererRegistry *mRendererRegistry = nullptr;

@@ -1,5 +1,5 @@
---- a/src/app/qgisappinterface.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/qgisappinterface.h	2022-04-25 18:33:16.000000000 +0300
+--- a/src/app/qgisappinterface.h	2025-04-25 19:26:53.685229291 +0300
++++ b/src/app/qgisappinterface.h	2025-04-02 18:34:56.423635275 +0300
 @@ -70,7 +70,7 @@
      QgsRasterLayer *addRasterLayer( const QString &rasterLayerPath, const QString &baseName ) override;
      QgsRasterLayer *addRasterLayer( const QString &url, const QString &baseName, const QString &providerKey ) override;
@@ -9,7 +9,7 @@
      QgsPointCloudLayer *addPointCloudLayer( const QString &url, const QString &baseName, const QString &providerKey ) override;
      bool addProject( const QString &projectName ) override;
      bool newProject( bool promptToSaveFlag = false ) override;
-@@ -249,7 +249,7 @@
+@@ -255,7 +255,7 @@
      QAction *actionAddPgLayer() override;
      QAction *actionAddWmsLayer() override;
      QAction *actionAddXyzLayer() override;

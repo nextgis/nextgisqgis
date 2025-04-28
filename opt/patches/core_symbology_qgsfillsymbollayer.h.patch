@@ -1,6 +1,6 @@
---- a/src/core/symbology/qgsfillsymbollayer.h	2023-08-21 19:39:45.747045550 +0300
-+++ b/src/core/symbology/qgsfillsymbollayer.h	2023-10-04 11:49:32.015303279 +0300
-@@ -172,14 +172,14 @@
+--- a/src/core/symbology/qgsfillsymbollayer.h	2025-04-25 19:26:53.999236184 +0300
++++ b/src/core/symbology/qgsfillsymbollayer.h	2025-04-02 18:34:56.628177317 +0300
+@@ -172,13 +172,13 @@
  
      double estimateMaxBleed( const QgsRenderContext &context ) const override;
  
@@ -11,7 +11,6 @@
 -    Qt::PenStyle dxfPenStyle() const override;
 -    QColor dxfBrushColor( QgsSymbolRenderContext &context ) const override;
 -    Qt::BrushStyle dxfBrushStyle() const override;
--    QImage toTiledPatternImage( ) const override;
 +    // double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
 +    // QColor dxfColor( QgsSymbolRenderContext &context ) const override;
 +    // double dxfAngle( QgsSymbolRenderContext &context ) const override;
@@ -19,10 +18,9 @@
 +    // Qt::PenStyle dxfPenStyle() const override;
 +    // QColor dxfBrushColor( QgsSymbolRenderContext &context ) const override;
 +    // Qt::BrushStyle dxfBrushStyle() const override;
-+    // QImage toTiledPatternImage( ) const override;
+     QImage toTiledPatternImage( ) const override;
  
    protected:
-     QBrush mBrush;
 @@ -839,8 +839,8 @@
      Qgis::RenderUnit outputUnit() const override;
      void setMapUnitScale( const QgsMapUnitScale &scale ) override;

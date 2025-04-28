@@ -1,6 +1,6 @@
---- a/python/core/auto_generated/qgsapplication.sip.in	2022-02-18 15:06:10.000000000 +0300
-+++ b/python/core/auto_generated/qgsapplication.sip.in	2022-04-29 16:02:24.745588400 +0300
-@@ -804,20 +804,6 @@
+--- a/python/core/auto_generated/qgsapplication.sip.in	2025-04-25 19:26:53.224219171 +0300
++++ b/python/core/auto_generated/qgsapplication.sip.in	2025-04-02 18:34:55.735224267 +0300
+@@ -831,20 +831,6 @@
  .. versionadded:: 3.16
  %End
  
@@ -21,7 +21,7 @@
      static QgsPluginLayerRegistry *pluginLayerRegistry() /KeepReference/;
  %Docstring
  Returns the application's plugin layer registry, used for managing plugin layer types.
-@@ -1008,13 +1008,6 @@
+@@ -1008,13 +994,6 @@
  .. versionadded:: 3.28
  %End
  

@@ -1,5 +1,5 @@
---- a/src/app/qgsmaptoolselectutils.cpp
-+++ b/src/app/qgsmaptoolselectutils.cpp
+--- a/src/app/qgsmaptoolselectutils.cpp	2025-04-25 19:26:53.705229730 +0300
++++ b/src/app/qgsmaptoolselectutils.cpp	2025-04-02 18:34:56.437327019 +0300
 @@ -21,7 +21,7 @@
  #include "qgsmessagebar.h"
  #include "qgsmapcanvas.h"
@@ -15,8 +15,7 @@
        case Qgis::LayerType::Vector:
 -      case Qgis::LayerType::VectorTile:
 -        // supported
--        break;
-+        break;
+         break;
 +//      case (int)Qgis::LayerType::VectorTile:
 +//        // supported
 +//        break;
@@ -84,4 +83,3 @@
  
      case Qgis::LayerType::Raster:
      case Qgis::LayerType::Plugin:
-

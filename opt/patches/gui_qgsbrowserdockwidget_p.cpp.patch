@@ -1,5 +1,5 @@
---- a/src/gui/qgsbrowserdockwidget_p.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/gui/qgsbrowserdockwidget_p.cpp	2022-04-25 18:33:18.000000000 +0300
+--- a/src/gui/qgsbrowserdockwidget_p.cpp	2025-04-25 19:26:54.152239542 +0300
++++ b/src/gui/qgsbrowserdockwidget_p.cpp	2025-04-02 18:34:56.702928961 +0300
 @@ -44,7 +44,7 @@
  #include "qgsnative.h"
  #include "qgsmaptoolpan.h"
@@ -9,7 +9,7 @@
  #include "qgsattributetablemodel.h"
  #include "qgsattributetablefiltermodel.h"
  #include "qgsapplication.h"
-@@ -215,12 +215,12 @@
+@@ -216,12 +216,12 @@
        break;
      }
  

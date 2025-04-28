@@ -1,6 +1,6 @@
---- a/src/gui/raster/qgsrasterlayerproperties.cpp	2023-08-22 11:32:53.431358491 +0300
-+++ b/src/gui/raster/qgsrasterlayerproperties.cpp	2023-10-26 01:46:54.262333015 +0300
-@@ -532,6 +532,10 @@
+--- a/src/gui/raster/qgsrasterlayerproperties.cpp	2025-04-25 19:26:54.235241364 +0300
++++ b/src/gui/raster/qgsrasterlayerproperties.cpp	2025-04-02 18:34:56.744845384 +0300
+@@ -584,6 +584,10 @@
    mOptsPage_Metadata->setProperty( "helpPage", QStringLiteral( "working_with_raster/raster_properties.html#metadata-properties" ) );
    mOptsPage_Legend->setProperty( "helpPage", QStringLiteral( "working_with_raster/raster_properties.html#legend-properties" ) );
    mOptsPage_Server->setProperty( "helpPage", QStringLiteral( "working_with_raster/raster_properties.html#server-properties" ) );

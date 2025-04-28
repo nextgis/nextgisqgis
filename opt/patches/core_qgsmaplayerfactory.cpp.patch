@@ -1,5 +1,5 @@
---- a/src/core/qgsmaplayerfactory.cpp
-+++ b/src/core/qgsmaplayerfactory.cpp
+--- a/src/core/qgsmaplayerfactory.cpp	2025-04-25 19:26:53.935234779 +0300
++++ b/src/core/qgsmaplayerfactory.cpp	2025-04-02 18:34:56.575478861 +0300
 @@ -20,7 +20,7 @@
  #include "qgsrasterlayer.h"
  #include "qgsmeshlayer.h"
@@ -37,4 +37,3 @@
  
      case Qgis::LayerType::Annotation:
      {
-

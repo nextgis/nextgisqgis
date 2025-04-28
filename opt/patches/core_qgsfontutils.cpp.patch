@@ -1,6 +1,6 @@
---- a/src/core/qgsfontutils.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/qgsfontutils.cpp	2022-04-25 18:33:18.000000000 +0300
-@@ -251,21 +251,21 @@
+--- a/src/core/qgsfontutils.cpp	2025-04-25 19:26:53.926234581 +0300
++++ b/src/core/qgsfontutils.cpp	2025-04-02 18:34:56.567676220 +0300
+@@ -282,21 +282,21 @@
      else
      {
        bool loaded = false;

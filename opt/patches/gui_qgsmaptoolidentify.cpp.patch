@@ -1,6 +1,6 @@
---- a/src/gui/qgsmaptoolidentify.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/gui/qgsmaptoolidentify.cpp	2022-04-25 18:33:17.000000000 +0300
-@@ -38,10 +38,10 @@
+--- a/src/gui/qgsmaptoolidentify.cpp	2025-04-25 19:26:54.196240508 +0300
++++ b/src/gui/qgsmaptoolidentify.cpp	2025-04-02 18:34:56.726125904 +0300
+@@ -34,10 +34,10 @@
  #include "qgsvectordataprovider.h"
  #include "qgsvectorlayer.h"
  #include "qgsvectorlayertemporalproperties.h"

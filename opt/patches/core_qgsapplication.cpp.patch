@@ -1,14 +1,5 @@
---- a/src/core/qgsapplication.cpp	2023-08-21 19:39:45.727046968 +0300
-+++ b/src/core/qgsapplication.cpp	2023-10-24 19:02:52.000000000 +0300
-@@ -42,7 +42,7 @@
- #include "qgscolorschemeregistry.h"
- #include "qgspainteffectregistry.h"
- #include "qgsprojectstorageregistry.h"
--#include "qgsexternalstorageregistry.h"
-+// #include "qgsexternalstorageregistry.h"
- #include "qgsrasterrendererregistry.h"
- #include "qgsrendererregistry.h"
- #include "qgspointcloudrendererregistry.h"
+--- a/src/core/qgsapplication.cpp	2025-04-25 19:26:53.906234142 +0300
++++ b/src/core/qgsapplication.cpp	2025-04-02 18:34:56.554011851 +0300
 @@ -68,7 +68,7 @@
  #include "qgsstyle.h"
  #include "qgsprojutils.h"
@@ -407,9 +398,9 @@
 -    }
 -    dir.cdUp(); // Go from /usr/bin or /usr/lib (for server) to /usr
 -    prefixPath = dir.absolutePath();
+-#endif
 +    QDir defaultPrefixDir("/usr");
  #endif
--#endif
 -  }
 +    QString defaultPrefixPath =  defaultPrefixDir.absolutePath();
  
@@ -658,21 +649,6 @@
  
  QgsPluginLayerRegistry *QgsApplication::pluginLayerRegistry()
  {
-@@ -2613,10 +2736,10 @@
-   return members()->mProjectStorageRegistry;
- }
- 
--QgsExternalStorageRegistry *QgsApplication::externalStorageRegistry()
--{
--  return members()->mExternalStorageRegistry;
--}
-+// QgsExternalStorageRegistry *QgsApplication::externalStorageRegistry()
-+// {
-+//   return members()->mExternalStorageRegistry;
-+// }
- 
- QgsLocalizedDataPathRegistry *QgsApplication::localizedDataPathRegistry()
- {
 @@ -2737,16 +2860,16 @@
      mPointCloudRendererRegistry = new QgsPointCloudRendererRegistry();
      profiler->end();
@@ -700,23 +676,6 @@
    {
      profiler->start( tr( "Setup plugin layer registry" ) );
      mPluginLayerRegistry = new QgsPluginLayerRegistry();
-@@ -2791,11 +2914,11 @@
-     m3DRendererRegistry = new Qgs3DRendererRegistry();
-     profiler->end();
-   }
--  {
--    profiler->start( tr( "Setup external storage registry" ) );
--    mExternalStorageRegistry = new QgsExternalStorageRegistry();
--    profiler->end();
--  }
-+//   {
-+//     profiler->start( tr( "Setup external storage registry" ) );
-+//     mExternalStorageRegistry = new QgsExternalStorageRegistry();
-+//     profiler->end();
-+//   }
-   {
-     profiler->start( tr( "Setup network content cache" ) );
-     mNetworkContentFetcherRegistry = new QgsNetworkContentFetcherRegistry();
 @@ -2840,8 +2963,8 @@
    delete mAnnotationRegistry;
    delete mColorSchemeRegistry;
@@ -728,15 +687,6 @@
    delete mMessageLog;
    delete mPaintEffectRegistry;
    delete mPluginLayerRegistry;
-@@ -2859,7 +2982,7 @@
-   delete mCalloutRegistry;
-   delete mRecentStyleHandler;
-   delete mSymbolLayerRegistry;
--  delete mExternalStorageRegistry;
-+//   delete mExternalStorageRegistry;
-   delete mTaskManager;
-   delete mNetworkContentFetcherRegistry;
-   delete mClassificationMethodRegistry;
 @@ -2890,3 +3013,8 @@
      return sApplicationMembers;
    }

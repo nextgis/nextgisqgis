@@ -1,6 +1,6 @@
---- a/src/app/qgisappinterface.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/qgisappinterface.cpp	2022-04-25 18:33:18.000000000 +0300
-@@ -163,12 +163,12 @@
+--- a/src/app/qgisappinterface.cpp	2025-04-25 19:26:53.684229269 +0300
++++ b/src/app/qgisappinterface.cpp	2025-04-02 18:34:56.423365411 +0300
+@@ -159,12 +159,12 @@
  {
    return qgis->addMeshLayer( url, baseName, providerKey );
  }
@@ -15,7 +15,7 @@
  QgsPointCloudLayer *QgisAppInterface::addPointCloudLayer( const QString &url, const QString &baseName, const QString &providerKey )
  {
    return qgis->addPointCloudLayer( url, baseName, providerKey );
-@@ -744,7 +744,7 @@
+@@ -813,7 +813,7 @@
  QAction *QgisAppInterface::actionAddPgLayer() { return qgis->actionAddPgLayer(); }
  QAction *QgisAppInterface::actionAddWmsLayer() { return qgis->actionAddWmsLayer(); }
  QAction *QgisAppInterface::actionAddXyzLayer() { return qgis->actionAddXyzLayer(); }
@@ -24,7 +24,7 @@
  QAction *QgisAppInterface::actionAddPointCloudLayer() { return qgis->actionAddPointCloudLayer(); }
  QAction *QgisAppInterface::actionAddAfsLayer() { return qgis->actionAddAfsLayer(); }
  QAction *QgisAppInterface::actionAddAmsLayer() { return qgis->actionAddAfsLayer(); }
-@@ -908,12 +908,12 @@
+@@ -977,12 +977,12 @@
  {
    return qgis->layerTreeInsertionPoint();
  }

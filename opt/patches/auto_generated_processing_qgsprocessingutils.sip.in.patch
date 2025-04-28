@@ -1,5 +1,5 @@
---- a/python/core/auto_generated/processing/qgsprocessingutils.sip.in	2023-08-21 19:39:45.539060304 +0300
-+++ b/python/core/auto_generated/processing/qgsprocessingutils.sip.in	2023-10-30 15:30:50.000000000 +0300
+--- a/python/core/auto_generated/processing/qgsprocessingutils.sip.in	2025-04-25 19:26:53.217219018 +0300
++++ b/python/core/auto_generated/processing/qgsprocessingutils.sip.in	2025-04-02 18:34:55.731034209 +0300
 @@ -43,8 +43,6 @@
  
  .. seealso:: :py:func:`compatibleAnnotationLayers`
@@ -110,7 +110,7 @@
  .. versionadded:: 3.10
  %End
  
-@@ -537,53 +495,9 @@
+@@ -537,27 +495,9 @@
  
  .. seealso:: :py:func:`defaultRasterExtension`
  
@@ -135,32 +135,6 @@
 -.. versionadded:: 3.32
 -%End
 -
--    static QVariantMap removePointerValuesFromMap( const QVariantMap &map );
--%Docstring
--Removes any raw pointer values from an input ``map``, replacing them with
--appropriate string values where possible.
--
--.. versionadded:: 3.26
--%End
--
--    static QVariantMap preprocessQgisProcessParameters( const QVariantMap &parameters, bool &ok, QString &error );
--%Docstring
--Pre-processes a set of ``parameter`` values for the qgis_process command.
--
--In particular, this function upgrades encoded data defined values to :py:class:`QgsProperty` objects.
--
--.. versionadded:: 3.30
--%End
--
--    static QString resolveDefaultEncoding( const QString &defaultEncoding = "System" );
--%Docstring
--Returns the default encoding.
--
--The default encoding could be the one from "/Processing/encoding" or when it's not an allowed encoding name
--like "System", the default encoding system (mostly UTF-8 on Unix-like, windows-1252 on Windows).
--
--.. versionadded:: 3.32
--%End
- 
- };
- 
+     static QVariantMap removePointerValuesFromMap( const QVariantMap &map );
+ %Docstring
+ Removes any raw pointer values from an input ``map``, replacing them with

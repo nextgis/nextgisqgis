@@ -1,6 +1,6 @@
---- a/src/ui/qgisapp.ui	2023-08-22 11:32:53.699361216 +0300
-+++ b/src/ui/qgisapp.ui	2023-08-28 21:30:58.187518067 +0300
-@@ -474,6 +474,29 @@
+--- a/src/ui/qgisapp.ui	2025-04-25 19:26:54.416245337 +0300
++++ b/src/ui/qgisapp.ui	2025-04-02 18:34:56.834116096 +0300
+@@ -437,6 +437,29 @@
     <addaction name="mActionShowLayoutManager"/>
     <addaction name="mActionStyleManager"/>
    </widget>
