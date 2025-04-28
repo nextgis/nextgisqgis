@@ -7,7 +7,7 @@ used in the NextGIS QGIS.
 Mode **create**
 ----------------
 Creates one or several ``*.patch`` files that describe the difference
-between *upstream* (clean QGIS) and *local* (NextGIS) versions of
+between *upstream* (vanilla QGIS) and *local* (NextGIS) versions of
 the same file.
 
 Typical call::
@@ -38,7 +38,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Iterable, List, Optional, Set
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 
 class AnsiColor(StrEnum):
@@ -92,6 +92,82 @@ def mark_failure(text: str) -> None:
     color_print(f"✗ {text}", color=AnsiColor.RED)
 
 
+def parse_qgis_version(cmake_file: Path) -> Dict[str, str]:
+    """Extract QGIS version and name from CMakeLists.txt."""
+
+    def extract_value(line: str) -> Optional[str]:
+        match = re.search(r"set\([^ ]+ (['\"]?)(.+?)\1\)", line, re.IGNORECASE)
+        if match:
+            return match.group(2)
+        return None
+
+    if not cmake_file.exists():
+        mark_failure(f"CMake file {cmake_file} file does not exist.")
+        sys.exit(1)
+
+    version_number_prefix = (
+        "CPACK_PACKAGE_VERSION" if cmake_file.suffix == ".txt" else "QGIS"
+    )
+    version_name_prefix = "RELEASE" if cmake_file.suffix == ".txt" else "QGIS"
+
+    parsed: Dict[str, Any] = {
+        "major": None,
+        "minor": None,
+        "patch": None,
+        "name": None,
+    }
+    with cmake_file.open() as cmake_stream:
+        for line in cmake_stream:
+            upper_line = line.upper()
+
+            if f"SET({version_number_prefix}_MAJOR" in upper_line:
+                parsed["major"] = extract_value(line)
+            elif f"SET({version_number_prefix}_MINOR" in upper_line:
+                parsed["minor"] = extract_value(line)
+            elif f"SET({version_number_prefix}_PATCH" in upper_line:
+                parsed["patch"] = extract_value(line)
+            elif f"SET({version_name_prefix}_NAME" in upper_line:
+                parsed["name"] = extract_value(line)
+            else:
+                continue
+
+            if all(part is not None for part in parsed.values()):
+                break
+
+    if not all(part is not None for part in parsed.values()):
+        color_print(f"✗ Invalid cmake file ({cmake_file}).", color=AnsiColor.RED)
+        sys.exit(1)
+
+    return parsed
+
+
+def _check_qgis_version(upstream: Path, local: Path) -> None:
+    upstream_cmake_file = upstream / "CMakeLists.txt"
+    upstream_version = parse_qgis_version(upstream_cmake_file)
+    color_print(
+        "ℹ Upstream QGIS version: {} ({}.{}.{})".format(
+            upstream_version["name"],
+            upstream_version["major"],
+            upstream_version["minor"],
+            upstream_version["patch"],
+        ),
+    )
+
+    local_cmake_file = local / "cmake" / "util.cmake"
+    local_version = parse_qgis_version(local_cmake_file)
+    color_print(
+        "ℹ Local QGIS version: {} ({}.{}.{})".format(
+            local_version["name"],
+            local_version["major"],
+            local_version["minor"],
+            local_version["patch"],
+        ),
+    )
+
+    if upstream_version != local_version:
+        mark_failure("Upstream QGIS version must be the same as local")
+        sys.exit(1)
+
 def _run_diff(upstream_file: Path, local_file: Path) -> str:
     """Return ``diff -u`` output between files (may be empty)."""
     process = subprocess.run(
@@ -119,6 +195,13 @@ def _patch_file_name(file_path: Path) -> str:
     return "_".join(parts) + ".patch"
 
 
+def _is_diff_same(patch_file: Path, new_diff: str) -> bool:
+    old_diff = patch_file.read_text("utf-8")
+    old_diff_lines = old_diff.splitlines()[2:]
+    new_diff_lines = new_diff.splitlines()[2:]
+    return old_diff_lines == new_diff_lines
+
+
 def _ensure_patch_dir(local_path: Path) -> Path:
     """Return ``<local>/opt/patches`` creating it when necessary."""
     patch_dir = local_path / "opt" / "patches"
@@ -134,6 +217,10 @@ def _create_or_update_patch(
     if patch_file.exists() and not diff_data:
         mark_semi_success(f"removed empty patch: {patch_file}")
         patch_file.unlink()
+        return
+
+    if _is_diff_same(patch_file, diff_data):
+        mark_success(f"diff is same for {relative_path}")
         return
 
     with open(patch_file, "w", encoding="utf-8") as file:
@@ -168,9 +255,7 @@ def _collect_changed_files_from_patches(local: Path) -> List[Path]:
     return sorted(subpaths)
 
 
-def create_patches(
-    upstream: Path, local: Path, changed_files: Iterable[Path], write_empty: bool = True
-) -> None:
+def create_patches(upstream: Path, local: Path, changed_files: Iterable[Path]) -> None:
     """Create new patches for *subpaths*."""
     patch_dir = _ensure_patch_dir(local)
 
@@ -262,14 +347,21 @@ def main() -> None:
     """Entry point."""
     args = parse_args()
 
+    local = args.local.resolve()
+    if args.command == "list":
+        list_patched_files(local)
+        return
+
+    upstream = args.upstream.resolve()
+    _check_qgis_version(upstream, local)
+
     if args.command == "create":
-        create_patches(args.upstream, args.local, args.files)
+        create_patches(upstream, local, args.files)
     elif args.command == "update":
-        update_patches(args.upstream, args.local)
-    elif args.command == "list":
-        list_patched_files(args.local)
+        update_patches(upstream, local)
     else:
-        sys.exit("unknown command")
+        mark_failure("Unknown command")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
