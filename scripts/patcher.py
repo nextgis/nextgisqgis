@@ -581,6 +581,19 @@ def _copy_files(source: Path, destination: Path, files: List[Path]) -> None:
         destination_file.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_file, destination_file)
 
+def _update_conflicting_files(local: Path, conflicting_files: List[Path]) -> None:
+    for conflicting_file in conflicting_files:
+        file_path = local / conflicting_file
+        content = file_path.read_text("utf-8")
+
+        updated_content = re.sub(
+            r"^<<<<<<<.*$", "<<<<<<< Vanilla QGIS", content, flags=re.MULTILINE
+        )
+        updated_content = re.sub(
+            r"^>>>>>>>.*$", ">>>>>>> NextGIS QGIS", updated_content, flags=re.MULTILINE
+        )
+
+        file_path.write_text(updated_content)
 
 def _apply_patches_in_temp_repo(
     *,
@@ -598,7 +611,7 @@ def _apply_patches_in_temp_repo(
 
     changed_files = _collect_changed_files_from_patches(local)
 
-    with tempfile.TemporaryDirectory(delete=False) as temp_dir:
+    with tempfile.TemporaryDirectory() as temp_dir:
         temp_repo = Path(temp_dir)
         initial_branch = "final-" + _format_version(local_version).replace(".", "_")
         target_branch = "final-" + _format_version(upstream_version).replace(".", "_")
@@ -618,6 +631,8 @@ def _apply_patches_in_temp_repo(
         _commit(temp_repo, "Updated " + _format_version(upstream_version))
         conflicting_files = _rebase(temp_repo, target_branch)
         _copy_files(temp_repo, local, changed_files)
+
+        _update_conflicting_files(local, conflicting_files)
 
         if add_to_stage:
             _add_to_stage(local, list(set(changed_files) - set(conflicting_files)))
