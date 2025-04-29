@@ -60,8 +60,9 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, cast
+from typing import Dict, Iterable, List, Optional, Set, Tuple, cast
 
 # ---------------------------------------------------------------------------
 # Constants & configuration
@@ -176,6 +177,13 @@ def _parse_qgis_version(cmake_file: Path) -> Dict[str, str]:
     return cast(Dict[str, str], parsed)
 
 
+def _format_version(version: Dict[str, str], with_name: bool = False) -> str:
+    template = (
+        "{name} ({major}.{minor}.{patch})" if with_name else "{major}.{minor}.{patch}"
+    )
+    return template.format_map(version)
+
+
 # ---------------------------------------------------------------------------
 # Diff & patch helpers
 # ---------------------------------------------------------------------------
@@ -238,13 +246,13 @@ def _create_or_update_patch(
     if not diff_data:
         if patch_file.exists():
             patch_file.unlink()
-            mark_semi_success(f"removed empty patch: {patch_file}")
+            mark_semi_success(f"Removed empty patch: {patch_file}")
         else:
-            mark_semi_success(f"skip empty patch: {patch_file}")
+            mark_semi_success(f"Skip empty patch: {patch_file}")
         return
 
     if patch_file.exists() and _is_diff_same(patch_file, diff_data):
-        mark_success(f"diff is same for {relative_path}")
+        mark_success(f"Diff is same for {relative_path}")
         return
 
     with patch_file.open("w", encoding="utf-8") as file:
@@ -252,24 +260,27 @@ def _create_or_update_patch(
             diff_data.replace(upstream.as_posix(), "a").replace(local.as_posix(), "b")
         )
 
-    mark_success(f"wrote patch for {relative_path}")
+    mark_success(f"Wrote patch for {relative_path}")
 
 
 def _cleanup(patch_dir: Path) -> None:
     """Remove every **obsolete** (empty) patch file in *patch_dir*."""
     for patch_file in patch_dir.glob("*.patch"):
         if patch_file.stat().st_size == 0:
-            mark_semi_success(f"removed empty patch: {patch_file}")
+            mark_semi_success(f"Removed empty patch: {patch_file}")
             patch_file.unlink()
 
 
 def _collect_changed_files_from_patches(local: Path) -> List[Path]:
     """Return a sorted list of paths **already** covered by patches."""
-    patch_dir = _ensure_patch_dir(local)
+    patches_path = _ensure_patch_dir(local)
     pattern = re.compile(r"--- a/(.+?)(\t|\s|$)")
     subpaths: Set[Path] = set()
 
-    for patch_file in patch_dir.glob("*.patch"):
+    patch_files = list(patches_path.rglob("*.patch"))
+    mark_info(f"Found {len(patch_files)} patches in {patches_path}")
+
+    for patch_file in patch_files:
         with patch_file.open("r", encoding="utf-8") as file:
             first_line = file.readline()
             match = pattern.search(first_line)
@@ -289,11 +300,11 @@ def create_patches(upstream: Path, local: Path, changed_files: Iterable[Path]) -
         local_file = local / relative_path
 
         if not upstream_file.exists():
-            mark_failure(f"upstream missing: {upstream_file}")
+            mark_failure(f"Upstream missing: {upstream_file}")
             continue
 
         if not local_file.exists():
-            mark_failure(f"local missing: {local_file}")
+            mark_failure(f"Local missing: {local_file}")
             sys.exit(1)
 
         diff = _run_diff(upstream_file, local_file)
@@ -363,7 +374,7 @@ def scan_for_new_patches(
 
         patch_file = patch_dir / _patch_file_name(changed_file)
         if patch_file.exists():
-            mark_semi_success(f"already patched: {changed_file}")
+            mark_semi_success(f"Already patched: {changed_file}")
             continue
 
         upstream_file = upstream / changed_file
@@ -383,15 +394,7 @@ def scan_for_new_patches(
 # ---------------------------------------------------------------------------
 
 
-def _resolve_conflict(resolver: str, patch_path: Path) -> bool:
-    """Resolve patch conflicts using specified merge tool."""
-    if resolver == "none":
-        return False
-
-    return False
-
-
-def _check_can_be_applied(local_path: Path, patch_file: Path) -> bool:
+def _check_is_applied(local_path: Path, patch_file: Path) -> bool:
     code = subprocess.call(
         [
             "git",
@@ -435,58 +438,201 @@ def _apply_patch(local_path: Path, patch_file: Path) -> Tuple[bool, Optional[str
 
 
 def _apply_patches(
-    upstream: Path, local: Path, resolver: str, skip_errors: bool
+    temp_repo: Path,
+    patches_path: Path,
 ) -> None:
     """Apply .patch files to the project directory."""
+    for patch_file in patches_path.rglob("*.patch"):
+        if _check_is_applied(temp_repo, patch_file):
+            continue
+
+        is_applied, error_message = _apply_patch(temp_repo, patch_file)
+        if not is_applied:
+            assert error_message is not None
+            mark_failure(error_message)
+            sys.exit(1)
+
+
+def _init_repo(
+    temp_repo: Path,
+    initial_branch: str,
+) -> None:
+    subprocess.run(
+        ["git", "init", "-b", initial_branch],
+        cwd=temp_repo,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=True,
+    )
+
+
+def _copy_files_from_branch(
+    upstream: Path,
+    initial_branch: str,
+    temp_repo: Path,
+    changed_files: List[Path],
+) -> None:
+    # Get the content of all files in the upstream repository at the initial branch state
+    for changed_file in changed_files:
+        temp_file_path = Path(temp_repo) / changed_file
+
+        # Ensure the parent directory exists
+        temp_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Retrieve the file content from the initial branch
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(upstream),
+                "show",
+                f"{initial_branch}:{changed_file}",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+
+        if result.returncode != 0:
+            mark_semi_success(f"Failed to retrieve {changed_file}")
+            continue
+
+        # Write the content to the temporary directory
+        temp_file_path.write_bytes(result.stdout)
+
+
+def _create_branch_and_checkout(
+    temp_repo: Path, initial_branch: str, target_branch: str
+) -> None:
+    subprocess.run(
+        ["git", "checkout", "-b", target_branch, initial_branch],
+        cwd=temp_repo,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=True,
+    )
+
+
+def _rebase(temp_repo: Path, target_branch: str) -> List[Path]:
+    result = subprocess.run(
+        ["git", "rebase", target_branch],
+        cwd=temp_repo,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+
+    if result.returncode == 0:
+        return []
+
+    # Identify files with conflicts during rebase
+    result = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=temp_repo,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=True,
+    )
+
+    conflicted_files: List[Path] = [
+        Path(line[3:].strip())
+        for line in result.stdout.decode().splitlines()
+        if line.startswith("UU ")  # "UU" indicates both modified (conflict)
+    ]
+    return conflicted_files
+
+
+def _add_to_stage(repo: Path, files: List[Path]) -> None:
+    subprocess.run(
+        ["git", "add", *files],
+        cwd=repo,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=True,
+    )
+
+
+def _commit(temp_repo: Path, message: str) -> None:
+    subprocess.run(
+        ["git", "add", "."],
+        cwd=temp_repo,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "commit", "-m", message],
+        cwd=temp_repo,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=True,
+    )
+
+
+def _copy_files(source: Path, destination: Path, files: List[Path]) -> None:
+    for file in files:
+        source_file = source / file
+        destination_file = destination / file
+
+        if not source_file.exists():
+            mark_failure(f"File does not exist: {source_file}")
+            continue
+
+        destination_file.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_file, destination_file)
+
+
+def _apply_patches_in_temp_repo(
+    *,
+    local: Path,
+    upstream: Path,
+    local_version: Dict[str, str],
+    upstream_version: Dict[str, str],
+    add_to_stage: bool,
+) -> None:
+    """Apply .patch files."""
     patches_path = local / "opt" / "patches"
     if not patches_path.exists():
         mark_failure(f"{patches_path} doesn't exist")
         sys.exit(1)
 
-    patch_files = list(patches_path.rglob("*.patch"))
-    color_print(f"ℹ Found {len(patch_files)} patches in {patches_path}")
+    changed_files = _collect_changed_files_from_patches(local)
 
-    errors = []
+    with tempfile.TemporaryDirectory(delete=False) as temp_dir:
+        temp_repo = Path(temp_dir)
+        initial_branch = "final-" + _format_version(local_version).replace(".", "_")
+        target_branch = "final-" + _format_version(upstream_version).replace(".", "_")
+        changed_branch = "changed-" + _format_version(local_version).replace(".", "_")
 
-    for patch_file in patch_files:
-        color_print(f"⤭ applying {patch_file.name} ... ", endl=False)
+        # Init repo with files from upstream at prevours NGQ core
+        _init_repo(temp_repo, initial_branch)
+        _copy_files_from_branch(upstream, initial_branch, temp_repo, changed_files)
+        _commit(temp_repo, "Upstream at " + _format_version(local_version))
 
-        if _check_can_be_applied(local, patch_file):
-            color_print("already patched", color=AnsiColor.YELLOW)
-            continue
+        _create_branch_and_checkout(temp_repo, initial_branch, target_branch)
+        _copy_files_from_branch(upstream, target_branch, temp_repo, changed_files)
+        _commit(temp_repo, "Upstream at " + _format_version(upstream_version))
 
-        is_applied, error_message = _apply_patch(local, patch_file)
-        if is_applied:
-            color_print("done.", color=AnsiColor.GREEN)
-            continue
+        _create_branch_and_checkout(temp_repo, initial_branch, changed_branch)
+        _apply_patches(temp_repo, patches_path)
+        _commit(temp_repo, "Updated " + _format_version(upstream_version))
+        conflicting_files = _rebase(temp_repo, target_branch)
+        _copy_files(temp_repo, local, changed_files)
 
-        assert error_message is not None
+        if add_to_stage:
+            _add_to_stage(local, list(set(changed_files) - set(conflicting_files)))
 
-        if resolver == "none":
-            errors.append(f"Error applying {patch_file}")
-            color_print(error_message, color=AnsiColor.RED)
-            if not skip_errors:
-                sys.exit(1)
-            else:
-                continue
-
-        if _resolve_conflict(resolver, patch_file):
-            color_print("resolved", color=AnsiColor.GREEN)
-        elif skip_errors:
-            color_print("not resolved", color=AnsiColor.YELLOW)
+        if not conflicting_files:
+            mark_success("All patches are applied successfully")
         else:
-            color_print(error_message, color=AnsiColor.RED)
-            sys.exit(1)
-
-    if errors:
-        color_print("\nErrors:", color=AnsiColor.RED)
-        for error in errors:
-            color_print(f" - {error}", color=AnsiColor.RED)
+            mark_semi_success(
+                f"{len(conflicting_files)} patches are applied with errors"
+            )
 
 
-def _overwrite_files(local_path: Path) -> None:
+def _overwrite_files(local: Path, add_to_stage: bool) -> None:
     """Overwrite destination directory files with those from source."""
-    overwrite_path = local_path / "opt" / "overwrite"
+    overwrite_path = local / "opt" / "overwrite"
     if not overwrite_path.exists():
         mark_semi_success(f"{overwrite_path} doesn't exist")
         return
@@ -495,28 +641,38 @@ def _overwrite_files(local_path: Path) -> None:
         if not source_path.is_file() or source_path.name.startswith("."):
             continue
 
-        destination = local_path / source_path.relative_to(overwrite_path)
+        destination = local / source_path.relative_to(overwrite_path)
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_path, destination)
-        mark_success(f"overwrited {destination}")
+        mark_success(f"Overwrited {destination.relative_to(local)}")
+
+        if add_to_stage:
+            _add_to_stage(local, [destination])
 
 
-def _rename_ui_file(local_path: Path) -> None:
+def _rename_files(local: Path, add_to_stage: bool) -> None:
     """Rename ui_defaults.h file to ngui_defaults.h if it exists."""
-    old_path = local_path / "src/app/ui_defaults.h"
-    if not old_path.exists():
-        return
+    files = [
+        (local / "src/app/ui_defaults.h", local / "src/app/ngui_defaults.h"),
+    ]
+    for old_path, new_path in files:
+        if not old_path.exists():
+            continue
+        old_path.rename(new_path)
 
-    new_path = local_path / "src/app/ngui_defaults.h"
-    old_path.rename(new_path)
-    mark_success("renamed ui_defaults.h")
+        if add_to_stage:
+            _add_to_stage(local, [old_path, new_path])
+
+        mark_success(f"Renamed {old_path.name} to {new_path.name}")
 
 
-def _patch_util_cmake(local: Path, version: Dict[str, str]) -> None:
+def _patch_util_cmake(local: Path, version: Dict[str, str], add_to_stage: bool) -> None:
     """Patch util.cmake file with extracted version info."""
     from fileinput import input
 
-    for line in input(local / "cmake" / "util.cmake", inplace=True):
+    util_path = local / "cmake" / "util.cmake"
+
+    for line in input(util_path, inplace=True):
         if "set(QGIS_MAJOR " in line:
             print(f"    set(QGIS_MAJOR {version['major']})")
         elif "set(QGIS_MINOR " in line:
@@ -530,20 +686,34 @@ def _patch_util_cmake(local: Path, version: Dict[str, str]) -> None:
         else:
             print(line, end="")
 
-    mark_success("patched version in util.cmake")
+    if add_to_stage:
+        _add_to_stage(local, [util_path])
+
+    mark_success("Patched version in util.cmake")
 
 
 def apply(
-    upstream: Path,
+    *,
     local: Path,
+    upstream: Path,
+    local_version: Dict[str, str],
     upstream_version: Dict[str, str],
-    resolver: str,
-    skip_errors: bool,
+    add_to_stage: bool,
 ) -> None:
-    _apply_patches(upstream, local, resolver, skip_errors)
-    _overwrite_files(local)
-    _rename_ui_file(local)
-    _patch_util_cmake(local, upstream_version)
+    if local_version == upstream_version:
+        mark_failure("Already applied")
+        sys.exit(1)
+
+    _apply_patches_in_temp_repo(
+        local=local,
+        upstream=upstream,
+        local_version=local_version,
+        upstream_version=upstream_version,
+        add_to_stage=add_to_stage,
+    )
+    _overwrite_files(local, add_to_stage)
+    _rename_files(local, add_to_stage)
+    _patch_util_cmake(local, upstream_version, add_to_stage)
 
 
 # ---------------------------------------------------------------------------
@@ -622,8 +792,9 @@ def _build_parser() -> argparse.ArgumentParser:  # pragma: no cover
         parents=[common_local, common_upstream],
         help="",
     )
-    apply_parser.add_argument("--skip-errors", action="store_true")
-    apply_parser.add_argument("--resolver", choices=["none"], default="none")
+    apply_parser.add_argument(
+        "--add", action="store_true", help="Add changed files to stage"
+    )
 
     return parser
 
@@ -647,12 +818,7 @@ def main() -> None:  # pragma: no cover
     mark_info(f"Local QGIS path: {local}")
     local_version = _parse_qgis_version(local / "cmake" / "util.cmake")
     mark_info(
-        "Local QGIS version: {} ({}.{}.{})".format(
-            local_version["name"],
-            local_version["major"],
-            local_version["minor"],
-            local_version["patch"],
-        )
+        f"Local QGIS version: {_format_version(local_version, with_name=True)}",
     )
 
     if args.command == "list":
@@ -665,21 +831,16 @@ def main() -> None:  # pragma: no cover
     mark_info(f"Upstream QGIS path: {upstream}")
     upstream_version = _parse_qgis_version(upstream / "CMakeLists.txt")
     mark_info(
-        "Upstream QGIS version: {} ({}.{}.{})".format(
-            upstream_version["name"],
-            upstream_version["major"],
-            upstream_version["minor"],
-            upstream_version["patch"],
-        )
+        f"Upstream QGIS version: {_format_version(upstream_version, with_name=True)}",
     )
 
     if args.command == "apply":
         apply(
-            upstream=upstream,
             local=local,
+            upstream=upstream,
+            local_version=local_version,
             upstream_version=upstream_version,
-            resolver=args.resolver,
-            skip_errors=args.skip_errors,
+            add_to_stage=args.add,
         )
         return
 
