@@ -41,15 +41,27 @@ list).  Patches are then created automatically.
 Typical call::
 
     python patcher.py scan --from a1b2c3d4 --upstream /path/to/qgis
+
+Mode **apply**
+-------------
+- Applies patches from opt/patches to local QGIS source
+- Overwrites files from opt/overwrite into the local source tree
+- Renames ui_defaults.h to ngui_defaults.h
+- Updates local util.cmake with upstream version info
+
+Typical call::
+
+    python patcher.py apply --upstream /path/to/qgis
 """
 
 import argparse
 from enum import StrEnum
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, cast
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, cast
 
 # ---------------------------------------------------------------------------
 # Constants & configuration
@@ -112,6 +124,7 @@ def mark_semi_success(text: str) -> None:  # pragma: no cover
 def mark_failure(text: str) -> None:  # pragma: no cover
     color_print(f"✗ {text}", color=AnsiColor.RED)
 
+
 def mark_info(text: str) -> None:  # pragma: no cover
     color_print(f"ℹ {text}", color=AnsiColor.PURPLE)
 
@@ -161,33 +174,6 @@ def _parse_qgis_version(cmake_file: Path) -> Dict[str, str]:
         sys.exit(1)
 
     return cast(Dict[str, str], parsed)
-
-
-def _check_qgis_version(upstream: Path, local: Path) -> None:
-    """Ensure *upstream* and *local* QGIS versions match."""
-    upstream_version = _parse_qgis_version(upstream / "CMakeLists.txt")
-    mark_info(
-        "Upstream QGIS version: {} ({}.{}.{})".format(
-            upstream_version["name"],
-            upstream_version["major"],
-            upstream_version["minor"],
-            upstream_version["patch"],
-        )
-    )
-
-    local_version = _parse_qgis_version(local / "cmake" / "util.cmake")
-    mark_info(
-        "Local QGIS version: {} ({}.{}.{})".format(
-            local_version["name"],
-            local_version["major"],
-            local_version["minor"],
-            local_version["patch"],
-        )
-    )
-
-    if upstream_version != local_version:
-        mark_failure("Upstream QGIS version must be the same as local")
-        sys.exit(1)
 
 
 # ---------------------------------------------------------------------------
@@ -393,6 +379,174 @@ def scan_for_new_patches(
 
 
 # ---------------------------------------------------------------------------
+# Postprocessing helpers for **apply** mode
+# ---------------------------------------------------------------------------
+
+
+def _resolve_conflict(resolver: str, patch_path: Path) -> bool:
+    """Resolve patch conflicts using specified merge tool."""
+    if resolver == "none":
+        return False
+
+    return False
+
+
+def _check_can_be_applied(local_path: Path, patch_file: Path) -> bool:
+    code = subprocess.call(
+        [
+            "git",
+            "apply",
+            "--check",
+            "--reverse",
+            "--ignore-whitespace",
+            "--whitespace=nowarn",
+            str(patch_file),
+        ],
+        cwd=local_path,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return code == 0
+
+
+def _apply_patch(local_path: Path, patch_file: Path) -> Tuple[bool, Optional[str]]:
+    process = subprocess.Popen(
+        [
+            "git",
+            "apply",
+            "--ignore-whitespace",
+            "--whitespace=nowarn",
+            str(patch_file),
+        ],
+        cwd=local_path,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    out, _ = process.communicate()
+    apply_result = process.returncode
+
+    if apply_result == 0:
+        return True, None
+
+    error_strings = out.decode().strip().splitlines()
+    return False, "errors: \n" + "\n".join(
+        error.replace("error:", "  -") for error in error_strings
+    )
+
+
+def _apply_patches(
+    upstream: Path, local: Path, resolver: str, skip_errors: bool
+) -> None:
+    """Apply .patch files to the project directory."""
+    patches_path = local / "opt" / "patches"
+    if not patches_path.exists():
+        mark_failure(f"{patches_path} doesn't exist")
+        sys.exit(1)
+
+    patch_files = list(patches_path.rglob("*.patch"))
+    color_print(f"ℹ Found {len(patch_files)} patches in {patches_path}")
+
+    errors = []
+
+    for patch_file in patch_files:
+        color_print(f"⤭ applying {patch_file.name} ... ", endl=False)
+
+        if _check_can_be_applied(local, patch_file):
+            color_print("already patched", color=AnsiColor.YELLOW)
+            continue
+
+        is_applied, error_message = _apply_patch(local, patch_file)
+        if is_applied:
+            color_print("done.", color=AnsiColor.GREEN)
+            continue
+
+        assert error_message is not None
+
+        if resolver == "none":
+            errors.append(f"Error applying {patch_file}")
+            color_print(error_message, color=AnsiColor.RED)
+            if not skip_errors:
+                sys.exit(1)
+            else:
+                continue
+
+        if _resolve_conflict(resolver, patch_file):
+            color_print("resolved", color=AnsiColor.GREEN)
+        elif skip_errors:
+            color_print("not resolved", color=AnsiColor.YELLOW)
+        else:
+            color_print(error_message, color=AnsiColor.RED)
+            sys.exit(1)
+
+    if errors:
+        color_print("\nErrors:", color=AnsiColor.RED)
+        for error in errors:
+            color_print(f" - {error}", color=AnsiColor.RED)
+
+
+def _overwrite_files(local_path: Path) -> None:
+    """Overwrite destination directory files with those from source."""
+    overwrite_path = local_path / "opt" / "overwrite"
+    if not overwrite_path.exists():
+        mark_semi_success(f"{overwrite_path} doesn't exist")
+        return
+
+    for source_path in overwrite_path.rglob("*"):
+        if not source_path.is_file() or source_path.name.startswith("."):
+            continue
+
+        destination = local_path / source_path.relative_to(overwrite_path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_path, destination)
+        mark_success(f"overwrited {destination}")
+
+
+def _rename_ui_file(local_path: Path) -> None:
+    """Rename ui_defaults.h file to ngui_defaults.h if it exists."""
+    old_path = local_path / "src/app/ui_defaults.h"
+    if not old_path.exists():
+        return
+
+    new_path = local_path / "src/app/ngui_defaults.h"
+    old_path.rename(new_path)
+    mark_success("renamed ui_defaults.h")
+
+
+def _patch_util_cmake(local: Path, version: Dict[str, str]) -> None:
+    """Patch util.cmake file with extracted version info."""
+    from fileinput import input
+
+    for line in input(local / "cmake" / "util.cmake", inplace=True):
+        if "set(QGIS_MAJOR " in line:
+            print(f"    set(QGIS_MAJOR {version['major']})")
+        elif "set(QGIS_MINOR " in line:
+            print(f"    set(QGIS_MINOR {version['minor']})")
+        elif "set(QGIS_PATCH " in line:
+            print(f"    set(QGIS_PATCH {version['patch']})")
+        elif "set(QGIS_NAME " in line:
+            print(f'    set(QGIS_NAME "{version["name"]}")')
+        elif "set(VERSION_PATCH " in line:
+            print("    set(VERSION_PATCH 0)")
+        else:
+            print(line, end="")
+
+    mark_success("patched version in util.cmake")
+
+
+def apply(
+    upstream: Path,
+    local: Path,
+    upstream_version: Dict[str, str],
+    resolver: str,
+    skip_errors: bool,
+) -> None:
+    _apply_patches(upstream, local, resolver, skip_errors)
+    _overwrite_files(local)
+    _rename_ui_file(local)
+    _patch_util_cmake(local, upstream_version)
+
+
+# ---------------------------------------------------------------------------
 # Command‑line interface
 # ---------------------------------------------------------------------------
 
@@ -462,6 +616,15 @@ def _build_parser() -> argparse.ArgumentParser:  # pragma: no cover
         help="Include CMake files.",
     )
 
+    # apply
+    apply_parser = subparsers.add_parser(
+        "apply",
+        parents=[common_local, common_upstream],
+        help="",
+    )
+    apply_parser.add_argument("--skip-errors", action="store_true")
+    apply_parser.add_argument("--resolver", choices=["none"], default="none")
+
     return parser
 
 
@@ -479,14 +642,50 @@ def main() -> None:  # pragma: no cover
     """Script **entry point**."""
     args = parse_args()
 
+    # Local version info
     local = args.local.resolve()
+    mark_info(f"Local QGIS path: {local}")
+    local_version = _parse_qgis_version(local / "cmake" / "util.cmake")
+    mark_info(
+        "Local QGIS version: {} ({}.{}.{})".format(
+            local_version["name"],
+            local_version["major"],
+            local_version["minor"],
+            local_version["patch"],
+        )
+    )
+
     if args.command == "list":
         for path in _collect_changed_files_from_patches(local):
             print(path)
         return
 
+    # Upstream version info
     upstream = args.upstream.resolve()
-    _check_qgis_version(upstream, local)
+    mark_info(f"Upstream QGIS path: {upstream}")
+    upstream_version = _parse_qgis_version(upstream / "CMakeLists.txt")
+    mark_info(
+        "Upstream QGIS version: {} ({}.{}.{})".format(
+            upstream_version["name"],
+            upstream_version["major"],
+            upstream_version["minor"],
+            upstream_version["patch"],
+        )
+    )
+
+    if args.command == "apply":
+        apply(
+            upstream=upstream,
+            local=local,
+            upstream_version=upstream_version,
+            resolver=args.resolver,
+            skip_errors=args.skip_errors,
+        )
+        return
+
+    if upstream_version != local_version:
+        mark_failure("Upstream QGIS version must be the same as local")
+        sys.exit(1)
 
     if args.command == "create":
         create_patches(upstream, local, args.files)
