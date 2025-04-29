@@ -232,7 +232,7 @@ QVector<QgsProfileIdentifyResults> QgsAbstractProfileSurfaceResults::identify( c
     prevElevation = it.value();
   }
   if ( result.has_value() )
-    return {result.value()};
+    return {*result};
   else
     return {};
 }
@@ -297,67 +297,57 @@ void QgsAbstractProfileSurfaceResults::renderResults( QgsProfileRenderContext &c
       break;
   }
 
+  auto checkLine = [this]( QPolygonF & currentLine, QgsProfileRenderContext & context, double minZ, double maxZ,
+                           double prevDistance, double currentPartStartDistance )
+  {
+    if ( currentLine.length() > 1 )
+    {
+      switch ( symbology )
+      {
+        case Qgis::ProfileSurfaceSymbology::Line:
+          mLineSymbol->renderPolyline( currentLine, nullptr, context.renderContext() );
+          break;
+        case Qgis::ProfileSurfaceSymbology::FillBelow:
+          currentLine.append( context.worldTransform().map( QPointF( prevDistance, minZ ) ) );
+          currentLine.append( context.worldTransform().map( QPointF( currentPartStartDistance, minZ ) ) );
+          currentLine.append( currentLine.at( 0 ) );
+          mFillSymbol->renderPolygon( currentLine, nullptr, nullptr, context.renderContext() );
+          break;
+        case Qgis::ProfileSurfaceSymbology::FillAbove:
+          currentLine.append( context.worldTransform().map( QPointF( prevDistance, maxZ ) ) );
+          currentLine.append( context.worldTransform().map( QPointF( currentPartStartDistance, maxZ ) ) );
+          currentLine.append( currentLine.at( 0 ) );
+          mFillSymbol->renderPolygon( currentLine, nullptr, nullptr, context.renderContext() );
+          break;
+      }
+    }
+  };
+
   QPolygonF currentLine;
   double prevDistance = std::numeric_limits< double >::quiet_NaN();
   double currentPartStartDistance = 0;
   for ( auto pointIt = mDistanceToHeightMap.constBegin(); pointIt != mDistanceToHeightMap.constEnd(); ++pointIt )
   {
-    if ( std::isnan( prevDistance ) )
+    if ( currentLine.empty() ) // new part
     {
+      if ( std::isnan( pointIt.value() ) ) // skip emptiness
+        continue;
       currentPartStartDistance = pointIt.key();
     }
+
     if ( std::isnan( pointIt.value() ) )
     {
-      if ( currentLine.length() > 1 )
-      {
-        switch ( symbology )
-        {
-          case Qgis::ProfileSurfaceSymbology::Line:
-            mLineSymbol->renderPolyline( currentLine, nullptr, context.renderContext() );
-            break;
-          case Qgis::ProfileSurfaceSymbology::FillBelow:
-            currentLine.append( context.worldTransform().map( QPointF( prevDistance, minZ ) ) );
-            currentLine.append( context.worldTransform().map( QPointF( currentPartStartDistance, minZ ) ) );
-            currentLine.append( currentLine.at( 0 ) );
-            mFillSymbol->renderPolygon( currentLine, nullptr, nullptr, context.renderContext() );
-            break;
-          case Qgis::ProfileSurfaceSymbology::FillAbove:
-            currentLine.append( context.worldTransform().map( QPointF( prevDistance, maxZ ) ) );
-            currentLine.append( context.worldTransform().map( QPointF( currentPartStartDistance, maxZ ) ) );
-            currentLine.append( currentLine.at( 0 ) );
-            mFillSymbol->renderPolygon( currentLine, nullptr, nullptr, context.renderContext() );
-            break;
-        }
-      }
-      prevDistance = pointIt.key();
+      checkLine( currentLine, context, minZ, maxZ, prevDistance, currentPartStartDistance );
       currentLine.clear();
-      continue;
     }
-
-    currentLine.append( context.worldTransform().map( QPointF( pointIt.key(), pointIt.value() ) ) );
-    prevDistance = pointIt.key();
-  }
-  if ( currentLine.length() > 1 )
-  {
-    switch ( symbology )
+    else
     {
-      case Qgis::ProfileSurfaceSymbology::Line:
-        mLineSymbol->renderPolyline( currentLine, nullptr, context.renderContext() );
-        break;
-      case Qgis::ProfileSurfaceSymbology::FillBelow:
-        currentLine.append( context.worldTransform().map( QPointF( prevDistance, minZ ) ) );
-        currentLine.append( context.worldTransform().map( QPointF( currentPartStartDistance, minZ ) ) );
-        currentLine.append( currentLine.at( 0 ) );
-        mFillSymbol->renderPolygon( currentLine, nullptr, nullptr, context.renderContext() );
-        break;
-      case Qgis::ProfileSurfaceSymbology::FillAbove:
-        currentLine.append( context.worldTransform().map( QPointF( prevDistance, maxZ ) ) );
-        currentLine.append( context.worldTransform().map( QPointF( currentPartStartDistance, maxZ ) ) );
-        currentLine.append( currentLine.at( 0 ) );
-        mFillSymbol->renderPolygon( currentLine, nullptr, nullptr, context.renderContext() );
-        break;
+      currentLine.append( context.worldTransform().map( QPointF( pointIt.key(), pointIt.value() ) ) );
+      prevDistance = pointIt.key();
     }
   }
+
+  checkLine( currentLine, context, minZ, maxZ, prevDistance, currentPartStartDistance );
 
   switch ( symbology )
   {

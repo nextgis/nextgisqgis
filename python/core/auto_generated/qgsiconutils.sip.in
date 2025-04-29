@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsiconutils.h                                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -29,8 +29,10 @@ Returns the icon for a vector layer whose geometry ``type`` is provided.
 
     static QIcon iconForGeometryType( Qgis::GeometryType typeGroup );
 %Docstring
-Returns the icon for a vector layer whose geometry ``typeGroup`` is provided.
-1since QGIS 3.28
+Returns the icon for a vector layer whose geometry ``typeGroup`` is
+provided.
+
+.. versionadded:: 3.28
 %End
 
     static QIcon iconPoint();
@@ -67,7 +69,8 @@ Returns an icon representing raster layers.
 
     static QIcon iconDefaultLayer();
 %Docstring
-Returns a default icon for layers, which aren't the standard raster/vector/... types.
+Returns a default icon for layers, which aren't the standard
+raster/vector/... types.
 %End
 
     static QIcon iconMesh();
@@ -83,6 +86,13 @@ Returns an icon representing vector tile layers.
     static QIcon iconPointCloud();
 %Docstring
 Returns an icon representing point cloud layers.
+%End
+
+    static QIcon iconTiledScene();
+%Docstring
+Returns an icon representing tiled scene layers.
+
+.. versionadded:: 3.34
 %End
 
     static QIcon iconForLayer( const QgsMapLayer *layer );
@@ -106,5 +116,5 @@ Returns the default icon for the specified layer ``type``.
  *                                                                      *
  * src/core/qgsiconutils.h                                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

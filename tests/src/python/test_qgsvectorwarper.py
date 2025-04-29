@@ -5,11 +5,11 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Nyall Dawson'
-__date__ = '01/03/2022'
-__copyright__ = 'Copyright 2022, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Nyall Dawson"
+__date__ = "01/03/2022"
+__copyright__ = "Copyright 2022, The QGIS Project"
+
 
 from qgis.analysis import (
     QgsGcpPoint,
@@ -25,17 +25,19 @@ from qgis.core import (
     QgsProject,
     QgsVectorLayer,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 start_app()
 
 
-class TestQgsVectorWarper(unittest.TestCase):
+class TestQgsVectorWarper(QgisTestCase):
 
     def testWarper(self):
         # create source layer
-        source_layer = QgsVectorLayer("Point?field=fldtxt:string&field=fldint:integer",
-                                      "addfeat", "memory")
+        source_layer = QgsVectorLayer(
+            "Point?field=fldtxt:string&field=fldint:integer", "addfeat", "memory"
+        )
         pr = source_layer.dataProvider()
         f = QgsFeature()
         f.setAttributes(["test", 123])
@@ -53,36 +55,68 @@ class TestQgsVectorWarper(unittest.TestCase):
         f5.setAttributes(["test5", 0])
         f5.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(0, 0)))
         self.assertTrue(pr.addFeatures([f, f2, f3, f4, f5]))
-        self.assertTrue(source_layer.featureCount() == 5)
+        self.assertEqual(source_layer.featureCount(), 5)
 
         # create sink
         sink = QgsFeatureStore()
-        warper = QgsVectorWarper(QgsGcpTransformerInterface.TransformMethod.PolynomialOrder1,
-                                 [
-                                     QgsGcpPoint(QgsPointXY(90, 210), QgsPointXY(8, 20),
-                                                 QgsCoordinateReferenceSystem('EPSG:4283'), True),
-                                     QgsGcpPoint(QgsPointXY(210, 190), QgsPointXY(20.5, 20),
-                                                 QgsCoordinateReferenceSystem('EPSG:4283'), True),
-                                     QgsGcpPoint(QgsPointXY(350, 220), QgsPointXY(30, 21),
-                                                 QgsCoordinateReferenceSystem('EPSG:4283'), True),
-                                     QgsGcpPoint(QgsPointXY(390, 290), QgsPointXY(39, 28),
-                                                 QgsCoordinateReferenceSystem('EPSG:4283'), True),
-                                 ],
-                                 QgsCoordinateReferenceSystem('EPSG:4283'))
+        warper = QgsVectorWarper(
+            QgsGcpTransformerInterface.TransformMethod.PolynomialOrder1,
+            [
+                QgsGcpPoint(
+                    QgsPointXY(90, 210),
+                    QgsPointXY(8, 20),
+                    QgsCoordinateReferenceSystem("EPSG:4283"),
+                    True,
+                ),
+                QgsGcpPoint(
+                    QgsPointXY(210, 190),
+                    QgsPointXY(20.5, 20),
+                    QgsCoordinateReferenceSystem("EPSG:4283"),
+                    True,
+                ),
+                QgsGcpPoint(
+                    QgsPointXY(350, 220),
+                    QgsPointXY(30, 21),
+                    QgsCoordinateReferenceSystem("EPSG:4283"),
+                    True,
+                ),
+                QgsGcpPoint(
+                    QgsPointXY(390, 290),
+                    QgsPointXY(39, 28),
+                    QgsCoordinateReferenceSystem("EPSG:4283"),
+                    True,
+                ),
+            ],
+            QgsCoordinateReferenceSystem("EPSG:4283"),
+        )
 
-        self.assertTrue(warper.transformFeatures(source_layer.getFeatures(),
-                                                 sink,
-                                                 QgsProject.instance().transformContext()))
+        self.assertTrue(
+            warper.transformFeatures(
+                source_layer.getFeatures(),
+                sink,
+                QgsProject.instance().transformContext(),
+            )
+        )
 
         self.assertEqual(sink.count(), 5)
-        feature_map = {f.attributes()[0]: {'geom': f.geometry().asWkt(1),
-                                           'attributes': f.attributes()} for f in sink.features()}
-        self.assertEqual(feature_map, {'test': {'geom': 'Point (9.4 19.7)', 'attributes': ['test', 123]},
-                                       'test2': {'geom': 'Point (18 19.9)', 'attributes': ['test2', 457]},
-                                       'test3': {'geom': 'Point (26.6 20.1)', 'attributes': ['test3', 888]},
-                                       'test4': {'geom': 'Point (39.6 28.5)', 'attributes': ['test4', -1]},
-                                       'test5': {'geom': 'Point (-7.8 3)', 'attributes': ['test5', 0]}})
+        feature_map = {
+            f.attributes()[0]: {
+                "geom": f.geometry().asWkt(1),
+                "attributes": f.attributes(),
+            }
+            for f in sink.features()
+        }
+        self.assertEqual(
+            feature_map,
+            {
+                "test": {"geom": "Point (9.4 19.7)", "attributes": ["test", 123]},
+                "test2": {"geom": "Point (18 19.9)", "attributes": ["test2", 457]},
+                "test3": {"geom": "Point (26.6 20.1)", "attributes": ["test3", 888]},
+                "test4": {"geom": "Point (39.6 28.5)", "attributes": ["test4", -1]},
+                "test5": {"geom": "Point (-7.8 3)", "attributes": ["test5", 0]},
+            },
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

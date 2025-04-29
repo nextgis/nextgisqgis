@@ -30,7 +30,6 @@ class QDialogButtonBox;
  * \ingroup gui
  * \class QgsColorBrewerColorRampWidget
  * \brief A widget which allows users to modify the properties of a QgsColorBrewerColorRamp.
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsColorBrewerColorRampWidget : public QgsPanelWidget, private Ui::QgsColorBrewerColorRampWidgetBase
 {
@@ -38,7 +37,6 @@ class GUI_EXPORT QgsColorBrewerColorRampWidget : public QgsPanelWidget, private 
     Q_PROPERTY( QgsColorBrewerColorRamp ramp READ ramp WRITE setRamp )
 
   public:
-
     /**
      * Constructor for QgsColorBrewerColorRampWidget.
      * \param ramp initial ramp to show in dialog
@@ -70,7 +68,6 @@ class GUI_EXPORT QgsColorBrewerColorRampWidget : public QgsPanelWidget, private 
     void populateVariants();
 
   private:
-
     void updatePreview();
     void updateUi();
 
@@ -81,7 +78,6 @@ class GUI_EXPORT QgsColorBrewerColorRampWidget : public QgsPanelWidget, private 
  * \ingroup gui
  * \class QgsColorBrewerColorRampDialog
  * \brief A dialog which allows users to modify the properties of a QgsColorBrewerColorRamp.
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsColorBrewerColorRampDialog : public QDialog
 {
@@ -89,7 +85,6 @@ class GUI_EXPORT QgsColorBrewerColorRampDialog : public QDialog
     Q_PROPERTY( QgsColorBrewerColorRamp ramp READ ramp WRITE setRamp )
 
   public:
-
     /**
      * Constructor for QgsColorBrewerColorRampDialog.
      * \param ramp initial ramp to show in dialog
@@ -122,14 +117,12 @@ class GUI_EXPORT QgsColorBrewerColorRampDialog : public QDialog
     void changed();
 
   private:
-
     QgsColorBrewerColorRampWidget *mWidget = nullptr;
     QDialogButtonBox *mButtonBox = nullptr;
 
   private slots:
 
     void showHelp();
-
 };
 
 #endif

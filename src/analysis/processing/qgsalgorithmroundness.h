@@ -30,9 +30,7 @@
  */
 class QgsRoundnessAlgorithm : public QgsProcessingFeatureBasedAlgorithm
 {
-
   public:
-
     QgsRoundnessAlgorithm() = default;
     QString name() const override;
     QString displayName() const override;
@@ -46,15 +44,13 @@ class QgsRoundnessAlgorithm : public QgsProcessingFeatureBasedAlgorithm
 
   protected:
     QString outputName() const override;
-    QgsProcessing::SourceType outputLayerType() const override;
+    Qgis::ProcessingSourceType outputLayerType() const override;
     QgsFields outputFields( const QgsFields &inputFields ) const override;
 
-    QgsFeatureList processFeature( const QgsFeature &feature,  QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
+    QgsFeatureList processFeature( const QgsFeature &feature, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
 };
 
 
 ///@endcond PRIVATE
 
 #endif // QGSALGORITHMROUNDNESS_H
-
-

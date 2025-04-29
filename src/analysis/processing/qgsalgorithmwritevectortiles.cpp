@@ -42,8 +42,8 @@ void QgsWriteVectorTilesBaseAlgorithm::addBaseParameters()
 {
   addParameter( new QgsProcessingParameterVectorTileWriterLayers( QStringLiteral( "LAYERS" ), QObject::tr( "Input layers" ) ) );
 
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "MIN_ZOOM" ), QObject::tr( "Minimum zoom level" ), QgsProcessingParameterNumber::Integer, 0, false, 0, 24 ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "MAX_ZOOM" ), QObject::tr( "Maximum zoom level" ), QgsProcessingParameterNumber::Integer, 3, false, 0, 24 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "MIN_ZOOM" ), QObject::tr( "Minimum zoom level" ), Qgis::ProcessingNumberParameterType::Integer, 0, false, 0, 24 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "MAX_ZOOM" ), QObject::tr( "Maximum zoom level" ), Qgis::ProcessingNumberParameterType::Integer, 3, false, 0, 24 ) );
 
   // optional extent
   addParameter( new QgsProcessingParameterExtent( QStringLiteral( "EXTENT" ), QObject::tr( "Extent" ), QVariant(), true ) );
@@ -157,12 +157,8 @@ void QgsWriteVectorTilesMbtilesAlgorithm::initAlgorithm( const QVariantMap & )
   addParameter( new QgsProcessingParameterString( QStringLiteral( "META_DESCRIPTION" ), QObject::tr( "Metadata: Description" ), QVariant(), false, true ) );
   addParameter( new QgsProcessingParameterString( QStringLiteral( "META_ATTRIBUTION" ), QObject::tr( "Metadata: Attribution" ), QVariant(), false, true ) );
   addParameter( new QgsProcessingParameterString( QStringLiteral( "META_VERSION" ), QObject::tr( "Metadata: Version" ), QVariant(), false, true ) );
-  std::unique_ptr< QgsProcessingParameterString > metaTypeParam = std::make_unique< QgsProcessingParameterString >( QStringLiteral( "META_TYPE" ), QObject::tr( "Metadata: Type" ), QVariant(), false, true );
-  metaTypeParam->setMetadata( {{
-      QStringLiteral( "widget_wrapper" ), QVariantMap(
-      {{QStringLiteral( "value_hints" ), QStringList() << QStringLiteral( "overlay" ) << QStringLiteral( "baselayer" ) }}
-      )
-    }
+  std::unique_ptr<QgsProcessingParameterString> metaTypeParam = std::make_unique<QgsProcessingParameterString>( QStringLiteral( "META_TYPE" ), QObject::tr( "Metadata: Type" ), QVariant(), false, true );
+  metaTypeParam->setMetadata( { { QStringLiteral( "widget_wrapper" ), QVariantMap( { { QStringLiteral( "value_hints" ), QStringList() << QStringLiteral( "overlay" ) << QStringLiteral( "baselayer" ) } } ) }
   } );
   addParameter( metaTypeParam.release() );
   addParameter( new QgsProcessingParameterString( QStringLiteral( "META_CENTER" ), QObject::tr( "Metadata: Center" ), QVariant(), false, true ) );
@@ -179,7 +175,7 @@ void QgsWriteVectorTilesMbtilesAlgorithm::prepareWriter( QgsVectorTileWriter &wr
   writer.setDestinationUri( uri );
 
   const QString metaName = parameterAsString( parameters, QStringLiteral( "META_NAME" ), context );
-  const QString metaDesciption = parameterAsString( parameters, QStringLiteral( "META_DESCRIPTION" ), context );
+  const QString metaDescription = parameterAsString( parameters, QStringLiteral( "META_DESCRIPTION" ), context );
   const QString metaAttribution = parameterAsString( parameters, QStringLiteral( "META_ATTRIBUTION" ), context );
   const QString metaVersion = parameterAsString( parameters, QStringLiteral( "META_VERSION" ), context );
   const QString metaType = parameterAsString( parameters, QStringLiteral( "META_TYPE" ), context );
@@ -188,8 +184,8 @@ void QgsWriteVectorTilesMbtilesAlgorithm::prepareWriter( QgsVectorTileWriter &wr
   QVariantMap meta;
   if ( !metaName.isEmpty() )
     meta["name"] = metaName;
-  if ( !metaDesciption.isEmpty() )
-    meta["description"] = metaDesciption;
+  if ( !metaDescription.isEmpty() )
+    meta["description"] = metaDescription;
   if ( !metaAttribution.isEmpty() )
     meta["attribution"] = metaAttribution;
   if ( !metaVersion.isEmpty() )

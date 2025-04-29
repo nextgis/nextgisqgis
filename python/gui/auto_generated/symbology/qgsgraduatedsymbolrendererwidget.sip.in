@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/symbology/qgsgraduatedsymbolrendererwidget.h                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -29,6 +29,8 @@ class QgsGraduatedSymbolRendererWidget : QgsRendererWidget
     virtual QgsFeatureRenderer *renderer();
 
     virtual void setContext( const QgsSymbolWidgetContext &context );
+
+    virtual QgsExpressionContext createExpressionContext() const;
 
 
   public slots:
@@ -98,7 +100,8 @@ Returns a list of indexes for the classes under selection
     void changeSelectedSymbols();
     void applyChangeToSymbol();
 %Docstring
-Applies current symbol to selected ranges, or to all ranges if none is selected
+Applies current symbol to selected ranges, or to all ranges if none is
+selected
 %End
 
     virtual QList<QgsSymbol *> selectedSymbols();
@@ -118,5 +121,5 @@ Applies current symbol to selected ranges, or to all ranges if none is selected
  *                                                                      *
  * src/gui/symbology/qgsgraduatedsymbolrendererwidget.h                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -47,8 +47,6 @@ class QgsMssqlSourceSelectDelegate : public QItemDelegate
 };
 
 
-
-
 /**
  * \class QgsMssqlSourceSelect
  * \brief Dialog to create connections and add tables from MSSQL.
@@ -62,12 +60,11 @@ class QgsMssqlSourceSelect : public QgsAbstractDbSourceSelect
     Q_OBJECT
 
   public:
-
     //! static function to delete a connection
     static void deleteConnection( const QString &key );
 
     //! Constructor
-    QgsMssqlSourceSelect( QWidget *parent = nullptr, Qt::WindowFlags fl = QgsGuiUtils::ModalDialogFlags, QgsProviderRegistry::WidgetMode widgetMode = QgsProviderRegistry::WidgetMode::None );
+    QgsMssqlSourceSelect( QWidget *parent = nullptr, Qt::WindowFlags fl = QgsGuiUtils::ModalDialogFlags, QgsProviderRegistry::WidgetMode widgetMode = QgsProviderRegistry::WidgetMode::Standalone );
 
     ~QgsMssqlSourceSelect() override;
     //! Populate the connection list combo box
@@ -124,7 +121,7 @@ class QgsMssqlSourceSelect : public QgsAbstractDbSourceSelect
     typedef QList<geomPair> geomCol;
 
     // queue another query for the thread
-    void addSearchGeometryColumn( const QString &service, const QString &host, const QString &database, const QString &username, const QString &password, const QgsMssqlLayerProperty &layerProperty, bool estimateMetadata );
+    void addSearchGeometryColumn( const QString &service, const QString &host, const QString &database, const QString &username, const QString &password, const QgsMssqlLayerProperty &layerProperty, bool estimateMetadata, bool disableInvalidGeometryHandling );
 
     // Set the position of the database connection list to the last
     // used one.
@@ -140,7 +137,7 @@ class QgsMssqlSourceSelect : public QgsAbstractDbSourceSelect
     QStringList mSelectedTables;
     bool mUseEstimatedMetadata = false;
     // Storage for the range of layer type icons
-    QMap<QString, QPair<QString, QIcon> > mLayerIcons;
+    QMap<QString, QPair<QString, QIcon>> mLayerIcons;
 
     //! Model that acts as datasource for mTableTreeWidget
     QgsMssqlTableModel *mTableModel = nullptr;
@@ -148,7 +145,6 @@ class QgsMssqlSourceSelect : public QgsAbstractDbSourceSelect
     void finishList();
 
     void showHelp();
-
 };
 
 #endif // QGSMSSQLSOURCESELECT_H

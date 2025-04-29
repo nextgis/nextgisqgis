@@ -20,6 +20,8 @@
 #include "qgsbox3d.h"
 #include "qgsray3d.h"
 
+#include "qgs3dexportobject.h"
+
 #include <QSize>
 #include <QtMath>
 
@@ -27,31 +29,38 @@
  * \ingroup UnitTests
  * This is a unit test for the vertex tool
  */
-class TestQgs3DUtils : public QObject
+class TestQgs3DUtils : public QgsTest
 {
     Q_OBJECT
   public:
-    TestQgs3DUtils() = default;
+    TestQgs3DUtils()
+      : QgsTest( QStringLiteral( "3D Utils" ), QStringLiteral( "3d" ) ) {}
 
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
+    void initTestCase();    // will be called before the first testfunction is executed.
+    void cleanupTestCase(); // will be called after the last testfunction was executed.
 
     void testTransforms();
     void testRayFromScreenPoint();
     void testQgsBox3DDistanceTo();
     void testQgsRay3D();
+    void testExportToObj();
+    void testDefinesToShaderCode();
+
   private:
 };
 
 //runs before all tests
 void TestQgs3DUtils::initTestCase()
 {
+  QgsApplication::init();
+  QgsApplication::initQgis();
 }
 
 //runs after all tests
 void TestQgs3DUtils::cleanupTestCase()
 {
+  QgsApplication::exitQgis();
 }
 
 void TestQgs3DUtils::testTransforms()
@@ -91,7 +100,6 @@ void TestQgs3DUtils::testTransforms()
 
 void TestQgs3DUtils::testRayFromScreenPoint()
 {
-
   Qt3DRender::QCamera camera;
   {
     camera.setFieldOfView( 45.0f );
@@ -155,12 +163,12 @@ void TestQgs3DUtils::testRayFromScreenPoint()
 void TestQgs3DUtils::testQgsBox3DDistanceTo()
 {
   {
-    const QgsBox3d box( -1, -1, -1, 1, 1, 1 );
+    const QgsBox3D box( -1, -1, -1, 1, 1, 1 );
     QCOMPARE( box.distanceTo( QVector3D( 0, 0, 0 ) ), 0.0 );
     QCOMPARE( box.distanceTo( QVector3D( 2, 2, 2 ) ), qSqrt( 3.0 ) );
   }
   {
-    const QgsBox3d box( 1, 2, 1, 4, 3, 3 );
+    const QgsBox3D box( 1, 2, 1, 4, 3, 3 );
     QCOMPARE( box.distanceTo( QVector3D( 1, 2, 1 ) ), 0.0 );
     QCOMPARE( box.distanceTo( QVector3D( 0, 0, 0 ) ), qSqrt( 6.0 ) );
   }
@@ -184,8 +192,8 @@ void TestQgs3DUtils::testQgsRay3D()
     QCOMPARE( p2.y(), projP2.y() );
     QCOMPARE( p2.z(), projP2.z() );
 
-    QVERIFY( qFuzzyIsNull( ( float )ray.angleToPoint( p1 ) ) );
-    QVERIFY( qFuzzyIsNull( ( float )ray.angleToPoint( p2 ) ) );
+    QVERIFY( qFuzzyIsNull( ( float ) ray.angleToPoint( p1 ) ) );
+    QVERIFY( qFuzzyIsNull( ( float ) ray.angleToPoint( p2 ) ) );
 
     QVERIFY( ray.isInFront( p1 ) );
     QVERIFY( !ray.isInFront( p2 ) );
@@ -212,6 +220,246 @@ void TestQgs3DUtils::testQgsRay3D()
     QVERIFY( !ray.isInFront( p2 ) );
   }
 }
+
+void TestQgs3DUtils::testExportToObj()
+{
+  // all vertice positions
+  QVector<float> positionData = {
+    -0.456616, 0.00187836, -0.413774,
+    -0.4718, 0.00187836, -0.0764642,
+    -0.25705, 0.00187836, -0.230477,
+    -0.25705, 0.00187836, -0.230477,
+    -0.4718, 0.00187836, -0.0764642,
+    0.0184382, 0.00187836, 0.177332,
+    -0.25705, 0.00187836, -0.230477,
+    0.0184382, 0.00187836, 0.177332,
+    -0.25705, -0.00187836, -0.230477,
+    -0.25705, -0.00187836, -0.230477,
+    0.0184382, 0.00187836, 0.177332,
+    0.0184382, -0.00187836, 0.177332,
+    0.0184382, 0.00187836, 0.177332,
+    -0.4718, 0.00187836, -0.0764642,
+    0.0184382, -0.00187836, 0.177332,
+    0.0184382, -0.00187836, 0.177332,
+    -0.4718, 0.00187836, -0.0764642,
+    -0.4718, -0.00187836, -0.0764642,
+    -0.4718, 0.00187836, -0.0764642,
+    -0.456616, 0.00187836, -0.413774,
+    -0.4718, -0.00187836, -0.0764642,
+    -0.4718, -0.00187836, -0.0764642,
+    -0.456616, 0.00187836, -0.413774,
+    -0.456616, -0.00187836, -0.413774,
+    -0.456616, 0.00187836, -0.413774,
+    -0.25705, 0.00187836, -0.230477,
+    -0.456616, -0.00187836, -0.413774,
+    -0.456616, -0.00187836, -0.413774,
+    -0.25705, 0.00187836, -0.230477,
+    -0.25705, -0.00187836, -0.230477
+  };
+
+  // all vertice normals
+  QVector<float> normalsData = {
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+    0, 1, 0,
+    0.828644, 0, -0.559776,
+    0.828644, 0, -0.559776,
+    0.828644, 0, -0.559776,
+    0.828644, 0, -0.559776,
+    0.828644, 0, -0.559776,
+    0.828644, 0, -0.559776,
+    -0.459744, 0, 0.888052,
+    -0.459744, 0, 0.888052,
+    -0.459744, 0, 0.888052,
+    -0.459744, 0, 0.888052,
+    -0.459744, 0, 0.888052,
+    -0.459744, 0, 0.888052,
+    -0.998988, 0, -0.0449705,
+    -0.998988, 0, -0.0449705,
+    -0.998988, 0, -0.0449705,
+    -0.998988, 0, -0.0449705,
+    -0.998988, 0, -0.0449705,
+    -0.998988, 0, -0.0449705,
+    0.676449, 0, -0.736489,
+    0.676449, 0, -0.736489,
+    0.676449, 0, -0.736489,
+    0.676449, 0, -0.736489,
+    0.676449, 0, -0.736489,
+    0.676449, 0, -0.736489
+  };
+  float scale = 1.0f;
+  QVector3D translation( 0.0f, 0.0f, 0.0f );
+
+  const QString myTmpDir = QDir::tempPath() + '/';
+
+  // case where all vertices are used
+  {
+    Qgs3DExportObject object( "all_faces" );
+    object.setupPositionCoordinates( positionData, scale, translation );
+    QCOMPARE( object.vertexPosition().size(), positionData.size() );
+
+    // exported vertice indexes
+    QVector<uint> indexData = {
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+    };
+
+    object.setupFaces( indexData );
+    QCOMPARE( object.indexes().size(), indexData.size() );
+
+    object.setupNormalCoordinates( normalsData );
+    QCOMPARE( object.normals().size(), normalsData.size() );
+
+
+    QFile file( myTmpDir + "all_faces.obj" );
+    file.open( QIODevice::ReadWrite | QIODevice::Text | QIODevice::Truncate );
+    QTextStream out( &file );
+
+    out << "o " << object.name() << "\n";
+    object.saveTo( out, scale, translation, 3 );
+
+    out.flush();
+    out.seek( 0 );
+
+    QString actual = out.readAll();
+    QGSCOMPARELONGSTR( "export_obj", "all_faces.obj", actual.toUtf8() );
+  }
+
+  // case where only a subset of vertices are used
+  {
+    // exported vertice indexes
+    QVector<uint> indexData = {
+      // 0, 1, 2,
+      // 3, 4, 5,
+      6, 7, 8,
+      9, 10, 11,
+      12, 13, 14,
+      15, 16, 17,
+      // 18, 19, 20,
+      21, 22, 23,
+      // 24, 25, 26,
+      // 27, 28, 29,
+    };
+
+    Qgs3DExportObject object( "sparse_faces" );
+    object.setupPositionCoordinates( positionData, scale, translation );
+    QCOMPARE( object.vertexPosition().size(), positionData.size() );
+
+    object.setupFaces( indexData );
+    QCOMPARE( object.indexes().size(), indexData.size() );
+
+    object.setupNormalCoordinates( normalsData );
+    QCOMPARE( object.normals().size(), normalsData.size() );
+
+    QFile file( myTmpDir + "sparse_faces.obj" );
+    file.open( QIODevice::ReadWrite | QIODevice::Text | QIODevice::Truncate );
+    QTextStream out( &file );
+    out << "o " << object.name() << "\n";
+    object.saveTo( out, scale, translation, 3 );
+
+    out.flush();
+    out.seek( 0 );
+
+    QString actual = out.readAll();
+    QGSCOMPARELONGSTR( "export_obj", "sparse_faces.obj", actual.toUtf8() );
+  }
+}
+
+void TestQgs3DUtils::testDefinesToShaderCode()
+{
+  // load the different files
+  const QByteArray shaderCode = Qt3DRender::QShaderProgram::loadSource( QUrl::fromLocalFile( testDataPath( "/3d/shader/sample.frag" ) ) );
+  QVERIFY( !shaderCode.isEmpty() );
+
+  const QByteArray shaderCodeWithDefines = Qt3DRender::QShaderProgram::loadSource( QUrl::fromLocalFile( testDataPath( "/3d/shader/sample_with_defines.frag" ) ) );
+  QVERIFY( !shaderCodeWithDefines.isEmpty() );
+
+  const QByteArray shaderCodeNoVersion = Qt3DRender::QShaderProgram::loadSource( QUrl::fromLocalFile( testDataPath( "/3d/shader/sample_no_version.frag" ) ) );
+  QVERIFY( !shaderCodeNoVersion.isEmpty() );
+
+  const QByteArray shaderCodeNoVersionWithDefines = Qt3DRender::QShaderProgram::loadSource( QUrl::fromLocalFile( testDataPath( "/3d/shader/sample_no_version_with_defines.frag" ) ) );
+  QVERIFY( !shaderCodeNoVersionWithDefines.isEmpty() );
+
+  const QByteArray shaderCodeWithBaseColorMap = Qt3DRender::QShaderProgram::loadSource( QUrl::fromLocalFile( testDataPath( "/3d/shader/sample_with_basecolormap.frag" ) ) );
+  QVERIFY( !shaderCodeWithBaseColorMap.isEmpty() );
+
+  const QStringList definesList( { "BASE_COLOR_MAP", "ROUGHNESS_MAP" } );
+
+
+  // =============================================
+  // =========== test addDefinesToShaderCode
+
+  // test a shader code
+  const QByteArray actualShaderCodeWithDefines = Qgs3DUtils::addDefinesToShaderCode( shaderCode, definesList );
+  QCOMPARE( actualShaderCodeWithDefines, shaderCodeWithDefines );
+
+  // shader code without a #version - this should not happen
+  // in that case the #define is inserted at the beginning
+  const QByteArray actualShaderCodeNoVersionWithDefines = Qgs3DUtils::addDefinesToShaderCode( shaderCodeNoVersion, definesList );
+  QCOMPARE( actualShaderCodeNoVersionWithDefines, shaderCodeNoVersionWithDefines );
+
+  // input is empty
+  // the result only contains the #define code
+  const QByteArray onlyDefines = Qgs3DUtils::addDefinesToShaderCode( QByteArray(), definesList );
+  QCOMPARE( onlyDefines, QByteArray( "#define BASE_COLOR_MAP\n#define ROUGHNESS_MAP\n" ) );
+
+
+  // =============================================
+  // =========== test removeDefinesFromShaderCode
+
+  // test a shader code
+  const QByteArray actualShaderCodeWithoutDefines = Qgs3DUtils::removeDefinesFromShaderCode( shaderCodeWithDefines, definesList );
+  QCOMPARE( actualShaderCodeWithoutDefines, shaderCode );
+
+  // remove defines one by one
+  const QByteArray actualShaderCodeWithBaseColorMap = Qgs3DUtils::removeDefinesFromShaderCode( shaderCodeWithDefines, QStringList { "ROUGHNESS_MAP" } );
+  QCOMPARE( actualShaderCodeWithBaseColorMap, shaderCodeWithBaseColorMap );
+
+  const QByteArray actualShaderCode = Qgs3DUtils::removeDefinesFromShaderCode( actualShaderCodeWithBaseColorMap, QStringList { "BASE_COLOR_MAP" } );
+  QCOMPARE( actualShaderCode, shaderCode );
+
+  // shader code without a #version - this should not happen
+  // define macros should be removed
+  const QByteArray actualShaderCodeNoVersionWithoutDefines = Qgs3DUtils::removeDefinesFromShaderCode( shaderCodeNoVersionWithDefines, definesList );
+  QCOMPARE( actualShaderCodeNoVersionWithoutDefines, shaderCodeNoVersion );
+
+  // input is empty
+  // result should be empty
+  const QByteArray actualEmpty = Qgs3DUtils::removeDefinesFromShaderCode( QByteArray(), definesList );
+  QCOMPARE( actualEmpty, QByteArray() );
+}
+
 
 QGSTEST_MAIN( TestQgs3DUtils )
 #include "testqgs3dutils.moc"

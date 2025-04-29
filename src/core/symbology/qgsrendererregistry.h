@@ -44,9 +44,8 @@ class CORE_EXPORT QgsRendererAbstractMetadata
 
     /**
      * Layer types the renderer is compatible with
-     * \since QGIS 2.16
      */
-    enum LayerType
+    enum LayerType SIP_ENUM_BASETYPE( IntFlag )
     {
       PointLayer = 1, //!< Compatible with point layers
       LineLayer = 2, //!< Compatible with line layers
@@ -95,7 +94,6 @@ class CORE_EXPORT QgsRendererAbstractMetadata
 
     /**
      * Returns flags indicating the types of layer the renderer is compatible with.
-     * \since QGIS 2.16
      */
     virtual QgsRendererAbstractMetadata::LayerTypes compatibleLayerTypes() const { return All; }
 
@@ -186,14 +184,14 @@ class CORE_EXPORT QgsRendererMetadata : public QgsRendererAbstractMetadata
     { return mCreateFromSldFunc ? mCreateFromSldFunc( elem, geomType ) : nullptr; }
 
     //! \note not available in Python bindings
-    QgsRendererCreateFunc createFunction() const { return mCreateFunc; } SIP_SKIP
+    QgsRendererCreateFunc createFunction() const SIP_SKIP { return mCreateFunc; }
     //! \note not available in Python bindings
-    QgsRendererWidgetFunc widgetFunction() const { return mWidgetFunc; } SIP_SKIP
+    QgsRendererWidgetFunc widgetFunction() const SIP_SKIP { return mWidgetFunc; }
     //! \note not available in Python bindings
-    QgsRendererCreateFromSldFunc createFromSldFunction() const { return mCreateFromSldFunc; } SIP_SKIP
+    QgsRendererCreateFromSldFunc createFromSldFunction() const SIP_SKIP { return mCreateFromSldFunc; }
 
     //! \note not available in Python bindings
-    void setWidgetFunction( QgsRendererWidgetFunc f ) { mWidgetFunc = f; } SIP_SKIP
+    void setWidgetFunction( QgsRendererWidgetFunc f ) SIP_SKIP { mWidgetFunc = f; }
 
     QgsRendererAbstractMetadata::LayerTypes compatibleLayerTypes() const override { return mLayerTypes; }
 
@@ -231,9 +229,7 @@ class CORE_EXPORT QgsRendererRegistry
     QgsRendererRegistry();
     ~QgsRendererRegistry();
 
-    //! QgsRendererRegistry cannot be copied.
     QgsRendererRegistry( const QgsRendererRegistry &rh ) = delete;
-    //! QgsRendererRegistry cannot be copied.
     QgsRendererRegistry &operator=( const QgsRendererRegistry &rh ) = delete;
 
     /**
@@ -267,7 +263,6 @@ class CORE_EXPORT QgsRendererRegistry
     /**
      * Returns a list of available renderers which are compatible with a specified layer.
      * \param layer vector layer
-     * \since QGIS 2.16
      */
     QStringList renderersList( const QgsVectorLayer *layer ) const;
 

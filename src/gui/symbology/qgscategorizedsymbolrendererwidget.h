@@ -25,6 +25,7 @@
 
 class QgsCategorizedSymbolRenderer;
 class QgsRendererCategory;
+class QgsSymbolSelectorWidget;
 
 #include "ui_qgscategorizedsymbolrendererwidget.h"
 #include "qgis_gui.h"
@@ -66,14 +67,14 @@ class GUI_EXPORT QgsCategorizedSymbolRendererModel : public QAbstractItemModel
   private:
     QgsCategorizedSymbolRenderer *mRenderer = nullptr;
     QString mMimeFormat;
-    QPointer< QScreen > mScreen;
+    QPointer<QScreen> mScreen;
 };
 
 /**
  * \ingroup gui
  * \brief View style which shows drop indicator line between items
  */
-class QgsCategorizedSymbolRendererViewStyle: public QgsProxyStyle
+class QgsCategorizedSymbolRendererViewStyle : public QgsProxyStyle
 {
     Q_OBJECT
 
@@ -87,7 +88,7 @@ class QgsCategorizedSymbolRendererViewStyle: public QgsProxyStyle
  * \ingroup gui
  * \brief Custom delegate for localized numeric input.
  */
-class QgsCategorizedRendererViewItemDelegate: public QStyledItemDelegate
+class QgsCategorizedRendererViewItemDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 
@@ -98,7 +99,6 @@ class QgsCategorizedRendererViewItemDelegate: public QStyledItemDelegate
     QWidget *createEditor( QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index ) const override;
 
   private:
-
     QgsFieldExpressionWidget *mFieldExpressionWidget = nullptr;
 };
 
@@ -111,19 +111,24 @@ class QgsCategorizedRendererViewItemDelegate: public QStyledItemDelegate
  * \ingroup gui
  * \class QgsCategorizedSymbolRendererWidget
  */
-class GUI_EXPORT QgsCategorizedSymbolRendererWidget : public QgsRendererWidget, private Ui::QgsCategorizedSymbolRendererWidget, private QgsExpressionContextGenerator
+class GUI_EXPORT QgsCategorizedSymbolRendererWidget : public QgsRendererWidget, private Ui::QgsCategorizedSymbolRendererWidget
 {
     Q_OBJECT
   public:
+    // *INDENT-OFF*
 
     /**
-     * CustomRoles enum represent custom roles for the widget.
-     * \since QGIS 3.22.1
+     * Custom model roles.
+     *
+     * \note Prior to QGIS 3.36 this was available as QgsCategorizedSymbolRendererWidget::CustomRoles
+     * \since QGIS 3.36
      */
-    enum CustomRoles
+    enum class CustomRole SIP_MONKEYPATCH_SCOPEENUM_UNNEST( QgsCategorizedSymbolRendererWidget, CustomRoles ) : int
     {
-      ValueRole = Qt::UserRole + 1 //!< Category value
+      Value SIP_MONKEYPATCH_COMPAT_NAME( ValueRole ) = Qt::UserRole + 1 //!< Category value
     };
+    Q_ENUM( CustomRole )
+    // *INDENT-ON*
 
     static QgsRendererWidget *create( QgsVectorLayer *layer, QgsStyle *style, QgsFeatureRenderer *renderer ) SIP_FACTORY;
 
@@ -133,6 +138,7 @@ class GUI_EXPORT QgsCategorizedSymbolRendererWidget : public QgsRendererWidget, 
     QgsFeatureRenderer *renderer() override;
     void setContext( const QgsSymbolWidgetContext &context ) override;
     void disableSymbolLevels() override SIP_SKIP;
+    QgsExpressionContext createExpressionContext() const override;
 
     /**
      * Replaces category symbols with the symbols from a style that have a matching
@@ -141,7 +147,6 @@ class GUI_EXPORT QgsCategorizedSymbolRendererWidget : public QgsRendererWidget, 
      * \returns number of symbols matched
      * \see matchToSymbolsFromLibrary
      * \see matchToSymbolsFromXml
-     * \since QGIS 2.9
      */
     int matchToSymbols( QgsStyle *style );
 
@@ -169,7 +174,6 @@ class GUI_EXPORT QgsCategorizedSymbolRendererWidget : public QgsRendererWidget, 
      * matching name.
      * \see matchToSymbolsFromXml
      * \see matchToSymbols
-     * \since QGIS 2.9
      */
     void matchToSymbolsFromLibrary();
 
@@ -178,7 +182,6 @@ class GUI_EXPORT QgsCategorizedSymbolRendererWidget : public QgsRendererWidget, 
      * from the XML file with a matching name.
      * \see matchToSymbolsFromLibrary
      * \see matchToSymbols
-     * \since QGIS 2.9
      */
     void matchToSymbolsFromXml();
 
@@ -191,8 +194,7 @@ class GUI_EXPORT QgsCategorizedSymbolRendererWidget : public QgsRendererWidget, 
 
   private slots:
 
-    void cleanUpSymbolSelector( QgsPanelWidget *container );
-    void updateSymbolsFromWidget();
+    void updateSymbolsFromWidget( QgsSymbolSelectorWidget *widget );
     void updateSymbolsFromButton();
     void dataDefinedSizeLegend();
 
@@ -215,7 +217,6 @@ class GUI_EXPORT QgsCategorizedSymbolRendererWidget : public QgsRendererWidget, 
     void selectionChanged( const QItemSelection &selected, const QItemSelection &deselected );
 
   protected:
-
     void updateUiFromRenderer();
 
     // Called by virtual refreshSymbolView()
@@ -240,9 +241,9 @@ class GUI_EXPORT QgsCategorizedSymbolRendererWidget : public QgsRendererWidget, 
     void keyPressEvent( QKeyEvent *event ) override;
 
   protected:
-    std::unique_ptr< QgsCategorizedSymbolRenderer > mRenderer;
+    std::unique_ptr<QgsCategorizedSymbolRenderer> mRenderer;
 
-    std::unique_ptr< QgsSymbol > mCategorizedSymbol;
+    std::unique_ptr<QgsSymbol> mCategorizedSymbol;
 
     QgsCategorizedSymbolRendererModel *mModel = nullptr;
 
@@ -253,8 +254,6 @@ class GUI_EXPORT QgsCategorizedSymbolRendererWidget : public QgsRendererWidget, 
     QAction *mMergeCategoriesAction = nullptr;
     QAction *mUnmergeCategoriesAction = nullptr;
     QAction *mActionLevels = nullptr;
-
-    QgsExpressionContext createExpressionContext() const override;
 
     friend class TestQgsCategorizedRendererWidget;
 };

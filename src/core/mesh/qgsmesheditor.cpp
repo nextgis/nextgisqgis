@@ -16,6 +16,7 @@
 
 #include "qgis.h"
 #include "qgsmesheditor.h"
+#include "moc_qgsmesheditor.cpp"
 #include "qgsmeshdataprovider.h"
 #include "qgstriangularmesh.h"
 #include "qgsmeshlayer.h"
@@ -587,7 +588,7 @@ bool QgsMeshEditor::edgeIsClose( QgsPointXY point, double tolerance, int &faceIn
       const QgsMeshVertex &v2 = mTriangularMesh->vertices().at( face.at( ( i + 1 ) % faceSize ) );
 
       double mx, my;
-      double dist = sqrt( QgsGeometryUtils::sqrDistToLine( point.x(),
+      double dist = sqrt( QgsGeometryUtilsBase::sqrDistToLine( point.x(),
                           point.y(),
                           v1.x(),
                           v1.y(),
@@ -1124,7 +1125,7 @@ void QgsMeshLayerUndoCommandRemoveVerticesFillHoles::redo()
     if ( initialVertexCount == mVerticesToRemoveIndexes.count() )
       setObsolete( true );
 
-    if ( mRemainingVerticesPointer != nullptr )
+    if ( mRemainingVerticesPointer )
       *mRemainingVerticesPointer = mVerticesToRemoveIndexes;
 
     mRemainingVerticesPointer = nullptr;

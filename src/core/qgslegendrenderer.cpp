@@ -22,6 +22,8 @@
 #include "qgsrendercontext.h"
 #include "qgsexpressioncontextutils.h"
 #include "qgstextrenderer.h"
+#include "qgslayertreefilterproxymodel.h"
+
 #include <QJsonObject>
 #include <QPainter>
 
@@ -29,9 +31,22 @@
 
 QgsLegendRenderer::QgsLegendRenderer( QgsLayerTreeModel *legendModel, const QgsLegendSettings &settings )
   : mLegendModel( legendModel )
+  , mProxyModel( std::make_unique< QgsLayerTreeFilterProxyModel >() )
   , mSettings( settings )
 {
+  mProxyModel->setLayerTreeModel( mLegendModel );
 }
+
+QgsLegendRenderer::QgsLegendRenderer( QgsLegendRenderer &&other )
+  : mLegendModel( other.mLegendModel )
+  , mProxyModel( std::move( other.mProxyModel ) )
+  , mSettings( std::move( other.mSettings ) )
+  , mLegendSize( other.mLegendSize )
+{
+  mProxyModel->setLayerTreeModel( mLegendModel );
+}
+
+QgsLegendRenderer::~QgsLegendRenderer() = default;
 
 QSizeF QgsLegendRenderer::minimumSize( QgsRenderContext *renderContext )
 {
@@ -86,6 +101,9 @@ QJsonObject QgsLegendRenderer::exportLegendToJson( const QgsRenderContext &conte
   const QList<QgsLayerTreeNode *> childNodes = nodeGroup->children();
   for ( QgsLayerTreeNode *node : childNodes )
   {
+    if ( !mProxyModel->nodeShown( node ) )
+      continue;
+
     if ( QgsLayerTree::isGroup( node ) )
     {
       QgsLayerTreeGroup *nodeGroup = QgsLayerTree::toGroup( node );
@@ -117,6 +135,25 @@ QJsonObject QgsLegendRenderer::exportLegendToJson( const QgsRenderContext &conte
       {
         QJsonObject group = legendNodes.at( 0 )->exportToJson( mSettings, context );
         group[ QStringLiteral( "type" ) ] = QStringLiteral( "layer" );
+        if ( mSettings.jsonRenderFlags().testFlag( Qgis::LegendJsonRenderFlag::ShowRuleDetails ) )
+        {
+          if ( QgsVectorLayer *vLayer = qobject_cast<QgsVectorLayer *>( nodeLayer->layer() ) )
+          {
+            if ( vLayer->renderer() )
+            {
+              const QString ruleKey { legendNodes.at( 0 )->data( static_cast< int >( QgsLayerTreeModelLegendNode::CustomRole::RuleKey ) ).toString() };
+              if ( ! ruleKey.isEmpty() )
+              {
+                bool ok = false;
+                const QString ruleExp { vLayer->renderer()->legendKeyToExpression( ruleKey, vLayer, ok ) };
+                if ( ok )
+                {
+                  group[ QStringLiteral( "rule" ) ] = ruleExp;
+                }
+              }
+            }
+          }
+        }
         nodes.append( group );
       }
       else if ( legendNodes.count() > 1 )
@@ -130,6 +167,25 @@ QJsonObject QgsLegendRenderer::exportLegendToJson( const QgsRenderContext &conte
         {
           QgsLayerTreeModelLegendNode *legendNode = legendNodes.at( j );
           QJsonObject symbol = legendNode->exportToJson( mSettings, context );
+          if ( mSettings.jsonRenderFlags().testFlag( Qgis::LegendJsonRenderFlag::ShowRuleDetails ) )
+          {
+            if ( QgsVectorLayer *vLayer = qobject_cast<QgsVectorLayer *>( nodeLayer->layer() ) )
+            {
+              if ( vLayer->renderer() )
+              {
+                const QString ruleKey { legendNode->data( static_cast< int >( QgsLayerTreeModelLegendNode::CustomRole::RuleKey ) ).toString() };
+                if ( ! ruleKey.isEmpty() )
+                {
+                  bool ok = false;
+                  const QString ruleExp { vLayer->renderer()->legendKeyToExpression( ruleKey, vLayer, ok ) };
+                  if ( ok )
+                  {
+                    symbol[ QStringLiteral( "rule" ) ] = ruleExp;
+                  }
+                }
+              }
+            }
+          }
           symbols.append( symbol );
         }
         group[ QStringLiteral( "symbols" ) ] = symbols;
@@ -149,6 +205,8 @@ QSizeF QgsLegendRenderer::paintAndDetermineSize( QgsRenderContext &context )
   QgsLayerTreeGroup *rootGroup = mLegendModel->rootGroup();
   if ( !rootGroup )
     return size;
+
+  mSettings.updateDataDefinedProperties( context );
 
   // temporarily remove painter from context -- we don't need to actually draw anything yet. But we DO need
   // to send the full render context so that an expression context is available during the size calculation
@@ -278,6 +336,9 @@ QList<QgsLegendRenderer::LegendComponentGroup> QgsLegendRenderer::createComponen
   const QList<QgsLayerTreeNode *> childNodes = parentGroup->children();
   for ( QgsLayerTreeNode *node : childNodes )
   {
+    if ( !mProxyModel->nodeShown( node ) )
+      continue;
+
     if ( QgsLayerTree::isGroup( node ) )
     {
       QgsLayerTreeGroup *nodeGroup = QgsLayerTree::toGroup( node );
@@ -889,12 +950,20 @@ QgsLegendRenderer::LegendComponent QgsLegendRenderer::drawSymbolItem( QgsLayerTr
 
   ctx.maxSiblingSymbolWidth = maxSiblingSymbolWidth;
 
+  QgsExpressionContextScope *symbolScope = nullptr;
   if ( const QgsSymbolLegendNode *symbolNode = dynamic_cast< const QgsSymbolLegendNode * >( symbolItem ) )
+  {
+    symbolScope = symbolNode->createSymbolScope();
+    context.expressionContext().appendScope( symbolScope );
     ctx.patchShape = symbolNode->patchShape();
+  }
 
   ctx.patchSize = symbolItem->userPatchSize();
 
   QgsLayerTreeModelLegendNode::ItemMetrics im = symbolItem->draw( mSettings, &ctx );
+
+  if ( symbolScope )
+    delete context.expressionContext().popScope();
 
   if ( layerScope )
     delete context.expressionContext().popScope();
@@ -1039,6 +1108,11 @@ QgsLegendStyle::Style QgsLegendRenderer::nodeLegendStyle( QgsLayerTreeNode *node
 QgsLegendStyle::Style QgsLegendRenderer::nodeLegendStyle( QgsLayerTreeNode *node )
 {
   return nodeLegendStyle( node, mLegendModel );
+}
+
+QgsLayerTreeFilterProxyModel *QgsLegendRenderer::proxyModel()
+{
+  return mProxyModel.get();
 }
 
 void QgsLegendRenderer::setNodeLegendStyle( QgsLayerTreeNode *node, QgsLegendStyle::Style style )

@@ -16,18 +16,19 @@
  ***************************************************************************/
 
 #include "qgsoracletransaction.h"
+#include "moc_qgsoracletransaction.cpp"
 ///@cond PRIVATE
 
 #include "qgslogger.h"
 #include "qgis.h"
 #include "qgsoracleconn.h"
 #include "qgsdbquerylog.h"
+#include "qgsdbquerylog_p.h"
 
 QgsOracleTransaction::QgsOracleTransaction( const QString &connString )
   : QgsTransaction( connString )
 
 {
-
 }
 
 QgsOracleTransaction::~QgsOracleTransaction()
@@ -39,8 +40,7 @@ QgsOracleTransaction::~QgsOracleTransaction()
 bool QgsOracleTransaction::beginTransaction( QString &, int /* statementTimeout */ )
 {
   mConn = QgsOracleConn::connectDb( mConnString, true /*transaction*/ );
-
-  return true;
+  return mConn;
 }
 
 bool QgsOracleTransaction::commitTransaction( QString &error )
@@ -67,6 +67,12 @@ bool QgsOracleTransaction::rollbackTransaction( QString &error )
 
 bool QgsOracleTransaction::executeSql( const QString &sql, QString &errorMsg, bool isDirty, const QString &name )
 {
+  if ( !mConn )
+  {
+    errorMsg = tr( "Connection to the database not available" );
+    return false;
+  }
+
   QString err;
   if ( isDirty )
   {
@@ -77,7 +83,7 @@ bool QgsOracleTransaction::executeSql( const QString &sql, QString &errorMsg, bo
 
   QgsDatabaseQueryLogWrapper logWrapper { sql, mConnString, QStringLiteral( "oracle" ), QStringLiteral( "QgsOracleConn" ), QGS_QUERY_LOG_ORIGIN };
   const bool res = mConn->exec( sql, true, &errorMsg );
-  if ( ! errorMsg.isEmpty() )
+  if ( !errorMsg.isEmpty() )
   {
     logWrapper.setError( errorMsg );
   }

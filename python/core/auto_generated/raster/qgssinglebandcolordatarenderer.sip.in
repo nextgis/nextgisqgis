@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/raster/qgssinglebandcolordatarenderer.h                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -26,7 +26,8 @@ Raster renderer pipe for single band color.
     virtual QgsSingleBandColorDataRenderer *clone() const /Factory/;
 
 %Docstring
-QgsSingleBandColorDataRenderer cannot be copied. Use :py:func:`~QgsSingleBandColorDataRenderer.clone` instead.
+QgsSingleBandColorDataRenderer cannot be copied. Use
+:py:func:`~QgsSingleBandColorDataRenderer.clone` instead.
 %End
     virtual Qgis::RasterRendererFlags flags() const;
 
@@ -34,6 +35,10 @@ QgsSingleBandColorDataRenderer cannot be copied. Use :py:func:`~QgsSingleBandCol
     static QgsRasterRenderer *create( const QDomElement &elem, QgsRasterInterface *input ) /Factory/;
 
     virtual bool setInput( QgsRasterInterface *input );
+
+    virtual int inputBand() const;
+
+    virtual bool setInputBand( int band );
 
 
     virtual QgsRasterBlock *block( int bandNo, const QgsRectangle &extent, int width, int height, QgsRasterBlockFeedback *feedback = 0 ) /Factory/;
@@ -55,5 +60,5 @@ QgsSingleBandColorDataRenderer cannot be copied. Use :py:func:`~QgsSingleBandCol
  *                                                                      *
  * src/core/raster/qgssinglebandcolordatarenderer.h                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -24,6 +24,7 @@
 
 #include <QCryptographicHash>
 #include <QDir>
+#include <QJsonDocument>
 #include <QMutex>
 
 #include <set>
@@ -36,9 +37,9 @@
 #include <sqlite3.h>
 
 QgsBackgroundCachedSharedData::QgsBackgroundCachedSharedData(
-  const QString &providerName, const QString &componentTranslated ):
-  mCacheDirectoryManager( QgsCacheDirectoryManager::singleton( ( providerName ) ) ),
-  mComponentTranslated( componentTranslated )
+  const QString &providerName, const QString &componentTranslated
+)
+  : mCacheDirectoryManager( QgsCacheDirectoryManager::singleton( ( providerName ) ) ), mComponentTranslated( componentTranslated )
 {
 }
 
@@ -99,7 +100,7 @@ void QgsBackgroundCachedSharedData::invalidateCache()
 
   QMutexLocker locker( &mMutex );
 
-// to prevent deadlock when waiting the end of the downloader thread that will try to take the mutex in serializeFeatures()
+  // to prevent deadlock when waiting the end of the downloader thread that will try to take the mutex in serializeFeatures()
   mMutex.unlock();
   mDownloader.reset();
   mMutex.lock();
@@ -178,17 +179,17 @@ bool QgsBackgroundCachedSharedData::createCache()
   std::set<QString> setSQLiteColumnNameUpperCase;
   for ( const QgsField &field : std::as_const( mFields ) )
   {
-    QVariant::Type type = field.type();
+    QMetaType::Type type = field.type();
     // Map DateTime to int64 milliseconds from epoch
-    if ( type == QVariant::DateTime )
+    if ( type == QMetaType::Type::QDateTime )
     {
       // Note: this is just a wish. If GDAL < 2, QgsVectorFileWriter will actually map
       // it to a String
-      type = QVariant::LongLong;
+      type = QMetaType::Type::LongLong;
     }
-    else if ( type == QVariant::List && field.subType() == QVariant::String )
+    else if ( type == QMetaType::Type::QVariantList && field.subType() == QMetaType::Type::QString )
     {
-      type = QVariant::StringList;
+      type = QMetaType::Type::QStringList;
     }
 
     // Make sure we don't have several field names that only differ by their case
@@ -205,14 +206,13 @@ bool QgsBackgroundCachedSharedData::createCache()
     cacheFields.append( QgsField( sqliteFieldName, type, field.typeName() ) );
   }
   // Add some field for our internal use
-  cacheFields.append( QgsField( QgsBackgroundCachedFeatureIteratorConstants::FIELD_GEN_COUNTER, QVariant::Int, QStringLiteral( "int" ) ) );
-  cacheFields.append( QgsField( QgsBackgroundCachedFeatureIteratorConstants::FIELD_UNIQUE_ID, QVariant::String, QStringLiteral( "string" ) ) );
-  cacheFields.append( QgsField( QgsBackgroundCachedFeatureIteratorConstants::FIELD_HEXWKB_GEOM, QVariant::String, QStringLiteral( "string" ) ) );
+  cacheFields.append( QgsField( QgsBackgroundCachedFeatureIteratorConstants::FIELD_GEN_COUNTER, QMetaType::Type::Int, QStringLiteral( "int" ) ) );
+  cacheFields.append( QgsField( QgsBackgroundCachedFeatureIteratorConstants::FIELD_UNIQUE_ID, QMetaType::Type::QString, QStringLiteral( "string" ) ) );
+  cacheFields.append( QgsField( QgsBackgroundCachedFeatureIteratorConstants::FIELD_HEXWKB_GEOM, QMetaType::Type::QString, QStringLiteral( "string" ) ) );
   if ( mDistinctSelect )
-    cacheFields.append( QgsField( QgsBackgroundCachedFeatureIteratorConstants::FIELD_MD5, QVariant::String, QStringLiteral( "string" ) ) );
+    cacheFields.append( QgsField( QgsBackgroundCachedFeatureIteratorConstants::FIELD_MD5, QMetaType::Type::QString, QStringLiteral( "string" ) ) );
 
-  const auto logMessageWithReason = [this]( const QString & reason )
-  {
+  const auto logMessageWithReason = [this]( const QString &reason ) {
     QgsMessageLog::logMessage( QStringLiteral( "%1: %2" ).arg( QObject::tr( "Cannot create temporary SpatiaLite cache." ) ).arg( reason ), mComponentTranslated );
   };
 
@@ -225,7 +225,7 @@ bool QgsBackgroundCachedSharedData::createCache()
     logMessageWithReason( QStringLiteral( "GDAL SQLite driver not available" ) );
     return false;
   }
-  const QString vsimemFilename = QStringLiteral( "/vsimem/qgis_cache_template_%1/features.sqlite" ).arg( reinterpret_cast< quintptr >( this ), QT_POINTER_SIZE * 2, 16, QLatin1Char( '0' ) );
+  const QString vsimemFilename = QStringLiteral( "/vsimem/qgis_cache_template_%1/features.sqlite" ).arg( reinterpret_cast<quintptr>( this ), QT_POINTER_SIZE * 2, 16, QLatin1Char( '0' ) );
   mCacheTablename = CPLGetBasename( vsimemFilename.toUtf8().constData() );
   VSIUnlink( vsimemFilename.toUtf8().constData() );
   const char *apszOptions[] = { "INIT_WITH_EPSG=NO", "SPATIALITE=YES", nullptr };
@@ -267,11 +267,11 @@ bool QgsBackgroundCachedSharedData::createCache()
   {
     QString sql;
 
-    ( void )sqlite3_exec( database.get(), "PRAGMA synchronous=OFF", nullptr, nullptr, nullptr );
+    ( void ) sqlite3_exec( database.get(), "PRAGMA synchronous=OFF", nullptr, nullptr, nullptr );
     // WAL is needed to avoid reader to block writers
-    ( void )sqlite3_exec( database.get(), "PRAGMA journal_mode=WAL", nullptr, nullptr, nullptr );
+    ( void ) sqlite3_exec( database.get(), "PRAGMA journal_mode=WAL", nullptr, nullptr, nullptr );
 
-    ( void )sqlite3_exec( database.get(), "BEGIN", nullptr, nullptr, nullptr );
+    ( void ) sqlite3_exec( database.get(), "BEGIN", nullptr, nullptr, nullptr );
 
     mCacheTablename = QStringLiteral( "features" );
     sql = QStringLiteral( "CREATE TABLE %1 (%2 INTEGER PRIMARY KEY" ).arg( mCacheTablename, fidName );
@@ -279,13 +279,13 @@ bool QgsBackgroundCachedSharedData::createCache()
     for ( const QgsField &field : std::as_const( cacheFields ) )
     {
       QString type( QStringLiteral( "VARCHAR" ) );
-      if ( field.type() == QVariant::Int )
+      if ( field.type() == QMetaType::Type::Int )
         type = QStringLiteral( "INTEGER" );
-      else if ( field.type() == QVariant::LongLong )
+      else if ( field.type() == QMetaType::Type::LongLong )
         type = QStringLiteral( "BIGINT" );
-      else if ( field.type() == QVariant::Double )
+      else if ( field.type() == QMetaType::Type::Double )
         type = QStringLiteral( "REAL" );
-      else if ( field.type() == QVariant::StringList )
+      else if ( field.type() == QMetaType::Type::QStringList )
         type = QStringLiteral( "JSONSTRINGLIST" );
 
       sql += QStringLiteral( ", %1 %2" ).arg( quotedIdentifier( field.name() ), type );
@@ -295,7 +295,8 @@ bool QgsBackgroundCachedSharedData::createCache()
     if ( rc != SQLITE_OK )
     {
       QgsDebugError( QStringLiteral( "%1 failed" ).arg( sql ) );
-      if ( failedSql.isEmpty() ) failedSql = sql;
+      if ( failedSql.isEmpty() )
+        failedSql = sql;
       ret = false;
     }
 
@@ -304,7 +305,8 @@ bool QgsBackgroundCachedSharedData::createCache()
     if ( rc != SQLITE_OK )
     {
       QgsDebugError( QStringLiteral( "%1 failed" ).arg( sql ) );
-      if ( failedSql.isEmpty() ) failedSql = sql;
+      if ( failedSql.isEmpty() )
+        failedSql = sql;
       ret = false;
     }
 
@@ -313,7 +315,8 @@ bool QgsBackgroundCachedSharedData::createCache()
     if ( rc != SQLITE_OK )
     {
       QgsDebugError( QStringLiteral( "%1 failed" ).arg( sql ) );
-      if ( failedSql.isEmpty() ) failedSql = sql;
+      if ( failedSql.isEmpty() )
+        failedSql = sql;
       ret = false;
     }
 
@@ -325,7 +328,8 @@ bool QgsBackgroundCachedSharedData::createCache()
     if ( rc != SQLITE_OK )
     {
       QgsDebugError( QStringLiteral( "%1 failed" ).arg( sql ) );
-      if ( failedSql.isEmpty() ) failedSql = sql;
+      if ( failedSql.isEmpty() )
+        failedSql = sql;
       ret = false;
     }
 
@@ -336,12 +340,13 @@ bool QgsBackgroundCachedSharedData::createCache()
       if ( rc != SQLITE_OK )
       {
         QgsDebugError( QStringLiteral( "%1 failed" ).arg( sql ) );
-        if ( failedSql.isEmpty() ) failedSql = sql;
+        if ( failedSql.isEmpty() )
+          failedSql = sql;
         ret = false;
       }
     }
 
-    ( void )sqlite3_exec( database.get(), "COMMIT", nullptr, nullptr, nullptr );
+    ( void ) sqlite3_exec( database.get(), "COMMIT", nullptr, nullptr, nullptr );
   }
   else
   {
@@ -365,7 +370,8 @@ bool QgsBackgroundCachedSharedData::createCache()
 
   QgsDataProvider::ProviderOptions providerOptions;
   mCacheDataProvider.reset( dynamic_cast<QgsVectorDataProvider *>( QgsProviderRegistry::instance()->createProvider(
-                              QStringLiteral( "spatialite" ), dsURI.uri(), providerOptions ) ) );
+    QStringLiteral( "spatialite" ), dsURI.uri(), providerOptions
+  ) ) );
   if ( mCacheDataProvider && !mCacheDataProvider->isValid() )
   {
     mCacheDataProvider.reset();
@@ -447,8 +453,7 @@ int QgsBackgroundCachedSharedData::registerToCache( QgsBackgroundCachedFeatureIt
       // If the requested bbox is inside an already cached rect that didn't
       // hit the download limit, then we can reuse the cached features without
       // issuing a new request.
-      if ( mRegions[id].geometry().boundingBox().contains( rect ) &&
-           !mRegions[id].attributes().value( 0 ).toBool() )
+      if ( mRegions[id].geometry().boundingBox().contains( rect ) && !mRegions[id].attributes().value( 0 ).toBool() )
       {
         QgsDebugMsgLevel( QStringLiteral( "Cached features already cover this area of interest" ), 4 );
         newDownloadNeeded = false;
@@ -458,8 +463,7 @@ int QgsBackgroundCachedSharedData::registerToCache( QgsBackgroundCachedFeatureIt
       // On the other hand, if the requested bbox is inside an already cached rect,
       // that hit the download limit, our larger bbox will hit it too, so no need
       // to re-issue a new request either.
-      if ( rect.contains( mRegions[id].geometry().boundingBox() ) &&
-           mRegions[id].attributes().value( 0 ).toBool() )
+      if ( rect.contains( mRegions[id].geometry().boundingBox() ) && mRegions[id].attributes().value( 0 ).toBool() )
       {
         QgsDebugMsgLevel( QStringLiteral( "Current request is larger than a smaller request that hit the download limit, so no server download needed." ), 4 );
         newDownloadNeeded = false;
@@ -504,7 +508,7 @@ int QgsBackgroundCachedSharedData::registerToCache( QgsBackgroundCachedFeatureIt
   // Under the mutex to ensure that we will not miss features
   iterator->connectSignals( mDownloader->downloader() );
 
-  return mGenCounter ++;
+  return mGenCounter++;
 }
 
 int QgsBackgroundCachedSharedData::getUpdatedCounter()
@@ -512,7 +516,7 @@ int QgsBackgroundCachedSharedData::getUpdatedCounter()
   QMutexLocker locker( &mMutex );
   if ( mDownloadFinished )
     return mGenCounter;
-  return mGenCounter ++;
+  return mGenCounter++;
 }
 
 void QgsBackgroundCachedSharedData::serializeFeatures( QVector<QgsFeatureUniqueIdPair> &featureList )
@@ -625,10 +629,22 @@ void QgsBackgroundCachedSharedData::serializeFeatures( QVector<QgsFeatureUniqueI
       if ( idx >= 0 )
       {
         const QVariant &v = srcFeature.attributes().value( i );
-        const QVariant::Type fieldType = dataProviderFields.at( idx ).type();
-        if ( v.type() == QVariant::DateTime && !QgsVariantUtils::isNull( v ) )
+        const QMetaType::Type fieldType = dataProviderFields.at( idx ).type();
+        if ( v.userType() == QMetaType::Type::QDateTime && !QgsVariantUtils::isNull( v ) )
           cachedFeature.setAttribute( idx, QVariant( v.toDateTime().toMSecsSinceEpoch() ) );
-        else if ( QgsWFSUtils::isCompatibleType( v.type(), fieldType ) )
+        else if ( v.userType() == QMetaType::Type::QVariantMap && !QgsVariantUtils::isNull( v ) )
+        {
+          QString stringValue = QString::fromUtf8( QJsonDocument::fromVariant( v ).toJson().constData() );
+          if ( stringValue.isEmpty() )
+          {
+            //store as string, because it's no valid QJson value
+            stringValue = v.toString();
+          }
+          cachedFeature.setAttribute( idx, stringValue );
+        }
+        else if ( mFields.at( i ).type() == QMetaType::Type::Bool ) // WFS boolean fields are stored as varchar in underlying cache sqlite database
+          cachedFeature.setAttribute( idx, QgsSqliteUtils::quotedValue( QVariant::fromValue( v.toBool() ) ) );
+        else if ( QgsWFSUtils::isCompatibleType( static_cast<QMetaType::Type>( v.userType() ), fieldType ) )
           cachedFeature.setAttribute( idx, v );
         else
           cachedFeature.setAttribute( idx, QgsVectorDataProvider::convertValue( fieldType, v.toString() ) );
@@ -676,8 +692,7 @@ void QgsBackgroundCachedSharedData::serializeFeatures( QVector<QgsFeatureUniqueI
       {
         QString errorMsg;
 
-        QString sql = qgs_sqlite3_mprintf( "SELECT qgisId, dbId FROM id_cache WHERE uniqueId = '%q'",
-                                           uniqueId.toUtf8().constData() );
+        QString sql = qgs_sqlite3_mprintf( "SELECT qgisId, dbId FROM id_cache WHERE uniqueId = '%q'", uniqueId.toUtf8().constData() );
         auto stmt = mCacheIdDb.prepare( sql, resultCode );
         Q_ASSERT( resultCode == SQLITE_OK );
         if ( stmt.step() == SQLITE_ROW )
@@ -686,16 +701,13 @@ void QgsBackgroundCachedSharedData::serializeFeatures( QVector<QgsFeatureUniqueI
           QgsFeatureId oldDbId = stmt.columnAsInt64( 1 );
           if ( dbId != oldDbId )
           {
-            sql = qgs_sqlite3_mprintf( "UPDATE id_cache SET dbId = NULL WHERE dbId = %lld",
-                                       dbId );
+            sql = qgs_sqlite3_mprintf( "UPDATE id_cache SET dbId = NULL WHERE dbId = %lld", dbId );
             if ( mCacheIdDb.exec( sql, errorMsg ) != SQLITE_OK )
             {
               QgsMessageLog::logMessage( QObject::tr( "Problem when updating id cache: %1 -> %2" ).arg( sql ).arg( errorMsg ), mComponentTranslated );
             }
 
-            sql = qgs_sqlite3_mprintf( "UPDATE id_cache SET dbId = %lld WHERE uniqueId = '%q'",
-                                       dbId,
-                                       uniqueId.toUtf8().constData() );
+            sql = qgs_sqlite3_mprintf( "UPDATE id_cache SET dbId = %lld WHERE uniqueId = '%q'", dbId, uniqueId.toUtf8().constData() );
             if ( mCacheIdDb.exec( sql, errorMsg ) != SQLITE_OK )
             {
               QgsMessageLog::logMessage( QObject::tr( "Problem when updating id cache: %1 -> %2" ).arg( sql ).arg( errorMsg ), mComponentTranslated );
@@ -704,19 +716,15 @@ void QgsBackgroundCachedSharedData::serializeFeatures( QVector<QgsFeatureUniqueI
         }
         else
         {
-          sql = qgs_sqlite3_mprintf( "UPDATE id_cache SET dbId = NULL WHERE dbId = %lld",
-                                     dbId );
+          sql = qgs_sqlite3_mprintf( "UPDATE id_cache SET dbId = NULL WHERE dbId = %lld", dbId );
           if ( mCacheIdDb.exec( sql, errorMsg ) != SQLITE_OK )
           {
             QgsMessageLog::logMessage( QObject::tr( "Problem when updating id cache: %1 -> %2" ).arg( sql ).arg( errorMsg ), mComponentTranslated );
           }
 
           qgisId = mNextCachedIdQgisId;
-          mNextCachedIdQgisId ++;
-          sql = qgs_sqlite3_mprintf( "INSERT INTO id_cache (uniqueId, dbId, qgisId) VALUES ('%q', %lld, %lld)",
-                                     uniqueId.toUtf8().constData(),
-                                     dbId,
-                                     qgisId );
+          mNextCachedIdQgisId++;
+          sql = qgs_sqlite3_mprintf( "INSERT INTO id_cache (uniqueId, dbId, qgisId) VALUES ('%q', %lld, %lld)", uniqueId.toUtf8().constData(), dbId, qgisId );
           if ( mCacheIdDb.exec( sql, errorMsg ) != SQLITE_OK )
           {
             QgsMessageLog::logMessage( QObject::tr( "Problem when updating id cache: %1 -> %2" ).arg( sql ).arg( errorMsg ), mComponentTranslated );
@@ -734,11 +742,11 @@ void QgsBackgroundCachedSharedData::serializeFeatures( QVector<QgsFeatureUniqueI
         if ( !mFeatureCountExact )
           mFeatureCount += featureListToCache.size();
         mTotalFeaturesAttemptedToBeCached += featureListToCache.size();
-        if ( !localComputedExtent.isNull() && mComputedExtent.isNull() && !mTryFetchingOneFeature &&
-             !localComputedExtent.intersects( mCapabilityExtent ) )
+        if ( !localComputedExtent.isNull() && mComputedExtent.isNull() && !mTryFetchingOneFeature && !localComputedExtent.intersects( mCapabilityExtent ) )
         {
           QgsMessageLog::logMessage( QObject::tr( "Layer extent reported by the server is not correct. "
-                                                  "You may need to zoom again on layer while features are being downloaded" ), mComponentTranslated );
+                                                  "You may need to zoom again on layer while features are being downloaded" ),
+                                     mComponentTranslated );
         }
         mComputedExtent = localComputedExtent;
       }
@@ -750,7 +758,6 @@ void QgsBackgroundCachedSharedData::serializeFeatures( QVector<QgsFeatureUniqueI
   emitExtentUpdated();
 
   QgsDebugMsgLevel( QStringLiteral( "end %1" ).arg( featureList.size() ), 4 );
-
 }
 
 const QgsRectangle &QgsBackgroundCachedSharedData::computedExtent() const
@@ -760,10 +767,7 @@ const QgsRectangle &QgsBackgroundCachedSharedData::computedExtent() const
 }
 
 //! Called by QgsFeatureDownloaderImpl::run() at the end of the download process.
-void QgsBackgroundCachedSharedData::endOfDownload( bool success, long long featureCount,
-    bool truncatedResponse,
-    bool interrupted,
-    const QString &errorMsg )
+void QgsBackgroundCachedSharedData::endOfDownload( bool success, long long featureCount, bool truncatedResponse, bool interrupted, const QString &errorMsg )
 {
   QMutexLocker locker( &mMutex );
 
@@ -782,14 +786,12 @@ void QgsBackgroundCachedSharedData::endOfDownload( bool success, long long featu
     // that we have no filter and we got no features, then it is not unlikely that the capabilities
     // might be wrong. In which case, query one feature so that we got a beginning of extent from
     // which the user will be able to zoom out. This is far from being ideal...
-    if ( featureCount == 0 && mRect.contains( mCapabilityExtent ) && !hasServerSideFilter() &&
-         supportsFastFeatureCount() && hasGeometry() && !mTryFetchingOneFeature )
+    if ( featureCount == 0 && mRect.contains( mCapabilityExtent ) && !hasServerSideFilter() && supportsFastFeatureCount() && hasGeometry() && !mTryFetchingOneFeature )
     {
       QgsDebugMsgLevel( QStringLiteral( "Capability extent is probably wrong. Starting a new request with one feature limit to get at least one feature" ), 2 );
       mTryFetchingOneFeature = true;
       mComputedExtent = getExtentFromSingleFeatureRequest();
-      if ( !mComputedExtent.isNull() &&
-           !detectPotentialServerAxisOrderIssueFromSingleFeatureExtent() )
+      if ( !mComputedExtent.isNull() && !detectPotentialServerAxisOrderIssueFromSingleFeatureExtent() )
       {
         // Grow the extent by ~ 50 km (completely arbitrary number if you wonder!)
         // so that it is sufficiently zoomed out
@@ -842,8 +844,7 @@ void QgsBackgroundCachedSharedData::endOfDownload( bool success, long long featu
       // contains duplicates. Actually happens with
       // http://demo.opengeo.org/geoserver/wfs?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&TYPENAMES=osm:landcover_line
       // with gml.id=landcover_line.119246130 in particular
-      QgsDebugMsgLevel( QStringLiteral( "raw features=%1, unique features=%2" ).
-                        arg( featureCount ).arg( mFeatureCount ), 2 );
+      QgsDebugMsgLevel( QStringLiteral( "raw features=%1, unique features=%2" ).arg( featureCount ).arg( mFeatureCount ), 2 );
     }
   }
 
@@ -874,7 +875,7 @@ QSet<QString> QgsBackgroundCachedSharedData::getExistingCachedUniqueIds( const Q
 
   // To avoid excessive memory consumption in expression building, do not
   // query more than 1000 ids at a time.
-  for ( int i = 0; i < featureList.size(); i ++ )
+  for ( int i = 0; i < featureList.size(); i++ )
   {
     if ( !first )
       expr += ',';
@@ -908,7 +909,6 @@ QSet<QString> QgsBackgroundCachedSharedData::getExistingCachedUniqueIds( const Q
 
       first = true;
     }
-
   }
 
   return setExistingUniqueIds;
@@ -925,7 +925,7 @@ QSet<QString> QgsBackgroundCachedSharedData::getExistingCachedMD5( const QVector
 
   // To avoid excessive memory consumption in expression building, do not
   // query more than 1000 ids at a time.
-  for ( int i = 0; i < featureList.size(); i ++ )
+  for ( int i = 0; i < featureList.size(); i++ )
   {
     if ( !first )
       expr += QLatin1Char( ',' );
@@ -959,7 +959,6 @@ QSet<QString> QgsBackgroundCachedSharedData::getExistingCachedMD5( const QVector
 
       first = true;
     }
-
   }
 
   return setExistingMD5;
@@ -1070,22 +1069,21 @@ bool QgsBackgroundCachedSharedData::changeGeometryValues( const QgsGeometryMap &
     {
       QgsAttributeMap newAttrMap;
       newAttrMap[idx] = QString( wkb.toHex().data() );
-      newChangedAttrMap[ dbId] = newAttrMap;
+      newChangedAttrMap[dbId] = newAttrMap;
 
       QgsGeometry polyBoundingBox = QgsGeometry::fromRect( iter.value().boundingBox() );
-      newGeometryMap[ dbId] = polyBoundingBox;
+      newGeometryMap[dbId] = polyBoundingBox;
     }
     else
     {
       QgsAttributeMap newAttrMap;
       newAttrMap[idx] = QString();
-      newChangedAttrMap[ dbId] = newAttrMap;
-      newGeometryMap[ dbId] = QgsGeometry();
+      newChangedAttrMap[dbId] = newAttrMap;
+      newGeometryMap[dbId] = QgsGeometry();
     }
   }
 
-  return mCacheDataProvider->changeGeometryValues( newGeometryMap ) &&
-         mCacheDataProvider->changeAttributeValues( newChangedAttrMap );
+  return mCacheDataProvider->changeGeometryValues( newGeometryMap ) && mCacheDataProvider->changeAttributeValues( newChangedAttrMap );
 }
 
 // Used by WFS-T
@@ -1118,7 +1116,7 @@ bool QgsBackgroundCachedSharedData::changeAttributeValues( const QgsChangedAttri
     {
       int idx = dataProviderFields.indexFromName( mMapUserVisibleFieldNameToSpatialiteColumnName[mFields.at( siter.key() ).name()] );
       Q_ASSERT( idx >= 0 );
-      if ( siter.value().type() == QVariant::DateTime && !QgsVariantUtils::isNull( siter.value() ) )
+      if ( siter.value().userType() == QMetaType::Type::QDateTime && !QgsVariantUtils::isNull( siter.value() ) )
         newAttrMap[idx] = QVariant( siter.value().toDateTime().toMSecsSinceEpoch() );
       else
         newAttrMap[idx] = siter.value();
@@ -1137,31 +1135,31 @@ QString QgsBackgroundCachedSharedData::getMD5( const QgsFeature &f )
   for ( int i = 0; i < attrs.size(); i++ )
   {
     const QVariant &v = attrs[i];
-    hash.addData( QByteArray( ( const char * )&i, sizeof( i ) ) );
+    hash.addData( QByteArray( ( const char * ) &i, sizeof( i ) ) );
     if ( QgsVariantUtils::isNull( v ) )
     {
       // nothing to do
     }
-    else if ( v.type() == QVariant::DateTime )
+    else if ( v.userType() == QMetaType::Type::QDateTime )
     {
       qint64 val = v.toDateTime().toMSecsSinceEpoch();
-      hash.addData( QByteArray( ( const char * )&val, sizeof( val ) ) );
+      hash.addData( QByteArray( ( const char * ) &val, sizeof( val ) ) );
     }
-    else if ( v.type() == QVariant::Int )
+    else if ( v.userType() == QMetaType::Type::Int )
     {
       int val = v.toInt();
-      hash.addData( QByteArray( ( const char * )&val, sizeof( val ) ) );
+      hash.addData( QByteArray( ( const char * ) &val, sizeof( val ) ) );
     }
-    else if ( v.type() == QVariant::LongLong )
+    else if ( v.userType() == QMetaType::Type::LongLong )
     {
       qint64 val = v.toLongLong();
-      hash.addData( QByteArray( ( const char * )&val, sizeof( val ) ) );
+      hash.addData( QByteArray( ( const char * ) &val, sizeof( val ) ) );
     }
-    else if ( v.type() == QVariant::String )
+    else if ( v.userType() == QMetaType::Type::QString )
     {
       hash.addData( v.toByteArray() );
     }
-    else if ( v.type() == QVariant::StringList )
+    else if ( v.userType() == QMetaType::Type::QStringList )
     {
       for ( const QString &s : v.toStringList() )
         hash.addData( s.toUtf8() );
@@ -1169,7 +1167,7 @@ QString QgsBackgroundCachedSharedData::getMD5( const QgsFeature &f )
   }
 
   const int attrCount = attrs.size();
-  hash.addData( QByteArray( ( const char * )&attrCount, sizeof( attrCount ) ) );
+  hash.addData( QByteArray( ( const char * ) &attrCount, sizeof( attrCount ) ) );
   QgsGeometry geometry = f.geometry();
   if ( !geometry.isNull() )
   {
@@ -1189,8 +1187,7 @@ void QgsBackgroundCachedSharedData::setFeatureCount( long long featureCount, boo
 
 long long QgsBackgroundCachedSharedData::getFeatureCount( bool issueRequestIfNeeded )
 {
-  if ( !mFeatureCountRequestIssued && !mFeatureCountExact &&
-       supportsFastFeatureCount() && issueRequestIfNeeded )
+  if ( !mFeatureCountRequestIssued && !mFeatureCountExact && supportsFastFeatureCount() && issueRequestIfNeeded )
   {
     mFeatureCountRequestIssued = true;
     long long featureCount = getFeatureCountFromServer();

@@ -5,11 +5,11 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Nyall Dawson'
-__date__ = '2019-12-07'
-__copyright__ = 'Copyright 2019, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Nyall Dawson"
+__date__ = "2019-12-07"
+__copyright__ = "Copyright 2019, The QGIS Project"
+
 
 from qgis.core import (
     QgsExpressionContext,
@@ -20,12 +20,13 @@ from qgis.core import (
     QgsProperty,
     QgsPropertyCollection,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 start_app()
 
 
-class TestQgsLabelObstacleSettings(unittest.TestCase):
+class TestQgsLabelObstacleSettings(QgisTestCase):
 
     def test_obstacle_settings(self):
         """
@@ -40,8 +41,10 @@ class TestQgsLabelObstacleSettings(unittest.TestCase):
         settings.setFactor(0.1)
         self.assertEqual(settings.factor(), 0.1)
 
-        settings.setType(QgsLabelObstacleSettings.PolygonWhole)
-        self.assertEqual(settings.type(), QgsLabelObstacleSettings.PolygonWhole)
+        settings.setType(QgsLabelObstacleSettings.ObstacleType.PolygonWhole)
+        self.assertEqual(
+            settings.type(), QgsLabelObstacleSettings.ObstacleType.PolygonWhole
+        )
 
         # check that compatibility code works
         pal_settings = QgsPalLayerSettings()
@@ -56,9 +59,14 @@ class TestQgsLabelObstacleSettings(unittest.TestCase):
         self.assertEqual(pal_settings.obstacleFactor, 0.2)
         self.assertEqual(pal_settings.obstacleSettings().factor(), 0.2)
 
-        pal_settings.obstacleType = QgsPalLayerSettings.PolygonWhole
-        self.assertEqual(pal_settings.obstacleType, QgsPalLayerSettings.PolygonWhole)
-        self.assertEqual(pal_settings.obstacleSettings().type(), QgsLabelObstacleSettings.PolygonWhole)
+        pal_settings.obstacleType = QgsPalLayerSettings.ObstacleType.PolygonWhole
+        self.assertEqual(
+            pal_settings.obstacleType, QgsPalLayerSettings.ObstacleType.PolygonWhole
+        )
+        self.assertEqual(
+            pal_settings.obstacleSettings().type(),
+            QgsLabelObstacleSettings.ObstacleType.PolygonWhole,
+        )
 
     def testUpdateDataDefinedProps(self):
         settings = QgsLabelObstacleSettings()
@@ -66,10 +74,13 @@ class TestQgsLabelObstacleSettings(unittest.TestCase):
         self.assertEqual(settings.factor(), 0.1)
 
         props = QgsPropertyCollection()
-        props.setProperty(QgsPalLayerSettings.ObstacleFactor, QgsProperty.fromExpression('@factor'))
+        props.setProperty(
+            QgsPalLayerSettings.Property.ObstacleFactor,
+            QgsProperty.fromExpression("@factor"),
+        )
         context = QgsExpressionContext()
         scope = QgsExpressionContextScope()
-        scope.setVariable('factor', 9)
+        scope.setVariable("factor", 9)
         context.appendScope(scope)
         settings.updateDataDefinedProperties(props, context)
         self.assertAlmostEqual(settings.factor(), 1.8, 3)
@@ -77,9 +88,9 @@ class TestQgsLabelObstacleSettings(unittest.TestCase):
     def testObstacleGeom(self):
         settings = QgsLabelObstacleSettings()
         self.assertTrue(settings.obstacleGeometry().isNull())
-        settings.setObstacleGeometry(QgsGeometry.fromWkt('LineString( 0 0, 1 1)'))
-        self.assertEqual(settings.obstacleGeometry().asWkt(), 'LineString (0 0, 1 1)')
+        settings.setObstacleGeometry(QgsGeometry.fromWkt("LineString( 0 0, 1 1)"))
+        self.assertEqual(settings.obstacleGeometry().asWkt(), "LineString (0 0, 1 1)")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

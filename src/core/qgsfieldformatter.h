@@ -34,9 +34,6 @@ class CORE_EXPORT QgsFieldFormatterContext
 {
   public:
 
-    /**
-     * Constructor
-     */
     QgsFieldFormatterContext() = default;
 
     /**
@@ -67,15 +64,11 @@ class CORE_EXPORT QgsFieldFormatterContext
  *
  * This is an abstract base class and will always need to be subclassed.
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsFieldFormatter
 {
   public:
 
-    /**
-      * Default constructor
-      */
     QgsFieldFormatter() = default;
 
     virtual ~QgsFieldFormatter() = default;
@@ -85,7 +78,7 @@ class CORE_EXPORT QgsFieldFormatter
      *
      * \since QGIS 3.12
      */
-    enum Flag
+    enum Flag SIP_ENUM_BASETYPE( IntFlag )
     {
       CanProvideAvailableValues =  1   //!< Can provide possible values
     };
@@ -104,7 +97,6 @@ class CORE_EXPORT QgsFieldFormatter
      *
      * \returns By default the string representation of the provided value as implied by the field definition is returned.
      *
-     * \since QGIS 3.0
      */
     virtual QString representValue( QgsVectorLayer *layer, int fieldIndex, const QVariantMap &config, const QVariant &cache, const QVariant &value ) const;
 
@@ -113,7 +105,6 @@ class CORE_EXPORT QgsFieldFormatter
      *
      * \returns an unmodified value by default.
      *
-     * \since QGIS 3.0
      */
     virtual QVariant sortValue( QgsVectorLayer *layer, int fieldIndex, const QVariantMap &config, const QVariant &cache, const QVariant &value ) const;
 
@@ -121,7 +112,6 @@ class CORE_EXPORT QgsFieldFormatter
      * Returns the alignment for a particular field. By default this will consider the field type but can be overwritten if mapped
      * values are represented.
      *
-     * \since QGIS 3.0
      */
     virtual Qt::AlignmentFlag alignmentFlag( QgsVectorLayer *layer, int fieldIndex, const QVariantMap &config ) const;
 
@@ -136,7 +126,6 @@ class CORE_EXPORT QgsFieldFormatter
      * implement this functionality to create a lookuptable once (a QVariantMap / dict) and are
      * make use of a cache if present.
      *
-     * \since QGIS 3.0
      */
     virtual QVariant createCache( QgsVectorLayer *layer, int fieldIndex, const QVariantMap &config ) const;
 

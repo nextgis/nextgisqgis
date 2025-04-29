@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsonlineterraingenerator.h"
+#include "moc_qgsonlineterraingenerator.cpp"
 
 #include "qgsdemterraintileloader_p.h"
 
@@ -49,9 +50,9 @@ QgsRectangle QgsOnlineTerrainGenerator::rootChunkExtent() const
   return mTerrainTilingScheme.tileToExtent( 0, 0, 0 );
 }
 
-float QgsOnlineTerrainGenerator::heightAt( double x, double y, const Qgs3DMapSettings &map ) const
+float QgsOnlineTerrainGenerator::heightAt( double x, double y, const Qgs3DRenderContext &context ) const
 {
-  Q_UNUSED( map )
+  Q_UNUSED( context )
   if ( mHeightMapGenerator )
     return mHeightMapGenerator->heightAt( x, y );
   else

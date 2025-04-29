@@ -16,8 +16,10 @@
  ***************************************************************************/
 
 #include "qgsprocessingfeedback.h"
+#include "moc_qgsprocessingfeedback.cpp"
 #include "qgsgeos.h"
 #include "qgsprocessingprovider.h"
+#include "qgsmessagelog.h"
 #include <ogr_api.h>
 #include <gdal_version.h>
 #include <proj.h>
@@ -32,8 +34,10 @@ QgsProcessingFeedback::QgsProcessingFeedback( bool logFeedback )
 
 }
 
-void QgsProcessingFeedback::setProgressText( const QString & )
+void QgsProcessingFeedback::setProgressText( const QString &text )
 {
+  mHtmlLog.append( text.toHtmlEscaped().replace( '\n', QLatin1String( "<br>" ) ) + QStringLiteral( "<br/>" ) );
+  mTextLog.append( text + '\n' );
 }
 
 void QgsProcessingFeedback::log( const QString &htmlMessage, const QString &textMessage )
@@ -81,6 +85,15 @@ void QgsProcessingFeedback::pushInfo( const QString &info )
 
   mHtmlLog.append( info.toHtmlEscaped().replace( '\n', QLatin1String( "<br>" ) ) + QStringLiteral( "<br/>" ) );
   mTextLog.append( info + '\n' );
+}
+
+void QgsProcessingFeedback::pushFormattedMessage( const QString &html, const QString &text )
+{
+  if ( mLogFeedback )
+    QgsMessageLog::logMessage( text, tr( "Processing" ), Qgis::MessageLevel::Info );
+
+  mHtmlLog.append( html + QStringLiteral( "<br/>" ) );
+  mTextLog.append( text + '\n' );
 }
 
 void QgsProcessingFeedback::pushCommandInfo( const QString &info )
@@ -139,6 +152,34 @@ void QgsProcessingFeedback::pushVersionInfo( const QgsProcessingProvider *provid
   }
 }
 
+void QgsProcessingFeedback::pushFormattedResults( const QgsProcessingAlgorithm *algorithm, QgsProcessingContext &context, const QVariantMap &results )
+{
+  if ( results.empty() )
+    return;
+
+  pushInfo( tr( "Results:" ) );
+
+  const QList< const QgsProcessingOutputDefinition * > outputs = algorithm->outputDefinitions();
+  for ( const QgsProcessingOutputDefinition *output : outputs )
+  {
+    const QString outputName = output->name();
+    if ( outputName == QLatin1String( "CHILD_RESULTS" ) || outputName == QLatin1String( "CHILD_INPUTS" ) )
+      continue;
+
+    if ( !results.contains( outputName ) )
+      continue;
+
+    bool ok = false;
+    const QString textValue = output->valueAsString( results.value( output->name() ), context, ok );
+    const QString formattedValue = output->valueAsFormattedString( results.value( output->name() ), context, ok );
+    if ( ok )
+    {
+      pushFormattedMessage( QStringLiteral( "<code>&nbsp;&nbsp;%1: %2</code>" ).arg( output->name(), formattedValue ),
+                            QStringLiteral( "  %1: %2" ).arg( output->name(), textValue ) );
+    }
+  }
+}
+
 QString QgsProcessingFeedback::htmlLog() const
 {
   return mHtmlLog;
@@ -154,65 +195,87 @@ QgsProcessingMultiStepFeedback::QgsProcessingMultiStepFeedback( int childAlgorit
   : mChildSteps( childAlgorithmCount )
   , mFeedback( feedback )
 {
-  connect( mFeedback, &QgsFeedback::canceled, this, &QgsFeedback::cancel, Qt::DirectConnection );
-  connect( this, &QgsFeedback::progressChanged, this, &QgsProcessingMultiStepFeedback::updateOverallProgress );
+  if ( mFeedback )
+  {
+    connect( mFeedback, &QgsFeedback::canceled, this, &QgsFeedback::cancel, Qt::DirectConnection );
+    connect( this, &QgsFeedback::progressChanged, this, &QgsProcessingMultiStepFeedback::updateOverallProgress );
+  }
 }
 
 void QgsProcessingMultiStepFeedback::setCurrentStep( int step )
 {
   mCurrentStep = step;
-  mFeedback->setProgress( 100.0 * static_cast< double >( mCurrentStep ) / mChildSteps );
+
+  if ( mFeedback )
+    mFeedback->setProgress( 100.0 * static_cast< double >( mCurrentStep ) / mChildSteps );
 }
 
 void QgsProcessingMultiStepFeedback::setProgressText( const QString &text )
 {
-  mFeedback->setProgressText( text );
+  if ( mFeedback )
+    mFeedback->setProgressText( text );
 }
 
 void QgsProcessingMultiStepFeedback::reportError( const QString &error, bool fatalError )
 {
-  mFeedback->reportError( error, fatalError );
+  if ( mFeedback )
+    mFeedback->reportError( error, fatalError );
 }
 
 void QgsProcessingMultiStepFeedback::pushWarning( const QString &warning )
 {
-  mFeedback->pushWarning( warning );
+  if ( mFeedback )
+    mFeedback->pushWarning( warning );
 }
 
 void QgsProcessingMultiStepFeedback::pushInfo( const QString &info )
 {
-  mFeedback->pushInfo( info );
+  if ( mFeedback )
+    mFeedback->pushInfo( info );
 }
 
 void QgsProcessingMultiStepFeedback::pushCommandInfo( const QString &info )
 {
-  mFeedback->pushCommandInfo( info );
+  if ( mFeedback )
+    mFeedback->pushCommandInfo( info );
 }
 
 void QgsProcessingMultiStepFeedback::pushDebugInfo( const QString &info )
 {
-  mFeedback->pushDebugInfo( info );
+  if ( mFeedback )
+    mFeedback->pushDebugInfo( info );
 }
 
 void QgsProcessingMultiStepFeedback::pushConsoleInfo( const QString &info )
 {
-  mFeedback->pushConsoleInfo( info );
+  if ( mFeedback )
+    mFeedback->pushConsoleInfo( info );
+}
+
+void QgsProcessingMultiStepFeedback::pushFormattedMessage( const QString &html, const QString &text )
+{
+  if ( mFeedback )
+    mFeedback->pushFormattedMessage( html, text );
 }
 
 QString QgsProcessingMultiStepFeedback::htmlLog() const
 {
-  return mFeedback->htmlLog();
+  if ( mFeedback )
+    return mFeedback->htmlLog();
+  return QString();
 }
 
 QString QgsProcessingMultiStepFeedback::textLog() const
 {
-  return mFeedback->textLog();
+  if ( mFeedback )
+    return mFeedback->textLog();
+  return QString();
 }
 
 void QgsProcessingMultiStepFeedback::updateOverallProgress( double progress )
 {
   const double baseProgress = 100.0 * static_cast< double >( mCurrentStep ) / mChildSteps;
   const double currentAlgorithmProgress = progress / mChildSteps;
-  mFeedback->setProgress( baseProgress + currentAlgorithmProgress );
+  if ( mFeedback )
+    mFeedback->setProgress( baseProgress + currentAlgorithmProgress );
 }
-

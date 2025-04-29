@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/mesh/qgsmeshforcebypolylines.h                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,14 +11,17 @@
 class QgsMeshEditForceByLine : QgsMeshAdvancedEditing
 {
 %Docstring(signature="appended")
+Class derived from :py:class:`QgsMeshAdvancedEditing` that forces mesh
+based on a line
 
-Class derived from :py:class:`QgsMeshAdvancedEditing` that forces mesh based on a line
+Forcing lines consist of line that the faces are forced to follow, that
+is edges of encountered faces have to be on theses lines.
 
-Forcing lines consist of line that the faces are forced to follow, that is edges of encountered faces have to be on theses lines.
+Caller of this class has to set the line with :py:func:`~setInputLine`
+before applying the edition with :py:func:`QgsMeshEditor.advancedEdit()`
 
-Caller of this class has to set the line with :py:func:`~setInputLine` before applying the edition with :py:func:`QgsMeshEditor.advancedEdit()`
-
-Other option has also to be set before calling :py:func:`QgsMeshEditor.advancedEdit()`
+Other option has also to be set before calling
+:py:func:`QgsMeshEditor.advancedEdit()`
 
 .. versionadded:: 3.22
 %End
@@ -29,9 +32,6 @@ Other option has also to be set before calling :py:func:`QgsMeshEditor.advancedE
   public:
 
     QgsMeshEditForceByLine();
-%Docstring
-Constructor
-%End
 
     void setInputLine( const QgsPoint &pt1, const QgsPoint &pt2, double tolerance, bool newVertexOnIntersection );
 %Docstring
@@ -45,19 +45,22 @@ Sets the tolerance in redering coordinate system unit
 
     void setAddVertexOnIntersection( bool addVertex );
 %Docstring
-Sets whether vertices will be added when the lines will intersect internal edges of faces, default is ``False``
+Sets whether vertices will be added when the lines will intersect
+internal edges of faces, default is ``False``
 %End
 
     void setDefaultZValue( double defaultZValue );
 %Docstring
-Sets the default value of Z coordinate to use for new vertices, this value will be used if the Z value
+Sets the default value of Z coordinate to use for new vertices, this
+value will be used if the Z value
 %End
 
     void setInterpolateZValueOnMesh( bool interpolateZValueOnMesh );
 %Docstring
-Sets whether the new created vertices will have their value interpolated from the existing mesh.
-If not, Z value will be interpolated from the lines,
-in case these line are not 3D, the default value will be used (:py:func:`setDefaultZValue`)
+Sets whether the new created vertices will have their value interpolated
+from the existing mesh. If not, Z value will be interpolated from the
+lines, in case these line are not 3D, the default value will be used
+(:py:func:`setDefaultZValue`)
 %End
 
 };
@@ -67,13 +70,16 @@ in case these line are not 3D, the default value will be used (:py:func:`setDefa
 class QgsMeshEditForceByPolylines : QgsMeshEditForceByLine
 {
 %Docstring(signature="appended")
+Class derived from :py:class:`QgsMeshEditForceByLine` that forces mesh
+based on polyline.
 
-Class derived from QgsMeshEditForceByLine that forces mesh based on polyline.
+Forcing lines consist of line that the faces are forced to follow, that
+is edges of encountered faces have to be on theses lines.
 
-Forcing lines consist of line that the faces are forced to follow, that is edges of encountered faces have to be on theses lines.
-
-Caller of this class has to add the lines from :py:class:`QgsGeometry` instances with :py:func:`~QgsMeshEditForceByLine.addLineFromGeometry` or :py:func:`~QgsMeshEditForceByLine.addLinesFromGeometries`
-before applying the edition with :py:func:`QgsMeshEditor.advancedEdit()`
+Caller of this class has to add the lines from :py:class:`QgsGeometry`
+instances with :py:func:`~addLineFromGeometry` or
+:py:func:`~addLinesFromGeometries` before applying the edition with
+:py:func:`QgsMeshEditor.advancedEdit()`
 
 .. versionadded:: 3.22
 %End
@@ -84,9 +90,6 @@ before applying the edition with :py:func:`QgsMeshEditor.advancedEdit()`
   public:
 
     QgsMeshEditForceByPolylines();
-%Docstring
-Constructor
-%End
 
     virtual QString text() const;
 
@@ -120,5 +123,5 @@ Adds a list of input forcing lines geometry in rendering coordinates
  *                                                                      *
  * src/core/mesh/qgsmeshforcebypolylines.h                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

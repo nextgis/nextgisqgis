@@ -28,14 +28,12 @@
 /**
  * \ingroup gui
  * \brief a dialog for setting properties of a newly saved style.
- * \since QGIS 3.0
 */
-class GUI_EXPORT QgsStyleSaveDialog: public QDialog, private Ui::QgsStyleSaveDialog
+class GUI_EXPORT QgsStyleSaveDialog : public QDialog, private Ui::QgsStyleSaveDialog
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsSymbolSaveDialog
      * \param parent parent widget
@@ -79,9 +77,7 @@ class GUI_EXPORT QgsStyleSaveDialog: public QDialog, private Ui::QgsStyleSaveDia
     QgsStyle *destinationStyle();
 
   private:
-
     QgsStyle::StyleEntity mType = QgsStyle::SymbolEntity;
-
 };
 
 #endif // QGSSTYLESAVEDIALOG_H

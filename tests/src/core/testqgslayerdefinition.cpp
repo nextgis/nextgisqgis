@@ -24,22 +24,27 @@
 #include <qgslayertree.h>
 #include <qgslayerdefinition.h>
 
-class TestQgsLayerDefinition: public QObject
+class TestQgsLayerDefinition : public QObject
 {
     Q_OBJECT
   public:
     TestQgsLayerDefinition() = default;
 
   private slots:
-    void initTestCase(); // will be called before the first testfunction is executed.
+    void initTestCase();    // will be called before the first testfunction is executed.
     void cleanupTestCase(); // will be called after the last testfunction was executed.
-    void init(); // will be called before each testfunction is executed.
-    void cleanup(); // will be called after every testfunction.
+    void init();            // will be called before each testfunction is executed.
+    void cleanup();         // will be called after every testfunction.
 
     /**
      * test findLayers()
      */
     void testFindLayers();
+
+    /**
+     * Tests loading a qlr placing the content at the top of the layer tree
+     */
+    void testLoadTopOfTree();
 
     /**
      * test that export does not crash: regression #18981
@@ -56,7 +61,6 @@ void TestQgsLayerDefinition::initTestCase()
 {
   QgsApplication::init();
   QgsApplication::initQgis();
-
 }
 
 void TestQgsLayerDefinition::cleanupTestCase()
@@ -90,6 +94,17 @@ void TestQgsLayerDefinition::testFindLayers()
   QCOMPARE( QgsProject::instance()->layerTreeRoot()->findLayers().at( 1 )->name(), QStringLiteral( "NewMemory" ) );
 }
 
+void TestQgsLayerDefinition::testLoadTopOfTree()
+{
+  QString errorMsg;
+  QgsLayerDefinition::loadLayerDefinition( TEST_DATA_DIR + QStringLiteral( "/vector_and_raster.qlr" ), QgsProject::instance(), QgsProject::instance()->layerTreeRoot(), errorMsg, Qgis::LayerTreeInsertionMethod::TopOfTree );
+  //test if new layers are on top
+  QList<QgsMapLayer *> orderedLayers = QgsProject::instance()->layerTreeRoot()->layerOrder();
+  QCOMPARE( orderedLayers.length(), 3 );
+  QVERIFY( orderedLayers.at( 1 )->name() == QLatin1String( "rgb256x256" ) );
+  QVERIFY( orderedLayers.at( 0 )->name() == QLatin1String( "memoryLayer" ) );
+}
+
 void TestQgsLayerDefinition::testExportDoesNotCrash()
 {
   QString errorMessage;
@@ -103,8 +118,5 @@ void TestQgsLayerDefinition::testExportDoesNotCrash()
 }
 
 
-
 QGSTEST_MAIN( TestQgsLayerDefinition )
 #include "testqgslayerdefinition.moc"
-
-

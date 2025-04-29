@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgslayoutitemscalebar.h"
+#include "moc_qgslayoutitemscalebar.cpp"
 #include "qgslayoutitemregistry.h"
 #include "qgsscalebarrendererregistry.h"
 #include "qgslayoutitemmap.h"
@@ -43,6 +44,8 @@
 #include <QDomElement>
 #include <QFontMetricsF>
 #include <QPainter>
+#include <QTextDocument>
+#include <QAbstractTextDocumentLayout>
 
 #include <cmath>
 
@@ -71,7 +74,12 @@ QgsLayoutItemScaleBar *QgsLayoutItemScaleBar::create( QgsLayout *layout )
 QgsLayoutSize QgsLayoutItemScaleBar::minimumSize() const
 {
   QgsRenderContext context = QgsLayoutUtils::createRenderContextForLayout( mLayout, nullptr );
-  return QgsLayoutSize( mStyle->calculateBoxSize( context, mSettings, createScaleContext() ), Qgis::LayoutUnit::Millimeters );
+
+  const QgsScaleBarRenderer::ScaleBarContext scaleContext = createScaleContext();
+  if ( !scaleContext.isValid() )
+    return QgsLayoutSize();
+
+  return QgsLayoutSize( mStyle->calculateBoxSize( context, mSettings, scaleContext ), Qgis::LayoutUnit::Millimeters );
 }
 
 void QgsLayoutItemScaleBar::draw( QgsLayoutItemRenderContext &context )
@@ -79,41 +87,70 @@ void QgsLayoutItemScaleBar::draw( QgsLayoutItemRenderContext &context )
   if ( !mStyle )
     return;
 
-  if ( dataDefinedProperties().isActive( QgsLayoutObject::ScalebarLineColor ) || dataDefinedProperties().isActive( QgsLayoutObject::ScalebarLineWidth ) )
+  const QgsScaleBarRenderer::ScaleBarContext scaleContext = createScaleContext();
+  if ( !scaleContext.isValid() )
+  {
+    if ( mLayout->renderContext().isPreviewRender() )
+    {
+      // No initial render available - so draw some preview text alerting user
+      QPainter *painter = context.renderContext().painter();
+
+      const double scale = context.renderContext().convertToPainterUnits( 1, Qgis::RenderUnit::Millimeters );
+      const QRectF thisPaintRect = QRectF( 0, 0, rect().width() * scale, rect().height() * scale );
+
+      painter->setBrush( QBrush( QColor( 255, 125, 125, 125 ) ) );
+      painter->setPen( Qt::NoPen );
+      painter->drawRect( thisPaintRect );
+      painter->setBrush( Qt::NoBrush );
+
+      painter->setPen( QColor( 200, 0, 0, 255 ) );
+      QTextDocument td;
+      td.setTextWidth( thisPaintRect.width() );
+      td.setHtml( QStringLiteral( "<span style=\"color: rgb(200,0,0);\"><b>%1</b><br>%2</span>" ).arg(
+                    tr( "Invalid scale!" ),
+                    tr( "The scale bar cannot be rendered due to invalid settings or an incompatible linked map extent." ) ) );
+      painter->setClipRect( thisPaintRect );
+      QAbstractTextDocumentLayout::PaintContext ctx;
+      td.documentLayout()->draw( painter, ctx );
+    }
+    return;
+  }
+
+  if ( dataDefinedProperties().isActive( QgsLayoutObject::DataDefinedProperty::ScalebarLineColor ) || dataDefinedProperties().isActive( QgsLayoutObject::DataDefinedProperty::ScalebarLineWidth ) )
   {
     // compatibility code - ScalebarLineColor and ScalebarLineWidth are deprecated
     const QgsExpressionContext expContext = createExpressionContext();
     std::unique_ptr< QgsLineSymbol > sym( mSettings.lineSymbol()->clone() );
     Q_NOWARN_DEPRECATED_PUSH
-    if ( dataDefinedProperties().isActive( QgsLayoutObject::ScalebarLineWidth ) )
-      sym->setWidth( mDataDefinedProperties.valueAsDouble( QgsLayoutObject::ScalebarLineWidth, expContext, mSettings.lineWidth() ) );
-    if ( dataDefinedProperties().isActive( QgsLayoutObject::ScalebarLineColor ) )
-      sym->setColor( mDataDefinedProperties.valueAsColor( QgsLayoutObject::ScalebarLineColor, expContext, mSettings.lineColor() ) );
+    if ( dataDefinedProperties().isActive( QgsLayoutObject::DataDefinedProperty::ScalebarLineWidth ) )
+      sym->setWidth( mDataDefinedProperties.valueAsDouble( QgsLayoutObject::DataDefinedProperty::ScalebarLineWidth, expContext, mSettings.lineWidth() ) );
+    if ( dataDefinedProperties().isActive( QgsLayoutObject::DataDefinedProperty::ScalebarLineColor ) )
+      sym->setColor( mDataDefinedProperties.valueAsColor( QgsLayoutObject::DataDefinedProperty::ScalebarLineColor, expContext, mSettings.lineColor() ) );
     Q_NOWARN_DEPRECATED_POP
     mSettings.setLineSymbol( sym.release() );
   }
-  if ( dataDefinedProperties().isActive( QgsLayoutObject::ScalebarFillColor ) )
+  if ( dataDefinedProperties().isActive( QgsLayoutObject::DataDefinedProperty::ScalebarFillColor ) )
   {
     // compatibility code - ScalebarLineColor and ScalebarLineWidth are deprecated
     const QgsExpressionContext expContext = createExpressionContext();
     std::unique_ptr< QgsFillSymbol > sym( mSettings.fillSymbol()->clone() );
     Q_NOWARN_DEPRECATED_PUSH
-    sym->setColor( mDataDefinedProperties.valueAsColor( QgsLayoutObject::ScalebarFillColor, expContext, mSettings.fillColor() ) );
+    sym->setColor( mDataDefinedProperties.valueAsColor( QgsLayoutObject::DataDefinedProperty::ScalebarFillColor, expContext, mSettings.fillColor() ) );
     Q_NOWARN_DEPRECATED_POP
     mSettings.setFillSymbol( sym.release() );
   }
-  if ( dataDefinedProperties().isActive( QgsLayoutObject::ScalebarFillColor2 ) )
+  if ( dataDefinedProperties().isActive( QgsLayoutObject::DataDefinedProperty::ScalebarFillColor2 ) )
   {
     // compatibility code - ScalebarLineColor and ScalebarLineWidth are deprecated
     const QgsExpressionContext expContext = createExpressionContext();
     std::unique_ptr< QgsFillSymbol > sym( mSettings.alternateFillSymbol()->clone() );
     Q_NOWARN_DEPRECATED_PUSH
-    sym->setColor( mDataDefinedProperties.valueAsColor( QgsLayoutObject::ScalebarFillColor2, expContext, mSettings.fillColor2() ) );
+    sym->setColor( mDataDefinedProperties.valueAsColor( QgsLayoutObject::DataDefinedProperty::ScalebarFillColor2, expContext, mSettings.fillColor2() ) );
     Q_NOWARN_DEPRECATED_POP
     mSettings.setAlternateFillSymbol( sym.release() );
   }
 
-  mStyle->draw( context.renderContext(), mSettings, createScaleContext() );
+  mStyle->draw( context.renderContext(), mSettings, scaleContext );
 }
 
 void QgsLayoutItemScaleBar::setNumberOfSegments( int nSegments )
@@ -140,7 +177,7 @@ void QgsLayoutItemScaleBar::setUnitsPerSegment( double units )
 }
 
 
-void QgsLayoutItemScaleBar::setSegmentSizeMode( QgsScaleBarSettings::SegmentSizeMode mode )
+void QgsLayoutItemScaleBar::setSegmentSizeMode( Qgis::ScaleBarSegmentSizeMode mode )
 {
   if ( !mStyle )
   {
@@ -290,13 +327,28 @@ void QgsLayoutItemScaleBar::disconnectCurrentMap()
   mMap = nullptr;
 }
 
+Qgis::ScaleCalculationMethod QgsLayoutItemScaleBar::method() const
+{
+  return mMethod;
+}
+
+void QgsLayoutItemScaleBar::setMethod( Qgis::ScaleCalculationMethod method )
+{
+  if ( mMethod == method )
+    return;
+
+  mMethod = method;
+  refreshSegmentMillimeters();
+  resizeToMinimumWidth();
+}
+
 void QgsLayoutItemScaleBar::refreshUnitsPerSegment( const QgsExpressionContext *context )
 {
-  if ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarSegmentWidth ) )
+  if ( mDataDefinedProperties.isActive( QgsLayoutObject::DataDefinedProperty::ScalebarSegmentWidth ) )
   {
     double unitsPerSegment = mSettings.unitsPerSegment();
     bool ok = false;
-    unitsPerSegment = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::ScalebarSegmentWidth, *context, unitsPerSegment, &ok );
+    unitsPerSegment = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::DataDefinedProperty::ScalebarSegmentWidth, *context, unitsPerSegment, &ok );
 
     if ( !ok )
     {
@@ -311,12 +363,12 @@ void QgsLayoutItemScaleBar::refreshUnitsPerSegment( const QgsExpressionContext *
 
 void QgsLayoutItemScaleBar::refreshMinimumBarWidth( const QgsExpressionContext *context )
 {
-  if ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarMinimumWidth ) )
+  if ( mDataDefinedProperties.isActive( QgsLayoutObject::DataDefinedProperty::ScalebarMinimumWidth ) )
   {
     double minimumBarWidth = mSettings.minimumBarWidth();
 
     bool ok = false;
-    minimumBarWidth = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::ScalebarMinimumWidth, *context, minimumBarWidth, &ok );
+    minimumBarWidth = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::DataDefinedProperty::ScalebarMinimumWidth, *context, minimumBarWidth, &ok );
 
     if ( !ok )
     {
@@ -331,12 +383,12 @@ void QgsLayoutItemScaleBar::refreshMinimumBarWidth( const QgsExpressionContext *
 
 void QgsLayoutItemScaleBar::refreshMaximumBarWidth( const QgsExpressionContext *context )
 {
-  if ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarMaximumWidth ) )
+  if ( mDataDefinedProperties.isActive( QgsLayoutObject::DataDefinedProperty::ScalebarMaximumWidth ) )
   {
     double maximumBarWidth = mSettings.maximumBarWidth();
 
     bool ok = false;
-    maximumBarWidth = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::ScalebarMaximumWidth, *context, maximumBarWidth, &ok );
+    maximumBarWidth = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::DataDefinedProperty::ScalebarMaximumWidth, *context, maximumBarWidth, &ok );
 
     if ( !ok )
     {
@@ -351,12 +403,12 @@ void QgsLayoutItemScaleBar::refreshMaximumBarWidth( const QgsExpressionContext *
 
 void QgsLayoutItemScaleBar::refreshNumberOfSegmentsLeft( const QgsExpressionContext *context )
 {
-  if ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarLeftSegments ) )
+  if ( mDataDefinedProperties.isActive( QgsLayoutObject::DataDefinedProperty::ScalebarLeftSegments ) )
   {
     int leftSegments = mSettings.numberOfSegmentsLeft();
 
     bool ok = false;
-    leftSegments = mDataDefinedProperties.valueAsInt( QgsLayoutObject::ScalebarLeftSegments, *context, leftSegments, &ok );
+    leftSegments = mDataDefinedProperties.valueAsInt( QgsLayoutObject::DataDefinedProperty::ScalebarLeftSegments, *context, leftSegments, &ok );
 
     if ( !ok )
     {
@@ -371,12 +423,12 @@ void QgsLayoutItemScaleBar::refreshNumberOfSegmentsLeft( const QgsExpressionCont
 
 void QgsLayoutItemScaleBar::refreshNumberOfSegmentsRight( const QgsExpressionContext *context )
 {
-  if ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarRightSegments ) )
+  if ( mDataDefinedProperties.isActive( QgsLayoutObject::DataDefinedProperty::ScalebarRightSegments ) )
   {
     int rightSegments = mSettings.numberOfSegments();
 
     bool ok = false;
-    rightSegments = mDataDefinedProperties.valueAsInt( QgsLayoutObject::ScalebarRightSegments, *context, rightSegments, &ok );
+    rightSegments = mDataDefinedProperties.valueAsInt( QgsLayoutObject::DataDefinedProperty::ScalebarRightSegments, *context, rightSegments, &ok );
 
     if ( !ok )
     {
@@ -395,13 +447,13 @@ void QgsLayoutItemScaleBar::refreshDataDefinedProperty( const QgsLayoutObject::D
 
   bool forceUpdate = false;
 
-  if ( ( property == QgsLayoutObject::ScalebarHeight || property == QgsLayoutObject::AllProperties )
-       && ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarHeight ) ) )
+  if ( ( property == QgsLayoutObject::DataDefinedProperty::ScalebarHeight || property == QgsLayoutObject::DataDefinedProperty::AllProperties )
+       && ( mDataDefinedProperties.isActive( QgsLayoutObject::DataDefinedProperty::ScalebarHeight ) ) )
   {
     double height = mSettings.height();
 
     bool ok = false;
-    height = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::ScalebarHeight, context, height, &ok );
+    height = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::DataDefinedProperty::ScalebarHeight, context, height, &ok );
 
     if ( !ok )
     {
@@ -415,13 +467,13 @@ void QgsLayoutItemScaleBar::refreshDataDefinedProperty( const QgsLayoutObject::D
     forceUpdate = true;
   }
 
-  if ( ( property == QgsLayoutObject::ScalebarSubdivisionHeight || property == QgsLayoutObject::AllProperties )
-       && ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarSubdivisionHeight ) ) )
+  if ( ( property == QgsLayoutObject::DataDefinedProperty::ScalebarSubdivisionHeight || property == QgsLayoutObject::DataDefinedProperty::AllProperties )
+       && ( mDataDefinedProperties.isActive( QgsLayoutObject::DataDefinedProperty::ScalebarSubdivisionHeight ) ) )
   {
     double height = mSettings.subdivisionsHeight();
 
     bool ok = false;
-    height = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::ScalebarSubdivisionHeight, context, height, &ok );
+    height = mDataDefinedProperties.valueAsDouble( QgsLayoutObject::DataDefinedProperty::ScalebarSubdivisionHeight, context, height, &ok );
 
     if ( !ok )
     {
@@ -435,25 +487,25 @@ void QgsLayoutItemScaleBar::refreshDataDefinedProperty( const QgsLayoutObject::D
     forceUpdate = true;
   }
 
-  if ( property == QgsLayoutObject::ScalebarLeftSegments || property == QgsLayoutObject::AllProperties )
+  if ( property ==  QgsLayoutObject::DataDefinedProperty::ScalebarLeftSegments || property == QgsLayoutObject::DataDefinedProperty::AllProperties )
   {
     refreshNumberOfSegmentsLeft( &context );
     forceUpdate = true;
   }
 
-  if ( property == QgsLayoutObject::ScalebarRightSegments || property == QgsLayoutObject::AllProperties )
+  if ( property == QgsLayoutObject::DataDefinedProperty::ScalebarRightSegments || property == QgsLayoutObject::DataDefinedProperty::AllProperties )
   {
     refreshNumberOfSegmentsRight( &context );
     forceUpdate = true;
   }
 
-  if ( ( property == QgsLayoutObject::ScalebarRightSegmentSubdivisions || property == QgsLayoutObject::AllProperties )
-       && ( mDataDefinedProperties.isActive( QgsLayoutObject::ScalebarRightSegmentSubdivisions ) ) )
+  if ( ( property == QgsLayoutObject::DataDefinedProperty::ScalebarRightSegmentSubdivisions || property == QgsLayoutObject::DataDefinedProperty::AllProperties )
+       && ( mDataDefinedProperties.isActive( QgsLayoutObject::DataDefinedProperty::ScalebarRightSegmentSubdivisions ) ) )
   {
     int segments = mSettings.numberOfSubdivisions();
 
     bool ok = false;
-    segments = mDataDefinedProperties.valueAsInt( QgsLayoutObject::ScalebarRightSegmentSubdivisions, context, segments, &ok );
+    segments = mDataDefinedProperties.valueAsInt( QgsLayoutObject::DataDefinedProperty::ScalebarRightSegmentSubdivisions, context, segments, &ok );
 
     if ( !ok )
     {
@@ -468,19 +520,19 @@ void QgsLayoutItemScaleBar::refreshDataDefinedProperty( const QgsLayoutObject::D
   }
 
 
-  if ( property == QgsLayoutObject::ScalebarSegmentWidth || property == QgsLayoutObject::AllProperties )
+  if ( property == QgsLayoutObject::DataDefinedProperty::ScalebarSegmentWidth || property == QgsLayoutObject::DataDefinedProperty::AllProperties )
   {
     refreshUnitsPerSegment( &context );
     forceUpdate = true;
   }
 
-  if ( property == QgsLayoutObject::ScalebarMinimumWidth || property == QgsLayoutObject::AllProperties )
+  if ( property == QgsLayoutObject::DataDefinedProperty::ScalebarMinimumWidth || property == QgsLayoutObject::DataDefinedProperty::AllProperties )
   {
     refreshMinimumBarWidth( &context );
     forceUpdate = true;
   }
 
-  if ( property == QgsLayoutObject::ScalebarMaximumWidth || property == QgsLayoutObject::AllProperties )
+  if ( property == QgsLayoutObject::DataDefinedProperty::ScalebarMaximumWidth || property == QgsLayoutObject::DataDefinedProperty::AllProperties )
   {
     refreshMaximumBarWidth( &context );
     forceUpdate = true;
@@ -488,19 +540,19 @@ void QgsLayoutItemScaleBar::refreshDataDefinedProperty( const QgsLayoutObject::D
 
   // updates data defined properties and redraws item to match
   // -- Deprecated --
-  if ( property == QgsLayoutObject::ScalebarFillColor || property == QgsLayoutObject::AllProperties )
+  if ( property == QgsLayoutObject::DataDefinedProperty::ScalebarFillColor || property == QgsLayoutObject::DataDefinedProperty::AllProperties )
   {
     forceUpdate = true;
   }
-  if ( property == QgsLayoutObject::ScalebarFillColor2 || property == QgsLayoutObject::AllProperties )
+  if ( property == QgsLayoutObject::DataDefinedProperty::ScalebarFillColor2 || property == QgsLayoutObject::DataDefinedProperty::AllProperties )
   {
     forceUpdate = true;
   }
-  if ( property == QgsLayoutObject::ScalebarLineColor || property == QgsLayoutObject::AllProperties )
+  if ( property == QgsLayoutObject::DataDefinedProperty::ScalebarLineColor || property == QgsLayoutObject::DataDefinedProperty::AllProperties )
   {
     forceUpdate = true;
   }
-  if ( property == QgsLayoutObject::ScalebarLineWidth || property == QgsLayoutObject::AllProperties )
+  if ( property == QgsLayoutObject::DataDefinedProperty::ScalebarLineWidth || property == QgsLayoutObject::DataDefinedProperty::AllProperties )
   {
     forceUpdate = true;
   }
@@ -521,16 +573,23 @@ void QgsLayoutItemScaleBar::refreshSegmentMillimeters()
     //get mm dimension of composer map
     const QRectF composerItemRect = mMap->rect();
 
+    const double currentMapWidth = mapWidth();
+    if ( qgsDoubleNear( currentMapWidth, 0 ) || std::isnan( currentMapWidth ) )
+    {
+      mSegmentMillimeters = std::numeric_limits< double >::quiet_NaN();
+      return;
+    }
+
     switch ( mSettings.segmentSizeMode() )
     {
-      case QgsScaleBarSettings::SegmentSizeFixed:
+      case Qgis::ScaleBarSegmentSizeMode::Fixed:
       {
         //calculate size depending on mNumUnitsPerSegment
-        mSegmentMillimeters = composerItemRect.width() / mapWidth() * mSettings.unitsPerSegment();
+        mSegmentMillimeters = composerItemRect.width() / currentMapWidth * mSettings.unitsPerSegment();
         break;
       }
 
-      case QgsScaleBarSettings::SegmentSizeFitWidth:
+      case Qgis::ScaleBarSegmentSizeMode::FitWidth:
       {
         if ( mSettings.maximumBarWidth() < mSettings.minimumBarWidth() )
         {
@@ -540,10 +599,10 @@ void QgsLayoutItemScaleBar::refreshSegmentMillimeters()
         {
           const double nSegments = ( mSettings.numberOfSegmentsLeft() != 0 ) + mSettings.numberOfSegments();
           // unitsPerSegments which fit minBarWidth resp. maxBarWidth
-          const double minUnitsPerSeg = ( mSettings.minimumBarWidth() * mapWidth() ) / ( nSegments * composerItemRect.width() );
-          const double maxUnitsPerSeg = ( mSettings.maximumBarWidth() * mapWidth() ) / ( nSegments * composerItemRect.width() );
+          const double minUnitsPerSeg = ( mSettings.minimumBarWidth() * currentMapWidth ) / ( nSegments * composerItemRect.width() );
+          const double maxUnitsPerSeg = ( mSettings.maximumBarWidth() * currentMapWidth ) / ( nSegments * composerItemRect.width() );
           mSettings.setUnitsPerSegment( QgsLayoutUtils::calculatePrettySize( minUnitsPerSeg, maxUnitsPerSeg ) );
-          mSegmentMillimeters = composerItemRect.width() / mapWidth() * mSettings.unitsPerSegment();
+          mSegmentMillimeters = composerItemRect.width() / currentMapWidth * mSettings.unitsPerSegment();
         }
         break;
       }
@@ -570,10 +629,62 @@ double QgsLayoutItemScaleBar::mapWidth() const
     da.setEllipsoid( mLayout->project()->ellipsoid() );
 
     const Qgis::DistanceUnit units = da.lengthUnits();
-    double measure = da.measureLine( QgsPointXY( mapExtent.xMinimum(), mapExtent.yMinimum() ),
-                                     QgsPointXY( mapExtent.xMaximum(), mapExtent.yMinimum() ) );
-    measure /= QgsUnitTypes::fromUnitToUnitFactor( mSettings.units(), units );
-    return measure;
+
+    QList< double > yValues;
+    switch ( mMethod )
+    {
+      case Qgis::ScaleCalculationMethod::HorizontalTop:
+        yValues << mapExtent.yMaximum();
+        break;
+
+      case Qgis::ScaleCalculationMethod::HorizontalMiddle:
+        yValues << 0.5 * ( mapExtent.yMaximum() + mapExtent.yMinimum() );
+        break;
+
+
+      case Qgis::ScaleCalculationMethod::HorizontalBottom:
+        yValues << mapExtent.yMinimum();
+        break;
+
+      case Qgis::ScaleCalculationMethod::HorizontalAverage:
+        yValues << mapExtent.yMaximum();
+        yValues << 0.5 * ( mapExtent.yMaximum() + mapExtent.yMinimum() );
+        yValues << mapExtent.yMinimum();
+        break;
+    }
+
+    double sumValidMeasures = 0;
+    int validMeasureCount = 0;
+
+    for ( const double y : std::as_const( yValues ) )
+    {
+      try
+      {
+        double measure = da.measureLine( QgsPointXY( mapExtent.xMinimum(), y ),
+                                         QgsPointXY( mapExtent.xMaximum(), y ) );
+        if ( std::isnan( measure ) )
+        {
+          // TODO report errors to user
+          QgsDebugError( QStringLiteral( "An error occurred while calculating length" ) );
+          continue;
+        }
+
+        measure /= QgsUnitTypes::fromUnitToUnitFactor( mSettings.units(), units );
+        sumValidMeasures += measure;
+        validMeasureCount++;
+      }
+      catch ( QgsCsException & )
+      {
+        // TODO report errors to user
+        QgsDebugError( QStringLiteral( "An error occurred while calculating length" ) );
+        continue;
+      }
+    }
+
+    if ( validMeasureCount == 0 )
+      return std::numeric_limits< double >::quiet_NaN();
+
+    return sumValidMeasures / validMeasureCount;
   }
 }
 
@@ -587,21 +698,21 @@ QgsScaleBarRenderer::ScaleBarContext QgsLayoutItemScaleBar::createScaleContext()
   return scaleContext;
 }
 
-void QgsLayoutItemScaleBar::setLabelVerticalPlacement( QgsScaleBarSettings::LabelVerticalPlacement placement )
+void QgsLayoutItemScaleBar::setLabelVerticalPlacement( Qgis::ScaleBarDistanceLabelVerticalPlacement placement )
 {
   mSettings.setLabelVerticalPlacement( placement );
   refreshItemSize();
   emit changed();
 }
 
-void QgsLayoutItemScaleBar::setLabelHorizontalPlacement( QgsScaleBarSettings::LabelHorizontalPlacement placement )
+void QgsLayoutItemScaleBar::setLabelHorizontalPlacement( Qgis::ScaleBarDistanceLabelHorizontalPlacement placement )
 {
   mSettings.setLabelHorizontalPlacement( placement );
   refreshItemSize();
   emit changed();
 }
 
-void QgsLayoutItemScaleBar::setAlignment( QgsScaleBarSettings::Alignment a )
+void QgsLayoutItemScaleBar::setAlignment( Qgis::ScaleBarAlignment a )
 {
   mSettings.setAlignment( a );
   refreshItemSize();
@@ -673,7 +784,7 @@ void QgsLayoutItemScaleBar::applyDefaultSettings()
   QFont f;
   if ( !defaultFontString.isEmpty() )
   {
-    f.setFamily( defaultFontString );
+    QgsFontUtils::setFontFamily( f, defaultFontString );
   }
   format.setFont( f );
   format.setSize( 12.0 );
@@ -708,6 +819,9 @@ Qgis::DistanceUnit QgsLayoutItemScaleBar::guessUnits() const
 
   // try to pick reasonable choice between metric / imperial units
   const double widthInSelectedUnits = mapWidth();
+  if ( std::isnan( widthInSelectedUnits ) )
+    return unit;
+
   const double initialUnitsPerSegment = widthInSelectedUnits / 10.0; //default scalebar width equals half the map width
   switch ( unit )
   {
@@ -741,26 +855,29 @@ void QgsLayoutItemScaleBar::applyDefaultSize( Qgis::DistanceUnit units )
   {
     double upperMagnitudeMultiplier = 1.0;
     const double widthInSelectedUnits = mapWidth();
-    const double initialUnitsPerSegment = widthInSelectedUnits / 10.0; //default scalebar width equals half the map width
-    mSettings.setUnitsPerSegment( initialUnitsPerSegment );
-
-    setUnitLabel( QgsUnitTypes::toAbbreviatedString( units ) );
-    upperMagnitudeMultiplier = 1;
-
-    const double segmentWidth = initialUnitsPerSegment / upperMagnitudeMultiplier;
-    const int segmentMagnitude = std::floor( std::log10( segmentWidth ) );
-    double unitsPerSegment = upperMagnitudeMultiplier * ( std::pow( 10.0, segmentMagnitude ) );
-    const double multiplier = std::floor( ( widthInSelectedUnits / ( unitsPerSegment * 10.0 ) ) / 2.5 ) * 2.5;
-
-    if ( multiplier > 0 )
+    if ( !std::isnan( widthInSelectedUnits ) )
     {
-      unitsPerSegment = unitsPerSegment * multiplier;
-    }
-    mSettings.setUnitsPerSegment( unitsPerSegment );
-    mSettings.setMapUnitsPerScaleBarUnit( upperMagnitudeMultiplier );
+      const double initialUnitsPerSegment = widthInSelectedUnits / 10.0; //default scalebar width equals half the map width
+      mSettings.setUnitsPerSegment( initialUnitsPerSegment );
 
-    mSettings.setNumberOfSegments( 2 );
-    mSettings.setNumberOfSegmentsLeft( 0 );
+      setUnitLabel( QgsUnitTypes::toAbbreviatedString( units ) );
+      upperMagnitudeMultiplier = 1;
+
+      const double segmentWidth = initialUnitsPerSegment / upperMagnitudeMultiplier;
+      const int segmentMagnitude = std::floor( std::log10( segmentWidth ) );
+      double unitsPerSegment = upperMagnitudeMultiplier * ( std::pow( 10.0, segmentMagnitude ) );
+      const double multiplier = std::floor( ( widthInSelectedUnits / ( unitsPerSegment * 10.0 ) ) / 2.5 ) * 2.5;
+
+      if ( multiplier > 0 )
+      {
+        unitsPerSegment = unitsPerSegment * multiplier;
+      }
+      mSettings.setUnitsPerSegment( unitsPerSegment );
+      mSettings.setMapUnitsPerScaleBarUnit( upperMagnitudeMultiplier );
+
+      mSettings.setNumberOfSegments( 2 );
+      mSettings.setNumberOfSegmentsLeft( 0 );
+    }
   }
 
   refreshSegmentMillimeters();
@@ -774,7 +891,12 @@ void QgsLayoutItemScaleBar::resizeToMinimumWidth()
     return;
 
   QgsRenderContext context = QgsLayoutUtils::createRenderContextForLayout( mLayout, nullptr );
-  const double widthMM = mStyle->calculateBoxSize( context, mSettings, createScaleContext() ).width();
+
+  const QgsScaleBarRenderer::ScaleBarContext scaleContext = createScaleContext();
+  if ( !scaleContext.isValid() )
+    return;
+
+  const double widthMM = mStyle->calculateBoxSize( context, mSettings, scaleContext ).width();
   QgsLayoutSize currentSize = sizeWithUnits();
   currentSize.setWidth( mLayout->renderContext().measurementConverter().convert( QgsLayoutMeasurement( widthMM, Qgis::LayoutUnit::Millimeters ), currentSize.units() ).length() );
   attemptResize( currentSize );
@@ -951,11 +1073,12 @@ bool QgsLayoutItemScaleBar::writePropertiesToElement( QDomElement &composerScale
   composerScaleBarElem.setAttribute( QStringLiteral( "numSubdivisions" ), mSettings.numberOfSubdivisions() );
   composerScaleBarElem.setAttribute( QStringLiteral( "subdivisionsHeight" ), mSettings.subdivisionsHeight() );
   composerScaleBarElem.setAttribute( QStringLiteral( "numUnitsPerSegment" ), QString::number( mSettings.unitsPerSegment() ) );
-  composerScaleBarElem.setAttribute( QStringLiteral( "segmentSizeMode" ), mSettings.segmentSizeMode() );
+  composerScaleBarElem.setAttribute( QStringLiteral( "segmentSizeMode" ), static_cast< int >( mSettings.segmentSizeMode() ) );
   composerScaleBarElem.setAttribute( QStringLiteral( "minBarWidth" ), mSettings.minimumBarWidth() );
   composerScaleBarElem.setAttribute( QStringLiteral( "maxBarWidth" ), mSettings.maximumBarWidth() );
   composerScaleBarElem.setAttribute( QStringLiteral( "segmentMillimeters" ), QString::number( mSegmentMillimeters ) );
   composerScaleBarElem.setAttribute( QStringLiteral( "numMapUnitsPerScaleBarUnit" ), QString::number( mSettings.mapUnitsPerScaleBarUnit() ) );
+  composerScaleBarElem.setAttribute( QStringLiteral( "method" ), qgsEnumValueToKey( mMethod ) );
 
   const QDomElement textElem = mSettings.textFormat().writeXml( doc, rwContext );
   composerScaleBarElem.appendChild( textElem );
@@ -1077,11 +1200,14 @@ bool QgsLayoutItemScaleBar::readPropertiesFromElement( const QDomElement &itemEl
   mSettings.setNumberOfSubdivisions( itemElem.attribute( QStringLiteral( "numSubdivisions" ), QStringLiteral( "1" ) ).toInt() );
   mSettings.setSubdivisionsHeight( itemElem.attribute( QStringLiteral( "subdivisionsHeight" ), QStringLiteral( "1.5" ) ).toDouble() );
   mSettings.setUnitsPerSegment( itemElem.attribute( QStringLiteral( "numUnitsPerSegment" ), QStringLiteral( "1.0" ) ).toDouble() );
-  mSettings.setSegmentSizeMode( static_cast<QgsScaleBarSettings::SegmentSizeMode>( itemElem.attribute( QStringLiteral( "segmentSizeMode" ), QStringLiteral( "0" ) ).toInt() ) );
+  mSettings.setSegmentSizeMode( static_cast<Qgis::ScaleBarSegmentSizeMode >( itemElem.attribute( QStringLiteral( "segmentSizeMode" ), QStringLiteral( "0" ) ).toInt() ) );
   mSettings.setMinimumBarWidth( itemElem.attribute( QStringLiteral( "minBarWidth" ), QStringLiteral( "50" ) ).toDouble() );
   mSettings.setMaximumBarWidth( itemElem.attribute( QStringLiteral( "maxBarWidth" ), QStringLiteral( "150" ) ).toDouble() );
   mSegmentMillimeters = itemElem.attribute( QStringLiteral( "segmentMillimeters" ), QStringLiteral( "0.0" ) ).toDouble();
   mSettings.setMapUnitsPerScaleBarUnit( itemElem.attribute( QStringLiteral( "numMapUnitsPerScaleBarUnit" ), QStringLiteral( "1.0" ) ).toDouble() );
+
+  // default to horizontal bottom to keep same behavior for older projects
+  mMethod = qgsEnumKeyToValue( itemElem.attribute( QStringLiteral( "method" ) ), Qgis::ScaleCalculationMethod::HorizontalBottom );
 
   const QDomElement lineSymbolElem = itemElem.firstChildElement( QStringLiteral( "lineSymbol" ) );
   bool foundLineSymbol = false;
@@ -1159,10 +1285,10 @@ bool QgsLayoutItemScaleBar::readPropertiesFromElement( const QDomElement &itemEl
 
     // need to translate the deprecated ScalebarLineWidth and ScalebarLineColor properties to symbol properties,
     // and then remove them from the scalebar so they don't interfere and apply to other compatibility workarounds
-    lineSymbolLayer->setDataDefinedProperty( QgsSymbolLayer::PropertyStrokeWidth, dataDefinedProperties().property( QgsLayoutObject::ScalebarLineWidth ) );
-    dataDefinedProperties().setProperty( QgsLayoutObject::ScalebarLineWidth, QgsProperty() );
-    lineSymbolLayer->setDataDefinedProperty( QgsSymbolLayer::PropertyStrokeColor, dataDefinedProperties().property( QgsLayoutObject::ScalebarLineColor ) );
-    dataDefinedProperties().setProperty( QgsLayoutObject::ScalebarLineColor, QgsProperty() );
+    lineSymbolLayer->setDataDefinedProperty( QgsSymbolLayer::Property::StrokeWidth, dataDefinedProperties().property( QgsLayoutObject::DataDefinedProperty::ScalebarLineWidth ) );
+    dataDefinedProperties().setProperty( QgsLayoutObject::DataDefinedProperty::ScalebarLineWidth, QgsProperty() );
+    lineSymbolLayer->setDataDefinedProperty( QgsSymbolLayer::Property::StrokeColor, dataDefinedProperties().property( QgsLayoutObject::DataDefinedProperty::ScalebarLineColor ) );
+    dataDefinedProperties().setProperty( QgsLayoutObject::DataDefinedProperty::ScalebarLineColor, QgsProperty() );
 
     lineSymbol->changeSymbolLayer( 0, lineSymbolLayer.release() );
     mSettings.setLineSymbol( lineSymbol->clone() );
@@ -1249,8 +1375,8 @@ bool QgsLayoutItemScaleBar::readPropertiesFromElement( const QDomElement &itemEl
 
     // need to translate the deprecated ScalebarFillColor property to symbol properties,
     // and then remove them from the scalebar so they don't interfere and apply to other compatibility workarounds
-    fillSymbolLayer->setDataDefinedProperty( QgsSymbolLayer::PropertyFillColor, dataDefinedProperties().property( QgsLayoutObject::ScalebarFillColor ) );
-    dataDefinedProperties().setProperty( QgsLayoutObject::ScalebarFillColor, QgsProperty() );
+    fillSymbolLayer->setDataDefinedProperty( QgsSymbolLayer::Property::FillColor, dataDefinedProperties().property( QgsLayoutObject::DataDefinedProperty::ScalebarFillColor ) );
+    dataDefinedProperties().setProperty( QgsLayoutObject::DataDefinedProperty::ScalebarFillColor, QgsProperty() );
 
     fillSymbol->changeSymbolLayer( 0, fillSymbolLayer.release() );
     mSettings.setFillSymbol( fillSymbol.release() );
@@ -1301,8 +1427,8 @@ bool QgsLayoutItemScaleBar::readPropertiesFromElement( const QDomElement &itemEl
 
     // need to translate the deprecated ScalebarFillColor2 property to symbol properties,
     // and then remove them from the scalebar so they don't interfere and apply to other compatibility workarounds
-    fillSymbolLayer->setDataDefinedProperty( QgsSymbolLayer::PropertyFillColor, dataDefinedProperties().property( QgsLayoutObject::ScalebarFillColor2 ) );
-    dataDefinedProperties().setProperty( QgsLayoutObject::ScalebarFillColor2, QgsProperty() );
+    fillSymbolLayer->setDataDefinedProperty( QgsSymbolLayer::Property::FillColor, dataDefinedProperties().property( QgsLayoutObject::DataDefinedProperty::ScalebarFillColor2 ) );
+    dataDefinedProperties().setProperty( QgsLayoutObject::DataDefinedProperty::ScalebarFillColor2, QgsProperty() );
 
     fillSymbol->changeSymbolLayer( 0, fillSymbolLayer.release() );
     mSettings.setAlternateFillSymbol( fillSymbol.release() );
@@ -1365,10 +1491,10 @@ bool QgsLayoutItemScaleBar::readPropertiesFromElement( const QDomElement &itemEl
     mSettings.setUnits( QgsUnitTypes::decodeDistanceUnit( itemElem.attribute( QStringLiteral( "unitType" ) ) ) );
   }
 
-  mSettings.setLabelVerticalPlacement( static_cast< QgsScaleBarSettings::LabelVerticalPlacement >( itemElem.attribute( QStringLiteral( "labelVerticalPlacement" ), QStringLiteral( "0" ) ).toInt() ) );
-  mSettings.setLabelHorizontalPlacement( static_cast< QgsScaleBarSettings::LabelHorizontalPlacement >( itemElem.attribute( QStringLiteral( "labelHorizontalPlacement" ), QStringLiteral( "0" ) ).toInt() ) );
+  mSettings.setLabelVerticalPlacement( static_cast< Qgis::ScaleBarDistanceLabelVerticalPlacement >( itemElem.attribute( QStringLiteral( "labelVerticalPlacement" ), QStringLiteral( "0" ) ).toInt() ) );
+  mSettings.setLabelHorizontalPlacement( static_cast< Qgis::ScaleBarDistanceLabelHorizontalPlacement >( itemElem.attribute( QStringLiteral( "labelHorizontalPlacement" ), QStringLiteral( "0" ) ).toInt() ) );
 
-  mSettings.setAlignment( static_cast< QgsScaleBarSettings::Alignment >( itemElem.attribute( QStringLiteral( "alignment" ), QStringLiteral( "0" ) ).toInt() ) );
+  mSettings.setAlignment( static_cast< Qgis::ScaleBarAlignment >( itemElem.attribute( QStringLiteral( "alignment" ), QStringLiteral( "0" ) ).toInt() ) );
 
   //map
   disconnectCurrentMap();

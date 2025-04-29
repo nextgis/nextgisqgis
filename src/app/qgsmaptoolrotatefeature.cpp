@@ -23,7 +23,9 @@
 #include <cmath>
 
 #include "qgsadvanceddigitizingdockwidget.h"
+#include "qgsavoidintersectionsoperation.h"
 #include "qgsmaptoolrotatefeature.h"
+#include "moc_qgsmaptoolrotatefeature.cpp"
 #include "qgsfeatureiterator.h"
 #include "qgsgeometry.h"
 #include "qgslogger.h"
@@ -77,7 +79,7 @@ QgsAngleMagnetWidget::QgsAngleMagnetWidget( const QString &label, QWidget *paren
 
   // connect signals
   mAngleSpinBox->installEventFilter( this );
-  connect( mAngleSpinBox, static_cast < void ( QgsDoubleSpinBox::* )( double ) > ( &QgsDoubleSpinBox::valueChanged ), this, &QgsAngleMagnetWidget::angleSpinBoxValueChanged );
+  connect( mAngleSpinBox, static_cast<void ( QgsDoubleSpinBox::* )( double )>( &QgsDoubleSpinBox::valueChanged ), this, &QgsAngleMagnetWidget::angleSpinBoxValueChanged );
 
   // config focus
   setFocusProxy( mAngleSpinBox );
@@ -142,7 +144,7 @@ void QgsAngleMagnetWidget::angleSpinBoxValueChanged( double angle )
 
 QgsMapToolRotateFeature::QgsMapToolRotateFeature( QgsMapCanvas *canvas )
   : QgsMapToolAdvancedDigitizing( canvas, QgisApp::instance()->cadDockWidget() )
-  , mSnapIndicator( std::make_unique< QgsSnapIndicator>( canvas ) )
+  , mSnapIndicator( std::make_unique<QgsSnapIndicator>( canvas ) )
 {
   mToolName = tr( "Rotate feature" );
 }
@@ -241,8 +243,7 @@ void QgsMapToolRotateFeature::cadCanvasReleaseEvent( QgsMapMouseEvent *e )
 
     const QgsPointXY layerCoords = toLayerCoordinates( vlayer, e->mapPoint() );
     const double searchRadius = QgsTolerance::vertexSearchRadius( mCanvas->currentLayer(), mCanvas->mapSettings() );
-    const QgsRectangle selectRect( layerCoords.x() - searchRadius, layerCoords.y() - searchRadius,
-                                   layerCoords.x() + searchRadius, layerCoords.y() + searchRadius );
+    const QgsRectangle selectRect( layerCoords.x() - searchRadius, layerCoords.y() - searchRadius, layerCoords.x() + searchRadius, layerCoords.y() + searchRadius );
 
     mAutoSetAnchorPoint = false;
     if ( !mAnchorPoint )
@@ -314,7 +315,7 @@ void QgsMapToolRotateFeature::cadCanvasReleaseEvent( QgsMapMouseEvent *e )
 
       QgsFeature feat;
       QgsFeatureIterator it = vlayer->getSelectedFeatures();
-      QVector <QgsGeometry> selectedGeometries;
+      QVector<QgsGeometry> selectedGeometries;
       while ( it.nextFeature( feat ) )
       {
         selectedGeometries << feat.geometry();
@@ -414,11 +415,35 @@ void QgsMapToolRotateFeature::applyRotation( double rotation )
   request.setFilterFids( mRotatedFeatures ).setNoAttributes();
   QgsFeatureIterator fi = vlayer->getFeatures( request );
   QgsFeature f;
+
+  QgsAvoidIntersectionsOperation avoidIntersections;
+  connect( &avoidIntersections, &QgsAvoidIntersectionsOperation::messageEmitted, this, &QgsMapTool::messageEmitted );
+
+  // when removing intersections don't check for intersections with selected features
+  const QHash<QgsVectorLayer *, QSet<QgsFeatureId>> ignoreFeatures { { vlayer, mRotatedFeatures } };
+
   while ( fi.nextFeature( f ) )
   {
     const QgsFeatureId id = f.id();
     QgsGeometry geom = f.geometry();
     geom.rotate( mRotation, anchorPoint );
+
+    if ( vlayer->geometryType() == Qgis::GeometryType::Polygon )
+    {
+      const QgsAvoidIntersectionsOperation::Result res = avoidIntersections.apply( vlayer, id, geom, ignoreFeatures );
+
+      if ( res.operationResult == Qgis::GeometryOperationResult::InvalidInputGeometryType || geom.isEmpty() )
+      {
+        const QString errorMessage = ( geom.isEmpty() ) ? tr( "The feature cannot be rotated because the resulting geometry would be empty" ) : tr( "An error was reported during intersection removal" );
+
+        emit messageEmitted( errorMessage, Qgis::MessageLevel::Warning );
+        vlayer->destroyEditCommand();
+        deleteRotationWidget();
+        deleteRubberband();
+        return;
+      }
+    }
+
     vlayer->changeGeometry( id, geom );
   }
 
@@ -475,7 +500,7 @@ void QgsMapToolRotateFeature::deleteRubberband()
 {
   delete mRubberBand;
   mRubberBand = nullptr;
-  mGeom  = QgsGeometry();
+  mGeom = QgsGeometry();
 }
 
 void QgsMapToolRotateFeature::deactivate()
@@ -520,5 +545,3 @@ void QgsMapToolRotateFeature::deleteRotationWidget()
   }
   mRotationWidget = nullptr;
 }
-
-

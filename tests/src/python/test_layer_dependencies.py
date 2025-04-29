@@ -5,14 +5,14 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Hugo Mercier'
-__date__ = '12/07/2016'
-__copyright__ = 'Copyright 2016, The QGIS Project'
+
+__author__ = "Hugo Mercier"
+__date__ = "12/07/2016"
+__copyright__ = "Copyright 2016, The QGIS Project"
 
 import os
 import tempfile
 
-import qgis  # NOQA
 from qgis.PyQt.QtCore import QPoint, QSize
 from qgis.PyQt.QtTest import QSignalSpy
 from qgis.core import (
@@ -30,14 +30,15 @@ from qgis.core import (
     QgsTolerance,
     QgsVectorLayer,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 from qgis.utils import spatialite_connect
 
 # Convenience instances in case you may need them
 start_app()
 
 
-class TestLayerDependencies(unittest.TestCase):
+class TestLayerDependencies(QgisTestCase):
 
     def setUp(self):
         """Run before each test."""
@@ -51,24 +52,42 @@ class TestLayerDependencies(unittest.TestCase):
         cur.execute("SELECT InitSpatialMetadata(1)")
         cur.execute("create table node(id integer primary key autoincrement);")
         cur.execute("select AddGeometryColumn('node', 'geom', 4326, 'POINT');")
-        cur.execute("create table section(id integer primary key autoincrement, node1 integer, node2 integer);")
+        cur.execute(
+            "create table section(id integer primary key autoincrement, node1 integer, node2 integer);"
+        )
         cur.execute("select AddGeometryColumn('section', 'geom', 4326, 'LINESTRING');")
-        cur.execute("create trigger add_nodes after insert on section begin insert into node (geom) values (st_startpoint(NEW.geom)); insert into node (geom) values (st_endpoint(NEW.geom)); end;")
-        cur.execute("insert into node (geom) values (geomfromtext('point(0 0)', 4326));")
-        cur.execute("insert into node (geom) values (geomfromtext('point(1 0)', 4326));")
+        cur.execute(
+            "create trigger add_nodes after insert on section begin insert into node (geom) values (st_startpoint(NEW.geom)); insert into node (geom) values (st_endpoint(NEW.geom)); end;"
+        )
+        cur.execute(
+            "insert into node (geom) values (geomfromtext('point(0 0)', 4326));"
+        )
+        cur.execute(
+            "insert into node (geom) values (geomfromtext('point(1 0)', 4326));"
+        )
         cur.execute("create table node2(id integer primary key autoincrement);")
         cur.execute("select AddGeometryColumn('node2', 'geom', 4326, 'POINT');")
-        cur.execute("create trigger add_nodes2 after insert on node begin insert into node2 (geom) values (st_translate(NEW.geom, 0.2, 0, 0)); end;")
+        cur.execute(
+            "create trigger add_nodes2 after insert on node begin insert into node2 (geom) values (st_translate(NEW.geom, 0.2, 0, 0)); end;"
+        )
         con.commit()
         con.close()
 
-        self.pointsLayer = QgsVectorLayer(f"dbname='{fn}' table=\"node\" (geom) sql=", "points", "spatialite")
-        assert (self.pointsLayer.isValid())
-        self.linesLayer = QgsVectorLayer(f"dbname='{fn}' table=\"section\" (geom) sql=", "lines", "spatialite")
-        assert (self.linesLayer.isValid())
-        self.pointsLayer2 = QgsVectorLayer(f"dbname='{fn}' table=\"node2\" (geom) sql=", "_points2", "spatialite")
-        assert (self.pointsLayer2.isValid())
-        QgsProject.instance().addMapLayers([self.pointsLayer, self.linesLayer, self.pointsLayer2])
+        self.pointsLayer = QgsVectorLayer(
+            f"dbname='{fn}' table=\"node\" (geom) sql=", "points", "spatialite"
+        )
+        assert self.pointsLayer.isValid()
+        self.linesLayer = QgsVectorLayer(
+            f"dbname='{fn}' table=\"section\" (geom) sql=", "lines", "spatialite"
+        )
+        assert self.linesLayer.isValid()
+        self.pointsLayer2 = QgsVectorLayer(
+            f"dbname='{fn}' table=\"node2\" (geom) sql=", "_points2", "spatialite"
+        )
+        assert self.pointsLayer2.isValid()
+        QgsProject.instance().addMapLayers(
+            [self.pointsLayer, self.linesLayer, self.pointsLayer2]
+        )
 
         # save the project file
         fo = tempfile.NamedTemporaryFile()
@@ -98,9 +117,12 @@ class TestLayerDependencies(unittest.TestCase):
         cfg = u.config()
         cfg.setEnabled(True)
         cfg.setMode(Qgis.SnappingMode.AdvancedConfiguration)
-        cfg.setIndividualLayerSettings(self.pointsLayer,
-                                       QgsSnappingConfig.IndividualLayerSettings(True,
-                                                                                 Qgis.SnappingType.Vertex, 20, Qgis.MapToolUnit.Pixels, 0.0, 0.0))
+        cfg.setIndividualLayerSettings(
+            self.pointsLayer,
+            QgsSnappingConfig.IndividualLayerSettings(
+                True, Qgis.SnappingType.Vertex, 20, Qgis.MapToolUnit.Pixels, 0.0, 0.0
+            ),
+        )
         u.setConfig(cfg)
 
         m = u.snapToMap(QPoint(95, 100))
@@ -141,12 +163,17 @@ class TestLayerDependencies(unittest.TestCase):
         self.pointsLayer.setDependencies([])
 
         # test chained layer dependencies A -> B -> C
-        cfg.setIndividualLayerSettings(self.pointsLayer2,
-                                       QgsSnappingConfig.IndividualLayerSettings(True,
-                                                                                 Qgis.SnappingType.Vertex, 20, Qgis.MapToolUnit.Pixels, 0.0, 0.0))
+        cfg.setIndividualLayerSettings(
+            self.pointsLayer2,
+            QgsSnappingConfig.IndividualLayerSettings(
+                True, Qgis.SnappingType.Vertex, 20, Qgis.MapToolUnit.Pixels, 0.0, 0.0
+            ),
+        )
         u.setConfig(cfg)
         self.pointsLayer.setDependencies([QgsMapLayerDependency(self.linesLayer.id())])
-        self.pointsLayer2.setDependencies([QgsMapLayerDependency(self.pointsLayer.id())])
+        self.pointsLayer2.setDependencies(
+            [QgsMapLayerDependency(self.pointsLayer.id())]
+        )
         # add another line
         f = QgsFeature(self.linesLayer.fields())
         f.setId(3)
@@ -171,13 +198,21 @@ class TestLayerDependencies(unittest.TestCase):
         spy_lines_repaint_requested = QSignalSpy(self.linesLayer.repaintRequested)
 
         # only points fire dataChanged because we change its dependencies
-        self.assertTrue(self.pointsLayer.setDependencies([QgsMapLayerDependency(self.linesLayer.id())]))
+        self.assertTrue(
+            self.pointsLayer.setDependencies(
+                [QgsMapLayerDependency(self.linesLayer.id())]
+            )
+        )
         self.assertEqual(len(spy_points_data_changed), 1)
         self.assertEqual(len(spy_lines_data_changed), 0)
 
         # lines fire dataChanged because we changes its dependencies
         # points fire dataChanged because it depends on line
-        self.assertTrue(self.linesLayer.setDependencies([QgsMapLayerDependency(self.pointsLayer.id())]))
+        self.assertTrue(
+            self.linesLayer.setDependencies(
+                [QgsMapLayerDependency(self.pointsLayer.id())]
+            )
+        )
         self.assertEqual(len(spy_points_data_changed), 2)
         self.assertEqual(len(spy_lines_data_changed), 1)
 
@@ -216,7 +251,11 @@ class TestLayerDependencies(unittest.TestCase):
         spy_lines_repaint_requested = QSignalSpy(self.linesLayer.repaintRequested)
 
         # line fire dataChanged because we change its dependencies
-        self.assertTrue(self.linesLayer.setDependencies([QgsMapLayerDependency(self.linesLayer.id())]))
+        self.assertTrue(
+            self.linesLayer.setDependencies(
+                [QgsMapLayerDependency(self.linesLayer.id())]
+            )
+        )
         self.assertEqual(len(spy_lines_data_changed), 1)
 
         f = QgsFeature(self.linesLayer.fields())
@@ -254,13 +293,15 @@ class TestLayerDependencies(unittest.TestCase):
         newPointsLayer = None
         newLinesLayer = None
         for l in grp.findLayers():
-            if l.layerId().startswith('points'):
+            if l.layerId().startswith("points"):
                 newPointsLayer = l.layer()
-            elif l.layerId().startswith('lines'):
+            elif l.layerId().startswith("lines"):
                 newLinesLayer = l.layer()
         self.assertIsNotNone(newPointsLayer)
         self.assertIsNotNone(newLinesLayer)
-        self.assertTrue(newLinesLayer.id() in [dep.layerId() for dep in newPointsLayer.dependencies()])
+        self.assertIn(
+            newLinesLayer.id(), [dep.layerId() for dep in newPointsLayer.dependencies()]
+        )
 
         self.pointsLayer.setDependencies([])
 
@@ -268,14 +309,22 @@ class TestLayerDependencies(unittest.TestCase):
         # remove all layers
         QgsProject.instance().removeAllMapLayers()
         # set dependencies and add back layers
-        self.pointsLayer = QgsVectorLayer(f"dbname='{self.fn}' table=\"node\" (geom) sql=", "points", "spatialite")
-        assert (self.pointsLayer.isValid())
-        self.linesLayer = QgsVectorLayer(f"dbname='{self.fn}' table=\"section\" (geom) sql=", "lines", "spatialite")
-        assert (self.linesLayer.isValid())
-        self.pointsLayer2 = QgsVectorLayer(f"dbname='{self.fn}' table=\"node2\" (geom) sql=", "_points2", "spatialite")
-        assert (self.pointsLayer2.isValid())
+        self.pointsLayer = QgsVectorLayer(
+            f"dbname='{self.fn}' table=\"node\" (geom) sql=", "points", "spatialite"
+        )
+        self.assertTrue(self.pointsLayer.isValid())
+        self.linesLayer = QgsVectorLayer(
+            f"dbname='{self.fn}' table=\"section\" (geom) sql=", "lines", "spatialite"
+        )
+        self.assertTrue(self.linesLayer.isValid())
+        self.pointsLayer2 = QgsVectorLayer(
+            f"dbname='{self.fn}' table=\"node2\" (geom) sql=", "_points2", "spatialite"
+        )
+        self.assertTrue(self.pointsLayer2.isValid())
         self.pointsLayer.setDependencies([QgsMapLayerDependency(self.linesLayer.id())])
-        self.pointsLayer2.setDependencies([QgsMapLayerDependency(self.pointsLayer.id())])
+        self.pointsLayer2.setDependencies(
+            [QgsMapLayerDependency(self.pointsLayer.id())]
+        )
         # this should update connections between layers
         QgsProject.instance().addMapLayers([self.pointsLayer])
         QgsProject.instance().addMapLayers([self.linesLayer])
@@ -291,12 +340,18 @@ class TestLayerDependencies(unittest.TestCase):
         cfg = u.config()
         cfg.setEnabled(True)
         cfg.setMode(Qgis.SnappingMode.AdvancedConfiguration)
-        cfg.setIndividualLayerSettings(self.pointsLayer,
-                                       QgsSnappingConfig.IndividualLayerSettings(True,
-                                                                                 Qgis.SnappingType.Vertex, 20, Qgis.MapToolUnit.Pixels, 0.0, 0.0))
-        cfg.setIndividualLayerSettings(self.pointsLayer2,
-                                       QgsSnappingConfig.IndividualLayerSettings(True,
-                                                                                 Qgis.SnappingType.Vertex, 20, Qgis.MapToolUnit.Pixels, 0.0, 0.0))
+        cfg.setIndividualLayerSettings(
+            self.pointsLayer,
+            QgsSnappingConfig.IndividualLayerSettings(
+                True, Qgis.SnappingType.Vertex, 20, Qgis.MapToolUnit.Pixels, 0.0, 0.0
+            ),
+        )
+        cfg.setIndividualLayerSettings(
+            self.pointsLayer2,
+            QgsSnappingConfig.IndividualLayerSettings(
+                True, Qgis.SnappingType.Vertex, 20, Qgis.MapToolUnit.Pixels, 0.0, 0.0
+            ),
+        )
         u.setConfig(cfg)
         # add another line
         f = QgsFeature(self.linesLayer.fields())
@@ -316,5 +371,5 @@ class TestLayerDependencies(unittest.TestCase):
         self.pointsLayer2.setDependencies([])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

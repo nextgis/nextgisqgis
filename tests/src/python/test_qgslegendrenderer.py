@@ -9,9 +9,9 @@ Run with ctest -V -R PyQgsLegendRenderer
 
 """
 
-__author__ = 'elpaso@itopen.it'
-__date__ = '2020-04-29'
-__copyright__ = 'Copyright 2020, ItOpen'
+__author__ = "elpaso@itopen.it"
+__date__ = "2020-04-29"
+__copyright__ = "Copyright 2020, ItOpen"
 
 import os
 
@@ -22,7 +22,8 @@ from qgis.core import (
     QgsProject,
     QgsRenderContext,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 from utilities import unitTestDataPath
 
@@ -30,21 +31,25 @@ QGISAPP = start_app()
 TEST_DATA_DIR = unitTestDataPath()
 
 
-class TestPyQgsLegendRenderer(unittest.TestCase):
+class TestPyQgsLegendRenderer(QgisTestCase):
 
     def test_json_export(self):
 
         project = QgsProject()
-        self.assertTrue(project.read(os.path.join(unitTestDataPath('qgis_server'), 'test_project.qgs')))
+        self.assertTrue(
+            project.read(
+                os.path.join(unitTestDataPath("qgis_server"), "test_project.qgs")
+            )
+        )
         model = QgsLegendModel(project.layerTreeRoot())
         ctx = QgsRenderContext()
         settings = QgsLegendSettings()
         renderer = QgsLegendRenderer(model, settings)
-        nodes = renderer.exportLegendToJson(ctx)['nodes'].toVariant()
-        self.assertEqual(len(nodes), 7)
-        self.assertEqual(nodes[0]['type'], 'layer')
-        self.assertEqual(nodes[0]['title'], 'testlayer')
+        nodes = renderer.exportLegendToJson(ctx)["nodes"].toVariant()
+        self.assertEqual(len(nodes), 9)
+        self.assertEqual(nodes[0]["type"], "layer")
+        self.assertEqual(nodes[0]["title"], "testlayer")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -26,7 +26,7 @@
 
 #define ROOF_EXPRESSION \
   "translate(" \
-  "  $geometry," \
+  "  @geometry," \
   "  cos( radians( eval( @qgis_25d_angle ) ) ) * eval( @qgis_25d_height )," \
   "  sin( radians( eval( @qgis_25d_angle ) ) ) * eval( @qgis_25d_height )" \
   ")"
@@ -34,17 +34,17 @@
 #define WALL_EXPRESSION \
   "order_parts( "\
   "  extrude(" \
-  "    segments_to_lines( $geometry )," \
+  "    segments_to_lines( @geometry )," \
   "    cos( radians( eval( @qgis_25d_angle ) ) ) * eval( @qgis_25d_height )," \
   "    sin( radians( eval( @qgis_25d_angle ) ) ) * eval( @qgis_25d_height )" \
   "  )," \
-  "  'distance(  $geometry,  translate(    @map_extent_center,    1000 * @map_extent_width * cos( radians( @qgis_25d_angle + 180 ) ),    1000 * @map_extent_width * sin( radians( @qgis_25d_angle + 180 ) )  ))'," \
+  "  'distance(  @geometry,  translate(    @map_extent_center,    1000 * @map_extent_width * cos( radians( @qgis_25d_angle + 180 ) ),    1000 * @map_extent_width * sin( radians( @qgis_25d_angle + 180 ) )  ))'," \
   "  False" \
   ")"
 
 #define ORDER_BY_EXPRESSION \
   "distance(" \
-  "  $geometry," \
+  "  @geometry," \
   "  translate(" \
   "    @map_extent_center," \
   "    1000 * @map_extent_width * cos( radians( @qgis_25d_angle + 180 ) )," \
@@ -57,8 +57,8 @@
   "  @symbol_color," \
   " 'value'," \
   "  40 + 19 * abs( $pi - azimuth( " \
-  "    point_n( geometry_n($geometry, @geometry_part_num) , 1 ), " \
-  "    point_n( geometry_n($geometry, @geometry_part_num) , 2 )" \
+  "    point_n( geometry_n(@geometry, @geometry_part_num) , 1 ), " \
+  "    point_n( geometry_n(@geometry, @geometry_part_num) , 2 )" \
   "  ) ) " \
   ")"
 
@@ -99,7 +99,7 @@ Qgs25DRenderer::Qgs25DRenderer()
   setRoofColor( QColor( 177, 169, 124 ) );
   setWallColor( QColor( 119, 119, 119 ) );
 
-  wallLayer()->setDataDefinedProperty( QgsSymbolLayer::PropertyFillColor, QgsProperty::fromExpression( QString( WALL_SHADING_EXPRESSION ) ) );
+  wallLayer()->setDataDefinedProperty( QgsSymbolLayer::Property::FillColor, QgsProperty::fromExpression( QString( WALL_SHADING_EXPRESSION ) ) );
 
   setShadowSpread( 4 );
   setShadowColor( QColor( 17, 17, 17 ) );
@@ -126,6 +126,15 @@ QDomElement Qgs25DRenderer::save( QDomDocument &doc, const QgsReadWriteContext &
   rendererElem.appendChild( symbolElem );
 
   return rendererElem;
+}
+
+Qgis::FeatureRendererFlags Qgs25DRenderer::flags() const
+{
+  Qgis::FeatureRendererFlags res;
+  if ( mSymbol && mSymbol->flags().testFlag( Qgis::SymbolFlag::AffectsLabeling ) )
+    res.setFlag( Qgis::FeatureRendererFlag::AffectsLabeling );
+
+  return res;
 }
 
 QgsFeatureRenderer *Qgs25DRenderer::create( QDomElement &element, const QgsReadWriteContext &context )
@@ -251,12 +260,12 @@ void Qgs25DRenderer::setWallColor( const QColor &wallColor ) const
 
 void Qgs25DRenderer::setWallShadingEnabled( bool enabled ) const
 {
-  wallLayer()->dataDefinedProperties().property( QgsSymbolLayer::PropertyFillColor ).setActive( enabled );
+  wallLayer()->dataDefinedProperties().property( QgsSymbolLayer::Property::FillColor ).setActive( enabled );
 }
 
 bool Qgs25DRenderer::wallShadingEnabled() const
 {
-  return wallLayer()->dataDefinedProperties().property( QgsSymbolLayer::PropertyFillColor ).isActive();
+  return wallLayer()->dataDefinedProperties().property( QgsSymbolLayer::Property::FillColor ).isActive();
 }
 
 QColor Qgs25DRenderer::roofColor() const

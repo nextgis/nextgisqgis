@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgslayoutpagepropertieswidget.h"
+#include "moc_qgslayoutpagepropertieswidget.cpp"
 #include "qgsapplication.h"
 #include "qgspagesizeregistry.h"
 #include "qgslayoutitempage.h"
@@ -27,7 +28,7 @@
 
 QgsLayoutPagePropertiesWidget::QgsLayoutPagePropertiesWidget( QWidget *parent, QgsLayoutItem *layoutItem )
   : QgsLayoutItemBaseWidget( parent, layoutItem )
-  , mPage( static_cast< QgsLayoutItemPage *>( layoutItem ) )
+  , mPage( static_cast<QgsLayoutItemPage *>( layoutItem ) )
 {
   setupUi( this );
 
@@ -61,18 +62,18 @@ QgsLayoutPagePropertiesWidget::QgsLayoutPagePropertiesWidget( QWidget *parent, Q
   connect( mPageSizeComboBox, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, &QgsLayoutPagePropertiesWidget::pageSizeChanged );
   connect( mPageOrientationComboBox, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, &QgsLayoutPagePropertiesWidget::orientationChanged );
 
-  connect( mWidthSpin, static_cast< void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutPagePropertiesWidget::updatePageSize );
-  connect( mHeightSpin, static_cast< void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutPagePropertiesWidget::updatePageSize );
-  connect( mWidthSpin, static_cast< void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutPagePropertiesWidget::setToCustomSize );
-  connect( mHeightSpin, static_cast< void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutPagePropertiesWidget::setToCustomSize );
+  connect( mWidthSpin, static_cast<void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutPagePropertiesWidget::updatePageSize );
+  connect( mHeightSpin, static_cast<void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutPagePropertiesWidget::updatePageSize );
+  connect( mWidthSpin, static_cast<void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutPagePropertiesWidget::setToCustomSize );
+  connect( mHeightSpin, static_cast<void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, &QgsLayoutPagePropertiesWidget::setToCustomSize );
   connect( mExcludePageCheckBox, &QCheckBox::toggled, this, &QgsLayoutPagePropertiesWidget::excludeExportsToggled );
 
   connect( mSymbolButton, &QgsSymbolButton::changed, this, &QgsLayoutPagePropertiesWidget::symbolChanged );
-  registerDataDefinedButton( mPaperSizeDDBtn, QgsLayoutObject::PresetPaperSize );
-  registerDataDefinedButton( mWidthDDBtn, QgsLayoutObject::ItemWidth );
-  registerDataDefinedButton( mHeightDDBtn, QgsLayoutObject::ItemHeight );
-  registerDataDefinedButton( mOrientationDDBtn, QgsLayoutObject::PaperOrientation );
-  registerDataDefinedButton( mExcludePageDDBtn, QgsLayoutObject::ExcludeFromExports );
+  registerDataDefinedButton( mPaperSizeDDBtn, QgsLayoutObject::DataDefinedProperty::PresetPaperSize );
+  registerDataDefinedButton( mWidthDDBtn, QgsLayoutObject::DataDefinedProperty::ItemWidth );
+  registerDataDefinedButton( mHeightDDBtn, QgsLayoutObject::DataDefinedProperty::ItemHeight );
+  registerDataDefinedButton( mOrientationDDBtn, QgsLayoutObject::DataDefinedProperty::PaperOrientation );
+  registerDataDefinedButton( mExcludePageDDBtn, QgsLayoutObject::DataDefinedProperty::ExcludeFromExports );
 
   connect( mPaperSizeDDBtn, &QgsPropertyOverrideButton::changed, this, &QgsLayoutPagePropertiesWidget::refreshLayout );
   connect( mWidthDDBtn, &QgsPropertyOverrideButton::changed, this, &QgsLayoutPagePropertiesWidget::refreshLayout );
@@ -86,6 +87,17 @@ QgsLayoutPagePropertiesWidget::QgsLayoutPagePropertiesWidget( QWidget *parent, Q
   if ( mPage->layout() )
   {
     connect( &mPage->layout()->reportContext(), &QgsLayoutReportContext::layerChanged, mSymbolButton, &QgsSymbolButton::setLayer );
+
+    QgsLayoutPageCollection *pages = mPage->layout()->pageCollection();
+    if ( pages->pageCount() > 1 )
+    {
+      const int pageNumber = mPage->layout()->pageCollection()->pageNumber( mPage );
+      mTitleLabel->setText( tr( "Page (%1/%2)" ).arg( pageNumber + 1 ).arg( pages->pageCount() ) );
+    }
+    else
+    {
+      mTitleLabel->setText( tr( "Page" ) );
+    }
   }
 
   showCurrentPageSize();
@@ -187,7 +199,7 @@ void QgsLayoutPagePropertiesWidget::setToCustomSize()
 void QgsLayoutPagePropertiesWidget::symbolChanged()
 {
   mPage->layout()->undoStack()->beginCommand( mPage->layout()->pageCollection(), tr( "Change Page Background" ), QgsLayoutItemPage::UndoPageSymbol );
-  mPage->setPageStyleSymbol( static_cast< QgsFillSymbol * >( mSymbolButton->symbol() )->clone() );
+  mPage->setPageStyleSymbol( static_cast<QgsFillSymbol *>( mSymbolButton->symbol() )->clone() );
   mPage->layout()->undoStack()->endCommand();
 }
 

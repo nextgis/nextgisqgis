@@ -521,7 +521,7 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
         double currentAlpha = mOpacity;
         if ( mRasterTransparency )
         {
-          currentAlpha = mRasterTransparency->alphaValue( x22, mOpacity * 255 ) / 255.0;
+          currentAlpha *= mRasterTransparency->opacityForValue( x22 );
         }
         if ( mAlphaBand > 0 )
         {
@@ -569,13 +569,29 @@ QList<int> QgsHillshadeRenderer::usesBands() const
 
 }
 
+int QgsHillshadeRenderer::inputBand() const
+{
+  return mBand;
+}
+
 void QgsHillshadeRenderer::setBand( int bandNo )
 {
-  if ( bandNo > mInput->bandCount() || bandNo <= 0 )
+  setInputBand( bandNo );
+}
+
+bool QgsHillshadeRenderer::setInputBand( int band )
+{
+  if ( !mInput )
   {
-    return;
+    mBand = band;
+    return true;
   }
-  mBand = bandNo;
+  else if ( band > 0 && band <= mInput->bandCount() )
+  {
+    mBand = band;
+    return true;
+  }
+  return false;
 }
 
 void QgsHillshadeRenderer::toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const
@@ -594,7 +610,7 @@ void QgsHillshadeRenderer::toSld( QDomDocument &doc, QDomElement &element, const
   // add Channel Selection tags (if band is not default 1)
   // Need to insert channelSelection in the correct sequence as in SLD standard e.g.
   // after opacity or geometry or as first element after sld:RasterSymbolizer
-  if ( band() != 1 )
+  if ( mBand != 1 )
   {
     QDomElement channelSelectionElem = doc.createElement( QStringLiteral( "sld:ChannelSelection" ) );
     elements = rasterSymbolizerElem.elementsByTagName( QStringLiteral( "sld:Opacity" ) );
@@ -621,7 +637,7 @@ void QgsHillshadeRenderer::toSld( QDomDocument &doc, QDomElement &element, const
 
     // set band
     QDomElement sourceChannelNameElem = doc.createElement( QStringLiteral( "sld:SourceChannelName" ) );
-    sourceChannelNameElem.appendChild( doc.createTextNode( QString::number( band() ) ) );
+    sourceChannelNameElem.appendChild( doc.createTextNode( QString::number( mBand ) ) );
     channelElem.appendChild( sourceChannelNameElem );
   }
 

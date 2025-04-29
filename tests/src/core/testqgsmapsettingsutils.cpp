@@ -28,18 +28,16 @@ class TestQgsMapSettingsUtils : public QObject
     Q_OBJECT
 
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
+    void initTestCase();      // will be called before the first testfunction is executed.
     void cleanupTestCase() {} // will be called after the last testfunction was executed.
-    void init() {} // will be called before each testfunction is executed.
-    void cleanup() {} // will be called after each testfunction was executed.
+    void init() {}            // will be called before each testfunction is executed.
+    void cleanup() {}         // will be called after each testfunction was executed.
 
-    void createWorldFileContent(); //test world file content function
+    void createWorldFileContent();  //test world file content function
     void containsAdvancedEffects(); //test contains advanced effects function
 
   private:
-
     QgsMapSettings mMapSettings;
-
 };
 
 void TestQgsMapSettingsUtils::initTestCase()
@@ -66,13 +64,23 @@ void TestQgsMapSettingsUtils::createWorldFileContent()
 
   mMapSettings.setRotation( 145 );
   QCOMPARE( QgsMapSettingsUtils::worldFileContent( mMapSettings ), QString( "-0.81915204428899191\r\n0.57357643635104594\r\n0.57357643635104594\r\n0.81915204428899191\r\n0.5\r\n0.49999999999999994\r\n" ) );
+
+  mMapSettings.setRotation( 0 );
+  mMapSettings.setDevicePixelRatio( 2.0 );
+  QgsMapSettingsUtils::worldFileParameters( mMapSettings, a, b, c, d, e, f );
+  QCOMPARE( a, 0.5 );
+  QCOMPARE( b, 0.0 );
+  QCOMPARE( c, 0.5 );
+  QCOMPARE( d, 0.0 );
+  QCOMPARE( e, -0.5 );
+  QCOMPARE( f, 0.5 );
 }
 
 void TestQgsMapSettingsUtils::containsAdvancedEffects()
 {
   QgsMapSettings mapSettings = mMapSettings;
 
-  std::unique_ptr< QgsVectorLayer > layer( new QgsVectorLayer( QStringLiteral( "Point?field=col1:real" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ) ) );
+  std::unique_ptr<QgsVectorLayer> layer( new QgsVectorLayer( QStringLiteral( "Point?field=col1:real" ), QStringLiteral( "layer" ), QStringLiteral( "memory" ) ) );
   layer->setBlendMode( QPainter::CompositionMode_Multiply );
 
   QList<QgsMapLayer *> layers;
@@ -96,12 +104,7 @@ void TestQgsMapSettingsUtils::containsAdvancedEffects()
   // changing an individual layer's opacity is OK -- we don't want to force the whole map to be rasterized just because of this setting!
   // (just let that one layer get exported as raster instead)
   layer->setOpacity( 0.5 );
-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-  // this only works on Qt 5.15 or later -- see https://github.com/qgis/QGIS/issues/42698
   QCOMPARE( QgsMapSettingsUtils::containsAdvancedEffects( mapSettings ).size(), 0 );
-#else
-  QCOMPARE( QgsMapSettingsUtils::containsAdvancedEffects( mapSettings ).size(), 1 );
-#endif
   QCOMPARE( QgsMapSettingsUtils::containsAdvancedEffects( mapSettings, QgsMapSettingsUtils::EffectsCheckFlag::IgnoreGeoPdfSupportedEffects ).size(), 0 );
 }
 

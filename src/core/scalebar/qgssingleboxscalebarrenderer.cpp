@@ -20,6 +20,7 @@
 #include "qgstextrenderer.h"
 #include "qgslinesymbol.h"
 #include "qgsfillsymbol.h"
+#include "qgsfillsymbollayer.h"
 #include <QList>
 #include <QPainter>
 
@@ -68,7 +69,7 @@ void QgsSingleBoxScaleBarRenderer::draw( QgsRenderContext &context, const QgsSca
   const double scaledLabelBarSpace = context.convertToPainterUnits( settings.labelBarSpace(), Qgis::RenderUnit::Millimeters );
   const double scaledBoxContentSpace = context.convertToPainterUnits( settings.boxContentSpace(), Qgis::RenderUnit::Millimeters );
   const QFontMetricsF fontMetrics = QgsTextRenderer::fontMetrics( context, settings.textFormat() );
-  const double barTopPosition = scaledBoxContentSpace + ( settings.labelVerticalPlacement() == QgsScaleBarSettings::LabelAboveSegment ? fontMetrics.ascent() + scaledLabelBarSpace : 0 );
+  const double barTopPosition = scaledBoxContentSpace + ( settings.labelVerticalPlacement() == Qgis::ScaleBarDistanceLabelVerticalPlacement::AboveSegment ? fontMetrics.ascent() + scaledLabelBarSpace : 0 );
   const double barHeight = context.convertToPainterUnits( settings.height(), Qgis::RenderUnit::Millimeters );
 
   painter->save();
@@ -157,5 +158,28 @@ void QgsSingleBoxScaleBarRenderer::draw( QgsRenderContext &context, const QgsSca
   drawDefaultLabels( context, settings, scaleContext );
 }
 
+bool QgsSingleBoxScaleBarRenderer::applyDefaultSettings( QgsScaleBarSettings &settings ) const
+{
+  QgsSimpleFillSymbolLayer *fill = dynamic_cast< QgsSimpleFillSymbolLayer * >( settings.fillSymbol()->symbolLayers().at( 0 ) );
 
+  // restore the fill symbols by default
+  if ( fill && fill->brushStyle() == Qt::NoBrush )
+  {
+    std::unique_ptr< QgsFillSymbol > fillSymbol = std::make_unique< QgsFillSymbol >();
+    std::unique_ptr< QgsSimpleFillSymbolLayer > fillSymbolLayer = std::make_unique< QgsSimpleFillSymbolLayer >();
+    fillSymbolLayer->setColor( QColor( 0, 0, 0 ) );
+    fillSymbolLayer->setBrushStyle( Qt::SolidPattern );
+    fillSymbolLayer->setStrokeStyle( Qt::SolidLine );
+    fillSymbol->changeSymbolLayer( 0, fillSymbolLayer.release() );
+    settings.setFillSymbol( fillSymbol.release() );
 
+    fillSymbol = std::make_unique< QgsFillSymbol >();
+    fillSymbolLayer = std::make_unique< QgsSimpleFillSymbolLayer >();
+    fillSymbolLayer->setColor( QColor( 255, 255, 255 ) );
+    fillSymbolLayer->setStrokeStyle( Qt::NoPen );
+    fillSymbol->changeSymbolLayer( 0, fillSymbolLayer.release() );
+    settings.setAlternateFillSymbol( fillSymbol.release() );
+  }
+
+  return true;
+}

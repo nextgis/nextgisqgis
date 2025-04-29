@@ -28,15 +28,26 @@
 #include "qgs3dmapscene.h"
 #include "qgs3dmapsettings.h"
 #include "qgs3dmapcanvas.h"
+#include "qgsprojectelevationproperties.h"
 #include "qgsprojectviewsettings.h"
 #include "qgspointlightsettings.h"
+#include "qgsterrainprovider.h"
+#include "qgstiledscenelayer.h"
+#include "qgstiledscenelayer3drenderer.h"
 
 #include <QScreen>
 
 void initCanvas3D( Qgs3DMapCanvas *canvas )
 {
   QgsLayerTree *root = QgsProject::instance()->layerTreeRoot();
-  const QList< QgsMapLayer * > visibleLayers = root->checkedLayers();
+  const QList<QgsMapLayer *> visibleLayers = root->checkedLayers();
+
+  QgsCoordinateReferenceSystem crs = QgsProject::instance()->crs();
+  if ( crs.isGeographic() )
+  {
+    // we can't deal with non-projected CRS, so let's just pick something
+    QgsProject::instance()->setCrs( QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:3857" ) ) );
+  }
 
   QgsMapSettings ms;
   ms.setDestinationCrs( QgsProject::instance()->crs() );
@@ -48,22 +59,28 @@ void initCanvas3D( Qgs3DMapCanvas *canvas )
   map->setOrigin( QgsVector3D( fullExtent.center().x(), fullExtent.center().y(), 0 ) );
   map->setLayers( visibleLayers );
 
+  map->setExtent( fullExtent );
+
+  Qgs3DAxisSettings axis;
+  axis.setMode( Qgs3DAxisSettings::Mode::Off );
+  map->set3DAxisSettings( axis );
+
   map->setTransformContext( QgsProject::instance()->transformContext() );
   map->setPathResolver( QgsProject::instance()->pathResolver() );
   map->setMapThemeCollection( QgsProject::instance()->mapThemeCollection() );
-  QObject::connect( QgsProject::instance(), &QgsProject::transformContextChanged, map, [map]
-  {
+  QObject::connect( QgsProject::instance(), &QgsProject::transformContextChanged, map, [map] {
     map->setTransformContext( QgsProject::instance()->transformContext() );
   } );
 
   QgsFlatTerrainGenerator *flatTerrain = new QgsFlatTerrainGenerator;
   flatTerrain->setCrs( map->crs() );
   map->setTerrainGenerator( flatTerrain );
+  map->setTerrainElevationOffset( QgsProject::instance()->elevationProperties()->terrainProvider()->offset() );
 
   QgsPointLightSettings defaultPointLight;
   defaultPointLight.setPosition( QgsVector3D( 0, 1000, 0 ) );
   defaultPointLight.setConstantAttenuation( 0 );
-  map->setLightSources( {defaultPointLight.clone() } );
+  map->setLightSources( { defaultPointLight.clone() } );
   if ( QScreen *screen = QGuiApplication::primaryScreen() )
   {
     map->setOutputDpi( screen->physicalDotsPerInch() );
@@ -73,15 +90,14 @@ void initCanvas3D( Qgs3DMapCanvas *canvas )
     map->setOutputDpi( 96 );
   }
 
-  canvas->setMap( map );
+  canvas->setMapSettings( map );
 
   QgsRectangle extent = fullExtent;
   extent.scale( 1.3 );
-  const float dist = static_cast< float >( std::max( extent.width(), extent.height() ) );
+  const float dist = static_cast<float>( std::max( extent.width(), extent.height() ) );
   canvas->setViewFromTop( extent.center(), dist * 2, 0 );
 
-  QObject::connect( canvas->scene(), &Qgs3DMapScene::totalPendingJobsCountChanged, canvas, [canvas]
-  {
+  QObject::connect( canvas->scene(), &Qgs3DMapScene::totalPendingJobsCountChanged, canvas, [canvas] {
     qDebug() << "pending jobs:" << canvas->scene()->totalPendingJobsCount();
   } );
 
@@ -90,7 +106,7 @@ void initCanvas3D( Qgs3DMapCanvas *canvas )
 
 int main( int argc, char *argv[] )
 {
-  const QApplication app( argc, argv );
+  QgsApplication myApp( argc, argv, true, QString(), QStringLiteral( "desktop" ) );
 
   // init QGIS's paths - true means that all path will be inited from prefix
   QgsApplication::init();
@@ -121,6 +137,14 @@ int main( int argc, char *argv[] )
       r->resolveReferences( *QgsProject::instance() );
       pcLayer->setRenderer3D( r );
     }
+
+    if ( QgsTiledSceneLayer *tsLayer = qobject_cast<QgsTiledSceneLayer *>( layer ) )
+    {
+      QgsTiledSceneLayer3DRenderer *r = new QgsTiledSceneLayer3DRenderer();
+      r->setLayer( tsLayer );
+      r->resolveReferences( *QgsProject::instance() );
+      tsLayer->setRenderer3D( r );
+    }
   }
 
   Qgs3DMapCanvas *canvas = new Qgs3DMapCanvas;
@@ -128,5 +152,5 @@ int main( int argc, char *argv[] )
   canvas->resize( 800, 600 );
   canvas->show();
 
-  return QApplication::exec();
+  return myApp.exec();
 }

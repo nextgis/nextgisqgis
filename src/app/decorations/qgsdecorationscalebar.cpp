@@ -20,6 +20,7 @@ email                : sbr00pwb@users.sourceforge.net
  ***************************************************************************/
 
 #include "qgsdecorationscalebar.h"
+#include "moc_qgsdecorationscalebar.cpp"
 
 #include "qgsdecorationscalebardialog.h"
 
@@ -33,7 +34,7 @@ email                : sbr00pwb@users.sourceforge.net
 #include "qgsproject.h"
 #include "qgsunittypes.h"
 #include "qgssettings.h"
-#include "qgssymbollayerutils.h"
+#include "qgscolorutils.h"
 #include "qgsfillsymbollayer.h"
 #include "qgsfillsymbol.h"
 #include "qgslinesymbol.h"
@@ -78,8 +79,8 @@ void QgsDecorationScaleBar::projectRead()
   mPreferredSize = QgsProject::instance()->readNumEntry( mConfigurationName, QStringLiteral( "/PreferredSize" ), 30 );
   mStyleIndex = QgsProject::instance()->readNumEntry( mConfigurationName, QStringLiteral( "/Style" ), 0 );
   mSnapping = QgsProject::instance()->readBoolEntry( mConfigurationName, QStringLiteral( "/Snapping" ), true );
-  mColor = QgsSymbolLayerUtils::decodeColor( QgsProject::instance()->readEntry( mConfigurationName, QStringLiteral( "/Color" ), QStringLiteral( "#000000" ) ) );
-  mOutlineColor = QgsSymbolLayerUtils::decodeColor( QgsProject::instance()->readEntry( mConfigurationName, QStringLiteral( "/OutlineColor" ), QStringLiteral( "#FFFFFF" ) ) );
+  mColor = QgsColorUtils::colorFromString( QgsProject::instance()->readEntry( mConfigurationName, QStringLiteral( "/Color" ), QStringLiteral( "#000000" ) ) );
+  mOutlineColor = QgsColorUtils::colorFromString( QgsProject::instance()->readEntry( mConfigurationName, QStringLiteral( "/OutlineColor" ), QStringLiteral( "#FFFFFF" ) ) );
   mMarginHorizontal = QgsProject::instance()->readNumEntry( mConfigurationName, QStringLiteral( "/MarginH" ), 0 );
   mMarginVertical = QgsProject::instance()->readNumEntry( mConfigurationName, QStringLiteral( "/MarginV" ), 0 );
 
@@ -121,8 +122,8 @@ void QgsDecorationScaleBar::saveToProject()
   QgsProject::instance()->writeEntry( mConfigurationName, QStringLiteral( "/PreferredSize" ), mPreferredSize );
   QgsProject::instance()->writeEntry( mConfigurationName, QStringLiteral( "/Snapping" ), mSnapping );
   QgsProject::instance()->writeEntry( mConfigurationName, QStringLiteral( "/Style" ), mStyleIndex );
-  QgsProject::instance()->writeEntry( mConfigurationName, QStringLiteral( "/Color" ), QgsSymbolLayerUtils::encodeColor( mColor ) );
-  QgsProject::instance()->writeEntry( mConfigurationName, QStringLiteral( "/OutlineColor" ), QgsSymbolLayerUtils::encodeColor( mOutlineColor ) );
+  QgsProject::instance()->writeEntry( mConfigurationName, QStringLiteral( "/Color" ), QgsColorUtils::colorToString( mColor ) );
+  QgsProject::instance()->writeEntry( mConfigurationName, QStringLiteral( "/OutlineColor" ), QgsColorUtils::colorToString( mOutlineColor ) );
   QgsProject::instance()->writeEntry( mConfigurationName, QStringLiteral( "/MarginH" ), mMarginHorizontal );
   QgsProject::instance()->writeEntry( mConfigurationName, QStringLiteral( "/MarginV" ), mMarginVertical );
 
@@ -150,19 +151,19 @@ void QgsDecorationScaleBar::setupScaleBar()
     case 0:
     case 1:
     {
-      std::unique_ptr< QgsTicksScaleBarRenderer > tickStyle = std::make_unique< QgsTicksScaleBarRenderer >();
+      std::unique_ptr<QgsTicksScaleBarRenderer> tickStyle = std::make_unique<QgsTicksScaleBarRenderer>();
       tickStyle->setTickPosition( mStyleIndex == 0 ? QgsTicksScaleBarRenderer::TicksDown : QgsTicksScaleBarRenderer::TicksUp );
       mStyle = std::move( tickStyle );
 
-      std::unique_ptr< QgsFillSymbol > fillSymbol = std::make_unique< QgsFillSymbol >();
+      std::unique_ptr<QgsFillSymbol> fillSymbol = std::make_unique<QgsFillSymbol>();
       fillSymbol->setColor( mColor ); // Compatibility with pre 3.2 configuration
-      if ( QgsSimpleFillSymbolLayer *fill = dynamic_cast< QgsSimpleFillSymbolLayer * >( fillSymbol->symbolLayer( 0 ) ) )
+      if ( QgsSimpleFillSymbolLayer *fill = dynamic_cast<QgsSimpleFillSymbolLayer *>( fillSymbol->symbolLayer( 0 ) ) )
       {
         fill->setStrokeStyle( Qt::NoPen );
       }
       mSettings.setFillSymbol( fillSymbol.release() );
 
-      std::unique_ptr< QgsLineSymbol > lineSymbol = std::make_unique< QgsLineSymbol >();
+      std::unique_ptr<QgsLineSymbol> lineSymbol = std::make_unique<QgsLineSymbol>();
       lineSymbol->setColor( mColor ); // Compatibility with pre 3.2 configuration
       lineSymbol->setWidth( 0.3 );
       lineSymbol->setOutputUnit( Qgis::RenderUnit::Millimeters );
@@ -174,27 +175,27 @@ void QgsDecorationScaleBar::setupScaleBar()
     case 2:
     case 3:
     {
-      mStyle = std::make_unique< QgsSingleBoxScaleBarRenderer >();
+      mStyle = std::make_unique<QgsSingleBoxScaleBarRenderer>();
 
 
-      std::unique_ptr< QgsFillSymbol > fillSymbol = std::make_unique< QgsFillSymbol >();
+      std::unique_ptr<QgsFillSymbol> fillSymbol = std::make_unique<QgsFillSymbol>();
       fillSymbol->setColor( mColor );
-      if ( QgsSimpleFillSymbolLayer *fill = dynamic_cast< QgsSimpleFillSymbolLayer * >( fillSymbol->symbolLayer( 0 ) ) )
+      if ( QgsSimpleFillSymbolLayer *fill = dynamic_cast<QgsSimpleFillSymbolLayer *>( fillSymbol->symbolLayer( 0 ) ) )
       {
         fill->setStrokeStyle( Qt::NoPen );
       }
       mSettings.setFillSymbol( fillSymbol.release() );
 
-      std::unique_ptr< QgsFillSymbol > fillSymbol2 = std::make_unique< QgsFillSymbol >();
+      std::unique_ptr<QgsFillSymbol> fillSymbol2 = std::make_unique<QgsFillSymbol>();
       fillSymbol2->setColor( QColor( 255, 255, 255, 0 ) );
-      if ( QgsSimpleFillSymbolLayer *fill = dynamic_cast< QgsSimpleFillSymbolLayer * >( fillSymbol2->symbolLayer( 0 ) ) )
+      if ( QgsSimpleFillSymbolLayer *fill = dynamic_cast<QgsSimpleFillSymbolLayer *>( fillSymbol2->symbolLayer( 0 ) ) )
       {
         fill->setStrokeStyle( Qt::NoPen );
       }
       mSettings.setAlternateFillSymbol( fillSymbol2.release() );
 
       mSettings.setHeight( mStyleIndex == 2 ? 1 : 3 );
-      std::unique_ptr< QgsLineSymbol > lineSymbol = std::make_unique< QgsLineSymbol >();
+      std::unique_ptr<QgsLineSymbol> lineSymbol = std::make_unique<QgsLineSymbol>();
       lineSymbol->setColor( mOutlineColor ); // Compatibility with pre 3.2 configuration
       lineSymbol->setWidth( mStyleIndex == 2 ? 0.2 : 0.3 );
       lineSymbol->setOutputUnit( Qgis::RenderUnit::Millimeters );
@@ -225,8 +226,16 @@ double QgsDecorationScaleBar::mapWidth( const QgsMapSettings &settings ) const
 
     // we measure the horizontal distance across the vertical center of the map
     const double yPosition = 0.5 * ( mapExtent.yMinimum() + mapExtent.yMaximum() );
-    double measure = da.measureLine( QgsPointXY( mapExtent.xMinimum(), yPosition ),
-                                     QgsPointXY( mapExtent.xMaximum(), yPosition ) );
+    double measure = 0;
+    try
+    {
+      measure = da.measureLine( QgsPointXY( mapExtent.xMinimum(), yPosition ), QgsPointXY( mapExtent.xMaximum(), yPosition ) );
+    }
+    catch ( QgsCsException & )
+    {
+      // TODO report errors to user
+      QgsDebugError( QStringLiteral( "An error occurred while calculating length" ) );
+    }
 
     measure /= QgsUnitTypes::fromUnitToUnitFactor( mSettings.units(), units );
     return measure;
@@ -240,14 +249,9 @@ void QgsDecorationScaleBar::render( const QgsMapSettings &mapSettings, QgsRender
 
   //Get canvas dimensions
   QPaintDevice *device = context.painter()->device();
-  const int deviceHeight = device->height() / device->devicePixelRatioF();
-  const int deviceWidth = device->width() / device->devicePixelRatioF();
-  const QgsSettings settings;
-  bool ok = false;
-  Qgis::DistanceUnit preferredUnits = QgsUnitTypes::decodeDistanceUnit( settings.value( QStringLiteral( "qgis/measure/displayunits" ) ).toString(), &ok );
-  if ( !ok )
-    preferredUnits = Qgis::DistanceUnit::Meters;
-
+  const float deviceHeight = static_cast<float>( device->height() ) / context.devicePixelRatio();
+  const float deviceWidth = static_cast<float>( device->width() ) / context.devicePixelRatio();
+  const Qgis::DistanceUnit preferredUnits = QgsProject::instance()->distanceUnits();
   Qgis::DistanceUnit scaleBarUnits = mapSettings.mapUnits();
 
   //Get map units per pixel
@@ -266,7 +270,7 @@ void QgsDecorationScaleBar::render( const QgsMapSettings &mapSettings, QgsRender
   //If scale bar is very small reset to 1/4 of the canvas wide
   if ( scaleBarWidth < 30 )
   {
-    scaleBarWidth = deviceWidth / 4.0; // value in pixels
+    scaleBarWidth = deviceWidth / 4.0;                       // value in pixels
     unitsPerSegment = scaleBarWidth * scaleBarUnitsPerPixel; // value in map units
   }
 
@@ -360,6 +364,45 @@ void QgsDecorationScaleBar::render( const QgsMapSettings &mapSettings, QgsRender
     case Qgis::DistanceUnit::Millimeters:
     case Qgis::DistanceUnit::Inches:
     case Qgis::DistanceUnit::Unknown:
+    case Qgis::DistanceUnit::ChainsInternational:
+    case Qgis::DistanceUnit::ChainsBritishBenoit1895A:
+    case Qgis::DistanceUnit::ChainsBritishBenoit1895B:
+    case Qgis::DistanceUnit::ChainsBritishSears1922Truncated:
+    case Qgis::DistanceUnit::ChainsBritishSears1922:
+    case Qgis::DistanceUnit::ChainsClarkes:
+    case Qgis::DistanceUnit::ChainsUSSurvey:
+    case Qgis::DistanceUnit::FeetBritish1865:
+    case Qgis::DistanceUnit::FeetBritish1936:
+    case Qgis::DistanceUnit::FeetBritishBenoit1895A:
+    case Qgis::DistanceUnit::FeetBritishBenoit1895B:
+    case Qgis::DistanceUnit::FeetBritishSears1922Truncated:
+    case Qgis::DistanceUnit::FeetBritishSears1922:
+    case Qgis::DistanceUnit::FeetClarkes:
+    case Qgis::DistanceUnit::FeetGoldCoast:
+    case Qgis::DistanceUnit::FeetIndian:
+    case Qgis::DistanceUnit::FeetIndian1937:
+    case Qgis::DistanceUnit::FeetIndian1962:
+    case Qgis::DistanceUnit::FeetIndian1975:
+    case Qgis::DistanceUnit::FeetUSSurvey:
+    case Qgis::DistanceUnit::LinksInternational:
+    case Qgis::DistanceUnit::LinksBritishBenoit1895A:
+    case Qgis::DistanceUnit::LinksBritishBenoit1895B:
+    case Qgis::DistanceUnit::LinksBritishSears1922Truncated:
+    case Qgis::DistanceUnit::LinksBritishSears1922:
+    case Qgis::DistanceUnit::LinksClarkes:
+    case Qgis::DistanceUnit::LinksUSSurvey:
+    case Qgis::DistanceUnit::YardsBritishBenoit1895A:
+    case Qgis::DistanceUnit::YardsBritishBenoit1895B:
+    case Qgis::DistanceUnit::YardsBritishSears1922Truncated:
+    case Qgis::DistanceUnit::YardsBritishSears1922:
+    case Qgis::DistanceUnit::YardsClarkes:
+    case Qgis::DistanceUnit::YardsIndian:
+    case Qgis::DistanceUnit::YardsIndian1937:
+    case Qgis::DistanceUnit::YardsIndian1962:
+    case Qgis::DistanceUnit::YardsIndian1975:
+    case Qgis::DistanceUnit::MilesUSSurvey:
+    case Qgis::DistanceUnit::Fathoms:
+    case Qgis::DistanceUnit::MetersGermanLegal:
       scaleBarUnitLabel = QgsUnitTypes::toAbbreviatedString( scaleBarUnits );
       break;
   }
@@ -368,7 +411,7 @@ void QgsDecorationScaleBar::render( const QgsMapSettings &mapSettings, QgsRender
   mSettings.setNumberOfSegments( mStyleIndex == 3 ? 2 : 1 );
   mSettings.setUnitsPerSegment( mStyleIndex == 3 ? unitsPerSegment / 2 : unitsPerSegment );
   mSettings.setUnitLabel( scaleBarUnitLabel );
-  mSettings.setLabelHorizontalPlacement( mPlacement == TopCenter || mPlacement == BottomCenter ? QgsScaleBarSettings::LabelCenteredSegment : QgsScaleBarSettings::LabelCenteredEdge );
+  mSettings.setLabelHorizontalPlacement( mPlacement == TopCenter || mPlacement == BottomCenter ? Qgis::ScaleBarDistanceLabelHorizontalPlacement::CenteredSegment : Qgis::ScaleBarDistanceLabelHorizontalPlacement::CenteredEdge );
 
   QgsScaleBarRenderer::ScaleBarContext scaleContext;
   scaleContext.segmentWidth = mStyleIndex == 3 ? segmentSizeInMm / 2 : segmentSizeInMm;

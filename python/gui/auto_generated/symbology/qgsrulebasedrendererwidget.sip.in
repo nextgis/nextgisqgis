@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/symbology/qgsrulebasedrendererwidget.h                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -17,27 +17,31 @@ class QgsRuleBasedRendererModel : QAbstractItemModel
 %Docstring(signature="appended")
 Tree model for the rules:
 
-(invalid)  == root node
-+--- top level rule
-+--- top level rule
+The model represents rules as a tree:
+
+::
+
+     (invalid) == root node
+     +--- top level rule
+     +--- top level rule
 %End
 
 %TypeHeaderCode
 #include "qgsrulebasedrendererwidget.h"
 %End
   public:
-
     QgsRuleBasedRendererModel( QgsRuleBasedRenderer *renderer, QObject *parent, QScreen *screen = 0 );
 %Docstring
-Constructor for QgsRuleBasedRendererModel, for the specified ``renderer``.
+Constructor for QgsRuleBasedRendererModel, for the specified
+``renderer``.
 %End
 
     virtual Qt::ItemFlags flags( const QModelIndex &index ) const;
 
     virtual QVariant data( const QModelIndex &index, int role = Qt::DisplayRole ) const;
 
-     virtual QVariant headerData( int section, Qt::Orientation orientation,
-                         int role = Qt::DisplayRole ) const;
+    virtual QVariant headerData( int section, Qt::Orientation orientation, int role = Qt::DisplayRole ) const;
+
     virtual int rowCount( const QModelIndex &parent = QModelIndex() ) const;
 
     virtual int columnCount( const QModelIndex & = QModelIndex() ) const;
@@ -72,14 +76,14 @@ Constructor for QgsRuleBasedRendererModel, for the specified ``renderer``.
 
     void setSymbol( const QModelIndex &index, QgsSymbol *symbol /Transfer/ );
 %Docstring
-Sets the ``symbol`` for the rule at the specified ``index``. Ownership of the symbols is
-transferred to the renderer.
+Sets the ``symbol`` for the rule at the specified ``index``. Ownership
+of the symbols is transferred to the renderer.
 
 .. versionadded:: 3.10
 %End
 
     void willAddRules( const QModelIndex &parent, int count ); // call beginInsertRows
-    void finishedAddingRules(); // call endInsertRows
+    void finishedAddingRules();                                // call endInsertRows
 
     void clearFeatureCounts();
 
@@ -96,7 +100,6 @@ class QgsRuleBasedRendererWidget : QgsRendererWidget
 #include "qgsrulebasedrendererwidget.h"
 %End
   public:
-
     static QgsRendererWidget *create( QgsVectorLayer *layer, QgsStyle *style, QgsFeatureRenderer *renderer ) /Factory/;
 
     QgsRuleBasedRendererWidget( QgsVectorLayer *layer, QgsStyle *style, QgsFeatureRenderer *renderer );
@@ -140,7 +143,7 @@ Opens the dialog for refining a rule using ranges
 %End
     void refineRuleScalesGui( const QModelIndexList &index );
 
-    virtual void setSymbolLevels( const QList< QgsLegendSymbolItem > &levels, bool enabled );
+    virtual void setSymbolLevels( const QList<QgsLegendSymbolItem> &levels, bool enabled );
 
 
     QgsRuleBasedRenderer::Rule *currentRule();
@@ -176,12 +179,7 @@ class QgsRendererRulePropsWidget : QgsPanelWidget
 #include "qgsrulebasedrendererwidget.h"
 %End
   public:
-
-    QgsRendererRulePropsWidget( QgsRuleBasedRenderer::Rule *rule,
-                                QgsVectorLayer *layer,
-                                QgsStyle *style,
-                                QWidget *parent /TransferThis/ = 0,
-                                const QgsSymbolWidgetContext &context = QgsSymbolWidgetContext() );
+    QgsRendererRulePropsWidget( QgsRuleBasedRenderer::Rule *rule, QgsVectorLayer *layer, QgsStyle *style, QWidget *parent /TransferThis/ = 0, const QgsSymbolWidgetContext &context = QgsSymbolWidgetContext() );
 %Docstring
 Widget to edit the details of a rule based renderer rule.
 
@@ -236,7 +234,6 @@ class QgsRendererRulePropsDialog : QDialog
 #include "qgsrulebasedrendererwidget.h"
 %End
   public:
-
     QgsRendererRulePropsDialog( QgsRuleBasedRenderer::Rule *rule, QgsVectorLayer *layer, QgsStyle *style, QWidget *parent /TransferThis/ = 0, const QgsSymbolWidgetContext &context = QgsSymbolWidgetContext() );
 %Docstring
 Constructor for QgsRendererRulePropsDialog
@@ -264,5 +261,5 @@ Constructor for QgsRendererRulePropsDialog
  *                                                                      *
  * src/gui/symbology/qgsrulebasedrendererwidget.h                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

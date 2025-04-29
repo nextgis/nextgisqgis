@@ -5,13 +5,13 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Nyall Dawson'
-__date__ = '11/06/2018'
-__copyright__ = 'Copyright 2018, The QGIS Project'
+
+__author__ = "Nyall Dawson"
+__date__ = "11/06/2018"
+__copyright__ = "Copyright 2018, The QGIS Project"
 
 import os
 
-import qgis  # NOQA
 from qgis.core import (
     Qgis,
     QgsDataSourceUri,
@@ -19,12 +19,13 @@ from qgis.core import (
     QgsTransaction,
     QgsVectorLayer,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 start_app()
 
 
-class TestQgsPostgresTransaction(unittest.TestCase):
+class TestQgsPostgresTransaction(QgisTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -33,22 +34,28 @@ class TestQgsPostgresTransaction(unittest.TestCase):
         :return:
         """
         super().setUpClass()
-        cls.dbconn = 'service=qgis_test'
-        if 'QGIS_PGTEST_DB' in os.environ:
-            cls.dbconn = os.environ['QGIS_PGTEST_DB']
+        cls.dbconn = "service=qgis_test"
+        if "QGIS_PGTEST_DB" in os.environ:
+            cls.dbconn = os.environ["QGIS_PGTEST_DB"]
         # Create test layer
-        cls.vl_b = QgsVectorLayer(cls.dbconn + ' sslmode=disable key=\'pk\' table="qgis_test"."books" sql=', 'books',
-                                  'postgres')
-        cls.vl_a = QgsVectorLayer(cls.dbconn + ' sslmode=disable key=\'pk\' table="qgis_test"."authors" sql=',
-                                  'authors', 'postgres')
+        cls.vl_b = QgsVectorLayer(
+            cls.dbconn + ' sslmode=disable key=\'pk\' table="qgis_test"."books" sql=',
+            "books",
+            "postgres",
+        )
+        cls.vl_a = QgsVectorLayer(
+            cls.dbconn + ' sslmode=disable key=\'pk\' table="qgis_test"."authors" sql=',
+            "authors",
+            "postgres",
+        )
 
         QgsProject.instance().addMapLayer(cls.vl_b)
         QgsProject.instance().addMapLayer(cls.vl_a)
 
         cls.relMgr = QgsProject.instance().relationManager()
 
-        assert (cls.vl_a.isValid())
-        assert (cls.vl_b.isValid())
+        assert cls.vl_a.isValid()
+        assert cls.vl_b.isValid()
 
     def startTransaction(self):
         """
@@ -109,10 +116,17 @@ class TestQgsPostgresTransaction(unittest.TestCase):
         project = QgsProject()
         project.setTransactionMode(Qgis.TransactionMode.AutomaticGroups)
 
-        vl_b = QgsVectorLayer(self.dbconn + ' sslmode=disable key=\'pk\' table="qgis_test"."books" sql=', 'books',
-                              'postgres')
-        vl_a = QgsVectorLayer(self.dbconn + ' sslmode=disable key=\'pk\' table="qgis_test"."authors" sql=',
-                              'authors', 'postgres')
+        vl_b = QgsVectorLayer(
+            self.dbconn + ' sslmode=disable key=\'pk\' table="qgis_test"."books" sql=',
+            "books",
+            "postgres",
+        )
+        vl_a = QgsVectorLayer(
+            self.dbconn
+            + ' sslmode=disable key=\'pk\' table="qgis_test"."authors" sql=',
+            "authors",
+            "postgres",
+        )
 
         project.addMapLayers([vl_a, vl_b])
 
@@ -125,5 +139,5 @@ class TestQgsPostgresTransaction(unittest.TestCase):
         self.assertTrue(vl_b.isEditable())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -28,7 +28,6 @@
  * \ingroup core
  * \class QgsTriangle
  * \brief Triangle geometry type.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsTriangle : public QgsPolygon
 {
@@ -89,7 +88,7 @@ class CORE_EXPORT QgsTriangle : public QgsPolygon
      * Inherited method not used. You cannot add an interior ring into a triangle.
      * \note not available in Python bindings
      */
-    void setInteriorRings( const QVector< QgsCurve *> &rings ) = delete;
+    void setInteriorRings( const QVector< QgsCurve *> &rings ) = delete; // cppcheck-suppress duplInheritedMember
     //! Inherited method not used. You cannot delete or insert a vertex directly. Returns always FALSE.
     bool deleteVertex( QgsVertexId position ) override;
     //! Inherited method not used. You cannot delete or insert a vertex directly. Returns always FALSE.
@@ -452,9 +451,8 @@ class CORE_EXPORT QgsTriangle : public QgsPolygon
      * Should be used by qgsgeometry_cast<QgsTriangle *>( geometry ).
      *
      * \note Not available in Python. Objects will be automatically be converted to the appropriate target type.
-     * \since QGIS 3.0
      */
-    inline static const QgsTriangle *cast( const QgsAbstractGeometry *geom )
+    inline static const QgsTriangle *cast( const QgsAbstractGeometry *geom ) // cppcheck-suppress duplInheritedMember
     {
       if ( geom && QgsWkbTypes::flatType( geom->wkbType() ) == Qgis::WkbType::Triangle )
         return static_cast<const QgsTriangle *>( geom );

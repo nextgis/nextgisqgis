@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/raster/qgsrasterhistogramwidget.h                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -22,10 +22,10 @@ Histogram widget
 #include "qgsrasterhistogramwidget.h"
 %End
   public:
-
     QgsRasterHistogramWidget( QgsRasterLayer *layer, QWidget *parent /TransferThis/ = 0 );
 %Docstring
-Constructor for QgsRasterHistogramWidget, for the specified raster ``layer``.
+Constructor for QgsRasterHistogramWidget, for the specified raster
+``layer``.
 %End
 
     bool histoSaveAsImage( const QString &filename, int width = 600, int height = 600, int quality = -1 );
@@ -73,5 +73,5 @@ slot executed when user wishes to refresh raster histogramwidget
  *                                                                      *
  * src/gui/raster/qgsrasterhistogramwidget.h                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

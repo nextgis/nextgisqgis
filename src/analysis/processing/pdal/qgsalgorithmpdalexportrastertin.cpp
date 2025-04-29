@@ -60,16 +60,16 @@ QgsPdalExportRasterTinAlgorithm *QgsPdalExportRasterTinAlgorithm::createInstance
 void QgsPdalExportRasterTinAlgorithm::initAlgorithm( const QVariantMap & )
 {
   addParameter( new QgsProcessingParameterPointCloudLayer( QStringLiteral( "INPUT" ), QObject::tr( "Input layer" ) ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "RESOLUTION" ), QObject::tr( "Resolution of the density raster" ), QgsProcessingParameterNumber::Double, 1, false, 1e-6 ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "TILE_SIZE" ), QObject::tr( "Tile size for parallel runs" ), QgsProcessingParameterNumber::Integer, 1000, false, 1 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "RESOLUTION" ), QObject::tr( "Resolution of the density raster" ), Qgis::ProcessingNumberParameterType::Double, 1, false, 1e-6 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "TILE_SIZE" ), QObject::tr( "Tile size for parallel runs" ), Qgis::ProcessingNumberParameterType::Integer, 1000, false, 1 ) );
 
   createCommonParameters();
 
-  std::unique_ptr< QgsProcessingParameterNumber > paramOriginX = std::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "ORIGIN_X" ), QObject::tr( "X origin of a tile for parallel runs" ), QgsProcessingParameterNumber::Double, QVariant(), true, 0 );
-  paramOriginX->setFlags( paramOriginX->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
+  std::unique_ptr<QgsProcessingParameterNumber> paramOriginX = std::make_unique<QgsProcessingParameterNumber>( QStringLiteral( "ORIGIN_X" ), QObject::tr( "X origin of a tile for parallel runs" ), Qgis::ProcessingNumberParameterType::Double, QVariant(), true, 0 );
+  paramOriginX->setFlags( paramOriginX->flags() | Qgis::ProcessingParameterFlag::Advanced );
   addParameter( paramOriginX.release() );
-  std::unique_ptr< QgsProcessingParameterNumber > paramOriginY = std::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "ORIGIN_Y" ), QObject::tr( "Y origin of a tile for parallel runs" ), QgsProcessingParameterNumber::Integer, QVariant(), true, 0 );
-  paramOriginY->setFlags( paramOriginY->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
+  std::unique_ptr<QgsProcessingParameterNumber> paramOriginY = std::make_unique<QgsProcessingParameterNumber>( QStringLiteral( "ORIGIN_Y" ), QObject::tr( "Y origin of a tile for parallel runs" ), Qgis::ProcessingNumberParameterType::Integer, QVariant(), true, 0 );
+  paramOriginY->setFlags( paramOriginY->flags() | Qgis::ProcessingParameterFlag::Advanced );
   addParameter( paramOriginY.release() );
 
   addParameter( new QgsProcessingParameterRasterDestination( QStringLiteral( "OUTPUT" ), QObject::tr( "Exported (using triangulation)" ) ) );
@@ -99,12 +99,7 @@ QStringList QgsPdalExportRasterTinAlgorithm::createArgumentLists( const QVariant
 
   enableElevationPropertiesPostProcessor( true );
 
-  QStringList args = { QStringLiteral( "to_raster_tin" ),
-                       QStringLiteral( "--input=%1" ).arg( layer->source() ),
-                       QStringLiteral( "--output=%1" ).arg( outputFile ),
-                       QStringLiteral( "--resolution=%1" ).arg( resolution ),
-                       QStringLiteral( "--tile-size=%1" ).arg( tileSize )
-                     };
+  QStringList args = { QStringLiteral( "to_raster_tin" ), QStringLiteral( "--input=%1" ).arg( layer->source() ), QStringLiteral( "--output=%1" ).arg( outputFile ), QStringLiteral( "--resolution=%1" ).arg( resolution ), QStringLiteral( "--tile-size=%1" ).arg( tileSize ) };
 
   if ( hasOriginX && hasOriginY )
   {

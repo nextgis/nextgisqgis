@@ -26,7 +26,7 @@ QgsMaskMarkerSymbolLayer::QgsMaskMarkerSymbolLayer()
 
 QgsMaskMarkerSymbolLayer::~QgsMaskMarkerSymbolLayer() = default;
 
-bool QgsMaskMarkerSymbolLayer::enabled() const
+bool QgsMaskMarkerSymbolLayer::enabled() const // cppcheck-suppress duplInheritedMember
 {
   return !mMaskedSymbolLayers.isEmpty();
 }
@@ -134,6 +134,11 @@ QList<QgsSymbolLayerReference> QgsMaskMarkerSymbolLayer::masks() const
 void QgsMaskMarkerSymbolLayer::setMasks( const QList<QgsSymbolLayerReference> &maskedLayers )
 {
   mMaskedSymbolLayers = maskedLayers;
+}
+
+void QgsMaskMarkerSymbolLayer::clearMasks()
+{
+  mMaskedSymbolLayers.clear();
 }
 
 QRectF QgsMaskMarkerSymbolLayer::bounds( QPointF point, QgsSymbolRenderContext &context )

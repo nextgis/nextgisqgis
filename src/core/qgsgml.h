@@ -32,6 +32,10 @@
 
 #include <string>
 
+#ifndef SIP_RUN
+#include <nlohmann/json.hpp>
+#endif
+
 class QgsCoordinateReferenceSystem;
 class QTextCodec;
 
@@ -46,7 +50,6 @@ class QTextCodec;
  * getAndStealReadyFeatures() to collect the features that have been completely
  * parsed.
  * \note not available in Python bindings
- * \since QGIS 2.16
  */
 class CORE_EXPORT QgsGmlStreamingParser
 {
@@ -61,7 +64,7 @@ class CORE_EXPORT QgsGmlStreamingParser
     class LayerProperties
     {
       public:
-        //! Constructor
+
         LayerProperties() = default;
 
         //! Layer name
@@ -91,15 +94,22 @@ class CORE_EXPORT QgsGmlStreamingParser
     //! Constructor for a join layer, or dealing with renamed fields
     QgsGmlStreamingParser( const QList<LayerProperties> &layerProperties,
                            const QgsFields &fields,
-                           const QMap< QString, QPair<QString, QString> > &mapFieldNameToSrcLayerNameFieldName,
+                           const QMap< QString, QPair<QString, QString> > &fieldNameToSrcLayerNameFieldNameMap,
                            AxisOrientationLogic axisOrientationLogic = Honour_EPSG_if_urn,
                            bool invertAxisOrientation = false );
     ~QgsGmlStreamingParser();
 
-    //! QgsGmlStreamingParser cannot be copied.
     QgsGmlStreamingParser( const QgsGmlStreamingParser &other ) = delete;
-    //! QgsGmlStreamingParser cannot be copied.
     QgsGmlStreamingParser &operator=( const QgsGmlStreamingParser &other ) = delete;
+
+    /**
+     * Define the XPath of the attributes and whether they are made of nested
+     * content. Also provides a map from namespace prefix to namespace URI,
+     * to help decoding the XPath.
+     */
+    void setFieldsXPath(
+      const QMap<QString, QPair<QString, bool>> &fieldNameToSrcLayerNameFieldNameMap,
+      const QMap<QString, QString> &namespacePrefixToURIMap );
 
     /**
      * Process a new chunk of data. atEnd must be set to TRUE when this is
@@ -190,6 +200,9 @@ class CORE_EXPORT QgsGmlStreamingParser
       static_cast<QgsGmlStreamingParser *>( data )->characters( chars, len );
     }
 
+    // Add mStringCash to the current json object
+    void addStringContentToJson();
+
     // Set current feature attribute
     void setAttribute( const QString &name, const QString &value );
 
@@ -231,9 +244,9 @@ class CORE_EXPORT QgsGmlStreamingParser
     int pointsFromPosListString( QList<QgsPointXY> &points, const QString &coordString, int dimension ) const;
 
     int pointsFromString( QList<QgsPointXY> &points, const QString &coordString ) const;
-    int getPointWKB( QgsWkbPtr &wkbPtr, const QgsPointXY & ) const;
-    int getLineWKB( QgsWkbPtr &wkbPtr, const QList<QgsPointXY> &lineCoordinates ) const;
-    int getRingWKB( QgsWkbPtr &wkbPtr, const QList<QgsPointXY> &ringCoordinates ) const;
+    int getPointWKB( QByteArray &wkbPtr, const QgsPointXY & ) const;
+    int getLineWKB( QByteArray &wkbPtr, const QList<QgsPointXY> &lineCoordinates ) const;
+    int getRingWKB( QByteArray &wkbPtr, const QList<QgsPointXY> &ringCoordinates ) const;
 
     /**
      * Creates a multiline from the information in mCurrentWKBFragments and
@@ -285,6 +298,8 @@ class CORE_EXPORT QgsGmlStreamingParser
 
     QgsFields mFields;
     QMap<QString, QPair<int, QgsField> > mThematicAttributes;
+    QMap<QString, QPair<QString, bool>> mMapXPathToFieldNameAndIsNestedContent;
+    QMap<QString, QString> mMapNamespaceURIToNamespacePrefix;
 
     bool mIsException;
     QString mExceptionText;
@@ -295,6 +310,7 @@ class CORE_EXPORT QgsGmlStreamingParser
     QString mCurrentTypename; //!< Used to track the current (unprefixed) typename for wfs:Member in join layer
     //! Keep track about the most important nested elements
     QStack<ParseMode> mParseModeStack;
+    QString mCurrentXPathWithinFeature;
     //! This contains the character data if an important element has been encountered
     QString mStringCash;
     QgsFeature *mCurrentFeature = nullptr;
@@ -302,7 +318,7 @@ class CORE_EXPORT QgsGmlStreamingParser
     QString mCurrentFeatureId;
     int mFeatureCount;
     //! The total WKB for a feature
-    QgsWkbPtr mCurrentWKB;
+    QByteArray mCurrentWKB;
     QgsRectangle mCurrentExtent;
     bool mBoundedByNullFound;
 
@@ -312,8 +328,14 @@ class CORE_EXPORT QgsGmlStreamingParser
      * polygons, only one nested list is used. For multipolygons, both nested lists
      * are used
     */
-    QList< QList<QgsWkbPtr> > mCurrentWKBFragments;
+    QList< QList< QByteArray > > mCurrentWKBFragments;
     QString mAttributeName;
+    int mAttributeDepth = -1;
+    bool mAttributeValIsNested = false;
+    //! Map from field name to JSON content.
+    QMap< QString, QString > mMapFieldNameToJSONContent;
+    nlohmann::json mAttributeJson;
+    QStack<nlohmann::json *> mAttributeJsonCurrentStack;
     char mEndian;
     //! Coordinate separator for coordinate strings. Usually ","
     QString mCoordinateSeparator;
@@ -358,10 +380,9 @@ class CORE_EXPORT QgsGmlStreamingParser
  * \ingroup core
  * \brief This class reads data from a WFS server or alternatively from a GML file.
  *
- * It
- * uses the expat XML parser and an event based model to keep performance high.
+ * It uses the expat XML parser and an event based model to keep performance high.
  * The parsing starts when the first data arrives, it does not wait until the
- * request is finished
+ * request is finished.
 */
 class CORE_EXPORT QgsGml : public QObject
 {
@@ -373,7 +394,8 @@ class CORE_EXPORT QgsGml : public QObject
       const QgsFields &fields );
 
     /**
-     * Does the Http GET request to the wfs server
+     * Does the HTTP GET request to the WFS server
+     *
      *  \param uri GML URL
      *  \param wkbType wkbType to retrieve
      *  \param extent retrieved extents
@@ -391,7 +413,9 @@ class CORE_EXPORT QgsGml : public QObject
                      const QString &authcfg = QString() ) SIP_PYNAME( getFeaturesUri );
 
     /**
-     * Read from GML data. Constructor uri param is ignored
+     * Read from GML data.
+     *
+     * The constructor uri param is ignored.
      */
     int getFeatures( const QByteArray &data, Qgis::WkbType *wkbType, QgsRectangle *extent = nullptr );
 
@@ -402,15 +426,32 @@ class CORE_EXPORT QgsGml : public QObject
     QMap<QgsFeatureId, QString > idsMap() const { return mIdMap; }
 
     /**
-     * Returns features spatial reference system
-     * \since QGIS 2.1
+     * Returns the spatial reference system for features.
      */
     QgsCoordinateReferenceSystem crs() const;
 
   signals:
+
+    /**
+     * Emitted when data reading progresses.
+     *
+     * \param progress specifies the number of bytes processed so far
+     */
     void dataReadProgress( int progress );
+
+    /**
+     * Emitted when the total number of bytes to read changes.
+     *
+     * \param totalSteps specifies the total number of bytes which must be processed
+     */
     void totalStepsUpdate( int totalSteps );
-    //! Also emit signal with progress and totalSteps together (this is better for the status message)
+
+    /**
+     * Emitted when data reading progresses or the total number of bytes to read changes.
+     *
+     * \param progress specifies the number of bytes processed so far
+     * \param totalSteps specifies the total number of bytes which must be processed
+     */
     void dataProgressAndSteps( int progress, int totalSteps );
 
   private slots:

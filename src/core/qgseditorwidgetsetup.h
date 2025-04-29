@@ -23,7 +23,6 @@
  * \ingroup core
  * \brief Holder for the widget type and its configuration for a field.
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsEditorWidgetSetup
 {
@@ -37,7 +36,6 @@ class CORE_EXPORT QgsEditorWidgetSetup
       , mConfig( config )
     {}
 
-    //! Constructor for QgsEditorWidgetSetup
     QgsEditorWidgetSetup() = default;
 
     /**
@@ -54,6 +52,12 @@ class CORE_EXPORT QgsEditorWidgetSetup
      * \returns TRUE if there is no widget configured.
      */
     bool isNull() const { return mType.isEmpty(); }
+
+    // TODO c++20 - replace with = default
+    bool operator==( const QgsEditorWidgetSetup &other ) const
+    {
+      return mType == other.mType && mConfig == other.mConfig;
+    }
 
   private:
     QString mType;

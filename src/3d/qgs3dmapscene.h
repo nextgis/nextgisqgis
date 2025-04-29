@@ -28,7 +28,7 @@ namespace Qt3DRender
 {
   class QRenderSettings;
   class QCamera;
-}
+} // namespace Qt3DRender
 
 namespace Qt3DLogic
 {
@@ -39,7 +39,7 @@ namespace Qt3DExtras
 {
   class QForwardRenderer;
   class QSkyboxEntity;
-}
+} // namespace Qt3DExtras
 #endif
 
 
@@ -53,7 +53,6 @@ class QgsChunkedEntity;
 class QgsSkyboxEntity;
 class QgsSkyboxSettings;
 class Qgs3DMapExportSettings;
-class QgsShadowRenderingFrameGraph;
 class QgsPostprocessingEntity;
 class QgsChunkNode;
 class QgsDoubleRange;
@@ -63,8 +62,6 @@ class Qgs3DMapSceneEntity;
 /**
  * \ingroup 3d
  * \brief Entity that encapsulates our 3D scene - contains all other entities (such as terrain) as children.
- * \note Not available in Python bindings
- * \since QGIS 3.0
  */
 #ifndef SIP_RUN
 class _3D_EXPORT Qgs3DMapScene : public Qt3DCore::QEntity
@@ -80,7 +77,7 @@ class _3D_EXPORT Qgs3DMapScene : public QObject
     Qgs3DMapScene( Qgs3DMapSettings &map, QgsAbstract3DEngine *engine ) SIP_SKIP;
 
     //! Returns camera controller
-    QgsCameraController *cameraController() { return mCameraController; }
+    QgsCameraController *cameraController() const { return mCameraController; }
 
     /**
      * Returns terrain entity (may be temporarily NULLPTR)
@@ -103,7 +100,7 @@ class _3D_EXPORT Qgs3DMapScene : public QObject
      *
      * \since QGIS 3.26
      */
-    QVector<QgsPointXY> viewFrustum2DExtent();
+    QVector<QgsPointXY> viewFrustum2DExtent() const;
 
     //! Returns number of pending jobs of the terrain entity
     int terrainPendingJobsCount() const;
@@ -117,8 +114,8 @@ class _3D_EXPORT Qgs3DMapScene : public QObject
     //! Enumeration of possible states of the 3D scene
     enum SceneState
     {
-      Ready,     //!< The scene is fully loaded/updated
-      Updating,  //!< The scene is still being loaded/updated
+      Ready,    //!< The scene is fully loaded/updated
+      Updating, //!< The scene is still being loaded/updated
     };
 
     //! Returns the current state of the scene
@@ -128,7 +125,7 @@ class _3D_EXPORT Qgs3DMapScene : public QObject
      * Given screen error (in pixels) and distance from camera (in 3D world coordinates), this function
      * estimates the error in world space. Takes into account camera's field of view and the screen (3D view) size.
      */
-    float worldSpaceError( float epsilon, float distance );
+    float worldSpaceError( float epsilon, float distance ) const;
 
     //! Exports the scene according to the scene export settings
     void exportScene( const Qgs3DMapExportSettings &exportSettings );
@@ -145,7 +142,7 @@ class _3D_EXPORT Qgs3DMapScene : public QObject
      *
      * \since QGIS 3.32
      */
-    QList<QgsMapLayer *> layers() SIP_SKIP { return mLayerEntities.keys(); }
+    QList<QgsMapLayer *> layers() const SIP_SKIP { return mLayerEntities.keys(); }
 
     /**
      * Returns the entity belonging to \a layer
@@ -159,11 +156,11 @@ class _3D_EXPORT Qgs3DMapScene : public QObject
      *
      * \since QGIS 3.20
      */
-    QgsRectangle sceneExtent();
+    QgsRectangle sceneExtent() const;
 
     /**
      * Returns the scene's elevation range
-     * \note Only terrain and point cloud layers are taken into account
+     * \note Only some layer types are considered by this method (eg terrain, point cloud and mesh layers)
      *
      * \since QGIS 3.30
      */
@@ -174,14 +171,14 @@ class _3D_EXPORT Qgs3DMapScene : public QObject
      *
      * \since QGIS 3.26
      */
-    Qgs3DAxis *get3DAxis() SIP_SKIP { return m3DAxis; }
+    Qgs3DAxis *get3DAxis() const SIP_SKIP { return m3DAxis; }
 
     /**
      * Returns the abstract 3D engine
      *
      * \since QGIS 3.26
      */
-    QgsAbstract3DEngine *engine() SIP_SKIP { return mEngine; }
+    QgsAbstract3DEngine *engine() const SIP_SKIP { return mEngine; }
 
     /**
      * Returns the 3D map settings.
@@ -191,17 +188,65 @@ class _3D_EXPORT Qgs3DMapScene : public QObject
     Qgs3DMapSettings *mapSettings() const { return &mMap; }
 
     /**
+     * Returns whether updates of the 3D scene's entities are allowed.
+     * Normally, scene updates are enabled. But for debugging purposes,
+     * it may be useful to temporarily disable scene updates.
+     *
+     * \since QGIS 3.40
+     */
+    bool hasSceneUpdatesEnabled() const { return mSceneUpdatesEnabled; }
+
+    /**
+     * Sets whether updates of the 3D scene's entities are allowed.
+     * Normally, scene updates are enabled. But for debugging purposes,
+     * it may be useful to temporarily disable scene updates.
+     *
+     * \since QGIS 3.40
+     */
+    void setSceneUpdatesEnabled( bool enabled ) { mSceneUpdatesEnabled = enabled; }
+
+    /**
      * Returns a map of 3D map scenes (by name) open in the QGIS application.
      *
      * \note Only available from the QGIS desktop application.
-     *
+     * \deprecated QGIS 3.36. Use QgisAppInterface::mapCanvases3D() instead.
      * \since QGIS 3.30
      */
-    static QMap< QString, Qgs3DMapScene * > openScenes();
+    Q_DECL_DEPRECATED static QMap<QString, Qgs3DMapScene *> openScenes() SIP_DEPRECATED;
+
+    /**
+     * Enables OpenGL clipping based on the planes equations defined in \a clipPlaneEquations.
+     * The number of planes is equal to the size of \a clipPlaneEquations.
+     * A plane equation contains 4 elements.
+     * A simple way to define a clip plane equation is to define a normalized normal to
+     * the plane and its distance from the origin of the scene.
+     * In that case, the first 3 elements are the coordinates of the normal of the plane as ``(X, Y, Z)``.
+     * They need to be normalized.
+     * The last element is the distance of the plane from the origin of the scene.
+     * In mathematical terms, a 3d plane can be defined with the equation ``ax+by+cz+d=0``
+     * The normal is ``(a, b, c)`` with ``|a, b, c| = 1``
+     * The distance is ``-d``.
+     *
+     * By default, OpenGL supports up to 8 additional clipping planes. If \a clipPlaneEquations
+     * contains more than 8 planes, only the first 8 ones will be used.
+     * If \a clipPlaneEquations is empty, the clipping is disabled.
+     *
+     * \see disableClipping()
+     * \since QGIS 3.40
+    */
+    void enableClipping( const QList<QVector4D> &clipPlaneEquations );
+
+    /**
+     * Disables OpenGL clipping.
+     *
+     * \see enableClipping()
+     * \since QGIS 3.40
+     */
+    void disableClipping();
 
 #ifndef SIP_RUN
     //! Static function for returning open 3D map scenes
-    static std::function< QMap< QString, Qgs3DMapScene * >() > sOpenScenesFunction;
+    static std::function<QMap<QString, Qgs3DMapScene *>()> sOpenScenesFunction;
 #endif
 
   signals:
@@ -229,6 +274,13 @@ class _3D_EXPORT Qgs3DMapScene : public QObject
      * \since QGIS 3.26
      */
     void viewed2DExtentFrom3DChanged( QVector<QgsPointXY> extent );
+
+    /**
+     *  Emitted when one of the entities reaches its GPU memory limit
+     *  and it is not possible to lower the GPU memory use by unloading
+     *  data that's not currently needed.
+     */
+    void gpuMemoryLimitReached();
 
   public slots:
     //! Updates the temporale entities
@@ -270,9 +322,12 @@ class _3D_EXPORT Qgs3DMapScene : public QObject
     void addCameraRotationCenterEntity( QgsCameraController *controller );
     void setSceneState( SceneState state );
     void updateSceneState();
-    void updateScene();
+    void updateScene( bool forceUpdate = false );
     void finalizeNewEntity( Qt3DCore::QEntity *newEntity );
     int maximumTextureSize() const;
+
+    void handleClippingOnEntity( QEntity *entity ) const;
+    void handleClippingOnAllEntities() const;
 
   private:
     Qgs3DMapSettings &mMap;
@@ -298,5 +353,8 @@ class _3D_EXPORT Qgs3DMapScene : public QObject
     //! 3d axis visualization
     Qgs3DAxis *m3DAxis = nullptr;
 
+    bool mSceneUpdatesEnabled = true;
+
+    QList<QVector4D> mClipPlanesEquations;
 };
 #endif // QGS3DMAPSCENE_H

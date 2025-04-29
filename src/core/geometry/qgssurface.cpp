@@ -30,7 +30,7 @@ bool QgsSurface::isValid( QString &error, Qgis::GeometryValidityFlags flags ) co
     return error.isEmpty();
   }
 
-  const QgsGeos geos( this );
+  const QgsGeos geos( this, 0, Qgis::GeosCreationFlags() );
   const bool res = geos.isValid( &error, flags & Qgis::GeometryValidityFlag::AllowSelfTouchingHoles, nullptr );
   if ( flags == 0 )
   {
@@ -42,7 +42,7 @@ bool QgsSurface::isValid( QString &error, Qgis::GeometryValidityFlags flags ) co
 
 void QgsSurface::clearCache() const
 {
-  mBoundingBox = QgsRectangle();
+  mBoundingBox = QgsBox3D();
   mHasCachedValidity = false;
   mValidityFailureReason.clear();
   QgsAbstractGeometry::clearCache();

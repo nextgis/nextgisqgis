@@ -37,14 +37,12 @@ class QgsAggregateToolButton;
  * of the editor widget depending on a number of possible modes. For instance, if the parent attribute
  * form is in the multi edit mode, this widget will show both the editor widget and a tool button for
  * controlling the multi edit results.
- * \since QGIS 2.16
  */
 class GUI_EXPORT QgsAttributeFormEditorWidget : public QgsAttributeFormWidget
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsAttributeFormEditorWidget.
      * \param editorWidget associated editor widget wrapper (for default/edit modes)
@@ -52,8 +50,7 @@ class GUI_EXPORT QgsAttributeFormEditorWidget : public QgsAttributeFormWidget
      *        wrapper
      * \param form parent attribute form
      */
-    explicit QgsAttributeFormEditorWidget( QgsEditorWidgetWrapper *editorWidget, const QString &widgetType,
-                                           QgsAttributeForm *form  SIP_TRANSFERTHIS );
+    explicit QgsAttributeFormEditorWidget( QgsEditorWidgetWrapper *editorWidget, const QString &widgetType, QgsAttributeForm *form SIP_TRANSFERTHIS );
 
     ~QgsAttributeFormEditorWidget() override;
 
@@ -112,7 +109,7 @@ class GUI_EXPORT QgsAttributeFormEditorWidget : public QgsAttributeFormWidget
     /**
      * Emitted when the widget's value changes
      * \param value new widget value
-     * \deprecated since QGIS 3.10 use valuesChanged instead
+     * \deprecated QGIS 3.10. Use valuesChanged instead.
      */
     Q_DECL_DEPRECATED void valueChanged( const QVariant &value );
 

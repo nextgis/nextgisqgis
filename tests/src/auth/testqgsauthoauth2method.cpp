@@ -37,7 +37,7 @@
  * \ingroup UnitTests
  * Unit tests for QgsAuthOAuth2Config
  */
-class TestQgsAuthOAuth2Method: public QObject
+class TestQgsAuthOAuth2Method : public QObject
 {
     Q_OBJECT
 
@@ -112,6 +112,7 @@ QgsAuthOAuth2Config *TestQgsAuthOAuth2Method::baseConfig( bool loaded )
     config->setRequestUrl( "https://request.oauth2.test" );
     config->setTokenUrl( "https://token.oauth2.test" );
     config->setRefreshTokenUrl( "https://refreshtoken.oauth2.test" );
+    config->setRedirectHost( "myhost" );
     config->setRedirectUrl( "subdir" );
     config->setRedirectPort( 7777 );
     config->setClientId( "myclientid" );
@@ -156,6 +157,7 @@ QByteArray TestQgsAuthOAuth2Method::baseConfigTxt( bool pretty )
            "        \"pf.password\": \"mypassword\",\n"
            "        \"pf.username\": \"myusername\"\n"
            "    },\n"
+           "    \"redirectHost\": \"myhost\",\n"
            "    \"redirectPort\": 7777,\n"
            "    \"redirectUrl\": \"subdir\",\n"
            "    \"refreshTokenUrl\": \"https://refreshtoken.oauth2.test\",\n"
@@ -183,6 +185,7 @@ QByteArray TestQgsAuthOAuth2Method::baseConfigTxt( bool pretty )
            "\"password\":\"mypassword\","
            "\"persistToken\":false,"
            "\"queryPairs\":{\"pf.password\":\"mypassword\",\"pf.username\":\"myusername\"},"
+           "\"redirectHost\":\"myhost\","
            "\"redirectPort\":7777,"
            "\"redirectUrl\":\"subdir\","
            "\"refreshTokenUrl\":\"https://refreshtoken.oauth2.test\","
@@ -216,6 +219,7 @@ QVariantMap TestQgsAuthOAuth2Method::baseVariantMap()
   qpairs.insert( "pf.password", "mypassword" );
   qpairs.insert( "pf.username", "myusername" );
   vmap.insert( "queryPairs", qpairs );
+  vmap.insert( "redirectHost", "myhost" );
   vmap.insert( "redirectPort", 7777 );
   vmap.insert( "redirectUrl", "subdir" );
   vmap.insert( "refreshTokenUrl", "https://refreshtoken.oauth2.test" );
@@ -363,16 +367,12 @@ void TestQgsAuthOAuth2Method::testOAuth2ConfigIO()
   const QString config4path( QDir::tempPath() + "/" + dirname + "/config4.json" );
   const QString config5path( QDir::tempPath() + "/" + dirname + "/config5.json" );
 
-  QVERIFY( QgsAuthOAuth2Config::writeOAuth2Config( config4path, config4,
-           QgsAuthOAuth2Config::JSON, true ) );
-  QVERIFY( QgsAuthOAuth2Config::writeOAuth2Config( config5path, config5,
-           QgsAuthOAuth2Config::JSON, true ) );
+  QVERIFY( QgsAuthOAuth2Config::writeOAuth2Config( config4path, config4, QgsAuthOAuth2Config::JSON, true ) );
+  QVERIFY( QgsAuthOAuth2Config::writeOAuth2Config( config5path, config5, QgsAuthOAuth2Config::JSON, true ) );
 
   qDebug() << "Verify reading config files from directory";
   ok = false;
-  QList<QgsAuthOAuth2Config *> configs =
-    QgsAuthOAuth2Config::loadOAuth2Configs( QDir::tempPath() + "/" + dirname,
-        qApp, QgsAuthOAuth2Config::JSON, &ok );
+  QList<QgsAuthOAuth2Config *> configs = QgsAuthOAuth2Config::loadOAuth2Configs( QDir::tempPath() + "/" + dirname, qApp, QgsAuthOAuth2Config::JSON, &ok );
   QVERIFY( ok );
   QCOMPARE( configs.size(), 2 );
   QgsAuthOAuth2Config *config6 = configs.takeFirst();
@@ -400,7 +400,8 @@ void TestQgsAuthOAuth2Method::testOAuth2ConfigUtils()
 
   qDebug() << "Verify serializeFromVariant";
   const QByteArray vtxt = QgsAuthOAuth2Config::serializeFromVariant(
-                            basevmap, QgsAuthOAuth2Config::JSON, true, &ok );
+    basevmap, QgsAuthOAuth2Config::JSON, true, &ok
+  );
   QVERIFY( ok );
   //qDebug() << vtxt;
   //qDebug() << baseConfigTxt( true );
@@ -408,25 +409,25 @@ void TestQgsAuthOAuth2Method::testOAuth2ConfigUtils()
 
   qDebug() << "Verify variantFromSerialized";
   const QVariantMap vmap = QgsAuthOAuth2Config::variantFromSerialized(
-                             baseConfigTxt( true ), QgsAuthOAuth2Config::JSON, &ok );
+    baseConfigTxt( true ), QgsAuthOAuth2Config::JSON, &ok
+  );
   QVERIFY( ok );
   QCOMPARE( vmap.value( "name" ).toString(), QString( "MyConfig" ) );
   QCOMPARE( vmap, basevmap );
-
 }
 
 void TestQgsAuthOAuth2Method::testDynamicRegistrationNoEndpoint()
 {
 #ifdef WITH_GUI
   QgsAuthOAuth2Config *config = baseConfig();
-  config->setClientId( QString( ) );
-  config->setClientSecret( QString( ) );
+  config->setClientId( QString() );
+  config->setClientSecret( QString() );
   QVariantMap configMap( config->mappedProperties() );
   QCOMPARE( configMap["clientId"].toString(), QString() );
   QCOMPARE( configMap["clientSecret"].toString(), QString() );
   QgsAuthOAuth2Edit dlg;
   QgsStringMap stringMap;
-  for ( const auto &k : configMap.keys( ) )
+  for ( const auto &k : configMap.keys() )
   {
     stringMap[k] = configMap.value( k ).toString();
   }
@@ -436,7 +437,7 @@ void TestQgsAuthOAuth2Method::testDynamicRegistrationNoEndpoint()
 
   // This JWT does not contain a registration_endpoint
   dlg.leSoftwareStatementJwtPath->setText( QStringLiteral( "%1/auth_code_grant_display_code.jwt" ).arg( sTestDataDir ) );
-  QVERIFY( ! dlg.btnRegister->isEnabled() );
+  QVERIFY( !dlg.btnRegister->isEnabled() );
   QCOMPARE( dlg.leSoftwareStatementConfigUrl->text(), QString() );
 #endif
 }
@@ -445,14 +446,14 @@ void TestQgsAuthOAuth2Method::testDynamicRegistration()
 {
 #ifdef WITH_GUI
   QgsAuthOAuth2Config *config = baseConfig();
-  config->setClientId( QString( ) );
-  config->setClientSecret( QString( ) );
+  config->setClientId( QString() );
+  config->setClientSecret( QString() );
   QVariantMap configMap( config->mappedProperties() );
   QCOMPARE( configMap["clientId"].toString(), QString() );
   QCOMPARE( configMap["clientSecret"].toString(), QString() );
   QgsAuthOAuth2Edit dlg;
   QgsStringMap stringMap;
-  for ( const auto &k : configMap.keys( ) )
+  for ( const auto &k : configMap.keys() )
   {
     stringMap[k] = configMap.value( k ).toString();
   }
@@ -462,10 +463,10 @@ void TestQgsAuthOAuth2Method::testDynamicRegistration()
 
   // This JWT does not contain a registration_endpoint
   dlg.leSoftwareStatementJwtPath->setText( QStringLiteral( "%1/auth_code_grant_display_code.jwt" ).arg( sTestDataDir ) );
-  QVERIFY( ! dlg.btnRegister->isEnabled() );
+  QVERIFY( !dlg.btnRegister->isEnabled() );
   QCOMPARE( dlg.leSoftwareStatementConfigUrl->text(), QString() );
   // Set the config url to something local
-  dlg.leSoftwareStatementConfigUrl->setText( QUrl::fromLocalFile( QStringLiteral( "%1/auth_code_grant_display_code_get_config.json" ).arg( sTestDataDir ) ).toString( ) );
+  dlg.leSoftwareStatementConfigUrl->setText( QUrl::fromLocalFile( QStringLiteral( "%1/auth_code_grant_display_code_get_config.json" ).arg( sTestDataDir ) ).toString() );
   QVERIFY( dlg.btnRegister->isEnabled() );
   // Change it to something local
   dlg.mRegistrationEndpoint = QUrl::fromLocalFile( QStringLiteral( "%1/client_information_registration_response.json" ).arg( sTestDataDir ) ).toString();
@@ -484,14 +485,14 @@ void TestQgsAuthOAuth2Method::testDynamicRegistrationJwt()
 {
 #ifdef WITH_GUI
   QgsAuthOAuth2Config *config = baseConfig();
-  config->setClientId( QString( ) );
-  config->setClientSecret( QString( ) );
+  config->setClientId( QString() );
+  config->setClientSecret( QString() );
   QVariantMap configMap( config->mappedProperties() );
   QCOMPARE( configMap["clientId"].toString(), QString() );
   QCOMPARE( configMap["clientSecret"].toString(), QString() );
   QgsAuthOAuth2Edit dlg;
   QgsStringMap stringMap;
-  for ( const auto &k : configMap.keys( ) )
+  for ( const auto &k : configMap.keys() )
   {
     stringMap[k] = configMap.value( k ).toString();
   }

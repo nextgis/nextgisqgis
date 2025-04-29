@@ -75,11 +75,7 @@ QString QgsStringUtils::capitalize( const QString &string, Qgis::Capitalization 
       }
 
       const bool allSameCase = string.toLower() == string || string.toUpper() == string;
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-      const QStringList parts = ( allSameCase ? string.toLower() : string ).split( splitWords, QString::SkipEmptyParts );
-#else
       const QStringList parts = ( allSameCase ? string.toLower() : string ).split( splitWords, Qt::SkipEmptyParts );
-#endif
       QString result;
       bool firstWord = true;
       int i = 0;
@@ -524,7 +520,7 @@ QString QgsStringUtils::insertLinks( const QString &string, bool *foundLinks )
 
   // http://alanstorm.com/url_regex_explained
   // note - there's more robust implementations available
-  const thread_local QRegularExpression urlRegEx( QStringLiteral( "(\\b(([\\w-]+://?|www[.])[^\\s()<>]+(?:\\([\\w\\d]+\\)|([^!\"#$%&'()*+,\\-./:;<=>?@[\\\\\\]^_`{|}~\\s]|/))))" ) );
+  const thread_local QRegularExpression urlRegEx( QStringLiteral( "((?:(?:http|https|ftp|file)://[^\\s]+[^\\s,.]+)|(?:\\b(([\\w-]+://?|www[.])[^\\s()<>]+(?:\\([\\w\\d]+\\)|([^!\"#$%&'()*+,\\-./:;<=>?@[\\\\\\]^_`{|}~\\s]|/)))))" ) );
   const thread_local QRegularExpression protoRegEx( QStringLiteral( "^(?:f|ht)tps?://|file://" ) );
   const thread_local QRegularExpression emailRegEx( QStringLiteral( "([\\w._%+-]+@[\\w.-]+\\.[A-Za-z]+)" ) );
 
@@ -659,21 +655,13 @@ QString QgsStringUtils::wordWrap( const QString &string, const int length, const
       }
       if ( strHit > -1 )
       {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 2)
-        newstr.append( line.midRef( strCurrent, strHit - strCurrent ) );
-#else
         newstr.append( QStringView {line} .mid( strCurrent, strHit - strCurrent ) );
-#endif
         newstr.append( '\n' );
         strCurrent = strHit + delimiterLength;
       }
       else
       {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 2)
-        newstr.append( line.midRef( strCurrent ) );
-#else
         newstr.append( QStringView {line} .mid( strCurrent ) );
-#endif
         strCurrent = strLength;
       }
     }
@@ -747,12 +735,31 @@ QString QgsStringUtils::truncateMiddleOfString( const QString &string, int maxLe
 
   // note we actually truncate an extra character, as we'll be replacing it with the ... character
   const int truncateFrom = string.length() / 2 - ( charactersToTruncate + 1 ) / 2;
+  if ( truncateFrom <= 0 )
+    return QChar( 0x2026 );
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
   return string.leftRef( truncateFrom ) + QString( QChar( 0x2026 ) ) + string.midRef( truncateFrom + charactersToTruncate + 1 );
 #else
   return QStringView( string ).first( truncateFrom ) + QString( QChar( 0x2026 ) ) + QStringView( string ).sliced( truncateFrom + charactersToTruncate + 1 );
 #endif
+}
+
+bool QgsStringUtils::containsByWord( const QString &candidate, const QString &words, Qt::CaseSensitivity sensitivity )
+{
+  if ( candidate.trimmed().isEmpty() )
+    return false;
+
+  const thread_local QRegularExpression rxWhitespace( QStringLiteral( "\\s+" ) );
+  const QStringList parts = words.split( rxWhitespace, Qt::SkipEmptyParts );
+  if ( parts.empty() )
+    return false;
+  for ( const QString &word : parts )
+  {
+    if ( !candidate.contains( word, sensitivity ) )
+      return false;
+  }
+  return true;
 }
 
 QgsStringReplacement::QgsStringReplacement( const QString &match, const QString &replacement, bool caseSensitive, bool wholeWordOnly )

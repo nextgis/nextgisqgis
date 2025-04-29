@@ -187,8 +187,13 @@ class CORE_EXPORT QgsDataSourceUri
 
     /**
      * Removes the password element from a URI.
+     *
+     * \param aUri A data source uri
+     * \param hide TRUE to replace the password value with 'xxxxxxxx', FALSE to remove password (key and value) (since QGIS 3.34)
+     *
+     * \returns The data source uri without the password
      */
-    static QString removePassword( const QString &aUri );
+    static QString removePassword( const QString &aUri, bool hide = false );
 
     /**
      * Returns any associated authentication configuration ID stored in the URI.
@@ -234,7 +239,6 @@ class CORE_EXPORT QgsDataSourceUri
 
     /**
      * Sets the \a scheme for the URI.
-     * \since QGIS 2.12
      */
     void setSchema( const QString &schema );
 
@@ -257,13 +261,11 @@ class CORE_EXPORT QgsDataSourceUri
 
     /**
      * Returns the driver name stored in the URI
-     * \since QGIS 2.16
      */
     QString driver() const;
 
     /**
      * Sets the \a driver name stored in the URI.
-     * \since QGIS 2.16
      */
     void setDriver( const QString &driver );
 

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/./3d/qgsabstractpointcloud3drenderer.h                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -24,20 +24,20 @@ This class allows for functionality in 3D to be called from core.
 #include "qgsabstractpointcloud3drenderer.h"
 %End
   public:
+
     virtual ~QgsAbstractPointCloud3DRenderer();
 
     virtual bool convertFrom2DRenderer( QgsPointCloudRenderer *renderer ) = 0;
 %Docstring
-Updates the 3D renderer's symbol to match that of a given :py:class:`QgsPointCloudRenderer`
+Updates the 3D renderer's symbol to match that of a given
+:py:class:`QgsPointCloudRenderer`
 
 :return: ``True`` on success, ``False`` otherwise
 %End
 
   protected:
+
     QgsAbstractPointCloud3DRenderer();
-%Docstring
-Default constructor
-%End
 
   private:
     QgsAbstractPointCloud3DRenderer( const QgsAbstractPointCloud3DRenderer & );
@@ -50,5 +50,5 @@ Default constructor
  *                                                                      *
  * src/core/./3d/qgsabstractpointcloud3drenderer.h                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -5,14 +5,15 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Nathan Woodrow'
-__date__ = '10.12.2018'
-__copyright__ = 'Copyright 2018, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Nathan Woodrow"
+__date__ = "10.12.2018"
+__copyright__ = "Copyright 2018, The QGIS Project"
+
 
 from qgis.processing import alg
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 start_app()
 
@@ -21,8 +22,12 @@ HELPSTRING = "TEST_HELP STRING{0}"
 
 
 def define_new_no_inputs(newid=1):
-    @alg(name="noinputs", label=alg.tr("Test func"), group="unittest",
-         group_label=alg.tr("Test label"))
+    @alg(
+        name="noinputs",
+        label=alg.tr("Test func"),
+        group="unittest",
+        group_label=alg.tr("Test label"),
+    )
     @alg.output(type=str, name="DISTANCE_OUT", label="Distance out")
     def testalg(instance, parameters, context, feedback, inputs):
         """
@@ -31,8 +36,12 @@ def define_new_no_inputs(newid=1):
 
 
 def define_new_no_outputs_but_sink_instead(newid=1):
-    @alg(name=ARGNAME.format(newid), label=alg.tr("Test func"), group="unittest",
-         group_label=alg.tr("Test label"))
+    @alg(
+        name=ARGNAME.format(newid),
+        label=alg.tr("Test func"),
+        group="unittest",
+        group_label=alg.tr("Test label"),
+    )
     @alg.help(HELPSTRING.format(newid))
     @alg.input(type=alg.SOURCE, name="INPUT", label="Input layer")
     @alg.input(type=alg.DISTANCE, name="DISTANCE", label="Distance", default=30)
@@ -44,12 +53,32 @@ def define_new_no_outputs_but_sink_instead(newid=1):
 
 
 def define_new_input_help(newid=1):
-    @alg(name=ARGNAME.format(newid), label=alg.tr("Test func"), group="unittest",
-         group_label=alg.tr("Test label"))
+    @alg(
+        name=ARGNAME.format(newid),
+        label=alg.tr("Test func"),
+        group="unittest",
+        group_label=alg.tr("Test label"),
+    )
     @alg.help(HELPSTRING.format(newid))
-    @alg.input(type=alg.SOURCE, name="INPUT", label="Input layer", help="The input layer as source")
-    @alg.input(type=alg.DISTANCE, name="DISTANCE", label="Distance", default=30, help="The distance to split the input layer")
-    @alg.input(type=alg.SINK, name="SINK", label="Output layer", help="The output layer as sink")
+    @alg.input(
+        type=alg.SOURCE,
+        name="INPUT",
+        label="Input layer",
+        help="The input layer as source",
+    )
+    @alg.input(
+        type=alg.DISTANCE,
+        name="DISTANCE",
+        label="Distance",
+        default=30,
+        help="The distance to split the input layer",
+    )
+    @alg.input(
+        type=alg.SINK,
+        name="SINK",
+        label="Output layer",
+        help="The output layer as sink",
+    )
     @alg.output(type=str, name="DISTANCE_OUT", label="Distance out")
     def testalg(instance, parameters, context, feedback, inputs):
         """
@@ -58,8 +87,12 @@ def define_new_input_help(newid=1):
 
 
 def define_new_doc_string(newid=1):
-    @alg(name=ARGNAME.format(newid), label=alg.tr("Test func"), group="unittest",
-         group_label=alg.tr("Test label"))
+    @alg(
+        name=ARGNAME.format(newid),
+        label=alg.tr("Test func"),
+        group="unittest",
+        group_label=alg.tr("Test label"),
+    )
     @alg.input(type=alg.SOURCE, name="INPUT", label="Input layer")
     @alg.output(type=str, name="DISTANCE_OUT", label="Distance out")
     def testalg(instance, parameters, context, feedback, inputs):
@@ -69,8 +102,12 @@ def define_new_doc_string(newid=1):
 
 
 def define_new(newid=1):
-    @alg(name=ARGNAME.format(newid), label=alg.tr("Test func"), group="unittest",
-         group_label=alg.tr("Test label"))
+    @alg(
+        name=ARGNAME.format(newid),
+        label=alg.tr("Test func"),
+        group="unittest",
+        group_label=alg.tr("Test label"),
+    )
     @alg.help(HELPSTRING.format(newid))
     @alg.input(type=alg.SOURCE, name="INPUT", label="Input layer")
     @alg.input(type=alg.DISTANCE, name="DISTANCE", label="Distance", default=30)
@@ -86,7 +123,7 @@ def cleanup():
     alg.instances.clear()
 
 
-class AlgNoInputs(unittest.TestCase):
+class AlgNoInputs(QgisTestCase):
 
     def setUp(self):
         cleanup()
@@ -95,7 +132,7 @@ class AlgNoInputs(unittest.TestCase):
         define_new_no_inputs()
 
 
-class AlgNoOutputsButSinkInstead(unittest.TestCase):
+class AlgNoOutputsButSinkInstead(QgisTestCase):
 
     def setUp(self):
         cleanup()
@@ -104,7 +141,7 @@ class AlgNoOutputsButSinkInstead(unittest.TestCase):
         define_new_no_outputs_but_sink_instead()
 
 
-class AlgInstanceTests(unittest.TestCase):
+class AlgInstanceTests(QgisTestCase):
     """
     Tests to check the createInstance method will work as expected.
     """
@@ -147,7 +184,7 @@ class AlgInstanceTests(unittest.TestCase):
         self.assertEqual("unittest", self.current.groupId())
 
 
-class AlgHelpTests(unittest.TestCase):
+class AlgHelpTests(QgisTestCase):
 
     def test_has_help_from_help_decorator(self):
         cleanup()
@@ -177,7 +214,7 @@ class AlgHelpTests(unittest.TestCase):
             self.assertEqual(data[1], parmdef.help())
 
 
-class TestAlg(unittest.TestCase):
+class TestAlg(QgisTestCase):
 
     def setUp(self):
         cleanup()

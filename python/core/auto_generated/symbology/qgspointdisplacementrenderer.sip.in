@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/symbology/qgspointdisplacementrenderer.h                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,7 +12,8 @@
 class QgsPointDisplacementRenderer: QgsPointDistanceRenderer
 {
 %Docstring(signature="appended")
-A renderer that automatically displaces points with the same geographic location.
+A renderer that automatically displaces points with the same geographic
+location.
 %End
 
 %TypeHeaderCode
@@ -33,6 +34,8 @@ Constructor for QgsPointDisplacementRenderer.
 
 :param labelAttributeName: optional attribute name for labeling points
 %End
+
+    virtual Qgis::FeatureRendererFlags flags() const;
 
     virtual QgsPointDisplacementRenderer *clone() const /Factory/;
 
@@ -133,8 +136,6 @@ Returns the factor for label distance from the symbol.
 Returns the placement method used for dispersing the points.
 
 .. seealso:: :py:func:`setPlacement`
-
-.. versionadded:: 2.12
 %End
 
     void setPlacement( Placement placement );
@@ -144,13 +145,12 @@ Sets the placement method used for dispersing the points.
 :param placement: placement method
 
 .. seealso:: :py:func:`placement`
-
-.. versionadded:: 2.12
 %End
 
     QgsMarkerSymbol *centerSymbol();
 %Docstring
-Returns the symbol for the center of a displacement group (but not ownership of the symbol).
+Returns the symbol for the center of a displacement group (but not
+ownership of the symbol).
 
 .. seealso:: :py:func:`setCenterSymbol`
 %End
@@ -159,7 +159,8 @@ Returns the symbol for the center of a displacement group (but not ownership of 
 %Docstring
 Sets the center symbol for a displacement group.
 
-:param symbol: new center symbol. Ownership is transferred to the renderer.
+:param symbol: new center symbol. Ownership is transferred to the
+               renderer.
 
 .. seealso:: :py:func:`centerSymbol`
 %End
@@ -168,9 +169,8 @@ Sets the center symbol for a displacement group.
 %Docstring
 Creates a QgsPointDisplacementRenderer from an existing renderer.
 
-:return: a new renderer if the conversion was possible, otherwise ``None``.
-
-.. versionadded:: 2.5
+:return: a new renderer if the conversion was possible, otherwise
+         ``None``.
 %End
 
   private:
@@ -185,5 +185,5 @@ Creates a QgsPointDisplacementRenderer from an existing renderer.
  *                                                                      *
  * src/core/symbology/qgspointdisplacementrenderer.h                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

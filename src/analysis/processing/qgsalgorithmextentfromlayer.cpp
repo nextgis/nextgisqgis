@@ -73,11 +73,11 @@ void QgsExtentFromLayerAlgorithm::initAlgorithm( const QVariantMap & )
 {
   addParameter( new QgsProcessingParameterMapLayer( QStringLiteral( "INPUT" ), QObject::tr( "Input layer" ) ) );
 
-  auto roundParam = std::make_unique < QgsProcessingParameterDistance >( QStringLiteral( "ROUND_TO" ), QObject::tr( "Round values to" ), 0, QStringLiteral( "INPUT" ), 0 );
-  roundParam->setFlags( QgsProcessingParameterDefinition::FlagAdvanced );
+  auto roundParam = std::make_unique<QgsProcessingParameterDistance>( QStringLiteral( "ROUND_TO" ), QObject::tr( "Round values to" ), 0, QStringLiteral( "INPUT" ), 0 );
+  roundParam->setFlags( Qgis::ProcessingParameterFlag::Advanced );
   addParameter( roundParam.release() );
 
-  addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Extent" ), QgsProcessing::TypeVectorPolygon ) );
+  addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Extent" ), Qgis::ProcessingSourceType::VectorPolygon ) );
 }
 
 QVariantMap QgsExtentFromLayerAlgorithm::processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback * )
@@ -90,23 +90,23 @@ QVariantMap QgsExtentFromLayerAlgorithm::processAlgorithm( const QVariantMap &pa
   const double roundTo = parameterAsDouble( parameters, QStringLiteral( "ROUND_TO" ), context );
 
   QgsFields fields;
-  fields.append( QgsField( QStringLiteral( "MINX" ), QVariant::Double ) );
-  fields.append( QgsField( QStringLiteral( "MINY" ), QVariant::Double ) );
-  fields.append( QgsField( QStringLiteral( "MAXX" ), QVariant::Double ) );
-  fields.append( QgsField( QStringLiteral( "MAXY" ), QVariant::Double ) );
-  fields.append( QgsField( QStringLiteral( "CNTX" ), QVariant::Double ) );
-  fields.append( QgsField( QStringLiteral( "CNTY" ), QVariant::Double ) );
-  fields.append( QgsField( QStringLiteral( "AREA" ), QVariant::Double ) );
-  fields.append( QgsField( QStringLiteral( "PERIM" ), QVariant::Double ) );
-  fields.append( QgsField( QStringLiteral( "HEIGHT" ), QVariant::Double ) );
-  fields.append( QgsField( QStringLiteral( "WIDTH" ), QVariant::Double ) );
+  fields.append( QgsField( QStringLiteral( "MINX" ), QMetaType::Type::Double ) );
+  fields.append( QgsField( QStringLiteral( "MINY" ), QMetaType::Type::Double ) );
+  fields.append( QgsField( QStringLiteral( "MAXX" ), QMetaType::Type::Double ) );
+  fields.append( QgsField( QStringLiteral( "MAXY" ), QMetaType::Type::Double ) );
+  fields.append( QgsField( QStringLiteral( "CNTX" ), QMetaType::Type::Double ) );
+  fields.append( QgsField( QStringLiteral( "CNTY" ), QMetaType::Type::Double ) );
+  fields.append( QgsField( QStringLiteral( "AREA" ), QMetaType::Type::Double ) );
+  fields.append( QgsField( QStringLiteral( "PERIM" ), QMetaType::Type::Double ) );
+  fields.append( QgsField( QStringLiteral( "HEIGHT" ), QMetaType::Type::Double ) );
+  fields.append( QgsField( QStringLiteral( "WIDTH" ), QMetaType::Type::Double ) );
 
   QString dest;
-  std::unique_ptr< QgsFeatureSink > sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, fields, Qgis::WkbType::Polygon, layer->crs() ) );
+  std::unique_ptr<QgsFeatureSink> sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, fields, Qgis::WkbType::Polygon, layer->crs() ) );
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
-  if ( QgsVectorLayer *vl = qobject_cast< QgsVectorLayer * >( layer ) )
+  if ( QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( layer ) )
   {
     vl->updateExtents();
   }

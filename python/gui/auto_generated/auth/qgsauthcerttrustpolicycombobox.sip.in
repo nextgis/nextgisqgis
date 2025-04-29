@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/auth/qgsauthcerttrustpolicycombobox.h                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,18 +11,19 @@
 class QgsAuthCertTrustPolicyComboBox : QComboBox
 {
 %Docstring(signature="appended")
-Widget for editing the trust policy associated with a Certificate (Intermediate) Authority
+Widget for editing the trust policy associated with a Certificate
+(Intermediate) Authority
 %End
 
 %TypeHeaderCode
 #include "qgsauthcerttrustpolicycombobox.h"
 %End
   public:
-
     explicit QgsAuthCertTrustPolicyComboBox(
       QWidget *parent /TransferThis/ = 0,
       QgsAuthCertUtils::CertTrustPolicy policy = QgsAuthCertUtils::DefaultTrust,
-      QgsAuthCertUtils::CertTrustPolicy defaultpolicy = QgsAuthCertUtils::DefaultTrust );
+      QgsAuthCertUtils::CertTrustPolicy defaultpolicy = QgsAuthCertUtils::DefaultTrust
+    );
 %Docstring
 Construct a combo box for defining certificate trust policy
 
@@ -59,5 +60,5 @@ Sets default trust policy
  *                                                                      *
  * src/gui/auth/qgsauthcerttrustpolicycombobox.h                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

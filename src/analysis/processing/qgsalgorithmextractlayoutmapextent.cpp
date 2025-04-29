@@ -58,19 +58,19 @@ void QgsLayoutMapExtentToLayerAlgorithm::initAlgorithm( const QVariantMap & )
 {
   addParameter( new QgsProcessingParameterLayout( QStringLiteral( "LAYOUT" ), QObject::tr( "Print layout" ) ) );
   addParameter( new QgsProcessingParameterLayoutItem( QStringLiteral( "MAP" ), QObject::tr( "Map item" ), QVariant(), QStringLiteral( "LAYOUT" ), QgsLayoutItemRegistry::LayoutMap, true ) );
-  auto crsParam = std::make_unique< QgsProcessingParameterCrs >( QStringLiteral( "CRS" ), QObject::tr( "Override CRS" ), QVariant(), true );
-  crsParam->setFlags( crsParam->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
+  auto crsParam = std::make_unique<QgsProcessingParameterCrs>( QStringLiteral( "CRS" ), QObject::tr( "Override CRS" ), QVariant(), true );
+  crsParam->setFlags( crsParam->flags() | Qgis::ProcessingParameterFlag::Advanced );
   addParameter( crsParam.release() );
-  addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Extent" ), QgsProcessing::TypeVectorPolygon ) );
+  addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Extent" ), Qgis::ProcessingSourceType::VectorPolygon ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "WIDTH" ), QObject::tr( "Map width" ) ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "HEIGHT" ), QObject::tr( "Map height" ) ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "SCALE" ), QObject::tr( "Map scale" ) ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "ROTATION" ), QObject::tr( "Map rotation" ) ) );
 }
 
-QgsProcessingAlgorithm::Flags QgsLayoutMapExtentToLayerAlgorithm::flags() const
+Qgis::ProcessingAlgorithmFlags QgsLayoutMapExtentToLayerAlgorithm::flags() const
 {
-  return QgsProcessingAlgorithm::flags() | FlagRequiresProject;
+  return QgsProcessingAlgorithm::flags() | Qgis::ProcessingAlgorithmFlag::RequiresProject;
 }
 
 QString QgsLayoutMapExtentToLayerAlgorithm::shortHelpString() const
@@ -95,11 +95,11 @@ bool QgsLayoutMapExtentToLayerAlgorithm::prepareAlgorithm( const QVariantMap &pa
   if ( !layout )
     throw QgsProcessingException( QObject::tr( "Cannot find layout with name \"%1\"" ).arg( parameters.value( QStringLiteral( "LAYOUT" ) ).toString() ) );
 
-  QgsLayoutItemMap *map = qobject_cast< QgsLayoutItemMap * >( parameterAsLayoutItem( parameters, QStringLiteral( "MAP" ), context, layout ) );
+  QgsLayoutItemMap *map = qobject_cast<QgsLayoutItemMap *>( parameterAsLayoutItem( parameters, QStringLiteral( "MAP" ), context, layout ) );
   if ( !map && parameters.value( QStringLiteral( "MAP" ) ).isValid() )
     throw QgsProcessingException( QObject::tr( "Cannot find matching map item with ID %1" ).arg( parameters.value( QStringLiteral( "MAP" ) ).toString() ) );
 
-  QList< QgsLayoutItemMap *> maps;
+  QList<QgsLayoutItemMap *> maps;
   if ( map )
     maps << map;
   else
@@ -144,14 +144,14 @@ bool QgsLayoutMapExtentToLayerAlgorithm::prepareAlgorithm( const QVariantMap &pa
 QVariantMap QgsLayoutMapExtentToLayerAlgorithm::processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback )
 {
   QgsFields fields;
-  fields.append( QgsField( QStringLiteral( "map" ), QVariant::String ) );
-  fields.append( QgsField( QStringLiteral( "width" ), QVariant::Double ) );
-  fields.append( QgsField( QStringLiteral( "height" ), QVariant::Double ) );
-  fields.append( QgsField( QStringLiteral( "scale" ), QVariant::Double ) );
-  fields.append( QgsField( QStringLiteral( "rotation" ), QVariant::Double ) );
+  fields.append( QgsField( QStringLiteral( "map" ), QMetaType::Type::QString ) );
+  fields.append( QgsField( QStringLiteral( "width" ), QMetaType::Type::Double ) );
+  fields.append( QgsField( QStringLiteral( "height" ), QMetaType::Type::Double ) );
+  fields.append( QgsField( QStringLiteral( "scale" ), QMetaType::Type::Double ) );
+  fields.append( QgsField( QStringLiteral( "rotation" ), QMetaType::Type::Double ) );
 
   QString dest;
-  std::unique_ptr< QgsFeatureSink > sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, fields, Qgis::WkbType::Polygon, mCrs ) );
+  std::unique_ptr<QgsFeatureSink> sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, fields, Qgis::WkbType::Polygon, mCrs ) );
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
@@ -174,4 +174,3 @@ QVariantMap QgsLayoutMapExtentToLayerAlgorithm::processAlgorithm( const QVariant
 }
 
 ///@endcond
-

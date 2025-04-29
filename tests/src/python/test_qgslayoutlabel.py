@@ -5,11 +5,11 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = '(C) 2017 by Nyall Dawson'
-__date__ = '23/10/2017'
-__copyright__ = 'Copyright 2017, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "(C) 2017 by Nyall Dawson"
+__date__ = "23/10/2017"
+__copyright__ = "Copyright 2017, The QGIS Project"
+
 from qgis.PyQt.QtCore import QDate, QDateTime, QFileInfo
 from qgis.PyQt.QtTest import QSignalSpy
 from qgis.core import (
@@ -20,7 +20,8 @@ from qgis.core import (
     QgsProject,
     QgsVectorLayer,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 from test_qgslayoutitem import LayoutItemTestCase
 from utilities import unitTestDataPath
@@ -28,17 +29,19 @@ from utilities import unitTestDataPath
 start_app()
 
 
-class TestQgsLayoutItemLabel(unittest.TestCase, LayoutItemTestCase):
+class TestQgsLayoutItemLabel(QgisTestCase, LayoutItemTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestQgsLayoutItemLabel, cls).setUpClass()
+        super().setUpClass()
         cls.item_class = QgsLayoutItemLabel
 
     def testCase(self):
         TEST_DATA_DIR = unitTestDataPath()
         vectorFileInfo = QFileInfo(TEST_DATA_DIR + "/france_parts.shp")
-        mVectorLayer = QgsVectorLayer(vectorFileInfo.filePath(), vectorFileInfo.completeBaseName(), "ogr")
+        mVectorLayer = QgsVectorLayer(
+            vectorFileInfo.filePath(), vectorFileInfo.completeBaseName(), "ogr"
+        )
 
         QgsProject.instance().addMapLayers([mVectorLayer])
 
@@ -55,7 +58,9 @@ class TestQgsLayoutItemLabel(unittest.TestCase, LayoutItemTestCase):
     def evaluation_test(self, layout, label):
         # $CURRENT_DATE evaluation
         label.setText("__$CURRENT_DATE__")
-        self.assertEqual(label.currentText(), ("__" + QDate.currentDate().toString() + "__"))
+        self.assertEqual(
+            label.currentText(), ("__" + QDate.currentDate().toString() + "__")
+        )
 
         # $CURRENT_DATE() evaluation
         label.setText("__$CURRENT_DATE(dd)(ok)__")
@@ -87,7 +92,7 @@ class TestQgsLayoutItemLabel(unittest.TestCase, LayoutItemTestCase):
 
     def page_evaluation_test(self, layout, label, mVectorLayer):
         page = QgsLayoutItemPage(layout)
-        page.setPageSize('A4')
+        page.setPageSize("A4")
         layout.pageCollection().addPage(page)
         label.setText("[%@layout_page||'/'||@layout_numpages%]")
         self.assertEqual(label.currentText(), "1/2")
@@ -102,27 +107,29 @@ class TestQgsLayoutItemLabel(unittest.TestCase, LayoutItemTestCase):
 
         label = QgsLayoutItemLabel(layout)
         layout.addLayoutItem(label)
-        layout.setName('my layout')
+        layout.setName("my layout")
 
         # no text yet
         label.convertToStaticText()
         self.assertFalse(label.text())
 
         spy = QSignalSpy(label.changed)
-        label.setText('already static text')
+        label.setText("already static text")
         self.assertEqual(len(spy), 1)
         label.convertToStaticText()
-        self.assertEqual(label.text(), 'already static text')
+        self.assertEqual(label.text(), "already static text")
         self.assertEqual(len(spy), 1)
 
-        label.setText('with [% 1+2+3 %] some [% @layout_name %] dynamic bits')
+        label.setText("with [% 1+2+3 %] some [% @layout_name %] dynamic bits")
         self.assertEqual(len(spy), 2)
-        self.assertEqual(label.text(), 'with [% 1+2+3 %] some [% @layout_name %] dynamic bits')
+        self.assertEqual(
+            label.text(), "with [% 1+2+3 %] some [% @layout_name %] dynamic bits"
+        )
 
         label.convertToStaticText()
-        self.assertEqual(label.text(), 'with 6 some my layout dynamic bits')
+        self.assertEqual(label.text(), "with 6 some my layout dynamic bits")
         self.assertEqual(len(spy), 3)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

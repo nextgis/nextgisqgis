@@ -27,13 +27,11 @@ class QgsListWidget;
  * \ingroup gui
  * \brief Wraps a list widget.
  * \note not available in Python bindings
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsListWidgetWrapper : public QgsEditorWidgetWrapper
 {
     Q_OBJECT
   public:
-
     /**
      * Constructor for QgsListWidgetWrapper.
      *
@@ -51,6 +49,9 @@ class GUI_EXPORT QgsListWidgetWrapper : public QgsEditorWidgetWrapper
     QVariant value() const override;
     void showIndeterminateState() override;
 
+  public slots:
+    void setEnabled( bool enabled ) override;
+
   protected:
     QWidget *createWidget( QWidget *parent ) override;
     void initWidget( QWidget *editor ) override;
@@ -60,7 +61,7 @@ class GUI_EXPORT QgsListWidgetWrapper : public QgsEditorWidgetWrapper
     void onValueChanged();
 
   private:
-    void updateValues( const QVariant &value, const QVariantList  & = QVariantList() ) override;
+    void updateValues( const QVariant &value, const QVariantList & = QVariantList() ) override;
     void updateConstraintWidgetStatus() override;
 
     QgsListWidget *mWidget = nullptr;

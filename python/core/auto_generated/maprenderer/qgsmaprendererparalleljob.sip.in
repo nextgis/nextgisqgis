@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/maprenderer/qgsmaprendererparalleljob.h                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,10 +13,9 @@ class QgsMapRendererParallelJob : QgsMapRendererQImageJob
 %Docstring(signature="appended")
 Job implementation that renders all layers in parallel.
 
-The resulting map image can be retrieved with :py:func:`~renderedImage` function.
-It is safe to call that function while rendering is active to see preview of the map.
-
-.. versionadded:: 2.4
+The resulting map image can be retrieved with :py:func:`~renderedImage`
+function. It is safe to call that function while rendering is active to
+see preview of the map.
 %End
 
 %TypeHeaderCode
@@ -51,5 +50,5 @@ It is safe to call that function while rendering is active to see preview of the
  *                                                                      *
  * src/core/maprenderer/qgsmaprendererparalleljob.h                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/textrenderer/qgstextrendererutils.h                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -55,7 +55,8 @@ Encodes a text ``orientation``.
 Attempts to decode a string representation of a text orientation.
 
 :param name: encoded text orientation name
-:param ok: if specified, will be set to ``True`` if the name was successfully decoded
+:param ok: if specified, will be set to ``True`` if the name was
+           successfully decoded
 
 :return: decoded text orientation
 
@@ -73,5 +74,5 @@ Attempts to decode a string representation of a text orientation.
  *                                                                      *
  * src/core/textrenderer/qgstextrendererutils.h                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

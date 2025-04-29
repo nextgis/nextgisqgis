@@ -15,14 +15,13 @@
 ***************************************************************************
 """
 
-__author__ = 'Hugo Mercier'
-__date__ = 'March 2016'
-__copyright__ = '(C) 2016, Hugo Mercier'
+__author__ = "Hugo Mercier"
+__date__ = "March 2016"
+__copyright__ = "(C) 2016, Hugo Mercier"
 
 import os
 
-import qgis  # NOQA
-from qgis.PyQt.QtCore import QDir, QSize
+from qgis.PyQt.QtCore import QSize, Qt
 from qgis.PyQt.QtGui import QColor, QImage, QPainter
 from qgis.core import (
     QgsArrowSymbolLayer,
@@ -31,18 +30,21 @@ from qgis.core import (
     QgsGeometry,
     QgsLineSymbol,
     QgsMapSettings,
-    QgsMultiRenderChecker,
     QgsProject,
     QgsProperty,
     QgsRectangle,
-    QgsRenderChecker,
     QgsRenderContext,
     QgsSingleSymbolRenderer,
     QgsSymbol,
     QgsSymbolLayer,
     QgsVectorLayer,
+    QgsSimpleFillSymbolLayer,
+    QgsCentroidFillSymbolLayer,
+    QgsSimpleMarkerSymbolLayer,
+    QgsMarkerSymbol,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 from qgis.testing.mocked import get_iface
 
 from utilities import unitTestDataPath
@@ -53,19 +55,17 @@ start_app()
 TEST_DATA_DIR = unitTestDataPath()
 
 
-class TestQgsArrowSymbolLayer(unittest.TestCase):
+class TestQgsArrowSymbolLayer(QgisTestCase):
 
     def setUp(self):
-        self.report = "<h1>Python QgsArrowSymbolLayer Tests</h1>\n"
-
         self.iface = get_iface()
 
-        lines_shp = os.path.join(TEST_DATA_DIR, 'lines.shp')
-        self.lines_layer = QgsVectorLayer(lines_shp, 'Lines', 'ogr')
+        lines_shp = os.path.join(TEST_DATA_DIR, "lines.shp")
+        self.lines_layer = QgsVectorLayer(lines_shp, "Lines", "ogr")
         QgsProject.instance().addMapLayer(self.lines_layer)
 
         # Create style
-        sym2 = QgsLineSymbol.createSimple({'color': '#fdbf6f'})
+        sym2 = QgsLineSymbol.createSimple({"color": "#fdbf6f"})
         self.lines_layer.setRenderer(QgsSingleSymbolRenderer(sym2))
 
         self.mapsettings = self.iface.mapCanvas().mapSettings()
@@ -76,84 +76,148 @@ class TestQgsArrowSymbolLayer(unittest.TestCase):
 
     def tearDown(self):
         QgsProject.instance().removeAllMapLayers()
-        report_file_path = f"{QDir.tempPath()}/qgistest.html"
-        with open(report_file_path, 'a') as report_file:
-            report_file.write(self.report)
+
+    @classmethod
+    def control_path_prefix(cls):
+        return "symbol_arrow"
 
     def test_1(self):
         sym = self.lines_layer.renderer().symbol()
-        sym_layer = QgsArrowSymbolLayer.create({'head_length': '6.5', 'head_thickness': '6.5'})
+        sym_layer = QgsArrowSymbolLayer.create(
+            {"head_length": "6.5", "head_thickness": "6.5"}
+        )
         dd = QgsProperty.fromExpression("(@geometry_point_num % 4) * 2")
-        sym_layer.setDataDefinedProperty(QgsSymbolLayer.PropertyArrowWidth, dd)
+        sym_layer.setDataDefinedProperty(QgsSymbolLayer.Property.PropertyArrowWidth, dd)
         dd2 = QgsProperty.fromExpression("(@geometry_point_num % 4) * 2")
-        sym_layer.setDataDefinedProperty(QgsSymbolLayer.PropertyArrowHeadLength, dd2)
+        sym_layer.setDataDefinedProperty(
+            QgsSymbolLayer.Property.PropertyArrowHeadLength, dd2
+        )
         dd3 = QgsProperty.fromExpression("(@geometry_point_num % 4) * 2")
-        sym_layer.setDataDefinedProperty(QgsSymbolLayer.PropertyArrowHeadThickness, dd3)
-        fill_sym = QgsFillSymbol.createSimple({'color': '#8bcfff', 'outline_color': '#000000', 'outline_style': 'solid', 'outline_width': '1'})
+        sym_layer.setDataDefinedProperty(
+            QgsSymbolLayer.Property.PropertyArrowHeadThickness, dd3
+        )
+        fill_sym = QgsFillSymbol.createSimple(
+            {
+                "color": "#8bcfff",
+                "outline_color": "#000000",
+                "outline_style": "solid",
+                "outline_width": "1",
+            }
+        )
         sym_layer.setSubSymbol(fill_sym)
         sym.changeSymbolLayer(0, sym_layer)
 
         rendered_layers = [self.lines_layer]
         self.mapsettings.setLayers(rendered_layers)
 
-        renderchecker = QgsMultiRenderChecker()
-        renderchecker.setMapSettings(self.mapsettings)
-        renderchecker.setControlName('expected_arrowsymbollayer_1')
-        self.assertTrue(renderchecker.runTest('arrowsymbollayer_1'))
+        self.assertTrue(
+            self.render_map_settings_check(
+                "arrowsymbollayer_1", "arrowsymbollayer_1", self.mapsettings
+            )
+        )
 
     def test_2(self):
         sym = self.lines_layer.renderer().symbol()
         # double headed
-        sym_layer = QgsArrowSymbolLayer.create({'arrow_width': '5', 'head_length': '4', 'head_thickness': '6', 'head_type': '2'})
-        fill_sym = QgsFillSymbol.createSimple({'color': '#8bcfff', 'outline_color': '#000000', 'outline_style': 'solid', 'outline_width': '1'})
+        sym_layer = QgsArrowSymbolLayer.create(
+            {
+                "arrow_width": "5",
+                "head_length": "4",
+                "head_thickness": "6",
+                "head_type": "2",
+            }
+        )
+        fill_sym = QgsFillSymbol.createSimple(
+            {
+                "color": "#8bcfff",
+                "outline_color": "#000000",
+                "outline_style": "solid",
+                "outline_width": "1",
+            }
+        )
         sym_layer.setSubSymbol(fill_sym)
         sym.changeSymbolLayer(0, sym_layer)
 
         rendered_layers = [self.lines_layer]
         self.mapsettings.setLayers(rendered_layers)
 
-        renderchecker = QgsMultiRenderChecker()
-        renderchecker.setMapSettings(self.mapsettings)
-        renderchecker.setControlName('expected_arrowsymbollayer_2')
-        self.assertTrue(renderchecker.runTest('arrowsymbollayer_2'))
+        self.assertTrue(
+            self.render_map_settings_check(
+                "arrowsymbollayer_2", "arrowsymbollayer_2", self.mapsettings
+            )
+        )
 
     def test_3(self):
         sym = self.lines_layer.renderer().symbol()
         # double headed
-        sym_layer = QgsArrowSymbolLayer.create({'arrow_width': '7', 'head_length': '6', 'head_thickness': '8', 'head_type': '0', 'arrow_type': '1', 'is_curved': '0'})
-        fill_sym = QgsFillSymbol.createSimple({'color': '#8bcfff', 'outline_color': '#000000', 'outline_style': 'solid', 'outline_width': '1'})
+        sym_layer = QgsArrowSymbolLayer.create(
+            {
+                "arrow_width": "7",
+                "head_length": "6",
+                "head_thickness": "8",
+                "head_type": "0",
+                "arrow_type": "1",
+                "is_curved": "0",
+            }
+        )
+        fill_sym = QgsFillSymbol.createSimple(
+            {
+                "color": "#8bcfff",
+                "outline_color": "#000000",
+                "outline_style": "solid",
+                "outline_width": "1",
+            }
+        )
         sym_layer.setSubSymbol(fill_sym)
         sym.changeSymbolLayer(0, sym_layer)
 
         rendered_layers = [self.lines_layer]
         self.mapsettings.setLayers(rendered_layers)
 
-        renderchecker = QgsMultiRenderChecker()
         ms = self.mapsettings
         ms.setExtent(QgsRectangle(-101, 35, -99, 37))
-        renderchecker.setMapSettings(ms)
-        renderchecker.setControlName('expected_arrowsymbollayer_3')
-        self.assertTrue(renderchecker.runTest('arrowsymbollayer_3'))
+        self.assertTrue(
+            self.render_map_settings_check(
+                "arrowsymbollayer_3", "arrowsymbollayer_3", ms
+            )
+        )
 
     def test_unrepeated(self):
         sym = self.lines_layer.renderer().symbol()
         # double headed
-        sym_layer = QgsArrowSymbolLayer.create({'arrow_width': '7', 'head_length': '6', 'head_thickness': '8', 'head_type': '0', 'arrow_type': '0'})
+        sym_layer = QgsArrowSymbolLayer.create(
+            {
+                "arrow_width": "7",
+                "head_length": "6",
+                "head_thickness": "8",
+                "head_type": "0",
+                "arrow_type": "0",
+            }
+        )
         # no repetition
         sym_layer.setIsRepeated(False)
-        fill_sym = QgsFillSymbol.createSimple({'color': '#8bcfff', 'outline_color': '#000000', 'outline_style': 'solid', 'outline_width': '1'})
+        fill_sym = QgsFillSymbol.createSimple(
+            {
+                "color": "#8bcfff",
+                "outline_color": "#000000",
+                "outline_style": "solid",
+                "outline_width": "1",
+            }
+        )
         sym_layer.setSubSymbol(fill_sym)
         sym.changeSymbolLayer(0, sym_layer)
 
         rendered_layers = [self.lines_layer]
         self.mapsettings.setLayers(rendered_layers)
 
-        renderchecker = QgsMultiRenderChecker()
         ms = self.mapsettings
         ms.setExtent(QgsRectangle(-119, 17, -82, 50))
-        renderchecker.setMapSettings(ms)
-        renderchecker.setControlName('expected_arrowsymbollayer_4')
-        self.assertTrue(renderchecker.runTest('arrowsymbollayer_4'))
+
+        self.assertTrue(
+            self.render_map_settings_check(
+                "arrowsymbollayer_4", "arrowsymbollayer_4", ms
+            )
+        )
 
     def testColors(self):
         """
@@ -171,28 +235,61 @@ class TestQgsArrowSymbolLayer(unittest.TestCase):
         # test test geometry_ring_num variable
         s3 = QgsFillSymbol()
         s3.deleteSymbolLayer(0)
-        s3.appendSymbolLayer(
-            QgsArrowSymbolLayer())
+        s3.appendSymbolLayer(QgsArrowSymbolLayer())
         s3.symbolLayer(0).setIsCurved(False)
-        s3.symbolLayer(0).subSymbol()[0].setDataDefinedProperty(QgsSymbolLayer.PropertyFillColor,
-                                                                QgsProperty.fromExpression('case when @geometry_ring_num=0 then \'green\' when @geometry_ring_num=1 then \'blue\' when @geometry_ring_num=2 then \'red\' end'))
+        s3.symbolLayer(0).subSymbol()[0].setDataDefinedProperty(
+            QgsSymbolLayer.Property.PropertyFillColor,
+            QgsProperty.fromExpression(
+                "case when @geometry_ring_num=0 then 'green' when @geometry_ring_num=1 then 'blue' when @geometry_ring_num=2 then 'red' end"
+            ),
+        )
 
-        g = QgsGeometry.fromWkt('Polygon((0 0, 10 0, 10 10, 0 10, 0 0),(1 1, 1 2, 2 2, 2 1, 1 1),(8 8, 9 8, 9 9, 8 9, 8 8))')
+        g = QgsGeometry.fromWkt(
+            "Polygon((0 0, 10 0, 10 10, 0 10, 0 0),(1 1, 1 2, 2 2, 2 1, 1 1),(8 8, 9 8, 9 9, 8 9, 8 8))"
+        )
         rendered_image = self.renderGeometry(s3, g)
-        assert self.imageCheck('arrow_ring_num', 'arrow_ring_num', rendered_image)
+        self.assertTrue(
+            self.image_check(
+                "arrow_ring_num",
+                "arrow_ring_num",
+                rendered_image,
+                control_path_prefix="symbol_arrow",
+            )
+        )
 
     def testOpacityWithDataDefinedColor(self):
-        line_shp = os.path.join(TEST_DATA_DIR, 'lines.shp')
-        line_layer = QgsVectorLayer(line_shp, 'Lines', 'ogr')
+        line_shp = os.path.join(TEST_DATA_DIR, "lines.shp")
+        line_layer = QgsVectorLayer(line_shp, "Lines", "ogr")
         self.assertTrue(line_layer.isValid())
 
         sym = QgsLineSymbol()
-        sym_layer = QgsArrowSymbolLayer.create({'arrow_width': '7', 'head_length': '6', 'head_thickness': '8', 'head_type': '0', 'arrow_type': '0', 'is_repeated': '0', 'is_curved': '0'})
-        fill_sym = QgsFillSymbol.createSimple({'color': '#8bcfff', 'outline_color': '#000000', 'outline_style': 'solid', 'outline_width': '1'})
-        fill_sym.symbolLayer(0).setDataDefinedProperty(QgsSymbolLayer.PropertyFillColor, QgsProperty.fromExpression(
-            "if(Name='Arterial', 'red', 'green')"))
-        fill_sym.symbolLayer(0).setDataDefinedProperty(QgsSymbolLayer.PropertyStrokeColor, QgsProperty.fromExpression(
-            "if(Name='Arterial', 'magenta', 'blue')"))
+        sym_layer = QgsArrowSymbolLayer.create(
+            {
+                "arrow_width": "7",
+                "head_length": "6",
+                "head_thickness": "8",
+                "head_type": "0",
+                "arrow_type": "0",
+                "is_repeated": "0",
+                "is_curved": "0",
+            }
+        )
+        fill_sym = QgsFillSymbol.createSimple(
+            {
+                "color": "#8bcfff",
+                "outline_color": "#000000",
+                "outline_style": "solid",
+                "outline_width": "1",
+            }
+        )
+        fill_sym.symbolLayer(0).setDataDefinedProperty(
+            QgsSymbolLayer.Property.PropertyFillColor,
+            QgsProperty.fromExpression("if(Name='Arterial', 'red', 'green')"),
+        )
+        fill_sym.symbolLayer(0).setDataDefinedProperty(
+            QgsSymbolLayer.Property.PropertyStrokeColor,
+            QgsProperty.fromExpression("if(Name='Arterial', 'magenta', 'blue')"),
+        )
 
         sym_layer.setSubSymbol(fill_sym)
         sym.changeSymbolLayer(0, sym_layer)
@@ -209,32 +306,56 @@ class TestQgsArrowSymbolLayer(unittest.TestCase):
         ms.setExtent(QgsRectangle(-118.5, 19.0, -81.4, 50.4))
         ms.setLayers([line_layer])
 
-        # Test rendering
-        renderchecker = QgsMultiRenderChecker()
-        renderchecker.setMapSettings(ms)
-        renderchecker.setControlPathPrefix('symbol_arrow')
-        renderchecker.setControlName('expected_arrow_opacityddcolor')
-        res = renderchecker.runTest('expected_arrow_opacityddcolor')
-        self.report += renderchecker.report()
-        self.assertTrue(res)
+        self.assertTrue(
+            self.render_map_settings_check(
+                "arrow_opacityddcolor",
+                "arrow_opacityddcolor",
+                ms,
+                control_path_prefix="symbol_arrow",
+            )
+        )
 
     def testDataDefinedOpacity(self):
-        line_shp = os.path.join(TEST_DATA_DIR, 'lines.shp')
-        line_layer = QgsVectorLayer(line_shp, 'Lines', 'ogr')
+        line_shp = os.path.join(TEST_DATA_DIR, "lines.shp")
+        line_layer = QgsVectorLayer(line_shp, "Lines", "ogr")
         self.assertTrue(line_layer.isValid())
 
         sym = QgsLineSymbol()
-        sym_layer = QgsArrowSymbolLayer.create({'arrow_width': '7', 'head_length': '6', 'head_thickness': '8', 'head_type': '0', 'arrow_type': '0', 'is_repeated': '0', 'is_curved': '0'})
-        fill_sym = QgsFillSymbol.createSimple({'color': '#8bcfff', 'outline_color': '#000000', 'outline_style': 'solid', 'outline_width': '1'})
-        fill_sym.symbolLayer(0).setDataDefinedProperty(QgsSymbolLayer.PropertyFillColor, QgsProperty.fromExpression(
-            "if(Name='Arterial', 'red', 'green')"))
-        fill_sym.symbolLayer(0).setDataDefinedProperty(QgsSymbolLayer.PropertyStrokeColor, QgsProperty.fromExpression(
-            "if(Name='Arterial', 'magenta', 'blue')"))
+        sym_layer = QgsArrowSymbolLayer.create(
+            {
+                "arrow_width": "7",
+                "head_length": "6",
+                "head_thickness": "8",
+                "head_type": "0",
+                "arrow_type": "0",
+                "is_repeated": "0",
+                "is_curved": "0",
+            }
+        )
+        fill_sym = QgsFillSymbol.createSimple(
+            {
+                "color": "#8bcfff",
+                "outline_color": "#000000",
+                "outline_style": "solid",
+                "outline_width": "1",
+            }
+        )
+        fill_sym.symbolLayer(0).setDataDefinedProperty(
+            QgsSymbolLayer.Property.PropertyFillColor,
+            QgsProperty.fromExpression("if(Name='Arterial', 'red', 'green')"),
+        )
+        fill_sym.symbolLayer(0).setDataDefinedProperty(
+            QgsSymbolLayer.Property.PropertyStrokeColor,
+            QgsProperty.fromExpression("if(Name='Arterial', 'magenta', 'blue')"),
+        )
 
         sym_layer.setSubSymbol(fill_sym)
         sym.changeSymbolLayer(0, sym_layer)
 
-        sym.setDataDefinedProperty(QgsSymbol.PropertyOpacity, QgsProperty.fromExpression("if(\"Value\" = 1, 25, 50)"))
+        sym.setDataDefinedProperty(
+            QgsSymbol.Property.PropertyOpacity,
+            QgsProperty.fromExpression('if("Value" = 1, 25, 50)'),
+        )
 
         line_layer.setRenderer(QgsSingleSymbolRenderer(sym))
 
@@ -244,20 +365,57 @@ class TestQgsArrowSymbolLayer(unittest.TestCase):
         ms.setExtent(QgsRectangle(-118.5, 19.0, -81.4, 50.4))
         ms.setLayers([line_layer])
 
-        # Test rendering
-        renderchecker = QgsMultiRenderChecker()
-        renderchecker.setMapSettings(ms)
-        renderchecker.setControlPathPrefix('symbol_arrow')
-        renderchecker.setControlName('expected_arrow_ddopacity')
-        res = renderchecker.runTest('expected_arrow_ddopacity')
-        self.report += renderchecker.report()
-        self.assertTrue(res)
+        self.assertTrue(
+            self.render_map_settings_check(
+                "arrow_ddopacity",
+                "arrow_ddopacity",
+                ms,
+                control_path_prefix="symbol_arrow",
+            )
+        )
+
+    def testCentroidFillSubSymbol(self):
+        s = QgsLineSymbol()
+        s.deleteSymbolLayer(0)
+
+        line = QgsArrowSymbolLayer()
+        line.setColor(QColor(255, 0, 0))
+        line.setArrowStartWidth(10)
+        line.setArrowWidth(5)
+        line.setIsCurved(False)
+
+        sub_symbol = QgsFillSymbol()
+        simple_fill = QgsSimpleFillSymbolLayer()
+        simple_fill.setColor(QColor(0, 255, 0, 100))
+        simple_fill.setStrokeStyle(Qt.PenStyle.NoPen)
+        centroid_fill = QgsCentroidFillSymbolLayer()
+        simple_marker = QgsSimpleMarkerSymbolLayer()
+        simple_marker.setFillColor(QColor(255, 0, 0))
+        simple_marker.setStrokeStyle(Qt.PenStyle.NoPen)
+        centroid_fill_marker = QgsMarkerSymbol()
+        centroid_fill_marker.changeSymbolLayer(0, simple_marker)
+        centroid_fill.setPointOnSurface(True)
+
+        centroid_fill.setSubSymbol(centroid_fill_marker)
+        sub_symbol.changeSymbolLayer(0, centroid_fill)
+        sub_symbol.appendSymbolLayer(simple_fill)
+        line.setSubSymbol(sub_symbol)
+
+        s.appendSymbolLayer(line.clone())
+
+        g = QgsGeometry.fromWkt("LineString(2 2, 10 10, 10 0)")
+        rendered_image = self.renderGeometry(s, g)
+        self.assertTrue(
+            self.image_check(
+                "render_centroid_fill", "render_centroid_fill", rendered_image
+            )
+        )
 
     def renderGeometry(self, symbol, geom):
         f = QgsFeature()
         f.setGeometry(geom)
 
-        image = QImage(200, 200, QImage.Format_RGB32)
+        image = QImage(200, 200, QImage.Format.Format_RGB32)
 
         painter = QPainter()
         ms = QgsMapSettings()
@@ -285,21 +443,6 @@ class TestQgsArrowSymbolLayer(unittest.TestCase):
 
         return image
 
-    def imageCheck(self, name, reference_image, image):
-        self.report += f"<h2>Render {name}</h2>\n"
-        temp_dir = QDir.tempPath() + '/'
-        file_name = temp_dir + 'symbol_' + name + ".png"
-        image.save(file_name, "PNG")
-        checker = QgsRenderChecker()
-        checker.setControlPathPrefix("symbol_arrow")
-        checker.setControlName("expected_" + reference_image)
-        checker.setRenderedImage(file_name)
-        checker.setColorTolerance(2)
-        result = checker.compareImages(name, 20)
-        self.report += checker.report()
-        print(self.report)
-        return result
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -83,7 +83,6 @@ class CORE_EXPORT QgsVector
 
     /**
      * Adds another vector to this vector.
-     * \since QGIS 3.0
      */
     QgsVector operator+( QgsVector other ) const SIP_HOLDGIL
     {
@@ -92,7 +91,6 @@ class CORE_EXPORT QgsVector
 
     /**
      * Adds another vector to this vector in place.
-     * \since QGIS 3.0
      */
     QgsVector &operator+=( QgsVector other ) SIP_HOLDGIL
     {
@@ -103,7 +101,6 @@ class CORE_EXPORT QgsVector
 
     /**
      * Subtracts another vector to this vector.
-     * \since QGIS 3.0
      */
     QgsVector operator-( QgsVector other ) const SIP_HOLDGIL
     {
@@ -112,7 +109,6 @@ class CORE_EXPORT QgsVector
 
     /**
      * Subtracts another vector to this vector in place.
-     * \since QGIS 3.0
      */
     QgsVector &operator-=( QgsVector other ) SIP_HOLDGIL
     {
@@ -207,13 +203,11 @@ class CORE_EXPORT QgsVector
      */
     QgsVector normalized() const SIP_THROW( QgsException );
 
-    //! Equality operator
     bool operator==( QgsVector other ) const SIP_HOLDGIL
     {
       return qgsDoubleNear( mX, other.mX ) && qgsDoubleNear( mY, other.mY );
     }
 
-    //! Inequality operator
     bool operator!=( QgsVector other ) const
     {
       return !qgsDoubleNear( mX, other.mX ) || !qgsDoubleNear( mY, other.mY );

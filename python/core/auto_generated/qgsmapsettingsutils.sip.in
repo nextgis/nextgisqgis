@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsmapsettingsutils.h                                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -14,8 +14,6 @@ class QgsMapSettingsUtils
 {
 %Docstring(signature="appended")
 Utilities for map settings.
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -32,9 +30,11 @@ Utilities for map settings.
 
     static QStringList containsAdvancedEffects( const QgsMapSettings &mapSettings, EffectsCheckFlags flags = QgsMapSettingsUtils::EffectsCheckFlags() );
 %Docstring
-Checks whether any of the layers attached to a map settings object contain advanced effects.
+Checks whether any of the layers attached to a map settings object
+contain advanced effects.
 
-The optional ``flags`` argument can be used to fine-tune the check behavior.
+The optional ``flags`` argument can be used to fine-tune the check
+behavior.
 %End
 
     static void worldFileParameters( const QgsMapSettings &mapSettings, double &a /Out/, double &b /Out/, double &c /Out/, double &d /Out/, double &e /Out/, double &f /Out/ );
@@ -74,5 +74,5 @@ QFlags<QgsMapSettingsUtils::EffectsCheckFlag> operator|(QgsMapSettingsUtils::Eff
  *                                                                      *
  * src/core/qgsmapsettingsutils.h                                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

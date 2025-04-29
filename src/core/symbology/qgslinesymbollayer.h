@@ -28,6 +28,7 @@ class QgsMarkerSymbol;
 class QgsLineSymbol;
 class QgsPathResolver;
 class QgsColorRamp;
+class QgsFillSymbol;
 
 #define DEFAULT_SIMPLELINE_COLOR     QColor(35,35,35)
 #define DEFAULT_SIMPLELINE_WIDTH     DEFAULT_LINE_WIDTH
@@ -70,6 +71,7 @@ class CORE_EXPORT QgsSimpleLineSymbolLayer : public QgsLineSymbolLayer
     static QgsSymbolLayer *createFromSld( QDomElement &element ) SIP_FACTORY;
 
     QString layerType() const override;
+    Qgis::SymbolLayerFlags flags() const override;
     void startRender( QgsSymbolRenderContext &context ) override;
     void stopRender( QgsSymbolRenderContext &context ) override;
     void renderPolyline( const QPolygonF &points, QgsSymbolRenderContext &context ) override;
@@ -85,11 +87,11 @@ class CORE_EXPORT QgsSimpleLineSymbolLayer : public QgsLineSymbolLayer
     void setMapUnitScale( const QgsMapUnitScale &scale ) override;
     QgsMapUnitScale mapUnitScale() const override;
     double estimateMaxBleed( const QgsRenderContext &context ) const override;
-    // QVector<qreal> dxfCustomDashPattern( Qgis::RenderUnit &unit ) const override;
-    // Qt::PenStyle dxfPenStyle() const override;
-    // double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
-    // double dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
-    // QColor dxfColor( QgsSymbolRenderContext &context ) const override;
+    QVector<qreal> dxfCustomDashPattern( Qgis::RenderUnit &unit ) const override;
+    Qt::PenStyle dxfPenStyle() const override;
+    double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
+    double dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
+    QColor dxfColor( QgsSymbolRenderContext &context ) const override;
     bool canCauseArtifactsBetweenAdjacentTiles() const override;
 
     /**
@@ -626,14 +628,14 @@ class CORE_EXPORT QgsTemplatedLineSymbolLayerBase : public QgsLineSymbolLayer
     /**
      * Returns the placement of the symbols.
      * \see setPlacement()
-     * \deprecated use placements() instead
+     * \deprecated QGIS 3.40. Use placements() instead.
      */
     Q_DECL_DEPRECATED Qgis::MarkerLinePlacement placement() const SIP_DEPRECATED;
 
     /**
      * Sets the \a placement of the symbols.
      * \see placement()
-     * \deprecated use setPlacements() instead
+     * \deprecated QGIS 3.40. Use setPlacements() instead.
      */
     Q_DECL_DEPRECATED void setPlacement( Qgis::MarkerLinePlacement placement ) SIP_DEPRECATED;
 
@@ -967,13 +969,13 @@ class CORE_EXPORT QgsMarkerLineSymbolLayer : public QgsTemplatedLineSymbolLayerB
      * Shall the marker be rotated.
      *
      * \returns TRUE if the marker should be rotated.
-     * \deprecated Use rotateSymbols() instead.
+     * \deprecated QGIS 3.40. Use rotateSymbols() instead.
      */
     Q_DECL_DEPRECATED bool rotateMarker() const SIP_DEPRECATED { return rotateSymbols(); }
 
     /**
      * Shall the marker be rotated.
-     * \deprecated Use setRotateSymbols() instead.
+     * \deprecated QGIS 3.40. Use setRotateSymbols() instead.
      */
     Q_DECL_DEPRECATED void setRotateMarker( bool rotate ) SIP_DEPRECATED { setRotateSymbols( rotate ); }
 
@@ -1248,6 +1250,7 @@ class CORE_EXPORT QgsRasterLineSymbolLayer : public QgsAbstractBrushedLineSymbol
     void setOpacity( double opacity ) { mOpacity = opacity; }
 
     QString layerType() const override;
+    Qgis::SymbolLayerFlags flags() const override;
     void startRender( QgsSymbolRenderContext &context ) override;
     void stopRender( QgsSymbolRenderContext &context ) override;
     void renderPolyline( const QPolygonF &points, QgsSymbolRenderContext &context ) override;
@@ -1299,6 +1302,7 @@ class CORE_EXPORT QgsLineburstSymbolLayer : public QgsAbstractBrushedLineSymbolL
     static QgsSymbolLayer *create( const QVariantMap &properties = QVariantMap() ) SIP_FACTORY;
 
     QString layerType() const override;
+    Qgis::SymbolLayerFlags flags() const override;
     void startRender( QgsSymbolRenderContext &context ) override;
     void stopRender( QgsSymbolRenderContext &context ) override;
     void renderPolyline( const QPolygonF &points, QgsSymbolRenderContext &context ) override;
@@ -1360,6 +1364,99 @@ class CORE_EXPORT QgsLineburstSymbolLayer : public QgsAbstractBrushedLineSymbolL
     Qgis::GradientColorSource mGradientColorType = Qgis::GradientColorSource::SimpleTwoColor;
     QColor mColor2;
     std::unique_ptr< QgsColorRamp > mGradientRamp;
+
+};
+
+
+/**
+ * \ingroup core
+ * \class QgsFilledLineSymbolLayer
+ *
+ * \brief A line symbol layer type which fills a stroked line with a QgsFillSymbol.
+ *
+ * \since QGIS 3.36
+ */
+class CORE_EXPORT QgsFilledLineSymbolLayer : public QgsLineSymbolLayer
+{
+  public:
+
+    /**
+     * Constructor for QgsFilledLineSymbolLayer.
+     *
+     * If a \a fillSymbol is specified, it will be transferred to the symbol layer and used
+     * to fill the inside of the stroked line. If no \a fillSymbol is specified then a default
+     * symbol will be used.
+     */
+    QgsFilledLineSymbolLayer( double width = DEFAULT_SIMPLELINE_WIDTH, QgsFillSymbol *fillSymbol SIP_TRANSFER = nullptr );
+    ~QgsFilledLineSymbolLayer() override;
+
+    /**
+     * Creates a new QgsFilledLineSymbolLayer, using the settings
+     * serialized in the \a properties map (corresponding to the output from
+     * QgsFilledLineSymbolLayer::properties() ).
+     */
+    static QgsSymbolLayer *create( const QVariantMap &properties = QVariantMap() ) SIP_FACTORY;
+
+    QString layerType() const override;
+    void startRender( QgsSymbolRenderContext &context ) override;
+    void stopRender( QgsSymbolRenderContext &context ) override;
+    void startFeatureRender( const QgsFeature &feature, QgsRenderContext &context ) override;
+    void stopFeatureRender( const QgsFeature &feature, QgsRenderContext &context ) override;
+    void renderPolyline( const QPolygonF &points, QgsSymbolRenderContext &context ) override;
+    QVariantMap properties() const override;
+    QgsFilledLineSymbolLayer *clone() const override SIP_FACTORY;
+    QgsSymbol *subSymbol() override;
+    bool setSubSymbol( QgsSymbol *symbol SIP_TRANSFER ) override;
+    bool hasDataDefinedProperties() const override;
+    void setColor( const QColor &c ) override;
+    QColor color() const override;
+    void setOutputUnit( Qgis::RenderUnit unit ) override;
+    Qgis::RenderUnit outputUnit() const override;
+    bool usesMapUnits() const override;
+    void setMapUnitScale( const QgsMapUnitScale &scale ) override;
+    QgsMapUnitScale mapUnitScale() const override;
+    double estimateMaxBleed( const QgsRenderContext &context ) const override;
+    QSet<QString> usedAttributes( const QgsRenderContext &context ) const override;
+
+    /**
+     * Returns the pen join style used to render the line (e.g. miter, bevel, round, etc).
+     *
+     * \see setPenJoinStyle()
+     */
+    Qt::PenJoinStyle penJoinStyle() const { return mPenJoinStyle; }
+
+    /**
+     * Sets the pen join \a style used to render the line (e.g. miter, bevel, round, etc).
+     *
+     * \see penJoinStyle()
+     */
+    void setPenJoinStyle( Qt::PenJoinStyle style ) { mPenJoinStyle = style; }
+
+    /**
+     * Returns the pen cap style used to render the line (e.g. flat, square, round, etc).
+     *
+     * \see setPenCapStyle()
+     */
+    Qt::PenCapStyle penCapStyle() const { return mPenCapStyle; }
+
+    /**
+     * Sets the pen cap \a style used to render the line (e.g. flat, square, round, etc).
+     *
+     * \see penCapStyle()
+     */
+    void setPenCapStyle( Qt::PenCapStyle style ) { mPenCapStyle = style; }
+
+  private:
+
+#ifdef SIP_RUN
+    QgsFilledLineSymbolLayer( const QgsFilledLineSymbolLayer & );
+#endif
+
+    //! Fill subsymbol
+    std::unique_ptr< QgsFillSymbol > mFill;
+    Qt::PenJoinStyle mPenJoinStyle = DEFAULT_SIMPLELINE_JOINSTYLE;
+    Qt::PenCapStyle mPenCapStyle = DEFAULT_SIMPLELINE_CAPSTYLE;
+
 
 };
 

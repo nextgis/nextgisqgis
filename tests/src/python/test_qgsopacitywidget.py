@@ -5,23 +5,25 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Nyall Dawson'
-__date__ = '30/05/2017'
-__copyright__ = 'Copyright 2017, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Nyall Dawson"
+__date__ = "30/05/2017"
+__copyright__ = "Copyright 2017, The QGIS Project"
+
 
 from qgis.PyQt.QtTest import QSignalSpy
-from qgis.testing import start_app, unittest
+from qgis.gui import QgsOpacityWidget
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 start_app()
 
 
-class TestQgsOpacityWidget(unittest.TestCase):
+class TestQgsOpacityWidget(QgisTestCase):
 
     def testGettersSetters(self):
-        """ test widget getters/setters """
-        w = qgis.gui.QgsOpacityWidget()
+        """test widget getters/setters"""
+        w = QgsOpacityWidget()
 
         w.setOpacity(0.2)
         self.assertEqual(w.opacity(), 0.2)
@@ -33,9 +35,9 @@ class TestQgsOpacityWidget(unittest.TestCase):
         self.assertEqual(w.opacity(), 1.0)
 
     def test_ChangedSignals(self):
-        """ test that signals are correctly emitted when setting opacity"""
+        """test that signals are correctly emitted when setting opacity"""
 
-        w = qgis.gui.QgsOpacityWidget()
+        w = QgsOpacityWidget()
 
         spy = QSignalSpy(w.opacityChanged)
         w.setOpacity(0.2)
@@ -49,5 +51,5 @@ class TestQgsOpacityWidget(unittest.TestCase):
         self.assertEqual(spy[1][0], 1.0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>846</width>
-    <height>312</height>
+    <height>705</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,26 +30,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QToolBar" name="mToolBar">
-     <addaction name="mActionUndo"/>
-     <addaction name="mActionRedo"/>
-     <addaction name="mActionCut"/>
-     <addaction name="mActionCopy"/>
-     <addaction name="mActionPaste"/>
-     <addaction name="separator"/>
-     <addaction name="mActionBold"/>
-     <addaction name="mActionItalic"/>
-     <addaction name="mActionUnderline"/>
-     <addaction name="mActionStrikeOut"/>
-     <addaction name="mActionBulletList"/>
-     <addaction name="mActionOrderedList"/>
-     <addaction name="mActionDecreaseIndent"/>
-     <addaction name="mActionIncreaseIndent"/>
-     <addaction name="separator"/>
-     <addaction name="mActionInsertLink"/>
-     <addaction name="mActionInsertImage"/>
-     <addaction name="mActionEditSource"/>
-    </widget>
+    <widget class="QToolBar" name="mToolBar"/>
    </item>
    <item>
     <widget class="QStackedWidget" name="mStackedWidget">
@@ -137,7 +118,7 @@
      <normaloff>:/images/themes/default/mActionEditPaste.svg</normaloff>:/images/themes/default/mActionEditPaste.svg</iconset>
    </property>
    <property name="text">
-    <string>Past</string>
+    <string>Paste</string>
    </property>
    <property name="toolTip">
     <string>Paste</string>

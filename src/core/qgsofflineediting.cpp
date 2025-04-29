@@ -20,6 +20,7 @@
 #include "qgsgeometry.h"
 #include "qgsmaplayer.h"
 #include "qgsofflineediting.h"
+#include "moc_qgsofflineediting.cpp"
 #include "qgsproject.h"
 #include "qgsvectordataprovider.h"
 #include "qgsvectorlayereditbuffer.h"
@@ -65,7 +66,7 @@ extern "C"
 
 QgsOfflineEditing::QgsOfflineEditing()
 {
-  connect( QgsProject::instance(), &QgsProject::layerWasAdded, this, &QgsOfflineEditing::setupLayer );
+  connect( QgsProject::instance(), &QgsProject::layerWasAdded, this, &QgsOfflineEditing::setupLayer ); // skip-keyword-check
 }
 
 /**
@@ -108,7 +109,7 @@ bool QgsOfflineEditing::convertToOfflineProject( const QString &offlineDataPath,
       {
         emit layerProgressUpdated( i + 1, layerIds.count() );
 
-        QgsMapLayer *layer = QgsProject::instance()->mapLayer( layerIds.at( i ) );
+        QgsMapLayer *layer = QgsProject::instance()->mapLayer( layerIds.at( i ) ); // skip-keyword-check
         QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( layer );
         if ( vl && vl->isValid() )
         {
@@ -119,14 +120,14 @@ bool QgsOfflineEditing::convertToOfflineProject( const QString &offlineDataPath,
       emit progressStopped();
 
       // save offline project
-      QString projectTitle = QgsProject::instance()->title();
+      QString projectTitle = QgsProject::instance()->title(); // skip-keyword-check
       if ( projectTitle.isEmpty() )
       {
-        projectTitle = QFileInfo( QgsProject::instance()->fileName() ).fileName();
+        projectTitle = QFileInfo( QgsProject::instance()->fileName() ).fileName(); // skip-keyword-check
       }
-      projectTitle += QLatin1String( " (offline)" );
-      QgsProject::instance()->setTitle( projectTitle );
-      QgsProject::instance()->writeEntry( PROJECT_ENTRY_SCOPE_OFFLINE, PROJECT_ENTRY_KEY_OFFLINE_DB_PATH, QgsProject::instance()->writePath( dbPath ) );
+      projectTitle += QLatin1String( " (offline)" ); // skip-keyword-check
+      QgsProject::instance()->setTitle( projectTitle ); // skip-keyword-check
+      QgsProject::instance()->writeEntry( PROJECT_ENTRY_SCOPE_OFFLINE, PROJECT_ENTRY_KEY_OFFLINE_DB_PATH, QgsProject::instance()->writePath( dbPath ) ); // skip-keyword-check
 
       return true;
     }
@@ -137,7 +138,7 @@ bool QgsOfflineEditing::convertToOfflineProject( const QString &offlineDataPath,
 
 bool QgsOfflineEditing::isOfflineProject() const
 {
-  return !QgsProject::instance()->readEntry( PROJECT_ENTRY_SCOPE_OFFLINE, PROJECT_ENTRY_KEY_OFFLINE_DB_PATH ).isEmpty();
+  return !QgsProject::instance()->readEntry( PROJECT_ENTRY_SCOPE_OFFLINE, PROJECT_ENTRY_KEY_OFFLINE_DB_PATH ).isEmpty(); // skip-keyword-check
 }
 
 void QgsOfflineEditing::synchronize( bool useTransaction )
@@ -151,10 +152,10 @@ void QgsOfflineEditing::synchronize( bool useTransaction )
 
   emit progressStarted();
 
-  const QgsSnappingConfig snappingConfig = QgsProject::instance()->snappingConfig();
+  const QgsSnappingConfig snappingConfig = QgsProject::instance()->snappingConfig(); // skip-keyword-check
 
   // restore and sync remote layers
-  QMap<QString, QgsMapLayer *> mapLayers = QgsProject::instance()->mapLayers();
+  QMap<QString, QgsMapLayer *> mapLayers = QgsProject::instance()->mapLayers(); // skip-keyword-check
   QMap<int, std::shared_ptr<QgsVectorLayer>> remoteLayersByOfflineId;
   QMap<int, QgsVectorLayer *> offlineLayersByOfflineId;
 
@@ -177,7 +178,7 @@ void QgsOfflineEditing::synchronize( bool useTransaction )
     const QString remoteNameSuffix = offlineLayer->customProperty( CUSTOM_PROPERTY_LAYERNAME_SUFFIX, " (offline)" ).toString();
     if ( remoteName.endsWith( remoteNameSuffix ) )
       remoteName.chop( remoteNameSuffix.size() );
-    const QgsVectorLayer::LayerOptions options { QgsProject::instance()->transformContext() };
+    const QgsVectorLayer::LayerOptions options { QgsProject::instance()->transformContext() }; // skip-keyword-check
 
     std::shared_ptr<QgsVectorLayer> remoteLayer = std::make_shared<QgsVectorLayer>( remoteSource, remoteName, remoteProvider, options );
 
@@ -332,9 +333,9 @@ void QgsOfflineEditing::synchronize( bool useTransaction )
   }
 
   // disable offline project
-  const QString projectTitle = QgsProject::instance()->title().remove( QRegularExpression( " \\(offline\\)$" ) );
-  QgsProject::instance()->setTitle( projectTitle );
-  QgsProject::instance()->removeEntry( PROJECT_ENTRY_SCOPE_OFFLINE, PROJECT_ENTRY_KEY_OFFLINE_DB_PATH );
+  const QString projectTitle = QgsProject::instance()->title().remove( QRegularExpression( " \\(offline\\)$" ) ); // skip-keyword-check
+  QgsProject::instance()->setTitle( projectTitle ); // skip-keyword-check
+  QgsProject::instance()->removeEntry( PROJECT_ENTRY_SCOPE_OFFLINE, PROJECT_ENTRY_KEY_OFFLINE_DB_PATH ); // skip-keyword-check
   // reset commitNo
   const QString sql = QStringLiteral( "UPDATE 'log_indices' SET 'last_index' = 0 WHERE \"name\" = 'commit_no'" );
   sqlExec( database.get(), sql );
@@ -370,18 +371,10 @@ void QgsOfflineEditing::initializeSpatialMetadata( sqlite3 *sqlite_handle )
   if ( ret == SQLITE_OK && rows == 1 && columns == 1 )
   {
     const QString version = QString::fromUtf8( results[1] );
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    QStringList parts = version.split( ' ', QString::SkipEmptyParts );
-#else
     const QStringList parts = version.split( ' ', Qt::SkipEmptyParts );
-#endif
     if ( !parts.empty() )
     {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-      QStringList verparts = parts.at( 0 ).split( '.', QString::SkipEmptyParts );
-#else
       const QStringList verparts = parts.at( 0 ).split( '.', Qt::SkipEmptyParts );
-#endif
       above41 = verparts.size() >= 2 && ( verparts.at( 0 ).toInt() > 4 || ( verparts.at( 0 ).toInt() == 4 && verparts.at( 1 ).toInt() >= 1 ) );
     }
   }
@@ -547,20 +540,20 @@ void QgsOfflineEditing::convertToOfflineLayer( QgsVectorLayer *layer, sqlite3 *d
       for ( const auto &field : providerFields )
       {
         QString dataType;
-        const QVariant::Type type = field.type();
-        if ( type == QVariant::Int || type == QVariant::LongLong )
+        const QMetaType::Type type = field.type();
+        if ( type == QMetaType::Type::Int || type == QMetaType::Type::LongLong )
         {
           dataType = QStringLiteral( "INTEGER" );
         }
-        else if ( type == QVariant::Double )
+        else if ( type == QMetaType::Type::Double )
         {
           dataType = QStringLiteral( "REAL" );
         }
-        else if ( type == QVariant::String )
+        else if ( type == QMetaType::Type::QString )
         {
           dataType = QStringLiteral( "TEXT" );
         }
-        else if ( type == QVariant::StringList  || type == QVariant::List )
+        else if ( type == QMetaType::Type::QStringList  || type == QMetaType::Type::QVariantList )
         {
           dataType = QStringLiteral( "TEXT" );
           showWarning( tr( "Field '%1' from layer %2 has been converted from a list to a string of comma-separated values." ).arg( field.name(), layer->name() ) );
@@ -653,7 +646,7 @@ void QgsOfflineEditing::convertToOfflineLayer( QgsVectorLayer *layer, sqlite3 *d
       const QString connectionString = QStringLiteral( "dbname='%1' table='%2'%3 sql=" )
                                        .arg( offlineDbPath,
                                              tableName, layer->isSpatial() ? "(Geometry)" : "" );
-      const QgsVectorLayer::LayerOptions options { QgsProject::instance()->transformContext() };
+      const QgsVectorLayer::LayerOptions options { QgsProject::instance()->transformContext() }; // skip-keyword-check
       newLayer = std::make_unique<QgsVectorLayer>( connectionString,
                  layer->name() + layerNameSuffix, QStringLiteral( "spatialite" ), options );
       break;
@@ -713,27 +706,27 @@ void QgsOfflineEditing::convertToOfflineLayer( QgsVectorLayer *layer, sqlite3 *d
       for ( const auto &field : providerFields )
       {
         const QString fieldName( field.name() );
-        const QVariant::Type type = field.type();
+        const QMetaType::Type type = field.type();
         OGRFieldType ogrType( OFTString );
         OGRFieldSubType ogrSubType = OFSTNone;
-        if ( type == QVariant::Int )
+        if ( type == QMetaType::Type::Int )
           ogrType = OFTInteger;
-        else if ( type == QVariant::LongLong )
+        else if ( type == QMetaType::Type::LongLong )
           ogrType = OFTInteger64;
-        else if ( type == QVariant::Double )
+        else if ( type == QMetaType::Type::Double )
           ogrType = OFTReal;
-        else if ( type == QVariant::Time )
+        else if ( type == QMetaType::Type::QTime )
           ogrType = OFTTime;
-        else if ( type == QVariant::Date )
+        else if ( type == QMetaType::Type::QDate )
           ogrType = OFTDate;
-        else if ( type == QVariant::DateTime )
+        else if ( type == QMetaType::Type::QDateTime )
           ogrType = OFTDateTime;
-        else if ( type == QVariant::Bool )
+        else if ( type == QMetaType::Type::Bool )
         {
           ogrType = OFTInteger;
           ogrSubType = OFSTBoolean;
         }
-        else if ( type == QVariant::StringList || type == QVariant::List )
+        else if ( type == QMetaType::Type::QStringList || type == QMetaType::Type::QVariantList )
         {
           ogrType = OFTString;
           ogrSubType = OFSTJSON;
@@ -770,7 +763,7 @@ void QgsOfflineEditing::convertToOfflineLayer( QgsVectorLayer *layer, sqlite3 *d
       hDS.reset();
 
       const QString uri = QStringLiteral( "%1|layername=%2|option:QGIS_FORCE_WAL=ON" ).arg( offlineDbPath,  tableName );
-      const QgsVectorLayer::LayerOptions layerOptions { QgsProject::instance()->transformContext() };
+      const QgsVectorLayer::LayerOptions layerOptions { QgsProject::instance()->transformContext() }; // skip-keyword-check
       newLayer = std::make_unique<QgsVectorLayer>( uri, layer->name() + layerNameSuffix, QStringLiteral( "ogr" ), layerOptions );
       break;
     }
@@ -794,7 +787,7 @@ void QgsOfflineEditing::convertToOfflineLayer( QgsVectorLayer *layer, sqlite3 *d
 
     QgsFeatureIterator fit = layer->dataProvider()->getFeatures( req );
 
-    if ( req.filterType() == QgsFeatureRequest::FilterFids )
+    if ( req.filterType() == Qgis::FeatureRequestFilterType::Fids )
     {
       emit progressModeSet( QgsOfflineEditing::CopyFeatures, layer->selectedFeatureIds().size() );
     }
@@ -820,11 +813,7 @@ void QgsOfflineEditing::convertToOfflineLayer( QgsVectorLayer *layer, sqlite3 *d
       QgsAttributes newAttrs( containerType == GPKG ? attrs.count() + 1 : attrs.count() );
       for ( int it = 0; it < attrs.count(); ++it )
       {
-        QVariant attr = attrs.at( it );
-        if ( layer->fields().at( it ).type() == QVariant::StringList || layer->fields().at( it ).type() == QVariant::List )
-        {
-          attr = QgsJsonUtils::encodeValue( attr );
-        }
+        const QVariant attr = attrs.at( it );
         newAttrs[column++] = attr;
       }
       f.setAttributes( newAttrs );
@@ -842,7 +831,7 @@ void QgsOfflineEditing::convertToOfflineLayer( QgsVectorLayer *layer, sqlite3 *d
       const int layerId = getOrCreateLayerId( db, layer->id() );
       QList<QgsFeatureId> offlineFeatureIds;
 
-      QgsFeatureIterator fit = newLayer->getFeatures( QgsFeatureRequest().setFlags( QgsFeatureRequest::NoGeometry ).setNoAttributes() );
+      QgsFeatureIterator fit = newLayer->getFeatures( QgsFeatureRequest().setFlags( Qgis::FeatureRequestFlag::NoGeometry ).setNoAttributes() );
       while ( fit.nextFeature( f ) )
       {
         offlineFeatureIds << f.id();
@@ -928,7 +917,7 @@ void QgsOfflineEditing::applyAttributesAdded( QgsVectorLayer *remoteLayer, sqlit
   const QList<QgsVectorDataProvider::NativeType> nativeTypes = provider->nativeTypes();
 
   // NOTE: uses last matching QVariant::Type of nativeTypes
-  QMap < QVariant::Type, QString /*typeName*/ > typeNameLookup;
+  QMap < QMetaType::Type, QString /*typeName*/ > typeNameLookup;
   for ( int i = 0; i < nativeTypes.size(); i++ )
   {
     const QgsVectorDataProvider::NativeType nativeType = nativeTypes.at( i );
@@ -999,20 +988,20 @@ void QgsOfflineEditing::applyFeaturesAdded( QgsVectorLayer *offlineLayer, QgsVec
       if ( remoteAttributeIndex == -1 )
         continue;
       QVariant attr = attrs.at( it );
-      if ( remoteLayer->fields().at( remoteAttributeIndex ).type() == QVariant::StringList )
+      if ( remoteLayer->fields().at( remoteAttributeIndex ).type() == QMetaType::Type::QStringList )
       {
-        if ( attr.type() == QVariant::StringList || attr.type() == QVariant::List )
+        if ( attr.userType() == QMetaType::Type::QStringList || attr.userType() == QMetaType::Type::QVariantList )
         {
           attr = attr.toStringList();
         }
         else
         {
-          attr = QgsJsonUtils::parseArray( attr.toString(), QVariant::String );
+          attr = QgsJsonUtils::parseArray( attr.toString(), QMetaType::Type::QString );
         }
       }
-      else if ( remoteLayer->fields().at( remoteAttributeIndex ).type() == QVariant::List )
+      else if ( remoteLayer->fields().at( remoteAttributeIndex ).type() == QMetaType::Type::QVariantList )
       {
-        if ( attr.type() == QVariant::StringList || attr.type() == QVariant::List )
+        if ( attr.userType() == QMetaType::Type::QStringList || attr.userType() == QMetaType::Type::QVariantList )
         {
           attr = attr.toList();
         }
@@ -1070,11 +1059,11 @@ void QgsOfflineEditing::applyAttributeValueChanges( QgsVectorLayer *offlineLayer
 
     const int remoteAttributeIndex = attrLookup[ values.at( i ).attr ];
     QVariant attr = values.at( i ).value;
-    if ( remoteLayer->fields().at( remoteAttributeIndex ).type() == QVariant::StringList )
+    if ( remoteLayer->fields().at( remoteAttributeIndex ).type() == QMetaType::Type::QStringList )
     {
-      attr = QgsJsonUtils::parseArray( attr.toString(), QVariant::String );
+      attr = QgsJsonUtils::parseArray( attr.toString(), QMetaType::Type::QString );
     }
-    else if ( remoteLayer->fields().at( remoteAttributeIndex ).type() == QVariant::List )
+    else if ( remoteLayer->fields().at( remoteAttributeIndex ).type() == QMetaType::Type::QVariantList )
     {
       attr = QgsJsonUtils::parseArray( attr.toString(), remoteLayer->fields().at( remoteAttributeIndex ).subType() );
     }
@@ -1115,7 +1104,7 @@ void QgsOfflineEditing::updateFidLookup( QgsVectorLayer *remoteLayer, sqlite3 *d
   QMap < QgsFeatureId, QString > newRemoteFids;
   QgsFeature f;
 
-  QgsFeatureIterator fit = remoteLayer->getFeatures( QgsFeatureRequest().setFlags( QgsFeatureRequest::NoGeometry ).setNoAttributes() );
+  QgsFeatureIterator fit = remoteLayer->getFeatures( QgsFeatureRequest().setFlags( Qgis::FeatureRequestFlag::NoGeometry ).setNoAttributes() );
 
   emit progressModeSet( QgsOfflineEditing::ProcessFeatures, remoteLayer->featureCount() );
 
@@ -1182,10 +1171,10 @@ void QgsOfflineEditing::showWarning( const QString &message )
 sqlite3_database_unique_ptr QgsOfflineEditing::openLoggingDb()
 {
   sqlite3_database_unique_ptr database;
-  const QString dbPath = QgsProject::instance()->readEntry( PROJECT_ENTRY_SCOPE_OFFLINE, PROJECT_ENTRY_KEY_OFFLINE_DB_PATH );
+  const QString dbPath = QgsProject::instance()->readEntry( PROJECT_ENTRY_SCOPE_OFFLINE, PROJECT_ENTRY_KEY_OFFLINE_DB_PATH ); // skip-keyword-check
   if ( !dbPath.isEmpty() )
   {
-    const QString absoluteDbPath = QgsProject::instance()->readPath( dbPath );
+    const QString absoluteDbPath = QgsProject::instance()->readPath( dbPath ); // skip-keyword-check
     const int rc = database.open( absoluteDbPath );
     if ( rc != SQLITE_OK )
     {
@@ -1372,7 +1361,7 @@ QList<QgsField> QgsOfflineEditing::sqlQueryAttributesAdded( sqlite3 *db, const Q
   while ( ret == SQLITE_ROW )
   {
     const QgsField field( QString( reinterpret_cast< const char * >( sqlite3_column_text( stmt, 0 ) ) ),
-                          static_cast< QVariant::Type >( sqlite3_column_int( stmt, 1 ) ),
+                          static_cast< QMetaType::Type >( sqlite3_column_int( stmt, 1 ) ),
                           QString(), // typeName
                           sqlite3_column_int( stmt, 2 ),
                           sqlite3_column_int( stmt, 3 ),
@@ -1498,11 +1487,11 @@ void QgsOfflineEditing::committedFeaturesAdded( const QString &qgisLayerId, cons
   const int layerId = getOrCreateLayerId( database.get(), qgisLayerId );
 
   // get new feature ids from db
-  QgsMapLayer *layer = QgsProject::instance()->mapLayer( qgisLayerId );
+  QgsMapLayer *layer = QgsProject::instance()->mapLayer( qgisLayerId ); // skip-keyword-check
   const QString dataSourceString = layer->source();
   const QgsDataSourceUri uri = QgsDataSourceUri( dataSourceString );
 
-  const QString offlinePath = QgsProject::instance()->readPath( QgsProject::instance()->readEntry( PROJECT_ENTRY_SCOPE_OFFLINE, PROJECT_ENTRY_KEY_OFFLINE_DB_PATH ) );
+  const QString offlinePath = QgsProject::instance()->readPath( QgsProject::instance()->readEntry( PROJECT_ENTRY_SCOPE_OFFLINE, PROJECT_ENTRY_KEY_OFFLINE_DB_PATH ) ); // skip-keyword-check
   QString tableName;
 
   if ( !offlinePath.contains( ".gpkg" ) )
@@ -1580,7 +1569,7 @@ void QgsOfflineEditing::committedAttributeValuesChanges( const QString &qgisLaye
     const QgsAttributeMap attrMap = cit.value();
     for ( QgsAttributeMap::const_iterator it = attrMap.constBegin(); it != attrMap.constEnd(); ++it )
     {
-      QString value = it.value().type() == QVariant::StringList || it.value().type() == QVariant::List ? QgsJsonUtils::encodeValue( it.value() ) : it.value().toString();
+      QString value = it.value().userType() == QMetaType::Type::QStringList || it.value().userType() == QMetaType::Type::QVariantList ? QgsJsonUtils::encodeValue( it.value() ) : it.value().toString();
       value.replace( QLatin1String( "'" ), QLatin1String( "''" ) ); // escape quote
       const QString sql = QStringLiteral( "INSERT INTO 'log_feature_updates' VALUES ( %1, %2, %3, %4, '%5' )" )
                           .arg( layerId )
@@ -1694,9 +1683,9 @@ int QgsOfflineEditing::getLayerPkIdx( const QgsVectorLayer *layer ) const
   if ( pkAttrs.length() == 1 )
   {
     const QgsField pkField = layer->fields().at( pkAttrs[0] );
-    const QVariant::Type pkType = pkField.type();
+    const QMetaType::Type pkType = pkField.type();
 
-    if ( pkType == QVariant::String )
+    if ( pkType == QMetaType::Type::QString )
     {
       return pkAttrs[0];
     }

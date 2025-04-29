@@ -18,27 +18,27 @@
 #include <Qt3DCore/QEntity>
 
 #include "qgs3dutils.h"
-#include "qgssymbollayerutils.h"
 #include "qgs3d.h"
+#include "qgscolorutils.h"
 #include "qgsmaterialregistry.h"
 #include "qgs3dsceneexporter.h"
 #include "qgsvectorlayerelevationproperties.h"
 #include "qgsvectorlayer.h"
+#include "qgstessellatedpolygongeometry.h"
 
 QgsPolygon3DSymbol::QgsPolygon3DSymbol()
-  : mMaterialSettings( std::make_unique< QgsPhongMaterialSettings >() )
+  : mMaterialSettings( std::make_unique<QgsPhongMaterialSettings>() )
 {
-
 }
 
 QgsPolygon3DSymbol::~QgsPolygon3DSymbol() = default;
 
 QgsAbstract3DSymbol *QgsPolygon3DSymbol::clone() const
 {
-  std::unique_ptr< QgsPolygon3DSymbol > result = std::make_unique< QgsPolygon3DSymbol >();
+  std::unique_ptr<QgsPolygon3DSymbol> result = std::make_unique<QgsPolygon3DSymbol>();
   result->mAltClamping = mAltClamping;
   result->mAltBinding = mAltBinding;
-  result->mHeight = mHeight;
+  result->mOffset = mOffset;
   result->mExtrusionHeight = mExtrusionHeight;
   result->mMaterialSettings.reset( mMaterialSettings->clone() );
   result->mCullingMode = mCullingMode;
@@ -61,7 +61,7 @@ void QgsPolygon3DSymbol::writeXml( QDomElement &elem, const QgsReadWriteContext 
   QDomElement elemDataProperties = doc.createElement( QStringLiteral( "data" ) );
   elemDataProperties.setAttribute( QStringLiteral( "alt-clamping" ), Qgs3DUtils::altClampingToString( mAltClamping ) );
   elemDataProperties.setAttribute( QStringLiteral( "alt-binding" ), Qgs3DUtils::altBindingToString( mAltBinding ) );
-  elemDataProperties.setAttribute( QStringLiteral( "height" ), mHeight );
+  elemDataProperties.setAttribute( QStringLiteral( "offset" ), mOffset );
   elemDataProperties.setAttribute( QStringLiteral( "extrusion-height" ), mExtrusionHeight );
   elemDataProperties.setAttribute( QStringLiteral( "culling-mode" ), Qgs3DUtils::cullingModeToString( mCullingMode ) );
   elemDataProperties.setAttribute( QStringLiteral( "invert-normals" ), mInvertNormals ? QStringLiteral( "1" ) : QStringLiteral( "0" ) );
@@ -81,7 +81,7 @@ void QgsPolygon3DSymbol::writeXml( QDomElement &elem, const QgsReadWriteContext 
   QDomElement elemEdges = doc.createElement( QStringLiteral( "edges" ) );
   elemEdges.setAttribute( QStringLiteral( "enabled" ), mEdgesEnabled ? QStringLiteral( "1" ) : QStringLiteral( "0" ) );
   elemEdges.setAttribute( QStringLiteral( "width" ), mEdgeWidth );
-  elemEdges.setAttribute( QStringLiteral( "color" ), QgsSymbolLayerUtils::encodeColor( mEdgeColor ) );
+  elemEdges.setAttribute( QStringLiteral( "color" ), QgsColorUtils::colorToString( mEdgeColor ) );
   elem.appendChild( elemEdges );
 }
 
@@ -92,7 +92,7 @@ void QgsPolygon3DSymbol::readXml( const QDomElement &elem, const QgsReadWriteCon
   const QDomElement elemDataProperties = elem.firstChildElement( QStringLiteral( "data" ) );
   mAltClamping = Qgs3DUtils::altClampingFromString( elemDataProperties.attribute( QStringLiteral( "alt-clamping" ) ) );
   mAltBinding = Qgs3DUtils::altBindingFromString( elemDataProperties.attribute( QStringLiteral( "alt-binding" ) ) );
-  mHeight = elemDataProperties.attribute( QStringLiteral( "height" ) ).toFloat();
+  mOffset = elemDataProperties.attribute( QStringLiteral( "offset" ) ).toFloat();
   mExtrusionHeight = elemDataProperties.attribute( QStringLiteral( "extrusion-height" ) ).toFloat();
   mCullingMode = Qgs3DUtils::cullingModeFromString( elemDataProperties.attribute( QStringLiteral( "culling-mode" ) ) );
   mInvertNormals = elemDataProperties.attribute( QStringLiteral( "invert-normals" ) ).toInt();
@@ -115,39 +115,39 @@ void QgsPolygon3DSymbol::readXml( const QDomElement &elem, const QgsReadWriteCon
   {
     mEdgesEnabled = elemEdges.attribute( QStringLiteral( "enabled" ) ).toInt();
     mEdgeWidth = elemEdges.attribute( QStringLiteral( "width" ) ).toFloat();
-    mEdgeColor = QgsSymbolLayerUtils::decodeColor( elemEdges.attribute( QStringLiteral( "color" ) ) );
+    mEdgeColor = QgsColorUtils::colorFromString( elemEdges.attribute( QStringLiteral( "color" ) ) );
   }
 }
 
 QList<Qgis::GeometryType> QgsPolygon3DSymbol::compatibleGeometryTypes() const
 {
-  return QList< Qgis::GeometryType >() << Qgis::GeometryType::Polygon;
+  return QList<Qgis::GeometryType>() << Qgis::GeometryType::Polygon;
 }
 
 void QgsPolygon3DSymbol::setDefaultPropertiesFromLayer( const QgsVectorLayer *layer )
 {
-  const QgsVectorLayerElevationProperties *props = qgis::down_cast< const QgsVectorLayerElevationProperties * >( const_cast< QgsVectorLayer *>( layer )->elevationProperties() );
+  const QgsVectorLayerElevationProperties *props = qgis::down_cast<const QgsVectorLayerElevationProperties *>( const_cast<QgsVectorLayer *>( layer )->elevationProperties() );
 
   mAltClamping = props->clamping();
   mAltBinding = props->binding();
-  mExtrusionHeight = props->extrusionEnabled() ? static_cast< float>( props->extrusionHeight() ) : 0.0f;
-  if ( props->dataDefinedProperties().isActive( QgsMapLayerElevationProperties::ExtrusionHeight ) )
+  mExtrusionHeight = props->extrusionEnabled() ? static_cast<float>( props->extrusionHeight() ) : 0.0f;
+  if ( props->dataDefinedProperties().isActive( QgsMapLayerElevationProperties::Property::ExtrusionHeight ) )
   {
-    mDataDefinedProperties.setProperty( PropertyExtrusionHeight, props->dataDefinedProperties().property( QgsMapLayerElevationProperties::ExtrusionHeight ) );
+    mDataDefinedProperties.setProperty( QgsAbstract3DSymbol::Property::ExtrusionHeight, props->dataDefinedProperties().property( QgsMapLayerElevationProperties::Property::ExtrusionHeight ) );
   }
   else
   {
-    mDataDefinedProperties.setProperty( PropertyExtrusionHeight, QgsProperty() );
+    mDataDefinedProperties.setProperty( QgsAbstract3DSymbol::Property::ExtrusionHeight, QgsProperty() );
   }
-  if ( props->dataDefinedProperties().isActive( QgsMapLayerElevationProperties::ZOffset ) )
+  if ( props->dataDefinedProperties().isActive( QgsMapLayerElevationProperties::Property::ZOffset ) )
   {
-    mDataDefinedProperties.setProperty( PropertyHeight, props->dataDefinedProperties().property( QgsMapLayerElevationProperties::ZOffset ) );
+    mDataDefinedProperties.setProperty( QgsAbstract3DSymbol::Property::Height, props->dataDefinedProperties().property( QgsMapLayerElevationProperties::Property::ZOffset ) );
   }
   else
   {
-    mDataDefinedProperties.setProperty( PropertyHeight, QgsProperty() );
+    mDataDefinedProperties.setProperty( QgsAbstract3DSymbol::Property::Height, QgsProperty() );
   }
-  mHeight = static_cast< float >( props->zOffset() );
+  mOffset = static_cast<float>( props->zOffset() );
 }
 
 QgsAbstract3DSymbol *QgsPolygon3DSymbol::create()
@@ -170,24 +170,32 @@ void QgsPolygon3DSymbol::setMaterialSettings( QgsAbstractMaterialSettings *mater
 
 bool QgsPolygon3DSymbol::exportGeometries( Qgs3DSceneExporter *exporter, Qt3DCore::QEntity *entity, const QString &objectNamePrefix ) const
 {
-  const QList<Qt3DCore::QEntity *> entities = entity->findChildren<Qt3DCore::QEntity *>( QString(), Qt::FindDirectChildrenOnly );
-  if ( entities.isEmpty() )
+  QList<Qt3DCore::QEntity *> subEntities = entity->findChildren<Qt3DCore::QEntity *>( QString(), Qt::FindDirectChildrenOnly );
+  // sort geometries by their name in order to always export them in the same way:
+  std::sort( subEntities.begin(), subEntities.end(), []( const Qt3DCore::QEntity *a, const Qt3DCore::QEntity *b ) {
+    return a->objectName() < b->objectName();
+  } );
+
+  if ( subEntities.isEmpty() )
   {
     const QList<Qt3DRender::QGeometryRenderer *> renderers = entity->findChildren<Qt3DRender::QGeometryRenderer *>();
+    const int startSize = exporter->mObjects.size();
     for ( Qt3DRender::QGeometryRenderer *renderer : renderers )
     {
       Qgs3DExportObject *object = exporter->processGeometryRenderer( renderer, objectNamePrefix );
-      if ( object == nullptr ) continue;
-      exporter->processEntityMaterial( entity, object );
-      exporter->mObjects.push_back( object );
+      if ( object )
+      {
+        exporter->processEntityMaterial( entity, object );
+        exporter->mObjects.push_back( object );
+      }
     }
-    return renderers.size() != 0;
+    return exporter->mObjects.size() > startSize;
   }
   else
   {
     bool out = false;
     QString prefix;
-    for ( Qt3DCore::QEntity *e : entities )
+    for ( Qt3DCore::QEntity *e : subEntities )
     {
       if ( e->objectName().isEmpty() )
         prefix = objectNamePrefix;

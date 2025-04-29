@@ -35,10 +35,11 @@ class CORE_EXPORT QgsVirtualPointCloudProvider: public QgsPointCloudDataProvider
   public:
     QgsVirtualPointCloudProvider( const QString &uri,
                                   const QgsDataProvider::ProviderOptions &providerOptions,
-                                  QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() );
+                                  Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() );
 
     ~QgsVirtualPointCloudProvider();
 
+    Qgis::DataProviderFlags flags() const override;
     QgsPointCloudDataProvider::Capabilities capabilities() const override;
     QgsCoordinateReferenceSystem crs() const override;
 
@@ -84,7 +85,7 @@ class QgsVirtualPointCloudProviderMetadata : public QgsProviderMetadata
     QgsVirtualPointCloudProviderMetadata();
     QIcon icon() const override;
     QgsProviderMetadata::ProviderMetadataCapabilities capabilities() const override;
-    QgsVirtualPointCloudProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() ) override;
+    QgsVirtualPointCloudProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() ) override;
     QList< QgsProviderSublayerDetails > querySublayers( const QString &uri, Qgis::SublayerQueryFlags flags = Qgis::SublayerQueryFlags(), QgsFeedback *feedback = nullptr ) const override;
     int priorityForUri( const QString &uri ) const override;
     QList< Qgis::LayerType > validLayerTypesForUri( const QString &uri ) const override;

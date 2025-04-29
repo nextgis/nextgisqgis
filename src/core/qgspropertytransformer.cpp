@@ -20,6 +20,7 @@
 #include "qgsexpressionnodeimpl.h"
 #include "qgssymbollayerutils.h"
 #include "qgscolorramp.h"
+#include "qgscolorutils.h"
 #include "qgspointxy.h"
 
 
@@ -223,7 +224,7 @@ QString QgsGenericNumericTransformer::toExpression( const QString &baseExpressio
     return QStringLiteral( "coalesce(scale_polynomial(%1, %2, %3, %4, %5, %6), %7)" ).arg( baseExpression, minValueString, maxValueString, minOutputString, maxOutputString, exponentString, nullOutputString );
 }
 
-QgsGenericNumericTransformer *QgsGenericNumericTransformer::fromExpression( const QString &expression, QString &baseExpression, QString &fieldName )
+QgsGenericNumericTransformer *QgsGenericNumericTransformer::fromExpression( const QString &expression, QString &baseExpression, QString &fieldName ) // cppcheck-suppress duplInheritedMember
 {
   bool ok = false;
 
@@ -435,7 +436,7 @@ QString QgsSizeScaleTransformer::toExpression( const QString &baseExpression ) c
   return QString();
 }
 
-QgsSizeScaleTransformer *QgsSizeScaleTransformer::fromExpression( const QString &expression, QString &baseExpression, QString &fieldName )
+QgsSizeScaleTransformer *QgsSizeScaleTransformer::fromExpression( const QString &expression, QString &baseExpression, QString &fieldName ) // cppcheck-suppress duplInheritedMember
 {
   bool ok = false;
 
@@ -524,10 +525,12 @@ QgsSizeScaleTransformer *QgsSizeScaleTransformer::fromExpression( const QString 
 
 QgsColorRampTransformer::QgsColorRampTransformer( double minValue, double maxValue,
     QgsColorRamp *ramp,
-    const QColor &nullColor )
+    const QColor &nullColor,
+    const QString &rampName )
   : QgsPropertyTransformer( minValue, maxValue )
   , mGradientRamp( ramp )
   , mNullColor( nullColor )
+  , mRampName( rampName )
 {
 
 }
@@ -571,7 +574,7 @@ QVariant QgsColorRampTransformer::toVariant() const
   {
     transformerMap.insert( QStringLiteral( "colorramp" ), QgsSymbolLayerUtils::colorRampToVariant( QStringLiteral( "[source]" ), mGradientRamp.get() ) );
   }
-  transformerMap.insert( QStringLiteral( "nullColor" ), QgsSymbolLayerUtils::encodeColor( mNullColor ) );
+  transformerMap.insert( QStringLiteral( "nullColor" ), QgsColorUtils::colorToString( mNullColor ) );
   transformerMap.insert( QStringLiteral( "rampName" ), mRampName );
 
   return transformerMap;
@@ -589,7 +592,7 @@ bool QgsColorRampTransformer::loadVariant( const QVariant &definition )
     setColorRamp( QgsSymbolLayerUtils::loadColorRamp( transformerMap.value( QStringLiteral( "colorramp" ) ).toMap() ) );
   }
 
-  mNullColor = QgsSymbolLayerUtils::decodeColor( transformerMap.value( QStringLiteral( "nullColor" ), QStringLiteral( "0,0,0,0" ) ).toString() );
+  mNullColor = QgsColorUtils::colorFromString( transformerMap.value( QStringLiteral( "nullColor" ), QStringLiteral( "0,0,0,0" ) ).toString() );
   mRampName = transformerMap.value( QStringLiteral( "rampName" ) ).toString();
   return true;
 }

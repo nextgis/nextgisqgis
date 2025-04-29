@@ -5,11 +5,11 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Nyall Dawson'
-__date__ = '24/1/2017'
-__copyright__ = 'Copyright 2017, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Nyall Dawson"
+__date__ = "24/1/2017"
+__copyright__ = "Copyright 2017, The QGIS Project"
+
 from qgis.PyQt.QtCore import QPointF, QSizeF
 from qgis.core import (
     QgsCoordinateReferenceSystem,
@@ -22,7 +22,8 @@ from qgis.core import (
     QgsVectorLayer,
 )
 from qgis.gui import QgsMapCanvas, QgsMapCanvasAnnotationItem
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 from utilities import unitTestDataPath
 
@@ -30,18 +31,18 @@ start_app()
 TEST_DATA_DIR = unitTestDataPath()
 
 
-class TestQgsMapCanvasAnnotationItem(unittest.TestCase):
+class TestQgsMapCanvasAnnotationItem(QgisTestCase):
 
     def testPosition(self):
-        """ test that map canvas annotation item syncs position correctly """
+        """test that map canvas annotation item syncs position correctly"""
         a = QgsTextAnnotation()
         a.setFrameSizeMm(QSizeF(300 / 3.7795275, 200 / 3.7795275))
         a.setFrameOffsetFromReferencePointMm(QPointF(40 / 3.7795275, 50 / 3.7795275))
         a.setMapPosition(QgsPointXY(12, 34))
-        a.setMapPositionCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
+        a.setMapPositionCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         canvas = QgsMapCanvas()
-        canvas.setDestinationCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
+        canvas.setDestinationCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
         canvas.setFrameStyle(0)
         canvas.resize(600, 400)
         canvas.show()
@@ -76,14 +77,16 @@ class TestQgsMapCanvasAnnotationItem(unittest.TestCase):
         self.assertAlmostEqual(i.pos().y(), 160, 1)
 
     def testSize(self):
-        """ test that map canvas annotation item size is correct """
+        """test that map canvas annotation item size is correct"""
         a = QgsTextAnnotation()
         a.setFrameSizeMm(QSizeF(300 / 3.7795275, 200 / 3.7795275))
         a.setHasFixedMapPosition(False)
-        a.setFillSymbol(QgsFillSymbol.createSimple({'color': 'blue', 'width_border': '0'}))
+        a.setFillSymbol(
+            QgsFillSymbol.createSimple({"color": "blue", "width_border": "0"})
+        )
 
         canvas = QgsMapCanvas()
-        canvas.setDestinationCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
+        canvas.setDestinationCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
         canvas.setFrameStyle(0)
         canvas.resize(600, 400)
         canvas.show()
@@ -116,31 +119,32 @@ class TestQgsMapCanvasAnnotationItem(unittest.TestCase):
             self.assertAlmostEqual(i.boundingRect().height(), 229.166, -1)
 
     def testVisibility(self):
-        """ test that map canvas annotation item visibility follows layer"""
+        """test that map canvas annotation item visibility follows layer"""
         a = QgsTextAnnotation()
         canvas = QgsMapCanvas()
         i = QgsMapCanvasAnnotationItem(a, canvas)
 
         self.assertTrue(i.isVisible())
 
-        layer = QgsVectorLayer("Point?crs=EPSG:3111&field=fldtxt:string",
-                               'test', "memory")
+        layer = QgsVectorLayer(
+            "Point?crs=EPSG:3111&field=fldtxt:string", "test", "memory"
+        )
         a.setMapLayer(layer)
         self.assertFalse(i.isVisible())
         canvas.setLayers([layer])
         self.assertTrue(i.isVisible())
 
     def testSettingFeature(self):
-        """ test that feature is set when item moves """
+        """test that feature is set when item moves"""
         a = QgsTextAnnotation()
         a.setFrameSizeMm(QSizeF(300 / 3.7795275, 200 / 3.7795275))
         a.setFrameOffsetFromReferencePointMm(QPointF(40 / 3.7795275, 50 / 3.7795275))
         a.setHasFixedMapPosition(True)
         a.setMapPosition(QgsPointXY(12, 34))
-        a.setMapPositionCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
+        a.setMapPositionCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         canvas = QgsMapCanvas()
-        canvas.setDestinationCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
+        canvas.setDestinationCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
         canvas.setFrameStyle(0)
         canvas.resize(600, 400)
 
@@ -148,24 +152,27 @@ class TestQgsMapCanvasAnnotationItem(unittest.TestCase):
 
         i = QgsMapCanvasAnnotationItem(a, canvas)  # NOQA
 
-        layer = QgsVectorLayer("Point?crs=EPSG:4326&field=station:string&field=suburb:string",
-                               'test', "memory")
+        layer = QgsVectorLayer(
+            "Point?crs=EPSG:4326&field=station:string&field=suburb:string",
+            "test",
+            "memory",
+        )
         canvas.setLayers([layer])
         f = QgsFeature(layer.fields())
         f.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(14, 31)))
         f.setValid(True)
-        f.setAttributes(['hurstbridge', 'somewhere'])
+        f.setAttributes(["hurstbridge", "somewhere"])
         self.assertTrue(layer.dataProvider().addFeatures([f]))
         a.setMapLayer(layer)
         self.assertFalse(a.associatedFeature().isValid())
 
         a.setMapPosition(QgsPointXY(14, 31))
         self.assertTrue(a.associatedFeature().isValid())
-        self.assertEqual(a.associatedFeature().attributes()[0], 'hurstbridge')
+        self.assertEqual(a.associatedFeature().attributes()[0], "hurstbridge")
 
         a.setMapPosition(QgsPointXY(17, 31))
         self.assertFalse(a.associatedFeature().isValid())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

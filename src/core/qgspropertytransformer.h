@@ -50,7 +50,6 @@ class QgsColorRamp;
  * or last control point. In other words, the curve will have a flat segment
  * for values outside of the control point range.
  *
- * \since QGIS 3.0
  */
 
 class CORE_EXPORT QgsCurveTransform
@@ -72,9 +71,6 @@ class CORE_EXPORT QgsCurveTransform
 
     ~QgsCurveTransform();
 
-    /**
-     * Copy constructor
-     */
     QgsCurveTransform( const QgsCurveTransform &other );
 
     QgsCurveTransform &operator=( const QgsCurveTransform &other );
@@ -165,7 +161,6 @@ class CORE_EXPORT QgsCurveTransform
  * \class QgsPropertyTransformer
  * \brief Abstract base class for objects which transform the calculated value of a property.
  * Possible uses include transformers which map a value into a scaled size or color from a gradient.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsPropertyTransformer
 {
@@ -206,9 +201,6 @@ class CORE_EXPORT QgsPropertyTransformer
      */
     QgsPropertyTransformer( double minValue = 0.0, double maxValue = 1.0 );
 
-    /**
-     * Copy constructor.
-     */
     QgsPropertyTransformer( const QgsPropertyTransformer &other );
     QgsPropertyTransformer &operator=( const QgsPropertyTransformer &other );
 
@@ -302,14 +294,9 @@ class CORE_EXPORT QgsPropertyTransformer
     /**
      * Attempts to parse an expression into a corresponding property transformer.
      * \param expression expression to parse
-     * \param baseExpression will be set to the component of the source expression which
-     * is used to calculate the input to the property transformer. This will be set to an
-     * empty string if a field reference is the transformer input.
-     * \param fieldName will be set to a field name which is used to calculate the input
-     * to the property transformer. This will be set to an
-     * empty string if an expression is the transformer input.
-     * \returns corresponding property transformer, or NULLPTR if expression could not
-     * be parsed to a transformer.
+     * \param baseExpression will be set to the component of the source expression which is used to calculate the input to the property transformer. This will be set to an empty string if a field reference is the transformer input.
+     * \param fieldName will be set to a field name which is used to calculate the input to the property transformer. This will be set to an empty string if an expression is the transformer input.
+     * \returns corresponding property transformer, or NULLPTR if expression could not be parsed to a transformer.
      */
     static QgsPropertyTransformer *fromExpression( const QString &expression, QString &baseExpression SIP_OUT, QString &fieldName SIP_OUT ) SIP_FACTORY;
 
@@ -337,7 +324,6 @@ class CORE_EXPORT QgsPropertyTransformer
  * \ingroup core
  * \class QgsGenericNumericTransformer
  * \brief QgsPropertyTransformer subclass for scaling an input numeric value into an output numeric value.
- * \since QGIS 3.0
  */
 
 class CORE_EXPORT QgsGenericNumericTransformer : public QgsPropertyTransformer
@@ -379,7 +365,7 @@ class CORE_EXPORT QgsGenericNumericTransformer : public QgsPropertyTransformer
      * \returns corresponding QgsSizeScaleTransformer, or NULLPTR if expression could not
      * be parsed to a size scale transformer.
      */
-    static QgsGenericNumericTransformer *fromExpression( const QString &expression, QString &baseExpression SIP_OUT, QString &fieldName SIP_OUT ) SIP_FACTORY;
+    static QgsGenericNumericTransformer *fromExpression( const QString &expression, QString &baseExpression SIP_OUT, QString &fieldName SIP_OUT ) SIP_FACTORY; // cppcheck-suppress duplInheritedMember
 
     /**
      * Calculates the size corresponding to a specific \a input value.
@@ -455,7 +441,6 @@ class CORE_EXPORT QgsGenericNumericTransformer : public QgsPropertyTransformer
  * \class QgsSizeScaleTransformer
  * \brief QgsPropertyTransformer subclass for scaling a value into a size according to various
  * scaling methods.
- * \since QGIS 3.0
  */
 
 class CORE_EXPORT QgsSizeScaleTransformer : public QgsPropertyTransformer
@@ -499,16 +484,11 @@ class CORE_EXPORT QgsSizeScaleTransformer : public QgsPropertyTransformer
     /**
      * Attempts to parse an expression into a corresponding QgsSizeScaleTransformer.
      * \param expression expression to parse
-     * \param baseExpression will be set to the component of the source expression which
-     * is used to calculate the input to the property transformer. This will be set to an
-     * empty string if a field reference is the transformer input.
-     * \param fieldName will be set to a field name which is used to calculate the input
-     * to the property transformer. This will be set to an
-     * empty string if an expression is the transformer input.
-     * \returns corresponding QgsSizeScaleTransformer, or NULLPTR if expression could not
-     * be parsed to a size scale transformer.
+     * \param baseExpression will be set to the component of the source expression which is used to calculate the input to the property transformer. This will be set to an empty string if a field reference is the transformer input.
+     * \param fieldName will be set to a field name which is used to calculate the input to the property transformer. This will be set to an empty string if an expression is the transformer input.
+     * \returns corresponding QgsSizeScaleTransformer, or NULLPTR if expression could not be parsed to a size scale transformer.
      */
-    static QgsSizeScaleTransformer *fromExpression( const QString &expression, QString &baseExpression SIP_OUT, QString &fieldName SIP_OUT ) SIP_FACTORY;
+    static QgsSizeScaleTransformer *fromExpression( const QString &expression, QString &baseExpression SIP_OUT, QString &fieldName SIP_OUT ) SIP_FACTORY; // cppcheck-suppress duplInheritedMember
 
     /**
      * Calculates the size corresponding to a specific value.
@@ -602,7 +582,6 @@ class CORE_EXPORT QgsSizeScaleTransformer : public QgsPropertyTransformer
  * \class QgsColorRampTransformer
  * \brief QgsPropertyTransformer subclass for transforming a numeric value into a color from a
  * color ramp.
- * \since QGIS 3.0
  */
 
 class CORE_EXPORT QgsColorRampTransformer : public QgsPropertyTransformer
@@ -615,15 +594,15 @@ class CORE_EXPORT QgsColorRampTransformer : public QgsPropertyTransformer
      * \param maxValue maximum expected value
      * \param ramp source color ramp. Ownership is transferred to the transformer.
      * \param nullColor color to return for null values
+     * \param rampName name of the source color ramp (since QGIS 3.36)
      */
     QgsColorRampTransformer( double minValue = 0.0,
                              double maxValue = 1.0,
                              QgsColorRamp *ramp SIP_TRANSFER = nullptr,
-                             const QColor &nullColor = QColor( 0, 0, 0, 0 ) );
+                             const QColor &nullColor = QColor( 0, 0, 0, 0 ),
+                             const QString &rampName = QString() );
 
-    //! Copy constructor
     QgsColorRampTransformer( const QgsColorRampTransformer &other );
-
     QgsColorRampTransformer &operator=( const QgsColorRampTransformer &other );
 
     Type transformerType() const override { return ColorRampTransformer; }

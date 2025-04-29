@@ -26,7 +26,7 @@
 
 class QString;
 class QRectF;
-class QgsBox3d;
+class QgsBox3D;
 #include "qgspointxy.h"
 
 
@@ -36,7 +36,7 @@ class QgsBox3d;
  *
  * QgsRectangle is used to store a rectangle when double values are required.
  * Examples are storing a layer extent or the current view extent of a map
- * \see QgsBox3d
+ * \see QgsBox3D
  */
 class CORE_EXPORT QgsRectangle
 {
@@ -85,7 +85,6 @@ class CORE_EXPORT QgsRectangle
       mYmax = qRectF.bottomRight().y();
     }
 
-    //! Copy constructor
     QgsRectangle( const QgsRectangle &other ) SIP_HOLDGIL
     {
       mXmin = other.xMinimum();
@@ -102,14 +101,12 @@ class CORE_EXPORT QgsRectangle
     /**
     * Creates a new rectangle from a \a wkt string.
     * The WKT must contain only 5 vertices, representing a rectangle aligned with X and Y axes.
-    * \since QGIS 3.0
     */
     static QgsRectangle fromWkt( const QString &wkt );
 
     /**
      * Creates a new rectangle, given the specified \a center point
      * and \a width and \a height.
-     * \since QGIS 3.0
      */
     static QgsRectangle fromCenterAndSize( const QgsPointXY &center, double width, double height );
 
@@ -166,15 +163,30 @@ class CORE_EXPORT QgsRectangle
     void setYMaximum( double y ) SIP_HOLDGIL { mYmax = y; }
 
     /**
+     * Mark a rectangle as being null (holding no spatial information).
+     *
+     * A null rectangle is also empty by definition.
+     *
+     * \see isNull()
+     * \see isEmpty()
+     *
+     * \since QGIS 3.34
+     */
+    void setNull() SIP_HOLDGIL
+    {
+      mXmin = mYmin = std::numeric_limits<double>::max();
+      mXmax = mYmax = -std::numeric_limits<double>::max();
+    }
+
+    /**
      * Set a rectangle so that min corner is at max
      * and max corner is at min. It is NOT normalized.
+     *
+     * \deprecated QGIS 3.34. Will be removed in QGIS 4.0. Use setNull().
      */
-    void setMinimal() SIP_HOLDGIL
+    Q_DECL_DEPRECATED void setMinimal() SIP_DEPRECATED
     {
-      mXmin = std::numeric_limits<double>::max();
-      mYmin = std::numeric_limits<double>::max();
-      mXmax = -std::numeric_limits<double>::max();
-      mYmax = -std::numeric_limits<double>::max();
+      setNull();
     }
 
     /**
@@ -234,14 +246,12 @@ class CORE_EXPORT QgsRectangle
      * \see width()
      * \see height()
      * \see perimeter()
-     * \since QGIS 3.0
      */
     double area() const SIP_HOLDGIL { return ( mXmax - mXmin ) * ( mYmax - mYmin ); }
 
     /**
      * Returns the perimeter of the rectangle.
      * \see area()
-     * \since QGIS 3.0
      */
     double perimeter() const SIP_HOLDGIL { return 2 * ( mXmax - mXmin ) + 2 * ( mYmax - mYmin ); }
 
@@ -295,6 +305,8 @@ class CORE_EXPORT QgsRectangle
      */
     void grow( double delta )
     {
+      if ( isNull() )
+        return;
       mXmin -= delta;
       mXmax += delta;
       mYmin -= delta;
@@ -306,6 +318,14 @@ class CORE_EXPORT QgsRectangle
      */
     void include( const QgsPointXY &p )
     {
+      if ( isNull() )
+      {
+        setXMinimum( p.x() );
+        setXMaximum( p.x() );
+        setYMinimum( p.y() );
+        setYMaximum( p.y() );
+        return;
+      }
       if ( p.x() < xMinimum() )
         setXMinimum( p.x() );
       if ( p.x() > xMaximum() )
@@ -320,10 +340,11 @@ class CORE_EXPORT QgsRectangle
      * Gets rectangle enlarged by buffer.
      * \note In earlier QGIS releases this method was named buffer().
      * \see grow()
-     * \since QGIS 3.0
     */
     QgsRectangle buffered( double width ) const
     {
+      if ( isNull() )
+        return QgsRectangle();
       return QgsRectangle( mXmin - width, mYmin - width, mXmax + width, mYmax + width );
     }
 
@@ -348,6 +369,11 @@ class CORE_EXPORT QgsRectangle
      */
     bool intersects( const QgsRectangle &rect ) const SIP_HOLDGIL
     {
+      if ( isNull() || rect.isNull() )
+      {
+        return false;
+      }
+
       const double x1 = ( mXmin > rect.mXmin ? mXmin : rect.mXmin );
       const double x2 = ( mXmax < rect.mXmax ? mXmax : rect.mXmax );
       if ( x1 > x2 )
@@ -440,46 +466,51 @@ class CORE_EXPORT QgsRectangle
 
     /**
      * Returns a rectangle offset from this one in the direction of the reversed vector.
-     * \since QGIS 3.0
      */
     QgsRectangle operator-( QgsVector v ) const;
 
     /**
      * Returns a rectangle offset from this one in the direction of the vector.
-     * \since QGIS 3.0
      */
     QgsRectangle operator+( QgsVector v ) const;
 
     /**
      * Moves this rectangle in the direction of the reversed vector.
-     * \since QGIS 3.0
      */
     QgsRectangle &operator-=( QgsVector v );
 
     /**
      * Moves this rectangle in the direction of the vector.
-     * \since QGIS 3.0
      */
     QgsRectangle &operator+=( QgsVector v );
 
     /**
-     * Returns TRUE if the rectangle is empty.
-     * An empty rectangle may still be non-null if it contains valid information (e.g. bounding box of a point).
+     * Returns TRUE if the rectangle has no area.
+     *
+     * An empty rectangle may still be non-null if it contains valid
+     * spatial information (e.g. bounding box of a point or of a vertical
+     * or horizontal segment).
+     *
+     * \see isNull()
      */
     bool isEmpty() const
     {
-      return mXmax < mXmin || mYmax < mYmin || qgsDoubleNear( mXmax, mXmin ) || qgsDoubleNear( mYmax, mYmin );
+      return isNull() || mXmax <= mXmin || mYmax <= mYmin || qgsDoubleNear( mXmax, mXmin ) || qgsDoubleNear( mYmax, mYmin );
     }
 
     /**
-     * Test if the rectangle is null (all coordinates zero or after call to setMinimal()).
+     * Test if the rectangle is null (holding no spatial information).
+     *
      * A null rectangle is also an empty rectangle.
-     * \since QGIS 2.4
+     *
+     * \see setNull()
+     *
      */
     bool isNull() const
     {
-      // rectangle created QgsRectangle() or with rect.setMinimal() ?
-      return ( qgsDoubleNear( mXmin, 0.0 ) && qgsDoubleNear( mXmax, 0.0 ) && qgsDoubleNear( mYmin, 0.0 ) && qgsDoubleNear( mYmax, 0.0 ) ) ||
+      // rectangle created QgsRectangle() or with rect.setNull() or
+      // otherwise having NaN ordinates
+      return ( std::isnan( mXmin )  && std::isnan( mXmax ) && std::isnan( mYmin ) && std::isnan( mYmax ) ) ||
              ( qgsDoubleNear( mXmin, std::numeric_limits<double>::max() ) && qgsDoubleNear( mYmin, std::numeric_limits<double>::max() ) &&
                qgsDoubleNear( mXmax, -std::numeric_limits<double>::max() ) && qgsDoubleNear( mYmax, -std::numeric_limits<double>::max() ) );
     }
@@ -514,31 +545,21 @@ class CORE_EXPORT QgsRectangle
      */
     QString asPolygon() const;
 
-    /**
-     * Comparison operator
-     * \returns TRUE if rectangles are equal
-     */
     bool operator==( const QgsRectangle &r1 ) const
     {
+      if ( isNull() ) return r1.isNull();
+
       return qgsDoubleNear( r1.xMaximum(), xMaximum() ) &&
              qgsDoubleNear( r1.xMinimum(), xMinimum() ) &&
              qgsDoubleNear( r1.yMaximum(), yMaximum() ) &&
              qgsDoubleNear( r1.yMinimum(), yMinimum() );
     }
 
-    /**
-     * Comparison operator
-     * \returns FALSE if rectangles are equal
-     */
     bool operator!=( const QgsRectangle &r1 ) const
     {
       return ( ! operator==( r1 ) );
     }
 
-    /**
-     * Assignment operator
-     * \param r1 QgsRectangle to assign from
-     */
     QgsRectangle &operator=( const QgsRectangle &r1 )
     {
       if ( &r1 != this )
@@ -581,9 +602,8 @@ class CORE_EXPORT QgsRectangle
     /**
      * Converts the rectangle to a 3D box, with the specified
      * \a zMin and \a zMax z values.
-     * \since QGIS 3.0
      */
-    QgsBox3d toBox3d( double zMin, double zMax ) const;
+    QgsBox3D toBox3d( double zMin, double zMax ) const;
 
     //! Allows direct construction of QVariants from rectangles.
     operator QVariant() const
@@ -602,17 +622,21 @@ class CORE_EXPORT QgsRectangle
 #ifdef SIP_RUN
     SIP_PYOBJECT __repr__();
     % MethodCode
-    QString str = QStringLiteral( "<QgsRectangle: %1>" ).arg( sipCpp->asWktCoordinates() );
+    QString str;
+    if ( sipCpp->isNull() )
+      str = QStringLiteral( "<QgsRectangle()>" );
+    else
+      str = QStringLiteral( "<QgsRectangle: %1>" ).arg( sipCpp->asWktCoordinates() );
     sipRes = PyUnicode_FromString( str.toUtf8().constData() );
     % End
 #endif
 
   private:
 
-    double mXmin = 0.0;
-    double mYmin = 0.0;
-    double mXmax = 0.0;
-    double mYmax = 0.0;
+    double mXmin = std::numeric_limits<double>::max();
+    double mYmin = std::numeric_limits<double>::max();
+    double mXmax = -std::numeric_limits<double>::max();
+    double mYmax = -std::numeric_limits<double>::max();
 
 };
 

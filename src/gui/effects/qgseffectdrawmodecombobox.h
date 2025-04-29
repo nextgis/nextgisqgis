@@ -25,7 +25,6 @@
  * \class QgsEffectDrawModeComboBox
  * \brief A combo box allowing selection of paint effect draw modes
  *
- * \since QGIS 2.9
  */
 
 class GUI_EXPORT QgsEffectDrawModeComboBox : public QComboBox
@@ -33,7 +32,6 @@ class GUI_EXPORT QgsEffectDrawModeComboBox : public QComboBox
     Q_OBJECT
 
   public:
-
     QgsEffectDrawModeComboBox( QWidget *parent SIP_TRANSFERTHIS = nullptr );
 
     /**
@@ -47,7 +45,6 @@ class GUI_EXPORT QgsEffectDrawModeComboBox : public QComboBox
      * \param drawMode selected draw mode
      */
     void setDrawMode( QgsPaintEffect::DrawMode drawMode );
-
 };
 
 #endif //QGSEFFECTDRAWMODECOMBOBOX_H

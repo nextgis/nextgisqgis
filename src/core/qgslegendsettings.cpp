@@ -64,6 +64,14 @@ QgsLegendSettings::QgsLegendSettings()
   rstyle( QgsLegendStyle::SymbolLabel ).setTextFormat( f );
 }
 
+void QgsLegendSettings::updateDataDefinedProperties( QgsRenderContext &context )
+{
+  rstyle( QgsLegendStyle::Title ).updateDataDefinedProperties( context );
+  rstyle( QgsLegendStyle::Group ).updateDataDefinedProperties( context );
+  rstyle( QgsLegendStyle::Subgroup ).updateDataDefinedProperties( context );
+  rstyle( QgsLegendStyle::SymbolLabel ).updateDataDefinedProperties( context );
+}
+
 QColor QgsLegendSettings::fontColor() const
 {
   return style( QgsLegendStyle::SymbolLabel ).textFormat().color();
@@ -256,5 +264,15 @@ double QgsLegendSettings::fontDescentMillimeters( const QFont &font ) const
   const QFont metricsFont = scaledFontPixelSize( font );
   const QFontMetricsF fontMetrics( metricsFont );
   return ( fontMetrics.descent() / FONT_WORKAROUND_SCALE );
+}
+
+Qgis::LegendJsonRenderFlags QgsLegendSettings::jsonRenderFlags() const
+{
+  return mJsonRenderFlags;
+}
+
+void QgsLegendSettings::setJsonRenderFlags( const Qgis::LegendJsonRenderFlags &jsonRenderFlags )
+{
+  mJsonRenderFlags = jsonRenderFlags;
 }
 

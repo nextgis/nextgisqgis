@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmaplayerlegend.h"
+#include "moc_qgsmaplayerlegend.cpp"
 #include "qgsiconutils.h"
 #include "qgsimagecache.h"
 #include "qgssettings.h"
@@ -203,7 +204,7 @@ void QgsMapLayerLegendUtils::setLegendNodeCustomSymbol( QgsLayerTreeLayer *nodeL
   {
     QDomDocument doc;
     QgsReadWriteContext rwContext;
-    rwContext.setPathResolver( QgsProject::instance()->pathResolver() );
+    rwContext.setPathResolver( QgsProject::instance()->pathResolver() ); // skip-keyword-check
     const QDomElement elem = QgsSymbolLayerUtils::saveSymbol( QStringLiteral( "custom symbol" ), symbol, doc, rwContext );
     doc.appendChild( elem );
     nodeLayer->setCustomProperty( "legend/custom-symbol-" + QString::number( originalIndex ), doc.toString() );
@@ -223,7 +224,7 @@ QgsSymbol *QgsMapLayerLegendUtils::legendNodeCustomSymbol( QgsLayerTreeLayer *no
   const QDomElement elem = doc.documentElement();
 
   QgsReadWriteContext rwContext;
-  rwContext.setPathResolver( QgsProject::instance()->pathResolver() );
+  rwContext.setPathResolver( QgsProject::instance()->pathResolver() ); // skip-keyword-check
 
   return QgsSymbolLayerUtils::loadSymbol( elem, rwContext );
 }
@@ -234,7 +235,7 @@ void QgsMapLayerLegendUtils::setLegendNodeColorRampSettings( QgsLayerTreeLayer *
   {
     QDomDocument doc;
     QgsReadWriteContext rwContext;
-    rwContext.setPathResolver( QgsProject::instance()->pathResolver() );
+    rwContext.setPathResolver( QgsProject::instance()->pathResolver() ); // skip-keyword-check
     QDomElement elem = doc.createElement( QStringLiteral( "rampSettings" ) );
     settings->writeXml( doc, elem, rwContext );
     doc.appendChild( elem );
@@ -255,7 +256,7 @@ QgsColorRampLegendNodeSettings *QgsMapLayerLegendUtils::legendNodeColorRampSetti
   const QDomElement elem = doc.documentElement();
 
   QgsReadWriteContext rwContext;
-  rwContext.setPathResolver( QgsProject::instance()->pathResolver() );
+  rwContext.setPathResolver( QgsProject::instance()->pathResolver() ); // skip-keyword-check
 
   QgsColorRampLegendNodeSettings settings;
   settings.readXml( elem, rwContext );
@@ -384,26 +385,23 @@ QList<QgsLayerTreeModelLegendNode *> QgsDefaultVectorLayerLegend::createLayerTre
     nodes.append( new QgsSimpleLegendNode( nodeLayer, r->legendClassificationAttribute() ) );
   }
 
-  const auto constLegendSymbolItems = r->legendSymbolItems();
-  for ( const QgsLegendSymbolItem &i : constLegendSymbolItems )
+  const QList<QgsLayerTreeModelLegendNode *> rendererNodes = r->createLegendNodes( nodeLayer );
+  for ( QgsLayerTreeModelLegendNode *node : rendererNodes )
   {
-    if ( auto *lDataDefinedSizeLegendSettings = i.dataDefinedSizeLegendSettings() )
-      nodes << new QgsDataDefinedSizeLegendNode( nodeLayer, *lDataDefinedSizeLegendSettings );
-    else
+    if ( QgsSymbolLegendNode *legendNode = qobject_cast< QgsSymbolLegendNode *>( node ) )
     {
-      QgsSymbolLegendNode *legendNode = new QgsSymbolLegendNode( nodeLayer, i );
-      if ( mTextOnSymbolEnabled && mTextOnSymbolContent.contains( i.ruleKey() ) )
+      const QString ruleKey = legendNode->data( static_cast< int >( QgsLayerTreeModelLegendNode::CustomRole::RuleKey ) ).toString();
+      if ( mTextOnSymbolEnabled && mTextOnSymbolContent.contains( ruleKey ) )
       {
-        legendNode->setTextOnSymbolLabel( mTextOnSymbolContent.value( i.ruleKey() ) );
+        legendNode->setTextOnSymbolLabel( mTextOnSymbolContent.value( ruleKey ) );
         legendNode->setTextOnSymbolTextFormat( mTextOnSymbolTextFormat );
       }
-      nodes << legendNode;
     }
+    nodes << node;
   }
 
-  if ( nodes.count() == 1 && nodes[0]->data( Qt::EditRole ).toString().isEmpty() )
+  if ( nodes.count() == 1 && nodes[0]->data( Qt::EditRole ).toString().isEmpty() && qobject_cast< QgsSymbolLegendNode * >( nodes[0] ) )
     nodes[0]->setEmbeddedInParent( true );
-
 
   if ( mLayer->diagramsEnabled() )
   {
@@ -439,7 +437,6 @@ QList<QgsLayerTreeModelLegendNode *> QgsDefaultVectorLayerLegend::createLayerTre
       }
     }
   }
-
 
   return nodes;
 }
@@ -556,16 +553,17 @@ QList<QgsLayerTreeModelLegendNode *> QgsDefaultMeshLayerLegend::createLayerTreeM
     return nodes;
   }
 
-  nodes << new QgsSimpleLegendNode( nodeLayer, name );
-
   if ( indexScalar > -1 )
   {
+    const QString scalarNameKey = QStringLiteral( "scalarName" );
+    nodes << new QgsSimpleLegendNode( nodeLayer, mLayer->datasetGroupMetadata( indexScalar ).name(),
+                                      QIcon(), nullptr, scalarNameKey );
     const QgsMeshRendererScalarSettings settings = rendererSettings.scalarSettings( indexScalar );
     const QgsColorRampShader shader = settings.colorRampShader();
     switch ( shader.colorRampType() )
     {
-      case QgsColorRampShader::Interpolated:
-        if ( ! shader.legendSettings() || shader.legendSettings()->useContinuousLegend() )
+      case Qgis::ShaderInterpolationMethod::Linear:
+        if ( !shader.legendSettings() || shader.legendSettings()->useContinuousLegend() )
         {
           // for interpolated shaders we use a ramp legend node
           if ( !shader.colorRampItemList().isEmpty() )
@@ -573,22 +571,88 @@ QList<QgsLayerTreeModelLegendNode *> QgsDefaultMeshLayerLegend::createLayerTreeM
             nodes << new QgsColorRampLegendNode( nodeLayer, shader.createColorRamp(),
                                                  shader.legendSettings() ? *shader.legendSettings() : QgsColorRampLegendNodeSettings(),
                                                  shader.minimumValue(),
-                                                 shader.maximumValue() );
+                                                 shader.maximumValue(),
+                                                 nullptr,
+                                                 QStringLiteral( "scalarLegend" ),
+                                                 scalarNameKey );
           }
           break;
         }
-        Q_FALLTHROUGH();
-      case QgsColorRampShader::Discrete:
-      case QgsColorRampShader::Exact:
+        [[fallthrough]];
+      case Qgis::ShaderInterpolationMethod::Discrete:
+      case Qgis::ShaderInterpolationMethod::Exact:
       {
         // for all others we use itemised lists
         QgsLegendColorList items;
         settings.colorRampShader().legendSymbologyItems( items );
         for ( const QPair< QString, QColor > &item : items )
         {
-          nodes << new QgsRasterSymbolLegendNode( nodeLayer, item.second, item.first );
+          nodes << new QgsRasterSymbolLegendNode( nodeLayer, item.second, item.first, nullptr, false,
+                                                  QStringLiteral( "scalarLegend" ) + QUuid::createUuid().toString(),
+                                                  scalarNameKey
+                                                );
         }
         break;
+      }
+    }
+  }
+
+  if ( indexVector > -1 )
+  {
+    const QgsMeshRendererVectorSettings settings = rendererSettings.vectorSettings( indexVector );
+    const QString vectorNameKey = QStringLiteral( "vectorName" );
+    switch ( settings.coloringMethod() )
+    {
+      case QgsInterpolatedLineColor::ColoringMethod::SingleColor:
+      {
+        const QColor arrowColor = settings.color();
+        const QIcon vectorIcon = QgsApplication::getThemeIcon( QStringLiteral( "/propertyicons/meshvectors.svg" ), arrowColor, arrowColor );
+        nodes << new QgsSimpleLegendNode( nodeLayer, mLayer->datasetGroupMetadata( indexVector ).name(),
+                                          vectorIcon, nullptr, vectorNameKey );
+        break;
+      }
+      case QgsInterpolatedLineColor::ColoringMethod::ColorRamp:
+      {
+        const QIcon vectorIcon = QgsApplication::getThemeIcon( QStringLiteral( "/propertyicons/meshvectors.svg" ) );
+        nodes << new QgsSimpleLegendNode( nodeLayer, mLayer->datasetGroupMetadata( indexVector ).name(),
+                                          vectorIcon, nullptr, vectorNameKey );
+        const QgsColorRampShader shader = settings.colorRampShader();
+        switch ( shader.colorRampType() )
+        {
+          case Qgis::ShaderInterpolationMethod::Linear:
+            if ( !shader.legendSettings() || shader.legendSettings()->useContinuousLegend() )
+            {
+              // for interpolated shaders we use a ramp legend node
+              if ( !shader.colorRampItemList().isEmpty() )
+              {
+                nodes << new QgsColorRampLegendNode( nodeLayer, shader.createColorRamp(),
+                                                     shader.legendSettings() ? *shader.legendSettings() : QgsColorRampLegendNodeSettings(),
+                                                     shader.minimumValue(),
+                                                     shader.maximumValue(),
+                                                     nullptr,
+                                                     QStringLiteral( "vectorLegend" ),
+                                                     vectorNameKey );
+              }
+              break;
+            }
+            [[fallthrough]];
+          case Qgis::ShaderInterpolationMethod::Discrete:
+          case Qgis::ShaderInterpolationMethod::Exact:
+          {
+            // for all others we use itemised lists
+            QgsLegendColorList items;
+            settings.colorRampShader().legendSymbologyItems( items );
+            for ( const QPair< QString, QColor > &item : items )
+            {
+              nodes << new QgsRasterSymbolLegendNode( nodeLayer, item.second, item.first, nullptr, false,
+                                                      QStringLiteral( "vectorLegend" ) + QUuid::createUuid().toString(),
+                                                      vectorNameKey
+                                                    );
+            }
+            break;
+          }
+          break;
+        }
       }
     }
   }

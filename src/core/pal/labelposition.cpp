@@ -33,13 +33,15 @@
 #include "labelposition.h"
 #include "geomfunction.h"
 #include "qgsgeos.h"
+#include "qgsgeometryutils_base.h"
+#include "qgslabelingenginerule.h"
 #include "qgsmessagelog.h"
 #include <cmath>
 #include <cfloat>
 
 using namespace pal;
 
-LabelPosition::LabelPosition( int id, double x1, double y1, double w, double h, double alpha, double cost, FeaturePart *feature, bool isReversed, Quadrant quadrant )
+LabelPosition::LabelPosition( int id, double x1, double y1, double w, double h, double alpha, double cost, FeaturePart *feature, LabelDirectionToLine directionToLine, Qgis::LabelQuadrantPosition quadrant )
   : id( id )
   , feature( feature )
   , probFeat( 0 )
@@ -48,9 +50,9 @@ LabelPosition::LabelPosition( int id, double x1, double y1, double w, double h, 
   , w( w )
   , h( h )
   , partId( -1 )
-  , reversed( isReversed )
   , upsideDown( false )
-  , quadrant( quadrant )
+  , mQuadrant( quadrant )
+  , mDirectionToLine( directionToLine )
   , mCost( cost )
   , mHasObstacleConflict( false )
   , mUpsideDownCharCount( 0 )
@@ -156,8 +158,8 @@ LabelPosition::LabelPosition( const LabelPosition &other )
 
   partId = other.partId;
   upsideDown = other.upsideDown;
-  reversed = other.reversed;
-  quadrant = other.quadrant;
+  mDirectionToLine = other.mDirectionToLine;
+  mQuadrant = other.mQuadrant;
   mHasObstacleConflict = other.mHasObstacleConflict;
   mUpsideDownCharCount = other.mUpsideDownCharCount;
 
@@ -168,7 +170,7 @@ LabelPosition::~LabelPosition()
 {
   if ( mPreparedOuterBoundsGeos )
   {
-    GEOSPreparedGeom_destroy_r( QgsGeos::getGEOSHandler(), mPreparedOuterBoundsGeos );
+    GEOSPreparedGeom_destroy_r( QgsGeosContext::get(), mPreparedOuterBoundsGeos );
     mPreparedOuterBoundsGeos = nullptr;
   }
 }
@@ -181,7 +183,7 @@ bool LabelPosition::intersects( const GEOSPreparedGeometry *geometry )
 
   try
   {
-    if ( GEOSPreparedIntersects_r( QgsGeos::getGEOSHandler(), geometry, mOuterBoundsGeos ? mOuterBoundsGeos.get() : mGeos ) == 1 )
+    if ( GEOSPreparedIntersects_r( QgsGeosContext::get(), geometry, mOuterBoundsGeos ? mOuterBoundsGeos.get() : mGeos ) == 1 )
     {
       return true;
     }
@@ -208,7 +210,7 @@ bool LabelPosition::within( const GEOSPreparedGeometry *geometry )
 
   try
   {
-    if ( GEOSPreparedContains_r( QgsGeos::getGEOSHandler(), geometry, mOuterBoundsGeos ? mOuterBoundsGeos.get() : mGeos ) != 1 )
+    if ( GEOSPreparedContains_r( QgsGeosContext::get(), geometry, mOuterBoundsGeos ? mOuterBoundsGeos.get() : mGeos ) != 1 )
     {
       return false;
     }
@@ -232,7 +234,7 @@ bool LabelPosition::isInConflict( const LabelPosition *lp ) const
   // this method considers the label's outer bounds
 
   if ( this->probFeat == lp->probFeat ) // bugfix #1
-    return false; // always overlaping itself !
+    return false; // always overlapping itself !
 
   // if either this label doesn't cause collisions, or the other one doesn't, then we don't conflict!
   if ( this->feature->feature()->overlapHandling() == Qgis::LabelOverlapHandling::AllowOverlapAtNoCost ||
@@ -259,7 +261,7 @@ bool LabelPosition::isInConflict( const LabelPosition *lp ) const
       if ( !mOuterBoundsGeos && !mGeos )
         createGeosGeom();
 
-      GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
+      GEOSContextHandle_t geosctxt = QgsGeosContext::get();
       try
       {
         const bool result = ( GEOSPreparedIntersects_r( geosctxt, lp->preparedOuterBoundsGeom() ? lp->preparedOuterBoundsGeom() : lp->preparedGeom(),
@@ -288,7 +290,7 @@ bool LabelPosition::isInConflictMultiPart( const LabelPosition *lp ) const
   if ( !lp->mMultipartGeos )
     lp->createMultiPartGeosGeom();
 
-  GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
+  GEOSContextHandle_t geosctxt = QgsGeosContext::get();
   try
   {
     const bool result = ( GEOSPreparedIntersects_r( geosctxt, preparedMultiPartGeom(), lp->mMultipartGeos ) == 1 );
@@ -310,7 +312,7 @@ void LabelPosition::createOuterBoundsGeom()
   if ( outerBounds.isNull() )
     return;
 
-  GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
+  GEOSContextHandle_t geosctxt = QgsGeosContext::get();
 
   const double beta = this->alpha + M_PI_2;
 
@@ -355,7 +357,7 @@ void LabelPosition::createOuterBoundsGeom()
 
   mOuterBoundsGeos.reset( GEOSGeom_createPolygon_r( geosctxt, GEOSGeom_createLinearRing_r( geosctxt, coord ), nullptr, 0 ) );
 
-  mPreparedOuterBoundsGeos = GEOSPrepare_r( QgsGeos::getGEOSHandler(), mOuterBoundsGeos.get() );
+  mPreparedOuterBoundsGeos = GEOSPrepare_r( QgsGeosContext::get(), mOuterBoundsGeos.get() );
 
   auto xminmax = std::minmax_element( mOuterBoundsX.begin(), mOuterBoundsX.end() );
   mOuterBoundsXMin = *xminmax.first;
@@ -447,6 +449,27 @@ void LabelPosition::getBoundingBox( double amin[2], double amax[2] ) const
   }
 }
 
+QgsRectangle LabelPosition::outerBoundingBox() const
+{
+  double amin[2];
+  double amax[2];
+  getBoundingBox( amin, amax );
+  return QgsRectangle( amin[0], amin[1], amax[0], amax[1] );
+}
+
+QgsRectangle LabelPosition::boundingBoxForCandidateConflicts( Pal *pal ) const
+{
+  QgsRectangle bounds = outerBoundingBox();
+  QgsRectangle bufferedBounds = bounds;
+  const QList< QgsAbstractLabelingEngineRule * > rules = pal->rules();
+  for ( QgsAbstractLabelingEngineRule *rule : rules )
+  {
+    const QgsRectangle modifiedBounds = rule->modifyCandidateConflictSearchBoundingBox( bounds );
+    bufferedBounds.combineExtentWith( modifiedBounds );
+  }
+  return bufferedBounds;
+}
+
 bool LabelPosition::outerBoundingBoxIntersects( const LabelPosition *other ) const
 {
   if ( other->mOuterBoundsGeos )
@@ -487,24 +510,25 @@ void LabelPosition::setHasHardObstacleConflict( bool conflicts )
 
 void LabelPosition::removeFromIndex( PalRtree<LabelPosition> &index )
 {
-  double amin[2];
-  double amax[2];
-  getBoundingBox( amin, amax );
-  index.remove( this, QgsRectangle( amin[0], amin[1], amax[0], amax[1] ) );
+  index.remove( this, outerBoundingBox() );
 }
 
 void LabelPosition::insertIntoIndex( PalRtree<LabelPosition> &index )
 {
-  double amin[2];
-  double amax[2];
-  getBoundingBox( amin, amax );
-  index.insert( this, QgsRectangle( amin[0], amin[1], amax[0], amax[1] ) );
+  index.insert( this, outerBoundingBox() );
 }
 
+const GEOSGeometry *LabelPosition::multiPartGeom() const
+{
+  if ( !mMultipartGeos )
+    createMultiPartGeosGeom();
+
+  return mMultipartGeos;
+}
 
 void LabelPosition::createMultiPartGeosGeom() const
 {
-  GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
+  GEOSContextHandle_t geosctxt = QgsGeosContext::get();
 
   std::vector< const GEOSGeometry * > geometries;
   const LabelPosition *tmp1 = this;
@@ -534,7 +558,7 @@ const GEOSPreparedGeometry *LabelPosition::preparedMultiPartGeom() const
 
   if ( !mMultipartPreparedGeos )
   {
-    mMultipartPreparedGeos = GEOSPrepare_r( QgsGeos::getGEOSHandler(), mMultipartGeos );
+    mMultipartPreparedGeos = GEOSPrepare_r( QgsGeosContext::get(), mMultipartGeos );
   }
   return mMultipartPreparedGeos;
 }
@@ -548,7 +572,7 @@ double LabelPosition::getDistanceToPoint( double xp, double yp, bool useOuterBou
 {
   // this method may consider the label's outer bounds!
 
-  GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
+  GEOSContextHandle_t geosctxt = QgsGeosContext::get();
 
   //first check if inside, if so then distance is -1
   bool contains = false;
@@ -573,7 +597,7 @@ double LabelPosition::getDistanceToPoint( double xp, double yp, bool useOuterBou
         geos::unique_ptr point( GEOSGeom_createPointFromXY_r( geosctxt, xp, yp ) );
         contains = ( GEOSPreparedContainsProperly_r( geosctxt, mPreparedOuterBoundsGeos, point.get() ) == 1 );
       }
-      catch ( GEOSException &e )
+      catch ( GEOSException & )
       {
         contains = false;
       }
@@ -622,7 +646,7 @@ double LabelPosition::getDistanceToPoint( double xp, double yp, bool useOuterBou
           else
           {
             ( void )GEOSCoordSeq_getXY_r( geosctxt, nearestCoord.get(), 0, &nx, &ny );
-            distance = GeomFunction::dist_euc2d_sq( xp, yp, nx, ny );
+            distance = QgsGeometryUtilsBase::sqrDistance2D( xp, yp, nx, ny );
           }
         }
         catch ( GEOSException &e )
@@ -654,7 +678,7 @@ bool LabelPosition::crossesLine( PointSet *line ) const
   if ( !line->mGeos )
     line->createGeosGeom();
 
-  GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
+  GEOSContextHandle_t geosctxt = QgsGeosContext::get();
   try
   {
     if ( GEOSPreparedIntersects_r( geosctxt, line->preparedGeom(), mOuterBoundsGeos ? mOuterBoundsGeos.get() : mGeos ) == 1 )
@@ -685,7 +709,7 @@ bool LabelPosition::crossesBoundary( PointSet *polygon ) const
   if ( !polygon->mGeos )
     polygon->createGeosGeom();
 
-  GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
+  GEOSContextHandle_t geosctxt = QgsGeosContext::get();
   try
   {
     if ( GEOSPreparedIntersects_r( geosctxt, polygon->preparedGeom(), mOuterBoundsGeos ? mOuterBoundsGeos.get() : mGeos ) == 1
@@ -725,7 +749,7 @@ bool LabelPosition::intersectsWithPolygon( PointSet *polygon ) const
   if ( !polygon->mGeos )
     polygon->createGeosGeom();
 
-  GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
+  GEOSContextHandle_t geosctxt = QgsGeosContext::get();
   try
   {
     if ( GEOSPreparedIntersects_r( geosctxt, polygon->preparedGeom(), mOuterBoundsGeos ? mOuterBoundsGeos.get() : mGeos ) == 1 )
@@ -758,7 +782,7 @@ double LabelPosition::polygonIntersectionCostForParts( PointSet *polygon ) const
   if ( !polygon->mGeos )
     polygon->createGeosGeom();
 
-  GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
+  GEOSContextHandle_t geosctxt = QgsGeosContext::get();
   double cost = 0;
   try
   {

@@ -36,26 +36,26 @@ namespace Qt3DExtras
 #include "qgs3dtypes.h"
 #include "qgsaabb.h"
 #include "qgsray3d.h"
-#include "qgsraycastingutils_p.h"
+#include "qgsraycastingutils.h"
 
 #include <QSize>
 #include <Qt3DRender/QCamera>
+#include <Qt3DRender/QCullFace>
 
 #include <memory>
 
 #define SIP_NO_FILE
 
+class Qgs3DRenderContext;
 
 /**
  * \ingroup 3d
  * \brief Miscellaneous utility functions used from 3D code.
  * \note Not available in Python bindings
- * \since QGIS 3.0
  */
 class _3D_EXPORT Qgs3DUtils
 {
   public:
-
     /**
      * Captures image of the current 3D scene of a 3D engine. The function waits
      * until the scene is not fully loaded/updated before capturing the image.
@@ -72,6 +72,13 @@ class _3D_EXPORT Qgs3DUtils
      * \since QGIS 3.24
      */
     static QImage captureSceneDepthBuffer( QgsAbstract3DEngine &engine, Qgs3DMapScene *scene );
+
+    /**
+     * Calculates approximate usage of GPU memory by an entity
+     * \return GPU memory usage in megabytes
+     * \since QGIS 3.34
+     */
+    static double calculateEntityGpuMemorySize( Qt3DCore::QEntity *entity );
 
     /**
      * Captures 3D animation frames to the selected folder
@@ -91,15 +98,7 @@ class _3D_EXPORT Qgs3DUtils
      *
      * \since QGIS 3.8
      */
-    static bool exportAnimation( const Qgs3DAnimationSettings &animationSettings,
-                                 Qgs3DMapSettings &mapSettings,
-                                 int framesPerSecond,
-                                 const QString &outputDirectory,
-                                 const QString &fileNameTemplate,
-                                 const QSize &outputSize,
-                                 QString &error,
-                                 QgsFeedback *feedback = nullptr
-                               );
+    static bool exportAnimation( const Qgs3DAnimationSettings &animationSettings, Qgs3DMapSettings &mapSettings, int framesPerSecond, const QString &outputDirectory, const QString &fileNameTemplate, const QSize &outputSize, QString &error, QgsFeedback *feedback = nullptr );
 
     /**
      * Calculates the highest needed zoom level for tiles in quad-tree given width of the base tile (zoom level 0)
@@ -123,11 +122,11 @@ class _3D_EXPORT Qgs3DUtils
     static Qgs3DTypes::CullingMode cullingModeFromString( const QString &str );
 
     //! Clamps altitude of a vertex according to the settings, returns Z value
-    static float clampAltitude( const QgsPoint &p, Qgis::AltitudeClamping altClamp, Qgis::AltitudeBinding altBind, float height, const QgsPoint &centroid, const Qgs3DMapSettings &map );
+    static float clampAltitude( const QgsPoint &p, Qgis::AltitudeClamping altClamp, Qgis::AltitudeBinding altBind, float offset, const QgsPoint &centroid, const Qgs3DRenderContext &context );
     //! Clamps altitude of vertices of a linestring according to the settings
-    static void clampAltitudes( QgsLineString *lineString, Qgis::AltitudeClamping altClamp, Qgis::AltitudeBinding altBind, const QgsPoint &centroid, float height, const Qgs3DMapSettings &map );
+    static void clampAltitudes( QgsLineString *lineString, Qgis::AltitudeClamping altClamp, Qgis::AltitudeBinding altBind, const QgsPoint &centroid, float offset, const Qgs3DRenderContext &context );
     //! Clamps altitude of vertices of a polygon according to the settings
-    static bool clampAltitudes( QgsPolygon *polygon, Qgis::AltitudeClamping altClamp, Qgis::AltitudeBinding altBind, float height, const Qgs3DMapSettings &map );
+    static bool clampAltitudes( QgsPolygon *polygon, Qgis::AltitudeClamping altClamp, Qgis::AltitudeBinding altBind, float offset, const Qgs3DRenderContext &context );
 
     //! Converts a 4x4 transform matrix to a string
     static QString matrix4x4toString( const QMatrix4x4 &m );
@@ -135,7 +134,7 @@ class _3D_EXPORT Qgs3DUtils
     static QMatrix4x4 stringToMatrix4x4( const QString &str );
 
     //! Calculates (x,y,z) positions of (multi)point from the given feature
-    static void extractPointPositions( const QgsFeature &f, const Qgs3DMapSettings &map, Qgis::AltitudeClamping altClamp, QVector<QVector3D> &positions );
+    static void extractPointPositions( const QgsFeature &f, const Qgs3DRenderContext &context, Qgis::AltitudeClamping altClamp, QVector<QVector3D> &positions );
 
     /**
      * Returns TRUE if bbox is completely outside the current viewing volume.
@@ -173,8 +172,7 @@ class _3D_EXPORT Qgs3DUtils
     static QgsRectangle worldToMapExtent( const QgsAABB &bbox, const QgsVector3D &mapOrigin );
 
     //! Transforms a world point from (origin1, crs1) to (origin2, crs2)
-    static QgsVector3D transformWorldCoordinates( const QgsVector3D &worldPoint1, const QgsVector3D &origin1, const QgsCoordinateReferenceSystem &crs1, const QgsVector3D &origin2, const QgsCoordinateReferenceSystem &crs2,
-        const QgsCoordinateTransformContext &context );
+    static QgsVector3D transformWorldCoordinates( const QgsVector3D &worldPoint1, const QgsVector3D &origin1, const QgsCoordinateReferenceSystem &crs1, const QgsVector3D &origin2, const QgsCoordinateReferenceSystem &crs2, const QgsCoordinateTransformContext &context );
 
     /**
      * Try to estimate range of Z values used in the given vector layer and store that in zMin and zMax.
@@ -238,7 +236,7 @@ class _3D_EXPORT Qgs3DUtils
      * \note This function was formerly in Qgs3DAppUtils
      * \since QGIS 3.26
      */
-    static std::unique_ptr< QgsPointCloudLayer3DRenderer > convert2DPointCloudRendererTo3D( QgsPointCloudRenderer *renderer );
+    static std::unique_ptr<QgsPointCloudLayer3DRenderer> convert2DPointCloudRendererTo3D( QgsPointCloudRenderer *renderer );
 
     /**
      * Casts a \a ray through the \a scene and returns information about the intersecting entities (ray uses World coordinates).
@@ -273,7 +271,50 @@ class _3D_EXPORT Qgs3DUtils
      *
      * \since QGIS 3.32
      */
-    static float screenSpaceError( float epsilon, float distance, float screenSize, float fov );
+    static float screenSpaceError( float epsilon, float distance, int screenSize, float fov );
+
+    /**
+     * This routine computes \a nearPlane \a farPlane from the closest and farthest corners point
+     * of bounding box \a bbox.
+     * In case of error, fnear will equal 1e9 and ffar 0.
+     *
+     * \param bbox in world coordinates
+     * \param viewMatrix camera view matrix
+     * \param fnear near plane
+     * \param ffar far plane
+     *
+     * \since QGIS 3.34
+     */
+    static void computeBoundingBoxNearFarPlanes( const QgsAABB &bbox, const QMatrix4x4 &viewMatrix, float &fnear, float &ffar );
+
+    /**
+     * Converts Qgs3DTypes::CullingMode \a mode into its Qt3D equivalent.
+     *
+     * \param mode culling mode
+     *
+     * \since QGIS 3.34
+     */
+    static Qt3DRender::QCullFace::CullingMode qt3DcullingMode( Qgs3DTypes::CullingMode mode );
+
+    /**
+     * Inserts some define macros into a shader source code.
+     *
+     * \param shaderCode shader code
+     * \param defines list of defines to add
+     *
+     * \since QGIS 3.40
+     */
+    static QByteArray addDefinesToShaderCode( const QByteArray &shaderCode, const QStringList &defines );
+
+    /**
+     * Removes some define macros from a shader source code.
+     *
+     * \param shaderCode shader code
+     * \param defines list of defines to remove
+     *
+     * \since QGIS 3.40
+     */
+    static QByteArray removeDefinesFromShaderCode( const QByteArray &shaderCode, const QStringList &defines );
 };
 
 #endif // QGS3DUTILS_H

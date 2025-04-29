@@ -31,7 +31,6 @@ class QgsPanelWidget;
  * \class QgsColorSwatchDelegate
  * \brief A delegate for showing a color swatch in a list
  * \see QgsColorSchemeList
- * \since QGIS 2.5
  */
 class GUI_EXPORT QgsColorSwatchDelegate : public QAbstractItemDelegate
 {
@@ -63,14 +62,12 @@ class GUI_EXPORT QgsColorSwatchDelegate : public QAbstractItemDelegate
  * \class QgsColorSchemeModel
  * \brief A model for colors in a color scheme
  * \see QgsColorSchemeList
- * \since QGIS 2.5
  */
-class GUI_EXPORT QgsColorSchemeModel: public QAbstractItemModel
+class GUI_EXPORT QgsColorSchemeModel : public QAbstractItemModel
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor
      * \param scheme color scheme for list
@@ -139,7 +136,6 @@ class GUI_EXPORT QgsColorSchemeModel: public QAbstractItemModel
     bool isDirty() const { return mIsDirty; }
 
   private:
-
     enum Columns
     {
       ColorSwatch = 0,
@@ -158,14 +154,12 @@ class GUI_EXPORT QgsColorSchemeModel: public QAbstractItemModel
  * \class QgsColorSchemeList
  * \brief An editable list of color swatches, taken from an associated QgsColorScheme.
  * \see QgsColorSchemeList
- * \since QGIS 2.5
  */
-class GUI_EXPORT QgsColorSchemeList: public QTreeView
+class GUI_EXPORT QgsColorSchemeList : public QTreeView
 {
     Q_OBJECT
 
   public:
-
     /**
      * Construct a new color swatch grid.
      * \param parent parent widget
@@ -205,7 +199,6 @@ class GUI_EXPORT QgsColorSchemeList: public QTreeView
     /**
      * Returns the scheme currently selected in the list.
      * \see setScheme()
-     * \since QGIS 3.0
      */
     QgsColorScheme *scheme();
 
@@ -248,14 +241,12 @@ class GUI_EXPORT QgsColorSchemeList: public QTreeView
     /**
      * Displays a file picker dialog allowing users to import colors into the list from a file.
      * \see showExportColorsDialog()
-     * \since QGIS 3.0
      */
     void showImportColorsDialog();
 
     /**
      * Displays a file picker dialog allowing users to export colors from the list into a file.
      * \see showImportColorsDialog()
-     * \since QGIS 3.0
      */
     void showExportColorsDialog();
 
@@ -268,7 +259,6 @@ class GUI_EXPORT QgsColorSchemeList: public QTreeView
     void colorSelected( const QColor &color );
 
   protected:
-
     void keyPressEvent( QKeyEvent *event ) override;
 
     void mousePressEvent( QMouseEvent *event ) override;
@@ -281,7 +271,6 @@ class GUI_EXPORT QgsColorSchemeList: public QTreeView
     QgsColorSwatchDelegate *mSwatchDelegate = nullptr;
 
     QPoint mDragStartPosition;
-
 };
 
 #endif

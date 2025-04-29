@@ -55,12 +55,14 @@ class QgsBaseNetworkRequest : public QObject
     //! Set whether to log error messages.
     void setLogErrors( bool enabled ) { mLogErrors = enabled; }
 
-    enum ErrorCode { NoError,
-                     NetworkError,
-                     TimeoutError,
-                     ServerExceptionError,
-                     ApplicationLevelError
-                   };
+    enum ErrorCode
+    {
+      NoError,
+      NetworkError,
+      TimeoutError,
+      ServerExceptionError,
+      ApplicationLevelError
+    };
 
     //! Returns the error code (after download/post)
     ErrorCode errorCode() const { return mErrorCode; }
@@ -135,18 +137,16 @@ class QgsBaseNetworkRequest : public QObject
     bool mFakeURLIncludesContentType = false;
 
   protected:
-
     /**
      * Returns (translated) error message, composed with a
      * (possibly translated, but sometimes coming from server) reason
      */
     virtual QString errorMessageWithReason( const QString &reason ) = 0;
 
-    //! Returns experiation delay in second
+    //! Returns expiration delay in second
     virtual int defaultExpirationInSec() { return 0; }
 
   private:
-
     //! Request headers
     QList<QNetworkReply::RawHeaderPair> mRequestHeaders;
 

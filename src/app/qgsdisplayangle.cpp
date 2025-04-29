@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsdisplayangle.h"
+#include "moc_qgsdisplayangle.cpp"
 #include "qgsmapcanvas.h"
 #include "qgsunittypes.h"
 #include "qgssettings.h"
@@ -21,14 +22,15 @@
 #include "qgsproject.h"
 #include "qgsbearingnumericformat.h"
 #include "qgsmaptool.h"
+#include "qgsgui.h"
 
 #include <cmath>
 
 QgsDisplayAngle::QgsDisplayAngle( QgsMapTool *tool, Qt::WindowFlags f )
   : QDialog( tool->canvas()->topLevelWidget(), f )
-  , mTool( tool )
 {
   setupUi( this );
+  QgsGui::enableAutoGeometryRestore( this );
 }
 
 void QgsDisplayAngle::setAngleInRadians( double value )

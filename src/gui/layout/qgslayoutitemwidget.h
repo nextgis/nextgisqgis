@@ -57,13 +57,11 @@ class QgsMasterLayoutInterface;
  * If you are creating a new QgsLayoutItem configuration widget, you should instead
  * inherit from QgsLayoutItemBaseWidget (rather then directly working with QgsLayoutConfigObject).
  *
- * \since QGIS 3.0
 */
-class GUI_EXPORT QgsLayoutConfigObject: public QObject
+class GUI_EXPORT QgsLayoutConfigObject : public QObject
 {
     Q_OBJECT
   public:
-
     /**
      * Constructor for QgsLayoutConfigObject, linked with the specified \a layoutObject.
      */
@@ -105,8 +103,7 @@ class GUI_EXPORT QgsLayoutConfigObject: public QObject
     void updateDataDefinedButtons();
 
   private:
-
-    QPointer< QgsLayoutObject > mLayoutObject;
+    QPointer<QgsLayoutObject> mLayoutObject;
 };
 
 /**
@@ -117,14 +114,12 @@ class GUI_EXPORT QgsLayoutConfigObject: public QObject
  * this base class.
  *
  *
- * \since QGIS 3.0
 */
-class GUI_EXPORT QgsLayoutItemBaseWidget: public QgsPanelWidget
+class GUI_EXPORT QgsLayoutItemBaseWidget : public QgsPanelWidget
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsLayoutItemBaseWidget, linked with the specified \a layoutObject.
      */
@@ -169,7 +164,6 @@ class GUI_EXPORT QgsLayoutItemBaseWidget: public QgsPanelWidget
     virtual void setMasterLayout( QgsMasterLayoutInterface *masterLayout );
 
   protected:
-
     /**
      * Registers a data defined \a button, setting up its initial value, connections and description.
      * The corresponding property \a key must be specified.
@@ -212,13 +206,11 @@ class GUI_EXPORT QgsLayoutItemBaseWidget: public QgsPanelWidget
  * \ingroup gui
  * \brief A widget for controlling the common properties of layout items (e.g. position and size, background, stroke, frame).
  * This widget can be embedded into other layout item widgets.
- * \since QGIS 3.0
 */
-class GUI_EXPORT QgsLayoutItemPropertiesWidget: public QWidget, private Ui::QgsLayoutItemWidgetBase
+class GUI_EXPORT QgsLayoutItemPropertiesWidget : public QWidget, private Ui::QgsLayoutItemWidgetBase
 {
     Q_OBJECT
   public:
-
     /**
      * Constructs a QgsLayoutItemPropertiesWidget with a \a parent and for the given layout \a item.
      */
@@ -267,14 +259,15 @@ class GUI_EXPORT QgsLayoutItemPropertiesWidget: public QWidget, private Ui::QgsL
      * Set the background color
      */
     void mBackgroundColorButton_colorChanged( const QColor &newBackgroundColor );
-//    void on_mTransparencySlider_valueChanged( int value );
-//    void on_mTransparencySpinBox_valueChanged( int value );
+    //    void on_mTransparencySlider_valueChanged( int value );
+    //    void on_mTransparencySpinBox_valueChanged( int value );
     void mStrokeWidthSpinBox_valueChanged( double d );
     void strokeUnitChanged( Qgis::LayoutUnit unit );
     void mFrameGroupBox_toggled( bool state );
     void mFrameJoinStyleCombo_currentIndexChanged( int index );
     void mBackgroundGroupBox_toggled( bool state );
     void mItemIdLineEdit_editingFinished();
+    void exportGroupNameEditingFinished();
 
     //adjust coordinates in line edits
     void mPageSpinBox_valueChanged( int );
@@ -310,8 +303,7 @@ class GUI_EXPORT QgsLayoutItemPropertiesWidget: public QWidget, private Ui::QgsL
     void variablesChanged();
 
   private:
-
-    QPointer< QgsLayoutItem > mItem;
+    QPointer<QgsLayoutItem> mItem;
     QgsLayoutConfigObject *mConfigObject = nullptr;
 
     bool mFreezeXPosSpin = false;
@@ -320,11 +312,10 @@ class GUI_EXPORT QgsLayoutItemPropertiesWidget: public QWidget, private Ui::QgsL
     bool mFreezeHeightSpin = false;
     bool mFreezePageSpin = false;
     bool mBlockVariableUpdates = false;
-//    void changeItemTransparency( int value );
+    //    void changeItemTransparency( int value );
     void changeItemPosition();
     void changeItemReference( QgsLayoutItem::ReferencePoint point );
     void changeItemSize();
-
 };
 
 

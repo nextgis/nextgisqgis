@@ -14,20 +14,16 @@
  ***************************************************************************/
 
 #include "qgsvaluerelationwidgetwrapper.h"
+#include "moc_qgsvaluerelationwidgetwrapper.cpp"
 
 #include "qgis.h"
 #include "qgsfields.h"
 #include "qgsproject.h"
-#include "qgsvaluerelationwidgetfactory.h"
 #include "qgsvectorlayer.h"
 #include "qgsfilterlineedit.h"
-#include "qgsfeatureiterator.h"
 #include "qgsvaluerelationfieldformatter.h"
 #include "qgsattributeform.h"
-#include "qgsattributes.h"
-#include "qgsjsonutils.h"
 #include "qgspostgresstringutils.h"
-#include "qgsapplication.h"
 
 #include <QComboBox>
 #include <QLineEdit>
@@ -37,18 +33,20 @@
 #include <QVBoxLayout>
 #include <QHeaderView>
 #include <QKeyEvent>
+#include <QStandardItemModel>
 
 #include <nlohmann/json.hpp>
 using namespace nlohmann;
 
 ///@cond PRIVATE
-QgsFilteredTableWidget::QgsFilteredTableWidget( QWidget *parent, bool showSearch )
+QgsFilteredTableWidget::QgsFilteredTableWidget( QWidget *parent, bool showSearch, bool displayGroupName )
   : QWidget( parent )
+  , mDisplayGroupName( displayGroupName )
 {
   mSearchWidget = new QgsFilterLineEdit( this );
   mSearchWidget->setShowSearchIcon( true );
   mSearchWidget->setShowClearButton( true );
-  mTableWidget  = new QTableWidget( this );
+  mTableWidget = new QTableWidget( this );
   mTableWidget->horizontalHeader()->setSectionResizeMode( QHeaderView::Stretch );
   mTableWidget->horizontalHeader()->setVisible( false );
   mTableWidget->verticalHeader()->setSectionResizeMode( QHeaderView::Stretch );
@@ -81,8 +79,7 @@ bool QgsFilteredTableWidget::eventFilter( QObject *watched, QEvent *event )
   if ( event->type() == QEvent::KeyPress )
   {
     QKeyEvent *keyEvent = static_cast<QKeyEvent *>( event );
-    if ( keyEvent->key() == Qt::Key_Escape &&
-         !mSearchWidget->text().isEmpty() )
+    if ( keyEvent->key() == Qt::Key_Escape && !mSearchWidget->text().isEmpty() )
     {
       mSearchWidget->clear();
       return true;
@@ -95,32 +92,63 @@ void QgsFilteredTableWidget::filterStringChanged( const QString &filterString )
 {
   auto signalBlockedTableWidget = whileBlocking( mTableWidget );
   Q_UNUSED( signalBlockedTableWidget )
-  mTableWidget->clearContents();
-  const int rCount = std::max( 1, ( int ) std::ceil( ( float ) mCache.count() / ( float ) mColumnCount ) );
-  mTableWidget->setRowCount( rCount );
-  int row = 0;
-  int column = 0;
 
-  for ( const QPair<QgsValueRelationFieldFormatter::ValueRelationItem, Qt::CheckState> &pair : std::as_const( mCache ) )
+  mTableWidget->clearContents();
+  if ( !mCache.isEmpty() )
   {
-    if ( column == mColumnCount )
+    QVariantList groups;
+    groups << QVariant();
+    for ( const QPair<QgsValueRelationFieldFormatter::ValueRelationItem, Qt::CheckState> &pair : std::as_const( mCache ) )
     {
-      row++;
-      column = 0;
+      if ( !groups.contains( pair.first.group ) )
+      {
+        groups << pair.first.group;
+      }
     }
-    if ( pair.first.value.contains( filterString, Qt::CaseInsensitive ) )
+    const int groupsCount = mDisplayGroupName ? groups.count() : groups.count() - 1;
+
+    const int rCount = std::max( 1, ( int ) std::ceil( ( float ) ( mCache.count() + groupsCount ) / ( float ) mColumnCount ) );
+    mTableWidget->setRowCount( rCount );
+
+    int row = 0;
+    int column = 0;
+    QVariant currentGroup;
+    for ( const QPair<QgsValueRelationFieldFormatter::ValueRelationItem, Qt::CheckState> &pair : std::as_const( mCache ) )
     {
-      QTableWidgetItem *item = nullptr;
-      item = new QTableWidgetItem( pair.first.value );
-      item->setData( Qt::UserRole, pair.first.key );
-      item->setData( Qt::ToolTipRole, pair.first.description );
-      item->setCheckState( pair.second );
-      item->setFlags( mEnabledTable ? item->flags() | Qt::ItemIsEnabled : item->flags() & ~Qt::ItemIsEnabled );
-      mTableWidget->setItem( row, column, item );
-      column++;
+      if ( column == mColumnCount )
+      {
+        row++;
+        column = 0;
+      }
+      if ( currentGroup != pair.first.group )
+      {
+        currentGroup = pair.first.group;
+        if ( mDisplayGroupName || !( row == 0 && column == 0 ) )
+        {
+          QTableWidgetItem *item = new QTableWidgetItem( mDisplayGroupName ? pair.first.group.toString() : QString() );
+          item->setFlags( item->flags() & ~Qt::ItemIsEnabled );
+          mTableWidget->setItem( row, column, item );
+          column++;
+          if ( column == mColumnCount )
+          {
+            row++;
+            column = 0;
+          }
+        }
+      }
+      if ( pair.first.value.contains( filterString, Qt::CaseInsensitive ) )
+      {
+        QTableWidgetItem *item = new QTableWidgetItem( pair.first.value );
+        item->setData( Qt::UserRole, pair.first.key );
+        item->setData( Qt::ToolTipRole, pair.first.description );
+        item->setCheckState( pair.second );
+        item->setFlags( mEnabledTable ? item->flags() | Qt::ItemIsEnabled : item->flags() & ~Qt::ItemIsEnabled );
+        mTableWidget->setItem( row, column, item );
+        column++;
+      }
     }
+    mTableWidget->setRowCount( row + 1 );
   }
-  mTableWidget->setRowCount( row + 1 );
 }
 
 QStringList QgsFilteredTableWidget::selection() const
@@ -157,11 +185,18 @@ void QgsFilteredTableWidget::populate( QgsValueRelationFieldFormatter::ValueRela
 
 void QgsFilteredTableWidget::setIndeterminateState()
 {
-  for ( int j = 0; j < mTableWidget->rowCount(); j++ )
+  for ( int rowIndex = 0; rowIndex < mTableWidget->rowCount(); rowIndex++ )
   {
-    for ( int i = 0; i < mColumnCount; ++i )
+    for ( int columnIndex = 0; columnIndex < mColumnCount; ++columnIndex )
     {
-      whileBlocking( mTableWidget )->item( j, i )->setCheckState( Qt::PartiallyChecked );
+      if ( item( rowIndex, columnIndex ) )
+      {
+        whileBlocking( mTableWidget )->item( rowIndex, columnIndex )->setCheckState( Qt::PartiallyChecked );
+      }
+      else
+      {
+        break;
+      }
     }
   }
 }
@@ -212,7 +247,7 @@ QVariant QgsValueRelationWidgetWrapper::value() const
     {
       v = mComboBox->currentData();
       if ( QgsVariantUtils::isNull( v ) )
-        v = QVariant( field().type() );
+        v = QgsVariantUtils::createNullVariant( field().type() );
     }
   }
   else if ( mTableWidget )
@@ -220,9 +255,9 @@ QVariant QgsValueRelationWidgetWrapper::value() const
     QStringList selection = mTableWidget->selection();
 
     // If there is no selection and allow NULL is not checked return NULL.
-    if ( selection.isEmpty() && ! config( QStringLiteral( "AllowNull" ) ).toBool( ) )
+    if ( selection.isEmpty() && !config( QStringLiteral( "AllowNull" ) ).toBool() )
     {
-      return QVariant( QVariant::Type::List );
+      return QgsVariantUtils::createNullVariant( QMetaType::Type::QVariantList );
     }
 
     QVariantList vl;
@@ -230,13 +265,13 @@ QVariant QgsValueRelationWidgetWrapper::value() const
     for ( const QString &s : std::as_const( selection ) )
     {
       // Convert to proper type
-      const QVariant::Type type { fkType() };
+      const QMetaType::Type type { fkType() };
       switch ( type )
       {
-        case QVariant::Type::Int:
+        case QMetaType::Type::Int:
           vl.push_back( s.toInt() );
           break;
-        case QVariant::Type::LongLong:
+        case QMetaType::Type::LongLong:
           vl.push_back( s.toLongLong() );
           break;
         default:
@@ -245,8 +280,7 @@ QVariant QgsValueRelationWidgetWrapper::value() const
       }
     }
 
-    if ( layer()->fields().at( fieldIdx() ).type() == QVariant::Map ||
-         layer()->fields().at( fieldIdx() ).type() == QVariant::List )
+    if ( layer()->fields().at( fieldIdx() ).type() == QMetaType::Type::QVariantMap || layer()->fields().at( fieldIdx() ).type() == QMetaType::Type::QVariantList )
     {
       v = vl;
     }
@@ -283,7 +317,8 @@ QWidget *QgsValueRelationWidgetWrapper::createWidget( QWidget *parent )
   const bool useCompleter = config( QStringLiteral( "UseCompleter" ) ).toBool();
   if ( allowMulti )
   {
-    return new QgsFilteredTableWidget( parent, useCompleter );
+    const bool displayGroupName = config( QStringLiteral( "DisplayGroupName" ) ).toBool();
+    return new QgsFilteredTableWidget( parent, useCompleter, displayGroupName );
   }
   else if ( useCompleter )
   {
@@ -300,8 +335,7 @@ QWidget *QgsValueRelationWidgetWrapper::createWidget( QWidget *parent )
 
 void QgsValueRelationWidgetWrapper::initWidget( QWidget *editor )
 {
-
-  mComboBox = qobject_cast<QgsToolTipComboBox *>( editor );
+  mComboBox = qobject_cast<QComboBox *>( editor );
   mTableWidget = qobject_cast<QgsFilteredTableWidget *>( editor );
   mLineEdit = qobject_cast<QLineEdit *>( editor );
 
@@ -311,8 +345,7 @@ void QgsValueRelationWidgetWrapper::initWidget( QWidget *editor )
   if ( mComboBox )
   {
     mComboBox->view()->setVerticalScrollBarPolicy( Qt::ScrollBarAsNeeded );
-    connect( mComboBox, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ),
-             this, static_cast<void ( QgsEditorWidgetWrapper::* )()>( &QgsEditorWidgetWrapper::emitValueChanged ), Qt::UniqueConnection );
+    connect( mComboBox, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, static_cast<void ( QgsEditorWidgetWrapper::* )()>( &QgsEditorWidgetWrapper::emitValueChanged ), Qt::UniqueConnection );
   }
   else if ( mTableWidget )
   {
@@ -320,7 +353,17 @@ void QgsValueRelationWidgetWrapper::initWidget( QWidget *editor )
   }
   else if ( mLineEdit )
   {
-    connect( mLineEdit, &QLineEdit::textChanged, this, &QgsValueRelationWidgetWrapper::emitValueChangedInternal, Qt::UniqueConnection );
+    if ( QgsFilterLineEdit *filterLineEdit = qobject_cast<QgsFilterLineEdit *>( editor ) )
+    {
+      connect( filterLineEdit, &QgsFilterLineEdit::valueChanged, this, [=]( const QString & ) {
+        if ( mSubWidgetSignalBlocking == 0 )
+          emitValueChanged();
+      } );
+    }
+    else
+    {
+      connect( mLineEdit, &QLineEdit::textChanged, this, &QgsValueRelationWidgetWrapper::emitValueChangedInternal, Qt::UniqueConnection );
+    }
   }
 }
 
@@ -331,12 +374,16 @@ bool QgsValueRelationWidgetWrapper::valid() const
 
 void QgsValueRelationWidgetWrapper::updateValues( const QVariant &value, const QVariantList & )
 {
+  updateValue( value, true );
+}
+
+void QgsValueRelationWidgetWrapper::updateValue( const QVariant &value, bool forceComboInsertion )
+{
   if ( mTableWidget )
   {
     QStringList checkList;
 
-    if ( layer()->fields().at( fieldIdx() ).type() == QVariant::Map ||
-         layer()->fields().at( fieldIdx() ).type() == QVariant::List )
+    if ( layer()->fields().at( fieldIdx() ).type() == QMetaType::Type::QVariantMap || layer()->fields().at( fieldIdx() ).type() == QMetaType::Type::QVariantList )
     {
       checkList = value.toStringList();
     }
@@ -365,7 +412,7 @@ void QgsValueRelationWidgetWrapper::updateValues( const QVariant &value, const Q
     if ( idx == -1 )
     {
       // if value doesn't exist, we show it in '(...)' (just like value map widget)
-      if ( QgsVariantUtils::isNull( value ) )
+      if ( QgsVariantUtils::isNull( value ) || !forceComboInsertion )
       {
         mComboBox->setCurrentIndex( -1 );
       }
@@ -382,6 +429,7 @@ void QgsValueRelationWidgetWrapper::updateValues( const QVariant &value, const Q
   }
   else if ( mLineEdit )
   {
+    mSubWidgetSignalBlocking++;
     mLineEdit->clear();
     bool wasFound { false };
     for ( const QgsValueRelationFieldFormatter::ValueRelationItem &i : std::as_const( mCache ) )
@@ -394,20 +442,22 @@ void QgsValueRelationWidgetWrapper::updateValues( const QVariant &value, const Q
       }
     }
     // Value could not be found
-    if ( ! wasFound )
+    if ( !wasFound )
     {
       mLineEdit->setText( tr( "(no selection)" ) );
     }
+    mSubWidgetSignalBlocking--;
   }
 }
 
 void QgsValueRelationWidgetWrapper::widgetValueChanged( const QString &attribute, const QVariant &newValue, bool attributeChanged )
 {
-
-  // Do nothing if the value has not changed
-  if ( attributeChanged )
+  // Do nothing if the value has not changed except for multi edit mode
+  // In multi edit mode feature is not updated (so attributeChanged is false) until user validate it but we need to update the
+  // value relation which could have an expression depending on another modified field
+  if ( attributeChanged || context().attributeFormMode() == QgsAttributeEditorContext::Mode::MultiEditMode )
   {
-    QVariant oldValue( value( ) );
+    QVariant oldValue( value() );
     setFormFeatureAttribute( attribute, newValue );
     // Update combos if the value used in the filter expression has changed
     if ( QgsValueRelationFieldFormatter::expressionRequiresFormScope( mExpression )
@@ -415,7 +465,7 @@ void QgsValueRelationWidgetWrapper::widgetValueChanged( const QString &attribute
     {
       populate();
       // Restore value
-      updateValues( value( ) );
+      updateValue( oldValue, false );
       // If the value has changed as a result of another widget's value change,
       // we need to emit the signal to make sure other dependent widgets are
       // updated.
@@ -431,7 +481,7 @@ void QgsValueRelationWidgetWrapper::widgetValueChanged( const QString &attribute
       if ( oldValue != value() && fieldIdx() < formFields.count() )
       {
         QString attributeName( formFields.names().at( fieldIdx() ) );
-        setFormFeatureAttribute( attributeName, value( ) );
+        setFormFeatureAttribute( attributeName, value() );
         emitValueChanged();
       }
     }
@@ -453,15 +503,14 @@ void QgsValueRelationWidgetWrapper::setFeature( const QgsFeature &feature )
   // Note that this needs to be here after the cache has been created/updated by populate()
   // and signals unblocked (we want this to propagate to the feature itself)
   if ( context().attributeFormMode() != QgsAttributeEditorContext::Mode::MultiEditMode
-       && ! formFeature().attribute( fieldIdx() ).isValid()
-       && ! mCache.isEmpty()
-       && ! config( QStringLiteral( "AllowNull" ) ).toBool( ) )
+       && !formFeature().attribute( fieldIdx() ).isValid()
+       && !mCache.isEmpty()
+       && !config( QStringLiteral( "AllowNull" ) ).toBool() )
   {
     // This is deferred because at the time the feature is set in one widget it is not
     // set in the next, which is typically the "down" in a drill-down
-    QTimer::singleShot( 0, this, [ this ]
-    {
-      if ( ! mCache.isEmpty() )
+    QTimer::singleShot( 0, this, [this] {
+      if ( !mCache.isEmpty() )
       {
         updateValues( formFeature().attribute( fieldIdx() ).isValid() ? formFeature().attribute( fieldIdx() ) : mCache.at( 0 ).key );
       }
@@ -475,26 +524,25 @@ int QgsValueRelationWidgetWrapper::columnCount() const
 }
 
 
-QVariant::Type QgsValueRelationWidgetWrapper::fkType() const
+QMetaType::Type QgsValueRelationWidgetWrapper::fkType() const
 {
   const QgsVectorLayer *layer = QgsValueRelationFieldFormatter::resolveLayer( config(), QgsProject::instance() );
   if ( layer )
   {
     QgsFields fields = layer->fields();
-    int idx { fields.lookupField( config().value( QStringLiteral( "Key" ) ).toString() )  };
+    int idx { fields.lookupField( config().value( QStringLiteral( "Key" ) ).toString() ) };
     if ( idx >= 0 )
     {
       return fields.at( idx ).type();
     }
   }
-  return QVariant::Type::Invalid;
+  return QMetaType::Type::UnknownType;
 }
 
-void QgsValueRelationWidgetWrapper::populate( )
+void QgsValueRelationWidgetWrapper::populate()
 {
   // Initialize, note that signals are blocked, to avoid double signals on new features
-  if ( QgsValueRelationFieldFormatter::expressionRequiresFormScope( mExpression ) ||
-       QgsValueRelationFieldFormatter::expressionRequiresParentFormScope( mExpression ) )
+  if ( QgsValueRelationFieldFormatter::expressionRequiresFormScope( mExpression ) || QgsValueRelationFieldFormatter::expressionRequiresParentFormScope( mExpression ) )
   {
     if ( context().parentFormFeature().isValid() )
     {
@@ -512,19 +560,45 @@ void QgsValueRelationWidgetWrapper::populate( )
 
   if ( mComboBox )
   {
+    mComboBox->blockSignals( true );
     mComboBox->clear();
-    if ( config( QStringLiteral( "AllowNull" ) ).toBool( ) )
+    const bool allowNull = config( QStringLiteral( "AllowNull" ) ).toBool();
+    if ( allowNull )
     {
-      whileBlocking( mComboBox )->addItem( tr( "(no selection)" ), QVariant( field().type( ) ) );
+      mComboBox->addItem( tr( "(no selection)" ), QgsVariantUtils::createNullVariant( field().type() ) );
     }
 
-    for ( const QgsValueRelationFieldFormatter::ValueRelationItem &element : std::as_const( mCache ) )
+    if ( !mCache.isEmpty() )
     {
-      whileBlocking( mComboBox )->addItem( element.value, element.key );
-      if ( !element.description.isEmpty() )
-        mComboBox->setItemData( mComboBox->count() - 1, element.description, Qt::ToolTipRole );
-    }
+      QVariant currentGroup;
+      QStandardItemModel *model = qobject_cast<QStandardItemModel *>( mComboBox->model() );
+      const bool displayGroupName = config( QStringLiteral( "DisplayGroupName" ) ).toBool();
+      for ( const QgsValueRelationFieldFormatter::ValueRelationItem &element : std::as_const( mCache ) )
+      {
+        if ( currentGroup != element.group )
+        {
+          if ( mComboBox->count() > ( allowNull ? 1 : 0 ) )
+          {
+            mComboBox->insertSeparator( mComboBox->count() );
+          }
+          if ( displayGroupName )
+          {
+            mComboBox->addItem( element.group.toString() );
+            QStandardItem *item = model->item( mComboBox->count() - 1 );
+            item->setFlags( item->flags() & ~Qt::ItemIsEnabled );
+          }
+          currentGroup = element.group;
+        }
 
+        mComboBox->addItem( element.value, element.key );
+
+        if ( !element.description.isEmpty() )
+        {
+          mComboBox->setItemData( mComboBox->count() - 1, element.description, Qt::ToolTipRole );
+        }
+      }
+    }
+    mComboBox->blockSignals( false );
   }
   else if ( mTableWidget )
   {
@@ -541,6 +615,17 @@ void QgsValueRelationWidgetWrapper::populate( )
     }
     QStringListModel *m = new QStringListModel( values, mLineEdit );
     QCompleter *completer = new QCompleter( m, mLineEdit );
+
+    const Qt::MatchFlags completerMatchFlags { config().contains( QStringLiteral( "CompleterMatchFlags" ) ) ? static_cast<Qt::MatchFlags>( config().value( QStringLiteral( "CompleterMatchFlags" ), Qt::MatchFlag::MatchStartsWith ).toInt() ) : Qt::MatchFlag::MatchStartsWith };
+
+    if ( completerMatchFlags.testFlag( Qt::MatchFlag::MatchContains ) )
+    {
+      completer->setFilterMode( Qt::MatchFlag::MatchContains );
+    }
+    else
+    {
+      completer->setFilterMode( Qt::MatchFlag::MatchStartsWith );
+    }
     completer->setCaseSensitivity( Qt::CaseInsensitive );
     mLineEdit->setCompleter( completer );
   }
@@ -579,7 +664,6 @@ void QgsValueRelationWidgetWrapper::setEnabled( bool enabled )
 
 void QgsValueRelationWidgetWrapper::parentFormValueChanged( const QString &attribute, const QVariant &value )
 {
-
   // Update the parent feature in the context ( which means to replace the whole context :/ )
   QgsAttributeEditorContext ctx { context() };
   QgsFeature feature { context().parentFormFeature() };
@@ -589,14 +673,10 @@ void QgsValueRelationWidgetWrapper::parentFormValueChanged( const QString &attri
 
   // Check if the change might affect the filter expression and the cache needs updates
   if ( QgsValueRelationFieldFormatter::expressionRequiresParentFormScope( mExpression )
-       && ( config( QStringLiteral( "Value" ) ).toString() == attribute ||
-            config( QStringLiteral( "Key" ) ).toString() == attribute ||
-            ! QgsValueRelationFieldFormatter::expressionParentFormVariables( mExpression ).isEmpty() ||
-            QgsValueRelationFieldFormatter::expressionParentFormAttributes( mExpression ).contains( attribute ) ) )
+       && ( config( QStringLiteral( "Value" ) ).toString() == attribute || config( QStringLiteral( "Key" ) ).toString() == attribute || !QgsValueRelationFieldFormatter::expressionParentFormVariables( mExpression ).isEmpty() || QgsValueRelationFieldFormatter::expressionParentFormAttributes( mExpression ).contains( attribute ) ) )
   {
     populate();
   }
-
 }
 
 void QgsValueRelationWidgetWrapper::emitValueChangedInternal( const QString &value )

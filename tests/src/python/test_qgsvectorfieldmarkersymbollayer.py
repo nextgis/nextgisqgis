@@ -15,12 +15,11 @@
 ***************************************************************************
 """
 
-__author__ = 'Nyall Dawson'
-__date__ = 'November 2021'
-__copyright__ = '(C) 2021, Nyall Dawson'
+__author__ = "Nyall Dawson"
+__date__ = "November 2021"
+__copyright__ = "(C) 2021, Nyall Dawson"
 
-import qgis  # NOQA
-from qgis.PyQt.QtCore import QDir, QVariant
+from qgis.PyQt.QtCore import QVariant
 from qgis.PyQt.QtGui import QColor, QImage, QPainter
 from qgis.core import (
     QgsFeature,
@@ -30,11 +29,11 @@ from qgis.core import (
     QgsLineSymbol,
     QgsMapSettings,
     QgsMarkerSymbol,
-    QgsRenderChecker,
     QgsRenderContext,
     QgsVectorFieldSymbolLayer,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 from utilities import unitTestDataPath
 
@@ -42,15 +41,11 @@ start_app()
 TEST_DATA_DIR = unitTestDataPath()
 
 
-class TestQgsVectorFieldMarkerSymbolLayer(unittest.TestCase):
+class TestQgsVectorFieldMarkerSymbolLayer(QgisTestCase):
 
-    def setUp(self):
-        self.report = "<h1>Python QgsVectorFieldMarkerSymbolLayer Tests</h1>\n"
-
-    def tearDown(self):
-        report_file_path = f"{QDir.tempPath()}/qgistest.html"
-        with open(report_file_path, 'a') as report_file:
-            report_file.write(self.report)
+    @classmethod
+    def control_path_prefix(cls):
+        return "symbol_vectorfield"
 
     def testRender(self):
         # test rendering
@@ -58,24 +53,34 @@ class TestQgsVectorFieldMarkerSymbolLayer(unittest.TestCase):
         s.deleteSymbolLayer(0)
 
         field_marker = QgsVectorFieldSymbolLayer()
-        field_marker.setXAttribute('x')
-        field_marker.setYAttribute('y')
+        field_marker.setXAttribute("x")
+        field_marker.setYAttribute("y")
         field_marker.setScale(4)
 
-        field_marker.setSubSymbol(QgsLineSymbol.createSimple({'color': '#ff0000', 'width': '2'}))
+        field_marker.setSubSymbol(
+            QgsLineSymbol.createSimple({"color": "#ff0000", "width": "2"})
+        )
 
         s.appendSymbolLayer(field_marker.clone())
 
-        g = QgsGeometry.fromWkt('Point(5 4)')
+        g = QgsGeometry.fromWkt("Point(5 4)")
         fields = QgsFields()
-        fields.append(QgsField('x', QVariant.Double))
-        fields.append(QgsField('y', QVariant.Double))
+        fields.append(QgsField("x", QVariant.Double))
+        fields.append(QgsField("y", QVariant.Double))
         f = QgsFeature(fields)
         f.setAttributes([2, 3])
         f.setGeometry(g)
 
         rendered_image = self.renderFeature(s, f)
-        assert self.imageCheck('vectorfield', 'vectorfield', rendered_image)
+        self.assertTrue(
+            self.image_check(
+                "vectorfield",
+                "vectorfield",
+                rendered_image,
+                color_tolerance=2,
+                allowed_mismatch=20,
+            )
+        )
 
     def testMapRotation(self):
         # test rendering with map rotation
@@ -83,24 +88,34 @@ class TestQgsVectorFieldMarkerSymbolLayer(unittest.TestCase):
         s.deleteSymbolLayer(0)
 
         field_marker = QgsVectorFieldSymbolLayer()
-        field_marker.setXAttribute('x')
-        field_marker.setYAttribute('y')
+        field_marker.setXAttribute("x")
+        field_marker.setYAttribute("y")
         field_marker.setScale(4)
 
-        field_marker.setSubSymbol(QgsLineSymbol.createSimple({'color': '#ff0000', 'width': '2'}))
+        field_marker.setSubSymbol(
+            QgsLineSymbol.createSimple({"color": "#ff0000", "width": "2"})
+        )
 
         s.appendSymbolLayer(field_marker.clone())
 
-        g = QgsGeometry.fromWkt('Point(5 4)')
+        g = QgsGeometry.fromWkt("Point(5 4)")
         fields = QgsFields()
-        fields.append(QgsField('x', QVariant.Double))
-        fields.append(QgsField('y', QVariant.Double))
+        fields.append(QgsField("x", QVariant.Double))
+        fields.append(QgsField("y", QVariant.Double))
         f = QgsFeature(fields)
         f.setAttributes([2, 3])
         f.setGeometry(g)
 
         rendered_image = self.renderFeature(s, f, map_rotation=45)
-        assert self.imageCheck('rotated_map', 'rotated_map', rendered_image)
+        self.assertTrue(
+            self.image_check(
+                "rotated_map",
+                "rotated_map",
+                rendered_image,
+                color_tolerance=2,
+                allowed_mismatch=20,
+            )
+        )
 
     def testHeight(self):
         # test rendering
@@ -108,25 +123,37 @@ class TestQgsVectorFieldMarkerSymbolLayer(unittest.TestCase):
         s.deleteSymbolLayer(0)
 
         field_marker = QgsVectorFieldSymbolLayer()
-        field_marker.setXAttribute('x')
-        field_marker.setYAttribute('y')
+        field_marker.setXAttribute("x")
+        field_marker.setYAttribute("y")
         field_marker.setScale(4)
-        field_marker.setVectorFieldType(QgsVectorFieldSymbolLayer.Height)
+        field_marker.setVectorFieldType(
+            QgsVectorFieldSymbolLayer.VectorFieldType.Height
+        )
 
-        field_marker.setSubSymbol(QgsLineSymbol.createSimple({'color': '#ff0000', 'width': '2'}))
+        field_marker.setSubSymbol(
+            QgsLineSymbol.createSimple({"color": "#ff0000", "width": "2"})
+        )
 
         s.appendSymbolLayer(field_marker.clone())
 
-        g = QgsGeometry.fromWkt('Point(5 4)')
+        g = QgsGeometry.fromWkt("Point(5 4)")
         fields = QgsFields()
-        fields.append(QgsField('x', QVariant.Double))
-        fields.append(QgsField('y', QVariant.Double))
+        fields.append(QgsField("x", QVariant.Double))
+        fields.append(QgsField("y", QVariant.Double))
         f = QgsFeature(fields)
         f.setAttributes([2, 3])
         f.setGeometry(g)
 
         rendered_image = self.renderFeature(s, f)
-        assert self.imageCheck('height', 'height', rendered_image)
+        self.assertTrue(
+            self.image_check(
+                "height",
+                "height",
+                rendered_image,
+                color_tolerance=2,
+                allowed_mismatch=20,
+            )
+        )
 
     def testPolar(self):
         # test rendering
@@ -134,25 +161,31 @@ class TestQgsVectorFieldMarkerSymbolLayer(unittest.TestCase):
         s.deleteSymbolLayer(0)
 
         field_marker = QgsVectorFieldSymbolLayer()
-        field_marker.setXAttribute('x')
-        field_marker.setYAttribute('y')
-        field_marker.setVectorFieldType(QgsVectorFieldSymbolLayer.Polar)
+        field_marker.setXAttribute("x")
+        field_marker.setYAttribute("y")
+        field_marker.setVectorFieldType(QgsVectorFieldSymbolLayer.VectorFieldType.Polar)
         field_marker.setScale(1)
 
-        field_marker.setSubSymbol(QgsLineSymbol.createSimple({'color': '#ff0000', 'width': '2'}))
+        field_marker.setSubSymbol(
+            QgsLineSymbol.createSimple({"color": "#ff0000", "width": "2"})
+        )
 
         s.appendSymbolLayer(field_marker.clone())
 
-        g = QgsGeometry.fromWkt('Point(5 4)')
+        g = QgsGeometry.fromWkt("Point(5 4)")
         fields = QgsFields()
-        fields.append(QgsField('x', QVariant.Double))
-        fields.append(QgsField('y', QVariant.Double))
+        fields.append(QgsField("x", QVariant.Double))
+        fields.append(QgsField("y", QVariant.Double))
         f = QgsFeature(fields)
         f.setAttributes([6, 135])
         f.setGeometry(g)
 
         rendered_image = self.renderFeature(s, f)
-        assert self.imageCheck('polar', 'polar', rendered_image)
+        self.assertTrue(
+            self.image_check(
+                "polar", "polar", rendered_image, color_tolerance=2, allowed_mismatch=20
+            )
+        )
 
     def testPolarAnticlockwise(self):
         # test rendering
@@ -160,26 +193,38 @@ class TestQgsVectorFieldMarkerSymbolLayer(unittest.TestCase):
         s.deleteSymbolLayer(0)
 
         field_marker = QgsVectorFieldSymbolLayer()
-        field_marker.setXAttribute('x')
-        field_marker.setYAttribute('y')
-        field_marker.setVectorFieldType(QgsVectorFieldSymbolLayer.Polar)
-        field_marker.setAngleOrientation(QgsVectorFieldSymbolLayer.CounterclockwiseFromEast)
+        field_marker.setXAttribute("x")
+        field_marker.setYAttribute("y")
+        field_marker.setVectorFieldType(QgsVectorFieldSymbolLayer.VectorFieldType.Polar)
+        field_marker.setAngleOrientation(
+            QgsVectorFieldSymbolLayer.AngleOrientation.CounterclockwiseFromEast
+        )
         field_marker.setScale(1)
 
-        field_marker.setSubSymbol(QgsLineSymbol.createSimple({'color': '#ff0000', 'width': '2'}))
+        field_marker.setSubSymbol(
+            QgsLineSymbol.createSimple({"color": "#ff0000", "width": "2"})
+        )
 
         s.appendSymbolLayer(field_marker.clone())
 
-        g = QgsGeometry.fromWkt('Point(5 4)')
+        g = QgsGeometry.fromWkt("Point(5 4)")
         fields = QgsFields()
-        fields.append(QgsField('x', QVariant.Double))
-        fields.append(QgsField('y', QVariant.Double))
+        fields.append(QgsField("x", QVariant.Double))
+        fields.append(QgsField("y", QVariant.Double))
         f = QgsFeature(fields)
         f.setAttributes([6, 135])
         f.setGeometry(g)
 
         rendered_image = self.renderFeature(s, f)
-        assert self.imageCheck('anticlockwise_polar', 'anticlockwise_polar', rendered_image)
+        self.assertTrue(
+            self.image_check(
+                "anticlockwise_polar",
+                "anticlockwise_polar",
+                rendered_image,
+                color_tolerance=2,
+                allowed_mismatch=20,
+            )
+        )
 
     def testPolarRadians(self):
         # test rendering
@@ -187,29 +232,39 @@ class TestQgsVectorFieldMarkerSymbolLayer(unittest.TestCase):
         s.deleteSymbolLayer(0)
 
         field_marker = QgsVectorFieldSymbolLayer()
-        field_marker.setXAttribute('x')
-        field_marker.setYAttribute('y')
-        field_marker.setVectorFieldType(QgsVectorFieldSymbolLayer.Polar)
+        field_marker.setXAttribute("x")
+        field_marker.setYAttribute("y")
+        field_marker.setVectorFieldType(QgsVectorFieldSymbolLayer.VectorFieldType.Polar)
         field_marker.setScale(1)
-        field_marker.setAngleUnits(QgsVectorFieldSymbolLayer.Radians)
+        field_marker.setAngleUnits(QgsVectorFieldSymbolLayer.AngleUnits.Radians)
 
-        field_marker.setSubSymbol(QgsLineSymbol.createSimple({'color': '#ff0000', 'width': '2'}))
+        field_marker.setSubSymbol(
+            QgsLineSymbol.createSimple({"color": "#ff0000", "width": "2"})
+        )
 
         s.appendSymbolLayer(field_marker.clone())
 
-        g = QgsGeometry.fromWkt('Point(5 4)')
+        g = QgsGeometry.fromWkt("Point(5 4)")
         fields = QgsFields()
-        fields.append(QgsField('x', QVariant.Double))
-        fields.append(QgsField('y', QVariant.Double))
+        fields.append(QgsField("x", QVariant.Double))
+        fields.append(QgsField("y", QVariant.Double))
         f = QgsFeature(fields)
         f.setAttributes([6, 135])
         f.setGeometry(g)
 
         rendered_image = self.renderFeature(s, f)
-        assert self.imageCheck('radians_polar', 'radians_polar', rendered_image)
+        self.assertTrue(
+            self.image_check(
+                "radians_polar",
+                "radians_polar",
+                rendered_image,
+                color_tolerance=2,
+                allowed_mismatch=20,
+            )
+        )
 
     def renderFeature(self, symbol, f, buffer=20, map_rotation=0):
-        image = QImage(200, 200, QImage.Format_RGB32)
+        image = QImage(200, 200, QImage.Format.Format_RGB32)
 
         painter = QPainter()
         ms = QgsMapSettings()
@@ -239,21 +294,6 @@ class TestQgsVectorFieldMarkerSymbolLayer(unittest.TestCase):
 
         return image
 
-    def imageCheck(self, name, reference_image, image):
-        self.report += f"<h2>Render {name}</h2>\n"
-        temp_dir = QDir.tempPath() + '/'
-        file_name = temp_dir + 'symbol_' + name + ".png"
-        image.save(file_name, "PNG")
-        checker = QgsRenderChecker()
-        checker.setControlPathPrefix("symbol_vectorfield")
-        checker.setControlName("expected_" + reference_image)
-        checker.setRenderedImage(file_name)
-        checker.setColorTolerance(2)
-        result = checker.compareImages(name, 20)
-        self.report += checker.report()
-        print(self.report)
-        return result
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

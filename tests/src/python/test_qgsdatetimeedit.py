@@ -5,24 +5,26 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Denis Rouzaud'
-__date__ = '2018-01-04'
-__copyright__ = 'Copyright 2017, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Denis Rouzaud"
+__date__ = "2018-01-04"
+__copyright__ = "Copyright 2017, The QGIS Project"
+
 from qgis.PyQt.QtCore import QDate, QDateTime, Qt, QTime
 from qgis.gui import QgsDateEdit, QgsDateTimeEdit, QgsTimeEdit
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 start_app()
 
-DATE = QDateTime.fromString('2018-01-01 01:02:03', Qt.ISODate)
+DATE = QDateTime.fromString("2018-01-01 01:02:03", Qt.DateFormat.ISODate)
+DATE_Z = QDateTime.fromString("2018-01-01 01:02:03Z", Qt.DateFormat.ISODate)
 
 
-class TestQgsDateTimeEdit(unittest.TestCase):
+class TestQgsDateTimeEdit(QgisTestCase):
 
     def testSettersGetters(self):
-        """ test widget handling of null values """
+        """test widget handling of null values"""
         w = QgsDateTimeEdit()
         w.setAllowNull(False)
 
@@ -32,8 +34,19 @@ class TestQgsDateTimeEdit(unittest.TestCase):
         w.setDateTime(QDateTime())
         self.assertEqual(w.dateTime(), DATE)
 
+    def testSettersGetters_DATE_Z(self):
+        """test widget handling with Z time spec"""
+        w = QgsDateTimeEdit()
+        w.setAllowNull(False)
+
+        w.setDateTime(DATE_Z)
+        self.assertEqual(w.dateTime(), DATE_Z)
+        # date should remain when setting an invalid date
+        w.setDateTime(QDateTime())
+        self.assertEqual(w.dateTime(), DATE_Z)
+
     def testNullValueHandling(self):
-        """ test widget handling of null values """
+        """test widget handling of null values"""
         w = QgsDateTimeEdit()
         w.setAllowNull(True)
 
@@ -50,10 +63,10 @@ class TestQgsDateTimeEdit(unittest.TestCase):
         self.assertTrue(w.dateTime().isValid())
 
 
-class TestQgsDateEdit(unittest.TestCase):
+class TestQgsDateEdit(QgisTestCase):
 
     def testSettersGetters(self):
-        """ test widget handling of null values """
+        """test widget handling of null values"""
         w = QgsDateEdit()
         w.setAllowNull(False)
 
@@ -64,7 +77,7 @@ class TestQgsDateEdit(unittest.TestCase):
         self.assertEqual(w.date(), DATE.date())
 
     def testNullValueHandling(self):
-        """ test widget handling of null values """
+        """test widget handling of null values"""
         w = QgsDateEdit()
         w.setAllowNull(True)
 
@@ -81,10 +94,10 @@ class TestQgsDateEdit(unittest.TestCase):
         self.assertTrue(w.date().isValid())
 
 
-class TestQgsTimeEdit(unittest.TestCase):
+class TestQgsTimeEdit(QgisTestCase):
 
     def testSettersGetters(self):
-        """ test widget handling of null values """
+        """test widget handling of null values"""
         w = QgsTimeEdit()
         w.setAllowNull(False)
 
@@ -95,7 +108,7 @@ class TestQgsTimeEdit(unittest.TestCase):
         self.assertEqual(w.time(), DATE.time())
 
     def testNullValueHandling(self):
-        """ test widget handling of null values """
+        """test widget handling of null values"""
         w = QgsTimeEdit()
         w.setAllowNull(True)
 
@@ -112,5 +125,5 @@ class TestQgsTimeEdit(unittest.TestCase):
         self.assertTrue(w.time().isValid())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -16,16 +16,16 @@
  ***************************************************************************/
 
 #include "qgsmeshterraingenerator.h"
-
-#include <Qt3DRender/QMaterial>
+#include "moc_qgsmeshterraingenerator.cpp"
+#include "qgsmeshterraintileloader_p.h"
 
 #include "qgsmesh3dentity_p.h"
 #include "qgsmeshlayer.h"
 #include "qgsmeshlayer3drenderer.h"
-#include "qgsterrainentity_p.h"
-#include "qgsterraintextureimage_p.h"
+#include "qgsterrainentity.h"
 #include "qgsmeshlayerutils.h"
-
+#include "qgs3dmapsettings.h"
+#include "qgs3drendercontext.h"
 
 QgsMeshTerrainTileLoader::QgsMeshTerrainTileLoader( QgsTerrainEntity *terrain, QgsChunkNode *node, const QgsTriangularMesh &triangularMesh, const QgsMesh3DSymbol *symbol )
   : QgsTerrainTileLoader( terrain, node )
@@ -37,7 +37,7 @@ QgsMeshTerrainTileLoader::QgsMeshTerrainTileLoader( QgsTerrainEntity *terrain, Q
 
 Qt3DCore::QEntity *QgsMeshTerrainTileLoader::createEntity( Qt3DCore::QEntity *parent )
 {
-  QgsMesh3dTerrainTileEntity *entity = new QgsMesh3dTerrainTileEntity( terrain()->map3D(), mTriangularMesh, mSymbol.get(), mNode->tileId(), parent );
+  QgsMesh3DTerrainTileEntity *entity = new QgsMesh3DTerrainTileEntity( Qgs3DRenderContext::fromMapSettings( terrain()->mapSettings() ), mTriangularMesh, mSymbol.get(), mNode->tileId(), parent );
   entity->build();
   createTexture( entity );
 
@@ -49,9 +49,8 @@ Qt3DCore::QEntity *QgsMeshTerrainTileLoader::createEntity( Qt3DCore::QEntity *pa
 //
 
 QgsMeshTerrainGenerator::QgsMeshTerrainGenerator()
-  : mSymbol( std::make_unique< QgsMesh3DSymbol >() )
+  : mSymbol( std::make_unique<QgsMesh3DSymbol>() )
 {
-
 }
 
 QgsChunkLoader *QgsMeshTerrainGenerator::createChunkLoader( QgsChunkNode *node ) const
@@ -71,7 +70,7 @@ void QgsMeshTerrainGenerator::rootChunkHeightRange( float &hMin, float &hMax ) c
 
   for ( int i = 0; i < mTriangularMesh.vertices().count(); ++i )
   {
-    const float zValue = static_cast< float >( mTriangularMesh.vertices().at( i ).z() );
+    const float zValue = static_cast<float>( mTriangularMesh.vertices().at( i ).z() );
     if ( min > zValue )
       min = zValue;
     if ( max < zValue )
@@ -93,7 +92,7 @@ void QgsMeshTerrainGenerator::setLayer( QgsMeshLayer *layer )
     disconnect( mLayer.get(), &QgsMeshLayer::request3DUpdate, this, &QgsMeshTerrainGenerator::terrainChanged );
 
   mLayer = QgsMapLayerRef( layer );
-  mIsValid = layer != nullptr;
+  mIsValid = layer;
   updateTriangularMesh();
   if ( mIsValid )
   {
@@ -120,7 +119,7 @@ QgsTerrainGenerator *QgsMeshTerrainGenerator::clone() const
   return cloned;
 }
 
-QgsTerrainGenerator::Type QgsMeshTerrainGenerator::type() const {return QgsTerrainGenerator::Mesh;}
+QgsTerrainGenerator::Type QgsMeshTerrainGenerator::type() const { return QgsTerrainGenerator::Mesh; }
 
 QgsRectangle QgsMeshTerrainGenerator::rootChunkExtent() const
 {
@@ -145,7 +144,7 @@ void QgsMeshTerrainGenerator::readXml( const QDomElement &elem )
   mSymbol->readXml( elem.firstChildElement( "symbol" ), rwc );
 }
 
-float QgsMeshTerrainGenerator::heightAt( double x, double y, const Qgs3DMapSettings & ) const
+float QgsMeshTerrainGenerator::heightAt( double x, double y, const Qgs3DRenderContext & ) const
 {
   return QgsMeshLayerUtils::interpolateZForPoint( mTriangularMesh, x, y );
 }

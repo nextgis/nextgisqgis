@@ -5,9 +5,10 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Alessandro Pasotti'
-__date__ = '2018-09'
-__copyright__ = 'Copyright 2019, The QGIS Project'
+
+__author__ = "Alessandro Pasotti"
+__date__ = "2018-09"
+__copyright__ = "Copyright 2019, The QGIS Project"
 
 from processing.core.Processing import Processing
 from processing.gui.AlgorithmExecutor import execute
@@ -20,7 +21,8 @@ from qgis.core import (
     QgsSettings,
     QgsVectorLayer,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 from utilities import unitTestDataPath
 
@@ -35,15 +37,14 @@ class ConsoleFeedBack(QgsProcessingFeedback):
         self._errors.append(error)
 
 
-class TestExportToPostGis(unittest.TestCase):
+class TestExportToPostGis(QgisTestCase):
 
     @classmethod
     def setUpClass(cls):
         """Run before all tests"""
         super().setUpClass()
         QCoreApplication.setOrganizationName("QGIS_Test")
-        QCoreApplication.setOrganizationDomain(
-            "QGIS_TestPyQgsExportToPostgis.com")
+        QCoreApplication.setOrganizationDomain("QGIS_TestPyQgsExportToPostgis.com")
         QCoreApplication.setApplicationName("QGIS_TestPyQgsExportToPostgis")
         QgsSettings().clear()
         Processing.initialize()
@@ -52,31 +53,31 @@ class TestExportToPostGis(unittest.TestCase):
 
         # Create DB connection in the settings
         settings = QgsSettings()
-        settings.beginGroup('/PostgreSQL/connections/qgis_test')
-        settings.setValue('service', 'qgis_test')
-        settings.setValue('database', 'qgis_test')
+        settings.beginGroup("/PostgreSQL/connections/qgis_test")
+        settings.setValue("service", "qgis_test")
+        settings.setValue("database", "qgis_test")
 
     def test_import(self):
-        """Test algorithm with CamelCaseSchema"""
+        """Test algorithm with CamelCase'singlequote'Schema"""
 
         alg = self.registry.createAlgorithmById("qgis:importintopostgis")
         self.assertIsNotNone(alg)
 
-        table_name = 'out_TestPyQgsExportToPostgis'
+        table_name = "out_TestPyQgsExportToPostgis"
 
         parameters = {
-            'CREATEINDEX': True,
-            'DATABASE': 'qgis_test',
-            'DROP_STRING_LENGTH': False,
-            'ENCODING': 'UTF-8',
-            'FORCE_SINGLEPART': False,
-            'GEOMETRY_COLUMN': 'geom',
-            'INPUT': unitTestDataPath() + '/points.shp',
-            'LOWERCASE_NAMES': True,
-            'OVERWRITE': True,
-            'PRIMARY_KEY': None,
-            'SCHEMA': 'CamelCaseSchema',
-            'TABLENAME': table_name
+            "CREATEINDEX": True,
+            "DATABASE": "qgis_test",
+            "DROP_STRING_LENGTH": False,
+            "ENCODING": "UTF-8",
+            "FORCE_SINGLEPART": False,
+            "GEOMETRY_COLUMN": "geom",
+            "INPUT": unitTestDataPath() + "/points.shp",
+            "LOWERCASE_NAMES": True,
+            "OVERWRITE": True,
+            "PRIMARY_KEY": None,
+            "SCHEMA": "CamelCase'singlequote'Schema",
+            "TABLENAME": table_name,
         }
 
         feedback = ConsoleFeedBack()
@@ -87,13 +88,17 @@ class TestExportToPostGis(unittest.TestCase):
         self.assertEqual(feedback._errors, [])
 
         # Check that data have been imported correctly
-        exported = QgsVectorLayer(unitTestDataPath() + '/points.shp', 'exported')
+        exported = QgsVectorLayer(unitTestDataPath() + "/points.shp", "exported")
         self.assertTrue(exported.isValid())
-        imported = QgsVectorLayer(f"service='qgis_test' table=\"CamelCaseSchema\".\"{table_name}\" (geom)", 'imported', 'postgres')
+        imported = QgsVectorLayer(
+            f"service='qgis_test' table=\"CamelCase'singlequote'Schema\".\"{table_name}\" (geom)",
+            "imported",
+            "postgres",
+        )
         self.assertTrue(imported.isValid())
         imported_fields = [f.name() for f in imported.fields()]
         for f in exported.fields():
-            self.assertTrue(f.name().lower() in imported_fields)
+            self.assertIn(f.name().lower(), imported_fields)
 
         # Check data
         imported_f = next(imported.getFeatures("class = 'Jet' AND heading = 85"))
@@ -103,5 +108,5 @@ class TestExportToPostGis(unittest.TestCase):
         self.assertEqual(exported_f.geometry().asWkt(), imported_f.geometry().asWkt())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

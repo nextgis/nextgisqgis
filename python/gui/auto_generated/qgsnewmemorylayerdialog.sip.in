@@ -3,20 +3,19 @@
  *                                                                      *
  * src/gui/qgsnewmemorylayerdialog.h                                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 
 
-class QgsNewMemoryLayerDialog: QDialog
+class QgsNewMemoryLayerDialog : QDialog
 {
 
 %TypeHeaderCode
 #include "qgsnewmemorylayerdialog.h"
 %End
   public:
-
     static QgsVectorLayer *runAndCreateLayer( QWidget *parent = 0, const QgsCoordinateReferenceSystem &defaultCrs = QgsCoordinateReferenceSystem() );
 %Docstring
 Runs the dialog and creates a new memory layer
@@ -42,8 +41,6 @@ Returns the selected geometry type
 Sets the ``crs`` value for the new layer in the dialog.
 
 .. seealso:: :py:func:`crs`
-
-.. versionadded:: 3.0
 %End
 
     QgsCoordinateReferenceSystem crs() const;
@@ -75,5 +72,5 @@ Returns attributes for the new layer.
  *                                                                      *
  * src/gui/qgsnewmemorylayerdialog.h                                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

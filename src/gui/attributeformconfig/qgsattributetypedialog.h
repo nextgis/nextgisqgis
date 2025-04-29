@@ -31,7 +31,7 @@
 class QWidget;
 class QStandardItem;
 
-class GUI_EXPORT QgsAttributeTypeDialog: public QWidget, private Ui::QgsAttributeTypeDialog, QgsExpressionContextGenerator
+class GUI_EXPORT QgsAttributeTypeDialog : public QWidget, private Ui::QgsAttributeTypeDialog, QgsExpressionContextGenerator
 {
     Q_OBJECT
 
@@ -177,26 +177,22 @@ class GUI_EXPORT QgsAttributeTypeDialog: public QWidget, private Ui::QgsAttribut
     /**
      * Setter for constraint expression description
      * \param desc the expression description
-     * \since QGIS 2.16
      */
     void setConstraintExpressionDescription( const QString &desc );
 
     /**
      * Getter for constraint expression description
      * \returns the expression description
-     * \since QGIS 2.16
      */
     QString constraintExpressionDescription();
 
     /**
      * Getter for the constraint expression
-     * \since QGIS 2.16
      */
     QString constraintExpression() const;
 
     /**
      * Setter for the constraint expression
-     * \since QGIS 2.16
      */
     void setConstraintExpression( const QString &str );
 
@@ -249,6 +245,24 @@ class GUI_EXPORT QgsAttributeTypeDialog: public QWidget, private Ui::QgsAttribut
      */
     void setSplitPolicy( Qgis::FieldDomainSplitPolicy policy );
 
+    /**
+     * Returns the field's duplicate policy.
+     *
+     * \see setDuplicatePolicy()
+     *
+     * \since QGIS 3.38
+     */
+    Qgis::FieldDuplicatePolicy duplicatePolicy() const;
+
+    /**
+     * Sets the field's duplicate policy.
+     *
+     * \see duplicatePolicy()
+     *
+     * \since QGIS 3.38
+     */
+    void setDuplicatePolicy( Qgis::FieldDuplicatePolicy policy );
+
   private slots:
 
     /**
@@ -261,6 +275,8 @@ class GUI_EXPORT QgsAttributeTypeDialog: public QWidget, private Ui::QgsAttribut
 
     void updateSplitPolicyLabel();
 
+    void updateDuplicatePolicyLabel();
+
   private:
     QgsVectorLayer *mLayer = nullptr;
     int mFieldIdx;
@@ -268,7 +284,7 @@ class GUI_EXPORT QgsAttributeTypeDialog: public QWidget, private Ui::QgsAttribut
     QVariantMap mWidgetConfig;
 
     //! Cached configuration dialog (lazy loaded)
-    QMap< QString, QgsEditorConfigWidget * > mEditorConfigWidgets;
+    QMap<QString, QgsEditorConfigWidget *> mEditorConfigWidgets;
 
     QStandardItem *currentItem() const;
 

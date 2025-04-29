@@ -500,13 +500,16 @@ tests:
           fields:
             fid: skip
 
-  - algorithm: qgis:basicstatisticsforfields
+  - algorithm: native:basicstatisticsforfields
     name: Basic statistics for numeric fields
     params:
     - name: multipolys.gml
       type: vector
     - 'Bfloatval'
     results:
+      OUTPUT:
+        name: expected/statistics_float.gml
+        type: vector
       OUTPUT_HTML_FILE:
         name: basic_statistics_numeric_float.html
         type: regex
@@ -529,13 +532,16 @@ tests:
           - 'NULL \(missing\) values: 1'
           - 'Interquartile Range \(IQR\): 0.123'
 
-  - algorithm: qgis:basicstatisticsforfields
+  - algorithm: native:basicstatisticsforfields
     name: Basic statistics for text fields
     params:
     - name: multipolys.gml
       type: vector
     - 'Bname'
     results:
+      OUTPUT:
+        name: expected/statistics_text.gml
+        type: vector
       OUTPUT_HTML_FILE:
         name: expected/basic_statistics_string.html
         type: regex
@@ -894,6 +900,21 @@ tests:
     results:
       OUTPUT:
         name: expected/dissolve_disjoint.geojson
+        type: vector
+        compare:
+          geometry:
+            normalize: True
+
+  - algorithm: native:dissolve
+    name: Dissolve separate disjoint with geopackage input and output
+    params:
+      INPUT:
+        name: custom/pol.gpkg|layername=pol1
+        type: vector
+      SEPARATE_DISJOINT: true
+    results:
+      OUTPUT:
+        name: expected/dissolve_pol.gpkg
         type: vector
         compare:
           geometry:
@@ -1531,7 +1552,10 @@ tests:
             precision: 7
 
   - algorithm: native:offsetline
-    name: Offset line negative
+    name: Offset line negative (GEOS < 3.11)
+    condition:
+      geos:
+        less_than: 31100
     params:
       DISTANCE: -1.0
       INPUT:
@@ -1543,6 +1567,27 @@ tests:
     results:
       OUTPUT:
         name: expected/line_offset_round_negative.gml
+        type: vector
+        compare:
+          geometry:
+            precision: 7
+
+  - algorithm: native:offsetline
+    name: Offset line negative (GEOS >= 3.11)
+    condition:
+      geos:
+        at_least: 31100
+    params:
+      DISTANCE: -1.0
+      INPUT:
+        name: lines.gml
+        type: vector
+      JOIN_STYLE: '0'
+      MITER_LIMIT: 2
+      SEGMENTS: 8
+    results:
+      OUTPUT:
+        name: expected/geos311/line_offset_round_negative.gml
         type: vector
         compare:
           geometry:
@@ -1620,7 +1665,10 @@ tests:
         type: vector
 
   - algorithm: native:buffer
-    name: Buffer polygons using miter
+    name: Buffer polygons using miter (GEOS < 3.11)
+    condition:
+      geos:
+        less_than: 31100
     params:
       DISSOLVE: false
       DISTANCE: 1.0
@@ -1634,6 +1682,29 @@ tests:
     results:
       OUTPUT:
         name: expected/buffer_polys_miter.gml
+        type: vector
+        compare:
+          geometry:
+            precision: 5
+
+  - algorithm: native:buffer
+    name: Buffer polygons using miter (GEOS >= 3.11)
+    condition:
+      geos:
+        at_least: 31100
+    params:
+      DISSOLVE: false
+      DISTANCE: 1.0
+      END_CAP_STYLE: '0'
+      INPUT:
+        name: polys.gml
+        type: vector
+      JOIN_STYLE: '1'
+      MITER_LIMIT: 2
+      SEGMENTS: 5
+    results:
+      OUTPUT:
+        name: expected/geos311/buffer_polys_miter.gml
         type: vector
         compare:
           geometry:
@@ -2378,6 +2449,8 @@ tests:
         - name
         - name_2
         compare:
+          geometry:
+            precision: 8
           fields:
             fid: skip
             fid_2: skip
@@ -2398,6 +2471,8 @@ tests:
         type: vector
         pk: [ name, pre_name ]
         compare:
+          geometry:
+            precision: 8
           fields:
             fid: skip
             pre_fid: skip
@@ -2420,6 +2495,8 @@ tests:
         name: expected/line_intersection_partial_fields.gml
         type: vector
         compare:
+          geometry:
+            precision: 8
           fields:
             fid: skip
 
@@ -2497,7 +2574,7 @@ tests:
           fields:
             fid: skip
 
-  - algorithm: qgis:delaunaytriangulation
+  - algorithm: native:delaunaytriangulation
     name: Delaunay triangulation (multipoint data)
     params:
       INPUT:
@@ -2508,8 +2585,12 @@ tests:
         name: expected/multipoint_delaunay.gml
         type: vector
         compare:
+          geometry:
+            precision: 3
+            normalize: true
+          unordered: true
           fields:
-            fid: skip
+            gml_id: skip
 
   - algorithm: native:polygonfromlayerextent
     name: Polygon from layer extent rounded to 0

@@ -14,10 +14,10 @@
  ***************************************************************************/
 
 #include "qgs3dviewsmanagerdialog.h"
+#include "moc_qgs3dviewsmanagerdialog.cpp"
 
 #include "qgisapp.h"
 #include "qgsnewnamedialog.h"
-#include "qgs3dmapcanvas.h"
 #include "qgsmapviewsmanager.h"
 #include "qgs3dmapcanvaswidget.h"
 #include "qgsdockablewidgethelper.h"

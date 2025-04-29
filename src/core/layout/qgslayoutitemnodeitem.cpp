@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgslayoutitemnodeitem.h"
+#include "moc_qgslayoutitemnodeitem.cpp"
 #include "qgssymbol.h"
 #include "qgslayout.h"
 #include "qgsmarkersymbol.h"
@@ -83,6 +84,11 @@ void QgsLayoutNodesItem::draw( QgsLayoutItemRenderContext &context )
 
   if ( mDrawNodes && layout()->renderContext().isPreviewRender() )
     drawNodes( context );
+}
+
+QgsLayoutItem::Flags QgsLayoutNodesItem::itemFlags() const
+{
+  return QgsLayoutItem::FlagDisableSceneCaching;
 }
 
 double QgsLayoutNodesItem::computeDistance( QPointF pt1,
@@ -344,10 +350,10 @@ void QgsLayoutNodesItem::updateBoundingRect()
 {
   QRectF br = rect();
   br.adjust( -mMaxSymbolBleed, -mMaxSymbolBleed, mMaxSymbolBleed, mMaxSymbolBleed );
+  prepareGeometryChange();
   mCurrentRectangle = br;
 
   // update
-  prepareGeometryChange();
   update();
 }
 

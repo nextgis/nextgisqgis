@@ -16,11 +16,11 @@
  ***************************************************************************/
 
 #include "qgsattributetypeloaddialog.h"
+#include "moc_qgsattributetypeloaddialog.cpp"
 
 #include "qgsmaplayer.h"
 #include "qgsfeatureiterator.h"
 #include "qgsvectordataprovider.h"
-#include "qgslogger.h"
 #include "qgsproject.h"
 #include "qgsvectorlayer.h"
 
@@ -41,8 +41,8 @@ QgsAttributeTypeLoadDialog::QgsAttributeTypeLoadDialog( QgsVectorLayer *vl )
   setupUi( this );
 
   connect( layerComboBox, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, &QgsAttributeTypeLoadDialog::fillComboBoxes );
-  connect( keyComboBox, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, [ = ]( int index ) { createPreview( index ); } );
-  connect( valueComboBox, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, [ = ]( int index ) { createPreview( index ); } );
+  connect( keyComboBox, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, [=]( int index ) { createPreview( index ); } );
+  connect( valueComboBox, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, [=]( int index ) { createPreview( index ); } );
   connect( previewButton, &QAbstractButton::pressed, this, &QgsAttributeTypeLoadDialog::previewButtonPushed );
 
   fillLayerList();
@@ -68,7 +68,7 @@ void QgsAttributeTypeLoadDialog::fillLayerList()
   const auto constMapLayers = QgsProject::instance()->mapLayers();
   for ( QgsMapLayer *l : constMapLayers )
   {
-    QgsVectorLayer *vl = qobject_cast< QgsVectorLayer * >( l );
+    QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( l );
     if ( vl )
       layerComboBox->addItem( vl->name(), vl->id() );
   }
@@ -131,7 +131,7 @@ void QgsAttributeTypeLoadDialog::createPreview( int fieldIndex, bool full )
   attributeList.append( idx );
   attributeList.append( idx2 );
 
-  QgsFeatureIterator fit = vLayer->getFeatures( QgsFeatureRequest().setFlags( QgsFeatureRequest::NoGeometry ).setSubsetOfAttributes( attributeList ) );
+  QgsFeatureIterator fit = vLayer->getFeatures( QgsFeatureRequest().setFlags( Qgis::FeatureRequestFlag::NoGeometry ).setSubsetOfAttributes( attributeList ) );
 
   QgsFeature f;
   QMap<QString, QVariant> valueMap;
@@ -180,7 +180,7 @@ void QgsAttributeTypeLoadDialog::loadDataToValueMap()
   attributeList.append( idx );
   attributeList.append( idx2 );
 
-  QgsFeatureIterator fit = vLayer->getFeatures( QgsFeatureRequest().setFlags( QgsFeatureRequest::NoGeometry ).setSubsetOfAttributes( attributeList ) );
+  QgsFeatureIterator fit = vLayer->getFeatures( QgsFeatureRequest().setFlags( Qgis::FeatureRequestFlag::NoGeometry ).setSubsetOfAttributes( attributeList ) );
 
   QgsFeature f;
   while ( fit.nextFeature( f ) )

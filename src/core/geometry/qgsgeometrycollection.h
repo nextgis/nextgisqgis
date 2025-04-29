@@ -23,6 +23,7 @@ email                : marco.hugentobler at sourcepole dot com
 #include "qgis_sip.h"
 #include "qgsabstractgeometry.h"
 #include "qgsrectangle.h"
+#include "qgsbox3d.h"
 
 class QgsPoint;
 
@@ -31,7 +32,6 @@ class QgsPoint;
  * \ingroup core
  * \class QgsGeometryCollection
  * \brief Geometry collection
- * \since QGIS 2.10
  */
 class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
 {
@@ -47,8 +47,70 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
     QgsGeometryCollection &operator=( const QgsGeometryCollection &c );
     ~QgsGeometryCollection() override;
 
-    bool operator==( const QgsAbstractGeometry &other ) const override;
-    bool operator!=( const QgsAbstractGeometry &other ) const override;
+    bool operator==( const QgsAbstractGeometry &other ) const override
+    {
+      return fuzzyEqual( other, 1e-8 );
+    }
+
+    bool operator!=( const QgsAbstractGeometry &other ) const override
+    {
+      return !operator==( other );
+    }
+
+#ifndef SIP_RUN
+  private:
+    bool fuzzyHelper( const QgsAbstractGeometry &other, double epsilon, bool useDistance ) const
+    {
+      const QgsGeometryCollection *otherCollection = qgsgeometry_cast< const QgsGeometryCollection * >( &other );
+      if ( !otherCollection )
+        return false;
+
+      if ( mWkbType != otherCollection->mWkbType )
+        return false;
+
+      if ( mGeometries.count() != otherCollection->mGeometries.count() )
+        return false;
+
+      for ( int i = 0; i < mGeometries.count(); ++i )
+      {
+        QgsAbstractGeometry *g1 = mGeometries.at( i );
+        QgsAbstractGeometry *g2 = otherCollection->mGeometries.at( i );
+
+        // Quick check if the geometries are exactly the same
+        if ( g1 != g2 )
+        {
+          if ( !g1 || !g2 )
+            return false;
+
+          // Slower check, compare the contents of the geometries
+          if ( useDistance )
+          {
+            if ( !( *g1 ).fuzzyDistanceEqual( *g2, epsilon ) )
+            {
+              return false;
+            }
+          }
+          else
+          {
+            if ( !( *g1 ).fuzzyEqual( *g2, epsilon ) )
+            {
+              return false;;
+            }
+          }
+        }
+      }
+      return true;
+    }
+#endif
+  public:
+    bool fuzzyEqual( const QgsAbstractGeometry &other, double epsilon = 1e-8 ) const override SIP_HOLDGIL
+    {
+      return fuzzyHelper( other, epsilon, false );
+    }
+    bool fuzzyDistanceEqual( const QgsAbstractGeometry &other, double epsilon = 1e-8 ) const override SIP_HOLDGIL
+    {
+      return fuzzyHelper( other, epsilon, true );
+    }
 
     QgsGeometryCollection *clone() const override SIP_FACTORY;
 
@@ -122,12 +184,12 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
     int dimension() const override SIP_HOLDGIL;
     QString geometryType() const override SIP_HOLDGIL;
     void clear() override;
-    QgsGeometryCollection *snappedToGrid( double hSpacing, double vSpacing, double dSpacing = 0, double mSpacing = 0 ) const override SIP_FACTORY;
+    QgsGeometryCollection *snappedToGrid( double hSpacing, double vSpacing, double dSpacing = 0, double mSpacing = 0, bool removeRedundantPoints = false ) const override SIP_FACTORY;
     bool removeDuplicateNodes( double epsilon = 4 * std::numeric_limits<double>::epsilon(), bool useZValues = false ) override;
     QgsAbstractGeometry *boundary() const override SIP_FACTORY;
     void adjacentVertices( QgsVertexId vertex, QgsVertexId &previousVertex SIP_OUT, QgsVertexId &nextVertex SIP_OUT ) const override;
     int vertexNumberFromVertexId( QgsVertexId id ) const override;
-    bool boundingBoxIntersects( const QgsRectangle &rectangle ) const override SIP_HOLDGIL;
+    bool boundingBoxIntersects( const QgsBox3D &box3d ) const override SIP_HOLDGIL;
 
     /**
      * Attempts to allocate memory for at least \a size geometries.
@@ -141,6 +203,15 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
 
     //! Adds a geometry and takes ownership. Returns TRUE in case of success.
     virtual bool addGeometry( QgsAbstractGeometry *g SIP_TRANSFER );
+
+    /**
+     * Adds a list of geometries to the collection, transferring ownership to the collection.
+     *
+     * Returns TRUE in case of success.
+     *
+     * \since QGIS 3.38
+     */
+    virtual bool addGeometries( const QVector< QgsAbstractGeometry * > &geometries SIP_TRANSFER );
 
     /**
      * Inserts a geometry before a specified index and takes ownership. Returns TRUE in case of success.
@@ -180,6 +251,14 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
     % End
 #endif
 
+    /**
+     * Removes all geometries from the collection, returning them and their ownership
+     * to the caller.
+     *
+     * \since QGIS 3.38
+     */
+    QVector< QgsAbstractGeometry * > takeGeometries() SIP_TRANSFER;
+
     void normalize() final SIP_HOLDGIL;
     void transform( const QgsCoordinateTransform &ct, Qgis::TransformDirection d = Qgis::TransformDirection::Forward, bool transformZ = false ) override SIP_THROW( QgsCsException );
     void transform( const QTransform &t, double zTranslate = 0.0, double zScale = 1.0, double mTranslate = 0.0, double mScale = 1.0 ) override;
@@ -198,7 +277,7 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
     json asJsonObject( int precision = 17 ) const override SIP_SKIP;
     QString asKml( int precision = 17 ) const override;
 
-    QgsRectangle boundingBox() const override;
+    QgsBox3D boundingBox3D() const override;
 
     QgsCoordinateSequence coordinateSequence() const override;
     int nCoordinates() const override;
@@ -239,6 +318,7 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
     void swapXy() override;
     QgsGeometryCollection *toCurveType() const override SIP_FACTORY;
     const QgsAbstractGeometry *simplifiedTypeRef() const override SIP_HOLDGIL;
+    virtual QgsGeometryCollection *simplifyByDistance( double tolerance ) const override SIP_FACTORY;
 
     bool transform( QgsAbstractGeometryTransformer *transformer, QgsFeedback *feedback = nullptr ) override;
 
@@ -251,7 +331,6 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
      * Should be used by qgsgeometry_cast<QgsGeometryCollection *>( geometry ).
      *
      * \note Not available in Python. Objects will be automatically be converted to the appropriate target type.
-     * \since QGIS 3.0
      */
     inline static const QgsGeometryCollection *cast( const QgsAbstractGeometry *geom )
     {
@@ -327,6 +406,21 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
     % End
 #endif
 
+    /**
+     * Returns a new QgsGeometryCollection subclass which consists of the parts of this collection
+     * which match the specified WKB \a type.
+     *
+     * For instance, if \a type is Qgis::WkbType::Polygon, then the returned object will be a QgsMultiPolygon
+     * object containing just the polygons from this collection.
+     *
+     * If \a useFlatType is TRUE, then the WKB types of component geometries from this collection will
+     * be flattened prior to comparing with \a type. (I.e. the presence of Z / M dimensions will be ignored
+     * when comparing against \a type).
+     *
+     * \since QGIS 3.36
+    */
+    QgsGeometryCollection *extractPartsByType( Qgis::WkbType type, bool useFlatType = true ) const SIP_FACTORY;
+
     QgsGeometryCollection *createEmptyWithSameType() const override SIP_FACTORY;
 
   protected:
@@ -339,7 +433,6 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
 
     /**
      * Returns whether child type names are omitted from Wkt representations of the collection
-     * \since QGIS 2.12
      */
     virtual bool wktOmitChildType() const;
 
@@ -348,12 +441,12 @@ class CORE_EXPORT QgsGeometryCollection: public QgsAbstractGeometry
      */
     bool fromCollectionWkt( const QString &wkt, const QVector<QgsAbstractGeometry *> &subtypes, const QString &defaultChildWkbType = QString() );
 
-    QgsRectangle calculateBoundingBox() const override;
+    QgsBox3D calculateBoundingBox3D() const override;
     void clearCache() const override;
 
   private:
 
-    mutable QgsRectangle mBoundingBox;
+    mutable QgsBox3D mBoundingBox;
     mutable bool mHasCachedValidity = false;
     mutable QString mValidityFailureReason;
 };

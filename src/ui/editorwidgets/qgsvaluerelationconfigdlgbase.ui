@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>427</width>
-    <height>489</height>
+    <width>318</width>
+    <height>490</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string notr="true">Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout" columnstretch="0,0">
-   <item row="13" column="0" colspan="2">
+   <item row="14" column="0" colspan="2">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QLabel" name="label_19">
@@ -52,14 +52,14 @@
      </item>
     </layout>
    </item>
-   <item row="9" column="0">
+   <item row="13" column="0">
     <widget class="QLabel" name="label_nofColumns">
      <property name="text">
       <string>Number of columns</string>
      </property>
     </widget>
    </item>
-   <item row="14" column="0" colspan="2">
+   <item row="17" column="0" colspan="2">
     <widget class="QTextEdit" name="mFilterExpression"/>
    </item>
    <item row="0" column="0" colspan="2">
@@ -82,34 +82,41 @@
    <item row="3" column="1">
     <widget class="QgsFieldComboBox" name="mValueColumn"/>
    </item>
+   <item row="4" column="0" colspan="2">
+    <widget class="QCheckBox" name="mOrderByValue">
+     <property name="text">
+      <string>Order by value</string>
+     </property>
+    </widget>
+   </item>
    <item row="1" column="1">
     <widget class="QgsMapLayerComboBox" name="mLayerName"/>
    </item>
-   <item row="8" column="0" colspan="2">
+   <item row="12" column="0" colspan="2">
     <widget class="QCheckBox" name="mAllowMulti">
      <property name="text">
       <string>Allow multiple selections</string>
      </property>
     </widget>
    </item>
-   <item row="5" column="0" colspan="2">
+   <item row="8" column="0" colspan="2">
     <widget class="QCheckBox" name="mAllowNull">
      <property name="text">
       <string>Allow NULL value</string>
      </property>
     </widget>
    </item>
-   <item row="11" column="0" colspan="2">
+   <item row="11" column="0">
     <widget class="QCheckBox" name="mUseCompleter">
      <property name="text">
       <string>Use completer</string>
      </property>
     </widget>
    </item>
-   <item row="7" column="0" colspan="2">
-    <widget class="QCheckBox" name="mOrderByValue">
+   <item row="11" column="1">
+    <widget class="QCheckBox" name="mCompleterMatchFromStart">
      <property name="text">
-      <string>Order by value</string>
+      <string>Only match from the beginning of the string</string>
      </property>
     </widget>
    </item>
@@ -123,8 +130,15 @@
      </property>
     </widget>
    </item>
-   <item row="9" column="1">
-    <widget class="QgsSpinBox" name="mNofColumns"/>
+   <item row="13" column="1">
+    <widget class="QgsSpinBox" name="mNofColumns">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>1</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
    </item>
    <item row="2" column="1">
     <widget class="QgsFieldComboBox" name="mKeyColumn"/>
@@ -139,14 +153,34 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="label">
+   <item row="5" column="0">
+    <widget class="QLabel" name="label_9">
      <property name="text">
-      <string>Description column</string>
+      <string>Group column</string>
+     </property>
+     <property name="buddy">
+      <cstring>mGroupColumn</cstring>
      </property>
     </widget>
    </item>
-   <item row="4" column="1">
+   <item row="5" column="1">
+    <widget class="QgsFieldComboBox" name="mGroupColumn"/>
+   </item>
+   <item row="6" column="0" colspan="2">
+    <widget class="QCheckBox" name="mDisplayGroupName">
+     <property name="text">
+      <string>Display group name</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Description</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="1">
     <widget class="QgsFieldExpressionWidget" name="mDescriptionExpression" native="true"/>
    </item>
   </layout>
@@ -178,11 +212,14 @@
   <tabstop>mLayerName</tabstop>
   <tabstop>mKeyColumn</tabstop>
   <tabstop>mValueColumn</tabstop>
-  <tabstop>mAllowNull</tabstop>
+  <tabstop>mGroupColumn</tabstop>
+  <tabstop>mDescriptionExpression</tabstop>
   <tabstop>mOrderByValue</tabstop>
+  <tabstop>mAllowNull</tabstop>
   <tabstop>mAllowMulti</tabstop>
-  <tabstop>mNofColumns</tabstop>
   <tabstop>mUseCompleter</tabstop>
+  <tabstop>mCompleterMatchFromStart</tabstop>
+  <tabstop>mNofColumns</tabstop>
   <tabstop>mEditExpression</tabstop>
   <tabstop>mFilterExpression</tabstop>
  </tabstops>

@@ -16,11 +16,13 @@
 #define QGSPROJECTSTYLESETTINGS_H
 
 #include "qgis_core.h"
+#include "qgis_sip.h"
 #include "qgstextformat.h"
 #include "qgswkbtypes.h"
 
 #include <memory.h>
 #include <QAbstractListModel>
+#include <QColorSpace>
 #include <QSortFilterProxyModel>
 #include <QPointer>
 
@@ -58,7 +60,7 @@ class CORE_EXPORT QgsProjectStyleSettings : public QObject
     /**
      * Returns the project default symbol for a given type.
      * \param symbolType the symbol type
-     * \returns a symbol pointer or NULL if there is no default set
+     * \returns a symbol pointer or NULLPTR if there is no default set
      * \note the symbol ownership is transferred to the caller
      */
     QgsSymbol *defaultSymbol( Qgis::SymbolType symbolType ) const SIP_FACTORY;
@@ -66,21 +68,21 @@ class CORE_EXPORT QgsProjectStyleSettings : public QObject
     /**
      * Sets the project default symbol for a given type.
      * \param symbolType the symbol type
-     * \param symbol the symbol pointer, set to NULL to clear default
+     * \param symbol the symbol pointer, set to NULLPTR to clear default
      * \note the symbol ownership is not transferred
      */
     void setDefaultSymbol( Qgis::SymbolType symbolType, QgsSymbol *symbol );
 
     /**
      * Returns the project default color ramp.
-     * \returns a color ramp pointer or NULL if there is no default set
+     * \returns a color ramp pointer or NULLPTR if there is no default set
      * \note the color ramp ownership is transferred to the caller
      */
     QgsColorRamp *defaultColorRamp() const SIP_FACTORY;
 
     /**
      * Sets the project default color ramp.
-     * \param colorRamp the color ramp, set to NULL to clear default
+     * \param colorRamp the color ramp, set to NULLPTR to clear default
      * \note the color ramp ownership is not transferred
      */
     void setDefaultColorRamp( QgsColorRamp *colorRamp );
@@ -105,7 +107,7 @@ class CORE_EXPORT QgsProjectStyleSettings : public QObject
     /**
      * Sets whether the default symbol fill color is randomized.
      */
-    void setRandomizeDefaultSymbolColor( bool randomized ) { mRandomizeDefaultSymbolColor = randomized; }
+    void setRandomizeDefaultSymbolColor( bool randomized );
 
     /**
      * Returns the default symbol opacity.
@@ -115,7 +117,7 @@ class CORE_EXPORT QgsProjectStyleSettings : public QObject
     /**
      * Sets the default symbol opacity.
      */
-    void setDefaultSymbolOpacity( double opacity ) { mDefaultSymbolOpacity = opacity; }
+    void setDefaultSymbolOpacity( double opacity );
 
     /**
      * Resets the settings to a default state.
@@ -142,6 +144,69 @@ class CORE_EXPORT QgsProjectStyleSettings : public QObject
      * \see setProjectStyle()
      */
     QgsStyle *projectStyle();
+
+    /**
+     * Set the project's color model to \a colorModel
+     *
+     * This sets the default color model used when selecting a color in the whole application.
+     * Any color defined in a different color model than the one specified here will be converted to
+     * this color model when exporting a layout.
+     *
+     * If a color space has already been set and its color model differs from \a colorModel, the project
+     * color space will be reset to invalid one (This is only true if QGIS is built against
+     * Qt 6.8.0 or greater). \see setColorSpace() colorSpace()
+     *
+     * The color model defaults to Qgis::ColorModel::Rgb
+     *
+     * \see colorModel()
+     * \since QGIS 3.40
+     */
+    void setColorModel( Qgis::ColorModel colorModel );
+
+    /**
+     * Returns the project's color model
+     *
+     * This model is used as the default color model when selecting a color in the whole application.
+     * Any color defined in a different color model than the returned model will be converted to
+     * this color model when exporting a layout.
+     *
+     * The color model defaults to Qgis::ColorModel::Rgb
+     *
+     * \see setColorModel()
+     * \since QGIS 3.40
+     */
+    Qgis::ColorModel colorModel() const;
+
+    /**
+     * Set the project's current color space to \a colorSpace. \a colorSpace must be a valid RGB or CMYK color space.
+     * The color space's ICC profile will be added as a project attached file.
+     *
+     * The project color's space will be added to PDF layout exports when it is defined (i.e. it is different from
+     * the default invalid QColorSpace).
+     *
+     * If a color model has already been set and it differs from \a colorSpace's color model, the project's
+     * color model is set to match the color space's color model (This is only true if QGIS is built against
+     * Qt 6.8.0 or greater). \see setColorModel() colorModel()
+     *
+     * The color space defaults to an invalid color space.
+     *
+     * \see colorSpace()
+     * \since QGIS 3.40
+     */
+    void setColorSpace( const QColorSpace &colorSpace );
+
+    /**
+     * Returns the project's color space.
+     *
+     * The project color's space will be added to PDF layout exports when it is defined (i.e. it is different from
+     * the default invalid QColorSpace).
+     *
+     * The color space defaults to an invalid color space.
+     *
+     * \see setColorSpace()
+     * \since QGIS 3.40
+     */
+    QColorSpace colorSpace() const;
 
     /**
      * Reads the settings's state from a DOM element.
@@ -282,10 +347,17 @@ class CORE_EXPORT QgsProjectStyleSettings : public QObject
     QList< QPointer< QgsStyle > > mStyles;
 
     QgsCombinedStyleModel *mCombinedStyleModel = nullptr;
+    Qgis::ColorModel mColorModel = Qgis::ColorModel::Rgb;
+    QColorSpace mColorSpace;
+    QString mIccProfileFilePath;
 
     void loadStyleAtPath( const QString &path );
     void clearStyles();
 
+    //! propagate dirtyness to project
+    void makeDirty();
+
+    friend class TestQgsProjectProperties;
 };
 
 /**
@@ -302,12 +374,21 @@ class CORE_EXPORT QgsProjectStyleDatabaseModel : public QAbstractListModel
 
   public:
 
-    //! Custom model roles
-    enum Role
+    // *INDENT-OFF*
+
+    /**
+     * Custom model roles.
+     *
+     * \note Prior to QGIS 3.36 this was available as QgsProjectStyleDatabaseModel::Role
+     * \since QGIS 3.36
+     */
+    enum class CustomRole SIP_MONKEYPATCH_SCOPEENUM_UNNEST( QgsProjectStyleDatabaseModel, Role ) : int
     {
-      StyleRole = Qt::UserRole + 1, //!< Style object
-      PathRole, //!< Style path
+      Style SIP_MONKEYPATCH_COMPAT_NAME( StyleRole ) = Qt::UserRole + 1, //!< Style object
+      Path SIP_MONKEYPATCH_COMPAT_NAME(PathRole) //!< Style path
     };
+    Q_ENUM( CustomRole )
+    // *INDENT-ON*
 
     /**
      * Constructor for QgsProjectStyleDatabaseModel, showing the styles from the specified \a settings.
@@ -375,7 +456,7 @@ class CORE_EXPORT QgsProjectStyleDatabaseProxyModel : public QSortFilterProxyMod
   public:
 
     //! Available filter flags for filtering the model
-    enum class Filter
+    enum class Filter : int SIP_ENUM_BASETYPE( IntFlag )
     {
       FilterHideReadOnly = 1 << 0, //!< Hide read-only style databases
     };

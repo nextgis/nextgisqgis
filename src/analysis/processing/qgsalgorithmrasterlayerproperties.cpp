@@ -47,10 +47,8 @@ QString QgsRasterLayerPropertiesAlgorithm::groupId() const
 
 void QgsRasterLayerPropertiesAlgorithm::initAlgorithm( const QVariantMap & )
 {
-  addParameter( new QgsProcessingParameterRasterLayer( QStringLiteral( "INPUT" ),
-                QObject::tr( "Input layer" ) ) );
-  addParameter( new QgsProcessingParameterBand( QStringLiteral( "BAND" ),
-                QObject::tr( "Band number" ), QVariant(), QStringLiteral( "INPUT" ), true ) );
+  addParameter( new QgsProcessingParameterRasterLayer( QStringLiteral( "INPUT" ), QObject::tr( "Input layer" ) ) );
+  addParameter( new QgsProcessingParameterBand( QStringLiteral( "BAND" ), QObject::tr( "Band number" ), QVariant(), QStringLiteral( "INPUT" ), true ) );
 
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "X_MIN" ), QObject::tr( "Minimum x-coordinate" ) ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "X_MAX" ), QObject::tr( "Maximum x-coordinate" ) ) );
@@ -62,15 +60,15 @@ void QgsRasterLayerPropertiesAlgorithm::initAlgorithm( const QVariantMap & )
   addOutput( new QgsProcessingOutputString( QStringLiteral( "CRS_AUTHID" ), QObject::tr( "CRS authority identifier" ) ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "WIDTH_IN_PIXELS" ), QObject::tr( "Width in pixels" ) ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "HEIGHT_IN_PIXELS" ), QObject::tr( "Height in pixels" ) ) );
-  addOutput( new QgsProcessingOutputBoolean( QStringLiteral( "HAS_NODATA_VALUE" ), QObject::tr( "Band has a nodata value set" ) ) );
-  addOutput( new QgsProcessingOutputNumber( QStringLiteral( "NODATA_VALUE" ), QObject::tr( "Band nodata value" ) ) );
+  addOutput( new QgsProcessingOutputBoolean( QStringLiteral( "HAS_NODATA_VALUE" ), QObject::tr( "Band has a NoData value set" ) ) );
+  addOutput( new QgsProcessingOutputNumber( QStringLiteral( "NODATA_VALUE" ), QObject::tr( "Band NoData value" ) ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "BAND_COUNT" ), QObject::tr( "Number of bands in raster" ) ) );
 }
 
 QString QgsRasterLayerPropertiesAlgorithm::shortHelpString() const
 {
   return QObject::tr( "This algorithm returns basic properties of the given raster layer, including the extent, size in pixels and dimensions of pixels (in map units).\n\n"
-                      "If an optional band number is specified then the nodata value for the selected band will also be returned." );
+                      "If an optional band number is specified then the NoData value for the selected band will also be returned." );
 }
 
 QgsRasterLayerPropertiesAlgorithm *QgsRasterLayerPropertiesAlgorithm::createInstance() const
@@ -91,8 +89,7 @@ bool QgsRasterLayerPropertiesAlgorithm::prepareAlgorithm( const QVariantMap &par
   {
     const int band = parameterAsInt( parameters, QStringLiteral( "BAND" ), context );
     if ( band < 1 || band > mBandCount )
-      throw QgsProcessingException( QObject::tr( "Invalid band number for BAND (%1): Valid values for input raster are 1 to %2" ).arg( band )
-                                    .arg( layer->bandCount() ) );
+      throw QgsProcessingException( QObject::tr( "Invalid band number for BAND (%1): Valid values for input raster are 1 to %2" ).arg( band ).arg( layer->bandCount() ) );
     mHasNoDataValue = layer->dataProvider()->sourceHasNoDataValue( band );
     if ( mHasNoDataValue )
       mNoDataValue = layer->dataProvider()->sourceNoDataValue( band );
@@ -134,6 +131,3 @@ QVariantMap QgsRasterLayerPropertiesAlgorithm::processAlgorithm( const QVariantM
 
 
 ///@endcond
-
-
-

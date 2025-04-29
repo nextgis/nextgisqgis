@@ -20,9 +20,6 @@
 
 #include "qgsterraingenerator.h"
 
-
-#include <memory>
-
 class QgsRasterLayer;
 class QgsDemHeightMapGenerator;
 
@@ -36,14 +33,12 @@ class QgsDemHeightMapGenerator;
  *
  * \note Not available in Python bindings
  *
- * \since QGIS 3.0
  */
 class _3D_EXPORT QgsDemTerrainGenerator : public QgsTerrainGenerator
 {
     Q_OBJECT
 
   public:
-    //! Constructor for QgsDemTerrainGenerator
     QgsDemTerrainGenerator() = default;
     ~QgsDemTerrainGenerator() override;
 
@@ -54,9 +49,14 @@ class _3D_EXPORT QgsDemTerrainGenerator : public QgsTerrainGenerator
 
     //! Sets CRS of the terrain
     void setCrs( const QgsCoordinateReferenceSystem &crs, const QgsCoordinateTransformContext &context );
+    QgsCoordinateReferenceSystem crs() const override { return mCrs; }
 
     //! Sets resolution of the generator (how many elevation samples on one side of a terrain tile)
-    void setResolution( int resolution ) { mResolution = resolution; updateGenerator(); }
+    void setResolution( int resolution )
+    {
+      mResolution = resolution;
+      updateGenerator();
+    }
     //! Returns resolution of the generator (how many elevation samples on one side of a terrain tile)
     int resolution() const { return mResolution; }
 
@@ -72,7 +72,7 @@ class _3D_EXPORT QgsDemTerrainGenerator : public QgsTerrainGenerator
     Type type() const override;
     QgsRectangle rootChunkExtent() const override;
     void setExtent( const QgsRectangle &extent ) override;
-    float heightAt( double x, double y, const Qgs3DMapSettings &map ) const override;
+    float heightAt( double x, double y, const Qgs3DRenderContext &context ) const override;
     void writeXml( QDomElement &elem ) const override;
     void readXml( const QDomElement &elem ) override;
     void resolveReferences( const QgsProject &project ) override;

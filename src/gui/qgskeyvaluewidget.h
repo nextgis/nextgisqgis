@@ -30,13 +30,11 @@
  * \ingroup gui
  * \brief Table model to edit a QVariantMap.
  * \note not available in Python bindings
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsKeyValueModel : public QAbstractTableModel
 {
     Q_OBJECT
   public:
-
     explicit QgsKeyValueModel( QObject *parent = nullptr );
     void setMap( const QVariantMap &map );
     QVariantMap map() const;
@@ -49,10 +47,11 @@ class GUI_EXPORT QgsKeyValueModel : public QAbstractTableModel
     Qt::ItemFlags flags( const QModelIndex &index ) const override;
     bool insertRows( int position, int rows, const QModelIndex &parent = QModelIndex() ) override;
     bool removeRows( int position, int rows, const QModelIndex &parent = QModelIndex() ) override;
-
+    void setReadOnly( bool readOnly );
     typedef QPair<QString, QVariant> Line;
 
   private:
+    bool mReadOnly = false;
     QVector<Line> mLines;
 };
 ///@endcond
@@ -61,14 +60,12 @@ class GUI_EXPORT QgsKeyValueModel : public QAbstractTableModel
 /**
  * \ingroup gui
  * \brief Widget allowing to edit a QVariantMap, using a table.
- * \since QGIS 3.0
  */
-class GUI_EXPORT QgsKeyValueWidget: public QgsTableWidgetBase
+class GUI_EXPORT QgsKeyValueWidget : public QgsTableWidgetBase
 {
     Q_OBJECT
     Q_PROPERTY( QVariantMap map READ map WRITE setMap )
   public:
-
     /**
      * Constructor.
      */
@@ -84,6 +81,10 @@ class GUI_EXPORT QgsKeyValueWidget: public QgsTableWidgetBase
      * \returns the QVariantMap
      */
     QVariantMap map() const { return mModel.map(); }
+
+  public slots:
+
+    void setReadOnly( bool readOnly ) override;
 
   private:
     QgsKeyValueModel mModel;

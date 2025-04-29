@@ -37,7 +37,6 @@ class QgsFillSymbol;
  * QgsLayoutItemMap. The overview stack controls which overviews are drawn and the
  * order they are drawn in.
  * \see QgsLayoutItemMapOverview
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutItemMapOverviewStack : public QgsLayoutItemMapItemStack
 {
@@ -97,12 +96,12 @@ class CORE_EXPORT QgsLayoutItemMapOverviewStack : public QgsLayoutItemMapItemSta
      * Returns a reference to an overview at the specified \a index within the stack.
      * \see overview()
      */
-    QgsLayoutItemMapOverview &operator[]( int index );
+    QgsLayoutItemMapOverview &operator[]( int index ); // cppcheck-suppress duplInheritedMember
 
     /**
      * Returns a list of QgsLayoutItemMapOverviews contained by the stack.
      */
-    QList< QgsLayoutItemMapOverview * > asList() const;
+    QList< QgsLayoutItemMapOverview * > asList() const; // cppcheck-suppress duplInheritedMember
     bool readXml( const QDomElement &elem, const QDomDocument &doc, const QgsReadWriteContext &context ) override;
 
     /**
@@ -121,7 +120,6 @@ class CORE_EXPORT QgsLayoutItemMapOverviewStack : public QgsLayoutItemMapItemSta
  * \brief An individual overview which is drawn above the map content in a
  * QgsLayoutItemMap, and shows the extent of another QgsLayoutItemMap.
  * \see QgsLayoutItemMapOverviewStack
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutItemMapOverview : public QgsLayoutItemMapItem
 {

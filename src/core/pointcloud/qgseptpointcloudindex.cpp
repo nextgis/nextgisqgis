@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgseptpointcloudindex.h"
+#include "moc_qgseptpointcloudindex.cpp"
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
@@ -32,8 +33,6 @@
 #include "qgspointcloudrequest.h"
 #include "qgspointcloudattribute.h"
 #include "qgslogger.h"
-#include "qgsfeedback.h"
-#include "qgsmessagelog.h"
 #include "qgspointcloudexpression.h"
 
 ///@cond PRIVATE
@@ -55,6 +54,7 @@ std::unique_ptr<QgsPointCloudIndex> QgsEptPointCloudIndex::clone() const
 
 void QgsEptPointCloudIndex::load( const QString &fileName )
 {
+  mUri = fileName;
   QFile f( fileName );
   if ( !f.open( QIODevice::ReadOnly ) )
   {
@@ -166,7 +166,14 @@ bool QgsEptPointCloudIndex::loadSchema( const QByteArray &dataJson )
 
     const int size = schemaObj.value( QLatin1String( "size" ) ).toInt();
 
-    if ( type == QLatin1String( "float" ) && ( size == 4 ) )
+    if ( name == QLatin1String( "ClassFlags" ) && size == 1 )
+    {
+      attributes.push_back( QgsPointCloudAttribute( QStringLiteral( "Synthetic" ), QgsPointCloudAttribute::UChar ) );
+      attributes.push_back( QgsPointCloudAttribute( QStringLiteral( "KeyPoint" ), QgsPointCloudAttribute::UChar ) );
+      attributes.push_back( QgsPointCloudAttribute( QStringLiteral( "Withheld" ), QgsPointCloudAttribute::UChar ) );
+      attributes.push_back( QgsPointCloudAttribute( QStringLiteral( "Overlap" ), QgsPointCloudAttribute::UChar ) );
+    }
+    else if ( type == QLatin1String( "float" ) && ( size == 4 ) )
     {
       attributes.push_back( QgsPointCloudAttribute( name, QgsPointCloudAttribute::Float ) );
     }
@@ -301,8 +308,13 @@ bool QgsEptPointCloudIndex::loadSchema( const QByteArray &dataJson )
   return true;
 }
 
-QgsPointCloudBlock *QgsEptPointCloudIndex::nodeData( const IndexedPointCloudNode &n, const QgsPointCloudRequest &request )
+std::unique_ptr<QgsPointCloudBlock> QgsEptPointCloudIndex::nodeData( const IndexedPointCloudNode &n, const QgsPointCloudRequest &request )
 {
+  if ( QgsPointCloudBlock *cached = getNodeDataFromCache( n, request ) )
+  {
+    return std::unique_ptr<QgsPointCloudBlock>( cached );
+  }
+
   mHierarchyMutex.lock();
   const bool found = mHierarchy.contains( n );
   mHierarchyMutex.unlock();
@@ -317,25 +329,25 @@ QgsPointCloudBlock *QgsEptPointCloudIndex::nodeData( const IndexedPointCloudNode
   requestAttributes.extend( attributes(), filterExpression.referencedAttributes() );
   QgsRectangle filterRect = request.filterRect();
 
+  std::unique_ptr<QgsPointCloudBlock> decoded;
   if ( mDataType == QLatin1String( "binary" ) )
   {
     const QString filename = QStringLiteral( "%1/ept-data/%2.bin" ).arg( mDirectory, n.toString() );
-    return QgsEptDecoder::decompressBinary( filename, attributes(), requestAttributes, scale(), offset(), filterExpression, filterRect );
+    decoded = QgsEptDecoder::decompressBinary( filename, attributes(), requestAttributes, scale(), offset(), filterExpression, filterRect );
   }
   else if ( mDataType == QLatin1String( "zstandard" ) )
   {
     const QString filename = QStringLiteral( "%1/ept-data/%2.zst" ).arg( mDirectory, n.toString() );
-    return QgsEptDecoder::decompressZStandard( filename, attributes(), request.attributes(), scale(), offset(), filterExpression, filterRect );
+    decoded = QgsEptDecoder::decompressZStandard( filename, attributes(), request.attributes(), scale(), offset(), filterExpression, filterRect );
   }
   else if ( mDataType == QLatin1String( "laszip" ) )
   {
     const QString filename = QStringLiteral( "%1/ept-data/%2.laz" ).arg( mDirectory, n.toString() );
-    return QgsLazDecoder::decompressLaz( filename, requestAttributes, filterExpression, filterRect );
+    decoded = QgsLazDecoder::decompressLaz( filename, requestAttributes, filterExpression, filterRect );
   }
-  else
-  {
-    return nullptr;  // unsupported
-  }
+
+  storeNodeDataToCache( decoded.get(), n, request );
+  return decoded;
 }
 
 QgsPointCloudBlockRequest *QgsEptPointCloudIndex::asyncNodeData( const IndexedPointCloudNode &n, const QgsPointCloudRequest &request )
@@ -361,7 +373,7 @@ bool QgsEptPointCloudIndex::hasStatisticsMetadata() const
   return !mMetadataStats.isEmpty();
 }
 
-QVariant QgsEptPointCloudIndex::metadataStatistic( const QString &attribute, QgsStatisticalSummary::Statistic statistic ) const
+QVariant QgsEptPointCloudIndex::metadataStatistic( const QString &attribute, Qgis::Statistic statistic ) const
 {
   if ( !mMetadataStats.contains( attribute ) )
     return QVariant();
@@ -369,37 +381,37 @@ QVariant QgsEptPointCloudIndex::metadataStatistic( const QString &attribute, Qgs
   const AttributeStatistics &stats = mMetadataStats[ attribute ];
   switch ( statistic )
   {
-    case QgsStatisticalSummary::Count:
+    case Qgis::Statistic::Count:
       return stats.count >= 0 ? QVariant( stats.count ) : QVariant();
 
-    case QgsStatisticalSummary::Mean:
+    case Qgis::Statistic::Mean:
       return std::isnan( stats.mean ) ? QVariant() : QVariant( stats.mean );
 
-    case QgsStatisticalSummary::StDev:
+    case Qgis::Statistic::StDev:
       return std::isnan( stats.stDev ) ? QVariant() : QVariant( stats.stDev );
 
-    case QgsStatisticalSummary::Min:
+    case Qgis::Statistic::Min:
       return stats.minimum;
 
-    case QgsStatisticalSummary::Max:
+    case Qgis::Statistic::Max:
       return stats.maximum;
 
-    case QgsStatisticalSummary::Range:
+    case Qgis::Statistic::Range:
       return stats.minimum.isValid() && stats.maximum.isValid() ? QVariant( stats.maximum.toDouble() - stats.minimum.toDouble() ) : QVariant();
 
-    case QgsStatisticalSummary::CountMissing:
-    case QgsStatisticalSummary::Sum:
-    case QgsStatisticalSummary::Median:
-    case QgsStatisticalSummary::StDevSample:
-    case QgsStatisticalSummary::Minority:
-    case QgsStatisticalSummary::Majority:
-    case QgsStatisticalSummary::Variety:
-    case QgsStatisticalSummary::FirstQuartile:
-    case QgsStatisticalSummary::ThirdQuartile:
-    case QgsStatisticalSummary::InterQuartileRange:
-    case QgsStatisticalSummary::First:
-    case QgsStatisticalSummary::Last:
-    case QgsStatisticalSummary::All:
+    case Qgis::Statistic::CountMissing:
+    case Qgis::Statistic::Sum:
+    case Qgis::Statistic::Median:
+    case Qgis::Statistic::StDevSample:
+    case Qgis::Statistic::Minority:
+    case Qgis::Statistic::Majority:
+    case Qgis::Statistic::Variety:
+    case Qgis::Statistic::FirstQuartile:
+    case Qgis::Statistic::ThirdQuartile:
+    case Qgis::Statistic::InterQuartileRange:
+    case Qgis::Statistic::First:
+    case Qgis::Statistic::Last:
+    case Qgis::Statistic::All:
       return QVariant();
   }
   return QVariant();
@@ -416,9 +428,9 @@ QVariantList QgsEptPointCloudIndex::metadataClasses( const QString &attribute ) 
   return classes;
 }
 
-QVariant QgsEptPointCloudIndex::metadataClassStatistic( const QString &attribute, const QVariant &value, QgsStatisticalSummary::Statistic statistic ) const
+QVariant QgsEptPointCloudIndex::metadataClassStatistic( const QString &attribute, const QVariant &value, Qgis::Statistic statistic ) const
 {
-  if ( statistic != QgsStatisticalSummary::Count )
+  if ( statistic != Qgis::Statistic::Count )
     return QVariant();
 
   const QMap< int, int > values =  mAttributeClasses.value( attribute );

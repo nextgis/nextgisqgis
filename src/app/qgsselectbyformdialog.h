@@ -29,7 +29,6 @@ class QgsMapCanvas;
  * \ingroup app
  * \class QgsSelectByFormDialog
  * \brief A dialog for selecting features from a layer, using a form based off the layer's editor widgets.
- * \since QGIS 2.16
  */
 
 class APP_EXPORT QgsSelectByFormDialog : public QDialog
@@ -37,7 +36,6 @@ class APP_EXPORT QgsSelectByFormDialog : public QDialog
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsSelectByFormDialog
      * \param layer vector layer to select from
@@ -45,15 +43,12 @@ class APP_EXPORT QgsSelectByFormDialog : public QDialog
      * \param parent parent widget
      * \param fl window flags
      */
-    QgsSelectByFormDialog( QgsVectorLayer *layer,
-                           const QgsAttributeEditorContext &context = QgsAttributeEditorContext(),
-                           QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags() );
+    QgsSelectByFormDialog( QgsVectorLayer *layer, const QgsAttributeEditorContext &context = QgsAttributeEditorContext(), QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags() );
 
     /**
      * Sets the message bar to display feedback from the form in. This is used in the search/filter
      * mode to display the count of selected features.
      * \param messageBar target message bar
-     * \since QGIS 2.16
      */
     void setMessageBar( QgsMessageBar *messageBar );
 
@@ -73,12 +68,10 @@ class APP_EXPORT QgsSelectByFormDialog : public QDialog
     void showFilteredFeaturesAttributeTable( const QString &filter );
 
   private:
-
     QgsAttributeForm *mForm = nullptr;
     QgsVectorLayer *mLayer = nullptr;
     QgsMessageBar *mMessageBar = nullptr;
     QgsMapCanvas *mMapCanvas = nullptr;
-
 };
 
 

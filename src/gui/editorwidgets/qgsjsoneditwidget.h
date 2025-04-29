@@ -33,20 +33,19 @@ class GUI_EXPORT QgsJsonEditWidget : public QWidget, private Ui::QgsJsonEditWidg
     Q_OBJECT
 
   public:
-
     //! View mode, text or tree.
     enum class View : int
     {
       Text = 0, //!< JSON data displayed as text.
-      Tree = 1 //!< JSON data displayed as tree. Tree view is disabled for invalid JSON data.
+      Tree = 1  //!< JSON data displayed as tree. Tree view is disabled for invalid JSON data.
     };
 
     //! Format mode in the text view
     enum class FormatJson : int
     {
       Indented = 0, //!< JSON data formatted with regular indentation
-      Compact = 1, //!< JSON data formatted as a compact one line string
-      Disabled = 2 //!< JSON data is not formatted
+      Compact = 1,  //!< JSON data formatted as a compact one line string
+      Disabled = 2  //!< JSON data is not formatted
     };
 
     /**
@@ -54,6 +53,13 @@ class GUI_EXPORT QgsJsonEditWidget : public QWidget, private Ui::QgsJsonEditWidg
      * \param parent parent widget
      */
     explicit QgsJsonEditWidget( QWidget *parent SIP_TRANSFERTHIS = nullptr );
+
+    /**
+     * Returns a reference to the JSON code editor used in the widget.
+     *
+     * \since QGIS 3.36
+     */
+    QgsCodeEditorJson *jsonEditor();
 
     /**
      * \brief Set the JSON text in the widget to \a jsonText.
@@ -96,7 +102,6 @@ class GUI_EXPORT QgsJsonEditWidget : public QWidget, private Ui::QgsJsonEditWidg
     void codeEditorJsonDwellEnd( int position, int x, int y );
 
   private:
-
     enum class TreeWidgetColumn : int
     {
       Key = 0,
@@ -109,6 +114,8 @@ class GUI_EXPORT QgsJsonEditWidget : public QWidget, private Ui::QgsJsonEditWidg
     void refreshTreeViewItem( QTreeWidgetItem *treeWidgetItemParent, const QJsonValue &jsonValue );
     void refreshTreeViewItemValue( QTreeWidgetItem *treeWidgetItem, const QString &jsonValueString, const QColor &textColor );
 
+    QFont monospaceFont() const;
+
     QString mJsonText;
 
     FormatJson mFormatJsonMode = FormatJson::Indented;
@@ -117,6 +124,8 @@ class GUI_EXPORT QgsJsonEditWidget : public QWidget, private Ui::QgsJsonEditWidg
 
     QAction *mCopyValueAction;
     QAction *mCopyKeyAction;
+
+    bool mEnableUrlHighlighting = true;
 };
 
 #endif // QGSJSONEDITWIDGET_H

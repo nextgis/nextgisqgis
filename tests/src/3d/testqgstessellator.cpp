@@ -34,54 +34,67 @@ static bool qgsVectorNear( const QVector3D &v1, const QVector3D &v2, double eps 
  */
 struct TriangleCoords
 {
-  //! Constructs from expected triangle coordinates
-  TriangleCoords( const QVector3D &a, const QVector3D &b, const QVector3D &c,
-                  const QVector3D &na = QVector3D(), const QVector3D &nb = QVector3D(), const QVector3D &nc = QVector3D() )
-  {
-    pts[0] = a; pts[1] = b; pts[2] = c;
-    normals[0] = na; normals[1] = nb; normals[2] = nc;
-  }
+    //! Constructs from expected triangle coordinates
+    TriangleCoords( const QVector3D &a, const QVector3D &b, const QVector3D &c, const QVector3D &na = QVector3D(), const QVector3D &nb = QVector3D(), const QVector3D &nc = QVector3D() )
+    {
+      pts[0] = a;
+      pts[1] = b;
+      pts[2] = c;
+      normals[0] = na;
+      normals[1] = nb;
+      normals[2] = nc;
+    }
 
-  //! Constructs from tessellator output. Note: tessellator outputs (X,-Z,Y) tuples for (X,Y,Z) input coords
-  TriangleCoords( const float *data, bool withNormal )
-  {
-#define FLOAT3_TO_VECTOR(x)  QVector3D( data[0], -data[2], data[1] )
+    //! Constructs from tessellator output. Note: tessellator outputs (X,-Z,Y) tuples for (X,Y,Z) input coords
+    TriangleCoords( const float *data, bool withNormal )
+    {
+#define FLOAT3_TO_VECTOR( x ) QVector3D( data[0], -data[2], data[1] )
 
-    pts[0] = FLOAT3_TO_VECTOR( data ); data += 3;
-    if ( withNormal ) { normals[0] = FLOAT3_TO_VECTOR( data ); data += 3; }
+      pts[0] = FLOAT3_TO_VECTOR( data );
+      data += 3;
+      if ( withNormal )
+      {
+        normals[0] = FLOAT3_TO_VECTOR( data );
+        data += 3;
+      }
 
-    pts[1] = FLOAT3_TO_VECTOR( data ); data += 3;
-    if ( withNormal ) { normals[1] = FLOAT3_TO_VECTOR( data ); data += 3; }
+      pts[1] = FLOAT3_TO_VECTOR( data );
+      data += 3;
+      if ( withNormal )
+      {
+        normals[1] = FLOAT3_TO_VECTOR( data );
+        data += 3;
+      }
 
-    pts[2] = FLOAT3_TO_VECTOR( data ); data += 3;
-    if ( withNormal ) { normals[2] = FLOAT3_TO_VECTOR( data ); data += 3; }
-  }
+      pts[2] = FLOAT3_TO_VECTOR( data );
+      data += 3;
+      if ( withNormal )
+      {
+        normals[2] = FLOAT3_TO_VECTOR( data );
+        data += 3;
+      }
+    }
 
-  //! Compares two triangles
-  bool operator==( const TriangleCoords &other ) const
-  {
-    // TODO: allow that the two triangles have coordinates shifted (but still in the same order)
-    const double eps = 1e-6;
-    return qgsVectorNear( pts[0], other.pts[0], eps ) &&
-           qgsVectorNear( pts[1], other.pts[1], eps ) &&
-           qgsVectorNear( pts[2], other.pts[2], eps ) &&
-           qgsVectorNear( normals[0], other.normals[0], eps ) &&
-           qgsVectorNear( normals[1], other.normals[1], eps ) &&
-           qgsVectorNear( normals[2], other.normals[2], eps );
-  }
+    //! Compares two triangles
+    bool operator==( const TriangleCoords &other ) const
+    {
+      // TODO: allow that the two triangles have coordinates shifted (but still in the same order)
+      const double eps = 1e-6;
+      return qgsVectorNear( pts[0], other.pts[0], eps ) && qgsVectorNear( pts[1], other.pts[1], eps ) && qgsVectorNear( pts[2], other.pts[2], eps ) && qgsVectorNear( normals[0], other.normals[0], eps ) && qgsVectorNear( normals[1], other.normals[1], eps ) && qgsVectorNear( normals[2], other.normals[2], eps );
+    }
 
-  bool operator!=( const TriangleCoords &other ) const
-  {
-    return !operator==( other );
-  }
+    bool operator!=( const TriangleCoords &other ) const
+    {
+      return !operator==( other );
+    }
 
-  void dump() const
-  {
-    qDebug() << pts[0] << pts[1] << pts[2] << normals[0] << normals[1] << normals[2];
-  }
+    void dump() const
+    {
+      qDebug() << pts[0] << pts[1] << pts[2] << normals[0] << normals[1] << normals[2];
+    }
 
-  QVector3D pts[3];
-  QVector3D normals[3];
+    QVector3D pts[3];
+    QVector3D normals[3];
 };
 
 
@@ -119,15 +132,16 @@ bool checkTriangleOutput( const QVector<float> &data, bool withNormals, const QL
  * \ingroup UnitTests
  * This is a unit test for the vertex tool
  */
-class TestQgsTessellator : public QObject
+class TestQgsTessellator : public QgsTest
 {
     Q_OBJECT
   public:
-    TestQgsTessellator() = default;
+    TestQgsTessellator()
+      : QgsTest( QStringLiteral( "Test QgsTessellator" ) ) {};
 
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
+    void initTestCase();    // will be called before the first testfunction is executed.
+    void cleanupTestCase(); // will be called after the last testfunction was executed.
 
     void testBasic();
     void testWalls();
@@ -156,6 +170,7 @@ void TestQgsTessellator::initTestCase()
 //runs after all tests
 void TestQgsTessellator::cleanupTestCase()
 {
+  QgsApplication::exitQgis();
 }
 
 void TestQgsTessellator::testBasic()
@@ -174,7 +189,7 @@ void TestQgsTessellator::testBasic()
   tcZ << TriangleCoords( QVector3D( 1, 2, 3 ), QVector3D( 2, 1, 3 ), QVector3D( 3, 2, 3 ) );
   tcZ << TriangleCoords( QVector3D( 1, 2, 3 ), QVector3D( 1, 1, 3 ), QVector3D( 2, 1, 3 ) );
 
-  const QVector3D up( 0, 0, 1 );  // surface normal pointing straight up
+  const QVector3D up( 0, 0, 1 ); // surface normal pointing straight up
   QList<TriangleCoords> tcNormals;
   tcNormals << TriangleCoords( QVector3D( 1, 2, 0 ), QVector3D( 2, 1, 0 ), QVector3D( 3, 2, 0 ), up, up, up );
   tcNormals << TriangleCoords( QVector3D( 1, 2, 0 ), QVector3D( 1, 1, 0 ), QVector3D( 2, 1, 0 ), up, up, up );
@@ -289,7 +304,7 @@ void TestQgsTessellator::testBackEdges()
   polygon.fromWkt( "POLYGON((1 1, 2 1, 3 2, 1 2, 1 1))" );
 
   const QVector3D up( 0, 0, 1 );  // surface normal pointing straight up
-  const QVector3D dn( 0, 0, -1 );  // surface normal pointing straight down for back faces
+  const QVector3D dn( 0, 0, -1 ); // surface normal pointing straight down for back faces
   QList<TriangleCoords> tcNormals;
   tcNormals << TriangleCoords( QVector3D( 1, 2, 0 ), QVector3D( 2, 1, 0 ), QVector3D( 3, 2, 0 ), up, up, up );
   tcNormals << TriangleCoords( QVector3D( 3, 2, 0 ), QVector3D( 2, 1, 0 ), QVector3D( 1, 2, 0 ), dn, dn, dn );
@@ -309,10 +324,10 @@ void TestQgsTessellator::test2DTriangle()
   QgsPolygon polygon;
   polygon.fromWkt( "POLYGON((1 1, 2 1, 1 2, 1 1))" );
 
-  const QVector3D up( 0, 0, 1 );  // surface normal pointing straight up
-  const QVector3D left( -1, 0, 0 );  // surface normal pointing straight down for back faces
+  const QVector3D up( 0, 0, 1 );    // surface normal pointing straight up
+  const QVector3D left( -1, 0, 0 ); // surface normal pointing straight down for back faces
   const QVector3D ne( 0.707107, 0.707107, 0 );
-  const QVector3D bt( 0, -1, 0 );  // surface normal pointing straight down for back faces
+  const QVector3D bt( 0, -1, 0 ); // surface normal pointing straight down for back faces
 
   {
     // NO extrusion
@@ -355,10 +370,10 @@ void TestQgsTessellator::test3DTriangle()
   QgsPolygon polygon;
   polygon.fromWkt( "POLYGONZ((1 1 5, 2 1 5, 1 2 5, 1 1 5))" );
 
-  const QVector3D up( 0, 0, 1 );  // surface normal pointing straight up
-  const QVector3D left( -1, 0, 0 );  // surface normal pointing straight down for back faces
+  const QVector3D up( 0, 0, 1 );    // surface normal pointing straight up
+  const QVector3D left( -1, 0, 0 ); // surface normal pointing straight down for back faces
   const QVector3D ne( 0.707107, 0.707107, 0 );
-  const QVector3D bt( 0, -1, 0 );  // surface normal pointing straight down for back faces
+  const QVector3D bt( 0, -1, 0 ); // surface normal pointing straight down for back faces
 
   {
     // NO extrusion
@@ -406,11 +421,11 @@ void TestQgsTessellator::asMultiPolygon()
 
   QgsTessellator t( 0, 0, false );
   t.addPolygon( polygon, 0 );
-  QCOMPARE( t.asMultiPolygon()->asWkt(), QStringLiteral( "MultiPolygonZ (((1 2 0, 2 1 0, 3 2 0, 1 2 0)),((1 2 0, 1 1 0, 2 1 0, 1 2 0)))" ) );
+  QCOMPARE( t.asMultiPolygon()->asWkt(), QStringLiteral( "MultiPolygon Z (((1 2 0, 2 1 0, 3 2 0, 1 2 0)),((1 2 0, 1 1 0, 2 1 0, 1 2 0)))" ) );
 
   QgsTessellator t2( 0, 0, false );
   t2.addPolygon( polygonZ, 0 );
-  QCOMPARE( t2.asMultiPolygon()->asWkt( 6 ), QStringLiteral( "MultiPolygonZ (((1 2 4, 2 1 2, 3 2 3, 1 2 4)),((1 2 4, 1 1 1, 2 1 2, 1 2 4)))" ) );
+  QCOMPARE( t2.asMultiPolygon()->asWkt( 6 ), QStringLiteral( "MultiPolygon Z (((1 2 4, 2 1 2, 3 2 3, 1 2 4)),((1 2 4, 1 1 1, 2 1 2, 1 2 4)))" ) );
 }
 
 void TestQgsTessellator::testBadCoordinates()
@@ -457,7 +472,7 @@ void TestQgsTessellator::testIssue17745()
   const bool resWktRead = p.fromWkt( "Polygon((0 0, 1 1e-15, 4 0, 4 5, 1 5, 0 5, 0 0))" );
   QVERIFY( resWktRead );
 
-  t.addPolygon( p, 0 );   // must not crash - that's all we test here
+  t.addPolygon( p, 0 ); // must not crash - that's all we test here
 }
 
 void TestQgsTessellator::testCrashSelfIntersection()
@@ -470,7 +485,7 @@ void TestQgsTessellator::testCrashSelfIntersection()
 
   QVERIFY( resWktRead );
 
-  t.addPolygon( p, 0 );   // must not crash - that's all we test here
+  t.addPolygon( p, 0 ); // must not crash - that's all we test here
 }
 
 void TestQgsTessellator::testCrashEmptyPolygon()
@@ -482,7 +497,7 @@ void TestQgsTessellator::testCrashEmptyPolygon()
   const bool resWktRead = p.fromWkt( "PolygonZ ((0 0 0, 0 0 0, 0 0 0))" );
   QVERIFY( resWktRead );
 
-  t.addPolygon( p, 0 );  // must not crash - that's all we test here
+  t.addPolygon( p, 0 ); // must not crash - that's all we test here
 }
 
 void TestQgsTessellator::testBoundsScaling()
@@ -555,7 +570,7 @@ void TestQgsTessellator::narrowPolygon()
   QgsGeometry res( t.asMultiPolygon() );
   res.translate( polygon.boundingBox().xMinimum(), polygon.boundingBox().yMinimum() );
   QgsDebugMsgLevel( res.asWkt( 0 ), 1 );
-  QCOMPARE( res.asWkt( 0 ), QStringLiteral( "MultiPolygonZ (((383357 4902094 0, 383356 4902092 0, 383356 4902091 0, 383357 4902094 0)),((383357 4902088 0, 383357 4902094 0, 383356 4902091 0, 383357 4902088 0)),((383357 4902088 0, 383361 4902086 0, 383357 4902094 0, 383357 4902088 0)),((383357 4902094 0, 383361 4902086 0, 383360 4902094 0, 383357 4902094 0)),((383363 4902094 0, 383360 4902094 0, 383361 4902086 0, 383363 4902094 0)),((383368 4902093 0, 383363 4902094 0, 383361 4902086 0, 383368 4902093 0)),((383368 4902093 0, 383361 4902086 0, 383369 4902085 0, 383368 4902093 0)),((383368 4902093 0, 383369 4902085 0, 383375 4902093 0, 383368 4902093 0)),((383375 4902093 0, 383369 4902085 0, 383380 4902084 0, 383375 4902093 0)),((383375 4902093 0, 383380 4902084 0, 383384 4902093 0, 383375 4902093 0)),((383384 4902093 0, 383380 4902084 0, 383396 4902084 0, 383384 4902093 0)),((383394 4902094 0, 383384 4902093 0, 383396 4902084 0, 383394 4902094 0)),((383403 4902094 0, 383394 4902094 0, 383396 4902084 0, 383403 4902094 0)),((383396 4902084 0, 383407 4902084 0, 383403 4902094 0, 383396 4902084 0)),((383411 4902094 0, 383403 4902094 0, 383407 4902084 0, 383411 4902094 0)),((383411 4902094 0, 383407 4902084 0, 383413 4902085 0, 383411 4902094 0)),((383411 4902094 0, 383413 4902085 0, 383416 4902093 0, 383411 4902094 0)),((383416 4902093 0, 383413 4902085 0, 383417 4902086 0, 383416 4902093 0)),((383419 4902088 0, 383416 4902093 0, 383417 4902086 0, 383419 4902088 0)),((383418 4902092 0, 383416 4902093 0, 383419 4902088 0, 383418 4902092 0)),((383418 4902092 0, 383419 4902088 0, 383419 4902091 0, 383418 4902092 0)),((383419 4902091 0, 383419 4902088 0, 383420 4902090 0, 383419 4902091 0)))" ) );
+  QCOMPARE( res.asWkt( 0 ), QStringLiteral( "MultiPolygon Z (((383357 4902094 0, 383356 4902092 0, 383356 4902091 0, 383357 4902094 0)),((383357 4902088 0, 383357 4902094 0, 383356 4902091 0, 383357 4902088 0)),((383357 4902088 0, 383361 4902086 0, 383357 4902094 0, 383357 4902088 0)),((383357 4902094 0, 383361 4902086 0, 383360 4902094 0, 383357 4902094 0)),((383363 4902094 0, 383360 4902094 0, 383361 4902086 0, 383363 4902094 0)),((383368 4902093 0, 383363 4902094 0, 383361 4902086 0, 383368 4902093 0)),((383368 4902093 0, 383361 4902086 0, 383369 4902085 0, 383368 4902093 0)),((383368 4902093 0, 383369 4902085 0, 383375 4902093 0, 383368 4902093 0)),((383375 4902093 0, 383369 4902085 0, 383380 4902084 0, 383375 4902093 0)),((383375 4902093 0, 383380 4902084 0, 383384 4902093 0, 383375 4902093 0)),((383384 4902093 0, 383380 4902084 0, 383396 4902084 0, 383384 4902093 0)),((383394 4902094 0, 383384 4902093 0, 383396 4902084 0, 383394 4902094 0)),((383403 4902094 0, 383394 4902094 0, 383396 4902084 0, 383403 4902094 0)),((383396 4902084 0, 383407 4902084 0, 383403 4902094 0, 383396 4902084 0)),((383411 4902094 0, 383403 4902094 0, 383407 4902084 0, 383411 4902094 0)),((383411 4902094 0, 383407 4902084 0, 383413 4902085 0, 383411 4902094 0)),((383411 4902094 0, 383413 4902085 0, 383416 4902093 0, 383411 4902094 0)),((383416 4902093 0, 383413 4902085 0, 383417 4902086 0, 383416 4902093 0)),((383419 4902088 0, 383416 4902093 0, 383417 4902086 0, 383419 4902088 0)),((383418 4902092 0, 383416 4902093 0, 383419 4902088 0, 383418 4902092 0)),((383418 4902092 0, 383419 4902088 0, 383419 4902091 0, 383418 4902092 0)),((383419 4902091 0, 383419 4902088 0, 383420 4902090 0, 383419 4902091 0)))" ) );
 }
 
 QGSTEST_MAIN( TestQgsTessellator )

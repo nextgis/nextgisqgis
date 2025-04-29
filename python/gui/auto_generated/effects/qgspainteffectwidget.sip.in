@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/effects/qgspainteffectwidget.h                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -15,8 +15,6 @@ class QgsPaintEffectWidget : QWidget
 {
 %Docstring(signature="appended")
 Base class for effect properties widgets.
-
-.. versionadded:: 2.9
 %End
 
 %TypeHeaderCode
@@ -24,7 +22,6 @@ Base class for effect properties widgets.
 %End
   public:
     QgsPaintEffectWidget( QWidget *parent /TransferThis/ = 0 );
-
     virtual void setPaintEffect( QgsPaintEffect *effect ) = 0;
 %Docstring
 Sets the paint effect to modify with the widget
@@ -38,7 +35,6 @@ Sets the paint effect to modify with the widget
 %Docstring
 Emitted when properties of the effect are changed through the widget
 %End
-
 };
 
 
@@ -61,7 +57,6 @@ class QgsDrawSourceWidget : QgsPaintEffectWidget
 
 
 
-
 class QgsBlurWidget : QgsPaintEffectWidget
 {
 
@@ -77,7 +72,6 @@ class QgsBlurWidget : QgsPaintEffectWidget
 
 
 };
-
 
 
 
@@ -151,11 +145,10 @@ class QgsColorEffectWidget : QgsPaintEffectWidget
 };
 
 
-
 /************************************************************************
  * This file has been generated automatically from                      *
  *                                                                      *
  * src/gui/effects/qgspainteffectwidget.h                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

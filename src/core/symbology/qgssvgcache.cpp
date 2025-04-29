@@ -16,12 +16,14 @@
  ***************************************************************************/
 
 #include "qgssvgcache.h"
+#include "moc_qgssvgcache.cpp"
 #include "qgis.h"
 #include "qgslogger.h"
 #include "qgsnetworkaccessmanager.h"
 #include "qgsmessagelog.h"
 #include "qgssymbollayerutils.h"
 #include "qgsnetworkcontentfetchertask.h"
+#include "qgsabstractcontentcache_p.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -855,3 +857,4 @@ QImage QgsSvgCache::imageFromCachedPicture( const QgsSvgCacheEntry &entry ) cons
   return image;
 }
 
+template class QgsAbstractContentCache<QgsSvgCacheEntry>; // clazy:exclude=missing-qobject-macro

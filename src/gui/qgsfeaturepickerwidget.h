@@ -21,7 +21,6 @@
 #include <QCompleter>
 
 #include "qgsfeature.h"
-#include "qgsfeaturerequest.h"
 #include "qgis_gui.h"
 
 class QToolButton;
@@ -54,7 +53,6 @@ class GUI_EXPORT QgsFeaturePickerWidget : public QWidget
     Q_PROPERTY( bool showBrowserButtons READ showBrowserButtons WRITE setShowBrowserButtons NOTIFY showBrowserButtonsChanged )
 
   public:
-
     /**
      * Create a new QgsFeaturePickerWidget, optionally specifying a \a parent.
      */
@@ -228,10 +226,8 @@ class GUI_EXPORT QgsFeaturePickerWidget : public QWidget
     QgsFilterLineEdit *mLineEdit;
     bool mPopupRequested = false;
     bool mIsCurrentlyEdited = false;
-    bool mHasStoredEditState = false;
     bool mShowBrowserButtons = false;
 };
-
 
 
 #endif // QGSFEATURECHOOSER_H

@@ -34,7 +34,7 @@
 #include "qgsrasterlayer.h"
 #include "qgswcscapabilities.h"
 #include "testqgswcspublicservers.h"
-#include "qgssettings.h"
+#include "qgsnetworkaccessmanager.h"
 
 #ifdef Q_OS_WIN
 #include <fcntl.h> /*  _O_BINARY */
@@ -42,8 +42,8 @@
 #include <getopt.h>
 #endif
 
-TestQgsWcsPublicServers::TestQgsWcsPublicServers( const QString &cacheDirPath, int maxCoverages, const QString &server, const QString &coverage, const QString &version, bool force ):
-  mCacheDirPath( cacheDirPath )
+TestQgsWcsPublicServers::TestQgsWcsPublicServers( const QString &cacheDirPath, int maxCoverages, const QString &server, const QString &coverage, const QString &version, bool force )
+  : mCacheDirPath( cacheDirPath )
   , mMaxCoverages( maxCoverages )
   , mServer( server )
   , mCoverage( coverage )
@@ -52,13 +52,11 @@ TestQgsWcsPublicServers::TestQgsWcsPublicServers( const QString &cacheDirPath, i
   , mTimeout( 300000 )
   , mOrigTimeout( 20000 )
 {
-
 }
 
 TestQgsWcsPublicServers::~TestQgsWcsPublicServers()
 {
-  QgsSettings settings;
-  settings.setValue( QStringLiteral( "/qgis/networkAndProxy/networkTimeout" ), mOrigTimeout );
+  QgsNetworkAccessManager::settingsNetworkTimeout->setValue( mOrigTimeout );
 }
 
 //runs before all tests
@@ -68,9 +66,8 @@ void TestQgsWcsPublicServers::init()
 
   // Unfortunately this seems to be the only way to set timeout, we try to reset it
   // at the end but it can be canceled before ...
-  QgsSettings settings;
-  mOrigTimeout = settings.value( QStringLiteral( "/qgis/networkAndProxy/networkTimeout" ), "60000" ).toInt();
-  settings.setValue( QStringLiteral( "/qgis/networkAndProxy/networkTimeout" ), mTimeout );
+  mOrigTimeout = QgsNetworkAccessManager::settingsNetworkTimeout->value();
+  QgsNetworkAccessManager::settingsNetworkTimeout->setValue( mTimeout );
 
   //mCacheDir = QDir( "./wcstestcache" );
   mCacheDir = QDir( mCacheDirPath );
@@ -106,7 +103,7 @@ void TestQgsWcsPublicServers::init()
   }
 
   // read servers + issues list
-  QString path = QgsApplication::pkgDataPath() +  "/resources/wcs-servers.json";
+  QString path = QgsApplication::pkgDataPath() + "/resources/wcs-servers.json";
   QFile file( path );
   if ( file.open( QIODevice::ReadOnly | QIODevice::Text ) )
   {
@@ -178,7 +175,8 @@ TestQgsWcsPublicServers::Server TestQgsWcsPublicServers::getServer( const QStrin
 {
   for ( const Server &server : std::as_const( mServers ) )
   {
-    if ( server.url == url ) return server;
+    if ( server.url == url )
+      return server;
   }
   return Server();
 }
@@ -192,8 +190,7 @@ QList<TestQgsWcsPublicServers::Issue> TestQgsWcsPublicServers::issues( const QSt
     {
       for ( const Issue &issue : server.issues )
       {
-        if ( ( issue.coverages.isEmpty() || issue.coverages.contains( coverage ) ) &&
-             ( issue.versions.isEmpty() || issue.versions.contains( version ) ) )
+        if ( ( issue.coverages.isEmpty() || issue.coverages.contains( coverage ) ) && ( issue.versions.isEmpty() || issue.versions.contains( version ) ) )
         {
           issues << issue;
         }
@@ -318,7 +315,7 @@ void TestQgsWcsPublicServers::test()
       if ( !myCapabilities.lastError().isEmpty() )
       {
         QgsDebugError( myCapabilities.lastError() );
-        myVersionLog << "error:" +  myCapabilities.lastError().replace( '\n', ' ' );
+        myVersionLog << "error:" + myCapabilities.lastError().replace( '\n', ' ' );
         continue;
       }
 
@@ -335,13 +332,14 @@ void TestQgsWcsPublicServers::test()
       myVersionLog << QStringLiteral( "totalCoverages:%1" ).arg( myCoverages.size() );
 
       int myCoverageCount = 0;
-      int myStep = myCoverages.size() / std::min< int >( mMaxCoverages, myCoverages.size() );
+      int myStep = myCoverages.size() / std::min<int>( mMaxCoverages, myCoverages.size() );
       int myStepCount = -1;
       bool myCoverageFound = false;
       for ( QgsWcsCoverageSummary myCoverage : myCoverages )
       {
         QgsDebugMsgLevel( "coverage: " + myCoverage.identifier, 1 );
-        if ( !mCoverage.isEmpty() && myCoverage.identifier != mCoverage ) continue;
+        if ( !mCoverage.isEmpty() && myCoverage.identifier != mCoverage )
+          continue;
         myCoverageFound = true;
 
         // Go in steps to get more success/errors
@@ -356,7 +354,8 @@ void TestQgsWcsPublicServers::test()
         }
 
         myCoverageCount++;
-        if ( myCoverageCount > mMaxCoverages ) break;
+        if ( myCoverageCount > mMaxCoverages )
+          break;
 
 
         QString myPath = myVersionDirPath + '/' + myCoverage.identifier;
@@ -430,17 +429,17 @@ void TestQgsWcsPublicServers::test()
             myLog << provider + "_height:" + QString::number( myLayer->dataProvider()->ySize() );
             QgsRectangle extent = myLayer->dataProvider()->extent();
             myLog << provider + "_extent:"
-                  + QgsRasterBlock::printValue( extent.xMinimum() ) + ','
-                  + QgsRasterBlock::printValue( extent.yMinimum() ) + ','
-                  + QgsRasterBlock::printValue( extent.xMaximum() ) + ','
-                  + QgsRasterBlock::printValue( extent.yMaximum() ) + ',';
+                       + QgsRasterBlock::printValue( extent.xMinimum() ) + ','
+                       + QgsRasterBlock::printValue( extent.yMinimum() ) + ','
+                       + QgsRasterBlock::printValue( extent.xMaximum() ) + ','
+                       + QgsRasterBlock::printValue( extent.yMaximum() ) + ',';
             int myBandCount = myLayer->dataProvider()->bandCount();
             myLog << provider + "_bandCount:" + QString::number( myBandCount );
             if ( myBandCount > 0 )
             {
-              myLog << provider + "_srcType:" + qgsEnumValueToKey< Qgis::DataType >( myLayer->dataProvider()->sourceDataType( 1 ) );
+              myLog << provider + "_srcType:" + qgsEnumValueToKey<Qgis::DataType>( myLayer->dataProvider()->sourceDataType( 1 ) );
 
-              QgsRasterBandStats myStats = myLayer->dataProvider()->bandStatistics( 1, QgsRasterBandStats::All, QgsRectangle(), myWidth * myHeight );
+              QgsRasterBandStats myStats = myLayer->dataProvider()->bandStatistics( 1, Qgis::RasterBandStatistic::All, QgsRectangle(), myWidth * myHeight );
               myLog << provider + "_min:" + QString::number( myStats.minimumValue );
               myLog << provider + "_max:" + QString::number( myStats.maximumValue );
             }
@@ -474,7 +473,8 @@ void TestQgsWcsPublicServers::test()
                 {
                   double value = myBlock->value( row, col );
                   QString valueStr = QString::number( value );
-                  if ( !myValues.contains( valueStr ) ) myValues.insert( valueStr );
+                  if ( !myValues.contains( valueStr ) )
+                    myValues.insert( valueStr );
                 }
               }
               delete myBlock;
@@ -489,7 +489,8 @@ void TestQgsWcsPublicServers::test()
               for ( int col = 0; col < myWidth; col++ )
               {
                 QRgb color = myImage.pixel( col, row );
-                if ( !myColors.contains( color ) ) myColors.insert( color );
+                if ( !myColors.contains( color ) )
+                  myColors.insert( color );
               }
             }
             QgsDebugMsgLevel( QStringLiteral( "%1 colors" ).arg( myColors.size() ), 1 );
@@ -514,7 +515,7 @@ void TestQgsWcsPublicServers::test()
         myLogFile.close();
         QgsProject::instance()->removeAllMapLayers();
       }
-      if ( !mCoverage.isEmpty() && ! myCoverageFound )
+      if ( !mCoverage.isEmpty() && !myCoverageFound )
       {
         QgsDebugError( QStringLiteral( "Coverage not found" ) );
       }
@@ -550,7 +551,7 @@ void TestQgsWcsPublicServers::report()
   QString myReport;
 
   int myServerCount = 0;
-  int myServerErrCount = 0; // at least one error
+  int myServerErrCount = 0;  // at least one error
   int myServerWarnCount = 0; // at least one error
   int myCoverageCount = 0;
   int myCoverageErrCount = 0;
@@ -618,12 +619,13 @@ void TestQgsWcsPublicServers::report()
         myVersionDir.setNameFilters( filters );
         for ( const QString &myLogFileName : myVersionDir.entryList( QDir::Files ) )
         {
-          if ( myLogFileName == QLatin1String( "version.log" ) ) continue;
+          if ( myLogFileName == QLatin1String( "version.log" ) )
+            continue;
           myVersionCoverageCount++;
           myCoverageCount++;
 
           QString myLogPath = myVersionDir.absolutePath() + '/' + myLogFileName;
-          QMap<QString, QString>myLog = readLog( myLogPath );
+          QMap<QString, QString> myLog = readLog( myLogPath );
           myVersionReport += QLatin1String( "<tr>" );
 
           QStringList myValues;
@@ -729,18 +731,19 @@ void TestQgsWcsPublicServers::report()
         } // coverages
         myVersionReport += QLatin1String( "</table>\n" );
         // prepend counts
-        myVersionReport.prepend( QStringLiteral( "<b>Total coverages: %1</b><br>\n" ).arg( myVersionLog.value( QStringLiteral( "totalCoverages" ) ) ) +
-                                 QStringLiteral( "<b>Tested coverages: %1</b><br>\n" ).arg( myVersionCoverageCount ) +
-                                 QStringLiteral( "<b>Errors: %1</b><br>\n" ).arg( myVersionErrCount ) +
-                                 QStringLiteral( "<b>Warnings: %1</b><br><br>" ).arg( myVersionWarnCount ) );
+        myVersionReport.prepend( QStringLiteral( "<b>Total coverages: %1</b><br>\n" ).arg( myVersionLog.value( QStringLiteral( "totalCoverages" ) ) ) + QStringLiteral( "<b>Tested coverages: %1</b><br>\n" ).arg( myVersionCoverageCount ) + QStringLiteral( "<b>Errors: %1</b><br>\n" ).arg( myVersionErrCount ) + QStringLiteral( "<b>Warnings: %1</b><br><br>" ).arg( myVersionWarnCount ) );
         myServerReport += myVersionReport;
       }
-      if ( myVersionErrCount > 0 ) myServerErr = true;
-      if ( myVersionWarnCount > 0 ) myServerWarn = true;
+      if ( myVersionErrCount > 0 )
+        myServerErr = true;
+      if ( myVersionWarnCount > 0 )
+        myServerWarn = true;
     } // versions
     myReport += myServerReport;
-    if ( myServerErr ) myServerErrCount++;
-    if ( myServerWarn ) myServerWarnCount++;
+    if ( myServerErr )
+      myServerErrCount++;
+    if ( myServerWarn )
+      myServerWarnCount++;
   } // servers
 
   QString mySettings = QgsApplication::showSettings();
@@ -840,7 +843,7 @@ void usage( std::string const &appName )
 {
   std::cerr << "QGIS public WCS servers test - " << VERSION << " '" << RELEASE_NAME << "'\n"
             << "Console application for QGIS WCS provider (WCS client) testing.\n"
-            << "Usage: " << appName <<  " [options] CACHE_DIR\n"
+            << "Usage: " << appName << " [options] CACHE_DIR\n"
             << "  options: \n"
             << "\t[--server URL]\tWCS server URL to be tested.\n"
             << "\t[--coverage coverage]\tCoverage name to be tested.\n"
@@ -857,10 +860,10 @@ int main( int argc, char *argv[] )
 #ifdef Q_OS_WIN // Windows
 #ifdef _MSC_VER
   _set_fmode( _O_BINARY );
-#else //MinGW
+#else  //MinGW
   _fmode = _O_BINARY;
-#endif  // _MSC_VER
-#endif  // Q_OS_WIN
+#endif // _MSC_VER
+#endif // Q_OS_WIN
 
   QString myServer;
   QString myCoverage;
@@ -870,15 +873,14 @@ int main( int argc, char *argv[] )
 
 #ifndef Q_OS_WIN
   int optionChar;
-  static struct option long_options[] =
-  {
-    {"help",     no_argument,       nullptr, 'h'},
-    {"server",   required_argument, nullptr, 's'},
-    {"coverage", required_argument, nullptr, 'c'},
-    {"num",      required_argument, nullptr, 'n'},
-    {"version",  required_argument, nullptr, 'v'},
-    {"force",    no_argument,       nullptr, 'f'},
-    {nullptr, 0, nullptr, 0}
+  static struct option long_options[] = {
+    { "help", no_argument, nullptr, 'h' },
+    { "server", required_argument, nullptr, 's' },
+    { "coverage", required_argument, nullptr, 'c' },
+    { "num", required_argument, nullptr, 'n' },
+    { "version", required_argument, nullptr, 'v' },
+    { "force", no_argument, nullptr, 'f' },
+    { nullptr, 0, nullptr, 0 }
   };
 
   while ( true )
@@ -886,8 +888,7 @@ int main( int argc, char *argv[] )
     /* getopt_long stores the option index here. */
     int option_index = 0;
 
-    optionChar = getopt_long( argc, argv, "hscnvf",
-                              long_options, &option_index );
+    optionChar = getopt_long( argc, argv, "hscnvf", long_options, &option_index );
 
     /* Detect the end of the options. */
     if ( optionChar == -1 )
@@ -927,13 +928,12 @@ int main( int argc, char *argv[] )
 
       case 'h':
         usage( argv[0] );
-        return 2;   // XXX need standard exit codes
+        return 2; // XXX need standard exit codes
 
       default:
         QgsDebugMsgLevel( QStringLiteral( "%1: getopt returned character code %2" ).arg( argv[0] ).arg( optionChar ), 1 );
-        return 1;   // XXX need standard exit codes
+        return 1; // XXX need standard exit codes
     }
-
   }
 
   QgsDebugMsgLevel( QStringLiteral( "myServer = %1" ).arg( myServer ), 1 );

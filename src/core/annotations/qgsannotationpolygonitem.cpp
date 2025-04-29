@@ -97,7 +97,7 @@ bool QgsAnnotationPolygonItem::writeXml( QDomElement &element, QDomDocument &doc
   return true;
 }
 
-QList<QgsAnnotationItemNode> QgsAnnotationPolygonItem::nodes() const
+QList<QgsAnnotationItemNode> QgsAnnotationPolygonItem::nodesV2( const QgsAnnotationItemEditContext & ) const
 {
   QList< QgsAnnotationItemNode > res;
 
@@ -124,7 +124,7 @@ QList<QgsAnnotationItemNode> QgsAnnotationPolygonItem::nodes() const
   return res;
 }
 
-Qgis::AnnotationItemEditOperationResult QgsAnnotationPolygonItem::applyEdit( QgsAbstractAnnotationItemEditOperation *operation )
+Qgis::AnnotationItemEditOperationResult QgsAnnotationPolygonItem::applyEditV2( QgsAbstractAnnotationItemEditOperation *operation, const QgsAnnotationItemEditContext & )
 {
   switch ( operation->type() )
   {
@@ -168,7 +168,7 @@ Qgis::AnnotationItemEditOperationResult QgsAnnotationPolygonItem::applyEdit( Qgs
   return Qgis::AnnotationItemEditOperationResult::Invalid;
 }
 
-QgsAnnotationItemEditOperationTransientResults *QgsAnnotationPolygonItem::transientEditResults( QgsAbstractAnnotationItemEditOperation *operation )
+QgsAnnotationItemEditOperationTransientResults *QgsAnnotationPolygonItem::transientEditResultsV2( QgsAbstractAnnotationItemEditOperation *operation, const QgsAnnotationItemEditContext & )
 {
   switch ( operation->type() )
   {
@@ -199,6 +199,11 @@ QgsAnnotationItemEditOperationTransientResults *QgsAnnotationPolygonItem::transi
   return nullptr;
 }
 
+Qgis::AnnotationItemFlags QgsAnnotationPolygonItem::flags() const
+{
+  return Qgis::AnnotationItemFlag::SupportsReferenceScale;
+}
+
 QgsAnnotationPolygonItem *QgsAnnotationPolygonItem::create()
 {
   return new QgsAnnotationPolygonItem( new QgsPolygon() );
@@ -219,7 +224,7 @@ bool QgsAnnotationPolygonItem::readXml( const QDomElement &element, const QgsRea
   return true;
 }
 
-QgsAnnotationPolygonItem *QgsAnnotationPolygonItem::clone()
+QgsAnnotationPolygonItem *QgsAnnotationPolygonItem::clone() const
 {
   std::unique_ptr< QgsAnnotationPolygonItem > item = std::make_unique< QgsAnnotationPolygonItem >( mPolygon->clone() );
   item->setSymbol( mSymbol->clone() );

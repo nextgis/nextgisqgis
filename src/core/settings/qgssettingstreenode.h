@@ -26,12 +26,12 @@ class QgsSettingsTreeNamedListNode;
 class QgsSettingsEntryBase;
 class QgsSettingsEntryString;
 
-
 /**
  * \ingroup core
  * \class QgsSettingsTreeNode
  * \brief QgsSettingsTreeNode is a tree node for the settings tree
  * to help organizing and introspecting the tree.
+ *
  * It is either a root node, a normal node or
  * a named list (to store a group of settings under a dynamic named key).
  * to automatically register a settings entry on its creation when a parent is provided.
@@ -144,7 +144,6 @@ class CORE_EXPORT QgsSettingsTreeNode
     void registerChildNode( QgsSettingsTreeNode *node );
 
     Qgis::SettingsTreeNodeType mType = Qgis::SettingsTreeNodeType::Root;
-
 
   private:
 

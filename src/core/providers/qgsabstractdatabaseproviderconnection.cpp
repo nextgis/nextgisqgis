@@ -14,6 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsabstractdatabaseproviderconnection.h"
+#include "moc_qgsabstractdatabaseproviderconnection.cpp"
 #include "qgsvectorlayer.h"
 #include "qgsexception.h"
 #include "qgsweakrelation.h"
@@ -81,6 +82,16 @@ void QgsAbstractDatabaseProviderConnection::checkCapability( Qgis::DatabaseProvi
   {
     throw QgsProviderConnectionException( QObject::tr( "Operation '%1' is not supported for this connection" ).arg( qgsEnumValueToKey( capability ) ) );
   }
+}
+
+QString QgsAbstractDatabaseProviderConnection::sanitizeSqlForQueryLayer( const QString &sql ) const
+{
+  QString sanitizedSql { sql.trimmed() };
+  while ( sanitizedSql.endsWith( ';' ) )
+  {
+    sanitizedSql.chop( 1 );
+  }
+  return sanitizedSql;
 }
 
 ///@endcond

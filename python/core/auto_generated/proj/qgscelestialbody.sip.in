@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/proj/qgscelestialbody.h                                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -27,8 +27,8 @@ Contains information about a celestial body.
 
     bool isValid() const;
 %Docstring
-Returns ``True`` if the body is a valid object, or ``False`` if it is a null/invalid
-object.
+Returns ``True`` if the body is a valid object, or ``False`` if it is a
+null/invalid object.
 %End
 
     QString name() const;
@@ -67,5 +67,5 @@ Authority name, e.g. EPSG.
  *                                                                      *
  * src/core/proj/qgscelestialbody.h                                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

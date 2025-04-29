@@ -21,7 +21,7 @@
 #include "qgis_core.h"
 #include "qgis_sip.h"
 #include "qgsabstractgeometry.h"
-#include "qgsrectangle.h"
+#include "qgsbox3d.h"
 #include <QPainterPath>
 
 class QgsLineString;
@@ -30,20 +30,15 @@ class QgsLineString;
  * \ingroup core
  * \class QgsCurve
  * \brief Abstract base class for curved geometry type
- * \since QGIS 2.10
  */
 class CORE_EXPORT QgsCurve: public QgsAbstractGeometry SIP_ABSTRACT
 {
   public:
 
-    /**
-     * Constructor for QgsCurve.
-     */
     QgsCurve() = default;
 
     /**
      * Checks whether this curve exactly equals another curve.
-     * \since QGIS 3.0
      */
     virtual bool equals( const QgsCurve &other ) const = 0;
 
@@ -169,7 +164,6 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry SIP_ABSTRACT
 
     /**
      * Returns a reversed copy of the curve, where the direction of the curve has been flipped.
-     * \since QGIS 2.14
      */
     virtual QgsCurve *reversed() const = 0 SIP_FACTORY;
 
@@ -191,7 +185,7 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry SIP_ABSTRACT
     QgsCurve *toCurveType() const override SIP_FACTORY;
     void normalize() final SIP_HOLDGIL;
 
-    QgsRectangle boundingBox() const override;
+    QgsBox3D boundingBox3D() const override;
     bool isValid( QString &error SIP_OUT, Qgis::GeometryValidityFlags flags = Qgis::GeometryValidityFlags() ) const override;
 
     /**
@@ -305,7 +299,6 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry SIP_ABSTRACT
      * Should be used by qgsgeometry_cast<QgsCurve *>( geometry ).
      *
      * \note Not available in Python. Objects will be automatically be converted to the appropriate target type.
-     * \since QGIS 3.0
      */
     inline static const QgsCurve *cast( const QgsAbstractGeometry *geom )
     {
@@ -349,13 +342,14 @@ class CORE_EXPORT QgsCurve: public QgsAbstractGeometry SIP_ABSTRACT
      */
     bool snapToGridPrivate( double hSpacing, double vSpacing, double dSpacing, double mSpacing,
                             const QVector<double> &srcX, const QVector<double> &srcY, const QVector<double> &srcZ, const QVector<double> &srcM,
-                            QVector<double> &outX, QVector<double> &outY, QVector<double> &outZ, QVector<double> &outM ) const;
+                            QVector<double> &outX, QVector<double> &outY, QVector<double> &outZ, QVector<double> &outM,
+                            bool removeRedundantPoints ) const;
 #endif
 
     /**
      * Cached bounding box.
      */
-    mutable QgsRectangle mBoundingBox;
+    mutable QgsBox3D mBoundingBox;
 
     mutable bool mHasCachedSummedUpArea = false;
     mutable double mSummedUpArea = 0;

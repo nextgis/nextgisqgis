@@ -26,8 +26,8 @@ QWidget:item:selected
 
 QWebView, QTextBrowser
 {
-    color: #000000;
-    background-color: #ffffff;
+    color: @text;
+    background-color: @itembackground;
 }
 
 QToolTip
@@ -64,9 +64,7 @@ QMenuBar::item:pressed
 
 QAbstractSpinBox {
     padding: 0.12em;
-    border-width: 1px;
-    border-color: @itemdarkbackground;
-    border-style: solid;
+    border: 1px solid @itemdarkbackground;
     border-radius: 0.2em;
     background-color:@itembackground;
     selection-background-color: @selection;
@@ -243,6 +241,9 @@ QLineEdit, QTextEdit, QPlainTextEdit
     selection-background-color: @selection;
     selection-color: @itemdarkbackground;
 }
+QLineEdit:read-only {
+    color: @text;
+}
 
 QLineEdit:no-frame
 {
@@ -389,6 +390,10 @@ QComboBox QAbstractItemView, QComboBox QListView {
     color: @itembackground;
     selection-background-color: @selection;
     selection-color: @text;
+}
+QComboBox::separator {
+    height: 1px;
+    background-color: @background;
 }
 QComboBox::drop-down {
      subcontrol-origin: border;
@@ -783,6 +788,10 @@ QCheckBox::indicator
     height:0.8em;
 }
 
+QCheckBox::indicator:intermediary {
+    image: url(@theme_path/icons/qcheckbox-intermediary.svg);
+}
+
 QCheckBox::indicator:unchecked {
     image: url(@theme_path/icons/qcheckbox-unchecked.svg);
 }
@@ -895,8 +904,14 @@ QAbstractItemView::selected, QListView::selected {
 QAbstractItemView::indicator:checked, QListView::indicator:checked {
     image: url(@theme_path/icons/qcheckbox-checked.svg) !important;
 }
+QAbstractItemView::indicator:checked:disabled, QListView::indicator:checked:disabled {
+    image: url(@theme_path/icons/qcheckbox-checked-disabled.svg);
+}
 QAbstractItemView::indicator:unchecked, QListView::indicator:unchecked {
     image: url(@theme_path/icons/qcheckbox-unchecked.svg);
+}
+QAbstractItemView::indicator:unchecked:disabled, QListView::indicator:unchecked:disabled {
+    image: url(@theme_path/icons/qcheckbox-unchecked-disabled.svg);
 }
 
 /* ==================================================================================== */
@@ -944,10 +959,16 @@ QTreeView::indicator:intermediary {
     image: url(@theme_path/icons/qcheckbox-intermediary.svg);
 }
 QTreeView::indicator:checked {
-    image: url(@theme_path/icons/qcheckbox-checked.svg) !important;
+    image: url(@theme_path/icons/qcheckbox-checked.svg);
+}
+QTreeView::indicator:checked:disabled {
+    image: url(@theme_path/icons/qcheckbox-checked-disabled.svg);
 }
 QTreeView::indicator:unchecked {
     image: url(@theme_path/icons/qcheckbox-unchecked.svg);
+}
+QTreeView::indicator:unchecked:disabled {
+    image: url(@theme_path/icons/qcheckbox-unchecked-disabled.svg);
 }
 
 QgsLayerTreeView::item,
@@ -1002,8 +1023,14 @@ QTableView::indicator:intermediary {
 QTableView::indicator:checked {
     image: url(@theme_path/icons/qcheckbox-checked.svg) !important;
 }
+QTableView::indicator:checked:disabled {
+    image: url(@theme_path/icons/qcheckbox-checked-disabled.svg);
+}
 QTableView::indicator:unchecked {
     image: url(@theme_path/icons/qcheckbox-unchecked.svg);
+}
+QTableView::indicator:unchecked:disabled {
+    image: url(@theme_path/icons/qcheckbox-unchecked-disabled.svg);
 }
 
 QTableView QTableCornerButton::section {
@@ -1073,7 +1100,7 @@ QComboBox:focus, QAbstractSpinBox:focus, QLineEdit:focus, QPlainTextEdit:focus, 
     border:1px solid @focus;
 }
 
-QComboBox:focus:read-only, QAbstractSpinBox:focus:read-only, QLineEdit:focus:read-only, QPlainTextEdit:focus:read-only, QTextEdit:focus:read-only {
+QComboBox:editable:focus:read-only, QAbstractSpinBox:focus:read-only, QLineEdit:focus:read-only, QPlainTextEdit:focus:read-only, QTextEdit:focus:read-only {
     border-color: transparent;
 }
 
@@ -1154,17 +1181,6 @@ QgsMessageBar QScrollBar::down-arrow:vertical {
     image: url(@theme_path/icons/arrow-down.svg);
 }
 
-QgsPropertyOverrideButton, QgsPropertyOverrideButton:hover, QgsPropertyOverrideButton:pressed {
-    background: none;
-    border: 1px solid rgba(0, 0, 0, 0%);
-    padding: 0px;
-}
-
-QgsPropertyOverrideButton:focus {
-    border:1px solid @focusdark;
-    border-radius: 0.2em;
-}
-
 QListWidget#mOptionsListWidget {
     background-color: @itemdarkbackground;
     color: @itembackground;
@@ -1185,4 +1201,14 @@ QWidget#QgsRasterCalcDialogBase QWidget#mOperatorsGroupBox QPushButton {
 
 QFrame#mUserInputContainer { 
     background-color: @background;
+}
+
+QgsAttributeFormWidget QComboBox:disabled {
+    border: none;
+    background-color: @itembackground;
+    color: @text;
+}
+
+QgsAttributeFormWidget QComboBox::down-arrow:disabled {
+     image: none;
 }

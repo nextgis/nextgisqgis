@@ -50,22 +50,6 @@ std::string moduleExeBaseName( void )
   return basename;
 }
 
-std::string pythonPathEnvString()
-{
-  std::string pythonPathEnv;
-
-  const std::string &baseName = moduleExeBaseName();
-  const std::size_t binPathPos = baseName.rfind("bin");
-  if (binPathPos != std::string::npos)
-  {
-      const std::string &qgisRootPath = baseName.substr(0, binPathPos);
-      pythonPathEnv = "PYTHONPATH=" + qgisRootPath + "lib\\python38;";
-      pythonPathEnv += qgisRootPath + "lib\\python38\\site-packages;";
-      pythonPathEnv += qgisRootPath + "lib\\python38\\lib-dynload;";
-  }
-  return pythonPathEnv;
-}
-
 int CALLBACK WinMain( HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int /*nCmdShow*/ )
 {
   std::string exename( moduleExeBaseName() );
@@ -105,7 +89,7 @@ int CALLBACK WinMain( HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/, LPST
         std::ofstream file;
         file.open( envfile, std::ifstream::out );
 
-        for ( std::list<std::string>::const_iterator it = vars.begin();  it != vars.end(); ++it )
+        for ( std::list<std::string>::const_iterator it = vars.begin(); it != vars.end(); ++it )
         {
           if ( getenv( it->c_str() ) )
             file << *it << "=" << getenv( it->c_str() ) << std::endl;
@@ -145,19 +129,12 @@ int CALLBACK WinMain( HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/, LPST
     return EXIT_FAILURE;
   }
 
-  const std::string &pythonPathEnv = pythonPathEnvString();
-  if (_putenv(pythonPathEnv.c_str()) < 0)
-  {
-      showError("Could not set PYTHONPATH environment variable", "Error loading QGIS");
-      return EXIT_FAILURE;
-  }
-
 #ifndef _MSC_VER // MinGW
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 #endif
   HINSTANCE hKernelDLL = LoadLibrary( "kernel32.dll" );
-  BOOL ( *SetDefaultDllDirectories )( DWORD ) = hKernelDLL ? reinterpret_cast<BOOL( * )( DWORD )>( GetProcAddress( hKernelDLL, "SetDefaultDllDirectories" ) ) : 0;
-  DLL_DIRECTORY_COOKIE( *AddDllDirectory )( PCWSTR ) = hKernelDLL ? reinterpret_cast<DLL_DIRECTORY_COOKIE( * )( PCWSTR )>( GetProcAddress( hKernelDLL, "AddDllDirectory" ) ) : 0;
+  BOOL ( *SetDefaultDllDirectories )( DWORD ) = hKernelDLL ? reinterpret_cast<BOOL ( * )( DWORD )>( GetProcAddress( hKernelDLL, "SetDefaultDllDirectories" ) ) : 0;
+  DLL_DIRECTORY_COOKIE ( *AddDllDirectory )( PCWSTR ) = hKernelDLL ? reinterpret_cast<DLL_DIRECTORY_COOKIE ( * )( PCWSTR )>( GetProcAddress( hKernelDLL, "AddDllDirectory" ) ) : 0;
 #ifndef _MSC_VER // MinGW
 #pragma GCC diagnostic pop
 #endif
@@ -191,10 +168,10 @@ int CALLBACK WinMain( HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/, LPST
 
 
 #ifdef _MSC_VER
-  HINSTANCE hGetProcIDDLL = LoadLibrary( "ngqgis_app.dll" );
+  HINSTANCE hGetProcIDDLL = LoadLibrary( "qgis_app.dll" );
 #else
-// MinGW
-  HINSTANCE hGetProcIDDLL = LoadLibrary( "libngqgis_app.dll" );
+  // MinGW
+  HINSTANCE hGetProcIDDLL = LoadLibrary( "libqgis_app.dll" );
 #endif
 
   if ( !hGetProcIDDLL )
@@ -207,11 +184,12 @@ int CALLBACK WinMain( HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/, LPST
       NULL,
       error,
       MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
-      ( LPTSTR )&errorText,
+      ( LPTSTR ) &errorText,
       0,
-      NULL );
+      NULL
+    );
 
-    std::string message = "Could not load ngqgis_app.dll \n Windows Error: " + std::string( errorText )
+    std::string message = "Could not load qgis_app.dll \n Windows Error: " + std::string( errorText )
                           + "\n Help: \n\n Check " + basename + ".env for correct environment paths";
     showError( message, "Error loading QGIS" );
 
@@ -230,7 +208,7 @@ int CALLBACK WinMain( HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/, LPST
 
   if ( !realmain )
   {
-    showError( "Could not locate main function in ngqgis_app.dll", "Error loading QGIS" );
+    showError( "Could not locate main function in qgis_app.dll", "Error loading QGIS" );
     return EXIT_FAILURE;
   }
 

@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgslayoutitemattributetable.h"
+#include "moc_qgslayoutitemattributetable.cpp"
 #include "qgslayout.h"
 #include "qgslayouttablecolumn.h"
 #include "qgslayoutitemmap.h"
@@ -472,6 +473,10 @@ bool QgsLayoutItemAttributeTable::getTableContents( QgsLayoutTableContents &cont
       atlasGeometryEngine.reset( QgsGeometry::createGeometryEngine( atlasGeometry.constGet() ) );
       atlasGeometryEngine->prepareGeometry();
     }
+    else
+    {
+      return false;
+    }
   }
 
   if ( mSource == QgsLayoutItemAttributeTable::RelationChildren )
@@ -481,10 +486,10 @@ bool QgsLayoutItemAttributeTable::getTableContents( QgsLayoutTableContents &cont
     req = relation.getRelatedFeaturesRequest( atlasFeature );
   }
 
-  if ( !selectionRect.isEmpty() )
+  if ( !selectionRect.isNull() )
     req.setFilterRect( selectionRect );
 
-  req.setFlags( mShowOnlyVisibleFeatures ? QgsFeatureRequest::ExactIntersect : QgsFeatureRequest::NoFlags );
+  req.setFlags( mShowOnlyVisibleFeatures ? Qgis::FeatureRequestFlag::ExactIntersect : Qgis::FeatureRequestFlag::NoFlags );
 
   if ( mSource == QgsLayoutItemAttributeTable::AtlasFeature )
   {
@@ -533,9 +538,9 @@ bool QgsLayoutItemAttributeTable::getTableContents( QgsLayoutTableContents &cont
     }
 
     //check against atlas feature intersection
-    if ( mFilterToAtlasIntersection )
+    if ( atlasGeometryEngine )
     {
-      if ( !f.hasGeometry() || !atlasGeometryEngine )
+      if ( !f.hasGeometry() )
       {
         continue;
       }
@@ -677,7 +682,7 @@ QgsTextFormat QgsLayoutItemAttributeTable::textFormatForCell( int row, int colum
     {
       QFont newFont = format.font();
       // we want to keep all the other font settings, like word/letter spacing
-      newFont.setFamily( styleFont.family() );
+      QgsFontUtils::setFontFamily( newFont, styleFont.family() );
 
       // warning -- there's a potential trap here! We can't just read QFont::styleName(), as that may be blank even when
       // the font has the bold or italic attributes set! Reading the style name via QFontInfo avoids this and always returns
@@ -745,7 +750,7 @@ void QgsLayoutItemAttributeTable::refreshDataDefinedProperty( const QgsLayoutObj
   QgsExpressionContext context = createExpressionContext();
 
   if ( mSource == QgsLayoutItemAttributeTable::LayerAttributes &&
-       ( property == QgsLayoutObject::AttributeTableSourceLayer || property == QgsLayoutObject::AllProperties ) )
+       ( property == QgsLayoutObject::DataDefinedProperty::AttributeTableSourceLayer || property == QgsLayoutObject::DataDefinedProperty::AllProperties ) )
   {
     mDataDefinedVectorLayer = nullptr;
 
@@ -753,7 +758,7 @@ void QgsLayoutItemAttributeTable::refreshDataDefinedProperty( const QgsLayoutObj
     if ( QgsVectorLayer *currentLayer = mVectorLayer.get() )
       currentLayerIdentifier = currentLayer->id();
 
-    const QString layerIdentifier = mDataDefinedProperties.valueAsString( QgsLayoutObject::AttributeTableSourceLayer, context, currentLayerIdentifier );
+    const QString layerIdentifier = mDataDefinedProperties.valueAsString( QgsLayoutObject::DataDefinedProperty::AttributeTableSourceLayer, context, currentLayerIdentifier );
     QgsVectorLayer *ddLayer = qobject_cast< QgsVectorLayer * >( QgsLayoutUtils::mapLayerFromString( layerIdentifier, mLayout->project() ) );
     if ( ddLayer )
       mDataDefinedVectorLayer = ddLayer;

@@ -98,7 +98,7 @@ class CORE_EXPORT QgsPointCloudLayer : public QgsMapLayer, public QgsAbstractPro
      * Point cloud statistics calculation task
      * \since QGIS 3.26
      */
-    enum class PointCloudStatisticsCalculationState : int
+    enum class PointCloudStatisticsCalculationState : int SIP_ENUM_BASETYPE( IntFlag )
     {
       NotStarted = 0, //!< The statistics calculation task has not been started
       Calculating = 1 << 0, //!< The statistics calculation task is running
@@ -116,9 +116,7 @@ class CORE_EXPORT QgsPointCloudLayer : public QgsMapLayer, public QgsAbstractPro
 
     ~QgsPointCloudLayer() override;
 
-    //! QgsPointCloudLayer cannot be copied.
     QgsPointCloudLayer( const QgsPointCloudLayer &rhs ) = delete;
-    //! QgsPointCloudLayer cannot be copied.
     QgsPointCloudLayer &operator=( QgsPointCloudLayer const &rhs ) = delete;
 
 #ifdef SIP_RUN
@@ -269,7 +267,7 @@ class CORE_EXPORT QgsPointCloudLayer : public QgsMapLayer, public QgsAbstractPro
 
   private slots:
     void onPointCloudIndexGenerationStateChanged( QgsPointCloudDataProvider::PointCloudIndexGenerationState state );
-    void setDataSourcePrivate( const QString &dataSource, const QString &baseName, const QString &provider, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags ) override;
+    void setDataSourcePrivate( const QString &dataSource, const QString &baseName, const QString &provider, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags ) override;
 
   private:
 

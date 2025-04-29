@@ -3,7 +3,7 @@
  *                                                                      *
  * src/analysis/network/qgsgraphanalyzer.h                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -14,15 +14,14 @@
 class QgsGraphAnalyzer
 {
 %Docstring(signature="appended")
-This class performs graph analysis, e.g. calculates shortest path between two
-points using different strategies with Dijkstra algorithm
+This class performs graph analysis, e.g. calculates shortest path
+between two points using different strategies with Dijkstra algorithm
 %End
 
 %TypeHeaderCode
 #include "qgsgraphanalyzer.h"
 %End
   public:
-
     static SIP_PYLIST  dijkstra( const QgsGraph *source, int startVertexIdx, int criterionNum, QVector<int> *resultTree = 0, QVector<double> *resultCost = 0 );
 %Docstring
 Solve shortest path problem using Dijkstra algorithm
@@ -30,14 +29,17 @@ Solve shortest path problem using Dijkstra algorithm
 :param source: source graph
 :param startVertexIdx: index of the start vertex
 :param criterionNum: index of the optimization strategy
-:param resultTree: array that represents shortest path tree. resultTree[ vertexIndex ] == inboundingArcIndex if vertex reachable, otherwise resultTree[ vertexIndex ] == -1.
-                   Note that the startVertexIdx will also have a value of -1 and may need special handling by callers.
+:param resultTree: array that represents shortest path tree. resultTree[
+                   vertexIndex ] == inboundingArcIndex if vertex
+                   reachable, otherwise resultTree[ vertexIndex ] == -1.
+                   Note that the startVertexIdx will also have a value
+                   of -1 and may need special handling by callers.
 :param resultCost: array of the paths costs
 %End
 
 %MethodCode
-    QVector< int > treeResult;
-    QVector< double > costResult;
+    QVector<int> treeResult;
+    QVector<double> costResult;
     QgsGraphAnalyzer::dijkstra( a0, a1, a2, &treeResult, &costResult );
 
     PyObject *l1 = PyList_New( treeResult.size() );
@@ -79,5 +81,5 @@ Returns shortest path tree with root-node in startVertexIdx
  *                                                                      *
  * src/analysis/network/qgsgraphanalyzer.h                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

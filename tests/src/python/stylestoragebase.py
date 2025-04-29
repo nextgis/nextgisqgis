@@ -7,9 +7,9 @@
 
 """
 
-__author__ = 'elpaso@itopen.it'
-__date__ = '2022-11-07'
-__copyright__ = 'Copyright 2022, ItOpen'
+__author__ = "elpaso@itopen.it"
+__date__ = "2022-11-07"
+__copyright__ = "Copyright 2022, ItOpen"
 
 from qgis.PyQt.QtCore import QCoreApplication, QVariant
 from qgis.PyQt.QtGui import QColor
@@ -23,10 +23,11 @@ from qgis.core import (
     QgsVectorLayer,
     QgsWkbTypes,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 
-class StyleStorageTestCaseBase(unittest.TestCase):
+class StyleStorageTestCaseBase(QgisTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -40,7 +41,7 @@ class StyleStorageTestCaseBase(unittest.TestCase):
         start_app()
 
 
-class StyleStorageTestBase():
+class StyleStorageTestBase:
 
     def layerUri(self, conn, schema_name, table_name):
         """Providers may override if they need more complex URI generation than
@@ -51,26 +52,29 @@ class StyleStorageTestBase():
     def schemaName(self):
         """Providers may override (Oracle?)"""
 
-        return 'test_styles_schema'
+        return "test_styles_schema"
 
     def tableName(self):
         """Providers may override (Oracle?)"""
 
-        return 'test_styles_table'
+        return "test_styles_table"
 
     def testMultipleStyles(self):
 
         md = QgsProviderRegistry.instance().providerMetadata(self.providerKey)
 
         conn = md.createConnection(self.uri, {})
-        md.saveConnection(conn, 'qgis_test1')
+        md.saveConnection(conn, "qgis_test1")
 
         schema = None
         capabilities = conn.capabilities()
 
-        if (capabilities & QgsAbstractDatabaseProviderConnection.CreateSchema
-            and capabilities & QgsAbstractDatabaseProviderConnection.Schemas
-                and capabilities & QgsAbstractDatabaseProviderConnection.DropSchema):
+        if (
+            capabilities & QgsAbstractDatabaseProviderConnection.Capability.CreateSchema
+            and capabilities & QgsAbstractDatabaseProviderConnection.Capability.Schemas
+            and capabilities
+            & QgsAbstractDatabaseProviderConnection.Capability.DropSchema
+        ):
 
             schema = self.schemaName()
             # Start clean
@@ -80,9 +84,9 @@ class StyleStorageTestBase():
             # Create
             conn.createSchema(schema)
             schemas = conn.schemas()
-            self.assertTrue(schema in schemas)
+            self.assertIn(schema, schemas)
 
-        elif (capabilities & QgsAbstractDatabaseProviderConnection.Schemas):
+        elif capabilities & QgsAbstractDatabaseProviderConnection.Capability.Schemas:
             schema = self.schemaName()
 
             try:
@@ -96,61 +100,65 @@ class StyleStorageTestBase():
                 pass
 
             schemas = conn.schemas()
-            self.assertTrue(schema in schemas)
+            self.assertIn(schema, schemas)
 
         fields = QgsFields()
         fields.append(QgsField("string_t", QVariant.String))
         options = {}
         crs = QgsCoordinateReferenceSystem.fromEpsgId(4326)
-        typ = QgsWkbTypes.Point
+        typ = QgsWkbTypes.Type.Point
 
         # Create table
-        conn.createVectorTable(schema, self.tableName(), fields, typ, crs, True, options)
+        conn.createVectorTable(
+            schema, self.tableName(), fields, typ, crs, True, options
+        )
 
         uri = self.layerUri(conn, schema, self.tableName())
 
-        vl = QgsVectorLayer(uri, 'vl', self.providerKey)
+        vl = QgsVectorLayer(uri, "vl", self.providerKey)
         self.assertTrue(vl.isValid())
         renderer = vl.renderer()
         symbol = renderer.symbol().clone()
-        symbol.setColor(QColor('#ff0000'))
+        symbol.setColor(QColor("#ff0000"))
         renderer.setSymbol(symbol)
 
-        vl.saveStyleToDatabase('style1', 'style1', False, None)
+        vl.saveStyleToDatabase("style1", "style1", False, None)
 
         symbol = renderer.symbol().clone()
-        symbol.setColor(QColor('#00ff00'))
+        symbol.setColor(QColor("#00ff00"))
         renderer.setSymbol(symbol)
 
-        vl.saveStyleToDatabase('style2', 'style2', True, None)
+        vl.saveStyleToDatabase("style2", "style2", True, None)
 
         symbol = renderer.symbol().clone()
-        symbol.setColor(QColor('#0000ff'))
+        symbol.setColor(QColor("#0000ff"))
         renderer.setSymbol(symbol)
 
-        vl.saveStyleToDatabase('style3', 'style3', False, None)
+        vl.saveStyleToDatabase("style3", "style3", False, None)
         num, ids, names, desc, err = vl.listStylesInDatabase()
 
-        self.assertTrue({'style2', 'style3', 'style1'}.issubset(set(names)))
+        self.assertIn("style1", names)
+        self.assertIn("style2", names)
+        self.assertIn("style3", names)
 
         del vl
-        vl = QgsVectorLayer(uri, 'vl', self.providerKey)
+        vl = QgsVectorLayer(uri, "vl", self.providerKey)
         self.assertTrue(vl.isValid())
         renderer = vl.renderer()
         symbol = renderer.symbol()
-        self.assertEqual(symbol.color().name(), '#00ff00')
+        self.assertEqual(symbol.color().name(), "#00ff00")
 
         mgr = vl.styleManager()
-        self.assertEqual(mgr.styles(), ['style2'])
+        self.assertEqual(mgr.styles(), ["style2"])
 
         del vl
         options = QgsVectorLayer.LayerOptions()
         options.loadAllStoredStyles = True
-        vl = QgsVectorLayer(uri, 'vl', self.providerKey, options)
+        vl = QgsVectorLayer(uri, "vl", self.providerKey, options)
         self.assertTrue(vl.isValid())
         renderer = vl.renderer()
         symbol = renderer.symbol()
-        self.assertEqual(symbol.color().name(), '#00ff00')
+        self.assertEqual(symbol.color().name(), "#00ff00")
 
         mgr = vl.styleManager()
-        self.assertTrue({'style2', 'style3', 'style1'}.issubset(set(names)))
+        self.assertTrue({"style2", "style3", "style1"}.issubset(set(names)))

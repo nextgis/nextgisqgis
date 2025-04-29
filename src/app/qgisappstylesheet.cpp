@@ -20,12 +20,15 @@
 #include <QStyle>
 
 #include "qgisappstylesheet.h"
+#include "moc_qgisappstylesheet.cpp"
 #include "qgsapplication.h"
 #include "qgisapp.h"
 #include "qgsproxystyle.h"
 #include "qgslogger.h"
 #include "qgssettings.h"
 #include "qgsguiutils.h"
+
+bool QgisAppStyleSheet::sIsFirstRun = true;
 
 QgisAppStyleSheet::QgisAppStyleSheet( QObject *parent )
   : QObject( parent )
@@ -84,12 +87,18 @@ void QgisAppStyleSheet::applyStyleSheet( const QMap<QString, QVariant> &opts )
 
     if ( overriddenFontFamily || overriddenFontSize )
     {
-      QFont font = QApplication::font();
-      if ( overriddenFontFamily )
-        font.setFamily( currentFontFamily );
-      if ( overriddenFontSize )
-        font.setPointSizeF( currentFontSize );
-      QApplication::setFont( font );
+      // this seems only safe to do at startup, at least on Windows.
+      // see https://github.com/qgis/QGIS/issues/54402, https://github.com/qgis/QGIS/issues/54295
+      // Let's play it safe and require a restart to change the font.
+      if ( sIsFirstRun )
+      {
+        QFont font = QApplication::font();
+        if ( overriddenFontFamily )
+          font.setFamily( currentFontFamily );
+        if ( overriddenFontSize )
+          font.setPointSizeF( currentFontSize );
+        QApplication::setFont( font );
+      }
     }
   }
 
@@ -123,7 +132,8 @@ void QgisAppStyleSheet::applyStyleSheet( const QMap<QString, QVariant> &opts )
                                     "    color: palette(window-text);"
                                     "    background-color:palette(window);"
                                     "    padding-right: 0px;"
-                                    "}" ).arg( frameMargin );
+                                    "}" )
+                      .arg( frameMargin );
 
     style += QStringLiteral( "QTreeView#mOptionsTreeView {"
                              "    background-color: rgba(69, 69, 69, 0);"
@@ -140,7 +150,8 @@ void QgisAppStyleSheet::applyStyleSheet( const QMap<QString, QVariant> &opts )
                              "    color: palette(window-text);"
                              "    background-color:palette(window);"
                              "    padding-right: 0px;"
-                             "}" ).arg( frameMargin );
+                             "}" )
+               .arg( frameMargin );
 
     const QString toolbarSpacing = opts.value( QStringLiteral( "toolbarSpacing" ), QString() ).toString();
     if ( !toolbarSpacing.isEmpty() )
@@ -161,16 +172,12 @@ void QgisAppStyleSheet::applyStyleSheet( const QMap<QString, QVariant> &opts )
                    "selection-background-color: %1;"
                    "selection-color: %2;"
                    "}" )
-          .arg( palette.highlight().color().name(),
-                palette.highlightedText().color().name() );
-
-    ss += QLatin1String( "QgsPropertyOverrideButton { background: none; border: 1px solid rgba(0, 0, 0, 0%); } QgsPropertyOverrideButton:focus { border: 1px solid palette(highlight); }" );
-#ifdef Q_OS_MACX
-    ss += QLatin1String( "QgsPropertyOverrideButton::menu-indicator { width: 5px; }" );
-#endif
+            .arg( palette.highlight().color().name(), palette.highlightedText().color().name() );
   }
 
   QgsDebugMsgLevel( QStringLiteral( "Stylesheet built: %1" ).arg( ss ), 2 );
+
+  sIsFirstRun = false;
 
   emit appStyleSheetChanged( ss );
 }
@@ -231,7 +238,7 @@ void QgisAppStyleSheet::setActiveValues()
   QgsDebugMsgLevel( QStringLiteral( "Style name: %1" ).arg( mStyle ), 2 );
 
   mMacStyle = mStyle.contains( QLatin1String( "macintosh" ) ); // macintosh (aqua)
-  mOxyStyle = mStyle.contains( QLatin1String( "oxygen" ) ); // oxygen
+  mOxyStyle = mStyle.contains( QLatin1String( "oxygen" ) );    // oxygen
 
   mDefaultFont = qApp->font(); // save before it is changed in any way
 
@@ -278,5 +285,4 @@ void QgisAppStyleSheet::setActiveValues()
 #else
   mAndroidOS = false;
 #endif
-
 }

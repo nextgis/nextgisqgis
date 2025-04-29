@@ -37,9 +37,9 @@ namespace Qt3DRender
   class QRenderSettings;
   class QCamera;
   class QFrameGraphNode;
-}
+} // namespace Qt3DRender
 
-class QgsShadowRenderingFrameGraph;
+class QgsFrameGraph;
 
 /**
  * \ingroup 3d
@@ -61,7 +61,6 @@ class _3D_EXPORT QgsAbstract3DEngine : public QObject
 {
     Q_OBJECT
   public:
-
     /**
      * Constructor for QgsAbstract3DEngine with the specified \a parent object.
      */
@@ -109,7 +108,7 @@ class _3D_EXPORT QgsAbstract3DEngine : public QObject
      *
      * \since QGIS 3.18
      */
-    QgsShadowRenderingFrameGraph *frameGraph() { return mFrameGraph; }
+    QgsFrameGraph *frameGraph() { return mFrameGraph; }
 
     /**
      * Sets whether it will be possible to render to an image
@@ -125,6 +124,18 @@ class _3D_EXPORT QgsAbstract3DEngine : public QObject
      * \since QGIS 3.18
      */
     bool renderCaptureEnabled() const;
+
+    /**
+     * Dump the current frame graph and scene graph to the console
+     */
+    void dumpFrameGraphToConsole() const;
+
+    //! Dump frame graph as string
+    QString dumpFrameGraph() const;
+
+    //! Dump scene graph as string
+    QString dumpSceneGraph() const;
+
   signals:
     //! Emitted after a call to requestCaptureImage() to return the captured image.
     void imageCaptured( const QImage &image );
@@ -141,8 +152,9 @@ class _3D_EXPORT QgsAbstract3DEngine : public QObject
      *  \since QGIS 3.30
      */
     void sizeChanged();
+
   protected:
-    QgsShadowRenderingFrameGraph *mFrameGraph = nullptr;
+    QgsFrameGraph *mFrameGraph = nullptr;
 };
 
 

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgscompoundcolorwidget.h                                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,17 +13,14 @@
 class QgsCompoundColorWidget : QgsPanelWidget
 {
 %Docstring(signature="appended")
-A custom QGIS widget for selecting a color, including options for selecting colors via
-hue wheel, color swatches, and a color sampler.
-
-.. versionadded:: 2.16
+A custom QGIS widget for selecting a color, including options for
+selecting colors via hue wheel, color swatches, and a color sampler.
 %End
 
 %TypeHeaderCode
 #include "qgscompoundcolorwidget.h"
 %End
   public:
-
     enum Layout
     {
       LayoutDefault,
@@ -50,29 +47,38 @@ Returns the current color for the dialog
 
     void setAllowOpacity( bool allowOpacity );
 %Docstring
-Sets whether opacity modification (transparency) is permitted
-for the color dialog. Defaults to ``True``.
+Sets whether opacity modification (transparency) is permitted for the
+color dialog. Defaults to ``True``.
 
 :param allowOpacity: set to ``False`` to disable opacity modification
+%End
 
-.. versionadded:: 3.0
+    void setColorModelEditable( bool colorModelEditable );
+%Docstring
+Sets whether color model is editable or not
+
+:param colorModelEditable: set to ``False`` to disable color model
+                           modification Defaults to ``True``.
+
+.. versionadded:: 3.40
 %End
 
     void setDiscarded( bool discarded );
 %Docstring
-Sets whether the widget's color has been "discarded" and the selected color should not
-be stored in the recent color list.
+Sets whether the widget's color has been "discarded" and the selected
+color should not be stored in the recent color list.
 
-:param discarded: set to ``True`` to avoid adding color to recent color list on widget destruction.
-
-.. versionadded:: 3.0
+:param discarded: set to ``True`` to avoid adding color to recent color
+                  list on widget destruction.
 %End
 
     static QgsUserColorScheme *importUserPaletteFromFile( QWidget *parent );
 %Docstring
-Triggers a user prompt for importing a new color scheme from an existing GPL file.
+Triggers a user prompt for importing a new color scheme from an existing
+GPL file.
 
-The ``parent`` argument must be set to a valid parent widget for the dialog prompts.
+The ``parent`` argument must be set to a valid parent widget for the
+dialog prompts.
 
 .. seealso:: :py:func:`createNewUserPalette`
 
@@ -85,7 +91,8 @@ The ``parent`` argument must be set to a valid parent widget for the dialog prom
 %Docstring
 Triggers a user prompt for creating a new user color scheme.
 
-The ``parent`` argument must be set to a valid parent widget for the dialog prompts.
+The ``parent`` argument must be set to a valid parent widget for the
+dialog prompts.
 
 .. seealso:: :py:func:`importUserPaletteFromFile`
 
@@ -98,7 +105,8 @@ The ``parent`` argument must be set to a valid parent widget for the dialog prom
 %Docstring
 Triggers a user prompt for removing an existing user color ``scheme``.
 
-The ``parent`` argument must be set to a valid parent widget for the dialog prompts.
+The ``parent`` argument must be set to a valid parent widget for the
+dialog prompts.
 
 .. seealso:: :py:func:`importUserPaletteFromFile`
 
@@ -133,7 +141,6 @@ Sets the color to show in an optional "previous color" section
 %End
 
   protected:
-
     virtual void hideEvent( QHideEvent *e );
 
 
@@ -156,5 +163,5 @@ Sets the color to show in an optional "previous color" section
  *                                                                      *
  * src/gui/qgscompoundcolorwidget.h                                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

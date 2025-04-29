@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/network/qgsnewsfeedparser.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -15,8 +15,8 @@ class QgsNewsFeedParser : QObject
 %Docstring(signature="appended")
 Parser for published QGIS news feeds.
 
-This class is designed to work with the specialized QGIS news feed API. See
-https://github.com/elpaso/qgis-feed.
+This class is designed to work with the specialized QGIS news feed API.
+See https://github.com/elpaso/qgis-feed.
 
 .. versionadded:: 3.10
 %End
@@ -61,8 +61,8 @@ Represents a single entry from a news feed.
 %Docstring
 Constructor for QgsNewsFeedParser, parsing the specified ``feedUrl``.
 
-The optional ``authcfg`` argument can be used to specify an authentication
-configuration to use when connecting to the feed.
+The optional ``authcfg`` argument can be used to specify an
+authentication configuration to use when connecting to the feed.
 %End
 
     QList< QgsNewsFeedParser::Entry > entries() const;
@@ -74,7 +74,8 @@ Returns a list of existing entries in the feed.
 %Docstring
 Dismisses an entry with matching ``key``.
 
-This removes the entry from the local store, ensuring it will never be present again.
+This removes the entry from the local store, ensuring it will never be
+present again.
 
 .. seealso:: :py:func:`dismissAll`
 %End
@@ -109,7 +110,7 @@ Fetches new entries from the feed's URL.
 
     void fetched( const QList< QgsNewsFeedParser::Entry > &entries );
 %Docstring
-Emitted when ``entries`` have fetched from the feed.
+Emitted when ``entries`` have been fetched from the feed.
 
 .. seealso:: :py:func:`fetch`
 %End
@@ -122,18 +123,28 @@ of a call to :py:func:`~QgsNewsFeedParser.fetch`).
 .. seealso:: :py:func:`fetch`
 %End
 
+    void entryUpdated( const QgsNewsFeedParser::Entry &entry );
+%Docstring
+Emitted whenever an existing ``entry`` is available from the feed (as a
+result of a call to :py:func:`~QgsNewsFeedParser.fetch`).
+
+.. seealso:: :py:func:`fetch`
+
+.. versionadded:: 3.36
+%End
+
     void entryDismissed( const QgsNewsFeedParser::Entry &entry );
 %Docstring
-Emitted whenever an ``entry`` is dismissed (as a result of a call
-to :py:func:`~QgsNewsFeedParser.dismissEntry`).
+Emitted whenever an ``entry`` is dismissed (as a result of a call to
+:py:func:`~QgsNewsFeedParser.dismissEntry`).
 
 .. seealso:: :py:func:`dismissEntry`
 %End
 
     void imageFetched( int key, const QPixmap &pixmap );
 %Docstring
-Emitted when the image attached to the entry with the specified ``key`` has been fetched
-and is now available.
+Emitted when the image attached to the entry with the specified ``key``
+has been fetched and is now available.
 %End
 
 };
@@ -143,5 +154,5 @@ and is now available.
  *                                                                      *
  * src/core/network/qgsnewsfeedparser.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

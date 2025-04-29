@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgsprovidersourcewidget.h                                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,7 +12,8 @@
 class QgsProviderSourceWidget : QWidget
 {
 %Docstring(signature="appended")
-Base class for widgets which allow customization of a provider's source URI.
+Base class for widgets which allow customization of a provider's source
+URI.
 
 .. versionadded:: 3.18
 %End
@@ -21,10 +22,10 @@ Base class for widgets which allow customization of a provider's source URI.
 #include "qgsprovidersourcewidget.h"
 %End
   public:
-
     QgsProviderSourceWidget( QWidget *parent /TransferThis/ = 0 );
 %Docstring
-Constructor for QgsProviderSourceWidget with the specified ``parent`` widget.
+Constructor for QgsProviderSourceWidget with the specified ``parent``
+widget.
 %End
 
     virtual void setSourceUri( const QString &uri ) = 0;
@@ -39,6 +40,16 @@ Sets the source ``uri`` to show in the widget.
 Returns the source URI as currently defined by the widget.
 
 .. seealso:: :py:func:`setSourceUri`
+%End
+
+    virtual QString groupTitle() const;
+%Docstring
+Returns an optional group title for the source settings, for use in
+layer properties dialogs.
+
+If not specified, a default title will be used.
+
+.. versionadded:: 3.36
 %End
 
     virtual void setMapCanvas( QgsMapCanvas *mapCanvas );
@@ -61,8 +72,8 @@ Returns the map canvas associated with the widget.
 %Docstring
 Emitted whenever the validation status of the widget changes.
 
-If ``isValid`` is ``False`` then the widget is not valid, and any dialog using the widget should be prevented from
-being accepted.
+If ``isValid`` is ``False`` then the widget is not valid, and any dialog
+using the widget should be prevented from being accepted.
 %End
 
     void changed();
@@ -78,5 +89,5 @@ Emitted whenever the configuration of the widget changes.
  *                                                                      *
  * src/gui/qgsprovidersourcewidget.h                                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

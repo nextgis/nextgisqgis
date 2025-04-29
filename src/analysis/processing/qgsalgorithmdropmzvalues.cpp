@@ -81,9 +81,9 @@ Qgis::WkbType QgsDropMZValuesAlgorithm::outputWkbType( Qgis::WkbType inputWkbTyp
   return wkb;
 }
 
-QgsProcessingFeatureSource::Flag QgsDropMZValuesAlgorithm::sourceFlags() const
+Qgis::ProcessingFeatureSourceFlags QgsDropMZValuesAlgorithm::sourceFlags() const
 {
-  return QgsProcessingFeatureSource::FlagSkipGeometryValidityChecks;
+  return Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks;
 }
 
 bool QgsDropMZValuesAlgorithm::prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback * )
@@ -98,7 +98,7 @@ QgsFeatureList QgsDropMZValuesAlgorithm::processFeature( const QgsFeature &featu
   QgsFeature f = feature;
   if ( f.hasGeometry() )
   {
-    std::unique_ptr< QgsAbstractGeometry > newGeom( f.geometry().constGet()->clone() );
+    std::unique_ptr<QgsAbstractGeometry> newGeom( f.geometry().constGet()->clone() );
     if ( mDropM )
       newGeom->dropMValue();
     if ( mDropZ )
@@ -110,4 +110,3 @@ QgsFeatureList QgsDropMZValuesAlgorithm::processFeature( const QgsFeature &featu
 }
 
 ///@endcond
-

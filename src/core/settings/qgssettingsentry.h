@@ -116,9 +116,6 @@ class CORE_EXPORT QgsSettingsEntryBase
                           const QString &description = QString(),
                           Qgis::SettingsOptions options = Qgis::SettingsOptions() ) SIP_THROW( QgsSettingsException );
 
-    /**
-     * Destructor for QgsSettingsEntryBase.
-     */
     virtual ~QgsSettingsEntryBase();
 
     /**
@@ -214,7 +211,7 @@ class CORE_EXPORT QgsSettingsEntryBase
 
     /**
      * Returns settings section. The settings section of the parent group is returned if available.
-     * \deprecated since QGIS 3.26 the key is entirely self-defined
+     * \deprecated QGIS 3.26. The key is entirely self-defined.
      */
     Q_DECL_DEPRECATED int section() const;
 
@@ -257,13 +254,13 @@ class CORE_EXPORT QgsSettingsEntryBase
 
     /**
      * Returns settings value with an optional default value override
-     * \deprecated since QGIS 3.26 use valueAsVariantWithDefaultOverride instead
+     * \deprecated QGIS 3.26. Use valueAsVariantWithDefaultOverride instead.
      */
     Q_DECL_DEPRECATED QVariant valueAsVariant( const QString &dynamicKeyPart, bool useDefaultValueOverride, const QVariant &defaultValueOverride ) const SIP_DEPRECATED;
 
     /**
      * Returns settings value with an optional default value override
-     * \deprecated since QGIS 3.26 use valueAsVariantWithDefaultOverride instead
+     * \deprecated QGIS 3.26. Use valueAsVariantWithDefaultOverride instead.
      */
     Q_DECL_DEPRECATED QVariant valueAsVariant( const QStringList &dynamicKeyPartList, bool useDefaultValueOverride, const QVariant &defaultValueOverride ) const SIP_DEPRECATED;
 
@@ -326,6 +323,16 @@ class CORE_EXPORT QgsSettingsEntryBase
     void copyValueToKey( const QString &key, const QStringList &dynamicKeyPartList = QStringList() ) const;
 
     /**
+     * Copies the settings to the given key, if it has changed during the current QGIS session (see hasChanged()).
+     *
+     * \param key the key to copy the setting value to.
+     * \param dynamicKeyPartList is the optional dynamic key part to determine the key. It must be the same for origin and destination keys.
+     *
+     * \since QGIS 3.36
+     */
+    void copyValueToKeyIfChanged( const QString &key, const QStringList &dynamicKeyPartList = QStringList() ) const;
+
+    /**
     * Returns the parent tree element
     * \since QGIS 3.30
     */
@@ -338,6 +345,13 @@ class CORE_EXPORT QgsSettingsEntryBase
       return true;
     }
 
+    /**
+     * Returns TRUE if the setting was changed during the current QGIS session.
+     *
+     * \since QGIS 3.36
+     */
+    bool hasChanged() const { return mHasChanged; }
+
   private:
     QString formerValuekey( const QStringList &dynamicKeyPartList ) const;
 
@@ -349,6 +363,7 @@ class CORE_EXPORT QgsSettingsEntryBase
     QVariant mDefaultValue;
     QString mDescription;
     Qgis::SettingsOptions mOptions;
+    mutable bool mHasChanged = false;
 };
 
 /**

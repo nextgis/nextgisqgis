@@ -29,9 +29,9 @@ class TestQgsDwgImportDialog : public QObject
     TestQgsDwgImportDialog() = default;
 
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
+    void initTestCase();      // will be called before the first testfunction is executed.
     void cleanupTestCase() {} // will be called after the last testfunction was executed.
-    void cleanup(); // will be called after every testfunction.
+    void cleanup();           // will be called after every testfunction.
 
     void importDwgDocument();
     void importDwgDocumentExpandBlockGeometries();
@@ -75,7 +75,7 @@ void TestQgsDwgImportDialog::importDwgDocument()
 
   // Set source drawing and import
   QString uri = QString( mDataDir + "/entities.dwg" );
-  dwgImportDialog.leDrawing->setText( uri );
+  dwgImportDialog.mSourceDrawingFileWidget->setFilePath( uri );
   dwgImportDialog.pbImportDrawing_clicked();
 
   // Check that a default group name was assigned
@@ -90,14 +90,10 @@ void TestQgsDwgImportDialog::importDwgDocument()
   QVERIFY( groupEntities );
 
   // Group 0
-  checkGroupContent( groupEntities,
-                     "0",
-                     QStringList() << "hatches" << "lines" << "polylines" << "texts" << "points" << "inserts" );
+  checkGroupContent( groupEntities, "0", QStringList() << "hatches" << "lines" << "polylines" << "texts" << "points" << "inserts" );
 
   // Group grün
-  checkGroupContent( groupEntities,
-                     "grün",
-                     QStringList() << "hatches" << "lines" << "polylines" );
+  checkGroupContent( groupEntities, "grün", QStringList() << "hatches" << "lines" << "polylines" );
 }
 
 void TestQgsDwgImportDialog::importDwgDocumentExpandBlockGeometries()
@@ -115,7 +111,7 @@ void TestQgsDwgImportDialog::importDwgDocumentExpandBlockGeometries()
 
   // Set source drawing and import
   QString uri = QString( mDataDir + "/entities.dwg" );
-  dwgImportDialog.leDrawing->setText( uri );
+  dwgImportDialog.mSourceDrawingFileWidget->setFilePath( uri );
   dwgImportDialog.pbImportDrawing_clicked();
 
   // Check that a default group name was assigned
@@ -132,14 +128,10 @@ void TestQgsDwgImportDialog::importDwgDocumentExpandBlockGeometries()
   QVERIFY( groupEntities );
 
   // Group 0
-  checkGroupContent( groupEntities,
-                     "0",
-                     QStringList() << "hatches" << "lines" << "polylines" << "texts" << "points" );
+  checkGroupContent( groupEntities, "0", QStringList() << "hatches" << "lines" << "polylines" << "texts" << "points" );
 
   // Group grün
-  checkGroupContent( groupEntities,
-                     "grün",
-                     QStringList() << "hatches" << "lines" << "polylines" );
+  checkGroupContent( groupEntities, "grün", QStringList() << "hatches" << "lines" << "polylines" );
 }
 
 void TestQgsDwgImportDialog::importDwgDocumentBlockOnlyInsertPoints()
@@ -157,7 +149,7 @@ void TestQgsDwgImportDialog::importDwgDocumentBlockOnlyInsertPoints()
 
   // Set source drawing and import
   QString uri = QString( mDataDir + "/entities.dwg" );
-  dwgImportDialog.leDrawing->setText( uri );
+  dwgImportDialog.mSourceDrawingFileWidget->setFilePath( uri );
   dwgImportDialog.pbImportDrawing_clicked();
 
   // Check that a default group name was assigned
@@ -174,14 +166,10 @@ void TestQgsDwgImportDialog::importDwgDocumentBlockOnlyInsertPoints()
   QVERIFY( groupEntities );
 
   // Group 0
-  checkGroupContent( groupEntities,
-                     "0",
-                     QStringList() << "hatches" << "lines" << "polylines" << "texts" << "points" << "inserts" );
+  checkGroupContent( groupEntities, "0", QStringList() << "hatches" << "lines" << "polylines" << "texts" << "points" << "inserts" );
 
   // Group grün
-  checkGroupContent( groupEntities,
-                     "grün",
-                     QStringList() << "hatches" << "lines" << "polylines" );
+  checkGroupContent( groupEntities, "grün", QStringList() << "hatches" << "lines" << "polylines" );
 }
 
 void TestQgsDwgImportDialog::checkGroupContent( QgsLayerTreeGroup *parentGroup, const QString &groupName, const QStringList &contentLayerNames )

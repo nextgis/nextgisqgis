@@ -27,13 +27,11 @@
  * This removes the need for devs to remember to call saveGeometry() and restoreGeometry() when writing new widgets.
  *
  * This helper is internal and should only be called via QgsGui::enabledAutoGeometryRestore
- * \since QGIS 3.0
  */
 class QgsWidgetStateHelper : public QObject
 {
     Q_OBJECT
   public:
-
     /**
      * QgsWidgetStateHelper
      * \param parent Parent object

@@ -29,7 +29,7 @@
 #include "qgssimplifymethod.h"
 #include "qgscoordinatetransformcontext.h"
 #include "qgscoordinatereferencesystem.h"
-
+#include "qgscoordinatetransform.h"
 
 /**
  * \ingroup core
@@ -83,35 +83,6 @@
 class CORE_EXPORT QgsFeatureRequest
 {
   public:
-    enum Flag
-    {
-      NoFlags            = 0,
-      NoGeometry         = 1,  //!< Geometry is not required. It may still be returned if e.g. required for a filter condition.
-      SubsetOfAttributes = 2,  //!< Fetch only a subset of attributes (setSubsetOfAttributes sets this flag)
-      ExactIntersect     = 4,   //!< Use exact geometry intersection (slower) instead of bounding boxes
-      IgnoreStaticNodesDuringExpressionCompilation = 8, //!< If a feature request uses a filter expression which can be partially precalculated due to static nodes in the expression, setting this flag will prevent these precalculated values from being utilized during compilation of the filter for the backend provider. This flag significantly slows down feature requests and should be used for debugging purposes only. (Since QGIS 3.18)
-      EmbeddedSymbols    = 16,  //!< Retrieve any embedded feature symbology (since QGIS 3.20)
-    };
-    Q_DECLARE_FLAGS( Flags, Flag )
-
-    /**
-     * Types of filters.
-     */
-    enum FilterType
-    {
-      FilterNone,       //!< No filter is applied
-      FilterFid,        //!< Filter using feature ID
-      FilterExpression, //!< Filter using expression
-      FilterFids        //!< Filter using feature IDs
-    };
-
-    //! Handling of features with invalid geometries
-    enum InvalidGeometryCheck
-    {
-      GeometryNoCheck = 0, //!< No invalid geometry checking
-      GeometrySkipInvalid = 1, //!< Skip any features with invalid geometry. This requires a slow geometry validity check for every feature.
-      GeometryAbortOnInvalid = 2, //!< Close iterator on encountering any features with invalid geometry. This requires a slow geometry validity check for every feature.
-    };
 
     /**
      * \ingroup core
@@ -134,7 +105,6 @@ class CORE_EXPORT QgsFeatureRequest
      * for the features returned by the iterator but internally all features will be requested
      * from the provider.
      *
-     * \since QGIS 2.14
      */
     class CORE_EXPORT OrderByClause
     {
@@ -189,7 +159,6 @@ class CORE_EXPORT QgsFeatureRequest
          *
          * \see QgsExpression::prepare
          *
-         * \since QGIS 3.0
          */
         bool prepare( QgsExpressionContext *context );
 
@@ -246,7 +215,6 @@ class CORE_EXPORT QgsFeatureRequest
      * \brief Represents a list of OrderByClauses, with the most important first and the least
      * important last.
      *
-     * \since QGIS 2.14
      */
     class OrderBy : public QList<QgsFeatureRequest::OrderByClause>
     {
@@ -261,6 +229,18 @@ class CORE_EXPORT QgsFeatureRequest
          * Create a new order by from a list of clauses
          */
         CORE_EXPORT OrderBy( const QList<QgsFeatureRequest::OrderByClause> &other );
+
+        /**
+         * Equality operator
+         * \since QGIS 3.38
+         */
+        CORE_EXPORT bool operator==( const OrderBy &v ) const;
+
+        /**
+         * Inequality operator
+         * \since QGIS 3.38
+         */
+        CORE_EXPORT bool operator!=( const OrderBy &v ) const;
 
         /**
          * Gets a copy as a list of OrderByClauses
@@ -321,10 +301,16 @@ class CORE_EXPORT QgsFeatureRequest
 
     //! construct a request with a filter expression
     explicit QgsFeatureRequest( const QgsExpression &expr, const QgsExpressionContext &context = QgsExpressionContext() );
-    //! copy constructor
     QgsFeatureRequest( const QgsFeatureRequest &rh );
-    //! Assignment operator
     QgsFeatureRequest &operator=( const QgsFeatureRequest &rh );
+
+    /**
+     * Compare two requests for equality, ignoring Expression Context, Transform Error Callback, Feedback and Invalid Geometry Callback
+     * \param other the other request
+     * \return TRUE if the requests are equal in all respects but without checking for Expression Context, Transform Error, Feedback and Invalid Geometry Callback
+     * \since QGIS 3.38
+     */
+    bool compare( const QgsFeatureRequest &other ) const;
 
     ~QgsFeatureRequest();
 
@@ -339,7 +325,7 @@ class CORE_EXPORT QgsFeatureRequest
      *
      * \see spatialFilterType()
      */
-    FilterType filterType() const { return mFilter; }
+    Qgis::FeatureRequestFilterType filterType() const { return mFilter; }
 
     /**
      * Returns the spatial filter type which is currently set on this request.
@@ -483,23 +469,20 @@ class CORE_EXPORT QgsFeatureRequest
      * \note Invalid geometry checking is not performed when retrieving features
      * directly from a QgsVectorDataProvider.
      * \see invalidGeometryCheck()
-     * \since QGIS 3.0
      */
-    QgsFeatureRequest &setInvalidGeometryCheck( InvalidGeometryCheck check );
+    QgsFeatureRequest &setInvalidGeometryCheck( Qgis::InvalidGeometryCheck check );
 
     /**
      * Returns the invalid geometry checking behavior.
      * \see setInvalidGeometryCheck()
-     * \since QGIS 3.0
      */
-    InvalidGeometryCheck invalidGeometryCheck() const { return mInvalidGeometryFilter; }
+    Qgis::InvalidGeometryCheck invalidGeometryCheck() const { return mInvalidGeometryFilter; }
 
     /**
      * Sets a callback function to use when encountering an invalid geometry and
      * invalidGeometryCheck() is set to GeometryAbortOnInvalid or GeometrySkipInvalid. This function will be
      * called using the feature with invalid geometry as a parameter.
      * \see invalidGeometryCallback()
-     * \since QGIS 3.0
      */
 #ifndef SIP_RUN
     QgsFeatureRequest &setInvalidGeometryCallback( const std::function< void( const QgsFeature & )> &callback );
@@ -526,9 +509,8 @@ class CORE_EXPORT QgsFeatureRequest
      * invalidGeometryCheck() is set to GeometryAbortOnInvalid or GeometrySkipInvalid.
      * \note not available in Python bindings
      * \see setInvalidGeometryCallback()
-     * \since QGIS 3.0
      */
-    std::function< void( const QgsFeature & ) > invalidGeometryCallback() const { return mInvalidGeometryCallback; } SIP_SKIP
+    std::function< void( const QgsFeature & ) > invalidGeometryCallback() const SIP_SKIP { return mInvalidGeometryCallback; }
 
     /**
      * Set the filter \a expression. {\see QgsExpression}
@@ -555,7 +537,6 @@ class CORE_EXPORT QgsFeatureRequest
      *
      * Calling this method will automatically set filterType() to QgsFeatureRequest::FilterExpression.
      *
-     * \since QGIS 2.14
      */
     QgsFeatureRequest &combineFilterExpression( const QString &expression );
 
@@ -563,7 +544,6 @@ class CORE_EXPORT QgsFeatureRequest
      * Returns the expression context used to evaluate filter expressions.
      * \see setExpressionContext
      * \see filterExpression
-     * \since QGIS 2.12
      */
     QgsExpressionContext *expressionContext() { return &mExpressionContext; }
 
@@ -571,7 +551,6 @@ class CORE_EXPORT QgsFeatureRequest
      * Sets the expression context used to evaluate filter expressions.
      * \see expressionContext
      * \see setFilterExpression
-     * \since QGIS 2.12
      */
     QgsFeatureRequest &setExpressionContext( const QgsExpressionContext &context );
 
@@ -584,9 +563,8 @@ class CORE_EXPORT QgsFeatureRequest
      *
      * \returns The object the method is called on for chaining
      *
-     * \since QGIS 2.12
      */
-    QgsFeatureRequest &disableFilter() { mFilter = FilterNone; mFilterExpression.reset(); return *this; }
+    QgsFeatureRequest &disableFilter() { mFilter = Qgis::FeatureRequestFilterType::NoFilter; mFilterExpression.reset(); return *this; }
 
     /**
      * Adds a new OrderByClause, appending it as the least important one.
@@ -596,7 +574,6 @@ class CORE_EXPORT QgsFeatureRequest
      *                   If the order is ascending, by default nulls are last
      *                   If the order is descending, by default nulls are first
      *
-     * \since QGIS 2.14
      */
 
     QgsFeatureRequest &addOrderBy( const QString &expression, bool ascending = true );
@@ -608,21 +585,18 @@ class CORE_EXPORT QgsFeatureRequest
      * \param ascending  If the order should be ascending (1,2,3) or descending (3,2,1)
      * \param nullsfirst If TRUE, NULLS are at the beginning, if FALSE, NULLS are at the end
      *
-     * \since QGIS 2.14
      */
     QgsFeatureRequest &addOrderBy( const QString &expression, bool ascending, bool nullsfirst );
 
     /**
      * Returns a list of order by clauses specified for this feature request.
      *
-     * \since QGIS 2.14
      */
     OrderBy orderBy() const;
 
     /**
      * Set a list of order by clauses.
      *
-     * \since QGIS 2.14
      */
     QgsFeatureRequest &setOrderBy( const OrderBy &orderBy );
 
@@ -630,14 +604,12 @@ class CORE_EXPORT QgsFeatureRequest
      * Set the maximum number of features to request.
      * \param limit maximum number of features, or -1 to request all features.
      * \see limit()
-     * \since QGIS 2.14
      */
     QgsFeatureRequest &setLimit( long long limit );
 
     /**
      * Returns the maximum number of features to request, or -1 if no limit set.
      * \see setLimit
-     * \since QGIS 2.14
      */
 #ifndef SIP_RUN
     long long limit() const { return mLimit; }
@@ -650,14 +622,14 @@ class CORE_EXPORT QgsFeatureRequest
      *
      * \see flags()
      */
-    QgsFeatureRequest &setFlags( QgsFeatureRequest::Flags flags );
+    QgsFeatureRequest &setFlags( Qgis::FeatureRequestFlags flags );
 
     /**
      * Returns the flags which affect how features are fetched.
      *
      * \see setFlags()
      */
-    Flags flags() const { return mFlags; }
+    Qgis::FeatureRequestFlags flags() const { return mFlags; }
 
     /**
      * Set a subset of attributes that will be fetched.
@@ -739,7 +711,6 @@ class CORE_EXPORT QgsFeatureRequest
      * Set a simplification method for geometries that will be fetched.
      *
      * \see simplifyMethod()
-     * \since QGIS 2.2
      */
     QgsFeatureRequest &setSimplifyMethod( const QgsSimplifyMethod &simplifyMethod );
 
@@ -747,17 +718,35 @@ class CORE_EXPORT QgsFeatureRequest
      * Returns the simplification method for geometries that will be fetched.
      *
      * \see setSimplifyMethod()
-     * \since QGIS 2.2
      */
     const QgsSimplifyMethod &simplifyMethod() const { return mSimplifyMethod; }
+
+    /**
+     * Returns the coordinate transform which will be used to transform
+     * the feature's geometries.
+     *
+     * If this transform is valid  then it will always be used to transform
+     * features, regardless of the destinationCrs() setting or the underlying
+     * feature source's actual CRS.
+     *
+     * \see setCoordinateTransform()
+     *
+     * \since QGIS 3.40
+     */
+    QgsCoordinateTransform coordinateTransform() const;
 
     /**
      * Returns the destination coordinate reference system for feature's geometries,
      * or an invalid QgsCoordinateReferenceSystem if no reprojection will be done
      * and all features will be left with their original geometry.
+     *
+     * \warning if coordinateTransform() returns a valid transform then the
+     * destinationCrs() will have no effect, and the coordinateTransform() will
+     * always be used to transform features.
+     *
+     * \see calculateTransform()
      * \see setDestinationCrs()
      * \see transformContext()
-     * \since QGIS 3.0
      */
     QgsCoordinateReferenceSystem destinationCrs() const;
 
@@ -766,9 +755,51 @@ class CORE_EXPORT QgsFeatureRequest
      * and reprojection is required
      * \see setDestinationCrs()
      * \see destinationCrs()
-     * \since QGIS 3.0
      */
     QgsCoordinateTransformContext transformContext() const;
+
+    /**
+     * Calculates the coordinate transform to use to transform geometries
+     * when they are originally in \a sourceCrs.
+     *
+     * This method will return coordinateTransform() if it is set (ignoring \a sourceCrs), otherwise
+     * it will calculate an appriopriate transform from \a sourceCrs to destinationCrs().
+     *
+     * \since QGIS 3.40
+     */
+    QgsCoordinateTransform calculateTransform( const QgsCoordinateReferenceSystem &sourceCrs ) const;
+
+    /**
+     * Sets the coordinate \a transform which will be used to transform
+     * the feature's geometries.
+     *
+     * If this transform is valid then it will always be used to transform
+     * features, regardless of the destinationCrs() setting or the underlying
+     * feature source's actual CRS.
+     *
+     * When a \a transform is set using setCoordinateTransform(), then any filterRect()
+     * or referenceGeometry() set on the request is expected to be in the
+     * same CRS as the destination CRS for the \a transform.
+     *
+     * The feature geometry transformation is performed
+     * after all filter expressions are tested and any virtual fields are
+     * calculated. Accordingly, any geometric expressions used in
+     * filterExpression() will be performed in the original
+     * source CRS. This ensures consistent results are returned regardless of the
+     * destination CRS. Similarly, virtual field values will be calculated using the
+     * original geometry in the source CRS, so these values are not affected by
+     * any destination CRS transform present in the feature request.
+     *
+     * \warning This method should be used with caution, and it is recommended
+     * to use the high-level setDestinationCrs() method instead. Setting a specific
+     * transform should only be done when there is a requirement to use a particular
+     * transform.
+     *
+     * \see coordinateTransform()
+     *
+     * \since QGIS 3.40
+     */
+    QgsFeatureRequest &setCoordinateTransform( const QgsCoordinateTransform &transform );
 
     /**
      * Sets the destination \a crs for feature's geometries. If set, all
@@ -790,8 +821,11 @@ class CORE_EXPORT QgsFeatureRequest
      * original geometry in the source CRS, so these values are not affected by
      * any destination CRS transform present in the feature request.
      *
+     * \warning if coordinateTransform() returns a valid transform then the
+     * destinationCrs() will have no effect, and the coordinateTransform() will
+     * always be used to transform features.
+     *
      * \see destinationCrs()
-     * \since QGIS 3.0
      */
     QgsFeatureRequest &setDestinationCrs( const QgsCoordinateReferenceSystem &crs, const QgsCoordinateTransformContext &context );
 
@@ -801,7 +835,6 @@ class CORE_EXPORT QgsFeatureRequest
      * called using the feature which encountered the transform error as a parameter.
      * \see transformErrorCallback()
      * \see setDestinationCrs()
-     * \since QGIS 3.0
      */
 #ifndef SIP_RUN
     QgsFeatureRequest &setTransformErrorCallback( const std::function< void( const QgsFeature & )> &callback );
@@ -829,9 +862,8 @@ class CORE_EXPORT QgsFeatureRequest
      * \note not available in Python bindings
      * \see setTransformErrorCallback()
      * \see destinationCrs()
-     * \since QGIS 3.0
      */
-    std::function< void( const QgsFeature & ) > transformErrorCallback() const { return mTransformErrorCallback; } SIP_SKIP
+    std::function< void( const QgsFeature & ) > transformErrorCallback() const SIP_SKIP { return mTransformErrorCallback; }
 
 
     /**
@@ -841,7 +873,6 @@ class CORE_EXPORT QgsFeatureRequest
      *
      * \returns TRUE, if the filter accepts the feature
      *
-     * \since QGIS 2.1
      */
     bool acceptFeature( const QgsFeature &feature );
 
@@ -851,8 +882,7 @@ class CORE_EXPORT QgsFeatureRequest
      *
      * \note Only works if the provider supports this option.
      *
-     * \deprecated Use timeout() instead.
-     * \since QGIS 3.0
+     * \deprecated QGIS 3.40. Use timeout() instead.
      */
     Q_DECL_DEPRECATED int connectionTimeout() const SIP_DEPRECATED;
 
@@ -862,8 +892,7 @@ class CORE_EXPORT QgsFeatureRequest
      *
      * \note Only works if the provider supports this option.
      *
-     * \deprecated Use setTimeout() instead.
-     * \since QGIS 3.0
+     * \deprecated QGIS 3.40. Use setTimeout() instead.
      */
     Q_DECL_DEPRECATED QgsFeatureRequest &setConnectionTimeout( int connectionTimeout ) SIP_DEPRECATED;
 
@@ -947,7 +976,7 @@ class CORE_EXPORT QgsFeatureRequest
     /**
      * Attribute/ID filter type.
      */
-    FilterType mFilter = FilterNone;
+    Qgis::FeatureRequestFilterType mFilter = Qgis::FeatureRequestFilterType::NoFilter;
 
     /**
      * Spatial filter type.
@@ -980,22 +1009,21 @@ class CORE_EXPORT QgsFeatureRequest
     QgsFeatureIds mFilterFids;
     std::unique_ptr< QgsExpression > mFilterExpression;
     QgsExpressionContext mExpressionContext;
-    Flags mFlags = Flags();
+    Qgis::FeatureRequestFlags mFlags;
     QgsAttributeList mAttrs;
     QgsSimplifyMethod mSimplifyMethod;
     long long mLimit = -1;
     OrderBy mOrderBy;
-    InvalidGeometryCheck mInvalidGeometryFilter = GeometryNoCheck;
+    Qgis::InvalidGeometryCheck mInvalidGeometryFilter = Qgis::InvalidGeometryCheck::NoCheck;
     std::function< void( const QgsFeature & ) > mInvalidGeometryCallback;
     std::function< void( const QgsFeature & ) > mTransformErrorCallback;
+    QgsCoordinateTransform mTransform;
     QgsCoordinateReferenceSystem mCrs;
     QgsCoordinateTransformContext mTransformContext;
     int mTimeout = -1;
     int mRequestMayBeNested = false;
     QgsFeedback *mFeedback = nullptr;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS( QgsFeatureRequest::Flags )
 
 
 class QgsFeatureIterator;
@@ -1004,7 +1032,6 @@ class QgsAbstractFeatureIterator;
 /**
  * \ingroup core
  * \brief Base class that can be used for any class that is capable of returning features
- * \since QGIS 2.4
  */
 class CORE_EXPORT QgsAbstractFeatureSource
 {

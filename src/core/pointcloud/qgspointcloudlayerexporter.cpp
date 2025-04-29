@@ -21,6 +21,7 @@
 #include <QThread>
 
 #include "qgspointcloudlayerexporter.h"
+#include "moc_qgspointcloudlayerexporter.cpp"
 #include "qgsmemoryproviderutils.h"
 #include "qgspointcloudrequest.h"
 #include "qgsvectorfilewriter.h"
@@ -53,7 +54,7 @@ QString QgsPointCloudLayerExporter::getOgrDriverName( ExportFormat format )
 
 QgsPointCloudLayerExporter::QgsPointCloudLayerExporter( QgsPointCloudLayer *layer )
   : mLayerAttributeCollection( layer->attributes() )
-  , mIndex( layer->dataProvider()->index()->clone().release() )
+  , mIndex( layer->dataProvider()->index()->clone() )
   , mSourceCrs( QgsCoordinateReferenceSystem( layer->crs() ) )
   , mTargetCrs( QgsCoordinateReferenceSystem( layer->crs() ) )
 {
@@ -194,8 +195,12 @@ void QgsPointCloudLayerExporter::prepareExport()
 
   if ( mFormat == ExportFormat::Memory )
   {
+#ifdef QGISDEBUG
     if ( QApplication::instance()->thread() != QThread::currentThread() )
+    {
       QgsDebugMsgLevel( QStringLiteral( "prepareExport() should better be called from the main thread!" ), 2 );
+    }
+#endif
 
     mMemoryLayer = QgsMemoryProviderUtils::createMemoryLayer( mName, outputFields(), Qgis::WkbType::PointZ, mTargetCrs );
   }
@@ -252,7 +257,7 @@ void QgsPointCloudLayerExporter::doExport()
     case ExportFormat::Csv:
       layerCreationOptions << QStringLiteral( "GEOMETRY=AS_XYZ" )
                            << QStringLiteral( "SEPARATOR=COMMA" ); // just in case ogr changes the default lco
-      FALLTHROUGH
+      [[fallthrough]];
     case ExportFormat::Gpkg:
     case ExportFormat::Dxf:
     case ExportFormat::Shp:
@@ -357,7 +362,7 @@ void QgsPointCloudLayerExporter::ExporterBase::run()
   qint64 pointsExported = 0;
   for ( const IndexedPointCloudNode &node : nodes )
   {
-    block.reset( mParent->mIndex->nodeData( node, request ) );
+    block = mParent->mIndex->nodeData( node, request );
     const QgsPointCloudAttributeCollection attributesCollection = block->attributes();
     const char *ptr = block->data();
     int count = block->pointCount();
@@ -587,14 +592,18 @@ void QgsPointCloudLayerExporter::ExporterPdal::handlePoint( double x, double y, 
   mView->setField( pdal::Dimension::Id::NumberOfReturns, pointNumber, map[ QStringLiteral( "NumberOfReturns" ) ].toInt() );
   mView->setField( pdal::Dimension::Id::ScanDirectionFlag, pointNumber, map[ QStringLiteral( "ScanDirectionFlag" ) ].toInt() );
   mView->setField( pdal::Dimension::Id::EdgeOfFlightLine, pointNumber, map[ QStringLiteral( "EdgeOfFlightLine" ) ].toInt() );
-  mView->setField( pdal::Dimension::Id::ScanAngleRank, pointNumber, map[ QStringLiteral( "ScanAngleRank" ) ].toInt() );
+  mView->setField( pdal::Dimension::Id::ScanAngleRank, pointNumber, map[ QStringLiteral( "ScanAngleRank" ) ].toFloat() );
   mView->setField( pdal::Dimension::Id::UserData, pointNumber, map[ QStringLiteral( "UserData" ) ].toInt() );
   mView->setField( pdal::Dimension::Id::PointSourceId, pointNumber, map[ QStringLiteral( "PointSourceId" ) ].toInt() );
 
   if ( mPointFormat == 6 || mPointFormat == 7 || mPointFormat == 8 || mPointFormat == 9 || mPointFormat == 10 )
   {
     mView->setField( pdal::Dimension::Id::ScanChannel, pointNumber, map[ QStringLiteral( "ScannerChannel" ) ].toInt() );
-    mView->setField( pdal::Dimension::Id::ClassFlags, pointNumber, map[ QStringLiteral( "ClassificationFlags" ) ].toInt() );
+    const int classificationFlags = ( map[ QStringLiteral( "Synthetic" ) ].toInt() & 0x01 ) << 0 |
+                                    ( map[ QStringLiteral( "KeyPoint" ) ].toInt() & 0x01 ) << 1 |
+                                    ( map[ QStringLiteral( "Withheld" ) ].toInt() & 0x01 ) << 2 |
+                                    ( map[ QStringLiteral( "Overlap" ) ].toInt() & 0x01 ) << 3;
+    mView->setField( pdal::Dimension::Id::ClassFlags, pointNumber, classificationFlags );
   }
 
   if ( mPointFormat != 0 && mPointFormat != 2 )

@@ -15,11 +15,10 @@
 
 
 #include "qgsmaptoolcapturelayergeometry.h"
+#include "moc_qgsmaptoolcapturelayergeometry.cpp"
 #include "qgsproject.h"
 #include "qgscurvepolygon.h"
 #include "qgscurve.h"
-
-
 
 
 void QgsMapToolCaptureLayerGeometry::geometryCaptured( const QgsGeometry &geometry )
@@ -38,11 +37,12 @@ void QgsMapToolCaptureLayerGeometry::geometryCaptured( const QgsGeometry &geomet
     case QgsMapToolCapture::CaptureLine:
     case QgsMapToolCapture::CapturePolygon:
       //does provider support circular strings?
-      const bool providerSupportsCurvedSegments = vlayer && ( vlayer->dataProvider()->capabilities() & QgsVectorDataProvider::CircularGeometries );
-      if ( !providerSupportsCurvedSegments )
+      const bool datasetIsCurved = QgsWkbTypes::isCurvedType( vlayer->wkbType() );
+      const bool providerSupportsCurvedSegments = vlayer && ( vlayer->dataProvider()->capabilities() & Qgis::VectorProviderCapability::CircularGeometries );
+      if ( !datasetIsCurved || !providerSupportsCurvedSegments )
         g = QgsGeometry( g.constGet()->segmentize() );
 
-      QList<QgsVectorLayer *>  avoidIntersectionsLayers;
+      QList<QgsVectorLayer *> avoidIntersectionsLayers;
       switch ( QgsProject::instance()->avoidIntersectionsMode() )
       {
         case Qgis::AvoidIntersectionsMode::AvoidIntersectionsCurrentLayer:
@@ -57,8 +57,8 @@ void QgsMapToolCaptureLayerGeometry::geometryCaptured( const QgsGeometry &geomet
       }
       if ( avoidIntersectionsLayers.size() > 0 )
       {
-        const int avoidIntersectionsReturn = g.avoidIntersections( avoidIntersectionsLayers );
-        if ( avoidIntersectionsReturn == 3 )
+        const Qgis::GeometryOperationResult avoidIntersectionsReturn = g.avoidIntersectionsV2( avoidIntersectionsLayers );
+        if ( avoidIntersectionsReturn == Qgis::GeometryOperationResult::InvalidBaseGeometry )
         {
           emit messageEmitted( tr( "The feature has been added, but at least one geometry intersected is invalid. These geometries must be manually repaired." ), Qgis::MessageLevel::Warning );
         }

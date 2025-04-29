@@ -15,6 +15,8 @@
  ***************************************************************************/
 
 #include "qgslayout.h"
+#include "moc_qgslayout.cpp"
+#include "qgslayoutframe.h"
 #include "qgslayoutitem.h"
 #include "qgslayoutitemhtml.h"
 #include "qgslayoutitemlabel.h"
@@ -298,18 +300,26 @@ QgsLayoutMultiFrame *QgsLayout::multiFrameByUuid( const QString &uuid, bool incl
   return nullptr;
 }
 
-QgsLayoutItem *QgsLayout::layoutItemAt( QPointF position, const bool ignoreLocked ) const
+QgsLayoutItem *QgsLayout::layoutItemAt( QPointF position, const bool ignoreLocked, double searchTolerance ) const
 {
-  return layoutItemAt( position, nullptr, ignoreLocked );
+  return layoutItemAt( position, nullptr, ignoreLocked, searchTolerance );
 }
 
-QgsLayoutItem *QgsLayout::layoutItemAt( QPointF position, const QgsLayoutItem *belowItem, const bool ignoreLocked ) const
+QgsLayoutItem *QgsLayout::layoutItemAt( QPointF position, const QgsLayoutItem *belowItem, const bool ignoreLocked, double searchTolerance ) const
 {
   //get a list of items which intersect the specified position, in descending z order
-  const QList<QGraphicsItem *> itemList = items( position, Qt::IntersectsItemShape, Qt::DescendingOrder );
+  QList<QGraphicsItem *> itemList;
+  if ( searchTolerance == 0 )
+  {
+    itemList = items( position, Qt::IntersectsItemShape, Qt::DescendingOrder );
+  }
+  else
+  {
+    itemList = items( QRectF( position.x() - searchTolerance, position.y() - searchTolerance, 2 * searchTolerance, 2 * searchTolerance ), Qt::IntersectsItemShape, Qt::DescendingOrder );
+  }
 
   bool foundBelowItem = false;
-  for ( QGraphicsItem *graphicsItem : itemList )
+  for ( QGraphicsItem *graphicsItem : std::as_const( itemList ) )
   {
     QgsLayoutItem *layoutItem = dynamic_cast<QgsLayoutItem *>( graphicsItem );
     QgsLayoutItemPage *paperItem = dynamic_cast<QgsLayoutItemPage *>( layoutItem );
@@ -319,6 +329,12 @@ QgsLayoutItem *QgsLayout::layoutItemAt( QPointF position, const QgsLayoutItem *b
       // already found that item, then we've found our target
       if ( ( ! belowItem || foundBelowItem ) && ( !ignoreLocked || !layoutItem->isLocked() ) )
       {
+        // If ignoreLocked and item is part of a locked group, return the next item below
+        if ( ignoreLocked && layoutItem->parentGroup() &&  layoutItem->parentGroup()->isLocked() )
+        {
+          return layoutItemAt( position, layoutItem, ignoreLocked, searchTolerance );
+        }
+
         return layoutItem;
       }
       else
@@ -1115,8 +1131,27 @@ QList< QgsLayoutItem * > QgsLayout::addItemsFromXml( const QDomElement &parentEl
       {
         if ( label->mode() == QgsLayoutItemLabel::ModeHtml )
         {
+          QgsTextFormat textFormat = label->textFormat();
+          if ( textFormat.lineHeightUnit() == Qgis::RenderUnit::Percentage )
+          {
+            // The line-height property handles height differently in webkit, adjust accordingly
+            textFormat.setLineHeight( textFormat.lineHeight() + 0.22 );
+            label->setTextFormat( textFormat );
+          }
           QgsLayoutMultiFrame *html = QgsLayoutItemHtml::createFromLabel( label );
           addMultiFrame( html );
+          if ( item->isGroupMember() )
+          {
+            QgsLayoutItemGroup *group = item->parentGroup();
+            QList<QgsLayoutItem *> groupItems = group->items();
+            groupItems.removeAll( item.get() );
+            group->removeItems();
+            for ( QgsLayoutItem *groupItem : std::as_const( groupItems ) )
+            {
+              group->addItem( groupItem );
+            }
+            group->addItem( html->frame( 0 ) );
+          }
           newMultiFrames << html;
           continue;
         }

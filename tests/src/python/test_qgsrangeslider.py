@@ -5,31 +5,32 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Nyall Dawson'
-__date__ = '2020-11-25'
-__copyright__ = 'Copyright 2020, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Nyall Dawson"
+__date__ = "2020-11-25"
+__copyright__ = "Copyright 2020, The QGIS Project"
+
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtTest import QSignalSpy
 from qgis.PyQt.QtWidgets import QSlider
 from qgis.gui import QgsRangeSlider
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 start_app()
 
 
-class TestQgsRangeSlider(unittest.TestCase):
+class TestQgsRangeSlider(QgisTestCase):
 
     def testSettersGetters(self):
         w = QgsRangeSlider()
-        w.setOrientation(Qt.Horizontal)
-        self.assertEqual(w.orientation(), Qt.Horizontal)
-        w.setOrientation(Qt.Vertical)
-        self.assertEqual(w.orientation(), Qt.Vertical)
+        w.setOrientation(Qt.Orientation.Horizontal)
+        self.assertEqual(w.orientation(), Qt.Orientation.Horizontal)
+        w.setOrientation(Qt.Orientation.Vertical)
+        self.assertEqual(w.orientation(), Qt.Orientation.Vertical)
 
-        w.setTickPosition(QSlider.TicksAbove)
-        self.assertEqual(w.tickPosition(), QSlider.TicksAbove)
+        w.setTickPosition(QSlider.TickPosition.TicksAbove)
+        self.assertEqual(w.tickPosition(), QSlider.TickPosition.TicksAbove)
         w.setTickInterval(5)
         self.assertEqual(w.tickInterval(), 5)
         w.setFlippedDirection(True)
@@ -40,6 +41,10 @@ class TestQgsRangeSlider(unittest.TestCase):
 
         w.setPageStep(5)
         self.assertEqual(w.pageStep(), 5)
+
+        self.assertEqual(w.fixedRangeSize(), -1)
+        w.setFixedRangeSize(5)
+        self.assertEqual(w.fixedRangeSize(), 5)
 
     def testLimits(self):
         w = QgsRangeSlider()
@@ -268,6 +273,56 @@ class TestQgsRangeSlider(unittest.TestCase):
         self.assertEqual(len(spy), 6)
         self.assertEqual(spy[-1], [3, 7])
 
+    def test_fixed_range_width(self):
+        """
+        Test interactions with fixed range widths
+        """
+        w = QgsRangeSlider()
+        w.setRangeLimits(0, 100)
+        w.setFixedRangeSize(10)
+        self.assertEqual(w.upperValue() - w.lowerValue(), 10)
 
-if __name__ == '__main__':
+        w.setUpperValue(70)
+        self.assertEqual(w.upperValue(), 70)
+        self.assertEqual(w.lowerValue(), 60)
+
+        w.setLowerValue(5)
+        self.assertEqual(w.upperValue(), 15)
+        self.assertEqual(w.lowerValue(), 5)
+
+        # try to force value outside range
+        w.setUpperValue(5)
+        self.assertEqual(w.upperValue(), 10)
+        self.assertEqual(w.lowerValue(), 0)
+
+        w.setLowerValue(95)
+        self.assertEqual(w.upperValue(), 100)
+        self.assertEqual(w.lowerValue(), 90)
+
+        w.setRange(0, 5)
+        self.assertEqual(w.upperValue(), 10)
+        self.assertEqual(w.lowerValue(), 0)
+
+        w.setRange(95, 100)
+        self.assertEqual(w.upperValue(), 100)
+        self.assertEqual(w.lowerValue(), 90)
+
+        # with zero width fixed range
+        w.setFixedRangeSize(0)
+        self.assertEqual(w.upperValue() - w.lowerValue(), 0)
+
+        w.setUpperValue(70)
+        self.assertEqual(w.upperValue(), 70)
+        self.assertEqual(w.lowerValue(), 70)
+
+        w.setLowerValue(5)
+        self.assertEqual(w.upperValue(), 5)
+        self.assertEqual(w.lowerValue(), 5)
+
+        w.setRange(0, 5)
+        self.assertEqual(w.upperValue(), 0)
+        self.assertEqual(w.lowerValue(), 0)
+
+
+if __name__ == "__main__":
     unittest.main()

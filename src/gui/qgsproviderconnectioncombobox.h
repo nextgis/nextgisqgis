@@ -26,14 +26,14 @@ class QgsProviderConnectionModel;
 
 ///@cond PRIVATE
 #ifndef SIP_RUN
-class GUI_EXPORT QgsProviderConnectionComboBoxSortModel: public QSortFilterProxyModel
+class GUI_EXPORT QgsProviderConnectionComboBoxSortModel : public QSortFilterProxyModel
 {
     Q_OBJECT
   public:
     explicit QgsProviderConnectionComboBoxSortModel( QObject *parent = nullptr );
+
   protected:
     bool lessThan( const QModelIndex &source_left, const QModelIndex &source_right ) const override;
-
 };
 #endif
 ///@endcond
@@ -52,7 +52,6 @@ class GUI_EXPORT QgsProviderConnectionComboBox : public QComboBox
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsProviderConnectionComboBox, for the specified \a provider.
      *
@@ -112,10 +111,13 @@ class GUI_EXPORT QgsProviderConnectionComboBox : public QComboBox
   private slots:
     void indexChanged( int i );
     void rowsChanged();
+    void rowsAboutToBeRemoved();
+    void rowsRemoved();
 
   private:
     QgsProviderConnectionModel *mModel = nullptr;
     QSortFilterProxyModel *mSortModel = nullptr;
+    QString mPreviousConnection;
 };
 
 #endif // QGSPROVIDERCONNECTIONCOMBOBOX_H

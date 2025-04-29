@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgsmaptoolfillring.h"
+#include "moc_qgsmaptoolfillring.cpp"
 #include "qgsgeometry.h"
 #include "qgsfeatureiterator.h"
 #include "qgsmapcanvas.h"
@@ -88,7 +89,7 @@ void QgsMapToolFillRing::polygonCaptured( const QgsCurvePolygon *polygon )
     {
       errorMessage = tr( "the inserted Ring is not closed" );
     }
-    else if ( addRingReturnCode ==  Qgis::GeometryOperationResult::AddRingNotValid )
+    else if ( addRingReturnCode == Qgis::GeometryOperationResult::AddRingNotValid )
     {
       errorMessage = tr( "the inserted Ring is not a valid geometry" );
     }
@@ -116,7 +117,6 @@ void QgsMapToolFillRing::polygonCaptured( const QgsCurvePolygon *polygon )
 
 void QgsMapToolFillRing::createFeature( const QgsGeometry &geometry, QgsFeatureId fid )
 {
-
   QgsVectorLayer *vlayer = getCheckLayer();
   if ( !vlayer )
     return;
@@ -129,7 +129,10 @@ void QgsMapToolFillRing::createFeature( const QgsGeometry &geometry, QgsFeatureI
   if ( fit.nextFeature( f ) )
   {
     //create QgsFeature with wkb representation
-    QgsFeature ft = QgsVectorLayerUtils::createFeature( vlayer, geometry, f.attributes().toMap(), &context );
+    const QgsFeature ft1 = QgsVectorLayerUtils::createFeature( vlayer, geometry, f.attributes().toMap(), &context );
+
+    // make feature compatible with layer
+    QgsFeature ft { QgsVectorLayerUtils::makeFeatureCompatible( ft1, vlayer ).at( 0 ) };
 
     bool res = false;
     if ( QApplication::keyboardModifiers() == Qt::ControlModifier )
@@ -193,7 +196,7 @@ void QgsMapToolFillRing::fillRingUnderPoint( const QgsPointXY &p )
       pol = g.asMultiPolygon();
     }
 
-    for ( int i = 0; i < pol.size() ; ++i )
+    for ( int i = 0; i < pol.size(); ++i )
     {
       //for each part
       if ( pol[i].size() > 1 )

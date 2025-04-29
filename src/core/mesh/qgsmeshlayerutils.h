@@ -34,7 +34,7 @@
 class QgsMeshTimeSettings;
 class QgsTriangularMesh;
 class QgsMeshDataBlock;
-class QgsMesh3dAveragingMethod;
+class QgsMesh3DAveragingMethod;
 class QgsMeshDatasetValue;
 class QgsMeshLayer;
 
@@ -139,6 +139,24 @@ class CORE_EXPORT QgsMeshLayerUtils
       const QgsMapToPixel &mtp,
       const QgsRectangle &bbox,
       double devicePixelRatio = 1.0
+    );
+
+    /**
+     * Calculates barycentric coordinates of point \a pP in a triangle given by
+     * its vertices \a pA, \a pB and \a pC. The results are written to \a lam1,
+     * \a lam2, \a lam3. The function returns true or false, depending on whether
+     * the point \a pP is inside the triangle.
+     *
+     * \since QGIS 3.36
+     */
+    static bool calculateBarycentricCoordinates(
+      const QgsPointXY &pA,
+      const QgsPointXY &pB,
+      const QgsPointXY &pC,
+      const QgsPointXY &pP,
+      double &lam1,
+      double &lam2,
+      double &lam3
     );
 
     /**
@@ -344,13 +362,21 @@ class CORE_EXPORT QgsMeshLayerUtils
      * \param triangularMesh the triangular mesh
      * \param verticalMagnitude the vertical magnitude values used instead Z value of vertices
      * \param isRelative TRUE if the vertical magnitude is relative to the Z value of vertices
-     * \returns normales (3D vector) on all the vertices
+     * \returns normals (3D vector) on all the vertices
      * \since QGIS 3.14
      */
     static QVector<QVector3D> calculateNormals(
       const QgsTriangularMesh &triangularMesh,
       const QVector<double> &verticalMagnitude,
       bool isRelative );
+
+    /**
+     * Returns TRUE if the datasets from \a layer at \a index1 and \a index2 share the same parent quantity.
+     *
+     * \since QGIS 3.38
+     */
+    static bool haveSameParentQuantity( const QgsMeshLayer *layer, const QgsMeshDatasetIndex &index1, const QgsMeshDatasetIndex &index2 );
+
 };
 
 ///@endcond

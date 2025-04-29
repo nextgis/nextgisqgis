@@ -43,6 +43,7 @@ class QgsAuthOAuth2Config : public QObject
     Q_PROPERTY( QString requestUrl READ requestUrl WRITE setRequestUrl NOTIFY requestUrlChanged )
     Q_PROPERTY( QString tokenUrl READ tokenUrl WRITE setTokenUrl NOTIFY tokenUrlChanged )
     Q_PROPERTY( QString refreshTokenUrl READ refreshTokenUrl WRITE setRefreshTokenUrl NOTIFY refreshTokenUrlChanged )
+    Q_PROPERTY( QString redirectHost READ redirectHost WRITE setRedirectHost NOTIFY redirectHostChanged )
     Q_PROPERTY( QString redirectUrl READ redirectUrl WRITE setRedirectUrl NOTIFY redirectUrlChanged )
     Q_PROPERTY( int redirectPort READ redirectPort WRITE setRedirectPort NOTIFY redirectPortChanged )
     Q_PROPERTY( QString clientId READ clientId WRITE setClientId NOTIFY clientIdChanged )
@@ -58,7 +59,6 @@ class QgsAuthOAuth2Config : public QObject
     Q_PROPERTY( QString customHeader READ customHeader WRITE setCustomHeader NOTIFY customHeaderChanged )
 
   public:
-
     //! Configuration type
     enum ConfigType
     {
@@ -72,6 +72,7 @@ class QgsAuthOAuth2Config : public QObject
       AuthCode,      //!< See http://tools.ietf.org/html/rfc6749#section-4.1
       Implicit,      //!< See http://tools.ietf.org/html/rfc6749#section-4.2
       ResourceOwner, //!< See http://tools.ietf.org/html/rfc6749#section-4.3
+      Pkce,          //!< See https://www.rfc-editor.org/rfc/rfc7636
     };
 
     //! Configuration format for serialize/unserialize operations
@@ -101,7 +102,7 @@ class QgsAuthOAuth2Config : public QObject
     ConfigType configType() const { return mConfigType; }
 
     //! Authorization flow
-    GrantFlow grantFlow()  const { return mGrantFlow; }
+    GrantFlow grantFlow() const { return mGrantFlow; }
 
     //! Configuration name
     QString name() const { return mName; }
@@ -117,6 +118,9 @@ class QgsAuthOAuth2Config : public QObject
 
     //! Refresh token url
     QString refreshTokenUrl() const { return mRefreshTokenUrl; }
+
+    //! Returns the redirect host
+    QString redirectHost() const { return mRedirectHost; }
 
     //! Redirect url
     QString redirectUrl() const { return mRedirectURL; }
@@ -192,10 +196,7 @@ class QgsAuthOAuth2Config : public QObject
      * \param ok is set to FALSE in case something goes wrong, TRUE otherwise
      * \return serialized config
      */
-    static QByteArray serializeFromVariant( const QVariantMap &variant,
-                                            ConfigFormat format = JSON,
-                                            bool pretty = false,
-                                            bool *ok = nullptr );
+    static QByteArray serializeFromVariant( const QVariantMap &variant, ConfigFormat format = JSON, bool pretty = false, bool *ok = nullptr );
 
     /**
      * Unserialize the configuration in \a serial according to \a format
@@ -204,29 +205,26 @@ class QgsAuthOAuth2Config : public QObject
      * \param ok is set to FALSE in case something goes wrong, TRUE otherwise
      * \return config map
      */
-    static QVariantMap variantFromSerialized( const QByteArray &serial,
-        ConfigFormat format = JSON,
-        bool *ok = nullptr );
+    static QVariantMap variantFromSerialized( const QByteArray &serial, ConfigFormat format = JSON, bool *ok = nullptr );
 
     //! Write config object out to a formatted file (e.g. JSON)
-    static bool writeOAuth2Config( const QString &filepath,
-                                   QgsAuthOAuth2Config *config,
-                                   ConfigFormat format = JSON,
-                                   bool pretty = false );
+    static bool writeOAuth2Config( const QString &filepath, QgsAuthOAuth2Config *config, ConfigFormat format = JSON, bool pretty = false );
 
     //! Load and parse a directory of configs (e.g. JSON) to objects
     static QList<QgsAuthOAuth2Config *> loadOAuth2Configs(
       const QString &configdirectory,
       QObject *parent = nullptr,
       ConfigFormat format = JSON,
-      bool *ok = nullptr );
+      bool *ok = nullptr
+    );
 
     //! Load and parse a directory of configs (e.g. JSON) to a map
     static QgsStringMap mapOAuth2Configs(
       const QString &configdirectory,
       QObject *parent = nullptr,
       ConfigFormat format = JSON,
-      bool *ok = nullptr );
+      bool *ok = nullptr
+    );
 
     /**
      * Returns an ordered list of locations from which stored configuration files
@@ -281,6 +279,8 @@ class QgsAuthOAuth2Config : public QObject
     void setTokenUrl( const QString &value );
     //! Set refresh token url to \a value
     void setRefreshTokenUrl( const QString &value );
+    //! Setsd the redirect \a host
+    void setRedirectHost( const QString &host );
     //! Set redirect url to \a value
     void setRedirectUrl( const QString &value );
     //! Set redirect port to \a value
@@ -342,6 +342,8 @@ class QgsAuthOAuth2Config : public QObject
     void tokenUrlChanged( const QString & );
     //! Emitted when configuration refresh token url has changed
     void refreshTokenUrlChanged( const QString & );
+    //! Emitted when configuration redirect host has changed
+    void redirectHostChanged( const QString & );
     //! Emitted when configuration redirect url has changed
     void redirectUrlChanged( const QString & );
     //! Emitted when configuration redirect port has changed
@@ -389,6 +391,7 @@ class QgsAuthOAuth2Config : public QObject
     QString mRequestUrl;
     QString mTokenUrl;
     QString mRefreshTokenUrl;
+    QString mRedirectHost = QStringLiteral( "127.0.0.1" );
     QString mRedirectURL;
     int mRedirectPort = 7070;
     QString mClientId;
@@ -400,7 +403,7 @@ class QgsAuthOAuth2Config : public QObject
     bool mPersistToken = false;
     AccessMethod mAccessMethod = AccessMethod::Header;
     QString mCustomHeader;
-    int mRequestTimeout = 30 ; // in seconds
+    int mRequestTimeout = 30; // in seconds
     QVariantMap mQueryPairs;
     bool mValid = false;
 };

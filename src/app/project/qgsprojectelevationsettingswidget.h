@@ -22,12 +22,12 @@
 
 class QgsVectorLayer;
 class QgsElevationShadingRendererSettingsWidget;
+class QgsProjectionSelectionWidget;
 
 class QgsProjectElevationSettingsWidget : public QgsOptionsPageWidget, private Ui::QgsProjectElevationSettingsWidgetBase
 {
     Q_OBJECT
   public:
-
     QgsProjectElevationSettingsWidget( QWidget *parent = nullptr );
 
   public slots:
@@ -36,11 +36,12 @@ class QgsProjectElevationSettingsWidget : public QgsOptionsPageWidget, private U
 
   private slots:
 
+    void updateVerticalCrsOptions();
     bool validate();
 
   private:
     QgsElevationShadingRendererSettingsWidget *mElevationShadingSettingsWidget = nullptr;
-
+    QgsProjectionSelectionWidget *mVerticalCrsWidget = nullptr;
 };
 
 
@@ -52,7 +53,6 @@ class QgsProjectElevationSettingsWidgetFactory : public QgsOptionsWidgetFactory
 
     QgsOptionsPageWidget *createWidget( QWidget *parent = nullptr ) const override;
 };
-
 
 
 #endif // QGSPROJECTELEVATIONSETTINGSWIDGET_H

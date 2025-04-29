@@ -46,7 +46,6 @@ namespace pal
  *
  * \note this class is not a part of public API yet. See notes in QgsLabelingEngine
  * \note not available in Python bindings
- * \since QGIS 2.12
  */
 class CORE_EXPORT QgsAbstractLabelProvider
 {
@@ -191,7 +190,7 @@ class CORE_EXPORT QgsAbstractLabelProvider
     //! Default priority of labels
     double mPriority = 0.5;
     //! Type of the obstacle of feature geometries
-    QgsLabelObstacleSettings::ObstacleType mObstacleType = QgsLabelObstacleSettings::PolygonBoundary;
+    QgsLabelObstacleSettings::ObstacleType mObstacleType = QgsLabelObstacleSettings::ObstacleType::PolygonBoundary;
     //! How to handle labels that would be upside down
     Qgis::UpsideDownLabelHandling mUpsidedownLabels = Qgis::UpsideDownLabelHandling::FlipUpsideDownLabels;
 
@@ -337,7 +336,6 @@ class CORE_EXPORT QgsLabelingEngineFeedback : public QgsFeedback
  * into feature loop vs providers with independent feature loop), split labeling
  * computation from drawing of labels, improved results class with label iterator).
  * \note not available in Python bindings
- * \since QGIS 2.12
  */
 class CORE_EXPORT QgsLabelingEngine
 {
@@ -347,9 +345,7 @@ class CORE_EXPORT QgsLabelingEngine
     //! Clean up everything (especially the registered providers)
     virtual ~QgsLabelingEngine();
 
-    //! QgsLabelingEngine cannot be copied.
     QgsLabelingEngine( const QgsLabelingEngine &rh ) = delete;
-    //! QgsLabelingEngine cannot be copied.
     QgsLabelingEngine &operator=( const QgsLabelingEngine &rh ) = delete;
 
     //! Associate map settings instance
@@ -361,8 +357,16 @@ class CORE_EXPORT QgsLabelingEngine
     const QgsLabelingEngineSettings &engineSettings() const { return mMapSettings.labelingEngineSettings(); }
 
     /**
+     * Prepares the engine for rendering in the specified \a context.
+     *
+     * \warning This method must be called in advanced on the main rendering thread, not a background thread.
+     *
+     * \since QGIS 3.40
+     */
+    bool prepare( QgsRenderContext &context );
+
+    /**
      * Returns a list of layers with providers in the engine.
-     * \since QGIS 3.0
      */
     QList< QgsMapLayer * > participatingLayers() const;
 
@@ -372,8 +376,22 @@ class CORE_EXPORT QgsLabelingEngine
      */
     QStringList participatingLayerIds() const;
 
-    //! Add provider of label features. Takes ownership of the provider
-    void addProvider( QgsAbstractLabelProvider *provider );
+    /**
+     * Adds a \a provider of label features.
+     *
+     * Takes ownership of the provider.
+     *
+     * Returns a generated string uniqueuly identifying the provider, which can be used with the providerById()
+     * method to retrieve the provider at a later stage.
+     */
+    QString addProvider( QgsAbstractLabelProvider *provider );
+
+    /**
+     * Returns the provider with matching \a id, where \a id corresponds to the value returned by the addProvider() call.
+     *
+     * Returns NULLPTR if no matching provider is found.
+     */
+    QgsAbstractLabelProvider *providerById( const QString &id );
 
     //! Remove provider if the provider's initialization failed. Provider instance is deleted.
     void removeProvider( QgsAbstractLabelProvider *provider );
@@ -439,7 +457,11 @@ class CORE_EXPORT QgsLabelingEngine
 
     //! List of providers (the are owned by the labeling engine)
     QList<QgsAbstractLabelProvider *> mProviders;
+    QHash<QString, QgsAbstractLabelProvider *> mProvidersById;
     QList<QgsAbstractLabelProvider *> mSubProviders;
+
+    //!< List of labeling engine rules (owned by the labeling engine)
+    std::vector< std::unique_ptr< QgsAbstractLabelingEngineRule > > mEngineRules;
 
     //! Resulting labeling layout
     std::unique_ptr< QgsLabelingResults > mResults;
@@ -470,9 +492,7 @@ class CORE_EXPORT QgsDefaultLabelingEngine : public QgsLabelingEngine
     //! Construct the labeling engine with default settings
     QgsDefaultLabelingEngine();
 
-    //! QgsDefaultLabelingEngine cannot be copied.
     QgsDefaultLabelingEngine( const QgsDefaultLabelingEngine &rh ) = delete;
-    //! QgsDefaultLabelingEngine cannot be copied.
     QgsDefaultLabelingEngine &operator=( const QgsDefaultLabelingEngine &rh ) = delete;
 
     void run( QgsRenderContext &context ) override;
@@ -496,9 +516,7 @@ class CORE_EXPORT QgsStagedRenderLabelingEngine : public QgsLabelingEngine
     //! Construct the labeling engine with default settings
     QgsStagedRenderLabelingEngine();
 
-    //! QgsStagedRenderLabelingEngine cannot be copied.
     QgsStagedRenderLabelingEngine( const QgsStagedRenderLabelingEngine &rh ) = delete;
-    //! QgsStagedRenderLabelingEngine cannot be copied.
     QgsStagedRenderLabelingEngine &operator=( const QgsStagedRenderLabelingEngine &rh ) = delete;
 
     void run( QgsRenderContext &context ) override;
@@ -523,7 +541,6 @@ class CORE_EXPORT QgsStagedRenderLabelingEngine : public QgsLabelingEngine
  * \brief Contains helper utilities for working with QGIS' labeling engine.
  * \note this class is not a part of public API yet. See notes in QgsLabelingEngine
  * \note not available in Python bindings
- * \since QGIS 2.14
  */
 class CORE_EXPORT QgsLabelingUtils
 {

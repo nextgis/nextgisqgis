@@ -46,22 +46,31 @@ class QgsVectorLayerCache;
  *
  * \see <a href="http://doc.qt.digia.com/qt/model-view-programming.html">Qt Model View Programming</a>
  */
-class GUI_EXPORT QgsAttributeTableModel: public QAbstractTableModel
+class GUI_EXPORT QgsAttributeTableModel : public QAbstractTableModel
 {
     Q_OBJECT
 
   public:
-    enum Role
+    // *INDENT-OFF*
+
+    /**
+     * Custom model roles.
+     *
+     * \note Prior to QGIS 3.36 this was available as QgsAttributeTableModel::Role
+     * \since QGIS 3.36
+     */
+    enum class CustomRole SIP_MONKEYPATCH_SCOPEENUM_UNNEST( QgsAttributeTableModel, Role ) : int
     {
-      FeatureIdRole = Qt::UserRole, //!< Get the feature id of the feature in this row
-      FieldIndexRole,               //!< Get the field index of this column
-      UserRole,                     //!< Start further roles starting from this role
+      FeatureId SIP_MONKEYPATCH_COMPAT_NAME( FeatureIdRole ) = Qt::UserRole, //!< Get the feature id of the feature in this row
+      FieldIndex SIP_MONKEYPATCH_COMPAT_NAME( FieldIndexRole ),              //!< Get the field index of this column
+      User SIP_MONKEYPATCH_COMPAT_NAME( UserRole ),                          //!< Start further roles starting from this role
       // Insert new values here, SortRole needs to be the last one
-      SortRole,                     //!< Role used for sorting start here
+      Sort SIP_MONKEYPATCH_COMPAT_NAME( SortRole ), //!< Role used for sorting start here
     };
+    Q_ENUM( CustomRole )
+    // *INDENT-ON*
 
   public:
-
     /**
      * Constructor
      * \param layerCache  A layer cache to use as backend
@@ -281,19 +290,22 @@ class GUI_EXPORT QgsAttributeTableModel: public QAbstractTableModel
     /**
      * Handles updating the model when the conditional style for a field changes.
      * \param fieldName name of field whose conditional style has changed
-     * \since QGIS 2.12
      */
     void fieldConditionalStyleChanged( const QString &fieldName );
 
   signals:
 
     /**
-     * Model has been changed
+     * Emitted when the model has been changed.
      */
     void modelChanged();
 
     //! \note not available in Python bindings
     void progress( int i, bool &cancel ) SIP_SKIP;
+
+    /**
+     * Emitted when the model has completely loaded all features.
+     */
     void finished();
 
   private slots:
@@ -354,17 +366,17 @@ class GUI_EXPORT QgsAttributeTableModel: public QAbstractTableModel
 
     struct WidgetData
     {
-      QgsFieldFormatter *fieldFormatter = nullptr;
-      QVariant cache;
-      QVariantMap config;
-      bool loaded = false;
+        QgsFieldFormatter *fieldFormatter = nullptr;
+        QVariant cache;
+        QVariantMap config;
+        bool loaded = false;
     };
     mutable QVector<WidgetData> mWidgetDatas;
 
     QHash<QgsFeatureId, int> mIdRowMap;
     QHash<int, QgsFeatureId> mRowIdMap;
-    mutable QHash<QgsFeatureId, QList<QgsConditionalStyle> > mRowStylesMap;
-    mutable QHash<QgsFeatureId, QHash<int, QgsConditionalStyle> > mConstraintStylesMap;
+    mutable QHash<QgsFeatureId, QList<QgsConditionalStyle>> mRowStylesMap;
+    mutable QHash<QgsFeatureId, QHash<int, QgsConditionalStyle>> mConstraintStylesMap;
 
     mutable QgsExpressionContext mExpressionContext;
 
@@ -403,13 +415,13 @@ class GUI_EXPORT QgsAttributeTableModel: public QAbstractTableModel
 
     struct SortCache
     {
-      //! If it is set, a simple field is used for sorting, if it's -1 it's the mSortCacheExpression
-      int sortFieldIndex;
-      //! The currently cached column
-      QgsExpression sortCacheExpression;
-      QgsAttributeList sortCacheAttributes;
-      //! Allows caching of one value per column (used for sorting)
-      QHash<QgsFeatureId, QVariant> sortCache;
+        //! If it is set, a simple field is used for sorting, if it's -1 it's the mSortCacheExpression
+        int sortFieldIndex;
+        //! The currently cached column
+        QgsExpression sortCacheExpression;
+        QgsAttributeList sortCacheAttributes;
+        //! Allows caching of one value per column (used for sorting)
+        QHash<QgsFeatureId, QVariant> sortCache;
     };
 
     std::vector<SortCache> mSortCaches;
@@ -442,7 +454,6 @@ class GUI_EXPORT QgsAttributeTableModel: public QAbstractTableModel
     bool mShowValidityState = false;
 
     friend class TestQgsAttributeTable;
-
 };
 
 

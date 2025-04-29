@@ -32,11 +32,9 @@ class QgsLayout;
  * \ingroup gui
  * \brief QgsLayoutViewRubberBand is an abstract base class for temporary rubber band items
  * in various shapes, for use within QgsLayoutView widgets.
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsLayoutViewRubberBand : public QObject
 {
-
     Q_OBJECT
 
 #ifdef SIP_RUN
@@ -49,7 +47,6 @@ class GUI_EXPORT QgsLayoutViewRubberBand : public QObject
 #endif
 
   public:
-
     /**
      * Constructor for QgsLayoutViewRubberBand.
      */
@@ -132,7 +129,6 @@ class GUI_EXPORT QgsLayoutViewRubberBand : public QObject
     void sizeChanged( const QString &size );
 
   protected:
-
     /**
      * Calculates an updated bounding box rectangle from a original \a start position
      * and new \a position. If \a constrainSquare is TRUE then the bounding box will be
@@ -142,26 +138,22 @@ class GUI_EXPORT QgsLayoutViewRubberBand : public QObject
     QRectF updateRect( QPointF start, QPointF position, bool constrainSquare, bool fromCenter );
 
   private:
-
     QgsLayoutView *mView = nullptr;
 
     QBrush mBrush = Qt::NoBrush;
     QPen mPen = QPen( QBrush( QColor( 227, 22, 22, 200 ) ), 0 );
-
 };
 
 
 /**
  * \ingroup gui
  * \brief QgsLayoutViewRectangularRubberBand is rectangular rubber band for use within QgsLayoutView widgets.
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsLayoutViewRectangularRubberBand : public QgsLayoutViewRubberBand
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsLayoutViewRectangularRubberBand.
      */
@@ -175,26 +167,22 @@ class GUI_EXPORT QgsLayoutViewRectangularRubberBand : public QgsLayoutViewRubber
     QRectF finish( QPointF position = QPointF(), Qt::KeyboardModifiers modifiers = Qt::KeyboardModifiers() ) override;
 
   private:
-
     //! Rubber band item
     QGraphicsRectItem *mRubberBandItem = nullptr;
 
     //! Start of rubber band creation
     QPointF mRubberBandStartPos;
-
 };
 
 /**
  * \ingroup gui
  * \brief QgsLayoutViewEllipseRubberBand is elliptical rubber band for use within QgsLayoutView widgets.
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsLayoutViewEllipticalRubberBand : public QgsLayoutViewRubberBand
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsLayoutViewEllipticalRubberBand.
      */
@@ -208,26 +196,22 @@ class GUI_EXPORT QgsLayoutViewEllipticalRubberBand : public QgsLayoutViewRubberB
     QRectF finish( QPointF position = QPointF(), Qt::KeyboardModifiers modifiers = Qt::KeyboardModifiers() ) override;
 
   private:
-
     //! Rubber band item
     QGraphicsEllipseItem *mRubberBandItem = nullptr;
 
     //! Start of rubber band creation
     QPointF mRubberBandStartPos;
-
 };
 
 /**
  * \ingroup gui
  * \brief QgsLayoutViewTriangleRubberBand is triangular rubber band for use within QgsLayoutView widgets.
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsLayoutViewTriangleRubberBand : public QgsLayoutViewRubberBand
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsLayoutViewTriangleRubberBand.
      */
@@ -241,12 +225,10 @@ class GUI_EXPORT QgsLayoutViewTriangleRubberBand : public QgsLayoutViewRubberBan
     QRectF finish( QPointF position = QPointF(), Qt::KeyboardModifiers modifiers = Qt::KeyboardModifiers() ) override;
 
   private:
-
     //! Rubber band item
     QGraphicsPolygonItem *mRubberBandItem = nullptr;
 
     //! Start of rubber band creation
     QPointF mRubberBandStartPos;
-
 };
 #endif // QGSLAYOUTVIEWRUBBERBAND_H

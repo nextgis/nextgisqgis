@@ -16,14 +16,15 @@
 #include "qgslogger.h"
 #include "qgsmessagelog.h"
 #include "qgswfsnewconnection.h"
+#include "moc_qgswfsnewconnection.cpp"
 #include "qgswfsguiutils.h"
 
 #include <QMessageBox>
 
 #include <algorithm>
 
-QgsWFSNewConnection::QgsWFSNewConnection( QWidget *parent, const QString &connName ):
-  QgsNewHttpConnection( parent, QgsNewHttpConnection::ConnectionWfs, QStringLiteral( "WFS" ), connName )
+QgsWFSNewConnection::QgsWFSNewConnection( QWidget *parent, const QString &connName )
+  : QgsNewHttpConnection( parent, QgsNewHttpConnection::ConnectionWfs, QStringLiteral( "WFS" ), connName )
 {
   connect( wfsVersionDetectButton(), &QPushButton::clicked, this, &QgsWFSNewConnection::versionDetectButton );
 }
@@ -106,7 +107,10 @@ void QgsWFSNewConnection::capabilitiesReplyFinished()
     wfsPageSizeLineEdit()->setText( QString::number( caps.maxFeatures ) );
   }
   wfsVersionComboBox()->setCurrentIndex( versionIdx );
-  wfsPagingEnabledCheckBox()->setChecked( caps.supportsPaging );
+
+  wfsPagingComboBox()->setCurrentIndex(
+    static_cast<int>( caps.supportsPaging ? QgsNewHttpConnection::WfsFeaturePagingIndex::ENABLED : QgsNewHttpConnection::WfsFeaturePagingIndex::DISABLED )
+  );
 
   mCapabilities.reset();
 }
@@ -159,7 +163,7 @@ void QgsWFSNewConnection::oapifLandingPageReplyFinished()
   }
 
   wfsVersionComboBox()->setCurrentIndex( WFS_VERSION_API_FEATURES_1_0 );
-  wfsPagingEnabledCheckBox()->setChecked( true );
+  wfsPagingComboBox()->setCurrentIndex( static_cast<int>( QgsNewHttpConnection::WfsFeaturePagingIndex::ENABLED ) );
 
   mCapabilities.reset();
 

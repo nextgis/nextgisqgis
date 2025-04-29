@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/layout/qgslayoutserializableobject.h                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,9 +13,8 @@
 class QgsLayoutSerializableObject : QgsLayoutUndoObjectInterface
 {
 %Docstring(signature="appended")
-An interface for layout objects which can be stored and read from DOM elements.
-
-.. versionadded:: 3.0
+An interface for layout objects which can be stored and read from DOM
+elements.
 %End
 
 %TypeHeaderCode
@@ -27,7 +26,8 @@ An interface for layout objects which can be stored and read from DOM elements.
 %Docstring
 Returns the object type as a string.
 
-This string must be a unique, single word, character only representation of the item type, eg "LayoutScaleBar"
+This string must be a unique, single word, character only representation
+of the item type, eg "LayoutScaleBar"
 %End
 
     virtual QgsLayout *layout() = 0;
@@ -37,14 +37,16 @@ Returns the layout the object belongs to.
 
     virtual bool writeXml( QDomElement &parentElement, QDomDocument &document, const QgsReadWriteContext &context ) const = 0;
 %Docstring
-Stores the objects's state in a DOM element. The ``parentElement`` should refer to the parent layout's DOM element.
+Stores the objects's state in a DOM element. The ``parentElement``
+should refer to the parent layout's DOM element.
 
 .. seealso:: :py:func:`readXml`
 %End
 
     virtual bool readXml( const QDomElement &element, const QDomDocument &document, const QgsReadWriteContext &context ) = 0;
 %Docstring
-Sets the objects's state from a DOM element. ``element`` is the DOM node corresponding to the object.
+Sets the objects's state from a DOM element. ``element`` is the DOM node
+corresponding to the object.
 
 .. seealso:: :py:func:`writeXml`
 %End
@@ -59,5 +61,5 @@ Sets the objects's state from a DOM element. ``element`` is the DOM node corresp
  *                                                                      *
  * src/core/layout/qgslayoutserializableobject.h                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

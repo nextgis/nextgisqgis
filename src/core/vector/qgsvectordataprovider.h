@@ -64,46 +64,8 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
 
   public:
 
-    // If you add to this, please also add to capabilitiesString()
-
-    /**
-     * enumeration with capabilities that providers might implement
-     */
-    enum Capability
-    {
-      NoCapabilities = 0,       //!< Provider has no capabilities
-      AddFeatures = 1,       //!< Allows adding features
-      DeleteFeatures = 1 <<  1, //!< Allows deletion of features
-      ChangeAttributeValues = 1 <<  2, //!< Allows modification of attribute values
-      AddAttributes = 1 <<  3, //!< Allows addition of new attributes (fields)
-      DeleteAttributes = 1 <<  4, //!< Allows deletion of attributes (fields)
-      CreateSpatialIndex = 1 <<  6, //!< Allows creation of spatial index
-      SelectAtId = 1 <<  7, //!< Fast access to features using their ID
-      ChangeGeometries = 1 <<  8, //!< Allows modifications of geometries
-      SelectEncoding = 1 << 13, //!< Allows user to select encoding
-      CreateAttributeIndex = 1 << 12, //!< Can create indexes on provider's fields
-      SimplifyGeometries = 1 << 14, //!< Supports simplification of geometries on provider side according to a distance tolerance
-      SimplifyGeometriesWithTopologicalValidation = 1 << 15, //!< Supports topological simplification of geometries on provider side according to a distance tolerance
-      TransactionSupport = 1 << 16, //!< Supports transactions
-      CircularGeometries = 1 << 17, //!< Supports circular geometry types (circularstring, compoundcurve, curvepolygon)
-      ChangeFeatures = 1 << 18, //!< Supports joint updates for attributes and geometry. Providers supporting this should still define ChangeGeometries | ChangeAttributeValues.
-      RenameAttributes = 1 << 19, //!< Supports renaming attributes (fields). Since QGIS 2.16
-      FastTruncate = 1 << 20, //!< Supports fast truncation of the layer (removing all features). Since QGIS 3.0
-      ReadLayerMetadata = 1 << 21, //!< Provider can read layer metadata from data store. Since QGIS 3.0. See QgsDataProvider::layerMetadata()
-      WriteLayerMetadata = 1 << 22, //!< Provider can write layer metadata to the data store. Since QGIS 3.0. See QgsDataProvider::writeLayerMetadata()
-      CancelSupport = 1 << 23, //!< Supports interruption of pending queries from a separated thread. Since QGIS 3.2
-      CreateRenderer = 1 << 24, //!< Provider can create feature renderers using backend-specific formatting information. Since QGIS 3.2. See QgsVectorDataProvider::createRenderer().
-      CreateLabeling = 1 << 25, //!< Provider can set labeling settings using backend-specific formatting information. Since QGIS 3.6. See QgsVectorDataProvider::createLabeling().
-      ReloadData = 1 << 26, //!< Provider is able to force reload data
-      FeatureSymbology = 1 << 27, //!< Provider is able retrieve embedded symbology associated with individual features. Since QGIS 3.20.
-    };
-
-    Q_DECLARE_FLAGS( Capabilities, Capability )
-
     //! Bitmask of all provider's editing capabilities
-    static const int EditingCapabilities = AddFeatures | DeleteFeatures |
-                                           ChangeAttributeValues | ChangeGeometries | AddAttributes | DeleteAttributes |
-                                           RenameAttributes;
+    static const int EditingCapabilities = static_cast< int >( Qgis::VectorProviderCapability::EditingCapabilities );
 
     /**
      * Constructor for a vector data provider.
@@ -114,7 +76,7 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      */
     QgsVectorDataProvider( const QString &uri = QString(),
                            const QgsDataProvider::ProviderOptions &providerOptions = QgsDataProvider::ProviderOptions(),
-                           QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() );
+                           Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() );
 
     /**
      * Returns feature source object that can be used for querying provider's data. The returned feature source
@@ -130,7 +92,6 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      * same time, some synchronization mechanisms must be used (e.g. mutexes) to prevent data corruption.
      *
      * \returns new instance of QgsAbstractFeatureSource (caller is responsible for deleting it)
-     * \since QGIS 2.4
      */
     virtual QgsAbstractFeatureSource *featureSource() const = 0 SIP_FACTORY;
 
@@ -193,7 +154,7 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      * \see empty()
      * \since QGIS 3.4
      */
-    QgsFeatureSource::FeatureAvailability hasFeatures() const override;
+    Qgis::FeatureAvailability hasFeatures() const override;
 
     /**
      * Returns the fields associated with this data provider.
@@ -202,6 +163,7 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
 
     QgsCoordinateReferenceSystem sourceCrs() const override;
     QgsRectangle sourceExtent() const override;
+    QgsBox3D sourceExtent3D() const override;
     QString sourceName() const override { return QString(); }
 
     /**
@@ -252,9 +214,8 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      * \param ok will be set to TRUE if calculation was successfully performed by the data provider
      * \param fids list of fids to filter, otherwise will use all fids
      * \returns calculated aggregate value
-     * \since QGIS 2.16
      */
-    virtual QVariant aggregate( QgsAggregateCalculator::Aggregate aggregate,
+    virtual QVariant aggregate( Qgis::Aggregate aggregate,
                                 int index,
                                 const QgsAggregateCalculator::AggregateParameters &parameters,
                                 QgsExpressionContext *context,
@@ -285,7 +246,6 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      * Providers with the FastTruncate capability will use an optimised method to truncate the layer.
      * \returns TRUE in case of success and FALSE in case of failure.
      * \see deleteFeatures()
-     * \since QGIS 3.0
      */
     virtual bool truncate();
 
@@ -319,7 +279,6 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      * manually to ensure that the layer's field are correctly reported.
      * \param renamedAttributes map of attribute index to new attribute name
      * \returns TRUE in case of success and FALSE in case of failure
-     * \since QGIS 2.16
      */
     virtual bool renameAttributes( const QgsFieldNameMap &renamedAttributes );
 
@@ -365,7 +324,6 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      * field index. These clauses are usually SQL fragments which must be evaluated by the
      * provider, e.g., sequence values.
      * \see defaultValue()
-     * \since QGIS 3.0
      */
     virtual QString defaultValueClause( int fieldIndex ) const;
 
@@ -373,7 +331,6 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      * Returns any constraints which are present at the provider for a specified
      * field index.
      * \see skipConstraintCheck()
-     * \since QGIS 3.0
      */
     QgsFieldConstraints::Constraints fieldConstraints( int fieldIndex ) const;
 
@@ -382,7 +339,6 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      * the value returned by defaultValue() is trusted implicitly. An optional attribute value can be
      * passed which can help refine the skip constraint check.
      * \see fieldConstraints()
-     * \since QGIS 3.0
      */
     virtual bool skipConstraintCheck( int fieldIndex, QgsFieldConstraints::Constraint constraint, const QVariant &value = QVariant() ) const;
 
@@ -412,7 +368,7 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      *
      * \see attributeEditCapabilities()
      */
-    Q_INVOKABLE virtual QgsVectorDataProvider::Capabilities capabilities() const;
+    Q_INVOKABLE virtual Qgis::VectorProviderCapabilities capabilities() const;
 
     /**
      *  Returns the above in friendly format.
@@ -469,9 +425,16 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
     virtual QgsAttributeList pkAttributeIndexes() const;
 
     /**
+     * Returns the name of the column storing geometry, if applicable.
+     *
+     * \since QGIS 3.42
+     */
+    virtual QString geometryColumnName() const;
+
+    /**
      * Returns list of indexes to names for QgsPalLabeling fix
      *
-     * \deprecated since QGIS 3.32 this method is unused and will always return an empty hash
+     * \deprecated QGIS 3.32. This method is unused and will always return an empty hash.
      */
     Q_DECL_DEPRECATED QgsAttrPalIndexNameHash palAttributeIndexNames() const SIP_DEPRECATED;
 
@@ -482,7 +445,7 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
 
     struct NativeType
     {
-      NativeType( const QString &typeDesc, const QString &typeName, QVariant::Type type, int minLen = 0, int maxLen = 0, int minPrec = 0, int maxPrec = 0, QVariant::Type subType = QVariant::Invalid )
+      NativeType( const QString &typeDesc, const QString &typeName, QMetaType::Type type, int minLen = 0, int maxLen = 0, int minPrec = 0, int maxPrec = 0, QMetaType::Type subType = QMetaType::Type::UnknownType )
         : mTypeDesc( typeDesc )
         , mTypeName( typeName )
         , mType( type )
@@ -493,14 +456,26 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
         , mSubType( subType )
       {}
 
-      QString mTypeDesc;
+      Q_DECL_DEPRECATED NativeType( const QString &typeDesc, const QString &typeName, QVariant::Type type, int minLen = 0, int maxLen = 0, int minPrec = 0, int maxPrec = 0, QVariant::Type subType = QVariant::Type::Invalid )
+        : mTypeDesc( typeDesc )
+        , mTypeName( typeName )
+        , mType( QgsVariantUtils::variantTypeToMetaType( type ) )
+        , mMinLen( minLen )
+        , mMaxLen( maxLen )
+        , mMinPrec( minPrec )
+        , mMaxPrec( maxPrec )
+        , mSubType( QgsVariantUtils::variantTypeToMetaType( subType ) ) SIP_DEPRECATED
+          {}
+
+
+          QString mTypeDesc;
       QString mTypeName;
-      QVariant::Type mType;
+      QMetaType::Type mType;
       int mMinLen;
       int mMaxLen;
       int mMinPrec;
       int mMaxPrec;
-      QVariant::Type mSubType;
+      QMetaType::Type mSubType;
     };
 
     /**
@@ -531,18 +506,6 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      * Gets recorded errors
      */
     QStringList errors() const;
-
-    /**
-     * It returns FALSE by default.
-     * Must be implemented by providers that support saving and loading styles to db returning TRUE
-     */
-    virtual bool isSaveAndLoadStyleToDatabaseSupported() const;
-
-    /**
-     * It returns FALSE by default.
-     * Must be implemented by providers that support delete styles from db returning TRUE
-     */
-    virtual bool isDeleteStyleFromDatabaseSupported() const;
 
     /**
      * Creates a new vector layer feature renderer, using provider backend specific information.
@@ -578,7 +541,17 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      */
     virtual QgsAbstractVectorLayerLabeling *createLabeling( const QVariantMap &configuration = QVariantMap() ) const SIP_FACTORY;
 
-    static QVariant convertValue( QVariant::Type type, const QString &value );
+    /**
+     * Convert \a value to \a type
+     */
+    static QVariant convertValue( QMetaType::Type type, const QString &value );
+
+    /**
+     * Convert \a value to \a type
+     *
+     * \deprecated QGIS 3.38. Use the method with a QMetaType::Type argument instead.
+     */
+    Q_DECL_DEPRECATED static QVariant convertValue( QVariant::Type type, const QString &value ) SIP_DEPRECATED;
 
     /**
      * Returns the transaction this data provider is included in, if any.
@@ -586,7 +559,7 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
     virtual QgsTransaction *transaction() const;
 
     /**
-     * \deprecated QGIS 3.12 - will be removed in QGIS 4.0 - use reloadData instead
+     * \deprecated QGIS 3.12. Will be removed in QGIS 4.0 - use reloadData instead.
      */
     Q_DECL_DEPRECATED virtual void forceReload() SIP_DEPRECATED { reloadData(); }
 
@@ -600,7 +573,6 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      * \param target the layer using this data provider.
      * \param layers the other layers.
      * \returns the list of N-1 relations from this provider.
-     * \since QGIS 3.0
      */
     virtual QList<QgsRelation> discoverRelations( const QgsVectorLayer *target, const QList<QgsVectorLayer *> &layers ) const;
 
@@ -630,7 +602,6 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      *
      * \returns TRUE if data source has metadata, FALSE otherwise.
      *
-     * \since QGIS 3.0
      */
     virtual bool hasMetadata() const { return true; }
 
@@ -645,12 +616,14 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
     QgsVectorDataProviderTemporalCapabilities *temporalCapabilities() override;
     const QgsVectorDataProviderTemporalCapabilities *temporalCapabilities() const override SIP_SKIP;
 
+    QgsDataProviderElevationProperties *elevationProperties() override;
+    const QgsDataProviderElevationProperties *elevationProperties() const override SIP_SKIP;
+
   signals:
 
     /**
      * Signals an error in this provider
      *
-     * \since QGIS 3.0
      */
     void raiseError( const QString &msg ) const;
 
@@ -674,13 +647,13 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      *
      * For general debug information use QgsMessageLog::logMessage() instead.
      *
-     * \since QGIS 3.0
      */
     void pushError( const QString &msg ) const;
 
     /**
      * Converts the geometry to the provider type if possible / necessary
      * \returns the converted geometry or NULLPTR if no conversion was necessary or possible
+     * \note The default implementation simply calls the static version of this function.
      */
     QgsGeometry convertToProviderType( const QgsGeometry &geom ) const;
 
@@ -688,16 +661,25 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      * Set the list of native types supported by this provider.
      * Usually done in the constructor.
      *
-     * \since QGIS 3.0
      */
     void setNativeTypes( const QList<QgsVectorDataProvider::NativeType> &nativeTypes );
+
+#ifdef SIP_PYQT5_RUN
 
     /**
      * Gets this providers encoding
      *
-     * \since QGIS 3.0
      */
     QTextCodec *textEncoding() const;
+#endif
+
+    /**
+     * Converts the \a geometry to the provider geometry type \a providerGeometryType if possible / necessary
+     * \returns the converted geometry or NULLPTR if no conversion was necessary or possible
+     * \since QGIS 3.34
+     */
+    static QgsGeometry convertToProviderType( const QgsGeometry &geometry,  Qgis::WkbType providerGeometryType );
+
 
   private:
     mutable bool mCacheMinMaxDirty = true;
@@ -716,6 +698,7 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
     mutable QStringList mErrors;
 
     std::unique_ptr< QgsVectorDataProviderTemporalCapabilities > mTemporalCapabilities;
+    std::unique_ptr< QgsDataProviderElevationProperties > mElevationProperties;
 
     static QStringList sEncodings;
 
@@ -724,7 +707,5 @@ class CORE_EXPORT QgsVectorDataProvider : public QgsDataProvider, public QgsFeat
      */
     virtual void setTransaction( QgsTransaction * /*transaction*/ ) {}
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS( QgsVectorDataProvider::Capabilities )
 
 #endif

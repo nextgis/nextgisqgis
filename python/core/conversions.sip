@@ -1039,6 +1039,208 @@ which are not wrapped by PyQt:
 %End
 };
 
+// adapted from the qpymultimedia_qlist.sip file from the PyQt6 sources
+%MappedType QList<Qgis::SensorThingsEntity>
+    /TypeHintIn="Iterable[Qgis.SensorThingsEntity]",
+    TypeHintOut="List[Qgis.SensorThingsEntity]", TypeHintValue="[]"/
+{
+    %TypeHeaderCode
+#include "qgis.h"
+        %End
+
+        %ConvertFromTypeCode
+            PyObject *l = PyList_New(sipCpp->size());
+
+    if (!l)
+        return 0;
+
+    for (int i = 0; i < sipCpp->size(); ++i)
+    {
+        PyObject *eobj = sipConvertFromEnum(static_cast<int>(sipCpp->at(i)),
+                                            sipType_Qgis_SensorThingsEntity);
+
+        if (!eobj)
+        {
+            Py_DECREF(l);
+
+            return 0;
+        }
+
+        PyList_SetItem(l, i, eobj);
+    }
+
+    return l;
+    %End
+
+        %ConvertToTypeCode
+            PyObject *iter = PyObject_GetIter(sipPy);
+
+    if (!sipIsErr)
+    {
+        PyErr_Clear();
+        Py_XDECREF(iter);
+
+        return (iter && !PyBytes_Check(sipPy) && !PyUnicode_Check(sipPy));
+    }
+
+    if (!iter)
+    {
+        *sipIsErr = 1;
+
+        return 0;
+    }
+
+    QList<Qgis::SensorThingsEntity> *ql = new QList<Qgis::SensorThingsEntity>;
+
+    for (Py_ssize_t i = 0; ; ++i)
+    {
+        PyErr_Clear();
+        PyObject *itm = PyIter_Next(iter);
+
+        if (!itm)
+        {
+            if (PyErr_Occurred())
+            {
+                delete ql;
+                Py_DECREF(iter);
+                *sipIsErr = 1;
+
+                return 0;
+            }
+
+            break;
+        }
+
+        int v = sipConvertToEnum(itm, sipType_Qgis_SensorThingsEntity);
+
+        if (PyErr_Occurred())
+        {
+            PyErr_Format(PyExc_TypeError,
+                         "index %zd has type '%s' but 'Qgis.SensorThingsEntity' is expected",
+                         i, sipPyTypeName(Py_TYPE(itm)));
+
+            Py_DECREF(itm);
+            delete ql;
+            Py_DECREF(iter);
+            *sipIsErr = 1;
+
+            return 0;
+        }
+
+        ql->append(static_cast<Qgis::SensorThingsEntity>(v));
+
+        Py_DECREF(itm);
+    }
+
+    Py_DECREF(iter);
+
+    *sipCppPtr = ql;
+
+    return sipGetState(sipTransferObj);
+    %End
+};
+
+// adapted from the qpymultimedia_qlist.sip file from the PyQt6 sources
+%MappedType QVector<Qgis::LabelPredefinedPointPosition>
+    /TypeHintIn="Iterable[Qgis.LabelPredefinedPointPosition]",
+    TypeHintOut="List[Qgis.LabelPredefinedPointPosition]", TypeHintValue="[]"/
+{
+    %TypeHeaderCode
+#include "qgis.h"
+        %End
+
+        %ConvertFromTypeCode
+            PyObject *l = PyList_New(sipCpp->size());
+
+    if (!l)
+        return 0;
+
+    for (int i = 0; i < sipCpp->size(); ++i)
+    {
+        PyObject *eobj = sipConvertFromEnum(static_cast<int>(sipCpp->at(i)),
+                                            sipType_Qgis_LabelPredefinedPointPosition);
+
+        if (!eobj)
+        {
+            Py_DECREF(l);
+
+            return 0;
+        }
+
+        PyList_SetItem(l, i, eobj);
+    }
+
+    return l;
+    %End
+
+        %ConvertToTypeCode
+            PyObject *iter = PyObject_GetIter(sipPy);
+
+    if (!sipIsErr)
+    {
+        PyErr_Clear();
+        Py_XDECREF(iter);
+
+        return (iter && !PyBytes_Check(sipPy) && !PyUnicode_Check(sipPy));
+    }
+
+    if (!iter)
+    {
+        *sipIsErr = 1;
+
+        return 0;
+    }
+
+    QVector<Qgis::LabelPredefinedPointPosition> *ql = new QVector<Qgis::LabelPredefinedPointPosition>;
+
+    for (Py_ssize_t i = 0; ; ++i)
+    {
+        PyErr_Clear();
+        PyObject *itm = PyIter_Next(iter);
+
+        if (!itm)
+        {
+            if (PyErr_Occurred())
+            {
+                delete ql;
+                Py_DECREF(iter);
+                *sipIsErr = 1;
+
+                return 0;
+            }
+
+            break;
+        }
+
+        int v = sipConvertToEnum(itm, sipType_Qgis_LabelPredefinedPointPosition);
+
+        if (PyErr_Occurred())
+        {
+            PyErr_Format(PyExc_TypeError,
+                         "index %zd has type '%s' but 'Qgis.LabelPredefinedPointPosition' is expected",
+                         i, sipPyTypeName(Py_TYPE(itm)));
+
+            Py_DECREF(itm);
+            delete ql;
+            Py_DECREF(iter);
+            *sipIsErr = 1;
+
+            return 0;
+        }
+
+        ql->append(static_cast<Qgis::LabelPredefinedPointPosition>(v));
+
+        Py_DECREF(itm);
+    }
+
+    Py_DECREF(iter);
+
+    *sipCppPtr = ql;
+
+    return sipGetState(sipTransferObj);
+    %End
+};
+
 template <TYPE>
 %MappedType QVector< QVector<TYPE> >
 {
@@ -1410,6 +1612,55 @@ template <TYPE>
 %End
 };
 
+
+%MappedType QVector<long long>
+    /TypeHintIn="Iterable[int]",
+    TypeHintOut="List[int]", TypeHintValue="[]"/
+{
+%TypeHeaderCode
+#include <QVector>
+    %End
+
+    %ConvertFromTypeCode
+        // Create the list.
+        PyObject *l;
+
+if ((l = PyList_New(sipCpp->size())) == NULL)
+    return NULL;
+
+// Set the list elements.
+QVector<long long>::iterator it = sipCpp->begin();
+for (int i = 0; it != sipCpp->end(); ++it, ++i)
+{
+    PyObject *tobj;
+
+    if ((tobj = PyLong_FromLongLong(*it)) == NULL)
+    {
+      Py_DECREF(l);
+      return NULL;
+    }
+    PyList_SET_ITEM(l, i, tobj);
+}
+
+return l;
+%End
+
+    %ConvertToTypeCode
+    // Check the type if that is all that is required.
+    if (sipIsErr == NULL)
+    return PyList_Check(sipPy);
+
+QVector<long long> *qlist = new QVector<long long>;
+qlist->reserve( PyList_GET_SIZE(sipPy) );
+for (int i = 0; i < PyList_GET_SIZE(sipPy); ++i)
+{
+    *qlist << PyLong_AsLongLong(PyList_GET_ITEM(sipPy, i));
+}
+
+*sipCppPtr = qlist;
+return sipGetState(sipTransferObj);
+%End
+};
 
 
 %MappedType QSet<qint64>
@@ -3172,6 +3423,10 @@ bool null_from_qvariant_converter( const QVariant *varp, PyObject **objp )
     return false;
   }
 }
+%End
+
+%ModuleHeaderCode
+#define SIP_PYQT_FROM_QVARIANT_BY_TYPE "pyqt5_from_qvariant_by_type"
 %End
 
 %PostInitialisationCode  //#spellok

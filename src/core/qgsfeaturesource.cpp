@@ -23,9 +23,9 @@
 #include "qgsvectorlayer.h"
 #include "qgsvectordataprovider.h"
 
-QgsFeatureSource::FeatureAvailability QgsFeatureSource::hasFeatures() const
+Qgis::FeatureAvailability QgsFeatureSource::hasFeatures() const
 {
-  return FeaturesMaybeAvailable;
+  return Qgis::FeatureAvailability::FeaturesMaybeAvailable;
 }
 
 QSet<QVariant> QgsFeatureSource::uniqueValues( int fieldIndex, int limit ) const
@@ -34,7 +34,7 @@ QSet<QVariant> QgsFeatureSource::uniqueValues( int fieldIndex, int limit ) const
     return QSet<QVariant>();
 
   QgsFeatureRequest req;
-  req.setFlags( QgsFeatureRequest::NoGeometry );
+  req.setFlags( Qgis::FeatureRequestFlag::NoGeometry );
   req.setSubsetOfAttributes( QgsAttributeList() << fieldIndex );
 
   QSet<QVariant> values;
@@ -55,7 +55,7 @@ QVariant QgsFeatureSource::minimumValue( int fieldIndex ) const
     return QVariant();
 
   QgsFeatureRequest req;
-  req.setFlags( QgsFeatureRequest::NoGeometry );
+  req.setFlags( Qgis::FeatureRequestFlag::NoGeometry );
   req.setSubsetOfAttributes( QgsAttributeList() << fieldIndex );
 
   QVariant min;
@@ -78,7 +78,7 @@ QVariant QgsFeatureSource::maximumValue( int fieldIndex ) const
     return QVariant();
 
   QgsFeatureRequest req;
-  req.setFlags( QgsFeatureRequest::NoGeometry );
+  req.setFlags( Qgis::FeatureRequestFlag::NoGeometry );
   req.setSubsetOfAttributes( QgsAttributeList() << fieldIndex );
 
   QVariant max;
@@ -97,7 +97,12 @@ QVariant QgsFeatureSource::maximumValue( int fieldIndex ) const
 
 QgsRectangle QgsFeatureSource::sourceExtent() const
 {
-  QgsRectangle r;
+  return sourceExtent3D().toRectangle();
+}
+
+QgsBox3D QgsFeatureSource::sourceExtent3D() const
+{
+  QgsBox3D r;
 
   QgsFeatureRequest req;
   req.setNoAttributes();
@@ -107,7 +112,7 @@ QgsRectangle QgsFeatureSource::sourceExtent() const
   while ( it.nextFeature( f ) )
   {
     if ( f.hasGeometry() )
-      r.combineExtentWith( f.geometry().boundingBox() );
+      r.combineWith( f.geometry().boundingBox3D() );
   }
   return r;
 }
@@ -115,7 +120,7 @@ QgsRectangle QgsFeatureSource::sourceExtent() const
 QgsFeatureIds QgsFeatureSource::allFeatureIds() const
 {
   QgsFeatureIterator fit = getFeatures( QgsFeatureRequest()
-                                        .setFlags( QgsFeatureRequest::NoGeometry )
+                                        .setFlags( Qgis::FeatureRequestFlag::NoGeometry )
                                         .setNoAttributes() );
 
   QgsFeatureIds ids;
@@ -131,13 +136,14 @@ QgsFeatureIds QgsFeatureSource::allFeatureIds() const
 
 QgsVectorLayer *QgsFeatureSource::materialize( const QgsFeatureRequest &request, QgsFeedback *feedback )
 {
-  const Qgis::WkbType outWkbType = ( request.flags() & QgsFeatureRequest::NoGeometry ) ? Qgis::WkbType::NoGeometry : wkbType();
-  const QgsCoordinateReferenceSystem crs = request.destinationCrs().isValid() ? request.destinationCrs() : sourceCrs();
+  const Qgis::WkbType outWkbType = ( request.flags() & Qgis::FeatureRequestFlag::NoGeometry ) ? Qgis::WkbType::NoGeometry : wkbType();
+  const QgsCoordinateReferenceSystem crs = request.coordinateTransform().isValid() ? request.coordinateTransform().destinationCrs()
+      : request.destinationCrs().isValid() ? request.destinationCrs() : sourceCrs();
 
   const QgsAttributeList requestedAttrs = request.subsetOfAttributes();
 
   QgsFields outFields;
-  if ( request.flags() & QgsFeatureRequest::SubsetOfAttributes )
+  if ( request.flags() & Qgis::FeatureRequestFlag::SubsetOfAttributes )
   {
     int i = 0;
     const QgsFields sourceFields = fields();
@@ -166,7 +172,7 @@ QgsVectorLayer *QgsFeatureSource::materialize( const QgsFeatureRequest &request,
     if ( feedback && feedback->isCanceled() )
       break;
 
-    if ( request.flags() & QgsFeatureRequest::SubsetOfAttributes )
+    if ( request.flags() & Qgis::FeatureRequestFlag::SubsetOfAttributes )
     {
       // remove unused attributes
       QgsAttributes attrs;
@@ -187,8 +193,7 @@ QgsVectorLayer *QgsFeatureSource::materialize( const QgsFeatureRequest &request,
   return layer.release();
 }
 
-QgsFeatureSource::SpatialIndexPresence QgsFeatureSource::hasSpatialIndex() const
+Qgis::SpatialIndexPresence QgsFeatureSource::hasSpatialIndex() const
 {
-  return SpatialIndexUnknown;
+  return Qgis::SpatialIndexPresence::Unknown;
 }
-

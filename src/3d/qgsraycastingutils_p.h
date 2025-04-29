@@ -27,10 +27,7 @@
 // version without notice, or even be removed.
 //
 
-#include "qgsfeatureid.h"
-#include <QSize>
-#include <QVariantMap>
-#include <QVector3D>
+#include "qgsraycastingutils.h"
 
 #define SIP_NO_FILE
 
@@ -39,7 +36,8 @@ class QgsAABB;
 namespace Qt3DRender
 {
   class QCamera;
-}
+  class QGeometryRenderer;
+} // namespace Qt3DRender
 
 
 namespace QgsRayCastingUtils
@@ -101,52 +99,17 @@ namespace QgsRayCastingUtils
    * \note With switch to Qt 5.11 we may remove it and use QRayCaster/QScreenRayCaster instead.
    * \since QGIS 3.4
    */
-  bool rayTriangleIntersection( const Ray3D &ray,
-                                QVector3D a,
-                                QVector3D b,
-                                QVector3D c,
-                                QVector3D &uvw,
-                                float &t );
+  bool rayTriangleIntersection( const Ray3D &ray, QVector3D a, QVector3D b, QVector3D c, QVector3D &uvw, float &t );
 
   /**
-   * Helper struct to store ray casting results.
+   * Tests whether a triangular mesh is intersected by a ray. Returns whether an intersection
+   * was found. If found, it outputs the point at which the intersection happened and index
+   * of the intersecting triangle.
+   * \since QGIS 3.34
    */
-  struct RayHit
-  {
-    //! Constructor
-    RayHit( const float distance, const QVector3D pos, const QgsFeatureId fid = FID_NULL, const QVariantMap attributes = QVariantMap() )
-      : distance( distance )
-      , pos( pos )
-      , fid( fid )
-      , attributes( attributes )
-    {
-    }
-    float distance;  //!< Distance from ray's origin
-    QVector3D pos;  //!< Hit position in world coordinates
-    QgsFeatureId fid;  //!< Fid of feature hit closest to ray origin, FID_NULL if no features hit
-    QVariantMap attributes;  //!< Point cloud point attributes, empty map if no point cloud points hit
-  };
+  bool rayMeshIntersection( Qt3DRender::QGeometryRenderer *geometryRenderer, const QgsRayCastingUtils::Ray3D &r, const QMatrix4x4 &worldTransform, QVector3D &intPt, int &triangleIndex );
 
-  /**
-   * Helper struct to store ray casting parameters.
-   */
-  struct RayCastContext
-  {
-    RayCastContext( bool singleResult = true, QSize screenSize = QSize(), float maxDistance = 0.f )
-      : singleResult( singleResult )
-      , screenSize( screenSize )
-      , maxDistance( maxDistance )
-    {}
-    bool singleResult;  //!< If set to TRUE, only the closest point cloud hit will be returned (other entities always return only closest hit)
-    QSize screenSize;  //!< QSize of the 3d engine window
-
-    /**
-     * The maximum distance from ray origin to look for hits when casting a ray.
-     * Should be normally set to far plane, to ignore data that will not get displayed in the 3D view
-     */
-    float maxDistance;
-  };
-}
+} // namespace QgsRayCastingUtils
 
 /// @endcond
 

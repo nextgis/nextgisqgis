@@ -34,7 +34,6 @@ class GUI_EXPORT QgsScaleComboBox : public QComboBox
     Q_PROPERTY( double minScale READ minScale WRITE setMinScale )
 
   public:
-
     /**
      * Constructor for QgsScaleComboBox.
      */
@@ -110,6 +109,16 @@ class GUI_EXPORT QgsScaleComboBox : public QComboBox
      * \since QGIS 3.8
      */
     bool allowNull() const;
+
+    /**
+     * Sets the list of predefined \a scales to show in the combobox. List elements
+     * are expected to be scale denominators, e.g. 1000.0 for a 1:1000 map.
+     *
+     * If \a scales is empty then the default user scale options will be used instead.
+     *
+     * \since QGIS 3.38
+    */
+    void setPredefinedScales( const QVector<double> &scales );
 
   signals:
 

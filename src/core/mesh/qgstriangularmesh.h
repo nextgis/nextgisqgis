@@ -51,9 +51,8 @@ class QgsRectangle;
 class CORE_EXPORT QgsTriangularMesh // TODO rename to QgsRendererMesh in QGIS 4
 {
   public:
-    //! Ctor
+
     QgsTriangularMesh();
-    //! Dtor
     ~QgsTriangularMesh();
 
     /**
@@ -93,7 +92,7 @@ class CORE_EXPORT QgsTriangularMesh // TODO rename to QgsRendererMesh in QGIS 4
     /**
      * Returns centroids of the native faces in map CRS
      *
-     * \deprecated since QGIS 3.14 use faceCentroids() instead
+     * \deprecated QGIS 3.14. Use faceCentroids() instead.
      */
     Q_DECL_DEPRECATED const QVector<QgsMeshVertex> &centroids() const ;
 
@@ -190,9 +189,9 @@ class CORE_EXPORT QgsTriangularMesh // TODO rename to QgsRendererMesh in QGIS 4
     QList<int> edgeIndexesForRectangle( const QgsRectangle &rectangle ) const ;
 
     /**
-     * Calculates and returns normale vector on each vertex that is part of any face
+     * Calculates and returns normal vector on each vertex that is part of any face
      *
-     * \returns all normales at vertices
+     * \returns all normals at vertices
      *
      * \since QGIS 3.12
      */
@@ -352,7 +351,7 @@ class CORE_EXPORT QgsTriangularMesh // TODO rename to QgsRendererMesh in QGIS 4
     QgsMeshVertex transformVertex( const QgsMeshVertex &vertex, Qgis::TransformDirection direction ) const;
 
     // calculate the centroid of the native mesh, mNativeMeshCentroids container must have the emplacment for the corresponding centroid before calling this method
-    QgsMeshVertex calculateCentroid( const QgsMeshFace &nativeFace );
+    QgsMeshVertex calculateCentroid( const QgsMeshFace &nativeFace ) const;
 
     // check clock wise and calculate average size of triangles
     void finalizeTriangles();

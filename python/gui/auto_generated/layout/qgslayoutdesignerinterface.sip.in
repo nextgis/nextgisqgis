@@ -3,20 +3,20 @@
  *                                                                      *
  * src/gui/layout/qgslayoutdesignerinterface.h                          *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 
 
-class QgsLayoutDesignerInterface: QObject
+class QgsLayoutDesignerInterface : QObject
 {
 %Docstring(signature="appended")
 A common interface for layout designer dialogs and widgets.
 
-Provides a common interface and stable API for layout designer dialogs and widgets.
-This interface can be used by plugins and scripts to interact with
-open layout designer dialogs.
+Provides a common interface and stable API for layout designer dialogs
+and widgets. This interface can be used by plugins and scripts to
+interact with open layout designer dialogs.
 
 .. note::
 
@@ -29,8 +29,6 @@ open layout designer dialogs.
    signal. Plugins must also listen for the QgisInterface.layoutDesignerWillBeClosed
    signal and gracefully cleanup any customizations before the designer dialog is
    deleted.
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -43,7 +41,6 @@ open layout designer dialogs.
       sipType = NULL;
 %End
   public:
-
     enum StandardTool
     {
       ToolMoveItemContent,
@@ -88,14 +85,15 @@ Returns the layout view utilized by the designer.
 Returns the designer's message bar.
 %End
 
-    virtual void selectItems( const QList< QgsLayoutItem * > &items ) = 0;
+    virtual void selectItems( const QList<QgsLayoutItem *> &items ) = 0;
 %Docstring
 Selects the specified ``items``.
 %End
 
     virtual void setAtlasPreviewEnabled( bool enabled ) = 0;
 %Docstring
-Toggles whether the atlas preview mode should be ``enabled`` in the designer.
+Toggles whether the atlas preview mode should be ``enabled`` in the
+designer.
 
 .. seealso:: :py:func:`atlasPreviewEnabled`
 
@@ -126,8 +124,8 @@ Sets the specified feature as the current atlas feature
 %Docstring
 Shows the configuration widget for the specified layout ``item``.
 
-If ``bringPanelToFront`` is ``True``, then the item properties panel will be automatically
-shown and raised to the top of the interface.
+If ``bringPanelToFront`` is ``True``, then the item properties panel
+will be automatically shown and raised to the top of the interface.
 
 .. versionadded:: 3.4
 %End
@@ -153,7 +151,6 @@ Returns a reference to the designer's "Layout" menu.
 
 .. seealso:: :py:func:`settingsMenu`
 
-
 .. versionadded:: 3.4
 %End
 
@@ -176,7 +173,6 @@ Returns a reference to the designer's "Edit" menu.
 .. seealso:: :py:func:`reportMenu`
 
 .. seealso:: :py:func:`settingsMenu`
-
 
 .. versionadded:: 3.4
 %End
@@ -201,7 +197,6 @@ Returns a reference to the designer's "View" menu.
 
 .. seealso:: :py:func:`settingsMenu`
 
-
 .. versionadded:: 3.4
 %End
 
@@ -225,7 +220,6 @@ Returns a reference to the designer's "Items" menu.
 
 .. seealso:: :py:func:`settingsMenu`
 
-
 .. versionadded:: 3.4
 %End
 
@@ -233,7 +227,8 @@ Returns a reference to the designer's "Items" menu.
 %Docstring
 Returns a reference to the designer's "Atlas" menu.
 
-Note that this may not exist or may be hidden if the designer is in report mode.
+Note that this may not exist or may be hidden if the designer is in
+report mode.
 
 .. note::
 
@@ -251,7 +246,6 @@ Note that this may not exist or may be hidden if the designer is in report mode.
 
 .. seealso:: :py:func:`settingsMenu`
 
-
 .. versionadded:: 3.4
 %End
 
@@ -259,7 +253,8 @@ Note that this may not exist or may be hidden if the designer is in report mode.
 %Docstring
 Returns a reference to the designer's "Report" menu.
 
-Note that this may not exist or may be hidden if the designer is not in report mode.
+Note that this may not exist or may be hidden if the designer is not in
+report mode.
 
 .. note::
 
@@ -276,7 +271,6 @@ Note that this may not exist or may be hidden if the designer is not in report m
 .. seealso:: :py:func:`atlasMenu`
 
 .. seealso:: :py:func:`settingsMenu`
-
 
 .. versionadded:: 3.4
 %End
@@ -301,7 +295,6 @@ Returns a reference to the designer's "Settings" menu.
 
 .. seealso:: :py:func:`reportMenu`
 
-
 .. versionadded:: 3.4
 %End
 
@@ -318,7 +311,6 @@ Returns a reference to the designer's "Layout" toolbar.
 .. seealso:: :py:func:`actionsToolbar`
 
 .. seealso:: :py:func:`atlasToolbar`
-
 
 .. versionadded:: 3.4
 %End
@@ -337,7 +329,6 @@ Returns a reference to the designer's "Navigation" toolbar.
 
 .. seealso:: :py:func:`atlasToolbar`
 
-
 .. versionadded:: 3.4
 %End
 
@@ -355,7 +346,6 @@ Returns a reference to the designer's "Actions" toolbar.
 
 .. seealso:: :py:func:`atlasToolbar`
 
-
 .. versionadded:: 3.4
 %End
 
@@ -363,8 +353,8 @@ Returns a reference to the designer's "Actions" toolbar.
 %Docstring
 Returns a reference to the designer's "Atlas" toolbar.
 
-Note that this toolbar may not exist or may be hidden if the
-designer is in report mode.
+Note that this toolbar may not exist or may be hidden if the designer is
+in report mode.
 
 .. note::
 
@@ -376,13 +366,13 @@ designer is in report mode.
 
 .. seealso:: :py:func:`actionsToolbar`
 
-
 .. versionadded:: 3.4
 %End
 
     virtual void addDockWidget( Qt::DockWidgetArea area, QDockWidget *dock ) = 0;
 %Docstring
-Adds a ``dock`` widget to the layout designer, in the specified dock ``area``.
+Adds a ``dock`` widget to the layout designer, in the specified dock
+``area``.
 
 .. note::
 
@@ -390,20 +380,19 @@ Adds a ``dock`` widget to the layout designer, in the specified dock ``area``.
 
 .. seealso:: :py:func:`removeDockWidget`
 
-
 .. versionadded:: 3.4
 %End
 
     virtual void removeDockWidget( QDockWidget *dock ) = 0;
 %Docstring
-Removes the specified ``dock`` widget from layout designer (without deleting it).
+Removes the specified ``dock`` widget from layout designer (without
+deleting it).
 
 .. note::
 
    See class documentation for notes regarding handling customization of designer dialogs.
 
 .. seealso:: :py:func:`addDockWidget`
-
 
 .. versionadded:: 3.4
 %End
@@ -418,7 +407,8 @@ Activates a standard layout designer ``tool``.
     class ExportResults
 {
 %Docstring(signature="appended")
-Encapsulates the results of an export operation performed in the designer.
+Encapsulates the results of an export operation performed in the
+designer.
 
 .. versionadded:: 3.20
 %End
@@ -427,16 +417,15 @@ Encapsulates the results of an export operation performed in the designer.
 #include "qgslayoutdesignerinterface.h"
 %End
       public:
-
         QgsLayoutExporter::ExportResult result;
 
-        QMap< QString, QgsLabelingResults * > labelingResults;
-
+        QMap<QString, QgsLabelingResults *> labelingResults;
     };
 
     virtual QgsLayoutDesignerInterface::ExportResults *lastExportResults() const = 0 /Factory/;
 %Docstring
-Returns the results of the last export operation performed in the designer.
+Returns the results of the last export operation performed in the
+designer.
 
 May be ``None`` if no export has been performed in the designer.
 
@@ -463,7 +452,8 @@ Toggles whether or not the rulers should be ``visible`` in the designer.
 %Docstring
 Emitted whenever a layout is exported from the layout designer.
 
-The results of the export can be retrieved by calling :py:func:`~QgsLayoutDesignerInterface.lastExportResults`.
+The results of the export can be retrieved by calling
+:py:func:`~QgsLayoutDesignerInterface.lastExportResults`.
 
 .. versionadded:: 3.20
 %End
@@ -475,7 +465,6 @@ Emitted when a ``map`` item's preview has been refreshed.
 
 .. versionadded:: 3.20
 %End
-
 };
 
 /************************************************************************
@@ -483,5 +472,5 @@ Emitted when a ``map`` item's preview has been refreshed.
  *                                                                      *
  * src/gui/layout/qgslayoutdesignerinterface.h                          *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

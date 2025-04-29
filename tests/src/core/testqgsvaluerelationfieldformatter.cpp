@@ -26,24 +26,24 @@
 //header for class being tested
 #include "fieldformatter/qgsvaluerelationfieldformatter.h"
 
-class TestQgsValueRelationFieldFormatter: public QObject
+class TestQgsValueRelationFieldFormatter : public QObject
 {
     Q_OBJECT
 
   private slots:
 
-    void initTestCase(); // will be called before the first testfunction is executed.
+    void initTestCase();    // will be called before the first testfunction is executed.
     void cleanupTestCase(); // will be called after the last testfunction was executed.
-    void init(); // will be called before each testfunction is executed.
-    void cleanup(); // will be called after every testfunction.
+    void init();            // will be called before each testfunction is executed.
+    void cleanup();         // will be called after every testfunction.
     void testDependencies();
     void testSortValueNull();
+    void testGroup();
 
   private:
     std::unique_ptr<QgsVectorLayer> mLayer1;
     std::unique_ptr<QgsVectorLayer> mLayer2;
     std::unique_ptr<QgsRelation> mRelation;
-
 };
 
 
@@ -131,12 +131,7 @@ void TestQgsValueRelationFieldFormatter::testDependencies()
 {
   // Test dependencies
 
-  const QgsEditorWidgetSetup setup { QStringLiteral( "ValueRelation" ), {
-      { QStringLiteral( "LayerSource" ), mLayer2->publicSource() },
-      { QStringLiteral( "LayerProviderName" ), mLayer2->providerType() },
-      { QStringLiteral( "LayerName" ), mLayer2->name() },
-      { QStringLiteral( "Layer" ), mLayer2->id() }
-    }};
+  const QgsEditorWidgetSetup setup { QStringLiteral( "ValueRelation" ), { { QStringLiteral( "LayerSource" ), mLayer2->publicSource() }, { QStringLiteral( "LayerProviderName" ), mLayer2->providerType() }, { QStringLiteral( "LayerName" ), mLayer2->name() }, { QStringLiteral( "Layer" ), mLayer2->id() } } };
   QgsFieldFormatter *fieldFormatter = QgsApplication::fieldFormatterRegistry()->fieldFormatter( setup.type() );
   const QList<QgsVectorLayerRef> dependencies = fieldFormatter->layerDependencies( setup.config() );
   QVERIFY( dependencies.count() == 1 );
@@ -162,6 +157,21 @@ void TestQgsValueRelationFieldFormatter::testSortValueNull()
 
   value = formatter.sortValue( mLayer2.get(), 1, config, QVariant(), QVariant( 10 ) );
   QCOMPARE( value, QVariant( QString( "iron" ) ) );
+}
+
+void TestQgsValueRelationFieldFormatter::testGroup()
+{
+  const QgsValueRelationFieldFormatter formatter;
+  QVariantMap config;
+  config.insert( QStringLiteral( "Layer" ), mLayer2->id() );
+  config.insert( QStringLiteral( "Key" ), QStringLiteral( "pk" ) );
+  config.insert( QStringLiteral( "Value" ), QStringLiteral( "raccord" ) );
+  config.insert( QStringLiteral( "Group" ), QStringLiteral( "material" ) );
+
+  QgsValueRelationFieldFormatter::ValueRelationCache cache = formatter.createCache( config );
+  QVERIFY( !cache.isEmpty() );
+  QCOMPARE( cache.at( 0 ).group, QVariant( QStringLiteral( "iron" ) ) );
+  QCOMPARE( cache.at( cache.size() - 1 ).group, QVariant( QStringLiteral( "steel" ) ) );
 }
 
 QGSTEST_MAIN( TestQgsValueRelationFieldFormatter )

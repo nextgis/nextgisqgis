@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/raster/qgsrasterresamplefilter.h                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -58,7 +58,8 @@ Sets resampler for zoomed out scales. Takes ownership of the object
     virtual void readXml( const QDomElement &filterElem );
 
 %Docstring
-Sets base class members from xml. Usually called from :py:func:`~QgsRasterResampleFilter.create` methods of subclasses
+Sets base class members from xml. Usually called from
+:py:func:`~QgsRasterResampleFilter.create` methods of subclasses
 %End
 
   protected:
@@ -71,5 +72,5 @@ Sets base class members from xml. Usually called from :py:func:`~QgsRasterResamp
  *                                                                      *
  * src/core/raster/qgsrasterresamplefilter.h                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

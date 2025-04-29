@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgslayoutlocatorfilter.h"
+#include "moc_qgslayoutlocatorfilter.cpp"
 #include "qgsproject.h"
 #include "qgsmasterlayoutinterface.h"
 #include "qgslayoutmanager.h"
@@ -33,16 +34,16 @@ QgsLayoutLocatorFilter *QgsLayoutLocatorFilter::clone() const
 
 void QgsLayoutLocatorFilter::fetchResults( const QString &string, const QgsLocatorContext &context, QgsFeedback * )
 {
-  const QList< QgsMasterLayoutInterface * > layouts = QgsProject::instance()->layoutManager()->layouts();
+  const QList<QgsMasterLayoutInterface *> layouts = QgsProject::instance()->layoutManager()->layouts();
   for ( QgsMasterLayoutInterface *layout : layouts )
   {
     // if the layout is broken, don't include it in the results
-    if ( ! layout )
+    if ( !layout )
       continue;
 
     QgsLocatorResult result;
     result.displayString = layout->name();
-    result.userData = layout->name();
+    result.setUserData( layout->name() );
 
     if ( context.usingPrefix && string.isEmpty() )
     {
@@ -59,7 +60,7 @@ void QgsLayoutLocatorFilter::fetchResults( const QString &string, const QgsLocat
 
 void QgsLayoutLocatorFilter::triggerResult( const QgsLocatorResult &result )
 {
-  const QString layoutName = result.userData.toString();
+  const QString layoutName = result.userData().toString();
   QgsMasterLayoutInterface *layout = QgsProject::instance()->layoutManager()->layoutByName( layoutName );
   if ( !layout )
     return;

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/layout/qgslayoutnortharrowhandler.h                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -30,7 +30,8 @@ An object which handles north-arrow type behavior for layout items.
 
     QgsLayoutNorthArrowHandler( QObject *parent /TransferThis/ );
 %Docstring
-Constructor for QgsLayoutNorthArrowHandler, with the specified parent ``object``.
+Constructor for QgsLayoutNorthArrowHandler, with the specified parent
+``object``.
 %End
 
     double arrowRotation() const;
@@ -47,8 +48,8 @@ Sets the linked ``map`` item.
 
     QgsLayoutItemMap *linkedMap() const;
 %Docstring
-Returns the linked rotation map, if set. An ``None`` means arrow calculation is
-disabled.
+Returns the linked rotation map, if set. An ``None`` means arrow
+calculation is disabled.
 
 .. seealso:: :py:func:`setLinkedMap`
 %End
@@ -102,5 +103,5 @@ Emitted on arrow rotation change
  *                                                                      *
  * src/core/layout/qgslayoutnortharrowhandler.h                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

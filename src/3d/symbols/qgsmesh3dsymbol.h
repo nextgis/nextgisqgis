@@ -43,7 +43,6 @@ class QgsAbstractMaterialSettings;
 class _3D_EXPORT QgsMesh3DSymbol : public QgsAbstract3DSymbol
 {
   public:
-
     /**
      * How to render the color of the mesh
      *
@@ -95,6 +94,20 @@ class _3D_EXPORT QgsMesh3DSymbol : public QgsAbstract3DSymbol
      * \since QGIS 3.14
      */
     void setEnabled( bool enabled );
+
+    /**
+     * Returns culling mode
+     *
+     * \since QGIS 3.34
+     */
+    Qgs3DTypes::CullingMode cullingMode() const;
+
+    /**
+     * Sets culling mode
+     *
+     * \since QGIS 3.34
+     */
+    void setCullingMode( const Qgs3DTypes::CullingMode &mode );
 
     //! Returns method that determines altitude (whether to clamp to feature to terrain)
     Qgis::AltitudeClamping altitudeClamping() const { return mAltClamping; }
@@ -343,14 +356,15 @@ class _3D_EXPORT QgsMesh3DSymbol : public QgsAbstract3DSymbol
     void setLevelOfDetailIndex( int lod );
 
   private:
-
     //! how to handle altitude of vector features
     Qgis::AltitudeClamping mAltClamping = Qgis::AltitudeClamping::Relative;
-    float mHeight = 0.0f;           //!< Base height of triangles
-    std::unique_ptr< QgsAbstractMaterialSettings > mMaterialSettings;  //!< Defines appearance of objects
+    float mHeight = 0.0f;                                           //!< Base height of triangles
+    std::unique_ptr<QgsAbstractMaterialSettings> mMaterialSettings; //!< Defines appearance of objects
     bool mAddBackFaces = false;
 
     bool mEnabled = true;
+
+    Qgs3DTypes::CullingMode mCullingMode = Qgs3DTypes::NoCulling;
 
     //! Triangles settings
     bool mSmoothedTriangles = false;

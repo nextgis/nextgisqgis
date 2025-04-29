@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/editform/qgsattributeeditorspacerelement.h                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -38,7 +38,8 @@ Returns ``True`` if the spacer element will contain an horizontal line.
 
     void setDrawLine( bool drawLine );
 %Docstring
-Sets a flag to define if the spacer element will contain an horizontal line.
+Sets a flag to define if the spacer element will contain an horizontal
+line.
 
 :param drawLine: flag status
 %End
@@ -50,5 +51,5 @@ Sets a flag to define if the spacer element will contain an horizontal line.
  *                                                                      *
  * src/core/editform/qgsattributeeditorspacerelement.h                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

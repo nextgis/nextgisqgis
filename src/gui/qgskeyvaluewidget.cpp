@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgskeyvaluewidget.h"
+#include "moc_qgskeyvaluewidget.cpp"
 
 QgsKeyValueWidget::QgsKeyValueWidget( QWidget *parent )
   : QgsTableWidgetBase( parent )
@@ -26,6 +27,12 @@ void QgsKeyValueWidget::setMap( const QVariantMap &map )
 {
   removeButton->setEnabled( false );
   mModel.setMap( map );
+}
+
+void QgsKeyValueWidget::setReadOnly( bool readOnly )
+{
+  mModel.setReadOnly( readOnly );
+  QgsTableWidgetBase::setReadOnly( readOnly );
 }
 
 ///@cond PRIVATE
@@ -53,8 +60,8 @@ QVariantMap QgsKeyValueModel::map() const
   return ret;
 }
 
-QgsKeyValueModel::QgsKeyValueModel( QObject *parent ) :
-  QAbstractTableModel( parent )
+QgsKeyValueModel::QgsKeyValueModel( QObject *parent )
+  : QAbstractTableModel( parent )
 {
 }
 
@@ -81,9 +88,7 @@ QVariant QgsKeyValueModel::headerData( int section, Qt::Orientation orientation,
 
 QVariant QgsKeyValueModel::data( const QModelIndex &index, int role ) const
 {
-  if ( index.row() < 0 ||
-       index.row() >= mLines.count() ||
-       ( role != Qt::DisplayRole && role != Qt::EditRole ) )
+  if ( index.row() < 0 || index.row() >= mLines.count() || ( role != Qt::DisplayRole && role != Qt::EditRole ) )
   {
     return QVariant();
   }
@@ -96,6 +101,9 @@ QVariant QgsKeyValueModel::data( const QModelIndex &index, int role ) const
 
 bool QgsKeyValueModel::setData( const QModelIndex &index, const QVariant &value, int role )
 {
+  if ( mReadOnly )
+    return false;
+
   if ( index.row() < 0 || index.row() >= mLines.count() || role != Qt::EditRole )
   {
     return false;
@@ -114,11 +122,17 @@ bool QgsKeyValueModel::setData( const QModelIndex &index, const QVariant &value,
 
 Qt::ItemFlags QgsKeyValueModel::flags( const QModelIndex &index ) const
 {
-  return QAbstractTableModel::flags( index ) | Qt::ItemIsEditable;
+  if ( !mReadOnly )
+    return QAbstractTableModel::flags( index ) | Qt::ItemIsEditable;
+  else
+    return QAbstractTableModel::flags( index );
 }
 
 bool QgsKeyValueModel::insertRows( int position, int rows, const QModelIndex &parent )
 {
+  if ( mReadOnly )
+    return false;
+
   Q_UNUSED( parent )
   beginInsertRows( QModelIndex(), position, position + rows - 1 );
   for ( int i = 0; i < rows; ++i )
@@ -131,10 +145,18 @@ bool QgsKeyValueModel::insertRows( int position, int rows, const QModelIndex &pa
 
 bool QgsKeyValueModel::removeRows( int position, int rows, const QModelIndex &parent )
 {
+  if ( mReadOnly )
+    return false;
+
   Q_UNUSED( parent )
   beginRemoveRows( QModelIndex(), position, position + rows - 1 );
   mLines.remove( position, rows );
   endRemoveRows();
   return true;
+}
+
+void QgsKeyValueModel::setReadOnly( bool readOnly )
+{
+  mReadOnly = readOnly;
 }
 ///@endcond

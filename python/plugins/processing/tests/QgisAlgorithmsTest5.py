@@ -15,9 +15,9 @@
 ***************************************************************************
 """
 
-__author__ = 'Matthias Kuhn'
-__date__ = 'January 2016'
-__copyright__ = '(C) 2016, Matthias Kuhn'
+__author__ = "Matthias Kuhn"
+__date__ = "January 2016"
+__copyright__ = "(C) 2016, Matthias Kuhn"
 
 
 import AlgorithmsTestBase
@@ -26,28 +26,31 @@ import nose2
 import shutil
 import os
 
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 
-class TestQgisAlgorithms5(unittest.TestCase, AlgorithmsTestBase.AlgorithmsTest):
+class TestQgisAlgorithms5(QgisTestCase, AlgorithmsTestBase.AlgorithmsTest):
 
     @classmethod
     def setUpClass(cls):
         start_app()
         from processing.core.Processing import Processing
+
         Processing.initialize()
         cls.cleanup_paths = []
 
     @classmethod
     def tearDownClass(cls):
         from processing.core.Processing import Processing
+
         Processing.deinitialize()
         for path in cls.cleanup_paths:
             shutil.rmtree(path)
 
-    def test_definition_file(self):
-        return 'qgis_algorithm_tests5.yaml'
+    def definition_file(self):
+        return "qgis_algorithm_tests5.yaml"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     nose2.main()

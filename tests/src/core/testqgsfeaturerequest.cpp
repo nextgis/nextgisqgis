@@ -21,12 +21,10 @@
 #include "qgsfeature.h"
 #include "qgsfield.h"
 #include "qgsgeometry.h"
-#include "qgssymbol.h"
 #include "qgssimplifymethod.h"
-#include "qgslinesymbol.h"
 #include "qgsexpressioncontextutils.h"
 
-class TestQgsFeatureRequest: public QObject
+class TestQgsFeatureRequest : public QObject
 {
     Q_OBJECT
 
@@ -34,43 +32,38 @@ class TestQgsFeatureRequest: public QObject
     void testDefaultConstructed( const QgsFeatureRequest &f );
 
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
-    void init();// will be called before each testfunction is executed.
-    void cleanup();// will be called after every testfunction.
-    void constructorTest(); //test default constructors
-    void copyConstructorTest(); //test copy constructor
+    void initTestCase();           // will be called before the first testfunction is executed.
+    void cleanupTestCase();        // will be called after the last testfunction was executed.
+    void init();                   // will be called before each testfunction is executed.
+    void cleanup();                // will be called after every testfunction.
+    void constructorTest();        //test default constructors
+    void copyConstructorTest();    //test copy constructor
     void assignmentOperatorTest(); //test copy constructor
 
 
   private:
-
 };
 
 void TestQgsFeatureRequest::initTestCase()
 {
-
 }
 
 void TestQgsFeatureRequest::cleanupTestCase()
 {
-
 }
 
 void TestQgsFeatureRequest::init()
 {
-
 }
 
 void TestQgsFeatureRequest::cleanup()
 {
-
 }
 
 void TestQgsFeatureRequest::testDefaultConstructed( const QgsFeatureRequest &f )
 {
   // Test public getter members
-  QCOMPARE( f.filterType(), QgsFeatureRequest::FilterType::FilterNone );
+  QCOMPARE( f.filterType(), Qgis::FeatureRequestFilterType::NoFilter );
   QCOMPARE( f.spatialFilterType(), Qgis::SpatialFilterType::NoFilter );
   QCOMPARE( f.filterRect(), QgsRectangle() );
   QVERIFY( f.referenceGeometry().isEmpty() );
@@ -80,7 +73,7 @@ void TestQgsFeatureRequest::testDefaultConstructed( const QgsFeatureRequest &f )
   //       behavior encoded in a default constructor
   QCOMPARE( f.filterFid(), -1 ); // I think FID_NULL should be used
   QCOMPARE( f.filterFids(), QgsFeatureIds() );
-  QCOMPARE( f.invalidGeometryCheck(), QgsFeatureRequest::InvalidGeometryCheck::GeometryNoCheck );
+  QCOMPARE( f.invalidGeometryCheck(), Qgis::InvalidGeometryCheck::NoCheck );
   QCOMPARE( f.invalidGeometryCallback(), nullptr );
   QCOMPARE( f.filterExpression(), nullptr );
   // Disabled because:
@@ -90,7 +83,7 @@ void TestQgsFeatureRequest::testDefaultConstructed( const QgsFeatureRequest &f )
   //QCOMPARE( *const_cast< QgsFeatureRequest & > (f).expressionContext(), QgsExpressionContext() );
   QCOMPARE( f.orderBy(), QgsFeatureRequest::OrderBy() );
   QCOMPARE( f.limit(), -1LL ); // I think 0 could be used to mean no limit
-  QCOMPARE( f.flags(), QgsFeatureRequest::Flags() );
+  QCOMPARE( f.flags(), Qgis::FeatureRequestFlags() );
   QCOMPARE( f.subsetOfAttributes(), QgsAttributeList() );
   QCOMPARE( f.simplifyMethod(), QgsSimplifyMethod() );
   QCOMPARE( f.destinationCrs(), QgsCoordinateReferenceSystem() );
@@ -123,16 +116,16 @@ void TestQgsFeatureRequest::assignmentOperatorTest()
   f2.setFilterRect( QgsRectangle( 10, 10, 20, 20 ) );
   f2.setDistanceWithin( QgsGeometry::fromWkt( "POINT(10 15)" ), 12 );
   f2.setFilterFid( 52 );
-  f2.setFilterFids( {3, 4} );
-  f2.setInvalidGeometryCheck( QgsFeatureRequest::InvalidGeometryCheck::GeometrySkipInvalid );
+  f2.setFilterFids( { 3, 4 } );
+  f2.setInvalidGeometryCheck( Qgis::InvalidGeometryCheck::SkipInvalid );
   f2.setInvalidGeometryCallback( []( const QgsFeature & ) {} );
   f2.setFilterExpression( "this not that" );
   QgsExpressionContextScope *scope = QgsExpressionContextUtils::globalScope();
   f2.setExpressionContext( QgsExpressionContext( { scope } ) );
   f2.addOrderBy( "someField" );
   f2.setLimit( 5 );
-  f2.setFlags( QgsFeatureRequest::NoGeometry );
-  f2.setSubsetOfAttributes( {1, 2} );
+  f2.setFlags( Qgis::FeatureRequestFlag::NoGeometry );
+  f2.setSubsetOfAttributes( { 1, 2 } );
   QgsSimplifyMethod sm;
   sm.setMethodType( QgsSimplifyMethod::PreserveTopology );
   f2.setSimplifyMethod( sm );

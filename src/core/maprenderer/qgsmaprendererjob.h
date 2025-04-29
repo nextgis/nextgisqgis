@@ -41,6 +41,7 @@ class QgsFeatureFilterProvider;
 class QgsRenderedItemResults;
 class QgsElevationMap;
 class QgsSettingsEntryBool;
+class QgsSettingsEntryString;
 
 #ifndef SIP_RUN
 /// @cond PRIVATE
@@ -55,10 +56,7 @@ class LayerRenderJob
 
     LayerRenderJob() = default;
 
-    //! LayerRenderJob cannot be copied
     LayerRenderJob( const LayerRenderJob & ) = delete;
-
-    //! LayerRenderJob cannot be copied
     LayerRenderJob &operator=( const LayerRenderJob & ) = delete;
 
     LayerRenderJob( LayerRenderJob && );
@@ -95,8 +93,24 @@ class LayerRenderJob
      */
     QgsElevationMap *elevationMap = nullptr;
 
+    /**
+     * Pointer to destination image for in-progress preview renders.
+     *
+     * May be NULLPTR if it is not necessary to draw in-progress preview renders.
+     *
+     * \since QGIS 3.34
+     */
+    QImage *previewRenderImage = nullptr;
+
     //! TRUE when img has been initialized (filled with transparent pixels)
     bool imageInitialized = false;
+
+    /**
+     * TRUE when previewRenderImage has been initialized (filled with transparent pixels).
+     *
+     * \since QGIS 3.34
+     */
+    bool previewRenderImageInitialized = false;
 
     bool imageCanBeComposed() const;
 
@@ -278,7 +292,6 @@ struct LabelRenderJob
  * - QgsMapRendererParallelJob - renders map in multiple background threads to an image
  * - QgsMapRendererCustomPainterJob - renders map with given QPainter in one background thread
  *
- * \since QGIS 2.4
  */
 class CORE_EXPORT QgsMapRendererJob : public QObject SIP_ABSTRACT
 {
@@ -319,7 +332,6 @@ class CORE_EXPORT QgsMapRendererJob : public QObject SIP_ABSTRACT
      * If so, any previously stored labeling results (see takeLabelingResults())
      * should be retained.
      * \see takeLabelingResults()
-     * \since QGIS 3.0
      */
     virtual bool usedCachedLabels() const = 0;
 
@@ -354,14 +366,12 @@ class CORE_EXPORT QgsMapRendererJob : public QObject SIP_ABSTRACT
      * each LayerRenderJob.
      * Ownership is not transferred and the provider must not be deleted
      * before the render job.
-     * \since QGIS 3.0
      */
     void setFeatureFilterProvider( const QgsFeatureFilterProvider *f ) { mFeatureFilterProvider = f; }
 
     /**
      * Returns the feature filter provider used by the QgsRenderContext of
      * each LayerRenderJob.
-     * \since QGIS 3.0
      */
     const QgsFeatureFilterProvider *featureFilterProvider() const { return mFeatureFilterProvider; }
 
@@ -393,7 +403,7 @@ class CORE_EXPORT QgsMapRendererJob : public QObject SIP_ABSTRACT
      * \note Not available in Python bindings.
      * \since QGIS 3.24
      */
-    QgsLabelSink *labelSink() const { return mLabelSink; } SIP_SKIP
+    QgsLabelSink *labelSink() const SIP_SKIP { return mLabelSink; }
 
     /**
      * Assigns the label sink which will take over responsibility for handling labels
@@ -402,7 +412,7 @@ class CORE_EXPORT QgsMapRendererJob : public QObject SIP_ABSTRACT
      * \note Not available in Python bindings.
      * \since QGIS 3.24
      */
-    void setLabelSink( QgsLabelSink *sink ) { mLabelSink = sink; } SIP_SKIP
+    void setLabelSink( QgsLabelSink *sink ) SIP_SKIP { mLabelSink = sink; }
 
     /**
      * Returns the associated labeling engine feedback object.
@@ -423,7 +433,6 @@ class CORE_EXPORT QgsMapRendererJob : public QObject SIP_ABSTRACT
     /**
      * Returns the render time (in ms) per layer.
      * \note Not available in Python bindings.
-     * \since QGIS 3.0
      */
     QHash< QgsMapLayer *, int > perLayerRenderingTime() const SIP_SKIP;
 
@@ -444,7 +453,6 @@ class CORE_EXPORT QgsMapRendererJob : public QObject SIP_ABSTRACT
     /**
      * Returns map settings with which this job was started.
      * \returns A QgsMapSettings instance with render settings
-     * \since QGIS 2.8
      */
     const QgsMapSettings &mapSettings() const;
 
@@ -471,6 +479,13 @@ class CORE_EXPORT QgsMapRendererJob : public QObject SIP_ABSTRACT
 #ifndef SIP_RUN
     //! Settings entry log canvas refresh event
     static const QgsSettingsEntryBool *settingsLogCanvasRefreshEvent;
+
+    /**
+     * Settings entry for mask painting backend engine.
+     *
+     * \since QGIS 3.38
+     */
+    static const QgsSettingsEntryString *settingsMaskBackend;
 #endif
 
   signals:
@@ -480,7 +495,6 @@ class CORE_EXPORT QgsMapRendererJob : public QObject SIP_ABSTRACT
      * Rendering labels is not yet done. If the fully rendered layer including labels is required use
      * finished() instead.
      *
-     * \since QGIS 3.0
      */
     void renderingLayersFinished();
 
@@ -527,6 +541,11 @@ class CORE_EXPORT QgsMapRendererJob : public QObject SIP_ABSTRACT
     QHash< QString, int > mLayerRenderingTimeHints;
 
     /**
+     * Additional layers participating in labeling problem
+     */
+    QList< QPointer< QgsMapLayer > > mAdditionalLabelLayers;
+
+    /**
      * TRUE if layer rendering time should be recorded.
      */
     bool mRecordRenderingTime = true;
@@ -560,7 +579,6 @@ class CORE_EXPORT QgsMapRendererJob : public QObject SIP_ABSTRACT
     /**
      * Prepares a labeling job.
      * \note not available in Python bindings
-     * \since QGIS 3.0
      */
     LabelRenderJob prepareLabelingJob( QPainter *painter, QgsLabelingEngine *labelingEngine2, bool canUseLabelCache = true ) SIP_SKIP;
 
@@ -573,6 +591,15 @@ class CORE_EXPORT QgsMapRendererJob : public QObject SIP_ABSTRACT
      * \since QGIS 3.12
      */
     std::vector< LayerRenderJob > prepareSecondPassJobs( std::vector< LayerRenderJob > &firstPassJobs, LabelRenderJob &labelJob ) SIP_SKIP;
+
+    /**
+     * Returns a list of the layers participating in the map labeling.
+     *
+     * \note Not available in Python bindings.
+     *
+     * \since QGIS 3.40
+     */
+    QList< QPointer< QgsMapLayer > > participatingLabelLayers( QgsLabelingEngine *engine ) SIP_SKIP;
 
     /**
      * Initialize \a secondPassJobs according to what have been rendered (mask clipping path e.g.) in first pass jobs and \a labelJob.
@@ -613,13 +640,12 @@ class CORE_EXPORT QgsMapRendererJob : public QObject SIP_ABSTRACT
      * Handles clean up tasks for a label job, including deletion of images and storing cached
      * label results.
      * \note not available in Python bindings
-     * \since QGIS 3.0
      */
     void cleanupLabelJob( LabelRenderJob &job ) SIP_SKIP;
 
     /**
      * \note not available in Python bindings
-     * \deprecated Will be removed in QGIS 4.0
+     * \deprecated QGIS 3.40. Will be removed in QGIS 4.0.
      */
     Q_DECL_DEPRECATED static void drawLabeling( const QgsMapSettings &settings, QgsRenderContext &renderContext, QgsLabelingEngine *labelingEngine2, QPainter *painter ) SIP_SKIP;
 
@@ -675,7 +701,6 @@ class CORE_EXPORT QgsMapRendererJob : public QObject SIP_ABSTRACT
  *
  * The image can be queried even while the rendering is still in progress to get intermediate result
  *
- * \since QGIS 2.4
  */
 class CORE_EXPORT QgsMapRendererQImageJob : public QgsMapRendererJob SIP_ABSTRACT
 {

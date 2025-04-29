@@ -52,10 +52,8 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
     Q_PROPERTY( ConstraintResult constraintResult READ constraintResult NOTIFY constraintStatusChanged )
 
   public:
-
     /**
      * Result of constraint checks.
-     * \since QGIS 3.0
      */
     enum ConstraintResult
     {
@@ -89,7 +87,7 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
      * Returns the list of additional fields which the editor handles
      * \since QGIS 3.10
      */
-    virtual QStringList additionalFields() const {return QStringList();}
+    virtual QStringList additionalFields() const { return QStringList(); }
 
     /**
      * Will be used to access the widget's values for potential additional fields handled by the widget
@@ -97,7 +95,7 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
      * \see additionalFields
      * \since QGIS 3.10
      */
-    virtual QVariantList additionalFieldValues() const {return QVariantList();}
+    virtual QVariantList additionalFieldValues() const { return QVariantList(); }
 
     /**
      * Access the field index.
@@ -131,7 +129,7 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
      * \param widget The widget which was created by a wrapper
      * \returns The wrapper for the widget or NULLPTR
      */
-    static QgsEditorWidgetWrapper *fromWidget( QWidget *widget );
+    static QgsEditorWidgetWrapper *fromWidget( QWidget *widget ); // cppcheck-suppress duplInheritedMember
 
     /**
      * Check if the given widget or one of its parent is a QTableView.
@@ -150,7 +148,6 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
 
     /**
      * Sets the widget to display in an indeterminate "mixed value" state.
-     * \since QGIS 2.16
      */
     virtual void showIndeterminateState() {}
 
@@ -159,7 +156,6 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
      * \param featureContext the feature to use to evaluate the constraint
      * \param constraintOrigin optional origin for constraints to check. This can be used to limit the constraints tested
      * to only provider or layer based constraints.
-     * \since QGIS 2.16
      */
     void updateConstraint( const QgsFeature &featureContext, QgsFieldConstraints::ConstraintOrigin constraintOrigin = QgsFieldConstraints::ConstraintOriginNotSet );
 
@@ -171,9 +167,16 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
      * \param constraintOrigin Optional origin for constraints to check. This
      * can be used to limit the constraints tested to only provider or layer
      * based constraints.
-     * \since QGIS 3.0
      */
     void updateConstraint( const QgsVectorLayer *layer, int index, const QgsFeature &feature, QgsFieldConstraints::ConstraintOrigin constraintOrigin = QgsFieldConstraints::ConstraintOriginNotSet );
+
+    /**
+     * Update constraint manually by providing the constraint result value and failure reason(s).
+     * \param constraintResult the constraint result value
+     * \param constraintFailureReason the constraint failure reason(s) (blank is the result passes)
+     * \since QGIS 3.36
+     */
+    void updateConstraint( QgsEditorWidgetWrapper::ConstraintResult constraintResult, const QString &constraintFailureReason );
 
     /**
      * Gets the current constraint status.
@@ -181,7 +184,6 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
      * FALSE otherwise
      * \see constraintFailureReason()
      * \see isBlockingCommit()
-     * \since QGIS 2.16
      */
     bool isValidConstraint() const;
 
@@ -189,7 +191,6 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
      * Returns TRUE if the widget is preventing the feature from being committed. This may be TRUE as a result
      * of attribute values failing enforced field constraints.
      * \see isValidConstraint()
-     * \since QGIS 3.0
      */
     bool isBlockingCommit() const;
 
@@ -197,14 +198,12 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
      * Returns the reason why a constraint check has failed (or an empty string
      * if constraint check was successful).
      * \see isValidConstraint()
-     * \since QGIS 3.0
      */
     QString constraintFailureReason() const;
 
     /**
      * Add a hint text on the widget
      * \param hintText The hint text to display
-     * \since QGIS 3.0
      */
     virtual void setHint( const QString &hintText );
 
@@ -212,7 +211,6 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
      * Returns the constraint result, which is the current result of the constraint
      * on the widget influencing its visualization.
      *
-     * \since QGIS 3.0
      */
     ConstraintResult constraintResult() const;
 
@@ -222,7 +220,6 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
      * Returns TRUE if the constraint result will be visualized on the widget (with color).
      * This will be disabled when the form is not editable.
      *
-     * \since QGIS 3.0
      */
     bool constraintResultVisible() const;
 
@@ -233,7 +230,6 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
      * This will be disabled when the form is not editable.
      *
      * \param constraintResultVisible if constraintResult should be displayed (mostly editable status)
-     * \since QGIS 3.0
      */
     void setConstraintResultVisible( bool constraintResultVisible );
 
@@ -243,7 +239,7 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
      * Emit this signal, whenever the value changed.
      *
      * \param value The new value
-     * \deprecated since QGIS 3.10 use valuesChanged signal instead
+     * \deprecated QGIS 3.10. Use valuesChanged signal instead.
      */
     Q_DECL_DEPRECATED void valueChanged( const QVariant &value );
 
@@ -290,7 +286,7 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
      * to reflect the new value.
      *
      * \param value The new value of the attribute
-     * \deprecated since QGIS 3.10
+     * \deprecated QGIS 3.10
      */
     virtual void setValue( const QVariant &value ) SIP_DEPRECATED;
 
@@ -321,7 +317,6 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
     virtual void parentFormValueChanged( const QString &attribute, const QVariant &value );
 
   protected:
-
     /**
      * This should update the widget with a visual cue if a constraint status
      * changed.
@@ -332,7 +327,6 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
      * This can be overwritten in subclasses to allow individual widgets to
      * change the visual cue.
      *
-     * \since QGIS 2.16
      */
     virtual void updateConstraintWidgetStatus();
 
@@ -362,7 +356,6 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
     bool setFormFeatureAttribute( const QString &attributeName, const QVariant &attributeValue );
 
   private:
-
     /**
     * Is called when the value of the widget needs to be changed. Updates the widget representation
     * to reflect the new value.
@@ -407,7 +400,6 @@ class GUI_EXPORT QgsEditorWidgetWrapper : public QgsWidgetWrapper
     bool mConstraintResultVisible = false;
 
     mutable QVariant mDefaultValue; // Cache default value, we don't want to retrieve different serial numbers if called repeatedly
-
 };
 
 // We'll use this class inside a QVariant in the widgets properties

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/symbology/qgssymbolselectordialog.h                          *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -17,7 +17,7 @@
 
 
 
-class QgsSymbolSelectorWidget: QgsPanelWidget
+class QgsSymbolSelectorWidget : QgsPanelWidget
 {
 %Docstring(signature="appended")
 Symbol selector widget that can be used to select and build a symbol
@@ -28,7 +28,6 @@ Symbol selector widget that can be used to select and build a symbol
 %End
   public:
 
-
     QgsSymbolSelectorWidget( QgsSymbol *symbol, QgsStyle *style, QgsVectorLayer *vl, QWidget *parent /TransferThis/ = 0 );
 %Docstring
 Symbol selector widget that can be used to select and build a symbol
@@ -36,41 +35,43 @@ Symbol selector widget that can be used to select and build a symbol
 :param symbol: The symbol to load into the widget as a start point.
 :param style: The style used by the widget.
 :param vl: The vector layer for the symbol.
-:param parent:
+:param parent: 
 
 .. note::
 
    The ownership of the symbol is not transferred and must exist for the lifetime of the widget.
 %End
 
+
+
     QMenu *advancedMenu();
 %Docstring
-Returns menu for "advanced" button - create it if doesn't exist and show the advanced button
+Returns menu for "advanced" button - create it if doesn't exist and show
+the advanced button
 %End
 
     void setContext( const QgsSymbolWidgetContext &context );
 %Docstring
-Sets the context in which the symbol widget is shown, e.g., the associated map canvas and expression contexts.
+Sets the context in which the symbol widget is shown, e.g., the
+associated map canvas and expression contexts.
 
 :param context: symbol widget context
 
 .. seealso:: :py:func:`context`
-
-.. versionadded:: 3.0
 %End
 
     QgsSymbolWidgetContext context() const;
 %Docstring
-Returns the context in which the symbol widget is shown, e.g., the associated map canvas and expression contexts.
+Returns the context in which the symbol widget is shown, e.g., the
+associated map canvas and expression contexts.
 
 .. seealso:: :py:func:`setContext`
-
-.. versionadded:: 3.0
 %End
 
     QgsSymbol *symbol();
 %Docstring
-Returns the symbol that is currently active in the widget. Can be ``None``.
+Returns the symbol that is currently active in the widget. Can be
+``None``.
 
 :return: The active symbol.
 %End
@@ -106,15 +107,14 @@ Lock the current active symbol layer.
 
     void duplicateLayer();
 %Docstring
-Duplicates the current symbol layer and places the duplicated layer above the current symbol layer
-
-.. versionadded:: 2.14
+Duplicates the current symbol layer and places the duplicated layer
+above the current symbol layer
 %End
 
     void layerChanged();
 %Docstring
-Called when the layer changes in the widget. Updates the active properties for
-active symbol layer.
+Called when the layer changes in the widget. Updates the active
+properties for active symbol layer.
 %End
 
     void updateLayerPreview();
@@ -134,8 +134,11 @@ Slot to update tree when a new symbol from style
 
     void changeLayer( QgsSymbolLayer *layer );
 %Docstring
-alters tree and sets proper widget when Layer Type is changed
-\note: The layer is received from the LayerPropertiesWidget
+Alters tree and sets proper widget when Layer Type is changed
+
+.. note::
+
+   The layer is received from the LayerPropertiesWidget
 %End
 
   signals:
@@ -149,12 +152,14 @@ Emitted when a symbol is modified in the widget.
 
 class QgsSymbolSelectorDialog : QDialog
 {
+%Docstring(signature="appended")
+A dialog that can be used to select and build a symbol.
+%End
 
 %TypeHeaderCode
 #include "qgssymbolselectordialog.h"
 %End
   public:
-
     QgsSymbolSelectorDialog( QgsSymbol *symbol, QgsStyle *style, QgsVectorLayer *vl, QWidget *parent /TransferThis/ = 0, bool embedded = false );
 %Docstring
 Constructor for QgsSymbolSelectorDialog.
@@ -163,37 +168,38 @@ Constructor for QgsSymbolSelectorDialog.
 :param style: The style
 :param vl: Associated vector layer
 :param parent: Parent widget
-:param embedded: ``True`` to embed in renderer properties dialog, ``False`` otherwise
+:param embedded: ``True`` to embed in renderer properties dialog,
+                 ``False`` otherwise
 %End
 
     QMenu *advancedMenu();
 %Docstring
-Returns menu for "advanced" button - create it if doesn't exist and show the advanced button
+Returns menu for "advanced" button - create it if doesn't exist and show
+the advanced button
 %End
 
     void setContext( const QgsSymbolWidgetContext &context );
 %Docstring
-Sets the context in which the symbol widget is shown, e.g., the associated map canvas and expression contexts.
+Sets the context in which the symbol widget is shown, e.g., the
+associated map canvas and expression contexts.
 
 :param context: symbol widget context
 
 .. seealso:: :py:func:`context`
-
-.. versionadded:: 3.0
 %End
 
     QgsSymbolWidgetContext context() const;
 %Docstring
-Returns the context in which the symbol widget is shown, e.g., the associated map canvas and expression contexts.
+Returns the context in which the symbol widget is shown, e.g., the
+associated map canvas and expression contexts.
 
 .. seealso:: :py:func:`setContext`
-
-.. versionadded:: 3.0
 %End
 
     QgsSymbol *symbol();
 %Docstring
-Returns the symbol that is currently active in the widget. Can be ``None``.
+Returns the symbol that is currently active in the widget. Can be
+``None``.
 
 :return: The active symbol.
 %End
@@ -218,9 +224,8 @@ Returns a reference to the dialog's button box.
 
     void duplicateLayer();
 %Docstring
-Duplicates the current symbol layer and places the duplicated layer above the current symbol layer
-
-.. versionadded:: 2.14
+Duplicates the current symbol layer and places the duplicated layer
+above the current symbol layer
 %End
 
     void layerChanged();
@@ -235,18 +240,23 @@ Slot to update tree when a new symbol from style
 
     void changeLayer( QgsSymbolLayer *layer );
 %Docstring
-alters tree and sets proper widget when Layer Type is changed
-\note: The layer is received from the LayerPropertiesWidget
+Alters tree and sets proper widget when Layer Type is changed
+
+.. note::
+
+   The layer is received from the LayerPropertiesWidget
 %End
 
   protected:
-
     virtual void keyPressEvent( QKeyEvent *e );
 
 
   signals:
 
     void symbolModified();
+%Docstring
+Emitted when the symbol defined in the dialog is modified.
+%End
 
 };
 
@@ -255,5 +265,5 @@ alters tree and sets proper widget when Layer Type is changed
  *                                                                      *
  * src/gui/symbology/qgssymbolselectordialog.h                          *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

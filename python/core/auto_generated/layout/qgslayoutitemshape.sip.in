@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/layout/qgslayoutitemshape.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,8 +12,6 @@ class QgsLayoutItemShape : QgsLayoutItem
 {
 %Docstring(signature="appended")
 Layout item for basic filled shapes (e.g. rectangles, ellipses).
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -31,7 +29,8 @@ Layout item for basic filled shapes (e.g. rectangles, ellipses).
 
     explicit QgsLayoutItemShape( QgsLayout *layout );
 %Docstring
-Constructor for QgsLayoutItemShape, with the specified parent ``layout``.
+Constructor for QgsLayoutItemShape, with the specified parent
+``layout``.
 %End
 
     ~QgsLayoutItemShape();
@@ -70,8 +69,8 @@ Sets the ``type`` of shape (e.g. rectangle, ellipse, etc).
 
     void setSymbol( QgsFillSymbol *symbol );
 %Docstring
-Sets the fill ``symbol`` used to draw the shape. Ownership is not transferred
-and a clone of the symbol is made.
+Sets the fill ``symbol`` used to draw the shape. Ownership is not
+transferred and a clone of the symbol is made.
 
 .. seealso:: :py:func:`symbol`
 %End
@@ -127,5 +126,5 @@ Returns the corner radius for rounded rectangle corners.
  *                                                                      *
  * src/core/layout/qgslayoutitemshape.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

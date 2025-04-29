@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/layout/qgsreportsectionlayout.h                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -18,8 +18,6 @@ A report section consisting of a single :py:class:`QgsLayout` body.
 
    This is not considered stable API, and may change in future QGIS releases. It is
    exposed to the Python bindings for unit testing purposes only.
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -29,8 +27,9 @@ A report section consisting of a single :py:class:`QgsLayout` body.
 
     QgsReportSectionLayout( QgsAbstractReportSection *parentSection = 0 );
 %Docstring
-Constructor for QgsReportSectionLayout, attached to the specified ``parent`` section.
-Note that ownership is not transferred to ``parent``.
+Constructor for QgsReportSectionLayout, attached to the specified
+``parent`` section. Note that ownership is not transferred to
+``parent``.
 %End
 
     virtual QString type() const;
@@ -51,8 +50,8 @@ Returns the body layout for the section.
 
     void setBody( QgsLayout *body /Transfer/ );
 %Docstring
-Sets the ``body`` layout for the section. Ownership of ``body``
-is transferred to the report section.
+Sets the ``body`` layout for the section. Ownership of ``body`` is
+transferred to the report section.
 
 .. seealso:: :py:func:`body`
 
@@ -107,5 +106,5 @@ Sets whether the body for the section is ``enabled``.
  *                                                                      *
  * src/core/layout/qgsreportsectionlayout.h                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

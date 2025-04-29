@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgstextformatwidget.h                                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -17,32 +17,29 @@ class QgsTextFormatWidget : QWidget, QgsExpressionContextGenerator, protected Ui
 %Docstring(signature="appended")
 A widget for customizing text formatting settings.
 
-:py:class:`QgsTextFormatWidget` provides a widget for controlling the appearance of text rendered
-using :py:class:`QgsTextRenderer`. The widget includes all settings contained within
-a :py:class:`QgsTextFormat`, including shadow, background and buffer.
+:py:class:`QgsTextFormatWidget` provides a widget for controlling the
+appearance of text rendered using :py:class:`QgsTextRenderer`. The
+widget includes all settings contained within a
+:py:class:`QgsTextFormat`, including shadow, background and buffer.
 
-Additionally, the widget can handle labeling settings due to the large overlap between
-the text renderer settings and the labeling settings. This mode is possible by
-subclassing :py:class:`QgsTextFormatWidget` and calling the protected constructor with a mode
-of Labeling.
-
-.. versionadded:: 3.0
+Additionally, the widget can handle labeling settings due to the large
+overlap between the text renderer settings and the labeling settings.
+This mode is possible by subclassing :py:class:`QgsTextFormatWidget` and
+calling the protected constructor with a mode of Labeling.
 %End
 
 %TypeHeaderCode
 #include "qgstextformatwidget.h"
 %End
   public:
-
-    QgsTextFormatWidget( const QgsTextFormat &format = QgsTextFormat(), QgsMapCanvas *mapCanvas = 0, QWidget *parent /TransferThis/ = 0,
-                         QgsVectorLayer *layer = 0 );
+    QgsTextFormatWidget( const QgsTextFormat &format = QgsTextFormat(), QgsMapCanvas *mapCanvas = 0, QWidget *parent /TransferThis/ = 0, QgsMapLayer *layer = 0 );
 %Docstring
 Constructor for QgsTextFormatWidget.
 
 :param format: initial formatting settings to show in widget
 :param mapCanvas: associated map canvas
 :param parent: parent widget
-:param layer: associated vector layer
+:param layer: associated layer (vector or mesh)
 %End
 
     ~QgsTextFormatWidget();
@@ -51,8 +48,9 @@ Constructor for QgsTextFormatWidget.
 %Docstring
 Returns the current formatting settings defined by the widget.
 
-If ``includateDataDefinedProperties`` is ``True``, then data defined properties
-specified in the widget will be included in the format definition.
+If ``includateDataDefinedProperties`` is ``True``, then data defined
+properties specified in the widget will be included in the format
+definition.
 %End
 
     void setFormat( const QgsTextFormat &format );
@@ -64,7 +62,8 @@ Sets the current formatting settings
 
     virtual void setContext( const QgsSymbolWidgetContext &context );
 %Docstring
-Sets the ``context`` in which the widget is shown, e.g., the associated map canvas and expression contexts.
+Sets the ``context`` in which the widget is shown, e.g., the associated
+map canvas and expression contexts.
 
 .. seealso:: :py:func:`context`
 
@@ -73,7 +72,8 @@ Sets the ``context`` in which the widget is shown, e.g., the associated map canv
 
     QgsSymbolWidgetContext context() const;
 %Docstring
-Returns the context in which the widget is shown, e.g., the associated map canvas and expression contexts.
+Returns the context in which the widget is shown, e.g., the associated
+map canvas and expression contexts.
 
 .. seealso:: :py:func:`setContext`
 
@@ -86,8 +86,6 @@ Deactivate a field from data defined properties and update the
 corresponding button.
 
 :param key: The property key to deactivate
-
-.. versionadded:: 3.0
 %End
 
   public slots:
@@ -114,14 +112,13 @@ Emitted when an auxiliary field is created in the widget.
 %End
 
   protected:
-
     enum Mode
     {
       Text,
       Labeling,
     };
 
-    QgsTextFormatWidget( QgsMapCanvas *mapCanvas, QWidget *parent /TransferThis/, Mode mode, QgsVectorLayer *layer = 0 );
+    QgsTextFormatWidget( QgsMapCanvas *mapCanvas, QWidget *parent /TransferThis/, Mode mode, QgsMapLayer *layer = 0 );
 %Docstring
 Constructor for QgsTextFormatWidget.
 
@@ -133,7 +130,8 @@ Constructor for QgsTextFormatWidget.
 
     void updateWidgetForFormat( const QgsTextFormat &format );
 %Docstring
-Updates the widget's state to reflect the settings in a :py:class:`QgsTextFormat`.
+Updates the widget's state to reflect the settings in a
+:py:class:`QgsTextFormat`.
 
 :param format: source format
 %End
@@ -149,8 +147,7 @@ Sets the background color for the text preview widget.
 %Docstring
 Update the enabled state of the data defined alignment buttons.
 
-.. deprecated::
-   QGIS 3.24
+.. deprecated:: 3.24
 %End
 
     virtual QgsExpressionContext createExpressionContext() const;
@@ -158,8 +155,9 @@ Update the enabled state of the data defined alignment buttons.
 
     Qgis::GeometryType labelGeometryType() const;
 %Docstring
-Returns the geometry type which will be used by the labeling engine
-when registering labels for the labeling settings currently defined by the widget.
+Returns the geometry type which will be used by the labeling engine when
+registering labels for the labeling settings currently defined by the
+widget.
 
 .. versionadded:: 3.16
 %End
@@ -212,19 +210,17 @@ class QgsTextFormatDialog : QDialog
 %Docstring(signature="appended")
 A simple dialog for customizing text formatting settings.
 
-:py:class:`QgsTextFormatDialog` provides a dialog for controlling the appearance of text rendered
-using :py:class:`QgsTextRenderer`. The dialog includes all settings contained within
-a :py:class:`QgsTextFormat`, including shadow, background and buffer.
-
-.. versionadded:: 3.0
+:py:class:`QgsTextFormatDialog` provides a dialog for controlling the
+appearance of text rendered using :py:class:`QgsTextRenderer`. The
+dialog includes all settings contained within a
+:py:class:`QgsTextFormat`, including shadow, background and buffer.
 %End
 
 %TypeHeaderCode
 #include "qgstextformatwidget.h"
 %End
   public:
-
-    QgsTextFormatDialog( const QgsTextFormat &format, QgsMapCanvas *mapCanvas = 0, QWidget *parent /TransferThis/ = 0, Qt::WindowFlags fl = QgsGuiUtils::ModalDialogFlags, QgsVectorLayer *layer = 0 );
+    QgsTextFormatDialog( const QgsTextFormat &format, QgsMapCanvas *mapCanvas = 0, QWidget *parent /TransferThis/ = 0, Qt::WindowFlags fl = QgsGuiUtils::ModalDialogFlags, QgsMapLayer *layer = 0 );
 %Docstring
 Constructor for QgsTextFormatDialog.
 
@@ -242,7 +238,8 @@ Returns the current formatting settings defined by the widget.
 
     void setContext( const QgsSymbolWidgetContext &context );
 %Docstring
-Sets the ``context`` in which the widget is shown, e.g., the associated map canvas and expression contexts.
+Sets the ``context`` in which the widget is shown, e.g., the associated
+map canvas and expression contexts.
 
 .. versionadded:: 3.10
 %End
@@ -262,19 +259,18 @@ class QgsTextFormatPanelWidget : QgsPanelWidgetWrapper
 %Docstring(signature="appended")
 A panel widget for customizing text formatting settings.
 
-:py:class:`QgsTextFormatPanelWidget` provides a panel widget for controlling the appearance of text rendered
-using :py:class:`QgsTextRenderer`. The dialog includes all settings contained within
-a :py:class:`QgsTextFormat`, including shadow, background and buffer.
-
-.. versionadded:: 3.0
+:py:class:`QgsTextFormatPanelWidget` provides a panel widget for
+controlling the appearance of text rendered using
+:py:class:`QgsTextRenderer`. The dialog includes all settings contained
+within a :py:class:`QgsTextFormat`, including shadow, background and
+buffer.
 %End
 
 %TypeHeaderCode
 #include "qgstextformatwidget.h"
 %End
   public:
-
-    QgsTextFormatPanelWidget( const QgsTextFormat &format, QgsMapCanvas *mapCanvas = 0, QWidget *parent /TransferThis/ = 0, QgsVectorLayer *layer = 0 );
+    QgsTextFormatPanelWidget( const QgsTextFormat &format, QgsMapCanvas *mapCanvas = 0, QWidget *parent /TransferThis/ = 0, QgsMapLayer *layer = 0 );
 %Docstring
 Constructor for QgsTextFormatPanelWidget.
 
@@ -298,7 +294,8 @@ Sets the ``format`` to show in the widget.
 
     void setContext( const QgsSymbolWidgetContext &context );
 %Docstring
-Sets the ``context`` in which the widget is shown, e.g., the associated map canvas and expression contexts.
+Sets the ``context`` in which the widget is shown, e.g., the associated
+map canvas and expression contexts.
 
 .. versionadded:: 3.10
 %End
@@ -308,12 +305,10 @@ Sets the ``context`` in which the widget is shown, e.g., the associated map canv
 
 };
 
-
-
 /************************************************************************
  * This file has been generated automatically from                      *
  *                                                                      *
  * src/gui/qgstextformatwidget.h                                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

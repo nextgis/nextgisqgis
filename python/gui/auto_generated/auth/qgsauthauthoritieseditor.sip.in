@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/auth/qgsauthauthoritieseditor.h                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -20,10 +20,10 @@ Widget for viewing and editing authentication identities database
 #include "qgsauthauthoritieseditor.h"
 %End
   public:
-
     explicit QgsAuthAuthoritiesEditor( QWidget *parent /TransferThis/ = 0 );
 %Docstring
-Widget for viewing and editing certificate authorities directly in database
+Widget for viewing and editing certificate authorities directly in
+database
 
 :param parent: Parent widget
 %End
@@ -42,5 +42,5 @@ Overridden show event of base widget
  *                                                                      *
  * src/gui/auth/qgsauthauthoritieseditor.h                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

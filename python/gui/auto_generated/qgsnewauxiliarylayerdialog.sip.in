@@ -3,32 +3,29 @@
  *                                                                      *
  * src/gui/qgsnewauxiliarylayerdialog.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 
 
 
-class QgsNewAuxiliaryLayerDialog: QDialog
+class QgsNewAuxiliaryLayerDialog : QDialog
 {
 %Docstring(signature="appended")
-
 A dialog to create a new auxiliary layer
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
 #include "qgsnewauxiliarylayerdialog.h"
 %End
   public:
-
     QgsNewAuxiliaryLayerDialog( QgsVectorLayer *layer, QWidget *parent = 0 );
 %Docstring
 Constructor.
 
-:param layer: The vector layer for which the auxiliary layer has to be created
+:param layer: The vector layer for which the auxiliary layer has to be
+              created
 :param parent: Parent window
 %End
 
@@ -43,5 +40,5 @@ Constructor.
  *                                                                      *
  * src/gui/qgsnewauxiliarylayerdialog.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

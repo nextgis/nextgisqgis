@@ -5,12 +5,12 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Nyall Dawson'
-__date__ = '28/3/2022'
-__copyright__ = 'Copyright 2022, The QGIS Project'
 
-import qgis  # NOQA
-from qgis.PyQt.QtCore import QDir, QEvent, QPoint, QPointF, Qt
+__author__ = "Nyall Dawson"
+__date__ = "28/3/2022"
+__copyright__ = "Copyright 2022, The QGIS Project"
+
+from qgis.PyQt.QtCore import QEvent, QPoint, QPointF, Qt
 from qgis.PyQt.QtGui import QKeyEvent, QMouseEvent, QWheelEvent
 from qgis.core import (
     QgsCoordinateReferenceSystem,
@@ -20,7 +20,8 @@ from qgis.core import (
     QgsProject,
 )
 from qgis.gui import QgsElevationProfileCanvas, QgsPlotMouseEvent, QgsPlotTool
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 app = start_app()
 
@@ -28,7 +29,7 @@ app = start_app()
 class TestTool(QgsPlotTool):
 
     def __init__(self, canvas):
-        super().__init__(canvas, 'Test')
+        super().__init__(canvas, "Test")
         self.events = []
 
     def plotMoveEvent(self, event):
@@ -53,32 +54,24 @@ class TestTool(QgsPlotTool):
         self.events.append(event)
 
 
-class TestQgsElevationProfileCanvas(unittest.TestCase):
-
-    def setUp(self):
-        self.report = "<h1>Python QgsElevationProfileCanvas Tests</h1>\n"
-
-    def tearDown(self):
-        report_file_path = f"{QDir.tempPath()}/qgistest.html"
-        with open(report_file_path, 'a') as report_file:
-            report_file.write(self.report)
+class TestQgsElevationProfileCanvas(QgisTestCase):
 
     def testGettersSetters(self):
         canvas = QgsElevationProfileCanvas()
-        canvas.setCrs(QgsCoordinateReferenceSystem('EPSG:3111'))
-        self.assertEqual(canvas.crs().authid(), 'EPSG:3111')
+        canvas.setCrs(QgsCoordinateReferenceSystem("EPSG:3111"))
+        self.assertEqual(canvas.crs().authid(), "EPSG:3111")
 
         ls = QgsLineString()
-        ls.fromWkt('LineString(1 2, 3 4)')
+        ls.fromWkt("LineString(1 2, 3 4)")
         canvas.setProfileCurve(ls)
-        self.assertEqual(canvas.profileCurve().asWkt(), 'LineString (1 2, 3 4)')
+        self.assertEqual(canvas.profileCurve().asWkt(), "LineString (1 2, 3 4)")
 
     def testToFromMapCoordinates(self):
         """
         Test converting canvas coordinates to map coordinates
         """
         canvas = QgsElevationProfileCanvas()
-        canvas.setCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
+        canvas.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
         canvas.setFrameStyle(0)
         canvas.resize(600, 400)
         canvas.setProject(QgsProject.instance())
@@ -91,7 +84,7 @@ class TestQgsElevationProfileCanvas(unittest.TestCase):
         self.assertTrue(canvas.toCanvasCoordinates(QgsPoint(6, 3)).isEmpty())
 
         ls = QgsLineString()
-        ls.fromWkt('LineString(0 2, 10 2, 10 4)')
+        ls.fromWkt("LineString(0 2, 10 2, 10 4)")
         canvas.setProfileCurve(ls)
 
         canvas.setVisiblePlotRange(0, ls.length(), 0, 100)
@@ -133,7 +126,7 @@ class TestQgsElevationProfileCanvas(unittest.TestCase):
         Test some plot tool logic
         """
         canvas = QgsElevationProfileCanvas()
-        canvas.setCrs(QgsCoordinateReferenceSystem('EPSG:4326'))
+        canvas.setCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
         canvas.setFrameStyle(0)
         canvas.resize(600, 400)
         canvas.setProject(QgsProject.instance())
@@ -141,7 +134,7 @@ class TestQgsElevationProfileCanvas(unittest.TestCase):
         self.assertEqual(canvas.width(), 600)
         self.assertEqual(canvas.height(), 400)
         ls = QgsLineString()
-        ls.fromWkt('LineString(0 2, 10 2, 10 4)')
+        ls.fromWkt("LineString(0 2, 10 2, 10 4)")
         canvas.setProfileCurve(ls)
         canvas.setVisiblePlotRange(0, ls.length(), 0, 100)
 
@@ -151,50 +144,87 @@ class TestQgsElevationProfileCanvas(unittest.TestCase):
         canvas.setTool(tool)
         self.assertEqual(canvas.tool(), tool)
 
-        key_press_event = QKeyEvent(QEvent.KeyPress, 54, Qt.ShiftModifier)
+        key_press_event = QKeyEvent(
+            QEvent.Type.KeyPress, 54, Qt.KeyboardModifier.ShiftModifier
+        )
         canvas.keyPressEvent(key_press_event)
-        self.assertEqual(tool.events[-1].type(), QEvent.KeyPress)
+        self.assertEqual(tool.events[-1].type(), QEvent.Type.KeyPress)
 
-        key_release_event = QKeyEvent(QEvent.KeyRelease, 54, Qt.ShiftModifier)
+        key_release_event = QKeyEvent(
+            QEvent.Type.KeyRelease, 54, Qt.KeyboardModifier.ShiftModifier
+        )
         canvas.keyReleaseEvent(key_release_event)
-        self.assertEqual(tool.events[-1].type(), QEvent.KeyRelease)
+        self.assertEqual(tool.events[-1].type(), QEvent.Type.KeyRelease)
 
-        mouse_dbl_click_event = QMouseEvent(QEvent.MouseButtonDblClick, QPointF(300, 200), Qt.LeftButton, Qt.MouseButtons(), Qt.ShiftModifier)
+        mouse_dbl_click_event = QMouseEvent(
+            QEvent.Type.MouseButtonDblClick,
+            QPointF(300, 200),
+            Qt.MouseButton.LeftButton,
+            Qt.MouseButtons(),
+            Qt.KeyboardModifier.ShiftModifier,
+        )
         canvas.mouseDoubleClickEvent(mouse_dbl_click_event)
-        self.assertEqual(tool.events[-1].type(), QEvent.MouseButtonDblClick)
+        self.assertEqual(tool.events[-1].type(), QEvent.Type.MouseButtonDblClick)
         self.assertIsInstance(tool.events[-1], QgsPlotMouseEvent)
         self.assertAlmostEqual(tool.events[-1].mapPoint().x(), 5.92, delta=0.6)
         self.assertAlmostEqual(tool.events[-1].mapPoint().y(), 2, 4)
         self.assertAlmostEqual(tool.events[-1].mapPoint().z(), 49.165, delta=5)
 
-        mouse_move_event = QMouseEvent(QEvent.MouseMove, QPointF(300, 200), Qt.LeftButton, Qt.MouseButtons(), Qt.ShiftModifier)
+        mouse_move_event = QMouseEvent(
+            QEvent.Type.MouseMove,
+            QPointF(300, 200),
+            Qt.MouseButton.LeftButton,
+            Qt.MouseButtons(),
+            Qt.KeyboardModifier.ShiftModifier,
+        )
         canvas.mouseMoveEvent(mouse_move_event)
-        self.assertEqual(tool.events[-1].type(), QEvent.MouseMove)
+        self.assertEqual(tool.events[-1].type(), QEvent.Type.MouseMove)
         self.assertIsInstance(tool.events[-1], QgsPlotMouseEvent)
         self.assertAlmostEqual(tool.events[-1].mapPoint().x(), 5.92, delta=10)
         self.assertAlmostEqual(tool.events[-1].mapPoint().y(), 2, 4)
         self.assertAlmostEqual(tool.events[-1].mapPoint().z(), 49.165, delta=5)
 
-        mouse_press_event = QMouseEvent(QEvent.MouseButtonPress, QPointF(300, 200), Qt.LeftButton, Qt.MouseButtons(), Qt.ShiftModifier)
+        mouse_press_event = QMouseEvent(
+            QEvent.Type.MouseButtonPress,
+            QPointF(300, 200),
+            Qt.MouseButton.LeftButton,
+            Qt.MouseButtons(),
+            Qt.KeyboardModifier.ShiftModifier,
+        )
         canvas.mousePressEvent(mouse_press_event)
-        self.assertEqual(tool.events[-1].type(), QEvent.MouseButtonPress)
+        self.assertEqual(tool.events[-1].type(), QEvent.Type.MouseButtonPress)
         self.assertIsInstance(tool.events[-1], QgsPlotMouseEvent)
         self.assertAlmostEqual(tool.events[-1].mapPoint().x(), 5.927, delta=1)
         self.assertAlmostEqual(tool.events[-1].mapPoint().y(), 2, 4)
         self.assertAlmostEqual(tool.events[-1].mapPoint().z(), 49.165, delta=5)
 
-        mouse_release_event = QMouseEvent(QEvent.MouseButtonRelease, QPointF(300, 200), Qt.LeftButton, Qt.MouseButtons(), Qt.ShiftModifier)
+        mouse_release_event = QMouseEvent(
+            QEvent.Type.MouseButtonRelease,
+            QPointF(300, 200),
+            Qt.MouseButton.LeftButton,
+            Qt.MouseButtons(),
+            Qt.KeyboardModifier.ShiftModifier,
+        )
         canvas.mouseReleaseEvent(mouse_release_event)
-        self.assertEqual(tool.events[-1].type(), QEvent.MouseButtonRelease)
+        self.assertEqual(tool.events[-1].type(), QEvent.Type.MouseButtonRelease)
         self.assertIsInstance(tool.events[-1], QgsPlotMouseEvent)
         self.assertAlmostEqual(tool.events[-1].mapPoint().x(), 5.927, delta=1)
         self.assertAlmostEqual(tool.events[-1].mapPoint().y(), 2, 4)
         self.assertAlmostEqual(tool.events[-1].mapPoint().z(), 49.165, delta=5)
 
-        wheel_event = QWheelEvent(QPointF(300, 200), QPointF(300, 200), QPoint(1, 2), QPoint(3, 4), Qt.NoButton, Qt.NoModifier, Qt.ScrollBegin, False)
+        wheel_event = QWheelEvent(
+            QPointF(300, 200),
+            QPointF(300, 200),
+            QPoint(1, 2),
+            QPoint(3, 4),
+            Qt.MouseButton.NoButton,
+            Qt.KeyboardModifier.NoModifier,
+            Qt.ScrollPhase.ScrollBegin,
+            False,
+        )
         canvas.wheelEvent(wheel_event)
-        self.assertEqual(tool.events[-1].type(), QEvent.Wheel)
+        self.assertEqual(tool.events[-1].type(), QEvent.Type.Wheel)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

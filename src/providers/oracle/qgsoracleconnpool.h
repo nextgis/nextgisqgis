@@ -18,7 +18,7 @@
 
 #include "qgsconnectionpool.h"
 #include "qgsoracleconn.h"
-
+#include "qgslogger.h"
 
 inline QString qgsConnectionPool_ConnectionToName( QgsOracleConn *c )
 {
@@ -27,11 +27,13 @@ inline QString qgsConnectionPool_ConnectionToName( QgsOracleConn *c )
 
 inline void qgsConnectionPool_ConnectionCreate( const QgsDataSourceUri &uri, QgsOracleConn *&c )
 {
+  QgsDebugMsgLevel( QStringLiteral( "Creating an Oracle connection" ), 2 );
   c = QgsOracleConn::connectDb( uri, false );
 }
 
 inline void qgsConnectionPool_ConnectionDestroy( QgsOracleConn *c )
 {
+  QgsDebugMsgLevel( QStringLiteral( "Disconnecting an Oracle connection" ), 2 );
   c->disconnect(); // will delete itself
 }
 
@@ -52,7 +54,8 @@ class QgsOracleConnPoolGroup : public QObject, public QgsConnectionPoolGroup<Qgs
     Q_OBJECT
 
   public:
-    explicit QgsOracleConnPoolGroup( QString name ) : QgsConnectionPoolGroup<QgsOracleConn*>( name ) { initTimer( this ); }
+    explicit QgsOracleConnPoolGroup( QString name )
+      : QgsConnectionPoolGroup<QgsOracleConn *>( name ) { initTimer( this ); }
 
   protected slots:
     void handleConnectionExpired() { onConnectionExpired(); }
@@ -61,7 +64,6 @@ class QgsOracleConnPoolGroup : public QObject, public QgsConnectionPoolGroup<Qgs
 
   protected:
     Q_DISABLE_COPY( QgsOracleConnPoolGroup )
-
 };
 
 //! Oracle connection pool - singleton

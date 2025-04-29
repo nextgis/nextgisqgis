@@ -51,7 +51,6 @@ class GUI_EXPORT QgsLabelingWidget : public QgsMapLayerConfigWidget, private Ui:
     /**
      * Returns the labeling gui widget or NULLPTR if none.
      *
-     * \since QGIS 3.0
      */
     QgsLabelingGui *labelingGui();
 
@@ -76,10 +75,10 @@ class GUI_EXPORT QgsLabelingWidget : public QgsMapLayerConfigWidget, private Ui:
 
   private slots:
     void labelModeChanged( int index );
+    void showLabelingEngineRules();
     void showEngineConfigDialog();
 
   private:
-
     enum Mode
     {
       ModeNone,
@@ -93,8 +92,8 @@ class GUI_EXPORT QgsLabelingWidget : public QgsMapLayerConfigWidget, private Ui:
     QgsMessageBar *mMessageBar = nullptr;
 
     QWidget *mWidget = nullptr;
-    std::unique_ptr< QgsPalLayerSettings > mSimpleSettings;
-    std::unique_ptr< QgsAbstractVectorLayerLabeling > mOldSettings;
+    std::unique_ptr<QgsPalLayerSettings> mSimpleSettings;
+    std::unique_ptr<QgsAbstractVectorLayerLabeling> mOldSettings;
     bool mOldLabelsEnabled = false;
 };
 

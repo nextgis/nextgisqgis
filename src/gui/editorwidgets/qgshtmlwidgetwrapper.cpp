@@ -15,10 +15,12 @@
  ***************************************************************************/
 
 #include "qgshtmlwidgetwrapper.h"
+#include "moc_qgshtmlwidgetwrapper.cpp"
 #include "qgsexpressioncontextutils.h"
 #include "qgswebframe.h"
 #include "qgsvaluerelationfieldformatter.h"
 #include "qgsattributeform.h"
+
 #include <QScreen>
 
 QgsHtmlWidgetWrapper::QgsHtmlWidgetWrapper( QgsVectorLayer *layer, QWidget *editor, QWidget *parent )
@@ -34,19 +36,15 @@ bool QgsHtmlWidgetWrapper::valid() const
 
 QWidget *QgsHtmlWidgetWrapper::createWidget( QWidget *parent )
 {
-
   QgsAttributeForm *form = qobject_cast<QgsAttributeForm *>( parent );
 
   if ( form )
   {
     mFormFeature = form->feature();
-    connect( form, &QgsAttributeForm::widgetValueChanged, this, [ = ]( const QString & attribute, const QVariant & newValue, bool attributeChanged )
-    {
+    connect( form, &QgsAttributeForm::widgetValueChanged, this, [=]( const QString &attribute, const QVariant &newValue, bool attributeChanged ) {
       if ( attributeChanged )
       {
-        const thread_local QRegularExpression expRe { QStringLiteral( R"re(expression.evaluate\s*\(\s*"(.*)"\))re" ), QRegularExpression::PatternOption::MultilineOption | QRegularExpression::PatternOption::DotMatchesEverythingOption };
-        const QRegularExpressionMatch match { expRe.match( mHtmlCode ) };
-        if ( match.hasMatch() && QgsValueRelationFieldFormatter::expressionRequiresFormScope( match.captured( 1 ) ) )
+        if ( mRequiresFormScope )
         {
           mFormFeature.setAttribute( attribute, newValue );
           setHtmlContext();
@@ -82,7 +80,7 @@ void QgsHtmlWidgetWrapper::initWidget( QWidget *editor )
   checkGeometryNeeds();
 }
 
-void QgsHtmlWidgetWrapper::reinitWidget( )
+void QgsHtmlWidgetWrapper::reinitWidget()
 {
   if ( !mWidget )
     return;
@@ -108,8 +106,7 @@ void QgsHtmlWidgetWrapper::checkGeometryNeeds()
   }
 
   auto frame = webView.page()->mainFrame();
-  connect( frame, &QWebFrame::javaScriptWindowObjectCleared, frame, [ frame, &evaluator ]
-  {
+  connect( frame, &QWebFrame::javaScriptWindowObjectCleared, frame, [frame, &evaluator] {
     frame->addToJavaScriptWindowObject( QStringLiteral( "expression" ), &evaluator );
   } );
 
@@ -121,10 +118,22 @@ void QgsHtmlWidgetWrapper::checkGeometryNeeds()
 void QgsHtmlWidgetWrapper::setHtmlCode( const QString &htmlCode )
 {
   mHtmlCode = htmlCode;
+
+  bool ok = false;
+  const thread_local QRegularExpression expRe( QStringLiteral( R"re(expression.evaluate\s*\(\s*"(.*)"\))re" ), QRegularExpression::PatternOption::MultilineOption | QRegularExpression::PatternOption::DotMatchesEverythingOption );
+  QRegularExpressionMatchIterator matchIt = expRe.globalMatch( mHtmlCode );
+  while ( !ok && matchIt.hasNext() )
+  {
+    const QRegularExpressionMatch match = matchIt.next();
+    const QgsExpression exp = match.captured( 1 );
+    ok = QgsValueRelationFieldFormatter::expressionRequiresFormScope( exp );
+  }
+  mRequiresFormScope = ok;
+
   checkGeometryNeeds();
 }
 
-void QgsHtmlWidgetWrapper::setHtmlContext( )
+void QgsHtmlWidgetWrapper::setHtmlContext()
 {
   if ( !mWidget )
     return;
@@ -142,8 +151,7 @@ void QgsHtmlWidgetWrapper::setHtmlContext( )
   HtmlExpression *htmlExpression = new HtmlExpression();
   htmlExpression->setExpressionContext( expressionContext );
   auto frame = mWidget->page()->mainFrame();
-  connect( frame, &QWebFrame::javaScriptWindowObjectCleared, frame, [ = ]
-  {
+  connect( frame, &QWebFrame::javaScriptWindowObjectCleared, frame, [=] {
     frame->addToJavaScriptWindowObject( QStringLiteral( "expression" ), htmlExpression );
   } );
 

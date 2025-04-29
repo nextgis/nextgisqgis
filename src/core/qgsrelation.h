@@ -37,6 +37,8 @@ class QgsPolymorphicRelation;
 /**
  * \ingroup core
  * \class QgsRelation
+ *
+ * \brief Represents a relationship between two vector layers.
  */
 class CORE_EXPORT QgsRelation
 {
@@ -138,7 +140,6 @@ class CORE_EXPORT QgsRelation
 
     /**
      * Set a strength for this relation
-     * \since QGIS 3.0
      */
     void setStrength( Qgis::RelationshipStrength strength );
 
@@ -203,7 +204,6 @@ class CORE_EXPORT QgsRelation
      * \returns expression filter string for all the referencing features
      * \see getRelatedFeatures()
      * \see getRelatedFeaturesRequest()
-     * \since QGIS 2.16
      */
     QString getRelatedFeaturesFilter( const QgsFeature &feature ) const;
 
@@ -250,7 +250,6 @@ class CORE_EXPORT QgsRelation
      * Returns the relation strength as a string
      *
      * \returns strength
-     * \since QGIS 3.0
      */
     Qgis::RelationshipStrength strength() const;
 
@@ -263,7 +262,6 @@ class CORE_EXPORT QgsRelation
 
     /**
      * Generate a (project-wide) unique id for this relation
-     * \since QGIS 3.0
      */
     void generateId();
 
@@ -335,6 +333,12 @@ class CORE_EXPORT QgsRelation
     QgsAttributeList referencingFields() const;
 
     /**
+     * Returns TRUE if none of the referencing fields has a NOT NULL constraint.
+     * \since QGIS 3.28
+     */
+    bool referencingFieldsAllowNull() const;
+
+    /**
      * Returns the validity of this relation. Don't use the information if it's not valid.
      * A relation is considered valid if both referenced and referencig layers are valid.
      *
@@ -359,21 +363,18 @@ class CORE_EXPORT QgsRelation
      *
      * \param other The other relation
      * \returns TRUE if they are similar
-     * \since QGIS 3.0
      */
     bool hasEqualDefinition( const QgsRelation &other ) const;
 
     /**
      * Gets the referenced field counterpart given a referencing field.
      *
-     * \since QGIS 3.0
      */
     Q_INVOKABLE QString resolveReferencedField( const QString &referencingField ) const;
 
     /**
      * Gets the referencing field counterpart given a referenced field.
      *
-     * \since QGIS 3.0
      */
     Q_INVOKABLE QString resolveReferencingField( const QString &referencedField ) const;
 

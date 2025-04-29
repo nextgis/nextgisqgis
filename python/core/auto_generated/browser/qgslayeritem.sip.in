@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/browser/qgslayeritem.h                                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,7 +11,8 @@
 class QgsLayerItem : QgsDataItem
 {
 %Docstring(signature="appended")
-Item that represents a layer that can be opened with one of the providers
+Item that represents a layer that can be opened with one of the
+providers
 %End
 
 %TypeHeaderCode
@@ -47,7 +48,8 @@ Returns the associated map layer type.
 
     static Qgis::BrowserLayerType typeFromMapLayer( QgsMapLayer *layer );
 %Docstring
-Returns the layer item type corresponding to a :py:class:`QgsMapLayer` ``layer``.
+Returns the layer item type corresponding to a :py:class:`QgsMapLayer`
+``layer``.
 
 .. versionadded:: 3.6
 %End
@@ -57,30 +59,19 @@ Returns the layer item type corresponding to a :py:class:`QgsMapLayer` ``layer``
 Returns layer uri or empty string if layer cannot be created
 %End
 
-    QString providerKey() const;
-%Docstring
-Returns provider key
-%End
-
     QStringList supportedCrs() const;
 %Docstring
 Returns the supported CRS
-
-.. versionadded:: 2.8
 %End
 
     QStringList supportedFormats() const;
 %Docstring
 Returns the supported formats
-
-.. versionadded:: 2.8
 %End
 
     virtual QString comments() const;
 %Docstring
 Returns comments of the layer
-
-.. versionadded:: 2.12
 %End
 
     static QString layerTypeAsString( Qgis::BrowserLayerType layerType );
@@ -99,11 +90,10 @@ Returns the icon name of the given ``layerType``
 
  virtual bool deleteLayer() /Deprecated/;
 %Docstring
-Delete this layer item
-Use :py:class:`QgsDataItemGuiProvider`.deleteLayer instead
+Delete this layer item Use
+:py:class:`QgsDataItemGuiProvider`.deleteLayer instead
 
-.. deprecated::
-   QGIS 3.10
+.. deprecated:: 3.10
 %End
 
   protected:
@@ -137,7 +127,6 @@ Returns icon for point cloud layer
 %End
     virtual QString layerName() const;
 %Docstring
-
 :return: the layer name
 %End
     virtual QgsAbstractDatabaseProviderConnection *databaseConnection() const;
@@ -145,8 +134,8 @@ Returns icon for point cloud layer
 
     const QgsLayerMetadata &layerMetadata() const;
 %Docstring
-Returns layer's metadata, it may be a default constructed metadata
-if metadata is not explicitly set.
+Returns layer's metadata, it may be a default constructed metadata if
+metadata is not explicitly set.
 
 .. versionadded:: 3.28
 %End
@@ -167,5 +156,5 @@ Set layer's ``metadata``.
  *                                                                      *
  * src/core/browser/qgslayeritem.h                                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

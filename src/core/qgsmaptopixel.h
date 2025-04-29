@@ -20,12 +20,10 @@
 #include "qgis_core.h"
 #include "qgis_sip.h"
 #include <QTransform>
-#include <vector>
 #include "qgis.h"
 #include "qgspointxy.h"
 
 #include <cassert>
-#include <memory>
 
 class QPoint;
 
@@ -54,7 +52,6 @@ class CORE_EXPORT QgsMapToPixel
      * \param widthPixels Output width, in pixels
      * \param heightPixels Output height, in pixels
      * \param rotation clockwise rotation in degrees
-     * \since QGIS 2.8
      */
     QgsMapToPixel( double mapUnitsPerPixel, double centerX, double centerY, int widthPixels, int heightPixels, double rotation );
 
@@ -70,7 +67,6 @@ class CORE_EXPORT QgsMapToPixel
      * \param dpi screen DPI
      * \param mapUnits map units
      * \returns matching QgsMapToPixel
-     * \since QGIS 3.0
      */
     static QgsMapToPixel fromScale( double scale, Qgis::DistanceUnit mapUnits, double dpi = 96 );
 
@@ -120,7 +116,7 @@ class CORE_EXPORT QgsMapToPixel
     }
 
     /**
-     * Transforms device coordinates to map coordinates.
+     * Transforms map coordinates to device coordinates.
      *
      * This method modifies the given coordinates in place. It is intended as a fast way to do the
      * transform.
@@ -134,7 +130,37 @@ class CORE_EXPORT QgsMapToPixel
     }
 
     /**
-     * Transforms device coordinates to map coordinates.
+     * Transforms a bounding box from map coordinates to device coordinates.
+     *
+     * The returns bounding box will always completely enclose the transformed input bounding box (i.e. this
+     * method will grow the bounds wherever required).
+     *
+     * \since QGIS 3.40
+     */
+    QRectF transformBounds( const QRectF &bounds ) const
+    {
+      QPointF topLeft = bounds.topLeft();
+      QPointF topRight = bounds.topRight();
+      QPointF bottomLeft = bounds.bottomLeft();
+      QPointF bottomRight = bounds.bottomRight();
+
+      transformInPlace( topLeft.rx(), topLeft.ry() );
+      transformInPlace( topRight.rx(), topRight.ry() );
+      transformInPlace( bottomLeft.rx(), bottomLeft.ry() );
+      transformInPlace( bottomRight.rx(), bottomRight.ry() );
+
+      auto minMaxX = std::minmax( { topLeft.x(), topRight.x(), bottomLeft.x(), bottomRight.x() } );
+      auto minMaxY = std::minmax( { topLeft.y(), topRight.y(), bottomLeft.y(), bottomRight.y() } );
+
+      const double left = minMaxX.first;
+      const double right = minMaxX.second;
+      const double top = minMaxY.first;
+      const double bottom = minMaxY.second;
+      return QRectF( left, top, right - left, bottom - top );
+    }
+
+    /**
+     * Transforms map coordinates to device coordinates.
      *
      * This method modifies the given coordinates in place. It is intended as a fast way to do the
      * transform.
@@ -152,7 +178,7 @@ class CORE_EXPORT QgsMapToPixel
 #ifndef SIP_RUN
 
     /**
-     * Transforms device coordinates to map coordinates.
+     * Transforms map coordinates to device coordinates.
      *
      * This method modifies the given coordinates in place. It is intended as a fast way to do the
      * transform.
@@ -162,8 +188,11 @@ class CORE_EXPORT QgsMapToPixel
     void transformInPlace( QVector<T> &x, QVector<T> &y ) const
     {
       assert( x.size() == y.size() );
-      for ( int i = 0; i < x.size(); ++i )
-        transformInPlace( x[i], y[i] );
+      T *xData = x.data();
+      T *yData = y.data();
+      const auto size = x.size();
+      for ( int i = 0; i < size; ++i )
+        transformInPlace( *xData++, *yData++ );
     }
 #endif
 
@@ -203,7 +232,7 @@ class CORE_EXPORT QgsMapToPixel
     /**
      * Transforms device coordinates to map (world) coordinates.
      *
-     * \deprecated since QGIS 3.4 use toMapCoordinates instead
+     * \deprecated QGIS 3.4. Use toMapCoordinates instead.
      */
     Q_DECL_DEPRECATED QgsPointXY toMapPoint( double x, double y ) const SIP_DEPRECATED
     {
@@ -234,7 +263,6 @@ class CORE_EXPORT QgsMapToPixel
      * The information is only known if setRotation was used.
      *
      * \see mapHeight()
-     * \since QGIS 2.8
      */
     int mapWidth() const { return mWidth; }
 
@@ -242,7 +270,6 @@ class CORE_EXPORT QgsMapToPixel
      * Returns current map height in pixels
      *
      * \see mapWidth()
-     * \since QGIS 2.8
      */
     int mapHeight() const { return mHeight; }
 
@@ -256,7 +283,6 @@ class CORE_EXPORT QgsMapToPixel
      * \param cy Y ordinate of map center in geographical units
      *
      * \see mapRotation()
-     * \since QGIS 2.8
      */
     void setMapRotation( double degrees, double cx, double cy );
 
@@ -264,7 +290,6 @@ class CORE_EXPORT QgsMapToPixel
      * Returns the current map rotation in degrees (clockwise).
      *
      * \see setMapRotation()
-     * \since QGIS 2.8
      */
     double mapRotation() const { return mRotation; }
 
@@ -281,7 +306,6 @@ class CORE_EXPORT QgsMapToPixel
      * \param rotation clockwise rotation in degrees
      *
      * \note if the specified parameters result in an invalid transform then no changes will be applied to the object
-     * \since QGIS 2.8
      */
     void setParameters( double mapUnitsPerPixel, double centerX, double centerY, int widthPixels, int heightPixels, double rotation );
 
@@ -315,14 +339,12 @@ class CORE_EXPORT QgsMapToPixel
     /**
      * Returns the center x-coordinate for the transform.
      * \see yCenter()
-     * \since QGIS 3.0
      */
     double xCenter() const { return mXCenter; }
 
     /**
      * Returns the center y-coordinate for the transform.
      * \see xCenter()
-     * \since QGIS 3.0
      */
     double yCenter() const { return mYCenter; }
 

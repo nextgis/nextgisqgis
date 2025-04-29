@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/settings/qgssettingsentrygroup.h                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -18,8 +18,9 @@ Creates a group of setting which have a common definition of base key
 
 .. versionadded:: 3.26
 
-.. deprecated:: QGIS 3.30
-   use :py:class:`QgsSettingsTreeNode` instead
+.. deprecated:: 3.30
+
+   Use :py:class:`QgsSettingsTreeNode` instead.
 %End
 
 %TypeHeaderCode
@@ -55,20 +56,21 @@ Returns all the settings
 
     void removeAllSettingsAtBaseKey( const QStringList &dynamicKeyPartList = QStringList() ) const;
 %Docstring
-Removes all the settings at the base key for the given ``dynamicKeyPartList``
-This means it might remove more settings than the ones registered in the group, use with caution
+Removes all the settings at the base key for the given
+``dynamicKeyPartList`` This means it might remove more settings than the
+ones registered in the group, use with caution
 %End
 
     void removeAllChildrenSettings( const QString &dynamicKeyPart = QString() ) const;
 %Docstring
-Removes all the settings from this group
-The ``dynamicKeyPart`` argument specifies the dynamic part of the settings key.
+Removes all the settings from this group The ``dynamicKeyPart`` argument
+specifies the dynamic part of the settings key.
 %End
 
     void removeAllChildrenSettings( const QStringList &dynamicKeyPartList ) const;
 %Docstring
-Removes all the settings from this group
-The ``dynamicKeyPartList`` argument specifies the dynamic part of the settings key.
+Removes all the settings from this group The ``dynamicKeyPartList``
+argument specifies the dynamic part of the settings key.
 %End
 
 };
@@ -79,5 +81,5 @@ The ``dynamicKeyPartList`` argument specifies the dynamic part of the settings k
  *                                                                      *
  * src/core/settings/qgssettingsentrygroup.h                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

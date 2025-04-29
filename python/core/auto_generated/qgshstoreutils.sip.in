@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgshstoreutils.h                                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -17,7 +17,8 @@ namespace QgsHstoreUtils
 
   QVariantMap parse( const QString &string );
 %Docstring
-Returns a QVariantMap object containing the key and values from a hstore-formatted string.
+Returns a QVariantMap object containing the key and values from a
+hstore-formatted string.
 
 :param string: The hstored-formatted string
 
@@ -40,5 +41,5 @@ Build a hstore-formatted string from a QVariantMap.
  *                                                                      *
  * src/core/qgshstoreutils.h                                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

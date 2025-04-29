@@ -14,25 +14,25 @@
  ***************************************************************************/
 
 #include "qgswindow3dengine.h"
+#include "moc_qgswindow3dengine.cpp"
 
-#include <Qt3DRender/QRenderCapture>
-#include <Qt3DExtras/Qt3DWindow>
 #include <Qt3DExtras/QForwardRenderer>
 #include <Qt3DRender/QRenderSettings>
 
-#include "qgspreviewquad.h"
+#include "qgs3dmapcanvas.h"
+#include "qgsframegraph.h"
 
-QgsWindow3DEngine::QgsWindow3DEngine( QObject *parent )
+
+QgsWindow3DEngine::QgsWindow3DEngine( Qgs3DMapCanvas *parent )
   : QgsAbstract3DEngine( parent )
 {
-  mWindow3D = new Qt3DExtras::Qt3DWindow;
+  mMapCanvas3D = parent;
 
   mRoot = new Qt3DCore::QEntity;
-  mWindow3D->setRootEntity( mRoot );
+  mMapCanvas3D->setRootEntity( mRoot );
 
-  mFrameGraph = new QgsShadowRenderingFrameGraph( mWindow3D, QSize( 1024, 768 ), mWindow3D->camera(), mRoot );
-  mFrameGraph->setRenderCaptureEnabled( false );
-  mWindow3D->setActiveFrameGraph( mFrameGraph->frameGraphRoot() );
+  mFrameGraph = new QgsFrameGraph( mMapCanvas3D, QSize( 1024, 768 ), mMapCanvas3D->camera(), mRoot );
+  mMapCanvas3D->setActiveFrameGraph( mFrameGraph->frameGraphRoot() );
 
   // force switching to no shadow rendering
   setShadowRenderingEnabled( false );
@@ -40,7 +40,7 @@ QgsWindow3DEngine::QgsWindow3DEngine( QObject *parent )
 
 QWindow *QgsWindow3DEngine::window()
 {
-  return mWindow3D;
+  return mMapCanvas3D;
 }
 
 Qt3DCore::QEntity *QgsWindow3DEngine::root() const
@@ -75,31 +75,31 @@ void QgsWindow3DEngine::setRootEntity( Qt3DCore::QEntity *root )
 
 Qt3DRender::QRenderSettings *QgsWindow3DEngine::renderSettings()
 {
-  return mWindow3D->renderSettings();
+  return mMapCanvas3D->renderSettings();
 }
 
 Qt3DRender::QCamera *QgsWindow3DEngine::camera()
 {
-  return mWindow3D->camera();
+  return mMapCanvas3D->camera();
 }
 
 QSize QgsWindow3DEngine::size() const
 {
-  return mWindow3D->size();
+  return mMapCanvas3D->size();
 }
 
 QSurface *QgsWindow3DEngine::surface() const
 {
-  return mWindow3D;
+  return mMapCanvas3D;
 }
 
 void QgsWindow3DEngine::setSize( QSize s )
 {
   mSize = s;
 
-  mWindow3D->setWidth( mSize.width() );
-  mWindow3D->setHeight( mSize.height() );
-  mFrameGraph->setSize( mSize );
+  mMapCanvas3D->setWidth( mSize.width() );
+  mMapCanvas3D->setHeight( mSize.height() );
+  mFrameGraph->setSize( mSize * mMapCanvas3D->devicePixelRatio() );
   camera()->setAspectRatio( float( mSize.width() ) / float( mSize.height() ) );
   emit sizeChanged();
 }

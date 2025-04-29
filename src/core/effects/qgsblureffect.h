@@ -31,7 +31,6 @@
  * \brief A paint effect which blurs a source picture, using a number of different blur
  * methods.
  *
- * \since QGIS 2.9
  */
 
 class CORE_EXPORT QgsBlurEffect : public QgsPaintEffect SIP_NODEFAULTCTORS
@@ -53,9 +52,6 @@ class CORE_EXPORT QgsBlurEffect : public QgsPaintEffect SIP_NODEFAULTCTORS
      */
     static QgsPaintEffect *create( const QVariantMap &map ) SIP_FACTORY;
 
-    /**
-     * Constructor for QgsBlurEffect.
-     */
     QgsBlurEffect() = default;
 
     QString type() const override { return QStringLiteral( "blur" ); }

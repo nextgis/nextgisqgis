@@ -3,7 +3,7 @@
  *                                                                      *
  * src/3d/materials/qgsphongtexturedmaterialsettings.h                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -27,18 +27,15 @@ A phong shading model with diffuse texture map.
 #include "qgsphongtexturedmaterialsettings.h"
 %End
   public:
-
     QgsPhongTexturedMaterialSettings();
-%Docstring
-Constructor for QgsPhongTexturedMaterialSettings.
-%End
 
     virtual QString type() const;
 
 
     static bool supportsTechnique( QgsMaterialSettingsRenderingTechnique technique );
 %Docstring
-Returns ``True`` if the specified ``technique`` is supported by the Phong material.
+Returns ``True`` if the specified ``technique`` is supported by the
+Phong material.
 %End
 
     static QgsAbstractMaterialSettings *create() /Factory/;
@@ -57,7 +54,7 @@ Returns ambient color component
 %Docstring
 Returns specular color component
 %End
-    float shininess() const;
+    double shininess() const;
 %Docstring
 Returns shininess of the surface
 %End
@@ -74,15 +71,15 @@ Returns the diffuse texture path.
 
     float textureScale() const;
 %Docstring
-Returns the texture scale
-The texture scale changes the size of the displayed texture in the 3D scene
-If the texture scale is less than 1 the texture will be stretched
+Returns the texture scale The texture scale changes the size of the
+displayed texture in the 3D scene If the texture scale is less than 1
+the texture will be stretched
 %End
 
     bool requiresTextureCoordinates() const;
 %Docstring
-Returns ``True`` if the material requires texture coordinates to be generated
-during triangulation.quiresTextureCoordinates
+Returns ``True`` if the material requires texture coordinates to be
+generated during triangulation.quiresTextureCoordinates
 %End
 
     float textureRotation() const;
@@ -90,7 +87,7 @@ during triangulation.quiresTextureCoordinates
 Returns the texture rotation, in degrees.
 %End
 
-    float opacity() const;
+    double opacity() const;
 %Docstring
 Returns the opacity of the surface
 
@@ -106,7 +103,7 @@ Sets ambient color component
 %Docstring
 Sets specular color component
 %End
-    void setShininess( float shininess );
+    void setShininess( double shininess );
 %Docstring
 Sets shininess of the surface
 %End
@@ -120,9 +117,9 @@ Sets the ``path`` of the diffuse texture.
 
     void setTextureScale( float scale );
 %Docstring
-Sets the texture scale
-The texture scale changes the size of the displayed texture in the 3D scene
-If the texture scale is less than 1 the texture will be stretched
+Sets the texture scale The texture scale changes the size of the
+displayed texture in the 3D scene If the texture scale is less than 1
+the texture will be stretched
 %End
 
     void setTextureRotation( float rotation );
@@ -152,5 +149,5 @@ Sets opacity of the surface.
  *                                                                      *
  * src/3d/materials/qgsphongtexturedmaterialsettings.h                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

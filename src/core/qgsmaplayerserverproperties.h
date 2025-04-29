@@ -293,31 +293,224 @@ class CORE_EXPORT QgsMapLayerServerProperties: public QgsServerMetadataUrlProper
      * Saves server properties to xml under the layer node
      * \since QGIS 3.10
      */
-    void writeXml( QDomNode &layer_node, QDomDocument &document ) const;
+    void writeXml( QDomNode &layer_node, QDomDocument &document ) const; // cppcheck-suppress duplInheritedMember
 
     /**
      * Reads server properties from project file.
      * \since QGIS 3.10
      */
-    void readXml( const QDomNode &layer_node );
+    void readXml( const QDomNode &layer_node ); // cppcheck-suppress duplInheritedMember
 
     /**
      * Reset properties to default
      * \since QGIS 3.22
      */
-    void reset();
+    void reset(); // cppcheck-suppress duplInheritedMember
+
+    /**
+     * Sets the short \a name of the layer used by QGIS Server to identify the layer.
+     *
+     * \see shortName()
+     *
+     * \since QGIS 3.38
+     */
+    void setShortName( const QString &name ) { mShortName = name; }
+
+    /**
+     * Returns the short name of the layer used by QGIS Server to identify the layer.
+     *
+     * \see setShortName()
+     *
+     * \since QGIS 3.38
+     */
+    QString shortName() const { return mShortName; }
+
+    /**
+     * Sets the \a title of the layer used by QGIS Server in GetCapabilities request.
+     *
+     * \see title()
+     *
+     * \since QGIS 3.38
+     */
+    void setTitle( const QString &title ) { mTitle = title; }
+
+    /**
+     * Sets the \a title of the layer used by QGIS Server in WFS GetCapabilities request.
+     *
+     * \see title()
+     *
+     * \since QGIS 3.40
+     */
+    void setWfsTitle( const QString &title ) { mWfsTitle = title; }
+
+    /**
+     * Returns the title of the layer used by QGIS Server in GetCapabilities request.
+     *
+     * \see setTitle()
+     *
+     * \since QGIS 3.38
+     */
+    QString title() const { return mTitle; }
+
+    /**
+     * Returns the optional WFS title if set or the title of the layer used by
+     * QGIS WFS in GetCapabilities request.
+     *
+     * \see setWfsTitle()
+     *
+     * \since QGIS 3.40
+     */
+    QString wfsTitle() const { return mWfsTitle.isEmpty() ? mTitle : mWfsTitle; }
+
+    /**
+     * Sets the \a abstract of the layer used by QGIS Server in GetCapabilities request.
+     *
+     * \see abstract()
+     *
+     * \since QGIS 3.38
+     */
+    void setAbstract( const QString &abstract ) { mAbstract = abstract; }
+
+    /**
+     * Returns the abstract of the layerused by QGIS Server in GetCapabilities request.
+     *
+     * \see setAbstract()
+     *
+     * \since QGIS 3.38
+     */
+    QString abstract() const { return mAbstract; }
+
+    /**
+     * Sets the \a keywords  list of the layerused by QGIS Server in GetCapabilities request.
+     *
+     * \see keywordList()
+     *
+     * \since QGIS 3.38
+     */
+    void setKeywordList( const QString &keywords ) { mKeywordList = keywords; }
+
+    /**
+     * Returns the keyword list of the layerused by QGIS Server in GetCapabilities request.
+     *
+     * \see setKeywordList()
+     *
+     * \since QGIS 3.38
+     */
+    QString keywordList() const { return mKeywordList; }
+
+    /**
+     * Sets the DataUrl of the layer used by QGIS Server in GetCapabilities request.
+     *
+     * DataUrl is a a link to the underlying data represented by a particular layer.
+     *
+     * \see dataUrl()
+     *
+     * \since QGIS 3.38
+     */
+    void setDataUrl( const QString &dataUrl ) { mDataUrl = dataUrl; }
+
+    /**
+     * Returns the DataUrl of the layer used by QGIS Server in GetCapabilities request.
+     *
+     * DataUrl is a a link to the underlying data represented by a particular layer.
+     *
+     * \see setDataUrl()
+     *
+     * \since QGIS 3.38
+     */
+    QString dataUrl() const { return mDataUrl; }
+
+    /**
+     * Sets the DataUrl \a format of the layerused by QGIS Server in GetCapabilities request.
+     *
+     * DataUrl is a a link to the underlying data represented by a particular layer.
+     *
+     * \see dataUrlFormat()
+     *
+     * \since QGIS 3.38
+     */
+    void setDataUrlFormat( const QString &dataUrlFormat ) { mDataUrlFormat = dataUrlFormat; }
+
+    /**
+     * Returns the DataUrl format of the layer used by QGIS Server in GetCapabilities request.
+     *
+     * DataUrl is a a link to the underlying data represented by a particular layer.
+     *
+     * \see setDataUrlFormat()
+     *
+     * \since QGIS 3.38
+     */
+    QString dataUrlFormat() const { return mDataUrlFormat; }
+
+    /**
+     * Sets the \a attribution of the layer used by QGIS Server in GetCapabilities request.
+     *
+     * Attribution indicates the provider of a layer or collection of layers.
+     *
+     * \see attribution()
+     *
+     * \since QGIS 3.38
+     */
+    void setAttribution( const QString &attrib ) { mAttribution = attrib; }
+
+    /**
+     * Returns the attribution of the layer used by QGIS Server in GetCapabilities request.
+     *
+     * Attribution indicates the provider of a layer or collection of layers.
+     *
+     * \see setAttribution()
+     *
+     * \since QGIS 3.38
+     */
+    QString attribution() const { return mAttribution; }
+
+    /**
+     * Sets the attribution \a url of the layer used by QGIS Server in GetCapabilities request.
+     *
+     * Attribution indicates the provider of a layer or collection of layers.
+     *
+     * \see attributionUrl()
+     *
+     * \since QGIS 3.38
+     */
+    void setAttributionUrl( const QString &url ) { mAttributionUrl = url; }
+
+    /**
+     * Returns the attribution URL of the layer used by QGIS Server in GetCapabilities request.
+     *
+     * Attribution indicates the provider of a layer or collection of layers.
+     *
+     * \see setAttributionUrl()
+     *
+     * \since QGIS 3.38
+     */
+    QString attributionUrl() const { return mAttributionUrl; }
 
     //! Gets the parent layer
     const QgsMapLayer *layer() const override { return mLayer; };
 
   private:
     QgsMapLayer *mLayer = nullptr;
+
+    QString mShortName;
+    QString mTitle;
+    QString mWfsTitle;  // optional WFS title
+
+    QString mAttribution;
+    QString mAttributionUrl;
+
+    QString mDataUrl;
+    QString mDataUrlFormat;
+
+    QString mAbstract;
+    QString mKeywordList;
+
 };
 
 /**
  * \ingroup core
  * \brief Convenient class for API compatibility
- * \deprecated since QGIS 3.22
+ * \deprecated QGIS 3.22
  * \since QGIS 3.10
  */
 // XXX How to make a proper SIP type alias ?

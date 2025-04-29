@@ -53,11 +53,9 @@ class CORE_EXPORT QgsDistanceArea
 {
   public:
 
-    //! Constructor
     QgsDistanceArea();
     ~QgsDistanceArea();
 
-    //! Copy constructor
     QgsDistanceArea( const QgsDistanceArea &other );
     QgsDistanceArea &operator=( const QgsDistanceArea &other );
 
@@ -65,14 +63,12 @@ class CORE_EXPORT QgsDistanceArea
      * Returns whether calculations will use the ellipsoid. Calculations will only use the
      * ellipsoid if a valid ellipsoid() has been set.
      * \see ellipsoid()
-     * \since QGIS 2.14
      */
     bool willUseEllipsoid() const;
 
     /**
      * Sets source spatial reference system \a crs.
      * \see sourceCrs()
-     * \since QGIS 2.2
      */
     void setSourceCrs( const QgsCoordinateReferenceSystem &crs, const QgsCoordinateTransformContext &context );
 
@@ -152,9 +148,9 @@ class CORE_EXPORT QgsDistanceArea
      * \see measureLength()
      * \see measurePerimeter()
      * \see areaUnits()
-     * \since QGIS 2.12
+     * \throws QgsCsException if a transformation error occurs while calculating the area
      */
-    double measureArea( const QgsGeometry &geometry ) const;
+    double measureArea( const QgsGeometry &geometry ) const SIP_THROW( QgsCsException );
 
     /**
      * Measures the length of a geometry.
@@ -164,9 +160,9 @@ class CORE_EXPORT QgsDistanceArea
      * \see lengthUnits()
      * \see measureArea()
      * \see measurePerimeter()
-     * \since QGIS 2.12
+     * \throws QgsCsException if a transformation error occurs while calculating the length
      */
-    double measureLength( const QgsGeometry &geometry ) const;
+    double measureLength( const QgsGeometry &geometry ) const SIP_THROW( QgsCsException );
 
     /**
      * Measures the perimeter of a polygon geometry.
@@ -176,26 +172,28 @@ class CORE_EXPORT QgsDistanceArea
      * \see lengthUnits()
      * \see measureArea()
      * \see measurePerimeter()
-     * \since QGIS 2.12
+     * \throws QgsCsException if a transformation error occurs while calculating the perimeter
      */
-    double measurePerimeter( const QgsGeometry &geometry ) const;
+    double measurePerimeter( const QgsGeometry &geometry ) const SIP_THROW( QgsCsException );
 
     /**
      * Measures the length of a line with multiple segments.
      * \param points list of points in line
      * \returns length of line. The units for the returned length can be retrieved by calling lengthUnits().
+     * \throws QgsCsException if a transformation error occurs while calculating the length
      * \see lengthUnits()
      */
-    double measureLine( const QVector<QgsPointXY> &points ) const;
+    double measureLine( const QVector<QgsPointXY> &points ) const SIP_THROW( QgsCsException );
 
     /**
      * Measures the distance between two points.
      * \param p1 start of line
      * \param p2 end of line
      * \returns distance between points. The units for the returned distance can be retrieved by calling lengthUnits().
+     * \throws QgsCsException if a transformation error occurs while calculating the length
      * \see lengthUnits()
      */
-    double measureLine( const QgsPointXY &p1, const QgsPointXY &p2 ) const;
+    double measureLine( const QgsPointXY &p1, const QgsPointXY &p2 ) const SIP_THROW( QgsCsException );
 
     /**
      * Calculates the distance from one point with distance in meters and azimuth (direction)
@@ -203,34 +201,33 @@ class CORE_EXPORT QgsDistanceArea
      * otherwise QgsPoint.project() will be called after QgsUnitTypes::fromUnitToUnitFactor() has been applied to the distance
      * \param p1 start point [can be Cartesian or Geographic]
      * \param distance must be in meters
-     * \param azimuth - azimuth in radians, clockwise from North
+     * \param azimuth azimuth in radians, clockwise from North
      * \param projectedPoint calculated projected point
      * \return distance in mapUnits
      * \see sourceCrs()
      * \see computeSpheroidProject()
      * \note The input Point must be in the coordinate reference system being used
-     * \since QGIS 3.0
      */
     double measureLineProjected( const QgsPointXY &p1, double distance = 1, double azimuth = M_PI_2, QgsPointXY *projectedPoint SIP_OUT = nullptr ) const;
 
     /**
      * Returns the units of distance for length calculations made by this object.
      * \see areaUnits()
-     * \since QGIS 2.14
      */
     Qgis::DistanceUnit lengthUnits() const;
 
     /**
      * Returns the units of area for areal calculations made by this object.
      * \see lengthUnits()
-     * \since QGIS 2.14
      */
     Qgis::AreaUnit areaUnits() const;
 
     /**
      * Measures the area of the polygon described by a set of points.
+     *
+     * \throws QgsCsException if a transformation error occurs while calculating the area.
      */
-    double measurePolygon( const QVector<QgsPointXY> &points ) const;
+    double measurePolygon( const QVector<QgsPointXY> &points ) const SIP_THROW( QgsCsException );
 
     /**
      * Computes the bearing (in radians) between two points.
@@ -248,7 +245,6 @@ class CORE_EXPORT QgsDistanceArea
      * kilometers
      * \returns formatted distance string
      * \see formatArea()
-     * \since QGIS 2.16
      */
     static QString formatDistance( double distance, int decimals, Qgis::DistanceUnit unit, bool keepBaseUnit = false );
 
@@ -261,7 +257,6 @@ class CORE_EXPORT QgsDistanceArea
      * square kilometers
      * \returns formatted area string
      * \see formatDistance()
-     * \since QGIS 2.14
      */
     static QString formatArea( double area, int decimals, Qgis::AreaUnit unit, bool keepBaseUnit = false );
 
@@ -273,7 +268,6 @@ class CORE_EXPORT QgsDistanceArea
      * \param toUnits distance unit to convert measurement to
      * \returns converted distance
      * \see convertAreaMeasurement()
-     * \since QGIS 2.14
      */
     double convertLengthMeasurement( double length, Qgis::DistanceUnit toUnits ) const;
 
@@ -285,7 +279,6 @@ class CORE_EXPORT QgsDistanceArea
      * \param toUnits area unit to convert measurement to
      * \returns converted area
      * \see convertLengthMeasurement()
-     * \since QGIS 2.14
      */
     double convertAreaMeasurement( double area, Qgis::AreaUnit toUnits ) const;
 
@@ -293,12 +286,11 @@ class CORE_EXPORT QgsDistanceArea
      * Given a location, an azimuth and a distance, computes the
      * location of the projected point.
      *
-     * \param p1 - location of first geographic (latitude/longitude) point as degrees.
-     * \param distance - distance in meters.
-     * \param azimuth - azimuth in radians, clockwise from North
+     * \param p1 location of first geographic (latitude/longitude) point as degrees.
+     * \param distance distance in meters.
+     * \param azimuth azimuth in radians, clockwise from North
      * \return p2 - location of projected point as longitude/latitude.
      *
-     * \since QGIS 3.0
      */
     QgsPointXY computeSpheroidProject( const QgsPointXY &p1, double distance = 1, double azimuth = M_PI_2 ) const;
 

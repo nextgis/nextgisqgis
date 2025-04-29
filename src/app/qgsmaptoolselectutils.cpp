@@ -16,12 +16,13 @@ email                : jpalmer at linz dot govt dot nz
 #include <limits>
 
 #include "qgsmaptoolselectutils.h"
+#include "moc_qgsmaptoolselectutils.cpp"
 #include "qgsfeatureiterator.h"
 #include "qgisapp.h"
 #include "qgsmessagebar.h"
 #include "qgsmapcanvas.h"
 #include "qgsvectorlayer.h"
-// #include "qgsvectortilelayer.h"
+#include "qgsvectortilelayer.h"
 #include "qgsvectorlayerfeatureiterator.h"
 #include "qgsfeature.h"
 #include "qgsgeometry.h"
@@ -50,21 +51,16 @@ QgsMapLayer *QgsMapToolSelectUtils::getCurrentTargetLayer( QgsMapCanvas *canvas 
     switch ( layer->type() )
     {
       case Qgis::LayerType::Vector:
+      case Qgis::LayerType::VectorTile:
+        // supported
         break;
-//      case (int)Qgis::LayerType::VectorTile:
-//        // supported
-//        break;
       case Qgis::LayerType::Raster:
-        break;
       case Qgis::LayerType::Plugin:
-        break;
       case Qgis::LayerType::Mesh:
-        break;
       case Qgis::LayerType::Annotation:
-        break;
       case Qgis::LayerType::PointCloud:
-        break;
       case Qgis::LayerType::Group:
+      case Qgis::LayerType::TiledScene:
         layer = nullptr; //not supported
         break;
     }
@@ -75,7 +71,8 @@ QgsMapLayer *QgsMapToolSelectUtils::getCurrentTargetLayer( QgsMapCanvas *canvas 
     QgisApp::instance()->messageBar()->pushMessage(
       QObject::tr( "No active vector layer" ),
       QObject::tr( "To select features, choose a vector layer in the layers panel" ),
-      Qgis::MessageLevel::Info );
+      Qgis::MessageLevel::Info
+    );
   }
   return layer;
 }
@@ -111,7 +108,7 @@ QgsRectangle QgsMapToolSelectUtils::expandSelectRectangle( QgsPointXY mapPoint, 
     {
       case Qgis::LayerType::Vector:
       {
-        QgsVectorLayer *vLayer = qobject_cast< QgsVectorLayer * >( layer );
+        QgsVectorLayer *vLayer = qobject_cast<QgsVectorLayer *>( layer );
         if ( vLayer->geometryType() != Qgis::GeometryType::Polygon )
         {
           //if point or line use an artificial bounding box of 10x10 pixels
@@ -125,10 +122,10 @@ QgsRectangle QgsMapToolSelectUtils::expandSelectRectangle( QgsPointXY mapPoint, 
         }
         break;
       }
-//      case Qgis::LayerType::VectorTile:
-//        // mixed layer type, so aim for somewhere between the vector layer polygon/point sizes
-//        boxSize = 2;
-//        break;
+      case Qgis::LayerType::VectorTile:
+        // mixed layer type, so aim for somewhere between the vector layer polygon/point sizes
+        boxSize = 2;
+        break;
 
       case Qgis::LayerType::Raster:
       case Qgis::LayerType::Plugin:
@@ -136,6 +133,7 @@ QgsRectangle QgsMapToolSelectUtils::expandSelectRectangle( QgsPointXY mapPoint, 
       case Qgis::LayerType::Annotation:
       case Qgis::LayerType::PointCloud:
       case Qgis::LayerType::Group:
+      case Qgis::LayerType::TiledScene:
         break;
     }
   }
@@ -179,7 +177,7 @@ bool transformSelectGeometry( const QgsGeometry &selectGeometry, QgsGeometry &se
         newpoly[0].resize( 41 );
         QgsPolylineXY &ringOut = newpoly[0];
 
-        ringOut[ 0 ] = ringIn.at( 0 );
+        ringOut[0] = ringIn.at( 0 );
 
         int i = 1;
         for ( int j = 1; j < 5; j++ )
@@ -187,10 +185,10 @@ bool transformSelectGeometry( const QgsGeometry &selectGeometry, QgsGeometry &se
           QgsVector v( ( ringIn.at( j ) - ringIn.at( j - 1 ) ) / 10.0 );
           for ( int k = 0; k < 9; k++ )
           {
-            ringOut[ i ] = ringOut[ i - 1 ] + v;
+            ringOut[i] = ringOut[i - 1] + v;
             i++;
           }
-          ringOut[ i++ ] = ringIn.at( j );
+          ringOut[i++] = ringIn.at( j );
         }
         selectGeomTrans = QgsGeometry::fromPolygonXY( newpoly );
       }
@@ -207,7 +205,8 @@ bool transformSelectGeometry( const QgsGeometry &selectGeometry, QgsGeometry &se
     QgisApp::instance()->messageBar()->pushMessage(
       QObject::tr( "CRS Exception" ),
       QObject::tr( "Selection extends beyond layer's coordinate system" ),
-      Qgis::MessageLevel::Warning );
+      Qgis::MessageLevel::Warning
+    );
     return false;
   }
 }
@@ -227,7 +226,7 @@ void QgsMapToolSelectUtils::selectSingleFeature( QgsMapCanvas *canvas, const Qgs
   {
     case Qgis::LayerType::Vector:
     {
-      QgsVectorLayer *vlayer = qobject_cast< QgsVectorLayer *>( layer );
+      QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( layer );
       QgsFeatureIds selectedFeatures = getMatchingFeatures( canvas, selectGeometry, false, true );
       if ( selectedFeatures.isEmpty() )
       {
@@ -257,10 +256,10 @@ void QgsMapToolSelectUtils::selectSingleFeature( QgsMapCanvas *canvas, const Qgs
       vlayer->selectByIds( selectedFeatures, behavior );
       break;
     }
-/*
+
     case Qgis::LayerType::VectorTile:
     {
-      QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer *>( layer );
+      QgsVectorTileLayer *vtLayer = qobject_cast<QgsVectorTileLayer *>( layer );
 
       QgsCoordinateTransform ct( canvas->mapSettings().destinationCrs(), layer->crs(), QgsProject::instance() );
       QgsGeometry selectGeomTrans;
@@ -280,7 +279,7 @@ void QgsMapToolSelectUtils::selectSingleFeature( QgsMapCanvas *canvas, const Qgs
 
       vtLayer->selectByGeometry( selectGeomTrans, context, behavior, Qgis::SelectGeometryRelationship::Intersect, flags, &renderContext );
       break;
-    }*/
+    }
 
     case Qgis::LayerType::Raster:
     case Qgis::LayerType::Plugin:
@@ -288,14 +287,14 @@ void QgsMapToolSelectUtils::selectSingleFeature( QgsMapCanvas *canvas, const Qgs
     case Qgis::LayerType::Annotation:
     case Qgis::LayerType::PointCloud:
     case Qgis::LayerType::Group:
+    case Qgis::LayerType::TiledScene:
       break;
   }
 
   QApplication::restoreOverrideCursor();
 }
 
-void QgsMapToolSelectUtils::setSelectedFeatures( QgsMapCanvas *canvas, const QgsGeometry &selectGeometry,
-    Qgis::SelectBehavior selectBehavior, bool doContains, bool singleSelect )
+void QgsMapToolSelectUtils::setSelectedFeatures( QgsMapCanvas *canvas, const QgsGeometry &selectGeometry, Qgis::SelectBehavior selectBehavior, bool doContains, bool singleSelect )
 {
   QgsMapLayer *layer = QgsMapToolSelectUtils::getCurrentTargetLayer( canvas );
   if ( !layer )
@@ -310,15 +309,15 @@ void QgsMapToolSelectUtils::setSelectedFeatures( QgsMapCanvas *canvas, const Qgs
   {
     case Qgis::LayerType::Vector:
     {
-      QgsVectorLayer *vLayer = qobject_cast< QgsVectorLayer * >( layer );
+      QgsVectorLayer *vLayer = qobject_cast<QgsVectorLayer *>( layer );
       QgsFeatureIds selectedFeatures = getMatchingFeatures( canvas, selectGeometry, doContains, singleSelect );
       vLayer->selectByIds( selectedFeatures, selectBehavior );
       break;
     }
-/*
+
     case Qgis::LayerType::VectorTile:
     {
-      QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( layer );
+      QgsVectorTileLayer *vtLayer = qobject_cast<QgsVectorTileLayer *>( layer );
       QgsCoordinateTransform ct( canvas->mapSettings().destinationCrs(), layer->crs(), QgsProject::instance() );
       QgsGeometry selectGeomTrans;
       if ( !transformSelectGeometry( selectGeometry, selectGeomTrans, ct ) )
@@ -333,7 +332,7 @@ void QgsMapToolSelectUtils::setSelectedFeatures( QgsMapCanvas *canvas, const Qgs
 
       vtLayer->selectByGeometry( selectGeomTrans, context, selectBehavior, doContains ? Qgis::SelectGeometryRelationship::Within : Qgis::SelectGeometryRelationship::Intersect, Qgis::SelectionFlags(), &renderContext );
       break;
-    }*/
+    }
 
     case Qgis::LayerType::Raster:
     case Qgis::LayerType::Plugin:
@@ -341,6 +340,7 @@ void QgsMapToolSelectUtils::setSelectedFeatures( QgsMapCanvas *canvas, const Qgs
     case Qgis::LayerType::Annotation:
     case Qgis::LayerType::PointCloud:
     case Qgis::LayerType::Group:
+    case Qgis::LayerType::TiledScene:
       break;
   }
 
@@ -355,7 +355,7 @@ QgsFeatureIds QgsMapToolSelectUtils::getMatchingFeatures( QgsMapCanvas *canvas, 
     return newSelectedFeatures;
 
   QgsMapLayer *targetLayer = QgsMapToolSelectUtils::getCurrentTargetLayer( canvas );
-  QgsVectorLayer *vlayer = qobject_cast< QgsVectorLayer * >( targetLayer );
+  QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( targetLayer );
   if ( !vlayer )
     return newSelectedFeatures;
 
@@ -373,7 +373,7 @@ QgsFeatureIds QgsMapToolSelectUtils::getMatchingFeatures( QgsMapCanvas *canvas, 
   QgsDebugMsgLevel( "doContains: " + QString( doContains ? QStringLiteral( "T" ) : QStringLiteral( "F" ) ), 3 );
 
   // make sure the selection geometry is valid, or intersection tests won't work correctly...
-  if ( !selectGeomTrans.isGeosValid( ) )
+  if ( !selectGeomTrans.isGeosValid() )
   {
     // a zero width buffer is safer than calling make valid here!
     selectGeomTrans = selectGeomTrans.buffer( 0, 1 );
@@ -381,7 +381,7 @@ QgsFeatureIds QgsMapToolSelectUtils::getMatchingFeatures( QgsMapCanvas *canvas, 
       return newSelectedFeatures;
   }
 
-  std::unique_ptr< QgsGeometryEngine > selectionGeometryEngine( QgsGeometry::createGeometryEngine( selectGeomTrans.constGet() ) );
+  std::unique_ptr<QgsGeometryEngine> selectionGeometryEngine( QgsGeometry::createGeometryEngine( selectGeomTrans.constGet() ) );
   selectionGeometryEngine->setLogErrors( false );
   selectionGeometryEngine->prepareGeometry();
 
@@ -391,7 +391,7 @@ QgsFeatureIds QgsMapToolSelectUtils::getMatchingFeatures( QgsMapCanvas *canvas, 
   expressionContext << QgsExpressionContextUtils::layerScope( vlayer );
   context.setExpressionContext( expressionContext );
 
-  std::unique_ptr< QgsFeatureRenderer > r;
+  std::unique_ptr<QgsFeatureRenderer> r;
   if ( vlayer->renderer() )
   {
     r.reset( vlayer->renderer()->clone() );
@@ -404,7 +404,7 @@ QgsFeatureIds QgsMapToolSelectUtils::getMatchingFeatures( QgsMapCanvas *canvas, 
 
   QgsFeatureRequest request;
   request.setFilterRect( selectGeomTrans.boundingBox() );
-  request.setFlags( QgsFeatureRequest::ExactIntersect );
+  request.setFlags( Qgis::FeatureRequestFlag::ExactIntersect );
   if ( r )
     request.setSubsetOfAttributes( r->usedAttributes( context ), vlayer->fields() );
   else
@@ -442,9 +442,8 @@ QgsFeatureIds QgsMapToolSelectUtils::getMatchingFeatures( QgsMapCanvas *canvas, 
       // if we get an error from the contains check then it indicates that the geometry is invalid and GEOS choked on it.
       // in this case we consider the bounding box intersection check which has already been performed by the iterator as sufficient and
       // allow the feature to be selected
-      const bool notContained = !selectionGeometryEngine->contains( g.constGet(), &errorMessage ) &&
-                                ( errorMessage.isEmpty() || /* message will be non empty if geometry g is invalid */
-                                  !selectionGeometryEngine->contains( g.makeValid().constGet(), &errorMessage ) ); /* second chance for invalid geometries, repair and re-test */
+      const bool notContained = !selectionGeometryEngine->contains( g.constGet(), &errorMessage ) && ( errorMessage.isEmpty() ||                                                        /* message will be non empty if geometry g is invalid */
+                                                                                                       !selectionGeometryEngine->contains( g.makeValid().constGet(), &errorMessage ) ); /* second chance for invalid geometries, repair and re-test */
 
       if ( !errorMessage.isEmpty() )
       {
@@ -460,9 +459,8 @@ QgsFeatureIds QgsMapToolSelectUtils::getMatchingFeatures( QgsMapCanvas *canvas, 
       // if we get an error from the intersects check then it indicates that the geometry is invalid and GEOS choked on it.
       // in this case we consider the bounding box intersection check which has already been performed by the iterator as sufficient and
       // allow the feature to be selected
-      const bool notIntersects = !selectionGeometryEngine->intersects( g.constGet(), &errorMessage ) &&
-                                 ( errorMessage.isEmpty() || /* message will be non empty if geometry g is invalid */
-                                   !selectionGeometryEngine->intersects( g.makeValid().constGet(), &errorMessage ) ); /* second chance for invalid geometries, repair and re-test */
+      const bool notIntersects = !selectionGeometryEngine->intersects( g.constGet(), &errorMessage ) && ( errorMessage.isEmpty() ||                                                          /* message will be non empty if geometry g is invalid */
+                                                                                                          !selectionGeometryEngine->intersects( g.makeValid().constGet(), &errorMessage ) ); /* second chance for invalid geometries, repair and re-test */
 
       if ( !errorMessage.isEmpty() )
       {
@@ -502,10 +500,7 @@ QgsFeatureIds QgsMapToolSelectUtils::getMatchingFeatures( QgsMapCanvas *canvas, 
 }
 
 
-QgsMapToolSelectUtils::QgsMapToolSelectMenuActions::QgsMapToolSelectMenuActions( QgsMapCanvas *canvas,
-    QgsVectorLayer *vectorLayer,
-    Qgis::SelectBehavior behavior, const QgsGeometry &selectionGeometry,
-    QObject *parent )
+QgsMapToolSelectUtils::QgsMapToolSelectMenuActions::QgsMapToolSelectMenuActions( QgsMapCanvas *canvas, QgsVectorLayer *vectorLayer, Qgis::SelectBehavior behavior, const QgsGeometry &selectionGeometry, QObject *parent )
   : QObject( parent )
   , mCanvas( canvas )
   , mVectorLayer( vectorLayer )
@@ -572,17 +567,17 @@ QgsFeatureIds QgsMapToolSelectUtils::QgsMapToolSelectMenuActions::search( std::s
 
   QgsGeometry selectGeomTrans = data->selectGeometry;
 
-  if ( ! transformSelectGeometry( data->selectGeometry, selectGeomTrans, data->ct ) )
+  if ( !transformSelectGeometry( data->selectGeometry, selectGeomTrans, data->ct ) )
     return newSelectedFeatures;
 
   // make sure the selection geometry is valid, or intersection tests won't work correctly...
-  if ( !selectGeomTrans.isGeosValid( ) )
+  if ( !selectGeomTrans.isGeosValid() )
   {
     // a zero width buffer is safer than calling make valid here!
     selectGeomTrans = selectGeomTrans.buffer( 0, 1 );
   }
 
-  std::unique_ptr< QgsGeometryEngine > selectionGeometryEngine( QgsGeometry::createGeometryEngine( selectGeomTrans.constGet() ) );
+  std::unique_ptr<QgsGeometryEngine> selectionGeometryEngine( QgsGeometry::createGeometryEngine( selectGeomTrans.constGet() ) );
   selectionGeometryEngine->setLogErrors( false );
   selectionGeometryEngine->prepareGeometry();
 
@@ -595,7 +590,7 @@ QgsFeatureIds QgsMapToolSelectUtils::QgsMapToolSelectMenuActions::search( std::s
 
   QgsFeatureRequest request;
   request.setFilterRect( selectGeomTrans.boundingBox() );
-  request.setFlags( QgsFeatureRequest::ExactIntersect );
+  request.setFlags( Qgis::FeatureRequestFlag::ExactIntersect );
 
   if ( !data->filterString.isEmpty() )
     request.setFilterExpression( data->filterString );
@@ -628,9 +623,8 @@ QgsFeatureIds QgsMapToolSelectUtils::QgsMapToolSelectMenuActions::search( std::s
     // if we get an error from the intersects check then it indicates that the geometry is invalid and GEOS choked on it.
     // in this case we consider the bounding box intersection check which has already been performed by the iterator as sufficient and
     // allow the feature to be selected
-    const bool notIntersects = !selectionGeometryEngine->intersects( g.constGet(), &errorMessage ) &&
-                               ( errorMessage.isEmpty() || /* message will be non empty if geometry g is invalid */
-                                 !selectionGeometryEngine->intersects( g.makeValid().constGet(), &errorMessage ) ); /* second chance for invalid geometries, repair and re-test */
+    const bool notIntersects = !selectionGeometryEngine->intersects( g.constGet(), &errorMessage ) && ( errorMessage.isEmpty() ||                                                          /* message will be non empty if geometry g is invalid */
+                                                                                                        !selectionGeometryEngine->intersects( g.makeValid().constGet(), &errorMessage ) ); /* second chance for invalid geometries, repair and re-test */
 
     if ( !errorMessage.isEmpty() )
     {
@@ -751,9 +745,9 @@ void QgsMapToolSelectUtils::QgsMapToolSelectMenuActions::populateChooseOneMenu( 
     if ( featureTitle.isEmpty() )
       featureTitle = tr( "Feature %1" ).arg( FID_TO_STRING( feat.id() ) );
 
-    QAction *featureAction = new QAction( featureTitle, this ) ;
-    connect( featureAction, &QAction::triggered, this, [this, id]() {chooseOneCandidateFeature( id );} );
-    connect( featureAction, &QAction::hovered, this, [this, id]() {this->highlightOneFeature( id );} );
+    QAction *featureAction = new QAction( featureTitle, this );
+    connect( featureAction, &QAction::triggered, this, [this, id]() { chooseOneCandidateFeature( id ); } );
+    connect( featureAction, &QAction::hovered, this, [this, id]() { this->highlightOneFeature( id ); } );
     mMenuChooseOne->addAction( featureAction );
   }
 
@@ -772,7 +766,7 @@ void QgsMapToolSelectUtils::QgsMapToolSelectMenuActions::chooseOneCandidateFeatu
 
 void QgsMapToolSelectUtils::QgsMapToolSelectMenuActions::chooseAllCandidateFeature()
 {
-  if ( ! mFutureWatcher )
+  if ( !mFutureWatcher )
     return;
 
   if ( !mFutureWatcher->isFinished() )
@@ -831,9 +825,7 @@ void QgsMapToolSelectUtils::QgsMapToolSelectMenuActions::highlightOneFeature( Qg
   }
 }
 
-QgsFeatureIds QgsMapToolSelectUtils::QgsMapToolSelectMenuActions::filterIds( const QgsFeatureIds &ids,
-    const QgsFeatureIds &existingSelection,
-    Qgis::SelectBehavior behavior )
+QgsFeatureIds QgsMapToolSelectUtils::QgsMapToolSelectMenuActions::filterIds( const QgsFeatureIds &ids, const QgsFeatureIds &existingSelection, Qgis::SelectBehavior behavior )
 {
   QgsFeatureIds effectiveFeatureIds = ids;
   switch ( behavior )

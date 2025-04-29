@@ -17,6 +17,7 @@
 
 
 #include "qgsprocessingparameterdefinitionwidget.h"
+#include "moc_qgsprocessingparameterdefinitionwidget.cpp"
 #include "qgsgui.h"
 #include "qgsprocessingguiregistry.h"
 #include "qgsapplication.h"
@@ -33,14 +34,10 @@
 #include <QTabWidget>
 #include <QTextEdit>
 
-QgsProcessingAbstractParameterDefinitionWidget::QgsProcessingAbstractParameterDefinitionWidget( QgsProcessingContext &,
-    const QgsProcessingParameterWidgetContext &context,
-    const QgsProcessingParameterDefinition *,
-    const QgsProcessingAlgorithm *, QWidget *parent )
+QgsProcessingAbstractParameterDefinitionWidget::QgsProcessingAbstractParameterDefinitionWidget( QgsProcessingContext &, const QgsProcessingParameterWidgetContext &context, const QgsProcessingParameterDefinition *, const QgsProcessingAlgorithm *, QWidget *parent )
   : QWidget( parent )
   , mWidgetContext( context )
 {
-
 }
 
 void QgsProcessingAbstractParameterDefinitionWidget::setWidgetContext( const QgsProcessingParameterWidgetContext &context )
@@ -67,11 +64,7 @@ QgsExpressionContext QgsProcessingAbstractParameterDefinitionWidget::createExpre
 // QgsProcessingParameterDefinitionWidget
 //
 
-QgsProcessingParameterDefinitionWidget::QgsProcessingParameterDefinitionWidget( const QString &type,
-    QgsProcessingContext &context,
-    const QgsProcessingParameterWidgetContext &widgetContext,
-    const QgsProcessingParameterDefinition *definition,
-    const QgsProcessingAlgorithm *algorithm, QWidget *parent )
+QgsProcessingParameterDefinitionWidget::QgsProcessingParameterDefinitionWidget( const QString &type, QgsProcessingContext &context, const QgsProcessingParameterWidgetContext &widgetContext, const QgsProcessingParameterDefinition *definition, const QgsProcessingAlgorithm *algorithm, QWidget *parent )
   : QWidget( parent )
   , mType( type )
 {
@@ -95,14 +88,14 @@ QgsProcessingParameterDefinitionWidget::QgsProcessingParameterDefinitionWidget( 
   vlayout->addSpacing( 20 );
   mRequiredCheckBox = new QCheckBox( tr( "Mandatory" ) );
   if ( definition )
-    mRequiredCheckBox->setChecked( !( definition->flags() & QgsProcessingParameterDefinition::FlagOptional ) );
+    mRequiredCheckBox->setChecked( !( definition->flags() & Qgis::ProcessingParameterFlag::Optional ) );
   else
     mRequiredCheckBox->setChecked( true );
   vlayout->addWidget( mRequiredCheckBox );
 
   mAdvancedCheckBox = new QCheckBox( tr( "Advanced" ) );
   if ( definition )
-    mAdvancedCheckBox->setChecked( definition->flags() & QgsProcessingParameterDefinition::FlagAdvanced );
+    mAdvancedCheckBox->setChecked( definition->flags() & Qgis::ProcessingParameterFlag::Advanced );
   else
     mAdvancedCheckBox->setChecked( false );
   vlayout->addWidget( mAdvancedCheckBox );
@@ -113,13 +106,13 @@ QgsProcessingParameterDefinitionWidget::QgsProcessingParameterDefinitionWidget( 
 
 QgsProcessingParameterDefinition *QgsProcessingParameterDefinitionWidget::createParameter( const QString &name ) const
 {
-  std::unique_ptr< QgsProcessingParameterDefinition > param;
-  QgsProcessingParameterDefinition::Flags flags = QgsProcessingParameterDefinition::Flags();
+  std::unique_ptr<QgsProcessingParameterDefinition> param;
+  Qgis::ProcessingParameterFlags flags;
 
   if ( !mRequiredCheckBox->isChecked() )
-    flags |= QgsProcessingParameterDefinition::FlagOptional;
+    flags |= Qgis::ProcessingParameterFlag::Optional;
   if ( mAdvancedCheckBox->isChecked() )
-    flags |= QgsProcessingParameterDefinition::FlagAdvanced;
+    flags |= Qgis::ProcessingParameterFlag::Advanced;
 
   if ( mDefinitionWidget )
   {
@@ -153,12 +146,7 @@ void QgsProcessingParameterDefinitionWidget::registerProcessingContextGenerator(
 // QgsProcessingParameterDefinitionDialog
 //
 
-QgsProcessingParameterDefinitionDialog::QgsProcessingParameterDefinitionDialog( const QString &type,
-    QgsProcessingContext &context,
-    const QgsProcessingParameterWidgetContext &widgetContext,
-    const QgsProcessingParameterDefinition *definition,
-    const QgsProcessingAlgorithm *algorithm,
-    QWidget *parent )
+QgsProcessingParameterDefinitionDialog::QgsProcessingParameterDefinitionDialog( const QString &type, QgsProcessingContext &context, const QgsProcessingParameterWidgetContext &widgetContext, const QgsProcessingParameterDefinition *definition, const QgsProcessingAlgorithm *algorithm, QWidget *parent )
   : QDialog( parent )
 {
   QVBoxLayout *vLayout = new QVBoxLayout();
@@ -197,9 +185,8 @@ QgsProcessingParameterDefinitionDialog::QgsProcessingParameterDefinitionDialog( 
 
   vLayout->addWidget( bbox );
   setLayout( vLayout );
-  setWindowTitle( definition ? tr( "%1 Parameter Definition" ).arg( definition->description() )
-                  : QgsApplication::processingRegistry()->parameterType( type ) ? tr( "%1 Parameter Definition" ).arg( QgsApplication::processingRegistry()->parameterType( type )->name() ) :
-                  tr( "Parameter Definition" ) );
+  setWindowTitle( definition ? tr( "%1 Parameter Definition" ).arg( definition->description() ) : QgsApplication::processingRegistry()->parameterType( type ) ? tr( "%1 Parameter Definition" ).arg( QgsApplication::processingRegistry()->parameterType( type )->name() )
+                                                                                                                                                              : tr( "Parameter Definition" ) );
   setObjectName( QStringLiteral( "QgsProcessingParameterDefinitionDialog" ) );
   QgsGui::enableAutoGeometryRestore( this );
 }
@@ -251,8 +238,7 @@ void QgsProcessingParameterDefinitionDialog::accept()
 {
   if ( mWidget->mDescriptionLineEdit->text().isEmpty() )
   {
-    QMessageBox::warning( this, tr( "Unable to define parameter" ),
-                          tr( "Invalid parameter name" ) );
+    QMessageBox::warning( this, tr( "Unable to define parameter" ), tr( "Invalid parameter name" ) );
     return;
   }
   QDialog::accept();

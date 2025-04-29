@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/classification/qgsclassificationequalinterval.h             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,8 +11,8 @@
 class QgsClassificationEqualInterval : QgsClassificationMethod
 {
 %Docstring(signature="appended")
-:py:class:`QgsClassificationEqualInterval` is an implementation of :py:class:`QgsClassificationMethod`
-for equal intervals
+:py:class:`QgsClassificationEqualInterval` is an implementation of
+:py:class:`QgsClassificationMethod` for equal intervals
 
 .. versionadded:: 3.10
 %End
@@ -43,5 +43,5 @@ for equal intervals
  *                                                                      *
  * src/core/classification/qgsclassificationequalinterval.h             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

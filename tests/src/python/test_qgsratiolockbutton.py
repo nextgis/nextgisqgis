@@ -5,23 +5,26 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Nyall Dawson'
-__date__ = '18/07/2017'
-__copyright__ = 'Copyright 2017, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Nyall Dawson"
+__date__ = "18/07/2017"
+__copyright__ = "Copyright 2017, The QGIS Project"
+
+import unittest
 
 from qgis.PyQt.QtWidgets import QDoubleSpinBox
-from qgis.testing import start_app, unittest
+
+from qgis.gui import QgsRatioLockButton
+from qgis.testing import start_app, QgisTestCase
 
 start_app()
 
 
-class TestQgsRatioLockButton(unittest.TestCase):
+class TestQgsRatioLockButton(QgisTestCase):
 
     def testLinkedWidgets(self):
-        """ test linking spin boxes to combobox"""
-        w = qgis.gui.QgsRatioLockButton()
+        """test linking spin boxes to combobox"""
+        w = QgsRatioLockButton()
 
         spin_width = QDoubleSpinBox()
         spin_width.setMaximum(100000)
@@ -94,7 +97,7 @@ class TestQgsRatioLockButton(unittest.TestCase):
         self.assertEqual(spin_height.value(), 1000)
 
     def testResetRatio(self):
-        w = qgis.gui.QgsRatioLockButton()
+        w = QgsRatioLockButton()
 
         spin_width = QDoubleSpinBox()
         spin_width.setMaximum(100000)
@@ -115,7 +118,9 @@ class TestQgsRatioLockButton(unittest.TestCase):
         spin_width.blockSignals(False)
 
         spin_height.setValue(2000)
-        self.assertEqual(spin_width.value(), 4000)  # signals were blocked, so ratio wasn't updated
+        self.assertEqual(
+            spin_width.value(), 4000
+        )  # signals were blocked, so ratio wasn't updated
 
         spin_width.blockSignals(True)
         spin_width.setValue(2000)
@@ -125,5 +130,5 @@ class TestQgsRatioLockButton(unittest.TestCase):
         self.assertEqual(spin_width.value(), 1000)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

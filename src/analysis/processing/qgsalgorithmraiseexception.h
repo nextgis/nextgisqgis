@@ -34,7 +34,7 @@ class QgsRaiseExceptionAlgorithm : public QgsProcessingAlgorithm
   public:
     QgsRaiseExceptionAlgorithm() = default;
     void initAlgorithm( const QVariantMap &configuration = QVariantMap() ) override;
-    Flags flags() const override;
+    Qgis::ProcessingAlgorithmFlags flags() const override;
     QString name() const override;
     QString displayName() const override;
     QStringList tags() const override;
@@ -45,10 +45,7 @@ class QgsRaiseExceptionAlgorithm : public QgsProcessingAlgorithm
     QgsRaiseExceptionAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
-
-    QVariantMap processAlgorithm( const QVariantMap &parameters,
-                                  QgsProcessingContext &context, QgsProcessingFeedback * ) override;
-
+    QVariantMap processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback * ) override;
 };
 
 /**
@@ -59,7 +56,7 @@ class QgsRaiseWarningAlgorithm : public QgsProcessingAlgorithm
   public:
     QgsRaiseWarningAlgorithm() = default;
     void initAlgorithm( const QVariantMap &configuration = QVariantMap() ) override;
-    Flags flags() const override;
+    Qgis::ProcessingAlgorithmFlags flags() const override;
     QString name() const override;
     QString displayName() const override;
     QStringList tags() const override;
@@ -70,10 +67,7 @@ class QgsRaiseWarningAlgorithm : public QgsProcessingAlgorithm
     QgsRaiseWarningAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
-
-    QVariantMap processAlgorithm( const QVariantMap &parameters,
-                                  QgsProcessingContext &context, QgsProcessingFeedback * ) override;
-
+    QVariantMap processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback * ) override;
 };
 
 /**
@@ -84,7 +78,7 @@ class QgsRaiseMessageAlgorithm : public QgsProcessingAlgorithm
   public:
     QgsRaiseMessageAlgorithm() = default;
     void initAlgorithm( const QVariantMap &configuration = QVariantMap() ) override;
-    Flags flags() const override;
+    Qgis::ProcessingAlgorithmFlags flags() const override;
     QString name() const override;
     QString displayName() const override;
     QStringList tags() const override;
@@ -95,10 +89,7 @@ class QgsRaiseMessageAlgorithm : public QgsProcessingAlgorithm
     QgsRaiseMessageAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
-
-    QVariantMap processAlgorithm( const QVariantMap &parameters,
-                                  QgsProcessingContext &context, QgsProcessingFeedback * ) override;
-
+    QVariantMap processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback * ) override;
 };
 
 ///@endcond PRIVATE

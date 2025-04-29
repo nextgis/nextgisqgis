@@ -21,16 +21,12 @@
 #include <QNetworkRequest>
 #include <QString>
 #include <QPointer>
-#include "qgsnetworkaccessmanager.h" // for QgsSetRequestInitiatorClass
 
+#include "qgis_core.h"
 #include "cpl_http.h"
 #include "gdal.h"
 
 class QgsFeedback;
-
-#ifndef SIP_RUN
-#define QgsSetCPLHTTPFetchOverriderInitiatorClass(overrider, _class) QgsSetRequestInitiatorClass((overrider), _class)
-#endif
 
 /**
  * \ingroup core
@@ -48,7 +44,6 @@ class CORE_EXPORT QgsCPLHTTPFetchOverrider
     //! Installs the redirection for the current thread
     explicit QgsCPLHTTPFetchOverrider( const QString &authCfg = QString(), QgsFeedback *feedback = nullptr );
 
-    //! Destructor
     ~QgsCPLHTTPFetchOverrider();
 
     //! Define attribute that must be forwarded to the actual QNetworkRequest
@@ -68,7 +63,7 @@ class CORE_EXPORT QgsCPLHTTPFetchOverrider
      */
     QThread *thread() const;
 
-  protected:
+  private:
 
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,2,0)
     static CPLHTTPResult *callback( const char *pszURL,

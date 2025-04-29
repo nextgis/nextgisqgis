@@ -7,13 +7,12 @@ the Free Software Foundation; either version 2 of the License, or
 
 """
 
-__author__ = 'Julien Cabieces'
-__date__ = '2022-04-19'
-__copyright__ = 'Copyright 2022, The QGIS Project'
+__author__ = "Julien Cabieces"
+__date__ = "2022-04-19"
+__copyright__ = "Copyright 2022, The QGIS Project"
 
-import qgis  # NOQA
 
-from PyQt5.QtCore import QDateTime
+from qgis.PyQt.QtCore import QDateTime
 from qgis.core import (
     QgsApplication,
     QgsProject,
@@ -32,18 +31,20 @@ class TestPyQgsProjectStorageBase:
 
     def testSaveLoadProject(self):
         schema_uri = self.encode_uri(self.ds_uri, self.schema)
-        project_uri = self.encode_uri(self.ds_uri, self.schema, 'abc')
+        project_uri = self.encode_uri(self.ds_uri, self.schema, "abc")
 
         self.dropProjectsTable()  # make sure we have a clean start
 
         prj = QgsProject()
         uri = self.vl.source()
 
-        vl1 = QgsVectorLayer(uri, 'test', self.provider)
+        vl1 = QgsVectorLayer(uri, "test", self.provider)
         self.assertEqual(vl1.isValid(), True)
         prj.addMapLayer(vl1)
 
-        prj_storage = QgsApplication.projectStorageRegistry().projectStorageFromType(self.project_storage_type)
+        prj_storage = QgsApplication.projectStorageRegistry().projectStorageFromType(
+            self.project_storage_type
+        )
         self.assertTrue(prj_storage)
 
         lst0 = prj_storage.listProjects(schema_uri)
@@ -68,8 +69,12 @@ class TestPyQgsProjectStorageBase:
         self.assertEqual(len(prj2.mapLayers()), 1)
 
         self.assertEqual(prj2.baseName(), "abc")
-        self.assertEqual(prj2.absoluteFilePath(), "")  # path not supported for project storages
-        self.assertTrue(abs(prj2.lastModified().secsTo(QDateTime.currentDateTime())) < 10)
+        self.assertEqual(
+            prj2.absoluteFilePath(), ""
+        )  # path not supported for project storages
+        self.assertLess(
+            abs(prj2.lastModified().secsTo(QDateTime.currentDateTime())), 10
+        )
         lastModified = prj2.lastModified()
 
         # try to see project's metadata
@@ -80,7 +85,7 @@ class TestPyQgsProjectStorageBase:
         time_project = metadata.lastModified
         time_now = QDateTime.currentDateTime()
         time_diff = time_now.secsTo(time_project)
-        self.assertTrue(abs(time_diff) < 10)
+        self.assertLess(abs(time_diff), 10)
 
         # try to update the project
         vl1.setName("testNew")
@@ -100,8 +105,10 @@ class TestPyQgsProjectStorageBase:
         self.assertEqual(list(prj4.mapLayers().values())[0].name(), "testNew")
 
         self.assertEqual(prj4.baseName(), "abc")
-        self.assertEqual(prj4.absoluteFilePath(), "")  # path not supported for project storages
-        self.assertTrue(prj4.lastModified() > lastModified)
+        self.assertEqual(
+            prj4.absoluteFilePath(), ""
+        )  # path not supported for project storages
+        self.assertGreater(prj4.lastModified(), lastModified)
 
         # try to remove the project
 

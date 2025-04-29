@@ -26,6 +26,7 @@ email                : sherman at mrcc.com
 class QgsOgrLayer;
 class QgsOgrTransaction;
 class QgsProviderSublayerDetails;
+class QgsDataProviderElevationProperties;
 
 ///@cond PRIVATE
 #define SIP_NO_FILE
@@ -48,6 +49,7 @@ class QgsOgrProvider final: public QgsVectorDataProvider
       const QgsCoordinateReferenceSystem &srs,
       bool overwrite,
       QMap<int, int> *oldToNewAttrIdxMap,
+      QString &createdLayerUri,
       QString *errorMessage = nullptr,
       const QMap<QString, QVariant> *options = nullptr
     );
@@ -59,7 +61,7 @@ class QgsOgrProvider final: public QgsVectorDataProvider
      */
     explicit QgsOgrProvider( QString const &uri,
                              const QgsDataProvider::ProviderOptions &providerOptions,
-                             QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() );
+                             Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() );
 
     ~QgsOgrProvider() override;
 
@@ -78,6 +80,8 @@ class QgsOgrProvider final: public QgsVectorDataProvider
 
     QgsCoordinateReferenceSystem crs() const override;
 
+    QString dataComment() const override;
+
     /**
      * Gets the number of sublayer in the OGR datasource.
      * layer_styles is not counted.
@@ -89,13 +93,16 @@ class QgsOgrProvider final: public QgsVectorDataProvider
     QString storageType() const override;
     QgsFeatureIterator getFeatures( const QgsFeatureRequest &request ) const override;
     QString subsetString() const override;
-    bool supportsSubsetString() const override { return true; }
+    bool supportsSubsetString() const override;
+    QString subsetStringDialect() const override;
+    QString subsetStringHelpUrl() const override;
     bool setSubsetString( const QString &theSQL, bool updateFeatureCount = true ) override;
     Qgis::WkbType wkbType() const override;
     virtual size_t layerCount() const;
     long long featureCount() const override;
     QgsFields fields() const override;
     QgsRectangle extent() const override;
+    QgsBox3D extent3D() const override;
     QVariant defaultValue( int fieldId ) const override;
     QString defaultValueClause( int fieldIndex ) const override;
     bool skipConstraintCheck( int fieldIndex, QgsFieldConstraints::Constraint constraint, const QVariant &value = QVariant() ) const override;
@@ -109,14 +116,14 @@ class QgsOgrProvider final: public QgsVectorDataProvider
     bool changeGeometryValues( const QgsGeometryMap &geometry_map ) override;
     bool createSpatialIndex() override;
     bool createAttributeIndex( int field ) override;
-    QgsVectorDataProvider::Capabilities capabilities() const override;
+    Qgis::VectorProviderCapabilities capabilities() const override;
     Qgis::VectorDataProviderAttributeEditCapabilities attributeEditCapabilities() const override;
-    QgsAttributeList pkAttributeIndexes() const override { return mPrimaryKeyAttrs; }
+    QgsAttributeList pkAttributeIndexes() const override;
+    QString geometryColumnName() const override;
     void setEncoding( const QString &e ) override;
     bool enterUpdateMode() override { return _enterUpdateMode(); }
     bool leaveUpdateMode() override;
-    bool isSaveAndLoadStyleToDatabaseSupported() const override;
-    bool isDeleteStyleFromDatabaseSupported() const override;
+    Qgis::ProviderStyleStorageCapabilities styleStorageCapabilities() const override;
     QString fileVectorFilters() const override;
     bool isValid() const override;
     QVariant minimumValue( int index ) const override;
@@ -124,7 +131,7 @@ class QgsOgrProvider final: public QgsVectorDataProvider
     QSet< QVariant > uniqueValues( int index, int limit = -1 ) const override;
     QStringList uniqueStringsMatching( int index, const QString &substring, int limit = -1,
                                        QgsFeedback *feedback = nullptr ) const override;
-    QgsFeatureSource::SpatialIndexPresence hasSpatialIndex() const override;
+    Qgis::SpatialIndexPresence hasSpatialIndex() const override;
     Qgis::VectorLayerTypeFlags vectorLayerTypeFlags() const override;
     QList<QgsRelation> discoverRelations( const QgsVectorLayer *target, const QList<QgsVectorLayer *> &layers ) const override;
 
@@ -211,7 +218,8 @@ class QgsOgrProvider final: public QgsVectorDataProvider
     QMap<int, QString> mDefaultValues;
 
     bool mFirstFieldIsFid = false;
-    mutable std::unique_ptr< OGREnvelope > mExtent;
+    mutable std::unique_ptr< OGREnvelope3D > mExtent2D;
+    mutable std::unique_ptr< OGREnvelope3D > mExtent3D;
     bool mForceRecomputeExtent = false;
 
     QList<int> mPrimaryKeyAttrs;
@@ -220,7 +228,7 @@ class QgsOgrProvider final: public QgsVectorDataProvider
      * This member variable receives the same value as extent_
      * in the method QgsOgrProvider::extent(). The purpose is to prevent a memory leak.
     */
-    mutable QgsRectangle mExtentRect;
+    mutable QgsBox3D mExtentRect;
 
     /**
      * Current working layer - will point to either mOgrSqlLayer or mOgrOrigLayer depending
@@ -250,6 +258,8 @@ class QgsOgrProvider final: public QgsVectorDataProvider
 
     //! open options
     QStringList mOpenOptions;
+
+    QVariantMap mCredentialOptions;
 
     //! was a sub layer requested?
     bool mIsSubLayer = false;
@@ -328,7 +338,7 @@ class QgsOgrProvider final: public QgsVectorDataProvider
 
     void computeCapabilities();
 
-    QgsVectorDataProvider::Capabilities mCapabilities = QgsVectorDataProvider::Capabilities();
+    Qgis::VectorProviderCapabilities mCapabilities;
     Qgis::VectorDataProviderAttributeEditCapabilities mAttributeEditCapabilities = Qgis::VectorDataProviderAttributeEditCapabilities();
 
     bool doInitialActionsForEdition();
@@ -350,6 +360,9 @@ class QgsOgrProvider final: public QgsVectorDataProvider
     void invalidateNetworkCache();
 
     bool mShapefileHadSpatialIndex = false;
+
+    //! Whether to convert Qt DateTime with local time to UTC
+    bool mConvertLocalTimeToUTC = false;
 };
 
 ///@endcond

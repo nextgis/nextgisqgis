@@ -3,9 +3,8 @@
  *                                                                      *
  * src/core/settings/qgssettingsentryimpl.h                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
-
 
 
 
@@ -15,7 +14,6 @@ typedef QgsSettingsEntryBaseTemplate<QVariant> QgsSettingsEntryBaseTemplateQVari
 class QgsSettingsEntryVariant : QgsSettingsEntryBaseTemplateQVariantBase
 {
 %Docstring(signature="appended")
-
 A variant settings entry.
 
 .. versionadded:: 3.20
@@ -71,8 +69,8 @@ Constructor for QgsSettingsEntryVariant.
                              const QString &description = QString(),
                              Qgis::SettingsOptions options = Qgis::SettingsOptions() ) throw( QgsSettingsException ) /Transfer/;
 %Docstring
-Constructor for QgsSettingsEntryVariant.
-This constructor is intended to be used from plugins.
+Constructor for QgsSettingsEntryVariant. This constructor is intended to
+be used from plugins.
 
 :param key: specifies the key of the settings.
 :param pluginName: is inserted in the key after the section.
@@ -93,12 +91,12 @@ Returns settings value.
 :param type: is the Python type of the value to be returned
 %End
 %MethodCode
-    typedef PyObject *( *pyqt5_from_qvariant_by_type )( QVariant &value, PyObject *type );
+    typedef PyObject *( *pyqt_from_qvariant_by_type )( QVariant &value, PyObject *type );
     QVariant value;
 
     value = sipCpp->value();
 
-    pyqt5_from_qvariant_by_type f = ( pyqt5_from_qvariant_by_type ) sipImportSymbol( "pyqt5_from_qvariant_by_type" );
+    pyqt_from_qvariant_by_type f = ( pyqt_from_qvariant_by_type ) sipImportSymbol( SIP_PYQT_FROM_QVARIANT_BY_TYPE );
     sipRes = f( value, a0 );
 
     sipIsErr = !sipRes;
@@ -116,7 +114,6 @@ typedef QgsSettingsEntryBaseTemplate<QString> QgsSettingsEntryBaseTemplateQStrin
 class QgsSettingsEntryString : QgsSettingsEntryBaseTemplateQStringBase
 {
 %Docstring(signature="appended")
-
 A string settings entry.
 
 .. versionadded:: 3.20
@@ -144,8 +141,10 @@ Constructor for QgsSettingsEntryString.
 :param defaultValue: specifies the default value for the settings entry.
 :param description: specifies a description for the settings entry.
 :param options: specifies the options for the settings entry.
-:param minLength: specifies the minimal length of the string value. 0 means no limit.
-:param maxLength: specifies the maximal length of the string value. -1 means no limit.
+:param minLength: specifies the minimal length of the string value. 0
+                  means no limit.
+:param maxLength: specifies the maximal length of the string value. -1
+                  means no limit.
 %End
 
   private:
@@ -164,8 +163,10 @@ Constructor for QgsSettingsEntryString.
 :param defaultValue: specifies the default value for the settings entry.
 :param description: specifies a description for the settings entry.
 :param options: specifies the options for the settings entry.
-:param minLength: specifies the minimal length of the string value. 0 means no limit.
-:param maxLength: specifies the maximal length of the string value. -1 means no limit.
+:param minLength: specifies the minimal length of the string value. 0
+                  means no limit.
+:param maxLength: specifies the maximal length of the string value. -1
+                  means no limit.
 %End
   public:
 
@@ -177,8 +178,8 @@ Constructor for QgsSettingsEntryString.
                             int minLength = 0,
                             int maxLength = -1 ) throw( QgsSettingsException ) /Transfer/;
 %Docstring
-Constructor for QgsSettingsEntryString.
-This constructor is intended to be used from plugins.
+Constructor for QgsSettingsEntryString. This constructor is intended to
+be used from plugins.
 
 :param key: specifies the key of the settings.
 :param pluginName: is inserted in the key after the section.
@@ -217,7 +218,6 @@ typedef QgsSettingsEntryBaseTemplate<QStringList> QgsSettingsEntryBaseTemplateQS
 class QgsSettingsEntryStringList : QgsSettingsEntryBaseTemplateQStringListBase
 {
 %Docstring(signature="appended")
-
 A string list settings entry.
 
 .. versionadded:: 3.20
@@ -269,8 +269,8 @@ Constructor for QgsSettingsEntryStringList.
                                 const QString &description = QString(),
                                 Qgis::SettingsOptions options = Qgis::SettingsOptions() ) throw( QgsSettingsException ) /Transfer/;
 %Docstring
-Constructor for QgsSettingsEntryStringList.
-This constructor is intended to be used from plugins.
+Constructor for QgsSettingsEntryStringList. This constructor is intended
+to be used from plugins.
 
 :param key: specifies the key of the settings.
 :param pluginName: is inserted in the key after the section.
@@ -295,7 +295,6 @@ typedef QgsSettingsEntryBaseTemplate<bool> QgsSettingsEntryBaseTemplateboolBase;
 class QgsSettingsEntryBool : QgsSettingsEntryBaseTemplateboolBase
 {
 %Docstring(signature="appended")
-
 A boolean settings entry.
 
 .. versionadded:: 3.20
@@ -346,8 +345,8 @@ Constructor for QgsSettingsEntryBool.
                           const QString &description = QString(),
                           Qgis::SettingsOptions options = Qgis::SettingsOptions() ) throw( QgsSettingsException ) /Transfer/;
 %Docstring
-Constructor for QgsSettingsEntryBool.
-This constructor is intended to be used from plugins.
+Constructor for QgsSettingsEntryBool. This constructor is intended to be
+used from plugins.
 
 :param key: specifies the key of the settings.
 :param pluginName: is inserted in the key after the section.
@@ -373,7 +372,6 @@ typedef QgsSettingsEntryBaseTemplate<int> QgsSettingsEntryBaseTemplateintBase;
 class QgsSettingsEntryInteger : QgsSettingsEntryBaseTemplateintBase
 {
 %Docstring(signature="appended")
-
 An integer settings entry.
 
 .. versionadded:: 3.20
@@ -434,8 +432,8 @@ Constructor for QgsSettingsEntryInteger.
                              int minValue = INT_MIN,
                              int maxValue = INT_MAX ) throw( QgsSettingsException ) /Transfer/;
 %Docstring
-Constructor for QgsSettingsEntryInteger.
-This constructor is intended to be used from plugins.
+Constructor for QgsSettingsEntryInteger. This constructor is intended to
+be used from plugins.
 
 :param key: specifies the key of the settings.
 :param pluginName: is used to define the key of the setting
@@ -476,7 +474,6 @@ typedef QgsSettingsEntryBaseTemplate<double> QgsSettingsEntryBaseTemplatedoubleB
 class QgsSettingsEntryDouble : QgsSettingsEntryBaseTemplatedoubleBase
 {
 %Docstring(signature="appended")
-
 A double settings entry.
 
 .. versionadded:: 3.20
@@ -507,8 +504,9 @@ Constructor for QgsSettingsEntryDouble.
 :param options: specifies the options for the settings entry.
 :param minValue: specifies the minimal value.
 :param maxValue: specifies the maximal value.
-:param displayDecimals: specifies a hint for the gui about how much decimals to show
-                        for example for a QDoubleSpinBox.
+:param displayDecimals: specifies a hint for the gui about how much
+                        decimals to show for example for a
+                        QDoubleSpinBox.
 %End
 
   private:
@@ -530,8 +528,9 @@ Constructor for QgsSettingsEntryDouble.
 :param options: specifies the options for the settings entry.
 :param minValue: specifies the minimal value.
 :param maxValue: specifies the maximal value.
-:param displayDecimals: specifies a hint for the gui about how much decimals to show
-                        for example for a QDoubleSpinBox.
+:param displayDecimals: specifies a hint for the gui about how much
+                        decimals to show for example for a
+                        QDoubleSpinBox.
 %End
   public:
 
@@ -544,8 +543,8 @@ Constructor for QgsSettingsEntryDouble.
                             double maxValue = DBL_MAX,
                             int displayDecimals = 1 ) throw( QgsSettingsException ) /Transfer/;
 %Docstring
-Constructor for QgsSettingsEntryDouble.
-This constructor is intended to be used from plugins.
+Constructor for QgsSettingsEntryDouble. This constructor is intended to
+be used from plugins.
 
 :param key: specifies the key of the settings.
 :param pluginName: is used to define the key of the setting
@@ -554,7 +553,8 @@ This constructor is intended to be used from plugins.
 :param description: specifies a description for the settings entry.
 :param minValue: specifies the minimal value.
 :param maxValue: specifies the maximal value.
-:param displayDecimals: specifies a hint for the gui about how much decimals to show
+:param displayDecimals: specifies a hint for the gui about how much
+                        decimals to show
 %End
 %MethodCode
     sipCpp = new sipQgsSettingsEntryDouble( QgsSettingsEntryDouble( *a0, QgsSettingsTree::createPluginTreeNode( *a1 ), a2, *a3, *a4, a5, a6, a7 ) );
@@ -577,7 +577,8 @@ Returns the maximum value.
 %Docstring
 Set the display hint decimals.
 
-displayHintDecimals The number of decimals that should be shown in the Gui.
+displayHintDecimals The number of decimals that should be shown in the
+Gui.
 %End
 
     int displayHintDecimals() const;
@@ -601,7 +602,6 @@ typedef QgsSettingsEntryBaseTemplate<QColor> QgsSettingsEntryBaseTemplateQColorB
 class QgsSettingsEntryColor : QgsSettingsEntryBaseTemplateQColorBase
 {
 %Docstring(signature="appended")
-
 A color settings entry.
 
 .. versionadded:: 3.20
@@ -657,8 +657,8 @@ Constructor for QgsSettingsEntryColor.
                            Qgis::SettingsOptions options = Qgis::SettingsOptions(),
                            bool allowAlpha = true ) throw( QgsSettingsException ) /Transfer/;
 %Docstring
-Constructor for QgsSettingsEntryColor.
-This constructor is intended to be used from plugins.
+Constructor for QgsSettingsEntryColor. This constructor is intended to
+be used from plugins.
 
 :param key: specifies the key of the settings.
 :param pluginName: is inserted in the key after the section.
@@ -695,7 +695,6 @@ typedef QgsSettingsEntryBaseTemplate<QVariantMap> QgsSettingsEntryBaseTemplateQV
 class QgsSettingsEntryVariantMap : QgsSettingsEntryBaseTemplateQVariantMapBase
 {
 %Docstring(signature="appended")
-
 A string list settings entry.
 
 .. versionadded:: 3.30
@@ -747,8 +746,8 @@ Constructor for QgsSettingsEntryVariantMap.
                                 const QString &description = QString(),
                                 Qgis::SettingsOptions options = Qgis::SettingsOptions() ) throw( QgsSettingsException ) /Transfer/;
 %Docstring
-Constructor for :py:class:`QgsSettingsEntryStringMap`.
-This constructor is intended to be used from plugins.
+Constructor for :py:class:`QgsSettingsEntryStringMap`. This constructor
+is intended to be used from plugins.
 
 :param key: specifies the key of the settings.
 :param pluginName: is inserted in the key after the section.
@@ -772,5 +771,5 @@ This constructor is intended to be used from plugins.
  *                                                                      *
  * src/core/settings/qgssettingsentryimpl.h                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

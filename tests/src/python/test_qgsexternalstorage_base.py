@@ -72,7 +72,8 @@ class TestPyQgsExternalStorageBase:
 
     def getNewFile(self, content, with_special_characters=False):
         """Return a newly created temporary file with content
-        if with_special_characters is True then add url reserved characters in the file name"""
+        if with_special_characters is True then add url reserved characters in the file name
+        """
 
         f = tempfile.NamedTemporaryFile(
             suffix=".txt",
@@ -123,7 +124,7 @@ class TestPyQgsExternalStorageBase:
         self.assertEqual(storedContent.url(), url)
         self.assertFalse(storedContent.errorString())
         self.assertEqual(storedContent.status(), Qgis.ContentStatus.Finished)
-        self.assertTrue(len(spyProgressChanged) > 0)
+        self.assertGreater(len(spyProgressChanged), 0)
         self.assertEqual(spyProgressChanged[-1][0], 100)
 
         # fetch
@@ -215,7 +216,7 @@ class TestPyQgsExternalStorageBase:
         self.assertEqual(storedContent.url(), url)
         self.assertFalse(storedContent.errorString())
         self.assertEqual(storedContent.status(), Qgis.ContentStatus.Finished)
-        self.assertTrue(len(spyProgressChanged) > 0)
+        self.assertGreater(len(spyProgressChanged), 0)
         self.assertEqual(spyProgressChanged[-1][0], 100)
 
         # fetch
@@ -316,7 +317,7 @@ class TestPyQgsExternalStorageBase:
         self.assertEqual(storedContent.url(), url)
         self.assertFalse(storedContent.errorString())
         self.assertEqual(storedContent.status(), Qgis.ContentStatus.Finished)
-        self.assertTrue(len(spyProgressChanged) > 0)
+        self.assertGreater(len(spyProgressChanged), 0)
         self.assertEqual(spyProgressChanged[-1][0], 100)
 
         # fetch
@@ -475,7 +476,7 @@ class TestPyQgsExternalStorageBase:
         self.assertFalse(storedContent.errorString())
         self.assertEqual(storedContent.url(), self.url + "/" + os.path.basename(f.name))
         self.assertEqual(storedContent.status(), Qgis.ContentStatus.Finished)
-        self.assertTrue(len(spyProgressChanged) > 0)
+        self.assertGreater(len(spyProgressChanged), 0)
         self.assertEqual(spyProgressChanged[-1][0], 100)
 
         # fetch

@@ -64,7 +64,7 @@ QString QgsShortestLineAlgorithm::shortHelpString() const
                       "and does not consider geodetic or ellipsoid properties when "
                       "determining feature proximity. The measurement and output coordinate "
                       "system is based on the coordinate system of the source layer."
-                    );
+  );
 }
 
 QgsShortestLineAlgorithm *QgsShortestLineAlgorithm::createInstance() const
@@ -74,12 +74,12 @@ QgsShortestLineAlgorithm *QgsShortestLineAlgorithm::createInstance() const
 
 void QgsShortestLineAlgorithm::initAlgorithm( const QVariantMap & )
 {
-  addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "SOURCE" ), QObject::tr( "Source layer" ), QList<int>() << QgsProcessing::TypeVectorAnyGeometry ) );
-  addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "DESTINATION" ), QObject::tr( "Destination layer" ), QList<int>() << QgsProcessing::TypeVectorAnyGeometry ) );
+  addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "SOURCE" ), QObject::tr( "Source layer" ), QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::VectorAnyGeometry ) ) );
+  addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "DESTINATION" ), QObject::tr( "Destination layer" ), QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::VectorAnyGeometry ) ) );
   addParameter( new QgsProcessingParameterEnum( QStringLiteral( "METHOD" ), QObject::tr( "Method" ), QStringList() << "Distance to Nearest Point on feature" << "Distance to Feature Centroid", false, 0 ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "NEIGHBORS" ), QObject::tr( "Maximum number of neighbors" ), QgsProcessingParameterNumber::Integer, 1, false, 1 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "NEIGHBORS" ), QObject::tr( "Maximum number of neighbors" ), Qgis::ProcessingNumberParameterType::Integer, 1, false, 1 ) );
   addParameter( new QgsProcessingParameterDistance( QStringLiteral( "DISTANCE" ), QObject::tr( "Maximum distance" ), QVariant(), QString( "SOURCE" ), true ) );
-  addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Shortest lines" ), QgsProcessing::TypeVectorLine ) );
+  addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Shortest lines" ), Qgis::ProcessingSourceType::VectorLine ) );
 }
 
 bool QgsShortestLineAlgorithm::prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback * )
@@ -107,19 +107,18 @@ QVariantMap QgsShortestLineAlgorithm::processAlgorithm( const QVariantMap &param
     mKNeighbors = mDestination->featureCount();
 
   QgsFields fields = QgsProcessingUtils::combineFields( mSource->fields(), mDestination->fields() );
-  fields.append( QgsField( QStringLiteral( "distance" ), QVariant::Double ) );
+  fields.append( QgsField( QStringLiteral( "distance" ), QMetaType::Type::Double ) );
 
   QString dest;
-  std::unique_ptr< QgsFeatureSink > sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, fields, Qgis::WkbType::MultiLineString, mSource->sourceCrs() ) );
+  std::unique_ptr<QgsFeatureSink> sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, fields, Qgis::WkbType::MultiLineString, mSource->sourceCrs() ) );
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
   const QgsFeatureIterator destinationIterator = mDestination->getFeatures( QgsFeatureRequest().setDestinationCrs( mSource->sourceCrs(), context.transformContext() ) );
-  QHash< QgsFeatureId, QgsAttributes > destinationAttributeCache;
+  QHash<QgsFeatureId, QgsAttributes> destinationAttributeCache;
   double step = mDestination->featureCount() > 0 ? 50.0 / mDestination->featureCount() : 1;
   int i = 0;
-  const QgsSpatialIndex idx( destinationIterator, [&]( const QgsFeature & f )->bool
-  {
+  const QgsSpatialIndex idx( destinationIterator, [&]( const QgsFeature &f ) -> bool {
     i++;
     if ( feedback-> isCanceled() )
       return false;
@@ -128,8 +127,7 @@ QVariantMap QgsShortestLineAlgorithm::processAlgorithm( const QVariantMap &param
 
     destinationAttributeCache.insert( f.id(), f.attributes() );
 
-    return true;
-  }, QgsSpatialIndex::FlagStoreFeatureGeometries );
+    return true; }, QgsSpatialIndex::FlagStoreFeatureGeometries );
 
   step = mSource->featureCount() > 0 ? 50.0 / mSource->featureCount() : 1;
   QgsFeatureIterator sourceIterator = mSource->getFeatures();
@@ -155,7 +153,16 @@ QVariantMap QgsShortestLineAlgorithm::processAlgorithm( const QVariantMap &param
       }
 
       const QgsGeometry shortestLine = sourceGeom.shortestLine( destinationGeom );
-      double dist = da.measureLength( shortestLine );
+      double dist = 0;
+      try
+      {
+        dist = da.measureLength( shortestLine );
+      }
+      catch ( QgsCsException & )
+      {
+        throw QgsProcessingException( QObject::tr( "An error occurred while calculating shortest line length" ) );
+      }
+
       QgsFeature f;
       QgsAttributes attrs = sourceFeature.attributes();
       attrs << destinationAttributeCache.value( id ) << dist;

@@ -20,6 +20,7 @@
 #include <QObject>
 #include <QThread>
 #include "qgis_gui.h"
+#include "qgis_sip.h"
 #include "qgsabstractlayermetadataprovider.h"
 
 class QgsFeedback;
@@ -33,17 +34,16 @@ class QgsFeedback;
  * The QgsMetadataResultFetcher class fetches query results from a separate thread
  * WARNING: this class is an implementation detail and it is not part of public API!
  */
-class QgsMetadataResultsFetcher: public QObject
+class QgsMetadataResultsFetcher : public QObject
 {
     Q_OBJECT
 
   public:
-
     //! Constructs a metadata result fetcher.
     QgsMetadataResultsFetcher( const QgsAbstractLayerMetadataProvider *metadataProvider, const QgsMetadataSearchContext &searchContext, QgsFeedback *feedback );
 
     //! Start fetching.
-    void fetchMetadata( );
+    void fetchMetadata();
 
   signals:
 
@@ -51,7 +51,6 @@ class QgsMetadataResultsFetcher: public QObject
     void resultsReady( const QgsLayerMetadataSearchResults &results );
 
   private:
-
     const QgsAbstractLayerMetadataProvider *mLayerMetadataProvider = nullptr;
     QgsMetadataSearchContext mSearchContext;
     QgsFeedback *mFeedback;
@@ -73,7 +72,6 @@ class GUI_EXPORT QgsLayerMetadataResultsModel : public QAbstractTableModel
     Q_OBJECT
 
   public:
-
     /**
      * Constructs a QgsLayerMetadataResultsModel from a \a searchContext and
      * an optional \a parent.
@@ -91,19 +89,25 @@ class GUI_EXPORT QgsLayerMetadataResultsModel : public QAbstractTableModel
     QVariant headerData( int section, Qt::Orientation orientation, int role ) const override;
 
     //! Load/Reload model data synchronously.
-    void reload( );
+    void reload();
 
     //! Load/Reload model data asynchronously using threads.
-    void reloadAsync( );
+    void reloadAsync();
+
+    // *INDENT-OFF*
 
     /**
      * The Roles enum represents the user roles for the model.
+     *
+     * \note Prior to QGIS 3.36 this was available as QgsLayerMetadataResultsModel::Roles
+     * \since QGIS 3.36
      */
-    enum Roles
+    enum class CustomRole SIP_MONKEYPATCH_SCOPEENUM_UNNEST( QgsLayerMetadataResultsModel, Roles ) : int
     {
-      //! Layer metadata role
-      Metadata = Qt::ItemDataRole::UserRole
+      Metadata = Qt::ItemDataRole::UserRole, //!< Layer metadata role
     };
+    Q_ENUM( CustomRole )
+    // *INDENT-ON*
 
     /**
      * The Sections enum represents the data columns.
@@ -142,13 +146,11 @@ class GUI_EXPORT QgsLayerMetadataResultsModel : public QAbstractTableModel
     void progressChanged( int progress );
 
   private:
-
     std::unique_ptr<QgsFeedback> mFeedback;
     QgsLayerMetadataSearchResults mResult;
     QgsMetadataSearchContext mSearchContext;
     std::vector<std::unique_ptr<QgsMetadataResultsFetcher>> mWorkers;
     std::vector<std::unique_ptr<QThread>> mWorkerThreads;
-
 };
 
 #endif // QGSLAYERMETADATARESULTSMODEL_H

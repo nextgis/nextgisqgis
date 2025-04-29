@@ -31,55 +31,9 @@
 
 class QgsFeature;
 
-
-#include "qgsexpressioncontext.h"
-
-class Qgs3DMapSettings;
+#include "qgs3drendercontext.h"
 
 #define SIP_NO_FILE
-
-
-/**
- * \ingroup 3d
- * \brief Rendering context for preparation of 3D entities.
- *
- * \note Not available in Python bindings
- */
-class Qgs3DRenderContext
-{
-  public:
-    Qgs3DRenderContext( const Qgs3DMapSettings &map ) : mMap( map ) {}
-
-    const Qgs3DMapSettings &map() const { return mMap; }
-
-    /**
-     * Sets the expression context. This context is used for all expression evaluation
-     * associated with this render context.
-     * \see expressionContext()
-     */
-    void setExpressionContext( const QgsExpressionContext &context ) { mExpressionContext = context; }
-
-    /**
-     * Gets the expression context. This context should be used for all expression evaluation
-     * associated with this render context.
-     * \see setExpressionContext()
-     */
-    QgsExpressionContext &expressionContext() { return mExpressionContext; }
-
-    /**
-     * Gets the expression context (const version). This context should be used for all expression evaluation
-     * associated with this render context.
-     * \see setExpressionContext()
-     * \note not available in Python bindings
-     */
-    const QgsExpressionContext &expressionContext() const { return mExpressionContext; } SIP_SKIP
-
-  private:
-    const Qgs3DMapSettings &mMap;
-    //! Expression context
-    QgsExpressionContext mExpressionContext;
-
-};
 
 
 /**
@@ -135,16 +89,6 @@ class QgsFeature3DHandler
     float mZMax = std::numeric_limits<float>::lowest();
     int mFeatureCount = 0;
 };
-
-
-class Qgs3DMapSettings;
-class QgsVectorLayer;
-
-namespace Qgs3DSymbolImpl
-{
-  //! generic method to iterate over a layer, handle features with handler and create an entity out of it
-  Qt3DCore::QEntity *entityFromHandler( QgsFeature3DHandler *handler, const Qgs3DMapSettings &map, QgsVectorLayer *layer );
-}
 
 
 /// @endcond

@@ -45,7 +45,6 @@ class CORE_EXPORT QgsPluginLayerType
 
     /**
      * Returns new layer of this type, using layer URI (specific to this plugin layer type). Return NULLPTR on error.
-     * \since QGIS 2.10
      */
     virtual QgsPluginLayer *createLayer( const QString &uri ) SIP_FACTORY;
 
@@ -69,15 +68,10 @@ class CORE_EXPORT QgsPluginLayerRegistry
 {
   public:
 
-    /**
-     * Constructor for QgsPluginLayerRegistry.
-     */
     QgsPluginLayerRegistry() = default;
     ~QgsPluginLayerRegistry();
 
-    //! QgsPluginLayerRegistry cannot be copied.
     QgsPluginLayerRegistry( const QgsPluginLayerRegistry &rh ) = delete;
-    //! QgsPluginLayerRegistry cannot be copied.
     QgsPluginLayerRegistry &operator=( const QgsPluginLayerRegistry &rh ) = delete;
 
     /**

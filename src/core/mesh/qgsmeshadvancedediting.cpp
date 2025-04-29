@@ -475,7 +475,7 @@ bool QgsMeshEditRefineFaces::createNewBorderFaces( QgsMeshEditor *meshEditor,
       QgsTopologicalMesh::TopologicalFaces topologicalFaces = QgsTopologicalMesh::createNewTopologicalFaces( faces, false, error );
       QVector<QgsTopologicalMesh::FaceNeighbors> neighborhood = topologicalFaces.facesNeighborhood();
 
-      // reindex internal neighborhod
+      // reindex internal neighborhood
       for ( int i = 0; i < neighborhood.count(); ++i )
       {
         QgsTopologicalMesh::FaceNeighbors &neighbors = neighborhood[i];
@@ -638,7 +638,7 @@ bool QgsMeshTransformVerticesByExpression::calculate( QgsMeshLayer *layer )
   std::unique_ptr<QgsExpressionContextScope> expScope( QgsExpressionContextUtils::meshExpressionScope( QgsMesh::Vertex ) );
   QgsExpressionContext context;
   context.appendScope( expScope.release() );
-  context.lastScope()->setVariable( QStringLiteral( "_mesh_layer" ), QVariant::fromValue( layer ) );
+  context.lastScope()->setVariable( QStringLiteral( "_native_mesh" ), QVariant::fromValue( mesh ) );
 
   QVector<QgsMeshVertex> newVertices;
   newVertices.reserve( mInputVertices.count() );

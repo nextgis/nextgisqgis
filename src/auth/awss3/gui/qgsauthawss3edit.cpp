@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsauthawss3edit.h"
+#include "moc_qgsauthawss3edit.cpp"
 #include "ui_qgsauthawss3edit.h"
 
 
@@ -24,7 +25,6 @@ QgsAuthAwsS3Edit::QgsAuthAwsS3Edit( QWidget *parent )
   connect( leUsername, &QLineEdit::textChanged, this, &QgsAuthAwsS3Edit::leUsername_textChanged );
   connect( lePassword, &QLineEdit::textChanged, this, &QgsAuthAwsS3Edit::lePassword_textChanged );
   connect( leRegion, &QLineEdit::textChanged, this, &QgsAuthAwsS3Edit::leRegion_textChanged );
-  connect( chkPasswordShow, &QCheckBox::stateChanged, this, &QgsAuthAwsS3Edit::chkPasswordShow_stateChanged );
 }
 
 bool QgsAuthAwsS3Edit::validateConfig()
@@ -70,7 +70,6 @@ void QgsAuthAwsS3Edit::clearConfig()
   leUsername->clear();
   lePassword->clear();
   leRegion->clear();
-  chkPasswordShow->setChecked( false );
 }
 
 void QgsAuthAwsS3Edit::leUsername_textChanged( const QString &txt )
@@ -89,9 +88,4 @@ void QgsAuthAwsS3Edit::leRegion_textChanged( const QString &txt )
 {
   Q_UNUSED( txt )
   validateConfig();
-}
-
-void QgsAuthAwsS3Edit::chkPasswordShow_stateChanged( int state )
-{
-  lePassword->setEchoMode( ( state > 0 ) ? QLineEdit::Normal : QLineEdit::Password );
 }

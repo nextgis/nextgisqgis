@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/geometry/qgscircularstring.h                                *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -15,8 +15,6 @@ class QgsCircularString: QgsCurve
 {
 %Docstring(signature="appended")
 Circular string geometry type
-
-.. versionadded:: 2.10
 %End
 
 %TypeHeaderCode
@@ -33,8 +31,8 @@ Constructs an empty circular string.
                        const QgsPoint &p2,
                        const QgsPoint &p3 ) /HoldGIL/;
 %Docstring
-Constructs a circular string with a single
-arc passing through ``p1``, ``p2`` and ``p3``.
+Constructs a circular string with a single arc passing through ``p1``,
+``p2`` and ``p3``.
 
 .. versionadded:: 3.2
 %End
@@ -44,13 +42,14 @@ arc passing through ``p1``, ``p2`` and ``p3``.
                        const QVector<double> &m = QVector<double>() ) /HoldGIL/;
 %Docstring
 Construct a circular string from arrays of coordinates. If the z or m
-arrays are non-empty then the resultant circular string will have
-z and m types accordingly.
+arrays are non-empty then the resultant circular string will have z and
+m types accordingly.
 
-This constructor is more efficient then calling :py:func:`~QgsCircularString.setPoints`.
+This constructor is more efficient then calling
+:py:func:`~QgsCircularString.setPoints`.
 
-If the sizes of ``x`` and ``y`` are non-equal then the resultant circular string
-will be created using the minimum size of these arrays.
+If the sizes of ``x`` and ``y`` are non-equal then the resultant
+circular string will be created using the minimum size of these arrays.
 
 .. warning::
 
@@ -66,15 +65,22 @@ will be created using the minimum size of these arrays.
         const QgsPoint &center,
         bool useShortestArc = true );
 %Docstring
-Creates a circular string with a single arc representing
-the curve from ``p1`` to ``p2`` with the specified ``center``.
+Creates a circular string with a single arc representing the curve from
+``p1`` to ``p2`` with the specified ``center``.
 
-If ``useShortestArc`` is ``True``, then the arc returned will be that corresponding
-to the shorter arc from ``p1`` to ``p2``. If it is ``False``, the longer arc from ``p1``
-to ``p2`` will be used (i.e. winding the other way around the circle).
+If ``useShortestArc`` is ``True``, then the arc returned will be that
+corresponding to the shorter arc from ``p1`` to ``p2``. If it is
+``False``, the longer arc from ``p1`` to ``p2`` will be used (i.e.
+winding the other way around the circle).
 
 .. versionadded:: 3.2
 %End
+
+
+  public:
+    virtual bool fuzzyEqual( const QgsAbstractGeometry &other, double epsilon = 1e-8 ) const /HoldGIL/;
+
+    virtual bool fuzzyDistanceEqual( const QgsAbstractGeometry &other, double epsilon = 1e-8 ) const /HoldGIL/;
 
     virtual bool equals( const QgsCurve &other ) const;
 
@@ -126,7 +132,8 @@ Sets the circular string's points
 
     void append( const QgsCircularString *string );
 %Docstring
-Appends the contents of another circular ``string`` to the end of this circular string.
+Appends the contents of another circular ``string`` to the end of this
+circular string.
 
 :param string: circular string to append. Ownership is not transferred.
 
@@ -134,7 +141,6 @@ Appends the contents of another circular ``string`` to the end of this circular 
 
    It is the caller's responsibility to ensure that the first point in the appended
    ``string`` matches the last point in the existing curve, or the result will be undefined.
-
 
 .. versionadded:: 3.20
 %End
@@ -147,7 +153,9 @@ Appends the contents of another circular ``string`` to the end of this circular 
 
     virtual QgsLineString *curveToLine( double tolerance = M_PI_2 / 90, SegmentationToleranceType toleranceType = MaximumAngle ) const /Factory/;
 
-    virtual QgsCircularString *snappedToGrid( double hSpacing, double vSpacing, double dSpacing = 0, double mSpacing = 0 ) const /Factory/;
+    virtual QgsCircularString *snappedToGrid( double hSpacing, double vSpacing, double dSpacing = 0, double mSpacing = 0, bool removeRedundantPoints = false ) const /Factory/;
+
+    virtual QgsAbstractGeometry *simplifyByDistance( double tolerance ) const /Factory/;
 
     virtual bool removeDuplicateNodes( double epsilon = 4 * DBL_EPSILON, bool useZValues = false );
 
@@ -225,7 +233,7 @@ Appends the contents of another circular ``string`` to the end of this circular 
   protected:
 
     int compareToSameClass( const QgsAbstractGeometry *other ) const final;
-    virtual QgsRectangle calculateBoundingBox() const;
+    virtual QgsBox3D calculateBoundingBox3D() const;
 
 
 };
@@ -236,5 +244,5 @@ Appends the contents of another circular ``string`` to the end of this circular 
  *                                                                      *
  * src/core/geometry/qgscircularstring.h                                *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

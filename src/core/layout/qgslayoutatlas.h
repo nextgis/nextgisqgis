@@ -36,7 +36,6 @@ class QgsLayout;
  * QgsLayoutAtlas object. Instead, the atlas attached to the print layout
  * should be used. This can be retrieved by calling QgsPrintLayout::atlas().
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutAtlas : public QObject, public QgsAbstractLayoutIterator, public QgsLayoutSerializableObject, public QgsExpressionContextGenerator
 {
@@ -55,7 +54,7 @@ class CORE_EXPORT QgsLayoutAtlas : public QObject, public QgsAbstractLayoutItera
      * Returns the atlas' layout.
      * \note Not available in Python bindings.
      */
-    const QgsLayout *layout() const SIP_SKIP;
+    const QgsLayout *layout() const SIP_SKIP;  // cppcheck-suppress duplInheritedMember
 
     bool writeXml( QDomElement &parentElement, QDomDocument &document, const QgsReadWriteContext &context ) const override;
     bool readXml( const QDomElement &element, const QDomDocument &document, const QgsReadWriteContext &context ) override;
@@ -315,7 +314,7 @@ class CORE_EXPORT QgsLayoutAtlas : public QObject, public QgsAbstractLayoutItera
     void changed();
 
     //! Emitted when atlas is enabled or disabled.
-    void toggled( bool );
+    void toggled( bool enabled );
 
     //! Emitted when the coverage layer for the atlas changes.
     void coverageLayerChanged( QgsVectorLayer *layer );

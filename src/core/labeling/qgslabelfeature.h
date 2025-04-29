@@ -51,7 +51,6 @@ class QgsGeometry;
  *
  * \note this class is not a part of public API yet. See notes in QgsLabelingEngine
  * \note not available in Python bindings
- * \since QGIS 2.12
  */
 class CORE_EXPORT QgsLabelFeature
 {
@@ -66,7 +65,7 @@ class CORE_EXPORT QgsLabelFeature
      * used by the labeling engine to generate candidate placements for the label. For
      * a vector layer feature this will generally be the feature's geometry.
      *
-     * The \a size argument dicates the size of the label's content (e.g. text width and height).
+     * The \a size argument dictates the size of the label's content (e.g. text width and height).
      */
     QgsLabelFeature( QgsFeatureId id, geos::unique_ptr geometry, QSizeF size );
 
@@ -85,7 +84,6 @@ class CORE_EXPORT QgsLabelFeature
      * \param geometry permissible zone geometry. If an invalid QgsGeometry is passed then no zone limit
      * will be applied to the label candidates (this is the default behavior).
      * \see permissibleZone()
-     * \since QGIS 3.0
      */
     void setPermissibleZone( const QgsGeometry &geometry );
 
@@ -95,14 +93,12 @@ class CORE_EXPORT QgsLabelFeature
      * generated which are not contained within the zone.
      * \see setPermissibleZone()
      * \see permissibleZonePrepared()
-     * \since QGIS 3.0
      */
     QgsGeometry permissibleZone() const { return mPermissibleZone; }
 
     /**
      * Returns a GEOS prepared geometry representing the label's permissibleZone().
      * \see permissibleZone()
-     * \since QGIS 3.0
      */
     //TODO - remove when QgsGeometry caches GEOS preparedness
     const GEOSPreparedGeometry *permissibleZonePrepared() const { return mPermissibleZoneGeosPrepared.get(); }
@@ -188,7 +184,6 @@ class CORE_EXPORT QgsLabelFeature
      * Returns the label's z-index. Higher z-index labels are rendered on top of lower
      * z-index labels.
      * \see setZIndex()
-     * \since QGIS 2.14
      */
     double zIndex() const { return mZIndex; }
 
@@ -197,7 +192,6 @@ class CORE_EXPORT QgsLabelFeature
      * z-index labels.
      * \param zIndex z-index for label
      * \see zIndex()
-     * \since QGIS 2.14
      */
     void setZIndex( double zIndex ) { mZIndex = zIndex; }
 
@@ -305,14 +299,52 @@ class CORE_EXPORT QgsLabelFeature
     /**
      * Applies to "around point" placement strategy or linestring features.
      * Distance of the label from the feature (in map units)
+     *
+     * \see setDistLabel()
+     * \see maximumDistance()
      */
     double distLabel() const { return mDistLabel; }
 
     /**
      * Applies to "around point" placement strategy or linestring features.
      * Set distance of the label from the feature (in map units)
+     *
+     * \see distLabel()
+     * \see setMaximumDistance()
      */
     void setDistLabel( double dist ) { mDistLabel = dist; }
+
+    /**
+     * Returns the maximum distance which labels are allowed to be from their corresponding points.
+     *
+     * This setting works alongside distLabel() to define a permissible
+     * range of distances at which labels can be placed from their points.
+     *
+     * The default value is 0, which indicates that no maximum is set and the that distLabel()
+     * always be respected.
+     *
+     * \see setMaximumDistance()
+     * \see distLabel()
+     *
+     * \since QGIS 3.38
+     */
+    double maximumDistance() const { return mMaximumDistance; }
+
+    /**
+     * Sets the maximum \a distance which labels are allowed to be from their corresponding points.
+     *
+     * This setting works alongside distLabel() to define a permissible
+     * range of distances at which labels can be placed from their points.
+     *
+     * The default value is 0, which indicates that no maximum is set and the that distLabel()
+     * always be respected.
+     *
+     * \see maximumDistance()
+     * \see setDistLabel()
+     *
+     * \since QGIS 3.38
+     */
+    void setMaximumDistance( double distance ) { mMaximumDistance = distance; }
 
     /**
      * Returns the priority ordered list of predefined positions for label candidates. This property
@@ -631,6 +663,22 @@ class CORE_EXPORT QgsLabelFeature
     bool allowDegradedPlacement() const { return mAllowDegradedPlacement; }
 
     /**
+     * Returns the label prioritization technique.
+     *
+     * \see setPrioritization()
+     * \since QGIS 3.38
+     */
+    Qgis::LabelPrioritization prioritization() const { return mPrioritization; }
+
+    /**
+     * Sets the label prioritization technique.
+     *
+     * \see prioritization()
+     * \since QGIS 3.26
+     */
+    void setPrioritization( Qgis::LabelPrioritization prioritization ) { mPrioritization = prioritization; }
+
+    /**
      * Sets whether the label can be placed in inferior fallback positions if it cannot otherwise
      * be placed.
      *
@@ -682,6 +730,10 @@ class CORE_EXPORT QgsLabelFeature
     QgsPointXY mPositionOffset;
     //! distance of label from the feature (only for "around point" placement or linestrings)
     double mDistLabel = 0;
+
+    //! Maximum distance of label from the feature.
+    double mMaximumDistance = 0;
+
     //! Offset type for certain placement modes
     Qgis::LabelOffsetType mOffsetType = Qgis::LabelOffsetType::FromPoint;
     //! Ordered list of predefined positions for label (only for OrderedPositionsAroundPoint placement)
@@ -725,6 +777,7 @@ class CORE_EXPORT QgsLabelFeature
 
     Qgis::LabelOverlapHandling mOverlapHandling = Qgis::LabelOverlapHandling::PreventOverlap;
     bool mAllowDegradedPlacement = false;
+    Qgis::LabelPrioritization mPrioritization = Qgis::LabelPrioritization::PreferCloser;
 
     QgsCoordinateReferenceSystem mOriginalFeatureCrs;
 

@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsgoochmaterialwidget.h"
+#include "moc_qgsgoochmaterialwidget.cpp"
 
 #include "qgsgoochmaterialsettings.h"
 #include "qgis.h"
@@ -53,7 +54,7 @@ QgsMaterialSettingsWidget *QgsGoochMaterialWidget::create()
 
 void QgsGoochMaterialWidget::setSettings( const QgsAbstractMaterialSettings *settings, QgsVectorLayer *layer )
 {
-  const QgsGoochMaterialSettings *goochMaterial = dynamic_cast< const QgsGoochMaterialSettings * >( settings );
+  const QgsGoochMaterialSettings *goochMaterial = dynamic_cast<const QgsGoochMaterialSettings *>( settings );
   if ( !goochMaterial )
     return;
   btnDiffuse->setColor( goochMaterial->diffuse() );
@@ -66,10 +67,10 @@ void QgsGoochMaterialWidget::setSettings( const QgsAbstractMaterialSettings *set
 
   mPropertyCollection = settings->dataDefinedProperties();
 
-  mDiffuseDataDefinedButton->init( QgsAbstractMaterialSettings::Diffuse, mPropertyCollection, settings->propertyDefinitions(), layer, true );
-  mWarmDataDefinedButton->init( QgsAbstractMaterialSettings::Warm, mPropertyCollection, settings->propertyDefinitions(), layer, true );
-  mCoolDataDefinedButton->init( QgsAbstractMaterialSettings::Cool, mPropertyCollection, settings->propertyDefinitions(), layer, true );
-  mSpecularDataDefinedButton->init( QgsAbstractMaterialSettings::Specular, mPropertyCollection, settings->propertyDefinitions(), layer, true );
+  mDiffuseDataDefinedButton->init( static_cast<int>( QgsAbstractMaterialSettings::Property::Diffuse ), mPropertyCollection, settings->propertyDefinitions(), layer, true );
+  mWarmDataDefinedButton->init( static_cast<int>( QgsAbstractMaterialSettings::Property::Warm ), mPropertyCollection, settings->propertyDefinitions(), layer, true );
+  mCoolDataDefinedButton->init( static_cast<int>( QgsAbstractMaterialSettings::Property::Cool ), mPropertyCollection, settings->propertyDefinitions(), layer, true );
+  mSpecularDataDefinedButton->init( static_cast<int>( QgsAbstractMaterialSettings::Property::Specular ), mPropertyCollection, settings->propertyDefinitions(), layer, true );
 }
 
 void QgsGoochMaterialWidget::setTechnique( QgsMaterialSettingsRenderingTechnique technique )
@@ -100,7 +101,7 @@ void QgsGoochMaterialWidget::setTechnique( QgsMaterialSettingsRenderingTechnique
 
 QgsAbstractMaterialSettings *QgsGoochMaterialWidget::settings()
 {
-  std::unique_ptr< QgsGoochMaterialSettings > m = std::make_unique< QgsGoochMaterialSettings >();
+  std::unique_ptr<QgsGoochMaterialSettings> m = std::make_unique<QgsGoochMaterialSettings>();
   m->setDiffuse( btnDiffuse->color() );
   m->setWarm( btnWarm->color() );
   m->setCool( btnCool->color() );
@@ -109,10 +110,10 @@ QgsAbstractMaterialSettings *QgsGoochMaterialWidget::settings()
   m->setAlpha( spinAlpha->value() );
   m->setBeta( spinBeta->value() );
 
-  mPropertyCollection.setProperty( QgsAbstractMaterialSettings::Diffuse, mDiffuseDataDefinedButton->toProperty() );
-  mPropertyCollection.setProperty( QgsAbstractMaterialSettings::Warm, mWarmDataDefinedButton->toProperty() );
-  mPropertyCollection.setProperty( QgsAbstractMaterialSettings::Cool, mCoolDataDefinedButton->toProperty() );
-  mPropertyCollection.setProperty( QgsAbstractMaterialSettings::Specular, mSpecularDataDefinedButton->toProperty() );
+  mPropertyCollection.setProperty( QgsAbstractMaterialSettings::Property::Diffuse, mDiffuseDataDefinedButton->toProperty() );
+  mPropertyCollection.setProperty( QgsAbstractMaterialSettings::Property::Warm, mWarmDataDefinedButton->toProperty() );
+  mPropertyCollection.setProperty( QgsAbstractMaterialSettings::Property::Cool, mCoolDataDefinedButton->toProperty() );
+  mPropertyCollection.setProperty( QgsAbstractMaterialSettings::Property::Specular, mSpecularDataDefinedButton->toProperty() );
   m->setDataDefinedProperties( mPropertyCollection );
 
   return m.release();

@@ -29,14 +29,12 @@ class QgsVectorLayer;
  *
  * \brief A dialog to create a new auxiliary layer
  *
- * \since QGIS 3.0
  */
-class GUI_EXPORT QgsNewAuxiliaryLayerDialog: public QDialog, private Ui::QgsNewAuxiliaryLayerDialogBase
+class GUI_EXPORT QgsNewAuxiliaryLayerDialog : public QDialog, private Ui::QgsNewAuxiliaryLayerDialogBase
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor.
      *

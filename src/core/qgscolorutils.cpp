@@ -18,10 +18,11 @@
 #include "qgscolorutils.h"
 
 #include <QColor>
+#include <QColorSpace>
 #include <QDomDocument>
+#include <QFile>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
-
 
 void QgsColorUtils::writeXml( const QColor &color, const QString &identifier, QDomDocument &document, QDomElement &element, const QgsReadWriteContext & )
 {
@@ -281,7 +282,7 @@ QString QgsColorUtils::colorToString( const QColor &color )
       qreal alpha = 1;
 #endif
 
-      color.getCmykF( &c, &y, &m, &k, &alpha );
+      color.getCmykF( &c, &m, &y, &k, &alpha );
       return compatString + QStringLiteral( "cmyk:%1,%2,%3,%4,%5" ).arg( qgsDoubleToString( c ),
              qgsDoubleToString( m ),
              qgsDoubleToString( y ),
@@ -301,16 +302,17 @@ QColor QgsColorUtils::colorFromString( const QString &string )
   const QRegularExpressionMatch match = rx.match( string );
   if ( !match.hasMatch() )
   {
-    // try reading older color format
-    const thread_local QRegularExpression rgbArx( QStringLiteral( "^(\\d+),(\\d+),(\\d+),(\\d+)$" ) );
-    const QRegularExpressionMatch match = rgbArx.match( string );
-    if ( !match.hasMatch() )
-      return QColor();
-
-    const int red = match.captured( 1 ).toInt();
-    const int green = match.captured( 2 ).toInt();
-    const int blue = match.captured( 3 ).toInt();
-    const int alpha = match.captured( 4 ).toInt();
+    // try reading older color format and hex strings
+    const QStringList lst = string.split( ',' );
+    if ( lst.count() < 3 )
+    {
+      return QColor( string );
+    }
+    int red, green, blue, alpha;
+    red = lst[0].toInt();
+    green = lst[1].toInt();
+    blue = lst[2].toInt();
+    alpha = lst.count() > 3 ? lst[3].toInt() : 255;
     return QColor( red, green, blue, alpha );
   }
 
@@ -352,3 +354,73 @@ QColor QgsColorUtils::colorFromString( const QString &string )
   }
   return QColor();
 }
+
+QColorSpace QgsColorUtils::iccProfile( const QString &iccProfileFilePath, QString &errorMsg )
+{
+  if ( iccProfileFilePath.isEmpty() )
+    return QColorSpace();
+
+  QFile file( iccProfileFilePath );
+  if ( !file.open( QIODevice::ReadOnly ) )
+  {
+    errorMsg = QObject::tr( "Failed to open ICC Profile: %1" ).arg( iccProfileFilePath );
+    return QColorSpace();
+  }
+
+  QColorSpace colorSpace = QColorSpace::fromIccProfile( file.readAll() );
+  if ( !colorSpace.isValid() )
+  {
+    errorMsg = QObject::tr( "Invalid ICC Profile: %1" ).arg( iccProfileFilePath );
+    return colorSpace;
+  }
+
+  return colorSpace;
+}
+
+
+QString QgsColorUtils::saveIccProfile( const QColorSpace &colorSpace, const QString &iccProfileFilePath )
+{
+  if ( !colorSpace.isValid() )
+    return QObject::tr( "Invalid ICC profile" );
+
+  QFile iccProfile( iccProfileFilePath );
+  if ( !iccProfile.open( QIODevice::WriteOnly ) )
+    return QObject::tr( "File access error '%1'" ).arg( iccProfileFilePath );
+
+  if ( iccProfile.write( colorSpace.iccProfile() ) < 0 )
+    return QObject::tr( "Error while writing to file '%1'" ).arg( iccProfileFilePath );
+
+  return QString();
+}
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+
+Qgis::ColorModel QgsColorUtils::toColorModel( QColorSpace::ColorModel colorModel, bool *ok )
+{
+  bool lok = false;
+  Qgis::ColorModel res;
+  switch ( colorModel )
+  {
+    case QColorSpace::ColorModel::Cmyk:
+      lok = true;
+      res = Qgis::ColorModel::Cmyk;
+      break;
+
+    case QColorSpace::ColorModel::Rgb:
+      lok = true;
+      res = Qgis::ColorModel::Rgb;
+      break;
+
+    case QColorSpace::ColorModel::Undefined:
+    case QColorSpace::ColorModel::Gray: // not supported
+      lok = false;
+      res = Qgis::ColorModel::Rgb;
+  }
+
+  if ( ok )
+    *ok = lok;
+
+  return res;
+}
+
+#endif

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/raster/qgssinglebandpseudocolorrenderer.h                   *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -30,7 +30,8 @@ Note: takes ownership of :py:class:`QgsRasterShader`
     virtual QgsSingleBandPseudoColorRenderer *clone() const /Factory/;
 
 %Docstring
-QgsSingleBandPseudoColorRenderer cannot be copied. Use :py:func:`~QgsSingleBandPseudoColorRenderer.clone` instead.
+QgsSingleBandPseudoColorRenderer cannot be copied. Use
+:py:func:`~QgsSingleBandPseudoColorRenderer.clone` instead.
 %End
     virtual Qgis::RasterRendererFlags flags() const;
 
@@ -52,29 +53,28 @@ Returns the raster shader
     const QgsRasterShader *shader() const /PyName=constShader/;
 %Docstring
 
-.. note::
-
-   available in Python as constShader
 %End
 
     virtual bool canCreateRasterAttributeTable( ) const;
 
 
     void createShader( QgsColorRamp *colorRamp /Transfer/ = 0,
-                       QgsColorRampShader::Type colorRampType  = QgsColorRampShader::Interpolated,
-                       QgsColorRampShader::ClassificationMode classificationMode = QgsColorRampShader::Continuous,
+                       Qgis::ShaderInterpolationMethod colorRampType = Qgis::ShaderInterpolationMethod::Linear,
+                       Qgis::ShaderClassificationMethod classificationMode = Qgis::ShaderClassificationMethod::Continuous,
                        int classes = 0,
                        bool clip = false,
                        const QgsRectangle &extent = QgsRectangle() );
 %Docstring
 Creates a color ramp shader
 
-:param colorRamp: vector color ramp. Ownership is transferred to the shader.
+:param colorRamp: vector color ramp. Ownership is transferred to the
+                  shader.
 :param colorRampType: type of color ramp shader
 :param classificationMode: classification mode
 :param classes: number of classes
 :param clip: clip out of range values
-:param extent: extent used in classification (only used in quantile mode)
+:param extent: extent used in classification (only used in quantile
+               mode)
 %End
 
     virtual void writeXml( QDomDocument &doc, QDomElement &parentElem ) const;
@@ -90,21 +90,30 @@ Creates a color ramp shader
     virtual bool accept( QgsStyleEntityVisitorInterface *visitor ) const;
 
 
-    int band() const;
+ int band() const /Deprecated/;
 %Docstring
 Returns the band used by the renderer
 
-.. versionadded:: 2.7
+.. deprecated:: 3.38
+
+   Use :py:func:`~QgsSingleBandPseudoColorRenderer.inputBand` instead.
 %End
 
-    void setBand( int bandNo );
+ void setBand( int bandNo ) /Deprecated/;
 %Docstring
 Sets the band used by the renderer.
 
 .. seealso:: :py:func:`band`
 
-.. versionadded:: 2.10
+.. deprecated:: 3.38
+
+   Use :py:func:`~QgsSingleBandPseudoColorRenderer.setInputBand` instead.
 %End
+
+    virtual int inputBand() const;
+
+    virtual bool setInputBand( int band );
+
 
     double classificationMin() const;
     double classificationMax() const;
@@ -121,5 +130,5 @@ Sets the band used by the renderer.
  *                                                                      *
  * src/core/raster/qgssinglebandpseudocolorrenderer.h                   *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

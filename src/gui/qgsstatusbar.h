@@ -41,19 +41,17 @@ class QStatusBar;
  * Instead of adding child widgets and showing messages directly in the window's status bar,
  * these widgets (and messages) should instead be added into the embedded QgsStatusBar.
  *
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsStatusBar : public QWidget
 {
     Q_OBJECT
 
   public:
-
     //! Placement anchor for widgets
     enum Anchor
     {
       AnchorLeft = 0, //!< Anchor widget to left of status bar
-      AnchorRight, //!< Anchor widget to right of status bar
+      AnchorRight,    //!< Anchor widget to right of status bar
     };
 
     /**
@@ -112,19 +110,14 @@ class GUI_EXPORT QgsStatusBar : public QWidget
 
 
   protected:
-
     void changeEvent( QEvent *event ) override;
 
   private:
-
     QHBoxLayout *mLayout = nullptr;
     QLineEdit *mLineEdit = nullptr;
     QTimer *mTempMessageTimer = nullptr;
     QStatusBar *mParentStatusBar = nullptr;
     QMetaObject::Connection mShowMessageConnection;
-
 };
 
 #endif // QGSSTATUSBAR_H
-
-

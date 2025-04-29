@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgslayoutviewtoolmoveitemcontent.h"
+#include "moc_qgslayoutviewtoolmoveitemcontent.cpp"
 #include "qgslayoutviewmouseevent.h"
 #include "qgslayoutview.h"
 #include "qgslayout.h"
@@ -64,8 +65,7 @@ void QgsLayoutViewToolMoveItemContent::layoutMoveEvent( QgsLayoutViewMouseEvent 
   }
 
   //update item preview
-  mMoveContentItem->setMoveContentPreviewOffset( event->layoutPoint().x() - mMoveContentStartPos.x(),
-      event->layoutPoint().y() - mMoveContentStartPos.y() );
+  mMoveContentItem->setMoveContentPreviewOffset( event->layoutPoint().x() - mMoveContentStartPos.x(), event->layoutPoint().y() - mMoveContentStartPos.y() );
   mMoveContentItem->update();
 }
 
@@ -94,11 +94,7 @@ void QgsLayoutViewToolMoveItemContent::wheelEvent( QWheelEvent *event )
 {
   event->accept();
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 2)
-  QPointF scenePoint = view()->mapToScene( event->pos().x(), event->pos().y() );
-#else
   const QPointF scenePoint = view()->mapToScene( event->position().x(), event->position().y() );
-#endif
 
   //select topmost item at position of event
   QgsLayoutItem *item = layout()->layoutItemAt( scenePoint, true );

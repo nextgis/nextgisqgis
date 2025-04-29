@@ -59,9 +59,7 @@ class CORE_EXPORT QgsVectorLayerFeatureSource : public QgsAbstractFeatureSource
      */
     explicit QgsVectorLayerFeatureSource( const QgsVectorLayer *layer );
 
-    //! QgsVectorLayerFeatureSource cannot be copied
     QgsVectorLayerFeatureSource( const QgsVectorLayerFeatureSource &other ) = delete;
-    //! QgsVectorLayerFeatureSource cannot be copied
     QgsVectorLayerFeatureSource &operator==( const QgsVectorLayerFeatureSource &other ) = delete;
 
     ~QgsVectorLayerFeatureSource() override;
@@ -74,13 +72,11 @@ class CORE_EXPORT QgsVectorLayerFeatureSource : public QgsAbstractFeatureSource
      * Returns the fields that will be available for features that are retrieved from
      * this source.
      *
-     * \since QGIS 3.0
      */
     QgsFields fields() const;
 
     /**
      * Returns the coordinate reference system for features retrieved from this source.
-     * \since QGIS 3.0
      */
     QgsCoordinateReferenceSystem crs() const;
 
@@ -153,6 +149,7 @@ class CORE_EXPORT QgsVectorLayerFeatureSource : public QgsAbstractFeatureSource
 
 /**
  * \ingroup core
+ * \brief A feature iterator which iterates over features from a QgsVectorLayer.
  */
 class CORE_EXPORT QgsVectorLayerFeatureIterator : public QgsAbstractFeatureIteratorFromSource<QgsVectorLayerFeatureSource>
 {
@@ -275,7 +272,6 @@ class CORE_EXPORT QgsVectorLayerFeatureIterator : public QgsAbstractFeatureItera
      * \param f feature
      * \param attrIndex attribute index
      * \note not available in Python bindings
-     * \since QGIS 2.14
      */
     void addExpressionAttribute( QgsFeature &f, int attrIndex ) SIP_SKIP;
 
@@ -369,7 +365,6 @@ class CORE_EXPORT QgsVectorLayerFeatureIterator : public QgsAbstractFeatureItera
  * \class QgsVectorLayerSelectedFeatureSource
  * \ingroup core
  * \brief QgsFeatureSource subclass for the selected features from a QgsVectorLayer.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsVectorLayerSelectedFeatureSource : public QgsFeatureSource, public QgsExpressionContextScopeGenerator
 {
@@ -382,9 +377,7 @@ class CORE_EXPORT QgsVectorLayerSelectedFeatureSource : public QgsFeatureSource,
      */
     QgsVectorLayerSelectedFeatureSource( QgsVectorLayer *layer );
 
-    //! QgsVectorLayerSelectedFeatureSource cannot be copied
     QgsVectorLayerSelectedFeatureSource( const QgsVectorLayerSelectedFeatureSource &other ) = delete;
-    //! QgsVectorLayerSelectedFeatureSource cannot be copied
     QgsVectorLayerSelectedFeatureSource &operator==( const QgsVectorLayerSelectedFeatureSource &other ) = delete;
 
     QgsFeatureIterator getFeatures( const QgsFeatureRequest &request = QgsFeatureRequest() ) const override;
@@ -394,7 +387,7 @@ class CORE_EXPORT QgsVectorLayerSelectedFeatureSource : public QgsFeatureSource,
     long long featureCount() const override;
     QString sourceName() const override;
     QgsExpressionContextScope *createExpressionContextScope() const override;
-    SpatialIndexPresence hasSpatialIndex() const override;
+    Qgis::SpatialIndexPresence hasSpatialIndex() const override;
 
   private:
 

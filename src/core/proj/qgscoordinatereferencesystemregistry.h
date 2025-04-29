@@ -20,10 +20,35 @@
 
 #include <QObject>
 #include <QMap>
+#include <QSet>
 #include "qgscoordinatereferencesystem.h"
 
 class QgsCelestialBody;
 class QgsProjOperation;
+
+
+#ifndef SIP_RUN
+
+/**
+ * \class QgsCoordinateReferenceSystemDbDetails
+ * \ingroup core
+ * \brief Encapsulates a record from the QGIS srs db.
+ *
+ * \note Not available in Python bindings.
+ *
+ * \since QGIS 3.34
+ */
+struct CORE_EXPORT QgsCrsDbRecord
+{
+  QString description;
+  QString projectionAcronym;
+  QString srsId;
+  QString authName;
+  QString authId;
+  Qgis::CrsType type = Qgis::CrsType::Unknown;
+  bool deprecated = false;
+};
+#endif
 
 /**
  * \class QgsCoordinateReferenceSystemRegistry
@@ -145,6 +170,57 @@ class CORE_EXPORT QgsCoordinateReferenceSystemRegistry : public QObject
      */
     QList< QgsCelestialBody > celestialBodies() const;
 
+    /**
+     * Returns a list of all known authorities.
+     *
+     * \note authority names will always be returned in lower case
+     *
+     * \since QGIS 3.34
+     */
+    QSet< QString > authorities() const;
+
+    /**
+     * Returns the list of records from the QGIS srs db.
+     *
+     * \note Not available in Python bindings
+     * \since QGIS 3.34
+     */
+    QList< QgsCrsDbRecord > crsDbRecords() const SIP_SKIP;
+
+    /**
+     * Returns a list of recently used CRS.
+     *
+     * \since QGIS 3.36
+    */
+    QList< QgsCoordinateReferenceSystem > recentCrs();
+
+    /**
+     * Pushes a recently used CRS to the top of the recent CRS list.
+     *
+     * \see recentCrsPushed()
+     *
+     * \since QGIS 3.16
+     */
+    void pushRecent( const QgsCoordinateReferenceSystem &crs );
+
+    /**
+     * Removes a CRS from the list of recently used CRS.
+     *
+     * \see recentCrsRemoved()
+     *
+     * \since QGIS 3.36
+     */
+    void removeRecent( const QgsCoordinateReferenceSystem &crs );
+
+    /**
+     * Cleans the list of recently used CRS.
+     *
+     * \see recentCrsCleared()
+     *
+     * \since QGIS 3.36
+     */
+    void clearRecent();
+
   signals:
 
     /**
@@ -185,12 +261,40 @@ class CORE_EXPORT QgsCoordinateReferenceSystemRegistry : public QObject
      */
     void crsDefinitionsChanged();
 
+    /**
+     * Emitted when a recently used CRS has been pushed to the top of the recent CRS list.
+     *
+     * \see pushRecent()
+     *
+     * \since QGIS 3.36
+     */
+    void recentCrsPushed( const QgsCoordinateReferenceSystem &crs );
+
+    /**
+     * Emitted when a recently used CRS has been removed from the recent CRS list.
+     *
+     * \see removeRecent()
+     *
+     * \since QGIS 3.36
+     */
+    void recentCrsRemoved( const QgsCoordinateReferenceSystem &crs );
+
+    /**
+     * Emitted when the list of recently used CRS has been cleared.
+     *
+     * \see clearRecent()
+     *
+     * \since QGIS 3.36
+     */
+    void recentCrsCleared();
+
   private:
 
     bool insertProjection( const QString &projectionAcronym );
 
-    mutable QList< QgsCelestialBody > mCelestialBodies;
-    mutable QMap< QString, QgsProjOperation > mProjOperations;
+    mutable QReadWriteLock mCrsDbRecordsLock;
+    mutable bool mCrsDbRecordsPopulated = false;
+    mutable QList< QgsCrsDbRecord > mCrsDbRecords;
 
 };
 

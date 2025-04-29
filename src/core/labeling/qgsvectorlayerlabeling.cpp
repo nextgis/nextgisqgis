@@ -123,7 +123,7 @@ bool QgsVectorLayerSimpleLabeling::requiresAdvancedEffects() const
   return mSettings->containsAdvancedEffects();
 }
 
-QgsVectorLayerSimpleLabeling *QgsVectorLayerSimpleLabeling::create( const QDomElement &element, const QgsReadWriteContext &context )
+QgsVectorLayerSimpleLabeling *QgsVectorLayerSimpleLabeling::create( const QDomElement &element, const QgsReadWriteContext &context ) // cppcheck-suppress duplInheritedMember
 {
   const QDomElement settingsElem = element.firstChildElement( QStringLiteral( "settings" ) );
   if ( !settingsElem.isNull() )
@@ -216,7 +216,7 @@ std::unique_ptr<QgsMarkerSymbolLayer> backgroundToMarkerLayer( const QgsTextBack
         layer.reset( static_cast< QgsMarkerSymbolLayer * >( settings.markerSymbol()->symbolLayer( 0 )->clone() ) );
         break;
       }
-      FALLTHROUGH // not set, just go with the default
+      [[fallthrough]]; // not set, just go with the default
     }
     case QgsTextBackgroundSettings::ShapeCircle:
     case QgsTextBackgroundSettings::ShapeEllipse:
@@ -345,10 +345,10 @@ void QgsAbstractVectorLayerLabeling::writeTextSymbolizer( QDomNode &parent, QgsP
       QDomElement pointPlacement = doc.createElement( "se:PointPlacement" );
       labelPlacement.appendChild( pointPlacement );
       // anchor point
-      const QPointF anchor = quadOffsetToSldAnchor( settings.quadOffset );
+      const QPointF anchor = quadOffsetToSldAnchor( settings.pointSettings().quadrant() );
       QgsSymbolLayerUtils::createAnchorPointElement( doc, pointPlacement, anchor );
       // displacement
-      if ( settings.xOffset > 0 || settings.yOffset > 0 )
+      if ( settings.xOffset != 0 || settings.yOffset != 0 )
       {
         const Qgis::RenderUnit offsetUnit =  settings.offsetUnits;
         const double dx = QgsSymbolLayerUtils::rescaleUom( settings.xOffset, offsetUnit, props );

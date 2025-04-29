@@ -53,8 +53,10 @@ class CORE_EXPORT QgsLayoutItemElevationProfile: public QgsLayoutItem
 
     int type() const override;
     QIcon icon() const override;
-    void refreshDataDefinedProperty( QgsLayoutObject::DataDefinedProperty property = QgsLayoutObject::AllProperties ) override;
+    void refreshDataDefinedProperty( QgsLayoutObject::DataDefinedProperty property = QgsLayoutObject::DataDefinedProperty::AllProperties ) override;
     QgsLayoutItem::Flags itemFlags() const override;
+    bool requiresRasterization() const override;
+    bool containsAdvancedEffects() const override;
 
     /**
      * Returns a reference to the elevation plot object, which can be used to
@@ -188,6 +190,15 @@ class CORE_EXPORT QgsLayoutItemElevationProfile: public QgsLayoutItem
     void refresh() override;
     void invalidateCache() override;
 
+  signals:
+
+    /**
+     * Emitted whenever the item's preview has been refreshed.
+     *
+     * \since QGIS 3.34
+     */
+    void previewRefreshed();
+
   protected:
     void draw( QgsLayoutItemRenderContext &context ) override;
     bool writePropertiesToElement( QDomElement &element, QDomDocument &document, const QgsReadWriteContext &context ) const override;
@@ -223,7 +234,6 @@ class CORE_EXPORT QgsLayoutItemElevationProfile: public QgsLayoutItem
     double mPreviewScaleFactor = 0;
     std::unique_ptr< QPainter > mPainter;
     std::unique_ptr< QgsProfilePlotRenderer > mRenderJob;
-    bool mPainterCancelWait = false;
 
 
 };

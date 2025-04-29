@@ -18,6 +18,7 @@
 #include "qgsshadoweffect.h"
 #include "qgsimageoperation.h"
 #include "qgssymbollayerutils.h"
+#include "qgscolorutils.h"
 #include "qgsunittypes.h"
 
 QgsShadowEffect::QgsShadowEffect()
@@ -28,13 +29,13 @@ QgsShadowEffect::QgsShadowEffect()
 
 void QgsShadowEffect::draw( QgsRenderContext &context )
 {
-  if ( !source() || !enabled() || !context.painter() )
+  if ( !enabled() || !context.painter() || source().isNull() )
     return;
 
   if ( context.feedback() && context.feedback()->isCanceled() )
     return;
 
-  QImage colorisedIm = sourceAsImage( context )->copy();
+  QImage colorisedIm = sourceAsImage( context ).copy();
 
   if ( context.feedback() && context.feedback()->isCanceled() )
     return;
@@ -86,7 +87,7 @@ void QgsShadowEffect::draw( QgsRenderContext &context )
 
     //restrict shadow so it's only drawn on top of original image
     imPainter.setCompositionMode( QPainter::CompositionMode_DestinationIn );
-    imPainter.drawImage( 0, 0, *sourceAsImage( context ) );
+    imPainter.drawImage( 0, 0, sourceAsImage( context ) );
     imPainter.end();
 
     painter->drawImage( imageOffset( context ), innerShadowIm );
@@ -111,7 +112,7 @@ QVariantMap QgsShadowEffect::properties() const
   props.insert( QStringLiteral( "offset_distance" ), QString::number( mOffsetDist ) );
   props.insert( QStringLiteral( "offset_unit" ), QgsUnitTypes::encodeUnit( mOffsetUnit ) );
   props.insert( QStringLiteral( "offset_unit_scale" ), QgsSymbolLayerUtils::encodeMapUnitScale( mOffsetMapUnitScale ) );
-  props.insert( QStringLiteral( "color" ), QgsSymbolLayerUtils::encodeColor( mColor ) );
+  props.insert( QStringLiteral( "color" ), QgsColorUtils::colorToString( mColor ) );
   return props;
 }
 
@@ -167,7 +168,7 @@ void QgsShadowEffect::readProperties( const QVariantMap &props )
   mOffsetMapUnitScale = QgsSymbolLayerUtils::decodeMapUnitScale( props.value( QStringLiteral( "offset_unit_scale" ) ).toString() );
   if ( props.contains( QStringLiteral( "color" ) ) )
   {
-    mColor = QgsSymbolLayerUtils::decodeColor( props.value( QStringLiteral( "color" ) ).toString() );
+    mColor = QgsColorUtils::colorFromString( props.value( QStringLiteral( "color" ) ).toString() );
   }
 }
 

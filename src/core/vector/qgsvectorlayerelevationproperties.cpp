@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgsvectorlayerelevationproperties.h"
+#include "moc_qgsvectorlayerelevationproperties.cpp"
 #include "qgslinesymbol.h"
 #include "qgsfillsymbol.h"
 #include "qgsmarkersymbol.h"
@@ -188,13 +189,13 @@ QString QgsVectorLayerElevationProperties::htmlSummary() const
   {
     switch ( mDataDefinedProperties.property( Property::ZOffset ).propertyType() )
     {
-      case QgsProperty::InvalidProperty:
-      case QgsProperty::StaticProperty:
+      case Qgis::PropertyType::Invalid:
+      case Qgis::PropertyType::Static:
         break;
-      case QgsProperty::FieldBasedProperty:
+      case Qgis::PropertyType::Field:
         properties << tr( "Offset: %1" ).arg( mDataDefinedProperties.property( Property::ZOffset ).field() );
         break;
-      case QgsProperty::ExpressionBasedProperty:
+      case Qgis::PropertyType::Expression:
         properties << tr( "Offset: %1" ).arg( mDataDefinedProperties.property( Property::ZOffset ).expressionString() );
         break;
     }
@@ -210,13 +211,13 @@ QString QgsVectorLayerElevationProperties::htmlSummary() const
     {
       switch ( mDataDefinedProperties.property( Property::ExtrusionHeight ).propertyType() )
       {
-        case QgsProperty::InvalidProperty:
-        case QgsProperty::StaticProperty:
+        case Qgis::PropertyType::Invalid:
+        case Qgis::PropertyType::Static:
           break;
-        case QgsProperty::FieldBasedProperty:
+        case Qgis::PropertyType::Field:
           properties << tr( "Extrusion: %1" ).arg( mDataDefinedProperties.property( Property::ExtrusionHeight ).field() );
           break;
-        case QgsProperty::ExpressionBasedProperty:
+        case Qgis::PropertyType::Expression:
           properties << tr( "Extrusion: %1" ).arg( mDataDefinedProperties.property( Property::ExtrusionHeight ).expressionString() );
           break;
       }
@@ -232,7 +233,7 @@ QString QgsVectorLayerElevationProperties::htmlSummary() const
   return QStringLiteral( "<li>%1</li>" ).arg( properties.join( QLatin1String( "</li><li>" ) ) );
 }
 
-bool QgsVectorLayerElevationProperties::isVisibleInZRange( const QgsDoubleRange & ) const
+bool QgsVectorLayerElevationProperties::isVisibleInZRange( const QgsDoubleRange &, QgsMapLayer * ) const
 {
   // TODO -- test actual layer z range
   return true;

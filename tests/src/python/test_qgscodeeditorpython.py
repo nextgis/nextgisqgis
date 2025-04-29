@@ -5,30 +5,25 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Yoann Quenach de Quivillic'
-__date__ = '31/03/2023'
-__copyright__ = 'Copyright 2023, The QGIS Project'
+
+__author__ = "Yoann Quenach de Quivillic"
+__date__ = "31/03/2023"
+__copyright__ = "Copyright 2023, The QGIS Project"
 
 
-import qgis  # NOQA
 from qgis.PyQt.QtCore import QCoreApplication, Qt
 from qgis.PyQt.QtTest import QTest
 from qgis.core import QgsSettings
 from qgis.gui import QgsCodeEditorPython
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 
-COMPLETIONS_PAIRS = {
-    "(": ")",
-    "[": "]",
-    "{": "}",
-    "'": "'",
-    "\"": "\""
-}
+COMPLETIONS_PAIRS = {"(": ")", "[": "]", "{": "}", "'": "'", '"': '"'}
 COMPLETIONS_SINGLE_CHARACTERS = ["`", "*"]
 
 
-class TestQgsCodeEditorPython(unittest.TestCase):
+class TestQgsCodeEditorPython(QgisTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -44,7 +39,7 @@ class TestQgsCodeEditorPython(unittest.TestCase):
         QgsSettings().clear()
 
     def testAutoSurround(self):
-        self.assertEqual(QgsSettings().value('pythonConsole/autoSurround'), None)
+        self.assertEqual(QgsSettings().value("pythonConsole/autoSurround"), None)
 
         editor = QgsCodeEditorPython()
 
@@ -78,7 +73,10 @@ class TestQgsCodeEditorPython(unittest.TestCase):
             text = editor.text()
             # Select the whole text
             QTest.keyClicks(editor, opening)
-            self.assertEqual(editor.text(), text.replace(test_string, opening + test_string + closing))
+            self.assertEqual(
+                editor.text(),
+                text.replace(test_string, opening + test_string + closing),
+            )
 
         # Check multiline autosurround with quotes (should insert triple quotes)
         test_string = "Hello\nWorld"
@@ -89,12 +87,12 @@ class TestQgsCodeEditorPython(unittest.TestCase):
 
         editor.setText(test_string)
         editor.selectAll()
-        QTest.keyClicks(editor, "\"")
+        QTest.keyClicks(editor, '"')
         self.assertEqual(editor.text(), f'"""{test_string}"""')
 
         # Check disabled autosurround
         test_string = "will not be surrounded"
-        QgsSettings().setValue('pythonConsole/autoSurround', False)
+        QgsSettings().setValue("pythonConsole/autoSurround", False)
         editor.setText(test_string)
         editor.selectAll()
         QTest.keyClicks(editor, "(")
@@ -102,7 +100,7 @@ class TestQgsCodeEditorPython(unittest.TestCase):
 
     def testAutoCloseBrackets(self):
 
-        self.assertEqual(QgsSettings().value('pythonConsole/autoCloseBracket'), None)
+        self.assertEqual(QgsSettings().value("pythonConsole/autoCloseBracket"), None)
 
         editor = QgsCodeEditorPython()
 
@@ -119,9 +117,9 @@ class TestQgsCodeEditorPython(unittest.TestCase):
             self.assertEqual(editor.getCursorPosition(), (0, 2))
 
             # Pressing backspace while inside an opening/closing pair should remove both characters
-            QTest.keyClick(editor, Qt.Key_Left)
+            QTest.keyClick(editor, Qt.Key.Key_Left)
             self.assertEqual(editor.getCursorPosition(), (0, 1))
-            QTest.keyClick(editor, Qt.Key_Backspace)
+            QTest.keyClick(editor, Qt.Key.Key_Backspace)
             self.assertEqual(editor.text(), "")
 
             editor.clear()
@@ -172,7 +170,7 @@ class TestQgsCodeEditorPython(unittest.TestCase):
         editor.clear()
 
         # Check disabled auto close brackets
-        QgsSettings().setValue('pythonConsole/autoCloseBracket', False)
+        QgsSettings().setValue("pythonConsole/autoCloseBracket", False)
 
         QTest.keyClicks(editor, "{")
         self.assertEqual(editor.text(), "{")
@@ -184,27 +182,27 @@ class TestQgsCodeEditorPython(unittest.TestCase):
 
         # Check single line comment
         editor.setText("#Hello World")
-        QTest.keyClick(editor, ':', Qt.ControlModifier)
+        QTest.keyClick(editor, ":", Qt.KeyboardModifier.ControlModifier)
         self.assertEqual(editor.text(), "Hello World")
-        QTest.keyClick(editor, ':', Qt.ControlModifier)
+        QTest.keyClick(editor, ":", Qt.KeyboardModifier.ControlModifier)
         self.assertEqual(editor.text(), "# Hello World")
 
         # Check multiline comment
         editor.setText("Hello\nQGIS\nWorld")
         editor.setSelection(0, 0, 1, 4)
-        QTest.keyClick(editor, ':', Qt.ControlModifier)
+        QTest.keyClick(editor, ":", Qt.KeyboardModifier.ControlModifier)
         self.assertEqual(editor.text(), "# Hello\n# QGIS\nWorld")
-        QTest.keyClick(editor, ':', Qt.ControlModifier)
+        QTest.keyClick(editor, ":", Qt.KeyboardModifier.ControlModifier)
         self.assertEqual(editor.text(), "Hello\nQGIS\nWorld")
 
         # Check multiline comment with already commented lines
         editor.setText("Hello\n# QGIS\nWorld")
         editor.setSelection(0, 0, 2, 4)
-        QTest.keyClick(editor, ':', Qt.ControlModifier)
+        QTest.keyClick(editor, ":", Qt.KeyboardModifier.ControlModifier)
         self.assertEqual(editor.text(), "# Hello\n# # QGIS\n# World")
-        QTest.keyClick(editor, ':', Qt.ControlModifier)
+        QTest.keyClick(editor, ":", Qt.KeyboardModifier.ControlModifier)
         self.assertEqual(editor.text(), "Hello\n# QGIS\nWorld")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

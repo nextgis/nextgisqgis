@@ -19,6 +19,7 @@
 
 #include <QByteArray>
 #include <QColor>
+#include <QLocale>
 
 #include "qgslogger.h"
 #include "qgsrasterblock.h"
@@ -506,9 +507,35 @@ char *QgsRasterBlock::bits( qgssize index )
   {
     return reinterpret_cast< char * >( mData ) + index * mTypeSize;
   }
-  if ( mImage && mImage->bits() )
+  if ( mImage )
   {
-    return reinterpret_cast< char * >( mImage->bits() + index * 4 );
+    if ( uchar *data = mImage->bits() )
+    {
+      return reinterpret_cast< char * >( data + index * 4 );
+    }
+  }
+
+  return nullptr;
+}
+
+const char *QgsRasterBlock::constBits( qgssize index ) const
+{
+  // Not testing type to avoid too much overhead because this method is called per pixel
+  if ( index >= static_cast< qgssize >( mWidth )*mHeight )
+  {
+    QgsDebugMsgLevel( QStringLiteral( "Index %1 out of range (%2 x %3)" ).arg( index ).arg( mWidth ).arg( mHeight ), 4 );
+    return nullptr;
+  }
+  if ( mData )
+  {
+    return reinterpret_cast< const char * >( mData ) + index * mTypeSize;
+  }
+  if ( mImage )
+  {
+    if ( const uchar *data = mImage->constBits() )
+    {
+      return reinterpret_cast< const char * >( data + index * 4 );
+    }
   }
 
   return nullptr;
@@ -525,9 +552,29 @@ char *QgsRasterBlock::bits()
   {
     return reinterpret_cast< char * >( mData );
   }
-  if ( mImage && mImage->bits() )
+  if ( mImage )
   {
-    return reinterpret_cast< char * >( mImage->bits() );
+    if ( uchar *data = mImage->bits() )
+    {
+      return reinterpret_cast< char * >( data );
+    }
+  }
+
+  return nullptr;
+}
+
+const char *QgsRasterBlock::constBits() const
+{
+  if ( mData )
+  {
+    return reinterpret_cast< const char * >( mData );
+  }
+  if ( mImage )
+  {
+    if ( const uchar *data = mImage->constBits() )
+    {
+      return reinterpret_cast< const char * >( data );
+    }
   }
 
   return nullptr;
@@ -624,7 +671,7 @@ bool QgsRasterBlock::setImage( const QImage *image )
   return true;
 }
 
-QString QgsRasterBlock::printValue( double value )
+QString QgsRasterBlock::printValue( double value, bool localized )
 {
   /*
    *  IEEE 754 double has 15-17 significant digits. It specifies:
@@ -653,8 +700,13 @@ QString QgsRasterBlock::printValue( double value )
   for ( int i = 15; i <= 17; i++ )
   {
     s.setNum( value, 'g', i );
-    if ( qgsDoubleNear( s.toDouble(), value ) )
+    const double doubleValue { s.toDouble( ) };
+    if ( qgsDoubleNear( doubleValue, value ) )
     {
+      if ( localized )
+      {
+        return QLocale().toString( doubleValue, 'g', i );
+      }
       return s;
     }
   }
@@ -663,7 +715,7 @@ QString QgsRasterBlock::printValue( double value )
   return s;
 }
 
-QString QgsRasterBlock::printValue( float value )
+QString QgsRasterBlock::printValue( float value, bool localized )
 {
   /*
    *  IEEE 754 double has 6-9 significant digits. See printValue(double)
@@ -674,8 +726,13 @@ QString QgsRasterBlock::printValue( float value )
   for ( int i = 6; i <= 9; i++ )
   {
     s.setNum( value, 'g', i );
-    if ( qgsFloatNear( s.toFloat(), value ) )
+    const float floatValue { s.toFloat() };
+    if ( qgsFloatNear( floatValue, value ) )
     {
+      if ( localized )
+      {
+        return QLocale().toString( floatValue, 'g', i );
+      }
       return s;
     }
   }

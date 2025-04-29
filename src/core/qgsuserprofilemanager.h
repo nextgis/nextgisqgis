@@ -37,7 +37,6 @@
  *
  * A user profile is all settings and anything that used to be found in .qgis3 in the users home folder.
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsUserProfileManager : public QObject
 {
@@ -144,7 +143,7 @@ class CORE_EXPORT QgsUserProfileManager : public QObject
     void setDefaultFromActive();
 
     /**
-     * Returns the name of the most recently closed profile. Empty if its the first time QGIS has been run.
+     * Returns the name of the most recently closed profile. Empty if it is the first time QGIS is run.
      * \since QGIS 3.32
      */
     QString lastProfileName() const;

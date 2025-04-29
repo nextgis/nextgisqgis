@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/raster/qgsrasterminmaxwidget.h                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,14 +11,13 @@
 
 
 
-class QgsRasterMinMaxWidget: QWidget
+class QgsRasterMinMaxWidget : QWidget
 {
 
 %TypeHeaderCode
 #include "qgsrasterminmaxwidget.h"
 %End
   public:
-
     QgsRasterMinMaxWidget( QgsRasterLayer *layer, QWidget *parent /TransferThis/ = 0 );
 %Docstring
 Constructor for QgsRasterMinMaxWidget
@@ -38,15 +37,14 @@ Sets the extent to use for minimum and maximum value calculation.
 
     void setMapCanvas( QgsMapCanvas *canvas );
 %Docstring
-Sets the map canvas associated with the widget. This allows the widget to retrieve the current
-map extent from the canvas. If a canvas is set it will take precedence over any extent
-set from calling :py:func:`~QgsRasterMinMaxWidget.setExtent`.
+Sets the map canvas associated with the widget. This allows the widget
+to retrieve the current map extent from the canvas. If a canvas is set
+it will take precedence over any extent set from calling
+:py:func:`~QgsRasterMinMaxWidget.setExtent`.
 
 :param canvas: map canvas
 
 .. seealso:: :py:func:`mapCanvas`
-
-.. versionadded:: 2.16
 %End
 
     QgsMapCanvas *mapCanvas();
@@ -54,16 +52,14 @@ set from calling :py:func:`~QgsRasterMinMaxWidget.setExtent`.
 Returns the map canvas associated with the widget.
 
 .. seealso:: :py:func:`setMapCanvas`
-
-.. versionadded:: 2.16
 %End
 
     void setBands( const QList<int> &bands );
 
     QgsRectangle extent();
 %Docstring
-Returns the extent selected by the user.
-Either an empty extent for 'full' or the current visible extent.
+Returns the extent selected by the user. Either an empty extent for
+'full' or the current visible extent.
 %End
 
     int sampleSize();
@@ -78,7 +74,8 @@ Sets the "source" of min/max values.
 
     QgsRasterMinMaxOrigin minMaxOrigin();
 %Docstring
-Returns a :py:class:`QgsRasterMinMaxOrigin` object with the widget values.
+Returns a :py:class:`QgsRasterMinMaxOrigin` object with the widget
+values.
 %End
 
     void hideUpdatedExtent();
@@ -110,8 +107,8 @@ Sets collapsed state of widget
 
     void widgetChanged();
 %Docstring
-Emitted when something on the widget has changed.
-All widgets will fire this event to notify of an internal change.
+Emitted when something on the widget has changed. All widgets will fire
+this event to notify of an internal change.
 %End
 
     void load( int bandNo, double min, double max );
@@ -126,5 +123,5 @@ signal emitted when new min/max values are computed from statistics.
  *                                                                      *
  * src/gui/raster/qgsrasterminmaxwidget.h                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

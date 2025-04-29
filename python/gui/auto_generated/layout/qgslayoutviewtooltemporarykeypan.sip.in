@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/layout/qgslayoutviewtooltemporarykeypan.h                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,16 +11,14 @@
 class QgsLayoutViewToolTemporaryKeyPan : QgsLayoutViewTool
 {
 %Docstring(signature="appended")
-Layout view tool for temporarily panning a layout while a key is depressed.
-
-.. versionadded:: 3.0
+Layout view tool for temporarily panning a layout while a key is
+depressed.
 %End
 
 %TypeHeaderCode
 #include "qgslayoutviewtooltemporarykeypan.h"
 %End
   public:
-
     QgsLayoutViewToolTemporaryKeyPan( QgsLayoutView *view /TransferThis/ );
 %Docstring
 Constructor for QgsLayoutViewToolTemporaryKeyPan.
@@ -40,5 +38,5 @@ Constructor for QgsLayoutViewToolTemporaryKeyPan.
  *                                                                      *
  * src/gui/layout/qgslayoutviewtooltemporarykeypan.h                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

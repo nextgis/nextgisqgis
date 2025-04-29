@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgsauthbasicedit.h"
+#include "moc_qgsauthbasicedit.cpp"
 #include "ui_qgsauthbasicedit.h"
 
 
@@ -23,7 +24,6 @@ QgsAuthBasicEdit::QgsAuthBasicEdit( QWidget *parent )
 {
   setupUi( this );
   connect( leUsername, &QLineEdit::textChanged, this, &QgsAuthBasicEdit::leUsername_textChanged );
-  connect( chkPasswordShow, &QCheckBox::stateChanged, this, &QgsAuthBasicEdit::chkPasswordShow_stateChanged );
 }
 
 bool QgsAuthBasicEdit::validateConfig()
@@ -69,16 +69,10 @@ void QgsAuthBasicEdit::clearConfig()
   leUsername->clear();
   lePassword->clear();
   leRealm->clear();
-  chkPasswordShow->setChecked( false );
 }
 
 void QgsAuthBasicEdit::leUsername_textChanged( const QString &txt )
 {
   Q_UNUSED( txt )
   validateConfig();
-}
-
-void QgsAuthBasicEdit::chkPasswordShow_stateChanged( int state )
-{
-  lePassword->setEchoMode( ( state > 0 ) ? QLineEdit::Normal : QLineEdit::Password );
 }

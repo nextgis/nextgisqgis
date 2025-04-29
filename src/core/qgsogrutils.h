@@ -187,7 +187,6 @@ namespace gdal
  *
  * Contains helper utilities for assisting work with both OGR features and layers.
  * \note not available in Python bindings
- * \since QGIS 2.16
  */
 class CORE_EXPORT QgsOgrUtils
 {
@@ -408,7 +407,7 @@ class CORE_EXPORT QgsOgrUtils
      * \note Not available in Python bindings
      * \since QGIS 3.26
      */
-    static void ogrFieldTypeToQVariantType( OGRFieldType ogrType, OGRFieldSubType ogrSubType, QVariant::Type &variantType, QVariant::Type &variantSubType ) SIP_SKIP;
+    static void ogrFieldTypeToQVariantType( OGRFieldType ogrType, OGRFieldSubType ogrSubType, QMetaType::Type &variantType, QMetaType::Type &variantSubType ) SIP_SKIP;
 
     /**
      * Converts an QVariant type to the best matching OGR field type and sub type.
@@ -420,7 +419,7 @@ class CORE_EXPORT QgsOgrUtils
      * \note Not available in Python bindings
      * \since QGIS 3.26
      */
-    static void variantTypeToOgrFieldType( QVariant::Type variantType, OGRFieldType &ogrType, OGRFieldSubType &ogrSubType ) SIP_SKIP;
+    static void variantTypeToOgrFieldType( QMetaType::Type variantType, OGRFieldType &ogrType, OGRFieldSubType &ogrSubType ) SIP_SKIP;
 
     /**
      * Converts a string to a variant, using the provider OGR field \a type and \a subType to determine the most appropriate
@@ -484,6 +483,53 @@ class CORE_EXPORT QgsOgrUtils
 #endif
 #endif
 
+    /**
+     * Helper function for listing styles in ogr/gdal database datasources.
+     *
+     * \since QGIS 3.34
+     */
+    static int listStyles( GDALDatasetH hDS, const QString &layerName,
+                           const QString &geomColumn, QStringList &ids, QStringList &names,
+                           QStringList &descriptions, QString &errCause );
+
+    /**
+     * Helper function for checking whether a style exists in ogr/gdal database datasources.
+     *
+     * \since QGIS 3.34
+     */
+    static bool styleExists( GDALDatasetH hDS, const QString &layerName, const QString &geomColumn, const QString &styleId, QString &errorCause );
+
+    /**
+     * Helper function for getting a style by ID from ogr/gdal database datasources.
+     *
+     * \since QGIS 3.34
+     */
+    static QString getStyleById( GDALDatasetH hDS, const QString &styleId, QString &errCause );
+
+    /**
+     * Helper function for saving a style to ogr/gdal database datasources.
+     *
+     * \since QGIS 3.34
+     */
+    static bool saveStyle( GDALDatasetH hDS, const QString &layerName,
+                           const QString &geomColumn, const QString &qmlStyle, const QString &sldStyle,
+                           const QString &styleName, const QString &styleDescription,
+                           const QString &uiFileContent, bool useAsDefault, QString &errCause
+                         );
+
+    /**
+     * Helper function for deleting a style by id from ogr/gdal database datasources.
+     *
+     * \since QGIS 3.34
+     */
+    static bool deleteStyleById( GDALDatasetH hDS, const QString &styleId, QString &errCause );
+
+    /**
+     * Helper function for loading a stored styles in ogr/gdal database datasources.
+     *
+     * \since QGIS 3.34
+     */
+    static QString loadStoredStyle( GDALDatasetH hDS, const QString &layerName, const QString &geomColumn, QString &styleName, QString &errCause );
 };
 
 #endif // QGSOGRUTILS_H

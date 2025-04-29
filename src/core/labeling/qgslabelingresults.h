@@ -29,7 +29,6 @@ class QgsLabelSearchTree;
 /**
  * \ingroup core
  * \brief Class that stores computed placement from labeling engine.
- * \since QGIS 2.4
  */
 class CORE_EXPORT QgsLabelingResults
 {
@@ -37,9 +36,7 @@ class CORE_EXPORT QgsLabelingResults
     QgsLabelingResults();
     ~QgsLabelingResults();
 
-    //! QgsLabelingResults cannot be copied.
     QgsLabelingResults( const QgsLabelingResults & ) = delete;
-    //! QgsLabelingResults cannot be copied.
     QgsLabelingResults &operator=( const QgsLabelingResults &rh ) = delete;
 
     /**

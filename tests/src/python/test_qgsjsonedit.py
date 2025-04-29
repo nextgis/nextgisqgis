@@ -5,21 +5,23 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Damiano Lombardi'
-__date__ = '2021-05-10'
-__copyright__ = 'Copyright 2021, The QGIS Project'
+
+__author__ = "Damiano Lombardi"
+__date__ = "2021-05-10"
+__copyright__ = "Copyright 2021, The QGIS Project"
 
 
 from qgis.gui import QgsJsonEditWidget
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 start_app()
 
 
-class TestQgsJsonEdit(unittest.TestCase):
+class TestQgsJsonEdit(QgisTestCase):
 
     def testSettersGetters(self):
-        """ test widget handling of null values """
+        """test widget handling of null values"""
         w = QgsJsonEditWidget()
 
         jsonText = '{"someText": "JSON edit widget test"}'
@@ -28,5 +30,5 @@ class TestQgsJsonEdit(unittest.TestCase):
         self.assertEqual(w.jsonText(), jsonText)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

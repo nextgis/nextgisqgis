@@ -3,14 +3,15 @@
  *                                                                      *
  * src/core/numericformats/qgsscientificnumericformat.h                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 class QgsScientificNumericFormat : QgsBasicNumericFormat
 {
 %Docstring(signature="appended")
-A numeric formatter which returns a scientific notation representation of a value.
+A numeric formatter which returns a scientific notation representation
+of a value.
 
 .. versionadded:: 3.12
 %End
@@ -60,5 +61,5 @@ The ``places`` argument must be at least 1.
  *                                                                      *
  * src/core/numericformats/qgsscientificnumericformat.h                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

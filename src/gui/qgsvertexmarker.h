@@ -23,10 +23,10 @@
 class QPainter;
 
 #ifdef SIP_RUN
-% ModuleHeaderCode
+//%ModuleHeaderCode
 // For ConvertToSubClassCode.
 #include <qgsvertexmarker.h>
-% End
+//%End
 #endif
 
 /**
@@ -35,7 +35,6 @@ class QPainter;
  */
 class GUI_EXPORT QgsVertexMarker : public QgsMapCanvasItem
 {
-
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
     if ( dynamic_cast<QgsVertexMarker *>( sipCpp ) )
@@ -45,7 +44,6 @@ class GUI_EXPORT QgsVertexMarker : public QgsMapCanvasItem
     SIP_END
 #endif
   public:
-
     //! Icons
     enum IconType
     {
@@ -54,9 +52,9 @@ class GUI_EXPORT QgsVertexMarker : public QgsMapCanvasItem
       ICON_X,
       ICON_BOX,
       ICON_CIRCLE,
-      ICON_DOUBLE_TRIANGLE,    //!< Added in QGIS 3.0
-      ICON_TRIANGLE,  //!< Added in QGIS 3.12
-      ICON_RHOMBUS,  //!< Added in QGIS 3.12
+      ICON_DOUBLE_TRIANGLE,   //!< Added in QGIS 3.0
+      ICON_TRIANGLE,          //!< Added in QGIS 3.12
+      ICON_RHOMBUS,           //!< Added in QGIS 3.12
       ICON_INVERTED_TRIANGLE, //!< Added in QGIS 3.20
     };
 
@@ -92,7 +90,6 @@ class GUI_EXPORT QgsVertexMarker : public QgsMapCanvasItem
      * Returns the stroke color for the marker.
      * \see setColor()
      * \see fillColor()
-     * \since QGIS 3.0
      */
     QColor color() const { return mColor; }
 
@@ -101,7 +98,6 @@ class GUI_EXPORT QgsVertexMarker : public QgsMapCanvasItem
      * applies to some icon types.
      * \see fillColor()
      * \see setColor()
-     * \since QGIS 3.0
      */
     void setFillColor( const QColor &color );
 
@@ -110,7 +106,6 @@ class GUI_EXPORT QgsVertexMarker : public QgsMapCanvasItem
      * applies to some icon types.
      * \see setFillColor()
      * \see color()
-     * \since QGIS 3.0
      */
     QColor fillColor() const { return mFillColor; }
 
@@ -123,7 +118,6 @@ class GUI_EXPORT QgsVertexMarker : public QgsMapCanvasItem
     void updatePosition() override;
 
   private:
-
     void updatePath();
 
     //! icon to be shown
@@ -145,7 +139,6 @@ class GUI_EXPORT QgsVertexMarker : public QgsMapCanvasItem
 
     //! Fill color
     QColor mFillColor = QColor( 0, 0, 0, 0 );
-
 };
 
 #endif

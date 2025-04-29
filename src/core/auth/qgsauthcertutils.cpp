@@ -27,10 +27,10 @@
 #include "qgsauthmanager.h"
 #include "qgslogger.h"
 
-// #ifdef Q_OS_MAC
-// #include <string.h>
-// #include "libtasn1.h"
-// #endif
+#ifdef Q_OS_MAC
+#include <string.h>
+#include "libtasn1.h"
+#endif
 
 
 QString QgsAuthCertUtils::getSslProtocolName( QSsl::SslProtocol protocol )
@@ -39,19 +39,8 @@ QString QgsAuthCertUtils::getSslProtocolName( QSsl::SslProtocol protocol )
   {
     case QSsl::SecureProtocols:
       return QObject::tr( "SecureProtocols" );
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    case QSsl::TlsV1SslV3:
-      return QObject::tr( "TlsV1SslV3" );
-#endif
     case QSsl::TlsV1_0:
       return QObject::tr( "TlsV1" );
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    // not supported by Qt 5.15+
-    case QSsl::SslV3:
-      return QObject::tr( "SslV3" );
-    case QSsl::SslV2:
-      return QObject::tr( "SslV2" );
-#endif
     default:
       return QString();
   }
@@ -300,7 +289,7 @@ bool QgsAuthCertUtils::pemIsPkcs8( const QString &keyPemTxt )
   return keyPemTxt.contains( pkcs8Header ) && keyPemTxt.contains( pkcs8Footer );
 }
 
-#ifdef UNUSED_TMP // Q_OS_MAC
+#ifdef Q_OS_MAC
 QByteArray QgsAuthCertUtils::pkcs8PrivateKey( QByteArray &pkcs8Der )
 {
   QByteArray pkcs1;
@@ -493,7 +482,7 @@ QStringList QgsAuthCertUtils::pkcs12BundleToPem( const QString &bundlepath,
   }
 
   QString keyPem;
-#ifdef UNUSED_TMP // Q_OS_MAC
+#ifdef Q_OS_MAC
   if ( keyalg == QSsl::Rsa && QgsAuthCertUtils::pemIsPkcs8( bundle.privateKey().toPEM() ) )
   {
     QgsDebugMsgLevel( QStringLiteral( "Private key is PKCS#8: attempting conversion to PKCS#1..." ), 4 );
@@ -1118,7 +1107,7 @@ bool QgsAuthCertUtils::certificateIsSslServer( const QSslCertificate &cert )
   bool decipheronly = false;
 
   QCA::PublicKey pubkey( qcacert.subjectPublicKey() );
-  // key size may be 0 for eliptical curve-based keys, in which case isDH() crashes QCA
+  // key size may be 0 for elliptical curve-based keys, in which case isDH() crashes QCA
   if ( pubkey.bitSize() > 0 && pubkey.isDH() )
   {
     keyagree = pubkey.canKeyAgree();

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsarchive.h                                                *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -14,8 +14,6 @@ class QgsArchive
 {
 %Docstring(signature="appended")
 Class allowing to manage the zip/unzip actions
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -24,14 +22,8 @@ Class allowing to manage the zip/unzip actions
   public:
 
     QgsArchive();
-%Docstring
-Constructor
-%End
 
     QgsArchive( const QgsArchive &other );
-%Docstring
-Copy constructor
-%End
 
 
     virtual ~QgsArchive();
@@ -75,7 +67,8 @@ Remove a file from this archive and from the filesystem.
 
 :param filename: The path of the file to remove
 
-:return: ``True`` if the file has been removed from the filesystem, ``False`` otherwise
+:return: ``True`` if the file has been removed from the filesystem,
+         ``False`` otherwise
 %End
 
     QStringList files() const;
@@ -90,7 +83,8 @@ Returns the current temporary directory.
 
     bool exists() const;
 %Docstring
-Returns ``True`` if the archive exists on the filesystem, ``False`` otherwise.
+Returns ``True`` if the archive exists on the filesystem, ``False``
+otherwise.
 
 .. versionadded:: 3.20
 %End
@@ -101,8 +95,6 @@ class QgsProjectArchive : QgsArchive
 {
 %Docstring(signature="appended")
 Class allowing to manage the zip/unzip actions on project file
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -146,5 +138,5 @@ there's none
  *                                                                      *
  * src/core/qgsarchive.h                                                *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

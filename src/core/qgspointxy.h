@@ -20,6 +20,7 @@
 
 #include "qgis_core.h"
 #include "qgsvector.h"
+#include "qgsgeometryutils_base.h"
 
 #include "qgis.h"
 
@@ -27,6 +28,7 @@
 #include <QString>
 #include <QPoint>
 #include <QObject>
+#include <qglobal.h>
 
 class QgsPoint;
 
@@ -53,7 +55,6 @@ class QgsPoint;
  * - Storage of coordinates for a geometry. Since QgsPointXY is strictly 2-dimensional it should never be used to store coordinates for vector geometries, as this will involve a loss of any z or m values present in the geometry.
  *
  * \see QgsPoint
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsPointXY
 {
@@ -63,10 +64,9 @@ class CORE_EXPORT QgsPointXY
     Q_PROPERTY( double y READ y WRITE setY )
 
   public:
-    /// Default constructor
+
     QgsPointXY() = default;
 
-    //! Create a point from another point
     QgsPointXY( const QgsPointXY &p ) SIP_HOLDGIL;
 
     /**
@@ -83,7 +83,6 @@ class CORE_EXPORT QgsPointXY
     /**
      * Create a point from a QPointF
      * \param point QPointF source
-     * \since QGIS 2.7
      */
     QgsPointXY( QPointF point ) SIP_HOLDGIL
   : mX( point.x() )
@@ -94,7 +93,6 @@ class CORE_EXPORT QgsPointXY
     /**
      * Create a point from a QPoint
      * \param point QPoint source
-     * \since QGIS 2.7
      */
     QgsPointXY( QPoint point ) SIP_HOLDGIL
   : mX( point.x() )
@@ -106,7 +104,6 @@ class CORE_EXPORT QgsPointXY
      * Create a new point.
      * Z and M values will be dropped.
      *
-     * \since QGIS 3.0
      */
     QgsPointXY( const QgsPoint &point ) SIP_HOLDGIL;
 
@@ -164,7 +161,6 @@ class CORE_EXPORT QgsPointXY
     /**
      * Converts a point to a QPointF
      * \returns QPointF with same x and y values
-     * \since QGIS 2.7
      */
     QPointF toQPointF() const
     {
@@ -189,7 +185,7 @@ class CORE_EXPORT QgsPointXY
     */
     double sqrDist( double x, double y ) const SIP_HOLDGIL
     {
-      return ( mX - x ) * ( mX - x ) + ( mY - y ) * ( mY - y );
+      return QgsGeometryUtilsBase::sqrDistance2D( mX, mY, x, y );
     }
 
     /**
@@ -198,7 +194,7 @@ class CORE_EXPORT QgsPointXY
     */
     double sqrDist( const QgsPointXY &other ) const SIP_HOLDGIL
     {
-      return sqrDist( other.x(), other.y() );
+      return QgsGeometryUtilsBase::sqrDistance2D( mX, mY, other.x(), other.y() );
     }
 
     /**
@@ -206,22 +202,20 @@ class CORE_EXPORT QgsPointXY
      * \param x x-coordniate
      * \param y y-coordinate
      * \see sqrDist()
-     * \since QGIS 2.16
     */
     double distance( double x, double y ) const SIP_HOLDGIL
     {
-      return std::sqrt( sqrDist( x, y ) );
+      return QgsGeometryUtilsBase::distance2D( mX, mY, x, y );
     }
 
     /**
      * Returns the distance between this point and another point.
      * \param other other point
      * \see sqrDist()
-     * \since QGIS 2.16
     */
     double distance( const QgsPointXY &other ) const SIP_HOLDGIL
     {
-      return std::sqrt( sqrDist( other ) );
+      return QgsGeometryUtilsBase::distance2D( mX, mY, other.x(), other.y() );
     }
 
     //! Returns the minimum distance between this point and a segment
@@ -235,7 +229,6 @@ class CORE_EXPORT QgsPointXY
      * in a specified bearing.
      * \param distance distance to project
      * \param bearing angle to project in, clockwise in degrees starting from north
-     * \since QGIS 2.16
      */
     QgsPointXY project( double distance, double bearing ) const SIP_HOLDGIL;
 
@@ -253,15 +246,31 @@ class CORE_EXPORT QgsPointXY
      * \param other point to compare with
      * \param epsilon maximum difference for coordinates between the points
      * \returns TRUE if points are equal within specified tolerance
-     * \since QGIS 2.9
+     *
+     * \see distanceCompare
+     *
      */
     bool compare( const QgsPointXY &other, double epsilon = 4 * std::numeric_limits<double>::epsilon() ) const SIP_HOLDGIL
     {
-      return ( qgsDoubleNear( mX, other.x(), epsilon ) && qgsDoubleNear( mY, other.y(), epsilon ) );
+      return QgsGeometryUtilsBase::fuzzyEqual( epsilon, mX, mY, other.x(), other.y() );
     }
 
-    //! equality operator
-    bool operator==( const QgsPointXY &other ) SIP_HOLDGIL
+    /**
+     * Compares this point with another point with a fuzzy tolerance using distance comparison
+     * \param other point to compare with
+     * \param epsilon maximum difference for coordinates between the points
+     * \returns TRUE if points are equal within specified tolerance
+     *
+     * \see compare
+     *
+     * \since QGIS 3.36
+     */
+    bool distanceCompare( const QgsPointXY &other, double epsilon = 4 * std::numeric_limits<double>::epsilon() ) const SIP_HOLDGIL
+    {
+      return QgsGeometryUtilsBase::fuzzyDistanceEqual( epsilon, mX, mY, other.x(), other.y() );
+    }
+
+    bool operator==( const QgsPointXY &other ) const SIP_HOLDGIL
     {
       if ( isEmpty() && other.isEmpty() )
         return true;
@@ -270,14 +279,9 @@ class CORE_EXPORT QgsPointXY
       if ( ! isEmpty() && other.isEmpty() )
         return false;
 
-      bool equal = true;
-      equal &= qgsDoubleNear( other.x(), mX, 1E-8 );
-      equal &= qgsDoubleNear( other.y(), mY, 1E-8 );
-
-      return equal;
+      return QgsGeometryUtilsBase::fuzzyEqual( 1E-8, mX, mY, other.x(), other.y() );
     }
 
-    //! Inequality operator
     bool operator!=( const QgsPointXY &other ) const SIP_HOLDGIL
     {
       if ( isEmpty() && other.isEmpty() )
@@ -287,11 +291,7 @@ class CORE_EXPORT QgsPointXY
       if ( ! isEmpty() && other.isEmpty() )
         return true;
 
-      bool equal = true;
-      equal &= qgsDoubleNear( other.x(), mX, 1E-8 );
-      equal &= qgsDoubleNear( other.y(), mY, 1E-8 );
-
-      return !equal;
+      return !QgsGeometryUtilsBase::fuzzyEqual( 1E-8, mX, mY, other.x(), other.y() );
     }
 
     //! Multiply x and y by the given value
@@ -301,7 +301,6 @@ class CORE_EXPORT QgsPointXY
       mY *= scalar;
     }
 
-    //! Assignment
     QgsPointXY &operator=( const QgsPointXY &other ) SIP_HOLDGIL
     {
       if ( &other != this )
@@ -399,26 +398,6 @@ class CORE_EXPORT QgsPointXY
 }; // class QgsPointXY
 
 Q_DECLARE_METATYPE( QgsPointXY )
-
-inline bool operator==( const QgsPointXY &p1, const QgsPointXY &p2 ) SIP_SKIP
-{
-  const bool nan1X = std::isnan( p1.x() );
-  const bool nan2X = std::isnan( p2.x() );
-  if ( nan1X != nan2X )
-    return false;
-  if ( !nan1X && !qgsDoubleNear( p1.x(), p2.x(), 1E-8 ) )
-    return false;
-
-  const bool nan1Y = std::isnan( p1.y() );
-  const bool nan2Y = std::isnan( p2.y() );
-  if ( nan1Y != nan2Y )
-    return false;
-
-  if ( !nan1Y && !qgsDoubleNear( p1.y(), p2.y(), 1E-8 ) )
-    return false;
-
-  return true;
-}
 
 inline std::ostream &operator << ( std::ostream &os, const QgsPointXY &p ) SIP_SKIP
 {

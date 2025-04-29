@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgshttpheaderwidget.h                                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,7 +13,8 @@
 class QgsHttpHeaderWidget : QWidget
 {
 %Docstring(signature="appended")
-Display referer http header field and collapsible table of key/value pairs
+Display referer http header field and collapsible table of key/value
+pairs
 
 .. versionadded:: 3.24
 %End
@@ -22,7 +23,6 @@ Display referer http header field and collapsible table of key/value pairs
 #include "qgshttpheaderwidget.h"
 %End
   public:
-
     explicit QgsHttpHeaderWidget( QWidget *parent = 0 );
 %Docstring
 Default constructor
@@ -33,8 +33,8 @@ Default constructor
 
     QgsHttpHeaders httpHeaders() const;
 %Docstring
-
-:return: build a new ``:py:class:`QgsHttpHeaders``` according to data in the UI
+:return: build a new ``:py:class:`QgsHttpHeaders``` according to data in
+         the UI
 %End
 
     void setHeaders( const QgsHttpHeaders &headers );
@@ -50,11 +50,12 @@ fill the inner header map from the settings defined at ``key``
 
 .. seealso:: :py:func:`QgsHttpHeaders.setFromSettings`
 
-:param settings:
-:param key:
+:param settings: 
+:param key: 
 
-.. deprecated:: QGIS 3.30
-   use setFromHeaders instead
+.. deprecated:: 3.30
+
+   Use setFromHeaders instead.
 %End
 
  void updateSettings( QgsSettings &settings, const QString &key ) const /Deprecated/;
@@ -63,11 +64,12 @@ update the ``settings`` with the http headers present in the inner map.
 
 .. seealso:: :py:func:`QgsHttpHeaders.updateSettings`
 
-:param settings:
-:param key:
+:param settings: 
+:param key: 
 
-.. deprecated:: QGIS 3.30
-   use a variant map for settinds directly
+.. deprecated:: 3.30
+
+   Use a variant map for settinds directly.
 %End
 
 };
@@ -77,5 +79,5 @@ update the ``settings`` with the http headers present in the inner map.
  *                                                                      *
  * src/gui/qgshttpheaderwidget.h                                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

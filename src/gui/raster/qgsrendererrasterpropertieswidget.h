@@ -38,7 +38,6 @@ class GUI_EXPORT QgsRendererRasterPropertiesWidget : public QgsMapLayerConfigWid
     Q_OBJECT
 
   public:
-
     /**
      * A widget to hold the renderer properties for a raster layer.
      * \param layer The raster layer to style
@@ -51,7 +50,6 @@ class GUI_EXPORT QgsRendererRasterPropertiesWidget : public QgsMapLayerConfigWid
      * Sets the map canvas associated with the dialog. This allows the widget to retrieve the current
      * map scale and other properties from the canvas.
      * \param canvas map canvas
-     * \since QGIS 2.12
      */
     void setMapCanvas( QgsMapCanvas *canvas );
 
@@ -107,6 +105,7 @@ class GUI_EXPORT QgsRendererRasterPropertiesWidget : public QgsMapLayerConfigWid
     void updateGammaSlider( double value );
 
   private:
+    static void initRendererWidgetFunctions();
     void setRendererWidget( const QString &rendererName );
 
     QgsRasterLayer *mRasterLayer = nullptr;

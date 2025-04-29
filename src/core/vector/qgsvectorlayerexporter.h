@@ -40,11 +40,10 @@ class QgsFields;
  *
  * QgsVectorLayerExporter can be used in two ways:
  *
- * # Using a static call to QgsVectorLayerExporter::exportLayer(...) which exports the
+ * - Using a static call to QgsVectorLayerExporter::exportLayer(...) which exports the
  *   entire layer to the destination provider.
- * # Create an instance of the class and issue calls to addFeature(...)
+ * - Create an instance of the class and issue calls to addFeature(...)
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsVectorLayerExporter : public QgsFeatureSink
 {
@@ -94,9 +93,7 @@ class CORE_EXPORT QgsVectorLayerExporter : public QgsFeatureSink
                             const QMap<QString, QVariant> &options = QMap<QString, QVariant>(),
                             QgsFeatureSink::SinkFlags sinkFlags = QgsFeatureSink::SinkFlags() );
 
-    //! QgsVectorLayerExporter cannot be copied
     QgsVectorLayerExporter( const QgsVectorLayerExporter &rh ) = delete;
-    //! QgsVectorLayerExporter cannot be copied
     QgsVectorLayerExporter &operator=( const QgsVectorLayerExporter &rh ) = delete;
 
     /**
@@ -175,7 +172,6 @@ class CORE_EXPORT QgsVectorLayerExporter : public QgsFeatureSink
  * QGIS interface.
  * \see QgsVectorFileWriterTask
  * \see QgsRasterFileWriterTask
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsVectorLayerExporterTask : public QgsTask
 {

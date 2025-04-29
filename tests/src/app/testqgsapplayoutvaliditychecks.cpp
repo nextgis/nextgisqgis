@@ -40,10 +40,10 @@ class TestQgsLayoutValidityChecks : public QObject
     TestQgsLayoutValidityChecks();
 
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
-    void init() {} // will be called before each testfunction is executed.
-    void cleanup() {} // will be called after every testfunction.
+    void initTestCase();    // will be called before the first testfunction is executed.
+    void cleanupTestCase(); // will be called after the last testfunction was executed.
+    void init() {}          // will be called before each testfunction is executed.
+    void cleanup() {}       // will be called after every testfunction.
 
     void testScaleBarValidity();
     void testNorthArrowValidity();
@@ -89,7 +89,7 @@ void TestQgsLayoutValidityChecks::testScaleBarValidity()
   // scalebar not linked to map
   QgsLayoutScaleBarValidityCheck check;
   QVERIFY( check.prepareCheck( &context, &f ) );
-  QList< QgsValidityCheckResult > res = check.runCheck( &context, &f );
+  QList<QgsValidityCheckResult> res = check.runCheck( &context, &f );
   QCOMPARE( res.size(), 1 );
   QCOMPARE( res.at( 0 ).type, QgsValidityCheckResult::Warning );
 
@@ -121,7 +121,7 @@ void TestQgsLayoutValidityChecks::testNorthArrowValidity()
   // scalebar not linked to map
   QgsLayoutNorthArrowValidityCheck check;
   QVERIFY( check.prepareCheck( &context, &f ) );
-  QList< QgsValidityCheckResult > res = check.runCheck( &context, &f );
+  QList<QgsValidityCheckResult> res = check.runCheck( &context, &f );
   QCOMPARE( res.size(), 1 );
   QCOMPARE( res.at( 0 ).type, QgsValidityCheckResult::Warning );
 
@@ -168,7 +168,7 @@ void TestQgsLayoutValidityChecks::testOverviewValidity()
   // no overviews
   QgsLayoutOverviewValidityCheck check;
   QVERIFY( check.prepareCheck( &context, &f ) );
-  QList< QgsValidityCheckResult > res = check.runCheck( &context, &f );
+  QList<QgsValidityCheckResult> res = check.runCheck( &context, &f );
   QCOMPARE( res.size(), 0 );
 
   // overview not linked to map
@@ -226,7 +226,7 @@ void TestQgsLayoutValidityChecks::testPictureValidity()
   picture->setPicturePath( QStringLiteral( "blaaaaaaaaaaaaaaaaah" ) );
   QgsLayoutPictureSourceValidityCheck check;
   QVERIFY( check.prepareCheck( &context, &f ) );
-  QList< QgsValidityCheckResult > res = check.runCheck( &context, &f );
+  QList<QgsValidityCheckResult> res = check.runCheck( &context, &f );
   QCOMPARE( res.size(), 1 );
   QCOMPARE( res.at( 0 ).type, QgsValidityCheckResult::Warning );
 
@@ -244,7 +244,7 @@ void TestQgsLayoutValidityChecks::testPictureValidity()
 
   QgsLayoutItemPicture *picture2 = new QgsLayoutItemPicture( &l );
   l.addItem( picture2 );
-  picture2->dataDefinedProperties().setProperty( QgsLayoutObject::PictureSource, QgsProperty::fromExpression( QStringLiteral( "'d:/bad' || 'robot'" ) ) );
+  picture2->dataDefinedProperties().setProperty( QgsLayoutObject::DataDefinedProperty::PictureSource, QgsProperty::fromExpression( QStringLiteral( "'d:/bad' || 'robot'" ) ) );
   l.refresh();
 
   QgsLayoutPictureSourceValidityCheck check4;
@@ -253,21 +253,20 @@ void TestQgsLayoutValidityChecks::testPictureValidity()
   QCOMPARE( res.size(), 1 );
   QCOMPARE( res.at( 0 ).type, QgsValidityCheckResult::Warning );
 
-  picture2->dataDefinedProperties().setProperty( QgsLayoutObject::PictureSource, QgsProperty::fromExpression( QStringLiteral( "''" ) ) );
+  picture2->dataDefinedProperties().setProperty( QgsLayoutObject::DataDefinedProperty::PictureSource, QgsProperty::fromExpression( QStringLiteral( "''" ) ) );
   l.refresh();
   QgsLayoutPictureSourceValidityCheck check5;
   QVERIFY( check5.prepareCheck( &context, &f ) );
   res = check5.runCheck( &context, &f );
   QCOMPARE( res.size(), 0 );
 
-  picture2->dataDefinedProperties().setProperty( QgsLayoutObject::PictureSource, QgsProperty::fromExpression( QStringLiteral( "'%1'" ).arg( QStringLiteral( TEST_DATA_DIR ) + "/sam' || 'ple_svg.svg" ) ) );
+  picture2->dataDefinedProperties().setProperty( QgsLayoutObject::DataDefinedProperty::PictureSource, QgsProperty::fromExpression( QStringLiteral( "'%1'" ).arg( QStringLiteral( TEST_DATA_DIR ) + "/sam' || 'ple_svg.svg" ) ) );
   l.refresh();
   QgsLayoutPictureSourceValidityCheck check6;
   QVERIFY( check6.prepareCheck( &context, &f ) );
   res = check6.runCheck( &context, &f );
   QCOMPARE( res.size(), 0 );
 }
-
 
 
 QGSTEST_MAIN( TestQgsLayoutValidityChecks )

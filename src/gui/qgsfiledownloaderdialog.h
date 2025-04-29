@@ -32,13 +32,11 @@ class QgsFileDownloader;
  *
  * \note Until QGIS 3.0 this functionality was available via QgsFileDownloader.
  *
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsFileDownloaderDialog : public QProgressDialog
 {
     Q_OBJECT
   public:
-
     /**
      * QgsFileDownloader
      * \param url the download url
@@ -65,10 +63,8 @@ class GUI_EXPORT QgsFileDownloaderDialog : public QProgressDialog
     void onDownloadProgress( qint64 bytesReceived, qint64 bytesTotal );
 
   private:
-
     QString mOutputFileName;
     QgsFileDownloader *mDownloader = nullptr;
-
 };
 
 #endif // QGSFILEDOWNLOADERDIALOG_H

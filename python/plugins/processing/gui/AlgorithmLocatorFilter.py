@@ -15,20 +15,22 @@
 ***************************************************************************
 """
 
-__author__ = 'Nyall Dawson'
-__date__ = 'May 2017'
-__copyright__ = '(C) 2017, Nyall Dawson'
+__author__ = "Nyall Dawson"
+__date__ = "May 2017"
+__copyright__ = "(C) 2017, Nyall Dawson"
 
-from qgis.core import (QgsApplication,
-                       QgsProcessingAlgorithm,
-                       QgsProcessingFeatureBasedAlgorithm,
-                       QgsLocatorFilter,
-                       QgsLocatorResult,
-                       QgsProcessing,
-                       QgsWkbTypes,
-                       QgsMapLayerType,
-                       QgsFields,
-                       QgsStringUtils)
+from qgis.core import (
+    QgsApplication,
+    QgsProcessingAlgorithm,
+    QgsProcessingFeatureBasedAlgorithm,
+    QgsLocatorFilter,
+    QgsLocatorResult,
+    QgsProcessing,
+    QgsWkbTypes,
+    QgsMapLayerType,
+    QgsFields,
+    QgsStringUtils,
+)
 from processing.gui.MessageBarProgress import MessageBarProgress
 from processing.gui.MessageDialog import MessageDialog
 from processing.gui.AlgorithmDialog import AlgorithmDialog
@@ -46,28 +48,32 @@ class AlgorithmLocatorFilter(QgsLocatorFilter):
         return AlgorithmLocatorFilter()
 
     def name(self):
-        return 'processing_alg'
+        return "processing_alg"
 
     def displayName(self):
-        return self.tr('Processing Algorithms')
+        return self.tr("Processing Algorithms")
 
     def priority(self):
-        return QgsLocatorFilter.Low
+        return QgsLocatorFilter.Priority.Low
 
     def prefix(self):
-        return 'a'
+        return "a"
 
     def flags(self):
-        return QgsLocatorFilter.FlagFast
+        return QgsLocatorFilter.Flag.FlagFast
 
     def fetchResults(self, string, context, feedback):
         # collect results in main thread, since this method is inexpensive and
         # accessing the processing registry is not thread safe
         for a in QgsApplication.processingRegistry().algorithms():
-            if a.flags() & QgsProcessingAlgorithm.FlagHideFromToolbox:
+            if a.flags() & QgsProcessingAlgorithm.Flag.FlagHideFromToolbox:
                 continue
-            if not ProcessingConfig.getSetting(ProcessingConfig.SHOW_ALGORITHMS_KNOWN_ISSUES) and \
-                    a.flags() & QgsProcessingAlgorithm.FlagKnownIssues:
+            if (
+                not ProcessingConfig.getSetting(
+                    ProcessingConfig.SHOW_ALGORITHMS_KNOWN_ISSUES
+                )
+                and a.flags() & QgsProcessingAlgorithm.Flag.FlagKnownIssues
+            ):
                 continue
 
             result = QgsLocatorResult()
@@ -77,7 +83,7 @@ class AlgorithmLocatorFilter(QgsLocatorFilter):
             result.userData = a.id()
             result.score = 0
 
-            if (context.usingPrefix and not string):
+            if context.usingPrefix and not string:
                 self.resultFetched.emit(result)
 
             if not string:
@@ -98,7 +104,10 @@ class AlgorithmLocatorFilter(QgsLocatorFilter):
                     tagScore = 1
                     break
 
-            result.score = QgsStringUtils.fuzzyScore(result.displayString, string) * 0.5 + tagScore * 0.5
+            result.score = (
+                QgsStringUtils.fuzzyScore(result.displayString, string) * 0.5
+                + tagScore * 0.5
+            )
 
             if result.score > 0:
                 self.resultFetched.emit(result)
@@ -109,9 +118,9 @@ class AlgorithmLocatorFilter(QgsLocatorFilter):
             ok, message = alg.canExecute()
             if not ok:
                 dlg = MessageDialog()
-                dlg.setTitle(self.tr('Missing dependency'))
+                dlg.setTitle(self.tr("Missing dependency"))
                 dlg.setMessage(message)
-                dlg.exec_()
+                dlg.exec()
                 return
             dlg = alg.createCustomParametersWidget(parent=iface.mainWindow())
             if not dlg:
@@ -119,7 +128,7 @@ class AlgorithmLocatorFilter(QgsLocatorFilter):
             canvas = iface.mapCanvas()
             prevMapTool = canvas.mapTool()
             dlg.show()
-            dlg.exec_()
+            dlg.exec()
             if canvas.mapTool() != prevMapTool:
                 try:
                     canvas.mapTool().reset()
@@ -140,29 +149,32 @@ class InPlaceAlgorithmLocatorFilter(QgsLocatorFilter):
         return InPlaceAlgorithmLocatorFilter()
 
     def name(self):
-        return 'edit_features'
+        return "edit_features"
 
     def displayName(self):
-        return self.tr('Edit Selected Features')
+        return self.tr("Edit Selected Features")
 
     def priority(self):
-        return QgsLocatorFilter.Low
+        return QgsLocatorFilter.Priority.Low
 
     def prefix(self):
-        return 'ef'
+        return "ef"
 
     def flags(self):
-        return QgsLocatorFilter.FlagFast
+        return QgsLocatorFilter.Flag.FlagFast
 
     def fetchResults(self, string, context, feedback):
         # collect results in main thread, since this method is inexpensive and
         # accessing the processing registry/current layer is not thread safe
 
-        if iface.activeLayer() is None or iface.activeLayer().type() != QgsMapLayerType.VectorLayer:
+        if (
+            iface.activeLayer() is None
+            or iface.activeLayer().type() != QgsMapLayerType.VectorLayer
+        ):
             return
 
         for a in QgsApplication.processingRegistry().algorithms():
-            if not a.flags() & QgsProcessingAlgorithm.FlagSupportsInPlaceEdits:
+            if not a.flags() & QgsProcessingAlgorithm.Flag.FlagSupportsInPlaceEdits:
                 continue
 
             if not a.supportInPlaceEdit(iface.activeLayer()):
@@ -175,7 +187,7 @@ class InPlaceAlgorithmLocatorFilter(QgsLocatorFilter):
             result.userData = a.id()
             result.score = 0
 
-            if (context.usingPrefix and not string):
+            if context.usingPrefix and not string:
                 self.resultFetched.emit(result)
 
             if not string:
@@ -196,36 +208,44 @@ class InPlaceAlgorithmLocatorFilter(QgsLocatorFilter):
                     tagScore = 1
                     break
 
-            result.score = QgsStringUtils.fuzzyScore(result.displayString, string) * 0.5 + tagScore * 0.5
+            result.score = (
+                QgsStringUtils.fuzzyScore(result.displayString, string) * 0.5
+                + tagScore * 0.5
+            )
 
             if result.score > 0:
                 self.resultFetched.emit(result)
 
     def triggerResult(self, result):
-        config = {'IN_PLACE': True}
-        alg = QgsApplication.processingRegistry().createAlgorithmById(result.userData, config)
+        config = {"IN_PLACE": True}
+        alg = QgsApplication.processingRegistry().createAlgorithmById(
+            result.userData, config
+        )
         if alg:
             ok, message = alg.canExecute()
             if not ok:
                 dlg = MessageDialog()
-                dlg.setTitle(self.tr('Missing dependency'))
+                dlg.setTitle(self.tr("Missing dependency"))
                 dlg.setMessage(message)
-                dlg.exec_()
+                dlg.exec()
                 return
 
-            in_place_input_parameter_name = 'INPUT'
-            if hasattr(alg, 'inputParameterName'):
+            in_place_input_parameter_name = "INPUT"
+            if hasattr(alg, "inputParameterName"):
                 in_place_input_parameter_name = alg.inputParameterName()
 
-            if [d for d in alg.parameterDefinitions() if
-                    d.name() not in (in_place_input_parameter_name, 'OUTPUT')]:
+            if [
+                d
+                for d in alg.parameterDefinitions()
+                if d.name() not in (in_place_input_parameter_name, "OUTPUT")
+            ]:
                 dlg = alg.createCustomParametersWidget(parent=iface.mainWindow())
                 if not dlg:
                     dlg = AlgorithmDialog(alg, True, parent=iface.mainWindow())
                 canvas = iface.mapCanvas()
                 prevMapTool = canvas.mapTool()
                 dlg.show()
-                dlg.exec_()
+                dlg.exec()
                 if canvas.mapTool() != prevMapTool:
                     try:
                         canvas.mapTool().reset()

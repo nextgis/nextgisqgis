@@ -31,12 +31,10 @@
  *
  * QgsTreeWidgetItem allows for items to be sorted using a specified user role, and
  * also correctly handles sorting numeric or mixed text and numeric values.
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsTreeWidgetItem : public QTreeWidgetItem
 {
   public:
-
     /**
      * Constructor for QgsTreeWidgetItem
      * \param view parent QTreeWidget view
@@ -144,27 +142,23 @@ class GUI_EXPORT QgsTreeWidgetItem : public QTreeWidgetItem
     bool operator>=( const QTreeWidgetItem &other ) const { return !( *this < other ); }
 
   private:
-
     enum ItemDataRole
     {
       CustomSortRole = Qt::UserRole + 1001,
       AlwaysOnTopPriorityRole = Qt::UserRole + 1002,
     };
-
 };
 
 /**
  * \ingroup gui
  * \class QgsTreeWidgetItemObject
  * \brief Custom QgsTreeWidgetItem with extra signals when item is edited.
- * \since QGIS 3.0
  */
-class GUI_EXPORT QgsTreeWidgetItemObject: public QObject, public QgsTreeWidgetItem
+class GUI_EXPORT QgsTreeWidgetItemObject : public QObject, public QgsTreeWidgetItem
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsTreeWidgetItemObject
      * \param type item type

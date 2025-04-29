@@ -18,7 +18,7 @@
 
 #include "qgsfeatureid.h"
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
 #include <Qt3DRender/QGeometry>
 #else
 #include <Qt3DCore/QGeometry>
@@ -33,7 +33,7 @@ namespace QgsRayCastingUtils
   class Ray3D;
 }
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
 namespace Qt3DRender
 {
   class QBuffer;
@@ -56,9 +56,8 @@ namespace Qt3DCore
  *
  * \note Not available in Python bindings
  *
- * \since QGIS 3.0
  */
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
 class QgsTessellatedPolygonGeometry : public Qt3DRender::QGeometry
 #else
 class QgsTessellatedPolygonGeometry : public Qt3DCore::QGeometry
@@ -108,16 +107,16 @@ class QgsTessellatedPolygonGeometry : public Qt3DCore::QGeometry
      */
     QgsFeatureId triangleIndexToFeatureId( uint triangleIndex ) const;
 
-    /**
-     * Tests whether the geometry is intersected by \a ray.
-     * In case of success, the \a intersectionPoint and the corresponding \a fid are updated.
-     */
-    bool rayIntersection( const QgsRayCastingUtils::Ray3D &ray, const QMatrix4x4 &worldTransform, QVector3D &intersectionPoint, QgsFeatureId &fid );
+    //! Returns included feature ids
+    QVector<QgsFeatureId> featureIds() const { return mTriangleIndexFids; }
+
+    //! Returns triangle index for features. For a feature featureIds()[i], matching triangles start at triangleIndexStartingIndices()[i]
+    QVector<uint> triangleIndexStartingIndices() const { return mTriangleIndexStartingIndices; }
 
     friend class Qgs3DSceneExporter;
-  private:
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+  private:
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
     Qt3DRender::QAttribute *mPositionAttribute = nullptr;
     Qt3DRender::QAttribute *mNormalAttribute = nullptr;
     Qt3DRender::QAttribute *mTextureCoordsAttribute = nullptr;

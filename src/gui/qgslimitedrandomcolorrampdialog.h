@@ -29,7 +29,6 @@ class QDialogButtonBox;
  * \ingroup gui
  * \class QgsLimitedRandomColorRampWidget
  * \brief A widget which allows users to modify the properties of a QgsLimitedRandomColorRamp.
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsLimitedRandomColorRampWidget : public QgsPanelWidget, private Ui::QgsLimitedRandomColorRampWidgetBase
 {
@@ -37,7 +36,6 @@ class GUI_EXPORT QgsLimitedRandomColorRampWidget : public QgsPanelWidget, privat
     Q_PROPERTY( QgsLimitedRandomColorRamp ramp READ ramp WRITE setRamp )
 
   public:
-
     /**
      * Constructor for QgsLimitedRandomColorRampWidget.
      * \param ramp initial ramp to show in dialog
@@ -81,7 +79,6 @@ class GUI_EXPORT QgsLimitedRandomColorRampWidget : public QgsPanelWidget, privat
     void setVal2( int val );
 
   private:
-
     void updatePreview();
     void updateUi();
 
@@ -93,7 +90,6 @@ class GUI_EXPORT QgsLimitedRandomColorRampWidget : public QgsPanelWidget, privat
  * \ingroup gui
  * \class QgsLimitedRandomColorRampDialog
  * \brief A dialog which allows users to modify the properties of a QgsLimitedRandomColorRamp.
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsLimitedRandomColorRampDialog : public QDialog
 {
@@ -101,7 +97,6 @@ class GUI_EXPORT QgsLimitedRandomColorRampDialog : public QDialog
     Q_PROPERTY( QgsLimitedRandomColorRamp ramp READ ramp WRITE setRamp )
 
   public:
-
     /**
      * Constructor for QgsLimitedRandomColorRampDialog.
      * \param ramp initial ramp to show in dialog
@@ -134,14 +129,12 @@ class GUI_EXPORT QgsLimitedRandomColorRampDialog : public QDialog
     void changed();
 
   private:
-
     QgsLimitedRandomColorRampWidget *mWidget = nullptr;
     QDialogButtonBox *mButtonBox = nullptr;
 
   private slots:
 
     void showHelp();
-
 };
 
 #endif

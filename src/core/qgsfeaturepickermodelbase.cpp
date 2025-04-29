@@ -14,12 +14,11 @@
  ***************************************************************************/
 
 #include "qgsfeaturepickermodelbase.h"
+#include "moc_qgsfeaturepickermodelbase.cpp"
 #include "qgsfeatureexpressionvaluesgatherer.h"
 
 #include "qgsvectorlayer.h"
 #include "qgsconditionalstyle.h"
-#include "qgsapplication.h"
-#include "qgssettings.h"
 #include "qgsexpressioncontextutils.h"
 
 QgsFeaturePickerModelBase::QgsFeaturePickerModelBase( QObject *parent )
@@ -32,7 +31,6 @@ QgsFeaturePickerModelBase::QgsFeaturePickerModelBase( QObject *parent )
   // The fact that the feature changed is a combination of the 2 signals:
   // If the extra value is set to a feature currently not fetched, it will go through an intermediate step while the extra value does not exist (as it call reloadFeature)
   connect( this, &QgsFeaturePickerModelBase::extraIdentifierValueChanged, this, &QgsFeaturePickerModelBase::currentFeatureChanged );
-  connect( this, &QgsFeaturePickerModelBase::extraValueDoesNotExistChanged, this, &QgsFeaturePickerModelBase::currentFeatureChanged );
 }
 
 
@@ -159,22 +157,22 @@ QVariant QgsFeaturePickerModelBase::data( const QModelIndex &index, int role ) c
   {
     case Qt::DisplayRole:
     case Qt::EditRole:
-    case ValueRole:
+    case static_cast< int >( CustomRole::Value ):
       return mEntries.value( index.row() ).value;
 
-    case FeatureIdRole:
+    case static_cast< int >( CustomRole::FeatureId ):
       return mEntries.value( index.row() ).featureId;
 
-    case FeatureRole:
+    case static_cast< int >( CustomRole::Feature ):
       return mEntries.value( index.row() ).feature;
 
-    case IdentifierValueRole:
+    case static_cast< int >( CustomRole::IdentifierValue ):
     {
       const QVariantList values = mEntries.value( index.row() ).identifierFields;
       return values.value( 0 );
     }
 
-    case IdentifierValuesRole:
+    case static_cast< int >( CustomRole::IdentifierValues ):
       return mEntries.value( index.row() ).identifierFields;
 
     case Qt::BackgroundRole:
@@ -420,7 +418,7 @@ void QgsFeaturePickerModelBase::scheduledReload()
   }
 
   if ( !mFetchGeometry )
-    request.setFlags( QgsFeatureRequest::NoGeometry );
+    request.setFlags( Qgis::FeatureRequestFlag::NoGeometry );
   if ( mFetchLimit > 0 )
     request.setLimit( mFetchLimit );
 
@@ -609,7 +607,7 @@ void QgsFeaturePickerModelBase::setExtraValueDoesNotExist( bool extraValueDoesNo
     return;
 
   mExtraValueDoesNotExist = extraValueDoesNotExist;
-  emit extraValueDoesNotExistChanged();
+  emit extraValueDoesNotExistChanged( mExtraValueDoesNotExist );
 }
 
 

@@ -33,8 +33,8 @@ class TestQgsVectorDataProvider : public QObject
 
   private slots:
 
-    void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
+    void initTestCase();    // will be called before the first testfunction is executed.
+    void cleanupTestCase(); // will be called after the last testfunction was executed.
 
     // test whether QgsFeature content is set up correctly
     void select_checkContents_data();
@@ -46,16 +46,21 @@ class TestQgsVectorDataProvider : public QObject
 
     void featureAtId();
 
-  private:
+    void sourceExtent();
 
+  private:
     QgsVectorLayer *vlayerPoints = nullptr;
     QgsVectorLayer *vlayerLines = nullptr;
+    QgsVectorLayer *vlayerPoints3D = nullptr;
+    QgsVectorLayer *vlayerLines3D = nullptr;
 };
 
 void TestQgsVectorDataProvider::initTestCase()
 {
   vlayerPoints = nullptr;
   vlayerLines = nullptr;
+  vlayerPoints3D = nullptr;
+  vlayerLines3D = nullptr;
 
   // load QGIS
   QgsApplication::init();
@@ -63,6 +68,8 @@ void TestQgsVectorDataProvider::initTestCase()
 
   const QString layerPointsUrl = QStringLiteral( TEST_DATA_DIR ) + "/points.shp";
   const QString layerLinesUrl = QStringLiteral( TEST_DATA_DIR ) + "/lines.shp";
+  const QString layerPoints3DUrl = QStringLiteral( TEST_DATA_DIR ) + "/3d/points_with_z.shp";
+  const QString layerLines3DUrl = QStringLiteral( TEST_DATA_DIR ) + "/3d/lines_with_z.gpkg.zip";
 
   // load layers
   const QgsVectorLayer::LayerOptions options { QgsCoordinateTransformContext() };
@@ -73,12 +80,22 @@ void TestQgsVectorDataProvider::initTestCase()
   vlayerLines = new QgsVectorLayer( layerLinesUrl, QStringLiteral( "testlayer" ), QStringLiteral( "ogr" ), options );
   QVERIFY( vlayerLines );
   QVERIFY( vlayerLines->isValid() );
+
+  vlayerPoints3D = new QgsVectorLayer( layerPoints3DUrl, QStringLiteral( "testlayer" ), QStringLiteral( "ogr" ), options );
+  QVERIFY( vlayerPoints3D );
+  QVERIFY( vlayerPoints3D->isValid() );
+
+  vlayerLines3D = new QgsVectorLayer( layerLines3DUrl, QStringLiteral( "testlayer" ), QStringLiteral( "ogr" ), options );
+  QVERIFY( vlayerLines3D );
+  QVERIFY( vlayerLines3D->isValid() );
 }
 
 void TestQgsVectorDataProvider::cleanupTestCase()
 {
   delete vlayerPoints;
   delete vlayerLines;
+  delete vlayerPoints3D;
+  delete vlayerLines3D;
 
   // unload QGIS
   QgsApplication::exitQgis();
@@ -94,7 +111,7 @@ static void checkFid4( QgsFeature &f, bool hasGeometry, bool hasAttrs, int onlyO
 {
   const QgsAttributes &attrs = f.attributes();
 
-  QCOMPARE( f.id(), ( QgsFeatureId )4 );
+  QCOMPARE( f.id(), ( QgsFeatureId ) 4 );
 
   QCOMPARE( f.attributes().count(), 6 );
   if ( hasAttrs )
@@ -105,9 +122,9 @@ static void checkFid4( QgsFeature &f, bool hasGeometry, bool hasAttrs, int onlyO
   }
   else
   {
-    QCOMPARE( attrs[0].type(), QVariant::Invalid );
-    QCOMPARE( attrs[1].type(), QVariant::Invalid );
-    QCOMPARE( attrs[2].type(), QVariant::Invalid );
+    QCOMPARE( static_cast<QMetaType::Type>( attrs[0].userType() ), QMetaType::Type::UnknownType );
+    QCOMPARE( static_cast<QMetaType::Type>( attrs[1].userType() ), QMetaType::Type::UnknownType );
+    QCOMPARE( static_cast<QMetaType::Type>( attrs[2].userType() ), QMetaType::Type::UnknownType );
   }
 
   if ( hasGeometry )
@@ -115,7 +132,7 @@ static void checkFid4( QgsFeature &f, bool hasGeometry, bool hasAttrs, int onlyO
     QVERIFY( f.hasGeometry() );
     QVERIFY( f.geometry().wkbType() == Qgis::WkbType::Point );
     QCOMPARE( keep6digits( f.geometry().asPoint().x() ), -88.302277 );
-    QCOMPARE( keep6digits( f.geometry().asPoint().y() ),  33.731884 );
+    QCOMPARE( keep6digits( f.geometry().asPoint().y() ), 33.731884 );
   }
   else
   {
@@ -133,7 +150,7 @@ void TestQgsVectorDataProvider::select_checkContents_data()
 
   QTest::newRow( "all" ) << QgsFeatureRequest() << 17 << true << true << -1;
   QTest::newRow( "no attrs" ) << QgsFeatureRequest().setSubsetOfAttributes( QgsAttributeList() ) << 17 << true << false << -1;
-  QTest::newRow( "no geom" ) << QgsFeatureRequest().setFlags( QgsFeatureRequest::NoGeometry ) << 17 << false << true << -1;
+  QTest::newRow( "no geom" ) << QgsFeatureRequest().setFlags( Qgis::FeatureRequestFlag::NoGeometry ) << 17 << false << true << -1;
   QTest::newRow( "one attr" ) << QgsFeatureRequest().setSubsetOfAttributes( QgsAttributeList() << 1 ) << 17 << true << true << 1;
 }
 
@@ -180,8 +197,8 @@ void TestQgsVectorDataProvider::select_checkSubset_data()
   // OGR always does exact intersection test
   //QTest::newRow("rect1") << QgsFeatureRequest().setExtent(rect1) << 2;
   //QTest::newRow("rect2") << QgsFeatureRequest().setExtent(rect2) << 4;
-  QTest::newRow( "rect1 + exact intersect" ) << QgsFeatureRequest().setFilterRect( rect1 ).setFlags( QgsFeatureRequest::ExactIntersect ) << 0;
-  QTest::newRow( "rect2 + exact intersect" ) << QgsFeatureRequest().setFilterRect( rect2 ).setFlags( QgsFeatureRequest::ExactIntersect ) << 2;
+  QTest::newRow( "rect1 + exact intersect" ) << QgsFeatureRequest().setFilterRect( rect1 ).setFlags( Qgis::FeatureRequestFlag::ExactIntersect ) << 0;
+  QTest::newRow( "rect2 + exact intersect" ) << QgsFeatureRequest().setFilterRect( rect2 ).setFlags( Qgis::FeatureRequestFlag::ExactIntersect ) << 2;
 }
 
 void TestQgsVectorDataProvider::select_checkSubset()
@@ -208,8 +225,8 @@ void TestQgsVectorDataProvider::featureAtId()
   QgsVectorDataProvider *pr = vlayerLines->dataProvider();
   QgsFeatureRequest request;
   request.setFilterFid( 4 );
-  QVERIFY( request.filterType() == QgsFeatureRequest::FilterFid );
-  QVERIFY( request.filterFid() == 4 );
+  QCOMPARE( request.filterType(), Qgis::FeatureRequestFilterType::Fid );
+  QCOMPARE( request.filterFid(), 4LL );
 
   QgsFeatureIterator fi = pr->getFeatures( request );
   QgsFeature feature;
@@ -217,11 +234,74 @@ void TestQgsVectorDataProvider::featureAtId()
   QVERIFY( fi.nextFeature( feature ) );
   QVERIFY( feature.isValid() );
   qDebug( "FID: %lld", feature.id() );
-  QVERIFY( feature.id() == 4 );
+  QCOMPARE( feature.id(), 4LL );
 
   // further invocations are not valid
   QVERIFY( !fi.nextFeature( feature ) );
   QVERIFY( !feature.isValid() );
+}
+
+void TestQgsVectorDataProvider::sourceExtent()
+{
+  // 2d data
+  QgsVectorDataProvider *prLines = vlayerLines->dataProvider();
+
+  QGSCOMPARENEAR( prLines->sourceExtent().xMinimum(), -117.623, 0.001 );
+  QGSCOMPARENEAR( prLines->sourceExtent().xMaximum(), -82.3226, 0.001 );
+  QGSCOMPARENEAR( prLines->sourceExtent().yMinimum(), 23.2082, 0.001 );
+  QGSCOMPARENEAR( prLines->sourceExtent().yMaximum(), 46.1829, 0.001 );
+
+  QGSCOMPARENEAR( prLines->sourceExtent3D().xMinimum(), -117.623, 0.001 );
+  QGSCOMPARENEAR( prLines->sourceExtent3D().xMaximum(), -82.3226, 0.001 );
+  QGSCOMPARENEAR( prLines->sourceExtent3D().yMinimum(), 23.2082, 0.001 );
+  QGSCOMPARENEAR( prLines->sourceExtent3D().yMaximum(), 46.1829, 0.001 );
+  QVERIFY( std::isnan( prLines->sourceExtent3D().zMinimum() ) );
+  QVERIFY( std::isnan( prLines->sourceExtent3D().zMaximum() ) );
+
+
+  QgsVectorDataProvider *prPoints = vlayerPoints->dataProvider();
+
+  QGSCOMPARENEAR( prPoints->sourceExtent().xMinimum(), -118.889, 0.001 );
+  QGSCOMPARENEAR( prPoints->sourceExtent().xMaximum(), -83.3333, 0.001 );
+  QGSCOMPARENEAR( prPoints->sourceExtent().yMinimum(), 22.8002, 0.001 );
+  QGSCOMPARENEAR( prPoints->sourceExtent().yMaximum(), 46.872, 0.001 );
+
+  QGSCOMPARENEAR( prPoints->sourceExtent3D().xMinimum(), -118.889, 0.001 );
+  QGSCOMPARENEAR( prPoints->sourceExtent3D().xMaximum(), -83.3333, 0.001 );
+  QGSCOMPARENEAR( prPoints->sourceExtent3D().yMinimum(), 22.8002, 0.001 );
+  QGSCOMPARENEAR( prPoints->sourceExtent3D().yMaximum(), 46.872, 0.001 );
+  QVERIFY( std::isnan( prPoints->sourceExtent3D().zMinimum() ) );
+  QVERIFY( std::isnan( prPoints->sourceExtent3D().zMaximum() ) );
+
+  // 3d data
+  QgsVectorDataProvider *prLines3D = vlayerLines3D->dataProvider();
+
+  QGSCOMPARENEAR( prLines3D->sourceExtent().xMinimum(), 0.0, 0.01 );
+  QGSCOMPARENEAR( prLines3D->sourceExtent().xMaximum(), 322355.71, 0.01 );
+  QGSCOMPARENEAR( prLines3D->sourceExtent().yMinimum(), 0.0, 0.01 );
+  QGSCOMPARENEAR( prLines3D->sourceExtent().yMaximum(), 129791.26, 0.01 );
+
+  QGSCOMPARENEAR( prLines3D->sourceExtent3D().xMinimum(), 0.0, 0.01 );
+  QGSCOMPARENEAR( prLines3D->sourceExtent3D().xMaximum(), 322355.71, 0.01 );
+  QGSCOMPARENEAR( prLines3D->sourceExtent3D().yMinimum(), 0.0, 0.01 );
+  QGSCOMPARENEAR( prLines3D->sourceExtent3D().yMaximum(), 129791.26, 0.01 );
+  QGSCOMPARENEAR( prLines3D->sourceExtent3D().zMinimum(), -5.00, 0.01 );
+  QGSCOMPARENEAR( prLines3D->sourceExtent3D().zMaximum(), 15.0, 0.01 );
+
+
+  QgsVectorDataProvider *prPoints3D = vlayerPoints3D->dataProvider();
+
+  QGSCOMPARENEAR( prPoints3D->sourceExtent().xMinimum(), 321384.94, 0.01 );
+  QGSCOMPARENEAR( prPoints3D->sourceExtent().xMaximum(), 322342.3, 0.01 );
+  QGSCOMPARENEAR( prPoints3D->sourceExtent().yMinimum(), 129147.09, 0.01 );
+  QGSCOMPARENEAR( prPoints3D->sourceExtent().yMaximum(), 130554.6, 0.01 );
+
+  QGSCOMPARENEAR( prPoints3D->sourceExtent3D().xMinimum(), 321384.94, 0.01 );
+  QGSCOMPARENEAR( prPoints3D->sourceExtent3D().xMaximum(), 322342.3, 0.01 );
+  QGSCOMPARENEAR( prPoints3D->sourceExtent3D().yMinimum(), 129147.09, 0.01 );
+  QGSCOMPARENEAR( prPoints3D->sourceExtent3D().yMaximum(), 130554.6, 0.01 );
+  QGSCOMPARENEAR( prPoints3D->sourceExtent3D().zMinimum(), 64.9, 0.01 );
+  QGSCOMPARENEAR( prPoints3D->sourceExtent3D().zMaximum(), 105.6, 0.01 );
 }
 
 

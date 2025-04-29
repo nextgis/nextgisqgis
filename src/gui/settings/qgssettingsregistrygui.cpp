@@ -24,21 +24,16 @@ const QgsSettingsEntryBool *QgsSettingsRegistryGui::settingsRespectScreenDPI = n
 QgsSettingsRegistryGui::QgsSettingsRegistryGui()
   : QgsSettingsRegistry()
 {
-
   // copy values from old keys to new keys and delete the old ones
   // for backward compatibility, old keys are recreated when the registry gets deleted
 
   // single settings - added in 3.30
   settingsRespectScreenDPI->copyValueFromKey( QStringLiteral( "gui/qgis/respect_screen_dpi" ), {}, true );
-
-
 }
 
 QgsSettingsRegistryGui::~QgsSettingsRegistryGui()
 {
   // TODO QGIS 4.0: Remove
   // backward compatibility for settings
-  settingsRespectScreenDPI->copyValueToKey( QStringLiteral( "gui/qgis/respect_screen_dpi" ) );
-
+  settingsRespectScreenDPI->copyValueToKeyIfChanged( QStringLiteral( "gui/qgis/respect_screen_dpi" ) );
 }
-

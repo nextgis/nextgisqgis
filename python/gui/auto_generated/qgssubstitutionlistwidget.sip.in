@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgssubstitutionlistwidget.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,19 +11,17 @@
 class QgsSubstitutionListWidget : QgsPanelWidget
 {
 %Docstring(signature="appended")
-A widget which allows users to specify a list of substitutions to apply to a string, with
-options for exporting and importing substitution lists.
+A widget which allows users to specify a list of substitutions to apply
+to a string, with options for exporting and importing substitution
+lists.
 
 .. seealso:: :py:class:`QgsSubstitutionListDialog`
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
 #include "qgssubstitutionlistwidget.h"
 %End
   public:
-
     QgsSubstitutionListWidget( QWidget *parent /TransferThis/ = 0 );
 %Docstring
 Constructor for QgsSubstitutionListWidget.
@@ -59,19 +57,17 @@ Emitted when the substitution definitions change.
 class QgsSubstitutionListDialog : QDialog
 {
 %Docstring(signature="appended")
-A dialog which allows users to specify a list of substitutions to apply to a string, with
-options for exporting and importing substitution lists.
+A dialog which allows users to specify a list of substitutions to apply
+to a string, with options for exporting and importing substitution
+lists.
 
 .. seealso:: :py:class:`QgsSubstitutionListWidget`
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
 #include "qgssubstitutionlistwidget.h"
 %End
   public:
-
     QgsSubstitutionListDialog( QWidget *parent /TransferThis/ = 0 );
 %Docstring
 Constructor for QgsSubstitutionListDialog.
@@ -103,5 +99,5 @@ Returns the list of substitutions currently defined by the dialog.
  *                                                                      *
  * src/gui/qgssubstitutionlistwidget.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

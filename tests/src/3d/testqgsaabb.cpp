@@ -20,15 +20,16 @@
  * \ingroup UnitTests
  * This is a unit test for the QgsAABB class
  */
-class TestQgsAABB : public QObject
+class TestQgsAABB : public QgsTest
 {
     Q_OBJECT
   public:
-    TestQgsAABB() = default;
+    TestQgsAABB()
+      : QgsTest( QStringLiteral( "QgsAABB tests" ) ) {};
 
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
+    void initTestCase();    // will be called before the first testfunction is executed.
+    void cleanupTestCase(); // will be called after the last testfunction was executed.
 
     void testIsEmpty();
 
@@ -43,6 +44,7 @@ void TestQgsAABB::initTestCase()
 //runs after all tests
 void TestQgsAABB::cleanupTestCase()
 {
+  QgsApplication::exitQgis();
 }
 
 void TestQgsAABB::testIsEmpty()
@@ -51,17 +53,20 @@ void TestQgsAABB::testIsEmpty()
   QgsAABB bbox = QgsAABB();
   QVERIFY( bbox.isEmpty() );
 
-  // if any dimension extent is zero, AABB is empty
-  bbox = QgsAABB( 0, 0, 0, 0, 1, 1 );
+  // if all dimension extents are zero, AABB is empty
+  bbox = QgsAABB( 1, 2, 3, 1, 2, 3 );
   QVERIFY( bbox.isEmpty() );
+
+  // if any dimension extent is not zero, AABB is NOT empty
+  bbox = QgsAABB( 0, 0, 0, 0, 1, 1 );
+  QVERIFY( !bbox.isEmpty() );
 
   bbox = QgsAABB( 0, 0, 0, 1, 0, 1 );
-  QVERIFY( bbox.isEmpty() );
+  QVERIFY( !bbox.isEmpty() );
 
   bbox = QgsAABB( 0, 0, 0, 1, 1, 0 );
-  QVERIFY( bbox.isEmpty() );
+  QVERIFY( !bbox.isEmpty() );
 
-  // if no dimension extent is zero, AABB is not empty
   bbox = QgsAABB( 0, 0, 0, 1, 1, 1 );
   QVERIFY( !bbox.isEmpty() );
 }

@@ -42,30 +42,32 @@ QString QgsRasterBooleanLogicAlgorithmBase::groupId() const
 
 void QgsRasterBooleanLogicAlgorithmBase::initAlgorithm( const QVariantMap & )
 {
-  addParameter( new QgsProcessingParameterMultipleLayers( QStringLiteral( "INPUT" ),
-                QObject::tr( "Input layers" ), QgsProcessing::TypeRaster ) );
+  addParameter( new QgsProcessingParameterMultipleLayers( QStringLiteral( "INPUT" ), QObject::tr( "Input layers" ), Qgis::ProcessingSourceType::Raster ) );
 
   addParameter( new QgsProcessingParameterRasterLayer( QStringLiteral( "REF_LAYER" ), QObject::tr( "Reference layer" ) ) );
-  addParameter( new QgsProcessingParameterBoolean( QStringLiteral( "NODATA_AS_FALSE" ), QObject::tr( "Treat nodata values as false" ), false ) );
+  addParameter( new QgsProcessingParameterBoolean( QStringLiteral( "NODATA_AS_FALSE" ), QObject::tr( "Treat NoData values as false" ), false ) );
 
-  std::unique_ptr< QgsProcessingParameterNumber > noDataValueParam = std::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "NO_DATA" ),
-      QObject::tr( "Output no data value" ), QgsProcessingParameterNumber::Double, -9999 );
-  noDataValueParam->setFlags( QgsProcessingParameterDefinition::FlagAdvanced );
+  std::unique_ptr<QgsProcessingParameterNumber> noDataValueParam = std::make_unique<QgsProcessingParameterNumber>( QStringLiteral( "NO_DATA" ), QObject::tr( "Output NoData value" ), Qgis::ProcessingNumberParameterType::Double, -9999 );
+  noDataValueParam->setFlags( Qgis::ProcessingParameterFlag::Advanced );
   addParameter( noDataValueParam.release() );
 
-  std::unique_ptr< QgsProcessingParameterDefinition > typeChoice = QgsRasterAnalysisUtils::createRasterTypeParameter( QStringLiteral( "DATA_TYPE" ), QObject::tr( "Output data type" ), Qgis::DataType::Float32 );
-  typeChoice->setFlags( QgsProcessingParameterDefinition::FlagAdvanced );
+  std::unique_ptr<QgsProcessingParameterDefinition> typeChoice = QgsRasterAnalysisUtils::createRasterTypeParameter( QStringLiteral( "DATA_TYPE" ), QObject::tr( "Output data type" ), Qgis::DataType::Float32 );
+  typeChoice->setFlags( Qgis::ProcessingParameterFlag::Advanced );
   addParameter( typeChoice.release() );
 
-  addParameter( new QgsProcessingParameterRasterDestination( QStringLiteral( "OUTPUT" ),
-                QObject::tr( "Output layer" ) ) );
+  std::unique_ptr<QgsProcessingParameterString> createOptsParam = std::make_unique<QgsProcessingParameterString>( QStringLiteral( "CREATE_OPTIONS" ), QObject::tr( "Creation options" ), QVariant(), false, true );
+  createOptsParam->setMetadata( QVariantMap( { { QStringLiteral( "widget_wrapper" ), QVariantMap( { { QStringLiteral( "widget_type" ), QStringLiteral( "rasteroptions" ) } } ) } } ) );
+  createOptsParam->setFlags( createOptsParam->flags() | Qgis::ProcessingParameterFlag::Advanced );
+  addParameter( createOptsParam.release() );
+
+  addParameter( new QgsProcessingParameterRasterDestination( QStringLiteral( "OUTPUT" ), QObject::tr( "Output layer" ) ) );
 
   addOutput( new QgsProcessingOutputString( QStringLiteral( "EXTENT" ), QObject::tr( "Extent" ) ) );
   addOutput( new QgsProcessingOutputString( QStringLiteral( "CRS_AUTHID" ), QObject::tr( "CRS authority identifier" ) ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "WIDTH_IN_PIXELS" ), QObject::tr( "Width in pixels" ) ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "HEIGHT_IN_PIXELS" ), QObject::tr( "Height in pixels" ) ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "TOTAL_PIXEL_COUNT" ), QObject::tr( "Total pixel count" ) ) );
-  addOutput( new QgsProcessingOutputNumber( QStringLiteral( "NODATA_PIXEL_COUNT" ), QObject::tr( "NODATA pixel count" ) ) );
+  addOutput( new QgsProcessingOutputNumber( QStringLiteral( "NODATA_PIXEL_COUNT" ), QObject::tr( "NoData pixel count" ) ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "TRUE_PIXEL_COUNT" ), QObject::tr( "True pixel count" ) ) );
   addOutput( new QgsProcessingOutputNumber( QStringLiteral( "FALSE_PIXEL_COUNT" ), QObject::tr( "False pixel count" ) ) );
 }
@@ -88,14 +90,14 @@ bool QgsRasterBooleanLogicAlgorithmBase::prepareAlgorithm( const QVariantMap &pa
 
   mTreatNodataAsFalse = parameterAsBoolean( parameters, QStringLiteral( "NODATA_AS_FALSE" ), context );
 
-  const QList< QgsMapLayer * > layers = parameterAsLayerList( parameters, QStringLiteral( "INPUT" ), context );
-  QList< QgsRasterLayer * > rasterLayers;
+  const QList<QgsMapLayer *> layers = parameterAsLayerList( parameters, QStringLiteral( "INPUT" ), context );
+  QList<QgsRasterLayer *> rasterLayers;
   rasterLayers.reserve( layers.count() );
   for ( QgsMapLayer *l : layers )
   {
     if ( l->type() == Qgis::LayerType::Raster )
     {
-      QgsRasterLayer *layer = qobject_cast< QgsRasterLayer * >( l );
+      QgsRasterLayer *layer = qobject_cast<QgsRasterLayer *>( l );
       QgsRasterAnalysisUtils::RasterLogicInput input;
       const int band = 1; // hardcoded for now - needs a way to supply this in the processing gui
       input.hasNoDataValue = layer->dataProvider()->sourceHasNoDataValue( band );
@@ -104,7 +106,7 @@ bool QgsRasterBooleanLogicAlgorithmBase::prepareAlgorithm( const QVariantMap &pa
       // add projector if necessary
       if ( layer->crs() != mCrs )
       {
-        input.projector = std::make_unique< QgsRasterProjector >();
+        input.projector = std::make_unique<QgsRasterProjector>();
         input.projector->setInput( input.sourceDataProvider.get() );
         input.projector->setCrs( layer->crs(), mCrs, context.transformContext() );
         input.interface = input.projector.get();
@@ -118,14 +120,19 @@ bool QgsRasterBooleanLogicAlgorithmBase::prepareAlgorithm( const QVariantMap &pa
 
 QVariantMap QgsRasterBooleanLogicAlgorithmBase::processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback )
 {
+  const QString createOptions = parameterAsString( parameters, QStringLiteral( "CREATE_OPTIONS" ), context ).trimmed();
   const QString outputFile = parameterAsOutputLayer( parameters, QStringLiteral( "OUTPUT" ), context );
   const QFileInfo fi( outputFile );
   const QString outputFormat = QgsRasterFileWriter::driverForExtension( fi.suffix() );
 
-  std::unique_ptr< QgsRasterFileWriter > writer = std::make_unique< QgsRasterFileWriter >( outputFile );
+  std::unique_ptr<QgsRasterFileWriter> writer = std::make_unique<QgsRasterFileWriter>( outputFile );
   writer->setOutputProviderKey( QStringLiteral( "gdal" ) );
+  if ( !createOptions.isEmpty() )
+  {
+    writer->setCreateOptions( createOptions.split( '|' ) );
+  }
   writer->setOutputFormat( outputFormat );
-  std::unique_ptr<QgsRasterDataProvider > provider( writer->createOneBandRaster( mDataType, mLayerWidth, mLayerHeight, mExtent, mCrs ) );
+  std::unique_ptr<QgsRasterDataProvider> provider( writer->createOneBandRaster( mDataType, mLayerWidth, mLayerHeight, mExtent, mCrs ) );
   if ( !provider )
     throw QgsProcessingException( QObject::tr( "Could not create raster output: %1" ).arg( outputFile ) );
   if ( !provider->isValid() )
@@ -135,10 +142,9 @@ QVariantMap QgsRasterBooleanLogicAlgorithmBase::processAlgorithm( const QVariant
   qgssize noDataCount = 0;
   qgssize trueCount = 0;
   qgssize falseCount = 0;
-  const qgssize layerSize = static_cast< qgssize >( mLayerWidth ) * static_cast< qgssize >( mLayerHeight );
+  const qgssize layerSize = static_cast<qgssize>( mLayerWidth ) * static_cast<qgssize>( mLayerHeight );
 
-  QgsRasterAnalysisUtils::applyRasterLogicOperator( mInputs, provider.get(), mNoDataValue, mTreatNodataAsFalse, mLayerWidth, mLayerHeight,
-      mExtent, feedback, mExtractValFunc, noDataCount, trueCount, falseCount );
+  QgsRasterAnalysisUtils::applyRasterLogicOperator( mInputs, provider.get(), mNoDataValue, mTreatNodataAsFalse, mLayerWidth, mLayerHeight, mExtent, feedback, mExtractValFunc, noDataCount, trueCount, falseCount );
 
   QVariantMap outputs;
   outputs.insert( QStringLiteral( "EXTENT" ), mExtent.toString() );
@@ -161,8 +167,7 @@ QVariantMap QgsRasterBooleanLogicAlgorithmBase::processAlgorithm( const QVariant
 
 QgsRasterLogicalOrAlgorithm::QgsRasterLogicalOrAlgorithm()
 {
-  mExtractValFunc = [ = ]( const std::vector< std::unique_ptr< QgsRasterBlock > > &inputs, bool & res, bool & resIsNoData, int row, int column, bool treatNoDataAsFalse )
-  {
+  mExtractValFunc = [=]( const std::vector<std::unique_ptr<QgsRasterBlock>> &inputs, bool &res, bool &resIsNoData, int row, int column, bool treatNoDataAsFalse ) {
     res = false;
     resIsNoData = false;
     bool isNoData = false;
@@ -220,8 +225,8 @@ QString QgsRasterLogicalOrAlgorithm::shortHelpString() const
                       "that pixel will be set to 1 in the output raster. If all the input rasters have 0 values for the pixel it will be set to 0 in the output raster.\n\n"
                       "The reference layer parameter specifies an existing raster layer to use as a reference when creating the output raster. The output raster "
                       "will have the same extent, CRS, and pixel dimensions as this layer.\n\n"
-                      "By default, a nodata pixel in ANY of the input layers will result in a nodata pixel in the output raster. If the "
-                      "'Treat nodata values as false' option is checked, then nodata inputs will be treated the same as a 0 input value." );
+                      "By default, a NoData pixel in ANY of the input layers will result in a NoData pixel in the output raster. If the "
+                      "'Treat NoData values as false' option is checked, then NoData inputs will be treated the same as a 0 input value." );
 }
 
 QgsRasterLogicalOrAlgorithm *QgsRasterLogicalOrAlgorithm::createInstance() const
@@ -235,8 +240,7 @@ QgsRasterLogicalOrAlgorithm *QgsRasterLogicalOrAlgorithm::createInstance() const
 
 QgsRasterLogicalAndAlgorithm::QgsRasterLogicalAndAlgorithm()
 {
-  mExtractValFunc = [ = ]( const std::vector< std::unique_ptr< QgsRasterBlock > > &inputs, bool & res, bool & resIsNoData, int row, int column, bool treatNoDataAsFalse )
-  {
+  mExtractValFunc = [=]( const std::vector<std::unique_ptr<QgsRasterBlock>> &inputs, bool &res, bool &resIsNoData, int row, int column, bool treatNoDataAsFalse ) {
     res = true;
     resIsNoData = false;
     bool isNoData = false;
@@ -297,8 +301,8 @@ QString QgsRasterLogicalAndAlgorithm::shortHelpString() const
                       "that pixel will be set to 1 in the output raster. If any of the input rasters have 0 values for the pixel it will be set to 0 in the output raster.\n\n"
                       "The reference layer parameter specifies an existing raster layer to use as a reference when creating the output raster. The output raster "
                       "will have the same extent, CRS, and pixel dimensions as this layer.\n\n"
-                      "By default, a nodata pixel in ANY of the input layers will result in a nodata pixel in the output raster. If the "
-                      "'Treat nodata values as false' option is checked, then nodata inputs will be treated the same as a 0 input value." );
+                      "By default, a NoData pixel in ANY of the input layers will result in a NoData pixel in the output raster. If the "
+                      "'Treat NoData values as false' option is checked, then NoData inputs will be treated the same as a 0 input value." );
 }
 
 QgsRasterLogicalAndAlgorithm *QgsRasterLogicalAndAlgorithm::createInstance() const
@@ -307,6 +311,3 @@ QgsRasterLogicalAndAlgorithm *QgsRasterLogicalAndAlgorithm::createInstance() con
 }
 
 ///@endcond
-
-
-

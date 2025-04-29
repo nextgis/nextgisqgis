@@ -19,14 +19,13 @@
 #include <QVariant>
 
 #include "qgsfeature.h"
-#include "qgsfeaturerequest.h"
 #include "qgis_analysis.h"
 
 #ifdef SIP_RUN
-% ModuleHeaderCode
+//%ModuleHeaderCode
 #include <qgsnetworkspeedstrategy.h>
 #include <qgsnetworkdistancestrategy.h>
-% End
+//%End
 #endif
 
 /**
@@ -36,17 +35,15 @@
  * take into account travel distance, amount of time or money. Currently there are two strategies
  * implemented in the analysis library: QgsNetworkDistanceStrategy and QgsNetworkSpeedStrategy.
  * QgsNetworkStrategy implemented using "strategy" design pattern.
- * \since QGIS 3.0
  */
 
 class ANALYSIS_EXPORT QgsNetworkStrategy
 {
-
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
-    if ( dynamic_cast< QgsNetworkDistanceStrategy * >( sipCpp ) != NULL )
+    if ( dynamic_cast<QgsNetworkDistanceStrategy *>( sipCpp ) != NULL )
       sipType = sipType_QgsNetworkDistanceStrategy;
-    else if ( dynamic_cast< QgsNetworkSpeedStrategy * >( sipCpp ) != NULL )
+    else if ( dynamic_cast<QgsNetworkSpeedStrategy *>( sipCpp ) != NULL )
       sipType = sipType_QgsNetworkSpeedStrategy;
     else
       sipType = NULL;
@@ -54,10 +51,6 @@ class ANALYSIS_EXPORT QgsNetworkStrategy
 #endif
 
   public:
-
-    /**
-     * Default constructor
-     */
     QgsNetworkStrategy() = default;
 
     virtual ~QgsNetworkStrategy() = default;
@@ -66,7 +59,7 @@ class ANALYSIS_EXPORT QgsNetworkStrategy
      * Returns a list of the source layer attributes needed for cost calculation.
      * This is method called by QgsGraphDirector.
      */
-    virtual QSet< int > requiredAttributes() const { return QSet< int >(); }
+    virtual QSet<int> requiredAttributes() const { return QSet<int>(); }
 
     /**
      * Returns edge cost

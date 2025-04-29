@@ -15,17 +15,12 @@
 ***************************************************************************
 """
 
-__author__ = 'Victor Olaya'
-__date__ = 'August 2012'
-__copyright__ = '(C) 2012, Victor Olaya'
+__author__ = "Victor Olaya"
+__date__ = "August 2012"
+__copyright__ = "(C) 2012, Victor Olaya"
 
 import traceback
-from typing import (
-    Dict,
-    List,
-    Optional,
-    Tuple
-)
+from typing import Dict, List, Optional, Tuple
 
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (
@@ -38,21 +33,27 @@ from qgis.core import (
     QgsProcessingContext,
     QgsProcessingAlgorithm,
     QgsLayerTreeLayer,
-    QgsLayerTreeGroup
+    QgsLayerTreeGroup,
+    QgsLayerTreeNode,
+    QgsLayerTreeRegistryBridge,
+    QgsProject,
 )
+from qgis.utils import iface
 
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.gui.RenderingStyles import RenderingStyles
 
 
-SORT_ORDER_CUSTOM_PROPERTY = '_processing_sort_order'
+SORT_ORDER_CUSTOM_PROPERTY = "_processing_sort_order"
 
 
-def determine_output_name(dest_id: str,
-                          details: QgsProcessingContext.LayerDetails,
-                          alg: QgsProcessingAlgorithm,
-                          context: QgsProcessingContext,
-                          parameters: Dict) -> str:
+def determine_output_name(
+    dest_id: str,
+    details: QgsProcessingContext.LayerDetails,
+    alg: QgsProcessingAlgorithm,
+    context: QgsProcessingContext,
+    parameters: dict,
+) -> str:
     """
     If running a model, the execution will arrive here when an
     algorithm that is part of that model is executed. We check if
@@ -64,9 +65,9 @@ def determine_output_name(dest_id: str,
             continue
         output_value = parameters[out.name()]
         if hasattr(output_value, "sink"):
-            output_value = output_value.sink.valueAsString(
-                context.expressionContext()
-            )[0]
+            output_value = output_value.sink.valueAsString(context.expressionContext())[
+                0
+            ]
         else:
             output_value = str(output_value)
         if output_value == dest_id:
@@ -75,9 +76,9 @@ def determine_output_name(dest_id: str,
     return details.outputName
 
 
-def post_process_layer(output_name: str,
-                       layer: QgsMapLayer,
-                       alg: QgsProcessingAlgorithm):
+def post_process_layer(
+    output_name: str, layer: QgsMapLayer, alg: QgsProcessingAlgorithm
+):
     """
     Applies post-processing steps to a layer
     """
@@ -89,21 +90,21 @@ def post_process_layer(output_name: str,
         if layer.type() == Qgis.LayerType.Raster:
             style = ProcessingConfig.getSetting(ProcessingConfig.RASTER_STYLE)
         elif layer.type() == Qgis.LayerType.Vector:
-            if layer.geometryType() == QgsWkbTypes.PointGeometry:
-                style = ProcessingConfig.getSetting(
-                    ProcessingConfig.VECTOR_POINT_STYLE)
-            elif layer.geometryType() == QgsWkbTypes.LineGeometry:
-                style = ProcessingConfig.getSetting(
-                    ProcessingConfig.VECTOR_LINE_STYLE)
+            if layer.geometryType() == QgsWkbTypes.GeometryType.PointGeometry:
+                style = ProcessingConfig.getSetting(ProcessingConfig.VECTOR_POINT_STYLE)
+            elif layer.geometryType() == QgsWkbTypes.GeometryType.LineGeometry:
+                style = ProcessingConfig.getSetting(ProcessingConfig.VECTOR_LINE_STYLE)
             else:
                 style = ProcessingConfig.getSetting(
-                    ProcessingConfig.VECTOR_POLYGON_STYLE)
+                    ProcessingConfig.VECTOR_POLYGON_STYLE
+                )
     if style:
         layer.loadNamedStyle(style)
 
-    try:
-        from qgis._3d import QgsPointCloudLayer3DRenderer
-        if layer.type() == Qgis.LayerType.PointCloud:
+    if layer.type() == Qgis.LayerType.PointCloud:
+        try:
+            from qgis._3d import QgsPointCloudLayer3DRenderer
+
             if layer.renderer3D() is None:
                 # If the layer has no 3D renderer and syncing 3D to 2D
                 # renderer is enabled, we create a renderer and set it up
@@ -112,66 +113,74 @@ def post_process_layer(output_name: str,
                     renderer_3d = QgsPointCloudLayer3DRenderer()
                     renderer_3d.convertFrom2DRenderer(layer.renderer())
                     layer.setRenderer3D(renderer_3d)
-    except ImportError:
-        QgsMessageLog.logMessage(
-            QCoreApplication.translate(
-                "Postprocessing",
-                "3D library is not available, "
-                "can't assign a 3d renderer to a layer."
+        except ImportError:
+            QgsMessageLog.logMessage(
+                QCoreApplication.translate(
+                    "Postprocessing",
+                    "3D library is not available, "
+                    "can't assign a 3d renderer to a layer.",
+                )
             )
-        )
 
 
-def create_layer_tree_layer(layer: QgsMapLayer,
-                            details: QgsProcessingContext.LayerDetails) \
-        -> QgsLayerTreeLayer:
+def create_layer_tree_layer(
+    layer: QgsMapLayer, details: QgsProcessingContext.LayerDetails
+) -> QgsLayerTreeLayer:
     """
     Applies post-processing steps to a QgsLayerTreeLayer created for
     an algorithm's output
     """
     layer_tree_layer = QgsLayerTreeLayer(layer)
 
-    if ProcessingConfig.getSetting(ProcessingConfig.VECTOR_FEATURE_COUNT) and \
-            layer.type() == Qgis.LayerType.Vector:
+    if (
+        ProcessingConfig.getSetting(ProcessingConfig.VECTOR_FEATURE_COUNT)
+        and layer.type() == Qgis.LayerType.Vector
+    ):
         layer_tree_layer.setCustomProperty("showFeatureCount", True)
 
     if details.layerSortKey:
-        layer_tree_layer.setCustomProperty(SORT_ORDER_CUSTOM_PROPERTY,
-                                           details.layerSortKey)
+        layer_tree_layer.setCustomProperty(
+            SORT_ORDER_CUSTOM_PROPERTY, details.layerSortKey
+        )
     return layer_tree_layer
 
 
-def get_layer_tree_results_group(details: QgsProcessingContext.LayerDetails,
-                                 context: QgsProcessingContext) \
-        -> QgsLayerTreeGroup:
+def get_layer_tree_results_group(
+    details: QgsProcessingContext.LayerDetails, context: QgsProcessingContext
+) -> Optional[QgsLayerTreeGroup]:
     """
-    Returns the destination layer tree group to store results in
+    Returns the destination layer tree group to store results in, or None
+    if there is no specific destination tree group associated with the layer
     """
 
     destination_project = details.project or context.project()
 
-    # default to placing results in the top level of the layer tree
-    results_group = details.project.layerTreeRoot()
+    results_group: Optional[QgsLayerTreeGroup] = None
 
     # if a specific results group is specified in Processing settings,
     # respect it (and create if necessary)
     results_group_name = ProcessingConfig.getSetting(
-        ProcessingConfig.RESULTS_GROUP_NAME)
+        ProcessingConfig.RESULTS_GROUP_NAME
+    )
     if results_group_name:
         results_group = destination_project.layerTreeRoot().findGroup(
-            results_group_name)
+            results_group_name
+        )
         if not results_group:
             results_group = destination_project.layerTreeRoot().insertGroup(
-                0, results_group_name)
+                0, results_group_name
+            )
             results_group.setExpanded(True)
 
     # if this particular output layer has a specific output group assigned,
     # find or create it now
     if details.groupName:
+        if results_group is None:
+            results_group = destination_project.layerTreeRoot()
+
         group = results_group.findGroup(details.groupName)
         if not group:
-            group = results_group.insertGroup(
-                0, details.groupName)
+            group = results_group.insertGroup(0, details.groupName)
             group.setExpanded(True)
     else:
         group = results_group
@@ -179,10 +188,12 @@ def get_layer_tree_results_group(details: QgsProcessingContext.LayerDetails,
     return group
 
 
-def handleAlgorithmResults(alg: QgsProcessingAlgorithm,
-                           context: QgsProcessingContext,
-                           feedback: Optional[QgsProcessingFeedback] = None,
-                           parameters: Optional[Dict] = None):
+def handleAlgorithmResults(
+    alg: QgsProcessingAlgorithm,
+    context: QgsProcessingContext,
+    feedback: Optional[QgsProcessingFeedback] = None,
+    parameters: Optional[dict] = None,
+):
     if not parameters:
         parameters = {}
     if feedback is None:
@@ -190,16 +201,16 @@ def handleAlgorithmResults(alg: QgsProcessingAlgorithm,
     wrong_layers = []
 
     feedback.setProgressText(
-        QCoreApplication.translate(
-            'Postprocessing',
-            'Loading resulting layers'
-        )
+        QCoreApplication.translate("Postprocessing", "Loading resulting layers")
     )
     i = 0
 
-    added_layers: List[Tuple[QgsLayerTreeGroup, QgsLayerTreeLayer]] = []
-    layers_to_post_process: List[Tuple[QgsMapLayer,
-                                       QgsProcessingContext.LayerDetails]] = []
+    added_layers: list[
+        tuple[QgsMapLayer, Optional[QgsLayerTreeGroup], QgsLayerTreeLayer, QgsProject]
+    ] = []
+    layers_to_post_process: list[
+        tuple[QgsMapLayer, QgsProcessingContext.LayerDetails]
+    ] = []
 
     for dest_id, details in context.layersToLoadOnCompletion().items():
         if feedback.isCanceled():
@@ -213,9 +224,7 @@ def handleAlgorithmResults(alg: QgsProcessingAlgorithm,
 
         try:
             layer = QgsProcessingUtils.mapLayerFromString(
-                dest_id,
-                context,
-                typeHint=details.layerTypeHint
+                dest_id, context, typeHint=details.layerTypeHint
             )
             if layer is not None:
                 details.setOutputLayerName(layer)
@@ -232,12 +241,17 @@ def handleAlgorithmResults(alg: QgsProcessingAlgorithm,
                 # output layer already exists in the destination project
                 owned_map_layer = context.temporaryLayerStore().takeMapLayer(layer)
                 if owned_map_layer:
-                    details.project.addMapLayer(owned_map_layer, False)
-
                     # we don't add the layer to the tree yet -- that's done
                     # later, after we've sorted all added layers
                     layer_tree_layer = create_layer_tree_layer(owned_map_layer, details)
-                    added_layers.append((results_group, layer_tree_layer))
+                    added_layers.append(
+                        (
+                            owned_map_layer,
+                            results_group,
+                            layer_tree_layer,
+                            details.project,
+                        )
+                    )
 
                 if details.postProcessor():
                     # we defer calling the postProcessor set in the context
@@ -251,43 +265,97 @@ def handleAlgorithmResults(alg: QgsProcessingAlgorithm,
         except Exception:
             QgsMessageLog.logMessage(
                 QCoreApplication.translate(
-                    'Postprocessing',
-                    "Error loading result layer:"
-                ) + "\n" + traceback.format_exc(),
-                'Processing',
-                Qgis.Critical)
+                    "Postprocessing", "Error loading result layer:"
+                )
+                + "\n"
+                + traceback.format_exc(),
+                "Processing",
+                Qgis.MessageLevel.Critical,
+            )
             wrong_layers.append(str(dest_id))
         i += 1
 
     # sort added layer tree layers
     sorted_layer_tree_layers = sorted(
-        added_layers,
-        key=lambda x: x[1].customProperty(SORT_ORDER_CUSTOM_PROPERTY, 0)
+        added_layers, key=lambda x: x[2].customProperty(SORT_ORDER_CUSTOM_PROPERTY, 0)
     )
-    for group, layer_node in sorted_layer_tree_layers:
+    have_set_active_layer = False
+
+    current_selected_node: Optional[QgsLayerTreeNode] = None
+    if iface is not None:
+        current_selected_node = iface.layerTreeView().currentNode()
+        iface.layerTreeView().setUpdatesEnabled(False)
+
+    for layer, group, layer_node, project in sorted_layer_tree_layers:
+        if not project:
+            project = context.project()
+
+        # store the current insertion point to restore it later
+        previous_insertion_point = None
+        if project:
+            previous_insertion_point = (
+                project.layerTreeRegistryBridge().layerInsertionPoint()
+            )
+
         layer_node.removeCustomProperty(SORT_ORDER_CUSTOM_PROPERTY)
-        group.insertChildNode(0, layer_node)
+        insertion_point: Optional[QgsLayerTreeRegistryBridge.InsertionPoint] = None
+        if group is not None:
+            insertion_point = QgsLayerTreeRegistryBridge.InsertionPoint(group, 0)
+        else:
+            # no destination group for this layer, so should be placed
+            # above the current layer
+            if isinstance(current_selected_node, QgsLayerTreeLayer):
+                current_node_group = current_selected_node.parent()
+                current_node_index = current_node_group.children().index(
+                    current_selected_node
+                )
+                insertion_point = QgsLayerTreeRegistryBridge.InsertionPoint(
+                    current_node_group, current_node_index
+                )
+            elif isinstance(current_selected_node, QgsLayerTreeGroup):
+                insertion_point = QgsLayerTreeRegistryBridge.InsertionPoint(
+                    current_selected_node, 0
+                )
+            elif project:
+                insertion_point = QgsLayerTreeRegistryBridge.InsertionPoint(
+                    project.layerTreeRoot(), 0
+                )
+
+        if project and insertion_point:
+            project.layerTreeRegistryBridge().setLayerInsertionPoint(insertion_point)
+
+        project.addMapLayer(layer_node.layer())
+
+        if not have_set_active_layer and iface is not None:
+            iface.setActiveLayer(layer_node.layer())
+            have_set_active_layer = True
+
+        # reset to the previous insertion point
+        if project:
+            project.layerTreeRegistryBridge().setLayerInsertionPoint(
+                previous_insertion_point
+            )
 
     # all layers have been added to the layer tree, so safe to call
     # postProcessors now
     for layer, details in layers_to_post_process:
-        details.postProcessor().postProcessLayer(
-            layer,
-            context,
-            feedback)
+        details.postProcessor().postProcessLayer(layer, context, feedback)
+
+    if iface is not None:
+        iface.layerTreeView().setUpdatesEnabled(True)
 
     feedback.setProgress(100)
 
     if wrong_layers:
         msg = QCoreApplication.translate(
-            'Postprocessing',
-            "The following layers were not correctly generated."
+            "Postprocessing", "The following layers were not correctly generated."
         )
-        msg += "\n" + "\n".join([f"• {lay}" for lay in wrong_layers]) + '\n'
+        msg += "\n" + "\n".join([f"• {lay}" for lay in wrong_layers]) + "\n"
         msg += QCoreApplication.translate(
-            'Postprocessing',
+            "Postprocessing",
             "You can check the 'Log Messages Panel' in QGIS main window "
-            "to find more information about the execution of the algorithm.")
+            "to find more information about the execution of the algorithm.",
+        )
         feedback.reportError(msg)
 
     return len(wrong_layers) == 0

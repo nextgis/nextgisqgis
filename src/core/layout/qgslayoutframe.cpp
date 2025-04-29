@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgslayoutframe.h"
+#include "moc_qgslayoutframe.cpp"
 #include "qgslayoutmultiframe.h"
 #include "qgslayoutitemregistry.h"
 #include "qgslayout.h"
@@ -31,7 +32,7 @@ QgsLayoutFrame::QgsLayoutFrame( QgsLayout *layout, QgsLayoutMultiFrame *multiFra
   if ( multiFrame )
   {
     //repaint frame when multiframe content changes
-    connect( multiFrame, &QgsLayoutMultiFrame::contentsChanged, this, [ = ]
+    connect( multiFrame, &QgsLayoutMultiFrame::contentsChanged, this, [this]
     {
       update();
     } );
@@ -39,6 +40,11 @@ QgsLayoutFrame::QgsLayoutFrame( QgsLayout *layout, QgsLayoutMultiFrame *multiFra
     //force recalculation of rect, so that multiframe specified sizes can be applied
     refreshItemSize();
   }
+}
+
+QgsLayoutFrame::~QgsLayoutFrame()
+{
+  QgsLayoutFrame::cleanup();
 }
 
 QgsLayoutFrame *QgsLayoutFrame::create( QgsLayout *layout )
@@ -158,6 +164,7 @@ void QgsLayoutFrame::cleanup()
 {
   if ( mMultiFrame )
     mMultiFrame->handleFrameRemoval( this );
+  mMultiFrame = nullptr;
 
   QgsLayoutItem::cleanup();
 }

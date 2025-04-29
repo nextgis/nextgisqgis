@@ -47,7 +47,8 @@ QString QgsDxfExportAlgorithm::groupId() const
 
 QString QgsDxfExportAlgorithm::shortHelpString() const
 {
-  return QObject::tr( "Exports layers to DXF file. For each layer, you can choose a field whose values are used to split features in generated destination layers in the DXF output." );
+  return QObject::tr( "Exports layers to DXF file. For each layer, you can choose a field whose values are used to split features in generated destination layers in the DXF output.\n\n"
+                      "If no field is chosen, you can still override the output layer name by directly entering a new output layer name in the Configure Layer panel or by preferring layer title (set in layer properties) to layer name." );
 }
 
 QgsDxfExportAlgorithm *QgsDxfExportAlgorithm::createInstance() const
@@ -60,18 +61,41 @@ void QgsDxfExportAlgorithm::initAlgorithm( const QVariantMap & )
   addParameter( new QgsProcessingParameterDxfLayers( QStringLiteral( "LAYERS" ), QObject::tr( "Input layers" ) ) );
   addParameter( new QgsProcessingParameterEnum( QStringLiteral( "SYMBOLOGY_MODE" ), QObject::tr( "Symbology mode" ), QStringList() << QObject::tr( "No Symbology" ) << QObject::tr( "Feature Symbology" ) << QObject::tr( "Symbol Layer Symbology" ), false, 0 ) );
   addParameter( new QgsProcessingParameterScale( QStringLiteral( "SYMBOLOGY_SCALE" ), QObject::tr( "Symbology scale" ), 1000000 ) );
-  addParameter( new QgsProcessingParameterEnum( QStringLiteral( "ENCODING" ), QObject::tr( "Encoding" ), QgsDxfExport::encodings(), false, QVariant(), false, true ) );
+  std::unique_ptr<QgsProcessingParameterMapTheme> mapThemeParam = std::make_unique<QgsProcessingParameterMapTheme>( QStringLiteral( "MAP_THEME" ), QObject::tr( "Map theme" ), QVariant(), true );
+  mapThemeParam->setHelp( QObject::tr( "Match layer styling to the provided map theme" ) );
+  addParameter( mapThemeParam.release() );
+  const QStringList encodings = QgsDxfExport::encodings();
+  addParameter( new QgsProcessingParameterEnum( QStringLiteral( "ENCODING" ), QObject::tr( "Encoding" ), encodings, false, encodings.at( 0 ), false, true ) );
   addParameter( new QgsProcessingParameterCrs( QStringLiteral( "CRS" ), QObject::tr( "CRS" ), QStringLiteral( "EPSG:4326" ) ) );
-  addParameter( new QgsProcessingParameterBoolean( QStringLiteral( "USE_LAYER_TITLE" ), QObject::tr( "Use layer title as name" ), false ) );
-  addParameter( new QgsProcessingParameterBoolean( QStringLiteral( "FORCE_2D" ), QObject::tr( "Force 2D output" ),  false ) );
-  addParameter( new QgsProcessingParameterBoolean( QStringLiteral( "MTEXT" ), QObject::tr( "Export labels as MTEXT elements" ),  true ) );
+  std::unique_ptr<QgsProcessingParameterExtent> extentParam = std::make_unique<QgsProcessingParameterExtent>( QStringLiteral( "EXTENT" ), QObject::tr( "Extent" ), QVariant(), true );
+  extentParam->setHelp( QObject::tr( "Limit exported features to those with geometries intersecting the provided extent" ) );
+  addParameter( extentParam.release() );
+  addParameter( new QgsProcessingParameterBoolean( QStringLiteral( "SELECTED_FEATURES_ONLY" ), QObject::tr( "Use only selected features" ), false ) );
+  std::unique_ptr<QgsProcessingParameterBoolean> useTitleParam = std::make_unique<QgsProcessingParameterBoolean>( QStringLiteral( "USE_LAYER_TITLE" ), QObject::tr( "Use layer title as name" ), false );
+  useTitleParam->setHelp( QObject::tr( "If no attribute is chosen and layer name is not being overridden, prefer layer title (set in layer properties) to layer name" ) );
+  addParameter( useTitleParam.release() );
+  addParameter( new QgsProcessingParameterBoolean( QStringLiteral( "FORCE_2D" ), QObject::tr( "Force 2D output" ), false ) );
+  addParameter( new QgsProcessingParameterBoolean( QStringLiteral( "MTEXT" ), QObject::tr( "Export labels as MTEXT elements" ), true ) );
+  addParameter( new QgsProcessingParameterBoolean( QStringLiteral( "EXPORT_LINES_WITH_ZERO_WIDTH" ), QObject::tr( "Export lines with zero width" ) ), false );
   addParameter( new QgsProcessingParameterFileDestination( QStringLiteral( "OUTPUT" ), QObject::tr( "DXF" ), QObject::tr( "DXF Files" ) + " (*.dxf *.DXF)" ) );
+}
+
+bool QgsDxfExportAlgorithm::prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback * )
+{
+  // Retrieve and clone layers
+  const QString mapTheme = parameterAsString( parameters, QStringLiteral( "MAP_THEME" ), context );
+  if ( !mapTheme.isEmpty() && context.project()->mapThemeCollection()->hasMapTheme( mapTheme ) )
+  {
+    mMapThemeStyleOverrides = context.project()->mapThemeCollection()->mapThemeStyleOverrides( mapTheme );
+  }
+  return true;
 }
 
 QVariantMap QgsDxfExportAlgorithm::processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback )
 {
   QgsMapSettings mapSettings;
   mapSettings.setTransformContext( context.transformContext() );
+  mapSettings.setLayerStyleOverrides( mMapThemeStyleOverrides );
 
   QList<QgsVectorLayer *> mapLayers;
 
@@ -85,13 +109,22 @@ QVariantMap QgsDxfExportAlgorithm::processAlgorithm( const QVariantMap &paramete
     mapLayers.push_back( layer.layer() );
   }
 
-  const Qgis::FeatureSymbologyExport symbologyMode = static_cast< Qgis::FeatureSymbologyExport >( parameterAsInt( parameters, QStringLiteral( "SYMBOLOGY_MODE" ), context ) );
+  const Qgis::FeatureSymbologyExport symbologyMode = static_cast<Qgis::FeatureSymbologyExport>( parameterAsInt( parameters, QStringLiteral( "SYMBOLOGY_MODE" ), context ) );
   const double symbologyScale = parameterAsDouble( parameters, QStringLiteral( "SYMBOLOGY_SCALE" ), context );
   const QString encoding = parameterAsEnumString( parameters, QStringLiteral( "ENCODING" ), context );
   const QgsCoordinateReferenceSystem crs = parameterAsCrs( parameters, QStringLiteral( "CRS" ), context );
+  const bool selectedFeaturesOnly = parameterAsBool( parameters, QStringLiteral( "SELECTED_FEATURES_ONLY" ), context );
   const bool useLayerTitle = parameterAsBool( parameters, QStringLiteral( "USE_LAYER_TITLE" ), context );
   const bool useMText = parameterAsBool( parameters, QStringLiteral( "MTEXT" ), context );
   const bool force2D = parameterAsBool( parameters, QStringLiteral( "FORCE_2D" ), context );
+  const bool exportLinesWithZeroWidth = parameterAsBool( parameters, QStringLiteral( "EXPORT_LINES_WITH_ZERO_WIDTH" ), context );
+
+  QgsRectangle extent;
+  if ( parameters.value( QStringLiteral( "EXTENT" ) ).isValid() )
+  {
+    extent = parameterAsExtent( parameters, QStringLiteral( "EXTENT" ), context, crs );
+  }
+
   const QString outputFile = parameterAsFileOutput( parameters, QStringLiteral( "OUTPUT" ), context );
 
   QgsDxfExport dxfExport;
@@ -104,15 +137,28 @@ QVariantMap QgsDxfExportAlgorithm::processAlgorithm( const QVariantMap &paramete
   dxfExport.setDestinationCrs( crs );
   dxfExport.setForce2d( force2D );
 
+  if ( !extent.isEmpty() )
+  {
+    dxfExport.setExtent( extent );
+  }
+
   QgsDxfExport::Flags flags = QgsDxfExport::Flags();
   if ( !useMText )
     flags = flags | QgsDxfExport::FlagNoMText;
+  if ( selectedFeaturesOnly )
+    flags = flags | QgsDxfExport::FlagOnlySelectedFeatures;
+  if ( exportLinesWithZeroWidth )
+    flags = flags | QgsDxfExport::FlagHairlineWidthExport;
   dxfExport.setFlags( flags );
 
   QFile dxfFile( outputFile );
   switch ( dxfExport.writeToFile( &dxfFile, encoding ) )
   {
     case QgsDxfExport::ExportResult::Success:
+      if ( !dxfExport.feedbackMessage().isEmpty() )
+      {
+        feedback->pushInfo( dxfExport.feedbackMessage() );
+      }
       feedback->pushInfo( QObject::tr( "DXF export completed" ) );
       break;
 

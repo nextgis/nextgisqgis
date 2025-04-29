@@ -74,12 +74,12 @@ QString QgsPoleOfInaccessibilityAlgorithm::outputName() const
 
 QList<int> QgsPoleOfInaccessibilityAlgorithm::inputLayerTypes() const
 {
-  return QList<int>() << QgsProcessing::TypeVectorPolygon;
+  return QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::VectorPolygon );
 }
 
-QgsProcessing::SourceType QgsPoleOfInaccessibilityAlgorithm::outputLayerType() const
+Qgis::ProcessingSourceType QgsPoleOfInaccessibilityAlgorithm::outputLayerType() const
 {
-  return QgsProcessing::TypeVectorPoint;
+  return Qgis::ProcessingSourceType::VectorPoint;
 }
 
 Qgis::WkbType QgsPoleOfInaccessibilityAlgorithm::outputWkbType( Qgis::WkbType inputWkbType ) const
@@ -92,7 +92,7 @@ Qgis::WkbType QgsPoleOfInaccessibilityAlgorithm::outputWkbType( Qgis::WkbType in
 QgsFields QgsPoleOfInaccessibilityAlgorithm::outputFields( const QgsFields &inputFields ) const
 {
   QgsFields outputFields = inputFields;
-  outputFields.append( QgsField( QStringLiteral( "dist_pole" ), QVariant::Double ) );
+  outputFields.append( QgsField( QStringLiteral( "dist_pole" ), QMetaType::Type::Double ) );
 
   return outputFields;
 }
@@ -104,7 +104,7 @@ QgsPoleOfInaccessibilityAlgorithm *QgsPoleOfInaccessibilityAlgorithm::createInst
 
 void QgsPoleOfInaccessibilityAlgorithm::initParameters( const QVariantMap & )
 {
-  auto toleranceParam = std::make_unique < QgsProcessingParameterDistance >( QStringLiteral( "TOLERANCE" ), QObject::tr( "Tolerance" ), 1.0, QStringLiteral( "INPUT" ), 0.0 );
+  auto toleranceParam = std::make_unique<QgsProcessingParameterDistance>( QStringLiteral( "TOLERANCE" ), QObject::tr( "Tolerance" ), 1.0, QStringLiteral( "INPUT" ), 0.0 );
   toleranceParam->setIsDynamic( true );
   toleranceParam->setDynamicPropertyDefinition( QgsPropertyDefinition( QStringLiteral( "Tolerance" ), QObject::tr( "Tolerance" ), QgsPropertyDefinition::Double ) );
   toleranceParam->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
@@ -116,7 +116,7 @@ bool QgsPoleOfInaccessibilityAlgorithm::prepareAlgorithm( const QVariantMap &par
   mTolerance = parameterAsDouble( parameters, QStringLiteral( "TOLERANCE" ), context );
   mDynamicTolerance = QgsProcessingParameters::isDynamic( parameters, QStringLiteral( "TOLERANCE" ) );
   if ( mDynamicTolerance )
-    mToleranceProperty = parameters.value( QStringLiteral( "TOLERANCE" ) ).value< QgsProperty >();
+    mToleranceProperty = parameters.value( QStringLiteral( "TOLERANCE" ) ).value<QgsProperty>();
 
   return true;
 }

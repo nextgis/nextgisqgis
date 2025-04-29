@@ -5,9 +5,10 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Nyall Dawson'
-__date__ = '10/08/2022'
-__copyright__ = 'Copyright 2022, The QGIS Project'
+
+__author__ = "Nyall Dawson"
+__date__ = "10/08/2022"
+__copyright__ = "Copyright 2022, The QGIS Project"
 
 import os
 import shutil
@@ -17,7 +18,8 @@ from qgis.PyQt.QtCore import QT_VERSION, QEventLoop, QLocale
 from qgis.PyQt.QtGui import QValidator
 from qgis.core import QgsDataCollectionItem, QgsLayerItem, QgsVectorLayer
 from qgis.gui import QgsFieldValidator
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 from utilities import unitTestDataPath
 
@@ -37,12 +39,18 @@ class PyQgsDataConnectionItem(QgsDataCollectionItem):
         children = []
 
         # Add a Python object as child
-        pyQgsLayerItem = PyQgsLayerItem(None, "name", "", "uri", QgsLayerItem.Vector, "my_provider")
+        pyQgsLayerItem = PyQgsLayerItem(
+            None, "name", "", "uri", QgsLayerItem.LayerType.Vector, "my_provider"
+        )
         pyQgsLayerItem.tabSetDestroyedFlag = self.tabSetDestroyedFlag
         children.append(pyQgsLayerItem)
 
         # Add a C++ object as child
-        children.append(QgsLayerItem(None, "name2", "", "uri", QgsLayerItem.Vector, "my_provider"))
+        children.append(
+            QgsLayerItem(
+                None, "name2", "", "uri", QgsLayerItem.LayerType.Vector, "my_provider"
+            )
+        )
 
         return children
 
@@ -58,18 +66,20 @@ DO NOT ADD TESTS TO THIS FILE WITHOUT A DETAILED EXPLANATION ON WHY!!!!
 """
 
 
-class TestQgsDisabledTests(unittest.TestCase):
+class TestQgsDisabledTests(QgisTestCase):
 
     @classmethod
     def setUpClass(cls):
         """Run before all tests."""
         super().setUpClass()
-        testPath = TEST_DATA_DIR + '/' + 'bug_17878.gpkg'
+        testPath = TEST_DATA_DIR + "/" + "bug_17878.gpkg"
         # Copy it
         tempdir = tempfile.mkdtemp()
-        testPathCopy = os.path.join(tempdir, 'bug_17878.gpkg')
+        testPathCopy = os.path.join(tempdir, "bug_17878.gpkg")
         shutil.copy(testPath, testPathCopy)
-        cls.vl = QgsVectorLayer(testPathCopy + '|layername=bug_17878', "test_data", "ogr")
+        cls.vl = QgsVectorLayer(
+            testPathCopy + "|layername=bug_17878", "test_data", "ogr"
+        )
         assert cls.vl.isValid()
 
     @classmethod
@@ -78,7 +88,13 @@ class TestQgsDisabledTests(unittest.TestCase):
         cls.vl = None
         super().tearDownClass()
 
-    @unittest.skipIf(QT_VERSION >= 0x050d00, 'Crashes on newer Qt/PyQt versions')
+    def test_dummy(self):
+        """
+        Dummy test so that test suite contains at least one enabled test
+        """
+        pass
+
+    @unittest.skipIf(QT_VERSION >= 0x050D00, "Crashes on newer Qt/PyQt versions")
     def testPythonCreateChildrenCalledFromCplusplus(self):
         """
         test createChildren() method implemented in Python, called from C++
@@ -116,7 +132,7 @@ class TestQgsDisabledTests(unittest.TestCase):
 
             # wait for populate() to have done its job
             item.stateChanged.connect(loop.quit)
-            loop.exec_()
+            loop.exec()
 
             # Python object PyQgsLayerItem should still be alive
             self.assertFalse(tabSetDestroyedFlag[0])
@@ -131,7 +147,7 @@ class TestQgsDisabledTests(unittest.TestCase):
             # Delete the object and make sure all deferred deletions are processed
             item.destroyed.connect(loop.quit)
             item.deleteLater()
-            loop.exec_()
+            loop.exec()
 
             # Check that the PyQgsLayerItem Python object is now destroyed
             self.assertTrue(tabSetDestroyedFlag[0])
@@ -144,23 +160,25 @@ class TestQgsDisabledTests(unittest.TestCase):
         QValidator::Intermediate 1 The string is a plausible intermediate value.
         QValidator::Acceptable 2 The string is acceptable as a final result; i.e. it is valid.
         """
-        validator = QgsFieldValidator(None, field, '0.0', '')
+        validator = QgsFieldValidator(None, field, "0.0", "")
 
         def _test(value, expected):
             ret = validator.validate(value, 0)
             self.assertEqual(ret[0], expected)
             if value:
-                self.assertEqual(validator.validate('-' + value, 0)[0], expected, '-' + value)
+                self.assertEqual(
+                    validator.validate("-" + value, 0)[0], expected, "-" + value
+                )
 
         # Valid
-        _test('0.1234', QValidator.Acceptable)
+        _test("0.1234", QValidator.State.Acceptable)
 
         # If precision is > 0, regexp validator is used (and it does not support sci notation)
         if field.precision() == 0:
-            _test('12345.1234e+123', QValidator.Acceptable)
-            _test('12345.1234e-123', QValidator.Acceptable)
+            _test("12345.1234e+123", QValidator.State.Acceptable)
+            _test("12345.1234e-123", QValidator.State.Acceptable)
 
-    @unittest.skipIf(QT_VERSION >= 0x050d00, 'Fails newer Qt/PyQt versions')
+    @unittest.skipIf(QT_VERSION >= 0x050D00, "Fails newer Qt/PyQt versions")
     def test_doubleValidatorCommaLocale(self):
         """Test the double with german locale
 
@@ -174,11 +192,11 @@ class TestQgsDisabledTests(unittest.TestCase):
 
         When fixed these tests should be merged back into test_qgsfieldvalidator.py
         """
-        QLocale.setDefault(QLocale(QLocale.German, QLocale.Germany))
-        self.assertEqual(QLocale().decimalPoint(), ',')
-        field = self.vl.fields()[self.vl.fields().indexFromName('double_field')]
+        QLocale.setDefault(QLocale(QLocale.Language.German, QLocale.Country.Germany))
+        self.assertEqual(QLocale().decimalPoint(), ",")
+        field = self.vl.fields()[self.vl.fields().indexFromName("double_field")]
         self._fld_checker(field)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

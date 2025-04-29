@@ -27,14 +27,12 @@ SIP_IF_MODULE( HAVE_QSCI_SIP )
  * \brief A HTML editor based on QScintilla2. Adds syntax highlighting and
  * code autocompletion.
  * \note may not be available in Python bindings, depending on platform support
- * \since QGIS 2.6
  */
 class GUI_EXPORT QgsCodeEditorHTML : public QgsCodeEditor
 {
     Q_OBJECT
 
   public:
-
     //! Constructor for QgsCodeEditorHTML
     QgsCodeEditorHTML( QWidget *parent SIP_TRANSFERTHIS = nullptr );
 

@@ -32,7 +32,6 @@
 class QgsWFSDataSourceURI
 {
   public:
-
     //! Http method for DCP URIs
     enum Method
     {
@@ -69,8 +68,16 @@ class QgsWFSDataSourceURI
     //! Returns user defined limit page size. 0=server udefault
     long long pageSize() const;
 
+    //! Whether paging is enabled
+    enum class PagingStatus
+    {
+      DEFAULT, //! For WFS <= 1.1, no paging. For WFS 2.0, trust GetCapabilities "ImplementsResultPaging"
+      ENABLED, //! Enabled
+      DISABLED // Disabled
+    };
+
     //! Returns whether paging is enabled.
-    bool pagingEnabled() const;
+    PagingStatus pagingStatus() const;
 
     //! Gets typename (with prefix)
     QString typeName() const;
@@ -133,12 +140,7 @@ class QgsWFSDataSourceURI
     const QgsAuthorizationSettings &auth() const { return mAuth; }
 
     //! Builds a derived uri from a base uri
-    static QString build( const QString &uri,
-                          const QString &typeName,
-                          const QString &crsString = QString(),
-                          const QString &sql = QString(),
-                          const QString &filter = QString(),
-                          bool restrictToCurrentViewExtent = false );
+    static QString build( const QString &uri, const QString &typeName, const QString &crsString = QString(), const QString &sql = QString(), const QString &filter = QString(), bool restrictToCurrentViewExtent = false );
 
     //! Sets Get DCP endpoints
     void setGetEndpoints( const QgsStringMap &map );
@@ -156,7 +158,7 @@ class QgsWFSDataSourceURI
     QgsWFSDataSourceURI &operator=( const QgsWFSDataSourceURI &other );
 
   private:
-    QgsDataSourceUri    mURI;
+    QgsDataSourceUri mURI;
     QgsAuthorizationSettings mAuth;
     QgsStringMap mGetEndpoints;
     QgsStringMap mPostEndpoints;

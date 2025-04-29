@@ -15,6 +15,7 @@
 
 #include "qgsapplication.h"
 #include "qgscolorramplegendnode.h"
+#include "moc_qgscolorramplegendnode.cpp"
 #include "qgscolorrampimpl.h"
 #include "qgslegendsettings.h"
 #include "qgslayertreemodel.h"
@@ -25,10 +26,13 @@
 #include "qgsnumericformat.h"
 
 #include <QPalette>
+#include <QBuffer>
 
-QgsColorRampLegendNode::QgsColorRampLegendNode( QgsLayerTreeLayer *nodeLayer, QgsColorRamp *ramp, const QString &minimumLabel, const QString &maximumLabel, QObject *parent )
+QgsColorRampLegendNode::QgsColorRampLegendNode( QgsLayerTreeLayer *nodeLayer, QgsColorRamp *ramp, const QString &minimumLabel, const QString &maximumLabel, QObject *parent, const QString &key, const QString &parentKey )
   : QgsLayerTreeModelLegendNode( nodeLayer, parent )
   , mRamp( ramp )
+  , mKey( key )
+  , mParentKey( parentKey )
 {
   mSettings.setMinimumLabel( minimumLabel );
   mSettings.setMaximumLabel( maximumLabel );
@@ -36,12 +40,14 @@ QgsColorRampLegendNode::QgsColorRampLegendNode( QgsLayerTreeLayer *nodeLayer, Qg
   init( nodeLayer );
 }
 
-QgsColorRampLegendNode::QgsColorRampLegendNode( QgsLayerTreeLayer *nodeLayer, QgsColorRamp *ramp, const QgsColorRampLegendNodeSettings &settings, double minimumValue, double maximumValue, QObject *parent )
+QgsColorRampLegendNode::QgsColorRampLegendNode( QgsLayerTreeLayer *nodeLayer, QgsColorRamp *ramp, const QgsColorRampLegendNodeSettings &settings, double minimumValue, double maximumValue, QObject *parent, const QString &key, const QString &parentKey )
   : QgsLayerTreeModelLegendNode( nodeLayer, parent )
   , mRamp( ramp )
   , mSettings( settings )
   , mMinimumValue( minimumValue )
   , mMaximumValue( maximumValue )
+  , mKey( key )
+  , mParentKey( parentKey )
 {
   init( nodeLayer );
 }
@@ -51,7 +57,7 @@ void QgsColorRampLegendNode::init( QgsLayerTreeLayer *nodeLayer )
   const int iconSize = QgsLayerTreeModel::scaleIconSize( 16 );
   mIconSize = mSettings.orientation() == Qt::Vertical ? QSize( iconSize, iconSize * 6 ) : QSize( iconSize * 6, iconSize );
 
-  connect( nodeLayer, &QObject::destroyed, this, [ = ]() { mLayerNode = nullptr; } );
+  connect( nodeLayer, &QObject::destroyed, this, [this]() { mLayerNode = nullptr; } );
 }
 
 const QgsColorRamp *QgsColorRampLegendNode::ramp() const
@@ -173,11 +179,14 @@ QVariant QgsColorRampLegendNode::data( int role ) const
     }
     return mPixmap;
   }
-  else if ( role == QgsLayerTreeModelLegendNode::NodeTypeRole )
+  else if ( role == static_cast< int >( QgsLayerTreeModelLegendNode::CustomRole::NodeType ) )
   {
     return QgsLayerTreeModelLegendNode::ColorRampLegend;
   }
-
+  else if ( role == static_cast< int >( QgsLayerTreeModelLegendNode::CustomRole::RuleKey ) )
+    return mKey;
+  else if ( role == static_cast< int >( QgsLayerTreeModelLegendNode::CustomRole::ParentRuleKey ) )
+    return mParentKey;
   return QVariant();
 }
 
@@ -475,4 +484,29 @@ QSizeF QgsColorRampLegendNode::drawSymbolText( const QgsLegendSettings &settings
   }
 
   return QSizeF( textWidth, textHeight );
+}
+
+QJsonObject QgsColorRampLegendNode::exportSymbolToJson( const QgsLegendSettings &settings, const QgsRenderContext &context ) const
+{
+  Q_UNUSED( settings );
+  Q_UNUSED( context );
+
+  QJsonObject json;
+
+  const QPixmap icon = data( Qt::DecorationRole ).value<QPixmap>();
+
+  if ( ! icon.isNull() )
+  {
+    const QImage image( icon.toImage() );
+    QByteArray byteArray;
+    QBuffer buffer( &byteArray );
+    image.save( &buffer, "PNG" );
+    const QString base64 = QString::fromLatin1( byteArray.toBase64().data() );
+    json[ QStringLiteral( "icon" ) ] = base64;
+  }
+
+  json [ QStringLiteral( "min" ) ] = mMinimumValue;
+  json [ QStringLiteral( "max" ) ] = mMaximumValue;
+
+  return json;
 }

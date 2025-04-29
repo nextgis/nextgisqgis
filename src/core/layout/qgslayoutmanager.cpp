@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgslayoutmanager.h"
+#include "moc_qgslayoutmanager.cpp"
 #include "qgslayout.h"
 #include "qgsproject.h"
 #include "qgslogger.h"
@@ -367,7 +368,7 @@ QVariant QgsLayoutManagerModel::data( const QModelIndex &index, int role ) const
     case Qt::EditRole:
       return !isEmpty && mLayoutManager ? mLayoutManager->layouts().at( layoutRow )->name() : QVariant();
 
-    case LayoutRole:
+    case static_cast< int >( CustomRole::Layout ):
     {
       if ( isEmpty || !mLayoutManager )
         return QVariant();
@@ -417,7 +418,7 @@ bool QgsLayoutManagerModel::setData( const QModelIndex &index, const QVariant &v
 
   //check if name already exists
   QStringList layoutNames;
-  const QList< QgsMasterLayoutInterface * > layouts = QgsProject::instance()->layoutManager()->layouts();
+  const QList< QgsMasterLayoutInterface * > layouts = QgsProject::instance()->layoutManager()->layouts(); // skip-keyword-check
   for ( QgsMasterLayoutInterface *l : layouts )
   {
     layoutNames << l->name();
@@ -454,9 +455,9 @@ QgsMasterLayoutInterface *QgsLayoutManagerModel::layoutFromIndex( const QModelIn
   if ( index.row() == 0 && mAllowEmpty )
     return nullptr;
 
-  if ( QgsPrintLayout *l = qobject_cast< QgsPrintLayout * >( qvariant_cast<QObject *>( data( index, LayoutRole ) ) ) )
+  if ( QgsPrintLayout *l = qobject_cast< QgsPrintLayout * >( qvariant_cast<QObject *>( data( index, static_cast< int >( CustomRole::Layout ) ) ) ) )
     return l;
-  else if ( QgsReport *r = qobject_cast< QgsReport * >( qvariant_cast<QObject *>( data( index, LayoutRole ) ) ) )
+  else if ( QgsReport *r = qobject_cast< QgsReport * >( qvariant_cast<QObject *>( data( index, static_cast< int >( CustomRole::Layout ) ) ) ) )
     return r;
   else
     return nullptr;

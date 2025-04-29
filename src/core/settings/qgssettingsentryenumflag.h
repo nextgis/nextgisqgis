@@ -28,7 +28,7 @@
  *
  * \brief A template class for enum and flag settings entry.
  *
- * \note This template class has a dedicated handling in sipify.pl
+ * \note This template class has a dedicated handling in sipify.py
  * \since QGIS 3.20
  */
 template <typename T>
@@ -161,6 +161,11 @@ class QgsSettingsEntryEnumFlag : public QgsSettingsEntryBaseTemplate<T>
     virtual Qgis::SettingsType settingsType() const override
     {
       return Qgis::SettingsType::EnumFlag;
+    }
+
+    virtual QString typeId() const override
+    {
+      return QStringLiteral( "%1-%2" ).arg( this->QgsSettingsEntryBase::typeId(), QMetaEnum::fromType<T>().name() );
     }
 
   private:

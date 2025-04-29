@@ -30,7 +30,7 @@ namespace Qt3DInput
   class QMouseEvent;
   class QMouseHandler;
   class QWheelEvent;
-}
+} // namespace Qt3DInput
 
 namespace Qt3DRender
 {
@@ -48,13 +48,10 @@ class QgsCameraPose;
 class QgsVector3D;
 class QgsWindow3DEngine;
 class Qgs3DMapScene;
-class QgsCameraController4Test;
 
 /**
  * \ingroup 3d
  * \brief Object that controls camera movement based on user input
- * \note Not available in Python bindings
- * \since QGIS 3.0
  */
 #ifndef SIP_RUN
 class _3D_EXPORT QgsCameraController : public Qt3DCore::QEntity
@@ -66,7 +63,6 @@ class _3D_EXPORT QgsCameraController : public QObject
 
     Q_OBJECT
   public:
-
     //! Constructs the camera controller with optional parent node that will take ownership
     QgsCameraController( Qgs3DMapScene *scene ) SIP_SKIP;
     ~QgsCameraController() override;
@@ -225,6 +221,31 @@ class _3D_EXPORT QgsCameraController : public QObject
     //! Returns a pointer to the scene's engine's window or nullptr if engine is QgsOffscreen3DEngine
     QWindow *window() const;
 
+    //! List of possible operations with the mouse in TerrainBased navigation
+    enum class MouseOperation
+    {
+      None = 0,       // no operation
+      Translation,    // left button pressed, no modifier
+      RotationCamera, // left button pressed + ctrl modifier
+      RotationCenter, // left button pressed + shift modifier
+      Zoom,           // right button pressed
+      ZoomWheel       // mouse wheel scroll
+    };
+
+    // This list gathers all the rotation and translation operations.
+    // It is used to update the appropriate parameters when successive
+    // translation and rotation happen.
+    const QList<MouseOperation> mTranslateOrRotate = {
+      MouseOperation::Translation,
+      MouseOperation::RotationCamera,
+      MouseOperation::RotationCenter
+    };
+
+    // check that current sequence (current operation and new operation) is a rotation or translation
+    bool isATranslationRotationSequence( MouseOperation newOperation ) const;
+
+    void setMouseParameters( const MouseOperation &newOperation, const QPoint &clickPoint = QPoint() );
+
   signals:
     //! Emitted when camera has been updated
     void cameraChanged();
@@ -294,28 +315,25 @@ class _3D_EXPORT QgsCameraController : public QObject
 
     //! Last mouse position recorded
     QPoint mMousePos;
-    bool mMousePressed = false;
-    Qt3DInput::QMouseEvent::Buttons mPressedButton = Qt3DInput::QMouseEvent::Buttons::NoButton;
+
+    //! click point for a rotation or a translation
+    QPoint mClickPoint;
 
     bool mDepthBufferIsReady = false;
     QImage mDepthBufferImage;
 
-    QPoint mMiddleButtonClickPos;
+    std::unique_ptr<Qt3DRender::QCamera> mCameraBefore;
+
     bool mRotationCenterCalculated = false;
     QVector3D mRotationCenter;
-    double mRotationDistanceFromCenter;
+    double mRotationDistanceFromCenter = 0;
     double mRotationPitch = 0;
     double mRotationYaw = 0;
-    std::unique_ptr< Qt3DRender::QCamera > mCameraBeforeRotation;
 
-    QPoint mDragButtonClickPos;
-    std::unique_ptr< Qt3DRender::QCamera > mCameraBeforeDrag;
     bool mDragPointCalculated = false;
     QVector3D mDragPoint;
     double mDragDepth;
 
-    bool mIsInZoomInState = false;
-    std::unique_ptr< Qt3DRender::QCamera > mCameraBeforeZoom;
     bool mZoomPointCalculated = false;
     QVector3D mZoomPoint;
 
@@ -325,14 +343,18 @@ class _3D_EXPORT QgsCameraController : public QObject
     Qgis::VerticalAxisInversion mVerticalAxisInversion = Qgis::VerticalAxisInversion::WhenDragging;
     double mCameraMovementSpeed = 5.0;
 
-    QSet< int > mDepressedKeys;
+    QSet<int> mDepressedKeys;
     bool mCaptureFpsMouseMovements = false;
     bool mIgnoreNextMouseMove = false;
     QTimer *mFpsNavTimer = nullptr;
 
     double mCumulatedWheelY = 0;
 
-    friend QgsCameraController4Test;
+    MouseOperation mCurrentOperation = MouseOperation::None;
+
+    // To test the cameracontroller
+    friend class TestQgs3DRendering;
+    friend class TestQgs3DCameraController;
 };
 
 #endif // QGSCAMERACONTROLLER_H

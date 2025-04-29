@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsunittypes.h                                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -15,8 +15,6 @@ class QgsUnitTypes
 {
 %Docstring(signature="appended")
 Helper functions for various unit types.
-
-.. versionadded:: 2.14
 %End
 
 %TypeHeaderCode
@@ -63,7 +61,7 @@ Decodes a unit type from a ``string``.
 :param string: string to decode
 
 :return: - decoded unit type
-         - ok: boolean, will be set to ``True`` if string was converted successfully
+         - ok: boolean, ``True`` if string was converted successfully
 
 .. seealso:: :py:func:`encodeUnitType`
 
@@ -95,7 +93,7 @@ Decodes a distance unit from a string.
 :param string: string to decode
 
 :return: - decoded units
-         - ok: boolean, will be set to ``True`` if string was converted successfully
+         - ok: boolean, ``True`` if string was converted successfully
 
 .. seealso:: :py:func:`encodeUnit`
 %End
@@ -116,8 +114,6 @@ Returns a translated abbreviation representing a distance unit.
 :param unit: unit to convert to string
 
 .. seealso:: :py:func:`stringToDistanceUnit`
-
-.. versionadded:: 3.0
 %End
 
     static Qgis::DistanceUnit stringToDistanceUnit( const QString &string, bool *ok /Out/ = 0 );
@@ -127,7 +123,7 @@ Converts a translated string to a distance unit.
 :param string: string representing a distance unit
 
 :return: - the distance unit
-         - ok: boolean, will be set to ``True`` if string was converted successfully
+         - ok: boolean, ``True`` if string was converted successfully
 
 .. seealso:: :py:func:`toString`
 %End
@@ -166,7 +162,7 @@ Decodes an areal unit from a string.
 :param string: string to decode
 
 :return: - decoded units
-         - ok: boolean, will be set to ``True`` if string was converted successfully
+         - ok: boolean, ``True`` if string was converted successfully
 
 .. seealso:: :py:func:`encodeUnit`
 %End
@@ -187,8 +183,6 @@ Returns a translated abbreviation representing an areal unit.
 :param unit: unit to convert to string
 
 .. seealso:: :py:func:`stringToAreaUnit`
-
-.. versionadded:: 3.0
 %End
 
     static Qgis::AreaUnit stringToAreaUnit( const QString &string, bool *ok /Out/ = 0 );
@@ -198,7 +192,7 @@ Converts a translated string to an areal unit.
 :param string: string representing an areal unit
 
 :return: - the area unit
-         - ok: boolean, will be set to ``True`` if string was converted successfully
+         - ok: boolean, ``True`` if string was converted successfully
 
 .. seealso:: :py:func:`toString`
 %End
@@ -215,7 +209,8 @@ Returns the conversion factor between the specified areal units.
 
     static Qgis::AreaUnit distanceToAreaUnit( Qgis::DistanceUnit distanceUnit );
 %Docstring
-Converts a distance unit to its corresponding area unit, e.g., meters to square meters
+Converts a distance unit to its corresponding area unit, e.g., meters to
+square meters
 
 :param distanceUnit: distance unit to convert
 
@@ -224,7 +219,8 @@ Converts a distance unit to its corresponding area unit, e.g., meters to square 
 
     static Qgis::DistanceUnit areaToDistanceUnit( Qgis::AreaUnit areaUnit );
 %Docstring
-Converts an area unit to its corresponding distance unit, e.g., square meters to meters
+Converts an area unit to its corresponding distance unit, e.g., square
+meters to meters
 
 :param areaUnit: area unit to convert
 
@@ -252,7 +248,7 @@ Decodes a temporal unit from a ``string``.
 :param string: string to decode
 
 :return: - decoded units
-         - ok: boolean, will be set to ``True`` if string was converted successfully
+         - ok: boolean, ``True`` if string was converted successfully
 
 .. seealso:: :py:func:`encodeUnit`
 
@@ -284,7 +280,7 @@ Converts a translated ``string`` to a temporal unit.
 :param string: string representing a volume unit
 
 :return: - the temporal unit
-         - ok: boolean, will be set to ``True`` if string was converted successfully
+         - ok: boolean, ``True`` if string was converted successfully
 
 .. seealso:: :py:func:`toString`
 
@@ -337,7 +333,7 @@ Decodes a volume unit from a ``string``.
 :param string: string to decode
 
 :return: - decoded units
-         - ok: boolean, will be set to ``True`` if string was converted successfully
+         - ok: boolean, ``True`` if string was converted successfully
 
 .. seealso:: :py:func:`encodeUnit`
 
@@ -369,7 +365,7 @@ Converts a translated ``string`` to a volume unit.
 :param string: string representing a volume unit
 
 :return: - the volume unit
-         - ok: boolean, will be set to ``True`` if string was converted successfully
+         - ok: boolean, ``True`` if string was converted successfully
 
 .. seealso:: :py:func:`toString`
 
@@ -390,7 +386,8 @@ Returns the conversion factor between the specified volume units.
 
     static Qgis::VolumeUnit distanceToVolumeUnit( Qgis::DistanceUnit distanceUnit );
 %Docstring
-Converts a distance unit to its corresponding volume unit, e.g., meters to cubic meters
+Converts a distance unit to its corresponding volume unit, e.g., meters
+to cubic meters
 
 :param distanceUnit: distance unit to convert
 
@@ -401,7 +398,8 @@ Converts a distance unit to its corresponding volume unit, e.g., meters to cubic
 
     static Qgis::DistanceUnit volumeToDistanceUnit( Qgis::VolumeUnit volumeUnit );
 %Docstring
-Converts a volume unit to its corresponding distance unit, e.g., cubic meters to meters
+Converts a volume unit to its corresponding distance unit, e.g., cubic
+meters to meters
 
 :param volumeUnit: volume unit to convert
 
@@ -429,7 +427,7 @@ Decodes an angular unit from a string.
 :param string: string to decode
 
 :return: - decoded units
-         - ok: boolean, will be set to ``True`` if string was converted successfully
+         - ok: boolean, ``True`` if string was converted successfully
 
 .. seealso:: :py:func:`encodeUnit`
 %End
@@ -456,7 +454,9 @@ Returns the conversion factor between the specified angular units.
 Returns an angle formatted as a friendly string.
 
 :param angle: angle to format
-:param decimals: number of decimal places to show. A value of -1 indicates that an appropriate number of decimal places should automatically be selected.
+:param decimals: number of decimal places to show. A value of -1
+                 indicates that an appropriate number of decimal places
+                 should automatically be selected.
 :param unit: unit of angle
 
 :return: formatted angle string
@@ -464,24 +464,22 @@ Returns an angle formatted as a friendly string.
 
     static QgsUnitTypes::DistanceValue scaledDistance( double distance, Qgis::DistanceUnit unit, int decimals, bool keepBaseUnit = false );
 %Docstring
-Will convert a ``distance`` with a given ``unit`` to a distance value which is nice to display.
-It will convert between different units (e.g. from meters to kilometers or millimeters)
-if appropriate, unless forced otherwise with ``keepBaseUnit``.
-The value will also be rounded to ``decimals`` (be prepared that the returned value is still a double so it will require
-further formatting when converting to a string).
-
-.. versionadded:: 3.0
+Will convert a ``distance`` with a given ``unit`` to a distance value
+which is nice to display. It will convert between different units (e.g.
+from meters to kilometers or millimeters) if appropriate, unless forced
+otherwise with ``keepBaseUnit``. The value will also be rounded to
+``decimals`` (be prepared that the returned value is still a double so
+it will require further formatting when converting to a string).
 %End
 
     static QgsUnitTypes::AreaValue scaledArea( double area, Qgis::AreaUnit unit, int decimals, bool keepBaseUnit = false );
 %Docstring
-Will convert an ``area`` with a given ``unit`` to an area value which is nice to display.
-It will convert between different units (e.g. from square meters to square kilometers)
-if appropriate, unless forced otherwise with ``keepBaseUnit``.
-The value will also be rounded to ``decimals`` (be prepared that the returned value is still a double so it will require
-further formatting when converting to a string).
-
-.. versionadded:: 3.0
+Will convert an ``area`` with a given ``unit`` to an area value which is
+nice to display. It will convert between different units (e.g. from
+square meters to square kilometers) if appropriate, unless forced
+otherwise with ``keepBaseUnit``. The value will also be rounded to
+``decimals`` (be prepared that the returned value is still a double so
+it will require further formatting when converting to a string).
 %End
 
     static QString formatDistance( double distance, int decimals, Qgis::DistanceUnit unit, bool keepBaseUnit = false );
@@ -491,14 +489,13 @@ Returns an distance formatted as a friendly string.
 :param distance: distance to format
 :param decimals: number of decimal places to show
 :param unit: unit of distance
-:param keepBaseUnit: set to ``False`` to allow conversion of large distances to more suitable units, e.g., meters to
+:param keepBaseUnit: set to ``False`` to allow conversion of large
+                     distances to more suitable units, e.g., meters to
                      kilometers
 
 :return: formatted distance string
 
 .. seealso:: :py:func:`formatArea`
-
-.. versionadded:: 3.0
 %End
 
     static QString formatArea( double area, int decimals, Qgis::AreaUnit unit, bool keepBaseUnit = false );
@@ -508,14 +505,13 @@ Returns an area formatted as a friendly string.
 :param area: area to format
 :param decimals: number of decimal places to show
 :param unit: unit of area
-:param keepBaseUnit: set to ``False`` to allow conversion of large areas to more suitable units, e.g., square meters to
+:param keepBaseUnit: set to ``False`` to allow conversion of large areas
+                     to more suitable units, e.g., square meters to
                      square kilometers
 
 :return: formatted area string
 
 .. seealso:: :py:func:`formatDistance`
-
-.. versionadded:: 3.0
 %End
 
 
@@ -537,7 +533,7 @@ Decodes a render unit from a string.
 :param string: string to decode
 
 :return: - decoded units
-         - ok: boolean, will be set to ``True`` if string was converted successfully
+         - ok: boolean, ``True`` if string was converted successfully
 
 .. seealso:: :py:func:`encodeUnit`
 %End
@@ -546,8 +542,6 @@ Decodes a render unit from a string.
     static QString toString( Qgis::RenderUnit unit );
 %Docstring
 Returns a translated string representing a render ``unit``.
-
-.. versionadded:: 3.0
 %End
 
     static QString toAbbreviatedString( Qgis::RenderUnit unit );
@@ -570,8 +564,6 @@ Encodes a layout unit to a string.
 :return: encoded string
 
 .. seealso:: :py:func:`decodeLayoutUnit`
-
-.. versionadded:: 3.0
 %End
 
     static Qgis::LayoutUnit decodeLayoutUnit( const QString &string, bool *ok /Out/ = 0 );
@@ -581,32 +573,25 @@ Decodes a layout unit from a string.
 :param string: string to decode
 
 :return: - decoded units
-         - ok: boolean, will be set to ``True`` if string was converted successfully
+         - ok: boolean, ``True`` if string was converted successfully
 
 .. seealso:: :py:func:`encodeUnit`
-
-.. versionadded:: 3.0
 %End
 
     static Qgis::LayoutUnitType unitType( Qgis::LayoutUnit units );
 %Docstring
 Returns the type for a unit of measurement.
-
-.. versionadded:: 3.0
 %End
 
     static QString toAbbreviatedString( Qgis::LayoutUnit unit );
 %Docstring
-Returns a translated abbreviation representing a layout ``unit`` (e.g. "mm").
-
-.. versionadded:: 3.0
+Returns a translated abbreviation representing a layout ``unit`` (e.g.
+"mm").
 %End
 
     static QString toString( Qgis::LayoutUnit unit );
 %Docstring
 Returns a translated string representing a layout ``unit``.
-
-.. versionadded:: 3.0
 %End
 
 };
@@ -616,5 +601,5 @@ Returns a translated string representing a layout ``unit``.
  *                                                                      *
  * src/core/qgsunittypes.h                                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

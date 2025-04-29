@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgsgraphicsviewmousehandles.h"
+#include "moc_qgsgraphicsviewmousehandles.cpp"
 #include "qgsrendercontext.h"
 #include "qgis.h"
 #include <QGraphicsView>
@@ -63,7 +64,6 @@ QRectF QgsGraphicsViewMouseHandles::storedItemRect( QGraphicsItem *item ) const
 
 void QgsGraphicsViewMouseHandles::previewItemMove( QGraphicsItem *, double, double )
 {
-
 }
 
 QRectF QgsGraphicsViewMouseHandles::previewSetItemRect( QGraphicsItem *, QRectF )
@@ -73,22 +73,18 @@ QRectF QgsGraphicsViewMouseHandles::previewSetItemRect( QGraphicsItem *, QRectF 
 
 void QgsGraphicsViewMouseHandles::startMacroCommand( const QString & )
 {
-
 }
 
 void QgsGraphicsViewMouseHandles::endMacroCommand()
 {
-
 }
 
 void QgsGraphicsViewMouseHandles::endItemCommand( QGraphicsItem * )
 {
-
 }
 
 void QgsGraphicsViewMouseHandles::createItemCommand( QGraphicsItem * )
 {
-
 }
 
 QPointF QgsGraphicsViewMouseHandles::snapPoint( QPointF originalPoint, QgsGraphicsViewMouseHandles::SnapGuideMode, bool, bool )
@@ -141,6 +137,15 @@ void QgsGraphicsViewMouseHandles::drawSelectedItemBounds( QPainter *painter )
     return;
   }
 
+  QList<QGraphicsItem *> itemsToDraw;
+  expandItemList( selectedItems, itemsToDraw );
+
+  if ( itemsToDraw.size() <= 1 )
+  {
+    // Single item selected. The items bounds are drawn by the MouseHandles itself.
+    return;
+  }
+
   //use difference mode so that they are visible regardless of item colors
   QgsScopedQPainterState painterState( painter );
   painter->setCompositionMode( QPainter::CompositionMode_Difference );
@@ -151,9 +156,6 @@ void QgsGraphicsViewMouseHandles::drawSelectedItemBounds( QPainter *painter )
   selectedItemPen.setWidth( 0 );
   painter->setPen( selectedItemPen );
   painter->setBrush( Qt::NoBrush );
-
-  QList< QGraphicsItem * > itemsToDraw;
-  expandItemList( selectedItems, itemsToDraw );
 
   for ( QGraphicsItem *item : std::as_const( itemsToDraw ) )
   {
@@ -173,24 +175,16 @@ void QgsGraphicsViewMouseHandles::drawSelectedItemBounds( QPainter *painter )
     else if ( isResizing() && !itemIsLocked( item ) )
     {
       //if currently resizing, calculate relative resize of this item
-      if ( selectedItems.size() > 1 )
-      {
-        //get item bounds in mouse handle item's coordinate system
-        QRectF thisItemRect = mapRectFromItem( item, itemRect( item ) );
-        //now, resize it relative to the current resized dimensions of the mouse handles
-        relativeResizeRect( thisItemRect, QRectF( -mResizeMoveX, -mResizeMoveY, mBeginHandleWidth, mBeginHandleHeight ), mResizeRect );
-        itemBounds = QPolygonF( thisItemRect );
-      }
-      else
-      {
-        //single item selected
-        itemBounds = rect();
-      }
+      //get item bounds in mouse handle item's coordinate system
+      QRectF thisItemRect = mapRectFromItem( item, itemRect( item ) );
+      //now, resize it relative to the current resized dimensions of the mouse handles
+      relativeResizeRect( thisItemRect, QRectF( -mResizeMoveX, -mResizeMoveY, mBeginHandleWidth, mBeginHandleHeight ), mResizeRect );
+      itemBounds = QPolygonF( thisItemRect );
     }
     else
     {
-      //not resizing or moving, so just map from scene bounds
-      itemBounds = mapRectFromItem( item, itemRect( item ) );
+      // not resizing or moving, so just map the item's bounds to the mouse handle item's coordinate system
+      itemBounds = item->mapToItem( this, itemRect( item ) );
     }
 
     // drawPolygon causes issues on windows - corners of path may be missing resulting in triangles being drawn
@@ -426,6 +420,26 @@ bool QgsGraphicsViewMouseHandles::shouldBlockEvent( QInputEvent * ) const
   return mIsDragging || mIsResizing;
 }
 
+void QgsGraphicsViewMouseHandles::startMove( QPointF sceneCoordPos )
+{
+  //save current cursor position
+  mMouseMoveStartPos = sceneCoordPos;
+  //save current item geometry
+  mBeginMouseEventPos = sceneCoordPos;
+  mBeginHandlePos = scenePos();
+  mBeginHandleWidth = rect().width();
+  mBeginHandleHeight = rect().height();
+  mCurrentMouseMoveAction = MoveItem;
+  mIsDragging = true;
+  hideAlignItems();
+
+  // Explicitly call grabMouse to ensure the mouse handles receive the subsequent mouse move events.
+  if ( mView->scene()->mouseGrabberItem() != this )
+  {
+    grabMouse();
+  }
+}
+
 void QgsGraphicsViewMouseHandles::selectedItemSizeChanged()
 {
   if ( !isDragging() && !isResizing() )
@@ -465,7 +479,6 @@ void QgsGraphicsViewMouseHandles::mousePressEvent( QGraphicsSceneMouseEvent *eve
 
   //save current cursor position
   mMouseMoveStartPos = event->lastScenePos();
-  mLastMouseEventPos = event->lastScenePos();
   //save current item geometry
   mBeginMouseEventPos = event->lastScenePos();
   mBeginHandlePos = scenePos();
@@ -481,8 +494,7 @@ void QgsGraphicsViewMouseHandles::mousePressEvent( QGraphicsSceneMouseEvent *eve
     //moving items
     mIsDragging = true;
   }
-  else if ( mCurrentMouseMoveAction != SelectItem &&
-            mCurrentMouseMoveAction != NoAction )
+  else if ( mCurrentMouseMoveAction != SelectItem && mCurrentMouseMoveAction != NoAction )
   {
     //resizing items
     mIsResizing = true;
@@ -490,7 +502,6 @@ void QgsGraphicsViewMouseHandles::mousePressEvent( QGraphicsSceneMouseEvent *eve
     mResizeMoveX = 0;
     mResizeMoveY = 0;
     mCursorOffset = calcCursorEdgeOffset( mMouseMoveStartPos );
-
   }
 }
 
@@ -526,8 +537,6 @@ void QgsGraphicsViewMouseHandles::mouseMoveEvent( QGraphicsSceneMouseEvent *even
     //resize from center if alt depressed
     resizeMouseMove( event->lastScenePos(), event->modifiers() & Qt::ShiftModifier, event->modifiers() & Qt::AltModifier );
   }
-
-  mLastMouseEventPos = event->lastScenePos();
 }
 
 void QgsGraphicsViewMouseHandles::mouseReleaseEvent( QGraphicsSceneMouseEvent *event )
@@ -537,6 +546,10 @@ void QgsGraphicsViewMouseHandles::mouseReleaseEvent( QGraphicsSceneMouseEvent *e
     event->ignore();
     return;
   }
+
+  // Mouse may have been grabbed from the QgsLayoutViewSelectTool, so we need to release it explicitly
+  // otherwise, hover events will not be received
+  ungrabMouse();
 
   QPointF mouseMoveStopPoint = event->lastScenePos();
   double diffX = mouseMoveStopPoint.x() - mMouseMoveStartPos.x();
@@ -629,7 +642,6 @@ void QgsGraphicsViewMouseHandles::mouseReleaseEvent( QGraphicsSceneMouseEvent *e
 
   //reset default action
   mCurrentMouseMoveAction = MoveItem;
-  setViewportCursor( Qt::ArrowCursor );
   //redraw handles
   resetTransform();
   updateHandles();
@@ -778,19 +790,9 @@ void QgsGraphicsViewMouseHandles::resizeMouseMove( QPointF currentPosition, bool
   {
     //snapping only occurs if handles are not rotated for now
 
-    bool snapVertical = mCurrentMouseMoveAction == ResizeLeft ||
-                        mCurrentMouseMoveAction == ResizeRight ||
-                        mCurrentMouseMoveAction == ResizeLeftUp ||
-                        mCurrentMouseMoveAction == ResizeRightUp ||
-                        mCurrentMouseMoveAction == ResizeLeftDown ||
-                        mCurrentMouseMoveAction == ResizeRightDown;
+    bool snapVertical = mCurrentMouseMoveAction == ResizeLeft || mCurrentMouseMoveAction == ResizeRight || mCurrentMouseMoveAction == ResizeLeftUp || mCurrentMouseMoveAction == ResizeRightUp || mCurrentMouseMoveAction == ResizeLeftDown || mCurrentMouseMoveAction == ResizeRightDown;
 
-    bool snapHorizontal = mCurrentMouseMoveAction == ResizeUp ||
-                          mCurrentMouseMoveAction == ResizeDown ||
-                          mCurrentMouseMoveAction == ResizeLeftUp ||
-                          mCurrentMouseMoveAction == ResizeRightUp ||
-                          mCurrentMouseMoveAction == ResizeLeftDown ||
-                          mCurrentMouseMoveAction == ResizeRightDown;
+    bool snapHorizontal = mCurrentMouseMoveAction == ResizeUp || mCurrentMouseMoveAction == ResizeDown || mCurrentMouseMoveAction == ResizeLeftUp || mCurrentMouseMoveAction == ResizeRightUp || mCurrentMouseMoveAction == ResizeLeftDown || mCurrentMouseMoveAction == ResizeRightDown;
 
     //subtract cursor edge offset from begin mouse event and current cursor position, so that snapping occurs to edge of mouse handles
     //rather then cursor position
@@ -1042,7 +1044,6 @@ void QgsGraphicsViewMouseHandles::resizeMouseMove( QPointF currentPosition, bool
 
   //show current size of selection in status bar
   showStatusMessage( tr( "width: %1 mm height: %2 mm" ).arg( rect().width() ).arg( rect().height() ) );
-
 }
 
 void QgsGraphicsViewMouseHandles::setHandleSize( double size )

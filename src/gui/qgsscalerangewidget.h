@@ -36,7 +36,6 @@ class GUI_EXPORT QgsScaleRangeWidget : public QWidget
     Q_PROPERTY( double maximumScale READ maximumScale WRITE setMaximumScale )
 
   public:
-
     /**
      * Constructor for QgsScaleRangeWidget.
      */
@@ -114,7 +113,6 @@ class GUI_EXPORT QgsScaleRangeWidget : public QWidget
      * Emitted when the scale range set in the widget is changed.
      * The scale values indicates the scale denominator, e.g. 1000.0 for a 1:1000 map,
      * or 0 to indicate not set.
-     * \since QGIS 2.16
      */
     void rangeChanged( double min, double max );
 
@@ -123,9 +121,6 @@ class GUI_EXPORT QgsScaleRangeWidget : public QWidget
     void emitRangeChanged();
 
   private:
-    //! pointer to the map canvas used for current buttons.
-    QgsMapCanvas *mCanvas = nullptr;
-
     // ui
     QGridLayout *mLayout = nullptr;
     QLabel *mMaximumScaleIconLabel = nullptr;

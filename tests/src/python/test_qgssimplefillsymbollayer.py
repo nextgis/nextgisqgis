@@ -15,13 +15,12 @@
 ***************************************************************************
 """
 
-__author__ = 'Nyall Dawson'
-__date__ = 'September 2020'
-__copyright__ = '(C) 2020, Nyall Dawson'
+__author__ = "Nyall Dawson"
+__date__ = "September 2020"
+__copyright__ = "(C) 2020, Nyall Dawson"
 
 import os
 
-import qgis  # NOQA
 from qgis.PyQt.QtCore import QDir, QPointF, QSize, Qt
 from qgis.PyQt.QtGui import QColor, QImage, QPainter
 from qgis.core import (
@@ -29,10 +28,8 @@ from qgis.core import (
     QgsFillSymbol,
     QgsGeometry,
     QgsMapSettings,
-    QgsMultiRenderChecker,
     QgsProperty,
     QgsRectangle,
-    QgsRenderChecker,
     QgsRenderContext,
     QgsSimpleFillSymbolLayer,
     QgsSingleSymbolRenderer,
@@ -40,7 +37,8 @@ from qgis.core import (
     QgsSymbolLayer,
     QgsVectorLayer,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 from utilities import unitTestDataPath
 
@@ -48,54 +46,59 @@ start_app()
 TEST_DATA_DIR = unitTestDataPath()
 
 
-class TestQgsSimpleFillSymbolLayer(unittest.TestCase):
+class TestQgsSimpleFillSymbolLayer(QgisTestCase):
 
     @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.report = "<h1>Python QgsSimpleFillSymbolLayer Tests</h1>\n"
-
-    @classmethod
-    def tearDownClass(cls):
-        report_file_path = f"{QDir.tempPath()}/qgistest.html"
-        with open(report_file_path, 'a') as report_file:
-            report_file.write(cls.report)
-        super().tearDownClass()
+    def control_path_prefix(cls):
+        return "symbol_simplefill"
 
     def testRender(self):
         # rendering test
-        s = QgsFillSymbol.createSimple({'outline_color': '#ff0000', 'outline_width': '2', 'color': '#ff5588'})
+        s = QgsFillSymbol.createSimple(
+            {"outline_color": "#ff0000", "outline_width": "2", "color": "#ff5588"}
+        )
 
-        g = QgsGeometry.fromWkt('Polygon((0 0, 10 0, 10 10, 0 0))')
+        g = QgsGeometry.fromWkt("Polygon((0 0, 10 0, 10 10, 0 0))")
         rendered_image = self.renderGeometry(s, g)
-        assert self.imageCheck('simplefill_render', 'simplefill_render', rendered_image)
+        self.assertTrue(
+            self.image_check("simplefill_render", "simplefill_render", rendered_image)
+        )
 
     def testRenderWithOffset(self):
         # rendering test with offset
-        s = QgsFillSymbol.createSimple({'outline_color': '#ff0000', 'outline_width': '2', 'color': '#ff5588'})
+        s = QgsFillSymbol.createSimple(
+            {"outline_color": "#ff0000", "outline_width": "2", "color": "#ff5588"}
+        )
         s[0].setOffset(QPointF(5, 3))
 
-        g = QgsGeometry.fromWkt('Polygon((0 0, 10 0, 10 10, 0 0))')
+        g = QgsGeometry.fromWkt("Polygon((0 0, 10 0, 10 10, 0 0))")
         rendered_image = self.renderGeometry(s, g)
-        assert self.imageCheck('simplefill_offset', 'simplefill_offset', rendered_image)
+        self.assertTrue(
+            self.image_check("simplefill_offset", "simplefill_offset", rendered_image)
+        )
 
     def testDataDefinedOffset(self):
-        """ test that rendering a fill symbol with data defined offset works"""
+        """test that rendering a fill symbol with data defined offset works"""
 
-        polys_shp = os.path.join(TEST_DATA_DIR, 'polys.shp')
-        polys_layer = QgsVectorLayer(polys_shp, 'Polygons', 'ogr')
+        polys_shp = os.path.join(TEST_DATA_DIR, "polys.shp")
+        polys_layer = QgsVectorLayer(polys_shp, "Polygons", "ogr")
 
         # lets render two layers, to make comparison easier
         layer = QgsSimpleFillSymbolLayer()
-        layer.setStrokeStyle(Qt.NoPen)
+        layer.setStrokeStyle(Qt.PenStyle.NoPen)
         layer.setColor(QColor(200, 250, 50))
 
         symbol = QgsFillSymbol()
         symbol.changeSymbolLayer(0, layer)
 
         layer = QgsSimpleFillSymbolLayer()
-        layer.setDataDefinedProperty(QgsSymbolLayer.PropertyOffset, QgsProperty.fromExpression("array(-(x_min($geometry)+100)/5, (y_min($geometry)-35)/5)"))
-        layer.setStrokeStyle(Qt.NoPen)
+        layer.setDataDefinedProperty(
+            QgsSymbolLayer.Property.PropertyOffset,
+            QgsProperty.fromExpression(
+                "array(-(x_min($geometry)+100)/5, (y_min($geometry)-35)/5)"
+            ),
+        )
+        layer.setStrokeStyle(Qt.PenStyle.NoPen)
         layer.setColor(QColor(100, 150, 150))
 
         symbol.appendSymbolLayer(layer)
@@ -109,26 +112,28 @@ class TestQgsSimpleFillSymbolLayer(unittest.TestCase):
         ms.setLayers([polys_layer])
 
         # Test rendering
-        renderchecker = QgsMultiRenderChecker()
-        renderchecker.setMapSettings(ms)
-        renderchecker.setControlPathPrefix('symbol_simplefill')
-        renderchecker.setControlName('expected_simplefill_ddoffset')
-        res = renderchecker.runTest('simplefill_ddoffset')
-        TestQgsSimpleFillSymbolLayer.report += renderchecker.report()
-        self.assertTrue(res)
+        self.assertTrue(
+            self.render_map_settings_check(
+                "simplefill_ddoffset", "simplefill_ddoffset", ms
+            )
+        )
 
     def testOpacityWithDataDefinedColor(self):
-        poly_shp = os.path.join(TEST_DATA_DIR, 'polys.shp')
-        poly_layer = QgsVectorLayer(poly_shp, 'Polys', 'ogr')
+        poly_shp = os.path.join(TEST_DATA_DIR, "polys.shp")
+        poly_layer = QgsVectorLayer(poly_shp, "Polys", "ogr")
         self.assertTrue(poly_layer.isValid())
 
         layer = QgsSimpleFillSymbolLayer()
-        layer.setStrokeStyle(Qt.NoPen)
+        layer.setStrokeStyle(Qt.PenStyle.NoPen)
         layer.setColor(QColor(200, 250, 50))
-        layer.setDataDefinedProperty(QgsSymbolLayer.PropertyFillColor, QgsProperty.fromExpression(
-            "if(Name='Dam', 'red', 'green')"))
-        layer.setDataDefinedProperty(QgsSymbolLayer.PropertyStrokeColor, QgsProperty.fromExpression(
-            "if(Name='Dam', 'magenta', 'blue')"))
+        layer.setDataDefinedProperty(
+            QgsSymbolLayer.Property.PropertyFillColor,
+            QgsProperty.fromExpression("if(Name='Dam', 'red', 'green')"),
+        )
+        layer.setDataDefinedProperty(
+            QgsSymbolLayer.Property.PropertyStrokeColor,
+            QgsProperty.fromExpression("if(Name='Dam', 'magenta', 'blue')"),
+        )
 
         symbol = QgsFillSymbol()
         symbol.changeSymbolLayer(0, layer)
@@ -144,31 +149,36 @@ class TestQgsSimpleFillSymbolLayer(unittest.TestCase):
         ms.setLayers([poly_layer])
 
         # Test rendering
-        renderchecker = QgsMultiRenderChecker()
-        renderchecker.setMapSettings(ms)
-        renderchecker.setControlPathPrefix('symbol_simplefill')
-        renderchecker.setControlName('expected_simplefill_opacityddcolor')
-        res = renderchecker.runTest('expected_simplefill_opacityddcolor')
-        self.report += renderchecker.report()
-        self.assertTrue(res)
+        self.assertTrue(
+            self.render_map_settings_check(
+                "simplefill_opacityddcolor", "simplefill_opacityddcolor", ms
+            )
+        )
 
     def testDataDefinedOpacity(self):
-        poly_shp = os.path.join(TEST_DATA_DIR, 'polys.shp')
-        poly_layer = QgsVectorLayer(poly_shp, 'Polys', 'ogr')
+        poly_shp = os.path.join(TEST_DATA_DIR, "polys.shp")
+        poly_layer = QgsVectorLayer(poly_shp, "Polys", "ogr")
         self.assertTrue(poly_layer.isValid())
 
         layer = QgsSimpleFillSymbolLayer()
-        layer.setStrokeStyle(Qt.NoPen)
+        layer.setStrokeStyle(Qt.PenStyle.NoPen)
         layer.setColor(QColor(200, 250, 50))
-        layer.setDataDefinedProperty(QgsSymbolLayer.PropertyFillColor, QgsProperty.fromExpression(
-            "if(Name='Dam', 'red', 'green')"))
-        layer.setDataDefinedProperty(QgsSymbolLayer.PropertyStrokeColor, QgsProperty.fromExpression(
-            "if(Name='Dam', 'magenta', 'blue')"))
+        layer.setDataDefinedProperty(
+            QgsSymbolLayer.Property.PropertyFillColor,
+            QgsProperty.fromExpression("if(Name='Dam', 'red', 'green')"),
+        )
+        layer.setDataDefinedProperty(
+            QgsSymbolLayer.Property.PropertyStrokeColor,
+            QgsProperty.fromExpression("if(Name='Dam', 'magenta', 'blue')"),
+        )
 
         symbol = QgsFillSymbol()
         symbol.changeSymbolLayer(0, layer)
 
-        symbol.setDataDefinedProperty(QgsSymbol.PropertyOpacity, QgsProperty.fromExpression("if(\"Value\" >10, 25, 50)"))
+        symbol.setDataDefinedProperty(
+            QgsSymbol.Property.PropertyOpacity,
+            QgsProperty.fromExpression('if("Value" >10, 25, 50)'),
+        )
 
         poly_layer.setRenderer(QgsSingleSymbolRenderer(symbol))
 
@@ -179,19 +189,17 @@ class TestQgsSimpleFillSymbolLayer(unittest.TestCase):
         ms.setLayers([poly_layer])
 
         # Test rendering
-        renderchecker = QgsMultiRenderChecker()
-        renderchecker.setMapSettings(ms)
-        renderchecker.setControlPathPrefix('symbol_simplefill')
-        renderchecker.setControlName('expected_simplefill_ddopacity')
-        res = renderchecker.runTest('expected_simplefill_ddopacity')
-        self.report += renderchecker.report()
-        self.assertTrue(res)
+        self.assertTrue(
+            self.render_map_settings_check(
+                "simplefill_ddopacity", "simplefill_ddopacity", ms
+            )
+        )
 
     def renderGeometry(self, symbol, geom):
         f = QgsFeature()
         f.setGeometry(geom)
 
-        image = QImage(200, 200, QImage.Format_RGB32)
+        image = QImage(200, 200, QImage.Format.Format_RGB32)
 
         painter = QPainter()
         ms = QgsMapSettings()
@@ -219,21 +227,6 @@ class TestQgsSimpleFillSymbolLayer(unittest.TestCase):
 
         return image
 
-    def imageCheck(self, name, reference_image, image):
-        TestQgsSimpleFillSymbolLayer.report += f"<h2>Render {name}</h2>\n"
-        temp_dir = QDir.tempPath() + '/'
-        file_name = temp_dir + 'symbol_' + name + ".png"
-        image.save(file_name, "PNG")
-        checker = QgsRenderChecker()
-        checker.setControlPathPrefix("symbol_simplefill")
-        checker.setControlName("expected_" + reference_image)
-        checker.setRenderedImage(file_name)
-        checker.setColorTolerance(2)
-        result = checker.compareImages(name, 20)
-        TestQgsSimpleFillSymbolLayer.report += checker.report()
-        print(TestQgsSimpleFillSymbolLayer.report)
-        return result
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -14,10 +14,11 @@
  ***************************************************************************/
 
 #include "qgsdemterraintilegeometry_p.h"
+#include "moc_qgsdemterraintilegeometry_p.cpp"
 #include <QMatrix4x4>
 
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
 #include <Qt3DRender/QAttribute>
 #include <Qt3DRender/QBuffer>
 #include <Qt3DRender/QAbstractFunctor>
@@ -93,7 +94,7 @@ static QByteArray createPlaneVertexData( int res, float side, float vertScale, f
       if ( i == iBound && j == jBound )
         height = *zBits++;
       else
-        height = zData[ jBound * resolution.width() + iBound ] - skirtHeight;
+        height = zData[jBound * resolution.width() + iBound] - skirtHeight;
 
       if ( std::isnan( height ) )
         height = noDataHeight;
@@ -108,7 +109,7 @@ static QByteArray createPlaneVertexData( int res, float side, float vertScale, f
       *fptr++ = v;
 
       // calculate normal coordinates
-#define zAt( ii, jj )  zData[ jj * resolution.width() + ii ] * vertScale
+#define zAt( ii, jj ) zData[jj * resolution.width() + ii] * vertScale
       float zi0 = zAt( std::clamp( i - 1, 0, iMax ), jBound );
       float zi1 = zAt( std::clamp( i + 1, 0, iMax ), jBound );
       float zj0 = zAt( iBound, std::clamp( j - 1, 0, jMax ) );
@@ -158,10 +159,7 @@ inline int ijToHeightMapIndex( int i, int j, int resX, int resZ )
 
 static bool hasNoData( int i, int j, const float *heightMap, int resX, int resZ )
 {
-  return std::isnan( heightMap[ ijToHeightMapIndex( i, j, resX, resZ ) ] ) ||
-         std::isnan( heightMap[ ijToHeightMapIndex( i + 1, j, resX, resZ ) ] ) ||
-         std::isnan( heightMap[ ijToHeightMapIndex( i, j + 1, resX, resZ ) ] ) ||
-         std::isnan( heightMap[ ijToHeightMapIndex( i + 1, j + 1, resX, resZ ) ] );
+  return std::isnan( heightMap[ijToHeightMapIndex( i, j, resX, resZ )] ) || std::isnan( heightMap[ijToHeightMapIndex( i + 1, j, resX, resZ )] ) || std::isnan( heightMap[ijToHeightMapIndex( i, j + 1, resX, resZ )] ) || std::isnan( heightMap[ijToHeightMapIndex( i + 1, j + 1, resX, resZ )] );
 }
 
 static QByteArray createPlaneIndexData( int res, const QByteArray &heightMap )
@@ -237,15 +235,11 @@ class PlaneVertexBufferFunctor : public Qt3DQAbstractFunctor
       return createPlaneVertexData( mResolution, mSide, mVertScale, mSkirtHeight, mHeightMap );
     }
 
-    bool operator ==( const Qt3DQAbstractFunctor &other ) const
+    bool operator==( const Qt3DQAbstractFunctor &other ) const
     {
       const PlaneVertexBufferFunctor *otherFunctor = functor_cast<PlaneVertexBufferFunctor>( &other );
-      if ( otherFunctor != nullptr )
-        return ( otherFunctor->mResolution == mResolution &&
-                 otherFunctor->mSide == mSide &&
-                 otherFunctor->mVertScale == mVertScale &&
-                 otherFunctor->mSkirtHeight == mSkirtHeight &&
-                 otherFunctor->mHeightMap == mHeightMap );
+      if ( otherFunctor )
+        return ( otherFunctor->mResolution == mResolution && otherFunctor->mSide == mSide && otherFunctor->mVertScale == mVertScale && otherFunctor->mSkirtHeight == mSkirtHeight && otherFunctor->mHeightMap == mHeightMap );
       return false;
     }
 
@@ -261,7 +255,7 @@ class PlaneVertexBufferFunctor : public Qt3DQAbstractFunctor
 
 
 //! Generates index buffer for DEM terrain tiles
-class PlaneIndexBufferFunctor: public Qt3DQAbstractFunctor
+class PlaneIndexBufferFunctor : public Qt3DQAbstractFunctor
 {
   public:
     explicit PlaneIndexBufferFunctor( int resolution, const QByteArray &heightMap )
@@ -274,10 +268,10 @@ class PlaneIndexBufferFunctor: public Qt3DQAbstractFunctor
       return createPlaneIndexData( mResolution, mHeightMap );
     }
 
-    bool operator ==( const Qt3DQAbstractFunctor &other ) const
+    bool operator==( const Qt3DQAbstractFunctor &other ) const
     {
       const PlaneIndexBufferFunctor *otherFunctor = functor_cast<PlaneIndexBufferFunctor>( &other );
-      if ( otherFunctor != nullptr )
+      if ( otherFunctor )
         return ( otherFunctor->mResolution == mResolution );
       return false;
     }

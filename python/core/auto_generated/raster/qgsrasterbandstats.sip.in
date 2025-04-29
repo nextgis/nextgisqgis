@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/raster/qgsrasterbandstats.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -22,18 +22,6 @@ raster band.
 #include "qgsrasterbandstats.h"
 %End
   public:
-    enum Stats
-    {
-      None,
-      Min,
-      Max,
-      Range,
-      Sum,
-      Mean,
-      StdDev,
-      SumOfSquares,
-      All
-    };
 
     QgsRasterBandStats();
 
@@ -57,7 +45,7 @@ Compares region, size etc. not collected statistics
 
     double stdDev;
 
-    int statsGathered;
+    Qgis::RasterBandStatistics statsGathered;
 
     double sum;
 
@@ -69,10 +57,11 @@ Compares region, size etc. not collected statistics
 
     QgsRectangle extent;
 };
+
 /************************************************************************
  * This file has been generated automatically from                      *
  *                                                                      *
  * src/core/raster/qgsrasterbandstats.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -172,7 +172,7 @@ class CORE_EXPORT QgsAuthCertUtils
      */
     static bool pemIsPkcs8( const QString &keyPemTxt );
 
-#ifdef UNUSED_TMP // Q_OS_MAC
+#ifdef Q_OS_MAC
 
     /**
      * Extract the PrivateKey ASN.1 element of a DER-encoded PKCS#8 private key

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/layout/qgslayoutitemlabel.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,8 +13,6 @@ class QgsLayoutItemLabel: QgsLayoutItem
 {
 %Docstring(signature="appended")
 A layout item subclass for text labels.
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -30,7 +28,8 @@ A layout item subclass for text labels.
 
     QgsLayoutItemLabel( QgsLayout *layout );
 %Docstring
-Constructor for QgsLayoutItemLabel, with the specified parent ``layout``.
+Constructor for QgsLayoutItemLabel, with the specified parent
+``layout``.
 %End
 
     static QgsLayoutItemLabel *create( QgsLayout *layout ) /Factory/;
@@ -49,14 +48,16 @@ The caller takes responsibility for deleting the returned object.
 
     void adjustSizeToText();
 %Docstring
-Resizes the item so that the label's text fits to the item. Keeps the top left point stationary.
+Resizes the item so that the label's text fits to the item. Keeps the
+top left point stationary.
 
 .. seealso:: :py:func:`sizeForText`
 %End
 
     QSizeF sizeForText() const;
 %Docstring
-Returns the required item size (in layout units) for the label's text to fill the item.
+Returns the required item size (in layout units) for the label's text to
+fill the item.
 
 .. seealso:: :py:func:`adjustSizeToText`
 %End
@@ -94,8 +95,8 @@ Returns the label's current mode.
 
     void setMode( Mode mode );
 %Docstring
-Sets the label's current ``mode``, allowing the label
-to switch between font based and HTML based rendering.
+Sets the label's current ``mode``, allowing the label to switch between
+font based and HTML based rendering.
 
 .. seealso:: :py:func:`mode`
 %End
@@ -106,8 +107,9 @@ Returns the label's current font.
 
 .. seealso:: :py:func:`setFont`
 
-.. deprecated::
-   use :py:func:`~QgsLayoutItemLabel.textFormat` instead (since QGIS 3.24)
+.. deprecated:: 3.40
+
+   Use :py:func:`~QgsLayoutItemLabel.textFormat` instead (since QGIS 3.24).
 %End
 
  void setFont( const QFont &font ) /Deprecated/;
@@ -116,8 +118,9 @@ Sets the label's current ``font``.
 
 .. seealso:: :py:func:`font`
 
-.. deprecated::
-   use :py:func:`~QgsLayoutItemLabel.setTextFormat` instead (since QGIS 3.24)
+.. deprecated:: 3.40
+
+   Use :py:func:`~QgsLayoutItemLabel.setTextFormat` instead (since QGIS 3.24).
 %End
 
     Qt::AlignmentFlag vAlign() const;
@@ -158,8 +161,8 @@ Sets for the vertical ``alignment`` of the label.
 
     double marginX() const;
 %Docstring
-Returns the horizontal margin between the edge of the frame and the label
-contents, in layout units.
+Returns the horizontal margin between the edge of the frame and the
+label contents, in layout units.
 
 .. seealso:: :py:func:`setMargin`
 
@@ -178,10 +181,11 @@ contents, in layout units.
 
     void setMargin( double margin );
 %Docstring
-Sets the ``margin`` between the edge of the frame and the label contents.
-This method sets both the horizontal and vertical margins to the same
-value. The margins can be individually controlled using the :py:func:`~QgsLayoutItemLabel.setMarginX`
-and :py:func:`~QgsLayoutItemLabel.setMarginY` methods.
+Sets the ``margin`` between the edge of the frame and the label
+contents. This method sets both the horizontal and vertical margins to
+the same value. The margins can be individually controlled using the
+:py:func:`~QgsLayoutItemLabel.setMarginX` and
+:py:func:`~QgsLayoutItemLabel.setMarginY` methods.
 
 Margins are set using the current layout units.
 
@@ -192,8 +196,8 @@ Margins are set using the current layout units.
 
     void setMarginX( double margin );
 %Docstring
-Sets the horizontal ``margin`` between the edge of the frame and the label
-contents, in layout units.
+Sets the horizontal ``margin`` between the edge of the frame and the
+label contents, in layout units.
 
 .. seealso:: :py:func:`setMargin`
 
@@ -216,8 +220,9 @@ Sets the label font ``color``.
 
 .. seealso:: :py:func:`fontColor`
 
-.. deprecated::
-   Use :py:func:`~QgsLayoutItemLabel.setTextFormat` instead (since QGIS 3.24)
+.. deprecated:: 3.40
+
+   Use :py:func:`~QgsLayoutItemLabel.setTextFormat` instead (since QGIS 3.24).
 %End
 
  QColor fontColor() const /Deprecated/;
@@ -226,18 +231,16 @@ Returns the label font color.
 
 .. seealso:: :py:func:`setFontColor`
 
-.. deprecated::
-   use :py:func:`~QgsLayoutItemLabel.textFormat` instead (since QGIS 3.24)
+.. deprecated:: 3.40
+
+   Use :py:func:`~QgsLayoutItemLabel.textFormat` instead (since QGIS 3.24).
 %End
 
     virtual QRectF boundingRect() const;
 
-
     virtual void setFrameEnabled( bool drawFrame );
 
-
     virtual void setFrameStrokeWidth( QgsLayoutMeasurement strokeWidth );
-
 
 
     QgsTextFormat textFormat() const;
@@ -265,8 +268,9 @@ Sets the text ``format`` used for drawing text in the label.
 
     void convertToStaticText();
 %Docstring
-Converts the label's :py:func:`~QgsLayoutItemLabel.text` to a static string, by evaluating any expressions included in the text
-and replacing them with their current values.
+Converts the label's :py:func:`~QgsLayoutItemLabel.text` to a static
+string, by evaluating any expressions included in the text and replacing
+them with their current values.
 
 .. versionadded:: 3.20
 %End
@@ -286,5 +290,5 @@ and replacing them with their current values.
  *                                                                      *
  * src/core/layout/qgslayoutitemlabel.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -171,10 +171,11 @@ Qgis::GeometryOperationResult staticAddRing( QgsVectorLayer *layer, std::unique_
   {
     //check all intersecting features
     QgsRectangle bBox = ring->boundingBox();
-    fit = layer->getFeatures( QgsFeatureRequest().setFilterRect( bBox ).setFlags( QgsFeatureRequest::ExactIntersect ) );
+    fit = layer->getFeatures( QgsFeatureRequest().setFilterRect( bBox ).setFlags( Qgis::FeatureRequestFlag::ExactIntersect ) );
   }
 
-  //find first valid feature we can add the ring to
+  //find valid features we can add the ring to
+  bool success = false;
   while ( fit.nextFeature( f ) )
   {
     if ( !f.hasGeometry() )
@@ -183,9 +184,17 @@ Qgis::GeometryOperationResult staticAddRing( QgsVectorLayer *layer, std::unique_
     //add ring takes ownership of ring, and deletes it if there's an error
     QgsGeometry g = f.geometry();
 
-    addRingReturnCode = g.addRing( static_cast< QgsCurve * >( ring->clone() ) );
+    if ( ring->orientation() != g.polygonOrientation() )
+    {
+      addRingReturnCode = g.addRing( static_cast< QgsCurve * >( ring->clone() ) );
+    }
+    else
+    {
+      addRingReturnCode = g.addRing( static_cast< QgsCurve * >( ring->reversed() ) );
+    }
     if ( addRingReturnCode == Qgis::GeometryOperationResult::Success )
     {
+      success = true;
       layer->changeGeometry( f.id(), g );
       if ( modifiedFeatureIds )
       {
@@ -199,8 +208,30 @@ Qgis::GeometryOperationResult staticAddRing( QgsVectorLayer *layer, std::unique_
     }
   }
 
-  return addRingReturnCode;
+  return success ? Qgis::GeometryOperationResult::Success : addRingReturnCode;
 }
+
+///@cond PRIVATE
+double QgsVectorLayerEditUtils::getTopologicalSearchRadius( const QgsVectorLayer *layer )
+{
+  double threshold = layer->geometryOptions()->geometryPrecision();
+
+  if ( qgsDoubleNear( threshold, 0.0 ) )
+  {
+    threshold = 1e-8;
+
+    if ( layer->crs().mapUnits() == Qgis::DistanceUnit::Meters )
+    {
+      threshold = 0.001;
+    }
+    else if ( layer->crs().mapUnits() == Qgis::DistanceUnit::Feet )
+    {
+      threshold = 0.0001;
+    }
+  }
+  return threshold;
+}
+///@endcond
 
 Qgis::GeometryOperationResult QgsVectorLayerEditUtils::addRing( const QVector<QgsPointXY> &ring, const QgsFeatureIds &targetFeatureIds, QgsFeatureId *modifiedFeatureId )
 {
@@ -223,9 +254,10 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::addRing( QgsCurve *ring, 
   std::unique_ptr<QgsCurve> uniquePtrRing( ring );
   if ( modifiedFeatureId )
   {
-    QgsFeatureIds *modifiedFeatureIds = new QgsFeatureIds;
-    Qgis::GeometryOperationResult result = staticAddRing( mLayer, uniquePtrRing, targetFeatureIds, modifiedFeatureIds, true );
-    *modifiedFeatureId = *modifiedFeatureIds->begin();
+    QgsFeatureIds modifiedFeatureIds;
+    Qgis::GeometryOperationResult result = staticAddRing( mLayer, uniquePtrRing, targetFeatureIds, &modifiedFeatureIds, true );
+    if ( modifiedFeatureId && !modifiedFeatureIds.empty() )
+      *modifiedFeatureId = *modifiedFeatureIds.begin();
     return result;
   }
   return staticAddRing( mLayer, uniquePtrRing, targetFeatureIds, nullptr, true );
@@ -271,7 +303,7 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::addPart( const QgsPointSe
     geometry = f.geometry();
   }
 
-  Qgis::GeometryOperationResult errorCode = geometry.addPart( points,  mLayer->geometryType() );
+  Qgis::GeometryOperationResult errorCode = geometry.addPartV2( points,  mLayer->wkbType() );
   if ( errorCode == Qgis::GeometryOperationResult::Success )
   {
     if ( firstPart && QgsWkbTypes::isSingleType( mLayer->wkbType() )
@@ -287,6 +319,7 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::addPart( const QgsPointSe
 
 Qgis::GeometryOperationResult QgsVectorLayerEditUtils::addPart( QgsCurve *ring, QgsFeatureId featureId )
 {
+
   if ( !mLayer->isSpatial() )
     return Qgis::GeometryOperationResult::AddPartSelectedGeometryNotFound;
 
@@ -304,9 +337,13 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::addPart( QgsCurve *ring, 
   else
   {
     geometry = f.geometry();
+    if ( ring->orientation() != geometry.polygonOrientation() )
+    {
+      ring = ring->reversed();
+    }
   }
+  Qgis::GeometryOperationResult errorCode = geometry.addPartV2( ring, mLayer->wkbType() );
 
-  Qgis::GeometryOperationResult errorCode = geometry.addPart( ring, mLayer->geometryType() );
   if ( errorCode == Qgis::GeometryOperationResult::Success )
   {
     if ( firstPart && QgsWkbTypes::isSingleType( mLayer->wkbType() )
@@ -342,6 +379,7 @@ int QgsVectorLayerEditUtils::translateFeature( QgsFeatureId featureId, double dx
 
 Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QVector<QgsPointXY> &splitLine, bool topologicalEditing )
 {
+
   QgsPointSequence l;
   for ( QVector<QgsPointXY>::const_iterator it = splitLine.constBegin(); it != splitLine.constEnd(); ++it )
   {
@@ -409,7 +447,7 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
       }
     }
 
-    features = mLayer->getFeatures( QgsFeatureRequest().setFilterRect( bBox ).setFlags( QgsFeatureRequest::ExactIntersect ) );
+    features = mLayer->getFeatures( QgsFeatureRequest().setFilterRect( bBox ).setFlags( Qgis::FeatureRequestFlag::ExactIntersect ) );
   }
 
   QgsVectorLayerUtils::QgsFeaturesDataList featuresDataToAdd;
@@ -431,6 +469,22 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
     topologyTestPoints.append( featureTopologyTestPoints );
     if ( splitFunctionReturn == Qgis::GeometryOperationResult::Success )
     {
+      //find largest geometry and give that to the original feature
+      std::function<double( const QgsGeometry & )> size = mLayer->geometryType() == Qgis::GeometryType::Polygon ? &QgsGeometry::area : &QgsGeometry::length;
+      double featureGeomSize = size( featureGeom );
+
+      QVector<QgsGeometry>::iterator largestNewFeature = std::max_element( newGeometries.begin(), newGeometries.end(), [ &size ]( const QgsGeometry & a, const QgsGeometry & b ) -> bool
+      {
+        return size( a ) < size( b );
+      } );
+
+      if ( size( *largestNewFeature ) > featureGeomSize )
+      {
+        QgsGeometry copy = *largestNewFeature;
+        *largestNewFeature = featureGeom;
+        featureGeom = copy;
+      }
+
       //change this geometry
       mLayer->changeGeometry( feat.id(), featureGeom );
 
@@ -508,8 +562,7 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitFeatures( const QgsC
           switch ( field.splitPolicy() )
           {
             case Qgis::FieldDomainSplitPolicy::DefaultValue:
-              // TODO!!!
-
+              //do nothing - default values ​​are determined
               break;
 
             case Qgis::FieldDomainSplitPolicy::Duplicate:
@@ -670,7 +723,7 @@ Qgis::GeometryOperationResult QgsVectorLayerEditUtils::splitParts( const QgsPoin
       }
     }
 
-    fit = mLayer->getFeatures( QgsFeatureRequest().setFilterRect( bBox ).setFlags( QgsFeatureRequest::ExactIntersect ) );
+    fit = mLayer->getFeatures( QgsFeatureRequest().setFilterRect( bBox ).setFlags( Qgis::FeatureRequestFlag::ExactIntersect ) );
   }
 
   QgsFeature feat;
@@ -770,71 +823,25 @@ int QgsVectorLayerEditUtils::addTopologicalPoints( const QgsPoint &p )
   double segmentSearchEpsilon = mLayer->crs().isGeographic() ? 1e-12 : 1e-8;
 
   //work with a tolerance because coordinate projection may introduce some rounding
-  double threshold = mLayer->geometryOptions()->geometryPrecision();
+  double threshold = getTopologicalSearchRadius( mLayer );
 
-  if ( qgsDoubleNear( threshold, 0.0 ) )
-  {
-    threshold = 0.0000001;
-
-    if ( mLayer->crs().mapUnits() == Qgis::DistanceUnit::Meters )
-    {
-      threshold = 0.001;
-    }
-    else if ( mLayer->crs().mapUnits() == Qgis::DistanceUnit::Feet )
-    {
-      threshold = 0.0001;
-    }
-  }
-
-  QgsRectangle searchRect( p.x() - threshold, p.y() - threshold,
-                           p.x() + threshold, p.y() + threshold );
-  double sqrSnappingTolerance = threshold * threshold;
+  QgsRectangle searchRect( p, p, false );
+  searchRect.grow( threshold );
 
   QgsFeature f;
   QgsFeatureIterator fit = mLayer->getFeatures( QgsFeatureRequest()
                            .setFilterRect( searchRect )
-                           .setFlags( QgsFeatureRequest::ExactIntersect )
+                           .setFlags( Qgis::FeatureRequestFlag::ExactIntersect )
                            .setNoAttributes() );
 
-  QMap<QgsFeatureId, QgsGeometry> features;
-  QMap<QgsFeatureId, int> segments;
-
+  bool pointsAdded = false;
   while ( fit.nextFeature( f ) )
   {
-    int afterVertex;
-    QgsPointXY snappedPoint;
-    double sqrDistSegmentSnap = f.geometry().closestSegmentWithContext( p, snappedPoint, afterVertex, nullptr, segmentSearchEpsilon );
-    if ( sqrDistSegmentSnap < sqrSnappingTolerance )
-    {
-      segments[f.id()] = afterVertex;
-      features[f.id()] = f.geometry();
-    }
-  }
-
-  if ( segments.isEmpty() )
-    return 2;
-
-  bool pointsAdded = false;
-  for ( QMap<QgsFeatureId, int>::const_iterator it = segments.constBegin(); it != segments.constEnd(); ++it )
-  {
-    QgsFeatureId fid = it.key();
-    int segmentAfterVertex = it.value();
-    QgsGeometry geom = features[fid];
-
-    int atVertex, beforeVertex, afterVertex;
-    double sqrDistVertexSnap;
-    geom.closestVertex( p, atVertex, beforeVertex, afterVertex, sqrDistVertexSnap );
-
-    if ( sqrDistVertexSnap < sqrSnappingTolerance )
-      continue;  // the vertex already exists - do not insert it
-
-    if ( !mLayer->insertVertex( p, fid, segmentAfterVertex ) )
-    {
-      QgsDebugError( QStringLiteral( "failed to insert topo point" ) );
-    }
-    else
+    QgsGeometry geom = f.geometry();
+    if ( geom.addTopologicalPoint( p, threshold, segmentSearchEpsilon ) )
     {
       pointsAdded = true;
+      mLayer->changeGeometry( f.id(), geom );
     }
   }
 
@@ -886,7 +893,7 @@ bool QgsVectorLayerEditUtils::mergeFeatures( const QgsFeatureId &targetFeatureId
   {
     QVariant val = mergeAttributes.at( i );
 
-    bool isDefaultValue = mLayer->fields().fieldOrigin( i ) == QgsFields::OriginProvider &&
+    bool isDefaultValue = mLayer->fields().fieldOrigin( i ) == Qgis::FieldOrigin::Provider &&
                           mLayer->dataProvider() &&
                           mLayer->dataProvider()->defaultValueClause( mLayer->fields().fieldOriginIndex( i ) ) == val;
 

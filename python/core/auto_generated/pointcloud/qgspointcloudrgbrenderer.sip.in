@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/pointcloud/qgspointcloudrgbrenderer.h                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -15,7 +15,8 @@
 class QgsPointCloudRgbRenderer : QgsPointCloudRenderer
 {
 %Docstring(signature="appended")
-An RGB renderer for 2d visualisation of point clouds using embedded red, green and blue attributes.
+An RGB renderer for 2d visualisation of point clouds using embedded red,
+green and blue attributes.
 
 .. versionadded:: 3.18
 %End
@@ -191,5 +192,5 @@ Ownership of ``enhancement`` is transferred.
  *                                                                      *
  * src/core/pointcloud/qgspointcloudrgbrenderer.h                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

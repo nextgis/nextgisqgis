@@ -24,6 +24,7 @@
 #include "qgis_analysis.h"
 #include "qgis_sip.h"
 #include "qgsogrutils.h"
+#include "qgsalignrasterdata.h"
 
 class QgsRectangle;
 
@@ -39,13 +40,11 @@ typedef void *GDALDatasetH SIP_SKIP;
  * - cell size and raster size
  * - offset of the raster grid
  *
- * \since QGIS 2.12
  */
 class ANALYSIS_EXPORT QgsAlignRaster
 {
-#ifdef SIP_RUN
-#include <gdal_version.h>
-#endif
+    //SIP_TYPEHEADER_INCLUDE( "gdal_version.h" );
+
 
   public:
     QgsAlignRaster();
@@ -106,66 +105,21 @@ class ANALYSIS_EXPORT QgsAlignRaster
         friend class QgsAlignRaster;
     };
 
-
-    /**
-     * Resampling algorithm to be used (equivalent to GDAL's enum GDALResampleAlg)
-     * \note RA_Max, RA_Min, RA_Median, RA_Q1 and RA_Q3 are available on GDAL >= 2.0 builds only
-     */
-    enum ResampleAlg
-    {
-      RA_NearestNeighbour = 0, //!< Nearest neighbour (select on one input pixel)
-      RA_Bilinear = 1,       //!< Bilinear (2x2 kernel)
-      RA_Cubic = 2,          //!< Cubic Convolution Approximation (4x4 kernel)
-      RA_CubicSpline = 3,    //!< Cubic B-Spline Approximation (4x4 kernel)
-      RA_Lanczos = 4,        //!< Lanczos windowed sinc interpolation (6x6 kernel)
-      RA_Average = 5,        //!< Average (computes the average of all non-NODATA contributing pixels)
-      RA_Mode = 6,            //!< Mode (selects the value which appears most often of all the sampled points)
-      RA_Max = 8, //!< Maximum (selects the maximum of all non-NODATA contributing pixels)
-      RA_Min = 9, //!< Minimum (selects the minimum of all non-NODATA contributing pixels)
-      RA_Median = 10, //!< Median (selects the median of all non-NODATA contributing pixels)
-      RA_Q1 = 11, //!< First quartile (selects the first quartile of all non-NODATA contributing pixels)
-      RA_Q3 = 12, //!< Third quartile (selects the third quartile of all non-NODATA contributing pixels)
-    };
-
-    //! Definition of one raster layer for alignment
-    struct Item
-    {
-      Item( const QString &input, const QString &output )
-        : inputFilename( input )
-        , outputFilename( output )
-        , resampleMethod( RA_NearestNeighbour )
-        , rescaleValues( false )
-        , srcCellSizeInDestCRS( 0.0 )
-      {}
-
-      //! filename of the source raster
-      QString inputFilename;
-      //! filename of the newly created aligned raster (will be overwritten if exists already)
-      QString outputFilename;
-      //! resampling method to be used
-      QgsAlignRaster::ResampleAlg resampleMethod;
-      //! rescaling of values according to the change of pixel size
-      bool rescaleValues;
-
-      // private part
-
-      //! used for rescaling of values (if necessary)
-      double srcCellSizeInDestCRS;
-    };
-    typedef QList<QgsAlignRaster::Item> List;
+    typedef Qgis::GdalResampleAlgorithm ResampleAlg;
+    typedef QgsAlignRasterData::RasterItem Item;
+    typedef QList<QgsAlignRasterData::RasterItem> List;
 
     //! Helper struct to be sub-classed for progress reporting
     struct ProgressHandler
     {
-
-      /**
+        /**
        * Method to be overridden for progress reporting.
        * \param complete Overall progress of the alignment operation
        * \returns FALSE if the execution should be canceled, TRUE otherwise
        */
-      virtual bool progress( double complete ) = 0;
+        virtual bool progress( double complete ) = 0;
 
-      virtual ~ProgressHandler() = default;
+        virtual ~ProgressHandler() = default;
     };
 
     //! Assign a progress handler instance. Does not take ownership. NULLPTR can be passed.
@@ -178,13 +132,21 @@ class ANALYSIS_EXPORT QgsAlignRaster
     //! Gets list of rasters that will be aligned
     List rasters() const { return mRasters; }
 
-    void setGridOffset( QPointF offset ) { mGridOffsetX = offset.x(); mGridOffsetY = offset.y(); }
+    void setGridOffset( QPointF offset )
+    {
+      mGridOffsetX = offset.x();
+      mGridOffsetY = offset.y();
+    }
     QPointF gridOffset() const { return QPointF( mGridOffsetX, mGridOffsetY ); }
 
     //! Sets output cell size
     void setCellSize( double x, double y ) { setCellSize( QSizeF( x, y ) ); }
     //! Sets output cell size
-    void setCellSize( QSizeF size ) { mCellSizeX = size.width(); mCellSizeY = size.height(); }
+    void setCellSize( QSizeF size )
+    {
+      mCellSizeX = size.width();
+      mCellSizeY = size.height();
+    }
     //! Gets output cell size
     QSizeF cellSize() const { return QSizeF( mCellSizeX, mCellSizeY ); }
 
@@ -267,7 +229,6 @@ class ANALYSIS_EXPORT QgsAlignRaster
     int suggestedReferenceLayer() const;
 
   protected:
-
     //! Internal function for processing of one raster (1. create output, 2. do the alignment)
     bool createAndWarp( const Item &raster );
 
@@ -275,7 +236,6 @@ class ANALYSIS_EXPORT QgsAlignRaster
     static bool suggestedWarpOutput( const RasterInfo &info, const QString &destWkt, QSizeF *cellSize = nullptr, QPointF *gridOffset = nullptr, QgsRectangle *rect = nullptr );
 
   protected:
-
     // set by the client
 
     //! Object that facilitates reporting of progress / cancellation
@@ -309,8 +269,6 @@ class ANALYSIS_EXPORT QgsAlignRaster
 
     //! Computed raster grid height
     int mYSize;
-
 };
-
 
 #endif // QGSALIGNRASTER_H

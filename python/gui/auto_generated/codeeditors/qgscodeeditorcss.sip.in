@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/codeeditors/qgscodeeditorcss.h                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -15,17 +15,14 @@
 class QgsCodeEditorCSS : QgsCodeEditor
 {
 %Docstring(signature="appended")
-A CSS editor based on QScintilla2. Adds syntax highlighting and
-code autocompletion.
-
-.. versionadded:: 2.6
+A CSS editor based on QScintilla2. Adds syntax highlighting and code
+autocompletion.
 %End
 
 %TypeHeaderCode
 #include "qgscodeeditorcss.h"
 %End
   public:
-
     QgsCodeEditorCSS( QWidget *parent /TransferThis/ = 0 );
 %Docstring
 Constructor for QgsCodeEditorCSS
@@ -43,5 +40,5 @@ Constructor for QgsCodeEditorCSS
  *                                                                      *
  * src/gui/codeeditors/qgscodeeditorcss.h                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

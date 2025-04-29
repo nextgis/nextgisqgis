@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/vector/qgsvectorlayereditpassthrough.h                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -47,8 +47,6 @@ class QgsVectorLayerEditPassthrough : QgsVectorLayerEditBuffer
 Changes values of attributes (but does not commit it).
 
 :return: ``True`` if attributes are well updated, ``False`` otherwise
-
-.. versionadded:: 3.0
 %End
 
     virtual bool addAttribute( const QgsField &field );
@@ -70,10 +68,8 @@ Update underlying data with a SQL query embedded in a transaction.
 :param sql: The SQL query updating data
 :param name: The name of the undo/redo command
 
-:return: ``True`` if the undo/redo command is well added to the stack, ``False`` otherwise
-
-
-.. versionadded:: 3.0
+:return: ``True`` if the undo/redo command is well added to the stack,
+         ``False`` otherwise
 %End
 
 };
@@ -83,5 +79,5 @@ Update underlying data with a SQL query embedded in a transaction.
  *                                                                      *
  * src/core/vector/qgsvectorlayereditpassthrough.h                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -43,14 +43,12 @@ class QgsCodeEditorExpression;
  * more space is available for the widget, but where QgsExpressionBuilderWidget
  * is too complex or large for use.
  *
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsExpressionLineEdit : public QWidget
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsExpressionLineEdit.
      * \param parent parent widget
@@ -150,7 +148,6 @@ class GUI_EXPORT QgsExpressionLineEdit : public QWidget
     void setExpression( const QString &expression );
 
   protected:
-
     void changeEvent( QEvent *event ) override;
 
   private slots:

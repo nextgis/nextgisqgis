@@ -28,13 +28,11 @@
  * \class QgsFormAnnotation
  * \ingroup gui
  * \brief An annotation item that embeds a designer form showing the feature attribute
- * \since QGIS 3.0
 */
-class GUI_EXPORT QgsFormAnnotation: public QgsAnnotation
+class GUI_EXPORT QgsFormAnnotation : public QgsAnnotation
 {
     Q_OBJECT
   public:
-
     /**
      * Constructor for QgsFormAnnotation.
      */
@@ -69,11 +67,9 @@ class GUI_EXPORT QgsFormAnnotation: public QgsAnnotation
     static QgsFormAnnotation *create() SIP_FACTORY { return new QgsFormAnnotation(); }
 
   protected:
-
     void renderAnnotation( QgsRenderContext &context, QSizeF size ) const override;
 
   private:
-
     std::unique_ptr<QWidget> mDesignerWidget;
     QSize mMinimumSize;
     //! Path to (and including) the .ui file

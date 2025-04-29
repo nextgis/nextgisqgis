@@ -27,10 +27,13 @@
  *
  * A valid value for this parameter is a list (QVariantList), where each
  * item is a map (QVariantMap) in this form:
+ *
+ * \code{.py}
  * {
  *   'layer':  string or QgsMapLayer,
  *   'attributeIndex': int
  * }
+ * \endcode
  *
  * Also it can accept lists (either string lists or QgsVectorLayer list)
  * as well as individual layer object or string representing layer source.
@@ -52,7 +55,7 @@ class CORE_EXPORT QgsProcessingParameterDxfLayers : public QgsProcessingParamete
     QString type() const override;
     bool checkValueIsAcceptable( const QVariant &input, QgsProcessingContext *context = nullptr ) const override;
     QString valueAsPythonString( const QVariant &value, QgsProcessingContext &context ) const override;
-    QString asPythonString( QgsProcessing::PythonOutputType outputType = QgsProcessing::PythonQgsProcessingAlgorithmSubclass ) const override;
+    QString asPythonString( QgsProcessing::PythonOutputType outputType = QgsProcessing::PythonOutputType::PythonQgsProcessingAlgorithmSubclass ) const override;
     QString valueAsString( const QVariant &value, QgsProcessingContext &context, bool &ok SIP_OUT ) const override;
     QVariant valueAsJsonObject( const QVariant &value, QgsProcessingContext &context ) const override;
 

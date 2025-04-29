@@ -37,7 +37,6 @@ class QgsRuleBasedLabelProvider;
  * \ingroup core
  * \class QgsRuleBasedLabeling
  * \brief Rule based labeling for a vector layer.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsRuleBasedLabeling : public QgsAbstractVectorLayerLabeling
 {
@@ -50,7 +49,6 @@ class CORE_EXPORT QgsRuleBasedLabeling : public QgsAbstractVectorLayerLabeling
      * \ingroup core
      * \class QgsRuleBasedLabeling::Rule
      * \brief A child rule for QgsRuleBasedLabeling.
-     * \since QGIS 3.0
      */
     class CORE_EXPORT Rule
     {
@@ -59,9 +57,7 @@ class CORE_EXPORT QgsRuleBasedLabeling : public QgsAbstractVectorLayerLabeling
         Rule( QgsPalLayerSettings *settings SIP_TRANSFER, double maximumScale = 0, double minimumScale = 0, const QString &filterExp = QString(), const QString &description = QString(), bool elseRule = false );
         ~Rule();
 
-        //! Rules cannot be copied.
         Rule( const Rule &rh ) = delete;
-        //! Rules cannot be copied.
         Rule &operator=( const Rule &rh ) = delete;
 
         //! The result of registering a rule
@@ -90,7 +86,6 @@ class CORE_EXPORT QgsRuleBasedLabeling : public QgsAbstractVectorLayerLabeling
          * A scale of 0 indicates no maximum scale visibility.
          * \see minimumScale()
          * \see setMaximumScale()
-         * \since QGIS 3.0
          */
         double maximumScale() const { return mMaximumScale; }
 
@@ -100,7 +95,6 @@ class CORE_EXPORT QgsRuleBasedLabeling : public QgsAbstractVectorLayerLabeling
          * A scale of 0 indicates no minimum scale visibility.
          * \see maximumScale()
          * \see setMinimumScale()
-         * \since QGIS 3.0
          */
         double minimumScale() const { return mMinimumScale; }
 
@@ -241,12 +235,15 @@ class CORE_EXPORT QgsRuleBasedLabeling : public QgsAbstractVectorLayerLabeling
          *
          * \returns The rule or NULLPTR if not found
          *
-         * \since QGIS 3.0
          */
         QgsRuleBasedLabeling::Rule *findRuleByKey( const QString &key ) SIP_SKIP;
 
-        //! clone this rule, return new instance
-        QgsRuleBasedLabeling::Rule *clone() const SIP_FACTORY;
+        /**
+         * clone this rule
+         * \param resetRuleKey TRUE if this rule and its children rule key need to be reset to new unique ones.
+         * \returns new instance
+         */
+        QgsRuleBasedLabeling::Rule *clone( bool resetRuleKey = true ) const SIP_FACTORY;
 
         // load / save
 
@@ -370,7 +367,7 @@ class CORE_EXPORT QgsRuleBasedLabeling : public QgsAbstractVectorLayerLabeling
     const Rule *rootRule() const SIP_SKIP;
 
     //! Create the instance from a DOM element with saved configuration
-    static QgsRuleBasedLabeling *create( const QDomElement &element, const QgsReadWriteContext &context ) SIP_FACTORY;
+    static QgsRuleBasedLabeling *create( const QDomElement &element, const QgsReadWriteContext &context ) SIP_FACTORY; // cppcheck-suppress duplInheritedMember
 
     // implementation of parent interface
 
@@ -389,7 +386,6 @@ class CORE_EXPORT QgsRuleBasedLabeling : public QgsAbstractVectorLayerLabeling
      * \param settings Pal layer settings
      * \param providerId The id of the provider
      *
-     * \since QGIS 3.0
      */
     void setSettings( QgsPalLayerSettings *settings SIP_TRANSFER, const QString &providerId = QString() ) override;
     bool requiresAdvancedEffects() const override;

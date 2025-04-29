@@ -23,20 +23,19 @@
 #include "qgsvectorlayerelevationproperties.h"
 
 QgsLine3DSymbol::QgsLine3DSymbol()
-  : mMaterialSettings( std::make_unique< QgsPhongMaterialSettings >() )
+  : mMaterialSettings( std::make_unique<QgsPhongMaterialSettings>() )
 {
-
 }
 
 QgsLine3DSymbol::~QgsLine3DSymbol() = default;
 
 QgsAbstract3DSymbol *QgsLine3DSymbol::clone() const
 {
-  std::unique_ptr< QgsLine3DSymbol > result = std::make_unique< QgsLine3DSymbol >();
+  std::unique_ptr<QgsLine3DSymbol> result = std::make_unique<QgsLine3DSymbol>();
   result->mAltClamping = mAltClamping;
   result->mAltBinding = mAltBinding;
   result->mWidth = mWidth;
-  result->mHeight = mHeight;
+  result->mOffset = mOffset;
   result->mExtrusionHeight = mExtrusionHeight;
   result->mRenderAsSimpleLines = mRenderAsSimpleLines;
   result->mMaterialSettings.reset( mMaterialSettings->clone() );
@@ -53,7 +52,7 @@ void QgsLine3DSymbol::writeXml( QDomElement &elem, const QgsReadWriteContext &co
   QDomElement elemDataProperties = doc.createElement( QStringLiteral( "data" ) );
   elemDataProperties.setAttribute( QStringLiteral( "alt-clamping" ), Qgs3DUtils::altClampingToString( mAltClamping ) );
   elemDataProperties.setAttribute( QStringLiteral( "alt-binding" ), Qgs3DUtils::altBindingToString( mAltBinding ) );
-  elemDataProperties.setAttribute( QStringLiteral( "height" ), mHeight );
+  elemDataProperties.setAttribute( QStringLiteral( "offset" ), mOffset );
   elemDataProperties.setAttribute( QStringLiteral( "extrusion-height" ), mExtrusionHeight );
   elemDataProperties.setAttribute( QStringLiteral( "simple-lines" ), mRenderAsSimpleLines ? QStringLiteral( "1" ) : QStringLiteral( "0" ) );
   elemDataProperties.setAttribute( QStringLiteral( "width" ), mWidth );
@@ -72,7 +71,7 @@ void QgsLine3DSymbol::readXml( const QDomElement &elem, const QgsReadWriteContex
   const QDomElement elemDataProperties = elem.firstChildElement( QStringLiteral( "data" ) );
   mAltClamping = Qgs3DUtils::altClampingFromString( elemDataProperties.attribute( QStringLiteral( "alt-clamping" ) ) );
   mAltBinding = Qgs3DUtils::altBindingFromString( elemDataProperties.attribute( QStringLiteral( "alt-binding" ) ) );
-  mHeight = elemDataProperties.attribute( QStringLiteral( "height" ) ).toFloat();
+  mOffset = elemDataProperties.attribute( QStringLiteral( "offset" ) ).toFloat();
   mExtrusionHeight = elemDataProperties.attribute( QStringLiteral( "extrusion-height" ) ).toFloat();
   mWidth = elemDataProperties.attribute( QStringLiteral( "width" ) ).toFloat();
   mRenderAsSimpleLines = elemDataProperties.attribute( QStringLiteral( "simple-lines" ), QStringLiteral( "0" ) ).toInt();
@@ -100,17 +99,17 @@ void QgsLine3DSymbol::setMaterialSettings( QgsAbstractMaterialSettings *material
 
 QList<Qgis::GeometryType> QgsLine3DSymbol::compatibleGeometryTypes() const
 {
-  return QList< Qgis::GeometryType >() << Qgis::GeometryType::Line;
+  return QList<Qgis::GeometryType>() << Qgis::GeometryType::Line;
 }
 
 void QgsLine3DSymbol::setDefaultPropertiesFromLayer( const QgsVectorLayer *layer )
 {
-  const QgsVectorLayerElevationProperties *props = qgis::down_cast< const QgsVectorLayerElevationProperties * >( const_cast< QgsVectorLayer *>( layer )->elevationProperties() );
+  const QgsVectorLayerElevationProperties *props = qgis::down_cast<const QgsVectorLayerElevationProperties *>( const_cast<QgsVectorLayer *>( layer )->elevationProperties() );
 
   mAltClamping = props->clamping();
   mAltBinding = props->binding();
-  mExtrusionHeight = props->extrusionEnabled() ? static_cast< float>( props->extrusionHeight() ) : 0.0f;
-  mHeight = static_cast< float >( props->zOffset() );
+  mExtrusionHeight = props->extrusionEnabled() ? static_cast<float>( props->extrusionHeight() ) : 0.0f;
+  mOffset = static_cast<float>( props->zOffset() );
 }
 
 QgsAbstract3DSymbol *QgsLine3DSymbol::create()
@@ -132,7 +131,8 @@ bool QgsLine3DSymbol::exportGeometries( Qgs3DSceneExporter *exporter, Qt3DCore::
     for ( Qt3DRender::QGeometryRenderer *r : renderers )
     {
       Qgs3DExportObject *object = exporter->processGeometryRenderer( r, objectNamePrefix );
-      if ( object == nullptr ) continue;
+      if ( !object )
+        continue;
       object->setupMaterial( materialSettings() );
       exporter->mObjects.push_back( object );
     }

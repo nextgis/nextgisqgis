@@ -32,14 +32,12 @@ class QShortcut;
  *
  * QgsShortcutsManager is not usually directly created, but rather accessed through
  * QgsGui::shortcutsManager().
- * \since QGIS 2.16
  */
 class GUI_EXPORT QgsShortcutsManager : public QObject
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsShortcutsManager.
      * \param parent parent object

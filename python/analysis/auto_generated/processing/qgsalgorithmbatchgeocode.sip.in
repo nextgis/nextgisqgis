@@ -3,7 +3,7 @@
  *                                                                      *
  * src/analysis/processing/qgsalgorithmbatchgeocode.h                   *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,12 +13,12 @@
 class QgsBatchGeocodeAlgorithm : QgsProcessingFeatureBasedAlgorithm
 {
 %Docstring(signature="appended")
-
-A base class for batch geocoder algorithms, which takes a :py:class:`QgsGeocoderInterface` object and exposes it as
-a Processing algorithm for batch geocoding operations.
+A base class for batch geocoder algorithms, which takes a
+:py:class:`QgsGeocoderInterface` object and exposes it as a Processing
+algorithm for batch geocoding operations.
 
 Example
--------
+-------------------------------------
 
 .. code-block:: python
 
@@ -57,14 +57,14 @@ Example
 #include "qgsalgorithmbatchgeocode.h"
 %End
   public:
-
     QgsBatchGeocodeAlgorithm( QgsGeocoderInterface *geocoder );
 %Docstring
 Constructor for QgsBatchGeocodeAlgorithm.
 
-The ``geocoder`` must specify an instance of a class which implements the :py:class:`QgsGeocoderInterface`
-interface. Ownership of ``geocoder`` is not transferred, and the caller must ensure that ``geocoder``
-exists for the lifetime of this algorithm.
+The ``geocoder`` must specify an instance of a class which implements
+the :py:class:`QgsGeocoderInterface` interface. Ownership of
+``geocoder`` is not transferred, and the caller must ensure that
+``geocoder`` exists for the lifetime of this algorithm.
 %End
 
     virtual void initParameters( const QVariantMap &configuration = QVariantMap() );
@@ -85,7 +85,7 @@ exists for the lifetime of this algorithm.
 
     virtual bool prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback );
 
-    virtual QgsFeatureList processFeature( const QgsFeature &feature,  QgsProcessingContext &, QgsProcessingFeedback *feedback );
+    virtual QgsFeatureList processFeature( const QgsFeature &feature, QgsProcessingContext &, QgsProcessingFeedback *feedback );
 
     virtual QgsCoordinateReferenceSystem outputCrs( const QgsCoordinateReferenceSystem &inputCrs ) const;
 
@@ -97,12 +97,10 @@ exists for the lifetime of this algorithm.
 };
 
 
-
-
 /************************************************************************
  * This file has been generated automatically from                      *
  *                                                                      *
  * src/analysis/processing/qgsalgorithmbatchgeocode.h                   *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

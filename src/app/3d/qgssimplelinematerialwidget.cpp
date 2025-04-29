@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgssimplelinematerialwidget.h"
+#include "moc_qgssimplelinematerialwidget.cpp"
 
 #include "qgssimplelinematerialsettings.h"
 #include "qgis.h"
@@ -27,6 +28,7 @@ QgsSimpleLineMaterialWidget::QgsSimpleLineMaterialWidget( QWidget *parent )
   setSettings( &defaultMaterial, nullptr );
 
   connect( btnAmbient, &QgsColorButton::colorChanged, this, &QgsSimpleLineMaterialWidget::changed );
+  connect( mAmbientDataDefinedButton, &QgsPropertyOverrideButton::changed, this, &QgsSimpleLineMaterialWidget::changed );
 }
 
 QgsMaterialSettingsWidget *QgsSimpleLineMaterialWidget::create()
@@ -34,18 +36,25 @@ QgsMaterialSettingsWidget *QgsSimpleLineMaterialWidget::create()
   return new QgsSimpleLineMaterialWidget();
 }
 
-void QgsSimpleLineMaterialWidget::setSettings( const QgsAbstractMaterialSettings *settings, QgsVectorLayer * )
+void QgsSimpleLineMaterialWidget::setSettings( const QgsAbstractMaterialSettings *settings, QgsVectorLayer *layer )
 {
-  const QgsSimpleLineMaterialSettings *lineMaterial = dynamic_cast< const QgsSimpleLineMaterialSettings * >( settings );
+  const QgsSimpleLineMaterialSettings *lineMaterial = dynamic_cast<const QgsSimpleLineMaterialSettings *>( settings );
   if ( !lineMaterial )
     return;
 
   btnAmbient->setColor( lineMaterial->ambient() );
+
+  mPropertyCollection = settings->dataDefinedProperties();
+  mAmbientDataDefinedButton->init( static_cast<int>( QgsAbstractMaterialSettings::Property::Ambient ), mPropertyCollection, settings->propertyDefinitions(), layer, true );
 }
 
 QgsAbstractMaterialSettings *QgsSimpleLineMaterialWidget::settings()
 {
-  std::unique_ptr< QgsSimpleLineMaterialSettings > m = std::make_unique< QgsSimpleLineMaterialSettings >();
+  std::unique_ptr<QgsSimpleLineMaterialSettings> m = std::make_unique<QgsSimpleLineMaterialSettings>();
   m->setAmbient( btnAmbient->color() );
+
+  mPropertyCollection.setProperty( QgsAbstractMaterialSettings::Property::Ambient, mAmbientDataDefinedButton->toProperty() );
+  m->setDataDefinedProperties( mPropertyCollection );
+
   return m.release();
 }

@@ -19,6 +19,7 @@
 #include <QtAlgorithms>
 
 #include "qgslayoutatlas.h"
+#include "moc_qgslayoutatlas.cpp"
 #include "qgslayout.h"
 #include "qgsmessagelog.h"
 #include "qgsfeaturerequest.h"
@@ -52,7 +53,7 @@ QgsLayout *QgsLayoutAtlas::layout()
   return mLayout;
 }
 
-const QgsLayout *QgsLayoutAtlas::layout() const
+const QgsLayout *QgsLayoutAtlas::layout() const  // cppcheck-suppress duplInheritedMember
 {
   return mLayout.data();
 }
@@ -120,6 +121,7 @@ bool QgsLayoutAtlas::readXml( const QDomElement &atlasElem, const QDomDocument &
   mFilterExpression = atlasElem.attribute( QStringLiteral( "featureFilter" ) );
 
   mHideCoverage = atlasElem.attribute( QStringLiteral( "hideCoverage" ), QStringLiteral( "0" ) ).toInt();
+  mLayout->renderContext().setFlag( QgsLayoutRenderContext::FlagHideCoverageLayer, mHideCoverage );
 
   emit toggled( mEnabled );
   emit changed();

@@ -31,13 +31,8 @@ class QgsMaterialRegistry;
  */
 class _3D_EXPORT Qgs3D
 {
-
   public:
-
-    //! Qgs3D cannot be copied
     Qgs3D( const Qgs3D &other ) = delete;
-
-    //! Qgs3D cannot be copied
     Qgs3D &operator=( const Qgs3D &other ) = delete;
 
     /**
@@ -58,7 +53,6 @@ class _3D_EXPORT Qgs3D
     static QgsMaterialRegistry *materialRegistry();
 
   private:
-
     Qgs3D();
 
 #ifdef SIP_RUN
@@ -68,7 +62,6 @@ class _3D_EXPORT Qgs3D
     bool mInitialized = false;
 
     QgsMaterialRegistry *mMaterialRegistry = nullptr;
-
 };
 
 #endif // QGS3D_H

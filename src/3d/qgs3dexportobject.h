@@ -53,7 +53,8 @@ class _3D_EXPORT Qgs3DExportObject
      * Constructs an export object that will be filled with coordinates later
      * \param name The name of the parent (Will be useful to define scene hierarchy)
      */
-    Qgs3DExportObject( const QString &name ) : mName( name ) { }
+    Qgs3DExportObject( const QString &name )
+      : mName( name ) {}
 
     //! Returns the object name
     QString name() const { return mName; }
@@ -100,9 +101,21 @@ class _3D_EXPORT Qgs3DExportObject
     void setMaterialParameter( const QString &parameter, const QString &value ) { mMaterialParameters[parameter] = value; }
 
     //! Saves the current object to the output stream while scaling the object and centering it to be visible in exported scene
-    void saveTo( QTextStream &out, float scale, const QVector3D &center );
+    void saveTo( QTextStream &out, float scale, const QVector3D &center, int precision = 6 );
     //! saves the texture of the object and material information
     QString saveMaterial( QTextStream &mtlOut, const QString &folder );
+
+    //! Returns the vertex coordinates
+    QVector<float> vertexPosition() const { return mVertexPosition; }
+
+    //! Returns the vertex normal coordinates
+    QVector<float> normals() const { return mNormals; }
+
+    //! Returns the vertex texture coordinates
+    QVector<float> texturesUV() const { return mTexturesUV; }
+
+    //! Returns the vertex indexes
+    QVector<unsigned int> indexes() const { return mIndexes; }
 
   private:
     QString mName;

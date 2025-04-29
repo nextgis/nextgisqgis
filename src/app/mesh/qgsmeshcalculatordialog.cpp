@@ -16,6 +16,7 @@
 
 #include "qgsgdalutils.h"
 #include "qgsmeshcalculatordialog.h"
+#include "moc_qgsmeshcalculatordialog.cpp"
 #include "qgsproject.h"
 #include "qgsmeshcalcnode.h"
 #include "qgsmeshdataprovider.h"
@@ -40,13 +41,12 @@
 #include <QMap>
 
 QgsMeshCalculatorDialog::QgsMeshCalculatorDialog( QgsMeshLayer *meshLayer, QWidget *parent, Qt::WindowFlags f )
-  : QDialog( parent, f ),
-    mLayer( meshLayer )
+  : QDialog( parent, f ), mLayer( meshLayer )
 {
   setupUi( this );
   QgsGui::enableAutoGeometryRestore( this );
 
-  cboLayerMask->setFilters( QgsMapLayerProxyModel::PolygonLayer );
+  cboLayerMask->setFilters( Qgis::LayerFilter::PolygonLayer );
   QgsMeshDatasetGroupListModel *model = new QgsMeshDatasetGroupListModel( this );
   model->syncToLayer( meshLayer );
   model->setDisplayProviderName( true );
@@ -54,7 +54,7 @@ QgsMeshCalculatorDialog::QgsMeshCalculatorDialog( QgsMeshLayer *meshLayer, QWidg
   mVariableNames = model->variableNames();
 
   getMeshDrivers();
-  populateDriversComboBox( );
+  populateDriversComboBox();
   connect( mOutputFormatComboBox, qOverload<int>( &QComboBox::currentIndexChanged ), this, &QgsMeshCalculatorDialog::updateInfoMessage );
   connect( mOutputFormatComboBox, qOverload<int>( &QComboBox::currentIndexChanged ), this, &QgsMeshCalculatorDialog::onOutputFormatChange );
   connect( mOutputGroupNameLineEdit, &QLineEdit::textChanged, this, &QgsMeshCalculatorDialog::updateInfoMessage );
@@ -104,8 +104,7 @@ QgsMeshCalculatorDialog::QgsMeshCalculatorDialog( QgsMeshLayer *meshLayer, QWidg
   useFullLayerExtent();
   repopulateTimeCombos();
   mButtonBox->button( QDialogButtonBox::Ok )->setEnabled( false );
-  connect( mButtonBox, &QDialogButtonBox::helpRequested, this, [ = ]
-  {
+  connect( mButtonBox, &QDialogButtonBox::helpRequested, this, [=] {
     QgsHelp::openHelp( QStringLiteral( "working_with_mesh/mesh_properties.html#mesh-calculator" ) );
   } );
 
@@ -152,7 +151,7 @@ QgsRectangle QgsMeshCalculatorDialog::outputExtent() const
 
 QgsGeometry QgsMeshCalculatorDialog::maskGeometry() const
 {
-  QgsVectorLayer *mask_layer = qobject_cast<QgsVectorLayer *> ( cboLayerMask->currentLayer() );
+  QgsVectorLayer *mask_layer = qobject_cast<QgsVectorLayer *>( cboLayerMask->currentLayer() );
   if ( mask_layer )
   {
     return maskGeometry( mask_layer );
@@ -179,7 +178,7 @@ QgsGeometry QgsMeshCalculatorDialog::maskGeometry( QgsVectorLayer *layer ) const
   {
     geometries.push_back( feat.geometry() );
   }
-  const QgsGeometry ret = QgsGeometry::unaryUnion( geometries ) ;
+  const QgsGeometry ret = QgsGeometry::unaryUnion( geometries );
   return ret;
 }
 
@@ -297,10 +296,10 @@ void QgsMeshCalculatorDialog::updateInfoMessage()
 
   // expression is valid
   const QgsMeshCalculator::Result result = QgsMeshCalculator::expressionIsValid(
-        formulaString(),
-        meshLayer(),
-        requiredCapability
-      );
+    formulaString(),
+    meshLayer(),
+    requiredCapability
+  );
   const bool expressionValid = result == QgsMeshCalculator::Success;
 
   // selected driver is appropriate
@@ -333,9 +332,7 @@ void QgsMeshCalculatorDialog::updateInfoMessage()
   // group name
   const bool groupNameValid = !groupName().isEmpty() && !mVariableNames.contains( groupName() );
 
-  if ( expressionValid &&
-       ( notInFile || ( driverValid && filePathValid ) )  &&
-       groupNameValid )
+  if ( expressionValid && ( notInFile || ( driverValid && filePathValid ) ) && groupNameValid )
   {
     mButtonBox->button( QDialogButtonBox::Ok )->setEnabled( true );
     mExpressionValidLabel->setText( tr( "Expression valid" ) );
@@ -576,20 +573,17 @@ void QgsMeshCalculatorDialog::getMeshDrivers()
     const QList<QgsMeshDriverMetadata> allDrivers = providerMetadata->meshDriversMetadata();
     for ( const QgsMeshDriverMetadata &meta : allDrivers )
     {
-      if ( meta.capabilities().testFlag( QgsMeshDriverMetadata::MeshDriverCapability::CanWriteFaceDatasets ) ||
-           meta.capabilities().testFlag( QgsMeshDriverMetadata::MeshDriverCapability::CanWriteEdgeDatasets ) ||
-           meta.capabilities().testFlag( QgsMeshDriverMetadata::MeshDriverCapability::CanWriteVertexDatasets ) )
+      if ( meta.capabilities().testFlag( QgsMeshDriverMetadata::MeshDriverCapability::CanWriteFaceDatasets ) || meta.capabilities().testFlag( QgsMeshDriverMetadata::MeshDriverCapability::CanWriteEdgeDatasets ) || meta.capabilities().testFlag( QgsMeshDriverMetadata::MeshDriverCapability::CanWriteVertexDatasets ) )
         mMeshDrivers[meta.name()] = meta;
     }
   }
 }
 
-void QgsMeshCalculatorDialog::populateDriversComboBox( )
+void QgsMeshCalculatorDialog::populateDriversComboBox()
 {
-
   whileBlocking( mOutputFormatComboBox )->clear();
 
-  const QList< QgsMeshDriverMetadata > vals = mMeshDrivers.values();
+  const QList<QgsMeshDriverMetadata> vals = mMeshDrivers.values();
   for ( const QgsMeshDriverMetadata &meta : vals )
   {
     whileBlocking( mOutputFormatComboBox )->addItem( meta.description(), meta.name() );
@@ -629,15 +623,14 @@ QString QgsMeshCalculatorDialog::currentDatasetGroup() const
 void QgsMeshCalculatorDialog::setTimesByDatasetGroupName( const QString group )
 {
   QgsMeshLayer *layer = meshLayer();
-  if ( !layer || !layer->dataProvider() )
+  if ( !layer )
     return;
-  const QgsMeshDataProvider *dp = layer->dataProvider();
 
   // find group index from group name
   int groupIndex = -1;
-  for ( int i = 0; i < dp->datasetGroupCount(); ++i )
+  for ( int i = 0; i < layer->datasetGroupCount(); ++i )
   {
-    const QgsMeshDatasetGroupMetadata meta = dp->datasetGroupMetadata( i );
+    const QgsMeshDatasetGroupMetadata meta = layer->datasetGroupMetadata( i );
     if ( meta.name() == group )
     {
       groupIndex = i;
@@ -648,18 +641,18 @@ void QgsMeshCalculatorDialog::setTimesByDatasetGroupName( const QString group )
   if ( groupIndex < 0 )
     return; //not found
 
-  const int datasetCount = dp->datasetCount( groupIndex );
+  const int datasetCount = layer->datasetCount( groupIndex );
   if ( datasetCount < 1 )
     return; // group without datasets
 
 
   // find maximum and minimum time in this group
-  const double minTime = dp->datasetMetadata( QgsMeshDatasetIndex( groupIndex, 0 ) ).time();
+  const double minTime = layer->datasetMetadata( QgsMeshDatasetIndex( groupIndex, 0 ) ).time();
   int idx = mStartTimeComboBox->findData( minTime );
   if ( idx >= 0 )
     mStartTimeComboBox->setCurrentIndex( idx );
 
-  const double maxTime = dp->datasetMetadata( QgsMeshDatasetIndex( groupIndex, datasetCount - 1 ) ).time();
+  const double maxTime = layer->datasetMetadata( QgsMeshDatasetIndex( groupIndex, datasetCount - 1 ) ).time();
   idx = mEndTimeComboBox->findData( maxTime );
   if ( idx >= 0 )
     mEndTimeComboBox->setCurrentIndex( idx );
@@ -668,9 +661,8 @@ void QgsMeshCalculatorDialog::setTimesByDatasetGroupName( const QString group )
 void QgsMeshCalculatorDialog::repopulateTimeCombos()
 {
   QgsMeshLayer *layer = meshLayer();
-  if ( !layer || !layer->dataProvider() )
+  if ( !layer )
     return;
-  const QgsMeshDataProvider *dp = layer->dataProvider();
 
   // extract all times from all datasets
   QMap<qint64, double> times;
@@ -684,7 +676,9 @@ void QgsMeshCalculatorDialog::repopulateTimeCombos()
       qint64 timeMs = layer->datasetRelativeTimeInMilliseconds( QgsMeshDatasetIndex( dsgi, datasetIndex ) );
       if ( timeMs == INVALID_MESHLAYER_TIME )
         continue;
-      const QgsMeshDatasetMetadata meta = dp->datasetMetadata( QgsMeshDatasetIndex( dsgi, datasetIndex ) );
+      const QgsMeshDatasetMetadata meta = layer->datasetMetadata( QgsMeshDatasetIndex( dsgi, datasetIndex ) );
+      if ( !meta.isValid() )
+        continue;
       times[timeMs] = meta.time();
     }
   }

@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsbrowserproxymodel.h"
+#include "moc_qgsbrowserproxymodel.cpp"
 #include "qgsbrowsermodel.h"
 #include "qgslayeritem.h"
 #include "qgsdatacollectionitem.h"
@@ -24,7 +25,7 @@ QgsBrowserProxyModel::QgsBrowserProxyModel( QObject *parent )
   : QSortFilterProxyModel( parent )
 {
   setDynamicSortFilter( true );
-  setSortRole( QgsBrowserModel::SortRole );
+  setSortRole( static_cast< int >( QgsBrowserModel::CustomRole::Sort ) );
   setSortCaseSensitivity( Qt::CaseInsensitive );
   sort( 0 );
 }
@@ -227,10 +228,10 @@ bool QgsBrowserProxyModel::filterAcceptsItem( const QModelIndex &sourceIndex ) c
   if ( !mFilter.isEmpty() )
   {
     //accept item if either displayed text or comment role matches string
-    const QString comment = mModel->data( sourceIndex, QgsBrowserModel::CommentRole ).toString();
+    const QString comment = mModel->data( sourceIndex, static_cast< int >( QgsBrowserModel::CustomRole::Comment ) ).toString();
     return ( filterAcceptsString( mModel->data( sourceIndex, Qt::DisplayRole ).toString() )
              || ( !comment.isEmpty() && filterAcceptsString( comment ) )
-             || mModel->data( sourceIndex, QgsBrowserModel::ItemDataRole::LayerMetadataRole ).value< QgsLayerMetadata >( ).matches( mREList ) );
+             || mModel->data( sourceIndex, static_cast< int >( QgsBrowserModel::CustomRole::LayerMetadata ) ).value< QgsLayerMetadata >( ).matches( mREList ) );
   }
 
   return true;
@@ -241,7 +242,7 @@ bool QgsBrowserProxyModel::filterAcceptsProviderKey( const QModelIndex &sourceIn
   if ( !mModel )
     return true;
 
-  const QString providerKey = mModel->data( sourceIndex, QgsBrowserModel::ProviderKeyRole ).toString();
+  const QString providerKey = mModel->data( sourceIndex, static_cast< int >( QgsBrowserModel::CustomRole::ProviderKey ) ).toString();
   if ( providerKey.isEmpty() )
     return true;
 

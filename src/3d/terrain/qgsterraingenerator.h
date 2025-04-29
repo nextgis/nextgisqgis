@@ -19,10 +19,11 @@
 #include "qgis_3d.h"
 
 #include "qgstilingscheme.h"
-#include "qgschunkloader_p.h"
+#include "qgschunkloader.h"
 
 class QgsAABB;
 class Qgs3DMapSettings;
+class Qgs3DRenderContext;
 class QgsRectangle;
 class QgsTerrainEntity;
 
@@ -44,24 +45,23 @@ class QgsProject;
  *
  * \note Not available in Python bindings
  *
- * \since QGIS 3.0
  */
 class _3D_EXPORT QgsTerrainGenerator : public QgsQuadtreeChunkLoaderFactory
 {
     Q_OBJECT
   public:
-
     //! Enumeration of the available terrain generators
     enum Type
     {
-      Flat,           //!< The whole terrain is flat area
-      Dem,            //!< Terrain is built from raster layer with digital elevation model
-      Online,         //!< Terrain is built from downloaded tiles with digital elevation model
-      Mesh            //!< Terrain is built from mesh layer with z value on vertices
+      Flat,          //!< The whole terrain is flat area
+      Dem,           //!< Terrain is built from raster layer with digital elevation model
+      Online,        //!< Terrain is built from downloaded tiles with digital elevation model
+      Mesh,          //!< Terrain is built from mesh layer with z value on vertices
+      QuantizedMesh, //!< Terrain is built from quantized mesh tiles
     };
 
     //! Sets terrain entity for the generator (does not transfer ownership)
-    void setTerrain( QgsTerrainEntity *t ) { mTerrain = t; }
+    virtual void setTerrain( QgsTerrainEntity *t ) { mTerrain = t; }
 
     //! Makes a copy of the current instance
     virtual QgsTerrainGenerator *clone() const = 0 SIP_FACTORY;
@@ -87,8 +87,8 @@ class _3D_EXPORT QgsTerrainGenerator : public QgsQuadtreeChunkLoaderFactory
     //! Returns height range of the root chunk in world coordinates
     virtual void rootChunkHeightRange( float &hMin, float &hMax ) const;
 
-    //! Returns height at (x,y) in terrain's CRS
-    virtual float heightAt( double x, double y, const Qgs3DMapSettings &map ) const;
+    //! Returns height at (x,y) in map's CRS
+    virtual float heightAt( double x, double y, const Qgs3DRenderContext &context ) const;
 
     //! Write terrain generator's configuration to XML
     virtual void writeXml( QDomElement &elem ) const = 0;
@@ -106,7 +106,7 @@ class _3D_EXPORT QgsTerrainGenerator : public QgsQuadtreeChunkLoaderFactory
     const QgsTilingScheme &tilingScheme() const { return mTerrainTilingScheme; }
 
     //! Returns CRS of the terrain
-    QgsCoordinateReferenceSystem crs() const { return mTerrainTilingScheme.crs(); }
+    virtual QgsCoordinateReferenceSystem crs() const { return mTerrainTilingScheme.crs(); }
 
     //! Returns whether the terrain generator is valid
     bool isValid() const;
@@ -117,13 +117,11 @@ class _3D_EXPORT QgsTerrainGenerator : public QgsQuadtreeChunkLoaderFactory
     void terrainChanged();
 
   protected:
-
-    QgsTilingScheme mTerrainTilingScheme;   //!< Tiling scheme of the terrain
+    QgsTilingScheme mTerrainTilingScheme; //!< Tiling scheme of the terrain
     QgsTerrainEntity *mTerrain = nullptr;
     QgsRectangle mExtent;
 
     bool mIsValid = true;
-
 };
 
 

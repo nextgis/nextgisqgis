@@ -70,7 +70,7 @@ bool QgsZipUtils::unzip( const QString &zipFilename, const QString &dir, QString
 
   if ( rc == ZIP_ER_OK && z )
   {
-    const int count = zip_get_num_files( z );
+    const int count = zip_get_num_entries( z, ZIP_FL_UNCHANGED );
     if ( count != -1 )
     {
       struct zip_stat stat;
@@ -86,6 +86,15 @@ bool QgsZipUtils::unzip( const QString &zipFilename, const QString &dir, QString
         {
           const QString fileName( stat.name );
           const QFileInfo newFile( QDir( dir ), fileName );
+
+          if ( !QString( QDir::cleanPath( newFile.absolutePath() ) + QStringLiteral( "/" ) ).startsWith( QDir( dir ).absolutePath() + QStringLiteral( "/" ) ) )
+          {
+            QgsMessageLog::logMessage( QObject::tr( "Skipped file %1 outside of the directory %2" ).arg(
+                                         newFile.absoluteFilePath(),
+                                         QDir( dir ).absolutePath()
+                                       ) );
+            continue;
+          }
 
           // Create path for a new file if it does not exist.
           if ( !newFile.absoluteDir().exists() )
@@ -216,7 +225,10 @@ bool QgsZipUtils::decodeGzip( const char *bytesIn, std::size_t size, QByteArray 
 
   int ret = inflateInit2( &strm, MAX_WBITS + DEC_MAGIC_NUM_FOR_GZIP );
   if ( ret != Z_OK )
+  {
+    inflateEnd( &strm );
     return false;
+  }
 
   while ( ret != Z_STREAM_END ) // done when inflate() says it's done
   {
@@ -308,7 +320,7 @@ const QStringList QgsZipUtils::files( const QString &zip )
 
   if ( rc == ZIP_ER_OK && z )
   {
-    const int count = zip_get_num_files( z );
+    const int count = zip_get_num_entries( z, ZIP_FL_UNCHANGED );
     if ( count != -1 )
     {
       struct zip_stat stat;

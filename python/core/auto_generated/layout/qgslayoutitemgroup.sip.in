@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/layout/qgslayoutitemgroup.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,8 +12,6 @@ class QgsLayoutItemGroup: QgsLayoutItem
 {
 %Docstring(signature="appended")
 A container for grouping several :py:class:`QgsLayoutItems`.
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -23,8 +21,10 @@ A container for grouping several :py:class:`QgsLayoutItems`.
 
     explicit QgsLayoutItemGroup( QgsLayout *layout );
 %Docstring
-Constructor for QgsLayoutItemGroup, belonging to the specified ``layout``.
+Constructor for QgsLayoutItemGroup, belonging to the specified
+``layout``.
 %End
+    ~QgsLayoutItemGroup();
 
     virtual void cleanup();
 
@@ -43,14 +43,14 @@ The caller takes responsibility for deleting the returned object.
 
     void addItem( QgsLayoutItem *item /Transfer/ );
 %Docstring
-Adds an ``item`` to the group. Ownership of the item
-is transferred to the group.
+Adds an ``item`` to the group. Ownership of the item is transferred to
+the group.
 %End
 
     void removeItems();
 %Docstring
-Removes all items from the group (but does not delete them).
-Items remain in the scene but are no longer grouped together
+Removes all items from the group (but does not delete them). Items
+remain in the scene but are no longer grouped together
 %End
 
     QList<QgsLayoutItem *> items() const;
@@ -73,6 +73,10 @@ Returns a list of items contained by the group.
 
     virtual ExportLayerBehavior exportLayerBehavior() const;
 
+
+    virtual QRectF rectWithFrame() const;
+
+
   protected:
     virtual void draw( QgsLayoutItemRenderContext &context );
 
@@ -91,5 +95,5 @@ Returns a list of items contained by the group.
  *                                                                      *
  * src/core/layout/qgslayoutitemgroup.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

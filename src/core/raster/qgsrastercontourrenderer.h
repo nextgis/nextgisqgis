@@ -40,6 +40,7 @@ class CORE_EXPORT QgsRasterContourRenderer : public QgsRasterRenderer
     const QgsRasterContourRenderer &operator=( const QgsRasterContourRenderer & ) = delete;
 
     QgsRasterContourRenderer *clone() const override SIP_FACTORY;
+    Qgis::RasterRendererFlags flags() const override;
 
     //! Creates an instance of the renderer based on definition from XML (used by renderer registry)
     static QgsRasterRenderer *create( const QDomElement &elem, QgsRasterInterface *input ) SIP_FACTORY;
@@ -50,13 +51,8 @@ class CORE_EXPORT QgsRasterContourRenderer : public QgsRasterRenderer
 
     QList<int> usesBands() const override;
     QList<QgsLayerTreeModelLegendNode *> createLegendNodes( QgsLayerTreeLayer *nodeLayer ) SIP_FACTORY override;
-
-    //
-
-    //! Returns the number of the input raster band
-    int inputBand() const { return mInputBand; }
-    //! Sets the number of the input raster band
-    void setInputBand( int band ) { mInputBand = band; }
+    int inputBand() const override;
+    bool setInputBand( int band ) override;
 
     //! Returns the interval of contour lines generation
     double contourInterval() const { return mContourInterval; }

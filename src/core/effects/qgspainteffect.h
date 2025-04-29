@@ -22,6 +22,7 @@
 #include <QPainter>
 #include <QDomDocument>
 #include <QDomElement>
+#include <QPicture>
 
 class QgsRenderContext;
 
@@ -46,7 +47,6 @@ class QgsRenderContext;
  * and render the result to the render context's paint device.
  *
  * \see QgsPaintEffectRegistry
- * \since QGIS 2.9
  */
 
 class CORE_EXPORT QgsPaintEffect SIP_NODEFAULTCTORS
@@ -107,9 +107,6 @@ class CORE_EXPORT QgsPaintEffect SIP_NODEFAULTCTORS
       ModifyAndRender //!< The result of the effect is both rendered and passed on to subsequent effects in the stack
     };
 
-    /**
-     * Constructor for QgsPaintEffect.
-     */
     QgsPaintEffect() = default;
 
     QgsPaintEffect( const QgsPaintEffect &other );
@@ -169,7 +166,7 @@ class CORE_EXPORT QgsPaintEffect SIP_NODEFAULTCTORS
      * \param context destination render context
      * \see begin
      */
-    virtual void render( QPicture &picture, QgsRenderContext &context );
+    virtual void render( const QPicture &picture, QgsRenderContext &context );
 
     /**
      * Begins intercepting paint operations to a render context. When the corresponding
@@ -250,20 +247,20 @@ class CORE_EXPORT QgsPaintEffect SIP_NODEFAULTCTORS
      * \see drawSource
      * \see sourceAsImage
      */
-    const QPicture *source() const { return mPicture; }
+    const QPicture &source() const { return mPicture; }
 
     /**
      * Returns the source QPicture rendered to a new QImage. The draw() member can
      * utilize this when drawing the effect. The image will be padded or cropped from the original
      * source QPicture by the results of the boundingRect() method.
      * The result is cached to speed up subsequent calls to sourceAsImage.
-     * \returns source QPicture rendered to an image
+     * \returns source QPicture rendered to an image, or a null image if source could not be rendered
      * \see drawSource
      * \see source
      * \see imageOffset
      * \see boundingRect
      */
-    QImage *sourceAsImage( QgsRenderContext &context );
+    QImage sourceAsImage( QgsRenderContext &context );
 
     /**
      * Returns the offset which should be used when drawing the source image on to a destination
@@ -290,18 +287,19 @@ class CORE_EXPORT QgsPaintEffect SIP_NODEFAULTCTORS
      * when drawing QPictures. This may need to be called by derived classes prior
      * to rendering results onto a painter.
      * \param painter destination painter
+     *
+     * \deprecated QGIS 3.40. Use QgsPainting::drawPicture() or QgsPainting::applyScaleFixForQPictureDpi() instead.
      */
-    void fixQPictureDpi( QPainter *painter ) const;
+    Q_DECL_DEPRECATED void fixQPictureDpi( QPainter *painter ) const SIP_DEPRECATED;
 
   private:
 
-    const QPicture *mPicture = nullptr;
-    QImage *mSourceImage = nullptr;
-    bool mOwnsImage = false;
+    QPicture mPicture;
+    QImage mSourceImage;
 
     QPainter *mPrevPainter = nullptr;
-    QPainter *mEffectPainter = nullptr;
-    QPicture *mTempPicture = nullptr;
+    std::unique_ptr< QPainter > mEffectPainter;
+    std::unique_ptr< QPicture > mTempPicture;
 
     QRectF imageBoundingRect( const QgsRenderContext &context ) const;
 
@@ -321,14 +319,12 @@ class CORE_EXPORT QgsPaintEffect SIP_NODEFAULTCTORS
  * supported, however these changes will force the resultant output to be rasterized.
  * If no alterations are performed then the original picture will be rendered as a vector.
  *
- * \since QGIS 2.9
  */
 
 class CORE_EXPORT QgsDrawSourceEffect : public QgsPaintEffect SIP_NODEFAULTCTORS
 {
   public:
 
-    //! Constructor for QgsDrawSourceEffect
     QgsDrawSourceEffect() = default;
 
     /**
@@ -390,7 +386,6 @@ class CORE_EXPORT QgsDrawSourceEffect : public QgsPaintEffect SIP_NODEFAULTCTORS
  * \class QgsEffectPainter
  * \brief A class to manager painter saving and restoring required for effect drawing
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsEffectPainter
 {
@@ -400,7 +395,6 @@ class CORE_EXPORT QgsEffectPainter
      * QgsEffectPainter constructor
      *
      * \param renderContext the QgsRenderContext object
-     * \since QGIS 3.0
      */
     QgsEffectPainter( QgsRenderContext &renderContext );
 
@@ -409,7 +403,6 @@ class CORE_EXPORT QgsEffectPainter
      *
      * \param renderContext the QgsRenderContext object
      * \param effect the QgsPaintEffect object
-     * \since QGIS 3.0
      */
     QgsEffectPainter( QgsRenderContext &renderContext, QgsPaintEffect *effect );
     ~QgsEffectPainter();
@@ -426,7 +419,6 @@ class CORE_EXPORT QgsEffectPainter
     /**
      * Access to the painter object
      *
-     * \since QGIS 3.0
      */
     QPainter *operator->() { return mPainter; }
     ///@endcond

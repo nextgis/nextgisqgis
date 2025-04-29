@@ -27,15 +27,11 @@
  * \class QgsLocatorContext
  * \ingroup core
  * \brief Encapsulates the properties relating to the context of a locator search.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLocatorContext
 {
   public:
 
-    /**
-     * Constructor for QgsLocatorContext.
-     */
     QgsLocatorContext() = default;
 
     /**

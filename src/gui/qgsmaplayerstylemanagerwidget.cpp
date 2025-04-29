@@ -20,21 +20,17 @@
 #include <QFileDialog>
 
 #include "qgsmaplayerstylemanagerwidget.h"
-#include "qgssettings.h"
+#include "moc_qgsmaplayerstylemanagerwidget.cpp"
 #include "qgslogger.h"
 #include "qgsmaplayer.h"
 #include "qgsmapcanvas.h"
 #include "qgsmaplayerconfigwidget.h"
 #include "qgsmaplayerstylemanager.h"
-#include "qgsvectordataprovider.h"
-#include "qgsrasterdataprovider.h"
 #include "qgsvectorlayer.h"
-//#include "qgsvectortilelayer.h"
-#include "qgsrasterlayer.h"
+#include "qgsvectortilelayer.h"
 #include "qgsapplication.h"
-#include "qgsproviderregistry.h"
 #include "qgsvectorlayerproperties.h"
-//#include "qgsvectortilelayerproperties.h"
+#include "qgsvectortilelayerproperties.h"
 #include "qgsrasterlayerproperties.h"
 #include "qgsmeshlayerproperties.h"
 
@@ -66,7 +62,7 @@ QgsMapLayerStyleManagerWidget::QgsMapLayerStyleManagerWidget( QgsMapLayer *layer
   connect( loadDefaultAction, &QAction::triggered, this, &QgsMapLayerStyleManagerWidget::loadDefault );
 
   //broken connect - not sure what the purpose of this was?
-//  connect( canvas, &QgsMapCanvas::mapCanvasRefreshed, this, SLOT( updateCurrent() ) );
+  //  connect( canvas, &QgsMapCanvas::mapCanvasRefreshed, this, SLOT( updateCurrent() ) );
 
   connect( mStyleList, &QAbstractItemView::clicked, this, &QgsMapLayerStyleManagerWidget::styleClicked );
 
@@ -148,9 +144,7 @@ void QgsMapLayerStyleManagerWidget::styleRenamed( const QString &oldname, const 
 void QgsMapLayerStyleManagerWidget::addStyle()
 {
   bool ok;
-  const QString text = QInputDialog::getText( nullptr, tr( "New Style" ),
-                       tr( "Style name:" ), QLineEdit::Normal,
-                       QStringLiteral( "new style" ), &ok );
+  const QString text = QInputDialog::getText( nullptr, tr( "New Style" ), tr( "Style name:" ), QLineEdit::Normal, QStringLiteral( "new style" ), &ok );
   if ( !ok || text.isEmpty() )
     return;
 
@@ -188,33 +182,28 @@ void QgsMapLayerStyleManagerWidget::saveAsDefault()
 
   switch ( mLayer->type() )
   {
-
     case Qgis::LayerType::Vector:
-      QgsVectorLayerProperties( mMapCanvas,
-                                mMapLayerConfigWidgetContext.messageBar(),
-                                qobject_cast<QgsVectorLayer *>( mLayer ) ).saveDefaultStyle();
+      QgsVectorLayerProperties( mMapCanvas, mMapLayerConfigWidgetContext.messageBar(), qobject_cast<QgsVectorLayer *>( mLayer ) ).saveDefaultStyle();
       break;
 
     case Qgis::LayerType::Raster:
-      QgsRasterLayerProperties( mLayer, mMapCanvas ).saveDefaultStyle();
+      QgsRasterLayerProperties( mLayer, mMapCanvas ).saveStyleAsDefault();
       break;
 
     case Qgis::LayerType::Mesh:
-      QgsMeshLayerProperties( mLayer, mMapCanvas ).saveDefaultStyle();
+      QgsMeshLayerProperties( mLayer, mMapCanvas ).saveStyleAsDefault();
       break;
 
-//    case Qgis::LayerType::VectorTile:
-//      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
-//                                    mMapCanvas,
-//                                    mMapLayerConfigWidgetContext.messageBar() ).saveDefaultStyle();
-//      break;
+    case Qgis::LayerType::VectorTile:
+      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ), mMapCanvas, mMapLayerConfigWidgetContext.messageBar() ).saveStyleAsDefault();
+      break;
 
     // Not available for these
     case Qgis::LayerType::PointCloud:
     case Qgis::LayerType::Annotation:
+    case Qgis::LayerType::TiledScene:
     case Qgis::LayerType::Plugin:
     case Qgis::LayerType::Group:
-    default:
       break;
   }
 }
@@ -226,11 +215,8 @@ void QgsMapLayerStyleManagerWidget::loadDefault()
 
   switch ( mLayer->type() )
   {
-
     case Qgis::LayerType::Vector:
-      QgsVectorLayerProperties( mMapCanvas,
-                                mMapLayerConfigWidgetContext.messageBar(),
-                                qobject_cast<QgsVectorLayer *>( mLayer ) ).loadDefaultStyle();
+      QgsVectorLayerProperties( mMapCanvas, mMapLayerConfigWidgetContext.messageBar(), qobject_cast<QgsVectorLayer *>( mLayer ) ).loadDefaultStyle();
       break;
 
     case Qgis::LayerType::Raster:
@@ -241,18 +227,16 @@ void QgsMapLayerStyleManagerWidget::loadDefault()
       QgsMeshLayerProperties( mLayer, mMapCanvas ).loadDefaultStyle();
       break;
 
-//    case Qgis::LayerType::VectorTile:
-//      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
-//                                    mMapCanvas,
-//                                    mMapLayerConfigWidgetContext.messageBar() ).loadDefaultStyle();
-//      break;
+    case Qgis::LayerType::VectorTile:
+      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ), mMapCanvas, mMapLayerConfigWidgetContext.messageBar() ).loadDefaultStyle();
+      break;
 
     // Not available for these
     case Qgis::LayerType::PointCloud:
     case Qgis::LayerType::Annotation:
+    case Qgis::LayerType::TiledScene:
     case Qgis::LayerType::Plugin:
     case Qgis::LayerType::Group:
-    default:
       break;
   }
 }
@@ -264,11 +248,8 @@ void QgsMapLayerStyleManagerWidget::saveStyle()
 
   switch ( mLayer->type() )
   {
-
     case Qgis::LayerType::Vector:
-      QgsVectorLayerProperties( mMapCanvas,
-                                mMapLayerConfigWidgetContext.messageBar(),
-                                qobject_cast<QgsVectorLayer *>( mLayer ) ).saveStyleAs();
+      QgsVectorLayerProperties( mMapCanvas, mMapLayerConfigWidgetContext.messageBar(), qobject_cast<QgsVectorLayer *>( mLayer ) ).saveStyleAs();
       break;
 
     case Qgis::LayerType::Raster:
@@ -276,21 +257,19 @@ void QgsMapLayerStyleManagerWidget::saveStyle()
       break;
 
     case Qgis::LayerType::Mesh:
-      QgsMeshLayerProperties( mLayer, mMapCanvas ).saveStyleAs();
+      QgsMeshLayerProperties( mLayer, mMapCanvas ).saveStyleToFile();
       break;
 
-//    case Qgis::LayerType::VectorTile:
-//      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
-//                                    mMapCanvas,
-//                                    mMapLayerConfigWidgetContext.messageBar() ).saveStyleAs();
-//      break;
+    case Qgis::LayerType::VectorTile:
+      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ), mMapCanvas, mMapLayerConfigWidgetContext.messageBar() ).saveStyleToFile();
+      break;
 
     // Not available for these
     case Qgis::LayerType::PointCloud:
     case Qgis::LayerType::Annotation:
+    case Qgis::LayerType::TiledScene:
     case Qgis::LayerType::Plugin:
     case Qgis::LayerType::Group:
-    default:
       break;
   }
 }
@@ -302,33 +281,28 @@ void QgsMapLayerStyleManagerWidget::loadStyle()
 
   switch ( mLayer->type() )
   {
-
     case Qgis::LayerType::Vector:
-      QgsVectorLayerProperties( mMapCanvas,
-                                mMapLayerConfigWidgetContext.messageBar(),
-                                qobject_cast<QgsVectorLayer *>( mLayer ) ).loadStyle();
+      QgsVectorLayerProperties( mMapCanvas, mMapLayerConfigWidgetContext.messageBar(), qobject_cast<QgsVectorLayer *>( mLayer ) ).loadStyle();
       break;
 
     case Qgis::LayerType::Raster:
-      QgsRasterLayerProperties( mLayer, mMapCanvas ).loadStyle();
+      QgsRasterLayerProperties( mLayer, mMapCanvas ).loadStyleFromFile();
       break;
 
     case Qgis::LayerType::Mesh:
-      QgsMeshLayerProperties( mLayer, mMapCanvas ).loadStyle();
+      QgsMeshLayerProperties( mLayer, mMapCanvas ).loadStyleFromFile();
       break;
 
-//    case Qgis::LayerType::VectorTile:
-//      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
-//                                    mMapCanvas,
-//                                    mMapLayerConfigWidgetContext.messageBar() ).loadStyle();
-//      break;
+    case Qgis::LayerType::VectorTile:
+      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ), mMapCanvas, mMapLayerConfigWidgetContext.messageBar() ).loadStyle();
+      break;
 
     // Not available for these
     case Qgis::LayerType::PointCloud:
     case Qgis::LayerType::Annotation:
+    case Qgis::LayerType::TiledScene:
     case Qgis::LayerType::Plugin:
     case Qgis::LayerType::Group:
-    default:
       break;
   }
 }

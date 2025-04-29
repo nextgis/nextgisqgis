@@ -27,7 +27,7 @@ class QString;
 class QgsReadWriteContext;
 class Qgs3DSceneExporter;
 
-namespace Qt3DCore { class QEntity; } SIP_SKIP
+namespace Qt3DCore SIP_SKIP { class QEntity; }
 
 
 /**
@@ -41,7 +41,6 @@ namespace Qt3DCore { class QEntity; } SIP_SKIP
  *
  * \note Prior to QGIS 3.16 this was available through the QGIS 3D library.
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsAbstract3DSymbol
 {
@@ -65,12 +64,14 @@ class CORE_EXPORT QgsAbstract3DSymbol
      */
     virtual QList< Qgis::GeometryType > compatibleGeometryTypes() const;
 
+    // *INDENT-OFF*
     //! Data definable properties.
-    enum Property
-    {
-      PropertyHeight = 0,       //!< Height (altitude)
-      PropertyExtrusionHeight,  //!< Extrusion height (zero means no extrusion)
+    enum class Property SIP_MONKEYPATCH_SCOPEENUM_UNNEST( QgsAbstract3DSymbol, Property ) : int
+      {
+      Height SIP_MONKEYPATCH_COMPAT_NAME( PropertyHeight ) = 0, //!< Height (altitude)
+      ExtrusionHeight SIP_MONKEYPATCH_COMPAT_NAME( PropertyExtrusionHeight ), //!< Extrusion height (zero means no extrusion)
     };
+    // *INDENT-ON*
 
     //! Returns the symbol layer property definitions.
     static const QgsPropertiesDefinition &propertyDefinitions();
@@ -79,7 +80,7 @@ class CORE_EXPORT QgsAbstract3DSymbol
     QgsPropertyCollection &dataDefinedProperties() { return mDataDefinedProperties; }
 
     //! Returns a reference to the symbol layer's property collection, used for data defined overrides.
-    const QgsPropertyCollection &dataDefinedProperties() const { return mDataDefinedProperties; } SIP_SKIP
+    const QgsPropertyCollection &dataDefinedProperties() const SIP_SKIP { return mDataDefinedProperties; }
 
     //! Sets the symbol layer's property collection, used for data defined overrides.
     void setDataDefinedProperties( const QgsPropertyCollection &collection ) { mDataDefinedProperties = collection; }

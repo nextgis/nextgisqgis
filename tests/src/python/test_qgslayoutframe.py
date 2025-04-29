@@ -5,24 +5,25 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = '(C) 2017 by Nyall Dawson'
-__date__ = '23/10/2017'
-__copyright__ = 'Copyright 2017, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "(C) 2017 by Nyall Dawson"
+__date__ = "23/10/2017"
+__copyright__ = "Copyright 2017, The QGIS Project"
+
 from qgis.core import QgsLayoutFrame, QgsLayoutItemHtml
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 from test_qgslayoutitem import LayoutItemTestCase
 
 start_app()
 
 
-class TestQgsLayoutFrame(unittest.TestCase, LayoutItemTestCase):
+class TestQgsLayoutFrame(QgisTestCase, LayoutItemTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestQgsLayoutFrame, cls).setUpClass()
+        super().setUpClass()
         cls.mf = None
 
     @classmethod
@@ -31,5 +32,5 @@ class TestQgsLayoutFrame(unittest.TestCase, LayoutItemTestCase):
         return QgsLayoutFrame(layout, cls.mf)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -47,26 +47,24 @@ class QgsFilterAlgorithm : public QgsProcessingAlgorithm
     QStringList tags() const override;
     QString group() const override;
     QString groupId() const override;
-    Flags flags() const override;
+    Qgis::ProcessingAlgorithmFlags flags() const override;
     QString shortHelpString() const override;
     QgsFilterAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
-
-    QVariantMap processAlgorithm( const QVariantMap &parameters,
-                                  QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
+    QVariantMap processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
 
   private:
     struct Output
     {
-      Output( const QString &name, const QString &expression )
-        : name( name )
-        , expression( expression )
-      {}
-      QString name;
-      QgsExpression expression;
-      std::unique_ptr< QgsFeatureSink > sink;
-      QString destinationIdentifier;
+        Output( const QString &name, const QString &expression )
+          : name( name )
+          , expression( expression )
+        {}
+        QString name;
+        QgsExpression expression;
+        std::unique_ptr<QgsFeatureSink> sink;
+        QString destinationIdentifier;
     };
 
     QList<Output *> mOutputs;

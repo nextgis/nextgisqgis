@@ -19,6 +19,7 @@
 #include "qgslogger.h"
 #include "qgsproviderregistry.h"
 #include "qgsvirtualpointcloudprovider.h"
+#include "moc_qgsvirtualpointcloudprovider.cpp"
 #include "qgscopcpointcloudindex.h"
 #include "qgseptpointcloudindex.h"
 #include "qgsremotecopcpointcloudindex.h"
@@ -46,7 +47,7 @@
 QgsVirtualPointCloudProvider::QgsVirtualPointCloudProvider(
   const QString &uri,
   const QgsDataProvider::ProviderOptions &options,
-  QgsDataProvider::ReadFlags flags )
+  Qgis::DataProviderReadFlags flags )
   : QgsPointCloudDataProvider( uri, options, flags )
 {
   std::unique_ptr< QgsScopedRuntimeProfile > profile;
@@ -56,6 +57,11 @@ QgsVirtualPointCloudProvider::QgsVirtualPointCloudProvider(
   mPolygonBounds.reset( new QgsGeometry( new QgsMultiPolygon() ) );
 
   parseFile();
+}
+
+Qgis::DataProviderFlags QgsVirtualPointCloudProvider::flags() const
+{
+  return Qgis::DataProviderFlag::FastExtent2D;
 }
 
 QgsVirtualPointCloudProvider::~QgsVirtualPointCloudProvider() = default;
@@ -193,7 +199,7 @@ void QgsVirtualPointCloudProvider::parseFile()
     }
 
     QString uri;
-    qint64 count;
+    qint64 count = 0;
     QgsRectangle extent;
     QgsGeometry geometry;
     QgsDoubleRange zRange;
@@ -220,7 +226,7 @@ void QgsVirtualPointCloudProvider::parseFile()
     if ( !mCrs.isValid() )
     {
       if ( f["properties"].contains( "proj:epsg" ) )
-        mCrs.createFromSrsId( f["properties"]["proj:epsg"].get<long>() );
+        mCrs = QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:%1" ).arg( f["properties"]["proj:epsg"].get<long>() ) );
       else if ( f["properties"].contains( "proj:wkt2" ) )
         mCrs.createFromString( QString::fromStdString( f["properties"]["proj:wkt2"] ) );
     }
@@ -407,7 +413,7 @@ void QgsVirtualPointCloudProvider::loadSubIndex( int i )
   sl.index()->load( sl.uri() );
 
   // if expression is broken or index is missing a required field, set to "false" so it returns no points
-  if ( !sl.index()->setSubsetString( mSubsetString ) )
+  if ( !mSubsetString.isEmpty() && !sl.index()->setSubsetString( mSubsetString ) )
     sl.index()->setSubsetString( QStringLiteral( "false" ) );
 
   emit subIndexLoaded( i );
@@ -432,15 +438,25 @@ void QgsVirtualPointCloudProvider::populateAttributeCollection( QSet<QString> na
   if ( names.contains( QLatin1String( "Classification" ) ) )
     mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "Classification" ), QgsPointCloudAttribute::UChar ) );
   if ( names.contains( QLatin1String( "ScanAngleRank" ) ) )
-    mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "ScanAngleRank" ), QgsPointCloudAttribute::Short ) );
+    mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "ScanAngleRank" ), QgsPointCloudAttribute::Float ) );
   if ( names.contains( QLatin1String( "UserData" ) ) )
     mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "UserData" ), QgsPointCloudAttribute::Char ) );
   if ( names.contains( QLatin1String( "PointSourceId" ) ) )
     mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "PointSourceId" ), QgsPointCloudAttribute::UShort ) );
   if ( names.contains( QLatin1String( "ScannerChannel" ) ) )
     mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "ScannerChannel" ), QgsPointCloudAttribute::Char ) );
-  if ( names.contains( QLatin1String( "ClassificationFlags" ) ) )
-    mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "ClassificationFlags" ), QgsPointCloudAttribute::Char ) );
+  if ( names.contains( QLatin1String( "Synthetic" ) ) ||
+       names.contains( QLatin1String( "ClassFlags" ) ) )
+    mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "Synthetic" ), QgsPointCloudAttribute::UChar ) );
+  if ( names.contains( QLatin1String( "KeyPoint" ) ) ||
+       names.contains( QLatin1String( "ClassFlags" ) ) )
+    mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "KeyPoint" ), QgsPointCloudAttribute::UChar ) );
+  if ( names.contains( QLatin1String( "Withheld" ) ) ||
+       names.contains( QLatin1String( "ClassFlags" ) ) )
+    mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "Withheld" ), QgsPointCloudAttribute::UChar ) );
+  if ( names.contains( QLatin1String( "Overlap" ) ) ||
+       names.contains( QLatin1String( "ClassFlags" ) ) )
+    mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "Overlap" ), QgsPointCloudAttribute::UChar ) );
   if ( names.contains( QLatin1String( "GpsTime" ) ) )
     mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "GpsTime" ), QgsPointCloudAttribute::Double ) );
   if ( names.contains( QLatin1String( "Red" ) ) )
@@ -464,7 +480,11 @@ void QgsVirtualPointCloudProvider::populateAttributeCollection( QSet<QString> na
                     QLatin1String( "UserData" ),
                     QLatin1String( "PointSourceId" ),
                     QLatin1String( "ScannerChannel" ),
-                    QLatin1String( "ClassificationFlags" ),
+                    QLatin1String( "ClassFlags" ),
+                    QLatin1String( "Synthetic" ),
+                    QLatin1String( "KeyPoint" ),
+                    QLatin1String( "Withheld" ),
+                    QLatin1String( "Overlap" ),
                     QLatin1String( "GpsTime" ),
                     QLatin1String( "Red" ),
                     QLatin1String( "Green" ),
@@ -517,7 +537,7 @@ QIcon QgsVirtualPointCloudProviderMetadata::icon() const
   return QgsApplication::getThemeIcon( QStringLiteral( "mIconPointCloudLayer.svg" ) );
 }
 
-QgsVirtualPointCloudProvider *QgsVirtualPointCloudProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags )
+QgsVirtualPointCloudProvider *QgsVirtualPointCloudProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags )
 {
   return new QgsVirtualPointCloudProvider( uri, options, flags );
 }
@@ -576,6 +596,7 @@ QString QgsVirtualPointCloudProviderMetadata::filters( Qgis::FileFilterType type
     case Qgis::FileFilterType::Mesh:
     case Qgis::FileFilterType::MeshDataset:
     case Qgis::FileFilterType::VectorTile:
+    case Qgis::FileFilterType::TiledScene:
       return QString();
 
     case Qgis::FileFilterType::PointCloud:

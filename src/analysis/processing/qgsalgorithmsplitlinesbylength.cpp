@@ -61,14 +61,19 @@ QString QgsSplitLinesByLengthAlgorithm::shortDescription() const
   return QObject::tr( "Splits lines into parts which are no longer than a specified length." );
 }
 
-QList<int> QgsSplitLinesByLengthAlgorithm::inputLayerTypes() const
+Qgis::ProcessingAlgorithmDocumentationFlags QgsSplitLinesByLengthAlgorithm::documentationFlags() const
 {
-  return QList<int>() << QgsProcessing::TypeVectorLine;
+  return Qgis::ProcessingAlgorithmDocumentationFlag::RegeneratesPrimaryKey;
 }
 
-QgsProcessing::SourceType QgsSplitLinesByLengthAlgorithm::outputLayerType() const
+QList<int> QgsSplitLinesByLengthAlgorithm::inputLayerTypes() const
 {
-  return QgsProcessing::TypeVectorLine;
+  return QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::VectorLine );
+}
+
+Qgis::ProcessingSourceType QgsSplitLinesByLengthAlgorithm::outputLayerType() const
+{
+  return Qgis::ProcessingSourceType::VectorLine;
 }
 
 QgsSplitLinesByLengthAlgorithm *QgsSplitLinesByLengthAlgorithm::createInstance() const
@@ -78,8 +83,7 @@ QgsSplitLinesByLengthAlgorithm *QgsSplitLinesByLengthAlgorithm::createInstance()
 
 void QgsSplitLinesByLengthAlgorithm::initParameters( const QVariantMap & )
 {
-  std::unique_ptr< QgsProcessingParameterDistance > length = std::make_unique< QgsProcessingParameterDistance >( QStringLiteral( "LENGTH" ),
-      QObject::tr( "Maximum line length" ), 10, QStringLiteral( "INPUT" ), false, 0 );
+  std::unique_ptr<QgsProcessingParameterDistance> length = std::make_unique<QgsProcessingParameterDistance>( QStringLiteral( "LENGTH" ), QObject::tr( "Maximum line length" ), 10, QStringLiteral( "INPUT" ), false, 0 );
   length->setIsDynamic( true );
   length->setDynamicPropertyDefinition( QgsPropertyDefinition( QStringLiteral( "LENGTH" ), QObject::tr( "Maximum length" ), QgsPropertyDefinition::DoublePositive ) );
   length->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
@@ -91,7 +95,7 @@ bool QgsSplitLinesByLengthAlgorithm::prepareAlgorithm( const QVariantMap &parame
   mLength = parameterAsDouble( parameters, QStringLiteral( "LENGTH" ), context );
   mDynamicLength = QgsProcessingParameters::isDynamic( parameters, QStringLiteral( "LENGTH" ) );
   if ( mDynamicLength )
-    mLengthProperty = parameters.value( QStringLiteral( "LENGTH" ) ).value< QgsProperty >();
+    mLengthProperty = parameters.value( QStringLiteral( "LENGTH" ) ).value<QgsProperty>();
 
   return true;
 }
@@ -124,7 +128,7 @@ QgsFeatureList QgsSplitLinesByLengthAlgorithm::processFeature( const QgsFeature 
     const QgsGeometry inputGeom = f.geometry();
     for ( auto it = inputGeom.const_parts_begin(); it != inputGeom.const_parts_end(); ++it )
     {
-      const QgsCurve *part = qgsgeometry_cast< const QgsCurve * >( *it );
+      const QgsCurve *part = qgsgeometry_cast<const QgsCurve *>( *it );
       if ( !part )
         continue;
 
@@ -138,19 +142,20 @@ QgsFeatureList QgsSplitLinesByLengthAlgorithm::processFeature( const QgsFeature 
         end += distance;
         features << outputFeature;
       }
-
     }
     return features;
   }
 }
 
-QgsProcessingFeatureSource::Flag QgsSplitLinesByLengthAlgorithm::sourceFlags() const
+Qgis::ProcessingFeatureSourceFlags QgsSplitLinesByLengthAlgorithm::sourceFlags() const
 {
-  return QgsProcessingFeatureSource::FlagSkipGeometryValidityChecks;
+  return Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks;
+}
+
+QgsFeatureSink::SinkFlags QgsSplitLinesByLengthAlgorithm::sinkFlags() const
+{
+  return QgsFeatureSink::RegeneratePrimaryKey;
 }
 
 
 ///@endcond
-
-
-

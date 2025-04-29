@@ -21,12 +21,12 @@
 #include <QObject>
 
 #include "qgis_core.h"
+#include "qgis_sip.h"
 
 /**
  * \class QgsFieldConstraints
  * \ingroup core
  * \brief Stores information about constraints which may be present on a field.
- * \since QGIS 3.0
  */
 
 class CORE_EXPORT QgsFieldConstraints
@@ -40,7 +40,7 @@ class CORE_EXPORT QgsFieldConstraints
     /**
      * Constraints which may be present on a field.
      */
-    enum Constraint
+    enum Constraint SIP_ENUM_BASETYPE( IntFlag )
     {
       ConstraintNotNull = 1, //!< Field may not be null
       ConstraintUnique = 1 << 1, //!< Field must have a unique value
@@ -89,7 +89,8 @@ class CORE_EXPORT QgsFieldConstraints
 
     /**
      * Returns the strength of a field constraint, or ConstraintStrengthNotSet if the constraint
-     * is not present on this field.
+     * is not present on this field. If the strength is not set returns ConstraintStrengthNotSet
+     * for anything but ConstraintExpression which returns ConstraintStrengthHard.
      * \see constraints()
      * \see setConstraintStrength()
      */

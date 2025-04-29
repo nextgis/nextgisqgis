@@ -25,12 +25,10 @@ SIP_NO_FILE
  * \ingroup gui
  * \brief Factory for widgets for editing a QVariantMap
  * \note not available in Python bindings
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsKeyValueWidgetFactory : public QgsEditorWidgetFactory
 {
   public:
-
     /**
      * Constructor for QgsKeyValueWidgetFactory, where \a name is a human-readable
      * name for the factory.

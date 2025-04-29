@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsvtpkvectortiledataprovider.h"
+#include "moc_qgsvtpkvectortiledataprovider.cpp"
 #include "qgsthreadingutils.h"
 #include "qgsvtpktiles.h"
 #include "qgsvectortileloader.h"
@@ -32,7 +33,7 @@ QString QgsVtpkVectorTileDataProvider::DATA_PROVIDER_KEY = QStringLiteral( "vtpk
 QString QgsVtpkVectorTileDataProvider::DATA_PROVIDER_DESCRIPTION = QObject::tr( "VTPK Vector Tiles data provider" );
 
 
-QgsVtpkVectorTileDataProvider::QgsVtpkVectorTileDataProvider( const QString &uri, const ProviderOptions &providerOptions, ReadFlags flags )
+QgsVtpkVectorTileDataProvider::QgsVtpkVectorTileDataProvider( const QString &uri, const ProviderOptions &providerOptions, Qgis::DataProviderReadFlags flags )
   : QgsVectorTileDataProvider( uri, providerOptions, flags )
 {
   QgsDataSourceUri dsUri;
@@ -81,6 +82,11 @@ QgsVtpkVectorTileDataProvider::QgsVtpkVectorTileDataProvider( const QgsVtpkVecto
   mStyleDefinition = other.mStyleDefinition;
   mSpriteDefinition = other.mSpriteDefinition;
   mSpriteImage = other.mSpriteImage;
+}
+
+Qgis::DataProviderFlags QgsVtpkVectorTileDataProvider::flags() const
+{
+  return Qgis::DataProviderFlag::FastExtent2D;
 }
 
 Qgis::VectorTileProviderFlags QgsVtpkVectorTileDataProvider::providerFlags() const
@@ -300,7 +306,7 @@ QgsProviderMetadata::ProviderMetadataCapabilities QgsVtpkVectorTileDataProviderM
          | ProviderMetadataCapability::QuerySublayers;
 }
 
-QgsVtpkVectorTileDataProvider *QgsVtpkVectorTileDataProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags )
+QgsVtpkVectorTileDataProvider *QgsVtpkVectorTileDataProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags )
 {
   return new QgsVtpkVectorTileDataProvider( uri, options, flags );
 }
@@ -324,6 +330,7 @@ QString QgsVtpkVectorTileDataProviderMetadata::filters( Qgis::FileFilterType typ
     case Qgis::FileFilterType::Mesh:
     case Qgis::FileFilterType::MeshDataset:
     case Qgis::FileFilterType::PointCloud:
+    case Qgis::FileFilterType::TiledScene:
       return QString();
 
     case Qgis::FileFilterType::VectorTile:

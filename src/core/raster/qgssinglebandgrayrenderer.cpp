@@ -22,7 +22,6 @@
 #include "qgscolorramplegendnodesettings.h"
 #include "qgsreadwritecontext.h"
 #include "qgscolorrampimpl.h"
-#include "qgssymbol.h"
 
 #include <QDomDocument>
 #include <QDomElement>
@@ -149,7 +148,7 @@ QgsRasterBlock *QgsSingleBandGrayRenderer::block( int bandNo, const QgsRectangle
     double currentAlpha = mOpacity;
     if ( mRasterTransparency )
     {
-      currentAlpha = mRasterTransparency->alphaValue( grayVal, mOpacity * 255 ) / 255.0;
+      currentAlpha *= mRasterTransparency->opacityForValue( grayVal );
     }
     if ( mAlphaBand > 0 )
     {
@@ -191,6 +190,31 @@ QgsRasterBlock *QgsSingleBandGrayRenderer::block( int bandNo, const QgsRectangle
   }
 
   return outputBlock.release();
+}
+
+void QgsSingleBandGrayRenderer::setGrayBand( int band )
+{
+  setInputBand( band );
+}
+
+int QgsSingleBandGrayRenderer::inputBand() const
+{
+  return mGrayBand;
+}
+
+bool QgsSingleBandGrayRenderer::setInputBand( int band )
+{
+  if ( !mInput )
+  {
+    mGrayBand = band;
+    return true;
+  }
+  else if ( band > 0 && band <= mInput->bandCount() )
+  {
+    mGrayBand = band;
+    return true;
+  }
+  return false;
 }
 
 void QgsSingleBandGrayRenderer::writeXml( QDomDocument &doc, QDomElement &parentElem ) const
@@ -314,7 +338,7 @@ void QgsSingleBandGrayRenderer::toSld( QDomDocument &doc, QDomElement &element, 
 
   // set band
   QDomElement sourceChannelNameElem = doc.createElement( QStringLiteral( "sld:SourceChannelName" ) );
-  sourceChannelNameElem.appendChild( doc.createTextNode( QString::number( grayBand() ) ) );
+  sourceChannelNameElem.appendChild( doc.createTextNode( QString::number( mGrayBand ) ) );
   channelElem.appendChild( sourceChannelNameElem );
 
   // set ContrastEnhancement
@@ -333,7 +357,7 @@ void QgsSingleBandGrayRenderer::toSld( QDomDocument &doc, QDomElement &element, 
       case QgsContrastEnhancement::ClipToMinimumMaximum:
       {
         // with this renderer export have to be check against real min/max values of the raster
-        const QgsRasterBandStats myRasterBandStats = mInput->bandStatistics( grayBand(), QgsRasterBandStats::Min | QgsRasterBandStats::Max );
+        const QgsRasterBandStats myRasterBandStats = mInput->bandStatistics( mGrayBand, Qgis::RasterBandStatistic::Min | Qgis::RasterBandStatistic::Max );
 
         // if minimum range differ from the real minimum => set is in exported SLD vendor option
         if ( !qgsDoubleNear( lContrastEnhancement->minimumValue(), myRasterBandStats.minimumValue ) )

@@ -23,15 +23,12 @@
 /**
  * \ingroup gui
  * \brief Layout view tool for moving and zooming item content.
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsLayoutViewToolMoveItemContent : public QgsLayoutViewTool
 {
-
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsLayoutViewToolMoveItemContent.
      */
@@ -43,7 +40,6 @@ class GUI_EXPORT QgsLayoutViewToolMoveItemContent : public QgsLayoutViewTool
     void wheelEvent( QWheelEvent *event ) override;
 
   private:
-
     //! Item to move content
     QgsLayoutItem *mMoveContentItem = nullptr;
 

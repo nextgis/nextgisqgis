@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/proj/qgsprojectionfactors.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,7 +11,8 @@
 class QgsProjectionFactors
 {
 %Docstring(signature="appended")
-contains various cartographic properties, such as scale factors, angular distortion and meridian convergence.
+contains various cartographic properties, such as scale factors, angular
+distortion and meridian convergence.
 
 .. versionadded:: 3.20
 %End
@@ -23,37 +24,39 @@ contains various cartographic properties, such as scale factors, angular distort
 
     bool isValid() const;
 %Docstring
-Returns ``True`` if the factors are valid, or ``False`` if they could not be calculated.
+Returns ``True`` if the factors are valid, or ``False`` if they could
+not be calculated.
 %End
 
     double meridionalScale() const;
 %Docstring
-Meridional scale at coordinate (Lambda, Phi).
+Meridional scale at coordinate (λ,ϕ).
 %End
 
     double parallelScale() const;
 %Docstring
-Parallel scale at coordinate (Lambda, Phi).
+Parallel scale at coordinate (λ,ϕ).
 %End
 
     double arealScale() const;
 %Docstring
-Areal scale factor at coordinate (Lambda, Phi).
+Areal scale factor at coordinate (λ,ϕ).
 %End
 
     double angularDistortion() const;
 %Docstring
-Angular distortion at coordinate (Lambda, Phi).
+Angular distortion at coordinate (λ,ϕ).
 %End
 
     double meridianParallelAngle() const;
 %Docstring
-Meridian/parallel angle (in degrees), Theta', at coordinate (Lambda, Phi).
+Meridian/parallel angle (in degrees), θ′, at coordinate (λ,ϕ).
 %End
 
     double meridianConvergence() const;
 %Docstring
-Meridian convergence (in degrees) at coordinate (Lambda, Phi). Sometimes also described as grid declination.
+Meridian convergence (in degrees) at coordinate (λ,ϕ). Sometimes also
+described as grid declination.
 %End
 
     double tissotSemimajor() const;
@@ -68,22 +71,22 @@ Minimum scale factor.
 
     double dxDlam() const;
 %Docstring
-Partial derivative dx/dLambda of coordinate (Lambda, Phi).
+Partial derivative ∂x/∂λ of coordinate (λ,ϕ).
 %End
 
     double dxDphi() const;
 %Docstring
-Partial derivative dx/dPhi of coordinate (Lambda, Phi).
+Partial derivative ∂x/∂ϕ of coordinate (λ,ϕ).
 %End
 
     double dyDlam() const;
 %Docstring
-Partial derivative dy/dLambda of coordinate (Lambda, Phi).
+Partial derivative ∂y/∂λ of coordinate (λ,ϕ).
 %End
 
     double dyDphi() const;
 %Docstring
-Partial derivative dy/dPhi of coordinate (Lambda, Phi).
+Partial derivative ∂y/∂ϕ of coordinate (λ,ϕ).
 %End
 
     SIP_PYOBJECT __repr__();
@@ -107,5 +110,5 @@ Partial derivative dy/dPhi of coordinate (Lambda, Phi).
  *                                                                      *
  * src/core/proj/qgsprojectionfactors.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

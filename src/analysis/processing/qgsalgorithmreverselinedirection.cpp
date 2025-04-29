@@ -61,25 +61,25 @@ QString QgsReverseLineDirectionAlgorithm::shortDescription() const
   return QObject::tr( "Reverses the direction of curve or LineString geometries." );
 }
 
-QgsReverseLineDirectionAlgorithm  *QgsReverseLineDirectionAlgorithm ::createInstance() const
+QgsReverseLineDirectionAlgorithm *QgsReverseLineDirectionAlgorithm ::createInstance() const
 {
   return new QgsReverseLineDirectionAlgorithm();
 }
 
-QgsProcessing::SourceType QgsReverseLineDirectionAlgorithm::outputLayerType() const
+Qgis::ProcessingSourceType QgsReverseLineDirectionAlgorithm::outputLayerType() const
 {
-  return QgsProcessing::TypeVectorLine;
+  return Qgis::ProcessingSourceType::VectorLine;
 }
 
 QList<int> QgsReverseLineDirectionAlgorithm::inputLayerTypes() const
 {
-  return QList<int>() << QgsProcessing::TypeVectorLine;
+  return QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::VectorLine );
 }
 
-QgsProcessingFeatureSource::Flag QgsReverseLineDirectionAlgorithm ::sourceFlags() const
+Qgis::ProcessingFeatureSourceFlags QgsReverseLineDirectionAlgorithm ::sourceFlags() const
 {
   // this algorithm doesn't care about invalid geometries
-  return QgsProcessingFeatureSource::FlagSkipGeometryValidityChecks;
+  return Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks;
 }
 
 QgsFeatureList QgsReverseLineDirectionAlgorithm ::processFeature( const QgsFeature &f, QgsProcessingContext &, QgsProcessingFeedback * )
@@ -90,10 +90,10 @@ QgsFeatureList QgsReverseLineDirectionAlgorithm ::processFeature( const QgsFeatu
     const QgsGeometry geom = feature.geometry();
     if ( !geom.isMultipart() )
     {
-      const QgsCurve *curve = qgsgeometry_cast< const QgsCurve * >( geom.constGet() );
+      const QgsCurve *curve = qgsgeometry_cast<const QgsCurve *>( geom.constGet() );
       if ( curve )
       {
-        std::unique_ptr< QgsCurve > reversed( curve->reversed() );
+        std::unique_ptr<QgsCurve> reversed( curve->reversed() );
         if ( !reversed )
         {
           // can this even happen?
@@ -105,16 +105,16 @@ QgsFeatureList QgsReverseLineDirectionAlgorithm ::processFeature( const QgsFeatu
     }
     else
     {
-      std::unique_ptr< QgsAbstractGeometry > dest( geom.constGet()->createEmptyWithSameType() );
-      const QgsGeometryCollection *collection = qgsgeometry_cast< const QgsGeometryCollection * >( geom.constGet() );
-      QgsGeometryCollection *destCollection = qgsgeometry_cast< QgsGeometryCollection * >( dest.get() );
+      std::unique_ptr<QgsAbstractGeometry> dest( geom.constGet()->createEmptyWithSameType() );
+      const QgsGeometryCollection *collection = qgsgeometry_cast<const QgsGeometryCollection *>( geom.constGet() );
+      QgsGeometryCollection *destCollection = qgsgeometry_cast<QgsGeometryCollection *>( dest.get() );
       destCollection->reserve( collection->numGeometries() );
       for ( int i = 0; i < collection->numGeometries(); ++i )
       {
-        const QgsCurve *curve = qgsgeometry_cast< const QgsCurve *>( collection->geometryN( i ) );
+        const QgsCurve *curve = qgsgeometry_cast<const QgsCurve *>( collection->geometryN( i ) );
         if ( curve )
         {
-          std::unique_ptr< QgsCurve > reversed( curve->reversed() );
+          std::unique_ptr<QgsCurve> reversed( curve->reversed() );
           if ( !reversed )
           {
             // can this even happen?

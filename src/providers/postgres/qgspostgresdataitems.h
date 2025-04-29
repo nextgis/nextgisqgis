@@ -65,7 +65,6 @@ class QgsPGConnectionItem : public QgsDataCollectionItem
 
     // refresh specified schema or all schemas if schema name is empty
     void refreshSchema( const QString &schema );
-
 };
 
 class QgsPGSchemaItem : public QgsDatabaseSchemaItem
@@ -105,9 +104,7 @@ class QgsPGLayerItem : public QgsLayerItem
 
   private:
     QgsPostgresLayerProperty mLayerProperty;
-
 };
-
 
 
 //! Provider for Postgres data item
@@ -118,7 +115,7 @@ class QgsPostgresDataItemProvider : public QgsDataItemProvider
 
     QString dataProviderKey() const override;
 
-    int capabilities() const override;
+    Qgis::DataItemProviderCapabilities capabilities() const override;
 
     QgsDataItem *createDataItem( const QString &pathIn, QgsDataItem *parentItem ) override;
 };

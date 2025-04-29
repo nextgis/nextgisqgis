@@ -5,20 +5,21 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Nyall Dawson'
-__date__ = '11/11/2018'
-__copyright__ = 'Copyright 2018, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Nyall Dawson"
+__date__ = "11/11/2018"
+__copyright__ = "Copyright 2018, The QGIS Project"
+
 from qgis.PyQt.QtCore import QByteArray
 from qgis.core import NULL, QgsFeature, QgsGeometry, QgsPointXY, QgsVectorLayer
 from qgis.gui import QgsGui
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 start_app()
 
 
-class TestQgsBinaryWidget(unittest.TestCase):
+class TestQgsBinaryWidget(QgisTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -29,11 +30,14 @@ class TestQgsBinaryWidget(unittest.TestCase):
         """
         create a layer with one feature
         """
-        self.layer = QgsVectorLayer("Point?crs=EPSG:21781&field=fldint:integer&field=fldbin:binary",
-                                    "addfeat", "memory")
+        self.layer = QgsVectorLayer(
+            "Point?crs=EPSG:21781&field=fldint:integer&field=fldbin:binary",
+            "addfeat",
+            "memory",
+        )
         self.assertTrue(self.layer.isValid())
         f = QgsFeature()
-        bin_1 = b'xxx'
+        bin_1 = b"xxx"
         bin_val1 = QByteArray(bin_1)
         f.setAttributes([123, bin_val1])
         f.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(600000, 200000)))
@@ -43,9 +47,9 @@ class TestQgsBinaryWidget(unittest.TestCase):
         create a binary widget
         """
         reg = QgsGui.editorWidgetRegistry()
-        configWdg = reg.createConfigWidget('Binary', self.layer, 1, None)
+        configWdg = reg.createConfigWidget("Binary", self.layer, 1, None)
         config = configWdg.config()
-        binary_widget = reg.create('Binary', self.layer, 1, config, None, None)
+        binary_widget = reg.create("Binary", self.layer, 1, config, None, None)
         return binary_widget
 
     def testValue(self):
@@ -54,7 +58,7 @@ class TestQgsBinaryWidget(unittest.TestCase):
 
         self.assertFalse(widget.value())
 
-        bin_2 = b'yyy'
+        bin_2 = b"yyy"
         bin_val2 = QByteArray(bin_2)
 
         widget.setValues(bin_val2, [])
@@ -64,5 +68,5 @@ class TestQgsBinaryWidget(unittest.TestCase):
         self.assertEqual(widget.value(), QByteArray())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

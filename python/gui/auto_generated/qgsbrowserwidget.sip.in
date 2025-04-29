@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgsbrowserwidget.h                                           *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,7 +12,8 @@
 class QgsBrowserWidget : QgsPanelWidget
 {
 %Docstring(signature="appended")
-A widget showing a browser tree view along with toolbar and toggleable properties pane.
+A widget showing a browser tree view along with toolbar and toggleable
+properties pane.
 
 .. versionadded:: 3.22
 %End
@@ -21,7 +22,6 @@ A widget showing a browser tree view along with toolbar and toggleable propertie
 #include "qgsbrowserwidget.h"
 %End
   public:
-
     explicit QgsBrowserWidget( QgsBrowserGuiModel *browserModel, QWidget *parent /TransferThis/ = 0 );
 %Docstring
 Constructor for QgsBrowserWidget
@@ -33,9 +33,9 @@ Constructor for QgsBrowserWidget
 
     void setMessageBar( QgsMessageBar *bar );
 %Docstring
-Sets a message ``bar`` to use alongside the widget. Setting this allows items
-to utilize the message bar to provide non-blocking feedback to users, e.g.
-success or failure of actions.
+Sets a message ``bar`` to use alongside the widget. Setting this allows
+items to utilize the message bar to provide non-blocking feedback to
+users, e.g. success or failure of actions.
 
 .. seealso:: :py:func:`messageBar`
 %End
@@ -51,10 +51,11 @@ Returns the message bar associated with the widget.
 %Docstring
 Sets the customization for data items based on item's data provider key
 
-By default browser model shows all items from all available data items provider and few special
-items (e.g. Favorites). To customize the behavior, set the filter to not load certain data items.
-The items that are not based on data item providers (e.g. Favorites, Home) have
-prefix "special:"
+By default browser model shows all items from all available data items
+provider and few special items (e.g. Favorites). To customize the
+behavior, set the filter to not load certain data items. The items that
+are not based on data item providers (e.g. Favorites, Home) have prefix
+"special:"
 
 Used in the proxy browser model to hide items
 %End
@@ -80,5 +81,5 @@ Refreshes the browser model and view.
  *                                                                      *
  * src/gui/qgsbrowserwidget.h                                           *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

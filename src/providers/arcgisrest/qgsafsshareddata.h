@@ -16,7 +16,6 @@
 #ifndef QGSAFSSHAREDDATA_H
 #define QGSAFSSHAREDDATA_H
 
-#include <QObject>
 #include <QMutex>
 #include "qgsfields.h"
 #include "qgsfeature.h"
@@ -29,11 +28,13 @@ class QgsFeedback;
 /**
  * \brief This class holds data, shared between QgsAfsProvider and QgsAfsFeatureIterator
  */
-class QgsAfsSharedData : public QObject
+class QgsAfsSharedData
 {
-    Q_OBJECT
   public:
     QgsAfsSharedData( const QgsDataSourceUri &uri );
+
+    //! Creates a deep copy of this shared data
+    std::shared_ptr<QgsAfsSharedData> clone() const;
 
     long long objectIdCount() const;
     long long featureCount() const;
@@ -67,11 +68,10 @@ class QgsAfsSharedData : public QObject
     bool hasCachedAllFeatures() const;
 
   private:
-
     QVariantMap postData( const QUrl &url, const QByteArray &payload, QgsFeedback *feedback, bool &ok, QString &errorText ) const;
 
     friend class QgsAfsProvider;
-    mutable QReadWriteLock mReadWriteLock{ QReadWriteLock::Recursive };
+    mutable QReadWriteLock mReadWriteLock { QReadWriteLock::Recursive };
     QgsDataSourceUri mDataSource;
     bool mLimitBBox = false;
     QgsRectangle mExtent;

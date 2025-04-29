@@ -24,11 +24,13 @@
 #include <QWaitCondition>
 #include <QMutex>
 
+class QgsPostgresConn;
+
+
 /**
  * \class QgsPostgresListener
  * \brief Launch a thread to listen on postgres notifications on the "qgis" channel, the notify signal is emitted on postgres notify.
  *
- * \since QGIS 3.0
  */
 
 class QgsPostgresListener : public QThread
@@ -36,12 +38,11 @@ class QgsPostgresListener : public QThread
     Q_OBJECT
 
   public:
-
     /**
      * create an instance if possible and starts the associated thread
      * /returns NULLPTR on error
      */
-    static std::unique_ptr< QgsPostgresListener > create( const QString &connString );
+    static std::unique_ptr<QgsPostgresListener> create( const QString &connString );
 
     ~QgsPostgresListener() override;
 
@@ -52,14 +53,12 @@ class QgsPostgresListener : public QThread
 
   private:
     volatile bool mStop = false;
-    const QString mConnString;
-    QWaitCondition mIsReadyCondition;
-    QMutex mMutex;
+
+    QgsPostgresConn *mConn = nullptr;
 
     QgsPostgresListener( const QString &connString );
 
     Q_DISABLE_COPY( QgsPostgresListener )
-
 };
 
 #endif // QGSPOSTGRESLISTENER_H

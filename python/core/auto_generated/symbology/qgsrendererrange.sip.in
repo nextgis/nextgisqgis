@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/symbology/qgsrendererrange.h                                *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -21,24 +21,42 @@ class QgsRendererRange
   public:
 
     QgsRendererRange();
-%Docstring
-Constructor for QgsRendererRange.
-%End
     ~QgsRendererRange();
 
-    QgsRendererRange( const QgsClassificationRange &range, QgsSymbol *symbol /Transfer/, bool render = true );
+    QgsRendererRange( const QgsClassificationRange &range, QgsSymbol *symbol /Transfer/, bool render = true, const QString &uuid = QString() );
 %Docstring
 Creates a renderer symbol range
 
 :param range: The classification range
 :param symbol: The symbol for this renderer range
 :param render: If ``True``, it will be renderered
+:param uuid: Optional parameter to manually set the UUID key identifier
+             for the this range (since QGIS 3.34).
 %End
-    QgsRendererRange( double lowerValue, double upperValue, QgsSymbol *symbol /Transfer/, const QString &label, bool render = true );
+
+    QgsRendererRange( double lowerValue, double upperValue, QgsSymbol *symbol /Transfer/, const QString &label, bool render = true, const QString &uuid = QString() );
+%Docstring
+Creates a renderer symbol range
+
+:param lowerValue: The lower bound of the range
+:param upperValue: The upper bound of the range
+:param symbol: The symbol for this renderer range
+:param label: The label used for the range
+:param render: If ``True``, it will be renderered
+:param uuid: Optional parameter to manually set the UUID key identifier
+             for the this range (since QGIS 3.34).
+%End
     QgsRendererRange( const QgsRendererRange &range );
 
 
     bool operator<( const QgsRendererRange &other ) const;
+
+    QString uuid() const;
+%Docstring
+Returns the unique identifier for this range.
+
+.. versionadded:: 3.34
+%End
 
     double lowerValue() const;
 %Docstring
@@ -111,8 +129,6 @@ Sets the upper bound of the range.
 Returns ``True`` if the range should be rendered.
 
 .. seealso:: :py:func:`setRenderState`
-
-.. versionadded:: 2.6
 %End
 
     void setRenderState( bool render );
@@ -120,8 +136,6 @@ Returns ``True`` if the range should be rendered.
 Sets whether the range should be rendered.
 
 .. seealso:: :py:func:`renderState`
-
-.. versionadded:: 2.6
 %End
 
     QString dump() const;
@@ -136,8 +150,9 @@ Creates a DOM element representing the range in SLD format.
 :param doc: DOM document
 :param element: destination DOM element
 :param props: graduated renderer properties
-:param firstRange: set to ``True`` if the range is the first range, where the lower value uses a <= test
-                   rather than a < test.
+:param firstRange: set to ``True`` if the range is the first range,
+                   where the lower value uses a <= test rather than a <
+                   test.
 %End
 
     SIP_PYOBJECT __repr__();
@@ -167,7 +182,6 @@ Creates a DOM element representing the range in SLD format.
 
   protected:
 
-    void swap( QgsRendererRange &other );
 };
 
 typedef QList<QgsRendererRange> QgsRangeList;
@@ -176,11 +190,9 @@ typedef QList<QgsRendererRange> QgsRangeList;
 class QgsRendererRangeLabelFormat /Deprecated/
 {
 %Docstring(signature="appended")
+.. deprecated:: 3.10
 
-.. versionadded:: 2.6
-
-.. deprecated:: QGIS 3.10
-  use :py:class:`QgsClassificationMethod` instead
+   Use :py:class:`QgsClassificationMethod` instead.
 %End
 
 %TypeHeaderCode
@@ -205,9 +217,6 @@ class QgsRendererRangeLabelFormat /Deprecated/
     QString labelForRange( double lower, double upper ) const /PyName=labelForLowerUpper/;
 %Docstring
 
-.. note::
-
-   labelForLowerUpper in Python bindings
 %End
     QString labelForRange( const QgsRendererRange &range ) const;
     QString formatNumber( double value ) const;
@@ -227,5 +236,5 @@ class QgsRendererRangeLabelFormat /Deprecated/
  *                                                                      *
  * src/core/symbology/qgsrendererrange.h                                *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

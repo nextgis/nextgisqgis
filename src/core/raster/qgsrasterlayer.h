@@ -109,7 +109,6 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer, public QgsAbstractProfile
 
     /**
      * Setting options for loading raster layers.
-     * \since QGIS 3.0
      */
     struct LayerOptions
     {
@@ -180,7 +179,6 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer, public QgsAbstractProfile
      * Returns a new instance equivalent to this one. A new provider is
      *  created for the same data source and renderer is cloned too.
      * \returns a new layer instance
-     * \since QGIS 3.0
      */
     QgsRasterLayer *clone() const override SIP_FACTORY;
 
@@ -202,7 +200,7 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer, public QgsAbstractProfile
 
     /**
      * Set the data provider.
-     * \deprecated Use the version with ProviderOptions instead.
+     * \deprecated QGIS 3.40. Use the version with ProviderOptions instead.
      */
     Q_DECL_DEPRECATED void setDataProvider( const QString &provider ) SIP_DEPRECATED;
 
@@ -213,7 +211,7 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer, public QgsAbstractProfile
      * \param flags provider flags since QGIS 3.16
      * \since QGIS 3.2
      */
-    void setDataProvider( const QString &provider, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() );
+    void setDataProvider( const QString &provider, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() );
 
     /**
      * Returns the raster layer type (which is a read only property).
@@ -345,7 +343,7 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer, public QgsAbstractProfile
     /**
      * Returns a list with classification items (Text and color).
      *
-     * \deprecated use QgsRasterRenderer::createLegendNodes() instead.
+     * \deprecated QGIS 3.40. Use QgsRasterRenderer::createLegendNodes() instead.
      */
     Q_DECL_DEPRECATED QgsLegendColorList legendSymbologyItems() const SIP_DEPRECATED;
 
@@ -360,14 +358,14 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer, public QgsAbstractProfile
      */
     QPixmap paletteAsPixmap( int bandNumber = 1 );
 
-    //! \brief [ data provider interface ] Which provider is being used for this Raster Layer?
-    QString providerType() const;
-
     /**
      * Returns the number of raster units per each raster pixel in X axis.
      *
      * In a world file, this is normally the first row (without the sign). (E.g.
      * the value reported by the GDAL geotransform[1]).
+     *
+     * \note If the dataProvider() does not have native size/resolution then 1 will be returned. QgsRasterDataProvider::capabilities() can be
+     * used to test for the Qgis.RasterInterfaceCapability.Size capability in order to determine whether the data provider has a native size/resolution.
      *
      * \see rasterUnitsPerPixelY()
      */
@@ -377,6 +375,9 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer, public QgsAbstractProfile
      * Returns the number of raster units per each raster pixel in Y axis.
      *
      * In a world file, this is normally the first row (without the sign).
+     *
+     * \note If the dataProvider() does not have native size/resolution then 1 will be returned. QgsRasterDataProvider::capabilities() can be
+     * used to test for the Qgis.RasterInterfaceCapability.Size capability in order to determine whether the data provider has a native size/resolution.
      *
      * \see rasterUnitsPerPixelX()
      */
@@ -443,7 +444,6 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer, public QgsAbstractProfile
 
     /**
      * \brief Draws a preview of the rasterlayer into a QImage
-     * \since QGIS 2.4
     */
     QImage previewAsImage( QSize size, const QColor &bgColor = Qt::white,
                            QImage::Format format = QImage::Format_ARGB32_Premultiplied );
@@ -548,7 +548,7 @@ class CORE_EXPORT QgsRasterLayer : public QgsMapLayer, public QgsAbstractProfile
      * \see dataSourceChanged()
      * \since QGIS 3.20
      */
-    void setDataSourcePrivate( const QString &dataSource, const QString &baseName, const QString &provider, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags ) override;
+    void setDataSourcePrivate( const QString &dataSource, const QString &baseName, const QString &provider, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags ) override;
 
     /**
      * Writes the paths to the external raster attribute table files associated with the raster bands.

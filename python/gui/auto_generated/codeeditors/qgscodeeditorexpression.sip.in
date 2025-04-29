@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/codeeditors/qgscodeeditorexpression.h                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,9 +13,8 @@
 class QgsCodeEditorExpression : QgsCodeEditor
 {
 %Docstring(signature="appended")
-
-A QGIS expression editor based on QScintilla2. Adds syntax highlighting and
-code autocompletion.
+A QGIS expression editor based on QScintilla2. Adds syntax highlighting
+and code autocompletion.
 
 .. versionadded:: 3.4
 %End
@@ -35,8 +34,7 @@ Constructor for QgsCodeEditorExpression
     void setExpressionContext( const QgsExpressionContext &context );
 %Docstring
 Variables and functions from this expression context will be added to
-the API.
-Will also reload all globally registered functions.
+the API. Will also reload all globally registered functions.
 %End
 
     void setFields( const QgsFields &fields );
@@ -45,7 +43,6 @@ Field names will be added to the API.
 %End
 
   protected:
-
     virtual void initializeLexer();
 
 
@@ -57,5 +54,5 @@ Field names will be added to the API.
  *                                                                      *
  * src/gui/codeeditors/qgscodeeditorexpression.h                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -30,11 +30,11 @@ class QgsVectorLayer;
 #ifdef SIP_RUN
 // This is required for the ConvertToSubClassCode to work properly
 // so RTTI for casting is available in the whole module.
-% ModuleCode
+//%ModuleCode
 #include "qgsrelationwidgetwrapper.h"
 #include "qgsqmlwidgetwrapper.h"
 #include "qgshtmlwidgetwrapper.h"
-% End
+//%End
 #endif
 
 /**
@@ -51,7 +51,6 @@ class QgsVectorLayer;
  */
 class GUI_EXPORT QgsWidgetWrapper : public QObject
 {
-
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
     if ( qobject_cast<QgsEditorWidgetWrapper *>( sipCpp ) )
@@ -69,20 +68,21 @@ class GUI_EXPORT QgsWidgetWrapper : public QObject
 
     Q_OBJECT
   public:
+    // *INDENT-OFF*
 
     /**
      * Data defined properties for different editor widgets.
      */
-    enum Property
+    enum class Property SIP_MONKEYPATCH_SCOPEENUM_UNNEST( QgsWidgetWrapper, Property ) : int
     {
-      RootPath = 0, //!< Root path for external resource
+      RootPath = 0,          //!< Root path for external resource
       DocumentViewerContent, //!< Document type for external resource
-      StorageUrl //!< Storage URL for external resource
+      StorageUrl             //!< Storage URL for external resource
     };
+    // *INDENT-ON*
 
     /**
      * Returns the editor widget property definitions.
-     * \since QGIS 3.0
      */
     static const QgsPropertiesDefinition &propertyDefinitions();
 
@@ -113,8 +113,7 @@ class GUI_EXPORT QgsWidgetWrapper : public QObject
      *
      * \note not available in Python bindings
      */
-    template <class T> SIP_SKIP
-    T *widget() { return dynamic_cast<T>( mWidget ); }
+    template<class T> SIP_SKIP T *widget() { return dynamic_cast<T>( mWidget ); }
 
     /**
      * Will set the config of this wrapper to the specified config.
@@ -171,7 +170,6 @@ class GUI_EXPORT QgsWidgetWrapper : public QObject
      *
      * \returns Validity status of this widget.
      *
-     * \since QGIS 2.12
      */
     virtual bool valid() const = 0;
 
@@ -181,15 +179,16 @@ class GUI_EXPORT QgsWidgetWrapper : public QObject
      * \see setDataDefinedProperties()
      *
      * \note not available in Python bindings
-     * \since QGIS 3.0
      */
-    QgsPropertyCollection &dataDefinedProperties() { return mPropertyCollection; } SIP_SKIP
+    QgsPropertyCollection &dataDefinedProperties() SIP_SKIP
+    {
+      return mPropertyCollection;
+    }
 
     /**
      * Returns a reference to the editor widget's property collection, used for data defined overrides.
      * \see setDataDefinedProperties()
      * \see Property
-     * \since QGIS 3.0
      */
     const QgsPropertyCollection &dataDefinedProperties() const { return mPropertyCollection; }
 
@@ -198,7 +197,6 @@ class GUI_EXPORT QgsWidgetWrapper : public QObject
      * \param collection property collection. Existing properties will be replaced.
      * \see dataDefinedProperties()
      * \see Property
-     * \since QGIS 3.0
      */
     void setDataDefinedProperties( const QgsPropertyCollection &collection ) { mPropertyCollection = collection; }
 
@@ -221,7 +219,6 @@ class GUI_EXPORT QgsWidgetWrapper : public QObject
     void contextChanged();
 
   protected:
-
     /**
      * This method should create a new widget with the provided parent. This will only be called
      * if the form did not already provide a widget, so it is not guaranteed to be called!
@@ -264,7 +261,6 @@ class GUI_EXPORT QgsWidgetWrapper : public QObject
     virtual void setEnabled( bool enabled );
 
   private:
-
     /**
      * Called when the containing attribute form is about to save.
      * Use this to push any widget states to the edit buffer.

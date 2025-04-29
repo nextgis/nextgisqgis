@@ -27,20 +27,18 @@
  * \brief A tool button widget which is displayed next to editor widgets in attribute forms, and
  * allows for controlling how the widget behaves and interacts with the form while in multi
  * edit mode.
- * \since QGIS 2.16
  */
 class GUI_EXPORT QgsMultiEditToolButton : public QToolButton
 {
     Q_OBJECT
 
   public:
-
     //! Button states
     enum State
     {
-      Default, //!< Default state, all features have same value for widget
+      Default,     //!< Default state, all features have same value for widget
       MixedValues, //!< Mixed state, some features have different values for the widget
-      Changed, //!< Value for widget has changed but changes have not yet been committed
+      Changed,     //!< Value for widget has changed but changes have not yet been committed
     };
 
     /**
@@ -69,7 +67,11 @@ class GUI_EXPORT QgsMultiEditToolButton : public QToolButton
      * \see setIsChanged()
      * \see resetChanges()
      */
-    void setIsMixed( bool mixed ) { mIsMixedValues = mixed; updateState(); }
+    void setIsMixed( bool mixed )
+    {
+      mIsMixedValues = mixed;
+      updateState();
+    }
 
     /**
      * Sets whether the associated field has changed.
@@ -77,7 +79,11 @@ class GUI_EXPORT QgsMultiEditToolButton : public QToolButton
      * \see setIsMixed()
      * \see resetChanges()
      */
-    void setIsChanged( bool changed ) { mIsChanged = changed; updateState(); }
+    void setIsChanged( bool changed )
+    {
+      mIsChanged = changed;
+      updateState();
+    }
 
     /**
      * Resets the changed state for the field.
@@ -85,13 +91,22 @@ class GUI_EXPORT QgsMultiEditToolButton : public QToolButton
      * \see setIsChanged()
      * \see changesCommitted()
      */
-    void resetChanges() { mIsChanged = false; updateState(); }
+    void resetChanges()
+    {
+      mIsChanged = false;
+      updateState();
+    }
 
     /**
      * Called when field values have been changed and field now contains all the same values.
      * \see resetChanges()
      */
-    void changesCommitted() { mIsMixedValues = false; mIsChanged = false; updateState(); }
+    void changesCommitted()
+    {
+      mIsMixedValues = false;
+      mIsChanged = false;
+      updateState();
+    }
 
   signals:
 
@@ -108,7 +123,6 @@ class GUI_EXPORT QgsMultiEditToolButton : public QToolButton
     void resetFieldTriggered();
 
   private:
-
     bool mIsMixedValues = false;
     bool mIsChanged = false;
     State mState = Default;
@@ -117,7 +131,6 @@ class GUI_EXPORT QgsMultiEditToolButton : public QToolButton
     QMenu *mMenu = nullptr;
 
     void updateState();
-
 };
 
 #endif // QGSMULTIEDITTOOLBUTTON_H

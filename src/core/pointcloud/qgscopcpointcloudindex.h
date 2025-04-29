@@ -57,7 +57,7 @@ class CORE_EXPORT QgsCopcPointCloudIndex: public QgsPointCloudIndex
     bool hasNode( const IndexedPointCloudNode &n ) const override;
     QList<IndexedPointCloudNode> nodeChildren( const IndexedPointCloudNode &n ) const override;
 
-    QgsPointCloudBlock *nodeData( const IndexedPointCloudNode &n, const QgsPointCloudRequest &request ) override;
+    std::unique_ptr< QgsPointCloudBlock> nodeData( const IndexedPointCloudNode &n, const QgsPointCloudRequest &request ) override;
     QgsPointCloudBlockRequest *asyncNodeData( const IndexedPointCloudNode &n, const QgsPointCloudRequest &request ) override;
 
     QgsCoordinateReferenceSystem crs() const override;
@@ -93,18 +93,18 @@ class CORE_EXPORT QgsCopcPointCloudIndex: public QgsPointCloudIndex
     bool loadHierarchy();
 
     //! Fetches all nodes leading to node \a node into memory
-    virtual bool fetchNodeHierarchy( const IndexedPointCloudNode &n ) const;
+    bool fetchNodeHierarchy( const IndexedPointCloudNode &n ) const;
 
     /**
      * Fetches the COPC hierarchy page at offset \a offset and of size \a byteSize into memory
-     * \note: This function is NOT thread safe and the mutex mHierarchyMutex needs to be locked before entering
      */
     virtual void fetchHierarchyPage( uint64_t offset, uint64_t byteSize ) const;
+
+    void populateHierarchy( const char *hierarchyPageData, uint64_t byteSize ) const;
 
     QByteArray fetchCopcStatisticsEvlrData();
 
     bool mIsValid = false;
-    QString mFileName;
     mutable std::ifstream mCopcFile;
     mutable lazperf::copc_info_vlr mCopcInfoVlr;
     mutable QHash<IndexedPointCloudNode, QPair<uint64_t, int32_t>> mHierarchyNodePos; //!< Additional data hierarchy for COPC

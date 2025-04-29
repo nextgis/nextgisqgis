@@ -37,19 +37,18 @@ class QgsChunkNode;
  *
  * \note Not available in Python bindings
  *
- * \since QGIS 3.0
  */
 struct QgsChunkListEntry
 {
-  //! Constructs entry for a particular node
-  QgsChunkListEntry( QgsChunkNode *node )
-    : chunk( node )
-  {
-  }
+    //! Constructs entry for a particular node
+    QgsChunkListEntry( QgsChunkNode *node )
+      : chunk( node )
+    {
+    }
 
-  QgsChunkListEntry *prev = nullptr;
-  QgsChunkListEntry *next = nullptr;
-  QgsChunkNode *chunk;   //!< TODO: shared pointer
+    QgsChunkListEntry *prev = nullptr;
+    QgsChunkListEntry *next = nullptr;
+    QgsChunkNode *chunk; //!< TODO: shared pointer
 };
 
 
@@ -65,7 +64,6 @@ struct QgsChunkListEntry
  * time (rather than having to search the whole list). This feature is very useful
  * in loader and replacement queues where entries are often taken out of the list
  * and inserted at the front again.
- * \since QGIS 3.0
  */
 class QgsChunkList
 {

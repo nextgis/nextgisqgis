@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgstessellator.h                                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -15,12 +15,12 @@ class QgsTessellator
 %Docstring(signature="appended")
 Class that takes care of tessellation of polygons into triangles.
 
-It is expected that client code will create the tessellator object, then repeatedly call
-:py:func:`~addPolygon` method that will generate triangles, and finally call :py:func:`~data` to get final vertex data.
+It is expected that client code will create the tessellator object, then
+repeatedly call :py:func:`~addPolygon` method that will generate
+triangles, and finally call :py:func:`~data` to get final vertex data.
 
-Optionally provides extrusion by adding triangles that serve as walls when extrusion height is non-zero.
-
-.. versionadded:: 3.4
+Optionally provides extrusion by adding triangles that serve as walls
+when extrusion height is non-zero.
 %End
 
 %TypeHeaderCode
@@ -30,24 +30,28 @@ Optionally provides extrusion by adding triangles that serve as walls when extru
     QgsTessellator( double originX, double originY, bool addNormals, bool invertNormals = false, bool addBackFaces = false, bool noZ = false,
                     bool addTextureCoords = false, int facade = 3, float textureRotation = 0.0f );
 %Docstring
-Creates tessellator with a specified origin point of the world (in map coordinates)
+Creates tessellator with a specified origin point of the world (in map
+coordinates)
 %End
 
     QgsTessellator( const QgsRectangle &bounds, bool addNormals, bool invertNormals = false, bool addBackFaces = false, bool noZ = false,
                     bool addTextureCoords = false, int facade = 3, float textureRotation = 0.0f );
 %Docstring
-Creates tessellator with a specified ``bounds`` of input geometry coordinates.
-This constructor allows the tessellator to map input coordinates to a desirable range for numerical
-stability during calculations.
+Creates tessellator with a specified ``bounds`` of input geometry
+coordinates. This constructor allows the tessellator to map input
+coordinates to a desirable range for numerical stability during
+calculations.
 
-If ``noZ`` is ``True``, then a 2-dimensional tessellation only will be performed and all z coordinates will be ignored.
+If ``noZ`` is ``True``, then a 2-dimensional tessellation only will be
+performed and all z coordinates will be ignored.
 
 .. versionadded:: 3.10
 %End
 
     void addPolygon( const QgsPolygon &polygon, float extrusionHeight );
 %Docstring
-Tessellates a triangle and adds its vertex entries to the output data array
+Tessellates a triangle and adds its vertex entries to the output data
+array
 %End
 
     QVector<float> data() const;
@@ -82,6 +86,13 @@ Returns maximal Z value of the data (in world coordinates)
 .. versionadded:: 3.12
 %End
 
+    QString error() const;
+%Docstring
+Returns a descriptive error string if the tessellation failed.
+
+.. versionadded:: 3.34
+%End
+
 };
 
 /************************************************************************
@@ -89,5 +100,5 @@ Returns maximal Z value of the data (in world coordinates)
  *                                                                      *
  * src/core/qgstessellator.h                                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

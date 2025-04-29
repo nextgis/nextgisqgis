@@ -42,7 +42,7 @@ class CORE_EXPORT QgsRasterDrawer
      * The QgsRasterDrawer constructor.
      * \param iterator the raster iterator to fetch data from
      * \param dpiTarget the target dpi (dots per inch) to be taken into consideration when rendering
-     * \deprecated since QGIS 3.28. Use the constructor without the \a dpiTarget argument instead, as DPI is now handled by the draw() method which accepts a QgsRenderContext.
+     * \deprecated QGIS 3.28. Use the constructor without the \a dpiTarget argument instead, as DPI is now handled by the draw() method which accepts a QgsRenderContext.
      */
     Q_DECL_DEPRECATED QgsRasterDrawer( QgsRasterIterator *iterator, double dpiTarget ) SIP_DEPRECATED;
 
@@ -88,6 +88,7 @@ class CORE_EXPORT QgsRasterDrawer
     QgsRasterIterator *mIterator = nullptr;
     double mDpiTarget = -1.0;
     double mDpiScaleFactor = 1.0;
+    double mDevicePixelRatio = 1.0;
 };
 
 #endif // QGSRASTERDRAWER_H

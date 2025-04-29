@@ -15,6 +15,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsnewhttpconnection.h"
+#include "moc_qgsnewhttpconnection.cpp"
 #include "qgsauthsettingswidget.h"
 #include "qgssettings.h"
 #include "qgshelp.h"
@@ -30,6 +31,8 @@
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
 #include <QUrlQuery>
+
+const QgsSettingsEntryBool *QgsNewHttpConnection::settingsIgnoreReportedLayerExtentsDefault = new QgsSettingsEntryBool( QStringLiteral( "ignore-reported-layer-extents-default" ), sTreeHttpConnectionDialog, false );
 
 QgsNewHttpConnection::QgsNewHttpConnection( QWidget *parent, ConnectionTypes types, const QString &serviceName, const QString &connectionName, QgsNewHttpConnection::Flags flags, Qt::WindowFlags fl )
   : QDialog( parent, fl )
@@ -84,12 +87,15 @@ QgsNewHttpConnection::QgsNewHttpConnection( QWidget *parent, ConnectionTypes typ
   cmbVersion->addItem( tr( "1.1" ) );
   cmbVersion->addItem( tr( "2.0" ) );
   cmbVersion->addItem( tr( "OGC API - Features" ) );
-  connect( cmbVersion,
-           static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ),
-           this, &QgsNewHttpConnection::wfsVersionCurrentIndexChanged );
+  connect( cmbVersion, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, &QgsNewHttpConnection::wfsVersionCurrentIndexChanged );
 
-  connect( cbxWfsFeaturePaging, &QCheckBox::stateChanged,
-           this, &QgsNewHttpConnection::wfsFeaturePagingStateChanged );
+  cmbFeaturePaging->clear();
+  cmbFeaturePaging->addItem( tr( "Default (trust server capabilities)" ) );
+  cmbFeaturePaging->addItem( tr( "Enabled" ) );
+  cmbFeaturePaging->addItem( tr( "Disabled" ) );
+  connect( cmbFeaturePaging, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, &QgsNewHttpConnection::wfsFeaturePagingCurrentIndexChanged );
+
+  cbxWmsIgnoreReportedLayerExtents->setChecked( settingsIgnoreReportedLayerExtentsDefault->value() );
 
   if ( !connectionName.isEmpty() )
   {
@@ -136,6 +142,11 @@ QgsNewHttpConnection::QgsNewHttpConnection( QWidget *parent, ConnectionTypes typ
       cbxIgnoreGetFeatureInfoURI->setVisible( false );
       mGroupBox->layout()->removeWidget( cbxIgnoreGetFeatureInfoURI );
 
+      sbFeatureCount->setVisible( false );
+      mGroupBox->layout()->removeWidget( sbFeatureCount );
+      lblFeatureCount->setVisible( false );
+      mGroupBox->layout()->removeWidget( lblFeatureCount );
+
       cmbDpiMode->setVisible( false );
       mGroupBox->layout()->removeWidget( cmbDpiMode );
       lblDpiMode->setVisible( false );
@@ -176,18 +187,20 @@ QgsNewHttpConnection::QgsNewHttpConnection( QWidget *parent, ConnectionTypes typ
 void QgsNewHttpConnection::wfsVersionCurrentIndexChanged( int index )
 {
   // For now 2019-06-06, leave paging checkable for some WFS version 1.1 servers with support
-  cbxWfsFeaturePaging->setEnabled( index == WFS_VERSION_MAX || index >= WFS_VERSION_2_0 );
-  lblPageSize->setEnabled( cbxWfsFeaturePaging->isChecked() && ( index == WFS_VERSION_MAX || index >= WFS_VERSION_1_1 ) );
-  txtPageSize->setEnabled( cbxWfsFeaturePaging->isChecked() && ( index == WFS_VERSION_MAX || index >= WFS_VERSION_1_1 ) );
+  const bool pagingOptionsEnabled = ( index == WFS_VERSION_MAX || index >= WFS_VERSION_1_1 );
+  cmbFeaturePaging->setEnabled( pagingOptionsEnabled );
+  lblPageSize->setEnabled( pagingOptionsEnabled );
+  txtPageSize->setEnabled( pagingOptionsEnabled );
   cbxWfsIgnoreAxisOrientation->setEnabled( index != WFS_VERSION_1_0 && index != WFS_VERSION_API_FEATURES_1_0 );
   cbxWfsInvertAxisOrientation->setEnabled( index != WFS_VERSION_API_FEATURES_1_0 );
   wfsUseGml2EncodingForTransactions()->setEnabled( index == WFS_VERSION_1_1 );
 }
 
-void QgsNewHttpConnection::wfsFeaturePagingStateChanged( int state )
+void QgsNewHttpConnection::wfsFeaturePagingCurrentIndexChanged( int index )
 {
-  lblPageSize->setEnabled( state == Qt::Checked );
-  txtPageSize->setEnabled( state == Qt::Checked );
+  const bool pagingNotDisabled = index != static_cast<int>( QgsNewHttpConnection::WfsFeaturePagingIndex::DISABLED );
+  lblPageSize->setEnabled( pagingNotDisabled );
+  txtPageSize->setEnabled( pagingNotDisabled );
 }
 
 QString QgsNewHttpConnection::name() const
@@ -223,24 +236,15 @@ bool QgsNewHttpConnection::validate()
 {
   const QString newConnectionName = txtName->text();
 
-  bool urlExists = QgsOwsConnection::settingsUrl->exists( {mServiceName.toLower(), newConnectionName} );
+  bool urlExists = QgsOwsConnection::settingsUrl->exists( { mServiceName.toLower(), newConnectionName } );
 
   // warn if entry was renamed to an existing connection
-  if ( ( mOriginalConnName.isNull() || mOriginalConnName.compare( newConnectionName, Qt::CaseInsensitive ) != 0 ) &&
-       urlExists &&
-       QMessageBox::question( this,
-                              tr( "Save Connection" ),
-                              tr( "Should the existing connection %1 be overwritten?" ).arg( txtName->text() ),
-                              QMessageBox::Ok | QMessageBox::Cancel ) == QMessageBox::Cancel )
+  if ( ( mOriginalConnName.isNull() || mOriginalConnName.compare( newConnectionName, Qt::CaseInsensitive ) != 0 ) && urlExists && QMessageBox::question( this, tr( "Save Connection" ), tr( "Should the existing connection %1 be overwritten?" ).arg( txtName->text() ), QMessageBox::Ok | QMessageBox::Cancel ) == QMessageBox::Cancel )
   {
     return false;
   }
 
-  if ( ! mAuthSettings->password().isEmpty() &&
-       QMessageBox::question( this,
-                              tr( "Saving Passwords" ),
-                              tr( "WARNING: You have entered a password. It will be stored in unsecured plain text in your project files and your home directory (Unix-like OS) or user profile (Windows). If you want to avoid this, press Cancel and either:\n\na) Don't provide a password in the connection settings — it will be requested interactively when needed;\nb) Use the Configuration tab to add your credentials in an HTTP Basic Authentication method and store them in an encrypted database." ),
-                              QMessageBox::Ok | QMessageBox::Cancel ) == QMessageBox::Cancel )
+  if ( !mAuthSettings->password().isEmpty() && QMessageBox::question( this, tr( "Saving Passwords" ), tr( "WARNING: You have entered a password. It will be stored in unsecured plain text in your project files and your home directory (Unix-like OS) or user profile (Windows). If you want to avoid this, press Cancel and either:\n\na) Don't provide a password in the connection settings — it will be requested interactively when needed;\nb) Use the Configuration tab to add your credentials in an HTTP Basic Authentication method and store them in an encrypted database." ), QMessageBox::Ok | QMessageBox::Cancel ) == QMessageBox::Cancel )
   {
     return false;
   }
@@ -268,9 +272,9 @@ QComboBox *QgsNewHttpConnection::wfsVersionComboBox()
   return cmbVersion;
 }
 
-QCheckBox *QgsNewHttpConnection::wfsPagingEnabledCheckBox()
+QComboBox *QgsNewHttpConnection::wfsPagingComboBox()
 {
-  return cbxWfsFeaturePaging;
+  return cmbFeaturePaging;
 }
 
 QCheckBox *QgsNewHttpConnection::wfsUseGml2EncodingForTransactions()
@@ -313,6 +317,8 @@ void QgsNewHttpConnection::updateServiceSpecificSettings()
   Qgis::TilePixelRatio tilePixelRatio = QgsOwsConnection::settingsTilePixelRatio->value( detailsParameters );
   cmbTilePixelRatio->setCurrentIndex( cmbTilePixelRatio->findData( static_cast<int>( tilePixelRatio ) ) );
 
+  sbFeatureCount->setValue( QgsOwsConnection::settingsFeatureCount->value( detailsParameters ) );
+
   const QString version = QgsOwsConnection::settingsVersion->value( detailsParameters );
   int versionIdx = WFS_VERSION_MAX; // AUTO
   if ( version == QLatin1String( "1.0.0" ) )
@@ -328,30 +334,34 @@ void QgsNewHttpConnection::updateServiceSpecificSettings()
   // Enable/disable these items per WFS versions
   wfsVersionCurrentIndexChanged( versionIdx );
 
-  mHttpHeaders->setHeaders( QgsHttpHeaders( QgsOwsConnection::settingsHeaders->value( {mServiceName.toLower(), mOriginalConnName} ) ) );
+  mHttpHeaders->setHeaders( QgsHttpHeaders( QgsOwsConnection::settingsHeaders->value( { mServiceName.toLower(), mOriginalConnName } ) ) );
 
   txtMaxNumFeatures->setText( QgsOwsConnection::settingsMaxNumFeatures->value( detailsParameters ) );
 
   // Only default to paging enabled if WFS 2.0.0 or higher
-  const bool pagingEnabled = QgsOwsConnection::settingsPagingEnabled->valueWithDefaultOverride( versionIdx == WFS_VERSION_MAX || versionIdx >= WFS_VERSION_2_0, detailsParameters );
+  const QString pagingEnabled = QgsOwsConnection::settingsPagingEnabled->value( detailsParameters );
+  if ( pagingEnabled == QLatin1String( "enabled" ) )
+    cmbFeaturePaging->setCurrentIndex( static_cast<int>( QgsNewHttpConnection::WfsFeaturePagingIndex::ENABLED ) );
+  else if ( pagingEnabled == QLatin1String( "disabled" ) )
+    cmbFeaturePaging->setCurrentIndex( static_cast<int>( QgsNewHttpConnection::WfsFeaturePagingIndex::DISABLED ) );
+  else
+    cmbFeaturePaging->setCurrentIndex( static_cast<int>( QgsNewHttpConnection::WfsFeaturePagingIndex::DEFAULT ) );
+
   txtPageSize->setText( QgsOwsConnection::settingsPagesize->value( detailsParameters ) );
-  cbxWfsFeaturePaging->setChecked( pagingEnabled );
 }
 
 QUrl QgsNewHttpConnection::urlTrimmed() const
 {
   QUrl url( txtUrl->text().trimmed() );
   QUrlQuery query( url );
-  const QList<QPair<QString, QString> > items = query.queryItems( QUrl::FullyEncoded );
-  QHash< QString, QPair<QString, QString> > params;
+  const QList<QPair<QString, QString>> items = query.queryItems( QUrl::FullyEncoded );
+  QHash<QString, QPair<QString, QString>> params;
   for ( const QPair<QString, QString> &it : items )
   {
     params.insert( it.first.toUpper(), it );
   }
 
-  if ( params[QStringLiteral( "SERVICE" )].second.toUpper() == "WMS" ||
-       params[QStringLiteral( "SERVICE" )].second.toUpper() == "WFS" ||
-       params[QStringLiteral( "SERVICE" )].second.toUpper() == "WCS" )
+  if ( params[QStringLiteral( "SERVICE" )].second.toUpper() == "WMS" || params[QStringLiteral( "SERVICE" )].second.toUpper() == "WFS" || params[QStringLiteral( "SERVICE" )].second.toUpper() == "WCS" )
   {
     query.removeQueryItem( params.value( QStringLiteral( "SERVICE" ) ).first );
     query.removeQueryItem( params.value( QStringLiteral( "REQUEST" ) ).first );
@@ -379,11 +389,11 @@ void QgsNewHttpConnection::accept()
   // on rename delete original entry first
   if ( !mOriginalConnName.isNull() && mOriginalConnName != newConnectionName )
   {
-    QgsOwsConnection::sTreeOwsConnections->deleteItem( mOriginalConnName, {mServiceName.toLower()} );
+    QgsOwsConnection::sTreeOwsConnections->deleteItem( mOriginalConnName, { mServiceName.toLower() } );
     settings.sync();
   }
 
-  QStringList detailsParameters = {mServiceName.toLower(), newConnectionName};
+  QStringList detailsParameters = { mServiceName.toLower(), newConnectionName };
 
   const QUrl url( urlTrimmed() );
   QgsOwsConnection::settingsUrl->setValue( url.toString(), detailsParameters );
@@ -413,6 +423,7 @@ void QgsNewHttpConnection::accept()
   if ( mTypes & ConnectionWms )
   {
     QgsOwsConnection::settingsIgnoreGetFeatureInfoURI->setValue( cbxIgnoreGetFeatureInfoURI->isChecked(), detailsParameters );
+    QgsOwsConnection::settingsFeatureCount->setValue( sbFeatureCount->value(), detailsParameters );
   }
   if ( mTypes & ConnectionWfs )
   {
@@ -438,10 +449,24 @@ void QgsNewHttpConnection::accept()
     QgsOwsConnection::settingsVersion->setValue( version, detailsParameters );
     QgsOwsConnection::settingsMaxNumFeatures->setValue( txtMaxNumFeatures->text(), detailsParameters );
     QgsOwsConnection::settingsPagesize->setValue( txtPageSize->text(), detailsParameters );
-    QgsOwsConnection::settingsPagingEnabled->setValue( cbxWfsFeaturePaging->isChecked(), detailsParameters );
+
+    QString pagingEnabled = QStringLiteral( "default" );
+    switch ( cmbFeaturePaging->currentIndex() )
+    {
+      case static_cast<int>( QgsNewHttpConnection::WfsFeaturePagingIndex::DEFAULT ):
+        pagingEnabled = QStringLiteral( "default" );
+        break;
+      case static_cast<int>( QgsNewHttpConnection::WfsFeaturePagingIndex::ENABLED ):
+        pagingEnabled = QStringLiteral( "enabled" );
+        break;
+      case static_cast<int>( QgsNewHttpConnection::WfsFeaturePagingIndex::DISABLED ):
+        pagingEnabled = QStringLiteral( "disabled" );
+        break;
+    }
+    QgsOwsConnection::settingsPagingEnabled->setValue( pagingEnabled, detailsParameters );
   }
 
-  QStringList credentialsParameters = {mServiceName.toLower(), newConnectionName};
+  QStringList credentialsParameters = { mServiceName.toLower(), newConnectionName };
   QgsOwsConnection::settingsUsername->setValue( mAuthSettings->username(), credentialsParameters );
   QgsOwsConnection::settingsPassword->setValue( mAuthSettings->password(), credentialsParameters );
   QgsOwsConnection::settingsAuthCfg->setValue( mAuthSettings->configId(), credentialsParameters );
@@ -449,7 +474,7 @@ void QgsNewHttpConnection::accept()
   if ( mHttpHeaders->isVisible() )
     QgsOwsConnection::settingsHeaders->setValue( mHttpHeaders->httpHeaders().headers(), credentialsParameters );
 
-  QgsOwsConnection::sTreeOwsConnections->setSelectedItem( newConnectionName, {mServiceName.toLower()} );
+  QgsOwsConnection::sTreeOwsConnections->setSelectedItem( newConnectionName, { mServiceName.toLower() } );
 
   QDialog::accept();
 }

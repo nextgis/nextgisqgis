@@ -28,9 +28,15 @@
  * \ingroup UnitTests
  * This is a unit test for the zonal statistics class
  */
-class TestQgsZonalStatistics : public QObject
+class TestQgsZonalStatistics : public QgsTest
 {
     Q_OBJECT
+
+  public:
+    TestQgsZonalStatistics()
+      : QgsTest( QStringLiteral( "Zonal Statistics Test" ) )
+    {}
+
 
   private slots:
     void initTestCase();
@@ -72,7 +78,8 @@ void TestQgsZonalStatistics::initTestCase()
   mVectorLayer = new QgsVectorLayer( mTempPath + "polys.shp", QStringLiteral( "poly" ), QStringLiteral( "ogr" ) );
   mRasterLayer = new QgsRasterLayer( mTempPath + "edge_problem.asc", QStringLiteral( "raster" ), QStringLiteral( "gdal" ) );
   QgsProject::instance()->addMapLayers(
-    QList<QgsMapLayer *>() << mVectorLayer << mRasterLayer );
+    QList<QgsMapLayer *>() << mVectorLayer << mRasterLayer
+  );
 }
 
 void TestQgsZonalStatistics::cleanupTestCase()
@@ -82,7 +89,7 @@ void TestQgsZonalStatistics::cleanupTestCase()
 
 void TestQgsZonalStatistics::testStatistics()
 {
-  QgsZonalStatistics zs( mVectorLayer, mRasterLayer, QString(), 1, QgsZonalStatistics::All );
+  QgsZonalStatistics zs( mVectorLayer, mRasterLayer, QString(), 1, Qgis::ZonalStatistic::All );
   zs.calculateStatistics( nullptr );
 
   QgsFeature f;
@@ -136,7 +143,7 @@ void TestQgsZonalStatistics::testStatistics()
   QCOMPARE( f.attribute( QStringLiteral( "variance" ) ).toDouble(), 0.13888888888889 );
 
   // same with long prefix to ensure that field name truncation handled correctly
-  QgsZonalStatistics zsl( mVectorLayer, mRasterLayer, QStringLiteral( "myqgis2_" ), 1, QgsZonalStatistics::All );
+  QgsZonalStatistics zsl( mVectorLayer, mRasterLayer, QStringLiteral( "myqgis2_" ), 1, Qgis::ZonalStatistic::All );
   zsl.calculateStatistics( nullptr );
 
   request.setFilterFid( 0 );
@@ -194,11 +201,11 @@ void TestQgsZonalStatistics::testReprojection()
   const QString myTestDataPath = myDataPath + "/zonalstatistics/";
 
   // create a reprojected version of the layer
-  std::unique_ptr< QgsVectorLayer > vectorLayer( new QgsVectorLayer( myTestDataPath + "polys.shp", QStringLiteral( "poly" ), QStringLiteral( "ogr" ) ) );
-  std::unique_ptr< QgsVectorLayer > reprojected( vectorLayer->materialize( QgsFeatureRequest().setDestinationCrs( QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:3785" ) ), QgsProject::instance()->transformContext() ) ) );
+  std::unique_ptr<QgsVectorLayer> vectorLayer( new QgsVectorLayer( myTestDataPath + "polys.shp", QStringLiteral( "poly" ), QStringLiteral( "ogr" ) ) );
+  std::unique_ptr<QgsVectorLayer> reprojected( vectorLayer->materialize( QgsFeatureRequest().setDestinationCrs( QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:3785" ) ), QgsProject::instance()->transformContext() ) ) );
 
   QCOMPARE( reprojected->featureCount(), vectorLayer->featureCount() );
-  QgsZonalStatistics zs( reprojected.get(), mRasterLayer, QString(), 1, QgsZonalStatistics::All );
+  QgsZonalStatistics zs( reprojected.get(), mRasterLayer, QString(), 1, Qgis::ZonalStatistic::All );
   zs.calculateStatistics( nullptr );
 
   QgsFeature f;
@@ -256,10 +263,10 @@ void TestQgsZonalStatistics::testNoData()
   const QString myTestDataPath = myDataPath + "/zonalstatistics/";
 
   // test that zonal stats respects no data and user set no data values
-  std::unique_ptr< QgsRasterLayer > rasterLayer = std::make_unique< QgsRasterLayer >( myTestDataPath + "raster.tif", QStringLiteral( "raster" ), QStringLiteral( "gdal" ) );
-  std::unique_ptr< QgsVectorLayer > vectorLayer = std::make_unique< QgsVectorLayer >( mTempPath + "polys2.shp", QStringLiteral( "poly" ), QStringLiteral( "ogr" ) );
+  std::unique_ptr<QgsRasterLayer> rasterLayer = std::make_unique<QgsRasterLayer>( myTestDataPath + "raster.tif", QStringLiteral( "raster" ), QStringLiteral( "gdal" ) );
+  std::unique_ptr<QgsVectorLayer> vectorLayer = std::make_unique<QgsVectorLayer>( mTempPath + "polys2.shp", QStringLiteral( "poly" ), QStringLiteral( "ogr" ) );
 
-  QgsZonalStatistics zs( vectorLayer.get(), rasterLayer.get(), QStringLiteral( "n" ), 1, QgsZonalStatistics::All );
+  QgsZonalStatistics zs( vectorLayer.get(), rasterLayer.get(), QStringLiteral( "n" ), 1, Qgis::ZonalStatistic::All );
   zs.calculateStatistics( nullptr );
 
   QgsFeature f;
@@ -281,10 +288,9 @@ void TestQgsZonalStatistics::testNoData()
   QCOMPARE( f.attribute( QStringLiteral( "nsum" ) ).toDouble(), 0.0 );
 
   // with user no data
-  rasterLayer->dataProvider()->setUserNoDataValue( 1, QgsRasterRangeList() << QgsRasterRange( 842, 852 )
-      << QgsRasterRange( 877, 891 ) );
+  rasterLayer->dataProvider()->setUserNoDataValue( 1, QgsRasterRangeList() << QgsRasterRange( 842, 852 ) << QgsRasterRange( 877, 891 ) );
 
-  zs = QgsZonalStatistics( vectorLayer.get(), rasterLayer.get(), QStringLiteral( "un" ), 1, QgsZonalStatistics::All );
+  zs = QgsZonalStatistics( vectorLayer.get(), rasterLayer.get(), QStringLiteral( "un" ), 1, Qgis::ZonalStatistic::All );
   zs.calculateStatistics( nullptr );
 
   it = vectorLayer->getFeatures( request );
@@ -310,10 +316,10 @@ void TestQgsZonalStatistics::testSmallPolygons()
   const QString myTestDataPath = myDataPath + "/zonalstatistics/";
 
   // test that zonal stats works ok with polygons much smaller than pixel size
-  const std::unique_ptr< QgsRasterLayer > rasterLayer = std::make_unique< QgsRasterLayer >( myTestDataPath + "raster.tif", QStringLiteral( "raster" ), QStringLiteral( "gdal" ) );
-  std::unique_ptr< QgsVectorLayer > vectorLayer = std::make_unique< QgsVectorLayer >( mTempPath + "small_polys.shp", QStringLiteral( "poly" ), QStringLiteral( "ogr" ) );
+  const std::unique_ptr<QgsRasterLayer> rasterLayer = std::make_unique<QgsRasterLayer>( myTestDataPath + "raster.tif", QStringLiteral( "raster" ), QStringLiteral( "gdal" ) );
+  std::unique_ptr<QgsVectorLayer> vectorLayer = std::make_unique<QgsVectorLayer>( mTempPath + "small_polys.shp", QStringLiteral( "poly" ), QStringLiteral( "ogr" ) );
 
-  QgsZonalStatistics zs( vectorLayer.get(), rasterLayer.get(), QStringLiteral( "n" ), 1, QgsZonalStatistics::All );
+  QgsZonalStatistics zs( vectorLayer.get(), rasterLayer.get(), QStringLiteral( "n" ), 1, Qgis::ZonalStatistic::All );
   zs.calculateStatistics( nullptr );
 
   QgsFeature f;
@@ -346,18 +352,18 @@ void TestQgsZonalStatistics::testSmallPolygons()
 
 void TestQgsZonalStatistics::testShortName()
 {
-  QCOMPARE( QgsZonalStatistics::shortName( QgsZonalStatistics::Count ), QStringLiteral( "count" ) );
-  QCOMPARE( QgsZonalStatistics::shortName( QgsZonalStatistics::Sum ), QStringLiteral( "sum" ) );
-  QCOMPARE( QgsZonalStatistics::shortName( QgsZonalStatistics::Mean ), QStringLiteral( "mean" ) );
-  QCOMPARE( QgsZonalStatistics::shortName( QgsZonalStatistics::Median ), QStringLiteral( "median" ) );
-  QCOMPARE( QgsZonalStatistics::shortName( QgsZonalStatistics::StDev ), QStringLiteral( "stdev" ) );
-  QCOMPARE( QgsZonalStatistics::shortName( QgsZonalStatistics::Min ), QStringLiteral( "min" ) );
-  QCOMPARE( QgsZonalStatistics::shortName( QgsZonalStatistics::Max ), QStringLiteral( "max" ) );
-  QCOMPARE( QgsZonalStatistics::shortName( QgsZonalStatistics::Range ), QStringLiteral( "range" ) );
-  QCOMPARE( QgsZonalStatistics::shortName( QgsZonalStatistics::Minority ), QStringLiteral( "minority" ) );
-  QCOMPARE( QgsZonalStatistics::shortName( QgsZonalStatistics::Majority ), QStringLiteral( "majority" ) );
-  QCOMPARE( QgsZonalStatistics::shortName( QgsZonalStatistics::Variety ), QStringLiteral( "variety" ) );
-  QCOMPARE( QgsZonalStatistics::shortName( QgsZonalStatistics::Variance ), QStringLiteral( "variance" ) );
+  QCOMPARE( QgsZonalStatistics::shortName( Qgis::ZonalStatistic::Count ), QStringLiteral( "count" ) );
+  QCOMPARE( QgsZonalStatistics::shortName( Qgis::ZonalStatistic::Sum ), QStringLiteral( "sum" ) );
+  QCOMPARE( QgsZonalStatistics::shortName( Qgis::ZonalStatistic::Mean ), QStringLiteral( "mean" ) );
+  QCOMPARE( QgsZonalStatistics::shortName( Qgis::ZonalStatistic::Median ), QStringLiteral( "median" ) );
+  QCOMPARE( QgsZonalStatistics::shortName( Qgis::ZonalStatistic::StDev ), QStringLiteral( "stdev" ) );
+  QCOMPARE( QgsZonalStatistics::shortName( Qgis::ZonalStatistic::Min ), QStringLiteral( "min" ) );
+  QCOMPARE( QgsZonalStatistics::shortName( Qgis::ZonalStatistic::Max ), QStringLiteral( "max" ) );
+  QCOMPARE( QgsZonalStatistics::shortName( Qgis::ZonalStatistic::Range ), QStringLiteral( "range" ) );
+  QCOMPARE( QgsZonalStatistics::shortName( Qgis::ZonalStatistic::Minority ), QStringLiteral( "minority" ) );
+  QCOMPARE( QgsZonalStatistics::shortName( Qgis::ZonalStatistic::Majority ), QStringLiteral( "majority" ) );
+  QCOMPARE( QgsZonalStatistics::shortName( Qgis::ZonalStatistic::Variety ), QStringLiteral( "variety" ) );
+  QCOMPARE( QgsZonalStatistics::shortName( Qgis::ZonalStatistic::Variance ), QStringLiteral( "variance" ) );
 }
 
 QGSTEST_MAIN( TestQgsZonalStatistics )

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsaggregatecalculator.h                                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -14,12 +14,14 @@
 class QgsAggregateCalculator
 {
 %Docstring(signature="appended")
-Utility class for calculating aggregates for a field (or expression) over the features
-from a vector layer. It is recommended that :py:func:`QgsVectorLayer.aggregate()` is used rather then
-directly using this class, as the :py:class:`QgsVectorLayer` method can handle delegating aggregate calculation
-to a data provider for remote calculation.
+Utility class for calculating aggregates for a field (or expression)
+over the features from a vector layer.
 
-.. versionadded:: 2.16
+.. note::
+
+   It is recommended that :py:func:`QgsVectorLayer.aggregate()` is used rather then
+   directly using this class, as the :py:class:`QgsVectorLayer` method can handle delegating aggregate calculation
+   to a data provider for remote calculation.
 %End
 
 %TypeHeaderCode
@@ -31,33 +33,7 @@ to a data provider for remote calculation.
     {
       QString function;
       QString name;
-      QSet<QVariant::Type> supportedTypes;
-    };
-
-    enum Aggregate
-    {
-      Count,
-      CountDistinct,
-      CountMissing,
-      Min,
-      Max,
-      Sum,
-      Mean,
-      Median,
-      StDev,
-      StDevSample,
-      Range,
-      Minority,
-      Majority,
-      FirstQuartile,
-      ThirdQuartile,
-      InterQuartileRange,
-      StringMinimumLength,
-      StringMaximumLength,
-      StringConcatenate,
-      GeometryCollect,
-      ArrayAggregate,
-      StringConcatenateUnique
+      QSet<QMetaType::Type> supportedTypes;
     };
 
     struct AggregateParameters
@@ -98,33 +74,39 @@ Sets all aggregate parameters from a parameter bundle.
 
     void setFilter( const QString &filterExpression );
 %Docstring
-Sets a filter to limit the features used during the aggregate calculation.
+Sets a filter to limit the features used during the aggregate
+calculation.
 
-:param filterExpression: expression for filtering features, or empty string to remove filter
+:param filterExpression: expression for filtering features, or empty
+                         string to remove filter
 
 .. seealso:: :py:func:`filter`
 %End
 
     void setFidsFilter( const QgsFeatureIds &fids );
 %Docstring
-Sets a filter to limit the features used during the aggregate calculation.
-If an expression filter is set, it will override this filter.
+Sets a filter to limit the features used during the aggregate
+calculation. If an expression filter is set, it will override this
+filter.
 
-:param fids: feature ids for feature filtering, and empty list will return no features.
+:param fids: feature ids for feature filtering, and empty list will
+             return no features.
 
 .. seealso:: :py:func:`filter`
 %End
 
     QString filter() const;
 %Docstring
-Returns the filter which limits the features used during the aggregate calculation.
+Returns the filter which limits the features used during the aggregate
+calculation.
 
 .. seealso:: :py:func:`setFilter`
 %End
 
     void setDelimiter( const QString &delimiter );
 %Docstring
-Sets the delimiter to use for joining values with the StringConcatenate aggregate.
+Sets the delimiter to use for joining values with the StringConcatenate
+aggregate.
 
 :param delimiter: string delimiter
 
@@ -133,38 +115,46 @@ Sets the delimiter to use for joining values with the StringConcatenate aggregat
 
     QString delimiter() const;
 %Docstring
-Returns the delimiter used for joining values with the StringConcatenate aggregate.
+Returns the delimiter used for joining values with the StringConcatenate
+aggregate.
 
 .. seealso:: :py:func:`setDelimiter`
 %End
 
-    QVariant calculate( Aggregate aggregate, const QString &fieldOrExpression,
+    QVariant calculate( Qgis::Aggregate aggregate, const QString &fieldOrExpression,
                         QgsExpressionContext *context = 0, bool *ok = 0, QgsFeedback *feedback = 0 ) const;
 %Docstring
 Calculates the value of an aggregate.
 
 :param aggregate: aggregate to calculate
-:param fieldOrExpression: source field or expression to use as basis for aggregated values.
-                          If an expression is used, then the context parameter must be set.
+:param fieldOrExpression: source field or expression to use as basis for
+                          aggregated values. If an expression is used,
+                          then the context parameter must be set.
 :param context: expression context for evaluating expressions
-:param ok: if specified, will be set to ``True`` if aggregate calculation was successful. If ``ok`` is ``False`` then :py:func:`~QgsAggregateCalculator.lastError` can be used to retrieve a descriptive error message.
-:param feedback: optional feedback argument for early cancellation (since QGIS 3.22). If set, this will take precedence over any feedback object
-                 set on the expression ``context``.
+:param ok: if specified, will be set to ``True`` if aggregate
+           calculation was successful. If ``ok`` is ``False`` then
+           :py:func:`~QgsAggregateCalculator.lastError` can be used to
+           retrieve a descriptive error message.
+:param feedback: optional feedback argument for early cancellation
+                 (since QGIS 3.22). If set, this will take precedence
+                 over any feedback object set on the expression
+                 ``context``.
 
 :return: calculated aggregate value
 %End
 
-    static Aggregate stringToAggregate( const QString &string, bool *ok = 0 );
+    static Qgis::Aggregate stringToAggregate( const QString &string, bool *ok = 0 );
 %Docstring
 Converts a string to a aggregate type.
 
 :param string: string to convert
-:param ok: if specified, will be set to ``True`` if conversion was successful
+:param ok: if specified, will be set to ``True`` if conversion was
+           successful
 
 :return: aggregate type
 %End
 
-    static QString displayName( Aggregate aggregate );
+    static QString displayName( Qgis::Aggregate aggregate );
 %Docstring
 Returns the friendly display name for a ``aggregate``.
 
@@ -185,5 +175,5 @@ Structured information for available aggregates.
  *                                                                      *
  * src/core/qgsaggregatecalculator.h                                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

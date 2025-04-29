@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsmimedatautils.h                                          *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,6 +11,9 @@
 
 class QgsMimeDataUtils
 {
+%Docstring(signature="appended")
+Contains utility functions for working with MIME data.
+%End
 
 %TypeHeaderCode
 #include "qgsmimedatautils.h"
@@ -38,8 +41,6 @@ Constructs a URI corresponding to the specified ``layer``.
       bool isValid() const;
 %Docstring
 Returns whether the object contains valid data
-
-.. versionadded:: 3.0
 %End
 
       QString data() const;
@@ -49,7 +50,8 @@ Returns encoded representation of the object
 
       QgsVectorLayer *vectorLayer( bool &owner, QString &error ) const;
 %Docstring
-Gets vector layer from uri if possible, otherwise returns ``None`` and error is set
+Gets vector layer from uri if possible, otherwise returns ``None`` and
+error is set
 
 :param owner: set to ``True`` if caller becomes owner
 :param error: set to error message if cannot get vector
@@ -57,7 +59,8 @@ Gets vector layer from uri if possible, otherwise returns ``None`` and error is 
 
       QgsRasterLayer *rasterLayer( bool &owner, QString &error ) const;
 %Docstring
-Gets raster layer from uri if possible, otherwise returns ``None`` and error is set
+Gets raster layer from uri if possible, otherwise returns ``None`` and
+error is set
 
 :param owner: set to ``True`` if caller becomes owner
 :param error: set to error message if cannot get raster
@@ -65,7 +68,8 @@ Gets raster layer from uri if possible, otherwise returns ``None`` and error is 
 
       QgsMeshLayer *meshLayer( bool &owner, QString &error ) const;
 %Docstring
-Gets mesh layer from uri if possible, otherwise returns ``None`` and error is set
+Gets mesh layer from uri if possible, otherwise returns ``None`` and
+error is set
 
 :param owner: set to ``True`` if caller becomes owner
 :param error: set to error message if cannot get raster
@@ -73,11 +77,13 @@ Gets mesh layer from uri if possible, otherwise returns ``None`` and error is se
 
       QgsMapLayer *mapLayer() const;
 %Docstring
-Returns the layer from the active project corresponding to this uri (if possible),
-otherwise returns ``None``.
+Returns the layer from the active project corresponding to this uri (if
+possible), otherwise returns ``None``.
 
-Unlike :py:func:`~QgsMimeDataUtils.vectorLayer`, :py:func:`~QgsMimeDataUtils.rasterLayer`, or :py:func:`~QgsMimeDataUtils.meshLayer`, this method will not attempt
-to create a new layer corresponding to the URI.
+Unlike :py:func:`~QgsMimeDataUtils.vectorLayer`,
+:py:func:`~QgsMimeDataUtils.rasterLayer`, or
+:py:func:`~QgsMimeDataUtils.meshLayer`, this method will not attempt to
+create a new layer corresponding to the URI.
 
 .. versionadded:: 3.8
 %End
@@ -119,8 +125,6 @@ Encodes a URI list to a new QMimeData object.
     static QByteArray layerTreeNodesToUriList( const QList<QgsLayerTreeNode *> &nodes );
 %Docstring
 Returns encoded URI list from a list of layer tree nodes.
-
-.. versionadded:: 3.0
 %End
 
     static bool hasOriginatedFromCurrentAppInstance( const QgsMimeDataUtils::Uri &uri );
@@ -140,5 +144,5 @@ instance.
  *                                                                      *
  * src/core/qgsmimedatautils.h                                          *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

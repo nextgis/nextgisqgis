@@ -106,19 +106,17 @@ void QgsGeoPackageProviderConnection::dropRasterTable( const QString &schema, co
   executeGdalSqlPrivate( QStringLiteral( "DROP TABLE %1" ).arg( name ) );
 }
 
-
-void QgsGeoPackageProviderConnection::renameVectorTable( const QString &schema, const QString &name, const QString &newName ) const
+void QgsGeoPackageProviderConnection::renameTablePrivate( const QString &schema, const QString &name, const QString &newName ) const
 {
-  checkCapability( Capability::RenameVectorTable );
   if ( ! schema.isEmpty() )
   {
     QgsMessageLog::logMessage( QStringLiteral( "Schema is not supported by GPKG, ignoring" ), QStringLiteral( "OGR" ), Qgis::MessageLevel::Info );
   }
-  // TODO: maybe an index?
   QString sql( QStringLiteral( "ALTER TABLE %1 RENAME TO %2" )
                .arg( QgsSqliteUtils::quotedIdentifier( name ),
                      QgsSqliteUtils::quotedIdentifier( newName ) ) );
   executeGdalSqlPrivate( sql );
+  // This is also done by GDAL (at least by current version)
   sql = QStringLiteral( "UPDATE layer_styles SET f_table_name = %2 WHERE f_table_name = %1" )
         .arg( QgsSqliteUtils::quotedString( name ),
               QgsSqliteUtils::quotedString( newName ) );
@@ -130,6 +128,20 @@ void QgsGeoPackageProviderConnection::renameVectorTable( const QString &schema, 
   {
     QgsDebugMsgLevel( QStringLiteral( "Warning: error while updating the styles, perhaps there are no styles stored in this GPKG: %1" ).arg( ex.what() ), 4 );
   }
+}
+
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,10,0)
+void QgsGeoPackageProviderConnection::renameRasterTable( const QString &schema, const QString &name, const QString &newName ) const
+{
+  checkCapability( Capability::RenameRasterTable );
+  renameTablePrivate( schema, name, newName );
+}
+#endif
+
+void QgsGeoPackageProviderConnection::renameVectorTable( const QString &schema, const QString &name, const QString &newName ) const
+{
+  checkCapability( Capability::RenameVectorTable );
+  renameTablePrivate( schema, name, newName );
 }
 
 void QgsGeoPackageProviderConnection::vacuum( const QString &schema, const QString &name ) const
@@ -243,18 +255,18 @@ QList<QgsGeoPackageProviderConnection::TableProperty> QgsGeoPackageProviderConne
       // Table type
       if ( dataType == QLatin1String( "tiles" ) || dataType == QLatin1String( "2d-gridded-coverage" ) )
       {
-        property.setFlag( QgsGeoPackageProviderConnection::Raster );
+        property.setFlag( QgsGeoPackageProviderConnection::TableFlag::Raster );
       }
       else if ( dataType == QLatin1String( "features" ) )
       {
-        property.setFlag( QgsGeoPackageProviderConnection::Vector );
+        property.setFlag( QgsGeoPackageProviderConnection::TableFlag::Vector );
         property.setGeometryColumn( row.at( 5 ).toString() );
         property.setGeometryColumnCount( 1 );
       }
 
       if ( aspatialTypes.contains( dataType ) )
       {
-        property.setFlag( QgsGeoPackageProviderConnection::Aspatial );
+        property.setFlag( QgsGeoPackageProviderConnection::TableFlag::Aspatial );
         property.addGeometryColumnType( Qgis::WkbType::NoGeometry, QgsCoordinateReferenceSystem() );
       }
       else
@@ -271,7 +283,7 @@ QList<QgsGeoPackageProviderConnection::TableProperty> QgsGeoPackageProviderConne
         property.addGeometryColumnType( QgsWkbTypes::parseType( row.at( 4 ).toString() ),  crs );
       }
 
-      property.setComment( row.at( 4 ).toString() );
+      property.setComment( row.at( 2 ).toString() );
       tableInfo.push_back( property );
     }
 
@@ -308,6 +320,9 @@ void QgsGeoPackageProviderConnection::setDefaultCapabilities()
     Capability::Tables,
     Capability::CreateVectorTable,
     Capability::DropVectorTable,
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,10,0)
+    Capability::RenameRasterTable,
+#endif
     Capability::RenameVectorTable,
     Capability::Vacuum,
     Capability::Spatial,
@@ -446,18 +461,31 @@ QList<QgsLayerMetadataProviderResult> QgsGeoPackageProviderConnection::searchLay
           QgsLayerMetadataProviderResult result{ layerMetadata };
 
           QgsRectangle extents;
+          bool extentsValid = false;
 
           const auto cExtents { layerMetadata.extent().spatialExtents() };
           for ( const auto &ext : std::as_const( cExtents ) )
           {
             QgsRectangle bbox {  ext.bounds.toRectangle()  };
             QgsCoordinateTransform ct { ext.extentCrs, QgsCoordinateReferenceSystem::fromEpsgId( 4326 ), searchContext.transformContext };
-            ct.transform( bbox );
+            try
+            {
+              ct.transform( bbox );
+            }
+            catch ( const QgsCsException & )
+            {
+              QgsDebugError( QStringLiteral( "Layer metadata extent failed to reproject to EPSG:4326" ) );
+              continue;
+            }
+            extentsValid = true;
             extents.combineExtentWith( bbox );
           }
 
           QgsPolygon poly;
-          poly.fromWkt( extents.asWktPolygon() );
+          if ( extentsValid )
+          {
+            poly.fromWkt( extents.asWktPolygon() );
+          }
 
           // Filters
           if ( ! geographicExtent.isEmpty() && ( poly.isEmpty() || ! geographicExtent.intersects( extents ) ) )
@@ -470,7 +498,10 @@ QList<QgsLayerMetadataProviderResult> QgsGeoPackageProviderConnection::searchLay
             continue;
           }
 
-          result.setGeographicExtent( poly );
+          if ( extentsValid )
+          {
+            result.setGeographicExtent( poly );
+          }
           result.setStandardUri( QStringLiteral( "http://mrcc.com/qgis.dtd" ) );
           result.setDataProviderName( QStringLiteral( "ogr" ) );
           result.setAuthid( layerMetadata.crs().authid() );
@@ -522,7 +553,7 @@ QgsFields QgsGeoPackageProviderConnection::fields( const QString &schema, const 
 
   if ( ! pkname.isEmpty() )
   {
-    fieldList.append( QgsField{ pkname, QVariant::LongLong } );
+    fieldList.append( QgsField{ pkname, QMetaType::Type::LongLong } );
   }
 
   QgsVectorLayer::LayerOptions options { false, true };
@@ -544,7 +575,7 @@ QgsFields QgsGeoPackageProviderConnection::fields( const QString &schema, const 
       const auto results = executeSql( sql );
       if ( ! results.isEmpty() )
       {
-        fieldList.append( QgsField{ results.first().first().toString(), QVariant::String, QStringLiteral( "geometry" ) } );
+        fieldList.append( QgsField{ results.first().first().toString(), QMetaType::Type::QString, QStringLiteral( "geometry" ) } );
       }
     }
     catch ( QgsProviderConnectionException &ex )

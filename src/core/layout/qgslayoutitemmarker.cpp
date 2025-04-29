@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgslayoutitemmarker.h"
+#include "moc_qgslayoutitemmarker.cpp"
 #include "qgslayout.h"
 #include "qgslayoututils.h"
 #include "qgssymbollayerutils.h"
@@ -37,7 +38,7 @@ QgsLayoutItemMarker::QgsLayoutItemMarker( QgsLayout *layout )
   mShapeStyleSymbol.reset( QgsMarkerSymbol::createSimple( properties ) );
   refreshSymbol();
 
-  connect( this, &QgsLayoutItemMarker::sizePositionChanged, this, [ = ]
+  connect( this, &QgsLayoutItemMarker::sizePositionChanged, this, [this]
   {
     updateBoundingRect();
     update();

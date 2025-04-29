@@ -18,6 +18,7 @@
 #include "qgsnetworkcontentfetcherregistry.h"
 #include "qgsblockingnetworkrequest.h"
 #include "qgsnetworkaccessmanager.h"
+#include "qgssetrequestinitiator_p.h"
 #include "qgsapplication.h"
 #include "qgsfeedback.h"
 
@@ -51,7 +52,7 @@ bool QgsHttpExternalStorageStoreTask::run()
   if ( mPrepareRequestHandler )
     mPrepareRequestHandler( req, f );
 
-  connect( &request, &QgsBlockingNetworkRequest::uploadProgress, this, [ = ]( qint64 bytesReceived, qint64 bytesTotal )
+  connect( &request, &QgsBlockingNetworkRequest::uploadProgress, this, [this]( qint64 bytesReceived, qint64 bytesTotal )
   {
     if ( !isCanceled() && bytesTotal > 0 )
     {
@@ -94,19 +95,19 @@ QgsHttpExternalStorageStoredContent::QgsHttpExternalStorageStoredContent( const 
 
   mUploadTask = new QgsHttpExternalStorageStoreTask( storageUrl, filePath, authcfg );
 
-  connect( mUploadTask, &QgsTask::taskCompleted, this, [ = ]
+  connect( mUploadTask, &QgsTask::taskCompleted, this, [this, storageUrl]
   {
     mUrl = storageUrl;
     setStatus( Qgis::ContentStatus::Finished );
     emit stored();
   } );
 
-  connect( mUploadTask, &QgsTask::taskTerminated, this, [ = ]
+  connect( mUploadTask, &QgsTask::taskTerminated, this, [this]
   {
     reportError( mUploadTask->errorString() );
   } );
 
-  connect( mUploadTask, &QgsTask::progressChanged, this, [ = ]( double progress )
+  connect( mUploadTask, &QgsTask::progressChanged, this, [this]( double progress )
   {
     emit progressChanged( progress );
   } );
@@ -125,7 +126,7 @@ void QgsHttpExternalStorageStoredContent::cancel()
     return;
 
   disconnect( mUploadTask, &QgsTask::taskTerminated, this, nullptr );
-  connect( mUploadTask, &QgsTask::taskTerminated, this, [ = ]
+  connect( mUploadTask, &QgsTask::taskTerminated, this, [this]
   {
     setStatus( Qgis::ContentStatus::Canceled );
     emit canceled();
@@ -149,7 +150,7 @@ QgsHttpExternalStorageFetchedContent::QgsHttpExternalStorageFetchedContent( QgsF
   : mFetchedContent( fetchedContent )
 {
   connect( mFetchedContent, &QgsFetchedContent::fetched, this, &QgsHttpExternalStorageFetchedContent::onFetched );
-  connect( mFetchedContent, &QgsFetchedContent::errorOccurred, this, [ = ]( QNetworkReply::NetworkError code, const QString & errorMsg )
+  connect( mFetchedContent, &QgsFetchedContent::errorOccurred, this, [this]( QNetworkReply::NetworkError code, const QString & errorMsg )
   {
     Q_UNUSED( code );
     reportError( errorMsg );

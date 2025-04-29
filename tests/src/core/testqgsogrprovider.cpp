@@ -18,19 +18,20 @@
 #include "qgstest.h"
 
 //qgis includes...
-#include <qgis.h>
-#include <qgssettings.h>
-#include <qgsapplication.h>
-#include <qgsproviderregistry.h>
-#include <qgsvectorlayer.h>
-#include <qgsnetworkaccessmanager.h>
-#include <qgsprovidermetadata.h>
+#include "qgis.h"
+#include "qgssettings.h"
+#include "qgsapplication.h"
+#include "qgsproviderregistry.h"
+#include "qgsvectorlayer.h"
+#include "qgsnetworkaccessmanager.h"
+#include "qgsprovidermetadata.h"
+#include "qgsprovidersublayerdetails.h"
 
 #include <QObject>
 #include <QThread>
 
 #include <cpl_conv.h>
-
+#include <gdal.h>
 
 /**
  * \ingroup UnitTests
@@ -41,11 +42,12 @@ class TestQgsOgrProvider : public QgsTest
     Q_OBJECT
 
   public:
-    TestQgsOgrProvider() : QgsTest( QStringLiteral( "OGR Provider Tests" ) ) {}
+    TestQgsOgrProvider()
+      : QgsTest( QStringLiteral( "OGR Provider Tests" ) ) {}
 
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
+    void initTestCase();    // will be called before the first testfunction is executed.
+    void cleanupTestCase(); // will be called after the last testfunction was executed.
 
     void setupProxy();
     void decodeUri();
@@ -53,6 +55,9 @@ class TestQgsOgrProvider : public QgsTest
     void testThread();
     void testCsvFeatureAddition();
     void absoluteRelativeUri();
+    void testExtent();
+    void testVsiCredentialOptions();
+    void testVsiCredentialOptionsQuerySublayers();
 
   private:
     QString mTestDataDir;
@@ -62,13 +67,19 @@ class TestQgsOgrProvider : public QgsTest
 };
 
 
-
 //runs before all tests
 void TestQgsOgrProvider::initTestCase()
 {
+  // Set up the QgsSettings environment
+  QCoreApplication::setOrganizationName( QStringLiteral( "QGIS" ) );
+  QCoreApplication::setOrganizationDomain( QStringLiteral( "qgis.org" ) );
+  QCoreApplication::setApplicationName( QStringLiteral( "QGIS-TEST" ) );
+
   // init QGIS's paths - true means that all path will be inited from prefix
   QgsApplication::init();
   QgsApplication::initQgis();
+
+  QgsSettings().clear();
 
   mTestDataDir = QStringLiteral( TEST_DATA_DIR ) + '/'; //defined in CmakeLists.txt
 }
@@ -81,7 +92,6 @@ void TestQgsOgrProvider::cleanupTestCase()
 
 void TestQgsOgrProvider::setupProxy()
 {
-
   QgsSettings settings;
   {
     settings.setValue( QStringLiteral( "proxy/proxyEnabled" ), true );
@@ -115,6 +125,10 @@ void TestQgsOgrProvider::setupProxy()
     QCOMPARE( proxyCredentials, "username" );
   }
 
+  // cleanup
+  QgsSettings().clear();
+  CPLSetConfigOption( "GDAL_HTTP_PROXY", nullptr );
+  CPLSetConfigOption( "GDAL_HTTP_PROXYUSERPWD", nullptr );
 }
 
 void TestQgsOgrProvider::decodeUri()
@@ -230,8 +244,14 @@ void TestQgsOgrProvider::decodeUri()
 
   // test authcfg with vsicurl URI
   parts = QgsProviderRegistry::instance()->decodeUri( QStringLiteral( "ogr" ), QStringLiteral( "/vsicurl/https://www.qgis.org/dataset.gpkg authcfg='1234567'" ) );
-  QCOMPARE( parts.value( QStringLiteral( "path" ) ).toString(), QString( "/vsicurl/https://www.qgis.org/dataset.gpkg" ) );
+  QCOMPARE( parts.value( QStringLiteral( "path" ) ).toString(), QString( "https://www.qgis.org/dataset.gpkg" ) );
+  QCOMPARE( parts.value( QStringLiteral( "vsiPrefix" ) ).toString(), QString( "/vsicurl/" ) );
   QCOMPARE( parts.value( QStringLiteral( "authcfg" ) ).toString(), QString( "1234567" ) );
+
+  // vsis3
+  parts = QgsProviderRegistry::instance()->decodeUri( QStringLiteral( "ogr" ), QStringLiteral( "/vsis3/nz-elevation/auckland/auckland-north_2016-2018/auckland.shp" ) );
+  QCOMPARE( parts.value( QStringLiteral( "path" ) ).toString(), QString( "nz-elevation/auckland/auckland-north_2016-2018/auckland.shp" ) );
+  QCOMPARE( parts.value( QStringLiteral( "vsiPrefix" ) ).toString(), QString( "/vsis3/" ) );
 }
 
 void TestQgsOgrProvider::encodeUri()
@@ -269,19 +289,30 @@ void TestQgsOgrProvider::encodeUri()
   parts.insert( QStringLiteral( "path" ), QStringLiteral( "/vsicurl/https://www.qgis.org/dataset.gpkg" ) );
   parts.insert( QStringLiteral( "authcfg" ), QStringLiteral( "1234567" ) );
   QCOMPARE( QgsProviderRegistry::instance()->encodeUri( QStringLiteral( "ogr" ), parts ), QStringLiteral( "/vsicurl/https://www.qgis.org/dataset.gpkg authcfg='1234567'" ) );
+
+  parts.clear();
+  parts.insert( QStringLiteral( "path" ), QStringLiteral( "https://www.qgis.org/dataset.gpkg" ) );
+  parts.insert( QStringLiteral( "vsiPrefix" ), QStringLiteral( "/vsicurl/" ) );
+  parts.insert( QStringLiteral( "authcfg" ), QStringLiteral( "1234567" ) );
+  QCOMPARE( QgsProviderRegistry::instance()->encodeUri( QStringLiteral( "ogr" ), parts ), QStringLiteral( "/vsicurl/https://www.qgis.org/dataset.gpkg authcfg='1234567'" ) );
+
+  // vsis3
+  parts.clear();
+  parts.insert( QStringLiteral( "vsiPrefix" ), QStringLiteral( "/vsis3/" ) );
+  parts.insert( QStringLiteral( "path" ), QStringLiteral( "nz-elevation/auckland/auckland-north_2016-2018/auckland.gpkg" ) );
+  QCOMPARE( QgsProviderRegistry::instance()->encodeUri( QStringLiteral( "ogr" ), parts ), QStringLiteral( "/vsis3/nz-elevation/auckland/auckland-north_2016-2018/auckland.gpkg" ) );
 }
 
 class ReadVectorLayer : public QThread
 {
     Q_OBJECT
 
-  public :
+  public:
     ReadVectorLayer( const QString &filePath, QMutex &mutex, QWaitCondition &waitForVlCreation, QWaitCondition &waitForProcessEvents )
       : _filePath( filePath ), _mutex( mutex ), _waitForVlCreation( waitForVlCreation ), _waitForProcessEvents( waitForProcessEvents ) {}
 
     void run() override
     {
-
       QgsVectorLayer *vl2 = new QgsVectorLayer( _filePath, QStringLiteral( "thread_test" ), QLatin1String( "ogr" ) );
 
       QgsFeature f;
@@ -303,7 +334,6 @@ class ReadVectorLayer : public QThread
     QMutex &_mutex;
     QWaitCondition &_waitForVlCreation;
     QWaitCondition &_waitForProcessEvents;
-
 };
 
 void failOnWarning( QtMsgType type, const QMessageLogContext &context, const QString &msg )
@@ -323,7 +353,7 @@ void TestQgsOgrProvider::testThread()
   // Disabled by @m-kuhn
   // This test is flaky
   // See https://travis-ci.org/qgis/QGIS/jobs/505008602#L6464-L7108
-  if ( !QgsTest::runFlakyTests() )
+  if ( QgsTest::isCIRun() )
     QSKIP( "This test is disabled on Travis CI environment" );
 
   // After reading a QgsVectorLayer (getFeatures) from another thread the QgsOgrConnPoolGroup starts
@@ -356,7 +386,6 @@ void TestQgsOgrProvider::testThread()
 
   thread->wait();
   qInstallMessageHandler( 0 );
-
 }
 
 void TestQgsOgrProvider::testCsvFeatureAddition()
@@ -418,6 +447,135 @@ void TestQgsOgrProvider::absoluteRelativeUri()
   relativeUri = QStringLiteral( "./points_gpkg.gpkg|layername=points_small" );
   QCOMPARE( ogrMetadata->absoluteToRelativeUri( absoluteUri, context ), relativeUri );
   QCOMPARE( ogrMetadata->relativeToAbsoluteUri( relativeUri, context ), absoluteUri );
+}
+
+void TestQgsOgrProvider::testExtent()
+{
+  QString uri2D = QStringLiteral( TEST_DATA_DIR ) + QStringLiteral( "/points_gpkg.gpkg|layername=points_small" );
+  QgsVectorLayer *layer2D = new QgsVectorLayer( uri2D, QStringLiteral( "gpkg" ), QLatin1String( "ogr" ) );
+  QVERIFY( layer2D->isValid() );
+  QCOMPARE( layer2D->extent(), QgsRectangle( -102.436, 40.578, -93.1608, 41.2405 ) );
+  QCOMPARE( layer2D->extent3D(), QgsBox3D( -102.436, 40.578, std::numeric_limits<double>::quiet_NaN(), -93.1608, 41.2405, std::numeric_limits<double>::quiet_NaN() ) );
+  delete layer2D;
+
+  QString uri3D = QStringLiteral( TEST_DATA_DIR ) + QStringLiteral( "/3d/points_with_z.shp" );
+  // QString uri3D = QStringLiteral( TEST_DATA_DIR ) + QStringLiteral( "/3d/earth_size_sphere_4978.gpkg|layername=earth_size_sphere_4978" );
+  QgsVectorLayer *layer3D = new QgsVectorLayer( uri3D, QStringLiteral( "shp" ), QLatin1String( "ogr" ) );
+  QVERIFY( layer3D->isValid() );
+  QGSCOMPARENEAR( layer3D->extent().xMinimum(), 321384.94, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent().xMaximum(), 322342.3, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent().yMinimum(), 129147.09, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent().yMaximum(), 130554.6, 0.001 );
+
+  QGSCOMPARENEAR( layer3D->extent3D().xMinimum(), 321384.94, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent3D().xMaximum(), 322342.3, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent3D().yMinimum(), 129147.09, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent3D().yMaximum(), 130554.6, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent3D().zMinimum(), 64.9, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent3D().zMaximum(), 105.6, 0.001 );
+  delete layer3D;
+
+  uri3D = QStringLiteral( TEST_DATA_DIR ) + QStringLiteral( "/3d/points_with_z.gpkg|layername=points_with_z" );
+  // QString uri3D = QStringLiteral( TEST_DATA_DIR ) + QStringLiteral( "/3d/earth_size_sphere_4978.gpkg|layername=earth_size_sphere_4978" );
+  layer3D = new QgsVectorLayer( uri3D, QStringLiteral( "gpkg" ), QLatin1String( "ogr" ) );
+  QVERIFY( layer3D->isValid() );
+  QGSCOMPARENEAR( layer3D->extent().xMinimum(), -102.436, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent().xMaximum(), -93.160, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent().yMinimum(), 40.577, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent().yMaximum(), 41.240, 0.001 );
+
+  QGSCOMPARENEAR( layer3D->extent3D().xMinimum(), -102.436, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent3D().xMaximum(), -93.160, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent3D().yMinimum(), 40.577, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent3D().yMaximum(), 41.240, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent3D().zMinimum(), -50.0, 0.001 );
+  QGSCOMPARENEAR( layer3D->extent3D().zMaximum(), 75.0, 0.001 );
+  delete layer3D;
+}
+
+void TestQgsOgrProvider::testVsiCredentialOptions()
+{
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION( 3, 6, 0 )
+  // test that credential options are correctly set when layer URI specifies them
+
+  // if actual aws dataset proves flaky, use this instead:
+  // std::unique_ptr< QgsVectorLayer > vl = std::make_unique< QgsVectorLayer >( QStringLiteral( "/vsis3/testbucket/test|credential:AWS_NO_SIGN_REQUEST=YES|credential:AWS_REGION=eu-central-1|credential:AWS_S3_ENDPOINT=localhost" ), QStringLiteral( "test" ), QStringLiteral( "ogr" ) );
+  std::unique_ptr<QgsVectorLayer> vl = std::make_unique<QgsVectorLayer>( QStringLiteral( "/vsis3/cdn.proj.org/files.geojson|credential:AWS_NO_SIGN_REQUEST=YES" ), QStringLiteral( "test" ), QStringLiteral( "ogr" ) );
+
+  // confirm that GDAL VSI configuration options are set
+  QString noSign( VSIGetPathSpecificOption( "/vsis3/cdn.proj.org", "AWS_NO_SIGN_REQUEST", nullptr ) );
+  QCOMPARE( noSign, QStringLiteral( "YES" ) );
+  QString region( VSIGetPathSpecificOption( "/vsis3/cdn.proj.org", "AWS_REGION", nullptr ) );
+  QCOMPARE( region, QString() );
+
+  // different bucket
+  noSign = QString( VSIGetPathSpecificOption( "/vsis3/another", "AWS_NO_SIGN_REQUEST", nullptr ) );
+  QCOMPARE( noSign, QString() );
+  region = QString( VSIGetPathSpecificOption( "/vsis3/another", "AWS_REGION", nullptr ) );
+  QCOMPARE( region, QString() );
+
+  QCOMPARE( vl->dataProvider()->dataSourceUri(), QStringLiteral( "/vsis3/cdn.proj.org/files.geojson|credential:AWS_NO_SIGN_REQUEST=YES" ) );
+
+  // credentials should be bucket specific
+  std::unique_ptr<QgsVectorLayer> vl2 = std::make_unique<QgsVectorLayer>( QStringLiteral( "/vsis3/ogranother/subfolder/subfolder2/test|credential:AWS_NO_SIGN_REQUEST=NO|credential:AWS_REGION=eu-central-2|credential:AWS_S3_ENDPOINT=localhost" ), QStringLiteral( "test" ), QStringLiteral( "ogr" ) );
+  noSign = QString( VSIGetPathSpecificOption( "/vsis3/cdn.proj.org", "AWS_NO_SIGN_REQUEST", nullptr ) );
+  QCOMPARE( noSign, QStringLiteral( "YES" ) );
+  region = QString( VSIGetPathSpecificOption( "/vsis3/cdn.proj.org", "AWS_REGION", nullptr ) );
+  QCOMPARE( region, QString() );
+  noSign = QString( VSIGetPathSpecificOption( "/vsis3/ogranother/subfolder/subfolder2", "AWS_NO_SIGN_REQUEST", nullptr ) );
+  QCOMPARE( noSign, QStringLiteral( "NO" ) );
+  region = QString( VSIGetPathSpecificOption( "/vsis3/ogranother/subfolder/subfolder2", "AWS_REGION", nullptr ) );
+  QCOMPARE( region, QStringLiteral( "eu-central-2" ) );
+  noSign = QString( VSIGetPathSpecificOption( "/vsis3/ogranother", "AWS_NO_SIGN_REQUEST", nullptr ) );
+  QCOMPARE( noSign, QString() );
+  region = QString( VSIGetPathSpecificOption( "/vsis3/ogranother", "AWS_REGION", nullptr ) );
+  QCOMPARE( region, QString() );
+
+  QCOMPARE( vl2->dataProvider()->dataSourceUri(), QStringLiteral( "/vsis3/ogranother/subfolder/subfolder2/test|credential:AWS_NO_SIGN_REQUEST=NO|credential:AWS_REGION=eu-central-2|credential:AWS_S3_ENDPOINT=localhost" ) );
+
+  // cleanup
+  VSIClearPathSpecificOptions( "/vsis3/cdn.proj.org" );
+  VSIClearPathSpecificOptions( "/vsis3/ogranother/subfolder/subfolder2" );
+#endif
+}
+
+void TestQgsOgrProvider::testVsiCredentialOptionsQuerySublayers()
+{
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION( 3, 6, 0 )
+  QgsProviderMetadata *ogrMetadata = QgsProviderRegistry::instance()->providerMetadata( "ogr" );
+  QVERIFY( ogrMetadata );
+
+  // test that credential options are correctly handled when querying sublayers
+
+  // if actual aws dataset proves flaky, use this instead:
+  // QList< QgsProviderSublayerDetails> subLayers = ogrMetadata->querySublayers( QStringLiteral( "/vsis3/sublayerstestbucket/test.shp|credential:AWS_NO_SIGN_REQUEST=YES|credential:AWS_REGION=eu-central-3|credential:AWS_S3_ENDPOINT=localhost" ) );
+  QList<QgsProviderSublayerDetails> subLayers = ogrMetadata->querySublayers( QStringLiteral( "/vsis3/cdn.proj.org/files.geojson|credential:AWS_NO_SIGN_REQUEST=YES" ) );
+
+  QCOMPARE( subLayers.size(), 1 );
+  QCOMPARE( subLayers.at( 0 ).name(), QStringLiteral( "files" ) );
+  QCOMPARE( subLayers.at( 0 ).uri(), QStringLiteral( "/vsis3/cdn.proj.org/files.geojson|layername=files|credential:AWS_NO_SIGN_REQUEST=YES" ) );
+  QCOMPARE( subLayers.at( 0 ).providerKey(), QStringLiteral( "ogr" ) );
+  QCOMPARE( subLayers.at( 0 ).type(), Qgis::LayerType::Vector );
+  QCOMPARE( subLayers.at( 0 ).wkbType(), Qgis::WkbType::Unknown );
+
+  // confirm that GDAL VSI configuration options are set
+  QString noSign( VSIGetPathSpecificOption( "/vsis3/cdn.proj.org", "AWS_NO_SIGN_REQUEST", nullptr ) );
+  QCOMPARE( noSign, QStringLiteral( "YES" ) );
+  QString region( VSIGetPathSpecificOption( "/vsis3/cdn.proj.org", "AWS_REGION", nullptr ) );
+  QCOMPARE( region, QString() );
+
+  //subLayers = ogrMetadata->querySublayers( QStringLiteral( "/vsis3/sublayerstestbucket/test.shp|credential:AWS_NO_SIGN_REQUEST=YES|credential:AWS_REGION=eu-central-3|credential:AWS_S3_ENDPOINT=localhost" ), Qgis::SublayerQueryFlag::FastScan );
+  subLayers = ogrMetadata->querySublayers( QStringLiteral( "/vsis3/cdn.proj.org/files.geojson|credential:AWS_NO_SIGN_REQUEST=YES" ), Qgis::SublayerQueryFlag::FastScan );
+  QCOMPARE( subLayers.size(), 1 );
+  QCOMPARE( subLayers.at( 0 ).name(), QStringLiteral( "files" ) );
+  QCOMPARE( subLayers.at( 0 ).uri(), QStringLiteral( "/vsis3/cdn.proj.org/files.geojson|credential:AWS_NO_SIGN_REQUEST=YES" ) );
+  QCOMPARE( subLayers.at( 0 ).providerKey(), QStringLiteral( "ogr" ) );
+  QCOMPARE( subLayers.at( 0 ).type(), Qgis::LayerType::Vector );
+  QCOMPARE( subLayers.at( 0 ).wkbType(), Qgis::WkbType::Unknown );
+
+  // cleanup
+  VSIClearPathSpecificOptions( "/vsis3/cdn.proj.org" );
+#endif
 }
 
 

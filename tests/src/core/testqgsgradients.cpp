@@ -44,11 +44,12 @@ class TestQgsGradients : public QgsTest
     Q_OBJECT
 
   public:
-    TestQgsGradients() : QgsTest( QStringLiteral( "Gradient Renderer Tests" ) ) {}
+    TestQgsGradients()
+      : QgsTest( QStringLiteral( "Gradient Renderer Tests" ) ) {}
 
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
+    void initTestCase();    // will be called before the first testfunction is executed.
+    void cleanupTestCase(); // will be called after the last testfunction was executed.
 
     void gradientSymbol();
     void gradientSymbolColors();
@@ -66,7 +67,7 @@ class TestQgsGradients : public QgsTest
     void gradientSymbolFromQml();
 
   private:
-    bool mTestHasError =  false ;
+    bool mTestHasError = false;
     bool setQml( const QString &type );
     bool imageCheck( const QString &type );
     QgsMapSettings mMapSettings;
@@ -92,11 +93,10 @@ void TestQgsGradients::initTestCase()
   //
   const QString myPolysFileName = mTestDataDir + "polys.shp";
   const QFileInfo myPolyFileInfo( myPolysFileName );
-  mpPolysLayer = new QgsVectorLayer( myPolyFileInfo.filePath(),
-                                     myPolyFileInfo.completeBaseName(), QStringLiteral( "ogr" ) );
+  mpPolysLayer = new QgsVectorLayer( myPolyFileInfo.filePath(), myPolyFileInfo.completeBaseName(), QStringLiteral( "ogr" ) );
 
   QgsVectorSimplifyMethod simplifyMethod;
-  simplifyMethod.setSimplifyHints( QgsVectorSimplifyMethod::NoSimplification );
+  simplifyMethod.setSimplifyHints( Qgis::VectorRenderingSimplificationFlags() );
   mpPolysLayer->setSimplifyMethod( simplifyMethod );
 
   // We only need maprender instead of mapcanvas
@@ -104,7 +104,6 @@ void TestQgsGradients::initTestCase()
   // and is more light weight
   //
   mMapSettings.setLayers( QList<QgsMapLayer *>() << mpPolysLayer );
-
 }
 void TestQgsGradients::cleanupTestCase()
 {
@@ -348,8 +347,8 @@ void TestQgsGradients::opacityWithDataDefinedColor()
   gradientFill->setGradientSpread( Qgis::GradientSpread::Pad );
   gradientFill->setReferencePoint2( QPointF( 1, 1 ) );
 
-  gradientFill->setDataDefinedProperty( QgsSymbolLayer::PropertyFillColor, QgsProperty::fromExpression( QStringLiteral( "if(importance > 2, 'red', 'green')" ) ) );
-  gradientFill->setDataDefinedProperty( QgsSymbolLayer::PropertySecondaryColor, QgsProperty::fromExpression( QStringLiteral( "if(importance > 2, 'blue', 'magenta')" ) ) );
+  gradientFill->setDataDefinedProperty( QgsSymbolLayer::Property::FillColor, QgsProperty::fromExpression( QStringLiteral( "if(importance > 2, 'red', 'green')" ) ) );
+  gradientFill->setDataDefinedProperty( QgsSymbolLayer::Property::SecondaryColor, QgsProperty::fromExpression( QStringLiteral( "if(importance > 2, 'blue', 'magenta')" ) ) );
   fillSymbol->setOpacity( 0.5 );
 
   const bool result = imageCheck( QStringLiteral( "gradient_opacityddcolor" ) );
@@ -371,10 +370,10 @@ void TestQgsGradients::dataDefinedOpacity()
   gradientFill->setReferencePoint1( QPointF( 0, 0 ) );
   gradientFill->setGradientSpread( Qgis::GradientSpread::Pad );
   gradientFill->setReferencePoint2( QPointF( 1, 1 ) );
-  gradientFill->setDataDefinedProperty( QgsSymbolLayer::PropertyFillColor, QgsProperty::fromExpression( QStringLiteral( "if(importance > 2, 'red', 'green')" ) ) );
-  gradientFill->setDataDefinedProperty( QgsSymbolLayer::PropertySecondaryColor, QgsProperty::fromExpression( QStringLiteral( "if(importance > 2, 'blue', 'magenta')" ) ) );
+  gradientFill->setDataDefinedProperty( QgsSymbolLayer::Property::FillColor, QgsProperty::fromExpression( QStringLiteral( "if(importance > 2, 'red', 'green')" ) ) );
+  gradientFill->setDataDefinedProperty( QgsSymbolLayer::Property::SecondaryColor, QgsProperty::fromExpression( QStringLiteral( "if(importance > 2, 'blue', 'magenta')" ) ) );
   fillSymbol->setOpacity( 1.0 );
-  fillSymbol->setDataDefinedProperty( QgsSymbol::PropertyOpacity, QgsProperty::fromExpression( QStringLiteral( "if(\"Value\" >10, 25, 50)" ) ) );
+  fillSymbol->setDataDefinedProperty( QgsSymbol::Property::Opacity, QgsProperty::fromExpression( QStringLiteral( "if(\"Value\" >10, 25, 50)" ) ) );
 
   const bool result = imageCheck( QStringLiteral( "gradient_ddopacity" ) );
   QVERIFY( result );
@@ -389,7 +388,7 @@ void TestQgsGradients::gradientSymbolFromQml()
 
   QVERIFY( setQml( "gradient" ) );
   QgsVectorSimplifyMethod simplifyMethod;
-  simplifyMethod.setSimplifyHints( QgsVectorSimplifyMethod::NoSimplification );
+  simplifyMethod.setSimplifyHints( Qgis::VectorRenderingSimplificationFlags() );
   mpPolysLayer->setSimplifyMethod( simplifyMethod );
   QVERIFY( imageCheck( "gradient_from_qml" ) );
 }

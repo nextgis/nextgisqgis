@@ -35,10 +35,10 @@ class TestQgisAppPython : public QObject
     TestQgisAppPython();
 
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
-    void init() {} // will be called before each testfunction is executed.
-    void cleanup() {} // will be called after every testfunction.
+    void initTestCase();    // will be called before the first testfunction is executed.
+    void cleanupTestCase(); // will be called after the last testfunction was executed.
+    void init() {}          // will be called before each testfunction is executed.
+    void cleanup() {}       // will be called after every testfunction.
 
     void hasPython();
     void plugins();
@@ -58,7 +58,8 @@ TestQgisAppPython::TestQgisAppPython() = default;
 //runs before all tests
 void TestQgisAppPython::initTestCase()
 {
-  qputenv( "QGIS_PLUGINPATH", QByteArray( TEST_DATA_DIR ) + "/test_plugin_path" );
+  const QByteArray pluginPath = QByteArray( TEST_DATA_DIR ) + "/test_plugin_path";
+  qputenv( "QGIS_PLUGINPATH", pluginPath );
 
   // Set up the QgsSettings environment
   QCoreApplication::setOrganizationName( QStringLiteral( "QGIS" ) );

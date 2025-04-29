@@ -31,7 +31,6 @@
  * \brief A widget which allows users to specify a list of substitutions to apply to a string, with
  * options for exporting and importing substitution lists.
  * \see QgsSubstitutionListDialog
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsSubstitutionListWidget : public QgsPanelWidget, private Ui::QgsSubstitutionListWidgetBase
 {
@@ -39,7 +38,6 @@ class GUI_EXPORT QgsSubstitutionListWidget : public QgsPanelWidget, private Ui::
     Q_PROPERTY( QgsStringReplacementCollection substitutions READ substitutions WRITE setSubstitutions NOTIFY substitutionsChanged )
 
   public:
-
     /**
      * Constructor for QgsSubstitutionListWidget.
      * \param parent parent widget
@@ -73,9 +71,7 @@ class GUI_EXPORT QgsSubstitutionListWidget : public QgsPanelWidget, private Ui::
     void mButtonImport_clicked();
 
   private:
-
     void addSubstitution( const QgsStringReplacement &substitution );
-
 };
 
 /**
@@ -84,7 +80,6 @@ class GUI_EXPORT QgsSubstitutionListWidget : public QgsPanelWidget, private Ui::
  * \brief A dialog which allows users to specify a list of substitutions to apply to a string, with
  * options for exporting and importing substitution lists.
  * \see QgsSubstitutionListWidget
- * \since QGIS 3.0
 */
 class GUI_EXPORT QgsSubstitutionListDialog : public QDialog
 {
@@ -92,7 +87,6 @@ class GUI_EXPORT QgsSubstitutionListDialog : public QDialog
     Q_PROPERTY( QgsStringReplacementCollection substitutions READ substitutions WRITE setSubstitutions )
 
   public:
-
     /**
      * Constructor for QgsSubstitutionListDialog.
      * \param parent parent widget
@@ -114,9 +108,7 @@ class GUI_EXPORT QgsSubstitutionListDialog : public QDialog
 
 
   private:
-
     QgsSubstitutionListWidget *mWidget = nullptr;
-
 };
 
 #endif // QGSSUBSTITUTIONLISTWIDGET_H

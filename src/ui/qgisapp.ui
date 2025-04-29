@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1277</width>
+    <width>1368</width>
     <height>506</height>
    </rect>
   </property>
@@ -16,8 +16,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1277</width>
-     <height>22</height>
+     <width>1368</width>
+     <height>30</height>
     </rect>
    </property>
    <property name="toolTip">
@@ -111,6 +111,9 @@
      <property name="title">
       <string>&amp;Decorations</string>
      </property>
+     <property name="toolTipsVisible">
+      <bool>true</bool>
+     </property>
      <addaction name="mActionDecorationGrid"/>
      <addaction name="mActionDecorationScaleBar"/>
      <addaction name="mActionDecorationImage"/>
@@ -142,6 +145,13 @@
      <addaction name="mActionToggleSelectedLayersIndependently"/>
      <addaction name="mActionHideDeselectedLayers"/>
     </widget>
+    <widget class="QMenu" name="menuData_Filtering">
+     <property name="title">
+      <string>Data Filtering</string>
+     </property>
+     <addaction name="mActionTemporalController"/>
+     <addaction name="mActionElevationController"/>
+    </widget>
     <addaction name="mActionNewMapCanvas"/>
     <addaction name="m3DMapViewsMenu"/>
     <addaction name="mActionPan"/>
@@ -149,6 +159,7 @@
     <addaction name="mActionZoomIn"/>
     <addaction name="mActionZoomOut"/>
     <addaction name="separator"/>
+    <addaction name="menuData_Filtering"/>
     <addaction name="mActionIdentify"/>
     <addaction name="mMenuMeasure"/>
     <addaction name="mActionStatisticalSummary"/>
@@ -280,12 +291,12 @@
     <addaction name="mActionDonate"/>
     <addaction name="mActionGetInvolved"/>
     <addaction name="mActionNeedSupport"/>
+    <addaction name="mActionSponsors"/>
     <addaction name="separator"/>
     <addaction name="mActionQgisHomePage"/>
     <addaction name="mActionCheckQgisVersion"/>
     <addaction name="separator"/>
     <addaction name="mActionAbout"/>
-    <addaction name="mActionSponsors"/>
    </widget>
    <widget class="QMenu" name="mSettingsMenu">
     <property name="title">
@@ -304,7 +315,6 @@
      <string>&amp;Raster</string>
     </property>
     <addaction name="mActionShowRasterCalculator"/>
-    <addaction name="mActionShowAlignRasterTool"/>
    </widget>
    <widget class="QMenu" name="mVectorMenu">
     <property name="title">
@@ -342,10 +352,8 @@
      <property name="title">
       <string>Add Annotation</string>
      </property>
-     <addaction name="mActionTextAnnotation"/>
      <addaction name="mActionFormAnnotation"/>
      <addaction name="mActionHtmlAnnotation"/>
-     <addaction name="mActionSvgAnnotation"/>
     </widget>
     <widget class="QMenu" name="mMenuEditAttributes">
      <property name="title">
@@ -436,29 +444,6 @@
    <addaction name="mActionNewPrintLayout"/>
    <addaction name="mActionShowLayoutManager"/>
    <addaction name="mActionStyleManager"/>
-  </widget>
-  <widget class="QToolBar" name="mNGAccountToolBar">
-   <property name="windowTitle">
-    <string>NextGIS Account Toolbar</string>
-   </property>
-   <property name="toolTip">
-    <string>NextGIS Account Toolbar</string>
-   </property>
-   <property name="movable">
-    <bool>true</bool>
-   </property>
-   <property name="allowedAreas">
-    <set>Qt::TopToolBarArea</set>
-   </property>
-   <property name="floatable">
-    <bool>false</bool>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
   </widget>
   <widget class="QToolBar" name="mLayerToolBar">
    <property name="windowTitle">
@@ -910,7 +895,7 @@
     <string>Ctrl+Q</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::QuitRole</enum>
+    <enum>QAction::MenuRole::QuitRole</enum>
    </property>
   </action>
   <action name="mActionUndo">
@@ -1133,7 +1118,8 @@ Click and drag to select vertices by rectangle.
 Alt+click to select vertices by polygon.
 Shift+click/drag to add vertices to selection.
 Ctrl+click/drag to remove vertices from selection.
-Shift+R to enable range selection.</string>
+Shift+R to enable range selection.
+Shift+O to turn segments into straight or curve lines.</string>
    </property>
   </action>
   <action name="mActionRotatePointSymbols">
@@ -1522,18 +1508,6 @@ Shift+R to enable range selection.</string>
     <string>F5</string>
    </property>
   </action>
-  <action name="mActionTextAnnotation">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionTextAnnotation.svg</normaloff>:/images/themes/default/mActionTextAnnotation.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Text Annotation</string>
-   </property>
-  </action>
   <action name="mActionFormAnnotation">
    <property name="checkable">
     <bool>true</bool>
@@ -1544,18 +1518,6 @@ Shift+R to enable range selection.</string>
    </property>
    <property name="text">
     <string>Form Annotation</string>
-   </property>
-  </action>
-  <action name="mActionAnnotation">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionAnnotation.svg</normaloff>:/images/themes/default/mActionAnnotation.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Move Annotation</string>
    </property>
   </action>
   <action name="mActionLabeling">
@@ -1919,7 +1881,7 @@ Shift+R to enable range selection.</string>
     <string>&amp;Options…</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::NoRole</enum>
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
   <action name="mActionCustomProjection">
@@ -1940,7 +1902,7 @@ Shift+R to enable range selection.</string>
     <string>Keyboard Shortcuts…</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::NoRole</enum>
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
   <action name="mActionLocalHistogramStretch">
@@ -2010,7 +1972,7 @@ Shift+R to enable range selection.</string>
     <string>About</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::AboutRole</enum>
+    <enum>QAction::MenuRole::AboutRole</enum>
    </property>
   </action>
   <action name="mActionSponsors">
@@ -2159,9 +2121,6 @@ Acts on all layers.</string>
     <string>&amp;Title Label…</string>
    </property>
    <property name="toolTip">
-    <string>Title Label</string>
-   </property>
-   <property name="whatsThis">
     <string>Creates a title label that is displayed on the map canvas.</string>
    </property>
   </action>
@@ -2174,9 +2133,6 @@ Acts on all layers.</string>
     <string>&amp;Copyright Label…</string>
    </property>
    <property name="toolTip">
-    <string>Copyright Label</string>
-   </property>
-   <property name="whatsThis">
     <string>Creates a copyright label that is displayed on the map canvas.</string>
    </property>
   </action>
@@ -2189,10 +2145,7 @@ Acts on all layers.</string>
     <string>&amp;Image…</string>
    </property>
    <property name="toolTip">
-    <string>Image</string>
-   </property>
-   <property name="whatsThis">
-    <string>&quot;Creates an image that is displayed on the map canvas&quot;</string>
+    <string>Creates an image that is displayed on the map canvas</string>
    </property>
   </action>
   <action name="mActionDecorationNorthArrow">
@@ -2204,10 +2157,7 @@ Acts on all layers.</string>
     <string>&amp;North Arrow…</string>
    </property>
    <property name="toolTip">
-    <string>North Arrow</string>
-   </property>
-   <property name="whatsThis">
-    <string>&quot;Creates a north arrow that is displayed on the map canvas&quot;</string>
+    <string>Creates a north arrow that is displayed on the map canvas</string>
    </property>
   </action>
   <action name="mActionDecorationScaleBar">
@@ -2219,9 +2169,6 @@ Acts on all layers.</string>
     <string>&amp;Scale Bar…</string>
    </property>
    <property name="toolTip">
-    <string>Scale Bar</string>
-   </property>
-   <property name="whatsThis">
     <string>Creates a scale bar that is displayed on the map canvas</string>
    </property>
   </action>
@@ -2261,7 +2208,7 @@ Acts on all layers.</string>
     <string>Pan Map to Selection</string>
    </property>
    <property name="toolTip">
-    <string>Pan Map to Selection</string>
+    <string>Pans the map canvas to selected features</string>
    </property>
   </action>
   <action name="mActionOffsetCurve">
@@ -2285,7 +2232,7 @@ Acts on all layers.</string>
     <string>Copy Style</string>
    </property>
    <property name="toolTip">
-    <string>Copy Style</string>
+    <string>Copy style of the active layer</string>
    </property>
   </action>
   <action name="mActionPasteStyle">
@@ -2297,7 +2244,7 @@ Acts on all layers.</string>
     <string>Paste Style</string>
    </property>
    <property name="toolTip">
-    <string>Paste Style</string>
+    <string>Applies a copied style onto the active style</string>
    </property>
   </action>
   <action name="mActionAddWcsLayer">
@@ -2318,9 +2265,6 @@ Acts on all layers.</string>
     <string>&amp;Grid…</string>
    </property>
    <property name="toolTip">
-    <string>Grid</string>
-   </property>
-   <property name="whatsThis">
     <string>Creates a grid that is displayed on the map canvas</string>
    </property>
   </action>
@@ -2437,18 +2381,6 @@ Acts on the currently active layer only.</string>
    </property>
    <property name="toolTip">
     <string>Duplicate Layer(s)</string>
-   </property>
-  </action>
-  <action name="mActionSvgAnnotation">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../images/images.qrc">
-     <normaloff>:/images/themes/default/mActionSvgAnnotation.svg</normaloff>:/images/themes/default/mActionSvgAnnotation.svg</iconset>
-   </property>
-   <property name="text">
-    <string>SVG Annotation</string>
    </property>
   </action>
   <action name="mActionSaveAllEdits">
@@ -2877,11 +2809,6 @@ Shift+click to snap rotation to 45 degree steps.</string>
     <string>Show Statistical Summary</string>
    </property>
   </action>
-  <action name="mActionShowAlignRasterTool">
-   <property name="text">
-    <string>Align Rasters…</string>
-   </property>
-  </action>
   <action name="mActionReportaBug">
    <property name="text">
     <string>Report an Issue</string>
@@ -2974,7 +2901,7 @@ Shift+click to snap rotation to 45 degree steps.</string>
     <string>&amp;Layout Extents…</string>
    </property>
    <property name="toolTip">
-    <string>Layout Extents</string>
+    <string>Displays extent of the print layouts on the map canvas</string>
    </property>
   </action>
   <action name="mActionDataSourceManager">
@@ -3403,6 +3330,19 @@ Shows placeholders for labels which could not be placed, e.g. due to overlaps wi
   <action name="mActionGetInvolved">
    <property name="text">
     <string>Get Involved</string>
+   </property>
+  </action>
+  <action name="mActionElevationController">
+   <property name="icon">
+    <iconset resource="../../images/images.qrc">
+     <normaloff>:/images/themes/default/mesh/Elevation.svg</normaloff>
+     <normalon>:/images/themes/default/mesh/Elevation.svg</normalon>:/images/themes/default/mesh/Elevation.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Elevation Controller</string>
+   </property>
+   <property name="toolTip">
+    <string>Elevation Controller Panel</string>
    </property>
   </action>
  </widget>

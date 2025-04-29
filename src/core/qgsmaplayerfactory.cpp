@@ -20,9 +20,10 @@
 #include "qgsrasterlayer.h"
 #include "qgsmeshlayer.h"
 #include "qgspointcloudlayer.h"
-// #include "qgsvectortilelayer.h"
+#include "qgsvectortilelayer.h"
 #include "qgsannotationlayer.h"
 #include "qgsgrouplayer.h"
+#include "qgstiledscenelayer.h"
 
 Qgis::LayerType QgsMapLayerFactory::typeFromString( const QString &string, bool &ok )
 {
@@ -33,8 +34,8 @@ Qgis::LayerType QgsMapLayerFactory::typeFromString( const QString &string, bool 
     return Qgis::LayerType::Raster;
   else if ( string.compare( QLatin1String( "mesh" ), Qt::CaseInsensitive ) == 0 )
     return Qgis::LayerType::Mesh;
-//  else if ( string.compare( QLatin1String( "vector-tile" ), Qt::CaseInsensitive ) == 0 )
-//    return Qgis::LayerType::VectorTile;
+  else if ( string.compare( QLatin1String( "vector-tile" ), Qt::CaseInsensitive ) == 0 )
+    return Qgis::LayerType::VectorTile;
   else if ( string.compare( QLatin1String( "point-cloud" ), Qt::CaseInsensitive ) == 0 )
     return Qgis::LayerType::PointCloud;
   else if ( string.compare( QLatin1String( "plugin" ), Qt::CaseInsensitive ) == 0 )
@@ -43,6 +44,8 @@ Qgis::LayerType QgsMapLayerFactory::typeFromString( const QString &string, bool 
     return Qgis::LayerType::Annotation;
   else if ( string.compare( QLatin1String( "group" ), Qt::CaseInsensitive ) == 0 )
     return Qgis::LayerType::Group;
+  else if ( string.compare( QLatin1String( "tiled-scene" ), Qt::CaseInsensitive ) == 0 )
+    return Qgis::LayerType::TiledScene;
 
   ok = false;
   return Qgis::LayerType::Vector;
@@ -68,6 +71,8 @@ QString QgsMapLayerFactory::typeToString( Qgis::LayerType type )
       return QStringLiteral( "point-cloud" );
     case Qgis::LayerType::Group:
       return QStringLiteral( "group" );
+    case Qgis::LayerType::TiledScene:
+      return QStringLiteral( "tiled-scene" );
   }
   return QString();
 }
@@ -101,11 +106,11 @@ QgsMapLayer *QgsMapLayerFactory::createLayer( const QString &uri, const QString 
       return new QgsMeshLayer( uri, name, provider, meshOptions );
     }
 
-    // case Qgis::LayerType::VectorTile:
-    // {
-    //   const QgsVectorTileLayer::LayerOptions vectorTileOptions( options.transformContext );
-    //   return new QgsVectorTileLayer( uri, name, vectorTileOptions );
-    // }
+    case Qgis::LayerType::VectorTile:
+    {
+      const QgsVectorTileLayer::LayerOptions vectorTileOptions( options.transformContext );
+      return new QgsVectorTileLayer( uri, name, vectorTileOptions );
+    }
 
     case Qgis::LayerType::Annotation:
     {
@@ -125,6 +130,14 @@ QgsMapLayer *QgsMapLayerFactory::createLayer( const QString &uri, const QString 
       pointCloudOptions.loadDefaultStyle = options.loadDefaultStyle;
       pointCloudOptions.transformContext = options.transformContext;
       return new QgsPointCloudLayer( uri, name, provider, pointCloudOptions );
+    }
+
+    case Qgis::LayerType::TiledScene:
+    {
+      QgsTiledSceneLayer::LayerOptions tiledSceneOptions;
+      tiledSceneOptions.loadDefaultStyle = options.loadDefaultStyle;
+      tiledSceneOptions.transformContext = options.transformContext;
+      return new QgsTiledSceneLayer( uri, name, provider, tiledSceneOptions );
     }
 
     case Qgis::LayerType::Plugin:

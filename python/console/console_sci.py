@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 """
 /***************************************************************************
 Python Console for QGIS
@@ -19,11 +18,14 @@ email                : lrssvtml (at) gmail (dot) com
 Some portions of code were taken from https://code.google.com/p/pydee/
 """
 
+from __future__ import annotations
+
 import code
 import os
 import re
 import sys
 import traceback
+from typing import Optional, TYPE_CHECKING
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
@@ -31,15 +33,13 @@ from qgis.PyQt.Qsci import QsciScintilla
 from qgis.PyQt.QtCore import Qt, QCoreApplication
 from qgis.PyQt.QtGui import QKeySequence, QFontMetrics, QClipboard
 from qgis.PyQt.QtWidgets import QShortcut, QApplication
-from qgis.core import QgsApplication, QgsSettings, Qgis
-from qgis.gui import (
-    QgsCodeEditorPython,
-    QgsCodeEditorColorScheme,
-    QgsCodeEditor,
-    QgsCodeInterpreter
-)
+from qgis.core import QgsApplication, Qgis, QgsProcessingUtils
+from qgis.gui import QgsCodeEditorPython, QgsCodeEditor, QgsCodeInterpreter
 
 from .process_wrapper import ProcessWrapper
+
+if TYPE_CHECKING:
+    from .console import PythonConsoleWidget
 
 _init_statements = [
     # Python
@@ -68,7 +68,6 @@ except ModuleNotFoundError:
     "from qgis.PyQt.QtWidgets import *",
     "from qgis.PyQt.QtNetwork import *",
     "from qgis.PyQt.QtXml import *",
-
     r"""
 def __parse_object(object=None):
     if not object:
@@ -132,7 +131,7 @@ def _pyqgis(object=None):
     elif api[0] == 'qt':
         qtversion = '.'.join(qVersion().split(".")[:2])
         webbrowser.open(f"https://doc.qt.io/qt-{qtversion}/{api[2].lower()}.html")
-"""
+""",
 ]
 
 
@@ -144,11 +143,11 @@ SUBPROCESS = 2  # Sending input to a subprocess
 
 class PythonInterpreter(QgsCodeInterpreter, code.InteractiveInterpreter):
 
-    def __init__(self, shell):
+    def __init__(self, shell: ShellScintilla):
         super(QgsCodeInterpreter, self).__init__()
         code.InteractiveInterpreter.__init__(self, locals=None)
 
-        self.shell = shell
+        self.shell: ShellScintilla = shell
         self.sub_process = None
         self.buffer = []
 
@@ -190,7 +189,9 @@ class PythonInterpreter(QgsCodeInterpreter, code.InteractiveInterpreter):
                 # Use a temporary file to communicate the result to the inner interpreter
                 tmp = Path(NamedTemporaryFile(delete=False).name)
                 tmp.write_text(res, encoding="utf-8")
-                self.runsource(f'{varname} = Path("{tmp}").read_text(encoding="utf-8").split("\\n")')
+                self.runsource(
+                    f'{varname} = Path("{tmp}").read_text(encoding="utf-8").split("\\n")'
+                )
                 tmp.unlink()
                 self.sub_process = None
                 return 0
@@ -209,19 +210,27 @@ class PythonInterpreter(QgsCodeInterpreter, code.InteractiveInterpreter):
         res = 0
 
         import webbrowser
-        version = 'master' if 'master' in Qgis.QGIS_VERSION.lower() else \
-            re.findall(r'^\d.[0-9]*', Qgis.QGIS_VERSION)[0]
+
+        version = (
+            "master"
+            if "master" in Qgis.QGIS_VERSION.lower()
+            else re.findall(r"^\d.[0-9]*", Qgis.QGIS_VERSION)[0]
+        )
 
         if cmd == "?":
-            self.shell.parent.shellOut.insertHelp()
-        elif cmd == '_pyqgis':
-            webbrowser.open("https://qgis.org/pyqgis/{}".format(version))
-        elif cmd == '_api':
-            webbrowser.open("https://qgis.org/api/{}".format('' if version == 'master' else version))
-        elif cmd == '_cookbook':
+            self.shell.console_widget.shell_output.insertHelp()
+        elif cmd == "_pyqgis":
+            webbrowser.open(f"https://qgis.org/pyqgis/{version}")
+        elif cmd == "_api":
+            webbrowser.open(
+                "https://qgis.org/api/{}".format("" if version == "master" else version)
+            )
+        elif cmd == "_cookbook":
             webbrowser.open(
                 "https://docs.qgis.org/{}/en/docs/pyqgis_developer_cookbook/".format(
-                    'testing' if version == 'master' else version))
+                    "testing" if version == "master" else version
+                )
+            )
         else:
             self.buffer.append(cmd)
             src = "\n".join(self.buffer)
@@ -235,20 +244,21 @@ class PythonInterpreter(QgsCodeInterpreter, code.InteractiveInterpreter):
         if sys.stdout:
             sys.stdout.fire_keyboard_interrupt = False
         if len(txt) > 0:
-            sys.stdout.write(f'{self.promptForState()} {txt}\n')
+            sys.stdout.write(f"{self.promptForState()} {txt}\n")
 
-    def runsource(self, source, filename='<input>', symbol='single'):
+    def runsource(self, source, filename="<input>", symbol="single"):
         if sys.stdout:
             sys.stdout.fire_keyboard_interrupt = False
 
         hook = sys.excepthook
         try:
+
             def excepthook(etype, value, tb):
                 self.write("".join(traceback.format_exception(etype, value, tb)))
 
             sys.excepthook = excepthook
 
-            return super(PythonInterpreter, self).runsource(source, filename, symbol)
+            return super().runsource(source, filename, symbol)
         finally:
             sys.excepthook = hook
 
@@ -274,41 +284,51 @@ class PythonInterpreter(QgsCodeInterpreter, code.InteractiveInterpreter):
 
 class ShellScintilla(QgsCodeEditorPython):
 
-    def __init__(self, parent=None):
+    def __init__(self, console_widget: PythonConsoleWidget):
         # We set the ImmediatelyUpdateHistory flag here, as users can easily
         # crash QGIS by entering a Python command, and we don't want the
-        # history leading to the crash lost..
-        super().__init__(parent, [], QgsCodeEditor.Mode.CommandInput,
-                         flags=QgsCodeEditor.Flags(QgsCodeEditor.Flag.CodeFolding | QgsCodeEditor.Flag.ImmediatelyUpdateHistory))
+        # history leading to the crash lost...
+        super().__init__(
+            console_widget,
+            [],
+            QgsCodeEditor.Mode.CommandInput,
+            flags=QgsCodeEditor.Flags(
+                QgsCodeEditor.Flag.CodeFolding
+                | QgsCodeEditor.Flag.ImmediatelyUpdateHistory
+            ),
+        )
 
-        self.parent = parent
-        self._interpreter = PythonInterpreter(self)
+        self.console_widget: PythonConsoleWidget = console_widget
+        self._interpreter = PythonInterpreter(shell=self)
         self.setInterpreter(self._interpreter)
 
-        self.opening = ['(', '{', '[', "'", '"']
-        self.closing = [')', '}', ']', "'", '"']
-
-        self.settings = QgsSettings()
+        self.opening = ["(", "{", "[", "'", '"']
+        self.closing = [")", "}", "]", "'", '"']
 
         self.setHistoryFilePath(
-            os.path.join(QgsApplication.qgisSettingsDirPath(), "console_history.txt"))
+            os.path.join(QgsApplication.qgisSettingsDirPath(), "console_history.txt")
+        )
 
         self.refreshSettingsShell()
 
         # Disable command key
         ctrl, shift = self.SCMOD_CTRL << 16, self.SCMOD_SHIFT << 16
-        self.SendScintilla(QsciScintilla.SCI_CLEARCMDKEY, ord('L') + ctrl)
-        self.SendScintilla(QsciScintilla.SCI_CLEARCMDKEY, ord('T') + ctrl)
-        self.SendScintilla(QsciScintilla.SCI_CLEARCMDKEY, ord('D') + ctrl)
-        self.SendScintilla(QsciScintilla.SCI_CLEARCMDKEY, ord('Z') + ctrl)
-        self.SendScintilla(QsciScintilla.SCI_CLEARCMDKEY, ord('Y') + ctrl)
-        self.SendScintilla(QsciScintilla.SCI_CLEARCMDKEY, ord('L') + ctrl + shift)
+        self.SendScintilla(QsciScintilla.SCI_CLEARCMDKEY, ord("L") + ctrl)
+        self.SendScintilla(QsciScintilla.SCI_CLEARCMDKEY, ord("T") + ctrl)
+        self.SendScintilla(QsciScintilla.SCI_CLEARCMDKEY, ord("D") + ctrl)
+        self.SendScintilla(QsciScintilla.SCI_CLEARCMDKEY, ord("Z") + ctrl)
+        self.SendScintilla(QsciScintilla.SCI_CLEARCMDKEY, ord("Y") + ctrl)
+        self.SendScintilla(QsciScintilla.SCI_CLEARCMDKEY, ord("L") + ctrl + shift)
 
         # New QShortcut = ctrl+space/ctrl+alt+space for Autocomplete
-        self.newShortcutCSS = QShortcut(QKeySequence(Qt.CTRL + Qt.SHIFT + Qt.Key_Space), self)
-        self.newShortcutCAS = QShortcut(QKeySequence(Qt.CTRL + Qt.ALT + Qt.Key_Space), self)
-        self.newShortcutCSS.setContext(Qt.WidgetShortcut)
-        self.newShortcutCAS.setContext(Qt.WidgetShortcut)
+        self.newShortcutCSS = QShortcut(
+            QKeySequence(Qt.Modifier.CTRL | Qt.Modifier.SHIFT | Qt.Key.Key_Space), self
+        )
+        self.newShortcutCAS = QShortcut(
+            QKeySequence(Qt.Modifier.CTRL | Qt.Modifier.ALT | Qt.Key.Key_Space), self
+        )
+        self.newShortcutCSS.setContext(Qt.ShortcutContext.WidgetShortcut)
+        self.newShortcutCAS.setContext(Qt.ShortcutContext.WidgetShortcut)
         self.newShortcutCAS.activated.connect(self.autoComplete)
         self.newShortcutCSS.activated.connect(self.showHistory)
 
@@ -329,18 +349,25 @@ class ShellScintilla(QgsCodeEditorPython):
         self._setMinimumHeight()
 
     def on_session_history_cleared(self):
-        msgText = QCoreApplication.translate('PythonConsole',
-                                             'Session history cleared successfully.')
-        self.parent.callWidgetMessageBar(msgText)
+        msgText = QCoreApplication.translate(
+            "PythonConsole", "Session history cleared successfully."
+        )
+        self.console_widget.callWidgetMessageBar(msgText)
 
     def on_persistent_history_cleared(self):
-        msgText = QCoreApplication.translate('PythonConsole',
-                                             'History cleared successfully.')
-        self.parent.callWidgetMessageBar(msgText)
+        msgText = QCoreApplication.translate(
+            "PythonConsole", "History cleared successfully."
+        )
+        self.console_widget.callWidgetMessageBar(msgText)
 
     def keyPressEvent(self, e):
 
-        if e.modifiers() & (Qt.ControlModifier | Qt.MetaModifier) and e.key() == Qt.Key_C and not self.hasSelectedText():
+        if (
+            e.modifiers()
+            & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.MetaModifier)
+            and e.key() == Qt.Key.Key_C
+            and not self.hasSelectedText()
+        ):
             if self._interpreter.sub_process:
                 sys.stderr.write("Terminate child process\n")
                 self._interpreter.sub_process.kill()
@@ -359,8 +386,8 @@ class ShellScintilla(QgsCodeEditorPython):
         e: the mouse press event (QMouseEvent)
         """
         self.setFocus()
-        if e.button() == Qt.MidButton:
-            stringSel = QApplication.clipboard().text(QClipboard.Selection)
+        if e.button() == Qt.MouseButton.MiddleButton:
+            stringSel = QApplication.clipboard().text(QClipboard.Mode.Selection)
             if not self.isCursorOnLastLine():
                 self.moveCursorToEnd()
             self.insertFromDropPaste(stringSel)
@@ -389,7 +416,7 @@ class ShellScintilla(QgsCodeEditorPython):
             stringDrag = e.mimeData().text()
             self.insertFromDropPaste(stringDrag)
             self.setFocus()
-            e.setDropAction(Qt.CopyAction)
+            e.setDropAction(Qt.DropAction.CopyAction)
             e.accept()
         else:
             QgsCodeEditorPython.dropEvent(self, e)
@@ -429,18 +456,40 @@ class ShellScintilla(QgsCodeEditorPython):
         if sys.stderr:
             sys.stderr.write(txt)
 
-    def runFile(self, filename):
+    def runFile(self, filename, override_file_name: str | None = None):
         filename = filename.replace("\\", "/")
         dirname = os.path.dirname(filename)
 
         # Append the directory of the file to the path and set __file__ to the filename
-        self._interpreter.execCommandImpl("sys.path.append('{0}')".format(dirname), False)
-        self._interpreter.execCommandImpl("__file__ = '{0}'".format(filename), False)
+        self._interpreter.execCommandImpl(
+            "sys.path.append({})".format(
+                QgsProcessingUtils.stringToPythonLiteral(dirname)
+            ),
+            False,
+        )
+        self._interpreter.execCommandImpl(
+            f"__file__ = {QgsProcessingUtils.stringToPythonLiteral(filename)}",
+            False,
+        )
 
         try:
             # Run the file
-            self.runCommand("exec(Path('{0}').read_text())".format(filename), skipHistory=True)
+
+            self.runCommand(
+                "exec(compile(Path({}).read_text(), {}, 'exec'))".format(
+                    QgsProcessingUtils.stringToPythonLiteral(filename),
+                    QgsProcessingUtils.stringToPythonLiteral(
+                        override_file_name or filename
+                    ),
+                ),
+                skipHistory=True,
+            )
         finally:
             # Remove the directory from the path and delete the __file__ variable
             self._interpreter.execCommandImpl("del __file__", False)
-            self._interpreter.execCommandImpl("sys.path.remove('{0}')".format(dirname), False)
+            self._interpreter.execCommandImpl(
+                "sys.path.remove({})".format(
+                    QgsProcessingUtils.stringToPythonLiteral(dirname)
+                ),
+                False,
+            )

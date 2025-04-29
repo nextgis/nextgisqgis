@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgsprovidersublayermodel.h"
+#include "moc_qgsprovidersublayermodel.cpp"
 #include "qgsprovidersublayerdetails.h"
 #include "qgsiconutils.h"
 #include "qgsapplication.h"
@@ -79,6 +80,7 @@ QgsProviderSublayerModelNode *QgsProviderSublayerModelGroup::addChild( std::uniq
 
   QgsProviderSublayerModelNode *res = child.get();
   mChildren.emplace_back( std::move( child ) );
+  // cppcheck-suppress returnDanglingLifetime
   return res;
 }
 
@@ -227,6 +229,7 @@ QVariant QgsProviderSublayerModelSublayerNode::data( int role, int column ) cons
             case Qgis::LayerType::Annotation:
             case Qgis::LayerType::PointCloud:
             case Qgis::LayerType::Group:
+            case Qgis::LayerType::TiledScene:
               return mSublayer.description();
           }
           break;

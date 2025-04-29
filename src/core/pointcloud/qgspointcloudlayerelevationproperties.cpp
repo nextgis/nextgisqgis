@@ -16,10 +16,11 @@
  ***************************************************************************/
 
 #include "qgspointcloudlayerelevationproperties.h"
+#include "moc_qgspointcloudlayerelevationproperties.cpp"
 #include "qgspointcloudlayer.h"
-#include "qgssymbollayerutils.h"
 #include "qgsapplication.h"
 #include "qgscolorschemeregistry.h"
+#include "qgscolorutils.h"
 
 QgsPointCloudLayerElevationProperties::QgsPointCloudLayerElevationProperties( QObject *parent )
   : QgsMapLayerElevationProperties( parent )
@@ -51,7 +52,7 @@ QDomElement QgsPointCloudLayerElevationProperties::writeXml( QDomElement &parent
   element.setAttribute( QStringLiteral( "point_size" ), qgsDoubleToString( mPointSize ) );
   element.setAttribute( QStringLiteral( "point_size_unit" ), QgsUnitTypes::encodeUnit( mPointSizeUnit ) );
   element.setAttribute( QStringLiteral( "point_symbol" ), qgsEnumValueToKey( mPointSymbol ) );
-  element.setAttribute( QStringLiteral( "point_color" ), QgsSymbolLayerUtils::encodeColor( mPointColor ) );
+  element.setAttribute( QStringLiteral( "point_color" ), QgsColorUtils::colorToString( mPointColor ) );
   element.setAttribute( QStringLiteral( "respect_layer_colors" ), mRespectLayerColors ? QStringLiteral( "1" ) : QStringLiteral( "0" ) );
   element.setAttribute( QStringLiteral( "opacity_by_distance" ), mApplyOpacityByDistanceEffect ? QStringLiteral( "1" ) : QStringLiteral( "0" ) );
 
@@ -77,7 +78,7 @@ bool QgsPointCloudLayerElevationProperties::readXml( const QDomElement &element,
   const QString colorString = elevationElement.attribute( QStringLiteral( "point_color" ) );
   if ( !colorString.isEmpty() )
   {
-    mPointColor = QgsSymbolLayerUtils::decodeColor( elevationElement.attribute( QStringLiteral( "point_color" ) ) );
+    mPointColor = QgsColorUtils::colorFromString( elevationElement.attribute( QStringLiteral( "point_color" ) ) );
   }
   else
   {
@@ -114,7 +115,7 @@ QString QgsPointCloudLayerElevationProperties::htmlSummary() const
   return QStringLiteral( "<ul><li>%1</li></ul>" ).arg( properties.join( QLatin1String( "</li><li>" ) ) );
 }
 
-bool QgsPointCloudLayerElevationProperties::isVisibleInZRange( const QgsDoubleRange & ) const
+bool QgsPointCloudLayerElevationProperties::isVisibleInZRange( const QgsDoubleRange &, QgsMapLayer * ) const
 {
   // TODO -- test actual point cloud z range
   return true;
@@ -139,6 +140,17 @@ QgsDoubleRange QgsPointCloudLayerElevationProperties::calculateZRange( QgsMapLay
   }
 
   return QgsDoubleRange();
+}
+
+QList<double> QgsPointCloudLayerElevationProperties::significantZValues( QgsMapLayer *layer ) const
+{
+  const QgsDoubleRange range = calculateZRange( layer );
+  if ( !range.isInfinite() && range.lower() != range.upper() )
+    return {range.lower(), range.upper() };
+  else if ( !range.isInfinite() )
+    return {range.lower() };
+  else
+    return {};
 }
 
 bool QgsPointCloudLayerElevationProperties::showByDefaultInElevationProfilePlots() const

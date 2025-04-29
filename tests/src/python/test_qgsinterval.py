@@ -5,11 +5,11 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Nyall Dawson'
-__date__ = '10/05/2016'
-__copyright__ = 'Copyright 2015, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Nyall Dawson"
+__date__ = "10/05/2016"
+__copyright__ = "Copyright 2015, The QGIS Project"
+
 
 from qgis.core import QgsInterval, QgsUnitTypes
 from qgis.testing import unittest
@@ -18,7 +18,7 @@ from qgis.testing import unittest
 class TestQgsInterval(unittest.TestCase):
 
     def testIntervalConstructor(self):
-        """ Test QgsInterval constructor """
+        """Test QgsInterval constructor"""
 
         # invalid interval
         i = QgsInterval()
@@ -37,9 +37,24 @@ class TestQgsInterval(unittest.TestCase):
         self.assertEqual(i.seconds(), 56)
 
         # constructor with unit type
-        i = QgsInterval(56, QgsUnitTypes.TemporalMilliseconds)
+        i = QgsInterval(56, QgsUnitTypes.TemporalUnit.TemporalMilliseconds)
         self.assertTrue(i.isValid())
         self.assertEqual(i.seconds(), 0.056)
+
+    def test_repr(self):
+        """
+        Test __repr__ implementation
+        """
+        self.assertEqual(repr(QgsInterval()), "<QgsInterval: invalid>")
+        self.assertEqual(repr(QgsInterval(5)), "<QgsInterval: 5 seconds>")
+        self.assertEqual(
+            repr(QgsInterval(1, QgsUnitTypes.TemporalUnit.TemporalMonths)),
+            "<QgsInterval: 1 months>",
+        )
+        self.assertEqual(
+            repr(QgsInterval(720, QgsUnitTypes.TemporalUnit.TemporalHours)),
+            "<QgsInterval: 720 hours>",
+        )
 
     def testSettersGetters(self):
         # setters and getters
@@ -106,10 +121,10 @@ class TestQgsInterval(unittest.TestCase):
 
         # using original units
 
-        i1 = QgsInterval(1, QgsUnitTypes.TemporalMonths)
-        self.assertEqual(i1, QgsInterval(1, QgsUnitTypes.TemporalMonths))
-        i2 = QgsInterval(720, QgsUnitTypes.TemporalHours)
-        self.assertEqual(i2, QgsInterval(720, QgsUnitTypes.TemporalHours))
+        i1 = QgsInterval(1, QgsUnitTypes.TemporalUnit.TemporalMonths)
+        self.assertEqual(i1, QgsInterval(1, QgsUnitTypes.TemporalUnit.TemporalMonths))
+        i2 = QgsInterval(720, QgsUnitTypes.TemporalUnit.TemporalHours)
+        self.assertEqual(i2, QgsInterval(720, QgsUnitTypes.TemporalUnit.TemporalHours))
         # these QgsInterval would be equal if we test on the approximated seconds value alone, but should be treated as not equal
         # as their original units differ and we don't want the odd situation that the QgsInterval objects report equality
         # but i1.months() != i2.months()!!
@@ -123,70 +138,70 @@ class TestQgsInterval(unittest.TestCase):
         self.assertEqual(i1, i2)
 
     def testFromString(self):
-        i = QgsInterval.fromString('1 Year 1 Month 1 Week 1 Hour 1 Minute')
+        i = QgsInterval.fromString("1 Year 1 Month 1 Week 1 Hour 1 Minute")
         self.assertTrue(i.isValid())
         self.assertEqual(i.seconds(), 34758060)
-        i = QgsInterval.fromString('1 Year, 1 Month, 1 Week, 1 Hour, 1 Minute')
+        i = QgsInterval.fromString("1 Year, 1 Month, 1 Week, 1 Hour, 1 Minute")
         self.assertTrue(i.isValid())
         self.assertEqual(i.seconds(), 34758060)
-        i = QgsInterval.fromString('1 Year; 1 Month; 1 Week; 1 Hour; 1 Minute')
+        i = QgsInterval.fromString("1 Year; 1 Month; 1 Week; 1 Hour; 1 Minute")
         self.assertTrue(i.isValid())
         self.assertEqual(i.seconds(), 34758060)
-        i = QgsInterval.fromString('1 Year. 1 Month. 1 Week. 1 Hour. 1 Minute.')
+        i = QgsInterval.fromString("1 Year. 1 Month. 1 Week. 1 Hour. 1 Minute.")
         self.assertTrue(i.isValid())
         self.assertEqual(i.seconds(), 34758060)
-        i = QgsInterval.fromString('1 Year. 1 Month. 1 Week. 01:01:00 ')
+        i = QgsInterval.fromString("1 Year. 1 Month. 1 Week. 01:01:00 ")
         self.assertTrue(i.isValid())
         self.assertEqual(i.seconds(), 34758060)
-        i = QgsInterval.fromString('1 Year. 1 Mon. 1 Week. 01:01:00 ')
+        i = QgsInterval.fromString("1 Year. 1 Mon. 1 Week. 01:01:00 ")
         self.assertTrue(i.isValid())
         self.assertEqual(i.seconds(), 34758060)
-        i = QgsInterval.fromString('2 Years')
+        i = QgsInterval.fromString("2 Years")
         self.assertTrue(i.isValid())
         self.assertEqual(i.years(), 2)
-        i = QgsInterval.fromString('20000 Years')
+        i = QgsInterval.fromString("20000 Years")
         self.assertTrue(i.isValid())
         self.assertEqual(i.years(), 20000)
-        i = QgsInterval.fromString('30 month')
+        i = QgsInterval.fromString("30 month")
         self.assertTrue(i.isValid())
         self.assertEqual(i.months(), 30)
-        i = QgsInterval.fromString(' 40 MONTHS ')
+        i = QgsInterval.fromString(" 40 MONTHS ")
         self.assertTrue(i.isValid())
         self.assertEqual(i.months(), 40)
-        i = QgsInterval.fromString('2.5 weeks')
+        i = QgsInterval.fromString("2.5 weeks")
         self.assertTrue(i.isValid())
         self.assertEqual(i.weeks(), 2.5)
-        i = QgsInterval.fromString('2.5 WEEK')
+        i = QgsInterval.fromString("2.5 WEEK")
         self.assertTrue(i.isValid())
         self.assertEqual(i.weeks(), 2.5)
-        i = QgsInterval.fromString('1 Day')
+        i = QgsInterval.fromString("1 Day")
         self.assertTrue(i.isValid())
         self.assertEqual(i.seconds(), 24 * 60 * 60)
-        i = QgsInterval.fromString('101.5 Days')
+        i = QgsInterval.fromString("101.5 Days")
         self.assertTrue(i.isValid())
         self.assertEqual(i.seconds(), 101.5 * 24 * 60 * 60)
-        i = QgsInterval.fromString('2  dAys')
+        i = QgsInterval.fromString("2  dAys")
         self.assertTrue(i.isValid())
         self.assertEqual(i.seconds(), 48 * 60 * 60)
-        i = QgsInterval.fromString('1 hours')
+        i = QgsInterval.fromString("1 hours")
         self.assertTrue(i.isValid())
         self.assertEqual(i.hours(), 1)
-        i = QgsInterval.fromString('1.7 HoURS ')
+        i = QgsInterval.fromString("1.7 HoURS ")
         self.assertTrue(i.isValid())
         self.assertEqual(i.hours(), 1.7)
-        i = QgsInterval.fromString('2 minutes')
+        i = QgsInterval.fromString("2 minutes")
         self.assertTrue(i.isValid())
         self.assertEqual(i.minutes(), 2)
-        i = QgsInterval.fromString('123 MiNuTe ')
+        i = QgsInterval.fromString("123 MiNuTe ")
         self.assertTrue(i.isValid())
         self.assertEqual(i.minutes(), 123)
-        i = QgsInterval.fromString('5 Seconds')
+        i = QgsInterval.fromString("5 Seconds")
         self.assertTrue(i.isValid())
         self.assertEqual(i.seconds(), 5)
-        i = QgsInterval.fromString('5 second')
+        i = QgsInterval.fromString("5 second")
         self.assertTrue(i.isValid())
         self.assertEqual(i.seconds(), 5)
-        i = QgsInterval.fromString('bad')
+        i = QgsInterval.fromString("bad")
         self.assertFalse(i.isValid())
 
     def testFromUnits(self):
@@ -210,106 +225,116 @@ class TestQgsInterval(unittest.TestCase):
     def testIntervalDurationUnitSetting(self):
         i = QgsInterval()
         self.assertEqual(i.originalDuration(), 0.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnknownUnit)
-        i = QgsInterval(2, QgsUnitTypes.TemporalMilliseconds)
+        self.assertEqual(
+            i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalUnknownUnit
+        )
+        i = QgsInterval(2, QgsUnitTypes.TemporalUnit.TemporalMilliseconds)
         self.assertEqual(i.originalDuration(), 2.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalMilliseconds)
-        i = QgsInterval(34.56, QgsUnitTypes.TemporalSeconds)
+        self.assertEqual(
+            i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalMilliseconds
+        )
+        i = QgsInterval(34.56, QgsUnitTypes.TemporalUnit.TemporalSeconds)
         self.assertEqual(i.originalDuration(), 34.56)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalSeconds)
-        i = QgsInterval(10, QgsUnitTypes.TemporalMinutes)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalSeconds)
+        i = QgsInterval(10, QgsUnitTypes.TemporalUnit.TemporalMinutes)
         self.assertEqual(i.originalDuration(), 10.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalMinutes)
-        i = QgsInterval(10.012, QgsUnitTypes.TemporalHours)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalMinutes)
+        i = QgsInterval(10.012, QgsUnitTypes.TemporalUnit.TemporalHours)
         self.assertEqual(i.originalDuration(), 10.012)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalHours)
-        i = QgsInterval(10.32, QgsUnitTypes.TemporalDays)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalHours)
+        i = QgsInterval(10.32, QgsUnitTypes.TemporalUnit.TemporalDays)
         self.assertEqual(i.originalDuration(), 10.32)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalDays)
-        i = QgsInterval(100, QgsUnitTypes.TemporalWeeks)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalDays)
+        i = QgsInterval(100, QgsUnitTypes.TemporalUnit.TemporalWeeks)
         self.assertEqual(i.originalDuration(), 100.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalWeeks)
-        i = QgsInterval(1000, QgsUnitTypes.TemporalMonths)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalWeeks)
+        i = QgsInterval(1000, QgsUnitTypes.TemporalUnit.TemporalMonths)
         self.assertEqual(i.originalDuration(), 1000.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalMonths)
-        i = QgsInterval(500.005, QgsUnitTypes.TemporalYears)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalMonths)
+        i = QgsInterval(500.005, QgsUnitTypes.TemporalUnit.TemporalYears)
         self.assertEqual(i.originalDuration(), 500.005)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalYears)
-        i = QgsInterval(0.02, QgsUnitTypes.TemporalDecades)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalYears)
+        i = QgsInterval(0.02, QgsUnitTypes.TemporalUnit.TemporalDecades)
         self.assertEqual(i.originalDuration(), 0.02)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalDecades)
-        i = QgsInterval(0.2, QgsUnitTypes.TemporalCenturies)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalDecades)
+        i = QgsInterval(0.2, QgsUnitTypes.TemporalUnit.TemporalCenturies)
         self.assertEqual(i.originalDuration(), 0.2)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalCenturies)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalCenturies)
 
         i = QgsInterval(10)
         self.assertEqual(i.originalDuration(), 10.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalSeconds)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalSeconds)
         i = QgsInterval(0)
         self.assertEqual(i.originalDuration(), 0.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalSeconds)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalSeconds)
 
         i = QgsInterval(1, 0, 0, 0, 0, 0, 0)
         self.assertEqual(i.originalDuration(), 1.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalYears)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalYears)
         i = QgsInterval(0, 1, 0, 0, 0, 0, 0)
         self.assertEqual(i.originalDuration(), 1.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalMonths)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalMonths)
         i = QgsInterval(0, 0, 1, 0, 0, 0, 0)
         self.assertEqual(i.originalDuration(), 1.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalWeeks)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalWeeks)
         i = QgsInterval(0, 0, 0, 1, 0, 0, 0)
         self.assertEqual(i.originalDuration(), 1.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalDays)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalDays)
         i = QgsInterval(0, 0, 0, 0, 1, 0, 0)
         self.assertEqual(i.originalDuration(), 1.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalHours)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalHours)
         i = QgsInterval(0, 0, 0, 0, 0, 1, 0)
         self.assertEqual(i.originalDuration(), 1.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalMinutes)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalMinutes)
         i = QgsInterval(0, 0, 0, 0, 0, 0, 1)
         self.assertEqual(i.originalDuration(), 1.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalSeconds)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalSeconds)
         i = QgsInterval(0, 0, 0, 0, 0, 0, 0)
 
         # we may as well treat this the same as if 0 seconds was explicitly specified!
         self.assertEqual(i.originalDuration(), 0.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalSeconds)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalSeconds)
 
         i = QgsInterval(0, 0, 0, 0, 0, 1, 1)
         self.assertEqual(i.originalDuration(), 0.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnknownUnit)
+        self.assertEqual(
+            i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalUnknownUnit
+        )
 
     def testSettersDurationUnitChange(self):
         i = QgsInterval()
         self.assertEqual(i.originalDuration(), 0.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnknownUnit)
+        self.assertEqual(
+            i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalUnknownUnit
+        )
         i.setYears(1)
         self.assertEqual(i.originalDuration(), 1.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalYears)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalYears)
         i.setMonths(3)
         self.assertEqual(i.originalDuration(), 3.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalMonths)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalMonths)
         i.setWeeks(1)
         self.assertEqual(i.originalDuration(), 1.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalWeeks)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalWeeks)
         i.setDays(4)
         self.assertEqual(i.originalDuration(), 4.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalDays)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalDays)
         i.setHours(22.3)
         self.assertEqual(i.originalDuration(), 22.3)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalHours)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalHours)
         i.setMinutes(11)
         self.assertEqual(i.originalDuration(), 11.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalMinutes)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalMinutes)
         i.setSeconds(100)
         self.assertEqual(i.originalDuration(), 100.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalSeconds)
+        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalSeconds)
 
     def testGettersDurationUnitChange(self):
         i = QgsInterval()
         self.assertEqual(i.originalDuration(), 0.0)
-        self.assertEqual(i.originalUnit(), QgsUnitTypes.TemporalUnknownUnit)
+        self.assertEqual(
+            i.originalUnit(), QgsUnitTypes.TemporalUnit.TemporalUnknownUnit
+        )
         i.setYears(1)
         self.assertEqual(i.years(), 1.0)
         i.setMonths(3)
@@ -331,5 +356,5 @@ class TestQgsInterval(unittest.TestCase):
         self.assertEqual(i.months(), 1.5)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

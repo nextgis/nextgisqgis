@@ -20,7 +20,6 @@
 #include "qgis.h"
 #include "qgsmapunitscale.h"
 #include "qgsfields.h"
-#include "qgswkbtypes.h"
 
 class QgsRenderContext;
 class QgsFeature;
@@ -52,7 +51,6 @@ class CORE_EXPORT QgsSymbolRenderContext
 
     ~QgsSymbolRenderContext();
 
-    //! QgsSymbolRenderContext cannot be copied.
     QgsSymbolRenderContext( const QgsSymbolRenderContext &rh ) = delete;
 
     /**
@@ -64,35 +62,34 @@ class CORE_EXPORT QgsSymbolRenderContext
      * Returns a reference to the context's render context.
      * \note Not available in Python bindings.
      */
-    const QgsRenderContext &renderContext() const { return mRenderContext; } SIP_SKIP
+    const QgsRenderContext &renderContext() const SIP_SKIP { return mRenderContext; }
 
     /**
      * Sets the original value variable value for data defined symbology
      * \param value value for original value variable. This usually represents the symbol property value
      * before any data defined overrides have been applied.
-     * \since QGIS 2.12
      */
     void setOriginalValueVariable( const QVariant &value );
 
     /**
      * Returns the output unit for the context.
-     * \deprecated No longer used and will be removed in QGIS 4.0
+     * \deprecated QGIS 3.40. No longer used and will be removed in QGIS 4.0.
      */
     Q_DECL_DEPRECATED Qgis::RenderUnit outputUnit() const SIP_DEPRECATED { return mOutputUnit; }
 
     /**
      * Sets the output unit for the context.
-     * \deprecated No longer used and will be removed in QGIS 4.0
+     * \deprecated QGIS 3.40. No longer used and will be removed in QGIS 4.0.
      */
     Q_DECL_DEPRECATED void setOutputUnit( Qgis::RenderUnit u ) SIP_DEPRECATED { mOutputUnit = u; }
 
     /**
-     * \deprecated Will be removed in QGIS 4.0
+     * \deprecated QGIS 3.40. Will be removed in QGIS 4.0.
      */
     Q_DECL_DEPRECATED QgsMapUnitScale mapUnitScale() const SIP_DEPRECATED { return mMapUnitScale; }
 
     /**
-     * \deprecated Will be removed in QGIS 4.0
+     * \deprecated QGIS 3.40. Will be removed in QGIS 4.0.
      */
     Q_DECL_DEPRECATED void setMapUnitScale( const QgsMapUnitScale &scale ) SIP_DEPRECATED { mMapUnitScale = scale; }
 
@@ -129,10 +126,26 @@ class CORE_EXPORT QgsSymbolRenderContext
     Qgis::SymbolRenderHints renderHints() const { return mRenderHints; }
 
     /**
+     * Returns TRUE if symbol must be rendered using vector methods, and optimisations
+     * like pre-rendered images must be disabled.
+     *
+     * \since QGIS 3.40
+     */
+    bool forceVectorRendering() const;
+
+    /**
      * Sets rendering hint flags for the symbol.
      * \see renderHints()
      */
     void setRenderHints( Qgis::SymbolRenderHints hints ) { mRenderHints = hints; }
+
+    /**
+     * Sets a rendering \a hint flag for the symbol.
+     * \see renderHints()
+     *
+     * \since QGIS 3.40
+     */
+    void setRenderHint( Qgis::SymbolRenderHint hint, bool enabled = true ) { mRenderHints.setFlag( hint, enabled ); }
 
     void setFeature( const QgsFeature *f ) { mFeature = f; }
 
@@ -144,7 +157,6 @@ class CORE_EXPORT QgsSymbolRenderContext
     /**
      * Sets the geometry type for the original feature geometry being rendered.
      * \see originalGeometryType()
-     * \since QGIS 3.0
      */
     void setOriginalGeometryType( Qgis::GeometryType type ) { mOriginalGeometryType = type; }
 
@@ -154,7 +166,6 @@ class CORE_EXPORT QgsSymbolRenderContext
      * simple line style will look different if the simple line is rendering a polygon feature
      * (a closed buffer) vs a line feature (an unclosed offset line).
      * \see originalGeometryType()
-     * \since QGIS 3.0
      */
     Qgis::GeometryType originalGeometryType() const { return mOriginalGeometryType; }
 
@@ -162,41 +173,36 @@ class CORE_EXPORT QgsSymbolRenderContext
      * Fields of the layer. Currently only available in startRender() calls
      * to allow symbols with data-defined properties prepare the expressions
      * (other times fields() returns an empty QgsFields object).
-     * \since QGIS 2.4
      */
     QgsFields fields() const { return mFields; }
 
     /**
      * Part count of current geometry
-     * \since QGIS 2.16
      */
     int geometryPartCount() const { return mGeometryPartCount; }
 
     /**
      * Sets the part count of current geometry
-     * \since QGIS 2.16
      */
     void setGeometryPartCount( int count ) { mGeometryPartCount = count; }
 
     /**
      * Part number of current geometry
-     * \since QGIS 2.16
      */
     int geometryPartNum() const { return mGeometryPartNum; }
 
     /**
      * Sets the part number of current geometry
-     * \since QGIS 2.16
      */
     void setGeometryPartNum( int num ) { mGeometryPartNum = num; }
 
     /**
-     * \deprecated Use the size conversion methods in QgsRenderContext instead.
+     * \deprecated QGIS 3.40. Use the size conversion methods in QgsRenderContext instead.
      */
     Q_DECL_DEPRECATED double outputLineWidth( double width ) const SIP_DEPRECATED;
 
     /**
-     * \deprecated Use the size conversion methods in QgsRenderContext instead.
+     * \deprecated QGIS 3.40. Use the size conversion methods in QgsRenderContext instead.
      */
     Q_DECL_DEPRECATED double outputPixelSize( double size ) const SIP_DEPRECATED;
 

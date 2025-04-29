@@ -35,14 +35,12 @@ class QgsTaskManagerModel;
  * \class QgsTaskManagerWidget
  * \brief A widget which displays tasks from a QgsTaskManager and allows for interaction with the manager.
  * \see QgsTaskManager
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsTaskManagerWidget : public QWidget
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsTaskManagerWidget
      * \param manager task manager associated with widget
@@ -58,7 +56,6 @@ class GUI_EXPORT QgsTaskManagerWidget : public QWidget
     void clicked( const QModelIndex &index );
 
   private:
-
     QgsTaskManager *mManager = nullptr;
     QTreeView *mTreeView = nullptr;
     QgsTaskManagerModel *mModel = nullptr;
@@ -73,21 +70,18 @@ class GUI_EXPORT QgsTaskManagerWidget : public QWidget
  * \class QgsTaskManagerFloatingWidget
  * \brief A widget which displays tasks from a QgsTaskManager and allows for interaction with the manager.
  * \see QgsTaskManager
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsTaskManagerFloatingWidget : public QgsFloatingWidget
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsTaskManagerWidget
      * \param manager task manager associated with widget
      * \param parent parent widget
      */
     QgsTaskManagerFloatingWidget( QgsTaskManager *manager, QWidget *parent = nullptr );
-
 };
 
 /**
@@ -96,14 +90,12 @@ class GUI_EXPORT QgsTaskManagerFloatingWidget : public QgsFloatingWidget
  * QgsTaskManager and allows for interaction with the manager.
  * \see QgsTaskManager
  * \ingroup gui
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsTaskManagerStatusBarWidget : public QToolButton
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsTaskManagerWidget.
      * \param manager task manager associated with widget
@@ -114,7 +106,6 @@ class GUI_EXPORT QgsTaskManagerStatusBarWidget : public QToolButton
     QSize sizeHint() const override;
 
   protected:
-
     void changeEvent( QEvent *event ) override;
 
   private slots:
@@ -126,7 +117,6 @@ class GUI_EXPORT QgsTaskManagerStatusBarWidget : public QToolButton
     void showButton();
 
   private:
-
     QgsTaskManagerFloatingWidget *mFloatingWidget = nullptr;
     QProgressBar *mProgressBar = nullptr;
     QgsTaskManager *mManager = nullptr;
@@ -137,20 +127,33 @@ class GUI_EXPORT QgsTaskManagerStatusBarWidget : public QToolButton
  * \class QgsTaskManagerModel
  * \brief A model representing a QgsTaskManager.
  * \see QgsTaskManager
- * \since QGIS 3.0
  */
-class GUI_EXPORT QgsTaskManagerModel: public QAbstractItemModel
+class GUI_EXPORT QgsTaskManagerModel : public QAbstractItemModel
 {
     Q_OBJECT
 
   public:
-
     enum Columns
     {
       Description = 0,
       Progress = 1,
       Status = 2,
     };
+
+    // *INDENT-OFF*
+
+    /**
+     * Custom model roles.
+     *
+     * \note Prior to QGIS 3.36 this was available as QgsTaskManagerModel::Roles
+     * \since QGIS 3.36
+     */
+    enum class CustomRole SIP_MONKEYPATCH_SCOPEENUM_UNNEST( QgsTaskManagerModel, Roles ) : int
+    {
+      Status SIP_MONKEYPATCH_COMPAT_NAME( StatusRole ) = Qt::UserRole, //!< Status role
+    };
+    Q_ENUM( CustomRole )
+    // *INDENT-ON*
 
     /**
      * Constructor for QgsTaskManagerModel
@@ -174,12 +177,6 @@ class GUI_EXPORT QgsTaskManagerModel: public QAbstractItemModel
      */
     QgsTask *indexToTask( const QModelIndex &index ) const;
 
-    //! Model roles
-    enum Roles
-    {
-      StatusRole = Qt::UserRole, //!< Status role
-    };
-
   private slots:
 
     void taskAdded( long id );
@@ -188,7 +185,6 @@ class GUI_EXPORT QgsTaskManagerModel: public QAbstractItemModel
     void statusChanged( long id, int status );
 
   private:
-
     enum ToolTipType
     {
       ToolTipDescription,
@@ -198,7 +194,7 @@ class GUI_EXPORT QgsTaskManagerModel: public QAbstractItemModel
 
     QgsTaskManager *mManager = nullptr;
 
-    QList< long > mRowToTaskIdList;
+    QList<long> mRowToTaskIdList;
 
 
     int idToRow( long id ) const;
@@ -212,14 +208,12 @@ class GUI_EXPORT QgsTaskManagerModel: public QAbstractItemModel
  * \ingroup gui
  * \class QgsTaskStatusWidget
  * \brief A widget for showing task status within a view. Clicks on the widget will cause the task to be canceled (via the model).
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsTaskStatusWidget : public QWidget
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsTaskStatusWidget
      * \param parent parent object
@@ -246,14 +240,12 @@ class GUI_EXPORT QgsTaskStatusWidget : public QWidget
     void cancelClicked();
 
   protected:
-
     void paintEvent( QPaintEvent *e ) override;
     void mousePressEvent( QMouseEvent *e ) override;
     void mouseMoveEvent( QMouseEvent *e ) override;
     void leaveEvent( QEvent *e ) override;
 
   private:
-
     bool mCanCancel;
     QgsTask::TaskStatus mStatus;
     bool mInside = false;

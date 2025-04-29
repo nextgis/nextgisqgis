@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsdatabasetablemodel.h                                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -14,10 +14,10 @@ class QgsDatabaseTableModel : QAbstractItemModel
 %Docstring(signature="appended")
 A model containing tables from a database connection.
 
-This class does not automatically subscribe to database updates. Tables are queried
-from the database initially upon model construction. In order
-to update the listed tbales, :py:func:`QgsDatabaseTableModel.refresh()` must be manually
-called.
+This class does not automatically subscribe to database updates. Tables
+are queried from the database initially upon model construction. In
+order to update the listed tbales,
+:py:func:`QgsDatabaseTableModel.refresh()` must be manually called.
 
 .. versionadded:: 3.14
 %End
@@ -27,23 +27,26 @@ called.
 %End
   public:
 
-    enum Role
+
+    enum class CustomRole
     {
-      RoleTableName,
-      RoleSchema,
-      RoleTableFlags,
-      RoleComment,
-      RoleCustomInfo,
-      RoleWkbType,
-      RoleCrs,
-      RoleEmpty,
+      TableName,
+      Schema,
+      TableFlags,
+      Comment,
+      CustomInfo,
+      WkbType,
+      Crs,
+      Empty,
     };
 
     explicit QgsDatabaseTableModel( const QString &provider, const QString &connection, const QString &schema = QString(), QObject *parent /TransferThis/ = 0 );
 %Docstring
-Constructor for QgsDatabaseTableModel, for the specified ``provider`` and ``connection`` name.
+Constructor for QgsDatabaseTableModel, for the specified ``provider``
+and ``connection`` name.
 
-The optional ``schema`` argument can be used to restrict the tables to those from a specific schema.
+The optional ``schema`` argument can be used to restrict the tables to
+those from a specific schema.
 
 .. warning::
 
@@ -55,7 +58,8 @@ The optional ``schema`` argument can be used to restrict the tables to those fro
 %Docstring
 Constructor for QgsDatabaseTableModel, for the specified ``connection``.
 
-The optional ``schema`` argument can be used to restrict the tables to those from a specific schema.
+The optional ``schema`` argument can be used to restrict the tables to
+those from a specific schema.
 
 Ownership of ``connection`` is transferred to the model.
 %End
@@ -73,7 +77,8 @@ Ownership of ``connection`` is transferred to the model.
 
     void setAllowEmptyTable( bool allowEmpty );
 %Docstring
-Sets whether an optional empty table ("not set") option is present in the model.
+Sets whether an optional empty table ("not set") option is present in
+the model.
 
 .. seealso:: :py:func:`allowEmptyTable`
 %End
@@ -99,5 +104,5 @@ Refreshes the table list by querying the underlying connection.
  *                                                                      *
  * src/core/qgsdatabasetablemodel.h                                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

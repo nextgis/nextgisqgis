@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/geometry/qgspolygon.h                                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -14,8 +14,6 @@ class QgsPolygon: QgsCurvePolygon
 {
 %Docstring(signature="appended")
 Polygon geometry type.
-
-.. versionadded:: 2.10
 %End
 
 %TypeHeaderCode
@@ -31,7 +29,8 @@ Constructor for an empty polygon geometry.
 
     QgsPolygon( QgsLineString *exterior /Transfer/, const QList< QgsLineString * > &rings /Transfer/ = QList< QgsLineString * >() ) /HoldGIL/;
 %Docstring
-Constructor for QgsPolygon, with the specified ``exterior`` ring and interior ``rings``.
+Constructor for QgsPolygon, with the specified ``exterior`` ring and
+interior ``rings``.
 
 Ownership of ``exterior`` and ``rings`` is transferred to the polygon.
 
@@ -50,13 +49,16 @@ Ownership of ``exterior`` and ``rings`` is transferred to the polygon.
 
     virtual QByteArray asWkb( QgsAbstractGeometry::WkbFlags flags = QgsAbstractGeometry::WkbFlags() ) const;
 
+    virtual QString asWkt( int precision = 17 ) const;
+
     virtual QgsPolygon *surfaceToPolygon() const /Factory/;
 
 
     virtual QgsCurvePolygon *toCurveType() const /Factory/;
 
 %Docstring
-Returns the geometry converted to the more generic curve type :py:class:`QgsCurvePolygon`
+Returns the geometry converted to the more generic curve type
+:py:class:`QgsCurvePolygon`
 
 :return: the converted geometry. Caller takes ownership
 %End
@@ -71,11 +73,9 @@ Returns the geometry converted to the more generic curve type :py:class:`QgsCurv
 
     double pointDistanceToBoundary( double x, double y ) const;
 %Docstring
-Returns the distance from a point to the boundary of the polygon (either the
-exterior ring or any closer interior rings). The returned distance will be
-negative if the point lies outside the polygon.
-
-.. versionadded:: 3.0
+Returns the distance from a point to the boundary of the polygon (either
+the exterior ring or any closer interior rings). The returned distance
+will be negative if the point lies outside the polygon.
 %End
 
 
@@ -100,5 +100,5 @@ negative if the point lies outside the polygon.
  *                                                                      *
  * src/core/geometry/qgspolygon.h                                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

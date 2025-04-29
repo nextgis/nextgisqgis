@@ -6,40 +6,39 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
 
-
-__author__ = 'Nyall Dawson'
-__date__ = '29/03/2018'
-__copyright__ = 'Copyright 2018, The QGIS Project'
+__author__ = "Nyall Dawson"
+__date__ = "29/03/2018"
+__copyright__ = "Copyright 2018, The QGIS Project"
 
 import http.server
 import os
 import socketserver
 import threading
 
-import qgis  # NOQA
 from qgis.PyQt.QtCore import QUrl
 from qgis.PyQt.QtNetwork import QNetworkReply
 from qgis.core import (
     QgsApplication,
     QgsNetworkContentFetcherTask,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 from utilities import unitTestDataPath
 
 app = start_app()
 
 
-class TestQgsNetworkContentFetcherTask(unittest.TestCase):
+class TestQgsNetworkContentFetcherTask(QgisTestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         # Bring up a simple HTTP server
-        os.chdir(unitTestDataPath() + '')
+        os.chdir(unitTestDataPath() + "")
         handler = http.server.SimpleHTTPRequestHandler
 
-        cls.httpd = socketserver.TCPServer(('localhost', 0), handler)
+        cls.httpd = socketserver.TCPServer(("localhost", 0), handler)
         cls.port = cls.httpd.server_address[1]
 
         cls.httpd_thread = threading.Thread(target=cls.httpd.serve_forever)
@@ -48,7 +47,7 @@ class TestQgsNetworkContentFetcherTask(unittest.TestCase):
 
     def __init__(self, methodName):
         """Run once on class initialization."""
-        unittest.TestCase.__init__(self, methodName)
+        QgisTestCase.__init__(self, methodName)
 
         self.loaded = False
 
@@ -56,12 +55,12 @@ class TestQgsNetworkContentFetcherTask(unittest.TestCase):
         self.loaded = True
 
     def testFetchBadUrl(self):
-        fetcher = QgsNetworkContentFetcherTask(QUrl('http://x'))
+        fetcher = QgsNetworkContentFetcherTask(QUrl("http://x"))
         self.loaded = False
 
         def check_reply():
             r = fetcher.reply()
-            assert r.error() != QNetworkReply.NoError
+            assert r.error() != QNetworkReply.NetworkError.NoError
             self.loaded = True
 
         fetcher.fetched.connect(check_reply)
@@ -71,14 +70,15 @@ class TestQgsNetworkContentFetcherTask(unittest.TestCase):
 
     def testFetchUrlContent(self):
         fetcher = QgsNetworkContentFetcherTask(
-            QUrl('http://localhost:' + str(self.port) + '/qgis_local_server/index.html'))
+            QUrl("http://localhost:" + str(self.port) + "/qgis_local_server/index.html")
+        )
         self.loaded = False
 
         def check_reply():
             r = fetcher.reply()
-            assert r.error() == QNetworkReply.NoError, r.error()
+            assert r.error() == QNetworkReply.NetworkError.NoError, r.error()
 
-            assert b'QGIS' in r.readAll()
+            assert b"QGIS" in r.readAll()
             self.loaded = True
 
         fetcher.fetched.connect(check_reply)

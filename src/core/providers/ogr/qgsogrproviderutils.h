@@ -123,6 +123,7 @@ class CORE_EXPORT QgsOgrProviderUtils
     static QStringList fileExtensions();
     static QStringList directoryExtensions();
     static QStringList wildcards();
+    static QStringList tableNamesFromSelectSQL( const QString &sql );
 
     //! Whether the file is a local file.
     static bool IsLocalFile( const QString &path );
@@ -249,7 +250,8 @@ class CORE_EXPORT QgsOgrProviderUtils
                                QString &layerName,
                                QString &subsetString,
                                OGRwkbGeometryType &ogrGeometryTypeFilter,
-                               QStringList &openOptions );
+                               QStringList &openOptions,
+                               QVariantMap &credentialOptions );
 
     //! Whether a driver can share the same dataset handle among different layers
     static bool canDriverShareSameDatasetAmongLayers( const QString &driverName );
@@ -300,6 +302,7 @@ class CORE_EXPORT QgsOgrProviderUtils
         ~DeferDatasetClosing() { QgsOgrProviderUtils::decrementDeferDatasetClosingCounter(); }
     };
 };
+
 
 /**
  * \class QgsOgrDataset
@@ -426,6 +429,9 @@ class QgsOgrLayer
     //! Returns layer name
     QByteArray name();
 
+    //! Return OGRERR_NONE if lmyer is not sqlite OR if layer is sqlite but with spatialite, else returns OGRERR_UNSUPPORTED_OPERATION
+    OGRErr isSpatialiteEnabled();
+
     //! Wrapper of OGR_L_GetLayerCount
     int GetLayerCount();
 
@@ -456,14 +462,25 @@ class QgsOgrLayer
     //! Return an total feature count based on meta data from package container
     GIntBig GetTotalFeatureCountFromMetaData() const;
 
-    //! Wrapper of OGR_L_GetLayerCount
+    //! Wrapper of OGR_L_GetExtent
     OGRErr GetExtent( OGREnvelope *psExtent, bool bForce );
+
+    //! Wrapper of OGR_L_GetExtent3D
+    OGRErr GetExtent3D( OGREnvelope3D *psExtent, bool bForce );
+
+    //! Combines 3D envelopes for all feature to find the extent. Slow process...
+    OGRErr computeExtent3DSlowly( OGREnvelope3D *extent );
 
     //! Wrapper of OGR_L_GetLayerCount
     OGRErr CreateFeature( OGRFeatureH hFeature );
 
     //! Wrapper of OGR_L_GetLayerCount
     OGRErr SetFeature( OGRFeatureH hFeature );
+
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,7,0)
+    //! Wrapper of OGR_L_UpdateFeature
+    OGRErr UpdateFeature( OGRFeatureH hFeature, int nUpdatedFieldsCount, const int *panUpdatedFieldsIdx, int nUpdatedGeomFieldsCount, const int *panUpdatedGeomFieldsIdx, bool bUpdateStyleString );
+#endif
 
     //! Wrapper of OGR_L_GetLayerCount
     OGRErr DeleteFeature( GIntBig fid );

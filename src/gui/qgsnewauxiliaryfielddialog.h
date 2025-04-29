@@ -28,14 +28,12 @@
  *
  * \brief A dialog to create a new auxiliary field
  *
- * \since QGIS 3.0
  */
-class GUI_EXPORT QgsNewAuxiliaryFieldDialog: public QDialog, private Ui::QgsNewAuxiliaryFieldDialogBase
+class GUI_EXPORT QgsNewAuxiliaryFieldDialog : public QDialog, private Ui::QgsNewAuxiliaryFieldDialogBase
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor.
      *

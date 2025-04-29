@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/editform/qgsattributeeditorhtmlelement.h                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -42,7 +42,8 @@ The Html code that will be represented within this widget.
 
     void setHtmlCode( const QString &htmlCode );
 %Docstring
-Sets the HTML code that will be represented within this widget to ``htmlCode``.
+Sets the HTML code that will be represented within this widget to
+``htmlCode``.
 %End
 
 };
@@ -53,5 +54,5 @@ Sets the HTML code that will be represented within this widget to ``htmlCode``.
  *                                                                      *
  * src/core/editform/qgsattributeeditorhtmlelement.h                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

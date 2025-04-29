@@ -35,7 +35,6 @@
 #include "qgsrenderer.h"
 #include "qgssinglesymbolrenderer.h"
 //qgis test includes
-#include "qgsmultirenderchecker.h"
 #include "qgsproject.h"
 #include "qgsshadoweffect.h"
 #include "qgslinesymbol.h"
@@ -50,15 +49,14 @@ class TestQgsDiagram : public QgsTest
     Q_OBJECT
 
   public:
-    TestQgsDiagram() : QgsTest( QStringLiteral( "Diagram Tests" ) ) {}
+    TestQgsDiagram()
+      : QgsTest( QStringLiteral( "Diagram Tests" ), QStringLiteral( "diagrams" ) ) {}
 
   private:
-    bool mTestHasError =  false ;
+    bool mTestHasError = false;
     QgsMapSettings *mMapSettings = nullptr;
     QgsVectorLayer *mPointsLayer = nullptr;
     QString mTestDataDir;
-
-    bool imageCheck( const QString &testType );
 
   private slots:
     // will be called before the first testfunction is executed.
@@ -84,8 +82,7 @@ class TestQgsDiagram : public QgsTest
       //
       const QString myPointsFileName = mTestDataDir + "points.shp";
       const QFileInfo myPointFileInfo( myPointsFileName );
-      mPointsLayer = new QgsVectorLayer( myPointFileInfo.filePath(),
-                                         myPointFileInfo.completeBaseName(), QStringLiteral( "ogr" ) );
+      mPointsLayer = new QgsVectorLayer( myPointFileInfo.filePath(), myPointFileInfo.completeBaseName(), QStringLiteral( "ogr" ) );
 
       //we don't want to render the points themselves, just the diagrams
       QVariantMap symbolProps;
@@ -120,7 +117,6 @@ class TestQgsDiagram : public QgsTest
     // will be called after every testfunction.
     void cleanup()
     {
-
     }
 
     void testPieDiagram()
@@ -157,7 +153,11 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "piediagram" ) );
+      const QgsRectangle extent( -126, 23, -70, 47 );
+      mMapSettings->setExtent( extent );
+      mMapSettings->setFlag( Qgis::MapSettingsFlag::ForceVectorOutput );
+      mMapSettings->setOutputDpi( 96 );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "piediagram", "piediagram", *mMapSettings, 200, 15 );
     }
 
     void testPieDiagramOpacity()
@@ -194,7 +194,11 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "piediagram_opacity" ) );
+      const QgsRectangle extent( -126, 23, -70, 47 );
+      mMapSettings->setExtent( extent );
+      mMapSettings->setFlag( Qgis::MapSettingsFlag::ForceVectorOutput );
+      mMapSettings->setOutputDpi( 96 );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "piediagram_opacity", "piediagram_opacity", *mMapSettings, 200, 15 );
     }
 
     void testPieDiagramAggregate()
@@ -231,7 +235,11 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "piediagram_aggregate" ) );
+      const QgsRectangle extent( -126, 23, -70, 47 );
+      mMapSettings->setExtent( extent );
+      mMapSettings->setFlag( Qgis::MapSettingsFlag::ForceVectorOutput );
+      mMapSettings->setOutputDpi( 96 );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "piediagram_aggregate", "piediagram_aggregate", *mMapSettings, 200, 15 );
     }
 
     void testDiagramWithGeometryBasedExpressionAttribute()
@@ -268,7 +276,11 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "piediagram_geometry_based_expression" ) );
+      const QgsRectangle extent( -126, 23, -70, 47 );
+      mMapSettings->setExtent( extent );
+      mMapSettings->setFlag( Qgis::MapSettingsFlag::ForceVectorOutput );
+      mMapSettings->setOutputDpi( 96 );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "piediagram_geometry_based_expression", "piediagram_geometry_based_expression", *mMapSettings, 200, 15 );
     }
 
     void testPaintEffect()
@@ -306,7 +318,11 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "diagram_effects" ) );
+      const QgsRectangle extent( -126, 23, -70, 47 );
+      mMapSettings->setExtent( extent );
+      mMapSettings->setFlag( Qgis::MapSettingsFlag::ForceVectorOutput );
+      mMapSettings->setOutputDpi( 96 );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "diagram_effects", "diagram_effects", *mMapSettings, 200, 15 );
     }
 
     void testHistogram()
@@ -343,7 +359,7 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "histogram" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "histogram", "histogram", *mMapSettings, 200, 15 );
     }
 
     void testHistogramSpacing()
@@ -382,7 +398,7 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "histogram_spacing" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "histogram_spacing", "histogram_spacing", *mMapSettings, 200, 15 );
     }
 
     void testHistogramAxis()
@@ -425,19 +441,19 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "histogram_axis_top" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "histogram_axis_top", "histogram_axis_top", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Down;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "histogram_axis_bottom" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "histogram_axis_bottom", "histogram_axis_bottom", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Left;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "histogram_axis_left" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "histogram_axis_left", "histogram_axis_left", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Right;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "histogram_axis_right" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "histogram_axis_right", "histogram_axis_right", *mMapSettings, 200, 15 );
     }
 
     void testHistogramOrientation()
@@ -475,16 +491,15 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "histogram_right" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "histogram_right", "histogram_right", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Left;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "histogram_left" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "histogram_left", "histogram_left", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Down;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "histogram_down" ) );
-
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "histogram_down", "histogram_down", *mMapSettings, 200, 15 );
     }
 
     void testStackedFixSize()
@@ -517,20 +532,19 @@ class TestQgsDiagram : public QgsTest
       dls.setPlacement( QgsDiagramLayerSettings::OverPoint );
       dls.setShowAllDiagrams( true );
       mPointsLayer->setDiagramLayerSettings( dls );
-      QVERIFY( imageCheck( "stacked_up" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_up", "stacked_up", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Right;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "stacked_right" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_right", "stacked_right", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Left;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "stacked_left" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_left", "stacked_left", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Down;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "stacked_down" ) );
-
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_down", "stacked_down", *mMapSettings, 200, 15 );
     }
 
     void testStackedVaryingFixSize()
@@ -568,20 +582,19 @@ class TestQgsDiagram : public QgsTest
       dls.setPlacement( QgsDiagramLayerSettings::OverPoint );
       dls.setShowAllDiagrams( true );
       mPointsLayer->setDiagramLayerSettings( dls );
-      QVERIFY( imageCheck( "stacked_varying_up" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_varying_up", "stacked_varying_up", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Right;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "stacked_varying_right" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_varying_right", "stacked_varying_right", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Left;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "stacked_varying_left" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_varying_left", "stacked_varying_left", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Down;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "stacked_varying_down" ) );
-
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_varying_down", "stacked_varying_down", *mMapSettings, 200, 15 );
     }
 
     void testStackedAxis()
@@ -625,19 +638,19 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "stacked_axis_up" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_axis_up", "stacked_axis_up", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Down;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "stacked_axis_down" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_axis_down", "stacked_axis_down", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Left;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "stacked_axis_left" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_axis_left", "stacked_axis_left", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Right;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "stacked_axis_right" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_axis_right", "stacked_axis_right", *mMapSettings, 200, 15 );
     }
 
     void testStackedNegative()
@@ -681,19 +694,19 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "stacked_negative_up" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_negative_up", "stacked_negative_up", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Down;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "stacked_negative_down" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_negative_down", "stacked_negative_down", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Left;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "stacked_negative_left" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_negative_left", "stacked_negative_left", *mMapSettings, 200, 15 );
 
       ds.diagramOrientation = QgsDiagramSettings::Right;
       dr->setDiagramSettings( ds );
-      QVERIFY( imageCheck( "stacked_negative_right" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "stacked_negative_right", "stacked_negative_right", *mMapSettings, 200, 15 );
     }
 
     void testPieDiagramExpression()
@@ -733,7 +746,7 @@ class TestQgsDiagram : public QgsTest
       mPointsLayer->setDiagramRenderer( dr );
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "piediagram_expression" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "piediagram_expression", "piediagram_expression", *mMapSettings, 200, 15 );
 
       mPointsLayer->setDiagramRenderer( nullptr );
     }
@@ -770,7 +783,7 @@ class TestQgsDiagram : public QgsTest
       mPointsLayer->setDiagramRenderer( dr );
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "piediagram_clockwise" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "piediagram_clockwise", "piediagram_clockwise", *mMapSettings, 200, 15 );
 
       mPointsLayer->setDiagramRenderer( nullptr );
     }
@@ -804,12 +817,12 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
 
       //Set data defined position
-      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::PositionX, QgsProperty::fromExpression( QStringLiteral( "$x + -5" ), true ) );
-      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::PositionY, QgsProperty::fromExpression( QStringLiteral( "$y + 5" ), true ) );
+      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Property::PositionX, QgsProperty::fromExpression( QStringLiteral( "$x + -5" ), true ) );
+      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Property::PositionY, QgsProperty::fromExpression( QStringLiteral( "$y + 5" ), true ) );
 
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "piediagram_datadefined_position" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "piediagram_datadefined_position", "piediagram_datadefined_position", *mMapSettings, 200, 15 );
     }
 
     void testDataDefinedStroke()
@@ -841,12 +854,12 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
 
       //setup data defined stroke
-      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::StrokeColor, QgsProperty::fromExpression( QStringLiteral( "if(\"Pilots\">1,'0,0,0,255','255,0,0,255')" ), true ) );
-      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::StrokeWidth, QgsProperty::fromExpression( QStringLiteral( "\"Staff\" / 2.0" ), true ) );
+      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Property::StrokeColor, QgsProperty::fromExpression( QStringLiteral( "if(\"Pilots\">1,'0,0,0,255','255,0,0,255')" ), true ) );
+      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Property::StrokeWidth, QgsProperty::fromExpression( QStringLiteral( "\"Staff\" / 2.0" ), true ) );
 
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "piediagram_datadefined_outline" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "piediagram_datadefined_outline", "piediagram_datadefined_outline", *mMapSettings, 200, 15 );
     }
 
     void testDataDefinedStartAngle()
@@ -878,11 +891,11 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
 
       //setup data defined start angle
-      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::StartAngle, QgsProperty::fromExpression( QStringLiteral( "360.0-\"Importance\"/20.0 * 360.0" ), true ) );
+      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Property::StartAngle, QgsProperty::fromExpression( QStringLiteral( "360.0-\"Importance\"/20.0 * 360.0" ), true ) );
 
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "piediagram_datadefined_startangle" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "piediagram_datadefined_startangle", "piediagram_datadefined_startangle", *mMapSettings, 200, 15 );
     }
 
     void testDataDefinedDistance()
@@ -914,11 +927,11 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
 
       //setup data defined distance
-      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Distance, QgsProperty::fromExpression( QStringLiteral( "\"Staff\"*2" ), true ) );
+      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Property::Distance, QgsProperty::fromExpression( QStringLiteral( "\"Staff\"*2" ), true ) );
 
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "piediagram_datadefined_distance" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "piediagram_datadefined_distance", "piediagram_datadefined_distance", *mMapSettings, 200, 15 );
     }
 
     void testDataDefinedShow()
@@ -950,11 +963,11 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
 
       //setup data defined show
-      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Show, QgsProperty::fromExpression( QStringLiteral( "\"Pilots\"=1" ), true ) );
+      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Property::Show, QgsProperty::fromExpression( QStringLiteral( "\"Pilots\"=1" ), true ) );
 
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "piediagram_datadefined_show" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "piediagram_datadefined_show", "piediagram_datadefined_show", *mMapSettings, 200, 15 );
     }
 
     void testDataDefinedPriority()
@@ -986,11 +999,11 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( false );
 
       //setup data defined priority
-      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Priority, QgsProperty::fromExpression( QStringLiteral( "\"importance\"/2" ), true ) );
+      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Property::Priority, QgsProperty::fromExpression( QStringLiteral( "\"importance\"/2" ), true ) );
 
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "piediagram_datadefined_priority" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "piediagram_datadefined_priority", "piediagram_datadefined_priority", *mMapSettings, 200, 15 );
     }
 
     void testDataDefinedZIndex()
@@ -1020,11 +1033,11 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
 
       //setup data defined z index
-      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::ZIndex, QgsProperty::fromExpression( QStringLiteral( "\"importance\"/2" ), true ) );
+      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Property::ZIndex, QgsProperty::fromExpression( QStringLiteral( "\"importance\"/2" ), true ) );
 
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "piediagram_datadefined_zindex" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "piediagram_datadefined_zindex", "piediagram_datadefined_zindex", *mMapSettings, 200, 15 );
     }
 
     void testDataDefinedAlwaysShow()
@@ -1056,14 +1069,14 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( false );
 
       //setup data defined priority (required to only show certain diagrams)
-      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Priority, QgsProperty::fromExpression( QStringLiteral( "\"importance\"/2" ), true ) );
+      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Property::Priority, QgsProperty::fromExpression( QStringLiteral( "\"importance\"/2" ), true ) );
       //setup data defined "always show"
-      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::AlwaysShow, QgsProperty::fromExpression( QStringLiteral( "\"Staff\">=6" ), true ) );
+      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Property::AlwaysShow, QgsProperty::fromExpression( QStringLiteral( "\"Staff\">=6" ), true ) );
 
 
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "piediagram_datadefined_alwaysshow" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "piediagram_datadefined_alwaysshow", "piediagram_datadefined_alwaysshow", *mMapSettings, 200, 15 );
     }
 
 
@@ -1097,22 +1110,22 @@ class TestQgsDiagram : public QgsTest
       dls.setShowAllDiagrams( true );
 
       //setup data defined stroke
-      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::BackgroundColor, QgsProperty::fromExpression( QStringLiteral( "if(\"Pilots\">1,'0,0,255,150','255,0,0,150')" ), true ) );
+      dls.dataDefinedProperties().setProperty( QgsDiagramLayerSettings::Property::BackgroundColor, QgsProperty::fromExpression( QStringLiteral( "if(\"Pilots\">1,'0,0,255,150','255,0,0,150')" ), true ) );
 
       mPointsLayer->setDiagramLayerSettings( dls );
 
-      QVERIFY( imageCheck( "textdiagram_datadefined_background" ) );
+      QGSVERIFYRENDERMAPSETTINGSCHECK( "textdiagram_datadefined_background", "textdiagram_datadefined_background", *mMapSettings, 200, 15 );
     }
 
     void testClipping()
     {
       const QString filename = QStringLiteral( TEST_DATA_DIR ) + "/lines.shp";
-      std::unique_ptr< QgsVectorLayer> vl2( new QgsVectorLayer( filename, QStringLiteral( "lines" ), QStringLiteral( "ogr" ) ) );
+      std::unique_ptr<QgsVectorLayer> vl2( new QgsVectorLayer( filename, QStringLiteral( "lines" ), QStringLiteral( "ogr" ) ) );
 
       QVariantMap props;
       props.insert( QStringLiteral( "outline_color" ), QStringLiteral( "#487bb6" ) );
       props.insert( QStringLiteral( "outline_width" ), QStringLiteral( "1" ) );
-      std::unique_ptr< QgsLineSymbol > symbol( QgsLineSymbol::createSimple( props ) );
+      std::unique_ptr<QgsLineSymbol> symbol( QgsLineSymbol::createSimple( props ) );
       vl2->setRenderer( new QgsSingleSymbolRenderer( symbol.release() ) );
 
       QgsDiagramSettings ds;
@@ -1152,35 +1165,14 @@ class TestQgsDiagram : public QgsTest
       region2.setFeatureClip( QgsMapClippingRegion::FeatureClippingType::ClipPainterOnly );
       mMapSettings->addClippingRegion( region2 );
 
-      const bool res = imageCheck( QStringLiteral( "diagram_clipping" ) );
-      mMapSettings->setClippingRegions( QList< QgsMapClippingRegion >() );
+      const bool res = QGSRENDERMAPSETTINGSCHECK( "diagram_clipping", "diagram_clipping", *mMapSettings, 200, 15 );
+      mMapSettings->setClippingRegions( QList<QgsMapClippingRegion>() );
       mMapSettings->setLayers( QList<QgsMapLayer *>() << mPointsLayer );
 
       QVERIFY( res );
     }
-
-
-
 };
 
-bool TestQgsDiagram::imageCheck( const QString &testType )
-{
-  //use the QgsRenderChecker test utility class to
-  //ensure the rendered output matches our control image
-
-  const QgsRectangle extent( -126, 23, -70, 47 );
-  mMapSettings->setExtent( extent );
-  mMapSettings->setFlag( Qgis::MapSettingsFlag::ForceVectorOutput );
-  mMapSettings->setOutputDpi( 96 );
-  QgsMultiRenderChecker checker;
-  checker.setControlPathPrefix( QStringLiteral( "diagrams" ) );
-  checker.setControlName( "expected_" + testType );
-  checker.setMapSettings( *mMapSettings );
-  checker.setColorTolerance( 15 );
-  const bool resultFlag = checker.runTest( testType, 200 );
-  mReport += checker.report();
-  return resultFlag;
-}
 
 QGSTEST_MAIN( TestQgsDiagram )
 #include "testqgsdiagram.moc"

@@ -25,6 +25,7 @@
 #include "qgslayertree.h"
 #include "qgssettings.h"
 #include "qgsunittypes.h"
+#include "qgsmaplayer.h"
 #include "qgsvectorlayer.h"
 #include "qgssymbollayerutils.h"
 #include "qgslayoutmanager.h"
@@ -37,10 +38,10 @@ class TestQgsProject : public QObject
 {
     Q_OBJECT
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
-    void init();// will be called before each testfunction is executed.
-    void cleanup();// will be called after every testfunction.
+    void initTestCase();    // will be called before the first testfunction is executed.
+    void cleanupTestCase(); // will be called after the last testfunction was executed.
+    void init();            // will be called before each testfunction is executed.
+    void cleanup();         // will be called after every testfunction.
 
     void testDirtySet();
     void testReadPath();
@@ -98,18 +99,17 @@ void TestQgsProject::cleanupTestCase()
 
 void TestQgsProject::testDirtySet()
 {
-  QgsProject p;
-  bool dirtySet = false;
-  connect( &p, &QgsProject::dirtySet, [&] { dirtySet = true; } );
-  p.setDirty( true );
-  QVERIFY( dirtySet );
+  QgsProject project;
+  QSignalSpy dirtySetSpy( &project, &QgsProject::dirtySet );
+  project.setDirty( true );
+  QVERIFY( dirtySetSpy.count() == 1 );
 }
 
 void TestQgsProject::testReadPath()
 {
   QgsProject *prj = new QgsProject;
   // this is a bit hacky as we do not really load such project
-#if defined(Q_OS_WIN)
+#if defined( Q_OS_WIN )
   const QString prefix( "C:" );
 #else
   const QString prefix;
@@ -166,7 +166,7 @@ void TestQgsProject::testPathResolver()
   // test older style relative path - file must exist for this to work
   QTemporaryFile tmpFile;
   tmpFile.open(); // fileName is not available until we open the file
-  const QString tmpName =  tmpFile.fileName();
+  const QString tmpName = tmpFile.fileName();
   tmpFile.close();
   const QgsPathResolver tempRel( tmpName );
   const QFileInfo fi( tmpName );
@@ -211,13 +211,13 @@ static QString _getLayerSvgMarkerPath( const QgsProject &prj, const QString &lay
 
 static QHash<QString, QString> _parseSvgPathsForLayers( const QString &projectFilename )
 {
-  QHash<QString, QString> projectFileSvgPaths;   // key = layer name, value = svg path
+  QHash<QString, QString> projectFileSvgPaths; // key = layer name, value = svg path
 
   QDomDocument doc;
   QFile projectFile( projectFilename );
   bool res = projectFile.open( QIODevice::ReadOnly );
   Q_ASSERT( res );
-  res = static_cast< bool >( doc.setContent( &projectFile ) );
+  res = static_cast<bool>( doc.setContent( &projectFile ) );
   Q_ASSERT( res );
   projectFile.close();
 
@@ -260,10 +260,10 @@ void TestQgsProject::testPathResolverSvg()
 
   QFile svgFile( ourSvgPath );
   QVERIFY( svgFile.open( QIODevice::WriteOnly ) );
-  svgFile.write( "<svg/>" );   // not a proper SVG, but good enough for this case
+  svgFile.write( "<svg/>" ); // not a proper SVG, but good enough for this case
   svgFile.close();
 
-  QVERIFY( QFileInfo::exists( ourSvgPath ) );  // should exist now
+  QVERIFY( QFileInfo::exists( ourSvgPath ) ); // should exist now
 
   const QString librarySvgPath = QgsSymbolLayerUtils::svgSymbolNameToPath( QStringLiteral( "transport/transport_airport.svg" ), QgsPathResolver() );
   QCOMPARE( QgsSymbolLayerUtils::svgSymbolPathToName( librarySvgPath, QgsPathResolver() ), QStringLiteral( "transport/transport_airport.svg" ) );
@@ -293,9 +293,9 @@ void TestQgsProject::testPathResolverSvg()
   QHash<QString, QString> projectFileSvgPaths = _parseSvgPathsForLayers( projectFilename );
 
   QCOMPARE( projectFileSvgPaths.count(), 3 );
-  QCOMPARE( projectFileSvgPaths["points 1"], QString( "./valid.svg" ) ); // relative path to project
-  QCOMPARE( projectFileSvgPaths["points 2"], invalidSvgPath );  // full path to non-existent file (not sure why - but that's how it works now)
-  QCOMPARE( projectFileSvgPaths["points 3"], QString( "transport/transport_airport.svg" ) );  // relative path to library
+  QCOMPARE( projectFileSvgPaths["points 1"], QString( "./valid.svg" ) );                     // relative path to project
+  QCOMPARE( projectFileSvgPaths["points 2"], invalidSvgPath );                               // full path to non-existent file (not sure why - but that's how it works now)
+  QCOMPARE( projectFileSvgPaths["points 3"], QString( "transport/transport_airport.svg" ) ); // relative path to library
 
   // load project again, check that the paths are absolute
   QgsProject projectLoaded;
@@ -323,7 +323,6 @@ void TestQgsProject::testPathResolverSvg()
   QCOMPARE( svg1x, ourSvgPath );
   QCOMPARE( svg2x, invalidSvgPath );
   QCOMPARE( svg3x, librarySvgPath );
-
 }
 
 
@@ -409,6 +408,10 @@ void TestQgsProject::testLayerFlags()
   QgsMapLayer *layer = prj2.mapLayer( layer2id );
   QVERIFY( layer );
   QVERIFY( !layer->flags().testFlag( QgsMapLayer::Removable ) );
+  QVERIFY( !layer->mReadFlags.testFlag( QgsMapLayer::FlagDontResolveLayers ) );
+  QVERIFY( !layer->mReadFlags.testFlag( QgsMapLayer::FlagTrustLayerMetadata ) );
+  QVERIFY( !layer->mReadFlags.testFlag( QgsMapLayer::FlagReadExtentFromXml ) );
+  QVERIFY( !layer->mReadFlags.testFlag( QgsMapLayer::FlagForceReadOnly ) );
 
   // test setFlags modifies correctly existing layer settings
   QVERIFY( !prj2.isDirty() );
@@ -419,7 +422,7 @@ void TestQgsProject::testLayerFlags()
   QVERIFY( vlayer->readExtentFromXml() );
   // vlayer doesn't have trust because it will be done for new layer or when reloading the project
   // no need to set trust on a layer which has already loaded everything
-  QVERIFY( !vlayer->dataProvider()->mReadFlags.testFlag( QgsDataProvider::FlagTrustDataSource ) );
+  QVERIFY( !vlayer->dataProvider()->mReadFlags.testFlag( Qgis::DataProviderReadFlag::TrustDataSource ) );
   QVERIFY( vlayer->dataProvider()->providerProperty( QgsVectorDataProvider::EvaluateDefaultValues ).toBool() );
 
   prj2.write();
@@ -433,10 +436,29 @@ void TestQgsProject::testLayerFlags()
   vlayer = qobject_cast<QgsVectorLayer *>( prj3.mapLayer( layer2id ) );
   QVERIFY( vlayer );
   QVERIFY( !vlayer->flags().testFlag( QgsMapLayer::Removable ) );
+  QVERIFY( !vlayer->mReadFlags.testFlag( QgsMapLayer::FlagDontResolveLayers ) );
+  QVERIFY( vlayer->mReadFlags.testFlag( QgsMapLayer::FlagTrustLayerMetadata ) );
+  QVERIFY( vlayer->mReadFlags.testFlag( QgsMapLayer::FlagReadExtentFromXml ) );
+  QVERIFY( !vlayer->mReadFlags.testFlag( QgsMapLayer::FlagForceReadOnly ) );
   QVERIFY( !prj3.isDirty() );
   QVERIFY( vlayer->readExtentFromXml() );
-  QVERIFY( vlayer->dataProvider()->mReadFlags.testFlag( QgsDataProvider::FlagTrustDataSource ) );
+  QVERIFY( vlayer->dataProvider()->mReadFlags.testFlag( Qgis::DataProviderReadFlag::TrustDataSource ) );
   QVERIFY( vlayer->dataProvider()->providerProperty( QgsVectorDataProvider::EvaluateDefaultValues ).toBool() );
+
+  // check reload of project with read fags that sets the correct layer properties
+  QgsProject prj4;
+  prj4.setFileName( f.fileName() );
+  Qgis::ProjectReadFlags readFlags = Qgis::ProjectReadFlag::DontResolveLayers
+                                     | Qgis::ProjectReadFlag::TrustLayerMetadata
+                                     | Qgis::ProjectReadFlag::ForceReadOnlyLayers;
+  QVERIFY( prj4.read( readFlags ) );
+  vlayer = qobject_cast<QgsVectorLayer *>( prj4.mapLayer( layer2id ) );
+  QVERIFY( vlayer );
+  QVERIFY( !vlayer->flags().testFlag( QgsMapLayer::Removable ) );
+  QVERIFY( vlayer->mReadFlags.testFlag( QgsMapLayer::FlagDontResolveLayers ) );
+  QVERIFY( vlayer->mReadFlags.testFlag( QgsMapLayer::FlagTrustLayerMetadata ) );
+  QVERIFY( vlayer->mReadFlags.testFlag( QgsMapLayer::FlagReadExtentFromXml ) );
+  QVERIFY( vlayer->mReadFlags.testFlag( QgsMapLayer::FlagForceReadOnly ) );
 }
 
 void TestQgsProject::testLocalFiles()
@@ -453,9 +475,8 @@ void TestQgsProject::testLocalFiles()
   QFile f2( shpPath );
   QVERIFY( f2.open( QFile::ReadWrite ) );
   f2.close();
-  const QgsPathResolver resolver( f.fileName( ) );
-  QCOMPARE( resolver.writePath( layerPath ), QString( "./" + info.baseName() + ".shp" ) ) ;
-
+  const QgsPathResolver resolver( f.fileName() );
+  QCOMPARE( resolver.writePath( layerPath ), QString( "./" + info.baseName() + ".shp" ) );
 }
 
 void TestQgsProject::testLocalUrlFiles()
@@ -468,14 +489,13 @@ void TestQgsProject::testLocalUrlFiles()
   prj.setFileName( f.fileName() );
   prj.write();
   const QString shpPath = info.dir().path() + '/' + info.baseName() + ".shp";
-  const QString extraStuff {"?someVar=someValue&someOtherVar=someOtherValue" };
+  const QString extraStuff { "?someVar=someValue&someOtherVar=someOtherValue" };
   const QString layerPath = "file://" + shpPath + extraStuff;
   QFile f2( shpPath );
   QVERIFY( f2.open( QFile::ReadWrite ) );
   f2.close();
-  const QgsPathResolver resolver( f.fileName( ) );
-  QCOMPARE( resolver.writePath( layerPath ), QString( "./" + info.baseName() + ".shp" + extraStuff ) ) ;
-
+  const QgsPathResolver resolver( f.fileName() );
+  QCOMPARE( resolver.writePath( layerPath ), QString( "./" + info.baseName() + ".shp" + extraStuff ) );
 }
 
 void TestQgsProject::testReadFlags()
@@ -491,10 +511,10 @@ void TestQgsProject::testReadFlags()
   QVERIFY( !layers.value( QStringLiteral( "polys20170310142652234" ) )->isValid() );
 
   // but they should have renderers (and other stuff!)
-  QCOMPARE( qobject_cast< QgsVectorLayer * >( layers.value( QStringLiteral( "points20170310142652246" ) ) )->renderer()->type(), QStringLiteral( "categorizedSymbol" ) );
-  QCOMPARE( qobject_cast< QgsVectorLayer * >( layers.value( QStringLiteral( "lines20170310142652255" ) ) )->renderer()->type(), QStringLiteral( "categorizedSymbol" ) );
-  QCOMPARE( qobject_cast< QgsVectorLayer * >( layers.value( QStringLiteral( "polys20170310142652234" ) ) )->renderer()->type(), QStringLiteral( "categorizedSymbol" ) );
-  QVERIFY( ! layers.value( QStringLiteral( "polys20170310142652234" ) )->originalXmlProperties().isEmpty() );
+  QCOMPARE( qobject_cast<QgsVectorLayer *>( layers.value( QStringLiteral( "points20170310142652246" ) ) )->renderer()->type(), QStringLiteral( "categorizedSymbol" ) );
+  QCOMPARE( qobject_cast<QgsVectorLayer *>( layers.value( QStringLiteral( "lines20170310142652255" ) ) )->renderer()->type(), QStringLiteral( "categorizedSymbol" ) );
+  QCOMPARE( qobject_cast<QgsVectorLayer *>( layers.value( QStringLiteral( "polys20170310142652234" ) ) )->renderer()->type(), QStringLiteral( "categorizedSymbol" ) );
+  QVERIFY( !layers.value( QStringLiteral( "polys20170310142652234" ) )->originalXmlProperties().isEmpty() );
 
   // do not store styles
   QVERIFY( p.read( project1Path, Qgis::ProjectReadFlag::DontStoreOriginalStyles ) );
@@ -510,8 +530,8 @@ void TestQgsProject::testReadFlags()
   QCOMPARE( layers.count(), 2 );
   QVERIFY( !layers.value( QStringLiteral( "lines20170310142652255" ) )->isValid() );
   QVERIFY( !layers.value( QStringLiteral( "polys20170310142652234" ) )->isValid() );
-  QCOMPARE( qobject_cast< QgsVectorLayer * >( layers.value( QStringLiteral( "lines20170310142652255" ) ) )->renderer()->type(), QStringLiteral( "categorizedSymbol" ) );
-  QCOMPARE( qobject_cast< QgsVectorLayer * >( layers.value( QStringLiteral( "polys20170310142652234" ) ) )->renderer()->type(), QStringLiteral( "categorizedSymbol" ) );
+  QCOMPARE( qobject_cast<QgsVectorLayer *>( layers.value( QStringLiteral( "lines20170310142652255" ) ) )->renderer()->type(), QStringLiteral( "categorizedSymbol" ) );
+  QCOMPARE( qobject_cast<QgsVectorLayer *>( layers.value( QStringLiteral( "polys20170310142652234" ) ) )->renderer()->type(), QStringLiteral( "categorizedSymbol" ) );
 
 
   const QString project3Path = QString( TEST_DATA_DIR ) + QStringLiteral( "/layouts/layout_casting.qgs" );
@@ -847,7 +867,6 @@ void TestQgsProject::testAttachmentsQgs()
     p2.removeMapLayer( p2layer->id() );
     QVERIFY( !QFile( path ).exists() );
   }
-
 }
 
 void TestQgsProject::testAttachmentsQgz()
@@ -927,7 +946,6 @@ void TestQgsProject::testAttachmentsQgz()
     p2.removeMapLayer( p2layer->id() );
     QVERIFY( !QFile( path ).exists() );
   }
-
 }
 
 void TestQgsProject::testAttachmentIdentifier()
@@ -1022,7 +1040,7 @@ void TestQgsProject::testAsynchronousLayerLoading()
               << QStringLiteral( "lines.shp" )
               << QStringLiteral( "lines_cardinals.shp" )
               << QStringLiteral( "lines_touching.shp" )
-              << QStringLiteral( "linestXXXX_XXXXXX.shp" )  //invalid name
+              << QStringLiteral( "linestXXXX_XXXXXX.shp" ) //invalid name
               << QStringLiteral( "multipatch.shp" )
               << QStringLiteral( "multipoint.shp" )
               << QStringLiteral( "points.shp" )
@@ -1041,7 +1059,7 @@ void TestQgsProject::testAsynchronousLayerLoading()
   for ( const QString &rasterFile : std::as_const( rasterFiles ) )
   {
     layers << new QgsRasterLayer( QString( TEST_DATA_DIR ) + QStringLiteral( "/raster/" ) + rasterFile, rasterFile, QStringLiteral( "gdal" ) );
-    if ( layers.last()->name() == QStringLiteral( "statistXXXX_XXXXXX.asc" ) )
+    if ( layers.last()->name() == QLatin1String( "statistXXXX_XXXXXX.asc" ) )
       QVERIFY( !layers.last()->isValid() );
     else
       QVERIFY( layers.last()->isValid() );
@@ -1050,8 +1068,8 @@ void TestQgsProject::testAsynchronousLayerLoading()
   for ( const QString &vectorFile : std::as_const( vectorFiles ) )
   {
     layers << new QgsVectorLayer( QString( TEST_DATA_DIR ) + QString( '/' ) + vectorFile, vectorFile, QStringLiteral( "ogr" ) );
-    if ( layers.last()->name() == QStringLiteral( "linestXXXX_XXXXXX.shp" ) )
-      QVERIFY( ! layers.last()->isValid() );
+    if ( layers.last()->name() == QLatin1String( "linestXXXX_XXXXXX.shp" ) )
+      QVERIFY( !layers.last()->isValid() );
     else
       QVERIFY( layers.last()->isValid() );
   }

@@ -22,10 +22,7 @@
 #include "qgs3drendererregistry.h"
 #include "qgsabstractvectorlayer3drenderer.h"
 #include "qgsabstract3dsymbol.h"
-
 #include "qgsphongmaterialsettings.h"
-
-#include "qgsmaplayerref.h"
 
 #include <QObject>
 
@@ -38,7 +35,6 @@ class QgsVectorLayer;
  * \warning This is not considered stable API, and may change in future QGIS releases. It is
  * exposed to the Python bindings as a tech preview only.
  *
- * \since QGIS 3.0
  */
 class _3D_EXPORT QgsVectorLayer3DRendererMetadata : public Qgs3DRendererAbstractMetadata
 {
@@ -54,7 +50,6 @@ class _3D_EXPORT QgsVectorLayer3DRendererMetadata : public Qgs3DRendererAbstract
  * \ingroup core
  * \brief 3D renderer that renders all features of a vector layer with the same 3D symbol.
  * The appearance is completely defined by the symbol.
- * \since QGIS 3.0
  */
 class _3D_EXPORT QgsVectorLayer3DRenderer : public QgsAbstractVectorLayer3DRenderer
 {
@@ -69,13 +64,13 @@ class _3D_EXPORT QgsVectorLayer3DRenderer : public QgsAbstractVectorLayer3DRende
 
     QString type() const override { return "vector"; }
     QgsVectorLayer3DRenderer *clone() const override SIP_FACTORY;
-    Qt3DCore::QEntity *createEntity( const Qgs3DMapSettings &map ) const override SIP_SKIP;
+    Qt3DCore::QEntity *createEntity( Qgs3DMapSettings *map ) const override SIP_SKIP;
 
     void writeXml( QDomElement &elem, const QgsReadWriteContext &context ) const override;
     void readXml( const QDomElement &elem, const QgsReadWriteContext &context ) override;
 
   private:
-    std::unique_ptr<QgsAbstract3DSymbol> mSymbol;  //!< 3D symbol that defines appearance
+    std::unique_ptr<QgsAbstract3DSymbol> mSymbol; //!< 3D symbol that defines appearance
 
   private:
 #ifdef SIP_RUN

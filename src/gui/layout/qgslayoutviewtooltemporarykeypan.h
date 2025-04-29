@@ -23,15 +23,12 @@
 /**
  * \ingroup gui
  * \brief Layout view tool for temporarily panning a layout while a key is depressed.
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsLayoutViewToolTemporaryKeyPan : public QgsLayoutViewTool
 {
-
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsLayoutViewToolTemporaryKeyPan.
      */
@@ -42,10 +39,8 @@ class GUI_EXPORT QgsLayoutViewToolTemporaryKeyPan : public QgsLayoutViewTool
     void activate() override;
 
   private:
-
     QPoint mLastMousePos;
-    QPointer< QgsLayoutViewTool > mPreviousViewTool;
-
+    QPointer<QgsLayoutViewTool> mPreviousViewTool;
 };
 
 #endif // QGSLAYOUTVIEWTOOLTEMPORARYKEYPAN_H

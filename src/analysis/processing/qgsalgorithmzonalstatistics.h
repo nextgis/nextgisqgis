@@ -22,8 +22,6 @@
 
 #include "qgis_sip.h"
 #include "qgsprocessingalgorithm.h"
-#include "qgsvectorlayer.h"
-#include "vector/qgszonalstatistics.h"
 
 ///@cond PRIVATE
 
@@ -32,11 +30,9 @@
  */
 class QgsZonalStatisticsAlgorithm : public QgsProcessingAlgorithm
 {
-
   public:
-
     QgsZonalStatisticsAlgorithm() = default;
-    Flags flags() const override;
+    Qgis::ProcessingAlgorithmFlags flags() const override;
     QString name() const override;
     QString displayName() const override;
     QStringList tags() const override;
@@ -49,14 +45,13 @@ class QgsZonalStatisticsAlgorithm : public QgsProcessingAlgorithm
 
   protected:
     bool prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
-    QVariantMap processAlgorithm( const QVariantMap &parameters,
-                                  QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
+    QVariantMap processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
 
   private:
-    std::unique_ptr< QgsRasterInterface > mInterface;
+    std::unique_ptr<QgsRasterInterface> mInterface;
     int mBand = 1;
     QString mPrefix;
-    QgsZonalStatistics::Statistics mStats = QgsZonalStatistics::All;
+    Qgis::ZonalStatistics mStats = Qgis::ZonalStatistic::All;
     QgsCoordinateReferenceSystem mCrs;
     double mPixelSizeX = 0;
     double mPixelSizeY = 0;

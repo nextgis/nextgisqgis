@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/providers/memory/qgsmemoryproviderutils.h                   *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -14,8 +14,6 @@ class QgsMemoryProviderUtils
 {
 %Docstring(signature="appended")
 Utility functions for use with the memory vector data provider.
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -29,8 +27,8 @@ Utility functions for use with the memory vector data provider.
         const QgsCoordinateReferenceSystem &crs = QgsCoordinateReferenceSystem(),
         bool loadDefaultStyle = true ) /Factory/;
 %Docstring
-Creates a new memory layer using the specified parameters. The caller takes responsibility
-for deleting the newly created layer.
+Creates a new memory layer using the specified parameters. The caller
+takes responsibility for deleting the newly created layer.
 
 :param name: layer name
 :param fields: fields for layer
@@ -47,5 +45,5 @@ for deleting the newly created layer.
  *                                                                      *
  * src/core/providers/memory/qgsmemoryproviderutils.h                   *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -15,6 +15,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgscustomization.h"
+#include "moc_qgscustomization.cpp"
 #include "qgisapp.h"
 #include "qgsapplication.h"
 #include "qgslogger.h"
@@ -52,11 +53,11 @@ bool isInternalWidget( const QString &name )
   return false;
 }
 
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MACOS
 QgsCustomizationDialog::QgsCustomizationDialog( QWidget *parent, QSettings *settings )
-  : QMainWindow( parent, Qt::WindowSystemMenuHint )  // Modeless dialog with close button only
+  : QMainWindow( parent, Qt::WindowSystemMenuHint ) // Modeless dialog with close button only
 #else
-QgsCustomizationDialog::QgsCustomizationDialog( QWidget * parent, QSettings * settings )
+QgsCustomizationDialog::QgsCustomizationDialog( QWidget *parent, QSettings *settings )
   : QMainWindow( parent )
 #endif
 {
@@ -79,14 +80,13 @@ QgsCustomizationDialog::QgsCustomizationDialog( QWidget * parent, QSettings * se
   myHeaders << tr( "Object name" ) << tr( "Label" );
   treeWidget->setHeaderLabels( myHeaders );
 
-  mLastDirSettingsName  = QStringLiteral( "/UI/lastCustomizationDir" );
+  mLastDirSettingsName = QStringLiteral( "/UI/lastCustomizationDir" );
   //treeWidget->hideColumn(0)
   connect( buttonBox->button( QDialogButtonBox::Ok ), &QAbstractButton::clicked, this, &QgsCustomizationDialog::ok );
   connect( buttonBox->button( QDialogButtonBox::Apply ), &QAbstractButton::clicked, this, &QgsCustomizationDialog::apply );
   connect( buttonBox->button( QDialogButtonBox::Cancel ), &QAbstractButton::clicked, this, &QgsCustomizationDialog::cancel );
   connect( buttonBox->button( QDialogButtonBox::Reset ), &QAbstractButton::clicked, this, &QgsCustomizationDialog::reset );
   connect( buttonBox->button( QDialogButtonBox::Help ), &QAbstractButton::clicked, this, &QgsCustomizationDialog::showHelp );
-
 }
 
 QTreeWidgetItem *QgsCustomizationDialog::item( const QString &path, QTreeWidgetItem *widgetItem )
@@ -97,7 +97,7 @@ QTreeWidgetItem *QgsCustomizationDialog::item( const QString &path, QTreeWidgetI
   QStringList names = pathCopy.split( '/' );
   pathCopy = QStringList( names.mid( 1 ) ).join( QLatin1Char( '/' ) );
 
-  if ( ! widgetItem )
+  if ( !widgetItem )
   {
     for ( int i = 0; i < treeWidget->topLevelItemCount(); ++i )
     {
@@ -138,9 +138,8 @@ bool QgsCustomizationDialog::filterItems( const QString &text )
 
   mTreeInitialVisible.clear();
   // initially hide everything
-  std::function< void( QTreeWidgetItem *, bool ) > setChildrenVisible;
-  setChildrenVisible = [this, &setChildrenVisible]( QTreeWidgetItem * item, bool visible )
-  {
+  std::function<void( QTreeWidgetItem *, bool )> setChildrenVisible;
+  setChildrenVisible = [this, &setChildrenVisible]( QTreeWidgetItem *item, bool visible ) {
     for ( int i = 0; i < item->childCount(); ++i )
       setChildrenVisible( item->child( i ), visible );
     mTreeInitialVisible.insert( item, !item->isHidden() );
@@ -210,7 +209,6 @@ void QgsCustomizationDialog::settingsToItem( const QString &path, QTreeWidgetIte
 
 void QgsCustomizationDialog::itemToSettings( const QString &path, QTreeWidgetItem *item, QSettings *settings )
 {
-
   QString objectName = item->text( 0 );
   if ( objectName.isEmpty() )
     return; // object is not identifiable
@@ -270,10 +268,22 @@ void QgsCustomizationDialog::apply()
 
   QSettings settings;
   settings.setValue( QStringLiteral( "UI/Customization/enabled" ), mCustomizationEnabledCheckBox->isChecked() );
+
+  mSelectedWidgets.clear();
 }
 
 void QgsCustomizationDialog::cancel()
 {
+  if ( mSelectedWidgets.size() > 0 )
+  {
+    for ( int i = 0; i < mSelectedWidgets.size(); i++ )
+    {
+      if ( QWidget *widget = mSelectedWidgets.at( i ) )
+        widget->setStyleSheet( mSelectedWidgets.at( i )->property( "originalStylesheet" ).toString() );
+    }
+    mSelectedWidgets.clear();
+  }
+  reset();
   hide();
 }
 
@@ -283,9 +293,7 @@ void QgsCustomizationDialog::actionSave_triggered( bool checked )
   QSettings mySettings;
   QString lastDir = mySettings.value( mLastDirSettingsName, QDir::homePath() ).toString();
 
-  QString fileName = QFileDialog::getSaveFileName( this,
-                     tr( "Choose a customization INI file" ),
-                     lastDir, tr( "Customization files (*.ini)" ) );
+  QString fileName = QFileDialog::getSaveFileName( this, tr( "Choose a customization INI file" ), lastDir, tr( "Customization files (*.ini)" ) );
 
   if ( fileName.isEmpty() )
   {
@@ -310,9 +318,7 @@ void QgsCustomizationDialog::actionLoad_triggered( bool checked )
   QSettings mySettings;
   QString lastDir = mySettings.value( mLastDirSettingsName, QDir::homePath() ).toString();
 
-  QString fileName = QFileDialog::getOpenFileName( this,
-                     tr( "Choose a customization INI file" ),
-                     lastDir, tr( "Customization files (*.ini)" ) );
+  QString fileName = QFileDialog::getOpenFileName( this, tr( "Choose a customization INI file" ), lastDir, tr( "Customization files (*.ini)" ) );
 
   if ( fileName.isEmpty() )
     return;
@@ -376,9 +382,8 @@ void QgsCustomizationDialog::init()
 
 QTreeWidgetItem *QgsCustomizationDialog::createTreeItemWidgets()
 {
-
   QDomDocument myDoc( QStringLiteral( "QgsWidgets" ) );
-  QFile myFile( QgsApplication::pkgDataPath() +  "/resources/customization.xml" );
+  QFile myFile( QgsApplication::pkgDataPath() + "/resources/customization.xml" );
   if ( !myFile.open( QIODevice::ReadOnly ) )
   {
     return nullptr;
@@ -520,9 +525,11 @@ bool QgsCustomizationDialog::switchWidget( QWidget *widget, QMouseEvent *e )
     QString style;
     if ( !on )
     {
+      mSelectedWidgets.append( widget );
       style = QStringLiteral( "background-color: #FFCCCC;" );
+      widget->setProperty( "originalStylesheet", widget->styleSheet() );
     }
-    widget->setStyleSheet( style );
+    widget->setStyleSheet( !style.isEmpty() ? style : widget->property( "originalStylesheet" ).toString() );
   }
 
   return true;
@@ -568,7 +575,7 @@ bool QgsCustomizationDialog::catchOn()
 
 void QgsCustomizationDialog::showHelp()
 {
-  QgsHelp::openHelp( QStringLiteral( "introduction/qgis_configuration.html#customization" ) );
+  QgsHelp::openHelp( QStringLiteral( "introduction/qgis_configuration.html#sec-customization" ) );
 }
 
 
@@ -730,17 +737,17 @@ void QgsCustomization::createTreeItemBrowser()
   mBrowserItem = new QTreeWidgetItem( data );
   QVector<QStringList> items;
 
-  items << QStringList( {QStringLiteral( "special:Home" ), tr( "Home Folder" )} );
-  items << QStringList( {QStringLiteral( "special:ProjectHome" ), tr( "Project Home Folder" )} );
-  items << QStringList( {QStringLiteral( "special:Favorites" ), tr( "Favorites Folder" )} );
-  items << QStringList( {QStringLiteral( "special:Drives" ), tr( "Drive Folders (e.g. C:\\)" )} );
-  items << QStringList( {QStringLiteral( "special:Volumes" ), tr( "Volume Folder (MacOS only)" )} );
+  items << QStringList( { QStringLiteral( "special:Home" ), tr( "Home Folder" ) } );
+  items << QStringList( { QStringLiteral( "special:ProjectHome" ), tr( "Project Home Folder" ) } );
+  items << QStringList( { QStringLiteral( "special:Favorites" ), tr( "Favorites Folder" ) } );
+  items << QStringList( { QStringLiteral( "special:Drives" ), tr( "Drive Folders (e.g. C:\\)" ) } );
+  items << QStringList( { QStringLiteral( "special:Volumes" ), tr( "Volume Folder (MacOS only)" ) } );
 
   const auto constProviders = QgsApplication::dataItemProviderRegistry()->providers();
   for ( QgsDataItemProvider *pr : constProviders )
   {
-    int capabilities = pr->capabilities();
-    if ( capabilities != QgsDataProvider::NoDataCapabilities )
+    const Qgis::DataItemProviderCapabilities capabilities = pr->capabilities();
+    if ( capabilities != Qgis::DataItemProviderCapabilities( Qgis::DataItemProviderCapability::NoCapabilities ) )
     {
       QStringList item;
       item << pr->name() << QObject::tr( "Data Item Provider: %1" ).arg( pr->name() );
@@ -769,7 +776,6 @@ QgsCustomization *QgsCustomization::instance()
 QgsCustomization::QgsCustomization()
   : mStatusPath( QStringLiteral( "/Customization/status" ) )
 {
-
   QSettings settings;
   mEnabled = settings.value( QStringLiteral( "UI/Customization/enabled" ), "false" ).toString() == QLatin1String( "true" );
 }
@@ -1129,8 +1135,8 @@ void QgsCustomization::loadDefault()
     return;
 
   // Look for default
-  QString path = QgsApplication::pkgDataPath() +  "/resources/customization.ini";
-  if ( ! QFile::exists( path ) )
+  QString path = QgsApplication::pkgDataPath() + "/resources/customization.ini";
+  if ( !QFile::exists( path ) )
   {
     QgsDebugMsgLevel( "Default customization not found in " + path, 2 );
     return;

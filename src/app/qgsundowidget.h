@@ -34,13 +34,12 @@ class QgsMapCanvas;
 class QgsMapLayer;
 
 /**
- * Class that handles undo display fo undo commands
+ * Class that handles undo display for undo commands
  */
 class APP_EXPORT QgsUndoWidget : public QgsPanelWidget
 {
     Q_OBJECT
   public:
-
     QgsUndoWidget( QWidget *parent, QgsMapCanvas *mapCanvas );
 
     /**
@@ -94,7 +93,7 @@ class APP_EXPORT QgsUndoWidget : public QgsPanelWidget
 
   private:
     QUndoView *mUndoView = nullptr;
-    QPointer< QUndoStack > mUndoStack;
+    QPointer<QUndoStack> mUndoStack;
     QgsMapCanvas *mMapCanvas = nullptr;
 
     int mPreviousIndex = 0;
@@ -108,4 +107,3 @@ class APP_EXPORT QgsUndoWidget : public QgsPanelWidget
 
 
 #endif // QGSUNDOWIDGET_H
-

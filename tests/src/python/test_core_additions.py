@@ -7,11 +7,11 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Denis Rouzaud'
-__date__ = '15.5.2018'
-__copyright__ = 'Copyright 2015, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Denis Rouzaud"
+__date__ = "15.5.2018"
+__copyright__ = "Copyright 2015, The QGIS Project"
+
 
 from qgis.core import (
     Qgis,
@@ -19,22 +19,23 @@ from qgis.core import (
     QgsTolerance,
     metaEnumFromValue,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 start_app()
 
 
-class TestCoreAdditions(unittest.TestCase):
+class TestCoreAdditions(QgisTestCase):
 
     def testMetaEnum(self):
         me = metaEnumFromValue(Qgis.MapToolUnit.Pixels)
         self.assertIsNotNone(me)
-        self.assertEqual(me.valueToKey(Qgis.MapToolUnit.Pixels), 'Pixels')
+        self.assertEqual(me.valueToKey(Qgis.MapToolUnit.Pixels), "Pixels")
 
         # check that using same variable twice doesn't segfault
         me = metaEnumFromValue(Qgis.MapToolUnit.Pixels, QgsTolerance)
         self.assertIsNotNone(me)
-        self.assertEqual(me.valueToKey(Qgis.MapToolUnit.Pixels), 'Pixels')
+        self.assertEqual(me.valueToKey(Qgis.MapToolUnit.Pixels), "Pixels")
 
         # do not raise error
         self.assertIsNone(metaEnumFromValue(1, QgsTolerance, False))

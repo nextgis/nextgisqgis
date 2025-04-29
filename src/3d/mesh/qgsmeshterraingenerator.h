@@ -23,39 +23,15 @@
 #include "qgsmeshlayer.h"
 #include "qgstriangularmesh.h"
 #include "qgsterraingenerator.h"
-#include "qgsterraintileloader_p.h"
 
 #define SIP_NO_FILE
-
-///@cond PRIVATE
-
-//! Chunk loader for mesh terrain implementation
-class QgsMeshTerrainTileLoader: public QgsTerrainTileLoader
-{
-    Q_OBJECT
-  public:
-    //! Construct the loader for a node
-    QgsMeshTerrainTileLoader( QgsTerrainEntity *terrain,
-                              QgsChunkNode *node,
-                              const QgsTriangularMesh &triangularMesh,
-                              const QgsMesh3DSymbol *symbol );
-
-    //! Create the 3D entity and returns it
-    Qt3DCore::QEntity *createEntity( Qt3DCore::QEntity *parent ) override;
-
-  private:
-    QgsTriangularMesh mTriangularMesh;
-    std::unique_ptr< QgsMesh3DSymbol > mSymbol;
-};
-
-///@endcond
 
 /**
  * \ingroup 3d
  * \brief Implementation of terrain generator that uses the Z values of a mesh layer to build a terrain
  * \since QGIS 3.12
  */
-class _3D_EXPORT QgsMeshTerrainGenerator: public QgsTerrainGenerator
+class _3D_EXPORT QgsMeshTerrainGenerator : public QgsTerrainGenerator
 {
     Q_OBJECT
   public:
@@ -85,7 +61,7 @@ class _3D_EXPORT QgsMeshTerrainGenerator: public QgsTerrainGenerator
     QgsRectangle rootChunkExtent() const override;
     void writeXml( QDomElement &elem ) const override;
     void readXml( const QDomElement &elem ) override;
-    float heightAt( double x, double y, const Qgs3DMapSettings & ) const override;
+    float heightAt( double x, double y, const Qgs3DRenderContext &context ) const override;
 
   private slots:
     void updateTriangularMesh();
@@ -94,10 +70,8 @@ class _3D_EXPORT QgsMeshTerrainGenerator: public QgsTerrainGenerator
     QgsMapLayerRef mLayer;
     QgsCoordinateReferenceSystem mCrs;
     QgsCoordinateTransformContext mTransformContext;
-    std::unique_ptr< QgsMesh3DSymbol > mSymbol;
+    std::unique_ptr<QgsMesh3DSymbol> mSymbol;
     QgsTriangularMesh mTriangularMesh;
-
-
 };
 
 #endif // QGSMESHTERRAINGENERATOR_H

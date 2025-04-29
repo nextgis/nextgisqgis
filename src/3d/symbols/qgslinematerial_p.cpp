@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgslinematerial_p.h"
+#include "moc_qgslinematerial_p.cpp"
 
 #include <QColor>
 #include <QSizeF>
@@ -34,13 +35,15 @@
 
 QgsLineMaterial::QgsLineMaterial()
   : mParameterThickness( new Qt3DRender::QParameter( "THICKNESS", 10, this ) )
-  , mParameterMiterLimit( new Qt3DRender::QParameter( "MITER_LIMIT", -1, this ) )  // 0.75
+  , mParameterMiterLimit( new Qt3DRender::QParameter( "MITER_LIMIT", -1, this ) ) // 0.75
   , mParameterLineColor( new Qt3DRender::QParameter( "lineColor", QColor( 0, 255, 0 ), this ) )
+  , mParameterUseVertexColors( new Qt3DRender::QParameter( "useVertexColors", false, this ) )
   , mParameterWindowScale( new Qt3DRender::QParameter( "WIN_SCALE", QSizeF(), this ) )
 {
   addParameter( mParameterThickness );
   addParameter( mParameterMiterLimit );
   addParameter( mParameterLineColor );
+  addParameter( mParameterUseVertexColors );
   addParameter( mParameterWindowScale );
 
   //Parameter { name: "tex0"; value: txt },
@@ -51,17 +54,8 @@ QgsLineMaterial::QgsLineMaterial()
   shaderProgram->setFragmentShaderCode( Qt3DRender::QShaderProgram::loadSource( QUrl( QStringLiteral( "qrc:/shaders/lines.frag" ) ) ) );
   shaderProgram->setGeometryShaderCode( Qt3DRender::QShaderProgram::loadSource( QUrl( QStringLiteral( "qrc:/shaders/lines.geom" ) ) ) );
 
-  Qt3DRender::QBlendEquation *blendEquation = new Qt3DRender::QBlendEquation( this );
-  blendEquation->setBlendFunction( Qt3DRender::QBlendEquation::Add );
-
-  Qt3DRender::QBlendEquationArguments *blendEquationArgs = new Qt3DRender::QBlendEquationArguments( this );
-  blendEquationArgs->setSourceRgb( Qt3DRender::QBlendEquationArguments::SourceAlpha );
-  blendEquationArgs->setDestinationRgb( Qt3DRender::QBlendEquationArguments::OneMinusSourceAlpha );
-
   Qt3DRender::QRenderPass *renderPass = new Qt3DRender::QRenderPass( this );
   renderPass->setShaderProgram( shaderProgram );
-  renderPass->addRenderState( blendEquation );
-  renderPass->addRenderState( blendEquationArgs );
 
   // without this filter the default forward renderer would not render this
   Qt3DRender::QFilterKey *filterKey = new Qt3DRender::QFilterKey;
@@ -90,6 +84,16 @@ void QgsLineMaterial::setLineColor( const QColor &color )
 QColor QgsLineMaterial::lineColor() const
 {
   return mParameterLineColor->value().value<QColor>();
+}
+
+void QgsLineMaterial::setUseVertexColors( bool enabled )
+{
+  mParameterUseVertexColors->setValue( enabled );
+}
+
+bool QgsLineMaterial::useVertexColors() const
+{
+  return mParameterUseVertexColors->value().toBool();
 }
 
 void QgsLineMaterial::setLineWidth( float width )

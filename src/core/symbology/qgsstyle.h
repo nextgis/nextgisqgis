@@ -78,79 +78,6 @@ typedef QMap<QString, QgsPalLayerSettings > QgsLabelSettingsMap;
  */
 typedef QMultiMap<QString, QString> QgsSmartConditionMap;
 
-// enumerators representing sqlite DB columns
-
-/**
- * Columns available in the Symbols table.
- */
-enum SymbolTable
-{
-  SymbolId, //!< Symbol ID
-  SymbolName, //!< Symbol Name
-  SymbolXML, //!< Symbol definition (as XML)
-  SymbolFavoriteId, //!< Symbol is favorite flag
-};
-
-/**
- * Columns available in the Tags table.
- */
-enum TagTable
-{
-  TagId, //!< Tag ID
-  TagName, //!< Tag name
-};
-
-/**
- * Columns available in the tag to symbol table.
- */
-enum TagmapTable
-{
-  TagmapTagId, //!< Tag ID
-  TagmapSymbolId, //!< Symbol ID
-};
-
-/**
- * Columns available in the color ramp table.
- */
-enum ColorrampTable
-{
-  ColorrampId, //!< Color ramp ID
-  ColorrampName, //!< Color ramp name
-  ColorrampXML, //!< Color ramp definition (as XML)
-  ColorrampFavoriteId, //!< Color ramp is favorite flag
-};
-
-/**
- * Columns available in the text format table.
- */
-enum TextFormatTable
-{
-  TextFormatId, //!< Text format ID
-  TextFormatName, //!< Text format name
-  TextFormatXML, //!< Text format definition (as XML)
-  TextFormatFavoriteId, //!< Text format is favorite flag
-};
-
-/**
- * Columns available in the label settings table.
- */
-enum LabelSettingsTable
-{
-  LabelSettingsId, //!< Label settings ID
-  LabelSettingsName, //!< Label settings name
-  LabelSettingsXML, //!< Label settings definition (as XML)
-  LabelSettingsFavoriteId, //!< Label settings is favorite flag
-};
-
-/**
- * Columns available in the smart group table.
- */
-enum SmartgroupTable
-{
-  SmartgroupId, //!< Smart group ID
-  SmartgroupName, //!< Smart group name
-  SmartgroupXML, //!< Smart group definition (as XML)
-};
 
 /**
  * \ingroup core
@@ -163,6 +90,99 @@ class CORE_EXPORT QgsStyle : public QObject
   public:
 
     /**
+     * Columns available in the Symbols table.
+     *
+     * \since QGIS 3.40. Prior to 3.40 this was available as SymbolTable.
+     */
+    enum class SymbolTableColumn : int
+    {
+      Id, //!< Symbol ID
+      Name, //!< Symbol Name
+      XML, //!< Symbol definition (as XML)
+      FavoriteId, //!< Symbol is favorite flag
+    };
+    Q_ENUM( SymbolTableColumn )
+
+    /**
+     * Columns available in the Tags table.
+     *
+     * \since QGIS 3.40. Prior to 3.40 this was available as TagTable.
+    */
+    enum class TagTableColumn : int
+    {
+      Id, //!< Tag ID
+      Name, //!< Tag name
+    };
+    Q_ENUM( TagTableColumn )
+
+    /**
+     * Columns available in the tag to symbol table.
+     *
+     * \since QGIS 3.40. Prior to 3.40 this was available as TagmapTable.
+    */
+    enum class TagmapTableColumn : int
+    {
+      TagId, //!< Tag ID
+      SymbolId, //!< Symbol ID
+    };
+    Q_ENUM( TagmapTableColumn )
+
+    /**
+     * Columns available in the color ramp table.
+     *
+     * \since QGIS 3.40. Prior to 3.40 this was available as ColorrampTable.
+    */
+    enum class ColorRampTableColumn : int
+    {
+      Id, //!< Color ramp ID
+      Name, //!< Color ramp name
+      XML, //!< Color ramp definition (as XML)
+      FavoriteId, //!< Color ramp is favorite flag
+    };
+    Q_ENUM( ColorRampTableColumn )
+
+    /**
+     * Columns available in the text format table.
+     *
+     * \since QGIS 3.40. Prior to 3.40 this was available as TextFormatTable.
+    */
+    enum class TextFormatTableColumn : int
+    {
+      Id, //!< Text format ID
+      Name, //!< Text format name
+      XML, //!< Text format definition (as XML)
+      FavoriteId, //!< Text format is favorite flag
+    };
+    Q_ENUM( TextFormatTableColumn )
+
+    /**
+     * Columns available in the label settings table.
+     *
+     * \since QGIS 3.40. Prior to 3.40 this was available as LabelSettingsTable.
+    */
+    enum class LabelSettingsTableColumn : int
+    {
+      Id, //!< Label settings ID
+      Name, //!< Label settings name
+      XML, //!< Label settings definition (as XML)
+      FavoriteId, //!< Label settings is favorite flag
+    };
+    Q_ENUM( LabelSettingsTableColumn )
+
+    /**
+     * Columns available in the smart group table.
+     *
+     * \since QGIS 3.40. Prior to 3.40 this was available as SmartgroupTable.
+    */
+    enum class SmartGroupTableColumn : int
+    {
+      Id, //!< Smart group ID
+      Name, //!< Smart group name
+      XML, //!< Smart group definition (as XML)
+    };
+    Q_ENUM( SmartGroupTableColumn )
+
+    /**
      * Constructor for QgsStyle, with the specified \a parent object.
      */
     QgsStyle( QObject *parent SIP_TRANSFERTHIS = nullptr );
@@ -173,7 +193,11 @@ class CORE_EXPORT QgsStyle : public QObject
      *
      *  The enumerator is used for identifying the entity being operated on when generic
      *  database functions are being run.
-     *  \sa rename(), remove(), symbolsOfFavorite(), symbolsWithTag(), symbolsOfSmartgroup()
+     *  \see rename()
+     *  \see remove()
+     *  \see symbolsOfFavorite()
+     *  \see symbolsWithTag()
+     *  \see symbolsOfSmartgroup()
      */
     enum StyleEntity
     {
@@ -183,8 +207,8 @@ class CORE_EXPORT QgsStyle : public QObject
       SmartgroupEntity, //!< Smart groups
       TextFormatEntity, //!< Text formats
       LabelSettingsEntity, //!< Label settings
-      LegendPatchShapeEntity, //!< Legend patch shape (since QGIS 3.14)
-      Symbol3DEntity, //!< 3D symbol entity (since QGIS 3.14)
+      LegendPatchShapeEntity, //!< Legend patch shape \since QGIS 3.14
+      Symbol3DEntity, //!< 3D symbol entity \since QGIS 3.14
     };
 
     /**
@@ -202,6 +226,17 @@ class CORE_EXPORT QgsStyle : public QObject
      * \since QGIS 3.26
      */
     void setName( const QString &name );
+
+    /**
+     * Returns TRUE if the style is initialized and ready for use.
+     *
+     * Most instances of QgsStyle will already be initialized. However, if the
+     * style is the QgsStyle::defaultStyle() object it may have been created using
+     * lazy initialization and will return FALSE until it is initialized().
+     *
+     * \since QGIS 3.36
+     */
+    bool isInitialized() const { return mInitialized; }
 
     /**
      * Returns TRUE if the style is considered a read-only library.
@@ -345,7 +380,6 @@ class CORE_EXPORT QgsStyle : public QObject
      * Returns a list of all tags in the style database
      *
      * \see addTag()
-     * \since QGIS 2.16
      */
     QStringList tags() const;
 
@@ -479,8 +513,15 @@ class CORE_EXPORT QgsStyle : public QObject
      */
     int labelSettingsId( const QString &name );
 
-    //! Returns default application-wide style
-    static QgsStyle *defaultStyle();
+    /**
+     * Returns the default application-wide style.
+     *
+     * Since QGIS 3.36, the \a initialize argument can be set to FALSE to temporarily
+     * defer the actual loading of the style's objects until they are first requested.
+     * This lazy-initialization can substantially improve application startup times,
+     * especially for standalone applications which do not utilize styles.
+     */
+    static QgsStyle *defaultStyle( bool initialize = true );
 
     //! Deletes the default style. Only to be used by QgsApplication::exitQgis()
     static void cleanDefaultStyle() SIP_SKIP;
@@ -816,7 +857,6 @@ class CORE_EXPORT QgsStyle : public QObject
      *  This function creates a new on-disk permanent style database.
      *  \returns returns the success state of the database creation
      *  \see createMemoryDatabase()
-     *  \since QGIS 3.0
      */
     bool createDatabase( const QString &filename );
 
@@ -826,7 +866,6 @@ class CORE_EXPORT QgsStyle : public QObject
      *  This function is used to create a temporary style database in case a permanent on-disk database is not needed.
      *  \returns returns the success state of the temporary memory database creation
      *  \see createDatabase()
-     *  \since QGIS 3.0
      */
     bool createMemoryDatabase();
 
@@ -836,7 +875,6 @@ class CORE_EXPORT QgsStyle : public QObject
      *  This function is used to create the tables structure in a newly-created database.
      *  \see createDatabase()
      *  \see createMemoryDatabase()
-     *  \since QGIS 3.0
      */
     void createTables();
 
@@ -864,7 +902,7 @@ class CORE_EXPORT QgsStyle : public QObject
      * \see load()
      * \see errorString()
      *
-     * \deprecated This function has no effect.
+     * \deprecated QGIS 3.40. This function has no effect.
      */
     Q_DECL_DEPRECATED bool save( const QString &filename = QString() ) SIP_DEPRECATED;
 
@@ -985,6 +1023,16 @@ class CORE_EXPORT QgsStyle : public QObject
 #endif
 
   signals:
+
+    /**
+     * Emitted when the style database has been fully initialized.
+     *
+     * This signals is only emitted by the QgsStyle::defaultStyle() instance,
+     * and only when the defaultStyle() has been lazily initialized.
+     *
+     * \since QGIS 3.36
+     */
+    void initialized();
 
     /**
      * Emitted just before the style object is destroyed.
@@ -1114,7 +1162,6 @@ class CORE_EXPORT QgsStyle : public QObject
      */
     void rampChanged( const QString &name );
 
-
     /**
      * Emitted whenever a text format has been renamed from \a oldName to \a newName
      * \see symbolRenamed()
@@ -1194,6 +1241,7 @@ class CORE_EXPORT QgsStyle : public QObject
 
   private:
 
+    bool mInitialized = true;
     QString mName;
     bool mReadOnly = false;
 
@@ -1223,6 +1271,13 @@ class CORE_EXPORT QgsStyle : public QObject
     void handleDeferred3DSymbolCreation();
 
     static QgsStyle *sDefaultStyle;
+
+    /**
+     * Loads default style database contents from the specified \a filename.
+     *
+     * \warning Must only be called on defaultStyle() instance!
+     */
+    void initializeDefaultStyle( const QString &filename );
 
     //! Convenience function to open the DB and return a sqlite3 object
     bool openDatabase( const QString &filename );

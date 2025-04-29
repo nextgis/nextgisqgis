@@ -30,11 +30,9 @@
  */
 class QgsDropTableFieldsAlgorithm : public QgsProcessingFeatureBasedAlgorithm
 {
-
   public:
-
     QgsDropTableFieldsAlgorithm() = default;
-    QgsProcessingAlgorithm::Flags flags() const override;
+    Qgis::ProcessingAlgorithmFlags flags() const override;
     QString name() const override;
     QString displayName() const override;
     QStringList tags() const override;
@@ -44,22 +42,20 @@ class QgsDropTableFieldsAlgorithm : public QgsProcessingFeatureBasedAlgorithm
     QString shortDescription() const override;
     QList<int> inputLayerTypes() const override;
     QgsDropTableFieldsAlgorithm *createInstance() const override SIP_FACTORY;
+    bool supportInPlaceEdit( const QgsMapLayer *layer ) const override;
 
   protected:
-
     void initParameters( const QVariantMap &configuration = QVariantMap() ) override;
     QString outputName() const override;
     QgsFields outputFields( const QgsFields &inputFields ) const override;
-    QgsProcessingFeatureSource::Flag sourceFlags() const override;
+    Qgis::ProcessingFeatureSourceFlags sourceFlags() const override;
 
     bool prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
-    QgsFeatureList processFeature( const QgsFeature &feature,  QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
-    bool supportInPlaceEdit( const QgsMapLayer *layer ) const override;
+    QgsFeatureList processFeature( const QgsFeature &feature, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
 
   private:
-
     QStringList mFieldsToDelete;
-    mutable QList< int > mFieldIndices;
+    mutable QList<int> mFieldIndices;
 };
 
 
@@ -68,11 +64,9 @@ class QgsDropTableFieldsAlgorithm : public QgsProcessingFeatureBasedAlgorithm
  */
 class QgsRetainTableFieldsAlgorithm : public QgsProcessingFeatureBasedAlgorithm
 {
-
   public:
-
     QgsRetainTableFieldsAlgorithm() = default;
-    QgsProcessingAlgorithm::Flags flags() const override;
+    Qgis::ProcessingAlgorithmFlags flags() const override;
     QString name() const override;
     QString displayName() const override;
     QStringList tags() const override;
@@ -84,20 +78,18 @@ class QgsRetainTableFieldsAlgorithm : public QgsProcessingFeatureBasedAlgorithm
     QgsRetainTableFieldsAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
-
     void initParameters( const QVariantMap &configuration = QVariantMap() ) override;
     QString outputName() const override;
     QgsFields outputFields( const QgsFields &inputFields ) const override;
-    QgsProcessingFeatureSource::Flag sourceFlags() const override;
+    Qgis::ProcessingFeatureSourceFlags sourceFlags() const override;
 
     bool prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
-    QgsFeatureList processFeature( const QgsFeature &feature,  QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
+    QgsFeatureList processFeature( const QgsFeature &feature, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
     bool supportInPlaceEdit( const QgsMapLayer *layer ) const override;
 
   private:
-
     QStringList mFieldsToRetain;
-    mutable QList< int > mFieldIndices;
+    mutable QList<int> mFieldIndices;
 };
 
 

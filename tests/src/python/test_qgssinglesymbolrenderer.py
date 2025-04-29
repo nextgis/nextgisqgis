@@ -18,42 +18,44 @@ From build dir, run: ctest -R PyQgsSingleSymbolRenderer -V
 
 """
 
-__author__ = 'Matthias Kuhn'
-__date__ = 'December 2015'
-__copyright__ = '(C) 2015, Matthias Kuhn'
+__author__ = "Matthias Kuhn"
+__date__ = "December 2015"
+__copyright__ = "(C) 2015, Matthias Kuhn"
 
 import os
 
-import qgis  # NOQA
 from qgis.PyQt.QtCore import QSize
 from qgis.core import (
     QgsFeatureRequest,
     QgsFillSymbol,
-    QgsMultiRenderChecker,
     QgsProject,
     QgsRectangle,
     QgsRenderContext,
     QgsSingleSymbolRenderer,
     QgsVectorLayer,
 )
-from qgis.testing import unittest
+from qgis.testing import unittest, QgisTestCase
 from qgis.testing.mocked import get_iface
 
-from utilities import unitTestDataPath
+from utilities import unitTestDataPath, start_app
 
 TEST_DATA_DIR = unitTestDataPath()
 
+start_app()
 
-class TestQgsSingleSymbolRenderer(unittest.TestCase):
+
+class TestQgsSingleSymbolRenderer(QgisTestCase):
 
     def setUp(self):
         self.iface = get_iface()
-        myShpFile = os.path.join(TEST_DATA_DIR, 'polys_overlapping.shp')
-        layer = QgsVectorLayer(myShpFile, 'Polys', 'ogr')
+        myShpFile = os.path.join(TEST_DATA_DIR, "polys_overlapping.shp")
+        layer = QgsVectorLayer(myShpFile, "Polys", "ogr")
         QgsProject.instance().addMapLayer(layer)
 
         # Create rulebased style
-        sym1 = QgsFillSymbol.createSimple({'color': '#fdbf6f', 'outline_color': 'black'})
+        sym1 = QgsFillSymbol.createSimple(
+            {"color": "#fdbf6f", "outline_color": "black"}
+        )
 
         self.renderer = QgsSingleSymbolRenderer(sym1)
         layer.setRenderer(self.renderer)
@@ -66,18 +68,25 @@ class TestQgsSingleSymbolRenderer(unittest.TestCase):
         self.mapsettings.setLayers(rendered_layers)
 
     def testOrderBy(self):
-        self.renderer.setOrderBy(QgsFeatureRequest.OrderBy([QgsFeatureRequest.OrderByClause('Value', False)]))
+        self.renderer.setOrderBy(
+            QgsFeatureRequest.OrderBy([QgsFeatureRequest.OrderByClause("Value", False)])
+        )
         self.renderer.setOrderByEnabled(True)
 
         # Setup rendering check
-        renderchecker = QgsMultiRenderChecker()
-        renderchecker.setMapSettings(self.mapsettings)
-        renderchecker.setControlName('expected_singlesymbol_orderby')
-        self.assertTrue(renderchecker.runTest('singlesymbol_orderby'))
+        self.assertTrue(
+            self.render_map_settings_check(
+                "singlesymbol_orderby", "singlesymbol_orderby", self.mapsettings
+            )
+        )
 
         # disable order by and retest
         self.renderer.setOrderByEnabled(False)
-        self.assertTrue(renderchecker.runTest('single'))
+        self.assertTrue(
+            self.render_map_settings_check(
+                "singlesymbol_noorderby", "singlesymbol_noorderby", self.mapsettings
+            )
+        )
 
     def testUsedAttributes(self):
         ctx = QgsRenderContext.fromMapSettings(self.mapsettings)
@@ -85,22 +94,26 @@ class TestQgsSingleSymbolRenderer(unittest.TestCase):
         self.assertCountEqual(self.renderer.usedAttributes(ctx), {})
 
     def test_legend_keys(self):
-        sym1 = QgsFillSymbol.createSimple({'color': '#fdbf6f', 'outline_color': 'black'})
+        sym1 = QgsFillSymbol.createSimple(
+            {"color": "#fdbf6f", "outline_color": "black"}
+        )
         renderer = QgsSingleSymbolRenderer(sym1)
 
-        self.assertEqual(renderer.legendKeys(), {'0'})
+        self.assertEqual(renderer.legendKeys(), {"0"})
 
     def test_legend_key_to_expression(self):
-        sym1 = QgsFillSymbol.createSimple({'color': '#fdbf6f', 'outline_color': 'black'})
+        sym1 = QgsFillSymbol.createSimple(
+            {"color": "#fdbf6f", "outline_color": "black"}
+        )
         renderer = QgsSingleSymbolRenderer(sym1)
 
-        exp, ok = renderer.legendKeyToExpression('0', None)
+        exp, ok = renderer.legendKeyToExpression("0", None)
         self.assertTrue(ok)
-        self.assertEqual(exp, 'TRUE')
+        self.assertEqual(exp, "TRUE")
 
-        exp, ok = renderer.legendKeyToExpression('xxxx', None)
+        exp, ok = renderer.legendKeyToExpression("xxxx", None)
         self.assertFalse(ok)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

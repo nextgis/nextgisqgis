@@ -5,11 +5,11 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = '(C) 2020 by Nyall Dawson'
-__date__ = '05/04/2020'
-__copyright__ = 'Copyright 2020, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "(C) 2020 by Nyall Dawson"
+__date__ = "05/04/2020"
+__copyright__ = "Copyright 2020, The QGIS Project"
+
 from qgis.PyQt.QtCore import QRectF
 from qgis.PyQt.QtTest import QSignalSpy
 from qgis.core import (
@@ -20,7 +20,8 @@ from qgis.core import (
     QgsProject,
     QgsRectangle,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 from utilities import unitTestDataPath
 
@@ -28,7 +29,7 @@ start_app()
 TEST_DATA_DIR = unitTestDataPath()
 
 
-class TestQgsLayoutNorthArrowHandler(unittest.TestCase):
+class TestQgsLayoutNorthArrowHandler(QgisTestCase):
 
     def testNorthArrowWithMapItemRotation(self):
         """Test arrow rotation when map item is also rotated"""
@@ -46,7 +47,7 @@ class TestQgsLayoutNorthArrowHandler(unittest.TestCase):
         self.assertEqual(handler.linkedMap(), map)
         self.assertEqual(len(spy), 0)
 
-        handler.setNorthMode(QgsLayoutNorthArrowHandler.GridNorth)
+        handler.setNorthMode(QgsLayoutNorthArrowHandler.NorthMode.GridNorth)
         map.setItemRotation(45)
         self.assertEqual(handler.arrowRotation(), 45)
         self.assertEqual(len(spy), 1)
@@ -105,7 +106,7 @@ class TestQgsLayoutNorthArrowHandler(unittest.TestCase):
         self.assertEqual(handler.linkedMap(), map)
         self.assertEqual(len(spy), 0)
 
-        handler.setNorthMode(QgsLayoutNorthArrowHandler.GridNorth)
+        handler.setNorthMode(QgsLayoutNorthArrowHandler.NorthMode.GridNorth)
         map.setMapRotation(45)
         self.assertEqual(handler.arrowRotation(), 45)
         self.assertEqual(len(spy), 1)
@@ -125,7 +126,9 @@ class TestQgsLayoutNorthArrowHandler(unittest.TestCase):
         map = QgsLayoutItemMap(layout)
         map.attemptSetSceneRect(QRectF(0, 0, 10, 10))
         map.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(3575))
-        map.setExtent(QgsRectangle(-2126029.962, -2200807.749, -119078.102, -757031.156))
+        map.setExtent(
+            QgsRectangle(-2126029.962, -2200807.749, -119078.102, -757031.156)
+        )
         layout.addLayoutItem(map)
 
         handler = QgsLayoutNorthArrowHandler(layout)
@@ -135,13 +138,15 @@ class TestQgsLayoutNorthArrowHandler(unittest.TestCase):
         self.assertEqual(handler.linkedMap(), map)
         self.assertEqual(len(spy), 0)
 
-        handler.setNorthMode(QgsLayoutNorthArrowHandler.TrueNorth)
+        handler.setNorthMode(QgsLayoutNorthArrowHandler.NorthMode.TrueNorth)
         self.assertAlmostEqual(handler.arrowRotation(), 37.20, 1)
         self.assertEqual(len(spy), 1)
         self.assertAlmostEqual(spy[-1][0], 37.20, 1)
 
         # shift map
-        map.setExtent(QgsRectangle(2120672.293, -3056394.691, 2481640.226, -2796718.780))
+        map.setExtent(
+            QgsRectangle(2120672.293, -3056394.691, 2481640.226, -2796718.780)
+        )
         self.assertAlmostEqual(handler.arrowRotation(), -38.18, 1)
         self.assertEqual(len(spy), 2)
         self.assertAlmostEqual(spy[-1][0], -38.18, 1)
@@ -159,5 +164,5 @@ class TestQgsLayoutNorthArrowHandler(unittest.TestCase):
         self.assertAlmostEqual(spy[-1][0], -38.18 + 35, 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

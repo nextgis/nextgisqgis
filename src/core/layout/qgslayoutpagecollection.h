@@ -35,7 +35,6 @@ class QgsMargins;
  * \ingroup core
  * \class QgsLayoutPageCollection
  * \brief A manager for a collection of pages in a layout.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutPageCollection : public QObject, public QgsLayoutSerializableObject
 {
@@ -233,7 +232,7 @@ class CORE_EXPORT QgsLayoutPageCollection : public QObject, public QgsLayoutSeri
      * Returns the symbol to use for drawing pages in the collection.
      * \see setPageStyleSymbol()
      *
-     * \deprecated Use QgsLayoutItemPage::pageStyleSymbol() instead.
+     * \deprecated QGIS 3.40. Use QgsLayoutItemPage::pageStyleSymbol() instead.
      */
     Q_DECL_DEPRECATED const QgsFillSymbol *pageStyleSymbol() const SIP_DEPRECATED;
 

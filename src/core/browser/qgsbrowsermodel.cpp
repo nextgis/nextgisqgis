@@ -25,15 +25,13 @@
 #include "qgsapplication.h"
 #include "qgsdataitemprovider.h"
 #include "qgsdataitemproviderregistry.h"
-#include "qgsdataprovider.h"
 #include "qgsmimedatautils.h"
 #include "qgslogger.h"
-#include "qgsproviderregistry.h"
 #include "qgsbrowsermodel.h"
+#include "moc_qgsbrowsermodel.cpp"
 #include "qgsproject.h"
 #include "qgssettings.h"
 #include "qgsdirectoryitem.h"
-#include "qgsprojectitem.h"
 #include "qgslayeritem.h"
 #include "qgsfavoritesitem.h"
 #include "qgslayermetadata.h"
@@ -86,7 +84,7 @@ QgsBrowserModel::~QgsBrowserModel()
 
 void QgsBrowserModel::updateProjectHome()
 {
-  QString home = QgsProject::instance()->homePath();
+  QString home = QgsProject::instance()->homePath(); // skip-keyword-check
   if ( mProjectHome && mProjectHome->path().mid( QStringLiteral( PROJECT_HOME_PREFIX ).length() ) == home )
     return;
 
@@ -251,7 +249,7 @@ void QgsBrowserModel::initialize()
 {
   if ( ! mInitialized )
   {
-    connect( QgsProject::instance(), &QgsProject::homePathChanged, this, &QgsBrowserModel::updateProjectHome );
+    connect( QgsProject::instance(), &QgsProject::homePathChanged, this, &QgsBrowserModel::updateProjectHome ); // skip-keyword-check
     addRootItems();
     mInitialized = true;
   }
@@ -301,7 +299,7 @@ QVariant QgsBrowserModel::data( const QModelIndex &index, int role ) const
   {
     return item->name();
   }
-  else if ( role == QgsBrowserModel::SortRole )
+  else if ( role == static_cast< int >( QgsBrowserModel::CustomRole::Sort ) )
   {
     return item->sortKey();
   }
@@ -313,11 +311,11 @@ QVariant QgsBrowserModel::data( const QModelIndex &index, int role ) const
   {
     return item->icon();
   }
-  else if ( role == QgsBrowserModel::PathRole )
+  else if ( role == static_cast< int >( QgsBrowserModel::CustomRole::Path ) )
   {
     return item->path();
   }
-  else if ( role == QgsBrowserModel::CommentRole )
+  else if ( role == static_cast< int >( QgsBrowserModel::CustomRole::Comment ) )
   {
     if ( item->type() == Qgis::BrowserItemType::Layer )
     {
@@ -326,7 +324,7 @@ QVariant QgsBrowserModel::data( const QModelIndex &index, int role ) const
     }
     return QVariant();
   }
-  else if ( role == QgsBrowserModel::LayerMetadataRole )
+  else if ( role == static_cast< int >( QgsBrowserModel::CustomRole::LayerMetadata ) )
   {
     if ( item->type() == Qgis::BrowserItemType::Layer )
     {
@@ -335,7 +333,7 @@ QVariant QgsBrowserModel::data( const QModelIndex &index, int role ) const
     }
     return QVariant();
   }
-  else if ( role == QgsBrowserModel::ProviderKeyRole )
+  else if ( role == static_cast< int >( QgsBrowserModel::CustomRole::ProviderKey ) )
   {
     return item->providerKey();
   }
@@ -439,7 +437,7 @@ QModelIndex QgsBrowserModel::findPath( QAbstractItemModel *model, const QString 
     {
       QModelIndex idx = model->index( i, 0, index );
 
-      QString itemPath = model->data( idx, PathRole ).toString();
+      QString itemPath = model->data( idx, static_cast< int >( QgsBrowserModel::CustomRole::Path ) ).toString();
       if ( itemPath == path )
       {
         QgsDebugMsgLevel( "Arrived " + itemPath, 4 );
@@ -674,7 +672,17 @@ QMimeData *QgsBrowserModel::mimeData( const QModelIndexList &indexes ) const
     if ( index.isValid() )
     {
       QgsDataItem *ptr = reinterpret_cast< QgsDataItem * >( index.internalPointer() );
-      const QgsMimeDataUtils::UriList uris = ptr->mimeUris();
+      QgsMimeDataUtils::UriList uris = ptr->mimeUris();
+      if ( uris.isEmpty() )
+      {
+        Q_NOWARN_DEPRECATED_PUSH
+        QgsMimeDataUtils::Uri uri = ptr->mimeUri();
+        Q_NOWARN_DEPRECATED_POP
+        if ( uri.isValid() )
+        {
+          uris << uri;
+        }
+      }
       for ( QgsMimeDataUtils::Uri uri : std::as_const( uris ) )
       {
         if ( ptr->capabilities2() & Qgis::BrowserItemCapability::ItemRepresentsFile )
@@ -814,8 +822,8 @@ void QgsBrowserModel::removeRootItem( QgsDataItem *item )
 
 QgsDataItem *QgsBrowserModel::addProviderRootItem( QgsDataItemProvider *pr )
 {
-  int capabilities = pr->capabilities();
-  if ( capabilities == QgsDataProvider::NoDataCapabilities )
+  const Qgis::DataItemProviderCapabilities capabilities = pr->capabilities();
+  if ( capabilities == Qgis::DataItemProviderCapabilities( Qgis::DataItemProviderCapability::NoCapabilities ) )
   {
     QgsDebugMsgLevel( pr->name() + " does not have any dataCapabilities", 4 );
     return nullptr;

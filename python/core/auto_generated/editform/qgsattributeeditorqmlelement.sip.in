@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/editform/qgsattributeeditorqmlelement.h                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -40,7 +40,8 @@ The QML code that will be represented within this widget.
 
     void setQmlCode( const QString &qmlCode );
 %Docstring
-Sets the QML code that will be represented within this widget to ``qmlCode``.
+Sets the QML code that will be represented within this widget to
+``qmlCode``.
 %End
 
 };
@@ -50,5 +51,5 @@ Sets the QML code that will be represented within this widget to ``qmlCode``.
  *                                                                      *
  * src/core/editform/qgsattributeeditorqmlelement.h                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

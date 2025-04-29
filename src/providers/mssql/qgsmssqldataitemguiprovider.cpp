@@ -16,18 +16,20 @@
 #include "qgsmanageconnectionsdialog.h"
 #include "qgsmssqlconnection.h"
 #include "qgsmssqldataitemguiprovider.h"
+#include "moc_qgsmssqldataitemguiprovider.cpp"
 #include "qgsmssqldataitems.h"
 #include "qgsmssqlnewconnection.h"
 #include "qgsmssqlsourceselect.h"
+#include "qgsdataitemguiproviderutils.h"
 
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
 
 
-void QgsMssqlDataItemGuiProvider::populateContextMenu( QgsDataItem *item, QMenu *menu, const QList<QgsDataItem *> &, QgsDataItemGuiContext )
+void QgsMssqlDataItemGuiProvider::populateContextMenu( QgsDataItem *item, QMenu *menu, const QList<QgsDataItem *> &selection, QgsDataItemGuiContext context )
 {
-  if ( QgsMssqlRootItem *rootItem = qobject_cast< QgsMssqlRootItem * >( item ) )
+  if ( QgsMssqlRootItem *rootItem = qobject_cast<QgsMssqlRootItem *>( item ) )
   {
     QAction *actionNew = new QAction( tr( "New Connection…" ), menu );
     connect( actionNew, &QAction::triggered, this, [rootItem] { newConnection( rootItem ); } );
@@ -41,50 +43,62 @@ void QgsMssqlDataItemGuiProvider::populateContextMenu( QgsDataItem *item, QMenu 
     connect( actionLoadServers, &QAction::triggered, this, [rootItem] { loadConnections( rootItem ); } );
     menu->addAction( actionLoadServers );
   }
-  else if ( QgsMssqlConnectionItem *connItem = qobject_cast< QgsMssqlConnectionItem * >( item ) )
+  else if ( QgsMssqlConnectionItem *connItem = qobject_cast<QgsMssqlConnectionItem *>( item ) )
   {
-    QAction *actionRefresh = new QAction( tr( "Refresh" ), menu );
-    connect( actionRefresh, &QAction::triggered, this, [connItem]
+    const QList<QgsMssqlConnectionItem *> mssqlConnectionItems = QgsDataItem::filteredItems<QgsMssqlConnectionItem>( selection );
+
+    if ( mssqlConnectionItems.size() == 1 )
     {
-      connItem->refresh();
-      if ( connItem->parent() )
-        connItem->parent()->refreshConnections();
+      QAction *actionRefresh = new QAction( tr( "Refresh" ), menu );
+      connect( actionRefresh, &QAction::triggered, this, [connItem] {
+        connItem->refresh();
+        if ( connItem->parent() )
+          connItem->parent()->refreshConnections();
+      } );
+      menu->addAction( actionRefresh );
+
+      menu->addSeparator();
+
+      QAction *actionEdit = new QAction( tr( "Edit Connection…" ), menu );
+      connect( actionEdit, &QAction::triggered, this, [connItem] { editConnection( connItem ); } );
+      menu->addAction( actionEdit );
+
+      QAction *actionDuplicate = new QAction( tr( "Duplicate Connection" ), menu );
+      connect( actionDuplicate, &QAction::triggered, this, [connItem] { duplicateConnection( connItem ); } );
+      menu->addAction( actionDuplicate );
+    }
+
+    QAction *actionDelete = new QAction( mssqlConnectionItems.size() > 1 ? tr( "Remove Connections…" ) : tr( "Remove Connection…" ), menu );
+    connect( actionDelete, &QAction::triggered, this, [mssqlConnectionItems, context] {
+      QgsDataItemGuiProviderUtils::deleteConnections( mssqlConnectionItems, []( const QString &connectionName ) { QgsMssqlSourceSelect::deleteConnection( connectionName ); }, context );
     } );
-    menu->addAction( actionRefresh );
-
-    menu->addSeparator();
-
-    QAction *actionEdit = new QAction( tr( "Edit Connection…" ), menu );
-    connect( actionEdit, &QAction::triggered, this, [connItem] { editConnection( connItem ); } );
-    menu->addAction( actionEdit );
-
-    QAction *actionDelete = new QAction( tr( "Remove Connection" ), menu );
-    connect( actionDelete, &QAction::triggered, this, [connItem] { deleteConnection( connItem ); } );
     menu->addAction( actionDelete );
 
-    menu->addSeparator();
+    if ( mssqlConnectionItems.size() == 1 )
+    {
+      menu->addSeparator();
 
-    QAction *actionShowNoGeom = new QAction( tr( "Show Non-spatial Tables" ), menu );
-    actionShowNoGeom->setCheckable( true );
-    actionShowNoGeom->setChecked( connItem->allowGeometrylessTables() );
-    connect( actionShowNoGeom, &QAction::toggled, connItem, &QgsMssqlConnectionItem::setAllowGeometrylessTables );
-    menu->addAction( actionShowNoGeom );
+      QAction *actionShowNoGeom = new QAction( tr( "Show Non-spatial Tables" ), menu );
+      actionShowNoGeom->setCheckable( true );
+      actionShowNoGeom->setChecked( connItem->allowGeometrylessTables() );
+      connect( actionShowNoGeom, &QAction::toggled, connItem, &QgsMssqlConnectionItem::setAllowGeometrylessTables );
+      menu->addAction( actionShowNoGeom );
 
-    QAction *actionCreateSchema = new QAction( tr( "New Schema…" ), menu );
-    connect( actionCreateSchema, &QAction::triggered, this, [connItem] { createSchema( connItem ); } );
-    menu->addAction( actionCreateSchema );
+      QAction *actionCreateSchema = new QAction( tr( "New Schema…" ), menu );
+      connect( actionCreateSchema, &QAction::triggered, this, [connItem] { createSchema( connItem ); } );
+      menu->addAction( actionCreateSchema );
+    }
   }
-  else if ( QgsMssqlSchemaItem *schemaItem = qobject_cast< QgsMssqlSchemaItem * >( item ) )
+  else if ( QgsMssqlSchemaItem *schemaItem = qobject_cast<QgsMssqlSchemaItem *>( item ) )
   {
     QAction *actionRefresh = new QAction( tr( "Refresh" ), menu );
-    connect( actionRefresh, &QAction::triggered, this, [schemaItem]
-    {
+    connect( actionRefresh, &QAction::triggered, this, [schemaItem] {
       if ( schemaItem->parent() )
         schemaItem->parent()->refresh();
     } );
     menu->addAction( actionRefresh );
   }
-  else if ( QgsMssqlLayerItem *layerItem = qobject_cast< QgsMssqlLayerItem * >( item ) )
+  else if ( QgsMssqlLayerItem *layerItem = qobject_cast<QgsMssqlLayerItem *>( item ) )
   {
     QMenu *maintainMenu = new QMenu( tr( "Table Operations" ), menu );
 
@@ -99,15 +113,13 @@ void QgsMssqlDataItemGuiProvider::populateContextMenu( QgsDataItem *item, QMenu 
 
 bool QgsMssqlDataItemGuiProvider::deleteLayer( QgsLayerItem *item, QgsDataItemGuiContext context )
 {
-  if ( QgsMssqlLayerItem *layerItem = qobject_cast< QgsMssqlLayerItem * >( item ) )
+  if ( QgsMssqlLayerItem *layerItem = qobject_cast<QgsMssqlLayerItem *>( item ) )
   {
     QgsMssqlConnectionItem *connItem = qobject_cast<QgsMssqlConnectionItem *>( layerItem->parent() ? layerItem->parent()->parent() : nullptr );
     const QgsMssqlLayerProperty &layerInfo = layerItem->layerInfo();
     const QString typeName = layerInfo.isView ? tr( "View" ) : tr( "Table" );
 
-    if ( QMessageBox::question( nullptr, QObject::tr( "Delete %1" ).arg( typeName ),
-                                QObject::tr( "Are you sure you want to delete [%1].[%2]?" ).arg( layerInfo.schemaName, layerInfo.tableName ),
-                                QMessageBox::Yes | QMessageBox::No, QMessageBox::No ) != QMessageBox::Yes )
+    if ( QMessageBox::question( nullptr, QObject::tr( "Delete %1" ).arg( typeName ), QObject::tr( "Are you sure you want to delete [%1].[%2]?" ).arg( layerInfo.schemaName, layerInfo.tableName ), QMessageBox::Yes | QMessageBox::No, QMessageBox::No ) != QMessageBox::Yes )
       return true;
 
     QString errCause;
@@ -134,9 +146,9 @@ bool QgsMssqlDataItemGuiProvider::deleteLayer( QgsLayerItem *item, QgsDataItemGu
 
 bool QgsMssqlDataItemGuiProvider::acceptDrop( QgsDataItem *item, QgsDataItemGuiContext )
 {
-  if ( qobject_cast< QgsMssqlConnectionItem * >( item ) )
+  if ( qobject_cast<QgsMssqlConnectionItem *>( item ) )
     return true;
-  if ( qobject_cast< QgsMssqlSchemaItem * >( item ) )
+  if ( qobject_cast<QgsMssqlSchemaItem *>( item ) )
     return true;
 
   return false;
@@ -144,11 +156,11 @@ bool QgsMssqlDataItemGuiProvider::acceptDrop( QgsDataItem *item, QgsDataItemGuiC
 
 bool QgsMssqlDataItemGuiProvider::handleDrop( QgsDataItem *item, QgsDataItemGuiContext, const QMimeData *data, Qt::DropAction )
 {
-  if ( QgsMssqlConnectionItem *connItem = qobject_cast< QgsMssqlConnectionItem * >( item ) )
+  if ( QgsMssqlConnectionItem *connItem = qobject_cast<QgsMssqlConnectionItem *>( item ) )
   {
     return connItem->handleDrop( data, QString() );
   }
-  else if ( QgsMssqlSchemaItem *schemaItem = qobject_cast< QgsMssqlSchemaItem * >( item ) )
+  else if ( QgsMssqlSchemaItem *schemaItem = qobject_cast<QgsMssqlSchemaItem *>( item ) )
   {
     QgsMssqlConnectionItem *connItem = qobject_cast<QgsMssqlConnectionItem *>( schemaItem->parent() );
     if ( !connItem )
@@ -179,17 +191,22 @@ void QgsMssqlDataItemGuiProvider::editConnection( QgsDataItem *item )
   }
 }
 
-void QgsMssqlDataItemGuiProvider::deleteConnection( QgsDataItem *item )
+void QgsMssqlDataItemGuiProvider::duplicateConnection( QgsDataItem *item )
 {
-  if ( QMessageBox::question( nullptr, QObject::tr( "Remove Connection" ),
-                              QObject::tr( "Are you sure you want to remove the connection to %1?" ).arg( item->name() ),
-                              QMessageBox::Yes | QMessageBox::No, QMessageBox::No ) != QMessageBox::Yes )
-    return;
+  const QString connectionName = item->name();
+  QgsSettings settings;
+  settings.beginGroup( QStringLiteral( "/MSSQL/connections" ) );
+  const QStringList connections = settings.childGroups();
+  settings.endGroup();
 
-  QgsMssqlSourceSelect::deleteConnection( item->name() );
-  // the parent should be updated
+  const QString newConnectionName = QgsDataItemGuiProviderUtils::uniqueName( connectionName, connections );
+
+  QgsMssqlConnection::duplicateConnection( connectionName, newConnectionName );
+
   item->parent()->refreshConnections();
+  item->refresh();
 }
+
 
 void QgsMssqlDataItemGuiProvider::createSchema( QgsMssqlConnectionItem *connItem )
 {
@@ -201,8 +218,7 @@ void QgsMssqlDataItemGuiProvider::createSchema( QgsMssqlConnectionItem *connItem
   QString error;
   if ( !QgsMssqlConnection::createSchema( uri, schemaName, &error ) )
   {
-    QMessageBox::warning( nullptr, tr( "Create Schema" ), tr( "Unable to create schema %1\n%2" ).arg( schemaName,
-                          error ) );
+    QMessageBox::warning( nullptr, tr( "Create Schema" ), tr( "Unable to create schema %1\n%2" ).arg( schemaName, error ) );
     return;
   }
 
@@ -216,9 +232,7 @@ void QgsMssqlDataItemGuiProvider::createSchema( QgsMssqlConnectionItem *connItem
 void QgsMssqlDataItemGuiProvider::truncateTable( QgsMssqlLayerItem *layerItem )
 {
   const QgsMssqlLayerProperty &layerInfo = layerItem->layerInfo();
-  if ( QMessageBox::question( nullptr, QObject::tr( "Truncate Table" ),
-                              QObject::tr( "Are you sure you want to truncate [%1].[%2]?\n\nThis will delete all data within the table." ).arg( layerInfo.schemaName, layerInfo.tableName ),
-                              QMessageBox::Yes | QMessageBox::No, QMessageBox::No ) != QMessageBox::Yes )
+  if ( QMessageBox::question( nullptr, QObject::tr( "Truncate Table" ), QObject::tr( "Are you sure you want to truncate [%1].[%2]?\n\nThis will delete all data within the table." ).arg( layerInfo.schemaName, layerInfo.tableName ), QMessageBox::Yes | QMessageBox::No, QMessageBox::No ) != QMessageBox::Yes )
     return;
 
   QString errCause;
@@ -241,8 +255,7 @@ void QgsMssqlDataItemGuiProvider::saveConnections()
 
 void QgsMssqlDataItemGuiProvider::loadConnections( QgsDataItem *item )
 {
-  const QString fileName = QFileDialog::getOpenFileName( nullptr, tr( "Load Connections" ), QDir::homePath(),
-                           tr( "XML files (*.xml *.XML)" ) );
+  const QString fileName = QFileDialog::getOpenFileName( nullptr, tr( "Load Connections" ), QDir::homePath(), tr( "XML files (*.xml *.XML)" ) );
   if ( fileName.isEmpty() )
   {
     return;

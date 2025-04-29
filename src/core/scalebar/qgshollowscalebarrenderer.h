@@ -32,9 +32,6 @@ class CORE_EXPORT QgsHollowScaleBarRenderer: public QgsScaleBarRenderer
 {
   public:
 
-    /**
-     * Constructor for QgsHollowScaleBarRenderer.
-     */
     QgsHollowScaleBarRenderer() = default;
 
     QString id() const override;
@@ -47,7 +44,6 @@ class CORE_EXPORT QgsHollowScaleBarRenderer: public QgsScaleBarRenderer
                const QgsScaleBarSettings &settings,
                const QgsScaleBarRenderer::ScaleBarContext &scaleContext ) const override;
     bool applyDefaultSettings( QgsScaleBarSettings &settings ) const override;
-
 };
 
 #endif // QGSHOLLOWSCALEBARRENDERER_H

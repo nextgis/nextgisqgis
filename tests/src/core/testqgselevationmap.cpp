@@ -26,14 +26,14 @@ class TestQgsElevationMap : public QgsTest
     Q_OBJECT
 
   public:
-    TestQgsElevationMap() : QgsTest( QStringLiteral( "Elevation Map Tests" ), QStringLiteral( "elevation_map" ) ) {}
+    TestQgsElevationMap()
+      : QgsTest( QStringLiteral( "Elevation Map Tests" ), QStringLiteral( "elevation_map" ) ) {}
 
   private slots:
     void initTestCase();
     void cleanupTestCase();
     void testRasterDemEdl();
     void testRasterDemReprojected();
-
 };
 
 
@@ -45,7 +45,6 @@ void TestQgsElevationMap::initTestCase()
   // init QGIS's paths - true means that all path will be inited from prefix
   QgsApplication::init();
   QgsApplication::initQgis();
-
 }
 
 void TestQgsElevationMap::cleanupTestCase()
@@ -56,7 +55,6 @@ void TestQgsElevationMap::cleanupTestCase()
 
 void TestQgsElevationMap::testRasterDemEdl()
 {
-
   QString testDataDir = QStringLiteral( TEST_DATA_DIR ); //defined in CmakeLists.txt
   QgsRasterLayer r( testDataDir + "/analysis/dem.tif" );
   QVERIFY( r.isValid() );
@@ -74,12 +72,11 @@ void TestQgsElevationMap::testRasterDemEdl()
   std::unique_ptr<QgsElevationMap> elevationMap( QgsElevationMap::fromRasterBlock( block.get() ) );
   elevationMap->applyEyeDomeLighting( img, 2, 100, 10000 );
 
-  QVERIFY( imageCheck( "dem_edl", "dem_edl", img ) );
+  QGSVERIFYIMAGECHECK( "dem_edl", "dem_edl", img );
 }
 
 void TestQgsElevationMap::testRasterDemReprojected()
 {
-
   QString testDataDir = QStringLiteral( TEST_DATA_DIR ); //defined in CmakeLists.txt
   QgsRasterLayer r( testDataDir + "/analysis/dem.tif" );
   r.setOpacity( 0.0 );
@@ -99,7 +96,7 @@ void TestQgsElevationMap::testRasterDemReprojected()
   mapSettings.setExtent( QgsRectangle( 770583, 5609270, 781928, 5619219 ) );
   mapSettings.setElevationShadingRenderer( elevationShadingRenderer );
 
-  QVERIFY( renderMapSettingsCheck( QStringLiteral( "reprojected_raster" ), QStringLiteral( "reprojected_raster" ), mapSettings ) );
+  QGSVERIFYRENDERMAPSETTINGSCHECK( QStringLiteral( "reprojected_raster" ), QStringLiteral( "reprojected_raster" ), mapSettings );
 }
 
 

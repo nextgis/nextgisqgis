@@ -26,14 +26,17 @@
  * of vector tiles - this parameter provides processing framework's adapter for QList<QgsVectorTileWriter::Layer>.
  *
  * A valid value for this parameter is a list (QVariantList), where each item is a map (QVariantMap) in this form:
+ *
+ * \code{.py}
  * {
  *   'layer':  string or QgsMapLayer,
- *   // key-value pairs below are optional
+ *   # key-value pairs below are optional
  *   'layerName': string,
  *   'filterExpression': string,
  *   'minZoom': int,
  *   'maxZoom': int
  * }
+ * \endcode
  *
  * Static functions parametersAsLayers(), variantMapAsLayer(), layerAsVariantMap() provide conversion between
  * QgsVectorTileWriter::Layer representation and QVariant representation.
@@ -51,7 +54,7 @@ class CORE_EXPORT QgsProcessingParameterVectorTileWriterLayers : public QgsProce
     QString type() const override;
     bool checkValueIsAcceptable( const QVariant &input, QgsProcessingContext *context = nullptr ) const override;
     QString valueAsPythonString( const QVariant &value, QgsProcessingContext &context ) const override;
-    QString asPythonString( QgsProcessing::PythonOutputType outputType = QgsProcessing::PythonQgsProcessingAlgorithmSubclass ) const override;
+    QString asPythonString( QgsProcessing::PythonOutputType outputType = QgsProcessing::PythonOutputType::PythonQgsProcessingAlgorithmSubclass ) const override;
 
     //! Returns the type name for the parameter class.
     static QString typeName() { return QStringLiteral( "vectortilewriterlayers" ); }

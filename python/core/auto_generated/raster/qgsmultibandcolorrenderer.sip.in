@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/raster/qgsmultibandcolorrenderer.h                          *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -29,7 +29,8 @@ Renderer for multiband images with the color components
     virtual QgsMultiBandColorRenderer *clone() const /Factory/;
 
 %Docstring
-QgsMultiBandColorRenderer cannot be copied. Use :py:func:`~QgsMultiBandColorRenderer.clone` instead.
+QgsMultiBandColorRenderer cannot be copied. Use
+:py:func:`~QgsMultiBandColorRenderer.clone` instead.
 %End
     virtual Qgis::RasterRendererFlags flags() const;
 
@@ -139,5 +140,5 @@ Ownership of the enhancement is transferred.
  *                                                                      *
  * src/core/raster/qgsmultibandcolorrenderer.h                          *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

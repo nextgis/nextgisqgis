@@ -19,11 +19,11 @@
 #include "qgsapplication.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgsrectangle.h"
+#include "qgis.h"
 
 #include <QDir>
 
 #include <gdal.h>
-
 
 
 static QString _tempFile( const QString &name )
@@ -32,9 +32,14 @@ static QString _tempFile( const QString &name )
 }
 
 
-class TestAlignRaster : public QObject
+class TestAlignRaster : public QgsTest
 {
     Q_OBJECT
+
+  public:
+    TestAlignRaster()
+      : QgsTest( QStringLiteral( "Align Raster Tests" ) )
+    {}
 
     QString SRC_FILE;
   private slots:
@@ -128,7 +133,7 @@ class TestAlignRaster : public QObject
       QgsAlignRaster align;
       QgsAlignRaster::List rasters;
       rasters << QgsAlignRaster::Item( SRC_FILE, tmpFile );
-      rasters[0].resampleMethod = QgsAlignRaster::RA_Bilinear;
+      rasters[0].resampleMethod = Qgis::GdalResampleAlgorithm::RA_Bilinear;
       align.setRasters( rasters );
       align.setParametersFromRaster( SRC_FILE );
       QPointF offset = align.gridOffset();
@@ -151,7 +156,7 @@ class TestAlignRaster : public QObject
       QgsAlignRaster align;
       QgsAlignRaster::List rasters;
       rasters << QgsAlignRaster::Item( SRC_FILE, tmpFile );
-      rasters[0].resampleMethod = QgsAlignRaster::RA_Bilinear;
+      rasters[0].resampleMethod = Qgis::GdalResampleAlgorithm::RA_Bilinear;
       align.setRasters( rasters );
       align.setParametersFromRaster( SRC_FILE );
       align.setCellSize( 0.1, 0.1 );
@@ -163,7 +168,6 @@ class TestAlignRaster : public QObject
       QCOMPARE( out.rasterSize(), QSize( 8, 8 ) );
       QCOMPARE( out.cellSize(), QSizeF( 0.1, 0.1 ) );
       QCOMPARE( out.identify( 106.15, -6.35 ), 2.25 );
-
     }
 
 
@@ -174,7 +178,7 @@ class TestAlignRaster : public QObject
       QgsAlignRaster align;
       QgsAlignRaster::List rasters;
       rasters << QgsAlignRaster::Item( SRC_FILE, tmpFile );
-      rasters[0].resampleMethod = QgsAlignRaster::RA_Average;
+      rasters[0].resampleMethod = Qgis::GdalResampleAlgorithm::RA_Average;
       align.setRasters( rasters );
       align.setParametersFromRaster( SRC_FILE, QString(), QSizeF( 0.4, 0.4 ) );
       const bool res = align.run();
@@ -195,7 +199,7 @@ class TestAlignRaster : public QObject
       QgsAlignRaster align;
       QgsAlignRaster::List rasters;
       rasters << QgsAlignRaster::Item( SRC_FILE, tmpFile );
-      rasters[0].resampleMethod = QgsAlignRaster::RA_Average;
+      rasters[0].resampleMethod = Qgis::GdalResampleAlgorithm::RA_Average;
       rasters[0].rescaleValues = true;
       align.setRasters( rasters );
       align.setParametersFromRaster( SRC_FILE, QString(), QSizeF( 0.4, 0.4 ) );
@@ -223,7 +227,7 @@ class TestAlignRaster : public QObject
       QgsAlignRaster::List rasters;
       rasters << QgsAlignRaster::Item( SRC_FILE, tmpFile );
       align.setRasters( rasters );
-      align.setParametersFromRaster( SRC_FILE, destCRS.toWkt( QgsCoordinateReferenceSystem::WKT_PREFERRED ) );
+      align.setParametersFromRaster( SRC_FILE, destCRS.toWkt( Qgis::CrsWktVariant::Preferred ) );
       const bool res = align.run();
       QVERIFY( res );
 
@@ -233,10 +237,10 @@ class TestAlignRaster : public QObject
       QCOMPARE( outCRS, destCRS );
       QCOMPARE( out.rasterSize(), QSize( 4, 4 ) );
       // tolerance of 1 to keep the test more robust
-      QGSCOMPARENEAR( out.cellSize().width(), 22293, 1 ); // ~ 22293.256065
+      QGSCOMPARENEAR( out.cellSize().width(), 22293, 1 );  // ~ 22293.256065
       QGSCOMPARENEAR( out.cellSize().height(), 22293, 1 ); // ~ 22293.256065
-      QGSCOMPARENEAR( out.gridOffset().x(), 4327, 1 ); // ~ 4327.168434
-      QGSCOMPARENEAR( out.gridOffset().y(), 637, 1 ); // ~ 637.007990
+      QGSCOMPARENEAR( out.gridOffset().x(), 4327, 1 );     // ~ 4327.168434
+      QGSCOMPARENEAR( out.gridOffset().y(), 637, 1 );      // ~ 637.007990
       QCOMPARE( out.identify( 1308405, -746611 ), 10. );
     }
 
@@ -251,9 +255,7 @@ class TestAlignRaster : public QObject
       align.setRasters( rasters );
 
       QCOMPARE( align.suggestedReferenceLayer(), 0 );
-
     }
-
 };
 
 QGSTEST_MAIN( TestAlignRaster )

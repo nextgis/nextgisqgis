@@ -28,20 +28,35 @@
  * This widget includes buttons to add and remove rows.
  * Child classes must call init(QAbstractTableModel*) from their constructor.
  *
- * \since QGIS 3.0
  */
-class GUI_EXPORT QgsTableWidgetBase: public QWidget, protected Ui::QgsTableWidgetUiBase
+class GUI_EXPORT QgsTableWidgetBase : public QWidget, protected Ui::QgsTableWidgetUiBase
 {
     Q_OBJECT
   public:
-
     /**
      * Constructor.
      */
     explicit QgsTableWidgetBase( QWidget *parent );
 
-  protected:
+    /**
+     * Returns TRUE if the widget is shown in a read-only state.
+     *
+     * \see setReadOnly()
+     * \since QGIS 3.38
+     */
+    bool isReadOnly() const { return mReadOnly; }
 
+  public slots:
+
+    /**
+    * Sets whether the widget should be shown in a read-only state.
+    *
+    * \see isReadOnly()
+    * \since QGIS 3.38
+    */
+    virtual void setReadOnly( bool readOnly );
+
+  protected:
     /**
      * Initialize the table with the given model.
      * Must be called once in the child class' constructor.
@@ -72,9 +87,11 @@ class GUI_EXPORT QgsTableWidgetBase: public QWidget, protected Ui::QgsTableWidge
      */
     void onSelectionChanged();
 
+  private:
+    bool mReadOnly = false;
+
     friend class TestQgsKeyValueWidget;
     friend class TestQgsListWidget;
-
 };
 
 

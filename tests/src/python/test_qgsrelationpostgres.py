@@ -5,28 +5,29 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Loïc Bartoletti'
-__date__ = '27/07/2020'
-__copyright__ = 'Copyright 2020, The QGIS Project'
+
+__author__ = "Loïc Bartoletti"
+__date__ = "27/07/2020"
+__copyright__ = "Copyright 2020, The QGIS Project"
 
 import os
 
-import qgis  # NOQA
 from qgis.core import QgsProject, QgsVectorLayer
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 start_app()
 
 
-class TestQgsRelationPostgresql(unittest.TestCase):
+class TestQgsRelationPostgresql(QgisTestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
 
-        cls.dbconn = 'service=\'qgis_test\''
-        if 'QGIS_PGTEST_DB' in os.environ:
-            cls.dbconn = os.environ['QGIS_PGTEST_DB']
+        cls.dbconn = "service='qgis_test'"
+        if "QGIS_PGTEST_DB" in os.environ:
+            cls.dbconn = os.environ["QGIS_PGTEST_DB"]
 
         cls.relMgr = QgsProject.instance().relationManager()
 
@@ -44,11 +45,44 @@ class TestQgsRelationPostgresql(unittest.TestCase):
         """
 
         # Create test layer
-        tables = ['c_amgmt_amgmt_lot', 'c_batiment_bat_lot', 'c_ens_immo_amgmt', 'c_ens_immo_bat', 'c_terrain_ens_immo', 't_actes', 't_adresse', 't_amgmt', 't_amgmt_lot', 't_bat', 't_bat_lot', 't_ens_immo', 't_terrain']  # spellok
-        vl_tables = ['vl_c_amgmt_amgmt_lot', 'vl_c_batiment_bat_lot', 'vl_c_ens_immo_amgmt', 'vl_c_ens_immo_bat', 'vl_c_terrain_ens_immo', 'vl_t_actes', 'vl_t_adresse', 'vl_t_amgmt', 'vl_t_amgmt_lot', 'vl_t_bat', 'vl_t_bat_lot', 'vl_t_ens_immo', 'vl_t_terrain']  # spellok
+        tables = [
+            "c_amgmt_amgmt_lot",
+            "c_batiment_bat_lot",
+            "c_ens_immo_amgmt",
+            "c_ens_immo_bat",
+            "c_terrain_ens_immo",
+            "t_actes",
+            "t_adresse",
+            "t_amgmt",
+            "t_amgmt_lot",
+            "t_bat",
+            "t_bat_lot",
+            "t_ens_immo",
+            "t_terrain",
+        ]  # spellok
+        vl_tables = [
+            "vl_c_amgmt_amgmt_lot",
+            "vl_c_batiment_bat_lot",
+            "vl_c_ens_immo_amgmt",
+            "vl_c_ens_immo_bat",
+            "vl_c_terrain_ens_immo",
+            "vl_t_actes",
+            "vl_t_adresse",
+            "vl_t_amgmt",
+            "vl_t_amgmt_lot",
+            "vl_t_bat",
+            "vl_t_bat_lot",
+            "vl_t_ens_immo",
+            "vl_t_terrain",
+        ]  # spellok
 
         for i in range(len(tables)):
-            vl_tables[i] = QgsVectorLayer(self.dbconn + f' sslmode=disable key=\'pk\' table="relations"."{tables[i]}" sql=', tables[i], 'postgres')
+            vl_tables[i] = QgsVectorLayer(
+                self.dbconn
+                + f' sslmode=disable key=\'pk\' table="relations"."{tables[i]}" sql=',
+                tables[i],
+                "postgres",
+            )
             assert vl_tables[i].isValid()
             QgsProject.instance().addMapLayer(vl_tables[i])
 
@@ -62,9 +96,19 @@ class TestQgsRelationPostgresql(unittest.TestCase):
     def test_discover_relations_spaced(self):
         """Test regression https://github.com/qgis/QGIS/issues/39025 and https://github.com/qgis/QGIS/issues/39036"""
 
-        vl_parent = QgsVectorLayer(self.dbconn + ' sslmode=disable key=\'pk\' table="spaced schema"."spaced parent" sql=', 'parent', 'postgres')
+        vl_parent = QgsVectorLayer(
+            self.dbconn
+            + ' sslmode=disable key=\'pk\' table="spaced schema"."spaced parent" sql=',
+            "parent",
+            "postgres",
+        )
         self.assertTrue(vl_parent.isValid())
-        vl_child = QgsVectorLayer(self.dbconn + ' sslmode=disable key=\'pk\' table="spaced schema"."spaced child" sql=', 'child', 'postgres')
+        vl_child = QgsVectorLayer(
+            self.dbconn
+            + ' sslmode=disable key=\'pk\' table="spaced schema"."spaced child" sql=',
+            "child",
+            "postgres",
+        )
         self.assertTrue(vl_child.isValid())
 
         QgsProject.instance().clear()
@@ -74,5 +118,5 @@ class TestQgsRelationPostgresql(unittest.TestCase):
         self.assertEqual(len(relations), 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

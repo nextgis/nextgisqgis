@@ -15,24 +15,23 @@
 #include "qgsguiutils.h"
 
 #include "qgsapplication.h"
+#include "qgsfileutils.h"
 #include "qgssettings.h"
 #include "qgsencodingfiledialog.h"
 #include "qgslogger.h"
 #include "qgis_gui.h"
 #include "qgis.h"
 
-#include <QImageWriter>
-#include <QFontDialog>
 #include <QApplication>
+#include <QFontDialog>
+#include <QImageWriter>
 #include <QRegularExpression>
 
 
 namespace QgsGuiUtils
 {
 
-  bool GUI_EXPORT openFilesRememberingFilter( QString const &filterName,
-      QString const &filters, QStringList &selectedFiles, QString &enc, QString &title,
-      bool cancelAll )
+  bool GUI_EXPORT openFilesRememberingFilter( QString const &filterName, QString const &filters, QStringList &selectedFiles, QString &enc, QString &title, bool cancelAll )
   {
     Q_UNUSED( enc )
 
@@ -93,14 +92,25 @@ namespace QgsGuiUtils
     // get a list of supported output image types
     QMap<QString, QString> filterMap;
     const auto supportedImageFormats { QImageWriter::supportedImageFormats() };
+    QStringList imageFormats;
+    // add PNG format first for certain file dialog to auto-fill from first listed extension
+    imageFormats << QStringLiteral( "*.png *.PNG" );
     for ( const QByteArray &format : supportedImageFormats )
     {
-      //svg doesn't work so skip it
+      // svg doesn't work so skip it
       if ( format == "svg" )
+      {
         continue;
+      }
 
       filterMap.insert( createFileFilter_( format ), format );
+
+      if ( format != "png" )
+      {
+        imageFormats << QStringLiteral( "*.%1 *.%2" ).arg( format, QString( format ).toUpper() );
+      }
     }
+    const QString formatByExtension = QStringLiteral( "%1 (%2)" ).arg( QObject::tr( "Format by Extension" ), imageFormats.join( QLatin1Char( ' ' ) ) );
 
 #ifdef QGISDEBUG
     QgsDebugMsgLevel( QStringLiteral( "Available Filters Map: " ), 2 );
@@ -110,13 +120,14 @@ namespace QgsGuiUtils
     }
 #endif
 
-    QgsSettings settings;  // where we keep last used filter in persistent state
+    QgsSettings settings; // where we keep last used filter in persistent state
     const QString lastUsedDir = settings.value( QStringLiteral( "UI/lastSaveAsImageDir" ), QDir::homePath() ).toString();
 
-    // Prefer "png" format unless the user previously chose a different format
-    const QString pngExtension = QStringLiteral( "png" );
-    const QString pngFilter = createFileFilter_( pngExtension );
-    QString selectedFilter = settings.value( QStringLiteral( "UI/lastSaveAsImageFilter" ), pngFilter ).toString();
+    QString selectedFilter = settings.value( QStringLiteral( "UI/lastSaveAsImageFilter" ), QString() ).toString();
+    if ( selectedFilter.isEmpty() )
+    {
+      selectedFilter = formatByExtension;
+    }
 
     QString initialPath;
     if ( defaultFilename.isNull() )
@@ -132,27 +143,18 @@ namespace QgsGuiUtils
 
     QString outputFileName;
     QString ext;
-#if defined(Q_OS_WIN) || defined(Q_OS_MAC) || defined(Q_OS_LINUX)
-    outputFileName = QFileDialog::getSaveFileName( parent, message, initialPath, qgsMapJoinKeys( filterMap, QStringLiteral( ";;" ) ), &selectedFilter );
-
-    if ( !outputFileName.isNull() )
-    {
-      ext = filterMap.value( selectedFilter, QString() );
-      if ( !ext.isNull() )
-        settings.setValue( QStringLiteral( "UI/lastSaveAsImageFilter" ), selectedFilter );
-      settings.setValue( QStringLiteral( "UI/lastSaveAsImageDir" ), QFileInfo( outputFileName ).absolutePath() );
-    }
+#if defined( Q_OS_WIN ) || defined( Q_OS_MAC ) || defined( Q_OS_LINUX )
+    outputFileName = QFileDialog::getSaveFileName( parent, message, initialPath, formatByExtension + QStringLiteral( ";;" ) + qgsMapJoinKeys( filterMap, QStringLiteral( ";;" ) ), &selectedFilter );
 #else
-
     //create a file dialog using the filter list generated above
-    std::unique_ptr<QFileDialog> fileDialog( new QFileDialog( parent, message, initialPath, qgsMapJoinKeys( filterMap, QStringLiteral( ";;" ) ) ) );
+    std::unique_ptr<QFileDialog> fileDialog( new QFileDialog( parent, message, initialPath, formatByExtension + QStringLiteral( ";;" ) + qgsMapJoinKeys( filterMap, QStringLiteral( ";;" ) ) ) );
 
     // allow for selection of more than one file
     fileDialog->setFileMode( QFileDialog::AnyFile );
     fileDialog->setAcceptMode( QFileDialog::AcceptSave );
     fileDialog->setOption( QFileDialog::DontConfirmOverwrite, false );
 
-    if ( !selectedFilter.isEmpty() )     // set the filter to the last one used
+    if ( !selectedFilter.isEmpty() ) // set the filter to the last one used
     {
       fileDialog->selectNameFilter( selectedFilter );
     }
@@ -162,21 +164,34 @@ namespace QgsGuiUtils
     {
       outputFileName = fileDialog->selectedFiles().first();
     }
-
-    selectedFilter = fileDialog->selectedNameFilter();
-    QgsDebugMsgLevel( "Selected filter: " + selectedFilter, 2 );
-    ext = filterMap.value( selectedFilter, QString() );
-
-    if ( !ext.isNull() )
-      settings.setValue( "/UI/lastSaveAsImageFilter", selectedFilter );
-
-    settings.setValue( "/UI/lastSaveAsImageDir", fileDialog->directory().absolutePath() );
 #endif
 
-    // Add the file type suffix to the fileName if required
-    if ( !ext.isNull() && !outputFileName.endsWith( '.' + ext.toLower(), Qt::CaseInsensitive ) )
+    if ( !outputFileName.isNull() )
     {
-      outputFileName += '.' + ext;
+      if ( selectedFilter == formatByExtension )
+      {
+        settings.setValue( QStringLiteral( "UI/lastSaveAsImageFilter" ), QString() );
+        ext = QFileInfo( outputFileName ).suffix();
+
+        auto match = std::find_if( filterMap.begin(), filterMap.end(), [&ext]( const QString &filter ) { return filter == ext; } );
+        if ( match == filterMap.end() )
+        {
+          // Use "png" format when extension missing or not matching
+          ext = QStringLiteral( "png" );
+          selectedFilter = createFileFilter_( ext );
+          outputFileName = QgsFileUtils::addExtensionFromFilter( outputFileName, selectedFilter );
+        }
+      }
+      else
+      {
+        ext = filterMap.value( selectedFilter, QString() );
+        if ( !ext.isEmpty() )
+        {
+          outputFileName = QgsFileUtils::addExtensionFromFilter( outputFileName, selectedFilter );
+          settings.setValue( QStringLiteral( "UI/lastSaveAsImageFilter" ), selectedFilter );
+        }
+      }
+      settings.setValue( QStringLiteral( "UI/lastSaveAsImageDir" ), QFileInfo( outputFileName ).absolutePath() );
     }
 
     return qMakePair( outputFileName, ext );
@@ -199,7 +214,7 @@ namespace QgsGuiUtils
     // parent is intentionally not set to 'this' as
     // that would make it follow the style sheet font
     // see also #12233 and #4937
-#if defined(Q_OS_MAC)
+#if defined( Q_OS_MAC )
     // Native dialog broken on macOS with Qt5
     // probably only broken in Qt5.11.1 and .2
     //    (see https://successfulsoftware.net/2018/11/02/qt-is-broken-on-macos-right-now/ )
@@ -280,13 +295,13 @@ namespace QgsGuiUtils
   {
     const int precision { significantDigits( dataType ) };
     QString result { QLocale().toString( value, 'f', precision ) };
-    if ( ! displayTrailingZeroes )
+    if ( !displayTrailingZeroes )
     {
       const QRegularExpression zeroesRe { QStringLiteral( R"raw(\%1\d*?(0+$))raw" ).arg( QLocale().decimalPoint() ) };
       if ( zeroesRe.match( result ).hasMatch() )
       {
         result.truncate( zeroesRe.match( result ).capturedStart( 1 ) );
-        if ( result.endsWith( QLocale().decimalPoint( ) ) )
+        if ( result.endsWith( QLocale().decimalPoint() ) )
         {
           result.chop( 1 );
         }
@@ -329,7 +344,7 @@ namespace QgsGuiUtils
     }
     return 0;
   }
-}
+} // namespace QgsGuiUtils
 
 //
 // QgsTemporaryCursorOverride
@@ -381,4 +396,28 @@ void QgsTemporaryCursorRestoreOverride::restore()
     QApplication::setOverrideCursor( *it );
   }
   mCursors.clear();
+}
+
+//
+// QWidgetUpdateBlocker
+//
+
+QWidgetUpdateBlocker::QWidgetUpdateBlocker( QWidget *widget )
+  : mWidget( widget )
+{
+  mWidget->setUpdatesEnabled( false );
+}
+
+void QWidgetUpdateBlocker::release()
+{
+  if ( !mWidget )
+    return;
+
+  mWidget->setUpdatesEnabled( true );
+  mWidget = nullptr;
+}
+
+QWidgetUpdateBlocker::~QWidgetUpdateBlocker()
+{
+  release();
 }

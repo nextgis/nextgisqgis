@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgsbrowsertreeview.h                                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -17,11 +17,10 @@
 class QgsBrowserTreeView : QTreeView
 {
 %Docstring(signature="appended")
-The :py:class:`QgsBrowserTreeView` class extends QTreeView with save/restore tree state functionality.
+The :py:class:`QgsBrowserTreeView` class extends QTreeView with
+save/restore tree state functionality.
 
 .. seealso:: :py:class:`QgsBrowserModel`
-
-.. versionadded:: 2.8
 %End
 
 %TypeHeaderCode
@@ -34,7 +33,6 @@ The :py:class:`QgsBrowserTreeView` class extends QTreeView with save/restore tre
       sipType = nullptr;
 %End
   public:
-
     QgsBrowserTreeView( QWidget *parent /TransferThis/ = 0 );
 %Docstring
 Constructor for QgsBrowserTreeView
@@ -68,17 +66,20 @@ Returns ``True`` if the item was found and could be selected.
 .. versionadded:: 3.28
 %End
 
-    void expandPath( const QString &path );
+    void expandPath( const QString &path, bool selectPath = false );
 %Docstring
 Expands out a file ``path`` in the view.
 
-The ``path`` must correspond to a valid directory existing on the file system.
+The ``path`` must correspond to a valid directory existing on the file
+system.
+
+Since QGIS 3.38 the ``selectPath`` argument can be used to automatically
+select the path too.
 
 .. versionadded:: 3.28
 %End
 
   protected:
-
     virtual void keyPressEvent( QKeyEvent *event );
 
 
@@ -93,5 +94,5 @@ The ``path`` must correspond to a valid directory existing on the file system.
  *                                                                      *
  * src/gui/qgsbrowsertreeview.h                                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

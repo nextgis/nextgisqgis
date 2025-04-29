@@ -140,7 +140,9 @@ class CORE_EXPORT QgsRasterBlock
     /**
      * TRUE if the block has no data value.
      * \returns TRUE if the block has no data value
-     * \see noDataValue(), setNoDataValue(), resetNoDataValue()
+     * \see noDataValue()
+     * \see setNoDataValue()
+     * \see resetNoDataValue()
      */
     bool hasNoDataValue() const SIP_HOLDGIL { return mHasNoDataValue; }
 
@@ -157,16 +159,18 @@ class CORE_EXPORT QgsRasterBlock
 
     /**
      * Sets cell value that will be considered as "no data".
-     * \see noDataValue(), hasNoDataValue(), resetNoDataValue()
-     * \since QGIS 3.0
+     * \see noDataValue()
+     * \see hasNoDataValue()
+     * \see resetNoDataValue()
      */
     void setNoDataValue( double noDataValue ) SIP_HOLDGIL;
 
     /**
      * Reset no data value: if there was a no data value previously set,
      * it will be discarded.
-     * \see noDataValue(), hasNoDataValue(), setNoDataValue()
-     * \since QGIS 3.0
+     * \see noDataValue()
+     * \see hasNoDataValue()
+     * \see setNoDataValue()
      */
     void resetNoDataValue() SIP_HOLDGIL;
 
@@ -174,7 +178,9 @@ class CORE_EXPORT QgsRasterBlock
      * Returns no data value. If the block does not have a no data value the
      *  returned value is undefined.
      * \returns No data value
-     * \see hasNoDataValue(), setNoDataValue(), resetNoDataValue()
+     * \see hasNoDataValue()
+     * \see setNoDataValue()
+     * \see resetNoDataValue()
      */
     double noDataValue() const SIP_HOLDGIL { return mNoDataValue; }
 
@@ -487,7 +493,6 @@ class CORE_EXPORT QgsRasterBlock
      * method. This method has no effect for raster blocks with an explicit no data value set.
      *  \param row row index
      *  \param column column index
-     *  \since QGIS 2.10
     */
     void setIsData( int row, int column ) SIP_HOLDGIL
     {
@@ -500,7 +505,6 @@ class CORE_EXPORT QgsRasterBlock
      * In this case it is possible to reset a pixel to flag it as having valid data using this
      * method. This method has no effect for raster blocks with an explicit no data value set.
      *  \param index data matrix index (long type in Python)
-     *  \since QGIS 2.10
     */
     void setIsData( qgssize index ) SIP_HOLDGIL
     {
@@ -531,7 +535,6 @@ class CORE_EXPORT QgsRasterBlock
      * still exists. Writing to the returned QByteArray will not affect the original data:
      * a deep copy of the data will be made and only the local copy will be modified.
      * \note in Python the method returns ordinary bytes object as the
-     * \since QGIS 3.0
      */
     QByteArray data() const;
 
@@ -542,7 +545,6 @@ class CORE_EXPORT QgsRasterBlock
      * array, only the initial data from the input array will be used.
      * Optionally it is possible to set non-zero offset (in bytes) if the input data should
      * overwrite data somewhere in the middle of the internal buffer.
-     * \since QGIS 3.0
      */
     void setData( const QByteArray &data, int offset = 0 );
 
@@ -558,32 +560,57 @@ class CORE_EXPORT QgsRasterBlock
      * Returns a pointer to block data.
      * \param index data matrix index (long type in Python)
      * \note not available in Python bindings
+     *
+     * \see constBits()
      */
     char *bits( qgssize index ) SIP_SKIP;
 
     /**
      * Returns a pointer to block data.
      * \note not available in Python bindings
+     *
+     * \see constBits()
      */
     char *bits() SIP_SKIP;
 
     /**
+     * Returns a const pointer to block data.
+     *
+     * \param index data matrix index (long type in Python)
+     * \note not available in Python bindings
+     *
+     * \see bits()
+     * \since QGIS 3.38
+     */
+    const char *constBits( qgssize index ) const SIP_SKIP;
+
+    /**
+     * Returns a const pointer to block data.
+     * \note not available in Python bindings
+     *
+     * \see bits()
+     * \since QGIS 3.38
+     */
+    const char *constBits() const SIP_SKIP;
+
+    /**
      * \brief Print double value with all necessary significant digits.
      *         It is ensured that conversion back to double gives the same number.
-     *  \param value the value to be printed
-     *  \returns string representing the value
+     * \param value the value to be printed
+     * \param localized if TRUE, use localized number format
+     * \returns string representing the value
      */
-    static QString printValue( double value );
+    static QString printValue( double value, bool localized = false );
 
     /**
      * \brief Print float value with all necessary significant digits.
      *         It is ensured that conversion back to float gives the same number.
-     *  \param value the value to be printed
-     *  \returns string representing the value
+     * \param value the value to be printed
+     * \param localized if TRUE, use localized number format
+     * \returns string representing the value
      * \note not available in Python bindings
-     * \since QGIS 2.16
      */
-    static QString printValue( float value ) SIP_SKIP;
+    static QString printValue( float value, bool localized = false ) SIP_SKIP;
 
     /**
      * \brief Convert data to different type.
@@ -613,7 +640,6 @@ class CORE_EXPORT QgsRasterBlock
 
     /**
      * Apply band scale and offset to raster block values
-     * \since QGIS 2.3
     */
     void applyScaleOffset( double scale, double offset );
 
@@ -640,14 +666,12 @@ class CORE_EXPORT QgsRasterBlock
     /**
      * Returns the width (number of columns) of the raster block.
      * \see height
-     * \since QGIS 2.10
      */
     int width() const SIP_HOLDGIL { return mWidth; }
 
     /**
      * Returns the height (number of rows) of the raster block.
      * \see width
-     * \since QGIS 2.10
      */
     int height() const SIP_HOLDGIL { return mHeight; }
 

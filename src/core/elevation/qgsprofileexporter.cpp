@@ -15,9 +15,10 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsprofileexporter.h"
+#include "moc_qgsprofileexporter.cpp"
 #include "qgsabstractprofilesource.h"
 #include "qgsabstractprofilegenerator.h"
-// #include "qgsdxfexport.h"
+#include "qgsdxfexport.h"
 #include "qgsprofilerenderer.h"
 #include "qgsmemoryproviderutils.h"
 #include "qgsvectorlayer.h"
@@ -72,7 +73,7 @@ QList< QgsVectorLayer *> QgsProfileExporter::toLayers()
   {
     // first collate a master list of fields for this geometry type
     QgsFields outputFields;
-    outputFields.append( QgsField( QStringLiteral( "layer" ), QVariant::String ) );
+    outputFields.append( QgsField( QStringLiteral( "layer" ), QMetaType::Type::QString ) );
 
     for ( const QgsAbstractProfileResults::Feature &feature : std::as_const( wkbTypeIt.value() ) )
     {
@@ -81,14 +82,14 @@ QList< QgsVectorLayer *> QgsProfileExporter::toLayers()
         const int existingFieldIndex = outputFields.lookupField( attributeIt.key() );
         if ( existingFieldIndex < 0 )
         {
-          outputFields.append( QgsField( attributeIt.key(), attributeIt.value().type() ) );
+          outputFields.append( QgsField( attributeIt.key(), static_cast<QMetaType::Type>( attributeIt.value().userType() ) ) );
         }
         else
         {
-          if ( outputFields.at( existingFieldIndex ).type() != QVariant::String && outputFields.at( existingFieldIndex ).type() != attributeIt.value().type() )
+          if ( outputFields.at( existingFieldIndex ).type() != QMetaType::Type::QString && outputFields.at( existingFieldIndex ).type() != attributeIt.value().userType() )
           {
             // attribute type mismatch across fields, just promote to string types to be flexible
-            outputFields[ existingFieldIndex ].setType( QVariant::String );
+            outputFields[ existingFieldIndex ].setType( QMetaType::Type::QString );
           }
         }
       }
@@ -163,38 +164,38 @@ bool QgsProfileExporterTask::run()
     const QString fileExtension = destinationFileInfo.completeSuffix();
     const QString driverName = QgsVectorFileWriter::driverForExtension( fileExtension );
 
-//    if ( driverName == QLatin1String( "DXF" ) )
-//    {
-//      // DXF gets special handling -- we use the inbuilt QgsDxfExport class
-//      QgsDxfExport dxf;
-//      QList< QgsDxfExport::DxfLayer > dxfLayers;
-//      for ( QgsVectorLayer *layer : std::as_const( mLayers ) )
-//      {
-//        QgsDxfExport::DxfLayer dxfLayer( layer );
-//        dxfLayers.append( dxfLayer );
-//        if ( layer->crs().isValid() )
-//          dxf.setDestinationCrs( layer->crs() );
-//      }
-//      dxf.addLayers( dxfLayers );
-//      QFile dxfFile( mDestination );
-//      switch ( dxf.writeToFile( &dxfFile, QStringLiteral( "UTF-8" ) ) )
-//      {
-//        case QgsDxfExport::ExportResult::Success:
-//          mResult = ExportResult::Success;
-//          mCreatedFiles.append( mDestination );
-//          break;
+    if ( driverName == QLatin1String( "DXF" ) )
+    {
+      // DXF gets special handling -- we use the inbuilt QgsDxfExport class
+      QgsDxfExport dxf;
+      QList< QgsDxfExport::DxfLayer > dxfLayers;
+      for ( QgsVectorLayer *layer : std::as_const( mLayers ) )
+      {
+        QgsDxfExport::DxfLayer dxfLayer( layer );
+        dxfLayers.append( dxfLayer );
+        if ( layer->crs().isValid() )
+          dxf.setDestinationCrs( layer->crs() );
+      }
+      dxf.addLayers( dxfLayers );
+      QFile dxfFile( mDestination );
+      switch ( dxf.writeToFile( &dxfFile, QStringLiteral( "UTF-8" ) ) )
+      {
+        case QgsDxfExport::ExportResult::Success:
+          mResult = ExportResult::Success;
+          mCreatedFiles.append( mDestination );
+          break;
 
-//        case QgsDxfExport::ExportResult::InvalidDeviceError:
-//        case QgsDxfExport::ExportResult::DeviceNotWritableError:
-//          mResult = ExportResult::DeviceError;
-//          break;
+        case QgsDxfExport::ExportResult::InvalidDeviceError:
+        case QgsDxfExport::ExportResult::DeviceNotWritableError:
+          mResult = ExportResult::DeviceError;
+          break;
 
-//        case QgsDxfExport::ExportResult::EmptyExtentError:
-//          mResult = ExportResult::DxfExportFailed;
-//          break;
-//      }
-//    }
-//    else
+        case QgsDxfExport::ExportResult::EmptyExtentError:
+          mResult = ExportResult::DxfExportFailed;
+          break;
+      }
+    }
+    else
     {
       // use vector file writer
       const bool outputFormatIsMultiLayer = QgsVectorFileWriter::supportedFormatExtensions( QgsVectorFileWriter::SupportsMultipleLayers ).contains( fileExtension );

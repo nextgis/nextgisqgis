@@ -24,12 +24,12 @@ class QgsSpinBoxLineEdit;
 
 
 #ifdef SIP_RUN
-% ModuleHeaderCode
+//%ModuleHeaderCode
 // fix to allow compilation with sip 4.7 that for some reason
 // doesn't add this include to the file where the code from
 // ConvertToSubClassCode goes.
 #include <qgsspinbox.h>
-% End
+//%End
 #endif
 
 
@@ -41,7 +41,6 @@ class QgsSpinBoxLineEdit;
  */
 class GUI_EXPORT QgsSpinBox : public QSpinBox
 {
-
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
     if ( qobject_cast<QgsSpinBox *>( sipCpp ) )
@@ -57,13 +56,12 @@ class GUI_EXPORT QgsSpinBox : public QSpinBox
     Q_PROPERTY( bool expressionsEnabled READ expressionsEnabled WRITE setExpressionsEnabled )
 
   public:
-
     //! Behavior when widget is cleared.
     enum ClearValueMode
     {
       MinimumValue, //!< Reset value to minimum()
       MaximumValue, //!< Reset value to maximum()
-      CustomValue, //!< Reset value to custom value (see setClearValue() )
+      CustomValue,  //!< Reset value to custom value (see setClearValue() )
     };
 
     /**
@@ -84,13 +82,12 @@ class GUI_EXPORT QgsSpinBox : public QSpinBox
      * Returns whether the widget is showing a clear button.
      * \see setShowClearButton()
      */
-    bool showClearButton() const {return mShowClearButton;}
+    bool showClearButton() const { return mShowClearButton; }
 
     /**
      * Sets if the widget will allow entry of simple expressions, which are
      * evaluated and then discarded.
      * \param enabled set to TRUE to allow expression entry
-     * \since QGIS 2.7
      */
     void setExpressionsEnabled( bool enabled );
 
@@ -98,9 +95,8 @@ class GUI_EXPORT QgsSpinBox : public QSpinBox
      * Returns whether the widget will allow entry of simple expressions, which are
      * evaluated and then discarded.
      * \returns TRUE if spin box allows expression entry
-     * \since QGIS 2.7
      */
-    bool expressionsEnabled() const {return mExpressionsEnabled;}
+    bool expressionsEnabled() const { return mExpressionsEnabled; }
 
     //! Sets the current value to the value defined by the clear value.
     void clear() override;
@@ -141,9 +137,23 @@ class GUI_EXPORT QgsSpinBox : public QSpinBox
 
     int valueFromText( const QString &text ) const override;
     QValidator::State validate( QString &input, int &pos ) const override;
+    void stepBy( int steps ) override;
+
+  signals:
+
+    /**
+     * Emitted when the Return or Enter key is used in the line edit
+     * \since QGIS 3.40
+     */
+    void returnPressed();
+
+    /**
+     * Emitted when the the value has been manually edited via line edit.
+     * \since QGIS 3.40
+     */
+    void textEdited( const QString &text );
 
   protected:
-
     void changeEvent( QEvent *event ) override;
     void paintEvent( QPaintEvent *event ) override;
     void wheelEvent( QWheelEvent *event ) override;
@@ -170,7 +180,6 @@ class GUI_EXPORT QgsSpinBox : public QSpinBox
     QString stripped( const QString &originalText ) const;
 
     friend class TestQgsRangeWidgetWrapper;
-
 };
 
 #endif // QGSSPINBOX_H

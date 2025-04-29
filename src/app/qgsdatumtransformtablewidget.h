@@ -28,16 +28,14 @@
  * The QgsDatumTransformTableModel class is a table model to display and edit
  * datum transformations.
  *
- * \since 3.0
  */
 class APP_EXPORT QgsDatumTransformTableModel : public QAbstractTableModel
 {
     Q_OBJECT
   public:
-
     enum TableColumns
     {
-      SourceCrsColumn  = 0,
+      SourceCrsColumn = 0,
       DestinationCrsColumn,
       ProjDefinitionColumn,
       AllowFallbackColumn,
@@ -63,7 +61,6 @@ class APP_EXPORT QgsDatumTransformTableModel : public QAbstractTableModel
     QVariant headerData( int section, Qt::Orientation orientation, int role ) const override;
 
   private:
-
     QgsCoordinateTransformContext mTransformContext;
 };
 

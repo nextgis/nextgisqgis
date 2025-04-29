@@ -3,7 +3,7 @@
  *                                                                      *
  * src/3d/symbols/qgspolygon3dsymbol.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -14,14 +14,13 @@
 class QgsPolygon3DSymbol : QgsAbstract3DSymbol /NoDefaultCtors/
 {
 %Docstring(signature="appended")
-3D symbol that draws polygon geometries as planar polygons, optionally extruded (with added walls).
+3D symbol that draws polygon geometries as planar polygons, optionally
+extruded (with added walls).
 
 .. warning::
 
    This is not considered stable API, and may change in future QGIS releases. It is
    exposed to the Python bindings as a tech preview only.
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -29,9 +28,6 @@ class QgsPolygon3DSymbol : QgsAbstract3DSymbol /NoDefaultCtors/
 %End
   public:
     QgsPolygon3DSymbol();
-%Docstring
-Constructor for QgsPolygon3DSymbol
-%End
     ~QgsPolygon3DSymbol();
 
     virtual QString type() const;
@@ -42,7 +38,7 @@ Constructor for QgsPolygon3DSymbol
 
     virtual void readXml( const QDomElement &elem, const QgsReadWriteContext &context );
 
-    virtual QList< Qgis::GeometryType > compatibleGeometryTypes() const;
+    virtual QList<Qgis::GeometryType> compatibleGeometryTypes() const;
 
     virtual void setDefaultPropertiesFromLayer( const QgsVectorLayer *layer );
 
@@ -56,29 +52,55 @@ Caller takes ownership of the returned symbol.
 
     Qgis::AltitudeClamping altitudeClamping() const;
 %Docstring
-Returns method that determines altitude (whether to clamp to feature to terrain)
+Returns method that determines altitude (whether to clamp to feature to
+terrain)
 %End
     void setAltitudeClamping( Qgis::AltitudeClamping altClamping );
 %Docstring
-Sets method that determines altitude (whether to clamp to feature to terrain)
+Sets method that determines altitude (whether to clamp to feature to
+terrain)
 %End
 
     Qgis::AltitudeBinding altitudeBinding() const;
 %Docstring
-Returns method that determines how altitude is bound to individual vertices
+Returns method that determines how altitude is bound to individual
+vertices
 %End
     void setAltitudeBinding( Qgis::AltitudeBinding altBinding );
 %Docstring
 Sets method that determines how altitude is bound to individual vertices
 %End
 
-    float height() const;
+ float height() const /Deprecated/;
 %Docstring
 Returns height (altitude) of the symbol (in map units)
+
+.. deprecated:: 3.36
+
+   Use :py:func:`~QgsPolygon3DSymbol.offset` instead.
 %End
-    void setHeight( float height );
+
+ void setHeight( float height ) /Deprecated/;
 %Docstring
 Sets height (altitude) of the symbol (in map units)
+
+.. deprecated:: 3.36
+
+   Use :py:func:`~QgsPolygon3DSymbol.setOffset` instead.
+%End
+
+    float offset() const;
+%Docstring
+Returns vertical offset of the symbol (in map units)
+
+.. versionadded:: 3.36
+%End
+
+    void setOffset( float offset );
+%Docstring
+Sets vertical offset of the symbol (in map units)
+
+.. versionadded:: 3.36
 %End
 
     float extrusionHeight() const;
@@ -113,23 +135,27 @@ Sets front/back culling mode
 
     bool invertNormals() const;
 %Docstring
-Returns whether the normals of triangles will be inverted (useful for fixing clockwise / counter-clockwise face vertex orders)
+Returns whether the normals of triangles will be inverted (useful for
+fixing clockwise / counter-clockwise face vertex orders)
 %End
     void setInvertNormals( bool invert );
 %Docstring
-Sets whether the normals of triangles will be inverted (useful for fixing clockwise / counter-clockwise face vertex orders)
+Sets whether the normals of triangles will be inverted (useful for
+fixing clockwise / counter-clockwise face vertex orders)
 %End
 
     bool addBackFaces() const;
 %Docstring
-Returns whether also triangles facing the other side will be created. Useful if input data have inconsistent order of vertices
+Returns whether also triangles facing the other side will be created.
+Useful if input data have inconsistent order of vertices
 
 .. versionadded:: 3.2
 %End
 
     void setAddBackFaces( bool add );
 %Docstring
-Sets whether also triangles facing the other side will be created. Useful if input data have inconsistent order of vertices
+Sets whether also triangles facing the other side will be created.
+Useful if input data have inconsistent order of vertices
 
 .. versionadded:: 3.2
 %End
@@ -178,14 +204,16 @@ Sets edge lines color
 
     void setRenderedFacade( int side );
 %Docstring
-Sets which facade of the buildings is rendered (0 for None, 1 for Walls, 2 for Roofs, 3 for WallsAndRoofs)
+Sets which facade of the buildings is rendered (0 for None, 1 for Walls,
+2 for Roofs, 3 for WallsAndRoofs)
 
 .. versionadded:: 3.16
 %End
 
     int renderedFacade() const;
 %Docstring
-Returns which facade of the buildings is rendered (0 for None, 1 for Walls, 2 for Roofs, 3 for WallsAndRoofs)
+Returns which facade of the buildings is rendered (0 for None, 1 for
+Walls, 2 for Roofs, 3 for WallsAndRoofs)
 
 .. versionadded:: 3.16
 %End
@@ -199,5 +227,5 @@ Returns which facade of the buildings is rendered (0 for None, 1 for Walls, 2 fo
  *                                                                      *
  * src/3d/symbols/qgspolygon3dsymbol.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

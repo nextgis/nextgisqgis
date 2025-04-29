@@ -33,16 +33,17 @@ class TestQgisApp : public QObject
     TestQgisApp();
 
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
-    void init(); // will be called before each testfunction is executed.
-    void cleanup(); // will be called after every testfunction.
+    void initTestCase();    // will be called before the first testfunction is executed.
+    void cleanupTestCase(); // will be called after the last testfunction was executed.
+    void init();            // will be called before each testfunction is executed.
+    void cleanup();         // will be called after every testfunction.
 
     void addVectorLayerShp();
     void addVectorLayerGeopackageSingleLayer();
     void addVectorLayerGeopackageSingleLayerAlreadyLayername();
     void addVectorLayerInvalid();
     void addEmbeddedGroup();
+    void pasteFeature();
 
   private:
     QgisApp *mQgisApp = nullptr;
@@ -100,7 +101,7 @@ void TestQgisApp::addVectorLayerShp()
   QVERIFY( layer->source().endsWith( QLatin1String( "points.shp" ) ) );
 
   // cleanup
-  QgsProject::instance()->layerStore()->removeMapLayers( QStringList() <<  layer->id() );
+  QgsProject::instance()->layerStore()->removeMapLayers( QStringList() << layer->id() );
 }
 
 void TestQgisApp::addVectorLayerGeopackageSingleLayer()
@@ -113,7 +114,7 @@ void TestQgisApp::addVectorLayerGeopackageSingleLayer()
   QVERIFY( layer->source().endsWith( QLatin1String( "/vsimem/test.gpkg|layername=my_layer" ) ) );
 
   // cleanup
-  QgsProject::instance()->layerStore()->removeMapLayers( QStringList() <<  layer->id() );
+  QgsProject::instance()->layerStore()->removeMapLayers( QStringList() << layer->id() );
 }
 
 void TestQgisApp::addVectorLayerGeopackageSingleLayerAlreadyLayername()
@@ -126,7 +127,7 @@ void TestQgisApp::addVectorLayerGeopackageSingleLayerAlreadyLayername()
   QVERIFY( layer->source().endsWith( QLatin1String( "/vsimem/test.gpkg|layername=my_layer" ) ) );
 
   // cleanup
-  QgsProject::instance()->layerStore()->removeMapLayers( QStringList() <<  layer->id() );
+  QgsProject::instance()->layerStore()->removeMapLayers( QStringList() << layer->id() );
 }
 
 void TestQgisApp::addVectorLayerInvalid()
@@ -153,6 +154,36 @@ void TestQgisApp::addEmbeddedGroup()
   QgsProject::instance()->clear();
 }
 
+void TestQgisApp::pasteFeature()
+{
+  QgsVectorLayer *vl = new QgsVectorLayer( QStringLiteral( "Polygon?crs=EPSG:4326" ), QStringLiteral( "polygons" ), QStringLiteral( "memory" ) );
+
+  QgsFeature f;
+  f.setGeometry( QgsGeometry::fromWkt( QStringLiteral( "POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))" ) ) );
+  vl->startEditing();
+  vl->addFeature( f );
+  vl->commitChanges();
+
+  QgsProject::instance()->addMapLayer( vl );
+  QgsProject::instance()->setAvoidIntersectionsMode( Qgis::AvoidIntersectionsMode::AvoidIntersectionsCurrentLayer );
+
+  vl->selectByIds( QgsFeatureIds() << 1 );
+
+  // Copy feature with the initial polygon
+  mQgisApp->copySelectionToClipboard( vl );
+
+  vl->startEditing();
+  QgsGeometry geom = QgsGeometry::fromWkt( QStringLiteral( "POLYGON((5 0, 10 0, 10 10, 5 10, 5 0))" ) );
+  vl->changeGeometry( 1, geom );
+  vl->commitChanges();
+
+  vl->startEditing();
+  mQgisApp->pasteFromClipboard( vl );
+  vl->commitChanges();
+
+  f = vl->getFeature( 2 );
+  QCOMPARE( f.geometry().asWkt(), QStringLiteral( "Polygon ((0 0, 0 10, 5 10, 5 0, 0 0))" ) );
+}
 
 
 QGSTEST_MAIN( TestQgisApp )

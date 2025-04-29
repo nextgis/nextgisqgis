@@ -35,7 +35,6 @@ class QgsPaintEffectWidget SIP_EXTERNAL;
  *  In C++ you can use the QgsPaintEffectMetadata convenience class to
  * simplify creation of the metadata.
  *
- * \since QGIS 2.9
  */
 class CORE_EXPORT QgsPaintEffectAbstractMetadata
 {
@@ -93,7 +92,6 @@ typedef QgsPaintEffectWidget *( *QgsPaintEffectWidgetFunc )() SIP_SKIP;
  * \brief Convenience metadata class that uses static functions to create an effect and its widget.
  *
  * \note not available in Python bindings
- * \since QGIS 2.9
  */
 class CORE_EXPORT QgsPaintEffectMetadata : public QgsPaintEffectAbstractMetadata SIP_SKIP
 {
@@ -121,7 +119,7 @@ class CORE_EXPORT QgsPaintEffectMetadata : public QgsPaintEffectAbstractMetadata
      * \returns creation function
      * \note not available in Python bindings
      */
-    QgsPaintEffectCreateFunc createFunction() const { return mCreateFunc; } SIP_SKIP
+    QgsPaintEffectCreateFunc createFunction() const SIP_SKIP { return mCreateFunc; }
 
     /**
      * Returns the paint effect properties widget creation function for the paint effect class
@@ -129,7 +127,7 @@ class CORE_EXPORT QgsPaintEffectMetadata : public QgsPaintEffectAbstractMetadata
      * \note not available in Python bindings
      * \see setWidgetFunction
      */
-    QgsPaintEffectWidgetFunc widgetFunction() const { return mWidgetFunc; } SIP_SKIP
+    QgsPaintEffectWidgetFunc widgetFunction() const SIP_SKIP { return mWidgetFunc; }
 
     /**
      * Sets the paint effect properties widget creation function for the paint effect class
@@ -137,7 +135,7 @@ class CORE_EXPORT QgsPaintEffectMetadata : public QgsPaintEffectAbstractMetadata
      * \note not available in Python bindings
      * \see widgetFunction
      */
-    void setWidgetFunction( QgsPaintEffectWidgetFunc f ) { mWidgetFunc = f; } SIP_SKIP
+    void setWidgetFunction( QgsPaintEffectWidgetFunc f ) SIP_SKIP { mWidgetFunc = f; }
 
     /**
      * Creates a new paint effect of the metadata's effect class
@@ -146,7 +144,7 @@ class CORE_EXPORT QgsPaintEffectMetadata : public QgsPaintEffectAbstractMetadata
      * \note not available in Python bindings
      * \see createWidget
      */
-    QgsPaintEffect *createPaintEffect( const QVariantMap &map ) override { return mCreateFunc ? mCreateFunc( map ) : nullptr; } SIP_SKIP
+    QgsPaintEffect *createPaintEffect( const QVariantMap &map ) override SIP_SKIP { return mCreateFunc ? mCreateFunc( map ) : nullptr; }
 
     /**
      * Creates a new paint effect properties widget for the metadata's effect class
@@ -154,7 +152,7 @@ class CORE_EXPORT QgsPaintEffectMetadata : public QgsPaintEffectAbstractMetadata
      * \note not available in Python bindings
      * \see createWidget
      */
-    QgsPaintEffectWidget *createWidget() override SIP_FACTORY { return mWidgetFunc ? mWidgetFunc() : nullptr; } SIP_SKIP
+    QgsPaintEffectWidget *createWidget() override SIP_FACTORY SIP_SKIP { return mWidgetFunc ? mWidgetFunc() : nullptr; }
 
   protected:
     QgsPaintEffectCreateFunc mCreateFunc;
@@ -170,7 +168,6 @@ class CORE_EXPORT QgsPaintEffectMetadata : public QgsPaintEffectAbstractMetadata
  * QgsPaintEffectRegistry is not usually directly created, but rather accessed through
  * QgsApplication::paintEffectRegistry().
  *
- * \since QGIS 2.9
  */
 class CORE_EXPORT QgsPaintEffectRegistry
 {
@@ -179,9 +176,7 @@ class CORE_EXPORT QgsPaintEffectRegistry
     QgsPaintEffectRegistry();
     ~QgsPaintEffectRegistry();
 
-    //! QgsPaintEffectRegistry cannot be copied.
     QgsPaintEffectRegistry( const QgsPaintEffectRegistry &rh ) = delete;
-    //! QgsPaintEffectRegistry cannot be copied.
     QgsPaintEffectRegistry &operator=( const QgsPaintEffectRegistry &rh ) = delete;
 
     /**
@@ -236,7 +231,6 @@ class CORE_EXPORT QgsPaintEffectRegistry
      * \param effect paint effect to test
      * \returns TRUE if effect is default stack
      * \see defaultStack()
-     * \since QGIS 2.12
      */
     static bool isDefaultStack( QgsPaintEffect *effect );
 

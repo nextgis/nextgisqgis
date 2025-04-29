@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsterraingenerator.h"
+#include "moc_qgsterraingenerator.cpp"
 
 #include "qgsaabb.h"
 #include "qgs3dmapsettings.h"
@@ -44,11 +45,11 @@ void QgsTerrainGenerator::rootChunkHeightRange( float &hMin, float &hMax ) const
   hMax = 400;
 }
 
-float QgsTerrainGenerator::heightAt( double x, double y, const Qgs3DMapSettings &map ) const
+float QgsTerrainGenerator::heightAt( double x, double y, const Qgs3DRenderContext &context ) const
 {
   Q_UNUSED( x )
   Q_UNUSED( y )
-  Q_UNUSED( map )
+  Q_UNUSED( context )
   return 0.f;
 }
 
@@ -56,14 +57,16 @@ QString QgsTerrainGenerator::typeToString( QgsTerrainGenerator::Type type )
 {
   switch ( type )
   {
-    case QgsTerrainGenerator::Mesh:
-      return QStringLiteral( "mesh" );
     case QgsTerrainGenerator::Flat:
       return QStringLiteral( "flat" );
     case QgsTerrainGenerator::Dem:
       return QStringLiteral( "dem" );
     case QgsTerrainGenerator::Online:
       return QStringLiteral( "online" );
+    case QgsTerrainGenerator::Mesh:
+      return QStringLiteral( "mesh" );
+    case QgsTerrainGenerator::QuantizedMesh:
+      return QStringLiteral( "quantizedmesh" );
   }
   return QString();
 }

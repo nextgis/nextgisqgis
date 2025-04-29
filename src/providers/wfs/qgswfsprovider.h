@@ -60,11 +60,10 @@ class QgsWFSSharedData;
  * the specific attributes of a WFS URI.
  *
  */
-class QgsWFSProvider final: public QgsVectorDataProvider
+class QgsWFSProvider final : public QgsVectorDataProvider
 {
     Q_OBJECT
   public:
-
     static const QString WFS_PROVIDER_KEY;
     static const QString WFS_PROVIDER_DESCRIPTION;
 
@@ -86,8 +85,9 @@ class QgsWFSProvider final: public QgsVectorDataProvider
 
     QString subsetString() const override;
     bool setSubsetString( const QString &theSQL, bool updateFeatureCount = true ) override;
-
-    bool supportsSubsetString() const override { return true; }
+    QString subsetStringDialect() const override;
+    QString subsetStringHelpUrl() const override;
+    bool supportsSubsetString() const override;
 
     /* Inherited from QgsDataProvider */
 
@@ -98,7 +98,7 @@ class QgsWFSProvider final: public QgsVectorDataProvider
 
     static QString providerKey();
 
-    QgsVectorDataProvider::Capabilities capabilities() const override;
+    Qgis::VectorProviderCapabilities capabilities() const override;
 
     QString storageType() const override { return QStringLiteral( "OGC WFS (Web Feature Service)" ); }
 
@@ -127,16 +127,18 @@ class QgsWFSProvider final: public QgsVectorDataProvider
     void handlePostCloneOperations( QgsVectorDataProvider *source ) override;
 
     static QgsWfsCapabilities::Capabilities getCachedCapabilities( const QString &uri );
-    static QString buildFilterByGeometryType( const QgsWfsCapabilities::Capabilities &caps,
-        const QString &geometryElement,
-        const QString &function );
-    static QString buildIsNullGeometryFilter( const QgsWfsCapabilities::Capabilities &caps,
-        const QString &geometryElement );
-    static QString buildGeometryCollectionFilter( const QgsWfsCapabilities::Capabilities &caps,
-        const QString &geometryElement );
+    static QString buildFilterByGeometryType( const QgsWfsCapabilities::Capabilities &caps, const QString &geometryElement, const QString &function );
+    static QString buildIsNullGeometryFilter( const QgsWfsCapabilities::Capabilities &caps, const QString &geometryElement );
+    static QString buildGeometryCollectionFilter( const QgsWfsCapabilities::Capabilities &caps, const QString &geometryElement );
 
     //! Perform an initial GetFeature request with a 1-feature limit.
     void issueInitialGetFeature();
+
+    //! Return whether metadata retrieval has been canceled (typically download of the schema)
+    bool metadataRetrievalCanceled() const { return mMetadataRetrievalCanceled; }
+
+    //! Return whether the geometry may be missing
+    bool geometryMaybeMissing() const { return mGeometryMaybeMissing; }
 
   private slots:
 
@@ -158,6 +160,9 @@ class QgsWFSProvider final: public QgsVectorDataProvider
     //! Field set by featureReceivedAnalyzeOneFeature() if a "name" field is set in the sample feature
     bool mSampleFeatureHasName = false;
 
+    //! Whether the geometry may be missing
+    bool mGeometryMaybeMissing = false;
+
     /**
      * Invalidates cache of shared object
     */
@@ -171,13 +176,19 @@ class QgsWFSProvider final: public QgsVectorDataProvider
     QDomElement geometryElement( const QgsGeometry &geometry, QDomDocument &transactionDoc );
 
     //! Set mShared->mLayerPropertiesList from describeFeatureDocument
-    bool setLayerPropertiesListFromDescribeFeature( QDomDocument &describeFeatureDocument, const QStringList &typenameList, QString &errorMsg );
+    bool setLayerPropertiesListFromDescribeFeature( QDomDocument &describeFeatureDocument, const QByteArray &response, const QStringList &typenameList, QString &errorMsg );
 
     //! backup of mShared->mLayerPropertiesList on the feature type when there is no sql request
-    QList< QgsOgcUtils::LayerProperties > mLayerPropertiesListWhenNoSqlRequest;
+    QList<QgsOgcUtils::LayerProperties> mLayerPropertiesListWhenNoSqlRequest;
+
+    //! Set if metadata retrieval has been canceled (typically download of the schema)
+    bool mMetadataRetrievalCanceled = false;
+
+    bool readAttributesFromSchemaWithoutGMLAS( QDomDocument &schemaDoc, const QString &prefixedTypename, QString &geometryAttribute, QgsFields &fields, Qgis::WkbType &geomType, QString &errorMsg, bool &mayTryWithGMLAS );
+
+    bool readAttributesFromSchemaWithGMLAS( const QByteArray &response, const QString &prefixedTypename, QString &geometryAttribute, QgsFields &fields, Qgis::WkbType &geomType, bool &geometryMaybeMissing, QString &errorMsg );
 
   protected:
-
     //! String used to define a subset of the layer
     QString mSubsetString;
 
@@ -186,7 +197,7 @@ class QgsWFSProvider final: public QgsVectorDataProvider
     //! Namespace URL of the server (comes from DescribeFeatureDocument)
     QString mApplicationNamespace;
     //! Server capabilities for this layer (generated from capabilities document)
-    QgsVectorDataProvider::Capabilities mCapabilities = QgsVectorDataProvider::Capabilities();
+    Qgis::VectorProviderCapabilities mCapabilities;
     //! Fields of this typename. Might be different from mShared->mFields in case of SELECT
     QgsFields mThisTypenameFields;
 
@@ -198,17 +209,13 @@ class QgsWFSProvider final: public QgsVectorDataProvider
      * The method gives back the name of
      * the geometry attribute and the thematic attributes with their types.
     */
-    bool describeFeatureType( QString &geometryAttribute,
-                              QgsFields &fields, Qgis::WkbType &geomType );
+    bool describeFeatureType( QString &geometryAttribute, QgsFields &fields, Qgis::WkbType &geomType, bool &geometryMaybeMissing );
 
     /**
      * For a given typename, reads the name of the geometry attribute, the
      * thematic attributes and their types from a dom document. Returns true in case of success.
     */
-    bool readAttributesFromSchema( QDomDocument &schemaDoc,
-                                   const QString &prefixedTypename,
-                                   QString &geometryAttribute,
-                                   QgsFields &fields, Qgis::WkbType &geomType, QString &errorMsg );
+    bool readAttributesFromSchema( QDomDocument &schemaDoc, const QByteArray &response, bool singleLayerContext, const QString &prefixedTypename, QString &geometryAttribute, QgsFields &fields, Qgis::WkbType &geomType, bool &geometryMaybeMissing, QString &errorMsg );
 
     //helper methods for WFS-T
 

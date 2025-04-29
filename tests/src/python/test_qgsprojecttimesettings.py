@@ -5,11 +5,11 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Samweli Mwakisambwe'
-__date__ = '6/3/2020'
-__copyright__ = 'Copyright 2020, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Samweli Mwakisambwe"
+__date__ = "6/3/2020"
+__copyright__ = "Copyright 2020, The QGIS Project"
+
 from qgis.PyQt.QtCore import QDate, QDateTime, QTime
 from qgis.PyQt.QtTest import QSignalSpy
 from qgis.PyQt.QtXml import QDomDocument
@@ -19,7 +19,8 @@ from qgis.core import (
     QgsReadWriteContext,
     QgsUnitTypes,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 from utilities import unitTestDataPath
 
@@ -27,7 +28,7 @@ app = start_app()
 TEST_DATA_DIR = unitTestDataPath()
 
 
-class TestQgsProjectTimeSettings(unittest.TestCase):
+class TestQgsProjectTimeSettings(QgisTestCase):
 
     def testTemporalRange(self):
         p = QgsProjectTimeSettings()
@@ -36,12 +37,12 @@ class TestQgsProjectTimeSettings(unittest.TestCase):
 
         r = QgsDateTimeRange(
             QDateTime(QDate(2020, 1, 1), QTime(8, 0, 0)),
-            QDateTime(QDate(2020, 12, 1), QTime(8, 0, 0))
+            QDateTime(QDate(2020, 12, 1), QTime(8, 0, 0)),
         )
 
         rc = QgsDateTimeRange(
             QDateTime(QDate(2020, 1, 1), QTime(8, 0, 0)),
-            QDateTime(QDate(2020, 12, 1), QTime(8, 0, 0))
+            QDateTime(QDate(2020, 12, 1), QTime(8, 0, 0)),
         )
 
         p.setTemporalRange(r)
@@ -59,8 +60,8 @@ class TestQgsProjectTimeSettings(unittest.TestCase):
 
         p.setTimeStep(4.8)
         self.assertEqual(p.timeStep(), 4.8)
-        p.setTimeStepUnit(QgsUnitTypes.TemporalDecades)
-        self.assertEqual(p.timeStepUnit(), QgsUnitTypes.TemporalDecades)
+        p.setTimeStepUnit(QgsUnitTypes.TemporalUnit.TemporalDecades)
+        self.assertEqual(p.timeStepUnit(), QgsUnitTypes.TemporalUnit.TemporalDecades)
         p.setFramesPerSecond(90)
         self.assertEqual(p.framesPerSecond(), 90)
         p.setIsTemporalRangeCumulative(True)
@@ -80,11 +81,11 @@ class TestQgsProjectTimeSettings(unittest.TestCase):
 
         r = QgsDateTimeRange(
             QDateTime(QDate(2020, 1, 1), QTime(8, 0, 0)),
-            QDateTime(QDate(2020, 12, 1), QTime(8, 0, 0))
+            QDateTime(QDate(2020, 12, 1), QTime(8, 0, 0)),
         )
         p.setTemporalRange(r)
         p.setTimeStep(4.8)
-        p.setTimeStepUnit(QgsUnitTypes.TemporalDecades)
+        p.setTimeStepUnit(QgsUnitTypes.TemporalUnit.TemporalDecades)
         p.setFramesPerSecond(90)
         p.setIsTemporalRangeCumulative(True)
         elem = p.writeXml(doc, QgsReadWriteContext())
@@ -95,10 +96,10 @@ class TestQgsProjectTimeSettings(unittest.TestCase):
         self.assertEqual(p2.temporalRange(), r)
         self.assertEqual(len(spy), 1)
         self.assertEqual(p2.timeStep(), 4.8)
-        self.assertEqual(p2.timeStepUnit(), QgsUnitTypes.TemporalDecades)
+        self.assertEqual(p2.timeStepUnit(), QgsUnitTypes.TemporalUnit.TemporalDecades)
         self.assertEqual(p2.framesPerSecond(), 90)
         self.assertTrue(p.isTemporalRangeCumulative())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

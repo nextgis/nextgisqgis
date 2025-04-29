@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsterraintexturegenerator_p.h"
+#include "moc_qgsterraintexturegenerator_p.cpp"
 
 #include <qgsmaprenderercustompainterjob.h>
 #include <qgsmaprenderersequentialjob.h>
@@ -39,19 +40,21 @@ int QgsTerrainTextureGenerator::render( const QgsRectangle &extent, QgsChunkNode
   QgsMapSettings mapSettings( baseMapSettings() );
   mapSettings.setExtent( extent );
   QSize size = QSize( mTextureSize );
+
+  QgsRectangle clippedExtent = extent;
   if ( mMap.terrainGenerator()->type() == QgsTerrainGenerator::Flat )
   {
     // The flat terrain generator might have non-square tiles, clipped at the scene's extent.
     // We need to produce non-square textures for those cases.
-    const QgsRectangle clippedExtent = extent.intersect( mMap.extent() );
-    if ( !qgsDoubleNear( clippedExtent.width(), clippedExtent.height() ) )
-    {
-      if ( clippedExtent.height() > clippedExtent.width() )
-        size.setWidth( std::round( size.width() * clippedExtent.width() / clippedExtent.height() ) );
-      else if ( clippedExtent.height() < clippedExtent.width() )
-        size.setHeight( std::round( size.height() * clippedExtent.height() / clippedExtent.width() ) );
-    }
+    clippedExtent = extent.intersect( mMap.extent() );
     mapSettings.setExtent( clippedExtent );
+  }
+  if ( !qgsDoubleNear( clippedExtent.width(), clippedExtent.height() ) )
+  {
+    if ( clippedExtent.height() > clippedExtent.width() )
+      size.setWidth( std::round( size.width() * clippedExtent.width() / clippedExtent.height() ) );
+    else if ( clippedExtent.height() < clippedExtent.width() )
+      size.setHeight( std::round( size.height() * clippedExtent.height() / clippedExtent.width() ) );
   }
   mapSettings.setOutputSize( size );
 
@@ -189,10 +192,7 @@ QgsMapSettings QgsTerrainTextureGenerator::baseMapSettings()
     layers = mapThemes->mapThemeVisibleLayers( mapThemeName );
     mapSettings.setLayerStyleOverrides( mapThemes->mapThemeStyleOverrides( mapThemeName ) );
   }
-  layers.erase( std::remove_if( layers.begin(),
-                                layers.end(),
-  []( const QgsMapLayer * layer ) { return layer->renderer3D(); } ),
-  layers.end() );
+  layers.erase( std::remove_if( layers.begin(), layers.end(), []( const QgsMapLayer *layer ) { return layer->renderer3D(); } ), layers.end() );
   mapSettings.setLayers( layers );
 
   return mapSettings;

@@ -5,20 +5,21 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Nyall Dawson'
-__date__ = '12/12/2021'
-__copyright__ = 'Copyright 2021, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Nyall Dawson"
+__date__ = "12/12/2021"
+__copyright__ = "Copyright 2021, The QGIS Project"
+
 from qgis.PyQt.QtTest import QSignalSpy
 from qgis.core import QgsCoordinateReferenceSystem
 from qgis.gui import QgsCrsDefinitionWidget
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 start_app()
 
 
-class TestQgsCrsDefinitionWidget(unittest.TestCase):
+class TestQgsCrsDefinitionWidget(QgisTestCase):
 
     def testWidget(self):
         """
@@ -27,41 +28,47 @@ class TestQgsCrsDefinitionWidget(unittest.TestCase):
         w = QgsCrsDefinitionWidget()
 
         self.assertFalse(w.crs().isValid())
-        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.FormatWkt)
+        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.Format.FormatWkt)
 
         spy = QSignalSpy(w.crsChanged)
-        c = QgsCoordinateReferenceSystem('EPSG:3111')
+        c = QgsCoordinateReferenceSystem("EPSG:3111")
 
         w.setCrs(c)
         self.assertEqual(w.crs(), c)
         self.assertEqual(len(spy), 1)
-        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.FormatWkt)
-        self.assertEqual(w.definitionString(), c.toWkt(QgsCoordinateReferenceSystem.WKT_PREFERRED))
+        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.Format.FormatWkt)
+        self.assertEqual(
+            w.definitionString(),
+            c.toWkt(QgsCoordinateReferenceSystem.WktVariant.WKT_PREFERRED),
+        )
 
         # native proj string definition
-        w.setCrs(c, QgsCoordinateReferenceSystem.FormatProj)
+        w.setCrs(c, QgsCoordinateReferenceSystem.Format.FormatProj)
         self.assertEqual(w.crs(), c)
         self.assertEqual(len(spy), 2)
-        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.FormatProj)
+        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.Format.FormatProj)
         self.assertEqual(w.definitionString(), c.toProj())
 
         # native WKT string definition
-        w.setCrs(c, QgsCoordinateReferenceSystem.FormatWkt)
+        w.setCrs(c, QgsCoordinateReferenceSystem.Format.FormatWkt)
         self.assertEqual(w.crs(), c)
         self.assertEqual(len(spy), 3)
-        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.FormatWkt)
-        self.assertEqual(w.definitionString(), c.toWkt(QgsCoordinateReferenceSystem.WKT_PREFERRED))
+        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.Format.FormatWkt)
+        self.assertEqual(
+            w.definitionString(),
+            c.toWkt(QgsCoordinateReferenceSystem.WktVariant.WKT_PREFERRED),
+        )
 
         # change format
-        w.setFormat(QgsCoordinateReferenceSystem.FormatProj)
+        w.setFormat(QgsCoordinateReferenceSystem.Format.FormatProj)
         self.assertEqual(len(spy), 4)
-        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.FormatProj)
+        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.Format.FormatProj)
         self.assertEqual(w.definitionString(), c.toProj())
 
-        w.setFormat(QgsCoordinateReferenceSystem.FormatWkt)
+        w.setFormat(QgsCoordinateReferenceSystem.Format.FormatWkt)
         # trip through proj string is lossy -- don't compare to previous wkt!
         self.assertEqual(len(spy), 5)
-        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.FormatWkt)
+        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.Format.FormatWkt)
 
     def test_definition_string(self):
         """
@@ -69,23 +76,33 @@ class TestQgsCrsDefinitionWidget(unittest.TestCase):
         """
         w = QgsCrsDefinitionWidget()
 
-        w.setFormat(QgsCoordinateReferenceSystem.FormatWkt)
-        c = QgsCoordinateReferenceSystem('EPSG:3111')
+        w.setFormat(QgsCoordinateReferenceSystem.Format.FormatWkt)
+        c = QgsCoordinateReferenceSystem("EPSG:3111")
         spy = QSignalSpy(w.crsChanged)
 
-        w.setDefinitionString(c.toWkt(QgsCoordinateReferenceSystem.WKT_PREFERRED))
+        w.setDefinitionString(
+            c.toWkt(QgsCoordinateReferenceSystem.WktVariant.WKT_PREFERRED)
+        )
         self.assertEqual(w.crs(), c)
         self.assertEqual(len(spy), 1)
-        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.FormatWkt)
-        self.assertEqual(w.definitionString(), c.toWkt(QgsCoordinateReferenceSystem.WKT_PREFERRED))
+        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.Format.FormatWkt)
+        self.assertEqual(
+            w.definitionString(),
+            c.toWkt(QgsCoordinateReferenceSystem.WktVariant.WKT_PREFERRED),
+        )
 
-        c2 = QgsCoordinateReferenceSystem('EPSG:3113')
-        w.setDefinitionString(c2.toWkt(QgsCoordinateReferenceSystem.WKT_PREFERRED))
+        c2 = QgsCoordinateReferenceSystem("EPSG:3113")
+        w.setDefinitionString(
+            c2.toWkt(QgsCoordinateReferenceSystem.WktVariant.WKT_PREFERRED)
+        )
         self.assertEqual(w.crs(), c2)
         self.assertEqual(len(spy), 2)
-        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.FormatWkt)
-        self.assertEqual(w.definitionString(), c2.toWkt(QgsCoordinateReferenceSystem.WKT_PREFERRED))
+        self.assertEqual(w.format(), QgsCoordinateReferenceSystem.Format.FormatWkt)
+        self.assertEqual(
+            w.definitionString(),
+            c2.toWkt(QgsCoordinateReferenceSystem.WktVariant.WKT_PREFERRED),
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

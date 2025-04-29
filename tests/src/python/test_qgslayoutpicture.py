@@ -5,16 +5,16 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = '(C) 2017 by Nyall Dawson'
-__date__ = '23/10/2017'
-__copyright__ = 'Copyright 2017, The QGIS Project'
+
+__author__ = "(C) 2017 by Nyall Dawson"
+__date__ = "23/10/2017"
+__copyright__ = "Copyright 2017, The QGIS Project"
 
 import http.server
 import os
 import socketserver
 import threading
 
-import qgis  # NOQA
 from qgis.PyQt.QtCore import QDir, QRectF
 from qgis.PyQt.QtTest import QSignalSpy
 from qgis.PyQt.QtXml import QDomDocument
@@ -26,9 +26,9 @@ from qgis.core import (
     QgsProject,
     QgsReadWriteContext,
     QgsRectangle,
-    QgsLayoutChecker
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 from test_qgslayoutitem import LayoutItemTestCase
 from utilities import unitTestDataPath
@@ -37,18 +37,22 @@ start_app()
 TEST_DATA_DIR = unitTestDataPath()
 
 
-class TestQgsLayoutPicture(unittest.TestCase, LayoutItemTestCase):
+class TestQgsLayoutPicture(QgisTestCase, LayoutItemTestCase):
+
+    @classmethod
+    def control_path_prefix(cls):
+        return "composer_picture"
 
     @classmethod
     def setUpClass(cls):
-        super(TestQgsLayoutPicture, cls).setUpClass()
+        super().setUpClass()
         cls.item_class = QgsLayoutItemPicture
 
         # Bring up a simple HTTP server, for remote picture tests
-        os.chdir(unitTestDataPath() + '')
+        os.chdir(unitTestDataPath() + "")
         handler = http.server.SimpleHTTPRequestHandler
 
-        cls.httpd = socketserver.TCPServer(('localhost', 0), handler)
+        cls.httpd = socketserver.TCPServer(("localhost", 0), handler)
         cls.port = cls.httpd.server_address[1]
 
         cls.httpd_thread = threading.Thread(target=cls.httpd.serve_forever)
@@ -57,7 +61,7 @@ class TestQgsLayoutPicture(unittest.TestCase, LayoutItemTestCase):
 
     def __init__(self, methodName):
         """Run once on class initialization."""
-        unittest.TestCase.__init__(self, methodName)
+        QgisTestCase.__init__(self, methodName)
 
         TEST_DATA_DIR = unitTestDataPath()
         self.pngImage = TEST_DATA_DIR + "/sample_image.png"
@@ -73,42 +77,34 @@ class TestQgsLayoutPicture(unittest.TestCase, LayoutItemTestCase):
         self.picture.setFrameEnabled(True)
         self.layout.addLayoutItem(self.picture)
 
-    def setUp(self):
-        self.report = "<h1>Python QgsLayoutItemPicture Tests</h1>\n"
-
-    def tearDown(self):
-        report_file_path = f"{QDir.tempPath()}/qgistest.html"
-        with open(report_file_path, 'a') as report_file:
-            report_file.write(self.report)
-
     def testMode(self):
         pic = QgsLayoutItemPicture(self.layout)
         # should default to unknown
-        self.assertEqual(pic.mode(), QgsLayoutItemPicture.FormatUnknown)
+        self.assertEqual(pic.mode(), QgsLayoutItemPicture.Format.FormatUnknown)
         spy = QSignalSpy(pic.changed)
-        pic.setMode(QgsLayoutItemPicture.FormatRaster)
-        self.assertEqual(pic.mode(), QgsLayoutItemPicture.FormatRaster)
+        pic.setMode(QgsLayoutItemPicture.Format.FormatRaster)
+        self.assertEqual(pic.mode(), QgsLayoutItemPicture.Format.FormatRaster)
         self.assertEqual(len(spy), 1)
-        pic.setMode(QgsLayoutItemPicture.FormatRaster)
+        pic.setMode(QgsLayoutItemPicture.Format.FormatRaster)
         self.assertEqual(len(spy), 1)
-        pic.setMode(QgsLayoutItemPicture.FormatSVG)
+        pic.setMode(QgsLayoutItemPicture.Format.FormatSVG)
         self.assertEqual(len(spy), 3)  # ideally only 2!
-        self.assertEqual(pic.mode(), QgsLayoutItemPicture.FormatSVG)
+        self.assertEqual(pic.mode(), QgsLayoutItemPicture.Format.FormatSVG)
 
         # set picture path without explicit format
         pic.setPicturePath(self.pngImage)
-        self.assertEqual(pic.mode(), QgsLayoutItemPicture.FormatRaster)
+        self.assertEqual(pic.mode(), QgsLayoutItemPicture.Format.FormatRaster)
         pic.setPicturePath(self.svgImage)
-        self.assertEqual(pic.mode(), QgsLayoutItemPicture.FormatSVG)
+        self.assertEqual(pic.mode(), QgsLayoutItemPicture.Format.FormatSVG)
         # forced format
-        pic.setPicturePath(self.pngImage, QgsLayoutItemPicture.FormatSVG)
-        self.assertEqual(pic.mode(), QgsLayoutItemPicture.FormatSVG)
-        pic.setPicturePath(self.pngImage, QgsLayoutItemPicture.FormatRaster)
-        self.assertEqual(pic.mode(), QgsLayoutItemPicture.FormatRaster)
-        pic.setPicturePath(self.svgImage, QgsLayoutItemPicture.FormatSVG)
-        self.assertEqual(pic.mode(), QgsLayoutItemPicture.FormatSVG)
-        pic.setPicturePath(self.svgImage, QgsLayoutItemPicture.FormatRaster)
-        self.assertEqual(pic.mode(), QgsLayoutItemPicture.FormatRaster)
+        pic.setPicturePath(self.pngImage, QgsLayoutItemPicture.Format.FormatSVG)
+        self.assertEqual(pic.mode(), QgsLayoutItemPicture.Format.FormatSVG)
+        pic.setPicturePath(self.pngImage, QgsLayoutItemPicture.Format.FormatRaster)
+        self.assertEqual(pic.mode(), QgsLayoutItemPicture.Format.FormatRaster)
+        pic.setPicturePath(self.svgImage, QgsLayoutItemPicture.Format.FormatSVG)
+        self.assertEqual(pic.mode(), QgsLayoutItemPicture.Format.FormatSVG)
+        pic.setPicturePath(self.svgImage, QgsLayoutItemPicture.Format.FormatRaster)
+        self.assertEqual(pic.mode(), QgsLayoutItemPicture.Format.FormatRaster)
 
     def testReadWriteXml(self):
         pr = QgsProject()
@@ -116,7 +112,7 @@ class TestQgsLayoutPicture(unittest.TestCase, LayoutItemTestCase):
 
         pic = QgsLayoutItemPicture(l)
         # mode should be saved/restored
-        pic.setMode(QgsLayoutItemPicture.FormatRaster)
+        pic.setMode(QgsLayoutItemPicture.Format.FormatRaster)
 
         # save original item to xml
         doc = QDomDocument("testdoc")
@@ -124,39 +120,40 @@ class TestQgsLayoutPicture(unittest.TestCase, LayoutItemTestCase):
         self.assertTrue(pic.writeXml(elem, doc, QgsReadWriteContext()))
 
         pic2 = QgsLayoutItemPicture(l)
-        self.assertTrue(pic2.readXml(elem.firstChildElement(), doc, QgsReadWriteContext()))
-        self.assertEqual(pic2.mode(), QgsLayoutItemPicture.FormatRaster)
+        self.assertTrue(
+            pic2.readXml(elem.firstChildElement(), doc, QgsReadWriteContext())
+        )
+        self.assertEqual(pic2.mode(), QgsLayoutItemPicture.Format.FormatRaster)
 
-        pic.setMode(QgsLayoutItemPicture.FormatSVG)
+        pic.setMode(QgsLayoutItemPicture.Format.FormatSVG)
         elem = doc.createElement("test2")
         self.assertTrue(pic.writeXml(elem, doc, QgsReadWriteContext()))
         pic3 = QgsLayoutItemPicture(l)
-        self.assertTrue(pic3.readXml(elem.firstChildElement(), doc, QgsReadWriteContext()))
-        self.assertEqual(pic3.mode(), QgsLayoutItemPicture.FormatSVG)
+        self.assertTrue(
+            pic3.readXml(elem.firstChildElement(), doc, QgsReadWriteContext())
+        )
+        self.assertEqual(pic3.mode(), QgsLayoutItemPicture.Format.FormatSVG)
 
     def testResizeZoom(self):
         """Test picture resize zoom mode."""
-        self.picture.setResizeMode(QgsLayoutItemPicture.Zoom)
+        self.picture.setResizeMode(QgsLayoutItemPicture.ResizeMode.Zoom)
 
-        checker = QgsLayoutChecker('composerpicture_resize_zoom', self.layout)
-        checker.setControlPathPrefix("composer_picture")
-        testResult, message = checker.testLayout()
-        self.report += checker.report()
-
-        assert testResult, message
+        self.assertTrue(
+            self.render_layout_check("composerpicture_resize_zoom", self.layout)
+        )
 
     def testRemoteImage(self):
         """Test fetching remote picture."""
         self.picture.setPicturePath(
-            'http://localhost:' + str(TestQgsLayoutPicture.port) + '/qgis_local_server/logo.png')
+            "http://localhost:"
+            + str(TestQgsLayoutPicture.port)
+            + "/qgis_local_server/logo.png"
+        )
 
-        checker = QgsLayoutChecker('composerpicture_remote', self.layout)
-        checker.setControlPathPrefix("composer_picture")
-        testResult, message = checker.testLayout()
-        self.report += checker.report()
+        res = self.render_layout_check("composerpicture_remote", self.layout)
 
         self.picture.setPicturePath(self.pngImage)
-        assert testResult, message
+        self.assertTrue(res)
 
     def testNorthArrowWithMapItemRotation(self):
         """Test picture rotation when map item is also rotated"""
@@ -173,7 +170,7 @@ class TestQgsLayoutPicture(unittest.TestCase, LayoutItemTestCase):
         picture.setLinkedMap(map)
         self.assertEqual(picture.linkedMap(), map)
 
-        picture.setNorthMode(QgsLayoutItemPicture.GridNorth)
+        picture.setNorthMode(QgsLayoutItemPicture.NorthMode.GridNorth)
         map.setItemRotation(45)
         self.assertEqual(picture.pictureRotation(), 45)
         map.setMapRotation(-34)
@@ -201,7 +198,7 @@ class TestQgsLayoutPicture(unittest.TestCase, LayoutItemTestCase):
         picture.setLinkedMap(map)
         self.assertEqual(picture.linkedMap(), map)
 
-        picture.setNorthMode(QgsLayoutItemPicture.GridNorth)
+        picture.setNorthMode(QgsLayoutItemPicture.NorthMode.GridNorth)
         map.setMapRotation(45)
         self.assertEqual(picture.pictureRotation(), 45)
 
@@ -217,7 +214,9 @@ class TestQgsLayoutPicture(unittest.TestCase, LayoutItemTestCase):
         map = QgsLayoutItemMap(layout)
         map.attemptSetSceneRect(QRectF(0, 0, 10, 10))
         map.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(3575))
-        map.setExtent(QgsRectangle(-2126029.962, -2200807.749, -119078.102, -757031.156))
+        map.setExtent(
+            QgsRectangle(-2126029.962, -2200807.749, -119078.102, -757031.156)
+        )
         layout.addLayoutItem(map)
 
         picture = QgsLayoutItemPicture(layout)
@@ -226,11 +225,13 @@ class TestQgsLayoutPicture(unittest.TestCase, LayoutItemTestCase):
         picture.setLinkedMap(map)
         self.assertEqual(picture.linkedMap(), map)
 
-        picture.setNorthMode(QgsLayoutItemPicture.TrueNorth)
+        picture.setNorthMode(QgsLayoutItemPicture.NorthMode.TrueNorth)
         self.assertAlmostEqual(picture.pictureRotation(), 37.20, 1)
 
         # shift map
-        map.setExtent(QgsRectangle(2120672.293, -3056394.691, 2481640.226, -2796718.780))
+        map.setExtent(
+            QgsRectangle(2120672.293, -3056394.691, 2481640.226, -2796718.780)
+        )
         self.assertAlmostEqual(picture.pictureRotation(), -38.18, 1)
 
         # rotate map
@@ -247,15 +248,15 @@ class TestQgsLayoutPicture(unittest.TestCase, LayoutItemTestCase):
         picture = QgsLayoutItemPicture(layout)
 
         # SVG
-        picture.setPicturePath("invalid_path", QgsLayoutItemPicture.FormatSVG)
+        picture.setPicturePath("invalid_path", QgsLayoutItemPicture.Format.FormatSVG)
         self.assertEqual(picture.isMissingImage(), True)
-        self.assertEqual(picture.mode(), QgsLayoutItemPicture.FormatSVG)
+        self.assertEqual(picture.mode(), QgsLayoutItemPicture.Format.FormatSVG)
 
         # Raster
-        picture.setPicturePath("invalid_path", QgsLayoutItemPicture.FormatRaster)
+        picture.setPicturePath("invalid_path", QgsLayoutItemPicture.Format.FormatRaster)
         self.assertEqual(picture.isMissingImage(), True)
-        self.assertEqual(picture.mode(), QgsLayoutItemPicture.FormatRaster)
+        self.assertEqual(picture.mode(), QgsLayoutItemPicture.Format.FormatRaster)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -38,7 +38,6 @@ class QgsAnimatedIcon;
  */
 class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
 {
-
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
     if ( qobject_cast<QgsFilterLineEdit *>( sipCpp ) )
@@ -58,12 +57,11 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
     Q_PROPERTY( bool showSpinner READ showSpinner WRITE setShowSpinner NOTIFY showSpinnerChanged )
 
   public:
-
     //! Behavior when clearing value of widget
     enum ClearMode
     {
       ClearToNull = 0, //!< Reset value to null
-      ClearToDefault, //!< Reset value to default value (see defaultValue() )
+      ClearToDefault,  //!< Reset value to default value (see defaultValue() )
     };
     Q_ENUM( ClearMode )
 
@@ -77,7 +75,6 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
     /**
      * Returns TRUE if the widget's clear button is visible.
      * \see setShowClearButton()
-     * \since QGIS 3.0
      */
     bool showClearButton() const { return mClearButtonVisible; }
 
@@ -85,7 +82,6 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
      * Sets whether the widget's clear button is visible.
      * \param visible set to FALSE to hide the clear button
      * \see showClearButton()
-     * \since QGIS 3.0
      */
     void setShowClearButton( bool visible );
 
@@ -93,7 +89,6 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
      * Returns the clear mode for the widget. The clear mode defines the behavior of the
      * widget when its value is cleared. This defaults to ClearToNull.
      * \see setClearMode()
-     * \since QGIS 3.0
      */
     ClearMode clearMode() const { return mClearMode; }
 
@@ -101,7 +96,6 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
      * Sets the clear mode for the widget. The clear mode defines the behavior of the
      * widget when its value is cleared. This defaults to ClearToNull.
      * \see clearMode()
-     * \since QGIS 3.0
      */
     void setClearMode( ClearMode mode ) { mClearMode = mode; }
 
@@ -125,16 +119,14 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
      * Define if a search icon shall be shown on the left of the image
      * when no text is entered
      * \param visible set to FALSE to hide the search icon
-     * \since QGIS 3.0
      */
     void setShowSearchIcon( bool visible );
 
     /**
      * Returns if a search icon shall be shown on the left of the image
      * when no text is entered
-     * \since QGIS 3.0
      */
-    bool showSearchIcon() const { return static_cast< bool >( mSearchAction ); }
+    bool showSearchIcon() const { return static_cast<bool>( mSearchAction ); }
 
     /**
      * Sets the default value for the widget. The default value is a value
@@ -143,7 +135,6 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
      * \param defaultValue default value
      * \see defaultValue()
      * \see clearMode()
-     * \since QGIS 3.0
      */
     void setDefaultValue( const QString &defaultValue );
 
@@ -153,7 +144,6 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
      * is equal to ClearToDefault.
      * \see setDefaultValue()
      * \see clearMode()
-     * \since QGIS 3.0
      */
     QString defaultValue() const { return mDefaultValue; }
 
@@ -188,7 +178,6 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
      * Show a spinner icon. This can be used for search boxes to indicate that
      * something is going on in the background.
      *
-     * \since QGIS 3.0
      */
     bool showSpinner() const;
 
@@ -196,21 +185,18 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
      * Show a spinner icon. This can be used for search boxes to indicate that
      * something is going on in the background.
      *
-     * \since QGIS 3.0
      */
     void setShowSpinner( bool showSpinner );
 
     /**
      * Will select all text when this widget receives the focus.
      *
-     * \since QGIS 3.0
      */
     bool selectOnFocus() const;
 
     /**
      * Will select all text when this widget receives the focus.
      *
-     * \since QGIS 3.0
      */
     void setSelectOnFocus( bool selectOnFocus );
 
@@ -218,7 +204,6 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
      * Reimplemented to enable/disable the clear action
      * depending on read-only status
      *
-     * \since QGIS 3.0.1
      */
     bool event( QEvent *event ) override;
 
@@ -226,14 +211,13 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
      * Returns if a state is already saved
      * \since QGIS 3.14
      */
-    bool hasStateStored() const {return mLineEditState.hasStateStored;}
+    bool hasStateStored() const { return mLineEditState.hasStateStored; }
 
   public slots:
 
     /**
      * Clears the widget and resets it to the null value.
      * \see nullValue()
-     * \since QGIS 3.0
      */
     virtual void clearValue();
 
@@ -268,7 +252,6 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
      * Show a spinner icon. This can be used for search boxes to indicate that
      * something is going on in the background.
      *
-     * \since QGIS 3.0
      */
     void showSpinnerChanged();
 
@@ -276,7 +259,6 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
     /**
      * Will select all text when this widget receives the focus.
      *
-     * \since QGIS 3.0
      */
     void selectOnFocusChanged();
 
@@ -292,11 +274,11 @@ class GUI_EXPORT QgsFilterLineEdit : public QLineEdit
   private:
     struct LineEditState
     {
-      bool hasStateStored = false;
-      QString text;
-      int selectionStart;
-      int selectionLength;
-      int cursorPosition;
+        bool hasStateStored = false;
+        QString text;
+        int selectionStart;
+        int selectionLength;
+        int cursorPosition;
     };
 
     QIcon mClearIcon;
@@ -338,7 +320,6 @@ class SIP_SKIP QgsSpinBoxLineEdit : public QgsFilterLineEdit
     Q_OBJECT
 
   public:
-
     QgsSpinBoxLineEdit( QWidget *parent = nullptr )
       : QgsFilterLineEdit( parent )
     {}

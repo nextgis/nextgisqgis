@@ -98,7 +98,6 @@ class QgsInternalGeometryEngine
      * either the vertices are within a specified tolerance of right angles or a set number of maximum
      * iterations is reached. The angle threshold parameter specifies how close to a right angle or
      * straight line an angle must be before it is attempted to be straightened.
-     * \since QGIS 3.0
      */
     QgsGeometry orthogonalize( double tolerance = 1.0E-8, int maxIterations = 1000, double angleThreshold = 15.0 ) const;
 
@@ -108,7 +107,6 @@ class QgsInternalGeometryEngine
      * If the geometry has z or m values present then these will be linearly interpolated
      * at the added nodes.
      * Curved geometry types are automatically segmentized by this routine.
-     * \since QGIS 3.0
      */
     QgsGeometry densifyByCount( int extraNodesPerSegment ) const;
 
@@ -123,7 +121,6 @@ class QgsInternalGeometryEngine
      * If the geometry has z or m values present then these will be linearly interpolated
      * at the added nodes.
      * Curved geometry types are automatically segmentized by this routine.
-     * \since QGIS 3.0
      */
     QgsGeometry densifyByDistance( double distance ) const;
 
@@ -172,7 +169,7 @@ class QgsInternalGeometryEngine
     QgsGeometry variableWidthBufferByM( int segments ) const;
 
     /**
-     * Returns a list of \a count random points generated inside a \a polygon geometry
+     * Returns a list of \a count random points generated inside a polygon geometry
      * (if \a acceptPoint is specified, and restrictive, the number of points returned may
      * be less than \a count).
      *
@@ -191,7 +188,7 @@ class QgsInternalGeometryEngine
      *
      * \since QGIS 3.10
      */
-    static QVector< QgsPointXY > randomPointsInPolygon( const QgsGeometry &polygon, int count,
+    QVector< QgsPointXY > randomPointsInPolygon( int count,
         const std::function< bool( const QgsPointXY & ) > &acceptPoint, unsigned long seed = 0, QgsFeedback *feedback = nullptr, int maxTriesPerPoint = 0 );
 
     /**

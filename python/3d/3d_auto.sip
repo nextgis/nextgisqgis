@@ -4,11 +4,13 @@
 %Include auto_generated/qgs3dmapscene.sip
 %Include auto_generated/qgs3dmapsettings.sip
 %Include auto_generated/qgs3dtypes.sip
+%Include auto_generated/qgs3dmapcanvas.sip
 %Include auto_generated/qgsabstractvectorlayer3drenderer.sip
 %Include auto_generated/qgscameracontroller.sip
 %Include auto_generated/qgscamerapose.sip
 %Include auto_generated/qgslayoutitem3dmap.sip
 %Include auto_generated/qgsrulebased3drenderer.sip
+%Include auto_generated/qgstiledscenelayer3drenderer.sip
 %Include auto_generated/qgsvectorlayer3drenderer.sip
 %Include auto_generated/qgspointcloudlayer3drenderer.sip
 %Include auto_generated/lights/qgsdirectionallightsettings.sip
@@ -17,6 +19,7 @@
 %Include auto_generated/materials/qgsabstractmaterialsettings.sip
 %Include auto_generated/materials/qgsgoochmaterialsettings.sip
 %Include auto_generated/materials/qgsmaterialregistry.sip
+%Include auto_generated/materials/qgsmetalroughmaterialsettings.sip
 %Include auto_generated/materials/qgsnullmaterialsettings.sip
 %Include auto_generated/materials/qgsphongmaterialsettings.sip
 %Include auto_generated/materials/qgsphongtexturedmaterialsettings.sip

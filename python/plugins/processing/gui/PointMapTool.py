@@ -15,9 +15,9 @@
 ***************************************************************************
 """
 
-__author__ = 'Alexander Bruy'
-__date__ = 'February 2016'
-__copyright__ = '(C) 2016, Alexander Bruy'
+__author__ = "Alexander Bruy"
+__date__ = "February 2016"
+__copyright__ = "(C) 2016, Alexander Bruy"
 
 from qgis.PyQt.QtCore import Qt, pyqtSignal
 
@@ -31,7 +31,7 @@ class PointMapTool(QgsMapToolEmitPoint):
         QgsMapToolEmitPoint.__init__(self, canvas)
 
         self.canvas = canvas
-        self.cursor = Qt.CrossCursor
+        self.cursor = Qt.CursorShape.CrossCursor
 
     def activate(self):
         self.canvas.setCursor(self.cursor)

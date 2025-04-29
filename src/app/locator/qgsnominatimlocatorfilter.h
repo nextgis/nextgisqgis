@@ -27,11 +27,10 @@ class APP_EXPORT QgsNominatimLocatorFilter : public QgsGeocoderLocatorFilter
     Q_OBJECT
 
   public:
-
     QgsNominatimLocatorFilter( QgsGeocoderInterface *geocoder, QgsMapCanvas *canvas );
+    QgsNominatimLocatorFilter *clone() const override SIP_FACTORY;
 
     void triggerResult( const QgsLocatorResult &result ) override;
-
 };
 
 #endif // QGSNOMINATIMLOCATORFILTERS_H

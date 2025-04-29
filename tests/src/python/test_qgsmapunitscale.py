@@ -5,11 +5,11 @@ it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 """
-__author__ = 'Nyall Dawson'
-__date__ = '2015-09'
-__copyright__ = 'Copyright 2015, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Nyall Dawson"
+__date__ = "2015-09"
+__copyright__ = "Copyright 2015, The QGIS Project"
+
 from qgis.PyQt.QtCore import QSize
 from qgis.core import (
     QgsMapSettings,
@@ -140,7 +140,7 @@ class PyQgsMapUnitScale(unittest.TestCase):
         self.assertEqual(s, r)
 
         # check old style encoding
-        encode = '9,78.3'
+        encode = "9,78.3"
         r = QgsSymbolLayerUtils.decodeMapUnitScale(encode)
         self.assertAlmostEqual(r.minScale, 1.0 / 9, 3)
         self.assertAlmostEqual(r.maxScale, 1.0 / 78.3, 3)
@@ -150,5 +150,5 @@ class PyQgsMapUnitScale(unittest.TestCase):
         self.assertEqual(r.maxSizeMM, 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

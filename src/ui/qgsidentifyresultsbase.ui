@@ -331,7 +331,7 @@
      <normaloff>:/images/themes/default/mActionIdentifyByMouseOver.svg</normaloff>:/images/themes/default/mActionIdentifyByMouseOver.svg</iconset>
    </property>
    <property name="text">
-    <string>Identify Feature(s) on mouse over</string>
+    <string>Identify Feature(s) on Mouse Over</string>
    </property>
    <property name="toolTip">
     <string>Identify Features by hovering on a feature with the mouse</string>
@@ -383,6 +383,17 @@
     <string>Hide derived attributes from results</string>
    </property>
   </action>
+  <action name="mActionShowRelations">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Relations</string>
+   </property>
+   <property name="toolTip">
+    <string>Show Relations</string>
+   </property>
+  </action>
   <action name="mHelpToolAction">
    <property name="icon">
     <iconset resource="../../images/images.qrc">
@@ -417,8 +428,6 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../images/images.qrc"/>
-  <include location="../../images/images.qrc"/>
   <include location="../../images/images.qrc"/>
  </resources>
  <connections/>

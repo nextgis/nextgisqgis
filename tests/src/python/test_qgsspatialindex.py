@@ -5,11 +5,11 @@
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
 """
-__author__ = 'Alexander Bruy'
-__date__ = '20/01/2011'
-__copyright__ = 'Copyright 2012, The QGIS Project'
 
-import qgis  # NOQA
+__author__ = "Alexander Bruy"
+__date__ = "20/01/2011"
+__copyright__ = "Copyright 2012, The QGIS Project"
+
 
 from qgis.core import (
     QgsFeature,
@@ -18,12 +18,13 @@ from qgis.core import (
     QgsRectangle,
     QgsSpatialIndex,
 )
-from qgis.testing import start_app, unittest
+import unittest
+from qgis.testing import start_app, QgisTestCase
 
 start_app()
 
 
-class TestQgsSpatialIndex(unittest.TestCase):
+class TestQgsSpatialIndex(QgisTestCase):
 
     def testIndex(self):
         idx = QgsSpatialIndex()
@@ -41,25 +42,25 @@ class TestQgsSpatialIndex(unittest.TestCase):
         fids = idx.intersects(rect)
         myExpectedValue = 4
         myValue = len(fids)
-        myMessage = f'Expected: {myExpectedValue} Got: {myValue}'
+        myMessage = f"Expected: {myExpectedValue} Got: {myValue}"
         self.assertEqual(myValue, myExpectedValue, myMessage)
         fids.sort()
-        myMessage = f'Expected: {[1, 2, 5, 6]}\nGot: {fids}\n'
+        myMessage = f"Expected: {[1, 2, 5, 6]}\nGot: {fids}\n"
         assert fids == [1, 2, 5, 6], myMessage
 
         # nearest neighbor test
         fids = idx.nearestNeighbor(QgsPointXY(8.75, 6.25), 3)
         myExpectedValue = 0
         myValue = len(fids)
-        myMessage = f'Expected: {myExpectedValue} Got: {myValue}'
+        myMessage = f"Expected: {myExpectedValue} Got: {myValue}"
 
         fids.sort()
-        myMessage = f'Expected: {[0, 1, 5]}\nGot: {fids}\n'
+        myMessage = f"Expected: {[0, 1, 5]}\nGot: {fids}\n"
         assert fids == [0, 1, 5], myMessage
 
     def testGetGeometry(self):
         idx = QgsSpatialIndex()
-        idx2 = QgsSpatialIndex(QgsSpatialIndex.FlagStoreFeatureGeometries)
+        idx2 = QgsSpatialIndex(QgsSpatialIndex.Flag.FlagStoreFeatureGeometries)
         fid = 0
         for y in range(5):
             for x in range(10, 15):
@@ -80,13 +81,13 @@ class TestQgsSpatialIndex(unittest.TestCase):
         with self.assertRaises(KeyError):
             idx.geometry(1000)
 
-        self.assertEqual(idx2.geometry(1).asWkt(1), 'Point (11 0)')
-        self.assertEqual(idx2.geometry(2).asWkt(1), 'Point (12 0)')
+        self.assertEqual(idx2.geometry(1).asWkt(1), "Point (11 0)")
+        self.assertEqual(idx2.geometry(2).asWkt(1), "Point (12 0)")
         with self.assertRaises(KeyError):
             idx2.geometry(-100)
         with self.assertRaises(KeyError):
             idx2.geometry(1000)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

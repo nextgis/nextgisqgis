@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsmaplayerserverproperties.h                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -148,9 +148,11 @@ Returns WMS Dimension default display labels
 %Docstring
 Adds a QGIS Server WMS Dimension
 
-:param wmsDimInfo: QGIS Server WMS Dimension object with, name, field, etc
+:param wmsDimInfo: QGIS Server WMS Dimension object with, name, field,
+                   etc
 
-:return: ``True`` if QGIS Server WMS Dimension has been successfully added
+:return: ``True`` if QGIS Server WMS Dimension has been successfully
+         added
 
 .. versionadded:: 3.10
 %End
@@ -159,7 +161,8 @@ Adds a QGIS Server WMS Dimension
 %Docstring
 Removes a QGIS Server WMS Dimension
 
-:return: ``True`` if QGIS Server WMS Dimension was found and successfully removed
+:return: ``True`` if QGIS Server WMS Dimension was found and
+         successfully removed
 
 .. versionadded:: 3.10
 %End
@@ -243,6 +246,206 @@ Reset properties to default
 .. versionadded:: 3.22
 %End
 
+    void setShortName( const QString &name );
+%Docstring
+Sets the short ``name`` of the layer used by QGIS Server to identify the
+layer.
+
+.. seealso:: :py:func:`shortName`
+
+.. versionadded:: 3.38
+%End
+
+    QString shortName() const;
+%Docstring
+Returns the short name of the layer used by QGIS Server to identify the
+layer.
+
+.. seealso:: :py:func:`setShortName`
+
+.. versionadded:: 3.38
+%End
+
+    void setTitle( const QString &title );
+%Docstring
+Sets the ``title`` of the layer used by QGIS Server in GetCapabilities
+request.
+
+.. seealso:: :py:func:`title`
+
+.. versionadded:: 3.38
+%End
+
+    void setWfsTitle( const QString &title );
+%Docstring
+Sets the ``title`` of the layer used by QGIS Server in WFS
+GetCapabilities request.
+
+.. seealso:: :py:func:`title`
+
+.. versionadded:: 3.40
+%End
+
+    QString title() const;
+%Docstring
+Returns the title of the layer used by QGIS Server in GetCapabilities
+request.
+
+.. seealso:: :py:func:`setTitle`
+
+.. versionadded:: 3.38
+%End
+
+    QString wfsTitle() const;
+%Docstring
+Returns the optional WFS title if set or the title of the layer used by
+QGIS WFS in GetCapabilities request.
+
+.. seealso:: :py:func:`setWfsTitle`
+
+.. versionadded:: 3.40
+%End
+
+    void setAbstract( const QString &abstract );
+%Docstring
+Sets the ``abstract`` of the layer used by QGIS Server in
+GetCapabilities request.
+
+.. seealso:: :py:func:`abstract`
+
+.. versionadded:: 3.38
+%End
+
+    QString abstract() const;
+%Docstring
+Returns the abstract of the layerused by QGIS Server in GetCapabilities
+request.
+
+.. seealso:: :py:func:`setAbstract`
+
+.. versionadded:: 3.38
+%End
+
+    void setKeywordList( const QString &keywords );
+%Docstring
+Sets the ``keywords`` list of the layerused by QGIS Server in
+GetCapabilities request.
+
+.. seealso:: :py:func:`keywordList`
+
+.. versionadded:: 3.38
+%End
+
+    QString keywordList() const;
+%Docstring
+Returns the keyword list of the layerused by QGIS Server in
+GetCapabilities request.
+
+.. seealso:: :py:func:`setKeywordList`
+
+.. versionadded:: 3.38
+%End
+
+    void setDataUrl( const QString &dataUrl );
+%Docstring
+Sets the DataUrl of the layer used by QGIS Server in GetCapabilities
+request.
+
+DataUrl is a a link to the underlying data represented by a particular
+layer.
+
+.. seealso:: :py:func:`dataUrl`
+
+.. versionadded:: 3.38
+%End
+
+    QString dataUrl() const;
+%Docstring
+Returns the DataUrl of the layer used by QGIS Server in GetCapabilities
+request.
+
+DataUrl is a a link to the underlying data represented by a particular
+layer.
+
+.. seealso:: :py:func:`setDataUrl`
+
+.. versionadded:: 3.38
+%End
+
+    void setDataUrlFormat( const QString &dataUrlFormat );
+%Docstring
+Sets the DataUrl ``format`` of the layerused by QGIS Server in
+GetCapabilities request.
+
+DataUrl is a a link to the underlying data represented by a particular
+layer.
+
+.. seealso:: :py:func:`dataUrlFormat`
+
+.. versionadded:: 3.38
+%End
+
+    QString dataUrlFormat() const;
+%Docstring
+Returns the DataUrl format of the layer used by QGIS Server in
+GetCapabilities request.
+
+DataUrl is a a link to the underlying data represented by a particular
+layer.
+
+.. seealso:: :py:func:`setDataUrlFormat`
+
+.. versionadded:: 3.38
+%End
+
+    void setAttribution( const QString &attrib );
+%Docstring
+Sets the ``attribution`` of the layer used by QGIS Server in
+GetCapabilities request.
+
+Attribution indicates the provider of a layer or collection of layers.
+
+.. seealso:: :py:func:`attribution`
+
+.. versionadded:: 3.38
+%End
+
+    QString attribution() const;
+%Docstring
+Returns the attribution of the layer used by QGIS Server in
+GetCapabilities request.
+
+Attribution indicates the provider of a layer or collection of layers.
+
+.. seealso:: :py:func:`setAttribution`
+
+.. versionadded:: 3.38
+%End
+
+    void setAttributionUrl( const QString &url );
+%Docstring
+Sets the attribution ``url`` of the layer used by QGIS Server in
+GetCapabilities request.
+
+Attribution indicates the provider of a layer or collection of layers.
+
+.. seealso:: :py:func:`attributionUrl`
+
+.. versionadded:: 3.38
+%End
+
+    QString attributionUrl() const;
+%Docstring
+Returns the attribution URL of the layer used by QGIS Server in
+GetCapabilities request.
+
+Attribution indicates the provider of a layer or collection of layers.
+
+.. seealso:: :py:func:`setAttributionUrl`
+
+.. versionadded:: 3.38
+%End
+
     virtual const QgsMapLayer *layer() const;
 %Docstring
 Gets the parent layer
@@ -266,5 +469,5 @@ class QgsVectorLayerServerProperties: QgsMapLayerServerProperties
  *                                                                      *
  * src/core/qgsmaplayerserverproperties.h                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

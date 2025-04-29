@@ -70,7 +70,6 @@ class GUI_EXPORT QgsValueMapConfigDlg : public QgsEditorConfigWidget, private Ui
      *
      * If \a skipNull is TRUE, then NULL entries will not be added.
      *
-     * \since QGIS 3.0
      */
     static void populateComboBox( QComboBox *comboBox, const QVariantMap &configuration, bool skipNull );
 
@@ -78,6 +77,14 @@ class GUI_EXPORT QgsValueMapConfigDlg : public QgsEditorConfigWidget, private Ui
 
   private:
     void setRow( int row, const QString &value, const QString &description );
+
+    /**
+     * Validates a value against the maximum allowed field length and trims it is necessary.
+     * \param value
+     * \return the validated field value trimmed if necessary
+     */
+    QString checkValueLength( const QString &value );
+
 
   private slots:
     void copySelectionToClipboard();

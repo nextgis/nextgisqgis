@@ -25,6 +25,11 @@
 #include <QPointer>
 #include <QJsonObject>
 
+#ifndef SIP_RUN
+#include <nlohmann/json_fwd.hpp>
+using namespace nlohmann;
+#endif
+
 class QTextCodec;
 
 /**
@@ -34,7 +39,6 @@ class QTextCodec;
  *
  * Note that geometries will be automatically reprojected to WGS84 to match GeoJSON spec
  * if either the source vector layer or source CRS is set.
- * \since QGIS 2.16
  */
 
 class CORE_EXPORT QgsJsonExporter
@@ -194,6 +198,22 @@ class CORE_EXPORT QgsJsonExporter
     QgsAttributeList excludedAttributes() const { return mExcludedAttributeIndexes; }
 
     /**
+     * Sets whether field formatters (of type KeyValue, List, ValueRelation,
+     * ValueMap) are used to export raw values as displayed
+     * values. The default is true.
+     * \since QGIS 3.40
+     */
+    void setUseFieldFormatters( bool useFieldFormatters ) { mUseFieldFormatters = useFieldFormatters; }
+
+    /**
+     * Returned whether field formatters (of type KeyValue, List, ValueRelation,
+     * ValueMap) are used to export raw values as displayed
+     * values.
+     * \since QGIS 3.40
+     */
+    bool useFieldFormatters() const { return mUseFieldFormatters; }
+
+    /**
      * Returns a GeoJSON string representation of a feature.
      * \param feature feature to convert
      * \param extraProperties map of extra attributes to include in feature's properties
@@ -287,13 +307,14 @@ class CORE_EXPORT QgsJsonExporter
     bool mTransformGeometries = true;
 
     QgsCoordinateReferenceSystem mDestinationCrs;
+
+    bool mUseFieldFormatters = true;
 };
 
 /**
  * \ingroup core
  * \class QgsJsonUtils
  * \brief Helper utilities for working with JSON and GeoJSON conversions.
- * \since QGIS 2.16
  */
 
 class CORE_EXPORT QgsJsonUtils
@@ -310,7 +331,7 @@ class CORE_EXPORT QgsJsonUtils
      * \see stringToFields()
      * \note this function is a wrapper around QgsOgrUtils::stringToFeatureList()
      */
-    static QgsFeatureList stringToFeatureList( const QString &string, const QgsFields &fields = QgsFields(), QTextCodec *encoding = nullptr );
+    static QgsFeatureList stringToFeatureList( const QString &string, const QgsFields &fields = QgsFields(), QTextCodec *encoding SIP_PYARGREMOVE6 = nullptr );
 
     /**
      * Attempts to retrieve the fields from a GeoJSON  \a string representing a collection of features.
@@ -319,7 +340,7 @@ class CORE_EXPORT QgsJsonUtils
      * \see stringToFeatureList()
      * \note this function is a wrapper around QgsOgrUtils::stringToFields()
      */
-    static QgsFields stringToFields( const QString &string, QTextCodec *encoding = nullptr );
+    static QgsFields stringToFields( const QString &string, QTextCodec *encoding SIP_PYARGREMOVE6 = nullptr );
 
     /**
      * Encodes a value to a JSON string representation, adding appropriate quotations and escaping
@@ -347,11 +368,12 @@ class CORE_EXPORT QgsJsonUtils
      * richer export utilising settings like the layer's fields widget configuration.
      * \param attributeWidgetCaches optional widget configuration cache. Can be used
      * to speed up exporting the attributes for multiple features from the same layer.
+     * \param useFieldFormatters Whether field formatters should be used (since QGIS 3.40)
      * \note Not available in Python bindings
      * \since QGIS 3.8
      */
     static json exportAttributesToJsonObject( const QgsFeature &feature, QgsVectorLayer *layer = nullptr,
-        const QVector<QVariant> &attributeWidgetCaches = QVector<QVariant>() ) SIP_SKIP;
+        const QVector<QVariant> &attributeWidgetCaches = QVector<QVariant>(), bool useFieldFormatters = true ) SIP_SKIP;
 
     /**
      * Parse a simple array (depth=1)
@@ -359,10 +381,37 @@ class CORE_EXPORT QgsJsonUtils
      * \param type optional variant type of the elements, if specified (and not Invalid),
      *        the array items will be converted to the type, and discarded if
      *        the conversion is not possible.
-     * \since QGIS 3.0
      */
-    Q_INVOKABLE static QVariantList parseArray( const QString &json, QVariant::Type type = QVariant::Invalid );
+    Q_INVOKABLE static QVariantList parseArray( const QString &json, QMetaType::Type type = QMetaType::Type::UnknownType );
 
+    /**
+     * Parse a simple array (depth=1)
+     * \param json the JSON to parse
+     * \param type optional variant type of the elements, if specified (and not Invalid),
+     *        the array items will be converted to the type, and discarded if
+     *        the conversion is not possible.
+     * \deprecated QGIS 3.38. Use the method with a QMetaType::Type argument instead.
+     */
+    Q_INVOKABLE Q_DECL_DEPRECATED static QVariantList parseArray( const QString &json, QVariant::Type type ) SIP_DEPRECATED;
+
+    /**
+     * Parses a GeoJSON "geometry" value to a QgsGeometry object.
+     *
+     * Returns a null geometry if the geometry could not be parsed.
+     *
+     * \note Not available in Python bindings.
+     * \since QGIS 3.36
+     */
+    static QgsGeometry geometryFromGeoJson( const json &geometry ) SIP_SKIP;
+
+    /**
+     * Parses a GeoJSON "geometry" value to a QgsGeometry object.
+     *
+     * Returns a null geometry if the geometry could not be parsed.
+     *
+     * \since QGIS 3.36
+     */
+    static QgsGeometry geometryFromGeoJson( const QString &geometry );
 
     /**
      * Converts a QVariant \a v to a json object
@@ -395,6 +444,22 @@ class CORE_EXPORT QgsJsonUtils
      * \since QGIS 3.8
      */
     static QVariant parseJson( const QString &jsonString ) SIP_SKIP;
+
+    /**
+     * Converts a JSON \a value to a QVariant, in case of parsing error an invalid QVariant is returned.
+     * \note Not available in Python bindings
+     * \since QGIS 3.36
+     */
+    static QVariant jsonToVariant( const json &value ) SIP_SKIP;
+
+    /**
+     * Add \a crs information entry in \a json object regarding old GeoJSON specification format
+     * if it differs from OGC:CRS84 or EPSG:4326.
+     * According to new specification RFC 7946, coordinate reference system for all GeoJSON coordinates
+     * is assumed to be OGC:CRS84 but when user specifically request a different CRS, this method
+     * adds this information in the JSON output
+     */
+    static void addCrsInfo( json &value, const QgsCoordinateReferenceSystem &crs ) SIP_SKIP;
 
 };
 

@@ -16,8 +16,8 @@
 #include "qgstessellator.h"
 
 #include "qgscurve.h"
+#include "qgsgeometryutils_base.h"
 #include "qgsgeometry.h"
-#include "qgsmessagelog.h"
 #include "qgsmultipolygon.h"
 #include "qgspoint.h"
 #include "qgspolygon.h"
@@ -453,7 +453,7 @@ double _minimum_distance_between_coordinates( const QgsPolygon &polygon )
     {
       const double x1 = *srcXData++;
       const double y1 = *srcYData++;
-      const double d = ( x0 - x1 ) * ( x0 - x1 ) + ( y0 - y1 ) * ( y0 - y1 );
+      const double d = QgsGeometryUtilsBase::sqrDistance2D( x0, y0, x1, y1 );
       if ( d < min_d )
         min_d = d;
       x0 = x1;
@@ -614,15 +614,15 @@ void QgsTessellator::addPolygon( const QgsPolygon &polygon, float extrusionHeigh
       const QgsGeometry polygonSimplified = QgsGeometry( polygonNew->clone() ).simplify( 0.001 );
       if ( polygonSimplified.isNull() )
       {
-        QgsMessageLog::logMessage( QObject::tr( "geometry simplification failed - skipping" ), QObject::tr( "3D" ) );
+        mError = QObject::tr( "geometry simplification failed - skipping" );
         return;
       }
       const QgsPolygon *polygonSimplifiedData = qgsgeometry_cast<const QgsPolygon *>( polygonSimplified.constGet() );
-      if ( polygonSimplifiedData == nullptr || _minimum_distance_between_coordinates( *polygonSimplifiedData ) < 0.001 )
+      if ( !polygonSimplifiedData || _minimum_distance_between_coordinates( *polygonSimplifiedData ) < 0.001 )
       {
         // Failed to fix that. It could be a really tiny geometry... or maybe they gave us
         // geometry in unprojected lat/lon coordinates
-        QgsMessageLog::logMessage( QObject::tr( "geometry's coordinates are too close to each other and simplification failed - skipping" ), QObject::tr( "3D" ) );
+        mError = QObject::tr( "geometry's coordinates are too close to each other and simplification failed - skipping" );
         return;
       }
       else
@@ -715,9 +715,13 @@ void QgsTessellator::addPolygon( const QgsPolygon &polygon, float extrusionHeigh
         }
       }
     }
+    catch ( std::runtime_error &err )
+    {
+      mError = err.what();
+    }
     catch ( ... )
     {
-      QgsMessageLog::logMessage( QObject::tr( "Triangulation failed. Skipping polygon…" ), QObject::tr( "3D" ) );
+      mError = QObject::tr( "An unknown error occurred" );
     }
 
     for ( int i = 0; i < polylinesToDelete.count(); ++i )

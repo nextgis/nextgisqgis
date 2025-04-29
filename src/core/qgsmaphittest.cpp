@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmaphittest.h"
+#include "moc_qgsmaphittest.cpp"
 
 #include "qgsfeatureiterator.h"
 #include "qgsrendercontext.h"
@@ -213,7 +214,7 @@ void QgsMapHitTest::runHitTestFeatureSource( QgsAbstractFeatureSource *source,
     if ( transformedPolygon.isNull() )
     {
       request.setFilterRect( context.extent() );
-      request.setFlags( QgsFeatureRequest::ExactIntersect );
+      request.setFlags( Qgis::FeatureRequestFlag::ExactIntersect );
     }
     else
     {

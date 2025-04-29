@@ -18,6 +18,7 @@
 
 #include "qgis_3d.h"
 #include "qgsabstractmaterialsettings.h"
+#include "qgsmaterial.h"
 
 #include <QColor>
 
@@ -35,10 +36,6 @@ class QDomElement;
 class _3D_EXPORT QgsPhongTexturedMaterialSettings : public QgsAbstractMaterialSettings
 {
   public:
-
-    /**
-     * Constructor for QgsPhongTexturedMaterialSettings.
-     */
     QgsPhongTexturedMaterialSettings() = default;
 
     QString type() const override;
@@ -60,7 +57,7 @@ class _3D_EXPORT QgsPhongTexturedMaterialSettings : public QgsAbstractMaterialSe
     //! Returns specular color component
     QColor specular() const { return mSpecular; }
     //! Returns shininess of the surface
-    float shininess() const { return mShininess; }
+    double shininess() const { return mShininess; }
 
     QMap<QString, QString> toExportParameters() const override;
 
@@ -93,7 +90,7 @@ class _3D_EXPORT QgsPhongTexturedMaterialSettings : public QgsAbstractMaterialSe
      * Returns the opacity of the surface
      * \since QGIS 3.28
      */
-    float opacity() const { return mOpacity; }
+    double opacity() const { return mOpacity; }
 
     //! Sets ambient color component
     void setAmbient( const QColor &ambient ) { mAmbient = ambient; }
@@ -101,7 +98,7 @@ class _3D_EXPORT QgsPhongTexturedMaterialSettings : public QgsAbstractMaterialSe
     //! Sets specular color component
     void setSpecular( const QColor &specular ) { mSpecular = specular; }
     //! Sets shininess of the surface
-    void setShininess( float shininess ) { mShininess = shininess; }
+    void setShininess( double shininess ) { mShininess = shininess; }
 
     /**
      * Sets the \a path of the diffuse texture.
@@ -128,30 +125,24 @@ class _3D_EXPORT QgsPhongTexturedMaterialSettings : public QgsAbstractMaterialSe
     void readXml( const QDomElement &elem, const QgsReadWriteContext &context ) override;
     void writeXml( QDomElement &elem, const QgsReadWriteContext &context ) const override;
 #ifndef SIP_RUN
-    Qt3DRender::QMaterial *toMaterial( QgsMaterialSettingsRenderingTechnique technique, const QgsMaterialContext &context ) const override SIP_FACTORY;
-    void addParametersToEffect( Qt3DRender::QEffect *effect ) const override;
+    QgsMaterial *toMaterial( QgsMaterialSettingsRenderingTechnique technique, const QgsMaterialContext &context ) const override SIP_FACTORY;
+    void addParametersToEffect( Qt3DRender::QEffect *effect, const QgsMaterialContext &materialContext ) const override;
 #endif
 
     // TODO c++20 - replace with = default
     bool operator==( const QgsPhongTexturedMaterialSettings &other ) const
     {
-      return mAmbient == other.mAmbient &&
-             mSpecular == other.mSpecular &&
-             mShininess == other.mShininess &&
-             mOpacity == other.mOpacity &&
-             mDiffuseTexturePath == other.mDiffuseTexturePath &&
-             mTextureScale == other.mTextureScale &&
-             mTextureRotation == other.mTextureRotation;
+      return mAmbient == other.mAmbient && mSpecular == other.mSpecular && mShininess == other.mShininess && mOpacity == other.mOpacity && mDiffuseTexturePath == other.mDiffuseTexturePath && mTextureScale == other.mTextureScale && mTextureRotation == other.mTextureRotation;
     }
 
   private:
-    QColor mAmbient{ QColor::fromRgbF( 0.1f, 0.1f, 0.1f, 1.0f ) };
-    QColor mSpecular{ QColor::fromRgbF( 1.0f, 1.0f, 1.0f, 1.0f ) };
-    float mShininess = 0.0f;
-    float mOpacity = 1.0f;
+    QColor mAmbient { QColor::fromRgbF( 0.1f, 0.1f, 0.1f, 1.0f ) };
+    QColor mSpecular { QColor::fromRgbF( 1.0f, 1.0f, 1.0f, 1.0f ) };
+    double mShininess = 0.0;
+    double mOpacity = 1.0;
     QString mDiffuseTexturePath;
-    float mTextureScale{ 1.0f };
-    float mTextureRotation{ 0.0f };
+    float mTextureScale { 1.0f };
+    float mTextureRotation { 0.0f };
 };
 
 

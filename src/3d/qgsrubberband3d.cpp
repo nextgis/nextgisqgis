@@ -24,10 +24,11 @@
 #include "qgsvertexid.h"
 #include "qgslinestring.h"
 #include "qgssymbollayer.h"
+#include "qgs3dmapsettings.h"
 
 #include <Qt3DCore/QEntity>
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
 #include <Qt3DRender/QAttribute>
 #include <Qt3DRender/QBuffer>
 #include <Qt3DRender/QGeometry>
@@ -38,7 +39,6 @@
 #endif
 
 #include <Qt3DRender/QGeometryRenderer>
-#include <Qt3DRender/QMaterial>
 #include <QColor>
 
 
@@ -72,8 +72,7 @@ QgsRubberBand3D::QgsRubberBand3D( Qgs3DMapSettings &map, QgsWindow3DEngine *engi
   mLineMaterial->setLineWidth( 3 );
   mLineMaterial->setLineColor( Qt::red );
 
-  QObject::connect( engine, &QgsAbstract3DEngine::sizeChanged, mLineMaterial, [this, engine]
-  {
+  QObject::connect( engine, &QgsAbstract3DEngine::sizeChanged, mLineMaterial, [this, engine] {
     mLineMaterial->setViewportSize( engine->size() );
   } );
   mLineMaterial->setViewportSize( engine->size() );
@@ -88,12 +87,11 @@ QgsRubberBand3D::QgsRubberBand3D( Qgs3DMapSettings &map, QgsWindow3DEngine *engi
   mMarkerGeometryRenderer->setGeometry( mMarkerGeometry );
   mMarkerGeometryRenderer->setVertexCount( mMarkerGeometry->count() );
 
-  const QVariantMap props
-  {
-    {QStringLiteral( "color" ), QStringLiteral( "red" ) },
-    {QStringLiteral( "size" ), 6 },
-    {QStringLiteral( "outline_color" ), QStringLiteral( "green" ) },
-    {QStringLiteral( "outline_width" ), 0.5 }
+  const QVariantMap props {
+    { QStringLiteral( "color" ), QStringLiteral( "red" ) },
+    { QStringLiteral( "size" ), 6 },
+    { QStringLiteral( "outline_color" ), QStringLiteral( "green" ) },
+    { QStringLiteral( "outline_width" ), 0.5 }
   };
 
   mMarkerSymbol = QgsMarkerSymbol::createSimple( props );
@@ -167,7 +165,7 @@ void QgsRubberBand3D::updateGeometry()
 {
   QgsLineVertexData lineData;
   lineData.withAdjacency = true;
-  lineData.init( Qgis::AltitudeClamping::Absolute, Qgis::AltitudeBinding::Vertex, 0, mMapSettings );
+  lineData.init( Qgis::AltitudeClamping::Absolute, Qgis::AltitudeBinding::Vertex, 0, Qgs3DRenderContext::fromMapSettings( mMapSettings ) );
   lineData.addLineString( mLineString );
 
   mPositionAttribute->buffer()->setData( lineData.createVertexBuffer() );
@@ -189,12 +187,11 @@ void QgsRubberBand3D::updateMarkerMaterial()
 {
   delete mMarkerMaterial;
   mMarkerMaterial = new QgsPoint3DBillboardMaterial();
-  mMarkerMaterial->setTexture2DFromSymbol( mMarkerSymbol, *mMapSettings );
+  mMarkerMaterial->setTexture2DFromSymbol( mMarkerSymbol, Qgs3DRenderContext::fromMapSettings( mMapSettings ) );
   mMarkerEntity->addComponent( mMarkerMaterial );
 
   //TODO: QgsAbstract3DEngine::sizeChanged should have const QSize &size param
-  QObject::connect( mEngine, &QgsAbstract3DEngine::sizeChanged, mMarkerMaterial, [this]
-  {
+  QObject::connect( mEngine, &QgsAbstract3DEngine::sizeChanged, mMarkerMaterial, [this] {
     mMarkerMaterial->setViewportSize( mEngine->size() );
   } );
   mMarkerMaterial->setViewportSize( mEngine->size() );

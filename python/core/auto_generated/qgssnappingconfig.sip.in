@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgssnappingconfig.h                                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -15,8 +15,6 @@ class QgsSnappingConfig
 {
 %Docstring(signature="appended")
 This is a container for configuration of the snapping of the project
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -56,8 +54,9 @@ Convenient method to return the translated name of the enum type
 
 .. versionadded:: 3.12
 
-.. deprecated:: QGIS 3.26
-   use :py:class:`Qgis`.snappingTypeToString instead
+.. deprecated:: 3.26
+
+   Use :py:class:`Qgis`.snappingTypeToString instead.
 %End
 
 
@@ -74,18 +73,17 @@ Convenient method to return an icon corresponding to the enum type
 Convenient method to return an icon corresponding to the enum type
 :py:class:`Qgis`.SnappingTypes.
 
-.. deprecated:: QGIS 3.26
-   use :py:class:`Qgis`.snappingTypeToString instead
+.. deprecated:: 3.26
 
+   Use :py:class:`Qgis`.snappingTypeToString instead.
 .. versionadded:: 3.20
 %End
 
     class IndividualLayerSettings
 {
 %Docstring(signature="appended")
-This is a container of advanced configuration (per layer) of the snapping of the project
-
-.. versionadded:: 3.0
+This is a container of advanced configuration (per layer) of the
+snapping of the project
 %End
 
 %TypeHeaderCode
@@ -97,23 +95,24 @@ This is a container of advanced configuration (per layer) of the snapping of the
 %Docstring
 IndividualLayerSettings
 
-:param enabled:
-:param type:
-:param tolerance:
-:param units:
+:param enabled: 
+:param type: 
+:param tolerance: 
+:param units: 
 
-.. deprecated:: QGIS 3.12
-   use the method with :py:class:`Qgis`.SnappingTypes instead.
+.. deprecated:: 3.12
+
+   Use the method with :py:class:`Qgis`.SnappingTypes instead.
 %End
 
         IndividualLayerSettings( bool enabled, Qgis::SnappingTypes type, double tolerance, Qgis::MapToolUnit units, double minScale = 0.0, double maxScale = 0.0 );
 %Docstring
 IndividualLayerSettings
 
-:param enabled:
-:param type:
-:param tolerance:
-:param units:
+:param enabled: 
+:param type: 
+:param tolerance: 
+:param units: 
 :param minScale: 0.0 disable scale limit
 :param maxScale: 0.0 disable scale limit
 
@@ -151,16 +150,18 @@ Returns the flags type (vertices | segments | area | centroid | middle)
 %Docstring
 Returns the flags type (vertices | segments | area | centroid | middle)
 
-.. deprecated:: QGIS 3.12
-   use typeFlag instead.
+.. deprecated:: 3.12
+
+   Use typeFlag instead.
 %End
 
  void setType( SnappingType type ) /Deprecated/;
 %Docstring
 define the type of snapping
 
-.. deprecated:: QGIS 3.12
-   use setTypeFlag instead.
+.. deprecated:: 3.12
+
+   Use setTypeFlag instead.
 %End
 
         void setTypeFlag( Qgis::SnappingTypes type );
@@ -199,7 +200,8 @@ Returns minimum scale on which snapping is limited
 
         void setMinimumScale( double minScale );
 %Docstring
-Sets the min scale value on which snapping is used, 0.0 disable scale limit
+Sets the min scale value on which snapping is used, 0.0 disable scale
+limit
 
 .. versionadded:: 3.14
 %End
@@ -213,7 +215,8 @@ Returns max scale on which snapping is limited
 
         void setMaximumScale( double maxScale );
 %Docstring
-Sets the max scale value on which snapping is used, 0.0 disable scale limit
+Sets the max scale value on which snapping is used, 0.0 disable scale
+limit
 
 .. versionadded:: 3.14
 %End
@@ -267,16 +270,18 @@ Returns the flags type (vertices | segments | area | centroid | middle)
 %Docstring
 Returns the flags type (vertices | segments | area | centroid | middle)
 
-.. deprecated:: QGIS 3.12
-   use typeFlag instead.
+.. deprecated:: 3.12
+
+   Use typeFlag instead.
 %End
 
  void setType( QgsSnappingConfig::SnappingType type );
 %Docstring
 define the type of snapping
 
-.. deprecated:: QGIS 3.12
-   use setTypeFlag instead.
+.. deprecated:: 3.12
+
+   Use setTypeFlag instead.
 %End
 
     void setTypeFlag( Qgis::SnappingTypes type );
@@ -360,14 +365,16 @@ Sets if the snapping on intersection is enabled
 
     bool selfSnapping() const;
 %Docstring
-Returns if self snapping (snapping to the currently digitized feature) is enabled
+Returns if self snapping (snapping to the currently digitized feature)
+is enabled
 
 .. versionadded:: 3.14
 %End
 
     void setSelfSnapping( bool enabled );
 %Docstring
-Sets if self snapping (snapping to the currently digitized feature) is enabled
+Sets if self snapping (snapping to the currently digitized feature) is
+enabled
 
 .. versionadded:: 3.14
 %End
@@ -418,12 +425,14 @@ Returns individual snapping settings for all layers
 
     QgsSnappingConfig::IndividualLayerSettings individualLayerSettings( QgsVectorLayer *vl ) const;
 %Docstring
-Returns individual layer snappings settings (applied if mode is AdvancedConfiguration)
+Returns individual layer snappings settings (applied if mode is
+AdvancedConfiguration)
 %End
 
     void setIndividualLayerSettings( QgsVectorLayer *vl, const QgsSnappingConfig::IndividualLayerSettings &individualLayerSettings );
 %Docstring
-Sets individual layer snappings settings (applied if mode is AdvancedConfiguration)
+Sets individual layer snappings settings (applied if mode is
+AdvancedConfiguration)
 %End
 
     void clearIndividualLayerSettings();
@@ -438,53 +447,42 @@ Removes all individual layer snapping settings
     void readProject( const QDomDocument &doc );
 %Docstring
 Reads the configuration from the specified QGIS project document.
-
-.. versionadded:: 3.0
 %End
 
     void writeProject( QDomDocument &doc );
 %Docstring
 Writes the configuration to the specified QGIS project document.
-
-.. versionadded:: 3.0
 %End
 
     bool addLayers( const QList<QgsMapLayer *> &layers );
 %Docstring
-Adds the specified layers as individual layers to the configuration
-with standard configuration.
-When implementing a long-living QgsSnappingConfig (like the one in QgsProject)
-it is best to directly feed this with information from the layer registry.
+Adds the specified layers as individual layers to the configuration with
+standard configuration. When implementing a long-living
+QgsSnappingConfig (like the one in QgsProject) it is best to directly
+feed this with information from the layer registry.
 
 :return: ``True`` if changes have been done.
-
-.. versionadded:: 3.0
 %End
 
 
     bool removeLayers( const QList<QgsMapLayer *> &layers );
 %Docstring
 Removes the specified layers from the individual layer configuration.
-When implementing a long-living QgsSnappingConfig (like the one in QgsProject)
-it is best to directly feed this with information from the layer registry.
+When implementing a long-living QgsSnappingConfig (like the one in
+QgsProject) it is best to directly feed this with information from the
+layer registry.
 
 :return: ``True`` if changes have been done.
-
-.. versionadded:: 3.0
 %End
 
     QgsProject *project() const;
 %Docstring
 The project from which the snapped layers should be retrieved
-
-.. versionadded:: 3.0
 %End
 
     void setProject( QgsProject *project );
 %Docstring
 The project from which the snapped layers should be retrieved
-
-.. versionadded:: 3.0
 %End
 
 };
@@ -494,5 +492,5 @@ The project from which the snapped layers should be retrieved
  *                                                                      *
  * src/core/qgssnappingconfig.h                                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

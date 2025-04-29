@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "qgsapplication.h"
-#include "qgsmultirenderchecker.h"
 #include "qgslayoutitemmap.h"
 #include "qgslayoutitemmapoverview.h"
 #include "qgslayoutatlas.h"
@@ -39,13 +38,14 @@ class TestQgsLayoutAtlas : public QgsTest
     Q_OBJECT
 
   public:
-    TestQgsLayoutAtlas() : QgsTest( QStringLiteral( "Layout Atlas Tests" ) ) {}
+    TestQgsLayoutAtlas()
+      : QgsTest( QStringLiteral( "Layout Atlas Tests" ), QStringLiteral( "atlas" ) ) {}
 
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
-    void init();// will be called before each testfunction is executed.
-    void cleanup();// will be called after every testfunction.
+    void initTestCase();
+    void cleanupTestCase();
+    void init();
+    void cleanup();
 
     // test filename pattern evaluation
     void filename();
@@ -88,15 +88,11 @@ void TestQgsLayoutAtlas::initTestCase()
 
   //create maplayers from testdata and add to layer registry
   const QFileInfo vectorFileInfo( QStringLiteral( TEST_DATA_DIR ) + "/france_parts.shp" );
-  mVectorLayer = new QgsVectorLayer( vectorFileInfo.filePath(),
-                                     vectorFileInfo.completeBaseName(),
-                                     QStringLiteral( "ogr" ) );
-  mVectorLayer2 = new QgsVectorLayer( vectorFileInfo.filePath(),
-                                      vectorFileInfo.completeBaseName(),
-                                      QStringLiteral( "ogr" ) );
+  mVectorLayer = new QgsVectorLayer( vectorFileInfo.filePath(), vectorFileInfo.completeBaseName(), QStringLiteral( "ogr" ) );
+  mVectorLayer2 = new QgsVectorLayer( vectorFileInfo.filePath(), vectorFileInfo.completeBaseName(), QStringLiteral( "ogr" ) );
 
   QgsVectorSimplifyMethod simplifyMethod;
-  simplifyMethod.setSimplifyHints( QgsVectorSimplifyMethod::NoSimplification );
+  simplifyMethod.setSimplifyHints( Qgis::VectorRenderingSimplificationFlags() );
   mVectorLayer->setSimplifyMethod( simplifyMethod );
 }
 
@@ -194,7 +190,7 @@ void TestQgsLayoutAtlas::filename()
   for ( int fi = 0; fi < mAtlas->count(); ++fi )
   {
     mAtlas->seekTo( fi );
-    const QString expected = QStringLiteral( "output_%1" ).arg( ( int )( fi + 1 ) );
+    const QString expected = QStringLiteral( "output_%1" ).arg( ( int ) ( fi + 1 ) );
     QCOMPARE( mAtlas->currentFilename(), expected );
   }
   mAtlas->endRender();
@@ -215,9 +211,7 @@ void TestQgsLayoutAtlas::autoscale_render()
     mAtlas->seekTo( fit );
     mLabel1->adjustSizeToText();
 
-    QgsLayoutChecker checker( QStringLiteral( "atlas_autoscale%1" ).arg( ( ( int )fit ) + 1 ), mLayout );
-    checker.setControlPathPrefix( QStringLiteral( "atlas" ) );
-    QVERIFY( checker.testLayout( mReport, 0, 100 ) );
+    QGSVERIFYLAYOUTCHECK( QStringLiteral( "atlas_autoscale%1" ).arg( ( ( int ) fit ) + 1 ), mLayout, 0, 100 );
   }
   mAtlas->endRender();
 }
@@ -237,9 +231,7 @@ void TestQgsLayoutAtlas::fixedscale_render()
     mAtlas->seekTo( fit );
     mLabel1->adjustSizeToText();
 
-    QgsLayoutChecker checker( QStringLiteral( "atlas_fixedscale%1" ).arg( ( ( int )fit ) + 1 ), mLayout );
-    checker.setControlPathPrefix( QStringLiteral( "atlas" ) );
-    QVERIFY( checker.testLayout( mReport, 0, 100 ) );
+    QGSVERIFYLAYOUTCHECK( QStringLiteral( "atlas_fixedscale%1" ).arg( ( ( int ) fit ) + 1 ), mLayout, 0, 100 );
   }
   mAtlas->endRender();
 }
@@ -271,9 +263,7 @@ void TestQgsLayoutAtlas::predefinedscales_render()
     mAtlas->seekTo( fit );
     mLabel1->adjustSizeToText();
 
-    QgsLayoutChecker checker( QStringLiteral( "atlas_predefinedscales%1" ).arg( ( ( int )fit ) + 1 ), mLayout );
-    checker.setControlPathPrefix( QStringLiteral( "atlas" ) );
-    QVERIFY( checker.testLayout( mReport, 0, 100 ) );
+    QGSVERIFYLAYOUTCHECK( QStringLiteral( "atlas_predefinedscales%1" ).arg( ( ( int ) fit ) + 1 ), mLayout, 0, 100 );
   }
   mAtlas->endRender();
 }
@@ -295,9 +285,7 @@ void TestQgsLayoutAtlas::two_map_autoscale_render()
     mAtlas->seekTo( fit );
     mLabel1->adjustSizeToText();
 
-    QgsLayoutChecker checker( QStringLiteral( "atlas_two_maps%1" ).arg( ( ( int )fit ) + 1 ), mLayout );
-    checker.setControlPathPrefix( QStringLiteral( "atlas" ) );
-    QVERIFY( checker.testLayout( mReport, 0, 100 ) );
+    QGSVERIFYLAYOUTCHECK( QStringLiteral( "atlas_two_maps%1" ).arg( ( ( int ) fit ) + 1 ), mLayout, 0, 100 );
   }
   mAtlas->endRender();
 }
@@ -316,9 +304,7 @@ void TestQgsLayoutAtlas::hiding_render()
     mAtlas->seekTo( fit );
     mLabel1->adjustSizeToText();
 
-    QgsLayoutChecker checker( QStringLiteral( "atlas_hiding%1" ).arg( ( ( int )fit ) + 1 ), mLayout );
-    checker.setControlPathPrefix( QStringLiteral( "atlas" ) );
-    QVERIFY( checker.testLayout( mReport, 0, 100 ) );
+    QGSVERIFYLAYOUTCHECK( QStringLiteral( "atlas_hiding%1" ).arg( ( ( int ) fit ) + 1 ), mLayout, 0, 100 );
   }
   mAtlas->endRender();
 }
@@ -341,9 +327,7 @@ void TestQgsLayoutAtlas::sorting_render()
     mAtlas->seekTo( fit );
     mLabel1->adjustSizeToText();
 
-    QgsLayoutChecker checker( QStringLiteral( "atlas_sorting%1" ).arg( ( ( int )fit ) + 1 ), mLayout );
-    checker.setControlPathPrefix( QStringLiteral( "atlas" ) );
-    QVERIFY( checker.testLayout( mReport, 0, 100 ) );
+    QGSVERIFYLAYOUTCHECK( QStringLiteral( "atlas_sorting%1" ).arg( ( ( int ) fit ) + 1 ), mLayout, 0, 100 );
   }
   mAtlas->endRender();
 }
@@ -368,9 +352,7 @@ void TestQgsLayoutAtlas::filtering_render()
     mAtlas->seekTo( fit );
     mLabel1->adjustSizeToText();
 
-    QgsLayoutChecker checker( QStringLiteral( "atlas_filtering%1" ).arg( ( ( int )fit ) + 1 ), mLayout );
-    checker.setControlPathPrefix( QStringLiteral( "atlas" ) );
-    QVERIFY( checker.testLayout( mReport, 0, 100 ) );
+    QGSVERIFYLAYOUTCHECK( QStringLiteral( "atlas_filtering%1" ).arg( ( ( int ) fit ) + 1 ), mLayout, 0, 100 );
   }
   mAtlas->endRender();
 }
@@ -421,7 +403,7 @@ void TestQgsLayoutAtlas::test_remove_layer()
 
 void TestQgsLayoutAtlas::context()
 {
-  std::unique_ptr< QgsVectorLayer> vl2( new QgsVectorLayer( QStringLiteral( "Point?crs=epsg:4326&field=id:integer&field=labelx:integer" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) ) );
+  std::unique_ptr<QgsVectorLayer> vl2( new QgsVectorLayer( QStringLiteral( "Point?crs=epsg:4326&field=id:integer&field=labelx:integer" ), QStringLiteral( "vl" ), QStringLiteral( "memory" ) ) );
   QgsFeature f;
   QVERIFY( vl2->dataProvider()->addFeature( f ) );
   QgsFeature f2;

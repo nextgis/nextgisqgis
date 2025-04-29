@@ -59,7 +59,7 @@ class GUI_EXPORT QgsProcessingMeshDatasetGroupsWidget : public QWidget
     QPointer<QAction> mActionCurrentActiveDatasetGroups;
     QPointer<QAction> mActionAvailableDatasetGroups;
     QgsMeshLayer *mMeshLayer = nullptr;
-    QMap<int, QString> mDatasetGroupsNames; //used to store the dataet groups name if layer is not referenced
+    QMap<int, QString> mDatasetGroupsNames; //used to store the dataset groups name if layer is not referenced
 
     QStringList datasetGroupsNames();
     void updateSummaryText();
@@ -68,13 +68,12 @@ class GUI_EXPORT QgsProcessingMeshDatasetGroupsWidget : public QWidget
 };
 
 
-class GUI_EXPORT QgsProcessingMeshDatasetGroupsWidgetWrapper  : public QgsAbstractProcessingParameterWidgetWrapper, public QgsProcessingParameterWidgetFactoryInterface
+class GUI_EXPORT QgsProcessingMeshDatasetGroupsWidgetWrapper : public QgsAbstractProcessingParameterWidgetWrapper, public QgsProcessingParameterWidgetFactoryInterface
 {
     Q_OBJECT
 
   public:
-    QgsProcessingMeshDatasetGroupsWidgetWrapper( const QgsProcessingParameterDefinition *parameter = nullptr,
-        QgsProcessingGui::WidgetType type = QgsProcessingGui::Standard, QWidget *parent = nullptr );
+    QgsProcessingMeshDatasetGroupsWidgetWrapper( const QgsProcessingParameterDefinition *parameter = nullptr, QgsProcessingGui::WidgetType type = QgsProcessingGui::Standard, QWidget *parent = nullptr );
 
     QString parameterType() const override;
     QgsAbstractProcessingParameterWidgetWrapper *createWidgetWrapper( const QgsProcessingParameterDefinition *parameter, QgsProcessingGui::WidgetType type ) override;
@@ -82,7 +81,8 @@ class GUI_EXPORT QgsProcessingMeshDatasetGroupsWidgetWrapper  : public QgsAbstra
       QgsProcessingContext &context,
       const QgsProcessingParameterWidgetContext &widgetContext,
       const QgsProcessingParameterDefinition *definition = nullptr,
-      const QgsProcessingAlgorithm *algorithm = nullptr ) override;
+      const QgsProcessingAlgorithm *algorithm = nullptr
+    ) override;
     void postInitialize( const QList<QgsAbstractProcessingParameterWidgetWrapper *> &wrappers ) override;
 
     //! Sets the layer parameter widget wrapper
@@ -106,12 +106,9 @@ class GUI_EXPORT QgsProcessingMeshDatasetGroupsParameterDefinitionWidget : publi
     Q_OBJECT
 
   public:
-    QgsProcessingMeshDatasetGroupsParameterDefinitionWidget( QgsProcessingContext &context,
-        const QgsProcessingParameterWidgetContext &widgetContext,
-        const QgsProcessingParameterDefinition *definition = nullptr,
-        const QgsProcessingAlgorithm *algorithm = nullptr, QWidget *parent SIP_TRANSFERTHIS = nullptr );
+    QgsProcessingMeshDatasetGroupsParameterDefinitionWidget( QgsProcessingContext &context, const QgsProcessingParameterWidgetContext &widgetContext, const QgsProcessingParameterDefinition *definition = nullptr, const QgsProcessingAlgorithm *algorithm = nullptr, QWidget *parent SIP_TRANSFERTHIS = nullptr );
 
-    QgsProcessingParameterDefinition *createParameter( const QString &name, const QString &description, QgsProcessingParameterDefinition::Flags flags ) const override;
+    QgsProcessingParameterDefinition *createParameter( const QString &name, const QString &description, Qgis::ProcessingParameterFlags flags ) const override;
 
   private:
     QComboBox *mParentLayerComboBox = nullptr;
@@ -122,9 +119,7 @@ class GUI_EXPORT QgsProcessingMeshDatasetTimeWidget : public QWidget, private Ui
     Q_OBJECT
 
   public:
-    QgsProcessingMeshDatasetTimeWidget( QWidget *parent = nullptr,
-                                        const QgsProcessingParameterMeshDatasetTime *param = nullptr,
-                                        const QgsProcessingParameterWidgetContext &context =  QgsProcessingParameterWidgetContext() );
+    QgsProcessingMeshDatasetTimeWidget( QWidget *parent = nullptr, const QgsProcessingParameterMeshDatasetTime *param = nullptr, const QgsProcessingParameterWidgetContext &context = QgsProcessingParameterWidgetContext() );
 
     /**
      * Set the mesh layer for populate the time steps,
@@ -156,7 +151,7 @@ class GUI_EXPORT QgsProcessingMeshDatasetTimeWidget : public QWidget, private Ui
 
     void populateTimeSteps();
     bool hasTemporalDataset() const;
-    //! Populates diretly the time steps combo box with the referenced layer, used if layer comes from project
+    //! Populates directly the time steps combo box with the referenced layer, used if layer comes from project
     void populateTimeStepsFromLayer();
     //! Stores the dataset time steps to use them later depending of chosen dataset groups (setDatasetGroupIndexes()), used if layer does not come from project
     void storeTimeStepsFromLayer( QgsMeshLayer *layer );
@@ -168,13 +163,12 @@ class GUI_EXPORT QgsProcessingMeshDatasetTimeWidget : public QWidget, private Ui
     friend class TestProcessingGui;
 };
 
-class GUI_EXPORT QgsProcessingMeshDatasetTimeWidgetWrapper  : public QgsAbstractProcessingParameterWidgetWrapper, public QgsProcessingParameterWidgetFactoryInterface
+class GUI_EXPORT QgsProcessingMeshDatasetTimeWidgetWrapper : public QgsAbstractProcessingParameterWidgetWrapper, public QgsProcessingParameterWidgetFactoryInterface
 {
     Q_OBJECT
 
   public:
-    QgsProcessingMeshDatasetTimeWidgetWrapper( const QgsProcessingParameterDefinition *parameter = nullptr,
-        QgsProcessingGui::WidgetType type = QgsProcessingGui::Standard, QWidget *parent = nullptr );
+    QgsProcessingMeshDatasetTimeWidgetWrapper( const QgsProcessingParameterDefinition *parameter = nullptr, QgsProcessingGui::WidgetType type = QgsProcessingGui::Standard, QWidget *parent = nullptr );
 
     QString parameterType() const override;
     QgsAbstractProcessingParameterWidgetWrapper *createWidgetWrapper( const QgsProcessingParameterDefinition *parameter, QgsProcessingGui::WidgetType type ) override;
@@ -183,7 +177,8 @@ class GUI_EXPORT QgsProcessingMeshDatasetTimeWidgetWrapper  : public QgsAbstract
       QgsProcessingContext &context,
       const QgsProcessingParameterWidgetContext &widgetContext,
       const QgsProcessingParameterDefinition *definition = nullptr,
-      const QgsProcessingAlgorithm *algorithm = nullptr ) override;
+      const QgsProcessingAlgorithm *algorithm = nullptr
+    ) override;
 
     //! Sets the layer parameter widget wrapper
     void setMeshLayerWrapperValue( const QgsAbstractProcessingParameterWidgetWrapper *wrapper );
@@ -209,12 +204,9 @@ class GUI_EXPORT QgsProcessingMeshDatasetTimeParameterDefinitionWidget : public 
     Q_OBJECT
 
   public:
-    QgsProcessingMeshDatasetTimeParameterDefinitionWidget( QgsProcessingContext &context,
-        const QgsProcessingParameterWidgetContext &widgetContext,
-        const QgsProcessingParameterDefinition *definition = nullptr,
-        const QgsProcessingAlgorithm *algorithm = nullptr, QWidget *parent SIP_TRANSFERTHIS = nullptr );
+    QgsProcessingMeshDatasetTimeParameterDefinitionWidget( QgsProcessingContext &context, const QgsProcessingParameterWidgetContext &widgetContext, const QgsProcessingParameterDefinition *definition = nullptr, const QgsProcessingAlgorithm *algorithm = nullptr, QWidget *parent SIP_TRANSFERTHIS = nullptr );
 
-    QgsProcessingParameterDefinition *createParameter( const QString &name, const QString &description, QgsProcessingParameterDefinition::Flags flags ) const override;
+    QgsProcessingParameterDefinition *createParameter( const QString &name, const QString &description, Qgis::ProcessingParameterFlags flags ) const override;
 
   private:
     QComboBox *mParentDatasetComboBox = nullptr;

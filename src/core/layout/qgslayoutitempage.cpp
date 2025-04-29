@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgslayoutitempage.h"
+#include "moc_qgslayoutitempage.cpp"
 #include "qgslayout.h"
 #include "qgslayoututils.h"
 #include "qgspagesizeregistry.h"
@@ -36,10 +37,10 @@ QgsLayoutItemPage::QgsLayoutItemPage( QgsLayout *layout )
   setFlag( QGraphicsItem::ItemIsMovable, false );
   setZValue( QgsLayout::ZPage );
 
-  connect( this, &QgsLayoutItem::sizePositionChanged, this, [ = ]
+  connect( this, &QgsLayoutItem::sizePositionChanged, this, [this]
   {
-    mBoundingRect = QRectF();
     prepareGeometryChange();
+    mBoundingRect = QRectF();
   } );
 
   const QFont font;

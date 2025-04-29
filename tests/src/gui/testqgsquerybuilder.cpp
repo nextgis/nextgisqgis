@@ -29,16 +29,14 @@ class TestQgsQueryBuilder : public QObject
     TestQgsQueryBuilder() = default;
 
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
-    void init();// will be called before each testfunction is executed.
-    void cleanup();// will be called after every testfunction.
+    void initTestCase();    // will be called before the first testfunction is executed.
+    void cleanupTestCase(); // will be called after the last testfunction was executed.
+    void init();            // will be called before each testfunction is executed.
+    void cleanup();         // will be called after every testfunction.
     void testFillValues();
 
   private:
-
     QStringList getModelItemDisplayStrings( QStandardItemModel *model );
-
 };
 
 void TestQgsQueryBuilder::initTestCase() // will be called before the first testfunction is executed.
@@ -101,13 +99,13 @@ void TestQgsQueryBuilder::testFillValues()
 
   QgsQueryBuilder queryBuilder( &vl );
 
-  queryBuilder.fillValues( 0, 10 );
+  queryBuilder.fillValues( "intarray", 10 );
   QCOMPARE( getModelItemDisplayStrings( queryBuilder.mModelValues ), QStringList() << "1" << "2, 3" << "4, 5, 6" << "NULL" );
 
-  queryBuilder.fillValues( 1, 10 );
+  queryBuilder.fillValues( "strarray", 10 );
   QCOMPARE( getModelItemDisplayStrings( queryBuilder.mModelValues ), QStringList() << "NULL" << "testA" << "testB, testC" );
 
-  queryBuilder.fillValues( 2, 10 );
+  queryBuilder.fillValues( "intf", 10 );
   QCOMPARE( getModelItemDisplayStrings( queryBuilder.mModelValues ), QStringList() << "0" << "42" << "NULL" );
 }
 

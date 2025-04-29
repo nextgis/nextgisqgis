@@ -31,12 +31,10 @@
 class QgsPdalAlgorithmBase : public QgsProcessingAlgorithm
 {
   public:
-
     /**
      * Builds a command line string to run required pdal_wrench tool.
      */
-    virtual QStringList createArgumentLists( const QVariantMap &parameters,
-        QgsProcessingContext &context, QgsProcessingFeedback *feedback );
+    virtual QStringList createArgumentLists( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback );
 
   protected:
     void setOutputValue( const QString &name, const QVariant &value );
@@ -66,17 +64,27 @@ class QgsPdalAlgorithmBase : public QgsProcessingAlgorithm
      * This is necessary as pdal_wrench at the moment can create only VPC
      * output if input file is a VPC. We automatically adjust output file
      * extension for temporary outputs to provide better UX. For normal outputs
-     * user will see a error if output files is not a VPC.
+     * user will see a error if output file is not a VPC.
      */
     QString fixOutputFileName( const QString &inputFileName, const QString &outputFileName, QgsProcessingContext &context );
+
+    /**
+     * Checks that output file has correct format (LAS/LAZ) throws an exception
+     * if this is not the case.
+     *
+     * This check is needed because most of the pdal_wrench tools don't support
+     * writing COPC as they are being run in the streaming mode.
+     *
+     * Also checks that output file is not a VPC file when input is not a VPC.
+     */
+    void checkOutputFormat( const QString &inputFileName, const QString &outputFileName );
 
     /**
      * Returns path to the pdal_wrench executable binary.
      */
     QString wrenchExecutableBinary() const;
 
-    QVariantMap processAlgorithm( const QVariantMap &parameters,
-                                  QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
+    QVariantMap processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
 
   private:
     QMap<QString, QVariant> mOutputValues;

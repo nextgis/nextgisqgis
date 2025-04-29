@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgsmapcanvassnappingutils.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,24 +13,22 @@
 class QgsMapCanvasSnappingUtils : QgsSnappingUtils
 {
 %Docstring(signature="appended")
-Snapping utils instance that is connected to a canvas and updates the configuration
-(map settings + current layer) whenever that is changed in the canvas.
-
-.. versionadded:: 2.8
+Snapping utils instance that is connected to a canvas and updates the
+configuration (map settings + current layer) whenever that is changed in
+the canvas.
 %End
 
 %TypeHeaderCode
 #include "qgsmapcanvassnappingutils.h"
 %End
   public:
-
     QgsMapCanvasSnappingUtils( QgsMapCanvas *canvas, QObject *parent = 0 );
 %Docstring
 Construct map canvas snapping utils object
 
 :param canvas: map canvas
-:param parent: parent object
-               if ``False`` it will block until indexing is done
+:param parent: parent object if ``False`` it will block until indexing
+               is done
 %End
 
   protected:
@@ -47,5 +45,5 @@ Construct map canvas snapping utils object
  *                                                                      *
  * src/gui/qgsmapcanvassnappingutils.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

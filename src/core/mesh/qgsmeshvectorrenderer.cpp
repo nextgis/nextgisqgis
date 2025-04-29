@@ -34,15 +34,6 @@
 #define M_DEG2RAD 0.0174532925
 #endif
 
-inline double mag( double input )
-{
-  if ( input < 0.0 )
-  {
-    return -1.0;
-  }
-  return 1.0;
-}
-
 inline bool nodataValue( double x, double y )
 {
   return ( std::isnan( x ) || std::isnan( y ) );
@@ -62,11 +53,11 @@ QgsMeshVectorArrowRenderer::QgsMeshVectorArrowRenderer(
   , mDatasetValuesMag( datasetValuesMag )
   , mMinMag( datasetMagMinimumValue )
   , mMaxMag( datasetMagMaximumValue )
+  , mDataType( dataType )
+  , mBufferedExtent( context.mapExtent() )
   , mContext( context )
   , mCfg( settings )
-  , mDataType( dataType )
   , mOutputSize( size )
-  , mBufferedExtent( context.mapExtent() )
 {
   // should be checked in caller
   Q_ASSERT( !mDatasetValuesMag.empty() );
@@ -148,10 +139,10 @@ bool QgsMeshVectorArrowRenderer::calcVectorLineEnd(
 
   // Determine the angle of the vector, counter-clockwise, from east
   // (and associated trigs)
-  const double vectorAngle = -1.0 * atan( ( -1.0 * yVal ) / xVal ) - mContext.mapToPixel().mapRotation() * M_DEG2RAD;
+  const double vectorAngle = std::atan2( yVal, xVal ) - mContext.mapToPixel().mapRotation() * M_DEG2RAD;
 
-  cosAlpha = cos( vectorAngle ) * mag( xVal );
-  sinAlpha = sin( vectorAngle ) * mag( xVal );
+  cosAlpha = cos( vectorAngle );
+  sinAlpha = sin( vectorAngle );
 
   // Now determine the X and Y distances of the end of the line from the start
   double xDist = 0.0;
@@ -202,11 +193,8 @@ bool QgsMeshVectorArrowRenderer::calcVectorLineEnd(
 
   vectorLength = sqrt( xDist * xDist + yDist * yDist );
 
-  // Check to see if both of the coords are outside the QImage area, if so, skip the whole vector
-  if ( ( lineStart.x() < 0 || lineStart.x() > mOutputSize.width() ||
-         lineStart.y() < 0 || lineStart.y() > mOutputSize.height() ) &&
-       ( lineEnd.x() < 0   || lineEnd.x() > mOutputSize.width() ||
-         lineEnd.y() < 0   || lineEnd.y() > mOutputSize.height() ) )
+  // skip rendering if line bbox does not intersect the QImage area
+  if ( !QgsRectangle( lineStart, lineEnd ).intersects( QgsRectangle( 0, 0, mOutputSize.width(), mOutputSize.height() ) ) )
     return true;
 
   return false; //success
@@ -292,7 +280,7 @@ void QgsMeshVectorArrowRenderer::drawVectorDataOnPoints( const QSet<int> indexes
     const double V = mDatasetValuesMag[i];  // pre-calculated magnitude
     const QgsPointXY lineStart = mContext.mapToPixel().transform( center.x(), center.y() );
 
-    drawVectorArrow( lineStart, xVal, yVal, V );
+    drawVector( lineStart, xVal, yVal, V );
   }
 }
 
@@ -307,9 +295,9 @@ void QgsMeshVectorArrowRenderer::drawVectorDataOnFaces( )
 
 void QgsMeshVectorArrowRenderer::drawVectorDataOnEdges()
 {
-  const QList<int> egdesInExtent = mTriangularMesh.edgeIndexesForRectangle( mBufferedExtent );
+  const QList<int> edgesInExtent = mTriangularMesh.edgeIndexesForRectangle( mBufferedExtent );
   const QVector<QgsMeshVertex> &centroids = mTriangularMesh.edgeCentroids();
-  const QSet<int> nativeEdgesInExtent = QgsMeshUtils::nativeEdgesFromEdges( egdesInExtent,
+  const QSet<int> nativeEdgesInExtent = QgsMeshUtils::nativeEdgesFromEdges( edgesInExtent,
                                         mTriangularMesh.edgesToNativeEdges() );
   drawVectorDataOnPoints( nativeEdgesInExtent, centroids );
 }
@@ -405,13 +393,13 @@ void QgsMeshVectorArrowRenderer::drawVectorDataOnGrid( )
           continue;
 
         const QgsPointXY lineStart( x, y );
-        drawVectorArrow( lineStart, val.x(), val.y(), val.scalar() );
+        drawVector( lineStart, val.x(), val.y(), val.scalar() );
       }
     }
   }
 }
 
-void QgsMeshVectorArrowRenderer::drawVectorArrow( const QgsPointXY &lineStart, double xVal, double yVal, double magnitude )
+void QgsMeshVectorArrowRenderer::drawVector( const QgsPointXY &lineStart, double xVal, double yVal, double magnitude )
 {
   QgsPointXY lineEnd;
   double vectorLength;
@@ -518,10 +506,174 @@ QgsMeshVectorRenderer *QgsMeshVectorRenderer::makeVectorRenderer(
         layerExtent,
         datasetMagMaximumValue );
       break;
+    case QgsMeshRendererVectorSettings::WindBarbs:
+      renderer = new QgsMeshVectorWindBarbRenderer(
+        m,
+        datasetVectorValues,
+        datasetValuesMag,
+        datasetMagMaximumValue,
+        datasetMagMinimumValue,
+        dataType,
+        settings,
+        context,
+        size );
+      break;
   }
 
   return renderer;
 }
 
 
+QgsMeshVectorWindBarbRenderer::QgsMeshVectorWindBarbRenderer(
+  const QgsTriangularMesh &m,
+  const QgsMeshDataBlock &datasetValues,
+  const QVector<double> &datasetValuesMag,
+  double datasetMagMaximumValue, double datasetMagMinimumValue,
+  QgsMeshDatasetGroupMetadata::DataType dataType,
+  const QgsMeshRendererVectorSettings &settings,
+  QgsRenderContext &context,
+  QSize size )  : QgsMeshVectorArrowRenderer( m,
+        datasetValues,
+        datasetValuesMag,
+        datasetMagMinimumValue,
+        datasetMagMaximumValue,
+        dataType,
+        settings,
+        context,
+        size )
+{
+  const QgsCoordinateReferenceSystem mapCrs = mContext.coordinateTransform().destinationCrs();
+  mGeographicTransform = QgsCoordinateTransform( mapCrs, mapCrs.toGeographicCrs(), mContext.coordinateTransform().context() );
+}
+
+QgsMeshVectorWindBarbRenderer::~QgsMeshVectorWindBarbRenderer() = default;
+
+void QgsMeshVectorWindBarbRenderer::drawVector( const QgsPointXY &lineStart, double xVal, double yVal, double magnitude )
+{
+  // do not render if magnitude is outside of the filtered range (if filtering is enabled)
+  if ( mCfg.filterMin() >= 0 && magnitude < mCfg.filterMin() )
+    return;
+  if ( mCfg.filterMax() >= 0 && magnitude > mCfg.filterMax() )
+    return;
+
+  QPen pen( mContext.painter()->pen() );
+  pen.setColor( mVectorColoring.color( magnitude ) );
+  mContext.painter()->setPen( pen );
+
+  // we need a brush to fill center circle and pennants
+  QBrush brush( pen.color() );
+  mContext.painter()->setBrush( brush );
+
+  const double shaftLength = mContext.convertToPainterUnits( mCfg.windBarbSettings().shaftLength(),
+                             mCfg.windBarbSettings().shaftLengthUnits() );
+  if ( shaftLength < 1 )
+    return;
+
+  // Check if barb is above or below the equinox
+  const QgsPointXY mapPoint = mContext.mapToPixel().toMapCoordinates( lineStart.x(), lineStart.y() );
+  bool isNorthHemisphere = true;
+  try
+  {
+    const QgsPointXY geoPoint = mGeographicTransform.transform( mapPoint );
+    isNorthHemisphere = geoPoint.y() >= 0;
+  }
+  catch ( QgsCsException & )
+  {
+    QgsDebugError( QStringLiteral( "Could not transform wind barb coordinates to geographic ones" ) );
+  }
+
+  const double d = shaftLength / 25; // this is a magic number ratio between shaft length and other barb dimensions
+  const double centerRadius = d;
+  const double zeroCircleRadius = 2 * d;
+  const double barbLength = 8 * d + pen.widthF();
+  const double barbAngle = 135;
+  const double barbOffset = 2 * d + pen.widthF();
+  const int sign = isNorthHemisphere ? 1 : -1;
+
+  // Determine the angle of the vector, counter-clockwise, from east
+  // (and associated trigs)
+  const double vectorAngle = std::atan2( yVal, xVal ) - mContext.mapToPixel().mapRotation() * M_DEG2RAD;
+
+  // Now determine the X and Y distances of the end of the line from the start
+  // Flip the Y axis (pixel vs real-world axis)
+  const double xDist = cos( vectorAngle ) * shaftLength;
+  const double yDist = - sin( vectorAngle ) * shaftLength;
+
+  // Determine the line coords
+  const QgsPointXY lineEnd = QgsPointXY( lineStart.x() - xDist,
+                                         lineStart.y() - yDist );
+
+  // skip rendering if line bbox does not intersect the QImage area
+  if ( !QgsRectangle( lineStart, lineEnd ).intersects( QgsRectangle( 0, 0, mOutputSize.width(), mOutputSize.height() ) ) )
+    return;
+
+  // scale the magnitude to convert it to knots
+  double knots = magnitude * mCfg.windBarbSettings().magnitudeMultiplier() ;
+  QgsPointXY nextLineOrigin = lineEnd;
+
+  // special case for no wind, just an empty circle
+  if ( knots < 2.5 )
+  {
+    mContext.painter()->setBrush( Qt::NoBrush );
+    mContext.painter()->drawEllipse( lineStart.toQPointF(), zeroCircleRadius, zeroCircleRadius );
+    mContext.painter()->setBrush( brush );
+    return;
+  }
+
+  const double azimuth = lineEnd.azimuth( lineStart );
+
+  // conditionally draw the shaft
+  if ( knots < 47.5 && knots > 7.5 )
+  {
+    // When first barb is a '10', we want to draw the shaft and barb as a single polyline for a proper join
+    const QVector< QPointF > pts{ lineStart.toQPointF(),
+                                  lineEnd.toQPointF(),
+                                  nextLineOrigin.project( barbLength, azimuth + barbAngle * sign ).toQPointF() };
+    mContext.painter()->drawPolyline( pts );
+    nextLineOrigin = nextLineOrigin.project( barbOffset, azimuth );
+    knots -= 10;
+  }
+  else
+  {
+    // draw just the shaft
+    mContext.painter()->drawLine( lineStart.toQPointF(), lineEnd.toQPointF() );
+  }
+
+  // draw the center circle
+  mContext.painter()->drawEllipse( lineStart.toQPointF(), centerRadius, centerRadius );
+
+  // draw pennants (50)
+  while ( knots > 47.5 )
+  {
+    const QVector< QPointF > pts{ nextLineOrigin.toQPointF(),
+                                  nextLineOrigin.project( barbLength / 1.414, azimuth + 90 * sign ).toQPointF(),
+                                  nextLineOrigin.project( barbLength / 1.414, azimuth ).toQPointF() };
+    mContext.painter()->drawPolygon( pts );
+    knots -= 50;
+
+    // don't use an offset for the next pennant
+    if ( knots > 47.5 )
+      nextLineOrigin = nextLineOrigin.project( barbLength / 1.414, azimuth );
+    else
+      nextLineOrigin = nextLineOrigin.project( barbLength / 1.414 + barbOffset, azimuth );
+  }
+
+  // draw large barbs (10)
+  while ( knots > 7.5 )
+  {
+    mContext.painter()->drawLine( nextLineOrigin.toQPointF(), nextLineOrigin.project( barbLength, azimuth + barbAngle * sign ).toQPointF() );
+    nextLineOrigin = nextLineOrigin.project( barbOffset, azimuth );
+    knots -= 10;
+  }
+
+  // draw small barb (5)
+  if ( knots > 2.5 )
+  {
+    // a single '5' barb should not start at the line end
+    if ( nextLineOrigin == lineEnd )
+      nextLineOrigin = nextLineOrigin.project( barbLength / 2, azimuth );
+
+    mContext.painter()->drawLine( nextLineOrigin.toQPointF(), nextLineOrigin.project( barbLength / 2, azimuth + barbAngle * sign ).toQPointF() );
+  }
+}
 ///@endcond

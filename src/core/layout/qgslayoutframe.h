@@ -26,7 +26,6 @@ class QgsLayoutMultiFrame;
 /**
  * \ingroup core
  * \brief Base class for frame items, which form a layout multiframe item.
- * \since QGIS 3.0
 */
 class CORE_EXPORT QgsLayoutFrame: public QgsLayoutItem
 {
@@ -39,6 +38,7 @@ class CORE_EXPORT QgsLayoutFrame: public QgsLayoutItem
      * and belonging to a \a multiFrame.
      */
     QgsLayoutFrame( QgsLayout *layout, QgsLayoutMultiFrame *multiFrame );
+    ~QgsLayoutFrame() override;
 
     /**
      * Creates a new QgsLayoutFrame belonging to the specified \a layout.

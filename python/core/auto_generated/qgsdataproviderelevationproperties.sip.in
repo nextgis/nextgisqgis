@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsdataproviderelevationproperties.h                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,7 +13,8 @@
 class QgsDataProviderElevationProperties
 {
 %Docstring(signature="appended")
-Base class for handling elevation related properties for a data provider.
+Base class for handling elevation related properties for a data
+provider.
 
 .. versionadded:: 3.32
 %End
@@ -38,7 +39,35 @@ Base class for handling elevation related properties for a data provider.
 Constructor for QgsDataProviderElevationProperties.
 %End
 
+    virtual bool containsElevationData() const;
+%Docstring
+Returns ``True`` if the data provider definitely contains elevation
+related data.
+
+.. note::
+
+   Even if this method returns ``False``, the data may still relate to elevation values. ``True`` will only
+   be returned in situations where elevation data is definitively present.
+
+.. seealso:: :py:func:`setContainsElevationData`
+
+.. versionadded:: 3.36
+%End
+
+    virtual void setContainsElevationData( bool contains );
+%Docstring
+Sets whether the data provider definitely contains elevation related
+data.
+
+.. seealso:: :py:func:`containsElevationData`
+
+.. versionadded:: 3.36
+%End
+
     virtual ~QgsDataProviderElevationProperties();
+
+  protected:
+
 };
 
 /************************************************************************
@@ -46,5 +75,5 @@ Constructor for QgsDataProviderElevationProperties.
  *                                                                      *
  * src/core/qgsdataproviderelevationproperties.h                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

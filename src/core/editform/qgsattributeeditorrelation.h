@@ -34,10 +34,10 @@ class CORE_EXPORT QgsAttributeEditorRelation : public QgsAttributeEditorElement
 
     /**
        * Possible buttons shown in the relation editor
-       * \deprecated since QGIS 3.18 use QgsRelationEditorWidget::Button instead
+       * \deprecated QGIS 3.18. Use QgsRelationEditorWidget::Button instead.
        * \since QGIS 3.16
        */
-    enum Button
+    enum Button SIP_ENUM_BASETYPE( IntFlag )
     {
       Link = 1 << 1, //!< Link button
       Unlink = 1 << 2, //!< Unlink button
@@ -56,7 +56,7 @@ class CORE_EXPORT QgsAttributeEditorRelation : public QgsAttributeEditorElement
     Q_FLAG( Buttons )
 
     /**
-     * \deprecated since QGIS 3.0.2. The name parameter is not used for anything and overwritten by the relationId internally.
+     * \deprecated QGIS 3.16
      */
     Q_DECL_DEPRECATED QgsAttributeEditorRelation( const QString &name, const QString &relationId, QgsAttributeEditorElement *parent )
       : QgsAttributeEditorElement( Qgis::AttributeEditorType::Relation, name, parent )
@@ -64,7 +64,7 @@ class CORE_EXPORT QgsAttributeEditorRelation : public QgsAttributeEditorElement
     {}
 
     /**
-     * \deprecated since QGIS 3.0.2. The name parameter is not used for anything and overwritten by the relationId internally.
+     * \deprecated QGIS 3.16
      */
     Q_DECL_DEPRECATED QgsAttributeEditorRelation( const QString &name, const QgsRelation &relation, QgsAttributeEditorElement *parent )
       : QgsAttributeEditorElement( Qgis::AttributeEditorType::Relation, name, parent )

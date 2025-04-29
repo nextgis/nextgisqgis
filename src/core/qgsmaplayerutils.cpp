@@ -31,7 +31,7 @@ QgsRectangle QgsMapLayerUtils::combinedExtent( const QList<QgsMapLayer *> &layer
 {
   // We can't use a constructor since QgsRectangle normalizes the rectangle upon construction
   QgsRectangle fullExtent;
-  fullExtent.setMinimal();
+  fullExtent.setNull();
 
   // iterate through the map layers and test each layers extent
   // against the current min and max values
@@ -165,4 +165,21 @@ QString QgsMapLayerUtils::launderLayerName( const QString &name )
   laundered.replace( sRxRemoveChars, QString() );
 
   return laundered;
+}
+
+bool QgsMapLayerUtils::isOpenStreetMapLayer( QgsMapLayer *layer )
+{
+  if ( layer->providerType() == QLatin1String( "wms" ) )
+  {
+    if ( const QgsProviderMetadata *metadata = layer->providerMetadata() )
+    {
+      QVariantMap details = metadata->decodeUri( layer->source() );
+      QUrl url( details.value( QStringLiteral( "url" ) ).toString() );
+      if ( url.host().endsWith( QLatin1String( ".openstreetmap.org" ) ) || url.host().endsWith( QLatin1String( ".osm.org" ) ) )
+      {
+        return true;
+      }
+    }
+  }
+  return false;
 }

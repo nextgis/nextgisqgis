@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgstablewidgetbase.h"
+#include "moc_qgstablewidgetbase.cpp"
 
 QgsTableWidgetBase::QgsTableWidgetBase( QWidget *parent )
   : QWidget( parent )
@@ -34,6 +35,9 @@ void QgsTableWidgetBase::init( QAbstractTableModel *model )
 
 void QgsTableWidgetBase::addButton_clicked()
 {
+  if ( mReadOnly )
+    return;
+
   const QItemSelectionModel *select = tableView->selectionModel();
   const int pos = select->hasSelection() ? select->selectedRows()[0].row() : 0;
   QAbstractItemModel *model = tableView->model();
@@ -46,6 +50,9 @@ void QgsTableWidgetBase::addButton_clicked()
 
 void QgsTableWidgetBase::removeButton_clicked()
 {
+  if ( mReadOnly )
+    return;
+
   const QItemSelectionModel *select = tableView->selectionModel();
   // The UI is configured to have single row selection.
   if ( select->hasSelection() )
@@ -57,4 +64,23 @@ void QgsTableWidgetBase::removeButton_clicked()
 void QgsTableWidgetBase::onSelectionChanged()
 {
   removeButton->setEnabled( tableView->selectionModel()->hasSelection() );
+}
+
+void QgsTableWidgetBase::setReadOnly( bool readOnly )
+{
+  mReadOnly = readOnly;
+
+  addButton->setEnabled( !mReadOnly );
+  removeButton->setEnabled( !mReadOnly && tableView->selectionModel()->hasSelection() );
+
+  if ( mReadOnly )
+  {
+    mWidgetActions->hide();
+    layout()->setSpacing( 0 );
+  }
+  else
+  {
+    mWidgetActions->show();
+    layout()->setSpacing( 6 );
+  }
 }

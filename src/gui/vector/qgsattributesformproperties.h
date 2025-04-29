@@ -55,7 +55,6 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
     Q_OBJECT
 
   public:
-
     enum FieldPropertiesRoles
     {
       DnDTreeRole = Qt::UserRole,
@@ -65,33 +64,33 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
 
     struct RelationEditorConfiguration
     {
-      operator QVariant();
+        operator QVariant();
 
-      QString mRelationWidgetType;
-      QVariantMap mRelationWidgetConfig;
-      QVariant nmRelationId;
-      bool forceSuppressFormPopup = false;
-      QString label;
+        QString mRelationWidgetType;
+        QVariantMap mRelationWidgetConfig;
+        QVariant nmRelationId;
+        bool forceSuppressFormPopup = false;
+        QString label;
     };
 
     struct QmlElementEditorConfiguration
     {
-      QString qmlCode;
+        QString qmlCode;
     };
 
     struct HtmlElementEditorConfiguration
     {
-      QString htmlCode;
+        QString htmlCode;
     };
 
     struct TextElementEditorConfiguration
     {
-      QString text;
+        QString text;
     };
 
     struct SpacerElementEditorConfiguration
     {
-      bool drawLine = false;
+        bool drawLine = false;
     };
 
     /**
@@ -108,9 +107,9 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
           Container, //!< Container for the form
           QmlWidget,
           HtmlWidget,
-          WidgetType, //!< In the widget tree, the type of widget
-          Action, //!< Layer action
-          TextWidget, //!< Text widget type, \since QGIS 3.30
+          WidgetType,   //!< In the widget tree, the type of widget
+          Action,       //!< Layer action
+          TextWidget,   //!< Text widget type, \since QGIS 3.30
           SpacerWidget, //!< Spacer widget type, \since QGIS 3.30
         };
 
@@ -323,23 +322,23 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
      */
     struct FieldConfig
     {
-      FieldConfig() = default;
-      FieldConfig( QgsVectorLayer *layer, int idx );
+        FieldConfig() = default;
+        FieldConfig( QgsVectorLayer *layer, int idx );
 
-      bool mEditable = true;
-      bool mEditableEnabled = true;
-      bool mLabelOnTop = false;
-      bool mReuseLastValues = false;
-      QgsFieldConstraints mFieldConstraints;
-      QPushButton *mButton = nullptr;
-      QString mEditorWidgetType;
-      QMap<QString, QVariant> mEditorWidgetConfig;
-      QString mAlias;
-      QgsPropertyCollection mDataDefinedProperties;
-      QString mComment;
-      Qgis::FieldDomainSplitPolicy mSplitPolicy = Qgis::FieldDomainSplitPolicy::Duplicate;
+        bool mEditable = true;
+        bool mLabelOnTop = false;
+        bool mReuseLastValues = false;
+        QgsFieldConstraints mFieldConstraints;
+        QPushButton *mButton = nullptr;
+        QString mEditorWidgetType;
+        QMap<QString, QVariant> mEditorWidgetConfig;
+        QString mAlias;
+        QgsPropertyCollection mDataDefinedProperties;
+        QString mComment;
+        Qgis::FieldDomainSplitPolicy mSplitPolicy = Qgis::FieldDomainSplitPolicy::Duplicate;
+        Qgis::FieldDuplicatePolicy mDuplicatePolicy = Qgis::FieldDuplicatePolicy::Duplicate;
 
-      operator QVariant();
+        operator QVariant();
     };
 
   public:
@@ -351,8 +350,17 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
     QgsAttributeEditorElement *createAttributeEditorWidget( QTreeWidgetItem *item, QgsAttributeEditorElement *parent, bool isTopLevel = false );
 
     void init();
+
+    /**
+     * Applies the attribute from properties to the vector layer.
+     */
     void apply();
 
+    /**
+     * Stores currently opened widget configuration.
+     * \since QGIS 3.36
+     */
+    void store();
 
     void loadRelations();
 
@@ -379,11 +387,18 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
     QLabel *mInfoTextWidget = nullptr;
 
   private slots:
+    void addContainer();
+    void removeTabOrGroupButton();
+    void mEditorLayoutComboBox_currentIndexChanged( int index );
+    void pbnSelectEditForm_clicked();
+    void mTbInitCode_clicked();
 
     void onInvertSelectionButtonClicked( bool checked );
     void loadAttributeSpecificEditor( QgsAttributesDnDTree *emitter, QgsAttributesDnDTree *receiver );
     void onAttributeSelectionChanged();
     void onFormLayoutSelectionChanged();
+
+    void updatedFields();
 
   private:
     //! this will clean the right panel
@@ -393,7 +408,7 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
     void storeAttributeWidgetEdit();
 
     void loadAttributeTypeDialog();
-    void storeAttributeTypeDialog( );
+    void storeAttributeTypeDialog();
 
     void storeAttributeContainerEdit();
     void loadAttributeContainerEdit();
@@ -406,18 +421,14 @@ class GUI_EXPORT QgsAttributesFormProperties : public QWidget, public QgsExpress
     QString mInitFunction;
     QString mInitFilePath;
     QString mInitCode;
+    int mBlockUpdates = 0;
 
-  private slots:
-    void addContainer();
-    void removeTabOrGroupButton();
-    void mEditorLayoutComboBox_currentIndexChanged( int index );
-    void pbnSelectEditForm_clicked();
-    void mTbInitCode_clicked();
+    friend class TestQgsAttributesFormProperties;
 };
 
 
-QDataStream &operator<< ( QDataStream &stream, const QgsAttributesFormProperties::DnDTreeItemData &data );
-QDataStream &operator>> ( QDataStream &stream, QgsAttributesFormProperties::DnDTreeItemData &data );
+QDataStream &operator<<( QDataStream &stream, const QgsAttributesFormProperties::DnDTreeItemData &data );
+QDataStream &operator>>( QDataStream &stream, QgsAttributesFormProperties::DnDTreeItemData &data );
 
 
 /**
@@ -474,7 +485,7 @@ class GUI_EXPORT QgsAttributesDnDTree : public QTreeWidget, private QgsExpressio
   protected:
     QStringList mimeTypes() const override;
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
     QMimeData *mimeData( const QList<QTreeWidgetItem *> items ) const override;
 #else
     QMimeData *mimeData( const QList<QTreeWidgetItem *> &items ) const override;

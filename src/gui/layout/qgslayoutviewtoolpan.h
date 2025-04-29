@@ -23,15 +23,12 @@
 /**
  * \ingroup gui
  * \brief Layout view tool for panning the layout.
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsLayoutViewToolPan : public QgsLayoutViewTool
 {
-
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsLayoutViewToolPan.
      */
@@ -43,12 +40,10 @@ class GUI_EXPORT QgsLayoutViewToolPan : public QgsLayoutViewTool
     void deactivate() override;
 
   private:
-
     bool mIsPanning = false;
     QPoint mLastMousePos;
     //! Start position for mouse press
     QPoint mMousePressStartPos;
-
 };
 
 #endif // QGSLAYOUTVIEWTOOLPAN_H

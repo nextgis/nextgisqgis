@@ -30,7 +30,6 @@ class QgsFields;
  * \ingroup core
  * \brief This is a container for configuration of the attribute table.
  * The configuration is specific for one vector layer.
- * \since QGIS 2.16
  */
 
 class CORE_EXPORT QgsAttributeTableConfig
@@ -49,9 +48,8 @@ class CORE_EXPORT QgsAttributeTableConfig
     /**
      * Defines the configuration of a column in the attribute table.
      */
-    struct ColumnConfig
+    struct CORE_EXPORT ColumnConfig
     {
-      //! Constructor for ColumnConfig
       ColumnConfig() = default;
 
       // TODO c++20 - replace with = default
@@ -79,9 +77,6 @@ class CORE_EXPORT QgsAttributeTableConfig
       DropDown      //!< A tool button with a drop-down to select the current action
     };
 
-    /**
-     * Constructor for QgsAttributeTableConfig.
-     */
     QgsAttributeTableConfig() = default;
 
     /**
@@ -302,13 +297,11 @@ class CORE_EXPORT QgsAttributeTableConfig
 
     /**
      * Gets the sort order
-     * \since QGIS 2.16
      */
     Qt::SortOrder sortOrder() const;
 
     /**
      * Set the sort order
-     * \since QGIS 2.16
      */
     void setSortOrder( Qt::SortOrder sortOrder );
 
@@ -318,9 +311,6 @@ class CORE_EXPORT QgsAttributeTableConfig
      */
     bool hasSameColumns( const QgsAttributeTableConfig &other ) const;
 
-    /**
-     * Compare this configuration to other.
-     */
     bool operator!= ( const QgsAttributeTableConfig &other ) const;
 
   private:

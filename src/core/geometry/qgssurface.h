@@ -21,7 +21,7 @@
 #include "qgis_core.h"
 #include "qgis_sip.h"
 #include "qgsabstractgeometry.h"
-#include "qgsrectangle.h"
+#include "qgsbox3d.h"
 
 class QgsPolygon;
 
@@ -34,17 +34,11 @@ class CORE_EXPORT QgsSurface: public QgsAbstractGeometry
 {
   public:
 
-    /**
-     * Gets a polygon representation of this surface.
-     * Ownership is transferred to the caller.
-     */
-    virtual QgsPolygon *surfaceToPolygon() const = 0 SIP_FACTORY;
-
-    QgsRectangle boundingBox() const override
+    QgsBox3D boundingBox3D() const override
     {
       if ( mBoundingBox.isNull() )
       {
-        mBoundingBox = calculateBoundingBox();
+        mBoundingBox = calculateBoundingBox3D();
       }
       return mBoundingBox;
     }
@@ -59,7 +53,6 @@ class CORE_EXPORT QgsSurface: public QgsAbstractGeometry
      * Should be used by qgsgeometry_cast<QgsSurface *>( geometry ).
      *
      * \note Not available in Python. Objects will be automatically be converted to the appropriate target type.
-     * \since QGIS 3.0
      */
     inline static const QgsSurface *cast( const QgsAbstractGeometry *geom )
     {
@@ -78,7 +71,7 @@ class CORE_EXPORT QgsSurface: public QgsAbstractGeometry
 
     void clearCache() const override;
 
-    mutable QgsRectangle mBoundingBox;
+    mutable QgsBox3D mBoundingBox;
     mutable bool mHasCachedValidity = false;
     mutable QString mValidityFailureReason;
 };

@@ -31,20 +31,15 @@ class QgsSymbol;
  * that can be used by legend model for rendering of legend.
  *
  * \see QgsSymbolLegendNode
- * \since QGIS 2.6
  */
 class CORE_EXPORT QgsLegendSymbolItem
 {
   public:
 
-    /**
-     * Constructor for QgsLegendSymbolItem.
-     */
     QgsLegendSymbolItem() = default;
 
     /**
      * Construct item. Does not take ownership of symbol (makes internal clone)
-     * \since QGIS 2.8
      */
     QgsLegendSymbolItem( QgsSymbol *symbol, const QString &label, const QString &ruleKey, bool checkable = false, int scaleMinDenom = -1, int scaleMaxDenom = -1, int level = 0, const QString &parentRuleKey = QString() );
     ~QgsLegendSymbolItem();
@@ -102,15 +97,29 @@ class CORE_EXPORT QgsLegendSymbolItem
      * rather than QgsSymbolLegendNode instance as usual. Passing NULLPTR removes any data-defined size legend settings.
      *
      * Takes ownership of the settings object.
-     * \since QGIS 3.0
      */
     void setDataDefinedSizeLegendSettings( QgsDataDefinedSizeLegend *settings SIP_TRANSFER );
 
     /**
      * Returns extra information for data-defined size legend rendering. Normally it returns NULLPTR.
-     * \since QGIS 3.0
      */
     QgsDataDefinedSizeLegend *dataDefinedSizeLegendSettings() const;
+
+    /**
+     * Adds a \a key - \a value pair to the item's user data.
+     *
+     * \see userData()
+     * \since QGIS 3.38
+     */
+    void setUserData( int key, QVariant &value );
+
+    /**
+     * Retrieves the item's user data with the specified \a key.
+     *
+     * \see setUserData()
+     * \since QGIS 3.38
+     */
+    QVariant userData( int key ) const;
 
   private:
     //! Legend symbol -- may be NULLPTR.
@@ -139,6 +148,8 @@ class CORE_EXPORT QgsLegendSymbolItem
     int mLevel = 0;
     //! Key of the parent legend node. For legends with tree hierarchy
     QString mParentKey;
+
+    QMap< int, QVariant > mUserData;
 };
 
 typedef QList< QgsLegendSymbolItem > QgsLegendSymbolList;

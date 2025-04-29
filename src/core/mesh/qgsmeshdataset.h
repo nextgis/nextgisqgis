@@ -22,17 +22,21 @@
 #include <QString>
 #include <QMap>
 #include <QPair>
+#include <QDateTime>
+#include <QDomElement>
 
 #include <limits>
+#include <memory>
 
 #include "qgis_core.h"
 #include "qgis_sip.h"
-#include "qgspoint.h"
-#include "qgsdataprovider.h"
 
 class QgsMeshLayer;
 class QgsMeshDatasetGroup;
 class QgsRectangle;
+class QDomDocument;
+class QgsReadWriteContext;
+
 struct QgsMesh;
 
 /**
@@ -56,9 +60,8 @@ class CORE_EXPORT QgsMeshDatasetIndex
     int dataset() const;
     //! Returns whether index is valid, ie at least groups is set
     bool isValid() const;
-    //! Equality operator
+
     bool operator == ( QgsMeshDatasetIndex other ) const;
-    //! Inequality operator
     bool operator != ( QgsMeshDatasetIndex other ) const;
   private:
     int mGroupIndex = -1;
@@ -89,7 +92,6 @@ class CORE_EXPORT QgsMeshDatasetValue
     //! Default Ctor, initialize to NaN
     QgsMeshDatasetValue() = default;
 
-    //! Dtor
     ~QgsMeshDatasetValue() = default;
 
     //! Sets scalar value
@@ -233,7 +235,7 @@ class CORE_EXPORT QgsMeshDataBlock
 /**
  * \ingroup core
  *
- * \brief QgsMesh3dDataBlock is a block of 3d stacked mesh data related N
+ * \brief QgsMesh3DDataBlock is a block of 3d stacked mesh data related N
  * faces defined on base mesh frame.
  *
  * Data are implicitly shared, so the class can be quickly copied
@@ -241,19 +243,20 @@ class CORE_EXPORT QgsMeshDataBlock
  *
  * \note The API is considered EXPERIMENTAL and can be changed without a notice
  *
+ * \note In QGIS 3.34 this class was renamed from QgsMesh3dDataBlock to QgsMesh3DDataBlock. The old QgsMesh3dDataBlock name
+ * remains available in PyQGIS for compatibility.
+ *
  * \since QGIS 3.12
  */
-class CORE_EXPORT QgsMesh3dDataBlock
+class CORE_EXPORT QgsMesh3DDataBlock
 {
   public:
     //! Constructs an invalid block
-    QgsMesh3dDataBlock();
-
-    //! Dtor
-    ~QgsMesh3dDataBlock();
+    QgsMesh3DDataBlock();
+    ~QgsMesh3DDataBlock();
 
     //! Constructs a new block for count faces
-    QgsMesh3dDataBlock( int count, bool isVector );
+    QgsMesh3DDataBlock( int count, bool isVector );
 
     //! Sets block validity
     void setValid( bool valid );
@@ -395,6 +398,16 @@ class CORE_EXPORT QgsMeshDatasetGroupMetadata
     QString name() const;
 
     /**
+     * Returns the name of the dataset's parent quantity, if available.
+     *
+     * The quantity can be used to collect dataset groups which represent a single quantity
+     * but at different values (e.g. groups which represent different elevations).
+     *
+     * \since QGIS 3.38
+     */
+    QString parentQuantityName() const;
+
+    /**
      * Returns the uri of the source
      *
      * \since QGIS 3.16
@@ -454,6 +467,7 @@ class CORE_EXPORT QgsMeshDatasetGroupMetadata
 
   private:
     QString mName;
+    QString mParentQuantityName;
     QString mUri;
     bool mIsScalar = false;
     DataType mDataType = DataType::DataOnFaces;
@@ -543,10 +557,9 @@ class CORE_EXPORT QgsMeshDatasetMetadata
 class CORE_EXPORT QgsMeshDataset
 {
   public:
-    //! Constructor
+
     QgsMeshDataset() = default;
 
-    //! Destructor
     virtual ~QgsMeshDataset() = default;
 
     //! Returns the value with index \a valueIndex
@@ -586,13 +599,12 @@ class CORE_EXPORT QgsMeshDatasetGroup
      */
     enum Type
     {
-      None, //! Generic type used for non typed dataset group
-      Persistent, //! Dataset group store in a file
-      Memory, //! Temporary dataset group in memory
-      Virtual, //! Virtual Dataset group defined by a formula
+      Unknown, //!< Generic type used for non typed dataset group
+      Persistent, //!< Dataset group store in a file
+      Memory, //!< Temporary dataset group in memory
+      Virtual, //!< Virtual Dataset group defined by a formula
     };
 
-    //! Default constructor
     QgsMeshDatasetGroup() = default;
     virtual ~QgsMeshDatasetGroup();
 
@@ -685,7 +697,7 @@ class CORE_EXPORT QgsMeshDatasetGroup
     mutable double mMaximum = std::numeric_limits<double>::quiet_NaN();
     mutable bool mIsStatisticObsolete = true;
 
-    void updateStatictic() const;
+    void updateStatistic() const;
 
     QDateTime mReferenceTime;
 };
@@ -704,7 +716,7 @@ class CORE_EXPORT QgsMeshDatasetGroup
 class CORE_EXPORT QgsMeshMemoryDataset: public QgsMeshDataset
 {
   public:
-    //! Constructor
+
     QgsMeshMemoryDataset() = default;
 
     QgsMeshDatasetValue datasetValue( int valueIndex ) const override;
@@ -737,7 +749,7 @@ class CORE_EXPORT QgsMeshMemoryDataset: public QgsMeshDataset
 class CORE_EXPORT QgsMeshMemoryDatasetGroup: public QgsMeshDatasetGroup
 {
   public:
-    //! Constructor
+
     QgsMeshMemoryDatasetGroup() = default;
     //! Constructor with the \a name of the group
     QgsMeshMemoryDatasetGroup( const QString &name );
@@ -826,16 +838,18 @@ class CORE_EXPORT QgsMeshVerticesElevationDatasetGroup : public QgsMeshDatasetGr
  * Support for multiple levels, because groups can have
  * subgroups, for example
  *
- * Groups:
- *   Depth
- *     Minimum
- *     Maximum
- *   Velocity
- *   Wind speed
- *     Minimum
- *     Maximum
+ * ~~~
+ * + Groups:
+ *   + Depth
+ *     + Minimum
+ *     + Maximum
+ *   + Velocity
+ *   + Wind speed
+ *      + Minimum
+ *      + Maximum
+ * ~~~
  *
- * Tree items handle also the dependencies between dataset groups represented by these items
+ * Tree items handle also the dependencies between dataset groups represented by these items.
  *
  * \since QGIS 3.14 in core API
  */
@@ -1053,7 +1067,7 @@ class CORE_EXPORT QgsMeshDatasetGroupTreeItem
     QString mUserName;
     QString mOriginalName;
     QString mSourceName;
-    QgsMeshDatasetGroup::Type mDatasetGroupType = QgsMeshDatasetGroup::None;
+    QgsMeshDatasetGroup::Type mDatasetGroupType = QgsMeshDatasetGroup::Unknown;
     QString mDescription;
 
     bool mIsVector = false;
@@ -1065,8 +1079,8 @@ class CORE_EXPORT QgsMeshDatasetGroupTreeItem
 
     QgsMeshDatasetGroupTreeItem *searchItemBySourceName( const QString &sourceName ) const;
     QgsMeshDatasetGroupTreeItem *rootItem() const;
-    void freeAsDependency();
-    void freeFromDependencies();
+    void freeAsDependency(); // cppcheck-suppress functionConst
+    void freeFromDependencies(); // cppcheck-suppress functionConst
 };
 
 #endif // QGSMESHDATASET_H

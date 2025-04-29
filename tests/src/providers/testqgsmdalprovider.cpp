@@ -38,19 +38,20 @@ class TestQgsMdalProvider : public QgsTest
     Q_OBJECT
 
   public:
-
-    TestQgsMdalProvider() : QgsTest( QStringLiteral( "MDAL Provider Tests" ) ) {}
+    TestQgsMdalProvider()
+      : QgsTest( QStringLiteral( "MDAL Provider Tests" ) ) {}
 
   private slots:
-    void initTestCase();// will be called before the first testfunction is executed.
-    void cleanupTestCase();// will be called after the last testfunction was executed.
-    void init() {}// will be called before each testfunction is executed.
-    void cleanup() {}// will be called after every testfunction.
+    void initTestCase();    // will be called before the first testfunction is executed.
+    void cleanupTestCase(); // will be called after the last testfunction was executed.
+    void init() {}          // will be called before each testfunction is executed.
+    void cleanup() {}       // will be called after every testfunction.
 
     void load();
     void filters();
     void encodeDecodeUri();
     void absoluteRelativeUri();
+    void preserveMeshMetadata();
 
   private:
     QString mTestDataDir;
@@ -144,12 +145,12 @@ void TestQgsMdalProvider::load()
   {
     const QString file = QStringLiteral( TEST_DATA_DIR ) + "/mesh/quad_flower.2dm";
     QgsDataProvider *provider = QgsProviderRegistry::instance()->createProvider(
-                                  QStringLiteral( "mdal" ),
-                                  file,
-                                  QgsDataProvider::ProviderOptions()
-                                );
+      QStringLiteral( "mdal" ),
+      file,
+      QgsDataProvider::ProviderOptions()
+    );
 
-    QgsMeshDataProvider *mp = dynamic_cast< QgsMeshDataProvider * >( provider );
+    QgsMeshDataProvider *mp = dynamic_cast<QgsMeshDataProvider *>( provider );
     QVERIFY( mp );
     QVERIFY( mp->isValid() );
     delete provider;
@@ -157,16 +158,53 @@ void TestQgsMdalProvider::load()
   {
     const QString file = QStringLiteral( TEST_DATA_DIR ) + QStringLiteral( "/goodluckwiththisfilename.2dm" );
     QgsDataProvider *provider = QgsProviderRegistry::instance()->createProvider(
-                                  QStringLiteral( "mdal" ),
-                                  file,
-                                  QgsDataProvider::ProviderOptions()
-                                );
+      QStringLiteral( "mdal" ),
+      file,
+      QgsDataProvider::ProviderOptions()
+    );
 
-    QgsMeshDataProvider *mp = dynamic_cast< QgsMeshDataProvider * >( provider );
+    QgsMeshDataProvider *mp = dynamic_cast<QgsMeshDataProvider *>( provider );
     QVERIFY( mp );
     QVERIFY( !mp->isValid() );
     delete provider;
   }
+}
+
+void TestQgsMdalProvider::preserveMeshMetadata()
+{
+  QgsProviderMetadata *mdalMetadata = QgsProviderRegistry::instance()->providerMetadata( "mdal" );
+  QVERIFY( mdalMetadata );
+
+  QString uri = QStringLiteral( TEST_DATA_DIR ) + QStringLiteral( "/mesh/small.mesh" );
+
+  QDir dir( QDir::tempPath() + QStringLiteral( "/mesh_metadata_test" ) );
+  dir.mkpath( dir.path() );
+  Q_ASSERT( dir.exists() );
+  QFile meshFile( uri );
+  const QString copiedFile = dir.filePath( QStringLiteral( "small.mesh" ) );
+  meshFile.copy( copiedFile );
+
+  QgsDataProvider *provider = QgsProviderRegistry::instance()->createProvider(
+    QStringLiteral( "mdal" ),
+    copiedFile,
+    QgsDataProvider::ProviderOptions()
+  );
+
+  QgsMeshDataProvider *mp = dynamic_cast<QgsMeshDataProvider *>( provider );
+  QVERIFY( mp );
+  QVERIFY( mp->isValid() );
+
+  QgsMesh *mesh = new QgsMesh();
+  mp->populateMesh( mesh );
+  QVERIFY( mp->saveMeshFrame( *mesh ) );
+  mp->reloadData();
+
+  QVERIFY( mp->isValid() );
+
+  dir.removeRecursively();
+
+  delete provider;
+  delete mesh;
 }
 
 QGSTEST_MAIN( TestQgsMdalProvider )

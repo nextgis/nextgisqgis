@@ -26,16 +26,15 @@
 /**
  * \ingroup gui
  * \class QgsSublayersDialog
- * \deprecated Will be removed in QGIS 4.0
+ * \deprecated QGIS 3.40. Will be removed in QGIS 4.0.
  */
 class GUI_EXPORT QgsSublayersDialog : public QDialog, private Ui::QgsSublayersDialogBase
 {
     Q_OBJECT
   public:
-
     /**
      * Prompt behavior of the QgsSublayersDialog
-     * \deprecated Use Qgis::SublayerPromptMode instead
+     * \deprecated QGIS 3.40. Use Qgis::SublayerPromptMode instead.
      */
     enum PromptMode
     {
@@ -72,33 +71,31 @@ class GUI_EXPORT QgsSublayersDialog : public QDialog, private Ui::QgsSublayersDi
 
     /**
      * A structure that defines layers for the purpose of this dialog
-     * \since QGIS 2.16
      */
     struct LayerDefinition
     {
-      //! Identifier of the layer (one unique layer id may have multiple types though)
-      int layerId = -1;
+        //! Identifier of the layer (one unique layer id may have multiple types though)
+        int layerId = -1;
 
-      //! Name of the layer (not necessarily unique)
-      QString layerName;
+        //! Name of the layer (not necessarily unique)
+        QString layerName;
 
-      //! Number of features (might be unused)
-      int count = -1;
+        //! Number of features (might be unused)
+        int count = -1;
 
-      //! Extra type depending on the use (e.g. geometry type for vector sublayers)
-      QString type;
+        //! Extra type depending on the use (e.g. geometry type for vector sublayers)
+        QString type;
 
-      /**
+        /**
        * Description.
        *
        * \since QGIS 3.10
        */
-      QString description;
+        QString description;
     };
 
     /**
      * List of layer definitions for the purpose of this dialog
-     * \since QGIS 2.16
      */
     typedef QList<QgsSublayersDialog::LayerDefinition> LayerDefinitionList;
 
@@ -113,49 +110,39 @@ class GUI_EXPORT QgsSublayersDialog : public QDialog, private Ui::QgsSublayersDi
      * \param fl window flags
      * \param dataSourceUri data source URI
      *
-     * \deprecated Will be removed in QGIS 4.0
+     * \deprecated QGIS 3.40. Will be removed in QGIS 4.0.
      */
-    Q_DECL_DEPRECATED QgsSublayersDialog( ProviderType providerType,
-                                          const QString &name,
-                                          QWidget *parent SIP_TRANSFERTHIS = nullptr,
-                                          Qt::WindowFlags fl = Qt::WindowFlags(),
-                                          const QString &dataSourceUri = QString() ) SIP_DEPRECATED;
+    Q_DECL_DEPRECATED QgsSublayersDialog( ProviderType providerType, const QString &name, QWidget *parent SIP_TRANSFERTHIS = nullptr, Qt::WindowFlags fl = Qt::WindowFlags(), const QString &dataSourceUri = QString() ) SIP_DEPRECATED;
 
     ~QgsSublayersDialog() override;
 
     /**
      * Populate the table with layers
-     * \since QGIS 2.16
      */
     void populateLayerTable( const LayerDefinitionList &list );
 
     /**
      * Returns list of selected layers
-     * \since QGIS 2.16
      */
     LayerDefinitionList selection();
 
     /**
      * Set if we should display the add to group checkbox
-     * \since QGIS 3.0
      */
     void setShowAddToGroupCheckbox( bool showAddToGroupCheckbox ) { mShowAddToGroupCheckbox = showAddToGroupCheckbox; }
 
     /**
      * If we should display the add to group checkbox
-     * \since QGIS 3.0
      */
     bool showAddToGroupCheckbox() const { return mShowAddToGroupCheckbox; }
 
     /**
      * If we should add layers in a group
-     * \since QGIS 3.0
      */
     bool addToGroupCheckbox() const { return mCbxAddToGroup->isChecked(); }
 
     /**
      * Returns column with count or -1
-     * \since QGIS 3.0
      */
     int countColumn() const { return mShowCount ? 2 : -1; }
 
@@ -167,7 +154,6 @@ class GUI_EXPORT QgsSublayersDialog : public QDialog, private Ui::QgsSublayersDi
     void mBtnDeselectAll_pressed();
 
   protected:
-
     /**
      * Provider type name
      */

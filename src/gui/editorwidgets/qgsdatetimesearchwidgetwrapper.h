@@ -31,7 +31,6 @@ class QgsDateTimeEdit;
  * \ingroup gui
  * \class QgsDateTimeSearchWidgetWrapper
  * \brief Wraps a date/time edit widget for searching.
- * \since QGIS 2.16
  */
 
 class GUI_EXPORT QgsDateTimeSearchWidgetWrapper : public QgsSearchWidgetWrapper
@@ -39,7 +38,6 @@ class GUI_EXPORT QgsDateTimeSearchWidgetWrapper : public QgsSearchWidgetWrapper
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsDateTimeSearchWidgetWrapper.
      * \param vl associated vector layer
