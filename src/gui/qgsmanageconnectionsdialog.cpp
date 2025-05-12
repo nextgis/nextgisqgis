@@ -25,7 +25,7 @@
 #include "moc_qgsmanageconnectionsdialog.cpp"
 #include "qgshttpheaders.h"
 #include "qgsowsconnection.h"
-#include "qgsvectortileconnection.h"
+// #include "qgsvectortileconnection.h"
 #include "qgssettingsentryimpl.h"
 #include "qgssettingsentryenumflag.h"
 #include "qgstiledsceneconnection.h"
@@ -145,10 +145,10 @@ void QgsManageConnectionsDialog::doExportImport()
         break;
       case ArcgisMapServer:
       case ArcgisFeatureServer:
-        doc = saveArcgisConnections( items );
+        // doc = saveArcgisConnections( items );
         break;
       case VectorTile:
-        doc = saveVectorTileConnections( items );
+        // doc = saveVectorTileConnections( items );
         break;
       case TiledScene:
         doc = saveTiledSceneConnections( items );
@@ -221,13 +221,13 @@ void QgsManageConnectionsDialog::doExportImport()
         loadXyzTilesConnections( doc, items );
         break;
       case ArcgisMapServer:
-        loadArcgisConnections( doc, items, QStringLiteral( "ARCGISMAPSERVER" ) );
+        // loadArcgisConnections( doc, items, QStringLiteral( "ARCGISMAPSERVER" ) );
         break;
       case ArcgisFeatureServer:
-        loadArcgisConnections( doc, items, QStringLiteral( "ARCGISFEATURESERVER" ) );
+        // loadArcgisConnections( doc, items, QStringLiteral( "ARCGISFEATURESERVER" ) );
         break;
       case VectorTile:
-        loadVectorTileConnections( doc, items );
+        // loadVectorTileConnections( doc, items );
         break;
       case TiledScene:
         loadTiledSceneConnections( doc, items );
@@ -289,10 +289,10 @@ bool QgsManageConnectionsDialog::populateConnections()
         break;
       case ArcgisMapServer:
       case ArcgisFeatureServer:
-        connections = QgsArcGisConnectionSettings::sTreeConnectionArcgis->items();
+        // connections = QgsArcGisConnectionSettings::sTreeConnectionArcgis->items();
         break;
       case VectorTile:
-        connections = QgsVectorTileProviderConnection::sTreeConnectionVectorTile->items();
+        // connections = QgsVectorTileProviderConnection::sTreeConnectionVectorTile->items();
         break;
       case TiledScene:
         connections = QgsTiledSceneProviderConnection::sTreeConnectionTiledScene->items();
@@ -745,7 +745,7 @@ QDomDocument QgsManageConnectionsDialog::saveXyzTilesConnections( const QStringL
 
   return doc;
 }
-
+/*
 QDomDocument QgsManageConnectionsDialog::saveArcgisConnections( const QStringList &connections )
 {
   QDomDocument doc( QStringLiteral( "connections" ) );
@@ -774,7 +774,8 @@ QDomDocument QgsManageConnectionsDialog::saveArcgisConnections( const QStringLis
 
   return doc;
 }
-
+*/
+/*
 QDomDocument QgsManageConnectionsDialog::saveVectorTileConnections( const QStringList &connections )
 {
   QDomDocument doc( QStringLiteral( "connections" ) );
@@ -929,6 +930,7 @@ QDomDocument QgsManageConnectionsDialog::saveStacConnections( const QStringList 
 
   return doc;
 }
+*/
 
 void QgsManageConnectionsDialog::loadOWSConnections( const QDomDocument &doc, const QStringList &items, const QString &service )
 {
@@ -1530,7 +1532,7 @@ void QgsManageConnectionsDialog::loadXyzTilesConnections( const QDomDocument &do
     child = child.nextSiblingElement();
   }
 }
-
+/*
 void QgsManageConnectionsDialog::loadArcgisConnections( const QDomDocument &doc, const QStringList &items, const QString &service )
 {
   const QDomElement root = doc.documentElement();
@@ -1607,7 +1609,8 @@ void QgsManageConnectionsDialog::loadArcgisConnections( const QDomDocument &doc,
     child = child.nextSiblingElement();
   }
 }
-
+*/
+/*
 void QgsManageConnectionsDialog::loadVectorTileConnections( const QDomDocument &doc, const QStringList &items )
 {
   const QDomElement root = doc.documentElement();
@@ -1689,6 +1692,7 @@ void QgsManageConnectionsDialog::loadVectorTileConnections( const QDomDocument &
     child = child.nextSiblingElement();
   }
 }
+*/
 
 void QgsManageConnectionsDialog::loadTiledSceneConnections( const QDomDocument &doc, const QStringList &items )
 {

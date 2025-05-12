@@ -64,8 +64,8 @@
 #include "qgsrelationshipsitem.h"
 #include "qgsprovidersqlquerybuilder.h"
 #include "qgsdbrelationshipwidget.h"
-#include "qgsdbqueryhistoryprovider.h"
-#include "qgshistoryproviderregistry.h"
+// #include "qgsdbqueryhistoryprovider.h"
+// #include "qgshistoryproviderregistry.h"
 
 #include <QFileInfo>
 #include <QMenu>
@@ -1648,10 +1648,10 @@ QWidget *QgsFieldItemGuiProvider::createParamWidget( QgsDataItem *item, QgsDataI
 
 QgsDatabaseItemGuiProvider::QgsDatabaseItemGuiProvider()
 {
-  if ( QgsDatabaseQueryHistoryProvider *historyProvider = qobject_cast<QgsDatabaseQueryHistoryProvider *>( QgsGui::historyProviderRegistry()->providerById( QStringLiteral( "dbquery" ) ) ) )
-  {
-    connect( historyProvider, &QgsDatabaseQueryHistoryProvider::openSqlDialog, this, &QgsDatabaseItemGuiProvider::openSqlDialogGeneric );
-  }
+  // if ( QgsDatabaseQueryHistoryProvider *historyProvider = qobject_cast<QgsDatabaseQueryHistoryProvider *>( QgsGui::historyProviderRegistry()->providerById( QStringLiteral( "dbquery" ) ) ) )
+  // {
+  //   connect( historyProvider, &QgsDatabaseQueryHistoryProvider::openSqlDialog, this, &QgsDatabaseItemGuiProvider::openSqlDialogGeneric );
+  // }
 }
 
 QString QgsDatabaseItemGuiProvider::name()

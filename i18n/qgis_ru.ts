@@ -56687,7 +56687,7 @@ Delete these features?</source>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="1703"/>
         <source>Updating recent project paths</source>
-        <translation>Обновление путей предыдщих проектов</translation>
+        <translation>Обновление путей предыдущих проектов</translation>
     </message>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="1705"/>

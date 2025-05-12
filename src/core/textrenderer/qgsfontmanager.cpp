@@ -246,6 +246,7 @@ QgsFontDownloadDetails GoogleFontDetails( const QString &family, const QStringLi
 QgsFontDownloadDetails QgsFontManager::detailsForFontDownload( const QString &family, QString &matchedFamily ) const
 {
   // this list is built using scripts/process_google_fonts.py
+  /*
   const thread_local std::vector< QgsFontDownloadDetails > sGoogleFonts
   {
     GoogleFontDetails( QStringLiteral( "ABeeZee" ), { QStringLiteral( "ofl/abeezee/ABeeZee-Regular.ttf" ), QStringLiteral( "ofl/abeezee/ABeeZee-Italic.ttf" ) }, QStringLiteral( "ofl/abeezee/OFL.txt" ) ),
@@ -1809,6 +1810,7 @@ QgsFontDownloadDetails QgsFontManager::detailsForFontDownload( const QString &fa
       return candidate;
     }
   }
+  */
 
   return QgsFontDownloadDetails();
 }

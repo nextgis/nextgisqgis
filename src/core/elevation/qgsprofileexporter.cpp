@@ -18,7 +18,7 @@
 #include "moc_qgsprofileexporter.cpp"
 #include "qgsabstractprofilesource.h"
 #include "qgsabstractprofilegenerator.h"
-#include "qgsdxfexport.h"
+// #include "qgsdxfexport.h"
 #include "qgsprofilerenderer.h"
 #include "qgsmemoryproviderutils.h"
 #include "qgsvectorlayer.h"
@@ -164,6 +164,7 @@ bool QgsProfileExporterTask::run()
     const QString fileExtension = destinationFileInfo.completeSuffix();
     const QString driverName = QgsVectorFileWriter::driverForExtension( fileExtension );
 
+    /*
     if ( driverName == QLatin1String( "DXF" ) )
     {
       // DXF gets special handling -- we use the inbuilt QgsDxfExport class
@@ -196,6 +197,7 @@ bool QgsProfileExporterTask::run()
       }
     }
     else
+    */
     {
       // use vector file writer
       const bool outputFormatIsMultiLayer = QgsVectorFileWriter::supportedFormatExtensions( QgsVectorFileWriter::SupportsMultipleLayers ).contains( fileExtension );

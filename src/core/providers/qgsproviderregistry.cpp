@@ -25,7 +25,7 @@
 #include "qgsmessagelog.h"
 #include "qgsprovidermetadata.h"
 #include "qgsquantizedmeshdataprovider.h"
-#include "qgsvectortileprovidermetadata.h"
+// #include "qgsvectortileprovidermetadata.h"
 #include "qgsproject.h"
 #include "qgsprovidersublayerdetails.h"
 #include "providers/memory/qgsmemoryprovider.h"
@@ -35,10 +35,10 @@
 #include "providers/meshmemory/qgsmeshmemorydataprovider.h"
 #include "providers/sensorthings/qgssensorthingsprovider.h"
 
-#include "qgsmbtilesvectortiledataprovider.h"
-#include "qgsarcgisvectortileservicedataprovider.h"
-#include "qgsxyzvectortiledataprovider.h"
-#include "qgsvtpkvectortiledataprovider.h"
+// #include "qgsmbtilesvectortiledataprovider.h"
+// #include "qgsarcgisvectortileservicedataprovider.h"
+// #include "qgsxyzvectortiledataprovider.h"
+// #include "qgsvtpkvectortiledataprovider.h"
 
 #include "qgscesiumtilesdataprovider.h"
 #include "qgstiledsceneprovidermetadata.h"
@@ -202,6 +202,7 @@ void QgsProviderRegistry::init()
     mProviders[ QgsSensorThingsProvider::providerKey() ] = new QgsSensorThingsProviderMetadata();
   }
   {
+    /*
     const QgsScopedRuntimeProfile profile( QObject::tr( "Create vector tile providers" ) );
     QgsProviderMetadata *vt = new QgsVectorTileProviderMetadata();
     mProviders[ vt->key() ] = vt;
@@ -213,6 +214,7 @@ void QgsProviderRegistry::init()
     mProviders[ vt->key() ] = vt;
     vt = new QgsMbTilesVectorTileDataProviderMetadata();
     mProviders[ vt->key() ] = vt;
+    */
   }
 #ifdef HAVE_EPT
   {

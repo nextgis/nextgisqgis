@@ -241,8 +241,6 @@ Creates a new QgsSimpleMarkerSymbolLayer from an SLD XML element.
 
     virtual QString ogrFeatureStyle( double mmScaleFactor, double mapUnitScaleFactor ) const;
 
-    virtual bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const;
-
     virtual void setOutputUnit( Qgis::RenderUnit unit );
 
     virtual Qgis::RenderUnit outputUnit() const;
@@ -731,9 +729,6 @@ Returns the units for the stroke width.
     virtual void setMapUnitScale( const QgsMapUnitScale &scale );
 
     virtual QgsMapUnitScale mapUnitScale() const;
-
-
-    virtual bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const;
 
 
     virtual QRectF bounds( QPointF point, QgsSymbolRenderContext &context );

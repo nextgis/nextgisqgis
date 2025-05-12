@@ -34,7 +34,7 @@
 #include "qgspluginlayer.h"
 #include "qgsreferencedgeometry.h"
 #include "qgsrasterfilewriter.h"
-#include "qgsvectortilelayer.h"
+// #include "qgsvectortilelayer.h"
 #include "qgspointcloudlayer.h"
 #include "qgsannotationlayer.h"
 #include "qgstiledscenelayer.h"
@@ -103,10 +103,12 @@ QList<QgsAnnotationLayer *> QgsProcessingUtils::compatibleAnnotationLayers( QgsP
   return res;
 }
 
+/*
 QList<QgsVectorTileLayer *> QgsProcessingUtils::compatibleVectorTileLayers( QgsProject *project, bool sort )
 {
   return compatibleMapLayers< QgsVectorTileLayer >( project, sort );
 }
+*/
 
 QList<QgsTiledSceneLayer *> QgsProcessingUtils::compatibleTiledSceneLayers( QgsProject *project, bool sort )
 {
@@ -164,9 +166,11 @@ QList<QgsMapLayer *> QgsProcessingUtils::compatibleLayers( QgsProject *project, 
     layers << al;
   layers << project->mainAnnotationLayer();
 
+  /*
   const auto vectorTileLayers = compatibleMapLayers< QgsVectorTileLayer >( project, false );
   for ( QgsVectorTileLayer *vtl : vectorTileLayers )
     layers << vtl;
+  */
 
   const auto tiledSceneLayers = compatibleMapLayers< QgsTiledSceneLayer >( project, false );
   for ( QgsTiledSceneLayer *tml : tiledSceneLayers )
@@ -226,7 +230,8 @@ QgsMapLayer *QgsProcessingUtils::mapLayerFromStore( const QString &string, QgsMa
       case Qgis::LayerType::Mesh:
         return !canUseLayer( qobject_cast< QgsMeshLayer * >( layer ) );
       case Qgis::LayerType::VectorTile:
-        return !canUseLayer( qobject_cast< QgsVectorTileLayer * >( layer ) );
+        // return !canUseLayer( qobject_cast< QgsVectorTileLayer * >( layer ) );
+        return true;
       case Qgis::LayerType::TiledScene:
         return !canUseLayer( qobject_cast< QgsTiledSceneLayer * >( layer ) );
       case Qgis::LayerType::PointCloud:
@@ -476,6 +481,7 @@ QgsMapLayer *QgsProcessingUtils::loadMapLayerFromString( const QString &string, 
     dsUri.setParam( "type", "mbtiles" );
     dsUri.setParam( "url", uri );
 
+    /*
     std::unique_ptr< QgsVectorTileLayer > tileLayer;
     tileLayer = std::make_unique< QgsVectorTileLayer >( dsUri.encodedUri(), name );
 
@@ -483,6 +489,7 @@ QgsMapLayer *QgsProcessingUtils::loadMapLayerFromString( const QString &string, 
     {
       return tileLayer.release();
     }
+    */
   }
   if ( candidateTypes.empty() || candidateTypes.contains( Qgis::LayerType::TiledScene ) )
   {
@@ -704,10 +711,12 @@ bool QgsProcessingUtils::canUseLayer( const QgsPluginLayer *layer )
   return layer && layer->isValid();
 }
 
+/*
 bool QgsProcessingUtils::canUseLayer( const QgsVectorTileLayer *layer )
 {
   return layer && layer->isValid();
 }
+*/
 
 bool QgsProcessingUtils::canUseLayer( const QgsRasterLayer *layer )
 {

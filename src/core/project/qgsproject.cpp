@@ -58,7 +58,7 @@
 #include "qgsprojectviewsettings.h"
 #include "qgsprojectstylesettings.h"
 #include "qgsprojecttimesettings.h"
-#include "qgsvectortilelayer.h"
+// #include "qgsvectortilelayer.h"
 #include "qgstiledscenelayer.h"
 #include "qgsruntimeprofiler.h"
 #include "qgsannotationlayer.h"
@@ -1841,7 +1841,7 @@ bool QgsProject::addLayer( const QDomElement &layerElem,
       break;
 
     case Qgis::LayerType::VectorTile:
-      mapLayer = std::make_unique<QgsVectorTileLayer>();
+      // mapLayer = std::make_unique<QgsVectorTileLayer>();
       break;
 
     case Qgis::LayerType::PointCloud:

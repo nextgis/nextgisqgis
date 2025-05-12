@@ -19,10 +19,10 @@
 #include "qgsprocessingalgorithmconfigurationwidget.h"
 #include "qgsprocessingconfigurationwidgets.h"
 #include "qgsprocessingalignrasterlayerswidgetwrapper.h"
-#include "qgsprocessingvectortilewriterlayerswidgetwrapper.h"
+// #include "qgsprocessingvectortilewriterlayerswidgetwrapper.h"
 #include "qgsprocessingfieldmapwidgetwrapper.h"
 #include "qgsprocessingaggregatewidgetwrapper.h"
-#include "qgsprocessingdxflayerswidgetwrapper.h"
+// #include "qgsprocessingdxflayerswidgetwrapper.h"
 #include "qgsprocessingwidgetwrapperimpl.h"
 #include "qgsprocessingtininputlayerswidget.h"
 #include "qgsprocessingmeshdatasetwidget.h"
@@ -72,7 +72,7 @@ QgsProcessingGuiRegistry::QgsProcessingGuiRegistry()
   addParameterWidgetFactory( new QgsProcessingMeshLayerWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingBandWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingMultipleLayerWidgetWrapper() );
-  addParameterWidgetFactory( new QgsProcessingVectorTileWriterLayersWidgetWrapper() );
+//   addParameterWidgetFactory( new QgsProcessingVectorTileWriterLayersWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingFeatureSinkWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingVectorDestinationWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingRasterDestinationWidgetWrapper() );
@@ -81,7 +81,7 @@ QgsProcessingGuiRegistry::QgsProcessingGuiRegistry()
   addParameterWidgetFactory( new QgsProcessingFieldMapWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingAggregateWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingTinInputLayersWidgetWrapper() );
-  addParameterWidgetFactory( new QgsProcessingDxfLayersWidgetWrapper() );
+//   addParameterWidgetFactory( new QgsProcessingDxfLayersWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingMeshDatasetGroupsWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingMeshDatasetTimeWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingPointCloudLayerWidgetWrapper() );

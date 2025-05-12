@@ -22,14 +22,14 @@
 #include "qgssettingsentryenumflag.h"
 #include "qgssettings.h"
 
-#include "qgsbabelformatregistry.h"
+//#include "qgsbabelformatregistry.h"
 #include "qgslayout.h"
 #include "qgslocator.h"
 #include "qgsnetworkaccessmanager.h"
 #include "qgsowsconnection.h"
 #include "qgsprocessing.h"
-#include "qgsvectortileconnection.h"
-#include "qgsgpsdetector.h"
+//#include "qgsvectortileconnection.h"
+//#include "qgsgpsdetector.h"
 #include "qgsrasterlayer.h"
 #include "qgsvectorlayer.h"
 #include "qgssettingsproxy.h"
@@ -153,12 +153,14 @@ void QgsSettingsRegistryCore::migrateOldSettings()
 
   settingsLayerTreeShowFeatureCountForNewLayers->copyValueFromKey( QStringLiteral( "core/layer-tree/show_feature_count_for_new_layers" ) );
 
+  /*
 #if defined( HAVE_QTSERIALPORT )
   QgsGpsDetector::settingsGpsStopBits->copyValueFromKey( QStringLiteral( "core/gps/stop_bits" ) );
   QgsGpsDetector::settingsGpsFlowControl->copyValueFromKey( QStringLiteral( "core/gps/flow_control" ) );
   QgsGpsDetector::settingsGpsDataBits->copyValueFromKey( QStringLiteral( "core/gps/data_bits" ) );
   QgsGpsDetector::settingsGpsParity->copyValueFromKey( QStringLiteral( "core/gps/parity" ) );
 #endif
+  */
 
   QgsRasterLayer::settingsRasterDefaultOversampling->copyValueFromKey( QStringLiteral( "Raster/defaultOversampling" ), true );
   QgsRasterLayer::settingsRasterDefaultEarlyResampling->copyValueFromKey( QStringLiteral( "Raster/defaultEarlyResampling" ), true );
@@ -293,6 +295,7 @@ void QgsSettingsRegistryCore::migrateOldSettings()
   }
 
   // Vector tile - added in 3.30
+  /*
   {
     QgsSettings settings;
     settings.beginGroup( QStringLiteral( "qgis/connections-vector-tile" ) );
@@ -318,7 +321,7 @@ void QgsSettingsRegistryCore::migrateOldSettings()
       Q_NOWARN_DEPRECATED_POP
     }
   }
-
+  */
   // xyz - added in 3.30
   {
     QgsSettings settings;
@@ -350,6 +353,7 @@ void QgsSettingsRegistryCore::migrateOldSettings()
   // arcgis - added in 3.30
   {
     // arcgismapserver entries are not used anymore (even in 3.28, only arcgisfeature server is used)
+    /*
     const QStringList serviceKeys = {QStringLiteral( "qgis/connections-arcgisfeatureserver" ), QStringLiteral( "qgis/connections-arcgismapserver" )};
     QgsSettings settings;
     for ( const QString &serviceKey : serviceKeys )
@@ -373,10 +377,12 @@ void QgsSettingsRegistryCore::migrateOldSettings()
       }
       settings.remove( serviceKey );
     }
+    */
   }
 
   // babel devices settings - added in 3.30
   {
+    /*
     if ( QgsBabelFormatRegistry::sTreeBabelDevices->items().count() == 0 )
     {
       const QStringList deviceNames = settings->value( QStringLiteral( "/Plugin-GPS/devices/deviceList" ) ).toStringList();
@@ -391,6 +397,7 @@ void QgsSettingsRegistryCore::migrateOldSettings()
         QgsBabelFormatRegistry::settingsBabelTrkUpload->copyValueFromKey( QStringLiteral( "/Plugin-GPS/devices/%1/trkupload" ), {device}, true );
       }
     }
+    */
   }
   QgsSettings::releaseFlush();
 }
@@ -517,6 +524,7 @@ void QgsSettingsRegistryCore::backwardCompatibility()
 
 // Vector tile - added in 3.30
   {
+    /*
     const QStringList connections = QgsVectorTileProviderConnection::sTreeConnectionVectorTile->items();
 
     for ( const QString &connection : connections )
@@ -540,6 +548,7 @@ void QgsSettingsRegistryCore::backwardCompatibility()
         Q_NOWARN_DEPRECATED_POP
       }
     }
+    */
   }
 
   // xyz - added in 3.30
@@ -571,6 +580,7 @@ void QgsSettingsRegistryCore::backwardCompatibility()
 
   // Arcgis - added in 3.30
   {
+    /*
     const QStringList connections = QgsArcGisConnectionSettings::sTreeConnectionArcgis->items();
     for ( const QString &connection : connections )
     {
@@ -594,10 +604,12 @@ void QgsSettingsRegistryCore::backwardCompatibility()
         }
       }
     }
+    */
   }
 
   // babel devices settings - added in 3.30
   {
+    /*
     const QStringList devices = QgsBabelFormatRegistry::sTreeBabelDevices->items();
     settings->setValue( QStringLiteral( "/Plugin-GPS/devices/deviceList" ), devices );
     for ( const QString &device : devices )
@@ -609,8 +621,8 @@ void QgsSettingsRegistryCore::backwardCompatibility()
       QgsBabelFormatRegistry::settingsBabelTrkDownload->copyValueToKey( QStringLiteral( "/Plugin-GPS/devices/%1/trkdownload" ), {device} );
       QgsBabelFormatRegistry::settingsBabelTrkUpload->copyValueToKey( QStringLiteral( "/Plugin-GPS/devices/%1/trkupload" ), {device} );
     }
+    */
   }
 
   QgsSettings::releaseFlush();
 }
-

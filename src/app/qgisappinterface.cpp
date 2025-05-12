@@ -155,10 +155,12 @@ QgsMeshLayer *QgisAppInterface::addMeshLayer( const QString &url, const QString 
   return qgis->addMeshLayer( url, baseName, providerKey );
 }
 
+/*
 QgsVectorTileLayer *QgisAppInterface::addVectorTileLayer( const QString &url, const QString &baseName )
 {
   return qgis->addLayer<QgsVectorTileLayer>( url, baseName, QString() );
 }
+*/
 
 QgsPointCloudLayer *QgisAppInterface::addPointCloudLayer( const QString &url, const QString &baseName, const QString &providerKey )
 {
@@ -823,7 +825,7 @@ QAction *QgisAppInterface::actionAddRasterLayer() { return qgis->actionAddRaster
 QAction *QgisAppInterface::actionAddPgLayer() { return qgis->actionAddPgLayer(); }
 QAction *QgisAppInterface::actionAddWmsLayer() { return qgis->actionAddWmsLayer(); }
 QAction *QgisAppInterface::actionAddXyzLayer() { return qgis->actionAddXyzLayer(); }
-QAction *QgisAppInterface::actionAddVectorTileLayer() { return qgis->actionAddVectorTileLayer(); }
+// QAction *QgisAppInterface::actionAddVectorTileLayer() { return qgis->actionAddVectorTileLayer(); }
 QAction *QgisAppInterface::actionAddPointCloudLayer() { return qgis->actionAddPointCloudLayer(); }
 QAction *QgisAppInterface::actionAddAfsLayer() { return qgis->actionAddAfsLayer(); }
 QAction *QgisAppInterface::actionAddAmsLayer() { return qgis->actionAddAfsLayer(); }
@@ -987,10 +989,12 @@ QgsLayerTreeRegistryBridge::InsertionPoint QgisAppInterface::layerTreeInsertionP
   return qgis->layerTreeInsertionPoint();
 }
 
+/*
 void QgisAppInterface::setGpsPanelConnection( QgsGpsConnection *connection )
 {
   qgis->setGpsPanelConnection( connection );
 }
+*/
 
 QList<QgsMapDecoration *> QgisAppInterface::activeDecorations()
 {

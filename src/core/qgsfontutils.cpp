@@ -284,7 +284,7 @@ bool QgsFontUtils::loadStandardTestFonts( const QStringList &loadstyles )
     else
     {
       bool loaded = false;
-      if ( QgsApplication::isRunningFromBuildDir() )
+      if ( false && QgsApplication::isRunningFromBuildDir() )
       {
         // workaround for bugs with Qt 4.8.5 (other versions?) on Mac 10.9, where fonts
         // from qrc resources load but fail to work and default font is substituted [LS]:

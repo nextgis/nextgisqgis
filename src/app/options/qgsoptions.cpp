@@ -54,7 +54,7 @@
 #include "qgslocatoroptionswidget.h"
 #include "qgsgui.h"
 #include "qgswelcomepage.h"
-#include "qgsnewsfeedparser.h"
+// #include "qgsnewsfeedparser.h"
 #include "qgsbearingnumericformat.h"
 #include "qgscoordinatenumericformat.h"
 #include "options/qgsadvancedoptions.h"
@@ -90,6 +90,12 @@
 #include <cpl_conv.h> // for setting gdal options
 
 #include "qgsconfig.h"
+
+#ifdef NGSTD_USING
+#include "core/request.h"
+#include "core/version.h"
+#include "framework/access/access.h"
+#endif // NGSTD_USING
 
 /**
  * \class QgsOptions - Set user options and preferences
@@ -130,6 +136,8 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
   mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "Network" ), QCoreApplication::translate( "QgsOptionsBase", "Network" ), QStringLiteral( "propertyicons/network_and_proxy.svg" ) ) );
   mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "Locator" ), tr( "Locator" ), QStringLiteral( "search.svg" ) ) );
   mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "Acceleration" ), tr( "GPU acceleration" ), QStringLiteral( "mIconGPU.svg" ) ) );
+
+  mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "NextGIS" ), QCoreApplication::translate( "QgsOptionsBase", "NextGIS" ), QStringLiteral( "nextgis.svg" ) ) );
 
   mOptionsTreeView->setModel( mTreeModel );
 
@@ -196,9 +204,10 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
 
   connect( mFontFamilyRadioCustom, &QAbstractButton::toggled, mFontFamilyComboBox, &QWidget::setEnabled );
 
-  connect( cmbIconSize, qOverload<int>( &QComboBox::activated ), this, &QgsOptions::iconSizeChanged );
-  connect( cmbIconSize, qOverload<int>( &QComboBox::highlighted ), this, &QgsOptions::iconSizeChanged );
-  connect( cmbIconSize, &QComboBox::editTextChanged, this, &QgsOptions::iconSizeChanged );
+  // connect( cmbIconSize, qOverload<int>( &QComboBox::activated ), this, &QgsOptions::iconSizeChanged );
+  // connect( cmbIconSize, qOverload<int>( &QComboBox::highlighted ), this, &QgsOptions::iconSizeChanged );
+  // connect( cmbIconSize, &QComboBox::editTextChanged, this, &QgsOptions::iconSizeChanged );
+  connect( cmbIconSize, &QComboBox::currentTextChanged, this, &QgsOptions::iconSizeChanged );
 
   connect( this, &QDialog::accepted, this, &QgsOptions::saveOptions );
   connect( this, &QDialog::rejected, this, &QgsOptions::rejectOptions );
@@ -239,6 +248,8 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
   mIdentifyHighlightColorButton->setDefaultColor( Qgis::DEFAULT_HIGHLIGHT_COLOR );
 
   mSettings = new QgsSettings();
+
+  mOptionsPageNextGIS->init(mSettings);
 
   double identifyValue = mSettings->value( QStringLiteral( "/Map/searchRadiusMM" ), Qgis::DEFAULT_SEARCH_RADIUS_MM ).toDouble();
   QgsDebugMsgLevel( QStringLiteral( "Standard Identify radius setting read from settings file: %1" ).arg( identifyValue ), 3 );
@@ -749,7 +760,7 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
   cbxLegendClassifiers->setChecked( mSettings->value( QStringLiteral( "/qgis/showLegendClassifiers" ), false ).toBool() );
   mShowFeatureCountByDefaultCheckBox->setChecked( QgsSettingsRegistryCore::settingsLayerTreeShowFeatureCountForNewLayers->value() );
   cbxHideSplash->setChecked( mSettings->value( QStringLiteral( "/qgis/hideSplash" ), false ).toBool() );
-  cbxShowNews->setChecked( !mSettings->value( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QgsWelcomePage::newsFeedUrl() ) ), false, QgsSettings::Core ).toBool() );
+  // cbxShowNews->setChecked( !mSettings->value( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QgsWelcomePage::newsFeedUrl() ) ), false, QgsSettings::Core ).toBool() );
   cbxCheckVersion->setChecked( mSettings->value( QStringLiteral( "/qgis/checkVersion" ), true ).toBool() );
   cbxCheckVersion->setVisible( mSettings->value( QStringLiteral( "/qgis/allowVersionCheck" ), true ).toBool() );
   cbxAttributeTableDocked->setChecked( mSettings->value( QStringLiteral( "/qgis/dockAttributeTable" ), false ).toBool() );
@@ -1566,6 +1577,17 @@ void QgsOptions::saveOptions()
   mSettings->setValue( QStringLiteral( "proxy/proxyPassword" ), mAuthSettings->password() );
   mSettings->setValue( QStringLiteral( "proxy/proxyType" ), mProxyTypeComboBox->currentText() );
 
+  // NEXTGIS:
+#ifdef NGSTD_USING
+#if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
+  NGRequest::setProxy(grpProxy->isChecked(),
+      mProxyTypeComboBox->currentText() == "DefaultProxy", leProxyHost->text(),
+      leProxyPort->text().toInt(), mAuthSettings->username(), mAuthSettings->password(),
+      "ANY");
+#endif // NGLIB_VERSION_NUMBER > 1100
+#endif // NGSTD_USING
+  // END NEXTGIS
+
   if ( !mCacheDirectory->text().isEmpty() )
     QgsSettingsRegistryCore::settingsNetworkCacheDirectory->setValue( mCacheDirectory->text() );
   else
@@ -1597,7 +1619,7 @@ void QgsOptions::saveOptions()
   mSettings->setValue( QStringLiteral( "/qgis/showLegendClassifiers" ), cbxLegendClassifiers->isChecked() );
   QgsSettingsRegistryCore::settingsLayerTreeShowFeatureCountForNewLayers->setValue( mShowFeatureCountByDefaultCheckBox->isChecked() );
   mSettings->setValue( QStringLiteral( "/qgis/hideSplash" ), cbxHideSplash->isChecked() );
-  mSettings->setValue( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QgsWelcomePage::newsFeedUrl() ) ), !cbxShowNews->isChecked(), QgsSettings::Core );
+  // mSettings->setValue( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QgsWelcomePage::newsFeedUrl() ) ), !cbxShowNews->isChecked(), QgsSettings::Core );
 
   mSettings->setValue( QStringLiteral( "/qgis/checkVersion" ), cbxCheckVersion->isChecked() );
   mSettings->setValue( QStringLiteral( "/qgis/dockAttributeTable" ), cbxAttributeTableDocked->isChecked() );
@@ -1877,6 +1899,31 @@ void QgsOptions::saveOptions()
   {
     // TODO[MD] QgisApp::instance()->legend()->updateLegendItemSymbologies();
   }
+
+// NextGIS settings
+ #ifdef NGSTD_USING
+    mSettings->setValue("nextgis/send_crashes", mOptionsPageNextGIS->sendCrashes->isChecked());
+    mSettings->setValue("nextgis/endpoint", mOptionsPageNextGIS->endpointEdit->text());
+    mSettings->setValue("nextgis/auth_endpoint", mOptionsPageNextGIS->authEndpointEdit->text());
+    mSettings->setValue("nextgis/token_endpoint", mOptionsPageNextGIS->tokenEndpointEdit->text());
+    mSettings->setValue("nextgis/user_info_endpoint", mOptionsPageNextGIS->userInfoEndpointEdit->text());
+    mSettings->setValue("nextgis/auth_type", mOptionsPageNextGIS->authTypeSelector->currentIndex());
+    mSettings->setValue("nextgis/use_code_challenge", mOptionsPageNextGIS->codeChallengeCheckBox->isChecked());
+
+    NGAccess::AuthSourceType type =
+        static_cast<NGAccess::AuthSourceType>(mOptionsPageNextGIS->authTypeSelector->currentIndex());
+    NGAccess::instance().setAuthEndpoint(mOptionsPageNextGIS->authEndpointEdit->text());
+    NGAccess::instance().setTokenEndpoint(mOptionsPageNextGIS->tokenEndpointEdit->text());
+    NGAccess::instance().setUserInfoEndpoint(mOptionsPageNextGIS->userInfoEndpointEdit->text());
+    NGAccess::instance().setUseCodeChallenge(mOptionsPageNextGIS->codeChallengeCheckBox->isChecked());
+    if (type == NGAccess::AuthSourceType::NGID) {
+        NGAccess::instance().setUseCodeChallenge(true);
+    }
+    NGAccess::instance().setEndPoint(mOptionsPageNextGIS->endpointEdit->text(), type);
+    NGAccess::instance().checkEndpointAsync(mOptionsPageNextGIS->endpointEdit->text());
+
+    NGAccess::instance().initSentry(mOptionsPageNextGIS->sendCrashes->isChecked(), "");
+#endif // NGSTD_USING
 
   //save variables
   QgsExpressionContextUtils::setGlobalVariables( mVariableEditor->variablesInActiveScope() );

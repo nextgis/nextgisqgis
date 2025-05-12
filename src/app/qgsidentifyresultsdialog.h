@@ -176,7 +176,7 @@ class APP_EXPORT QgsIdentifyResultsDialog : public QDialog, private Ui::QgsIdent
      * Adds results from vector tile layer
      * \since QGIS 3.14
      */
-    void addFeature( QgsVectorTileLayer *layer, const QString &label, const QgsFields &fields, const QgsFeature &feature, const QMap<QString, QString> &derivedAttributes );
+    // void addFeature( QgsVectorTileLayer *layer, const QString &label, const QgsFields &fields, const QgsFeature &feature, const QMap<QString, QString> &derivedAttributes );
 
     /**
      * Adds results from point cloud layer
@@ -326,7 +326,7 @@ class APP_EXPORT QgsIdentifyResultsDialog : public QDialog, private Ui::QgsIdent
     static QgsVectorLayer *vectorLayer( QTreeWidgetItem *item );
     QgsRasterLayer *rasterLayer( QTreeWidgetItem *item );
     QgsMeshLayer *meshLayer( QTreeWidgetItem *item );
-    QgsVectorTileLayer *vectorTileLayer( QTreeWidgetItem *item );
+    // QgsVectorTileLayer *vectorTileLayer( QTreeWidgetItem *item );
     QgsPointCloudLayer *pointCloudLayer( QTreeWidgetItem *item );
     QgsTiledSceneLayer *tiledSceneLayer( QTreeWidgetItem *item );
     QTreeWidgetItem *featureItem( QTreeWidgetItem *item );

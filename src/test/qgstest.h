@@ -20,7 +20,7 @@
 #include <QDir>
 #include <QFile>
 #include <QTextStream>
-#include <QDesktopServices>
+//#include <QDesktopServices>
 
 #include "qgsapplication.h"
 
@@ -509,8 +509,8 @@ class TEST_EXPORT QgsTest : public QObject
         stream << report;
         file.close();
 
-        if ( !isCIRun() )
-          QDesktopServices::openUrl( QStringLiteral( "file:///%1" ).arg( reportFile ) );
+        // if ( !isCIRun() )
+        //   QDesktopServices::openUrl( QStringLiteral( "file:///%1" ).arg( reportFile ) );
       }
     }
 

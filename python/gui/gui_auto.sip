@@ -71,7 +71,6 @@
 %Include auto_generated/qgsexpressiontreeview.sip
 %Include auto_generated/qgsextentgroupbox.sip
 %Include auto_generated/qgsextentwidget.sip
-%Include auto_generated/qgsexternalresourcewidget.sip
 %Include auto_generated/qgsfeaturepickerwidget.sip
 %Include auto_generated/qgsfeaturelistcombobox.sip
 %Include auto_generated/qgsfeatureselectiondlg.sip
@@ -85,7 +84,6 @@
 %Include auto_generated/qgsfilecontentsourcelineedit.sip
 %Include auto_generated/qgsfiledownloaderdialog.sip
 %Include auto_generated/qgsfilewidget.sip
-%Include auto_generated/qgsexternalstoragefilewidget.sip
 %Include auto_generated/qgsfilterlineedit.sip
 %Include auto_generated/qgsfindfilesbypatternwidget.sip
 %Include auto_generated/qgsfloatingwidget.sip
@@ -342,13 +340,6 @@
 %Include auto_generated/effects/qgspainteffectwidget.sip
 %Include auto_generated/elevation/qgselevationcontrollerwidget.sip
 %Include auto_generated/elevation/qgselevationprofilecanvas.sip
-%Include auto_generated/history/qgshistoryentry.sip
-%Include auto_generated/history/qgshistoryentrymodel.sip
-%Include auto_generated/history/qgshistoryentrynode.sip
-%Include auto_generated/history/qgshistoryprovider.sip
-%Include auto_generated/history/qgshistoryproviderregistry.sip
-%Include auto_generated/history/qgshistorywidget.sip
-%Include auto_generated/history/qgshistorywidgetcontext.sip
 %Include auto_generated/inputcontroller/qgs2dmapcontroller.sip
 %If ( HAVE_QTGAMEPAD )
 %Include auto_generated/inputcontroller/qgs2dgamepadcontroller.sip
@@ -430,8 +421,6 @@
 %Include auto_generated/processing/qgsprocessingfavoritealgorithmmanager.sip
 %Include auto_generated/processing/qgsprocessinggui.sip
 %Include auto_generated/processing/qgsprocessingguiregistry.sip
-%Include auto_generated/processing/qgsprocessinghistoryprovider.sip
-%Include auto_generated/processing/qgsprocessinghistorywidget.sip
 %Include auto_generated/processing/qgsprocessingmaplayercombobox.sip
 %Include auto_generated/processing/qgsprocessingmodelerparameterwidget.sip
 %Include auto_generated/processing/qgsprocessingmultipleselectiondialog.sip
@@ -530,5 +519,4 @@
 %Include auto_generated/tableeditor/qgstableeditorwidget.sip
 %Include auto_generated/tiledscene/qgstiledscenerendererpropertieswidget.sip
 %Include auto_generated/tiledscene/qgstiledscenerendererwidget.sip
-%Include auto_generated/vectortile/qgsvectortilelayerproperties.sip
 %Include auto_generated/editorwidgets/qgsqmlwidgetwrapper.sip

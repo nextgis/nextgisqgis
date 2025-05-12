@@ -35,10 +35,10 @@ class QgsMapLayerStore;
 class QgsProcessingFeedback;
 class QgsProcessingFeatureSource;
 class QgsProcessingAlgorithm;
-class QgsVectorTileLayer;
+// class QgsVectorTileLayer;
 class QgsPointCloudLayer;
 class QgsAnnotationLayer;
-class QgsVectorTileLayer;
+// class QgsVectorTileLayer;
 class QgsTiledSceneLayer;
 
 #include <QString>
@@ -194,7 +194,7 @@ class CORE_EXPORT QgsProcessingUtils
      *
      * \since QGIS 3.32
      */
-    static QList<QgsVectorTileLayer *> compatibleVectorTileLayers( QgsProject *project, bool sort = true );
+    // static QList<QgsVectorTileLayer *> compatibleVectorTileLayers( QgsProject *project, bool sort = true );
 
     /**
      * Returns a list of tiled scene layers from a \a project which are compatible with the processing
@@ -614,7 +614,7 @@ class CORE_EXPORT QgsProcessingUtils
     static bool canUseLayer( const QgsRasterLayer *layer );
     static bool canUseLayer( const QgsMeshLayer *layer );
     static bool canUseLayer( const QgsPluginLayer *layer );
-    static bool canUseLayer( const QgsVectorTileLayer *layer );
+    // static bool canUseLayer( const QgsVectorTileLayer *layer );
     static bool canUseLayer( const QgsPointCloudLayer *layer );
     static bool canUseLayer( const QgsAnnotationLayer *layer );
     static bool canUseLayer( const QgsTiledSceneLayer *layer );
@@ -811,5 +811,3 @@ class CORE_EXPORT QgsProcessingFeatureSink : public QgsProxyFeatureSink
 #endif
 
 #endif // QGSPROCESSINGUTILS_H
-
-

@@ -85,8 +85,6 @@ Creates the symbol layer
     virtual void writeSldMarker( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const;
 
 
-    virtual bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const;
-
 
  void setSymbolName( const QString &name ) /Deprecated/;
 %Docstring

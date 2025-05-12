@@ -78,16 +78,6 @@ Creates a new QgsSimpleLineSymbolLayer from an SLD XML DOM ``element``.
 
     virtual double estimateMaxBleed( const QgsRenderContext &context ) const;
 
-    virtual QVector<qreal> dxfCustomDashPattern( Qgis::RenderUnit &unit ) const;
-
-    virtual Qt::PenStyle dxfPenStyle() const;
-
-    virtual double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const;
-
-    virtual double dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const;
-
-    virtual QColor dxfColor( QgsSymbolRenderContext &context ) const;
-
     virtual bool canCauseArtifactsBetweenAdjacentTiles() const;
 
 

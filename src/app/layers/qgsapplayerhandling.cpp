@@ -43,7 +43,7 @@
 #include "qgsgui.h"
 #include "qgsmessagelog.h"
 #include "qgsapplication.h"
-#include "qgsvectortilelayer.h"
+// #include "qgsvectortilelayer.h"
 #include "qgsprojectstorageregistry.h"
 #include "qgsprojectstorage.h"
 #include "qgsmaplayerfactory.h"
@@ -560,6 +560,8 @@ L *QgsAppLayerHandling::addLayer( const QString &uri, const QString &baseName, c
 
   QgsDebugMsgLevel( "completeBaseName: " + base, 2 );
 
+  return nullptr;
+  /*
   // create the layer
   std::unique_ptr<L> layer = createLayer<L>( uri, base, provider );
 
@@ -582,6 +584,7 @@ L *QgsAppLayerHandling::addLayer( const QString &uri, const QString &baseName, c
   QgisApp::instance()->activateDeactivateLayerRelatedActions( QgisApp::instance()->activeLayer() );
 
   return layer.release();
+  */
 }
 template QgsPointCloudLayer *QgsAppLayerHandling::addLayer<QgsPointCloudLayer>( const QString &uri, const QString &baseName, const QString &provider, bool addToLegend, bool showWarningOnInvalid );
 template QgsVectorTileLayer *QgsAppLayerHandling::addLayer<QgsVectorTileLayer>( const QString &uri, const QString &baseName, const QString &provider, bool addToLegend, bool showWarningOnInvalid );

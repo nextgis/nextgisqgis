@@ -16,8 +16,8 @@
 #include "qgsmarkersymbollayer.h"
 #include "qgssymbollayerutils.h"
 
-#include "qgsdxfexport.h"
-#include "qgsdxfpaintdevice.h"
+// #include "qgsdxfexport.h"
+// #include "qgsdxfpaintdevice.h"
 #include "qgsfontutils.h"
 #include "qgsimagecache.h"
 #include "qgsimageoperation.h"
@@ -1566,7 +1566,7 @@ void QgsSimpleMarkerSymbolLayer::drawMarker( QPainter *p, QgsSymbolRenderContext
     p->drawPath( mPath );
   }
 }
-
+/*
 bool QgsSimpleMarkerSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift ) const
 {
   //data defined size?
@@ -1755,7 +1755,7 @@ bool QgsSimpleMarkerSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScal
 
   return true;
 }
-
+*/
 
 void QgsSimpleMarkerSymbolLayer::setOutputUnit( Qgis::RenderUnit unit )
 {
@@ -2826,6 +2826,7 @@ QgsSymbolLayer *QgsSvgMarkerSymbolLayer::createFromSld( QDomElement &element )
   return m;
 }
 
+/*
 bool QgsSvgMarkerSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift ) const
 {
   //size
@@ -2946,6 +2947,7 @@ bool QgsSvgMarkerSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFa
   p.end();
   return true;
 }
+*/
 
 QRectF QgsSvgMarkerSymbolLayer::bounds( QPointF point, QgsSymbolRenderContext &context )
 {
@@ -4146,4 +4148,3 @@ QImage QgsAnimatedMarkerSymbolLayer::fetchImage( QgsRenderContext &context, cons
   bool cached = false;
   return QgsApplication::imageCache()->pathAsImage( path, size, preserveAspectRatio, opacity, cached, context.flags() & Qgis::RenderContextFlag::RenderBlocking, 96, movieFrame );
 }
-

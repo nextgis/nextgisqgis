@@ -76,7 +76,7 @@
 #include "qgsscreenhelper.h"
 #include "qgsshortcutsmanager.h"
 #include "qgsconfigureshortcutsdialog.h"
-#include "ui_defaults.h"
+#include "ngui_defaults.h"
 
 #include <QShortcut>
 #include <QComboBox>

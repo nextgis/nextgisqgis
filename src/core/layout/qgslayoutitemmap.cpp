@@ -38,7 +38,7 @@
 #include "qgscoordinatereferencesystemregistry.h"
 #include "qgsprojoperation.h"
 #include "qgslabelingresults.h"
-#include "qgsvectortileutils.h"
+// #include "qgsvectortileutils.h"
 #include "qgsunittypes.h"
 
 #include <QApplication>
@@ -1899,8 +1899,10 @@ QgsExpressionContext QgsLayoutItemMap::createExpressionContext() const
   const double mapScale = scale();
   scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_scale" ), mapScale, true ) );
 
+  /*
   scope->setVariable( QStringLiteral( "zoom_level" ), !qgsDoubleNear( mapScale, 0 ) ? QgsVectorTileUtils::scaleToZoomLevel( mapScale, 0, 99999 ) : 0, true );
   scope->setVariable( QStringLiteral( "vector_tile_zoom" ), !qgsDoubleNear( mapScale, 0 ) ? QgsVectorTileUtils::scaleToZoom( mapScale ) : 0, true );
+  */
 
   QgsRectangle currentExtent( extent() );
   scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_extent" ), QVariant::fromValue( QgsGeometry::fromRect( currentExtent ) ), true ) );

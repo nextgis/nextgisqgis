@@ -50,7 +50,7 @@ class QgsSubsetStringEditorProviderRegistry;
 class QgsProviderSourceWidgetProviderRegistry;
 class QgsRelationWidgetRegistry;
 class QgsMapToolShapeRegistry;
-class QgsHistoryProviderRegistry;
+// class QgsHistoryProviderRegistry;
 class QgsSensorGuiRegistry;
 class QgsSettingsEditorWidgetRegistry;
 class QgsInputControllerManager;
@@ -226,7 +226,7 @@ class GUI_EXPORT QgsGui : public QObject
      * Returns the global history provider registry, used for tracking history providers.
      * \since QGIS 3.24
      */
-    static QgsHistoryProviderRegistry *historyProviderRegistry() SIP_KEEPREFERENCE;
+    // static QgsHistoryProviderRegistry *historyProviderRegistry() SIP_KEEPREFERENCE;
 
     /**
      * Returns the registry of settings editors.
@@ -361,7 +361,7 @@ class GUI_EXPORT QgsGui : public QObject
     QgsProviderSourceWidgetProviderRegistry *mProviderSourceWidgetProviderRegistry = nullptr;
     QgsRelationWidgetRegistry *mRelationEditorRegistry = nullptr;
     QgsMapToolShapeRegistry *mShapeMapToolRegistry = nullptr;
-    QgsHistoryProviderRegistry *mHistoryProviderRegistry = nullptr;
+    // QgsHistoryProviderRegistry *mHistoryProviderRegistry = nullptr;
     QgsSensorGuiRegistry *mSensorGuiRegistry = nullptr;
     QgsSettingsEditorWidgetRegistry *mSettingsEditorRegistry = nullptr;
     QgsInputControllerManager *mInputControllerManager = nullptr;

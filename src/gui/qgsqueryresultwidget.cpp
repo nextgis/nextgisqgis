@@ -23,8 +23,8 @@
 #include "qgsvectorlayer.h"
 #include "qgsapplication.h"
 #include "qgsgui.h"
-#include "qgshistoryproviderregistry.h"
-#include "qgshistoryentry.h"
+// #include "qgshistoryproviderregistry.h"
+// #include "qgshistoryentry.h"
 #include "qgsproviderregistry.h"
 #include "qgsprovidermetadata.h"
 #include "qgscodeeditorwidget.h"
@@ -181,12 +181,14 @@ void QgsQueryResultWidget::executeQuery()
     const QString sql { mSqlEditor->selectedText().isEmpty() ? mSqlEditor->text() : mSqlEditor->selectedText() };
 
     bool ok = false;
+    /*
     mCurrentHistoryEntryId = QgsGui::historyProviderRegistry()->addEntry( QStringLiteral( "dbquery" ), QVariantMap {
                                                                                                          { QStringLiteral( "query" ), sql },
                                                                                                          { QStringLiteral( "provider" ), mConnection->providerKey() },
                                                                                                          { QStringLiteral( "connection" ), mConnection->uri() },
                                                                                                        },
                                                                           ok );
+    */
 
     mWasCanceled = false;
     mFeedback = std::make_unique<QgsFeedback>();
@@ -395,6 +397,7 @@ void QgsQueryResultWidget::startFetching()
       mQueryResultsTableView->show();
 
       connect( mModel.get(), &QgsQueryResultModel::fetchingComplete, mStopButton, [=] {
+        /*
         bool ok = false;
         const QgsHistoryEntry currentHistoryEntry = QgsGui::historyProviderRegistry()->entry( mCurrentHistoryEntryId, ok );
         QVariantMap entryDetails = currentHistoryEntry.entry;
@@ -402,6 +405,7 @@ void QgsQueryResultWidget::startFetching()
         entryDetails.insert( QStringLiteral( "time" ), mQueryResultWatcher.result().queryExecutionTime() );
 
         QgsGui::historyProviderRegistry()->updateEntry( mCurrentHistoryEntryId, entryDetails );
+        */
         mProgressBar->hide();
         mStopButton->setEnabled( false );
       } );

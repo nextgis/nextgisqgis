@@ -568,6 +568,11 @@ void QgsPluginRegistry::restoreSessionPlugins( const QString &pluginDirString )
     corePlugins << QStringLiteral( "MetaSearch" );
     corePlugins << QStringLiteral( "grassprovider" );
 
+    // NextGIS plugins
+    corePlugins << "quick_map_services";
+    corePlugins << "nextgis_connect";
+    corePlugins << "ngq_rosreestr_tools";
+
     // make the required core plugins enabled by default:
     const auto constCorePlugins = corePlugins;
     for ( const QString &corePlugin : constCorePlugins )

@@ -236,7 +236,7 @@ void QgsNewsItemListItemDelegate::paint( QPainter *painter, const QStyleOptionVi
     iconSize /= w->devicePixelRatioF();
   }
 
-  doc.setHtml( QStringLiteral( "<div style='font-size:%1px'><span style='font-size:%2px;font-weight:bold;'>%3%4</span>%5</div>" ).arg( textSize ).arg( QString::number( titleSize ), index.data( static_cast<int>( QgsNewsFeedModel::CustomRole::Title ) ).toString(), index.data( static_cast<int>( QgsNewsFeedModel::CustomRole::Sticky ) ).toBool() ? QStringLiteral( "<img src=\":/images/themes/default/pin.svg\">" ) : QString(), index.data( static_cast<int>( QgsNewsFeedModel::CustomRole::Content ) ).toString() ) );
+  // doc.setHtml( QStringLiteral( "<div style='font-size:%1px'><span style='font-size:%2px;font-weight:bold;'>%3%4</span>%5</div>" ).arg( textSize ).arg( QString::number( titleSize ), index.data( static_cast<int>( QgsNewsFeedModel::CustomRole::Title ) ).toString(), index.data( static_cast<int>( QgsNewsFeedModel::CustomRole::Sticky ) ).toBool() ? QStringLiteral( "<img src=\":/images/themes/default/pin.svg\">" ) : QString(), index.data( static_cast<int>( QgsNewsFeedModel::CustomRole::Content ) ).toString() ) );
 
 
   doc.setTextWidth( option.rect.width() - ( !icon.isNull() ? iconSize.width() + 4.375 * mRoundedRectSizePixels : 4.375 * mRoundedRectSizePixels ) );

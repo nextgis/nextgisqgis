@@ -206,7 +206,7 @@ class CORE_EXPORT QgsAuthManager : public QObject
      * \note Do not emit verification signals when only comparing
      * \param compare Password to compare against
      */
-    bool verifyMasterPassword( const QString &compare = QString() );
+    virtual bool verifyMasterPassword( const QString &compare = QString() );
 
     //! Whether master password has be input and verified, i.e. authentication database is accessible
     bool masterPasswordIsSet() const;
@@ -730,7 +730,7 @@ class CORE_EXPORT QgsAuthManager : public QObject
      * Password helper enabled getter
      * \note Available in Python bindings since QGIS 3.8.0
      */
-    static bool passwordHelperEnabled();
+    virtual bool passwordHelperEnabled() const;
 
     /**
      * Password helper enabled setter
@@ -856,8 +856,17 @@ class CORE_EXPORT QgsAuthManager : public QObject
      * Enforce singleton pattern
      * \note To set up the manager instance and initialize everything use QgsAuthManager::instance()->init()
      */
-    static QgsAuthManager *instance() SIP_SKIP;
-
+    template<typename T = QgsAuthManager>
+    static QgsAuthManager *instance() SIP_SKIP
+    {
+        static QMutex sMutex;
+        QMutexLocker locker(&sMutex);
+        if (!sInstance)
+        {
+            sInstance = new T;
+        }
+        return sInstance;
+    }
 
 #ifdef Q_OS_WIN
   public:
@@ -880,11 +889,15 @@ class CORE_EXPORT QgsAuthManager : public QObject
     //! Print a debug message in QGIS
     void passwordHelperLog( const QString &msg ) const;
 
+  protected:
+
     //! Read Master password from the wallet
     QString passwordHelperRead();
 
     //! Store Master password in the wallet
     bool passwordHelperWrite( const QString &password );
+
+  private:
 
     //! Error message setter
     void passwordHelperSetErrorMessage( const QString &errorMessage ) { mPasswordHelperErrorMessage = errorMessage; }
@@ -892,13 +905,16 @@ class CORE_EXPORT QgsAuthManager : public QObject
     //! Clear error code and message
     void passwordHelperClearErrors();
 
+  protected:
     /**
      * Process the error: show it and/or disable the password helper system in case of
      * access denied or no backend, reset error flags at the end
      */
-    void passwordHelperProcessError();
+    virtual void passwordHelperProcessError();
 
-    bool masterPasswordInput();
+    virtual bool masterPasswordInput();
+
+  private:
 
     bool masterPasswordRowsInDb( int *rows ) const;
 
@@ -956,7 +972,10 @@ class CORE_EXPORT QgsAuthManager : public QObject
     QHash<QString, QString> mConfigAuthMethods;
     QHash<QString, QgsAuthMethod *> mAuthMethods;
 
+  protected:
     QString mMasterPass;
+
+  private:
     int mPassTries = 0;
     bool mAuthDisabled = false;
     QString mAuthDisabledMessage;
@@ -993,8 +1012,11 @@ class CORE_EXPORT QgsAuthManager : public QObject
     //! Store last error message
     QString mPasswordHelperErrorMessage;
 
+  protected:
     //! Store last error code (enum)
     QKeychain::Error mPasswordHelperErrorCode = QKeychain::NoError;
+
+  private:
 
     //! Enable logging
     bool mPasswordHelperLoggingEnabled = false;

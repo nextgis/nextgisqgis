@@ -36,7 +36,7 @@
 #include "qgsrectangle.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgsmapsettings.h"
-#include "qgsmbtiles.h"
+// #include "qgsmbtiles.h"
 #include "qgsmessageoutput.h"
 #include "qgsmessagelog.h"
 #include "qgsnetworkaccessmanager.h"
@@ -134,6 +134,7 @@ QgsWmsProvider::QgsWmsProvider( QString const &uri, const ProviderOptions &optio
 
   std::unique_ptr<QgsScopedRuntimeProfile> profile;
 
+  /*
   if ( mSettings.mIsMBTiles )
   {
     if ( QgsApplication::profiler()->groupIsActive( QStringLiteral( "projectload" ) ) )
@@ -146,7 +147,7 @@ QgsWmsProvider::QgsWmsProvider( QString const &uri, const ProviderOptions &optio
       return;
     }
   }
-  else if ( mSettings.mXyz )
+  else */ if ( mSettings.mXyz )
   {
     if ( QgsApplication::profiler()->groupIsActive( QStringLiteral( "projectload" ) ) )
       profile = std::make_unique<QgsScopedRuntimeProfile>( tr( "Setup tile capabilities" ), QStringLiteral( "projectload" ) );
@@ -907,6 +908,7 @@ QImage *QgsWmsProvider::draw( const QgsRectangle &viewExtent, int pixelWidth, in
     else
       tm->viewExtentIntersection( viewExtent, tml, col0, row0, col1, row1 );
 
+/*
 #ifdef QGISDEBUG
     int n = ( col1 - col0 + 1 ) * ( row1 - row0 + 1 );
     QgsDebugMsgLevel( QStringLiteral( "tile number: %1x%2 = %3" ).arg( col1 - col0 + 1 ).arg( row1 - row0 + 1 ).arg( n ), 3 );
@@ -916,6 +918,7 @@ QImage *QgsWmsProvider::draw( const QgsRectangle &viewExtent, int pixelWidth, in
       return image;
     }
 #endif
+*/
 
     TilePositions tiles;
     for ( int row = row0; row <= row1; row++ )
@@ -952,12 +955,14 @@ QImage *QgsWmsProvider::draw( const QgsRectangle &viewExtent, int pixelWidth, in
     QList<TileImage> tileImages; // in the correct resolution
     QList<QRectF> missing;       // rectangles (in map coords) of missing tiles for this view
 
+    /*
     std::unique_ptr<QgsMbTiles> mbtilesReader;
     if ( mSettings.mIsMBTiles )
     {
       mbtilesReader.reset( new QgsMbTiles( QUrl( mSettings.mBaseUrl ).path() ) );
       mbtilesReader->open();
     }
+    */
 
     QElapsedTimer t;
     t.start();
@@ -971,6 +976,7 @@ QImage *QgsWmsProvider::draw( const QgsRectangle &viewExtent, int pixelWidth, in
 
       QImage localImage;
 
+      /*
       if ( mbtilesReader && !QgsTileCache::tile( r.url, localImage ) )
       {
         QUrlQuery query( r.url );
@@ -979,6 +985,7 @@ QImage *QgsWmsProvider::draw( const QgsRectangle &viewExtent, int pixelWidth, in
           continue;
         QgsTileCache::insertTile( r.url, img );
       }
+      */
 
       if ( QgsTileCache::tile( r.url, localImage ) )
       {
@@ -1859,6 +1866,9 @@ bool QgsWmsProvider::setupXyzCapabilities( const QString &uri, const QgsRectangl
 
 bool QgsWmsProvider::setupMBTilesCapabilities( const QString &uri )
 {
+  return false;
+
+  /*
   // if it is MBTiles source, let's prepare the reader to get some metadata
   QgsMbTiles mbtilesReader( QUrl( mSettings.mBaseUrl ).path() );
   if ( !mbtilesReader.open() )
@@ -1903,6 +1913,7 @@ bool QgsWmsProvider::setupMBTilesCapabilities( const QString &uri )
   double sourceTilePixelRatio = 1;
 
   return setupXyzCapabilities( uri, sourceExtent, sourceMinZoom, sourceMaxZoom, sourceTilePixelRatio );
+  */
 }
 
 
@@ -5114,6 +5125,7 @@ QList<QgsProviderSublayerDetails> QgsWmsProviderMetadata::querySublayers( const 
     else
     {
       // slower scan, check actual mbtiles format
+      /*
       QgsMbTiles reader( fileName );
       if ( reader.open() )
       {
@@ -5127,6 +5139,7 @@ QList<QgsProviderSublayerDetails> QgsWmsProviderMetadata::querySublayers( const 
           return { details };
         }
       }
+      */
     }
   }
   else

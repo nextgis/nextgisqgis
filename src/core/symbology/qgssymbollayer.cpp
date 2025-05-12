@@ -15,7 +15,7 @@
 
 #include "qgssymbollayer.h"
 #include "qgsrendercontext.h"
-#include "qgsdxfexport.h"
+// #include "qgsdxfexport.h"
 #include "qgsgeometrysimplifier.h"
 #include "qgspainteffect.h"
 #include "qgspainteffectregistry.h"
@@ -153,6 +153,7 @@ bool QgsSymbolLayer::setSubSymbol( QgsSymbol *symbol )
   return false;
 }
 
+/*
 bool QgsSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift ) const
 {
   Q_UNUSED( e )
@@ -217,6 +218,7 @@ Qt::BrushStyle QgsSymbolLayer::dxfBrushStyle() const
 {
   return Qt::NoBrush;
 }
+*/
 
 QgsPaintEffect *QgsSymbolLayer::paintEffect() const
 {
@@ -821,12 +823,13 @@ double QgsLineSymbolLayer::width( const QgsRenderContext &context ) const
   return context.convertToPainterUnits( mWidth, mWidthUnit, mWidthMapUnitScale );
 }
 
+/*
 double QgsLineSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
 {
   Q_UNUSED( context )
   return width() * QgsDxfExport::mapUnitScaleFactor( e.symbologyScale(), widthUnit(), e.mapUnits(), context.renderContext().mapToPixel().mapUnitsPerPixel() );
 }
-
+*/
 
 void QgsFillSymbolLayer::drawPreviewIcon( QgsSymbolRenderContext &context, QSize size )
 {
@@ -921,6 +924,7 @@ QList<QgsSymbolLayerReference> QgsSymbolLayer::masks() const
   return {};
 }
 
+/*
 double QgsMarkerSymbolLayer::dxfSize( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
 {
   double size = mSize;
@@ -954,6 +958,7 @@ double QgsMarkerSymbolLayer::dxfAngle( QgsSymbolRenderContext &context ) const
   }
   return angle;
 }
+*/
 
 QPainterPath generateClipPath( const QgsRenderContext &renderContext, const QString &id, const QRectF *rect, bool &foundGeometries )
 {

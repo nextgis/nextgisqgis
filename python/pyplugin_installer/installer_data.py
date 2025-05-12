@@ -123,6 +123,10 @@ officialRepo = (
     QCoreApplication.translate("QgsPluginInstaller", "QGIS Official Plugin Repository"),
     "https://plugins.qgis.org/plugins/plugins.xml",
 )
+nextGISRepo = (
+    QCoreApplication.translate("QgsPluginInstaller", "NextGIS Plugin Repository"),
+    "https://rm.nextgis.com/api/repo/1/qgis_xml",
+)
 
 
 # --- common functions ------------------------------------------------------------------- #
@@ -213,15 +217,15 @@ class Repositories(QObject):
 
     def __init__(self):
         QObject.__init__(self)
-        self.mRepositories: dict[str, dict[str, Any]] = {}
+        self.mRepositories: Dict[str, Dict[str, Any]] = {}
         self.httpId = {}  # {httpId : repoName}
         self.mInspectionFilter: Optional[str] = None
 
-    def all(self) -> dict[str, dict[str, Any]]:
+    def all(self) -> Dict[str, Dict[str, Any]]:
         """return dict of all repositories"""
         return self.mRepositories
 
-    def allEnabled(self) -> dict[str, dict[str, Any]]:
+    def allEnabled(self) -> Dict[str, Dict[str, Any]]:
         """return dict of all enabled and valid repositories"""
         if self.mInspectionFilter:
             return {self.mInspectionFilter: self.mRepositories[self.mInspectionFilter]}
@@ -230,7 +234,7 @@ class Repositories(QObject):
             k: v for k, v in self.mRepositories.items() if v["enabled"] and v["valid"]
         }
 
-    def allUnavailable(self) -> dict[str, dict[str, Any]]:
+    def allUnavailable(self) -> Dict[str, Dict[str, Any]]:
         """return dict of all unavailable repositories"""
         repos = {}
 
@@ -318,12 +322,17 @@ class Repositories(QObject):
         settings.beginGroup(reposGroup)
         # first, update repositories in QgsSettings if needed
         officialRepoPresent = False
+        nextGISRepoPresent = False
         for key in settings.childGroups():
             url = settings.value(key + "/url", "", type=str)
             if url == officialRepo[1]:
                 officialRepoPresent = True
+            if url == nextGISRepo[1]:
+                nextGISRepoPresent = True
         if not officialRepoPresent:
             settings.setValue(officialRepo[0] + "/url", officialRepo[1])
+        if not nextGISRepoPresent:
+            settings.setValue(nextGISRepo[0] + "/url", nextGISRepo[1])
 
         for key in settings.childGroups():
             self.mRepositories[key] = {}

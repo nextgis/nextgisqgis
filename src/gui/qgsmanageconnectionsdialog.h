@@ -79,8 +79,8 @@ class GUI_EXPORT QgsManageConnectionsDialog : public QDialog, private Ui::QgsMan
     QDomDocument saveOracleConnections( const QStringList &connections );
     QDomDocument saveHanaConnections( const QStringList &connections );
     QDomDocument saveXyzTilesConnections( const QStringList &connections );
-    QDomDocument saveArcgisConnections( const QStringList &connections );
-    QDomDocument saveVectorTileConnections( const QStringList &connections );
+    // QDomDocument saveArcgisConnections( const QStringList &connections );
+    // QDomDocument saveVectorTileConnections( const QStringList &connections );
     QDomDocument saveTiledSceneConnections( const QStringList &connections );
     QDomDocument saveSensorThingsConnections( const QStringList &connections );
     QDomDocument saveCloudStorageConnections( const QStringList &connections );
@@ -93,8 +93,8 @@ class GUI_EXPORT QgsManageConnectionsDialog : public QDialog, private Ui::QgsMan
     void loadOracleConnections( const QDomDocument &doc, const QStringList &items );
     void loadHanaConnections( const QDomDocument &doc, const QStringList &items );
     void loadXyzTilesConnections( const QDomDocument &doc, const QStringList &items );
-    void loadArcgisConnections( const QDomDocument &doc, const QStringList &items, const QString &service );
-    void loadVectorTileConnections( const QDomDocument &doc, const QStringList &items );
+    // void loadArcgisConnections( const QDomDocument &doc, const QStringList &items, const QString &service );
+    // void loadVectorTileConnections( const QDomDocument &doc, const QStringList &items );
     void loadTiledSceneConnections( const QDomDocument &doc, const QStringList &items );
     void loadSensorThingsConnections( const QDomDocument &doc, const QStringList &items );
     void loadCloudStorageConnections( const QDomDocument &doc, const QStringList &items );

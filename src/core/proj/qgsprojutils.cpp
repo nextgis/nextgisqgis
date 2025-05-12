@@ -19,6 +19,7 @@
 #include "qgscoordinatetransform.h"
 #include "qgsexception.h"
 #include "qgslogger.h"
+#include "qgsapplication.h"
 #include <QString>
 #include <QSet>
 #include <QRegularExpression>
@@ -623,6 +624,7 @@ QDate QgsProjUtils::ignfDatabaseDate()
 
 QStringList QgsProjUtils::searchPaths()
 {
+  /*
   const QString path( proj_info().searchpath );
   QStringList paths;
 #ifdef Q_OS_WIN
@@ -632,8 +634,15 @@ QStringList QgsProjUtils::searchPaths()
 #endif
 
   QSet<QString> existing;
+  */
   // thin out duplicates from paths -- see https://github.com/OSGeo/proj.4/pull/1498
   QStringList res;
+#ifdef Q_OS_MACX
+    res << QgsApplication::prefixPath() + QStringLiteral("/Library/Frameworks/proj.framework/Resources/proj");
+#else
+    res << QgsApplication::prefixPath() + QStringLiteral("/share/proj");
+#endif // Q_OS_MACX
+  /*
   res.reserve( paths.count() );
   for ( const QString &p : std::as_const( paths ) )
   {
@@ -643,6 +652,7 @@ QStringList QgsProjUtils::searchPaths()
     existing.insert( p );
     res << p;
   }
+  */
   return res;
 }
 

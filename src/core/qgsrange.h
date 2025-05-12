@@ -215,6 +215,7 @@ class QgsRange
 
 };
 
+typedef QgsRange<int> QgsRangeintBase;
 
 /**
  * \brief QgsRange which stores a range of double values.

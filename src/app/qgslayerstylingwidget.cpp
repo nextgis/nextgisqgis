@@ -39,9 +39,9 @@
 #include "qgsmaplayerstylemanager.h"
 #include "qgsstyle.h"
 #include "qgsvectorlayer.h"
-#include "qgsvectortilelayer.h"
-#include "qgsvectortilebasiclabelingwidget.h"
-#include "qgsvectortilebasicrendererwidget.h"
+// #include "qgsvectortilelayer.h"
+// #include "qgsvectortilebasiclabelingwidget.h"
+// #include "qgsvectortilebasicrendererwidget.h"
 #include "qgsmeshlayer.h"
 #include "qgsmeshlabelingwidget.h"
 #include "qgsproject.h"
@@ -266,6 +266,7 @@ void QgsLayerStylingWidget::setLayer( QgsMapLayer *layer )
 
     case Qgis::LayerType::VectorTile:
     {
+      /*
       QListWidgetItem *symbolItem = new QListWidgetItem( QgsApplication::getThemeIcon( QStringLiteral( "propertyicons/symbology.svg" ) ), QString() );
       symbolItem->setData( Qt::UserRole, Symbology );
       symbolItem->setToolTip( tr( "Symbology" ) );
@@ -274,6 +275,7 @@ void QgsLayerStylingWidget::setLayer( QgsMapLayer *layer )
       labelItem->setData( Qt::UserRole, VectorLabeling );
       labelItem->setToolTip( tr( "Labels" ) );
       mOptionsListWidget->addItem( labelItem );
+      */
       break;
     }
 
@@ -753,6 +755,7 @@ void QgsLayerStylingWidget::updateCurrentWidgetLayer()
 
       case Qgis::LayerType::VectorTile:
       {
+        /*
         QgsVectorTileLayer *vtLayer = qobject_cast<QgsVectorTileLayer *>( mCurrentLayer );
         switch ( row )
         {
@@ -775,6 +778,7 @@ void QgsLayerStylingWidget::updateCurrentWidgetLayer()
           default:
             break;
         }
+        */
         break;
       }
 

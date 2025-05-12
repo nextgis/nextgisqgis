@@ -27,10 +27,10 @@
 #include "qgsauthmanager.h"
 #include "qgslogger.h"
 
-#ifdef Q_OS_MAC
-#include <string.h>
-#include "libtasn1.h"
-#endif
+// #ifdef Q_OS_MAC
+// #include <string.h>
+// #include "libtasn1.h"
+// #endif
 
 
 QString QgsAuthCertUtils::getSslProtocolName( QSsl::SslProtocol protocol )
@@ -289,7 +289,7 @@ bool QgsAuthCertUtils::pemIsPkcs8( const QString &keyPemTxt )
   return keyPemTxt.contains( pkcs8Header ) && keyPemTxt.contains( pkcs8Footer );
 }
 
-#ifdef Q_OS_MAC
+#ifdef UNUSED_TMP // Q_OS_MAC
 QByteArray QgsAuthCertUtils::pkcs8PrivateKey( QByteArray &pkcs8Der )
 {
   QByteArray pkcs1;
@@ -482,7 +482,7 @@ QStringList QgsAuthCertUtils::pkcs12BundleToPem( const QString &bundlepath,
   }
 
   QString keyPem;
-#ifdef Q_OS_MAC
+#ifdef UNUSED_TMP // Q_OS_MAC
   if ( keyalg == QSsl::Rsa && QgsAuthCertUtils::pemIsPkcs8( bundle.privateKey().toPEM() ) )
   {
     QgsDebugMsgLevel( QStringLiteral( "Private key is PKCS#8: attempting conversion to PKCS#1..." ), 4 );

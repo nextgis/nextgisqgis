@@ -499,6 +499,10 @@ QgsVectorLayerProperties::QgsVectorLayerProperties(
 
   optionsStackedWidget_CurrentChanged( mOptStackedWidget->currentIndex() );
 
+  auto qgisServerItems = mOptionsListWidget->findItems("QGIS Server", Qt::MatchExactly);
+  for (auto item : qgisServerItems)
+    item->setHidden(true);
+
   initialize();
 }
 

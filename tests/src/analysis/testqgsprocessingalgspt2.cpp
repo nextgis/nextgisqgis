@@ -82,7 +82,7 @@ class TestQgsProcessingAlgsPt2 : public QgsTest
 
     void rasterize();
 
-    void convertGpxFeatureType();
+    // void convertGpxFeatureType();
     void convertGpsData();
     void downloadGpsData();
     void uploadGpsData();
@@ -1191,6 +1191,7 @@ void TestQgsProcessingAlgsPt2::rasterize()
   QVERIFY( checker.compareImages( "rasterize", 500 ) );
 }
 
+/*
 void TestQgsProcessingAlgsPt2::convertGpxFeatureType()
 {
   // test generation of babel argument lists
@@ -1226,6 +1227,7 @@ void TestQgsProcessingAlgsPt2::convertGpxFeatureType()
   // when showing the babel command, filenames should be wrapped in "", which is what QProcess does internally (hence the processArgs don't have these)
   QCOMPARE( logArgs, QStringList( { QStringLiteral( "-i" ), QStringLiteral( "gpx" ), QStringLiteral( "-f" ), QStringLiteral( "\"/home/me/my input file.gpx\"" ), QStringLiteral( "-x" ), QStringLiteral( "transform,trk=wpt,del" ), QStringLiteral( "-o" ), QStringLiteral( "gpx" ), QStringLiteral( "-F" ), QStringLiteral( "\"/home/me/my output file.gpx\"" ) } ) );
 }
+*/
 
 class TestProcessingFeedback : public QgsProcessingFeedback
 {

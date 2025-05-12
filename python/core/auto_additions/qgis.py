@@ -201,15 +201,15 @@ Qgis.LayerFilter.__doc__ = """Filter for layers
 
 .. versionadded:: 3.34.
 
-* ``RasterLayer``: 
-* ``NoGeometry``: 
-* ``PointLayer``: 
-* ``LineLayer``: 
-* ``PolygonLayer``: 
-* ``HasGeometry``: 
-* ``VectorLayer``: 
-* ``PluginLayer``: 
-* ``WritableLayer``: 
+* ``RasterLayer``:
+* ``NoGeometry``:
+* ``PointLayer``:
+* ``LineLayer``:
+* ``PolygonLayer``:
+* ``HasGeometry``:
+* ``VectorLayer``:
+* ``PluginLayer``:
+* ``WritableLayer``:
 * ``MeshLayer``: QgsMeshLayer
 
   .. versionadded:: 3.6
@@ -755,8 +755,8 @@ Qgis.PythonEmbeddedType.__doc__ = """Type of Python Embedded in projects
 
 .. versionadded:: 3.40
 
-* ``Macro``: 
-* ``ExpressionFunction``: 
+* ``Macro``:
+* ``ExpressionFunction``:
 
 """
 # --
@@ -2709,8 +2709,8 @@ Qgis.RasterResamplingStage.__doc__ = """Stage at which raster resampling occurs.
 
 .. versionadded:: 3.22
 
-* ``ResampleFilter``: 
-* ``Provider``: 
+* ``ResampleFilter``:
+* ``Provider``:
 
 """
 # --
@@ -2805,8 +2805,8 @@ note Directly mapped from GDALRATTableType enum values.
 
 .. versionadded:: 3.30
 
-* ``Thematic``: 
-* ``Athematic``: 
+* ``Thematic``:
+* ``Athematic``:
 
 """
 # --
@@ -7293,60 +7293,60 @@ Qgis.MapBoxGlStyleSourceType.__doc__ = """Available MapBox GL style source types
 """
 # --
 Qgis.MapBoxGlStyleSourceType.baseClass = Qgis
-QgsArcGisPortalUtils.ItemType = Qgis.ArcGisRestServiceType
+# QgsArcGisPortalUtils.ItemType = Qgis.ArcGisRestServiceType
 # monkey patching scoped based enum
-QgsArcGisPortalUtils.FeatureService = Qgis.ArcGisRestServiceType.FeatureServer
-QgsArcGisPortalUtils.ItemType.FeatureService = Qgis.ArcGisRestServiceType.FeatureServer
-QgsArcGisPortalUtils.FeatureService.is_monkey_patched = True
-QgsArcGisPortalUtils.FeatureService.__doc__ = "FeatureServer"
-QgsArcGisPortalUtils.MapService = Qgis.ArcGisRestServiceType.MapServer
-QgsArcGisPortalUtils.ItemType.MapService = Qgis.ArcGisRestServiceType.MapServer
-QgsArcGisPortalUtils.MapService.is_monkey_patched = True
-QgsArcGisPortalUtils.MapService.__doc__ = "MapServer"
-QgsArcGisPortalUtils.ImageService = Qgis.ArcGisRestServiceType.ImageServer
-QgsArcGisPortalUtils.ItemType.ImageService = Qgis.ArcGisRestServiceType.ImageServer
-QgsArcGisPortalUtils.ImageService.is_monkey_patched = True
-QgsArcGisPortalUtils.ImageService.__doc__ = "ImageServer"
-QgsArcGisPortalUtils.GlobeServer = Qgis.ArcGisRestServiceType.GlobeServer
-QgsArcGisPortalUtils.GlobeServer.is_monkey_patched = True
-QgsArcGisPortalUtils.GlobeServer.__doc__ = "GlobeServer"
-QgsArcGisPortalUtils.GPServer = Qgis.ArcGisRestServiceType.GPServer
-QgsArcGisPortalUtils.GPServer.is_monkey_patched = True
-QgsArcGisPortalUtils.GPServer.__doc__ = "GPServer"
-QgsArcGisPortalUtils.GeocodeServer = Qgis.ArcGisRestServiceType.GeocodeServer
-QgsArcGisPortalUtils.GeocodeServer.is_monkey_patched = True
-QgsArcGisPortalUtils.GeocodeServer.__doc__ = "GeocodeServer"
-QgsArcGisPortalUtils.Unknown = Qgis.ArcGisRestServiceType.Unknown
-QgsArcGisPortalUtils.Unknown.is_monkey_patched = True
-QgsArcGisPortalUtils.Unknown.__doc__ = "Other unknown/unsupported type"
-Qgis.ArcGisRestServiceType.__doc__ = """Available ArcGIS REST service types.
+# QgsArcGisPortalUtils.FeatureService = Qgis.ArcGisRestServiceType.FeatureServer
+# QgsArcGisPortalUtils.ItemType.FeatureService = Qgis.ArcGisRestServiceType.FeatureServer
+# QgsArcGisPortalUtils.FeatureService.is_monkey_patched = True
+# QgsArcGisPortalUtils.FeatureService.__doc__ = "FeatureServer"
+# QgsArcGisPortalUtils.MapService = Qgis.ArcGisRestServiceType.MapServer
+# QgsArcGisPortalUtils.ItemType.MapService = Qgis.ArcGisRestServiceType.MapServer
+# QgsArcGisPortalUtils.MapService.is_monkey_patched = True
+# QgsArcGisPortalUtils.MapService.__doc__ = "MapServer"
+# QgsArcGisPortalUtils.ImageService = Qgis.ArcGisRestServiceType.ImageServer
+# QgsArcGisPortalUtils.ItemType.ImageService = Qgis.ArcGisRestServiceType.ImageServer
+# QgsArcGisPortalUtils.ImageService.is_monkey_patched = True
+# QgsArcGisPortalUtils.ImageService.__doc__ = "ImageServer"
+# QgsArcGisPortalUtils.GlobeServer = Qgis.ArcGisRestServiceType.GlobeServer
+# QgsArcGisPortalUtils.GlobeServer.is_monkey_patched = True
+# QgsArcGisPortalUtils.GlobeServer.__doc__ = "GlobeServer"
+# QgsArcGisPortalUtils.GPServer = Qgis.ArcGisRestServiceType.GPServer
+# QgsArcGisPortalUtils.GPServer.is_monkey_patched = True
+# QgsArcGisPortalUtils.GPServer.__doc__ = "GPServer"
+# QgsArcGisPortalUtils.GeocodeServer = Qgis.ArcGisRestServiceType.GeocodeServer
+# QgsArcGisPortalUtils.GeocodeServer.is_monkey_patched = True
+# QgsArcGisPortalUtils.GeocodeServer.__doc__ = "GeocodeServer"
+# QgsArcGisPortalUtils.Unknown = Qgis.ArcGisRestServiceType.Unknown
+# QgsArcGisPortalUtils.Unknown.is_monkey_patched = True
+# QgsArcGisPortalUtils.Unknown.__doc__ = "Other unknown/unsupported type"
+# Qgis.ArcGisRestServiceType.__doc__ = """Available ArcGIS REST service types.
 
-.. note::
+# .. note::
 
-   Prior to QGIS 3.26 this was available as :py:class:`QgsArcGisPortalUtils`.ItemType.
+#    Prior to QGIS 3.26 this was available as :py:class:`QgsArcGisPortalUtils`.ItemType.
 
-.. versionadded:: 3.28
+# .. versionadded:: 3.28
 
-* ``FeatureServer``: FeatureServer
+# * ``FeatureServer``: FeatureServer
 
-  Available as ``QgsArcGisPortalUtils.FeatureService`` in older QGIS releases.
+#   Available as ``QgsArcGisPortalUtils.FeatureService`` in older QGIS releases.
 
-* ``MapServer``: MapServer
+# * ``MapServer``: MapServer
 
-  Available as ``QgsArcGisPortalUtils.MapService`` in older QGIS releases.
+#   Available as ``QgsArcGisPortalUtils.MapService`` in older QGIS releases.
 
-* ``ImageServer``: ImageServer
+# * ``ImageServer``: ImageServer
 
-  Available as ``QgsArcGisPortalUtils.ImageService`` in older QGIS releases.
+#   Available as ``QgsArcGisPortalUtils.ImageService`` in older QGIS releases.
 
-* ``GlobeServer``: GlobeServer
-* ``GPServer``: GPServer
-* ``GeocodeServer``: GeocodeServer
-* ``Unknown``: Other unknown/unsupported type
+# * ``GlobeServer``: GlobeServer
+# * ``GPServer``: GPServer
+# * ``GeocodeServer``: GeocodeServer
+# * ``Unknown``: Other unknown/unsupported type
 
-"""
-# --
-Qgis.ArcGisRestServiceType.baseClass = Qgis
+# """
+# # --
+# Qgis.ArcGisRestServiceType.baseClass = Qgis
 QgsRelation.RelationType = Qgis.RelationshipType
 # monkey patching scoped based enum
 QgsRelation.Normal = Qgis.RelationshipType.Normal
@@ -7579,7 +7579,7 @@ Prior to QGIS 3.30 this was available as :py:class:`QgsMapLayerAction`.Target
 * ``Layer``: Action targets a complete layer
 * ``SingleFeature``: Action targets a single feature from a layer
 * ``MultipleFeatures``: Action targets multiple features from a layer
-* ``AllActions``: 
+* ``AllActions``:
 
 """
 # --
@@ -9852,9 +9852,9 @@ Qgis.ProviderStyleStorageCapability.__doc__ = """The StorageCapability enum repr
 
 .. versionadded:: 3.34
 
-* ``SaveToDatabase``: 
-* ``LoadFromDatabase``: 
-* ``DeleteFromDatabase``: 
+* ``SaveToDatabase``:
+* ``LoadFromDatabase``:
+* ``DeleteFromDatabase``:
 
 """
 # --

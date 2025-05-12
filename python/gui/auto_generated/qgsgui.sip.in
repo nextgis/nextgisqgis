@@ -186,13 +186,6 @@ relation widget factories.
 %End
 
 
-    static QgsHistoryProviderRegistry *historyProviderRegistry() /KeepReference/;
-%Docstring
-Returns the global history provider registry, used for tracking history
-providers.
-
-.. versionadded:: 3.24
-%End
 
     static QgsSettingsEditorWidgetRegistry *settingsEditorWidgetRegistry() /KeepReference/;
 %Docstring

@@ -20,6 +20,7 @@
 #include <QEvent>
 #include <QStringList>
 #include <QColor>
+#include <QVector>
 
 #include <memory>
 #include "qgis_sip.h"
@@ -47,8 +48,8 @@ class QgsImageCache;
 class QgsSourceCache;
 class QgsSymbolLayerRegistry;
 class QgsRasterRendererRegistry;
-class QgsGpsConnectionRegistry;
-class QgsBabelFormatRegistry;
+// class QgsGpsConnectionRegistry;
+// class QgsBabelFormatRegistry;
 class QgsDataItemProviderRegistry;
 class QgsPluginLayerRegistry;
 class QgsClassificationMethodRegistry;
@@ -167,6 +168,9 @@ class CORE_EXPORT QgsApplication : public QApplication
     static const char *QGIS_ORGANIZATION_NAME;
     static const char *QGIS_ORGANIZATION_DOMAIN;
     static const char *QGIS_APPLICATION_NAME;
+    static const char *NGQGIS_ORGANIZATION_NAME;
+    static const char *NGQGIS_ORGANIZATION_DOMAIN;
+    static const char *NGQGIS_APPLICATION_NAME;
 #ifndef SIP_RUN
 
     /**
@@ -385,6 +389,7 @@ class CORE_EXPORT QgsApplication : public QApplication
 
     //! Returns the common root path of all application data directories.
     static QString pkgDataPath();
+    static QString fontsPath();
 
     //! Returns the path to the currently active theme directory.
     static QString activeThemePath();
@@ -801,13 +806,13 @@ class CORE_EXPORT QgsApplication : public QApplication
     /**
      * Returns the application's GPS connection registry, used for managing GPS connections.
      */
-    static QgsGpsConnectionRegistry *gpsConnectionRegistry() SIP_KEEPREFERENCE;
+    // static QgsGpsConnectionRegistry *gpsConnectionRegistry() SIP_KEEPREFERENCE;
 
     /**
      * Returns the application's GPSBabel format registry, used for managing GPSBabel formats.
      * \since QGIS 3.22
      */
-    static QgsBabelFormatRegistry *gpsBabelFormatRegistry() SIP_KEEPREFERENCE;
+    // static QgsBabelFormatRegistry *gpsBabelFormatRegistry() SIP_KEEPREFERENCE;
 
     /**
      * Returns the application's plugin layer registry, used for managing plugin layer types.
@@ -1152,9 +1157,10 @@ class CORE_EXPORT QgsApplication : public QApplication
     QMap<QString, QIcon> mIconCache;
     QMap<Cursor, QCursor> mCursorCache;
 
-    QTranslator *mQgisTranslator = nullptr;
-    QTranslator *mQtTranslator = nullptr;
-    QTranslator *mQtBaseTranslator = nullptr;
+    // QTranslator *mQgisTranslator = nullptr;
+    // QTranslator *mQtTranslator = nullptr;
+    // QTranslator *mQtBaseTranslator = nullptr;
+    QVector<QTranslator*> mTranslators;
 
     QgsDataItemProviderRegistry *mDataItemProviderRegistry = nullptr;
     QgsAuthManager *mAuthManager = nullptr;
@@ -1171,8 +1177,8 @@ class CORE_EXPORT QgsApplication : public QApplication
       QgsLocalizedDataPathRegistry *mLocalizedDataPathRegistry = nullptr;
       QgsNumericFormatRegistry *mNumericFormatRegistry = nullptr;
       QgsFieldFormatterRegistry *mFieldFormatterRegistry = nullptr;
-      QgsGpsConnectionRegistry *mGpsConnectionRegistry = nullptr;
-      QgsBabelFormatRegistry *mGpsBabelFormatRegistry = nullptr;
+      // QgsGpsConnectionRegistry *mGpsConnectionRegistry = nullptr;
+      // QgsBabelFormatRegistry *mGpsBabelFormatRegistry = nullptr;
       QgsNetworkContentFetcherRegistry *mNetworkContentFetcherRegistry = nullptr;
       QgsScaleBarRendererRegistry *mScaleBarRendererRegistry = nullptr;
       QgsLabelingEngineRuleRegistry *mLabelingEngineRuleRegistry = nullptr;

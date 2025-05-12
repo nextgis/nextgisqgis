@@ -35,6 +35,7 @@
 #include <QStandardPaths>
 #include <QScreen>
 #include <QSurfaceFormat>
+#include <QLibraryInfo>
 
 #include <cstdio>
 #include <cstdlib>
@@ -91,7 +92,7 @@ typedef SInt32 SRefCon;
 #include "qgsproject.h"
 #include "qgsrectangle.h"
 #include "qgslogger.h"
-#include "qgsdxfexport.h"
+// #include "qgsdxfexport.h"
 #include "qgsvectorlayer.h"
 #include "qgis_app.h"
 #ifdef HAVE_CRASH_HANDLER
@@ -112,6 +113,8 @@ typedef SInt32 SRefCon;
 #include "qgsopenclutils.h"
 #endif
 
+#include "ngcustomization.h"
+
 /**
  * Print QGIS version
  */
@@ -129,7 +132,8 @@ void usage( const QString &appName )
   QStringList msg;
 
   msg
-    << QStringLiteral( "QGIS is a user friendly Open Source Geographic Information System.\n" )
+    << QStringLiteral(VENDOR) << QStringLiteral(" QGIS - ") << QStringLiteral(VENDOR_VERSION) << QStringLiteral(" (") << QStringLiteral(VERSION) << QStringLiteral(")\n")
+    << QStringLiteral(VENDOR) << QStringLiteral(" QGIS is a user friendly Open Source Geographic Information System.\n")
     << QStringLiteral( "Usage: " ) << appName << QStringLiteral( " [OPTION] [FILE]\n" )
     << QStringLiteral( "  OPTION:\n" )
     << QStringLiteral( "\t[-v, --version]\tdisplay version information and exit\n" )
@@ -151,12 +155,12 @@ void usage( const QString &appName )
     << QStringLiteral( "\t[-F, --py-args arguments]\targuments for python. This arguments will be available for each python execution via 'sys.argv' included the file specified by '--code'. All arguments till '--' are passed to python and ignored by QGIS\n" )
     << QStringLiteral( "\t[-d, --defaultui]\tstart by resetting user ui settings to default\n" )
     << QStringLiteral( "\t[--hide-browser]\thide the browser widget\n" )
-    << QStringLiteral( "\t[--dxf-export filename.dxf]\temit dxf output of loaded datasets to given file\n" )
-    << QStringLiteral( "\t[--dxf-extent xmin,ymin,xmax,ymax]\tset extent to export to dxf\n" )
-    << QStringLiteral( "\t[--dxf-symbology-mode none|symbollayer|feature]\tsymbology mode for dxf output\n" )
-    << QStringLiteral( "\t[--dxf-scale-denom scale]\tscale for dxf output\n" )
-    << QStringLiteral( "\t[--dxf-encoding encoding]\tencoding to use for dxf output\n" )
-    << QStringLiteral( "\t[--dxf-map-theme maptheme]\tmap theme to use for dxf output\n" )
+    // << QStringLiteral( "\t[--dxf-export filename.dxf]\temit dxf output of loaded datasets to given file\n" )
+    // << QStringLiteral( "\t[--dxf-extent xmin,ymin,xmax,ymax]\tset extent to export to dxf\n" )
+    // << QStringLiteral( "\t[--dxf-symbology-mode none|symbollayer|feature]\tsymbology mode for dxf output\n" )
+    // << QStringLiteral( "\t[--dxf-scale-denom scale]\tscale for dxf output\n" )
+    // << QStringLiteral( "\t[--dxf-encoding encoding]\tencoding to use for dxf output\n" )
+    // << QStringLiteral( "\t[--dxf-map-theme maptheme]\tmap theme to use for dxf output\n" )
     << QStringLiteral( "\t[--take-screenshots output_path]\ttake screen shots for the user documentation\n" )
     << QStringLiteral( "\t[--screenshots-categories categories]\tspecify the categories of screenshot to be used (see QgsAppScreenShots::Categories).\n" )
     << QStringLiteral( "\t[--profile name]\tload a named profile from the users profiles folder.\n" )
@@ -225,6 +229,7 @@ void myPrint( const char *fmt, ... )
 
 static void dumpBacktrace( unsigned int depth )
 {
+  /*
   if ( depth == 0 )
     depth = 20;
 
@@ -299,8 +304,9 @@ static void dumpBacktrace( unsigned int depth )
 #elif defined( Q_OS_WIN )
   // TODO Replace with incoming QgsStackTrace
 #else
+  */
   Q_UNUSED( depth )
-#endif
+// #endif
 }
 
 #ifdef QGIS_CRASH
@@ -579,12 +585,14 @@ int main( int argc, char *argv[] )
   bool mySkipBadLayers = false;
   bool myCustomization = true;
 
+  /*
   QString dxfOutputFile;
   Qgis::FeatureSymbologyExport dxfSymbologyMode = Qgis::FeatureSymbologyExport::PerSymbolLayer;
   double dxfScale = 50000.0;
   QString dxfEncoding = QStringLiteral( "CP1252" );
   QString dxfMapTheme;
   QgsRectangle dxfExtent;
+  */
 
   bool takeScreenShots = false;
   QString screenShotsPath;
@@ -753,6 +761,7 @@ int main( int argc, char *argv[] )
         {
           myRestoreDefaultWindowState = true;
         }
+        /*
         else if ( arg == QLatin1String( "--dxf-export" ) )
         {
           dxfOutputFile = args[++i];
@@ -838,6 +847,7 @@ int main( int argc, char *argv[] )
         {
           dxfMapTheme = args[++i];
         }
+        */
         else if ( arg == QLatin1String( "--take-screenshots" ) )
         {
           takeScreenShots = true;
@@ -936,9 +946,12 @@ int main( int argc, char *argv[] )
     QgsCustomization::instance()->setEnabled( false );
   }
 
-  QCoreApplication::setOrganizationName( QgsApplication::QGIS_ORGANIZATION_NAME );
-  QCoreApplication::setOrganizationDomain( QgsApplication::QGIS_ORGANIZATION_DOMAIN );
-  QCoreApplication::setApplicationName( QgsApplication::QGIS_APPLICATION_NAME );
+  QgsDebugMsgLevel(QStringLiteral("Plugin path: ") + QLibraryInfo::location(QLibraryInfo::PluginsPath).toLocal8Bit().constData(), 2);
+  QgsDebugMsgLevel(QStringLiteral("Prefix: ") + QLibraryInfo::location(QLibraryInfo::PrefixPath).toLocal8Bit().constData(), 2);
+
+  QCoreApplication::setOrganizationName( QgsApplication::NGQGIS_ORGANIZATION_NAME );
+  QCoreApplication::setOrganizationDomain( QgsApplication::NGQGIS_ORGANIZATION_DOMAIN );
+  QCoreApplication::setApplicationName( QgsApplication::NGQGIS_APPLICATION_NAME );
   QCoreApplication::setAttribute( Qt::AA_DontShowIconsInMenus, false );
 
   // this is implicit in Qt 6 now
@@ -1034,6 +1047,18 @@ int main( int argc, char *argv[] )
   // But we need the Qt Application to be created to be able to display the
   // profile selection dialog if needed
   QgsApplication myApp( argc, argv, myUseGuiFlag, QString(), QStringLiteral( "desktop" ) );
+
+  // List font directory
+  QDir fontsDir(QgsApplication::fontsPath());
+  QStringList filters;
+  filters << "*.ttf" << "*.otf";
+  QStringList fontsList = fontsDir.entryList(filters,  QDir::Files);
+  // Add font to database
+  QStringList::Iterator it = fontsList.begin();
+  while (it != fontsList.end()) {
+      QFontDatabase::addApplicationFont( fontsDir.filePath(*it) );
+      ++it;
+  }
 
   // Preload the translation. The GUI is not yet initilaized, so only
   // the profile selection dialog will be translated with the system locale, or
@@ -1240,7 +1265,7 @@ int main( int argc, char *argv[] )
 #ifdef Q_OS_WIN
   // For non static builds on win (static builds are not supported)
   // we need to be sure we can find the qt image plugins.
-  QCoreApplication::addLibraryPath( QApplication::applicationDirPath() + QDir::separator() + "qtplugins" );
+  // QCoreApplication::addLibraryPath( QApplication::applicationDirPath() + QDir::separator() + "qtplugins" );
 #endif
 #if defined( Q_OS_UNIX )
   // Resulting libraryPaths has critical QGIS plugin paths first, then any Qt plugin paths, then
@@ -1347,10 +1372,10 @@ int main( int argc, char *argv[] )
   {
     // If the GDAL plugins are bundled with the application and GDAL_DRIVER_PATH
     // is not already defined, use the GDAL plugins in the application bundle.
-    QString gdalPlugins( QCoreApplication::applicationDirPath().append( "/lib/gdalplugins" ) );
-    if ( QFile::exists( gdalPlugins ) )
+    QString gdalPlugins( QCoreApplication::applicationDirPath().append( "/../../../../" + QString( QGIS_PLUGIN_SUBDIR ) ) );
+    if ( QFile::exists( gdalPlugins ) && !getenv( "GDAL_DRIVER_PATH" ) )
     {
-      setenv( "GDAL_DRIVER_PATH", gdalPlugins.toUtf8(), 1 );
+        setenv( "GDAL_DRIVER_PATH", gdalPlugins.toUtf8(), 1 );
     }
   }
 
@@ -1373,6 +1398,7 @@ int main( int argc, char *argv[] )
   }
 
   // Point PYTHONHOME to embedded interpreter if present in the bundle
+  /*
   if ( !getenv( "PYTHONHOME" ) )
   {
     if ( QFile::exists( QCoreApplication::applicationDirPath().append( "/bin/python3" ) ) )
@@ -1380,7 +1406,20 @@ int main( int argc, char *argv[] )
       setenv( "PYTHONHOME", QCoreApplication::applicationDirPath().toUtf8().constData(), 1 );
     }
   }
+  */
 #endif
+
+#ifdef Q_OS_WIN
+    putenv( QString("GDAL_DATA=" + QCoreApplication::applicationDirPath().append( "/../share/gdal" )).toUtf8().constData() );
+    putenv( QString("GDAL_DRIVER_PATH=" + QCoreApplication::applicationDirPath().append( "/../" ) + QString( QGIS_PLUGIN_SUBDIR ) ).toUtf8().constData() );
+    putenv(QString("PROJ_LIB=" + QCoreApplication::applicationDirPath().append( "/../share/proj" )).toUtf8().constData());
+    if(!getenv("SSL_CERT_FILE")) {
+        putenv(QString("SSL_CERT_FILE=" + QCoreApplication::applicationDirPath().append( "/../share/ssl/certs/cert.pem" )).toUtf8().constData());
+    }
+    if (!getenv("CURL_CA_BUNDLE")) {
+        putenv(QString("CURL_CA_BUNDLE=" + QCoreApplication::applicationDirPath().append( "/../share/ssl/certs/cert.pem" )).toUtf8().constData());
+    }
+#endif // Q_OS_WIN
 
   // custom environment variables
   QMap<QString, QString> systemEnvVars = QgsApplication::systemEnvVars();
@@ -1537,7 +1576,7 @@ int main( int argc, char *argv[] )
   // this should be done in QgsApplication::init() but it doesn't know the settings dir.
   QgsApplication::setMaxThreads( settings.value( QStringLiteral( "qgis/max_threads" ), -1 ).toInt() );
 
-  QgisApp *qgis = new QgisApp( mypSplash, myRestorePlugins, mySkipBadLayers, mySkipVersionCheck, rootProfileFolder, profileName ); // "QgisApp" used to find canonical instance
+  QgisApp *qgis = new NGQgisApp( mypSplash, myRestorePlugins, mySkipBadLayers, mySkipVersionCheck, rootProfileFolder, profileName ); // "QgisApp" used to find canonical instance
   qgis->setObjectName( QStringLiteral( "QgisApp" ) );
 
   QgsApplication::connect(
@@ -1674,7 +1713,7 @@ int main( int argc, char *argv[] )
 
     return 1;
   }
-
+  /*
   if ( !dxfOutputFile.isEmpty() )
   {
     qgis->hide();
@@ -1755,7 +1794,7 @@ int main( int argc, char *argv[] )
 
     return static_cast<int>( res );
   }
-
+  */
   // make sure we don't have a dirty blank project after launch
   QgsProject::instance()->setDirty( false );
 

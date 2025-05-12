@@ -845,20 +845,6 @@ item types.
 .. versionadded:: 3.16
 %End
 
-    static QgsGpsConnectionRegistry *gpsConnectionRegistry() /KeepReference/;
-%Docstring
-Returns the application's GPS connection registry, used for managing GPS
-connections.
-%End
-
-    static QgsBabelFormatRegistry *gpsBabelFormatRegistry() /KeepReference/;
-%Docstring
-Returns the application's GPSBabel format registry, used for managing
-GPSBabel formats.
-
-.. versionadded:: 3.22
-%End
-
     static QgsPluginLayerRegistry *pluginLayerRegistry() /KeepReference/;
 %Docstring
 Returns the application's plugin layer registry, used for managing
@@ -1026,13 +1012,6 @@ Returns registry of available project storage implementations.
 Returns registry of available layer metadata provider implementations.
 
 .. versionadded:: 3.28
-%End
-
-    static QgsExternalStorageRegistry *externalStorageRegistry() /KeepReference/;
-%Docstring
-Returns registry of available external storage implementations.
-
-.. versionadded:: 3.20
 %End
 
     static QgsProfileSourceRegistry *profileSourceRegistry() /KeepReference/;

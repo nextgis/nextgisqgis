@@ -58,7 +58,7 @@ class QgsPluginManagerInterface;
 class QgsRasterLayer;
 class QgsVectorLayer;
 class QgsVectorLayerTools;
-class QgsVectorTileLayer;
+// class QgsVectorTileLayer;
 class QgsPointCloudLayer;
 class QgsTiledSceneLayer;
 class QgsOptionsWidgetFactory;
@@ -67,7 +67,7 @@ class QgsStatusBar;
 class QgsMeshLayer;
 class QgsBrowserGuiModel;
 class QgsDevToolWidgetFactory;
-class QgsGpsConnection;
+// class QgsGpsConnection;
 class QgsApplicationExitBlockerInterface;
 class QgsAbstractMapToolHandler;
 class QgsUserProfileManager;
@@ -609,7 +609,7 @@ class GUI_EXPORT QgisInterface : public QObject
      * Returns the native Add Vector Tile Layer action.
      * \since QGIS 3.14
      */
-    virtual QAction *actionAddVectorTileLayer() = 0;
+    // virtual QAction *actionAddVectorTileLayer() = 0;
 
     /**
      * Returns the native Add Point Cloud Layer action.
@@ -890,7 +890,7 @@ class GUI_EXPORT QgisInterface : public QObject
      *
      * \since QGIS 3.14
      */
-    virtual QgsVectorTileLayer *addVectorTileLayer( const QString &url, const QString &baseName ) = 0;
+    // virtual QgsVectorTileLayer *addVectorTileLayer( const QString &url, const QString &baseName ) = 0;
 
     /**
      * Adds a point cloud layer to the current project, using the specified data provider and source \a url.
@@ -1481,7 +1481,7 @@ class GUI_EXPORT QgisInterface : public QObject
      *
      * \since QGIS 3.16
      */
-    virtual void setGpsPanelConnection( QgsGpsConnection *connection SIP_TRANSFER ) = 0;
+    // virtual void setGpsPanelConnection( QgsGpsConnection *connection ) = 0;
 
     /**
      * Sets whether changes to the active layer should be temporarily

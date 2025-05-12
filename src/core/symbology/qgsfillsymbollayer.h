@@ -166,6 +166,7 @@ class CORE_EXPORT QgsSimpleFillSymbolLayer : public QgsFillSymbolLayer
 
     double estimateMaxBleed( const QgsRenderContext &context ) const override;
 
+    /*
     double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
     QColor dxfColor( QgsSymbolRenderContext &context ) const override;
     double dxfAngle( QgsSymbolRenderContext &context ) const override;
@@ -173,6 +174,7 @@ class CORE_EXPORT QgsSimpleFillSymbolLayer : public QgsFillSymbolLayer
     Qt::PenStyle dxfPenStyle() const override;
     QColor dxfBrushColor( QgsSymbolRenderContext &context ) const override;
     Qt::BrushStyle dxfBrushStyle() const override;
+    */
     QImage toTiledPatternImage( ) const override;
 
   protected:
@@ -815,8 +817,8 @@ class CORE_EXPORT QgsImageFillSymbolLayer: public QgsFillSymbolLayer SIP_ABSTRAC
     Qgis::RenderUnit outputUnit() const override;
     void setMapUnitScale( const QgsMapUnitScale &scale ) override;
     QgsMapUnitScale mapUnitScale() const override;
-    double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
-    Qt::PenStyle dxfPenStyle() const override;
+    // double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
+    // Qt::PenStyle dxfPenStyle() const override;
     QVariantMap properties() const override;
 
   protected:
@@ -1216,7 +1218,7 @@ class CORE_EXPORT QgsSVGFillSymbolLayer: public QgsImageFillSymbolLayer
     QgsSymbol *subSymbol() override;
     bool setSubSymbol( QgsSymbol *symbol SIP_TRANSFER ) override;
     double estimateMaxBleed( const QgsRenderContext &context ) const override;
-    QColor dxfColor( QgsSymbolRenderContext &context ) const override;
+    // QColor dxfColor( QgsSymbolRenderContext &context ) const override;
     QSet<QString> usedAttributes( const QgsRenderContext &context ) const override;
     bool hasDataDefinedProperties() const override;
 

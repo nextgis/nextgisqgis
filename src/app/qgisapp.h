@@ -94,7 +94,7 @@ class QgsUndoWidget;
 class QgsUserInputWidget;
 class QgsVectorLayer;
 class QgsVectorLayerTools;
-class QgsVectorTileLayer;
+// class QgsVectorTileLayer;
 class QgsWelcomePage;
 class QgsOptionsWidgetFactory;
 class QgsStatusBar;
@@ -104,7 +104,7 @@ class QgsGeometryValidationModel;
 class QgsUserProfileManager;
 class QgsHandleBadLayersHandler;
 class QgsNetworkAccessManager;
-class QgsGpsConnection;
+// class QgsGpsConnection;
 class QgsApplicationExitBlockerInterface;
 class QgsAbstractMapToolHandler;
 class QgsAppMapTools;
@@ -120,10 +120,10 @@ class QAuthenticator;
 
 class QgsBrowserDockWidget;
 class QgsAdvancedDigitizingDockWidget;
-class QgsGpsInformationWidget;
-class QgsGpsCanvasBridge;
-class QgsAppGpsDigitizing;
-class QgsAppGpsLogging;
+// class QgsGpsInformationWidget;
+// class QgsGpsCanvasBridge;
+// class QgsAppGpsDigitizing;
+// class QgsAppGpsLogging;
 class QgsStatisticalSummaryDockWidget;
 class QgsMapCanvasTracer;
 class QgsTemporalControllerDockWidget;
@@ -207,7 +207,7 @@ class QgsGeoreferencerMainWindow;
  * \class QgisApp
  * \brief Main window for the QGIS application
  */
-class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
+class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
 {
     Q_OBJECT
   public:
@@ -590,9 +590,9 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
 #endif
     QAction *actionAddWmsLayer() { return mActionAddWmsLayer; }
     QAction *actionAddXyzLayer() { return mActionAddXyzLayer; }
-    QAction *actionAddVectorTileLayer() { return mActionAddVectorTileLayer; }
+    // QAction *actionAddVectorTileLayer() { return mActionAddVectorTileLayer; }
     QAction *actionAddPointCloudLayer() { return mActionAddPointCloudLayer; }
-    QAction *actionAddGpsLayer() { return mActionAddGpsLayer; }
+    // QAction *actionAddGpsLayer() { return mActionAddGpsLayer; }
     QAction *actionAddWcsLayer() { return mActionAddWcsLayer; }
 #ifdef HAVE_SPATIALITE
     QAction *actionAddWfsLayer() { return mActionAddWfsLayer; }
@@ -909,12 +909,12 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
      * Any existing GPS connection used by the widget will be disconnect and replaced with this connection. The connection
      * is automatically registered within the QgsApplication::gpsConnectionRegistry().
      */
-    void setGpsPanelConnection( QgsGpsConnection *connection );
+    // void setGpsPanelConnection( QgsGpsConnection *connection );
 
     /**
      * Returns the GPS settings menu;
      */
-    QgsAppGpsSettingsMenu *gpsSettingsMenu();
+    // QgsAppGpsSettingsMenu *gpsSettingsMenu();
 
     //! Returns the application vertex editor
     QgsVertexEditor *vertexEditor() { return mVertexEditorDock; }
@@ -1447,7 +1447,7 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     //! QGIS Sponsors
     void sponsors();
     //! About QGIS
-    void about();
+    virtual void about();
 
     //! Add a vector layer defined by uri, layer name, data source uri
     void addSelectedVectorLayer( const QString &uri, const QString &layerName, const QString &provider );
@@ -1652,9 +1652,9 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     //! Save project as
     void fileSaveAs();
     //! Export project in dxf format
-    void dxfExport();
+    // void dxfExport();
     //! Import layers in dwg format
-    void dwgImport();
+    // void dwgImport();
 
     /**
      * Open the project file corresponding to the
@@ -1775,7 +1775,7 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     //! Open a url in the users configured browser
     void openURL( QString url, bool useQgisDocDirectory = true );
     //! Check qgis version against the qgis version server
-    void checkQgisVersion();
+    virtual void checkQgisVersion();
     //!Invoke the custom projection dialog
     void customProjection();
     //! configure shortcuts
@@ -2195,7 +2195,7 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
      */
     void activeLayerChanged( QgsMapLayer *layer );
 
-  private:
+  protected:
     void createPreviewImage( const QString &path, const QIcon &overlayIcon = QIcon() );
     void startProfile( const QString &name );
     void endProfile();
@@ -2275,7 +2275,7 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     void createActionGroups();
     void createMenus();
     void createProfileMenu();
-    void createToolBars();
+    virtual void createToolBars();
     void createStatusBar();
     void setupConnections();
     void initLayerTreeView();
@@ -2605,6 +2605,7 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     QgsDecorationOverlay *mDecorationOverlay = nullptr;
 
     //! Persistent GPS toolbox
+    /*
     QgsAppGpsConnection *mGpsConnection = nullptr;
     QgsAppGpsSettingsMenu *mGpsSettingsMenu = nullptr;
     QgsGpsInformationWidget *mpGpsWidget = nullptr;
@@ -2612,6 +2613,7 @@ class APP_EXPORT QgisApp : public QMainWindow, private Ui::MainWindow
     QgsGpsCanvasBridge *mGpsCanvasBridge = nullptr;
     QgsAppGpsDigitizing *mGpsDigitizing = nullptr;
     QgsAppGpsLogging *mGpsLogging = nullptr;
+    */
 
     QgsMessageBarItem *mLastMapToolMessage = nullptr;
 
