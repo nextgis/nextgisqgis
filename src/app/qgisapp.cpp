@@ -12358,6 +12358,7 @@ QMap<QString, QString> QgisApp::optionsPagesMap()
     sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "Locator" ), QStringLiteral( "mOptionsLocatorSettings" ) );
     sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "Acceleration" ), QStringLiteral( "mOptionsPageAcceleration" ) );
     sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "Advanced" ), QCoreApplication::translate( "QgsOptionsBase", "Advanced" ) );
+    sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "NextGIS" ), QCoreApplication::translate( "QgsOptionsBase", "NextGIS" ) );
   } );
 
   QMap<QString, QString> pages = sOptionsPagesMap;
