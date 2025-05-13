@@ -19,7 +19,6 @@
 //qt includes
 #include <QBitmap>
 #include <QDir>
-#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QFont>
@@ -1037,11 +1036,11 @@ int main( int argc, char *argv[] )
   QStringList filters;
   filters << "*.ttf" << "*.otf";
   QStringList fontsList = fontsDir.entryList(filters,  QDir::Files);
-  // Add fonts to database
-  QDirIterator it(fontsDir.path(), filters, QDir::Files, QDirIterator::IteratorFlag::Subdirectories);
-  while (it.hasNext()) {
-      QString fontPath = it.next();
-      QFontDatabase::addApplicationFont( fontPath );
+  // Add font to database
+  QStringList::Iterator it = fontsList.begin();
+  while (it != fontsList.end()) {
+      QFontDatabase::addApplicationFont( fontsDir.filePath(*it) );
+      ++it;
   }
 
   // Preload the translation. The GUI is not yet initilaized, so only
