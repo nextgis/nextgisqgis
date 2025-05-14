@@ -14,10 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmaskpaintdevice.h"
-
-
-Q_GUI_EXPORT extern int qt_defaultDpiX();
-Q_GUI_EXPORT extern int qt_defaultDpiY();
+#include "qgspainting.h"
 
 ///@cond PRIVATE
 
@@ -34,18 +31,17 @@ QPainterPath QgsMaskPaintEngine::maskPainterPath() const
 
 void QgsMaskPaintEngine::drawPath( const QPainterPath &path )
 {
+  QPainterPath realPath = path;
   if ( mUsePathStroker )
   {
     QPen pen = painter()->pen();
     QPainterPathStroker stroker( pen );
     QPainterPath strokedPath = stroker.createStroke( path );
-    strokedPath = painter()->combinedTransform().map( strokedPath );
-    mMaskPainterPath.addPath( strokedPath );
+    realPath = strokedPath;
   }
-  else
-  {
-    mMaskPainterPath.addPath( path );
-  }
+
+  const QTransform transform = painter()->combinedTransform();
+  mMaskPainterPath.addPath( transform.map( realPath ) );
 }
 
 void QgsMaskPaintEngine::drawPolygon( const QPointF *points, int numPoints, QPaintEngine::PolygonDrawMode mode )
@@ -56,7 +52,9 @@ void QgsMaskPaintEngine::drawPolygon( const QPointF *points, int numPoints, QPai
   polygon.reserve( numPoints );
   for ( int i = 0; i < numPoints; ++i )
     polygon << points[i];
-  mMaskPainterPath.addPolygon( polygon );
+
+  const QTransform transform = painter()->transform();
+  mMaskPainterPath.addPolygon( transform.map( polygon ) );
 }
 
 ///@endcond
@@ -75,28 +73,27 @@ int QgsMaskPaintDevice::metric( PaintDeviceMetric m ) const
 {
   // copy/paste from qpicture.cpp
   int val;
-  QRectF brect = mPaintEngine->maskPainterPath().boundingRect();
   switch ( m )
   {
     case PdmWidth:
-      val = brect.width();
+      val = static_cast< int >( mPaintEngine->maskPainterPath().boundingRect().width() );
       break;
     case PdmHeight:
-      val = brect.height();
+      val = static_cast< int >( mPaintEngine->maskPainterPath().boundingRect().height() );
       break;
     case PdmWidthMM:
-      val = int( 25.4 / qt_defaultDpiX() * brect.width() );
+      val = static_cast< int >( 25.4 / QgsPainting::qtDefaultDpiX() * mPaintEngine->maskPainterPath().boundingRect().width() );
       break;
     case PdmHeightMM:
-      val = int( 25.4 / qt_defaultDpiY() * brect.height() );
+      val = static_cast< int >( 25.4 / QgsPainting::qtDefaultDpiY() * mPaintEngine->maskPainterPath().boundingRect().height() );
       break;
     case PdmDpiX:
     case PdmPhysicalDpiX:
-      val = qt_defaultDpiX();
+      val = QgsPainting::qtDefaultDpiX();
       break;
     case PdmDpiY:
     case PdmPhysicalDpiY:
-      val = qt_defaultDpiY();
+      val = QgsPainting::qtDefaultDpiY();
       break;
     case PdmNumColors:
       val = 16777216;
@@ -108,7 +105,7 @@ int QgsMaskPaintDevice::metric( PaintDeviceMetric m ) const
       val = 1;
       break;
     case PdmDevicePixelRatioScaled:
-      val = 1 * QPaintDevice::devicePixelRatioFScale();
+      val = static_cast< int >( 1 * QPaintDevice::devicePixelRatioFScale() );
       break;
     default:
       val = 0;
