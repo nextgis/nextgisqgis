@@ -1,6 +1,6 @@
---- a/src/core/processing/qgsprocessingutils.h	2025-04-25 19:26:53.863233198 +0300
-+++ b/src/core/processing/qgsprocessingutils.h	2025-04-02 18:34:56.534461817 +0300
-@@ -35,10 +35,9 @@
+--- a/src/core/processing/qgsprocessingutils.h	2025-05-15 15:26:35.445156611 +0300
++++ b/src/core/processing/qgsprocessingutils.h	2025-05-15 14:47:00.745293638 +0300
+@@ -35,10 +35,10 @@
  class QgsProcessingFeedback;
  class QgsProcessingFeatureSource;
  class QgsProcessingAlgorithm;
@@ -9,10 +9,11 @@
  class QgsPointCloudLayer;
  class QgsAnnotationLayer;
 -class QgsVectorTileLayer;
++// class QgsVectorTileLayer;
+ class QgsTiledSceneLayer;
  
  #include <QString>
- #include <QVariant>
-@@ -185,7 +184,7 @@
+@@ -194,7 +194,7 @@
       *
       * \since QGIS 3.32
       */
@@ -20,8 +21,8 @@
 +    // static QList<QgsVectorTileLayer *> compatibleVectorTileLayers( QgsProject *project, bool sort = true );
  
      /**
-      * Returns a list of map layers from a \a project which are compatible with the processing
-@@ -574,7 +573,7 @@
+      * Returns a list of tiled scene layers from a \a project which are compatible with the processing
+@@ -614,7 +614,7 @@
      static bool canUseLayer( const QgsRasterLayer *layer );
      static bool canUseLayer( const QgsMeshLayer *layer );
      static bool canUseLayer( const QgsPluginLayer *layer );
@@ -29,4 +30,10 @@
 +    // static bool canUseLayer( const QgsVectorTileLayer *layer );
      static bool canUseLayer( const QgsPointCloudLayer *layer );
      static bool canUseLayer( const QgsAnnotationLayer *layer );
-     static bool canUseLayer( const QgsVectorLayer *layer,
+     static bool canUseLayer( const QgsTiledSceneLayer *layer );
+@@ -811,5 +811,3 @@
+ #endif
+ 
+ #endif // QGSPROCESSINGUTILS_H
+-
+-

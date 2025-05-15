@@ -1,0 +1,44 @@
+--- a/src/gui/maptools/qgsmaptoolidentify.cpp	2025-05-14 10:31:56.132285333 +0300
++++ b/src/gui/maptools/qgsmaptoolidentify.cpp	2025-05-15 14:15:38.310586646 +0300
+@@ -35,10 +35,12 @@
+ #include "qgsvectordataprovider.h"
+ #include "qgsvectorlayer.h"
+ #include "qgsvectorlayertemporalproperties.h"
++/*
+ #include "qgsvectortilelayer.h"
+ #include "qgsvectortileloader.h"
+ #include "qgsvectortilemvtdecoder.h"
+ #include "qgsvectortileutils.h"
++*/
+ #include "qgsproject.h"
+ #include "qgsrenderer.h"
+ #include "qgstiles.h"
+@@ -240,10 +242,12 @@
+       break;
+ 
+     case Qgis::LayerType::VectorTile:
++      /*
+       if ( layerType.testFlag( VectorTileLayer ) )
+       {
+         return identifyVectorTileLayer( results, qobject_cast<QgsVectorTileLayer *>( layer ), geometry, identifyContext );
+       }
++      */
+       break;
+ 
+     case Qgis::LayerType::PointCloud:
+@@ -404,6 +408,7 @@
+   return true;
+ }
+ 
++/*
+ bool QgsMapToolIdentify::identifyVectorTileLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsVectorTileLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext )
+ {
+   Q_UNUSED( identifyContext )
+@@ -532,6 +537,7 @@
+ 
+   return featureCount > 0;
+ }
++*/
+ 
+ bool QgsMapToolIdentify::identifyPointCloudLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsPointCloudLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext )
+ {

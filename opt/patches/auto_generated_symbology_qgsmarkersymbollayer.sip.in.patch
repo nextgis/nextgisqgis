@@ -1,6 +1,6 @@
---- a/python/core/auto_generated/symbology/qgsmarkersymbollayer.sip.in	2023-08-21 19:30:48.705620174 +0300
-+++ b/python/core/auto_generated/symbology/qgsmarkersymbollayer.sip.in	2023-10-04 10:12:16.846065914 +0300
-@@ -228,8 +228,6 @@
+--- a/python/core/auto_generated/symbology/qgsmarkersymbollayer.sip.in	2025-05-15 15:26:35.314752161 +0300
++++ b/python/core/auto_generated/symbology/qgsmarkersymbollayer.sip.in	2025-05-15 14:47:00.324898916 +0300
+@@ -241,8 +241,6 @@
  
      virtual QString ogrFeatureStyle( double mmScaleFactor, double mapUnitScaleFactor ) const;
  
@@ -9,7 +9,7 @@
      virtual void setOutputUnit( Qgis::RenderUnit unit );
  
      virtual Qgis::RenderUnit outputUnit() const;
-@@ -717,9 +715,6 @@
+@@ -733,9 +731,6 @@
      virtual QgsMapUnitScale mapUnitScale() const;
  
  

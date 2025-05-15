@@ -1,9 +1,9 @@
---- a/src/gui/processing/qgsprocessingguiregistry.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/gui/processing/qgsprocessingguiregistry.cpp	2022-04-25 18:33:18.000000000 +0300
-@@ -18,10 +18,10 @@
- #include "qgsprocessingguiregistry.h"
+--- a/src/gui/processing/qgsprocessingguiregistry.cpp	2025-05-15 15:26:35.534668062 +0300
++++ b/src/gui/processing/qgsprocessingguiregistry.cpp	2025-05-15 14:47:00.922299811 +0300
+@@ -19,10 +19,10 @@
  #include "qgsprocessingalgorithmconfigurationwidget.h"
  #include "qgsprocessingconfigurationwidgets.h"
+ #include "qgsprocessingalignrasterlayerswidgetwrapper.h"
 -#include "qgsprocessingvectortilewriterlayerswidgetwrapper.h"
 +// #include "qgsprocessingvectortilewriterlayerswidgetwrapper.h"
  #include "qgsprocessingfieldmapwidgetwrapper.h"
@@ -13,7 +13,7 @@
  #include "qgsprocessingwidgetwrapperimpl.h"
  #include "qgsprocessingtininputlayerswidget.h"
  #include "qgsprocessingmeshdatasetwidget.h"
-@@ -67,7 +67,7 @@
+@@ -72,7 +72,7 @@
    addParameterWidgetFactory( new QgsProcessingMeshLayerWidgetWrapper() );
    addParameterWidgetFactory( new QgsProcessingBandWidgetWrapper() );
    addParameterWidgetFactory( new QgsProcessingMultipleLayerWidgetWrapper() );
@@ -22,7 +22,7 @@
    addParameterWidgetFactory( new QgsProcessingFeatureSinkWidgetWrapper() );
    addParameterWidgetFactory( new QgsProcessingVectorDestinationWidgetWrapper() );
    addParameterWidgetFactory( new QgsProcessingRasterDestinationWidgetWrapper() );
-@@ -76,7 +76,7 @@
+@@ -81,7 +81,7 @@
    addParameterWidgetFactory( new QgsProcessingFieldMapWidgetWrapper() );
    addParameterWidgetFactory( new QgsProcessingAggregateWidgetWrapper() );
    addParameterWidgetFactory( new QgsProcessingTinInputLayersWidgetWrapper() );

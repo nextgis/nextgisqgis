@@ -1,17 +1,16 @@
---- a/python/gui/auto_generated/qgsgui.sip.in	2022-02-18 15:06:10.000000000 +0300
-+++ b/python/gui/auto_generated/qgsgui.sip.in	2022-04-30 21:30:06.707097400 +0300
-@@ -160,14 +160,6 @@
- .. versionadded:: 3.18
+--- a/python/gui/auto_generated/qgsgui.sip.in	2025-05-15 15:26:35.330833247 +0300
++++ b/python/gui/auto_generated/qgsgui.sip.in	2025-05-15 14:47:00.379280874 +0300
+@@ -186,13 +186,6 @@
  %End
  
--
+ 
 -    static QgsHistoryProviderRegistry *historyProviderRegistry() /KeepReference/;
 -%Docstring
--Returns the global history provider registry, used for tracking history providers.
+-Returns the global history provider registry, used for tracking history
+-providers.
 -
 -.. versionadded:: 3.24
 -%End
--
+ 
      static QgsSettingsEditorWidgetRegistry *settingsEditorWidgetRegistry() /KeepReference/;
  %Docstring
- Returns the registry of settings editors.

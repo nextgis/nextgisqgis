@@ -1,8 +1,8 @@
---- a/python/core/core_auto.sip	2023-08-21 19:39:45.559058885 +0300
-+++ b/python/core/core_auto.sip	2023-10-30 17:16:52.000000000 +0300
-@@ -126,7 +126,6 @@
+--- a/python/core/core_auto.sip	2025-05-15 15:26:35.325376929 +0300
++++ b/python/core/core_auto.sip	2025-05-15 14:47:00.337279410 +0300
+@@ -128,7 +128,6 @@
+ %Include auto_generated/qgsmimedatautils.sip
  %Include auto_generated/qgsmultirenderchecker.sip
- %Include auto_generated/qgsnullpainterdevice.sip
  %Include auto_generated/qgsobjectcustomproperties.sip
 -%Include auto_generated/qgsofflineediting.sip
  %Include auto_generated/qgsogcutils.sip
@@ -17,24 +17,24 @@
  %Include auto_generated/qgssourcecache.sip
  %Include auto_generated/qgssqliteutils.sip
  %Include auto_generated/qgssqlstatement.sip
-@@ -275,7 +272,6 @@
- %Include auto_generated/diagram/qgspiediagram.sip
+@@ -282,7 +279,6 @@
  %Include auto_generated/diagram/qgsstackedbardiagram.sip
+ %Include auto_generated/diagram/qgsstackeddiagram.sip
  %Include auto_generated/diagram/qgstextdiagram.sip
 -%Include auto_generated/dxf/qgsdxfexport.sip
  %Include auto_generated/editform/qgseditformconfig.sip
  %Include auto_generated/editform/qgsattributeeditoraction.sip
  %Include auto_generated/editform/qgsattributeeditorelement.sip
-@@ -294,8 +290,6 @@
- %Include auto_generated/elevation/qgsprofilerequest.sip
+@@ -302,8 +298,6 @@
  %Include auto_generated/elevation/qgsprofilesnapping.sip
+ %Include auto_generated/elevation/qgsprofilesourceregistry.sip
  %Include auto_generated/elevation/qgsterrainprovider.sip
 -%Include auto_generated/externalstorage/qgsexternalstorage.sip
 -%Include auto_generated/externalstorage/qgsexternalstorageregistry.sip
  %Include auto_generated/effects/qgsblureffect.sip
  %Include auto_generated/effects/qgscoloreffect.sip
  %Include auto_generated/effects/qgseffectstack.sip
-@@ -323,8 +317,6 @@
+@@ -331,8 +325,6 @@
  %Include auto_generated/geocoding/qgsgeocoder.sip
  %Include auto_generated/geocoding/qgsgeocodercontext.sip
  %Include auto_generated/geocoding/qgsgeocoderresult.sip
@@ -43,7 +43,7 @@
  %Include auto_generated/geometry/qgsabstractgeometry.sip
  %Include auto_generated/geometry/qgsbox3d.sip
  %Include auto_generated/geometry/qgscircle.sip
-@@ -357,17 +349,6 @@
+@@ -370,17 +362,6 @@
  %Include auto_generated/geometry/qgswkbptr.sip
  %Include auto_generated/geometry/qgswkbtypes.sip
  %Include auto_generated/geometry/qgsray3d.sip
@@ -61,7 +61,7 @@
  %Include auto_generated/labeling/qgscalloutposition.sip
  %Include auto_generated/labeling/qgslabeling.sip
  %Include auto_generated/labeling/qgslabelingenginesettings.sip
-@@ -551,13 +532,11 @@
+@@ -577,13 +558,11 @@
  %Include auto_generated/processing/qgsprocessingfeedback.sip
  %Include auto_generated/processing/qgsprocessingoutputs.sip
  %Include auto_generated/processing/qgsprocessingparameteraggregate.sip
@@ -72,19 +72,19 @@
  %Include auto_generated/processing/qgsprocessingparametertininputlayers.sip
  %Include auto_generated/processing/qgsprocessingparametertype.sip
 -%Include auto_generated/processing/qgsprocessingparametervectortilewriterlayers.sip
+ %Include auto_generated/processing/qgsprocessingparameteralignrasterlayers.sip
  %Include auto_generated/processing/qgsprocessingprovider.sip
  %Include auto_generated/processing/qgsprocessingregistry.sip
- %Include auto_generated/processing/qgsprocessingutils.sip
-@@ -589,8 +568,6 @@
+@@ -616,8 +595,6 @@
  %Include auto_generated/providers/qgsprovidersublayermodel.sip
  %Include auto_generated/providers/qgsprovidersublayertask.sip
  %Include auto_generated/providers/qgsproviderutils.sip
 -%Include auto_generated/providers/arcgis/qgsarcgisportalutils.sip
 -%Include auto_generated/providers/arcgis/qgsarcgisrestutils.sip
  %Include auto_generated/providers/memory/qgsmemoryproviderutils.sip
+ %Include auto_generated/providers/sensorthings/qgssensorthingsutils.sip
  %Include auto_generated/raster/qgsrasterattributetable.sip
- %Include auto_generated/raster/qgsbilinearrasterresampler.sip
-@@ -744,14 +721,3 @@
+@@ -791,18 +768,6 @@
  %Include auto_generated/vector/qgsvectorlayerundocommand.sip
  %Include auto_generated/vector/qgsvectorlayerundopassthroughcommand.sip
  %Include auto_generated/vector/qgsvectorlayerutils.sip
@@ -95,7 +95,13 @@
 -%Include auto_generated/vectortile/qgsvectortilelayer.sip
 -%Include auto_generated/vectortile/qgsvectortilematrixset.sip
 -%Include auto_generated/vectortile/qgsvectortilerenderer.sip
+-%Include auto_generated/vectortile/qgsvectortileutils.sip
 -%Include auto_generated/vectortile/qgsvectortilewriter.sip
 -%Include auto_generated/vectortile/qgsvtpktiles.sip
 -%Include auto_generated/gps/qgsqtlocationconnection.sip
+ %If ( HAVE_WEBENGINE_SIP )
+ %Include auto_generated/web/qgswebenginepage.sip
+-%End
 -%Include auto_generated/gps/qgsgpsconnectionregistry.sip
++%End
+\ No newline at end of file

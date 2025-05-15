@@ -1,6 +1,6 @@
---- a/src/gui/qgsqueryresultwidget.cpp	2023-08-21 19:30:50.846335869 +0300
-+++ b/src/gui/qgsqueryresultwidget.cpp	2023-10-24 10:55:22.000000000 +0300
-@@ -22,8 +22,8 @@
+--- a/src/gui/qgsqueryresultwidget.cpp	2025-05-15 15:26:35.564368326 +0300
++++ b/src/gui/qgsqueryresultwidget.cpp	2025-05-15 14:47:00.982301903 +0300
+@@ -23,8 +23,8 @@
  #include "qgsvectorlayer.h"
  #include "qgsapplication.h"
  #include "qgsgui.h"
@@ -10,49 +10,35 @@
 +// #include "qgshistoryentry.h"
  #include "qgsproviderregistry.h"
  #include "qgsprovidermetadata.h"
- 
-@@ -175,14 +175,14 @@
-     const QString sql { mSqlEditor->text( ) };
+ #include "qgscodeeditorwidget.h"
+@@ -181,12 +181,14 @@
+     const QString sql { mSqlEditor->selectedText().isEmpty() ? mSqlEditor->text() : mSqlEditor->selectedText() };
  
      bool ok = false;
--    mCurrentHistoryEntryId = QgsGui::historyProviderRegistry()->addEntry( QStringLiteral( "dbquery" ),
--                             QVariantMap
--    {
--      { QStringLiteral( "query" ), sql },
--      { QStringLiteral( "provider" ), mConnection->providerKey() },
--      { QStringLiteral( "connection" ), mConnection->uri() },
--    },
--    ok );
-+//    mCurrentHistoryEntryId = QgsGui::historyProviderRegistry()->addEntry( QStringLiteral( "dbquery" ),
-+//                             QVariantMap
-+//    {
-+//      { QStringLiteral( "query" ), sql },
-+//      { QStringLiteral( "provider" ), mConnection->providerKey() },
-+//      { QStringLiteral( "connection" ), mConnection->uri() },
-+//    },
-+//    ok );
++    /*
+     mCurrentHistoryEntryId = QgsGui::historyProviderRegistry()->addEntry( QStringLiteral( "dbquery" ), QVariantMap {
+                                                                                                          { QStringLiteral( "query" ), sql },
+                                                                                                          { QStringLiteral( "provider" ), mConnection->providerKey() },
+                                                                                                          { QStringLiteral( "connection" ), mConnection->uri() },
+                                                                                                        },
+                                                                           ok );
++    */
  
      mWasCanceled = false;
      mFeedback = std::make_unique<QgsFeedback>();
-@@ -403,14 +403,14 @@
+@@ -395,6 +397,7 @@
+       mQueryResultsTableView->show();
  
-       connect( mModel.get(), &QgsQueryResultModel::fetchingComplete, mStopButton, [ = ]
-       {
--        bool ok = false;
--        const QgsHistoryEntry currentHistoryEntry = QgsGui::historyProviderRegistry()->entry( mCurrentHistoryEntryId, ok );
--        QVariantMap entryDetails = currentHistoryEntry.entry;
--        entryDetails.insert( QStringLiteral( "rows" ), mActualRowCount );
--        entryDetails.insert( QStringLiteral( "time" ), mQueryResultWatcher.result().queryExecutionTime() );
-+//        bool ok = false;
-+//        const QgsHistoryEntry currentHistoryEntry = QgsGui::historyProviderRegistry()->entry( mCurrentHistoryEntryId, ok );
-+//        QVariantMap entryDetails = currentHistoryEntry.entry;
-+//        entryDetails.insert( QStringLiteral( "rows" ), mActualRowCount );
-+//        entryDetails.insert( QStringLiteral( "time" ), mQueryResultWatcher.result().queryExecutionTime() );
+       connect( mModel.get(), &QgsQueryResultModel::fetchingComplete, mStopButton, [=] {
++        /*
+         bool ok = false;
+         const QgsHistoryEntry currentHistoryEntry = QgsGui::historyProviderRegistry()->entry( mCurrentHistoryEntryId, ok );
+         QVariantMap entryDetails = currentHistoryEntry.entry;
+@@ -402,6 +405,7 @@
+         entryDetails.insert( QStringLiteral( "time" ), mQueryResultWatcher.result().queryExecutionTime() );
  
--        QgsGui::historyProviderRegistry()->updateEntry( mCurrentHistoryEntryId,
--            entryDetails );
-+//        QgsGui::historyProviderRegistry()->updateEntry( mCurrentHistoryEntryId,
-+//            entryDetails );
+         QgsGui::historyProviderRegistry()->updateEntry( mCurrentHistoryEntryId, entryDetails );
++        */
          mProgressBar->hide();
          mStopButton->setEnabled( false );
        } );

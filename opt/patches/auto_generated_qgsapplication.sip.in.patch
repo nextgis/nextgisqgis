@@ -1,27 +1,27 @@
---- a/python/core/auto_generated/qgsapplication.sip.in	2025-04-25 19:26:53.224219171 +0300
-+++ b/python/core/auto_generated/qgsapplication.sip.in	2025-04-02 18:34:55.735224267 +0300
-@@ -831,20 +831,6 @@
+--- a/python/core/auto_generated/qgsapplication.sip.in	2025-05-15 15:26:35.298339113 +0300
++++ b/python/core/auto_generated/qgsapplication.sip.in	2025-05-15 14:47:00.295277945 +0300
+@@ -845,20 +845,6 @@
  .. versionadded:: 3.16
  %End
  
 -    static QgsGpsConnectionRegistry *gpsConnectionRegistry() /KeepReference/;
 -%Docstring
--Returns the application's GPS connection registry, used for managing GPS connections.
--
--.. versionadded:: 3.0
+-Returns the application's GPS connection registry, used for managing GPS
+-connections.
 -%End
 -
 -    static QgsBabelFormatRegistry *gpsBabelFormatRegistry() /KeepReference/;
 -%Docstring
--Returns the application's GPSBabel format registry, used for managing GPSBabel formats.
+-Returns the application's GPSBabel format registry, used for managing
+-GPSBabel formats.
 -
 -.. versionadded:: 3.22
 -%End
 -
      static QgsPluginLayerRegistry *pluginLayerRegistry() /KeepReference/;
  %Docstring
- Returns the application's plugin layer registry, used for managing plugin layer types.
-@@ -1008,13 +994,6 @@
+ Returns the application's plugin layer registry, used for managing
+@@ -1028,13 +1014,6 @@
  .. versionadded:: 3.28
  %End
  
@@ -32,6 +32,6 @@
 -.. versionadded:: 3.20
 -%End
 -
-     static QgsLocalizedDataPathRegistry *localizedDataPathRegistry() /KeepReference/;
+     static QgsProfileSourceRegistry *profileSourceRegistry() /KeepReference/;
  %Docstring
- Returns the registry of data repositories
+ Returns registry of available profile source implementations.

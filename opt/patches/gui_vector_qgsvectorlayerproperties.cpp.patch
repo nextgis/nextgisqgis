@@ -1,13 +1,13 @@
---- a/src/gui/vector/qgsvectorlayerproperties.cpp	2025-04-25 19:26:54.260241913 +0300
-+++ b/src/gui/vector/qgsvectorlayerproperties.cpp	2025-04-02 18:34:56.756520899 +0300
-@@ -461,6 +461,10 @@
- 
+--- a/src/gui/vector/qgsvectorlayerproperties.cpp	2025-05-15 15:26:35.570890910 +0300
++++ b/src/gui/vector/qgsvectorlayerproperties.cpp	2025-05-15 14:47:01.016303089 +0300
+@@ -499,6 +499,10 @@
  
    optionsStackedWidget_CurrentChanged( mOptStackedWidget->currentIndex() );
-+
+ 
 +  auto qgisServerItems = mOptionsListWidget->findItems("QGIS Server", Qt::MatchExactly);
 +  for (auto item : qgisServerItems)
 +    item->setHidden(true);
++
+   initialize();
  }
  
- void QgsVectorLayerProperties::toggleEditing()

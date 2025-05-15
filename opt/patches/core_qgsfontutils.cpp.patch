@@ -1,39 +1,11 @@
---- a/src/core/qgsfontutils.cpp	2025-04-25 19:26:53.926234581 +0300
-+++ b/src/core/qgsfontutils.cpp	2025-04-02 18:34:56.567676220 +0300
-@@ -282,21 +282,21 @@
+--- a/src/core/qgsfontutils.cpp	2025-05-15 15:26:35.467372788 +0300
++++ b/src/core/qgsfontutils.cpp	2025-05-15 14:47:00.777294754 +0300
+@@ -284,7 +284,7 @@
      else
      {
        bool loaded = false;
 -      if ( QgsApplication::isRunningFromBuildDir() )
--      {
--        // workaround for bugs with Qt 4.8.5 (other versions?) on Mac 10.9, where fonts
--        // from qrc resources load but fail to work and default font is substituted [LS]:
--        //   https://bugreports.qt.io/browse/QTBUG-30917
--        //   https://bugreports.qt.io/browse/QTBUG-32789
--        const QString fontPath( QgsApplication::buildSourcePath() + "/tests/testdata/font/" + fontpath );
--        const int fontID = QFontDatabase::addApplicationFont( fontPath );
--        loaded = ( fontID != -1 );
--        fontsLoaded = ( fontsLoaded || loaded );
--        QgsDebugMsgLevel( QStringLiteral( "Test font '%1 %2' %3 from filesystem [%4]" )
--                          .arg( fontFamily, fontstyle, loaded ? "loaded" : "FAILED to load", fontPath ), 2 );
--        QgsDebugMsgLevel( QStringLiteral( "font families in %1: %2" ).arg( fontID ).arg( QFontDatabase().applicationFontFamilies( fontID ).join( "," ) ), 2 );
--      }
--      else
-+    //   if ( QgsApplication::isRunningFromBuildDir() )
-+    //   {
-+    //     // workaround for bugs with Qt 4.8.5 (other versions?) on Mac 10.9, where fonts
-+    //     // from qrc resources load but fail to work and default font is substituted [LS]:
-+    //     //   https://bugreports.qt.io/browse/QTBUG-30917
-+    //     //   https://bugreports.qt.io/browse/QTBUG-32789
-+    //     const QString fontPath( QgsApplication::buildSourcePath() + "/tests/testdata/font/" + fontpath );
-+    //     const int fontID = QFontDatabase::addApplicationFont( fontPath );
-+    //     loaded = ( fontID != -1 );
-+    //     fontsLoaded = ( fontsLoaded || loaded );
-+    //     QgsDebugMsgLevel( QStringLiteral( "Test font '%1 %2' %3 from filesystem [%4]" )
-+    //                       .arg( fontFamily, fontstyle, loaded ? "loaded" : "FAILED to load", fontPath ), 2 );
-+    //     QgsDebugMsgLevel( QStringLiteral( "font families in %1: %2" ).arg( fontID ).arg( QFontDatabase().applicationFontFamilies( fontID ).join( "," ) ), 2 );
-+    //   }
-+    //   else
++      if ( false && QgsApplication::isRunningFromBuildDir() )
        {
-         QFile fontResource( ":/testdata/font/" + fontpath );
-         if ( fontResource.open( QIODevice::ReadOnly ) )
+         // workaround for bugs with Qt 4.8.5 (other versions?) on Mac 10.9, where fonts
+         // from qrc resources load but fail to work and default font is substituted [LS]:

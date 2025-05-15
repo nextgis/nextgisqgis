@@ -1,68 +1,70 @@
---- a/python/core/auto_generated/processing/qgsprocessingutils.sip.in	2025-04-25 19:26:53.217219018 +0300
-+++ b/python/core/auto_generated/processing/qgsprocessingutils.sip.in	2025-04-02 18:34:55.731034209 +0300
-@@ -43,8 +43,6 @@
+--- a/python/core/auto_generated/processing/qgsprocessingutils.sip.in	2025-05-15 15:26:35.293443102 +0300
++++ b/python/core/auto_generated/processing/qgsprocessingutils.sip.in	2025-05-15 14:47:00.291277805 +0300
+@@ -44,8 +44,6 @@
  
  .. seealso:: :py:func:`compatibleAnnotationLayers`
  
 -.. seealso:: :py:func:`compatibleVectorTileLayers`
 -
- .. seealso:: :py:func:`compatibleLayers`
- %End
+ .. seealso:: :py:func:`compatibleTiledSceneLayers`
  
-@@ -73,8 +71,6 @@
+ .. seealso:: :py:func:`compatibleLayers`
+@@ -78,8 +76,6 @@
  
  .. seealso:: :py:func:`compatibleAnnotationLayers`
  
 -.. seealso:: :py:func:`compatibleVectorTileLayers`
 -
- .. seealso:: :py:func:`compatibleLayers`
- %End
+ .. seealso:: :py:func:`compatibleTiledSceneLayers`
  
-@@ -96,8 +92,6 @@
+ .. seealso:: :py:func:`compatibleLayers`
+@@ -103,8 +99,6 @@
  
  .. seealso:: :py:func:`compatibleAnnotationLayers`
  
 -.. seealso:: :py:func:`compatibleVectorTileLayers`
 -
- .. seealso:: :py:func:`compatibleLayers`
+ .. seealso:: :py:func:`compatibleTiledSceneLayers`
  
- .. versionadded:: 3.6
-@@ -121,8 +115,6 @@
+ .. seealso:: :py:func:`compatibleLayers`
+@@ -130,8 +124,6 @@
  
  .. seealso:: :py:func:`compatibleAnnotationLayers`
  
 -.. seealso:: :py:func:`compatibleVectorTileLayers`
 -
- .. seealso:: :py:func:`compatibleLayers`
+ .. seealso:: :py:func:`compatibleTiledSceneLayers`
  
- .. versionadded:: 3.22
-@@ -146,8 +138,6 @@
+ .. seealso:: :py:func:`compatibleLayers`
+@@ -157,8 +149,6 @@
  
  .. seealso:: :py:func:`compatibleAnnotationLayers`
  
 -.. seealso:: :py:func:`compatibleVectorTileLayers`
 -
- .. seealso:: :py:func:`compatibleLayers`
+ .. seealso:: :py:func:`compatibleTiledSceneLayers`
  
- .. versionadded:: 3.22
-@@ -171,38 +161,11 @@
+ .. seealso:: :py:func:`compatibleLayers`
+@@ -184,8 +174,6 @@
  
  .. seealso:: :py:func:`compatiblePointCloudLayers`
  
 -.. seealso:: :py:func:`compatibleVectorTileLayers`
 -
- .. seealso:: :py:func:`compatibleLayers`
+ .. seealso:: :py:func:`compatibleTiledSceneLayers`
  
+ .. seealso:: :py:func:`compatibleLayers`
+@@ -193,33 +181,6 @@
  .. versionadded:: 3.22
  %End
  
 -    static QList<QgsVectorTileLayer *> compatibleVectorTileLayers( QgsProject *project, bool sort = true );
 -%Docstring
--Returns a list of vector tile layers from a ``project`` which are compatible with the processing
--framework.
+-Returns a list of vector tile layers from a ``project`` which are
+-compatible with the processing framework.
 -
--If the ``sort`` argument is ``True`` then the layers will be sorted by their :py:func:`QgsMapLayer.name()`
--value.
+-If the ``sort`` argument is ``True`` then the layers will be sorted by
+-their :py:func:`QgsMapLayer.name()` value.
 -
 -.. seealso:: :py:func:`compatibleRasterLayers`
 -
@@ -76,23 +78,17 @@
 -
 -.. seealso:: :py:func:`compatibleAnnotationLayers`
 -
+-.. seealso:: :py:func:`compatibleTiledSceneLayers`
+-
 -.. seealso:: :py:func:`compatibleLayers`
 -
 -.. versionadded:: 3.32
 -%End
 -
-     static QList< QgsMapLayer * > compatibleLayers( QgsProject *project, bool sort = true );
+     static QList<QgsTiledSceneLayer *> compatibleTiledSceneLayers( QgsProject *project, bool sort = true );
  %Docstring
- Returns a list of map layers from a ``project`` which are compatible with the processing
-@@ -246,7 +209,6 @@
-       Mesh,
-       PointCloud,
-       Annotation,
--      VectorTile,
-     };
- 
-     static QgsMapLayer *mapLayerFromString( const QString &string, QgsProcessingContext &context, bool allowLoadingNewLayers = true, QgsProcessingUtils::LayerHint typeHint = QgsProcessingUtils::LayerHint::UnknownType, QgsProcessing::LayerOptionsFlags flags = QgsProcessing::LayerOptionsFlags() );
-@@ -504,8 +466,6 @@
+ Returns a list of tiled scene layers from a ``project`` which are
+@@ -589,8 +550,6 @@
  
  .. seealso:: :py:func:`defaultPointCloudExtension`
  
@@ -101,7 +97,7 @@
  .. versionadded:: 3.10
  %End
  
-@@ -521,8 +481,6 @@
+@@ -606,8 +565,6 @@
  
  .. seealso:: :py:func:`defaultPointCloudExtension`
  
@@ -110,7 +106,7 @@
  .. versionadded:: 3.10
  %End
  
-@@ -537,27 +495,9 @@
+@@ -622,27 +579,9 @@
  
  .. seealso:: :py:func:`defaultRasterExtension`
  
@@ -121,8 +117,8 @@
  
 -    static QString defaultVectorTileExtension();
 -%Docstring
--Returns the default vector tile extension to use, in the absence of all other constraints (e.g.
--provider based support for extensions).
+-Returns the default vector tile extension to use, in the absence of all
+-other constraints (e.g. provider based support for extensions).
 -
 -This method returns a fallback value of "mbtiles".
 -
@@ -137,4 +133,4 @@
 -
      static QVariantMap removePointerValuesFromMap( const QVariantMap &map );
  %Docstring
- Removes any raw pointer values from an input ``map``, replacing them with
+ Removes any raw pointer values from an input ``map``, replacing them

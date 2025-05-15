@@ -1,25 +1,20 @@
---- a/src/app/qgsidentifyresultsdialog.h	2025-04-25 19:26:53.695229510 +0300
-+++ b/src/app/qgsidentifyresultsdialog.h	2025-04-02 18:34:56.430693499 +0300
-@@ -164,11 +164,11 @@
+--- a/src/app/qgsidentifyresultsdialog.h	2025-05-15 15:26:35.388021626 +0300
++++ b/src/app/qgsidentifyresultsdialog.h	2025-05-15 14:47:00.616289140 +0300
+@@ -176,7 +176,7 @@
       * Adds results from vector tile layer
       * \since QGIS 3.14
       */
--    void addFeature( QgsVectorTileLayer *layer,
-+    /*void addFeature( QgsVectorTileLayer *layer,
-                      const QString &label,
-                      const QgsFields &fields,
-                      const QgsFeature &feature,
--                     const QMap< QString, QString > &derivedAttributes );
-+                     const QMap< QString, QString > &derivedAttributes );*/
+-    void addFeature( QgsVectorTileLayer *layer, const QString &label, const QgsFields &fields, const QgsFeature &feature, const QMap<QString, QString> &derivedAttributes );
++    // void addFeature( QgsVectorTileLayer *layer, const QString &label, const QgsFields &fields, const QgsFeature &feature, const QMap<QString, QString> &derivedAttributes );
  
      /**
       * Adds results from point cloud layer
-@@ -307,7 +307,7 @@
-     QgsVectorLayer *vectorLayer( QTreeWidgetItem *item );
+@@ -326,7 +326,7 @@
+     static QgsVectorLayer *vectorLayer( QTreeWidgetItem *item );
      QgsRasterLayer *rasterLayer( QTreeWidgetItem *item );
      QgsMeshLayer *meshLayer( QTreeWidgetItem *item );
 -    QgsVectorTileLayer *vectorTileLayer( QTreeWidgetItem *item );
 +    // QgsVectorTileLayer *vectorTileLayer( QTreeWidgetItem *item );
      QgsPointCloudLayer *pointCloudLayer( QTreeWidgetItem *item );
+     QgsTiledSceneLayer *tiledSceneLayer( QTreeWidgetItem *item );
      QTreeWidgetItem *featureItem( QTreeWidgetItem *item );
-     QTreeWidgetItem *layerItem( QTreeWidgetItem *item );

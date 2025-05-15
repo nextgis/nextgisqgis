@@ -1,13 +1,13 @@
---- a/src/gui/raster/qgsrasterlayerproperties.cpp	2025-04-25 19:26:54.235241364 +0300
-+++ b/src/gui/raster/qgsrasterlayerproperties.cpp	2025-04-02 18:34:56.744845384 +0300
-@@ -584,6 +584,10 @@
-   mOptsPage_Metadata->setProperty( "helpPage", QStringLiteral( "working_with_raster/raster_properties.html#metadata-properties" ) );
+--- a/src/gui/raster/qgsrasterlayerproperties.cpp	2025-05-15 15:26:35.567575206 +0300
++++ b/src/gui/raster/qgsrasterlayerproperties.cpp	2025-05-15 14:47:00.997302427 +0300
+@@ -573,6 +573,10 @@
    mOptsPage_Legend->setProperty( "helpPage", QStringLiteral( "working_with_raster/raster_properties.html#legend-properties" ) );
    mOptsPage_Server->setProperty( "helpPage", QStringLiteral( "working_with_raster/raster_properties.html#server-properties" ) );
-+
+ 
 +  auto qgisServerItems = mOptionsListWidget->findItems("QGIS Server", Qt::MatchExactly);
 +  for (auto item : qgisServerItems)
 +    item->setHidden(true);
++
+   initialize();
  }
  
- void QgsRasterLayerProperties::addPropertiesPageFactory( const QgsMapLayerConfigWidgetFactory *factory )

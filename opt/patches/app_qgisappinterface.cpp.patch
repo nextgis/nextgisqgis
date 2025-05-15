@@ -1,21 +1,19 @@
---- a/src/app/qgisappinterface.cpp	2025-04-25 19:26:53.684229269 +0300
-+++ b/src/app/qgisappinterface.cpp	2025-04-02 18:34:56.423365411 +0300
-@@ -159,12 +159,12 @@
- {
+--- a/src/app/qgisappinterface.cpp	2025-05-15 15:26:35.380171194 +0300
++++ b/src/app/qgisappinterface.cpp	2025-05-15 14:47:00.606288791 +0300
+@@ -155,10 +155,12 @@
    return qgis->addMeshLayer( url, baseName, providerKey );
  }
--
+ 
 +/*
  QgsVectorTileLayer *QgisAppInterface::addVectorTileLayer( const QString &url, const QString &baseName )
  {
-   return qgis->addVectorTileLayer( url, baseName );
+   return qgis->addLayer<QgsVectorTileLayer>( url, baseName, QString() );
  }
--
 +*/
+ 
  QgsPointCloudLayer *QgisAppInterface::addPointCloudLayer( const QString &url, const QString &baseName, const QString &providerKey )
  {
-   return qgis->addPointCloudLayer( url, baseName, providerKey );
-@@ -813,7 +813,7 @@
+@@ -823,7 +825,7 @@
  QAction *QgisAppInterface::actionAddPgLayer() { return qgis->actionAddPgLayer(); }
  QAction *QgisAppInterface::actionAddWmsLayer() { return qgis->actionAddWmsLayer(); }
  QAction *QgisAppInterface::actionAddXyzLayer() { return qgis->actionAddXyzLayer(); }
@@ -24,18 +22,16 @@
  QAction *QgisAppInterface::actionAddPointCloudLayer() { return qgis->actionAddPointCloudLayer(); }
  QAction *QgisAppInterface::actionAddAfsLayer() { return qgis->actionAddAfsLayer(); }
  QAction *QgisAppInterface::actionAddAmsLayer() { return qgis->actionAddAfsLayer(); }
-@@ -977,12 +977,12 @@
- {
+@@ -987,10 +989,12 @@
    return qgis->layerTreeInsertionPoint();
  }
--
+ 
 +/*
  void QgisAppInterface::setGpsPanelConnection( QgsGpsConnection *connection )
  {
    qgis->setGpsPanelConnection( connection );
  }
--
 +*/
+ 
  QList<QgsMapDecoration *> QgisAppInterface::activeDecorations()
  {
-   return qgis->activeDecorations();

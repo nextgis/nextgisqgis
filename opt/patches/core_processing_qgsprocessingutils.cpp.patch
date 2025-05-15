@@ -1,6 +1,6 @@
---- a/src/core/processing/qgsprocessingutils.cpp	2023-08-21 19:39:45.707048388 +0300
-+++ b/src/core/processing/qgsprocessingutils.cpp	2023-10-04 14:34:32.102912793 +0300
-@@ -33,7 +33,7 @@
+--- a/src/core/processing/qgsprocessingutils.cpp	2025-05-15 15:26:35.442287168 +0300
++++ b/src/core/processing/qgsprocessingutils.cpp	2025-05-15 14:47:00.745293638 +0300
+@@ -34,7 +34,7 @@
  #include "qgspluginlayer.h"
  #include "qgsreferencedgeometry.h"
  #include "qgsrasterfilewriter.h"
@@ -8,78 +8,68 @@
 +// #include "qgsvectortilelayer.h"
  #include "qgspointcloudlayer.h"
  #include "qgsannotationlayer.h"
- #include <QRegularExpression>
-@@ -101,10 +101,10 @@
+ #include "qgstiledscenelayer.h"
+@@ -103,10 +103,12 @@
    return res;
  }
  
--QList<QgsVectorTileLayer *> QgsProcessingUtils::compatibleVectorTileLayers( QgsProject *project, bool sort )
--{
--  return compatibleMapLayers< QgsVectorTileLayer >( project, sort );
--}
-+// QList<QgsVectorTileLayer *> QgsProcessingUtils::compatibleVectorTileLayers( QgsProject *project, bool sort )
-+// {
-+//   return compatibleMapLayers< QgsVectorTileLayer >( project, sort );
-+// }
- 
- template<typename T> QList<T *> QgsProcessingUtils::compatibleMapLayers( QgsProject *project, bool sort )
++/*
+ QList<QgsVectorTileLayer *> QgsProcessingUtils::compatibleVectorTileLayers( QgsProject *project, bool sort )
  {
-@@ -157,9 +157,9 @@
+   return compatibleMapLayers< QgsVectorTileLayer >( project, sort );
+ }
++*/
+ 
+ QList<QgsTiledSceneLayer *> QgsProcessingUtils::compatibleTiledSceneLayers( QgsProject *project, bool sort )
+ {
+@@ -164,9 +166,11 @@
      layers << al;
    layers << project->mainAnnotationLayer();
  
--  const auto vectorTileLayers = compatibleMapLayers< QgsVectorTileLayer >( project, false );
--  for ( QgsVectorTileLayer *vtl : vectorTileLayers )
--    layers << vtl;
-+//  const auto vectorTileLayers = compatibleMapLayers< QgsVectorTileLayer >( project, false );
-+//  for ( QgsVectorTileLayer *vtl : vectorTileLayers )
-+//    layers << vtl;
++  /*
+   const auto vectorTileLayers = compatibleMapLayers< QgsVectorTileLayer >( project, false );
+   for ( QgsVectorTileLayer *vtl : vectorTileLayers )
+     layers << vtl;
++  */
  
-   const auto pluginLayers = compatibleMapLayers< QgsPluginLayer >( project, false );
-   for ( QgsPluginLayer *pl : pluginLayers )
-@@ -214,8 +214,8 @@
-         return true;
+   const auto tiledSceneLayers = compatibleMapLayers< QgsTiledSceneLayer >( project, false );
+   for ( QgsTiledSceneLayer *tml : tiledSceneLayers )
+@@ -226,7 +230,8 @@
        case Qgis::LayerType::Mesh:
          return !canUseLayer( qobject_cast< QgsMeshLayer * >( layer ) );
--      case Qgis::LayerType::VectorTile:
+       case Qgis::LayerType::VectorTile:
 -        return !canUseLayer( qobject_cast< QgsVectorTileLayer * >( layer ) );
-+    //   case Qgis::LayerType::VectorTile:
-+    //     return !canUseLayer( qobject_cast< QgsVectorTileLayer * >( layer ) );
++        // return !canUseLayer( qobject_cast< QgsVectorTileLayer * >( layer ) );
++        return true;
+       case Qgis::LayerType::TiledScene:
+         return !canUseLayer( qobject_cast< QgsTiledSceneLayer * >( layer ) );
        case Qgis::LayerType::PointCloud:
-         return !canUseLayer( qobject_cast< QgsPointCloudLayer * >( layer ) );
-       case Qgis::LayerType::Annotation:
-@@ -397,13 +397,13 @@
+@@ -476,6 +481,7 @@
      dsUri.setParam( "type", "mbtiles" );
      dsUri.setParam( "url", uri );
  
--    std::unique_ptr< QgsVectorTileLayer > tileLayer;
--    tileLayer = std::make_unique< QgsVectorTileLayer >( dsUri.encodedUri(), name );
-+//    std::unique_ptr< QgsVectorTileLayer > tileLayer;
-+//    tileLayer = std::make_unique< QgsVectorTileLayer >( dsUri.encodedUri(), name );
++    /*
+     std::unique_ptr< QgsVectorTileLayer > tileLayer;
+     tileLayer = std::make_unique< QgsVectorTileLayer >( dsUri.encodedUri(), name );
  
--    if ( tileLayer->isValid() )
--    {
--      return tileLayer.release();
--    }
-+//    if ( tileLayer->isValid() )
-+//    {
-+//      return tileLayer.release();
-+//    }
+@@ -483,6 +489,7 @@
+     {
+       return tileLayer.release();
+     }
++    */
    }
-   return nullptr;
- }
-@@ -594,10 +594,10 @@
+   if ( candidateTypes.empty() || candidateTypes.contains( Qgis::LayerType::TiledScene ) )
+   {
+@@ -704,10 +711,12 @@
    return layer && layer->isValid();
  }
  
--bool QgsProcessingUtils::canUseLayer( const QgsVectorTileLayer *layer )
--{
--  return layer && layer->isValid();
--}
-+// bool QgsProcessingUtils::canUseLayer( const QgsVectorTileLayer *layer )
-+// {
-+//   return layer && layer->isValid();
-+// }
++/*
+ bool QgsProcessingUtils::canUseLayer( const QgsVectorTileLayer *layer )
+ {
+   return layer && layer->isValid();
+ }
++*/
  
  bool QgsProcessingUtils::canUseLayer( const QgsRasterLayer *layer )
  {

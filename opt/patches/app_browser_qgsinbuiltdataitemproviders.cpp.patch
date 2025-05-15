@@ -1,6 +1,6 @@
---- a/src/app/browser/qgsinbuiltdataitemproviders.cpp	2023-08-21 19:39:45.643052926 +0300
-+++ b/src/app/browser/qgsinbuiltdataitemproviders.cpp	2023-10-24 12:35:54.000000000 +0300
-@@ -61,8 +61,8 @@
+--- a/src/app/browser/qgsinbuiltdataitemproviders.cpp	2025-05-15 15:26:35.349144193 +0300
++++ b/src/app/browser/qgsinbuiltdataitemproviders.cpp	2025-05-15 14:47:00.569287500 +0300
+@@ -64,8 +64,8 @@
  #include "qgsrelationshipsitem.h"
  #include "qgsprovidersqlquerybuilder.h"
  #include "qgsdbrelationshipwidget.h"
@@ -11,18 +11,18 @@
  
  #include <QFileInfo>
  #include <QMenu>
-@@ -1646,10 +1646,10 @@
+@@ -1648,10 +1648,10 @@
  
  QgsDatabaseItemGuiProvider::QgsDatabaseItemGuiProvider()
  {
--  if ( QgsDatabaseQueryHistoryProvider *historyProvider = qobject_cast< QgsDatabaseQueryHistoryProvider * >( QgsGui::historyProviderRegistry()->providerById( QStringLiteral( "dbquery" ) ) ) )
+-  if ( QgsDatabaseQueryHistoryProvider *historyProvider = qobject_cast<QgsDatabaseQueryHistoryProvider *>( QgsGui::historyProviderRegistry()->providerById( QStringLiteral( "dbquery" ) ) ) )
 -  {
 -    connect( historyProvider, &QgsDatabaseQueryHistoryProvider::openSqlDialog, this, &QgsDatabaseItemGuiProvider::openSqlDialogGeneric );
 -  }
-+//  if ( QgsDatabaseQueryHistoryProvider *historyProvider = qobject_cast< QgsDatabaseQueryHistoryProvider * >( QgsGui::historyProviderRegistry()->providerById( QStringLiteral( "dbquery" ) ) ) )
-+//  {
-+//    connect( historyProvider, &QgsDatabaseQueryHistoryProvider::openSqlDialog, this, &QgsDatabaseItemGuiProvider::openSqlDialogGeneric );
-+//  }
++  // if ( QgsDatabaseQueryHistoryProvider *historyProvider = qobject_cast<QgsDatabaseQueryHistoryProvider *>( QgsGui::historyProviderRegistry()->providerById( QStringLiteral( "dbquery" ) ) ) )
++  // {
++  //   connect( historyProvider, &QgsDatabaseQueryHistoryProvider::openSqlDialog, this, &QgsDatabaseItemGuiProvider::openSqlDialogGeneric );
++  // }
  }
  
  QString QgsDatabaseItemGuiProvider::name()

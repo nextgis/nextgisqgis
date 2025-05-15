@@ -1,15 +1,15 @@
---- a/src/core/symbology/qgslinesymbollayer.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/symbology/qgslinesymbollayer.cpp	2022-04-25 18:33:16.000000000 +0300
-@@ -16,7 +16,7 @@
+--- a/src/core/symbology/qgslinesymbollayer.cpp	2025-05-15 15:26:35.502699336 +0300
++++ b/src/core/symbology/qgslinesymbollayer.cpp	2025-05-15 14:47:00.826428895 +0300
+@@ -15,7 +15,7 @@
+ 
  #include "qgslinesymbollayer.h"
- #include "qgscurve.h"
  #include "qgscurvepolygon.h"
 -#include "qgsdxfexport.h"
 +// #include "qgsdxfexport.h"
  #include "qgssymbollayerutils.h"
  #include "qgsrendercontext.h"
  #include "qgslogger.h"
-@@ -1072,7 +1072,7 @@
+@@ -1088,7 +1088,7 @@
             context.convertToPainterUnits( std::fabs( mOffset ), mOffsetUnit, mOffsetMapUnitScale );
    }
  }
@@ -18,7 +18,7 @@
  QVector<qreal> QgsSimpleLineSymbolLayer::dxfCustomDashPattern( Qgis::RenderUnit &unit ) const
  {
    unit = mCustomDashPatternUnit;
-@@ -1110,7 +1110,7 @@
+@@ -1126,7 +1126,7 @@
    }
    return mColor;
  }
@@ -27,7 +27,7 @@
  bool QgsSimpleLineSymbolLayer::canCauseArtifactsBetweenAdjacentTiles() const
  {
    return mPenStyle != Qt::SolidLine || mUseCustomDashPattern;
-@@ -1135,7 +1135,7 @@
+@@ -1151,7 +1151,7 @@
  {
    mPatternCartographicTweakOnSharpCorners = enabled;
  }
@@ -36,7 +36,7 @@
  double QgsSimpleLineSymbolLayer::dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
  {
    double offset = mOffset;
-@@ -1153,7 +1153,7 @@
+@@ -1169,7 +1169,7 @@
    }
    return -offset; //direction seems to be inverse to symbology offset
  }

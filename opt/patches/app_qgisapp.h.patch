@@ -1,5 +1,5 @@
---- a/src/app/qgisapp.h	2023-08-21 19:39:45.663051508 +0300
-+++ b/src/app/qgisapp.h	2023-10-24 13:07:36.000000000 +0300
+--- a/src/app/qgisapp.h	2025-05-15 15:26:35.377566338 +0300
++++ b/src/app/qgisapp.h	2025-05-15 14:47:00.606288791 +0300
 @@ -94,7 +94,7 @@
  class QgsUserInputWidget;
  class QgsVectorLayer;
@@ -33,15 +33,7 @@
  class QgsStatisticalSummaryDockWidget;
  class QgsMapCanvasTracer;
  class QgsTemporalControllerDockWidget;
-@@ -176,6 +176,7 @@
- #include "qgsrasterminmaxorigin.h"
- #include "qgslayertreeregistrybridge.h"
- #include "qgsmaplayeractionregistry.h"
-+
- #include "qgsoptionswidgetfactory.h"
- #include "qgsattributetablefiltermodel.h"
- #include "qgsmasterlayoutinterface.h"
-@@ -204,7 +205,7 @@
+@@ -207,7 +207,7 @@
   * \class QgisApp
   * \brief Main window for the QGIS application
   */
@@ -50,15 +42,7 @@
  {
      Q_OBJECT
    public:
-@@ -221,7 +222,6 @@
-     QgisApp( QgisApp const & ) = delete;
-     QgisApp &operator=( QgisApp const & ) = delete;
- 
--
-     /**
-      * Returns and adjusted uri for the layer based on current and available CRS as well as the last selected image format
-      * \since QGIS 2.8
-@@ -578,9 +578,9 @@
+@@ -590,9 +590,9 @@
  #endif
      QAction *actionAddWmsLayer() { return mActionAddWmsLayer; }
      QAction *actionAddXyzLayer() { return mActionAddXyzLayer; }
@@ -70,7 +54,7 @@
      QAction *actionAddWcsLayer() { return mActionAddWcsLayer; }
  #ifdef HAVE_SPATIALITE
      QAction *actionAddWfsLayer() { return mActionAddWfsLayer; }
-@@ -898,12 +898,12 @@
+@@ -909,12 +909,12 @@
       * Any existing GPS connection used by the widget will be disconnect and replaced with this connection. The connection
       * is automatically registered within the QgsApplication::gpsConnectionRegistry().
       */
@@ -85,42 +69,7 @@
  
      //! Returns the application vertex editor
      QgsVertexEditor *vertexEditor() { return mVertexEditorDock; }
-@@ -1238,7 +1238,7 @@
-      * in the Map Legend so it should be formed in a meaningful way.
-      * \since QGIS 3.14
-      */
--    QgsVectorTileLayer *addVectorTileLayer( const QString &url, const QString &baseName );
-+    // QgsVectorTileLayer *addVectorTileLayer( const QString &url, const QString &baseName );
- 
-     /**
-      * Adds a vector tile layer directly without prompting user for location
-@@ -1364,6 +1364,12 @@
-     bool checkUnsavedLayerEdits();
- 
-     /**
-+     * Check to see if the current project file is dirty and if so, prompt the user to save it.
-+     * \returns TRUE if saved or discarded, FALSE if canceled
-+     */
-+    bool saveDirty();
-+
-+    /**
-      * Checks for unsaved changes in raster attribute tables and prompts the user to save
-      * or discard these changes for each raster attribute table.
-      *
-@@ -1388,12 +1394,6 @@
-      */
-     bool checkMemoryLayers();
- 
--    /**
--     * Check to see if the current project file is dirty and if so, prompt the user to save it.
--     * \returns TRUE if saved or discarded, FALSE if canceled
--     */
--    bool saveDirty();
--
-   public slots:
- 
-     /**
-@@ -1440,7 +1440,7 @@
+@@ -1447,7 +1447,7 @@
      //! QGIS Sponsors
      void sponsors();
      //! About QGIS
@@ -129,7 +78,7 @@
  
      //! Add a vector layer defined by uri, layer name, data source uri
      void addSelectedVectorLayer( const QString &uri, const QString &layerName, const QString &provider );
-@@ -1646,9 +1646,9 @@
+@@ -1652,9 +1652,9 @@
      //! Save project as
      void fileSaveAs();
      //! Export project in dxf format
@@ -141,7 +90,7 @@
  
      /**
       * Open the project file corresponding to the
-@@ -1771,7 +1771,7 @@
+@@ -1775,7 +1775,7 @@
      //! Open a url in the users configured browser
      void openURL( QString url, bool useQgisDocDirectory = true );
      //! Check qgis version against the qgis version server
@@ -150,41 +99,16 @@
      //!Invoke the custom projection dialog
      void customProjection();
      //! configure shortcuts
-@@ -2026,9 +2026,6 @@
-     void renderDecorationItems( QPainter *p );
-     void projectReadDecorationItems();
- 
--    //! clear out any stuff from project
--    void closeProject();
--
-     //! trust and load project macros
-     void enableProjectMacros();
- 
-@@ -2182,13 +2179,21 @@
+@@ -2195,7 +2195,7 @@
       */
      void activeLayerChanged( QgsMapLayer *layer );
  
 -  private:
-+protected:
-+    //! clear out any stuff from project
-+    void closeProject();
-+    
-+    //! list of recently opened/saved project files
-+    QList<QgsRecentProjectItemsModel::RecentProjectData> mRecentProjects;
- 
--    void createPreviewImage( const QString &path, const QIcon &overlayIcon = QIcon() );
++  protected:
+     void createPreviewImage( const QString &path, const QIcon &overlayIcon = QIcon() );
      void startProfile( const QString &name );
      void endProfile();
-     void functionProfile( void ( QgisApp::*fnc )(), QgisApp *instance, const QString &name );
- 
-+  private:
-+
-+    void createPreviewImage( const QString &path, const QIcon &overlayIcon = QIcon() );
-+
-     void showProgress( int progress, int totalSteps );
- 
-     /**
-@@ -2270,7 +2275,7 @@
+@@ -2275,7 +2275,7 @@
      void createActionGroups();
      void createMenus();
      void createProfileMenu();
@@ -193,33 +117,19 @@
      void createStatusBar();
      void setupConnections();
      void initLayerTreeView();
-@@ -2527,8 +2532,6 @@
-     QgisAppInterface *mQgisInterface = nullptr;
- 
-     QSplashScreen *mSplash = nullptr;
--    //! list of recently opened/saved project files
--    QList<QgsRecentProjectItemsModel::RecentProjectData> mRecentProjects;
- 
-     //! Currently open layout designer dialogs
-     QSet<QgsLayoutDesignerDialog *> mLayoutDesignerDialogs;
-@@ -2606,13 +2609,13 @@
-     QList<QgsDecorationItem *> mDecorationItems;
+@@ -2605,6 +2605,7 @@
+     QgsDecorationOverlay *mDecorationOverlay = nullptr;
  
      //! Persistent GPS toolbox
--    QgsAppGpsConnection *mGpsConnection = nullptr;
--    QgsAppGpsSettingsMenu *mGpsSettingsMenu = nullptr;
--    QgsGpsInformationWidget *mpGpsWidget = nullptr;
--    QgsGpsToolBar *mGpsToolBar = nullptr;
--    QgsGpsCanvasBridge *mGpsCanvasBridge = nullptr;
--    QgsAppGpsDigitizing *mGpsDigitizing = nullptr;
--    QgsAppGpsLogging *mGpsLogging = nullptr;
-+    // QgsAppGpsConnection *mGpsConnection = nullptr;
-+    // QgsAppGpsSettingsMenu *mGpsSettingsMenu = nullptr;
-+    // QgsGpsInformationWidget *mpGpsWidget = nullptr;
-+    // QgsGpsToolBar *mGpsToolBar = nullptr;
-+    // QgsGpsCanvasBridge *mGpsCanvasBridge = nullptr;
-+    // QgsAppGpsDigitizing *mGpsDigitizing = nullptr;
-+    // QgsAppGpsLogging *mGpsLogging = nullptr;
++    /*
+     QgsAppGpsConnection *mGpsConnection = nullptr;
+     QgsAppGpsSettingsMenu *mGpsSettingsMenu = nullptr;
+     QgsGpsInformationWidget *mpGpsWidget = nullptr;
+@@ -2612,6 +2613,7 @@
+     QgsGpsCanvasBridge *mGpsCanvasBridge = nullptr;
+     QgsAppGpsDigitizing *mGpsDigitizing = nullptr;
+     QgsAppGpsLogging *mGpsLogging = nullptr;
++    */
  
      QgsMessageBarItem *mLastMapToolMessage = nullptr;
  

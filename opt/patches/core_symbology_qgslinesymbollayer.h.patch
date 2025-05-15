@@ -1,6 +1,6 @@
---- a/src/core/symbology/qgslinesymbollayer.h	2023-08-21 19:30:50.606255554 +0300
-+++ b/src/core/symbology/qgslinesymbollayer.h	2023-10-04 10:14:13.132693807 +0300
-@@ -85,11 +85,11 @@
+--- a/src/core/symbology/qgslinesymbollayer.h	2025-05-15 15:26:35.505578818 +0300
++++ b/src/core/symbology/qgslinesymbollayer.h	2025-05-15 14:47:00.826428895 +0300
+@@ -87,11 +87,11 @@
      void setMapUnitScale( const QgsMapUnitScale &scale ) override;
      QgsMapUnitScale mapUnitScale() const override;
      double estimateMaxBleed( const QgsRenderContext &context ) const override;

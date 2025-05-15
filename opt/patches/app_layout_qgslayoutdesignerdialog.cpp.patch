@@ -1,6 +1,6 @@
---- a/src/app/layout/qgslayoutdesignerdialog.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/layout/qgslayoutdesignerdialog.cpp	2022-04-25 18:33:17.000000000 +0300
-@@ -75,7 +75,7 @@
+--- a/src/app/layout/qgslayoutdesignerdialog.cpp	2025-05-15 15:26:35.355651068 +0300
++++ b/src/app/layout/qgslayoutdesignerdialog.cpp	2025-05-15 14:47:00.584288024 +0300
+@@ -76,7 +76,7 @@
  #include "qgsscreenhelper.h"
  #include "qgsshortcutsmanager.h"
  #include "qgsconfigureshortcutsdialog.h"

@@ -1,6 +1,6 @@
---- a/src/gui/qgsproviderguiregistry.cpp	2025-04-25 19:26:54.212240859 +0300
-+++ b/src/gui/qgsproviderguiregistry.cpp	2025-04-02 18:34:56.733737470 +0300
-@@ -25,12 +25,12 @@
+--- a/src/gui/qgsproviderguiregistry.cpp	2025-05-15 15:26:35.561766683 +0300
++++ b/src/gui/qgsproviderguiregistry.cpp	2025-05-15 14:47:00.980301834 +0300
+@@ -25,13 +25,13 @@
  #include "qgslogger.h"
  #include "qgsgdalguiprovider.h"
  #include "qgsogrguiprovider.h"
@@ -9,31 +9,32 @@
  #include "qgspointcloudproviderguimetadata.h"
  #include "qgsmaplayerconfigwidgetfactory.h"
  
+ #include "qgstiledsceneproviderguimetadata.h"
 -#include "qgsmbtilesvectortileguiprovider.h"
 -#include "qgsvtpkvectortileguiprovider.h"
-+//#include "qgsmbtilesvectortileguiprovider.h"
-+//#include "qgsvtpkvectortileguiprovider.h"
- 
++// #include "qgsmbtilesvectortileguiprovider.h"
++// #include "qgsvtpkvectortileguiprovider.h"
+ #include "qgssensorthingsguiprovider.h"
  #ifdef HAVE_EPT
  #include "qgseptproviderguimetadata.h"
-@@ -91,14 +91,14 @@
+@@ -90,14 +90,14 @@
    QgsProviderGuiMetadata *ogr = new QgsOgrGuiProviderMetadata();
-   mProviders[ ogr->key() ] = ogr;
+   mProviders[ogr->key()] = ogr;
  
 -  QgsProviderGuiMetadata *vt = new QgsVectorTileProviderGuiMetadata();
--  mProviders[ vt->key() ] = vt;
-+//   QgsProviderGuiMetadata *vt = new QgsVectorTileProviderGuiMetadata();
-+//   mProviders[ vt->key() ] = vt;
+-  mProviders[vt->key()] = vt;
++  // QgsProviderGuiMetadata *vt = new QgsVectorTileProviderGuiMetadata();
++  // mProviders[vt->key()] = vt;
  
 -  QgsProviderGuiMetadata *mbtilesVectorTiles = new QgsMbtilesVectorTileGuiProviderMetadata();
--  mProviders[ mbtilesVectorTiles->key() ] = mbtilesVectorTiles;
-+//   QgsProviderGuiMetadata *mbtilesVectorTiles = new QgsMbtilesVectorTileGuiProviderMetadata();
-+//   mProviders[ mbtilesVectorTiles->key() ] = mbtilesVectorTiles;
+-  mProviders[mbtilesVectorTiles->key()] = mbtilesVectorTiles;
++  // QgsProviderGuiMetadata *mbtilesVectorTiles = new QgsMbtilesVectorTileGuiProviderMetadata();
++  // mProviders[mbtilesVectorTiles->key()] = mbtilesVectorTiles;
  
 -  QgsProviderGuiMetadata *vtpkVectorTiles = new QgsVtpkVectorTileGuiProviderMetadata();
--  mProviders[ vtpkVectorTiles->key() ] = vtpkVectorTiles;
-+//   QgsProviderGuiMetadata *vtpkVectorTiles = new QgsVtpkVectorTileGuiProviderMetadata();
-+//   mProviders[ vtpkVectorTiles->key() ] = vtpkVectorTiles;
+-  mProviders[vtpkVectorTiles->key()] = vtpkVectorTiles;
++  // QgsProviderGuiMetadata *vtpkVectorTiles = new QgsVtpkVectorTileGuiProviderMetadata();
++  // mProviders[vtpkVectorTiles->key()] = vtpkVectorTiles;
  
  #ifdef HAVE_EPT
    QgsProviderGuiMetadata *ept = new QgsEptProviderGuiMetadata();

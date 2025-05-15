@@ -1,5 +1,5 @@
---- a/tests/src/gui/testprocessinggui.cpp	2023-08-21 19:30:51.278480516 +0300
-+++ b/tests/src/gui/testprocessinggui.cpp	2023-08-29 15:33:31.826173277 +0300
+--- a/tests/src/gui/testprocessinggui.cpp	2025-05-15 15:26:35.595219564 +0300
++++ b/tests/src/gui/testprocessinggui.cpp	2025-05-15 14:47:01.142307483 +0300
 @@ -93,8 +93,8 @@
  #include "qgsprocessingparameteraggregate.h"
  #include "qgsprocessingparametertininputlayers.h"
@@ -11,30 +11,28 @@
  #include "qgsprocessingmeshdatasetwidget.h"
  #include "qgsabstractdatabaseproviderconnection.h"
  #include "qgsprocessingpointcloudexpressionlineedit.h"
-@@ -314,7 +314,7 @@
+@@ -311,7 +311,7 @@
      void testFileOutWrapper();
      void testFolderOutWrapper();
      void testTinInputLayerWrapper();
 -    void testDxfLayersWrapper();
-+//    void testDxfLayersWrapper();
++    // void testDxfLayersWrapper();
+     void testAlignRasterLayersWrapper();
+     void testRasterOptionsWrapper();
      void testMeshDatasetWrapperLayerInProject();
-     void testMeshDatasetWrapperLayerOutsideProject();
-     void testModelGraphicsView();
-@@ -9910,7 +9910,7 @@
-   QString valueAsPythonString = definition.valueAsPythonString( value, context );
+@@ -10331,6 +10331,7 @@
    QCOMPARE( valueAsPythonString, QStringLiteral( "[{'source': 'PointLayerForTin','type': 0,'attributeIndex': -1}]" ) );
  }
--
+ 
 +/*
  void TestProcessingGui::testDxfLayersWrapper()
  {
-   QgsProcessingParameterDxfLayers definition( QStringLiteral( "DXF layers" ) ) ;
-@@ -9945,7 +9945,7 @@
+   QgsProcessingParameterDxfLayers definition( QStringLiteral( "DXF layers" ) );
+@@ -10366,6 +10367,7 @@
    QString valueAsPythonString = definition.valueAsPythonString( value, context );
-   QCOMPARE( valueAsPythonString, QStringLiteral( "[{'layer': '%1','attributeIndex': -1}]" ).arg( vectorLayer->source() ) );
+   QCOMPARE( valueAsPythonString, QStringLiteral( "[{'layer': '%1','attributeIndex': -1,'overriddenLayerName': '','buildDataDefinedBlocks': True,'dataDefinedBlocksMaximumNumberOfClasses': -1}]" ).arg( vectorLayer->source() ) );
  }
--
 +*/
- void TestProcessingGui::testMeshDatasetWrapperLayerInProject()
+ 
+ void TestProcessingGui::testAlignRasterLayersWrapper()
  {
-   QgsProcessingParameterMeshLayer layerDefinition( QStringLiteral( "layer" ), QStringLiteral( "layer" ) );

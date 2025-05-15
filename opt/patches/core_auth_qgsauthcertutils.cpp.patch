@@ -1,5 +1,5 @@
---- a/src/core/auth/qgsauthcertutils.cpp	2025-04-25 19:26:53.732230323 +0300
-+++ b/src/core/auth/qgsauthcertutils.cpp	2025-04-02 18:34:56.457060383 +0300
+--- a/src/core/auth/qgsauthcertutils.cpp	2025-05-15 15:26:35.408283650 +0300
++++ b/src/core/auth/qgsauthcertutils.cpp	2025-05-15 14:47:00.655290500 +0300
 @@ -27,10 +27,10 @@
  #include "qgsauthmanager.h"
  #include "qgslogger.h"
@@ -15,7 +15,7 @@
  
  
  QString QgsAuthCertUtils::getSslProtocolName( QSsl::SslProtocol protocol )
-@@ -300,7 +300,7 @@
+@@ -289,7 +289,7 @@
    return keyPemTxt.contains( pkcs8Header ) && keyPemTxt.contains( pkcs8Footer );
  }
  
@@ -24,7 +24,7 @@
  QByteArray QgsAuthCertUtils::pkcs8PrivateKey( QByteArray &pkcs8Der )
  {
    QByteArray pkcs1;
-@@ -493,7 +493,7 @@
+@@ -482,7 +482,7 @@
    }
  
    QString keyPem;

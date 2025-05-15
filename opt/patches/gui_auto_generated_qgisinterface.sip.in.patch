@@ -1,6 +1,6 @@
---- a/python/gui/auto_generated/qgisinterface.sip.in	2025-04-25 19:26:53.294220708 +0300
-+++ b/python/gui/auto_generated/qgisinterface.sip.in	2025-04-02 18:34:55.773088975 +0300
-@@ -646,13 +646,6 @@
+--- a/python/gui/auto_generated/qgisinterface.sip.in	2025-05-15 15:26:35.328054187 +0300
++++ b/python/gui/auto_generated/qgisinterface.sip.in	2025-05-15 14:47:00.370280561 +0300
+@@ -705,13 +705,6 @@
  .. versionadded:: 3.14
  %End
  
@@ -14,21 +14,25 @@
      virtual QAction *actionAddPointCloudLayer() = 0;
  %Docstring
  Returns the native Add Point Cloud Layer action.
-@@ -956,13 +949,6 @@
- Adds a mesh layer to the current project.
+@@ -1060,17 +1053,6 @@
+ the map legend).
  %End
  
 -    virtual QgsVectorTileLayer *addVectorTileLayer( const QString &url, const QString &baseName ) = 0;
 -%Docstring
--Adds a vector tile layer to the current project.
+-Adds a vector tile layer to the current project, using the specified
+-source ``url``.
+-
+-The ``baseName`` parameter will be used as the layer name (and shown in
+-the map legend).
 -
 -.. versionadded:: 3.14
 -%End
 -
      virtual QgsPointCloudLayer *addPointCloudLayer( const QString &url, const QString &baseName, const QString &providerKey ) = 0;
  %Docstring
- Adds a point cloud layer to the current project.
-@@ -1711,16 +1697,6 @@
+ Adds a point cloud layer to the current project, using the specified
+@@ -1821,17 +1803,6 @@
  .. versionadded:: 3.4
  %End
  
@@ -36,12 +40,13 @@
 -%Docstring
 -Sets a GPS ``connection`` to use within the GPS Panel widget.
 -
--Any existing GPS connection used by the widget will be disconnect and replaced with this connection. The connection
--is automatically registered within the :py:func:`QgsApplication.gpsConnectionRegistry()`.
+-Any existing GPS connection used by the widget will be disconnect and
+-replaced with this connection. The connection is automatically
+-registered within the :py:func:`QgsApplication.gpsConnectionRegistry()`.
 -
 -.. versionadded:: 3.16
 -%End
 -
-   signals:
- 
-     void currentLayerChanged( QgsMapLayer *layer );
+     virtual void blockActiveLayerChanges( bool blocked ) = 0;
+ %Docstring
+ Sets whether changes to the active layer should be temporarily blocked.

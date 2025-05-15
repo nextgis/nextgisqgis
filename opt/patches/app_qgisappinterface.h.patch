@@ -1,15 +1,15 @@
---- a/src/app/qgisappinterface.h	2025-04-25 19:26:53.685229291 +0300
-+++ b/src/app/qgisappinterface.h	2025-04-02 18:34:56.423635275 +0300
-@@ -70,7 +70,7 @@
+--- a/src/app/qgisappinterface.h	2025-05-15 15:26:35.382574966 +0300
++++ b/src/app/qgisappinterface.h	2025-05-15 14:47:00.607288826 +0300
+@@ -68,7 +68,7 @@
      QgsRasterLayer *addRasterLayer( const QString &rasterLayerPath, const QString &baseName ) override;
      QgsRasterLayer *addRasterLayer( const QString &url, const QString &baseName, const QString &providerKey ) override;
      QgsMeshLayer *addMeshLayer( const QString &url, const QString &baseName, const QString &providerKey ) override;
 -    QgsVectorTileLayer *addVectorTileLayer( const QString &url, const QString &baseName ) override;
 +    // QgsVectorTileLayer *addVectorTileLayer( const QString &url, const QString &baseName ) override;
      QgsPointCloudLayer *addPointCloudLayer( const QString &url, const QString &baseName, const QString &providerKey ) override;
+     QgsTiledSceneLayer *addTiledSceneLayer( const QString &url, const QString &baseName, const QString &providerKey ) override;
      bool addProject( const QString &projectName ) override;
-     bool newProject( bool promptToSaveFlag = false ) override;
-@@ -255,7 +255,7 @@
+@@ -258,7 +258,7 @@
      QAction *actionAddPgLayer() override;
      QAction *actionAddWmsLayer() override;
      QAction *actionAddXyzLayer() override;
@@ -18,7 +18,7 @@
      QAction *actionAddPointCloudLayer() override;
      QAction *actionAddAfsLayer() override;
      QAction *actionAddAmsLayer() override;
-@@ -312,7 +312,7 @@
+@@ -315,7 +315,7 @@
      void takeAppScreenShots( const QString &saveDirectory, const int categories = 0 ) override;
      QgsBrowserGuiModel *browserModel() override;
      QgsLayerTreeRegistryBridge::InsertionPoint layerTreeInsertionPoint() override;
@@ -26,4 +26,4 @@
 +    // void setGpsPanelConnection( QgsGpsConnection *connection ) override;
      QList<QgsMapDecoration *> activeDecorations() override;
      QgsUserProfileManager *userProfileManager() override;
- 
+     void blockActiveLayerChanges( bool blocked ) override;

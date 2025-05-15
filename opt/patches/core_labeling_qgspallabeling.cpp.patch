@@ -1,5 +1,5 @@
---- a/src/core/labeling/qgspallabeling.cpp	2023-08-21 19:39:45.691049522 +0300
-+++ b/src/core/labeling/qgspallabeling.cpp	2023-10-04 00:32:07.746213903 +0300
+--- a/src/core/labeling/qgspallabeling.cpp	2025-05-15 15:26:35.429514493 +0300
++++ b/src/core/labeling/qgspallabeling.cpp	2025-05-15 14:47:00.695291895 +0300
 @@ -56,8 +56,8 @@
  #include "qgsgeometrycollection.h"
  #include "callouts/qgscallout.h"
@@ -10,31 +10,19 @@
 +// #include "qgsvectortilebasiclabeling.h"
  #include "qgsfontmanager.h"
  #include "qgsvariantutils.h"
+ #include "qgsmeshlayer.h"
+@@ -4081,12 +4081,14 @@
  
-@@ -3893,17 +3893,17 @@
-       return vl->labelsEnabled() || vl->diagramsEnabled();
+     case Qgis::LayerType::VectorTile:
+     {
++      /*
+       const QgsVectorTileLayer *vl = qobject_cast< const QgsVectorTileLayer * >( layer );
+       if ( !vl->labeling() )
+         return false;
+ 
+       if ( const QgsVectorTileBasicLabeling *labeling = dynamic_cast< const QgsVectorTileBasicLabeling *>( vl->labeling() ) )
+         return !labeling->styles().empty();
++      */
+ 
+       return false;
      }
- 
--    case Qgis::LayerType::VectorTile:
--    {
--      const QgsVectorTileLayer *vl = qobject_cast< const QgsVectorTileLayer * >( layer );
--      if ( !vl->labeling() )
--        return false;
-+    // case Qgis::LayerType::VectorTile:
-+    // {
-+    //   const QgsVectorTileLayer *vl = qobject_cast< const QgsVectorTileLayer * >( layer );
-+    //   if ( !vl->labeling() )
-+    //     return false;
- 
--      if ( const QgsVectorTileBasicLabeling *labeling = dynamic_cast< const QgsVectorTileBasicLabeling *>( vl->labeling() ) )
--        return !labeling->styles().empty();
-+    //   if ( const QgsVectorTileBasicLabeling *labeling = dynamic_cast< const QgsVectorTileBasicLabeling *>( vl->labeling() ) )
-+    //     return !labeling->styles().empty();
- 
--      return false;
--    }
-+    //   return false;
-+    // }
- 
-     case Qgis::LayerType::Raster:
-     case Qgis::LayerType::Plugin:

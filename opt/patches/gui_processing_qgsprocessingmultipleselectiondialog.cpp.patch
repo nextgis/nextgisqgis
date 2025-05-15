@@ -1,6 +1,6 @@
---- a/src/gui/processing/qgsprocessingmultipleselectiondialog.cpp	2023-08-21 19:30:50.758306420 +0300
-+++ b/src/gui/processing/qgsprocessingmultipleselectiondialog.cpp	2023-10-24 09:41:59.000000000 +0300
-@@ -23,7 +23,7 @@
+--- a/src/gui/processing/qgsprocessingmultipleselectiondialog.cpp	2025-05-15 15:26:35.542713397 +0300
++++ b/src/gui/processing/qgsprocessingmultipleselectiondialog.cpp	2025-05-15 14:47:00.925299916 +0300
+@@ -24,7 +24,7 @@
  #include "qgspluginlayer.h"
  #include "qgspointcloudlayer.h"
  #include "qgsannotationlayer.h"
@@ -9,21 +9,18 @@
  #include "qgsproject.h"
  #include "processing/models/qgsprocessingmodelchildparametersource.h"
  #include <QStandardItemModel>
-@@ -570,7 +570,7 @@
+@@ -709,12 +709,14 @@
+ 
+     case Qgis::ProcessingSourceType::VectorTile:
+     {
++      /*
+       const QList<QgsVectorTileLayer *> options = QgsProcessingUtils::compatibleVectorTileLayers( project, false );
+       for ( const QgsVectorTileLayer *layer : options )
+       {
+         addLayer( layer );
+       }
+ 
++      */
        break;
      }
  
--    case QgsProcessing::TypeVectorTile:
-+/*    case QgsProcessing::TypeVectorTile:
-     {
-       const QList<QgsVectorTileLayer *> options = QgsProcessingUtils::compatibleVectorTileLayers( project, false );
-       for ( const QgsVectorTileLayer *layer : options )
-@@ -579,7 +579,7 @@
-       }
- 
-       break;
--    }
-+    }*/
- 
-     case QgsProcessing::TypeVector:
-     case QgsProcessing::TypeVectorAnyGeometry:

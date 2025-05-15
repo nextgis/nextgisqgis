@@ -1,6 +1,6 @@
---- a/src/ui/qgsoptionsbase.ui	2025-04-25 19:26:54.432245688 +0300
-+++ b/src/ui/qgsoptionsbase.ui	2025-04-02 18:34:56.844358397 +0300
-@@ -5154,6 +5154,7 @@
+--- a/src/ui/qgsoptionsbase.ui	2025-05-15 15:26:35.585750729 +0300
++++ b/src/ui/qgsoptionsbase.ui	2025-05-15 14:47:01.074305112 +0300
+@@ -5267,6 +5267,7 @@
             </item>
            </layout>
           </widget>
@@ -8,7 +8,7 @@
          </widget>
         </item>
        </layout>
-@@ -5311,6 +5312,12 @@
+@@ -5424,6 +5425,12 @@
     <header>qgsautheditorwidgets.h</header>
     <container>1</container>
    </customwidget>
@@ -20,4 +20,4 @@
 +  </customwidget>
   </customwidgets>
   <tabstops>
-   <tabstop>mSearchLineEdit</tabstop>
+   <tabstop>mOptionsTreeView</tabstop>

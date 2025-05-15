@@ -1,20 +1,28 @@
---- a/python/plugins/processing/gui/AlgorithmDialog.py	2025-04-25 19:26:53.402223079 +0300
-+++ b/python/plugins/processing/gui/AlgorithmDialog.py	2025-04-02 18:34:55.804654290 +0300
-@@ -274,7 +274,7 @@
-                 process_command, command_ok = self.algorithm().asQgisProcessCommand(parameters, self.context)
+--- a/python/plugins/processing/gui/AlgorithmDialog.py	2025-05-15 15:26:35.338220074 +0300
++++ b/python/plugins/processing/gui/AlgorithmDialog.py	2025-05-15 14:47:00.415282130 +0300
+@@ -345,9 +345,9 @@
+                 )
                  if command_ok:
-                     self.history_details['process_command'] = process_command
--                self.history_log_id, _ = QgsGui.historyProviderRegistry().addEntry('processing', self.history_details)
-+                #self.history_log_id, _ = QgsGui.historyProviderRegistry().addEntry('processing', self.history_details)
+                     self.history_details["process_command"] = process_command
+-                self.history_log_id, _ = QgsGui.historyProviderRegistry().addEntry(
+-                    "processing", self.history_details
+-                )
++                # self.history_log_id, _ = QgsGui.historyProviderRegistry().addEntry(
++                #     "processing", self.history_details
++                # )
  
-                 QgsGui.instance().processingRecentAlgorithmLog().push(self.algorithm().id())
-                 self.cancelButton().setEnabled(self.algorithm().flags() & QgsProcessingAlgorithm.FlagCanCancel)
-@@ -296,7 +296,7 @@
-                         self.history_details['results'] = {k: v for k, v in results.items() if k != 'CHILD_INPUTS'}
-                         self.history_details['log'] = self.feedback.htmlLog()
+                 QgsGui.instance().processingRecentAlgorithmLog().push(
+                     self.algorithm().id()
+@@ -381,9 +381,9 @@
+                         }
+                         self.history_details["log"] = self.feedback.htmlLog()
  
--                        QgsGui.historyProviderRegistry().updateEntry(self.history_log_id, self.history_details)
-+                        #QgsGui.historyProviderRegistry().updateEntry(self.history_log_id, self.history_details)
+-                        QgsGui.historyProviderRegistry().updateEntry(
+-                            self.history_log_id, self.history_details
+-                        )
++                        # QgsGui.historyProviderRegistry().updateEntry(
++                        #     self.history_log_id, self.history_details
++                        # )
  
                      if self.feedback_dialog is not None:
                          self.feedback_dialog.close()

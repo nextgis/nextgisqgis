@@ -1,12 +1,13 @@
---- a/src/gui/qgsgui.cpp	2023-08-21 19:39:45.779043280 +0300
-+++ b/src/gui/qgsgui.cpp	2023-10-24 16:17:54.000000000 +0300
-@@ -58,10 +58,10 @@
+--- a/src/gui/qgsgui.cpp	2025-05-15 15:26:35.550844491 +0300
++++ b/src/gui/qgsgui.cpp	2025-05-15 14:47:00.960301136 +0300
+@@ -63,11 +63,11 @@
  #include "qgsrelationwidgetregistry.h"
  #include "qgsmaptoolshaperegistry.h"
  #include "qgssettingsregistrygui.h"
 -#include "qgshistoryproviderregistry.h"
 +// #include "qgshistoryproviderregistry.h"
  #include "qgslayermetadatasourceselectprovider.h"
+ #include "qgsinputcontrollermanager.h"
 -#include "qgssensorguiregistry.h"
 -#include "qgshistoryentry.h"
 +// #include "qgssensorguiregistry.h"
@@ -14,7 +15,7 @@
  
  #include "qgssettingseditorwidgetregistry.h"
  
-@@ -180,10 +180,10 @@
+@@ -196,10 +196,10 @@
    return instance()->mSensorGuiRegistry;
  }
  
@@ -29,37 +30,37 @@
  
  QgsSettingsEditorWidgetRegistry *QgsGui::settingsEditorWidgetRegistry()
  {
-@@ -232,7 +232,7 @@
+@@ -255,7 +255,7 @@
    delete mEditorWidgetRegistry;
    delete mMapLayerActionRegistry;
    delete mSourceSelectProviderRegistry;
 -  delete mHistoryProviderRegistry;
-+//   delete mHistoryProviderRegistry;
++  // delete mHistoryProviderRegistry;
    delete mShortcutsManager;
    delete mNative;
    delete mNumericFormatGuiRegistry;
-@@ -302,11 +302,11 @@
+@@ -326,11 +326,11 @@
    mCodeEditorColorSchemeRegistry = new QgsCodeEditorColorSchemeRegistry();
  
    // provider gui registry initialize QgsProviderRegistry too
 -  mSensorGuiRegistry = new QgsSensorGuiRegistry();
 -  mSensorGuiRegistry->populate();
-+//   mSensorGuiRegistry = new QgsSensorGuiRegistry();
-+//   mSensorGuiRegistry->populate();
++  // mSensorGuiRegistry = new QgsSensorGuiRegistry();
++  // mSensorGuiRegistry->populate();
  
 -  mHistoryProviderRegistry = new QgsHistoryProviderRegistry();
 -  mHistoryProviderRegistry->addDefaultProviders();
-+//   mHistoryProviderRegistry = new QgsHistoryProviderRegistry();
-+//   mHistoryProviderRegistry->addDefaultProviders();
++  // mHistoryProviderRegistry = new QgsHistoryProviderRegistry();
++  // mHistoryProviderRegistry->addDefaultProviders();
  
-   mProviderGuiRegistry = new QgsProviderGuiRegistry( QgsApplication::pluginPath() );
-   mProjectStorageGuiRegistry = new QgsProjectStorageGuiRegistry();
-@@ -338,7 +338,7 @@
+   mInputControllerManager = new QgsInputControllerManager();
+ 
+@@ -368,7 +368,7 @@
    mProcessingRecentAlgorithmLog = new QgsProcessingRecentAlgorithmLog();
    mProcessingGuiRegistry = new QgsProcessingGuiRegistry();
  
--  qRegisterMetaType< QgsHistoryEntry >( "QgsHistoryEntry" );
-+//  qRegisterMetaType< QgsHistoryEntry >( "QgsHistoryEntry" );
+-  qRegisterMetaType<QgsHistoryEntry>( "QgsHistoryEntry" );
++  // qRegisterMetaType<QgsHistoryEntry>( "QgsHistoryEntry" );
  }
  
- bool QgsGui::pythonMacroAllowed( void ( *lambda )(), QgsMessageBar *messageBar )
+ bool QgsGui::pythonEmbeddedInProjectAllowed( void ( *lambda )(), QgsMessageBar *messageBar, Qgis::PythonEmbeddedType embeddedType )

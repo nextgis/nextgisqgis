@@ -1,5 +1,5 @@
---- a/src/core/symbology/qgssymbollayer.h	2023-08-21 19:39:45.751045266 +0300
-+++ b/src/core/symbology/qgssymbollayer.h	2023-10-04 13:07:23.792507864 +0300
+--- a/src/core/symbology/qgssymbollayer.h	2025-05-15 15:26:35.519037024 +0300
++++ b/src/core/symbology/qgssymbollayer.h	2025-05-15 14:47:00.834296742 +0300
 @@ -37,7 +37,7 @@
  class QSize;
  class QPolygonF;
@@ -9,24 +9,23 @@
  class QgsExpression;
  class QgsRenderContext;
  class QgsPaintEffect;
-@@ -535,6 +535,7 @@
+@@ -546,6 +546,7 @@
       */
      virtual void setDataDefinedProperty( Property key, const QgsProperty &property );
  
-+/*
++    /*
      //! write as DXF
      virtual bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const;
  
-@@ -564,7 +565,7 @@
+@@ -575,6 +576,7 @@
  
      //! Gets brush/fill style
      virtual Qt::BrushStyle dxfBrushStyle() const;
--
-+*/
++    */
+ 
      /**
       * Returns the current paint effect for the layer.
-      * \returns paint effect
-@@ -970,8 +971,8 @@
+@@ -988,8 +990,8 @@
      Qgis::RenderUnit outputUnit() const override;
      void setMapUnitScale( const QgsMapUnitScale &scale ) override;
      QgsMapUnitScale mapUnitScale() const override;
@@ -37,7 +36,7 @@
  
      /**
       * Returns the approximate bounding box of the marker symbol layer, taking into account
-@@ -1083,7 +1084,7 @@
+@@ -1099,7 +1101,7 @@
      void setMapUnitScale( const QgsMapUnitScale &scale ) override;
      QgsMapUnitScale mapUnitScale() const override;
      void drawPreviewIcon( QgsSymbolRenderContext &context, QSize size ) override;

@@ -1,6 +1,6 @@
---- a/src/core/auth/qgsauthmanager.h	2025-04-25 19:26:53.734230367 +0300
-+++ b/src/core/auth/qgsauthmanager.h	2025-04-02 18:34:56.458009803 +0300
-@@ -131,7 +131,7 @@
+--- a/src/core/auth/qgsauthmanager.h	2025-05-15 15:26:35.417656947 +0300
++++ b/src/core/auth/qgsauthmanager.h	2025-05-15 14:47:00.658290604 +0300
+@@ -206,7 +206,7 @@
       * \note Do not emit verification signals when only comparing
       * \param compare Password to compare against
       */
@@ -9,20 +9,21 @@
  
      //! Whether master password has be input and verified, i.e. authentication database is accessible
      bool masterPasswordIsSet() const;
-@@ -678,7 +678,7 @@
+@@ -730,7 +730,7 @@
       * Password helper enabled getter
       * \note Available in Python bindings since QGIS 3.8.0
       */
--    bool passwordHelperEnabled() const;
+-    static bool passwordHelperEnabled();
 +    virtual bool passwordHelperEnabled() const;
  
      /**
       * Password helper enabled setter
-@@ -782,8 +782,35 @@
+@@ -856,8 +856,17 @@
       * Enforce singleton pattern
       * \note To set up the manager instance and initialize everything use QgsAuthManager::instance()->init()
       */
 -    static QgsAuthManager *instance() SIP_SKIP;
+-
 +    template<typename T = QgsAuthManager>
 +    static QgsAuthManager *instance() SIP_SKIP
 +    {
@@ -34,73 +35,65 @@
 +        }
 +        return sInstance;
 +    }
-+
-+    virtual bool masterPasswordInput();
-+
-+    //! Read Master password from the wallet
-+    QString passwordHelperRead();
-+
-+    //! Store Master password in the wallet
-+    bool passwordHelperWrite( const QString &password );
-+
-+    /**
-+     * Process the error: show it and/or disable the password helper system in case of
-+     * access denied or no backend, reset error flags at the end
-+     */
-+    virtual void passwordHelperProcessError();
- 
-+    //! Store last error code (enum)
-+    QKeychain::Error mPasswordHelperErrorCode = QKeychain::NoError;
-+    QString mMasterPass;
  
  #ifdef Q_OS_WIN
    public:
-@@ -804,30 +831,17 @@
+@@ -880,25 +889,32 @@
      //! Print a debug message in QGIS
      void passwordHelperLog( const QString &msg ) const;
  
--    //! Read Master password from the wallet
--    QString passwordHelperRead();
--
--    //! Store Master password in the wallet
--    bool passwordHelperWrite( const QString &password );
--
++  protected:
++
+     //! Read Master password from the wallet
+     QString passwordHelperRead();
+ 
+     //! Store Master password in the wallet
+     bool passwordHelperWrite( const QString &password );
+ 
++  private:
++
      //! Error message setter
      void passwordHelperSetErrorMessage( const QString &errorMessage ) { mPasswordHelperErrorMessage = errorMessage; }
  
      //! Clear error code and message
      void passwordHelperClearErrors();
  
--    /**
--     * Process the error: show it and/or disable the password helper system in case of
--     * access denied or no backend, reset error flags at the end
--     */
++  protected:
+     /**
+      * Process the error: show it and/or disable the password helper system in case of
+      * access denied or no backend, reset error flags at the end
+      */
 -    void passwordHelperProcessError();
- 
-     bool createConfigTables();
- 
-     bool createCertTables();
++    virtual void passwordHelperProcessError();
  
 -    bool masterPasswordInput();
--
++    virtual bool masterPasswordInput();
++
++  private:
+ 
      bool masterPasswordRowsInDb( int *rows ) const;
  
-     bool masterPasswordCheckAgainstDb( const QString &compare = QString() ) const;
-@@ -892,7 +906,6 @@
+@@ -956,7 +972,10 @@
      QHash<QString, QString> mConfigAuthMethods;
      QHash<QString, QgsAuthMethod *> mAuthMethods;
  
--    QString mMasterPass;
++  protected:
+     QString mMasterPass;
++
++  private:
      int mPassTries = 0;
      bool mAuthDisabled = false;
      QString mAuthDisabledMessage;
-@@ -929,9 +942,6 @@
+@@ -993,9 +1012,12 @@
      //! Store last error message
      QString mPasswordHelperErrorMessage;
  
--    //! Store last error code (enum)
--    QKeychain::Error mPasswordHelperErrorCode = QKeychain::NoError;
--
++  protected:
+     //! Store last error code (enum)
+     QKeychain::Error mPasswordHelperErrorCode = QKeychain::NoError;
+ 
++  private:
++
      //! Enable logging
      bool mPasswordHelperLoggingEnabled = false;
  

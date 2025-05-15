@@ -1,6 +1,6 @@
---- a/src/gui/qgsgui.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/gui/qgsgui.h	2022-04-25 18:33:17.000000000 +0300
-@@ -46,7 +46,7 @@
+--- a/src/gui/qgsgui.h	2025-05-15 15:26:35.554165935 +0300
++++ b/src/gui/qgsgui.h	2025-05-15 14:47:00.960301136 +0300
+@@ -50,7 +50,7 @@
  class QgsProviderSourceWidgetProviderRegistry;
  class QgsRelationWidgetRegistry;
  class QgsMapToolShapeRegistry;
@@ -8,8 +8,8 @@
 +// class QgsHistoryProviderRegistry;
  class QgsSensorGuiRegistry;
  class QgsSettingsEditorWidgetRegistry;
- 
-@@ -211,7 +211,7 @@
+ class QgsInputControllerManager;
+@@ -226,7 +226,7 @@
       * Returns the global history provider registry, used for tracking history providers.
       * \since QGIS 3.24
       */
@@ -18,7 +18,7 @@
  
      /**
       * Returns the registry of settings editors.
-@@ -326,7 +326,7 @@
+@@ -361,7 +361,7 @@
      QgsProviderSourceWidgetProviderRegistry *mProviderSourceWidgetProviderRegistry = nullptr;
      QgsRelationWidgetRegistry *mRelationEditorRegistry = nullptr;
      QgsMapToolShapeRegistry *mShapeMapToolRegistry = nullptr;
@@ -26,4 +26,4 @@
 +    // QgsHistoryProviderRegistry *mHistoryProviderRegistry = nullptr;
      QgsSensorGuiRegistry *mSensorGuiRegistry = nullptr;
      QgsSettingsEditorWidgetRegistry *mSettingsEditorRegistry = nullptr;
-     std::unique_ptr< QgsWindowManagerInterface > mWindowManager;
+     QgsInputControllerManager *mInputControllerManager = nullptr;

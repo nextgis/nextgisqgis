@@ -1,5 +1,5 @@
---- a/src/app/qgswelcomepage.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/qgswelcomepage.h	2022-04-25 18:33:16.000000000 +0300
+--- a/src/app/qgswelcomepage.h	2025-05-15 15:26:35.405404916 +0300
++++ b/src/app/qgswelcomepage.h	2025-05-15 14:47:00.642290046 +0300
 @@ -27,9 +27,9 @@
  class QListView;
  class QLabel;
@@ -13,9 +13,9 @@
  
  class QgsWelcomePage : public QWidget
  {
-@@ -52,20 +52,20 @@
-     void projectPinned( int row );
+@@ -61,20 +61,20 @@
      void projectUnpinned( int row );
+     void projectsCleared( bool clearPinned );
  
 -  protected:
 -    bool eventFilter( QObject *obj, QEvent *event ) override;
@@ -40,7 +40,7 @@
  
    private:
      QgsRecentProjectItemsModel *mRecentProjectsModel = nullptr;
-@@ -77,11 +77,11 @@
+@@ -86,11 +86,11 @@
      QStandardItemModel *mTemplateProjectsModel = nullptr;
      QSplitter *mSplitter = nullptr;
      QSplitter *mSplitter2 = nullptr;

@@ -1,6 +1,6 @@
---- a/src/core/network/qgsnetworkaccessmanager.cpp	2023-08-21 19:30:50.370176576 +0300
-+++ b/src/core/network/qgsnetworkaccessmanager.cpp	2023-10-03 22:46:13.498640041 +0300
-@@ -43,7 +43,7 @@
+--- a/src/core/network/qgsnetworkaccessmanager.cpp	2025-05-15 15:26:35.436461450 +0300
++++ b/src/core/network/qgsnetworkaccessmanager.cpp	2025-05-15 14:47:00.726292976 +0300
+@@ -45,7 +45,7 @@
  #include <QStandardPaths>
  #include <QUuid>
  

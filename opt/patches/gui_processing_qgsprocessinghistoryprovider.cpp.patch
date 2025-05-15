@@ -1,6 +1,6 @@
---- a/src/gui/processing/qgsprocessinghistoryprovider.cpp	2025-04-25 19:26:54.123238906 +0300
-+++ b/src/gui/processing/qgsprocessinghistoryprovider.cpp	2025-04-02 18:34:56.691644426 +0300
-@@ -77,7 +77,7 @@
+--- a/src/gui/processing/qgsprocessinghistoryprovider.cpp	2025-05-15 15:26:35.537270320 +0300
++++ b/src/gui/processing/qgsprocessinghistoryprovider.cpp	2025-05-15 14:47:00.923299846 +0300
+@@ -78,7 +78,7 @@
        }
      }
  

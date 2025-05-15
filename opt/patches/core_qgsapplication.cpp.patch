@@ -1,6 +1,6 @@
---- a/src/core/qgsapplication.cpp	2025-04-25 19:26:53.906234142 +0300
-+++ b/src/core/qgsapplication.cpp	2025-04-02 18:34:56.554011851 +0300
-@@ -68,7 +68,7 @@
+--- a/src/core/qgsapplication.cpp	2025-05-15 15:26:35.458793023 +0300
++++ b/src/core/qgsapplication.cpp	2025-05-15 14:47:00.764294301 +0300
+@@ -72,7 +72,7 @@
  #include "qgsstyle.h"
  #include "qgsprojutils.h"
  #include "qgsvaliditycheckregistry.h"
@@ -9,7 +9,7 @@
  #include "qgsbookmarkmanager.h"
  #include "qgsstylemodel.h"
  #include "qgsconnectionregistry.h"
-@@ -77,16 +77,16 @@
+@@ -81,18 +81,18 @@
  #include "qgsfeaturestore.h"
  #include "qgslocator.h"
  #include "qgsreadwritelocker.h"
@@ -23,13 +23,15 @@
 -#include "qgsgpsconnection.h"
 +// #include "qgsgpsconnection.h"
  #include "qgssensorregistry.h"
+ #include "qgssensorthingsutils.h"
+ #include "qgsprofilesourceregistry.h"
  
 -#include "gps/qgsgpsconnectionregistry.h"
 +// #include "gps/qgsgpsconnectionregistry.h"
  #include "processing/qgsprocessingregistry.h"
  #include "processing/models/qgsprocessingmodelchildparametersource.h"
  #include "processing/models/qgsprocessingmodelchilddependency.h"
-@@ -150,6 +150,24 @@
+@@ -158,6 +158,24 @@
  
  #include <proj.h>
  
@@ -54,7 +56,7 @@
  #if defined(Q_OS_LINUX)
  #include <sys/sysinfo.h>
  #endif
-@@ -162,6 +180,9 @@
+@@ -170,6 +188,9 @@
  const char *QgsApplication::QGIS_ORGANIZATION_NAME = "QGIS";
  const char *QgsApplication::QGIS_ORGANIZATION_DOMAIN = "qgis.org";
  const char *QgsApplication::QGIS_APPLICATION_NAME = "QGIS3";
@@ -64,7 +66,7 @@
  QgsApplication::ApplicationMembers *QgsApplication::sApplicationMembers = nullptr;
  QgsAuthManager *QgsApplication::sAuthManager = nullptr;
  int ABISYM( QgsApplication::sMaxThreads ) = -1;
-@@ -228,13 +249,22 @@
+@@ -237,13 +258,22 @@
  
    if ( profileFolder.isEmpty() )
    {
@@ -88,12 +90,12 @@
 +                .arg( QDir::homePath() + QDir::separator() + config + QDir::separator())
 +                .arg( QStringLiteral(VENDOR) + QDir::separator() )
 +                .arg( VERSION_INT / 10000 );
-+        qputenv("QGIS_CUSTOM_CONFIG_PATH", profileFolder.toUtf8());        
++        qputenv("QGIS_CUSTOM_CONFIG_PATH", profileFolder.toUtf8());
 +    //   profileFolder = QStandardPaths::standardLocations( QStandardPaths::AppDataLocation ).value( 0 );
      }
      // This will normally get here for custom scripts that use QgsApplication.
      // This doesn't get this hit for QGIS Desktop because we setup the profile via main
-@@ -281,7 +311,7 @@
+@@ -290,7 +320,7 @@
      qRegisterMetaType<QgsPoint>( "QgsPoint" );
      qRegisterMetaType<QgsDatumTransform::GridDetails>( "QgsDatumTransform::GridDetails" );
      qRegisterMetaType<QgsDatumTransform::TransformDetails>( "QgsDatumTransform::TransformDetails" );
@@ -102,134 +104,56 @@
      qRegisterMetaType<QgsRectangle>( "QgsRectangle" );
      qRegisterMetaType<QgsLocatorResult>( "QgsLocatorResult" );
      qRegisterMetaType<QgsGradientColorRamp>( "QgsGradientColorRamp" );
-@@ -309,7 +339,7 @@
+@@ -320,7 +350,7 @@
      qRegisterMetaType<QMap<QNetworkRequest::KnownHeaders, QVariant>>( "QMap<QNetworkRequest::KnownHeaders,QVariant>" );
      qRegisterMetaType<QList<QNetworkReply::RawHeaderPair>>( "QList<QNetworkReply::RawHeaderPair>" );
      qRegisterMetaType< QAuthenticator * >( "QAuthenticator*" );
 -    qRegisterMetaType< QgsGpsInformation >( "QgsGpsInformation" );
-+//    qRegisterMetaType< QgsGpsInformation >( "QgsGpsInformation" );
++    // qRegisterMetaType< QgsGpsInformation >( "QgsGpsInformation" );
+     qRegisterMetaType< QgsSensorThingsExpansionDefinition >( "QgsSensorThingsExpansionDefinition" );
    } );
  
-   ( void ) resolvePkgPath();
-@@ -372,9 +402,14 @@
-   *sDefaultSvgPaths() << qgisSettingsDirPath() + QStringLiteral( "svg/" );
- 
+@@ -389,9 +419,15 @@
+   // 3 - use the default path from settings dir path, assume QSQLITE and add "qgis-auth.db"
    *sAuthDbDirPath() = qgisSettingsDirPath();
+ 
 -  if ( getenv( "QGIS_AUTH_DB_DIR_PATH" ) )
 +  QString authDBDirPath = QString::fromLocal8Bit( qgetenv( "QGIS_AUTH_DB_DIR_PATH" ) );
 +  if (!authDBDirPath.isEmpty())
 +  {
 +    setAuthDatabaseDirPath( authDBDirPath );
++    sAuthDbUri()->clear();
 +  }
 +  else
    {
 -    setAuthDatabaseDirPath( getenv( "QGIS_AUTH_DB_DIR_PATH" ) );
 +    setAuthDatabaseDirPath( qgisSettingsDirPath() );
+     sAuthDbUri()->clear();
    }
  
-   // force use of OpenGL renderer for Qt3d.
-@@ -400,28 +435,30 @@
+@@ -429,6 +465,7 @@
    *sSystemEnvVars() = systemEnvVarMap;
  
    // append local user-writable folder as a proj search path
--  QStringList currentProjSearchPaths = QgsProjUtils::searchPaths();
--  currentProjSearchPaths.append( qgisSettingsDirPath() + QStringLiteral( "proj" ) );
--#ifdef Q_OS_MACX
--  // append bundled proj lib for MacOS
--  QString projLib( QDir::cleanPath( pkgDataPath().append( "/proj" ) ) );
--  if ( QFile::exists( projLib ) )
--  {
--    currentProjSearchPaths.append( projLib );
--  }
--#endif // Q_OS_MACX
--
--  char **newPaths = new char *[currentProjSearchPaths.length()];
--  for ( int i = 0; i < currentProjSearchPaths.count(); ++i )
--  {
--    newPaths[i] = CPLStrdup( currentProjSearchPaths.at( i ).toUtf8().constData() );
--  }
--  proj_context_set_search_paths( nullptr, currentProjSearchPaths.count(), newPaths );
--  for ( int i = 0; i < currentProjSearchPaths.count(); ++i )
--  {
--    CPLFree( newPaths[i] );
--  }
--  delete [] newPaths;
-+//   QStringList currentProjSearchPaths = QgsProjUtils::searchPaths();
-+//   currentProjSearchPaths.append( qgisSettingsDirPath() + QStringLiteral( "proj" ) );
-+// #ifdef Q_OS_MACX
-+//   // append bundled proj lib for MacOS
-+//   // Library/Frameworks/proj.framework/Resources/proj
-+//   QString projLib( QDir::cleanPath( pkgDataPath().append( "/proj" ) ) );
-+//   if ( QFile::exists( projLib ) )
-+//   {
-+//     currentProjSearchPaths.append( projLib );
-+//   }
-+// #endif // Q_OS_MACX
-+
-+//   char **newPaths = new char *[currentProjSearchPaths.length()];
-+//   for ( int i = 0; i < currentProjSearchPaths.count(); ++i )
-+//   {
-+//     newPaths[i] = CPLStrdup( currentProjSearchPaths.at( i ).toUtf8().constData() );
-+//   }
-+//   proj_context_set_search_paths( nullptr, currentProjSearchPaths.count(), newPaths );
-+//   for ( int i = 0; i < currentProjSearchPaths.count(); ++i )
-+//   {
-+//     CPLFree( newPaths[i] );
-+//   }
-+//   delete [] newPaths;
-+//   qputenv("PROJ_LIB", currentProjSearchPaths[0].toUtf8());
++  /*
+   QStringList currentProjSearchPaths = QgsProjUtils::searchPaths();
+   currentProjSearchPaths.append( qgisSettingsDirPath() + QStringLiteral( "proj" ) );
+ #ifdef Q_OS_MACOS
+@@ -451,6 +488,7 @@
+     CPLFree( newPaths[i] );
+   }
+   delete [] newPaths;
++  */
  
    // allow Qt to search for Qt plugins (e.g. sqldrivers) in our plugin directory
    QCoreApplication::addLibraryPath( pluginPath() );
-@@ -455,52 +492,99 @@
-   ABISYM( mInitialized ) = true;
- }
+@@ -488,7 +526,56 @@
  
--
  void QgsApplication::installTranslators()
  {
--  if ( *sTranslation() != QLatin1String( "C" ) )
 +  if ( *sTranslation() != QStringLiteral( "C" ) )
-   {
--    mQgisTranslator = new QTranslator( this );
--    if ( mQgisTranslator->load( QStringLiteral( "qgis_" ) + *sTranslation(), i18nPath() ) )
--    {
--      installTranslator( mQgisTranslator );
--    }
--    else
--    {
--      QgsDebugMsgLevel( QStringLiteral( "loading of qgis translation failed %1/qgis_%2" ).arg( i18nPath(), *sTranslation() ), 2 );
--    }
--
--    /* Translation file for Qt.
--     * The strings from the QMenuBar context section are used by Qt/Mac to shift
--     * the About, Preferences and Quit items to the Mac Application menu.
--     * These items must be translated identically in both qt_ and qgis_ files.
--     */
--    QString qtTranslationsPath = QLibraryInfo::location( QLibraryInfo::TranslationsPath );
--#ifdef __MINGW32__
--    QString prefix = QDir( QString( "%1/../" ).arg( QApplication::applicationDirPath() ) ).absolutePath();
--    qtTranslationsPath = prefix + qtTranslationsPath.mid( QLibraryInfo::location( QLibraryInfo::PrefixPath ).length() );
--#endif
- 
--    mQtTranslator = new QTranslator( this );
--    if ( mQtTranslator->load( QStringLiteral( "qt_" ) + *sTranslation(), qtTranslationsPath ) )
--    {
--      installTranslator( mQtTranslator );
--    }
--    else
--    {
--      QgsDebugMsgLevel( QStringLiteral( "loading of qt translation failed %1/qt_%2" ).arg( qtTranslationsPath, *sTranslation() ), 2 );
--    }
--
--    mQtBaseTranslator = new QTranslator( this );
--    if ( mQtBaseTranslator->load( QStringLiteral( "qtbase_" ) + *sTranslation(), qtTranslationsPath ) )
--    {
--      installTranslator( mQtBaseTranslator );
--    }
--    else
--    {
--      QgsDebugMsgLevel( QStringLiteral( "loading of qtbase translation failed %1/qt_%2" ).arg( qtTranslationsPath, *sTranslation() ), 2 );
++  {
++
 +      QList<QString> localePaths;
 +      localePaths.append(i18nPath());
 +      #ifdef Q_OS_MAC
@@ -272,91 +196,69 @@
 +                delete translator;
 +            }
 +        }
++    }
++  }
++
+   // Remove translators if any are already installed
++  /*
+   if ( mQgisTranslator )
+   {
+     removeTranslator( mQgisTranslator );
+@@ -519,12 +606,14 @@
+     {
+       QgsDebugMsgLevel( QStringLiteral( "loading of qgis translation failed %1/qgis_%2" ).arg( i18nPath(), *sTranslation() ), 2 );
+     }
++    */
+ 
+     /* Translation file for Qt.
+      * The strings from the QMenuBar context section are used by Qt/Mac to shift
+      * the About, Preferences and Quit items to the Mac Application menu.
+      * These items must be translated identically in both qt_ and qgis_ files.
+      */
++    /*
+     QString qtTranslationsPath = QLibraryInfo::location( QLibraryInfo::TranslationsPath );
+ #ifdef __MINGW32__
+     QString prefix = QDir( QString( "%1/../" ).arg( QApplication::applicationDirPath() ) ).absolutePath();
+@@ -551,6 +640,7 @@
+       QgsDebugMsgLevel( QStringLiteral( "loading of qtbase translation failed %1/qt_%2" ).arg( qtTranslationsPath, *sTranslation() ), 2 );
      }
    }
-+
-+//  if ( *sTranslation() != QLatin1String( "C" ) )
-+//  {
-+//    mQgisTranslator = new QTranslator( this );
-+//    if ( mQgisTranslator->load( QStringLiteral( "qgis_" ) + *sTranslation(), i18nPath() ) )
-+//    {
-+//      installTranslator( mQgisTranslator );
-+//    }
-+//    else
-+//    {
-+//      QgsDebugMsgLevel( QStringLiteral( "loading of qgis translation failed %1/qgis_%2" ).arg( i18nPath(), *sTranslation() ), 2 );
-+//    }
-+
-+//    /* Translation file for Qt.
-+//     * The strings from the QMenuBar context section are used by Qt/Mac to shift
-+//     * the About, Preferences and Quit items to the Mac Application menu.
-+//     * These items must be translated identically in both qt_ and qgis_ files.
-+//     */
-+//    QString qtTranslationsPath = QLibraryInfo::location( QLibraryInfo::TranslationsPath );
-+//#ifdef __MINGW32__
-+//    QString prefix = QDir( QString( "%1/../" ).arg( QApplication::applicationDirPath() ) ).absolutePath();
-+//    qtTranslationsPath = prefix + qtTranslationsPath.mid( QLibraryInfo::location( QLibraryInfo::PrefixPath ).length() );
-+//#endif
-+
-+//    mQtTranslator = new QTranslator( this );
-+//    if ( mQtTranslator->load( QStringLiteral( "qt_" ) + *sTranslation(), qtTranslationsPath ) )
-+//    {
-+//      installTranslator( mQtTranslator );
-+//    }
-+//    else
-+//    {
-+//      QgsDebugMsgLevel( QStringLiteral( "loading of qt translation failed %1/qt_%2" ).arg( qtTranslationsPath, *sTranslation() ), 2 );
-+//    }
-+
-+//    mQtBaseTranslator = new QTranslator( this );
-+//    if ( mQtBaseTranslator->load( QStringLiteral( "qtbase_" ) + *sTranslation(), qtTranslationsPath ) )
-+//    {
-+//      installTranslator( mQtBaseTranslator );
-+//    }
-+//    else
-+//    {
-+//      QgsDebugMsgLevel( QStringLiteral( "loading of qtbase translation failed %1/qt_%2" ).arg( qtTranslationsPath, *sTranslation() ), 2 );
-+//    }
-+//  }
++  */
  }
  
  QgsApplication::~QgsApplication()
-@@ -510,9 +594,12 @@
+@@ -560,9 +650,12 @@
  
    delete mDataItemProviderRegistry;
    delete mApplicationMembers;
 -  delete mQgisTranslator;
 -  delete mQtTranslator;
 -  delete mQtBaseTranslator;
-+//   delete mQgisTranslator;
-+//   delete mQtTranslator;
-+//   delete mQtBaseTranslator;
++  // delete mQgisTranslator;
++  // delete mQtTranslator;
++  // delete mQtBaseTranslator;
 +  for (QTranslator *translator : mTranslators) {
 +      delete translator;
 +  }
  
    // we do this here as well as in exitQgis() -- it's safe to call as often as we want,
    // and there's just a *chance* that someone hasn't properly called exitQgis prior to
-@@ -626,12 +713,12 @@
+@@ -676,12 +769,14 @@
  void QgsApplication::setPrefixPath( const QString &prefixPath, bool useDefaultPaths )
  {
    *sPrefixPath() = prefixPath;
--#if defined(Q_OS_WIN)
--  if ( sPrefixPath()->endsWith( "/bin" ) )
--  {
--    sPrefixPath()->chop( 4 );
--  }
--#endif
-+// #if defined(Q_OS_WIN)
-+//   if ( sPrefixPath()->endsWith( "/bin" ) )
-+//   {
-+//     sPrefixPath()->chop( 4 );
-+//   }
-+// #endif
++  /*
+ #if defined(Q_OS_WIN)
+   if ( sPrefixPath()->endsWith( "/bin" ) )
+   {
+     sPrefixPath()->chop( 4 );
+   }
+ #endif
++  */
    if ( useDefaultPaths && !ABISYM( mRunningFromBuildDir ) )
    {
      setPluginPath( *sPrefixPath() + '/' + QStringLiteral( QGIS_PLUGIN_SUBDIR ) );
-@@ -947,40 +1034,65 @@
+@@ -998,40 +1093,31 @@
      }
    }
  
@@ -374,7 +276,7 @@
 +#ifdef Q_OS_WIN
 +    QDir defaultPrefixDir(applicationDirPath() + QDir::separator() + "..");
  
--#if defined(Q_OS_MACX)
+-#if defined(Q_OS_MACOS)
 -    prefixPath = appPath;
 -#elif defined(Q_OS_WIN)
 -    prefixPath = appPath;
@@ -403,113 +305,53 @@
  #endif
 -  }
 +    QString defaultPrefixPath =  defaultPrefixDir.absolutePath();
- 
--  if ( ABISYM( mRunningFromBuildDir ) )
--    return *sBuildOutputPath() + QStringLiteral( "/data" );
--  else
++
 +    QString envPrefixPath = QString::fromLocal8Bit( qgetenv( "QGIS_PREFIX_PATH" ) );
 +    QString prefixPath( envPrefixPath.isEmpty() ?
 +                            defaultPrefixPath : envPrefixPath );
 +    QgsDebugMsgLevel( QString( "prefixPath(): %1" ).arg( prefixPath ), 2 );
 +
-+
-+//   if ( getenv( "QGIS_PREFIX_PATH" ) )
-+//     prefixPath = getenv( "QGIS_PREFIX_PATH" );
-+//   else
-+//   {
-+// #if defined(ANDROID)
-+//     // this is "/data/data/org.qgis.qgis" in android
-+//     QDir dir( QDir::homePath() );
-+//     dir.cdUp();
-+//     prefixPath = dir.absolutePath();
-+// #else
-+
-+// #if defined(Q_OS_MACX)
-+//     prefixPath = appPath;
-+// #elif defined(Q_OS_WIN)
-+//     prefixPath = appPath;
-+//     if ( prefixPath.endsWith( "/bin" ) )
-+//       prefixPath.chop( 4 );
-+// #else
-+//     QDir dir( appPath );
-+//     // Fix for server which is one level deeper in /usr/lib/cgi-bin
-+//     if ( appPath.contains( QStringLiteral( "cgi-bin" ) ) )
-+//     {
-+//       dir.cdUp();
-+//     }
-+//     dir.cdUp(); // Go from /usr/bin or /usr/lib (for server) to /usr
-+//     prefixPath = dir.absolutePath();
-+// #endif
-+// #endif
-+//   }
-+
 +    setPrefixPath( prefixPath, true );
 +    qputenv("QGIS_PREFIX_PATH", prefixPath.toUtf8());
-+
-+//   if ( ABISYM( mRunningFromBuildDir ) )
-+//     return *sBuildOutputPath() + QStringLiteral( "/data" );
-+//   else
+ 
+-  if ( ABISYM( mRunningFromBuildDir ) )
+-    return *sBuildOutputPath() + QStringLiteral( "/data" );
+-  else
      return prefixPath + '/' + QStringLiteral( QGIS_DATA_SUBDIR );
  }
  
-@@ -1139,9 +1251,9 @@
+@@ -1190,9 +1276,11 @@
  
  QString QgsApplication::i18nPath()
  {
--  if ( ABISYM( mRunningFromBuildDir ) )
--    return *sBuildOutputPath() + QStringLiteral( "/i18n/" );
--  else
-+//   if ( ABISYM( mRunningFromBuildDir ) )
-+//     return *sBuildOutputPath() + QStringLiteral( "/i18n/" );
-+//   else
++  /*
+   if ( ABISYM( mRunningFromBuildDir ) )
+     return *sBuildOutputPath() + QStringLiteral( "/i18n/" );
+   else
++  */
      return pkgDataPath() + QStringLiteral( "/i18n/" );
  }
  
-@@ -1182,25 +1294,25 @@
+@@ -1238,6 +1326,7 @@
  
  QString QgsApplication::srsDatabaseFilePath()
  {
--  if ( ABISYM( mRunningFromBuildDir ) )
--  {
--    QString tempCopy = QDir::tempPath() + "/srs6.db";
--
--    if ( !QFile( tempCopy ).exists() )
--    {
--      QFile f( buildSourcePath() + "/resources/srs6.db" );
--      if ( !f.copy( tempCopy ) )
--      {
--        qFatal( "Could not create temporary copy" );
--      }
--    }
--
--    return tempCopy;
--  }
--  else
--  {
-+//   if ( ABISYM( mRunningFromBuildDir ) )
-+//   {
-+//     QString tempCopy = QDir::tempPath() + "/srs6.db";
-+
-+//     if ( !QFile( tempCopy ).exists() )
-+//     {
-+//       QFile f( buildSourcePath() + "/resources/srs6.db" );
-+//       if ( !f.copy( tempCopy ) )
-+//       {
-+//         qFatal( "Could not create temporary copy" );
-+//       }
-+//     }
-+
-+//     return tempCopy;
-+//   }
-+//   else
-+//   {
++  /*
+   if ( ABISYM( mRunningFromBuildDir ) )
+   {
+     QString tempCopy = QDir::tempPath() + "/srs6.db";
+@@ -1255,8 +1344,9 @@
+   }
+   else
+   {
++  */
      return pkgDataPath() + QStringLiteral( "/resources/srs.db" );
 -  }
-+//   }
++  // }
  }
  
  void QgsApplication::setSvgPaths( const QStringList &svgPaths )
-@@ -1298,12 +1410,12 @@
+@@ -1354,12 +1444,12 @@
      return *sUserName();
  
    //backup plan - use environment variables
@@ -524,7 +366,7 @@
    return *sUserName();
  }
  
-@@ -1329,8 +1441,8 @@
+@@ -1385,8 +1475,8 @@
    //fall back to login name
    if ( sUserFullName()->isEmpty() )
      *sUserFullName() = userLoginName();
@@ -535,7 +377,7 @@
  #else
    struct passwd *p = getpwuid( getuid() );
  
-@@ -1526,6 +1638,7 @@
+@@ -1582,6 +1672,7 @@
    {
      if ( !lInstance->mAuthManager )
      {
@@ -543,7 +385,7 @@
        lInstance->mAuthManager = QgsAuthManager::instance();
      }
      return lInstance->mAuthManager;
-@@ -1533,8 +1646,11 @@
+@@ -1589,8 +1680,11 @@
    else
    {
      // no QgsApplication instance
@@ -556,35 +398,36 @@
      return sAuthManager;
    }
  }
-@@ -1583,28 +1699,36 @@
+@@ -1644,28 +1738,36 @@
  
  QString QgsApplication::showSettings()
  {
 -  QString myEnvironmentVar( getenv( "QGIS_PREFIX_PATH" ) );
+-  QString myState = tr( "QgsApplication state:\n"
 +  QString myEnvironmentVar = QString::fromLocal8Bit(qgetenv( "QGIS_PREFIX_PATH" ) );
-   QString myState = tr( "Application state:\n"
-                         "QGIS_PREFIX_PATH env var:\t\t%1\n"
-                         "Prefix:\t\t%2\n"
--                        "Plugin Path:\t\t%3\n"
--                        "Package Data Path:\t%4\n"
--                        "Active Theme Name:\t%5\n"
--                        "Active Theme Path:\t%6\n"
--                        "Default Theme Path:\t%7\n"
--                        "SVG Search Paths:\t%8\n"
--                        "User DB Path:\t%9\n"
--                        "Auth DB Path:\t%10\n" )
-+                        "Library Path:\t\t%3\n"
-+                        "Plugin Path:\t\t%4\n"
-+                        "Package Data Path:\t%5\n"
-+                        "Active Theme Name:\t%6\n"
-+                        "Active Theme Path:\t%7\n"
-+                        "Default Theme Path:\t%8\n"
-+                        "SVG Search Paths:\t%9\n"
-+                        "User DB Path:\t%10\n"
-+                        "Auth DB Path:\t%11\n"
-+                        "Translations Path:\t%12\n"
-+                        "SRS DB Path:\t%13\n"
-+                        "Icons Path:\t%14\n"  )
++  QString myState = tr( "Application state:\n"
+                         " - QGIS_PREFIX_PATH env var:   %1\n"
+                         " - Prefix:                     %2\n"
+-                        " - Plugin Path:                %3\n"
+-                        " - Package Data Path:          %4\n"
+-                        " - Active Theme Name:          %5\n"
+-                        " - Active Theme Path:          %6\n"
+-                        " - Default Theme Path:         %7\n"
+-                        " - SVG Search Paths:           %8\n"
+-                        " - User DB Path:               %9\n"
+-                        " - Auth DB Path:               %10\n" )
++                        " - Library Path:               %3\n"
++                        " - Plugin Path:                %4\n"
++                        " - Package Data Path:          %5\n"
++                        " - Active Theme Name:          %6\n"
++                        " - Active Theme Path:          %7\n"
++                        " - Default Theme Path:         %8\n"
++                        " - SVG Search Paths:           %9\n"
++                        " - User DB Path:               %10\n"
++                        " - Auth DB Path:               %11\n"
++                        " - Translations Path:          %12\n"
++                        " - SRS DB Path:                %13\n"
++                        " - Icons Path:                 %14\n" )
                      .arg( myEnvironmentVar,
                            prefixPath(),
 +                          libraryPath(),
@@ -593,19 +436,19 @@
                            themeName(),
                            activeThemePath(),
                            defaultThemePath(),
--                          svgPaths().join( tr( "\n\t\t", "match indentation of application state" ) ),
+-                          svgPaths().join( tr( "\n                               ", "match indentation of application state" ) ),
 -                          qgisMasterDatabaseFilePath() )
--                    .arg( qgisAuthDatabaseFilePath() );
+-                    .arg( QgsAuthManager::instance()->authenticationDatabaseUriStripped() );
 +                          svgPaths().join( tr( "\n\t\t", "match indentation of application state" ) ) )
 +                    .arg( qgisMasterDatabaseFilePath(),
-+                          qgisAuthDatabaseFilePath(), 
++                          qgisAuthDatabaseFilePath(),
 +                          i18nPath(),
 +                          srsDatabaseFilePath(),
 +                          iconsPath() );
    return myState;
  }
  
-@@ -2113,7 +2237,7 @@
+@@ -2164,7 +2266,7 @@
    ApplicationMembers *appMembers = members();
    if ( appMembers->mNullRepresentation.isNull() )
    {
@@ -614,7 +457,7 @@
    }
    return appMembers->mNullRepresentation;
  }
-@@ -2154,8 +2278,7 @@
+@@ -2205,8 +2307,7 @@
  #else
    //under other OS's we use an environment var so the user can
    //override the path if he likes
@@ -624,70 +467,54 @@
  #endif
  
    // Check qgis.db and make private copy if necessary
-@@ -2503,15 +2626,15 @@
+@@ -2559,15 +2660,19 @@
    return members()->mSensorRegistry;
  }
  
--QgsGpsConnectionRegistry *QgsApplication::gpsConnectionRegistry()
--{
--  return members()->mGpsConnectionRegistry;
--}
--
--QgsBabelFormatRegistry *QgsApplication::gpsBabelFormatRegistry()
--{
--  return members()->mGpsBabelFormatRegistry;
--}
-+// QgsGpsConnectionRegistry *QgsApplication::gpsConnectionRegistry()
-+// {
-+//   return members()->mGpsConnectionRegistry;
-+// }
-+
-+// QgsBabelFormatRegistry *QgsApplication::gpsBabelFormatRegistry()
-+// {
-+//   return members()->mGpsBabelFormatRegistry;
-+// }
++/*
+ QgsGpsConnectionRegistry *QgsApplication::gpsConnectionRegistry()
+ {
+   return members()->mGpsConnectionRegistry;
+ }
++*/
+ 
++/*
+ QgsBabelFormatRegistry *QgsApplication::gpsBabelFormatRegistry()
+ {
+   return members()->mGpsBabelFormatRegistry;
+ }
++*/
  
  QgsPluginLayerRegistry *QgsApplication::pluginLayerRegistry()
  {
-@@ -2737,16 +2860,16 @@
-     mPointCloudRendererRegistry = new QgsPointCloudRendererRegistry();
+@@ -2808,6 +2913,7 @@
+     mTiledSceneRendererRegistry = new QgsTiledSceneRendererRegistry();
      profiler->end();
    }
--  {
--    profiler->start( tr( "Setup GPS registry" ) );
--    mGpsConnectionRegistry = new QgsGpsConnectionRegistry();
--    profiler->end();
--  }
--  {
--    profiler->start( tr( "Setup GPSBabel format registry" ) );
--    mGpsBabelFormatRegistry = new QgsBabelFormatRegistry();
--    profiler->end();
--  }
-+//   {
-+//     profiler->start( tr( "Setup GPS registry" ) );
-+//     mGpsConnectionRegistry = new QgsGpsConnectionRegistry();
-+//     profiler->end();
-+//   }
-+//   {
-+//     profiler->start( tr( "Setup GPSBabel format registry" ) );
-+//     mGpsBabelFormatRegistry = new QgsBabelFormatRegistry();
-+//     profiler->end();
-+//   }
++  /*
+   {
+     profiler->start( tr( "Setup GPS registry" ) );
+     mGpsConnectionRegistry = new QgsGpsConnectionRegistry();
+@@ -2818,6 +2924,7 @@
+     mGpsBabelFormatRegistry = new QgsBabelFormatRegistry();
+     profiler->end();
+   }
++  */
    {
      profiler->start( tr( "Setup plugin layer registry" ) );
      mPluginLayerRegistry = new QgsPluginLayerRegistry();
-@@ -2840,8 +2963,8 @@
+@@ -2921,8 +3028,8 @@
    delete mAnnotationRegistry;
    delete mColorSchemeRegistry;
    delete mFieldFormatterRegistry;
 -  delete mGpsConnectionRegistry;
 -  delete mGpsBabelFormatRegistry;
-+//  delete mGpsConnectionRegistry;
-+//  delete mGpsBabelFormatRegistry;
++  // delete mGpsConnectionRegistry;
++  // delete mGpsBabelFormatRegistry;
    delete mMessageLog;
    delete mPaintEffectRegistry;
    delete mPluginLayerRegistry;
-@@ -2890,3 +3013,8 @@
+@@ -2974,3 +3081,8 @@
      return sApplicationMembers;
    }
  }

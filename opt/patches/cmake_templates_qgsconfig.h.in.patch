@@ -1,8 +1,8 @@
---- a/cmake_templates/qgsconfig.h.in	2022-02-18 15:06:10.000000000 +0300
-+++ b/cmake_templates/qgsconfig.h.in	2022-04-25 18:33:16.000000000 +0300
-@@ -33,6 +33,11 @@
- #define CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}"
- #define CMAKE_SOURCE_DIR "${CMAKE_SOURCE_DIR}"
+--- a/cmake_templates/qgsconfig.h.in	2025-05-15 15:26:35.218632070 +0300
++++ b/cmake_templates/qgsconfig.h.in	2025-05-15 14:46:59.465248999 +0300
+@@ -31,6 +31,11 @@
+ #define QGIS_LIB_SUBDIR "${QGIS_LIB_SUBDIR}"
+ #define QGIS_QML_SUBDIR "${QGIS_QML_SUBDIR}"
  
 +#define VENDOR_VERSION "${VERSION}"
 +#define VENDOR "${PACKAGE_VENDOR}"

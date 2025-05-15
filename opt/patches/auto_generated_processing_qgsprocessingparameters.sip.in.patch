@@ -1,6 +1,6 @@
---- a/python/core/auto_generated/processing/qgsprocessingparameters.sip.in	2025-04-25 19:26:53.216218996 +0300
-+++ b/python/core/auto_generated/processing/qgsprocessingparameters.sip.in	2025-04-02 18:34:55.730622046 +0300
-@@ -234,10 +234,8 @@
+--- a/python/core/auto_generated/processing/qgsprocessingparameters.sip.in	2025-05-15 15:26:35.290749419 +0300
++++ b/python/core/auto_generated/processing/qgsprocessingparameters.sip.in	2025-05-15 14:47:00.290277771 +0300
+@@ -242,10 +242,8 @@
  %End
  %TypeHeaderCode
  #include "qgsprocessingparameteraggregate.h"
@@ -11,7 +11,7 @@
  #include "qgsprocessingparametermeshdataset.h"
  %End
  %ConvertToSubClassCode
-@@ -323,10 +321,6 @@
+@@ -335,10 +333,6 @@
        sipType = sipType_QgsProcessingParameterFieldMapping;
      else if ( sipCpp->type() == QgsProcessingParameterTinInputLayers::typeName() )
        sipType = sipType_QgsProcessingParameterTinInputLayers;

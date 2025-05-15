@@ -1,6 +1,6 @@
---- a/src/app/pluginmanager/qgspluginmanager.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/pluginmanager/qgspluginmanager.cpp	2022-08-11 17:22:42.887502300 +0300
-@@ -905,7 +905,7 @@
+--- a/src/app/pluginmanager/qgspluginmanager.cpp	2025-05-15 15:26:35.367188067 +0300
++++ b/src/app/pluginmanager/qgspluginmanager.cpp	2025-05-15 14:47:00.599288547 +0300
+@@ -919,7 +919,7 @@
        iconPath = "file://" + iconPath;
  #endif
      }

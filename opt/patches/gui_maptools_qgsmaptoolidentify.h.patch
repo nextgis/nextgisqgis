@@ -1,5 +1,5 @@
---- a/src/gui/qgsmaptoolidentify.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/gui/qgsmaptoolidentify.h	2022-04-25 18:33:16.000000000 +0300
+--- a/src/gui/maptools/qgsmaptoolidentify.h	2025-05-14 10:31:56.132285333 +0300
++++ b/src/gui/maptools/qgsmaptoolidentify.h	2025-05-15 14:09:44.087290174 +0300
 @@ -28,7 +28,7 @@
  
  class QgsRasterLayer;
@@ -9,9 +9,9 @@
  class QgsMapLayer;
  class QgsMapCanvas;
  class QgsMeshLayer;
-@@ -251,7 +251,7 @@
+@@ -265,7 +265,7 @@
      bool identifyVectorLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsVectorLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext = QgsIdentifyContext() );
-     int identifyVectorLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsVectorLayer *layer, const QgsFeatureList &features, QgsFeatureRenderer *renderer, const QMap< QString, QString >  &commonDerivedAttributes, const std::function< QMap< QString, QString > ( const QgsFeature & ) > &derivedAttributes, QgsRenderContext &context );
+     int identifyVectorLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsVectorLayer *layer, const QgsFeatureList &features, QgsFeatureRenderer *renderer, const QMap<QString, QString> &commonDerivedAttributes, const std::function<QMap<QString, QString>( const QgsFeature & )> &derivedAttributes, QgsRenderContext &context );
      bool identifyMeshLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsMeshLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext = QgsIdentifyContext() );
 -    bool identifyVectorTileLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsVectorTileLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext = QgsIdentifyContext() );
 +    // bool identifyVectorTileLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsVectorTileLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext = QgsIdentifyContext() );

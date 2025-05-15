@@ -1,5 +1,5 @@
---- a/src/app/mainwin.cpp	2025-04-25 19:26:53.655228632 +0300
-+++ b/src/app/mainwin.cpp	2025-04-02 18:34:56.405328553 +0300
+--- a/src/app/mainwin.cpp	2025-05-15 15:26:35.361154083 +0300
++++ b/src/app/mainwin.cpp	2025-05-15 14:47:00.589288198 +0300
 @@ -50,6 +50,22 @@
    return basename;
  }
@@ -44,22 +44,22 @@
 -  HINSTANCE hGetProcIDDLL = LoadLibrary( "qgis_app.dll" );
 +  HINSTANCE hGetProcIDDLL = LoadLibrary( "ngqgis_app.dll" );
  #else
- // MinGW
+   // MinGW
 -  HINSTANCE hGetProcIDDLL = LoadLibrary( "libqgis_app.dll" );
 +  HINSTANCE hGetProcIDDLL = LoadLibrary( "libngqgis_app.dll" );
  #endif
  
    if ( !hGetProcIDDLL )
-@@ -188,7 +211,7 @@
-       0,
-       NULL );
+@@ -189,7 +212,7 @@
+       NULL
+     );
  
 -    std::string message = "Could not load qgis_app.dll \n Windows Error: " + std::string( errorText )
 +    std::string message = "Could not load ngqgis_app.dll \n Windows Error: " + std::string( errorText )
                            + "\n Help: \n\n Check " + basename + ".env for correct environment paths";
      showError( message, "Error loading QGIS" );
  
-@@ -207,7 +230,7 @@
+@@ -208,7 +231,7 @@
  
    if ( !realmain )
    {

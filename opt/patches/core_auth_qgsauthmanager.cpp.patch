@@ -1,17 +1,17 @@
---- a/src/core/auth/qgsauthmanager.cpp	2025-04-25 19:26:53.733230345 +0300
-+++ b/src/core/auth/qgsauthmanager.cpp	2025-04-02 18:34:56.458009803 +0300
-@@ -75,8 +75,8 @@
+--- a/src/core/auth/qgsauthmanager.cpp	2025-05-15 15:26:35.414556346 +0300
++++ b/src/core/auth/qgsauthmanager.cpp	2025-05-15 14:47:00.658290604 +0300
+@@ -66,8 +66,8 @@
  const QString QgsAuthManager::AUTH_CFG_REGEX = QStringLiteral( "authcfg=([a-z]|[A-Z]|[0-9]){7}" );
  
  
--const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_KEY_NAME( "QGIS-Master-Password" );
+-const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_KEY_NAME_BASE( "QGIS-Master-Password" );
 -const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_FOLDER_NAME( "QGIS" );
-+const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_KEY_NAME( "NextGIS-Master-Password" );
++const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_KEY_NAME_BASE( "NextGIS-Master-Password" );
 +const QLatin1String QgsAuthManager::AUTH_PASSWORD_HELPER_FOLDER_NAME( "NextGIS" );
  
  
  
-@@ -90,17 +90,6 @@
+@@ -81,17 +81,6 @@
  const QString QgsAuthManager::AUTH_PASSWORD_HELPER_DISPLAY_NAME( "Password Manager" );
  #endif
  
@@ -29,3 +29,17 @@
  
  QgsAuthManager::QgsAuthManager()
  {
+@@ -3343,7 +3332,7 @@
+   return result;
+ }
+ 
+-bool QgsAuthManager::passwordHelperEnabled()
++bool QgsAuthManager::passwordHelperEnabled() const
+ {
+   // Does the user want to store the password in the wallet?
+   QgsSettings settings;
+@@ -4040,4 +4029,3 @@
+   QgsAuthConfigurationStorageRegistry *storageRegistry = authConfigurationStorageRegistry();
+   return storageRegistry->firstReadyStorageWithCapability( capability );
+ }
+-

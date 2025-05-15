@@ -1,48 +1,48 @@
---- a/src/core/qgsvectorfilewriter.cpp	2025-04-25 19:26:53.974235635 +0300
-+++ b/src/core/qgsvectorfilewriter.cpp	2025-04-02 18:34:56.606012961 +0300
-@@ -2484,6 +2484,46 @@
+--- a/src/core/qgsvectorfilewriter.cpp	2025-05-15 15:26:35.480193019 +0300
++++ b/src/core/qgsvectorfilewriter.cpp	2025-05-15 14:47:00.803295661 +0300
+@@ -2509,6 +2509,46 @@
                               )
                             );
  
 +      // SXF
-+        datasetOptions.clear();
-+        layerOptions.clear();
++      datasetOptions.clear();
++      layerOptions.clear();
 +
-+        datasetOptions.insert( QStringLiteral("SXF_WRITE_RSC"), new QgsVectorFileWriter::BoolOption(
-+                                QObject::tr( "Write correspondent RSC file. By default RSC file create."),
-+                                true  // Default value
-+                                ) );
++      datasetOptions.insert( QStringLiteral("SXF_WRITE_RSC"), new QgsVectorFileWriter::BoolOption(
++                              QObject::tr( "Write correspondent RSC file. By default RSC file create."),
++                              true  // Default value
++                              ) );
 +
-+        datasetOptions.insert( QStringLiteral("SXF_MAP_NAME"), new QgsVectorFileWriter::StringOption(
-+                                QObject::tr( "Write map name."),
-+                                QStringLiteral("")
-+                                ) );
++      datasetOptions.insert( QStringLiteral("SXF_MAP_NAME"), new QgsVectorFileWriter::StringOption(
++                              QObject::tr( "Write map name."),
++                              QStringLiteral("")
++                              ) );
 +
-+        datasetOptions.insert( QStringLiteral("SXF_SHEET_KEY"), new QgsVectorFileWriter::StringOption(
-+                                QObject::tr( "Write sheet name."),
-+                                QStringLiteral("")
-+                                ) );
++      datasetOptions.insert( QStringLiteral("SXF_SHEET_KEY"), new QgsVectorFileWriter::StringOption(
++                              QObject::tr( "Write sheet name."),
++                              QStringLiteral("")
++                              ) );
 +
-+        datasetOptions.insert( QStringLiteral("SXF_MAP_SCALE"), new QgsVectorFileWriter::IntOption(
-+                                QObject::tr( "Write sheet scale."),
-+                                1000000
-+                                ) );
++      datasetOptions.insert( QStringLiteral("SXF_MAP_SCALE"), new QgsVectorFileWriter::IntOption(
++                              QObject::tr( "Write sheet scale."),
++                              1000000
++                              ) );
 +
-+        layerOptions.insert( QStringLiteral("SXF_NEW_BEHAVIOR"), new QgsVectorFileWriter::HiddenOption(
-+                                QStringLiteral("YES")
-+                            ) ); 
++      layerOptions.insert( QStringLiteral("SXF_NEW_BEHAVIOR"), new QgsVectorFileWriter::HiddenOption(
++                              QStringLiteral("YES")
++                          ) );
 +
-+        driverMetadata.insert( QStringLiteral( "SXF" ),
-+                               QgsVectorFileWriter::MetaData(
-+                                QStringLiteral( "Storage and eXchange Format" ),
-+                                QObject::tr( "Storage and eXchange Format" ),
-+                                QStringLiteral( "*.sxf" ),
-+                                QStringLiteral( "sxf" ),
-+                                datasetOptions,
-+                                layerOptions,
-+                                QStringLiteral( "UTF-8" )
-+                                )
-+                            );
++      driverMetadata.insert( QStringLiteral( "SXF" ),
++                             QgsVectorFileWriter::MetaData(
++                              QStringLiteral( "Storage and eXchange Format" ),
++                              QObject::tr( "Storage and eXchange Format" ),
++                              QStringLiteral( "*.sxf" ),
++                              QStringLiteral( "sxf" ),
++                              datasetOptions,
++                              layerOptions,
++                              QStringLiteral( "UTF-8" )
++                              )
++                          );
 +
      }
  

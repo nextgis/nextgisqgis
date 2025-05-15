@@ -1,5 +1,5 @@
---- a/src/core/qgsapplication.h	2025-04-25 19:26:53.907234164 +0300
-+++ b/src/core/qgsapplication.h	2025-04-02 18:34:56.554011851 +0300
+--- a/src/core/qgsapplication.h	2025-05-15 15:26:35.461887084 +0300
++++ b/src/core/qgsapplication.h	2025-05-15 14:47:00.764294301 +0300
 @@ -20,6 +20,7 @@
  #include <QEvent>
  #include <QStringList>
@@ -8,7 +8,7 @@
  
  #include <memory>
  #include "qgis_sip.h"
-@@ -46,8 +47,8 @@
+@@ -47,8 +48,8 @@
  class QgsSourceCache;
  class QgsSymbolLayerRegistry;
  class QgsRasterRendererRegistry;
@@ -19,7 +19,7 @@
  class QgsDataItemProviderRegistry;
  class QgsPluginLayerRegistry;
  class QgsClassificationMethodRegistry;
-@@ -163,6 +164,9 @@
+@@ -167,6 +168,9 @@
      static const char *QGIS_ORGANIZATION_NAME;
      static const char *QGIS_ORGANIZATION_DOMAIN;
      static const char *QGIS_APPLICATION_NAME;
@@ -29,7 +29,7 @@
  #ifndef SIP_RUN
  
      /**
-@@ -373,6 +377,7 @@
+@@ -385,6 +389,7 @@
  
      //! Returns the common root path of all application data directories.
      static QString pkgDataPath();
@@ -37,9 +37,9 @@
  
      //! Returns the path to the currently active theme directory.
      static QString activeThemePath();
-@@ -800,13 +805,13 @@
+@@ -801,13 +806,13 @@
+     /**
       * Returns the application's GPS connection registry, used for managing GPS connections.
-      * \since QGIS 3.0
       */
 -    static QgsGpsConnectionRegistry *gpsConnectionRegistry() SIP_KEEPREFERENCE;
 +    // static QgsGpsConnectionRegistry *gpsConnectionRegistry() SIP_KEEPREFERENCE;
@@ -53,7 +53,7 @@
  
      /**
       * Returns the application's plugin layer registry, used for managing plugin layer types.
-@@ -1133,9 +1138,10 @@
+@@ -1152,9 +1157,10 @@
      QMap<QString, QIcon> mIconCache;
      QMap<Cursor, QCursor> mCursorCache;
  
@@ -67,7 +67,7 @@
  
      QgsDataItemProviderRegistry *mDataItemProviderRegistry = nullptr;
      QgsAuthManager *mAuthManager = nullptr;
-@@ -1152,8 +1158,8 @@
+@@ -1171,8 +1177,8 @@
        QgsLocalizedDataPathRegistry *mLocalizedDataPathRegistry = nullptr;
        QgsNumericFormatRegistry *mNumericFormatRegistry = nullptr;
        QgsFieldFormatterRegistry *mFieldFormatterRegistry = nullptr;
@@ -77,4 +77,4 @@
 +      // QgsBabelFormatRegistry *mGpsBabelFormatRegistry = nullptr;
        QgsNetworkContentFetcherRegistry *mNetworkContentFetcherRegistry = nullptr;
        QgsScaleBarRendererRegistry *mScaleBarRendererRegistry = nullptr;
-       QgsValidityCheckRegistry *mValidityCheckRegistry = nullptr;
+       QgsLabelingEngineRuleRegistry *mLabelingEngineRuleRegistry = nullptr;

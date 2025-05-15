@@ -1,5 +1,5 @@
---- a/src/core/symbology/qgsmarkersymbollayer.cpp	2023-08-21 19:39:45.751045266 +0300
-+++ b/src/core/symbology/qgsmarkersymbollayer.cpp	2023-10-04 10:39:44.316569545 +0300
+--- a/src/core/symbology/qgsmarkersymbollayer.cpp	2025-05-15 15:26:35.509031016 +0300
++++ b/src/core/symbology/qgsmarkersymbollayer.cpp	2025-05-15 14:47:00.827296498 +0300
 @@ -16,8 +16,8 @@
  #include "qgsmarkersymbollayer.h"
  #include "qgssymbollayerutils.h"
@@ -11,7 +11,7 @@
  #include "qgsfontutils.h"
  #include "qgsimagecache.h"
  #include "qgsimageoperation.h"
-@@ -1570,7 +1570,7 @@
+@@ -1566,7 +1566,7 @@
      p->drawPath( mPath );
    }
  }
@@ -20,7 +20,7 @@
  bool QgsSimpleMarkerSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift ) const
  {
    //data defined size?
-@@ -1759,7 +1759,7 @@
+@@ -1755,7 +1755,7 @@
  
    return true;
  }
@@ -29,21 +29,24 @@
  
  void QgsSimpleMarkerSymbolLayer::setOutputUnit( Qgis::RenderUnit unit )
  {
-@@ -2809,7 +2809,7 @@
-   m->setOffset( offset );
+@@ -2826,6 +2826,7 @@
    return m;
  }
--
+ 
 +/*
  bool QgsSvgMarkerSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift ) const
  {
    //size
-@@ -2930,7 +2930,7 @@
+@@ -2946,6 +2947,7 @@
    p.end();
    return true;
  }
--
 +*/
+ 
  QRectF QgsSvgMarkerSymbolLayer::bounds( QPointF point, QgsSymbolRenderContext &context )
  {
-   bool hasDataDefinedSize = false;
+@@ -4146,4 +4148,3 @@
+   bool cached = false;
+   return QgsApplication::imageCache()->pathAsImage( path, size, preserveAspectRatio, opacity, cached, context.flags() & Qgis::RenderContextFlag::RenderBlocking, 96, movieFrame );
+ }
+-

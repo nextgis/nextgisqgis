@@ -1,5 +1,5 @@
---- a/src/core/symbology/qgssymbollayer.cpp	2023-08-21 19:39:45.751045266 +0300
-+++ b/src/core/symbology/qgssymbollayer.cpp	2023-10-04 13:08:11.804798526 +0300
+--- a/src/core/symbology/qgssymbollayer.cpp	2025-05-15 15:26:35.515573152 +0300
++++ b/src/core/symbology/qgssymbollayer.cpp	2025-05-15 14:47:00.834296742 +0300
 @@ -15,7 +15,7 @@
  
  #include "qgssymbollayer.h"
@@ -9,29 +9,26 @@
  #include "qgsgeometrysimplifier.h"
  #include "qgspainteffect.h"
  #include "qgspainteffectregistry.h"
-@@ -149,7 +149,7 @@
-   delete symbol;
+@@ -153,6 +153,7 @@
    return false;
  }
--
+ 
 +/*
  bool QgsSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift ) const
  {
    Q_UNUSED( e )
-@@ -214,7 +214,7 @@
+@@ -217,6 +218,7 @@
  {
    return Qt::NoBrush;
  }
--
 +*/
+ 
  QgsPaintEffect *QgsSymbolLayer::paintEffect() const
  {
-   return mPaintEffect.get();
-@@ -807,13 +807,13 @@
- {
+@@ -821,12 +823,13 @@
    return context.convertToPainterUnits( mWidth, mWidthUnit, mWidthMapUnitScale );
  }
--
+ 
 +/*
  double QgsLineSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
  {
@@ -43,21 +40,19 @@
  
  void QgsFillSymbolLayer::drawPreviewIcon( QgsSymbolRenderContext &context, QSize size )
  {
-@@ -907,7 +907,7 @@
- {
+@@ -921,6 +924,7 @@
    return {};
  }
--
+ 
 +/*
  double QgsMarkerSymbolLayer::dxfSize( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
  {
    double size = mSize;
-@@ -941,7 +941,7 @@
+@@ -954,6 +958,7 @@
    }
    return angle;
  }
--
 +*/
- void QgsSymbolLayer::prepareMasks( const QgsSymbolRenderContext &context )
+ 
+ QPainterPath generateClipPath( const QgsRenderContext &renderContext, const QString &id, const QRectF *rect, bool &foundGeometries )
  {
-   mClipPath.clear();

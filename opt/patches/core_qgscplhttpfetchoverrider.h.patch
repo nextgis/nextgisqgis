@@ -1,15 +1,6 @@
---- a/src/core/qgscplhttpfetchoverrider.h	2025-04-25 19:26:53.914234318 +0300
-+++ b/src/core/qgscplhttpfetchoverrider.h	2025-04-02 18:34:56.559327442 +0300
-@@ -42,7 +42,7 @@
-  * \note not available in Python bindings
-  * \since QGIS 3.18
-  */
--class QgsCPLHTTPFetchOverrider
-+class CORE_EXPORT QgsCPLHTTPFetchOverrider
- {
-   public:
-     //! Installs the redirection for the current thread
-@@ -68,7 +68,7 @@
+--- a/src/core/qgscplhttpfetchoverrider.h	2025-05-15 15:26:35.464578588 +0300
++++ b/src/core/qgscplhttpfetchoverrider.h	2025-05-15 14:47:00.769294475 +0300
+@@ -63,7 +63,7 @@
       */
      QThread *thread() const;
  

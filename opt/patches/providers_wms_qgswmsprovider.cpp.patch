@@ -1,6 +1,6 @@
---- a/src/providers/wms/qgswmsprovider.cpp	2023-08-21 19:39:45.843038741 +0300
-+++ b/src/providers/wms/qgswmsprovider.cpp	2023-10-24 11:16:11.000000000 +0300
-@@ -35,7 +35,7 @@
+--- a/src/providers/wms/qgswmsprovider.cpp	2025-05-15 15:26:35.577217091 +0300
++++ b/src/providers/wms/qgswmsprovider.cpp	2025-05-15 14:47:01.057304519 +0300
+@@ -36,7 +36,7 @@
  #include "qgsrectangle.h"
  #include "qgscoordinatereferencesystem.h"
  #include "qgsmapsettings.h"
@@ -9,217 +9,101 @@
  #include "qgsmessageoutput.h"
  #include "qgsmessagelog.h"
  #include "qgsnetworkaccessmanager.h"
-@@ -131,7 +131,7 @@
-     return;
+@@ -134,6 +134,7 @@
  
-   std::unique_ptr< QgsScopedRuntimeProfile > profile;
--
-+/*
+   std::unique_ptr<QgsScopedRuntimeProfile> profile;
+ 
++  /*
    if ( mSettings.mIsMBTiles )
    {
      if ( QgsApplication::profiler()->groupIsActive( QStringLiteral( "projectload" ) ) )
-@@ -144,7 +144,8 @@
+@@ -146,7 +147,7 @@
        return;
      }
    }
 -  else if ( mSettings.mXyz )
-+  else */
-+  if ( mSettings.mXyz )
++  else */ if ( mSettings.mXyz )
    {
      if ( QgsApplication::profiler()->groupIsActive( QStringLiteral( "projectload" ) ) )
-       profile = std::make_unique< QgsScopedRuntimeProfile >( tr( "Setup tile capabilities" ), QStringLiteral( "projectload" ) );
-@@ -909,7 +910,7 @@
+       profile = std::make_unique<QgsScopedRuntimeProfile>( tr( "Setup tile capabilities" ), QStringLiteral( "projectload" ) );
+@@ -907,6 +908,7 @@
      else
        tm->viewExtentIntersection( viewExtent, tml, col0, row0, col1, row1 );
  
--#ifdef QGISDEBUG
-+/*#ifdef QGISDEBUG
++/*
+ #ifdef QGISDEBUG
      int n = ( col1 - col0 + 1 ) * ( row1 - row0 + 1 );
      QgsDebugMsgLevel( QStringLiteral( "tile number: %1x%2 = %3" ).arg( col1 - col0 + 1 ).arg( row1 - row0 + 1 ).arg( n ), 3 );
-     if ( n > 256 && !mSettings.mIsMBTiles )
-@@ -917,7 +918,7 @@
-       emit statusChanged( QStringLiteral( "current view would need %1 tiles. tile request per draw limited to 256." ).arg( n ) );
+@@ -916,6 +918,7 @@
        return image;
      }
--#endif
-+#endif*/
+ #endif
++*/
  
      TilePositions tiles;
      for ( int row = row0; row <= row1; row++ )
-@@ -954,12 +955,12 @@
-     QList<TileImage> tileImages;  // in the correct resolution
-     QList<QRectF> missing;  // rectangles (in map coords) of missing tiles for this view
+@@ -952,12 +955,14 @@
+     QList<TileImage> tileImages; // in the correct resolution
+     QList<QRectF> missing;       // rectangles (in map coords) of missing tiles for this view
  
--    std::unique_ptr<QgsMbTiles> mbtilesReader;
--    if ( mSettings.mIsMBTiles )
--    {
--      mbtilesReader.reset( new QgsMbTiles( QUrl( mSettings.mBaseUrl ).path() ) );
--      mbtilesReader->open();
--    }
-+    // std::unique_ptr<QgsMbTiles> mbtilesReader;
-+    // if ( mSettings.mIsMBTiles )
-+    // {
-+    //   mbtilesReader.reset( new QgsMbTiles( QUrl( mSettings.mBaseUrl ).path() ) );
-+    //   mbtilesReader->open();
-+    // }
++    /*
+     std::unique_ptr<QgsMbTiles> mbtilesReader;
+     if ( mSettings.mIsMBTiles )
+     {
+       mbtilesReader.reset( new QgsMbTiles( QUrl( mSettings.mBaseUrl ).path() ) );
+       mbtilesReader->open();
+     }
++    */
  
      QElapsedTimer t;
      t.start();
-@@ -973,16 +974,16 @@
+@@ -971,6 +976,7 @@
  
        QImage localImage;
  
--      if ( mbtilesReader && !QgsTileCache::tile( r.url, localImage ) )
--      {
--        QUrlQuery query( r.url );
--        QImage img = mbtilesReader->tileDataAsImage( query.queryItemValue( "z" ).toInt(),
--                     query.queryItemValue( "x" ).toInt(),
--                     query.queryItemValue( "y" ).toInt() );
--        if ( img.isNull() )
--          continue;
--        QgsTileCache::insertTile( r.url, img );
--      }
-+      // if ( mbtilesReader && !QgsTileCache::tile( r.url, localImage ) )
-+      // {
-+      //   QUrlQuery query( r.url );
-+      //   QImage img = mbtilesReader->tileDataAsImage( query.queryItemValue( "z" ).toInt(),
-+      //                query.queryItemValue( "x" ).toInt(),
-+      //                query.queryItemValue( "y" ).toInt() );
-+      //   if ( img.isNull() )
-+      //     continue;
-+      //   QgsTileCache::insertTile( r.url, img );
-+      // }
++      /*
+       if ( mbtilesReader && !QgsTileCache::tile( r.url, localImage ) )
+       {
+         QUrlQuery query( r.url );
+@@ -979,6 +985,7 @@
+           continue;
+         QgsTileCache::insertTile( r.url, img );
+       }
++      */
  
        if ( QgsTileCache::tile( r.url, localImage ) )
        {
-@@ -1867,52 +1868,52 @@
+@@ -1859,6 +1866,9 @@
  
  bool QgsWmsProvider::setupMBTilesCapabilities( const QString &uri )
  {
--  // if it is MBTiles source, let's prepare the reader to get some metadata
--  QgsMbTiles mbtilesReader( QUrl( mSettings.mBaseUrl ).path() );
--  if ( !mbtilesReader.open() )
-+//   // if it is MBTiles source, let's prepare the reader to get some metadata
-+//   QgsMbTiles mbtilesReader( QUrl( mSettings.mBaseUrl ).path() );
-+//   if ( !mbtilesReader.open() )
-     return false;
++  return false;
++
++  /*
+   // if it is MBTiles source, let's prepare the reader to get some metadata
+   QgsMbTiles mbtilesReader( QUrl( mSettings.mBaseUrl ).path() );
+   if ( !mbtilesReader.open() )
+@@ -1903,6 +1913,7 @@
+   double sourceTilePixelRatio = 1;
  
--  // We expect something like "mbtiles:///path/to/my/file.mbtiles" as the URL for tiles in MBTiles specs.
--  // Here we just add extra x,y,z query items as an implementation detail (it uses TMS tiling scheme - that's why {-y})
--  mSettings.mBaseUrl += "?x={x}&y={-y}&z={z}";
--
--  QgsRectangle sourceExtent;
--  QgsRectangle sourceExtentWgs84 = mbtilesReader.extent();
--  if ( !sourceExtentWgs84.isNull() )
--  {
--    QgsPointXY customTopLeft, customBottomRight;
--    QgsCoordinateTransform ct( QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:4326" ) ), QgsCoordinateReferenceSystem( mSettings.mCrsId ),
--                               transformContext() );
--    try
--    {
--      customTopLeft = ct.transform( QgsPointXY( sourceExtentWgs84.xMinimum(), sourceExtentWgs84.yMaximum() ) );
--      customBottomRight = ct.transform( QgsPointXY( sourceExtentWgs84.xMaximum(), sourceExtentWgs84.yMinimum() ) );
--    }
--    catch ( const QgsCsException & )
--    {
--      QgsDebugError( QStringLiteral( "Failed to reproject extent from MBTiles metadata" ) );
--      return false;
--    }
--    sourceExtent = QgsRectangle( customTopLeft.x(), customBottomRight.y(), customBottomRight.x(), customTopLeft.y() );
--  }
--
--  // minzoom/maxzoom SHOULD be in MBTiles (since spec v1.3) - but does not have to be there...
--  int sourceMinZoom = -1, sourceMaxZoom = -1;
--  QString sourceMinZoomStr = mbtilesReader.metadataValue( "minzoom" );
--  QString sourceMaxZoomStr = mbtilesReader.metadataValue( "maxzoom" );
--  if ( !sourceMinZoomStr.isEmpty() && !sourceMaxZoomStr.isEmpty() )
--  {
--    sourceMinZoom = sourceMinZoomStr.toInt();
--    sourceMaxZoom = sourceMaxZoomStr.toInt();
--  }
-+//   // We expect something like "mbtiles:///path/to/my/file.mbtiles" as the URL for tiles in MBTiles specs.
-+//   // Here we just add extra x,y,z query items as an implementation detail (it uses TMS tiling scheme - that's why {-y})
-+//   mSettings.mBaseUrl += "?x={x}&y={-y}&z={z}";
-+
-+//  QgsRectangle sourceExtent;
-+//  QgsRectangle sourceExtentWgs84 = mbtilesReader.extent();
-+//  if ( !sourceExtentWgs84.isNull() )
-+//  {
-+//    QgsPointXY customTopLeft, customBottomRight;
-+//    QgsCoordinateTransform ct( QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:4326" ) ), QgsCoordinateReferenceSystem( mSettings.mCrsId ),
-+//                               transformContext() );
-+//    try
-+//    {
-+//      customTopLeft = ct.transform( QgsPointXY( sourceExtentWgs84.xMinimum(), sourceExtentWgs84.yMaximum() ) );
-+//      customBottomRight = ct.transform( QgsPointXY( sourceExtentWgs84.xMaximum(), sourceExtentWgs84.yMinimum() ) );
-+//    }
-+//    catch ( const QgsCsException & )
-+//    {
-+//      QgsDebugError( QStringLiteral( "Failed to reproject extent from MBTiles metadata" ) );
-+//      return false;
-+//    }
-+//    sourceExtent = QgsRectangle( customTopLeft.x(), customBottomRight.y(), customBottomRight.x(), customTopLeft.y() );
-+//  }
-+
-+//  // minzoom/maxzoom SHOULD be in MBTiles (since spec v1.3) - but does not have to be there...
-+//  int sourceMinZoom = -1, sourceMaxZoom = -1;
-+//  QString sourceMinZoomStr = mbtilesReader.metadataValue( "minzoom" );
-+//  QString sourceMaxZoomStr = mbtilesReader.metadataValue( "maxzoom" );
-+//  if ( !sourceMinZoomStr.isEmpty() && !sourceMaxZoomStr.isEmpty() )
-+//  {
-+//    sourceMinZoom = sourceMinZoomStr.toInt();
-+//    sourceMaxZoom = sourceMaxZoomStr.toInt();
-+//  }
-+
-+//  // Assuming tiles with resolution of 256x256 pixels at 96 DPI.
-+//  // This can be overridden by "tilePixelRatio" in URI. Unfortunately
-+//  // MBTiles spec does not say anything about resolutions...
-+//  double sourceTilePixelRatio = 1;
- 
--  // Assuming tiles with resolution of 256x256 pixels at 96 DPI.
--  // This can be overridden by "tilePixelRatio" in URI. Unfortunately
--  // MBTiles spec does not say anything about resolutions...
--  double sourceTilePixelRatio = 1;
--
--  setupXyzCapabilities( uri, sourceExtent, sourceMinZoom, sourceMaxZoom, sourceTilePixelRatio );
--  return true;
-+//  setupXyzCapabilities( uri, sourceExtent, sourceMinZoom, sourceMaxZoom, sourceTilePixelRatio );
-+//  return true;
+   return setupXyzCapabilities( uri, sourceExtent, sourceMinZoom, sourceMaxZoom, sourceTilePixelRatio );
++  */
  }
  
  
-@@ -5299,20 +5300,20 @@
-     }
+@@ -5114,6 +5125,7 @@
      else
      {
--      // slower scan, check actual mbtiles format
--      QgsMbTiles reader( fileName );
--      if ( reader.open() )
--      {
--        if ( reader.metadataValue( "format" ) != QLatin1String( "pbf" ) )
--        {
--          QgsProviderSublayerDetails details;
--          details.setUri( encodeUri( parts ) );
--          details.setProviderKey( key() );
--          details.setType( Qgis::LayerType::Raster );
--          details.setName( QgsProviderUtils::suggestLayerNameFromFilePath( fileName ) );
--          return {details};
--        }
--      }
-+//      // slower scan, check actual mbtiles format
-+//      QgsMbTiles reader( fileName );
-+//      if ( reader.open() )
-+//      {
-+//        if ( reader.metadataValue( "format" ) != QLatin1String( "pbf" ) )
-+//        {
-+//          QgsProviderSublayerDetails details;
-+//          details.setUri( encodeUri( parts ) );
-+//          details.setProviderKey( key() );
-+//          details.setType( Qgis::LayerType::Raster );
-+//          details.setName( QgsProviderUtils::suggestLayerNameFromFilePath( fileName ) );
-+//          return {details};
-+//        }
-+//      }
+       // slower scan, check actual mbtiles format
++      /*
+       QgsMbTiles reader( fileName );
+       if ( reader.open() )
+       {
+@@ -5127,6 +5139,7 @@
+           return { details };
+         }
+       }
++      */
      }
    }
-   return {};
+   else

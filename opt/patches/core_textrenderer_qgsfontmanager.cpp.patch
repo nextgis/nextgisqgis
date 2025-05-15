@@ -1,20 +1,18 @@
---- a/src/core/textrenderer/qgsfontmanager.cpp	2025-04-25 19:26:54.015236535 +0300
-+++ b/src/core/textrenderer/qgsfontmanager.cpp	2025-04-02 18:34:56.636838767 +0300
-@@ -200,7 +200,7 @@
- 
- QString QgsFontManager::urlForFontDownload( const QString &family, QString &matchedFamily ) const
+--- a/src/core/textrenderer/qgsfontmanager.cpp	2025-05-15 15:26:35.523448145 +0300
++++ b/src/core/textrenderer/qgsfontmanager.cpp	2025-05-15 14:47:00.839296917 +0300
+@@ -246,6 +246,7 @@
+ QgsFontDownloadDetails QgsFontManager::detailsForFontDownload( const QString &family, QString &matchedFamily ) const
  {
--  const thread_local QStringList sGoogleFonts
-+/*  const thread_local QStringList sGoogleFonts
+   // this list is built using scripts/process_google_fonts.py
++  /*
+   const thread_local std::vector< QgsFontDownloadDetails > sGoogleFonts
    {
-     QStringLiteral( "ABeeZee" ),
-     QStringLiteral( "Abel" ),
-@@ -946,7 +946,7 @@
-       matchedFamily = candidate;
-       return QStringLiteral( "https://fonts.google.com/download?family=%1" ).arg( paramName );
+     GoogleFontDetails( QStringLiteral( "ABeeZee" ), { QStringLiteral( "ofl/abeezee/ABeeZee-Regular.ttf" ), QStringLiteral( "ofl/abeezee/ABeeZee-Italic.ttf" ) }, QStringLiteral( "ofl/abeezee/OFL.txt" ) ),
+@@ -1809,6 +1810,7 @@
+       return candidate;
      }
--  }
-+  }*/
-   return QString();
- }
+   }
++  */
  
+   return QgsFontDownloadDetails();
+ }

@@ -1,0 +1,56 @@
+--- a/python/core/auto_generated/auth/qgsauthmanager.sip.in	2025-05-15 15:43:29.461775403 +0300
++++ b/python/core/auto_generated/auth/qgsauthmanager.sip.in	2025-05-15 14:47:00.263276829 +0300
+@@ -299,7 +299,7 @@
+ %Docstring
+ Gets key of authentication method associated with config ID
+ 
+-:param authcfg: 
++:param authcfg:
+ %End
+ 
+     QStringList authMethodsKeys( const QString &dataprovider = QString() );
+@@ -332,7 +332,7 @@
+ Gets supported authentication method expansion(s), e.g. NetworkRequest |
+ DataSourceURI, as flags
+ 
+-:param authcfg: 
++:param authcfg:
+ %End
+ 
+     const QString uniqueConfigId() const;
+@@ -524,7 +524,7 @@
+ returned as QVariant( QString ))
+ 
+ :param key: setting key
+-:param defaultValue: 
++:param defaultValue:
+ :param decrypt: if the value needs decrypted
+ 
+ :return: QVariant( QString ) authentication setting
+@@ -738,7 +738,7 @@
+ %Docstring
+ certTrustPolicy get whether certificate ``cert`` is trusted by user
+ 
+-:param cert: 
++:param cert:
+ 
+ :return: DefaultTrust if certificate sha not in trust table, i.e.
+          follows default trust policy
+@@ -759,7 +759,7 @@
+ certificateTrustPolicy get trust policy for a particular certificate
+ ``cert``
+ 
+-:param cert: 
++:param cert:
+ 
+ :return: DefaultTrust if certificate sha not in trust table, i.e.
+          follows default trust policy
+@@ -827,7 +827,7 @@
+ 
+ 
+ 
+-    static bool passwordHelperEnabled();
++    bool passwordHelperEnabled();
+ %Docstring
+ Password helper enabled getter
+ 

@@ -1,14 +1,22 @@
---- a/src/app/main.cpp	2025-04-25 19:26:53.654228610 +0300
-+++ b/src/app/main.cpp	2025-04-02 18:34:56.405328553 +0300
-@@ -34,6 +34,7 @@
- #include <QMessageBox>
+--- a/src/app/main.cpp	2025-05-15 15:26:35.358631754 +0300
++++ b/src/app/main.cpp	2025-05-15 14:47:00.588288163 +0300
+@@ -19,6 +19,7 @@
+ //qt includes
+ #include <QBitmap>
+ #include <QDir>
++#include <QDirIterator>
+ #include <QFile>
+ #include <QFileInfo>
+ #include <QFont>
+@@ -35,6 +36,7 @@
  #include <QStandardPaths>
  #include <QScreen>
+ #include <QSurfaceFormat>
 +#include <QLibraryInfo>
  
  #include <cstdio>
  #include <cstdlib>
-@@ -90,7 +91,7 @@
+@@ -91,7 +93,7 @@
  #include "qgsproject.h"
  #include "qgsrectangle.h"
  #include "qgslogger.h"
@@ -17,7 +25,7 @@
  #include "qgsvectorlayer.h"
  #include "qgis_app.h"
  #ifdef HAVE_CRASH_HANDLER
-@@ -111,6 +112,8 @@
+@@ -112,6 +114,8 @@
  #include "qgsopenclutils.h"
  #endif
  
@@ -26,264 +34,86 @@
  /**
   * Print QGIS version
   */
-@@ -128,7 +131,8 @@
+@@ -129,7 +133,8 @@
    QStringList msg;
  
    msg
--      << QStringLiteral( "QGIS is a user friendly Open Source Geographic Information System.\n" )
-+      << QStringLiteral(VENDOR) << QStringLiteral(" QGIS - ") << QStringLiteral(VENDOR_VERSION) << QStringLiteral(" (") << QStringLiteral(VERSION) << QStringLiteral(")\n")
-+      << QStringLiteral(VENDOR) << QStringLiteral(" QGIS is a user friendly Open Source Geographic Information System.\n")
-       << QStringLiteral( "Usage: " ) << appName <<  QStringLiteral( " [OPTION] [FILE]\n" )
-       << QStringLiteral( "  OPTION:\n" )
-       << QStringLiteral( "\t[-v, --version]\tdisplay version information and exit\n" )
-@@ -150,13 +154,13 @@
-       << QStringLiteral( "\t[-F, --py-args arguments]\targuments for python. This arguments will be available for each python execution via 'sys.argv' included the file specified by '--code'. All arguments till '--' are passed to python and ignored by QGIS\n" )
-       << QStringLiteral( "\t[-d, --defaultui]\tstart by resetting user ui settings to default\n" )
-       << QStringLiteral( "\t[--hide-browser]\thide the browser widget\n" )
--      << QStringLiteral( "\t[--dxf-export filename.dxf]\temit dxf output of loaded datasets to given file\n" )
--      << QStringLiteral( "\t[--dxf-extent xmin,ymin,xmax,ymax]\tset extent to export to dxf\n" )
--      << QStringLiteral( "\t[--dxf-symbology-mode none|symbollayer|feature]\tsymbology mode for dxf output\n" )
--      << QStringLiteral( "\t[--dxf-scale-denom scale]\tscale for dxf output\n" )
--      << QStringLiteral( "\t[--dxf-encoding encoding]\tencoding to use for dxf output\n" )
--      << QStringLiteral( "\t[--dxf-map-theme maptheme]\tmap theme to use for dxf output\n" )
--      << QStringLiteral( "\t[--take-screenshots output_path]\ttake screen shots for the user documentation\n" )
-+    //   << QStringLiteral( "\t[--dxf-export filename.dxf]\temit dxf output of loaded datasets to given file\n" )
-+    //   << QStringLiteral( "\t[--dxf-extent xmin,ymin,xmax,ymax]\tset extent to export to dxf\n" )
-+    //   << QStringLiteral( "\t[--dxf-symbology-mode none|symbollayer|feature]\tsymbology mode for dxf output\n" )
-+    //   << QStringLiteral( "\t[--dxf-scale-denom scale]\tscale for dxf output\n" )
-+    //   << QStringLiteral( "\t[--dxf-encoding encoding]\tencoding to use for dxf output\n" )
-+    //   << QStringLiteral( "\t[--dxf-map-theme maptheme]\tmap theme to use for dxf output\n" )
-+    //   << QStringLiteral( "\t[--take-screenshots output_path]\ttake screen shots for the user documentation\n" )
-       << QStringLiteral( "\t[--screenshots-categories categories]\tspecify the categories of screenshot to be used (see QgsAppScreenShots::Categories).\n" )
-       << QStringLiteral( "\t[--profile name]\tload a named profile from the users profiles folder.\n" )
-       << QStringLiteral( "\t[-S, --profiles-path path]\tpath to store user profile folders. Will create profiles inside a {path}\\profiles folder \n" )
-@@ -227,7 +231,7 @@
+-    << QStringLiteral( "QGIS is a user friendly Open Source Geographic Information System.\n" )
++    << QStringLiteral(VENDOR) << QStringLiteral(" QGIS - ") << QStringLiteral(VENDOR_VERSION) << QStringLiteral(" (") << QStringLiteral(VERSION) << QStringLiteral(")\n")
++    << QStringLiteral(VENDOR) << QStringLiteral(" QGIS is a user friendly Open Source Geographic Information System.\n")
+     << QStringLiteral( "Usage: " ) << appName << QStringLiteral( " [OPTION] [FILE]\n" )
+     << QStringLiteral( "  OPTION:\n" )
+     << QStringLiteral( "\t[-v, --version]\tdisplay version information and exit\n" )
+@@ -151,12 +156,12 @@
+     << QStringLiteral( "\t[-F, --py-args arguments]\targuments for python. This arguments will be available for each python execution via 'sys.argv' included the file specified by '--code'. All arguments till '--' are passed to python and ignored by QGIS\n" )
+     << QStringLiteral( "\t[-d, --defaultui]\tstart by resetting user ui settings to default\n" )
+     << QStringLiteral( "\t[--hide-browser]\thide the browser widget\n" )
+-    << QStringLiteral( "\t[--dxf-export filename.dxf]\temit dxf output of loaded datasets to given file\n" )
+-    << QStringLiteral( "\t[--dxf-extent xmin,ymin,xmax,ymax]\tset extent to export to dxf\n" )
+-    << QStringLiteral( "\t[--dxf-symbology-mode none|symbollayer|feature]\tsymbology mode for dxf output\n" )
+-    << QStringLiteral( "\t[--dxf-scale-denom scale]\tscale for dxf output\n" )
+-    << QStringLiteral( "\t[--dxf-encoding encoding]\tencoding to use for dxf output\n" )
+-    << QStringLiteral( "\t[--dxf-map-theme maptheme]\tmap theme to use for dxf output\n" )
++    // << QStringLiteral( "\t[--dxf-export filename.dxf]\temit dxf output of loaded datasets to given file\n" )
++    // << QStringLiteral( "\t[--dxf-extent xmin,ymin,xmax,ymax]\tset extent to export to dxf\n" )
++    // << QStringLiteral( "\t[--dxf-symbology-mode none|symbollayer|feature]\tsymbology mode for dxf output\n" )
++    // << QStringLiteral( "\t[--dxf-scale-denom scale]\tscale for dxf output\n" )
++    // << QStringLiteral( "\t[--dxf-encoding encoding]\tencoding to use for dxf output\n" )
++    // << QStringLiteral( "\t[--dxf-map-theme maptheme]\tmap theme to use for dxf output\n" )
+     << QStringLiteral( "\t[--take-screenshots output_path]\ttake screen shots for the user documentation\n" )
+     << QStringLiteral( "\t[--screenshots-categories categories]\tspecify the categories of screenshot to be used (see QgsAppScreenShots::Categories).\n" )
+     << QStringLiteral( "\t[--profile name]\tload a named profile from the users profiles folder.\n" )
+@@ -225,6 +230,7 @@
  
  static void dumpBacktrace( unsigned int depth )
  {
--  if ( depth == 0 )
-+/*  if ( depth == 0 )
++  /*
+   if ( depth == 0 )
      depth = 20;
  
- #ifdef QGIS_CRASH
-@@ -300,9 +304,9 @@
-   }
- #elif defined(Q_OS_WIN)
+@@ -299,8 +305,9 @@
+ #elif defined( Q_OS_WIN )
    // TODO Replace with incoming QgsStackTrace
--#else
-+#else */
+ #else
++  */
    Q_UNUSED( depth )
 -#endif
-+//#endif
++// #endif
  }
  
  #ifdef QGIS_CRASH
-@@ -578,12 +582,12 @@
+@@ -579,12 +586,14 @@
    bool mySkipBadLayers = false;
    bool myCustomization = true;
  
--  QString dxfOutputFile;
--  Qgis::FeatureSymbologyExport dxfSymbologyMode = Qgis::FeatureSymbologyExport::PerSymbolLayer;
--  double dxfScale = 50000.0;
--  QString dxfEncoding = QStringLiteral( "CP1252" );
--  QString dxfMapTheme;
--  QgsRectangle dxfExtent;
-+//   QString dxfOutputFile;
-+//   Qgis::FeatureSymbologyExport dxfSymbologyMode = Qgis::FeatureSymbologyExport::PerSymbolLayer;
-+//   double dxfScale = 50000.0;
-+//   QString dxfEncoding = QStringLiteral( "CP1252" );
-+//   QString dxfMapTheme;
-+//   QgsRectangle dxfExtent;
++  /*
+   QString dxfOutputFile;
+   Qgis::FeatureSymbologyExport dxfSymbologyMode = Qgis::FeatureSymbologyExport::PerSymbolLayer;
+   double dxfScale = 50000.0;
+   QString dxfEncoding = QStringLiteral( "CP1252" );
+   QString dxfMapTheme;
+   QgsRectangle dxfExtent;
++  */
  
    bool takeScreenShots = false;
    QString screenShotsPath;
-@@ -752,91 +756,91 @@
+@@ -753,6 +762,7 @@
          {
            myRestoreDefaultWindowState = true;
          }
--        else if ( arg == QLatin1String( "--dxf-export" ) )
--        {
--          dxfOutputFile = args[++i];
--        }
--        else if ( arg == QLatin1String( "--dxf-extent" ) )
--        {
--          QgsLocaleNumC l;
--          QString ext( args[++i] );
--          QStringList coords( ext.split( ',' ) );
--
--          if ( coords.size() != 4 )
--          {
--            std::cerr << "invalid dxf extent " << ext.toStdString() << std::endl;
--            return 2;
--          }
--
--          for ( int i = 0; i < 4; i++ )
--          {
--            bool ok;
--            double d;
--
--            d = coords[i].toDouble( &ok );
--            if ( !ok )
--            {
--              std::cerr << "invalid dxf coordinate " << coords[i].toStdString() << " in extent " << ext.toStdString() << std::endl;
--              return 2;
--            }
--
--            switch ( i )
--            {
--              case 0:
--                dxfExtent.setXMinimum( d );
--                break;
--              case 1:
--                dxfExtent.setYMinimum( d );
--                break;
--              case 2:
--                dxfExtent.setXMaximum( d );
--                break;
--              case 3:
--                dxfExtent.setYMaximum( d );
--                break;
--            }
--          }
--        }
--        else if ( arg == QLatin1String( "--dxf-symbology-mode" ) )
--        {
--          QString mode( args[++i] );
--          if ( mode == QLatin1String( "none" ) )
--          {
--            dxfSymbologyMode = Qgis::FeatureSymbologyExport::NoSymbology;
--          }
--          else if ( mode == QLatin1String( "symbollayer" ) )
--          {
--            dxfSymbologyMode = Qgis::FeatureSymbologyExport::PerSymbolLayer;
--          }
--          else if ( mode == QLatin1String( "feature" ) )
--          {
--            dxfSymbologyMode = Qgis::FeatureSymbologyExport::PerFeature;
--          }
--          else
--          {
--            std::cerr << "invalid dxf symbology mode " << mode.toStdString() << std::endl;
--            return 2;
--          }
--        }
--        else if ( arg == QLatin1String( "--dxf-scale-denom" ) )
--        {
--          bool ok;
--          QString scale( args[++i] );
--          dxfScale = scale.toDouble( &ok );
--          if ( !ok )
--          {
--            std::cerr << "invalid dxf scale " << scale.toStdString() << std::endl;
--            return 2;
--          }
--        }
--        else if ( arg == QLatin1String( "--dxf-encoding" ) )
--        {
--          dxfEncoding = args[++i];
--        }
--        else if ( arg == QLatin1String( "--dxf-map-theme" ) )
--        {
--          dxfMapTheme = args[++i];
--        }
-+        // else if ( arg == QLatin1String( "--dxf-export" ) )
-+        // {
-+        //   dxfOutputFile = args[++i];
-+        // }
-+        // else if ( arg == QLatin1String( "--dxf-extent" ) )
-+        // {
-+        //   QgsLocaleNumC l;
-+        //   QString ext( args[++i] );
-+        //   QStringList coords( ext.split( ',' ) );
-+
-+        //   if ( coords.size() != 4 )
-+        //   {
-+        //     std::cerr << "invalid dxf extent " << ext.toStdString() << std::endl;
-+        //     return 2;
-+        //   }
-+
-+        //   for ( int i = 0; i < 4; i++ )
-+        //   {
-+        //     bool ok;
-+        //     double d;
-+
-+        //     d = coords[i].toDouble( &ok );
-+        //     if ( !ok )
-+        //     {
-+        //       std::cerr << "invalid dxf coordinate " << coords[i].toStdString() << " in extent " << ext.toStdString() << std::endl;
-+        //       return 2;
-+        //     }
-+
-+        //     switch ( i )
-+        //     {
-+        //       case 0:
-+        //         dxfExtent.setXMinimum( d );
-+        //         break;
-+        //       case 1:
-+        //         dxfExtent.setYMinimum( d );
-+        //         break;
-+        //       case 2:
-+        //         dxfExtent.setXMaximum( d );
-+        //         break;
-+        //       case 3:
-+        //         dxfExtent.setYMaximum( d );
-+        //         break;
-+        //     }
-+        //   }
-+        // }
-+        // else if ( arg == QLatin1String( "--dxf-symbology-mode" ) )
-+        // {
-+        //   QString mode( args[++i] );
-+        //   if ( mode == QLatin1String( "none" ) )
-+        //   {
-+        //     dxfSymbologyMode = Qgis::FeatureSymbologyExport::NoSymbology;
-+        //   }
-+        //   else if ( mode == QLatin1String( "symbollayer" ) )
-+        //   {
-+        //     dxfSymbologyMode = Qgis::FeatureSymbologyExport::PerSymbolLayer;
-+        //   }
-+        //   else if ( mode == QLatin1String( "feature" ) )
-+        //   {
-+        //     dxfSymbologyMode = Qgis::FeatureSymbologyExport::PerFeature;
-+        //   }
-+        //   else
-+        //   {
-+        //     std::cerr << "invalid dxf symbology mode " << mode.toStdString() << std::endl;
-+        //     return 2;
-+        //   }
-+        // }
-+        // else if ( arg == QLatin1String( "--dxf-scale-denom" ) )
-+        // {
-+        //   bool ok;
-+        //   QString scale( args[++i] );
-+        //   dxfScale = scale.toDouble( &ok );
-+        //   if ( !ok )
-+        //   {
-+        //     std::cerr << "invalid dxf scale " << scale.toStdString() << std::endl;
-+        //     return 2;
-+        //   }
-+        // }
-+        // else if ( arg == QLatin1String( "--dxf-encoding" ) )
-+        // {
-+        //   dxfEncoding = args[++i];
-+        // }
-+        // else if ( arg == QLatin1String( "--dxf-map-theme" ) )
-+        // {
-+        //   dxfMapTheme = args[++i];
-+        // }
++        /*
+         else if ( arg == QLatin1String( "--dxf-export" ) )
+         {
+           dxfOutputFile = args[++i];
+@@ -838,6 +848,7 @@
+         {
+           dxfMapTheme = args[++i];
+         }
++        */
          else if ( arg == QLatin1String( "--take-screenshots" ) )
          {
            takeScreenShots = true;
-@@ -921,7 +925,7 @@
- 
- // Set up for high displays
- // The following values are set by default in Qt6
--#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-+#if QT_VERSION_MAJOR < 6
-   QCoreApplication::setAttribute( Qt::AA_EnableHighDpiScaling, true );
-   QCoreApplication::setAttribute( Qt::AA_UseHighDpiPixmaps );
-   QGuiApplication::setHighDpiScaleFactorRoundingPolicy( Qt::HighDpiScaleFactorRoundingPolicy::PassThrough );
-@@ -934,9 +938,12 @@
+@@ -936,9 +947,12 @@
      QgsCustomization::instance()->setEnabled( false );
    }
  
@@ -299,7 +129,7 @@
    QCoreApplication::setAttribute( Qt::AA_DontShowIconsInMenus, false );
  
    // this is implicit in Qt 6 now
-@@ -1024,6 +1031,18 @@
+@@ -1035,6 +1049,18 @@
    // profile selection dialog if needed
    QgsApplication myApp( argc, argv, myUseGuiFlag, QString(), QStringLiteral( "desktop" ) );
  
@@ -308,36 +138,26 @@
 +  QStringList filters;
 +  filters << "*.ttf" << "*.otf";
 +  QStringList fontsList = fontsDir.entryList(filters,  QDir::Files);
-+  // Add font to database
-+  QStringList::Iterator it = fontsList.begin();
-+  while (it != fontsList.end()) {
-+      QFontDatabase::addApplicationFont( fontsDir.filePath(*it) );
-+      ++it;
++  // Add fonts to database
++  QDirIterator it(fontsDir.path(), filters, QDir::Files, QDirIterator::IteratorFlag::Subdirectories);
++  while (it.hasNext()) {
++      QString fontPath = it.next();
++      QFontDatabase::addApplicationFont( fontPath );
 +  }
 +
    // Preload the translation. The GUI is not yet initilaized, so only
    // the profile selection dialog will be translated with the system locale, or
    // the one specified with --lang
-@@ -1221,12 +1240,12 @@
-   //            e.g. loading splash screen, setting window icon, etc.
-   //            Always honor QT_PLUGIN_PATH env var or qt.conf, which will
-   //            be part of libraryPaths just after QgsApplication creation.
--#ifdef Q_OS_WIN
--  // For non static builds on win (static builds are not supported)
--  // we need to be sure we can find the qt image plugins.
--  QCoreApplication::addLibraryPath( QApplication::applicationDirPath()
--                                    + QDir::separator() + "qtplugins" );
--#endif
-+// #ifdef Q_OS_WIN
-+//   // For non static builds on win (static builds are not supported)
-+//   // we need to be sure we can find the qt image plugins.
-+//   QCoreApplication::addLibraryPath( QApplication::applicationDirPath()
-+//                                     + QDir::separator() + "qtplugins" );
-+// #endif
- #if defined(Q_OS_UNIX)
+@@ -1240,7 +1266,7 @@
+ #ifdef Q_OS_WIN
+   // For non static builds on win (static builds are not supported)
+   // we need to be sure we can find the qt image plugins.
+-  QCoreApplication::addLibraryPath( QApplication::applicationDirPath() + QDir::separator() + "qtplugins" );
++  // QCoreApplication::addLibraryPath( QApplication::applicationDirPath() + QDir::separator() + "qtplugins" );
+ #endif
+ #if defined( Q_OS_UNIX )
    // Resulting libraryPaths has critical QGIS plugin paths first, then any Qt plugin paths, then
-   // any dev-defined paths (in app's qt.conf) and/or user-defined paths (QT_PLUGIN_PATH env var).
-@@ -1334,10 +1353,10 @@
+@@ -1347,10 +1373,10 @@
    {
      // If the GDAL plugins are bundled with the application and GDAL_DRIVER_PATH
      // is not already defined, use the GDAL plugins in the application bundle.
@@ -351,24 +171,19 @@
      }
    }
  
-@@ -1360,15 +1379,27 @@
+@@ -1373,6 +1399,7 @@
    }
  
    // Point PYTHONHOME to embedded interpreter if present in the bundle
--  if ( !getenv( "PYTHONHOME" ) )
--  {
--    if ( QFile::exists( QCoreApplication::applicationDirPath().append( "/bin/python3" ) ) )
--    {
--      setenv( "PYTHONHOME", QCoreApplication::applicationDirPath().toUtf8().constData(), 1 );
--    }
--  }
-+//   if ( !getenv( "PYTHONHOME" ) )
-+//   {
-+//     if ( QFile::exists( QCoreApplication::applicationDirPath().append( "/bin/python3" ) ) )
-+//     {
-+//       setenv( "PYTHONHOME", QCoreApplication::applicationDirPath().toUtf8().constData(), 1 );
-+//     }
-+//   }
++  /*
+   if ( !getenv( "PYTHONHOME" ) )
+   {
+     if ( QFile::exists( QCoreApplication::applicationDirPath().append( "/bin/python3" ) ) )
+@@ -1380,8 +1407,21 @@
+       setenv( "PYTHONHOME", QCoreApplication::applicationDirPath().toUtf8().constData(), 1 );
+     }
+   }
++  */
  #endif
  
 +#ifdef Q_OS_WIN
@@ -386,7 +201,7 @@
    // custom environment variables
    QMap<QString, QString> systemEnvVars = QgsApplication::systemEnvVars();
    bool useCustomVars = settings.value( QStringLiteral( "qgis/customEnvVarsUse" ), QVariant( false ) ).toBool();
-@@ -1524,7 +1555,7 @@
+@@ -1537,7 +1577,7 @@
    // this should be done in QgsApplication::init() but it doesn't know the settings dir.
    QgsApplication::setMaxThreads( settings.value( QStringLiteral( "qgis/max_threads" ), -1 ).toInt() );
  
@@ -395,21 +210,21 @@
    qgis->setObjectName( QStringLiteral( "QgisApp" ) );
  
    QgsApplication::connect(
-@@ -1671,7 +1702,7 @@
+@@ -1674,7 +1714,7 @@
  
      return 1;
    }
 -
-+/*
++  /*
    if ( !dxfOutputFile.isEmpty() )
    {
      qgis->hide();
-@@ -1752,7 +1783,7 @@
+@@ -1755,7 +1795,7 @@
  
      return static_cast<int>( res );
    }
 -
-+*/
++  */
    // make sure we don't have a dirty blank project after launch
    QgsProject::instance()->setDirty( false );
  

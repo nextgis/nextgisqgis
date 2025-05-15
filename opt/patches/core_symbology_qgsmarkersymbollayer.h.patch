@@ -1,5 +1,5 @@
---- a/src/core/symbology/qgsmarkersymbollayer.h	2023-08-21 19:30:50.610256892 +0300
-+++ b/src/core/symbology/qgsmarkersymbollayer.h	2023-10-04 13:28:23.863477925 +0300
+--- a/src/core/symbology/qgsmarkersymbollayer.h	2025-05-15 15:26:35.512489934 +0300
++++ b/src/core/symbology/qgsmarkersymbollayer.h	2025-05-15 14:47:00.828296533 +0300
 @@ -222,7 +222,7 @@
      QgsSimpleMarkerSymbolLayer *clone() const override SIP_FACTORY;
      void writeSldMarker( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override;
@@ -9,7 +9,7 @@
      void setOutputUnit( Qgis::RenderUnit unit ) override;
      Qgis::RenderUnit outputUnit() const override;
      void setMapUnitScale( const QgsMapUnitScale &scale ) override;
-@@ -632,7 +632,7 @@
+@@ -625,7 +625,7 @@
      void setMapUnitScale( const QgsMapUnitScale &scale ) override;
      QgsMapUnitScale mapUnitScale() const override;
  

@@ -1,6 +1,6 @@
---- a/python/core/auto_generated/symbology/qgslinesymbollayer.sip.in	2025-04-25 19:26:53.258219918 +0300
-+++ b/python/core/auto_generated/symbology/qgslinesymbollayer.sip.in	2025-04-02 18:34:55.755894081 +0300
-@@ -76,16 +76,6 @@
+--- a/python/core/auto_generated/symbology/qgslinesymbollayer.sip.in	2025-05-15 15:26:35.312197241 +0300
++++ b/python/core/auto_generated/symbology/qgslinesymbollayer.sip.in	2025-05-15 14:47:00.324898916 +0300
+@@ -78,16 +78,6 @@
  
      virtual double estimateMaxBleed( const QgsRenderContext &context ) const;
  

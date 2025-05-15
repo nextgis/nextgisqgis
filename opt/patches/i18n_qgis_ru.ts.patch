@@ -1,25 +1,16 @@
---- a/i18n/qgis_ru.ts	2025-04-25 19:26:52.974213684 +0300
-+++ b/i18n/qgis_ru.ts	2025-04-02 18:34:55.504989468 +0300
-@@ -43758,7 +43758,7 @@
+--- a/i18n/qgis_ru.ts	2025-05-15 15:26:35.264748633 +0300
++++ b/i18n/qgis_ru.ts	2025-05-15 14:47:00.097026221 +0300
+@@ -56687,7 +56687,7 @@
      <message>
-         <location filename="../src/app/qgisapp.cpp" line="1659"/>
+         <location filename="../src/app/qgisapp.cpp" line="1703"/>
          <source>Updating recent project paths</source>
 -        <translation>Обновление путей предыдщих проектов</translation>
 +        <translation>Обновление путей предыдущих проектов</translation>
      </message>
      <message>
-         <location filename="../src/app/qgisapp.cpp" line="1661"/>
-@@ -127138,7 +127138,7 @@
-         <location filename="../src/gui/qgsquerybuilder.cpp" line="261"/>
-         <source>The where clause returned %n row(s).</source>
-         <comment>returned test rows</comment>
--        <translation><numerusform>Выражение where вернуло %s строку</numerusform><numerusform>Выражение where вернуло %s строк</numerusform><numerusform>Выражение where вернуло %s строк</numerusform><numerusform>Выражение where вернуло %s строк</numerusform></translation>
-+        <translation><numerusform>Выражение where вернуло %n строку</numerusform><numerusform>Выражение where вернуло %n строк</numerusform><numerusform>Выражение where вернуло %n строк</numerusform><numerusform>Выражение where вернуло %n строк</numerusform></translation>
-     </message>
-     <message>
-         <location filename="../src/gui/qgsquerybuilder.cpp" line="297"/>
-@@ -157267,4 +157267,4 @@
-         <translation type="unfinished"/>
+         <location filename="../src/app/qgisapp.cpp" line="1705"/>
+@@ -176910,4 +176910,4 @@
+         <translation>Некорректный формат вывода</translation>
      </message>
  </context>
 -</TS>
