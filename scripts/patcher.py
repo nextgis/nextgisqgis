@@ -62,7 +62,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Tuple, cast
+from typing import Dict, List, Optional, Set, Tuple, cast
 
 # ---------------------------------------------------------------------------
 # Constants & configuration
@@ -70,8 +70,8 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple, cast
 
 #: Paths (relative to the QGIS source tree) that must **never** receive a
 #: patch automatically.
-EXCLUDED_PATHS: Set[Path] = set((Path("opt/patches"),))
-EXCLUDED_FILES: Set[str] = set(("README.md", ".gitignore"))
+EXCLUDED_PATHS: Set[Path] = set((Path("opt/patches"), Path("opt/overwrite")))
+EXCLUDED_FILES: Set[str] = set(("README.md", ".gitignore", "ui_defaults.h"))
 
 # ---------------------------------------------------------------------------
 # Helper classes & utilities
@@ -290,31 +290,55 @@ def _collect_changed_files_from_patches(local: Path) -> List[Path]:
     return sorted(subpaths)
 
 
-def create_patches(upstream: Path, local: Path, changed_files: Iterable[Path]) -> None:
+def create_patches(
+    upstream: Path,
+    local: Path,
+    changed_files: List[Path],
+    *,
+    needed_version: Optional[Dict[str, str]] = None,
+) -> None:
     """Create patches for *changed_files* relative to *local*."""
+    if not changed_files:
+        mark_semi_success("Empty changed files list")
+        return
+
     patch_dir = _ensure_patch_dir(local)
 
-    for changed_file in changed_files:
-        relative_path = Path(changed_file)
-        upstream_file = upstream / relative_path
-        local_file = local / relative_path
+    if needed_version is None:
+        temporary_dir = None
+        upstream_root = upstream
+    else:
+        temporary_dir = tempfile.TemporaryDirectory()
+        upstream_root = Path(temporary_dir.name)
+        branch = "final-" + _format_version(needed_version).replace(".", "_")
+        _copy_files_from_branch(upstream, branch, upstream_root, changed_files)
 
-        if not upstream_file.exists():
-            mark_failure(f"Upstream missing: {upstream_file}")
-            continue
+    try:
+        for changed_file in changed_files:
+            relative_path = Path(changed_file)
+            upstream_file = upstream_root / relative_path
+            local_file = local / relative_path
 
-        if not local_file.exists():
-            mark_failure(f"Local missing: {local_file}")
-            sys.exit(1)
+            if not upstream_file.exists():
+                mark_failure(f"Upstream missing: {upstream_file}")
+                continue
 
-        diff = _run_diff(upstream_file, local_file)
-        _create_or_update_patch(
-            upstream=upstream,
-            local=local,
-            relative_path=relative_path,
-            patch_dir=patch_dir,
-            diff_data=diff,
-        )
+            if not local_file.exists():
+                mark_failure(f"Local missing: {local_file}")
+                sys.exit(1)
+
+            diff = _run_diff(upstream_file, local_file)
+            _create_or_update_patch(
+                upstream=upstream_root,
+                local=local,
+                relative_path=relative_path,
+                patch_dir=patch_dir,
+                diff_data=diff,
+            )
+
+    finally:
+        if temporary_dir is not None:
+            temporary_dir.cleanup()
 
 
 # ---------------------------------------------------------------------------
@@ -347,46 +371,66 @@ def _get_changed_files_since(local: Path, commit: str) -> List[Path]:
 
 
 def scan_for_new_patches(
-    upstream: Path, local: Path, commit: str, with_cmake: bool
+    upstream: Path,
+    local: Path,
+    commit: str,
+    with_cmake: bool,
+    *,
+    needed_version: Optional[Dict[str, str]] = None,
 ) -> None:
     """Find files changed since *commit* and create **missing** patches."""
-    changed_files = _get_changed_files_since(local, commit)
+    changed_files = [
+        changed_file
+        for changed_file in _get_changed_files_since(local, commit)
+        if (
+            not any(
+                changed_file.is_relative_to(excluded_path)
+                for excluded_path in EXCLUDED_PATHS
+            )
+            and changed_file.name not in EXCLUDED_FILES
+        )
+    ]
     if not changed_files:
         mark_success("No files changed – nothing to do.")
         return
 
     patch_dir = _ensure_patch_dir(local)
 
-    excluded_local_paths = {local / path for path in EXCLUDED_PATHS}
-
-    files_to_patch: List[Path] = []
-    for changed_file in changed_files:
-        if (
-            any(changed_file.is_relative_to(path) for path in excluded_local_paths)
-            or changed_file.name in EXCLUDED_FILES
-        ):
-            continue
-
-        if not with_cmake and (
-            changed_file.name == "CMakeLists.txt" or changed_file.suffix == ".cmake"
-        ):
-            continue
-
-        patch_file = patch_dir / _patch_file_name(changed_file)
-        if patch_file.exists():
-            mark_semi_success(f"Already patched: {changed_file}")
-            continue
-
-        upstream_file = upstream / changed_file
-        if not upstream_file.exists():
-            continue
-
-        files_to_patch.append(changed_file)
-
-    if files_to_patch:
-        create_patches(upstream, local, files_to_patch)
+    if needed_version is None:
+        temporary_dir = None
+        upstream_root = upstream
     else:
-        mark_success("All changed files already have patches.")
+        temporary_dir = tempfile.TemporaryDirectory()
+        upstream_root = Path(temporary_dir.name)
+        branch = "final-" + _format_version(needed_version).replace(".", "_")
+        _copy_files_from_branch(upstream, branch, upstream_root, changed_files)
+
+    try:
+        files_to_patch: List[Path] = []
+        for changed_file in changed_files:
+            if not with_cmake and (
+                changed_file.name == "CMakeLists.txt" or changed_file.suffix == ".cmake"
+            ):
+                continue
+
+            patch_file = patch_dir / _patch_file_name(changed_file)
+            if patch_file.exists():
+                mark_semi_success(f"Already patched: {changed_file}")
+                continue
+
+            upstream_file = upstream_root / changed_file
+            if not upstream_file.exists():
+                continue
+
+            files_to_patch.append(changed_file)
+
+        if files_to_patch:
+            create_patches(upstream_root, local, files_to_patch)
+        else:
+            mark_success("All changed files already have patches.")
+    finally:
+        if temporary_dir is not None:
+            temporary_dir.cleanup()
 
 
 # ---------------------------------------------------------------------------
@@ -581,6 +625,7 @@ def _copy_files(source: Path, destination: Path, files: List[Path]) -> None:
         destination_file.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_file, destination_file)
 
+
 def _update_conflicting_files(local: Path, conflicting_files: List[Path]) -> None:
     for conflicting_file in conflicting_files:
         file_path = local / conflicting_file
@@ -594,6 +639,7 @@ def _update_conflicting_files(local: Path, conflicting_files: List[Path]) -> Non
         )
 
         file_path.write_text(updated_content)
+
 
 def _apply_patches_in_temp_repo(
     *,
@@ -831,9 +877,17 @@ def main() -> None:  # pragma: no cover
     # Local version info
     local = args.local.resolve()
     mark_info(f"Local QGIS path: {local}")
+
+    upstream = None
+    upstream_version = None
+    if args.command != "list":
+        upstream = args.upstream.resolve()
+        upstream_version = _parse_qgis_version(upstream / "CMakeLists.txt")
+        mark_info(f"Upstream QGIS path: {upstream}")
+
     local_version = _parse_qgis_version(local / "cmake" / "util.cmake")
     mark_info(
-        f"Local QGIS version: {_format_version(local_version, with_name=True)}",
+        f"QGIS version: {_format_version(local_version, with_name=True)}",
     )
 
     if args.command == "list":
@@ -841,13 +895,7 @@ def main() -> None:  # pragma: no cover
             print(path)
         return
 
-    # Upstream version info
-    upstream = args.upstream.resolve()
-    mark_info(f"Upstream QGIS path: {upstream}")
-    upstream_version = _parse_qgis_version(upstream / "CMakeLists.txt")
-    mark_info(
-        f"Upstream QGIS version: {_format_version(upstream_version, with_name=True)}",
-    )
+    assert upstream is not None and upstream_version is not None
 
     if args.command == "apply":
         apply(
@@ -859,18 +907,18 @@ def main() -> None:  # pragma: no cover
         )
         return
 
-    if upstream_version != local_version:
-        mark_failure("Upstream QGIS version must be the same as local")
-        sys.exit(1)
+    needed_version = None if local_version == upstream_version else local_version
 
     if args.command == "create":
-        create_patches(upstream, local, args.files)
+        create_patches(upstream, local, args.files, needed_version=needed_version)
     elif args.command == "update":
         changed = _collect_changed_files_from_patches(local)
-        create_patches(upstream, local, changed)
+        create_patches(upstream, local, changed, needed_version=needed_version)
         _cleanup(_ensure_patch_dir(local))
     elif args.command == "scan":
-        scan_for_new_patches(upstream, local, args._from, args.with_cmake)
+        scan_for_new_patches(
+            upstream, local, args._from, args.with_cmake, needed_version=needed_version
+        )
     else:
         mark_failure("Unknown command")
         sys.exit(1)
