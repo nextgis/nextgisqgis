@@ -920,8 +920,8 @@ def main() -> None:  # pragma: no cover
             upstream, local, args._from, args.with_cmake, needed_version=needed_version
         )
     else:
-        mark_failure("Unknown command")
-        sys.exit(1)
+        mark_failure(f"Unknown command: {args.command}")
+        sys.exit(2)
 
 
 if __name__ == "__main__":  # pragma: no cover
