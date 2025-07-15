@@ -120,10 +120,12 @@ class QAuthenticator;
 
 class QgsBrowserDockWidget;
 class QgsAdvancedDigitizingDockWidget;
-// class QgsGpsInformationWidget;
-// class QgsGpsCanvasBridge;
-// class QgsAppGpsDigitizing;
-// class QgsAppGpsLogging;
+/*
+class QgsGpsInformationWidget;
+class QgsGpsCanvasBridge;
+class QgsAppGpsDigitizing;
+class QgsAppGpsLogging;
+*/
 class QgsStatisticalSummaryDockWidget;
 class QgsMapCanvasTracer;
 class QgsTemporalControllerDockWidget;
@@ -176,7 +178,6 @@ class Qgs3DMapScene;
 #include "qgsrasterminmaxorigin.h"
 #include "qgslayertreeregistrybridge.h"
 #include "qgsmaplayeractionregistry.h"
-
 #include "qgsoptionswidgetfactory.h"
 #include "qgsattributetablefiltermodel.h"
 #include "qgsmasterlayoutinterface.h"
@@ -221,6 +222,7 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
 
     QgisApp( QgisApp const & ) = delete;
     QgisApp &operator=( QgisApp const & ) = delete;
+
 
     /**
      * Returns and adjusted uri for the layer based on current and available CRS as well as the last selected image format
@@ -1364,12 +1366,6 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     bool checkUnsavedLayerEdits();
 
     /**
-     * Check to see if the current project file is dirty and if so, prompt the user to save it.
-     * \returns TRUE if saved or discarded, FALSE if canceled
-     */
-    bool saveDirty();
-
-    /**
      * Checks for unsaved changes in raster attribute tables and prompts the user to save
      * or discard these changes for each raster attribute table.
      *
@@ -1393,6 +1389,12 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
      * the warning dialog.
      */
     bool checkMemoryLayers();
+
+    /**
+     * Check to see if the current project file is dirty and if so, prompt the user to save it.
+     * \returns TRUE if saved or discarded, FALSE if canceled
+     */
+    bool saveDirty();
 
   public slots:
 
@@ -2026,6 +2028,11 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
     void renderDecorationItems( QPainter *p );
     void projectReadDecorationItems();
 
+  protected slots:
+    //! clear out any stuff from project
+    void closeProject();
+
+  private slots:
     //! trust and load project macros
     void enableProjectMacros();
 
@@ -2179,20 +2186,16 @@ class APP_EXPORT QgisApp : public QMainWindow, protected Ui::MainWindow
      */
     void activeLayerChanged( QgsMapLayer *layer );
 
-protected:
-    //! clear out any stuff from project
-    void closeProject();
-    
-    //! list of recently opened/saved project files
-    QList<QgsRecentProjectItemsModel::RecentProjectData> mRecentProjects;
+  private:
 
+    void createPreviewImage( const QString &path, const QIcon &overlayIcon = QIcon() );
+
+  protected:
     void startProfile( const QString &name );
     void endProfile();
     void functionProfile( void ( QgisApp::*fnc )(), QgisApp *instance, const QString &name );
 
   private:
-
-    void createPreviewImage( const QString &path, const QIcon &overlayIcon = QIcon() );
 
     void showProgress( int progress, int totalSteps );
 
@@ -2533,6 +2536,11 @@ protected:
 
     QSplashScreen *mSplash = nullptr;
 
+  protected:
+    //! list of recently opened/saved project files
+    QList<QgsRecentProjectItemsModel::RecentProjectData> mRecentProjects;
+
+  private:
     //! Currently open layout designer dialogs
     QSet<QgsLayoutDesignerDialog *> mLayoutDesignerDialogs;
 
@@ -2609,13 +2617,15 @@ protected:
     QList<QgsDecorationItem *> mDecorationItems;
 
     //! Persistent GPS toolbox
-    // QgsAppGpsConnection *mGpsConnection = nullptr;
-    // QgsAppGpsSettingsMenu *mGpsSettingsMenu = nullptr;
-    // QgsGpsInformationWidget *mpGpsWidget = nullptr;
-    // QgsGpsToolBar *mGpsToolBar = nullptr;
-    // QgsGpsCanvasBridge *mGpsCanvasBridge = nullptr;
-    // QgsAppGpsDigitizing *mGpsDigitizing = nullptr;
-    // QgsAppGpsLogging *mGpsLogging = nullptr;
+    /*
+    QgsAppGpsConnection *mGpsConnection = nullptr;
+    QgsAppGpsSettingsMenu *mGpsSettingsMenu = nullptr;
+    QgsGpsInformationWidget *mpGpsWidget = nullptr;
+    QgsGpsToolBar *mGpsToolBar = nullptr;
+    QgsGpsCanvasBridge *mGpsCanvasBridge = nullptr;
+    QgsAppGpsDigitizing *mGpsDigitizing = nullptr;
+    QgsAppGpsLogging *mGpsLogging = nullptr;
+    */
 
     QgsMessageBarItem *mLastMapToolMessage = nullptr;
 

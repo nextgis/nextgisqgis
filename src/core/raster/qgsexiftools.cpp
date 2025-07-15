@@ -25,15 +25,17 @@
 #include <QFileInfo>
 #include <QTime>
 
-//double readRationale( const Exiv2::Value &value, long n = 0 )
-//{
-//  const Exiv2::Rational rational = value.toRational( n );
-//  return static_cast< double >( rational.first ) / rational.second;
-//};
+/*
+double readRationale( const Exiv2::Value &value, long n = 0 )
+{
+  const Exiv2::Rational rational = value.toRational( n );
+  return static_cast< double >( rational.first ) / rational.second;
+};
+*/
 
 double readCoordinate( const std::string &value )
 {
-    //EXIF_GPSLatitude=(50) (49) (8.592)
+  // EXIF_GPSLatitude=(50) (49) (8.592)
   double res = 0;
   double div = 1;
   CPLString localVal(value);
@@ -49,8 +51,7 @@ double readCoordinate( const std::string &value )
   return res;
 };
 
-//TODO: Проверить где и как это работает в NGQGIS
-//необходимо привести decodeXmpData к виду decodeExifData?
+//TODO: check in NGQGIS
 /*
 QVariant decodeXmpData( const QString &key, Exiv2::XmpData::const_iterator &it )
 {
@@ -169,7 +170,8 @@ QVariant decodeExifData( const QString &key, const std::string &value )
   }
   else
   {
-/*    switch ( it->typeId() )
+    /*
+    switch ( it->typeId() )
     {
       case Exiv2::asciiString:
       case Exiv2::string:
@@ -242,7 +244,8 @@ QVariant decodeExifData( const QString &key, const std::string &value )
         val = QString::fromStdString( it->toString() );
         break;
 
-    }*/
+    }
+    */
     val = QString::fromStdString( value );
   }
   return val;
@@ -263,7 +266,8 @@ QVariant QgsExifTools::readTag( const QString &imagePath, const QString &key )
   if ( !QFileInfo::exists( imagePath ) )
     return QVariant();
 
-/*  if ( key.startsWith( QLatin1String( "Xmp." ) ) )
+  /*
+  if ( key.startsWith( QLatin1String( "Xmp." ) ) )
   {
       std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toStdString() ) );
       if ( !image || key.isEmpty() )
@@ -280,8 +284,9 @@ QVariant QgsExifTools::readTag( const QString &imagePath, const QString &key )
       }
       Exiv2::XmpData::const_iterator i = xmpData.findKey( Exiv2::XmpKey( key.toUtf8().constData() ) );
       return i != xmpData.end() ? decodeXmpData( key, i ) : QVariant();
-  }
-  else*/
+    }
+    else
+    */
   {
       QVariant res;
       GDALDataset *ds = reinterpret_cast<GDALDataset*>(
@@ -471,7 +476,7 @@ bool QgsExifTools::tagImage( const QString &imagePath, const QString &tag, const
 {
   //DEBUG:
   return false;
-/*
+  /*
   try
   {
     std::unique_ptr< Exiv2::Image > image( Exiv2::ImageFactory::open( imagePath.toStdString() ) );
@@ -596,5 +601,6 @@ bool QgsExifTools::tagImage( const QString &imagePath, const QString &tag, const
   {
     return false;
   }
-  return true;*/
+  return true;
+  */
 }

@@ -29,12 +29,12 @@
 #include "qgsvectordataprovider.h"
 #include "qgsrasterdataprovider.h"
 #include "qgsvectorlayer.h"
-//#include "qgsvectortilelayer.h"
+// #include "qgsvectortilelayer.h"
 #include "qgsrasterlayer.h"
 #include "qgsapplication.h"
 #include "qgsproviderregistry.h"
 #include "qgsvectorlayerproperties.h"
-//#include "qgsvectortilelayerproperties.h"
+// #include "qgsvectortilelayerproperties.h"
 #include "qgsrasterlayerproperties.h"
 #include "qgsmeshlayerproperties.h"
 
@@ -203,11 +203,13 @@ void QgsMapLayerStyleManagerWidget::saveAsDefault()
       QgsMeshLayerProperties( mLayer, mMapCanvas ).saveDefaultStyle();
       break;
 
-//    case Qgis::LayerType::VectorTile:
-//      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
-//                                    mMapCanvas,
-//                                    mMapLayerConfigWidgetContext.messageBar() ).saveDefaultStyle();
-//      break;
+    case Qgis::LayerType::VectorTile:
+      /*
+      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
+                                    mMapCanvas,
+                                    mMapLayerConfigWidgetContext.messageBar() ).saveDefaultStyle();
+      */
+      break;
 
     // Not available for these
     case Qgis::LayerType::PointCloud:
@@ -241,11 +243,13 @@ void QgsMapLayerStyleManagerWidget::loadDefault()
       QgsMeshLayerProperties( mLayer, mMapCanvas ).loadDefaultStyle();
       break;
 
-//    case Qgis::LayerType::VectorTile:
-//      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
-//                                    mMapCanvas,
-//                                    mMapLayerConfigWidgetContext.messageBar() ).loadDefaultStyle();
-//      break;
+    case Qgis::LayerType::VectorTile:
+      /*
+      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
+                                    mMapCanvas,
+                                    mMapLayerConfigWidgetContext.messageBar() ).loadDefaultStyle();
+      */
+      break;
 
     // Not available for these
     case Qgis::LayerType::PointCloud:
@@ -279,11 +283,13 @@ void QgsMapLayerStyleManagerWidget::saveStyle()
       QgsMeshLayerProperties( mLayer, mMapCanvas ).saveStyleAs();
       break;
 
-//    case Qgis::LayerType::VectorTile:
-//      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
-//                                    mMapCanvas,
-//                                    mMapLayerConfigWidgetContext.messageBar() ).saveStyleAs();
-//      break;
+    case Qgis::LayerType::VectorTile:
+      /*
+      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
+                                    mMapCanvas,
+                                    mMapLayerConfigWidgetContext.messageBar() ).saveStyleAs();
+      */
+      break;
 
     // Not available for these
     case Qgis::LayerType::PointCloud:
@@ -317,11 +323,13 @@ void QgsMapLayerStyleManagerWidget::loadStyle()
       QgsMeshLayerProperties( mLayer, mMapCanvas ).loadStyle();
       break;
 
-//    case Qgis::LayerType::VectorTile:
-//      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
-//                                    mMapCanvas,
-//                                    mMapLayerConfigWidgetContext.messageBar() ).loadStyle();
-//      break;
+    case Qgis::LayerType::VectorTile:
+      /*
+      QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
+                                    mMapCanvas,
+                                    mMapLayerConfigWidgetContext.messageBar() ).loadStyle();
+      */
+      break;
 
     // Not available for these
     case Qgis::LayerType::PointCloud:

@@ -1,0 +1,65 @@
+--- a/src/gui/qgsmaplayerstylemanagerwidget.cpp	2025-07-15 20:09:37.920548891 +0300
++++ b/src/gui/qgsmaplayerstylemanagerwidget.cpp	2025-07-30 19:58:18.126961584 +0300
+@@ -29,12 +29,12 @@
+ #include "qgsvectordataprovider.h"
+ #include "qgsrasterdataprovider.h"
+ #include "qgsvectorlayer.h"
+-#include "qgsvectortilelayer.h"
++// #include "qgsvectortilelayer.h"
+ #include "qgsrasterlayer.h"
+ #include "qgsapplication.h"
+ #include "qgsproviderregistry.h"
+ #include "qgsvectorlayerproperties.h"
+-#include "qgsvectortilelayerproperties.h"
++// #include "qgsvectortilelayerproperties.h"
+ #include "qgsrasterlayerproperties.h"
+ #include "qgsmeshlayerproperties.h"
+ 
+@@ -204,9 +204,11 @@
+       break;
+ 
+     case Qgis::LayerType::VectorTile:
++      /*
+       QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
+                                     mMapCanvas,
+                                     mMapLayerConfigWidgetContext.messageBar() ).saveDefaultStyle();
++      */
+       break;
+ 
+     // Not available for these
+@@ -242,9 +244,11 @@
+       break;
+ 
+     case Qgis::LayerType::VectorTile:
++      /*
+       QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
+                                     mMapCanvas,
+                                     mMapLayerConfigWidgetContext.messageBar() ).loadDefaultStyle();
++      */
+       break;
+ 
+     // Not available for these
+@@ -280,9 +284,11 @@
+       break;
+ 
+     case Qgis::LayerType::VectorTile:
++      /*
+       QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
+                                     mMapCanvas,
+                                     mMapLayerConfigWidgetContext.messageBar() ).saveStyleAs();
++      */
+       break;
+ 
+     // Not available for these
+@@ -318,9 +324,11 @@
+       break;
+ 
+     case Qgis::LayerType::VectorTile:
++      /*
+       QgsVectorTileLayerProperties( qobject_cast<QgsVectorTileLayer *>( mLayer ),
+                                     mMapCanvas,
+                                     mMapLayerConfigWidgetContext.messageBar() ).loadStyle();
++      */
+       break;
+ 
+     // Not available for these

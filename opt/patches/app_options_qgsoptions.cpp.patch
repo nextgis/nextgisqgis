@@ -1,5 +1,5 @@
---- a/src/app/options/qgsoptions.cpp	2023-08-21 19:39:45.651052360 +0300
-+++ b/src/app/options/qgsoptions.cpp	2023-10-04 12:12:19.432098194 +0300
+--- a/src/app/options/qgsoptions.cpp	2025-07-15 20:09:37.497539856 +0300
++++ b/src/app/options/qgsoptions.cpp	2025-07-30 19:58:18.108960942 +0300
 @@ -53,7 +53,7 @@
  #include "qgslocatoroptionswidget.h"
  #include "qgsgui.h"
@@ -22,7 +22,21 @@
  /**
   * \class QgsOptions - Set user options and preferences
   * Constructor
-@@ -136,6 +142,8 @@
+@@ -127,6 +133,13 @@
+   mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "Variables" ), QCoreApplication::translate( "QgsOptionsBase", "Variables" ), QStringLiteral( "mIconExpression.svg" ) ) );
+   mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "Authentication" ), QCoreApplication::translate( "QgsOptionsBase", "Authentication" ), QStringLiteral( "locked.svg" ) ) );
+   mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "Network" ), QCoreApplication::translate( "QgsOptionsBase", "Network" ), QStringLiteral( "propertyicons/network_and_proxy.svg" ) ) );
++
++  QStandardItem *gpsGroup = new QStandardItem( QCoreApplication::translate( "QgsOptionsBase", "GPS" ) );
++  gpsGroup->setData( QStringLiteral( "gps" ) );
++  gpsGroup->setToolTip( tr( "GPS" ) );
++  gpsGroup->setSelectable( false );
++//  mTreeModel->appendRow( gpsGroup );
++
+   mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "Locator" ), tr( "Locator" ), QStringLiteral( "search.svg" ) ) );
+   mTreeModel->appendRow( createItem( QCoreApplication::translate( "QgsOptionsBase", "Acceleration" ), tr( "GPU acceleration" ), QStringLiteral( "mIconGPU.svg" ) ) );
+ 
+@@ -136,6 +149,8 @@
    ideGroup->setSelectable( false );
    mTreeModel->appendRow( ideGroup );
  
@@ -31,7 +45,20 @@
    mOptionsTreeView->setModel( mTreeModel );
  
    // stylesheet setup
-@@ -220,6 +228,8 @@
+@@ -176,9 +191,12 @@
+ 
+   connect( mFontFamilyRadioCustom, &QAbstractButton::toggled, mFontFamilyComboBox, &QWidget::setEnabled );
+ 
++  /*
+   connect( cmbIconSize, qOverload< int >( &QComboBox::activated ), this, &QgsOptions::iconSizeChanged );
+   connect( cmbIconSize, qOverload< int >( &QComboBox::highlighted ), this, &QgsOptions::iconSizeChanged );
+   connect( cmbIconSize, &QComboBox::editTextChanged, this, &QgsOptions::iconSizeChanged );
++  */
++  connect( cmbIconSize, &QComboBox::currentTextChanged, this, &QgsOptions::iconSizeChanged );
+ 
+   connect( this, &QDialog::accepted, this, &QgsOptions::saveOptions );
+   connect( this, &QDialog::rejected, this, &QgsOptions::rejectOptions );
+@@ -220,6 +238,8 @@
  
    mSettings = new QgsSettings();
  
@@ -40,16 +67,16 @@
    double identifyValue = mSettings->value( QStringLiteral( "/Map/searchRadiusMM" ), Qgis::DEFAULT_SEARCH_RADIUS_MM ).toDouble();
    QgsDebugMsgLevel( QStringLiteral( "Standard Identify radius setting read from settings file: %1" ).arg( identifyValue ), 3 );
    if ( identifyValue <= 0.0 )
-@@ -724,7 +734,7 @@
+@@ -724,7 +744,7 @@
    cbxLegendClassifiers->setChecked( mSettings->value( QStringLiteral( "/qgis/showLegendClassifiers" ), false ).toBool() );
    mShowFeatureCountByDefaultCheckBox->setChecked( QgsSettingsRegistryCore::settingsLayerTreeShowFeatureCountForNewLayers->value() );
    cbxHideSplash->setChecked( mSettings->value( QStringLiteral( "/qgis/hideSplash" ), false ).toBool() );
 -  cbxShowNews->setChecked( !mSettings->value( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QgsWelcomePage::newsFeedUrl() ) ), false, QgsSettings::Core ).toBool() );
-+//   cbxShowNews->setChecked( !mSettings->value( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QgsWelcomePage::newsFeedUrl() ) ), false, QgsSettings::Core ).toBool() );
++  // cbxShowNews->setChecked( !mSettings->value( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QgsWelcomePage::newsFeedUrl() ) ), false, QgsSettings::Core ).toBool() );
    cbxCheckVersion->setChecked( mSettings->value( QStringLiteral( "/qgis/checkVersion" ), true ).toBool() );
    cbxCheckVersion->setVisible( mSettings->value( QStringLiteral( "/qgis/allowVersionCheck" ), true ).toBool() );
    cbxAttributeTableDocked->setChecked( mSettings->value( QStringLiteral( "/qgis/dockAttributeTable" ), false ).toBool() );
-@@ -1547,6 +1557,17 @@
+@@ -1547,6 +1567,17 @@
    mSettings->setValue( QStringLiteral( "proxy/proxyPassword" ), mAuthSettings->password() );
    mSettings->setValue( QStringLiteral( "proxy/proxyType" ), mProxyTypeComboBox->currentText() );
  
@@ -60,27 +87,27 @@
 +      mProxyTypeComboBox->currentText() == "DefaultProxy", leProxyHost->text(),
 +      leProxyPort->text().toInt(), mAuthSettings->username(), mAuthSettings->password(),
 +      "ANY");
-+#endif // NGLIB_VERSION_NUMBER > 1100  
++#endif // NGLIB_VERSION_NUMBER > 1100
 +#endif // NGSTD_USING
 +  // END NEXTGIS
 +
    if ( !mCacheDirectory->text().isEmpty() )
      mSettings->setValue( QStringLiteral( "cache/directory" ), mCacheDirectory->text() );
    else
-@@ -1578,7 +1599,7 @@
+@@ -1578,7 +1609,7 @@
    mSettings->setValue( QStringLiteral( "/qgis/showLegendClassifiers" ), cbxLegendClassifiers->isChecked() );
    QgsSettingsRegistryCore::settingsLayerTreeShowFeatureCountForNewLayers->setValue( mShowFeatureCountByDefaultCheckBox->isChecked() );
    mSettings->setValue( QStringLiteral( "/qgis/hideSplash" ), cbxHideSplash->isChecked() );
 -  mSettings->setValue( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QgsWelcomePage::newsFeedUrl() ) ), !cbxShowNews->isChecked(), QgsSettings::Core );
-+//   mSettings->setValue( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QgsWelcomePage::newsFeedUrl() ) ), !cbxShowNews->isChecked(), QgsSettings::Core );
++  // mSettings->setValue( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QgsWelcomePage::newsFeedUrl() ) ), !cbxShowNews->isChecked(), QgsSettings::Core );
  
    mSettings->setValue( QStringLiteral( "/qgis/checkVersion" ), cbxCheckVersion->isChecked() );
    mSettings->setValue( QStringLiteral( "/qgis/dockAttributeTable" ), cbxAttributeTableDocked->isChecked() );
-@@ -1858,6 +1879,30 @@
+@@ -1858,6 +1889,31 @@
      // TODO[MD] QgisApp::instance()->legend()->updateLegendItemSymbologies();
    }
  
-+// NextGIS settings
++  // NextGIS settings
 + #ifdef NGSTD_USING
 +    mSettings->setValue("nextgis/send_crashes", mOptionsPageNextGIS->sendCrashes->isChecked());
 +    mSettings->setValue("nextgis/endpoint", mOptionsPageNextGIS->endpointEdit->text());
@@ -100,6 +127,7 @@
 +        NGAccess::instance().setUseCodeChallenge(true);
 +    }
 +    NGAccess::instance().setEndPoint(mOptionsPageNextGIS->endpointEdit->text(), type);
++    NGAccess::instance().checkEndpointAsync(mOptionsPageNextGIS->endpointEdit->text());
 +
 +    NGAccess::instance().initSentry(mOptionsPageNextGIS->sendCrashes->isChecked(), "");
 +#endif // NGSTD_USING

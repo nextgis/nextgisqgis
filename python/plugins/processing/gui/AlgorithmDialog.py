@@ -274,7 +274,7 @@ class AlgorithmDialog(QgsProcessingAlgorithmDialogBase):
                 process_command, command_ok = self.algorithm().asQgisProcessCommand(parameters, self.context)
                 if command_ok:
                     self.history_details['process_command'] = process_command
-                #self.history_log_id, _ = QgsGui.historyProviderRegistry().addEntry('processing', self.history_details)
+                # self.history_log_id, _ = QgsGui.historyProviderRegistry().addEntry('processing', self.history_details)
 
                 QgsGui.instance().processingRecentAlgorithmLog().push(self.algorithm().id())
                 self.cancelButton().setEnabled(self.algorithm().flags() & QgsProcessingAlgorithm.FlagCanCancel)
@@ -296,7 +296,7 @@ class AlgorithmDialog(QgsProcessingAlgorithmDialogBase):
                         self.history_details['results'] = {k: v for k, v in results.items() if k != 'CHILD_INPUTS'}
                         self.history_details['log'] = self.feedback.htmlLog()
 
-                        #QgsGui.historyProviderRegistry().updateEntry(self.history_log_id, self.history_details)
+                        # QgsGui.historyProviderRegistry().updateEntry(self.history_log_id, self.history_details)
 
                     if self.feedback_dialog is not None:
                         self.feedback_dialog.close()

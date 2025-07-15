@@ -1,0 +1,11 @@
+--- a/src/gui/processing/qgsprocessinghistoryprovider.cpp	2025-07-15 20:09:37.863547673 +0300
++++ b/src/gui/processing/qgsprocessinghistoryprovider.cpp	2025-07-30 19:58:18.124961513 +0300
+@@ -77,7 +77,7 @@
+       }
+     }
+ 
+-    QgsGui::historyProviderRegistry()->addEntries( entries );
++    // QgsGui::historyProviderRegistry()->addEntries( entries );
+   }
+ }
+ 

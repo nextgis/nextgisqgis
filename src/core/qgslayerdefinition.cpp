@@ -331,9 +331,9 @@ QList<QgsMapLayer *> QgsLayerDefinition::loadLayerDefinitionLayersInternal( QDom
           layer = new QgsMeshLayer();
           break;
 
-        // case Qgis::LayerType::VectorTile:
-        //   layer = new QgsVectorTileLayer;
-        //   break;
+        case Qgis::LayerType::VectorTile:
+          // layer = new QgsVectorTileLayer;
+          break;
 
         case Qgis::LayerType::PointCloud:
           layer = new QgsPointCloudLayer();
@@ -534,5 +534,3 @@ bool QgsLayerDefinition::DependencySorter::isLayerDependent( const QString &laye
 {
   return mDependentLayerIds.contains( layerId );
 }
-
-

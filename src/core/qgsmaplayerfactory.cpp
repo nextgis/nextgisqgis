@@ -23,6 +23,7 @@
 // #include "qgsvectortilelayer.h"
 #include "qgsannotationlayer.h"
 #include "qgsgrouplayer.h"
+#include <cstddef>
 
 Qgis::LayerType QgsMapLayerFactory::typeFromString( const QString &string, bool &ok )
 {
@@ -33,8 +34,8 @@ Qgis::LayerType QgsMapLayerFactory::typeFromString( const QString &string, bool 
     return Qgis::LayerType::Raster;
   else if ( string.compare( QLatin1String( "mesh" ), Qt::CaseInsensitive ) == 0 )
     return Qgis::LayerType::Mesh;
-//  else if ( string.compare( QLatin1String( "vector-tile" ), Qt::CaseInsensitive ) == 0 )
-//    return Qgis::LayerType::VectorTile;
+  else if ( string.compare( QLatin1String( "vector-tile" ), Qt::CaseInsensitive ) == 0 )
+    return Qgis::LayerType::VectorTile;
   else if ( string.compare( QLatin1String( "point-cloud" ), Qt::CaseInsensitive ) == 0 )
     return Qgis::LayerType::PointCloud;
   else if ( string.compare( QLatin1String( "plugin" ), Qt::CaseInsensitive ) == 0 )
@@ -101,11 +102,14 @@ QgsMapLayer *QgsMapLayerFactory::createLayer( const QString &uri, const QString 
       return new QgsMeshLayer( uri, name, provider, meshOptions );
     }
 
-    // case Qgis::LayerType::VectorTile:
-    // {
-    //   const QgsVectorTileLayer::LayerOptions vectorTileOptions( options.transformContext );
-    //   return new QgsVectorTileLayer( uri, name, vectorTileOptions );
-    // }
+    case Qgis::LayerType::VectorTile:
+    {
+      /*
+      const QgsVectorTileLayer::LayerOptions vectorTileOptions( options.transformContext );
+      return new QgsVectorTileLayer( uri, name, vectorTileOptions );
+      */
+      break;
+    }
 
     case Qgis::LayerType::Annotation:
     {

@@ -1,6 +1,6 @@
---- a/src/core/qgsmaplayerfactory.cpp
-+++ b/src/core/qgsmaplayerfactory.cpp
-@@ -20,7 +20,7 @@
+--- a/src/core/qgsmaplayerfactory.cpp	2025-07-15 20:09:37.698544150 +0300
++++ b/src/core/qgsmaplayerfactory.cpp	2025-07-30 19:58:18.119961334 +0300
+@@ -20,9 +20,10 @@
  #include "qgsrasterlayer.h"
  #include "qgsmeshlayer.h"
  #include "qgspointcloudlayer.h"
@@ -8,33 +8,19 @@
 +// #include "qgsvectortilelayer.h"
  #include "qgsannotationlayer.h"
  #include "qgsgrouplayer.h"
++#include <cstddef>
  
-@@ -33,8 +33,8 @@
-     return Qgis::LayerType::Raster;
-   else if ( string.compare( QLatin1String( "mesh" ), Qt::CaseInsensitive ) == 0 )
-     return Qgis::LayerType::Mesh;
--  else if ( string.compare( QLatin1String( "vector-tile" ), Qt::CaseInsensitive ) == 0 )
--    return Qgis::LayerType::VectorTile;
-+//  else if ( string.compare( QLatin1String( "vector-tile" ), Qt::CaseInsensitive ) == 0 )
-+//    return Qgis::LayerType::VectorTile;
-   else if ( string.compare( QLatin1String( "point-cloud" ), Qt::CaseInsensitive ) == 0 )
-     return Qgis::LayerType::PointCloud;
-   else if ( string.compare( QLatin1String( "plugin" ), Qt::CaseInsensitive ) == 0 )
-@@ -101,11 +101,11 @@
-       return new QgsMeshLayer( uri, name, provider, meshOptions );
+ Qgis::LayerType QgsMapLayerFactory::typeFromString( const QString &string, bool &ok )
+ {
+@@ -103,8 +104,11 @@
+ 
+     case Qgis::LayerType::VectorTile:
+     {
++      /*
+       const QgsVectorTileLayer::LayerOptions vectorTileOptions( options.transformContext );
+       return new QgsVectorTileLayer( uri, name, vectorTileOptions );
++      */
++      break;
      }
  
--    case Qgis::LayerType::VectorTile:
--    {
--      const QgsVectorTileLayer::LayerOptions vectorTileOptions( options.transformContext );
--      return new QgsVectorTileLayer( uri, name, vectorTileOptions );
--    }
-+    // case Qgis::LayerType::VectorTile:
-+    // {
-+    //   const QgsVectorTileLayer::LayerOptions vectorTileOptions( options.transformContext );
-+    //   return new QgsVectorTileLayer( uri, name, vectorTileOptions );
-+    // }
- 
      case Qgis::LayerType::Annotation:
-     {
-

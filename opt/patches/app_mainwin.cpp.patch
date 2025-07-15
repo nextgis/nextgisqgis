@@ -1,5 +1,5 @@
---- a/src/app/mainwin.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/mainwin.cpp	2022-05-15 12:20:36.570338600 +0300
+--- a/src/app/mainwin.cpp	2025-07-14 17:28:14.774952974 +0300
++++ b/src/app/mainwin.cpp	2025-07-14 13:59:40.643924228 +0300
 @@ -50,6 +50,22 @@
    return basename;
  }
@@ -37,7 +37,7 @@
  #ifndef _MSC_VER // MinGW
  #pragma GCC diagnostic ignored "-Wcast-function-type"
  #endif
-@@ -168,10 +168,10 @@
+@@ -168,10 +191,10 @@
  
  
  #ifdef _MSC_VER
@@ -50,7 +50,7 @@
  #endif
  
    if ( !hGetProcIDDLL )
-@@ -188,7 +188,7 @@
+@@ -188,7 +211,7 @@
        0,
        NULL );
  
@@ -59,7 +59,7 @@
                            + "\n Help: \n\n Check " + basename + ".env for correct environment paths";
      showError( message, "Error loading QGIS" );
  
-@@ -207,7 +207,7 @@
+@@ -207,7 +230,7 @@
  
    if ( !realmain )
    {

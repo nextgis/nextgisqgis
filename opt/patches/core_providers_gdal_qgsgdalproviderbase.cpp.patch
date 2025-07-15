@@ -1,0 +1,11 @@
+--- a/src/core/providers/gdal/qgsgdalproviderbase.cpp	2025-07-15 20:09:37.664543423 +0300
++++ b/src/core/providers/gdal/qgsgdalproviderbase.cpp	2025-07-30 03:05:27.888802509 +0300
+@@ -406,7 +406,7 @@
+   {
+     path = path.mid( vsiPrefix.count() );
+ 
+-    const thread_local QRegularExpression vsiRegex( QStringLiteral( "(?:\\.zip|\\.tar|\\.gz|\\.tar\\.gz|\\.tgz)([^|]+)" ) );
++    const thread_local QRegularExpression vsiRegex( QStringLiteral( "(?:\\.zip|\\.tar|\\.tar\\.gz|\\.tgz)([\\\\/][^|]+)" ) );
+     const QRegularExpressionMatch match = vsiRegex.match( path );
+     if ( match.hasMatch() )
+     {

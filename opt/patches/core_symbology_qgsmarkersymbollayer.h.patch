@@ -1,5 +1,5 @@
---- a/src/core/symbology/qgsmarkersymbollayer.h	2023-08-21 19:30:50.610256892 +0300
-+++ b/src/core/symbology/qgsmarkersymbollayer.h	2023-10-04 13:28:23.863477925 +0300
+--- a/src/core/symbology/qgsmarkersymbollayer.h	2025-07-15 20:09:37.776545815 +0300
++++ b/src/core/symbology/qgsmarkersymbollayer.h	2025-07-30 19:58:18.123961477 +0300
 @@ -222,7 +222,7 @@
      QgsSimpleMarkerSymbolLayer *clone() const override SIP_FACTORY;
      void writeSldMarker( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override;
@@ -18,3 +18,9 @@
  
      QRectF bounds( QPointF point, QgsSymbolRenderContext &context ) override;
  
+@@ -1143,5 +1143,3 @@
+ // clazy:excludeall=qstring-allocations
+ 
+ #endif
+-
+-

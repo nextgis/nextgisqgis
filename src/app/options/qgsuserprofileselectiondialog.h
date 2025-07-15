@@ -21,6 +21,7 @@
 
 #include "ui_qgsuserprofileselectiondialog.h"
 
+
 // Forward declarations
 class QgsUserProfileManager;
 class QEvent;

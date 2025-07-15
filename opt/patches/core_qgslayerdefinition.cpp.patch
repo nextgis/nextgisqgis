@@ -1,5 +1,5 @@
---- a/src/core/qgslayerdefinition.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/qgslayerdefinition.cpp	2022-04-25 18:33:18.000000000 +0300
+--- a/src/core/qgslayerdefinition.cpp	2025-07-15 20:09:37.695544086 +0300
++++ b/src/core/qgslayerdefinition.cpp	2025-07-30 19:58:18.119961334 +0300
 @@ -27,7 +27,7 @@
  #include "qgsrasterlayer.h"
  #include "qgsreadwritecontext.h"
@@ -9,16 +9,18 @@
  #include "qgsapplication.h"
  #include "qgsmaplayerfactory.h"
  #include "qgsmeshlayer.h"
-@@ -331,9 +331,9 @@
-           layer = new QgsMeshLayer();
+@@ -332,7 +332,7 @@
            break;
  
--        case Qgis::LayerType::VectorTile:
+         case Qgis::LayerType::VectorTile:
 -          layer = new QgsVectorTileLayer;
--          break;
-+        // case Qgis::LayerType::VectorTile:
-+        //   layer = new QgsVectorTileLayer;
-+        //   break;
++          // layer = new QgsVectorTileLayer;
+           break;
  
          case Qgis::LayerType::PointCloud:
-           layer = new QgsPointCloudLayer();
+@@ -534,5 +534,3 @@
+ {
+   return mDependentLayerIds.contains( layerId );
+ }
+-
+-

@@ -56,8 +56,10 @@
 #include "qgsgeometrycollection.h"
 #include "callouts/qgscallout.h"
 #include "callouts/qgscalloutsregistry.h"
-// #include "qgsvectortilelayer.h"
-// #include "qgsvectortilebasiclabeling.h"
+/*
+#include "qgsvectortilelayer.h"
+#include "qgsvectortilebasiclabeling.h"
+*/
 #include "qgsfontmanager.h"
 #include "qgsvariantutils.h"
 
@@ -3893,17 +3895,18 @@ bool QgsPalLabeling::staticWillUseLayer( const QgsMapLayer *layer )
       return vl->labelsEnabled() || vl->diagramsEnabled();
     }
 
-    // case Qgis::LayerType::VectorTile:
-    // {
-    //   const QgsVectorTileLayer *vl = qobject_cast< const QgsVectorTileLayer * >( layer );
-    //   if ( !vl->labeling() )
-    //     return false;
+    case Qgis::LayerType::VectorTile:
+    {
+      /*
+      const QgsVectorTileLayer *vl = qobject_cast< const QgsVectorTileLayer * >( layer );
+      if ( !vl->labeling() )
+        return false;
 
-    //   if ( const QgsVectorTileBasicLabeling *labeling = dynamic_cast< const QgsVectorTileBasicLabeling *>( vl->labeling() ) )
-    //     return !labeling->styles().empty();
-
-    //   return false;
-    // }
+      if ( const QgsVectorTileBasicLabeling *labeling = dynamic_cast< const QgsVectorTileBasicLabeling *>( vl->labeling() ) )
+        return !labeling->styles().empty();
+      */
+      return false;
+    }
 
     case Qgis::LayerType::Raster:
     case Qgis::LayerType::Plugin:

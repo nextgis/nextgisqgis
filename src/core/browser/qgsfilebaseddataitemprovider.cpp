@@ -156,8 +156,10 @@ Qgis::BrowserLayerType QgsProviderSublayerItem::layerTypeFromSublayer( const Qgs
     case Qgis::LayerType::Mesh:
       return Qgis::BrowserLayerType::Mesh;
 
-    // case Qgis::LayerType::VectorTile:
-    //   return Qgis::BrowserLayerType::VectorTile;
+    /*
+    case Qgis::LayerType::VectorTile:
+      return Qgis::BrowserLayerType::VectorTile;
+    */
 
     case Qgis::LayerType::PointCloud:
       return Qgis::BrowserLayerType::PointCloud;

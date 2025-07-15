@@ -1,5 +1,5 @@
---- a/src/app/qgsmaptoolselectutils.cpp
-+++ b/src/app/qgsmaptoolselectutils.cpp
+--- a/src/app/qgsmaptoolselectutils.cpp	2025-07-15 20:09:37.521540369 +0300
++++ b/src/app/qgsmaptoolselectutils.cpp	2025-07-30 19:58:18.114961156 +0300
 @@ -21,7 +21,7 @@
  #include "qgsmessagebar.h"
  #include "qgsmapcanvas.h"
@@ -9,79 +9,55 @@
  #include "qgsvectorlayerfeatureiterator.h"
  #include "qgsfeature.h"
  #include "qgsgeometry.h"
-@@ -50,14 +50,20 @@
+@@ -50,9 +50,9 @@
      switch ( layer->type() )
      {
        case Qgis::LayerType::Vector:
 -      case Qgis::LayerType::VectorTile:
--        // supported
--        break;
-+        break;
-+//      case (int)Qgis::LayerType::VectorTile:
-+//        // supported
-+//        break;
+         // supported
+         break;
++      case Qgis::LayerType::VectorTile:
        case Qgis::LayerType::Raster:
-+        break;
        case Qgis::LayerType::Plugin:
-+        break;
        case Qgis::LayerType::Mesh:
-+        break;
-       case Qgis::LayerType::Annotation:
-+        break;
-       case Qgis::LayerType::PointCloud:
-+        break;
-       case Qgis::LayerType::Group:
-         layer = nullptr; //not supported
-         break;
-@@ -119,10 +125,10 @@
-         }
-         break;
+@@ -121,7 +121,7 @@
        }
--      case Qgis::LayerType::VectorTile:
--        // mixed layer type, so aim for somewhere between the vector layer polygon/point sizes
+       case Qgis::LayerType::VectorTile:
+         // mixed layer type, so aim for somewhere between the vector layer polygon/point sizes
 -        boxSize = 2;
--        break;
-+//      case Qgis::LayerType::VectorTile:
-+//        // mixed layer type, so aim for somewhere between the vector layer polygon/point sizes
-+//        boxSize = 2;
-+//        break;
++        // boxSize = 2;
+         break;
  
        case Qgis::LayerType::Raster:
-       case Qgis::LayerType::Plugin:
-@@ -251,7 +257,7 @@
-       vlayer->selectByIds( selectedFeatures, behavior );
-       break;
-     }
--
-+/*
+@@ -254,6 +254,7 @@
+ 
      case Qgis::LayerType::VectorTile:
      {
++      /*
        QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer *>( layer );
-@@ -274,7 +280,7 @@
+ 
+       QgsCoordinateTransform ct( canvas->mapSettings().destinationCrs(), layer->crs(), QgsProject::instance() );
+@@ -273,6 +274,7 @@
+       renderContext.setExpressionContext( expressionContext );
  
        vtLayer->selectByGeometry( selectGeomTrans, context, behavior, Qgis::SelectGeometryRelationship::Intersect, flags, &renderContext );
-       break;
--    }
-+    }*/
- 
-     case Qgis::LayerType::Raster:
-     case Qgis::LayerType::Plugin:
-@@ -309,7 +315,7 @@
-       vLayer->selectByIds( selectedFeatures, selectBehavior );
++      */
        break;
      }
--
-+/*
+ 
+@@ -312,6 +314,7 @@
+ 
      case Qgis::LayerType::VectorTile:
      {
++      /*
        QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( layer );
-@@ -327,7 +333,7 @@
+       QgsCoordinateTransform ct( canvas->mapSettings().destinationCrs(), layer->crs(), QgsProject::instance() );
+       QgsGeometry selectGeomTrans;
+@@ -326,6 +329,7 @@
+       renderContext.setExpressionContext( expressionContext );
  
        vtLayer->selectByGeometry( selectGeomTrans, context, selectBehavior, doContains ? Qgis::SelectGeometryRelationship::Within : Qgis::SelectGeometryRelationship::Intersect, Qgis::SelectionFlags(), &renderContext );
++      */
        break;
--    }
-+    }*/
+     }
  
-     case Qgis::LayerType::Raster:
-     case Qgis::LayerType::Plugin:
-

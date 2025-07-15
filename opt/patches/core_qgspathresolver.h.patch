@@ -1,0 +1,48 @@
+--- a/src/core/qgspathresolver.h	2025-07-15 20:09:37.706544321 +0300
++++ b/src/core/qgspathresolver.h	2025-07-30 19:58:18.119961334 +0300
+@@ -113,9 +113,10 @@
+     static QString setPathPreprocessor( SIP_PYCALLABLE / AllowNone / );
+     % MethodCode
+     PyObject *s = 0;
+-    Py_BEGIN_ALLOW_THREADS
++    QString id;
+     Py_XINCREF( a0 );
+-    QString id = QgsPathResolver::setPathPreprocessor( [a0]( const QString &arg )->QString
++    Py_BEGIN_ALLOW_THREADS
++    id = QgsPathResolver::setPathPreprocessor( [a0]( const QString &arg )->QString
+     {
+       QString res;
+       SIP_BLOCK_THREADS
+@@ -132,8 +133,8 @@
+       return res;
+     } );
+ 
+-    s = sipConvertFromNewType( new QString( id ), sipType_QString, 0 );
+     Py_END_ALLOW_THREADS
++    s = sipConvertFromNewType( new QString( id ), sipType_QString, 0 );
+     return s;
+     % End
+ #endif
+@@ -223,9 +224,10 @@
+     static QString setPathWriter( SIP_PYCALLABLE / AllowNone / );
+     % MethodCode
+     PyObject *s = 0;
+-    Py_BEGIN_ALLOW_THREADS
++    QString id;
+     Py_XINCREF( a0 );
+-    QString id = QgsPathResolver::setPathWriter( [a0]( const QString &arg )->QString
++    Py_BEGIN_ALLOW_THREADS
++    id = QgsPathResolver::setPathWriter( [a0]( const QString &arg )->QString
+     {
+       QString res;
+       SIP_BLOCK_THREADS
+@@ -242,8 +244,8 @@
+       return res;
+     } );
+ 
+-    s = sipConvertFromNewType( new QString( id ), sipType_QString, 0 );
+     Py_END_ALLOW_THREADS
++    s = sipConvertFromNewType( new QString( id ), sipType_QString, 0 );
+     return s;
+     % End
+ #endif

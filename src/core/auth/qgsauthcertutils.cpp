@@ -27,10 +27,12 @@
 #include "qgsauthmanager.h"
 #include "qgslogger.h"
 
-// #ifdef Q_OS_MAC
-// #include <string.h>
-// #include "libtasn1.h"
-// #endif
+/*
+#ifdef Q_OS_MAC
+#include <string.h>
+#include "libtasn1.h"
+#endif
+*/
 
 
 QString QgsAuthCertUtils::getSslProtocolName( QSsl::SslProtocol protocol )

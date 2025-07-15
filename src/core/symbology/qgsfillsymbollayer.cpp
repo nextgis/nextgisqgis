@@ -514,6 +514,7 @@ double QgsSimpleFillSymbolLayer::estimateMaxBleed( const QgsRenderContext &conte
   double offsetBleed = context.convertToPainterUnits( std::max( std::fabs( mOffset.x() ), std::fabs( mOffset.y() ) ), mOffsetUnit, mOffsetMapUnitScale );
   return penBleed + offsetBleed;
 }
+
 /*
 double QgsSimpleFillSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
 {
@@ -568,6 +569,7 @@ Qt::BrushStyle QgsSimpleFillSymbolLayer::dxfBrushStyle() const
   return mBrushStyle;
 }
 */
+
 QImage QgsSimpleFillSymbolLayer::toTiledPatternImage( ) const
 {
   QPixmap pixmap( QSize( 32, 32 ) );
@@ -1843,6 +1845,7 @@ QgsMapUnitScale QgsImageFillSymbolLayer::mapUnitScale() const
 {
   return mStrokeWidthMapUnitScale;
 }
+
 /*
 double QgsImageFillSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
 {
@@ -1870,6 +1873,7 @@ Qt::PenStyle QgsImageFillSymbolLayer::dxfPenStyle() const
 #endif //0
 }
 */
+
 QVariantMap QgsImageFillSymbolLayer::properties() const
 {
   QVariantMap map;
@@ -2351,6 +2355,7 @@ double QgsSVGFillSymbolLayer::estimateMaxBleed( const QgsRenderContext &context 
   }
   return 0;
 }
+
 /*
 QColor QgsSVGFillSymbolLayer::dxfColor( QgsSymbolRenderContext &context ) const
 {
@@ -2362,6 +2367,7 @@ QColor QgsSVGFillSymbolLayer::dxfColor( QgsSymbolRenderContext &context ) const
   return mStroke->color();
 }
 */
+
 QSet<QString> QgsSVGFillSymbolLayer::usedAttributes( const QgsRenderContext &context ) const
 {
   QSet<QString> attr = QgsImageFillSymbolLayer::usedAttributes( context );

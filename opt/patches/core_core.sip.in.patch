@@ -1,11 +1,11 @@
---- a/python/core/core.sip.in	2023-08-21 19:30:48.725626855 +0300
-+++ b/python/core/core.sip.in	2024-01-24 07:08:01.773513396 +0300
+--- a/python/core/core.sip.in	2025-07-15 20:09:37.265534902 +0300
++++ b/python/core/core.sip.in	2025-07-30 19:58:18.105960835 +0300
 @@ -97,7 +97,7 @@
  
  %Import QtPrintSupport/QtPrintSupportmod.sip
  %Import QtWidgets/QtWidgetsmod.sip
 -%Import QtPositioning/QtPositioningmod.sip
-+//%Import QtPositioning/QtPositioningmod.sip
++// %Import QtPositioning/QtPositioningmod.sip
  
  %Feature HAVE_GUI
  %Feature HAVE_QTSERIALPORT

@@ -1600,9 +1600,9 @@ bool QgsProject::addLayer( const QDomElement &layerElem,
       mapLayer = std::make_unique<QgsMeshLayer>();
       break;
 
-    // case Qgis::LayerType::VectorTile:
-    //   mapLayer = std::make_unique<QgsVectorTileLayer>();
-    //   break;
+    case Qgis::LayerType::VectorTile:
+      // mapLayer = std::make_unique<QgsVectorTileLayer>();
+      break;
 
     case Qgis::LayerType::PointCloud:
       mapLayer = std::make_unique<QgsPointCloudLayer>();

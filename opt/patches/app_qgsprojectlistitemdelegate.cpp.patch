@@ -1,40 +1,23 @@
---- a/src/app/qgsprojectlistitemdelegate.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/qgsprojectlistitemdelegate.cpp	2022-04-25 18:33:16.000000000 +0300
-@@ -15,7 +15,7 @@
- 
- #include "qgsprojectlistitemdelegate.h"
- #include "qgis.h"
--#include "qgsnewsfeedmodel.h"
-+// #include "qgsnewsfeedmodel.h"
- #include "qgswebframe.h"
- #include "qgsapplication.h"
- #include "qgsrendercontext.h"
-@@ -237,13 +237,13 @@
+--- a/src/app/qgsprojectlistitemdelegate.cpp	2025-07-15 20:09:37.525540454 +0300
++++ b/src/app/qgsprojectlistitemdelegate.cpp	2025-07-30 19:58:18.114961156 +0300
+@@ -237,12 +237,12 @@
    const int titleSize = static_cast<int>( QApplication::fontMetrics().height() * 1.1 );
    const int textSize = static_cast<int>( titleSize * 0.85 );
    QSizeF iconSize = icon.size() / painter->device()->devicePixelRatio();
 -
-+/*
++  /*
    doc.setHtml( QStringLiteral( "<div style='font-size:%1px'><span style='font-size:%2px;font-weight:bold;'>%3%4</span>%5</div>" ).arg( textSize ).arg( QString::number( titleSize ),
                 index.data( QgsNewsFeedModel::Title ).toString(),
                 index.data( QgsNewsFeedModel::Sticky ).toBool() ? QStringLiteral( "<img src=\":/images/themes/default/pin.svg\">" ) : QString(),
                 index.data( QgsNewsFeedModel::Content ).toString() ) );
- 
 -
-+*/
++  */
+ 
    doc.setTextWidth( option.rect.width() - ( !icon.isNull() ? iconSize.width() + 4.375 * mRoundedRectSizePixels : 4.375 * mRoundedRectSizePixels ) );
  
-   if ( !icon.isNull() )
-@ -271,10 +271,12 @@
+@@ -293,5 +293,3 @@
  
-   const int titleSize = QApplication::fontMetrics().height() * 1.1;
-   const int textSize = titleSize * 0.85;
-+  /*
-   doc.setHtml( QStringLiteral( "<div style='font-size:%1px'><span style='font-size:%2px;font-weight:bold;'>%3%4</span>%5</div>" ).arg( textSize ).arg( QString::number( titleSize ),
-                index.data( QgsNewsFeedModel::Title ).toString(),
-                index.data( QgsNewsFeedModel::Sticky ).toBool() ? QStringLiteral( "<img src=\"qrc:/images/themes/default/pin.svg\">" ) : QString(),
-                index.data( QgsNewsFeedModel::Content ).toString() ) );
-+               */
-   doc.setTextWidth( width - ( !icon.isNull() ? icon.width() + 4.375 * mRoundedRectSizePixels : 4.375 * mRoundedRectSizePixels ) );
- 
-   return QSize( width, std::max( ( double ) doc.size().height() + 1.25 * mRoundedRectSizePixels, static_cast<double>( icon.height() ) ) + 2.5 * mRoundedRectSizePixels );
+   return QSize( width, std::max( ( double ) doc.size().height() + 1.25 * mRoundedRectSizePixels, static_cast<double>( iconSize.height() ) ) + 2.5 * mRoundedRectSizePixels );
+ }
+-
+-

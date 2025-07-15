@@ -528,9 +528,9 @@ void QgsIdentifyResultsDialog::addFeature( const QgsMapToolIdentify::IdentifyRes
       addFeature( qobject_cast<QgsMeshLayer *>( result.mLayer ), result.mLabel, result.mAttributes, result.mDerivedAttributes );
       break;
 
-    // case Qgis::LayerType::VectorTile:
-    //   addFeature( qobject_cast<QgsVectorTileLayer *>( result.mLayer ), result.mLabel, result.mFields, result.mFeature, result.mDerivedAttributes );
-    //   break;
+    case Qgis::LayerType::VectorTile:
+      // addFeature( qobject_cast<QgsVectorTileLayer *>( result.mLayer ), result.mLabel, result.mFields, result.mFeature, result.mDerivedAttributes );
+      break;
     case Qgis::LayerType::PointCloud:
       addFeature( qobject_cast<QgsPointCloudLayer *>( result.mLayer ), result.mLabel, result.mAttributes );
       break;
@@ -1220,6 +1220,7 @@ void QgsIdentifyResultsDialog::addFeature( QgsMeshLayer *layer,
     }
   }
 }
+
 /*
 void QgsIdentifyResultsDialog::addFeature( QgsVectorTileLayer *layer,
     const QString &label,
@@ -1307,6 +1308,7 @@ void QgsIdentifyResultsDialog::addFeature( QgsVectorTileLayer *layer,
   highlightFeature( featItem );
 }
 */
+
 void QgsIdentifyResultsDialog::addFeature( QgsPointCloudLayer *layer,
     const QString &label,
     const QMap< QString, QString > &attributes )
@@ -1495,7 +1497,7 @@ void QgsIdentifyResultsDialog::contextMenuEvent( QContextMenuEvent *event )
   QgsMapLayer *layer = QgsIdentifyResultsDialog::layer( item );
   QgsVectorLayer *vlayer = vectorLayer( item );
   QgsRasterLayer *rlayer = rasterLayer( item );
-//   QgsVectorTileLayer *vtlayer = vectorTileLayer( item );
+  // QgsVectorTileLayer *vtlayer = vectorTileLayer( item );
   QgsPointCloudLayer *pclayer = pointCloudLayer( item );
   if ( !vlayer && !rlayer /*&& !vtlayer*/ && !pclayer )
   {
@@ -1886,6 +1888,7 @@ QgsMeshLayer *QgsIdentifyResultsDialog::meshLayer( QTreeWidgetItem *item )
     return nullptr;
   return qobject_cast<QgsMeshLayer *>( item->data( 0, Qt::UserRole ).value<QObject *>() );
 }
+
 /*
 QgsVectorTileLayer *QgsIdentifyResultsDialog::vectorTileLayer( QTreeWidgetItem *item )
 {
@@ -1895,6 +1898,7 @@ QgsVectorTileLayer *QgsIdentifyResultsDialog::vectorTileLayer( QTreeWidgetItem *
   return qobject_cast<QgsVectorTileLayer *>( item->data( 0, Qt::UserRole ).value<QObject *>() );
 }
 */
+
 QgsPointCloudLayer *QgsIdentifyResultsDialog::pointCloudLayer( QTreeWidgetItem *item )
 {
   item = layerItem( item );

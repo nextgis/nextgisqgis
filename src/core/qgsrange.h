@@ -42,7 +42,6 @@
  * \note not available in Python bindings (but class provided for template-based inheritance)
  * \since QGIS 3.0
  */
- 
 template <typename T>
 class QgsRange
 {
@@ -191,7 +190,6 @@ class QgsRange
 
 };
 
-typedef QgsRange<int> QgsRangeintBase;
 
 /**
  * \brief QgsRange which stores a range of double values.

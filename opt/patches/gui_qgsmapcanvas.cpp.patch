@@ -1,0 +1,97 @@
+--- a/src/gui/qgsmapcanvas.cpp	2025-07-15 20:09:37.919548870 +0300
++++ b/src/gui/qgsmapcanvas.cpp	2025-07-30 19:58:18.125961548 +0300
+@@ -89,7 +89,7 @@
+ #include "qgsrendereditemresults.h"
+ #include "qgstemporalnavigationobject.h"
+ #include "qgssymbollayerutils.h"
+-#include "qgsvectortilelayer.h"
++// #include "qgsvectortilelayer.h"
+ #include "qgsscreenhelper.h"
+ 
+ /**
+@@ -425,8 +425,10 @@
+ 
+       case Qgis::LayerType::VectorTile:
+       {
++        /*
+         QgsVectorTileLayer *vtlayer = qobject_cast<QgsVectorTileLayer *>( layer );
+         disconnect( vtlayer, &QgsVectorTileLayer::selectionChanged, this, &QgsMapCanvas::selectionChangedSlot );
++        */
+         break;
+       }
+ 
+@@ -462,8 +464,10 @@
+ 
+       case Qgis::LayerType::VectorTile:
+       {
++        /*
+         QgsVectorTileLayer *vtlayer = qobject_cast<QgsVectorTileLayer *>( layer );
+         connect( vtlayer, &QgsVectorTileLayer::selectionChanged, this, &QgsMapCanvas::selectionChangedSlot );
++        */
+         break;
+       }
+ 
+@@ -1719,6 +1723,7 @@
+ 
+     case Qgis::LayerType::VectorTile:
+     {
++      /*
+       QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( layer );
+       if ( vtLayer->selectedFeatureCount() == 0 )
+         return;
+@@ -1740,6 +1745,7 @@
+       }
+ 
+       rect = mapSettings().layerExtentToOutputExtent( layer, rect );
++      */
+       break;
+     }
+ 
+@@ -1792,6 +1798,7 @@
+ 
+       case Qgis::LayerType::VectorTile:
+       {
++        /*
+         QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( mapLayer );
+         if ( vtLayer->selectedFeatureCount() == 0 )
+           continue;
+@@ -1808,6 +1815,7 @@
+ 
+         rect = mapSettings().layerExtentToOutputExtent( vtLayer, rect );
+         selectionExtent.combineExtentWith( rect );
++        */
+         break;
+       }
+ 
+@@ -1982,6 +1990,7 @@
+     }
+     case Qgis::LayerType::VectorTile:
+     {
++      /*
+       QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( layer );
+       if ( vtLayer->selectedFeatureCount() == 0 )
+         return;
+@@ -1994,6 +2003,7 @@
+ 
+         rect.combineExtentWith( feature.geometry().boundingBox() );
+       }
++      */
+       break;
+     }
+ 
+@@ -2051,6 +2061,7 @@
+ 
+       case Qgis::LayerType::VectorTile:
+       {
++        /*
+         QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( mapLayer );
+         if ( vtLayer->selectedFeatureCount() == 0 )
+           continue;
+@@ -2065,6 +2076,7 @@
+         }
+ 
+         rect = mapSettings().layerExtentToOutputExtent( vtLayer, rect );
++        */
+         break;
+       }
+ 

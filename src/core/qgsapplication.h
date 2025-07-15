@@ -47,8 +47,10 @@ class QgsImageCache;
 class QgsSourceCache;
 class QgsSymbolLayerRegistry;
 class QgsRasterRendererRegistry;
-// class QgsGpsConnectionRegistry;
-// class QgsBabelFormatRegistry;
+/*
+class QgsGpsConnectionRegistry;
+class QgsBabelFormatRegistry;
+*/
 class QgsDataItemProviderRegistry;
 class QgsPluginLayerRegistry;
 class QgsClassificationMethodRegistry;
@@ -1138,9 +1140,11 @@ class CORE_EXPORT QgsApplication : public QApplication
     QMap<QString, QIcon> mIconCache;
     QMap<Cursor, QCursor> mCursorCache;
 
-    // QTranslator *mQgisTranslator = nullptr;
-    // QTranslator *mQtTranslator = nullptr;
-    // QTranslator *mQtBaseTranslator = nullptr;
+    /*
+    QTranslator *mQgisTranslator = nullptr;
+    QTranslator *mQtTranslator = nullptr;
+    QTranslator *mQtBaseTranslator = nullptr;
+    */
     QVector<QTranslator*> mTranslators;
 
     QgsDataItemProviderRegistry *mDataItemProviderRegistry = nullptr;
@@ -1158,8 +1162,10 @@ class CORE_EXPORT QgsApplication : public QApplication
       QgsLocalizedDataPathRegistry *mLocalizedDataPathRegistry = nullptr;
       QgsNumericFormatRegistry *mNumericFormatRegistry = nullptr;
       QgsFieldFormatterRegistry *mFieldFormatterRegistry = nullptr;
-      // QgsGpsConnectionRegistry *mGpsConnectionRegistry = nullptr;
-      // QgsBabelFormatRegistry *mGpsBabelFormatRegistry = nullptr;
+      /*
+      QgsGpsConnectionRegistry *mGpsConnectionRegistry = nullptr;
+      QgsBabelFormatRegistry *mGpsBabelFormatRegistry = nullptr;
+      */
       QgsNetworkContentFetcherRegistry *mNetworkContentFetcherRegistry = nullptr;
       QgsScaleBarRendererRegistry *mScaleBarRendererRegistry = nullptr;
       QgsValidityCheckRegistry *mValidityCheckRegistry = nullptr;

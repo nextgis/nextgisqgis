@@ -209,6 +209,7 @@ Decodes a provider key and layer ``uri`` from an encoded string, for use with
       Mesh,
       PointCloud,
       Annotation,
+      VectorTile,
     };
 
     static QgsMapLayer *mapLayerFromString( const QString &string, QgsProcessingContext &context, bool allowLoadingNewLayers = true, QgsProcessingUtils::LayerHint typeHint = QgsProcessingUtils::LayerHint::UnknownType, QgsProcessing::LayerOptionsFlags flags = QgsProcessing::LayerOptionsFlags() );

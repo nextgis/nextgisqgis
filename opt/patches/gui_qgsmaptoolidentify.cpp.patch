@@ -1,50 +1,44 @@
---- a/src/gui/qgsmaptoolidentify.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/gui/qgsmaptoolidentify.cpp	2022-04-25 18:33:17.000000000 +0300
-@@ -38,10 +38,10 @@
+--- a/src/gui/qgsmaptoolidentify.cpp	2025-07-15 20:09:37.922548934 +0300
++++ b/src/gui/qgsmaptoolidentify.cpp	2025-07-30 19:58:18.126961584 +0300
+@@ -34,10 +34,12 @@
  #include "qgsvectordataprovider.h"
  #include "qgsvectorlayer.h"
  #include "qgsvectorlayertemporalproperties.h"
--#include "qgsvectortilelayer.h"
--#include "qgsvectortileloader.h"
--#include "qgsvectortilemvtdecoder.h"
--#include "qgsvectortileutils.h"
-+// #include "qgsvectortilelayer.h"
-+// #include "qgsvectortileloader.h"
-+// #include "qgsvectortilemvtdecoder.h"
-+// #include "qgsvectortileutils.h"
++/*
+ #include "qgsvectortilelayer.h"
+ #include "qgsvectortileloader.h"
+ #include "qgsvectortilemvtdecoder.h"
+ #include "qgsvectortileutils.h"
++*/
  #include "qgsproject.h"
  #include "qgsrenderer.h"
  #include "qgstiles.h"
-@@ -225,10 +225,10 @@
+@@ -225,10 +227,12 @@
    {
      return identifyMeshLayer( results, qobject_cast<QgsMeshLayer *>( layer ), geometry, identifyContext );
    }
--  else if ( layer->type() == Qgis::LayerType::VectorTile && layerType.testFlag( VectorTileLayer ) )
--  {
--    return identifyVectorTileLayer( results, qobject_cast<QgsVectorTileLayer *>( layer ), geometry, identifyContext );
--  }
-+//   else if ( layer->type() == Qgis::LayerType::VectorTile && layerType.testFlag( VectorTileLayer ) )
-+//   {
-+//     return identifyVectorTileLayer( results, qobject_cast<QgsVectorTileLayer *>( layer ), geometry, identifyContext );
-+//   }
++  /*
+   else if ( layer->type() == Qgis::LayerType::VectorTile && layerType.testFlag( VectorTileLayer ) )
+   {
+     return identifyVectorTileLayer( results, qobject_cast<QgsVectorTileLayer *>( layer ), geometry, identifyContext );
+   }
++  */
    else if ( layer->type() == Qgis::LayerType::PointCloud && layerType.testFlag( PointCloudLayer ) )
    {
      return identifyPointCloudLayer( results, qobject_cast<QgsPointCloudLayer *>( layer ), geometry, identifyContext );
-@@ -379,7 +379,7 @@
- 
+@@ -380,6 +384,7 @@
    return true;
  }
--
+ 
 +/*
  bool QgsMapToolIdentify::identifyVectorTileLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsVectorTileLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext )
  {
    Q_UNUSED( identifyContext )
-@@ -507,7 +507,7 @@
+@@ -507,6 +512,7 @@
  
    return featureCount > 0;
  }
--
 +*/
+ 
  bool QgsMapToolIdentify::identifyPointCloudLayer( QList<QgsMapToolIdentify::IdentifyResult> *results, QgsPointCloudLayer *layer, const QgsGeometry &geometry, const QgsIdentifyContext &identifyContext )
  {
-   Q_UNUSED( identifyContext )

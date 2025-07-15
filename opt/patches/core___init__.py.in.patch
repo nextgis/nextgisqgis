@@ -1,0 +1,18 @@
+--- a/python/core/__init__.py.in	2025-07-15 20:09:37.180533086 +0300
++++ b/python/core/__init__.py.in	2025-07-30 19:58:18.101960692 +0300
+@@ -134,6 +134,7 @@
+ QgsMapLayerType.GroupLayer.__doc__ = "Composite group layer. Added in QGIS 3.24"
+ QgsMapLayerType.baseClass = Qgis
+ 
++"""
+ # Monkey patch QgsDxfExport
+ QgsDxfExport.SymbologyExport = Qgis.FeatureSymbologyExport
+ QgsDxfExport.SymbologyExport.FeatureSymbology = Qgis.FeatureSymbologyExport.PerFeature
+@@ -141,6 +142,7 @@
+ QgsDxfExport.NoSymbology = Qgis.FeatureSymbologyExport.NoSymbology
+ QgsDxfExport.FeatureSymbology = Qgis.FeatureSymbologyExport.PerFeature
+ QgsDxfExport.SymbolLayerSymbology = Qgis.FeatureSymbologyExport.PerSymbolLayer
++"""
+ 
+ GEOWKT = geoWkt()
+ PROJECT_SCALES = Qgis.defaultProjectScales()

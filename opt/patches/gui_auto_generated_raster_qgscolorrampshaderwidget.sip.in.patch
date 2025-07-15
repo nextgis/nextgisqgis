@@ -1,0 +1,11 @@
+--- a/python/gui/auto_generated/raster/qgscolorrampshaderwidget.sip.in	2025-07-15 20:09:37.299535628 +0300
++++ b/python/gui/auto_generated/raster/qgscolorrampshaderwidget.sip.in	2025-07-30 03:05:27.881463215 +0300
+@@ -11,7 +11,7 @@
+ 
+ 
+ 
+-class QgsColorRampShaderWidget: QWidget, protected Ui::QgsColorRampShaderWidgetBase
++class QgsColorRampShaderWidget: QWidget
+ {
+ %Docstring(signature="appended")
+ 

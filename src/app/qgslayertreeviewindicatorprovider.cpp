@@ -103,8 +103,8 @@ void QgsLayerTreeViewIndicatorProvider::onLayerLoaded()
   if ( !( qobject_cast<QgsVectorLayer *>( layerNode->layer() ) ||
           qobject_cast<QgsRasterLayer *>( layerNode->layer() ) ||
           qobject_cast<QgsMeshLayer *>( layerNode->layer() ) ||
-          qobject_cast<QgsPointCloudLayer *>( layerNode->layer() )/* ||
-          qobject_cast<QgsVectorTileLayer *>( layerNode->layer() )*/ ) )
+          qobject_cast<QgsPointCloudLayer *>( layerNode->layer() ) /* ||
+          qobject_cast<QgsVectorTileLayer *>( layerNode->layer() ) */ ) )
     return;
 
   if ( QgsMapLayer *mapLayer = layerNode->layer() )
@@ -132,7 +132,7 @@ void QgsLayerTreeViewIndicatorProvider::connectSignals( QgsMapLayer *layer )
           || qobject_cast<QgsRasterLayer *>( layer )
           || qobject_cast<QgsMeshLayer *>( layer )
           || qobject_cast<QgsPointCloudLayer *>( layer )
-          /*|| qobject_cast<QgsVectorTileLayer *>( layer ) */) )
+          /* || qobject_cast<QgsVectorTileLayer *>( layer ) */ ) )
     return;
 
   QgsMapLayer *mapLayer = layer;
@@ -145,7 +145,7 @@ void QgsLayerTreeViewIndicatorProvider::disconnectSignals( QgsMapLayer *layer )
           || qobject_cast<QgsRasterLayer *>( layer )
           || qobject_cast<QgsMeshLayer *>( layer )
           || qobject_cast<QgsPointCloudLayer *>( layer )
-          /*|| qobject_cast<QgsVectorTileLayer *>( layer ) */) )
+          /* || qobject_cast<QgsVectorTileLayer *>( layer ) */ ) )
     return;
   QgsMapLayer *mapLayer = layer;
   disconnect( mapLayer, &QgsMapLayer::dataSourceChanged, this, &QgsLayerTreeViewIndicatorProvider::onLayerChanged );
@@ -215,4 +215,3 @@ void QgsLayerTreeViewIndicatorProvider::addOrRemoveIndicator( QgsLayerTreeNode *
     // no indicator was there before, nothing to do
   }
 }
-

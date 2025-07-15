@@ -1,0 +1,36 @@
+--- a/images/svg/CMakeLists.txt	2023-05-12 15:35:25.962916400 +0300
++++ b/images/svg/CMakeLists.txt	2025-07-30 20:39:33.109626503 +0300
+@@ -1,4 +1,4 @@
+-include(CopyResources)
++# include(CopyResources)
+ 
+ set (SVG_DIRS
+  accommodation
+@@ -10,10 +10,8 @@
+  emergency
+  entertainment
+  food
+- geometric
+  gpsicons
+  health
+- icon
+  landmark
+  logos
+  money
+@@ -28,11 +26,11 @@
+ )
+ 
+ foreach (SVG_DIR ${SVG_DIRS})
+-  file(GLOB_RECURSE IMAGES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${SVG_DIR}/*.svg)
+-  set(SVG_FILES ${SVG_FILES} ${IMAGES})
++  install(DIRECTORY ${SVG_DIR} DESTINATION ${INSTALL_SHARE_DIR}/svg)
++  # file(GLOB_RECURSE IMAGES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${SVG_DIR}/*.svg)
++  # set(SVG_FILES ${SVG_FILES} ${IMAGES})
+ endforeach (SVG_DIR)
+ 
+-ADD_QGIS_RESOURCES("${CMAKE_CURRENT_SOURCE_DIR}" svg DEST_SVG_FILES "${SVG_FILES}")
+-
+-add_custom_target(svg ALL DEPENDS ${DEST_SVG_FILES})
++# ADD_QGIS_RESOURCES("${CMAKE_CURRENT_SOURCE_DIR}" svg DEST_SVG_FILES "${SVG_FILES}")
+ 
++# add_custom_target(svg ALL DEPENDS ${DEST_SVG_FILES})

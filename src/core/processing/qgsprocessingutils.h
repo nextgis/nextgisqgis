@@ -38,6 +38,7 @@ class QgsProcessingAlgorithm;
 // class QgsVectorTileLayer;
 class QgsPointCloudLayer;
 class QgsAnnotationLayer;
+// class QgsVectorTileLayer;
 
 #include <QString>
 #include <QVariant>
@@ -762,5 +763,3 @@ class CORE_EXPORT QgsProcessingFeatureSink : public QgsProxyFeatureSink
 #endif
 
 #endif // QGSPROCESSINGUTILS_H
-
-

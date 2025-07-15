@@ -570,16 +570,18 @@ void QgsProcessingMultipleInputPanelWidget::populateFromProject( QgsProject *pro
       break;
     }
 
-/*    case QgsProcessing::TypeVectorTile:
+    case QgsProcessing::TypeVectorTile:
     {
+      /*
       const QList<QgsVectorTileLayer *> options = QgsProcessingUtils::compatibleVectorTileLayers( project, false );
       for ( const QgsVectorTileLayer *layer : options )
       {
         addLayer( layer );
       }
+      */
 
       break;
-    }*/
+    }
 
     case QgsProcessing::TypeVector:
     case QgsProcessing::TypeVectorAnyGeometry:

@@ -75,8 +75,10 @@ class GUI_EXPORT QgsManageConnectionsDialog : public QDialog, private Ui::QgsMan
     QDomDocument saveOracleConnections( const QStringList &connections );
     QDomDocument saveHanaConnections( const QStringList &connections );
     QDomDocument saveXyzTilesConnections( const QStringList &connections );
-//    QDomDocument saveArcgisConnections( const QStringList &connections );
-//    QDomDocument saveVectorTileConnections( const QStringList &connections );
+    /*
+    QDomDocument saveArcgisConnections( const QStringList &connections );
+    QDomDocument saveVectorTileConnections( const QStringList &connections );
+    */
 
     void loadOWSConnections( const QDomDocument &doc, const QStringList &items, const QString &service );
     void loadWfsConnections( const QDomDocument &doc, const QStringList &items );
@@ -85,8 +87,10 @@ class GUI_EXPORT QgsManageConnectionsDialog : public QDialog, private Ui::QgsMan
     void loadOracleConnections( const QDomDocument &doc, const QStringList &items );
     void loadHanaConnections( const QDomDocument &doc, const QStringList &items );
     void loadXyzTilesConnections( const QDomDocument &doc, const QStringList &items );
-//    void loadArcgisConnections( const QDomDocument &doc, const QStringList &items, const QString &service );
-//    void loadVectorTileConnections( const QDomDocument &doc, const QStringList &items );
+    /*
+    void loadArcgisConnections( const QDomDocument &doc, const QStringList &items, const QString &service );
+    void loadVectorTileConnections( const QDomDocument &doc, const QStringList &items );
+    */
 
     QString mFileName;
     Mode mDialogMode;
@@ -96,4 +100,3 @@ class GUI_EXPORT QgsManageConnectionsDialog : public QDialog, private Ui::QgsMan
 // clazy:excludeall=qstring-allocations
 
 #endif // QGSMANAGECONNECTIONSDIALOG_H
-

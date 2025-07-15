@@ -287,5 +287,3 @@ class CORE_EXPORT QgsEllipseSymbolLayer: public QgsMarkerSymbolLayer
 // clazy:excludeall=qstring-allocations
 
 #endif // QGSELLIPSESYMBOLLAYER_H
-
-

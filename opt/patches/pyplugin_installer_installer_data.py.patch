@@ -1,0 +1,28 @@
+--- a/python/pyplugin_installer/installer_data.py	2025-07-15 20:09:37.350536717 +0300
++++ b/python/pyplugin_installer/installer_data.py	2025-07-30 20:03:53.766933413 +0300
+@@ -108,6 +108,7 @@
+ reposGroup = "app/plugin_repositories"
+ 
+ officialRepo = (QCoreApplication.translate("QgsPluginInstaller", "QGIS Official Plugin Repository"), "https://plugins.qgis.org/plugins/plugins.xml")
++nextGISRepo = (QCoreApplication.translate("QgsPluginInstaller", "NextGIS Plugin Repository"), "https://rm.nextgis.com/api/repo/1/qgis_xml")
+ 
+ 
+ # --- common functions ------------------------------------------------------------------- #
+@@ -259,12 +260,17 @@
+         settings.beginGroup(reposGroup)
+         # first, update repositories in QgsSettings if needed
+         officialRepoPresent = False
++        nextGISRepoPresent = False
+         for key in settings.childGroups():
+             url = settings.value(key + "/url", "", type=str)
+             if url == officialRepo[1]:
+                 officialRepoPresent = True
++            if url == nextGISRepo[1]:
++                nextGISRepoPresent = True
+         if not officialRepoPresent:
+             settings.setValue(officialRepo[0] + "/url", officialRepo[1])
++        if not nextGISRepoPresent:
++            settings.setValue(nextGISRepo[0] + "/url", nextGISRepo[1])
+ 
+         for key in settings.childGroups():
+             self.mRepositories[key] = {}

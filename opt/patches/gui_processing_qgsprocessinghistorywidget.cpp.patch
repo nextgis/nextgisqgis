@@ -1,0 +1,20 @@
+--- a/src/gui/processing/qgsprocessinghistorywidget.cpp	2025-07-15 20:09:37.863547673 +0300
++++ b/src/gui/processing/qgsprocessinghistorywidget.cpp	2025-07-30 19:58:18.124961513 +0300
+@@ -47,7 +47,7 @@
+                               QMessageBox::No
+                             ) == QMessageBox::Yes )
+   {
+-    QgsGui::historyProviderRegistry()->clearHistory( Qgis::HistoryProviderBackend::LocalProfile, QStringLiteral( "processing" ) );
++    // QgsGui::historyProviderRegistry()->clearHistory( Qgis::HistoryProviderBackend::LocalProfile, QStringLiteral( "processing" ) );
+   }
+ }
+ 
+@@ -68,7 +68,7 @@
+ 
+   fileName = QgsFileUtils::ensureFileNameHasExtension( fileName, { QStringLiteral( "log" ) } );
+ 
+-  const QList< QgsHistoryEntry > entries = QgsGui::historyProviderRegistry()->queryEntries( QDateTime(), QDateTime(), QStringLiteral( "processing" ) );
++  const QList< QgsHistoryEntry > entries /* = QgsGui::historyProviderRegistry()->queryEntries( QDateTime(), QDateTime(), QStringLiteral( "processing" ) )*/;
+ 
+   const QString logSeparator = QStringLiteral( "|~|" );
+   QFile logFile( fileName );

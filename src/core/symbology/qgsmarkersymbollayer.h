@@ -1143,5 +1143,3 @@ class CORE_EXPORT QgsAnimatedMarkerSymbolLayer : public QgsRasterMarkerSymbolLay
 // clazy:excludeall=qstring-allocations
 
 #endif
-
-

@@ -1,5 +1,5 @@
---- a/src/core/qgsapplication.h	2023-08-21 19:39:45.727046968 +0300
-+++ b/src/core/qgsapplication.h	2023-10-16 14:56:20.000000000 +0300
+--- a/src/core/qgsapplication.h	2025-07-15 20:09:37.677543701 +0300
++++ b/src/core/qgsapplication.h	2025-07-30 19:58:18.118961299 +0300
 @@ -20,6 +20,7 @@
  #include <QEvent>
  #include <QStringList>
@@ -8,27 +8,18 @@
  
  #include <memory>
  #include "qgis_sip.h"
-@@ -37,7 +38,7 @@
- class QgsColorSchemeRegistry;
- class QgsPaintEffectRegistry;
- class QgsProjectStorageRegistry;
--class QgsExternalStorageRegistry;
-+// class QgsExternalStorageRegistry;
- class QgsLocalizedDataPathRegistry;
- class QgsLayerMetadataProviderRegistry;
- class QgsRendererRegistry;
-@@ -46,8 +47,8 @@
+@@ -46,8 +47,10 @@
  class QgsSourceCache;
  class QgsSymbolLayerRegistry;
  class QgsRasterRendererRegistry;
--class QgsGpsConnectionRegistry;
--class QgsBabelFormatRegistry;
-+// class QgsGpsConnectionRegistry;
-+// class QgsBabelFormatRegistry;
++/*
+ class QgsGpsConnectionRegistry;
+ class QgsBabelFormatRegistry;
++*/
  class QgsDataItemProviderRegistry;
  class QgsPluginLayerRegistry;
  class QgsClassificationMethodRegistry;
-@@ -163,6 +164,9 @@
+@@ -163,6 +166,9 @@
      static const char *QGIS_ORGANIZATION_NAME;
      static const char *QGIS_ORGANIZATION_DOMAIN;
      static const char *QGIS_APPLICATION_NAME;
@@ -38,7 +29,7 @@
  #ifndef SIP_RUN
  
      /**
-@@ -373,6 +377,7 @@
+@@ -373,6 +379,7 @@
  
      //! Returns the common root path of all application data directories.
      static QString pkgDataPath();
@@ -46,7 +37,7 @@
  
      //! Returns the path to the currently active theme directory.
      static QString activeThemePath();
-@@ -800,13 +805,13 @@
+@@ -800,13 +807,13 @@
       * Returns the application's GPS connection registry, used for managing GPS connections.
       * \since QGIS 3.0
       */
@@ -62,46 +53,27 @@
  
      /**
       * Returns the application's plugin layer registry, used for managing plugin layer types.
-@@ -968,7 +973,7 @@
-      * Returns registry of available external storage implementations.
-      * \since QGIS 3.20
-      */
--    static QgsExternalStorageRegistry *externalStorageRegistry() SIP_KEEPREFERENCE;
-+    // static QgsExternalStorageRegistry *externalStorageRegistry() SIP_KEEPREFERENCE;
- 
-     /**
-      * Returns the registry of data repositories
-@@ -1133,9 +1138,10 @@
+@@ -1133,9 +1140,12 @@
      QMap<QString, QIcon> mIconCache;
      QMap<Cursor, QCursor> mCursorCache;
  
--    QTranslator *mQgisTranslator = nullptr;
--    QTranslator *mQtTranslator = nullptr;
--    QTranslator *mQtBaseTranslator = nullptr;
-+    // QTranslator *mQgisTranslator = nullptr;
-+    // QTranslator *mQtTranslator = nullptr;
-+    // QTranslator *mQtBaseTranslator = nullptr;
++    /*
+     QTranslator *mQgisTranslator = nullptr;
+     QTranslator *mQtTranslator = nullptr;
+     QTranslator *mQtBaseTranslator = nullptr;
++    */
 +    QVector<QTranslator*> mTranslators;
  
      QgsDataItemProviderRegistry *mDataItemProviderRegistry = nullptr;
      QgsAuthManager *mAuthManager = nullptr;
-@@ -1152,8 +1158,8 @@
+@@ -1152,8 +1162,10 @@
        QgsLocalizedDataPathRegistry *mLocalizedDataPathRegistry = nullptr;
        QgsNumericFormatRegistry *mNumericFormatRegistry = nullptr;
        QgsFieldFormatterRegistry *mFieldFormatterRegistry = nullptr;
--      QgsGpsConnectionRegistry *mGpsConnectionRegistry = nullptr;
--      QgsBabelFormatRegistry *mGpsBabelFormatRegistry = nullptr;
-+      // QgsGpsConnectionRegistry *mGpsConnectionRegistry = nullptr;
-+      // QgsBabelFormatRegistry *mGpsBabelFormatRegistry = nullptr;
++      /*
+       QgsGpsConnectionRegistry *mGpsConnectionRegistry = nullptr;
+       QgsBabelFormatRegistry *mGpsBabelFormatRegistry = nullptr;
++      */
        QgsNetworkContentFetcherRegistry *mNetworkContentFetcherRegistry = nullptr;
        QgsScaleBarRendererRegistry *mScaleBarRendererRegistry = nullptr;
        QgsValidityCheckRegistry *mValidityCheckRegistry = nullptr;
-@@ -1165,7 +1171,7 @@
-       QgsConnectionRegistry *mConnectionRegistry = nullptr;
-       QgsProjectStorageRegistry *mProjectStorageRegistry = nullptr;
-       QgsLayerMetadataProviderRegistry *mLayerMetadataProviderRegistry = nullptr;
--      QgsExternalStorageRegistry *mExternalStorageRegistry = nullptr;
-+      // QgsExternalStorageRegistry *mExternalStorageRegistry = nullptr;
-       QgsPageSizeRegistry *mPageSizeRegistry = nullptr;
-       QgsRasterRendererRegistry *mRasterRendererRegistry = nullptr;
-       QgsRendererRegistry *mRendererRegistry = nullptr;

@@ -1,5 +1,5 @@
---- a/src/gui/qgsbrowserdockwidget_p.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/gui/qgsbrowserdockwidget_p.cpp	2022-04-25 18:33:18.000000000 +0300
+--- a/src/gui/qgsbrowserdockwidget_p.cpp	2025-07-15 20:09:37.895548357 +0300
++++ b/src/gui/qgsbrowserdockwidget_p.cpp	2025-07-30 19:58:18.125961548 +0300
 @@ -44,7 +44,7 @@
  #include "qgsnative.h"
  #include "qgsmaptoolpan.h"
@@ -9,22 +9,14 @@
  #include "qgsattributetablemodel.h"
  #include "qgsattributetablefiltermodel.h"
  #include "qgsapplication.h"
-@@ -215,12 +215,12 @@
+@@ -218,8 +218,10 @@
+ 
+     case Qgis::LayerType::VectorTile:
+     {
++      /*
+       QgsDebugMsgLevel( QStringLiteral( "creating vector tile layer" ), 2 );
+       mLayer = std::make_unique< QgsVectorTileLayer >( layerItem->uri(), layerItem->name() );
++      */
        break;
      }
  
--    case Qgis::LayerType::VectorTile:
--    {
--      QgsDebugMsgLevel( QStringLiteral( "creating vector tile layer" ), 2 );
--      mLayer = std::make_unique< QgsVectorTileLayer >( layerItem->uri(), layerItem->name() );
--      break;
--    }
-+    // case Qgis::LayerType::VectorTile:
-+    // {
-+    //   QgsDebugMsgLevel( QStringLiteral( "creating vector tile layer" ), 2 );
-+    //   mLayer = std::make_unique< QgsVectorTileLayer >( layerItem->uri(), layerItem->name() );
-+    //   break;
-+    // }
- 
-     case Qgis::LayerType::PointCloud:
-     {

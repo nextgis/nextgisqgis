@@ -216,12 +216,14 @@ void QgsBrowserLayerProperties::setItem( QgsDataItem *item )
       break;
     }
 
-    // case Qgis::LayerType::VectorTile:
-    // {
-    //   QgsDebugMsgLevel( QStringLiteral( "creating vector tile layer" ), 2 );
-    //   mLayer = std::make_unique< QgsVectorTileLayer >( layerItem->uri(), layerItem->name() );
-    //   break;
-    // }
+    case Qgis::LayerType::VectorTile:
+    {
+      /*
+      QgsDebugMsgLevel( QStringLiteral( "creating vector tile layer" ), 2 );
+      mLayer = std::make_unique< QgsVectorTileLayer >( layerItem->uri(), layerItem->name() );
+      */
+      break;
+    }
 
     case Qgis::LayerType::PointCloud:
     {

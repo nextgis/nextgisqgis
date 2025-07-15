@@ -29,8 +29,10 @@
 #include "qgspointcloudproviderguimetadata.h"
 #include "qgsmaplayerconfigwidgetfactory.h"
 
-//#include "qgsmbtilesvectortileguiprovider.h"
-//#include "qgsvtpkvectortileguiprovider.h"
+/*
+#include "qgsmbtilesvectortileguiprovider.h"
+#include "qgsvtpkvectortileguiprovider.h"
+*/
 
 #ifdef HAVE_EPT
 #include "qgseptproviderguimetadata.h"
@@ -91,14 +93,20 @@ void QgsProviderGuiRegistry::loadStaticProviders( )
   QgsProviderGuiMetadata *ogr = new QgsOgrGuiProviderMetadata();
   mProviders[ ogr->key() ] = ogr;
 
-//   QgsProviderGuiMetadata *vt = new QgsVectorTileProviderGuiMetadata();
-//   mProviders[ vt->key() ] = vt;
+  /*
+  QgsProviderGuiMetadata *vt = new QgsVectorTileProviderGuiMetadata();
+  mProviders[ vt->key() ] = vt;
+  */
 
-//   QgsProviderGuiMetadata *mbtilesVectorTiles = new QgsMbtilesVectorTileGuiProviderMetadata();
-//   mProviders[ mbtilesVectorTiles->key() ] = mbtilesVectorTiles;
+  /*
+  QgsProviderGuiMetadata *mbtilesVectorTiles = new QgsMbtilesVectorTileGuiProviderMetadata();
+  mProviders[ mbtilesVectorTiles->key() ] = mbtilesVectorTiles;
+  */
 
-//   QgsProviderGuiMetadata *vtpkVectorTiles = new QgsVtpkVectorTileGuiProviderMetadata();
-//   mProviders[ vtpkVectorTiles->key() ] = vtpkVectorTiles;
+  /*
+  QgsProviderGuiMetadata *vtpkVectorTiles = new QgsVtpkVectorTileGuiProviderMetadata();
+  mProviders[ vtpkVectorTiles->key() ] = vtpkVectorTiles;
+  */
 
 #ifdef HAVE_EPT
   QgsProviderGuiMetadata *ept = new QgsEptProviderGuiMetadata();

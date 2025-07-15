@@ -1,0 +1,16 @@
+--- a/src/app/options/qgsfontoptions.cpp	2025-07-15 20:09:37.494539792 +0300
++++ b/src/app/options/qgsfontoptions.cpp	2025-07-30 19:58:18.107960906 +0300
+@@ -14,7 +14,7 @@
+  ***************************************************************************/
+ #include "qgsfontoptions.h"
+ 
+-#include "qgsbabelgpsdevice.h"
++// #include "qgsbabelgpsdevice.h"
+ #include "qgssettings.h"
+ #include "qgsapplication.h"
+ #include "qgsfontmanager.h"
+@@ -158,4 +158,3 @@
+ {
+   return QStringLiteral( "mOptionsPageComposer" );
+ }
+-

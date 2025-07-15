@@ -423,12 +423,14 @@ void QgsMapCanvas::setLayersPrivate( const QList<QgsMapLayer *> &layers )
         break;
       }
 
-//      case Qgis::LayerType::VectorTile:
-//      {
-//        QgsVectorTileLayer *vtlayer = qobject_cast<QgsVectorTileLayer *>( layer );
-//        disconnect( vtlayer, &QgsVectorTileLayer::selectionChanged, this, &QgsMapCanvas::selectionChangedSlot );
-//        break;
-//      }
+      case Qgis::LayerType::VectorTile:
+      {
+        /*
+        QgsVectorTileLayer *vtlayer = qobject_cast<QgsVectorTileLayer *>( layer );
+        disconnect( vtlayer, &QgsVectorTileLayer::selectionChanged, this, &QgsMapCanvas::selectionChangedSlot );
+        */
+        break;
+      }
 
       case Qgis::LayerType::Raster:
       case Qgis::LayerType::Plugin:
@@ -460,12 +462,14 @@ void QgsMapCanvas::setLayersPrivate( const QList<QgsMapLayer *> &layers )
         break;
       }
 
-//      case Qgis::LayerType::VectorTile:
-//      {
-//        QgsVectorTileLayer *vtlayer = qobject_cast<QgsVectorTileLayer *>( layer );
-//        connect( vtlayer, &QgsVectorTileLayer::selectionChanged, this, &QgsMapCanvas::selectionChangedSlot );
-//        break;
-//      }
+      case Qgis::LayerType::VectorTile:
+      {
+        /*
+        QgsVectorTileLayer *vtlayer = qobject_cast<QgsVectorTileLayer *>( layer );
+        connect( vtlayer, &QgsVectorTileLayer::selectionChanged, this, &QgsMapCanvas::selectionChangedSlot );
+        */
+        break;
+      }
 
       case Qgis::LayerType::Raster:
       case Qgis::LayerType::Plugin:
@@ -1717,31 +1721,33 @@ void QgsMapCanvas::zoomToSelected( QgsMapLayer *layer )
       break;
     }
 
-//    case Qgis::LayerType::VectorTile:
-//    {
-//      QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( layer );
-//      if ( vtLayer->selectedFeatureCount() == 0 )
-//        return;
+    case Qgis::LayerType::VectorTile:
+    {
+      /*
+      QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( layer );
+      if ( vtLayer->selectedFeatureCount() == 0 )
+        return;
 
-//      const QList< QgsFeature > selectedFeatures = vtLayer->selectedFeatures();
-//      for ( const QgsFeature &feature : selectedFeatures )
-//      {
-//        if ( !feature.hasGeometry() )
-//          continue;
+      const QList< QgsFeature > selectedFeatures = vtLayer->selectedFeatures();
+      for ( const QgsFeature &feature : selectedFeatures )
+      {
+        if ( !feature.hasGeometry() )
+          continue;
 
-//        rect.combineExtentWith( feature.geometry().boundingBox() );
-//      }
+        rect.combineExtentWith( feature.geometry().boundingBox() );
+      }
 
-//      if ( rect.isNull() )
-//      {
-//        cursorOverride.release();
-//        emit messageEmitted( tr( "Cannot zoom to selected feature(s)" ), tr( "No extent could be determined." ), Qgis::MessageLevel::Warning );
-//        return;
-//      }
+      if ( rect.isNull() )
+      {
+        cursorOverride.release();
+        emit messageEmitted( tr( "Cannot zoom to selected feature(s)" ), tr( "No extent could be determined." ), Qgis::MessageLevel::Warning );
+        return;
+      }
 
-//      rect = mapSettings().layerExtentToOutputExtent( layer, rect );
-//      break;
-//    }
+      rect = mapSettings().layerExtentToOutputExtent( layer, rect );
+      */
+      break;
+    }
 
     case Qgis::LayerType::Raster:
     case Qgis::LayerType::Plugin:
@@ -1790,26 +1796,28 @@ void QgsMapCanvas::zoomToSelected( const QList<QgsMapLayer *> &layers )
         break;
       }
 
-//      case Qgis::LayerType::VectorTile:
-//      {
-//        QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( mapLayer );
-//        if ( vtLayer->selectedFeatureCount() == 0 )
-//          continue;
+      case Qgis::LayerType::VectorTile:
+      {
+        /*
+        QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( mapLayer );
+        if ( vtLayer->selectedFeatureCount() == 0 )
+          continue;
 
-//        const QList< QgsFeature > selectedFeatures = vtLayer->selectedFeatures();
-//        QgsRectangle rect;
-//        for ( const QgsFeature &feature : selectedFeatures )
-//        {
-//          if ( !feature.hasGeometry() )
-//            continue;
+        const QList< QgsFeature > selectedFeatures = vtLayer->selectedFeatures();
+        QgsRectangle rect;
+        for ( const QgsFeature &feature : selectedFeatures )
+        {
+          if ( !feature.hasGeometry() )
+            continue;
 
-//          rect.combineExtentWith( feature.geometry().boundingBox() );
-//        }
+          rect.combineExtentWith( feature.geometry().boundingBox() );
+        }
 
-//        rect = mapSettings().layerExtentToOutputExtent( vtLayer, rect );
-//        selectionExtent.combineExtentWith( rect );
-//        break;
-//      }
+        rect = mapSettings().layerExtentToOutputExtent( vtLayer, rect );
+        selectionExtent.combineExtentWith( rect );
+        */
+        break;
+      }
 
       case Qgis::LayerType::Raster:
       case Qgis::LayerType::Plugin:
@@ -1980,22 +1988,24 @@ void QgsMapCanvas::panToSelected( QgsMapLayer *layer )
       rect = vLayer->boundingBoxOfSelected();
       break;
     }
-//    case Qgis::LayerType::VectorTile:
-//    {
-//      QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( layer );
-//      if ( vtLayer->selectedFeatureCount() == 0 )
-//        return;
+    case Qgis::LayerType::VectorTile:
+    {
+      /*
+      QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( layer );
+      if ( vtLayer->selectedFeatureCount() == 0 )
+        return;
 
-//      const QList< QgsFeature > selectedFeatures = vtLayer->selectedFeatures();
-//      for ( const QgsFeature &feature : selectedFeatures )
-//      {
-//        if ( !feature.hasGeometry() )
-//          continue;
+      const QList< QgsFeature > selectedFeatures = vtLayer->selectedFeatures();
+      for ( const QgsFeature &feature : selectedFeatures )
+      {
+        if ( !feature.hasGeometry() )
+          continue;
 
-//        rect.combineExtentWith( feature.geometry().boundingBox() );
-//      }
-//      break;
-//    }
+        rect.combineExtentWith( feature.geometry().boundingBox() );
+      }
+      */
+      break;
+    }
 
     case Qgis::LayerType::Raster:
     case Qgis::LayerType::Plugin:
@@ -2049,24 +2059,26 @@ void QgsMapCanvas::panToSelected( const QList<QgsMapLayer *> &layers )
         break;
       }
 
-//      case Qgis::LayerType::VectorTile:
-//      {
-//        QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( mapLayer );
-//        if ( vtLayer->selectedFeatureCount() == 0 )
-//          continue;
+      case Qgis::LayerType::VectorTile:
+      {
+        /*
+        QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( mapLayer );
+        if ( vtLayer->selectedFeatureCount() == 0 )
+          continue;
 
-//        const QList< QgsFeature > selectedFeatures = vtLayer->selectedFeatures();
-//        for ( const QgsFeature &feature : selectedFeatures )
-//        {
-//          if ( !feature.hasGeometry() )
-//            continue;
+        const QList< QgsFeature > selectedFeatures = vtLayer->selectedFeatures();
+        for ( const QgsFeature &feature : selectedFeatures )
+        {
+          if ( !feature.hasGeometry() )
+            continue;
 
-//          rect.combineExtentWith( feature.geometry().boundingBox() );
-//        }
+          rect.combineExtentWith( feature.geometry().boundingBox() );
+        }
 
-//        rect = mapSettings().layerExtentToOutputExtent( vtLayer, rect );
-//        break;
-//      }
+        rect = mapSettings().layerExtentToOutputExtent( vtLayer, rect );
+        */
+        break;
+      }
 
       case Qgis::LayerType::Raster:
       case Qgis::LayerType::Plugin:

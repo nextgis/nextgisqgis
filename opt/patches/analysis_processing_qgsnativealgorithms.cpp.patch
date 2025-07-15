@@ -1,5 +1,5 @@
---- a/src/analysis/processing/qgsnativealgorithms.cpp	2023-08-21 19:39:45.635053494 +0300
-+++ b/src/analysis/processing/qgsnativealgorithms.cpp	2023-11-22 14:44:57.102838324 +0300
+--- a/src/analysis/processing/qgsnativealgorithms.cpp	2025-07-15 20:09:37.441538661 +0300
++++ b/src/analysis/processing/qgsnativealgorithms.cpp	2025-07-30 19:58:18.106960871 +0300
 @@ -43,7 +43,7 @@
  #include "qgsalgorithmconverttocurves.h"
  #include "qgsalgorithmconvexhull.h"
@@ -14,7 +14,7 @@
  #include "qgsalgorithmdissolve.h"
  #include "qgsalgorithmdistancewithin.h"
 -#include "qgsalgorithmdownloadvectortiles.h"
-+//#include "qgsalgorithmdownloadvectortiles.h"
++// #include "qgsalgorithmdownloadvectortiles.h"
  #include "qgsalgorithmdrape.h"
  #include "qgsalgorithmdropfields.h"
  #include "qgsalgorithmdropgeometry.h"
@@ -24,20 +24,19 @@
  #include "qgsalgorithmexecutepostgisquery.h"
  #include "qgsalgorithmexecutespatialitequery.h"
  #include "qgsalgorithmexecutespatialitequeryregistered.h"
-@@ -90,9 +90,9 @@
+@@ -90,9 +90,11 @@
  #include "qgsalgorithmforcerhr.h"
  #include "qgsalgorithmfuzzifyraster.h"
  #include "qgsalgorithmgeometrybyexpression.h"
--#if QT_CONFIG(process)
--#include "qgsalgorithmgpsbabeltools.h"
--#endif
-+//#if QT_CONFIG(process)
-+//#include "qgsalgorithmgpsbabeltools.h"
-+//#endif
++/*
+ #if QT_CONFIG(process)
+ #include "qgsalgorithmgpsbabeltools.h"
+ #endif
++*/
  #include "qgsalgorithmgrid.h"
  #include "qgsalgorithmhillshade.h"
  #include "qgsalgorithmjoinbyattribute.h"
-@@ -199,7 +199,7 @@
+@@ -199,7 +201,7 @@
  #include "qgsalgorithmsplitlinesbylength.h"
  #include "qgsalgorithmsplitvectorlayer.h"
  #include "qgsalgorithmsplitwithlines.h"
@@ -46,7 +45,7 @@
  #include "qgsalgorithmstringconcatenation.h"
  #include "qgsalgorithmsubdivide.h"
  #include "qgsalgorithmsumlinelength.h"
-@@ -215,7 +215,7 @@
+@@ -215,7 +217,7 @@
  #include "qgsalgorithmuniquevalueindex.h"
  #include "qgsalgorithmvectorize.h"
  #include "qgsalgorithmwedgebuffers.h"
@@ -55,64 +54,60 @@
  #include "qgsalgorithmzonalhistogram.h"
  #include "qgsalgorithmzonalstatistics.h"
  #include "qgsalgorithmzonalstatisticsfeaturebased.h"
-@@ -295,18 +295,18 @@
+@@ -295,18 +297,18 @@
    addAlgorithm( new QgsConvertToCurvesAlgorithm() );
    addAlgorithm( new QgsConvexHullAlgorithm() );
    addAlgorithm( new QgsCreateDirectoryAlgorithm() );
 -  addAlgorithm( new QgsDbscanClusteringAlgorithm() );
-+//   addAlgorithm( new QgsDbscanClusteringAlgorithm() );
++  // addAlgorithm( new QgsDbscanClusteringAlgorithm() );
    addAlgorithm( new QgsDeleteDuplicateGeometriesAlgorithm() );
    addAlgorithm( new QgsDetectVectorChangesAlgorithm() );
    addAlgorithm( new QgsDifferenceAlgorithm() );
    addAlgorithm( new QgsDissolveAlgorithm() );
 -  addAlgorithm( new QgsDownloadVectorTilesAlgorithm() );
-+//   addAlgorithm( new QgsDownloadVectorTilesAlgorithm() );
++  // addAlgorithm( new QgsDownloadVectorTilesAlgorithm() );
    addAlgorithm( new QgsDrapeToMAlgorithm() );
    addAlgorithm( new QgsDrapeToZAlgorithm() );
    addAlgorithm( new QgsDropTableFieldsAlgorithm() );
    addAlgorithm( new QgsDropGeometryAlgorithm() );
    addAlgorithm( new QgsDropMZValuesAlgorithm() );
 -  addAlgorithm( new QgsDxfExportAlgorithm() );
-+//   addAlgorithm( new QgsDxfExportAlgorithm() );
++  // addAlgorithm( new QgsDxfExportAlgorithm() );
    addAlgorithm( new QgsExecutePostgisQueryAlgorithm() );
    addAlgorithm( new QgsExecuteRegisteredSpatialiteQueryAlgorithm() );
    addAlgorithm( new QgsExecuteSpatialiteQueryAlgorithm() );
-@@ -351,12 +351,12 @@
+@@ -351,12 +353,14 @@
    addAlgorithm( new QgsFuzzifyRasterGaussianMembershipAlgorithm() );
    addAlgorithm( new QgsFuzzifyRasterNearMembershipAlgorithm() );
    addAlgorithm( new QgsGeometryByExpressionAlgorithm() );
--#if QT_CONFIG(process)
--  addAlgorithm( new QgsConvertGpxFeatureTypeAlgorithm() );
--  addAlgorithm( new QgsConvertGpsDataAlgorithm() );
--  addAlgorithm( new QgsDownloadGpsDataAlgorithm() );
--  addAlgorithm( new QgsUploadGpsDataAlgorithm() );
--#endif
-+// #if QT_CONFIG(process)
-+//   addAlgorithm( new QgsConvertGpxFeatureTypeAlgorithm() );
-+//   addAlgorithm( new QgsConvertGpsDataAlgorithm() );
-+//   addAlgorithm( new QgsDownloadGpsDataAlgorithm() );
-+//   addAlgorithm( new QgsUploadGpsDataAlgorithm() );
-+// #endif
++  /*
+ #if QT_CONFIG(process)
+   addAlgorithm( new QgsConvertGpxFeatureTypeAlgorithm() );
+   addAlgorithm( new QgsConvertGpsDataAlgorithm() );
+   addAlgorithm( new QgsDownloadGpsDataAlgorithm() );
+   addAlgorithm( new QgsUploadGpsDataAlgorithm() );
+ #endif
++  */
    addAlgorithm( new QgsGridAlgorithm() );
    addAlgorithm( new QgsHillshadeAlgorithm() );
    addAlgorithm( new QgsImportPhotosAlgorithm() );
-@@ -490,7 +490,7 @@
+@@ -490,7 +494,7 @@
    addAlgorithm( new QgsSplitLinesByLengthAlgorithm() );
    addAlgorithm( new QgsSplitVectorLayerAlgorithm() );
    addAlgorithm( new QgsSplitWithLinesAlgorithm() );
 -  addAlgorithm( new QgsStDbscanClusteringAlgorithm() );
-+//   addAlgorithm( new QgsStDbscanClusteringAlgorithm() );
++  // addAlgorithm( new QgsStDbscanClusteringAlgorithm() );
    addAlgorithm( new QgsStringConcatenationAlgorithm() );
    addAlgorithm( new QgsStyleFromProjectAlgorithm() );
    addAlgorithm( new QgsSubdivideAlgorithm() );
-@@ -507,8 +507,8 @@
+@@ -507,8 +511,10 @@
    addAlgorithm( new QgsUnionAlgorithm() );
    addAlgorithm( new QgsVariableWidthBufferByMAlgorithm() );
    addAlgorithm( new QgsWedgeBuffersAlgorithm() );
--  addAlgorithm( new QgsWriteVectorTilesXyzAlgorithm() );
--  addAlgorithm( new QgsWriteVectorTilesMbtilesAlgorithm() );
-+//   addAlgorithm( new QgsWriteVectorTilesXyzAlgorithm() );
-+//   addAlgorithm( new QgsWriteVectorTilesMbtilesAlgorithm() );
++  /*
+   addAlgorithm( new QgsWriteVectorTilesXyzAlgorithm() );
+   addAlgorithm( new QgsWriteVectorTilesMbtilesAlgorithm() );
++  */
    addAlgorithm( new QgsZonalHistogramAlgorithm() );
    addAlgorithm( new QgsZonalStatisticsAlgorithm() );
    addAlgorithm( new QgsZonalStatisticsFeatureBasedAlgorithm() );

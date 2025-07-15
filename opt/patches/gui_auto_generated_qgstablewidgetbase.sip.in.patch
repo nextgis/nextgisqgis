@@ -1,0 +1,11 @@
+--- a/python/gui/auto_generated/qgstablewidgetbase.sip.in	2025-07-15 20:09:37.298535606 +0300
++++ b/python/gui/auto_generated/qgstablewidgetbase.sip.in	2025-07-30 03:05:27.880809063 +0300
+@@ -8,7 +8,7 @@
+ 
+ 
+ 
+-class QgsTableWidgetBase: QWidget, protected Ui::QgsTableWidgetUiBase
++class QgsTableWidgetBase: QWidget
+ {
+ %Docstring(signature="appended")
+ Base widget allowing to edit a collection, using a table.

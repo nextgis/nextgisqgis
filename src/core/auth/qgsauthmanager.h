@@ -794,23 +794,6 @@ class CORE_EXPORT QgsAuthManager : public QObject
         return sInstance;
     }
 
-    virtual bool masterPasswordInput();
-
-    //! Read Master password from the wallet
-    QString passwordHelperRead();
-
-    //! Store Master password in the wallet
-    bool passwordHelperWrite( const QString &password );
-
-    /**
-     * Process the error: show it and/or disable the password helper system in case of
-     * access denied or no backend, reset error flags at the end
-     */
-    virtual void passwordHelperProcessError();
-
-    //! Store last error code (enum)
-    QKeychain::Error mPasswordHelperErrorCode = QKeychain::NoError;
-    QString mMasterPass;
 
 #ifdef Q_OS_WIN
   public:
@@ -831,17 +814,36 @@ class CORE_EXPORT QgsAuthManager : public QObject
     //! Print a debug message in QGIS
     void passwordHelperLog( const QString &msg ) const;
 
+  protected:
+    //! Read Master password from the wallet
+    QString passwordHelperRead();
+
+    //! Store Master password in the wallet
+    bool passwordHelperWrite( const QString &password );
+
+  private:
     //! Error message setter
     void passwordHelperSetErrorMessage( const QString &errorMessage ) { mPasswordHelperErrorMessage = errorMessage; }
 
     //! Clear error code and message
     void passwordHelperClearErrors();
 
+  protected:
+    /**
+     * Process the error: show it and/or disable the password helper system in case of
+     * access denied or no backend, reset error flags at the end
+     */
+    virtual void passwordHelperProcessError();
 
+  private:
     bool createConfigTables();
 
     bool createCertTables();
 
+  protected:
+    virtual bool masterPasswordInput();
+
+  private:
     bool masterPasswordRowsInDb( int *rows ) const;
 
     bool masterPasswordCheckAgainstDb( const QString &compare = QString() ) const;
@@ -906,6 +908,10 @@ class CORE_EXPORT QgsAuthManager : public QObject
     QHash<QString, QString> mConfigAuthMethods;
     QHash<QString, QgsAuthMethod *> mAuthMethods;
 
+  protected:
+    QString mMasterPass;
+
+  private:
     int mPassTries = 0;
     bool mAuthDisabled = false;
     QString mAuthDisabledMessage;
@@ -942,6 +948,11 @@ class CORE_EXPORT QgsAuthManager : public QObject
     //! Store last error message
     QString mPasswordHelperErrorMessage;
 
+  protected:
+    //! Store last error code (enum)
+    QKeychain::Error mPasswordHelperErrorCode = QKeychain::NoError;
+
+  private:
     //! Enable logging
     bool mPasswordHelperLoggingEnabled = false;
 

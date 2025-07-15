@@ -66,11 +66,11 @@ QgsProcessingRegistry::QgsProcessingRegistry( QObject *parent SIP_TRANSFERTHIS )
   addParameterType( new QgsProcessingParameterTypeProviderConnection() );
   addParameterType( new QgsProcessingParameterTypeDatabaseSchema() );
   addParameterType( new QgsProcessingParameterTypeDatabaseTable() );
-//   addParameterType( new QgsProcessingParameterTypeVectorTileWriterLayers() );
+  // addParameterType( new QgsProcessingParameterTypeVectorTileWriterLayers() );
   addParameterType( new QgsProcessingParameterTypeFieldMapping() );
   addParameterType( new QgsProcessingParameterTypeAggregate() );
   addParameterType( new QgsProcessingParameterTypeTinInputLayers() );
-//   addParameterType( new QgsProcessingParameterTypeDxfLayers() );
+  // addParameterType( new QgsProcessingParameterTypeDxfLayers() );
   addParameterType( new QgsProcessingParameterTypeMeshDatasetGroups() );
   addParameterType( new QgsProcessingParameterTypeMeshDatasetTime() );
   addParameterType( new QgsProcessingParameterTypePointCloudLayer() );

@@ -1768,8 +1768,10 @@ QgsExpressionContext QgsLayoutItemMap::createExpressionContext() const
   const double mapScale = scale();
   scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_scale" ), mapScale, true ) );
 
-//   scope->setVariable( QStringLiteral( "zoom_level" ), QgsVectorTileUtils::scaleToZoomLevel( mapScale, 0, 99999 ), true );
-//   scope->setVariable( QStringLiteral( "vector_tile_zoom" ), QgsVectorTileUtils::scaleToZoom( mapScale ), true );
+  /*
+  scope->setVariable( QStringLiteral( "zoom_level" ), QgsVectorTileUtils::scaleToZoomLevel( mapScale, 0, 99999 ), true );
+  scope->setVariable( QStringLiteral( "vector_tile_zoom" ), QgsVectorTileUtils::scaleToZoom( mapScale ), true );
+  */
 
   QgsRectangle currentExtent( extent() );
   scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_extent" ), QVariant::fromValue( QgsGeometry::fromRect( currentExtent ) ), true ) );

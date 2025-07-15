@@ -1072,6 +1072,7 @@ double QgsSimpleLineSymbolLayer::estimateMaxBleed( const QgsRenderContext &conte
            context.convertToPainterUnits( std::fabs( mOffset ), mOffsetUnit, mOffsetMapUnitScale );
   }
 }
+
 /*
 QVector<qreal> QgsSimpleLineSymbolLayer::dxfCustomDashPattern( Qgis::RenderUnit &unit ) const
 {
@@ -1111,6 +1112,7 @@ QColor QgsSimpleLineSymbolLayer::dxfColor( QgsSymbolRenderContext &context ) con
   return mColor;
 }
 */
+
 bool QgsSimpleLineSymbolLayer::canCauseArtifactsBetweenAdjacentTiles() const
 {
   return mPenStyle != Qt::SolidLine || mUseCustomDashPattern;
@@ -1135,6 +1137,7 @@ void QgsSimpleLineSymbolLayer::setTweakDashPatternOnCorners( bool enabled )
 {
   mPatternCartographicTweakOnSharpCorners = enabled;
 }
+
 /*
 double QgsSimpleLineSymbolLayer::dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
 {
@@ -1154,6 +1157,7 @@ double QgsSimpleLineSymbolLayer::dxfOffset( const QgsDxfExport &e, QgsSymbolRend
   return -offset; //direction seems to be inverse to symbology offset
 }
 */
+
 /////////
 
 ///@cond PRIVATE
