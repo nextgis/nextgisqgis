@@ -1,0 +1,11 @@
+--- a/src/app/qgsclipboard.h	2025-07-15 20:09:37.509540113 +0300
++++ b/src/app/qgsclipboard.h	2025-07-30 19:58:18.114015920 +0300
+@@ -74,7 +74,7 @@
+      * Place a copy of the selected features from the specified layer on
+      * the internal clipboard, destroying the previous contents.
+      */
+-    void replaceWithCopyOf( QgsVectorTileLayer *src );
++    // void replaceWithCopyOf( QgsVectorTileLayer *src );
+ 
+     /**
+      * Place a copy of features on the internal clipboard,

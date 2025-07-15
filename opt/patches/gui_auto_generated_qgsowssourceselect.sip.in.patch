@@ -1,0 +1,11 @@
+--- a/python/gui/auto_generated/qgsowssourceselect.sip.in	2025-07-15 20:09:37.294535521 +0300
++++ b/python/gui/auto_generated/qgsowssourceselect.sip.in	2025-07-30 03:05:27.880809063 +0300
+@@ -11,7 +11,7 @@
+ 
+ 
+ 
+-class QgsOWSSourceSelect : QgsAbstractDataSourceWidget, protected Ui::QgsOWSSourceSelectBase
++class QgsOWSSourceSelect : QgsAbstractDataSourceWidget
+ {
+ %Docstring(signature="appended")
+ Dialog to create connections and add layers WCS etc.

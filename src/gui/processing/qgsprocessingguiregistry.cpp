@@ -67,7 +67,7 @@ QgsProcessingGuiRegistry::QgsProcessingGuiRegistry()
   addParameterWidgetFactory( new QgsProcessingMeshLayerWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingBandWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingMultipleLayerWidgetWrapper() );
-//   addParameterWidgetFactory( new QgsProcessingVectorTileWriterLayersWidgetWrapper() );
+  // addParameterWidgetFactory( new QgsProcessingVectorTileWriterLayersWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingFeatureSinkWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingVectorDestinationWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingRasterDestinationWidgetWrapper() );
@@ -76,7 +76,7 @@ QgsProcessingGuiRegistry::QgsProcessingGuiRegistry()
   addParameterWidgetFactory( new QgsProcessingFieldMapWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingAggregateWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingTinInputLayersWidgetWrapper() );
-//   addParameterWidgetFactory( new QgsProcessingDxfLayersWidgetWrapper() );
+  // addParameterWidgetFactory( new QgsProcessingDxfLayersWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingMeshDatasetGroupsWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingMeshDatasetTimeWidgetWrapper() );
   addParameterWidgetFactory( new QgsProcessingPointCloudLayerWidgetWrapper() );
@@ -182,4 +182,3 @@ QgsProcessingAbstractParameterDefinitionWidget *QgsProcessingGuiRegistry::create
 
   return mParameterWidgetFactories.value( type )->createParameterDefinitionWidget( context, widgetContext, definition, algorithm );
 }
-

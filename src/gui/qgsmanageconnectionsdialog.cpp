@@ -139,13 +139,15 @@ void QgsManageConnectionsDialog::doExportImport()
       case XyzTiles:
         doc = saveXyzTilesConnections( items );
         break;
-//      case ArcgisMapServer:
-//      case ArcgisFeatureServer:
-//        doc = saveArcgisConnections( items );
-//        break;
-//      case VectorTile:
-//        doc = saveVectorTileConnections( items );
-//        break;
+      /*
+      case ArcgisMapServer:
+      case ArcgisFeatureServer:
+        doc = saveArcgisConnections( items );
+        break;
+      case VectorTile:
+        doc = saveVectorTileConnections( items );
+        break;
+      */
     }
 
     QFile file( mFileName );
@@ -214,15 +216,17 @@ void QgsManageConnectionsDialog::doExportImport()
       case XyzTiles:
         loadXyzTilesConnections( doc, items );
         break;
-//      case ArcgisMapServer:
-//        loadArcgisConnections( doc, items, QStringLiteral( "ARCGISMAPSERVER" ) );
-//        break;
-//      case ArcgisFeatureServer:
-//        loadArcgisConnections( doc, items, QStringLiteral( "ARCGISFEATURESERVER" ) );
-//        break;
-//      case VectorTile:
-//        loadVectorTileConnections( doc, items );
-//        break;
+      /*
+      case ArcgisMapServer:
+        loadArcgisConnections( doc, items, QStringLiteral( "ARCGISMAPSERVER" ) );
+        break;
+      case ArcgisFeatureServer:
+        loadArcgisConnections( doc, items, QStringLiteral( "ARCGISFEATURESERVER" ) );
+        break;
+      case VectorTile:
+        loadVectorTileConnections( doc, items );
+        break;
+      */
     }
     // clear connections list and close window
     listConnections->clear();
@@ -269,13 +273,15 @@ bool QgsManageConnectionsDialog::populateConnections()
       case XyzTiles:
         connections = QgsXyzConnectionSettings::sTreeXyzConnections->items();
         break;
-//      case ArcgisMapServer:
-//      case ArcgisFeatureServer:
-//        connections = QgsArcGisConnectionSettings::sTreeConnectionArcgis->items();
-//        break;
-//      case VectorTile:
-//        connections = QgsVectorTileProviderConnection::sTreeConnectionVectorTile->items();
-//        break;
+      /*
+      case ArcgisMapServer:
+      case ArcgisFeatureServer:
+        connections = QgsArcGisConnectionSettings::sTreeConnectionArcgis->items();
+        break;
+      case VectorTile:
+        connections = QgsVectorTileProviderConnection::sTreeConnectionVectorTile->items();
+        break;
+      */
     }
     for ( const QString &connection : std::as_const( connections ) )
     {
@@ -692,6 +698,7 @@ QDomDocument QgsManageConnectionsDialog::saveXyzTilesConnections( const QStringL
 
   return doc;
 }
+
 /*
 QDomDocument QgsManageConnectionsDialog::saveArcgisConnections( const QStringList &connections )
 {
@@ -717,7 +724,9 @@ QDomDocument QgsManageConnectionsDialog::saveArcgisConnections( const QStringLis
   }
 
   return doc;
-}*/
+}
+*/
+
 /*
 QDomDocument QgsManageConnectionsDialog::saveVectorTileConnections( const QStringList &connections )
 {
@@ -1391,6 +1400,7 @@ void QgsManageConnectionsDialog::loadXyzTilesConnections( const QDomDocument &do
     child = child.nextSiblingElement();
   }
 }
+
 /*
 void QgsManageConnectionsDialog::loadArcgisConnections( const QDomDocument &doc, const QStringList &items, const QString &service )
 {
@@ -1472,7 +1482,9 @@ void QgsManageConnectionsDialog::loadArcgisConnections( const QDomDocument &doc,
 
     child = child.nextSiblingElement();
   }
-}*/
+}
+*/
+
 /*
 void QgsManageConnectionsDialog::loadVectorTileConnections( const QDomDocument &doc, const QStringList &items )
 {

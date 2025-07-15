@@ -1,13 +1,13 @@
---- a/src/core/browser/qgsfilebaseddataitemprovider.cpp	2023-08-21 19:39:45.675050657 +0300
-+++ b/src/core/browser/qgsfilebaseddataitemprovider.cpp	2023-10-04 12:13:39.000000000 +0300
-@@ -156,8 +156,8 @@
+--- a/src/core/browser/qgsfilebaseddataitemprovider.cpp	2025-07-15 20:09:37.547540925 +0300
++++ b/src/core/browser/qgsfilebaseddataitemprovider.cpp	2025-07-30 19:58:18.115961191 +0300
+@@ -156,8 +156,10 @@
      case Qgis::LayerType::Mesh:
        return Qgis::BrowserLayerType::Mesh;
  
--    case Qgis::LayerType::VectorTile:
--      return Qgis::BrowserLayerType::VectorTile;
-+    // case Qgis::LayerType::VectorTile:
-+    //   return Qgis::BrowserLayerType::VectorTile;
++    /*
+     case Qgis::LayerType::VectorTile:
+       return Qgis::BrowserLayerType::VectorTile;
++    */
  
      case Qgis::LayerType::PointCloud:
        return Qgis::BrowserLayerType::PointCloud;

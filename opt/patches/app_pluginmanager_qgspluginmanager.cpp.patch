@@ -1,11 +1,28 @@
---- a/src/app/pluginmanager/qgspluginmanager.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/pluginmanager/qgspluginmanager.cpp	2022-08-11 17:22:42.887502300 +0300
-@@ -905,7 +905,7 @@
-       iconPath = "file://" + iconPath;
- #endif
-     }
--    html += QStringLiteral( "<img src=\"%1\" style=\"float:right;max-width:64px;max-height:64px;\">" ).arg( iconPath );
-+    html += QStringLiteral( "<img src=\"%1\" width=\"64\" style=\"float:right;max-width:64px;max-height:64px;\">" ).arg( iconPath );
-   }
+--- a/src/app/pluginmanager/qgspluginmanager.cpp	2025-07-15 20:09:37.499539899 +0300
++++ b/src/app/pluginmanager/qgspluginmanager.cpp	2025-07-30 20:03:53.768933484 +0300
+@@ -33,6 +33,7 @@
+ #include <QRegularExpression>
+ #include <QUrl>
+ #include <QCheckBox>
++#include <QPalette>
  
-   const thread_local QRegularExpression stripHtml = QRegularExpression( QStringLiteral( "&lt;[^\\s].*?&gt;" ) );
+ #include "qgsmessagelog.h"
+ 
+@@ -699,7 +700,7 @@
+ 
+   QString html = "<style>"
+                  "  body {"
+-                 "    background-color:white;"
++                 "    color:" + QPalette().color( QPalette::ColorRole::Text ).name() + ";"
+                  "  }"
+                  "  body, table {"
+                  "    padding:0px;"
+@@ -1368,7 +1369,7 @@
+     {
+       tabInfoHTML += "<style>"
+                      "  body, p {"
+-                     "      background-color: white;"
++                     "      color: " + QPalette().color( QPalette::ColorRole::Text ).name() + ";"
+                      "      margin: 2px;"
+                      "      font-family: Verdana, Sans-serif;"
+                      "      font-size: 10pt;"

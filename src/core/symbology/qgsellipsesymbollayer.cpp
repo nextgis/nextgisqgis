@@ -894,6 +894,7 @@ QRectF QgsEllipseSymbolLayer::bounds( QPointF point, QgsSymbolRenderContext &con
 
   return symbolBounds;
 }
+
 /*
 bool QgsEllipseSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift ) const
 {
@@ -1085,6 +1086,7 @@ bool QgsEllipseSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFact
   return false;
 }
 */
+
 QgsEllipseSymbolLayer::Shape QgsEllipseSymbolLayer::decodeShape( const QString &name, bool *ok )
 {
   if ( ok )

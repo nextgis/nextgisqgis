@@ -1,0 +1,11 @@
+--- a/python/gui/auto_generated/symbology/qgs25drendererwidget.sip.in	2025-07-15 20:09:37.301535671 +0300
++++ b/python/gui/auto_generated/symbology/qgs25drendererwidget.sip.in	2025-07-30 03:05:27.881463215 +0300
+@@ -8,7 +8,7 @@
+ 
+ 
+ 
+-class Qgs25DRendererWidget : QgsRendererWidget, protected Ui::Qgs25DRendererWidgetBase
++class Qgs25DRendererWidget : QgsRendererWidget
+ {
+ 
+ %TypeHeaderCode

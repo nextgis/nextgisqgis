@@ -158,4 +158,3 @@ QString QgsFontOptionsFactory::pagePositionHint() const
 {
   return QStringLiteral( "mOptionsPageComposer" );
 }
-

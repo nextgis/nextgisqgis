@@ -33,10 +33,12 @@
 #include "providers/ogr/qgsogrprovider.h"
 #include "providers/meshmemory/qgsmeshmemorydataprovider.h"
 
-// #include "qgsmbtilesvectortiledataprovider.h"
-// #include "qgsarcgisvectortileservicedataprovider.h"
-// #include "qgsxyzvectortiledataprovider.h"
-// #include "qgsvtpkvectortiledataprovider.h"
+/*
+#include "qgsmbtilesvectortiledataprovider.h"
+#include "qgsarcgisvectortileservicedataprovider.h"
+#include "qgsxyzvectortiledataprovider.h"
+#include "qgsvtpkvectortiledataprovider.h"
+*/
 
 #ifdef HAVE_EPT
 #include "providers/ept/qgseptprovider.h"
@@ -192,19 +194,21 @@ void QgsProviderRegistry::init()
     const QgsScopedRuntimeProfile profile( QObject::tr( "Create OGR provider" ) );
     mProviders[ QgsOgrProvider::providerKey() ] = new QgsOgrProviderMetadata();
   }
-//   {
-//     const QgsScopedRuntimeProfile profile( QObject::tr( "Create vector tile providers" ) );
-//     QgsProviderMetadata *vt = new QgsVectorTileProviderMetadata();
-//     mProviders[ vt->key() ] = vt;
-//     vt = new QgsXyzVectorTileDataProviderMetadata();
-//     mProviders[ vt->key() ] = vt;
-//     vt = new QgsVtpkVectorTileDataProviderMetadata();
-//     mProviders[ vt->key() ] = vt;
-//     vt = new QgsArcGisVectorTileServiceDataProviderMetadata();
-//     mProviders[ vt->key() ] = vt;
-//     vt = new QgsMbTilesVectorTileDataProviderMetadata();
-//     mProviders[ vt->key() ] = vt;
-//   }
+  /*
+  {
+    const QgsScopedRuntimeProfile profile( QObject::tr( "Create vector tile providers" ) );
+    QgsProviderMetadata *vt = new QgsVectorTileProviderMetadata();
+    mProviders[ vt->key() ] = vt;
+    vt = new QgsXyzVectorTileDataProviderMetadata();
+    mProviders[ vt->key() ] = vt;
+    vt = new QgsVtpkVectorTileDataProviderMetadata();
+    mProviders[ vt->key() ] = vt;
+    vt = new QgsArcGisVectorTileServiceDataProviderMetadata();
+    mProviders[ vt->key() ] = vt;
+    vt = new QgsMbTilesVectorTileDataProviderMetadata();
+    mProviders[ vt->key() ] = vt;
+  }
+  */
 #ifdef HAVE_EPT
   {
     const QgsScopedRuntimeProfile profile( QObject::tr( "Create EPT point cloud provider" ) );

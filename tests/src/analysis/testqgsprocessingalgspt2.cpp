@@ -107,7 +107,7 @@ class TestQgsProcessingAlgsPt2: public QObject
 
     void rasterize();
 
-//    void convertGpxFeatureType();
+    // void convertGpxFeatureType();
     void convertGpsData();
     void downloadGpsData();
     void uploadGpsData();
@@ -1207,6 +1207,7 @@ void TestQgsProcessingAlgsPt2::rasterize()
   checker.setRenderedImage( outputTif );
   QVERIFY( checker.compareImages( "rasterize", 500 ) );
 }
+
 /*
 void TestQgsProcessingAlgsPt2::convertGpxFeatureType()
 {
@@ -1352,6 +1353,7 @@ void TestQgsProcessingAlgsPt2::convertGpxFeatureType()
   } ) );
 }
 */
+
 class TestProcessingFeedback : public QgsProcessingFeedback
 {
     Q_OBJECT

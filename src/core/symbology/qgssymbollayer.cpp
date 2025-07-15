@@ -149,6 +149,7 @@ bool QgsSymbolLayer::setSubSymbol( QgsSymbol *symbol )
   delete symbol;
   return false;
 }
+
 /*
 bool QgsSymbolLayer::writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift ) const
 {
@@ -215,6 +216,7 @@ Qt::BrushStyle QgsSymbolLayer::dxfBrushStyle() const
   return Qt::NoBrush;
 }
 */
+
 QgsPaintEffect *QgsSymbolLayer::paintEffect() const
 {
   return mPaintEffect.get();
@@ -807,6 +809,7 @@ double QgsLineSymbolLayer::width( const QgsRenderContext &context ) const
 {
   return context.convertToPainterUnits( mWidth, mWidthUnit, mWidthMapUnitScale );
 }
+
 /*
 double QgsLineSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
 {
@@ -814,6 +817,7 @@ double QgsLineSymbolLayer::dxfWidth( const QgsDxfExport &e, QgsSymbolRenderConte
   return width() * QgsDxfExport::mapUnitScaleFactor( e.symbologyScale(), widthUnit(), e.mapUnits(), context.renderContext().mapToPixel().mapUnitsPerPixel() );
 }
 */
+
 
 void QgsFillSymbolLayer::drawPreviewIcon( QgsSymbolRenderContext &context, QSize size )
 {
@@ -907,6 +911,7 @@ QList<QgsSymbolLayerReference> QgsSymbolLayer::masks() const
 {
   return {};
 }
+
 /*
 double QgsMarkerSymbolLayer::dxfSize( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const
 {
@@ -942,6 +947,7 @@ double QgsMarkerSymbolLayer::dxfAngle( QgsSymbolRenderContext &context ) const
   return angle;
 }
 */
+
 void QgsSymbolLayer::prepareMasks( const QgsSymbolRenderContext &context )
 {
   mClipPath.clear();

@@ -45,6 +45,11 @@ This is the base class for all map layer types (vector, raster).
         case Qgis::LayerType::Mesh:
           sipType = sipType_QgsMeshLayer;
           break;
+        /*
+        case Qgis::LayerType::VectorTile:
+          sipType = sipType_QgsVectorTileLayer;
+          break;
+        */
         case Qgis::LayerType::Annotation:
           sipType = sipType_QgsAnnotationLayer;
           break;

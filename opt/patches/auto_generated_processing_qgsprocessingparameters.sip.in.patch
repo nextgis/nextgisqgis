@@ -1,6 +1,6 @@
---- a/python/core/auto_generated/processing/qgsprocessingparameters.sip.in	2022-02-18 15:06:10.000000000 +0300
-+++ b/python/core/auto_generated/processing/qgsprocessingparameters.sip.in	2022-04-30 14:32:32.145601500 +0300
-@@ -226,10 +226,8 @@
+--- a/python/core/auto_generated/processing/qgsprocessingparameters.sip.in	2025-07-15 20:09:37.213533791 +0300
++++ b/python/core/auto_generated/processing/qgsprocessingparameters.sip.in	2025-07-30 19:58:18.104501779 +0300
+@@ -234,10 +234,8 @@
  %End
  %TypeHeaderCode
  #include "qgsprocessingparameteraggregate.h"
@@ -11,7 +11,7 @@
  #include "qgsprocessingparametermeshdataset.h"
  %End
  %ConvertToSubClassCode
-@@ -315,10 +313,6 @@
+@@ -323,10 +321,6 @@
        sipType = sipType_QgsProcessingParameterFieldMapping;
      else if ( sipCpp->type() == QgsProcessingParameterTinInputLayers::typeName() )
        sipType = sipType_QgsProcessingParameterTinInputLayers;
@@ -22,3 +22,12 @@
      else if ( sipCpp->type() == QgsProcessingParameterMeshDatasetGroups::typeName() )
        sipType = sipType_QgsProcessingParameterMeshDatasetGroups;
      else if ( sipCpp->type() == QgsProcessingParameterMeshDatasetTime::typeName() )
+@@ -1087,7 +1081,7 @@
+ 
+ This function creates a new object and the caller takes responsibility for deleting the returned object.
+ 
+-:raises QgsProcessingException: 
++:raises QgsProcessingException:
+ 
+ .. versionadded:: 3.4
+ %End

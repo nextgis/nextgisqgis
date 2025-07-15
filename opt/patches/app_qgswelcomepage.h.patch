@@ -1,26 +1,25 @@
---- a/src/app/qgswelcomepage.h	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/qgswelcomepage.h	2022-04-25 18:33:16.000000000 +0300
-@@ -27,9 +27,9 @@
+--- a/src/app/qgswelcomepage.h	2025-07-15 20:09:37.531540583 +0300
++++ b/src/app/qgswelcomepage.h	2025-07-30 19:58:18.114961156 +0300
+@@ -27,9 +27,11 @@
  class QListView;
  class QLabel;
  class QSplitter;
--class QgsNewsFeedParser;
--class QgsNewsFeedProxyModel;
--class QgsNewsItemListItemDelegate;
-+// class QgsNewsFeedParser;
-+// class QgsNewsFeedProxyModel;
-+// class QgsNewsItemListItemDelegate;
++/*
+ class QgsNewsFeedParser;
+ class QgsNewsFeedProxyModel;
+ class QgsNewsItemListItemDelegate;
++*/
  
  class QgsWelcomePage : public QWidget
  {
-@@ -52,20 +52,20 @@
+@@ -52,20 +54,24 @@
      void projectPinned( int row );
      void projectUnpinned( int row );
  
--  protected:
--    bool eventFilter( QObject *obj, QEvent *event ) override;
-+//   protected:
-+//     bool eventFilter( QObject *obj, QEvent *event ) override;
++  /*
+   protected:
+     bool eventFilter( QObject *obj, QEvent *event ) override;
++  */
  
    private slots:
      void recentProjectItemActivated( const QModelIndex &index );
@@ -33,27 +32,24 @@
 -    void showContextMenuForNews( QPoint point );
 +    // void showContextMenuForNews( QPoint point );
  
--  public slots:
--    void updateNewsFeedVisibility();
-+//   public slots:
-+//     void updateNewsFeedVisibility();
++  /*
+   public slots:
+     void updateNewsFeedVisibility();
++  */
  
    private:
      QgsRecentProjectItemsModel *mRecentProjectsModel = nullptr;
-@@ -77,11 +77,11 @@
+@@ -77,11 +83,13 @@
      QStandardItemModel *mTemplateProjectsModel = nullptr;
      QSplitter *mSplitter = nullptr;
      QSplitter *mSplitter2 = nullptr;
--    QLabel *mNewsFeedTitle = nullptr;
--    QgsNewsFeedParser *mNewsFeedParser = nullptr;
--    QgsNewsFeedProxyModel *mNewsFeedModel = nullptr;
--    QListView *mNewsFeedListView = nullptr;
--    QgsNewsItemListItemDelegate *mNewsDelegate = nullptr;
-+    // QLabel *mNewsFeedTitle = nullptr;
-+    // QgsNewsFeedParser *mNewsFeedParser = nullptr;
-+    // QgsNewsFeedProxyModel *mNewsFeedModel = nullptr;
-+    // QListView *mNewsFeedListView = nullptr;
-+    // QgsNewsItemListItemDelegate *mNewsDelegate = nullptr;
++    /*
+     QLabel *mNewsFeedTitle = nullptr;
+     QgsNewsFeedParser *mNewsFeedParser = nullptr;
+     QgsNewsFeedProxyModel *mNewsFeedModel = nullptr;
+     QListView *mNewsFeedListView = nullptr;
+     QgsNewsItemListItemDelegate *mNewsDelegate = nullptr;
++    */
  };
  
  #endif // QGSWELCOMEPAGE_H

@@ -50,20 +50,14 @@ QgsMapLayer *QgsMapToolSelectUtils::getCurrentTargetLayer( QgsMapCanvas *canvas 
     switch ( layer->type() )
     {
       case Qgis::LayerType::Vector:
+        // supported
         break;
-//      case (int)Qgis::LayerType::VectorTile:
-//        // supported
-//        break;
+      case Qgis::LayerType::VectorTile:
       case Qgis::LayerType::Raster:
-        break;
       case Qgis::LayerType::Plugin:
-        break;
       case Qgis::LayerType::Mesh:
-        break;
       case Qgis::LayerType::Annotation:
-        break;
       case Qgis::LayerType::PointCloud:
-        break;
       case Qgis::LayerType::Group:
         layer = nullptr; //not supported
         break;
@@ -125,10 +119,10 @@ QgsRectangle QgsMapToolSelectUtils::expandSelectRectangle( QgsPointXY mapPoint, 
         }
         break;
       }
-//      case Qgis::LayerType::VectorTile:
-//        // mixed layer type, so aim for somewhere between the vector layer polygon/point sizes
-//        boxSize = 2;
-//        break;
+      case Qgis::LayerType::VectorTile:
+        // mixed layer type, so aim for somewhere between the vector layer polygon/point sizes
+        // boxSize = 2;
+        break;
 
       case Qgis::LayerType::Raster:
       case Qgis::LayerType::Plugin:
@@ -257,9 +251,10 @@ void QgsMapToolSelectUtils::selectSingleFeature( QgsMapCanvas *canvas, const Qgs
       vlayer->selectByIds( selectedFeatures, behavior );
       break;
     }
-/*
+
     case Qgis::LayerType::VectorTile:
     {
+      /*
       QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer *>( layer );
 
       QgsCoordinateTransform ct( canvas->mapSettings().destinationCrs(), layer->crs(), QgsProject::instance() );
@@ -279,8 +274,9 @@ void QgsMapToolSelectUtils::selectSingleFeature( QgsMapCanvas *canvas, const Qgs
       renderContext.setExpressionContext( expressionContext );
 
       vtLayer->selectByGeometry( selectGeomTrans, context, behavior, Qgis::SelectGeometryRelationship::Intersect, flags, &renderContext );
+      */
       break;
-    }*/
+    }
 
     case Qgis::LayerType::Raster:
     case Qgis::LayerType::Plugin:
@@ -315,9 +311,10 @@ void QgsMapToolSelectUtils::setSelectedFeatures( QgsMapCanvas *canvas, const Qgs
       vLayer->selectByIds( selectedFeatures, selectBehavior );
       break;
     }
-/*
+
     case Qgis::LayerType::VectorTile:
     {
+      /*
       QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( layer );
       QgsCoordinateTransform ct( canvas->mapSettings().destinationCrs(), layer->crs(), QgsProject::instance() );
       QgsGeometry selectGeomTrans;
@@ -332,8 +329,9 @@ void QgsMapToolSelectUtils::setSelectedFeatures( QgsMapCanvas *canvas, const Qgs
       renderContext.setExpressionContext( expressionContext );
 
       vtLayer->selectByGeometry( selectGeomTrans, context, selectBehavior, doContains ? Qgis::SelectGeometryRelationship::Within : Qgis::SelectGeometryRelationship::Intersect, Qgis::SelectionFlags(), &renderContext );
+      */
       break;
-    }*/
+    }
 
     case Qgis::LayerType::Raster:
     case Qgis::LayerType::Plugin:

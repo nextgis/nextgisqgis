@@ -93,8 +93,10 @@
 #include "qgsprocessingparameteraggregate.h"
 #include "qgsprocessingparametertininputlayers.h"
 #include "qgsprocessingtininputlayerswidget.h"
-//#include "qgsprocessingparameterdxflayers.h"
-//#include "qgsprocessingdxflayerswidgetwrapper.h"
+/*
+#include "qgsprocessingparameterdxflayers.h"
+#include "qgsprocessingdxflayerswidgetwrapper.h"
+*/
 #include "qgsprocessingmeshdatasetwidget.h"
 #include "qgsabstractdatabaseproviderconnection.h"
 #include "qgsprocessingpointcloudexpressionlineedit.h"
@@ -314,7 +316,7 @@ class TestProcessingGui : public QObject
     void testFileOutWrapper();
     void testFolderOutWrapper();
     void testTinInputLayerWrapper();
-//    void testDxfLayersWrapper();
+    // void testDxfLayersWrapper();
     void testMeshDatasetWrapperLayerInProject();
     void testMeshDatasetWrapperLayerOutsideProject();
     void testModelGraphicsView();
@@ -9910,6 +9912,7 @@ void TestProcessingGui::testTinInputLayerWrapper()
   QString valueAsPythonString = definition.valueAsPythonString( value, context );
   QCOMPARE( valueAsPythonString, QStringLiteral( "[{'source': 'PointLayerForTin','type': 0,'attributeIndex': -1}]" ) );
 }
+
 /*
 void TestProcessingGui::testDxfLayersWrapper()
 {
@@ -9946,6 +9949,7 @@ void TestProcessingGui::testDxfLayersWrapper()
   QCOMPARE( valueAsPythonString, QStringLiteral( "[{'layer': '%1','attributeIndex': -1}]" ).arg( vectorLayer->source() ) );
 }
 */
+
 void TestProcessingGui::testMeshDatasetWrapperLayerInProject()
 {
   QgsProcessingParameterMeshLayer layerDefinition( QStringLiteral( "layer" ), QStringLiteral( "layer" ) );

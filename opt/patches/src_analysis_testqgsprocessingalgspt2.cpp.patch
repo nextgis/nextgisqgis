@@ -1,29 +1,27 @@
---- a/tests/src/analysis/testqgsprocessingalgspt2.cpp	2023-08-21 19:30:51.178447022 +0300
-+++ b/tests/src/analysis/testqgsprocessingalgspt2.cpp	2023-08-29 14:49:17.022786310 +0300
+--- a/tests/src/analysis/testqgsprocessingalgspt2.cpp	2025-07-15 20:09:38.140553590 +0300
++++ b/tests/src/analysis/testqgsprocessingalgspt2.cpp	2025-07-30 19:58:18.127961619 +0300
 @@ -107,7 +107,7 @@
  
      void rasterize();
  
 -    void convertGpxFeatureType();
-+//    void convertGpxFeatureType();
++    // void convertGpxFeatureType();
      void convertGpsData();
      void downloadGpsData();
      void uploadGpsData();
-@@ -1207,7 +1207,7 @@
-   checker.setRenderedImage( outputTif );
+@@ -1208,6 +1208,7 @@
    QVERIFY( checker.compareImages( "rasterize", 500 ) );
  }
--
+ 
 +/*
  void TestQgsProcessingAlgsPt2::convertGpxFeatureType()
  {
    // test generation of babel argument lists
-@@ -1351,7 +1351,7 @@
+@@ -1351,6 +1352,7 @@
      QStringLiteral( "\"/home/me/my output file.gpx\"" )
    } ) );
  }
--
 +*/
+ 
  class TestProcessingFeedback : public QgsProcessingFeedback
  {
-     Q_OBJECT

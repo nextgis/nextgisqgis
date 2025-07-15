@@ -200,7 +200,8 @@ void QgsFontManager::enableFontDownloadsForSession()
 
 QString QgsFontManager::urlForFontDownload( const QString &family, QString &matchedFamily ) const
 {
-/*  const thread_local QStringList sGoogleFonts
+  /*
+  const thread_local QStringList sGoogleFonts
   {
     QStringLiteral( "ABeeZee" ),
     QStringLiteral( "Abel" ),
@@ -946,7 +947,8 @@ QString QgsFontManager::urlForFontDownload( const QString &family, QString &matc
       matchedFamily = candidate;
       return QStringLiteral( "https://fonts.google.com/download?family=%1" ).arg( paramName );
     }
-  }*/
+  }
+  */
   return QString();
 }
 

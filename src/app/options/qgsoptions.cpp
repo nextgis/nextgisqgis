@@ -191,9 +191,11 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
 
   connect( mFontFamilyRadioCustom, &QAbstractButton::toggled, mFontFamilyComboBox, &QWidget::setEnabled );
 
-  //connect( cmbIconSize, qOverload< int >( &QComboBox::activated ), this, &QgsOptions::iconSizeChanged );
-  //connect( cmbIconSize, qOverload< int >( &QComboBox::highlighted ), this, &QgsOptions::iconSizeChanged );
-  //connect( cmbIconSize, &QComboBox::editTextChanged, this, &QgsOptions::iconSizeChanged );
+  /*
+  connect( cmbIconSize, qOverload< int >( &QComboBox::activated ), this, &QgsOptions::iconSizeChanged );
+  connect( cmbIconSize, qOverload< int >( &QComboBox::highlighted ), this, &QgsOptions::iconSizeChanged );
+  connect( cmbIconSize, &QComboBox::editTextChanged, this, &QgsOptions::iconSizeChanged );
+  */
   connect( cmbIconSize, &QComboBox::currentTextChanged, this, &QgsOptions::iconSizeChanged );
 
   connect( this, &QDialog::accepted, this, &QgsOptions::saveOptions );
@@ -742,7 +744,7 @@ QgsOptions::QgsOptions( QWidget *parent, Qt::WindowFlags fl, const QList<QgsOpti
   cbxLegendClassifiers->setChecked( mSettings->value( QStringLiteral( "/qgis/showLegendClassifiers" ), false ).toBool() );
   mShowFeatureCountByDefaultCheckBox->setChecked( QgsSettingsRegistryCore::settingsLayerTreeShowFeatureCountForNewLayers->value() );
   cbxHideSplash->setChecked( mSettings->value( QStringLiteral( "/qgis/hideSplash" ), false ).toBool() );
-//   cbxShowNews->setChecked( !mSettings->value( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QgsWelcomePage::newsFeedUrl() ) ), false, QgsSettings::Core ).toBool() );
+  // cbxShowNews->setChecked( !mSettings->value( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QgsWelcomePage::newsFeedUrl() ) ), false, QgsSettings::Core ).toBool() );
   cbxCheckVersion->setChecked( mSettings->value( QStringLiteral( "/qgis/checkVersion" ), true ).toBool() );
   cbxCheckVersion->setVisible( mSettings->value( QStringLiteral( "/qgis/allowVersionCheck" ), true ).toBool() );
   cbxAttributeTableDocked->setChecked( mSettings->value( QStringLiteral( "/qgis/dockAttributeTable" ), false ).toBool() );
@@ -1572,7 +1574,7 @@ void QgsOptions::saveOptions()
       mProxyTypeComboBox->currentText() == "DefaultProxy", leProxyHost->text(),
       leProxyPort->text().toInt(), mAuthSettings->username(), mAuthSettings->password(),
       "ANY");
-#endif // NGLIB_VERSION_NUMBER > 1100  
+#endif // NGLIB_VERSION_NUMBER > 1100
 #endif // NGSTD_USING
   // END NEXTGIS
 
@@ -1607,7 +1609,7 @@ void QgsOptions::saveOptions()
   mSettings->setValue( QStringLiteral( "/qgis/showLegendClassifiers" ), cbxLegendClassifiers->isChecked() );
   QgsSettingsRegistryCore::settingsLayerTreeShowFeatureCountForNewLayers->setValue( mShowFeatureCountByDefaultCheckBox->isChecked() );
   mSettings->setValue( QStringLiteral( "/qgis/hideSplash" ), cbxHideSplash->isChecked() );
-//   mSettings->setValue( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QgsWelcomePage::newsFeedUrl() ) ), !cbxShowNews->isChecked(), QgsSettings::Core );
+  // mSettings->setValue( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QgsWelcomePage::newsFeedUrl() ) ), !cbxShowNews->isChecked(), QgsSettings::Core );
 
   mSettings->setValue( QStringLiteral( "/qgis/checkVersion" ), cbxCheckVersion->isChecked() );
   mSettings->setValue( QStringLiteral( "/qgis/dockAttributeTable" ), cbxAttributeTableDocked->isChecked() );
@@ -1887,7 +1889,7 @@ void QgsOptions::saveOptions()
     // TODO[MD] QgisApp::instance()->legend()->updateLegendItemSymbologies();
   }
 
-// NextGIS settings
+  // NextGIS settings
  #ifdef NGSTD_USING
     mSettings->setValue("nextgis/send_crashes", mOptionsPageNextGIS->sendCrashes->isChecked());
     mSettings->setValue("nextgis/endpoint", mOptionsPageNextGIS->endpointEdit->text());

@@ -1,5 +1,5 @@
---- a/src/core/expression/qgsexpressioncontextutils.cpp	2023-08-21 19:30:50.254137756 +0300
-+++ b/src/core/expression/qgsexpressioncontextutils.cpp	2023-10-04 00:34:07.827720949 +0300
+--- a/src/core/expression/qgsexpressioncontextutils.cpp	2025-07-15 20:09:37.558541159 +0300
++++ b/src/core/expression/qgsexpressioncontextutils.cpp	2025-07-30 19:58:18.115961191 +0300
 @@ -33,7 +33,7 @@
  #include "qgsprojoperation.h"
  #include "qgsmarkersymbol.h"
@@ -14,11 +14,16 @@
    scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_rotation" ), mapSettings.rotation(), true ) );
    scope->addVariable( QgsExpressionContextScope::StaticVariable( QStringLiteral( "map_scale" ), mapSettings.scale(), true ) );
 -
-+/*
++  /*
    scope->setVariable( QStringLiteral( "zoom_level" ), QgsVectorTileUtils::scaleToZoomLevel( mapSettings.scale(), 0, 99999 ), true );
    scope->setVariable( QStringLiteral( "vector_tile_zoom" ), QgsVectorTileUtils::scaleToZoom( mapSettings.scale() ), true );
 -
-+*/
++  */
    // IMPORTANT: ANY CHANGES HERE ALSO NEED TO BE MADE TO QgsLayoutItemMap::createExpressionContext()
    // (rationale is described in QgsLayoutItemMap::createExpressionContext() )
  
+@@ -1429,4 +1429,3 @@
+   return new LoadLayerFunction();
+ }
+ ///@endcond
+-

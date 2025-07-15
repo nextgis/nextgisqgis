@@ -564,7 +564,8 @@ QgsVectorTileLayer *QgsAppLayerHandling::addVectorTileLayer( const QString &uri,
 
   return nullptr;
 
-/*  // create the layer
+  /*
+  // create the layer
   const QgsVectorTileLayer::LayerOptions options( QgsProject::instance()->transformContext() );
   std::unique_ptr<QgsVectorTileLayer> layer( new QgsVectorTileLayer( uri, base, options ) );
 
@@ -585,7 +586,8 @@ QgsVectorTileLayer *QgsAppLayerHandling::addVectorTileLayer( const QString &uri,
   QgsProject::instance()->addMapLayer( layer.get(), addToLegend );
   QgisApp::instance()->activateDeactivateLayerRelatedActions( QgisApp::instance()->activeLayer() );
 
-  return layer.release();*/
+  return layer.release();
+  */
 }
 
 bool QgsAppLayerHandling::askUserForZipItemLayers( const QString &path, const QList<Qgis::LayerType> &acceptableTypes )

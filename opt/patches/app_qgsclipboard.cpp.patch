@@ -1,0 +1,27 @@
+--- a/src/app/qgsclipboard.cpp	2025-07-15 20:09:37.509540113 +0300
++++ b/src/app/qgsclipboard.cpp	2025-07-30 19:58:18.114015920 +0300
+@@ -40,7 +40,7 @@
+ #include "qgsmapcanvas.h"
+ #include "qgsproject.h"
+ #include "qgsapplication.h"
+-#include "qgsvectortilelayer.h"
++// #include "qgsvectortilelayer.h"
+ #include "qgsvectorlayerutils.h"
+ 
+ #include <nlohmann/json.hpp>
+@@ -66,6 +66,7 @@
+   emit changed();
+ }
+ 
++/*
+ void QgsClipboard::replaceWithCopyOf( QgsVectorTileLayer *src )
+ {
+   if ( !src )
+@@ -105,6 +106,7 @@
+   mUseSystemClipboard = false;
+   emit changed();
+ }
++*/
+ 
+ void QgsClipboard::replaceWithCopyOf( QgsFeatureStore &featureStore )
+ {

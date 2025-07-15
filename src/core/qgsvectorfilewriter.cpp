@@ -2510,7 +2510,7 @@ class QgsVectorFileWriterMetadataContainer
 
         layerOptions.insert( QStringLiteral("SXF_NEW_BEHAVIOR"), new QgsVectorFileWriter::HiddenOption(
                                 QStringLiteral("YES")
-                            ) ); 
+                            ) );
 
         driverMetadata.insert( QStringLiteral( "SXF" ),
                                QgsVectorFileWriter::MetaData(

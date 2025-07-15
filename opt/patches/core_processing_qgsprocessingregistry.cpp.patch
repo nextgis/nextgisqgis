@@ -1,5 +1,5 @@
---- a/src/core/processing/qgsprocessingregistry.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/processing/qgsprocessingregistry.cpp	2022-04-25 18:33:18.000000000 +0300
+--- a/src/core/processing/qgsprocessingregistry.cpp	2025-07-15 20:09:37.654543210 +0300
++++ b/src/core/processing/qgsprocessingregistry.cpp	2025-07-30 19:58:18.117961263 +0300
 @@ -19,11 +19,11 @@
  #include "qgsvectorfilewriter.h"
  #include "qgsprocessingparametertypeimpl.h"
@@ -19,12 +19,12 @@
    addParameterType( new QgsProcessingParameterTypeDatabaseSchema() );
    addParameterType( new QgsProcessingParameterTypeDatabaseTable() );
 -  addParameterType( new QgsProcessingParameterTypeVectorTileWriterLayers() );
-+//   addParameterType( new QgsProcessingParameterTypeVectorTileWriterLayers() );
++  // addParameterType( new QgsProcessingParameterTypeVectorTileWriterLayers() );
    addParameterType( new QgsProcessingParameterTypeFieldMapping() );
    addParameterType( new QgsProcessingParameterTypeAggregate() );
    addParameterType( new QgsProcessingParameterTypeTinInputLayers() );
 -  addParameterType( new QgsProcessingParameterTypeDxfLayers() );
-+//   addParameterType( new QgsProcessingParameterTypeDxfLayers() );
++  // addParameterType( new QgsProcessingParameterTypeDxfLayers() );
    addParameterType( new QgsProcessingParameterTypeMeshDatasetGroups() );
    addParameterType( new QgsProcessingParameterTypeMeshDatasetTime() );
    addParameterType( new QgsProcessingParameterTypePointCloudLayer() );

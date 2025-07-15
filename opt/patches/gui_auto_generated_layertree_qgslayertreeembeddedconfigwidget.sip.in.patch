@@ -1,0 +1,11 @@
+--- a/python/gui/auto_generated/layertree/qgslayertreeembeddedconfigwidget.sip.in	2025-07-15 20:09:37.275535115 +0300
++++ b/python/gui/auto_generated/layertree/qgslayertreeembeddedconfigwidget.sip.in	2025-07-30 03:05:27.880809063 +0300
+@@ -9,7 +9,7 @@
+ 
+ 
+ 
+-class QgsLayerTreeEmbeddedConfigWidget : QWidget, protected Ui::QgsLayerTreeEmbeddedConfigWidgetBase
++class QgsLayerTreeEmbeddedConfigWidget : QWidget
+ {
+ %Docstring(signature="appended")
+ A widget to configure layer tree embedded widgets for a particular map layer.

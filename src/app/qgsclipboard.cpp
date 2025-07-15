@@ -65,6 +65,7 @@ void QgsClipboard::replaceWithCopyOf( QgsVectorLayer *src )
   mUseSystemClipboard = false;
   emit changed();
 }
+
 /*
 void QgsClipboard::replaceWithCopyOf( QgsVectorTileLayer *src )
 {
@@ -104,7 +105,8 @@ void QgsClipboard::replaceWithCopyOf( QgsVectorTileLayer *src )
   setSystemClipboard();
   mUseSystemClipboard = false;
   emit changed();
-}*/
+}
+*/
 
 void QgsClipboard::replaceWithCopyOf( QgsFeatureStore &featureStore )
 {

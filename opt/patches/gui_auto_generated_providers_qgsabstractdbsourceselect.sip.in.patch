@@ -1,0 +1,11 @@
+--- a/python/gui/auto_generated/providers/qgsabstractdbsourceselect.sip.in	2025-07-15 20:09:37.281535243 +0300
++++ b/python/gui/auto_generated/providers/qgsabstractdbsourceselect.sip.in	2025-07-30 03:05:27.880809063 +0300
+@@ -10,7 +10,7 @@
+ 
+ 
+ 
+-class QgsAbstractDbSourceSelect : QgsAbstractDataSourceWidget, protected Ui::QgsDbSourceSelectBase
++class QgsAbstractDbSourceSelect : QgsAbstractDataSourceWidget
+ {
+ %Docstring(signature="appended")
+ The :py:class:`QgsAbstractDbSourceSelect` class is a base class for database source widget selector

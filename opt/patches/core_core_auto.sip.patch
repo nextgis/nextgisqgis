@@ -1,5 +1,5 @@
---- a/python/core/core_auto.sip	2023-08-21 19:39:45.559058885 +0300
-+++ b/python/core/core_auto.sip	2023-10-30 17:16:52.000000000 +0300
+--- a/python/core/core_auto.sip	2025-07-15 20:09:37.265534902 +0300
++++ b/python/core/core_auto.sip	2025-07-30 19:58:18.105960835 +0300
 @@ -126,7 +126,6 @@
  %Include auto_generated/qgsmultirenderchecker.sip
  %Include auto_generated/qgsnullpainterdevice.sip
@@ -34,16 +34,7 @@
  %Include auto_generated/effects/qgsblureffect.sip
  %Include auto_generated/effects/qgscoloreffect.sip
  %Include auto_generated/effects/qgseffectstack.sip
-@@ -323,8 +317,6 @@
- %Include auto_generated/geocoding/qgsgeocoder.sip
- %Include auto_generated/geocoding/qgsgeocodercontext.sip
- %Include auto_generated/geocoding/qgsgeocoderresult.sip
--%Include auto_generated/geocoding/qgsnominatimgeocoder.sip
--%Include auto_generated/geocoding/qgsgooglemapsgeocoder.sip
- %Include auto_generated/geometry/qgsabstractgeometry.sip
- %Include auto_generated/geometry/qgsbox3d.sip
- %Include auto_generated/geometry/qgscircle.sip
-@@ -357,17 +349,6 @@
+@@ -357,17 +351,6 @@
  %Include auto_generated/geometry/qgswkbptr.sip
  %Include auto_generated/geometry/qgswkbtypes.sip
  %Include auto_generated/geometry/qgsray3d.sip
@@ -61,7 +52,15 @@
  %Include auto_generated/labeling/qgscalloutposition.sip
  %Include auto_generated/labeling/qgslabeling.sip
  %Include auto_generated/labeling/qgslabelingenginesettings.sip
-@@ -551,13 +532,11 @@
+@@ -477,6 +460,7 @@
+ %Include auto_generated/mesh/qgsmeshtimesettings.sip
+ %Include auto_generated/mesh/qgsmeshtracerenderer.sip
+ %Include auto_generated/mesh/qgsmeshcalculator.sip
++%Include auto_generated/mesh/qgstopologicalmesh.sip
+ %Include auto_generated/mesh/qgsmeshadvancedediting.sip
+ %Include auto_generated/mesh/qgsmeshforcebypolylines.sip
+ %Include auto_generated/plot/qgsplot.sip
+@@ -551,13 +535,11 @@
  %Include auto_generated/processing/qgsprocessingfeedback.sip
  %Include auto_generated/processing/qgsprocessingoutputs.sip
  %Include auto_generated/processing/qgsprocessingparameteraggregate.sip
@@ -75,7 +74,7 @@
  %Include auto_generated/processing/qgsprocessingprovider.sip
  %Include auto_generated/processing/qgsprocessingregistry.sip
  %Include auto_generated/processing/qgsprocessingutils.sip
-@@ -589,8 +568,6 @@
+@@ -589,8 +571,6 @@
  %Include auto_generated/providers/qgsprovidersublayermodel.sip
  %Include auto_generated/providers/qgsprovidersublayertask.sip
  %Include auto_generated/providers/qgsproviderutils.sip
@@ -84,7 +83,7 @@
  %Include auto_generated/providers/memory/qgsmemoryproviderutils.sip
  %Include auto_generated/raster/qgsrasterattributetable.sip
  %Include auto_generated/raster/qgsbilinearrasterresampler.sip
-@@ -744,14 +721,3 @@
+@@ -744,14 +724,3 @@
  %Include auto_generated/vector/qgsvectorlayerundocommand.sip
  %Include auto_generated/vector/qgsvectorlayerundopassthroughcommand.sip
  %Include auto_generated/vector/qgsvectorlayerutils.sip

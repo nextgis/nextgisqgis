@@ -1,0 +1,11 @@
+--- a/python/gui/auto_generated/qgstextformatwidget.sip.in	2025-07-15 20:09:37.298535606 +0300
++++ b/python/gui/auto_generated/qgstextformatwidget.sip.in	2025-07-30 03:05:27.881463215 +0300
+@@ -12,7 +12,7 @@
+ 
+ 
+ 
+-class QgsTextFormatWidget : QWidget, QgsExpressionContextGenerator, protected Ui::QgsTextFormatWidgetBase
++class QgsTextFormatWidget : QWidget, QgsExpressionContextGenerator
+ {
+ %Docstring(signature="appended")
+ A widget for customizing text formatting settings.

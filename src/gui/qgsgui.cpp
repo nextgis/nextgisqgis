@@ -60,8 +60,10 @@
 #include "qgssettingsregistrygui.h"
 // #include "qgshistoryproviderregistry.h"
 #include "qgslayermetadatasourceselectprovider.h"
-// #include "qgssensorguiregistry.h"
-// #include "qgshistoryentry.h"
+/*
+#include "qgssensorguiregistry.h"
+#include "qgshistoryentry.h"
+*/
 
 #include "qgssettingseditorwidgetregistry.h"
 
@@ -180,10 +182,12 @@ QgsSensorGuiRegistry *QgsGui::sensorGuiRegistry()
   return instance()->mSensorGuiRegistry;
 }
 
-// QgsHistoryProviderRegistry *QgsGui::historyProviderRegistry()
-// {
-//   return instance()->mHistoryProviderRegistry;
-// }
+/*
+QgsHistoryProviderRegistry *QgsGui::historyProviderRegistry()
+{
+  return instance()->mHistoryProviderRegistry;
+}
+*/
 
 QgsSettingsEditorWidgetRegistry *QgsGui::settingsEditorWidgetRegistry()
 {
@@ -232,7 +236,7 @@ QgsGui::~QgsGui()
   delete mEditorWidgetRegistry;
   delete mMapLayerActionRegistry;
   delete mSourceSelectProviderRegistry;
-//   delete mHistoryProviderRegistry;
+  // delete mHistoryProviderRegistry;
   delete mShortcutsManager;
   delete mNative;
   delete mNumericFormatGuiRegistry;
@@ -302,11 +306,15 @@ QgsGui::QgsGui()
   mCodeEditorColorSchemeRegistry = new QgsCodeEditorColorSchemeRegistry();
 
   // provider gui registry initialize QgsProviderRegistry too
-//   mSensorGuiRegistry = new QgsSensorGuiRegistry();
-//   mSensorGuiRegistry->populate();
+  /*
+  mSensorGuiRegistry = new QgsSensorGuiRegistry();
+  mSensorGuiRegistry->populate();
+  */
 
-//   mHistoryProviderRegistry = new QgsHistoryProviderRegistry();
-//   mHistoryProviderRegistry->addDefaultProviders();
+  /*
+  mHistoryProviderRegistry = new QgsHistoryProviderRegistry();
+  mHistoryProviderRegistry->addDefaultProviders();
+  */
 
   mProviderGuiRegistry = new QgsProviderGuiRegistry( QgsApplication::pluginPath() );
   mProjectStorageGuiRegistry = new QgsProjectStorageGuiRegistry();
@@ -338,7 +346,7 @@ QgsGui::QgsGui()
   mProcessingRecentAlgorithmLog = new QgsProcessingRecentAlgorithmLog();
   mProcessingGuiRegistry = new QgsProcessingGuiRegistry();
 
-//  qRegisterMetaType< QgsHistoryEntry >( "QgsHistoryEntry" );
+  // qRegisterMetaType< QgsHistoryEntry >( "QgsHistoryEntry" );
 }
 
 bool QgsGui::pythonMacroAllowed( void ( *lambda )(), QgsMessageBar *messageBar )

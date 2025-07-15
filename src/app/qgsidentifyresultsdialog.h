@@ -164,11 +164,13 @@ class APP_EXPORT QgsIdentifyResultsDialog: public QDialog, private Ui::QgsIdenti
      * Adds results from vector tile layer
      * \since QGIS 3.14
      */
-    /*void addFeature( QgsVectorTileLayer *layer,
+    /*
+    void addFeature( QgsVectorTileLayer *layer,
                      const QString &label,
                      const QgsFields &fields,
                      const QgsFeature &feature,
-                     const QMap< QString, QString > &derivedAttributes );*/
+                     const QMap< QString, QString > &derivedAttributes );
+    */
 
     /**
      * Adds results from point cloud layer

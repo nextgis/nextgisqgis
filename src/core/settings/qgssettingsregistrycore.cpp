@@ -22,14 +22,16 @@
 #include "qgssettingsentryenumflag.h"
 #include "qgssettings.h"
 
-//#include "qgsbabelformatregistry.h"
+// #include "qgsbabelformatregistry.h"
 #include "qgslayout.h"
 #include "qgslocator.h"
 #include "qgsnetworkaccessmanager.h"
 #include "qgsowsconnection.h"
 #include "qgsprocessing.h"
-//#include "qgsvectortileconnection.h"
-//#include "qgsgpsdetector.h"
+/*
+#include "qgsvectortileconnection.h"
+#include "qgsgpsdetector.h"
+*/
 #include "qgsrasterlayer.h"
 #include "qgsvectorlayer.h"
 
@@ -140,12 +142,14 @@ void QgsSettingsRegistryCore::migrateOldSettings()
 
   settingsLayerTreeShowFeatureCountForNewLayers->copyValueFromKey( QStringLiteral( "core/layer-tree/show_feature_count_for_new_layers" ) );
 
-//#if defined( HAVE_QTSERIALPORT )
-//  QgsGpsDetector::settingsGpsStopBits->copyValueFromKey( QStringLiteral( "core/gps/stop_bits" ) );
-//  QgsGpsDetector::settingsGpsFlowControl->copyValueFromKey( QStringLiteral( "core/gps/flow_control" ) );
-//  QgsGpsDetector::settingsGpsDataBits->copyValueFromKey( QStringLiteral( "core/gps/data_bits" ) );
-//  QgsGpsDetector::settingsGpsParity->copyValueFromKey( QStringLiteral( "core/gps/parity" ) );
-//#endif
+  /*
+#if defined( HAVE_QTSERIALPORT )
+  QgsGpsDetector::settingsGpsStopBits->copyValueFromKey( QStringLiteral( "core/gps/stop_bits" ) );
+  QgsGpsDetector::settingsGpsFlowControl->copyValueFromKey( QStringLiteral( "core/gps/flow_control" ) );
+  QgsGpsDetector::settingsGpsDataBits->copyValueFromKey( QStringLiteral( "core/gps/data_bits" ) );
+  QgsGpsDetector::settingsGpsParity->copyValueFromKey( QStringLiteral( "core/gps/parity" ) );
+#endif
+  */
 
   QgsRasterLayer::settingsRasterDefaultOversampling->copyValueFromKey( QStringLiteral( "Raster/defaultOversampling" ), true );
   QgsRasterLayer::settingsRasterDefaultEarlyResampling->copyValueFromKey( QStringLiteral( "Raster/defaultEarlyResampling" ), true );
@@ -275,7 +279,8 @@ void QgsSettingsRegistryCore::migrateOldSettings()
       QgsOwsConnection::sTreeOwsConnections->setSelectedItem( settings.value( QStringLiteral( "selected" ) ).toString(), {service.toLower()} );
   }
 
-/*  // Vector tile - added in 3.30
+  // Vector tile - added in 3.30
+  /*
   {
     QgsSettings settings;
     settings.beginGroup( QStringLiteral( "qgis/connections-vector-tile" ) );
@@ -297,7 +302,8 @@ void QgsSettingsRegistryCore::migrateOldSettings()
       Q_NOWARN_DEPRECATED_POP
     }
   }
-*/
+  */
+
   // xyz - added in 3.30
   {
     QgsSettings settings;
@@ -349,7 +355,8 @@ void QgsSettingsRegistryCore::migrateOldSettings()
     }
   }
 
-/*  // babel devices settings - added in 3.30
+  // babel devices settings - added in 3.30
+  /*
   {
     if ( QgsBabelFormatRegistry::sTreeBabelDevices->items().count() == 0 )
     {
@@ -365,7 +372,8 @@ void QgsSettingsRegistryCore::migrateOldSettings()
         QgsBabelFormatRegistry::settingsBabelTrkUpload->copyValueFromKey( QStringLiteral( "/Plugin-GPS/devices/%1/trkupload" ), {device}, true );
       }
     }
-  }*/
+  }
+  */
 }
 
 // TODO QGIS 4.0: Remove
@@ -479,7 +487,8 @@ void QgsSettingsRegistryCore::backwardCompatibility()
     }
   }
 
-/*  // Vector tile - added in 3.30
+  // Vector tile - added in 3.30
+  /*
   {
     QgsSettings settings;
     settings.beginGroup( QStringLiteral( "qgis/connections-vector-tile" ) );
@@ -504,7 +513,7 @@ void QgsSettingsRegistryCore::backwardCompatibility()
       Q_NOWARN_DEPRECATED_POP
     }
   }
-*/
+  */
 
   // xyz - added in 3.30
   {
@@ -555,7 +564,8 @@ void QgsSettingsRegistryCore::backwardCompatibility()
     }
   }
 
-/*  // babel devices settings - added in 3.30
+  // babel devices settings - added in 3.30
+  /*
   {
     const QStringList devices = QgsBabelFormatRegistry::sTreeBabelDevices->items();
     QgsSettings().setValue( QStringLiteral( "/Plugin-GPS/devices/deviceList" ), devices );
@@ -568,5 +578,6 @@ void QgsSettingsRegistryCore::backwardCompatibility()
       QgsBabelFormatRegistry::settingsBabelTrkDownload->copyValueToKey( QStringLiteral( "/Plugin-GPS/devices/%1/trkdownload" ), {device} );
       QgsBabelFormatRegistry::settingsBabelTrkUpload->copyValueToKey( QStringLiteral( "/Plugin-GPS/devices/%1/trkupload" ), {device} );
     }
-  }*/
+  }
+  */
 }

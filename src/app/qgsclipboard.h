@@ -74,7 +74,7 @@ class APP_EXPORT QgsClipboard : public QObject
      * Place a copy of the selected features from the specified layer on
      * the internal clipboard, destroying the previous contents.
      */
-//    void replaceWithCopyOf( QgsVectorTileLayer *src );
+    // void replaceWithCopyOf( QgsVectorTileLayer *src );
 
     /**
      * Place a copy of features on the internal clipboard,

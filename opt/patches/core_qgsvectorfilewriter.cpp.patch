@@ -1,6 +1,6 @@
---- a/src/core/qgsvectorfilewriter.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/core/qgsvectorfilewriter.cpp	2022-04-25 18:33:17.000000000 +0300
-@@ -2262,6 +2262,46 @@
+--- a/src/core/qgsvectorfilewriter.cpp	2025-07-15 20:09:37.745545153 +0300
++++ b/src/core/qgsvectorfilewriter.cpp	2025-07-30 19:58:18.120961370 +0300
+@@ -2484,6 +2484,46 @@
                               )
                             );
  
@@ -30,7 +30,7 @@
 +
 +        layerOptions.insert( QStringLiteral("SXF_NEW_BEHAVIOR"), new QgsVectorFileWriter::HiddenOption(
 +                                QStringLiteral("YES")
-+                            ) ); 
++                            ) );
 +
 +        driverMetadata.insert( QStringLiteral( "SXF" ),
 +                               QgsVectorFileWriter::MetaData(

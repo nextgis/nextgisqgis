@@ -85,11 +85,13 @@ class CORE_EXPORT QgsSimpleLineSymbolLayer : public QgsLineSymbolLayer
     void setMapUnitScale( const QgsMapUnitScale &scale ) override;
     QgsMapUnitScale mapUnitScale() const override;
     double estimateMaxBleed( const QgsRenderContext &context ) const override;
-    // QVector<qreal> dxfCustomDashPattern( Qgis::RenderUnit &unit ) const override;
-    // Qt::PenStyle dxfPenStyle() const override;
-    // double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
-    // double dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
-    // QColor dxfColor( QgsSymbolRenderContext &context ) const override;
+    /*
+    QVector<qreal> dxfCustomDashPattern( Qgis::RenderUnit &unit ) const override;
+    Qt::PenStyle dxfPenStyle() const override;
+    double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
+    double dxfOffset( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
+    QColor dxfColor( QgsSymbolRenderContext &context ) const override;
+    */
     bool canCauseArtifactsBetweenAdjacentTiles() const override;
 
     /**
@@ -1364,5 +1366,3 @@ class CORE_EXPORT QgsLineburstSymbolLayer : public QgsAbstractBrushedLineSymbolL
 };
 
 #endif
-
-

@@ -1,0 +1,11 @@
+--- a/python/gui/auto_generated/qgsrichtexteditor.sip.in	2025-07-15 20:09:37.296535564 +0300
++++ b/python/gui/auto_generated/qgsrichtexteditor.sip.in	2025-07-30 03:05:27.880809063 +0300
+@@ -10,7 +10,7 @@
+ 
+ 
+ 
+-class QgsRichTextEditor : QWidget, protected Ui::QgsRichTextEditorBase
++class QgsRichTextEditor : QWidget
+ {
+ %Docstring(signature="appended")
+ A widget for editing rich text documents, with support for user controlled formatting of text

@@ -159,12 +159,14 @@ QgsMeshLayer *QgisAppInterface::addMeshLayer( const QString &url, const QString 
 {
   return qgis->addMeshLayer( url, baseName, providerKey );
 }
+
 /*
 QgsVectorTileLayer *QgisAppInterface::addVectorTileLayer( const QString &url, const QString &baseName )
 {
   return qgis->addVectorTileLayer( url, baseName );
 }
 */
+
 QgsPointCloudLayer *QgisAppInterface::addPointCloudLayer( const QString &url, const QString &baseName, const QString &providerKey )
 {
   return qgis->addPointCloudLayer( url, baseName, providerKey );
@@ -977,12 +979,14 @@ QgsLayerTreeRegistryBridge::InsertionPoint QgisAppInterface::layerTreeInsertionP
 {
   return qgis->layerTreeInsertionPoint();
 }
+
 /*
 void QgisAppInterface::setGpsPanelConnection( QgsGpsConnection *connection )
 {
   qgis->setGpsPanelConnection( connection );
 }
 */
+
 QList<QgsMapDecoration *> QgisAppInterface::activeDecorations()
 {
   return qgis->activeDecorations();
@@ -992,4 +996,3 @@ QgsUserProfileManager *QgisAppInterface::userProfileManager()
 {
   return qgis->userProfileManager();
 }
-

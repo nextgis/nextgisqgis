@@ -535,7 +535,7 @@ class CORE_EXPORT QgsSymbolLayer
      */
     virtual void setDataDefinedProperty( Property key, const QgsProperty &property );
 
-/*
+    /*
     //! write as DXF
     virtual bool writeDxf( QgsDxfExport &e, double mmMapUnitScaleFactor, const QString &layerName, QgsSymbolRenderContext &context, QPointF shift = QPointF( 0.0, 0.0 ) ) const;
 
@@ -565,7 +565,8 @@ class CORE_EXPORT QgsSymbolLayer
 
     //! Gets brush/fill style
     virtual Qt::BrushStyle dxfBrushStyle() const;
-*/
+    */
+
     /**
      * Returns the current paint effect for the layer.
      * \returns paint effect
@@ -971,8 +972,10 @@ class CORE_EXPORT QgsMarkerSymbolLayer : public QgsSymbolLayer
     Qgis::RenderUnit outputUnit() const override;
     void setMapUnitScale( const QgsMapUnitScale &scale ) override;
     QgsMapUnitScale mapUnitScale() const override;
-    // virtual double dxfSize( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
-    // virtual double dxfAngle( QgsSymbolRenderContext &context ) const override;
+    /*
+    virtual double dxfSize( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
+    virtual double dxfAngle( QgsSymbolRenderContext &context ) const override;
+    */
 
     /**
      * Returns the approximate bounding box of the marker symbol layer, taking into account

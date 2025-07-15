@@ -1,17 +1,17 @@
---- a/src/app/qgswelcomepage.cpp	2022-02-18 15:06:10.000000000 +0300
-+++ b/src/app/qgswelcomepage.cpp	2022-05-25 14:38:03.192787200 +0300
-@@ -26,8 +26,8 @@
+--- a/src/app/qgswelcomepage.cpp	2025-07-15 20:09:37.531540583 +0300
++++ b/src/app/qgswelcomepage.cpp	2025-07-30 19:58:18.114961156 +0300
+@@ -26,8 +26,10 @@
  #include "qgsfileutils.h"
  #include "qgstemplateprojectsmodel.h"
  #include "qgsprojectlistitemdelegate.h"
--#include "qgsnewsfeedmodel.h"
--#include "qgsnewsfeedparser.h"
-+// #include "qgsnewsfeedmodel.h"
-+// #include "qgsnewsfeedparser.h"
++/*
+ #include "qgsnewsfeedmodel.h"
+ #include "qgsnewsfeedparser.h"
++*/
  
  #include "qgsprojectstorage.h"
  #include "qgsprojectstorageguiprovider.h"
-@@ -44,7 +44,7 @@
+@@ -44,7 +46,7 @@
  #include <QRegularExpression>
  #include <QUrl>
  
@@ -20,95 +20,90 @@
  
  QgsWelcomePage::QgsWelcomePage( bool skipVersionCheck, QWidget *parent )
    : QWidget( parent )
-@@ -85,7 +85,7 @@
+@@ -85,7 +87,7 @@
    QWidget *rightContainer = new QWidget();
    QVBoxLayout *rightLayout = new QVBoxLayout;
    rightLayout->setContentsMargins( 0, 0, 0, 0 );
 -
-+/*
++  /*
    if ( !QgsSettings().value( QStringLiteral( "%1/disabled" ).arg( QgsNewsFeedParser::keyForFeed( QStringLiteral( FEED_URL ) ) ), false, QgsSettings::Core ).toBool() )
    {
      mSplitter2 = new QSplitter( Qt::Vertical );
-@@ -116,7 +116,7 @@
+@@ -116,7 +118,7 @@
      newsContainer->setLayout( newsLayout );
      mSplitter2->addWidget( newsContainer );
    }
 -
-+*/
++  */
    QWidget *templateContainer = new QWidget();
    QVBoxLayout *templateLayout = new QVBoxLayout();
    templateLayout->setContentsMargins( 0, 0, 0, 0 );
-@@ -167,7 +167,7 @@
+@@ -167,7 +169,7 @@
         && settings.value( QStringLiteral( "qgis/checkVersion" ), true ).toBool() && !skipVersionCheck )
    {
      connect( mVersionInfo, &QgsVersionInfo::versionInfoAvailable, this, &QgsWelcomePage::versionInfoReceived );
 -    mVersionInfo->checkVersion();
-+    //mVersionInfo->checkVersion();
++    // mVersionInfo->checkVersion();
    }
  
    mSplitter->restoreState( settings.value( QStringLiteral( "Windows/WelcomePage/SplitState" ), QVariant(), QgsSettings::App ).toByteArray() );
-@@ -177,15 +177,15 @@
+@@ -177,15 +179,17 @@
    connect( mRecentProjectsListView, &QAbstractItemView::activated, this, &QgsWelcomePage::recentProjectItemActivated );
    connect( mTemplateProjectsListView, &QAbstractItemView::activated, this, &QgsWelcomePage::templateProjectItemActivated );
  
 -  updateNewsFeedVisibility();
-+//   updateNewsFeedVisibility();
++  // updateNewsFeedVisibility();
  }
  
  QgsWelcomePage::~QgsWelcomePage()
  {
    QgsSettings settings;
    settings.setValue( QStringLiteral( "Windows/WelcomePage/SplitState" ), mSplitter->saveState(), QgsSettings::App );
--  if ( mSplitter2 && mNewsFeedTitle->isVisible() )
--    settings.setValue( QStringLiteral( "Windows/WelcomePage/SplitState2" ), mSplitter2->saveState(), QgsSettings::App );
-+//   if ( mSplitter2 && mNewsFeedTitle->isVisible() )
-+//     settings.setValue( QStringLiteral( "Windows/WelcomePage/SplitState2" ), mSplitter2->saveState(), QgsSettings::App );
++  /*
+   if ( mSplitter2 && mNewsFeedTitle->isVisible() )
+     settings.setValue( QStringLiteral( "Windows/WelcomePage/SplitState2" ), mSplitter2->saveState(), QgsSettings::App );
++  */
  
    delete mVersionInfo;
  }
-@@ -194,12 +194,12 @@
- {
+@@ -195,10 +199,12 @@
    mRecentProjectsModel->setRecentProjects( recentProjects );
  }
--
+ 
 +/*
  QString QgsWelcomePage::newsFeedUrl()
  {
    return QStringLiteral( FEED_URL );
  }
--
 +*/
+ 
  void QgsWelcomePage::recentProjectItemActivated( const QModelIndex &index )
  {
-   QgisApp::instance()->openProject( mRecentProjectsModel->data( index, Qt::ToolTipRole ).toString() );
-@@ -212,7 +212,7 @@
-   else
+@@ -213,6 +219,7 @@
      QgisApp::instance()->fileNewFromTemplate( index.data( QgsProjectListItemDelegate::NativePathRole ).toString() );
  }
--
+ 
 +/*
  void QgsWelcomePage::newsItemActivated( const QModelIndex &index )
  {
    if ( !index.isValid() )
-@@ -221,7 +221,7 @@
+@@ -221,6 +228,7 @@
    const QUrl link = index.data( QgsNewsFeedModel::Link ).toUrl();
    QDesktopServices::openUrl( link );
  }
--
 +*/
+ 
  void QgsWelcomePage::versionInfoReceived()
  {
-   QgsVersionInfo *versionInfo = qobject_cast<QgsVersionInfo *>( sender() );
-@@ -370,7 +370,7 @@
- 
+@@ -371,6 +379,7 @@
    menu->popup( mTemplateProjectsListView->mapToGlobal( point ) );
  }
--
+ 
 +/*
  void QgsWelcomePage::showContextMenuForNews( QPoint point )
  {
    const QModelIndex index = mNewsFeedListView->indexAt( point );
-@@ -454,4 +454,4 @@
+@@ -454,4 +463,4 @@
  
    return QWidget::eventFilter( obj, event );
  }

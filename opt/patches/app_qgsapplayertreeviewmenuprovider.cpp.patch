@@ -1,0 +1,47 @@
+--- a/src/app/qgsapplayertreeviewmenuprovider.cpp	2025-07-15 20:09:37.508540091 +0300
++++ b/src/app/qgsapplayertreeviewmenuprovider.cpp	2025-07-30 19:58:18.114015920 +0300
+@@ -53,8 +53,10 @@
+ #include "qgsmeshlayer.h"
+ #include "qgsmapcanvasutils.h"
+ #include "qgsmaplayeraction.h"
++/*
+ #include "qgsvectortilelayer.h"
+ #include "qgsvectortiledataprovider.h"
++*/
+ #include "qgsproviderregistry.h"
+ #include "qgsprovidermetadata.h"
+ 
+@@ -161,7 +163,7 @@
+       QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( layer );
+       QgsPointCloudLayer *pcLayer = qobject_cast<QgsPointCloudLayer * >( layer );
+       QgsMeshLayer *meshLayer = qobject_cast<QgsMeshLayer * >( layer );
+-      QgsVectorTileLayer *vectorTileLayer = qobject_cast<QgsVectorTileLayer * >( layer );
++      // QgsVectorTileLayer *vectorTileLayer = qobject_cast<QgsVectorTileLayer * >( layer );
+ 
+       if ( layer && layer->isSpatial() )
+       {
+@@ -388,6 +390,7 @@
+ 
+       // change data source is only supported for vectors, rasters, point clouds, mesh, some vector tile layers
+       bool supportsChangeDataSource = vlayer || rlayer || pcLayer || meshLayer;
++      /*
+       if ( vectorTileLayer )
+       {
+         if ( const QgsProviderMetadata *metadata = QgsProviderRegistry::instance()->providerMetadata( vectorTileLayer->providerType() ) )
+@@ -395,6 +398,7 @@
+           supportsChangeDataSource = metadata->providerCapabilities() & QgsProviderMetadata::FileBasedUris;
+         }
+       }
++      */
+       if ( supportsChangeDataSource )
+       {
+ 
+@@ -577,7 +581,7 @@
+ 
+           case Qgis::LayerType::Raster:
+           case Qgis::LayerType::Mesh:
+-          case Qgis::LayerType::VectorTile:
++          // case Qgis::LayerType::VectorTile:
+           case Qgis::LayerType::PointCloud:
+           {
+             bool enableSaveAs = ( pcLayer && pcLayer->isValid() && pcLayer->dataProvider()->hasValidIndex() ) ||
