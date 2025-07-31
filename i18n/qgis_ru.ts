@@ -5194,7 +5194,7 @@ Please, check that GRASS is correctly installed and available on your system.</s
     </message>
     <message>
         <source>GRASS GIS 7 binary {} can&apos;t be found on this system from a shell. Please install it or configure your PATH {} environment variable.</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось найти двоичный файл {} GRASS GIS в этой системе из оболочки. Установите его или настройте переменную окружения PATH {}.</translation>
     </message>
 </context>
 <context>
@@ -6029,7 +6029,7 @@ Please, check that GRASS is correctly installed and available on your system.</s
     <message>
         <location filename="../src/plugins/grass/qtermwidget/Session.cpp" line="454"/>
         <source>Bell in session &apos;%1&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>Уведомление в сессии &apos;%1&apos;</translation>
     </message>
     <message>
         <location filename="../src/plugins/grass/qtermwidget/Session.cpp" line="606"/>
@@ -9140,7 +9140,11 @@ Shows placeholders for labels which could not be placed, e.g. due to overlaps wi
     <message numerus="yes">
         <source>Showing {0} - {1} of %n result(s)</source>
         <comment>number of results</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Coordinate Transformation Error</source>
@@ -12229,7 +12233,7 @@ This can cause unexpected results.</source>
     </message>
     <message>
         <source>Search Selection in PyQGIS Documentation</source>
-        <translation type="unfinished"></translation>
+        <translation>Поиск выделенного в документации PyQGIS</translation>
     </message>
     <message>
         <source>Untitled-0</source>
@@ -12990,7 +12994,13 @@ By default the algorithm uses the strict OGC definition of polygon validity, whe
 The GEOS method is faster and performs better on larger geometries, but is limited to only returning the first error encountered in a geometry. The QGIS method will be slower but reports all errors encountered in the geometry, not just the first.
 </source>
         <extracomment>qgis:checkvalidity</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Алгоритм выполняет проверку корректности геометрии векторного слоя.
+
+Геометрии распределяются на три группы (корректные, некорректные, ошибки) и выводятся в векторные слои, содержащие объекты этих групп.
+
+По умолчанию алгоритм использует строгое определение корректности полигона OGC, при котором полигон отмечается как некорректный, если самопересечение создаёт «дыру». Если отмечена опция «Игнорировать самопересечения колец», то это правило игнорируется и выполняется более мягкая проверка корректности. 
+
+Метод GEOS быстрее и выполняется лучше на больших геометриях, но имеет ограничение: возвращает только первую встреченную ошибку геометрии. Метод QGIS выполняется медленнее, но выводит все ошибки геометрии.</translation>
     </message>
 </context>
 <context>
@@ -12998,7 +13008,7 @@ The GEOS method is faster and performs better on larger geometries, but is limit
     <message>
         <location filename="../src/plugins/grass/qtermwidget/TerminalDisplay.cpp" line="2796"/>
         <source>Show Details...</source>
-        <translation type="unfinished"></translation>
+        <translation>Показать подробности...</translation>
     </message>
 </context>
 <context>
@@ -13706,17 +13716,29 @@ The distance is specified in layer units, and the bearing in degrees clockwise f
     <message numerus="yes">
         <location filename="../src/core/expression/qgsexpressionfunction.cpp" line="1878"/>
         <source>Function `attribute` requires one or two parameters. %n given.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/expression/qgsexpressionfunction.cpp" line="1903"/>
         <source>Function `map_to_html_table` requires one parameter. %n given.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/expression/qgsexpressionfunction.cpp" line="1937"/>
         <source>Function `map_to_html_dl` requires one parameter. %n given.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/expression/qgsexpressionfunction.cpp" line="1999"/>
@@ -13733,7 +13755,11 @@ The distance is specified in layer units, and the bearing in degrees clockwise f
     <message numerus="yes">
         <location filename="../src/core/expression/qgsexpressionfunction.cpp" line="2141"/>
         <source>Function `represent_attributes` requires no more than two parameters. %n given.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/expression/qgsexpressionfunction.cpp" line="2148"/>
@@ -13748,12 +13774,20 @@ The distance is specified in layer units, and the bearing in degrees clockwise f
     <message numerus="yes">
         <location filename="../src/core/expression/qgsexpressionfunction.cpp" line="2235"/>
         <source>Function `maptip` requires no more than three parameters. %n given.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/expression/qgsexpressionfunction.cpp" line="2239"/>
         <source>Function `display` requires no more than three parameters. %n given.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/expression/qgsexpressionfunction.cpp" line="2246"/>
@@ -13768,12 +13802,20 @@ The distance is specified in layer units, and the bearing in degrees clockwise f
     <message numerus="yes">
         <location filename="../src/core/expression/qgsexpressionfunction.cpp" line="2316"/>
         <source>Function `is_selected` requires no more than two parameters. %n given.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/expression/qgsexpressionfunction.cpp" line="2347"/>
         <source>Function `num_selected` requires no more than one parameter. %n given.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/expression/qgsexpressionfunction.cpp" line="2385"/>
@@ -13928,7 +13970,11 @@ The distance is specified in layer units, and the bearing in degrees clockwise f
     <message numerus="yes">
         <location filename="../src/core/expression/qgsexpressionfunction.cpp" line="5304"/>
         <source>Function `azimuth` requires exactly two parameters. %n given.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/expression/qgsexpressionfunction.cpp" line="5337"/>
@@ -14205,7 +14251,11 @@ The distance is specified in layer units, and the bearing in degrees clockwise f
         <location filename="../src/core/qgsgeometryvalidator.cpp" line="182"/>
         <source>line %1 contains %n duplicate node(s) starting at vertex %2</source>
         <comment>number of duplicate nodes</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/qgsgeometryvalidator.cpp" line="239"/>
@@ -14241,7 +14291,11 @@ The distance is specified in layer units, and the bearing in degrees clockwise f
     <message numerus="yes">
         <location filename="../src/core/qgsgeometryvalidator.cpp" line="405"/>
         <source>Geometry has %n error(s).</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/qgsgeometryvalidator.cpp" line="409"/>
@@ -15328,7 +15382,11 @@ Only %1 of %2 features written.</source>
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmrepairshapefile.cpp" line="92"/>
         <source>Successfully repaired, found %n feature(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/providers/ogr/qgsogrproviderutils.cpp" line="301"/>
@@ -15986,7 +16044,11 @@ If set to YES:  RFC 8142 standard: GeoJSON Text Sequences  (geojsons).</source>
         <location filename="../src/core/qgsvectorfilewriter.cpp" line="3659"/>
         <location filename="../src/core/vector/qgsvectorlayerexporter.cpp" line="422"/>
         <source>Stopping after %n error(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/qgsvectorfilewriter.cpp" line="4212"/>
@@ -17203,7 +17265,7 @@ stderr: %4</source>
     <message>
         <location filename="../src/core/providers/ogr/qgsogrproviderutils.cpp" line="296"/>
         <source>ESRI Shapefiles</source>
-        <translation>ESRI Shape-файлы </translation>
+        <translation>ESRI Shape-файлы&#xa0;</translation>
     </message>
     <message>
         <location filename="../src/core/providers/ogr/qgsogrproviderutils.cpp" line="309"/>
@@ -19502,7 +19564,11 @@ If desired, a maximum distance to use when aligning points can be set, to avoid 
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmangletonearest.cpp" line="269"/>
         <source>Multiple matching features found at same distance from search feature, found %n feature(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmrasterlogicalop.cpp" line="49"/>
@@ -21445,12 +21511,20 @@ Z and M values at the start and end of the new line substrings are linearly inte
     <message numerus="yes">
         <location filename="../src/gui/qgssqlcomposerdialog.cpp" line="448"/>
         <source>%n argument(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/qgssqlcomposerdialog.cpp" line="452"/>
         <source>%n argument(s) or more</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgslayerstylingwidget.cpp" line="890"/>
@@ -22954,12 +23028,20 @@ The additional attributes and their values are taken from a second vector layer.
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmjoinbyattribute.cpp" line="261"/>
         <source>%n feature(s) from input layer were successfully matched</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmjoinbyattribute.cpp" line="263"/>
         <source>%n feature(s) from input layer could not be matched</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmjoinbyattribute.cpp" line="126"/>
@@ -25485,7 +25567,11 @@ Extracted label information include: position (served as point geometries), the 
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmextractlabels.cpp" line="492"/>
         <source>Writing %n label(s) to output layer</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/layout/qgscompositionconverter.cpp" line="98"/>
@@ -26144,12 +26230,20 @@ Extracted label information include: position (served as point geometries), the 
     <message numerus="yes">
         <location filename="../src/core/processing/models/qgsprocessingmodelalgorithm.cpp" line="576"/>
         <source>OK. Execution took %1 s (%n output(s)).</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/processing/models/qgsprocessingmodelalgorithm.cpp" line="583"/>
         <source>Model processed OK. Executed %n algorithm(s) total in %1 s.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/processing/models/qgsprocessingmodelalgorithm.cpp" line="1030"/>
@@ -26409,12 +26503,12 @@ Extracted label information include: position (served as point geometries), the 
     <message>
         <location filename="../src/core/processing/qgsprocessingutils.cpp" line="930"/>
         <source>%1: Aliases are not supported by %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1: Псевдонимы не поддерживаются %2</translation>
     </message>
     <message>
         <location filename="../src/core/processing/qgsprocessingutils.cpp" line="932"/>
         <source>%1: Comments are not supported by %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1: Комментарии не поддерживаются %2</translation>
     </message>
     <message>
         <location filename="../src/core/processing/qgsprocessingutils.cpp" line="981"/>
@@ -26476,12 +26570,20 @@ Extracted label information include: position (served as point geometries), the 
     <message numerus="yes">
         <location filename="../src/core/processing/qgsprocessingutils.cpp" line="1841"/>
         <source>%n feature(s) could not be written to %1: %2</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/processing/qgsprocessingutils.cpp" line="1843"/>
         <source>%n feature(s) could not be written to %1</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/processing/qgsprocessingutils.cpp" line="1855"/>
@@ -29199,7 +29301,11 @@ Optionally, a separate table can be output which contains a summary of the class
     <message numerus="yes">
         <location filename="../src/core/project/qgsprojectbadlayerhandler.cpp" line="27"/>
         <source>%n unavailable layer(s) found:</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/project/qgsprojectbadlayerhandler.cpp" line="31"/>
@@ -29616,12 +29722,12 @@ Non-curved geometries will be retained without change.</source>
     <message>
         <location filename="../src/core/layout/qgslayoutobject.cpp" line="122"/>
         <source>Minimum elevation</source>
-        <translation type="unfinished"></translation>
+        <translation>Минимальная высота</translation>
     </message>
     <message>
         <location filename="../src/core/layout/qgslayoutobject.cpp" line="123"/>
         <source>Maximum elevation</source>
-        <translation type="unfinished"></translation>
+        <translation>Максимальная высота</translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmremoveholes.cpp" line="29"/>
@@ -29700,7 +29806,11 @@ An optional minimum area parameter allows removing only holes which are smaller 
 The point layer will contain a single PointZ feature per input file from which the geotags could be read. Any altitude information from the geotags will be used to set the point&apos;s Z value.
 
 Optionally, a table of unreadable or non-geotagged photos can also be created.</source>
-        <translation type="unfinished"></translation>
+        <translation>Cоздаёт точечный слой, соответствующий геометкам из изображений JPEG или HEIF/HEIC, находящихся в исходной папке. Опционально папка может быть рекурсивно просканирована.
+
+Точечный слой будет содержать один объект PointZ на каждый входной файл, из которого были считаны геотеги. Информация о высоте из геотегов будет записана в значение Z точки.
+
+Дополнительно может быть создана таблица нечитаемых или не имеющих геотегов фотографий.</translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmimportphotos.cpp" line="314"/>
@@ -30808,17 +30918,29 @@ If input geometries are lines or polygons, the clustering is based on the centro
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmkmeansclustering.cpp" line="245"/>
         <source>There are at least %n duplicate input(s), the number of output clusters may be less than was requested</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmkmeansclustering.cpp" line="325"/>
         <source>Clustering did not converge after %n iteration(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmkmeansclustering.cpp" line="327"/>
         <source>Clustering converged after %n iteration(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmvectorize.cpp" line="148"/>
@@ -31931,19 +32053,34 @@ If a multipart geometry is encountered, only the first part is considered when c
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmcategorizeusingstyle.cpp" line="237"/>
         <source>Matched %n categories to symbols from file.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmcategorizeusingstyle.cpp" line="246"/>
         <source>
 %n categorie(s) could not be matched:</source>
-        <translation type="unfinished"></translation>
+        <translation>
+            <numerusform>
+%n категорию не удалось сопоставить:</numerusform>
+            <numerusform>
+%n категории не удалось сопоставить:</numerusform>
+            <numerusform>
+%n категорий не удалось сопоставить:</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmcategorizeusingstyle.cpp" line="263"/>
         <source>
 %n symbol(s) in style were not matched:</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmangletonearest.cpp" line="96"/>
@@ -32422,7 +32559,11 @@ This algorithm uses purely Cartesian calculations for distance, and does not con
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmjoinbynearest.cpp" line="276"/>
         <source>Multiple matching features found at same distance from search feature, found %n feature(s) instead of %1</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmjoinbynearest.cpp" line="110"/>
@@ -32801,7 +32942,11 @@ Attributes are not checked, so in case two features have identical geometries bu
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmdeleteduplicategeometries.cpp" line="192"/>
         <source>%n duplicate feature(s) removed</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmremoveduplicatesbyattribute.cpp" line="65"/>
@@ -34034,12 +34179,20 @@ An attribute or expression can be selected to group points having the same value
     <message numerus="yes">
         <location filename="../src/app/qgsappbrowserproviders.cpp" line="1102"/>
         <source>Are you sure you want to delete the %n selected bookmark(s)?</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/app/qgsappbrowserproviders.cpp" line="1185"/>
         <source>Are you sure you want to delete the %n selected bookmark group(s)? This will delete all bookmarks in these groups.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgsappbrowserproviders.cpp" line="1171"/>
@@ -34600,17 +34753,29 @@ The algorithm outputs three layers, one containing all features which are consid
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmdetectdatasetchanges.cpp" line="424"/>
         <source>%n feature(s) unchanged</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmdetectdatasetchanges.cpp" line="425"/>
         <source>%n feature(s) added</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmdetectdatasetchanges.cpp" line="426"/>
         <source>%n feature(s) deleted</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmexecutespatialitequery.cpp" line="33"/>
@@ -34887,7 +35052,11 @@ The algorithm outputs three layers, one containing all features which are consid
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmflattenrelationships.cpp" line="92"/>
         <source>Found %n relation(s). This algorithm currently supports only a single relation.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmflattenrelationships.cpp" line="94"/>
@@ -35230,7 +35399,11 @@ If a coverage layer is set, the selected layout&apos;s atlas settings exposed in
         <location filename="../src/analysis/processing/qgsalgorithmlayoutatlastopdf.cpp" line="250"/>
         <location filename="../src/analysis/processing/qgsalgorithmlayoutatlastopdf.cpp" line="346"/>
         <source>Exporting %n atlas feature(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmlayoutatlastoimage.cpp" line="230"/>
@@ -37109,7 +37282,11 @@ Both the encoding specified by an optional .cpg file and any encoding details pr
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmsnapgeometries.cpp" line="174"/>
         <source>Snapped %n geometries.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmexporttopostgresql.cpp" line="38"/>
@@ -37321,7 +37498,11 @@ Prior to this a connection between QGIS and the PostgreSQL database has to be cr
     <message numerus="yes">
         <location filename="../src/analysis/processing/qgsalgorithmsplitvectorlayer.cpp" line="160"/>
         <source>Added %n feature(s) to layer</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmsumlinelength.cpp" line="33"/>
@@ -39337,7 +39518,11 @@ and the QGIS_PROJECT_FILE environment variable.</source>
     <message numerus="yes">
         <location filename="../src/analysis/mesh/qgsmeshtriangulation.cpp" line="439"/>
         <source>%n vertices have not been included in the triangulation</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmbatchgeocode.cpp" line="33"/>
@@ -40050,52 +40235,92 @@ For more details, please see the following papers:
     <message numerus="yes">
         <location filename="../src/core/mesh/qgsmeshadvancedediting.cpp" line="623"/>
         <source>Refine %n face(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/mesh/qgsmeshadvancedediting.cpp" line="763"/>
         <source>Transform %n vertices by expression</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/mesh/qgsmesheditor.cpp" line="1064"/>
         <source>Add %n vertices</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/mesh/qgsmesheditor.cpp" line="1097"/>
         <source>Remove %n vertices filling holes</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/mesh/qgsmesheditor.cpp" line="1148"/>
         <source>Remove %n vertices without filling holes</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/mesh/qgsmesheditor.cpp" line="1173"/>
         <source>Add %n face(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/mesh/qgsmesheditor.cpp" line="1197"/>
         <source>Remove %n face(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/mesh/qgsmesheditor.cpp" line="1295"/>
         <source>Change %n vertices Z Value</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/mesh/qgsmesheditor.cpp" line="1320"/>
         <source>Move %n vertices</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/mesh/qgsmesheditor.cpp" line="1346"/>
         <source>Transform %n vertices coordinates</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/mesh/qgsmesheditor.cpp" line="1387"/>
@@ -40110,7 +40335,11 @@ For more details, please see the following papers:
     <message numerus="yes">
         <location filename="../src/core/mesh/qgsmesheditor.cpp" line="1436"/>
         <source>Split %n face(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/mesh/qgsmeshforcebypolylines.cpp" line="1115"/>
@@ -40599,42 +40828,42 @@ For more details, please see the following papers:
     <message>
         <location filename="../src/app/georeferencer/qgsgeorefmainwindow.cpp" line="75"/>
         <source>Last used georeferencer resampling method</source>
-        <translation type="unfinished"></translation>
+        <translation>Последний использовавшийся метод передискретизации</translation>
     </message>
     <message>
         <location filename="../src/app/georeferencer/qgsgeorefmainwindow.cpp" line="77"/>
         <source>Last used georeferencer compression method</source>
-        <translation type="unfinished"></translation>
+        <translation>Последний использовавшийся метод сжатия</translation>
     </message>
     <message>
         <location filename="../src/app/georeferencer/qgsgeorefmainwindow.cpp" line="79"/>
         <source>Last used georeferencer use-zero-as-transparent option</source>
-        <translation type="unfinished"></translation>
+        <translation>Последняя использовавшаяся опция Использовать ноль (0) для прозрачности вместо NULL</translation>
     </message>
     <message>
         <location filename="../src/app/georeferencer/qgsgeorefmainwindow.cpp" line="81"/>
         <source>Last used georeferencer transform method</source>
-        <translation type="unfinished"></translation>
+        <translation>Последний использовавшийся метод трансформации</translation>
     </message>
     <message>
         <location filename="../src/app/georeferencer/qgsgeorefmainwindow.cpp" line="83"/>
         <source>Whether georeferencer should automatically save .points files</source>
-        <translation type="unfinished"></translation>
+        <translation>Должен ли модуль привязки автоматически сохранять файлы .points</translation>
     </message>
     <message>
         <location filename="../src/app/georeferencer/qgsgeorefmainwindow.cpp" line="85"/>
         <source>Whether georeferencer should automatically load results into the current project</source>
-        <translation type="unfinished"></translation>
+        <translation>Должен ли модуль привязки автоматически загружать результаты в текущий проект</translation>
     </message>
     <message>
         <location filename="../src/app/georeferencer/qgsgeorefmainwindow.cpp" line="87"/>
         <source>Last used folder for georeferencer source files</source>
-        <translation type="unfinished"></translation>
+        <translation>Последняя директория используемая для исходных файлов модуля привязки</translation>
     </message>
     <message>
         <location filename="../src/app/georeferencer/qgsgeorefmainwindow.cpp" line="89"/>
         <source>Last used raster file filter for georeferencer source files</source>
-        <translation type="unfinished"></translation>
+        <translation>Последний используемый фильтр растровых файлов модуля привязки</translation>
     </message>
     <message>
         <location filename="../src/app/georeferencer/qgstransformsettingsdialog.cpp" line="28"/>
@@ -40758,7 +40987,7 @@ For more details, please see the following papers:
         <location filename="../src/core/settings/qgssettingsentryimpl.cpp" line="145"/>
         <location filename="../src/core/settings/qgssettingsentryimpl.cpp" line="187"/>
         <source>Can&apos;t set value for setting. Value &apos;%1&apos; is greather than maximum value &apos;%2&apos;.</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось установить значение параметра. Значение «%1» меньше минимального значения «%2».</translation>
     </message>
     <message>
         <location filename="../src/core/vector/qgsfielddomain.cpp" line="64"/>
@@ -41774,7 +42003,7 @@ For more details, please see the following papers:
     <message>
         <location filename="../src/core/vectortile/qgsvectortilematrixset.cpp" line="190"/>
         <source>Vector Tiles</source>
-        <translation type="unfinished"></translation>
+        <translation>Векторные тайлы</translation>
     </message>
     <message>
         <location filename="../src/core/vectortile/qgsvtpkvectortiledataprovider.cpp" line="32"/>
@@ -41879,7 +42108,7 @@ For more details, please see the following papers:
     <message>
         <location filename="../src/gui/qgsdbqueryhistoryprovider.cpp" line="170"/>
         <source>Execute SQL Command…</source>
-        <translation type="unfinished"></translation>
+        <translation>Выполнить команду SQL...</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsdbqueryhistoryprovider.cpp" line="180"/>
@@ -42400,24 +42629,40 @@ Please contact the developers.
     <message numerus="yes">
         <location filename="../src/app/qgisapp.cpp" line="8660"/>
         <source>Some of the &lt;b&gt;%n&lt;/b&gt; selected feature(s) about to be deleted &lt;b&gt;are outside of the current map view&lt;/b&gt;. Would you still like to continue?</source>
-        <translation></translation>
+        <translation>
+            <numerusform>Некоторые из &lt;b&gt;%n&lt;/b&gt; удаляемого выбранного объекта &lt;b&gt;находятся за пределами текущего вида карты&lt;/b&gt;. Вы всё ещё хотите продолжить?</numerusform>
+            <numerusform>Некоторые из &lt;b&gt;%n&lt;/b&gt; удаляемых выбранных объектов &lt;b&gt;находятся за пределами текущего вида карты&lt;/b&gt;. Вы всё ещё хотите продолжить?</numerusform>
+            <numerusform>Некоторые из &lt;b&gt;%n&lt;/b&gt; удаляемых выбранных объектов &lt;b&gt;находятся за пределами текущего вида карты&lt;/b&gt;. Вы всё ещё хотите продолжить?</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/app/qgisapp.cpp" line="8663"/>
         <location filename="../src/app/qgisapp.cpp" line="8689"/>
         <location filename="../src/app/qgisapp.cpp" line="8707"/>
         <source>Delete %n Feature(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/app/qgisapp.cpp" line="8680"/>
         <source>%n feature(s) on layer &quot;%1&quot;, </source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/app/qgisapp.cpp" line="8704"/>
         <source>&lt;b&gt;%n&lt;/b&gt; selected feature(s) is/are about to be deleted. Would you like to continue?</source>
-        <translation type="unfinished"></translation>
+        <translation>
+            <numerusform>&lt;b&gt;%n&lt;/b&gt; выбранный объект будет удалён. Продолжить?</numerusform>
+            <numerusform>&lt;b&gt;%n&lt;/b&gt; выбранных объекта будут удалены. Продолжить?</numerusform>
+            <numerusform>&lt;b&gt;%n&lt;/b&gt; выбранных объектов будут удалены. Продолжить?</numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="8708"/>
@@ -42427,7 +42672,11 @@ Please contact the developers.
     <message numerus="yes">
         <location filename="../src/app/qgisapp.cpp" line="8743"/>
         <source>%n feature(s) deleted: %1</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="9705"/>
@@ -42443,12 +42692,20 @@ Please contact the developers.
     <message numerus="yes">
         <location filename="../src/app/qgisapp.cpp" line="10239"/>
         <source>%n feature(s) were pasted.</source>
-        <translation type="unfinished"></translation>
+        <translation>
+            <numerusform>Вставлен %n объект.</numerusform>
+            <numerusform>Вставлено %n объекта.</numerusform>
+            <numerusform>Вставлено %n объектов.</numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/app/qgisapp.cpp" line="10249"/>
         <source>%n geometries collapsed due to intersection avoidance.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="10365"/>
@@ -42534,7 +42791,11 @@ Alternatively, you can create a new mesh layer from that one.</source>
         <location filename="../src/app/qgisapp.cpp" line="11662"/>
         <source>(%n more hidden layer(s))</source>
         <comment>number of hidden layers not shown</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="11664"/>
@@ -42552,13 +42813,21 @@ Alternatively, you can create a new mesh layer from that one.</source>
         <location filename="../src/app/qgisapp.cpp" line="11655"/>
         <source>Remove %n legend entries?</source>
         <comment>number of legend items to remove</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/app/qgisapp.cpp" line="11686"/>
         <source>%n legend entries removed.</source>
         <comment>number of removed legend entries</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="11765"/>
@@ -43432,7 +43701,11 @@ Error: %1</source>
         <location filename="../src/app/qgisapp.cpp" line="8746"/>
         <source>%n feature(s) deleted.</source>
         <comment>number of features deleted</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="6132"/>
@@ -43564,12 +43837,20 @@ Error: %1</source>
         <location filename="../src/app/qgisapp.cpp" line="8659"/>
         <location filename="../src/app/qgisapp.cpp" line="8703"/>
         <source>Delete %n feature(s) from layer &quot;%1&quot;</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/app/qgisapp.cpp" line="8727"/>
         <source>A problem occurred during deletion from layer &quot;%1&quot;. %n feature(s) not deleted.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="8851"/>
@@ -44126,7 +44407,7 @@ Delete these features?</source>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="10377"/>
         <source>Cannot create field %1 (%2,%3), falling back to string type</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось создать поле %1 (%2,%3), возврат к строковому типу</translation>
     </message>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="10710"/>
@@ -44404,7 +44685,7 @@ Please cancel these tasks and retry.</source>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="12730"/>
         <source>https://donate.qgis.org/</source>
-        <translation type="unfinished"></translation>
+        <translation>https://donate.qgis.org/</translation>
     </message>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="12843"/>
@@ -44647,7 +44928,11 @@ Please cancel these tasks and retry.</source>
     <message numerus="yes">
         <location filename="../src/app/qgisapp.cpp" line="16872"/>
         <source>%n children on layer %1 duplicated</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="16875"/>
@@ -44767,7 +45052,11 @@ Please cancel these tasks and retry.</source>
         <location filename="../src/app/qgisapp.cpp" line="14597"/>
         <source>%n feature(s) selected on layer %1.</source>
         <comment>number of selected features</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgisapp.cpp" line="15658"/>
@@ -45213,7 +45502,11 @@ Please cancel these tasks and retry.</source>
     <message numerus="yes">
         <location filename="../src/app/3d/qgs3dmapcanvaswidget.cpp" line="523"/>
         <source>Loading %n tile(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/3d/qgs3dmapcanvaswidget.cpp" line="545"/>
@@ -45581,7 +45874,11 @@ Please cancel these tasks and retry.</source>
         <location filename="../src/app/3d/qgsrulebased3drendererwidget.cpp" line="635"/>
         <source>Filter returned %n feature(s)</source>
         <comment>number of filtered features</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -45874,7 +46171,11 @@ Please cancel these tasks and retry.</source>
     <message numerus="yes">
         <location filename="../src/gui/qgsabstractrelationeditorwidget.cpp" line="409"/>
         <source>%n feature(s) on layer &quot;%1&quot;, </source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/qgsabstractrelationeditorwidget.cpp" line="413"/>
@@ -45898,7 +46199,11 @@ Delete these features?</source>
     <message numerus="yes">
         <location filename="../src/gui/qgsabstractrelationeditorwidget.cpp" line="434"/>
         <source>%n feature(s) deleted: %2</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/qgsabstractrelationeditorwidget.cpp" line="458"/>
@@ -46184,7 +46489,7 @@ Delete these features?</source>
     <message>
         <location filename="../src/gui/qgsadvanceddigitizingdockwidget.cpp" line="157"/>
         <source>Prioritize Snapping to Angle</source>
-        <translation type="unfinished"></translation>
+        <translation>Назначить приоритет угловой привязки</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsadvanceddigitizingdockwidget.cpp" line="190"/>
@@ -46775,12 +47080,12 @@ Delete these features?</source>
     <message>
         <location filename="../src/providers/arcgisrest/qgsafsshareddata.cpp" line="97"/>
         <source>getObjectIds failed: %1 - %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка getObjectIds: %1 - %2</translation>
     </message>
     <message>
         <location filename="../src/providers/arcgisrest/qgsafsshareddata.cpp" line="102"/>
         <source>Failed to determine objectIdFieldName and/or objectIds</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось определить objectIdFieldName и/или objectIds</translation>
     </message>
 </context>
 <context>
@@ -47984,7 +48289,11 @@ Delete these features?</source>
     <message numerus="yes">
         <location filename="../src/app/browser/qgsinbuiltdataitemproviders.cpp" line="667"/>
         <source>Permanently delete %n file(s)?</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/browser/qgsinbuiltdataitemproviders.cpp" line="668"/>
@@ -48031,7 +48340,11 @@ Delete these features?</source>
     <message numerus="yes">
         <location filename="../src/app/browser/qgsinbuiltdataitemproviders.cpp" line="772"/>
         <source>Could not delete %n file(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/browser/qgsinbuiltdataitemproviders.cpp" line="786"/>
@@ -48495,7 +48808,11 @@ Errors: %2
         <location filename="../src/app/qgsapplayertreeviewmenuprovider.cpp" line="853"/>
         <source>%n matching feature(s) selected</source>
         <comment>matching features</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgsapplayertreeviewmenuprovider.cpp" line="859"/>
@@ -48809,7 +49126,7 @@ Auth DB Path:	%10
         <location filename="../src/core/qgsapplication.cpp" line="1184"/>
         <source></source>
         <comment>match indentation of application state</comment>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../src/core/qgsapplication.cpp" line="430"/>
@@ -50046,7 +50363,11 @@ Auth DB Path:	%10
         <location filename="../src/gui/qgsattributeform.cpp" line="1584"/>
         <source>Changes to this form will not be saved. %n field(s) don&apos;t meet their constraints.</source>
         <comment>invalid fields</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/qgsattributeform.cpp" line="2134"/>
@@ -50153,7 +50474,11 @@ Auth DB Path:	%10
         <location filename="../src/gui/qgsattributeform.cpp" line="711"/>
         <source>%n matching feature(s) selected</source>
         <comment>matching features</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/qgsattributeform.cpp" line="795"/>
@@ -50646,12 +50971,20 @@ Auth DB Path:	%10
     <message numerus="yes">
         <location filename="../src/app/qgsattributetabledialog.cpp" line="1054"/>
         <source>%n feature(s) on layer &quot;%1&quot;, </source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/app/qgsattributetabledialog.cpp" line="1078"/>
         <source>%n feature(s) deleted: %1</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgsattributetabledialog.cpp" line="1058"/>
@@ -51134,22 +51467,22 @@ Delete these features?</source>
     <message>
         <location filename="../src/gui/vector/qgsattributesformproperties.cpp" line="1567"/>
         <source>Configure Text Widget</source>
-        <translation type="unfinished"></translation>
+        <translation>Настроить текстовый виджет</translation>
     </message>
     <message>
         <location filename="../src/gui/vector/qgsattributesformproperties.cpp" line="1607"/>
         <source>Text</source>
-        <translation type="unfinished"></translation>
+        <translation>Текст</translation>
     </message>
     <message>
         <location filename="../src/gui/vector/qgsattributesformproperties.cpp" line="1647"/>
         <source>Configure Spacer Widget</source>
-        <translation type="unfinished"></translation>
+        <translation>Настройка виджета Spacer</translation>
     </message>
     <message>
         <location filename="../src/gui/vector/qgsattributesformproperties.cpp" line="1659"/>
         <source>Draw horizontal line</source>
-        <translation type="unfinished"></translation>
+        <translation>Горизонтальную линию</translation>
     </message>
 </context>
 <context>
@@ -51346,12 +51679,12 @@ Use this function to add extra logic to your forms.</source>
     <message>
         <location filename="../src/gui/vector/qgsattributesformproperties.cpp" line="176"/>
         <source>Text Widget</source>
-        <translation type="unfinished"></translation>
+        <translation>Текстовый виджет</translation>
     </message>
     <message>
         <location filename="../src/gui/vector/qgsattributesformproperties.cpp" line="180"/>
         <source>Spacer Widget</source>
-        <translation type="unfinished"></translation>
+        <translation>Виджет Spacer</translation>
     </message>
     <message>
         <location filename="../src/gui/vector/qgsattributesformproperties.cpp" line="209"/>
@@ -51632,7 +51965,7 @@ Operation can NOT be undone!</source>
     <message>
         <location filename="../src/auth/awss3/gui/qgsauthawss3edit.ui"/>
         <source>Show</source>
-        <translation type="unfinished"></translation>
+        <translation>Показать</translation>
     </message>
     <message>
         <location filename="../src/auth/awss3/gui/qgsauthawss3edit.ui"/>
@@ -53182,7 +53515,7 @@ Authorities/Issuers: %1%2</source>
     <message>
         <location filename="../src/core/auth/qgsauthmanager.cpp" line="167"/>
         <source>Opening of authentication db FAILED : %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось открыть БД аутентификации: %1</translation>
     </message>
     <message>
         <location filename="../src/core/auth/qgsauthmanager.cpp" line="1119"/>
@@ -54933,7 +55266,11 @@ Operation can NOT be undone!</source>
         <location filename="../src/app/qgsbookmarks.cpp" line="129"/>
         <source>Are you sure you want to delete %n bookmark(s)?</source>
         <comment>number of rows</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgsbookmarks.cpp" line="182"/>
@@ -55563,17 +55900,29 @@ Operation can NOT be undone!</source>
     <message numerus="yes">
         <location filename="../src/gui/symbology/qgscategorizedsymbolrendererwidget.cpp" line="934"/>
         <source>High number of classes. Classification would yield %n entries which might not be expected. Continue?</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/symbology/qgscategorizedsymbolrendererwidget.cpp" line="1174"/>
         <source>Matched %n categories to symbols.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/symbology/qgscategorizedsymbolrendererwidget.cpp" line="1227"/>
         <source>Matched %n categories to symbols from file.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/symbology/qgscategorizedsymbolrendererwidget.cpp" line="957"/>
@@ -57745,22 +58094,22 @@ file are transformed).</source>
     <message>
         <location filename="../src/core/pointcloud/qgscopcpointcloudindex.cpp" line="91"/>
         <source>Invalid COPC file</source>
-        <translation type="unfinished"></translation>
+        <translation>Недопустимый файл COPC</translation>
     </message>
     <message>
         <location filename="../src/core/pointcloud/qgscopcpointcloudindex.cpp" line="200"/>
         <source>Can&apos;t write statistics to &quot;%1&quot;: laz version != 1.4</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось записать статистику в «%1»: laz version != 1.4</translation>
     </message>
     <message>
         <location filename="../src/core/pointcloud/qgscopcpointcloudindex.cpp" line="207"/>
         <source>Can&apos;t write statistics to &quot;%1&quot;: file already contains COPC statistics!</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось записать статистику в «%1»: файл уже содержит статистику COPC!</translation>
     </message>
     <message>
         <location filename="../src/core/pointcloud/qgscopcpointcloudindex.cpp" line="238"/>
         <source>Couldn&apos;t open COPC file &quot;%1&quot; to write statistics</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось открыть файл COPC «%1» для записи статистики</translation>
     </message>
 </context>
 <context>
@@ -58651,7 +59000,11 @@ The default actions are activated in the Action section of the layer properties.
         <location filename="../src/app/options/qgscustomprojectionoptions.cpp" line="184"/>
         <source>Are you sure you want to delete %n projection(s)?</source>
         <comment>number of rows</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/options/qgscustomprojectionoptions.cpp" line="293"/>
@@ -59217,7 +59570,7 @@ Try changing the CRS definition to a WKT format instead.</source>
     <message>
         <location filename="../src/app/browser/qgsinbuiltdataitemproviders.cpp" line="2028"/>
         <source>Execute SQL</source>
-        <translation type="unfinished"></translation>
+        <translation>Выполнить SQL-запрос</translation>
     </message>
 </context>
 <context>
@@ -60765,28 +61118,48 @@ p, li { white-space: pre-wrap; }
     <message numerus="yes">
         <location filename="../src/providers/delimitedtext/qgsdelimitedtextprovider.cpp" line="875"/>
         <source>%n record(s) discarded due to invalid format</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/providers/delimitedtext/qgsdelimitedtextprovider.cpp" line="877"/>
         <source>%n record(s) have missing geometry definitions</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/providers/delimitedtext/qgsdelimitedtextprovider.cpp" line="879"/>
         <source>%n record(s) discarded due to invalid geometry definitions</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/providers/delimitedtext/qgsdelimitedtextprovider.cpp" line="881"/>
         <source>%n record(s) discarded due to incompatible geometry types</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/providers/delimitedtext/qgsdelimitedtextprovider.cpp" line="1159"/>
         <location filename="../src/providers/delimitedtext/qgsdelimitedtextprovider.cpp" line="1179"/>
         <source>There are %n additional error(s) in the file</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/delimitedtext/qgsdelimitedtextprovider.cpp" line="1147"/>
@@ -60921,7 +61294,11 @@ p, li { white-space: pre-wrap; }
     <message numerus="yes">
         <location filename="../src/providers/delimitedtext/qgsdelimitedtextsourceselect.cpp" line="770"/>
         <source>%n badly formatted record(s) discarded</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/delimitedtext/qgsdelimitedtextsourceselect.cpp" line="775"/>
@@ -60946,7 +61323,11 @@ p, li { white-space: pre-wrap; }
     <message numerus="yes">
         <location filename="../src/providers/delimitedtext/qgsdelimitedtextsourceselect.cpp" line="794"/>
         <source>%n badly formatted record(s) discarded from sample data</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/delimitedtext/qgsdelimitedtextsourceselect.cpp" line="801"/>
@@ -62850,7 +63231,11 @@ Error: %2</source>
     <message numerus="yes">
         <location filename="../src/app/dwg/qgsdwgimporter.cpp" line="1507"/>
         <source>%n entities processed.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/dwg/qgsdwgimporter.cpp" line="1551"/>
@@ -67693,7 +68078,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>difference,needs,datetimes,order,extract,information,following,interval,dates,functions,yearmonthweekdayhourminutesecond</source>
-        <translation type="unfinished"></translation>
+        <translation>difference,needs,datetimes,order,extract,information,following,interval,dates,functions,yearmonthweekdayhourminutesecond,разница,потребности,дата,время,извлечение,информация,интервал,даты,функции,годмесяцденьчасминутасекунда</translation>
     </message>
     <message>
         <source>aggregate,combine,features,calculated,merge,concatenate,sum,mean,median,count,quartile,minimum,maximum,minority,majority,standard,deviation,length,unique</source>
@@ -69697,7 +70082,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>white,space,regular,performs,backslash,characters,escaped,character,expression,match</source>
-        <translation type="unfinished"></translation>
+        <translation>white,space,regular,performs,backslash,characters,escaped,character,expression,match,пробел,регулярный,выполняет,обратная косая черта,символы,экранированный,символ,выражение,соответствие,регулярноевыражение,регулярное выражение</translation>
     </message>
     <message>
         <source>criteria,multigeometry,orders,parts,given</source>
@@ -69797,7 +70182,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>direction,order,vertices,reverses,line,reversing</source>
-        <translation type="unfinished"></translation>
+        <translation>direction,order,vertices,reverses,line,reversing,направление,порядок,вершины,обращение,линия</translation>
     </message>
     <message>
         <source>last,end,substring,rightmost,characters,contains</source>
@@ -70049,11 +70434,11 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>coordinate,spatial,reference,calculations,system,maximum</source>
-        <translation type="unfinished"></translation>
+        <translation>coordinate,spatial,reference,calculations,system,maximum,координата,пространство,пример,расчёты,система,максимум</translation>
     </message>
     <message>
         <source>coordinate,spatial,reference,calculations,system,minimum</source>
-        <translation type="unfinished"></translation>
+        <translation>coordinate,spatial,reference,calculations,system,maximum,координата,пространство,пример,расчёты,система,минимум</translation>
     </message>
     <message>
         <source>Returns the maximum z coordinate of a geometry, or NULL if the geometry has no z value.</source>
@@ -71297,7 +71682,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>property,matching,metadata</source>
-        <translation type="unfinished"></translation>
+        <translation>property,matching,metadata,свойство,соответствие,метаданные</translation>
     </message>
     <message>
         <source>first,start,begin,substring,leftmost,characters,contains,extracts</source>
@@ -71901,11 +72286,11 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>map_to_html_dl(map(&apos;qgis&apos;,&apos;rocks&apos;))</source>
-        <translation type="unfinished"></translation>
+        <translation>map_to_html_dl(map(&apos;qgis&apos;,&apos;rocks&apos;))</translation>
     </message>
     <message>
         <source>&lt;dl&gt;&lt;dt&gt;qgis&lt;/dt&gt;&lt;dd&gt;rocks&lt;/dd&gt;&lt;/dl&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>formatted,map,html</source>
@@ -71921,11 +72306,11 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>map_to_html_table(map(&apos;qgis&apos;,&apos;rocks&apos;))</source>
-        <translation type="unfinished"></translation>
+        <translation>map_to_html_table(map(&apos;qgis&apos;,&apos;rocks&apos;))</translation>
     </message>
     <message>
         <source>&lt;table&gt;&lt;thead&gt;&lt;th&gt;qgis&lt;/th&gt;&lt;/thead&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;rocks&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;table&gt;&lt;thead&gt;&lt;th&gt;qgis&lt;/th&gt;&lt;/thead&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;rocks&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;</translation>
     </message>
     <message>
         <source>Returns the maptip for a given feature in a layer. The expression is evaluated by default. Can be used with zero, one or more arguments, see below for details.</source>
@@ -73017,7 +73402,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>optional argument specifying whether to allow holes within the output geometry. Defaults to FALSE, set to TRUE to avoid including holes in the output geometry.</source>
-        <translation type="unfinished"></translation>
+        <translation>необязательный аргумент, указывающий, разрешить ли отверстия в выходной геометрии. По умолчанию FALSE, установите значение TRUE, чтобы допустить включение отверстий в выходную геометрию.</translation>
     </message>
     <message>
         <source>geom_to_wkt(concave_hull(geom_from_wkt(&apos;MULTILINESTRING((106 164,30 112,74 70,82 112,130 94,130 62,122 40,156 32,162 76,172 88),(132 178,134 148,128 136,96 128,132 108,150 130,170 142,174 110,156 96,158 90,158 88),(22 64,66 28,94 38,94 68,114 76,112 30,132 10,168 18,178 34,186 52,184 74,190 100,190 122,182 148,178 170,176 184,156 164,146 178,132 186,92 182,56 158,36 150,62 150,76 128,88 118))&apos;), 0.99))</source>
@@ -74293,7 +74678,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>Set this to true to return a list of maps containing (key names in quotes) the feature &apos;id&apos;, the expression &apos;result&apos; and the &apos;overlap&apos; value. The &apos;radius&apos; of the maximum inscribed circle is also returned when the target layer is a polygon. Only valid when used with the expression parameter</source>
-        <translation type="unfinished"></translation>
+        <translation>Установите значение true, чтобы вернуть список карт, содержащих (имена ключей в кавычках) идентификатор объекта «id», выражение «result» и значение «overlap». «Радиус» максимальной вписанной окружности также возвращается, если целевой слой является полигоном. Допустимо только при использовании с параметром выражения</translation>
     </message>
     <message>
         <source>only valid when used with an expression, set this to &apos;des&apos; to return the results ordered by the overlap value in descending order or set this to &apos;asc&apos; for ascending order.</source>
@@ -77387,13 +77772,21 @@ Change the name of the script and save to allow QGIS to auto load on startup.</s
         <location filename="../src/gui/qgsexpressionselectiondialog.cpp" line="142"/>
         <source>%n matching feature(s) selected</source>
         <comment>matching features</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/qgsexpressionselectiondialog.cpp" line="188"/>
         <source>Zoomed to %n matching feature(s)</source>
         <comment>number of matching features</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/qgsexpressionselectiondialog.cpp" line="148"/>
@@ -78261,7 +78654,11 @@ Change the name of the script and save to allow QGIS to auto load on startup.</s
     <message numerus="yes">
         <location filename="../src/gui/vector/qgsfieldcalculator.cpp" line="156"/>
         <source>Only update %n selected feature(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/vector/qgsfieldcalculator.cpp" line="162"/>
@@ -79368,7 +79765,7 @@ This field is a geometry column, its removal may make the table unusable by QGIS
     <message>
         <location filename="../src/core/textrenderer/qgsfontmanager.cpp" line="958"/>
         <source>Installing fonts from %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Установка шрифтов из %1</translation>
     </message>
     <message>
         <location filename="../src/core/textrenderer/qgsfontmanager.cpp" line="962"/>
@@ -80531,22 +80928,38 @@ Check file and directory permissions on
     <message numerus="yes">
         <location filename="../src/plugins/geometry_checker/qgsgeometrycheckerfixsummarydialog.cpp" line="35"/>
         <source>%n error(s) were fixed</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/plugins/geometry_checker/qgsgeometrycheckerfixsummarydialog.cpp" line="36"/>
         <source>%n new error(s) were found</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/plugins/geometry_checker/qgsgeometrycheckerfixsummarydialog.cpp" line="37"/>
         <source>%n error(s) were not fixed</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/plugins/geometry_checker/qgsgeometrycheckerfixsummarydialog.cpp" line="38"/>
         <source>%n error(s) are obsolete</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -80698,7 +81111,11 @@ Check file and directory permissions on
     <message numerus="yes">
         <location filename="../src/plugins/geometry_checker/qgsgeometrycheckerresulttab.cpp" line="495"/>
         <source>Do you want to fix %n error(s)?</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/plugins/geometry_checker/qgsgeometrycheckerresulttab.cpp" line="646"/>
@@ -81721,7 +82138,11 @@ The geometry check can be performed, but it will not be possible to fix any erro
     <message numerus="yes">
         <location filename="../src/app/qgsgeometryvalidationmodel.cpp" line="165"/>
         <source>%1: %n Error(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -82683,7 +83104,11 @@ The geometry check can be performed, but it will not be possible to fix any erro
     <message numerus="yes">
         <location filename="../src/app/georeferencer/qgsgeorefmainwindow.cpp" line="2281"/>
         <source>%1 transformation requires at least %n GCPs. Please define more.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -84362,7 +84787,11 @@ Press cancel to abort breaks calculation or OK to continue.</source>
     <message numerus="yes">
         <location filename="../src/gui/qgsgraphicsviewmousehandles.cpp" line="504"/>
         <source>%n item(s) selected</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/qgsgraphicsviewmousehandles.cpp" line="558"/>
@@ -86436,7 +86865,11 @@ at line %2 column %3</source>
     <message numerus="yes">
         <location filename="../src/plugins/grass/qgsgrasstools.cpp" line="623"/>
         <source>%n error(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -87883,7 +88316,11 @@ b) Use the Configuration tab to add your credentials in an HTTP Basic Authentica
         <location filename="../src/app/qgshandlebadlayers.cpp" line="500"/>
         <source>There are still %n unhandled layer(s). If they are not fixed, they will be disabled/deactivated until the project is opened again.</source>
         <comment>unhandled layers</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgshandlebadlayers.cpp" line="315"/>
@@ -88344,7 +88781,7 @@ b) Use the Configuration tab to add your credentials in an HTTP Basic Authentica
     <message>
         <location filename="../src/ui/qgsidentifyresultsbase.ui"/>
         <source>Identify Feature(s) on mouse over</source>
-        <translation type="unfinished"></translation>
+        <translation>Идентифицировать объект(ы) при наведении мыши</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsidentifyresultsbase.ui"/>
@@ -89755,7 +90192,11 @@ CTRL + щелчок для перехода по ссылке</translation>
         <location filename="../src/gui/labeling/qgsrulebasedlabelingwidget.cpp" line="769"/>
         <source>Filter returned %n feature(s)</source>
         <comment>number of filtered features</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/ui/labeling/qgslabelingrulepropswidget.ui"/>
@@ -93808,7 +94249,11 @@ Evaluation error: %1</source>
     <message numerus="yes">
         <location filename="../src/app/layout/qgslayoutdesignerdialog.cpp" line="4902"/>
         <source>Redrawing %n map(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/layout/qgslayoutdesignerdialog.cpp" line="4904"/>
@@ -100749,7 +101194,11 @@ Load anyway?</source>
         <location filename="../src/app/vertextool/qgslockedfeature.cpp" line="192"/>
         <source>Validation finished (%n error(s) found).</source>
         <comment>number of geometry errors</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -102436,17 +102885,17 @@ Rasterizing map is recommended for proper rendering.</source>
         <location filename="../src/gui/qgsmaptoolcapture.cpp" line="484"/>
         <location filename="../src/gui/qgsmaptoolcapture.cpp" line="1321"/>
         <source>Select an option from the Shape Digitizing Toolbar in order to capture shapes</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите опцию на панели инструментов оцифровки фигур для захвата фигур</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsmaptoolcapture.cpp" line="1294"/>
         <source>Cannot transform the point to the layer&apos;s coordinate system</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось преобразовать точку в систему координат слоя</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsmaptoolcapture.cpp" line="1347"/>
         <source>Cannot transform the point to the layers coordinate system</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось преобразовать точку в систему координат слоя</translation>
     </message>
 </context>
 <context>
@@ -102541,7 +102990,7 @@ Rasterizing map is recommended for proper rendering.</source>
     <message>
         <location filename="../src/gui/qgsmaptooldigitizefeature.cpp" line="86"/>
         <source>The digitized geometry type (%1) does not correspond to the layer geometry type (%2).</source>
-        <translation type="unfinished"></translation>
+        <translation>Оцифрованный тип геометрии (%1) не соответствует типу геометрии слоя (%2).</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsmaptooldigitizefeature.cpp" line="171"/>
@@ -102647,7 +103096,11 @@ Rasterizing map is recommended for proper rendering.</source>
     <message numerus="yes">
         <location filename="../src/app/mesh/qgsmaptooleditmeshframe.cpp" line="1734"/>
         <source>%n vertices were not removed</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/mesh/qgsmaptooleditmeshframe.cpp" line="1744"/>
@@ -102702,12 +103155,20 @@ Rasterizing map is recommended for proper rendering.</source>
     <message numerus="yes">
         <location filename="../src/app/mesh/qgsmaptooleditmeshframe.cpp" line="2219"/>
         <source>Remove %n Selected Face(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/app/mesh/qgsmaptooleditmeshframe.cpp" line="2244"/>
         <source>Refine %n Selected Face(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/mesh/qgsmaptooleditmeshframe.cpp" line="2235"/>
@@ -102717,7 +103178,11 @@ Rasterizing map is recommended for proper rendering.</source>
     <message numerus="yes">
         <location filename="../src/app/mesh/qgsmaptooleditmeshframe.cpp" line="2237"/>
         <source>Split %n Selected Face(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/mesh/qgsmaptooleditmeshframe.cpp" line="1932"/>
@@ -102932,17 +103397,17 @@ Rasterizing map is recommended for proper rendering.</source>
     <message>
         <location filename="../src/gui/qgsmaptoolidentify.cpp" line="489"/>
         <source>Tile column</source>
-        <translation type="unfinished"></translation>
+        <translation>Столбец тайла</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsmaptoolidentify.cpp" line="490"/>
         <source>Tile row</source>
-        <translation type="unfinished"></translation>
+        <translation>Строка тайла</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsmaptoolidentify.cpp" line="491"/>
         <source>Tile zoom</source>
-        <translation type="unfinished"></translation>
+        <translation>Масштаб тайла</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsmaptoolidentify.cpp" line="706"/>
@@ -103049,14 +103514,14 @@ Rasterizing map is recommended for proper rendering.</source>
         <location filename="../src/gui/qgsmaptoolidentify.cpp" line="1364"/>
         <location filename="../src/gui/qgsmaptoolidentify.cpp" line="1380"/>
         <source>Distance along curve</source>
-        <translation type="unfinished"></translation>
+        <translation>Расстояние вдоль кривой</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsmaptoolidentify.cpp" line="1337"/>
         <location filename="../src/gui/qgsmaptoolidentify.cpp" line="1366"/>
         <location filename="../src/gui/qgsmaptoolidentify.cpp" line="1382"/>
         <source>Elevation</source>
-        <translation type="unfinished"></translation>
+        <translation>Высота</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsmaptoolidentify.cpp" line="851"/>
@@ -105194,7 +105659,11 @@ and re-encrypted using new password</source>
     <message numerus="yes">
         <location filename="../src/core/mesh/qgsmesheditor.cpp" line="797"/>
         <source>Add a face with new %n vertices</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -105217,7 +105686,7 @@ and re-encrypted using new password</source>
     <message>
         <location filename="../src/app/mesh/qgsmeshelevationpropertieswidget.cpp" line="37"/>
         <source>No set</source>
-        <translation type="unfinished"></translation>
+        <translation>Не установлено</translation>
     </message>
 </context>
 <context>
@@ -105225,12 +105694,12 @@ and re-encrypted using new password</source>
     <message>
         <location filename="../src/ui/mesh/qgsmeshelevationpropertieswidgetbase.ui"/>
         <source>Raster Elevation Properties</source>
-        <translation type="unfinished"></translation>
+        <translation>Свойства высотных данных растра</translation>
     </message>
     <message>
         <location filename="../src/ui/mesh/qgsmeshelevationpropertieswidgetbase.ui"/>
         <source>Elevation Surface</source>
-        <translation type="unfinished"></translation>
+        <translation>Поверхность рельефа</translation>
     </message>
     <message>
         <location filename="../src/ui/mesh/qgsmeshelevationpropertieswidgetbase.ui"/>
@@ -105245,7 +105714,7 @@ and re-encrypted using new password</source>
     <message>
         <location filename="../src/ui/mesh/qgsmeshelevationpropertieswidgetbase.ui"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Elevation scaling and offset can be used to manually correct elevation values from the layer.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The scale is applied to the mesh values before adding the offset.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Значения масштаба высоты и смещения можно вручную корректировать высотные данные слоя.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Масштаб применяется к значениям растра до того, как добавляется смещение.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../src/ui/mesh/qgsmeshelevationpropertieswidgetbase.ui"/>
@@ -106540,7 +107009,11 @@ and re-encrypted using new password</source>
         <location filename="../src/gui/qgsmessagebar.cpp" line="439"/>
         <source>%n more</source>
         <comment>unread messages</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -107393,7 +107866,11 @@ and re-encrypted using new password</source>
     <message numerus="yes">
         <location filename="../src/gui/processing/models/qgsmodeldesignerdialog.cpp" line="1159"/>
         <source>%n dependencies selected</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -108244,7 +108721,7 @@ See the log for more information.</source>
         <location filename="../src/providers/mssql/qgsmssqldataitems.cpp" line="457"/>
         <location filename="../src/providers/mssql/qgsmssqldataitems.cpp" line="479"/>
         <source>Import to MS SQL Server database</source>
-        <translation type="unfinished"></translation>
+        <translation>Импорт в базу данных MS SQL Server</translation>
     </message>
     <message>
         <location filename="../src/providers/mssql/qgsmssqldataitems.cpp" line="471"/>
@@ -110025,7 +110502,11 @@ b) Use the Configuration tab to add your credentials in an HTTP Basic Authentica
     <message numerus="yes">
         <location filename="../src/gui/qgsnewnamedialog.cpp" line="164"/>
         <source>%n Name(s) %1 exists</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/qgsnewnamedialog.cpp" line="168"/>
@@ -110792,7 +111273,11 @@ Error message: %1</source>
         <location filename="../src/gui/qgsowssourceselect.cpp" line="448"/>
         <source>Coordinate Reference System (%n available)</source>
         <comment>crs count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/qgsowssourceselect.cpp" line="493"/>
@@ -114454,12 +114939,12 @@ The bigger the number, the faster zooming with the mouse wheel will be.</source>
     <message>
         <location filename="../src/ui/qgsoptionsbase.ui"/>
         <source>Measure Tool Copy Settings</source>
-        <translation type="unfinished"></translation>
+        <translation>Настройки копирования для инструмента измерений</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsoptionsbase.ui"/>
         <source>C</source>
-        <translation type="unfinished"></translation>
+        <translation>C</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsoptionsbase.ui"/>
@@ -116147,12 +116632,12 @@ Should the existing classes be deleted?</source>
     <message>
         <location filename="../src/providers/pdal/qgspdalindexingtask.cpp" line="195"/>
         <source>Folder %1 is non-empty, but there isn&apos;t ept.json present.</source>
-        <translation type="unfinished"></translation>
+        <translation>Директория %1 не пустая, но в ней нет файла ept.json</translation>
     </message>
     <message>
         <location filename="../src/providers/pdal/qgspdalindexingtask.cpp" line="204"/>
         <source>Failed to remove empty directory %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось удалить пустую директорию %1</translation>
     </message>
 </context>
 <context>
@@ -118007,7 +118492,7 @@ Please search the list of installed plugins. You should find the plugin there, b
     <message>
         <location filename="../src/ui/qgspluginmanagerbase.ui"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;If this function is enabled, QGIS will inform you whenever a plugin update is available.&lt;/span&gt; Otherwise, fetching repositories will be performed during opening of the Plugin Manager window.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Если эта функция включена, QGIS будет информировать вас о доступности обновления модуля.&lt;/span&gt; В противном случае поиск репозиториев будет осуществляться при открытии окна управления модулями.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../src/ui/qgspluginmanagerbase.ui"/>
@@ -119020,7 +119505,7 @@ Raising this value may allow missing chunks to be rendered while lowering it may
     <message>
         <location filename="../src/ui/pointcloud/qgspointcloudlayersaveasdialogbase.ui"/>
         <source>Save Vector Layer as…</source>
-        <translation type="unfinished"></translation>
+        <translation>Сохранить векторный слой как…</translation>
     </message>
     <message>
         <location filename="../src/ui/pointcloud/qgspointcloudlayersaveasdialogbase.ui"/>
@@ -119184,7 +119669,7 @@ Raising this value may allow missing chunks to be rendered while lowering it may
     <message>
         <location filename="../src/gui/qgspointcloudquerybuilder.cpp" line="251"/>
         <source>Error in query. The subset string could not be set.</source>
-        <translation type="unfinished"></translation>
+        <translation>Error in query. The subset string could not be set.</translation>
     </message>
     <message>
         <location filename="../src/gui/qgspointcloudquerybuilder.cpp" line="274"/>
@@ -120948,7 +121433,11 @@ Write accesses will be denied.</source>
     <message numerus="yes">
         <location filename="../src/providers/postgres/raster/qgspostgresrasterprovider.cpp" line="745"/>
         <source>Data type size for band %1 could not be found: num bands is: %2 and the type size map for bands contains: %n item(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/postgres/raster/qgspostgresrasterprovider.cpp" line="826"/>
@@ -122040,7 +122529,11 @@ SQL: %3</translation>
     <message numerus="yes">
         <location filename="../src/gui/processing/qgsprocessingdxflayerswidgetwrapper.cpp" line="249"/>
         <source>%n vector layer(s) selected</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -122108,7 +122601,7 @@ SQL: %3</translation>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="2530"/>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="2627"/>
         <source>%1 options selected</source>
-        <translation>выделено параметров: %1 </translation>
+        <translation>выделено параметров: %1&#xa0;</translation>
     </message>
     <message>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="2650"/>
@@ -122118,7 +122611,11 @@ SQL: %3</translation>
     <message numerus="yes">
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="2654"/>
         <source>%n option(s) selected</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -122446,7 +122943,7 @@ SQL: %3</translation>
     <message>
         <location filename="../src/ui/processing/qgsprocessingfieldsmappingpanelbase.ui"/>
         <source>Invert selection</source>
-        <translation type="unfinished"></translation>
+        <translation>Инвертировать выделение</translation>
     </message>
 </context>
 <context>
@@ -122485,7 +122982,11 @@ SQL: %3</translation>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="4311"/>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="4326"/>
         <source>%n field(s) selected</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="4322"/>
@@ -123201,7 +123702,11 @@ SQL: %3</translation>
     <message numerus="yes">
         <location filename="../src/gui/processing/qgsprocessingmeshdatasetwidget.cpp" line="329"/>
         <source>%n option(s) selected</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -123336,7 +123841,11 @@ SQL: %3</translation>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="6955"/>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="7181"/>
         <source>%n input(s) selected</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -123572,7 +124081,11 @@ SQL: %3</translation>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="7625"/>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="7640"/>
         <source>%n attribute(s) selected</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="7636"/>
@@ -123908,7 +124421,11 @@ SQL: %3</translation>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="6507"/>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="6581"/>
         <source>%n band(s) selected</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -124182,7 +124699,11 @@ SQL: %3</translation>
     <message numerus="yes">
         <location filename="../src/gui/processing/qgsprocessingvectortilewriterlayerswidgetwrapper.cpp" line="292"/>
         <source>%n vector layer(s) selected</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -124626,7 +125147,7 @@ SQL: %3</translation>
     <message>
         <location filename="../src/app/project/qgsprojectelevationsettingswidget.cpp" line="163"/>
         <source>Terrain</source>
-        <translation type="unfinished"></translation>
+        <translation>Поверхность</translation>
     </message>
 </context>
 <context>
@@ -126366,17 +126887,17 @@ Proceed?</source>
     <message>
         <location filename="../src/gui/qgsprojectionselectiontreewidget.cpp" line="91"/>
         <source>Remove selected CRS from recently used CRS</source>
-        <translation type="unfinished"></translation>
+        <translation>Удалить выбранные СК из списка недавно использованных СК</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsprojectionselectiontreewidget.cpp" line="96"/>
         <source>Clear all recently used CRS</source>
-        <translation type="unfinished"></translation>
+        <translation>Очистить список недавно использованных СК</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsprojectionselectiontreewidget.cpp" line="315"/>
         <source>Remove from recently used CRS</source>
-        <translation type="unfinished"></translation>
+        <translation>Удалить из списка недавно использованных СК</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsprojectionselectiontreewidget.cpp" line="405"/>
@@ -126487,12 +127008,12 @@ Because of this the projection selector will not work…</source>
     <message>
         <location filename="../src/gui/qgsprojectionselectiontreewidget.cpp" line="1128"/>
         <source>Clear Recent CRS</source>
-        <translation type="unfinished"></translation>
+        <translation>Очистить список недавно использованных СК</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsprojectionselectiontreewidget.cpp" line="1129"/>
         <source>Are you sure you want to clear the list of recently used coordinate reference system?</source>
-        <translation type="unfinished"></translation>
+        <translation>Вы уверены, что хотите очистить список недавно использованных систем координат?</translation>
     </message>
 </context>
 <context>
@@ -127303,7 +127824,11 @@ Now let&apos;s get back to work, shall we?</source>
         <location filename="../src/gui/qgsquerybuilder.cpp" line="261"/>
         <source>The where clause returned %n row(s).</source>
         <comment>returned test rows</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/qgsquerybuilder.cpp" line="297"/>
@@ -127594,7 +128119,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../src/gui/qgsqueryresultwidget.cpp" line="247"/>
         <source>Copy</source>
-        <translation type="unfinished"></translation>
+        <translation>Копировать</translation>
     </message>
     <message>
         <location filename="../src/gui/qgsqueryresultwidget.cpp" line="352"/>
@@ -127717,7 +128242,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../src/ui/qgsqueryresultwidgetbase.ui"/>
         <source>Load Layer</source>
-        <translation type="unfinished"></translation>
+        <translation>Загрузить слой</translation>
     </message>
 </context>
 <context>
@@ -128737,7 +129262,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../src/app/raster/qgsrasterelevationpropertieswidget.cpp" line="38"/>
         <source>No set</source>
-        <translation type="unfinished"></translation>
+        <translation>Не установлено</translation>
     </message>
 </context>
 <context>
@@ -128750,7 +129275,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../src/ui/raster/qgsrasterelevationpropertieswidgetbase.ui"/>
         <source>Represents Elevation Surface</source>
-        <translation type="unfinished"></translation>
+        <translation>Представляет собой данные высоты</translation>
     </message>
     <message>
         <location filename="../src/ui/raster/qgsrasterelevationpropertieswidgetbase.ui"/>
@@ -128765,7 +129290,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../src/ui/raster/qgsrasterelevationpropertieswidgetbase.ui"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Elevation scaling and offset can be used to manually correct elevation values from the layer.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The scale is applied to the raster values before adding the offset.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Значения масштаба высоты и смещения можно вручную корректировать высотные данные слоя.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Масштаб применяется к значениям растра до того, как добавляется смещение.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../src/ui/raster/qgsrasterelevationpropertieswidgetbase.ui"/>
@@ -130059,22 +130584,22 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../src/ui/qgsrasterlayerpropertiesbase.ui"/>
         <source>Inserts the selected field or expression into the map tip</source>
-        <translation type="unfinished"></translation>
+        <translation>Вставляет выбранное поле или выражение во всплывающее описание</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsrasterlayerpropertiesbase.ui"/>
         <source>Insert</source>
-        <translation type="unfinished"></translation>
+        <translation>Вставить</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsrasterlayerpropertiesbase.ui"/>
         <source>The HTML map tips are shown when moving mouse over features of the currently selected layer when the &apos;Show Map Tips&apos; action is toggled on. If no HTML code is set, the feature display name is used.</source>
-        <translation type="unfinished"></translation>
+        <translation>Всплывающие подсказки HTML показываются при перемещении курсора над объектами текущего слоя, если включено отображение этих подсказок. Если HTML код не задан, будет показано отображаемое имя объекта.</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsrasterlayerpropertiesbase.ui"/>
         <source>The valid attribute names for this layer</source>
-        <translation type="unfinished"></translation>
+        <translation>Допустимые имена атрибутов для этого слоя</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsrasterlayerpropertiesbase.ui"/>
@@ -130586,13 +131111,13 @@ not displayed</source>
         <location filename="../src/app/options/qgsrasterrenderingoptions.cpp" line="42"/>
         <location filename="../src/app/options/qgsrasterrenderingoptions.cpp" line="46"/>
         <source>Bilinear</source>
-        <translation type="unfinished"></translation>
+        <translation>Билинейная</translation>
     </message>
     <message>
         <location filename="../src/app/options/qgsrasterrenderingoptions.cpp" line="43"/>
         <location filename="../src/app/options/qgsrasterrenderingoptions.cpp" line="47"/>
         <source>Cubic</source>
-        <translation type="unfinished"></translation>
+        <translation>Кубическая</translation>
     </message>
     <message>
         <location filename="../src/app/options/qgsrasterrenderingoptions.cpp" line="114"/>
@@ -131031,17 +131556,17 @@ not displayed</source>
     <message>
         <location filename="../src/ui/editorwidgets/qgsrelationreferenceconfigdlgbase.ui"/>
         <source>If no limit is set, all entries are loaded.</source>
-        <translation type="unfinished"></translation>
+        <translation>Если лимит не установлен, все элементы будут загружены</translation>
     </message>
     <message>
         <location filename="../src/ui/editorwidgets/qgsrelationreferenceconfigdlgbase.ui"/>
         <source>Limit number of entries</source>
-        <translation type="unfinished"></translation>
+        <translation>Ограничить количество записей</translation>
     </message>
     <message>
         <location filename="../src/ui/editorwidgets/qgsrelationreferenceconfigdlgbase.ui"/>
         <source>Maximum number of entries</source>
-        <translation type="unfinished"></translation>
+        <translation>Максимальное число записей</translation>
     </message>
 </context>
 <context>
@@ -131739,7 +132264,7 @@ The default actions are activated in the Action section of the layer properties.
     <message>
         <location filename="../src/core/pointcloud/qgsremotecopcpointcloudindex.cpp" line="93"/>
         <source>Unable to recognize %1 as a LAZ file: &quot;%2&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>Невозможно распознать %1 как файл LAZ: &quot;%2&quot;</translation>
     </message>
 </context>
 <context>
@@ -132063,7 +132588,11 @@ The default actions are activated in the Action section of the layer properties.
         <location filename="../src/gui/symbology/qgsrulebasedrendererwidget.cpp" line="885"/>
         <source>Filter returned %n feature(s)</source>
         <comment>number of filtered features</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -133437,7 +133966,11 @@ and only the geometry column of the main typename can be used as the geometry co
         <location filename="../src/gui/qgssearchquerybuilder.cpp" line="201"/>
         <source>Found %n matching feature(s).</source>
         <comment>test result</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/qgssearchquerybuilder.cpp" line="277"/>
@@ -133465,7 +133998,11 @@ and only the geometry column of the main typename can be used as the geometry co
         <location filename="../src/app/qgsselectbyformdialog.cpp" line="76"/>
         <source>Zoomed to %n matching feature(s)</source>
         <comment>number of matching features</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/app/qgsselectbyformdialog.cpp" line="83"/>
@@ -135087,7 +135624,11 @@ please provide a new name:</source>
     <message numerus="yes">
         <location filename="../src/app/qgsstatisticalsummarydockwidget.cpp" line="508"/>
         <source>%n second(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -135828,7 +136369,11 @@ please provide a new name:</source>
     <message numerus="yes">
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="727"/>
         <source>Successfully imported %n item(s).</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="781"/>
@@ -136114,7 +136659,11 @@ Overwrite?</source>
     <message numerus="yes">
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="2250"/>
         <source>Do you really want to remove %n label setting(s)?</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="2257"/>
@@ -136124,7 +136673,11 @@ Overwrite?</source>
     <message numerus="yes">
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="2258"/>
         <source>Do you really want to remove %n legend patch shape(s)?</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="2265"/>
@@ -136134,7 +136687,11 @@ Overwrite?</source>
     <message numerus="yes">
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="2266"/>
         <source>Do you really want to remove %n 3D symbol(s)?</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="2998"/>
@@ -136236,7 +136793,11 @@ Overwrite?</source>
     <message numerus="yes">
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="2216"/>
         <source>Do you really want to remove %n item(s)?</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="2225"/>
@@ -136251,7 +136812,11 @@ Overwrite?</source>
     <message numerus="yes">
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="2242"/>
         <source>Do you really want to remove %n text format(s)?</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="2249"/>
@@ -136397,7 +136962,11 @@ Kindly select a group or smart group you might want to delete.</source>
     <message numerus="yes">
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="2226"/>
         <source>Do you really want to remove %n symbol(s)?</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="2233"/>
@@ -136407,7 +136976,11 @@ Kindly select a group or smart group you might want to delete.</source>
     <message numerus="yes">
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="2234"/>
         <source>Do you really want to remove %n ramp(s)?</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/symbology/qgsstylemanagerdialog.cpp" line="2368"/>
@@ -137601,42 +138174,74 @@ Kindly select a group or smart group you might want to delete.</source>
     <message numerus="yes">
         <location filename="../src/gui/tableeditor/qgstableeditordialog.cpp" line="273"/>
         <source>%n Row(s) Above</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/tableeditor/qgstableeditordialog.cpp" line="274"/>
         <source>%n Row(s) Below</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/tableeditor/qgstableeditordialog.cpp" line="275"/>
         <source>Delete %n Row(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/tableeditor/qgstableeditordialog.cpp" line="276"/>
         <source>Select %n Row(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/tableeditor/qgstableeditordialog.cpp" line="299"/>
         <source>%n Column(s) Before</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/tableeditor/qgstableeditordialog.cpp" line="300"/>
         <source>%n Column(s) After</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/tableeditor/qgstableeditordialog.cpp" line="301"/>
         <source>Delete %n Column(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/tableeditor/qgstableeditordialog.cpp" line="302"/>
         <source>Select %n Column(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/tableeditor/qgstableeditordialog.cpp" line="285"/>
@@ -137821,27 +138426,47 @@ Kindly select a group or smart group you might want to delete.</source>
     <message numerus="yes">
         <location filename="../src/gui/tableeditor/qgstableeditorwidget.cpp" line="69"/>
         <source>Insert %n Column(s) Before</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/tableeditor/qgstableeditorwidget.cpp" line="71"/>
         <source>Insert %n Column(s) After</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/tableeditor/qgstableeditorwidget.cpp" line="74"/>
         <source>Delete %n Column(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/tableeditor/qgstableeditorwidget.cpp" line="111"/>
         <source>Insert %n Row(s) Above</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/gui/tableeditor/qgstableeditorwidget.cpp" line="113"/>
         <source>Insert %n Row(s) Below</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/tableeditor/qgstableeditorwidget.cpp" line="116"/>
@@ -137851,7 +138476,11 @@ Kindly select a group or smart group you might want to delete.</source>
     <message numerus="yes">
         <location filename="../src/gui/tableeditor/qgstableeditorwidget.cpp" line="116"/>
         <source>Delete %n Row(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/gui/tableeditor/qgstableeditorwidget.cpp" line="199"/>
@@ -137954,7 +138583,11 @@ Kindly select a group or smart group you might want to delete.</source>
     <message numerus="yes">
         <location filename="../src/gui/qgstaskmanagerwidget.cpp" line="660"/>
         <source>%n active task(s) running</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -140064,7 +140697,7 @@ p, li { white-space: pre-wrap; }
         <location filename="../src/app/options/qgsuserprofileoptions.cpp" line="79"/>
         <source>Active Profile (%1)</source>
         <comment>Active profile name</comment>
-        <translation type="unfinished"></translation>
+        <translation>Активный профиль (%1)</translation>
     </message>
     <message>
         <location filename="../src/app/options/qgsuserprofileoptions.cpp" line="103"/>
@@ -140097,7 +140730,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../src/ui/qgsuserprofileoptionswidgetbase.ui"/>
         <source>Let user choose profile at start up</source>
-        <translation type="unfinished"></translation>
+        <translation>Выбирать профиль при загрузке</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsuserprofileoptionswidgetbase.ui"/>
@@ -140112,12 +140745,12 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../src/ui/qgsuserprofileoptionswidgetbase.ui"/>
         <source>Profile Selector</source>
-        <translation type="unfinished"></translation>
+        <translation>Выбор профиля</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsuserprofileoptionswidgetbase.ui"/>
         <source>Icon size</source>
-        <translation type="unfinished"></translation>
+        <translation>Размер иконки</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsuserprofileoptionswidgetbase.ui"/>
@@ -140147,12 +140780,12 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../src/ui/qgsuserprofileoptionswidgetbase.ui"/>
         <source>Active Profile</source>
-        <translation type="unfinished"></translation>
+        <translation>Активный профиль</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsuserprofileoptionswidgetbase.ui"/>
         <source>Change icon</source>
-        <translation type="unfinished"></translation>
+        <translation>Изменить изображение</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsuserprofileoptionswidgetbase.ui"/>
@@ -140170,7 +140803,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../src/ui/qgsuserprofileselectiondialog.ui"/>
         <source>Profiles</source>
-        <translation type="unfinished"></translation>
+        <translation>Профили</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsuserprofileselectiondialog.ui"/>
@@ -140195,12 +140828,12 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../src/ui/qgsuserprofileselectiondialog.ui"/>
         <source>Ok</source>
-        <translation type="unfinished"></translation>
+        <translation>ОК</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsuserprofileselectiondialog.ui"/>
         <source>Return</source>
-        <translation type="unfinished"></translation>
+        <translation>Вернуться</translation>
     </message>
     <message>
         <location filename="../src/app/options/qgsuserprofileselectiondialog.cpp" line="77"/>
@@ -140533,7 +141166,7 @@ Error was: %2</source>
     <message>
         <location filename="../src/app/vector/qgsvectorelevationpropertieswidget.cpp" line="42"/>
         <source>No set</source>
-        <translation type="unfinished"></translation>
+        <translation>Не установлено</translation>
     </message>
     <message>
         <location filename="../src/app/vector/qgsvectorelevationpropertieswidget.cpp" line="44"/>
@@ -140743,7 +141376,7 @@ Error was: %2</source>
     <message>
         <location filename="../src/ui/qgsvectorelevationpropertieswidgetbase.ui"/>
         <source>GroupBox</source>
-        <translation type="unfinished"></translation>
+        <translation>GroupBox</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsvectorelevationpropertieswidgetbase.ui"/>
@@ -141113,31 +141746,51 @@ Error was: %2</source>
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="644"/>
         <source>SUCCESS: %n attribute(s) deleted.</source>
         <comment>deleted attributes count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="653"/>
         <source>ERROR: %n attribute(s) not deleted.</source>
         <comment>not deleted attributes count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="703"/>
         <source>SUCCESS: %n attribute(s) added.</source>
         <comment>added attributes count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="710"/>
         <source>ERROR: %n new attribute(s) not added</source>
         <comment>not added attributes count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="678"/>
         <source>SUCCESS: %n attribute(s) renamed.</source>
         <comment>renamed attributes count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="140"/>
@@ -141148,7 +141801,11 @@ Error was: %2</source>
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="687"/>
         <source>ERROR: %n attribute(s) not renamed</source>
         <comment>not renamed attributes count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="733"/>
@@ -141207,62 +141864,102 @@ Error was: %2</source>
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="832"/>
         <source>SUCCESS: %n attribute value(s) changed.</source>
         <comment>changed attribute values count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="839"/>
         <source>ERROR: %n attribute value change(s) not applied.</source>
         <comment>not changed attribute values count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="871"/>
         <source>SUCCESS: %n feature(s) deleted.</source>
         <comment>deleted features count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="886"/>
         <source>ERROR: %n feature(s) not deleted.</source>
         <comment>not deleted features count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="926"/>
         <source>SUCCESS: %n feature(s) added.</source>
         <comment>added features count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="950"/>
         <source>ERROR: %n feature(s) not added.</source>
         <comment>not added features count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="628"/>
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="970"/>
         <source>ERROR: %n feature(s) not added - provider doesn&apos;t support adding features.</source>
         <comment>not added features count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="620"/>
         <source>ERROR: %n feature(s) not added - geometry type is not compatible with the current layer.</source>
         <comment>not added features count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="807"/>
         <source>SUCCESS: %n geometries were changed.</source>
         <comment>changed geometries count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="814"/>
         <source>ERROR: %n geometries not changed.</source>
         <comment>not changed geometries count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/core/vector/qgsvectorlayereditbuffer.cpp" line="454"/>
@@ -141322,12 +142019,12 @@ Error was: %2</source>
     <message>
         <location filename="../src/core/vector/qgsvectorlayereditbuffergroup.cpp" line="309"/>
         <source>WARNING: changes to layer &apos;%1&apos; where already sent to data provider and cannot be rolled back.</source>
-        <translation type="unfinished"></translation>
+        <translation>ПРЕДУПРЕЖДЕНИЕ: изменения в слое &apos;%1&apos; уже были отправлены провайдеру данных и не могут быть отменены:</translation>
     </message>
     <message>
         <location filename="../src/core/vector/qgsvectorlayereditbuffergroup.cpp" line="312"/>
         <source>WARNING: changes to following layers where already sent to data provider and cannot be rolled back:</source>
-        <translation type="unfinished"></translation>
+        <translation>ПРЕДУПРЕЖДЕНИЕ: изменения в следующих слоях уже были отправлены провайдеру данных и не могут быть отменены:</translation>
     </message>
     <message>
         <location filename="../src/core/vector/qgsvectorlayereditbuffergroup.cpp" line="314"/>
@@ -141705,7 +142402,7 @@ Error was: %2</source>
     <message>
         <location filename="../src/gui/vector/qgsvectorlayerproperties.cpp" line="1288"/>
         <source>Save default style to local database</source>
-        <translation type="unfinished"></translation>
+        <translation>Сохранить стиль по умолчанию в локальной базе данных</translation>
     </message>
     <message>
         <location filename="../src/gui/vector/qgsvectorlayerproperties.cpp" line="1424"/>
@@ -142857,7 +143554,7 @@ Error was: %2</source>
     <message>
         <location filename="../src/gui/vector/qgsvectorlayersavestyledialog.cpp" line="102"/>
         <source>As Default In Local Database</source>
-        <translation type="unfinished"></translation>
+        <translation>В соответствии с умолчанием локальной базы данных</translation>
     </message>
     <message>
         <location filename="../src/gui/vector/qgsvectorlayersavestyledialog.cpp" line="186"/>
@@ -142887,17 +143584,17 @@ Error was: %2</source>
     <message>
         <location filename="../src/ui/qgsvectorlayersavestyledialog.ui"/>
         <source>SLD Options</source>
-        <translation type="unfinished"></translation>
+        <translation>Параметры SLD</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsvectorlayersavestyledialog.ui"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Complex and rotated polygon fills are generally not supported by SLD. &lt;/p&gt;&lt;p&gt;By checking this option supported symbols will be exported as PNG tiles in the same directory of the SLD document and the SLD document will refer to the PNG images as external graphic symbols.&lt;/p&gt;&lt;p&gt;Note that not all symbols can be exported to PNG, if the symbol cannot be exported the default SLD export implementation will be used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Сложные и повёрнутые заливки полигонов обычно не поддерживаются SLD. &lt;/p&gt;&lt;p&gt;При выборе этого параметра поддерживаемые символы будут экспортированы в виде PNG-тайлов в тот же каталог, что и документ SLD, а документ SLD будет ссылаться на PNG-изображения как на внешние графические символы.&lt;/p&gt;&lt;p&gt;Примечание: не все символы могут быть экспортированы в PNG; если символ не может быть экспортирован, будет использована реализация экспорта в SLD по умолчанию.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsvectorlayersavestyledialog.ui"/>
         <source>Export polygon fills as PNG tiles</source>
-        <translation type="unfinished"></translation>
+        <translation>Экспорт заливок полигонов в виде PNG-тайлов</translation>
     </message>
 </context>
 <context>
@@ -143145,7 +143842,7 @@ Error was: %2</source>
     <message>
         <location filename="../src/ui/qgsvectorrenderingoptionsbase.ui"/>
         <source>Maximum scale at which the layer should be simplified (1:1 always simplifies)</source>
-        <translation type="unfinished"></translation>
+        <translation>Максимальный масштаб при котором слой должен упрощаться (1:1 упрощать всегда)</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsvectorrenderingoptionsbase.ui"/>
@@ -143160,12 +143857,12 @@ Error was: %2</source>
     <message>
         <location filename="../src/ui/qgsvectorrenderingoptionsbase.ui"/>
         <source>Simplification threshold (higher values result in more simplification)</source>
-        <translation type="unfinished"></translation>
+        <translation>Порог упрощения (большие значения приводят к большей генерализации)</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsvectorrenderingoptionsbase.ui"/>
         <source>pixels</source>
-        <translation type="unfinished"></translation>
+        <translation>пиксели</translation>
     </message>
     <message>
         <location filename="../src/ui/qgsvectorrenderingoptionsbase.ui"/>
@@ -144142,7 +144839,11 @@ Error was: %2</source>
         <location filename="../src/app/vertextool/qgsvertextool.cpp" line="2944"/>
         <source>Validation finished (%n error(s) found).</source>
         <comment>number of geometry errors</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -145118,7 +145819,11 @@ In particular, saving a virtual layer with embedded layers to a QLR file can be 
         <location filename="../src/providers/wms/qgswmssourceselect.cpp" line="984"/>
         <source>Coordinate Reference System (%n available)</source>
         <comment>crs count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/wms/qgswmssourceselect.cpp" line="916"/>
@@ -145144,7 +145849,11 @@ In particular, saving a virtual layer with embedded layers to a QLR file can be 
         <location filename="../src/providers/wms/qgswmssourceselect.cpp" line="1007"/>
         <source>%n Layer(s) selected</source>
         <comment>selected layer count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/wms/qgswmssourceselect.cpp" line="1013"/>
@@ -145867,7 +146576,11 @@ Response was:
         <location filename="../src/providers/wcs/qgswcsprovider.cpp" line="1301"/>
         <source>(and %n more)</source>
         <comment>crs</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/wcs/qgswcsprovider.cpp" line="1296"/>
@@ -145944,7 +146657,11 @@ Response was:
     <message numerus="yes">
         <location filename="../src/providers/wcs/qgswcsprovider.cpp" line="1386"/>
         <source>And %n more coverage(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/wcs/qgswcsprovider.cpp" line="1412"/>
@@ -146500,7 +147217,11 @@ Reason phrase: %2</source>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="1143"/>
         <source>, %n cache misses.</source>
         <comment>tile cache missed</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="1161"/>
@@ -146783,7 +147504,11 @@ Reason phrase: %2</source>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="2525"/>
         <source>(and %n more)</source>
         <comment>crs</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="2535"/>
@@ -146813,7 +147538,11 @@ Reason phrase: %2</source>
     <message numerus="yes">
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="3765"/>
         <source>Result parsing failed. %n feature type(s) were guessed from gml (%2) but no features were parsed.</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="2602"/>
@@ -146892,19 +147621,31 @@ Reason phrase: %2</source>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="1141"/>
         <source>%n tile request(s) in background</source>
         <comment>tile request count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="1142"/>
         <source>, %n cache hit(s)</source>
         <comment>tile cache hits</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="1144"/>
         <source>, %n error(s).</source>
         <comment>errors</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="2047"/>
@@ -147091,7 +147832,11 @@ Response was:
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="3031"/>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="3057"/>
         <source>%n missing row(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="3032"/>
@@ -147102,7 +147847,11 @@ Response was:
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="3044"/>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="3070"/>
         <source>%n missing column(s)</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="3045"/>
@@ -147209,19 +147958,31 @@ Reason phrase: %2</source>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="4910"/>
         <source>%n tile request(s) in background</source>
         <comment>tile request count</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="4911"/>
         <source>, %n cache hit(s)</source>
         <comment>tile cache hits</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="4913"/>
         <source>, %n error(s).</source>
         <comment>errors</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="4786"/>
@@ -147242,7 +148003,11 @@ Reason phrase: %2</source>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="4912"/>
         <source>, %n cache misses.</source>
         <comment>tile cache missed</comment>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/providers/wms/qgswmsprovider.cpp" line="4933"/>
@@ -148299,7 +149064,7 @@ Reason phrase: %2</source>
     <message>
         <location filename="../src/plugins/grass/qtermwidget/SearchBar.ui"/>
         <source>SearchBar</source>
-        <translation type="unfinished"></translation>
+        <translation>Панель поиска</translation>
     </message>
     <message>
         <location filename="../src/plugins/grass/qtermwidget/SearchBar.ui"/>
@@ -149244,19 +150009,19 @@ Reason phrase: %2</source>
     </message>
     <message>
         <source>Leaflet HTML output title</source>
-        <translation type="unfinished"></translation>
+        <translation>Заголовок HTML-вывода Leaflet</translation>
     </message>
     <message>
         <source>Leaflet HTML output attribution</source>
-        <translation type="unfinished"></translation>
+        <translation>Атрибуция HTML-вывода Leaflet</translation>
     </message>
     <message>
         <source>Include OpenStreetMap basemap in Leaflet HTML output</source>
-        <translation type="unfinished"></translation>
+        <translation>Включить базовую карту OpenStreetMap в выходной файл Leaflet HTML</translation>
     </message>
     <message>
         <source>Created by QGIS algorithm:</source>
-        <translation type="unfinished"></translation>
+        <translation>Создано алгоритмом QGIS:</translation>
     </message>
 </context>
 <context>
@@ -149775,17 +150540,17 @@ Reason phrase: %2</source>
     <message>
         <location filename="../src/ui/symbollayer/widget_animatedmarker.ui"/>
         <source>Left</source>
-        <translation type="unfinished"></translation>
+        <translation>Слева</translation>
     </message>
     <message>
         <location filename="../src/ui/symbollayer/widget_animatedmarker.ui"/>
         <source>HCenter</source>
-        <translation type="unfinished"></translation>
+        <translation>Горизонтальный центр</translation>
     </message>
     <message>
         <location filename="../src/ui/symbollayer/widget_animatedmarker.ui"/>
         <source>Right</source>
-        <translation type="unfinished"></translation>
+        <translation>Справа</translation>
     </message>
     <message>
         <location filename="../src/ui/symbollayer/widget_animatedmarker.ui"/>
@@ -149805,17 +150570,17 @@ Reason phrase: %2</source>
     <message>
         <location filename="../src/ui/symbollayer/widget_animatedmarker.ui"/>
         <source>Top</source>
-        <translation type="unfinished"></translation>
+        <translation>Сверху</translation>
     </message>
     <message>
         <location filename="../src/ui/symbollayer/widget_animatedmarker.ui"/>
         <source>VCenter</source>
-        <translation type="unfinished"></translation>
+        <translation>Вертикальный центр</translation>
     </message>
     <message>
         <location filename="../src/ui/symbollayer/widget_animatedmarker.ui"/>
         <source>Bottom</source>
-        <translation type="unfinished"></translation>
+        <translation>Снизу</translation>
     </message>
     <message>
         <location filename="../src/ui/symbollayer/widget_animatedmarker.ui"/>
@@ -152291,7 +153056,11 @@ Run topology check again.</source>
         <location filename="../src/plugins/topology/checkDock.cpp" line="328"/>
         <location filename="../src/plugins/topology/checkDock.cpp" line="427"/>
         <source>%n error(s) were found</source>
-        <translation></translation>
+        <translation>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../src/plugins/topology/checkDock.cpp" line="332"/>
@@ -152321,7 +153090,7 @@ Run topology check again.</source>
     <message>
         <location filename="../src/plugins/topology/checkDock.ui"/>
         <source>Show:</source>
-        <translation type="unfinished"></translation>
+        <translation>Показывать:</translation>
     </message>
     <message>
         <location filename="../src/plugins/topology/checkDock.ui"/>
@@ -152801,15 +153570,15 @@ Check the processing framework log to look for errors.</source>
     </message>
     <message>
         <source>Input pixel value to treat as &quot;nodata&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>Входное значение, трактуемое как &quot;нет данных&quot;</translation>
     </message>
     <message>
         <source>Assign specified &quot;nodata&quot; value to output</source>
-        <translation type="unfinished"></translation>
+        <translation>Задать значение &quot;нет данных&quot; для выходного файла</translation>
     </message>
     <message>
         <source>Do not output nodata values</source>
-        <translation type="unfinished"></translation>
+        <translation>Не выводить значения NoData</translation>
     </message>
     <message>
         <source>The source nodata option (-srcnodata) is only available on GDAL 3.6.4 or later</source>
@@ -157167,7 +157936,7 @@ The algorithm also makes it possible to reorder the bands for the newly-created 
     <message>
         <location filename="../src/core/expression/qgsexpression.cpp" line="832"/>
         <source>Last cursor position on the canvas in the current layers&apos;s geographical coordinates.</source>
-        <translation type="unfinished"></translation>
+        <translation>Последняя позиция курсора на карте в географических координатах текущего слоя.</translation>
     </message>
     <message>
         <location filename="../src/core/expression/qgsexpression.cpp" line="835"/>
