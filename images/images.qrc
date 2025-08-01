@@ -233,7 +233,6 @@
         <file>themes/default/mActionAddLegend.svg</file>
         <file>themes/default/mActionAddMap.svg</file>
         <file>themes/default/mActionAddMssqlLayer.svg</file>
-        <file>themes/default/mActionAddDb2Layer.svg</file>
         <file>themes/default/mActionAddOgrLayer.svg</file>
         <file>themes/default/mActionAddOracleLayer.svg</file>
         <file>themes/default/mActionAddPostgisLayer.svg</file>
@@ -248,7 +247,6 @@
         <file>themes/default/mActionAddXyzLayer.svg</file>
         <file>themes/default/mActionAddVectorTileLayer.svg</file>
         <file>themes/default/mActionAddPointCloudLayer.svg</file>
-        <file>themes/default/mActionAddGeonodeLayer.svg</file>
         <file>themes/default/mActionAddDelimitedTextLayer.svg</file>
         <file>themes/default/mActionAddVirtualLayer.svg</file>
         <file>themes/default/mActionAlignBottom.svg</file>
@@ -494,7 +492,6 @@
         <file>themes/default/mIconDataDefineExpression.svg</file>
         <file>themes/default/mIconDataDefineExpressionError.svg</file>
         <file>themes/default/mIconDataDefineExpressionOn.svg</file>
-        <file>themes/default/mIconDb2.svg</file>
         <file>themes/default/mIconDbSchema.svg</file>
         <file>themes/default/mIconDelete.svg</file>
         <file>themes/default/mIconDeselected.svg</file>
@@ -522,7 +519,6 @@
         <file>themes/default/mIconFieldTime.svg</file>
         <file>themes/default/mIconFile.svg</file>
         <file>themes/default/mIconFileLink.svg</file>
-        <file>themes/default/mIconGeonode.svg</file>
         <file>themes/default/mIconInfo.svg</file>
         <file>themes/default/mIconImport.gif</file>
         <file>themes/default/mIconLabelQuadrantCenter.svg</file>
@@ -904,16 +900,6 @@
         <file>themes/default/mLayoutItemMarker.svg</file>
         <file>themes/default/algorithms/mAlgorithmConstantRaster.svg</file>
         <file>themes/default/mIconStopwatch.svg</file>
-        <file>themes/default/georeferencer/mGeorefRun.png</file>
-        <file>themes/default/georeferencer/mPushButtonPencil.png</file>
-        <file>themes/default/georeferencer/mActionGDALScript.png</file>
-        <file>themes/default/georeferencer/mActionLinkGeorefToQgis.png</file>
-        <file>themes/default/georeferencer/mActionLinkQGisToGeoref.png</file>
-        <file>themes/default/georeferencer/mActionLoadGCPpoints.png</file>
-        <file>themes/default/georeferencer/mActionAddGCPPoint.png</file>
-        <file>themes/default/georeferencer/mActionDeleteGCPPoint.png</file>
-        <file>themes/default/georeferencer/mActionMoveGCPPoint.png</file>
-        <file>themes/default/georeferencer/mActionSaveGCPpointsAs.png</file>
         <file>themes/default/georeferencer/mGeorefRun.svg</file>
         <file>themes/default/georeferencer/mPushButtonPencil.svg</file>
         <file>themes/default/georeferencer/mActionGDALScript.svg</file>

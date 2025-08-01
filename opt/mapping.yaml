@@ -68,18 +68,14 @@ rules:
   - '*.ts'
 - source: images
   include:
-  - '**/*.gif'
-  - '**/*.jpg'
-  - '**/*.png'
-  - '**/*.svg'
-  - '**/*.txt'
-  - '**/*.xcf'
+  - '**/*'
   exclude:
   - 'README-md/**/*'
   - 'icons/qgis-full.png'
   - 'icons/qgis-icon*'
   - 'icons/qgis_icon.*'
   - 'icons/sponsor_medals/**/*'
+  - 'icons/mac/**/*'
   - 'splash/**/*'
   - 'themes/default/nextgis.svg'
   - 'themes/default/mActionHelpAbout.svg'
