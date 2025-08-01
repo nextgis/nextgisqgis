@@ -1,0 +1,18 @@
+--- a/images/images.qrc	2025-07-15 20:09:37.152532488 +0300
++++ b/images/images.qrc	2025-08-01 12:00:59.574249862 +0300
+@@ -68,6 +68,7 @@
+         <file>flags/ky.svg</file>
+         <file>icons/qgis-icon-16x16.png</file>
+         <file>icons/qgis-icon-60x60.png</file>
++        <file>icons/qgis-icon-512x512.png</file>
+         <file>icons/qgis-full.png</file>
+         <file>icons/qbrowser_icon.svg</file>
+         <file>north_arrows/default.png</file>
+@@ -986,6 +987,7 @@
+         <file>themes/default/mActionTextAlongLine.svg</file>
+         <file>themes/default/mActionNewElevationProfile.svg</file>
+         <file>themes/default/mIconSurfaceElevationFillAbove.svg</file>
++        <file>themes/default/nextgis.svg</file>
+     </qresource>
+     <qresource prefix="/images/tips">
+         <file alias="symbol_levels.png">qgis_tips/symbol_levels.png</file>
