@@ -97,12 +97,38 @@ endif()
 #    add_subdirectory(mssql)
 #endif()
 
+set(RECURSIVE_PROVIDERS wfs)
+
 macro(add_provider PLUGIN_NAME)
-    include_directories (${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME})
-    file(GLOB PROV_${PLUGIN_NAME}_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.h")
-    file(GLOB PROV_${PLUGIN_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.cpp")
-    # file(GLOB PROV_${PLUGIN_NAME}_UIS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.ui")
-    file(GLOB PROV_${PLUGIN_NAME}_RCS "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.qrc")
+    # Add main provider directory
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME})
+
+    # Add all subdirectories of provider
+    file(GLOB PROV_SUBDIRS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}
+        ${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*
+    )
+    foreach(subdir ${PROV_SUBDIRS})
+        if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/${subdir}")
+            include_directories(${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/${subdir})
+        endif()
+    endforeach()
+
+    list(FIND RECURSIVE_PROVIDERS "${PLUGIN_NAME}" _is_recursive)
+    if(_is_recursive GREATER -1)
+        set(_glob_type GLOB_RECURSE)
+    else()
+        set(_glob_type GLOB)
+    endif()
+
+    file(${_glob_type} PROV_${PLUGIN_NAME}_HEADERS
+        "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.h"
+    )
+    file(${_glob_type} PROV_${PLUGIN_NAME}_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.cpp"
+    )
+    file(${_glob_type} PROV_${PLUGIN_NAME}_RCS
+        "${CMAKE_CURRENT_SOURCE_DIR}/${PLUGIN_NAME}/*.qrc"
+    )
 
     # if(NOT PREPARE_ONLY)
         # if(PROV_${PLUGIN_NAME}_RCS)
@@ -127,13 +153,13 @@ macro(add_provider PLUGIN_NAME)
     #     set(PROV_${PLUGIN_NAME}_HEADERS ${PROV_${PLUGIN_NAME}_HEADERS}
     #         ${CMAKE_SOURCE_DIR}/src/gui/auth/qgsauthsettingswidget.h
     #     )
-        set(PROV_${PLUGIN_NAME}_SOURCES ${PROV_${PLUGIN_NAME}_SOURCES} 
+        set(PROV_${PLUGIN_NAME}_SOURCES ${PROV_${PLUGIN_NAME}_SOURCES}
             ${CMAKE_CURRENT_SOURCE_DIR}/postgres/raster/qgspostgresrastertemporalsettingswidget.cpp
         )
         set(LIB_NAME provider_${PLUGIN_NAME})
     elseif("${PLUGIN_NAME}" MATCHES "postgres/raster")
         set(LIB_NAME "provider_postgres_raster")
-        set(PROV_${PLUGIN_NAME}_SOURCES ${PROV_${PLUGIN_NAME}_SOURCES} 
+        set(PROV_${PLUGIN_NAME}_SOURCES ${PROV_${PLUGIN_NAME}_SOURCES}
             ${CMAKE_CURRENT_SOURCE_DIR}/postgres/qgspostgresconn.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/postgres/qgspostgresconnpool.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/postgres/qgspostgresprovidermetadatautils.cpp
@@ -167,13 +193,13 @@ macro(add_provider PLUGIN_NAME)
 
     target_link_libraries(${LIB_NAME} PRIVATE
         ${NG_PREFIX}qgis_core
-        ${NG_PREFIX}qgis_gui 
+        ${NG_PREFIX}qgis_gui
         ${NG_PREFIX}qgis_analysis
     )
-    
+
     target_link_libraries(${LIB_NAME}_a PRIVATE
         ${NG_PREFIX}qgis_core
-        ${NG_PREFIX}qgis_gui 
+        ${NG_PREFIX}qgis_gui
         ${NG_PREFIX}qgis_analysis
     )
 
