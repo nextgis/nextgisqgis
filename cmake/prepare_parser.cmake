@@ -48,21 +48,22 @@ macro(add_bison_files)
 
                 set(_out ${CMAKE_CURRENT_SOURCE_DIR}/${_basename}.cpp)
 
+                file(RELATIVE_PATH _in_rel ${CMAKE_SOURCE_DIR} ${_in})
+                file(RELATIVE_PATH _out_rel ${CMAKE_SOURCE_DIR} ${_out})
+
                 # bison options:
                 # -t add debugging facilities
                 # -d produce additional header file (used in parser.l)
                 # -v produce additional *.output file with parser states
 
-                add_custom_command(
-                    OUTPUT ${_out}
+                add_custom_target(
+                    bison_${_basename} ALL
                     COMMAND ${BISON_EXECUTABLE}
-                    ARGS
-                    -o${_out} -d
-                    ${_in}
+                        -o${_out_rel} -d
+                        ${_in_rel}
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                     DEPENDS ${_in}
                 )
-
-                add_custom_target(bison_${_basename} DEPENDS ${_out})
                 set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} bison_${_basename})
             endforeach ()
             set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
@@ -83,22 +84,23 @@ macro(add_bison_files_prefix prefix)
 
                 set(_out ${CMAKE_CURRENT_SOURCE_DIR}/${_basename}.cpp)
 
+                file(RELATIVE_PATH _in_rel ${CMAKE_SOURCE_DIR} ${_in})
+                file(RELATIVE_PATH _out_rel ${CMAKE_SOURCE_DIR} ${_out})
 
                 # bison options:
                 # -t add debugging facilities
                 # -d produce additional header file (used in parser.l)
                 # -v produce additional *.output file with parser states
 
-                add_custom_command(
-                    OUTPUT ${_out}
+                add_custom_target(
+                    bison_prefix_${_basename} ALL
                     COMMAND ${BISON_EXECUTABLE}
-                    ARGS
-                    -p ${prefix}
-                    -o${_out} -d
-                    ${_in}
+                        -p ${prefix}
+                        -o${_out_rel} -d
+                        ${_in_rel}
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                     DEPENDS ${_in}
                 )
-                add_custom_target(bison_prefix_${_basename} DEPENDS ${_out})
                 set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} bison_prefix_${_basename})
             endforeach ()
             set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
@@ -139,17 +141,19 @@ macro(add_flex_files)
 
                 set(_out ${CMAKE_CURRENT_SOURCE_DIR}/flex_${_basename}.cpp)
 
+                file(RELATIVE_PATH _in_rel ${CMAKE_SOURCE_DIR} ${_in})
+                file(RELATIVE_PATH _out_rel ${CMAKE_SOURCE_DIR} ${_out})
+
                 # -d option for flex means that it will produce output to stderr while analyzing
 
-                add_custom_command(
-                    OUTPUT ${_out}
+                add_custom_target(
+                    flex_${_basename} ALL
                     COMMAND ${FLEX_EXECUTABLE}
-                    ARGS
-                    -o${_out}
-                    ${_in}
+                        -o${_out_rel}
+                        ${_in_rel}
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                     DEPENDS ${_in}
                 )
-                add_custom_target(flex_${_basename} DEPENDS ${_out})
                 set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} flex_${_basename})
             endforeach ()
             set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)
@@ -158,7 +162,6 @@ macro(add_flex_files)
         warning_msg("Flex: Skip creating ${ARGN}")
     endif()
 endmacro()
-
 
 macro(add_flex_files_prefix prefix)
     find_flex()
@@ -171,18 +174,20 @@ macro(add_flex_files_prefix prefix)
 
                 set(_out ${CMAKE_CURRENT_SOURCE_DIR}/flex_${_basename}.cpp)
 
+                file(RELATIVE_PATH _in_rel ${CMAKE_SOURCE_DIR} ${_in})
+                file(RELATIVE_PATH _out_rel ${CMAKE_SOURCE_DIR} ${_out})
+
                 # -d option for flex means that it will produce output to stderr while analyzing
 
-                add_custom_command(
-                    OUTPUT ${_out}
+                add_custom_target(
+                    flex_prefix_${_basename} ALL
                     COMMAND ${FLEX_EXECUTABLE}
-                    ARGS
-                    -P${prefix}
-                    -o${_out}
-                    ${_in}
+                        -P${prefix}
+                        -o${_out_rel}
+                        ${_in_rel}
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                     DEPENDS ${_in}
                 )
-                add_custom_target(flex_prefix_${_basename} DEPENDS ${_out})
                 set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} flex_prefix_${_basename})
             endforeach ()
             set(PREPARE_PARSER_TARGETS ${PREPARE_PARSER_TARGETS} PARENT_SCOPE)

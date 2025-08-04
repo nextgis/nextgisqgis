@@ -19,6 +19,20 @@ locked_paths:
   - 'src/ui/ngauthoptions.ui'
   - 'src/ui/ngsaboutdialog.ui'
 
+  # Generated files
+  - 'src/analysis/flex_qgsrastercalclexer.cpp'
+  - 'src/analysis/qgsrastercalcparser.cpp'
+  - 'src/analysis/qgsrastercalcparser.hpp'
+  - 'src/core/flex_qgsexpressionlexer.cpp'
+  - 'src/core/flex_qgsmeshcalclexer.cpp'
+  - 'src/core/flex_qgssqlstatementlexer.cpp'
+  - 'src/core/qgsexpressionparser.cpp'
+  - 'src/core/qgsexpressionparser.hpp'
+  - 'src/core/qgsmeshcalcparser.cpp'
+  - 'src/core/qgsmeshcalcparser.hpp'
+  - 'src/core/qgssqlstatementparser.cpp'
+  - 'src/core/qgssqlstatementparser.hpp'
+
 rules:
 - source: .
   destination: doc
