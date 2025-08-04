@@ -23,8 +23,6 @@
 # DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-cmake_policy(SET CMP0002 OLD)
-
 if (ENABLE_TESTS)
   macro (add_qgis_test TESTSRC)
       set(options OPTIONAL)
