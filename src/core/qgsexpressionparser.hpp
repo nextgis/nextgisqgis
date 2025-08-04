@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_EXP_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED
-# define YY_EXP_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED
+#ifndef YY_EXP_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED
+# define YY_EXP_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -75,25 +75,26 @@ extern int exp_debug;
     POW = 276,                     /* POW  */
     NOT = 277,                     /* NOT  */
     IN = 278,                      /* IN  */
-    NUMBER_FLOAT = 279,            /* NUMBER_FLOAT  */
-    NUMBER_INT = 280,              /* NUMBER_INT  */
-    NUMBER_INT64 = 281,            /* NUMBER_INT64  */
-    BOOLEAN = 282,                 /* BOOLEAN  */
-    NULLVALUE = 283,               /* NULLVALUE  */
-    CASE = 284,                    /* CASE  */
-    WHEN = 285,                    /* WHEN  */
-    THEN = 286,                    /* THEN  */
-    ELSE = 287,                    /* ELSE  */
-    END = 288,                     /* END  */
-    STRING = 289,                  /* STRING  */
-    QUOTED_COLUMN_REF = 290,       /* QUOTED_COLUMN_REF  */
-    NAME = 291,                    /* NAME  */
-    SPECIAL_COL = 292,             /* SPECIAL_COL  */
-    VARIABLE = 293,                /* VARIABLE  */
-    NAMED_NODE = 294,              /* NAMED_NODE  */
-    COMMA = 295,                   /* COMMA  */
-    Unknown_CHARACTER = 296,       /* Unknown_CHARACTER  */
-    UMINUS = 297                   /* UMINUS  */
+    BETWEEN = 279,                 /* BETWEEN  */
+    NUMBER_FLOAT = 280,            /* NUMBER_FLOAT  */
+    NUMBER_INT = 281,              /* NUMBER_INT  */
+    NUMBER_INT64 = 282,            /* NUMBER_INT64  */
+    BOOLEAN = 283,                 /* BOOLEAN  */
+    NULLVALUE = 284,               /* NULLVALUE  */
+    CASE = 285,                    /* CASE  */
+    WHEN = 286,                    /* WHEN  */
+    THEN = 287,                    /* THEN  */
+    ELSE = 288,                    /* ELSE  */
+    END = 289,                     /* END  */
+    STRING = 290,                  /* STRING  */
+    QUOTED_COLUMN_REF = 291,       /* QUOTED_COLUMN_REF  */
+    NAME = 292,                    /* NAME  */
+    SPECIAL_COL = 293,             /* SPECIAL_COL  */
+    VARIABLE = 294,                /* VARIABLE  */
+    NAMED_NODE = 295,              /* NAMED_NODE  */
+    COMMA = 296,                   /* COMMA  */
+    Unknown_CHARACTER = 297,       /* Unknown_CHARACTER  */
+    UMINUS = 298                   /* UMINUS  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -102,7 +103,7 @@ extern int exp_debug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 94 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 94 "src/core/qgsexpressionparser.yy"
 
   QgsExpressionNode* node;
   QgsExpressionNode::NodeList* nodelist;
@@ -117,7 +118,7 @@ union YYSTYPE
   QgsExpressionNodeCondition::WhenThen* whenthen;
   QgsExpressionNodeCondition::WhenThenList* whenthenlist;
 
-#line 121 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.hpp"
+#line 122 "src/core/qgsexpressionparser.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -145,4 +146,4 @@ struct YYLTYPE
 int exp_parse (expression_parser_context* parser_ctx);
 
 
-#endif /* !YY_EXP_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED  */
+#endif /* !YY_EXP_SRC_CORE_QGSEXPRESSIONPARSER_HPP_INCLUDED  */

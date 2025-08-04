@@ -74,7 +74,7 @@
 #define yychar          raster_char
 
 /* First part of user prologue.  */
-#line 19 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 19 "src/analysis/raster/qgsrastercalcparser.yy"
 
   #include "qgsrastercalcnode.h"
 
@@ -107,7 +107,7 @@
   // we want verbose error messages
   #define YYERROR_VERBOSE 1
 
-#line 111 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 111 "src/analysis/qgsrastercalcparser.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -1173,144 +1173,144 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* root: raster_exp  */
-#line 80 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 80 "src/analysis/raster/qgsrastercalcparser.yy"
                 {}
-#line 1179 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1179 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 3: /* raster_exp: FUNCTION '(' raster_exp ')'  */
-#line 84 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 84 "src/analysis/raster/qgsrastercalcparser.yy"
                                 { (yyval.node) = new QgsRasterCalcNode((yyvsp[-3].op), (yyvsp[-1].node), 0); joinTmpNodes((yyval.node), (yyvsp[-1].node), 0);}
-#line 1185 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1185 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 4: /* raster_exp: FUNCTION_2_ARGS '(' raster_exp ',' raster_exp ')'  */
-#line 85 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 85 "src/analysis/raster/qgsrastercalcparser.yy"
                                                       { (yyval.node) = new QgsRasterCalcNode((yyvsp[-5].op), (yyvsp[-3].node), (yyvsp[-1].node)); joinTmpNodes((yyval.node), (yyvsp[-3].node), (yyvsp[-1].node));}
-#line 1191 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1191 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 5: /* raster_exp: IF '(' raster_exp ',' raster_exp ',' raster_exp ')'  */
-#line 86 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 86 "src/analysis/raster/qgsrastercalcparser.yy"
                                                         { QVector <QgsRasterCalcNode *> tmpVect;
                                                             tmpVect<< (yyvsp[-5].node)<< (yyvsp[-3].node)<< (yyvsp[-1].node);
                                                             (yyval.node) = new QgsRasterCalcNode("if", tmpVect);
                                                             joinTmpNodes((yyval.node), (yyvsp[-5].node), (yyvsp[-3].node));
                                                             gTmpNodes.removeAll((yyvsp[-1].node));
                                                           }
-#line 1202 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1202 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 6: /* raster_exp: raster_exp AND raster_exp  */
-#line 92 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 92 "src/analysis/raster/qgsrastercalcparser.yy"
                                 { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opAND, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
-#line 1208 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1208 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 7: /* raster_exp: raster_exp OR raster_exp  */
-#line 93 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 93 "src/analysis/raster/qgsrastercalcparser.yy"
                                { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opOR, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
-#line 1214 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1214 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 8: /* raster_exp: raster_exp '=' raster_exp  */
-#line 94 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 94 "src/analysis/raster/qgsrastercalcparser.yy"
                                 { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opEQ, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
-#line 1220 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1220 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 9: /* raster_exp: raster_exp NE raster_exp  */
-#line 95 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 95 "src/analysis/raster/qgsrastercalcparser.yy"
                                { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opNE, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
-#line 1226 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1226 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 10: /* raster_exp: raster_exp '>' raster_exp  */
-#line 96 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 96 "src/analysis/raster/qgsrastercalcparser.yy"
                                 { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opGT, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1232 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1232 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 11: /* raster_exp: raster_exp '<' raster_exp  */
-#line 97 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 97 "src/analysis/raster/qgsrastercalcparser.yy"
                                 { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opLT, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1238 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1238 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 12: /* raster_exp: raster_exp GE raster_exp  */
-#line 98 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 98 "src/analysis/raster/qgsrastercalcparser.yy"
                                { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opGE, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1244 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1244 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 13: /* raster_exp: raster_exp LE raster_exp  */
-#line 99 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 99 "src/analysis/raster/qgsrastercalcparser.yy"
                                { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opLE, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1250 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1250 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 14: /* raster_exp: raster_exp '^' raster_exp  */
-#line 100 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 100 "src/analysis/raster/qgsrastercalcparser.yy"
                                 { (yyval.node) = new QgsRasterCalcNode(QgsRasterCalcNode::opPOW, (yyvsp[-2].node), (yyvsp[0].node)); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
-#line 1256 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1256 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 15: /* raster_exp: raster_exp '*' raster_exp  */
-#line 101 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 101 "src/analysis/raster/qgsrastercalcparser.yy"
                                 { (yyval.node) = new QgsRasterCalcNode(QgsRasterCalcNode::opMUL, (yyvsp[-2].node), (yyvsp[0].node)); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
-#line 1262 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1262 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 16: /* raster_exp: raster_exp '/' raster_exp  */
-#line 102 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 102 "src/analysis/raster/qgsrastercalcparser.yy"
                                 { (yyval.node) = new QgsRasterCalcNode(QgsRasterCalcNode::opDIV, (yyvsp[-2].node), (yyvsp[0].node)); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
-#line 1268 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1268 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 17: /* raster_exp: raster_exp '+' raster_exp  */
-#line 103 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 103 "src/analysis/raster/qgsrastercalcparser.yy"
                                 { (yyval.node) = new QgsRasterCalcNode(QgsRasterCalcNode::opPLUS, (yyvsp[-2].node), (yyvsp[0].node)); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
-#line 1274 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1274 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 18: /* raster_exp: raster_exp '-' raster_exp  */
-#line 104 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 104 "src/analysis/raster/qgsrastercalcparser.yy"
                                 { (yyval.node) = new QgsRasterCalcNode(QgsRasterCalcNode::opMINUS, (yyvsp[-2].node), (yyvsp[0].node)); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node)); }
-#line 1280 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1280 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 19: /* raster_exp: '(' raster_exp ')'  */
-#line 105 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 105 "src/analysis/raster/qgsrastercalcparser.yy"
                                 { (yyval.node) = (yyvsp[-1].node); }
-#line 1286 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1286 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 20: /* raster_exp: '+' raster_exp  */
-#line 106 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 106 "src/analysis/raster/qgsrastercalcparser.yy"
                                 { (yyval.node) = (yyvsp[0].node); }
-#line 1292 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1292 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 21: /* raster_exp: '-' raster_exp  */
-#line 107 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 107 "src/analysis/raster/qgsrastercalcparser.yy"
                                 { (yyval.node) = new QgsRasterCalcNode( QgsRasterCalcNode::opSIGN, (yyvsp[0].node), 0 ); joinTmpNodes((yyval.node), (yyvsp[0].node), 0); }
-#line 1298 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1298 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 22: /* raster_exp: NUMBER  */
-#line 108 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 108 "src/analysis/raster/qgsrastercalcparser.yy"
            { (yyval.node) = new QgsRasterCalcNode((yyvsp[0].number)); addToTmpNodes((yyval.node)); }
-#line 1304 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1304 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
   case 23: /* raster_exp: RASTER_BAND_REF  */
-#line 109 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 109 "src/analysis/raster/qgsrastercalcparser.yy"
                     { (yyval.node) = new QgsRasterCalcNode(QString::fromUtf8(raster_text)); addToTmpNodes((yyval.node)); }
-#line 1310 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1310 "src/analysis/qgsrastercalcparser.cpp"
     break;
 
 
-#line 1314 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.cpp"
+#line 1314 "src/analysis/qgsrastercalcparser.cpp"
 
       default: break;
     }
@@ -1503,7 +1503,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 112 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 112 "src/analysis/raster/qgsrastercalcparser.yy"
 
 
 void addToTmpNodes(QgsRasterCalcNode* node)

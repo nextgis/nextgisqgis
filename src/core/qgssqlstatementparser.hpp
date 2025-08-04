@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_SQLSTATEMENT_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED
-# define YY_SQLSTATEMENT_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED
+#ifndef YY_SQLSTATEMENT_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED
+# define YY_SQLSTATEMENT_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -104,9 +104,10 @@ extern int sqlstatement_debug;
     NULLVALUE = 305,               /* NULLVALUE  */
     STRING = 306,                  /* STRING  */
     IDENTIFIER = 307,              /* IDENTIFIER  */
-    COMMA = 308,                   /* COMMA  */
-    Unknown_CHARACTER = 309,       /* Unknown_CHARACTER  */
-    UMINUS = 310                   /* UMINUS  */
+    IDENTIFIER_WITH_DOT = 308,     /* IDENTIFIER_WITH_DOT  */
+    COMMA = 309,                   /* COMMA  */
+    Unknown_CHARACTER = 310,       /* Unknown_CHARACTER  */
+    UMINUS = 311                   /* UMINUS  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -115,7 +116,7 @@ extern int sqlstatement_debug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 93 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 93 "src/core/qgssqlstatementparser.yy"
 
   QgsSQLStatement::Node* node;
   QgsSQLStatement::NodeColumnRef* nodecolumnref;
@@ -139,7 +140,7 @@ union YYSTYPE
   QgsSQLStatement::JoinType jointype;
   QList<QString>* usinglist;
 
-#line 143 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.hpp"
+#line 144 "src/core/qgssqlstatementparser.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -153,4 +154,4 @@ typedef union YYSTYPE YYSTYPE;
 int sqlstatement_parse (sqlstatement_parser_context* parser_ctx);
 
 
-#endif /* !YY_SQLSTATEMENT_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED  */
+#endif /* !YY_SQLSTATEMENT_SRC_CORE_QGSSQLSTATEMENTPARSER_HPP_INCLUDED  */

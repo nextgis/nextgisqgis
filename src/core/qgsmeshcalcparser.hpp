@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_MESH_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_CORE_QGSMESHCALCPARSER_HPP_INCLUDED
-# define YY_MESH_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_CORE_QGSMESHCALCPARSER_HPP_INCLUDED
+#ifndef YY_MESH_SRC_CORE_QGSMESHCALCPARSER_HPP_INCLUDED
+# define YY_MESH_SRC_CORE_QGSMESHCALCPARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -75,10 +75,10 @@ extern int mesh_debug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 51 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 51 "src/core/mesh/qgsmeshcalcparser.yy"
  QgsMeshCalcNode* node; double number; QgsMeshCalcNode::Operator op;
 
-#line 82 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.hpp"
+#line 82 "src/core/qgsmeshcalcparser.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -93,4 +93,4 @@ extern YYSTYPE mesh_lval;
 int mesh_parse (void);
 
 
-#endif /* !YY_MESH_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_CORE_QGSMESHCALCPARSER_HPP_INCLUDED  */
+#endif /* !YY_MESH_SRC_CORE_QGSMESHCALCPARSER_HPP_INCLUDED  */
