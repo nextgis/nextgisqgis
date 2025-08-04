@@ -80,7 +80,7 @@ if(OSX_FRAMEWORK)
     set(_PLUGIN_SUBDIR "Library/Plugins/Qt5")
     set(QT5_PLUGINS_DIR Library/Plugins/Qt5)
     set(QT5_TRANSLATION_DIR Library/Translations/Qt5)
-    
+
     set(INSTALL_PLUGIN_DIR ${_PLUGIN_SUBDIR}/${NG_PREFIX}${PROJECT_NAME} CACHE INTERNAL "Installation directory for plugins" FORCE)
     set(INSTALL_SHARE_DIR ${QGIS_DATA_SUBDIR} CACHE INTERNAL "Installation directory for share data" FORCE)
     set(INSTALL_MAN_DIR ${INSTALL_SHARE_DIR}/man CACHE INTERNAL "Installation directory for manual pages" FORCE)
@@ -220,7 +220,9 @@ endif()
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<NOT:$<CONFIG:Debug>>:QT_NO_DEBUG>)
 
 # Need for synccrsdb
-find_anyproject(PROJ REQUIRED)
+if (NOT PREPARE_ONLY)
+    find_anyproject(PROJ REQUIRED)
+endif()
 if (PROJ_FOUND)
     string(REPLACE "." ";" VERSION_LIST ${PROJ_VERSION})
     list(GET VERSION_LIST 0 PROJ_VERSION_MAJOR)
@@ -228,18 +230,21 @@ if (PROJ_FOUND)
     list(GET VERSION_LIST 2 PROJ_VERSION_PATCH)
 endif()
 
-find_anyproject(GDAL REQUIRED)
-find_anyproject(GEOS REQUIRED)
-find_anyproject(Qca REQUIRED)
-find_anyproject(QtKeychain REQUIRED)
-find_anyproject(SpatialIndex REQUIRED)
-find_anyproject(SQLite3 REQUIRED)
-find_anyproject(LIBZIP REQUIRED)
-# find_anyproject(EXIV REQUIRED)
-find_anyproject(EXPAT REQUIRED)
-find_anyproject(ZLIB REQUIRED)
+if (NOT PREPARE_ONLY)
+    find_anyproject(GDAL REQUIRED)
+    find_anyproject(GEOS REQUIRED)
+    find_anyproject(Qca REQUIRED)
+    find_anyproject(QtKeychain REQUIRED)
+    find_anyproject(SpatialIndex REQUIRED)
+    find_anyproject(SQLite3 REQUIRED)
+    find_anyproject(LIBZIP REQUIRED)
+    # find_anyproject(EXIV REQUIRED)
+    find_anyproject(EXPAT REQUIRED)
+    find_anyproject(ZLIB REQUIRED)
 
-find_anyproject(NGSTD DEFAULT ON COMPONENTS core framework)
+    find_anyproject(NGSTD DEFAULT ON COMPONENTS core framework)
+endif()
+
 if(NGSTD_FOUND)
     add_definitions(-DNGSTD_USING)
 endif()
@@ -252,7 +257,7 @@ endif()
 # try` to configure and build POLY2TRI support
 set (WITH_INTERNAL_POLY2TRI TRUE CACHE BOOL "Determines whether POLY2TRI should be built from internal copy")
 
-if (NOT WITH_INTERNAL_POLY2TRI)
+if (NOT WITH_INTERNAL_POLY2TRI AND NOT PREPARE_ONLY)
     find_anyproject(Poly2Tri REQUIRED)
 endif()
 
@@ -280,7 +285,7 @@ else()
     option(WITH_BINDINGS "Determines whether python bindings should be built" ON)
     option(WITH_DOCS "Determines whether documents should be built" ON)
     option(ENABLE_TESTS "Build unit tests?" OFF)
-    
+
     option(WITH_OAUTH2_PLUGIN "Build OAuth2 authentication method plugin" OFF) # TODO: Set ON
     if(WITH_OAUTH2_PLUGIN)
         set(HAVE_OAUTH2_PLUGIN TRUE)
@@ -290,7 +295,7 @@ else()
     if (WITH_THREAD_LOCAL)
         set (USE_THREAD_LOCAL TRUE)  # used in qgsconfig.h
     endif()
-   
+
     # find_anyproject(ZLIB REQUIRED)
 
     if (WITH_GUI)
@@ -301,7 +306,7 @@ else()
         set(HAVE_GUI TRUE)
     endif()
     set(QT_REQUIRED_COMPONENTS ${QT_REQUIRED_COMPONENTS} LinguistTools)
-   
+
     find_package(OpenCL)
     if(${OpenCL_FOUND})
         set(USE_OPENCL TRUE)
@@ -325,7 +330,7 @@ endif()
 
 if(WITH_DESKTOP)
   if((WIN32 AND NOT MINGW) OR (UNIX AND NOT APPLE AND NOT ANDROID AND NOT IOS))
-    set(HAVE_CRASH_HANDLER TRUE) 
+    set(HAVE_CRASH_HANDLER TRUE)
   endif()
 endif()
 
@@ -349,10 +354,10 @@ get_target_property(QMAKE_EXECUTABLE ${QT_VERSION_BASE}::qmake LOCATION)
 if(WIN32)
     get_target_property(LR_PATH Qt5::lrelease IMPORTED_LOCATION)
     get_filename_component(QT_BIN_DIR ${LR_PATH} PATH)
-    
+
     set(QT5_PLUGINS_DIR "${QT_BIN_DIR}/../plugins")
     set(QT5_TRANSLATION_DIR "${QT_BIN_DIR}/../translation")
-    
+
     # Copy zlib1.dll to make  moc.exe, rcc.exe, etc. working
     if(${ZLIB_FOUND})
         get_target_property(ZLIB_IMPORTED_LOCATION ${ZLIB_LIBRARIES} IMPORTED_LOCATION_RELEASE)
@@ -483,19 +488,24 @@ if (WITH_ANALYSIS AND NOT PREPARE_ONLY)
     set(HAVE_GEOREFERENCER TRUE)
 endif()
 
-
-find_anyproject(Spatialite DEFAULT ON)
+if (NOT PREPARE_ONLY)
+    find_anyproject(Spatialite DEFAULT ON)
+endif()
 if(SPATIALITE_FOUND)
     set(HAVE_SPATIALITE TRUE)
 endif()
 
-find_anyproject(PostgreSQL DEFAULT ON NAMES PQ pq libpq)
+if (NOT PREPARE_ONLY)
+    find_anyproject(PostgreSQL DEFAULT ON NAMES PQ pq libpq)
+endif()
 if(POSTGRESQL_FOUND)
     set(HAVE_POSTGRESQL TRUE)
     add_definitions(-DHAVE_PGCONFIG=1) #-DHAVE_POSTGRESQL
 endif()
 
-find_anyproject(OCI DEFAULT ON)
+if (NOT PREPARE_ONLY)
+    find_anyproject(OCI DEFAULT ON)
+endif()
 if(OCI_FOUND)
     include_directories(${OCI_INCLUDE_DIRS}/oci)
     set(HAVE_ORACLE TRUE)
@@ -529,7 +539,7 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 if (WITH_BINDINGS)
     find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
-    
+
     if(${Python3_FOUND})
         set(PYTHON_EXECUTABLE ${Python3_EXECUTABLE})
         set(PYTHON_LIBRARIES ${Python3_LIBRARIES})
@@ -539,7 +549,7 @@ if (WITH_BINDINGS)
         set(PYTHON_VERSION_MINOR ${Python3_VERSION_MINOR})
         set(PYTHON_VERSION_STRING ${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}.${Python3_VERSION_PATCH})
     endif()
-    
+
     if(OSX_FRAMEWORK)
         set(QGIS_PYTHON_DIR "Library/Python/${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages/${PROJECT_NAME}")
     elseif(WIN32)
@@ -592,7 +602,7 @@ set(PACKAGE_NAME ${PROJECT_NAME})
 string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
 
 set(TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/testdata")
-    
+
 add_subdirectory(src)
 
 if(WITH_DOCS)
