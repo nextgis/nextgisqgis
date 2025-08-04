@@ -72,7 +72,7 @@
 #define yynerrs         sqlstatement_nerrs
 
 /* First part of user prologue.  */
-#line 18 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 18 "src/core/qgssqlstatementparser.yy"
 
 #include <qglobal.h>
 #include <QList>
@@ -141,7 +141,7 @@ struct sqlstatement_parser_context
 #define BINOP(x, y, z)  new QgsSQLStatement::NodeBinaryOperator(x, y, z)
 
 
-#line 145 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 145 "src/core/qgssqlstatementparser.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -222,34 +222,35 @@ enum yysymbol_kind_t
   YYSYMBOL_NULLVALUE = 50,                 /* NULLVALUE  */
   YYSYMBOL_STRING = 51,                    /* STRING  */
   YYSYMBOL_IDENTIFIER = 52,                /* IDENTIFIER  */
-  YYSYMBOL_COMMA = 53,                     /* COMMA  */
-  YYSYMBOL_Unknown_CHARACTER = 54,         /* Unknown_CHARACTER  */
-  YYSYMBOL_UMINUS = 55,                    /* UMINUS  */
-  YYSYMBOL_56_ = 56,                       /* '('  */
-  YYSYMBOL_57_ = 57,                       /* ')'  */
-  YYSYMBOL_58_ = 58,                       /* '.'  */
-  YYSYMBOL_YYACCEPT = 59,                  /* $accept  */
-  YYSYMBOL_root = 60,                      /* root  */
-  YYSYMBOL_expr = 61,                      /* expr  */
-  YYSYMBOL_column_name = 62,               /* column_name  */
-  YYSYMBOL_expr_list = 63,                 /* expr_list  */
-  YYSYMBOL_expr_non_logical = 64,          /* expr_non_logical  */
-  YYSYMBOL_select_type = 65,               /* select_type  */
-  YYSYMBOL_select_statement = 66,          /* select_statement  */
-  YYSYMBOL_selected_column_list = 67,      /* selected_column_list  */
-  YYSYMBOL_selected_column = 68,           /* selected_column  */
-  YYSYMBOL_as_clause = 69,                 /* as_clause  */
-  YYSYMBOL_opt_where = 70,                 /* opt_where  */
-  YYSYMBOL_join_qualifier = 71,            /* join_qualifier  */
-  YYSYMBOL_join = 72,                      /* join  */
-  YYSYMBOL_using_list = 73,                /* using_list  */
-  YYSYMBOL_join_list = 74,                 /* join_list  */
-  YYSYMBOL_opt_joins = 75,                 /* opt_joins  */
-  YYSYMBOL_opt_order_by = 76,              /* opt_order_by  */
-  YYSYMBOL_sort_spec_list = 77,            /* sort_spec_list  */
-  YYSYMBOL_sort_spec = 78,                 /* sort_spec  */
-  YYSYMBOL_table_def = 79,                 /* table_def  */
-  YYSYMBOL_table_list = 80                 /* table_list  */
+  YYSYMBOL_IDENTIFIER_WITH_DOT = 53,       /* IDENTIFIER_WITH_DOT  */
+  YYSYMBOL_COMMA = 54,                     /* COMMA  */
+  YYSYMBOL_Unknown_CHARACTER = 55,         /* Unknown_CHARACTER  */
+  YYSYMBOL_UMINUS = 56,                    /* UMINUS  */
+  YYSYMBOL_57_ = 57,                       /* '('  */
+  YYSYMBOL_58_ = 58,                       /* ')'  */
+  YYSYMBOL_59_ = 59,                       /* '.'  */
+  YYSYMBOL_YYACCEPT = 60,                  /* $accept  */
+  YYSYMBOL_root = 61,                      /* root  */
+  YYSYMBOL_expr = 62,                      /* expr  */
+  YYSYMBOL_column_name = 63,               /* column_name  */
+  YYSYMBOL_expr_list = 64,                 /* expr_list  */
+  YYSYMBOL_expr_non_logical = 65,          /* expr_non_logical  */
+  YYSYMBOL_select_type = 66,               /* select_type  */
+  YYSYMBOL_select_statement = 67,          /* select_statement  */
+  YYSYMBOL_selected_column_list = 68,      /* selected_column_list  */
+  YYSYMBOL_selected_column = 69,           /* selected_column  */
+  YYSYMBOL_as_clause = 70,                 /* as_clause  */
+  YYSYMBOL_opt_where = 71,                 /* opt_where  */
+  YYSYMBOL_join_qualifier = 72,            /* join_qualifier  */
+  YYSYMBOL_join = 73,                      /* join  */
+  YYSYMBOL_using_list = 74,                /* using_list  */
+  YYSYMBOL_join_list = 75,                 /* join_list  */
+  YYSYMBOL_opt_joins = 76,                 /* opt_joins  */
+  YYSYMBOL_opt_order_by = 77,              /* opt_order_by  */
+  YYSYMBOL_sort_spec_list = 78,            /* sort_spec_list  */
+  YYSYMBOL_sort_spec = 79,                 /* sort_spec  */
+  YYSYMBOL_table_def = 80,                 /* table_def  */
+  YYSYMBOL_table_list = 81                 /* table_list  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -577,19 +578,19 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  29
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   366
+#define YYLAST   381
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  59
+#define YYNTOKENS  60
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  22
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  89
+#define YYNRULES  93
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  167
+#define YYNSTATES  173
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   310
+#define YYMAXUTOK   311
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -607,7 +608,7 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-      56,    57,     2,     2,     2,     2,    58,     2,     2,     2,
+      57,    58,     2,     2,     2,     2,    59,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -634,7 +635,7 @@ static const yytype_int8 yytranslate[] =
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
       45,    46,    47,    48,    49,    50,    51,    52,    53,    54,
-      55
+      55,    56
 };
 
 #if YYDEBUG
@@ -649,7 +650,8 @@ static const yytype_int16 yyrline[] =
      340,   345,   350,   357,   362,   368,   384,   403,   422,   446,
      451,   454,   455,   462,   466,   470,   474,   478,   482,   486,
      490,   497,   501,   509,   514,   522,   526,   532,   533,   540,
-     541,   549,   553,   558,   562,   566,   573,   579,   588,   592
+     541,   549,   553,   558,   562,   566,   573,   578,   584,   591,
+     597,   604,   615,   619
 };
 #endif
 
@@ -672,9 +674,9 @@ static const char *const yytname[] =
   "ON", "USING", "WHERE", "ORDER", "BY", "ASC", "DESC", "LEFT", "RIGHT",
   "INNER", "OUTER", "CROSS", "FULL", "NATURAL", "UNION", "NUMBER_FLOAT",
   "NUMBER_INT", "NUMBER_INT64", "BOOLEAN", "NULLVALUE", "STRING",
-  "IDENTIFIER", "COMMA", "Unknown_CHARACTER", "UMINUS", "'('", "')'",
-  "'.'", "$accept", "root", "expr", "column_name", "expr_list",
-  "expr_non_logical", "select_type", "select_statement",
+  "IDENTIFIER", "IDENTIFIER_WITH_DOT", "COMMA", "Unknown_CHARACTER",
+  "UMINUS", "'('", "')'", "'.'", "$accept", "root", "expr", "column_name",
+  "expr_list", "expr_non_logical", "select_type", "select_statement",
   "selected_column_list", "selected_column", "as_clause", "opt_where",
   "join_qualifier", "join", "using_list", "join_list", "opt_joins",
   "opt_order_by", "sort_spec_list", "sort_spec", "table_def", "table_list", YY_NULLPTR
@@ -701,23 +703,24 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-     164,    13,    13,   219,    -2,   -40,   -99,   -99,   -99,   -99,
-     -99,   -99,   -41,   219,    10,   298,   -99,   346,   179,   -99,
-     -99,   -99,   326,   -99,   -99,   219,   124,   -23,    74,   -99,
-     219,   219,   219,   219,   219,   219,   219,   219,   219,   219,
-      45,    32,    13,    13,    13,    13,    13,    13,    13,    13,
-      13,   -99,    -1,    98,   -11,   -99,   251,   -99,   298,   -46,
-     -99,   -99,   318,   326,   -99,   -99,   -99,   -99,   -99,   -99,
-     -99,   -99,    38,    13,   219,   278,    55,    55,    79,    79,
-      79,    79,   -99,    79,   109,    -9,    59,   -99,   -99,    63,
-     179,    66,   219,   -99,   219,   338,     1,    13,    68,    77,
-     -99,   -99,    -8,   -99,   247,   -99,    75,   298,    34,    13,
-     -99,   346,    -8,    76,    83,   -99,   -99,   -27,   -20,   104,
-     110,   112,    63,    63,   -99,   205,   111,   -99,   -99,   346,
-     -99,    -8,   -99,   114,   -99,   117,   -99,   -99,   -99,   -99,
-      82,   -99,   219,   115,   -99,   -99,   -99,   219,    92,   298,
-     118,   -99,   298,   100,    77,   -99,    36,    80,   101,   -99,
-     116,   -99,   -99,   -99,    77,   -99,   -99
+     165,   232,   232,   220,    16,   -48,   -99,   -99,   -99,   -99,
+     -99,   -99,    -1,   220,    14,   313,   -99,   361,   180,   -99,
+     -99,   -99,   341,   -99,   -99,   220,   125,   -35,    59,   -99,
+     220,   220,   220,   220,   220,   220,   220,   220,   220,   220,
+       6,     2,   232,   232,   232,   232,   232,   232,   232,   232,
+     232,   -99,    37,    98,   -28,   -99,   287,   -99,   313,   -46,
+     -99,   -99,   333,   341,   -99,   -99,   -99,   -99,   -99,   -99,
+     -99,   -99,    21,   232,   220,   235,   245,   245,    94,    94,
+      94,    94,   -99,    94,   109,    -9,   -30,   -99,   -99,     5,
+     180,    36,   220,   -99,   220,   353,   -43,   232,    41,    43,
+     -99,   -99,    27,   -99,    89,   -99,    53,   313,    29,   232,
+     -99,   361,   -12,    66,    79,    90,   -99,   -99,    44,    48,
+     116,   118,   119,     5,     5,   -99,   -19,   120,   -99,   -99,
+     361,   -99,   -12,    32,   -99,   133,   -99,   134,   -99,   -99,
+     -99,   -99,    84,   -99,   220,   115,   -99,   102,   -99,   -99,
+     -99,   220,   107,   313,   130,   -99,   -12,   313,   117,    43,
+     -99,   -99,    39,    97,   114,   -99,   128,   -99,   -99,   -99,
+      43,   -99,   -99
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -735,28 +738,29 @@ static const yytype_int8 yydefact[] =
       13,    14,     0,     0,     0,     0,    34,    35,    36,    38,
       37,    39,    41,    40,     0,     0,     0,    60,    52,     0,
        0,     0,     0,    32,     0,     0,     0,     0,     0,     0,
-      54,    59,    86,    89,    77,    49,     0,    22,     0,     0,
-      16,    18,    55,    20,     0,    87,    63,     0,     0,     0,
-       0,     0,     0,     0,    75,    78,    61,    44,    17,    19,
-      56,    57,    64,     0,    66,     0,    70,    69,    68,    88,
-       0,    76,     0,    79,    58,    65,    67,     0,     0,    62,
-       0,    48,    71,     0,     0,    73,     0,    83,    80,    82,
-       0,    72,    84,    85,     0,    74,    81
+      54,    59,    86,    93,    77,    49,     0,    22,     0,     0,
+      16,    18,    55,    20,     0,     0,    89,    63,     0,     0,
+       0,     0,     0,     0,     0,    75,    78,    61,    44,    17,
+      19,    56,    57,    87,    64,     0,    66,     0,    70,    69,
+      68,    92,     0,    76,     0,    79,    58,     0,    90,    65,
+      67,     0,     0,    62,     0,    48,    88,    71,     0,     0,
+      91,    73,     0,    83,    80,    82,     0,    72,    84,    85,
+       0,    74,    81
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -99,   -99,     0,   -98,   -66,     3,   -99,   -99,   -99,    72,
-     -90,   -99,   -99,    39,   -99,   -99,   -99,   -99,   -99,    15,
-       5,   -99
+     -99,   -99,     0,   -98,   -67,     3,   -99,   -99,   -99,    80,
+     -58,   -99,   -99,    55,   -99,   -99,   -99,   -99,   -99,    15,
+      17,   -99
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_uint8 yydefgoto[] =
 {
        0,    14,    58,    16,    59,    17,    18,    19,    54,    55,
-      88,   143,   123,   124,   156,   125,   126,   151,   158,   159,
+      88,   145,   124,   125,   162,   126,   127,   155,   164,   165,
      103,   104
 };
 
@@ -765,84 +769,88 @@ static const yytype_uint8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
-      15,   114,   132,    22,    20,    21,   100,    92,    96,   134,
-      29,    93,   115,    28,   133,    26,    25,    27,    53,    89,
-      86,   135,   130,    23,    24,    56,     1,     2,   108,    60,
+      15,   114,    89,    22,    20,    21,   100,    96,    92,    25,
+     117,    92,    93,    28,    29,   110,    86,    60,    53,   118,
+     119,   120,   101,   121,   122,    56,    90,   108,    72,    73,
       62,    63,    64,    65,    66,    67,    68,    69,    70,    71,
-       5,   144,    90,    60,    87,    75,    76,    77,    78,    79,
-      80,    81,    82,    83,    92,    84,   157,    85,   110,     6,
-       7,     8,     9,    10,    11,    12,   157,    72,    73,    13,
-      45,    46,    47,    48,    49,    50,    95,    30,    31,    32,
-      33,    34,    35,    36,    37,    38,    39,    92,    74,   160,
-      53,   128,   107,   161,    94,    40,    41,    42,    49,    50,
+      87,    23,    24,    60,   116,    75,    76,    77,    78,    79,
+      80,    81,    82,    83,   131,    86,    26,   102,    27,    74,
+      86,   163,    30,    31,    32,    33,    34,    35,    36,    37,
+      38,    39,   163,   134,   146,   148,    95,   136,    94,    87,
+      40,    41,    42,    92,    87,   135,   115,   129,   106,   137,
+      53,   147,   107,   166,    84,   113,    85,   167,   160,   112,
      111,    30,    31,    32,    33,    34,    35,    36,    37,    38,
-      39,   101,   129,   147,   148,   102,   162,   163,   106,    40,
-      41,    42,     1,     2,    98,   112,    86,   139,   140,   113,
-       3,    61,   127,   136,    27,    99,     5,     1,     2,   137,
-     131,   138,   149,   145,   142,     3,   146,   152,   153,   150,
-      87,     5,   155,   154,   164,     6,     7,     8,     9,    10,
-      11,    12,   105,     0,   141,    13,    57,     0,   165,     0,
-       6,     7,     8,     9,    10,    11,    12,     1,     2,   166,
-      13,    57,     0,     0,     0,     3,     0,     0,     4,     0,
-       0,     5,     1,     2,    51,     0,     0,     0,     0,     0,
-       3,     0,     0,     0,     0,     0,     5,     0,     0,     0,
-       6,     7,     8,     9,    10,    11,    12,     0,     0,     0,
-      13,     0,     0,     0,     0,     6,     7,     8,     9,    10,
-      11,    52,     1,     2,   116,    13,     0,     0,     0,     0,
-       3,     0,     0,   117,   118,   119,     5,   120,   121,     0,
-       0,     0,     0,     0,    30,    31,    32,    33,    34,    35,
-      36,    37,    38,    39,     0,     6,     7,     8,     9,    10,
-      11,    12,    40,    41,    42,    13,   116,     0,     0,    91,
-       0,     0,    97,     0,     0,   117,   118,   119,     0,   120,
-     121,    43,    44,    45,    46,    47,    48,    49,    50,     0,
-     122,    30,    31,    32,    33,    34,    35,    36,    37,    38,
-      39,     0,     0,     0,     0,     0,     0,     0,     0,    40,
-      41,    42,    31,    32,    33,    34,    35,    36,    37,    38,
-      39,    32,    33,    34,    35,    36,    37,    38,    39,    40,
-      41,    42,   109,     0,     0,     0,     0,    40,    41,    42,
-       0,    43,    44,    45,    46,    47,    48,    49,    50,    43,
-      44,    45,    46,    47,    48,    49,    50
+      39,   128,   130,    49,    50,   151,   152,    61,   117,    40,
+      41,    42,     1,     2,    98,    27,    86,   118,   119,   120,
+       3,   121,   122,   168,   169,    99,     5,   132,     1,     2,
+     141,   142,   133,   123,   153,   138,     3,   139,   140,   154,
+      87,   157,     5,   144,   156,     6,     7,     8,     9,    10,
+      11,    12,   149,   150,   158,   159,    13,    57,   170,   161,
+     105,     6,     7,     8,     9,    10,    11,    12,     1,     2,
+     171,   143,    13,    57,     0,   172,     3,     0,     0,     4,
+       0,     0,     5,     1,     2,    51,     0,     0,     0,     0,
+       0,     3,     0,     0,     0,     0,     0,     5,     0,     0,
+       0,     6,     7,     8,     9,    10,    11,    12,     0,     0,
+       0,     0,    13,     0,     0,     0,     6,     7,     8,     9,
+      10,    11,    52,     1,     2,     0,     0,    13,     0,    97,
+       0,     3,     0,     0,     0,     1,     2,     5,    43,    44,
+      45,    46,    47,    48,    49,    50,     0,     0,     0,     5,
+      45,    46,    47,    48,    49,    50,     6,     7,     8,     9,
+      10,    11,    12,     0,     0,     0,     0,    13,     6,     7,
+       8,     9,    10,    11,    12,     0,     0,     0,     0,    13,
+      30,    31,    32,    33,    34,    35,    36,    37,    38,    39,
+       0,     0,     0,     0,     0,     0,     0,     0,    40,    41,
+      42,     0,     0,     0,     0,    91,    30,    31,    32,    33,
+      34,    35,    36,    37,    38,    39,     0,     0,     0,     0,
+       0,     0,     0,     0,    40,    41,    42,    31,    32,    33,
+      34,    35,    36,    37,    38,    39,    32,    33,    34,    35,
+      36,    37,    38,    39,    40,    41,    42,   109,     0,     0,
+       0,     0,    40,    41,    42,     0,    43,    44,    45,    46,
+      47,    48,    49,    50,    43,    44,    45,    46,    47,    48,
+      49,    50
 };
 
 static const yytype_int16 yycheck[] =
 {
-       0,    99,    29,     3,     1,     2,    15,    53,    74,    29,
-       0,    57,   102,    13,    41,    56,    56,    58,    18,    30,
-      28,    41,   112,    25,    26,    25,    13,    14,    94,    52,
+       0,    99,    30,     3,     1,     2,    15,    74,    54,    57,
+      29,    54,    58,    13,     0,    58,    28,    52,    18,    38,
+      39,    40,    52,    42,    43,    25,    54,    94,    22,    23,
       30,    31,    32,    33,    34,    35,    36,    37,    38,    39,
-      27,   131,    53,    52,    52,    42,    43,    44,    45,    46,
-      47,    48,    49,    50,    53,    56,   154,    58,    57,    46,
-      47,    48,    49,    50,    51,    52,   164,    22,    23,    56,
-      15,    16,    17,    18,    19,    20,    73,     3,     4,     5,
-       6,     7,     8,     9,    10,    11,    12,    53,    56,    53,
-      90,    57,    92,    57,    56,    21,    22,    23,    19,    20,
+      52,    25,    26,    52,   102,    42,    43,    44,    45,    46,
+      47,    48,    49,    50,   112,    28,    57,    52,    59,    57,
+      28,   159,     3,     4,     5,     6,     7,     8,     9,    10,
+      11,    12,   170,    29,   132,   133,    73,    29,    57,    52,
+      21,    22,    23,    54,    52,    41,    59,    58,    52,    41,
+      90,    59,    92,    54,    57,    52,    59,    58,   156,    58,
       97,     3,     4,     5,     6,     7,     8,     9,    10,    11,
-      12,    52,   109,    31,    32,    52,    36,    37,    52,    21,
-      22,    23,    13,    14,    15,    57,    28,   122,   123,    52,
-      21,    57,    57,    29,    58,    26,    27,    13,    14,    29,
-      57,    29,   142,    29,    33,    21,    29,   147,    56,    34,
-      52,    27,    52,    35,    53,    46,    47,    48,    49,    50,
-      51,    52,    90,    -1,   125,    56,    57,    -1,    52,    -1,
-      46,    47,    48,    49,    50,    51,    52,    13,    14,   164,
-      56,    57,    -1,    -1,    -1,    21,    -1,    -1,    24,    -1,
-      -1,    27,    13,    14,    15,    -1,    -1,    -1,    -1,    -1,
-      21,    -1,    -1,    -1,    -1,    -1,    27,    -1,    -1,    -1,
-      46,    47,    48,    49,    50,    51,    52,    -1,    -1,    -1,
-      56,    -1,    -1,    -1,    -1,    46,    47,    48,    49,    50,
-      51,    52,    13,    14,    29,    56,    -1,    -1,    -1,    -1,
-      21,    -1,    -1,    38,    39,    40,    27,    42,    43,    -1,
-      -1,    -1,    -1,    -1,     3,     4,     5,     6,     7,     8,
-       9,    10,    11,    12,    -1,    46,    47,    48,    49,    50,
-      51,    52,    21,    22,    23,    56,    29,    -1,    -1,    28,
-      -1,    -1,     4,    -1,    -1,    38,    39,    40,    -1,    42,
-      43,    13,    14,    15,    16,    17,    18,    19,    20,    -1,
-      53,     3,     4,     5,     6,     7,     8,     9,    10,    11,
-      12,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    21,
-      22,    23,     4,     5,     6,     7,     8,     9,    10,    11,
-      12,     5,     6,     7,     8,     9,    10,    11,    12,    21,
-      22,    23,     4,    -1,    -1,    -1,    -1,    21,    22,    23,
-      -1,    13,    14,    15,    16,    17,    18,    19,    20,    13,
-      14,    15,    16,    17,    18,    19,    20
+      12,    58,   109,    19,    20,    31,    32,    58,    29,    21,
+      22,    23,    13,    14,    15,    59,    28,    38,    39,    40,
+      21,    42,    43,    36,    37,    26,    27,    58,    13,    14,
+     123,   124,    52,    54,   144,    29,    21,    29,    29,    34,
+      52,   151,    27,    33,    52,    46,    47,    48,    49,    50,
+      51,    52,    29,    29,    57,    35,    57,    58,    54,    52,
+      90,    46,    47,    48,    49,    50,    51,    52,    13,    14,
+      52,   126,    57,    58,    -1,   170,    21,    -1,    -1,    24,
+      -1,    -1,    27,    13,    14,    15,    -1,    -1,    -1,    -1,
+      -1,    21,    -1,    -1,    -1,    -1,    -1,    27,    -1,    -1,
+      -1,    46,    47,    48,    49,    50,    51,    52,    -1,    -1,
+      -1,    -1,    57,    -1,    -1,    -1,    46,    47,    48,    49,
+      50,    51,    52,    13,    14,    -1,    -1,    57,    -1,     4,
+      -1,    21,    -1,    -1,    -1,    13,    14,    27,    13,    14,
+      15,    16,    17,    18,    19,    20,    -1,    -1,    -1,    27,
+      15,    16,    17,    18,    19,    20,    46,    47,    48,    49,
+      50,    51,    52,    -1,    -1,    -1,    -1,    57,    46,    47,
+      48,    49,    50,    51,    52,    -1,    -1,    -1,    -1,    57,
+       3,     4,     5,     6,     7,     8,     9,    10,    11,    12,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    21,    22,
+      23,    -1,    -1,    -1,    -1,    28,     3,     4,     5,     6,
+       7,     8,     9,    10,    11,    12,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    21,    22,    23,     4,     5,     6,
+       7,     8,     9,    10,    11,    12,     5,     6,     7,     8,
+       9,    10,    11,    12,    21,    22,    23,     4,    -1,    -1,
+      -1,    -1,    21,    22,    23,    -1,    13,    14,    15,    16,
+      17,    18,    19,    20,    13,    14,    15,    16,    17,    18,
+      19,    20
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
@@ -850,36 +858,38 @@ static const yytype_int16 yycheck[] =
 static const yytype_int8 yystos[] =
 {
        0,    13,    14,    21,    24,    27,    46,    47,    48,    49,
-      50,    51,    52,    56,    60,    61,    62,    64,    65,    66,
-      64,    64,    61,    25,    26,    56,    56,    58,    61,     0,
+      50,    51,    52,    57,    61,    62,    63,    65,    66,    67,
+      65,    65,    62,    25,    26,    57,    57,    59,    62,     0,
        3,     4,     5,     6,     7,     8,     9,    10,    11,    12,
       21,    22,    23,    13,    14,    15,    16,    17,    18,    19,
-      20,    15,    52,    61,    67,    68,    61,    57,    61,    63,
-      52,    57,    61,    61,    61,    61,    61,    61,    61,    61,
-      61,    61,    22,    23,    56,    64,    64,    64,    64,    64,
-      64,    64,    64,    64,    56,    58,    28,    52,    69,    30,
-      53,    28,    53,    57,    56,    64,    63,     4,    15,    26,
-      15,    52,    52,    79,    80,    68,    52,    61,    63,     4,
-      57,    64,    57,    52,    62,    69,    29,    38,    39,    40,
-      42,    43,    53,    71,    72,    74,    75,    57,    57,    64,
-      69,    57,    29,    41,    29,    41,    29,    29,    29,    79,
-      79,    72,    33,    70,    69,    29,    29,    31,    32,    61,
-      34,    76,    61,    56,    35,    52,    73,    62,    77,    78,
-      53,    57,    36,    37,    53,    52,    78
+      20,    15,    52,    62,    68,    69,    62,    58,    62,    64,
+      52,    58,    62,    62,    62,    62,    62,    62,    62,    62,
+      62,    62,    22,    23,    57,    65,    65,    65,    65,    65,
+      65,    65,    65,    65,    57,    59,    28,    52,    70,    30,
+      54,    28,    54,    58,    57,    65,    64,     4,    15,    26,
+      15,    52,    52,    80,    81,    69,    52,    62,    64,     4,
+      58,    65,    58,    52,    63,    59,    70,    29,    38,    39,
+      40,    42,    43,    54,    72,    73,    75,    76,    58,    58,
+      65,    70,    58,    52,    29,    41,    29,    41,    29,    29,
+      29,    80,    80,    73,    33,    71,    70,    59,    70,    29,
+      29,    31,    32,    62,    34,    77,    52,    62,    57,    35,
+      70,    52,    74,    63,    78,    79,    54,    58,    36,    37,
+      54,    52,    79
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    59,    60,    60,    61,    61,    61,    61,    61,    61,
-      61,    61,    61,    61,    61,    61,    61,    61,    61,    61,
-      62,    62,    63,    63,    64,    64,    64,    64,    64,    64,
-      64,    64,    64,    64,    64,    64,    64,    64,    64,    64,
-      64,    64,    64,    64,    64,    65,    65,    65,    66,    67,
-      67,    68,    68,    68,    68,    68,    68,    68,    68,    69,
-      69,    70,    70,    71,    71,    71,    71,    71,    71,    71,
-      71,    72,    72,    73,    73,    74,    74,    75,    75,    76,
-      76,    77,    77,    78,    78,    78,    79,    79,    80,    80
+       0,    60,    61,    61,    62,    62,    62,    62,    62,    62,
+      62,    62,    62,    62,    62,    62,    62,    62,    62,    62,
+      63,    63,    64,    64,    65,    65,    65,    65,    65,    65,
+      65,    65,    65,    65,    65,    65,    65,    65,    65,    65,
+      65,    65,    65,    65,    65,    66,    66,    66,    67,    68,
+      68,    69,    69,    69,    69,    69,    69,    69,    69,    70,
+      70,    71,    71,    72,    72,    72,    72,    72,    72,    72,
+      72,    73,    73,    74,    74,    75,    75,    76,    76,    77,
+      77,    78,    78,    79,    79,    79,    80,    80,    80,    80,
+      80,    80,    81,    81
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
@@ -893,7 +903,8 @@ static const yytype_int8 yyr2[] =
        1,     1,     2,     1,     3,     4,     5,     5,     6,     2,
        1,     0,     2,     1,     2,     3,     2,     3,     2,     2,
        2,     4,     6,     1,     3,     1,     2,     0,     1,     0,
-       3,     3,     1,     1,     2,     2,     1,     2,     3,     1
+       3,     3,     1,     1,     2,     2,     1,     3,     5,     2,
+       4,     6,     3,     1
 };
 
 
@@ -1366,105 +1377,111 @@ yydestruct (const char *yymsg,
   switch (yykind)
     {
     case YYSYMBOL_STRING: /* STRING  */
-#line 193 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 193 "src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).text); }
-#line 1372 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1383 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_IDENTIFIER: /* IDENTIFIER  */
-#line 193 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 193 "src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).text); }
-#line 1378 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1389 "src/core/qgssqlstatementparser.cpp"
+        break;
+
+    case YYSYMBOL_IDENTIFIER_WITH_DOT: /* IDENTIFIER_WITH_DOT  */
+#line 193 "src/core/qgssqlstatementparser.yy"
+            { delete ((*yyvaluep).text); }
+#line 1395 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_expr: /* expr  */
-#line 190 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 190 "src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).node); }
-#line 1384 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1401 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_column_name: /* column_name  */
-#line 192 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 192 "src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).nodecolumnref); }
-#line 1390 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1407 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_expr_list: /* expr_list  */
-#line 191 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 191 "src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).nodelist); }
-#line 1396 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1413 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_expr_non_logical: /* expr_non_logical  */
-#line 190 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 190 "src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).node); }
-#line 1402 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1419 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_select_statement: /* select_statement  */
-#line 195 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 195 "src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).nodeselect); }
-#line 1408 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1425 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_selected_column_list: /* selected_column_list  */
-#line 200 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 200 "src/core/qgssqlstatementparser.yy"
             { qDeleteAll(*((*yyvaluep).selectedcolumnlist)); delete ((*yyvaluep).selectedcolumnlist); }
-#line 1414 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1431 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_selected_column: /* selected_column  */
-#line 196 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 196 "src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).nodeselectedcolumn); }
-#line 1420 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1437 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_as_clause: /* as_clause  */
-#line 193 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 193 "src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).text); }
-#line 1426 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1443 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_join: /* join  */
-#line 198 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 198 "src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).nodejoin); }
-#line 1432 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1449 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_using_list: /* using_list  */
-#line 199 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 199 "src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).usinglist); }
-#line 1438 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1455 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_join_list: /* join_list  */
-#line 202 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 202 "src/core/qgssqlstatementparser.yy"
             { qDeleteAll(*((*yyvaluep).joinlist)); delete ((*yyvaluep).joinlist); }
-#line 1444 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1461 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_sort_spec_list: /* sort_spec_list  */
-#line 201 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 201 "src/core/qgssqlstatementparser.yy"
             { qDeleteAll(*((*yyvaluep).columnsortedlist)); delete ((*yyvaluep).columnsortedlist); }
-#line 1450 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1467 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_sort_spec: /* sort_spec  */
-#line 197 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 197 "src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).nodecolumnsorted); }
-#line 1456 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1473 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_table_def: /* table_def  */
-#line 194 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 194 "src/core/qgssqlstatementparser.yy"
             { delete ((*yyvaluep).nodetabledef); }
-#line 1462 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1479 "src/core/qgssqlstatementparser.cpp"
         break;
 
     case YYSYMBOL_table_list: /* table_list  */
-#line 203 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 203 "src/core/qgssqlstatementparser.yy"
             { qDeleteAll(*((*yyvaluep).tablelist)); delete ((*yyvaluep).tablelist); }
-#line 1468 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1485 "src/core/qgssqlstatementparser.cpp"
         break;
 
       default:
@@ -1741,370 +1758,370 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* root: select_statement  */
-#line 207 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 207 "src/core/qgssqlstatementparser.yy"
                        { parser_ctx->rootNode = (yyvsp[0].nodeselect); }
-#line 1747 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1764 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 3: /* root: expr  */
-#line 208 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 208 "src/core/qgssqlstatementparser.yy"
              { parser_ctx->expression = (yyvsp[0].node); }
-#line 1753 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1770 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 4: /* expr: expr_non_logical  */
-#line 216 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 216 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.node) = (yyvsp[0].node);
         }
-#line 1761 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1778 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 5: /* expr: expr AND expr  */
-#line 220 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 220 "src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1767 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1784 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 6: /* expr: expr OR expr  */
-#line 221 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 221 "src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1773 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1790 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 7: /* expr: expr EQ expr  */
-#line 222 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 222 "src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1779 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1796 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 8: /* expr: expr NE expr  */
-#line 223 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 223 "src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1785 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1802 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 9: /* expr: expr LE expr  */
-#line 224 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 224 "src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1791 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1808 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 10: /* expr: expr GE expr  */
-#line 225 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 225 "src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1797 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1814 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 11: /* expr: expr LT expr  */
-#line 226 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 226 "src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1803 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1820 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 12: /* expr: expr GT expr  */
-#line 227 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 227 "src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1809 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1826 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 13: /* expr: expr LIKE expr  */
-#line 228 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 228 "src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1815 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1832 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 14: /* expr: expr IS expr  */
-#line 229 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 229 "src/core/qgssqlstatementparser.yy"
                           { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1821 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1838 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 15: /* expr: NOT expr  */
-#line 230 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 230 "src/core/qgssqlstatementparser.yy"
                                 { (yyval.node) = new QgsSQLStatement::NodeUnaryOperator((yyvsp[-1].u_op), (yyvsp[0].node)); }
-#line 1827 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1844 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 16: /* expr: expr IN '(' expr_list ')'  */
-#line 232 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 232 "src/core/qgssqlstatementparser.yy"
                                     { (yyval.node) = new QgsSQLStatement::NodeInOperator((yyvsp[-4].node), (yyvsp[-1].nodelist), false);  }
-#line 1833 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1850 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 17: /* expr: expr NOT IN '(' expr_list ')'  */
-#line 233 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 233 "src/core/qgssqlstatementparser.yy"
                                     { (yyval.node) = new QgsSQLStatement::NodeInOperator((yyvsp[-5].node), (yyvsp[-1].nodelist), true); }
-#line 1839 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1856 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 18: /* expr: expr BETWEEN expr_non_logical AND expr_non_logical  */
-#line 235 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 235 "src/core/qgssqlstatementparser.yy"
                                                              { (yyval.node) = new QgsSQLStatement::NodeBetweenOperator((yyvsp[-4].node), (yyvsp[-2].node), (yyvsp[0].node), false);  }
-#line 1845 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1862 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 19: /* expr: expr NOT BETWEEN expr_non_logical AND expr_non_logical  */
-#line 236 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 236 "src/core/qgssqlstatementparser.yy"
                                                                  { (yyval.node) = new QgsSQLStatement::NodeBetweenOperator((yyvsp[-5].node), (yyvsp[-2].node), (yyvsp[0].node), true);  }
-#line 1851 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1868 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 20: /* column_name: IDENTIFIER  */
-#line 242 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 242 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodecolumnref) = new QgsSQLStatement::NodeColumnRef( *(yyvsp[0].text), false );
             delete (yyvsp[0].text);
         }
-#line 1860 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1877 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 21: /* column_name: IDENTIFIER '.' IDENTIFIER  */
-#line 248 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 248 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodecolumnref) = new QgsSQLStatement::NodeColumnRef( *(yyvsp[-2].text), *(yyvsp[0].text), false );
             delete (yyvsp[-2].text);
             delete (yyvsp[0].text);
         }
-#line 1870 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1887 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 22: /* expr_list: expr_list COMMA expr  */
-#line 257 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 257 "src/core/qgssqlstatementparser.yy"
        {
           (yyval.nodelist) = (yyvsp[-2].nodelist); (yyvsp[-2].nodelist)->append((yyvsp[0].node));
        }
-#line 1878 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1895 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 23: /* expr_list: expr  */
-#line 260 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 260 "src/core/qgssqlstatementparser.yy"
                         { (yyval.nodelist) = new QgsSQLStatement::NodeList(); (yyval.nodelist)->append((yyvsp[0].node)); }
-#line 1884 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1901 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 24: /* expr_non_logical: NUMBER_FLOAT  */
-#line 266 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 266 "src/core/qgssqlstatementparser.yy"
                                   { (yyval.node) = new QgsSQLStatement::NodeLiteral( QVariant((yyvsp[0].numberFloat)) ); }
-#line 1890 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1907 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 25: /* expr_non_logical: NUMBER_INT  */
-#line 267 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 267 "src/core/qgssqlstatementparser.yy"
                                   { (yyval.node) = new QgsSQLStatement::NodeLiteral( QVariant((yyvsp[0].numberInt)) ); }
-#line 1896 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1913 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 26: /* expr_non_logical: NUMBER_INT64  */
-#line 268 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 268 "src/core/qgssqlstatementparser.yy"
                                   { (yyval.node) = new QgsSQLStatement::NodeLiteral( QVariant((yyvsp[0].numberInt64)) ); }
-#line 1902 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1919 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 27: /* expr_non_logical: BOOLEAN  */
-#line 269 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 269 "src/core/qgssqlstatementparser.yy"
                                   { (yyval.node) = new QgsSQLStatement::NodeLiteral( QVariant((yyvsp[0].boolVal)) ); }
-#line 1908 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1925 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 28: /* expr_non_logical: STRING  */
-#line 270 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 270 "src/core/qgssqlstatementparser.yy"
                                   { (yyval.node) = new QgsSQLStatement::NodeLiteral( QVariant(*(yyvsp[0].text)) ); delete (yyvsp[0].text); }
-#line 1914 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1931 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 29: /* expr_non_logical: NULLVALUE  */
-#line 271 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 271 "src/core/qgssqlstatementparser.yy"
                                   { (yyval.node) = new QgsSQLStatement::NodeLiteral( QVariant() ); }
-#line 1920 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1937 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 30: /* expr_non_logical: column_name  */
-#line 274 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 274 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.node) = (yyvsp[0].nodecolumnref);
         }
-#line 1928 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1945 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 31: /* expr_non_logical: '(' expr ')'  */
-#line 278 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 278 "src/core/qgssqlstatementparser.yy"
                                 { (yyval.node) = (yyvsp[-1].node); }
-#line 1934 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1951 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 32: /* expr_non_logical: IDENTIFIER '(' expr_list ')'  */
-#line 281 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 281 "src/core/qgssqlstatementparser.yy"
         {
           (yyval.node) = new QgsSQLStatement::NodeFunction(*(yyvsp[-3].text), (yyvsp[-1].nodelist));
           delete (yyvsp[-3].text);
         }
-#line 1943 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1960 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 33: /* expr_non_logical: IDENTIFIER '(' ')'  */
-#line 287 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 287 "src/core/qgssqlstatementparser.yy"
         {
           (yyval.node) = new QgsSQLStatement::NodeFunction(*(yyvsp[-2].text), new QgsSQLStatement::NodeList());
           delete (yyvsp[-2].text);
         }
-#line 1952 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1969 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 34: /* expr_non_logical: expr_non_logical PLUS expr_non_logical  */
-#line 292 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 292 "src/core/qgssqlstatementparser.yy"
                                                   { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1958 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1975 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 35: /* expr_non_logical: expr_non_logical MINUS expr_non_logical  */
-#line 293 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 293 "src/core/qgssqlstatementparser.yy"
                                                   { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1964 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1981 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 36: /* expr_non_logical: expr_non_logical MUL_OR_STAR expr_non_logical  */
-#line 294 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 294 "src/core/qgssqlstatementparser.yy"
                                                     { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1970 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1987 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 37: /* expr_non_logical: expr_non_logical INTDIV expr_non_logical  */
-#line 295 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 295 "src/core/qgssqlstatementparser.yy"
                                                   { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1976 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1993 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 38: /* expr_non_logical: expr_non_logical DIV expr_non_logical  */
-#line 296 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 296 "src/core/qgssqlstatementparser.yy"
                                                   { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1982 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 1999 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 39: /* expr_non_logical: expr_non_logical MOD expr_non_logical  */
-#line 297 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 297 "src/core/qgssqlstatementparser.yy"
                                                   { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1988 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2005 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 40: /* expr_non_logical: expr_non_logical POW expr_non_logical  */
-#line 298 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 298 "src/core/qgssqlstatementparser.yy"
                                                   { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1994 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2011 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 41: /* expr_non_logical: expr_non_logical CONCAT expr_non_logical  */
-#line 299 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 299 "src/core/qgssqlstatementparser.yy"
                                                   { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 2000 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2017 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 42: /* expr_non_logical: PLUS expr_non_logical  */
-#line 300 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 300 "src/core/qgssqlstatementparser.yy"
                                          { (yyval.node) = (yyvsp[0].node); }
-#line 2006 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2023 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 43: /* expr_non_logical: MINUS expr_non_logical  */
-#line 301 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 301 "src/core/qgssqlstatementparser.yy"
                                           { (yyval.node) = new QgsSQLStatement::NodeUnaryOperator( QgsSQLStatement::uoMinus, (yyvsp[0].node)); }
-#line 2012 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2029 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 44: /* expr_non_logical: CAST '(' expr AS IDENTIFIER ')'  */
-#line 304 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 304 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.node) = new QgsSQLStatement::NodeCast((yyvsp[-3].node), *(yyvsp[-1].text));
             delete (yyvsp[-1].text);
         }
-#line 2021 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2038 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 45: /* select_type: SELECT  */
-#line 313 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 313 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.boolVal) = false;
         }
-#line 2029 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2046 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 46: /* select_type: SELECT ALL  */
-#line 317 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 317 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.boolVal) = false;
         }
-#line 2037 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2054 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 47: /* select_type: SELECT DISTINCT  */
-#line 321 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 321 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.boolVal) = true;
         }
-#line 2045 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2062 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 48: /* select_statement: select_type selected_column_list FROM table_list opt_joins opt_where opt_order_by  */
-#line 328 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 328 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodeselect) = new QgsSQLStatement::NodeSelect(*(yyvsp[-3].tablelist), *(yyvsp[-5].selectedcolumnlist), (yyvsp[-6].boolVal));
             delete (yyvsp[-5].selectedcolumnlist);
             delete (yyvsp[-3].tablelist);
         }
-#line 2055 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2072 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 49: /* selected_column_list: selected_column_list COMMA selected_column  */
-#line 337 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 337 "src/core/qgssqlstatementparser.yy"
        {
           (yyval.selectedcolumnlist) = (yyvsp[-2].selectedcolumnlist); (yyvsp[-2].selectedcolumnlist)->append((yyvsp[0].nodeselectedcolumn));
        }
-#line 2063 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2080 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 50: /* selected_column_list: selected_column  */
-#line 341 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 341 "src/core/qgssqlstatementparser.yy"
       { (yyval.selectedcolumnlist) = new QList<QgsSQLStatement::NodeSelectedColumn*>(); (yyval.selectedcolumnlist)->append((yyvsp[0].nodeselectedcolumn)); }
-#line 2069 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2086 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 51: /* selected_column: expr  */
-#line 346 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 346 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodeselectedcolumn) = new QgsSQLStatement::NodeSelectedColumn((yyvsp[0].node));
         }
-#line 2077 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2094 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 52: /* selected_column: expr as_clause  */
-#line 351 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 351 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodeselectedcolumn) = new QgsSQLStatement::NodeSelectedColumn((yyvsp[-1].node));
             (yyval.nodeselectedcolumn)->setAlias(*(yyvsp[0].text));
             delete (yyvsp[0].text);
         }
-#line 2087 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2104 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 53: /* selected_column: MUL_OR_STAR  */
-#line 358 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 358 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodeselectedcolumn) = new QgsSQLStatement::NodeSelectedColumn( new QgsSQLStatement::NodeColumnRef("*", true) );
         }
-#line 2095 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2112 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 54: /* selected_column: IDENTIFIER '.' MUL_OR_STAR  */
-#line 363 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 363 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodeselectedcolumn) = new QgsSQLStatement::NodeSelectedColumn( new QgsSQLStatement::NodeColumnRef(*(yyvsp[-2].text), "*", true) );
             delete (yyvsp[-2].text);
         }
-#line 2104 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2121 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 55: /* selected_column: IDENTIFIER '(' MUL_OR_STAR ')'  */
-#line 369 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 369 "src/core/qgssqlstatementparser.yy"
         {
             // special case for COUNT(*), confirm it.
             if( (yyvsp[-3].text)->compare("COUNT", Qt::CaseInsensitive) != 0 )
@@ -2119,11 +2136,11 @@ yyreduce:
             (yyval.nodeselectedcolumn) = new QgsSQLStatement::NodeSelectedColumn(
                     new QgsSQLStatement::NodeFunction( "COUNT", nodeList) );
         }
-#line 2123 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2140 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 56: /* selected_column: IDENTIFIER '(' MUL_OR_STAR ')' as_clause  */
-#line 385 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 385 "src/core/qgssqlstatementparser.yy"
         {
             // special case for COUNT(*), confirm it.
             if( (yyvsp[-4].text)->compare("COUNT", Qt::CaseInsensitive) != 0 )
@@ -2141,11 +2158,11 @@ yyreduce:
             (yyval.nodeselectedcolumn)->setAlias(*(yyvsp[0].text));
             delete (yyvsp[0].text);
         }
-#line 2145 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2162 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 57: /* selected_column: IDENTIFIER '(' DISTINCT column_name ')'  */
-#line 404 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 404 "src/core/qgssqlstatementparser.yy"
         {
             // special case for COUNT(DISTINCT x), confirm it.
             if( (yyvsp[-4].text)->compare("COUNT", Qt::CaseInsensitive) != 0 )
@@ -2163,11 +2180,11 @@ yyreduce:
             (yyval.nodeselectedcolumn) = new QgsSQLStatement::NodeSelectedColumn(
                     new QgsSQLStatement::NodeFunction( "COUNT", nodeList) );
         }
-#line 2167 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2184 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 58: /* selected_column: IDENTIFIER '(' DISTINCT column_name ')' as_clause  */
-#line 423 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 423 "src/core/qgssqlstatementparser.yy"
         {
             // special case for COUNT(DISTINCT x), confirm it.
             if( (yyvsp[-5].text)->compare("COUNT", Qt::CaseInsensitive) != 0 )
@@ -2188,231 +2205,275 @@ yyreduce:
             (yyval.nodeselectedcolumn)->setAlias(*(yyvsp[0].text));
             delete (yyvsp[0].text);
         }
-#line 2192 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2209 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 59: /* as_clause: AS IDENTIFIER  */
-#line 447 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 447 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.text) = (yyvsp[0].text);
         }
-#line 2200 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2217 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 62: /* opt_where: WHERE expr  */
-#line 456 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 456 "src/core/qgssqlstatementparser.yy"
         {
             parser_ctx->setWhere((yyvsp[0].node));
         }
-#line 2208 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2225 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 63: /* join_qualifier: JOIN  */
-#line 463 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 463 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtDefault;
         }
-#line 2216 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2233 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 64: /* join_qualifier: LEFT JOIN  */
-#line 467 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 467 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtLeft;
         }
-#line 2224 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2241 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 65: /* join_qualifier: LEFT OUTER JOIN  */
-#line 471 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 471 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtLeftOuter;
         }
-#line 2232 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2249 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 66: /* join_qualifier: RIGHT JOIN  */
-#line 475 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 475 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtRight;
         }
-#line 2240 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2257 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 67: /* join_qualifier: RIGHT OUTER JOIN  */
-#line 479 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 479 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtRightOuter;
         }
-#line 2248 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2265 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 68: /* join_qualifier: FULL JOIN  */
-#line 483 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 483 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtFull;
         }
-#line 2256 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2273 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 69: /* join_qualifier: CROSS JOIN  */
-#line 487 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 487 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtCross;
         }
-#line 2264 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2281 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 70: /* join_qualifier: INNER JOIN  */
-#line 491 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 491 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.jointype) = QgsSQLStatement::jtInner;
         }
-#line 2272 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2289 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 71: /* join: join_qualifier table_def ON expr  */
-#line 498 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 498 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodejoin) = new QgsSQLStatement::NodeJoin((yyvsp[-2].nodetabledef), (yyvsp[0].node), (yyvsp[-3].jointype));
         }
-#line 2280 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2297 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 72: /* join: join_qualifier table_def USING '(' using_list ')'  */
-#line 502 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 502 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodejoin) = new QgsSQLStatement::NodeJoin((yyvsp[-4].nodetabledef), *(yyvsp[-1].usinglist), (yyvsp[-5].jointype));
             delete (yyvsp[-1].usinglist);
         }
-#line 2289 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2306 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 73: /* using_list: IDENTIFIER  */
-#line 510 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 510 "src/core/qgssqlstatementparser.yy"
         {
           (yyval.usinglist) = new QList<QString>(); (yyval.usinglist)->push_back(*(yyvsp[0].text));
           delete (yyvsp[0].text);
         }
-#line 2298 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2315 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 74: /* using_list: using_list COMMA IDENTIFIER  */
-#line 515 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 515 "src/core/qgssqlstatementparser.yy"
         {
           (yyval.usinglist) = (yyvsp[-2].usinglist); (yyvsp[-2].usinglist)->push_back(*(yyvsp[0].text));
           delete (yyvsp[0].text);
         }
-#line 2307 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2324 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 75: /* join_list: join  */
-#line 523 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 523 "src/core/qgssqlstatementparser.yy"
         {
           (yyval.joinlist) = new QList<QgsSQLStatement::NodeJoin*>(); (yyval.joinlist)->push_back((yyvsp[0].nodejoin));
         }
-#line 2315 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2332 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 76: /* join_list: join_list join  */
-#line 527 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 527 "src/core/qgssqlstatementparser.yy"
         {
           (yyval.joinlist) = (yyvsp[-1].joinlist); (yyvsp[-1].joinlist)->push_back((yyvsp[0].nodejoin));
         }
-#line 2323 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2340 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 78: /* opt_joins: join_list  */
-#line 534 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 534 "src/core/qgssqlstatementparser.yy"
         {
             parser_ctx->setJoins( *(yyvsp[0].joinlist) );
             delete (yyvsp[0].joinlist);
         }
-#line 2332 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2349 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 80: /* opt_order_by: ORDER BY sort_spec_list  */
-#line 542 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 542 "src/core/qgssqlstatementparser.yy"
       {
           parser_ctx->setOrderBy(*(yyvsp[0].columnsortedlist));
           delete (yyvsp[0].columnsortedlist);
       }
-#line 2341 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2358 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 81: /* sort_spec_list: sort_spec_list COMMA sort_spec  */
-#line 550 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 550 "src/core/qgssqlstatementparser.yy"
        {
           (yyval.columnsortedlist) = (yyvsp[-2].columnsortedlist); (yyvsp[-2].columnsortedlist)->push_back((yyvsp[0].nodecolumnsorted));
        }
-#line 2349 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2366 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 82: /* sort_spec_list: sort_spec  */
-#line 554 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 554 "src/core/qgssqlstatementparser.yy"
       { (yyval.columnsortedlist) = new QList<QgsSQLStatement::NodeColumnSorted*>(); (yyval.columnsortedlist)->push_back((yyvsp[0].nodecolumnsorted)); }
-#line 2355 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2372 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 83: /* sort_spec: column_name  */
-#line 559 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 559 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodecolumnsorted) = new QgsSQLStatement::NodeColumnSorted( (yyvsp[0].nodecolumnref), true );
         }
-#line 2363 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2380 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 84: /* sort_spec: column_name ASC  */
-#line 563 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 563 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodecolumnsorted) = new QgsSQLStatement::NodeColumnSorted( (yyvsp[-1].nodecolumnref), true );
         }
-#line 2371 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2388 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 85: /* sort_spec: column_name DESC  */
-#line 567 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 567 "src/core/qgssqlstatementparser.yy"
         {
             (yyval.nodecolumnsorted) = new QgsSQLStatement::NodeColumnSorted( (yyvsp[-1].nodecolumnref), false );
         }
-#line 2379 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2396 "src/core/qgssqlstatementparser.cpp"
     break;
 
   case 86: /* table_def: IDENTIFIER  */
-#line 574 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 574 "src/core/qgssqlstatementparser.yy"
     {
         (yyval.nodetabledef) = new QgsSQLStatement::NodeTableDef(*(yyvsp[0].text));
         delete (yyvsp[0].text);
     }
-#line 2388 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2405 "src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 87: /* table_def: IDENTIFIER as_clause  */
-#line 580 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+  case 87: /* table_def: IDENTIFIER '.' IDENTIFIER  */
+#line 579 "src/core/qgssqlstatementparser.yy"
+    {
+        (yyval.nodetabledef) = new QgsSQLStatement::NodeTableDef(*(yyvsp[-2].text), *(yyvsp[0].text), QString());
+        delete (yyvsp[-2].text);
+        delete (yyvsp[0].text);
+    }
+#line 2415 "src/core/qgssqlstatementparser.cpp"
+    break;
+
+  case 88: /* table_def: IDENTIFIER '.' IDENTIFIER '.' IDENTIFIER  */
+#line 585 "src/core/qgssqlstatementparser.yy"
+    {
+        (yyval.nodetabledef) = new QgsSQLStatement::NodeTableDef(*(yyvsp[-4].text) + '.' + *(yyvsp[-2].text), *(yyvsp[0].text), QString());
+        delete (yyvsp[-4].text);
+        delete (yyvsp[-2].text);
+        delete (yyvsp[0].text);
+    }
+#line 2426 "src/core/qgssqlstatementparser.cpp"
+    break;
+
+  case 89: /* table_def: IDENTIFIER as_clause  */
+#line 592 "src/core/qgssqlstatementparser.yy"
     {
         (yyval.nodetabledef) = new QgsSQLStatement::NodeTableDef(*(yyvsp[-1].text), *(yyvsp[0].text));
         delete (yyvsp[-1].text);
         delete (yyvsp[0].text);
     }
-#line 2398 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2436 "src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 88: /* table_list: table_list COMMA table_def  */
-#line 589 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+  case 90: /* table_def: IDENTIFIER '.' IDENTIFIER as_clause  */
+#line 598 "src/core/qgssqlstatementparser.yy"
+    {
+        (yyval.nodetabledef) = new QgsSQLStatement::NodeTableDef(*(yyvsp[-3].text), *(yyvsp[-1].text), *(yyvsp[0].text));
+        delete (yyvsp[-3].text);
+        delete (yyvsp[-1].text);
+        delete (yyvsp[0].text);
+    }
+#line 2447 "src/core/qgssqlstatementparser.cpp"
+    break;
+
+  case 91: /* table_def: IDENTIFIER '.' IDENTIFIER '.' IDENTIFIER as_clause  */
+#line 605 "src/core/qgssqlstatementparser.yy"
+    {
+        (yyval.nodetabledef) = new QgsSQLStatement::NodeTableDef(*(yyvsp[-5].text) + '.' + *(yyvsp[-3].text), *(yyvsp[-1].text), *(yyvsp[0].text));
+        delete (yyvsp[-5].text);
+        delete (yyvsp[-3].text);
+        delete (yyvsp[-1].text);
+        delete (yyvsp[0].text);
+    }
+#line 2459 "src/core/qgssqlstatementparser.cpp"
+    break;
+
+  case 92: /* table_list: table_list COMMA table_def  */
+#line 616 "src/core/qgssqlstatementparser.yy"
        {
           (yyval.tablelist) = (yyvsp[-2].tablelist); (yyvsp[-2].tablelist)->push_back((yyvsp[0].nodetabledef));
        }
-#line 2406 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2467 "src/core/qgssqlstatementparser.cpp"
     break;
 
-  case 89: /* table_list: table_def  */
-#line 593 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+  case 93: /* table_list: table_def  */
+#line 620 "src/core/qgssqlstatementparser.yy"
       { (yyval.tablelist) = new QList<QgsSQLStatement::NodeTableDef*>(); (yyval.tablelist)->push_back((yyvsp[0].nodetabledef)); }
-#line 2412 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2473 "src/core/qgssqlstatementparser.cpp"
     break;
 
 
-#line 2416 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.cpp"
+#line 2477 "src/core/qgssqlstatementparser.cpp"
 
       default: break;
     }
@@ -2636,7 +2697,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 596 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgssqlstatementparser.yy"
+#line 623 "src/core/qgssqlstatementparser.yy"
 
 
 

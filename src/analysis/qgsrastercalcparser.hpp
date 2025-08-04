@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_RASTER_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_ANALYSIS_QGSRASTERCALCPARSER_HPP_INCLUDED
-# define YY_RASTER_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_ANALYSIS_QGSRASTERCALCPARSER_HPP_INCLUDED
+#ifndef YY_RASTER_SRC_ANALYSIS_QGSRASTERCALCPARSER_HPP_INCLUDED
+# define YY_RASTER_SRC_ANALYSIS_QGSRASTERCALCPARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -73,10 +73,10 @@ extern int raster_debug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 52 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/raster/qgsrastercalcparser.yy"
+#line 52 "src/analysis/raster/qgsrastercalcparser.yy"
  QgsRasterCalcNode* node; double number; QgsRasterCalcNode::Operator op;
 
-#line 80 "/Volumes/Data/work/projects/desktop/qgis3/src/analysis/qgsrastercalcparser.hpp"
+#line 80 "src/analysis/qgsrastercalcparser.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -91,4 +91,4 @@ extern YYSTYPE raster_lval;
 int raster_parse (void);
 
 
-#endif /* !YY_RASTER_VOLUMES_DATA_WORK_PROJECTS_DESKTOP_QGIS3_SRC_ANALYSIS_QGSRASTERCALCPARSER_HPP_INCLUDED  */
+#endif /* !YY_RASTER_SRC_ANALYSIS_QGSRASTERCALCPARSER_HPP_INCLUDED  */

@@ -74,7 +74,7 @@
 #define yychar          mesh_char
 
 /* First part of user prologue.  */
-#line 18 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 18 "src/core/mesh/qgsmeshcalcparser.yy"
 
   #include "qgsmeshcalcnode.h"
 
@@ -107,7 +107,7 @@
   // we want verbose error messages
   #define YYERROR_VERBOSE 1
 
-#line 111 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 111 "src/core/qgsmeshcalcparser.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -1183,151 +1183,151 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* root: mesh_exp  */
-#line 80 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 80 "src/core/mesh/qgsmeshcalcparser.yy"
               {}
-#line 1189 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1189 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 3: /* mesh_exp: FUNCTION '(' mesh_exp ')'  */
-#line 84 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 84 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode((yyvsp[-3].op), (yyvsp[-1].node), 0); joinTmpNodes((yyval.node), (yyvsp[-1].node), 0, 0);}
-#line 1195 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1195 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 4: /* mesh_exp: FUNCTION2 '(' mesh_exp ',' mesh_exp ')'  */
-#line 85 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 85 "src/core/mesh/qgsmeshcalcparser.yy"
                                               { (yyval.node) = new QgsMeshCalcNode((yyvsp[-5].op), (yyvsp[-3].node), (yyvsp[-1].node)); joinTmpNodes((yyval.node), (yyvsp[-3].node), (yyvsp[-1].node), 0);}
-#line 1201 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1201 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 5: /* mesh_exp: IF '(' mesh_exp ',' mesh_exp ',' mesh_exp ')'  */
-#line 86 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 86 "src/core/mesh/qgsmeshcalcparser.yy"
                                                     { (yyval.node) = new QgsMeshCalcNode((yyvsp[-5].node), (yyvsp[-3].node), (yyvsp[-1].node)); joinTmpNodes((yyval.node), (yyvsp[-5].node), (yyvsp[-3].node), (yyvsp[-1].node));}
-#line 1207 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1207 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 6: /* mesh_exp: NOT '(' mesh_exp ')'  */
-#line 87 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 87 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opNOT, (yyvsp[-1].node), 0 ); joinTmpNodes((yyval.node),(yyvsp[-1].node), 0, 0); }
-#line 1213 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1213 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 7: /* mesh_exp: mesh_exp AND mesh_exp  */
-#line 88 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 88 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opAND, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node), 0); }
-#line 1219 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1219 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 8: /* mesh_exp: mesh_exp OR mesh_exp  */
-#line 89 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 89 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opOR, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node), 0); }
-#line 1225 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1225 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 9: /* mesh_exp: mesh_exp '=' mesh_exp  */
-#line 90 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 90 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opEQ, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node), 0); }
-#line 1231 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1231 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 10: /* mesh_exp: mesh_exp NE mesh_exp  */
-#line 91 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 91 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opNE, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node), 0); }
-#line 1237 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1237 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 11: /* mesh_exp: mesh_exp '>' mesh_exp  */
-#line 92 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 92 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opGT, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node), (yyvsp[-2].node), (yyvsp[0].node), 0); }
-#line 1243 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1243 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 12: /* mesh_exp: mesh_exp '<' mesh_exp  */
-#line 93 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 93 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opLT, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node), (yyvsp[-2].node), (yyvsp[0].node), 0); }
-#line 1249 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1249 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 13: /* mesh_exp: mesh_exp GE mesh_exp  */
-#line 94 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 94 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opGE, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node), (yyvsp[-2].node), (yyvsp[0].node), 0); }
-#line 1255 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1255 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 14: /* mesh_exp: mesh_exp LE mesh_exp  */
-#line 95 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 95 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opLE, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node), (yyvsp[-2].node), (yyvsp[0].node), 0); }
-#line 1261 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1261 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 15: /* mesh_exp: mesh_exp '^' mesh_exp  */
-#line 96 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 96 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opPOW, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node), 0); }
-#line 1267 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1267 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 16: /* mesh_exp: mesh_exp '*' mesh_exp  */
-#line 97 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 97 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opMUL, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node), 0); }
-#line 1273 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1273 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 17: /* mesh_exp: mesh_exp '/' mesh_exp  */
-#line 98 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 98 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opDIV, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node), 0); }
-#line 1279 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1279 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 18: /* mesh_exp: mesh_exp '+' mesh_exp  */
-#line 99 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 99 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opPLUS, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node), 0); }
-#line 1285 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1285 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 19: /* mesh_exp: mesh_exp '-' mesh_exp  */
-#line 100 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 100 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opMINUS, (yyvsp[-2].node), (yyvsp[0].node) ); joinTmpNodes((yyval.node),(yyvsp[-2].node),(yyvsp[0].node), 0); }
-#line 1291 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1291 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 20: /* mesh_exp: '(' mesh_exp ')'  */
-#line 101 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 101 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = (yyvsp[-1].node); }
-#line 1297 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1297 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 21: /* mesh_exp: '+' mesh_exp  */
-#line 102 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 102 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = (yyvsp[0].node); }
-#line 1303 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1303 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 22: /* mesh_exp: '-' mesh_exp  */
-#line 103 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 103 "src/core/mesh/qgsmeshcalcparser.yy"
                               { (yyval.node) = new QgsMeshCalcNode( QgsMeshCalcNode::opSIGN, (yyvsp[0].node), 0 ); joinTmpNodes((yyval.node), (yyvsp[0].node), 0, 0); }
-#line 1309 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1309 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 23: /* mesh_exp: NUMBER  */
-#line 104 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 104 "src/core/mesh/qgsmeshcalcparser.yy"
            { (yyval.node) = new QgsMeshCalcNode((yyvsp[0].number)); addToTmpNodes((yyval.node)); }
-#line 1315 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1315 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 24: /* mesh_exp: DATASET_REF  */
-#line 105 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 105 "src/core/mesh/qgsmeshcalcparser.yy"
                 { (yyval.node) = new QgsMeshCalcNode(QString::fromUtf8(mesh_text)); addToTmpNodes((yyval.node)); }
-#line 1321 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1321 "src/core/qgsmeshcalcparser.cpp"
     break;
 
   case 25: /* mesh_exp: NODATA  */
-#line 106 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 106 "src/core/mesh/qgsmeshcalcparser.yy"
            { (yyval.node) = new QgsMeshCalcNode(); addToTmpNodes((yyval.node)); }
-#line 1327 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1327 "src/core/qgsmeshcalcparser.cpp"
     break;
 
 
-#line 1331 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsmeshcalcparser.cpp"
+#line 1331 "src/core/qgsmeshcalcparser.cpp"
 
       default: break;
     }
@@ -1520,7 +1520,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 109 "/Volumes/Data/work/projects/desktop/qgis3/src/core/mesh/qgsmeshcalcparser.yy"
+#line 109 "src/core/mesh/qgsmeshcalcparser.yy"
 
 
 void addToTmpNodes(QgsMeshCalcNode* node)

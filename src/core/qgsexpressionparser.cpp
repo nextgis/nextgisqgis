@@ -72,7 +72,7 @@
 #define yynerrs         exp_nerrs
 
 /* First part of user prologue.  */
-#line 16 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 16 "src/core/qgsexpressionparser.yy"
 
 #include <qglobal.h>
 #include <QList>
@@ -143,7 +143,7 @@ void addParserLocation(YYLTYPE* yyloc, QgsExpressionNode *node)
 }
 
 
-#line 147 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 147 "src/core/qgsexpressionparser.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -195,36 +195,38 @@ enum yysymbol_kind_t
   YYSYMBOL_POW = 21,                       /* POW  */
   YYSYMBOL_NOT = 22,                       /* NOT  */
   YYSYMBOL_IN = 23,                        /* IN  */
-  YYSYMBOL_NUMBER_FLOAT = 24,              /* NUMBER_FLOAT  */
-  YYSYMBOL_NUMBER_INT = 25,                /* NUMBER_INT  */
-  YYSYMBOL_NUMBER_INT64 = 26,              /* NUMBER_INT64  */
-  YYSYMBOL_BOOLEAN = 27,                   /* BOOLEAN  */
-  YYSYMBOL_NULLVALUE = 28,                 /* NULLVALUE  */
-  YYSYMBOL_CASE = 29,                      /* CASE  */
-  YYSYMBOL_WHEN = 30,                      /* WHEN  */
-  YYSYMBOL_THEN = 31,                      /* THEN  */
-  YYSYMBOL_ELSE = 32,                      /* ELSE  */
-  YYSYMBOL_END = 33,                       /* END  */
-  YYSYMBOL_STRING = 34,                    /* STRING  */
-  YYSYMBOL_QUOTED_COLUMN_REF = 35,         /* QUOTED_COLUMN_REF  */
-  YYSYMBOL_NAME = 36,                      /* NAME  */
-  YYSYMBOL_SPECIAL_COL = 37,               /* SPECIAL_COL  */
-  YYSYMBOL_VARIABLE = 38,                  /* VARIABLE  */
-  YYSYMBOL_NAMED_NODE = 39,                /* NAMED_NODE  */
-  YYSYMBOL_COMMA = 40,                     /* COMMA  */
-  YYSYMBOL_Unknown_CHARACTER = 41,         /* Unknown_CHARACTER  */
-  YYSYMBOL_UMINUS = 42,                    /* UMINUS  */
-  YYSYMBOL_43_ = 43,                       /* '['  */
-  YYSYMBOL_44_ = 44,                       /* '('  */
-  YYSYMBOL_45_ = 45,                       /* ')'  */
-  YYSYMBOL_46_ = 46,                       /* ']'  */
-  YYSYMBOL_YYACCEPT = 47,                  /* $accept  */
-  YYSYMBOL_root = 48,                      /* root  */
-  YYSYMBOL_expression = 49,                /* expression  */
-  YYSYMBOL_named_node = 50,                /* named_node  */
-  YYSYMBOL_exp_list = 51,                  /* exp_list  */
-  YYSYMBOL_when_then_clauses = 52,         /* when_then_clauses  */
-  YYSYMBOL_when_then_clause = 53           /* when_then_clause  */
+  YYSYMBOL_BETWEEN = 24,                   /* BETWEEN  */
+  YYSYMBOL_NUMBER_FLOAT = 25,              /* NUMBER_FLOAT  */
+  YYSYMBOL_NUMBER_INT = 26,                /* NUMBER_INT  */
+  YYSYMBOL_NUMBER_INT64 = 27,              /* NUMBER_INT64  */
+  YYSYMBOL_BOOLEAN = 28,                   /* BOOLEAN  */
+  YYSYMBOL_NULLVALUE = 29,                 /* NULLVALUE  */
+  YYSYMBOL_CASE = 30,                      /* CASE  */
+  YYSYMBOL_WHEN = 31,                      /* WHEN  */
+  YYSYMBOL_THEN = 32,                      /* THEN  */
+  YYSYMBOL_ELSE = 33,                      /* ELSE  */
+  YYSYMBOL_END = 34,                       /* END  */
+  YYSYMBOL_STRING = 35,                    /* STRING  */
+  YYSYMBOL_QUOTED_COLUMN_REF = 36,         /* QUOTED_COLUMN_REF  */
+  YYSYMBOL_NAME = 37,                      /* NAME  */
+  YYSYMBOL_SPECIAL_COL = 38,               /* SPECIAL_COL  */
+  YYSYMBOL_VARIABLE = 39,                  /* VARIABLE  */
+  YYSYMBOL_NAMED_NODE = 40,                /* NAMED_NODE  */
+  YYSYMBOL_COMMA = 41,                     /* COMMA  */
+  YYSYMBOL_Unknown_CHARACTER = 42,         /* Unknown_CHARACTER  */
+  YYSYMBOL_UMINUS = 43,                    /* UMINUS  */
+  YYSYMBOL_44_ = 44,                       /* '['  */
+  YYSYMBOL_45_ = 45,                       /* '('  */
+  YYSYMBOL_46_ = 46,                       /* ')'  */
+  YYSYMBOL_47_ = 47,                       /* ']'  */
+  YYSYMBOL_YYACCEPT = 48,                  /* $accept  */
+  YYSYMBOL_root = 49,                      /* root  */
+  YYSYMBOL_expression = 50,                /* expression  */
+  YYSYMBOL_expression_non_logical = 51,    /* expression_non_logical  */
+  YYSYMBOL_named_node = 52,                /* named_node  */
+  YYSYMBOL_exp_list = 53,                  /* exp_list  */
+  YYSYMBOL_when_then_clauses = 54,         /* when_then_clauses  */
+  YYSYMBOL_when_then_clause = 55           /* when_then_clause  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -553,21 +555,21 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  28
+#define YYFINAL  29
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   445
+#define YYLAST   404
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  47
+#define YYNTOKENS  48
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  7
+#define YYNNTS  8
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  51
+#define YYNRULES  54
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  98
+#define YYNSTATES  107
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   297
+#define YYMAXUTOK   298
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -585,12 +587,12 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-      44,    45,     2,     2,     2,     2,     2,     2,     2,     2,
+      45,    46,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,    43,     2,    46,     2,     2,     2,     2,     2,     2,
+       2,    44,     2,    47,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -610,19 +612,19 @@ static const yytype_int8 yytranslate[] =
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39,    40,    41,    42
+      35,    36,    37,    38,    39,    40,    41,    42,    43
 };
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   180,   180,   181,   192,   193,   194,   195,   196,   197,
-     198,   199,   200,   201,   202,   203,   204,   205,   206,   207,
-     208,   209,   210,   211,   212,   213,   259,   284,   285,   287,
-     289,   290,   292,   293,   296,   297,   300,   318,   329,   330,
-     331,   332,   333,   334,   338,   342,   357,   358,   359,   363,
-     364,   368
+       0,   181,   181,   182,   198,   199,   200,   201,   202,   203,
+     204,   205,   206,   207,   208,   209,   210,   211,   212,   214,
+     215,   221,   222,   223,   224,   225,   226,   227,   228,   229,
+     230,   276,   301,   303,   304,   306,   307,   310,   311,   314,
+     332,   343,   344,   345,   346,   347,   348,   353,   357,   372,
+     373,   374,   378,   379,   383
 };
 #endif
 
@@ -640,13 +642,13 @@ static const char *const yytname[] =
 {
   "\"end of file\"", "error", "\"invalid token\"", "OR", "AND", "EQ",
   "NE", "LE", "GE", "LT", "GT", "REGEXP", "LIKE", "IS", "PLUS", "MINUS",
-  "MUL", "DIV", "INTDIV", "MOD", "CONCAT", "POW", "NOT", "IN",
+  "MUL", "DIV", "INTDIV", "MOD", "CONCAT", "POW", "NOT", "IN", "BETWEEN",
   "NUMBER_FLOAT", "NUMBER_INT", "NUMBER_INT64", "BOOLEAN", "NULLVALUE",
   "CASE", "WHEN", "THEN", "ELSE", "END", "STRING", "QUOTED_COLUMN_REF",
   "NAME", "SPECIAL_COL", "VARIABLE", "NAMED_NODE", "COMMA",
   "Unknown_CHARACTER", "UMINUS", "'['", "'('", "')'", "']'", "$accept",
-  "root", "expression", "named_node", "exp_list", "when_then_clauses",
-  "when_then_clause", YY_NULLPTR
+  "root", "expression", "expression_non_logical", "named_node", "exp_list",
+  "when_then_clauses", "when_then_clause", YY_NULLPTR
 };
 
 static const char *
@@ -656,7 +658,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-75)
+#define YYPACT_NINF (-72)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -670,16 +672,17 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-      76,   365,   365,   365,   365,   -75,   -75,   -75,   -75,   -75,
-     -21,   -75,   -75,   -33,   -75,   -75,   365,    19,   243,   243,
-     -19,   -19,   302,   365,   -12,   -75,   313,   118,   -75,   365,
-     365,   365,   365,   365,   365,   365,   365,   365,   365,   365,
-     365,   365,   365,   365,   365,   365,   365,   365,    -1,   -18,
-     365,   161,   365,   -75,   -75,   365,   -75,   243,   -75,   -32,
-     -75,   283,   302,   396,   396,   396,   396,   396,   396,   396,
-     396,   396,   402,   402,   -15,   -15,   -15,   -15,   -19,   -15,
-     -17,   339,    53,   365,   202,   243,   339,   -75,   339,   -30,
-     -75,   243,   -75,   243,   -75,   -28,   -75,   -75
+      91,   214,   258,   258,   214,   -72,   -72,   -72,   -72,   -72,
+      -6,   -72,   -72,    -7,   -72,   -72,   214,    39,   339,   290,
+     339,    -4,    -4,   380,   214,   -27,   -72,   160,   138,   -72,
+     214,   214,   214,   214,   214,   214,   214,   214,   214,   214,
+     214,    -1,    10,   258,   258,   258,   258,   258,   258,   258,
+     258,   258,   214,   309,   214,   -72,   -72,   214,   -72,   339,
+     -72,   -22,   -72,   360,   380,   -72,   -72,   -72,   -72,   -72,
+     -72,   -72,   -72,   -72,    14,   258,   187,    16,    51,    51,
+     -18,   -18,   -18,   -18,    -4,   -18,     5,   214,   257,   339,
+     187,   -72,   187,   149,    12,   258,   -72,   339,   -72,   339,
+     -72,    15,   258,   -72,   290,   -72,   290
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -687,28 +690,29 @@ static const yytype_int16 yypact[] =
    means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,     0,     0,     0,     0,    38,    39,    40,    41,    43,
-       0,    42,    35,    34,    36,    37,     0,     0,     2,     3,
-      30,    31,    23,     0,     0,    50,     0,     0,     1,     0,
+       0,     0,     0,     0,     0,    41,    42,    43,    44,    46,
+       0,    45,    38,    37,    39,    40,     0,     0,     2,     4,
+       3,    33,    34,    16,     0,     0,    53,     0,     0,     1,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,    32,    49,     0,    26,    47,    48,     0,
-      24,     5,     4,     6,     7,     8,     9,    10,    11,    12,
-      13,    14,    15,    16,    17,    19,    18,    20,    22,    21,
-       0,     0,     0,     0,     0,    44,     0,    25,     0,     0,
-      29,    51,    33,    45,    46,     0,    27,    28
+       0,     0,     0,     0,     0,    35,    52,     0,    31,    50,
+      51,     0,    29,     6,     5,     7,     8,     9,    10,    11,
+      12,    13,    14,    15,     0,     0,     0,     0,    21,    22,
+      23,    25,    24,    26,    28,    27,     0,     0,     0,    47,
+       0,    30,     0,     0,     0,     0,    32,    54,    36,    48,
+      49,     0,     0,    17,    19,    18,    20
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -75,   -75,     0,   -61,   -74,   -75,    24
+     -72,   -72,    50,    -2,   -33,   -71,   -72,    37
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,    17,    57,    58,    59,    24,    25
+       0,    17,    59,    19,    60,    61,    25,    26
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -716,138 +720,131 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      18,    19,    20,    21,    22,    46,    47,    89,    86,    23,
-      86,    26,    86,    87,    95,    96,    27,    97,    23,    28,
-      52,    53,    80,    51,    50,    94,    81,    88,    50,    61,
-      62,    63,    64,    65,    66,    67,    68,    69,    70,    71,
-      72,    73,    74,    75,    76,    77,    78,    79,    54,     0,
-      82,     0,    84,     0,     0,    85,    29,    30,    31,    32,
-      33,    34,    35,    36,    37,    38,    39,    40,    41,    42,
-      43,    44,    45,    46,    47,    48,    49,     1,     0,     0,
-       0,     0,     0,    91,     0,     0,    93,     0,     0,     0,
-       2,     3,     0,     0,     0,     0,    50,     0,     4,    90,
-       5,     6,     7,     8,     9,    10,     0,     0,     0,     0,
-      11,    12,    13,    14,    15,     0,     0,     0,     0,     0,
-      16,    29,    30,    31,    32,    33,    34,    35,    36,    37,
-      38,    39,    40,    41,    42,    43,    44,    45,    46,    47,
-      48,    49,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,    50,     0,    60,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    46,    47,    48,    49,     0,     0,     0,     0,     0,
-       0,     0,    83,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,    50,    29,    30,    31,    32,    33,
-      34,    35,    36,    37,    38,    39,    40,    41,    42,    43,
-      44,    45,    46,    47,    48,    49,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,    92,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,    50,    29,    30,    31,    32,
-      33,    34,    35,    36,    37,    38,    39,    40,    41,    42,
-      43,    44,    45,    46,    47,    48,    49,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,    50,    30,    31,    32,
-      33,    34,    35,    36,    37,    38,    39,    40,    41,    42,
-      43,    44,    45,    46,    47,    48,    49,    31,    32,    33,
-      34,    35,    36,    37,    38,    39,    40,    41,    42,    43,
-      44,    45,    46,    47,    48,    49,    50,     2,     3,     0,
-       0,     0,     0,     0,     0,     4,     0,     5,     6,     7,
-       8,     9,    10,     0,     0,    50,     0,    11,    12,    13,
-      14,    15,    55,     2,     3,     0,     0,    16,    56,     0,
-       0,     4,     0,     5,     6,     7,     8,     9,    10,     0,
-       0,     0,     0,    11,    12,    13,    14,    15,    55,     2,
-       3,     0,     0,    16,     0,     0,     0,     4,     0,     5,
+      21,    22,    50,    51,    24,    94,    54,    55,    30,    31,
+      32,    33,    34,    35,    36,    37,    38,    39,    40,    90,
+      95,   101,    74,    75,    91,    24,    52,    41,    42,    43,
+      44,    45,    46,    47,    48,    49,    50,    51,    27,    29,
+      52,    77,    78,    79,    80,    81,    82,    83,    84,    85,
+      18,    20,    96,    90,    23,    76,    90,   100,   103,    92,
+      52,   105,    56,     0,     0,     0,    28,    46,    47,    48,
+      49,    50,    51,    93,    53,     0,     0,     0,     0,     0,
+      63,    64,    65,    66,    67,    68,    69,    70,    71,    72,
+      73,     0,     1,   104,     0,    52,     0,     0,     0,     0,
+     106,     0,    86,     0,    88,     2,     3,    89,     0,     0,
+       0,     0,     0,     4,     0,     0,     5,     6,     7,     8,
+       9,    10,     0,     0,     0,     0,    11,    12,    13,    14,
+      15,     0,     0,     0,     0,     0,    16,    97,     0,     0,
+      99,    30,    31,    32,    33,    34,    35,    36,    37,    38,
+      39,    40,     0,   102,     0,     0,     0,     0,     0,     0,
+      41,    42,    43,    44,    45,    46,    47,    48,    49,    50,
+      51,     0,     0,     0,     2,     3,     0,     0,     0,     0,
+       0,     0,     4,     0,    62,     5,     6,     7,     8,     9,
+      10,     0,     0,    52,     0,    11,    12,    13,    14,    15,
+      57,     2,     3,     0,     0,    16,    58,     0,     0,     4,
+       0,     0,     5,     6,     7,     8,     9,    10,     0,     0,
+       0,     0,    11,    12,    13,    14,    15,    57,     2,     3,
+       0,     0,    16,     0,     0,     0,     4,     0,     0,     5,
        6,     7,     8,     9,    10,     0,     0,     0,     0,    11,
       12,    13,    14,    15,     0,     0,     0,     0,     0,    16,
-      40,    41,    42,    43,    44,    45,    46,    47,    42,    43,
-      44,    45,    46,    47,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,    50,
-       0,     0,     0,     0,     0,    50
+      30,    31,    32,    33,    34,    35,    36,    37,    38,    39,
+      40,     0,     2,     3,     0,     0,     0,     0,     0,    41,
+      42,    43,     0,     5,     6,     7,     8,     9,    10,     0,
+       0,    98,     0,    11,    12,    13,    14,    15,     0,     0,
+       0,     0,     0,    16,    44,    45,    46,    47,    48,    49,
+      50,    51,    30,    31,    32,    33,    34,    35,    36,    37,
+      38,    39,    40,     0,     0,     0,     0,     0,     0,     0,
+       0,    41,    42,    43,    52,     0,     0,     0,     0,     0,
+       0,    87,    30,    31,    32,    33,    34,    35,    36,    37,
+      38,    39,    40,     0,     0,     0,     0,     0,     0,     0,
+       0,    41,    42,    43,    31,    32,    33,    34,    35,    36,
+      37,    38,    39,    40,     0,     0,     0,     0,     0,     0,
+       0,     0,    41,    42,    43,    32,    33,    34,    35,    36,
+      37,    38,    39,    40,     0,     0,     0,     0,     0,     0,
+       0,     0,    41,    42,    43
 };
 
 static const yytype_int8 yycheck[] =
 {
-       0,     1,     2,     3,     4,    20,    21,    81,    40,    30,
-      40,    44,    40,    45,    88,    45,    16,    45,    30,     0,
-      32,    33,    23,    23,    43,    86,    44,    44,    43,    29,
+       2,     3,    20,    21,    31,    76,    33,    34,     3,     4,
+       5,     6,     7,     8,     9,    10,    11,    12,    13,    41,
+       4,    92,    23,    24,    46,    31,    44,    22,    23,    24,
+      14,    15,    16,    17,    18,    19,    20,    21,    45,     0,
+      44,    43,    44,    45,    46,    47,    48,    49,    50,    51,
+       0,     1,    47,    41,     4,    45,    41,    90,    46,    45,
+      44,    46,    25,    -1,    -1,    -1,    16,    16,    17,    18,
+      19,    20,    21,    75,    24,    -1,    -1,    -1,    -1,    -1,
       30,    31,    32,    33,    34,    35,    36,    37,    38,    39,
-      40,    41,    42,    43,    44,    45,    46,    47,    24,    -1,
-      50,    -1,    52,    -1,    -1,    55,     3,     4,     5,     6,
-       7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
-      17,    18,    19,    20,    21,    22,    23,     1,    -1,    -1,
-      -1,    -1,    -1,    83,    -1,    -1,    86,    -1,    -1,    -1,
-      14,    15,    -1,    -1,    -1,    -1,    43,    -1,    22,    46,
-      24,    25,    26,    27,    28,    29,    -1,    -1,    -1,    -1,
-      34,    35,    36,    37,    38,    -1,    -1,    -1,    -1,    -1,
-      44,     3,     4,     5,     6,     7,     8,     9,    10,    11,
-      12,    13,    14,    15,    16,    17,    18,    19,    20,    21,
-      22,    23,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    43,    -1,    45,     3,     4,     5,     6,     7,     8,
-       9,    10,    11,    12,    13,    14,    15,    16,    17,    18,
-      19,    20,    21,    22,    23,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    31,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    43,     3,     4,     5,     6,     7,
-       8,     9,    10,    11,    12,    13,    14,    15,    16,    17,
-      18,    19,    20,    21,    22,    23,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    33,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    43,     3,     4,     5,     6,
-       7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
-      17,    18,    19,    20,    21,    22,    23,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    43,     4,     5,     6,
-       7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
-      17,    18,    19,    20,    21,    22,    23,     5,     6,     7,
-       8,     9,    10,    11,    12,    13,    14,    15,    16,    17,
-      18,    19,    20,    21,    22,    23,    43,    14,    15,    -1,
-      -1,    -1,    -1,    -1,    -1,    22,    -1,    24,    25,    26,
-      27,    28,    29,    -1,    -1,    43,    -1,    34,    35,    36,
-      37,    38,    39,    14,    15,    -1,    -1,    44,    45,    -1,
-      -1,    22,    -1,    24,    25,    26,    27,    28,    29,    -1,
-      -1,    -1,    -1,    34,    35,    36,    37,    38,    39,    14,
-      15,    -1,    -1,    44,    -1,    -1,    -1,    22,    -1,    24,
-      25,    26,    27,    28,    29,    -1,    -1,    -1,    -1,    34,
-      35,    36,    37,    38,    -1,    -1,    -1,    -1,    -1,    44,
-      14,    15,    16,    17,    18,    19,    20,    21,    16,    17,
-      18,    19,    20,    21,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    43,
-      -1,    -1,    -1,    -1,    -1,    43
+      40,    -1,     1,    95,    -1,    44,    -1,    -1,    -1,    -1,
+     102,    -1,    52,    -1,    54,    14,    15,    57,    -1,    -1,
+      -1,    -1,    -1,    22,    -1,    -1,    25,    26,    27,    28,
+      29,    30,    -1,    -1,    -1,    -1,    35,    36,    37,    38,
+      39,    -1,    -1,    -1,    -1,    -1,    45,    87,    -1,    -1,
+      90,     3,     4,     5,     6,     7,     8,     9,    10,    11,
+      12,    13,    -1,     4,    -1,    -1,    -1,    -1,    -1,    -1,
+      22,    23,    24,    14,    15,    16,    17,    18,    19,    20,
+      21,    -1,    -1,    -1,    14,    15,    -1,    -1,    -1,    -1,
+      -1,    -1,    22,    -1,    46,    25,    26,    27,    28,    29,
+      30,    -1,    -1,    44,    -1,    35,    36,    37,    38,    39,
+      40,    14,    15,    -1,    -1,    45,    46,    -1,    -1,    22,
+      -1,    -1,    25,    26,    27,    28,    29,    30,    -1,    -1,
+      -1,    -1,    35,    36,    37,    38,    39,    40,    14,    15,
+      -1,    -1,    45,    -1,    -1,    -1,    22,    -1,    -1,    25,
+      26,    27,    28,    29,    30,    -1,    -1,    -1,    -1,    35,
+      36,    37,    38,    39,    -1,    -1,    -1,    -1,    -1,    45,
+       3,     4,     5,     6,     7,     8,     9,    10,    11,    12,
+      13,    -1,    14,    15,    -1,    -1,    -1,    -1,    -1,    22,
+      23,    24,    -1,    25,    26,    27,    28,    29,    30,    -1,
+      -1,    34,    -1,    35,    36,    37,    38,    39,    -1,    -1,
+      -1,    -1,    -1,    45,    14,    15,    16,    17,    18,    19,
+      20,    21,     3,     4,     5,     6,     7,     8,     9,    10,
+      11,    12,    13,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    22,    23,    24,    44,    -1,    -1,    -1,    -1,    -1,
+      -1,    32,     3,     4,     5,     6,     7,     8,     9,    10,
+      11,    12,    13,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    22,    23,    24,     4,     5,     6,     7,     8,     9,
+      10,    11,    12,    13,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    22,    23,    24,     5,     6,     7,     8,     9,
+      10,    11,    12,    13,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    22,    23,    24
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     1,    14,    15,    22,    24,    25,    26,    27,    28,
-      29,    34,    35,    36,    37,    38,    44,    48,    49,    49,
-      49,    49,    49,    30,    52,    53,    44,    49,     0,     3,
-       4,     5,     6,     7,     8,     9,    10,    11,    12,    13,
-      14,    15,    16,    17,    18,    19,    20,    21,    22,    23,
-      43,    49,    32,    33,    53,    39,    45,    49,    50,    51,
-      45,    49,    49,    49,    49,    49,    49,    49,    49,    49,
-      49,    49,    49,    49,    49,    49,    49,    49,    49,    49,
-      23,    44,    49,    31,    49,    49,    40,    45,    44,    51,
-      46,    49,    33,    49,    50,    51,    45,    45
+       0,     1,    14,    15,    22,    25,    26,    27,    28,    29,
+      30,    35,    36,    37,    38,    39,    45,    49,    50,    51,
+      50,    51,    51,    50,    31,    54,    55,    45,    50,     0,
+       3,     4,     5,     6,     7,     8,     9,    10,    11,    12,
+      13,    22,    23,    24,    14,    15,    16,    17,    18,    19,
+      20,    21,    44,    50,    33,    34,    55,    40,    46,    50,
+      52,    53,    46,    50,    50,    50,    50,    50,    50,    50,
+      50,    50,    50,    50,    23,    24,    45,    51,    51,    51,
+      51,    51,    51,    51,    51,    51,    50,    32,    50,    50,
+      41,    46,    45,    51,    53,     4,    47,    50,    34,    50,
+      52,    53,     4,    46,    51,    46,    51
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    47,    48,    48,    49,    49,    49,    49,    49,    49,
-      49,    49,    49,    49,    49,    49,    49,    49,    49,    49,
-      49,    49,    49,    49,    49,    49,    49,    49,    49,    49,
-      49,    49,    49,    49,    49,    49,    49,    49,    49,    49,
-      49,    49,    49,    49,    50,    51,    51,    51,    51,    52,
-      52,    53
+       0,    48,    49,    49,    50,    50,    50,    50,    50,    50,
+      50,    50,    50,    50,    50,    50,    50,    50,    50,    50,
+      50,    51,    51,    51,    51,    51,    51,    51,    51,    51,
+      51,    51,    51,    51,    51,    51,    51,    51,    51,    51,
+      51,    51,    51,    51,    51,    51,    51,    52,    53,    53,
+      53,    53,    54,    54,    55
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     1,     2,     3,     3,     3,     3,     3,     3,
-       3,     3,     3,     3,     3,     3,     3,     3,     3,     3,
-       3,     3,     3,     2,     3,     4,     3,     5,     6,     4,
-       2,     2,     3,     5,     1,     1,     1,     1,     1,     1,
-       1,     1,     1,     1,     2,     3,     3,     1,     1,     2,
-       1,     4
+       0,     2,     1,     2,     1,     3,     3,     3,     3,     3,
+       3,     3,     3,     3,     3,     3,     2,     5,     6,     5,
+       6,     3,     3,     3,     3,     3,     3,     3,     3,     3,
+       4,     3,     4,     2,     2,     3,     5,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     2,     3,     3,
+       1,     1,     2,     1,     4
 };
 
 
@@ -1409,69 +1406,75 @@ yydestruct (const char *yymsg,
   switch (yykind)
     {
     case YYSYMBOL_STRING: /* STRING  */
-#line 174 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 175 "src/core/qgsexpressionparser.yy"
             { delete ((*yyvaluep).text); }
-#line 1415 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1412 "src/core/qgsexpressionparser.cpp"
         break;
 
     case YYSYMBOL_QUOTED_COLUMN_REF: /* QUOTED_COLUMN_REF  */
-#line 174 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 175 "src/core/qgsexpressionparser.yy"
             { delete ((*yyvaluep).text); }
-#line 1421 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1418 "src/core/qgsexpressionparser.cpp"
         break;
 
     case YYSYMBOL_NAME: /* NAME  */
-#line 174 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 175 "src/core/qgsexpressionparser.yy"
             { delete ((*yyvaluep).text); }
-#line 1427 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1424 "src/core/qgsexpressionparser.cpp"
         break;
 
     case YYSYMBOL_SPECIAL_COL: /* SPECIAL_COL  */
-#line 174 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 175 "src/core/qgsexpressionparser.yy"
             { delete ((*yyvaluep).text); }
-#line 1433 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1430 "src/core/qgsexpressionparser.cpp"
         break;
 
     case YYSYMBOL_VARIABLE: /* VARIABLE  */
-#line 174 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 175 "src/core/qgsexpressionparser.yy"
             { delete ((*yyvaluep).text); }
-#line 1439 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1436 "src/core/qgsexpressionparser.cpp"
         break;
 
     case YYSYMBOL_NAMED_NODE: /* NAMED_NODE  */
-#line 174 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 175 "src/core/qgsexpressionparser.yy"
             { delete ((*yyvaluep).text); }
-#line 1445 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1442 "src/core/qgsexpressionparser.cpp"
         break;
 
     case YYSYMBOL_expression: /* expression  */
-#line 171 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 172 "src/core/qgsexpressionparser.yy"
             { delete ((*yyvaluep).node); }
-#line 1451 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1448 "src/core/qgsexpressionparser.cpp"
+        break;
+
+    case YYSYMBOL_expression_non_logical: /* expression_non_logical  */
+#line 172 "src/core/qgsexpressionparser.yy"
+            { delete ((*yyvaluep).node); }
+#line 1454 "src/core/qgsexpressionparser.cpp"
         break;
 
     case YYSYMBOL_named_node: /* named_node  */
-#line 173 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 174 "src/core/qgsexpressionparser.yy"
             { delete ((*yyvaluep).namednode); }
-#line 1457 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1460 "src/core/qgsexpressionparser.cpp"
         break;
 
     case YYSYMBOL_exp_list: /* exp_list  */
-#line 172 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 173 "src/core/qgsexpressionparser.yy"
             { delete ((*yyvaluep).nodelist); }
-#line 1463 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1466 "src/core/qgsexpressionparser.cpp"
         break;
 
     case YYSYMBOL_when_then_clauses: /* when_then_clauses  */
-#line 176 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 177 "src/core/qgsexpressionparser.yy"
             { delete ((*yyvaluep).whenthenlist); }
-#line 1469 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1472 "src/core/qgsexpressionparser.cpp"
         break;
 
     case YYSYMBOL_when_then_clause: /* when_then_clause  */
-#line 175 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 176 "src/core/qgsexpressionparser.yy"
             { delete ((*yyvaluep).whenthen); }
-#line 1475 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1478 "src/core/qgsexpressionparser.cpp"
         break;
 
       default:
@@ -1775,13 +1778,13 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* root: expression  */
-#line 180 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 181 "src/core/qgsexpressionparser.yy"
                  { parser_ctx->rootNode = (yyvsp[0].node); }
-#line 1781 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1784 "src/core/qgsexpressionparser.cpp"
     break;
 
   case 3: /* root: error expression  */
-#line 182 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 183 "src/core/qgsexpressionparser.yy"
         {
             delete (yyvsp[0].node);
             if ( parser_ctx->parserErrors.count() < MAX_ERRORS )
@@ -1789,137 +1792,167 @@ yyreduce:
             else
               YYABORT;
         }
-#line 1793 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1796 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 4: /* expression: expression AND expression  */
-#line 192 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 4: /* expression: expression_non_logical  */
+#line 198 "src/core/qgsexpressionparser.yy"
+                                      { (yyval.node) = (yyvsp[0].node); }
+#line 1802 "src/core/qgsexpressionparser.cpp"
+    break;
+
+  case 5: /* expression: expression AND expression  */
+#line 199 "src/core/qgsexpressionparser.yy"
                                       { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1799 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1808 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 5: /* expression: expression OR expression  */
-#line 193 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 6: /* expression: expression OR expression  */
+#line 200 "src/core/qgsexpressionparser.yy"
                                       { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1805 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1814 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 6: /* expression: expression EQ expression  */
-#line 194 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 7: /* expression: expression EQ expression  */
+#line 201 "src/core/qgsexpressionparser.yy"
                                       { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1811 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1820 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 7: /* expression: expression NE expression  */
-#line 195 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 8: /* expression: expression NE expression  */
+#line 202 "src/core/qgsexpressionparser.yy"
                                       { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1817 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1826 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 8: /* expression: expression LE expression  */
-#line 196 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 9: /* expression: expression LE expression  */
+#line 203 "src/core/qgsexpressionparser.yy"
                                       { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1823 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1832 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 9: /* expression: expression GE expression  */
-#line 197 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 10: /* expression: expression GE expression  */
+#line 204 "src/core/qgsexpressionparser.yy"
                                       { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1829 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1838 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 10: /* expression: expression LT expression  */
-#line 198 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 11: /* expression: expression LT expression  */
+#line 205 "src/core/qgsexpressionparser.yy"
                                       { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1835 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1844 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 11: /* expression: expression GT expression  */
-#line 199 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 12: /* expression: expression GT expression  */
+#line 206 "src/core/qgsexpressionparser.yy"
                                       { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1841 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1850 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 12: /* expression: expression REGEXP expression  */
-#line 200 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 13: /* expression: expression REGEXP expression  */
+#line 207 "src/core/qgsexpressionparser.yy"
                                       { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1847 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1856 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 13: /* expression: expression LIKE expression  */
-#line 201 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 14: /* expression: expression LIKE expression  */
+#line 208 "src/core/qgsexpressionparser.yy"
                                       { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1853 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1862 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 14: /* expression: expression IS expression  */
-#line 202 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 15: /* expression: expression IS expression  */
+#line 209 "src/core/qgsexpressionparser.yy"
                                       { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1859 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1868 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 15: /* expression: expression PLUS expression  */
-#line 203 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
-                                      { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1865 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
-    break;
-
-  case 16: /* expression: expression MINUS expression  */
-#line 204 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
-                                      { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1871 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
-    break;
-
-  case 17: /* expression: expression MUL expression  */
-#line 205 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
-                                      { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1877 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
-    break;
-
-  case 18: /* expression: expression INTDIV expression  */
-#line 206 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
-                                      { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1883 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
-    break;
-
-  case 19: /* expression: expression DIV expression  */
-#line 207 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
-                                      { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1889 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
-    break;
-
-  case 20: /* expression: expression MOD expression  */
-#line 208 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
-                                      { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1895 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
-    break;
-
-  case 21: /* expression: expression POW expression  */
-#line 209 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
-                                      { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1901 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
-    break;
-
-  case 22: /* expression: expression CONCAT expression  */
-#line 210 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
-                                      { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
-#line 1907 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
-    break;
-
-  case 23: /* expression: NOT expression  */
-#line 211 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 16: /* expression: NOT expression  */
+#line 210 "src/core/qgsexpressionparser.yy"
                                       { (yyval.node) = new QgsExpressionNodeUnaryOperator((yyvsp[-1].u_op), (yyvsp[0].node)); }
-#line 1913 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1874 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 24: /* expression: '(' expression ')'  */
-#line 212 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 17: /* expression: expression IN '(' exp_list ')'  */
+#line 211 "src/core/qgsexpressionparser.yy"
+                                         { (yyval.node) = new QgsExpressionNodeInOperator((yyvsp[-4].node), (yyvsp[-1].nodelist), false);  }
+#line 1880 "src/core/qgsexpressionparser.cpp"
+    break;
+
+  case 18: /* expression: expression NOT IN '(' exp_list ')'  */
+#line 212 "src/core/qgsexpressionparser.yy"
+                                         { (yyval.node) = new QgsExpressionNodeInOperator((yyvsp[-5].node), (yyvsp[-1].nodelist), true); }
+#line 1886 "src/core/qgsexpressionparser.cpp"
+    break;
+
+  case 19: /* expression: expression BETWEEN expression_non_logical AND expression_non_logical  */
+#line 214 "src/core/qgsexpressionparser.yy"
+                                                                             { (yyval.node) = new QgsExpressionNodeBetweenOperator((yyvsp[-4].node), (yyvsp[-2].node), (yyvsp[0].node), false ); }
+#line 1892 "src/core/qgsexpressionparser.cpp"
+    break;
+
+  case 20: /* expression: expression NOT BETWEEN expression_non_logical AND expression_non_logical  */
+#line 215 "src/core/qgsexpressionparser.yy"
+                                                                                 { (yyval.node) = new QgsExpressionNodeBetweenOperator((yyvsp[-5].node), (yyvsp[-2].node), (yyvsp[0].node), true); }
+#line 1898 "src/core/qgsexpressionparser.cpp"
+    break;
+
+  case 21: /* expression_non_logical: expression_non_logical PLUS expression_non_logical  */
+#line 221 "src/core/qgsexpressionparser.yy"
+                                                              { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1904 "src/core/qgsexpressionparser.cpp"
+    break;
+
+  case 22: /* expression_non_logical: expression_non_logical MINUS expression_non_logical  */
+#line 222 "src/core/qgsexpressionparser.yy"
+                                                              { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1910 "src/core/qgsexpressionparser.cpp"
+    break;
+
+  case 23: /* expression_non_logical: expression_non_logical MUL expression_non_logical  */
+#line 223 "src/core/qgsexpressionparser.yy"
+                                                              { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1916 "src/core/qgsexpressionparser.cpp"
+    break;
+
+  case 24: /* expression_non_logical: expression_non_logical INTDIV expression_non_logical  */
+#line 224 "src/core/qgsexpressionparser.yy"
+                                                              { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1922 "src/core/qgsexpressionparser.cpp"
+    break;
+
+  case 25: /* expression_non_logical: expression_non_logical DIV expression_non_logical  */
+#line 225 "src/core/qgsexpressionparser.yy"
+                                                              { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1928 "src/core/qgsexpressionparser.cpp"
+    break;
+
+  case 26: /* expression_non_logical: expression_non_logical MOD expression_non_logical  */
+#line 226 "src/core/qgsexpressionparser.yy"
+                                                              { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1934 "src/core/qgsexpressionparser.cpp"
+    break;
+
+  case 27: /* expression_non_logical: expression_non_logical POW expression_non_logical  */
+#line 227 "src/core/qgsexpressionparser.yy"
+                                                              { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1940 "src/core/qgsexpressionparser.cpp"
+    break;
+
+  case 28: /* expression_non_logical: expression_non_logical CONCAT expression_non_logical  */
+#line 228 "src/core/qgsexpressionparser.yy"
+                                                              { (yyval.node) = BINOP((yyvsp[-1].b_op), (yyvsp[-2].node), (yyvsp[0].node)); }
+#line 1946 "src/core/qgsexpressionparser.cpp"
+    break;
+
+  case 29: /* expression_non_logical: '(' expression ')'  */
+#line 229 "src/core/qgsexpressionparser.yy"
                                       { (yyval.node) = (yyvsp[-1].node); }
-#line 1919 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 1952 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 25: /* expression: NAME '(' exp_list ')'  */
-#line 214 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 30: /* expression_non_logical: NAME '(' exp_list ')'  */
+#line 231 "src/core/qgsexpressionparser.yy"
         {
           int fnIndex = QgsExpression::functionIndex(*(yyvsp[-3].text));
           delete (yyvsp[-3].text);
@@ -1964,11 +1997,11 @@ yyreduce:
           (yyval.node) = new QgsExpressionNodeFunction(fnIndex, (yyvsp[-1].nodelist));
           addParserLocation(&(yylsp[-3]), (yyval.node));
         }
-#line 1968 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2001 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 26: /* expression: NAME '(' ')'  */
-#line 260 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 31: /* expression_non_logical: NAME '(' ')'  */
+#line 277 "src/core/qgsexpressionparser.yy"
         {
           int fnIndex = QgsExpression::functionIndex(*(yyvsp[-2].text));
           delete (yyvsp[-2].text);
@@ -1992,65 +2025,53 @@ yyreduce:
           (yyval.node) = new QgsExpressionNodeFunction(fnIndex, new QgsExpressionNode::NodeList());
           addParserLocation(&(yylsp[-2]), (yyval.node));
         }
-#line 1996 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2029 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 27: /* expression: expression IN '(' exp_list ')'  */
-#line 284 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
-                                         { (yyval.node) = new QgsExpressionNodeInOperator((yyvsp[-4].node), (yyvsp[-1].nodelist), false);  }
-#line 2002 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+  case 32: /* expression_non_logical: expression_non_logical '[' expression ']'  */
+#line 301 "src/core/qgsexpressionparser.yy"
+                                                { (yyval.node) = new QgsExpressionNodeIndexOperator( (yyvsp[-3].node), (yyvsp[-1].node) ); }
+#line 2035 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 28: /* expression: expression NOT IN '(' exp_list ')'  */
-#line 285 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
-                                         { (yyval.node) = new QgsExpressionNodeInOperator((yyvsp[-5].node), (yyvsp[-1].nodelist), true); }
-#line 2008 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+  case 33: /* expression_non_logical: PLUS expression_non_logical  */
+#line 303 "src/core/qgsexpressionparser.yy"
+                                               { (yyval.node) = (yyvsp[0].node); }
+#line 2041 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 29: /* expression: expression '[' expression ']'  */
-#line 287 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
-                                    { (yyval.node) = new QgsExpressionNodeIndexOperator( (yyvsp[-3].node), (yyvsp[-1].node) ); }
-#line 2014 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+  case 34: /* expression_non_logical: MINUS expression_non_logical  */
+#line 304 "src/core/qgsexpressionparser.yy"
+                                                { (yyval.node) = new QgsExpressionNodeUnaryOperator( QgsExpressionNodeUnaryOperator::uoMinus, (yyvsp[0].node)); }
+#line 2047 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 30: /* expression: PLUS expression  */
-#line 289 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
-                                   { (yyval.node) = (yyvsp[0].node); }
-#line 2020 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
-    break;
-
-  case 31: /* expression: MINUS expression  */
-#line 290 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
-                                    { (yyval.node) = new QgsExpressionNodeUnaryOperator( QgsExpressionNodeUnaryOperator::uoMinus, (yyvsp[0].node)); }
-#line 2026 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
-    break;
-
-  case 32: /* expression: CASE when_then_clauses END  */
-#line 292 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 35: /* expression_non_logical: CASE when_then_clauses END  */
+#line 306 "src/core/qgsexpressionparser.yy"
                                       { (yyval.node) = new QgsExpressionNodeCondition((yyvsp[-1].whenthenlist)); }
-#line 2032 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2053 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 33: /* expression: CASE when_then_clauses ELSE expression END  */
-#line 293 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 36: /* expression_non_logical: CASE when_then_clauses ELSE expression END  */
+#line 307 "src/core/qgsexpressionparser.yy"
                                                   { (yyval.node) = new QgsExpressionNodeCondition((yyvsp[-3].whenthenlist),(yyvsp[-1].node)); }
-#line 2038 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2059 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 34: /* expression: NAME  */
-#line 296 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 37: /* expression_non_logical: NAME  */
+#line 310 "src/core/qgsexpressionparser.yy"
                             { (yyval.node) = new QgsExpressionNodeColumnRef( *(yyvsp[0].text) ); delete (yyvsp[0].text); }
-#line 2044 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2065 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 35: /* expression: QUOTED_COLUMN_REF  */
-#line 297 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 38: /* expression_non_logical: QUOTED_COLUMN_REF  */
+#line 311 "src/core/qgsexpressionparser.yy"
                                          { (yyval.node) = new QgsExpressionNodeColumnRef( *(yyvsp[0].text) ); delete (yyvsp[0].text); }
-#line 2050 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2071 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 36: /* expression: SPECIAL_COL  */
-#line 301 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 39: /* expression_non_logical: SPECIAL_COL  */
+#line 315 "src/core/qgsexpressionparser.yy"
         {
           int fnIndex = QgsExpression::functionIndex(*(yyvsp[0].text));
           if (fnIndex >= 0)
@@ -2066,11 +2087,11 @@ yyreduce:
           }
           delete (yyvsp[0].text);
         }
-#line 2070 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2091 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 37: /* expression: VARIABLE  */
-#line 319 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 40: /* expression_non_logical: VARIABLE  */
+#line 333 "src/core/qgsexpressionparser.yy"
         {
           // @var is equivalent to var( "var" )
           QgsExpressionNode::NodeList* args = new QgsExpressionNode::NodeList();
@@ -2079,53 +2100,53 @@ yyreduce:
           (yyval.node) = new QgsExpressionNodeFunction( QgsExpression::functionIndex( "var" ), args );
           delete (yyvsp[0].text);
         }
-#line 2083 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2104 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 38: /* expression: NUMBER_FLOAT  */
-#line 329 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 41: /* expression_non_logical: NUMBER_FLOAT  */
+#line 343 "src/core/qgsexpressionparser.yy"
                                   { (yyval.node) = new QgsExpressionNodeLiteral( QVariant((yyvsp[0].numberFloat)) ); }
-#line 2089 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2110 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 39: /* expression: NUMBER_INT  */
-#line 330 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 42: /* expression_non_logical: NUMBER_INT  */
+#line 344 "src/core/qgsexpressionparser.yy"
                                   { (yyval.node) = new QgsExpressionNodeLiteral( QVariant((yyvsp[0].numberInt)) ); }
-#line 2095 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2116 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 40: /* expression: NUMBER_INT64  */
-#line 331 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 43: /* expression_non_logical: NUMBER_INT64  */
+#line 345 "src/core/qgsexpressionparser.yy"
                                   { (yyval.node) = new QgsExpressionNodeLiteral( QVariant((yyvsp[0].numberInt64)) ); }
-#line 2101 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2122 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 41: /* expression: BOOLEAN  */
-#line 332 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 44: /* expression_non_logical: BOOLEAN  */
+#line 346 "src/core/qgsexpressionparser.yy"
                                   { (yyval.node) = new QgsExpressionNodeLiteral( QVariant((yyvsp[0].boolVal)) ); }
-#line 2107 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2128 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 42: /* expression: STRING  */
-#line 333 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 45: /* expression_non_logical: STRING  */
+#line 347 "src/core/qgsexpressionparser.yy"
                                   { (yyval.node) = new QgsExpressionNodeLiteral( QVariant(*(yyvsp[0].text)) ); delete (yyvsp[0].text); }
-#line 2113 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2134 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 43: /* expression: NULLVALUE  */
-#line 334 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 46: /* expression_non_logical: NULLVALUE  */
+#line 348 "src/core/qgsexpressionparser.yy"
                                   { (yyval.node) = new QgsExpressionNodeLiteral( QVariant() ); }
-#line 2119 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2140 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 44: /* named_node: NAMED_NODE expression  */
-#line 338 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 47: /* named_node: NAMED_NODE expression  */
+#line 353 "src/core/qgsexpressionparser.yy"
                           { (yyval.namednode) = new QgsExpressionNode::NamedNode( *(yyvsp[-1].text), (yyvsp[0].node) ); delete (yyvsp[-1].text); }
-#line 2125 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2146 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 45: /* exp_list: exp_list COMMA expression  */
-#line 343 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 48: /* exp_list: exp_list COMMA expression  */
+#line 358 "src/core/qgsexpressionparser.yy"
        {
          if ( (yyvsp[-2].nodelist)->hasNamedNodes() )
          {
@@ -2140,47 +2161,47 @@ yyreduce:
            (yyval.nodelist) = (yyvsp[-2].nodelist); (yyvsp[-2].nodelist)->append((yyvsp[0].node));
          }
        }
-#line 2144 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2165 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 46: /* exp_list: exp_list COMMA named_node  */
-#line 357 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 49: /* exp_list: exp_list COMMA named_node  */
+#line 372 "src/core/qgsexpressionparser.yy"
                                 { (yyval.nodelist) = (yyvsp[-2].nodelist); (yyvsp[-2].nodelist)->append((yyvsp[0].namednode)); }
-#line 2150 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2171 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 47: /* exp_list: expression  */
-#line 358 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 50: /* exp_list: expression  */
+#line 373 "src/core/qgsexpressionparser.yy"
                               { (yyval.nodelist) = new QgsExpressionNode::NodeList(); (yyval.nodelist)->append((yyvsp[0].node)); }
-#line 2156 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2177 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 48: /* exp_list: named_node  */
-#line 359 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 51: /* exp_list: named_node  */
+#line 374 "src/core/qgsexpressionparser.yy"
                               { (yyval.nodelist) = new QgsExpressionNode::NodeList(); (yyval.nodelist)->append((yyvsp[0].namednode)); }
-#line 2162 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2183 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 49: /* when_then_clauses: when_then_clauses when_then_clause  */
-#line 363 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 52: /* when_then_clauses: when_then_clauses when_then_clause  */
+#line 378 "src/core/qgsexpressionparser.yy"
                                           { (yyval.whenthenlist) = (yyvsp[-1].whenthenlist); (yyvsp[-1].whenthenlist)->append((yyvsp[0].whenthen)); }
-#line 2168 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2189 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 50: /* when_then_clauses: when_then_clause  */
-#line 364 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 53: /* when_then_clauses: when_then_clause  */
+#line 379 "src/core/qgsexpressionparser.yy"
                                           { (yyval.whenthenlist) = new QgsExpressionNodeCondition::WhenThenList(); (yyval.whenthenlist)->append((yyvsp[0].whenthen)); }
-#line 2174 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2195 "src/core/qgsexpressionparser.cpp"
     break;
 
-  case 51: /* when_then_clause: WHEN expression THEN expression  */
-#line 368 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+  case 54: /* when_then_clause: WHEN expression THEN expression  */
+#line 383 "src/core/qgsexpressionparser.yy"
                                           { (yyval.whenthen) = new QgsExpressionNodeCondition::WhenThen((yyvsp[-2].node),(yyvsp[0].node)); }
-#line 2180 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2201 "src/core/qgsexpressionparser.cpp"
     break;
 
 
-#line 2184 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.cpp"
+#line 2205 "src/core/qgsexpressionparser.cpp"
 
       default: break;
     }
@@ -2409,7 +2430,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 371 "/Volumes/Data/work/projects/desktop/qgis3/src/core/qgsexpressionparser.yy"
+#line 387 "src/core/qgsexpressionparser.yy"
 
 
 
