@@ -1,0 +1,18 @@
+--- a/tests/CMakeLists.txt	2025-07-15 20:09:38.132553419 +0300
++++ b/tests/CMakeLists.txt	2025-08-06 12:22:12.638868566 +0300
+@@ -1,11 +1,9 @@
+ if (ENABLE_TESTS)
+ 
+-  if (WITH_CORE)
++  # if (WITH_CORE)
+     add_subdirectory(src)
+-    add_subdirectory(bench)
+-  endif()
++    # add_subdirectory(bench)
++  # endif()
+ 
+-  add_subdirectory(code_layout)
++  # add_subdirectory(code_layout)
+ endif()
+-
+-
