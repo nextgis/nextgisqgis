@@ -528,7 +528,6 @@ rules:
   - vector_tile/*
   - wfs_transactional/*
   - wkt/*
-  - zip/*
   - zonalstatistics/*
 - source: tests/testdata/control_images/composer_3d/expected_composer3d_basic
 - source: tests/testdata/control_images/qgssimplemarkertest
