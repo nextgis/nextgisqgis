@@ -274,7 +274,7 @@ void QgsAbout::btnQgisUser_clicked()
 
 void QgsAbout::btnQgisHome_clicked()
 {
-  openUrl( QStringLiteral( "https://qgis.org" ) );
+  openUrl( QStringLiteral( "https://nextgis.com/nextgis-qgis/" ) );
 }
 
 void QgsAbout::openUrl( const QUrl &url )

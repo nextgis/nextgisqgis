@@ -12734,7 +12734,7 @@ void QgisApp::getInvolved()
 {
   QgsSettings settings;
   QString getInvolvedUrl = settings.value( QStringLiteral( "qgis/getInvolved" ),
-                           tr( "https://qgis.org/en/site/getinvolved/" ) ).toString();
+                           tr( "https://nextgis.com/redirect/ru/ak45prp" ) ).toString();
   openURL( getInvolvedUrl, false );
 }
 
@@ -12742,7 +12742,7 @@ void QgisApp::donate()
 {
   QgsSettings settings;
   QString donateUrl = settings.value( QStringLiteral( "qgis/donate" ),
-                                      tr( "https://donate.qgis.org/" ) ).toString();
+                                      tr( "https://nextgis.com/redirect/ru/ak45prp5" ) ).toString();
   openURL( donateUrl, false );
 }
 
@@ -12750,7 +12750,7 @@ void QgisApp::supportProviders()
 {
   QgsSettings settings;
   QString supportProvidersUrl = settings.value( QStringLiteral( "qgis/supportProvidersUrl" ),
-                                tr( "https://qgis.org/en/site/forusers/commercial_support.html" ) ).toString();
+                                tr( "https://nextgis.com/support" ) ).toString();
   openURL( supportProvidersUrl, false );
 }
 
@@ -12758,7 +12758,7 @@ void QgisApp::helpQgisHomePage()
 {
   QgsSettings settings;
   QString  helpQgisHomePageUrl = settings.value( QStringLiteral( "qgis/helpQgisHomePageUrl" ),
-                                 QStringLiteral( "https://qgis.org" ) ).toString();
+                                 QStringLiteral( "https://nextgis.com/nextgis-qgis/" ) ).toString();
   openURL( helpQgisHomePageUrl, false );
 }
 
