@@ -1,0 +1,9 @@
+--- a/tests/src/core/vector/CMakeLists.txt	2023-05-12 15:35:27.366280067 +0300
++++ b/tests/src/core/vector/CMakeLists.txt	2025-08-06 15:31:45.299230865 +0300
+@@ -19,5 +19,5 @@
+   )
+ 
+ foreach(TESTSRC ${TESTS})
+-  add_qgis_test(${TESTSRC} MODULE core_vector LINKEDLIBRARIES qgis_core)
++  add_qgis_test(${TESTSRC} MODULE core_vector LINKEDLIBRARIES ${NG_PREFIX}qgis_core)
+ endforeach(TESTSRC)

@@ -1,0 +1,25 @@
+--- a/tests/src/3d/CMakeLists.txt	2025-07-15 20:09:38.135553483 +0300
++++ b/tests/src/3d/CMakeLists.txt	2025-08-06 15:23:10.389745679 +0300
+@@ -22,18 +22,18 @@
+ 
+ set(TESTS
+   testqgs3dmaterial.cpp
+-  testqgs3drendering.cpp
++  # testqgs3drendering.cpp
+   testqgs3dsymbolregistry.cpp
+   testqgs3dutils.cpp
+   testqgsaabb.cpp
+-  testqgslayout3dmap.cpp
++  # testqgslayout3dmap.cpp
+   testqgsmaterialregistry.cpp
+-  testqgspointcloud3drendering.cpp
++  # testqgspointcloud3drendering.cpp
+   testqgstessellator.cpp
+   testqgstilingscheme.cpp
+ )
+ 
+ 
+ foreach(TESTSRC ${TESTS})
+-  add_qgis_test(${TESTSRC} MODULE 3d LINKEDLIBRARIES qgis_3d)
++  add_qgis_test(${TESTSRC} MODULE 3d LINKEDLIBRARIES ${NG_PREFIX}qgis_3d)
+ endforeach(TESTSRC)

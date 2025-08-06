@@ -1,0 +1,9 @@
+--- a/tests/src/native/CMakeLists.txt	2023-05-12 15:35:27.372946877 +0300
++++ b/tests/src/native/CMakeLists.txt	2025-08-06 15:29:06.976701691 +0300
+@@ -46,5 +46,5 @@
+ # Tests:
+ 
+ if (APPLE)
+-  add_qgis_test(testqgsmacnative.cpp MODULE native LINKEDLIBRARIES qgis_core qgis_native)
++  add_qgis_test(testqgsmacnative.cpp MODULE native LINKEDLIBRARIES ${NG_PREFIX}qgis_core ${NG_PREFIX}qgis_native)
+ endif()

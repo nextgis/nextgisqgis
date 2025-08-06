@@ -1,35 +1,8 @@
-################################################################################
-# Project:  NextGIS QGIS
-# Purpose:  CMake build scripts
-################################################################################
-# Copyright (C) 2022, NextGIS <info@nextgis.com>
-#
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
-################################################################################
-
 set (ENABLE_MSSQLTEST FALSE CACHE BOOL "Enable MSSQL provider tests")
 set (ENABLE_ORACLETEST FALSE CACHE BOOL "Enable Oracle provider tests")
 set (ENABLE_HANATEST FALSE CACHE BOOL "Enable HANA provider tests")
 
 include(UsePythonTest)
-# Run one of the two server tests at the beginning so they don't run in
-# parallel
 
 ADD_PYTHON_TEST(PyQgsDisabledTests test_disabled_tests.py)
 ADD_PYTHON_TEST(PyCoreAdditions test_core_additions.py)
@@ -118,7 +91,7 @@ ADD_PYTHON_TEST(PyQgsExpressionBuilderWidget test_qgsexpressionbuilderwidget.py)
 ADD_PYTHON_TEST(PyQgsExpressionLineEdit test_qgsexpressionlineedit.py)
 ADD_PYTHON_TEST(PyQgsExtentGroupBox test_qgsextentgroupbox.py)
 ADD_PYTHON_TEST(PyQgsExtentWidget test_qgsextentwidget.py)
-ADD_PYTHON_TEST(PyQgsExternalStorageWebDAV test_qgsexternalstorage_webdav.py)
+ADD_PYTHON_TEST(PyQgsExternalStorageWebDav test_qgsexternalstorage_webdav.py)
 ADD_PYTHON_TEST(PyQgsExternalStorageAwsS3 test_qgsexternalstorage_awss3.py)
 ADD_PYTHON_TEST(PyQgsFeature test_qgsfeature.py)
 ADD_PYTHON_TEST(PyQgsFeatureSink test_qgsfeaturesink.py)
@@ -552,3 +525,51 @@ if (ENABLE_HANATEST)
   ADD_PYTHON_TEST(PyQgsProviderConnectionHana test_qgsproviderconnection_hana.py TEST_TIMEOUT=120)
   SET_TESTS_PROPERTIES(PyQgsHanaProvider PyQgsProviderConnectionHana PROPERTIES LABELS "HANA")
 endif (ENABLE_HANATEST)
+
+if (WITH_SERVER)
+  ADD_PYTHON_TEST(PyQgsServer test_qgsserver.py)
+  ADD_PYTHON_TEST(PyQgsServerLogger test_qgsserverlogger.py)
+  ADD_PYTHON_TEST(PyQgsServerPlugins test_qgsserver_plugins.py)
+  ADD_PYTHON_TEST(PyQgsServerWMS test_qgsserver_wms.py)
+  ADD_PYTHON_TEST(PyQgsServerApi test_qgsserver_api.py)
+  ADD_PYTHON_TEST(PyQgsServerLandingPage test_qgsserver_landingpage.py)
+  ADD_PYTHON_TEST(PyQgsServerApiContext test_qgsserver_apicontext.py)
+  ADD_PYTHON_TEST(PyQgsServerWMSGetFeatureInfo test_qgsserver_wms_getfeatureinfo.py)
+  ADD_PYTHON_TEST(PyQgsServerWMSGetMap test_qgsserver_wms_getmap.py)
+  ADD_PYTHON_TEST(PyQgsServerWMSGetMapDxf test_qgsserver_wms_dxf.py)
+  ADD_PYTHON_TEST(PyQgsServerWMSGetMapSizeProject test_qgsserver_wms_getmap_size_project.py)
+  ADD_PYTHON_TEST(PyQgsServerWMSGetMapSizeServer test_qgsserver_wms_getmap_size_server.py)
+  ADD_PYTHON_TEST(PyQgsServerWMSGetMapIgnoreBadLayers test_qgsserver_wms_getmap_ignore_bad_layers.py)
+  ADD_PYTHON_TEST(PyQgsServerWMSGetLegendGraphic test_qgsserver_wms_getlegendgraphic.py)
+  ADD_PYTHON_TEST(PyQgsServerWMSGetPrint test_qgsserver_wms_getprint.py)
+  ADD_PYTHON_TEST(PyQgsServerWMSGetPrintExtra test_qgsserver_wms_getprint_extra.py)
+  ADD_PYTHON_TEST(PyQgsServerWMSGetPrintOutputs test_qgsserver_wms_getprint_outputs.py)
+  ADD_PYTHON_TEST(PyQgsServerWMSGetPrintAtlas test_qgsserver_wms_getprint_atlas.py)
+  ADD_PYTHON_TEST(PyQgsServerWMSGetPrintMapTheme, test_qgsserver_wms_getprint_maptheme.py)
+  ADD_PYTHON_TEST(PyQgsServerWMSDimension test_qgsserver_wms_dimension.py)
+  ADD_PYTHON_TEST(PyQgsServerSettings test_qgsserver_settings.py)
+  ADD_PYTHON_TEST(PyQgsServerProjectUtils test_qgsserver_projectutils.py)
+  ADD_PYTHON_TEST(PyQgsServerSecurity test_qgsserver_security.py)
+  ADD_PYTHON_TEST(PyQgsServerAccessControlWMS test_qgsserver_accesscontrol_wms.py)
+  ADD_PYTHON_TEST(PyQgsServerAccessControlWMSGetlegendgraphic test_qgsserver_accesscontrol_wms_getlegendgraphic.py)
+  ADD_PYTHON_TEST(PyQgsServerAccessControlWFS test_qgsserver_accesscontrol_wfs.py)
+  ADD_PYTHON_TEST(PyQgsServerAccessControlWCS test_qgsserver_accesscontrol_wcs.py)
+  ADD_PYTHON_TEST(PyQgsServerAccessControlWFSTransactional test_qgsserver_accesscontrol_wfs_transactional.py)
+  ADD_PYTHON_TEST(PyQgsServerAccessControlFixFiltersCache test_qgsserver_accesscontrol_fix_filters.py)
+  ADD_PYTHON_TEST(PyQgsServerCacheManager test_qgsserver_cachemanager.py)
+  ADD_PYTHON_TEST(PyQgsServerWMTS test_qgsserver_wmts.py)
+  ADD_PYTHON_TEST(PyQgsServerWFS test_qgsserver_wfs.py)
+  ADD_PYTHON_TEST(PyQgsServerWFST test_qgsserver_wfst.py)
+  ADD_PYTHON_TEST(PyQgsServerLocaleOverride test_qgsserver_locale_override.py)
+  ADD_PYTHON_TEST(PyQgsOfflineEditingWFS test_offline_editing_wfs.py)
+  ADD_PYTHON_TEST(PyQgsAuthManagerPasswordOWSTest test_authmanager_password_ows.py)
+  ADD_PYTHON_TEST(PyQgsAuthManagerPKIOWSTest test_authmanager_pki_ows.py)
+  if(WITH_OAUTH2_PLUGIN)
+    ADD_PYTHON_TEST(PyQgsAuthManagerOAuth2OWSTest test_authmanager_oauth2_ows.py)
+  endif()
+  ADD_PYTHON_TEST(PyQgsServerServices test_qgsserver_services.py)
+  ADD_PYTHON_TEST(PyQgsServerModules test_qgsserver_modules.py)
+  ADD_PYTHON_TEST(PyQgsServerRequest test_qgsserver_request.py)
+  ADD_PYTHON_TEST(PyQgsServerResponse test_qgsserver_response.py)
+  ADD_PYTHON_TEST(PyQgsServerConfigCache test_qgsserver_configcache.py)
+endif()

@@ -186,7 +186,6 @@ rules:
   include:
   - '**/*'
   exclude:
-  - '**/CMakeLists.txt'
   - 'providers/grass/**/*'
   - 'server/**/*'
   - 'quickgui/**/*'

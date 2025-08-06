@@ -1,34 +1,9 @@
-################################################################################
-# Project:  NextGIS QGIS
-# Purpose:  CMake build scripts
-################################################################################
-# Copyright (C) 2017-2022, NextGIS <info@nextgis.com>
-#
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
-################################################################################
-
+#####################################################
 # Don't forget to include output directory, otherwise
 # the UI file won't be wrapped!
 include_directories(
   ${CMAKE_SOURCE_DIR}/src/test
   ${CMAKE_CURRENT_BINARY_DIR}
-  
 )
 
 if(IS_MULTI_CONFIG_GENERATOR)
@@ -44,52 +19,52 @@ endif()
 set(TESTS
   testqgisapp.cpp
   testqgsappbrowserproviders.cpp
-  #testqgisappclipboard.cpp
+  # testqgisappclipboard.cpp
   testqgisappdockwidgets.cpp
-  #testqgsadvanceddigitizing.cpp
-  #testqgsattributetable.cpp
-  #testqgsapplocatorfilters.cpp
-  #testqgsdecorationscalebar.cpp
-  #testqgsdwgimportdialog.cpp
-  #testqgsfieldcalculator.cpp
-  #testqgsmapcanvasdockwidget.cpp
+  # testqgsadvanceddigitizing.cpp
+  # testqgsattributetable.cpp
+  # testqgsapplocatorfilters.cpp
+  # testqgsdecorationscalebar.cpp
+  # testqgsdwgimportdialog.cpp
+  # testqgsfieldcalculator.cpp
+  # testqgsmapcanvasdockwidget.cpp
   testqgsmaptooleditannotation.cpp
-  #testqgsmaptoolidentifyaction.cpp
+  # testqgsmaptoolidentifyaction.cpp
   testqgsmaptoollabel.cpp
-#####  testqgsmaptoolselect.cpp
-  #testqgsmaptoolreshape.cpp
+  # testqgsmaptoolselect.cpp
+  # testqgsmaptoolreshape.cpp
   testqgsmaptoolrotatefeature.cpp
-  #testqgsmaptoolscalefeature.cpp
+  # testqgsmaptoolscalefeature.cpp
   testqgsmaptoolcircularstring.cpp
-  #testqgsmaptooleditmesh.cpp
+  # testqgsmaptooleditmesh.cpp
   testqgsmaptoolmovefeature.cpp
   testqgsmaptoolellipse.cpp
   testqgsmaptoolcircle.cpp
   testqgsmaptoolrectangle.cpp
   testqgsmaptoolregularpolygon.cpp
   testqgsmaptoolsplitparts.cpp
-  #testqgsmaptoolsplitfeatures.cpp
-  #testqgsmeasuretool.cpp
-  #testqgsmeasurebearingtool.cpp
-  #testqgsvertexeditor.cpp
-  #testqgsvertextool.cpp
+  # testqgsmaptoolsplitfeatures.cpp
+  # testqgsmeasuretool.cpp
+  # testqgsmeasurebearingtool.cpp
+  # testqgsvertexeditor.cpp
+  # testqgsvertextool.cpp
   testqgsvectorlayersaveasdialog.cpp
   testqgsmaptoolreverseline.cpp
   testqgsmaptooltrimextendfeature.cpp
-  #testqgsprojectproperties.cpp
+  # testqgsprojectproperties.cpp
   testqgsapplayoutvaliditychecks.cpp
-  #testqgsmeshcalculatordialog.cpp
-  #testqgsgpsintegration.cpp
-  #testqgslabelpropertydialog.cpp
-  #testqgsmergeattributesdialog.cpp
+  # testqgsmeshcalculatordialog.cpp
+  # testqgsgpsintegration.cpp
+  # testqgslabelpropertydialog.cpp
+  # testqgsmergeattributesdialog.cpp
 )
 
 if (HAVE_GEOREFERENCER)
-#####  set(TESTS ${TESTS} testqgsgeoreferencer.cpp)
+  # set(TESTS ${TESTS} testqgsgeoreferencer.cpp)
 endif()
 
 if (WITH_BINDINGS)
-  #set(TESTS ${TESTS} testqgisapppython.cpp)
+  # set(TESTS ${TESTS} testqgisapppython.cpp)
 endif()
 
 foreach(TESTSRC ${TESTS})

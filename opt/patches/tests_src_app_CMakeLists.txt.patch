@@ -1,0 +1,99 @@
+--- a/tests/src/app/CMakeLists.txt	2025-07-15 20:09:38.141553611 +0300
++++ b/tests/src/app/CMakeLists.txt	2025-08-06 16:11:06.831731320 +0300
+@@ -6,61 +6,69 @@
+   ${CMAKE_CURRENT_BINARY_DIR}
+ )
+ 
+-
++if(IS_MULTI_CONFIG_GENERATOR)
++    include_directories(
++        ${CMAKE_BINARY_DIR}/src/app/${NG_PREFIX}qgis_app_autogen/include_${CMAKE_BUILD_TYPE}
++    )
++else()
++    include_directories(
++        ${CMAKE_BINARY_DIR}/src/app/${NG_PREFIX}qgis_app_autogen/include
++    )
++endif()
+ 
+ set(TESTS
+   testqgisapp.cpp
+   testqgsappbrowserproviders.cpp
+-  testqgisappclipboard.cpp
++  # testqgisappclipboard.cpp
+   testqgisappdockwidgets.cpp
+-  testqgsadvanceddigitizing.cpp
+-  testqgsattributetable.cpp
+-  testqgsapplocatorfilters.cpp
+-  testqgsdecorationscalebar.cpp
+-  testqgsdwgimportdialog.cpp
+-  testqgsfieldcalculator.cpp
+-  testqgsmapcanvasdockwidget.cpp
++  # testqgsadvanceddigitizing.cpp
++  # testqgsattributetable.cpp
++  # testqgsapplocatorfilters.cpp
++  # testqgsdecorationscalebar.cpp
++  # testqgsdwgimportdialog.cpp
++  # testqgsfieldcalculator.cpp
++  # testqgsmapcanvasdockwidget.cpp
+   testqgsmaptooleditannotation.cpp
+-  testqgsmaptoolidentifyaction.cpp
++  # testqgsmaptoolidentifyaction.cpp
+   testqgsmaptoollabel.cpp
+-  testqgsmaptoolselect.cpp
+-  testqgsmaptoolreshape.cpp
++  # testqgsmaptoolselect.cpp
++  # testqgsmaptoolreshape.cpp
+   testqgsmaptoolrotatefeature.cpp
+-  testqgsmaptoolscalefeature.cpp
++  # testqgsmaptoolscalefeature.cpp
+   testqgsmaptoolcircularstring.cpp
+-  testqgsmaptooleditmesh.cpp
++  # testqgsmaptooleditmesh.cpp
+   testqgsmaptoolmovefeature.cpp
+   testqgsmaptoolellipse.cpp
+   testqgsmaptoolcircle.cpp
+   testqgsmaptoolrectangle.cpp
+   testqgsmaptoolregularpolygon.cpp
+   testqgsmaptoolsplitparts.cpp
+-  testqgsmaptoolsplitfeatures.cpp
+-  testqgsmeasuretool.cpp
+-  testqgsmeasurebearingtool.cpp
+-  testqgsvertexeditor.cpp
+-  testqgsvertextool.cpp
++  # testqgsmaptoolsplitfeatures.cpp
++  # testqgsmeasuretool.cpp
++  # testqgsmeasurebearingtool.cpp
++  # testqgsvertexeditor.cpp
++  # testqgsvertextool.cpp
+   testqgsvectorlayersaveasdialog.cpp
+   testqgsmaptoolreverseline.cpp
+   testqgsmaptooltrimextendfeature.cpp
+-  testqgsprojectproperties.cpp
++  # testqgsprojectproperties.cpp
+   testqgsapplayoutvaliditychecks.cpp
+-  testqgsmeshcalculatordialog.cpp
+-  testqgsgpsintegration.cpp
+-  testqgslabelpropertydialog.cpp
+-  testqgsmergeattributesdialog.cpp
++  # testqgsmeshcalculatordialog.cpp
++  # testqgsgpsintegration.cpp
++  # testqgslabelpropertydialog.cpp
++  # testqgsmergeattributesdialog.cpp
+ )
+ 
+ if (HAVE_GEOREFERENCER)
+-  set(TESTS ${TESTS} testqgsgeoreferencer.cpp)
++  # set(TESTS ${TESTS} testqgsgeoreferencer.cpp)
+ endif()
+ 
+ if (WITH_BINDINGS)
+-  set(TESTS ${TESTS} testqgisapppython.cpp)
++  # set(TESTS ${TESTS} testqgisapppython.cpp)
+ endif()
+ 
+ foreach(TESTSRC ${TESTS})
+-  add_qgis_test(${TESTSRC} MODULE app LINKEDLIBRARIES qgis_app)
++  add_qgis_test(${TESTSRC} MODULE app LINKEDLIBRARIES ${NG_PREFIX}qgis_app)
+ endforeach(TESTSRC)
+ 
+ add_subdirectory(maptooladdfeaturepoint)

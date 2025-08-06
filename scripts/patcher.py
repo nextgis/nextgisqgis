@@ -212,7 +212,7 @@ def _patch_file_name(file_path: Path) -> str:
     parts = file_path.parts
     if parts[0:3] == ("python", "core", "auto_generated"):
         parts = parts[2:]
-    elif parts[0] in {"src", "python", "plugins", "tests"}:
+    elif parts[0] in {"src", "python", "plugins"}:
         parts = parts[1:]
     return "_".join(parts) + ".patch"
 

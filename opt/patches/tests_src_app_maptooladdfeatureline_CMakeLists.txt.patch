@@ -1,0 +1,17 @@
+--- a/tests/src/app/maptooladdfeatureline/CMakeLists.txt	2025-07-15 20:09:38.141553611 +0300
++++ b/tests/src/app/maptooladdfeatureline/CMakeLists.txt	2025-08-06 15:26:55.808776534 +0300
+@@ -14,12 +14,12 @@
+ # Tests:
+ 
+ set(TESTS
+-  testqgsmaptooladdfeatureline.cpp
++  # testqgsmaptooladdfeatureline.cpp
+   testqgsmaptooladdfeaturelinez.cpp
+   testqgsmaptooladdfeaturelinem.cpp
+   testqgsmaptooladdfeaturelinezm.cpp
+   )
+ 
+ foreach(TESTSRC ${TESTS})
+-  add_qgis_test(${TESTSRC} MODULE app LINKEDLIBRARIES qgis_app)
++  add_qgis_test(${TESTSRC} MODULE app LINKEDLIBRARIES ${NG_PREFIX}qgis_app)
+ endforeach(TESTSRC)

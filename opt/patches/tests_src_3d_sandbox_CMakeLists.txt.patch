@@ -1,0 +1,23 @@
+--- a/tests/src/3d/sandbox/CMakeLists.txt	2025-07-15 20:09:38.135553483 +0300
++++ b/tests/src/3d/sandbox/CMakeLists.txt	2025-08-06 15:37:57.039891824 +0300
+@@ -13,7 +13,7 @@
+ 
+   ${CMAKE_SOURCE_DIR}/src/app/3d
+   ${CMAKE_BINARY_DIR}/src/app
+-  ${QWT_INCLUDE_DIR}
++  ${QWT_INCLUDE_DIR}/qwt
+ )
+ 
+ include_directories(SYSTEM
+@@ -39,7 +39,7 @@
+   ${GEOS_LIBRARY}
+   ${GDAL_LIBRARY}
+   ${QWT_LIBRARY}
+-  qgis_core
+-  qgis_3d
+-  qgis_native
+-  qgis_app)
++  ${NG_PREFIX}qgis_core
++  ${NG_PREFIX}qgis_3d
++  ${NG_PREFIX}qgis_native
++  ${NG_PREFIX}qgis_app)

@@ -1,0 +1,14 @@
+--- a/tests/src/auth/CMakeLists.txt	2025-07-15 20:09:38.148553761 +0300
++++ b/tests/src/auth/CMakeLists.txt	2025-08-06 15:24:20.605313352 +0300
+@@ -24,9 +24,9 @@
+ #############################################################
+ # Tests:
+ 
+-set(LINKEDLIBRARIES qgis_core authmethod_oauth2_a)
++set(LINKEDLIBRARIES ${NG_PREFIX}qgis_core authmethod_oauth2_a)
+ if(WITH_GUI)
+-  set(LINKEDLIBRARIES ${LINKEDLIBRARIES} qgis_gui)
++  set(LINKEDLIBRARIES ${LINKEDLIBRARIES} ${NG_PREFIX}qgis_gui)
+ endif()
+ if(APPLE)
+   set(LINKEDLIBRARIES ${LINKEDLIBRARIES} ${APP_SERVICES_LIBRARY})

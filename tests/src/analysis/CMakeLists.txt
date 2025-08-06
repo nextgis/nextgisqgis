@@ -1,28 +1,3 @@
-################################################################################
-# Project:  NextGIS QGIS
-# Purpose:  CMake build scripts
-################################################################################
-# Copyright (C) 2017-2022, NextGIS <info@nextgis.com>
-#
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
-################################################################################
-
 # Standard includes and utils to compile into all tests.
 set (util_SRCS)
 
@@ -45,24 +20,28 @@ endif()
 set(TESTS
  testqgsgeometrysnapper.cpp
  testqgsinterpolator.cpp
-# testqgsprocessingalgspt1.cpp
-# testqgsprocessingalgspt2.cpp
-# testqgsprocessingmodelalgorithm.cpp
+ # testqgsprocessingalgspt1.cpp
+ # testqgsprocessingalgspt2.cpp
+ # testqgsprocessingmodelalgorithm.cpp
  testqgszonalstatistics.cpp
- #testqgsrastercalculator.cpp
+ # testqgsrastercalculator.cpp
  testqgsreclassifyutils.cpp
- #testqgsalignraster.cpp
+ # testqgsalignraster.cpp
  testqgsnetworkanalysis.cpp
  testqgsninecellfilters.cpp
- #testqgsmeshcalculator.cpp
- #testqgsmeshcontours.cpp
+ # testqgsmeshcalculator.cpp
+ # testqgsmeshcontours.cpp
  testqgstriangulation.cpp
 )
 if(HAVE_GSL)
   set(TESTS ${TESTS} testqgsgcptransformer.cpp)
 endif()
 
+if (WITH_PDAL AND PDAL_2_5_OR_HIGHER)
+  set(TESTS ${TESTS} testqgsprocessingpdalalgs.cpp)
+endif()
+
 foreach(TESTSRC ${TESTS})
     add_qgis_test(${TESTSRC} MODULE analysis LINKEDLIBRARIES ${NG_PREFIX}qgis_analysis)
 endforeach(TESTSRC)
-#add_qgis_test(testqgsprocessing.cpp MODULE analysis LINKEDLIBRARIES ${NG_PREFIX}qgis_analysis LABELS "POSTGRES")
+# add_qgis_test(testqgsprocessing.cpp MODULE analysis LINKEDLIBRARIES ${NG_PREFIX}qgis_analysis LABELS "POSTGRES")
