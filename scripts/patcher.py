@@ -373,12 +373,12 @@ def create_patches(
             relative_path = Path(changed_file)
             upstream_file = upstream_root / relative_path
             local_file = local / relative_path
+            patch_file = patch_dir / _patch_file_name(relative_path)
 
             is_upstream_file_missing = not upstream_file.exists()
             if is_upstream_file_missing:
                 current_status = _find_missing_upstream_file(upstream, relative_path)
                 if current_status == "D":
-                    patch_file = patch_dir / _patch_file_name(relative_path)
                     patch_file.unlink()
                     mark_semi_success(
                         f"File was deleted in upstream. Patch removed: {patch_file}"
@@ -387,14 +387,16 @@ def create_patches(
 
                 # TODO: elif current_status == "R":
 
-            if is_upstream_file_missing or not local_file.exists():
+            if is_upstream_file_missing or not local_file.exists() :
+                if not patch_file.exists():
+                    continue
+
                 mark_failure(
                     f"Patch for {relative_path} exists, but the file is missing"
                     + (" in upstream" if is_upstream_file_missing else "")
                 )
                 answer = input("Delete the patch? [y/N]: ")
                 if answer.lower() == "y":
-                    patch_file = patch_dir / _patch_file_name(relative_path)
                     if patch_file.exists():
                         patch_file.unlink()
                         mark_success(f"Patch removed: {patch_file}")
