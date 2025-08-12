@@ -1,5 +1,5 @@
 --- a/src/app/qgisapp.cpp	2025-07-15 20:09:37.505540027 +0300
-+++ b/src/app/qgisapp.cpp	2025-07-30 19:58:18.113337171 +0300
++++ b/src/app/qgisapp.cpp	2025-08-12 15:56:11.788648513 +0300
 @@ -110,8 +110,10 @@
  
  #include "options/qgscodeeditoroptions.h"
@@ -324,6 +324,42 @@
 -                                          tr( "https://qgis.org/en/site/getinvolved/development/bugreporting.html" ) ).toString();
 +                                          tr( "https://nextgis.com/support" ) ).toString();
    openURL( reportaBugUrl, false );
+ }
+ 
+@@ -12719,7 +12765,7 @@
+ {
+   QgsSettings settings;
+   QString getInvolvedUrl = settings.value( QStringLiteral( "qgis/getInvolved" ),
+-                           tr( "https://qgis.org/en/site/getinvolved/" ) ).toString();
++                           tr( "https://nextgis.com/redirect/ru/ak45prp" ) ).toString();
+   openURL( getInvolvedUrl, false );
+ }
+ 
+@@ -12727,7 +12773,7 @@
+ {
+   QgsSettings settings;
+   QString donateUrl = settings.value( QStringLiteral( "qgis/donate" ),
+-                                      tr( "https://donate.qgis.org/" ) ).toString();
++                                      tr( "https://nextgis.com/redirect/ru/ak45prp5" ) ).toString();
+   openURL( donateUrl, false );
+ }
+ 
+@@ -12735,7 +12781,7 @@
+ {
+   QgsSettings settings;
+   QString supportProvidersUrl = settings.value( QStringLiteral( "qgis/supportProvidersUrl" ),
+-                                tr( "https://qgis.org/en/site/forusers/commercial_support.html" ) ).toString();
++                                tr( "https://nextgis.com/support" ) ).toString();
+   openURL( supportProvidersUrl, false );
+ }
+ 
+@@ -12743,7 +12789,7 @@
+ {
+   QgsSettings settings;
+   QString  helpQgisHomePageUrl = settings.value( QStringLiteral( "qgis/helpQgisHomePageUrl" ),
+-                                 QStringLiteral( "https://qgis.org" ) ).toString();
++                                 QStringLiteral( "https://nextgis.com/nextgis-qgis/" ) ).toString();
+   openURL( helpQgisHomePageUrl, false );
  }
  
 @@ -14592,9 +14638,11 @@

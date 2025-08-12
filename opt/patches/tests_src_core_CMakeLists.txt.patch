@@ -1,6 +1,6 @@
 --- a/tests/src/core/CMakeLists.txt	2025-07-15 20:09:38.148553761 +0300
-+++ b/tests/src/core/CMakeLists.txt	2025-08-06 16:07:53.792563393 +0300
-@@ -25,134 +25,134 @@
++++ b/tests/src/core/CMakeLists.txt	2025-08-12 15:56:17.007613366 +0300
+@@ -25,52 +25,52 @@
   testqgs25drenderer.cpp
   testqgsannotationitemregistry.cpp
   testqgsapplication.cpp
@@ -13,17 +13,14 @@
 - testqgsauthmanager.cpp
 + # testqgsauthmanager.cpp
   testqgsblendmodes.cpp
-- testqgsbrowsermodel.cpp
-- testqgsbrowserproxymodel.cpp
-+ # testqgsbrowsermodel.cpp
-+ # testqgsbrowserproxymodel.cpp
+  testqgsbrowsermodel.cpp
+  testqgsbrowserproxymodel.cpp
   testqgscadutils.cpp
 - testqgscallout.cpp
 + # testqgscallout.cpp
   testqgscalloutregistry.cpp
   testqgscentroidfillsymbol.cpp
-- testqgsclipper.cpp
-+ # testqgsclipper.cpp
+  testqgsclipper.cpp
   testqgscolorscheme.cpp
 - testqgscolorschemeregistry.cpp
 - testqgscompositionconverter.cpp
@@ -31,28 +28,23 @@
 + # testqgscompositionconverter.cpp
   testqgsconnectionpool.cpp
 - testqgscoordinatereferencesystemregistry.cpp
-- testqgscoordinatetransform.cpp
-- testqgscoordinateutils.cpp
 + # testqgscoordinatereferencesystemregistry.cpp
-+ # testqgscoordinatetransform.cpp
-+ # testqgscoordinateutils.cpp
+  testqgscoordinatetransform.cpp
+  testqgscoordinateutils.cpp
   testqgscopyfiletask.cpp
   testqgscredentials.cpp
   testqgscurve.cpp
 - testqgsdatadefinedsizelegend.cpp
 - testqgsdataitem.cpp
-- testqgsdatasourceuri.cpp
-- testqgsdiagram.cpp
-- testqgsdistancearea.cpp
-- testqgsdxfexport.cpp
-- testqgselevationmap.cpp
 + # testqgsdatadefinedsizelegend.cpp
 + # testqgsdataitem.cpp
-+ # testqgsdatasourceuri.cpp
+  testqgsdatasourceuri.cpp
+- testqgsdiagram.cpp
 + # testqgsdiagram.cpp
-+ # testqgsdistancearea.cpp
+  testqgsdistancearea.cpp
+- testqgsdxfexport.cpp
 + # testqgsdxfexport.cpp
-+ # testqgselevationmap.cpp
+  testqgselevationmap.cpp
   testqgsellipsemarker.cpp
 - testqgsexpression.cpp
 + # testqgsexpression.cpp
@@ -64,61 +56,45 @@
   testqgsfilledmarker.cpp
 - testqgsfontmarker.cpp
 - testqgsfontutils.cpp
-- testqgsgdalprovider.cpp
-- testqgsgdalutils.cpp
 + # testqgsfontmarker.cpp
 + # testqgsfontutils.cpp
-+ # testqgsgdalprovider.cpp
-+ # testqgsgdalutils.cpp
+  testqgsgdalprovider.cpp
+  testqgsgdalutils.cpp
   testqgsgenericspatialindex.cpp
   testqgsgeometryimport.cpp
 - testqgsgeopdfexport.cpp
-- testqgsgml.cpp
 + # testqgsgeopdfexport.cpp
-+ # testqgsgml.cpp
+  testqgsgml.cpp
   testqgsgradients.cpp
   testqgsgraduatedsymbolrenderer.cpp
-  testqgshistogram.cpp
-  testqgshstoreutils.cpp
-  testqgshttpheaders.cpp
-- testqgsimagecache.cpp
-+ # testqgsimagecache.cpp
-  testqgsimageoperation.cpp
+@@ -82,7 +82,7 @@
   testqgsinternalgeometryengine.cpp
-- testqgsinvertedpolygonrenderer.cpp
-- testqgsjsonutils.cpp
+  testqgsinvertedpolygonrenderer.cpp
+  testqgsjsonutils.cpp
 - testqgslabelingengine.cpp
-+ # testqgsinvertedpolygonrenderer.cpp
-+ # testqgsjsonutils.cpp
 + # testqgslabelingengine.cpp
   testqgslayerdefinition.cpp
   testqgslayeredsymbollevel.cpp
   testqgslayertree.cpp
-- testqgslayout.cpp
-- testqgslayoutatlas.cpp
-- testqgslayoutcontext.cpp
-+ # testqgslayout.cpp
-+ # testqgslayoutatlas.cpp
-+ # testqgslayoutcontext.cpp
+@@ -90,68 +90,68 @@
+  testqgslayoutatlas.cpp
+  testqgslayoutcontext.cpp
   testqgslayoutexporter.cpp
 - testqgslayoutgeopdfexport.cpp
-- testqgslayoutitem.cpp
 + # testqgslayoutgeopdfexport.cpp
-+ # testqgslayoutitem.cpp
+  testqgslayoutitem.cpp
   testqgslayoutitemgroup.cpp
 - testqgslayoutlabel.cpp
 - testqgslayoutmanualtable.cpp
 - testqgslayoutmap.cpp
 - testqgslayoutmapgrid.cpp
-- testqgslayoutmapoverview.cpp
 + # testqgslayoutlabel.cpp
 + # testqgslayoutmanualtable.cpp
 + # testqgslayoutmap.cpp
 + # testqgslayoutmapgrid.cpp
-+ # testqgslayoutmapoverview.cpp
+  testqgslayoutmapoverview.cpp
   testqgslayoutmodel.cpp
-- testqgslayoutmultiframe.cpp
-+ # testqgslayoutmultiframe.cpp
+  testqgslayoutmultiframe.cpp
   testqgslayoutobject.cpp
   testqgslayoutpage.cpp
 - testqgslayoutpicture.cpp
@@ -132,11 +108,10 @@
   testqgslayoutunits.cpp
 - testqgslayoututils.cpp
 - testqgslegendrenderer.cpp
-- testqgslinefillsymbol.cpp
-- testqgsmapdevicepixelratio.cpp
 + # testqgslayoututils.cpp
 + # testqgslegendrenderer.cpp
-+ # testqgslinefillsymbol.cpp
+  testqgslinefillsymbol.cpp
+- testqgsmapdevicepixelratio.cpp
 + # testqgsmapdevicepixelratio.cpp
   testqgsmaplayer.cpp
   testqgsmaplayerstylemanager.cpp
@@ -144,11 +119,10 @@
 - testqgsmaprendererjob.cpp
 - testqgsmaprotation.cpp
 - testqgsmapsettings.cpp
-- testqgsmapsettingsutils.cpp
 + # testqgsmaprendererjob.cpp
 + # testqgsmaprotation.cpp
 + # testqgsmapsettings.cpp
-+ # testqgsmapsettingsutils.cpp
+  testqgsmapsettingsutils.cpp
   testqgsmapthemecollection.cpp
   testqgsmaptopixel.cpp
   testqgsmaptopixelgeometrysimplifier.cpp
@@ -158,23 +132,21 @@
 - testqgsmeshlayer.cpp
 - testqgsmeshlayerinterpolator.cpp
 - testqgsmeshlayerrenderer.cpp
-- testqgsmimedatautils.cpp
-- testqgsnetworkaccessmanager.cpp
 + # testqgsmesheditor.cpp
 + # testqgsmeshlayer.cpp
 + # testqgsmeshlayerinterpolator.cpp
 + # testqgsmeshlayerrenderer.cpp
-+ # testqgsmimedatautils.cpp
+  testqgsmimedatautils.cpp
+- testqgsnetworkaccessmanager.cpp
 + # testqgsnetworkaccessmanager.cpp
   testqgsnetworkcontentfetcher.cpp
 - testqgsnewsfeedparser.cpp
 - testqgsnmeaconnection.cpp
 - testqgsofflineediting.cpp
-- testqgsogcutils.cpp
 + # testqgsnewsfeedparser.cpp
-+ # testqgsnmeaconnection.cpp
++#  testqgsnmeaconnection.cpp
 + # testqgsofflineediting.cpp
-+ # testqgsogcutils.cpp
+  testqgsogcutils.cpp
   testqgsogrprovider.cpp
 - testqgsogrutils.cpp
 + # testqgsogrutils.cpp
@@ -192,17 +164,13 @@
   testqgspointlocator.cpp
   testqgspointpatternfillsymbol.cpp
   testqgspostgresstringutils.cpp
-- testqgsproject.cpp
-- testqgsprojectstorage.cpp
+  testqgsproject.cpp
+  testqgsprojectstorage.cpp
 - testqgsprojutils.cpp
-- testqgsproperty.cpp
-+ # testqgsproject.cpp
-+ # testqgsprojectstorage.cpp
 + # testqgsprojutils.cpp
-+ # testqgsproperty.cpp
+  testqgsproperty.cpp
   testqgsprovidermetadata.cpp
   testqgsrange.cpp
-  testqgsrasterblock.cpp
 @@ -161,7 +161,7 @@
   testqgsrasterfilewriter.cpp
   testqgsrasterfill.cpp
@@ -212,25 +180,22 @@
   testqgsrasterlayertemporalproperties.cpp
   testqgsrastermarker.cpp
   testqgsrastersublayer.cpp
-@@ -177,43 +177,43 @@
+@@ -177,22 +177,22 @@
   testqgssimplifymethod.cpp
   testqgssnappingutils.cpp
   testqgsspatialindex.cpp
 - testqgsspatialindexkdbush.cpp
-- testqgssqliteexpressioncompiler.cpp
 + # testqgsspatialindexkdbush.cpp
-+ # testqgssqliteexpressioncompiler.cpp
+  testqgssqliteexpressioncompiler.cpp
   testqgssqliteutils.cpp
   testqgsrelation.cpp
   testqgsstatisticalsummary.cpp
   testqgsstoredexpressionmanager.cpp
-- testqgsstringutils.cpp
+  testqgsstringutils.cpp
 - testqgsstyle.cpp
-- testqgssvgcache.cpp
-- testqgssvgmarker.cpp
-+ # testqgsstringutils.cpp
 + # testqgsstyle.cpp
-+ # testqgssvgcache.cpp
+  testqgssvgcache.cpp
+- testqgssvgmarker.cpp
 + # testqgssvgmarker.cpp
   testqgssymbol.cpp
   testqgstaskmanager.cpp
@@ -242,12 +207,7 @@
   testqgstracer.cpp
   testqgstranslateproject.cpp
   testqgstriangularmesh.cpp
-  testqgsvaluerelationfieldformatter.cpp
-  testqgsvector.cpp
-  testqgsvectordataprovider.cpp
-- testqgsvectorfilewriter.cpp
-+ # testqgsvectorfilewriter.cpp
-  testqgsvectorlayer.cpp
+@@ -204,10 +204,10 @@
   testqgsvectorlayercache.cpp
   testqgsvectorlayerjoinbuffer.cpp
   testqgsvectorlayerutils.cpp
@@ -255,21 +215,13 @@
 - testqgsvectortileconnection.cpp
 - testqgsvectortileutils.cpp
 - testqgsvectortilewriter.cpp
-- testqgstiles.cpp
 + # testqgsvectortilelayer.cpp
 + # testqgsvectortileconnection.cpp
 + # testqgsvectortileutils.cpp
 + # testqgsvectortilewriter.cpp
-+ # testqgstiles.cpp
+  testqgstiles.cpp
   testqgsweakrelation.cpp
   testqgsziputils.cpp
-  testqobjectparentuniqueptr.cpp
-  testqobjectuniqueptr.cpp
-- testziplayer.cpp
-+ # testziplayer.cpp
- )
- 
- if(WITH_QTWEBKIT)
 @@ -229,10 +229,10 @@
  endif()
  

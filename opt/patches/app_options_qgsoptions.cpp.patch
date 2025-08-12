@@ -1,5 +1,5 @@
 --- a/src/app/options/qgsoptions.cpp	2025-07-15 20:09:37.497539856 +0300
-+++ b/src/app/options/qgsoptions.cpp	2025-07-30 19:58:18.108960942 +0300
++++ b/src/app/options/qgsoptions.cpp	2025-08-12 15:56:11.786493617 +0300
 @@ -53,7 +53,7 @@
  #include "qgslocatoroptionswidget.h"
  #include "qgsgui.h"
@@ -67,6 +67,15 @@
    double identifyValue = mSettings->value( QStringLiteral( "/Map/searchRadiusMM" ), Qgis::DEFAULT_SEARCH_RADIUS_MM ).toDouble();
    QgsDebugMsgLevel( QStringLiteral( "Standard Identify radius setting read from settings file: %1" ).arg( identifyValue ), 3 );
    if ( identifyValue <= 0.0 )
+@@ -390,7 +410,7 @@
+   connect( mBtnRemoveHiddenPath, &QAbstractButton::clicked, this, &QgsOptions::removeHiddenPath );
+ 
+   //locations of the QGIS help
+-  const QStringList helpPathList = mSettings->value( QStringLiteral( "help/helpSearchPath" ), "https://docs.qgis.org/$qgis_short_version/$qgis_locale/docs/user_manual/" ).toStringList();
++  const QStringList helpPathList = mSettings->value( QStringLiteral( "help/helpSearchPath" ), "https://docs.nextgis.ru/docs_ngqgis/source/index.html" ).toStringList();
+   for ( const QString &path : helpPathList )
+   {
+     QTreeWidgetItem *item = new QTreeWidgetItem();
 @@ -724,7 +744,7 @@
    cbxLegendClassifiers->setChecked( mSettings->value( QStringLiteral( "/qgis/showLegendClassifiers" ), false ).toBool() );
    mShowFeatureCountByDefaultCheckBox->setChecked( QgsSettingsRegistryCore::settingsLayerTreeShowFeatureCountForNewLayers->value() );
