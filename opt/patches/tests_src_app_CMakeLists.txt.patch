@@ -1,6 +1,6 @@
 --- a/tests/src/app/CMakeLists.txt	2025-07-15 20:09:38.141553611 +0300
-+++ b/tests/src/app/CMakeLists.txt	2025-08-06 16:11:06.831731320 +0300
-@@ -6,61 +6,69 @@
++++ b/tests/src/app/CMakeLists.txt	2025-08-13 14:51:04.190754987 +0300
+@@ -6,7 +6,15 @@
    ${CMAKE_CURRENT_BINARY_DIR}
  )
  
@@ -17,68 +17,34 @@
  
  set(TESTS
    testqgisapp.cpp
-   testqgsappbrowserproviders.cpp
--  testqgisappclipboard.cpp
-+  # testqgisappclipboard.cpp
-   testqgisappdockwidgets.cpp
--  testqgsadvanceddigitizing.cpp
--  testqgsattributetable.cpp
--  testqgsapplocatorfilters.cpp
--  testqgsdecorationscalebar.cpp
+@@ -17,7 +25,7 @@
+   testqgsattributetable.cpp
+   testqgsapplocatorfilters.cpp
+   testqgsdecorationscalebar.cpp
 -  testqgsdwgimportdialog.cpp
--  testqgsfieldcalculator.cpp
--  testqgsmapcanvasdockwidget.cpp
-+  # testqgsadvanceddigitizing.cpp
-+  # testqgsattributetable.cpp
-+  # testqgsapplocatorfilters.cpp
-+  # testqgsdecorationscalebar.cpp
 +  # testqgsdwgimportdialog.cpp
-+  # testqgsfieldcalculator.cpp
-+  # testqgsmapcanvasdockwidget.cpp
+   testqgsfieldcalculator.cpp
+   testqgsmapcanvasdockwidget.cpp
    testqgsmaptooleditannotation.cpp
--  testqgsmaptoolidentifyaction.cpp
-+  # testqgsmaptoolidentifyaction.cpp
-   testqgsmaptoollabel.cpp
--  testqgsmaptoolselect.cpp
--  testqgsmaptoolreshape.cpp
-+  # testqgsmaptoolselect.cpp
-+  # testqgsmaptoolreshape.cpp
+@@ -28,7 +36,7 @@
    testqgsmaptoolrotatefeature.cpp
--  testqgsmaptoolscalefeature.cpp
-+  # testqgsmaptoolscalefeature.cpp
+   testqgsmaptoolscalefeature.cpp
    testqgsmaptoolcircularstring.cpp
 -  testqgsmaptooleditmesh.cpp
 +  # testqgsmaptooleditmesh.cpp
    testqgsmaptoolmovefeature.cpp
    testqgsmaptoolellipse.cpp
    testqgsmaptoolcircle.cpp
-   testqgsmaptoolrectangle.cpp
-   testqgsmaptoolregularpolygon.cpp
-   testqgsmaptoolsplitparts.cpp
--  testqgsmaptoolsplitfeatures.cpp
--  testqgsmeasuretool.cpp
--  testqgsmeasurebearingtool.cpp
--  testqgsvertexeditor.cpp
--  testqgsvertextool.cpp
-+  # testqgsmaptoolsplitfeatures.cpp
-+  # testqgsmeasuretool.cpp
-+  # testqgsmeasurebearingtool.cpp
-+  # testqgsvertexeditor.cpp
-+  # testqgsvertextool.cpp
-   testqgsvectorlayersaveasdialog.cpp
-   testqgsmaptoolreverseline.cpp
+@@ -45,22 +53,22 @@
    testqgsmaptooltrimextendfeature.cpp
--  testqgsprojectproperties.cpp
-+  # testqgsprojectproperties.cpp
+   testqgsprojectproperties.cpp
    testqgsapplayoutvaliditychecks.cpp
 -  testqgsmeshcalculatordialog.cpp
 -  testqgsgpsintegration.cpp
--  testqgslabelpropertydialog.cpp
--  testqgsmergeattributesdialog.cpp
 +  # testqgsmeshcalculatordialog.cpp
 +  # testqgsgpsintegration.cpp
-+  # testqgslabelpropertydialog.cpp
-+  # testqgsmergeattributesdialog.cpp
+   testqgslabelpropertydialog.cpp
+   testqgsmergeattributesdialog.cpp
  )
  
  if (HAVE_GEOREFERENCER)

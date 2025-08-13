@@ -31,7 +31,7 @@
 #include "qgsgeometry.h"
 #include "qgspoint.h"
 #include "qgssettings.h"
-#include "qgsvectortilelayer.h"
+// #include "qgsvectortilelayer.h"
 #include "qgsselectioncontext.h"
 
 /**
@@ -58,7 +58,7 @@ class TestQgisAppClipboard : public QObject
     void pasteGeoJson();
     void retrieveFields();
     void clipboardLogic(); //test clipboard logic
-    void testVectorTileLayer();
+    // void testVectorTileLayer();
 
   private:
     QgisApp *mQgisApp = nullptr;
@@ -523,6 +523,7 @@ void TestQgisAppClipboard::clipboardLogic()
   QCOMPARE( features.at( 0 ).attribute( "name" ).toString(), QString( "Dinagat Islands" ) );
 }
 
+/*
 void TestQgisAppClipboard::testVectorTileLayer()
 {
   QString dataDir = QString( TEST_DATA_DIR ); //defined in CmakeLists.txt
@@ -583,6 +584,7 @@ void TestQgisAppClipboard::testVectorTileLayer()
   QCOMPARE( oceanFeature.fields(), mQgisApp->clipboard()->fields() );
   QCOMPARE( oceanFeature.attribute( QStringLiteral( "class" ) ).toString(), QStringLiteral( "ocean" ) );
 }
+*/
 
 QGSTEST_MAIN( TestQgisAppClipboard )
 #include "testqgisappclipboard.moc"

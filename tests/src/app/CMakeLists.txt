@@ -19,22 +19,22 @@ endif()
 set(TESTS
   testqgisapp.cpp
   testqgsappbrowserproviders.cpp
-  # testqgisappclipboard.cpp
+  testqgisappclipboard.cpp
   testqgisappdockwidgets.cpp
-  # testqgsadvanceddigitizing.cpp
-  # testqgsattributetable.cpp
-  # testqgsapplocatorfilters.cpp
-  # testqgsdecorationscalebar.cpp
+  testqgsadvanceddigitizing.cpp
+  testqgsattributetable.cpp
+  testqgsapplocatorfilters.cpp
+  testqgsdecorationscalebar.cpp
   # testqgsdwgimportdialog.cpp
-  # testqgsfieldcalculator.cpp
-  # testqgsmapcanvasdockwidget.cpp
+  testqgsfieldcalculator.cpp
+  testqgsmapcanvasdockwidget.cpp
   testqgsmaptooleditannotation.cpp
-  # testqgsmaptoolidentifyaction.cpp
+  testqgsmaptoolidentifyaction.cpp
   testqgsmaptoollabel.cpp
-  # testqgsmaptoolselect.cpp
-  # testqgsmaptoolreshape.cpp
+  testqgsmaptoolselect.cpp
+  testqgsmaptoolreshape.cpp
   testqgsmaptoolrotatefeature.cpp
-  # testqgsmaptoolscalefeature.cpp
+  testqgsmaptoolscalefeature.cpp
   testqgsmaptoolcircularstring.cpp
   # testqgsmaptooleditmesh.cpp
   testqgsmaptoolmovefeature.cpp
@@ -43,20 +43,20 @@ set(TESTS
   testqgsmaptoolrectangle.cpp
   testqgsmaptoolregularpolygon.cpp
   testqgsmaptoolsplitparts.cpp
-  # testqgsmaptoolsplitfeatures.cpp
-  # testqgsmeasuretool.cpp
-  # testqgsmeasurebearingtool.cpp
-  # testqgsvertexeditor.cpp
-  # testqgsvertextool.cpp
+  testqgsmaptoolsplitfeatures.cpp
+  testqgsmeasuretool.cpp
+  testqgsmeasurebearingtool.cpp
+  testqgsvertexeditor.cpp
+  testqgsvertextool.cpp
   testqgsvectorlayersaveasdialog.cpp
   testqgsmaptoolreverseline.cpp
   testqgsmaptooltrimextendfeature.cpp
-  # testqgsprojectproperties.cpp
+  testqgsprojectproperties.cpp
   testqgsapplayoutvaliditychecks.cpp
   # testqgsmeshcalculatordialog.cpp
   # testqgsgpsintegration.cpp
-  # testqgslabelpropertydialog.cpp
-  # testqgsmergeattributesdialog.cpp
+  testqgslabelpropertydialog.cpp
+  testqgsmergeattributesdialog.cpp
 )
 
 if (HAVE_GEOREFERENCER)
