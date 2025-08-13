@@ -1,4 +1,5 @@
 locked_paths:
+  - 'i18n/ngqgis_ru.ts'
   - 'images/icons/qgis-icon-16x16.png'
   - 'images/icons/qgis-icon.png'
   - 'images/splash/splash.png'
