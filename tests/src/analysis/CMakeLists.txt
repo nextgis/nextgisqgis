@@ -20,13 +20,13 @@ endif()
 set(TESTS
  testqgsgeometrysnapper.cpp
  testqgsinterpolator.cpp
- # testqgsprocessingalgspt1.cpp
+ testqgsprocessingalgspt1.cpp
  # testqgsprocessingalgspt2.cpp
- # testqgsprocessingmodelalgorithm.cpp
+ testqgsprocessingmodelalgorithm.cpp
  testqgszonalstatistics.cpp
- # testqgsrastercalculator.cpp
+ testqgsrastercalculator.cpp
  testqgsreclassifyutils.cpp
- # testqgsalignraster.cpp
+ testqgsalignraster.cpp
  testqgsnetworkanalysis.cpp
  testqgsninecellfilters.cpp
  # testqgsmeshcalculator.cpp

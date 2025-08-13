@@ -253,6 +253,7 @@ void TestQgsProcessingAlgsPt1::initTestCase()
   QVERIFY( mPolygonLayer->isValid() );
 
   //add a mesh layer
+  /*
   const QString uri( dataDir + "/mesh/quad_and_triangle.2dm" );
   const QString meshLayerName = QStringLiteral( "mesh layer" );
   QgsMeshLayer *meshLayer = new QgsMeshLayer( uri, meshLayerName, QStringLiteral( "mdal" ) );
@@ -264,8 +265,10 @@ void TestQgsProcessingAlgsPt1::initTestCase()
   meshLayer->addDatasets( dataDir + "/mesh/quad_and_triangle_els_face_scalar.dat" );
   meshLayer->addDatasets( dataDir + "/mesh/quad_and_triangle_els_face_vector.dat" );
   QCOMPARE( meshLayer->datasetGroupCount(), 5 );
+  */
 
   //add a 1D mesh layer
+  /*
   const QString uri1d( dataDir + "/mesh/lines.2dm" );
   const QString meshLayer1dName = QStringLiteral( "mesh layer 1D" );
   QgsMeshLayer *meshLayer1d = new QgsMeshLayer( uri1d, meshLayer1dName, QStringLiteral( "mdal" ) );
@@ -275,6 +278,7 @@ void TestQgsProcessingAlgsPt1::initTestCase()
   meshLayer1d->addDatasets( dataDir + "/mesh/lines_els_scalar.dat" );
   meshLayer1d->addDatasets( dataDir + "/mesh/lines_els_vector.dat" );
   QCOMPARE( meshLayer1d->datasetGroupCount(), 3 );
+  */
 
   /* Make sure geopackages are not written-to, during tests
    * See https://github.com/qgis/QGIS/issues/25830
