@@ -522,6 +522,7 @@ void QgsApplication::installTranslators()
     translationFilters << QString("qt_%1").arg(*sTranslation());
     translationFilters << QString("qtbase_%1").arg(*sTranslation());
     translationFilters << QString("qgis_%1").arg(*sTranslation());
+    translationFilters << QString("ngqgis_%1").arg(*sTranslation());
     translationFilters << QString("qscintilla_%1").arg(*sTranslation());
 
     for(const QString &localePath : localePaths) {
