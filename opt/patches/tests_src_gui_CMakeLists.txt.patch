@@ -1,28 +1,16 @@
 --- a/tests/src/gui/CMakeLists.txt	2025-07-15 20:09:38.183554509 +0300
-+++ b/tests/src/gui/CMakeLists.txt	2025-08-06 16:01:43.165284665 +0300
-@@ -29,59 +29,59 @@
-   testqgsmaptoolzoom.cpp
-   testqgsmaptooledit.cpp
-   testqgscategorizedrendererwidget.cpp
--  testqgsdatumtransformdialog.cpp
-+  # testqgsdatumtransformdialog.cpp
-   testqgsdoublespinbox.cpp
--  testqgsdualview.cpp
-+  # testqgsdualview.cpp
-   testqgsattributeform.cpp
-   testqgsdatetimeedit.cpp
++++ b/tests/src/gui/CMakeLists.txt	2025-08-18 15:06:45.865981787 +0300
+@@ -37,15 +37,15 @@
    testqgsdockwidget.cpp
    testqgsfieldexpressionwidget.cpp
    testqgsfilewidget.cpp
 -  testqgsexternalstoragefilewidget.cpp
 +  # testqgsexternalstoragefilewidget.cpp
    testqgsfocuswatcher.cpp
--  testqgshtmlwidgetwrapper.cpp
+   testqgshtmlwidgetwrapper.cpp
 -  testqgsmapcanvas.cpp
--  testqgsmaptoolcapture.cpp
-+  # testqgshtmlwidgetwrapper.cpp
 +  # testqgsmapcanvas.cpp
-+  # testqgsmaptoolcapture.cpp
+   testqgsmaptoolcapture.cpp
    testqgsmessagebar.cpp
    testprojectionissues.cpp
    testqgsgui.cpp
@@ -30,12 +18,8 @@
 +  # testprocessinggui.cpp
    testqgsprocessingmodel.cpp
    testqgsrubberband.cpp
--  testqgsscalecombobox.cpp
-+  # testqgsscalecombobox.cpp
-   testqgsscalerangewidget.cpp
--  testqgsrangewidgetwrapper.cpp
-+  # testqgsrangewidgetwrapper.cpp
-   testqgsspinbox.cpp
+   testqgsscalecombobox.cpp
+@@ -55,14 +55,14 @@
    testqgssqlcomposerdialog.cpp
    testqgseditorwidgetregistry.cpp
    testqgskeyvaluewidget.cpp
@@ -45,18 +29,15 @@
    testqgslayoutview.cpp
    testqgsvaluemapwidgetwrapper.cpp
    testqgsvaluemapconfigdlg.cpp
--  testqgsvaluerelationwidgetwrapper.cpp
-+  # testqgsvaluerelationwidgetwrapper.cpp
+   testqgsvaluerelationwidgetwrapper.cpp
    testqgsrelationeditorwidget.cpp
 -  testqgsrelationreferencewidget.cpp
 +  # testqgsrelationreferencewidget.cpp
    testqgsfeaturelistcombobox.cpp
    testqgstexteditwrapper.cpp
    testqgstableeditor.cpp
--  testqgsnewdatabasetablewidget.cpp
--  testqgsogrprovidergui.cpp
-+  # testqgsnewdatabasetablewidget.cpp
-+  # testqgsogrprovidergui.cpp
+@@ -70,18 +70,18 @@
+   testqgsogrprovidergui.cpp
    testqgssinglebandpseudocolorrendererwidget.cpp
    testqgsdoublevalidator.cpp
 -  testqgsmeshlayerpropertiesdialog.cpp

@@ -1,33 +1,91 @@
---- a/src/app/mainwin.cpp	2025-07-14 17:28:14.774952974 +0300
-+++ b/src/app/mainwin.cpp	2025-07-14 13:59:40.643924228 +0300
-@@ -50,6 +50,22 @@
+--- a/src/app/mainwin.cpp	2025-07-15 20:09:37.489539685 +0300
++++ b/src/app/mainwin.cpp	2025-08-18 15:05:37.440369285 +0300
+@@ -20,6 +20,7 @@
+ #include <fstream>
+ #include <list>
+ #include <memory>
++#include <filesystem>
+ 
+ void showError( std::string message, std::string title )
+ {
+@@ -50,6 +51,72 @@
    return basename;
  }
  
++std::string getQgisRootPath()
++{
++    const auto baseName = moduleExeBaseName();
++    const auto binPathPos = baseName.rfind("bin");
++    if (binPathPos != std::string::npos)
++    {
++        return baseName.substr(0, binPathPos);
++    }
++    return {};
++}
++
++
++bool isRunningFromBuildDir()
++{
++    const auto qgisRootPath = getQgisRootPath();
++    bool result = false;
++    if (!qgisRootPath.empty())
++    {
++        std::ifstream f(qgisRootPath + "/qgisbuildpath.txt");
++        result = f.good();
++    }
++    return result;
++}
++
++
 +std::string pythonPathEnvString()
 +{
 +  std::string pythonPathEnv;
-+
-+  const std::string &baseName = moduleExeBaseName();
-+  const std::size_t binPathPos = baseName.rfind("bin");
-+  if (binPathPos != std::string::npos)
++  const auto qgisRootPath = getQgisRootPath();
++  if (qgisRootPath.empty())
 +  {
-+      const std::string &qgisRootPath = baseName.substr(0, binPathPos);
-+      pythonPathEnv = "PYTHONPATH=" + qgisRootPath + "lib\\python38;";
++      return pythonPathEnv;
++  }
++
++  if (!isRunningFromBuildDir())
++  {
++      pythonPathEnv = "PYTHONPATH=";
++      pythonPathEnv += qgisRootPath + "lib\\python38;";
 +      pythonPathEnv += qgisRootPath + "lib\\python38\\site-packages;";
 +      pythonPathEnv += qgisRootPath + "lib\\python38\\lib-dynload;";
 +  }
++  else
++  {
++      const auto baseName = moduleExeBaseName();
++
++      std::string binDir = baseName.substr(0, baseName.rfind('\\'));
++      std::error_code ec;
++
++      pythonPathEnv = "PYTHONPATH=";
++      for (const auto& entry : std::filesystem::recursive_directory_iterator(binDir, ec))
++      {
++          if (!entry.is_directory())
++              continue;
++
++          const std::string dirName = entry.path().filename().string();
++          if (dirName != "site-packages")
++              continue;
++
++          pythonPathEnv += entry.path().string() + ";";
++      }
++  }
++
 +  return pythonPathEnv;
 +}
++
 +
  int CALLBACK WinMain( HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int /*nCmdShow*/ )
  {
    std::string exename( moduleExeBaseName() );
-@@ -129,6 +145,13 @@
+@@ -129,6 +196,13 @@
      return EXIT_FAILURE;
    }
  
-+  const std::string &pythonPathEnv = pythonPathEnvString();
++  const std::string& pythonPathEnv = pythonPathEnvString();
 +  if (_putenv(pythonPathEnv.c_str()) < 0)
 +  {
 +      showError("Could not set PYTHONPATH environment variable", "Error loading QGIS");
@@ -37,7 +95,7 @@
  #ifndef _MSC_VER // MinGW
  #pragma GCC diagnostic ignored "-Wcast-function-type"
  #endif
-@@ -168,10 +191,10 @@
+@@ -168,10 +242,10 @@
  
  
  #ifdef _MSC_VER
@@ -50,7 +108,7 @@
  #endif
  
    if ( !hGetProcIDDLL )
-@@ -188,7 +211,7 @@
+@@ -188,7 +262,7 @@
        0,
        NULL );
  
@@ -59,7 +117,7 @@
                            + "\n Help: \n\n Check " + basename + ".env for correct environment paths";
      showError( message, "Error loading QGIS" );
  
-@@ -207,7 +230,7 @@
+@@ -207,7 +281,7 @@
  
    if ( !realmain )
    {

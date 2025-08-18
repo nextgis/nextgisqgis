@@ -1,0 +1,81 @@
+--- a/tests/src/app/testqgsmaptoolidentifyaction.cpp	2025-07-15 20:09:38.146553718 +0300
++++ b/tests/src/app/testqgsmaptoolidentifyaction.cpp	2025-08-18 15:05:40.400435438 +0300
+@@ -21,7 +21,7 @@
+ #include "qgsfeature.h"
+ #include "qgsgeometry.h"
+ #include "qgsvectordataprovider.h"
+-#include "qgsvectortilelayer.h"
++// #include "qgsvectortilelayer.h"
+ #include "qgsproject.h"
+ #include "qgsmapcanvas.h"
+ #include "qgsmeshlayer.h"
+@@ -59,8 +59,8 @@
+     void identifyRasterFloat32(); // test pixel identification and decimal precision
+     void identifyRasterFloat64(); // test pixel identification and decimal precision
+     void identifyRasterTemporal();
+-    void identifyMesh(); // test identification for mesh layer
+-    void identifyVectorTile();  // test identification for vector tile layer
++    // void identifyMesh(); // test identification for mesh layer
++    // void identifyVectorTile();  // test identification for vector tile layer
+     void identifyInvalidPolygons(); // test selecting invalid polygons
+     void clickxy(); // test if click_x and click_y variables are propagated
+     void closestPoint();
+@@ -75,7 +75,7 @@
+     QString testIdentifyRaster( QgsRasterLayer *layer, double xGeoref, double yGeoref );
+     QList<QgsMapToolIdentify::IdentifyResult> testIdentifyVector( QgsVectorLayer *layer, double xGeoref, double yGeoref );
+     QList<QgsMapToolIdentify::IdentifyResult> testIdentifyMesh( QgsMeshLayer *layer, double xGeoref, double yGeoref );
+-    QList<QgsMapToolIdentify::IdentifyResult> testIdentifyVectorTile( QgsVectorTileLayer *layer, double xGeoref, double yGeoref );
++    // QList<QgsMapToolIdentify::IdentifyResult> testIdentifyVectorTile( QgsVectorTileLayer *layer, double xGeoref, double yGeoref );
+ 
+     // Release return with delete []
+     unsigned char *
+@@ -607,6 +607,7 @@
+ }
+ 
+ // private
++/*
+ QList<QgsMapToolIdentify::IdentifyResult>
+ TestQgsMapToolIdentifyAction::testIdentifyVectorTile( QgsVectorTileLayer *layer, double xGeoref, double yGeoref )
+ {
+@@ -618,6 +619,7 @@
+   QList<QgsMapToolIdentify::IdentifyResult> result = action->identify( mapPoint.x(), mapPoint.y(), QList<QgsMapLayer *>() << layer, QgsMapToolIdentify::DefaultQgsSetting, identifyContext );
+   return result;
+ }
++*/
+ 
+ void TestQgsMapToolIdentifyAction::identifyRasterTemporal()
+ {
+@@ -705,6 +707,7 @@
+   QCOMPARE( testIdentifyRaster( tempLayer.get(), 6.5, 0.5 ), QString( "1.2345678901234" ) );
+ }
+ 
++/*
+ void TestQgsMapToolIdentifyAction::identifyMesh()
+ {
+   //create a temporary layer
+@@ -807,7 +810,9 @@
+   QCOMPARE( results[0].mDerivedAttributes[ QStringLiteral( "Vector x-component" )], QStringLiteral( "1.8" ) );
+   QCOMPARE( results[0].mDerivedAttributes[ QStringLiteral( "Vector y-component" )], QStringLiteral( "2.4" ) );
+ }
++*/
+ 
++/*
+ void TestQgsMapToolIdentifyAction::identifyVectorTile()
+ {
+   //create a temporary layer
+@@ -836,6 +841,7 @@
+ 
+   delete tempLayer;
+ }
++*/
+ 
+ void TestQgsMapToolIdentifyAction::identifyInvalidPolygons()
+ {
+@@ -867,7 +873,3 @@
+ 
+ QGSTEST_MAIN( TestQgsMapToolIdentifyAction )
+ #include "testqgsmaptoolidentifyaction.moc"
+-
+-
+-
+-

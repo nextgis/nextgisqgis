@@ -1,6 +1,15 @@
---- a/src/app/qgisapp.cpp	2025-07-15 20:09:37.505540027 +0300
-+++ b/src/app/qgisapp.cpp	2025-08-12 15:56:11.788648513 +0300
-@@ -110,8 +110,10 @@
+--- a/src/app/qgisapp.cpp	2025-08-23 10:09:42.294918835 +0300
++++ b/src/app/qgisapp.cpp	2025-08-23 10:08:37.121314565 +0300
+@@ -75,6 +75,8 @@
+ #include <QWindow>
+ #include <QActionGroup>
+ 
++#include "ngcustomization.h"
++
+ #include "qgsscreenhelper.h"
+ #include "qgssettingsregistrycore.h"
+ #include "qgsnetworkaccessmanager.h"
+@@ -110,8 +112,10 @@
  
  #include "options/qgscodeeditoroptions.h"
  #include "options/qgsfontoptions.h"
@@ -11,7 +20,7 @@
  #include "options/qgscustomprojectionoptions.h"
  #include "options/qgsrasterrenderingoptions.h"
  #include "options/qgsrenderingoptions.h"
-@@ -232,9 +234,11 @@
+@@ -232,9 +236,11 @@
  #include "qgsdatumtransformdialog.h"
  #include "qgsdoublespinbox.h"
  #include "qgsdockwidget.h"
@@ -23,7 +32,7 @@
  #include "qgsdecorationtitle.h"
  #include "qgsdecorationcopyright.h"
  #include "qgsdecorationimage.h"
-@@ -255,6 +259,7 @@
+@@ -255,6 +261,7 @@
  #include "qgsformannotation.h"
  #include "qgsguiutils.h"
  #include "qgsprojectionselectiondialog.h"
@@ -31,7 +40,7 @@
  #include "qgsgpsinformationwidget.h"
  #include "qgsappgpsconnection.h"
  #include "qgsappgpsdigitizing.h"
-@@ -262,6 +267,7 @@
+@@ -262,6 +269,7 @@
  #include "qgsappgpssettingsmenu.h"
  #include "qgsgpstoolbar.h"
  #include "qgsgpscanvasbridge.h"
@@ -39,7 +48,7 @@
  #include "qgsguivectorlayertools.h"
  #include "qgsdiagramproperties.h"
  #include "qgslayerdefinition.h"
-@@ -318,7 +324,7 @@
+@@ -318,7 +326,7 @@
  #include "qgsmapoverviewcanvas.h"
  #include "qgsmapsettings.h"
  #include "qgsmaptip.h"
@@ -48,7 +57,7 @@
  #include "qgsmergeattributesdialog.h"
  #include "qgsmessageviewer.h"
  #include "qgsmessagebar.h"
-@@ -396,12 +402,15 @@
+@@ -396,12 +404,15 @@
  #include "qgsvectorlayer.h"
  #include "qgsvectorlayerproperties.h"
  #include "qgsvectorlayerdigitizingproperties.h"
@@ -64,7 +73,7 @@
  #include "qgswelcomepage.h"
  #include "qgsversioninfo.h"
  #include "qgslegendfilterbutton.h"
-@@ -1437,6 +1446,7 @@
+@@ -1437,6 +1448,7 @@
    addDockWidget( Qt::LeftDockWidgetArea, mBookMarksDockWidget );
    mBookMarksDockWidget->hide();
  
@@ -72,7 +81,7 @@
    // create the GPS tool on starting QGIS - this is like the browser
    mGpsConnection = new QgsAppGpsConnection( this );
    mGpsSettingsMenu = new QgsAppGpsSettingsMenu( this );
-@@ -1488,7 +1498,7 @@
+@@ -1488,7 +1500,7 @@
    mpGpsDock->setWidget( gpsStack );
    mpGpsDock->setToggleVisibilityAction( mGpsToolBar->showInfoAction() );
    mpGpsDock->hide();
@@ -81,7 +90,7 @@
  
    mLastMapToolMessage = nullptr;
  
-@@ -1718,6 +1728,14 @@
+@@ -1718,6 +1730,14 @@
    // do main window customization - after window state has been restored, before the window is shown
    startProfile( tr( "Update customization on main window" ) );
    QgsCustomization::instance()->updateMainWindow( mToolbarMenu, mPanelMenu );
@@ -96,7 +105,7 @@
    endProfile();
  
    mSplash->showMessage( tr( "Populate saved styles" ), Qt::AlignHCenter | Qt::AlignBottom, splashTextColor );
-@@ -1918,8 +1936,10 @@
+@@ -1918,8 +1938,10 @@
    mOptionWidgetFactories.emplace_back( QgsScopedOptionsWidgetFactory( std::make_unique< QgsRenderingOptionsFactory >() ) );
    mOptionWidgetFactories.emplace_back( QgsScopedOptionsWidgetFactory( std::make_unique< QgsVectorRenderingOptionsFactory >() ) );
    mOptionWidgetFactories.emplace_back( QgsScopedOptionsWidgetFactory( std::make_unique< QgsRasterRenderingOptionsFactory >() ) );
@@ -107,7 +116,7 @@
    mOptionWidgetFactories.emplace_back( QgsScopedOptionsWidgetFactory( std::make_unique< QgsCustomProjectionOptionsFactory >() ) );
    mOptionWidgetFactories.emplace_back( QgsScopedOptionsWidgetFactory( std::make_unique< QgsFontOptionsFactory >() ) );
    mOptionWidgetFactories.emplace_back( QgsScopedOptionsWidgetFactory( std::make_unique< QgsUserProfileOptionsFactory >() ) );
-@@ -2078,6 +2098,7 @@
+@@ -2078,6 +2100,7 @@
  
    delete mpMaptip;
  
@@ -115,7 +124,7 @@
    delete mpGpsWidget;
    mpGpsWidget = nullptr;
  
-@@ -2098,6 +2119,7 @@
+@@ -2098,6 +2121,7 @@
  
    delete mGpsConnection;
    mGpsConnection = nullptr;
@@ -123,7 +132,7 @@
  
    delete mOverviewMapCursor;
  
-@@ -2438,6 +2460,7 @@
+@@ -2438,6 +2462,7 @@
        if ( layer )
          addedLayers << layer;
      }
@@ -131,7 +140,7 @@
      else if ( u.layerType == QLatin1String( "vector-tile" ) )
      {
        QgsTemporaryCursorOverride busyCursor( Qt::WaitCursor );
-@@ -2535,6 +2558,7 @@
+@@ -2535,6 +2560,7 @@
          addedLayers << layer;
        }
      }
@@ -139,7 +148,7 @@
      else if ( u.layerType == QLatin1String( "plugin" ) )
      {
        QgsMapLayer *layer = QgsAppLayerHandling::addPluginLayer( uri, u.name, u.providerKey, addToLegend );
-@@ -2644,7 +2668,7 @@
+@@ -2644,7 +2670,7 @@
          QgsAppLayerHandling::postProcessAddedLayers( addedLayers );
      } );
      connect( mDataSourceManagerDialog, &QgsDataSourceManagerDialog::addMeshLayer, this, &QgisApp::addMeshLayer );
@@ -148,7 +157,7 @@
      connect( mDataSourceManagerDialog, &QgsDataSourceManagerDialog::addPointCloudLayer, this, &QgisApp::addPointCloudLayer );
      connect( mDataSourceManagerDialog, &QgsDataSourceManagerDialog::showStatusMessage, this, &QgisApp::showStatusMessage );
      connect( mDataSourceManagerDialog, &QgsDataSourceManagerDialog::addDatabaseLayers, this, []( const QStringList & layerPathList, const QString & providerKey )
-@@ -2820,8 +2844,10 @@
+@@ -2820,8 +2846,10 @@
    connect( mActionNewReport, &QAction::triggered, this, &QgisApp::newReport );
    connect( mActionShowLayoutManager, &QAction::triggered, this, &QgisApp::showLayoutManager );
    connect( mActionExit, &QAction::triggered, this, &QgisApp::fileExit );
@@ -159,7 +168,7 @@
  
    // Edit Menu Items
  
-@@ -2948,9 +2974,11 @@
+@@ -2948,9 +2976,11 @@
    connect( mActionAddHanaLayer, &QAction::triggered, this, [ = ] { dataSourceManager( QStringLiteral( "hana" ) ); } );
    connect( mActionAddWmsLayer, &QAction::triggered, this, [ = ] { dataSourceManager( QStringLiteral( "wms" ) ); } );
    connect( mActionAddXyzLayer, &QAction::triggered, this, [ = ] { dataSourceManager( QStringLiteral( "xyz" ) ); } );
@@ -171,7 +180,7 @@
    connect( mActionAddWcsLayer, &QAction::triggered, this, [ = ] { dataSourceManager( QStringLiteral( "wcs" ) ); } );
  #ifdef HAVE_SPATIALITE
    connect( mActionAddWfsLayer, &QAction::triggered, this, [ = ] { dataSourceManager( QStringLiteral( "WFS" ) ); } );
-@@ -3461,6 +3489,7 @@
+@@ -3461,6 +3491,7 @@
                        << mSelectionToolBar
                        << mPluginToolBar
                        << mHelpToolBar
@@ -179,7 +188,7 @@
                        << mRasterToolBar
                        << mVectorToolBar
                        << mDatabaseToolBar
-@@ -4065,7 +4094,9 @@
+@@ -4065,7 +4096,9 @@
    for ( QToolBar *toolbar : constToolbars )
    {
      QString className = toolbar->parent()->metaObject()->className();
@@ -190,7 +199,7 @@
      {
        toolbar->setIconSize( iconSize );
      }
-@@ -5010,15 +5041,19 @@
+@@ -5010,15 +5043,19 @@
    return QgsLayerTreeRegistryBridge::InsertionPoint( insertGroup, index );
  }
  
@@ -210,7 +219,7 @@
  
  void QgisApp::autoSelectAddedLayer( QList<QgsMapLayer *> layers )
  {
-@@ -5330,7 +5365,7 @@
+@@ -5330,7 +5367,7 @@
    QgsPluginRegistry::instance()->unloadAll();
  }
  
@@ -219,7 +228,7 @@
  
  void QgisApp::restoreWindowState()
  {
-@@ -5600,10 +5635,12 @@
+@@ -5600,10 +5637,12 @@
    return QgsAppLayerHandling::addMeshLayer( url, baseName, providerKey );
  }
  
@@ -232,7 +241,7 @@
  
  QgsPointCloudLayer *QgisApp::addPointCloudLayer( const QString &url, const QString &baseName, const QString &providerKey )
  {
-@@ -6714,6 +6751,7 @@
+@@ -6714,6 +6753,7 @@
    mProjectLastModified = fullPath.lastModified();
  } // QgisApp::fileSaveAs
  
@@ -240,7 +249,7 @@
  void QgisApp::dxfExport()
  {
    QgsDxfExportDialog d;
-@@ -6781,6 +6819,7 @@
+@@ -6781,6 +6821,7 @@
    QgsDwgImportDialog d;
    d.exec();
  }
@@ -248,7 +257,7 @@
  
  void QgisApp::openTemplate( const QString &fileName )
  {
-@@ -8266,9 +8305,11 @@
+@@ -8266,9 +8307,11 @@
        break;
  
      case Qgis::LayerType::VectorTile:
@@ -260,7 +269,7 @@
        break;
  
      case Qgis::LayerType::PointCloud:
-@@ -9858,8 +9899,10 @@
+@@ -9858,8 +9901,10 @@
    {
      if ( QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( it.value() ) )
        vl->removeSelection();
@@ -271,7 +280,7 @@
    }
  }
  
-@@ -9886,8 +9929,10 @@
+@@ -9886,8 +9931,10 @@
  
      case Qgis::LayerType::VectorTile:
      {
@@ -282,7 +291,7 @@
        break;
      }
  
-@@ -10051,7 +10096,7 @@
+@@ -10051,7 +10098,7 @@
        break;
  
      case Qgis::LayerType::VectorTile:
@@ -291,7 +300,7 @@
        break;
  
      case Qgis::LayerType::Raster:
-@@ -12190,7 +12235,7 @@
+@@ -12190,7 +12237,7 @@
  {
    QgsScopedRuntimeProfile profile( tr( "Loading Python support" ) );
  
@@ -300,7 +309,7 @@
  #if defined(Q_OS_UNIX)
    pythonlibName.prepend( QgsApplication::libraryPath() );
  #endif
-@@ -12403,6 +12448,7 @@
+@@ -12403,6 +12450,7 @@
      sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "Locator" ), QStringLiteral( "mOptionsLocatorSettings" ) );
      sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "Acceleration" ), QStringLiteral( "mOptionsPageAcceleration" ) );
      sOptionsPagesMap.insert( QCoreApplication::translate( "QgsOptionsBase", "Advanced" ), QCoreApplication::translate( "QgsOptionsBase", "Advanced" ) );
@@ -308,7 +317,7 @@
    } );
  
    QMap< QString, QString > pages = sOptionsPagesMap;
-@@ -12499,7 +12545,7 @@
+@@ -12499,7 +12547,7 @@
      mMagnifierWidget->setDefaultFactor( factor );
      mMagnifierWidget->updateMagnification( factor );
  
@@ -317,52 +326,52 @@
    }
  }
  
-@@ -12711,7 +12757,7 @@
+@@ -12711,7 +12759,7 @@
  {
    QgsSettings settings;
    QString reportaBugUrl = settings.value( QStringLiteral( "qgis/reportaBugUrl" ),
 -                                          tr( "https://qgis.org/en/site/getinvolved/development/bugreporting.html" ) ).toString();
-+                                          tr( "https://nextgis.com/support" ) ).toString();
++                                          QString( nextgisDomain() + "/support" ) ).toString();
    openURL( reportaBugUrl, false );
  }
  
-@@ -12719,7 +12765,7 @@
+@@ -12719,7 +12767,7 @@
  {
    QgsSettings settings;
    QString getInvolvedUrl = settings.value( QStringLiteral( "qgis/getInvolved" ),
 -                           tr( "https://qgis.org/en/site/getinvolved/" ) ).toString();
-+                           tr( "https://nextgis.com/redirect/ru/ak45prp" ) ).toString();
++                           QString( nextgisDomain() + "/redirect/ru/ak45prp5" ) ).toString();
    openURL( getInvolvedUrl, false );
  }
  
-@@ -12727,7 +12773,7 @@
+@@ -12727,7 +12775,7 @@
  {
    QgsSettings settings;
    QString donateUrl = settings.value( QStringLiteral( "qgis/donate" ),
 -                                      tr( "https://donate.qgis.org/" ) ).toString();
-+                                      tr( "https://nextgis.com/redirect/ru/ak45prp5" ) ).toString();
++                                      QString( nextgisDomain() + "/redirect/ru/ak45prp5" ) ).toString();
    openURL( donateUrl, false );
  }
  
-@@ -12735,7 +12781,7 @@
+@@ -12735,7 +12783,7 @@
  {
    QgsSettings settings;
    QString supportProvidersUrl = settings.value( QStringLiteral( "qgis/supportProvidersUrl" ),
 -                                tr( "https://qgis.org/en/site/forusers/commercial_support.html" ) ).toString();
-+                                tr( "https://nextgis.com/support" ) ).toString();
++                                QString( nextgisDomain() + "/support" ) ).toString();
    openURL( supportProvidersUrl, false );
  }
  
-@@ -12743,7 +12789,7 @@
+@@ -12743,7 +12791,7 @@
  {
    QgsSettings settings;
    QString  helpQgisHomePageUrl = settings.value( QStringLiteral( "qgis/helpQgisHomePageUrl" ),
 -                                 QStringLiteral( "https://qgis.org" ) ).toString();
-+                                 QStringLiteral( "https://nextgis.com/nextgis-qgis/" ) ).toString();
++                                 QString( nextgisDomain() + "/nextgis-qgis" ) ).toString();
    openURL( helpQgisHomePageUrl, false );
  }
  
-@@ -14592,9 +14638,11 @@
+@@ -14592,9 +14640,11 @@
  
        case Qgis::LayerType::VectorTile:
        {
@@ -374,7 +383,7 @@
          break;
        }
  
-@@ -14726,10 +14774,12 @@
+@@ -14726,10 +14776,12 @@
        }
  
        case Qgis::LayerType::VectorTile:
@@ -387,7 +396,7 @@
  
        case Qgis::LayerType::Raster:
        case Qgis::LayerType::Plugin:
-@@ -14757,9 +14807,11 @@
+@@ -14757,9 +14809,11 @@
        }
        case Qgis::LayerType::VectorTile:
        {
@@ -399,7 +408,7 @@
          break;
        }
  
-@@ -15371,6 +15423,7 @@
+@@ -15371,6 +15425,7 @@
  
      case Qgis::LayerType::VectorTile:
      {
@@ -407,7 +416,7 @@
        QgsVectorTileLayer *vtLayer = qobject_cast< QgsVectorTileLayer * >( layer );
        const bool layerHasSelection = vtLayer->selectedFeatureCount() > 0;
        mActionLocalHistogramStretch->setEnabled( false );
-@@ -15438,6 +15491,7 @@
+@@ -15438,6 +15493,7 @@
        mActionIdentify->setEnabled( true );
        mDigitizingTechniqueManager->enableDigitizingTechniqueActions( false );
        enableMeshEditingTools( false );
@@ -415,7 +424,7 @@
        break;
      }
  
-@@ -16335,6 +16389,7 @@
+@@ -16335,6 +16391,7 @@
  
      case Qgis::LayerType::VectorTile:
      {
@@ -423,7 +432,7 @@
        QgsVectorTileLayerProperties vectorTileLayerPropertiesDialog( qobject_cast<QgsVectorTileLayer *>( mapLayer ), mMapCanvas, visibleMessageBar(), this );
        if ( !page.isEmpty() )
          vectorTileLayerPropertiesDialog.setCurrentPage( page );
-@@ -16348,6 +16403,7 @@
+@@ -16348,6 +16405,7 @@
          mMapStyleWidget->updateCurrentWidgetLayer();
        }
        mMapStyleWidget->blockUpdates( false ); // delete since dialog cannot be reused without updating code

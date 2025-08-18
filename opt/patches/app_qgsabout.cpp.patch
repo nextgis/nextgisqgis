@@ -1,11 +1,19 @@
---- a/src/app/qgsabout.cpp	2025-07-15 20:09:37.507540070 +0300
-+++ b/src/app/qgsabout.cpp	2025-08-12 15:56:11.788648513 +0300
-@@ -274,7 +274,7 @@
+--- a/src/app/qgsabout.cpp	2025-08-23 10:09:42.307789572 +0300
++++ b/src/app/qgsabout.cpp	2025-08-23 10:08:37.121711091 +0300
+@@ -16,6 +16,7 @@
+  ***************************************************************************/
+ 
+ #include "qgsabout.h"
++#include "ngcustomization.h"
+ #include "qgsapplication.h"
+ #include "qgsauthmethodregistry.h"
+ #include "qgsproviderregistry.h"
+@@ -274,7 +275,7 @@
  
  void QgsAbout::btnQgisHome_clicked()
  {
 -  openUrl( QStringLiteral( "https://qgis.org" ) );
-+  openUrl( QStringLiteral( "https://nextgis.com/nextgis-qgis/" ) );
++  openUrl( QString( nextgisDomain() + QStringLiteral( "/nextgis-qgis" ) ) );
  }
  
  void QgsAbout::openUrl( const QUrl &url )

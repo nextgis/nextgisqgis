@@ -1,21 +1,16 @@
 --- a/tests/src/analysis/CMakeLists.txt	2025-07-15 20:09:38.136553505 +0300
-+++ b/tests/src/analysis/CMakeLists.txt	2025-08-06 15:42:09.921728110 +0300
-@@ -20,17 +20,17 @@
- set(TESTS
++++ b/tests/src/analysis/CMakeLists.txt	2025-08-18 15:06:45.863897819 +0300
+@@ -21,7 +21,7 @@
   testqgsgeometrysnapper.cpp
   testqgsinterpolator.cpp
-- testqgsprocessingalgspt1.cpp
+  testqgsprocessingalgspt1.cpp
 - testqgsprocessingalgspt2.cpp
-- testqgsprocessingmodelalgorithm.cpp
-+ # testqgsprocessingalgspt1.cpp
 + # testqgsprocessingalgspt2.cpp
-+ # testqgsprocessingmodelalgorithm.cpp
+  testqgsprocessingmodelalgorithm.cpp
   testqgszonalstatistics.cpp
-- testqgsrastercalculator.cpp
-+ # testqgsrastercalculator.cpp
-  testqgsreclassifyutils.cpp
-- testqgsalignraster.cpp
-+ # testqgsalignraster.cpp
+  testqgsrastercalculator.cpp
+@@ -29,8 +29,8 @@
+  testqgsalignraster.cpp
   testqgsnetworkanalysis.cpp
   testqgsninecellfilters.cpp
 - testqgsmeshcalculator.cpp
