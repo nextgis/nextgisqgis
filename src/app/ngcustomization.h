@@ -16,11 +16,13 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
- 
+
 #ifndef NGCUSTOMIZATION_H
 #define NGCUSTOMIZATION_H
 
 #include "qgisapp.h"
+
+#include <QString>
 
 #ifdef NGSTD_USING
 #include "ngupdater.h"
@@ -49,7 +51,7 @@ protected:
     void checkQgisVersion() override;
     virtual void createToolBars() override;
     virtual void functionProfileNG(void (NGQgisApp:: *fnc)(), NGQgisApp *instance, QString name);
-    
+
 private:
     bool mUpdatesCheckStartByUser;
     void addNextGISAuthentication();
@@ -63,5 +65,7 @@ private slots:
     void updatesSearchStop(bool updatesAvailable);
 	void startUpdate();
 };
+
+QString APP_EXPORT nextgisDomain();
 
 #endif // NGCUSTOMIZATION_H

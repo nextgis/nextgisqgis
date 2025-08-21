@@ -75,6 +75,8 @@
 #include <QWindow>
 #include <QActionGroup>
 
+#include "ngcustomization.h"
+
 #include "qgsscreenhelper.h"
 #include "qgssettingsregistrycore.h"
 #include "qgsnetworkaccessmanager.h"
@@ -12726,7 +12728,7 @@ void QgisApp::reportaBug()
 {
   QgsSettings settings;
   QString reportaBugUrl = settings.value( QStringLiteral( "qgis/reportaBugUrl" ),
-                                          tr( "https://nextgis.com/support" ) ).toString();
+                                          QString( nextgisDomain() + "/support" ) ).toString();
   openURL( reportaBugUrl, false );
 }
 
@@ -12734,7 +12736,7 @@ void QgisApp::getInvolved()
 {
   QgsSettings settings;
   QString getInvolvedUrl = settings.value( QStringLiteral( "qgis/getInvolved" ),
-                           tr( "https://nextgis.com/redirect/ru/ak45prp" ) ).toString();
+                           QString( nextgisDomain() + "/redirect/ru/ak45prp5" ) ).toString();
   openURL( getInvolvedUrl, false );
 }
 
@@ -12742,7 +12744,7 @@ void QgisApp::donate()
 {
   QgsSettings settings;
   QString donateUrl = settings.value( QStringLiteral( "qgis/donate" ),
-                                      tr( "https://nextgis.com/redirect/ru/ak45prp5" ) ).toString();
+                                      QString( nextgisDomain() + "/redirect/ru/ak45prp5" ) ).toString();
   openURL( donateUrl, false );
 }
 
@@ -12750,7 +12752,7 @@ void QgisApp::supportProviders()
 {
   QgsSettings settings;
   QString supportProvidersUrl = settings.value( QStringLiteral( "qgis/supportProvidersUrl" ),
-                                tr( "https://nextgis.com/support" ) ).toString();
+                                QString( nextgisDomain() + "/support" ) ).toString();
   openURL( supportProvidersUrl, false );
 }
 
@@ -12758,7 +12760,7 @@ void QgisApp::helpQgisHomePage()
 {
   QgsSettings settings;
   QString  helpQgisHomePageUrl = settings.value( QStringLiteral( "qgis/helpQgisHomePageUrl" ),
-                                 QStringLiteral( "https://nextgis.com/nextgis-qgis/" ) ).toString();
+                                 QString( nextgisDomain() + "/nextgis-qgis" ) ).toString();
   openURL( helpQgisHomePageUrl, false );
 }
 
