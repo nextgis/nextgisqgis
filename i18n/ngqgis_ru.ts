@@ -113,6 +113,16 @@
         <source>Exit</source>
         <translation>Выход</translation>
     </message>
+    <message>
+        <location filename="../src/app/options/ngauthoptions.cpp" line="128"/>
+        <source>Authorization server is available.</source>
+        <translation type="unfinished">Сервер авторизации доступен.</translation>
+    </message>
+    <message>
+        <location filename="../src/app/options/ngauthoptions.cpp" line="129"/>
+        <source>Authorization server is not available!</source>
+        <translation>Сервер авторизации недоступен!</translation>
+    </message>
 </context>
 <context>
     <name>NGQgisApp</name>
