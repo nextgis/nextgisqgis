@@ -80,6 +80,69 @@ def escape_xml(text: Optional[str]) -> str:
     return html.escape(text, quote=True).replace("&#x27;", "&apos;")
 
 
+def get_numerusform_texts(
+    translation_elem: Optional[ET.Element],
+) -> List[str]:
+    """
+    Return numerusform texts from a translation element.
+
+    :param translation_elem: Translation element or None
+    :return: List of texts inside ``<numerusform>``
+    """
+    if translation_elem is None:
+        return []
+    return [num.text or "" for num in translation_elem.findall("numerusform")]
+
+
+def format_attrs(attrs: Dict[str, str]) -> str:
+    """
+    Build attribute string preserving original order.
+
+    :param attrs: Attributes dictionary
+    :return: String like ``' key1="v1" key2="v2"'``
+    """
+    parts: List[str] = []
+    for key, val in attrs.items():
+        parts.append(f" {key}=\"{val}\"")
+    return "".join(parts)
+
+
+def build_translation_lines(
+    translation_elem: Optional[ET.Element],
+    entry: Optional[TranslationEntry],
+    indent: str = "        ",
+) -> List[str]:
+    """
+    Build translation block lines, preserving ``<numerusform>`` from target.
+
+    If target has plural forms, keep them and its attributes. Otherwise use
+    entry's text/attrs, falling back to target's text/attrs when absent.
+
+    :param translation_elem: Target ``<translation>`` element
+    :param entry: Matched source entry, if any
+    :param indent: Indentation to use for the block
+    :return: Lines representing the translation block
+    """
+    plural_texts = get_numerusform_texts(translation_elem)
+    if plural_texts:
+        attrs = translation_elem.attrib.copy() if translation_elem is not None else {}
+        lines: List[str] = [f"{indent}<translation{format_attrs(attrs)}>"]
+        for t in plural_texts:
+            lines.append(f"{indent}    <numerusform>{escape_xml(t)}</numerusform>")
+        lines.append(f"{indent}</translation>")
+        return lines
+
+    if entry is not None:
+        attrs = entry.translation_attrs
+        text = entry.translation
+    else:
+        attrs = translation_elem.attrib.copy() if translation_elem is not None else {}
+        text = translation_elem.text if translation_elem is not None else ""
+
+    open_tag = f"{indent}<translation{format_attrs(attrs)}>"
+    return [f"{open_tag}{escape_xml(text)}</translation>"]
+
+
 def write_ts_file(
     target_path: Path, translations: Dict[str, List[TranslationEntry]]
 ) -> None:
@@ -130,8 +193,17 @@ def write_ts_file(
         lines.append(context_open)
         lines.append(f"    <name>{escape_xml(context_name)}</name>")
         entries = translations.get(context_name, [])
-        # Build lookup for fast access
-        entry_lookup = {(e.source, e.filename): e for e in entries}
+        # Build lookups:
+        # 1) exact: case-sensitive, ignoring '&'
+        # 2) folded: lowercased, ignoring '&'
+        exact_lookup: Dict[tuple, List[TranslationEntry]] = {}
+        folded_lookup: Dict[tuple, List[TranslationEntry]] = {}
+        for entry in entries:
+            key_exact = (normalize_source_exact(entry.source), entry.filename)
+            key_folded = (normalize_source_folded(entry.source), entry.filename)
+            exact_lookup.setdefault(key_exact, []).append(entry)
+            folded_lookup.setdefault(key_folded, []).append(entry)
+
         for message in context.findall("message"):
             msg_attrs = message.attrib.copy()
             msg_open = "    <message"
@@ -169,25 +241,25 @@ def write_ts_file(
             # Translator comment
             translatorcomment = message.findtext("translatorcomment")
             if translatorcomment:
-                lines.append(f"        <translatorcomment>{escape_xml(translatorcomment)}</translatorcomment>")
+                lines.append(
+                    f"        <translatorcomment>{escape_xml(translatorcomment)}</translatorcomment>"
+                )
             # Translation
             translation_elem = message.find("translation")
             filename = None
             location = message.find("location")
             if location is not None:
                 filename = location.get("filename")
-            entry = entry_lookup.get((source_text, filename))
-            if entry is not None:
-                translation_attrs = entry.translation_attrs
-                translation_text = entry.translation
-            else:
-                translation_attrs = translation_elem.attrib.copy() if translation_elem is not None else {}
-                translation_text = translation_elem.text if translation_elem is not None else ""
-            translation_open = "        <translation"
-            for k, v in translation_attrs.items():
-                translation_open += f" {k}=\"{v}\""
-            translation_open += ">"
-            lines.append(f"{translation_open}{escape_xml(translation_text)}</translation>")
+            key_exact = (normalize_source_exact(source_text), filename)
+            key_folded = (normalize_source_folded(source_text), filename)
+
+            candidates = [*exact_lookup.get(key_exact, []), *folded_lookup.get(key_folded, [])]
+            entry = candidates[0] if candidates else None
+
+            # Build translation lines (preserve numerusform if present)
+            for tline in build_translation_lines(translation_elem, entry):
+                lines.append(tline)
+
             # Userdata
             userdata = message.findtext("userdata")
             if userdata:
@@ -211,6 +283,32 @@ def update_target(
     :param translations: Dictionary mapping context name to list of TranslationEntry
     """
     write_ts_file(target_path, translations)
+
+
+def normalize_source_exact(text: Optional[str]) -> str:
+    """
+    Normalize source text for exact (case-sensitive) matching.
+
+    Remove ampersands only; keep original case.
+
+    :param text: Source text or None
+    :return: Normalized text
+    """
+    if not text:
+        return ""
+    return text.replace("&amp;", "")
+
+
+def normalize_source_folded(text: Optional[str]) -> str:
+    """
+    Normalize source text for folded (case-insensitive) matching.
+
+    Remove ampersands and convert to lower case.
+
+    :param text: Source text or None
+    :return: Normalized text
+    """
+    return normalize_source_exact(text).lower()
 
 
 def main() -> None:

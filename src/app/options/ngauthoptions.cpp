@@ -40,7 +40,7 @@ void NGAuthOptions::onUserInfoUpdated()
 
 void NGAuthOptions::ngInitControls()
 {
-#ifdef NGSTD_USING   
+#ifdef NGSTD_USING
     if (NGAccess::instance().isEnterprise()) {
         authGroupBox->hide();
     }
@@ -79,7 +79,7 @@ void NGAuthOptions::ngInitControls()
 #endif // NGLIB_VERSION_NUMBER > 1100
 
     sendCrashes->setChecked(mSettings->value("nextgis/send_crashes", "0").toBool());
-#endif // NGSTD_USING  
+#endif // NGSTD_USING
 }
 
 void NGAuthOptions::updateAuthControls(int type)
@@ -125,8 +125,8 @@ void NGAuthOptions::init(QgsSettings *settings)
         const bool isEndpointAvailable = NGAccess::instance().isEndpointAvailable();
 
         availableEndpointLabel->setText(isEndpointAvailable
-                                        ? "Authorization server is ready."
-                                        : "Authorization server is not available!");
+                                        ? tr("Authorization server is available.")
+                                        : tr("Authorization server is not available!"));
     });
 
     signinButton->installEventFilter(NGAccess::instance().getSignInEventFilter());
@@ -141,7 +141,7 @@ void NGAuthOptions::on_signinButton_clicked()
     mSettings->setValue("nextgis/user_info_endpoint", userInfoEndpointEdit->text());
     mSettings->setValue("nextgis/auth_type", authTypeSelector->currentIndex());
     mSettings->setValue("nextgis/use_code_challenge", codeChallengeCheckBox->isChecked());
-#ifdef NGSTD_USING  
+#ifdef NGSTD_USING
     if (NGAccess::instance().isUserAuthorized()) {
         NGAccess::instance().exit();
     }
@@ -172,7 +172,7 @@ void NGAuthOptions::on_defaultsButton_clicked()
 
 void NGAuthOptions::on_authTypeSelector_currentIndexChanged(int index)
 {
-#ifdef NGSTD_USING   
+#ifdef NGSTD_USING
     updateAuthControls(index);
-#endif // NGSTD_USING      
+#endif // NGSTD_USING
 }

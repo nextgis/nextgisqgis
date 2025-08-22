@@ -1230,7 +1230,7 @@ Open the results dialog to check it.</source>
     </message>
     <message>
         <source>Assign a specified nodata value to output bands</source>
-        <translation>Присвоить указанное значение NODATA для выходных каналов</translation>
+        <translation>Назначить указанное значение «нет данных» для выходных каналов</translation>
     </message>
     <message>
         <source>Additional creation options</source>
@@ -1281,7 +1281,7 @@ Open the results dialog to check it.</source>
     </message>
     <message>
         <source>Assign a specified nodata value to output bands</source>
-        <translation>Присвоить указанное значение NODATA для выходных каналов</translation>
+        <translation>Назначить указанное значение «нет данных» для выходных каналов</translation>
     </message>
     <message>
         <source>Create an output alpha band</source>
@@ -19573,7 +19573,7 @@ If desired, a maximum distance to use when aligning points can be set, to avoid 
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmrasterlogicalop.cpp" line="49"/>
         <source>Treat nodata values as false</source>
-        <translation>Обрабатывать значения nodata как false</translation>
+        <translation>Считать значения NoData ложными</translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmrasterlogicalop.cpp" line="69"/>
@@ -19640,11 +19640,11 @@ If desired, a maximum distance to use when aligning points can be set, to avoid 
 The reference layer parameter specifies an existing raster layer to use as a reference when creating the output raster. The output raster will have the same extent, CRS, and pixel dimensions as this layer.
 
 By default, a nodata pixel in ANY of the input layers will result in a nodata pixel in the output raster. If the &apos;Treat nodata values as false&apos; option is checked, then nodata inputs will be treated the same as a 0 input value.</source>
-        <translation>Алгоритм применяет логическую операцию ИЛИ к набору входных растров. Если какой-либо из входных растров имеет ненулевое значение для пикселя, этот пиксель будет установлен в 1 в выходном растре. Если все входные растры имеют значение 0 для пиксела, он будет установлен в 0 в выходном растре.
+        <translation>Этот алгоритм вычисляет логическое ИЛИ для набора входных растров. Если любой из входных растров имеет ненулевое значение для пикселя, то для этого пикселя будет установлено значение 1 в выходном растре. Если все входные растры имеют нулевые значения для пикселя, то в выходном растре для него будет установлено значение 0.
 
-Параметр опорный слой указывает существующий растровый слой, который будет использоваться в качестве эталона для выходного растра. Выходной растр будет иметь тот же охват, систему координат и размерность в пикселах, что и этот слой.
+Параметр опорного слоя указывает существующий растровый слой, который будет использоваться в качестве опорного при создании выходного растра. Выходной растр будет иметь тот же охват, СК и размеры пикселей, что и этот слой.
 
-По умолчанию значение NODATA в любом из входных слоев приведет к значению NODATA в выходном растре. Если установлен флажок &quot;обрабатывать значения NODATA как false&quot;, входные значения NODATA будут обрабатываться как 0.</translation>
+По умолчанию значение пикселя «нет данных» в ЛЮБОМ из входных слоев приведёт к значению пикселя NoData в выходном растре. Если установлен флажок «Считать значения NoData ложными», то входные значения NoData будут интерпретироваться так же, как и входное значение 0.</translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmrasterlogicalop.cpp" line="285"/>
@@ -19663,11 +19663,11 @@ By default, a nodata pixel in ANY of the input layers will result in a nodata pi
 The reference layer parameter specifies an existing raster layer to use as a reference when creating the output raster. The output raster will have the same extent, CRS, and pixel dimensions as this layer.
 
 By default, a nodata pixel in ANY of the input layers will result in a nodata pixel in the output raster. If the &apos;Treat nodata values as false&apos; option is checked, then nodata inputs will be treated the same as a 0 input value.</source>
-        <translation>Алгоритм применяет логическую операцию И к набору входных растров. Если пиксел во всех входных растрах имеет ненулевое значение, этот пиксель будет установлен в 1 в выходном растре. Если пиксел в любом из входных растров имеют значение 0, его значение в выходном растре также будет 0.
+        <translation>Этот алгоритм вычисляет логическое И для набора входных растров. Если все входные растры имеют ненулевое значение для пикселя, то для этого пикселя будет установлено значение 1 в выходном растре. Если любой из входных растров имеет нулевые значения для пикселя, для него будет установлено значение 0 в выходном растре.
 
-Параметр опорный слой указывает существующий растровый слой, который будет использоваться в качестве образца для выходного растра. Выходной растр будет иметь тот же охват, систему координат и размерность в пикселах, что и этот слой.
+Параметр опорного слоя указывает существующий растровый слой для использования в качестве ссылки при создании выходного растра. Выходной растр будет иметь тот же охват, СК и размеры пикселей, что и этот слой.
 
-По умолчанию значение NODATA в любом из входных слоев приведет к значению NODATA в выходном растре. Если установлен флажок &quot;обрабатывать значения NODATA как false&quot;, входные значения NODATA будут обрабатываться как 0.</translation>
+По умолчанию значение пикселя NoData в ЛЮБОМ из входных слоёв приведёт к значению пикселя NoData в выходном растре. Если установлен флажок «Считать значения NoData ложными», то входные значения NoData будут интерпретироваться так же, как и входное значение 0.</translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmreclassifybylayer.cpp" line="170"/>
@@ -23740,7 +23740,7 @@ For help with QGIS expression functions, see the inbuilt help for specific funct
         <location filename="../src/analysis/processing/qgsalgorithmdrape.cpp" line="48"/>
         <location filename="../src/analysis/processing/qgsalgorithmdrape.cpp" line="51"/>
         <source>Value for nodata or non-intersecting vertices</source>
-        <translation>Значение для NODATA или непокрытых вершин</translation>
+        <translation>Значение для отсутствующих данных или непересекающихся вершин</translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmdrape.cpp" line="55"/>
@@ -23877,7 +23877,7 @@ For help with QGIS expression functions, see the inbuilt help for specific funct
         <location filename="../src/analysis/processing/qgsalgorithmrasterlogicalop.cpp" line="68"/>
         <location filename="../src/analysis/processing/qgsalgorithmrasterzonalstats.cpp" line="75"/>
         <source>NODATA pixel count</source>
-        <translation>Пикселей со значением &apos;нет данных&apos;</translation>
+        <translation>Пиксели со значением NoData</translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmrasterlayeruniquevalues.cpp" line="72"/>
@@ -26640,12 +26640,12 @@ Extracted label information include: position (served as point geometries), the 
     <message>
         <location filename="../src/core/proj/qgscoordinatetransform.cpp" line="872"/>
         <source>forward transform</source>
-        <translation>прямая трансформация</translation>
+        <translation>Прямая трансформация</translation>
     </message>
     <message>
         <location filename="../src/core/proj/qgscoordinatetransform.cpp" line="872"/>
         <source>inverse transform</source>
-        <translation>обратная трансформация</translation>
+        <translation>Обратная трансформация</translation>
     </message>
     <message>
         <location filename="../src/core/proj/qgscoordinatetransform.cpp" line="874"/>
@@ -30957,9 +30957,9 @@ If input geometries are lines or polygons, the clustering is based on the centro
         <source>This algorithm converts a raster layer to a vector layer, by creating polygon features for each individual pixel&apos;s extent in the raster layer.
 
 Any nodata pixels are skipped in the output.</source>
-        <translation>Алгоритм преобразует растровый слой в векторный, создавая для каждого пиксела отдельный прямоугольник размером в его охват.
+        <translation>Этот алгоритм преобразует растровый слой в векторный, создавая полигональные объекты для охвата каждого отдельного пикселя в растровом слое.
 
-Пикселы со значением NODATA пропускаются.</translation>
+Все пиксели NoData пропускаются в выходных данных.</translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmvectorize.cpp" line="165"/>
@@ -30986,9 +30986,9 @@ Any nodata pixels are skipped in the output.</source>
         <source>This algorithm converts a raster layer to a vector layer, by creating point features for each individual pixel&apos;s center in the raster layer.
 
 Any nodata pixels are skipped in the output.</source>
-        <translation>Алгоритм преобразует растровый слой в векторный, создавая в центре каждого пиксела отдельный точечный объект.
+        <translation>Этот алгоритм преобразует растровый слой в векторный, создавая точечные объекты для центра каждого отдельного пикселя в растровом слое.
 
-Пикселы со значением NODATA пропускаются.</translation>
+Все пиксели NoData пропускаются в выходных данных.</translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmvectorize.cpp" line="224"/>
@@ -36799,7 +36799,7 @@ By default the algorithm preserves original the NODATA value, but there is an op
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmrescaleraster.cpp" line="71"/>
         <source>New NODATA value</source>
-        <translation>Новое значение NODATA</translation>
+        <translation>Новое значение NoData</translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmrescaleraster.cpp" line="72"/>
@@ -39997,12 +39997,12 @@ The output layer will have a point geometry reflecting the geocoded location as 
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmrasterlayerproperties.cpp" line="65"/>
         <source>Band has a nodata value set</source>
-        <translation>Канал содержит значения «нет данных»</translation>
+        <translation>Канал имеет множество значений  NoData</translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmrasterlayerproperties.cpp" line="66"/>
         <source>Band nodata value</source>
-        <translation>Значение «нет данных» канала</translation>
+        <translation>Значение канала NoData</translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmrasterlayerproperties.cpp" line="67"/>
@@ -40014,9 +40014,9 @@ The output layer will have a point geometry reflecting the geocoded location as 
         <source>This algorithm returns basic properties of the given raster layer, including the extent, size in pixels and dimensions of pixels (in map units).
 
 If an optional band number is specified then the nodata value for the selected band will also be returned.</source>
-        <translation>Алгоритм возвращает основные свойства заданного растра, включая охват, размер в пикселах и размеры пикселов в единицах карты.
+        <translation>Этот алгоритм возвращает основные свойства заданного растрового слоя, включая охват, размер в пикселях и размеры пикселей (в единицах карты).
 
-Если задана опция номер канала, то также будет возвращено значение «нет данных» для указанного канал.</translation>
+Если указан необязательный номер канала, то также будет возвращено значение NoData для выбранного канала.</translation>
     </message>
     <message>
         <location filename="../src/analysis/processing/qgsalgorithmroundness.cpp" line="30"/>
@@ -52759,7 +52759,7 @@ Operation can NOT be undone!</source>
     <message>
         <location filename="../src/gui/auth/qgsautheditorwidgets.cpp" line="156"/>
         <source>Clear cached authentication configurations</source>
-        <translation>Очистить кэшированную конфигурацию проверки подлинности</translation>
+        <translation>Очистить кэшированные настройки аутентификации</translation>
     </message>
     <message>
         <location filename="../src/gui/auth/qgsautheditorwidgets.cpp" line="157"/>
@@ -52774,12 +52774,12 @@ Operation can NOT be undone!</source>
     <message>
         <location filename="../src/gui/auth/qgsautheditorwidgets.cpp" line="160"/>
         <source>Clear network authentication access cache</source>
-        <translation>Очистить кэш аутентификации сетевого доступа</translation>
+        <translation>Очистить кэш доступа при сетевой аутентификации</translation>
     </message>
     <message>
         <location filename="../src/gui/auth/qgsautheditorwidgets.cpp" line="161"/>
         <source>Automatically clear network authentication access cache on SSL errors</source>
-        <translation>Автоматически очищать кэш аутентификации сетевого доступа при возникновении ошибок SSL</translation>
+        <translation>Автоматически очищать кэш доступа сетевой аутентификации при возникновении ошибок SSL</translation>
     </message>
     <message>
         <location filename="../src/gui/auth/qgsautheditorwidgets.cpp" line="165"/>
@@ -52799,7 +52799,7 @@ Operation can NOT be undone!</source>
     <message>
         <location filename="../src/gui/auth/qgsautheditorwidgets.cpp" line="171"/>
         <source>Enable password helper debug log</source>
-        <translation>Включить журнал отладки помощника по паролям</translation>
+        <translation>Включить журнал отладки менеджера паролей</translation>
     </message>
     <message>
         <location filename="../src/gui/auth/qgsautheditorwidgets.cpp" line="196"/>
@@ -121504,7 +121504,7 @@ Write accesses will be denied.</source>
     <message>
         <location filename="../src/providers/postgres/raster/qgspostgresrasterprovider.cpp" line="1139"/>
         <source>Cannot convert nodata value &apos;%1&apos; to double</source>
-        <translation>Не удается преобразовать значение NoData &apos;%1&apos; в вещественное значение</translation>
+        <translation>Не удалось преобразовать значение NoData &apos;%1&apos; в значение с двойной точностью</translation>
     </message>
     <message>
         <location filename="../src/providers/postgres/raster/qgspostgresrasterprovider.cpp" line="1178"/>
@@ -121568,7 +121568,7 @@ Please consider adding raster constraints with PostGIS function AddRasterConstra
     <message>
         <location filename="../src/providers/postgres/raster/qgspostgresrasterprovider.cpp" line="1425"/>
         <source>Cannot convert nodata value &apos;%1&apos; to double, default to: %2</source>
-        <translation>Не удается преобразовать NoData &apos;%1&apos; в значение двойной точности, по умолчанию в %2</translation>
+        <translation>Не удалось преобразовать значение NoData &apos;%1&apos; в значение с двойной точностью, по умолчанию: %2</translation>
     </message>
     <message>
         <location filename="../src/providers/postgres/raster/qgspostgresrasterprovider.cpp" line="1439"/>
@@ -153348,7 +153348,7 @@ Check the processing framework log to look for errors.</source>
     </message>
     <message>
         <source>Fill nodata</source>
-        <translation>Заполнить значения &quot;Нет данных&quot;</translation>
+        <translation>Заполнить значения NoData</translation>
     </message>
     <message>
         <source>Raster analysis</source>
@@ -156605,7 +156605,7 @@ Supported output formats for this option are:
     </message>
     <message>
         <source>Assign a specified nodata value to output bands</source>
-        <translation>Присвоить указанное значение NODATA выходным каналам</translation>
+        <translation>Назначить указанное значение «нет данных» (NoData) для выходных каналов</translation>
     </message>
     <message>
         <source>Output data type</source>
@@ -157353,7 +157353,7 @@ The algorithm also makes it possible to reorder the bands for the newly-created 
     </message>
     <message>
         <source>Assign a specified nodata value to output bands</source>
-        <translation>Присвоить указанное значение NODATA выходным каналам</translation>
+        <translation>Назначить указанное значение «нет данных» для выходных каналов</translation>
     </message>
     <message>
         <source>Copy all subdatasets of this file to individual output files</source>

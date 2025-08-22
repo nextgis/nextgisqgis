@@ -42,7 +42,7 @@ NGQgisApp::NGQgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLa
              const QString &activeProfile, QWidget *parent, Qt::WindowFlags fl )
              : QgisApp( splash, restorePlugins, skipBadLayers, skipVersionCheck, rootProfileLocation, activeProfile, parent, fl)
 {
-  
+
 #ifdef NGSTD_USING
     mNGUpdater = new NGQgisUpdater(this);
     connect(mNGUpdater, SIGNAL(checkUpdatesStarted()), this, SLOT(updatesSearchStart()));
@@ -126,7 +126,7 @@ void NGQgisApp::updatesSearchStop(bool updatesAvailable)
 
   QgsMessageBarItem* item = new QgsMessageBarItem(banner);
   this->messageBar()->pushItem(item);
-  
+
 
   if (mUpdatesCheckStartByUser)
   {
@@ -168,7 +168,7 @@ void NGQgisApp::createToolBars()
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     mNGAccountToolBar->addWidget(spacer);
 
-#ifdef NGSTD_USING 
+#ifdef NGSTD_USING
 #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
     QString endPointStr = settings.value("nextgis/endpoint",
         NGAccess::instance().endPoint()).toString();
@@ -244,3 +244,19 @@ NGCPLHTTPFetchOverrider::~NGCPLHTTPFetchOverrider()
     CPLHTTPSetFetchCallback( nullptr, nullptr );
 }
 
+QString nextgisDomain()
+{
+    auto systemLocale = QLocale::system().name().left(2);
+    auto userLocale = QgsApplication::settingsLocaleUserLocale->valueWithDefaultOverride( QStringLiteral( "en" ) ).left( 2 );
+    QString locale = QgsApplication::settingsLocaleOverrideFlag->value() ? userLocale : systemLocale;
+
+    for ( const QString &lang : { "be", "kk", "ky", "ru", "uk" } )
+    {
+        if ( locale == lang )
+        {
+            return QLatin1String("https://nextgis.ru");
+        }
+    }
+
+    return QLatin1String("https://nextgis.com");
+}
