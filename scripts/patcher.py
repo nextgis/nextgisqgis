@@ -492,6 +492,9 @@ def scan_for_new_patches(
             ):
                 continue
 
+            if changed_file.parent.name == "i18n":
+                continue
+
             patch_file = patch_dir / _patch_file_name(changed_file)
             if patch_file.exists():
                 mark_semi_success(f"Already patched: {changed_file}")
