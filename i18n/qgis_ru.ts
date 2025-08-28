@@ -14365,7 +14365,7 @@ The distance is specified in layer units, and the bearing in degrees clockwise f
         <location filename="../src/core/qgsvariantutils.cpp" line="58"/>
         <location filename="../src/gui/layout/qgslayoutguiutils.cpp" line="117"/>
         <source>Map</source>
-        <translation>Словарь</translation>
+        <translation>карту</translation>
     </message>
     <message>
         <location filename="../src/core/layout/qgslayoutitemregistry.cpp" line="68"/>
@@ -17265,7 +17265,7 @@ stderr: %4</source>
     <message>
         <location filename="../src/core/providers/ogr/qgsogrproviderutils.cpp" line="296"/>
         <source>ESRI Shapefiles</source>
-        <translation>ESRI Shape-файлы </translation>
+        <translation>ESRI Shape-файлы&#xa0;</translation>
     </message>
     <message>
         <location filename="../src/core/providers/ogr/qgsogrproviderutils.cpp" line="309"/>
@@ -122601,7 +122601,7 @@ SQL: %3</translation>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="2530"/>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="2627"/>
         <source>%1 options selected</source>
-        <translation>выделено параметров: %1 </translation>
+        <translation>выделено параметров: %1&#xa0;</translation>
     </message>
     <message>
         <location filename="../src/gui/processing/qgsprocessingwidgetwrapperimpl.cpp" line="2650"/>
