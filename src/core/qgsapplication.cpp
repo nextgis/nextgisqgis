@@ -3055,5 +3055,5 @@ QgsApplication::ApplicationMembers *QgsApplication::members()
 
 QString QgsApplication::fontsPath()
 {
-    return pkgDataPath() + QDir::separator() + QStringLiteral( "fonts" );
+    return pkgDataPath() + QStringLiteral( "/resources/fonts" );
 }
