@@ -605,6 +605,13 @@ set(TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/testdata")
 
 add_subdirectory(src)
 
+if(IS_MULTI_CONFIG_GENERATOR AND NOT PREPARE_ONLY)
+    file(CREATE_LINK
+        "${QGIS_OUTPUT_DIRECTORY}/${QGIS_PLUGIN_SUBDIR}/${CMAKE_BUILD_TYPE}"
+        "${QGIS_OUTPUT_DIRECTORY}/${QGIS_PLUGIN_SUBDIR}/bin"
+        SYMBOLIC)
+endif()
+
 if(WITH_DOCS)
     add_subdirectory(doc)
 endif()
