@@ -27,7 +27,7 @@ function(check_version major minor patch qgis_major qgis_minor qgis_patch qgis_n
     # QGIS release version
     set(VERSION_MAJOR ${CURRENT_YEAR})
     set(VERSION_MINOR ${CURRENT_MONTH})
-    set(VERSION_PATCH 0)
+    set(VERSION_PATCH 1)
 
     # QGIS_PORT is the version of QGIS this release is bound to
 
@@ -157,4 +157,3 @@ function(get_compiler_version ver)
     # set(COMPILER MSVC-19.29-64bit)
     set(${ver} ${COMPILER} PARENT_SCOPE)
 endfunction()
-

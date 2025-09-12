@@ -14365,7 +14365,7 @@ The distance is specified in layer units, and the bearing in degrees clockwise f
         <location filename="../src/core/qgsvariantutils.cpp" line="58"/>
         <location filename="../src/gui/layout/qgslayoutguiutils.cpp" line="117"/>
         <source>Map</source>
-        <translation>Словарь</translation>
+        <translation>карту</translation>
     </message>
     <message>
         <location filename="../src/core/layout/qgslayoutitemregistry.cpp" line="68"/>
