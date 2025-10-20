@@ -31,6 +31,14 @@ FIND_PATH(PROJ_INCLUDE_DIR proj_api.h
           /usr/local/include
     DOC "Path to PROJ.4 library include directory")
 
+IF(NOT PROJ_INCLUDE_DIR)
+  FIND_PATH(PROJ_INCLUDE_DIR proj.h
+    PATHS ${PROJ_OSGEO4W_HOME}/include
+          /usr/include
+          /usr/local/include
+    DOC "Path to PROJ.4 library include directory (fallback to proj.h)")
+ENDIF()
+
 SET(PROJ_NAMES ${PROJ_NAMES} proj proj_i)
 FIND_LIBRARY(PROJ_LIBRARY
     NAMES ${PROJ_NAMES}
