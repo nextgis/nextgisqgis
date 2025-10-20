@@ -4,7 +4,7 @@
 # On success, the macro sets the following variables:
 # PROJ_FOUND       = if the library found
 # PROJ_LIBRARY     = full path to the library
-# PROJ_INCLUDE_DIR = where to find the library headers 
+# PROJ_INCLUDE_DIR = where to find the library headers
 # also defined, but not for general use are
 # PROJ_LIBRARY, where to find the PROJ.4 library.
 #
@@ -18,21 +18,25 @@
 
 # Try to use OSGeo4W installation
 IF(WIN32)
-    SET(PROJ_OSGEO4W_HOME "C:/OSGeo4W") 
+    SET(PROJ_OSGEO4W_HOME "C:/OSGeo4W")
 
     IF($ENV{OSGEO4W_HOME})
-        SET(PROJ_OSGEO4W_HOME "$ENV{OSGEO4W_HOME}") 
+        SET(PROJ_OSGEO4W_HOME "$ENV{OSGEO4W_HOME}")
     ENDIF()
 ENDIF(WIN32)
 
 FIND_PATH(PROJ_INCLUDE_DIR proj_api.h
     PATHS ${PROJ_OSGEO4W_HOME}/include
+          /usr/include
+          /usr/local/include
     DOC "Path to PROJ.4 library include directory")
 
 SET(PROJ_NAMES ${PROJ_NAMES} proj proj_i)
 FIND_LIBRARY(PROJ_LIBRARY
     NAMES ${PROJ_NAMES}
     PATHS ${PROJ_OSGEO4W_HOME}/lib
+          /usr/lib
+          /usr/local/lib
     DOC "Path to PROJ.4 library file")
 
 if(PROJ_INCLUDE_DIR)
@@ -53,15 +57,15 @@ if(PROJ_INCLUDE_DIR)
         string(SUBSTRING ${PJ_VERSION} 2 1 PROJ_VERSION_PATCH)
         unset(PROJ_API_H_CONTENTS)
     endif()
-      
-    set(PROJ_VERSION_STRING "${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR}.${PROJ_VERSION_PATCH}")   
-endif ()    
-         
+
+    set(PROJ_VERSION_STRING "${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR}.${PROJ_VERSION_PATCH}")
+endif ()
+
 # Handle the QUIETLY and REQUIRED arguments and set SPATIALINDEX_FOUND to TRUE
 # if all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(PROJ 
-                                  REQUIRED_VARS PROJ_LIBRARY PROJ_INCLUDE_DIR 
+find_package_handle_standard_args(PROJ
+                                  REQUIRED_VARS PROJ_LIBRARY PROJ_INCLUDE_DIR
                                   VERSION_VAR PROJ_VERSION_STRING)
 
 IF(PROJ_FOUND)
