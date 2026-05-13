@@ -77,13 +77,12 @@ class QTimer;
 
 /**
  * \ingroup gui
- * \brief Widget for importing an SSL server certificate exception into the authentication database
+ * \brief Widget for importing an SSL server certificate exception into the authentication database.
  */
 class GUI_EXPORT QgsAuthSslImportDialog : public QDialog, private Ui::QgsAuthSslTestDialog
 {
     Q_OBJECT
   public:
-
     /**
      * Construct dialog for importing certificates
      * \param parent

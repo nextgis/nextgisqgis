@@ -1,34 +1,16 @@
-################################################################################
-# Copyright (C) 2020-2022, NextGIS <info@nextgis.com>
-#
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the "Software"),
-# to deal in the Software without restriction, including without limitation
-# the rights to use, copy, modify, merge, publish, distribute, sublicense,
-# and/or sell copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
-################################################################################
-
+#############################################################
 # sources
-if (PREPARE_ONLY)
-    # add_flex_files_prefix(raster raster/qgsrastercalclexer.ll)
-    add_flex_files(raster/qgsrastercalclexer.ll)
-    add_bison_files_prefix(raster_ raster/qgsrastercalcparser.yy)
-else(PREPARE_ONLY)
+
+BISON_TARGET(QgsRasterCalcParser raster/qgsrastercalcparser.yy ${CMAKE_CURRENT_BINARY_DIR}/qgsrastercalcparser.cpp COMPILE_FLAGS "-p raster_")
+FLEX_TARGET(QgsRasterCalcLexer raster/qgsrastercalclexer.ll ${CMAKE_CURRENT_BINARY_DIR}/qgsrastercalclexer.cpp)
+ADD_FLEX_BISON_DEPENDENCY(QgsRasterCalcLexer QgsRasterCalcParser)
 
 set(QGIS_ANALYSIS_SRCS
   qgsanalysis.cpp
+
+
+  ${FLEX_QgsRasterCalcLexer_OUTPUTS}
+  ${BISON_QgsRasterCalcParser_OUTPUTS}
 
   georeferencing/qgsgcpgeometrytransformer.cpp
   georeferencing/qgsgcppoint.cpp
@@ -58,6 +40,8 @@ set(QGIS_ANALYSIS_SRCS
   processing/qgsalgorithmaddxyfields.cpp
   processing/qgsalgorithmaffinetransform.cpp
   processing/qgsalgorithmaggregate.cpp
+  processing/qgsalgorithmalignrasters.cpp
+  processing/qgsalgorithmalignsingleraster.cpp
   processing/qgsalgorithmangletonearest.cpp
   processing/qgsalgorithmannotations.cpp
   processing/qgsalgorithmapplylayerstyle.cpp
@@ -65,22 +49,66 @@ set(QGIS_ANALYSIS_SRCS
   processing/qgsalgorithmaspect.cpp
   processing/qgsalgorithmassignprojection.cpp
   processing/qgsalgorithmattributeindex.cpp
+  processing/qgsalgorithmb3dmtogltf.cpp
+  processing/qgsalgorithmbasicstatistics.cpp
   processing/qgsalgorithmbatchgeocode.cpp
   processing/qgsalgorithmbatchnominatimgeocode.cpp
   processing/qgsalgorithmboundary.cpp
   processing/qgsalgorithmboundingbox.cpp
   processing/qgsalgorithmbuffer.cpp
+  processing/qgsalgorithmcalculateexpression.cpp
   processing/qgsalgorithmcalculateoverlaps.cpp
   processing/qgsalgorithmcategorizeusingstyle.cpp
   processing/qgsalgorithmcellstatistics.cpp
   processing/qgsalgorithmcentroid.cpp
+  processing/qgsalgorithmcheckgeometrysegmentlength.cpp
+  processing/qgsalgorithmcheckgeometryangle.cpp
+  processing/qgsalgorithmcheckvalidity.cpp
+  processing/qgsalgorithmfixgeometryduplicatenodes.cpp
+  processing/qgsalgorithmfixgeometrymultipart.cpp
+  processing/qgsalgorithmfixgeometryoverlap.cpp
+  processing/qgsalgorithmfixgeometrydeletefeatures.cpp
+  processing/qgsalgorithmfixgeometryangle.cpp
+  processing/qgsalgorithmfixgeometryselfintersection.cpp
+  processing/qgsalgorithmfixgeometrygap.cpp
+  processing/qgsalgorithmcheckgeometryhole.cpp
+  processing/qgsalgorithmfixgeometryhole.cpp
+  processing/qgsalgorithmcheckgeometrymissingvertex.cpp
+  processing/qgsalgorithmfixgeometrymissingvertex.cpp
+  processing/qgsalgorithmcheckgeometryarea.cpp
+  processing/qgsalgorithmfixgeometryarea.cpp
+  processing/qgsalgorithmcheckgeometrylineintersection.cpp
+  processing/qgsalgorithmcheckgeometrylinelayerintersection.cpp
+  processing/qgsalgorithmcheckgeometrypointcoveredbyline.cpp
+  processing/qgsalgorithmcheckgeometrypointinpolygon.cpp
+  processing/qgsalgorithmcheckgeometrygap.cpp
+  processing/qgsalgorithmcheckgeometrysliverpolygon.cpp
+  processing/qgsalgorithmcheckgeometryselfcontact.cpp
+  processing/qgsalgorithmcheckgeometryoverlap.cpp
+  processing/qgsalgorithmcheckgeometryfollowboundaries.cpp
+  processing/qgsalgorithmcheckgeometryduplicatenodes.cpp
+  processing/qgsalgorithmcheckgeometrydangle.cpp
+  processing/qgsalgorithmcheckgeometryduplicate.cpp
+  processing/qgsalgorithmcheckgeometryselfintersection.cpp
+  processing/qgsalgorithmcheckgeometrymultipart.cpp
+  processing/qgsalgorithmcheckgeometrydegeneratepolygon.cpp
+  processing/qgsalgorithmcheckgeometrycontained.cpp
+  processing/qgsalgorithmclimb.cpp
   processing/qgsalgorithmclip.cpp
+  processing/qgsalgorithmconcavehull.cpp
+  processing/qgsalgorithmconcavehullbyfeature.cpp
   processing/qgsalgorithmconditionalbranch.cpp
   processing/qgsalgorithmconstantraster.cpp
   processing/qgsalgorithmconverttocurves.cpp
+  processing/qgsalgorithmconvertgeometrytype.cpp
   processing/qgsalgorithmconvexhull.cpp
+  processing/qgsalgorithmcoveragesimplify.cpp
+  processing/qgsalgorithmcoverageunion.cpp
+  processing/qgsalgorithmcoveragevalidate.cpp
   processing/qgsalgorithmcreatedirectory.cpp
-  # processing/qgsalgorithmdbscanclustering.cpp
+  processing/qgsalgorithmdbscanclustering.cpp
+  processing/qgsalgorithmdefineprojection.cpp
+  processing/qgsalgorithmdelaunaytriangulation.cpp
   processing/qgsalgorithmdeleteduplicategeometries.cpp
   processing/qgsalgorithmdensifygeometriesbycount.cpp
   processing/qgsalgorithmdensifygeometriesbyinterval.cpp
@@ -88,17 +116,18 @@ set(QGIS_ANALYSIS_SRCS
   processing/qgsalgorithmdifference.cpp
   processing/qgsalgorithmdissolve.cpp
   processing/qgsalgorithmdistancewithin.cpp
-  # processing/qgsalgorithmdownloadvectortiles.cpp
+  processing/qgsalgorithmdownloadvectortiles.cpp
   processing/qgsalgorithmdrape.cpp
   processing/qgsalgorithmdropfields.cpp
   processing/qgsalgorithmdropgeometry.cpp
   processing/qgsalgorithmdropmzvalues.cpp
-  # processing/qgsalgorithmdxfexport.cpp
+  processing/qgsalgorithmdxfexport.cpp
   processing/qgsalgorithmexecutepostgisquery.cpp
   processing/qgsalgorithmexecutespatialitequery.cpp
   processing/qgsalgorithmexecutespatialitequeryregistered.cpp
   processing/qgsalgorithmexplode.cpp
   processing/qgsalgorithmexplodehstore.cpp
+  processing/qgsalgorithmexportgeometryattributes.cpp
   processing/qgsalgorithmexportlayersinformation.cpp
   processing/qgsalgorithmexportmesh.cpp
   processing/qgsalgorithmexporttopostgresql.cpp
@@ -119,15 +148,19 @@ set(QGIS_ANALYSIS_SRCS
   processing/qgsalgorithmfieldcalculator.cpp
   processing/qgsalgorithmfiledownloader.cpp
   processing/qgsalgorithmfillnodata.cpp
+  processing/qgsalgorithmfillsinkswangliu.cpp
   processing/qgsalgorithmfilter.cpp
   processing/qgsalgorithmfilterbygeometry.cpp
   processing/qgsalgorithmfiltervertices.cpp
+  processing/qgsalgorithmfindprojection.cpp
   processing/qgsalgorithmfixgeometries.cpp
   processing/qgsalgorithmflattenrelationships.cpp
   processing/qgsalgorithmforcerhr.cpp
   processing/qgsalgorithmfuzzifyraster.cpp
+  processing/qgsalgorithmgenerateelevationprofile.cpp
   processing/qgsalgorithmgeometrybyexpression.cpp
-  # processing/qgsalgorithmgpsbabeltools.cpp
+  processing/qgsalgorithmgltftovector.cpp
+  processing/qgsalgorithmgpsbabeltools.cpp
   processing/qgsalgorithmgrid.cpp
   processing/qgsalgorithmhillshade.cpp
   processing/qgsalgorithmimportphotos.cpp
@@ -135,8 +168,10 @@ set(QGIS_ANALYSIS_SRCS
   processing/qgsalgorithmintersection.cpp
   processing/qgsalgorithmjoinbyattribute.cpp
   processing/qgsalgorithmjoinbylocation.cpp
+  processing/qgsalgorithmjoinbylocationsummary.cpp
   processing/qgsalgorithmjoinbynearest.cpp
   processing/qgsalgorithmjoinwithlines.cpp
+  processing/qgsalgorithmkeepnbiggestparts.cpp
   processing/qgsalgorithmkmeansclustering.cpp
   processing/qgsalgorithmlayoutatlastoimage.cpp
   processing/qgsalgorithmlayoutatlastopdf.cpp
@@ -148,6 +183,7 @@ set(QGIS_ANALYSIS_SRCS
   processing/qgsalgorithmloadlayer.cpp
   processing/qgsalgorithmmeancoordinates.cpp
   processing/qgsalgorithmmergelines.cpp
+  processing/qgsalgorithmmeshsurfacetopolygon.cpp
   processing/qgsalgorithmmergevector.cpp
   processing/qgsalgorithmminimumenclosingcircle.cpp
   processing/qgsalgorithmmultidifference.cpp
@@ -180,11 +216,15 @@ set(QGIS_ANALYSIS_SRCS
   processing/qgsalgorithmrandompointsinpolygons.cpp
   processing/qgsalgorithmrandompointsonlines.cpp
   processing/qgsalgorithmrandomraster.cpp
+  processing/qgsalgorithmrastercalculator.cpp
+  processing/qgsalgorithmrasterdtmslopebasedfilter.cpp
   processing/qgsalgorithmrasterfrequencybycomparisonoperator.cpp
   processing/qgsalgorithmrasterlayerproperties.cpp
   processing/qgsalgorithmrasterlayeruniquevalues.cpp
   processing/qgsalgorithmrasterlogicalop.cpp
+  processing/qgsalgorithmrasterminmax.cpp
   processing/qgsalgorithmrasterize.cpp
+  processing/qgsalgorithmrasterrank.cpp
   processing/qgsalgorithmrastersampling.cpp
   processing/qgsalgorithmrasterstackposition.cpp
   processing/qgsalgorithmrasterstatistics.cpp
@@ -233,7 +273,7 @@ set(QGIS_ANALYSIS_SRCS
   processing/qgsalgorithmsplitlinesbylength.cpp
   processing/qgsalgorithmsplitvectorlayer.cpp
   processing/qgsalgorithmsplitwithlines.cpp
-  # processing/qgsalgorithmstdbscanclustering.cpp
+  processing/qgsalgorithmstdbscanclustering.cpp
   processing/qgsalgorithmstringconcatenation.cpp
   processing/qgsalgorithmswapxy.cpp
   processing/qgsalgorithmsubdivide.cpp
@@ -247,13 +287,20 @@ set(QGIS_ANALYSIS_SRCS
   processing/qgsalgorithmtruncatetable.cpp
   processing/qgsalgorithmunion.cpp
   processing/qgsalgorithmuniquevalueindex.cpp
+  processing/qgsalgorithmurlopener.cpp
+  processing/qgsalgorithmhttprequest.cpp
   processing/qgsalgorithmvectorize.cpp
+  processing/qgsalgorithmvirtualrastercalculator.cpp
+  processing/qgsalgorithmvoronoipolygons.cpp
   processing/qgsalgorithmwedgebuffers.cpp
-  # processing/qgsalgorithmwritevectortiles.cpp
+  processing/qgsalgorithmwritevectortiles.cpp
+  processing/qgsalgorithmxyztiles.cpp
   processing/qgsalgorithmzonalhistogram.cpp
+  processing/qgsalgorithmzonalminmaxpoint.cpp
   processing/qgsalgorithmzonalstatistics.cpp
   processing/qgsalgorithmzonalstatisticsfeaturebased.cpp
   processing/qgsbookmarkalgorithms.cpp
+  processing/qgsmetadataalgorithms.cpp
   processing/qgsprojectstylealgorithms.cpp
   processing/qgsstylealgorithms.cpp
 
@@ -327,110 +374,109 @@ set(QGIS_ANALYSIS_SRCS
   vector/geometry_checker/qgssinglegeometrycheck.cpp
   vector/geometry_checker/qgsvectordataproviderfeaturepool.cpp
   vector/geometry_checker/qgsvectorlayerfeaturepool.cpp
-  
-  ${CMAKE_CURRENT_SOURCE_DIR}/flex_qgsrastercalclexer.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/qgsrastercalcparser.cpp
 )
 
-SET(QGIS_ANALYSIS_HDRS
-qgsanalysis.h
+set(QGIS_ANALYSIS_HDRS
+  qgsanalysis.h
 
-georeferencing/qgsgcpgeometrytransformer.h
-georeferencing/qgsgcppoint.h
-georeferencing/qgsgcptransformer.h
-georeferencing/qgsvectorwarper.h
+  georeferencing/qgsgcpgeometrytransformer.h
+  georeferencing/qgsgcppoint.h
+  georeferencing/qgsgcptransformer.h
+  georeferencing/qgsvectorwarper.h
 
-interpolation/Bezier3D.h
-interpolation/CloughTocherInterpolator.h
-interpolation/qgsdualedgetriangulation.h
-interpolation/HalfEdge.h
-interpolation/LinTriangleInterpolator.h
-interpolation/MathUtils.h
-interpolation/NormVecDecorator.h
-interpolation/ParametricLine.h
-interpolation/TriDecorator.h
-interpolation/TriangleInterpolator.h
-interpolation/qgstriangulation.h
-interpolation/Vector3D.h
-interpolation/qgsgridfilewriter.h
-interpolation/qgsidwinterpolator.h
-interpolation/qgsinterpolator.h
-interpolation/qgstininterpolator.h
+  interpolation/Bezier3D.h
+  interpolation/CloughTocherInterpolator.h
+  interpolation/qgsdualedgetriangulation.h
+  interpolation/HalfEdge.h
+  interpolation/LinTriangleInterpolator.h
+  interpolation/MathUtils.h
+  interpolation/NormVecDecorator.h
+  interpolation/ParametricLine.h
+  interpolation/TriDecorator.h
+  interpolation/TriangleInterpolator.h
+  interpolation/qgstriangulation.h
+  interpolation/Vector3D.h
+  interpolation/qgsgridfilewriter.h
+  interpolation/qgsidwinterpolator.h
+  interpolation/qgsinterpolator.h
+  interpolation/qgstininterpolator.h
 
-mesh/qgsmeshcontours.h
-mesh/qgsmeshtriangulation.h
+  mesh/qgsmeshcontours.h
+  mesh/qgsmeshtriangulation.h
 
-network/qgsgraph.h
-network/qgsgraphanalyzer.h
-network/qgsgraphbuilder.h
-network/qgsgraphbuilderinterface.h
-network/qgsgraphdirector.h
-network/qgsnetworkdistancestrategy.h
-network/qgsnetworkspeedstrategy.h
-network/qgsnetworkstrategy.h
-network/qgsvectorlayerdirector.h
+  network/qgsgraph.h
+  network/qgsgraphanalyzer.h
+  network/qgsgraphbuilder.h
+  network/qgsgraphbuilderinterface.h
+  network/qgsgraphdirector.h
+  network/qgsnetworkdistancestrategy.h
+  network/qgsnetworkspeedstrategy.h
+  network/qgsnetworkstrategy.h
+  network/qgsvectorlayerdirector.h
 
-# processing/qgsalgorithmbatchgeocode.h
-# processing/qgsalgorithmbatchnominatimgeocode.h
-processing/qgsalgorithmfiledownloader.h
-processing/qgsalgorithmimportphotos.h
-processing/qgsnativealgorithms.h
-processing/qgsprojectstylealgorithms.h
-processing/qgsreclassifyutils.h
+  processing/qgsalgorithmbatchgeocode.h
+  processing/qgsalgorithmbatchnominatimgeocode.h
+  processing/qgsalgorithmfiledownloader.h
+  processing/qgsalgorithmimportphotos.h
+  processing/qgsnativealgorithms.h
+  processing/qgsprojectstylealgorithms.h
+  processing/qgsreclassifyutils.h
+  processing/qgsalgorithmurlopener.h
+  processing/qgsalgorithmhttprequest.h
 
-raster/qgsalignraster.h
-raster/qgsaspectfilter.h
-raster/qgsderivativefilter.h
-raster/qgshillshadefilter.h
-raster/qgskde.h
-raster/qgsninecellfilter.h
-raster/qgsrastercalcnode.h
-raster/qgsrastercalculator.h
-raster/qgsrastermatrix.h
-raster/qgsrelief.h
-raster/qgsruggednessfilter.h
-raster/qgsslopefilter.h
-raster/qgstotalcurvaturefilter.h
+  raster/qgsalignraster.h
+  raster/qgsaspectfilter.h
+  raster/qgsderivativefilter.h
+  raster/qgshillshadefilter.h
+  raster/qgskde.h
+  raster/qgsninecellfilter.h
+  raster/qgsrastercalcnode.h
+  raster/qgsrastercalculator.h
+  raster/qgsrastermatrix.h
+  raster/qgsrelief.h
+  raster/qgsruggednessfilter.h
+  raster/qgsslopefilter.h
+  raster/qgstotalcurvaturefilter.h
 
-vector/geometry_checker/qgsfeaturepool.h
-vector/geometry_checker/qgsgeometryanglecheck.h
-vector/geometry_checker/qgsgeometryareacheck.h
-vector/geometry_checker/qgsgeometrycheck.h
-vector/geometry_checker/qgsgeometrycheckresolutionmethod.h
-vector/geometry_checker/qgsgeometrycheckcontext.h
-vector/geometry_checker/qgsgeometrychecker.h
-vector/geometry_checker/qgsgeometrycheckerror.h
-vector/geometry_checker/qgsgeometrycheckerutils.h
-vector/geometry_checker/qgsgeometrycheckfactory.h
-vector/geometry_checker/qgsgeometrycheckregistry.h
-vector/geometry_checker/qgsgeometrycontainedcheck.h
-vector/geometry_checker/qgsgeometrydanglecheck.h
-vector/geometry_checker/qgsgeometrydegeneratepolygoncheck.h
-vector/geometry_checker/qgsgeometryduplicatecheck.h
-vector/geometry_checker/qgsgeometryduplicatenodescheck.h
-vector/geometry_checker/qgsgeometryfollowboundariescheck.h
-vector/geometry_checker/qgsgeometrygapcheck.h
-vector/geometry_checker/qgsgeometryholecheck.h
-vector/geometry_checker/qgsgeometryisvalidcheck.h
-vector/geometry_checker/qgsgeometrylineintersectioncheck.h
-vector/geometry_checker/qgsgeometrylinelayerintersectioncheck.h
-vector/geometry_checker/qgsgeometrymissingvertexcheck.h
-vector/geometry_checker/qgsgeometrymultipartcheck.h
-vector/geometry_checker/qgsgeometryoverlapcheck.h
-vector/geometry_checker/qgsgeometrypointcoveredbylinecheck.h
-vector/geometry_checker/qgsgeometrypointinpolygoncheck.h
-vector/geometry_checker/qgsgeometrysegmentlengthcheck.h
-vector/geometry_checker/qgsgeometryselfcontactcheck.h
-vector/geometry_checker/qgsgeometryselfintersectioncheck.h
-vector/geometry_checker/qgsgeometrysliverpolygoncheck.h
-vector/geometry_checker/qgsgeometrytypecheck.h
-vector/geometry_checker/qgssinglegeometrycheck.h
-vector/geometry_checker/qgsvectordataproviderfeaturepool.h
-vector/geometry_checker/qgsvectorlayerfeaturepool.h
+  vector/geometry_checker/qgsfeaturepool.h
+  vector/geometry_checker/qgsgeometryanglecheck.h
+  vector/geometry_checker/qgsgeometryareacheck.h
+  vector/geometry_checker/qgsgeometrycheck.h
+  vector/geometry_checker/qgsgeometrycheckresolutionmethod.h
+  vector/geometry_checker/qgsgeometrycheckcontext.h
+  vector/geometry_checker/qgsgeometrychecker.h
+  vector/geometry_checker/qgsgeometrycheckerror.h
+  vector/geometry_checker/qgsgeometrycheckerutils.h
+  vector/geometry_checker/qgsgeometrycheckfactory.h
+  vector/geometry_checker/qgsgeometrycheckregistry.h
+  vector/geometry_checker/qgsgeometrycontainedcheck.h
+  vector/geometry_checker/qgsgeometrydanglecheck.h
+  vector/geometry_checker/qgsgeometrydegeneratepolygoncheck.h
+  vector/geometry_checker/qgsgeometryduplicatecheck.h
+  vector/geometry_checker/qgsgeometryduplicatenodescheck.h
+  vector/geometry_checker/qgsgeometryfollowboundariescheck.h
+  vector/geometry_checker/qgsgeometrygapcheck.h
+  vector/geometry_checker/qgsgeometryholecheck.h
+  vector/geometry_checker/qgsgeometryisvalidcheck.h
+  vector/geometry_checker/qgsgeometrylineintersectioncheck.h
+  vector/geometry_checker/qgsgeometrylinelayerintersectioncheck.h
+  vector/geometry_checker/qgsgeometrymissingvertexcheck.h
+  vector/geometry_checker/qgsgeometrymultipartcheck.h
+  vector/geometry_checker/qgsgeometryoverlapcheck.h
+  vector/geometry_checker/qgsgeometrypointcoveredbylinecheck.h
+  vector/geometry_checker/qgsgeometrypointinpolygoncheck.h
+  vector/geometry_checker/qgsgeometrysegmentlengthcheck.h
+  vector/geometry_checker/qgsgeometryselfcontactcheck.h
+  vector/geometry_checker/qgsgeometryselfintersectioncheck.h
+  vector/geometry_checker/qgsgeometrysliverpolygoncheck.h
+  vector/geometry_checker/qgsgeometrytypecheck.h
+  vector/geometry_checker/qgssinglegeometrycheck.h
+  vector/geometry_checker/qgsvectordataproviderfeaturepool.h
+  vector/geometry_checker/qgsvectorlayerfeaturepool.h
 
-vector/qgsgeometrysnapper.h
-vector/qgsgeometrysnappersinglesource.h
-vector/qgszonalstatistics.h
+  vector/qgsgeometrysnapper.h
+  vector/qgsgeometrysnappersinglesource.h
+  vector/qgszonalstatistics.h
 )
 
 if (WITH_PDAL AND PDAL_2_5_OR_HIGHER)
@@ -469,22 +515,23 @@ if (WITH_PDAL AND PDAL_2_5_OR_HIGHER)
   include_directories(
     ${CMAKE_SOURCE_DIR}/external/untwine/api
   )
+
+  IF(MSVC)
+    set_source_files_properties(
+      ${CMAKE_SOURCE_DIR}/external/untwine/api/QgisUntwine.cpp
+      PROPERTIES COMPILE_FLAGS "/DUNICODE"
+    )
+  endif()
 endif()
 
-include_directories(SYSTEM ${SPATIALITE_INCLUDE_DIR})
 include_directories(SYSTEM ${SPATIALINDEX_INCLUDE_DIR})
-include_directories(SYSTEM ${SQLITE3_INCLUDE_DIR})
 include_directories(BEFORE raster)
 include_directories(BEFORE mesh)
 
-if(HAVE_GSL)
-  include_directories(SYSTEM ${GSL_INCLUDE_DIR})
-endif()
-
 if(NOT MSVC)
   set_source_files_properties(
-    qgsrastercalcparser.cpp
-    # qgsmeshcalcparser.cpp
+    ${BISON_QgsRasterCalcParser_OUTPUTS}
+    ${FLEX_QgsRasterCalcLexer_OUTPUTS}
     PROPERTIES COMPILE_FLAGS "-w"
   )
 else()
@@ -492,9 +539,9 @@ else()
     # 4127 expression is constant
     # 4702 unreachable code
     set_source_files_properties(
-      qgsrastercalcparser.cpp
-    #   qgsmeshcalcparser.cpp
-      PROPERTIES COMPILE_FLAGS "-wd4127 -wd4702"
+      ${BISON_QgsRasterCalcParser_OUTPUTS}
+      ${FLEX_QgsRasterCalcLexer_OUTPUTS}
+      PROPERTIES COMPILE_FLAGS "-wd4127 -wd4702 /W0"
     )
   endif()
 endif()
@@ -515,17 +562,28 @@ if(HAVE_OPENCL)
 endif()
 
 
+
 #############################################################
 # qgis_analysis library
-set(LIB_NAME ${NG_PREFIX}qgis_analysis)
-set(TARGETS ${TARGETS} ${LIB_NAME} PARENT_SCOPE)
-    
-add_library(${LIB_NAME} SHARED ${QGIS_ANALYSIS_SRCS} ${QGIS_ANALYSIS_HDRS})
+
+add_library(qgis_analysis ${LIBRARY_TYPE} ${QGIS_ANALYSIS_SRCS} ${QGIS_ANALYSIS_HDRS})
+
+if(DEFINED NG_PREFIX AND NOT "${NG_PREFIX}" STREQUAL "")
+  add_library(${NG_PREFIX}qgis_analysis ALIAS qgis_analysis)
+endif()
+
+if (USE_PRECOMPILED_HEADERS)
+  target_precompile_headers(qgis_analysis PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_SOURCE_DIR}/src/core/qgis.h>)
+endif()
+
+if(DEFINED ENABLE_UNITY_BUILDS)
+  set_target_properties(qgis_analysis PROPERTIES UNITY_BUILD ${ENABLE_UNITY_BUILDS})
+endif()
 
 # require c++17
-target_compile_features(${LIB_NAME} PRIVATE cxx_std_17)
+target_compile_features(qgis_analysis PRIVATE cxx_std_17)
 
-target_include_directories(${LIB_NAME} PUBLIC
+target_include_directories(qgis_analysis PUBLIC
   ${CMAKE_SOURCE_DIR}/src/analysis
   ${CMAKE_SOURCE_DIR}/src/analysis/georeferencing
   ${CMAKE_SOURCE_DIR}/src/analysis/interpolation
@@ -535,84 +593,105 @@ target_include_directories(${LIB_NAME} PUBLIC
   ${CMAKE_SOURCE_DIR}/src/analysis/raster
   ${CMAKE_SOURCE_DIR}/src/analysis/vector/
   ${CMAKE_SOURCE_DIR}/src/analysis/vector/geometry_checker
-
+  ${CMAKE_SOURCE_DIR}/external/tinygltf
   ${CMAKE_BINARY_DIR}/src/analysis
-
-  if (WITH_PDAL AND NOT PDAL_2_5_OR_HIGHER)
-     ${CMAKE_SOURCE_DIR}/src/analysis/processing/pdal
-  endif()
+  ${CMAKE_SOURCE_DIR}/src/analysis/processing/pdal
 )
 
-generate_export_header(
-    ${LIB_NAME}
-    BASE_NAME ANALYSIS
-    EXPORT_FILE_NAME qgis_analysis.h
+
+GENERATE_EXPORT_HEADER(
+   qgis_analysis
+   BASE_NAME ANALYSIS
+   EXPORT_FILE_NAME qgis_analysis.h
 )
 
 set(QGIS_ANALYSIS_HDRS ${QGIS_ANALYSIS_HDRS} ${CMAKE_CURRENT_BINARY_DIR}/qgis_analysis.h)
 
-if(OSX_FRAMEWORK)
-    set_target_properties(${LIB_NAME} PROPERTIES
-        FRAMEWORK TRUE
-        FRAMEWORK_VERSION ${FRAMEWORK_VERSION}
-        MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${QGIS_VERSION}
-        MACOSX_FRAMEWORK_BUNDLE_VERSION ${QGIS_VERSION}
-        MACOSX_FRAMEWORK_IDENTIFIER "org.qgis.qgis${FRAMEWORK_VERSION}_analysis"
-        XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
-        PUBLIC_HEADER "${QGIS_ANALYSIS_HDRS}"
-        LINK_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}"
+if(NOT DEFINED QGIS_INCLUDE_DIR)
+  if(DEFINED INSTALL_INC_DIR)
+    set(QGIS_INCLUDE_DIR ${INSTALL_INC_DIR})
+  else()
+    set(QGIS_INCLUDE_DIR include)
+  endif()
+endif()
+
+if(NOT APPLE OR NOT QGIS_MACAPP_FRAMEWORK)
+  install(FILES ${QGIS_ANALYSIS_HDRS} DESTINATION ${QGIS_INCLUDE_DIR})
+else()
+  set_target_properties(qgis_analysis PROPERTIES
+    # no moc headers, messes up PROPERTIES syntax
+    CLEAN_DIRECT_OUTPUT 1
+    FRAMEWORK 1
+    FRAMEWORK_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}"
+    MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/mac/framework.info.plist.in"
+    MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${COMPLETE_VERSION}
+    MACOSX_FRAMEWORK_IDENTIFIER org.qgis.qgis3_analysis
+    BUILD_WITH_INSTALL_RPATH TRUE
+    PUBLIC_HEADER "${QGIS_ANALYSIS_HDRS}"
+    LINK_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}"
+  )
+  # generated export header does not get copied with PUBLIC_HEADER files
+  add_custom_command(TARGET qgis_analysis
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy qgis_analysis.h
+            "${QGIS_OUTPUT_DIRECTORY}/${QGIS_LIB_SUBDIR}/qgis_analysis.framework/Headers"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS qgis_analysis.h
+  )
+endif()
+
+#generate unversioned libs for android
+if (NOT ANDROID)
+  set_target_properties(qgis_analysis PROPERTIES
+    VERSION ${COMPLETE_VERSION}
+    SOVERSION ${COMPLETE_VERSION}
     )
 endif()
 
-set_target_properties(${LIB_NAME} PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-
-#generate unversioned libs for android
-set_target_properties(${LIB_NAME} PROPERTIES
-    VERSION ${QGIS_VERSION}
-    SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR}
-)
-
-target_link_libraries(${LIB_NAME}
-  ${NG_PREFIX}qgis_core
-  ${QT_VERSION_BASE}::PrintSupport
-)
+target_link_libraries(
+  qgis_analysis
+  qgis_core
+  )
 
 if(HAVE_GSL)
-  target_link_libraries(${LIB_NAME} ${GSL_LIBRARIES})
+  if(TARGET GSL::gsl)
+    target_link_libraries(qgis_analysis GSL::gsl)
+  else()
+    target_link_libraries(qgis_analysis ${GSL_LIBRARIES})
+  endif()
 endif()
 
 if(HAVE_OPENCL)
-    target_link_libraries(${LIB_NAME} ${OpenCL_LIBRARIES})
+    target_link_libraries(qgis_analysis ${OpenCL_LIBRARIES})
 endif()
 
-target_compile_definitions(${LIB_NAME} PRIVATE "-DQT_NO_FOREACH")
+if (WITH_DRACO)
+  target_link_libraries(qgis_analysis ${DRACO_LIBRARY})
+endif()
+
+target_compile_definitions(qgis_analysis PRIVATE "-DQT_NO_FOREACH")
+
+# clang-tidy
+if(CLANG_TIDY_EXE)
+  set_target_properties(
+    qgis_analysis PROPERTIES
+    CXX_CLANG_TIDY "${DO_CLANG_TIDY}"
+  )
+endif()
 
 # install
-if(OSX_FRAMEWORK)
-    add_custom_command(TARGET ${LIB_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E create_symlink ../../Applications/${QGIS_APP_NAME}.app/Contents/Frameworks/${LIB_NAME}.framework ${PROJECT_BINARY_DIR}/symlinks/${LIB_NAME}.framework
-        VERBATIM
-    )
+
+install(TARGETS qgis_analysis
+  RUNTIME DESTINATION ${QGIS_BIN_DIR}
+  LIBRARY DESTINATION ${QGIS_LIB_DIR}
+  ARCHIVE DESTINATION ${QGIS_LIB_DIR}
+  FRAMEWORK DESTINATION ${QGIS_FW_SUBDIR}
+  PUBLIC_HEADER DESTINATION ${QGIS_INCLUDE_DIR})
+
+# Mac dev frameworks
+
+if (APPLE AND QGIS_MACAPP_INSTALL_DEV)
+  install(TARGETS qgis_analysis FRAMEWORK DESTINATION ${QGIS_MACAPP_DEV_PREFIX})
+  install(CODE "execute_process(COMMAND install_name_tool -id \"${QGIS_MACAPP_DEV_PREFIX}/qgis_analysis.framework/Versions/${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}/qgis_analysis\" \"$ENV{DESTDIR}${QGIS_MACAPP_DEV_PREFIX}/qgis_analysis.framework/qgis_analysis\")")
+  install(CODE "execute_process(COMMAND install_name_tool -change \"${CMAKE_INSTALL_NAME_DIR}/qgis_core.framework/Versions/${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}/qgis_core\" \"${QGIS_MACAPP_DEV_PREFIX}/qgis_core.framework/Versions/${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}/qgis_core\" \"$ENV{DESTDIR}${QGIS_MACAPP_DEV_PREFIX}/qgis_analysis.framework/qgis_analysis\")")
 endif()
-
-
-if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
-    install(TARGETS ${LIB_NAME}
-        RUNTIME DESTINATION ${INSTALL_BIN_DIR} COMPONENT libraries
-        LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT libraries
-        ARCHIVE DESTINATION ${INSTALL_LIB_DIR} COMPONENT libraries
-        FRAMEWORK DESTINATION ${INSTALL_LIB_DIR}
-        PUBLIC_HEADER DESTINATION ${INSTALL_INC_DIR} COMPONENT headers
-        INCLUDES DESTINATION ${INSTALL_INC_DIR} COMPONENT headers
-    )
-
-    if(OSX_FRAMEWORK)
-        install(FILES ${PROJECT_BINARY_DIR}/symlinks/${LIB_NAME}.framework DESTINATION ${INSTALL_LIB_DIR2})
-    endif()
-endif()
-
-if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
-    install(FILES ${QGIS_CORE_HDRS} DESTINATION ${INSTALL_INC_DIR})
-endif()
-
-endif(PREPARE_ONLY)

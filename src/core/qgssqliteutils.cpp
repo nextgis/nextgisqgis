@@ -208,15 +208,18 @@ long long QgsSqliteUtils::nextSequenceValue( sqlite3 *connection, const QString 
 {
   long long result { -1 };
   sqlite3_database_unique_ptr dsPtr;
+
+  // this is MESSY -- this function does not have ownership of connection, so this is a HACK:
+  // we intentionally .release() at the end of the function accordingly -- be careful if adding additional return paths!!
   dsPtr.reset( connection );
+
   const QString quotedTableName { QgsSqliteUtils::quotedValue( tableName ) };
 
-  int resultCode;
+  int resultCode = 0;
   sqlite3_statement_unique_ptr stmt { dsPtr.prepare( QStringLiteral( "SELECT seq FROM sqlite_sequence WHERE name = %1" )
                                       .arg( quotedTableName ), resultCode )};
-  if ( resultCode == SQLITE_OK )
+  if ( resultCode == SQLITE_OK && stmt.step() )
   {
-    stmt.step();
     result = sqlite3_column_int64( stmt.get(), 0 );
     // Try to create the sequence in case this is an empty layer
     if ( sqlite3_column_count( stmt.get() ) == 0 )
@@ -243,7 +246,8 @@ long long QgsSqliteUtils::nextSequenceValue( sqlite3 *connection, const QString 
     }
   }
 
-  dsPtr.release();
+  // INTENTIONAL HACK -- see above
+  ( void )dsPtr.release();
   return result;
 }
 
@@ -269,19 +273,19 @@ QString QgsSqliteUtils::quotedValue( const QVariant &value )
   if ( QgsVariantUtils::isNull( value ) )
     return QStringLiteral( "NULL" );
 
-  switch ( value.type() )
+  switch ( value.userType() )
   {
-    case QVariant::Int:
-    case QVariant::LongLong:
-    case QVariant::Double:
+    case QMetaType::Type::Int:
+    case QMetaType::Type::LongLong:
+    case QMetaType::Type::Double:
       return value.toString();
 
-    case QVariant::Bool:
+    case QMetaType::Type::Bool:
       //SQLite has no boolean literals
       return value.toBool() ? QStringLiteral( "1" ) : QStringLiteral( "0" );
 
     default:
-    case QVariant::String:
+    case QMetaType::Type::QString:
       QString v = value.toString();
       // https://www.sqlite.org/lang_expr.html :
       // """A string constant is formed by enclosing the string in single quotes (').

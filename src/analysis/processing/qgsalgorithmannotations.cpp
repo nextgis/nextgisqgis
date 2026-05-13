@@ -45,15 +45,19 @@ QString QgsTransferAnnotationsFromMainAlgorithm::groupId() const
   return QStringLiteral( "cartography" );
 }
 
-QgsProcessingAlgorithm::Flags QgsTransferAnnotationsFromMainAlgorithm::flags() const
+Qgis::ProcessingAlgorithmFlags QgsTransferAnnotationsFromMainAlgorithm::flags() const
 {
-  return QgsProcessingAlgorithm::flags() | QgsProcessingAlgorithm::FlagNoThreading | QgsProcessingAlgorithm::FlagRequiresProject;
+  return QgsProcessingAlgorithm::flags() | Qgis::ProcessingAlgorithmFlag::NoThreading | Qgis::ProcessingAlgorithmFlag::RequiresProject;
 }
-
 
 QString QgsTransferAnnotationsFromMainAlgorithm::shortHelpString() const
 {
-  return QObject::tr( "Transfer all annotations from the main annotation layer in a project to a new annotation layer." );
+  return QObject::tr( "This algorithm transfers all annotations from the main annotation layer in a project to a new annotation layer." );
+}
+
+QString QgsTransferAnnotationsFromMainAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Transfers all annotations from the main annotation layer in a project to a new annotation layer." );
 }
 
 QgsTransferAnnotationsFromMainAlgorithm *QgsTransferAnnotationsFromMainAlgorithm::createInstance() const
@@ -77,7 +81,7 @@ QVariantMap QgsTransferAnnotationsFromMainAlgorithm::processAlgorithm( const QVa
   if ( !main )
     throw QgsProcessingException( QObject::tr( "Could not load main annotation layer for project." ) );
 
-  std::unique_ptr< QgsAnnotationLayer > newLayer( main->clone() );
+  std::unique_ptr<QgsAnnotationLayer> newLayer( main->clone() );
   newLayer->setName( parameterAsString( parameters, QStringLiteral( "LAYER_NAME" ), context ) );
   main->clear();
 

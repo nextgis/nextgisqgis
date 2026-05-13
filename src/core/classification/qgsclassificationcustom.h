@@ -21,8 +21,7 @@
 
 /**
  * \ingroup core
- * \brief QgsClassificationCustom is a dummy implementation of QgsClassification
- * which does not compute any break.
+ * \brief A dummy implementation class method which does not compute any breaks.
  * \since QGIS 3.10
  */
 class CORE_EXPORT QgsClassificationCustom : public QgsClassificationMethod
@@ -30,7 +29,7 @@ class CORE_EXPORT QgsClassificationCustom : public QgsClassificationMethod
   public:
     QgsClassificationCustom();
 
-    QgsClassificationMethod *clone() const override;
+    std::unique_ptr< QgsClassificationMethod > clone() const override;
     QString name() const override;
     QString id() const override;
 
@@ -40,7 +39,7 @@ class CORE_EXPORT QgsClassificationCustom : public QgsClassificationMethod
 
   private:
     QList<double> calculateBreaks( double &minimum, double &maximum,
-                                   const QList<double> &values, int nclasses ) override;
+                                   const QList<double> &values, int nclasses, QString &error ) override;
 };
 
 #endif // QGSCLASSIFICATIONCUSTOM_H

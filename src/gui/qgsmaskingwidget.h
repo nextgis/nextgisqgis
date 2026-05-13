@@ -37,7 +37,7 @@ class QgsMessageBarItem;
  * \note This class is not a part of public API
  * \since QGIS 3.14
  */
-class GUI_EXPORT QgsMaskingWidget: public QgsPanelWidget, private Ui::QgsMaskingWidgetBase
+class GUI_EXPORT QgsMaskingWidget : public QgsPanelWidget, private Ui::QgsMaskingWidgetBase
 {
     Q_OBJECT
   public:
@@ -49,13 +49,6 @@ class GUI_EXPORT QgsMaskingWidget: public QgsPanelWidget, private Ui::QgsMasking
 
     //! Applies the changes
     void apply();
-
-    //! Widget has been populated or not
-    bool hasBeenPopulated();
-
-  protected:
-
-    void showEvent( QShowEvent * ) override;
 
   private slots:
 
@@ -70,7 +63,8 @@ class GUI_EXPORT QgsMaskingWidget: public QgsPanelWidget, private Ui::QgsMasking
     void populate();
 
     QPointer<QgsMessageBarItem> mMessageBarItem;
-    bool mMustPopulate = false;
+
+    friend class TestQgsMaskingWidget;
 };
 
 
@@ -92,13 +86,11 @@ class SymbolLayerVisitor : public QgsStyleEntityVisitorInterface
     bool visitEnter( const QgsStyleEntityVisitorInterface::Node &node ) override;
 
     //! Process a symbol
-    void visitSymbol( const QgsSymbol *symbol, const QString &leafIdentifier, QVector<int> rootPath );
+    void visitSymbol( const QgsSymbol *symbol, const QString &leafIdentifier );
 
     bool visit( const QgsStyleEntityVisitorInterface::StyleLeaf &leaf ) override;
 
   private:
-    QString mSymbolKey;
-    QList<QPair<QgsSymbolLayerId, QList<QgsSymbolLayerReference>>> mMasks;
     SymbolLayerCallback mCallback;
 };
 

@@ -267,7 +267,7 @@ Qgis::RasterFileWriterResult QgsRasterFileWriter::writeDataRaster( const QgsRast
       {
         // Destination extent is (at least partially) outside of source extent, we need destination no data values
         // Get src sample statistics (estimation from sample)
-        const QgsRasterBandStats stats = srcProvider->bandStatistics( bandNo, QgsRasterBandStats::Min | QgsRasterBandStats::Max, outputExtentInSrcCrs, 250000 );
+        const QgsRasterBandStats stats = srcProvider->bandStatistics( bandNo, Qgis::RasterBandStatistic::Min | Qgis::RasterBandStatistic::Max, outputExtentInSrcCrs, 250000 );
 
         // Test if we have free (not used) values
         const double typeMinValue = QgsContrastEnhancement::minimumValuePossible( srcDataType );
@@ -529,7 +529,7 @@ Qgis::RasterFileWriterResult QgsRasterFileWriter::writeDataRaster( const QgsRast
         if ( destBlockList[ i - 1 ]->isEmpty() )
           continue;
 
-        if ( !partDestProvider->write( destBlockList[i - 1]->bits( 0 ), i, iterCols, iterRows, 0, 0 ) )
+        if ( !partDestProvider->write( destBlockList[i - 1]->constBits( 0 ), i, iterCols, iterRows, 0, 0 ) )
         {
           return Qgis::RasterFileWriterResult::WriteError;
         }
@@ -545,7 +545,7 @@ Qgis::RasterFileWriterResult QgsRasterFileWriter::writeDataRaster( const QgsRast
         if ( destBlockList[ i - 1 ]->isEmpty() )
           continue;
 
-        if ( !destProvider->write( destBlockList[i - 1]->bits( 0 ), i, iterCols, iterRows, iterLeft, iterTop ) )
+        if ( !destProvider->write( destBlockList[i - 1]->constBits( 0 ), i, iterCols, iterRows, iterLeft, iterTop ) )
         {
           return Qgis::RasterFileWriterResult::WriteError;
         }
@@ -995,9 +995,9 @@ QgsRasterDataProvider *QgsRasterFileWriter::createPartProvider( const QgsRectang
   geoTransform[4] = 0.0;
   geoTransform[5] = -mup;
 
-  // perhaps we need a separate createOptions for tiles ?
+  // perhaps we need a separate creationOptions for tiles ?
 
-  QgsRasterDataProvider *destProvider = QgsRasterDataProvider::create( mOutputProviderKey, outputFile, mOutputFormat, nBands, type, iterCols, iterRows, geoTransform, crs, mCreateOptions );
+  QgsRasterDataProvider *destProvider = QgsRasterDataProvider::create( mOutputProviderKey, outputFile, mOutputFormat, nBands, type, iterCols, iterRows, geoTransform, crs, mCreationOptions );
 
   // TODO: return provider and report error
   return destProvider;
@@ -1018,10 +1018,10 @@ QgsRasterDataProvider *QgsRasterFileWriter::initOutput( int nCols, int nRows, co
     // TODO enable "use existing", has no effect for now, because using Create() in gdal provider
     // should this belong in provider? should also test that source provider is gdal
     if ( mBuildPyramidsFlag == -4 && mOutputProviderKey == "gdal" && mOutputFormat.compare( QLatin1String( "gtiff" ), Qt::CaseInsensitive ) == 0 )
-      mCreateOptions << "COPY_SRC_OVERVIEWS=YES";
+      mCreationOptions << "COPY_SRC_OVERVIEWS=YES";
 #endif
 
-    QgsRasterDataProvider *destProvider = QgsRasterDataProvider::create( mOutputProviderKey, mOutputUrl, mOutputFormat, nBands, type, nCols, nRows, geoTransform, crs, mCreateOptions );
+    QgsRasterDataProvider *destProvider = QgsRasterDataProvider::create( mOutputProviderKey, mOutputUrl, mOutputFormat, nBands, type, nCols, nRows, geoTransform, crs, mCreationOptions );
 
     if ( !destProvider )
     {
@@ -1072,6 +1072,16 @@ QString QgsRasterFileWriter::driverForExtension( const QString &extension )
   if ( ext.startsWith( '.' ) )
     ext.remove( 0, 1 );
 
+  if ( ext.compare( QLatin1String( "tif" ), Qt::CaseInsensitive ) == 0 ||
+       ext.compare( QLatin1String( "tiff" ), Qt::CaseInsensitive ) == 0 )
+  {
+    // Be robust to GDAL drivers potentially recognizing the tif/tiff extensions
+    // but being registered before the GTiff one.
+    // Cf https://github.com/qgis/QGIS/issues/59112
+    if ( GDALGetDriverByName( "GTiff" ) )
+      return "GTiff";
+  }
+
   GDALAllRegister();
   int const drvCount = GDALGetDriverCount();
 
@@ -1080,7 +1090,7 @@ QString QgsRasterFileWriter::driverForExtension( const QString &extension )
     GDALDriverH drv = GDALGetDriver( i );
     if ( drv )
     {
-      char **driverMetadata = GDALGetMetadata( drv, nullptr );
+      CSLConstList driverMetadata = GDALGetMetadata( drv, nullptr );
       if ( CSLFetchBoolean( driverMetadata, GDAL_DCAP_RASTER, false ) )
       {
         QString drvName = GDALGetDriverShortName( drv );
@@ -1103,7 +1113,7 @@ QStringList QgsRasterFileWriter::extensionsForFormat( const QString &format )
   GDALDriverH drv = GDALGetDriverByName( format.toLocal8Bit().data() );
   if ( drv )
   {
-    char **driverMetadata = GDALGetMetadata( drv, nullptr );
+    CSLConstList driverMetadata = GDALGetMetadata( drv, nullptr );
     if ( CSLFetchBoolean( driverMetadata, GDAL_DCAP_RASTER, false ) )
     {
       return QString( GDALGetMetadataItem( drv, GDAL_DMD_EXTENSIONS, nullptr ) ).split( ' ' );
@@ -1206,7 +1216,7 @@ QList< QgsRasterFileWriter::FilterFormatDetails > QgsRasterFileWriter::supported
 QStringList QgsRasterFileWriter::supportedFormatExtensions( const RasterFormatOptions options )
 {
   const auto formats = supportedFiltersAndFormats( options );
-  QStringList extensions;
+  QSet< QString > extensions;
 
   const thread_local QRegularExpression rx( QStringLiteral( "\\*\\.([a-zA-Z0-9]*)" ) );
 
@@ -1218,7 +1228,31 @@ QStringList QgsRasterFileWriter::supportedFormatExtensions( const RasterFormatOp
       continue;
 
     const QString matched = match.captured( 1 );
-    extensions << matched;
+    extensions.insert( matched );
   }
-  return extensions;
+
+  QStringList extensionList( extensions.constBegin(), extensions.constEnd() );
+
+  std::sort( extensionList.begin(), extensionList.end(), [options]( const QString & a, const QString & b ) -> bool
+  {
+    if ( options & SortRecommended )
+    {
+      if ( a == QLatin1String( "tif" ) )
+        return true;
+      else if ( b == QLatin1String( "tif" ) )
+        return false;
+      if ( a == QLatin1String( "tiff" ) )
+        return true;
+      else if ( b == QLatin1String( "tiff" ) )
+        return false;
+      if ( a == QLatin1String( "gpkg" ) )
+        return true;
+      else if ( b == QLatin1String( "gpkg" ) )
+        return false;
+    }
+
+    return a.toLower().localeAwareCompare( b.toLower() ) < 0;
+  } );
+
+  return extensionList;
 }

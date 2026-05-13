@@ -38,8 +38,9 @@ typedef QList< QgsTask * > QgsTaskList;
 /**
  * \ingroup core
  * \class QgsTask
- * \brief Abstract base class for long running background tasks. Tasks can be controlled directly,
- * or added to a QgsTaskManager for automatic management.
+ * \brief Abstract base class for long running background tasks.
+ *
+ * Tasks can be controlled directly, or added to a QgsTaskManager for automatic management.
  *
  * Derived classes should implement the process they want to execute in the background
  * within the run() method. This method will be called when the
@@ -49,7 +50,6 @@ typedef QList< QgsTask * > QgsTaskList;
  * has been canceled via some external event. If this flag is TRUE then the task should
  * clean up and terminate at the earliest possible convenience.
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsTask : public QObject
 {
@@ -69,12 +69,12 @@ class CORE_EXPORT QgsTask : public QObject
     Q_ENUM( TaskStatus )
 
     //! Task flags
-    enum Flag
+    enum Flag SIP_ENUM_BASETYPE( IntFlag )
     {
       CanCancel = 1 << 1, //!< Task can be canceled
       CancelWithoutPrompt = 1 << 2, //!< Task can be canceled without any users prompts, e.g. when closing a project or QGIS.
-      Hidden = 1 << 3, //!< Hide task from GUI (since QGIS 3.26)
-      Silent = 1 << 4, //!< Don't show task updates (such as completion/failure messages) as operating-system level notifications (since QGIS 3.26)
+      Hidden = 1 << 3, //!< Hide task from GUI \since QGIS 3.26
+      Silent = 1 << 4, //!< Don't show task updates (such as completion/failure messages) as operating-system level notifications \since QGIS 3.26
       AllFlags = CanCancel, //!< Task supports all flags
     };
     Q_DECLARE_FLAGS( Flags, Flag )
@@ -368,6 +368,7 @@ class CORE_EXPORT QgsTask : public QObject
     void processSubTasksForHold();
 
     friend class QgsTaskManager;
+    friend class QgsTaskWithSerialSubTasks;
     friend class QgsTaskRunnableWrapper;
     friend class TestQgsTaskManager;
 
@@ -385,9 +386,9 @@ Q_DECLARE_OPERATORS_FOR_FLAGS( QgsTask::Flags )
 /**
  * \ingroup core
  * \class QgsTaskManager
- * \brief Task manager for managing a set of long-running QgsTask tasks. This class can be created directly,
- * or accessed via QgsApplication::taskManager().
- * \since QGIS 3.0
+ * \brief Task manager for managing a set of long-running QgsTask tasks.
+ *
+ * This class can be created directly, or accessed via QgsApplication::taskManager().
  */
 class CORE_EXPORT QgsTaskManager : public QObject
 {
@@ -429,6 +430,13 @@ class CORE_EXPORT QgsTaskManager : public QObject
       QgsTaskList dependentTasks;
 
     };
+
+    /**
+     * Returns the threadpool utilized by the task manager.
+     *
+     * \since QGIS 3.34
+     */
+    QThreadPool *threadPool();
 
     /**
      * Adds a task to the manager. Ownership of the task is transferred
@@ -600,11 +608,14 @@ class CORE_EXPORT QgsTaskManager : public QObject
       QgsTaskRunnableWrapper *runnable = nullptr;
     };
 
+    QThreadPool *mThreadPool = nullptr;
+
     bool mInitialized = false;
 
     mutable QRecursiveMutex *mTaskMutex;
 
     QMap< long, TaskInfo > mTasks;
+    QMap< QgsTask *, long> mMapTaskPtrToId;
     QMap< long, QgsTaskList > mTaskDependencies;
     QMap< long, QgsWeakMapLayerPointerList > mLayerDependencies;
 
@@ -640,12 +651,50 @@ class CORE_EXPORT QgsTaskManager : public QObject
      */
     void cancelDependentTasks( long taskId );
 
-    bool resolveDependencies( long firstTaskId, long currentTaskId, QSet< long > &results ) const;
+    bool resolveDependencies( long taskId, QSet< long > &results ) const;
 
     //! Will return TRUE if the specified task has circular dependencies
     bool hasCircularDependencies( long taskId ) const;
 
     friend class TestQgsTaskManager;
+};
+
+/**
+ * \ingroup core
+ * \class QgsTaskWithSerialSubTasks
+ * \brief A task that is composed of sub-tasks to be executed in a serial way.
+ *
+ * This may be useful for example to add several layers in a single target
+ * dataset which does not support concurrent updates.
+ * \since QGIS 3.36
+ */
+class CORE_EXPORT QgsTaskWithSerialSubTasks : public QgsTask
+{
+    Q_OBJECT
+
+  public:
+    //! Constructor
+    QgsTaskWithSerialSubTasks( const QString &desc = QString() ) : QgsTask( desc ) {}
+    ~QgsTaskWithSerialSubTasks() override;
+
+    /**
+     * Add a subtask and transfer its ownership
+     *
+     * The parent task must be added to a QgsTaskManager for subtasks to be utilized.
+     * Subtasks should not be added manually to a QgsTaskManager, rather, only the parent
+     * task should be added to the manager.
+     *
+     * For now, subtasks can *NOT* be nested.
+     */
+    void addSubTask( QgsTask *subTask SIP_TRANSFER );
+
+    void cancel() override;
+
+  protected:
+
+    QList< QgsTask *> mSubTasksSerial;
+
+    bool run() override;
 };
 
 #endif //QGSTASKMANAGER_H

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgsnewhttpconnection.h                                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,8 +13,8 @@
 class QgsNewHttpConnection : QDialog
 {
 %Docstring(signature="appended")
-Dialog to allow the user to configure and save connection
-information for an HTTP Server for WMS, etc.
+Dialog to allow the user to configure and save connection information
+for an HTTP Server for WMS, etc.
 %End
 
 %TypeHeaderCode
@@ -41,34 +41,27 @@ information for an HTTP Server for WMS, etc.
     typedef QFlags<QgsNewHttpConnection::Flag> Flags;
 
 
-    QgsNewHttpConnection( QWidget *parent /TransferThis/ = 0,
-                          QgsNewHttpConnection::ConnectionTypes types = ConnectionWms,
+    QgsNewHttpConnection( QWidget *parent /TransferThis/ = 0, QgsNewHttpConnection::ConnectionTypes types = ConnectionWms,
                           const QString &settingsKey = "WMS", // TODO QGIS 4 remove arg rename
-                          const QString &connectionName = QString(),
-                          QgsNewHttpConnection::Flags flags = QgsNewHttpConnection::Flags(),
-                          Qt::WindowFlags fl = QgsGuiUtils::ModalDialogFlags );
+                          const QString &connectionName = QString(), QgsNewHttpConnection::Flags flags = QgsNewHttpConnection::Flags(), Qt::WindowFlags fl = QgsGuiUtils::ModalDialogFlags );
 %Docstring
 Constructor for QgsNewHttpConnection.
 
 The ``types`` argument dictates which connection type settings should be
 shown in the dialog.
 
-The ``flags`` argument allows specifying flags which control the dialog behavior
-and appearance.
+The ``flags`` argument allows specifying flags which control the dialog
+behavior and appearance.
 %End
 
     QString name() const;
 %Docstring
 Returns the current connection name.
-
-.. versionadded:: 3.0
 %End
 
     QString url() const;
 %Docstring
 Returns the current connection url.
-
-.. versionadded:: 3.0
 %End
 
   public slots:
@@ -77,7 +70,6 @@ Returns the current connection url.
 
 
   protected:
-
     enum WfsVersionIndex
     {
       WFS_VERSION_MAX,
@@ -87,19 +79,16 @@ Returns the current connection url.
       WFS_VERSION_API_FEATURES_1_0,
     };
 
+
     virtual bool validate();
 %Docstring
 Returns ``True`` if dialog settings are valid, or ``False`` if current
 settings are not valid and the dialog should not be acceptable.
-
-.. versionadded:: 3.0
 %End
 
     QPushButton *testConnectButton();
 %Docstring
 Returns the "test connection" button.
-
-.. versionadded:: 3.0
 %End
 
 
@@ -107,6 +96,13 @@ Returns the "test connection" button.
 
 
 
+
+    Qgis::HttpMethod preferredHttpMethod() const;
+%Docstring
+Returns the selected preferred HTTP method.
+
+.. versionadded:: 3.44
+%End
 
 
     virtual QString wfsSettingsKey( const QString &base, const QString &connectionName ) const;
@@ -114,8 +110,6 @@ Returns the "test connection" button.
 Returns the QSettings key for WFS related settings for the connection.
 
 .. seealso:: :py:func:`wmsSettingsKey`
-
-.. versionadded:: 3.0
 %End
 
     virtual QString wmsSettingsKey( const QString &base, const QString &connectionName ) const;
@@ -123,16 +117,18 @@ Returns the QSettings key for WFS related settings for the connection.
 Returns the QSettings key for WMS related settings for the connection.
 
 .. seealso:: :py:func:`wfsSettingsKey`
-
-.. versionadded:: 3.0
 %End
 
     void updateServiceSpecificSettings();
 %Docstring
-Triggers a resync of the GUI widgets for the service specific settings (i.e. WFS
-and WMS related settings).
+Triggers a resync of the GUI widgets for the service specific settings
+(i.e. WFS and WMS related settings).
+%End
 
-.. versionadded:: 3.0
+    virtual void showEvent( QShowEvent *event );
+
+%Docstring
+Adjust height of dialog to fit the content.
 %End
 
 };
@@ -148,5 +144,5 @@ QFlags<QgsNewHttpConnection::Flag> operator|(QgsNewHttpConnection::Flag f1, QFla
  *                                                                      *
  * src/gui/qgsnewhttpconnection.h                                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

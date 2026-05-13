@@ -28,12 +28,12 @@
 /**
  * \ingroup gui
  * \class QgsErrorDialog
+ * \brief A dialog which shows error details.
  */
-class GUI_EXPORT QgsErrorDialog: public QDialog, private Ui::QgsErrorDialogBase
+class GUI_EXPORT QgsErrorDialog : public QDialog, private Ui::QgsErrorDialogBase
 {
     Q_OBJECT
   public:
-
     /**
      * Constructor for QgsErrorDialog
      */

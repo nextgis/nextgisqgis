@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmaprenderercache.h"
+#include "moc_qgsmaprenderercache.cpp"
 
 #include "qgsmaplayer.h"
 #include "qgsmaplayerlistutils_p.h"
@@ -35,7 +36,7 @@ void QgsMapRendererCache::clear()
 
 void QgsMapRendererCache::clearInternal()
 {
-  mExtent.setMinimal();
+  mExtent.setNull();
   mScale = 0;
 
   // make sure we are disconnected from all layers

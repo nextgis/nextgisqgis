@@ -3,14 +3,17 @@
  *                                                                      *
  * src/gui/qgsludialog.h                                                *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 
 
-class QgsLUDialog: QDialog
+class QgsLUDialog : QDialog
 {
+%Docstring(signature="appended")
+A dialog for setting a lower and upper range value.
+%End
 
 %TypeHeaderCode
 #include "qgsludialog.h"
@@ -43,5 +46,5 @@ Returns the upper value.
  *                                                                      *
  * src/gui/qgsludialog.h                                                *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -43,13 +43,6 @@
 #include <cmath>
 #include <QString>
 
-/**
- * \ingroup core
- * \brief pal labeling engine
- * \class pal::LabelInfo
- * \note not available in Python bindings
- */
-
 namespace pal
 {
   class LabelPosition;
@@ -57,7 +50,7 @@ namespace pal
 
   /**
    * \ingroup core
-   * \brief Main class to handle feature
+   * \brief Represents a part of a label feature.
    * \class pal::FeaturePart
    * \note not available in Python bindings
    */
@@ -76,7 +69,7 @@ namespace pal
 
       /**
        * Creates a new generic feature.
-        * \param lf a pointer for a feature which contains the spatial entites
+        * \param lf a pointer for a feature which contains the spatial entities
         * \param geom a pointer to a GEOS geometry
         */
       FeaturePart( QgsLabelFeature *lf, const GEOSGeometry *geom );
@@ -225,7 +218,7 @@ namespace pal
        */
       std::unique_ptr< LabelPosition > curvedPlacementAtOffset( PointSet *mapShape, const std::vector<double> &pathDistances,
           QgsTextRendererUtils::LabelLineDirection direction, double distance, bool &labeledLineSegmentIsRightToLeft, bool applyAngleConstraints,
-          QgsTextRendererUtils::CurvedTextFlags flags );
+          Qgis::CurvedTextFlags flags );
 
       /**
        * Generate curved candidates for line features.
@@ -353,7 +346,7 @@ namespace pal
 
     private:
 
-      LabelPosition::Quadrant quadrantFromOffset() const;
+      Qgis::LabelQuadrantPosition quadrantFromOffset() const;
 
       int mTotalRepeats = 0;
 

@@ -3,13 +3,16 @@
  *                                                                      *
  * src/gui/attributetable/qgsfeaturelistviewdelegate.h                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 
 class QgsFeatureListViewDelegate : QItemDelegate
 {
+%Docstring(signature="appended")
+Custom item delegate for feature list views.
+%End
 
 %TypeHeaderCode
 #include "qgsfeaturelistviewdelegate.h"
@@ -34,7 +37,12 @@ class QgsFeatureListViewDelegate : QItemDelegate
     void setCurrentFeatureEdited( bool state );
 
   signals:
+
     void editButtonClicked( QModelIndex &index );
+%Docstring
+Emitted when the edit button is clicked for the feature with matching
+``index``.
+%End
 
   protected:
     virtual QSize sizeHint( const QStyleOptionViewItem &option, const QModelIndex &index ) const;
@@ -49,5 +57,5 @@ class QgsFeatureListViewDelegate : QItemDelegate
  *                                                                      *
  * src/gui/attributetable/qgsfeaturelistviewdelegate.h                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

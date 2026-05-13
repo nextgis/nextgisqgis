@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsattributeformeditorwidget.h"
+#include "moc_qgsattributeformeditorwidget.cpp"
 #include "qgsattributeform.h"
 #include "qgsmultiedittoolbutton.h"
 #include "qgseditorwidgetwrapper.h"
@@ -74,16 +75,13 @@ void QgsAttributeFormEditorWidget::createSearchWidgetWrappers( const QgsAttribut
   const QVariantMap config = mEditorWidget->config();
   const int fieldIdx = mEditorWidget->fieldIdx();
 
-  QgsSearchWidgetWrapper *sww = QgsGui::editorWidgetRegistry()->createSearchWidget( mWidgetType, layer(), fieldIdx, config,
-                                searchWidgetFrame(), context );
+  QgsSearchWidgetWrapper *sww = QgsGui::editorWidgetRegistry()->createSearchWidget( mWidgetType, layer(), fieldIdx, config, searchWidgetFrame(), context );
   setSearchWidgetWrapper( sww );
   searchWidgetFrame()->layout()->addWidget( mAggregateButton );
-  if ( sww->supportedFlags() & QgsSearchWidgetWrapper::Between ||
-       sww->supportedFlags() & QgsSearchWidgetWrapper::IsNotBetween )
+  if ( sww->supportedFlags() & QgsSearchWidgetWrapper::Between || sww->supportedFlags() & QgsSearchWidgetWrapper::IsNotBetween )
   {
     // create secondary widget for between type searches
-    QgsSearchWidgetWrapper *sww2 = QgsGui::editorWidgetRegistry()->createSearchWidget( mWidgetType, layer(), fieldIdx, config,
-                                   searchWidgetFrame(), context );
+    QgsSearchWidgetWrapper *sww2 = QgsGui::editorWidgetRegistry()->createSearchWidget( mWidgetType, layer(), fieldIdx, config, searchWidgetFrame(), context );
     addAdditionalSearchWidgetWrapper( sww2 );
   }
 }
@@ -141,7 +139,6 @@ void QgsAttributeFormEditorWidget::changesCommitted()
 }
 
 
-
 void QgsAttributeFormEditorWidget::initialize( const QVariant &initialValue, bool mixedValues, const QVariantList &additionalFieldValues )
 {
   if ( mEditorWidget )
@@ -162,7 +159,6 @@ QVariant QgsAttributeFormEditorWidget::currentValue() const
 {
   return mEditorWidget->value();
 }
-
 
 
 void QgsAttributeFormEditorWidget::editorWidgetValuesChanged( const QVariant &value, const QVariantList &additionalFieldValues )
@@ -245,27 +241,30 @@ void QgsAttributeFormEditorWidget::updateWidgets()
       // for this field.
       // if the field is always read only regardless of the feature, no need to dig further. But otherwise
       // we may need to test editability for the actual selected features...
-      const int fieldIndex = mEditorWidget->fieldIdx();
-      shouldShowMultiEditButton = !QgsVectorLayerUtils::fieldIsReadOnly( layer(), fieldIndex );
-      if ( shouldShowMultiEditButton )
+      if ( mEditorWidget )
       {
-        // depending on the field type, the editability of the field may vary feature by feature (e.g. for joined
-        // fields coming from joins without the upsert on edit capabilities).
-        // But this feature-by-feature check is EXPENSIVE!!! (see https://github.com/qgis/QGIS/issues/41366), so
-        // avoid it whenever we can...
-        const bool fieldEditabilityDependsOnFeature = QgsVectorLayerUtils::fieldEditabilityDependsOnFeature( layer(), fieldIndex );
-        if ( fieldEditabilityDependsOnFeature )
+        const int fieldIndex = mEditorWidget->fieldIdx();
+        shouldShowMultiEditButton = !QgsVectorLayerUtils::fieldIsReadOnly( layer(), fieldIndex );
+        if ( shouldShowMultiEditButton )
         {
-          QgsFeature feature;
-          QgsFeatureIterator it = layer()->getSelectedFeatures();
-          while ( it.nextFeature( feature ) )
+          // depending on the field type, the editability of the field may vary feature by feature (e.g. for joined
+          // fields coming from joins without the upsert on edit capabilities).
+          // But this feature-by-feature check is EXPENSIVE!!! (see https://github.com/qgis/QGIS/issues/41366), so
+          // avoid it whenever we can...
+          const bool fieldEditabilityDependsOnFeature = QgsVectorLayerUtils::fieldEditabilityDependsOnFeature( layer(), fieldIndex );
+          if ( fieldEditabilityDependsOnFeature )
           {
-            const bool isEditable = QgsVectorLayerUtils::fieldIsEditable( layer(), fieldIndex, feature );
-            if ( !isEditable )
+            QgsFeature feature;
+            QgsFeatureIterator it = layer()->getSelectedFeatures();
+            while ( it.nextFeature( feature ) )
             {
-              // as soon as we find one read-only feature for the field, we can break early...
-              shouldShowMultiEditButton = false;
-              break;
+              const bool isEditable = QgsVectorLayerUtils::fieldIsEditable( layer(), fieldIndex, feature );
+              if ( !isEditable )
+              {
+                // as soon as we find one read-only feature for the field, we can break early...
+                shouldShowMultiEditButton = false;
+                break;
+              }
             }
           }
         }

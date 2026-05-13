@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/layout/qgsprintlayout.h                                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,9 +11,8 @@
 class QgsPrintLayout : QgsLayout, QgsMasterLayoutInterface
 {
 %Docstring(signature="appended")
-Print layout, a :py:class:`QgsLayout` subclass for static or atlas-based layouts.
-
-.. versionadded:: 3.0
+Print layout, a :py:class:`QgsLayout` subclass for static or atlas-based
+layouts.
 %End
 
 %TypeHeaderCode
@@ -77,5 +76,5 @@ Emitted when the layout's name is changed.
  *                                                                      *
  * src/core/layout/qgsprintlayout.h                                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

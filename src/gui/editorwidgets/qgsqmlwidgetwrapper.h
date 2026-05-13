@@ -19,11 +19,12 @@
 #include "qgswidgetwrapper.h"
 #include "qgis_sip.h"
 #include "qgis_gui.h"
-#include <QtQuickWidgets/QQuickWidget>
+
+#include <QQuickWidget>
 
 /**
  * \ingroup gui
- * \brief Wraps a QQuickWidget to display QML code
+ * \brief Wraps a QQuickWidget to display QML code.
  * \since QGIS 3.4
  */
 class GUI_EXPORT QgsQmlWidgetWrapper : public QgsWidgetWrapper
@@ -31,7 +32,6 @@ class GUI_EXPORT QgsQmlWidgetWrapper : public QgsWidgetWrapper
     Q_OBJECT
 
   public:
-
     /**
      * Create a qml widget wrapper
      *
@@ -62,8 +62,11 @@ class GUI_EXPORT QgsQmlWidgetWrapper : public QgsWidgetWrapper
 
   private:
     QTemporaryFile mQmlFile;
+    QString mQmlCode;
     QQuickWidget *mWidget = nullptr;
     QgsFeature mFeature;
+    QgsFeature mFormFeature;
+    bool mRequiresFormScope = false;
 };
 
 

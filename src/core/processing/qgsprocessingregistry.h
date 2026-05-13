@@ -52,7 +52,6 @@ class CORE_EXPORT QgsProcessingAlgorithmInformation
  *
  * QgsProcessingRegistry is not usually directly created, but rather accessed through
  * QgsApplication::processingRegistry().
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsProcessingRegistry : public QObject
 {
@@ -67,9 +66,7 @@ class CORE_EXPORT QgsProcessingRegistry : public QObject
 
     ~QgsProcessingRegistry() override;
 
-    //! Registry cannot be copied
     QgsProcessingRegistry( const QgsProcessingRegistry &other ) = delete;
-    //! Registry cannot be copied
     QgsProcessingRegistry &operator=( const QgsProcessingRegistry &other ) = delete;
 
     /**
@@ -105,7 +102,7 @@ class CORE_EXPORT QgsProcessingRegistry : public QObject
     /**
      * Returns a matching provider by provider ID.
      */
-    QgsProcessingProvider *providerById( const QString &id );
+    QgsProcessingProvider *providerById( const QString &id ) const SIP_HOLDGIL;
 
     /**
      * Returns a list of all available algorithms from registered providers.

@@ -33,12 +33,12 @@ class QgsRasterLayer;
 /**
  * \ingroup gui
  * \class QgsRasterMinMaxWidget
+ * \brief A widget for configuring how the minimum and maximum value of a raster layer is determined.
  */
-class GUI_EXPORT QgsRasterMinMaxWidget: public QWidget, private Ui::QgsRasterMinMaxWidgetBase
+class GUI_EXPORT QgsRasterMinMaxWidget : public QWidget, private Ui::QgsRasterMinMaxWidgetBase
 {
     Q_OBJECT
   public:
-
     //! Constructor for QgsRasterMinMaxWidget
     QgsRasterMinMaxWidget( QgsRasterLayer *layer, QWidget *parent SIP_TRANSFERTHIS = nullptr );
 
@@ -56,14 +56,12 @@ class GUI_EXPORT QgsRasterMinMaxWidget: public QWidget, private Ui::QgsRasterMin
      * set from calling setExtent().
      * \param canvas map canvas
      * \see mapCanvas()
-     * \since QGIS 2.16
      */
     void setMapCanvas( QgsMapCanvas *canvas );
 
     /**
      * Returns the map canvas associated with the widget.
      * \see setMapCanvas()
-     * \since QGIS 2.16
      */
     QgsMapCanvas *mapCanvas();
 
@@ -113,9 +111,21 @@ class GUI_EXPORT QgsRasterMinMaxWidget: public QWidget, private Ui::QgsRasterMin
   private slots:
 
     void mUserDefinedRadioButton_toggled( bool );
-    void mMinMaxRadioButton_toggled( bool b ) { if ( b ) emit widgetChanged(); }
-    void mStdDevRadioButton_toggled( bool b ) { if ( b ) emit widgetChanged(); }
-    void mCumulativeCutRadioButton_toggled( bool b ) { if ( b ) emit widgetChanged(); }
+    void mMinMaxRadioButton_toggled( bool b )
+    {
+      if ( b )
+        emit widgetChanged();
+    }
+    void mStdDevRadioButton_toggled( bool b )
+    {
+      if ( b )
+        emit widgetChanged();
+    }
+    void mCumulativeCutRadioButton_toggled( bool b )
+    {
+      if ( b )
+        emit widgetChanged();
+    }
     void mStatisticsExtentCombo_currentIndexChanged( int ) { emit widgetChanged(); }
     void mCumulativeCutLowerDoubleSpinBox_valueChanged( double ) { emit widgetChanged(); }
     void mCumulativeCutUpperDoubleSpinBox_valueChanged( double ) { emit widgetChanged(); }

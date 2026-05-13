@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/sensor/qgsiodevicesensor.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,7 +13,7 @@
 class QgsIODeviceSensor : QgsAbstractSensor
 {
 %Docstring(signature="appended")
-An abstract class QIODevice-based sensor classes
+An abstract class for QIODevice-based sensors.
 
 .. versionadded:: 3.32
 %End
@@ -25,7 +25,8 @@ An abstract class QIODevice-based sensor classes
 
     explicit QgsIODeviceSensor( QObject *parent = 0 );
 %Docstring
-Constructor for a abstract QIODevice-based sensor, bound to the specified ``parent``.
+Constructor for a abstract QIODevice-based sensor, bound to the
+specified ``parent``.
 %End
     ~QgsIODeviceSensor();
 
@@ -57,7 +58,7 @@ Parses the data read from the device when available.
 class QgsTcpSocketSensor : QgsIODeviceSensor
 {
 %Docstring(signature="appended")
-A TCP socket sensor class
+A TCP socket sensor class.
 
 .. versionadded:: 3.32
 %End
@@ -122,7 +123,7 @@ Sets the ``port`` the socket connects to.
 class QgsUdpSocketSensor : QgsIODeviceSensor
 {
 %Docstring(signature="appended")
-A UDP socket sensor class
+A UDP socket sensor class.
 
 .. versionadded:: 3.32
 %End
@@ -189,7 +190,7 @@ Sets the ``port`` the socket connects to.
 class QgsSerialPortSensor : QgsIODeviceSensor
 {
 %Docstring(signature="appended")
-A serial port sensor class
+A serial port sensor class.
 
 .. versionadded:: 3.32
 %End
@@ -227,6 +228,41 @@ Sets the serial port the sensor connects to.
 :param portName: the port name (e.g. COM4)
 %End
 
+    QSerialPort::BaudRate baudRate() const;
+%Docstring
+Returns the baudrate of the serial port the sensor connects to.
+
+.. versionadded:: 3.36
+%End
+
+    void setBaudRate( const QSerialPort::BaudRate &baudRate );
+%Docstring
+Sets the baudrate of the serial port the sensor connects to.
+
+:param baudRate: the baudrate (e.g. 9600)
+
+.. versionadded:: 3.36
+%End
+
+    QByteArray delimiter() const;
+%Docstring
+Returns the current delimiter used to separate data frames. If empty,
+each serial port data update will be considered a data frame.
+
+.. versionadded:: 3.38
+%End
+
+    void setDelimiter( const QByteArray &delimiter );
+%Docstring
+Sets the delimiter used to identify data frames out of the data received
+from the serial port. If empty, each serial port data update will be
+considered a data frame.
+
+:param delimiter: Character used to identify data frames
+
+.. versionadded:: 3.38
+%End
+
     virtual bool writePropertiesToElement( QDomElement &element, QDomDocument &document ) const;
 
     virtual bool readPropertiesFromElement( const QDomElement &element, const QDomDocument &document );
@@ -237,6 +273,11 @@ Sets the serial port the sensor connects to.
     virtual void handleConnect();
 
     virtual void handleDisconnect();
+
+
+  protected slots:
+
+    virtual void parseData();
 
 
 };
@@ -250,5 +291,5 @@ Sets the serial port the sensor connects to.
  *                                                                      *
  * src/core/sensor/qgsiodevicesensor.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

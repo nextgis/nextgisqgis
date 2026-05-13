@@ -18,7 +18,7 @@
 
 #include "qgsfeatureid.h"
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
 #include <Qt3DRender/QGeometry>
 #else
 #include <Qt3DCore/QGeometry>
@@ -33,7 +33,7 @@ namespace QgsRayCastingUtils
   class Ray3D;
 }
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
 namespace Qt3DRender
 {
   class QBuffer;
@@ -48,17 +48,16 @@ namespace Qt3DCore
 #define SIP_NO_FILE
 
 /**
- * \ingroup 3d
- * \brief Class derived from Qt3DRender::QGeometry that represents polygons tessellated into 3D geometry.
+ * \ingroup qgis_3d
+ * \brief Qt3DRender::QGeometry subclass that represents polygons tessellated into 3D geometry.
  *
  * Takes a list of polygons as input, internally it does tessellation and writes output to the internal
  * vertex buffer. Optionally it can add "walls" if the extrusion height is non-zero.
  *
  * \note Not available in Python bindings
  *
- * \since QGIS 3.0
  */
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
 class QgsTessellatedPolygonGeometry : public Qt3DRender::QGeometry
 #else
 class QgsTessellatedPolygonGeometry : public Qt3DCore::QGeometry
@@ -92,9 +91,6 @@ class QgsTessellatedPolygonGeometry : public Qt3DCore::QGeometry
      */
     void setAddTextureCoords( bool add ) { mAddTextureCoords = add; }
 
-    //! Initializes vertex buffer from given polygons. Takes ownership of passed polygon geometries
-    void setPolygons( const QList<QgsPolygon *> &polygons, const QList<QgsFeatureId> &featureIds, const QgsPointXY &origin, float extrusionHeight, const QList<float> &extrusionHeightPerPolygon = QList<float>() );
-
     /**
      * Initializes vertex buffer (and other members) from data that were already tessellated.
      * This is an alternative to setPolygons() - this method does not do any expensive work in the body.
@@ -108,16 +104,16 @@ class QgsTessellatedPolygonGeometry : public Qt3DCore::QGeometry
      */
     QgsFeatureId triangleIndexToFeatureId( uint triangleIndex ) const;
 
-    /**
-     * Tests whether the geometry is intersected by \a ray.
-     * In case of success, the \a intersectionPoint and the corresponding \a fid are updated.
-     */
-    bool rayIntersection( const QgsRayCastingUtils::Ray3D &ray, const QMatrix4x4 &worldTransform, QVector3D &intersectionPoint, QgsFeatureId &fid );
+    //! Returns included feature ids
+    QVector<QgsFeatureId> featureIds() const { return mTriangleIndexFids; }
+
+    //! Returns triangle index for features. For a feature featureIds()[i], matching triangles start at triangleIndexStartingIndices()[i]
+    QVector<uint> triangleIndexStartingIndices() const { return mTriangleIndexStartingIndices; }
 
     friend class Qgs3DSceneExporter;
-  private:
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+  private:
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
     Qt3DRender::QAttribute *mPositionAttribute = nullptr;
     Qt3DRender::QAttribute *mNormalAttribute = nullptr;
     Qt3DRender::QAttribute *mTextureCoordsAttribute = nullptr;

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/proj/qgscoordinatereferencesystemutils.h                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,7 +12,8 @@
 class QgsCoordinateReferenceSystemUtils
 {
 %Docstring(signature="appended")
-Utility functions for working with :py:class:`QgsCoordinateReferenceSystem` objects.
+Utility functions for working with
+:py:class:`QgsCoordinateReferenceSystem` objects.
 
 .. versionadded:: 3.26
 %End
@@ -36,6 +37,22 @@ Returns the default coordinate order to use for the specified ``crs``.
 %Docstring
 Returns a translated abbreviation representing an ``axis`` direction.
 %End
+
+    static QString crsTypeToString( Qgis::CrsType type );
+%Docstring
+Returns a translated string representing a CRS ``type``.
+
+.. versionadded:: 3.34
+%End
+
+    static QString translateProjection( const QString &projection );
+%Docstring
+Returns a translated string for a ``projection`` method.
+
+Returns an empty string for unhandled methods.
+
+.. versionadded:: 3.34
+%End
 };
 
 /************************************************************************
@@ -43,5 +60,5 @@ Returns a translated abbreviation representing an ``axis`` direction.
  *                                                                      *
  * src/core/proj/qgscoordinatereferencesystemutils.h                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

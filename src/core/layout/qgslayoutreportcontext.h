@@ -27,7 +27,6 @@
  * \ingroup core
  * \class QgsLayoutReportContext
  * \brief Stores information relating to the current reporting context for a layout.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutReportContext : public QObject
 {
@@ -91,14 +90,14 @@ class CORE_EXPORT QgsLayoutReportContext : public QObject
      * Sets the list of predefined \a scales to use with the layout. This is used
      * for maps which are set to the predefined atlas scaling mode.
      * \see predefinedScales()
-     * \deprecated Use QgsLayoutRenderContext::setPredefinedScales()
+     * \deprecated QGIS 3.40. Use QgsLayoutRenderContext::setPredefinedScales().
      */
     Q_DECL_DEPRECATED void setPredefinedScales( const QVector<qreal> &scales ) SIP_DEPRECATED;
 
     /**
      * Returns the current list of predefined scales for use with the layout.
      * \see setPredefinedScales()
-     * \deprecated Use QgsLayoutRenderContext::predefinedScales()
+     * \deprecated QGIS 3.40. Use QgsLayoutRenderContext::predefinedScales().
      */
     Q_DECL_DEPRECATED QVector<qreal> predefinedScales() const SIP_DEPRECATED { return mPredefinedScales; }
 

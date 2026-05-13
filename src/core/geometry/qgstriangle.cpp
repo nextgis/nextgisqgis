@@ -201,21 +201,14 @@ bool QgsTriangle::fromWkt( const QString &wkt )
   }
 
   mExteriorRing.reset( mInteriorRings.takeFirst() );
-  if ( ( mExteriorRing->numPoints() < 3 ) || ( mExteriorRing->numPoints() > 4 ) || ( mExteriorRing->numPoints() == 4 && mExteriorRing->startPoint() != mExteriorRing->endPoint() ) )
+  if ( !mExteriorRing || ( mExteriorRing->numPoints() < 3 ) || ( mExteriorRing->numPoints() > 4 ) || ( mExteriorRing->numPoints() == 4 && mExteriorRing->startPoint() != mExteriorRing->endPoint() ) )
   {
     clear();
     return false;
   }
 
-  //scan through rings and check if dimensionality of rings is different to CurvePolygon.
-  //if so, update the type dimensionality of the CurvePolygon to match
-  bool hasZ = false;
-  bool hasM = false;
-  if ( mExteriorRing )
-  {
-    hasZ = hasZ || mExteriorRing->is3D();
-    hasM = hasM || mExteriorRing->isMeasure();
-  }
+  bool hasZ = mExteriorRing->is3D();
+  bool hasM = mExteriorRing->isMeasure();
   if ( hasZ )
     addZValue( 0 );
   if ( hasM )
@@ -251,7 +244,7 @@ QgsPolygon *QgsTriangle::surfaceToPolygon() const
 
 QgsCurvePolygon *QgsTriangle::toCurveType() const
 {
-  std::unique_ptr<QgsCurvePolygon> curvePolygon( new QgsCurvePolygon() );
+  auto curvePolygon = std::make_unique<QgsCurvePolygon>();
   curvePolygon->setExteriorRing( mExteriorRing->clone() );
 
   return curvePolygon.release();
@@ -361,6 +354,11 @@ QgsCurve *QgsTriangle::boundary() const
   return mExteriorRing->clone();
 }
 
+QgsPoint QgsTriangle::vertexAt( QgsVertexId id ) const
+{
+  return QgsPolygon::vertexAt( id );
+}
+
 QgsPoint QgsTriangle::vertexAt( int atVertex ) const
 {
   if ( isEmpty() )
@@ -418,7 +416,7 @@ bool QgsTriangle::isDegenerate() const
   const QgsPoint p1( vertexAt( 0 ) );
   const QgsPoint p2( vertexAt( 1 ) );
   const QgsPoint p3( vertexAt( 2 ) );
-  return ( ( ( p1 == p2 ) || ( p1 == p3 ) || ( p2 == p3 ) ) || QgsGeometryUtils::leftOfLine( p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y() ) == 0 );
+  return ( ( ( p1 == p2 ) || ( p1 == p3 ) || ( p2 == p3 ) ) || QgsGeometryUtilsBase::leftOfLine( p1.x(), p1.y(), p2.x(), p2.y(), p3.x(), p3.y() ) == 0 );
 }
 
 bool QgsTriangle::isIsocele( double lengthTolerance ) const

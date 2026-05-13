@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgsvectorlayercache.h"
+#include "moc_qgsvectorlayercache.cpp"
 #include "qgscacheindex.h"
 #include "qgscachedfeatureiterator.h"
 #include "qgsvectorlayerjoininfo.h"
@@ -106,7 +107,7 @@ void QgsVectorLayerCache::setFullCache( bool fullCache )
     // Initialize the cache...
     QgsFeatureIterator it( new QgsCachedFeatureWriterIterator( this, QgsFeatureRequest()
                            .setSubsetOfAttributes( mCachedAttributes )
-                           .setFlags( mCacheGeometry ? QgsFeatureRequest::NoFlags : QgsFeatureRequest::NoGeometry ) ) );
+                           .setFlags( mCacheGeometry ? Qgis::FeatureRequestFlag::NoFlags : Qgis::FeatureRequestFlag::NoGeometry ) ) );
 
     int i = 0;
 
@@ -178,7 +179,7 @@ bool QgsVectorLayerCache::featureAtId( QgsFeatureId featureId, QgsFeature &featu
     }
     if ( !mCacheGeometry )
     {
-      request.setFlags( request.flags().setFlag( QgsFeatureRequest::NoGeometry ) );
+      request.setFlags( request.flags().setFlag( Qgis::FeatureRequestFlag::NoGeometry ) );
     }
     if ( mLayer->getFeatures( request ).nextFeature( feature ) )
     {
@@ -209,10 +210,37 @@ bool QgsVectorLayerCache::featureAtIdWithAllAttributes( QgsFeatureId featureId, 
   }
   else if ( mLayer->getFeatures( QgsFeatureRequest()
                                  .setFilterFid( featureId )
-                                 .setFlags( !mCacheGeometry ? QgsFeatureRequest::NoGeometry : QgsFeatureRequest::Flags() ) )
+                                 .setFlags( !mCacheGeometry ? Qgis::FeatureRequestFlag::NoGeometry : Qgis::FeatureRequestFlags() ) )
             .nextFeature( feature ) )
   {
     cacheFeature( feature, true );
+    featureFound = true;
+  }
+
+  return featureFound;
+}
+
+bool QgsVectorLayerCache::completeFeatureAtId( QgsFeatureId featureId, QgsFeature &feature, bool skipCache )
+{
+  bool featureFound = false;
+
+  QgsCachedFeature *cachedFeature = nullptr;
+
+  if ( !skipCache )
+  {
+    cachedFeature = mCache[ featureId ];
+  }
+
+  if ( cachedFeature && cachedFeature->allAttributesFetched() && cachedFeature->geometryFetched() )
+  {
+    feature = QgsFeature( *cachedFeature->feature() );
+    featureFound = true;
+  }
+  else if ( mLayer->getFeatures( QgsFeatureRequest()
+                                 .setFilterFid( featureId ) )
+            .nextFeature( feature ) )
+  {
+    cacheFeature( feature, true, true );
     featureFound = true;
   }
 
@@ -269,7 +297,7 @@ void QgsVectorLayerCache::requestCompleted( const QgsFeatureRequest &featureRequ
     {
       idx->requestCompleted( featureRequest, fids );
     }
-    if ( featureRequest.filterType() == QgsFeatureRequest::FilterNone &&
+    if ( featureRequest.filterType() == Qgis::FeatureRequestFilterType::NoFilter &&
          ( featureRequest.spatialFilterType() == Qgis::SpatialFilterType::NoFilter || featureRequest.filterRect().contains( mLayer->extent() ) ) )
     {
       mFullCache = true;
@@ -357,11 +385,10 @@ void QgsVectorLayerCache::attributeAdded( int field )
 
 void QgsVectorLayerCache::attributeDeleted( int field )
 {
-  QgsAttributeList attrs = mCachedAttributes;
+  const QgsAttributeList attrs = mCachedAttributes;
   mCachedAttributes.clear();
 
-  const auto constAttrs = attrs;
-  for ( int attr : constAttrs )
+  for ( int attr : attrs )
   {
     if ( attr < field )
       mCachedAttributes << attr;
@@ -413,7 +440,7 @@ bool QgsVectorLayerCache::canUseCacheForRequest( const QgsFeatureRequest &featur
   // no indexes available, but maybe we have already cached all required features anyway?
   switch ( featureRequest.filterType() )
   {
-    case QgsFeatureRequest::FilterFid:
+    case Qgis::FeatureRequestFilterType::Fid:
     {
       if ( mCache.contains( featureRequest.filterFid() ) )
       {
@@ -422,7 +449,7 @@ bool QgsVectorLayerCache::canUseCacheForRequest( const QgsFeatureRequest &featur
       }
       break;
     }
-    case QgsFeatureRequest::FilterFids:
+    case Qgis::FeatureRequestFilterType::Fids:
     {
       if ( cachedFeatureIds().contains( featureRequest.filterFids() ) )
       {
@@ -431,8 +458,8 @@ bool QgsVectorLayerCache::canUseCacheForRequest( const QgsFeatureRequest &featur
       }
       break;
     }
-    case QgsFeatureRequest::FilterNone:
-    case QgsFeatureRequest::FilterExpression:
+    case Qgis::FeatureRequestFilterType::NoFilter:
+    case Qgis::FeatureRequestFilterType::Expression:
     {
       if ( mFullCache )
       {
@@ -480,10 +507,10 @@ QgsFeatureIterator QgsVectorLayerCache::getFeatures( const QgsFeatureRequest &fe
 
     // Make sure if we cache the geometry, it gets fetched
     if ( mCacheGeometry && mLayer->isSpatial() )
-      myRequest.setFlags( featureRequest.flags() & ~QgsFeatureRequest::NoGeometry );
+      myRequest.setFlags( featureRequest.flags() & ~( static_cast< int >( Qgis::FeatureRequestFlag::NoGeometry ) ) );
 
     // Make sure all the cached attributes are requested as well if requesting a subset
-    if ( myRequest.flags().testFlag( QgsFeatureRequest::SubsetOfAttributes ) )
+    if ( myRequest.flags().testFlag( Qgis::FeatureRequestFlag::SubsetOfAttributes ) )
     {
       if ( mCachedAttributes.count( ) != mLayer->fields().count() )
       {
@@ -496,7 +523,7 @@ QgsFeatureIterator QgsVectorLayerCache::getFeatures( const QgsFeatureRequest &fe
       else // we are already caching all attributes
       {
         myRequest.setSubsetOfAttributes( QgsAttributeList() );
-        myRequest.setFlags( myRequest.flags().setFlag( QgsFeatureRequest::Flag::SubsetOfAttributes, false ) );
+        myRequest.setFlags( myRequest.flags().setFlag( Qgis::FeatureRequestFlag::SubsetOfAttributes, false ) );
       }
     }
 
@@ -521,7 +548,7 @@ bool QgsVectorLayerCache::checkInformationCovered( const QgsFeatureRequest &feat
 {
   QgsAttributeList requestedAttributes;
 
-  if ( !featureRequest.flags().testFlag( QgsFeatureRequest::SubsetOfAttributes ) )
+  if ( !featureRequest.flags().testFlag( Qgis::FeatureRequestFlag::SubsetOfAttributes ) )
   {
     requestedAttributes = mLayer->attributeList();
   }
@@ -541,7 +568,7 @@ bool QgsVectorLayerCache::checkInformationCovered( const QgsFeatureRequest &feat
   }
 
   // If the request needs geometry but we don't cache this...
-  return !( !featureRequest.flags().testFlag( QgsFeatureRequest::NoGeometry )
+  return !( !featureRequest.flags().testFlag( Qgis::FeatureRequestFlag::NoGeometry )
             && !mCacheGeometry );
 }
 
@@ -561,3 +588,7 @@ bool QgsVectorLayerCache::QgsCachedFeature::allAttributesFetched() const
   return mAllAttributesFetched;
 }
 
+bool QgsVectorLayerCache::QgsCachedFeature::geometryFetched() const
+{
+  return mGeometryFetched;
+}

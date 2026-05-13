@@ -27,7 +27,6 @@
 #define SIP_NO_FILE
 
 class QgsEptPointCloudIndex;
-class QgsRemoteEptPointCloudIndex;
 
 class QgsEptProvider: public QgsPointCloudDataProvider
 {
@@ -35,18 +34,18 @@ class QgsEptProvider: public QgsPointCloudDataProvider
   public:
     QgsEptProvider( const QString &uri,
                     const QgsDataProvider::ProviderOptions &providerOptions,
-                    QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() );
+                    Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() );
 
     ~QgsEptProvider();
 
+    Qgis::DataProviderFlags flags() const override;
     QgsCoordinateReferenceSystem crs() const override;
-
     QgsRectangle extent() const override;
     QgsPointCloudAttributeCollection attributes() const override;
     bool isValid() const override;
     QString name() const override;
     QString description() const override;
-    QgsPointCloudIndex *index() const override;
+    QgsPointCloudIndex index() const override;
     qint64 pointCount() const override;
     QVariantMap originalMetadata() const override;
     void loadIndex( ) override;
@@ -54,7 +53,7 @@ class QgsEptProvider: public QgsPointCloudDataProvider
     PointCloudIndexGenerationState indexingState( ) override { return PointCloudIndexGenerationState::Indexed; }
 
   private:
-    std::unique_ptr<QgsPointCloudIndex> mIndex;
+    QgsPointCloudIndex mIndex;
 };
 
 class QgsEptProviderMetadata : public QgsProviderMetadata
@@ -64,7 +63,7 @@ class QgsEptProviderMetadata : public QgsProviderMetadata
     QgsEptProviderMetadata();
     QIcon icon() const override;
     QgsProviderMetadata::ProviderMetadataCapabilities capabilities() const override;
-    QgsEptProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() ) override;
+    QgsEptProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() ) override;
     QList< QgsProviderSublayerDetails > querySublayers( const QString &uri, Qgis::SublayerQueryFlags flags = Qgis::SublayerQueryFlags(), QgsFeedback *feedback = nullptr ) const override;
     int priorityForUri( const QString &uri ) const override;
     QList< Qgis::LayerType > validLayerTypesForUri( const QString &uri ) const override;

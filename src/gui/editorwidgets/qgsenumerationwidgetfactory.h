@@ -24,13 +24,12 @@ SIP_NO_FILE
 /**
  * \ingroup gui
  * \class QgsEnumerationWidgetFactory
+ * \brief Editor widget factory for enum widgets.
  * \note not available in Python bindings
  */
-
 class GUI_EXPORT QgsEnumerationWidgetFactory : public QgsEditorWidgetFactory
 {
   public:
-
     /**
      * Constructor for QgsEnumerationWidgetFactory, where \a name is a human-readable
      * name for the factory.

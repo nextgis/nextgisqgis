@@ -3,14 +3,15 @@
  *                                                                      *
  * src/core/numericformats/qgspercentagenumericformat.h                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 class QgsPercentageNumericFormat : QgsBasicNumericFormat
 {
 %Docstring(signature="appended")
-A numeric formatter which returns a text representation of a percentage value.
+A numeric formater which returns a text representation of a percentage
+value.
 
 .. versionadded:: 3.12
 %End
@@ -69,5 +70,5 @@ Sets the ``format`` of the incoming values.
  *                                                                      *
  * src/core/numericformats/qgspercentagenumericformat.h                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

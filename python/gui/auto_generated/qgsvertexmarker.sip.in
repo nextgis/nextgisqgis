@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgsvertexmarker.h                                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -17,7 +17,8 @@
 class QgsVertexMarker : QgsMapCanvasItem
 {
 %Docstring(signature="appended")
-A class for marking vertices of features using e.g. circles or 'x'.
+A map canvas item for marking vertices of features using e.g. circles or
+'x'.
 %End
 
 %TypeHeaderCode
@@ -30,7 +31,6 @@ A class for marking vertices of features using e.g. circles or 'x'.
       sipType = nullptr;
 %End
   public:
-
     enum IconType
     {
       ICON_NONE,
@@ -82,32 +82,26 @@ Returns the stroke color for the marker.
 .. seealso:: :py:func:`setColor`
 
 .. seealso:: :py:func:`fillColor`
-
-.. versionadded:: 3.0
 %End
 
     void setFillColor( const QColor &color );
 %Docstring
-Sets the fill ``color`` for the marker. This setting only
-applies to some icon types.
+Sets the fill ``color`` for the marker. This setting only applies to
+some icon types.
 
 .. seealso:: :py:func:`fillColor`
 
 .. seealso:: :py:func:`setColor`
-
-.. versionadded:: 3.0
 %End
 
     QColor fillColor() const;
 %Docstring
-Returns the fill ``color`` for the marker. This setting only
-applies to some icon types.
+Returns the fill ``color`` for the marker. This setting only applies to
+some icon types.
 
 .. seealso:: :py:func:`setFillColor`
 
 .. seealso:: :py:func:`color`
-
-.. versionadded:: 3.0
 %End
 
     void setPenWidth( int width );
@@ -128,5 +122,5 @@ applies to some icon types.
  *                                                                      *
  * src/gui/qgsvertexmarker.h                                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

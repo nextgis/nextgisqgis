@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsmaptopixelgeometrysimplifier.h                           *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,25 +13,21 @@
 class QgsMapToPixelSimplifier : QgsAbstractGeometrySimplifier
 {
 %Docstring(signature="appended")
-Implementation of GeometrySimplifier using the "MapToPixel" algorithm
+Implementation of a geometry simplifier using the "MapToPixel"
+algorithm.
 
-Simplifies a geometry removing points within of the maximum distance difference that defines the MapToPixel info of a RenderContext request.
-This class enables simplify the geometries to be rendered in a MapCanvas target to speed up the vector drawing.
+Simplifies a geometry removing points within of the maximum distance
+difference that defines the MapToPixel info of a RenderContext request.
+This class enables simplify the geometries to be rendered in a MapCanvas
+target to speed up the vector drawing.
 %End
 
 %TypeHeaderCode
 #include "qgsmaptopixelgeometrysimplifier.h"
 %End
   public:
-    enum SimplifyAlgorithm
-    {
-      Distance,
-      SnapToGrid,
-      Visvalingam,
-      SnappedToGridGlobal,
-    };
 
-    QgsMapToPixelSimplifier( int simplifyFlags, double tolerance, SimplifyAlgorithm simplifyAlgorithm = Distance );
+    QgsMapToPixelSimplifier( int simplifyFlags, double tolerance, Qgis::VectorSimplificationAlgorithm simplifyAlgorithm = Qgis::VectorSimplificationAlgorithm::Distance );
 %Docstring
 Constructor
 %End
@@ -49,7 +45,8 @@ Constructor
 
     static float calculateLengthSquared2D( double x1, double y1, double x2, double y2 );
 %Docstring
-Returns the squared 2D-distance of the vector defined by the two points specified
+Returns the squared 2D-distance of the vector defined by the two points
+specified
 %End
 
     static bool equalSnapToGrid( double x1, double y1, double x2, double y2, double gridOriginX, double gridOriginY, float gridInverseSizeXY );
@@ -67,11 +64,11 @@ Gets the simplification hints of the vector layer managed
 Sets the simplification hints of the vector layer managed
 %End
 
-    SimplifyAlgorithm simplifyAlgorithm() const;
+    Qgis::VectorSimplificationAlgorithm simplifyAlgorithm() const;
 %Docstring
 Gets the local simplification algorithm of the vector layer managed
 %End
-    void setSimplifyAlgorithm( SimplifyAlgorithm simplifyAlgorithm );
+    void setSimplifyAlgorithm( Qgis::VectorSimplificationAlgorithm simplifyAlgorithm );
 %Docstring
 Sets the local simplification algorithm of the vector layer managed
 %End
@@ -90,12 +87,14 @@ Sets the tolerance of the vector layer managed
 
     static bool isGeneralizableByMapBoundingBox( const QgsRectangle &envelope, double map2pixelTol );
 %Docstring
-Returns whether the envelope can be replaced by its BBOX when is applied the specified map2pixel context
+Returns whether the envelope can be replaced by its BBOX when is applied
+the specified map2pixel context
 %End
 
     bool isGeneralizableByMapBoundingBox( const QgsRectangle &envelope ) const;
 %Docstring
-Returns whether the envelope can be replaced by its BBOX when is applied the specified map2pixel context
+Returns whether the envelope can be replaced by its BBOX when is applied
+the specified map2pixel context
 %End
 };
 
@@ -104,5 +103,5 @@ Returns whether the envelope can be replaced by its BBOX when is applied the spe
  *                                                                      *
  * src/core/qgsmaptopixelgeometrysimplifier.h                           *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

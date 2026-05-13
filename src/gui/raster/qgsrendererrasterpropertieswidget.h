@@ -32,13 +32,13 @@ class QgsRasterRendererWidget;
 /**
  * \ingroup gui
  * \class QgsRendererRasterPropertiesWidget
+ * \brief A widget for configuring properties of a raster layer renderer.
  */
 class GUI_EXPORT QgsRendererRasterPropertiesWidget : public QgsMapLayerConfigWidget, private Ui::QgsRendererRasterPropsWidgetBase
 {
     Q_OBJECT
 
   public:
-
     /**
      * A widget to hold the renderer properties for a raster layer.
      * \param layer The raster layer to style
@@ -51,7 +51,6 @@ class GUI_EXPORT QgsRendererRasterPropertiesWidget : public QgsMapLayerConfigWid
      * Sets the map canvas associated with the dialog. This allows the widget to retrieve the current
      * map scale and other properties from the canvas.
      * \param canvas map canvas
-     * \since QGIS 2.12
      */
     void setMapCanvas( QgsMapCanvas *canvas );
 
@@ -68,9 +67,9 @@ class GUI_EXPORT QgsRendererRasterPropertiesWidget : public QgsMapLayerConfigWid
     void apply() override;
 
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Woverloaded-virtual"
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverloaded-virtual"
 #endif
 
     /**
@@ -78,8 +77,8 @@ class GUI_EXPORT QgsRendererRasterPropertiesWidget : public QgsMapLayerConfigWid
      * \param layer The layer to use for the widget
      */
     void syncToLayer( QgsRasterLayer *layer );
-#ifdef __clang__
-#pragma clang diagnostic pop
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
 #endif
 
   private slots:
@@ -107,6 +106,7 @@ class GUI_EXPORT QgsRendererRasterPropertiesWidget : public QgsMapLayerConfigWid
     void updateGammaSlider( double value );
 
   private:
+    static void initRendererWidgetFunctions();
     void setRendererWidget( const QString &rendererName );
 
     QgsRasterLayer *mRasterLayer = nullptr;

@@ -13,6 +13,7 @@
 *                                                                         *
 ***************************************************************************/
 #include "qgsdatabaseschemamodel.h"
+#include "moc_qgsdatabaseschemamodel.cpp"
 #include "qgsproviderregistry.h"
 #include "qgsprovidermetadata.h"
 #include "qgsabstractdatabaseproviderconnection.h"
@@ -71,7 +72,7 @@ QVariant QgsDatabaseSchemaModel::data( const QModelIndex &index, int role ) cons
 
   if ( index.row() == 0 && mAllowEmpty )
   {
-    if ( role == RoleEmpty )
+    if ( role == static_cast< int >( CustomRole::Empty ) )
       return true;
 
     return QVariant();
@@ -80,7 +81,7 @@ QVariant QgsDatabaseSchemaModel::data( const QModelIndex &index, int role ) cons
   const QString schemaName = mSchemas.value( index.row() - ( mAllowEmpty ? 1 : 0 ) );
   switch ( role )
   {
-    case RoleEmpty:
+    case static_cast< int >( CustomRole::Empty ):
       return false;
 
     case Qt::DisplayRole:

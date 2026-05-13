@@ -30,7 +30,7 @@ class QgsValidityCheckContext;
 /**
  * \class QgsValidityCheckResultsModel
  * \ingroup gui
- * \brief A QAbstractItemModel subclass for displaying the results from a QgsAbtractValidityCheck.
+ * \brief A QAbstractItemModel subclass for displaying the results from a QgsAbstractValidityCheck.
  *
  * \since QGIS 3.6
  */
@@ -38,26 +38,34 @@ class GUI_EXPORT QgsValidityCheckResultsModel : public QAbstractItemModel
 {
     Q_OBJECT
   public:
+    // *INDENT-OFF*
 
-    //! Model roles
-    enum Roles
+    /**
+     * Custom model roles.
+     *
+     * \note Prior to QGIS 3.36 this was available as QgsValidityCheckResultsModel::Roles
+     * \since QGIS 3.36
+     */
+    enum class CustomRole SIP_MONKEYPATCH_SCOPEENUM_UNNEST( QgsValidityCheckResultsModel, Roles ) : int
     {
-      DescriptionRole = Qt::UserRole + 1, //!< Result detailed description
+      Description SIP_MONKEYPATCH_COMPAT_NAME( DescriptionRole ) = Qt::UserRole + 1, //!< Result detailed description
     };
+    Q_ENUM( CustomRole )
+    // *INDENT-ON*
 
     /**
      * Constructor for QgsValidityCheckResultsModel, showing the specified list of checks \a results.
      */
-    QgsValidityCheckResultsModel( const QList< QgsValidityCheckResult > &results, QObject *parent SIP_TRANSFERTHIS = nullptr );
+    QgsValidityCheckResultsModel( const QList<QgsValidityCheckResult> &results, QObject *parent SIP_TRANSFERTHIS = nullptr );
 
     QModelIndex index( int row, int column, const QModelIndex &parent ) const override;
     QModelIndex parent( const QModelIndex &child ) const override;
     int rowCount( const QModelIndex &parent = QModelIndex() ) const override;
     int columnCount( const QModelIndex &parent ) const override;
     QVariant data( const QModelIndex &index, int role ) const override;
-  private:
 
-    QList< QgsValidityCheckResult > mResults;
+  private:
+    QList<QgsValidityCheckResult> mResults;
 };
 
 /**
@@ -72,7 +80,6 @@ class GUI_EXPORT QgsValidityCheckResultsWidget : public QWidget, private Ui::Qgs
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsValidityCheckResultsWidget, with the specified \a parent widget.
      */
@@ -87,7 +94,7 @@ class GUI_EXPORT QgsValidityCheckResultsWidget : public QWidget, private Ui::Qgs
     /**
      * Sets the list of check \a results to show in the dialog.
      */
-    void setResults( const QList< QgsValidityCheckResult > &results );
+    void setResults( const QList<QgsValidityCheckResult> &results );
 
     /**
      * Runs all registered validity checks of the given \a type, and if any warnings or critical
@@ -116,9 +123,7 @@ class GUI_EXPORT QgsValidityCheckResultsWidget : public QWidget, private Ui::Qgs
     void selectionChanged( const QModelIndex &current, const QModelIndex &previous );
 
   private:
-
     QgsValidityCheckResultsModel *mResultsModel = nullptr;
-
 };
 
 #endif // QGSVALIDITYCHECKRESULTSWIDGET_H

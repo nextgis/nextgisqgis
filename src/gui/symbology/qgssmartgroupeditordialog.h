@@ -23,13 +23,14 @@
 /**
  * \ingroup gui
  * \class QgsSmartGroupCondition
+ * \brief A widget for configuring the conditions attached to a style smart group.
  */
 class GUI_EXPORT QgsSmartGroupCondition : public QWidget, private Ui::QgsSmartGroupConditionWidget
 {
     Q_OBJECT
 
   public:
-    QgsSmartGroupCondition( int id,  QWidget *parent SIP_TRANSFERTHIS = nullptr );
+    QgsSmartGroupCondition( int id, QWidget *parent SIP_TRANSFERTHIS = nullptr );
 
     //! returns the constraint key
     QString constraint();
@@ -50,11 +51,14 @@ class GUI_EXPORT QgsSmartGroupCondition : public QWidget, private Ui::QgsSmartGr
     void destruct();
 
   signals:
-    void removed( int );
+
+    /**
+     * Emitted when the group with the specified \a id is removed.
+     */
+    void removed( int id );
 
   protected:
     int mConditionId;
-
 };
 
 
@@ -67,6 +71,7 @@ class GUI_EXPORT QgsSmartGroupCondition : public QWidget, private Ui::QgsSmartGr
 /**
  * \ingroup gui
  * \class QgsSmartGroupEditorDialog
+ * \brief A dialog for configuring a style smart group.
  */
 class GUI_EXPORT QgsSmartGroupEditorDialog : public QDialog, private Ui::QgsSmartGroupEditorDialogBase
 {

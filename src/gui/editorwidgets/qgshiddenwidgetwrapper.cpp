@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgshiddenwidgetwrapper.h"
+#include "moc_qgshiddenwidgetwrapper.cpp"
 
 #include <QWidget>
 
@@ -21,7 +22,6 @@ QgsHiddenWidgetWrapper::QgsHiddenWidgetWrapper( QgsVectorLayer *layer, int field
   : QgsEditorWidgetWrapper( layer, fieldIdx, editor, parent )
 {
 }
-
 
 QVariant QgsHiddenWidgetWrapper::value() const
 {

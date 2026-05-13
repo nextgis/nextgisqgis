@@ -46,7 +46,7 @@ class CORE_EXPORT QgsValidityCheckResult
     };
 
     //! Result type
-    Type type;
+    QgsValidityCheckResult::Type type;
 
     /**
      * A short, translated string summarising the result. Ideally a single sentence.
@@ -94,12 +94,14 @@ class CORE_EXPORT QgsAbstractValidityCheck
 
   public:
 
+    // *INDENT-OFF*
     //! Check types
-    enum Type
-    {
-      TypeLayoutCheck = 0, //!< Print layout validity check, triggered on exporting a print layout
-      TypeUserCheck = 10000, //!< Starting point for custom user types
+    enum class Type SIP_MONKEYPATCH_SCOPEENUM_UNNEST( QgsAbstractValidityCheck, Type ) : int
+      {
+      LayoutCheck SIP_MONKEYPATCH_COMPAT_NAME( TypeLayoutCheck ) = 0, //!< Print layout validity check, triggered on exporting a print layout
+      UserCheck SIP_MONKEYPATCH_COMPAT_NAME( TypeUserCheck ) = 10000, //!< Starting point for custom user types
     };
+    // *INDENT-ON*
 
     virtual ~QgsAbstractValidityCheck() = default;
 

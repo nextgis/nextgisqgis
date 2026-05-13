@@ -59,6 +59,11 @@ QString QgsExtractByExtentAlgorithm::shortHelpString() const
                       "geometries will automatically be converted to multi geometries to ensure uniform output geometry types." );
 }
 
+QString QgsExtractByExtentAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Creates a vector layer that only contains features which intersect a specified extent." );
+}
+
 QgsExtractByExtentAlgorithm *QgsExtractByExtentAlgorithm::createInstance() const
 {
   return new QgsExtractByExtentAlgorithm();
@@ -66,11 +71,11 @@ QgsExtractByExtentAlgorithm *QgsExtractByExtentAlgorithm::createInstance() const
 
 QVariantMap QgsExtractByExtentAlgorithm::processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback )
 {
-  std::unique_ptr< QgsFeatureSource > featureSource( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
+  std::unique_ptr<QgsFeatureSource> featureSource( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
   if ( !featureSource )
     throw QgsProcessingException( invalidSourceError( parameters, QStringLiteral( "INPUT" ) ) );
 
-  if ( featureSource->hasSpatialIndex() == QgsFeatureSource::SpatialIndexNotPresent )
+  if ( featureSource->hasSpatialIndex() == Qgis::SpatialIndexPresence::NotPresent )
     feedback->pushWarning( QObject::tr( "No spatial index exists for input layer, performance will be severely degraded" ) );
 
   const QgsRectangle extent = parameterAsExtent( parameters, QStringLiteral( "EXTENT" ), context, featureSource->sourceCrs() );
@@ -80,7 +85,7 @@ QVariantMap QgsExtractByExtentAlgorithm::processAlgorithm( const QVariantMap &pa
   const Qgis::WkbType outType = clip ? QgsWkbTypes::promoteNonPointTypesToMulti( featureSource->wkbType() ) : featureSource->wkbType();
 
   QString dest;
-  std::unique_ptr< QgsFeatureSink > sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, featureSource->fields(), outType, featureSource->sourceCrs() ) );
+  std::unique_ptr<QgsFeatureSink> sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, featureSource->fields(), outType, featureSource->sourceCrs() ) );
 
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
@@ -88,7 +93,7 @@ QVariantMap QgsExtractByExtentAlgorithm::processAlgorithm( const QVariantMap &pa
   const QgsGeometry clipGeom = parameterAsExtentGeometry( parameters, QStringLiteral( "EXTENT" ), context, featureSource->sourceCrs() );
 
   const double step = featureSource->featureCount() > 0 ? 100.0 / featureSource->featureCount() : 1;
-  QgsFeatureIterator inputIt = featureSource->getFeatures( QgsFeatureRequest().setFilterRect( extent ).setFlags( QgsFeatureRequest::ExactIntersect ) );
+  QgsFeatureIterator inputIt = featureSource->getFeatures( QgsFeatureRequest().setFilterRect( extent ).setFlags( Qgis::FeatureRequestFlag::ExactIntersect ) );
   QgsFeature f;
   int i = -1;
   while ( inputIt.nextFeature( f ) )
@@ -118,10 +123,11 @@ QVariantMap QgsExtractByExtentAlgorithm::processAlgorithm( const QVariantMap &pa
     feedback->setProgress( i * step );
   }
 
+  sink->finalize();
+
   QVariantMap outputs;
   outputs.insert( QStringLiteral( "OUTPUT" ), dest );
   return outputs;
 }
 
 ///@endcond
-

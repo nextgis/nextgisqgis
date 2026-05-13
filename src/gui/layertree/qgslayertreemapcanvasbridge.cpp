@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgslayertreemapcanvasbridge.h"
+#include "moc_qgslayertreemapcanvasbridge.cpp"
 
 #include "qgslayertree.h"
 #include "qgslayertreeutils.h"
@@ -111,14 +112,16 @@ void QgsLayerTreeMapCanvasBridge::setCanvasLayers()
 
   if ( mFirstCRS.isValid() && firstLayers )
   {
-    const QgsGui::ProjectCrsBehavior projectCrsBehavior = QgsSettings().enumValue( QStringLiteral( "/projections/newProjectCrsBehavior" ),  QgsGui::UseCrsOfFirstLayerAdded, QgsSettings::App );
+    const QgsGui::ProjectCrsBehavior projectCrsBehavior = QgsSettings().enumValue( QStringLiteral( "/projections/newProjectCrsBehavior" ), QgsGui::UseCrsOfFirstLayerAdded, QgsSettings::App );
     switch ( projectCrsBehavior )
     {
       case QgsGui::UseCrsOfFirstLayerAdded:
       {
         const bool planimetric = QgsSettings().value( QStringLiteral( "measure/planimetric" ), true, QgsSettings::Core ).toBool();
         // Only adjust ellipsoid to CRS if it's not set to planimetric
-        QgsProject::instance()->setCrs( mFirstCRS, !planimetric );
+        QgsProject::instance()->setCrs( mFirstCRS.horizontalCrs(), !planimetric );
+        const QgsCoordinateReferenceSystem vertCrs = mFirstCRS.verticalCrs();
+        QgsProject::instance()->setVerticalCrs( vertCrs );
         break;
       }
 
@@ -159,7 +162,8 @@ void QgsLayerTreeMapCanvasBridge::setCanvasLayers( QgsLayerTreeNode *node, QList
     {
       if ( QgsGroupLayer *groupLayer = QgsLayerTree::toGroup( child )->groupLayer() )
       {
-        canvasLayers << groupLayer;
+        if ( child->isVisible() )
+          canvasLayers << groupLayer;
         continue;
       }
     }
@@ -194,14 +198,14 @@ void QgsLayerTreeMapCanvasBridge::layersAdded( const QList<QgsMapLayer *> &layer
   {
     if ( l )
     {
-      connect( l, &QgsMapLayer::dataSourceChanged, this, [ this, l ]
-      {
+      connect( l, &QgsMapLayer::dataSourceChanged, this, [this, l] {
         if ( l->isValid() && l->isSpatial() && mAutoSetupOnFirstLayer && !mHasValidLayersLoaded )
         {
           mHasValidLayersLoaded = true;
           // if we are moving from zero valid layers to non-zero VALID layers, let's zoom to those data
           mCanvas->zoomToProjectExtent();
         }
+        deferredSetCanvasLayers();
       } );
     }
   }

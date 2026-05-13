@@ -38,7 +38,6 @@ class QgsStyleEntityVisitorInterface;
  * \ingroup core
  * \class QgsLayoutItemRenderContext
  * \brief Contains settings and helpers relating to a render of a QgsLayoutItem.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutItemRenderContext
 {
@@ -56,10 +55,7 @@ class CORE_EXPORT QgsLayoutItemRenderContext
      */
     QgsLayoutItemRenderContext( QgsRenderContext &context, double viewScaleFactor = 1.0 );
 
-    //! QgsLayoutItemRenderContext cannot be copied.
     QgsLayoutItemRenderContext( const QgsLayoutItemRenderContext &other ) = delete;
-
-    //! QgsLayoutItemRenderContext cannot be copied.
     QgsLayoutItemRenderContext &operator=( const QgsLayoutItemRenderContext &other ) = delete;
 
     /**
@@ -78,7 +74,7 @@ class CORE_EXPORT QgsLayoutItemRenderContext
      *
      * \note Not available in Python bindings.
      */
-    const QgsRenderContext &renderContext() const { return mRenderContext; } SIP_SKIP
+    const QgsRenderContext &renderContext() const SIP_SKIP { return mRenderContext; }
 
     /**
      * Returns the current view zoom (scale factor). It can be
@@ -106,25 +102,22 @@ class CORE_EXPORT QgsLayoutItemRenderContext
  * \ingroup core
  * \class QgsLayoutItem
  * \brief Base class for graphical items within a QgsLayout.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutItem : public QgsLayoutObject, public QGraphicsRectItem, public QgsLayoutUndoObjectInterface
 {
-#ifdef SIP_RUN
-#include "qgslayoutitemgroup.h"
-#include "qgslayoutitemmap.h"
-#include "qgslayoutitempicture.h"
-#include "qgslayoutitemlabel.h"
-#include "qgslayoutitemlegend.h"
-#include "qgslayoutitempolygon.h"
-#include "qgslayoutitempolyline.h"
-#include "qgslayoutitemscalebar.h"
-#include "qgslayoutframe.h"
-#include "qgslayoutitemshape.h"
-#include "qgslayoutitempage.h"
-#include "qgslayoutitemmarker.h"
-#include "qgslayoutitemelevationprofile.h"
-#endif
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemgroup.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemmap.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitempicture.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemlabel.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemlegend.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitempolygon.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitempolyline.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemscalebar.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutframe.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemshape.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitempage.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemmarker.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemelevationprofile.h" );
 
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
@@ -230,12 +223,13 @@ class CORE_EXPORT QgsLayoutItem : public QgsLayoutObject, public QGraphicsRectIt
       UndoStrokeWidth, //!< Stroke width adjustment
       UndoBackgroundColor, //!< Background color adjustment
       UndoOpacity, //!< Opacity adjustment
-      UndoMarginLeft, //!< Left margin (since QGIS 3.30)
-      UndoMarginTop, //!< Top margin (since QGIS 3.30)
-      UndoMarginBottom, //!< Bottom margin (since QGIS 3.30)
-      UndoMarginRight, //!< Right margin (since QGIS 3.30)
+      UndoMarginLeft, //!< Left margin \since QGIS 3.30
+      UndoMarginTop, //!< Top margin \since QGIS 3.30
+      UndoMarginBottom, //!< Bottom margin \since QGIS 3.30
+      UndoMarginRight, //!< Right margin \since QGIS 3.30
       UndoSetId, //!< Change item ID
       UndoRotation, //!< Rotation adjustment
+      UndoExportLayerName, //!< Export layer name \since QGIS 3.40
       UndoShapeStyle, //!< Shape symbol style
       UndoShapeCornerRadius, //!< Shape corner radius
       UndoNodeMove, //!< Node move
@@ -286,6 +280,7 @@ class CORE_EXPORT QgsLayoutItem : public QgsLayoutObject, public QGraphicsRectIt
       UndoLegendGroupFont, //!< Legend group font
       UndoLegendLayerFont, //!< Legend layer font
       UndoLegendItemFont, //!< Legend item font
+      UndoLegendAutoWrapAfter, //!< Legend auto wrap lines after distance. \since QGIS 3.44
       UndoScaleBarLineWidth, //!< Scalebar line width
       UndoScaleBarSegmentSize, //!< Scalebar segment size
       UndoScaleBarSegmentsLeft, //!< Scalebar segments left
@@ -322,6 +317,7 @@ class CORE_EXPORT QgsLayoutItem : public QgsLayoutObject, public QGraphicsRectIt
       UndoElevationProfileMaximumDistance, //!< Change elevation profile maximum distance
       UndoElevationProfileMinimumElevation, //!< Change elevation profile minimum elevation
       UndoElevationProfileMaximumElevation, //!< Change elevation profile maximum elevation
+      UndoElevationProfileSubsectionLines, //!< Change elevation profile subsection indicator symbol. \since QGIS 3.44
 
       UndoCustomCommand, //!< Base id for plugin based item undo commands
     };
@@ -330,10 +326,11 @@ class CORE_EXPORT QgsLayoutItem : public QgsLayoutObject, public QGraphicsRectIt
      * Flags for controlling how an item behaves.
      * \since QGIS 3.4.3
      */
-    enum Flag
+    enum Flag SIP_ENUM_BASETYPE( IntFlag )
     {
       FlagOverridesPaint = 1 << 1,  //!< Item overrides the default layout item painting method
       FlagProvidesClipPath = 1 << 2, //!< Item can act as a clipping path provider (see clipPath())
+      FlagDisableSceneCaching = 1 << 3, //!< Item should not have QGraphicsItem caching enabled
     };
     Q_DECLARE_FLAGS( Flags, Flag )
 
@@ -465,9 +462,11 @@ class CORE_EXPORT QgsLayoutItem : public QgsLayoutObject, public QGraphicsRectIt
     };
 
     /**
-     * Returns the behavior of this item during exporting to layered exports (e.g. SVG).
+     * Returns the behavior of this item during exporting to layered exports (e.g. SVG or geospatial PDF).
+     *
      * \see numberExportLayers()
      * \see exportLayerDetails()
+     *
      * \since QGIS 3.10
      */
     virtual ExportLayerBehavior exportLayerBehavior() const;
@@ -483,7 +482,7 @@ class CORE_EXPORT QgsLayoutItem : public QgsLayoutObject, public QGraphicsRectIt
      * \see exportLayerBehavior()
      * \see exportLayerDetails()
      *
-     * \deprecated Use nextExportPart() and exportLayerBehavior() instead.
+     * \deprecated QGIS 3.40. Use nextExportPart() and exportLayerBehavior() instead.
      */
     Q_DECL_DEPRECATED virtual int numberExportLayers() const SIP_DEPRECATED;
 
@@ -541,6 +540,13 @@ class CORE_EXPORT QgsLayoutItem : public QgsLayoutObject, public QGraphicsRectIt
 
       //! Associated map theme, or an empty string if this export layer does not need to be associated with a map theme
       QString mapTheme;
+
+      /**
+       * Associated group name, if this layer is associated with an export group.
+       *
+       * \since QGIS 3.40
+       */
+      QString groupName;
     };
 
     /**
@@ -1044,7 +1050,7 @@ class CORE_EXPORT QgsLayoutItem : public QgsLayoutObject, public QGraphicsRectIt
      * QgsLayoutObject::AllProperties then all data defined properties for the item will be
      * refreshed.
     */
-    virtual void refreshDataDefinedProperty( QgsLayoutObject::DataDefinedProperty property = QgsLayoutObject::AllProperties );
+    virtual void refreshDataDefinedProperty( QgsLayoutObject::DataDefinedProperty property = QgsLayoutObject::DataDefinedProperty::AllProperties );
 
     /**
      * Sets the layout item's \a rotation, in degrees clockwise.
@@ -1316,7 +1322,10 @@ class CORE_EXPORT QgsLayoutItem : public QgsLayoutObject, public QGraphicsRectIt
 
     //! Composition blend mode for item
     QPainter::CompositionMode mBlendMode = QPainter::CompositionMode_SourceOver;
-    std::unique_ptr< QgsLayoutEffect > mEffect;
+    //! Evaluated blend mode, including evaluated overrides for data defined blending
+    QPainter::CompositionMode mEvaluatedBlendMode = QPainter::CompositionMode_SourceOver;
+
+    QPainter::CompositionMode blendModeForRender() const;
 
     //! Item opacity, between 0 and 1
     double mOpacity = 1.0;
@@ -1365,12 +1374,12 @@ class CORE_EXPORT QgsLayoutItem : public QgsLayoutObject, public QGraphicsRectIt
     friend class TestQgsLayoutView;
     friend class QgsLayout;
     friend class QgsLayoutItemGroup;
+    friend class QgsLayoutItemMap;
+    friend class QgsLayoutItemLegend;
+    friend class QgsLayoutItemElevationProfile;
     friend class QgsCompositionConverter;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS( QgsLayoutItem::Flags )
 
 #endif //QGSLAYOUTITEM_H
-
-
-

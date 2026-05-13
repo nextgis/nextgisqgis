@@ -67,6 +67,11 @@ QString QgsSmoothAlgorithm::shortHelpString() const
                       "geometry will retain the same dimensionality as the input geometry." );
 }
 
+QString QgsSmoothAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Smooths the geometries in a line or polygon layer by adding vertices and rounding corners." );
+}
+
 QgsSmoothAlgorithm *QgsSmoothAlgorithm::createInstance() const
 {
   return new QgsSmoothAlgorithm();
@@ -74,30 +79,24 @@ QgsSmoothAlgorithm *QgsSmoothAlgorithm::createInstance() const
 
 QList<int> QgsSmoothAlgorithm::inputLayerTypes() const
 {
-  return QList<int>() << QgsProcessing::TypeVectorLine << QgsProcessing::TypeVectorPolygon;
+  return QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::VectorLine ) << static_cast<int>( Qgis::ProcessingSourceType::VectorPolygon );
 }
 
 void QgsSmoothAlgorithm::initParameters( const QVariantMap & )
 {
-  std::unique_ptr< QgsProcessingParameterNumber > iterations = std::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "ITERATIONS" ),
-      QObject::tr( "Iterations" ), QgsProcessingParameterNumber::Integer,
-      1, false, 1, 10 );
+  auto iterations = std::make_unique<QgsProcessingParameterNumber>( QStringLiteral( "ITERATIONS" ), QObject::tr( "Iterations" ), Qgis::ProcessingNumberParameterType::Integer, 1, false, 1, 10 );
   iterations->setIsDynamic( true );
   iterations->setDynamicPropertyDefinition( QgsPropertyDefinition( QStringLiteral( "ITERATIONS" ), QObject::tr( "Iterations" ), QgsPropertyDefinition::IntegerPositiveGreaterZero ) );
   iterations->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
   addParameter( iterations.release() );
 
-  std::unique_ptr< QgsProcessingParameterNumber > offset = std::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "OFFSET" ),
-      QObject::tr( "Offset" ), QgsProcessingParameterNumber::Double,
-      0.25, false, 0.0, 0.5 );
+  auto offset = std::make_unique<QgsProcessingParameterNumber>( QStringLiteral( "OFFSET" ), QObject::tr( "Offset" ), Qgis::ProcessingNumberParameterType::Double, 0.25, false, 0.0, 0.5 );
   offset->setIsDynamic( true );
   offset->setDynamicPropertyDefinition( QgsPropertyDefinition( QStringLiteral( "OFFSET" ), QObject::tr( "Offset" ), QgsPropertyDefinition::Double0To1 ) );
   offset->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
   addParameter( offset.release() );
 
-  std::unique_ptr< QgsProcessingParameterNumber > maxAngle = std::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "MAX_ANGLE" ),
-      QObject::tr( "Maximum node angle to smooth" ), QgsProcessingParameterNumber::Double,
-      180.0, false, 0.0, 180.0 );
+  auto maxAngle = std::make_unique<QgsProcessingParameterNumber>( QStringLiteral( "MAX_ANGLE" ), QObject::tr( "Maximum node angle to smooth" ), Qgis::ProcessingNumberParameterType::Double, 180.0, false, 0.0, 180.0 );
   maxAngle->setIsDynamic( true );
   maxAngle->setDynamicPropertyDefinition( QgsPropertyDefinition( QStringLiteral( "MAX_ANGLE" ), QObject::tr( "Maximum node angle to smooth" ), QgsPropertyDefinition::Rotation ) );
   maxAngle->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
@@ -109,17 +108,17 @@ bool QgsSmoothAlgorithm::prepareAlgorithm( const QVariantMap &parameters, QgsPro
   mIterations = parameterAsInt( parameters, QStringLiteral( "ITERATIONS" ), context );
   mDynamicIterations = QgsProcessingParameters::isDynamic( parameters, QStringLiteral( "ITERATIONS" ) );
   if ( mDynamicIterations )
-    mIterationsProperty = parameters.value( QStringLiteral( "ITERATIONS" ) ).value< QgsProperty >();
+    mIterationsProperty = parameters.value( QStringLiteral( "ITERATIONS" ) ).value<QgsProperty>();
 
   mOffset = parameterAsDouble( parameters, QStringLiteral( "OFFSET" ), context );
   mDynamicOffset = QgsProcessingParameters::isDynamic( parameters, QStringLiteral( "OFFSET" ) );
   if ( mDynamicOffset )
-    mOffsetProperty = parameters.value( QStringLiteral( "OFFSET" ) ).value< QgsProperty >();
+    mOffsetProperty = parameters.value( QStringLiteral( "OFFSET" ) ).value<QgsProperty>();
 
   mMaxAngle = parameterAsDouble( parameters, QStringLiteral( "MAX_ANGLE" ), context );
   mDynamicMaxAngle = QgsProcessingParameters::isDynamic( parameters, QStringLiteral( "MAX_ANGLE" ) );
   if ( mDynamicMaxAngle )
-    mMaxAngleProperty = parameters.value( QStringLiteral( "MAX_ANGLE" ) ).value< QgsProperty >();
+    mMaxAngleProperty = parameters.value( QStringLiteral( "MAX_ANGLE" ) ).value<QgsProperty>();
 
   return true;
 }
@@ -151,11 +150,9 @@ QgsFeatureList QgsSmoothAlgorithm::processFeature( const QgsFeature &feature, Qg
   return QgsFeatureList() << f;
 }
 
-QgsProcessingFeatureSource::Flag QgsSmoothAlgorithm::sourceFlags() const
+Qgis::ProcessingFeatureSourceFlags QgsSmoothAlgorithm::sourceFlags() const
 {
-  return QgsProcessingFeatureSource::FlagSkipGeometryValidityChecks;
+  return Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks;
 }
 
 ///@endcond
-
-

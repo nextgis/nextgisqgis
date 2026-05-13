@@ -17,9 +17,9 @@
 
 #include "qgsprocessingparametertype.h"
 
-QgsProcessingParameterType::ParameterFlags QgsProcessingParameterType::flags() const
+Qgis::ProcessingParameterTypeFlags QgsProcessingParameterType::flags() const
 {
-  return QgsProcessingParameterType::ExposeToModeler;
+  return Qgis::ProcessingParameterTypeFlag::ExposeToModeler;
 }
 
 QVariantMap QgsProcessingParameterType::metadata() const
@@ -35,4 +35,19 @@ QStringList QgsProcessingParameterType::acceptedPythonTypes() const
 QStringList QgsProcessingParameterType::acceptedStringValues() const
 {
   return QStringList();
+}
+
+QStringList QgsProcessingParameterType::acceptedParameterTypes() const
+{
+  return QStringList();
+}
+
+QStringList QgsProcessingParameterType::acceptedOutputTypes() const
+{
+  return QStringList();
+}
+
+QList<int> QgsProcessingParameterType::acceptedDataTypes( const QgsProcessingParameterDefinition * ) const
+{
+  return QList<int>();
 }

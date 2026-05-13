@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/raster/qgsrastercontourrendererwidget.h                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,7 +11,7 @@
 class QgsRasterContourRendererWidget : QgsRasterRendererWidget
 {
 %Docstring(signature="appended")
-Configuration widget for :py:class:`QgsRasterContourRenderer`
+Configuration widget for :py:class:`QgsRasterContourRenderer`.
 
 .. versionadded:: 3.14
 %End
@@ -22,7 +22,10 @@ Configuration widget for :py:class:`QgsRasterContourRenderer`
   public:
     QgsRasterContourRendererWidget( QgsRasterLayer *layer, const QgsRectangle &extent = QgsRectangle() );
 %Docstring
-Constructs the widget
+Constructor for QgsRasterContourRendererWidget.
+
+:param layer: associated raster layer
+:param extent: current canvas extent
 %End
 
     static QgsRasterRendererWidget *create( QgsRasterLayer *layer, const QgsRectangle &extent ) /Factory/;
@@ -39,5 +42,5 @@ Widget creation function (mainly for the use by the renderer registry)
  *                                                                      *
  * src/gui/raster/qgsrastercontourrendererwidget.h                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

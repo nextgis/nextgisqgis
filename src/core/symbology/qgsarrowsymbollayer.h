@@ -27,7 +27,6 @@ class QgsFillSymbol;
  * \ingroup core
  * \class QgsArrowSymbolLayer
  * \brief Line symbol layer used for representing lines as arrows.
- * \since QGIS 2.16
  */
 
 class CORE_EXPORT QgsArrowSymbolLayer : public QgsLineSymbolLayer
@@ -146,6 +145,8 @@ class CORE_EXPORT QgsArrowSymbolLayer : public QgsLineSymbolLayer
     QString layerType() const override;
     void startRender( QgsSymbolRenderContext &context ) override;
     void stopRender( QgsSymbolRenderContext &context ) override;
+    void startFeatureRender( const QgsFeature &feature, QgsRenderContext &context ) override;
+    void stopFeatureRender( const QgsFeature &feature, QgsRenderContext &context ) override;
     void renderPolyline( const QPolygonF &points, QgsSymbolRenderContext &context ) override;
     void setColor( const QColor &c ) override;
     QColor color() const override;
@@ -186,6 +187,15 @@ class CORE_EXPORT QgsArrowSymbolLayer : public QgsLineSymbolLayer
     double mScaledOffset = 0.0;
     HeadType mComputedHeadType = HeadSingle;
     ArrowType mComputedArrowType = ArrowPlain;
+
+    // Store all default values in case we have DD and NULL values
+    double mDefaultScaledArrowWidth = 1.0;
+    double mDefaultScaledArrowStartWidth = 1.0;
+    double mDefaultScaledHeadLength = 1.5;
+    double mDefaultScaledHeadThickness = 1.5;
+    double mDefaultScaledOffset = 0.0;
+    HeadType mDefaultComputedHeadType = HeadSingle;
+    ArrowType mDefaultComputedArrowType = ArrowPlain;
 
     std::unique_ptr<QgsExpressionContextScope> mExpressionScope;
 

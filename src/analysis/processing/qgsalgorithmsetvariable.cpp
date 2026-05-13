@@ -25,11 +25,11 @@ QString QgsSetProjectVariableAlgorithm::name() const
   return QStringLiteral( "setprojectvariable" );
 }
 
-QgsProcessingAlgorithm::Flags QgsSetProjectVariableAlgorithm::flags() const
+Qgis::ProcessingAlgorithmFlags QgsSetProjectVariableAlgorithm::flags() const
 {
-  return QgsProcessingAlgorithm::FlagHideFromToolbox
-         | QgsProcessingAlgorithm::FlagSkipGenericModelLogging
-         | QgsProcessingAlgorithm::FlagNotAvailableInStandaloneTool;
+  return Qgis::ProcessingAlgorithmFlag::HideFromToolbox
+         | Qgis::ProcessingAlgorithmFlag::SkipGenericModelLogging
+         | Qgis::ProcessingAlgorithmFlag::NotAvailableInStandaloneTool;
 }
 
 QString QgsSetProjectVariableAlgorithm::displayName() const
@@ -54,7 +54,7 @@ QString QgsSetProjectVariableAlgorithm::groupId() const
 
 QString QgsSetProjectVariableAlgorithm::shortDescription() const
 {
-  return QObject::tr( "Sets an expression variable for the current project" );
+  return QObject::tr( "Sets an expression variable for the current project." );
 }
 
 QString QgsSetProjectVariableAlgorithm::shortHelpString() const

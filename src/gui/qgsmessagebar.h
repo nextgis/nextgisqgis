@@ -57,12 +57,11 @@ class QgsMessageBarItem;
  * The class also supports pushing custom widgets to the notification stack via
  * the pushWidget() method.
  */
-class GUI_EXPORT QgsMessageBar: public QFrame
+class GUI_EXPORT QgsMessageBar : public QFrame
 {
     Q_OBJECT
 
   public:
-
     //! Constructor for QgsMessageBar
     QgsMessageBar( QWidget *parent SIP_TRANSFERTHIS = nullptr );
 
@@ -214,7 +213,6 @@ class GUI_EXPORT QgsMessageBar: public QFrame
      * \param title title string for message
      * \param message The message to be displayed
      *
-     * \since QGIS 2.8
      */
     void pushSuccess( const QString &title, const QString &message );
 
@@ -224,7 +222,6 @@ class GUI_EXPORT QgsMessageBar: public QFrame
      * \param title title string for message
      * \param message The message to be displayed
      *
-     * \since QGIS 2.8
      */
     void pushInfo( const QString &title, const QString &message );
 
@@ -234,7 +231,6 @@ class GUI_EXPORT QgsMessageBar: public QFrame
      * \param title title string for message
      * \param message The message to be displayed
      *
-     * \since QGIS 2.8
      */
     void pushWarning( const QString &title, const QString &message );
 
@@ -244,7 +240,6 @@ class GUI_EXPORT QgsMessageBar: public QFrame
      * \param title title string for message
      * \param message The message to be displayed
      *
-     * \since QGIS 2.8
      */
     void pushCritical( const QString &title, const QString &message );
 

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/layout/qgslayouteffect.h                                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,11 +13,12 @@
 class QgsLayoutEffect : QGraphicsEffect
 {
 %Docstring(signature="appended")
+A QGraphicsEffect subclass used for rendering layout items onto a scene
+with custom composition modes.
 
-A QGraphicsEffect subclass used for rendering layout items
-onto a scene with custom composition modes.
+.. deprecated:: 3.34
 
-.. versionadded:: 3.0
+   This class should not be used, it is non-stable and results in crashes. See https://bugreports.qt.io/browse/QTBUG-58501.
 %End
 
 %TypeHeaderCode
@@ -26,24 +27,27 @@ onto a scene with custom composition modes.
   public:
 
     QgsLayoutEffect();
-%Docstring
-Constructor for QgsLayoutEffect.
-%End
 
-    void setCompositionMode( QPainter::CompositionMode mode );
+ void setCompositionMode( QPainter::CompositionMode mode ) /Deprecated="Since 3.34. This class should not be used, it is non-stable and results in crashes. See https//bugreports.qt.io/browse/QTBUG-58501."/;
 %Docstring
-Sets the composition (blending) ``mode`` used for rendering
-the item.
+Sets the composition (blending) ``mode`` used for rendering the item.
 
 .. seealso:: :py:func:`compositionMode`
+
+.. deprecated:: 3.34
+
+   This class should not be used, it is non-stable and results in crashes. See https://bugreports.qt.io/browse/QTBUG-58501.
 %End
 
-    QPainter::CompositionMode compositionMode() const;
+ QPainter::CompositionMode compositionMode() const /Deprecated="Since 3.34. This class should not be used, it is non-stable and results in crashes. See https//bugreports.qt.io/browse/QTBUG-58501."/;
 %Docstring
-Returns the composition (blending) mode used for rendering
-the item.
+Returns the composition (blending) mode used for rendering the item.
 
 .. seealso:: :py:func:`setCompositionMode`
+
+.. deprecated:: 3.34
+
+   This class should not be used, it is non-stable and results in crashes. See https://bugreports.qt.io/browse/QTBUG-58501.
 %End
 
   protected:
@@ -59,5 +63,5 @@ the item.
  *                                                                      *
  * src/core/layout/qgslayouteffect.h                                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

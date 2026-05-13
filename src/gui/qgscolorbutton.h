@@ -27,14 +27,15 @@ class QgsPanelWidget;
 /**
  * \ingroup gui
  * \class QgsColorButton
- * \brief A cross platform button subclass for selecting colors. Will open a color chooser dialog when clicked.
+ * \brief A cross platform button subclass for selecting colors.
+ *
+ * Will open a color chooser dialog when clicked.
+ *
  * Offers live updates to button from color chooser dialog. An attached drop-down menu allows for copying
  * and pasting colors, picking colors from the screen, and selecting colors from color swatch grids.
- * \since QGIS 2.5
  */
 class GUI_EXPORT QgsColorButton : public QToolButton
 {
-
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
     if ( qobject_cast<QgsColorButton *>( sipCpp ) )
@@ -57,14 +58,13 @@ class GUI_EXPORT QgsColorButton : public QToolButton
     Q_PROPERTY( QString context READ context WRITE setContext )
 
   public:
-
     /**
      * Specifies the behavior when the button is clicked
      */
     enum Behavior
     {
       ShowDialog = 0, //!< Show a color picker dialog when clicked
-      SignalOnly //!< Emit colorClicked signal only, no dialog
+      SignalOnly      //!< Emit colorClicked signal only, no dialog
     };
     Q_ENUM( Behavior )
 
@@ -92,7 +92,6 @@ class GUI_EXPORT QgsColorButton : public QToolButton
      * for the color. Defaults to FALSE.
      * \param allowOpacity set to TRUE to allow opacity modification
      * \see allowOpacity()
-     * \since QGIS 3.0
      */
     void setAllowOpacity( bool allowOpacity );
 
@@ -101,7 +100,6 @@ class GUI_EXPORT QgsColorButton : public QToolButton
      * for the color.
      * \returns TRUE if opacity modification is allowed
      * \see setAllowOpacity()
-     * \since QGIS 3.0
      */
     bool allowOpacity() const { return mAllowOpacity; }
 
@@ -205,7 +203,6 @@ class GUI_EXPORT QgsColorButton : public QToolButton
      * \param nullString translated string to use for the null option. If not set, a default "Clear Color" string will be used.
      * \see showNull()
      * \see isNull()
-     * \since QGIS 2.16
      */
     void setShowNull( bool showNull, const QString &nullString = QString() );
 
@@ -213,7 +210,6 @@ class GUI_EXPORT QgsColorButton : public QToolButton
      * Returns whether the set to null (clear) option is shown in the button's drop-down menu.
      * \see setShowNull()
      * \see isNull()
-     * \since QGIS 2.16
      */
     bool showNull() const;
 
@@ -221,7 +217,6 @@ class GUI_EXPORT QgsColorButton : public QToolButton
      * Returns TRUE if the current color is null.
      * \see setShowNull()
      * \see showNull()
-     * \since QGIS 2.16
      */
     bool isNull() const;
 
@@ -364,7 +359,6 @@ class GUI_EXPORT QgsColorButton : public QToolButton
      * \see setToDefaultColor()
      * \see setToNoColor()
      * \see cleared()
-     * \since QGIS 2.16
      */
     void setToNull();
 
@@ -415,7 +409,6 @@ class GUI_EXPORT QgsColorButton : public QToolButton
     void unlinked();
 
   protected:
-
     bool event( QEvent *e ) override;
     void changeEvent( QEvent *e ) override;
     void showEvent( QShowEvent *e ) override;
@@ -464,7 +457,6 @@ class GUI_EXPORT QgsColorButton : public QToolButton
     void wheelEvent( QWheelEvent *event ) override;
 
   private:
-
     Behavior mBehavior = QgsColorButton::ShowDialog;
     QString mColorDialogTitle;
     QColor mColor;
@@ -542,6 +534,8 @@ class GUI_EXPORT QgsColorButton : public QToolButton
      * Creates the drop-down menu entries
      */
     void prepareMenu();
+
+    friend class QgsColorTooltip;
 };
 
 #endif

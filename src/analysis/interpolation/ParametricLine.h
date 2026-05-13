@@ -28,7 +28,7 @@ class Vector3D;
 
 /**
  * \ingroup analysis
- * \brief ParametricLine is an Interface for parametric lines.
+ * \brief An interface for parametric lines used during triangulation.
  *
  * It is possible, that a parametric line is composed of several parametric
  * lines (see the composite pattern in Gamma et al. 'Design Patterns'). Do not build instances of it since it is an abstract class.
@@ -43,8 +43,8 @@ class ANALYSIS_EXPORT ParametricLine
     ParametricLine *mParent = nullptr;
     //! MControlPoly stores the points of the control polygon
     QVector<QgsPoint *> *mControlPoly = nullptr;
+
   public:
-    //! Default constructor
     ParametricLine() = default;
 
     /**
@@ -77,17 +77,8 @@ inline ParametricLine::ParametricLine( ParametricLine *par, QVector<QgsPoint *> 
   : mParent( par )
   , mControlPoly( controlpoly )
 {
-
 }
 
 #endif
 
 #endif
-
-
-
-
-
-
-
-

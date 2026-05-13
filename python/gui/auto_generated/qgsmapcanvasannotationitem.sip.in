@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgsmapcanvasannotationitem.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -15,12 +15,11 @@
 
 
 
-class QgsMapCanvasAnnotationItem: QObject, QgsMapCanvasItem
+class QgsMapCanvasAnnotationItem : QObject, QgsMapCanvasItem
 {
 %Docstring(signature="appended")
-An interactive map canvas item which displays a :py:class:`QgsAnnotation`.
-
-.. versionadded:: 3.0
+An interactive map canvas item which displays a
+:py:class:`QgsAnnotation`.
 %End
 
 %TypeHeaderCode
@@ -36,7 +35,6 @@ An interactive map canvas item which displays a :py:class:`QgsAnnotation`.
       sipType = nullptr;
 %End
   public:
-
     enum MouseMoveAction
     {
       NoAction,
@@ -74,7 +72,8 @@ Returns the item's annotation.
 
     MouseMoveAction moveActionForPosition( QPointF pos ) const;
 %Docstring
-Returns the mouse move behavior for a given position in scene coordinates
+Returns the mouse move behavior for a given position in scene
+coordinates
 %End
 
     Qt::CursorShape cursorShapeForAction( MouseMoveAction moveAction ) const;
@@ -89,5 +88,5 @@ Returns matching cursor shape for a mouse move action.
  *                                                                      *
  * src/gui/qgsmapcanvasannotationitem.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

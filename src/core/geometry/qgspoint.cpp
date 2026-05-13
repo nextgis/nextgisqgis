@@ -17,12 +17,13 @@
 
 
 #include "qgspoint.h"
+#include "moc_qgspoint.cpp"
 #include "qgsapplication.h"
 #include "qgscoordinatetransform.h"
 #include "qgsgeometryutils.h"
-#include "qgsmaptopixel.h"
 #include "qgswkbptr.h"
 #include "qgsgeometrytransformer.h"
+#include "qgsbox3d.h"
 
 #include <cmath>
 #include <QPainter>
@@ -106,7 +107,7 @@ QgsPoint *QgsPoint::clone() const
   return new QgsPoint( *this );
 }
 
-QgsPoint *QgsPoint::snappedToGrid( double hSpacing, double vSpacing, double dSpacing, double mSpacing ) const
+QgsPoint *QgsPoint::snappedToGrid( double hSpacing, double vSpacing, double dSpacing, double mSpacing, bool ) const
 {
   // helper function
   auto gridifyValue = []( double value, double spacing, bool extraCondition = true ) -> double
@@ -125,6 +126,11 @@ QgsPoint *QgsPoint::snappedToGrid( double hSpacing, double vSpacing, double dSpa
 
   // return the new object
   return new QgsPoint( mWkbType, x, y, z, m );
+}
+
+QgsPoint *QgsPoint::simplifyByDistance( double ) const
+{
+  return clone();
 }
 
 bool QgsPoint::removeDuplicateNodes( double, bool )
@@ -178,11 +184,7 @@ bool QgsPoint::fromWkt( const QString &wkt )
     return true;
 
   const thread_local QRegularExpression rx( QStringLiteral( "\\s" ) );
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-  QStringList coordinates = parts.second.split( rx, QString::SkipEmptyParts );
-#else
   QStringList coordinates = parts.second.split( rx, Qt::SkipEmptyParts );
-#endif
 
   // So far the parser hasn't looked at the coordinates. We'll avoid having anything but numbers and return NULL instead of 0 as a coordinate.
   // Without this check, "POINT (a, b)" or "POINT (( 4, 3 ))" returned "POINT (0 ,0)"
@@ -542,6 +544,11 @@ bool QgsPoint::boundingBoxIntersects( const QgsRectangle &rectangle ) const
   return rectangle.contains( mX, mY );
 }
 
+bool QgsPoint::boundingBoxIntersects( const QgsBox3D &box3d ) const
+{
+  return box3d.contains( mX, mY, mZ );
+}
+
 /***************************************************************************
  * This class is considered CRITICAL and any change MUST be accompanied with
  * full unit tests.
@@ -677,47 +684,9 @@ void QgsPoint::transformVertices( const std::function<QgsPoint( const QgsPoint &
   clearCache();
 }
 
-double QgsPoint::distance3D( double x, double y, double z ) const
-{
-  double zDistSquared = 0.0;
-  if ( is3D() || !std::isnan( z ) )
-    zDistSquared = ( mZ - z ) * ( mZ - z );
-
-  return std::sqrt( ( mX - x ) * ( mX - x ) + ( mY - y ) * ( mY - y ) + zDistSquared );
-}
-
-double QgsPoint::distance3D( const QgsPoint &other ) const
-{
-  double zDistSquared = 0.0;
-  if ( is3D() || other.is3D() )
-    zDistSquared = ( mZ - other.z() ) * ( mZ - other.z() );
-
-  return std::sqrt( ( mX - other.x() ) * ( mX - other.x() ) + ( mY - other.y() ) * ( mY - other.y() ) + zDistSquared );
-}
-
-double QgsPoint::distanceSquared3D( double x, double y, double z ) const
-{
-  double zDistSquared = 0.0;
-  if ( is3D() || !std::isnan( z ) )
-    zDistSquared = ( mZ - z ) * ( mZ - z );
-
-  return ( mX - x ) * ( mX - x ) + ( mY - y ) * ( mY - y ) + zDistSquared;
-}
-
-double QgsPoint::distanceSquared3D( const QgsPoint &other ) const
-{
-  double zDistSquared = 0.0;
-  if ( is3D() || other.is3D() )
-    zDistSquared = ( mZ - other.z() ) * ( mZ - other.z() );
-
-  return ( mX - other.x() ) * ( mX - other.x() ) + ( mY - other.y() ) * ( mY - other.y() ) + zDistSquared;
-}
-
 double QgsPoint::azimuth( const QgsPoint &other ) const
 {
-  const double dx = other.x() - mX;
-  const double dy = other.y() - mY;
-  return ( std::atan2( dx, dy ) * 180.0 / M_PI );
+  return QgsGeometryUtilsBase::azimuth( mX, mY, other.x(), other.y() );
 }
 
 double QgsPoint::inclination( const QgsPoint &other ) const
@@ -769,9 +738,9 @@ bool QgsPoint::isEmpty() const
   return std::isnan( mX ) || std::isnan( mY );
 }
 
-QgsRectangle QgsPoint::boundingBox() const
+QgsBox3D QgsPoint::boundingBox3D() const
 {
-  return QgsRectangle( mX, mY, mX, mY );
+  return QgsBox3D( mX, mY, mZ, mX, mY, mZ );
 }
 
 QString QgsPoint::geometryType() const

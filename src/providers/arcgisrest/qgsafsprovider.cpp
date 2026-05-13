@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgsafsprovider.h"
+#include "moc_qgsafsprovider.cpp"
 #include "qgsarcgisrestutils.h"
 #include "qgsarcgisrestquery.h"
 #include "qgsafsfeatureiterator.h"
@@ -24,13 +25,15 @@
 #include "qgslogger.h"
 #include "qgsdataitemprovider.h"
 #include "qgsapplication.h"
+#include "qgsrenderer.h"
 #include "qgsruntimeprofiler.h"
 #include "qgsfeedback.h"
 #include "qgsreadwritelocker.h"
 #include "qgsvariantutils.h"
+#include "qgsvectorlayerlabeling.h"
 
 
-QgsAfsProvider::QgsAfsProvider( const QString &uri, const ProviderOptions &options, QgsDataProvider::ReadFlags flags )
+QgsAfsProvider::QgsAfsProvider( const QString &uri, const ProviderOptions &options, Qgis::DataProviderReadFlags flags )
   : QgsVectorDataProvider( uri, options, flags )
 {
   mSharedData.reset( new QgsAfsSharedData( QgsDataSourceUri( uri ) ) );
@@ -46,13 +49,13 @@ QgsAfsProvider::QgsAfsProvider( const QString &uri, const ProviderOptions &optio
   QString errorTitle, errorMessage;
 
   mRequestHeaders = mSharedData->mDataSource.httpHeaders();
+  const QString &urlPrefix = mSharedData->mDataSource.param( QStringLiteral( "urlprefix" ) );
 
-  std::unique_ptr< QgsScopedRuntimeProfile > profile;
+  std::unique_ptr<QgsScopedRuntimeProfile> profile;
   if ( QgsApplication::profiler()->groupIsActive( QStringLiteral( "projectload" ) ) )
-    profile = std::make_unique< QgsScopedRuntimeProfile >( tr( "Retrieve service definition" ), QStringLiteral( "projectload" ) );
+    profile = std::make_unique<QgsScopedRuntimeProfile>( tr( "Retrieve service definition" ), QStringLiteral( "projectload" ) );
 
-  const QVariantMap layerData = QgsArcGisRestQueryUtils::getLayerInfo( mSharedData->mDataSource.param( QStringLiteral( "url" ) ),
-                                authcfg, errorTitle, errorMessage, mRequestHeaders );
+  const QVariantMap layerData = QgsArcGisRestQueryUtils::getLayerInfo( mSharedData->mDataSource.param( QStringLiteral( "url" ) ), authcfg, errorTitle, errorMessage, mRequestHeaders, urlPrefix );
   if ( layerData.isEmpty() )
   {
     pushError( errorTitle + ": " + errorMessage );
@@ -74,8 +77,7 @@ QgsAfsProvider::QgsAfsProvider( const QString &uri, const ProviderOptions &optio
     if ( adminUrl.contains( QStringLiteral( "/rest/services/" ) ) )
     {
       adminUrl.replace( QLatin1String( "/rest/services/" ), QLatin1String( "/rest/admin/services/" ) );
-      const QVariantMap adminData = QgsArcGisRestQueryUtils::getLayerInfo( adminUrl,
-                                    authcfg, errorTitle, errorMessage, mRequestHeaders );
+      const QVariantMap adminData = QgsArcGisRestQueryUtils::getLayerInfo( adminUrl, authcfg, errorTitle, errorMessage, mRequestHeaders, urlPrefix );
       if ( !adminData.isEmpty() )
       {
         mAdminUrl = adminUrl;
@@ -85,8 +87,9 @@ QgsAfsProvider::QgsAfsProvider( const QString &uri, const ProviderOptions &optio
     }
   }
 
-  mServerSupportsCurves = layerData.value( QStringLiteral( "allowTrueCurvesUpdates" ), false ).toBool();
+  mServerSupportsCurvedUpdates = layerData.value( QStringLiteral( "allowTrueCurvesUpdates" ), false ).toBool();
 
+  const bool useCurvedTypes = mServerSupportsCurvedUpdates || !mCapabilityStrings.contains( QLatin1String( "update" ), Qt::CaseInsensitive );
   if ( !isTable )
   {
     // Set extent
@@ -129,10 +132,10 @@ QgsAfsProvider::QgsAfsProvider( const QString &uri, const ProviderOptions &optio
     if ( xminOk && yminOk && xmaxOk && ymaxOk )
     {
       QgsLayerMetadata::SpatialExtent spatialExtent;
-      spatialExtent.bounds = QgsBox3d( originalExtent );
+      spatialExtent.bounds = QgsBox3D( originalExtent );
       spatialExtent.extentCrs = extentCrs;
       QgsLayerMetadata::Extent metadataExtent;
-      metadataExtent.setSpatialExtents( QList<  QgsLayerMetadata::SpatialExtent >() << spatialExtent );
+      metadataExtent.setSpatialExtents( QList<QgsLayerMetadata::SpatialExtent>() << spatialExtent );
       mLayerMetadata.setExtent( metadataExtent );
     }
     if ( extentCrs.isValid() )
@@ -166,7 +169,7 @@ QgsAfsProvider::QgsAfsProvider( const QString &uri, const ProviderOptions &optio
     const QString fieldName = fieldDataMap[QStringLiteral( "name" )].toString();
     const QString fieldAlias = fieldDataMap[QStringLiteral( "alias" )].toString();
     const QString fieldTypeString = fieldDataMap[QStringLiteral( "type" )].toString();
-    const QVariant::Type type = QgsArcGisRestUtils::convertFieldType( fieldTypeString );
+    const QMetaType::Type type = QgsArcGisRestUtils::convertFieldType( fieldTypeString );
     if ( fieldName == QLatin1String( "geometry" ) || fieldTypeString == QLatin1String( "esriFieldTypeGeometry" ) )
     {
       // skip geometry field
@@ -176,7 +179,7 @@ QgsAfsProvider::QgsAfsProvider( const QString &uri, const ProviderOptions &optio
     {
       objectIdFieldName = fieldName;
     }
-    if ( type == QVariant::Invalid )
+    if ( type == QMetaType::Type::UnknownType )
     {
       QgsDebugError( QStringLiteral( "Skipping unsupported field %1 of type %2" ).arg( fieldName, fieldTypeString ) );
       continue;
@@ -194,7 +197,7 @@ QgsAfsProvider::QgsAfsProvider( const QString &uri, const ProviderOptions &optio
       {
         const QVariantMap value = v.toMap();
         QVariantMap config;
-        config[ value.value( QStringLiteral( "name" ) ).toString() ] = value.value( QStringLiteral( "code" ) );
+        config[value.value( QStringLiteral( "name" ) ).toString()] = value.value( QStringLiteral( "code" ) );
         valueConfig.append( config );
       }
       QVariantMap editorConfig;
@@ -228,6 +231,11 @@ QgsAfsProvider::QgsAfsProvider( const QString &uri, const ProviderOptions &optio
     const bool hasM = layerData[QStringLiteral( "hasM" )].toBool();
     const bool hasZ = layerData[QStringLiteral( "hasZ" )].toBool();
     mSharedData->mGeometryType = QgsArcGisRestUtils::convertGeometryType( layerData[QStringLiteral( "geometryType" )].toString() );
+    if ( useCurvedTypes )
+      mSharedData->mGeometryType = QgsWkbTypes::curveType( mSharedData->mGeometryType );
+    else
+      mSharedData->mGeometryType = QgsWkbTypes::linearType( mSharedData->mGeometryType );
+
     if ( mSharedData->mGeometryType == Qgis::WkbType::Unknown )
     {
       if ( layerData.value( QStringLiteral( "serviceDataType" ) ).toString().startsWith( QLatin1String( "esriImageService" ) ) )
@@ -249,32 +257,31 @@ QgsAfsProvider::QgsAfsProvider( const QString &uri, const ProviderOptions &optio
   {
     const QVariantMap timeInfo = layerData.value( QStringLiteral( "timeInfo" ) ).toMap();
 
-    temporalCapabilities()->setHasTemporalCapabilities( true );
-    temporalCapabilities()->setStartField( timeInfo.value( QStringLiteral( "startTimeField" ) ).toString() );
-    temporalCapabilities()->setEndField( timeInfo.value( QStringLiteral( "endTimeField" ) ).toString() );
-    if ( !temporalCapabilities()->endField().isEmpty() )
-      temporalCapabilities()->setMode( Qgis::VectorDataProviderTemporalMode::StoresFeatureDateTimeStartAndEndInSeparateFields );
-    else if ( !temporalCapabilities()->startField().isEmpty() )
-      temporalCapabilities()->setMode( Qgis::VectorDataProviderTemporalMode::StoresFeatureDateTimeInstantInField );
+    QgsVectorDataProviderTemporalCapabilities *lTemporalCapabilities = temporalCapabilities();
+    lTemporalCapabilities->setHasTemporalCapabilities( true );
+    lTemporalCapabilities->setStartField( timeInfo.value( QStringLiteral( "startTimeField" ) ).toString() );
+    lTemporalCapabilities->setEndField( timeInfo.value( QStringLiteral( "endTimeField" ) ).toString() );
+    if ( !lTemporalCapabilities->endField().isEmpty() )
+      lTemporalCapabilities->setMode( Qgis::VectorDataProviderTemporalMode::StoresFeatureDateTimeStartAndEndInSeparateFields );
+    else if ( !lTemporalCapabilities->startField().isEmpty() )
+      lTemporalCapabilities->setMode( Qgis::VectorDataProviderTemporalMode::StoresFeatureDateTimeInstantInField );
     else
-      temporalCapabilities()->setMode( Qgis::VectorDataProviderTemporalMode::HasFixedTemporalRange );
+      lTemporalCapabilities->setMode( Qgis::VectorDataProviderTemporalMode::HasFixedTemporalRange );
 
     const QVariantList extent = timeInfo.value( QStringLiteral( "timeExtent" ) ).toList();
     if ( extent.size() == 2 )
     {
-      temporalCapabilities()->setAvailableTemporalRange( QgsDateTimeRange( QgsArcGisRestUtils::convertDateTime( extent.at( 0 ) ),
-          QgsArcGisRestUtils::convertDateTime( extent.at( 1 ) ) ) );
+      lTemporalCapabilities->setAvailableTemporalRange( QgsDateTimeRange( QgsArcGisRestUtils::convertDateTime( extent.at( 0 ) ), QgsArcGisRestUtils::convertDateTime( extent.at( 1 ) ) ) );
     }
   }
 
-  QList<QgsVectorDataProvider::NativeType> types
-  {
-    QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QVariant::Int ), QStringLiteral( "esriFieldTypeSmallInteger" ), QVariant::Int, -1, -1, 0, 0 ),
-    QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QVariant::LongLong ), QStringLiteral( "esriFieldTypeInteger" ), QVariant::LongLong, -1, -1, 0, 0 ),
-    QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QVariant::Double ), QStringLiteral( "esriFieldTypeDouble" ), QVariant::Double, 1, 20, 0, 20 ),
-    QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QVariant::String ), QStringLiteral( "esriFieldTypeString" ), QVariant::String, -1, -1, -1, -1 ),
-    QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QVariant::DateTime ), QStringLiteral( "esriFieldTypeDate" ), QVariant::DateTime, -1, -1, -1, -1 ),
-    QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QVariant::ByteArray ), QStringLiteral( "esriFieldTypeBlob" ), QVariant::ByteArray, -1, -1, -1, -1 )
+  QList<QgsVectorDataProvider::NativeType> types {
+    QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QMetaType::Type::Int ), QStringLiteral( "esriFieldTypeSmallInteger" ), QMetaType::Type::Int, -1, -1, 0, 0 ),
+    QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QMetaType::Type::LongLong ), QStringLiteral( "esriFieldTypeInteger" ), QMetaType::Type::LongLong, -1, -1, 0, 0 ),
+    QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QMetaType::Type::Double ), QStringLiteral( "esriFieldTypeDouble" ), QMetaType::Type::Double, 1, 20, 0, 20 ),
+    QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QMetaType::Type::QString ), QStringLiteral( "esriFieldTypeString" ), QMetaType::Type::QString, -1, -1, -1, -1 ),
+    QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QMetaType::Type::QDateTime ), QStringLiteral( "esriFieldTypeDate" ), QMetaType::Type::QDateTime, -1, -1, -1, -1 ),
+    QgsVectorDataProvider::NativeType( QgsVariantUtils::typeToDisplayString( QMetaType::Type::QByteArray ), QStringLiteral( "esriFieldTypeBlob" ), QMetaType::Type::QByteArray, -1, -1, -1, -1 )
   };
   setNativeTypes( types );
 
@@ -284,7 +291,7 @@ QgsAfsProvider::QgsAfsProvider( const QString &uri, const ProviderOptions &optio
   // Read OBJECTIDs of all features: these may not be a continuous sequence,
   // and we need to store these to iterate through the features. This query
   // also returns the name of the ObjectID field.
-  if ( ! mSharedData->getObjectIds( errorMessage ) )
+  if ( !mSharedData->getObjectIds( errorMessage ) )
   {
     appendError( QgsErrorMessage( errorMessage, QStringLiteral( "AFSProvider" ) ) );
     return;
@@ -311,6 +318,11 @@ QgsAfsProvider::QgsAfsProvider( const QString &uri, const ProviderOptions &optio
   // renderer
   mRendererDataMap = layerData.value( QStringLiteral( "drawingInfo" ) ).toMap().value( QStringLiteral( "renderer" ) ).toMap();
   mLabelingDataList = layerData.value( QStringLiteral( "drawingInfo" ) ).toMap().value( QStringLiteral( "labelingInfo" ) ).toList();
+  const QVariant transparency = layerData.value( QStringLiteral( "drawingInfo" ) ).toMap().value( QStringLiteral( "transparency" ) );
+  if ( transparency.isValid() )
+  {
+    mRendererDataMap.insert( QStringLiteral( "transparency" ), transparency );
+  }
 
   mValid = true;
 }
@@ -369,6 +381,21 @@ bool QgsAfsProvider::addFeatures( QgsFeatureList &flist, Flags )
   if ( flist.isEmpty() )
     return true; // for consistency!
 
+  // special handling for object ID field -- explicitly reset "Autogenerate" strings for
+  // field to QgsUnsetAttributeValue. This is required to maintain stable API which allowed
+  // provider default value clause strings to be used as an alias for unset attributes.
+  // TODO QGIS 5 - We can remove this when we no longer need to respect that.
+  for ( int i = 0; i < flist.size(); ++i )
+  {
+    QgsFeature &f = flist[i];
+    if ( mSharedData->mObjectIdFieldIdx >= 0
+         && f.attributes().size() > mSharedData->mObjectIdFieldIdx
+         && f.attribute( mSharedData->mObjectIdFieldIdx ) == QLatin1String( "Autogenerate" ) )
+    {
+      f.setAttribute( mSharedData->mObjectIdFieldIdx, QgsUnsetAttributeValue() );
+    }
+  }
+
   QString error;
   QgsFeedback feedback;
   const bool res = mSharedData->addFeatures( flist, error, &feedback );
@@ -394,7 +421,7 @@ bool QgsAfsProvider::changeAttributeValues( const QgsChangedAttributesMap &attrM
   }
 
   // REST API requires a full definition of features, so we have to read their initial values first
-  QgsFeatureIterator it = getFeatures( QgsFeatureRequest().setFilterFids( ids ).setFlags( QgsFeatureRequest::NoGeometry ) );
+  QgsFeatureIterator it = getFeatures( QgsFeatureRequest().setFilterFids( ids ).setFlags( Qgis::FeatureRequestFlag::NoGeometry ) );
   QgsFeature feature;
 
   QgsFeatureList updatedFeatures;
@@ -579,46 +606,46 @@ bool QgsAfsProvider::createAttributeIndex( int field )
   return true;
 }
 
-QgsVectorDataProvider::Capabilities QgsAfsProvider::capabilities() const
+Qgis::VectorProviderCapabilities QgsAfsProvider::capabilities() const
 {
-  QgsVectorDataProvider::Capabilities c = QgsVectorDataProvider::SelectAtId
-                                          | QgsVectorDataProvider::ReadLayerMetadata
-                                          | QgsVectorDataProvider::Capability::ReloadData;
+  Qgis::VectorProviderCapabilities c = Qgis::VectorProviderCapability::SelectAtId
+                                       | Qgis::VectorProviderCapability::ReadLayerMetadata
+                                       | Qgis::VectorProviderCapability::ReloadData;
   if ( !mRendererDataMap.empty() )
   {
-    c = c | QgsVectorDataProvider::CreateRenderer;
+    c = c | Qgis::VectorProviderCapability::CreateRenderer;
   }
   if ( !mLabelingDataList.empty() )
   {
-    c = c | QgsVectorDataProvider::CreateLabeling;
+    c = c | Qgis::VectorProviderCapability::CreateLabeling;
   }
 
-  if ( mServerSupportsCurves )
-    c |= QgsVectorDataProvider::CircularGeometries;
+  if ( mServerSupportsCurvedUpdates )
+    c |= Qgis::VectorProviderCapability::CircularGeometries;
 
   if ( mCapabilityStrings.contains( QLatin1String( "delete" ), Qt::CaseInsensitive ) )
   {
-    c |= QgsVectorDataProvider::DeleteFeatures;
+    c |= Qgis::VectorProviderCapability::DeleteFeatures;
   }
   if ( mCapabilityStrings.contains( QLatin1String( "create" ), Qt::CaseInsensitive ) )
   {
-    c |= QgsVectorDataProvider::AddFeatures;
+    c |= Qgis::VectorProviderCapability::AddFeatures;
   }
   if ( mCapabilityStrings.contains( QLatin1String( "update" ), Qt::CaseInsensitive ) )
   {
-    c |= QgsVectorDataProvider::ChangeAttributeValues;
-    c |= QgsVectorDataProvider::ChangeFeatures;
-    c |= QgsVectorDataProvider::ChangeGeometries;
+    c |= Qgis::VectorProviderCapability::ChangeAttributeValues;
+    c |= Qgis::VectorProviderCapability::ChangeFeatures;
+    c |= Qgis::VectorProviderCapability::ChangeGeometries;
   }
 
   if ( mAdminCapabilityStrings.contains( QLatin1String( "update" ), Qt::CaseInsensitive ) )
   {
-    c |= QgsVectorDataProvider::AddAttributes;
-    c |= QgsVectorDataProvider::CreateAttributeIndex;
+    c |= Qgis::VectorProviderCapability::AddAttributes;
+    c |= Qgis::VectorProviderCapability::CreateAttributeIndex;
   }
   if ( mAdminCapabilityStrings.contains( QLatin1String( "delete" ), Qt::CaseInsensitive ) )
   {
-    c |= QgsVectorDataProvider::DeleteAttributes;
+    c |= Qgis::VectorProviderCapability::DeleteAttributes;
   }
 
   return c;
@@ -638,7 +665,7 @@ QString QgsAfsProvider::defaultValueClause( int fieldId ) const
 
 bool QgsAfsProvider::skipConstraintCheck( int fieldIndex, QgsFieldConstraints::Constraint, const QVariant &value ) const
 {
-  return fieldIndex == mSharedData->mObjectIdFieldIdx && value.toString() == QLatin1String( "Autogenerate" );
+  return fieldIndex == mSharedData->mObjectIdFieldIdx && ( QgsVariantUtils::isUnsetAttributeValue( value ) || value.toString() == QLatin1String( "Autogenerate" ) );
 }
 
 QString QgsAfsProvider::subsetString() const
@@ -652,6 +679,11 @@ bool QgsAfsProvider::setSubsetString( const QString &subset, bool )
   if ( trimmedSubset == mSharedData->subsetString() )
     return true;
 
+  // We must not change the subset string of the shared data used in another iterator/data provider,
+  // or other layers attached to the same shared data (i.e. layers with a data provider cloned from
+  // this one) will also unwantedly inherit the new subset string.
+  mSharedData = mSharedData->clone();
+
   mSharedData->setSubsetString( trimmedSubset );
 
   // Update datasource uri too
@@ -664,6 +696,21 @@ bool QgsAfsProvider::setSubsetString( const QString &subset, bool )
   emit dataChanged();
 
   return true;
+}
+
+bool QgsAfsProvider::supportsSubsetString() const
+{
+  return true;
+}
+
+QString QgsAfsProvider::subsetStringDialect() const
+{
+  return tr( "SQL 92 WHERE clause" );
+}
+
+QString QgsAfsProvider::subsetStringHelpUrl() const
+{
+  return QStringLiteral( "https://developers.arcgis.com/rest/services-reference/enterprise/query-feature-service/#sql-92-where-clause" );
 }
 
 void QgsAfsProvider::setDataSourceUri( const QString &uri )
@@ -714,12 +761,12 @@ void QgsAfsProvider::reloadProviderData()
 
 QgsFeatureRenderer *QgsAfsProvider::createRenderer( const QVariantMap & ) const
 {
-  return QgsArcGisRestUtils::convertRenderer( mRendererDataMap );
+  return QgsArcGisRestUtils::convertRenderer( mRendererDataMap ).release();
 }
 
 QgsAbstractVectorLayerLabeling *QgsAfsProvider::createLabeling( const QVariantMap & ) const
 {
-  return QgsArcGisRestUtils::convertLabeling( mLabelingDataList );
+  return QgsArcGisRestUtils::convertLabeling( mLabelingDataList ).release();
 }
 
 bool QgsAfsProvider::renderInPreview( const QgsDataProvider::PreviewContext & )
@@ -730,8 +777,8 @@ bool QgsAfsProvider::renderInPreview( const QgsDataProvider::PreviewContext & )
 }
 
 
-QgsAfsProviderMetadata::QgsAfsProviderMetadata():
-  QgsProviderMetadata( QgsAfsProvider::AFS_PROVIDER_KEY, QgsAfsProvider::AFS_PROVIDER_DESCRIPTION )
+QgsAfsProviderMetadata::QgsAfsProviderMetadata()
+  : QgsProviderMetadata( QgsAfsProvider::AFS_PROVIDER_KEY, QgsAfsProvider::AFS_PROVIDER_DESCRIPTION )
 {
 }
 
@@ -745,7 +792,7 @@ QList<QgsDataItemProvider *> QgsAfsProviderMetadata::dataItemProviders() const
   QList<QgsDataItemProvider *> providers;
 
   providers
-      << new QgsArcGisRestDataItemProvider;
+    << new QgsArcGisRestDataItemProvider;
 
   return providers;
 }
@@ -790,9 +837,9 @@ QString QgsAfsProviderMetadata::encodeUri( const QVariantMap &parts ) const
   QgsDataSourceUri dsUri;
   dsUri.setParam( QStringLiteral( "url" ), parts.value( QStringLiteral( "url" ) ).toString() );
 
-  if ( parts.contains( QStringLiteral( "bounds" ) ) && parts.value( QStringLiteral( "bounds" ) ).userType() == QMetaType::type( "QgsRectangle" ) )
+  if ( parts.contains( QStringLiteral( "bounds" ) ) && parts.value( QStringLiteral( "bounds" ) ).userType() == qMetaTypeId<QgsRectangle>() )
   {
-    const QgsRectangle bBox = parts.value( QStringLiteral( "bounds" ) ).value< QgsRectangle >();
+    const QgsRectangle bBox = parts.value( QStringLiteral( "bounds" ) ).value<QgsRectangle>();
     dsUri.setParam( QStringLiteral( "bbox" ), QStringLiteral( "%1,%2,%3,%4" ).arg( bBox.xMinimum() ).arg( bBox.yMinimum() ).arg( bBox.xMaximum() ).arg( bBox.yMaximum() ) );
   }
 
@@ -810,7 +857,7 @@ QString QgsAfsProviderMetadata::encodeUri( const QVariantMap &parts ) const
   return dsUri.uri( false );
 }
 
-QgsAfsProvider *QgsAfsProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags )
+QgsAfsProvider *QgsAfsProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags )
 {
   return new QgsAfsProvider( uri, options, flags );
 }

@@ -31,6 +31,7 @@
 
 #include "qgis_gui.h"
 
+class QgsSymbolSelectorWidget;
 
 #ifndef SIP_RUN
 /// @cond PRIVATE
@@ -70,11 +71,11 @@ class GUI_EXPORT QgsGraduatedSymbolRendererModel : public QAbstractItemModel
   private:
     QgsGraduatedSymbolRenderer *mRenderer = nullptr;
     QString mMimeFormat;
-    QPointer< QScreen > mScreen;
+    QPointer<QScreen> mScreen;
 };
 
-// View style which shows drop indicator line between items
-class QgsGraduatedSymbolRendererViewStyle: public QgsProxyStyle
+// View style which shows a drop indicator line between items
+class QgsGraduatedSymbolRendererViewStyle : public QgsProxyStyle
 {
     Q_OBJECT
 
@@ -90,8 +91,9 @@ class QgsGraduatedSymbolRendererViewStyle: public QgsProxyStyle
 /**
  * \ingroup gui
  * \class QgsGraduatedSymbolRendererWidget
+ * \brief A widget for configuring a QgsGraduatedSymbolRenderer.
  */
-class GUI_EXPORT QgsGraduatedSymbolRendererWidget : public QgsRendererWidget, private Ui::QgsGraduatedSymbolRendererWidget, private QgsExpressionContextGenerator
+class GUI_EXPORT QgsGraduatedSymbolRendererWidget : public QgsRendererWidget, private Ui::QgsGraduatedSymbolRendererWidget
 {
     Q_OBJECT
 
@@ -104,6 +106,7 @@ class GUI_EXPORT QgsGraduatedSymbolRendererWidget : public QgsRendererWidget, pr
     QgsFeatureRenderer *renderer() override;
     void setContext( const QgsSymbolWidgetContext &context ) override;
     void disableSymbolLevels() override SIP_SKIP;
+    QgsExpressionContext createExpressionContext() const override;
 
   public slots:
     void graduatedColumnChanged( const QString &field );
@@ -144,8 +147,7 @@ class GUI_EXPORT QgsGraduatedSymbolRendererWidget : public QgsRendererWidget, pr
     void mSizeUnitWidget_changed();
     void methodComboBox_currentIndexChanged( int );
     void updateMethodParameters();
-    void cleanUpSymbolSelector( QgsPanelWidget *container );
-    void updateSymbolsFromWidget();
+    void updateSymbolsFromWidget( QgsSymbolSelectorWidget *widget );
     void dataDefinedSizeLegend();
     void changeGraduatedSymbol();
     void selectionChanged( const QItemSelection &selected, const QItemSelection &deselected );
@@ -186,14 +188,13 @@ class GUI_EXPORT QgsGraduatedSymbolRendererWidget : public QgsRendererWidget, pr
       SizeMode
     };
 
-    QgsExpressionContext createExpressionContext() const override;
     void toggleMethodWidgets( MethodMode mode );
 
     void clearParameterWidgets();
 
-    std::unique_ptr< QgsGraduatedSymbolRenderer > mRenderer;
+    std::unique_ptr<QgsGraduatedSymbolRenderer> mRenderer;
 
-    std::unique_ptr< QgsSymbol > mGraduatedSymbol;
+    std::unique_ptr<QgsSymbol> mGraduatedSymbol;
 
     int mRowSelected;
 
@@ -203,7 +204,9 @@ class GUI_EXPORT QgsGraduatedSymbolRendererWidget : public QgsRendererWidget, pr
 
     QgsDoubleValidator *mSymmetryPointValidator = nullptr;
     QAction *mActionLevels = nullptr;
-    std::vector< std::unique_ptr< QgsAbstractProcessingParameterWidgetWrapper >> mParameterWidgetWrappers;
+
+    std::unique_ptr< QgsClassificationMethod > mClassificationMethod;
+    std::vector<std::unique_ptr<QgsAbstractProcessingParameterWidgetWrapper>> mParameterWidgetWrappers;
 
     int mBlockUpdates = 0;
 

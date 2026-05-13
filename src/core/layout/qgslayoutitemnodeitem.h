@@ -24,7 +24,6 @@
  * \ingroup core
  * \brief An abstract layout item that provides generic methods for node based
  * shapes such as polygon or polylines.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutNodesItem: public QgsLayoutItem
 {
@@ -48,7 +47,7 @@ class CORE_EXPORT QgsLayoutNodesItem: public QgsLayoutItem
      * Add a node in current shape.
      * \param point is the location of the new node (in scene coordinates)
      * \param checkArea is a flag to indicate if there's a space constraint.
-     * \param radius is the space contraint and is used only if checkArea is
+     * \param radius is the space constraint and is used only if checkArea is
      * TRUE. Typically, if this flag is TRUE, the new node has to be nearer
      * than radius to the shape to be added.
      */
@@ -114,6 +113,15 @@ class CORE_EXPORT QgsLayoutNodesItem: public QgsLayoutItem
     // rather than the item's pen
     double estimatedFrameBleed() const override;
 
+    /**
+     * Must be reimplemented in subclasses.
+     * Typically a polyline is valid if it has at least 2 distinct nodes,
+     * while a polygon is valid if it has at least 3 distinct nodes.
+     *
+     * \since QGIS 3.40
+     */
+    virtual bool isValid() const = 0;
+
   protected:
 
     /**
@@ -127,7 +135,7 @@ class CORE_EXPORT QgsLayoutNodesItem: public QgsLayoutItem
     QgsLayoutNodesItem( const QPolygonF &polygon, QgsLayout *layout );
 
     void draw( QgsLayoutItemRenderContext &context ) override;
-
+    QgsLayoutItem::Flags itemFlags() const override;
     bool writePropertiesToElement( QDomElement &element, QDomDocument &document, const QgsReadWriteContext &context ) const override;
     bool readPropertiesFromElement( const QDomElement &element, const QDomDocument &document, const QgsReadWriteContext &context ) override;
 

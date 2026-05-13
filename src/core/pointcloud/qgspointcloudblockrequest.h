@@ -42,7 +42,7 @@ class CORE_EXPORT QgsPointCloudBlockRequest : public QObject
      * QgsPointCloudBlockRequest constructor
      * Note: It is the responsablitiy of the caller to delete the block if it was loaded correctly
      */
-    QgsPointCloudBlockRequest( const IndexedPointCloudNode &node, const QString &Uri,
+    QgsPointCloudBlockRequest( const QgsPointCloudNodeId &node, const QString &Uri,
                                const QgsPointCloudAttributeCollection &attributes, const QgsPointCloudAttributeCollection &requestedAttributes,
                                const QgsVector3D &scale, const QgsVector3D &offset, const QgsPointCloudExpression &filterExpression, const QgsRectangle &filterRect );
 
@@ -50,10 +50,9 @@ class CORE_EXPORT QgsPointCloudBlockRequest : public QObject
     virtual ~QgsPointCloudBlockRequest() = 0;
 
     /**
-     * Returns the requested block. if the returned block is nullptr, that means the data request failed
-     * Note: It is the responsablitiy of the caller to delete the block if it was loaded correctly
+     * Returns the requested block. if the returned block is nullptr, that means the data request failed.
      */
-    QgsPointCloudBlock *block();
+    std::unique_ptr<QgsPointCloudBlock> takeBlock();
 
     //! Returns the error message string of the request
     QString errorStr();
@@ -63,12 +62,12 @@ class CORE_EXPORT QgsPointCloudBlockRequest : public QObject
     void finished();
 
   protected:
-    IndexedPointCloudNode mNode;
+    QgsPointCloudNodeId mNode;
     QString mUri;
     QgsPointCloudAttributeCollection mAttributes;
     QgsPointCloudAttributeCollection mRequestedAttributes;
     std::unique_ptr<QgsTileDownloadManagerReply> mTileDownloadManagerReply = nullptr;
-    QgsPointCloudBlock *mBlock = nullptr;
+    std::unique_ptr<QgsPointCloudBlock> mBlock;
     QString mErrorStr;
     QgsVector3D mScale, mOffset;
     QgsPointCloudExpression mFilterExpression;

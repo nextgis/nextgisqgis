@@ -27,18 +27,16 @@ class QgsSnappingUtils;
 
 /**
  * \ingroup core
- * \brief The QgsCadUtils class provides routines for CAD editing.
+ * \brief Provides routines for CAD editing.
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsCadUtils
 {
   public:
 
     /**
-     * \brief Structure with details of one constraint
+     * \brief Structure with details of one constraint.
      * \ingroup core
-     * \since QGIS 3.0
      */
     class AlignMapPointConstraint
     {
@@ -62,9 +60,8 @@ class CORE_EXPORT QgsCadUtils
     };
 
     /**
-     * \brief Structure returned from alignMapPoint() method
+     * \brief Structure returned from alignMapPoint() method.
      * \ingroup core
-     * \since QGIS 3.0
      */
     class AlignMapPointOutput
     {
@@ -83,7 +80,7 @@ class CORE_EXPORT QgsCadUtils
 
         /**
          * Snapped segment - only valid if actually used for something
-         * \deprecated will be removed in QGIS 4.0 - use snapMatch instead
+         * \deprecated QGIS 3.40. Will be removed in QGIS 4.0 - use snapMatch() instead.
          */
         QgsPointLocator::Match edgeMatch;
 
@@ -98,7 +95,6 @@ class CORE_EXPORT QgsCadUtils
     /**
      * \ingroup core
      * \brief Defines constraints for the QgsCadUtils::alignMapPoint() method.
-     * \since QGIS 3.0
      */
     class AlignMapPointContext
     {
@@ -106,7 +102,7 @@ class CORE_EXPORT QgsCadUtils
         //! Snapping utils that will be used to snap point to map. Must not be NULLPTR.
         QgsSnappingUtils *snappingUtils = nullptr;
         //! Map units/pixel ratio from map canvas.
-        double mapUnitsPerPixel;
+        double mapUnitsPerPixel = 1;
 
         //! Constraint for X coordinate
         QgsCadUtils::AlignMapPointConstraint xConstraint;
@@ -198,7 +194,6 @@ class CORE_EXPORT QgsCadUtils
          * \since QGIS 3.26
          */
         QQueue< QgsPointLocator::Match > lockedSnapVertices() const { return mLockedSnapVertices; } SIP_SKIP;
-
 
 #ifdef SIP_RUN
         SIP_PROPERTY( name = cadPointList, get = _cadPointList, set = _setCadPointList )

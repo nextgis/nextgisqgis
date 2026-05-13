@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/actions/qgsaction.h                                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -22,21 +22,19 @@ Utility class that encapsulates an action based on vector attributes.
   public:
 
     QgsAction();
-%Docstring
-Default constructor
-%End
 
-    QgsAction( Qgis::AttributeActionType type, const QString &description, const QString &command, bool capture = false);
+    QgsAction( Qgis::AttributeActionType type, const QString &description, const QString &command, bool capture = false );
 %Docstring
 Create a new QgsAction
 
 :param type: The type of this action
 :param description: A human readable description string
 :param command: The action text. Its interpretation depends on the type
-:param capture: If this is set to ``True``, the output will be captured when an action is run
+:param capture: If this is set to ``True``, the output will be captured
+                when an action is run
 %End
 
-    QgsAction( Qgis::AttributeActionType type, const QString &description, const QString &action, const QString &icon, bool capture, const QString &shortTitle = QString(), const QSet<QString> &actionScopes = QSet<QString>(), const QString &notificationMessage = QString());
+    QgsAction( Qgis::AttributeActionType type, const QString &description, const QString &action, const QString &icon, bool capture, const QString &shortTitle = QString(), const QSet<QString> &actionScopes = QSet<QString>(), const QString &notificationMessage = QString() );
 %Docstring
 Create a new QgsAction
 
@@ -44,13 +42,17 @@ Create a new QgsAction
 :param description: A human readable description string
 :param action: The action text. Its interpretation depends on the type
 :param icon: Path to an icon for this action
-:param capture: If this is set to ``True``, the output will be captured when an action is run
-:param shortTitle: A short string used to label user interface elements like buttons
-:param actionScopes: A set of scopes in which this action will be available
-:param notificationMessage: A particular message which reception will trigger the action
+:param capture: If this is set to ``True``, the output will be captured
+                when an action is run
+:param shortTitle: A short string used to label user interface elements
+                   like buttons
+:param actionScopes: A set of scopes in which this action will be
+                     available
+:param notificationMessage: A particular message which reception will
+                            trigger the action
 %End
 
-    QgsAction( const QUuid &id, Qgis::AttributeActionType type, const QString &description, const QString &action, const QString &icon, bool capture, const QString &shortTitle = QString(), const QSet<QString> &actionScopes = QSet<QString>(), const QString &notificationMessage = QString());
+    QgsAction( const QUuid &id, Qgis::AttributeActionType type, const QString &description, const QString &action, const QString &icon, bool capture, const QString &shortTitle = QString(), const QSet<QString> &actionScopes = QSet<QString>(), const QString &notificationMessage = QString() );
 %Docstring
 Create a new QgsAction
 
@@ -59,10 +61,14 @@ Create a new QgsAction
 :param description: A human readable description string
 :param action: The action text. Its interpretation depends on the type
 :param icon: Path to an icon for this action
-:param capture: If this is set to ``True``, the output will be captured when an action is run
-:param shortTitle: A short string used to label user interface elements like buttons
-:param actionScopes: A set of scopes in which this action will be available
-:param notificationMessage: A particular message which reception will trigger the action
+:param capture: If this is set to ``True``, the output will be captured
+                when an action is run
+:param shortTitle: A short string used to label user interface elements
+                   like buttons
+:param actionScopes: A set of scopes in which this action will be
+                     available
+:param notificationMessage: A particular message which reception will
+                            trigger the action
 %End
 
 
@@ -79,15 +85,11 @@ The short title is used to label user interface elements like buttons
     QUuid id() const;
 %Docstring
 Returns a unique id for this action.
-
-.. versionadded:: 3.0
 %End
 
     bool isValid() const;
 %Docstring
 Returns ``True`` if this action was a default constructed one.
-
-.. versionadded:: 3.0
 %End
 
     QString iconPath() const;
@@ -102,18 +104,14 @@ The icon
 
     QString command() const;
 %Docstring
-Returns the command that is executed by this action.
-How the content is interpreted depends on the :py:func:`~QgsAction.type` and
-the :py:func:`~QgsAction.actionScope`.
-
-.. versionadded:: 3.0
+Returns the command that is executed by this action. How the content is
+interpreted depends on the :py:func:`~QgsAction.type` and the
+:py:func:`~QgsAction.actionScope`.
 %End
 
     QString notificationMessage() const;
 %Docstring
 Returns the notification message that triggers the action
-
-.. versionadded:: 3.0
 %End
 
     Qgis::AttributeActionType type() const;
@@ -147,65 +145,46 @@ Checks if the action is runable on the current platform
     void run( QgsVectorLayer *layer, const QgsFeature &feature, const QgsExpressionContext &expressionContext ) const;
 %Docstring
 Run this action.
-
-.. versionadded:: 3.0
 %End
 
     void run( const QgsExpressionContext &expressionContext ) const;
 %Docstring
 Run this action.
-
-.. versionadded:: 3.0
 %End
 
     QSet<QString> actionScopes() const;
 %Docstring
-The action scopes define where an action will be available.
-Action scopes may offer additional variables like the clicked
-coordinate.
+The action scopes define where an action will be available. Action
+scopes may offer additional variables like the clicked coordinate.
 
 .. seealso:: :py:class:`QgsActionScope`
-
-.. versionadded:: 3.0
 %End
 
     void setActionScopes( const QSet<QString> &actionScopes );
 %Docstring
-The action scopes define where an action will be available.
-Action scopes may offer additional variables like the clicked
-coordinate.
-
-.. versionadded:: 3.0
+The action scopes define where an action will be available. Action
+scopes may offer additional variables like the clicked coordinate.
 %End
 
     void readXml( const QDomNode &actionNode );
 %Docstring
-Reads an XML definition from actionNode
-into this object.
-
-.. versionadded:: 3.0
+Reads an XML definition from actionNode into this object.
 %End
 
     void writeXml( QDomNode &actionsNode ) const;
 %Docstring
-Appends an XML definition for this action as a new
-child node to actionsNode.
-
-.. versionadded:: 3.0
+Appends an XML definition for this action as a new child node to
+actionsNode.
 %End
 
     void setExpressionContextScope( const QgsExpressionContextScope &scope );
 %Docstring
 Sets an expression context scope to use for running the action.
-
-.. versionadded:: 3.0
 %End
 
     QgsExpressionContextScope expressionContextScope() const;
 %Docstring
 Returns an expression context scope used for running the action.
-
-.. versionadded:: 3.0
 %End
 
     QString html( ) const;
@@ -230,5 +209,5 @@ Sets the action ``command``.
  *                                                                      *
  * src/core/actions/qgsaction.h                                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

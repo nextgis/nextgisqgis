@@ -26,27 +26,19 @@
 #include <limits>
 
 #include "qgis_core.h"
-#include "qgspoint.h"
 #include "qgsdataprovider.h"
 #include "qgsprovidermetadata.h"
 #include "qgsmeshdataset.h"
 #include "qgsmeshdataprovidertemporalcapabilities.h"
+#include "qgsmeshutils.h"
 
+#ifdef SIP_RUN
+% ModuleHeaderCode
+#include "qgsmeshutils.h"
+% End
+#endif
 
 class QgsRectangle;
-
-//! xyz coords of vertex
-typedef QgsPoint QgsMeshVertex;
-
-//! List of vertex indexes
-typedef QVector<int> QgsMeshFace;
-
-/**
- * Edge is a straight line seqment between 2 points.
- * Stores the pair of vertex indexes
- * \since QGIS 3.14
- */
-typedef QPair<int, int> QgsMeshEdge;
 
 /**
  * \ingroup core
@@ -114,10 +106,14 @@ struct CORE_EXPORT QgsMesh
   QVector<QgsMeshFace> faces SIP_SKIP;
 };
 
+// we need to declare metatype so QgsMesh can be passed as QVariant for expressions
+Q_DECLARE_METATYPE( QgsMesh );
+
+
 /**
  * \ingroup core
  *
- * \brief Interface for mesh data sources
+ * \brief Interface for mesh data sources.
  *
  * Mesh is a collection of vertices, edges and faces in 2D or 3D space
  *
@@ -135,7 +131,7 @@ struct CORE_EXPORT QgsMesh
 class CORE_EXPORT QgsMeshDataSourceInterface SIP_ABSTRACT
 {
   public:
-    //! Dtor
+
     virtual ~QgsMeshDataSourceInterface() = default;
 
     /**
@@ -194,7 +190,7 @@ class CORE_EXPORT QgsMeshDataSourceInterface SIP_ABSTRACT
 
 /**
  * \ingroup core
- * \brief Interface for mesh datasets and dataset groups
+ * \brief Interface for mesh datasets and dataset groups.
  *
  *  Dataset is a  collection of vector or scalar values on vertices or faces of the mesh.
  *  Based on the underlying data provider/format, whole dataset is either stored in memory
@@ -211,7 +207,6 @@ class CORE_EXPORT QgsMeshDatasetSourceInterface SIP_ABSTRACT
 {
   public:
     QgsMeshDatasetSourceInterface();
-    //! Dtor
     virtual ~QgsMeshDatasetSourceInterface() = default;
 
     /**
@@ -293,7 +288,7 @@ class CORE_EXPORT QgsMeshDatasetSourceInterface SIP_ABSTRACT
      *
      * \since QGIS 3.12
      */
-    virtual QgsMesh3dDataBlock dataset3dValues( QgsMeshDatasetIndex index, int faceIndex, int count ) const = 0;
+    virtual QgsMesh3DDataBlock dataset3dValues( QgsMeshDatasetIndex index, int faceIndex, int count ) const = 0;
 
     /**
      * \brief Returns whether the face is active for particular dataset
@@ -425,7 +420,7 @@ class CORE_EXPORT QgsMeshDatasetSourceInterface SIP_ABSTRACT
 
 /**
  * \ingroup core
- * \brief Base class for providing data for QgsMeshLayer
+ * \brief Base class for providing data for QgsMeshLayer.
  *
  * Responsible for reading native mesh data
  *
@@ -440,7 +435,7 @@ class CORE_EXPORT QgsMeshDataProvider: public QgsDataProvider, public QgsMeshDat
     //! Ctor
     QgsMeshDataProvider( const QString &uri,
                          const QgsDataProvider::ProviderOptions &providerOptions,
-                         QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() );
+                         Qgis::DataProviderReadFlags = Qgis::DataProviderReadFlags() );
 
     QgsMeshDataProviderTemporalCapabilities *temporalCapabilities() override;
     const QgsMeshDataProviderTemporalCapabilities *temporalCapabilities() const override SIP_SKIP;
@@ -471,6 +466,17 @@ class CORE_EXPORT QgsMeshDataProvider: public QgsDataProvider, public QgsMeshDat
      * \since QGIS 3.22
      */
     virtual void close() = 0;
+
+    /**
+     * \brief Remove dataset group from the mesh
+     *
+     * emits dataChanged when successful
+     *
+     * \return TRUE on success
+     *
+     * \since QGIS 3.42
+     */
+    virtual bool removeDatasetGroup( int index ) = 0;
 
   signals:
     //! Emitted when some new dataset groups have been added

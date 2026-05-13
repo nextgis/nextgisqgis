@@ -18,6 +18,7 @@
 
 
 #include "qgsscalevisibilitydialog.h"
+#include "moc_qgsscalevisibilitydialog.cpp"
 #include "qgsscalerangewidget.h"
 
 
@@ -54,7 +55,7 @@ QgsScaleVisibilityDialog::QgsScaleVisibilityDialog( QWidget *parent, const QStri
   dlgLayout->addWidget( buttonBox, 1, 0 );
 }
 
-void QgsScaleVisibilityDialog::setScaleVisiblity( bool hasScaleVisibility )
+void QgsScaleVisibilityDialog::setScaleVisibility( bool hasScaleVisibility )
 {
   mGroupBox->setChecked( hasScaleVisibility );
 }

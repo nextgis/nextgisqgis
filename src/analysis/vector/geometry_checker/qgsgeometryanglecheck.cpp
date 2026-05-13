@@ -13,6 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "qgsfeedback.h"
 #include "qgsgeometrycheckcontext.h"
 #include "qgsgeometryanglecheck.h"
 #include "qgsgeometryutils.h"
@@ -24,13 +25,29 @@ QList<Qgis::GeometryType> QgsGeometryAngleCheck::compatibleGeometryTypes() const
   return factoryCompatibleGeometryTypes();
 }
 
-void QgsGeometryAngleCheck::collectErrors( const QMap<QString, QgsFeaturePool *> &featurePools, QList<QgsGeometryCheckError *> &errors, QStringList &messages, QgsFeedback *feedback, const LayerFeatureIds &ids ) const
+QgsGeometryCheck::Result QgsGeometryAngleCheck::collectErrors( const QMap<QString, QgsFeaturePool *> &featurePools, QList<QgsGeometryCheckError *> &errors, QStringList &messages, QgsFeedback *feedback, const LayerFeatureIds &ids ) const
 {
   Q_UNUSED( messages )
+
+  QMap<QString, QSet<QVariant>> uniqueIds;
   const QMap<QString, QgsFeatureIds> featureIds = ids.isEmpty() ? allLayerFeatureIds( featurePools ) : ids.toMap();
   const QgsGeometryCheckerUtils::LayerFeatures layerFeatures( featurePools, featureIds, compatibleGeometryTypes(), feedback, context() );
   for ( const QgsGeometryCheckerUtils::LayerFeature &layerFeature : layerFeatures )
   {
+    if ( feedback && feedback->isCanceled() )
+    {
+      return QgsGeometryCheck::Result::Canceled;
+    }
+
+    if ( context()->uniqueIdFieldIndex != -1 )
+    {
+      QgsGeometryCheck::Result result = checkUniqueId( layerFeature, uniqueIds );
+      if ( result != QgsGeometryCheck::Result::Success )
+      {
+        return result;
+      }
+    }
+
     const QgsAbstractGeometry *geom = layerFeature.geometry().constGet();
     for ( int iPart = 0, nParts = geom->partCount(); iPart < nParts; ++iPart )
     {
@@ -69,11 +86,12 @@ void QgsGeometryAngleCheck::collectErrors( const QMap<QString, QgsFeaturePool *>
       }
     }
   }
+  return QgsGeometryCheck::Result::Success;
 }
 
 void QgsGeometryAngleCheck::fixError( const QMap<QString, QgsFeaturePool *> &featurePools, QgsGeometryCheckError *error, int method, const QMap<QString, int> & /*mergeAttributeIndices*/, Changes &changes ) const
 {
-  QgsFeaturePool *featurePool = featurePools[ error->layerId() ];
+  QgsFeaturePool *featurePool = featurePools[error->layerId()];
   QgsFeature feature;
   if ( !featurePool->getFeature( error->featureId(), feature ) )
   {
@@ -138,9 +156,7 @@ void QgsGeometryAngleCheck::fixError( const QMap<QString, QgsFeaturePool *> &fea
     {
       changes[error->layerId()][error->featureId()].append( Change( ChangeNode, ChangeRemoved, vidx ) );
       // Avoid duplicate nodes as result of deleting spike vertex
-      if ( QgsGeometryUtils::sqrDistance2D( p1, p3 ) < ( mContext->tolerance * mContext->tolerance ) &&
-           QgsGeometryCheckerUtils::canDeleteVertex( geometry, vidx.part, vidx.ring ) &&
-           geometry->deleteVertex( error->vidx() ) ) // error->vidx points to p3 after removing p2
+      if ( QgsGeometryUtils::sqrDistance2D( p1, p3 ) < ( mContext->tolerance * mContext->tolerance ) && QgsGeometryCheckerUtils::canDeleteVertex( geometry, vidx.part, vidx.ring ) && geometry->deleteVertex( error->vidx() ) ) // error->vidx points to p3 after removing p2
       {
         changes[error->layerId()][error->featureId()].append( Change( ChangeNode, ChangeRemoved, QgsVertexId( vidx.part, vidx.ring, ( vidx.vertex + 1 ) % n ) ) );
       }
@@ -183,7 +199,7 @@ QgsGeometryCheck::CheckType QgsGeometryAngleCheck::checkType() const
 
 QList<Qgis::GeometryType> QgsGeometryAngleCheck::factoryCompatibleGeometryTypes()
 {
-  return {Qgis::GeometryType::Line, Qgis::GeometryType::Polygon};
+  return { Qgis::GeometryType::Line, Qgis::GeometryType::Polygon };
 }
 
 bool QgsGeometryAngleCheck::factoryIsCompatible( QgsVectorLayer *layer )

@@ -28,16 +28,17 @@
 
 /**
  * \ingroup core
- * \brief Bilinear Raster Resampler
+ * \brief Bilinear raster resampler.
  */
 class CORE_EXPORT QgsBilinearRasterResampler: public QgsRasterResamplerV2
 {
   public:
 
-    /**
-     * Constructor for QgsBilinearRasterResampler.
-     */
     QgsBilinearRasterResampler() = default;
+
+    /**
+     * \deprecated QGIS 3.12. Use resampleV2() instead.
+     */
     Q_DECL_DEPRECATED void resample( const QImage &srcImage, QImage &dstImage ) override SIP_DEPRECATED;
 
     QImage resampleV2( const QImage &source, const QSize &size ) override;

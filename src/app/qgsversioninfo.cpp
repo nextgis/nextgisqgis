@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsversioninfo.h"
+#include "moc_qgsversioninfo.cpp"
 #include "qgis.h"
 #include "qgsapplication.h"
 #include "qgsnetworkaccessmanager.h"
@@ -22,12 +23,13 @@
 QgsVersionInfo::QgsVersionInfo( QObject *parent )
   : QObject( parent )
 {
-
 }
 
 void QgsVersionInfo::checkVersion()
 {
-  QNetworkReply *reply = QgsNetworkAccessManager::instance()->get( QNetworkRequest( QUrl( QStringLiteral( "https://version.qgis.org/version.txt" ) ) ) );
+  QNetworkRequest request( QUrl( QStringLiteral( "https://version.qgis.org/version.txt" ) ) );
+  request.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork );
+  QNetworkReply *reply = QgsNetworkAccessManager::instance()->get( request );
   connect( reply, &QNetworkReply::finished, this, &QgsVersionInfo::versionReplyFinished );
 }
 
@@ -62,11 +64,7 @@ void QgsVersionInfo::versionReplyFinished()
       pos += contentFlag.length();
 
       versionMessage = versionMessage.mid( pos );
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-      QStringList parts = versionMessage.split( '|', QString::SkipEmptyParts );
-#else
       QStringList parts = versionMessage.split( '|', Qt::SkipEmptyParts );
-#endif
       // check the version from the  server against our version
       mLatestVersion = parts[0].toInt();
       mDownloadInfo = parts.value( 1 );

@@ -23,17 +23,15 @@
 
 /**
  * \ingroup gui
- * \brief QgsVScrollArea is a QScrollArea subclass which only displays a vertical
+ * \brief A QScrollArea subclass which only displays a vertical
  * scrollbar and fits the width to the contents.
  *
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsVScrollArea : public QgsScrollArea
 {
     Q_OBJECT
 
   public:
-
     /**
      * QgsVScrollArea
      * \param parent The parent widget

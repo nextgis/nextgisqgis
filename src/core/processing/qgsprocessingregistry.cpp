@@ -16,14 +16,16 @@
  ***************************************************************************/
 
 #include "qgsprocessingregistry.h"
+#include "moc_qgsprocessingregistry.cpp"
 #include "qgsvectorfilewriter.h"
 #include "qgsprocessingparametertypeimpl.h"
 #include "qgsprocessingparametermeshdataset.h"
-// #include "qgsprocessingparametervectortilewriterlayers.h"
+#include "qgsprocessingparametervectortilewriterlayers.h"
 #include "qgsprocessingparametertininputlayers.h"
 #include "qgsprocessingparameterfieldmap.h"
 #include "qgsprocessingparameteraggregate.h"
-// #include "qgsprocessingparameterdxflayers.h"
+#include "qgsprocessingparameterdxflayers.h"
+#include "qgsprocessingparameteralignrasterlayers.h"
 
 QgsProcessingRegistry::QgsProcessingRegistry( QObject *parent SIP_TRANSFERTHIS )
   : QObject( parent )
@@ -53,6 +55,8 @@ QgsProcessingRegistry::QgsProcessingRegistry( QObject *parent SIP_TRANSFERTHIS )
   addParameterType( new QgsProcessingParameterTypeFeatureSource() );
   addParameterType( new QgsProcessingParameterTypeNumber() );
   addParameterType( new QgsProcessingParameterTypeDistance() );
+  addParameterType( new QgsProcessingParameterTypeArea() );
+  addParameterType( new QgsProcessingParameterTypeVolume() );
   addParameterType( new QgsProcessingParameterTypeDuration() );
   addParameterType( new QgsProcessingParameterTypeScale() );
   addParameterType( new QgsProcessingParameterTypeBand() );
@@ -66,11 +70,11 @@ QgsProcessingRegistry::QgsProcessingRegistry( QObject *parent SIP_TRANSFERTHIS )
   addParameterType( new QgsProcessingParameterTypeProviderConnection() );
   addParameterType( new QgsProcessingParameterTypeDatabaseSchema() );
   addParameterType( new QgsProcessingParameterTypeDatabaseTable() );
-  // addParameterType( new QgsProcessingParameterTypeVectorTileWriterLayers() );
+  addParameterType( new QgsProcessingParameterTypeVectorTileWriterLayers() );
   addParameterType( new QgsProcessingParameterTypeFieldMapping() );
   addParameterType( new QgsProcessingParameterTypeAggregate() );
   addParameterType( new QgsProcessingParameterTypeTinInputLayers() );
-  // addParameterType( new QgsProcessingParameterTypeDxfLayers() );
+  addParameterType( new QgsProcessingParameterTypeDxfLayers() );
   addParameterType( new QgsProcessingParameterTypeMeshDatasetGroups() );
   addParameterType( new QgsProcessingParameterTypeMeshDatasetTime() );
   addParameterType( new QgsProcessingParameterTypePointCloudLayer() );
@@ -78,6 +82,7 @@ QgsProcessingRegistry::QgsProcessingRegistry( QObject *parent SIP_TRANSFERTHIS )
   addParameterType( new QgsProcessingParameterTypePointCloudDestination() );
   addParameterType( new QgsProcessingParameterTypePointCloudAttribute() );
   addParameterType( new QgsProcessingParameterTypeVectorTileDestination() );
+  addParameterType( new QgsProcessingParameterTypeAlignRasterLayers() );
 }
 
 QgsProcessingRegistry::~QgsProcessingRegistry()
@@ -101,7 +106,7 @@ bool QgsProcessingRegistry::addProvider( QgsProcessingProvider *provider )
   if ( !provider )
     return false;
 
-  if ( mProviders.contains( provider->id() ) )
+  if ( providerById( provider->id() ) )
   {
     QgsLogger::warning( QStringLiteral( "Duplicate provider %1 registered" ).arg( provider->id() ) );
     delete provider;
@@ -154,9 +159,17 @@ bool QgsProcessingRegistry::removeProvider( const QString &providerId )
   return removeProvider( p );
 }
 
-QgsProcessingProvider *QgsProcessingRegistry::providerById( const QString &id )
+QgsProcessingProvider *QgsProcessingRegistry::providerById( const QString &id ) const
 {
-  return mProviders.value( id, nullptr );
+  auto it = mProviders.constFind( id );
+  if ( it != mProviders.constEnd() )
+    return it.value();
+
+  // transparently map old references to "grass7" provider to "grass" provider
+  if ( id.compare( QLatin1String( "grass7" ), Qt::CaseInsensitive ) == 0 )
+    return providerById( QStringLiteral( "grass" ) );
+
+  return nullptr;
 }
 
 QList< const QgsProcessingAlgorithm * > QgsProcessingRegistry::algorithms() const
@@ -188,26 +201,47 @@ QgsProcessingAlgorithmInformation QgsProcessingRegistry::algorithmInformation( c
 
 const QgsProcessingAlgorithm *QgsProcessingRegistry::algorithmById( const QString &constId ) const
 {
+  if ( constId.isEmpty() )
+    return nullptr;
+
   // allow mapping of algorithm via registered algorithm aliases
   const QString id = mAlgorithmAliases.value( constId, constId );
 
+  // try to match just the one target provider, if we can determine it from the id easily
+  static thread_local QRegularExpression reSplitProviderId( QStringLiteral( "^(.*?):(.*)$" ) );
+  const QRegularExpressionMatch match = reSplitProviderId.match( id );
+  if ( match.hasMatch() )
+  {
+    if ( QgsProcessingProvider *provider = providerById( match.captured( 1 ) ) )
+    {
+      if ( const QgsProcessingAlgorithm *algorithm = provider->algorithm( match.captured( 2 ) ) )
+        return algorithm;
+    }
+
+    // try mapping 'qgis' algs to 'native' algs - this allows us to freely move algorithms
+    // from the python 'qgis' provider to the c++ 'native' provider without breaking API
+    // or existing models
+    if ( match.captured( 1 ) == QLatin1String( "qgis" ) )
+    {
+      const QString algorithmName = id.mid( 5 );
+      if ( QgsProcessingProvider *provider = mProviders.value( QStringLiteral( "native" ) ) )
+      {
+        if ( const QgsProcessingAlgorithm *algorithm = provider->algorithm( algorithmName ) )
+          return algorithm;
+      }
+    }
+  }
+
+  // slow: iterate through ALL providers to find a match
   QMap<QString, QgsProcessingProvider *>::const_iterator it = mProviders.constBegin();
   for ( ; it != mProviders.constEnd(); ++it )
   {
-    const auto constAlgorithms = it.value()->algorithms();
-    for ( const QgsProcessingAlgorithm *alg : constAlgorithms )
+    const QList< const QgsProcessingAlgorithm * > algorithms = it.value()->algorithms();
+    for ( const QgsProcessingAlgorithm *alg : algorithms )
       if ( alg->id() == id )
         return alg;
   }
 
-  // try mapping 'qgis' algs to 'native' algs - this allows us to freely move algorithms
-  // from the python 'qgis' provider to the c++ 'native' provider without breaking API
-  // or existing models
-  if ( id.startsWith( QLatin1String( "qgis:" ) ) )
-  {
-    const QString newId = QStringLiteral( "native:" ) + id.mid( 5 );
-    return algorithmById( newId );
-  }
   return nullptr;
 }
 

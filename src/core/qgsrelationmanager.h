@@ -30,7 +30,7 @@ class QgsVectorLayer;
 
 /**
  * \ingroup core
- * \brief This class manages a set of relations between layers.
+ * \brief Manages a set of relations between layers.
  */
 class CORE_EXPORT QgsRelationManager : public QObject
 {
@@ -70,14 +70,14 @@ class CORE_EXPORT QgsRelationManager : public QObject
      *
      * \param relation The relation to add.
      */
-    void addRelation( const QgsRelation &relation );
+    Q_INVOKABLE void addRelation( const QgsRelation &relation );
 
     /**
      * Remove a relation.
      *
      * \param id The id of the relation to remove.
      */
-    void removeRelation( const QString &id );
+    Q_INVOKABLE void removeRelation( const QString &id );
 
     /**
      * Remove a relation.
@@ -101,7 +101,6 @@ class CORE_EXPORT QgsRelationManager : public QObject
      * \param name relation name to search for. Searching is case insensitive.
      * \returns a list of matching relations
      * \see relation()
-     * \since QGIS 2.16
      */
     QList<QgsRelation> relationsByName( const QString &name ) const;
 
@@ -135,7 +134,6 @@ class CORE_EXPORT QgsRelationManager : public QObject
      * \param existingRelations the existing relations to filter them out
      * \param layers the current layers
      * \returns the list of discovered relations
-     * \since QGIS 3.0
      */
     static QList<QgsRelation> discoverRelations( const QList<QgsRelation> &existingRelations, const QList<QgsVectorLayer *> &layers );
 
@@ -171,7 +169,6 @@ class CORE_EXPORT QgsRelationManager : public QObject
 
     /**
      * Emitted when relations are added or removed to the manager.
-     * \since QGIS 2.5
      */
     void changed();
 

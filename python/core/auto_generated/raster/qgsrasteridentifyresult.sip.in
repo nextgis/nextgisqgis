@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/raster/qgsrasteridentifyresult.h                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -21,9 +21,6 @@ Raster identify results container.
   public:
 
     QgsRasterIdentifyResult();
-%Docstring
-Constructor for QgsRasterIdentifyResult.
-%End
 
     QgsRasterIdentifyResult( Qgis::RasterIdentifyFormat format, const QMap<int, QVariant> &results );
 %Docstring
@@ -56,9 +53,12 @@ Returns the results format.
 %Docstring
 Returns the identify results. Results are different for each format:
 
-- :py:class:`Qgis`.RasterIdentifyFormat.Value: a map of values for each band, where keys are band numbers (from 1).
-- :py:class:`Qgis`.RasterIdentifyFormat.Feature: a map of WMS sublayer keys and lists of :py:class:`QgsFeatureStore` values.
-- :py:class:`Qgis`.RasterIdentifyFormat.Html: a map of WMS sublayer keys and HTML strings.
+- :py:class:`Qgis`.RasterIdentifyFormat.Value: a map of values for each
+  band, where keys are band numbers (from 1).
+- :py:class:`Qgis`.RasterIdentifyFormat.Feature: a map of WMS sublayer
+  keys and lists of :py:class:`QgsFeatureStore` values.
+- :py:class:`Qgis`.RasterIdentifyFormat.Html: a map of WMS sublayer keys
+  and HTML strings.
 %End
 
     void setParams( const QMap<QString, QVariant> &params );
@@ -90,5 +90,5 @@ Sets the last error
  *                                                                      *
  * src/core/raster/qgsrasteridentifyresult.h                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

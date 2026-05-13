@@ -1,4 +1,4 @@
-/* **************************************************************************
+/***************************************************************************
               qgscliptominmaxenhancement.h -  description
                        -------------------
 begin                : Fri Nov 16 2007
@@ -7,7 +7,7 @@ email                : ersts@amnh.org
 
 ****************************************************************************/
 
-/* **************************************************************************
+/***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -25,6 +25,7 @@ email                : ersts@amnh.org
 /**
  * \ingroup core
  * \brief A raster contrast enhancement that will clip a value to the specified min/max range.
+ *
  * For example if a min max range of [10,240] is specified in the constructor, and
  * a value of 250 is called using enhance(), the value will be truncated ('clipped')
  * to 240.

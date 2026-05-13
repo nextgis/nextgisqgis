@@ -20,6 +20,7 @@
 #include "qgsexpressionnodeimpl.h"
 #include "qgssymbollayerutils.h"
 #include "qgscolorramp.h"
+#include "qgscolorutils.h"
 #include "qgspointxy.h"
 
 
@@ -177,8 +178,10 @@ bool QgsGenericNumericTransformer::loadVariant( const QVariant &transformer )
 
 double QgsGenericNumericTransformer::value( double input ) const
 {
-  if ( qgsDoubleNear( mMaxValue, mMinValue ) )
-    return std::clamp( input, mMinOutput, mMaxOutput );
+  if ( mMinValue >= mMaxValue || qgsDoubleNear( mMaxValue, mMinValue ) )
+  {
+    return mMinOutput;
+  }
 
   input = transformNumeric( input );
   if ( qgsDoubleNear( mExponent, 1.0 ) )
@@ -223,7 +226,7 @@ QString QgsGenericNumericTransformer::toExpression( const QString &baseExpressio
     return QStringLiteral( "coalesce(scale_polynomial(%1, %2, %3, %4, %5, %6), %7)" ).arg( baseExpression, minValueString, maxValueString, minOutputString, maxOutputString, exponentString, nullOutputString );
 }
 
-QgsGenericNumericTransformer *QgsGenericNumericTransformer::fromExpression( const QString &expression, QString &baseExpression, QString &fieldName )
+QgsGenericNumericTransformer *QgsGenericNumericTransformer::fromExpression( const QString &expression, QString &baseExpression, QString &fieldName ) // cppcheck-suppress duplInheritedMember
 {
   bool ok = false;
 
@@ -357,6 +360,11 @@ double QgsSizeScaleTransformer::size( double value ) const
 {
   value = transformNumeric( value );
 
+  if ( mMinValue >= mMaxValue || qgsDoubleNear( mMaxValue, mMinValue ) )
+  {
+    return mMinSize;
+  }
+
   switch ( mType )
   {
     case Linear:
@@ -435,7 +443,7 @@ QString QgsSizeScaleTransformer::toExpression( const QString &baseExpression ) c
   return QString();
 }
 
-QgsSizeScaleTransformer *QgsSizeScaleTransformer::fromExpression( const QString &expression, QString &baseExpression, QString &fieldName )
+QgsSizeScaleTransformer *QgsSizeScaleTransformer::fromExpression( const QString &expression, QString &baseExpression, QString &fieldName ) // cppcheck-suppress duplInheritedMember
 {
   bool ok = false;
 
@@ -524,10 +532,12 @@ QgsSizeScaleTransformer *QgsSizeScaleTransformer::fromExpression( const QString 
 
 QgsColorRampTransformer::QgsColorRampTransformer( double minValue, double maxValue,
     QgsColorRamp *ramp,
-    const QColor &nullColor )
+    const QColor &nullColor,
+    const QString &rampName )
   : QgsPropertyTransformer( minValue, maxValue )
   , mGradientRamp( ramp )
   , mNullColor( nullColor )
+  , mRampName( rampName )
 {
 
 }
@@ -571,7 +581,7 @@ QVariant QgsColorRampTransformer::toVariant() const
   {
     transformerMap.insert( QStringLiteral( "colorramp" ), QgsSymbolLayerUtils::colorRampToVariant( QStringLiteral( "[source]" ), mGradientRamp.get() ) );
   }
-  transformerMap.insert( QStringLiteral( "nullColor" ), QgsSymbolLayerUtils::encodeColor( mNullColor ) );
+  transformerMap.insert( QStringLiteral( "nullColor" ), QgsColorUtils::colorToString( mNullColor ) );
   transformerMap.insert( QStringLiteral( "rampName" ), mRampName );
 
   return transformerMap;
@@ -586,10 +596,10 @@ bool QgsColorRampTransformer::loadVariant( const QVariant &definition )
   mGradientRamp.reset( nullptr );
   if ( transformerMap.contains( QStringLiteral( "colorramp" ) ) )
   {
-    setColorRamp( QgsSymbolLayerUtils::loadColorRamp( transformerMap.value( QStringLiteral( "colorramp" ) ).toMap() ) );
+    setColorRamp( QgsSymbolLayerUtils::loadColorRamp( transformerMap.value( QStringLiteral( "colorramp" ) ).toMap() ).release() );
   }
 
-  mNullColor = QgsSymbolLayerUtils::decodeColor( transformerMap.value( QStringLiteral( "nullColor" ), QStringLiteral( "0,0,0,0" ) ).toString() );
+  mNullColor = QgsColorUtils::colorFromString( transformerMap.value( QStringLiteral( "nullColor" ), QStringLiteral( "0,0,0,0" ) ).toString() );
   mRampName = transformerMap.value( QStringLiteral( "rampName" ) ).toString();
   return true;
 }
@@ -630,6 +640,11 @@ QString QgsColorRampTransformer::toExpression( const QString &baseExpression ) c
 
 QColor QgsColorRampTransformer::color( double value ) const
 {
+  if ( mMinValue >= mMaxValue || qgsDoubleNear( mMaxValue, mMinValue ) )
+  {
+    return mGradientRamp ? mGradientRamp->color( 0 ) : mNullColor;
+  }
+
   value = transformNumeric( value );
   double scaledVal = std::clamp( ( value - mMinValue ) / ( mMaxValue - mMinValue ), 0.0, 1.0 );
 

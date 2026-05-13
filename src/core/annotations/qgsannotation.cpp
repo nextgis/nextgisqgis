@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgsannotation.h"
+#include "moc_qgsannotation.cpp"
 #include "qgssymbollayerutils.h"
 #include "qgsmaplayer.h"
 #include "qgsproject.h"
@@ -24,11 +25,10 @@
 #include "qgssymbol.h"
 #include "qgsmarkersymbol.h"
 #include "qgsfillsymbol.h"
+#include "qgspainting.h"
 
 #include <QPen>
 #include <QPainter>
-
-Q_GUI_EXPORT extern int qt_defaultDpiX();
 
 QgsAnnotation::QgsAnnotation( QObject *parent )
   : QObject( parent )
@@ -41,7 +41,7 @@ QgsAnnotation::QgsAnnotation( QObject *parent )
   props.insert( QStringLiteral( "color_border" ), QStringLiteral( "black" ) );
   props.insert( QStringLiteral( "width_border" ), QStringLiteral( "0.3" ) );
   props.insert( QStringLiteral( "joinstyle" ), QStringLiteral( "miter" ) );
-  mFillSymbol.reset( QgsFillSymbol::createSimple( props ) );
+  mFillSymbol = QgsFillSymbol::createSimple( props );
 }
 
 QgsAnnotation::~QgsAnnotation() = default;
@@ -140,7 +140,7 @@ QgsFillSymbol *QgsAnnotation::fillSymbol() const
 void QgsAnnotation::render( QgsRenderContext &context ) const
 {
   QPainter *painter = context.painter();
-  if ( !painter )
+  if ( !painter || ( context.feedback() && context.feedback()->isCanceled() ) )
   {
     return;
   }
@@ -329,7 +329,7 @@ void QgsAnnotation::_readXml( const QDomElement &annotationElem, const QgsReadWr
   }
 
   mContentsMargins = QgsMargins::fromString( annotationElem.attribute( QStringLiteral( "contentsMargin" ) ) );
-  const double dpiScale = 25.4 / qt_defaultDpiX();
+  const double dpiScale = 25.4 / QgsPainting::qtDefaultDpiX();
   if ( annotationElem.hasAttribute( QStringLiteral( "frameWidthMM" ) ) )
     mFrameSize.setWidth( annotationElem.attribute( QStringLiteral( "frameWidthMM" ), QStringLiteral( "5" ) ).toDouble() );
   else
@@ -352,7 +352,7 @@ void QgsAnnotation::_readXml( const QDomElement &annotationElem, const QgsReadWr
   mVisible = annotationElem.attribute( QStringLiteral( "visible" ), QStringLiteral( "1" ) ).toInt();
   if ( annotationElem.hasAttribute( QStringLiteral( "mapLayer" ) ) )
   {
-    mMapLayer = QgsProject::instance()->mapLayer( annotationElem.attribute( QStringLiteral( "mapLayer" ) ) );
+    mMapLayer = QgsProject::instance()->mapLayer( annotationElem.attribute( QStringLiteral( "mapLayer" ) ) ); // skip-keyword-check
   }
 
   //marker symbol
@@ -360,10 +360,10 @@ void QgsAnnotation::_readXml( const QDomElement &annotationElem, const QgsReadWr
     const QDomElement symbolElem = annotationElem.firstChildElement( QStringLiteral( "symbol" ) );
     if ( !symbolElem.isNull() )
     {
-      QgsMarkerSymbol *symbol = QgsSymbolLayerUtils::loadSymbol<QgsMarkerSymbol>( symbolElem, context );
+      std::unique_ptr< QgsMarkerSymbol > symbol = QgsSymbolLayerUtils::loadSymbol<QgsMarkerSymbol>( symbolElem, context );
       if ( symbol )
       {
-        mMarkerSymbol.reset( symbol );
+        mMarkerSymbol = std::move( symbol );
       }
     }
   }
@@ -375,10 +375,10 @@ void QgsAnnotation::_readXml( const QDomElement &annotationElem, const QgsReadWr
     const QDomElement symbolElem = fillElem.firstChildElement( QStringLiteral( "symbol" ) );
     if ( !symbolElem.isNull() )
     {
-      QgsFillSymbol *symbol = QgsSymbolLayerUtils::loadSymbol<QgsFillSymbol>( symbolElem, context );
+      std::unique_ptr< QgsFillSymbol  >symbol = QgsSymbolLayerUtils::loadSymbol<QgsFillSymbol>( symbolElem, context );
       if ( symbol )
       {
-        mFillSymbol.reset( symbol );
+        mFillSymbol = std::move( symbol );
       }
     }
   }
@@ -400,7 +400,7 @@ void QgsAnnotation::_readXml( const QDomElement &annotationElem, const QgsReadWr
     props.insert( QStringLiteral( "color_border" ), frameColor.name() );
     props.insert( QStringLiteral( "width_border" ), QString::number( frameBorderWidth ) );
     props.insert( QStringLiteral( "joinstyle" ), QStringLiteral( "miter" ) );
-    mFillSymbol.reset( QgsFillSymbol::createSimple( props ) );
+    mFillSymbol = QgsFillSymbol::createSimple( props );
   }
 
   emit mapLayerChanged();

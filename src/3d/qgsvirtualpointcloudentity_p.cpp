@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsvirtualpointcloudentity_p.h"
+#include "moc_qgsvirtualpointcloudentity_p.cpp"
 #include "qgsvirtualpointcloudprovider.h"
 #include "qgspointcloudlayerchunkloader_p.h"
 #include "qgschunkboundsentity_p.h"
@@ -22,18 +23,19 @@
 ///@cond PRIVATE
 
 
-QgsVirtualPointCloudEntity::QgsVirtualPointCloudEntity( QgsPointCloudLayer *layer,
-    const Qgs3DMapSettings &map,
-    const QgsCoordinateTransform &coordinateTransform,
-    QgsPointCloud3DSymbol *symbol,
-    float maximumScreenSpaceError,
-    bool showBoundingBoxes,
-    double zValueScale,
-    double zValueOffset,
-    int pointBudget )
-  : Qgs3DMapSceneEntity( nullptr )
+QgsVirtualPointCloudEntity::QgsVirtualPointCloudEntity(
+  Qgs3DMapSettings *map,
+  QgsPointCloudLayer *layer,
+  const QgsCoordinateTransform &coordinateTransform,
+  QgsPointCloud3DSymbol *symbol,
+  float maximumScreenSpaceError,
+  bool showBoundingBoxes,
+  double zValueScale,
+  double zValueOffset,
+  int pointBudget
+)
+  : Qgs3DMapSceneEntity( map, nullptr )
   , mLayer( layer )
-  , mMap( map )
   , mCoordinateTransform( coordinateTransform )
   , mZValueScale( zValueScale )
   , mZValueOffset( zValueOffset )
@@ -42,20 +44,44 @@ QgsVirtualPointCloudEntity::QgsVirtualPointCloudEntity( QgsPointCloudLayer *laye
   , mShowBoundingBoxes( showBoundingBoxes )
 {
   mSymbol.reset( symbol );
-  mBboxesEntity = new QgsChunkBoundsEntity( this );
-  const QgsRectangle mapExtent = Qgs3DUtils::tryReprojectExtent2D( mMap.extent(), mMap.crs(), layer->crs(), mMap.transformContext() );
+  const QgsRectangle mapExtent = Qgs3DUtils::tryReprojectExtent2D( map->extent(), map->crs(), layer->crs(), map->transformContext() );
   const QVector<QgsPointCloudSubIndex> subIndexes = provider()->subIndexes();
   for ( int i = 0; i < subIndexes.size(); ++i )
   {
     const QgsPointCloudSubIndex &si = subIndexes.at( i );
     const QgsRectangle intersection = si.extent().intersect( mapExtent );
 
-    mBboxes << Qgs3DUtils::mapToWorldExtent( intersection, si.zRange().lower(), si.zRange().upper(), mMap.origin() );
+    mBboxes << QgsBox3D( intersection, si.zRange().lower(), si.zRange().upper() );
 
     createChunkedEntityForSubIndex( i );
   }
 
+  if ( provider()->overview() )
+  {
+    mOverviewEntity = new QgsPointCloudLayerChunkedEntity(
+      mapSettings(),
+      mLayer,
+      provider()->overview(),
+      mCoordinateTransform,
+      dynamic_cast<QgsPointCloud3DSymbol *>( mSymbol->clone() ),
+      mMaximumScreenSpaceError,
+      false,
+      mZValueScale,
+      mZValueOffset,
+      mPointBudget
+    );
+    mOverviewEntity->setParent( this );
+    connect( mOverviewEntity, &QgsChunkedEntity::pendingJobsCountChanged, this, &Qgs3DMapSceneEntity::pendingJobsCountChanged );
+    connect( mOverviewEntity, &QgsChunkedEntity::newEntityCreated, this, &Qgs3DMapSceneEntity::newEntityCreated );
+    emit newEntityCreated( mOverviewEntity );
+  }
+
+  // this is a rather arbitrary point, it could be somewhere else, ideally near the actual data
+  QgsVector3D boundsEntityOrigin( mapExtent.center().x(), mapExtent.center().y(), 0 );
+
+  mBboxesEntity = new QgsChunkBoundsEntity( boundsEntityOrigin, this );
   updateBboxEntity();
+  connect( this, &QgsVirtualPointCloudEntity::subIndexNeedsLoading, provider(), &QgsVirtualPointCloudProvider::loadSubIndex, Qt::QueuedConnection );
   connect( provider(), &QgsVirtualPointCloudProvider::subIndexLoaded, this, &QgsVirtualPointCloudEntity::createChunkedEntityForSubIndex );
 }
 
@@ -69,61 +95,79 @@ QgsVirtualPointCloudProvider *QgsVirtualPointCloudEntity::provider() const
   return qobject_cast<QgsVirtualPointCloudProvider *>( mLayer->dataProvider() );
 }
 
-QgsAABB QgsVirtualPointCloudEntity::boundingBox( int i ) const
-{
-  return mBboxes.at( i );
-}
-
 void QgsVirtualPointCloudEntity::createChunkedEntityForSubIndex( int i )
 {
   const QVector<QgsPointCloudSubIndex> subIndexes = provider()->subIndexes();
   const QgsPointCloudSubIndex &si = subIndexes.at( i );
 
-  // Skip if Index is not yet loaded or is outside the map extents
-  if ( !si.index() || mBboxes.at( i ).isEmpty() )
+  // Skip if Index is not yet loaded or is outside the map extents, or it's not valid (e.g. file is missing)
+  if ( !si.index() || mBboxes.at( i ).isEmpty() || !si.index().isValid() )
     return;
 
-  QgsPointCloudLayerChunkedEntity *newChunkedEntity = new QgsPointCloudLayerChunkedEntity( si.index(),
-      mMap,
-      mCoordinateTransform,
-      static_cast< QgsPointCloud3DSymbol * >( mSymbol->clone() ),
-      mMaximumScreenSpaceError,
-      mShowBoundingBoxes,
-      mZValueScale,
-      mZValueOffset,
-      mPointBudget );
+  QgsPointCloudLayerChunkedEntity *newChunkedEntity = new QgsPointCloudLayerChunkedEntity(
+    mapSettings(),
+    mLayer,
+    si.index(),
+    mCoordinateTransform,
+    static_cast<QgsPointCloud3DSymbol *>( mSymbol->clone() ),
+    mMaximumScreenSpaceError,
+    mShowBoundingBoxes,
+    mZValueScale,
+    mZValueOffset,
+    mPointBudget
+  );
 
   mChunkedEntitiesMap.insert( i, newChunkedEntity );
   newChunkedEntity->setParent( this );
   connect( newChunkedEntity, &QgsChunkedEntity::pendingJobsCountChanged, this, &Qgs3DMapSceneEntity::pendingJobsCountChanged );
+  connect( newChunkedEntity, &QgsChunkedEntity::newEntityCreated, this, &Qgs3DMapSceneEntity::newEntityCreated );
   emit newEntityCreated( newChunkedEntity );
 }
 
-void QgsVirtualPointCloudEntity::handleSceneUpdate( const SceneState &state )
+void QgsVirtualPointCloudEntity::handleSceneUpdate( const SceneContext &sceneContext )
 {
+  QgsVector3D cameraPosMapCoords = QgsVector3D( sceneContext.cameraPos ) + mapSettings()->origin();
   const QVector<QgsPointCloudSubIndex> subIndexes = provider()->subIndexes();
   for ( int i = 0; i < subIndexes.size(); ++i )
   {
-    const QgsAABB &bbox = mBboxes.at( i );
+    // If the chunked entity needs an update, do it even if it's occluded,
+    // since otherwise we'd return needsUpdate() == true until it comes into
+    // view again.
+    bool needsUpdate = mChunkedEntitiesMap.contains( i ) && mChunkedEntitiesMap[i]->needsUpdate();
 
-    if ( bbox.isEmpty() )
+    const QgsBox3D &box3D = mBboxes.at( i );
+
+    if ( !needsUpdate && box3D.isEmpty() )
+      continue;
+
+    QgsAABB aabb = QgsAABB::fromBox3D( box3D, mMapSettings->origin() );
+    if ( !needsUpdate && Qgs3DUtils::isCullable( aabb, sceneContext.viewProjectionMatrix ) )
       continue;
 
     // magic number 256 is the common span value for a COPC root node
     constexpr int SPAN = 256;
-    const float epsilon = std::min( bbox.xExtent(), bbox.yExtent() ) / SPAN;
-    const float distance = bbox.distanceFromPoint( state.cameraPos );
-    const float sse = Qgs3DUtils::screenSpaceError( epsilon, distance, state.screenSizePx, state.cameraFov );
+    const float epsilon = static_cast<float>( std::min( box3D.width(), box3D.height() ) ) / SPAN;
+    const float distance = static_cast<float>( box3D.distanceTo( cameraPosMapCoords ) );
+    const float sse = Qgs3DUtils::screenSpaceError( epsilon, distance, sceneContext.screenSizePx, sceneContext.cameraFov );
     constexpr float THRESHOLD = .2;
-    const bool displayAsBbox = sse < THRESHOLD;
+
+    // always display as bbox for the initial temporary camera pos (0, 0, 0)
+    // then once the camera changes we display as bbox depending on screen space error
+    const bool displayAsBbox = sceneContext.cameraPos.isNull() || sse < THRESHOLD;
     if ( !displayAsBbox && !subIndexes.at( i ).index() )
-      provider()->loadSubIndex( i );
+      emit subIndexNeedsLoading( i );
 
     setRenderSubIndexAsBbox( i, displayAsBbox );
     if ( !displayAsBbox && mChunkedEntitiesMap.contains( i ) )
-      mChunkedEntitiesMap[i]->handleSceneUpdate( state );
+      mChunkedEntitiesMap[i]->handleSceneUpdate( sceneContext );
   }
   updateBboxEntity();
+
+  const QgsPointCloudLayer3DRenderer *rendererBehavior = dynamic_cast<QgsPointCloudLayer3DRenderer *>( mLayer->renderer3D() );
+  if ( provider()->overview() && rendererBehavior && ( rendererBehavior->zoomOutBehavior() == Qgis::PointCloudZoomOutRenderBehavior::RenderOverview || rendererBehavior->zoomOutBehavior() == Qgis::PointCloudZoomOutRenderBehavior::RenderOverviewAndExtents ) )
+  {
+    mOverviewEntity->handleSceneUpdate( sceneContext );
+  }
 }
 
 QgsRange<float> QgsVirtualPointCloudEntity::getNearFarPlaneRange( const QMatrix4x4 &viewMatrix ) const
@@ -144,20 +188,14 @@ QgsRange<float> QgsVirtualPointCloudEntity::getNearFarPlaneRange( const QMatrix4
   // if there were no chunked entities available, we will iterate the bboxes as a fallback instead
   if ( fnear == 1e9 && ffar == 0 )
   {
-    for ( const QgsAABB &bbox : mBboxes )
+    for ( const QgsBox3D &box : mBboxes )
     {
-      for ( int i = 0; i < 8; ++i )
-      {
-        const QVector4D p( ( ( i >> 0 ) & 1 ) ? bbox.xMin : bbox.xMax,
-                           ( ( i >> 1 ) & 1 ) ? bbox.yMin : bbox.yMax,
-                           ( ( i >> 2 ) & 1 ) ? bbox.zMin : bbox.zMax, 1 );
-
-        const QVector4D pc = viewMatrix * p;
-
-        const float dst = -pc.z();  // in camera coordinates, x grows right, y grows down, z grows to the back
-        fnear = std::min( fnear, dst );
-        ffar = std::max( ffar, dst );
-      }
+      QgsAABB aabb = QgsAABB::fromBox3D( box, mMapSettings->origin() );
+      float bboxfnear;
+      float bboxffar;
+      Qgs3DUtils::computeBoundingBoxNearFarPlanes( aabb, viewMatrix, bboxfnear, bboxffar );
+      fnear = std::min( fnear, bboxfnear );
+      ffar = std::max( ffar, bboxffar );
     }
   }
 
@@ -187,17 +225,22 @@ bool QgsVirtualPointCloudEntity::needsUpdate() const
 
 void QgsVirtualPointCloudEntity::updateBboxEntity()
 {
-  QList<QgsAABB> bboxes;
-  const QVector<QgsPointCloudSubIndex> subIndexes = provider()->subIndexes();
-  for ( int i = 0; i < subIndexes.size(); ++i )
+  QList<QgsBox3D> bboxes;
+  // we want to render bounding boxes only when zoomOutBehavior is RenderExtents or RenderOverviewAndExtents
+  const QgsPointCloudLayer3DRenderer *renderer = dynamic_cast<QgsPointCloudLayer3DRenderer *>( mLayer->renderer3D() );
+  if ( renderer && renderer->zoomOutBehavior() != Qgis::PointCloudZoomOutRenderBehavior::RenderOverview )
   {
-    if ( mChunkedEntitiesMap.contains( i ) && mChunkedEntitiesMap[i]->isEnabled() )
-      continue;
+    const QVector<QgsPointCloudSubIndex> subIndexes = provider()->subIndexes();
+    for ( int i = 0; i < subIndexes.size(); ++i )
+    {
+      if ( mChunkedEntitiesMap.contains( i ) && mChunkedEntitiesMap[i]->isEnabled() )
+        continue;
 
-    if ( mBboxes.at( i ).isEmpty() )
-      continue;
+      if ( mBboxes.at( i ).isEmpty() )
+        continue;
 
-    bboxes << mBboxes.at( i );
+      bboxes << mBboxes.at( i );
+    }
   }
 
   mBboxesEntity->setBoxes( bboxes );

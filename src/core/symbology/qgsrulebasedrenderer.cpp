@@ -30,6 +30,8 @@
 #include "qgsfillsymbol.h"
 #include "qgsmarkersymbol.h"
 #include "qgspointdistancerenderer.h"
+#include "qgsscaleutils.h"
+#include "qgssldexportcontext.h"
 
 #include <QSet>
 
@@ -297,10 +299,15 @@ bool QgsRuleBasedRenderer::Rule::isScaleOK( double scale ) const
     return true;
   if ( qgsDoubleNear( mMaximumScale, 0.0 ) && qgsDoubleNear( mMinimumScale, 0.0 ) )
     return true;
-  if ( !qgsDoubleNear( mMaximumScale, 0.0 ) && mMaximumScale > scale )
+
+  // maxScale is inclusive ( < --> no render )
+  if ( !qgsDoubleNear( mMaximumScale, 0.0 ) && QgsScaleUtils::lessThanMaximumScale( scale, mMaximumScale ) )
     return false;
-  if ( !qgsDoubleNear( mMinimumScale, 0.0 ) && mMinimumScale < scale )
+
+  // minScale is exclusive ( >= --> no render )
+  if ( !qgsDoubleNear( mMinimumScale, 0.0 ) && QgsScaleUtils::equalToOrGreaterThanMinimumScale( scale, mMinimumScale ) )
     return false;
+
   return true;
 }
 
@@ -350,11 +357,20 @@ QDomElement QgsRuleBasedRenderer::Rule::save( QDomDocument &doc, QgsSymbolMap &s
 
 void QgsRuleBasedRenderer::Rule::toSld( QDomDocument &doc, QDomElement &element, QVariantMap props ) const
 {
+  QgsSldExportContext context;
+  context.setExtraProperties( props );
+  toSld( doc, element, context );
+}
+
+bool QgsRuleBasedRenderer::Rule::toSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &exportContext ) const
+{
   // do not convert this rule if there are no symbols
   QgsRenderContext context;
   if ( symbols( context ).isEmpty() )
-    return;
+    return false;
 
+  const QVariantMap oldProps = exportContext.extraProperties();
+  QVariantMap props = oldProps;
   if ( !mFilterExp.isEmpty() )
   {
     QString filter = props.value( QStringLiteral( "filter" ), QString() ).toString();
@@ -365,11 +381,11 @@ void QgsRuleBasedRenderer::Rule::toSld( QDomDocument &doc, QDomElement &element,
   }
 
   QgsSymbolLayerUtils::mergeScaleDependencies( mMaximumScale, mMinimumScale, props );
+  exportContext.setExtraProperties( props );
 
   if ( mSymbol )
   {
     QDomElement ruleElem = doc.createElement( QStringLiteral( "se:Rule" ) );
-    element.appendChild( ruleElem );
 
     //XXX: <se:Name> is the rule identifier, but our the Rule objects
     // have no properties could be used as identifier. Use the label.
@@ -397,20 +413,31 @@ void QgsRuleBasedRenderer::Rule::toSld( QDomDocument &doc, QDomElement &element,
 
     if ( !props.value( QStringLiteral( "filter" ), QString() ).toString().isEmpty() )
     {
-      QgsSymbolLayerUtils::createFunctionElement( doc, ruleElem, props.value( QStringLiteral( "filter" ), QString() ).toString() );
+      QgsSymbolLayerUtils::createFunctionElement( doc, ruleElem, props.value( QStringLiteral( "filter" ), QString() ).toString(), exportContext );
     }
 
     QgsSymbolLayerUtils::applyScaleDependency( doc, ruleElem, props );
+    exportContext.setExtraProperties( props );
 
-    mSymbol->toSld( doc, ruleElem, props );
+    mSymbol->toSld( doc, ruleElem, exportContext );
+
+    // Only create rules if symbol could be converted to SLD, and is not an "empty" symbol. Otherwise we do not generate a rule, as
+    // SLD spec requires a Symbolizer element to be present
+    if ( QgsSymbolLayerUtils::hasSldSymbolizer( ruleElem ) )
+    {
+      element.appendChild( ruleElem );
+    }
   }
 
   // loop into children rule list
-  const auto constMChildren = mChildren;
-  for ( Rule *rule : constMChildren )
+  bool result = true;
+  for ( Rule *rule : std::as_const( mChildren ) )
   {
-    rule->toSld( doc, element, props );
+    if ( !rule->toSld( doc, element, exportContext ) )
+      result = false;
   }
+  exportContext.setExtraProperties( oldProps );
+  return result;
 }
 
 bool QgsRuleBasedRenderer::Rule::startRender( QgsRenderContext &context, const QgsFields &fields, QString &filter )
@@ -738,8 +765,7 @@ QgsRuleBasedRenderer::RuleList QgsRuleBasedRenderer::Rule::rulesForFeature( cons
   if ( onlyActive )
     listChildren = mActiveChildren;
 
-  const auto constListChildren = listChildren;
-  for ( Rule *rule : constListChildren )
+  for ( Rule *rule : std::as_const( listChildren ) )
   {
     lst += rule->rulesForFeature( feature, context, onlyActive );
   }
@@ -971,6 +997,32 @@ QgsSymbol *QgsRuleBasedRenderer::symbolForFeature( const QgsFeature &, QgsRender
   return nullptr;
 }
 
+Qgis::FeatureRendererFlags QgsRuleBasedRenderer::flags() const
+{
+  Qgis::FeatureRendererFlags res;
+
+  std::function< void( Rule *rule ) > exploreRule;
+  exploreRule = [&res, &exploreRule]( Rule * rule )
+  {
+    if ( !rule )
+      return;
+
+    if ( QgsSymbol *symbol = rule->symbol() )
+    {
+      if ( symbol->flags().testFlag( Qgis::SymbolFlag::AffectsLabeling ) )
+        res.setFlag( Qgis::FeatureRendererFlag::AffectsLabeling );
+    }
+
+    for ( Rule *child : rule->children() )
+    {
+      exploreRule( child );
+    }
+  };
+  exploreRule( mRootRule );
+
+  return res;
+}
+
 bool QgsRuleBasedRenderer::renderFeature( const QgsFeature &feature,
     QgsRenderContext &context,
     int layer,
@@ -1102,7 +1154,14 @@ QgsRuleBasedRenderer *QgsRuleBasedRenderer::clone() const
 
 void QgsRuleBasedRenderer::toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const
 {
-  mRootRule->toSld( doc, element, props );
+  QgsSldExportContext context;
+  context.setExtraProperties( props );
+  toSld( doc, element, context );
+}
+
+bool QgsRuleBasedRenderer::toSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &context ) const
+{
+  return mRootRule->toSld( doc, element, context );
 }
 
 // TODO: ideally this function should be removed in favor of legendSymbol(ogy)Items
@@ -1320,9 +1379,9 @@ void QgsRuleBasedRenderer::refineRuleCategories( QgsRuleBasedRenderer::Rule *ini
     // not quoting numbers saves a type cast
     if ( QgsVariantUtils::isNull( cat.value() ) )
       value = "NULL";
-    else if ( cat.value().type() == QVariant::Int )
+    else if ( cat.value().userType() == QMetaType::Type::Int )
       value = cat.value().toString();
-    else if ( cat.value().type() == QVariant::Double )
+    else if ( cat.value().userType() == QMetaType::Type::Double )
       // we loose precision here - so we may miss some categories :-(
       // TODO: have a possibility to construct expressions directly as a parse tree to avoid loss of precision
       value = QString::number( cat.value().toDouble(), 'f', 4 );
@@ -1459,26 +1518,26 @@ QgsRuleBasedRenderer *QgsRuleBasedRenderer::convertFromRenderer( const QgsFeatur
       attr = QgsExpression::quotedColumnRef( attr );
     }
 
-    std::unique_ptr< QgsRuleBasedRenderer::Rule > rootrule = std::make_unique< QgsRuleBasedRenderer::Rule >( nullptr );
+    auto rootrule = std::make_unique< QgsRuleBasedRenderer::Rule >( nullptr );
 
     QString expression;
     QString value;
     QgsRendererCategory category;
     for ( const QgsRendererCategory &category : categorizedRenderer->categories() )
     {
-      std::unique_ptr< QgsRuleBasedRenderer::Rule > rule = std::make_unique< QgsRuleBasedRenderer::Rule >( nullptr );
+      auto rule = std::make_unique< QgsRuleBasedRenderer::Rule >( nullptr );
 
       rule->setLabel( category.label() );
 
       //We first define the rule corresponding to the category
-      if ( category.value().type() == QVariant::List )
+      if ( category.value().userType() == QMetaType::Type::QVariantList )
       {
         QStringList values;
         const QVariantList list = category.value().toList();
         for ( const QVariant &v : list )
         {
           //If the value is a number, we can use it directly, otherwise we need to quote it in the rule
-          if ( QVariant( v ).convert( QVariant::Double ) )
+          if ( QVariant( v ).convert( QMetaType::Type::Double ) )
           {
             values << v.toString();
           }
@@ -1500,7 +1559,7 @@ QgsRuleBasedRenderer *QgsRuleBasedRenderer::convertFromRenderer( const QgsFeatur
       else
       {
         //If the value is a number, we can use it directly, otherwise we need to quote it in the rule
-        if ( category.value().convert( QVariant::Double ) )
+        if ( category.value().convert( QMetaType::Type::Double ) )
         {
           value = category.value().toString();
         }
@@ -1563,24 +1622,39 @@ QgsRuleBasedRenderer *QgsRuleBasedRenderer::convertFromRenderer( const QgsFeatur
       attr = QStringLiteral( "(%1)" ).arg( attr );
     }
 
-    std::unique_ptr< QgsRuleBasedRenderer::Rule > rootrule = std::make_unique< QgsRuleBasedRenderer::Rule >( nullptr );
+    auto rootrule = std::make_unique< QgsRuleBasedRenderer::Rule >( nullptr );
 
     QString expression;
+    const QgsRangeList ranges = graduatedRenderer->ranges();
+    const bool isInverted = ranges.size() > 1 ?
+                            ranges.at( 0 ).upperValue() > ranges.at( 1 ).upperValue() :
+                            false;
     QgsRendererRange range;
-    for ( int i = 0; i < graduatedRenderer->ranges().size(); ++i )
+    for ( int i = 0; i < ranges.size(); ++i )
     {
-      range = graduatedRenderer->ranges().value( i );
-      std::unique_ptr< QgsRuleBasedRenderer::Rule > rule = std::make_unique< QgsRuleBasedRenderer::Rule >( nullptr );
+      range = ranges.value( i );
+      auto rule = std::make_unique< QgsRuleBasedRenderer::Rule >( nullptr );
+
       rule->setLabel( range.label() );
-      if ( i == 0 )//The lower boundary of the first range is included, while it is excluded for the others
+      const QString upperValue = QString::number( range.upperValue(), 'f', 16 );
+      const QString lowerValue = QString::number( range.lowerValue(), 'f', 16 );
+      // Lower and upper boundaries have to be open-ended
+      if ( i == 0 )
       {
-        expression = attr + " >= " + QString::number( range.lowerValue(), 'f' ) + " AND " + \
-                     attr + " <= " + QString::number( range.upperValue(), 'f' );
+        expression = !isInverted ?
+                     QStringLiteral( "%1 <= %2" ).arg( attr, upperValue ) :
+                     QStringLiteral( "%1 > %2" ).arg( attr, lowerValue );
+      }
+      else if ( i == ranges.size() - 1 )
+      {
+        expression = !isInverted ?
+                     QStringLiteral( "%1 > %2" ).arg( attr, lowerValue ) :
+                     QStringLiteral( "%1 <= %2" ).arg( attr, upperValue );
       }
       else
       {
-        expression = attr + " > " + QString::number( range.lowerValue(), 'f' ) + " AND " + \
-                     attr + " <= " + QString::number( range.upperValue(), 'f' );
+        expression = attr + " > " + lowerValue + " AND " + \
+                     attr + " <= " + upperValue;
       }
       rule->setFilterExpression( expression );
 
@@ -1615,10 +1689,10 @@ QgsRuleBasedRenderer *QgsRuleBasedRenderer::convertFromRenderer( const QgsFeatur
   {
     const QgsEmbeddedSymbolRenderer *embeddedRenderer = dynamic_cast<const QgsEmbeddedSymbolRenderer *>( renderer );
 
-    std::unique_ptr< QgsRuleBasedRenderer::Rule > rootrule = std::make_unique< QgsRuleBasedRenderer::Rule >( nullptr );
+    auto rootrule = std::make_unique< QgsRuleBasedRenderer::Rule >( nullptr );
 
     QgsFeatureRequest req;
-    req.setFlags( QgsFeatureRequest::EmbeddedSymbols | QgsFeatureRequest::NoGeometry );
+    req.setFlags( Qgis::FeatureRequestFlag::EmbeddedSymbols | Qgis::FeatureRequestFlag::NoGeometry );
     req.setNoAttributes();
     QgsFeatureIterator it = layer->getFeatures( req );
     QgsFeature feature;
@@ -1626,7 +1700,7 @@ QgsRuleBasedRenderer *QgsRuleBasedRenderer::convertFromRenderer( const QgsFeatur
     {
       if ( feature.embeddedSymbol() )
       {
-        std::unique_ptr< QgsRuleBasedRenderer::Rule > rule = std::make_unique< QgsRuleBasedRenderer::Rule >( nullptr );
+        auto rule = std::make_unique< QgsRuleBasedRenderer::Rule >( nullptr );
         rule->setFilterExpression( QStringLiteral( "$id=%1" ).arg( feature.id() ) );
         rule->setLabel( QString::number( feature.id() ) );
         rule->setSymbol( feature.embeddedSymbol()->clone() );
@@ -1634,7 +1708,7 @@ QgsRuleBasedRenderer *QgsRuleBasedRenderer::convertFromRenderer( const QgsFeatur
       }
     }
 
-    std::unique_ptr< QgsRuleBasedRenderer::Rule > rule = std::make_unique< QgsRuleBasedRenderer::Rule >( nullptr );
+    auto rule = std::make_unique< QgsRuleBasedRenderer::Rule >( nullptr );
     rule->setFilterExpression( QStringLiteral( "ELSE" ) );
     rule->setLabel( QObject::tr( "All other features" ) );
     rule->setSymbol( embeddedRenderer->defaultSymbol()->clone() );
@@ -1663,11 +1737,11 @@ void QgsRuleBasedRenderer::convertToDataDefinedSymbology( QgsSymbol *symbol, con
         if ( ! sizeScaleField.isEmpty() )
         {
           sizeExpression = QStringLiteral( "%1*(%2)" ).arg( msl->size() ).arg( sizeScaleField );
-          msl->setDataDefinedProperty( QgsSymbolLayer::PropertySize, QgsProperty::fromExpression( sizeExpression ) );
+          msl->setDataDefinedProperty( QgsSymbolLayer::Property::Size, QgsProperty::fromExpression( sizeExpression ) );
         }
         if ( ! rotationField.isEmpty() )
         {
-          msl->setDataDefinedProperty( QgsSymbolLayer::PropertyAngle, QgsProperty::fromField( rotationField ) );
+          msl->setDataDefinedProperty( QgsSymbolLayer::Property::Angle, QgsProperty::fromField( rotationField ) );
         }
       }
       break;
@@ -1680,7 +1754,7 @@ void QgsRuleBasedRenderer::convertToDataDefinedSymbology( QgsSymbol *symbol, con
           {
             QgsLineSymbolLayer *lsl = static_cast<QgsLineSymbolLayer *>( symbol->symbolLayer( j ) );
             sizeExpression = QStringLiteral( "%1*(%2)" ).arg( lsl->width() ).arg( sizeScaleField );
-            lsl->setDataDefinedProperty( QgsSymbolLayer::PropertyStrokeWidth, QgsProperty::fromExpression( sizeExpression ) );
+            lsl->setDataDefinedProperty( QgsSymbolLayer::Property::StrokeWidth, QgsProperty::fromExpression( sizeExpression ) );
           }
           if ( symbol->symbolLayer( j )->layerType() == QLatin1String( "MarkerLine" ) )
           {
@@ -1689,7 +1763,7 @@ void QgsRuleBasedRenderer::convertToDataDefinedSymbology( QgsSymbol *symbol, con
             {
               QgsMarkerSymbolLayer *msl = static_cast<QgsMarkerSymbolLayer *>( marker->symbolLayer( k ) );
               sizeExpression = QStringLiteral( "%1*(%2)" ).arg( msl->size() ).arg( sizeScaleField );
-              msl->setDataDefinedProperty( QgsSymbolLayer::PropertySize, QgsProperty::fromExpression( sizeExpression ) );
+              msl->setDataDefinedProperty( QgsSymbolLayer::Property::Size, QgsProperty::fromExpression( sizeExpression ) );
             }
           }
         }

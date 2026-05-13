@@ -29,7 +29,7 @@
 /**
  * \ingroup gui
  * \class QgsHttpHeaderWidget
- * \brief Display referer http header field and collapsible table of key/value pairs
+ * \brief Displays referer HTTP header field and collapsible table of key/value pairs.
  *
  * \since QGIS 3.24
  */
@@ -38,7 +38,6 @@ class GUI_EXPORT QgsHttpHeaderWidget : public QWidget, private Ui::QgsHttpHeader
     Q_OBJECT
 
   public:
-
     /**
      * Default constructor
      * \param parent parent widget
@@ -47,7 +46,7 @@ class GUI_EXPORT QgsHttpHeaderWidget : public QWidget, private Ui::QgsHttpHeader
     ~QgsHttpHeaderWidget();
 
     /**
-     * \return build a new \a QgsHttpHeaders according to data in the UI
+     * Returns the headers as defined in the widget.
      */
     QgsHttpHeaders httpHeaders() const;
 
@@ -59,19 +58,19 @@ class GUI_EXPORT QgsHttpHeaderWidget : public QWidget, private Ui::QgsHttpHeader
 
     /**
      * \brief fill the inner header map from the settings defined at \a key
-     * \see QgsHttpHeaders::setFromSettings( const QgsSettings &settings, const QString &key )
+     * \see QgsHttpHeaders::setFromSettings()
      * \param settings
      * \param key
-     * \deprecated since QGIS 3.30 use setFromHeaders instead
+     * \deprecated QGIS 3.30. Use setFromHeaders() instead.
      */
     Q_DECL_DEPRECATED void setFromSettings( const QgsSettings &settings, const QString &key ) SIP_DEPRECATED;
 
     /**
      * \brief update the \a settings with the http headers present in the inner map.
-     * \see QgsHttpHeaders::updateSettings( QgsSettings &settings, const QString &key ) const
+     * \see QgsHttpHeaders::updateSettings()
      * \param settings
      * \param key
-     * \deprecated since QGIS 3.30 use a variant map for settinds directly
+     * \deprecated QGIS 3.30. Use a variant map for settinds directly.
      */
     Q_DECL_DEPRECATED void updateSettings( QgsSettings &settings, const QString &key ) const SIP_DEPRECATED;
 
@@ -89,7 +88,6 @@ class GUI_EXPORT QgsHttpHeaderWidget : public QWidget, private Ui::QgsHttpHeader
 
   private:
     void addQueryPairRow( const QString &key, const QString &val );
-
 };
 
 #endif // QGSHTTPHEADERWIDGET_H

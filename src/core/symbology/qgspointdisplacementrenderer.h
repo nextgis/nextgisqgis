@@ -47,6 +47,7 @@ class CORE_EXPORT QgsPointDisplacementRenderer: public QgsPointDistanceRenderer
      */
     QgsPointDisplacementRenderer( const QString &labelAttributeName = QString() );
 
+    Qgis::FeatureRendererFlags flags() const override;
     QgsPointDisplacementRenderer *clone() const override SIP_FACTORY;
     void startRender( QgsRenderContext &context, const QgsFields &fields ) override;
     void stopRender( QgsRenderContext &context ) override;
@@ -118,7 +119,6 @@ class CORE_EXPORT QgsPointDisplacementRenderer: public QgsPointDistanceRenderer
     /**
      * Returns the placement method used for dispersing the points.
      * \see setPlacement()
-     * \since QGIS 2.12
      */
     Placement placement() const { return mPlacement; }
 
@@ -126,7 +126,6 @@ class CORE_EXPORT QgsPointDisplacementRenderer: public QgsPointDistanceRenderer
      * Sets the placement method used for dispersing the points.
      * \param placement placement method
      * \see placement()
-     * \since QGIS 2.12
      */
     void setPlacement( Placement placement ) { mPlacement = placement; }
 
@@ -146,7 +145,6 @@ class CORE_EXPORT QgsPointDisplacementRenderer: public QgsPointDistanceRenderer
     /**
      * Creates a QgsPointDisplacementRenderer from an existing renderer.
      * \returns a new renderer if the conversion was possible, otherwise NULLPTR.
-     * \since QGIS 2.5
      */
     static QgsPointDisplacementRenderer *convertFromRenderer( const QgsFeatureRenderer *renderer ) SIP_FACTORY;
 

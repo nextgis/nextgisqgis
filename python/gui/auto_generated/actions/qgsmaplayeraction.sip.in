@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/actions/qgsmaplayeraction.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -14,17 +14,18 @@
 class QgsMapLayerAction : QAction
 {
 %Docstring(signature="appended")
-An action which can run on map layers
+An action which can run on map layers.
+
 The class can be used in two manners:
-* by instantiating it and connecting to its signals to perform an action
-* by subclassing and reimplementing its method (only since QGIS 3.18.2)
+
+- by instantiating it and connecting to its signals to perform an action
+- by subclassing and reimplementing its method (only since QGIS 3.18.2)
 %End
 
 %TypeHeaderCode
 #include "qgsmaplayeraction.h"
 %End
   public:
-
     QgsMapLayerAction( const QString &name, QObject *parent /TransferThis/, Qgis::MapLayerActionTargets targets = Qgis::MapLayerActionTarget::AllActions, const QIcon &icon = QIcon(), Qgis::MapLayerActionFlags flags = Qgis::MapLayerActionFlags() );
 %Docstring
 Creates a map layer action which can run on any layer
@@ -49,16 +50,15 @@ Creates a map layer action which can run on a specific type of layer
     Qgis::MapLayerActionFlags flags() const;
 %Docstring
 Layer behavior flags.
-
-.. versionadded:: 3.0
 %End
 
- virtual bool canRunUsingLayer( QgsMapLayer *layer ) const /Deprecated/;
+ virtual bool canRunUsingLayer( QgsMapLayer *layer ) const /Deprecated="Since 3.40. Use the version with QgsMapLayerActionContext instead."/;
 %Docstring
 Returns ``True`` if the action can run using the specified layer.
 
-.. deprecated::
-   use the version with :py:class:`QgsMapLayerActionContext` instead.
+.. deprecated:: 3.40
+
+   Use the version with :py:class:`QgsMapLayerActionContext` instead.
 %End
 
     virtual bool canRunUsingLayer( QgsMapLayer *layer, const QgsMapLayerActionContext &context ) const;
@@ -72,28 +72,31 @@ Returns ``True`` if the action can run using the specified layer.
 .. versionadded:: 3.30
 %End
 
- virtual void triggerForFeatures( QgsMapLayer *layer, const QList<QgsFeature> &featureList ) /Deprecated/;
+ virtual void triggerForFeatures( QgsMapLayer *layer, const QList<QgsFeature> &featureList ) /Deprecated="Since 3.40. Use the version with QgsMapLayerActionContext instead."/;
 %Docstring
 Triggers the action with the specified layer and list of feature.
 
-.. deprecated::
-   use the version with :py:class:`QgsMapLayerActionContext` instead.
+.. deprecated:: 3.40
+
+   Use the version with :py:class:`QgsMapLayerActionContext` instead.
 %End
 
- virtual void triggerForFeature( QgsMapLayer *layer, const QgsFeature &feature ) /Deprecated/;
+ virtual void triggerForFeature( QgsMapLayer *layer, const QgsFeature &feature ) /Deprecated="Since 3.40. Use the version with QgsMapLayerActionContext instead."/;
 %Docstring
 Triggers the action with the specified layer and feature.
 
-.. deprecated::
-   use the version with :py:class:`QgsMapLayerActionContext` instead.
+.. deprecated:: 3.40
+
+   Use the version with :py:class:`QgsMapLayerActionContext` instead.
 %End
 
- virtual void triggerForLayer( QgsMapLayer *layer ) /Deprecated/;
+ virtual void triggerForLayer( QgsMapLayer *layer ) /Deprecated="Since 3.40. Use the version with QgsMapLayerActionContext instead."/;
 %Docstring
 Triggers the action with the specified layer.
 
-.. deprecated::
-   use the version with :py:class:`QgsMapLayerActionContext` instead.
+.. deprecated:: 3.40
+
+   Use the version with :py:class:`QgsMapLayerActionContext` instead.
 %End
 
     virtual void triggerForFeatures( QgsMapLayer *layer, const QList<QgsFeature> &featureList, const QgsMapLayerActionContext &context );
@@ -128,35 +131,37 @@ Returns availibity of action
 
     bool isEnabledOnlyWhenEditable() const;
 %Docstring
-Returns ``True`` if the action is only enabled for layers in editable mode.
-
-.. versionadded:: 3.0
+Returns ``True`` if the action is only enabled for layers in editable
+mode.
 %End
 
   signals:
 
- void triggeredForFeatures( QgsMapLayer *layer, const QList<QgsFeature> &featureList ) /Deprecated/;
+ void triggeredForFeatures( QgsMapLayer *layer, const QList<QgsFeature> &featureList ) /Deprecated="Since 3.40. Use the version with QgsMapLayerActionContext instead."/;
 %Docstring
 Triggered when action has been run for a specific list of features
 
-.. deprecated::
-   use the version with :py:class:`QgsMapLayerActionContext` instead.
+.. deprecated:: 3.40
+
+   Use the version with :py:class:`QgsMapLayerActionContext` instead.
 %End
 
- void triggeredForFeature( QgsMapLayer *layer, const QgsFeature &feature ) /Deprecated/;
+ void triggeredForFeature( QgsMapLayer *layer, const QgsFeature &feature ) /Deprecated="Since 3.40. Use the version with QgsMapLayerActionContext instead."/;
 %Docstring
 Triggered when action has been run for a specific feature
 
-.. deprecated::
-   use the version with :py:class:`QgsMapLayerActionContext` instead.
+.. deprecated:: 3.40
+
+   Use the version with :py:class:`QgsMapLayerActionContext` instead.
 %End
 
- void triggeredForLayer( QgsMapLayer *layer ) /Deprecated/;
+ void triggeredForLayer( QgsMapLayer *layer ) /Deprecated="Since 3.40. Use the version with QgsMapLayerActionContext instead."/;
 %Docstring
 Triggered when action has been run for a specific layer
 
-.. deprecated::
-   use the version with :py:class:`QgsMapLayerActionContext` instead.
+.. deprecated:: 3.40
+
+   Use the version with :py:class:`QgsMapLayerActionContext` instead.
 %End
 
     void triggeredForFeaturesV2( QgsMapLayer *layer, const QList<QgsFeature> &featureList, const QgsMapLayerActionContext &context );
@@ -188,5 +193,5 @@ Triggered when action has been run for a specific layer.
  *                                                                      *
  * src/gui/actions/qgsmaplayeraction.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

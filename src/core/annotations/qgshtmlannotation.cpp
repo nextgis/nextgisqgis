@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgshtmlannotation.h"
+#include "moc_qgshtmlannotation.cpp"
 #include "qgsfeature.h"
 #include "qgsfeatureiterator.h"
 #include "qgslogger.h"
@@ -56,7 +57,7 @@ QgsHtmlAnnotation::QgsHtmlAnnotation( QObject *parent )
 
 QgsHtmlAnnotation *QgsHtmlAnnotation::clone() const
 {
-  std::unique_ptr< QgsHtmlAnnotation > c( new QgsHtmlAnnotation() );
+  auto c = std::make_unique<QgsHtmlAnnotation>();
   copyCommonProperties( c.get() );
   c->setSourceFile( mHtmlFile );
   return c.release();
@@ -94,7 +95,7 @@ void QgsHtmlAnnotation::setHtmlSource( const QString &htmlSource )
 
 void QgsHtmlAnnotation::renderAnnotation( QgsRenderContext &context, QSizeF size ) const
 {
-  if ( !context.painter() )
+  if ( !context.painter() || ( context.feedback() && context.feedback()->isCanceled() ) )
   {
     return;
   }
@@ -150,7 +151,7 @@ void QgsHtmlAnnotation::readXml( const QDomElement &itemElem, const QgsReadWrite
   // upgrade old layer
   if ( !mapLayer() && itemElem.hasAttribute( QStringLiteral( "vectorLayer" ) ) )
   {
-    setMapLayer( QgsProject::instance()->mapLayer( itemElem.attribute( QStringLiteral( "vectorLayer" ) ) ) );
+    setMapLayer( QgsProject::instance()->mapLayer( itemElem.attribute( QStringLiteral( "vectorLayer" ) ) ) ); // skip-keyword-check
   }
 
   if ( mWebPage )

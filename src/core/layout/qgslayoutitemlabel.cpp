@@ -16,11 +16,11 @@
  ***************************************************************************/
 
 #include "qgslayoutitemlabel.h"
+#include "moc_qgslayoutitemlabel.cpp"
 #include "qgslayoutitemregistry.h"
 #include "qgslayoututils.h"
 #include "qgslayoutmodel.h"
 #include "qgsexpression.h"
-#include "qgsnetworkaccessmanager.h"
 #include "qgsvectorlayer.h"
 #include "qgsdistancearea.h"
 #include "qgsfontutils.h"
@@ -51,13 +51,18 @@ QgsLayoutItemLabel::QgsLayoutItemLabel( QgsLayout *layout )
   if ( !defaultFontString.isEmpty() )
   {
     QFont f = mFormat.font();
-    f.setFamily( defaultFontString );
+    QgsFontUtils::setFontFamily( f, defaultFontString );
     mFormat.setFont( f );
   }
 
   //default to a 10 point font size
   mFormat.setSize( 10 );
   mFormat.setSizeUnit( Qgis::RenderUnit::Points );
+
+  connect( this, &QgsLayoutItem::sizePositionChanged, this, [this]
+  {
+    updateBoundingRect();
+  } );
 
   //default to no background
   setBackgroundEnabled( false );
@@ -219,6 +224,30 @@ void QgsLayoutItemLabel::refreshExpressionContext()
   update();
 }
 
+void QgsLayoutItemLabel::updateBoundingRect()
+{
+  QRectF rectangle = rect();
+  const double frameExtension = frameEnabled() ? pen().widthF() / 2.0 : 0.0;
+  if ( frameExtension > 0 )
+    rectangle.adjust( -frameExtension, -frameExtension, frameExtension, frameExtension );
+
+  if ( mMarginX < 0 )
+  {
+    rectangle.adjust( mMarginX, 0, -mMarginX, 0 );
+  }
+  if ( mMarginY < 0 )
+  {
+    rectangle.adjust( 0, mMarginY, 0, -mMarginY );
+  }
+
+  if ( rectangle != mCurrentRectangle )
+  {
+    prepareGeometryChange();
+    mCurrentRectangle = rectangle;
+  }
+  invalidateCache();
+}
+
 QString QgsLayoutItemLabel::currentText() const
 {
   QString displayText = mText;
@@ -259,6 +288,7 @@ void QgsLayoutItemLabel::setFont( const QFont &f )
   mFormat.setFont( f );
   if ( f.pointSizeF() > 0 )
     mFormat.setSize( f.pointSizeF() );
+  invalidateCache();
 }
 
 QgsTextFormat QgsLayoutItemLabel::textFormat() const
@@ -269,25 +299,26 @@ QgsTextFormat QgsLayoutItemLabel::textFormat() const
 void QgsLayoutItemLabel::setTextFormat( const QgsTextFormat &format )
 {
   mFormat = format;
+  invalidateCache();
 }
 
 void QgsLayoutItemLabel::setMargin( const double m )
 {
   mMarginX = m;
   mMarginY = m;
-  prepareGeometryChange();
+  updateBoundingRect();
 }
 
 void QgsLayoutItemLabel::setMarginX( const double margin )
 {
   mMarginX = margin;
-  prepareGeometryChange();
+  updateBoundingRect();
 }
 
 void QgsLayoutItemLabel::setMarginY( const double margin )
 {
   mMarginY = margin;
-  prepareGeometryChange();
+  updateBoundingRect();
 }
 
 void QgsLayoutItemLabel::adjustSizeToText()
@@ -304,13 +335,76 @@ void QgsLayoutItemLabel::adjustSizeToText()
   attemptSetSceneRect( QRectF( pos().x() + xShift, pos().y() + yShift, newSize.width(), newSize.height() ) );
 }
 
+void QgsLayoutItemLabel::adjustSizeToText( ReferencePoint referencePoint )
+{
+  const QSizeF newSize = sizeForText();
+  const double newWidth = newSize.width();
+  const double newHeight = newSize.height();
+  const double currentWidth = rect().width();
+  const double currentHeight = rect().height();
+
+  //keep reference point constant
+  double xShift = 0;
+  double yShift = 0;
+  switch ( referencePoint )
+  {
+    case QgsLayoutItem::UpperLeft:
+      xShift = 0;
+      yShift = 0;
+      break;
+    case QgsLayoutItem::UpperMiddle:
+      xShift = - ( newWidth - currentWidth ) / 2.0;
+      yShift = 0;
+      break;
+
+    case QgsLayoutItem::UpperRight:
+      xShift = - ( newWidth - currentWidth );
+      yShift = 0;
+      break;
+
+    case QgsLayoutItem::MiddleLeft:
+      xShift = 0;
+      yShift = -( newHeight - currentHeight ) / 2.0;
+      break;
+
+    case QgsLayoutItem::Middle:
+      xShift = - ( newWidth - currentWidth ) / 2.0;
+      yShift = -( newHeight - currentHeight ) / 2.0;
+      break;
+
+    case QgsLayoutItem::MiddleRight:
+      xShift = - ( newWidth - currentWidth );
+      yShift = -( newHeight - currentHeight ) / 2.0;
+      break;
+
+    case QgsLayoutItem::LowerLeft:
+      xShift = 0;
+      yShift = - ( newHeight - currentHeight );
+      break;
+
+    case QgsLayoutItem::LowerMiddle:
+      xShift = - ( newWidth - currentWidth ) / 2.0;
+      yShift = - ( newHeight - currentHeight );
+      break;
+
+    case QgsLayoutItem::LowerRight:
+      xShift = - ( newWidth - currentWidth );
+      yShift = - ( newHeight - currentHeight );
+      break;
+  }
+
+  //update rect for data defined size and position
+  attemptSetSceneRect( QRectF( pos().x() + xShift, pos().y() + yShift, newSize.width(), newSize.height() ) );
+}
+
 QSizeF QgsLayoutItemLabel::sizeForText() const
 {
   QgsRenderContext context = QgsLayoutUtils::createRenderContextForLayout( mLayout, nullptr );
+  context.setFlag( Qgis::RenderContextFlag::ApplyScalingWorkaroundForTextRendering );
 
   const QStringList lines = currentText().split( '\n' );
-  const double textWidth = QgsTextRenderer::textWidth( context, mFormat, lines ) / context.convertToPainterUnits( 1, Qgis::RenderUnit::Millimeters );
-  const double fontHeight = QgsTextRenderer::textHeight( context, mFormat, lines ) / context.convertToPainterUnits( 1, Qgis::RenderUnit::Millimeters );
+  const double textWidth = std::ceil( QgsTextRenderer::textWidth( context, mFormat, lines ) + 1 ) / context.convertToPainterUnits( 1, Qgis::RenderUnit::Millimeters );
+  const double fontHeight = std::ceil( QgsTextRenderer::textHeight( context, mFormat, lines ) + 1 ) / context.convertToPainterUnits( 1, Qgis::RenderUnit::Millimeters );
 
   const double penWidth = frameEnabled() ? ( pen().widthF() / 2.0 ) : 0;
 
@@ -413,6 +507,8 @@ bool QgsLayoutItemLabel::readPropertiesFromElement( const QDomElement &itemElem,
     }
   }
 
+  updateBoundingRect();
+
   return true;
 }
 
@@ -452,32 +548,19 @@ QString QgsLayoutItemLabel::displayName() const
 
 QRectF QgsLayoutItemLabel::boundingRect() const
 {
-  QRectF rectangle = rect();
-  const double penWidth = frameEnabled() ? ( pen().widthF() / 2.0 ) : 0;
-  rectangle.adjust( -penWidth, -penWidth, penWidth, penWidth );
-
-  if ( mMarginX < 0 )
-  {
-    rectangle.adjust( mMarginX, 0, -mMarginX, 0 );
-  }
-  if ( mMarginY < 0 )
-  {
-    rectangle.adjust( 0, mMarginY, 0, -mMarginY );
-  }
-
-  return rectangle;
+  return mCurrentRectangle;
 }
 
-void QgsLayoutItemLabel::setFrameEnabled( const bool drawFrame )
+void QgsLayoutItemLabel::setFrameEnabled( bool drawFrame )
 {
   QgsLayoutItem::setFrameEnabled( drawFrame );
-  prepareGeometryChange();
+  updateBoundingRect();
 }
 
-void QgsLayoutItemLabel::setFrameStrokeWidth( const QgsLayoutMeasurement strokeWidth )
+void QgsLayoutItemLabel::setFrameStrokeWidth( QgsLayoutMeasurement strokeWidth )
 {
   QgsLayoutItem::setFrameStrokeWidth( strokeWidth );
-  prepareGeometryChange();
+  updateBoundingRect();
 }
 
 void QgsLayoutItemLabel::refresh()
@@ -623,12 +706,9 @@ double QgsLayoutItemLabel::htmlUnitsToLayoutUnits()
 QString QgsLayoutItemLabel::createStylesheet() const
 {
   QString stylesheet;
+
   stylesheet += QStringLiteral( "body { margin: %1 %2;" ).arg( std::max( mMarginY * mHtmlUnitsToLayoutUnits, 0.0 ) ).arg( std::max( mMarginX * mHtmlUnitsToLayoutUnits, 0.0 ) );
-
-  QFont f = createDefaultFont();
-  stylesheet += QgsFontUtils::asCSS( f, 0.352778 * mHtmlUnitsToLayoutUnits );
-
-  stylesheet += QStringLiteral( "color: rgba(%1,%2,%3,%4);" ).arg( mFormat.color().red() ).arg( mFormat.color().green() ).arg( mFormat.color().blue() ).arg( QString::number( mFormat.color().alphaF(), 'f', 4 ) );
+  stylesheet += mFormat.asCSS( 0.352778 * mHtmlUnitsToLayoutUnits );
   stylesheet += QStringLiteral( "text-align: %1; }" ).arg( mHAlignment == Qt::AlignLeft ? QStringLiteral( "left" ) : mHAlignment == Qt::AlignRight ? QStringLiteral( "right" ) : mHAlignment == Qt::AlignHCenter ? QStringLiteral( "center" ) : QStringLiteral( "justify" ) );
 
   return stylesheet;

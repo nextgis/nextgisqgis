@@ -63,23 +63,27 @@ class GUI_EXPORT QgsPointCloudClassifiedRendererModel : public QAbstractItemMode
     QgsPointCloudCategoryList categories() const { return mCategories; }
 
     void setCategoryColor( int row, const QColor &color );
+    void setCategoryPointSize( int row, double size );
     //! Updates the model with percentage of points per category
-    void updateCategoriesPercentages( const QMap< int, float > &percentages ) { mPercentages = percentages; };
+    void updateCategoriesPercentages( const QMap<int, float> &percentages ) { mPercentages = percentages; };
 
   signals:
     void categoriesChanged();
 
+    //! Informs views that categories were moved (e.g., via mCategories.move()) in the model.
+    void rowsMoved();
+
   private:
     QgsPointCloudCategoryList mCategories;
-    QMap< int, float > mPercentages;
+    QMap<int, float> mPercentages;
     QString mMimeFormat;
 };
 
 /**
  * \ingroup gui
- * \brief View style which shows drop indicator line between items
+ * \brief View style which shows a drop indicator line between items
  */
-class QgsPointCloudClassifiedRendererViewStyle: public QgsProxyStyle
+class QgsPointCloudClassifiedRendererViewStyle : public QgsProxyStyle
 {
     Q_OBJECT
 
@@ -90,7 +94,7 @@ class QgsPointCloudClassifiedRendererViewStyle: public QgsProxyStyle
 };
 
 
-class GUI_EXPORT QgsPointCloudClassifiedRendererWidget: public QgsPointCloudRendererWidget, private Ui::QgsPointCloudClassifiedRendererWidgetBase
+class GUI_EXPORT QgsPointCloudClassifiedRendererWidget : public QgsPointCloudRendererWidget, private Ui::QgsPointCloudClassifiedRendererWidgetBase
 {
     Q_OBJECT
 
@@ -122,10 +126,14 @@ class GUI_EXPORT QgsPointCloudClassifiedRendererWidget: public QgsPointCloudRend
     void deleteCategories();
     void deleteAllCategories();
     void attributeChanged();
+    void changeCategoryColor();
+    void changeCategoryOpacity();
+    void changeCategoryPointSize();
+    void rowsMoved();
+
   private:
     //! Sets default category and available classes
     void initialize();
-    void changeCategorySymbol();
     //! Returns a list of indexes for the categories under selection
     QList<int> selectedCategories();
     //! Returns row index for the currently selected category (-1 if on no selection)
@@ -135,6 +143,7 @@ class GUI_EXPORT QgsPointCloudClassifiedRendererWidget: public QgsPointCloudRend
 
     QgsPointCloudClassifiedRendererModel *mModel = nullptr;
     bool mBlockChangedSignal = false;
+    QMenu *contextMenu = nullptr;
 };
 
 ///@endcond

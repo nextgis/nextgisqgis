@@ -30,9 +30,7 @@
  */
 class QgsExplodeAlgorithm : public QgsProcessingFeatureBasedAlgorithm
 {
-
   public:
-
     QgsExplodeAlgorithm() = default;
     QString name() const override;
     QString displayName() const override;
@@ -40,22 +38,23 @@ class QgsExplodeAlgorithm : public QgsProcessingFeatureBasedAlgorithm
     QString group() const override;
     QString groupId() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
+    Qgis::ProcessingAlgorithmDocumentationFlags documentationFlags() const override;
     QList<int> inputLayerTypes() const override;
-    QgsProcessing::SourceType outputLayerType() const override;
+    Qgis::ProcessingSourceType outputLayerType() const override;
     QgsExplodeAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
     QString outputName() const override;
     Qgis::WkbType outputWkbType( Qgis::WkbType inputWkbType ) const override;
-    QgsFeatureList processFeature( const QgsFeature &feature,  QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
+    QgsFeatureList processFeature( const QgsFeature &feature, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
+    Qgis::ProcessingFeatureSourceFlags sourceFlags() const override;
     QgsFeatureSink::SinkFlags sinkFlags() const override;
 
-    std::vector< QgsGeometry > extractAsParts( const QgsGeometry &geometry ) const;
-    std::vector< QgsGeometry > curveAsSingleSegments( const QgsCurve *curve, bool useCompoundCurves = false ) const;
+    std::vector<QgsGeometry> extractAsParts( const QgsGeometry &geometry ) const;
+    std::vector<QgsGeometry> curveAsSingleSegments( const QgsCurve *curve, bool useCompoundCurves = false ) const;
 };
 
 ///@endcond PRIVATE
 
 #endif // QGSALGORITHMEXPLODE_H
-
-

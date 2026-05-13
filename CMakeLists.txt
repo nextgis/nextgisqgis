@@ -33,6 +33,10 @@ if(NOT SKIP_PREFIX)
     set(PACKAGE_VENDOR_DOMAIN "nextgis.com")
 endif()
 
+if(NOT DEFINED ENABLE_UNITY_BUILDS)
+    set(ENABLE_UNITY_BUILDS OFF)
+endif()
+
 # Some init settings
 set(CMAKE_COLOR_MAKEFILE ON)
 # Set path to additional CMake modules
@@ -117,6 +121,10 @@ else()
     set(QGIS_MACAPP_BUNDLE 0)
 endif()
 
+if(NOT DEFINED QGIS_PLUGIN_DIR OR QGIS_PLUGIN_DIR STREQUAL "")
+    set(QGIS_PLUGIN_DIR ${INSTALL_PLUGIN_DIR})
+endif()
+
 set(QT_PREFIX ${CMAKE_INSTALL_PREFIX})
 # set(CMAKE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -182,6 +190,7 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_AUTOUIC_SEARCH_PATHS}
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/styledock
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/mesh
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/pointcloud
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/tiledscene
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/3d
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/callouts
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/numericformats

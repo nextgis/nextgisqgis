@@ -23,6 +23,7 @@
 #include "qgsrasterblock.h"
 #include "qgsrectangle.h"
 #include "qgsmessagelog.h"
+#include "qgssldexportcontext.h"
 #include <memory>
 
 #ifdef HAVE_OPENCL
@@ -99,7 +100,7 @@ void QgsHillshadeRenderer::writeXml( QDomDocument &doc, QDomElement &parentElem 
 QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &extent, int width, int height, QgsRasterBlockFeedback *feedback )
 {
   Q_UNUSED( bandNo )
-  std::unique_ptr< QgsRasterBlock > outputBlock( new QgsRasterBlock() );
+  auto outputBlock = std::make_unique<QgsRasterBlock>();
   if ( !mInput )
   {
     QgsDebugError( QStringLiteral( "No input raster!" ) );
@@ -238,7 +239,7 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
       // Buffer scanlines, 1px height, 2px wider
       // Data type for input is Float32 (4 bytes)
       // keep only three scanlines in memory at a time, make room for initial and final nodata
-      std::unique_ptr<QgsRasterBlock> scanLine = std::make_unique<QgsRasterBlock>( inputBlock->dataType(), scanLineWidth, 1 );
+      auto scanLine = std::make_unique<QgsRasterBlock>( inputBlock->dataType(), scanLineWidth, 1 );
       // Note: output block is not 2px wider and it is an image
       // Prepare context and queue
       cl::Context ctx = QgsOpenClUtils::context();
@@ -521,11 +522,11 @@ QgsRasterBlock *QgsHillshadeRenderer::block( int bandNo, const QgsRectangle &ext
         double currentAlpha = mOpacity;
         if ( mRasterTransparency )
         {
-          currentAlpha = mRasterTransparency->alphaValue( x22, mOpacity * 255 ) / 255.0;
+          currentAlpha *= mRasterTransparency->opacityForValue( x22 );
         }
         if ( mAlphaBand > 0 )
         {
-          currentAlpha *= alphaBlock->value( row ) / 255.0;
+          currentAlpha *= alphaBlock->value( static_cast<qgssize>( row ) * width + col ) / 255.0;
         }
 
         if ( qgsDoubleNear( currentAlpha, 1.0 ) )
@@ -569,24 +570,47 @@ QList<int> QgsHillshadeRenderer::usesBands() const
 
 }
 
+int QgsHillshadeRenderer::inputBand() const
+{
+  return mBand;
+}
+
 void QgsHillshadeRenderer::setBand( int bandNo )
 {
-  if ( bandNo > mInput->bandCount() || bandNo <= 0 )
+  setInputBand( bandNo );
+}
+
+bool QgsHillshadeRenderer::setInputBand( int band )
+{
+  if ( !mInput )
   {
-    return;
+    mBand = band;
+    return true;
   }
-  mBand = bandNo;
+  else if ( band > 0 && band <= mInput->bandCount() )
+  {
+    mBand = band;
+    return true;
+  }
+  return false;
 }
 
 void QgsHillshadeRenderer::toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const
 {
+  QgsSldExportContext context;
+  context.setExtraProperties( props );
+  toSld( doc, element, context );
+}
+
+bool QgsHillshadeRenderer::toSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &context ) const
+{
   // create base structure
-  QgsRasterRenderer::toSld( doc, element, props );
+  QgsRasterRenderer::toSld( doc, element, context );
 
   // look for RasterSymbolizer tag
   QDomNodeList elements = element.elementsByTagName( QStringLiteral( "sld:RasterSymbolizer" ) );
   if ( elements.size() == 0 )
-    return;
+    return false;
 
   // there SHOULD be only one
   QDomElement rasterSymbolizerElem = elements.at( 0 ).toElement();
@@ -594,7 +618,7 @@ void QgsHillshadeRenderer::toSld( QDomDocument &doc, QDomElement &element, const
   // add Channel Selection tags (if band is not default 1)
   // Need to insert channelSelection in the correct sequence as in SLD standard e.g.
   // after opacity or geometry or as first element after sld:RasterSymbolizer
-  if ( band() != 1 )
+  if ( mBand != 1 )
   {
     QDomElement channelSelectionElem = doc.createElement( QStringLiteral( "sld:ChannelSelection" ) );
     elements = rasterSymbolizerElem.elementsByTagName( QStringLiteral( "sld:Opacity" ) );
@@ -621,7 +645,7 @@ void QgsHillshadeRenderer::toSld( QDomDocument &doc, QDomElement &element, const
 
     // set band
     QDomElement sourceChannelNameElem = doc.createElement( QStringLiteral( "sld:SourceChannelName" ) );
-    sourceChannelNameElem.appendChild( doc.createTextNode( QString::number( band() ) ) );
+    sourceChannelNameElem.appendChild( doc.createTextNode( QString::number( mBand ) ) );
     channelElem.appendChild( sourceChannelNameElem );
   }
 
@@ -656,4 +680,6 @@ void QgsHillshadeRenderer::toSld( QDomDocument &doc, QDomElement &element, const
   multidirectionalVendorOptionElem.setAttribute( QStringLiteral( "name" ), QStringLiteral( "multidirectional" ) );
   multidirectionalVendorOptionElem.appendChild( doc.createTextNode( QString::number( multiDirectional() ) ) );
   shadedReliefElem.appendChild( multidirectionalVendorOptionElem );
+
+  return true;
 }

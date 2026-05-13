@@ -27,9 +27,9 @@ SIP_NO_FILE
  * \ingroup gui
  * \class QgsMeshVariableStrokeWidthButton
  *
- * \brief A widget push button that store variable stroke width and call a widget to set parameters
+ * \brief A widget push button that stores variable stroke width and calls a widget to set parameters.
  */
-class QgsMeshVariableStrokeWidthButton: public QPushButton
+class QgsMeshVariableStrokeWidthButton : public QPushButton
 {
     Q_OBJECT
   public:
@@ -65,15 +65,12 @@ class QgsMeshVariableStrokeWidthButton: public QPushButton
  *
  * \brief A widget to set parameters of variable stroke width
  */
-class QgsMeshVariableStrokeWidthWidget: public QgsPanelWidget, public Ui::QgsMeshVariableStrokeWidthWidget
+class QgsMeshVariableStrokeWidthWidget : public QgsPanelWidget, public Ui::QgsMeshVariableStrokeWidthWidget
 {
     Q_OBJECT
   public:
     //! Constructor
-    QgsMeshVariableStrokeWidthWidget( const QgsInterpolatedLineWidth &variableStrokeWidth,
-                                      double defaultMinimumvalue,
-                                      double defaultMaximumValue,
-                                      QWidget *parent = nullptr );
+    QgsMeshVariableStrokeWidthWidget( const QgsInterpolatedLineWidth &variableStrokeWidth, double defaultMinimumvalue, double defaultMaximumValue, QWidget *parent = nullptr );
 
     //! Sets the variable stroke width
     void setVariableStrokeWidth( const QgsInterpolatedLineWidth &variableStrokeWidth );
@@ -83,6 +80,7 @@ class QgsMeshVariableStrokeWidthWidget: public QgsPanelWidget, public Ui::QgsMes
 
   private slots:
     void defaultMinMax();
+
   private:
     double mDefaultMinimumValue = 0;
     double mDefaultMaximumValue = 0;

@@ -15,6 +15,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgselevationprofiletoolmeasure.h"
+#include "moc_qgselevationprofiletoolmeasure.cpp"
 #include "qgselevationprofilecanvas.h"
 #include "qgsunittypes.h"
 #include "qgsplotmouseevent.h"
@@ -64,9 +65,7 @@ void QgsProfileMeasureResultsDialog::setCrs( const QgsCoordinateReferenceSystem 
 
 bool QgsProfileMeasureResultsDialog::eventFilter( QObject *object, QEvent *event )
 {
-  if ( object == this && ( event->type() == QEvent::Close ||
-                           event->type() == QEvent::Destroy ||
-                           event->type() == QEvent::Hide ) )
+  if ( object == this && ( event->type() == QEvent::Close || event->type() == QEvent::Destroy || event->type() == QEvent::Hide ) )
   {
     emit closed();
   }
@@ -146,17 +145,13 @@ QgsElevationProfileToolMeasure::QgsElevationProfileToolMeasure( QgsElevationProf
   mDialog = new QgsProfileMeasureResultsDialog();
 
   connect( this, &QgsElevationProfileToolMeasure::cleared, mDialog, &QDialog::hide );
-  connect( this, &QgsElevationProfileToolMeasure::measureChanged, mDialog, [ = ]( double totalDistance, double deltaCurve, double deltaElevation )
-  {
+  connect( this, &QgsElevationProfileToolMeasure::measureChanged, mDialog, [=]( double totalDistance, double deltaCurve, double deltaElevation ) {
     mDialog->setCrs( mElevationCanvas->crs() );
     mDialog->setMeasures( totalDistance, deltaCurve, deltaElevation );
     mDialog->show();
   } );
-  connect( mDialog, &QgsProfileMeasureResultsDialog::closed, this, [ = ]
-  {
-    mMeasureInProgress = false;
-    mRubberBand->hide();
-    emit cleared();
+  connect( mDialog, &QgsProfileMeasureResultsDialog::closed, this, [=] {
+    clear();
   } );
 }
 
@@ -234,9 +229,7 @@ void QgsElevationProfileToolMeasure::plotReleaseEvent( QgsPlotMouseEvent *event 
   if ( event->button() == Qt::RightButton && mRubberBand->isVisible() )
   {
     event->ignore();
-    mMeasureInProgress = false;
-    mRubberBand->hide();
-    emit cleared();
+    clear();
   }
   else if ( event->button() != Qt::LeftButton )
   {
@@ -253,11 +246,17 @@ void QgsElevationProfileToolMeasure::updateRubberBand()
   double elevation1 = mStartPoint.elevation();
   double distance2 = mEndPoint.distance();
   double elevation2 = mEndPoint.elevation();
-  QgsClipper::clipLineSegment( distanceRange.lower(), distanceRange.upper(), elevationRange.lower(), elevationRange.upper(),
-                               distance1, elevation1, distance2, elevation2 );
+  QgsClipper::clipLineSegment( distanceRange.lower(), distanceRange.upper(), elevationRange.lower(), elevationRange.upper(), distance1, elevation1, distance2, elevation2 );
 
   const QgsPointXY p1 = mElevationCanvas->plotPointToCanvasPoint( QgsProfilePoint( distance1, elevation1 ) );
   const QgsPointXY p2 = mElevationCanvas->plotPointToCanvasPoint( QgsProfilePoint( distance2, elevation2 ) );
 
   mRubberBand->setLine( QLineF( p1.x(), p1.y(), p2.x(), p2.y() ) );
+}
+
+void QgsElevationProfileToolMeasure::clear()
+{
+  mMeasureInProgress = false;
+  mRubberBand->hide();
+  emit cleared();
 }

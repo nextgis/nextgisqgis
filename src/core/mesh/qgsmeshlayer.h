@@ -36,17 +36,18 @@ class QgsSymbol;
 class QgsTriangularMesh;
 class QgsRenderContext;
 struct QgsMesh;
-class QgsMesh3dAveragingMethod;
+class QgsMesh3DAveragingMethod;
 class QgsMeshLayerTemporalProperties;
 class QgsMeshDatasetGroupStore;
 class QgsMeshEditor;
 class QgsMeshEditingError;
 class QgsMeshLayerElevationProperties;
+class QgsAbstractMeshLayerLabeling;
 
 /**
  * \ingroup core
  *
- * \brief Represents a mesh layer supporting display of data on structured or unstructured meshes
+ * \brief Represents a mesh layer supporting display of data on structured or unstructured meshes.
  *
  * The QgsMeshLayer is instantiated by specifying the name of a data provider,
  * such as mdal, and url defining the specific data set to connect to.
@@ -64,10 +65,10 @@ class QgsMeshLayerElevationProperties;
  * \subsection mesh_memory Memory data providerType (mesh_memory)
  *
  * The memory data provider is used to construct in memory data, for example scratch
- * data. There is no inherent persistent storage of the data. The data source uri is constructed.
- * Data can be populated by setMesh(const QString &vertices, const QString &faces), where
- * vertices and faces is comma separated coordinates and connections for mesh.
- * E.g. to create mesh with one quad and one triangle
+ * data. There is no inherent persistent storage of the data. The data source uri is
+ * constructed where vertices and faces are comma separated coordinates and connections
+ * for the mesh.
+ * E.g. to create a mesh with one quad and one triangle
  *
  * \code{py}
  *  uri = "1.0, 2.0 \n" \
@@ -160,9 +161,7 @@ class CORE_EXPORT QgsMeshLayer : public QgsMapLayer, public QgsAbstractProfileSo
 
     ~QgsMeshLayer() override;
 
-    //! QgsMeshLayer cannot be copied.
     QgsMeshLayer( const QgsMeshLayer &rhs ) = delete;
-    //! QgsMeshLayer cannot be copied.
     QgsMeshLayer &operator=( QgsMeshLayer const &rhs ) = delete;
 
 #ifdef SIP_RUN
@@ -178,6 +177,7 @@ class CORE_EXPORT QgsMeshLayer : public QgsMapLayer, public QgsAbstractProfileSo
     QgsMeshLayer *clone() const override SIP_FACTORY;
     QgsRectangle extent() const override;
     QgsMapLayerRenderer *createMapRenderer( QgsRenderContext &rendererContext ) override SIP_FACTORY;
+    QgsAbstractProfileSource *profileSource() override {return this;}
     QgsAbstractProfileGenerator *createProfileGenerator( const QgsProfileRequest &request ) override SIP_FACTORY;
     bool readSymbology( const QDomNode &node, QString &errorMessage,
                         QgsReadWriteContext &context, QgsMapLayer::StyleCategories categories = QgsMapLayer::AllStyleCategories ) override;
@@ -198,19 +198,26 @@ class CORE_EXPORT QgsMeshLayer : public QgsMapLayer, public QgsAbstractProfileSo
     bool supportsEditing() const override;
     QString loadDefaultStyle( bool &resultFlag SIP_OUT ) FINAL;
 
-    //! Returns the provider type for this layer
-    QString providerType() const;
-
     /**
      * Adds datasets to the mesh from file with \a path. Use the the time \a defaultReferenceTime as reference time is not provided in the file
      *
-     * \param path the path to the atasets file
+     * \param path the path to the datasets file
      * \param defaultReferenceTime reference time used if not provided in the file
      * \return whether the dataset is added
      *
      * \since QGIS 3.14
      */
     bool addDatasets( const QString &path, const QDateTime &defaultReferenceTime = QDateTime() );
+
+    /**
+     * Removes datasets from the mesh with given \a name.
+     *
+     * \param name name of dataset group to remove
+     * \return whether the dataset is removed
+     *
+     * \since QGIS 3.42
+     */
+    bool removeDatasets( const QString &name );
 
     /**
      * Adds extra datasets to the mesh. Take ownership.
@@ -300,8 +307,14 @@ class CORE_EXPORT QgsMeshLayer : public QgsMapLayer, public QgsAbstractProfileSo
 
     //! Returns renderer settings
     QgsMeshRendererSettings rendererSettings() const;
-    //! Sets new renderer settings
-    void setRendererSettings( const QgsMeshRendererSettings &settings );
+
+    /**
+     * Sets new renderer settings
+     *
+     * \param settings
+     * \param repaint should the update of renderer settings trigger repaint and emit rendererChanged signal
+     */
+    void setRendererSettings( const QgsMeshRendererSettings &settings, const bool repaint = true );
 
     /**
      * Returns time format settings
@@ -462,7 +475,7 @@ class CORE_EXPORT QgsMeshLayer : public QgsMapLayer, public QgsAbstractProfileSo
      *
      * \since QGIS 3.16
      */
-    QgsMesh3dDataBlock dataset3dValues( const QgsMeshDatasetIndex &index, int faceIndex, int count ) const;
+    QgsMesh3DDataBlock dataset3dValues( const QgsMeshDatasetIndex &index, int faceIndex, int count ) const;
 
     /**
      * Returns N vector/scalar values from the face index from the dataset for 3d stacked meshes
@@ -530,7 +543,7 @@ class CORE_EXPORT QgsMeshLayer : public QgsMapLayer, public QgsAbstractProfileSo
       *
       * \since QGIS 3.12
       */
-    QgsMesh3dDataBlock dataset3dValue( const QgsMeshDatasetIndex &index, const QgsPointXY &point ) const;
+    QgsMesh3DDataBlock dataset3dValue( const QgsMeshDatasetIndex &index, const QgsPointXY &point ) const;
 
     /**
       * Returns the value of 1D mesh dataset defined on edge that are in the search area defined by point ans searchRadius
@@ -607,27 +620,27 @@ class CORE_EXPORT QgsMeshLayer : public QgsMapLayer, public QgsAbstractProfileSo
       * Returns dataset index from active scalar group depending on the time range.
       * If the temporal properties is not active, return the static dataset
       *
-      * \param timeRange the time range
-      * \returns dataset index
+      * Since QGIS 3.38, the \a group argument can be used to specify a fixed group
+      * to use. If this is not specified, then the active group from the layer's renderer will be used.
       *
       * \note the returned dataset index depends on the matching method, see setTemporalMatchingMethod()
       *
       * \since QGIS 3.14
       */
-    QgsMeshDatasetIndex activeScalarDatasetAtTime( const QgsDateTimeRange &timeRange ) const;
+    QgsMeshDatasetIndex activeScalarDatasetAtTime( const QgsDateTimeRange &timeRange, int group = -1 ) const;
 
     /**
       * Returns dataset index from active vector group depending on the time range
       * If the temporal properties is not active, return the static dataset
       *
-      * \param timeRange the time range
-      * \returns dataset index
+      * Since QGIS 3.38, the \a group argument can be used to specify a fixed group
+      * to use. If this is not specified, then the active group from the layer's renderer will be used.
       *
       * \note the returned dataset index depends on the matching method, see setTemporalMatchingMethod()
       *
       * \since QGIS 3.14
       */
-    QgsMeshDatasetIndex activeVectorDatasetAtTime( const QgsDateTimeRange &timeRange ) const;
+    QgsMeshDatasetIndex activeVectorDatasetAtTime( const QgsDateTimeRange &timeRange, int group = -1 ) const;
 
     /**
       * Sets the static scalar dataset index that is rendered if the temporal properties is not active
@@ -648,18 +661,24 @@ class CORE_EXPORT QgsMeshLayer : public QgsMapLayer, public QgsAbstractProfileSo
     void setStaticVectorDatasetIndex( const QgsMeshDatasetIndex &staticVectorDatasetIndex ) SIP_SKIP;
 
     /**
-      * Returns the static scalar dataset index that is rendered if the temporal properties is not active
+      * Returns the static scalar dataset index that is rendered if the temporal properties is not active.
+      *
+      * Since QGIS 3.38, the \a group argument can be used to specify a fixed group
+      * to use. If this is not specified, then the active group from the layer's renderer will be used.
       *
       * \since QGIS 3.14
       */
-    QgsMeshDatasetIndex staticScalarDatasetIndex() const;
+    QgsMeshDatasetIndex staticScalarDatasetIndex( int group = -1 ) const;
 
     /**
-      * Returns the static vector dataset index that is rendered if the temporal properties is not active
+      * Returns the static vector dataset index that is rendered if the temporal properties is not active.
+      *
+      * Since QGIS 3.38, the \a group argument can be used to specify a fixed group
+      * to use. If this is not specified, then the active group from the layer's renderer will be used.
       *
       * \since QGIS 3.14
       */
-    QgsMeshDatasetIndex staticVectorDatasetIndex() const;
+    QgsMeshDatasetIndex staticVectorDatasetIndex( int group = -1 ) const;
 
     /**
       * Sets the reference time of the layer
@@ -701,6 +720,34 @@ class CORE_EXPORT QgsMeshLayer : public QgsMapLayer, public QgsAbstractProfileSo
       * \since QGIS 3.14
       */
     QgsPointXY snapOnElement( QgsMesh::ElementType elementType, const QgsPointXY &point, double searchRadius );
+
+    /**
+      * Returns the index of the snapped point on the mesh element closest to \a point intersecting with
+      * the searching area defined by \a point and \a searchRadius
+      * The position of the snapped point on the closest element is stored in \a projectedPoint
+      *
+      * For vertex, the snapped position is the vertex position
+      * For edge, the snapped position is the projected point on the edge, extremity of edge if outside the edge
+      * For face, the snapped position is the centroid of the face
+      * The snapped position is in map coordinates.
+      *
+      * \note It uses previously cached and indexed triangular mesh
+      * and so if the layer has not been rendered previously
+      * (e.g. when used in a script) it returns empty QgsPointXY
+      * \see updateTriangularMesh()
+      *
+      * \note This is similar to the snapOnElement() method, except it also returns the index of the snapped point
+      * \see snapOnElement()
+      *
+      * \param elementType the type of element to snap
+      * \param point the center of the search area in map coordinates
+      * \param searchRadius the radius of the search area in map units
+      * \param projectedPoint the position of the snapped point on the closest element, empty QgsPointXY if no element of type \a elementType
+      * \return index of the snapped point on the closest element, -1 if no element of type \a elementType
+      *
+      * \since QGIS 3.44
+      */
+    int closestElement( QgsMesh::ElementType elementType, const QgsPointXY &point, double searchRadius, QgsPointXY &projectedPoint SIP_OUT ) const;
 
     /**
      * Returns a list of vertex indexes that meet the condition defined by \a expression with the context \a expressionContext
@@ -779,7 +826,7 @@ class CORE_EXPORT QgsMeshLayer : public QgsMapLayer, public QgsAbstractProfileSo
     * This operation will disconnect the mesh layer from the data provider and removes all existing dataset group
     *
     * \since QGIS 3.22
-    * \deprecated since QGIS 3.28, use the version with QgsMeshEditingError instead
+    * \deprecated QGIS 3.28. Use the version with QgsMeshEditingError instead.
     */
     Q_DECL_DEPRECATED bool startFrameEditing( const QgsCoordinateTransform &transform );
 
@@ -881,6 +928,81 @@ class CORE_EXPORT QgsMeshLayer : public QgsMapLayer, public QgsAbstractProfileSo
     */
     int meshEdgeCount() const;
 
+    /**
+     * Returns whether the layer contains labels which are enabled and should be drawn.
+     * \returns TRUE if layer contains enabled labels
+     *
+     * \see setLabelsEnabled()
+     * \see labeling()
+     * \since QGIS 3.36
+     */
+    bool labelsEnabled() const;
+
+    /**
+     * Sets whether labels should be \a enabled for the layer.
+     *
+     * \note Labels will only be rendered if labelsEnabled() is TRUE and a labeling
+     * object is returned by labeling().
+     *
+     * \see labelsEnabled()
+     * \see labeling()
+     * \since QGIS 3.36
+     */
+    void setLabelsEnabled( bool enabled );
+
+    /**
+     * Access to const labeling configuration. May be NULLPTR if labeling is not used.
+     * \note Labels will only be rendered if labelsEnabled() returns TRUE.
+     *
+     * \see labelsEnabled()
+     * \see setLabelsEnabled()
+     * \since QGIS 3.36
+     */
+    const QgsAbstractMeshLayerLabeling *labeling() const SIP_SKIP { return mLabeling; }
+
+    /**
+     * Access to labeling configuration. May be NULLPTR if labeling is not used.
+     * \note Labels will only be rendered if labelsEnabled() returns TRUE.
+     * \see labelsEnabled()
+     * \since QGIS 3.36
+     */
+    QgsAbstractMeshLayerLabeling *labeling() { return mLabeling; }
+
+    /**
+     * Sets labeling configuration. Takes ownership of the object.
+     * \since QGIS 3.36
+     */
+    void setLabeling( QgsAbstractMeshLayerLabeling *labeling SIP_TRANSFER );
+
+    /**
+     * Extracts minimum and maximum value for active scalar dataset on mesh faces.
+     * \param extent extent in which intersecting faces are searched for
+     * \param datasetIndex index for which dataset the values should be extracted
+     * \param min minimal value
+     * \param max maximal value
+     * \return TRUE if values were extracted
+     * \since QGIS 3.42
+     */
+    bool minimumMaximumActiveScalarDataset( const QgsRectangle &extent, const QgsMeshDatasetIndex &datasetIndex, double &min SIP_OUT, double &max SIP_OUT );
+
+    /**
+     * Returns current active scalar dataset index for current renderer context.
+     *
+     * \since QGIS 3.42
+     */
+    QgsMeshDatasetIndex activeScalarDatasetIndex( QgsRenderContext &rendererContext );
+
+    /**
+     * Checks whether that datasets path is already added to this mesh layer. Return TRUE if the
+     * dataset path is not already added.
+     *
+     * \param path the path to the datasets file
+     * \return whether the datasets path is unique
+     *
+     * \since QGIS 3.42
+     */
+    bool datasetsPathUnique( const QString &path );
+
   public slots:
 
     /**
@@ -933,8 +1055,7 @@ class CORE_EXPORT QgsMeshLayer : public QgsMapLayer, public QgsAbstractProfileSo
      * \param options generic provider options
      * \param flags provider flags since QGIS 3.16
      */
-    bool setDataProvider( QString const &provider, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() );
-
+    bool setDataProvider( QString const &provider, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() );
 #ifdef SIP_RUN
     QgsMeshLayer( const QgsMeshLayer &rhs );
 #endif
@@ -991,16 +1112,20 @@ class CORE_EXPORT QgsMeshLayer : public QgsMapLayer, public QgsAbstractProfileSo
 
     QgsMeshEditor *mMeshEditor = nullptr;
 
-    int closestEdge( const QgsPointXY &point, double searchRadius, QgsPointXY &projectedPoint ) const;
+    //! True if labels are enabled
+    bool mLabelsEnabled = false;
+
+    //! Labeling configuration
+    QgsAbstractMeshLayerLabeling *mLabeling = nullptr;
 
     //! Returns the exact position in map coordinates of the closest vertex in the search area
-    QgsPointXY snapOnVertex( const QgsPointXY &point, double searchRadius );
+    int closestEdge( const QgsPointXY &point, double searchRadius, QgsPointXY &projectedPoint ) const;
 
     //!Returns the position of the projected point on the closest edge in the search area
-    QgsPointXY snapOnEdge( const QgsPointXY &point, double searchRadius );
+    int closestVertex( const QgsPointXY &point, double searchRadius, QgsPointXY &projectedPoint ) const;
 
-    //!Returns the position of the centroid point on the closest face in the search area
-    QgsPointXY snapOnFace( const QgsPointXY &point, double searchRadius );
+    //!Returns the position of the projected point on the closest edge in the search area
+    int closestFace( const QgsPointXY &point, double searchRadius, QgsPointXY &projectedPoint ) const;
 
     void updateActiveDatasetGroups();
 
@@ -1008,7 +1133,7 @@ class CORE_EXPORT QgsMeshLayer : public QgsMapLayer, public QgsAbstractProfileSo
     void checkSymbologyConsistency();
 
     void setDataSourcePrivate( const QString &dataSource, const QString &baseName, const QString &provider,
-                               const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags ) final;
+                               const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags ) final;
 };
 
 #endif //QGSMESHLAYER_H

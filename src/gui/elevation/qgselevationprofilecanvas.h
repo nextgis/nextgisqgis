@@ -25,6 +25,7 @@
 #include "qgsmaplayer.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgsprofilepoint.h"
+#include "qgslinesymbol.h"
 
 class QgsElevationProfilePlotItem;
 class QgsElevationProfileCrossHairsItem;
@@ -45,11 +46,9 @@ class QgsScreenHelper;
  */
 class GUI_EXPORT QgsElevationProfileCanvas : public QgsPlotCanvas
 {
-
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsElevationProfileCanvas, with the specified \a parent widget.
      */
@@ -106,14 +105,14 @@ class GUI_EXPORT QgsElevationProfileCanvas : public QgsPlotCanvas
      *
      * \see layers()
      */
-    void setLayers( const QList< QgsMapLayer * > &layers );
+    void setLayers( const QList<QgsMapLayer *> &layers );
 
     /**
      * Returns the list of layers included in the profile.
      *
      * \see setLayers()
      */
-    QList< QgsMapLayer * > layers() const;
+    QList<QgsMapLayer *> layers() const;
 
     /**
      * Sets the \a crs associated with the canvas' map coordinates.
@@ -256,6 +255,36 @@ class GUI_EXPORT QgsElevationProfileCanvas : public QgsPlotCanvas
      */
     void setDistanceUnit( Qgis::DistanceUnit unit );
 
+    /**
+     * Sets the background \a color to use for the profile canvas.
+     *
+     * The chart text, border and axis color will be automatically updated to ensure
+     * readability with the new background color.
+     *
+     * \since QGIS 3.34
+     */
+    void setBackgroundColor( const QColor &color );
+
+    /**
+     * Returns the symbol used to draw the subsections.
+     *
+     * \see setSubsectionsSymbol()
+     * \since QGIS 3.44
+     */
+    QgsLineSymbol *subsectionsSymbol()
+    {
+      return mSubsectionsSymbol.get();
+    }
+
+    /**
+     * Sets the \a symbol used to draw the subsections. If \a symbol is NULLPTR, the subsections are not drawn.
+     * Ownership of \a symbol is transferred.
+     *
+     * \see subsectionsSymbol()
+     * \since QGIS 3.44
+     */
+    void setSubsectionsSymbol( QgsLineSymbol *symbol SIP_TRANSFER );
+
   signals:
 
     /**
@@ -300,7 +329,7 @@ class GUI_EXPORT QgsElevationProfileCanvas : public QgsPlotCanvas
     void refineResults();
 
   private:
-
+    void updateChartFromPalette();
     QgsProfileSnapContext snapContext() const;
     QgsProfileIdentifyContext identifyContext() const;
 
@@ -327,7 +356,7 @@ class GUI_EXPORT QgsElevationProfileCanvas : public QgsPlotCanvas
     QTimer *mDeferredRedrawTimer = nullptr;
     bool mDeferredRedrawScheduled = false;
 
-    std::unique_ptr< QgsCurve > mProfileCurve;
+    std::unique_ptr<QgsCurve> mProfileCurve;
     double mTolerance = 0;
 
     bool mFirstDrawOccurred = false;
@@ -339,6 +368,8 @@ class GUI_EXPORT QgsElevationProfileCanvas : public QgsPlotCanvas
     bool mForceRegenerationAfterCurrentJobCompletes = false;
 
     static constexpr double MAX_ERROR_PIXELS = 2;
+
+    std::unique_ptr<QgsLineSymbol> mSubsectionsSymbol;
 };
 
 #endif // QGSELEVATIONPROFILECANVAS_H

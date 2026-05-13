@@ -26,7 +26,6 @@ class QgsLineString;
  * \ingroup core
  * \class QgsMultiLineString
  * \brief Multi line string geometry collection.
- * \since QGIS 2.10
  */
 class CORE_EXPORT QgsMultiLineString: public QgsMultiCurve
 {
@@ -37,6 +36,23 @@ class CORE_EXPORT QgsMultiLineString: public QgsMultiCurve
      */
     QgsMultiLineString() SIP_HOLDGIL;
 
+    /**
+     * Constructor for a multilinestring containing the specified \a linestrings.
+     *
+     * The \a linestrings will be internally cloned.
+     *
+     * \since QGIS 3.38
+     */
+    QgsMultiLineString( const QList< QgsLineString > &linestrings ) SIP_HOLDGIL;
+
+    /**
+     * Constructor for a multilinestring containing the specified \a linestrings.
+     *
+     * Ownership of the \a linestrings will be transferred to the multilinestring.
+     *
+     * \since QGIS 3.38
+     */
+    QgsMultiLineString( const QList< QgsLineString * > &linestrings SIP_TRANSFER ) SIP_HOLDGIL;
 
 #ifndef SIP_RUN
 
@@ -89,7 +105,9 @@ class CORE_EXPORT QgsMultiLineString: public QgsMultiCurve
     QDomElement asGml3( QDomDocument &doc, int precision = 17, const QString &ns = "gml", QgsAbstractGeometry::AxisOrder axisOrder = QgsAbstractGeometry::AxisOrder::XY ) const override;
     json asJsonObject( int precision = 17 ) const override SIP_SKIP;
     bool addGeometry( QgsAbstractGeometry *g SIP_TRANSFER ) override;
+    bool addGeometries( const QVector< QgsAbstractGeometry * > &geometries SIP_TRANSFER ) final;
     bool insertGeometry( QgsAbstractGeometry *g SIP_TRANSFER, int index ) override;
+    QgsMultiLineString *simplifyByDistance( double tolerance ) const override SIP_FACTORY;
 
     /**
      * Returns the geometry converted to the more generic curve type QgsMultiCurve
@@ -103,13 +121,29 @@ class CORE_EXPORT QgsMultiLineString: public QgsMultiCurve
      * Cast the \a geom to a QgsMultiLineString.
      * Should be used by qgsgeometry_cast<QgsMultiLineString *>( geometry ).
      *
-     * \note Not available in Python. Objects will be automatically be converted to the appropriate target type.
-     * \since QGIS 3.0
+     * Objects will be automatically converted to the appropriate target type.
+     *
+     * \note Not available in Python.
      */
-    inline static const QgsMultiLineString *cast( const QgsAbstractGeometry *geom )
+    inline static const QgsMultiLineString *cast( const QgsAbstractGeometry *geom ) // cppcheck-suppress duplInheritedMember
     {
       if ( geom && QgsWkbTypes::flatType( geom->wkbType() ) == Qgis::WkbType::MultiLineString )
         return static_cast<const QgsMultiLineString *>( geom );
+      return nullptr;
+    }
+
+    /**
+     * Cast the \a geom to a QgsMultiLineString.
+     * Should be used by qgsgeometry_cast<QgsMultiLineString *>( geometry ).
+     *
+     * Objects will be automatically converted to the appropriate target type.
+     *
+     * \note Not available in Python.
+     */
+    inline static QgsMultiLineString *cast( QgsAbstractGeometry *geom ) // cppcheck-suppress duplInheritedMember
+    {
+      if ( geom && QgsWkbTypes::flatType( geom->wkbType() ) == Qgis::WkbType::MultiLineString )
+        return static_cast<QgsMultiLineString *>( geom );
       return nullptr;
     }
 #endif
@@ -126,6 +160,14 @@ class CORE_EXPORT QgsMultiLineString: public QgsMultiCurve
     sipRes = PyUnicode_FromString( str.toUtf8().constData() );
     % End
 #endif
+
+    /**
+     * Re-write the measure ordinate (or add one, if it isn't already there) interpolating
+     * the measure between the supplied \a start and \a end values.
+     *
+     * \since QGIS 3.36
+     */
+    QgsMultiLineString *measuredLine( double start, double end ) const SIP_FACTORY;
 
   protected:
 

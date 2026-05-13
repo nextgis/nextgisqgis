@@ -23,15 +23,11 @@
  * \ingroup core
  * \brief Field formatter for a range (double) field with precision and locale.
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsRangeFieldFormatter : public QgsFieldFormatter
 {
   public:
 
-    /**
-      * Default constructor of field formatter for a range (double)field.
-      */
     QgsRangeFieldFormatter() = default;
 
     QString id() const override;

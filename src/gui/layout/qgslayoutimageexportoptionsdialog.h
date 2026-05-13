@@ -31,20 +31,19 @@
  * \brief A dialog for customizing the properties of an exported image file.
  *
  * \note This class is not a part of public API
- * \since QGIS 3.0
 */
-class GUI_EXPORT QgsLayoutImageExportOptionsDialog: public QDialog, private Ui::QgsLayoutImageExportOptionsDialog
+class GUI_EXPORT QgsLayoutImageExportOptionsDialog : public QDialog, private Ui::QgsLayoutImageExportOptionsDialog
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsLayoutImageExportOptionsDialog
      * \param parent parent widget
+     * \param fileExtension output image file extension
      * \param flags window flags
      */
-    QgsLayoutImageExportOptionsDialog( QWidget *parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags() );
+    QgsLayoutImageExportOptionsDialog( QWidget *parent = nullptr, const QString &fileExtension = QString(), Qt::WindowFlags flags = Qt::WindowFlags() );
 
     /**
      * Sets the initial resolution displayed in the dialog.
@@ -134,6 +133,17 @@ class GUI_EXPORT QgsLayoutImageExportOptionsDialog: public QDialog, private Ui::
      */
     void setCropMargins( int topMargin, int rightMargin, int bottomMargin, int leftMargin );
 
+    //! Sets whether to open the pdf after exporting it
+    void setOpenAfterExporting( bool enabled );
+    //! Returns whether the pdf should be opened after exporting it
+    bool openAfterExporting() const;
+
+
+    //! Sets the image quality (for JPEG)
+    void setQuality( int quality );
+    //! Returns the image quality
+    int quality() const;
+
   private slots:
 
     void mWidthSpinBox_valueChanged( int value );
@@ -143,10 +153,9 @@ class GUI_EXPORT QgsLayoutImageExportOptionsDialog: public QDialog, private Ui::
     void showHelp();
 
   private:
-
+    bool shouldShowQuality() const;
     QSizeF mImageSize;
-
-
+    QString mFileExtension;
 };
 
 #endif // QGSLAYOUTIMAGEEXPORTOPTIONSDIALOG_H

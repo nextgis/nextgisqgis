@@ -15,6 +15,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgstransaction.h"
+#include "moc_qgstransaction.cpp"
 #include "qgslogger.h"
 #include "qgsdatasourceuri.h"
 #include "qgsproviderregistry.h"
@@ -202,7 +203,7 @@ bool QgsTransaction::rollback( QString &errorMsg )
 bool QgsTransaction::supportsTransaction( const QgsVectorLayer *layer )
 {
   //test if provider supports transactions
-  if ( !layer->dataProvider() || ( layer->dataProvider()->capabilities() & QgsVectorDataProvider::TransactionSupport ) == 0 )
+  if ( !layer->dataProvider() || ( layer->dataProvider()->capabilities() & Qgis::VectorProviderCapability::TransactionSupport ) == 0 )
     return false;
 
   return true;
@@ -270,7 +271,12 @@ bool QgsTransaction::rollbackToSavepoint( const QString &name, QString &error SI
   // the status of the DB has changed between the previous savepoint and the
   // one we are rolling back to.
   mLastSavePointIsDirty = true;
-  return executeSql( QStringLiteral( "ROLLBACK TO SAVEPOINT %1" ).arg( QgsExpression::quotedColumnRef( name ) ), error );
+  if ( ! executeSql( QStringLiteral( "ROLLBACK TO SAVEPOINT %1" ).arg( QgsExpression::quotedColumnRef( name ) ), error ) )
+  {
+    return false;
+  }
+  emit afterRollbackToSavepoint( name );
+  return true;
 }
 
 void QgsTransaction::dirtyLastSavePoint()

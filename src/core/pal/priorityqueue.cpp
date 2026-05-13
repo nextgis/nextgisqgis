@@ -28,6 +28,7 @@
  */
 
 #include <cstdio>
+#include <memory>
 
 #include "internalexception.h"
 #include "priorityqueue.h"
@@ -50,9 +51,9 @@ PriorityQueue::PriorityQueue( int n, int maxId, bool min )
   , maxsize( n )
   , maxId( maxId )
 {
-  heap = new int[maxsize];
-  p = new double[maxsize];
-  pos = new int[maxId + 1];
+  heap = std::make_unique<int[]>( maxsize );
+  p = std::make_unique<double[]>( maxsize );
+  pos = std::make_unique<int[]>( maxId + 1 );
 
   int i;
 
@@ -68,9 +69,6 @@ PriorityQueue::PriorityQueue( int n, int maxId, bool min )
 
 PriorityQueue::~PriorityQueue()
 {
-  delete[] heap;
-  delete[] p;
-  delete[] pos;
 }
 
 int PriorityQueue::getSize() const

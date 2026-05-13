@@ -27,7 +27,6 @@
  * \class QgsGradientStopEditor
  * \brief An interactive editor for previewing a gradient color ramp and modifying the position of color
  * stops along the gradient.
- * \since QGIS 2.16
  */
 
 class GUI_EXPORT QgsGradientStopEditor : public QWidget
@@ -35,7 +34,6 @@ class GUI_EXPORT QgsGradientStopEditor : public QWidget
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsGradientStopEditor.
      * \param parent parent widget
@@ -150,7 +148,6 @@ class GUI_EXPORT QgsGradientStopEditor : public QWidget
     void selectedStopChanged( const QgsGradientStop &stop );
 
   protected:
-
     void mouseMoveEvent( QMouseEvent *event ) override;
     void mousePressEvent( QMouseEvent *event ) override;
     void mouseDoubleClickEvent( QMouseEvent *event ) override;
@@ -163,7 +160,6 @@ class GUI_EXPORT QgsGradientStopEditor : public QWidget
     void dropEvent( QDropEvent *e ) override;
 
   private:
-
     /**
      * Generates a checkboard pattern pixmap for use as a background to transparent colors
      * \returns checkerboard pixmap
@@ -205,6 +201,13 @@ class GUI_EXPORT QgsGradientStopEditor : public QWidget
     //! Polygon for stop triangle marker inner
     QPolygonF sInnerTriangle;
 
+    static constexpr int FRAME_MARGIN_PX = 2;
+    static constexpr int MARKER_WIDTH = 11;
+    static constexpr int MARKER_HEIGHT = 14;
+    static constexpr double MARKER_GAP = 1.5;
+    static constexpr int MARGIN_BOTTOM = MARKER_HEIGHT + 2;
+    static constexpr int MARGIN_X = MARKER_WIDTH / 2;
+    static constexpr int CLICK_THRESHOLD = MARKER_WIDTH / 2 + 3;
 };
 
 #endif // QGSGRADIENTSTOPEDITOR_H

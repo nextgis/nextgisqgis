@@ -26,17 +26,13 @@ class QgsPaintEffect;
 /**
  * \ingroup gui
  * \class QgsPaintEffectPropertiesWidget
- * \brief A widget which modifies the properties of a QgsPaintEffect
- *
- * \since QGIS 2.9
+ * \brief A widget which modifies the properties of a QgsPaintEffect.
  */
-
 class GUI_EXPORT QgsPaintEffectPropertiesWidget : public QWidget, private Ui::EffectPropertiesWidget
 {
     Q_OBJECT
 
   public:
-
     /**
      * QgsPaintEffectPropertiesWidget constructor
      * \param effect QgsPaintEffect to modify in the widget
@@ -69,12 +65,10 @@ class GUI_EXPORT QgsPaintEffectPropertiesWidget : public QWidget, private Ui::Ef
     void changeEffect( QgsPaintEffect *effect );
 
   private:
-
     QgsPaintEffect *mEffect = nullptr;
 
     void populateEffectTypes();
     void updateEffectWidget( QgsPaintEffect *effect );
-
 };
 
 #endif //QGSPAINTEFFECTPROPERTIESWIDGET_H

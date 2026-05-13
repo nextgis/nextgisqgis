@@ -19,6 +19,7 @@
 #include "qgis_core.h"
 #include "qgslayoutmeasurementconverter.h"
 #include "qgsvectorsimplifymethod.h"
+#include "qgsmaskrendersettings.h"
 #include "qgis.h"
 #include <QtGlobal>
 #include <QColor>
@@ -31,7 +32,6 @@ class QgsFeatureFilterProvider;
  * \ingroup core
  * \class QgsLayoutRenderContext
  * \brief Stores information relating to the current rendering settings for a layout.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutRenderContext : public QObject
 {
@@ -39,22 +39,6 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
     Q_OBJECT
 
   public:
-
-    //! Flags for controlling how a layout is rendered
-    enum Flag
-    {
-      FlagDebug = 1 << 1,  //!< Debug/testing mode, items are drawn as solid rectangles.
-      FlagOutlineOnly = 1 << 2, //!< Render items as outlines only.
-      FlagAntialiasing = 1 << 3, //!< Use antialiasing when drawing items.
-      FlagUseAdvancedEffects = 1 << 4, //!< Enable advanced effects such as blend modes.
-      FlagForceVectorOutput = 1 << 5, //!< Force output in vector format where possible, even if items require rasterization to keep their correct appearance.
-      FlagHideCoverageLayer = 1 << 6, //!< Hide coverage layer in outputs
-      FlagDrawSelection = 1 << 7, //!< Draw selection
-      FlagDisableTiledRasterLayerRenders = 1 << 8, //!< If set, then raster layers will not be drawn as separate tiles. This may improve the appearance in exported files, at the cost of much higher memory usage during exports.
-      FlagRenderLabelsByMapLayer = 1 << 9, //!< When rendering map items to multi-layered exports, render labels belonging to different layers into separate export layers
-      FlagLosslessImageRendering = 1 << 10, //!< Render images losslessly whenever possible, instead of the default lossy jpeg rendering used for some destination devices (e.g. PDF).
-    };
-    Q_DECLARE_FLAGS( Flags, Flag )
 
     /**
      * Constructor for QgsLayoutRenderContext.
@@ -67,7 +51,7 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
      * \see flags()
      * \see testFlag()
      */
-    void setFlags( QgsLayoutRenderContext::Flags flags );
+    void setFlags( Qgis::LayoutRenderFlags flags );
 
     /**
      * Enables or disables a particular rendering \a flag for the layout. Other existing
@@ -76,7 +60,7 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
      * \see flags()
      * \see testFlag()
      */
-    void setFlag( QgsLayoutRenderContext::Flag flag, bool on = true );
+    void setFlag( Qgis::LayoutRenderFlag flag, bool on = true );
 
     /**
      * Returns the current combination of flags used for rendering the layout.
@@ -84,7 +68,7 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
      * \see setFlag()
      * \see testFlag()
      */
-    QgsLayoutRenderContext::Flags flags() const;
+    Qgis::LayoutRenderFlags flags() const;
 
     /**
      * Check whether a particular rendering \a flag is enabled for the layout.
@@ -92,12 +76,28 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
      * \see setFlag()
      * \see flags()
      */
-    bool testFlag( Flag flag ) const;
+    bool testFlag( Qgis::LayoutRenderFlag flag ) const;
 
     /**
      * Returns the combination of render context flags matched to the layout context's settings.
      */
     Qgis::RenderContextFlags renderContextFlags() const;
+
+    /**
+     * Returns the policy controlling when rasterization of content during renders is permitted.
+     *
+     * \see setRasterizedRenderingPolicy()
+     * \since QGIS 3.44
+     */
+    Qgis::RasterizedRenderingPolicy rasterizedRenderingPolicy() const;
+
+    /**
+     * Sets the \a policy controlling when rasterization of content during renders is permitted.
+     *
+     * \see rasterizedRenderingPolicy()
+     * \since QGIS 3.44
+     */
+    void setRasterizedRenderingPolicy( Qgis::RasterizedRenderingPolicy policy );
 
     /**
      * Sets the \a dpi for outputting the layout. This also sets the
@@ -193,7 +193,7 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
      * If \a layer is -1, all item layers will be rendered.
      *
      * \see currentExportLayer()
-     * \deprecated Items should now handle this themselves, via QgsLayoutItem::exportLayerBehavior() and returning QgsLayoutItem::nextExportPart().
+     * \deprecated QGIS 3.40. Items should now handle this themselves, via QgsLayoutItem::exportLayerBehavior() and returning QgsLayoutItem::nextExportPart().
      */
     Q_DECL_DEPRECATED void setCurrentExportLayer( int layer = -1 ) SIP_DEPRECATED { mCurrentExportLayer = layer; }
 
@@ -205,7 +205,7 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
      * If \a layer is -1, all item layers should be rendered.
      *
      * \see setCurrentExportLayer()
-     * \deprecated Items should now handle this themselves, via QgsLayoutItem::exportLayerBehavior() and returning QgsLayoutItem::nextExportPart().
+     * \deprecated QGIS 3.40. Items should now handle this themselves, via QgsLayoutItem::exportLayerBehavior() and returning QgsLayoutItem::nextExportPart().
      */
     Q_DECL_DEPRECATED int currentExportLayer() const SIP_DEPRECATED  { return mCurrentExportLayer; }
 
@@ -265,6 +265,33 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
     const QgsVectorSimplifyMethod &simplifyMethod() const { return mSimplifyMethod; }
 
     /**
+     * Returns a reference to the mask render settings, which control how masks
+     * are drawn and behave during map renders.
+     *
+     * \see setMaskSettings()
+     * \since QGIS 3.38
+     */
+    const QgsMaskRenderSettings &maskSettings() const SIP_SKIP { return mMaskRenderSettings; }
+
+    /**
+     * Returns a reference to the mask render settings, which control how masks
+     * are drawn and behave during map renders.
+     *
+     * \see setMaskSettings()
+     * \since QGIS 3.38
+     */
+    QgsMaskRenderSettings &maskSettings() { return mMaskRenderSettings; }
+
+    /**
+     * Sets the mask render \a settings, which control how masks
+     * are drawn and behave during map renders.
+     *
+     * \see maskSettings()
+     * \since QGIS 3.38
+     */
+    void setMaskSettings( const QgsMaskRenderSettings &settings );
+
+    /**
      * Returns a list of map themes to use during the export.
      *
      * Items which handle layered exports (e.g. maps) may utilize this list to export different
@@ -302,7 +329,7 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
     QVector<qreal> predefinedScales() const { return mPredefinedScales; }
 
     /**
-     * Returns the possibly NULL feature filter provider.
+     * Returns the (possibly NULLPTR) feature filter provider.
      *
      * A feature filter provider for filtering visible features or attributes.
      * It is currently used by QGIS Server Access Control Plugins.
@@ -327,7 +354,7 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
      * Emitted whenever the context's \a flags change.
      * \see setFlags()
      */
-    void flagsChanged( QgsLayoutRenderContext::Flags flags );
+    void flagsChanged( Qgis::LayoutRenderFlags flags );
 
     /**
      * Emitted when the context's DPI is changed.
@@ -343,7 +370,10 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
 
   private:
 
-    Flags mFlags = Flags();
+    void matchRasterizedRenderingPolicyToFlags();
+
+    Qgis::LayoutRenderFlags mFlags;
+    Qgis::RasterizedRenderingPolicy mRasterizedRenderingPolicy = Qgis::RasterizedRenderingPolicy::PreferVector;
 
     QgsLayout *mLayout = nullptr;
 
@@ -368,6 +398,8 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
 
     QgsFeatureFilterProvider *mFeatureFilterProvider = nullptr;
 
+    QgsMaskRenderSettings mMaskRenderSettings;
+
     friend class QgsLayoutExporter;
     friend class TestQgsLayout;
     friend class LayoutContextPreviewSettingRestorer;
@@ -376,7 +408,6 @@ class CORE_EXPORT QgsLayoutRenderContext : public QObject
 
 };
 
-Q_DECLARE_METATYPE( QgsLayoutRenderContext::Flags )
 
 #endif //QGSLAYOUTRENDERCONTEXT_H
 

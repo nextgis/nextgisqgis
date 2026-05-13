@@ -17,8 +17,6 @@
 #include "qgsexpressionutils.h"
 #include "qgsexpression.h"
 
-#include "qgsgeometry.h"
-#include "qgsfeaturerequest.h"
 #include "qgsstringutils.h"
 #include "qgsvariantutils.h"
 
@@ -148,7 +146,7 @@ bool QgsExpressionNodeUnaryOperator::prepareNode( QgsExpression *parent, const Q
 
 QString QgsExpressionNodeUnaryOperator::dump() const
 {
-  if ( dynamic_cast<QgsExpressionNodeBinaryOperator *>( mOperand ) )
+  if ( dynamic_cast<QgsExpressionNodeBinaryOperator *>( mOperand.get() ) )
     return QStringLiteral( "%1 ( %2 )" ).arg( UNARY_OPERATOR_TEXT[mOp], mOperand->dump() );
   else
     return QStringLiteral( "%1 %2" ).arg( UNARY_OPERATOR_TEXT[mOp], mOperand->dump() );
@@ -204,6 +202,180 @@ QString QgsExpressionNodeUnaryOperator::text() const
 
 //
 
+template<class T>
+bool compareOp( T diff, QgsExpressionNodeBinaryOperator::BinaryOperator op )
+{
+  switch ( op )
+  {
+    case QgsExpressionNodeBinaryOperator::boEQ:
+      return diff == 0;
+    case QgsExpressionNodeBinaryOperator::boNE:
+      return diff != 0;
+    case QgsExpressionNodeBinaryOperator::boLT:
+      return diff < 0;
+    case QgsExpressionNodeBinaryOperator::boGT:
+      return diff > 0;
+    case QgsExpressionNodeBinaryOperator::boLE:
+      return diff <= 0;
+    case QgsExpressionNodeBinaryOperator::boGE:
+      return diff >= 0;
+    default:
+      Q_ASSERT( false );
+      return false;
+  }
+}
+
+template<>
+bool compareOp( double diff, QgsExpressionNodeBinaryOperator::BinaryOperator op )
+{
+  switch ( op )
+  {
+    case QgsExpressionNodeBinaryOperator::boEQ:
+      return qgsDoubleNear( diff, 0.0 );
+    case QgsExpressionNodeBinaryOperator::boNE:
+      return !qgsDoubleNear( diff, 0.0 );
+    case QgsExpressionNodeBinaryOperator::boLT:
+      return diff < 0;
+    case QgsExpressionNodeBinaryOperator::boGT:
+      return diff > 0;
+    case QgsExpressionNodeBinaryOperator::boLE:
+      return diff <= 0;
+    case QgsExpressionNodeBinaryOperator::boGE:
+      return diff >= 0;
+    default:
+      Q_ASSERT( false );
+      return false;
+  }
+}
+
+QVariant QgsExpressionNodeBinaryOperator::compareNonNullValues( QgsExpression *parent, const QgsExpressionContext *, const QVariant &vL, const QVariant &vR, BinaryOperator op )
+{
+  if ( ( vL.userType() == QMetaType::Type::QDateTime && vR.userType() == QMetaType::Type::QDateTime ) )
+  {
+    QDateTime dL = QgsExpressionUtils::getDateTimeValue( vL, parent );
+    ENSURE_NO_EVAL_ERROR
+    QDateTime dR = QgsExpressionUtils::getDateTimeValue( vR, parent );
+    ENSURE_NO_EVAL_ERROR
+
+    // while QDateTime has innate handling of timezones, we don't expose these ANYWHERE
+    // in QGIS. So to avoid confusion where seemingly equal datetime values give unexpected
+    // results (due to different hidden timezones), we force all datetime comparisons to treat
+    // all datetime values as having the same time zone
+    dL.setTimeSpec( Qt::UTC );
+    dR.setTimeSpec( Qt::UTC );
+
+    return compareOp<qint64>( dR.msecsTo( dL ), op ) ? TVL_True : TVL_False;
+  }
+  else if ( ( vL.userType() == QMetaType::Type::QDate && vR.userType() == QMetaType::Type::QDate ) )
+  {
+    const QDate dL = QgsExpressionUtils::getDateValue( vL, parent );
+    ENSURE_NO_EVAL_ERROR
+    const QDate dR = QgsExpressionUtils::getDateValue( vR, parent );
+    ENSURE_NO_EVAL_ERROR
+    return compareOp<qint64>( dR.daysTo( dL ), op ) ? TVL_True : TVL_False;
+  }
+  else if ( ( vL.userType() == QMetaType::Type::QTime && vR.userType() == QMetaType::Type::QTime ) )
+  {
+    const QTime dL = QgsExpressionUtils::getTimeValue( vL, parent );
+    ENSURE_NO_EVAL_ERROR
+    const QTime dR = QgsExpressionUtils::getTimeValue( vR, parent );
+    ENSURE_NO_EVAL_ERROR
+    return compareOp<int>( dR.msecsTo( dL ), op ) ? TVL_True : TVL_False;
+  }
+  else if ( ( vL.userType() != QMetaType::Type::QString || vR.userType() != QMetaType::Type::QString ) &&
+            QgsExpressionUtils::isDoubleSafe( vL ) && QgsExpressionUtils::isDoubleSafe( vR ) )
+  {
+    // do numeric comparison if both operators can be converted to numbers,
+    // and they aren't both string
+    double fL = QgsExpressionUtils::getDoubleValue( vL, parent );
+    ENSURE_NO_EVAL_ERROR
+    double fR = QgsExpressionUtils::getDoubleValue( vR, parent );
+    ENSURE_NO_EVAL_ERROR
+    return compareOp< double >( fL - fR, op ) ? TVL_True : TVL_False;
+  }
+
+  else if ( vL.userType() == QMetaType::Type::Bool || vR.userType() == QMetaType::Type::Bool )
+  {
+    // Documented behavior of QVariant::toBool() for each userType:
+    //
+    // For variant with userType():
+    //
+    //   QMetaType::Bool:
+    //     true if value is true
+    //     false otherwise
+    //
+    //   QMetaType::QChar, QMetaType::Double, QMetaType::Int,
+    //   QMetaType::LongLong, QMetaType::UInt, and QMetaType::ULongLong:
+    //     true if the value is non-zero
+    //     false otherwise
+    //
+    //   QMetaType::QString and QMetaType::QByteArray:
+    //     false if its lower-case content is empty, "0" or "false"
+    //     true otherwise
+    //
+    // All other variants always return false.
+
+    // Note: Boolean logical operators behave the same in C++ and SQL.
+    const bool vLBool = vL.toBool();
+    const bool vRBool = vR.toBool();
+    switch ( op )
+    {
+      case boEQ:
+        return vLBool == vRBool ? TVL_True : TVL_False;
+      case boNE:
+        return vLBool != vRBool ? TVL_True : TVL_False;
+      case boLT:
+        return vLBool <  vRBool ? TVL_True : TVL_False;
+      case boLE:
+        return vLBool <= vRBool ? TVL_True : TVL_False;
+      case boGT:
+        return vLBool > vRBool ? TVL_True : TVL_False;
+      case boGE:
+        return vLBool >= vRBool ? TVL_True : TVL_False;
+      case boOr:
+      case boAnd:
+      case boRegexp:
+      case boLike:
+      case boNotLike:
+      case boILike:
+      case boNotILike:
+      case boIs:
+      case boIsNot:
+      case boPlus:
+      case boMinus:
+      case boMul:
+      case boDiv:
+      case boIntDiv:
+      case boMod:
+      case boPow:
+      case boConcat:
+        // should not happen
+        break;
+    }
+    return TVL_Unknown;
+  }
+
+  // warning - QgsExpression::isIntervalSafe is VERY expensive and should not be used here
+  else if ( vL.userType() == qMetaTypeId< QgsInterval>() && vR.userType() == qMetaTypeId< QgsInterval>() )
+  {
+    double fL = QgsExpressionUtils::getInterval( vL, parent ).seconds();
+    ENSURE_NO_EVAL_ERROR
+    double fR = QgsExpressionUtils::getInterval( vR, parent ).seconds();
+    ENSURE_NO_EVAL_ERROR
+    return compareOp< double >( fL - fR, op ) ? TVL_True : TVL_False;
+  }
+  else
+  {
+    // do string comparison otherwise
+    QString sL = QgsExpressionUtils::getStringValue( vL, parent );
+    ENSURE_NO_EVAL_ERROR
+    QString sR = QgsExpressionUtils::getStringValue( vR, parent );
+    ENSURE_NO_EVAL_ERROR
+    int diff = QString::compare( sL, sR );
+    return compareOp<int>( diff, op ) ? TVL_True : TVL_False;
+  }
+}
+
 QVariant QgsExpressionNodeBinaryOperator::evalNode( QgsExpression *parent, const QgsExpressionContext *context )
 {
   QVariant vL = mOpLeft->eval( parent, context );
@@ -225,7 +397,7 @@ QVariant QgsExpressionNodeBinaryOperator::evalNode( QgsExpression *parent, const
   switch ( mOp )
   {
     case boPlus:
-      if ( vL.type() == QVariant::String && vR.type() == QVariant::String )
+      if ( vL.userType() == QMetaType::Type::QString && vR.userType() == QMetaType::Type::QString )
       {
         QString sL = QgsExpressionUtils::isNull( vL ) ? QString() : QgsExpressionUtils::getStringValue( vL, parent );
         ENSURE_NO_EVAL_ERROR
@@ -234,7 +406,7 @@ QVariant QgsExpressionNodeBinaryOperator::evalNode( QgsExpression *parent, const
         return QVariant( sL + sR );
       }
       //intentional fall-through
-      FALLTHROUGH
+      [[fallthrough]];
     case boMinus:
     case boMul:
     case boDiv:
@@ -268,17 +440,17 @@ QVariant QgsExpressionNodeBinaryOperator::evalNode( QgsExpression *parent, const
         }
         return QVariant( computeDateTimeFromInterval( dL, &iL ) );
       }
-      else if ( mOp == boPlus && ( ( vL.type() == QVariant::Date && vR.type() == QVariant::Time ) ||
-                                   ( vR.type() == QVariant::Date && vL.type() == QVariant::Time ) ) )
+      else if ( mOp == boPlus && ( ( vL.userType() == QMetaType::Type::QDate && vR.userType() == QMetaType::Type::QTime ) ||
+                                   ( vR.userType() == QMetaType::Type::QDate && vL.userType() == QMetaType::Type::QTime ) ) )
       {
-        QDate date = QgsExpressionUtils::getDateValue( vL.type() == QVariant::Date ? vL : vR, parent );
+        QDate date = QgsExpressionUtils::getDateValue( vL.userType() == QMetaType::Type::QDate ? vL : vR, parent );
         ENSURE_NO_EVAL_ERROR
-        QTime time = QgsExpressionUtils::getTimeValue( vR.type() == QVariant::Time ? vR : vL, parent );
+        QTime time = QgsExpressionUtils::getTimeValue( vR.userType() == QMetaType::Type::QTime ? vR : vL, parent );
         ENSURE_NO_EVAL_ERROR
         QDateTime dt = QDateTime( date, time );
         return QVariant( dt );
       }
-      else if ( mOp == boMinus && vL.type() == QVariant::Date && vR.type() == QVariant::Date )
+      else if ( mOp == boMinus && vL.userType() == QMetaType::Type::QDate && vR.userType() == QMetaType::Type::QDate )
       {
         QDate date1 = QgsExpressionUtils::getDateValue( vL, parent );
         ENSURE_NO_EVAL_ERROR
@@ -286,7 +458,7 @@ QVariant QgsExpressionNodeBinaryOperator::evalNode( QgsExpression *parent, const
         ENSURE_NO_EVAL_ERROR
         return date1 - date2;
       }
-      else if ( mOp == boMinus && vL.type() == QVariant::Time && vR.type() == QVariant::Time )
+      else if ( mOp == boMinus && vL.userType() == QMetaType::Type::QTime && vR.userType() == QMetaType::Type::QTime )
       {
         QTime time1 = QgsExpressionUtils::getTimeValue( vL, parent );
         ENSURE_NO_EVAL_ERROR
@@ -294,7 +466,7 @@ QVariant QgsExpressionNodeBinaryOperator::evalNode( QgsExpression *parent, const
         ENSURE_NO_EVAL_ERROR
         return time1 - time2;
       }
-      else if ( mOp == boMinus && vL.type() == QVariant::DateTime && vR.type() == QVariant::DateTime )
+      else if ( mOp == boMinus && vL.userType() == QMetaType::Type::QDateTime && vR.userType() == QMetaType::Type::QDateTime )
       {
         QDateTime datetime1 = QgsExpressionUtils::getDateTimeValue( vL, parent );
         ENSURE_NO_EVAL_ERROR
@@ -430,100 +602,25 @@ QVariant QgsExpressionNodeBinaryOperator::evalNode( QgsExpression *parent, const
             return TVL_Unknown;
         }
       }
-      else if ( ( vL.type() == QVariant::DateTime && vR.type() == QVariant::DateTime ) )
-      {
-        QDateTime dL = QgsExpressionUtils::getDateTimeValue( vL, parent );
-        ENSURE_NO_EVAL_ERROR
-        QDateTime dR = QgsExpressionUtils::getDateTimeValue( vR, parent );
-        ENSURE_NO_EVAL_ERROR
-
-        // while QDateTime has innate handling of timezones, we don't expose these ANYWHERE
-        // in QGIS. So to avoid confusion where seemingly equal datetime values give unexpected
-        // results (due to different hidden timezones), we force all datetime comparisons to treat
-        // all datetime values as having the same time zone
-        dL.setTimeSpec( Qt::UTC );
-        dR.setTimeSpec( Qt::UTC );
-
-        return compare( dR.msecsTo( dL ) ) ? TVL_True : TVL_False;
-      }
-      else if ( ( vL.type() == QVariant::Date && vR.type() == QVariant::Date ) )
-      {
-        const QDate dL = QgsExpressionUtils::getDateValue( vL, parent );
-        ENSURE_NO_EVAL_ERROR
-        const QDate dR = QgsExpressionUtils::getDateValue( vR, parent );
-        ENSURE_NO_EVAL_ERROR
-        return compare( dR.daysTo( dL ) ) ? TVL_True : TVL_False;
-      }
-      else if ( ( vL.type() == QVariant::Time && vR.type() == QVariant::Time ) )
-      {
-        const QTime dL = QgsExpressionUtils::getTimeValue( vL, parent );
-        ENSURE_NO_EVAL_ERROR
-        const QTime dR = QgsExpressionUtils::getTimeValue( vR, parent );
-        ENSURE_NO_EVAL_ERROR
-        return compare( dR.msecsTo( dL ) ) ? TVL_True : TVL_False;
-      }
-      else if ( ( vL.type() != QVariant::String || vR.type() != QVariant::String ) &&
-                QgsExpressionUtils::isDoubleSafe( vL ) && QgsExpressionUtils::isDoubleSafe( vR ) )
-      {
-        // do numeric comparison if both operators can be converted to numbers,
-        // and they aren't both string
-        double fL = QgsExpressionUtils::getDoubleValue( vL, parent );
-        ENSURE_NO_EVAL_ERROR
-        double fR = QgsExpressionUtils::getDoubleValue( vR, parent );
-        ENSURE_NO_EVAL_ERROR
-        return compare( fL - fR ) ? TVL_True : TVL_False;
-      }
-      // warning - QgsExpression::isIntervalSafe is VERY expensive and should not be used here
-      else if ( vL.userType() == QMetaType::type( "QgsInterval" ) && vR.userType() == QMetaType::type( "QgsInterval" ) )
-      {
-        double fL = QgsExpressionUtils::getInterval( vL, parent ).seconds();
-        ENSURE_NO_EVAL_ERROR
-        double fR = QgsExpressionUtils::getInterval( vR, parent ).seconds();
-        ENSURE_NO_EVAL_ERROR
-        return compare( fL - fR ) ? TVL_True : TVL_False;
-      }
       else
       {
-        // do string comparison otherwise
-        QString sL = QgsExpressionUtils::getStringValue( vL, parent );
-        ENSURE_NO_EVAL_ERROR
-        QString sR = QgsExpressionUtils::getStringValue( vR, parent );
-        ENSURE_NO_EVAL_ERROR
-        int diff = QString::compare( sL, sR );
-        return compare( diff ) ? TVL_True : TVL_False;
+        return compareNonNullValues( parent, context, vL, vR, mOp );
       }
 
     case boIs:
     case boIsNot:
-      if ( QgsExpressionUtils::isNull( vL ) && QgsExpressionUtils::isNull( vR ) ) // both operators null
+    {
+      const bool vLNull = QgsExpressionUtils::isNull( vL );
+      const bool vRNull = QgsExpressionUtils::isNull( vR );
+      if ( vLNull && vRNull ) // both operators null
         return ( mOp == boIs ? TVL_True : TVL_False );
-      else if ( QgsExpressionUtils::isNull( vL ) || QgsExpressionUtils::isNull( vR ) ) // one operator null
+      else if ( vLNull || vRNull ) // one operator null
         return ( mOp == boIs ? TVL_False : TVL_True );
       else // both operators non-null
       {
-        bool equal = false;
-        if ( QgsExpressionUtils::isDoubleSafe( vL ) && QgsExpressionUtils::isDoubleSafe( vR ) &&
-             ( vL.type() != QVariant::String || vR.type() != QVariant::String ) )
-        {
-          double fL = QgsExpressionUtils::getDoubleValue( vL, parent );
-          ENSURE_NO_EVAL_ERROR
-          double fR = QgsExpressionUtils::getDoubleValue( vR, parent );
-          ENSURE_NO_EVAL_ERROR
-          equal = qgsDoubleNear( fL, fR );
-        }
-        else
-        {
-          QString sL = QgsExpressionUtils::getStringValue( vL, parent );
-          ENSURE_NO_EVAL_ERROR
-          QString sR = QgsExpressionUtils::getStringValue( vR, parent );
-          ENSURE_NO_EVAL_ERROR
-          equal = QString::compare( sL, sR ) == 0;
-        }
-        if ( equal )
-          return mOp == boIs ? TVL_True : TVL_False;
-        else
-          return mOp == boIs ? TVL_False : TVL_True;
+        return compareNonNullValues( parent, context, vL, vR, mOp == boIs ? boEQ : boNE );
       }
+    }
 
     case boRegexp:
     case boLike:
@@ -601,28 +698,6 @@ QVariant QgsExpressionNodeBinaryOperator::evalNode( QgsExpression *parent, const
   return QVariant();
 }
 
-bool QgsExpressionNodeBinaryOperator::compare( double diff )
-{
-  switch ( mOp )
-  {
-    case boEQ:
-      return qgsDoubleNear( diff, 0.0 );
-    case boNE:
-      return !qgsDoubleNear( diff, 0.0 );
-    case boLT:
-      return diff < 0;
-    case boGT:
-      return diff > 0;
-    case boLE:
-      return diff <= 0;
-    case boGE:
-      return diff >= 0;
-    default:
-      Q_ASSERT( false );
-      return false;
-  }
-}
-
 qlonglong QgsExpressionNodeBinaryOperator::computeInt( qlonglong x, qlonglong y )
 {
   switch ( mOp )
@@ -684,6 +759,140 @@ QgsExpressionNode::NodeType QgsExpressionNodeBinaryOperator::nodeType() const
 
 bool QgsExpressionNodeBinaryOperator::prepareNode( QgsExpression *parent, const QgsExpressionContext *context )
 {
+
+  // if this is an OR, try to collapse the OR expression into an IN node
+  if ( mOp == boOr )
+  {
+
+    // First step: flatten OR chain and collect values
+    QMap<QString, QgsExpressionNode::NodeList> orValuesMap;
+    QList<QString> orFieldNames;
+
+    // Get a list of all the OR and IN nodes chained together
+    std::function<bool ( QgsExpressionNode * )> visitOrNodes = [&visitOrNodes, &orValuesMap, &orFieldNames]( QgsExpressionNode * node ) -> bool
+    {
+      if ( QgsExpressionNodeBinaryOperator *op = dynamic_cast<QgsExpressionNodeBinaryOperator *>( node ) )
+      {
+        if ( op->op() != boOr && op->op() != boEQ )
+        {
+          return false;
+        }
+
+        if ( op->op() == boEQ )
+        {
+          // If left is a column ref and right is a literal, collect
+          if ( ( dynamic_cast<QgsExpressionNodeColumnRef *>( op->opLeft() ) && dynamic_cast<QgsExpressionNodeLiteral *>( op->opRight() ) ) )
+          {
+            const QString fieldName = op->opLeft()->dump();
+            if ( !orValuesMap.contains( fieldName ) )
+            {
+              orFieldNames.append( fieldName );
+              orValuesMap.insert( fieldName, QgsExpressionNode::NodeList() );
+            }
+            orValuesMap[fieldName].append( op->opRight()->clone() );
+            return true;
+          }
+          else if ( ( dynamic_cast<QgsExpressionNodeColumnRef *>( op->opRight() ) && dynamic_cast<QgsExpressionNodeLiteral *>( op->opLeft() ) ) )
+          {
+            const QString fieldName = op->opRight()->dump();
+            if ( !orValuesMap.contains( fieldName ) )
+            {
+              orFieldNames.append( fieldName );
+              orValuesMap.insert( fieldName, QgsExpressionNode::NodeList() );
+            }
+            orValuesMap[fieldName].append( op->opLeft()->clone() );
+            return true;
+          }
+          return false;
+        }
+
+        if ( visitOrNodes( op->opLeft() ) && visitOrNodes( op->opRight() ) )
+        {
+          return true;
+        }
+
+      }
+      else if ( QgsExpressionNodeInOperator *inOp = dynamic_cast<QgsExpressionNodeInOperator *>( node ) )
+      {
+        if ( inOp->isNotIn() || inOp->node()->nodeType() != QgsExpressionNode::ntColumnRef )
+        {
+          return false;
+        }
+
+        const QString fieldName = inOp->node()->dump();
+
+        // Check if all nodes are literals
+        const auto nodes = inOp->list()->list();
+        for ( const auto &valueNode : std::as_const( nodes ) )
+        {
+          if ( valueNode->nodeType() != QgsExpressionNode::ntLiteral )
+          {
+            return false;
+          }
+        }
+
+        if ( !orValuesMap.contains( fieldName ) )
+        {
+          orFieldNames.append( fieldName );
+          orValuesMap.insert( fieldName, *inOp->list()->clone() );
+        }
+        else
+        {
+          for ( const auto &valueNode : std::as_const( nodes ) )
+          {
+            orValuesMap[fieldName].append( valueNode->clone() );
+          }
+        }
+
+        return true;
+      }
+      return false;
+    };
+
+
+    // Second step: build the OR chain of IN operators
+    if ( visitOrNodes( this ) && ! orValuesMap.empty() )
+    {
+
+      std::unique_ptr<QgsExpressionNode> currentNode;
+      for ( const auto &fieldName : std::as_const( orFieldNames ) )
+      {
+        auto orValuesIt = orValuesMap.find( fieldName );
+        if ( orValuesIt.value().count() == 1 )
+        {
+          auto eqNode = std::make_unique<QgsExpressionNodeBinaryOperator>( boEQ, new QgsExpressionNodeColumnRef( fieldName ), orValuesIt.value().at( 0 )->clone() );
+          if ( currentNode )
+          {
+            currentNode = std::make_unique<QgsExpressionNodeBinaryOperator>( boOr, currentNode.release(), eqNode.release() );
+          }
+          else
+          {
+            currentNode = std::move( eqNode );
+          }
+        }
+        else
+        {
+          auto inNode = std::make_unique<QgsExpressionNodeInOperator>( new QgsExpressionNodeColumnRef( fieldName ), orValuesIt.value().clone() );
+          if ( currentNode )
+          {
+            currentNode = std::make_unique<QgsExpressionNodeBinaryOperator>( boOr, currentNode.release(), inNode.release() );
+          }
+          else
+          {
+            currentNode = std::move( inNode );
+          }
+        }
+      }
+
+
+      if ( currentNode )
+      {
+        mCompiledSimplifiedNode = std::move( currentNode );
+      }
+    }
+
+  }
+
   bool resL = mOpLeft->prepare( parent, context );
   bool resR = mOpRight->prepare( parent, context );
   return resL && resR;
@@ -773,9 +982,9 @@ bool QgsExpressionNodeBinaryOperator::leftAssociative() const
 
 QString QgsExpressionNodeBinaryOperator::dump() const
 {
-  QgsExpressionNodeBinaryOperator *lOp = dynamic_cast<QgsExpressionNodeBinaryOperator *>( mOpLeft );
-  QgsExpressionNodeBinaryOperator *rOp = dynamic_cast<QgsExpressionNodeBinaryOperator *>( mOpRight );
-  QgsExpressionNodeUnaryOperator *ruOp = dynamic_cast<QgsExpressionNodeUnaryOperator *>( mOpRight );
+  QgsExpressionNodeBinaryOperator *lOp = dynamic_cast<QgsExpressionNodeBinaryOperator *>( mOpLeft.get() );
+  QgsExpressionNodeBinaryOperator *rOp = dynamic_cast<QgsExpressionNodeBinaryOperator *>( mOpRight.get() );
+  QgsExpressionNodeUnaryOperator *ruOp = dynamic_cast<QgsExpressionNodeUnaryOperator *>( mOpRight.get() );
 
   QString rdump( mOpRight->dump() );
 
@@ -974,7 +1183,7 @@ QVariant QgsExpressionNodeInOperator::evalNode( QgsExpression *parent, const Qgs
     {
       bool equal = false;
       // check whether they are equal
-      if ( ( v1.type() != QVariant::String || v2.type() != QVariant::String ) &&
+      if ( ( v1.userType() != QMetaType::Type::QString || v2.userType() != QMetaType::Type::QString ) &&
            QgsExpressionUtils::isDoubleSafe( v1 ) && QgsExpressionUtils::isDoubleSafe( v2 ) )
       {
         // do numeric comparison if both operators can be converted to numbers,
@@ -1008,8 +1217,6 @@ QVariant QgsExpressionNodeInOperator::evalNode( QgsExpression *parent, const Qgs
 
 QgsExpressionNodeInOperator::~QgsExpressionNodeInOperator()
 {
-  delete mNode;
-  delete mList;
 }
 
 QgsExpressionNode::NodeType QgsExpressionNodeInOperator::nodeType() const
@@ -1062,7 +1269,7 @@ QVariant QgsExpressionNodeFunction::evalNode( QgsExpression *parent, const QgsEx
   QString name = QgsExpression::QgsExpression::Functions()[mFnIndex]->name();
   QgsExpressionFunction *fd = context && context->hasFunction( name ) ? context->function( name ) : QgsExpression::QgsExpression::Functions()[mFnIndex];
 
-  QVariant res = fd->run( mArgs, context, parent, this );
+  QVariant res = fd->run( mArgs.get(), context, parent, this );
   ENSURE_NO_EVAL_ERROR
 
   // everything went fine
@@ -1072,16 +1279,23 @@ QVariant QgsExpressionNodeFunction::evalNode( QgsExpression *parent, const QgsEx
 QgsExpressionNodeFunction::QgsExpressionNodeFunction( int fnIndex, QgsExpressionNode::NodeList *args )
   : mFnIndex( fnIndex )
 {
+  // lock the function mutex once upfront -- we'll be doing this when calling QgsExpression::Functions() anyway,
+  // and it's cheaper to hold the recursive lock once upfront like while we handle ALL the function's arguments,
+  // since those might be QgsExpressionNodeFunction nodes and would need to re-obtain the lock otherwise.
+  QMutexLocker locker( &QgsExpression::QgsExpression::sFunctionsMutex );
+
   const QgsExpressionFunction::ParameterList &functionParams = QgsExpression::QgsExpression::Functions()[mFnIndex]->parameters();
+  const int functionParamsSize = functionParams.size();
   if ( functionParams.isEmpty() )
   {
     // function does not support parameters
-    mArgs = args;
+    mArgs.reset( args );
   }
   else if ( !args )
   {
     // no arguments specified, but function has parameters. Build a list of default parameter values for the arguments list.
-    mArgs = new NodeList();
+    mArgs = std::make_unique<NodeList>();
+    mArgs->reserve( functionParamsSize );
     for ( const QgsExpressionFunction::Parameter &param : functionParams )
     {
       // insert default value for QgsExpressionFunction::Parameter
@@ -1090,28 +1304,35 @@ QgsExpressionNodeFunction::QgsExpressionNodeFunction( int fnIndex, QgsExpression
   }
   else
   {
-    mArgs = new NodeList();
+    mArgs = std::make_unique<NodeList>();
+    mArgs->reserve( functionParamsSize );
 
     int idx = 0;
+    const QStringList argNames = args->names();
+    const QList<QgsExpressionNode *> argList = args->list();
     //first loop through unnamed arguments
-    while ( idx < args->names().size() && args->names().at( idx ).isEmpty() )
     {
-      mArgs->append( args->list().at( idx )->clone() );
-      idx++;
+      const int argNamesSize = argNames.size();
+      while ( idx < argNamesSize && argNames.at( idx ).isEmpty() )
+      {
+        mArgs->append( argList.at( idx )->clone() );
+        idx++;
+      }
     }
 
     //next copy named QgsExpressionFunction::Parameters in order expected by function
-    for ( ; idx < functionParams.count(); ++idx )
+    for ( ; idx < functionParamsSize; ++idx )
     {
-      int nodeIdx = args->names().indexOf( functionParams.at( idx ).name().toLower() );
+      const QgsExpressionFunction::Parameter &parameter = functionParams.at( idx );
+      int nodeIdx = argNames.indexOf( parameter.name().toLower() );
       if ( nodeIdx < 0 )
       {
         //QgsExpressionFunction::Parameter not found - insert default value for QgsExpressionFunction::Parameter
-        mArgs->append( new QgsExpressionNodeLiteral( functionParams.at( idx ).defaultValue() ) );
+        mArgs->append( new QgsExpressionNodeLiteral( parameter.defaultValue() ) );
       }
       else
       {
-        mArgs->append( args->list().at( nodeIdx )->clone() );
+        mArgs->append( argList.at( nodeIdx )->clone() );
       }
     }
 
@@ -1121,7 +1342,7 @@ QgsExpressionNodeFunction::QgsExpressionNodeFunction( int fnIndex, QgsExpression
 
 QgsExpressionNodeFunction::~QgsExpressionNodeFunction()
 {
-  delete mArgs;
+
 }
 
 QgsExpressionNode::NodeType QgsExpressionNodeFunction::nodeType() const
@@ -1367,23 +1588,23 @@ QString QgsExpressionNodeLiteral::valueAsString() const
   if ( QgsVariantUtils::isNull( mValue ) )
     return QStringLiteral( "NULL" );
 
-  switch ( mValue.type() )
+  switch ( mValue.userType() )
   {
-    case QVariant::Int:
+    case QMetaType::Type::Int:
       return QString::number( mValue.toInt() );
-    case QVariant::Double:
-      return QString::number( mValue.toDouble() );
-    case QVariant::LongLong:
+    case QMetaType::Type::Double:
+      return qgsDoubleToString( mValue.toDouble() );
+    case QMetaType::Type::LongLong:
       return QString::number( mValue.toLongLong() );
-    case QVariant::String:
+    case QMetaType::Type::QString:
       return QgsExpression::quotedString( mValue.toString() );
-    case QVariant::Time:
+    case QMetaType::Type::QTime:
       return QgsExpression::quotedString( mValue.toTime().toString( Qt::ISODate ) );
-    case QVariant::Date:
+    case QMetaType::Type::QDate:
       return QgsExpression::quotedString( mValue.toDate().toString( Qt::ISODate ) );
-    case QVariant::DateTime:
+    case QMetaType::Type::QDateTime:
       return QgsExpression::quotedString( mValue.toDateTime().toString( Qt::ISODate ) );
-    case QVariant::Bool:
+    case QMetaType::Type::Bool:
       return mValue.toBool() ? QStringLiteral( "TRUE" ) : QStringLiteral( "FALSE" );
     default:
       return tr( "[unsupported type: %1; value: %2]" ).arg( mValue.typeName(), mValue.toString() );
@@ -1559,7 +1780,7 @@ QgsExpressionNodeCondition::QgsExpressionNodeCondition( QgsExpressionNodeConditi
 
 QgsExpressionNodeCondition::~QgsExpressionNodeCondition()
 {
-  delete mElseExp;
+
   qDeleteAll( mConditions );
 }
 
@@ -1808,9 +2029,6 @@ QList<const QgsExpressionNode *> QgsExpressionNodeInOperator::nodes() const
 
 QgsExpressionNodeBetweenOperator::~QgsExpressionNodeBetweenOperator()
 {
-  delete mNode;
-  delete mLowerBound;
-  delete mHigherBound;
 }
 
 QgsExpressionNode::NodeType QgsExpressionNodeBetweenOperator::nodeType() const
@@ -1904,7 +2122,7 @@ QSet<QString> QgsExpressionNodeBetweenOperator::referencedFunctions() const
 
 QList<const QgsExpressionNode *> QgsExpressionNodeBetweenOperator::nodes() const
 {
-  return { this, mLowerBound, mHigherBound };
+  return { this, mLowerBound.get(), mHigherBound.get() };
 }
 
 QSet<QString> QgsExpressionNodeBetweenOperator::referencedColumns() const
@@ -1952,12 +2170,12 @@ bool QgsExpressionNodeBetweenOperator::isStatic( QgsExpression *parent, const Qg
 
 QgsExpressionNode *QgsExpressionNodeBetweenOperator::lowerBound() const
 {
-  return mLowerBound;
+  return mLowerBound.get();
 }
 
 QgsExpressionNode *QgsExpressionNodeBetweenOperator::higherBound() const
 {
-  return mHigherBound;
+  return mHigherBound.get();
 }
 
 bool QgsExpressionNodeBetweenOperator::negate() const
@@ -1973,8 +2191,8 @@ QgsExpressionNodeCondition::WhenThen::WhenThen( QgsExpressionNode *whenExp, QgsE
 
 QgsExpressionNodeCondition::WhenThen::~WhenThen()
 {
-  delete mWhenExp;
-  delete mThenExp;
+
+
 }
 
 QgsExpressionNodeCondition::WhenThen *QgsExpressionNodeCondition::WhenThen::clone() const
@@ -1996,13 +2214,13 @@ QVariant QgsExpressionNodeIndexOperator::evalNode( QgsExpression *parent, const 
   const QVariant index = mIndex->eval( parent, context );
   ENSURE_NO_EVAL_ERROR
 
-  switch ( container.type() )
+  switch ( container.userType() )
   {
-    case QVariant::Map:
+    case QMetaType::Type::QVariantMap:
       return QgsExpressionUtils::getMapValue( container, parent ).value( index.toString() );
 
-    case QVariant::List:
-    case QVariant::StringList:
+    case QMetaType::Type::QVariantList:
+    case QMetaType::Type::QStringList:
     {
       const QVariantList list = QgsExpressionUtils::getListValue( container, parent );
       qlonglong pos = QgsExpressionUtils::getIntValue( index, parent );
@@ -2021,7 +2239,7 @@ QVariant QgsExpressionNodeIndexOperator::evalNode( QgsExpression *parent, const 
 
     default:
       if ( !QgsVariantUtils::isNull( container ) )
-        parent->setEvalErrorString( tr( "[] can only be used with map or array values, not %1" ).arg( QMetaType::typeName( container.type() ) ) );
+        parent->setEvalErrorString( tr( "[] can only be used with map or array values, not %1" ).arg( QMetaType::typeName( static_cast<QMetaType::Type>( container.userType() ) ) ) );
       return QVariant();
   }
 }

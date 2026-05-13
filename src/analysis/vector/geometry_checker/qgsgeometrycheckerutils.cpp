@@ -29,10 +29,7 @@
 
 #include <qmath.h>
 
-QgsGeometryCheckerUtils::LayerFeature::LayerFeature( const QgsFeaturePool *pool,
-    const QgsFeature &feature,
-    const QgsGeometryCheckContext *context,
-    bool useMapCrs )
+QgsGeometryCheckerUtils::LayerFeature::LayerFeature( const QgsFeaturePool *pool, const QgsFeature &feature, const QgsGeometryCheckContext *context, bool useMapCrs )
   : mFeaturePool( pool )
   , mFeature( feature )
   , mGeometry( feature.geometry() )
@@ -55,6 +52,11 @@ QgsGeometryCheckerUtils::LayerFeature::LayerFeature( const QgsFeaturePool *pool,
 QgsFeature QgsGeometryCheckerUtils::LayerFeature::feature() const
 {
   return mFeature;
+}
+
+QgsCoordinateReferenceSystem QgsGeometryCheckerUtils::LayerFeature::layerCrs() const
+{
+  return mFeaturePool->crs();
 }
 
 QPointer<QgsVectorLayer> QgsGeometryCheckerUtils::LayerFeature::layer() const
@@ -207,12 +209,7 @@ bool QgsGeometryCheckerUtils::LayerFeatures::iterator::nextFeature( bool begin )
 
 /////////////////////////////////////////////////////////////////////////////
 
-QgsGeometryCheckerUtils::LayerFeatures::LayerFeatures( const QMap<QString, QgsFeaturePool *> &featurePools,
-    const QMap<QString, QgsFeatureIds> &featureIds,
-    const QList<Qgis::GeometryType> &geometryTypes,
-    QgsFeedback *feedback,
-    const QgsGeometryCheckContext *context,
-    bool useMapCrs )
+QgsGeometryCheckerUtils::LayerFeatures::LayerFeatures( const QMap<QString, QgsFeaturePool *> &featurePools, const QMap<QString, QgsFeatureIds> &featureIds, const QList<Qgis::GeometryType> &geometryTypes, QgsFeedback *feedback, const QgsGeometryCheckContext *context, bool useMapCrs )
   : mFeaturePools( featurePools )
   , mFeatureIds( featureIds )
   , mLayerIds( featurePools.keys() )
@@ -222,10 +219,7 @@ QgsGeometryCheckerUtils::LayerFeatures::LayerFeatures( const QMap<QString, QgsFe
   , mUseMapCrs( useMapCrs )
 {}
 
-QgsGeometryCheckerUtils::LayerFeatures::LayerFeatures( const QMap<QString, QgsFeaturePool *> &featurePools,
-    const QList<QString> &layerIds, const QgsRectangle &extent,
-    const QList<Qgis::GeometryType> &geometryTypes,
-    const QgsGeometryCheckContext *context )
+QgsGeometryCheckerUtils::LayerFeatures::LayerFeatures( const QMap<QString, QgsFeaturePool *> &featurePools, const QList<QString> &layerIds, const QgsRectangle &extent, const QList<Qgis::GeometryType> &geometryTypes, const QgsGeometryCheckContext *context )
   : mFeaturePools( featurePools )
   , mLayerIds( layerIds )
   , mExtent( extent )
@@ -260,25 +254,20 @@ QgsGeometryCheckerUtils::LayerFeatures::iterator QgsGeometryCheckerUtils::LayerF
 
 /////////////////////////////////////////////////////////////////////////////
 
-std::unique_ptr<QgsGeometryEngine> QgsGeometryCheckerUtils::createGeomEngine( const QgsAbstractGeometry *geometry, double tolerance )
-{
-  return std::make_unique<QgsGeos>( geometry, tolerance );
-}
-
 QgsAbstractGeometry *QgsGeometryCheckerUtils::getGeomPart( QgsAbstractGeometry *geom, int partIdx )
 {
-  if ( dynamic_cast<QgsGeometryCollection *>( geom ) )
+  if ( QgsGeometryCollection *collection = qgsgeometry_cast<QgsGeometryCollection *>( geom ) )
   {
-    return static_cast<QgsGeometryCollection *>( geom )->geometryN( partIdx );
+    return collection->geometryN( partIdx );
   }
   return geom;
 }
 
 const QgsAbstractGeometry *QgsGeometryCheckerUtils::getGeomPart( const QgsAbstractGeometry *geom, int partIdx )
 {
-  if ( dynamic_cast<const QgsGeometryCollection *>( geom ) )
+  if ( const QgsGeometryCollection *collection = qgsgeometry_cast<const QgsGeometryCollection *>( geom ) )
   {
-    return static_cast<const QgsGeometryCollection *>( geom )->geometryN( partIdx );
+    return collection->geometryN( partIdx );
   }
   return geom;
 }
@@ -286,13 +275,13 @@ const QgsAbstractGeometry *QgsGeometryCheckerUtils::getGeomPart( const QgsAbstra
 QList<const QgsLineString *> QgsGeometryCheckerUtils::polygonRings( const QgsPolygon *polygon )
 {
   QList<const QgsLineString *> rings;
-  if ( const QgsLineString *exterior = dynamic_cast<const QgsLineString *>( polygon->exteriorRing() ) )
+  if ( const QgsLineString *exterior = qgsgeometry_cast<const QgsLineString *>( polygon->exteriorRing() ) )
   {
     rings.append( exterior );
   }
   for ( int iInt = 0, nInt = polygon->numInteriorRings(); iInt < nInt; ++iInt )
   {
-    if ( const QgsLineString *interior = dynamic_cast<const QgsLineString *>( polygon->interiorRing( iInt ) ) )
+    if ( const QgsLineString *interior = qgsgeometry_cast<const QgsLineString *>( polygon->interiorRing( iInt ) ) )
     {
       rings.append( interior );
     }
@@ -302,9 +291,8 @@ QList<const QgsLineString *> QgsGeometryCheckerUtils::polygonRings( const QgsPol
 
 void QgsGeometryCheckerUtils::filter1DTypes( QgsAbstractGeometry *geom )
 {
-  if ( qgsgeometry_cast<QgsGeometryCollection *>( geom ) )
+  if ( QgsGeometryCollection *geomCollection = qgsgeometry_cast<QgsGeometryCollection *>( geom ) )
   {
-    QgsGeometryCollection *geomCollection = static_cast<QgsGeometryCollection *>( geom );
     for ( int nParts = geom->partCount(), iPart = nParts - 1; iPart >= 0; --iPart )
     {
       if ( !qgsgeometry_cast<QgsSurface *>( geomCollection->geometryN( iPart ) ) )

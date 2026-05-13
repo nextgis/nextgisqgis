@@ -27,9 +27,10 @@ SIP_NO_FILE
 /**
  * \ingroup gui
  * \class QgsRelationReferenceConfigDlg
+ *
+ * \brief Configuration widget for relation reference widgets.
  * \note not available in Python bindings
  */
-
 class GUI_EXPORT QgsRelationReferenceConfigDlg : public QgsEditorConfigWidget, private Ui::QgsRelReferenceConfigDlgBase
 {
     Q_OBJECT
@@ -46,6 +47,7 @@ class GUI_EXPORT QgsRelationReferenceConfigDlg : public QgsEditorConfigWidget, p
     int indexFromListWidgetItem( QListWidgetItem *item );
 
     QgsVectorLayer *mReferencedLayer = nullptr;
+    bool mAllowNullWasSetByConfig = false;
 
   private slots:
     void relationChanged( int idx );
@@ -56,6 +58,8 @@ class GUI_EXPORT QgsRelationReferenceConfigDlg : public QgsEditorConfigWidget, p
      * Opens an expression dialog and sets its value as filter expression for the relation reference.
      */
     void mEditExpression_clicked();
+
+    friend class TestQgsRelationReferenceWidget;
 };
 
 #endif // QGSRELATIONREFERENCECONFIGDLGBASE_H

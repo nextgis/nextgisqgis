@@ -72,8 +72,8 @@ QgsMultiCurve *QgsMultiCurve::toCurveType() const
 bool QgsMultiCurve::fromWkt( const QString &wkt )
 {
   return fromCollectionWkt( wkt,
-                            QVector<QgsAbstractGeometry *>() << new QgsLineString << new QgsCircularString << new QgsCompoundCurve,
-                            QStringLiteral( "LineString" ) );
+  {Qgis::WkbType::LineString, Qgis::WkbType::CircularString, Qgis::WkbType::CompoundCurve },
+  QStringLiteral( "LineString" ) );
 }
 
 QDomElement QgsMultiCurve::asGml2( QDomDocument &doc, int precision, const QString &ns, const  AxisOrder axisOrder ) const
@@ -165,6 +165,39 @@ bool QgsMultiCurve::addGeometry( QgsAbstractGeometry *g )
   return QgsGeometryCollection::addGeometry( g );
 }
 
+bool QgsMultiCurve::addGeometries( const QVector<QgsAbstractGeometry *> &geometries )
+{
+  for ( QgsAbstractGeometry *g : geometries )
+  {
+    if ( !qgsgeometry_cast<QgsCurve *>( g ) )
+    {
+      qDeleteAll( geometries );
+      return false;
+    }
+  }
+
+  if ( mGeometries.empty() && !geometries.empty() )
+  {
+    setZMTypeFromSubGeometry( geometries.at( 0 ), Qgis::WkbType::MultiCurve );
+  }
+  mGeometries.reserve( mGeometries.size() + geometries.size() );
+  for ( QgsAbstractGeometry *g : geometries )
+  {
+    if ( is3D() && !g->is3D() )
+      g->addZValue();
+    else if ( !is3D() && g->is3D() )
+      g->dropZValue();
+    if ( isMeasure() && !g->isMeasure() )
+      g->addMValue();
+    else if ( !isMeasure() && g->isMeasure() )
+      g->dropMValue();
+    mGeometries.append( g );
+  }
+
+  clearCache();
+  return true;
+}
+
 bool QgsMultiCurve::insertGeometry( QgsAbstractGeometry *g, int index )
 {
   if ( !g || !qgsgeometry_cast<QgsCurve *>( g ) )
@@ -174,6 +207,17 @@ bool QgsMultiCurve::insertGeometry( QgsAbstractGeometry *g, int index )
   }
 
   return QgsGeometryCollection::insertGeometry( g, index );
+}
+
+QgsMultiCurve *QgsMultiCurve::simplifyByDistance( double tolerance ) const
+{
+  auto res = std::make_unique< QgsMultiCurve >();
+  res->reserve( mGeometries.size() );
+  for ( int i = 0; i < mGeometries.size(); ++i )
+  {
+    res->addGeometry( mGeometries.at( i )->simplifyByDistance( tolerance ) );
+  }
+  return res.release();
 }
 
 QgsMultiCurve *QgsMultiCurve::reversed() const
@@ -192,7 +236,7 @@ QgsMultiCurve *QgsMultiCurve::reversed() const
 
 QgsAbstractGeometry *QgsMultiCurve::boundary() const
 {
-  std::unique_ptr< QgsMultiPoint > multiPoint( new QgsMultiPoint() );
+  auto multiPoint = std::make_unique<QgsMultiPoint>();
   multiPoint->reserve( mGeometries.size() * 2 );
   for ( int i = 0; i < mGeometries.size(); ++i )
   {

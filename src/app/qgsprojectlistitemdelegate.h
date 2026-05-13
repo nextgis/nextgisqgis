@@ -46,7 +46,8 @@ class QgsProjectListItemDelegate : public QStyledItemDelegate
       PathRole = Qt::UserRole + 2,
       NativePathRole = Qt::UserRole + 3,
       CrsRole = Qt::UserRole + 4,
-      PinRole = Qt::UserRole + 5
+      PinRole = Qt::UserRole + 5,
+      AnonymisedNativePathRole = Qt::UserRole + 6
     };
 
     explicit QgsProjectListItemDelegate( QObject *parent = nullptr );
@@ -57,7 +58,6 @@ class QgsProjectListItemDelegate : public QStyledItemDelegate
     void setShowPath( bool value );
 
   private:
-
     int mRoundedRectSizePixels = 5;
     bool mShowPath = true;
     QColor mColor = Qt::white;
@@ -68,7 +68,6 @@ class QgsNewsItemListItemDelegate : public QStyledItemDelegate
     Q_OBJECT
 
   public:
-
     explicit QgsNewsItemListItemDelegate( QObject *parent = nullptr );
     void paint( QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index ) const override;
     QSize sizeHint( const QStyleOptionViewItem &option, const QModelIndex &index ) const override;
@@ -81,7 +80,6 @@ class QgsNewsItemListItemDelegate : public QStyledItemDelegate
     QSize dismissRectSize() const { return mDismissRectSize; }
 
   private:
-
     int mRoundedRectSizePixels = 5;
     QColor mColor = Qt::white;
     mutable QRect mDismissRect;

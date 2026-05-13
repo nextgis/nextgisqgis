@@ -32,7 +32,7 @@ class QgsPointCloudLayer;
 
 /**
  * \ingroup gui
- * \brief Class to select destination file, type and CRS for ogr layers
+ * \brief A dialog for selecting destination file and parameters for point cloud exports.
  * \note not available in Python bindings
  * \since QGIS 3.28
  */
@@ -41,7 +41,6 @@ class GUI_EXPORT QgsPointCloudLayerSaveAsDialog : public QDialog, private Ui::Qg
     Q_OBJECT
 
   public:
-
     /**
      * Construct a new QgsPointCloudLayerSaveAsDialog
      */
@@ -166,7 +165,6 @@ class GUI_EXPORT QgsPointCloudLayerSaveAsDialog : public QDialog, private Ui::Qg
     void mDeselectAllAttributes_clicked();
 
   private:
-
     void setup();
 
     /**

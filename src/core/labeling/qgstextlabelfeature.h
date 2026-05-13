@@ -28,7 +28,7 @@ class QgsTextCharacterFormat;
 
 /**
  * \ingroup core
- * \brief Class that adds extra information to QgsLabelFeature for text labels
+ * \brief Adds extra information to QgsLabelFeature for text labels.
  *
  * \note not part of public API
  */
@@ -45,7 +45,6 @@ class CORE_EXPORT QgsTextLabelFeature : public QgsLabelFeature
      * Returns the text component corresponding to a specified label part
      * \param partId Set to -1 for labels which are not broken into parts (e.g., non-curved labels), or the required
      * part index for labels which are broken into parts (curved labels)
-     * \since QGIS 2.10
      */
     QString text( int partId ) const;
 
@@ -84,7 +83,7 @@ class CORE_EXPORT QgsTextLabelFeature : public QgsLabelFeature
      * \see setTextMetrics()
      * \since QGIS 3.20
      */
-    const QgsPrecalculatedTextMetrics *textMetrics() const { return mTextMetrics.has_value() ? &mTextMetrics.value() : nullptr; }
+    const QgsPrecalculatedTextMetrics *textMetrics() const { return mTextMetrics.has_value() ? &( *mTextMetrics ) : nullptr; }
 
     /**
      * Sets additional text \a metrics required for curved label placement.
@@ -99,7 +98,7 @@ class CORE_EXPORT QgsTextLabelFeature : public QgsLabelFeature
      *
      * \since QGIS 3.20
      */
-    static QgsPrecalculatedTextMetrics calculateTextMetrics( const QgsMapToPixel *xform, const QgsRenderContext &context, const QFont &baseFont, const QFontMetricsF &fontMetrics, double letterSpacing,
+    static QgsPrecalculatedTextMetrics calculateTextMetrics( const QgsMapToPixel *xform, const QgsRenderContext &context, const QgsTextFormat &format, const QFont &baseFont, const QFontMetricsF &fontMetrics, double letterSpacing,
         double wordSpacing, const QString &text = QString(), QgsTextDocument *document = nullptr, QgsTextDocumentMetrics *metrics = nullptr );
 
     /**
@@ -107,7 +106,7 @@ class CORE_EXPORT QgsTextLabelFeature : public QgsLabelFeature
      * \see setDocument()
      * \since QGIS 3.14
      */
-    QgsTextDocument document() const;
+    const QgsTextDocument &document() const { return mDocument; }
 
     /**
      * Returns the document metrics for the label.
@@ -115,7 +114,7 @@ class CORE_EXPORT QgsTextLabelFeature : public QgsLabelFeature
      * \see document()
      * \since QGIS 3.28
      */
-    QgsTextDocumentMetrics documentMetrics() const;
+    const QgsTextDocumentMetrics &documentMetrics() const { return mDocumentMetrics; }
 
     /**
      * Sets the \a document and document \a metrics for the label.

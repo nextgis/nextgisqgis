@@ -23,14 +23,13 @@
 
 /**
  * \ingroup gui
- * \brief QgsInterpolatedLineSymbolLayerWidget
+ * \brief A widget for configuring a QgsInterpolatedLineSymbolLayer.
  * \since QGIS 3.20
  */
-class GUI_EXPORT QgsInterpolatedLineSymbolLayerWidget: public QgsSymbolLayerWidget, private Ui::QgsInterpolatedLineSymbolLayerWidgetBase
+class GUI_EXPORT QgsInterpolatedLineSymbolLayerWidget : public QgsSymbolLayerWidget, private Ui::QgsInterpolatedLineSymbolLayerWidgetBase
 {
     Q_OBJECT
   public:
-
     /**
      * Constructor
      * \param layer the layer where this symbol layer is applied

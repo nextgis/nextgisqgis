@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsmaplayerdependency.h                                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,15 +13,13 @@
 class QgsMapLayerDependency
 {
 %Docstring(signature="appended")
-This class models dependencies with or between map layers.
+Models dependencies with or between map layers.
 
-A dependency is defined by a layer ID, a type and an origin.
-The two combinations of type/origin that are currently supported are:
+A dependency is defined by a layer ID, a type and an origin. The two
+combinations of type/origin that are currently supported are:
 
 - PresenceDependency && FromProvider: virtual layers for instance which may depend on other layers already loaded to work
 - DataDependency && FromUser: dependencies given by the user, mainly to represent database triggers
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -76,5 +74,5 @@ Returns the ID of the layer this dependency depends on
  *                                                                      *
  * src/core/qgsmaplayerdependency.h                                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

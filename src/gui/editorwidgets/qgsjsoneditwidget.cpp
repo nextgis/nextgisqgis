@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsjsoneditwidget.h"
+#include "moc_qgsjsoneditwidget.cpp"
 
 #include <QAction>
 #include <QClipboard>
@@ -26,8 +27,8 @@
 
 QgsJsonEditWidget::QgsJsonEditWidget( QWidget *parent )
   : QWidget( parent )
-  , mCopyValueAction( new QAction( tr( "Copy value" ), this ) )
-  , mCopyKeyAction( new QAction( tr( "Copy key" ), this ) )
+  , mCopyValueAction( new QAction( tr( "Copy Value" ), this ) )
+  , mCopyKeyAction( new QAction( tr( "Copy Key" ), this ) )
 {
   setupUi( this );
 
@@ -39,8 +40,6 @@ QgsJsonEditWidget::QgsJsonEditWidget( QWidget *parent )
   mCodeEditorJson->indicatorDefine( QsciScintilla::PlainIndicator, SCINTILLA_UNDERLINE_INDICATOR_INDEX );
   mCodeEditorJson->SendScintilla( QsciScintillaBase::SCI_SETINDICATORCURRENT, SCINTILLA_UNDERLINE_INDICATOR_INDEX );
   mCodeEditorJson->SendScintilla( QsciScintillaBase::SCI_SETMOUSEDWELLTIME, 400 );
-
-  mTreeWidget->setStyleSheet( QStringLiteral( "font-family: %1;" ).arg( QgsCodeEditor::getMonospaceFont().family() ) );
 
   mTreeWidget->setContextMenuPolicy( Qt::ActionsContextMenu );
   mTreeWidget->addAction( mCopyValueAction );
@@ -58,6 +57,11 @@ QgsJsonEditWidget::QgsJsonEditWidget( QWidget *parent )
   connect( mCodeEditorJson, &QsciScintilla::indicatorClicked, this, &QgsJsonEditWidget::codeEditorJsonIndicatorClicked );
   connect( mCodeEditorJson, &QsciScintillaBase::SCN_DWELLSTART, this, &QgsJsonEditWidget::codeEditorJsonDwellStart );
   connect( mCodeEditorJson, &QsciScintillaBase::SCN_DWELLEND, this, &QgsJsonEditWidget::codeEditorJsonDwellEnd );
+}
+
+QgsCodeEditorJson *QgsJsonEditWidget::jsonEditor()
+{
+  return mCodeEditorJson;
 }
 
 void QgsJsonEditWidget::setJsonText( const QString &jsonText )
@@ -198,9 +202,7 @@ void QgsJsonEditWidget::codeEditorJsonIndicatorClicked( int line, int index, Qt:
     return;
 
   const int position = mCodeEditorJson->positionFromLineIndex( line, index );
-  const int clickableLinkListIndex = mCodeEditorJson->SendScintilla( QsciScintillaBase::SCI_INDICATORVALUEAT,
-                                     SCINTILLA_UNDERLINE_INDICATOR_INDEX,
-                                     position );
+  const int clickableLinkListIndex = mCodeEditorJson->SendScintilla( QsciScintillaBase::SCI_INDICATORVALUEAT, SCINTILLA_UNDERLINE_INDICATOR_INDEX, position );
   if ( clickableLinkListIndex <= 0 )
     return;
 
@@ -212,14 +214,11 @@ void QgsJsonEditWidget::codeEditorJsonDwellStart( int position, int x, int y )
   Q_UNUSED( x )
   Q_UNUSED( y )
 
-  const int clickableLinkListIndex = mCodeEditorJson->SendScintilla( QsciScintillaBase::SCI_INDICATORVALUEAT,
-                                     SCINTILLA_UNDERLINE_INDICATOR_INDEX,
-                                     position );
+  const int clickableLinkListIndex = mCodeEditorJson->SendScintilla( QsciScintillaBase::SCI_INDICATORVALUEAT, SCINTILLA_UNDERLINE_INDICATOR_INDEX, position );
   if ( clickableLinkListIndex <= 0 )
     return;
 
-  QToolTip::showText( QCursor::pos(),
-                      tr( "%1\nCTRL + click to follow link" ).arg( mClickableLinkList.at( clickableLinkListIndex - 1 ) ) );
+  QToolTip::showText( QCursor::pos(), tr( "%1\nCTRL + click to follow link" ).arg( mClickableLinkList.at( clickableLinkListIndex - 1 ) ) );
 }
 
 void QgsJsonEditWidget::codeEditorJsonDwellEnd( int position, int x, int y )
@@ -256,6 +255,7 @@ void QgsJsonEditWidget::refreshTreeView( const QJsonDocument &jsonDocument )
     {
       const QJsonValue jsonValue = jsonDocument.object().value( key );
       QTreeWidgetItem *treeWidgetItem = new QTreeWidgetItem( mTreeWidget, QStringList() << key );
+      treeWidgetItem->setFont( 0, monospaceFont() );
       refreshTreeViewItem( treeWidgetItem, jsonValue );
       mTreeWidget->addTopLevelItem( treeWidgetItem );
       mTreeWidget->expandItem( treeWidgetItem );
@@ -263,12 +263,33 @@ void QgsJsonEditWidget::refreshTreeView( const QJsonDocument &jsonDocument )
   }
   else if ( jsonDocument.isArray() )
   {
-    for ( int index = 0; index < jsonDocument.array().size(); index++ )
+    const QJsonArray array = jsonDocument.array();
+    const auto arraySize = array.size();
+    // Limit the number of rows we display, otherwise for pathological cases
+    // like https://github.com/qgis/QGIS/pull/55847#issuecomment-1902077683
+    // a unbounded number of elements will just stall the GUI forever.
+    constexpr decltype( arraySize ) MAX_ELTS = 200;
+    // If there are too many elements, disable URL highighting as it
+    // performs very poorly.
+    if ( arraySize > MAX_ELTS )
+      mEnableUrlHighlighting = false;
+    for ( auto index = decltype( arraySize ) { 0 }; index < arraySize; index++ )
     {
       QTreeWidgetItem *treeWidgetItem = new QTreeWidgetItem( mTreeWidget, QStringList() << QString::number( index ) );
-      refreshTreeViewItem( treeWidgetItem, jsonDocument.array().at( index ) );
-      mTreeWidget->addTopLevelItem( treeWidgetItem );
-      mTreeWidget->expandItem( treeWidgetItem );
+      treeWidgetItem->setFont( 0, monospaceFont() );
+      if ( arraySize <= MAX_ELTS || ( index < MAX_ELTS / 2 || index + MAX_ELTS / 2 > arraySize ) )
+      {
+        refreshTreeViewItem( treeWidgetItem, array.at( index ) );
+        mTreeWidget->addTopLevelItem( treeWidgetItem );
+        mTreeWidget->expandItem( treeWidgetItem );
+      }
+      else if ( index == MAX_ELTS / 2 )
+      {
+        index = arraySize - MAX_ELTS / 2;
+        refreshTreeViewItem( treeWidgetItem, tr( "... truncated ..." ) );
+        mTreeWidget->addTopLevelItem( treeWidgetItem );
+        mTreeWidget->expandItem( treeWidgetItem );
+      }
     }
   }
 
@@ -282,52 +303,63 @@ void QgsJsonEditWidget::refreshTreeViewItem( QTreeWidgetItem *treeWidgetItem, co
   switch ( jsonValue.type() )
   {
     case QJsonValue::Null:
-      refreshTreeViewItemValue( treeWidgetItem,
-                                QStringLiteral( "null" ),
-                                QgsCodeEditor::color( QgsCodeEditorColorScheme::ColorRole::Keyword ) );
+      refreshTreeViewItemValue( treeWidgetItem, QStringLiteral( "null" ), QgsCodeEditor::color( QgsCodeEditorColorScheme::ColorRole::Keyword ) );
       break;
     case QJsonValue::Bool:
-      refreshTreeViewItemValue( treeWidgetItem,
-                                jsonValue.toBool() ? QStringLiteral( "true" ) : QStringLiteral( "false" ),
-                                QgsCodeEditor::color( QgsCodeEditorColorScheme::ColorRole::Keyword ) );
+      refreshTreeViewItemValue( treeWidgetItem, jsonValue.toBool() ? QStringLiteral( "true" ) : QStringLiteral( "false" ), QgsCodeEditor::color( QgsCodeEditorColorScheme::ColorRole::Keyword ) );
       break;
     case QJsonValue::Double:
-      refreshTreeViewItemValue( treeWidgetItem,
-                                QString::number( jsonValue.toDouble() ),
-                                QgsCodeEditor::color( QgsCodeEditorColorScheme::ColorRole::Number ) );
+      refreshTreeViewItemValue( treeWidgetItem, QString::number( jsonValue.toDouble() ), QgsCodeEditor::color( QgsCodeEditorColorScheme::ColorRole::Number ) );
       break;
     case QJsonValue::String:
     {
       const QString jsonValueString = jsonValue.toString();
-      if ( QUrl( jsonValueString ).scheme().isEmpty() )
+      if ( !mEnableUrlHighlighting || QUrl( jsonValueString ).scheme().isEmpty() )
       {
-        refreshTreeViewItemValue( treeWidgetItem,
-                                  jsonValueString,
-                                  QgsCodeEditor::color( QgsCodeEditorColorScheme::ColorRole::DoubleQuote ) );
+        refreshTreeViewItemValue( treeWidgetItem, jsonValueString, QgsCodeEditor::color( QgsCodeEditorColorScheme::ColorRole::DoubleQuote ) );
       }
       else
       {
         QLabel *label = new QLabel( QString( "<a href='%1'>%1</a>" ).arg( jsonValueString ) );
         label->setOpenExternalLinks( true );
+        label->setFont( monospaceFont() );
         mTreeWidget->setItemWidget( treeWidgetItem, static_cast<int>( TreeWidgetColumn::Value ), label );
 
         mClickableLinkList.append( jsonValueString );
-        mCodeEditorJson->SendScintilla( QsciScintillaBase::SCI_SETINDICATORVALUE, static_cast< int >( mClickableLinkList.size() ) );
-        mCodeEditorJson->SendScintilla( QsciScintillaBase::SCI_INDICATORFILLRANGE,
-                                        mCodeEditorJson->text().indexOf( jsonValueString ),
-                                        jsonValueString.size() );
+        mCodeEditorJson->SendScintilla( QsciScintillaBase::SCI_SETINDICATORVALUE, static_cast<int>( mClickableLinkList.size() ) );
+        mCodeEditorJson->SendScintilla( QsciScintillaBase::SCI_INDICATORFILLRANGE, mCodeEditorJson->text().indexOf( jsonValueString ), jsonValueString.size() );
       }
     }
     break;
     case QJsonValue::Array:
     {
       const QJsonArray jsonArray = jsonValue.toArray();
-      for ( int index = 0; index < jsonArray.size(); index++ )
+      const auto arraySize = jsonArray.size();
+      // Limit the number of rows we display, otherwise for pathological cases
+      // like https://github.com/qgis/QGIS/pull/55847#issuecomment-1902077683
+      // a unbounded number of elements will just stall the GUI forever.
+      constexpr decltype( arraySize ) MAX_ELTS = 200;
+      // If there are too many elements, disable URL highighting as it
+      // performs very poorly.
+      if ( arraySize > MAX_ELTS )
+        mEnableUrlHighlighting = false;
+      for ( auto index = decltype( arraySize ) { 0 }; index < arraySize; index++ )
       {
         QTreeWidgetItem *treeWidgetItemChild = new QTreeWidgetItem( treeWidgetItem, QStringList() << QString::number( index ) );
-        refreshTreeViewItem( treeWidgetItemChild, jsonArray.at( index ) );
-        treeWidgetItem->addChild( treeWidgetItemChild );
-        treeWidgetItem->setExpanded( true );
+        treeWidgetItemChild->setFont( 0, monospaceFont() );
+        if ( arraySize <= MAX_ELTS || ( index < MAX_ELTS / 2 || index + MAX_ELTS / 2 > arraySize ) )
+        {
+          refreshTreeViewItem( treeWidgetItemChild, jsonArray.at( index ) );
+          treeWidgetItem->addChild( treeWidgetItemChild );
+          treeWidgetItem->setExpanded( true );
+        }
+        else if ( index == MAX_ELTS / 2 )
+        {
+          index = arraySize - MAX_ELTS / 2;
+          refreshTreeViewItem( treeWidgetItemChild, tr( "... truncated ..." ) );
+          treeWidgetItem->addChild( treeWidgetItemChild );
+          treeWidgetItem->setExpanded( true );
+        }
       }
     }
     break;
@@ -338,6 +370,7 @@ void QgsJsonEditWidget::refreshTreeViewItem( QTreeWidgetItem *treeWidgetItem, co
       for ( const QString &key : keys )
       {
         QTreeWidgetItem *treeWidgetItemChild = new QTreeWidgetItem( treeWidgetItem, QStringList() << key );
+        treeWidgetItemChild->setFont( 0, monospaceFont() );
         refreshTreeViewItem( treeWidgetItemChild, jsonObject.value( key ) );
         treeWidgetItem->addChild( treeWidgetItemChild );
         treeWidgetItem->setExpanded( true );
@@ -345,9 +378,7 @@ void QgsJsonEditWidget::refreshTreeViewItem( QTreeWidgetItem *treeWidgetItem, co
     }
     break;
     case QJsonValue::Undefined:
-      refreshTreeViewItemValue( treeWidgetItem,
-                                QStringLiteral( "Undefined value" ),
-                                QgsCodeEditor::color( QgsCodeEditorColorScheme::ColorRole::DoubleQuote ) );
+      refreshTreeViewItemValue( treeWidgetItem, QStringLiteral( "Undefined value" ), QgsCodeEditor::color( QgsCodeEditorColorScheme::ColorRole::DoubleQuote ) );
       break;
   }
 }
@@ -355,7 +386,17 @@ void QgsJsonEditWidget::refreshTreeViewItem( QTreeWidgetItem *treeWidgetItem, co
 void QgsJsonEditWidget::refreshTreeViewItemValue( QTreeWidgetItem *treeWidgetItem, const QString &jsonValueString, const QColor &textColor )
 {
   QLabel *label = new QLabel( jsonValueString );
+  label->setFont( monospaceFont() );
+
   if ( textColor.isValid() )
     label->setStyleSheet( QStringLiteral( "color: %1;" ).arg( textColor.name() ) );
   mTreeWidget->setItemWidget( treeWidgetItem, static_cast<int>( TreeWidgetColumn::Value ), label );
+}
+
+QFont QgsJsonEditWidget::monospaceFont() const
+{
+  QFont f = QgsCodeEditor::getMonospaceFont();
+  // use standard widget font size, not code editor font size
+  f.setPointSize( font().pointSize() );
+  return f;
 }

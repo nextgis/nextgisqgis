@@ -28,12 +28,11 @@
 /**
  * \ingroup core
  * \class QgsReportSectionFieldGroup
- * \brief A report section consisting of a features
+ * \brief A report section consisting of a features.
  *
  * \warning This is not considered stable API, and may change in future QGIS releases. It is
  * exposed to the Python bindings for unit testing purposes only.
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsReportSectionFieldGroup : public QgsAbstractReportSection
 {

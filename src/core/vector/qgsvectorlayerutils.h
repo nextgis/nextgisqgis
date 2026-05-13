@@ -45,10 +45,7 @@ typedef QHash<QString, QgsMaskedLayer> QgsMaskedLayers;
  * \ingroup core
  * \class QgsVectorLayerUtils
  * \brief Contains utility methods for working with QgsVectorLayers.
- *
- * \since QGIS 3.0
  */
-
 class CORE_EXPORT QgsVectorLayerUtils
 {
   public:
@@ -56,26 +53,21 @@ class CORE_EXPORT QgsVectorLayerUtils
     /**
      * \ingroup core
      * \class QgsDuplicateFeatureContext
-     * \brief Contains mainly the QMap with QgsVectorLayer and QgsFeatureIds do list all the duplicated features
-     *
-     * \since QGIS 3.0
+     * \brief Contains mainly the QMap with QgsVectorLayer and QgsFeatureIds which list all the duplicated features.
      */
     class CORE_EXPORT QgsDuplicateFeatureContext
     {
       public:
 
-        //! Constructor for QgsDuplicateFeatureContext
         QgsDuplicateFeatureContext() = default;
 
         /**
          * Returns all the layers on which features have been duplicated
-         * \since QGIS 3.0
          */
         QList<QgsVectorLayer *> layers() const;
 
         /**
          * Returns the duplicated features in the given layer
-         * \since QGIS 3.0
          */
         QgsFeatureIds duplicatedFeatures( QgsVectorLayer *layer ) const;
 
@@ -86,7 +78,6 @@ class CORE_EXPORT QgsVectorLayerUtils
 
         /**
          * To set info about duplicated features to the function feedback (layout and ids)
-         * \since QGIS 3.0
          */
         void setDuplicatedFeatures( QgsVectorLayer *layer, const QgsFeatureIds &ids );
     };
@@ -94,7 +85,7 @@ class CORE_EXPORT QgsVectorLayerUtils
     /**
      * \ingroup core
      * \class QgsFeatureData
-     * \brief Encapsulate geometry and attributes for new features, to be passed to createFeatures
+     * \brief Encapsulate geometry and attributes for new features, to be passed to createFeatures.
      * \see createFeatures()
      * \since QGIS 3.6
      */
@@ -129,7 +120,6 @@ class CORE_EXPORT QgsVectorLayerUtils
      * \param ok will be set to FALSE if field or expression is invalid, otherwise TRUE
      * \param selectedOnly set to TRUE to get values from selected features only
      * \returns feature iterator
-     * \since QGIS 3.0
      */
     static QgsFeatureIterator getValuesIterator( const QgsVectorLayer *layer, const QString &fieldOrExpression, bool &ok, bool selectedOnly );
 
@@ -142,7 +132,6 @@ class CORE_EXPORT QgsVectorLayerUtils
      * \param feedback optional feedback object to allow cancellation
      * \returns list of fetched values
      * \see getDoubleValues
-     * \since QGIS 3.0
      */
     static QList< QVariant > getValues( const QgsVectorLayer *layer, const QString &fieldOrExpression, bool &ok, bool selectedOnly = false, QgsFeedback *feedback = nullptr );
 
@@ -157,7 +146,6 @@ class CORE_EXPORT QgsVectorLayerUtils
      * \param feedback optional feedback object to allow cancellation
      * \returns list of fetched values
      * \see getValues
-     * \since QGIS 3.0
      */
     static QList< double > getDoubleValues( const QgsVectorLayer *layer, const QString &fieldOrExpression, bool &ok, bool selectedOnly = false, int *nullCount = nullptr, QgsFeedback *feedback = nullptr );
 
@@ -233,7 +221,6 @@ class CORE_EXPORT QgsVectorLayerUtils
      * \a maxDepth the maximum depth to duplicate children in relations, 0 is unlimited depth (in any case, limited to 100)
      * \a depth the current depth, not exposed in Python
      * \a referencedLayersBranch the current branch of layers across the relations, not exposed in Python, taken by copy not reference, used to avoid infinite loop
-     * \since QGIS 3.0
      */
     static QgsFeature duplicateFeature( QgsVectorLayer *layer, const QgsFeature &feature, QgsProject *project, QgsDuplicateFeatureContext &duplicateFeatureContext SIP_OUT, const int maxDepth = 0, int depth SIP_PYARGREMOVE = 0, QList<QgsVectorLayer *> referencedLayersBranch SIP_PYARGREMOVE = QList<QgsVectorLayer *>() );
 
@@ -332,7 +319,7 @@ class CORE_EXPORT QgsVectorLayerUtils
     static bool fieldIsEditable( const QgsVectorLayer *layer, int fieldIndex, const QgsFeature &feature );
 
     /**
-     * \returns TRUE if the field at index \a fieldIndex from \a layer
+     * Returns TRUE if the field at index \a fieldIndex from \a layer
      * is editable, FALSE if the field is read only.
      *
      * If this function returns TRUE then the editability of the field may still vary feature by
@@ -372,8 +359,10 @@ class CORE_EXPORT QgsVectorLayerUtils
     static QgsMaskedLayers symbolLayerMasks( const QgsVectorLayer * ) SIP_SKIP;
 
     /**
-     * \returns a descriptive string for a \a feature, suitable for displaying to the user.
-     *         The definition is taken from the ``displayExpression`` property of \a layer.
+     * Returns a descriptive string for a \a feature, suitable for displaying to the user.
+     *
+     * The definition is taken from the ``displayExpression`` property of \a layer.
+     *
      * \since QGIS 3.12
      */
     static QString getFeatureDisplayString( const QgsVectorLayer *layer, const QgsFeature &feature );
@@ -383,15 +372,16 @@ class CORE_EXPORT QgsVectorLayerUtils
      *
      * \since QGIS 3.4
      */
-    enum CascadedFeatureFlag
+    enum CascadedFeatureFlag SIP_ENUM_BASETYPE( IntFlag )
     {
       IgnoreAuxiliaryLayers = 1 << 1, //!< Ignore auxiliary layers
     };
     Q_DECLARE_FLAGS( CascadedFeatureFlags, CascadedFeatureFlag )
 
     /**
-     * \returns TRUE if at least one feature of the \a fids on \a layer is connected as parent in at
+     * Returns TRUE if at least one feature of the \a fids on \a layer is connected as parent in at
      * least one composition relation of the \a project or contains joins, where cascade delete is set.
+     *
      * Details about cascading effects will be written to \a context.
      * \since QGIS 3.14
      */

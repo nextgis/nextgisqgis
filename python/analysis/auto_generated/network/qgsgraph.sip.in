@@ -3,7 +3,7 @@
  *                                                                      *
  * src/analysis/network/qgsgraph.h                                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -15,20 +15,14 @@
 class QgsGraphEdge
 {
 %Docstring(signature="appended")
-This class implements a graph edge
-
-.. versionadded:: 3.0
+Represents an edge in a graph.
 %End
 
 %TypeHeaderCode
 #include "qgsgraph.h"
 %End
   public:
-
     QgsGraphEdge();
-%Docstring
-Constructor for QgsGraphEdge.
-%End
 
     QVariant cost( int strategyIndex ) const;
 %Docstring
@@ -37,7 +31,7 @@ Returns edge cost calculated using specified strategy
 :param strategyIndex: strategy index
 %End
 
-    QVector< QVariant > strategies() const;
+    QVector<QVariant> strategies() const;
 %Docstring
 Returns array of available strategies
 %End
@@ -59,30 +53,25 @@ Returns the index of the vertex at the start of this edge.
 };
 
 
-typedef QList< int > QgsGraphEdgeIds;
+typedef QList<int> QgsGraphEdgeIds;
 
 class QgsGraphVertex
 {
 %Docstring(signature="appended")
-This class implements a graph vertex
-
-.. versionadded:: 3.0
+Represents vertex in a graph.
 %End
 
 %TypeHeaderCode
 #include "qgsgraph.h"
 %End
   public:
-
     QgsGraphVertex();
-%Docstring
-Default constructor. It is needed for Qt's container, e.g. QVector
-%End
 
 
     QgsGraphVertex( const QgsPointXY &point );
 %Docstring
-This constructor initializes QgsGraphVertex object and associates a vertex with a point
+This constructor initializes QgsGraphVertex object and associates a
+vertex with a point
 %End
 
     QgsGraphEdgeIds incomingEdges() const;
@@ -110,20 +99,14 @@ Returns point associated with graph vertex.
 class QgsGraph
 {
 %Docstring(signature="appended")
-Mathematical graph representation
-
-.. versionadded:: 3.0
+Mathematical graph representation.
 %End
 
 %TypeHeaderCode
 #include "qgsgraph.h"
 %End
   public:
-
     QgsGraph();
-%Docstring
-Constructor for QgsGraph.
-%End
 
 
     int addVertex( const QgsPointXY &pt );
@@ -131,10 +114,10 @@ Constructor for QgsGraph.
 Add a vertex to the graph
 %End
 
-    int addEdge( int fromVertexIdx, int toVertexIdx, const QVector< QVariant > &strategies );
+    int addEdge( int fromVertexIdx, int toVertexIdx, const QVector<QVariant> &strategies );
 %Docstring
-Add an edge to the graph, going from the ``fromVertexIdx``
-to ``toVertexIdx``.
+Add an edge to the graph, going from the ``fromVertexIdx`` to
+``toVertexIdx``.
 %End
 
     int vertexCount() const;
@@ -166,7 +149,8 @@ Returns the vertex at the given index.
 %Docstring
 Removes the vertex at specified ``index``.
 
-All edges which are incoming or outgoing edges for the vertex will also be removed.
+All edges which are incoming or outgoing edges for the vertex will also
+be removed.
 
 :raises IndexError: if the vertex is not found.
 
@@ -214,8 +198,9 @@ Returns the edge at the given index.
 %Docstring
 Removes the edge at specified ``index``.
 
-The incoming and outgoing edges for all graph vertices will be updated accordingly. Vertices which
-no longer have any incoming or outgoing edges as a result will be removed from the graph automatically.
+The incoming and outgoing edges for all graph vertices will be updated
+accordingly. Vertices which no longer have any incoming or outgoing
+edges as a result will be removed from the graph automatically.
 
 :raises IndexError: if the vertex is not found.
 
@@ -243,15 +228,18 @@ Find vertex by associated point
 
     int findOppositeEdge( int index ) const;
 %Docstring
-Finds the first edge which is the opposite of the edge with the specified index.
+Finds the first edge which is the opposite of the edge with the
+specified index.
 
-This represents the edge which has the same vertices as the specified edge, but
-the opposite direction in the graph.(I.e. the edge which starts at the "from" vertex
-of the specified edge and ends at the "to" vertex.)
+This represents the edge which has the same vertices as the specified
+edge, but the opposite direction in the graph.(I.e. the edge which
+starts at the "from" vertex of the specified edge and ends at the "to"
+vertex.)
 
 Returns -1 if no opposite edge exists.
 
-:raises IndexError: if the edge with the specified ``index`` is not found.
+:raises IndexError: if the edge with the specified ``index`` is not
+                    found.
 
 .. versionadded:: 3.24
 %End
@@ -284,7 +272,6 @@ Returns whether the vertex of the given index exists.
   protected:
 
 
-
 };
 
 /************************************************************************
@@ -292,5 +279,5 @@ Returns whether the vertex of the given index exists.
  *                                                                      *
  * src/analysis/network/qgsgraph.h                                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

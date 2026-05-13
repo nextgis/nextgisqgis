@@ -30,9 +30,7 @@
  */
 class QgsSplitLinesByLengthAlgorithm : public QgsProcessingFeatureBasedAlgorithm
 {
-
   public:
-
     QgsSplitLinesByLengthAlgorithm() = default;
     QString name() const override;
     QString displayName() const override;
@@ -41,8 +39,9 @@ class QgsSplitLinesByLengthAlgorithm : public QgsProcessingFeatureBasedAlgorithm
     QString groupId() const override;
     QString shortHelpString() const override;
     QString shortDescription() const override;
+    Qgis::ProcessingAlgorithmDocumentationFlags documentationFlags() const override;
     QList<int> inputLayerTypes() const override;
-    QgsProcessing::SourceType outputLayerType() const override;
+    Qgis::ProcessingSourceType outputLayerType() const override;
     QgsSplitLinesByLengthAlgorithm *createInstance() const override SIP_FACTORY;
     void initParameters( const QVariantMap &configuration = QVariantMap() ) override;
     bool prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
@@ -50,19 +49,18 @@ class QgsSplitLinesByLengthAlgorithm : public QgsProcessingFeatureBasedAlgorithm
   protected:
     QString outputName() const override;
     Qgis::WkbType outputWkbType( Qgis::WkbType inputWkbType ) const override;
-    QgsFeatureList processFeature( const QgsFeature &feature,  QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
-    QgsProcessingFeatureSource::Flag sourceFlags() const override;
+    QgsFeatureList processFeature( const QgsFeature &feature, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
+    Qgis::ProcessingFeatureSourceFlags sourceFlags() const override;
+    QgsFeatureSink::SinkFlags sinkFlags() const override;
+    QgsFields outputFields( const QgsFields &inputFields ) const override;
+
 
   private:
-
     double mLength = 0.0;
     bool mDynamicLength = false;
     QgsProperty mLengthProperty;
-
 };
 
 ///@endcond PRIVATE
 
 #endif // QGSALGORITHMSPLITLINESBYLENGTH_H
-
-

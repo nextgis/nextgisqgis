@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsline3dsymbolwidget.h"
+#include "moc_qgsline3dsymbolwidget.cpp"
 
 #include "qgsline3dsymbol.h"
 #include "qgsphongmaterialsettings.h"
@@ -23,22 +24,23 @@ QgsLine3DSymbolWidget::QgsLine3DSymbolWidget( QWidget *parent )
 {
   setupUi( this );
 
-  spinHeight->setClearValue( 0.0 );
+  spinOffset->setClearValue( 0.0 );
   spinWidth->setClearValue( 0.0, tr( "Hairline" ) );
   spinExtrusion->setClearValue( 0.0 );
 
-  cboAltClamping->addItem( tr( "Absolute" ), static_cast< int >( Qgis::AltitudeClamping::Absolute ) );
-  cboAltClamping->addItem( tr( "Relative" ), static_cast< int >( Qgis::AltitudeClamping::Relative ) );
-  cboAltClamping->addItem( tr( "Terrain" ), static_cast< int >( Qgis::AltitudeClamping::Terrain ) );
+  cboAltClamping->addItem( tr( "Absolute" ), static_cast<int>( Qgis::AltitudeClamping::Absolute ) );
+  cboAltClamping->addItem( tr( "Relative" ), static_cast<int>( Qgis::AltitudeClamping::Relative ) );
+  cboAltClamping->addItem( tr( "Terrain" ), static_cast<int>( Qgis::AltitudeClamping::Terrain ) );
 
   QgsLine3DSymbol defaultLine;
   setSymbol( &defaultLine, nullptr );
 
   connect( spinWidth, static_cast<void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, &QgsLine3DSymbolWidget::changed );
-  connect( spinHeight, static_cast<void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, &QgsLine3DSymbolWidget::changed );
+  connect( spinOffset, static_cast<void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, &QgsLine3DSymbolWidget::changed );
   connect( spinExtrusion, static_cast<void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, &QgsLine3DSymbolWidget::changed );
-  connect( cboAltClamping, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, &QgsLine3DSymbolWidget::changed );
   connect( cboAltBinding, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, &QgsLine3DSymbolWidget::changed );
+  connect( cboAltClamping, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, &QgsLine3DSymbolWidget::changed );
+  connect( cboAltClamping, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, &QgsLine3DSymbolWidget::updateGuiState );
   connect( chkSimpleLines, &QCheckBox::toggled, this, &QgsLine3DSymbolWidget::changed );
   connect( chkSimpleLines, &QCheckBox::toggled, this, &QgsLine3DSymbolWidget::updateGuiState );
   connect( chkSimpleLines, &QCheckBox::toggled, this, &QgsLine3DSymbolWidget::simple3DLinesToggled );
@@ -54,27 +56,26 @@ Qgs3DSymbolWidget *QgsLine3DSymbolWidget::create( QgsVectorLayer * )
 
 void QgsLine3DSymbolWidget::setSymbol( const QgsAbstract3DSymbol *symbol, QgsVectorLayer *layer )
 {
-  const QgsLine3DSymbol *lineSymbol = dynamic_cast< const QgsLine3DSymbol *>( symbol );
+  const QgsLine3DSymbol *lineSymbol = dynamic_cast<const QgsLine3DSymbol *>( symbol );
   if ( !lineSymbol )
     return;
 
   spinWidth->setValue( lineSymbol->width() );
-  spinHeight->setValue( lineSymbol->height() );
+  spinOffset->setValue( lineSymbol->offset() );
   spinExtrusion->setValue( lineSymbol->extrusionHeight() );
-  cboAltClamping->setCurrentIndex( cboAltClamping->findData( static_cast< int >( lineSymbol->altitudeClamping() ) ) );
+  cboAltClamping->setCurrentIndex( cboAltClamping->findData( static_cast<int>( lineSymbol->altitudeClamping() ) ) );
   cboAltBinding->setCurrentIndex( static_cast<int>( lineSymbol->altitudeBinding() ) );
   chkSimpleLines->setChecked( lineSymbol->renderAsSimpleLines() );
   widgetMaterial->setSettings( lineSymbol->materialSettings(), layer );
-  widgetMaterial->setTechnique( chkSimpleLines->isChecked() ? QgsMaterialSettingsRenderingTechnique::Lines
-                                : QgsMaterialSettingsRenderingTechnique::Triangles );
+  widgetMaterial->setTechnique( chkSimpleLines->isChecked() ? QgsMaterialSettingsRenderingTechnique::Lines : QgsMaterialSettingsRenderingTechnique::Triangles );
   updateGuiState();
 }
 
 QgsAbstract3DSymbol *QgsLine3DSymbolWidget::symbol()
 {
-  std::unique_ptr< QgsLine3DSymbol > sym = std::make_unique< QgsLine3DSymbol >();
+  auto sym = std::make_unique<QgsLine3DSymbol>();
   sym->setWidth( spinWidth->value() );
-  sym->setHeight( spinHeight->value() );
+  sym->setOffset( static_cast<float>( spinOffset->value() ) );
   sym->setExtrusionHeight( spinExtrusion->value() );
   sym->setAltitudeClamping( static_cast<Qgis::AltitudeClamping>( cboAltClamping->currentData().toInt() ) );
   sym->setAltitudeBinding( static_cast<Qgis::AltitudeBinding>( cboAltBinding->currentIndex() ) );
@@ -92,8 +93,12 @@ void QgsLine3DSymbolWidget::updateGuiState()
 {
   const bool simple = chkSimpleLines->isChecked();
   spinExtrusion->setEnabled( !simple );
-  widgetMaterial->setTechnique( chkSimpleLines->isChecked() ? QgsMaterialSettingsRenderingTechnique::Lines
-                                : QgsMaterialSettingsRenderingTechnique::Triangles );
+  widgetMaterial->setTechnique( chkSimpleLines->isChecked() ? QgsMaterialSettingsRenderingTechnique::Lines : QgsMaterialSettingsRenderingTechnique::Triangles );
+
+  // Altitude binding is not taken into account if altitude clamping is absolute.
+  // See: Qgs3DUtils::clampAltitudes()
+  const bool absoluteClamping = cboAltClamping->currentData().toInt() == static_cast<int>( Qgis::AltitudeClamping::Absolute );
+  cboAltBinding->setEnabled( !absoluteClamping );
 }
 
 void QgsLine3DSymbolWidget::simple3DLinesToggled( bool active )
@@ -101,23 +106,23 @@ void QgsLine3DSymbolWidget::simple3DLinesToggled( bool active )
   if ( active )
   {
     //remove "terrain" option for altitude clamping
-    int terrainIndex = cboAltClamping->findData( static_cast< int >( Qgis::AltitudeClamping::Terrain ) );
+    int terrainIndex = cboAltClamping->findData( static_cast<int>( Qgis::AltitudeClamping::Terrain ) );
     if ( terrainIndex >= 0 )
     {
       cboAltClamping->removeItem( terrainIndex );
     }
     if ( cboAltClamping->currentIndex() == -1 )
     {
-      cboAltClamping->setCurrentIndex( cboAltClamping->findData( static_cast< int >( Qgis::AltitudeClamping::Relative ) ) );
+      cboAltClamping->setCurrentIndex( cboAltClamping->findData( static_cast<int>( Qgis::AltitudeClamping::Relative ) ) );
     }
   }
   else
   {
     // make sure "terrain" option is available
-    int terrainIndex = cboAltClamping->findData( static_cast< int >( Qgis::AltitudeClamping::Terrain ) );
+    int terrainIndex = cboAltClamping->findData( static_cast<int>( Qgis::AltitudeClamping::Terrain ) );
     if ( terrainIndex == -1 )
     {
-      cboAltClamping->addItem( tr( "Terrain" ), static_cast< int >( Qgis::AltitudeClamping::Terrain ) );
+      cboAltClamping->addItem( tr( "Terrain" ), static_cast<int>( Qgis::AltitudeClamping::Terrain ) );
     }
   }
 }

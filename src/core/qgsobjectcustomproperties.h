@@ -30,15 +30,11 @@ class QDomNode;
  * \brief Simple key-value store (keys = strings, values = variants) that supports loading/saving to/from XML
  * in \verbatim <customproperties> \endverbatim element.
  *
- * \since QGIS 2.4
  */
 class CORE_EXPORT QgsObjectCustomProperties
 {
   public:
 
-    /**
-     * Constructor for QgsObjectCustomProperties.
-     */
     QgsObjectCustomProperties() = default;
 
     /**

@@ -24,12 +24,13 @@
 #include "qgsoapifprovider.h"
 #include "qgswfsconstants.h"
 #include "qgswfsconnection.h"
-#include "qgswfscapabilities.h"
+#include "qgswfsgetcapabilities.h"
 #include "qgswfsdataitems.h"
+#include "moc_qgswfsdataitems.cpp"
 #include "qgswfsdatasourceuri.h"
 #include "qgswfsprovider.h"
 #include "qgssettings.h"
-#include "qgsstyle.h"
+#include "qgsproject.h"
 
 #ifdef HAVE_GUI
 #include "qgswfssourceselect.h"
@@ -74,22 +75,21 @@ QVector<QgsDataItem *> QgsWfsConnectionItem::createChildrenOapif()
   const bool forceRefresh = false;
 
   QgsOapifLandingPageRequest landingPageRequest( uri );
-  if ( landingPageRequest.request( synchronous, forceRefresh ) &&
-       landingPageRequest.errorCode() == QgsBaseNetworkRequest::NoError )
+  if ( landingPageRequest.request( synchronous, forceRefresh ) && landingPageRequest.errorCode() == QgsBaseNetworkRequest::NoError )
   {
     QString url = landingPageRequest.collectionsUrl();
     while ( !url.isEmpty() )
     {
       QgsOapifCollectionsRequest collectionsRequest( uri, url );
       url.clear();
-      if ( collectionsRequest.request( synchronous, forceRefresh ) &&
-           collectionsRequest.errorCode() == QgsBaseNetworkRequest::NoError )
+      if ( collectionsRequest.request( synchronous, forceRefresh ) && collectionsRequest.errorCode() == QgsBaseNetworkRequest::NoError )
       {
         for ( const auto &collection : collectionsRequest.collections() )
         {
           QgsWfsLayerItem *layer = new QgsWfsLayerItem(
             this, mName, uri, collection.mId, collection.mTitle,
-            QString(), QgsOapifProvider::OAPIF_PROVIDER_KEY );
+            QString(), QgsOapifProvider::OAPIF_PROVIDER_KEY
+          );
           layers.append( layer );
         }
         url = collectionsRequest.nextUrl();
@@ -114,7 +114,7 @@ QVector<QgsDataItem *> QgsWfsConnectionItem::createChildren()
   }
   else
   {
-    QgsWfsCapabilities capabilities( mUri );
+    QgsWfsGetCapabilitiesRequest capabilities( mUri );
     if ( version == QgsWFSConstants::VERSION_AUTO )
     {
       capabilities.setLogErrors( false ); // as this might be a OAPIF server
@@ -122,15 +122,34 @@ QVector<QgsDataItem *> QgsWfsConnectionItem::createChildren()
     capabilities.requestCapabilities( synchronous, forceRefresh );
 
     QVector<QgsDataItem *> layers;
-    if ( capabilities.errorCode() == QgsWfsCapabilities::NoError )
+    if ( capabilities.errorCode() == QgsWfsGetCapabilitiesRequest::NoError )
     {
+      const QString projectCrs = QgsProject::instance()->crs().authid();
       const auto featureTypes = capabilities.capabilities().featureTypes;
       for ( const QgsWfsCapabilities::FeatureType &featureType : featureTypes )
       {
+        // if project CRS is supported then use it, otherwise use first available CRS (which is the default CRS)
+        QString crs;
+        if ( !featureType.crslist.isEmpty() )
+        {
+          for ( const QString &c : std::as_const( featureType.crslist ) )
+          {
+            if ( c.compare( projectCrs, Qt::CaseInsensitive ) == 0 )
+            {
+              crs = projectCrs;
+              break;
+            }
+          }
+
+          if ( crs.isEmpty() )
+          {
+            crs = featureType.crslist.first();
+          }
+        }
         QgsWfsLayerItem *layer = new QgsWfsLayerItem(
           this, mName, uri, featureType.name, featureType.title,
-          !featureType.crslist.isEmpty() ? featureType.crslist.first() : QString(),
-          QgsWFSProvider::WFS_PROVIDER_KEY );
+          crs, QgsWFSProvider::WFS_PROVIDER_KEY
+        );
         layers.append( layer );
       }
     }
@@ -160,7 +179,7 @@ QVector<QgsDataItem *> QgsWfsRootItem::createChildren()
 {
   QVector<QgsDataItem *> connections;
 
-  const QStringList list = QgsWfsConnection::connectionList() ;
+  const QStringList list = QgsWfsConnection::connectionList();
   for ( const QString &connName : list )
   {
     const QgsWfsConnection connection( connName );
@@ -202,9 +221,9 @@ QString QgsWfsDataItemProvider::dataProviderKey() const
   return QStringLiteral( "WFS" );
 }
 
-int QgsWfsDataItemProvider::capabilities() const
+Qgis::DataItemProviderCapabilities QgsWfsDataItemProvider::capabilities() const
 {
-  return QgsDataProvider::Net;
+  return Qgis::DataItemProviderCapability::NetworkSources;
 }
 
 QgsDataItem *QgsWfsDataItemProvider::createDataItem( const QString &path, QgsDataItem *parentItem )
@@ -212,7 +231,7 @@ QgsDataItem *QgsWfsDataItemProvider::createDataItem( const QString &path, QgsDat
   QgsDebugMsgLevel( "WFS path = " + path, 4 );
   if ( path.isEmpty() )
   {
-    return new QgsWfsRootItem( parentItem, QStringLiteral( "WFS / OGC API - Features" ), QStringLiteral( "wfs:" ) );
+    return new QgsWfsRootItem( parentItem, QObject::tr( "WFS / OGC API - Features" ), QStringLiteral( "wfs:" ) );
   }
 
   // path schema: wfs:/connection name (used by OWS)

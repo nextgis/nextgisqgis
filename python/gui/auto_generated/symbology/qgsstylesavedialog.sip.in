@@ -3,26 +3,23 @@
  *                                                                      *
  * src/gui/symbology/qgsstylesavedialog.h                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 
 
 
-class QgsStyleSaveDialog: QDialog
+class QgsStyleSaveDialog : QDialog
 {
 %Docstring(signature="appended")
-a dialog for setting properties of a newly saved style.
-
-.. versionadded:: 3.0
+A dialog for setting properties of a newly saved style.
 %End
 
 %TypeHeaderCode
 #include "qgsstylesavedialog.h"
 %End
   public:
-
     QgsStyleSaveDialog( QWidget *parent /TransferThis/ = 0, QgsStyle::StyleEntity type = QgsStyle::SymbolEntity );
 %Docstring
 Constructor for :py:class:`QgsSymbolSaveDialog`
@@ -45,7 +42,8 @@ Sets the default ``tags`` for the newly created item.
 
     QString tags() const;
 %Docstring
-Returns any tags entered for the new symbol (as a comma separated value list).
+Returns any tags entered for the new symbol (as a comma separated value
+list).
 %End
 
     bool isFavorite() const;
@@ -74,5 +72,5 @@ Returns the destination style database.
  *                                                                      *
  * src/gui/symbology/qgsstylesavedialog.h                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

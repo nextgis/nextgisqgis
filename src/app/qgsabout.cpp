@@ -16,11 +16,13 @@
  ***************************************************************************/
 
 #include "qgsabout.h"
-#include "ngcustomization.h"
+#include "moc_qgsabout.cpp"
 #include "qgsapplication.h"
+#include "ngcustomization.h"
 #include "qgsauthmethodregistry.h"
 #include "qgsproviderregistry.h"
 #include "qgslogger.h"
+#include <QClipboard>
 #include <QDesktopServices>
 #include <QFile>
 #include <QTextStream>
@@ -30,18 +32,30 @@
 #include <QUrl>
 #include <QRegularExpression>
 
-#ifdef Q_OS_MACX
-QgsAbout::QgsAbout( QWidget *parent )
-  : QgsOptionsDialogBase( "about", parent, Qt::WindowSystemMenuHint )  // Modeless dialog with close button only
+#ifdef Q_OS_MACOS
+// Modeless dialog with close button only
+constexpr Qt::WindowFlags kAboutWindowFlags = Qt::WindowSystemMenuHint;
 #else
-QgsAbout::QgsAbout( QWidget * parent )
-  : QgsOptionsDialogBase( QStringLiteral( "about" ), parent )  // Normal dialog in non Mac-OS
+// Normal dialog in non Mac-OS
+constexpr Qt::WindowFlags kAboutWindowFlags = Qt::WindowFlags();
 #endif
+
+QgsAbout::QgsAbout( QWidget *parent )
+  : QgsOptionsDialogBase( QStringLiteral( "about" ), parent, kAboutWindowFlags )
 {
   setupUi( this );
   connect( btnQgisUser, &QPushButton::clicked, this, &QgsAbout::btnQgisUser_clicked );
   connect( btnQgisHome, &QPushButton::clicked, this, &QgsAbout::btnQgisHome_clicked );
-  initOptionsBase( true, QStringLiteral( "%1 - %2 Bit" ).arg( windowTitle() ).arg( QSysInfo::WordSize ) );
+  connect( btnCopyToClipboard, &QPushButton::clicked, this, &QgsAbout::btnCopyToClipboard_clicked );
+  if constexpr ( QSysInfo::WordSize != 64 )
+  {
+    // 64 bit is the current standard. Only specify word size if it is not 64.
+    initOptionsBase( true, tr( "%1 - %2 Bit" ).arg( windowTitle() ).arg( QSysInfo::WordSize ) );
+  }
+  else
+  {
+    initOptionsBase( true );
+  }
   init();
 }
 
@@ -78,7 +92,7 @@ void QgsAbout::init()
   if ( file.open( QIODevice::ReadOnly ) )
   {
     QTextStream stream( &file );
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
     // Always use UTF-8
     stream.setCodec( "UTF-8" );
 #endif
@@ -89,11 +103,7 @@ void QgsAbout::init()
       //ignore the line if it starts with a hash....
       if ( !line.isEmpty() && line.at( 0 ) == '#' )
         continue;
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-      QStringList myTokens = line.split( '\t', QString::SkipEmptyParts );
-#else
       QStringList myTokens = line.split( '\t', Qt::SkipEmptyParts );
-#endif
       lines << myTokens[0];
     }
     file.close();
@@ -114,7 +124,7 @@ void QgsAbout::init()
   if ( file2.open( QIODevice::ReadOnly ) )
   {
     QTextStream stream( &file2 );
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
     // Always use UTF-8
     stream.setCodec( "UTF-8" );
 #endif
@@ -142,8 +152,8 @@ void QgsAbout::init()
   {
     const QString donorsHTML = tr( "<p>For a list of individuals and institutions who have contributed "
                                    "money to fund QGIS development and other project costs see "
-                                   "<a href=\"https://qgis.org/en/site/about/sustaining_members.html#list-of-donors\">"
-                                   "https://qgis.org/en/site/about/sustaining_members.html#list-of-donors</a></p>" );
+                                   "<a href=\"https://qgis.org/funding/donate/\">"
+                                   "https://qgis.org/funding/donate/</a></p>" );
 #if 0
     QString website;
     QTextStream donorsStream( &donorsFile );
@@ -186,7 +196,7 @@ void QgsAbout::init()
     QString translatorHTML;
     QTextStream translatorStream( &translatorFile );
     // Always use UTF-8
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
     translatorStream.setCodec( "UTF-8" );
 #endif
     const QString myStyle = QgsApplication::reportStyleSheet();
@@ -206,10 +216,7 @@ void QgsAbout::setLicence()
 {
   // read the DONORS file and populate the text widget
   QFile licenceFile( QgsApplication::licenceFilePath() );
-#ifdef QGISDEBUG
-  printf( "Reading licence file %s.............................................\n",
-          licenceFile.fileName().toLocal8Bit().constData() );
-#endif
+  QgsDebugMsgLevel( QStringLiteral( "Reading licence file %1" ).arg( licenceFile.fileName() ), 2 );
   if ( licenceFile.open( QIODevice::ReadOnly ) )
   {
     txtLicense->setText( licenceFile.readAll() );
@@ -221,6 +228,7 @@ void QgsAbout::setVersion( const QString &v )
   txtVersion->setBackgroundRole( QPalette::NoRole );
   txtVersion->setAutoFillBackground( true );
   txtVersion->setHtml( v );
+  mVersionString = v;
 }
 
 void QgsAbout::setWhatsNew()
@@ -266,6 +274,11 @@ void QgsAbout::setPluginInfo()
   txtProviders->clear();
   txtProviders->document()->setDefaultStyleSheet( myStyle );
   txtProviders->setText( myString );
+}
+
+void QgsAbout::btnCopyToClipboard_clicked()
+{
+  QGuiApplication::clipboard()->setText( mVersionString );
 }
 
 void QgsAbout::btnQgisUser_clicked()

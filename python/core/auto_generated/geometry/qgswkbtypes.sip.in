@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/geometry/qgswkbtypes.h                                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -16,8 +16,6 @@ class QgsWkbTypes
 {
 %Docstring(signature="appended")
 Handles storage of information regarding WKB types and their properties.
-
-.. versionadded:: 2.10
 %End
 
 %TypeHeaderCode
@@ -30,7 +28,8 @@ Handles storage of information regarding WKB types and their properties.
 
     static Qgis::WkbType singleType( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Returns the single type for a WKB type. For example, for MultiPolygon WKB types the single type would be Polygon.
+Returns the single type for a WKB type. For example, for MultiPolygon
+WKB types the single type would be Polygon.
 
 .. seealso:: :py:func:`isSingleType`
 
@@ -43,7 +42,8 @@ Returns the single type for a WKB type. For example, for MultiPolygon WKB types 
 
     static Qgis::WkbType multiType( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Returns the multi type for a WKB type. For example, for Polygon WKB types the multi type would be MultiPolygon.
+Returns the multi type for a WKB type. For example, for Polygon WKB
+types the multi type would be MultiPolygon.
 
 .. seealso:: :py:func:`promoteNonPointTypesToMulti`
 
@@ -59,12 +59,15 @@ Returns the multi type for a WKB type. For example, for Polygon WKB types the mu
 
     static Qgis::WkbType promoteNonPointTypesToMulti( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Promotes a WKB geometry type to its multi-type equivalent, with the exception of point geometry types.
+Promotes a WKB geometry type to its multi-type equivalent, with the
+exception of point geometry types.
 
-Specifically, this method should be used to determine the most-permissive possible resultant WKB type which can result
-from subtracting parts of a geometry. A single-point geometry type can never become a multi-point geometry type as
-a result of a subtraction, but a single-line or single-polygon geometry CAN become a multipart geometry as a result of subtracting
-portions of the geometry.
+Specifically, this method should be used to determine the
+most-permissive possible resultant WKB type which can result from
+subtracting parts of a geometry. A single-point geometry type can never
+become a multi-point geometry type as a result of a subtraction, but a
+single-line or single-polygon geometry CAN become a multipart geometry
+as a result of subtracting portions of the geometry.
 
 .. seealso:: :py:func:`multiType`
 
@@ -75,7 +78,8 @@ portions of the geometry.
 
     static Qgis::WkbType curveType( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Returns the curve type for a WKB type. For example, for Polygon WKB types the curve type would be CurvePolygon.
+Returns the curve type for a WKB type. For example, for Polygon WKB
+types the curve type would be CurvePolygon.
 
 .. note::
 
@@ -93,13 +97,13 @@ Returns the curve type for a WKB type. For example, for Polygon WKB types the cu
 
 .. seealso:: :py:func:`multiType`
 
-
 .. versionadded:: 3.10
 %End
 
     static Qgis::WkbType linearType( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Returns the linear type for a WKB type. For example, for a CompoundCurve, the linear type would be LineString.
+Returns the linear type for a WKB type. For example, for a
+CompoundCurve, the linear type would be LineString.
 
 .. seealso:: :py:func:`curveType`
 
@@ -118,8 +122,9 @@ Returns the linear type for a WKB type. For example, for a CompoundCurve, the li
 
     static Qgis::WkbType flatType( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Returns the flat type for a WKB type. This is the WKB type minus any Z or M dimensions.
-For example, for PolygonZM WKB types the single type would be Polygon.
+Returns the flat type for a WKB type. This is the WKB type minus any Z
+or M dimensions. For example, for PolygonZM WKB types the single type
+would be Polygon.
 
 .. seealso:: :py:func:`singleType`
 
@@ -160,48 +165,50 @@ Returns ``True`` if the WKB type is a multi type.
 
     static bool isCurvedType( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Returns ``True`` if the WKB type is a curved type or can contain curved geometries.
-
-.. versionadded:: 2.14
+Returns ``True`` if the WKB type is a curved type or can contain curved
+geometries.
 %End
 
     static int wkbDimensions( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Returns the inherent dimension of the geometry type as an integer. Returned value will
-always be less than or equal to the coordinate dimension.
+Returns the inherent dimension of the geometry type as an integer.
+Returned value will always be less than or equal to the coordinate
+dimension.
 
-:return: 0 for point geometries, 1 for line geometries, 2 for polygon geometries
-         Invalid geometry types will return a dimension of 0.
+:return: 0 for point geometries, 1 for line geometries, 2 for polygon
+         geometries Invalid geometry types will return a dimension of 0.
 
 .. seealso:: :py:func:`coordDimensions`
 %End
 
     static int coordDimensions( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Returns the coordinate dimension of the geometry type as an integer. Returned value will
-be between 2-4, depending on whether the geometry type contains the Z or M dimensions.
-Invalid geometry types will return a dimension of 0.
+Returns the coordinate dimension of the geometry type as an integer.
+Returned value will be between 2-4, depending on whether the geometry
+type contains the Z or M dimensions. Invalid geometry types will return
+a dimension of 0.
 
 .. seealso:: :py:func:`wkbDimensions`
-
-.. versionadded:: 2.14
 %End
 
     static Qgis::GeometryType geometryType( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Returns the geometry type for a WKB type, e.g., both MultiPolygon and CurvePolygon would have a
-PolygonGeometry geometry type.
-GeometryCollections are reported as :py:class:`Qgis`.GeometryType.Unknown.
+Returns the geometry type for a WKB type, e.g., both MultiPolygon and
+CurvePolygon would have a PolygonGeometry geometry type.
+GeometryCollections are reported as
+:py:class:`Qgis`.GeometryType.Unknown.
 %End
 
     static QString displayString( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Returns a non-translated display string type for a WKB type, e.g., the geometry name used in WKT geometry representations.
+Returns a non-translated display string type for a WKB type, e.g., the
+geometry name used in WKT geometry representations.
 %End
 
     static QString translatedDisplayString( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Returns a translated display string type for a WKB type, e.g., the geometry name used in WKT geometry representations.
+Returns a translated display string type for a WKB type, e.g., the
+geometry name used in WKT geometry representations.
 
 .. versionadded:: 3.18
 %End
@@ -218,8 +225,6 @@ This will return one of the following strings:
 - Unknown Geometry
 - No Geometry
 - Invalid Geometry
-
-.. versionadded:: 3.0
 %End
 
     static bool hasZ( Qgis::WkbType type ) /HoldGIL/;
@@ -255,8 +260,6 @@ Adds the z dimension to a WKB type and returns the new type
 .. seealso:: :py:func:`dropZ`
 
 .. seealso:: :py:func:`hasZ`
-
-.. versionadded:: 2.12
 %End
 
     static Qgis::WkbType addM( Qgis::WkbType type ) /HoldGIL/;
@@ -270,39 +273,36 @@ Adds the m dimension to a WKB type and returns the new type
 .. seealso:: :py:func:`dropM`
 
 .. seealso:: :py:func:`hasM`
-
-.. versionadded:: 2.12
 %End
 
     static Qgis::WkbType dropZ( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Drops the z dimension (if present) for a WKB type and returns the new type.
+Drops the z dimension (if present) for a WKB type and returns the new
+type.
 
 :param type: original type
 
 .. seealso:: :py:func:`dropM`
 
 .. seealso:: :py:func:`addZ`
-
-.. versionadded:: 2.14
 %End
 
     static Qgis::WkbType dropM( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Drops the m dimension (if present) for a WKB type and returns the new type.
+Drops the m dimension (if present) for a WKB type and returns the new
+type.
 
 :param type: original type
 
 .. seealso:: :py:func:`dropZ`
 
 .. seealso:: :py:func:`addM`
-
-.. versionadded:: 2.14
 %End
 
     static Qgis::WkbType to25D( Qgis::WkbType type ) /HoldGIL/;
 %Docstring
-Will convert the 25D version of the flat type if supported or Unknown if not supported.
+Will convert the 25D version of the flat type if supported or Unknown if
+not supported.
 
 :param type: The type to convert
 
@@ -316,5 +316,5 @@ Will convert the 25D version of the flat type if supported or Unknown if not sup
  *                                                                      *
  * src/core/geometry/qgswkbtypes.h                                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

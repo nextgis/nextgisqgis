@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/proj/qgsdatums.h                                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -83,8 +83,8 @@ Contains information about a datum ensemble.
 
     bool isValid() const;
 %Docstring
-Returns ``True`` if the datum ensemble is a valid object, or ``False`` if it is a null/invalid
-object.
+Returns ``True`` if the datum ensemble is a valid object, or ``False``
+if it is a null/invalid object.
 %End
 
     QString name() const;
@@ -148,5 +148,5 @@ Contains a list of members of the ensemble.
  *                                                                      *
  * src/core/proj/qgsdatums.h                                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

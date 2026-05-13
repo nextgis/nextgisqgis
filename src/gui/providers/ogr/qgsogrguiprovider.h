@@ -19,17 +19,17 @@
 #define QGSOGRGUIPROVIDER_H
 
 #include "qgsproviderguimetadata.h"
-#include "qgsogrsourceselect.h"
 #include "qgis_sip.h"
 
 ///@cond PRIVATE
 #define SIP_NO_FILE
 
-class QgsOgrGuiProviderMetadata: public QgsProviderGuiMetadata
+class QgsOgrGuiProviderMetadata : public QgsProviderGuiMetadata
 {
   public:
     QgsOgrGuiProviderMetadata();
     QList<QgsSourceSelectProvider *> sourceSelectProviders() override;
+    QList<QgsProviderSourceWidgetProvider *> sourceWidgetProviders() override;
     QList<QgsDataItemGuiProvider *> dataItemGuiProviders() override;
     QList<QgsProjectStorageGuiProvider *> projectStorageGuiProviders() override;
 };

@@ -27,21 +27,21 @@ class QgsAbstractDatabaseProviderConnection;
 
 ///@cond PRIVATE
 #ifndef SIP_RUN
-class GUI_EXPORT QgsDatabaseTableComboBoxSortModel: public QSortFilterProxyModel
+class GUI_EXPORT QgsDatabaseTableComboBoxSortModel : public QSortFilterProxyModel
 {
     Q_OBJECT
   public:
     explicit QgsDatabaseTableComboBoxSortModel( QObject *parent = nullptr );
+
   protected:
     bool lessThan( const QModelIndex &source_left, const QModelIndex &source_right ) const override;
-
 };
 #endif
 ///@endcond
 
 /**
  * \ingroup gui
- * \brief The QgsDatabaseTableComboBox class is a combo box which displays the list of tables for a specific database connection.
+ * \brief A combobox which displays the list of tables for a specific database connection.
  *
  * \warning The provider must support the connection API methods in its QgsProviderMetadata implementation
  * in order for the combobox to work correctly.
@@ -53,7 +53,6 @@ class GUI_EXPORT QgsDatabaseTableComboBox : public QWidget
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsDatabaseTableComboBox, for the specified \a provider and \a connection.
      *

@@ -49,9 +49,9 @@ QString QgsMergeLinesAlgorithm::outputName() const
   return QObject::tr( "Merged" );
 }
 
-QgsProcessing::SourceType QgsMergeLinesAlgorithm::outputLayerType() const
+Qgis::ProcessingSourceType QgsMergeLinesAlgorithm::outputLayerType() const
 {
-  return QgsProcessing::TypeVectorLine;
+  return Qgis::ProcessingSourceType::VectorLine;
 }
 
 Qgis::WkbType QgsMergeLinesAlgorithm::outputWkbType( Qgis::WkbType ) const
@@ -66,9 +66,14 @@ QString QgsMergeLinesAlgorithm::shortHelpString() const
                       "geometry will be a MultiLineString containing any lines which could be merged and any non-connected line parts." );
 }
 
+QString QgsMergeLinesAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Joins all connected parts of MultiLineString geometries into single LineString geometries." );
+}
+
 QList<int> QgsMergeLinesAlgorithm::inputLayerTypes() const
 {
-  return QList<int>() << QgsProcessing::TypeVectorLine;
+  return QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::VectorLine );
 }
 
 QgsMergeLinesAlgorithm *QgsMergeLinesAlgorithm::createInstance() const
@@ -91,5 +96,3 @@ QgsFeatureList QgsMergeLinesAlgorithm::processFeature( const QgsFeature &feature
 }
 
 ///@endcond
-
-

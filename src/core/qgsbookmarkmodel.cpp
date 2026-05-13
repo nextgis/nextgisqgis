@@ -15,6 +15,7 @@
 
 #include "qgsapplication.h"
 #include "qgsbookmarkmodel.h"
+#include "moc_qgsbookmarkmodel.cpp"
 #include "qgsbookmarkmanager.h"
 
 #include <QIcon>
@@ -54,19 +55,19 @@ QVariant QgsBookmarkManagerModel::data( const QModelIndex &index, int role ) con
 
   switch ( role )
   {
-    case RoleExtent:
+    case static_cast< int >( CustomRole::Extent ):
       return b.extent();
 
-    case RoleRotation:
+    case static_cast< int >( CustomRole::Rotation ):
       return b.rotation();
 
-    case RoleName:
+    case static_cast< int >( CustomRole::Name ):
       return b.name();
 
-    case RoleId:
+    case static_cast< int >( CustomRole::Id ):
       return b.id();
 
-    case RoleGroup:
+    case static_cast< int >( CustomRole::Group ):
       return b.group();
 
     case Qt::DecorationRole:
@@ -222,11 +223,9 @@ bool QgsBookmarkManagerModel::setData( const QModelIndex &index, const QVariant 
   return false;
 }
 
-bool QgsBookmarkManagerModel::insertRows( int, int count, const QModelIndex &parent )
+bool QgsBookmarkManagerModel::insertRows( int, int count, const QModelIndex & )
 {
   // append
-  const int oldCount = mManager->bookmarks().count();
-  beginInsertRows( parent, oldCount, oldCount + count );
   bool result = true;
   for ( int i = 0; i < count; ++i )
   {
@@ -236,14 +235,11 @@ bool QgsBookmarkManagerModel::insertRows( int, int count, const QModelIndex &par
     mBlocked = false;
     result &= res;
   }
-  endInsertRows();
   return result;
 }
 
-bool QgsBookmarkManagerModel::removeRows( int row, int count, const QModelIndex &parent )
+bool QgsBookmarkManagerModel::removeRows( int row, int count, const QModelIndex & )
 {
-  beginRemoveRows( parent, row, row + count );
-
   const QList< QgsBookmark > appBookmarks = mManager->bookmarks();
   const QList< QgsBookmark > projectBookmarks = mProjectManager->bookmarks();
   for ( int r = row + count - 1; r >= row; --r )
@@ -253,7 +249,6 @@ bool QgsBookmarkManagerModel::removeRows( int row, int count, const QModelIndex 
     else
       mManager->removeBookmark( appBookmarks.at( r ).id() );
   }
-  endRemoveRows();
   return true;
 }
 

@@ -133,46 +133,46 @@ class CORE_EXPORT QgsPalettedRasterRenderer: public QgsRasterRenderer
 
     /**
      * Returns optional category label
-     * \since QGIS 2.1
     */
     QString label( double idx ) const;
 
     /**
      * Set category label
-     * \since QGIS 2.1
     */
     void setLabel( double idx, const QString &label );
 
     /**
      * Returns the raster band used for rendering the raster.
-     * \since QGIS 3.0
+     *
+     * \deprecated QGIS 3.38. Use inputBand() instead.
      */
-    int band() const { return mBand; }
+    Q_DECL_DEPRECATED int band() const SIP_DEPRECATED { return mBand; }
+
+    int inputBand() const override;
+    bool setInputBand( int band ) override;
 
     void writeXml( QDomDocument &doc, QDomElement &parentElem ) const override;
     QList< QPair< QString, QColor > > legendSymbologyItems() const override;
     QList<QgsLayerTreeModelLegendNode *> createLegendNodes( QgsLayerTreeLayer *nodeLayer ) SIP_FACTORY override;
     QList<int> usesBands() const override;
-    void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props = QVariantMap() ) const override;
+    Q_DECL_DEPRECATED void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props = QVariantMap() ) const override SIP_DEPRECATED;
+    bool toSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &context ) const override;
     bool accept( QgsStyleEntityVisitorInterface *visitor ) const override;
 
     /**
      * Set the source color \a ramp. Ownership is transferred to the renderer.
      * \see sourceColorRamp()
-     * \since QGIS 3.0
      */
     void setSourceColorRamp( QgsColorRamp *ramp SIP_TRANSFER );
 
     /**
      * Gets the source color ramp
      * \see setSourceColorRamp()
-     * \since QGIS 3.0
      */
     QgsColorRamp *sourceColorRamp() const;
 
     /**
      * Converts a raster color \a table to paletted renderer class data.
-     * \since QGIS 3.0
      */
     static QgsPalettedRasterRenderer::ClassData colorTableToClassData( const QList<QgsColorRampShader::ColorRampItem> &table );
 
@@ -191,28 +191,24 @@ class CORE_EXPORT QgsPalettedRasterRenderer: public QgsRasterRenderer
      *
      * \see classDataFromFile()
      * \see classDataToString()
-     * \since QGIS 3.0
      */
     static QgsPalettedRasterRenderer::ClassData classDataFromString( const QString &string );
 
     /**
      * Opens a color table file and returns corresponding paletted renderer class data.
      * \see classDataFromString()
-     * \since QGIS 3.0
      */
     static QgsPalettedRasterRenderer::ClassData classDataFromFile( const QString &path );
 
     /**
      * Converts classes to a string representation, using the .clr/gdal color table file format.
      * \see classDataFromString()
-     * \since QGIS 3.0
      */
     static QString classDataToString( const QgsPalettedRasterRenderer::ClassData &classes );
 
     /**
      * Generates class data from a \a raster, for the specified \a bandNumber. An optional
      * color \a ramp can be specified to automatically assign colors from the ramp.
-     * \since QGIS 3.0
      */
     static QgsPalettedRasterRenderer::ClassData classDataFromRaster( QgsRasterInterface *raster, int bandNumber, QgsColorRamp *ramp = nullptr,
         QgsRasterBlockFeedback *feedback = nullptr );

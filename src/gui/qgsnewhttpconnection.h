@@ -22,8 +22,10 @@
 #include "ui_qgsnewhttpconnectionbase.h"
 #include "qgsguiutils.h"
 #include "qgis_gui.h"
+#include "qgssettingstree.h"
 
 class QgsAuthSettingsWidget;
+class QgsSettingsEntryBool;
 
 /**
  * \ingroup gui
@@ -35,29 +37,32 @@ class GUI_EXPORT QgsNewHttpConnection : public QDialog, private Ui::QgsNewHttpCo
     Q_OBJECT
 
   public:
+#ifndef SIP_RUN
+    static inline QgsSettingsTreeNode *sTreeHttpConnectionDialog = QgsSettingsTree::sTreeConnections->createChildNode( QStringLiteral( "http-connection-dialog" ) );
+
+    static const QgsSettingsEntryBool *settingsIgnoreReportedLayerExtentsDefault;
+#endif
 
     /**
      * Available connection types for configuring in the dialog.
-     * \since QGIS 3.0
      */
-    enum ConnectionType
+    enum ConnectionType SIP_ENUM_BASETYPE( IntFlag )
     {
-      ConnectionWfs = 1 << 1, //!< WFS connection
-      ConnectionWms = 1 << 2, //!< WMS connection
-      ConnectionWcs = 1 << 3, //!< WCS connection
+      ConnectionWfs = 1 << 1,   //!< WFS connection
+      ConnectionWms = 1 << 2,   //!< WMS connection
+      ConnectionWcs = 1 << 3,   //!< WCS connection
       ConnectionOther = 1 << 4, //!< Other connection type
     };
     Q_DECLARE_FLAGS( ConnectionTypes, ConnectionType )
 
     /**
      * Flags controlling dialog behavior.
-     * \since QGIS 3.0
      */
-    enum Flag
+    enum Flag SIP_ENUM_BASETYPE( IntFlag )
     {
-      FlagShowTestConnection = 1 << 1, //!< Display the 'test connection' button
+      FlagShowTestConnection = 1 << 1,      //!< Display the 'test connection' button
       FlagHideAuthenticationGroup = 1 << 2, //!< Hide the Authentication group
-      FlagShowHttpSettings = 1 << 3, //!< Display the 'http' group
+      FlagShowHttpSettings = 1 << 3,        //!< Display the 'http' group
     };
     Q_DECLARE_FLAGS( Flags, Flag )
 
@@ -70,22 +75,17 @@ class GUI_EXPORT QgsNewHttpConnection : public QDialog, private Ui::QgsNewHttpCo
      * The \a flags argument allows specifying flags which control the dialog behavior
      * and appearance.
      */
-    QgsNewHttpConnection( QWidget *parent SIP_TRANSFERTHIS = nullptr,
-                          QgsNewHttpConnection::ConnectionTypes types = ConnectionWms,
+    QgsNewHttpConnection( QWidget *parent SIP_TRANSFERTHIS = nullptr, QgsNewHttpConnection::ConnectionTypes types = ConnectionWms,
                           const QString &serviceName SIP_PYARGRENAME( settingsKey ) = "WMS", // TODO QGIS 4 remove arg rename
-                          const QString &connectionName = QString(),
-                          QgsNewHttpConnection::Flags flags = QgsNewHttpConnection::Flags(),
-                          Qt::WindowFlags fl = QgsGuiUtils::ModalDialogFlags );
+                          const QString &connectionName = QString(), QgsNewHttpConnection::Flags flags = QgsNewHttpConnection::Flags(), Qt::WindowFlags fl = QgsGuiUtils::ModalDialogFlags );
 
     /**
      * Returns the current connection name.
-     * \since QGIS 3.0
      */
     QString name() const;
 
     /**
      * Returns the current connection url.
-     * \since QGIS 3.0
      */
     QString url() const;
 
@@ -99,10 +99,9 @@ class GUI_EXPORT QgsNewHttpConnection : public QDialog, private Ui::QgsNewHttpCo
     void urlChanged( const QString & );
     void updateOkButtonState();
     void wfsVersionCurrentIndexChanged( int index );
-    void wfsFeaturePagingStateChanged( int state );
+    void wfsFeaturePagingCurrentIndexChanged( int index );
 
   protected:
-
     //! Index of wfsVersionComboBox
     enum WfsVersionIndex
     {
@@ -113,16 +112,24 @@ class GUI_EXPORT QgsNewHttpConnection : public QDialog, private Ui::QgsNewHttpCo
       WFS_VERSION_API_FEATURES_1_0 = 4,
     };
 
+#ifndef SIP_RUN
+    //! Index of wfsFeaturePaging
+    enum class WfsFeaturePagingIndex
+    {
+      DEFAULT = 0,
+      ENABLED = 1,
+      DISABLED = 2,
+    };
+#endif
+
     /**
      * Returns TRUE if dialog settings are valid, or FALSE if current
      * settings are not valid and the dialog should not be acceptable.
-     * \since QGIS 3.0
      */
     virtual bool validate();
 
     /**
      * Returns the "test connection" button.
-     * \since QGIS 3.0
      */
     QPushButton *testConnectButton();
 
@@ -145,10 +152,10 @@ class GUI_EXPORT QgsNewHttpConnection : public QDialog, private Ui::QgsNewHttpCo
     QComboBox *wfsVersionComboBox() SIP_SKIP;
 
     /**
-     * Returns the "WFS paging enabled" checkbox
-     * \since QGIS 3.2
+     * Returns the "WFS paging" combobox
+     * \since QGIS 3.36
      */
-    QCheckBox *wfsPagingEnabledCheckBox() SIP_SKIP;
+    QComboBox *wfsPagingComboBox() SIP_SKIP;
 
     /**
      * Returns the "Use GML2 encoding for transactions" checkbox
@@ -163,6 +170,13 @@ class GUI_EXPORT QgsNewHttpConnection : public QDialog, private Ui::QgsNewHttpCo
     QLineEdit *wfsPageSizeLineEdit() SIP_SKIP;
 
     /**
+     * Returns the selected preferred HTTP method.
+     *
+     * \since QGIS 3.44
+     */
+    Qgis::HttpMethod preferredHttpMethod() const;
+
+    /**
      * Returns the url.
      * \since QGIS 3.2
      */
@@ -171,32 +185,32 @@ class GUI_EXPORT QgsNewHttpConnection : public QDialog, private Ui::QgsNewHttpCo
     /**
      * Returns the QSettings key for WFS related settings for the connection.
      * \see wmsSettingsKey()
-     * \since QGIS 3.0
      */
     virtual QString wfsSettingsKey( const QString &base, const QString &connectionName ) const;
 
     /**
      * Returns the QSettings key for WMS related settings for the connection.
      * \see wfsSettingsKey()
-     * \since QGIS 3.0
      */
     virtual QString wmsSettingsKey( const QString &base, const QString &connectionName ) const;
 
     /**
      * Triggers a resync of the GUI widgets for the service specific settings (i.e. WFS
      * and WMS related settings).
-     * \since QGIS 3.0
      */
     void updateServiceSpecificSettings();
 
-  private:
+    /**
+     * Adjust height of dialog to fit the content.
+     */
+    void showEvent( QShowEvent *event ) override;
 
+  private:
     ConnectionTypes mTypes = ConnectionWms;
 
     QString mServiceName;
     QString mOriginalConnName; //store initial name to delete entry in case of rename
     void showHelp();
-
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS( QgsNewHttpConnection::ConnectionTypes )

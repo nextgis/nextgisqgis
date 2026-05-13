@@ -29,16 +29,12 @@ class QgsRenderContext;
  * \class QgsMapDecoration
  * \brief Interface for map decorations.
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsMapDecoration
 {
 
   public:
 
-    /**
-     * Constructor for QgsMapDecoration.
-     */
     QgsMapDecoration() = default;
 
     virtual ~QgsMapDecoration() = default;
@@ -53,6 +49,13 @@ class CORE_EXPORT QgsMapDecoration
      * \since QGIS 3.14
      */
     const QString displayName() const { return mDisplayName; }
+
+    /**
+     * Returns TRUE if the decoration is attached to a fixed map position (e.g grid, layout extent), or
+     * FALSE if the annotation uses a position relative to the map canvas (e.g. title, copyright...)
+     * \since QGIS 3.34
+     */
+    virtual bool hasFixedMapPosition() const { return false; }
 
   protected:
 

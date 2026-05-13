@@ -30,9 +30,7 @@
  */
 class QgsForceRHRAlgorithm : public QgsProcessingFeatureBasedAlgorithm
 {
-
   public:
-
     QgsForceRHRAlgorithm() = default;
     QString name() const override;
     QString displayName() const override;
@@ -45,14 +43,11 @@ class QgsForceRHRAlgorithm : public QgsProcessingFeatureBasedAlgorithm
     QgsForceRHRAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
-    QgsProcessingFeatureSource::Flag sourceFlags() const override;
+    Qgis::ProcessingFeatureSourceFlags sourceFlags() const override;
     QString outputName() const override;
-    QgsFeatureList processFeature( const QgsFeature &feature,  QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
-
+    QgsFeatureList processFeature( const QgsFeature &feature, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
 };
 
 ///@endcond PRIVATE
 
 #endif // QGSALGORITHMFORCERHR_H
-
-

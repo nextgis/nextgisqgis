@@ -36,7 +36,7 @@
 
 /**
  * \ingroup core
- * \brief Configuration storage class for authentication method configurations
+ * \brief Configuration storage class for authentication method configurations.
  */
 class CORE_EXPORT QgsAuthMethodConfig
 {
@@ -51,10 +51,7 @@ class CORE_EXPORT QgsAuthMethodConfig
 
     // TODO c++20 - replace with = default
 
-    //! Operator used to compare configs' equality
     bool operator==( const QgsAuthMethodConfig &other ) const;
-
-    //! Operator used to compare configs' inequality
     bool operator!=( const QgsAuthMethodConfig &other ) const;
 
     /**
@@ -204,7 +201,7 @@ typedef QHash<QString, QgsAuthMethodConfig> QgsAuthMethodConfigsMap;
 
 /**
  * \ingroup core
- * \brief Storage set for PKI bundle: SSL certificate, key, optional CA cert chain
+ * \brief Storage set for PKI bundle: SSL certificate, key, optional CA cert chain.
  * \note Useful for caching the bundle during application run sessions
  */
 class CORE_EXPORT QgsPkiBundle
@@ -274,7 +271,7 @@ class CORE_EXPORT QgsPkiBundle
 
 /**
  * \ingroup core
- * \brief Storage set for constructed SSL certificate, key, associated with an authentication config
+ * \brief Storage set for constructed SSL certificate, key, associated with an authentication config.
  */
 class CORE_EXPORT QgsPkiConfigBundle
 {
@@ -387,7 +384,7 @@ class CORE_EXPORT QgsPkiConfigBundle
 
 /**
  * \ingroup core
- * \brief Configuration container for SSL server connection exceptions or overrides
+ * \brief Configuration container for SSL server connection exceptions or overrides.
  */
 class CORE_EXPORT QgsAuthConfigSslServer
 {
@@ -456,6 +453,9 @@ class CORE_EXPORT QgsAuthConfigSslServer
 
     QString mSslHostPort;
     QSslCertificate mSslCert;
+
+    static QSsl::SslProtocol decodeSslProtocol( const QString &protocol );
+    static QString encodeSslProtocol( QSsl::SslProtocol protocol );
 
     QSsl::SslProtocol mSslProtocol;
     int mQtVersion;

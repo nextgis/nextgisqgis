@@ -29,7 +29,7 @@
 
 /**
  * \ingroup core
- * \brief User profile manager is used to manager list, and manage user profiles on the users machine.
+ * \brief A manager for QGIS user profiles.
  *
  * In QGIS 3 all settings, plugins, etc were moved into a %APPDATA%/profiles folder for each platform.
  * This allows for manage different user profiles per machine vs the single default one that was allowed in the
@@ -37,7 +37,6 @@
  *
  * A user profile is all settings and anything that used to be found in .qgis3 in the users home folder.
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsUserProfileManager : public QObject
 {
@@ -68,7 +67,7 @@ class CORE_EXPORT QgsUserProfileManager : public QObject
      * \return The user profile
      * \note Returns a new QgsUserProfile. Ownership transferred to caller.
      */
-    QgsUserProfile *getProfile( const QString &defaultProfile = "default", bool createNew = true, bool initSettings = true ) SIP_FACTORY;
+    std::unique_ptr< QgsUserProfile > getProfile( const QString &defaultProfile = "default", bool createNew = true, bool initSettings = true );
 
     /**
      * Set the root profile location for the profile manager. All profiles are loaded from this
@@ -144,7 +143,7 @@ class CORE_EXPORT QgsUserProfileManager : public QObject
     void setDefaultFromActive();
 
     /**
-     * Returns the name of the most recently closed profile. Empty if its the first time QGIS has been run.
+     * Returns the name of the most recently closed profile. Empty if it is the first time QGIS is run.
      * \since QGIS 3.32
      */
     QString lastProfileName() const;
@@ -173,7 +172,7 @@ class CORE_EXPORT QgsUserProfileManager : public QObject
      * \param name The name of the profile to return.
      * \return A QgsUserprofile pointing to the location of the user profile.
      */
-    QgsUserProfile *profileForName( const QString &name ) const SIP_FACTORY;
+    std::unique_ptr< QgsUserProfile > profileForName( const QString &name ) const;
 
     /**
      * Create a user profile given by the name

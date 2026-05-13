@@ -28,6 +28,8 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR} 
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/src/core
+    ${CMAKE_SOURCE_DIR}/src/core/geometry
+    ${CMAKE_SOURCE_DIR}/src/core/settings
     ${CMAKE_BINARY_DIR}/src/core
 )
 
@@ -35,6 +37,9 @@ add_executable(crssync main.cpp)
 target_compile_features(crssync PRIVATE cxx_std_17)
 
 target_link_libraries(crssync
+  ${QT_VERSION_BASE}::Core
+  ${QT_VERSION_BASE}::Gui
+  ${QT_VERSION_BASE}::Widgets
   ${NG_PREFIX}qgis_core
   ${PROJ_LIBRARY}
   ${GDAL_LIBRARY})

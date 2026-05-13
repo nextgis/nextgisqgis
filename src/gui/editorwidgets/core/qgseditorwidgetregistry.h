@@ -36,7 +36,7 @@ class QgsVectorLayer;
 
 /**
  * \ingroup gui
- * \brief This class manages all known edit widget factories.
+ * \brief A registry that manages all known edit widget factories.
  *
  * QgsEditorWidgetRegistry is not usually directly created, but rather accessed through
  * QgsGui::editorWidgetRegistry().
@@ -46,7 +46,6 @@ class GUI_EXPORT QgsEditorWidgetRegistry : public QObject
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsEditorWidgetRegistry. QgsEditorWidgetRegistry is not usually directly created, but rather accessed through
      * QgsGui::editorWidgetRegistry().
@@ -61,7 +60,6 @@ class GUI_EXPORT QgsEditorWidgetRegistry : public QObject
      * \param messageBar Specify a message bar on which messages by widgets will be shown while working with the map canvas
      *
      * \note Not required for plugins, the QGIS application does that already
-     * \since QGIS 2.8
      */
     void initEditors( QgsMapCanvas *mapCanvas = nullptr, QgsMessageBar *messageBar = nullptr );
 
@@ -96,13 +94,7 @@ class GUI_EXPORT QgsEditorWidgetRegistry : public QObject
      *
      * \returns A new widget wrapper
      */
-    QgsEditorWidgetWrapper *create( const QString &widgetId,
-                                    QgsVectorLayer *vl,
-                                    int fieldIdx,
-                                    const QVariantMap &config,
-                                    QWidget *editor,
-                                    QWidget *parent SIP_TRANSFERTHIS,
-                                    const QgsAttributeEditorContext &context  SIP_PYARGREMOVE = QgsAttributeEditorContext() ) SIP_FACTORY;
+    QgsEditorWidgetWrapper *create( const QString &widgetId, QgsVectorLayer *vl, int fieldIdx, const QVariantMap &config, QWidget *editor, QWidget *parent SIP_TRANSFERTHIS, const QgsAttributeEditorContext &context SIP_PYARGREMOVE = QgsAttributeEditorContext() ) SIP_FACTORY;
 
     /**
      * Create an attribute editor widget wrapper of the best type for a given field.
@@ -116,18 +108,9 @@ class GUI_EXPORT QgsEditorWidgetRegistry : public QObject
      *
      * \returns A new widget wrapper
      */
-    QgsEditorWidgetWrapper *create( QgsVectorLayer *vl,
-                                    int fieldIdx,
-                                    QWidget *editor,
-                                    QWidget *parent SIP_TRANSFERTHIS,
-                                    const QgsAttributeEditorContext &context SIP_PYARGREMOVE = QgsAttributeEditorContext() ) SIP_FACTORY;
+    QgsEditorWidgetWrapper *create( QgsVectorLayer *vl, int fieldIdx, QWidget *editor, QWidget *parent SIP_TRANSFERTHIS, const QgsAttributeEditorContext &context SIP_PYARGREMOVE = QgsAttributeEditorContext() ) SIP_FACTORY;
 
-    QgsSearchWidgetWrapper *createSearchWidget( const QString &widgetId,
-        QgsVectorLayer *vl,
-        int fieldIdx,
-        const QVariantMap &config,
-        QWidget *parent SIP_TRANSFERTHIS,
-        const QgsAttributeEditorContext &context SIP_PYARGREMOVE = QgsAttributeEditorContext() ) SIP_FACTORY;
+    QgsSearchWidgetWrapper *createSearchWidget( const QString &widgetId, QgsVectorLayer *vl, int fieldIdx, const QVariantMap &config, QWidget *parent SIP_TRANSFERTHIS, const QgsAttributeEditorContext &context SIP_PYARGREMOVE = QgsAttributeEditorContext() ) SIP_FACTORY;
 
     /**
      * Creates a configuration widget
@@ -149,6 +132,15 @@ class GUI_EXPORT QgsEditorWidgetRegistry : public QObject
      * \returns A human readable name
      */
     QString name( const QString &widgetId );
+
+    /**
+     * Gets the widget's read-only flag
+     *
+     * \param widgetId The widget type to get the read-only flag for
+     *
+     * \since QGIS 3.44
+     */
+    bool isReadOnly( const QString &widgetId );
 
     /**
      * Gets access to all registered factories
@@ -185,7 +177,7 @@ class GUI_EXPORT QgsEditorWidgetRegistry : public QObject
     QString findSuitableWrapper( QWidget *editor, const QString &defaultWidget );
 
     QMap<QString, QgsEditorWidgetFactory *> mWidgetFactories;
-    QMap<const char *, QPair<int, QString> > mFactoriesByType;
+    QMap<const char *, QPair<int, QString>> mFactoriesByType;
     QgsEditorWidgetAutoConf mAutoConf;
     std::unique_ptr<QgsEditorWidgetFactory> mFallbackWidgetFactory = nullptr;
 };

@@ -26,11 +26,13 @@
 #include "qgsfields.h"
 #include "qgsfeature.h"
 #include "qgscoordinatereferencesystem.h"
+#include "qgsmaplayer.h"
 #include "qgis_app.h"
 
 class QgsVectorLayer;
 class QgsVectorTileLayer;
 class QgsFeatureStore;
+class QgsMessageBar;
 
 /**
  * \brief QGIS internal clipboard for features.
@@ -49,13 +51,13 @@ class APP_EXPORT QgsClipboard : public QObject
 {
     Q_OBJECT
   public:
-
     //! Available formats for copying features as text
     enum CopyFormat
     {
-      AttributesOnly, //!< Tab delimited text, attributes only
+      AttributesOnly,    //!< Tab delimited text, attributes only
       AttributesWithWKT, //!< Tab delimited text, with geometry in WKT format
-      GeoJSON, //!< GeoJSON FeatureCollection format
+      AttributesWithWKB, //!< Tab delimited text, with geometry in WKB format
+      GeoJSON,           //!< GeoJSON FeatureCollection format
     };
     Q_ENUM( CopyFormat )
 
@@ -74,13 +76,13 @@ class APP_EXPORT QgsClipboard : public QObject
      * Place a copy of the selected features from the specified layer on
      * the internal clipboard, destroying the previous contents.
      */
-    // void replaceWithCopyOf( QgsVectorTileLayer *src );
+    void replaceWithCopyOf( QgsVectorTileLayer *src );
 
     /**
      * Place a copy of features on the internal clipboard,
      * destroying the previous contents.
      */
-    void replaceWithCopyOf( QgsFeatureStore &featureStore );
+    void replaceWithCopyOf( QgsFeatureStore &featureStore, QgsVectorLayer *src = nullptr );
 
     /**
      * Returns a copy of features on the internal clipboard.
@@ -140,6 +142,17 @@ class APP_EXPORT QgsClipboard : public QObject
      */
     QgsFields fields() const;
 
+    QgsMapLayer *layer() const;
+
+    /**
+     * Pastes clipboard features to a new memory layer.
+     *
+     * If no features are in clipboard an empty layer is returned.
+     *
+     * Returns a new memory layer or NULLPTR if the operation failed.
+     */
+    std::unique_ptr<QgsVectorLayer> pasteToNewMemoryVector( QgsMessageBar *messageBar );
+
   private slots:
 
     void systemClipboardChanged();
@@ -149,7 +162,6 @@ class APP_EXPORT QgsClipboard : public QObject
     void changed();
 
   private:
-
     /**
      * Set system clipboard from previously set features.
      */
@@ -162,7 +174,7 @@ class APP_EXPORT QgsClipboard : public QObject
     void generateClipboardText( QString &textContent, QString &htmlContent ) const;
 
     /**
-     * Attempts to convert a string to a list of features, by parsing the string as WKT and GeoJSON
+     * Attempts to convert a string to a list of features, by parsing the string as WKT/WKB and GeoJSON
      * \param string string to convert
      * \param fields fields for resultant features
      * \returns list of features if conversion was successful
@@ -184,6 +196,7 @@ class APP_EXPORT QgsClipboard : public QObject
     QgsFeatureList mFeatureClipboard;
     QgsFields mFeatureFields;
     QgsCoordinateReferenceSystem mCRS;
+    QPointer<QgsMapLayer> mFeatureLayer;
 
     //! True if next system clipboard change should be ignored
     bool mIgnoreNextSystemClipboardChange = false;
@@ -192,7 +205,6 @@ class APP_EXPORT QgsClipboard : public QObject
     bool mUseSystemClipboard = false;
 
     friend class TestQgisAppClipboard;
-
 };
 
 #endif

@@ -16,11 +16,14 @@
  ***************************************************************************/
 
 #include "qgscopcpointcloudblockrequest.h"
+#include "moc_qgscopcpointcloudblockrequest.cpp"
 
+#include "qgspointcloudindex.h"
 #include "qgstiledownloadmanager.h"
 #include "qgslazdecoder.h"
 #include "qgsapplication.h"
 #include "qgsnetworkaccessmanager.h"
+#include "qgssetrequestinitiator_p.h"
 
 //
 // QgsCopcPointCloudBlockRequest
@@ -28,14 +31,17 @@
 
 ///@cond PRIVATE
 
-QgsCopcPointCloudBlockRequest::QgsCopcPointCloudBlockRequest( const IndexedPointCloudNode &node, const QString &uri,
+QgsCopcPointCloudBlockRequest::QgsCopcPointCloudBlockRequest( const QgsPointCloudNodeId &node, const QString &uri,
     const QgsPointCloudAttributeCollection &attributes, const QgsPointCloudAttributeCollection &requestedAttributes,
     const QgsVector3D &scale, const QgsVector3D &offset, const QgsPointCloudExpression &filterExpression, const QgsRectangle &filterRect,
     uint64_t blockOffset, int32_t blockSize, int pointCount, const QgsLazInfo &lazInfo )
   : QgsPointCloudBlockRequest( node, uri, attributes, requestedAttributes, scale, offset, filterExpression, filterRect ),
     mBlockOffset( blockOffset ), mBlockSize( blockSize ), mPointCount( pointCount ), mLazInfo( lazInfo )
 {
-  QNetworkRequest nr( mUri );
+  // an empty block size will create an invalid range, causing a full request to the server
+  Q_ASSERT( mBlockSize > 0 );
+
+  QNetworkRequest nr = QNetworkRequest( QUrl( mUri ) );
   QgsSetRequestInitiatorClass( nr, QStringLiteral( "QgsCopcPointCloudBlockRequest" ) );
   QgsSetRequestInitiatorId( nr, node.toString() );
   nr.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache );
@@ -63,6 +69,10 @@ void QgsCopcPointCloudBlockRequest::blockFinishedLoading()
       try
       {
         mBlock = QgsLazDecoder::decompressCopc( mTileDownloadManagerReply->data(), mLazInfo, mPointCount, mRequestedAttributes, mFilterExpression, mFilterRect );
+        QgsPointCloudRequest req;
+        req.setAttributes( mRequestedAttributes );
+        req.setFilterRect( mFilterRect );
+        QgsAbstractPointCloudIndex::storeNodeDataToCacheStatic( mBlock.get(), mNode, req, mFilterExpression, mUri );
       }
       catch ( std::exception &e )
       {

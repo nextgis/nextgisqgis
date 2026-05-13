@@ -17,6 +17,7 @@
 #define QGSMSSQLDATAITEMGUIPROVIDER_H
 
 #include "qgsdataitemguiprovider.h"
+#include "qgsmimedatautils.h"
 
 class QgsMssqlConnectionItem;
 class QgsMssqlLayerItem;
@@ -25,11 +26,9 @@ class QgsMssqlDataItemGuiProvider : public QObject, public QgsDataItemGuiProvide
 {
     Q_OBJECT
   public:
-
     QString name() override { return QStringLiteral( "MSSQL" ); }
 
-    void populateContextMenu( QgsDataItem *item, QMenu *menu,
-                              const QList<QgsDataItem *> &selectedItems, QgsDataItemGuiContext context ) override;
+    void populateContextMenu( QgsDataItem *item, QMenu *menu, const QList<QgsDataItem *> &selectedItems, QgsDataItemGuiContext context ) override;
 
     bool deleteLayer( QgsLayerItem *item, QgsDataItemGuiContext context ) override;
 
@@ -39,11 +38,15 @@ class QgsMssqlDataItemGuiProvider : public QObject, public QgsDataItemGuiProvide
   private:
     static void newConnection( QgsDataItem *item );
     static void editConnection( QgsDataItem *item );
-    static void deleteConnection( QgsDataItem *item );
+    static void duplicateConnection( QgsDataItem *item );
     static void createSchema( QgsMssqlConnectionItem *connItem );
     static void truncateTable( QgsMssqlLayerItem *layerItem );
     static void saveConnections();
     static void loadConnections( QgsDataItem *item );
+
+    bool handleDrop( QgsMssqlConnectionItem *connectionItem, const QMimeData *data, const QString &toSchema, QgsDataItemGuiContext context );
+    bool handleDropUri( QgsMssqlConnectionItem *connectionItem, const QgsMimeDataUtils::Uri &sourceUri, const QString &toSchema, QgsDataItemGuiContext context );
+    void handleImportVector( QgsMssqlConnectionItem *connectionItem, const QString &toSchema, QgsDataItemGuiContext context );
 };
 
 #endif // QGSMSSQLDATAITEMGUIPROVIDER_H

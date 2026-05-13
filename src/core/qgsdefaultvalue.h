@@ -26,8 +26,7 @@
 /**
  * \ingroup core
  *
- * \brief The QgsDefaultValue class provides a container for managing client
- *        side default values for fields.
+ * \brief Provides a container for managing client side default values for fields.
  *
  * A QgsDefaultValue consists of an expression string that will be evaluated
  * on the client when a default field value needs to be generated.
@@ -43,7 +42,6 @@
  * default value should also be applied when a feature is updated. If this is
  * not set, the default value will only be used when a feature is created.
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsDefaultValue
 {
@@ -108,7 +106,7 @@ class CORE_EXPORT QgsDefaultValue
      * Checks if a default value is set. Alias for isValid().
      * \returns FALSE if the expression is a null string.
      */
-    operator bool() const SIP_PYTHON_SPECIAL_BOOL( isValid );
+    explicit operator bool() const SIP_PYTHON_SPECIAL_BOOL( isValid );
 
   private:
     QString mExpression;

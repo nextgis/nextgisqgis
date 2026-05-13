@@ -28,7 +28,7 @@ class QgsSnappingConfig;
 
 /**
  * \ingroup core
- * \brief This class has all the configuration of snapping and can return answers to snapping queries.
+ * \brief Contains configuration of snapping and can return answers to snapping queries.
  *
  * Internally, it keeps a cache of QgsPointLocator instances for multiple layers.
  *
@@ -45,7 +45,6 @@ class QgsSnappingConfig;
  * When working with map canvas, it may be useful to use derived class QgsMapCanvasSnappingUtils
  * which keeps the configuration in sync with map canvas (e.g. current view, active layer).
  *
- * \since QGIS 2.8
  */
 class CORE_EXPORT QgsSnappingUtils : public QObject
 {
@@ -171,7 +170,6 @@ class CORE_EXPORT QgsSnappingUtils : public QObject
 
     /**
      * Gets extra information about the instance
-     * \since QGIS 2.14
      */
     QString dump();
 
@@ -241,7 +239,6 @@ class CORE_EXPORT QgsSnappingUtils : public QObject
     /**
      * Toggles the state of snapping
      *
-     * \since QGIS 3.0
      */
     void toggleEnabled();
 
@@ -324,6 +321,8 @@ class CORE_EXPORT QgsSnappingUtils : public QObject
 
     //! Disable or not the snapping on all features. By default is always TRUE except for non visible features on map canvas.
     bool mEnableSnappingForInvisibleFeature = true;
+
+    friend class TestQgsSnappingUtils;
 };
 
 

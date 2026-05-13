@@ -21,6 +21,7 @@
 
 #include "qgis_core.h"
 #include "qgis_sip.h"
+#include "qgis.h"
 
 class QgsMapLayerModel;
 class QgsMapLayer;
@@ -28,38 +29,17 @@ class QgsProject;
 
 /**
  * \ingroup core
- * \brief The QgsMapLayerProxyModel class provides an easy to use model to display the list of layers in widgets.
- * \since QGIS 2.3
+ * \brief A proxy model which provides an easy to use model to display the list of layers in widgets.
  */
 class CORE_EXPORT QgsMapLayerProxyModel : public QSortFilterProxyModel
 {
     Q_OBJECT
 
-    Q_PROPERTY( QgsMapLayerProxyModel::Filters filters READ filters WRITE setFilters )
+    Q_PROPERTY( Qgis::LayerFilters filters READ filters WRITE setFilters )
     Q_PROPERTY( QList<QgsMapLayer *> exceptedLayerList READ exceptedLayerList WRITE setExceptedLayerList )
     Q_PROPERTY( QStringList exceptedLayerIds READ exceptedLayerIds WRITE setExceptedLayerIds )
 
   public:
-    enum Filter
-    {
-      RasterLayer = 1,
-      NoGeometry = 2,
-      PointLayer = 4,
-      LineLayer = 8,
-      PolygonLayer = 16,
-      HasGeometry = PointLayer | LineLayer | PolygonLayer,
-      VectorLayer = NoGeometry | HasGeometry,
-      PluginLayer = 32,
-      WritableLayer = 64,
-      MeshLayer = 128, //!< QgsMeshLayer \since QGIS 3.6
-      VectorTileLayer = 256, //!< QgsVectorTileLayer \since QGIS 3.14
-      PointCloudLayer = 512, //!< QgsPointCloudLayer \since QGIS 3.18
-      AnnotationLayer = 1024, //!< QgsAnnotationLayer \since QGIS 3.22
-      All = RasterLayer | VectorLayer | PluginLayer | MeshLayer | VectorTileLayer | PointCloudLayer | AnnotationLayer,
-      SpatialLayer = RasterLayer | HasGeometry | PluginLayer | MeshLayer | VectorTileLayer | PointCloudLayer | AnnotationLayer //!< \since QGIS 3.24
-    };
-    Q_DECLARE_FLAGS( Filters, Filter )
-    Q_FLAG( Filters )
 
     /**
      * \brief QgsMapLayerProxModel creates a proxy model with a QgsMapLayerModel as source model.
@@ -77,23 +57,29 @@ class CORE_EXPORT QgsMapLayerProxyModel : public QSortFilterProxyModel
      *
      * \see filters()
      *
-     * \since QGIS 2.3
      */
-    QgsMapLayerProxyModel *setFilters( QgsMapLayerProxyModel::Filters filters );
+    QgsMapLayerProxyModel *setFilters( Qgis::LayerFilters filters );
+
+    /**
+     * Filters according to layer type and/or geometry type.
+     * \note for API compatibility
+     * \since QGIS 3.34
+     * \deprecated QGIS 3.34. Use the flag signature instead.
+     */
+    Q_DECL_DEPRECATED void setFilters( int filters ) SIP_DEPRECATED { setFilters( static_cast<Qgis::LayerFilters>( filters ) ); }
 
     /**
      * Returns the filter flags which affect how layers are filtered within the model.
      *
      * \see setFilters()
      *
-     * \since QGIS 2.3
      */
-    const Filters &filters() const { return mFilters; }
+    const Qgis::LayerFilters &filters() const { return mFilters; }
 
     /**
      * Sets the \a project from which map layers are shown.
      *
-     * If \a project is NULLPTR then QgsProject::instance() will be used.
+     * If \a project is NULLPTR then QgsProject.instance() will be used.
      *
      * \since QGIS 3.24
      */
@@ -103,7 +89,7 @@ class CORE_EXPORT QgsMapLayerProxyModel : public QSortFilterProxyModel
      * Returns if the \a layer matches the given \a filters
      * \since QGIS 3.14
      */
-    static bool layerMatchesFilters( const QgsMapLayer *layer, const Filters &filters );
+    static bool layerMatchesFilters( const QgsMapLayer *layer, const Qgis::LayerFilters &filters );
 
     /**
      * Sets an allowlist of \a layers to include within the model. Only layers
@@ -114,7 +100,7 @@ class CORE_EXPORT QgsMapLayerProxyModel : public QSortFilterProxyModel
      * \see layerAllowlist()
      * \see setExceptedLayerList()
      *
-     * \deprecated use setLayerAllowList()
+     * \deprecated QGIS 3.40. Use setLayerAllowList().
      */
     Q_DECL_DEPRECATED void setLayerWhitelist( const QList<QgsMapLayer *> &layers ) SIP_DEPRECATED;
 
@@ -139,7 +125,7 @@ class CORE_EXPORT QgsMapLayerProxyModel : public QSortFilterProxyModel
      * \see setLayerAllowlist()
      * \see exceptedLayerList()
      *
-     * \deprecated use layerAllowlist() instead
+     * \deprecated QGIS 3.40. Use layerAllowlist() instead.
      */
     Q_DECL_DEPRECATED QList<QgsMapLayer *> layerWhitelist() SIP_DEPRECATED {return mLayerAllowlist;}
 
@@ -188,14 +174,12 @@ class CORE_EXPORT QgsMapLayerProxyModel : public QSortFilterProxyModel
     /**
      * Sets a blocklist of data providers which should be excluded from the model.
      * \see excludedProviders()
-     * \since QGIS 3.0
      */
     void setExcludedProviders( const QStringList &providers );
 
     /**
      * Returns the blocklist of data providers which are excluded from the model.
      * \see setExcludedProviders()
-     * \since QGIS 3.0
      */
     QStringList excludedProviders() const { return mExcludedProviders; }
 
@@ -229,14 +213,12 @@ class CORE_EXPORT QgsMapLayerProxyModel : public QSortFilterProxyModel
     void setFilterString( const QString &filter );
 
   private:
-    Filters mFilters;
+    Qgis::LayerFilters mFilters;
     QList<QgsMapLayer *> mExceptList;
     QList<QgsMapLayer *> mLayerAllowlist;
     QgsMapLayerModel *mModel = nullptr;
     QStringList mExcludedProviders;
     QString mFilterString;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS( QgsMapLayerProxyModel::Filters )
 
 #endif // QGSMAPLAYERPROXYMODEL_H

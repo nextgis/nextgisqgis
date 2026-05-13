@@ -30,18 +30,17 @@ class QFrame;
 
 /**
  * \ingroup gui
- * \brief The QgsUserInputWidget class is a floating widget that shall be used to display widgets for user inputs.
+ * \brief A floating widget that can be used to display widgets for user inputs.
+ *
  * It can be used by map tools, plugins, etc.
  * Several widgets can be displayed at once, they will be separated by a separator.
  * Widgets will be either layout horizontally or vertically.
  * The widget is automatically hidden if it contains no widget.
- * \since QGIS 2.10
  */
 class GUI_EXPORT QgsUserInputWidget : public QgsFloatingWidget
 {
     Q_OBJECT
   public:
-
     //! Constructor for QgsUserInputWidget
     QgsUserInputWidget( QWidget *parent SIP_TRANSFERTHIS = nullptr );
 

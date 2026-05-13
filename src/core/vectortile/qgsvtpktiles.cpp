@@ -55,7 +55,7 @@ bool QgsVtpkTiles::open()
   mZip = zip_open( fileNamePtr.constData(), ZIP_CHECKCONS, &rc );
   if ( rc == ZIP_ER_OK && mZip )
   {
-    const int count = zip_get_num_files( mZip );
+    const int count = zip_get_num_entries( mZip, ZIP_FL_UNCHANGED );
     if ( count != -1 )
     {
       return true;
@@ -317,7 +317,7 @@ QgsLayerMetadata QgsVtpkTiles::layerMetadata() const
       QgsCoordinateReferenceSystem crs = matrixSet().crs();
 
       QgsLayerMetadata::SpatialExtent spatialExtent;
-      spatialExtent.bounds = QgsBox3d( QgsRectangle( xMin, yMin, xMax, yMax ) );
+      spatialExtent.bounds = QgsBox3D( QgsRectangle( xMin, yMin, xMax, yMax ) );
       spatialExtent.extentCrs = QgsCoordinateReferenceSystem( "EPSG:4326" );
       QgsLayerMetadata::Extent extent;
       extent.setSpatialExtents( { spatialExtent } );
@@ -339,7 +339,7 @@ QgsLayerMetadata QgsVtpkTiles::layerMetadata() const
 
 QVariantMap QgsVtpkTiles::rootTileMap() const
 {
-  // make sure metadata has been read alread
+  // make sure metadata has been read already
   ( void )metadata();
 
   if ( mHasReadTileMap || mTileMapPath.isEmpty() )

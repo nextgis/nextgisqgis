@@ -34,7 +34,7 @@ class CORE_EXPORT QgsLineSymbol : public QgsSymbol
      * Create a line symbol with one symbol layer: SimpleLine with specified properties.
      * This is a convenience method for easier creation of line symbols.
      */
-    static QgsLineSymbol *createSimple( const QVariantMap &properties ) SIP_FACTORY;
+    static std::unique_ptr< QgsLineSymbol > createSimple( const QVariantMap &properties );
 
     /**
      * Constructor for QgsLineSymbol, with the specified list of initial symbol \a layers.
@@ -86,7 +86,6 @@ class CORE_EXPORT QgsLineSymbol : public QgsSymbol
     /**
      * Set data defined width for whole symbol (including all symbol layers).
      * \see dataDefinedWidth()
-     * \since QGIS 3.0
      */
     void setDataDefinedWidth( const QgsProperty &property ) const;
 
@@ -95,7 +94,6 @@ class CORE_EXPORT QgsLineSymbol : public QgsSymbol
      * \returns data defined width, or invalid property if size is not set
      * at the line level. Caller takes responsibility for deleting the returned object.
      * \see setDataDefinedWidth
-     * \since QGIS 3.0
      */
     QgsProperty dataDefinedWidth() const;
 

@@ -18,6 +18,8 @@
 #include <limits>
 #include <QTime>
 #include <QDateTime>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 
 #include "qgsmeshlayerutils.h"
 #include "qgsmeshtimesettings.h"
@@ -84,11 +86,11 @@ QgsMeshDataBlock QgsMeshLayerUtils::datasetValues(
   }
   else
   {
-    const QgsMesh3dAveragingMethod *averagingMethod = meshLayer->rendererSettings().averagingMethod();
+    const QgsMesh3DAveragingMethod *averagingMethod = meshLayer->rendererSettings().averagingMethod();
     if ( !averagingMethod )
       return block;
 
-    const QgsMesh3dDataBlock block3d = meshLayer->dataset3dValues( index, valueIndex, count );
+    const QgsMesh3DDataBlock block3d = meshLayer->dataset3dValues( index, valueIndex, count );
     if ( !block3d.isValid() )
       return block;
 
@@ -287,6 +289,13 @@ static bool E3T_physicalToBarycentric( const QgsPointXY &pA, const QgsPointXY &p
   return true;
 }
 
+bool QgsMeshLayerUtils::calculateBarycentricCoordinates(
+  const QgsPointXY &pA, const QgsPointXY &pB, const QgsPointXY &pC, const QgsPointXY &pP,
+  double &lam1, double &lam2, double &lam3 )
+{
+  return E3T_physicalToBarycentric( pA, pB, pC, pP, lam1, lam2, lam3 );
+}
+
 double QgsMeshLayerUtils::interpolateFromVerticesData( const QgsPointXY &p1, const QgsPointXY &p2, const QgsPointXY &p3,
     double val1, double val2, double val3, const QgsPointXY &pt )
 {
@@ -480,7 +489,7 @@ QVector<double> QgsMeshLayerUtils::calculateMagnitudeOnVertices( const QgsMeshLa
 {
   QVector<double> ret;
 
-  if ( !meshLayer && !index.isValid() )
+  if ( !meshLayer || !index.isValid() )
     return ret;
 
   const QgsTriangularMesh *triangularMesh = meshLayer->triangularMesh();
@@ -693,6 +702,19 @@ QVector<QVector3D> QgsMeshLayerUtils::calculateNormals( const QgsTriangularMesh 
   }
 
   return normals;
+}
+
+bool QgsMeshLayerUtils::haveSameParentQuantity( const QgsMeshLayer *layer, const QgsMeshDatasetIndex &index1, const QgsMeshDatasetIndex &index2 )
+{
+  const QgsMeshDatasetGroupMetadata metadata1 = layer->datasetGroupMetadata( index1 );
+  if ( metadata1.parentQuantityName().isEmpty() )
+    return false;
+
+  const QgsMeshDatasetGroupMetadata metadata2 = layer->datasetGroupMetadata( index2 );
+  if ( metadata2.parentQuantityName().isEmpty() )
+    return false;
+
+  return metadata1.parentQuantityName().compare( metadata2.parentQuantityName(), Qt::CaseInsensitive ) == 0;
 }
 
 ///@endcond

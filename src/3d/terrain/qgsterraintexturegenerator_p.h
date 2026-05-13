@@ -37,13 +37,13 @@ class QgsRasterLayer;
 #include <QObject>
 #include <QSize>
 
-#include "qgschunknode_p.h"
+#include "qgschunknode.h"
 #include "qgsrectangle.h"
 
 class Qgs3DMapSettings;
 
 /**
- * \ingroup 3d
+ * \ingroup qgis_3d
  * \brief Class responsible for rendering map images in background for the purposes of their use
  * as textures for terrain's tiles.
  *
@@ -51,7 +51,6 @@ class Qgs3DMapSettings;
  * signal will be emitted. Handles multiple rendering requests at a time - each request gets
  * a unique job ID assigned.
  *
- * \since QGIS 3.0
  */
 class QgsTerrainTextureGenerator : public QObject
 {
@@ -91,11 +90,11 @@ class QgsTerrainTextureGenerator : public QObject
 
     struct JobData
     {
-      int jobId;
-      QgsChunkNodeId tileId;
-      QgsMapRendererSequentialJob *job = nullptr;
-      QgsRectangle extent;
-      QString debugText;
+        int jobId;
+        QgsChunkNodeId tileId;
+        QgsMapRendererSequentialJob *job = nullptr;
+        QgsRectangle extent;
+        QString debugText;
     };
 
     QHash<QgsMapRendererSequentialJob *, JobData> mJobs;

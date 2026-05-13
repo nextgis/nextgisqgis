@@ -30,7 +30,7 @@
 
 /**
  * \ingroup core
- * \brief QgsFileDownloader is a utility class for downloading files.
+ * \brief A utility class for downloading files.
  *
  * To use this class, it is necessary to pass the URL and an output file name as
  * arguments to the constructor, the download will start immediately.
@@ -41,7 +41,6 @@
  * An optional authentication configuration can be specified.
  *
  * \note This class was part of the GUI library from QGIS 2.18.1 until QGIS 3.0
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsFileDownloader : public QObject
 {

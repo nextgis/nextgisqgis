@@ -18,7 +18,6 @@
 
 #include "qgis.h"
 #include "qgis_gui.h"
-#include "qgsfeaturerequest.h"
 #include "ui_qgsprocessingfeaturesourceoptionsbase.h"
 
 #define SIP_NO_FILE
@@ -36,7 +35,6 @@ class GUI_EXPORT QgsProcessingFeatureSourceOptionsWidget : public QgsPanelWidget
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsProcessingFeatureSourceOptionsWidget, with the specified \a parent widget.
      */
@@ -53,7 +51,7 @@ class GUI_EXPORT QgsProcessingFeatureSourceOptionsWidget : public QgsPanelWidget
      * \see isOverridingInvalidGeometryCheck()
      * \see geometryCheckMethod()
      */
-    void setGeometryCheckMethod( bool isOverridden, QgsFeatureRequest::InvalidGeometryCheck check );
+    void setGeometryCheckMethod( bool isOverridden, Qgis::InvalidGeometryCheck check );
 
     /**
      * Sets the feature \a limit for the source.
@@ -76,7 +74,7 @@ class GUI_EXPORT QgsProcessingFeatureSourceOptionsWidget : public QgsPanelWidget
      * \see isOverridingInvalidGeometryCheck()
      * \see setGeometryCheckMethod()
      */
-    QgsFeatureRequest::InvalidGeometryCheck geometryCheckMethod() const;
+    Qgis::InvalidGeometryCheck geometryCheckMethod() const;
 
     /**
      * Returns TRUE if the default geometry check method is being overridden.
@@ -98,7 +96,6 @@ class GUI_EXPORT QgsProcessingFeatureSourceOptionsWidget : public QgsPanelWidget
      * \see setFilterExpression()
      */
     QString filterExpression() const;
-
 };
 
 ///@endcond

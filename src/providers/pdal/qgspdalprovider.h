@@ -22,18 +22,16 @@
 #include "qgsprovidermetadata.h"
 #include <memory>
 
-class QgsEptPointCloudIndex;
 class QgsPdalIndexingTask;
 
-class QgsPdalProvider: public QgsPointCloudDataProvider
+class QgsPdalProvider : public QgsPointCloudDataProvider
 {
     Q_OBJECT
   public:
-    QgsPdalProvider( const QString &uri,
-                     const QgsDataProvider::ProviderOptions &providerOptions,
-                     QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags(), bool generateCopc = true );
+    QgsPdalProvider( const QString &uri, const QgsDataProvider::ProviderOptions &providerOptions, Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() );
 
     ~QgsPdalProvider();
+    Qgis::DataProviderFlags flags() const override;
     QgsCoordinateReferenceSystem crs() const override;
     QgsRectangle extent() const override;
     QgsPointCloudAttributeCollection attributes() const override;
@@ -42,10 +40,10 @@ class QgsPdalProvider: public QgsPointCloudDataProvider
     bool isValid() const override;
     QString name() const override;
     QString description() const override;
-    QgsPointCloudIndex *index() const override;
-    void loadIndex( ) override;
-    void generateIndex( ) override;
-    PointCloudIndexGenerationState indexingState( ) override;
+    QgsPointCloudIndex index() const override;
+    void loadIndex() override;
+    void generateIndex() override;
+    PointCloudIndexGenerationState indexingState() override;
 
   private slots:
     void onGenerateIndexFinished();
@@ -62,9 +60,8 @@ class QgsPdalProvider: public QgsPointCloudDataProvider
     QVariantMap mOriginalMetadata;
     // will be used when layer was not indexed, e.g. when loaded by Processing algorithm
     QgsPointCloudAttributeCollection mDummyAttributes;
-    std::unique_ptr<QgsPointCloudIndex> mIndex;
+    QgsPointCloudIndex mIndex;
     QgsPdalIndexingTask *mRunningIndexingTask = nullptr;
-    bool mGenerateCopc = true;
     static QQueue<QgsPdalProvider *> sIndexingQueue;
 };
 
@@ -75,22 +72,21 @@ class QgsPdalProviderMetadata : public QgsProviderMetadata
   public:
     QgsPdalProviderMetadata();
     QIcon icon() const override;
-    QgsPdalProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() ) override;
+    QgsPdalProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() ) override;
     QgsProviderMetadata::ProviderMetadataCapabilities capabilities() const override;
     QString encodeUri( const QVariantMap &parts ) const override;
     QVariantMap decodeUri( const QString &uri ) const override;
     int priorityForUri( const QString &uri ) const override;
-    QList< Qgis::LayerType > validLayerTypesForUri( const QString &uri ) const override;
-    QList< QgsProviderSublayerDetails > querySublayers( const QString &uri, Qgis::SublayerQueryFlags flags = Qgis::SublayerQueryFlags(), QgsFeedback *feedback = nullptr ) const override;
+    QList<Qgis::LayerType> validLayerTypesForUri( const QString &uri ) const override;
+    QList<QgsProviderSublayerDetails> querySublayers( const QString &uri, Qgis::SublayerQueryFlags flags = Qgis::SublayerQueryFlags(), QgsFeedback *feedback = nullptr ) const override;
     QString filters( Qgis::FileFilterType type ) override;
     ProviderCapabilities providerCapabilities() const override;
-    QList< Qgis::LayerType > supportedLayerTypes() const override;
+    QList<Qgis::LayerType> supportedLayerTypes() const override;
 
   private:
     static QString sFilterString;
     static QStringList sExtensions;
     void buildSupportedPointCloudFileFilterAndExtensions();
-
 };
 
 #endif // QGSPDALPROVIDER_H

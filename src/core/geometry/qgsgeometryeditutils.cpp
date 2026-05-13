@@ -311,7 +311,7 @@ std::unique_ptr<QgsAbstractGeometry> QgsGeometryEditUtils::avoidIntersections( c
       ignoreIds = ignoreIt.value();
 
     QgsFeatureIterator fi = currentLayer->getFeatures( QgsFeatureRequest( geom.boundingBox() )
-                            .setFlags( QgsFeatureRequest::ExactIntersect )
+                            .setFlags( Qgis::FeatureRequestFlag::ExactIntersect )
                             .setNoAttributes() );
     QgsFeature f;
     while ( fi.nextFeature( f ) )
@@ -341,9 +341,16 @@ std::unique_ptr<QgsAbstractGeometry> QgsGeometryEditUtils::avoidIntersections( c
   }
 
   std::unique_ptr< QgsAbstractGeometry > diffGeom( geomEngine->difference( combinedGeometries.get() ) );
-  if ( geomEngine->isEqual( diffGeom.get() ) )
+  if ( !diffGeom || geomEngine->isEqual( diffGeom.get() ) )
   {
     return nullptr;
+  }
+
+  if ( QgsWkbTypes::isMultiType( geomTypeBeforeModification ) && QgsWkbTypes::isSingleType( diffGeom->wkbType() ) )
+  {
+    QgsGeometry geom( std::move( diffGeom ) );
+    geom.convertToMultiType();
+    diffGeom.reset( geom.constGet()->clone() );
   }
 
   return diffGeom;

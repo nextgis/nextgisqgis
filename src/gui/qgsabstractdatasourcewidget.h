@@ -22,7 +22,6 @@
 #include "qgis_sip.h"
 #include "qgis_gui.h"
 
-#include "qgsproviderguimetadata.h"
 #include "qgsproviderregistry.h"
 #include "qgsguiutils.h"
 #include <QDialog>
@@ -34,7 +33,8 @@ class QgsBrowserModel;
 
 /**
  * \ingroup gui
- * \brief  Abstract base Data Source Widget to create connections and add layers
+ * \brief Abstract base class for Data Source widgets to create connections and add layers.
+ *
  * This class provides common functionality and the interface for all
  * source select dialogs used by data providers to configure data sources
  * and add layers.
@@ -42,14 +42,12 @@ class QgsBrowserModel;
  * The implementation is generic enough to handle other layer search and
  * selection widgets.
  *
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsAbstractDataSourceWidget : public QDialog
 {
     Q_OBJECT
 
   public:
-
     /**
      * Sets a browser \a model to use with the widget.
      *
@@ -63,7 +61,7 @@ class GUI_EXPORT QgsAbstractDataSourceWidget : public QDialog
      * \see setMapCanvas()
      *
      */
-    virtual QgsMapCanvas *mapCanvas() {return mMapCanvas; }
+    virtual QgsMapCanvas *mapCanvas() { return mMapCanvas; }
 
     /**
      * Sets the dialog map canvas
@@ -97,6 +95,16 @@ class GUI_EXPORT QgsAbstractDataSourceWidget : public QDialog
      */
     virtual void reset();
 
+    /**
+     * Configure the widget from a layer \a uri by selecting the layer path or connection options.
+     * The base implementation does nothing and returns FALSE: providers with ConfigureSourceSelectFromUri capability
+     * must override to implement this functionality.
+     * \return TRUE on success.
+     * \note Not all data providers may be able to configure the widget from the provided uri, in that case this method returns FALSE.
+     * \since QGIS 3.38
+     */
+    virtual bool configureFromUri( const QString &uri );
+
   signals:
 
     /**
@@ -108,13 +116,17 @@ class GUI_EXPORT QgsAbstractDataSourceWidget : public QDialog
     //! Emitted when a DB layer has been selected for addition
     void addDatabaseLayers( const QStringList &paths, const QString &providerKey );
 
-    //! Emitted when a raster layer has been selected for addition
-    void addRasterLayer( const QString &rasterLayerPath, const QString &baseName, const QString &providerKey );
+    /**
+     * Emitted when a raster layer has been selected for addition
+     *
+     * \deprecated QGIS 3.40. Use addLayer() instead.
+     */
+    Q_DECL_DEPRECATED void addRasterLayer( const QString &rasterLayerPath, const QString &baseName, const QString &providerKey ) SIP_DEPRECATED;
 
     /**
      * Emitted when one or more GDAL supported layers are selected for addition
      * \param layersList list of layers protocol URIs
-     * \since 3.20
+     * \since QGIS 3.20
      */
     void addRasterLayers( const QStringList &layersList );
 
@@ -123,26 +135,43 @@ class GUI_EXPORT QgsAbstractDataSourceWidget : public QDialog
      *
      * If \a providerKey is not specified, the default provider key associated with the source
      * will be used.
+     *
+     * \deprecated QGIS 3.40. Use addLayer() instead.
      */
-    void addVectorLayer( const QString &uri, const QString &layerName, const QString &providerKey = QString() );
+    Q_DECL_DEPRECATED void addVectorLayer( const QString &uri, const QString &layerName, const QString &providerKey = QString() ) SIP_DEPRECATED;
 
     /**
      * Emitted when a mesh layer has been selected for addition.
-     * \since QGIS 3.4
+     *
+     * \deprecated QGIS 3.40. Use addLayer() instead.
      */
-    void addMeshLayer( const QString &url, const QString &baseName, const QString &providerKey );
+    Q_DECL_DEPRECATED void addMeshLayer( const QString &url, const QString &baseName, const QString &providerKey ) SIP_DEPRECATED;
 
     /**
      * Emitted when a vector tile layer has been selected for addition.
-     * \since QGIS 3.14
+     *
+     * \deprecated QGIS 3.40. Use addLayer() instead.
      */
-    void addVectorTileLayer( const QString &url, const QString &baseName );
+    Q_DECL_DEPRECATED void addVectorTileLayer( const QString &url, const QString &baseName ) SIP_DEPRECATED;
 
     /**
      * Emitted when a point cloud layer has been selected for addition.
-     * \since QGIS 3.18
+     *
+     * \deprecated QGIS 3.40. Use addLayer() instead.
      */
-    void addPointCloudLayer( const QString &url, const QString &baseName, const QString &providerKey );
+    Q_DECL_DEPRECATED void addPointCloudLayer( const QString &url, const QString &baseName, const QString &providerKey ) SIP_DEPRECATED;
+
+    /**
+     * Emitted when a layer has been selected for addition.
+     *
+     * This is a generic method, intended for replacing the specific layer type signals implemented above.
+     *
+     * \warning For QGIS versions < 4.x, the specific layer type added signals must be emitted for vector, raster,
+     * mesh, vector tile and point cloud layers in addition to this signal.
+     *
+     * \since QGIS 3.34
+     */
+    void addLayer( Qgis::LayerType type, const QString &url, const QString &baseName, const QString &providerKey );
 
     /**
      * Emitted when one or more OGR supported layers are selected for addition
@@ -164,7 +193,7 @@ class GUI_EXPORT QgsAbstractDataSourceWidget : public QDialog
     /**
      * Emitted when a progress dialog is shown by the provider dialog.
      *
-     * \deprecated Since QGIS 3.4 this signal is no longer used. Use QgsProxyProgressTask instead to show progress reports.
+     * \deprecated QGIS 3.4. This signal is no longer used. Use QgsProxyProgressTask instead to show progress reports.
      */
     Q_DECL_DEPRECATED void progress( int, int ) SIP_DEPRECATED;
 
@@ -181,9 +210,8 @@ class GUI_EXPORT QgsAbstractDataSourceWidget : public QDialog
     void pushMessage( const QString &title, const QString &message, const Qgis::MessageLevel level = Qgis::MessageLevel::Info );
 
   protected:
-
     //! Constructor
-    QgsAbstractDataSourceWidget( QWidget *parent SIP_TRANSFERTHIS = nullptr, Qt::WindowFlags fl = QgsGuiUtils::ModalDialogFlags, QgsProviderRegistry::WidgetMode widgetMode = QgsProviderRegistry::WidgetMode::None );
+    QgsAbstractDataSourceWidget( QWidget *parent SIP_TRANSFERTHIS = nullptr, Qt::WindowFlags fl = QgsGuiUtils::ModalDialogFlags, QgsProviderRegistry::WidgetMode widgetMode = QgsProviderRegistry::WidgetMode::Standalone );
 
     //! Returns the widget mode
     QgsProviderRegistry::WidgetMode widgetMode() const;
@@ -199,14 +227,13 @@ class GUI_EXPORT QgsAbstractDataSourceWidget : public QDialog
     void setupButtons( QDialogButtonBox *buttonBox );
 
     //! Returns the add Button
-    QPushButton *addButton( ) const { return mAddButton; }
+    QPushButton *addButton() const { return mAddButton; }
 
   private:
-    QPushButton *mAddButton  = nullptr;
+    QPushButton *mAddButton = nullptr;
     QgsProviderRegistry::WidgetMode mWidgetMode;
     QgsBrowserModel *mBrowserModel = nullptr;
     QgsMapCanvas *mMapCanvas = nullptr;
-
 };
 
 #endif // QGSABSTRACTDATASOURCEWIDGET_H

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgscolorramp.h                                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,9 +11,7 @@
 class QgsColorRamp
 {
 %Docstring(signature="appended")
-Abstract base class for color ramps
-
-.. versionadded:: 3.0
+Abstract base class for color ramps.
 %End
 
 %TypeHeaderCode
@@ -81,11 +79,12 @@ Returns a string map containing all the color ramp's properties.
 
     static QList< QPair< QString, QString > > rampTypes();
 %Docstring
-Returns a list of available ramp types, where the first value in each item is the :py:func:`QgsColorRamp.type()` string
-and the second is a user friendly, translated name for the color ramp type.
+Returns a list of available ramp types, where the first value in each
+item is the :py:func:`QgsColorRamp.type()` string and the second is a
+user friendly, translated name for the color ramp type.
 
-The ramp types are returned in a order of precedence for exposing in UI, with more commonly used types
-listed first.
+The ramp types are returned in a order of precedence for exposing in UI,
+with more commonly used types listed first.
 
 .. versionadded:: 3.16
 %End
@@ -96,5 +95,5 @@ listed first.
  *                                                                      *
  * src/core/qgscolorramp.h                                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgslayoutitempage.h"
+#include "moc_qgslayoutitempage.cpp"
 #include "qgslayout.h"
 #include "qgslayoututils.h"
 #include "qgspagesizeregistry.h"
@@ -36,10 +37,10 @@ QgsLayoutItemPage::QgsLayoutItemPage( QgsLayout *layout )
   setFlag( QGraphicsItem::ItemIsMovable, false );
   setZValue( QgsLayout::ZPage );
 
-  connect( this, &QgsLayoutItem::sizePositionChanged, this, [ = ]
+  connect( this, &QgsLayoutItem::sizePositionChanged, this, [this]
   {
-    mBoundingRect = QRectF();
     prepareGeometryChange();
+    mBoundingRect = QRectF();
   } );
 
   const QFont font;
@@ -191,7 +192,7 @@ void QgsLayoutItemPage::createDefaultPageStyleSymbol()
   properties.insert( QStringLiteral( "style" ), QStringLiteral( "solid" ) );
   properties.insert( QStringLiteral( "style_border" ), QStringLiteral( "no" ) );
   properties.insert( QStringLiteral( "joinstyle" ), QStringLiteral( "miter" ) );
-  mPageStyleSymbol.reset( QgsFillSymbol::createSimple( properties ) );
+  mPageStyleSymbol = QgsFillSymbol::createSimple( properties );
 }
 
 
@@ -328,7 +329,7 @@ bool QgsLayoutItemPage::readPropertiesFromElement( const QDomElement &element, c
   const QDomElement symbolElem = element.firstChildElement( QStringLiteral( "symbol" ) );
   if ( !symbolElem.isNull() )
   {
-    mPageStyleSymbol.reset( QgsSymbolLayerUtils::loadSymbol<QgsFillSymbol>( symbolElem, context ) );
+    mPageStyleSymbol = QgsSymbolLayerUtils::loadSymbol<QgsFillSymbol>( symbolElem, context );
   }
   else
   {

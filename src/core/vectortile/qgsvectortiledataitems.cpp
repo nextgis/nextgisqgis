@@ -13,10 +13,8 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsvectortiledataitems.h"
-
-#include "qgssettings.h"
+#include "moc_qgsvectortiledataitems.cpp"
 #include "qgsvectortileconnection.h"
-#include "qgsdataprovider.h"
 
 ///@cond PRIVATE
 
@@ -65,15 +63,15 @@ QString QgsVectorTileDataItemProvider::dataProviderKey() const
   return QStringLiteral( "vectortile" );
 }
 
-int QgsVectorTileDataItemProvider::capabilities() const
+Qgis::DataItemProviderCapabilities QgsVectorTileDataItemProvider::capabilities() const
 {
-  return QgsDataProvider::Net;
+  return Qgis::DataItemProviderCapability::NetworkSources;
 }
 
 QgsDataItem *QgsVectorTileDataItemProvider::createDataItem( const QString &path, QgsDataItem *parentItem )
 {
   if ( path.isEmpty() )
-    return new QgsVectorTileRootItem( parentItem, QStringLiteral( "Vector Tiles" ), QStringLiteral( "vectortile:" ) );
+    return new QgsVectorTileRootItem( parentItem, QObject::tr( "Vector Tiles" ), QStringLiteral( "vectortile:" ) );
   return nullptr;
 }
 

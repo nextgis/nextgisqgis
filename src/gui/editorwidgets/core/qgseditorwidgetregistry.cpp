@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgseditorwidgetregistry.h"
+#include "moc_qgseditorwidgetregistry.cpp"
 
 #include "qgsattributeeditorcontext.h"
 #include "qgsmessagelog.h"
@@ -168,6 +169,16 @@ QString QgsEditorWidgetRegistry::name( const QString &widgetId )
   return QString();
 }
 
+bool QgsEditorWidgetRegistry::isReadOnly( const QString &widgetId )
+{
+  if ( mWidgetFactories.contains( widgetId ) )
+  {
+    return mWidgetFactories[widgetId]->isReadOnly();
+  }
+
+  return false;
+}
+
 QMap<QString, QgsEditorWidgetFactory *> QgsEditorWidgetRegistry::factories()
 {
   return mWidgetFactories;
@@ -213,7 +224,7 @@ bool QgsEditorWidgetRegistry::registerWidget( const QString &widgetId, QgsEditor
 
 QString QgsEditorWidgetRegistry::findSuitableWrapper( QWidget *editor, const QString &defaultWidget )
 {
-  QMap<const char *, QPair<int, QString> >::ConstIterator it;
+  QMap<const char *, QPair<int, QString>>::ConstIterator it;
 
   QString widgetid;
 

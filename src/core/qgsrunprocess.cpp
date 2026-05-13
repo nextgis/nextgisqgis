@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include "qgsrunprocess.h"
+#include "moc_qgsrunprocess.cpp"
 
 #include "qgslogger.h"
 #include "qgsmessageoutput.h"
@@ -40,24 +41,22 @@ QgsRunProcess::QgsRunProcess( const QString &action, bool capture )
 
   mCommand = action;
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
   QStringList arguments = QProcess::splitCommand( action );
   const QString command = arguments.value( 0 );
   if ( !arguments.isEmpty() )
     arguments.removeFirst();
-#endif
 
-  mProcess = new QProcess;
+  mProcess = std::make_unique<QProcess>();
 
   if ( capture )
   {
-    connect( mProcess, &QProcess::errorOccurred, this, &QgsRunProcess::processError );
-    connect( mProcess, &QProcess::readyReadStandardOutput, this, &QgsRunProcess::stdoutAvailable );
-    connect( mProcess, &QProcess::readyReadStandardError, this, &QgsRunProcess::stderrAvailable );
+    connect( mProcess.get(), &QProcess::errorOccurred, this, &QgsRunProcess::processError );
+    connect( mProcess.get(), &QProcess::readyReadStandardOutput, this, &QgsRunProcess::stdoutAvailable );
+    connect( mProcess.get(), &QProcess::readyReadStandardError, this, &QgsRunProcess::stderrAvailable );
     // We only care if the process has finished if we are capturing
     // the output from the process, hence this connect() call is
     // inside the capture if() statement.
-    connect( mProcess, static_cast < void ( QProcess::* )( int,  QProcess::ExitStatus ) >( &QProcess::finished ), this, &QgsRunProcess::processExit );
+    connect( mProcess.get(), static_cast < void ( QProcess::* )( int,  QProcess::ExitStatus ) >( &QProcess::finished ), this, &QgsRunProcess::processExit );
 
     // Use QgsMessageOutput for displaying output to user
     // It will delete itself when the dialog box is closed.
@@ -74,19 +73,11 @@ QgsRunProcess::QgsRunProcess( const QString &action, bool capture )
     }
 
     // start the process!
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    mProcess->start( action );
-#else
     mProcess->start( command, arguments );
-#endif
   }
   else
   {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    if ( ! mProcess->startDetached( action ) ) // let the program run by itself
-#else
     if ( ! QProcess::startDetached( command, arguments ) ) // let the program run by itself
-#endif
     {
       QMessageBox::critical( nullptr, tr( "Action" ),
                              tr( "Unable to run command\n%1" ).arg( action ),
@@ -100,7 +91,7 @@ QgsRunProcess::QgsRunProcess( const QString &action, bool capture )
 
 QgsRunProcess::~QgsRunProcess()
 {
-  delete mProcess;
+
 }
 
 void QgsRunProcess::die()
@@ -160,10 +151,10 @@ void QgsRunProcess::dialogGone()
 
   mOutput = nullptr;
 
-  disconnect( mProcess, &QProcess::errorOccurred, this, &QgsRunProcess::processError );
-  disconnect( mProcess, &QProcess::readyReadStandardOutput, this, &QgsRunProcess::stdoutAvailable );
-  disconnect( mProcess, &QProcess::readyReadStandardError, this, &QgsRunProcess::stderrAvailable );
-  disconnect( mProcess, static_cast < void ( QProcess::* )( int, QProcess::ExitStatus ) >( &QProcess::finished ), this, &QgsRunProcess::processExit );
+  disconnect( mProcess.get(), &QProcess::errorOccurred, this, &QgsRunProcess::processError );
+  disconnect( mProcess.get(), &QProcess::readyReadStandardOutput, this, &QgsRunProcess::stdoutAvailable );
+  disconnect( mProcess.get(), &QProcess::readyReadStandardError, this, &QgsRunProcess::stderrAvailable );
+  disconnect( mProcess.get(), static_cast < void ( QProcess::* )( int, QProcess::ExitStatus ) >( &QProcess::finished ), this, &QgsRunProcess::processExit );
 
   die();
 }
@@ -185,55 +176,7 @@ void QgsRunProcess::processError( QProcess::ProcessError err )
 
 QStringList QgsRunProcess::splitCommand( const QString &command )
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
   return QProcess::splitCommand( command );
-#else
-  // taken from Qt 5.15's implementation
-  QStringList args;
-  QString tmp;
-  int quoteCount = 0;
-  bool inQuote = false;
-
-  // handle quoting. tokens can be surrounded by double quotes
-  // "hello world". three consecutive double quotes represent
-  // the quote character itself.
-  for ( int i = 0; i < command.size(); ++i )
-  {
-    if ( command.at( i ) == QLatin1Char( '"' ) )
-    {
-      ++quoteCount;
-      if ( quoteCount == 3 )
-      {
-        // third consecutive quote
-        quoteCount = 0;
-        tmp += command.at( i );
-      }
-      continue;
-    }
-    if ( quoteCount )
-    {
-      if ( quoteCount == 1 )
-        inQuote = !inQuote;
-      quoteCount = 0;
-    }
-    if ( !inQuote && command.at( i ).isSpace() )
-    {
-      if ( !tmp.isEmpty() )
-      {
-        args += tmp;
-        tmp.clear();
-      }
-    }
-    else
-    {
-      tmp += command.at( i );
-    }
-  }
-  if ( !tmp.isEmpty() )
-    args += tmp;
-
-  return args;
-#endif
 }
 #else
 QgsRunProcess::QgsRunProcess( const QString &action, bool )
@@ -337,7 +280,7 @@ int QgsBlockingProcess::run( QgsFeedback *feedback )
 
   if ( requestMadeFromMainThread )
   {
-    std::unique_ptr<ProcessThread> processThread = std::make_unique<ProcessThread>( runFunction );
+    auto processThread = std::make_unique<ProcessThread>( runFunction );
     processThread->start();
     // wait for thread to gracefully exit
     processThread->wait();

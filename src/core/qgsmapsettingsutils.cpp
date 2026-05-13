@@ -21,6 +21,7 @@
 #include "qgstextformat.h"
 #include "qgsvectorlayer.h"
 #include "qgsabstractgeopdfexporter.h"
+#include "qgsvectorlayerlabeling.h"
 
 #include <QString>
 
@@ -39,7 +40,7 @@ QStringList QgsMapSettingsUtils::containsAdvancedEffects( const QgsMapSettings &
       {
         if ( flags & EffectsCheckFlag::IgnoreGeoPdfSupportedEffects )
         {
-          layerHasAdvancedBlendMode = !QgsAbstractGeoPdfExporter::compositionModeSupported( layer->blendMode() );
+          layerHasAdvancedBlendMode = !QgsAbstractGeospatialPdfExporter::compositionModeSupported( layer->blendMode() );
         }
         else
         {
@@ -54,13 +55,6 @@ QStringList QgsMapSettingsUtils::containsAdvancedEffects( const QgsMapSettings &
       // if vector layer, check labels and feature blend mode
       if ( QgsVectorLayer *currentVectorLayer = qobject_cast<QgsVectorLayer *>( layer ) )
       {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-        // Qt < 5.15 does not correctly support layer level opacity in PDF exports -- see https://github.com/qgis/QGIS/issues/42698
-        if ( !qgsDoubleNear( currentVectorLayer->opacity(), 1.0 ) && !( flags & EffectsCheckFlag::IgnoreGeoPdfSupportedEffects ) )
-        {
-          layers << layer->name();
-        }
-#endif
         if ( currentVectorLayer->featureBlendMode() != QPainter::CompositionMode_SourceOver )
         {
           layers << layer->name();
@@ -68,9 +62,7 @@ QStringList QgsMapSettingsUtils::containsAdvancedEffects( const QgsMapSettings &
         // check label blend modes
         if ( QgsPalLabeling::staticWillUseLayer( currentVectorLayer ) )
         {
-          // Check all label blending properties
-          layerFormat.readFromLayer( currentVectorLayer );
-          if ( layerFormat.containsAdvancedEffects() )
+          if ( currentVectorLayer->labeling() && currentVectorLayer->labeling()->requiresAdvancedEffects() )
           {
             layers << layer->name();
           }
@@ -100,11 +92,11 @@ void QgsMapSettingsUtils::worldFileParameters( const QgsMapSettings &mapSettings
 
   // scaling matrix
   double s[6];
-  s[0] = ms.mapUnitsPerPixel();
+  s[0] = ms.mapUnitsPerPixel() / ms.devicePixelRatio();
   s[1] = 0;
   s[2] = xOrigin;
   s[3] = 0;
-  s[4] = -ms.mapUnitsPerPixel();
+  s[4] = -ms.mapUnitsPerPixel() / ms.devicePixelRatio();
   s[5] = yOrigin;
 
   // rotation matrix
@@ -147,4 +139,40 @@ QString QgsMapSettingsUtils::worldFileContent( const QgsMapSettings &mapSettings
   content += qgsDoubleToString( f ) + "\r\n";
 
   return content;
+}
+
+bool QgsMapSettingsUtils::isValidExtent( const QgsRectangle &extent )
+{
+  if ( extent.isEmpty() || !extent.isFinite() )
+  {
+    return false;
+  }
+
+  // Don't allow extents that are so small that they
+  // can't be accurately represented using a double. Excluding 0 avoids
+  // a divide by zero and an infinite loop when rendering to a new canvas.
+  // Excluding extents greater than 1 avoids doing unnecessary calculations.
+
+  // The scheme is to compare the width against the mean x coordinate
+  // (and height against mean y coordinate) and only allow zooms where
+  // the ratio indicates that there is more than about 12 significant
+  // figures (there are about 16 significant figures in a double).
+
+  if ( extent.width() > 0 && extent.height() > 0 && extent.width() < 1 && extent.height() < 1 )
+  {
+    // Use abs() on the extent to avoid the case where the extent is
+    // symmetrical about 0.
+    const double xMean = ( std::fabs( extent.xMinimum() ) + std::fabs( extent.xMaximum() ) ) * 0.5;
+    const double yMean = ( std::fabs( extent.yMinimum() ) + std::fabs( extent.yMaximum() ) ) * 0.5;
+
+    const double xRange = extent.width() / xMean;
+    const double yRange = extent.height() / yMean;
+
+    static const double MIN_PROPORTION = 1e-12;
+    if ( xRange < MIN_PROPORTION || yRange < MIN_PROPORTION )
+    {
+      return false;
+    }
+  }
+  return true;
 }

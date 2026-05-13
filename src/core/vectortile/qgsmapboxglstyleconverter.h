@@ -103,36 +103,46 @@ class CORE_EXPORT QgsMapBoxGlStyleConversionContext
     void setPixelSizeConversionFactor( double sizeConversionFactor );
 
     /**
-     * Returns the sprite image to use during conversion, or an invalid image if this is not set.
+     * Returns the list of sprite categories to use during conversion, or an empty list of none is set.
      *
+     * \see spriteDefinitions()
+     * \see spriteImage()
+     * \since QGIS 3.44
+     */
+    QStringList spriteCategories() const;
+
+    /**
+     * Returns the sprite image for a given \a category to use during conversion, or an invalid image if this is not set.
+     *
+     * \see spriteCategories()
      * \see spriteDefinitions()
      * \see setSprites()
      */
-    QImage spriteImage() const;
+    QImage spriteImage( const QString &category = QString() ) const;
 
     /**
-     * Returns the sprite definitions to use during conversion.
+     * Returns the sprite definitions for a given \a category to use during conversion.
      *
      * \see spriteImage()
      * \see setSprites()
      */
-    QVariantMap spriteDefinitions() const;
+    QVariantMap spriteDefinitions( const QString &category = QString() ) const;
 
     /**
-     * Sets the sprite \a image and \a definitions JSON to use during conversion.
+     * Sets the sprite \a image and \a definitions JSON for a given \a category to use during conversion.
      *
      * \see spriteImage()
      * \see spriteDefinitions()
      */
-    void setSprites( const QImage &image, const QVariantMap &definitions );
+    void setSprites( const QImage &image, const QVariantMap &definitions, const QString &category = QString() );
 
     /**
-     * Sets the sprite \a image and \a definitions JSON string to use during conversion.
+     * Sets the sprite \a image and \a definitions JSON string for a given \a category to use during conversion.
      *
      * \see spriteImage()
      * \see spriteDefinitions()
      */
-    void setSprites( const QImage &image, const QString &definitions );
+    void setSprites( const QImage &image, const QString &definitions, const QString &category = QString() );
 
     /**
      * Returns the layer ID of the layer currently being converted.
@@ -158,8 +168,8 @@ class CORE_EXPORT QgsMapBoxGlStyleConversionContext
 
     double mSizeConversionFactor = 1.0;
 
-    QImage mSpriteImage;
-    QVariantMap mSpriteDefinitions;
+    QMap<QString, QImage> mSpriteImage;
+    QMap<QString, QVariantMap> mSpriteDefinitions;
 };
 
 
@@ -349,9 +359,7 @@ class CORE_EXPORT QgsMapBoxGlStyleConverter
      */
     QgsMapBoxGlStyleConverter();
 
-    //! QgsMapBoxGlStyleConverter cannot be copied
     QgsMapBoxGlStyleConverter( const QgsMapBoxGlStyleConverter &other ) = delete;
-    //! QgsMapBoxGlStyleConverter cannot be copied
     QgsMapBoxGlStyleConverter &operator=( const QgsMapBoxGlStyleConverter &other ) = delete;
 
     ~QgsMapBoxGlStyleConverter();
@@ -373,6 +381,8 @@ class CORE_EXPORT QgsMapBoxGlStyleConverter
       Numeric, //!< Numeric property (e.g. line width, text size)
       Opacity, //!< Opacity property
       Point, //!< Point/offset property
+      NumericArray, //!< Numeric array for dash arrays or such
+      DashArray,    //!< Dash array. Like numeric array, but must be even length array. Odd length arrays are considered as having an additional 0 value. \since QGIS 4.2
     };
     Q_ENUM( PropertyType )
 
@@ -672,9 +682,19 @@ class CORE_EXPORT QgsMapBoxGlStyleConverter
                                        int maxOpacity = 255, QColor *defaultColor SIP_OUT = nullptr, double *defaultNumber SIP_OUT = nullptr );
 
     /**
+     * Parses and converts a match function value list.
+     *
+     * \warning This is private API only, and may change in future QGIS versions
+     */
+    static QgsProperty parseStepList( const QVariantList &json, PropertyType type, QgsMapBoxGlStyleConversionContext &context, double multiplier = 1,
+                                      int maxOpacity = 255, QColor *defaultColor SIP_OUT = nullptr, double *defaultNumber SIP_OUT = nullptr );
+
+    /**
      * Interpolates a list which starts with the interpolate function.
      *
      * \warning This is private API only, and may change in future QGIS versions
+     *
+     * \since QGIS 3.40
      */
     static QgsProperty parseInterpolateListByZoom( const QVariantList &json, PropertyType type, QgsMapBoxGlStyleConversionContext &context, double multiplier = 1,
         int maxOpacity = 255, QColor *defaultColor SIP_OUT = nullptr, double *defaultNumber SIP_OUT = nullptr );
@@ -684,7 +704,7 @@ class CORE_EXPORT QgsMapBoxGlStyleConverter
      * \param colorExpression the color expression
      * \param context the style conversion context
      * \returns the QGIS expression string
-     * since QGIS 3.22
+     * \since QGIS 3.22
      */
     static QString parseColorExpression( const QVariant &colorExpression, QgsMapBoxGlStyleConversionContext &context );
 
@@ -756,7 +776,23 @@ class CORE_EXPORT QgsMapBoxGlStyleConverter
      * The \a context must have valid sprite definitions and images set via QgsMapBoxGlStyleConversionContext::setSprites()
      * prior to conversion.
      */
-    static QString retrieveSpriteAsBase64( const QVariant &value, QgsMapBoxGlStyleConversionContext &context, QSize &spriteSize, QString &spriteProperty, QString &spriteSizeProperty );
+    static QString retrieveSpriteAsBase64( const QVariant &value, QgsMapBoxGlStyleConversionContext &context )
+    {
+      QSize spriteSize;
+      QString spriteProperty;
+      QString spriteSizeProperty;
+      return retrieveSpriteAsBase64WithProperties( value, context, spriteSize, spriteProperty, spriteSizeProperty );
+    }
+
+    /**
+     * Retrieves the sprite image with the specified \a name, taken from the specified \a context as a base64 encoded value
+     *
+     * The \a context must have valid sprite definitions and images set via QgsMapBoxGlStyleConversionContext::setSprites()
+     * prior to conversion.
+     *
+     * \since QGIS 3.40
+     */
+    static QString retrieveSpriteAsBase64WithProperties( const QVariant &value, QgsMapBoxGlStyleConversionContext &context, QSize &spriteSize SIP_OUT, QString &spriteProperty SIP_OUT, QString &spriteSizeProperty SIP_OUT );
 
   private:
 

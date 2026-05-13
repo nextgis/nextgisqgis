@@ -19,6 +19,7 @@
 #include "labelposition.h"
 #include "util.h"
 #include "costcalculator.h"
+#include "qgsgeometryutils_base.h"
 #include <cmath>
 #include <cfloat>
 
@@ -60,15 +61,15 @@ void CostCalculator::addObstacleCostPenalty( LabelPosition *lp, FeaturePart *obs
       // behavior depends on obstacle avoid type
       switch ( obstacle->layer()->obstacleType() )
       {
-        case QgsLabelObstacleSettings::PolygonInterior:
+        case QgsLabelObstacleSettings::ObstacleType::PolygonInterior:
           // n ranges from 0 -> 12
           n = lp->polygonIntersectionCost( obstacle );
           break;
-        case QgsLabelObstacleSettings::PolygonBoundary:
+        case QgsLabelObstacleSettings::ObstacleType::PolygonBoundary:
           // penalty may need tweaking, given that interior mode ranges up to 12
           n = ( lp->crossesBoundary( obstacle ) ? 6 : 0 );
           break;
-        case QgsLabelObstacleSettings::PolygonWhole:
+        case QgsLabelObstacleSettings::ObstacleType::PolygonWhole:
           // n is either 0 or 12
           n = ( lp->intersectsWithPolygon( obstacle ) ? 12 : 0 );
           break;
@@ -93,7 +94,7 @@ void CostCalculator::addObstacleCostPenalty( LabelPosition *lp, FeaturePart *obs
       const double priority = 2 * ( 1 - lp->feature->calculatePriority() );
       const double obstaclePriority = obstacle->obstacleSettings().factor();
 
-      // if feature priority is < obstaclePriorty, there's a hard conflict...
+      // if feature priority is < obstaclePriority, there's a hard conflict...
       if ( n > 0 && ( priority < obstaclePriority && !qgsDoubleNear( priority, obstaclePriority, 0.001 ) ) )
       {
         lp->setHasHardObstacleConflict( true );
@@ -154,7 +155,7 @@ void CostCalculator::calculateCandidatePolygonCentroidDistanceCosts( pal::Featur
     const double lPosX = ( pos->x[0] + pos->x[2] ) / 2.0;
     const double lPosY = ( pos->y[0] + pos->y[2] ) / 2.0;
 
-    const double candidatePolygonCentroidDistance = std::sqrt( ( cx - lPosX ) * ( cx - lPosX ) + ( cy - lPosY ) * ( cy - lPosY ) );
+    const double candidatePolygonCentroidDistance = QgsGeometryUtilsBase::distance2D( cx, cy, lPosX, lPosY );
 
     minCandidateCentroidDistance  = std::min( minCandidateCentroidDistance, candidatePolygonCentroidDistance );
     maxCandidateCentroidDistance = std::max( maxCandidateCentroidDistance, candidatePolygonCentroidDistance );

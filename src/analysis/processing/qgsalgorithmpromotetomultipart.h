@@ -32,9 +32,7 @@
  */
 class QgsPromoteToMultipartAlgorithm : public QgsProcessingFeatureBasedAlgorithm
 {
-
   public:
-
     QgsPromoteToMultipartAlgorithm() = default;
     QIcon icon() const override { return QgsApplication::getThemeIcon( QStringLiteral( "/algorithms/mAlgorithmSingleToMulti.svg" ) ); }
     QString svgIconPath() const override { return QgsApplication::iconPath( QStringLiteral( "/algorithms/mAlgorithmSingleToMulti.svg" ) ); }
@@ -44,19 +42,17 @@ class QgsPromoteToMultipartAlgorithm : public QgsProcessingFeatureBasedAlgorithm
     QString group() const override;
     QString groupId() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
     QgsPromoteToMultipartAlgorithm *createInstance() const override SIP_FACTORY;
     bool supportInPlaceEdit( const QgsMapLayer *layer ) const override;
 
   protected:
     QString outputName() const override;
-    QgsProcessingFeatureSource::Flag sourceFlags() const override;
+    Qgis::ProcessingFeatureSourceFlags sourceFlags() const override;
     Qgis::WkbType outputWkbType( Qgis::WkbType inputWkbType ) const override;
     QgsFeatureList processFeature( const QgsFeature &feature, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
-
 };
 
 ///@endcond PRIVATE
 
 #endif // QGSALGORITHMPROMOTETOMULTIPART_H
-
-

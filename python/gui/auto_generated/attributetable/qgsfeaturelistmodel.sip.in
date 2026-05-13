@@ -3,8 +3,9 @@
  *                                                                      *
  * src/gui/attributetable/qgsfeaturelistmodel.h                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
+
 
 
 
@@ -12,6 +13,9 @@
 
 class QgsFeatureListModel : QSortFilterProxyModel, QgsFeatureModel
 {
+%Docstring(signature="appended")
+A proxy model for feature lists.
+%End
 
 %TypeHeaderCode
 #include "qgsfeaturelistmodel.h"
@@ -20,11 +24,7 @@ class QgsFeatureListModel : QSortFilterProxyModel, QgsFeatureModel
     struct FeatureInfo
     {
       public:
-
         FeatureInfo();
-%Docstring
-Constructor for FeatureInfo.
-%End
 
         bool isNew;
 
@@ -34,11 +34,11 @@ Constructor for FeatureInfo.
     enum Role
     {
       FeatureInfoRole,
-      FeatureRole
+      FeatureRole,
+      FeatureWithGeometryRole,
     };
 
   public:
-
     explicit QgsFeatureListModel( QgsAttributeTableFilterModel *sourceModel, QObject *parent /TransferThis/ = 0 );
 %Docstring
 Constructor for QgsFeatureListModel
@@ -48,7 +48,8 @@ Constructor for QgsFeatureListModel
 
     QgsVectorLayerCache *layerCache();
 %Docstring
-Returns the vector layer cache which is being used to populate the model.
+Returns the vector layer cache which is being used to populate the
+model.
 %End
 
     virtual QVariant data( const QModelIndex &index, int role ) const;
@@ -65,8 +66,6 @@ If ``True`` is specified, a NULL value will be injected
 .. note::
 
    If set to ``True``, the sort by display expression cannot be used
-
-.. versionadded:: 2.9
 %End
 
     bool injectNull();
@@ -74,25 +73,26 @@ If ``True`` is specified, a NULL value will be injected
 Returns the current state of null value injection
 
 :return: If a NULL value is added
-
-.. versionadded:: 2.9
 %End
 
     QgsAttributeTableModel *masterModel();
 
     bool setDisplayExpression( const QString &expression );
 %Docstring
+Sets the display expression.
 
 :param expression: A :py:class:`QgsExpression` compatible string.
 
-:return: ``True`` if the expression could be set, ``False`` if there was a parse error.
-         If it fails, the old expression will still be applied. Call :py:func:`~QgsFeatureListModel.parserErrorString`
+:return: ``True`` if the expression could be set, ``False`` if there was
+         a parse error. If it fails, the old expression will still be
+         applied. Call :py:func:`~QgsFeatureListModel.parserErrorString`
          for a meaningful error message.
 %End
 
     QString parserErrorString();
 %Docstring
-Returns a detailed message about errors while parsing a :py:class:`QgsExpression`.
+Returns a detailed message about errors while parsing a
+:py:class:`QgsExpression`.
 
 :return: A message containing information about the parser error.
 %End
@@ -159,34 +159,42 @@ Sort this model by its display expression.
 
  void onBeginRemoveRows( const QModelIndex &parent, int first, int last );
 %Docstring
-Does nothing except for calling :py:func:`~QgsFeatureListModel.beginRemoveRows`
+Does nothing except for calling
+:py:func:`~QgsFeatureListModel.beginRemoveRows`
 
-.. deprecated::
-   Use :py:func:`~QgsFeatureListModel.beginRemoveRows` instead
+.. deprecated:: 3.40
+
+   Use :py:func:`~QgsFeatureListModel.beginRemoveRows` instead.
 %End
 
  void onEndRemoveRows( const QModelIndex &parent, int first, int last );
 %Docstring
-Does nothing except for calling :py:func:`~QgsFeatureListModel.endRemoveRows`
+Does nothing except for calling
+:py:func:`~QgsFeatureListModel.endRemoveRows`
 
-.. deprecated::
-   Use :py:func:`~QgsFeatureListModel.endRemoveRows` instead
+.. deprecated:: 3.40
+
+   Use :py:func:`~QgsFeatureListModel.endRemoveRows` instead.
 %End
 
  void onBeginInsertRows( const QModelIndex &parent, int first, int last );
 %Docstring
-Does nothing except for calling :py:func:`~QgsFeatureListModel.beginInsertRows`
+Does nothing except for calling
+:py:func:`~QgsFeatureListModel.beginInsertRows`
 
-.. deprecated::
-   use :py:func:`~QgsFeatureListModel.beginInsertRows` instead
+.. deprecated:: 3.40
+
+   Use :py:func:`~QgsFeatureListModel.beginInsertRows` instead.
 %End
 
  void onEndInsertRows( const QModelIndex &parent, int first, int last );
 %Docstring
-Does nothing except for calling :py:func:`~QgsFeatureListModel.endInsertRows`
+Does nothing except for calling
+:py:func:`~QgsFeatureListModel.endInsertRows`
 
-.. deprecated::
-   use :py:func:`~QgsFeatureListModel.endInsertRows` instead
+.. deprecated:: 3.40
+
+   Use :py:func:`~QgsFeatureListModel.endInsertRows` instead.
 %End
 
 };
@@ -197,5 +205,5 @@ Does nothing except for calling :py:func:`~QgsFeatureListModel.endInsertRows`
  *                                                                      *
  * src/gui/attributetable/qgsfeaturelistmodel.h                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

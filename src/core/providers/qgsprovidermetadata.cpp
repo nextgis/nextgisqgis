@@ -17,6 +17,7 @@
  ***************************************************************************/
 
 #include "qgsprovidermetadata.h"
+#include "moc_qgsprovidermetadata.cpp"
 #include "qgsdataprovider.h"
 #include "qgsmaplayer.h"
 #include "qgsexception.h"
@@ -134,7 +135,7 @@ QList<QgsProviderSublayerDetails> QgsProviderMetadata::querySublayers( const QSt
 
 QgsDataProvider *QgsProviderMetadata::createProvider( const QString &uri,
     const QgsDataProvider::ProviderOptions &options,
-    QgsDataProvider::ReadFlags flags )
+    Qgis::DataProviderReadFlags flags )
 {
   if ( mCreateFunction )
   {
@@ -197,10 +198,20 @@ QString QgsProviderMetadata::relativeToAbsoluteUri( const QString &uri, const Qg
   return context.pathResolver().readPath( uri );
 }
 
+QString QgsProviderMetadata::cleanUri( const QString &uri, Qgis::UriCleaningFlags flags ) const
+{
+  if ( flags.testFlag( Qgis::UriCleaningFlag::RemoveCredentials ) )
+    return QgsDataSourceUri::removePassword( uri );
+  else if ( flags.testFlag( Qgis::UriCleaningFlag::RedactCredentials ) )
+    return QgsDataSourceUri::removePassword( uri, true );
+  return uri;
+}
+
 Qgis::VectorExportResult QgsProviderMetadata::createEmptyLayer( const QString &, const QgsFields &,
     Qgis::WkbType, const QgsCoordinateReferenceSystem &,
     bool, QMap<int, int> &,
-    QString &errorMessage, const QMap<QString, QVariant> * )
+    QString &errorMessage, const QMap<QString, QVariant> *,
+    QString & )
 {
   errorMessage = QObject::tr( "Provider %1 has no %2 method" ).arg( key(), QStringLiteral( "createEmptyLayer" ) );
   return Qgis::VectorExportResult::ErrorProviderUnsupportedFeature;
@@ -225,14 +236,16 @@ QgsRasterDataProvider *QgsProviderMetadata::createRasterDataProvider(
 bool QgsProviderMetadata::createMeshData( const QgsMesh &,
     const QString &,
     const QString &,
-    const QgsCoordinateReferenceSystem & ) const
+    const QgsCoordinateReferenceSystem &,
+    const QMap<QString, QString> & ) const
 {
   return false;
 }
 
 bool QgsProviderMetadata::createMeshData( const QgsMesh &,
     const QString &,
-    const QgsCoordinateReferenceSystem & ) const
+    const QgsCoordinateReferenceSystem &,
+    const QMap<QString, QString> & ) const
 {
   return false;
 }

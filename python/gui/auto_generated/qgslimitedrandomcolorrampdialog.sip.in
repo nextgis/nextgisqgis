@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgslimitedrandomcolorrampdialog.h                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,16 +12,14 @@
 class QgsLimitedRandomColorRampWidget : QgsPanelWidget
 {
 %Docstring(signature="appended")
-A widget which allows users to modify the properties of a :py:class:`QgsLimitedRandomColorRamp`.
-
-.. versionadded:: 3.0
+A widget which allows users to modify the properties of a
+:py:class:`QgsLimitedRandomColorRamp`.
 %End
 
 %TypeHeaderCode
 #include "qgslimitedrandomcolorrampdialog.h"
 %End
   public:
-
     QgsLimitedRandomColorRampWidget( const QgsLimitedRandomColorRamp &ramp, QWidget *parent /TransferThis/ = 0 );
 %Docstring
 Constructor for QgsLimitedRandomColorRampWidget.
@@ -90,16 +88,14 @@ Sets the maximum value for colors in the ramp
 class QgsLimitedRandomColorRampDialog : QDialog
 {
 %Docstring(signature="appended")
-A dialog which allows users to modify the properties of a :py:class:`QgsLimitedRandomColorRamp`.
-
-.. versionadded:: 3.0
+A dialog which allows users to modify the properties of a
+:py:class:`QgsLimitedRandomColorRamp`.
 %End
 
 %TypeHeaderCode
 #include "qgslimitedrandomcolorrampdialog.h"
 %End
   public:
-
     QgsLimitedRandomColorRampDialog( const QgsLimitedRandomColorRamp &ramp, QWidget *parent /TransferThis/ = 0 );
 %Docstring
 Constructor for QgsLimitedRandomColorRampDialog.
@@ -145,5 +141,5 @@ Emitted when the dialog settings change
  *                                                                      *
  * src/gui/qgslimitedrandomcolorrampdialog.h                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

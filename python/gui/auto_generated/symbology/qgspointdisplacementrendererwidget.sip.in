@@ -3,15 +3,18 @@
  *                                                                      *
  * src/gui/symbology/qgspointdisplacementrendererwidget.h               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 
 
 
-class QgsPointDisplacementRendererWidget: QgsRendererWidget, QgsExpressionContextGenerator
+class QgsPointDisplacementRendererWidget : QgsRendererWidget
 {
+%Docstring(signature="appended")
+A widget for configuring :py:class:`QgsPointDisplacementRenderer`.
+%End
 
 %TypeHeaderCode
 #include "qgspointdisplacementrendererwidget.h"
@@ -36,5 +39,5 @@ class QgsPointDisplacementRendererWidget: QgsRendererWidget, QgsExpressionContex
  *                                                                      *
  * src/gui/symbology/qgspointdisplacementrendererwidget.h               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsprojectviewsettings.h"
+#include "moc_qgsprojectviewsettings.cpp"
 #include "qgis.h"
 #include "qgsproject.h"
 #include "qgsmaplayerutils.h"
@@ -79,7 +80,15 @@ QgsReferencedRectangle QgsProjectViewSettings::fullExtent() const
   {
     QgsCoordinateTransform ct( mPresetFullExtent.crs(), mProject->crs(), mProject->transformContext() );
     ct.setBallparkTransformsAreAppropriate( true );
-    return QgsReferencedRectangle( ct.transformBoundingBox( mPresetFullExtent ), mProject->crs() );
+    try
+    {
+      return QgsReferencedRectangle( ct.transformBoundingBox( mPresetFullExtent ), mProject->crs() );
+    }
+    catch ( QgsCsException &e )
+    {
+      QgsDebugError( QStringLiteral( "Transform error encountered while determining project extent: %1" ).arg( e.what() ) );
+      return QgsReferencedRectangle();
+    }
   }
   else
   {
@@ -88,7 +97,7 @@ QgsReferencedRectangle QgsProjectViewSettings::fullExtent() const
     QList< QgsMapLayer * > nonBaseMapLayers;
     std::copy_if( layers.begin(), layers.end(),
                   std::back_inserter( nonBaseMapLayers ),
-    []( const QgsMapLayer * layer ) { return !( layer->properties() & Qgis::MapLayerProperty::IsBasemapLayer ); } );
+    []( const QgsMapLayer * layer ) { return !( layer->properties() & Qgis::MapLayerProperty::IsBasemapLayer ) && !( layer->properties() & Qgis::MapLayerProperty::Is3DBasemapLayer ); } );
 
     // unless ALL layers from the project are basemap layers, we exclude these by default as their extent won't be useful for the project.
     if ( !nonBaseMapLayers.empty( ) )

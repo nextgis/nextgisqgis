@@ -16,24 +16,11 @@
  ***************************************************************************/
 
 #include "qgsalgorithmzonalstatistics.h"
+#include "qgszonalstatistics.h"
+#include "qgsvectorlayer.h"
+#include "qgsalgorithmzonalstatistics_private.h"
 
 ///@cond PRIVATE
-
-const std::vector< QgsZonalStatistics::Statistic > STATS
-{
-  QgsZonalStatistics::Count,
-  QgsZonalStatistics::Sum,
-  QgsZonalStatistics::Mean,
-  QgsZonalStatistics::Median,
-  QgsZonalStatistics::StDev,
-  QgsZonalStatistics::Min,
-  QgsZonalStatistics::Max,
-  QgsZonalStatistics::Range,
-  QgsZonalStatistics::Minority,
-  QgsZonalStatistics::Majority,
-  QgsZonalStatistics::Variety,
-  QgsZonalStatistics::Variance,
-};
 
 QString QgsZonalStatisticsAlgorithm::name() const
 {
@@ -48,7 +35,8 @@ QString QgsZonalStatisticsAlgorithm::displayName() const
 QStringList QgsZonalStatisticsAlgorithm::tags() const
 {
   return QObject::tr( "stats,statistics,zones,layer,sum,maximum,minimum,mean,count,standard,deviation,"
-                      "median,range,majority,minority,variety,variance,summary,raster" ).split( ',' );
+                      "median,range,majority,minority,variety,variance,summary,raster" )
+    .split( ',' );
 }
 
 QString QgsZonalStatisticsAlgorithm::group() const
@@ -72,9 +60,9 @@ QString QgsZonalStatisticsAlgorithm::shortHelpString() const
                       "of an overlapping polygon vector layer. The results will be written in place." );
 }
 
-QgsProcessingAlgorithm::Flags QgsZonalStatisticsAlgorithm::flags() const
+Qgis::ProcessingAlgorithmFlags QgsZonalStatisticsAlgorithm::flags() const
 {
-  return QgsProcessingAlgorithm::flags() | QgsProcessingAlgorithm::FlagNoThreading | QgsProcessingAlgorithm::FlagDeprecated;
+  return QgsProcessingAlgorithm::flags() | Qgis::ProcessingAlgorithmFlag::NoThreading | Qgis::ProcessingAlgorithmFlag::Deprecated;
 }
 
 QgsZonalStatisticsAlgorithm *QgsZonalStatisticsAlgorithm::createInstance() const
@@ -86,22 +74,19 @@ void QgsZonalStatisticsAlgorithm::initAlgorithm( const QVariantMap & )
 {
   QStringList statChoices;
   statChoices.reserve( STATS.size() );
-  for ( const QgsZonalStatistics::Statistic stat : STATS )
+  for ( const Qgis::ZonalStatistic stat : STATS )
   {
     statChoices << QgsZonalStatistics::displayName( stat );
   }
 
   addParameter( new QgsProcessingParameterRasterLayer( QStringLiteral( "INPUT_RASTER" ), QObject::tr( "Raster layer" ) ) );
-  addParameter( new QgsProcessingParameterBand( QStringLiteral( "RASTER_BAND" ),
-                QObject::tr( "Raster band" ), 1, QStringLiteral( "INPUT_RASTER" ) ) );
-  addParameter( new QgsProcessingParameterVectorLayer( QStringLiteral( "INPUT_VECTOR" ), QObject::tr( "Vector layer containing zones" ),
-                QList< int >() << QgsProcessing::TypeVectorPolygon ) );
+  addParameter( new QgsProcessingParameterBand( QStringLiteral( "RASTER_BAND" ), QObject::tr( "Raster band" ), 1, QStringLiteral( "INPUT_RASTER" ) ) );
+  addParameter( new QgsProcessingParameterVectorLayer( QStringLiteral( "INPUT_VECTOR" ), QObject::tr( "Vector layer containing zones" ), QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::VectorPolygon ) ) );
   addParameter( new QgsProcessingParameterString( QStringLiteral( "COLUMN_PREFIX" ), QObject::tr( "Output column prefix" ), QStringLiteral( "_" ) ) );
 
-  addParameter( new QgsProcessingParameterEnum( QStringLiteral( "STATISTICS" ), QObject::tr( "Statistics to calculate" ),
-                statChoices, true, QVariantList() << 0 << 1 << 2 ) );
+  addParameter( new QgsProcessingParameterEnum( QStringLiteral( "STATISTICS" ), QObject::tr( "Statistics to calculate" ), statChoices, true, QVariantList() << 0 << 1 << 2 ) );
 
-  addOutput( new QgsProcessingOutputVectorLayer( QStringLiteral( "INPUT_VECTOR" ), QObject::tr( "Zonal statistics" ), QgsProcessing::TypeVectorPolygon ) );
+  addOutput( new QgsProcessingOutputVectorLayer( QStringLiteral( "INPUT_VECTOR" ), QObject::tr( "Zonal statistics" ), Qgis::ProcessingSourceType::VectorPolygon ) );
 }
 
 bool QgsZonalStatisticsAlgorithm::prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback * )
@@ -112,8 +97,7 @@ bool QgsZonalStatisticsAlgorithm::prepareAlgorithm( const QVariantMap &parameter
 
   mBand = parameterAsInt( parameters, QStringLiteral( "RASTER_BAND" ), context );
   if ( mBand < 1 || mBand > rasterLayer->bandCount() )
-    throw QgsProcessingException( QObject::tr( "Invalid band number for BAND (%1): Valid values for input raster are 1 to %2" ).arg( mBand )
-                                  .arg( rasterLayer->bandCount() ) );
+    throw QgsProcessingException( QObject::tr( "Invalid band number for BAND (%1): Valid values for input raster are 1 to %2" ).arg( mBand ).arg( rasterLayer->bandCount() ) );
 
   mInterface.reset( rasterLayer->dataProvider()->clone() );
   mCrs = rasterLayer->crs();
@@ -122,8 +106,8 @@ bool QgsZonalStatisticsAlgorithm::prepareAlgorithm( const QVariantMap &parameter
 
   mPrefix = parameterAsString( parameters, QStringLiteral( "COLUMN_PREFIX" ), context );
 
-  const QList< int > stats = parameterAsEnums( parameters, QStringLiteral( "STATISTICS" ), context );
-  mStats = QgsZonalStatistics::Statistics();
+  const QList<int> stats = parameterAsEnums( parameters, QStringLiteral( "STATISTICS" ), context );
+  mStats = Qgis::ZonalStatistics();
   for ( const int s : stats )
   {
     mStats |= STATS.at( s );
@@ -138,15 +122,7 @@ QVariantMap QgsZonalStatisticsAlgorithm::processAlgorithm( const QVariantMap &pa
   if ( !layer )
     throw QgsProcessingException( QObject::tr( "Invalid zones layer" ) );
 
-  QgsZonalStatistics zs( layer,
-                         mInterface.get(),
-                         mCrs,
-                         mPixelSizeX,
-                         mPixelSizeY,
-                         mPrefix,
-                         mBand,
-                         QgsZonalStatistics::Statistics( mStats )
-                       );
+  QgsZonalStatistics zs( layer, mInterface.get(), mCrs, mPixelSizeX, mPixelSizeY, mPrefix, mBand, Qgis::ZonalStatistics( mStats ) );
 
   zs.calculateStatistics( feedback );
 

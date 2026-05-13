@@ -121,7 +121,6 @@ void NGAuthOptions::init(QgsSettings *settings)
     ngInitControls();
     connect(&NGAccess::instance(), SIGNAL(userInfoUpdated()), this, SLOT(onUserInfoUpdated()));
     connect(&NGAccess::instance(), &NGAccess::endpointAvailableUpdated, this, [ = ] () {
-        const bool isUserAuthorized = NGAccess::instance().isUserAuthorized();
         const bool isEndpointAvailable = NGAccess::instance().isEndpointAvailable();
 
         availableEndpointLabel->setText(isEndpointAvailable
@@ -157,7 +156,7 @@ void NGAuthOptions::on_signinButton_clicked()
             NGAccess::instance().setUseCodeChallenge(true);
         }
         NGAccess::instance().setEndPoint(endpointEdit->text(), type);
-        NGAccess::instance().checkEndpointAsync(endpointEdit->text());
+        NGAccess::instance().checkEndpointAsync();
 #endif // NGLIB_VERSION_NUMBER > 1100
         NGAccess::instance().authorize();
     }

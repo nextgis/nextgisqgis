@@ -53,6 +53,11 @@ QString QgsHillshadeAlgorithm::shortHelpString() const
          + QObject::tr( "The shading of the layer is calculated according to the sun position (azimuth and elevation)." );
 }
 
+QString QgsHillshadeAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Calculates the hillshade of a Digital Terrain Model." );
+}
+
 QgsHillshadeAlgorithm *QgsHillshadeAlgorithm::createInstance() const
 {
   return new QgsHillshadeAlgorithm();
@@ -61,12 +66,9 @@ QgsHillshadeAlgorithm *QgsHillshadeAlgorithm::createInstance() const
 void QgsHillshadeAlgorithm::initAlgorithm( const QVariantMap & )
 {
   addParameter( new QgsProcessingParameterRasterLayer( QStringLiteral( "INPUT" ), QObject::tr( "Elevation layer" ) ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "Z_FACTOR" ), QObject::tr( "Z factor" ),
-                QgsProcessingParameterNumber::Double, 1, false, 0 ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "AZIMUTH" ), QObject::tr( "Azimuth (horizontal angle)" ),
-                QgsProcessingParameterNumber::Double, 300, false, 0, 360 ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "V_ANGLE" ), QObject::tr( "Vertical angle" ),
-                QgsProcessingParameterNumber::Double, 40, false, 0, 90 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "Z_FACTOR" ), QObject::tr( "Z factor" ), Qgis::ProcessingNumberParameterType::Double, 1, false, 0 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "AZIMUTH" ), QObject::tr( "Azimuth (horizontal angle)" ), Qgis::ProcessingNumberParameterType::Double, 300, false, 0, 360 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "V_ANGLE" ), QObject::tr( "Vertical angle" ), Qgis::ProcessingNumberParameterType::Double, 40, false, 0, 90 ) );
 
   addParameter( new QgsProcessingParameterRasterDestination( QStringLiteral( "OUTPUT" ), QObject::tr( "Hillshade" ) ) );
 }

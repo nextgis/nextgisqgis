@@ -3,6 +3,7 @@ try:
     QgsTopologicalMesh.createTopologicalMesh = staticmethod(QgsTopologicalMesh.createTopologicalMesh)
     QgsTopologicalMesh.counterClockwiseFaces = staticmethod(QgsTopologicalMesh.counterClockwiseFaces)
     QgsTopologicalMesh.checkTopology = staticmethod(QgsTopologicalMesh.checkTopology)
+    QgsTopologicalMesh.vertexPositionInFace = staticmethod(QgsTopologicalMesh.vertexPositionInFace)
     QgsTopologicalMesh.__group__ = ['mesh']
 except (NameError, AttributeError):
     pass

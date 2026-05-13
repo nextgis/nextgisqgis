@@ -56,6 +56,11 @@ QString QgsRuggednessAlgorithm::shortHelpString() const
                         "difference in elevation from a center cell and the 8 cells surrounding it." );
 }
 
+QString QgsRuggednessAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Calculates the quantitative measurement of terrain heterogeneity described by Riley et al. (1999)." );
+}
+
 QgsRuggednessAlgorithm *QgsRuggednessAlgorithm::createInstance() const
 {
   return new QgsRuggednessAlgorithm();
@@ -64,8 +69,7 @@ QgsRuggednessAlgorithm *QgsRuggednessAlgorithm::createInstance() const
 void QgsRuggednessAlgorithm::initAlgorithm( const QVariantMap & )
 {
   addParameter( new QgsProcessingParameterRasterLayer( QStringLiteral( "INPUT" ), QObject::tr( "Elevation layer" ) ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "Z_FACTOR" ), QObject::tr( "Z factor" ),
-                QgsProcessingParameterNumber::Double, 1, false, 0 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "Z_FACTOR" ), QObject::tr( "Z factor" ), Qgis::ProcessingNumberParameterType::Double, 1, false, 0 ) );
 
   addParameter( new QgsProcessingParameterRasterDestination( QStringLiteral( "OUTPUT" ), QObject::tr( "Ruggedness" ) ) );
 }

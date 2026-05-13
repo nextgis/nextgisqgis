@@ -35,7 +35,6 @@ class QgsRandomRasterAlgorithmBase : public QgsProcessingAlgorithm
     void initAlgorithm( const QVariantMap &configuration = QVariantMap() ) final;
 
   protected:
-
     /**
      * Adds specific subclass algorithm parameters. The common parameters, such as raster destination, are automatically
      * added by the base class.
@@ -79,6 +78,7 @@ class QgsRandomUniformRasterAlgorithm : public QgsRandomRasterAlgorithmBase
     QString displayName() const override;
     QStringList tags() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
     QgsRandomUniformRasterAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
@@ -105,6 +105,7 @@ class QgsRandomBinomialRasterAlgorithm : public QgsRandomRasterAlgorithmBase
     QString displayName() const override;
     QStringList tags() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
     QgsRandomBinomialRasterAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
@@ -128,6 +129,7 @@ class QgsRandomExponentialRasterAlgorithm : public QgsRandomRasterAlgorithmBase
     QString displayName() const override;
     QStringList tags() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
     QgsRandomExponentialRasterAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
@@ -152,6 +154,7 @@ class QgsRandomGammaRasterAlgorithm : public QgsRandomRasterAlgorithmBase
     QString displayName() const override;
     QStringList tags() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
     QgsRandomGammaRasterAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
@@ -175,6 +178,7 @@ class QgsRandomGeometricRasterAlgorithm : public QgsRandomRasterAlgorithmBase
     QString displayName() const override;
     QStringList tags() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
     QgsRandomGeometricRasterAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
@@ -199,6 +203,7 @@ class QgsRandomNegativeBinomialRasterAlgorithm : public QgsRandomRasterAlgorithm
     QString displayName() const override;
     QStringList tags() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
     QgsRandomNegativeBinomialRasterAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
@@ -222,6 +227,7 @@ class QgsRandomNormalRasterAlgorithm : public QgsRandomRasterAlgorithmBase
     QString displayName() const override;
     QStringList tags() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
     QgsRandomNormalRasterAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
@@ -245,6 +251,7 @@ class QgsRandomPoissonRasterAlgorithm : public QgsRandomRasterAlgorithmBase
     QString displayName() const override;
     QStringList tags() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
     QgsRandomPoissonRasterAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/layout/qgslayoutviewtooladdnodeitem.h                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,15 +12,12 @@ class QgsLayoutViewToolAddNodeItem : QgsLayoutViewTool
 {
 %Docstring(signature="appended")
 Layout view tool for adding node based items to a layout.
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
 #include "qgslayoutviewtooladdnodeitem.h"
 %End
   public:
-
     QgsLayoutViewToolAddNodeItem( QgsLayoutView *view /TransferThis/ );
 %Docstring
 Constructs a QgsLayoutViewToolAddNodeItem for the given layout ``view``.
@@ -37,8 +34,8 @@ Returns the item metadata id for items created by the tool.
 %Docstring
 Sets the item metadata ``metadataId`` for items created by the tool.
 
-The ``metadataId`` associates the current tool behavior with a metadata entry
-from :py:class:`QgsLayoutItemGuiRegistry`.
+The ``metadataId`` associates the current tool behavior with a metadata
+entry from :py:class:`QgsLayoutItemGuiRegistry`.
 
 .. seealso:: :py:func:`itemMetadataId`
 %End
@@ -68,5 +65,5 @@ Emitted when an item has been created using the tool.
  *                                                                      *
  * src/gui/layout/qgslayoutviewtooladdnodeitem.h                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

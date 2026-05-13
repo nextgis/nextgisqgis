@@ -16,9 +16,11 @@
  ***************************************************************************/
 
 #include "qgsbasenetworkrequest.h"
+#include "moc_qgsbasenetworkrequest.cpp"
 #include "qgslogger.h"
 #include "qgsmessagelog.h"
 #include "qgsnetworkaccessmanager.h"
+#include "qgssetrequestinitiator_p.h"
 #include "qgssettings.h"
 #include "qgsvariantutils.h"
 
@@ -65,7 +67,7 @@ QgsBaseNetworkRequest::QgsBaseNetworkRequest( const QgsAuthorizationSettings &au
   : mAuth( auth )
   , mTranslatedComponent( translatedComponent )
 {
-  connect( QgsNetworkAccessManager::instance(), qOverload< QNetworkReply *>( &QgsNetworkAccessManager::requestTimedOut ), this, &QgsBaseNetworkRequest::requestTimedOut );
+  connect( QgsNetworkAccessManager::instance(), qOverload<QNetworkReply *>( &QgsNetworkAccessManager::requestTimedOut ), this, &QgsBaseNetworkRequest::requestTimedOut );
 }
 
 QgsBaseNetworkRequest::~QgsBaseNetworkRequest()
@@ -142,7 +144,7 @@ bool QgsBaseNetworkRequest::sendGET( const QUrl &url, const QString &acceptHeade
       {
         modifiedUrlString += QLatin1Char( '?' );
       }
-      modifiedUrlString += QString::fromUtf8( headerPair.first ) + QStringLiteral( "=" ) + QString::fromUtf8( headerPair.second ) ;
+      modifiedUrlString += QString::fromUtf8( headerPair.first ) + QStringLiteral( "=" ) + QString::fromUtf8( headerPair.second );
     }
 
     QgsDebugMsgLevel( QStringLiteral( "Get %1" ).arg( modifiedUrlString ), 4 );
@@ -238,9 +240,7 @@ bool QgsBaseNetworkRequest::sendGET( const QUrl &url, const QString &acceptHeade
     // with a COUNT=1 into a short-lived memory cache, as they are emitted
     // repeatedly in interactive scenarios when adding a WFS layer.
     QString urlString = url.toString();
-    if ( urlString.contains( QStringLiteral( "REQUEST=GetCapabilities" ) ) ||
-         urlString.contains( QStringLiteral( "REQUEST=DescribeFeatureType" ) ) ||
-         ( urlString.contains( QStringLiteral( "REQUEST=GetFeature" ) ) && urlString.contains( QStringLiteral( "COUNT=1" ) ) ) )
+    if ( urlString.contains( QStringLiteral( "REQUEST=GetCapabilities" ) ) || urlString.contains( QStringLiteral( "REQUEST=DescribeFeatureType" ) ) || ( urlString.contains( QStringLiteral( "REQUEST=GetFeature" ) ) && urlString.contains( QStringLiteral( "COUNT=1" ) ) ) )
     {
       QgsSettings s;
       if ( s.value( QStringLiteral( "qgis/wfsMemoryCacheAllowed" ), true ).toBool() )
@@ -255,15 +255,15 @@ bool QgsBaseNetworkRequest::sendGET( const QUrl &url, const QString &acceptHeade
 
 bool QgsBaseNetworkRequest::issueRequest( QNetworkRequest &request, const QByteArray &verb, const QByteArray *data, bool synchronous )
 {
-
   QWaitCondition waitCondition;
   QMutex waitConditionMutex;
 
   bool threadFinished = false;
   bool success = false;
 
-  const std::function<void()> downloaderFunction = [ this, request, synchronous, data, &verb, &waitConditionMutex, &waitCondition, &threadFinished, &success ]()
-  {
+  request.setAttribute( QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy );
+
+  const std::function<void()> downloaderFunction = [this, request, synchronous, data, &verb, &waitConditionMutex, &waitCondition, &threadFinished, &success]() {
     if ( QThread::currentThread() != QApplication::instance()->thread() )
       QgsNetworkAccessManager::instance( Qt::DirectConnection );
 
@@ -298,8 +298,7 @@ bool QgsBaseNetworkRequest::issueRequest( QNetworkRequest &request, const QByteA
 
       if ( synchronous )
       {
-        auto resumeMainThread = [&waitConditionMutex, &waitCondition]()
-        {
+        auto resumeMainThread = [&waitConditionMutex, &waitCondition]() {
           // when this method is called we have "produced" a single authentication request -- so the buffer is now full
           // and it's time for the "consumer" (main thread) to do its part
           waitConditionMutex.lock();
@@ -309,15 +308,22 @@ bool QgsBaseNetworkRequest::issueRequest( QNetworkRequest &request, const QByteA
           // note that we don't need to handle waking this thread back up - that's done automatically by QgsNetworkAccessManager
         };
 
-        connect( QgsNetworkAccessManager::instance(), &QgsNetworkAccessManager::authRequestOccurred, this, resumeMainThread, Qt::DirectConnection );
-        connect( QgsNetworkAccessManager::instance(), &QgsNetworkAccessManager::proxyAuthenticationRequired, this, resumeMainThread, Qt::DirectConnection );
-
+        QMetaObject::Connection authRequestConnection = connect( QgsNetworkAccessManager::instance(), &QgsNetworkAccessManager::authRequestOccurred, this, resumeMainThread, Qt::DirectConnection );
+        QMetaObject::Connection proxyAuthenticationConnection = connect( QgsNetworkAccessManager::instance(), &QgsNetworkAccessManager::proxyAuthenticationRequired, this, resumeMainThread, Qt::DirectConnection );
 #ifndef QT_NO_SSL
-        connect( QgsNetworkAccessManager::instance(), &QgsNetworkAccessManager::sslErrorsOccurred, this, resumeMainThread, Qt::DirectConnection );
+        QMetaObject::Connection sslErrorConnection = connect( QgsNetworkAccessManager::instance(), &QgsNetworkAccessManager::sslErrorsOccurred, this, resumeMainThread, Qt::DirectConnection );
 #endif
+
         QEventLoop loop;
         connect( this, &QgsBaseNetworkRequest::downloadFinished, &loop, &QEventLoop::quit, Qt::DirectConnection );
         loop.exec();
+
+        // event loop exited - need to disconnect as to not leave functor hanging to receive signals in future
+        disconnect( authRequestConnection );
+        disconnect( proxyAuthenticationConnection );
+#ifndef QT_NO_SSL
+        disconnect( sslErrorConnection );
+#endif
       }
     }
     waitConditionMutex.lock();
@@ -328,7 +334,7 @@ bool QgsBaseNetworkRequest::issueRequest( QNetworkRequest &request, const QByteA
 
   if ( synchronous && QThread::currentThread() == QApplication::instance()->thread() )
   {
-    std::unique_ptr<_DownloaderThread> downloaderThread = std::make_unique<_DownloaderThread>( downloaderFunction );
+    auto downloaderThread = std::make_unique<_DownloaderThread>( downloaderFunction );
     downloaderThread->start();
 
     while ( true )
@@ -369,7 +375,7 @@ bool QgsBaseNetworkRequest::issueRequest( QNetworkRequest &request, const QByteA
   return success;
 }
 
-bool QgsBaseNetworkRequest::sendPOSTOrPUTOrPATCH( const QUrl &url, const QByteArray &verb, const QString &contentTypeHeader, const QByteArray &data, const QList<QNetworkReply::RawHeaderPair> &extraHeaders )
+bool QgsBaseNetworkRequest::sendPOSTOrPUTOrPATCH( const QUrl &url, const QByteArray &verb, const QString &contentTypeHeader, const QByteArray &data, bool synchronous, const QList<QNetworkReply::RawHeaderPair> &extraHeaders )
 {
   abort(); // cancel previous
   mIsAborted = false;
@@ -439,12 +445,12 @@ bool QgsBaseNetworkRequest::sendPOSTOrPUTOrPATCH( const QUrl &url, const QByteAr
   }
 
   mRequestHeaders = extraHeaders;
-  mRequestHeaders <<  QNetworkReply::RawHeaderPair( "Content-Type", contentTypeHeader.toUtf8() );
+  mRequestHeaders << QNetworkReply::RawHeaderPair( "Content-Type", contentTypeHeader.toUtf8() );
 
   for ( const QNetworkReply::RawHeaderPair &headerPair : std::as_const( mRequestHeaders ) )
     request.setRawHeader( headerPair.first, headerPair.second );
 
-  if ( !issueRequest( request, verb, &data, /*synchronous=*/true ) )
+  if ( !issueRequest( request, verb, &data, synchronous ) )
   {
     return false;
   }
@@ -452,19 +458,19 @@ bool QgsBaseNetworkRequest::sendPOSTOrPUTOrPATCH( const QUrl &url, const QByteAr
   return mErrorMessage.isEmpty();
 }
 
-bool QgsBaseNetworkRequest::sendPOST( const QUrl &url, const QString &contentTypeHeader, const QByteArray &data, const QList<QNetworkReply::RawHeaderPair> &extraHeaders )
+bool QgsBaseNetworkRequest::sendPOST( const QUrl &url, const QString &contentTypeHeader, const QByteArray &data, bool synchronous, const QList<QNetworkReply::RawHeaderPair> &extraHeaders )
 {
-  return sendPOSTOrPUTOrPATCH( url, QByteArray( "POST" ), contentTypeHeader, data, extraHeaders );
+  return sendPOSTOrPUTOrPATCH( url, QByteArray( "POST" ), contentTypeHeader, data, synchronous, extraHeaders );
 }
 
 bool QgsBaseNetworkRequest::sendPUT( const QUrl &url, const QString &contentTypeHeader, const QByteArray &data, const QList<QNetworkReply::RawHeaderPair> &extraHeaders )
 {
-  return sendPOSTOrPUTOrPATCH( url, QByteArray( "PUT" ), contentTypeHeader, data, extraHeaders );
+  return sendPOSTOrPUTOrPATCH( url, QByteArray( "PUT" ), contentTypeHeader, data, true /*synchronous*/, extraHeaders );
 }
 
 bool QgsBaseNetworkRequest::sendPATCH( const QUrl &url, const QString &contentTypeHeader, const QByteArray &data, const QList<QNetworkReply::RawHeaderPair> &extraHeaders )
 {
-  return sendPOSTOrPUTOrPATCH( url, QByteArray( "PATCH" ), contentTypeHeader, data, extraHeaders );
+  return sendPOSTOrPUTOrPATCH( url, QByteArray( "PATCH" ), contentTypeHeader, data, true /*synchronous*/, extraHeaders );
 }
 
 QStringList QgsBaseNetworkRequest::sendOPTIONS( const QUrl &url )
@@ -511,7 +517,7 @@ QStringList QgsBaseNetworkRequest::sendOPTIONS( const QUrl &url )
 
     for ( const auto &headerKeyValue : mResponseHeaders )
     {
-      if ( headerKeyValue.first == QByteArray( "Allow" ) )
+      if ( headerKeyValue.first.compare( QByteArray( "Allow" ), Qt::CaseInsensitive ) == 0 )
       {
         allowValue = headerKeyValue.second;
         break;
@@ -579,7 +585,7 @@ void QgsBaseNetworkRequest::abort()
   }
 }
 
-void QgsBaseNetworkRequest::replyReadyRead( )
+void QgsBaseNetworkRequest::replyReadyRead()
 {
   mGotNonEmptyResponse = true;
 }
@@ -637,6 +643,7 @@ void QgsBaseNetworkRequest::replyFinished()
             emit downloadFinished();
             return;
           }
+          request.setAttribute( QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy );
           request.setAttribute( QNetworkRequest::CacheLoadControlAttribute, mForceRefresh ? QNetworkRequest::AlwaysNetwork : QNetworkRequest::PreferCache );
           request.setAttribute( QNetworkRequest::CacheSaveControlAttribute, true );
 
@@ -722,9 +729,12 @@ void QgsBaseNetworkRequest::replyFinished()
         {
           const QDomElement exception = exceptionElem.firstChildElement( QStringLiteral( "Exception" ) );
           mErrorMessage = tr( "WFS exception report (code=%1 text=%2)" )
-                          .arg( exception.attribute( QStringLiteral( "exceptionCode" ), tr( "missing" ) ),
-                                exception.firstChildElement( QStringLiteral( "ExceptionText" ) ).text() );
+                            .arg( exception.attribute( QStringLiteral( "exceptionCode" ), tr( "missing" ) ), exception.firstChildElement( QStringLiteral( "ExceptionText" ) ).text() );
         }
+      }
+      else if ( !replyContent.isEmpty() )
+      {
+        mErrorMessage += tr( "\nServer response: %1" ).arg( replyContent );
       }
       mErrorCode = QgsBaseNetworkRequest::ServerExceptionError;
       logMessageIfEnabled();

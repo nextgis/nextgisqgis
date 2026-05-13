@@ -23,8 +23,9 @@
 #include <QImage>
 #include <memory>
 
-QgsSingleBandColorDataRenderer::QgsSingleBandColorDataRenderer( QgsRasterInterface *input, int band ):
-  QgsRasterRenderer( input, QStringLiteral( "singlebandcolordata" ) ), mBand( band )
+QgsSingleBandColorDataRenderer::QgsSingleBandColorDataRenderer( QgsRasterInterface *input, int band )
+  : QgsRasterRenderer( input, QStringLiteral( "singlebandcolordata" ) )
+  , mBand( band )
 {
 
 }
@@ -58,7 +59,7 @@ QgsRasterBlock *QgsSingleBandColorDataRenderer::block( int bandNo, QgsRectangle 
 {
   Q_UNUSED( bandNo )
 
-  std::unique_ptr< QgsRasterBlock > outputBlock( new QgsRasterBlock() );
+  auto outputBlock = std::make_unique<QgsRasterBlock>();
   if ( !mInput )
   {
     return outputBlock.release();
@@ -135,6 +136,26 @@ bool QgsSingleBandColorDataRenderer::setInput( QgsRasterInterface *input )
        input->dataType( 1 ) == Qgis::DataType::ARGB32_Premultiplied )
   {
     mInput = input;
+    return true;
+  }
+  return false;
+}
+
+int QgsSingleBandColorDataRenderer::inputBand() const
+{
+  return mBand;
+}
+
+bool QgsSingleBandColorDataRenderer::setInputBand( int band )
+{
+  if ( !mInput )
+  {
+    mBand = band;
+    return true;
+  }
+  else if ( band > 0 && band <= mInput->bandCount() )
+  {
+    mBand = band;
     return true;
   }
   return false;

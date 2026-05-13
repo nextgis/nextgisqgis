@@ -36,13 +36,13 @@ class QTemporaryFile;
 /**
  * \ingroup gui
  * \class QgsStyleExportImportDialog
+ * \brief A dialog allowing importing and exporting of entities from a QgsStyle.
  */
 class GUI_EXPORT QgsStyleExportImportDialog : public QDialog, private Ui::QgsStyleExportImportDialogBase
 {
     Q_OBJECT
 
   public:
-
     //! Dialog modes
     enum Mode
     {
@@ -142,7 +142,6 @@ class GUI_EXPORT QgsStyleExportImportDialog : public QDialog, private Ui::QgsSty
     void importFileChanged( const QString &path );
 
   private:
-
     enum ImportSource
     {
       File,
@@ -163,8 +162,8 @@ class GUI_EXPORT QgsStyleExportImportDialog : public QDialog, private Ui::QgsSty
     QgsStyleProxyModel *mModel = nullptr;
 
     QgsStyle *mStyle = nullptr;
-    std::unique_ptr< QgsStyle > mTempStyle;
-    std::unique_ptr< QgsTemporaryCursorOverride > mCursorOverride;
+    std::unique_ptr<QgsStyle> mTempStyle;
+    std::unique_ptr<QgsTemporaryCursorOverride> mCursorOverride;
 };
 
 #endif // QGSSTYLEV2EXPORTIMPORTDIALOG_H

@@ -24,9 +24,8 @@
 /**
  * \ingroup core
  * \brief Provides a list of features based on filter conditions.
- * Features are fetched asynchronously.
  *
- * \since QGIS 3.0
+ * Features are fetched asynchronously.
  */
 class CORE_EXPORT QgsFeaturePickerModel : public QgsFeaturePickerModelBase
 {

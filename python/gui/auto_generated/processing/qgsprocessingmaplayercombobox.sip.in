@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/processing/qgsprocessingmaplayercombobox.h                   *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -26,24 +26,24 @@ Processing map layer combo box.
 #include "qgsprocessingmaplayercombobox.h"
 %End
   public:
-
-    QgsProcessingMapLayerComboBox( const QgsProcessingParameterDefinition *parameter, QgsProcessingGui::WidgetType type = QgsProcessingGui::Standard, QWidget *parent = 0 );
+    QgsProcessingMapLayerComboBox( const QgsProcessingParameterDefinition *parameter, Qgis::ProcessingMode type = Qgis::ProcessingMode::Standard, QWidget *parent = 0 );
 %Docstring
-Constructor for QgsProcessingMapLayerComboBox, with the specified ``parameter`` definition.
+Constructor for QgsProcessingMapLayerComboBox, with the specified
+``parameter`` definition.
 %End
 
     ~QgsProcessingMapLayerComboBox();
 
     void setLayer( QgsMapLayer *layer );
 %Docstring
-Sets the combo box to the specified ``layer``, if ``layer`` is compatible with the
-widget's parameter definition.
+Sets the combo box to the specified ``layer``, if ``layer`` is
+compatible with the widget's parameter definition.
 %End
 
     QgsMapLayer *currentLayer();
 %Docstring
-Returns the current layer selected in the combobox, or ``None`` if the selection cannot
-be represented as a map layer.
+Returns the current layer selected in the combobox, or ``None`` if the
+selection cannot be represented as a map layer.
 
 .. warning::
 
@@ -112,7 +112,6 @@ Emitted whenever the value is changed in the widget.
 %End
 
   protected:
-
     virtual void dragEnterEvent( QDragEnterEvent *event );
 
     virtual void dragLeaveEvent( QDragLeaveEvent *event );
@@ -127,5 +126,5 @@ Emitted whenever the value is changed in the widget.
  *                                                                      *
  * src/gui/processing/qgsprocessingmaplayercombobox.h                   *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

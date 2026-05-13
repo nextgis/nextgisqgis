@@ -36,12 +36,11 @@
 class QgsTerrainTextureGenerator;
 
 /**
- * \ingroup 3d
+ * \ingroup qgis_3d
  * \brief Class that stores an image with a rendered map. The image is used as a texture for one map tile.
  *
  * The texture is provided to Qt 3D through the implementation of dataGenerator() method.
  *
- * \since QGIS 3.0
  */
 class QgsTerrainTextureImage : public Qt3DRender::QAbstractTextureImage
 {

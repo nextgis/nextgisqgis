@@ -22,7 +22,7 @@
 #include "qgscolorramplegendnodesettings.h"
 #include "qgsreadwritecontext.h"
 #include "qgscolorrampimpl.h"
-#include "qgssymbol.h"
+#include "qgssldexportcontext.h"
 
 #include <QDomDocument>
 #include <QDomElement>
@@ -83,7 +83,7 @@ QgsRasterRenderer *QgsSingleBandGrayRenderer::create( const QDomElement &elem, Q
     r->setContrastEnhancement( ce );
   }
 
-  std::unique_ptr< QgsColorRampLegendNodeSettings > legendSettings = std::make_unique< QgsColorRampLegendNodeSettings >();
+  auto legendSettings = std::make_unique< QgsColorRampLegendNodeSettings >();
   legendSettings->readXml( elem, QgsReadWriteContext() );
   r->setLegendSettings( legendSettings.release() );
 
@@ -100,7 +100,7 @@ QgsRasterBlock *QgsSingleBandGrayRenderer::block( int bandNo, const QgsRectangle
   Q_UNUSED( bandNo )
   QgsDebugMsgLevel( QStringLiteral( "width = %1 height = %2" ).arg( width ).arg( height ), 4 );
 
-  std::unique_ptr< QgsRasterBlock > outputBlock( new QgsRasterBlock() );
+  auto outputBlock = std::make_unique<QgsRasterBlock>();
   if ( !mInput )
   {
     return outputBlock.release();
@@ -149,7 +149,7 @@ QgsRasterBlock *QgsSingleBandGrayRenderer::block( int bandNo, const QgsRectangle
     double currentAlpha = mOpacity;
     if ( mRasterTransparency )
     {
-      currentAlpha = mRasterTransparency->alphaValue( grayVal, mOpacity * 255 ) / 255.0;
+      currentAlpha *= mRasterTransparency->opacityForValue( grayVal );
     }
     if ( mAlphaBand > 0 )
     {
@@ -191,6 +191,31 @@ QgsRasterBlock *QgsSingleBandGrayRenderer::block( int bandNo, const QgsRectangle
   }
 
   return outputBlock.release();
+}
+
+void QgsSingleBandGrayRenderer::setGrayBand( int band )
+{
+  setInputBand( band );
+}
+
+int QgsSingleBandGrayRenderer::inputBand() const
+{
+  return mGrayBand;
+}
+
+bool QgsSingleBandGrayRenderer::setInputBand( int band )
+{
+  if ( !mInput )
+  {
+    mGrayBand = band;
+    return true;
+  }
+  else if ( band > 0 && band <= mInput->bandCount() )
+  {
+    mGrayBand = band;
+    return true;
+  }
+  return false;
 }
 
 void QgsSingleBandGrayRenderer::writeXml( QDomDocument &doc, QDomElement &parentElem ) const
@@ -275,13 +300,20 @@ QList<int> QgsSingleBandGrayRenderer::usesBands() const
 
 void QgsSingleBandGrayRenderer::toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const
 {
+  QgsSldExportContext context;
+  context.setExtraProperties( props );
+  toSld( doc, element, context );
+}
+
+bool QgsSingleBandGrayRenderer::toSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &context ) const
+{
   // create base structure
-  QgsRasterRenderer::toSld( doc, element, props );
+  QgsRasterRenderer::toSld( doc, element, context );
 
   // look for RasterSymbolizer tag
   QDomNodeList elements = element.elementsByTagName( QStringLiteral( "sld:RasterSymbolizer" ) );
   if ( elements.size() == 0 )
-    return;
+    return false;
 
   // there SHOULD be only one
   QDomElement rasterSymbolizerElem = elements.at( 0 ).toElement();
@@ -314,7 +346,7 @@ void QgsSingleBandGrayRenderer::toSld( QDomDocument &doc, QDomElement &element, 
 
   // set band
   QDomElement sourceChannelNameElem = doc.createElement( QStringLiteral( "sld:SourceChannelName" ) );
-  sourceChannelNameElem.appendChild( doc.createTextNode( QString::number( grayBand() ) ) );
+  sourceChannelNameElem.appendChild( doc.createTextNode( QString::number( mGrayBand ) ) );
   channelElem.appendChild( sourceChannelNameElem );
 
   // set ContrastEnhancement
@@ -333,7 +365,7 @@ void QgsSingleBandGrayRenderer::toSld( QDomDocument &doc, QDomElement &element, 
       case QgsContrastEnhancement::ClipToMinimumMaximum:
       {
         // with this renderer export have to be check against real min/max values of the raster
-        const QgsRasterBandStats myRasterBandStats = mInput->bandStatistics( grayBand(), QgsRasterBandStats::Min | QgsRasterBandStats::Max );
+        const QgsRasterBandStats myRasterBandStats = mInput->bandStatistics( mGrayBand, Qgis::RasterBandStatistic::Min | Qgis::RasterBandStatistic::Max );
 
         // if minimum range differ from the real minimum => set is in exported SLD vendor option
         if ( !qgsDoubleNear( lContrastEnhancement->minimumValue(), myRasterBandStats.minimumValue ) )
@@ -421,6 +453,7 @@ void QgsSingleBandGrayRenderer::toSld( QDomDocument &doc, QDomElement &element, 
       lowColorMapEntryElem.setAttribute( QStringLiteral( "opacity" ), QString::number( it->second.alpha() ) );
     }
   }
+  return true;
 }
 
 const QgsColorRampLegendNodeSettings *QgsSingleBandGrayRenderer::legendSettings() const
@@ -433,4 +466,24 @@ void QgsSingleBandGrayRenderer::setLegendSettings( QgsColorRampLegendNodeSetting
   if ( settings == mLegendSettings.get() )
     return;
   mLegendSettings.reset( settings );
+}
+
+bool QgsSingleBandGrayRenderer::refresh( const QgsRectangle &extent, const QList<double> &min, const QList<double> &max, bool forceRefresh )
+{
+  if ( !needsRefresh( extent ) && !forceRefresh )
+  {
+    return false;
+  }
+
+  bool refreshed = false;
+  if ( mContrastEnhancement && mContrastEnhancement->contrastEnhancementAlgorithm() != QgsContrastEnhancement::NoEnhancement &&
+       min.size() >= 1 && max.size() >= 1 )
+  {
+    mLastRectangleUsedByRefreshContrastEnhancementIfNeeded = extent;
+    mContrastEnhancement->setMinimumValue( min[0] );
+    mContrastEnhancement->setMaximumValue( max[0] );
+    refreshed = true;
+  }
+
+  return refreshed;
 }

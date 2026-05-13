@@ -23,6 +23,7 @@
 
 #define SIP_NO_FILE
 
+#include <QObject>
 #include <QPointer>
 #include <qtypeinfo.h>
 #include <QtDebug>
@@ -69,7 +70,6 @@ class QObjectUniquePtr
      */
     inline QObjectUniquePtr( T *p ) : mPtr( p )
     { }
-    // compiler-generated copy/move ctor/assignment operators are fine!
 
     /**
      * Will delete the contained QObject if it still exists.
@@ -78,6 +78,23 @@ class QObjectUniquePtr
     {
       // Will be a nullptr if the QObject has been deleted from somewhere else (e.g. through parent ownership)
       delete mPtr.data();
+    }
+
+    // This is a unique ptr, so copy is forbidden and we need to implement the move constructor/operator
+    QObjectUniquePtr( const QObjectUniquePtr &other ) = delete;
+    QObjectUniquePtr &operator=( const QObjectUniquePtr &other ) = delete;
+
+    QObjectUniquePtr( QObjectUniquePtr &&other )
+    {
+      *this = std::move( other );
+    }
+
+    QObjectUniquePtr &operator=( QObjectUniquePtr &&other ) noexcept
+    {
+      delete mPtr.data();
+      mPtr = other.mPtr;
+      other.clear();
+      return *this;
     }
 
     /**
@@ -147,7 +164,7 @@ class QObjectUniquePtr
      * If it is not ``nullptr`` TRUE will be returned, if it is ``nullptr``
      * FALSE will be returned.
      */
-    inline operator bool() const
+    explicit inline operator bool() const
     {
       return !mPtr.isNull();
     }
@@ -404,7 +421,7 @@ class QObjectParentUniquePtr
      * If it is not NULLPTR TRUE will be returned, if it is NULLPTR
      * FALSE will be returned.
      */
-    inline operator bool() const
+    explicit inline operator bool() const
     {
       return static_cast< bool >( mChild );
     }

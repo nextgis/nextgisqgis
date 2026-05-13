@@ -25,6 +25,7 @@
 #include "qgis_core.h"
 #include "qgslocatorcontext.h"
 #include "qgslogger.h"
+#include "qgssettingstree.h"
 
 class QgsFeedback;
 class QgsLocatorFilter;
@@ -33,15 +34,20 @@ class QgsLocatorFilter;
  * \class QgsLocatorResult
  * \ingroup core
  * \brief Encapsulates properties of an individual matching result found by a QgsLocatorFilter.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLocatorResult
 {
+    Q_GADGET
+
+    Q_PROPERTY( QVariant userData READ userData WRITE setUserData )
+    Q_PROPERTY( QString displayString MEMBER displayString )
+    Q_PROPERTY( QString description MEMBER description )
+    Q_PROPERTY( double score MEMBER score )
+    Q_PROPERTY( QString group MEMBER group )
+    Q_PROPERTY( double groupScore MEMBER groupScore )
+
   public:
 
-    /**
-     * Constructor for QgsLocatorResult.
-     */
     QgsLocatorResult() = default;
 
     /**
@@ -50,16 +56,22 @@ class CORE_EXPORT QgsLocatorResult
     QgsLocatorResult( QgsLocatorFilter *filter, const QString &displayString, const QVariant &userData = QVariant() )
       : filter( filter )
       , displayString( displayString )
-      , userData( userData )
+      , mUserData( userData )
     {}
-
 
     /**
      * Returns the ``userData``.
      *
      * \since QGIS 3.18
      */
-    QVariant getUserData() const;
+    QVariant userData() const SIP_PYNAME( _userData );
+
+    /**
+     * Set \a userData for the locator result
+     *
+     * \since QGIS 3.34
+     */
+    void setUserData( const QVariant &userData );
 
     /**
      * Filter from which the result was obtained. This is automatically set.
@@ -75,11 +87,6 @@ class CORE_EXPORT QgsLocatorResult
      * Descriptive text for result.
      */
     QString description;
-
-    /**
-     * Custom reference or other data set by the filter.
-     */
-    QVariant userData;
 
     /**
      * Icon for result.
@@ -101,6 +108,15 @@ class CORE_EXPORT QgsLocatorResult
     QString group;
 
     /**
+     * Specifies the score of the group to allow ordering.
+     * Score must be positive, higher scores are shown first.
+     * If the scores are left to 0 or are identical,
+     * the sorting of groups is made alphabetically.
+     * \since QGIS 3.40
+     */
+    double groupScore = 0;
+
+    /**
      * The ResultAction stores basic information for additional
      * actions to be used in a locator widget for the result.
      * They could be used in a context menu for instance.
@@ -109,7 +125,7 @@ class CORE_EXPORT QgsLocatorResult
     struct CORE_EXPORT ResultAction
     {
       public:
-        //! Constructor for ResultAction
+
         ResultAction() = default;
 
         /**
@@ -135,6 +151,15 @@ class CORE_EXPORT QgsLocatorResult
       * \since QGIS 3.6
       */
     QList<QgsLocatorResult::ResultAction> actions;
+
+  private:
+
+    /**
+     * Custom reference or other data set by the filter.
+     */
+    QVariant mUserData;
+
+
 };
 
 Q_DECLARE_METATYPE( QgsLocatorResult::ResultAction )
@@ -147,7 +172,6 @@ Q_DECLARE_METATYPE( QgsLocatorResult::ResultAction )
  *
  * \note If the configuration of the filter is changed outside of the main application settings,
  * one needs to invalidate current results of the locator widget: \see QgisInterface::invalidateLocatorResults
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLocatorFilter : public QObject
 {
@@ -155,6 +179,9 @@ class CORE_EXPORT QgsLocatorFilter : public QObject
 
   public:
 
+#ifndef SIP_RUN
+    static inline QgsSettingsTreeNamedListNode *sTreeAppLocatorFilters = QgsSettingsTree::sTreeApp->createNamedListNode( QStringLiteral( "locator-filters" ) );
+#endif
     //! Filter priority. Controls the order of results in the locator.
     enum Priority
     {
@@ -167,7 +194,7 @@ class CORE_EXPORT QgsLocatorFilter : public QObject
     Q_ENUM( Priority )
 
     //! Flags for locator behavior.
-    enum Flag
+    enum Flag SIP_ENUM_BASETYPE( IntFlag )
     {
       FlagFast = 1 << 1, //!< Filter finds results quickly and can be safely run in the main thread
     };
@@ -264,6 +291,22 @@ class CORE_EXPORT QgsLocatorFilter : public QObject
     virtual void triggerResult( const QgsLocatorResult &result ) = 0;
 
     /**
+     * This is called when the \a result is selected by the user.
+     * The filter subclass can implement logic here.
+     *
+     * \since QGIS 3.40
+     */
+    virtual void resultSelected( const QgsLocatorResult &result ) {Q_UNUSED( result )}
+
+    /**
+     * This is called when a \a result is deselected.
+     * The filter subclass can implement logic here.
+     *
+     * \since QGIS 3.40
+     */
+    virtual void resultDeselected( const QgsLocatorResult &result ) {Q_UNUSED( result )}
+
+    /**
      * Triggers a filter \a result from this filter for an entry in the context menu.
      * The entry is identified by its \a actionId as specified in the result of this filter.
      * \see triggerResult()
@@ -322,7 +365,7 @@ class CORE_EXPORT QgsLocatorFilter : public QObject
     /**
      * Tests a \a candidate string to see how likely it is a match for
      * a specified \a search string.
-     * \since 3.14
+     * \since QGIS 3.14
      */
     static double fuzzyScore( const QString &candidate, const QString &search );
 
@@ -402,5 +445,3 @@ Q_DECLARE_OPERATORS_FOR_FLAGS( QgsLocatorFilter::Flags )
 
 
 #endif // QGSLOCATORFILTER_H
-
-

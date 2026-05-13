@@ -52,6 +52,11 @@ QString QgsPdalAssignProjectionAlgorithm::shortHelpString() const
   return QObject::tr( "This algorithm assigns point cloud CRS if it is not present or wrong." );
 }
 
+QString QgsPdalAssignProjectionAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Assigns a new CRS to a point cloud, without transforming points." );
+}
+
 QgsPdalAssignProjectionAlgorithm *QgsPdalAssignProjectionAlgorithm::createInstance() const
 {
   return new QgsPdalAssignProjectionAlgorithm();
@@ -72,16 +77,14 @@ QStringList QgsPdalAssignProjectionAlgorithm::createArgumentLists( const QVarian
   if ( !layer )
     throw QgsProcessingException( invalidPointCloudError( parameters, QStringLiteral( "INPUT" ) ) );
 
-  const QString outputFile = parameterAsOutputLayer( parameters, QStringLiteral( "OUTPUT" ), context );
+  const QString outputName = parameterAsOutputLayer( parameters, QStringLiteral( "OUTPUT" ), context );
+  QString outputFile = fixOutputFileName( layer->source(), outputName, context );
+  checkOutputFormat( layer->source(), outputFile );
   setOutputValue( QStringLiteral( "OUTPUT" ), outputFile );
 
   QgsCoordinateReferenceSystem crs = parameterAsCrs( parameters, QStringLiteral( "CRS" ), context );
 
-  QStringList args = { QStringLiteral( "translate" ),
-                       QStringLiteral( "--input=%1" ).arg( layer->source() ),
-                       QStringLiteral( "--output=%1" ).arg( outputFile ),
-                       QStringLiteral( "--assign-crs=%1" ).arg( crs.authid() )
-                     };
+  QStringList args = { QStringLiteral( "translate" ), QStringLiteral( "--input=%1" ).arg( layer->source() ), QStringLiteral( "--output=%1" ).arg( outputFile ), QStringLiteral( "--assign-crs=%1" ).arg( crs.authid() ) };
 
   applyThreadsParameter( args, context );
   return args;

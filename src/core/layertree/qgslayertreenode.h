@@ -30,7 +30,7 @@ class QgsMapLayer;
 
 /**
  * \ingroup core
- * \brief This class is a base class for nodes in a layer tree.
+ * \brief Base class for nodes in a layer tree.
  *
  * Layer tree is a hierarchical structure consisting of group and layer nodes:
  *
@@ -72,7 +72,6 @@ class QgsMapLayer;
  * \see QgsLayerTree
  * \see QgsLayerTreeLayer
  * \see QgsLayerTreeGroup
- * \since QGIS 2.4
  */
 class CORE_EXPORT QgsLayerTreeNode : public QObject
 {
@@ -122,10 +121,10 @@ class CORE_EXPORT QgsLayerTreeNode : public QObject
     //! Gets list of children of the node. Children are owned by the parent
     QList<QgsLayerTreeNode *> children() { return mChildren; }
     //! Gets list of children of the node. Children are owned by the parent
-    QList<QgsLayerTreeNode *> children() const { return mChildren; } SIP_SKIP
+    QList<QgsLayerTreeNode *> children() const SIP_SKIP { return mChildren; }
 
     /**
-     * Removes the childrens, disconnect all the forwarded and external signals and sets their parent to NULLPTR
+     * Removes the children, disconnect all the forwarded and external signals and sets their parent to NULLPTR
      * \return the removed children
      * \since QGIS 3.16
      */
@@ -133,13 +132,11 @@ class CORE_EXPORT QgsLayerTreeNode : public QObject
 
     /**
      * Returns name of the node
-     * \since QGIS 3.0
      */
     virtual QString name() const = 0;
 
     /**
      * Set name of the node. Emits nameChanged signal.
-     * \since QGIS 3.0
      */
     virtual void setName( const QString &name ) = 0;
 
@@ -152,7 +149,6 @@ class CORE_EXPORT QgsLayerTreeNode : public QObject
     /**
      * Read layer tree from XML. Returns new instance.
      * Also resolves textual references to layers from the project (calls resolveReferences() internally).
-     * \since QGIS 3.0
      */
     static QgsLayerTreeNode *readXml( QDomElement &element, const QgsProject *project ) SIP_FACTORY;
 
@@ -172,19 +168,16 @@ class CORE_EXPORT QgsLayerTreeNode : public QObject
      * will match if the name, public source, and data provider match. This can be
      * used to match legend customization from different projects where layers
      * will have different layer IDs.
-     * \since QGIS 3.0
      */
     virtual void resolveReferences( const QgsProject *project, bool looseMatching = false ) = 0;
 
     /**
      * Returns whether a node is really visible (ie checked and all its ancestors checked as well)
-     * \since QGIS 3.0
      */
     bool isVisible() const;
 
     /**
      * Returns whether a node is checked (independently of its ancestors or children)
-     * \since QGIS 3.0
      */
     bool itemVisibilityChecked() const { return mChecked; }
 
@@ -193,38 +186,32 @@ class CORE_EXPORT QgsLayerTreeNode : public QObject
      *
      * \see QgsLayerTreeView::setLayerVisible()
      *
-     * \since QGIS 3.0
      */
     void setItemVisibilityChecked( bool checked );
 
     /**
      * Check or uncheck a node and all its children (taking into account exclusion rules)
-     * \since QGIS 3.0
      */
     virtual void setItemVisibilityCheckedRecursive( bool checked );
 
     /**
      * Check or uncheck a node and all its parents
-     * \since QGIS 3.0
      */
     void setItemVisibilityCheckedParentRecursive( bool checked );
 
     /**
      * Returns whether this node is checked and all its children.
-     * \since QGIS 3.0
      */
     bool isItemVisibilityCheckedRecursive() const;
 
     /**
      * Returns whether this node is unchecked and all its children.
-     * \since QGIS 3.0
      */
     bool isItemVisibilityUncheckedRecursive() const;
 
     /**
      * Returns a list of any checked layers which belong to this node or its
      * children.
-     * \since QGIS 3.0
      */
     QList< QgsMapLayer * > checkedLayers() const;
 
@@ -269,7 +256,6 @@ class CORE_EXPORT QgsLayerTreeNode : public QObject
 
     /**
      * Emitted when the name of the node is changed
-     * \since QGIS 3.0
      */
     void nameChanged( QgsLayerTreeNode *node, QString name );
 
@@ -282,7 +268,7 @@ class CORE_EXPORT QgsLayerTreeNode : public QObject
     // low-level utility functions
 
     //! Read common XML elements.
-    void readCommonXml( QDomElement &element );
+    void readCommonXml( const QDomElement &element );
     //! Write common XML elements.
     void writeCommonXml( QDomElement &element );
 

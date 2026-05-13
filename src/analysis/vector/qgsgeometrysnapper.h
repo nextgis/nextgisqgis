@@ -34,27 +34,27 @@ class QgsVectorLayer;
 /**
  * \class QgsGeometrySnapper
  * \ingroup analysis
- * \brief QgsGeometrySnapper allows a geometry to be snapped to the geometries within a
- * different reference layer. Vertices in the geometries will be modified to
+ * \brief Allows a geometry to be snapped to the geometries within a
+ * different reference layer.
+ *
+ * Vertices in the geometries will be modified to
  * match the reference layer features within a specified snap tolerance.
- * \since QGIS 3.0
  */
 class ANALYSIS_EXPORT QgsGeometrySnapper : public QObject
 {
     Q_OBJECT
 
   public:
-
     //! Snapping modes
     enum SnapMode
     {
-      PreferNodes = 0, //!< Prefer to snap to nodes, even when a segment may be closer than a node. New nodes will be inserted to make geometries follow each other exactly when inside allowable tolerance.
-      PreferClosest, //!< Snap to closest point, regardless of it is a node or a segment. New nodes will be inserted to make geometries follow each other exactly when inside allowable tolerance.
-      PreferNodesNoExtraVertices, //!< Prefer to snap to nodes, even when a segment may be closer than a node. No new nodes will be inserted.
+      PreferNodes = 0,              //!< Prefer to snap to nodes, even when a segment may be closer than a node. New nodes will be inserted to make geometries follow each other exactly when inside allowable tolerance.
+      PreferClosest,                //!< Snap to closest point, regardless of it is a node or a segment. New nodes will be inserted to make geometries follow each other exactly when inside allowable tolerance.
+      PreferNodesNoExtraVertices,   //!< Prefer to snap to nodes, even when a segment may be closer than a node. No new nodes will be inserted.
       PreferClosestNoExtraVertices, //!< Snap to closest point, regardless of it is a node or a segment. No new nodes will be inserted.
-      EndPointPreferNodes, //!< Only snap start/end points of lines (point features will also be snapped, polygon features will not be modified), prefer to snap to nodes
-      EndPointPreferClosest, //!< Only snap start/end points of lines (point features will also be snapped, polygon features will not be modified), snap to closest point
-      EndPointToEndPoint, //!< Only snap the start/end points of lines to other start/end points of lines
+      EndPointPreferNodes,          //!< Only snap start/end points of lines (point features will also be snapped, polygon features will not be modified), prefer to snap to nodes
+      EndPointPreferClosest,        //!< Only snap start/end points of lines (point features will also be snapped, polygon features will not be modified), snap to closest point
+      EndPointToEndPoint,           //!< Only snap the start/end points of lines to other start/end points of lines
     };
 
     /**
@@ -91,18 +91,23 @@ class ANALYSIS_EXPORT QgsGeometrySnapper : public QObject
   private:
     struct ProcessFeatureWrapper
     {
-      QgsGeometrySnapper *instance = nullptr;
-      double snapTolerance;
-      SnapMode mode;
-      explicit ProcessFeatureWrapper( QgsGeometrySnapper *_instance, double snapTolerance, SnapMode mode )
-        : instance( _instance )
-        , snapTolerance( snapTolerance )
-        , mode( mode )
-      {}
-      void operator()( QgsFeature &feature ) { instance->processFeature( feature, snapTolerance, mode ); }
+        QgsGeometrySnapper *instance = nullptr;
+        double snapTolerance;
+        SnapMode mode;
+        explicit ProcessFeatureWrapper( QgsGeometrySnapper *_instance, double snapTolerance, SnapMode mode )
+          : instance( _instance )
+          , snapTolerance( snapTolerance )
+          , mode( mode )
+        {}
+        void operator()( QgsFeature &feature ) { instance->processFeature( feature, snapTolerance, mode ); }
     };
 
-    enum PointFlag { SnappedToRefNode, SnappedToRefSegment, Unsnapped };
+    enum PointFlag
+    {
+      SnappedToRefNode,
+      SnappedToRefSegment,
+      Unsnapped
+    };
 
     QgsFeatureSource *mReferenceSource = nullptr;
     QHash<QgsFeatureId, QgsGeometry> mCachedReferenceGeometries;
@@ -114,14 +119,15 @@ class ANALYSIS_EXPORT QgsGeometrySnapper : public QObject
     void processFeature( QgsFeature &feature, double snapTolerance, SnapMode mode );
 
     static int polyLineSize( const QgsAbstractGeometry *geom, int iPart, int iRing );
-
 };
 
 
 /**
  * \class QgsInternalGeometrySnapper
  * \ingroup analysis
- * \brief QgsInternalGeometrySnapper allows a set of geometries to be snapped to each other. It can be used to close gaps in layers.
+ * \brief Allows a set of geometries to be snapped to each other.
+ *
+ * QgsInternalGeometrySnapper can be used to close gaps in layers.
  *
  * To use QgsInternalGeometrySnapper, first construct the snapper using the desired snap parameters. Then,
  * features are fed to to the snapper one-by-one by calling snapFeature(). Each feature passed by calling
@@ -131,13 +137,10 @@ class ANALYSIS_EXPORT QgsGeometrySnapper : public QObject
  * The returned QgsGeometryMap can be passed to QgsVectorDataProvider::changeGeometryValues() to save
  * the snapped geometries back to the source layer.
  *
- * \since QGIS 3.0
  */
 class ANALYSIS_EXPORT QgsInternalGeometrySnapper
 {
-
   public:
-
     /**
      * Constructor for QgsInternalGeometrySnapper. The \a snapTolerance and \a mode parameters dictate
      * how geometries will be snapped by the snapper.
@@ -156,13 +159,11 @@ class ANALYSIS_EXPORT QgsInternalGeometrySnapper
     QgsGeometryMap snappedGeometries() const { return mProcessedGeometries; }
 
   private:
-
     bool mFirstFeature = true;
     double mSnapTolerance = 0;
     QgsGeometrySnapper::SnapMode mMode = QgsGeometrySnapper::PreferNodes;
     QgsSpatialIndex mProcessedIndex;
     QgsGeometryMap mProcessedGeometries;
-
 };
 
 #ifndef SIP_RUN
@@ -173,17 +174,22 @@ class QgsSnapIndex
   public:
     struct CoordIdx
     {
-      CoordIdx( const QgsAbstractGeometry *_geom, QgsVertexId _vidx )
-        : geom( _geom )
-        , vidx( _vidx )
-      {}
-      QgsPoint point() const { return geom->vertexAt( vidx ); }
+        CoordIdx( const QgsAbstractGeometry *_geom, QgsVertexId _vidx )
+          : geom( _geom )
+          , vidx( _vidx )
+        {}
+        QgsPoint point() const { return geom->vertexAt( vidx ); }
 
-      const QgsAbstractGeometry *geom = nullptr;
-      QgsVertexId vidx;
+        const QgsAbstractGeometry *geom = nullptr;
+        QgsVertexId vidx;
     };
 
-    enum SnapType { SnapPoint, SnapEndPoint, SnapSegment };
+    enum SnapType
+    {
+      SnapPoint,
+      SnapEndPoint,
+      SnapSegment
+    };
 
     class SnapItem
     {
@@ -193,14 +199,15 @@ class QgsSnapIndex
         virtual QgsPoint getSnapPoint( const QgsPoint &p ) const = 0;
 
       protected:
-        explicit SnapItem( SnapType _type ) : type( _type ) {}
+        explicit SnapItem( SnapType _type )
+          : type( _type ) {}
     };
 
     class PointSnapItem : public QgsSnapIndex::SnapItem
     {
       public:
         explicit PointSnapItem( const CoordIdx *_idx, bool isEndPoint );
-        QgsPoint getSnapPoint( const QgsPoint &/*p*/ ) const override;
+        QgsPoint getSnapPoint( const QgsPoint & /*p*/ ) const override;
         const CoordIdx *idx = nullptr;
     };
 
@@ -211,7 +218,7 @@ class QgsSnapIndex
         QgsPoint getSnapPoint( const QgsPoint &p ) const override;
         bool getIntersection( const QgsPoint &p1, const QgsPoint &p2, QgsPoint &inter ) const;
         bool getProjection( const QgsPoint &p, QgsPoint &pProj ) const;
-        bool withinDistance( const QgsPoint &p, const double distance );
+        bool withinSquaredDistance( const QgsPoint &p, const double squaredDistance );
         const CoordIdx *idxFrom = nullptr;
         const CoordIdx *idxTo = nullptr;
     };
@@ -234,7 +241,7 @@ class QgsSnapIndex
     void addSegment( const CoordIdx *idxFrom, const CoordIdx *idxTo );
 
     GEOSSTRtree *mSTRTree = nullptr;
-    std::vector< geos::unique_ptr > mSTRTreeItems;
+    std::vector<geos::unique_ptr> mSTRTreeItems;
 };
 
 ///@endcond

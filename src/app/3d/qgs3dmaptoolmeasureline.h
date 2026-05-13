@@ -17,12 +17,13 @@
 #define QGS3DMAPTOOLMEASURELINE_H
 
 #include "qgs3dmaptool.h"
+#include "qgs3dmeasuredialog.h"
 #include "qgspoint.h"
+#include "qobjectuniqueptr.h"
 
 #include <memory>
 
-
-class Qgs3DMeasureDialog;
+class Qgs3DMapCanvasWidget;
 class QgsRubberBand3D;
 
 
@@ -31,7 +32,7 @@ class Qgs3DMapToolMeasureLine : public Qgs3DMapTool
     Q_OBJECT
 
   public:
-    Qgs3DMapToolMeasureLine( Qgs3DMapCanvas *canvas );
+    Qgs3DMapToolMeasureLine( Qgs3DMapCanvasWidget *canvas );
     ~Qgs3DMapToolMeasureLine() override;
 
     //! When we have added our last point, and not following
@@ -65,8 +66,6 @@ class Qgs3DMapToolMeasureLine : public Qgs3DMapTool
     void keyPressEvent( QKeyEvent *event ) override;
 
   private:
-    bool mIsAlreadyActivated = false;
-
     //! Store points
     QVector<QgsPoint> mPoints;
 
@@ -74,7 +73,7 @@ class Qgs3DMapToolMeasureLine : public Qgs3DMapTool
     bool mDone = true;
 
     //! Dialog
-    Qgs3DMeasureDialog *mDialog = nullptr;
+    QObjectUniquePtr<Qgs3DMeasureDialog> mDialog = nullptr;
 
     std::unique_ptr<QgsRubberBand3D> mRubberBand;
 

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgspixmaplabel.h                                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,15 +11,14 @@
 class QgsPixmapLabel : QLabel
 {
 %Docstring(signature="appended")
-The :py:class:`QgsPixmapLabel` class shows a pixmap and adjusts its size to the space given
-to the widget by the layout and keeping its aspect ratio.
+Shows a pixmap and adjusts its size to the space given to the widget by
+the layout and keeping its aspect ratio.
 %End
 
 %TypeHeaderCode
 #include "qgspixmaplabel.h"
 %End
   public:
-
     explicit QgsPixmapLabel( QWidget *parent /TransferThis/ = 0 );
 %Docstring
 Constructor for QgsPixmapLabel
@@ -38,8 +37,8 @@ Calculates the height for the given width.
     virtual QSize sizeHint() const;
 
 %Docstring
-An optimal size for the widget. Effectively using the height
-determined from the width with the given aspect ratio.
+An optimal size for the widget. Effectively using the height determined
+from the width with the given aspect ratio.
 
 :return: A size hint
 %End
@@ -62,5 +61,5 @@ Clears any label contents.
  *                                                                      *
  * src/gui/qgspixmaplabel.h                                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

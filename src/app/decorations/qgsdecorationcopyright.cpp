@@ -22,6 +22,7 @@ email                : tim@linfiniti.com
 // includes
 
 #include "qgsdecorationcopyright.h"
+#include "moc_qgsdecorationcopyright.cpp"
 #include "qgsdecorationcopyrightdialog.h"
 
 #include "qgisapp.h"
@@ -125,8 +126,8 @@ void QgsDecorationCopyright::render( const QgsMapSettings &mapSettings, QgsRende
   const double textHeight = QgsTextRenderer::textHeight( context, mTextFormat, displayStringList, Qgis::TextLayoutMode::Point );
 
   QPaintDevice *device = context.painter()->device();
-  const int deviceHeight = device->height() / device->devicePixelRatioF();
-  const int deviceWidth = device->width() / device->devicePixelRatioF();
+  const float deviceHeight = static_cast<float>( device->height() ) / context.devicePixelRatio();
+  const float deviceWidth = static_cast<float>( device->width() ) / context.devicePixelRatio();
 
   float xOffset( 0 ), yOffset( 0 );
 
@@ -198,4 +199,3 @@ void QgsDecorationCopyright::render( const QgsMapSettings &mapSettings, QgsRende
   //Paint label to canvas
   QgsTextRenderer::drawText( QPointF( xOffset, yOffset ), 0.0, horizontalAlignment, displayStringList, context, mTextFormat );
 }
-

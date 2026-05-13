@@ -14,7 +14,10 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsformlabelformatwidget.h"
+#include "moc_qgsformlabelformatwidget.cpp"
 #include "qgsguiutils.h"
+#include "qgsfontutils.h"
+
 #include <QGroupBox>
 
 /// @cond private
@@ -44,7 +47,6 @@ QgsFormLabelFormatWidget::QgsFormLabelFormatWidget( QWidget *parent )
 
   btnTextColor->setAllowOpacity( true );
   btnTextColor->setShowNull( true, tr( "Default color" ) );
-
 }
 
 void QgsFormLabelFormatWidget::setLabelStyle( const QgsAttributeEditorElement::LabelStyle &labelStyle )
@@ -64,8 +66,8 @@ void QgsFormLabelFormatWidget::setLabelStyle( const QgsAttributeEditorElement::L
   }
   mOverrideLabelColorGroupBox->setChecked( labelStyle.overrideColor );
   mOverrideLabelFontGroupBox->setChecked( labelStyle.overrideFont );
-  mOverrideLabelColorGroupBox->setCollapsed( ! labelStyle.overrideColor );
-  mOverrideLabelFontGroupBox->setCollapsed( ! labelStyle.overrideFont );
+  mOverrideLabelColorGroupBox->setCollapsed( !labelStyle.overrideColor );
+  mOverrideLabelFontGroupBox->setCollapsed( !labelStyle.overrideFont );
 }
 
 QgsAttributeEditorElement::LabelStyle QgsFormLabelFormatWidget::labelStyle() const
@@ -73,14 +75,14 @@ QgsAttributeEditorElement::LabelStyle QgsFormLabelFormatWidget::labelStyle() con
   QgsAttributeEditorElement::LabelStyle style;
   style.color = btnTextColor->color();
   QFont currentFont;
-  currentFont.setFamily( mFontFamilyCmbBx->currentFont().family() );
+  QgsFontUtils::setFontFamily( currentFont, mFontFamilyCmbBx->currentFont().family() );
   currentFont.setBold( mFontBoldBtn->isChecked() );
   currentFont.setItalic( mFontItalicBtn->isChecked() );
   currentFont.setUnderline( mFontUnderlineBtn->isChecked() );
   currentFont.setStrikeOut( mFontStrikethroughBtn->isChecked() );
   style.font = currentFont;
-  style.overrideColor = mOverrideLabelColorGroupBox->isChecked( );
-  style.overrideFont = mOverrideLabelFontGroupBox->isChecked( );
+  style.overrideColor = mOverrideLabelColorGroupBox->isChecked();
+  style.overrideFont = mOverrideLabelFontGroupBox->isChecked();
   return style;
 }
 

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/geometry/qgsvertexid.h                                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -14,7 +14,7 @@ struct QgsVertexId
 
   explicit QgsVertexId( int _part = -1, int _ring = -1, int _vertex = -1, Qgis::VertexType _type = Qgis::VertexType::Segment ) /HoldGIL/;
 %Docstring
-Constructor for :py:class:`QgsVertexId`.
+Constructor for QgsVertexId.
 %End
 
   bool isValid() const  /HoldGIL/;
@@ -27,19 +27,21 @@ Returns ``True`` if the vertex id is valid
 
   bool partEqual( QgsVertexId o ) const /HoldGIL/;
 %Docstring
-Returns ``True`` if this vertex ID belongs to the same part as another vertex ID.
+Returns ``True`` if this vertex ID belongs to the same part as another
+vertex ID.
 %End
 
   bool ringEqual( QgsVertexId o ) const /HoldGIL/;
 %Docstring
-Returns ``True`` if this vertex ID belongs to the same ring as another vertex ID (i.e. the part
-and ring number are equal).
+Returns ``True`` if this vertex ID belongs to the same ring as another
+vertex ID (i.e. the part and ring number are equal).
 %End
 
   bool vertexEqual( QgsVertexId o ) const /HoldGIL/;
 %Docstring
-Returns ``True`` if this vertex ID corresponds to the same vertex as another vertex ID (i.e. the part,
-ring number and vertex number are equal).
+Returns ``True`` if this vertex ID corresponds to the same vertex as
+another vertex ID (i.e. the part, ring number and vertex number are
+equal).
 %End
 
   bool isValid( const QgsAbstractGeometry *geom ) const /HoldGIL/;
@@ -68,5 +70,5 @@ Returns ``True`` if this vertex ID is valid for the specified ``geom``.
  *                                                                      *
  * src/core/geometry/qgsvertexid.h                                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

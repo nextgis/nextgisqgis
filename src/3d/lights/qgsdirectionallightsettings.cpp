@@ -15,6 +15,7 @@
 
 #include "qgsdirectionallightsettings.h"
 #include "qgssymbollayerutils.h"
+#include "qgscolorutils.h"
 
 #include <QDomDocument>
 #include <Qt3DRender/QDirectionalLight>
@@ -33,7 +34,6 @@ QgsDirectionalLightSettings *QgsDirectionalLightSettings::clone() const
 Qt3DCore::QEntity *QgsDirectionalLightSettings::createEntity( const Qgs3DMapSettings &, Qt3DCore::QEntity *parent ) const
 {
   Qt3DCore::QEntity *lightEntity = new Qt3DCore::QEntity( parent );
-  Qt3DCore::QTransform *lightTransform = new Qt3DCore::QTransform;
 
   Qt3DRender::QDirectionalLight *light = new Qt3DRender::QDirectionalLight;
   light->setColor( color() );
@@ -42,7 +42,6 @@ Qt3DCore::QEntity *QgsDirectionalLightSettings::createEntity( const Qgs3DMapSett
   light->setWorldDirection( QVector3D( direction.x(), direction.y(), direction.z() ) );
 
   lightEntity->addComponent( light );
-  lightEntity->addComponent( lightTransform );
 
   return lightEntity;
 }
@@ -53,17 +52,15 @@ QDomElement QgsDirectionalLightSettings::writeXml( QDomDocument &doc, const QgsR
   elemLight.setAttribute( QStringLiteral( "x" ), mDirection.x() );
   elemLight.setAttribute( QStringLiteral( "y" ), mDirection.y() );
   elemLight.setAttribute( QStringLiteral( "z" ), mDirection.z() );
-  elemLight.setAttribute( QStringLiteral( "color" ), QgsSymbolLayerUtils::encodeColor( mColor ) );
+  elemLight.setAttribute( QStringLiteral( "color" ), QgsColorUtils::colorToString( mColor ) );
   elemLight.setAttribute( QStringLiteral( "intensity" ), mIntensity );
   return elemLight;
 }
 
 void QgsDirectionalLightSettings::readXml( const QDomElement &elem, const QgsReadWriteContext & )
 {
-  mDirection.set( elem.attribute( QStringLiteral( "x" ) ).toFloat(),
-                  elem.attribute( QStringLiteral( "y" ) ).toFloat(),
-                  elem.attribute( QStringLiteral( "z" ) ).toFloat() );
-  mColor = QgsSymbolLayerUtils::decodeColor( elem.attribute( QStringLiteral( "color" ) ) );
+  mDirection.set( elem.attribute( QStringLiteral( "x" ) ).toFloat(), elem.attribute( QStringLiteral( "y" ) ).toFloat(), elem.attribute( QStringLiteral( "z" ) ).toFloat() );
+  mColor = QgsColorUtils::colorFromString( elem.attribute( QStringLiteral( "color" ) ) );
   mIntensity = elem.attribute( QStringLiteral( "intensity" ) ).toFloat();
 }
 

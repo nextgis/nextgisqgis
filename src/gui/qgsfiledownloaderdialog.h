@@ -23,8 +23,7 @@ class QgsFileDownloader;
 
 /**
  * \ingroup gui
- * \brief QgsFileDownloaderDialog is a QProgressDialog subclass which
- * handles file downloads and user feedback.
+ * \brief A QProgressDialog subclass which handles file downloads and user feedback.
  *
  * Internally, it uses QgsFileDownloader to handle the download,
  * while showing progress via a progress dialog and supporting
@@ -32,13 +31,11 @@ class QgsFileDownloader;
  *
  * \note Until QGIS 3.0 this functionality was available via QgsFileDownloader.
  *
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsFileDownloaderDialog : public QProgressDialog
 {
     Q_OBJECT
   public:
-
     /**
      * QgsFileDownloader
      * \param url the download url
@@ -65,10 +62,8 @@ class GUI_EXPORT QgsFileDownloaderDialog : public QProgressDialog
     void onDownloadProgress( qint64 bytesReceived, qint64 bytesTotal );
 
   private:
-
     QString mOutputFileName;
     QgsFileDownloader *mDownloader = nullptr;
-
 };
 
 #endif // QGSFILEDOWNLOADERDIALOG_H

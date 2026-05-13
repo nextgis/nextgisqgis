@@ -35,13 +35,14 @@ class QgsDifferenceAlgorithm : public QgsProcessingAlgorithm
     QString group() const override;
     QString groupId() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
     bool supportInPlaceEdit( const QgsMapLayer *layer ) const override;
-    QgsProcessingAlgorithm::Flags flags() const override;
+    Qgis::ProcessingAlgorithmFlags flags() const override;
+
   protected:
     QgsProcessingAlgorithm *createInstance() const override;
     void initAlgorithm( const QVariantMap &configuration = QVariantMap() ) override;
     QVariantMap processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
-
 };
 
 ///@endcond PRIVATE

@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmaprendererparalleljob.h"
+#include "moc_qgsmaprendererparalleljob.cpp"
 
 #include "qgsfeedback.h"
 #include "qgslabelingengine.h"
@@ -356,6 +357,12 @@ void QgsMapRendererParallelJob::renderLayerStatic( LayerRenderJob &job )
   if ( job.cached )
     return;
 
+  if ( job.previewRenderImage && !job.previewRenderImageInitialized )
+  {
+    job.previewRenderImage->fill( 0 );
+    job.previewRenderImageInitialized = true;
+  }
+
   if ( job.img )
   {
     job.img->fill( 0 );
@@ -408,6 +415,10 @@ void QgsMapRendererParallelJob::renderLabelsStatic( QgsMapRendererParallelJob *s
       job.img->fill( 0 );
       painter.begin( job.img );
     }
+    else if ( job.picture )
+    {
+      painter.begin( job.picture.get() );
+    }
     else
     {
       painter.begin( &self->mFinalImage );
@@ -437,7 +448,7 @@ void QgsMapRendererParallelJob::renderLabelsStatic( QgsMapRendererParallelJob *s
 
     job.renderingTime = labelTime.elapsed();
     job.complete = true;
-    job.participatingLayers = _qgis_listRawToQPointer( self->mLabelingEngineV2->participatingLayers() );
+    job.participatingLayers = self->participatingLabelLayers( self->mLabelingEngineV2.get() );
     if ( job.img )
     {
       self->mFinalImage = composeImage( self->mSettings, self->mLayerJobs, self->mLabelJob );

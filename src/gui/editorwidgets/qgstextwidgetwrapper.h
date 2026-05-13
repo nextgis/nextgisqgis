@@ -22,7 +22,7 @@
 
 /**
  * \ingroup gui
- * \brief Wraps a label widget to display text
+ * \brief Wraps a label widget to display text.
  * \since QGIS 3.30
  */
 class GUI_EXPORT QgsTextWidgetWrapper : public QgsWidgetWrapper
@@ -30,7 +30,6 @@ class GUI_EXPORT QgsTextWidgetWrapper : public QgsWidgetWrapper
     Q_OBJECT
 
   public:
-
     /**
      * Create a text widget wrapper
      *
@@ -60,17 +59,17 @@ class GUI_EXPORT QgsTextWidgetWrapper : public QgsWidgetWrapper
   private slots:
 
     //! sets the context with the current values
-    void updateTextContext( );
+    void updateTextContext();
 
   public slots:
     void setFeature( const QgsFeature &feature ) override;
 
   private:
-
     QString mText;
     QLabel *mWidget = nullptr;
     QgsFeature mFeature;
     QgsFeature mFormFeature;
+    bool mRequiresFormScope = false;
     QgsExpressionContext mTextContext;
     bool mNeedsGeometry = false;
 

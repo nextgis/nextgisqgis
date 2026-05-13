@@ -36,7 +36,7 @@ QString QgsPointCloudAttributeByRampRenderer::type() const
 
 QgsPointCloudRenderer *QgsPointCloudAttributeByRampRenderer::clone() const
 {
-  std::unique_ptr< QgsPointCloudAttributeByRampRenderer > res = std::make_unique< QgsPointCloudAttributeByRampRenderer >();
+  auto res = std::make_unique< QgsPointCloudAttributeByRampRenderer >();
   res->mAttribute = mAttribute;
   res->mColorRampShader = mColorRampShader;
   res->mMin = mMin;
@@ -49,7 +49,13 @@ QgsPointCloudRenderer *QgsPointCloudAttributeByRampRenderer::clone() const
 
 void QgsPointCloudAttributeByRampRenderer::renderBlock( const QgsPointCloudBlock *block, QgsPointCloudRenderContext &context )
 {
-  const QgsRectangle visibleExtent = context.renderContext().extent();
+  QgsRectangle visibleExtent = context.renderContext().extent();
+  if ( renderAsTriangles() )
+  {
+    // we need to include also points slightly outside of the visible extent,
+    // otherwise the triangulation may be missing triangles near the edges and corners
+    visibleExtent.grow( std::max( visibleExtent.width(), visibleExtent.height() ) * 0.05 );
+  }
 
   const char *ptr = block->data();
   int count = block->pointCount();
@@ -122,6 +128,16 @@ void QgsPointCloudAttributeByRampRenderer::renderBlock( const QgsPointCloudBlock
         attributeValue = ( context.offset().z() + context.scale().z() * attributeValue ) * context.zValueScale() + context.zValueFixedOffset();
 
       mColorRampShader.shade( attributeValue, &red, &green, &blue, &alpha );
+
+      if ( renderAsTriangles() )
+      {
+        addPointToTriangulation( x, y, z, QColor( red, green, blue, alpha ), context );
+
+        // We don't want to render any points if we're rendering triangles and there is no preview painter
+        if ( !context.renderContext().previewRenderPainter() )
+          continue;
+      }
+
       drawPoint( x, y, QColor( red, green, blue, alpha ), context );
       if ( renderElevation )
         drawPointToElevationMap( x, y, z, context );
@@ -135,7 +151,7 @@ void QgsPointCloudAttributeByRampRenderer::renderBlock( const QgsPointCloudBlock
 
 QgsPointCloudRenderer *QgsPointCloudAttributeByRampRenderer::create( QDomElement &element, const QgsReadWriteContext &context )
 {
-  std::unique_ptr< QgsPointCloudAttributeByRampRenderer > r = std::make_unique< QgsPointCloudAttributeByRampRenderer >();
+  auto r = std::make_unique< QgsPointCloudAttributeByRampRenderer >();
 
   r->setAttribute( element.attribute( QStringLiteral( "attribute" ), QStringLiteral( "Intensity" ) ) );
 
@@ -182,7 +198,7 @@ QList<QgsLayerTreeModelLegendNode *> QgsPointCloudAttributeByRampRenderer::creat
 
   switch ( mColorRampShader.colorRampType() )
   {
-    case QgsColorRampShader::Interpolated:
+    case Qgis::ShaderInterpolationMethod::Linear:
       // for interpolated shaders we use a ramp legend node unless the settings flag
       // to use the continuous legend is not set, in that case we fall through
       if ( mColorRampShader.sourceColorRamp() && ( ! mColorRampShader.legendSettings() || mColorRampShader.legendSettings()->useContinuousLegend() ) )
@@ -193,9 +209,9 @@ QList<QgsLayerTreeModelLegendNode *> QgsPointCloudAttributeByRampRenderer::creat
                                            mColorRampShader.maximumValue() );
         break;
       }
-      Q_FALLTHROUGH();
-    case QgsColorRampShader::Discrete:
-    case QgsColorRampShader::Exact:
+      [[fallthrough]];
+    case Qgis::ShaderInterpolationMethod::Discrete:
+    case Qgis::ShaderInterpolationMethod::Exact:
     {
       // for all others we use itemised lists
       QList< QPair< QString, QColor > > items;
@@ -253,7 +269,7 @@ void QgsPointCloudAttributeByRampRenderer::setMaximum( double value )
 
 std::unique_ptr<QgsPreparedPointCloudRendererData> QgsPointCloudAttributeByRampRenderer::prepare()
 {
-  std::unique_ptr< QgsPointCloudAttributeByRampRendererPreparedData> data = std::make_unique< QgsPointCloudAttributeByRampRendererPreparedData >();
+  auto data = std::make_unique< QgsPointCloudAttributeByRampRendererPreparedData >();
   data->attributeName = mAttribute;
   data->colorRampShader = mColorRampShader;
 

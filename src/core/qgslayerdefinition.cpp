@@ -27,7 +27,8 @@
 #include "qgsrasterlayer.h"
 #include "qgsreadwritecontext.h"
 #include "qgsvectorlayer.h"
-// #include "qgsvectortilelayer.h"
+#include "qgsvectortilelayer.h"
+#include "qgstiledscenelayer.h"
 #include "qgsapplication.h"
 #include "qgsmaplayerfactory.h"
 #include "qgsmeshlayer.h"
@@ -37,7 +38,7 @@
 #include "qgslayertreegroup.h"
 #include "qgslayertreelayer.h"
 
-bool QgsLayerDefinition::loadLayerDefinition( const QString &path, QgsProject *project, QgsLayerTreeGroup *rootGroup, QString &errorMessage )
+bool QgsLayerDefinition::loadLayerDefinition( const QString &path, QgsProject *project, QgsLayerTreeGroup *rootGroup, QString &errorMessage, Qgis::LayerTreeInsertionMethod insertMethod, const QgsLayerTreeRegistryBridge::InsertionPoint *insertPoint )
 {
   QFile file( path );
   if ( !file.open( QIODevice::ReadOnly ) )
@@ -61,14 +62,14 @@ bool QgsLayerDefinition::loadLayerDefinition( const QString &path, QgsProject *p
   context.setPathResolver( QgsPathResolver( path ) );
   context.setProjectTranslator( project );
 
-  return loadLayerDefinition( doc, project, rootGroup, errorMessage, context );
+  return loadLayerDefinition( doc, project, rootGroup, errorMessage, context, insertMethod, insertPoint );
 }
 
-bool QgsLayerDefinition::loadLayerDefinition( QDomDocument doc, QgsProject *project, QgsLayerTreeGroup *rootGroup, QString &errorMessage, QgsReadWriteContext &context )
+bool QgsLayerDefinition::loadLayerDefinition( QDomDocument doc, QgsProject *project, QgsLayerTreeGroup *rootGroup, QString &errorMessage, QgsReadWriteContext &context, Qgis::LayerTreeInsertionMethod insertMethod, const QgsLayerTreeRegistryBridge::InsertionPoint *insertPoint )
 {
   errorMessage.clear();
 
-  QgsLayerTreeGroup *root = new QgsLayerTreeGroup();
+  QgsLayerTreeGroup root;
 
   // reorder maplayer nodes based on dependencies
   // dependencies have to be resolved before IDs get changed
@@ -173,7 +174,7 @@ bool QgsLayerDefinition::loadLayerDefinition( QDomDocument doc, QgsProject *proj
   bool loadInLegend = true;
   if ( !layerTreeElem.isNull() )
   {
-    root->readChildrenFromXml( layerTreeElem, context );
+    root.readChildrenFromXml( layerTreeElem, context );
     loadInLegend = false;
   }
 
@@ -188,20 +189,36 @@ bool QgsLayerDefinition::loadLayerDefinition( QDomDocument doc, QgsProject *proj
     layer->resolveReferences( project );
   }
 
-  root->resolveReferences( project );
+  root.resolveReferences( project );
 
-  const QList<QgsLayerTreeNode *> nodes = root->children();
-  root->abandonChildren();
-  delete root;
+  const QList<QgsLayerTreeNode *> nodes = root.children();
+  root.abandonChildren();
 
-  rootGroup->insertChildNodes( -1, nodes );
+  switch ( insertMethod )
+  {
+    case Qgis::LayerTreeInsertionMethod::AboveInsertionPoint:
+      if ( insertPoint )
+      {
+        insertPoint->group->insertChildNodes( insertPoint->position, nodes );
+      }
+      else
+      {
+        rootGroup->insertChildNodes( -1, nodes );
+      }
+      break;
+    case Qgis::LayerTreeInsertionMethod::TopOfTree:
+      rootGroup->insertChildNodes( 0, nodes );
+      break;
+    default: //Keep current behavior for Qgis::LayerTreeInsertionMethod::OptimalInInsertionGroup
+      rootGroup->insertChildNodes( -1, nodes );
+  }
 
   return true;
 }
 
 bool QgsLayerDefinition::exportLayerDefinition( const QString &path, const QList<QgsLayerTreeNode *> &selectedTreeNodes, QString &errorMessage )
 {
-  return exportLayerDefinition( path, selectedTreeNodes, QgsProject::instance()->filePathStorage(), errorMessage );
+  return exportLayerDefinition( path, selectedTreeNodes, QgsProject::instance()->filePathStorage(), errorMessage ); // skip-keyword-check
 }
 
 bool QgsLayerDefinition::exportLayerDefinition( const QString &p, const QList<QgsLayerTreeNode *> &selectedTreeNodes, Qgis::FilePathType pathType, QString &errorMessage )
@@ -240,20 +257,17 @@ bool QgsLayerDefinition::exportLayerDefinition( QDomDocument doc, const QList<Qg
   Q_UNUSED( errorMessage )
   QDomElement qgiselm = doc.createElement( QStringLiteral( "qlr" ) );
   doc.appendChild( qgiselm );
-  const QList<QgsLayerTreeNode *> nodes = selectedTreeNodes;
-  QgsLayerTreeGroup *root = new QgsLayerTreeGroup;
-  const auto constNodes = nodes;
-  for ( QgsLayerTreeNode *node : constNodes )
+  QgsLayerTreeGroup root;
+  for ( QgsLayerTreeNode *node : selectedTreeNodes )
   {
     QgsLayerTreeNode *newnode = node->clone();
-    root->addChildNode( newnode );
+    root.addChildNode( newnode );
   }
-  root->writeXml( qgiselm, context );
+  root.writeXml( qgiselm, context );
 
   QDomElement layerselm = doc.createElement( QStringLiteral( "maplayers" ) );
-  const QList<QgsLayerTreeLayer *> layers = root->findLayers();
-  const auto constLayers = layers;
-  for ( QgsLayerTreeLayer *layer : constLayers )
+  const QList<QgsLayerTreeLayer *> layers = root.findLayers();
+  for ( QgsLayerTreeLayer *layer : layers )
   {
     if ( ! layer->layer() )
     {
@@ -332,11 +346,15 @@ QList<QgsMapLayer *> QgsLayerDefinition::loadLayerDefinitionLayersInternal( QDom
           break;
 
         case Qgis::LayerType::VectorTile:
-          // layer = new QgsVectorTileLayer;
+          layer = new QgsVectorTileLayer;
           break;
 
         case Qgis::LayerType::PointCloud:
           layer = new QgsPointCloudLayer();
+          break;
+
+        case Qgis::LayerType::TiledScene:
+          layer = new QgsTiledSceneLayer;
           break;
 
         case Qgis::LayerType::Group:
@@ -534,3 +552,5 @@ bool QgsLayerDefinition::DependencySorter::isLayerDependent( const QString &laye
 {
   return mDependentLayerIds.contains( layerId );
 }
+
+

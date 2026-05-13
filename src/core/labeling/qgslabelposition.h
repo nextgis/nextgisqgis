@@ -71,7 +71,6 @@ class CORE_EXPORT QgsLabelPosition
       , isUnplaced( isUnplaced )
     {}
 
-    //! Constructor for QgsLabelPosition
     QgsLabelPosition() = default;
 
 #ifdef SIP_RUN
@@ -144,7 +143,6 @@ class CORE_EXPORT QgsLabelPosition
 
     /**
      * ID of the associated label provider.
-     * \since QGIS 2.14
      */
     QString providerID;
 

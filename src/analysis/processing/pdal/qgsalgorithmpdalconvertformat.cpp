@@ -52,6 +52,11 @@ QString QgsPdalConvertFormatAlgorithm::shortHelpString() const
   return QObject::tr( "This algorithm converts point cloud to a different file format, e. g. creates compressed LAZ." );
 }
 
+QString QgsPdalConvertFormatAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Converts a point cloud to a different file format, e.g. creates compressed LAZ." );
+}
+
 QgsPdalConvertFormatAlgorithm *QgsPdalConvertFormatAlgorithm::createInstance() const
 {
   return new QgsPdalConvertFormatAlgorithm();
@@ -71,13 +76,12 @@ QStringList QgsPdalConvertFormatAlgorithm::createArgumentLists( const QVariantMa
   if ( !layer )
     throw QgsProcessingException( invalidPointCloudError( parameters, QStringLiteral( "INPUT" ) ) );
 
-  const QString outputFile = parameterAsOutputLayer( parameters, QStringLiteral( "OUTPUT" ), context );
+  const QString outputName = parameterAsOutputLayer( parameters, QStringLiteral( "OUTPUT" ), context );
+  QString outputFile = fixOutputFileName( layer->source(), outputName, context );
+  checkOutputFormat( layer->source(), outputFile );
   setOutputValue( QStringLiteral( "OUTPUT" ), outputFile );
 
-  QStringList args = { QStringLiteral( "translate" ),
-                       QStringLiteral( "--input=%1" ).arg( layer->source() ),
-                       QStringLiteral( "--output=%1" ).arg( outputFile )
-                     };
+  QStringList args = { QStringLiteral( "translate" ), QStringLiteral( "--input=%1" ).arg( layer->source() ), QStringLiteral( "--output=%1" ).arg( outputFile ) };
 
   applyThreadsParameter( args, context );
   return args;

@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgsmeshtransformcoordinatesdockwidget.h"
+#include "moc_qgsmeshtransformcoordinatesdockwidget.cpp"
 
 #include "qgsgui.h"
 #include "qgsexpressioncontextutils.h"
@@ -26,9 +27,11 @@
 #include "qgshelp.h"
 #include "qgscoordinateutils.h"
 #include "qgsapplication.h"
+#include "qgsterrainprovider.h"
+#include "qgsprojectelevationproperties.h"
 
-QgsMeshTransformCoordinatesDockWidget::QgsMeshTransformCoordinatesDockWidget( QWidget *parent ):
-  QgsDockWidget( parent )
+QgsMeshTransformCoordinatesDockWidget::QgsMeshTransformCoordinatesDockWidget( QWidget *parent )
+  : QgsDockWidget( parent )
 {
   setupUi( this );
 
@@ -53,16 +56,26 @@ QgsMeshTransformCoordinatesDockWidget::QgsMeshTransformCoordinatesDockWidget( QW
   connect( mButtonPreview, &QToolButton::clicked, this, &QgsMeshTransformCoordinatesDockWidget::calculate );
   connect( mButtonApply, &QPushButton::clicked, this, &QgsMeshTransformCoordinatesDockWidget::apply );
   connect( mButtonImport, &QToolButton::toggled, this, &QgsMeshTransformCoordinatesDockWidget::onImportVertexClicked );
+
+  connect( mCheckBoxZ, &QCheckBox::toggled, this, [=]( const bool checked ) {
+    if ( checked )
+      mCheckBoxZFromProjectTerrain->setChecked( false );
+  } );
+  connect( mCheckBoxZFromProjectTerrain, &QCheckBox::toggled, this, [=]( const bool checked ) {
+    if ( checked )
+      mCheckBoxZ->setChecked( false );
+  } );
+  connect( mCheckBoxZFromProjectTerrain, &QCheckBox::toggled, this, &QgsMeshTransformCoordinatesDockWidget::updateButton );
 }
 
 QgsExpressionContext QgsMeshTransformCoordinatesDockWidget::createExpressionContext() const
 {
-  return QgsExpressionContext( {QgsExpressionContextUtils::meshExpressionScope( QgsMesh::Vertex )} );
+  return QgsExpressionContext( { QgsExpressionContextUtils::meshExpressionScope( QgsMesh::Vertex ) } );
 }
 
 QgsMeshVertex QgsMeshTransformCoordinatesDockWidget::transformedVertex( int i )
 {
-  if ( ! mInputLayer || !mIsCalculated )
+  if ( !mInputLayer || !mIsCalculated )
     return QgsMeshVertex();
 
   return mTransformVertices.transformedVertex( mInputLayer, i );
@@ -94,13 +107,12 @@ void QgsMeshTransformCoordinatesDockWidget::setInput( QgsMeshLayer *layer, const
     {
       if ( mInputVertices.count() == 0 )
         mLabelInformation->setText( tr( "No vertex selected for mesh \"%1\"" ).arg( mInputLayer->name() ) );
-      else if ( mInputVertices.count() == 1 )
-        mLabelInformation->setText( tr( "1 vertex of mesh layer \"%1\" to transform" ).arg( mInputLayer->name() ) );
       else
-        mLabelInformation->setText( tr( "%1 vertices of mesh layer \"%2\" to transform" ).
-                                    arg( QString::number( mInputVertices.count() ), mInputLayer->name() ) );
+        mLabelInformation->setText( tr( "%n vertices of mesh layer \"%1\" to transform", nullptr, mInputVertices.count() )
+                                      .arg( mInputLayer->name() ) );
     }
   }
+
   importVertexCoordinates();
   updateButton();
   emit calculationUpdated();
@@ -114,13 +126,11 @@ void QgsMeshTransformCoordinatesDockWidget::calculate()
   QgsTemporaryCursorOverride busyCursor( Qt::WaitCursor );
   mTransformVertices.clear();
   mTransformVertices.setInputVertices( mInputVertices );
-  mTransformVertices.setExpressions( mCheckBoxX->isChecked() ? mExpressionEditX->expression() : QString(),
-                                     mCheckBoxY->isChecked() ? mExpressionEditY->expression() : QString(),
-                                     mCheckBoxZ->isChecked() ? mExpressionEditZ->expression() : QString() );
-  QgsExpressionContext context;
-  context.appendScope( QgsExpressionContextUtils::projectScope( QgsProject::instance() ) );
+  mTransformVertices.setExpressions( mCheckBoxX->isChecked() ? mExpressionEditX->expression() : QString(), mCheckBoxY->isChecked() ? mExpressionEditY->expression() : QString(), mCheckBoxZ->isChecked() ? mExpressionEditZ->expression() : QString() );
 
-  mIsResultValid = mTransformVertices.calculate( mInputLayer );
+  mTransformVertices.setZFromTerrain( mCheckBoxZFromProjectTerrain->isChecked() );
+
+  mIsResultValid = mTransformVertices.calculate( mInputLayer, QgsProject::instance() );
 
   mIsCalculated = true;
   mButtonApply->setEnabled( mIsResultValid );
@@ -130,6 +140,7 @@ void QgsMeshTransformCoordinatesDockWidget::calculate()
 
 void QgsMeshTransformCoordinatesDockWidget::updateButton()
 {
+  bool modifyXYZSelected = false;
   mButtonApply->setEnabled( false );
   bool isCalculable = mInputLayer && !mInputVertices.isEmpty();
   if ( isCalculable )
@@ -140,11 +151,21 @@ void QgsMeshTransformCoordinatesDockWidget::updateButton()
 
     if ( isCalculable )
     {
+      modifyXYZSelected = true;
+    }
+
+    if ( isCalculable )
+    {
       for ( int i = 0; i < mCheckBoxes.count(); ++i )
       {
         bool checked = mCheckBoxes.at( i )->isChecked();
         isCalculable &= !checked || mExpressionLineEdits.at( i )->isValidExpression();
       }
+    }
+
+    if ( !modifyXYZSelected && mCheckBoxZFromProjectTerrain->isChecked() )
+    {
+      isCalculable = true;
     }
   }
 
@@ -156,7 +177,7 @@ void QgsMeshTransformCoordinatesDockWidget::apply()
   emit aboutToBeApplied();
   QgsTemporaryCursorOverride busyCursor( Qt::WaitCursor );
   if ( mIsResultValid && mInputLayer && mInputLayer->meshEditor() )
-    mInputLayer->meshEditor()->advancedEdit( & mTransformVertices );
+    mInputLayer->meshEditor()->advancedEdit( &mTransformVertices );
   emit applied();
 }
 
@@ -196,4 +217,3 @@ void QgsMeshTransformCoordinatesDockWidget::importVertexCoordinates()
     }
   }
 }
-

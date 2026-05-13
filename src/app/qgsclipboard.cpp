@@ -26,6 +26,7 @@
 #include <QTextCodec>
 
 #include "qgsclipboard.h"
+#include "moc_qgsclipboard.cpp"
 #include "qgsfeature.h"
 #include "qgsfeaturestore.h"
 #include "qgsfields.h"
@@ -40,8 +41,10 @@
 #include "qgsmapcanvas.h"
 #include "qgsproject.h"
 #include "qgsapplication.h"
-// #include "qgsvectortilelayer.h"
+#include "qgsvectortilelayer.h"
 #include "qgsvectorlayerutils.h"
+#include "qgsmemoryproviderutils.h"
+#include "qgsmessagebar.h"
 
 #include <nlohmann/json.hpp>
 
@@ -59,6 +62,7 @@ void QgsClipboard::replaceWithCopyOf( QgsVectorLayer *src )
   mFeatureFields = src->fields();
   mFeatureClipboard = src->selectedFeatures();
   mCRS = src->crs();
+  mFeatureLayer = src;
   QgsDebugMsgLevel( QStringLiteral( "replaced QGIS clipboard." ), 2 );
 
   setSystemClipboard();
@@ -66,7 +70,6 @@ void QgsClipboard::replaceWithCopyOf( QgsVectorLayer *src )
   emit changed();
 }
 
-/*
 void QgsClipboard::replaceWithCopyOf( QgsVectorTileLayer *src )
 {
   if ( !src )
@@ -75,7 +78,7 @@ void QgsClipboard::replaceWithCopyOf( QgsVectorTileLayer *src )
   // things are a bit tricky for vector tile features, as each will have different fields
   // so we build a "super set" of fields first, and then make sure each feature has that superset present
 
-  const QList< QgsFeature > selectedFeatures = src->selectedFeatures();
+  const QList<QgsFeature> selectedFeatures = src->selectedFeatures();
   QgsFields supersetFields;
   for ( const QgsFeature &feature : selectedFeatures )
   {
@@ -100,20 +103,21 @@ void QgsClipboard::replaceWithCopyOf( QgsVectorTileLayer *src )
   }
 
   mCRS = src->crs();
+  mFeatureLayer = src;
   QgsDebugMsgLevel( QStringLiteral( "replaced QGIS clipboard." ), 2 );
 
   setSystemClipboard();
   mUseSystemClipboard = false;
   emit changed();
 }
-*/
 
-void QgsClipboard::replaceWithCopyOf( QgsFeatureStore &featureStore )
+void QgsClipboard::replaceWithCopyOf( QgsFeatureStore &featureStore, QgsVectorLayer *src )
 {
   QgsDebugMsgLevel( QStringLiteral( "features count = %1" ).arg( featureStore.features().size() ), 2 );
   mFeatureFields = featureStore.fields();
   mFeatureClipboard = featureStore.features();
   mCRS = featureStore.crs();
+  mFeatureLayer = src;
   setSystemClipboard();
   mUseSystemClipboard = false;
   emit changed();
@@ -121,27 +125,39 @@ void QgsClipboard::replaceWithCopyOf( QgsFeatureStore &featureStore )
 
 void QgsClipboard::generateClipboardText( QString &textContent, QString &htmlContent ) const
 {
-  const CopyFormat format = QgsSettings().enumValue( QStringLiteral( "qgis/copyFeatureFormat" ),  AttributesWithWKT );
+  CopyFormat format = QgsSettings().enumValue( QStringLiteral( "qgis/copyFeatureFormat" ), AttributesWithWKT );
 
   textContent.clear();
   htmlContent.clear();
+
+  if ( QgsVectorLayer *vectorLayer = qobject_cast<QgsVectorLayer *>( mFeatureLayer.data() ) )
+  {
+    if ( vectorLayer->geometryType() == Qgis::GeometryType::Null )
+    {
+      format = AttributesOnly;
+    }
+  }
 
   switch ( format )
   {
     case AttributesOnly:
     case AttributesWithWKT:
+    case AttributesWithWKB:
     {
       QStringList textLines, htmlLines;
       QStringList textFields, htmlFields;
 
       // first do the field names
-      if ( format == AttributesWithWKT )
+      if ( ( format == AttributesWithWKB ) || ( format == AttributesWithWKT ) )
       {
-        // only include the "wkt_geom" field IF we have other fields -- otherwise it's redundant and we should just set the clipboard to WKT text directly
+        const QLatin1String geometryHeading = format == AttributesWithWKB ? QLatin1String( "wkb_geom" ) : QLatin1String( "wkt_geom" );
+        // only include the "wkx_geom" field IF we have other fields -- otherwise it's redundant and we should just set the clipboard to WKT/WKB text directly
         if ( !mFeatureFields.isEmpty() )
-          textFields += QLatin1String( "wkt_geom" );
+        {
+          textFields += geometryHeading;
+        }
 
-        htmlFields += QLatin1String( "<td>wkt_geom</td>" );
+        htmlFields += QLatin1String( "<td>" ) + geometryHeading + QLatin1String( "</td>" );
       }
 
       textFields.reserve( mFeatureFields.size() );
@@ -163,13 +179,22 @@ void QgsClipboard::generateClipboardText( QString &textContent, QString &htmlCon
         const QgsAttributes attributes = it->attributes();
 
         // TODO: Set up Paste Transformations to specify the order in which fields are added.
-        if ( format == AttributesWithWKT )
+        if ( ( format == AttributesWithWKB ) || ( format == AttributesWithWKT ) )
         {
           if ( it->hasGeometry() )
           {
-            const QString wkt = it->geometry().asWkt();
-            textFields += wkt;
-            htmlFields += QStringLiteral( "<td>%1</td>" ).arg( wkt );
+            if ( format == AttributesWithWKT )
+            {
+              const QString wkt = it->geometry().asWkt();
+              textFields += wkt;
+              htmlFields += QStringLiteral( "<td>%1</td>" ).arg( wkt );
+            }
+            else if ( format == AttributesWithWKB )
+            {
+              const QString wkb = it->geometry().asWkb().toHex();
+              textFields += wkb;
+              htmlFields += QStringLiteral( "<td>%1</td>" ).arg( wkb );
+            }
           }
           else
           {
@@ -182,15 +207,18 @@ void QgsClipboard::generateClipboardText( QString &textContent, QString &htmlCon
         {
           QString value;
           QVariant variant = attributes.at( idx );
-          const bool useJSONFromVariant = variant.type() == QVariant::StringList || variant.type() == QVariant::List || variant.type() == QVariant::Map;
+          const bool useJSONFromVariant = variant.userType() == QMetaType::Type::QStringList || variant.userType() == QMetaType::Type::QVariantList || variant.userType() == QMetaType::Type::QVariantMap;
 
           if ( useJSONFromVariant )
           {
-            value = QString::fromStdString( QgsJsonUtils::jsonFromVariant( attributes.at( idx ) ).dump() );
+            value = QString::fromStdString( QgsJsonUtils::jsonFromVariant( variant ).dump() );
           }
           else
           {
-            value = attributes.at( idx ).toString();
+            if ( QgsVariantUtils::isNull( variant ) && variant.isValid() )
+              value = "";
+            else
+              value = variant.toString();
           }
 
           if ( value.contains( '\n' ) || value.contains( '\t' ) )
@@ -201,11 +229,14 @@ void QgsClipboard::generateClipboardText( QString &textContent, QString &htmlCon
           }
           if ( useJSONFromVariant )
           {
-            value = QString::fromStdString( QgsJsonUtils::jsonFromVariant( attributes.at( idx ) ).dump() );
+            value = QString::fromStdString( QgsJsonUtils::jsonFromVariant( variant ).dump() );
           }
           else
           {
-            value = attributes.at( idx ).toString();
+            if ( QgsVariantUtils::isNull( variant ) && variant.isValid() )
+              value = "";
+            else
+              value = variant.toString();
           }
           value.replace( '\n', QLatin1String( "<br>" ) ).replace( '\t', QLatin1String( "&emsp;" ) );
           htmlFields += QStringLiteral( "<td>%1</td>" ).arg( value );
@@ -278,20 +309,18 @@ QgsFeatureList QgsClipboard::stringToFeatureList( const QString &string, const Q
     return features;
 
   // Poor man's csv parser
-  bool isInsideQuotes {false};
+  bool isInsideQuotes { false };
   QgsAttributes attrs;
   QgsGeometry geom;
   QString attrVal;
-  bool isFirstLine {string.startsWith( QLatin1String( "wkt_geom" ) )};
+  bool isFirstLine { string.startsWith( QLatin1String( "wkt_geom" ) ) };
   // it seems there is no other way to check for header
-  const bool hasHeader{string.startsWith( QLatin1String( "wkt_geom" ) )};
+  const bool hasHeader { string.startsWith( QLatin1String( "wkt_geom" ) ) };
   QgsGeometry geometry;
-  bool setFields {fields.isEmpty()};
+  bool setFields { fields.isEmpty() };
   QgsFields fieldsFromClipboard;
 
-  auto parseFunc = [ & ]( const QChar & c )
-  {
-
+  auto parseFunc = [&]( const QChar &c ) {
     // parse geom only if it wasn't successfully set before
     if ( geometry.isNull() )
     {
@@ -302,7 +331,7 @@ QgsFeatureList QgsClipboard::stringToFeatureList( const QString &string, const Q
     {
       if ( attrVal != QLatin1String( "wkt_geom" ) ) // ignore this one
       {
-        fieldsFromClipboard.append( QgsField{attrVal, QVariant::String } );
+        fieldsFromClipboard.append( QgsField { attrVal, QMetaType::Type::QString } );
       }
     }
     else // ... or value
@@ -319,7 +348,7 @@ QgsFeatureList QgsClipboard::stringToFeatureList( const QString &string, const Q
       }
       else
       {
-        QgsFeature feature{setFields ? fieldsFromClipboard : fields};
+        QgsFeature feature { setFields ? fieldsFromClipboard : fields };
         feature.setGeometry( geometry );
         if ( hasHeader || !geometry.isNull() )
         {
@@ -403,7 +432,7 @@ QgsFields QgsClipboard::retrieveFields() const
           continue;
         }
 
-        f.append( QgsField( fieldName, QVariant::String ) );
+        f.append( QgsField( fieldName, QMetaType::Type::QString ) );
       }
     }
   }
@@ -514,12 +543,16 @@ void QgsClipboard::setText( const QString &text )
 
 bool QgsClipboard::hasFormat( const QString &mimeType ) const
 {
-  return QApplication::clipboard()->mimeData()->hasFormat( mimeType );
+  if ( const QMimeData *data = QApplication::clipboard()->mimeData() )
+    return data->hasFormat( mimeType );
+  return false;
 }
 
 QByteArray QgsClipboard::data( const QString &mimeType ) const
 {
-  return QApplication::clipboard()->mimeData()->data( mimeType );
+  if ( const QMimeData *data = QApplication::clipboard()->mimeData() )
+    return data->data( mimeType );
+  return QByteArray();
 }
 
 QgsFields QgsClipboard::fields() const
@@ -528,6 +561,125 @@ QgsFields QgsClipboard::fields() const
     return mFeatureFields;
   else
     return retrieveFields();
+}
+
+QgsMapLayer *QgsClipboard::layer() const
+{
+  if ( !mUseSystemClipboard )
+    return mFeatureLayer.data();
+  else
+    return nullptr;
+}
+
+std::unique_ptr<QgsVectorLayer> QgsClipboard::pasteToNewMemoryVector( QgsMessageBar *messageBar )
+{
+  const QgsFields fields = QgsClipboard::fields();
+
+  // Decide geometry type from features, switch to multi type if at least one multi is found
+  QMap<Qgis::WkbType, int> typeCounts;
+  const QgsFeatureList features = copyOf( fields );
+  for ( const QgsFeature &feature : features )
+  {
+    if ( !feature.hasGeometry() )
+      continue;
+
+    const Qgis::WkbType type = feature.geometry().wkbType();
+
+    if ( type == Qgis::WkbType::Unknown || type == Qgis::WkbType::NoGeometry )
+      continue;
+
+    if ( QgsWkbTypes::isSingleType( type ) )
+    {
+      if ( typeCounts.contains( QgsWkbTypes::multiType( type ) ) )
+      {
+        typeCounts[QgsWkbTypes::multiType( type )] = typeCounts[QgsWkbTypes::multiType( type )] + 1;
+      }
+      else
+      {
+        typeCounts[type] = typeCounts[type] + 1;
+      }
+    }
+    else if ( QgsWkbTypes::isMultiType( type ) )
+    {
+      if ( typeCounts.contains( QgsWkbTypes::singleType( type ) ) )
+      {
+        // switch to multi type
+        typeCounts[type] = typeCounts[QgsWkbTypes::singleType( type )];
+        typeCounts.remove( QgsWkbTypes::singleType( type ) );
+      }
+      typeCounts[type] = typeCounts[type] + 1;
+    }
+  }
+
+  const Qgis::WkbType wkbType = !typeCounts.isEmpty() ? typeCounts.constBegin().key() : Qgis::WkbType::NoGeometry;
+
+  if ( features.isEmpty() )
+  {
+    // should not happen
+    if ( messageBar )
+      messageBar->pushMessage( tr( "Paste features" ), tr( "No features in clipboard." ), Qgis::MessageLevel::Info );
+    return nullptr;
+  }
+  else if ( typeCounts.size() > 1 )
+  {
+    QString typeName = wkbType != Qgis::WkbType::NoGeometry ? QgsWkbTypes::displayString( wkbType ) : QStringLiteral( "none" );
+    if ( messageBar )
+      messageBar->pushMessage( tr( "Paste features" ), tr( "Multiple geometry types found, features with geometry different from %1 will be created without geometry." ).arg( typeName ), Qgis::MessageLevel::Info );
+  }
+
+  std::unique_ptr<QgsVectorLayer> layer( QgsMemoryProviderUtils::createMemoryLayer( QStringLiteral( "pasted_features" ), QgsFields(), wkbType, crs() ) );
+
+  if ( !layer->isValid() || !layer->dataProvider() )
+  {
+    if ( messageBar )
+      messageBar->pushMessage( tr( "Paste features" ), tr( "Cannot create new layer." ), Qgis::MessageLevel::Warning );
+    return nullptr;
+  }
+
+  layer->startEditing();
+  for ( const QgsField &f : QgsClipboard::fields() )
+  {
+    QgsDebugMsgLevel( QStringLiteral( "field %1 (%2)" ).arg( f.name(), QVariant::typeToName( f.type() ) ), 2 );
+    if ( !layer->addAttribute( f ) )
+    {
+      if ( messageBar )
+        messageBar->pushMessage( tr( "Paste features" ), tr( "Cannot create field %1 (%2,%3), falling back to string type" ).arg( f.name(), f.typeName(), QVariant::typeToName( f.type() ) ), Qgis::MessageLevel::Warning );
+
+      // Fallback to string
+      QgsField strField { f };
+      strField.setType( QMetaType::Type::QString );
+      if ( !layer->addAttribute( strField ) )
+      {
+        if ( messageBar )
+          messageBar->pushMessage( tr( "Paste features" ), tr( "Cannot create field %1 (%2,%3)" ).arg( strField.name(), strField.typeName(), QVariant::typeToName( strField.type() ) ), Qgis::MessageLevel::Critical );
+        return nullptr;
+      }
+    }
+  }
+
+  QgsFeatureList convertedFeatures { QgsVectorLayerUtils::makeFeaturesCompatible( features, layer.get() ) };
+
+  // Convert attributes
+  for ( auto it = convertedFeatures.begin(); it != convertedFeatures.end(); ++it )
+  {
+    for ( int idx = 0; idx < layer->fields().count() && idx < it->attributeCount(); ++idx )
+    {
+      QVariant attr = it->attribute( idx );
+      //if convertCompatible fails, it will replace attr with an appropriate null QVariant
+      //so we're calling setAttribute regardless, covering cases like 'Autogenerate' or 'nextVal()' on int fields.
+      layer->fields().at( idx ).convertCompatible( attr );
+      it->setAttribute( idx, attr );
+    }
+  }
+
+  if ( !layer->addFeatures( convertedFeatures ) || !layer->commitChanges() )
+  {
+    QgsDebugError( QStringLiteral( "Cannot add features or commit changes" ) );
+    return nullptr;
+  }
+
+  QgsDebugMsgLevel( QStringLiteral( "%1 features pasted to temporary scratch layer" ).arg( layer->featureCount() ), 2 );
+  return layer;
 }
 
 void QgsClipboard::systemClipboardChanged()

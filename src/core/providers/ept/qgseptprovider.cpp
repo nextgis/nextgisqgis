@@ -17,8 +17,8 @@
 
 #include "qgis.h"
 #include "qgseptprovider.h"
+#include "moc_qgseptprovider.cpp"
 #include "qgseptpointcloudindex.h"
-#include "qgsremoteeptpointcloudindex.h"
 #include "qgsruntimeprofiler.h"
 #include "qgsapplication.h"
 #include "qgsprovidersublayerdetails.h"
@@ -36,19 +36,23 @@
 QgsEptProvider::QgsEptProvider(
   const QString &uri,
   const QgsDataProvider::ProviderOptions &options,
-  QgsDataProvider::ReadFlags flags )
-  : QgsPointCloudDataProvider( uri, options, flags )
+  Qgis::DataProviderReadFlags flags )
+  : QgsPointCloudDataProvider( uri, options, flags ), mIndex( new QgsEptPointCloudIndex )
 {
-  if ( uri.startsWith( QStringLiteral( "http" ), Qt::CaseSensitivity::CaseInsensitive ) )
-    mIndex.reset( new QgsRemoteEptPointCloudIndex );
-  else
-    mIndex.reset( new QgsEptPointCloudIndex );
-
   std::unique_ptr< QgsScopedRuntimeProfile > profile;
   if ( QgsApplication::profiler()->groupIsActive( QStringLiteral( "projectload" ) ) )
     profile = std::make_unique< QgsScopedRuntimeProfile >( tr( "Open data source" ), QStringLiteral( "projectload" ) );
 
   loadIndex( );
+  if ( mIndex && !mIndex.isValid() )
+  {
+    appendError( mIndex.error() );
+  }
+}
+
+Qgis::DataProviderFlags QgsEptProvider::flags() const
+{
+  return Qgis::DataProviderFlag::FastExtent2D;
 }
 
 QgsEptProvider::~QgsEptProvider() = default;
@@ -57,28 +61,28 @@ QgsCoordinateReferenceSystem QgsEptProvider::crs() const
 {
   QGIS_PROTECT_QOBJECT_THREAD_ACCESS
 
-  return mIndex->crs();
+  return mIndex.crs();
 }
 
 QgsRectangle QgsEptProvider::extent() const
 {
   QGIS_PROTECT_QOBJECT_THREAD_ACCESS
 
-  return mIndex->extent();
+  return mIndex.extent();
 }
 
 QgsPointCloudAttributeCollection QgsEptProvider::attributes() const
 {
   QGIS_PROTECT_QOBJECT_THREAD_ACCESS
 
-  return mIndex->attributes();
+  return mIndex.attributes();
 }
 
 bool QgsEptProvider::isValid() const
 {
   QGIS_PROTECT_QOBJECT_THREAD_ACCESS
 
-  return mIndex->isValid();
+  return mIndex.isValid();
 }
 
 QString QgsEptProvider::name() const
@@ -95,36 +99,36 @@ QString QgsEptProvider::description() const
   return QStringLiteral( "Point Clouds EPT" );
 }
 
-QgsPointCloudIndex *QgsEptProvider::index() const
+QgsPointCloudIndex QgsEptProvider::index() const
 {
   // BAD! 2D rendering of point clouds is NOT thread safe
   QGIS_PROTECT_QOBJECT_THREAD_ACCESS_NON_FATAL
 
-  return mIndex.get();
+  return mIndex;
 }
 
 qint64 QgsEptProvider::pointCount() const
 {
   QGIS_PROTECT_QOBJECT_THREAD_ACCESS
 
-  return mIndex->pointCount();
+  return mIndex.pointCount();
 }
 
 void QgsEptProvider::loadIndex( )
 {
   QGIS_PROTECT_QOBJECT_THREAD_ACCESS
 
-  if ( mIndex->isValid() )
+  if ( mIndex.isValid() )
     return;
 
-  mIndex->load( dataSourceUri() );
+  mIndex.load( dataSourceUri() );
 }
 
 QVariantMap QgsEptProvider::originalMetadata() const
 {
   QGIS_PROTECT_QOBJECT_THREAD_ACCESS
 
-  return mIndex->originalMetadata();
+  return mIndex.originalMetadata();
 }
 
 void QgsEptProvider::generateIndex()
@@ -144,7 +148,7 @@ QIcon QgsEptProviderMetadata::icon() const
   return QgsApplication::getThemeIcon( QStringLiteral( "mIconPointCloudLayer.svg" ) );
 }
 
-QgsEptProvider *QgsEptProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags )
+QgsEptProvider *QgsEptProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags )
 {
   return new QgsEptProvider( uri, options, flags );
 }
@@ -218,6 +222,7 @@ QString QgsEptProviderMetadata::filters( Qgis::FileFilterType type )
     case Qgis::FileFilterType::Mesh:
     case Qgis::FileFilterType::MeshDataset:
     case Qgis::FileFilterType::VectorTile:
+    case Qgis::FileFilterType::TiledScene:
       return QString();
 
     case Qgis::FileFilterType::PointCloud:
@@ -248,5 +253,9 @@ QgsProviderMetadata::ProviderMetadataCapabilities QgsEptProviderMetadata::capabi
          | ProviderMetadataCapability::PriorityForUri
          | ProviderMetadataCapability::QuerySublayers;
 }
+
+#undef PROVIDER_KEY
+#undef PROVIDER_DESCRIPTION
+
 ///@endcond
 

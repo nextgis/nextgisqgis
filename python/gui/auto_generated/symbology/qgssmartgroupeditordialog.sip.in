@@ -3,19 +3,22 @@
  *                                                                      *
  * src/gui/symbology/qgssmartgroupeditordialog.h                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 
 class QgsSmartGroupCondition : QWidget
 {
+%Docstring(signature="appended")
+A widget for configuring the conditions attached to a style smart group.
+%End
 
 %TypeHeaderCode
 #include "qgssmartgroupeditordialog.h"
 %End
   public:
-    QgsSmartGroupCondition( int id,  QWidget *parent /TransferThis/ = 0 );
+    QgsSmartGroupCondition( int id, QWidget *parent /TransferThis/ = 0 );
 
     QString constraint();
 %Docstring
@@ -46,10 +49,13 @@ sets the remove button hidden state to 'hide'
     void destruct();
 
   signals:
-    void removed( int );
+
+    void removed( int id );
+%Docstring
+Emitted when the group with the specified ``id`` is removed.
+%End
 
   protected:
-
 };
 
 
@@ -58,6 +64,9 @@ sets the remove button hidden state to 'hide'
 
 class QgsSmartGroupEditorDialog : QDialog
 {
+%Docstring(signature="appended")
+A dialog for configuring a style smart group.
+%End
 
 %TypeHeaderCode
 #include "qgssmartgroupeditordialog.h"
@@ -108,5 +117,5 @@ slot to remove the condition with id int
  *                                                                      *
  * src/gui/symbology/qgssmartgroupeditordialog.h                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

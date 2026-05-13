@@ -27,23 +27,32 @@
 #include "qgsrendercontext.h"
 #include "qgsvectortiledataprovider.h"
 #include "qgstextrenderer.h"
+#include "qgsruntimeprofiler.h"
+#include "qgsapplication.h"
 
 #include <QElapsedTimer>
 #include <QThread>
 
 QgsVectorTileLayerRenderer::QgsVectorTileLayerRenderer( QgsVectorTileLayer *layer, QgsRenderContext &context )
   : QgsMapLayerRenderer( layer->id(), &context )
+  , mLayerName( layer->name() )
   , mDataProvider( qgis::down_cast< const QgsVectorTileDataProvider* >( layer->dataProvider() )->clone() )
   , mRenderer( layer->renderer()->clone() )
+  , mLayerBlendMode( layer->blendMode() )
   , mDrawTileBoundaries( layer->isTileBorderRenderingEnabled() )
+  , mLabelsEnabled( layer->labelsEnabled() )
   , mFeedback( new QgsFeedback )
   , mSelectedFeatures( layer->selectedFeatures() )
   , mLayerOpacity( layer->opacity() )
   , mTileMatrixSet( layer->tileMatrixSet() )
+  , mEnableProfile( context.flags() & Qgis::RenderContextFlag::RecordProfile )
 {
+  QElapsedTimer timer;
+  timer.start();
+
   if ( QgsLabelingEngine *engine = context.labelingEngine() )
   {
-    if ( layer->labeling() )
+    if ( layer->labelsEnabled() )
     {
       mLabelProvider = layer->labeling()->provider( layer );
       if ( mLabelProvider )
@@ -56,16 +65,32 @@ QgsVectorTileLayerRenderer::QgsVectorTileLayerRenderer( QgsVectorTileLayer *laye
   mClippingRegions = QgsMapClippingUtils::collectClippingRegionsForLayer( *renderContext(), layer );
 
   mDataProvider->moveToThread( nullptr );
+
+  mPreparationTime = timer.elapsed();
 }
 
 QgsVectorTileLayerRenderer::~QgsVectorTileLayerRenderer() = default;
 
 bool QgsVectorTileLayerRenderer::render()
 {
+  std::unique_ptr< QgsScopedRuntimeProfile > profile;
+  if ( mEnableProfile )
+  {
+    profile = std::make_unique< QgsScopedRuntimeProfile >( mLayerName, QStringLiteral( "rendering" ), layerId() );
+    if ( mPreparationTime > 0 )
+      QgsApplication::profiler()->record( QObject::tr( "Create renderer" ), mPreparationTime / 1000.0, QStringLiteral( "rendering" ) );
+  }
+
   QgsRenderContext &ctx = *renderContext();
 
   if ( ctx.renderingStopped() )
     return false;
+
+  std::unique_ptr< QgsScopedRuntimeProfile > preparingProfile;
+  if ( mEnableProfile )
+  {
+    preparingProfile = std::make_unique< QgsScopedRuntimeProfile >( QObject::tr( "Preparing render" ), QStringLiteral( "rendering" ) );
+  }
 
   mDataProvider->moveToThread( QThread::currentThread() );
 
@@ -83,7 +108,34 @@ bool QgsVectorTileLayerRenderer::render()
   tTotal.start();
 
   const double tileRenderScale = mTileMatrixSet.scaleForRenderContext( ctx );
-  QgsDebugMsgLevel( QStringLiteral( "Vector tiles rendering extent: " ) + ctx.extent().toString( -1 ), 2 );
+
+  QgsRectangle extent = ctx.extent();
+  if ( extent.isMaximal() )
+  {
+    // invalid extent. We don't want to fetch ALL tiles at the zoom level!
+    // This has occurred because the map renderer is being pessimistic and thinks a worst-case
+    // scenario is acceptable when it failed to transform the map extent to the layer's crs.
+    // But while that's permissible eg for a local raster layer, it's entirely inappropriate
+    // for vector tiles!
+    // So let's try and determine a MINIMAL extent for the layer, avoiding the pessimism used
+    // in the generic map renderer code
+    QgsCoordinateTransform layerToMapTransform = ctx.coordinateTransform();
+    layerToMapTransform.setAllowFallbackTransforms( true );
+    layerToMapTransform.setBallparkTransformsAreAppropriate( true );
+
+    QgsRectangle extentInMapCrs = ctx.mapExtent();
+    try
+    {
+      extent = layerToMapTransform.transformBoundingBox( extentInMapCrs, Qgis::TransformDirection::Reverse );
+    }
+    catch ( QgsCsException &cs )
+    {
+      QgsDebugError( QStringLiteral( "Could not transform map extent to layer extent -- cannot calculate valid extent for vector tiles, aborting: %1" ).arg( cs.what() ) );
+      return false;
+    }
+  }
+
+  QgsDebugMsgLevel( QStringLiteral( "Vector tiles rendering extent: " ) + extent.toString( -1 ), 2 );
   QgsDebugMsgLevel( QStringLiteral( "Vector tiles map scale 1 : %1" ).arg( tileRenderScale ), 2 );
 
   mTileZoomToFetch = mTileMatrixSet.scaleToZoomLevel( tileRenderScale );
@@ -93,18 +145,25 @@ bool QgsVectorTileLayerRenderer::render()
 
   mTileMatrix = mTileMatrixSet.tileMatrix( mTileZoomToFetch );
 
-  mTileRange = mTileMatrix.tileRangeFromExtent( ctx.extent() );
-  QgsDebugMsgLevel( QStringLiteral( "Vector tiles range X: %1 - %2  Y: %3 - %4" )
+  mTileRange = mTileMatrix.tileRangeFromExtent( extent );
+  QgsDebugMsgLevel( QStringLiteral( "Vector tiles range X: %1 - %2  Y: %3 - %4 (%5 tiles total)" )
                     .arg( mTileRange.startColumn() ).arg( mTileRange.endColumn() )
-                    .arg( mTileRange.startRow() ).arg( mTileRange.endRow() ), 2 );
+                    .arg( mTileRange.startRow() ).arg( mTileRange.endRow() ).arg( mTileRange.count() ), 2 );
 
   // view center is used to sort the order of tiles for fetching and rendering
-  const QPointF viewCenter = mTileMatrix.mapToTileCoordinates( ctx.extent().center() );
+  const QPointF viewCenter = mTileMatrix.mapToTileCoordinates( extent.center() );
 
   if ( !mTileRange.isValid() )
   {
     QgsDebugMsgLevel( QStringLiteral( "Vector tiles - outside of range" ), 2 );
     return true;   // nothing to do
+  }
+
+  preparingProfile.reset();
+  std::unique_ptr< QgsScopedRuntimeProfile > renderingProfile;
+  if ( mEnableProfile )
+  {
+    renderingProfile = std::make_unique< QgsScopedRuntimeProfile >( QObject::tr( "Rendering" ), QStringLiteral( "rendering" ) );
   }
 
   std::unique_ptr<QgsVectorTileLoader> asyncLoader;
@@ -192,6 +251,15 @@ bool QgsVectorTileLayerRenderer::render()
       mErrors.append( asyncLoader->error() );
   }
 
+  // Register labels features when all tiles are fetched to ensure consistent labeling
+  if ( mLabelProvider )
+  {
+    for ( const auto &tile : mTileDataMap )
+    {
+      mLabelProvider->registerTileFeatures( tile, ctx );
+    }
+  }
+
   if ( ctx.flags() & Qgis::RenderContextFlag::DrawSelection )
     mRenderer->renderSelectedFeatures( mSelectedFeatures, ctx );
 
@@ -206,7 +274,23 @@ bool QgsVectorTileLayerRenderer::render()
 
 bool QgsVectorTileLayerRenderer::forceRasterRender() const
 {
-  return renderContext()->testFlag( Qgis::RenderContextFlag::UseAdvancedEffects ) && ( !qgsDoubleNear( mLayerOpacity, 1.0 ) );
+  switch ( renderContext()->rasterizedRenderingPolicy() )
+  {
+    case Qgis::RasterizedRenderingPolicy::Default:
+    case Qgis::RasterizedRenderingPolicy::PreferVector:
+      break;
+
+    case Qgis::RasterizedRenderingPolicy::ForceVector:
+      return false;
+  }
+
+  if ( !qgsDoubleNear( mLayerOpacity, 1.0 ) )
+    return true;
+
+  if ( mLayerBlendMode != QPainter::CompositionMode_SourceOver )
+    return true;
+
+  return false;
 }
 
 void QgsVectorTileLayerRenderer::decodeAndDrawTile( const QgsVectorTileRawData &rawTile )
@@ -268,8 +352,9 @@ void QgsVectorTileLayerRenderer::decodeAndDrawTile( const QgsVectorTileRawData &
     mTotalDrawTime += tDraw.elapsed();
   }
 
+  // Store tile for later use
   if ( mLabelProvider )
-    mLabelProvider->registerTileFeatures( tile, ctx );
+    mTileDataMap.insert( tile.id().toString(), tile );
 
   if ( mDrawTileBoundaries )
   {

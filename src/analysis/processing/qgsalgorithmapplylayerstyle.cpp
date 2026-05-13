@@ -46,7 +46,12 @@ QString QgsApplyLayerStyleAlgorithm::groupId() const
 
 QString QgsApplyLayerStyleAlgorithm::shortHelpString() const
 {
-  return QObject::tr( "Applies the style to a layer. The style must be defined as QML file." );
+  return QObject::tr( "This algorithm applies the style to a layer. The style must be defined as QML file." );
+}
+
+QString QgsApplyLayerStyleAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Applies the style from a QML file to a layer." );
 }
 
 QgsApplyLayerStyleAlgorithm *QgsApplyLayerStyleAlgorithm::createInstance() const
@@ -57,7 +62,7 @@ QgsApplyLayerStyleAlgorithm *QgsApplyLayerStyleAlgorithm::createInstance() const
 void QgsApplyLayerStyleAlgorithm::initAlgorithm( const QVariantMap & )
 {
   addParameter( new QgsProcessingParameterMapLayer( QStringLiteral( "INPUT" ), QObject::tr( "Layer" ) ) );
-  addParameter( new QgsProcessingParameterFile( QStringLiteral( "STYLE" ), QObject::tr( "Style file" ),  QgsProcessingParameterFile::File, QStringLiteral( "qml" ) ) );
+  addParameter( new QgsProcessingParameterFile( QStringLiteral( "STYLE" ), QObject::tr( "Style file" ), Qgis::ProcessingFileParameterBehavior::File, QStringLiteral( "qml" ) ) );
   addOutput( new QgsProcessingOutputMapLayer( QStringLiteral( "OUTPUT" ), QObject::tr( "Styled" ) ) );
 }
 

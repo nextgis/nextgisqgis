@@ -14,10 +14,11 @@
  ***************************************************************************/
 
 #include "qgsarcgisvectortileservicedataprovider.h"
+#include "moc_qgsarcgisvectortileservicedataprovider.cpp"
 #include "qgsthreadingutils.h"
 #include "qgsapplication.h"
 #include "qgsblockingnetworkrequest.h"
-#include "qgsnetworkaccessmanager.h"
+#include "qgssetrequestinitiator_p.h"
 #include "qgsvectortileutils.h"
 #include "qgsarcgisrestutils.h"
 #include "qgslogger.h"
@@ -36,7 +37,7 @@ QString QgsArcGisVectorTileServiceDataProvider::ARCGIS_VT_SERVICE_DATA_PROVIDER_
 QString QgsArcGisVectorTileServiceDataProvider::ARCGIS_VT_SERVICE_DATA_PROVIDER_DESCRIPTION = QObject::tr( "ArcGIS Vector Tile Service data provider" );
 
 
-QgsArcGisVectorTileServiceDataProvider::QgsArcGisVectorTileServiceDataProvider( const QString &uri, const ProviderOptions &providerOptions, ReadFlags flags )
+QgsArcGisVectorTileServiceDataProvider::QgsArcGisVectorTileServiceDataProvider( const QString &uri, const ProviderOptions &providerOptions, Qgis::DataProviderReadFlags flags )
   : QgsXyzVectorTileDataProviderBase( uri, providerOptions, flags )
 {
   mIsValid = setupArcgisVectorTileServiceConnection();
@@ -70,6 +71,11 @@ QgsArcGisVectorTileServiceDataProvider::QgsArcGisVectorTileServiceDataProvider( 
   mArcgisStyleConfiguration = other.mArcgisStyleConfiguration;
   mCrs = other.mCrs;
   mLayerMetadata = other.mLayerMetadata;
+}
+
+Qgis::DataProviderFlags QgsArcGisVectorTileServiceDataProvider::flags() const
+{
+  return Qgis::DataProviderFlag::FastExtent2D;
 }
 
 Qgis::VectorTileProviderFlags QgsArcGisVectorTileServiceDataProvider::providerFlags() const
@@ -383,7 +389,7 @@ QgsProviderMetadata::ProviderCapabilities QgsArcGisVectorTileServiceDataProvider
   return QgsProviderMetadata::ProviderCapabilities();
 }
 
-QgsArcGisVectorTileServiceDataProvider *QgsArcGisVectorTileServiceDataProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags )
+QgsArcGisVectorTileServiceDataProvider *QgsArcGisVectorTileServiceDataProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags )
 {
   return new QgsArcGisVectorTileServiceDataProvider( uri, options, flags );
 }

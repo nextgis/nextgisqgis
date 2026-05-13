@@ -14,7 +14,9 @@
  ***************************************************************************/
 
 #include "qgsextentgroupbox.h"
+#include "moc_qgsextentgroupbox.cpp"
 #include "qgsextentwidget.h"
+#include "qgsmaplayer.h"
 
 QgsExtentGroupBox::QgsExtentGroupBox( QWidget *parent )
   : QgsCollapsibleGroupBox( parent )
@@ -28,9 +30,9 @@ QgsExtentGroupBox::QgsExtentGroupBox( QWidget *parent )
   connect( this, &QGroupBox::toggled, this, &QgsExtentGroupBox::groupBoxClicked );
   connect( mWidget, &QgsExtentWidget::extentChanged, this, &QgsExtentGroupBox::widgetExtentChanged );
   connect( mWidget, &QgsExtentWidget::validationChanged, this, &QgsExtentGroupBox::validationChanged );
+  connect( mWidget, &QgsExtentWidget::extentLayerChanged, this, &QgsExtentGroupBox::extentLayerChanged );
 
-  connect( mWidget, &QgsExtentWidget::toggleDialogVisibility, this, [ = ]( bool visible )
-  {
+  connect( mWidget, &QgsExtentWidget::toggleDialogVisibility, this, [=]( bool visible ) {
     QWidget *w = window();
     // Don't hide the main window or we'll get locked outside!
     if ( w->objectName() == QLatin1String( "QgisApp" ) )
@@ -176,7 +178,7 @@ QgsCoordinateReferenceSystem QgsExtentGroupBox::outputCrs() const
 
 QgsExtentGroupBox::ExtentState QgsExtentGroupBox::extentState() const
 {
-  return static_cast< QgsExtentGroupBox::ExtentState >( mWidget->extentState() );
+  return static_cast<QgsExtentGroupBox::ExtentState>( mWidget->extentState() );
 }
 
 void QgsExtentGroupBox::setTitleBase( const QString &title )

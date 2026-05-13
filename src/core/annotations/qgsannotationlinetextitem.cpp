@@ -36,7 +36,8 @@ QgsAnnotationLineTextItem::QgsAnnotationLineTextItem( const QString &text, QgsCu
 Qgis::AnnotationItemFlags QgsAnnotationLineTextItem::flags() const
 {
   // in truth this should depend on whether the text format is scale dependent or not!
-  return Qgis::AnnotationItemFlag::ScaleDependentBoundingBox;
+  return Qgis::AnnotationItemFlag::ScaleDependentBoundingBox
+         | Qgis::AnnotationItemFlag::SupportsReferenceScale;
 }
 
 QgsAnnotationLineTextItem::~QgsAnnotationLineTextItem() = default;
@@ -84,7 +85,7 @@ void QgsAnnotationLineTextItem::render( QgsRenderContext &context, QgsFeedback *
 
   const double offsetFromLine = context.convertToPainterUnits( mOffsetFromLineDistance, mOffsetFromLineUnit, mOffsetFromLineScale );
 
-  QgsTextRenderer::drawTextOnLine( pts, displayText, context, mTextFormat, 0, offsetFromLine );
+  QgsTextRenderer::drawTextOnLine( pts, displayText, context, mTextFormat, 0, offsetFromLine, Qgis::CurvedTextFlag::UseBaselinePlacement | Qgis::CurvedTextFlag::ExtendLineToFitText );
 }
 
 bool QgsAnnotationLineTextItem::writeXml( QDomElement &element, QDomDocument &document, const QgsReadWriteContext &context ) const
@@ -105,7 +106,7 @@ bool QgsAnnotationLineTextItem::writeXml( QDomElement &element, QDomDocument &do
   return true;
 }
 
-QList<QgsAnnotationItemNode> QgsAnnotationLineTextItem::nodes() const
+QList<QgsAnnotationItemNode> QgsAnnotationLineTextItem::nodesV2( const QgsAnnotationItemEditContext & ) const
 {
   QList< QgsAnnotationItemNode > res;
   int i = 0;
@@ -116,7 +117,7 @@ QList<QgsAnnotationItemNode> QgsAnnotationLineTextItem::nodes() const
   return res;
 }
 
-Qgis::AnnotationItemEditOperationResult QgsAnnotationLineTextItem::applyEdit( QgsAbstractAnnotationItemEditOperation *operation )
+Qgis::AnnotationItemEditOperationResult QgsAnnotationLineTextItem::applyEditV2( QgsAbstractAnnotationItemEditOperation *operation, const QgsAnnotationItemEditContext & )
 {
   switch ( operation->type() )
   {
@@ -160,13 +161,13 @@ Qgis::AnnotationItemEditOperationResult QgsAnnotationLineTextItem::applyEdit( Qg
   return Qgis::AnnotationItemEditOperationResult::Invalid;
 }
 
-QgsAnnotationItemEditOperationTransientResults *QgsAnnotationLineTextItem::transientEditResults( QgsAbstractAnnotationItemEditOperation *operation )
+QgsAnnotationItemEditOperationTransientResults *QgsAnnotationLineTextItem::transientEditResultsV2( QgsAbstractAnnotationItemEditOperation *operation, const QgsAnnotationItemEditContext & )
 {
   switch ( operation->type() )
   {
     case QgsAbstractAnnotationItemEditOperation::Type::MoveNode:
     {
-      QgsAnnotationItemEditOperationMoveNode *moveOperation = dynamic_cast< QgsAnnotationItemEditOperationMoveNode * >( operation );
+      QgsAnnotationItemEditOperationMoveNode *moveOperation = qgis::down_cast< QgsAnnotationItemEditOperationMoveNode * >( operation );
       std::unique_ptr< QgsCurve > modifiedCurve( mCurve->clone() );
       if ( modifiedCurve->moveVertex( moveOperation->nodeId(), QgsPoint( moveOperation->after() ) ) )
       {
@@ -246,9 +247,9 @@ QgsRectangle QgsAnnotationLineTextItem::boundingBox( QgsRenderContext &context )
   return mCurve->boundingBox().buffered( heightInMapUnits + lineOffsetInMapUnits );
 }
 
-QgsAnnotationLineTextItem *QgsAnnotationLineTextItem::clone()
+QgsAnnotationLineTextItem *QgsAnnotationLineTextItem::clone() const
 {
-  std::unique_ptr< QgsAnnotationLineTextItem > item = std::make_unique< QgsAnnotationLineTextItem >( mText, mCurve->clone() );
+  auto item = std::make_unique< QgsAnnotationLineTextItem >( mText, mCurve->clone() );
   item->setFormat( mTextFormat );
   item->setOffsetFromLine( mOffsetFromLineDistance );
   item->setOffsetFromLineUnit( mOffsetFromLineUnit );

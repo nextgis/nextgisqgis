@@ -16,12 +16,14 @@
  ***************************************************************************/
 
 #include "qgseptpointcloudblockrequest.h"
+#include "moc_qgseptpointcloudblockrequest.cpp"
 
 #include "qgstiledownloadmanager.h"
 #include "qgseptdecoder.h"
 #include "qgslazdecoder.h"
 #include "qgsapplication.h"
 #include "qgsnetworkaccessmanager.h"
+#include "qgssetrequestinitiator_p.h"
 
 //
 // QgsEptPointCloudBlockRequest
@@ -29,13 +31,13 @@
 
 ///@cond PRIVATE
 
-QgsEptPointCloudBlockRequest::QgsEptPointCloudBlockRequest( const IndexedPointCloudNode &node, const QString &uri, const QString &dataType,
+QgsEptPointCloudBlockRequest::QgsEptPointCloudBlockRequest( const QgsPointCloudNodeId &node, const QString &uri, const QString &dataType,
     const QgsPointCloudAttributeCollection &attributes, const QgsPointCloudAttributeCollection &requestedAttributes,
     const QgsVector3D &scale, const QgsVector3D &offset, const QgsPointCloudExpression &filterExpression, const QgsRectangle &filterRect )
   : QgsPointCloudBlockRequest( node, uri, attributes, requestedAttributes, scale, offset, filterExpression, filterRect ),
     mDataType( dataType )
 {
-  QNetworkRequest nr( mUri );
+  QNetworkRequest nr = QNetworkRequest( QUrl( mUri ) );
   QgsSetRequestInitiatorClass( nr, QStringLiteral( "QgsEptPointCloudBlockRequest" ) );
   QgsSetRequestInitiatorId( nr, node.toString() );
   nr.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache );
@@ -68,6 +70,13 @@ void QgsEptPointCloudBlockRequest::blockFinishedLoading()
       else
       {
         error = QStringLiteral( "Unknown data type %1;" ).arg( mDataType );
+      }
+      if ( mBlock )
+      {
+        QgsPointCloudRequest req;
+        req.setAttributes( mRequestedAttributes );
+        req.setFilterRect( mFilterRect );
+        QgsAbstractPointCloudIndex::storeNodeDataToCacheStatic( mBlock.get(), mNode, req, mFilterExpression, mUri );
       }
     }
     catch ( std::exception &e )

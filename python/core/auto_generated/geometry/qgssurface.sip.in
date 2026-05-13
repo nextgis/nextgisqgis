@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/geometry/qgssurface.h                                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -21,13 +21,7 @@ Surface geometry type.
 %End
   public:
 
-    virtual QgsPolygon *surfaceToPolygon() const = 0 /Factory/;
-%Docstring
-Gets a polygon representation of this surface.
-Ownership is transferred to the caller.
-%End
-
-    virtual QgsRectangle boundingBox() const;
+    virtual QgsBox3D boundingBox3D() const;
 
     virtual bool isValid( QString &error /Out/, Qgis::GeometryValidityFlags flags = Qgis::GeometryValidityFlags() ) const;
 
@@ -45,5 +39,5 @@ Ownership is transferred to the caller.
  *                                                                      *
  * src/core/geometry/qgssurface.h                                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

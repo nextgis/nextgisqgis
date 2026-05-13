@@ -21,6 +21,8 @@
 #include "qgslinestring.h"
 #include "qgsmeshlayerinterpolator.h"
 #include "qgsmeshlayerutils.h"
+#include "qgsrastershader.h"
+#include "qgssinglebandpseudocolorrenderer.h"
 
 #include <QPointer>
 
@@ -760,7 +762,7 @@ QgsMeshStreamlinesField::QgsMeshStreamlinesField( const QgsTriangularMesh &trian
     double magMax,
     bool dataIsOnVertices,
     QgsRenderContext &rendererContext,
-    const QgsInterpolatedLineColor vectorColoring )
+    const QgsInterpolatedLineColor &vectorColoring )
   : QgsMeshStreamField(
       triangularMesh,
       datasetVectorValues,
@@ -784,7 +786,7 @@ QgsMeshStreamlinesField::QgsMeshStreamlinesField(
   double magMax,
   bool dataIsOnVertices,
   QgsRenderContext &rendererContext,
-  const QgsInterpolatedLineColor vectorColoring )
+  const QgsInterpolatedLineColor &vectorColoring )
   : QgsMeshStreamField(
       triangularMesh,
       datasetVectorValues,
@@ -1114,7 +1116,7 @@ QgsMeshParticleTracesField::QgsMeshParticleTracesField( const QgsTriangularMesh 
     double magMax,
     bool dataIsOnVertices,
     const QgsRenderContext &rendererContext,
-    const QgsInterpolatedLineColor vectorColoring ):
+    const QgsInterpolatedLineColor &vectorColoring ):
   QgsMeshStreamField( triangularMesh,
                       datasetVectorValues,
                       scalarActiveFaceFlagValues,

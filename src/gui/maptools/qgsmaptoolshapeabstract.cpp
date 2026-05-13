@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgsmaptoolshapeabstract.h"
+#include "moc_qgsmaptoolshapeabstract.cpp"
 #include "qgsgeometryrubberband.h"
 
 #include <QKeyEvent>
@@ -49,6 +50,8 @@ void QgsMapToolShapeAbstract::clean()
 
 void QgsMapToolShapeAbstract::undo()
 {
-  if ( mPoints.count() > 0 )
+  if ( mPoints.count() == 1 )
+    clean();
+  else if ( mPoints.count() > 1 )
     mPoints.removeLast();
 }

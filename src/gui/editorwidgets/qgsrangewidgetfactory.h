@@ -24,13 +24,12 @@ SIP_NO_FILE
 /**
  * \ingroup gui
  * \class QgsRangeWidgetFactory
+ * \brief Editor widget factory for range widgets.
  * \note not available in Python bindings
  */
-
 class GUI_EXPORT QgsRangeWidgetFactory : public QgsEditorWidgetFactory
 {
   public:
-
     /**
      * Constructor for QgsRangeWidgetFactory, where \a name is a human-readable
      * name for the factory.

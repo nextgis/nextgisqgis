@@ -17,6 +17,7 @@ email                : a.furieri@lqt.it
  ***************************************************************************/
 
 #include "qgsspatialitesourceselect.h"
+#include "moc_qgsspatialitesourceselect.cpp"
 #include "qgsspatialiteconnection.h"
 
 #include "qgsquerybuilder.h"
@@ -40,11 +41,13 @@ email                : a.furieri@lqt.it
 #include <QPushButton>
 
 #ifdef _MSC_VER
-#define strcasecmp(a,b) stricmp(a,b)
+#define strcasecmp( a, b ) stricmp( a, b )
 #endif
 
-QgsSpatiaLiteSourceSelect::QgsSpatiaLiteSourceSelect( QWidget *parent, Qt::WindowFlags fl, QgsProviderRegistry::WidgetMode theWidgetMode ):
-  QgsAbstractDbSourceSelect( parent, fl, theWidgetMode )
+static const QString SETTINGS_WINDOWS_PATH = QStringLiteral( "SpatiaLiteSourceSelect" );
+
+QgsSpatiaLiteSourceSelect::QgsSpatiaLiteSourceSelect( QWidget *parent, Qt::WindowFlags fl, QgsProviderRegistry::WidgetMode theWidgetMode )
+  : QgsAbstractDbSourceSelect( parent, fl, theWidgetMode )
 {
   QgsGui::enableAutoGeometryRestore( this );
 
@@ -56,11 +59,10 @@ QgsSpatiaLiteSourceSelect::QgsSpatiaLiteSourceSelect( QWidget *parent, Qt::Windo
   setupButtons( buttonBox );
   connect( buttonBox, &QDialogButtonBox::helpRequested, this, &QgsSpatiaLiteSourceSelect::showHelp );
 
-  const QgsSettings settings;
-  mHoldDialogOpen->setChecked( settings.value( QStringLiteral( "Windows/SpatiaLiteSourceSelect/HoldDialogOpen" ), false ).toBool() );
+  mHoldDialogOpen->setChecked( settingHoldDialogOpen->value( { SETTINGS_WINDOWS_PATH } ) );
 
   setWindowTitle( tr( "Add SpatiaLite Layer(s)" ) );
-  btnEdit->hide();  // hide the edit button
+  btnEdit->hide(); // hide the edit button
   btnSave->hide();
   btnLoad->hide();
 
@@ -68,7 +70,7 @@ QgsSpatiaLiteSourceSelect::QgsSpatiaLiteSourceSelect( QWidget *parent, Qt::Windo
   connect( mStatsButton, &QAbstractButton::clicked, this, &QgsSpatiaLiteSourceSelect::updateStatistics );
   mStatsButton->setEnabled( false );
 
-  if ( widgetMode() != QgsProviderRegistry::WidgetMode::None )
+  if ( widgetMode() != QgsProviderRegistry::WidgetMode::Standalone )
   {
     mHoldDialogOpen->hide();
   }
@@ -87,8 +89,9 @@ QgsSpatiaLiteSourceSelect::QgsSpatiaLiteSourceSelect( QWidget *parent, Qt::Windo
 
 QgsSpatiaLiteSourceSelect::~QgsSpatiaLiteSourceSelect()
 {
-  QgsSettings settings;
-  settings.setValue( QStringLiteral( "Windows/SpatiaLiteSourceSelect/HoldDialogOpen" ), mHoldDialogOpen->isChecked() );
+  settingHoldDialogOpen->setValue( mHoldDialogOpen->isChecked(), { SETTINGS_WINDOWS_PATH } );
+  //store general settings in base class
+  storeSettings();
 }
 
 
@@ -108,9 +111,9 @@ void QgsSpatiaLiteSourceSelect::updateStatistics()
 
   const QString msg = tr( "Are you sure you want to update the internal statistics for DB: %1?\n\n"
                           "This could take a long time (depending on the DB size), "
-                          "but implies better performance thereafter." ).arg( subKey );
-  const QMessageBox::StandardButton result =
-    QMessageBox::question( this, tr( "Confirm Update Statistics" ), msg, QMessageBox::Yes | QMessageBox::No );
+                          "but implies better performance thereafter." )
+                        .arg( subKey );
+  const QMessageBox::StandardButton result = QMessageBox::question( this, tr( "Confirm Update Statistics" ), msg, QMessageBox::Yes | QMessageBox::No );
   if ( result != QMessageBox::Yes )
     return;
 
@@ -118,13 +121,11 @@ void QgsSpatiaLiteSourceSelect::updateStatistics()
   QgsSpatiaLiteConnection conn( subKey );
   if ( conn.updateStatistics() )
   {
-    QMessageBox::information( this, tr( "Update Statistics" ),
-                              tr( "Internal statistics successfully updated for: %1" ).arg( subKey ) );
+    QMessageBox::information( this, tr( "Update Statistics" ), tr( "Internal statistics successfully updated for: %1" ).arg( subKey ) );
   }
   else
   {
-    QMessageBox::critical( this, tr( "Update Statistics" ),
-                           tr( "Error while updating internal statistics for: %1" ).arg( subKey ) );
+    QMessageBox::critical( this, tr( "Update Statistics" ), tr( "Error while updating internal statistics for: %1" ).arg( subKey ) );
   }
 }
 
@@ -152,7 +153,7 @@ void QgsSpatiaLiteSourceSelect::populateConnectionList()
   for ( const QString &name : list )
   {
     // retrieving the SQLite DB name and full path
-    const QString text = name + tr( "@" ) + QgsSpatiaLiteConnection::connectionPath( name );
+    const QString text = name + '@' + QgsSpatiaLiteConnection::connectionPath( name );
     cmbConnections->addItem( text );
   }
   setConnectionListPosition();
@@ -165,7 +166,7 @@ void QgsSpatiaLiteSourceSelect::populateConnectionList()
 
 void QgsSpatiaLiteSourceSelect::btnNew_clicked()
 {
-  if ( ! newConnection( this ) )
+  if ( !newConnection( this ) )
     return;
   populateConnectionList();
   emit connectionsChanged();
@@ -177,9 +178,7 @@ bool QgsSpatiaLiteSourceSelect::newConnection( QWidget *parent )
   QgsSettings settings;
   const QString lastUsedDir = settings.value( QStringLiteral( "UI/lastSpatiaLiteDir" ), QDir::homePath() ).toString();
 
-  const QString myFile = QFileDialog::getOpenFileName( parent,
-                         tr( "Choose a SpatiaLite/SQLite DB to open" ),
-                         lastUsedDir, tr( "SpatiaLite DB" ) + " (*.sqlite *.db *.sqlite3 *.db3 *.s3db);;" + tr( "All files" ) + " (*)" );
+  const QString myFile = QFileDialog::getOpenFileName( parent, tr( "Choose a SpatiaLite/SQLite DB to open" ), lastUsedDir, tr( "SpatiaLite DB" ) + " (*.sqlite *.db *.sqlite3 *.db3 *.s3db);;" + tr( "All files" ) + " (*)" );
 
   if ( myFile.isEmpty() )
     return false;
@@ -197,12 +196,10 @@ bool QgsSpatiaLiteSourceSelect::newConnection( QWidget *parent )
   //closeSpatiaLiteDb( handle );
 
   // if there is already a connection with this name, ask for a new name
-  while ( ! settings.value( baseKey + savedName + "/sqlitepath", "" ).toString().isEmpty() )
+  while ( !settings.value( baseKey + savedName + "/sqlitepath", "" ).toString().isEmpty() )
   {
     bool ok;
-    savedName = QInputDialog::getText( nullptr, tr( "Add Connection" ),
-                                       tr( "A connection with the same name already exists,\nplease provide a new name:" ), QLineEdit::Normal,
-                                       QString(), &ok );
+    savedName = QInputDialog::getText( nullptr, tr( "Add Connection" ), tr( "A connection with the same name already exists,\nplease provide a new name:" ), QLineEdit::Normal, QString(), &ok );
     if ( !ok || savedName.isEmpty() )
     {
       return false;
@@ -217,7 +214,7 @@ bool QgsSpatiaLiteSourceSelect::newConnection( QWidget *parent )
 
   // inserting this SQLite DB path
   QgsProviderMetadata *providerMetadata = QgsProviderRegistry::instance()->providerMetadata( QStringLiteral( "spatialite" ) );
-  std::unique_ptr< QgsSpatiaLiteProviderConnection > providerConnection( qgis::down_cast<QgsSpatiaLiteProviderConnection *>( providerMetadata->createConnection( dsUri.uri(), QVariantMap() ) ) );
+  std::unique_ptr<QgsSpatiaLiteProviderConnection> providerConnection( qgis::down_cast<QgsSpatiaLiteProviderConnection *>( providerMetadata->createConnection( dsUri.uri(), QVariantMap() ) ) );
   providerMetadata->saveConnection( providerConnection.get(), savedName );
   return true;
 }
@@ -232,7 +229,7 @@ QString QgsSpatiaLiteSourceSelect::layerURI( const QModelIndex &index )
   {
     const int a = geomColumnName.indexOf( QLatin1String( " AS " ) );
     const QString typeName = geomColumnName.mid( a + 4 ); //only the type name
-    geomColumnName = geomColumnName.left( a ); //only the geom column name
+    geomColumnName = geomColumnName.left( a );            //only the geom column name
     QString geomFilter;
 
     if ( typeName == QLatin1String( "POINT" ) )
@@ -273,8 +270,7 @@ void QgsSpatiaLiteSourceSelect::btnDelete_clicked()
     subKey.truncate( idx );
 
   const QString msg = tr( "Are you sure you want to remove the %1 connection and all associated settings?" ).arg( subKey );
-  const QMessageBox::StandardButton result =
-    QMessageBox::question( this, tr( "Confirm Delete" ), msg, QMessageBox::Yes | QMessageBox::No );
+  const QMessageBox::StandardButton result = QMessageBox::question( this, tr( "Confirm Delete" ), msg, QMessageBox::Yes | QMessageBox::No );
   if ( result != QMessageBox::Yes )
     return;
 
@@ -289,8 +285,8 @@ void QgsSpatiaLiteSourceSelect::addButtonClicked()
 {
   m_selectedTables.clear();
 
-  typedef QMap < int, bool >schemaInfo;
-  QMap < QString, schemaInfo > dbInfo;
+  typedef QMap<int, bool> schemaInfo;
+  QMap<QString, schemaInfo> dbInfo;
 
   const QItemSelection selection = mTablesTreeView->selectionModel()->selection();
   const QModelIndexList selectedIndices = selection.indexes();
@@ -327,7 +323,7 @@ void QgsSpatiaLiteSourceSelect::addButtonClicked()
   else
   {
     emit addDatabaseLayers( m_selectedTables, QStringLiteral( "spatialite" ) );
-    if ( widgetMode() == QgsProviderRegistry::WidgetMode::None && ! mHoldDialogOpen->isChecked() )
+    if ( widgetMode() == QgsProviderRegistry::WidgetMode::Standalone && !mHoldDialogOpen->isChecked() )
     {
       accept();
     }
@@ -360,24 +356,19 @@ void QgsSpatiaLiteSourceSelect::btnConnect_clicked()
     switch ( err )
     {
       case QgsSpatiaLiteConnection::NotExists:
-        QMessageBox::critical( this, tr( "SpatiaLite DB Open Error" ),
-                               tr( "Database does not exist: %1" ).arg( mSqlitePath ) );
+        QMessageBox::critical( this, tr( "SpatiaLite DB Open Error" ), tr( "Database does not exist: %1" ).arg( mSqlitePath ) );
         break;
       case QgsSpatiaLiteConnection::FailedToOpen:
-        QMessageBox::critical( this, tr( "SpatiaLite DB Open Error" ),
-                               tr( "Failure while connecting to: %1\n\n%2" ).arg( mSqlitePath, errCause ) );
+        QMessageBox::critical( this, tr( "SpatiaLite DB Open Error" ), tr( "Failure while connecting to: %1\n\n%2" ).arg( mSqlitePath, errCause ) );
         break;
       case QgsSpatiaLiteConnection::FailedToGetTables:
-        QMessageBox::critical( this, tr( "SpatiaLite getTableInfo Error" ),
-                               tr( "Failure exploring tables from: %1\n\n%2" ).arg( mSqlitePath, errCause ) );
+        QMessageBox::critical( this, tr( "SpatiaLite getTableInfo Error" ), tr( "Failure exploring tables from: %1\n\n%2" ).arg( mSqlitePath, errCause ) );
         break;
       case QgsSpatiaLiteConnection::FailedToCheckMetadata:
-        QMessageBox::critical( this, tr( "SpatiaLite metadata check failed" ),
-                               tr( "Failure getting table metadata. Is %1 really a SpatiaLite database?\n\n%2" ).arg( mSqlitePath, errCause ) );
+        QMessageBox::critical( this, tr( "SpatiaLite metadata check failed" ), tr( "Failure getting table metadata. Is %1 really a SpatiaLite database?\n\n%2" ).arg( mSqlitePath, errCause ) );
         break;
       default:
-        QMessageBox::critical( this, tr( "SpatiaLite Error" ),
-                               tr( "Unexpected error when working with %1\n\n%2" ).arg( mSqlitePath, errCause ) );
+        QMessageBox::critical( this, tr( "SpatiaLite Error" ), tr( "Unexpected error when working with %1\n\n%2" ).arg( mSqlitePath, errCause ) );
     }
     mSqlitePath = QString();
     return;
@@ -442,6 +433,7 @@ void QgsSpatiaLiteSourceSelect::setSql( const QModelIndex &index )
 
   if ( !vlayer->isValid() )
   {
+    QMessageBox::critical( this, tr( "SpatiaLite Error" ), tr( "Error when creating a layer. Check message log for more details." ) );
     delete vlayer;
     return;
   }
@@ -471,6 +463,11 @@ void QgsSpatiaLiteSourceSelect::dbChanged()
   settings.setValue( QStringLiteral( "SpatiaLite/connections/selected" ), cmbConnections->currentText() );
 }
 
+QString QgsSpatiaLiteSourceSelect::settingPath() const
+{
+  return SETTINGS_WINDOWS_PATH;
+}
+
 void QgsSpatiaLiteSourceSelect::refresh()
 {
   populateConnectionList();
@@ -480,15 +477,13 @@ void QgsSpatiaLiteSourceSelect::setConnectionListPosition()
 {
   const QgsSettings settings;
   // If possible, set the item currently displayed database
-  QString toSelect = settings.value( QStringLiteral( "SpatiaLite/connections/selected" ) ).toString();
+  const QString name = settings.value( QStringLiteral( "SpatiaLite/connections/selected" ) ).toString();
 
-  toSelect += '@' + settings.value( "/SpatiaLite/connections/" + toSelect + "/sqlitepath" ).toString();
-
-  cmbConnections->setCurrentIndex( cmbConnections->findText( toSelect ) );
+  cmbConnections->setCurrentIndex( cmbConnections->findText( name ) );
 
   if ( cmbConnections->currentIndex() < 0 )
   {
-    if ( toSelect.isNull() )
+    if ( name.isEmpty() )
       cmbConnections->setCurrentIndex( 0 );
     else
       cmbConnections->setCurrentIndex( cmbConnections->count() - 1 );
@@ -510,4 +505,75 @@ void QgsSpatiaLiteSourceSelect::treeWidgetSelectionChanged( const QItemSelection
 void QgsSpatiaLiteSourceSelect::showHelp()
 {
   QgsHelp::openHelp( QStringLiteral( "managing_data_source/opening_data.html#spatialite-layers" ) );
+}
+
+bool QgsSpatiaLiteSourceSelect::configureFromUri( const QString &uri )
+{
+  const QgsDataSourceUri dsUri { uri };
+  const QString filePath { dsUri.database() };
+  const QString layerName { dsUri.table() };
+  const QString subsetString { dsUri.sql() };
+
+  // I'm not sure we can make use of this:
+  // const QString geometryColumn { dsUri.geometryColumn() };
+
+  QFileInfo pathInfo { filePath };
+  const QString connectionName { pathInfo.fileName() };
+  QString connectionText { connectionName + tr( "@" ) + filePath };
+
+  const QStringList list = QgsSpatiaLiteConnection::connectionList();
+  for ( const QString &name : std::as_const( list ) )
+  {
+    const QString connectionPath { QgsSpatiaLiteConnection::connectionPath( name ) };
+    if ( connectionPath == filePath )
+    {
+      connectionText = name + tr( "@" ) + connectionPath;
+      break;
+    }
+  }
+
+  int idx { cmbConnections->findText( connectionText ) };
+
+  if ( idx < 0 )
+  {
+    QgsProviderMetadata *providerMetadata = QgsProviderRegistry::instance()->providerMetadata( QStringLiteral( "spatialite" ) );
+    std::unique_ptr<QgsSpatiaLiteProviderConnection> providerConnection( qgis::down_cast<QgsSpatiaLiteProviderConnection *>( providerMetadata->createConnection( uri, QVariantMap() ) ) );
+    providerMetadata->saveConnection( providerConnection.get(), connectionName );
+    populateConnectionList();
+    idx = cmbConnections->findText( connectionText );
+  }
+
+  if ( idx >= 0 )
+  {
+    cmbConnections->setCurrentIndex( idx );
+    if ( !layerName.isEmpty() )
+    {
+      btnConnect_clicked();
+      // Find table/layer
+      QModelIndex index;
+      const QModelIndex parentIndex { mTableModel->index( 0, 0, mTableModel->invisibleRootItem()->index() ) };
+      const QModelIndexList indexList { mTableModel->match( mTableModel->index( 0, 0, parentIndex ), Qt::DisplayRole, layerName, 1, Qt::MatchFlag::MatchExactly ) };
+      if ( !indexList.isEmpty() )
+      {
+        index = indexList.first();
+      }
+
+      if ( index.isValid() )
+      {
+        const QModelIndex proxyIndex { proxyModel()->mapFromSource( index ) };
+        mTablesTreeView->selectionModel()->setCurrentIndex( proxyIndex, QItemSelectionModel::SelectionFlag::Rows | QItemSelectionModel::SelectionFlag::ClearAndSelect );
+        mTablesTreeView->scrollTo( proxyIndex );
+        // Set filter
+        if ( !subsetString.isEmpty() )
+        {
+          mTableModel->setSql( index, subsetString );
+        }
+      }
+    }
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }

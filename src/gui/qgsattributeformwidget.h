@@ -33,20 +33,18 @@ class QgsSearchWidgetToolButton;
  * \brief Base class for all widgets shown on a QgsAttributeForm.
  * Consists of the widget which is visible in edit mode as well as the widget visible in search mode.
  *
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsAttributeFormWidget : public QWidget // SIP_ABSTRACT
 {
     Q_OBJECT
 
   public:
-
     //! Widget modes
     enum Mode
     {
-      DefaultMode, //!< Default mode, only the editor widget is shown
-      MultiEditMode, //!< Multi edit mode, both the editor widget and a QgsMultiEditToolButton is shown
-      SearchMode, //!< Layer search/filter mode
+      DefaultMode,         //!< Default mode, only the editor widget is shown
+      MultiEditMode,       //!< Multi edit mode, both the editor widget and a QgsMultiEditToolButton is shown
+      SearchMode,          //!< Layer search/filter mode
       AggregateSearchMode, //!< Embedded in a search form, show additional aggregate function toolbutton
     };
 
@@ -68,7 +66,6 @@ class GUI_EXPORT QgsAttributeFormWidget : public QWidget // SIP_ABSTRACT
     /**
      * Creates an expression matching the current search filter value and
      * search properties represented in the widget.
-     * \since QGIS 2.16
      */
     virtual QString currentFilterExpression() const;
 
@@ -129,7 +126,7 @@ class GUI_EXPORT QgsAttributeFormWidget : public QWidget // SIP_ABSTRACT
      * \note this method is in place for unit testing only, and is not considered
      * stable API
      */
-    QList< QgsSearchWidgetWrapper * > searchWidgetWrappers();
+    QList<QgsSearchWidgetWrapper *> searchWidgetWrappers();
 
     /**
      * Resets the search/filter value of the widget.
@@ -149,7 +146,6 @@ class GUI_EXPORT QgsAttributeFormWidget : public QWidget // SIP_ABSTRACT
     void setSearchWidgetToolButtonVisible( bool searchWidgetToolButtonVisible );
 
   protected:
-
     /**
      * Returns a pointer to the EDIT page widget.
      * \note this method is in place for unit testing only, and is not considered
@@ -195,7 +191,7 @@ class GUI_EXPORT QgsAttributeFormWidget : public QWidget // SIP_ABSTRACT
     QStackedWidget *mStack = nullptr;
     QWidget *mSearchFrame = nullptr;
     QgsAttributeForm *mForm = nullptr;
-    QList< QgsSearchWidgetWrapper * > mSearchWidgets;
+    QList<QgsSearchWidgetWrapper *> mSearchWidgets;
     QgsWidgetWrapper *mWidget = nullptr;
 };
 

@@ -14,12 +14,15 @@
  ***************************************************************************/
 
 #include "qgsrulebasedchunkloader_p.h"
+#include "moc_qgsrulebasedchunkloader_p.cpp"
 #include "qgsvectorlayerchunkloader_p.h"
 
 #include "qgs3dutils.h"
+#include "qgsline3dsymbol.h"
+#include "qgspoint3dsymbol.h"
+#include "qgspolygon3dsymbol.h"
 #include "qgsraycastingutils_p.h"
-#include "qgschunknode_p.h"
-#include "qgspolygon3dsymbol_p.h"
+#include "qgschunknode.h"
 #include "qgseventtracing.h"
 
 #include "qgsvectorlayer.h"
@@ -27,6 +30,7 @@
 
 #include "qgsrulebased3drenderer.h"
 #include "qgstessellatedpolygongeometry.h"
+#include "qgsabstractterrainsettings.h"
 
 #include <QtConcurrent>
 #include <Qt3DCore/QTransform>
@@ -37,7 +41,7 @@
 QgsRuleBasedChunkLoader::QgsRuleBasedChunkLoader( const QgsRuleBasedChunkLoaderFactory *factory, QgsChunkNode *node )
   : QgsChunkLoader( node )
   , mFactory( factory )
-  , mContext( factory->mMap )
+  , mContext( factory->mRenderContext )
   , mSource( new QgsVectorLayerFeatureSource( factory->mLayer ) )
 {
   if ( node->level() < mFactory->mLeafLevel )
@@ -47,7 +51,12 @@ QgsRuleBasedChunkLoader::QgsRuleBasedChunkLoader( const QgsRuleBasedChunkLoaderF
   }
 
   QgsVectorLayer *layer = mFactory->mLayer;
-  const Qgs3DMapSettings &map = mFactory->mMap;
+
+  // only a subset of data to be queried
+  const QgsRectangle rect = node->box3D().toRectangle();
+  // origin for coordinates of the chunk - it is kind of arbitrary, but it should be
+  // picked so that the coordinates are relatively small to avoid numerical precision issues
+  QgsVector3D chunkOrigin( rect.center().x(), rect.center().y(), 0 );
 
   QgsExpressionContext exprContext( Qgs3DUtils::globalProjectLayerExpressionContext( layer ) );
   exprContext.setFields( layer->fields() );
@@ -62,15 +71,12 @@ QgsRuleBasedChunkLoader::QgsRuleBasedChunkLoader( const QgsRuleBasedChunkLoaderF
   mRootRule->createHandlers( layer, mHandlers );
 
   QSet<QString> attributeNames;
-  mRootRule->prepare( mContext, attributeNames, mHandlers );
+  mRootRule->prepare( mContext, attributeNames, chunkOrigin, mHandlers );
 
   // build the feature request
   QgsFeatureRequest req;
-  req.setDestinationCrs( map.crs(), map.transformContext() );
+  req.setDestinationCrs( mContext.crs(), mContext.transformContext() );
   req.setSubsetOfAttributes( attributeNames, layer->fields() );
-
-  // only a subset of data to be queried
-  const QgsRectangle rect = Qgs3DUtils::worldToMapExtent( node->bbox(), map.origin() );
   req.setFilterRect( rect );
 
   //
@@ -79,8 +85,7 @@ QgsRuleBasedChunkLoader::QgsRuleBasedChunkLoader( const QgsRuleBasedChunkLoaderF
   mFutureWatcher = new QFutureWatcher<void>( this );
   connect( mFutureWatcher, &QFutureWatcher<void>::finished, this, &QgsChunkQueueJob::finished );
 
-  const QFuture<void> future = QtConcurrent::run( [req, this]
-  {
+  const QFuture<void> future = QtConcurrent::run( [req = std::move( req ), this] {
     const QgsEventTracing::ScopedEvent e( QStringLiteral( "3D" ), QStringLiteral( "RB chunk load" ) );
 
     QgsFeature f;
@@ -119,7 +124,7 @@ Qt3DCore::QEntity *QgsRuleBasedChunkLoader::createEntity( Qt3DCore::QEntity *par
 {
   if ( mNode->level() < mFactory->mLeafLevel )
   {
-    return new Qt3DCore::QEntity( parent );  // dummy entity
+    return new Qt3DCore::QEntity( parent ); // dummy entity
   }
 
   long long featureCount = 0;
@@ -149,10 +154,10 @@ Qt3DCore::QEntity *QgsRuleBasedChunkLoader::createEntity( Qt3DCore::QEntity *par
   // fix the vertical range of the node from the estimated vertical range to the true range
   if ( zMin != std::numeric_limits<float>::max() && zMax != std::numeric_limits<float>::lowest() )
   {
-    QgsAABB box = mNode->bbox();
-    box.yMin = zMin;
-    box.yMax = zMax;
-    mNode->setExactBbox( box );
+    QgsBox3D box = mNode->box3D();
+    box.setZMinimum( zMin );
+    box.setZMaximum( zMax );
+    mNode->setExactBox3D( box );
     mNode->updateParentBoundingBoxesRecursively();
   }
 
@@ -163,14 +168,14 @@ Qt3DCore::QEntity *QgsRuleBasedChunkLoader::createEntity( Qt3DCore::QEntity *par
 ///////////////
 
 
-QgsRuleBasedChunkLoaderFactory::QgsRuleBasedChunkLoaderFactory( const Qgs3DMapSettings &map, QgsVectorLayer *vl, QgsRuleBased3DRenderer::Rule *rootRule, int leafLevel, double zMin, double zMax )
-  : mMap( map )
+QgsRuleBasedChunkLoaderFactory::QgsRuleBasedChunkLoaderFactory( const Qgs3DRenderContext &context, QgsVectorLayer *vl, QgsRuleBased3DRenderer::Rule *rootRule, int leafLevel, double zMin, double zMax )
+  : mRenderContext( context )
   , mLayer( vl )
   , mRootRule( rootRule->clone() )
   , mLeafLevel( leafLevel )
 {
-  const QgsAABB rootBbox = Qgs3DUtils::mapToWorldExtent( map.extent(), zMin, zMax, map.origin() );
-  setupQuadtree( rootBbox, -1, leafLevel );  // negative root error means that the node does not contain anything
+  const QgsBox3D rootBox3D( context.extent(), zMin, zMax );
+  setupQuadtree( rootBox3D, -1, leafLevel ); // negative root error means that the node does not contain anything
 }
 
 QgsRuleBasedChunkLoaderFactory::~QgsRuleBasedChunkLoaderFactory() = default;
@@ -183,14 +188,18 @@ QgsChunkLoader *QgsRuleBasedChunkLoaderFactory::createChunkLoader( QgsChunkNode 
 
 ///////////////
 
-QgsRuleBasedChunkedEntity::QgsRuleBasedChunkedEntity( QgsVectorLayer *vl, double zMin, double zMax, const QgsVectorLayer3DTilingSettings &tilingSettings, QgsRuleBased3DRenderer::Rule *rootRule, const Qgs3DMapSettings &map )
-  : QgsChunkedEntity( -1, // max. allowed screen error (negative tau means that we need to go until leaves are reached)
-                      new QgsRuleBasedChunkLoaderFactory( map, vl, rootRule, tilingSettings.zoomLevelsCount() - 1, zMin, zMax ), true )
+QgsRuleBasedChunkedEntity::QgsRuleBasedChunkedEntity( Qgs3DMapSettings *map, QgsVectorLayer *vl, double zMin, double zMax, const QgsVectorLayer3DTilingSettings &tilingSettings, QgsRuleBased3DRenderer::Rule *rootRule )
+  : QgsChunkedEntity( map,
+                      -1, // max. allowed screen error (negative tau means that we need to go until leaves are reached)
+                      new QgsRuleBasedChunkLoaderFactory( Qgs3DRenderContext::fromMapSettings( map ), vl, rootRule, tilingSettings.zoomLevelsCount() - 1, zMin, zMax ), true )
 {
   mTransform = new Qt3DCore::QTransform;
-  mTransform->setTranslation( QVector3D( 0.0f, map.terrainElevationOffset(), 0.0f ) );
+  if ( applyTerrainOffset() )
+  {
+    mTransform->setTranslation( QVector3D( 0.0f, 0.0f, static_cast<float>( map->terrainSettings()->elevationOffset() ) ) );
+  }
   this->addComponent( mTransform );
-  connect( &map, &Qgs3DMapSettings::terrainElevationOffsetChanged, this, &QgsRuleBasedChunkedEntity::onTerrainElevationOffsetChanged );
+  connect( map, &Qgs3DMapSettings::terrainSettingsChanged, this, &QgsRuleBasedChunkedEntity::onTerrainElevationOffsetChanged );
 
   setShowBoundingBoxes( tilingSettings.showBoundingBoxes() );
 }
@@ -201,13 +210,66 @@ QgsRuleBasedChunkedEntity::~QgsRuleBasedChunkedEntity()
   cancelActiveJobs();
 }
 
-void QgsRuleBasedChunkedEntity::onTerrainElevationOffsetChanged( float newOffset )
+// if the AltitudeClamping is `Absolute`, do not apply the offset
+bool QgsRuleBasedChunkedEntity::applyTerrainOffset() const
 {
-  mTransform->setTranslation( QVector3D( 0.0f, newOffset, 0.0f ) );
+  QgsRuleBasedChunkLoaderFactory *loaderFactory = static_cast<QgsRuleBasedChunkLoaderFactory *>( mChunkLoaderFactory );
+  if ( loaderFactory )
+  {
+    QgsRuleBased3DRenderer::Rule *rootRule = loaderFactory->mRootRule.get();
+    const QgsRuleBased3DRenderer::RuleList rules = rootRule->children();
+    for ( const auto &rule : rules )
+    {
+      if ( rule->symbol() )
+      {
+        QString symbolType = rule->symbol()->type();
+        if ( symbolType == "line" )
+        {
+          QgsLine3DSymbol *lineSymbol = static_cast<QgsLine3DSymbol *>( rule->symbol() );
+          if ( lineSymbol && lineSymbol->altitudeClamping() == Qgis::AltitudeClamping::Absolute )
+          {
+            return false;
+          }
+        }
+        else if ( symbolType == "point" )
+        {
+          QgsPoint3DSymbol *pointSymbol = static_cast<QgsPoint3DSymbol *>( rule->symbol() );
+          if ( pointSymbol && pointSymbol->altitudeClamping() == Qgis::AltitudeClamping::Absolute )
+          {
+            return false;
+          }
+        }
+        else if ( symbolType == "polygon" )
+        {
+          QgsPolygon3DSymbol *polygonSymbol = static_cast<QgsPolygon3DSymbol *>( rule->symbol() );
+          if ( polygonSymbol && polygonSymbol->altitudeClamping() == Qgis::AltitudeClamping::Absolute )
+          {
+            return false;
+          }
+        }
+        else
+        {
+          QgsDebugMsgLevel( QStringLiteral( "QgsRuleBasedChunkedEntityChunkedEntity::applyTerrainOffset, unhandled symbol type %1" ).arg( symbolType ), 2 );
+        }
+      }
+    }
+  }
+
+  return true;
+}
+
+void QgsRuleBasedChunkedEntity::onTerrainElevationOffsetChanged()
+{
+  float newOffset = static_cast<float>( qobject_cast<Qgs3DMapSettings *>( sender() )->terrainSettings()->elevationOffset() );
+  if ( !applyTerrainOffset() )
+  {
+    newOffset = 0.0;
+  }
+  mTransform->setTranslation( QVector3D( 0.0f, 0.0f, newOffset ) );
 }
 
 QVector<QgsRayCastingUtils::RayHit> QgsRuleBasedChunkedEntity::rayIntersection( const QgsRayCastingUtils::Ray3D &ray, const QgsRayCastingUtils::RayCastContext &context ) const
 {
-  return QgsVectorLayerChunkedEntity::rayIntersection( activeNodes(), mTransform->matrix(), ray, context );
+  return QgsVectorLayerChunkedEntity::rayIntersection( activeNodes(), mTransform->matrix(), ray, context, mMapSettings->origin() );
 }
 /// @endcond

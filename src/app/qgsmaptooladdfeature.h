@@ -13,6 +13,9 @@
  *                                                                         *
  ***************************************************************************/
 
+#ifndef QGSMAPTOOLADDFEATURE_H
+#define QGSMAPTOOLADDFEATURE_H
+
 #include "qgsmaptooldigitizefeature.h"
 #include "qgis_app.h"
 
@@ -28,8 +31,7 @@ class APP_EXPORT QgsMapToolAddFeature : public QgsMapToolDigitizeFeature
     QgsMapToolAddFeature( QgsMapCanvas *canvas, QgsAdvancedDigitizingDockWidget *cadDockWidget, CaptureMode mode );
 
     /**
-     * \since QGIS 2.12
-     * \deprecated Will be made in QGIS 4
+     * \deprecated QGIS 3.40. Will be made in QGIS 4.
      */
     QgsMapToolAddFeature( QgsMapCanvas *canvas, CaptureMode mode );
 
@@ -38,18 +40,13 @@ class APP_EXPORT QgsMapToolAddFeature : public QgsMapToolDigitizeFeature
     void featureDigitized( const QgsFeature &feature ) override;
 
   private:
-
     bool addFeature( QgsVectorLayer *vlayer, const QgsFeature &f, bool showModal = true );
 
     /**
      * Creates a highlight corresponding to the captured geometry map tool and transfers
      * ownership to the caller.
      */
-    std::unique_ptr< QgsHighlight > createHighlight( QgsVectorLayer *layer, const QgsFeature &f );
-
-    /**
-     * Check if CaptureMode matches layer type. Default is TRUE.
-     * \since QGIS 2.12
-    */
-    bool mCheckGeometryType;
+    std::unique_ptr<QgsHighlight> createHighlight( QgsVectorLayer *layer, const QgsFeature &f );
 };
+
+#endif // QGSMAPTOOLADDFEATURE_H

@@ -28,6 +28,7 @@ class QMimeData;
 /**
  * \ingroup core
  * \class QgsFontUtils
+ * \brief Contains utility functions for working with fonts.
  */
 class CORE_EXPORT QgsFontUtils
 {
@@ -52,7 +53,6 @@ class CORE_EXPORT QgsFontUtils
      * \param family The family to test
      * \param style The style to test for
      * \returns Whether family has style
-     * \since QGIS 2.1
      */
     static bool fontFamilyHasStyle( const QString &family, const QString &style );
 
@@ -84,13 +84,12 @@ class CORE_EXPORT QgsFontUtils
      * \param fontstyle The style to try and switch the font to
      * \param fallback If no matching fontstyle found for font, assign most similar or first style found to font
      * \returns Whether the font was updated (also returns TRUE if the requested style matches font's current style)
-     * \note This is a more featured replacement for a Qt 4.8+ function: void QFont::setStyleName ( const QString & styleName )
+     * \note This is a more featured replacement for a Qt 4.8+ function: void QFont::setStyleName().
      */
     static bool updateFontViaStyle( QFont &f, const QString &fontstyle, bool fallback = false );
 
     /**
      * Gets standard test font family
-     * \since QGIS 2.1
      */
     static QString standardTestFontFamily();
 
@@ -99,7 +98,6 @@ class CORE_EXPORT QgsFontUtils
      * \param loadstyles List of styles to load, e.g. All, Roman, Oblique, Bold, Bold Oblique
      * \returns Whether any font was loaded
      * \note Done by default on debug app/server startup to ensure fonts available for unit tests (Roman and Bold)
-     * \since QGIS 2.1
      */
     static bool loadStandardTestFonts( const QStringList &loadstyles );
 
@@ -108,7 +106,6 @@ class CORE_EXPORT QgsFontUtils
      * \param style Style to load, e.g. Roman, Oblique, Bold, Bold Oblique
      * \param pointsize Font point size to set
      * \returns QFont
-     * \since QGIS 2.1
      */
     static QFont getStandardTestFont( const QString &style = "Roman", int pointsize = 12 );
 
@@ -119,7 +116,6 @@ class CORE_EXPORT QgsFontUtils
      * \param elementName name for DOM element
      * \returns DOM element containing font settings
      * \see setFromXmlElement
-     * \since QGIS 2.10
      */
     static QDomElement toXmlElement( const QFont &font, QDomDocument &document, const QString &elementName );
 
@@ -131,7 +127,6 @@ class CORE_EXPORT QgsFontUtils
      * \returns TRUE if properties were successfully read from element
      * \see toXmlElement
      * \see setFromXmlChildNode
-     * \since QGIS 2.10
      */
     static bool setFromXmlElement( QFont &font, const QDomElement &element );
 
@@ -144,7 +139,6 @@ class CORE_EXPORT QgsFontUtils
      * \returns TRUE if child node exists and properties were successfully read from node
      * \see setFromXmlElement
      * \see toXmlElement
-     * \since QGIS 2.10
      */
     static bool setFromXmlChildNode( QFont &font, const QDomElement &element, const QString &childNode );
 
@@ -152,7 +146,6 @@ class CORE_EXPORT QgsFontUtils
      * Returns new mime data representing the specified \a font settings.
      * Caller takes responsibility for deleting the returned object.
      * \see fromMimeData()
-     * \since QGIS 3.0
      */
     static QMimeData *toMimeData( const QFont &font ) SIP_FACTORY;
 
@@ -160,7 +153,6 @@ class CORE_EXPORT QgsFontUtils
      * Attempts to parse the provided mime \a data as a QFont.
      * If data can be parsed as a QFont, \a ok will be set to TRUE.
      * \see toMimeData()
-     * \since QGIS 3.0
      */
     static QFont fromMimeData( const QMimeData *data, bool *ok SIP_OUT = nullptr );
 
@@ -169,7 +161,6 @@ class CORE_EXPORT QgsFontUtils
      * \param namedStyle a named style, i.e. "Bold", "Italic", etc
      * \returns The localized named style
      * \see untranslateNamedStyle
-     * \since QGIS 2.12
      */
     static QString translateNamedStyle( const QString &namedStyle );
 
@@ -178,7 +169,6 @@ class CORE_EXPORT QgsFontUtils
      * \param namedStyle a localized named style, i.e. "Fett", "Kursiv", etc
      * \returns The english named style
      * \see translateNamedStyle
-     * \since QGIS 2.12
      */
     static QString untranslateNamedStyle( const QString &namedStyle );
 
@@ -190,23 +180,38 @@ class CORE_EXPORT QgsFontUtils
      * should be set to a suitable value to convert point sizes to pixels (e.g., taking into account
      * destination DPI)
      * \returns partial CSS string, e.g., "font-family: Comic Sans; font-size: 12px;"
-     * \since QGIS 2.16
      */
     static QString asCSS( const QFont &font, double pointToPixelMultiplier = 1.0 );
 
     /**
      * Adds a font \a family to the list of recently used font families.
      * \see recentFontFamilies()
-     * \since QGIS 3.0
      */
     static void addRecentFontFamily( const QString &family );
 
     /**
      * Returns a list of recently used font families.
      * \see addRecentFontFamily()
-     * \since QGIS 3.0
      */
     static QStringList recentFontFamilies();
+
+    /**
+     * Sets the \a family for a \a font object.
+     *
+     * Applies some workarounds for specific font quirks.
+     *
+     * \since QGIS 3.34
+     */
+    static void setFontFamily( QFont &font, const QString &family );
+
+    /**
+     * Creates a font with the specified \a family.
+     *
+     * Applies some workarounds for specific font quirks.
+     *
+     * \since QGIS 3.34
+     */
+    static QFont createFont( const QString &family, int pointSize = -1, int weight = -1, bool italic = false );
 };
 
 // clazy:excludeall=qstring-allocations

@@ -32,7 +32,6 @@ class QgsNetworkContentFetcher;
 /**
  * \ingroup core
  * \brief A layout multiframe subclass for HTML content.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutItemHtml: public QgsLayoutMultiFrame
 {
@@ -232,7 +231,7 @@ class CORE_EXPORT QgsLayoutItemHtml: public QgsLayoutMultiFrame
     //! Recalculates the frame sizes for the current viewport dimensions
     void recalculateFrameSizes() override;
 
-    void refreshDataDefinedProperty( QgsLayoutObject::DataDefinedProperty property = QgsLayoutObject::AllProperties ) override;
+    void refreshDataDefinedProperty( QgsLayoutObject::DataDefinedProperty property = QgsLayoutObject::DataDefinedProperty::AllProperties ) override;
 
   protected:
 

@@ -22,13 +22,14 @@
 #include <QList>
 #include <QVector3D>
 
+#include "qgsbox3d.h"
+
 #define SIP_NO_FILE
 
 /**
- * \ingroup 3d
+ * \ingroup qgis_3d
  * \brief Axis-aligned bounding box - in world coords.
  * \note Not available in Python bindings
- * \since QGIS 3.0
  */
 class _3D_EXPORT QgsAABB
 {
@@ -38,6 +39,16 @@ class _3D_EXPORT QgsAABB
 
     //! Constructs bounding box
     QgsAABB( float xMin, float yMin, float zMin, float xMax, float yMax, float zMax );
+
+    /**
+     * Constructs bounding box from QgsBox3D by subtracting origin 3D vector.
+     * Note: this is potentially lossy operation as the coordinates are converted
+     * from double values to floats!
+     */
+    static QgsAABB fromBox3D( const QgsBox3D &box3D, const QgsVector3D &origin )
+    {
+      return QgsAABB( static_cast<float>( box3D.xMinimum() - origin.x() ), static_cast<float>( box3D.yMinimum() - origin.y() ), static_cast<float>( box3D.zMinimum() - origin.z() ), static_cast<float>( box3D.xMaximum() - origin.x() ), static_cast<float>( box3D.yMaximum() - origin.y() ), static_cast<float>( box3D.zMaximum() - origin.z() ) );
+    }
 
     //! Returns box width in X axis
     float xExtent() const { return xMax - xMin; }
@@ -78,8 +89,11 @@ class _3D_EXPORT QgsAABB
     //! Returns text representation of the bounding box
     QString toString() const;
 
-    //! Returns true if any of xExtent(), yExtent() or zExtent() is zero, false otherwise
-    bool isEmpty() const { return xMin == xMax || yMin == yMax || zMin == zMax; }
+    //! Returns true if xExtent(), yExtent() and zExtent() are all zero, false otherwise
+    bool isEmpty() const
+    {
+      return xMin == xMax && yMin == yMax && zMin == zMax;
+    }
 
     float xMin = 0.0f;
     float yMin = 0.0f;

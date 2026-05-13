@@ -23,6 +23,7 @@
 #include "qgsdatasourceuri.h"
 #include "qgslogger.h"
 #include "qgsowsconnection.h"
+#include "moc_qgsowsconnection.cpp"
 #include "qgssettings.h"
 #include "qgshttpheaders.h"
 #include "qgssettingsentryimpl.h"
@@ -51,6 +52,7 @@ const QgsSettingsEntryString *QgsArcGisConnectionSettings::settingsAuthcfg = new
 const QgsSettingsEntryString *QgsArcGisConnectionSettings::settingsUsername = new QgsSettingsEntryString( QStringLiteral( "username" ), sTreeConnectionArcgis );
 const QgsSettingsEntryString *QgsArcGisConnectionSettings::settingsPassword = new QgsSettingsEntryString( QStringLiteral( "password" ), sTreeConnectionArcgis );
 const QgsSettingsEntryVariantMap *QgsArcGisConnectionSettings::settingsHeaders = new QgsSettingsEntryVariantMap( QStringLiteral( "http-header" ), sTreeConnectionArcgis );
+const QgsSettingsEntryString *QgsArcGisConnectionSettings::settingsUrlPrefix = new QgsSettingsEntryString( QStringLiteral( "urlprefix" ), sTreeConnectionArcgis );
 const QgsSettingsEntryString *QgsArcGisConnectionSettings::settingsContentEndpoint = new QgsSettingsEntryString( QStringLiteral( "content-endpoint" ), sTreeConnectionArcgis );
 const QgsSettingsEntryString *QgsArcGisConnectionSettings::settingsCommunityEndpoint = new QgsSettingsEntryString( QStringLiteral( "community-endpoint" ), sTreeConnectionArcgis );
 
@@ -66,13 +68,16 @@ const QgsSettingsEntryEnumFlag<Qgis::DpiMode> *QgsOwsConnection::settingsDpiMode
 const QgsSettingsEntryEnumFlag<Qgis::TilePixelRatio> *QgsOwsConnection::settingsTilePixelRatio = new QgsSettingsEntryEnumFlag<Qgis::TilePixelRatio>( QStringLiteral( "tile-pixel-ratio" ), sTreeOwsConnections, Qgis::TilePixelRatio::Undefined, QString(), Qgis::SettingsOption::SaveEnumFlagAsInt ) ;
 const QgsSettingsEntryString *QgsOwsConnection::settingsMaxNumFeatures = new QgsSettingsEntryString( QStringLiteral( "max-num-features" ), sTreeOwsConnections ) ;
 const QgsSettingsEntryString *QgsOwsConnection::settingsPagesize = new QgsSettingsEntryString( QStringLiteral( "page-size" ), sTreeOwsConnections ) ;
-const QgsSettingsEntryBool *QgsOwsConnection::settingsPagingEnabled = new QgsSettingsEntryBool( QStringLiteral( "paging-enabled" ), sTreeOwsConnections, true ) ;
+const QgsSettingsEntryString *QgsOwsConnection::settingsPagingEnabled = new QgsSettingsEntryString( QStringLiteral( "paging-enabled" ), sTreeOwsConnections, QString( "default" ) ) ;
+const QgsSettingsEntryString *QgsOwsConnection::settingsWfsFeatureMode = new QgsSettingsEntryString( QStringLiteral( "feature-mode" ), sTreeOwsConnections, QString( "default" ) ) ;
 const QgsSettingsEntryBool *QgsOwsConnection::settingsPreferCoordinatesForWfsT11 = new QgsSettingsEntryBool( QStringLiteral( "prefer-coordinates-for-wfs-T11" ), sTreeOwsConnections, false ) ;
 const QgsSettingsEntryBool *QgsOwsConnection::settingsIgnoreAxisOrientation = new QgsSettingsEntryBool( QStringLiteral( "ignore-axis-orientation" ), sTreeOwsConnections, false ) ;
 const QgsSettingsEntryBool *QgsOwsConnection::settingsInvertAxisOrientation = new QgsSettingsEntryBool( QStringLiteral( "invert-axis-orientation" ), sTreeOwsConnections, false ) ;
 const QgsSettingsEntryString *QgsOwsConnection::settingsUsername = new QgsSettingsEntryString( QStringLiteral( "username" ), sTreeOwsConnections ) ;
 const QgsSettingsEntryString *QgsOwsConnection::settingsPassword = new QgsSettingsEntryString( QStringLiteral( "password" ), sTreeOwsConnections ) ;
 const QgsSettingsEntryString *QgsOwsConnection::settingsAuthCfg = new QgsSettingsEntryString( QStringLiteral( "authcfg" ), sTreeOwsConnections ) ;
+const QgsSettingsEntryInteger *QgsOwsConnection::settingsFeatureCount = new QgsSettingsEntryInteger( QStringLiteral( "feature-count" ), sTreeOwsConnections, 10 );
+const QgsSettingsEntryEnumFlag<Qgis::HttpMethod> *QgsOwsConnection::settingsPreferredHttpMethod = new QgsSettingsEntryEnumFlag<Qgis::HttpMethod>( QStringLiteral( "http-method" ), sTreeOwsConnections, Qgis::HttpMethod::Get, QString() );
 
 QgsOwsConnection::QgsOwsConnection( const QString &service, const QString &connName )
   : mConnName( connName )
@@ -211,6 +216,10 @@ QgsDataSourceUri &QgsOwsConnection::addWmsWcsConnectionSettings( QgsDataSourceUr
   {
     uri.setParam( QStringLiteral( "tilePixelRatio" ), QString::number( static_cast<int>( settingsTilePixelRatio->value( {service.toLower(), connName} ) ) ) );
   }
+  if ( settingsFeatureCount->exists( {service.toLower(), connName} ) )
+  {
+    uri.setParam( QStringLiteral( "featureCount" ), QString::number( settingsFeatureCount->value( {service.toLower(), connName} ) ) );
+  }
 
   return uri;
 }
@@ -251,6 +260,24 @@ QgsDataSourceUri &QgsOwsConnection::addWfsConnectionSettings( QgsDataSourceUri &
   if ( !maxnumFeatures.isEmpty() )
   {
     uri.setParam( QStringLiteral( "maxNumFeatures" ), maxnumFeatures );
+  }
+
+  const Qgis::HttpMethod httpMethod = settingsPreferredHttpMethod->value( {service.toLower(), connName} );
+  switch ( httpMethod )
+  {
+    case Qgis::HttpMethod::Get:
+      // default, we don't set to explicitly set
+      break;
+
+    case Qgis::HttpMethod::Post:
+      uri.setParam( QStringLiteral( "httpMethod" ), QStringLiteral( "post" ) );
+      break;
+
+    case Qgis::HttpMethod::Head:
+    case Qgis::HttpMethod::Put:
+    case Qgis::HttpMethod::Delete:
+      // not supported
+      break;
   }
 
   return uri;

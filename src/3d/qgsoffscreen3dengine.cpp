@@ -14,7 +14,11 @@
  ***************************************************************************/
 
 #include "qgsoffscreen3dengine.h"
+#include "moc_qgsoffscreen3dengine.cpp"
 
+#include "qgsframegraph.h"
+
+#include <QCoreApplication>
 #include <QOffscreenSurface>
 #include <QSurfaceFormat>
 #include <QOpenGLFunctions>
@@ -25,7 +29,6 @@
 #include <Qt3DRender/QCameraSelector>
 #include <Qt3DRender/QClearBuffers>
 #include <Qt3DRender/QRenderAspect>
-#include <Qt3DRender/QRenderCapture>
 #include <Qt3DRender/QRenderSettings>
 #include <Qt3DRender/QRenderTarget>
 #include <Qt3DRender/QRenderTargetOutput>
@@ -33,31 +36,11 @@
 #include <Qt3DRender/QRenderSurfaceSelector>
 #include <Qt3DRender/QTexture>
 #include <Qt3DRender/QViewport>
-#include <QtGui/QOpenGLContext>
+#include "qgsshadowrenderview.h"
+#include "qgsforwardrenderview.h"
 
 QgsOffscreen3DEngine::QgsOffscreen3DEngine()
 {
-  // Set up the default OpenGL surface format.
-  QSurfaceFormat format;
-
-  // by default we get just some older version of OpenGL from the system,
-  // but for 3D lines we use "primitive restart" functionality supported in OpenGL >= 3.1
-  // Qt3DWindow uses this - requesting OpenGL 4.3 - so let's request the same version.
-#ifdef QT_OPENGL_ES_2
-  format.setRenderableType( QSurfaceFormat::OpenGLES );
-#else
-  if ( QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGL )
-  {
-    format.setVersion( 4, 3 );
-    format.setProfile( QSurfaceFormat::CoreProfile );
-  }
-#endif
-
-  format.setMajorVersion( 3 );
-  format.setDepthBufferSize( 32 ); // TODO: or 24?  (used by QWindow3D)
-  format.setSamples( 8 );
-  QSurfaceFormat::setDefaultFormat( format );
-
   // Set up a camera to point at the shapes.
   mCamera = new Qt3DRender::QCamera;
   mCamera->lens()->setPerspectiveProjection( 45.0f, float( mSize.width() ) / float( mSize.height() ), 0.1f, 1000.0f );
@@ -68,7 +51,7 @@ QgsOffscreen3DEngine::QgsOffscreen3DEngine()
   // Set up the engine and the aspects that we want to use.
   mAspectEngine = new Qt3DCore::QAspectEngine();
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
   mRenderAspect = new Qt3DRender::QRenderAspect( Qt3DRender::QRenderAspect::Threaded ); // Only threaded mode seems to work right now.
 #else
   mRenderAspect = new Qt3DRender::QRenderAspect();
@@ -93,19 +76,41 @@ QgsOffscreen3DEngine::QgsOffscreen3DEngine()
   // Create the offscreen frame graph, which will manage all of the resources required
   // for rendering without a QWindow.
   mOffscreenSurface = new QOffscreenSurface();
-  mOffscreenSurface->setFormat( QSurfaceFormat::defaultFormat() );
+
+  QSurfaceFormat format;
+
+  //Use default format when shared OpenGL context is enabled
+  if ( QCoreApplication::instance() && QCoreApplication::instance()->testAttribute( Qt::AA_ShareOpenGLContexts ) )
+  {
+    format = QSurfaceFormat::defaultFormat();
+  }
+  //Set the surface format when used outside of QGIS application
+  else
+  {
+    format.setRenderableType( QSurfaceFormat::OpenGL );
+#ifdef Q_OS_MAC
+    format.setVersion( 4, 1 ); //OpenGL is deprecated on MacOS, use last supported version
+    format.setProfile( QSurfaceFormat::CoreProfile );
+#else
+    format.setVersion( 4, 3 );
+    format.setProfile( QSurfaceFormat::CoreProfile );
+#endif
+    format.setDepthBufferSize( 24 );
+    format.setSamples( 4 );
+    format.setStencilBufferSize( 8 );
+  }
+
+  mOffscreenSurface->setFormat( format );
   mOffscreenSurface->create();
 
-  mFrameGraph = new QgsShadowRenderingFrameGraph( mOffscreenSurface, mSize, mCamera, mRoot );
-  mFrameGraph->setRenderCaptureEnabled( true );
-  mFrameGraph->setShadowRenderingEnabled( false );
+  mFrameGraph = new QgsFrameGraph( mOffscreenSurface, mSize, mCamera, mRoot );
+  mFrameGraph->shadowRenderView().setEnabled( false );
   // Set this frame graph to be in use.
   // the render settings also sets itself as the parent of mSurfaceSelector
   mRenderSettings->setActiveFrameGraph( mFrameGraph->frameGraphRoot() );
 
   // Set the root entity of the engine. This causes the engine to begin running.
   mAspectEngine->setRootEntity( Qt3DCore::QEntityPtr( mRoot ) );
-
 }
 
 QgsOffscreen3DEngine::~QgsOffscreen3DEngine()
@@ -144,8 +149,8 @@ void QgsOffscreen3DEngine::setRootEntity( Qt3DCore::QEntity *root )
   // Parent the incoming scene root to our current root entity.
   mSceneRoot = root;
   mSceneRoot->setParent( mRoot );
-  root->addComponent( mFrameGraph->forwardRenderLayer() );
-  root->addComponent( mFrameGraph->castShadowsLayer() );
+  root->addComponent( mFrameGraph->forwardRenderView().renderLayer() );
+  root->addComponent( mFrameGraph->shadowRenderView().entityCastingShadowsLayer() );
 }
 
 Qt3DRender::QRenderSettings *QgsOffscreen3DEngine::renderSettings()

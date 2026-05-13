@@ -24,13 +24,12 @@ SIP_NO_FILE
 /**
  * \ingroup gui
  * \class QgsClassificationWidgetWrapperFactory
+ * \brief Editor widget factory for classification widgets.
  * \note not available in Python bindings
  */
-
 class GUI_EXPORT QgsClassificationWidgetWrapperFactory : public QgsEditorWidgetFactory
 {
   public:
-
     /**
      * Constructor for QgsClassificationWidgetWrapperFactory, where \a name is a human-readable
      * name for the factory.

@@ -42,7 +42,6 @@ class GUI_EXPORT QgsTextEditWrapper : public QgsEditorWidgetWrapper
 {
     Q_OBJECT
   public:
-
     /**
      * Constructor for QgsTextEditWrapper.
      *
@@ -70,7 +69,6 @@ class GUI_EXPORT QgsTextEditWrapper : public QgsEditorWidgetWrapper
     /**
      * Add a hint text on the widget
      * \param hintText The hint text to display
-     * \since QGIS 3.0
      */
     void setHint( const QString &hintText ) override;
 

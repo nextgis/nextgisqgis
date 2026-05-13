@@ -50,6 +50,8 @@ class CORE_EXPORT QgsDiagram SIP_NODEFAULTCTORS
       sipType = sipType_QgsTextDiagram;
     else if ( sipCpp->diagramName() == QLatin1String( "Stacked" ) )
       sipType = sipType_QgsStackedBarDiagram;
+    else if ( sipCpp->diagramName() == QLatin1String( "StackedDiagram" ) )
+      sipType = sipType_QgsStackedDiagram;
     else
       sipType = NULL;
     SIP_END
@@ -59,7 +61,6 @@ class CORE_EXPORT QgsDiagram SIP_NODEFAULTCTORS
 
     /**
      * Returns an instance that is equivalent to this one
-     * \since QGIS 2.4
     */
     virtual QgsDiagram *clone() const = 0 SIP_FACTORY;
 
@@ -69,7 +70,6 @@ class CORE_EXPORT QgsDiagram SIP_NODEFAULTCTORS
      * Returns a prepared expression for the specified context.
      * \param expression expression string
      * \param context expression context
-     * \since QGIS 2.12
      */
     QgsExpression *getExpression( const QString &expression, const QgsExpressionContext &context );
 
@@ -83,22 +83,18 @@ class CORE_EXPORT QgsDiagram SIP_NODEFAULTCTORS
     //! Returns the size in map units the diagram will use to render.
     virtual QSizeF diagramSize( const QgsAttributes &attributes, const QgsRenderContext &c, const QgsDiagramSettings &s ) = 0;
     //! Returns the size in map units the diagram will use to render. Interpolate size
-    virtual QSizeF diagramSize( const QgsFeature &feature, const QgsRenderContext &c, const QgsDiagramSettings &s, const QgsDiagramInterpolationSettings &is ) = 0;
+    virtual QSizeF diagramSize( const QgsFeature &feature, const QgsRenderContext &c, const QgsDiagramSettings &s, const QgsDiagramInterpolationSettings &interpolationSettings ) = 0;
 
     /**
      * Returns the size of the legend item for the diagram corresponding to a specified value.
      * \param value value to return legend item size for
      * \param s diagram settings
-     * \param is interpolation settings
-     * \since QGIS 2.16
+     * \param interpolationSettings interpolation settings
      */
-    virtual double legendSize( double value, const QgsDiagramSettings &s, const QgsDiagramInterpolationSettings &is ) const = 0;
+    virtual double legendSize( double value, const QgsDiagramSettings &s, const QgsDiagramInterpolationSettings &interpolationSettings ) const = 0;
 
   protected:
 
-    /**
-     * Constructor for QgsDiagram.
-     */
     QgsDiagram() = default;
     QgsDiagram( const QgsDiagram &other );
 
@@ -123,7 +119,7 @@ class CORE_EXPORT QgsDiagram SIP_NODEFAULTCTORS
     /**
      * Calculates a length to match the current settings and rendering context
      *  \param l    The length to convert
-     *  \param s    Unused
+     *  \param s    The settings that specify the size type
      *  \param c    The rendering specifying the proper scale units for pixel conversion
      *
      *  \returns The converted length for rendering
@@ -143,10 +139,9 @@ class CORE_EXPORT QgsDiagram SIP_NODEFAULTCTORS
      * Returns the scaled size of a diagram for a value, respecting the specified diagram interpolation settings.
      * \param value value to calculate corresponding circular size for
      * \param s diagram settings
-     * \param is interpolation settings
-     * \since QGIS 2.16
+     * \param interpolationSettings interpolation settings
      */
-    QSizeF sizeForValue( double value, const QgsDiagramSettings &s, const QgsDiagramInterpolationSettings &is ) const;
+    QSizeF sizeForValue( double value, const QgsDiagramSettings &s, const QgsDiagramInterpolationSettings &interpolationSettings ) const;
 
   private:
     QMap<QString, QgsExpression *> mExpressions;

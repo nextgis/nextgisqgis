@@ -34,13 +34,11 @@ class QgsColorButton;
  * \brief A dialog for customization of the cell background colors for a QgsLayoutTable
  *
  * \note This class is not a part of public API
- * \since QGIS 3.0
 */
-class GUI_EXPORT QgsLayoutTableBackgroundColorsDialog: public QDialog, private Ui::QgsLayoutTableBackgroundDialog
+class GUI_EXPORT QgsLayoutTableBackgroundColorsDialog : public QDialog, private Ui::QgsLayoutTableBackgroundDialog
 {
     Q_OBJECT
   public:
-
     /**
      * Constructor for QgsLayoutTableBackgroundColorsDialog
      * \param table associated layout table
@@ -58,16 +56,13 @@ class GUI_EXPORT QgsLayoutTableBackgroundColorsDialog: public QDialog, private U
     void showHelp();
 
   private:
-
     QgsLayoutTable *mTable = nullptr;
-    QMap< QgsLayoutTable::CellStyleGroup, QCheckBox * > mCheckBoxMap;
-    QMap< QgsLayoutTable::CellStyleGroup, QgsColorButton * > mColorButtonMap;
+    QMap<QgsLayoutTable::CellStyleGroup, QCheckBox *> mCheckBoxMap;
+    QMap<QgsLayoutTable::CellStyleGroup, QgsColorButton *> mColorButtonMap;
 
 
     //! Sets the GUI elements to the values of the table
     void setGuiElementValues();
-
-
 };
 
 #endif // QGSLAYOUTTABLEBACKGROUNDCOLORSDIALOG_H

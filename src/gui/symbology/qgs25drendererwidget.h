@@ -26,13 +26,13 @@ class Qgs25DRenderer;
 /**
  * \ingroup gui
  * \class Qgs25DRendererWidget
+ * \brief A widget for configuring a Qgs25DRenderer.
  */
 class GUI_EXPORT Qgs25DRendererWidget : public QgsRendererWidget, protected Ui::Qgs25DRendererWidgetBase
 {
     Q_OBJECT
 
   public:
-
     /**
      * Static creation method
      * \param layer the layer where this renderer is applied
@@ -58,7 +58,7 @@ class GUI_EXPORT Qgs25DRendererWidget : public QgsRendererWidget, protected Ui::
   private:
     void apply() override SIP_FORCE;
 
-    std::unique_ptr< Qgs25DRenderer > mRenderer;
+    std::unique_ptr<Qgs25DRenderer> mRenderer;
 
     friend class QgsAppScreenShots;
 };

@@ -24,7 +24,7 @@
 #define DEFAULT_SIMPLEFILL_STYLE        Qt::SolidPattern
 #define DEFAULT_SIMPLEFILL_BORDERCOLOR  QColor( 35, 35, 35 )
 #define DEFAULT_SIMPLEFILL_BORDERSTYLE  Qt::SolidLine
-#define DEFAULT_SIMPLEFILL_BORDERWIDTH  DEFAULT_LINE_WIDTH
+#define DEFAULT_SIMPLEFILL_BORDERWIDTH  Qgis::DEFAULT_LINE_WIDTH
 #define DEFAULT_SIMPLEFILL_JOINSTYLE    Qt::BevelJoin
 
 #define INF 1E20
@@ -39,6 +39,7 @@ class QgsPathResolver;
 /**
  * \ingroup core
  * \class QgsSimpleFillSymbolLayer
+ * \brief Renders polygons using a single fill and stroke color.
  */
 class CORE_EXPORT QgsSimpleFillSymbolLayer : public QgsFillSymbolLayer
 {
@@ -66,19 +67,14 @@ class CORE_EXPORT QgsSimpleFillSymbolLayer : public QgsFillSymbolLayer
     // implemented from base classes
 
     QString layerType() const override;
-
+    Qgis::SymbolLayerFlags flags() const override;
     void startRender( QgsSymbolRenderContext &context ) override;
-
     void stopRender( QgsSymbolRenderContext &context ) override;
-
     void renderPolygon( const QPolygonF &points, const QVector<QPolygonF> *rings, QgsSymbolRenderContext &context ) override;
-
     QVariantMap properties() const override;
-
     QgsSimpleFillSymbolLayer *clone() const override SIP_FACTORY;
-
-    void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override;
-
+    Q_DECL_DEPRECATED void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override SIP_DEPRECATED;
+    bool toSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &context ) const override;
     QString ogrFeatureStyle( double mmScaleFactor, double mapUnitScaleFactor ) const override;
 
     Qt::BrushStyle brushStyle() const { return mBrushStyle; }
@@ -86,7 +82,6 @@ class CORE_EXPORT QgsSimpleFillSymbolLayer : public QgsFillSymbolLayer
 
     QColor strokeColor() const override { return mStrokeColor; }
     void setStrokeColor( const QColor &strokeColor ) override { mStrokeColor = strokeColor; }
-
     QColor fillColor() const override { return color(); }
     void setFillColor( const QColor &color ) override { setColor( color ); }
 
@@ -172,17 +167,13 @@ class CORE_EXPORT QgsSimpleFillSymbolLayer : public QgsFillSymbolLayer
 
     double estimateMaxBleed( const QgsRenderContext &context ) const override;
 
-    /*
     double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
     QColor dxfColor( QgsSymbolRenderContext &context ) const override;
     double dxfAngle( QgsSymbolRenderContext &context ) const override;
-    */
 
-    /*
     Qt::PenStyle dxfPenStyle() const override;
     QColor dxfBrushColor( QgsSymbolRenderContext &context ) const override;
     Qt::BrushStyle dxfBrushStyle() const override;
-    */
     QImage toTiledPatternImage( ) const override;
 
   protected:
@@ -213,6 +204,7 @@ class QgsColorRamp;
 /**
  * \ingroup core
  * \class QgsGradientFillSymbolLayer
+ * A fill symbol layer which draws a smooth color gradient over a polygon.
  */
 class CORE_EXPORT QgsGradientFillSymbolLayer : public QgsFillSymbolLayer
 {
@@ -242,6 +234,7 @@ class CORE_EXPORT QgsGradientFillSymbolLayer : public QgsFillSymbolLayer
 
     // implemented from base classes
 
+    Qgis::SymbolLayerFlags flags() const override;
     QString layerType() const override;
     void startRender( QgsSymbolRenderContext &context ) override;
     void stopRender( QgsSymbolRenderContext &context ) override;
@@ -285,7 +278,7 @@ class CORE_EXPORT QgsGradientFillSymbolLayer : public QgsFillSymbolLayer
      * \see setColorRamp()
      * \see gradientColorType()
      */
-    QgsColorRamp *colorRamp() { return mGradientRamp; }
+    QgsColorRamp *colorRamp() { return mGradientRamp.get(); }
 
     /**
      * Sets the color ramp used for the gradient fill. This is only
@@ -456,7 +449,7 @@ class CORE_EXPORT QgsGradientFillSymbolLayer : public QgsFillSymbolLayer
 
     Qgis::GradientColorSource mGradientColorType;
     QColor mColor2;
-    QgsColorRamp *mGradientRamp = nullptr;
+    std::unique_ptr<QgsColorRamp> mGradientRamp;
     Qgis::GradientType mGradientType;
     Qgis::SymbolCoordinateReference mCoordinateMode;
     Qgis::GradientSpread mGradientSpread;
@@ -488,6 +481,7 @@ class CORE_EXPORT QgsGradientFillSymbolLayer : public QgsFillSymbolLayer
 /**
  * \ingroup core
  * \class QgsShapeburstFillSymbolLayer
+ * \brief A fill symbol layer which applies a gradient from the outer edges of a symbol to the inside.
  */
 class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
 {
@@ -526,6 +520,7 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
     // implemented from base classes
 
     QString layerType() const override;
+    Qgis::SymbolLayerFlags flags() const override;
     void startRender( QgsSymbolRenderContext &context ) override;
     void stopRender( QgsSymbolRenderContext &context ) override;
     void renderPolygon( const QPolygonF &points, const QVector<QPolygonF> *rings, QgsSymbolRenderContext &context ) override;
@@ -538,7 +533,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * Sets the blur radius, which controls the amount of blurring applied to the fill.
      * \param blurRadius Radius for fill blur. Values between 0 - 17 are valid, where higher values results in a stronger blur. Set to 0 to disable blur.
      * \see blurRadius
-     * \since QGIS 2.3
      */
     void setBlurRadius( int blurRadius ) { mBlurRadius = blurRadius; }
 
@@ -546,7 +540,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * Returns the blur radius, which controls the amount of blurring applied to the fill.
      * \returns Integer representing the radius for fill blur. Higher values indicate a stronger blur. A 0 value indicates that blurring is disabled.
      * \see setBlurRadius
-     * \since QGIS 2.3
      */
     int blurRadius() const { return mBlurRadius; }
 
@@ -556,7 +549,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * be shaded
      * \see useWholeShape
      * \see setMaxDistance
-     * \since QGIS 2.3
      */
     void setUseWholeShape( bool useWholeShape ) { mUseWholeShape = useWholeShape; }
 
@@ -565,7 +557,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * \returns TRUE if shapeburst fill will cover the entire shape. If FALSE, shapeburst is drawn to a distance of maxDistance from the polygon's boundary.
      * \see setUseWholeShape
      * \see maxDistance
-     * \since QGIS 2.3
      */
     bool useWholeShape() const { return mUseWholeShape; }
 
@@ -575,7 +566,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * \see maxDistance
      * \see setUseWholeShape
      * \see setDistanceUnit
-     * \since QGIS 2.3
      */
     void setMaxDistance( double maxDistance ) { mMaxDistance = maxDistance; }
 
@@ -585,7 +575,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * \see useWholeShape
      * \see setMaxDistance
      * \see distanceUnit
-     * \since QGIS 2.3
      */
     double maxDistance() const { return mMaxDistance; }
 
@@ -594,7 +583,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * \param unit distance unit for the maximum distance
      * \see setMaxDistance
      * \see distanceUnit
-     * \since QGIS 2.3
      */
     void setDistanceUnit( Qgis::RenderUnit unit ) { mDistanceUnit = unit; }
 
@@ -603,7 +591,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * \returns distance unit for the maximum distance
      * \see maxDistance
      * \see setDistanceUnit
-     * \since QGIS 2.3
      */
     Qgis::RenderUnit distanceUnit() const { return mDistanceUnit; }
 
@@ -618,7 +605,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * \see setColor
      * \see setColor2
      * \see setColorRamp
-     * \since QGIS 2.3
      */
     void setColorType( Qgis::GradientColorSource colorType ) { mColorType = colorType; }
 
@@ -630,7 +616,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * \see color
      * \see color2
      * \see colorRamp
-     * \since QGIS 2.3
      */
     Qgis::GradientColorSource colorType() const { return mColorType; }
 
@@ -641,7 +626,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      *
      * \see setColorType
      * \see colorRamp
-     * \since QGIS 2.3
      */
     void setColorRamp( QgsColorRamp *ramp SIP_TRANSFER );
 
@@ -650,7 +634,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * \returns a QgsColorRamp color ramp
      * \see setColorRamp
      * \see colorType
-     * \since QGIS 2.3
      */
     QgsColorRamp *colorRamp() { return mGradientRamp.get(); }
 
@@ -659,7 +642,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * \param color2 QColor to use for endpoint of gradient
      * \see setColorType
      * \see color2
-     * \since QGIS 2.3
      */
     void setColor2( const QColor &color2 ) { mColor2 = color2; }
 
@@ -668,7 +650,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * \returns a QColor indicating the color of the endpoint of the gradient
      * \see setColor2
      * \see colorType
-     * \since QGIS 2.3
      */
     QColor color2() const { return mColor2; }
 
@@ -677,7 +658,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * the buffered shading.
      * \param ignoreRings Set to TRUE if buffers should ignore interior rings for polygons.
      * \see ignoreRings
-     * \since QGIS 2.3
      */
     void setIgnoreRings( bool ignoreRings ) { mIgnoreRings = ignoreRings; }
 
@@ -685,7 +665,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * Returns whether the shapeburst fill is set to ignore polygon interior rings.
      * \returns TRUE if the shapeburst fill will ignore interior rings when calculating buffered shading.
      * \see setIgnoreRings
-     * \since QGIS 2.3
      */
     bool ignoreRings() const { return mIgnoreRings; }
 
@@ -694,7 +673,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * \param offset QPointF indicating the horizontal/vertical offset amount
      * \see offset
      * \see setOffsetUnit
-     * \since QGIS 2.3
      */
     void setOffset( QPointF offset ) { mOffset = offset; }
 
@@ -703,7 +681,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * \returns a QPointF indicating the horizontal/vertical offset amount
      * \see setOffset
      * \see offsetUnit
-     * \since QGIS 2.3
      */
     QPointF offset() const { return mOffset; }
 
@@ -712,7 +689,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * \param unit units for fill offset
      * \see setOffset
      * \see offsetUnit
-     * \since QGIS 2.3
      */
     void setOffsetUnit( Qgis::RenderUnit unit ) { mOffsetUnit = unit; }
 
@@ -721,7 +697,6 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
      * \returns units used for the fill offset
      * \see offset
      * \see setOffsetUnit
-     * \since QGIS 2.3
      */
     Qgis::RenderUnit offsetUnit() const { return mOffsetUnit; }
 
@@ -778,7 +753,7 @@ class CORE_EXPORT QgsShapeburstFillSymbolLayer : public QgsFillSymbolLayer
 
 /**
  * \ingroup core
- * \brief Base class for polygon renderers generating texture images
+ * \brief Base class for fill symbol layers which fill polygons with a repeated image.
 */
 class CORE_EXPORT QgsImageFillSymbolLayer: public QgsFillSymbolLayer SIP_ABSTRACT
 {
@@ -790,7 +765,7 @@ class CORE_EXPORT QgsImageFillSymbolLayer: public QgsFillSymbolLayer SIP_ABSTRAC
     void renderPolygon( const QPolygonF &points, const QVector<QPolygonF> *rings, QgsSymbolRenderContext &context ) override;
 
     /**
-     * Sets the \a units fo the symbol's stroke width.
+     * Sets the \a units for the symbol's stroke width.
      * \see strokeWidthUnit()
      * \see setStrokeWidthMapUnitScale()
     */
@@ -817,7 +792,6 @@ class CORE_EXPORT QgsImageFillSymbolLayer: public QgsFillSymbolLayer SIP_ABSTRAC
      * \see setStrokeWidthMapUnitScale()
      * \see strokeWidthUnit()
      *
-     * \since QGIS 2.16
     */
     const QgsMapUnitScale &strokeWidthMapUnitScale() const { return mStrokeWidthMapUnitScale; }
 
@@ -843,10 +817,8 @@ class CORE_EXPORT QgsImageFillSymbolLayer: public QgsFillSymbolLayer SIP_ABSTRAC
     Qgis::RenderUnit outputUnit() const override;
     void setMapUnitScale( const QgsMapUnitScale &scale ) override;
     QgsMapUnitScale mapUnitScale() const override;
-    /*
     double dxfWidth( const QgsDxfExport &e, QgsSymbolRenderContext &context ) const override;
     Qt::PenStyle dxfPenStyle() const override;
-    */
     QVariantMap properties() const override;
 
   protected:
@@ -880,8 +852,7 @@ class CORE_EXPORT QgsImageFillSymbolLayer: public QgsFillSymbolLayer SIP_ABSTRAC
 /**
  * \ingroup core
  * \class QgsRasterFillSymbolLayer
- * \brief A class for filling symbols with a repeated raster image.
- * \since QGIS 2.7
+ * \brief A fill symbol layer which fills polygons with a repeated raster image.
  */
 class CORE_EXPORT QgsRasterFillSymbolLayer: public QgsImageFillSymbolLayer
 {
@@ -911,12 +882,12 @@ class CORE_EXPORT QgsRasterFillSymbolLayer: public QgsImageFillSymbolLayer
     /**
      * Turns relative paths in properties map to absolute when reading and vice versa when writing.
      * Used internally when reading/writing symbols.
-     * \since QGIS 3.0
      */
     static void resolvePaths( QVariantMap &properties, const QgsPathResolver &pathResolver, bool saving );
 
     // implemented from base classes
     QString layerType() const override;
+    Qgis::SymbolLayerFlags flags() const override;
     void renderPolygon( const QPolygonF &points, const QVector<QPolygonF> *rings, QgsSymbolRenderContext &context ) override;
     void startRender( QgsSymbolRenderContext &context ) override;
     void stopRender( QgsSymbolRenderContext &context ) override;
@@ -1030,60 +1001,145 @@ class CORE_EXPORT QgsRasterFillSymbolLayer: public QgsImageFillSymbolLayer
     const QgsMapUnitScale &offsetMapUnitScale() const { return mOffsetMapUnitScale; }
 
     /**
-     * Sets the width for scaling the image used in the fill. The image's height will also be
-     * scaled to maintain the image's aspect ratio.
-     * \param width width for scaling the image
-     * \see width
-     * \see setWidthUnit
-     * \see setWidthMapUnitScale
+     * Sets the \a width for scaling the image used in the fill.
+     *
+     * If \a width is 0 then the width will be calculated automatically based on the image's height().
+     *
+     * \see width()
+     * \see height()
+     * \see setHeight()
+     * \see setSizeUnit()
+     * \see setSizeMapUnitScale()
      */
-    void setWidth( const double width ) { mWidth = width; }
+    void setWidth( double width ) { mWidth = width; }
 
     /**
-     * Returns the width used for scaling the image used in the fill. The image's height is
-     * scaled to maintain the image's aspect ratio.
-     * \returns width used for scaling the image
-     * \see setWidth
-     * \see widthUnit
-     * \see widthMapUnitScale
+     * Returns the width used for scaling the image used in the fill.
+     *
+     * If the width is 0 then the width will be calculated automatically based on the image's height().
+     *
+     * \see height()
+     * \see setWidth()
+     * \see sizeUnit()
+     * \see sizeMapUnitScale()
      */
     double width() const { return mWidth; }
 
     /**
-     * Sets the units for the image's width.
-     * \param unit units for width
-     * \see widthUnit
-     * \see setWidth
-     * \see setWidthMapUnitScale
+     * Sets the \a height for scaling the image.
+     *
+     * If \a height is 0 then the height will be calculated automatically based on the image's width().
+     *
+     * \see setWidth()
+     * \see height()
+     * \see width()
+     *
+     * \since QGIS 3.36
      */
-    void setWidthUnit( const Qgis::RenderUnit unit ) { mWidthUnit = unit; }
+    void setHeight( double height ) { mHeight = height; }
+
+    /**
+     * Returns the height used for scaling the image used in the fill.
+     *
+     * If the height is 0 then the height will be calculated automatically based on the image's width().
+     *
+     * \see width()
+     * \see setHeight()
+     *
+     * \since QGIS 3.36
+     */
+    double height() const { return mHeight; }
+
+    /**
+     * Sets the \a unit for the image's width.
+     *
+     * \see widthUnit()
+     * \see setWidth()
+     * \see setWidthMapUnitScale()
+     *
+     * \deprecated QGIS 3.40. Use setSizeUnit() instead.
+     */
+    Q_DECL_DEPRECATED void setWidthUnit( Qgis::RenderUnit unit ) SIP_DEPRECATED { mSizeUnit = unit; }
+
+    /**
+     * Sets the \a unit for the image's width and height.
+     *
+     * \see widthUnit()
+     * \see setWidth()
+     * \see setWidthMapUnitScale()
+     *
+     * \since QGIS 3.36
+     */
+    void setSizeUnit( Qgis::RenderUnit unit ) { mSizeUnit = unit; }
 
     /**
      * Returns the units for the image's width.
-     * \returns units for width
-     * \see setWidthUnit
-     * \see width
-     * \see widthMapUnitScale
+     *
+     * \see setWidthUnit()
+     * \see width()
+     * \see widthMapUnitScale()
+     *
+     * \deprecated QGIS 3.40. Use sizeUnit() instead.
      */
-    Qgis::RenderUnit widthUnit() const { return mWidthUnit; }
+    Q_DECL_DEPRECATED Qgis::RenderUnit widthUnit() const SIP_DEPRECATED { return mSizeUnit; }
 
     /**
-     * Sets the map unit scale for the image's width.
-     * \param scale map unit scale for width
-     * \see widthMapUnitScale
-     * \see setWidth
-     * \see setWidthUnit
+     * Returns the units for the image's width and height.
+     *
+     * \see setSizeUnit()
+     * \see width()
+     * \see height()
+     * \see sizeMapUnitScale()
+     *
+     * \since QGIS 3.36
      */
-    void setWidthMapUnitScale( const QgsMapUnitScale &scale ) { mWidthMapUnitScale = scale; }
+    Qgis::RenderUnit sizeUnit() const { return mSizeUnit; }
+
+    /**
+     * Sets the map unit \a scale for the image's width.
+     *
+     * \see widthMapUnitScale()
+     * \see setWidth()
+     * \see setWidthUnit()
+     *
+     * \deprecated QGIS 3.40. Use setSizeMapUnitScale() instead.
+     */
+    Q_DECL_DEPRECATED void setWidthMapUnitScale( const QgsMapUnitScale &scale ) SIP_DEPRECATED { mSizeMapUnitScale = scale; }
+
+    /**
+     * Sets the map unit \a scale for the image's width and height.
+     *
+     * \see sizeMapUnitScale()
+     * \see setWidth()
+     * \see setHeight()
+     * \see setSizeUnit()
+     *
+     * \since QGIS 3.36
+     */
+    void setSizeMapUnitScale( const QgsMapUnitScale &scale ) { mSizeMapUnitScale = scale; }
 
     /**
      * Returns the map unit scale for the image's width.
-     * \returns map unit scale for width
-     * \see setWidthMapUnitScale
-     * \see width
-     * \see widthUnit
+     *
+     * \see setWidthMapUnitScale()
+     * \see width()
+     * \see widthUnit()
+     *
+     * \deprecated QGIS 3.40. Use sizeMapUnitScale() instead.
      */
-    const QgsMapUnitScale &widthMapUnitScale() const { return mWidthMapUnitScale; }
+    Q_DECL_DEPRECATED const QgsMapUnitScale &widthMapUnitScale() const SIP_DEPRECATED { return mSizeMapUnitScale; }
+
+    /**
+     * Returns the map unit scale for the image's width and height.
+     *
+     * \see setSizeMapUnitScale()
+     * \see width()
+     * \see height()
+     * \see sizeUnit()
+     *
+     * \since QGIS 3.36
+     */
+    const QgsMapUnitScale &sizeMapUnitScale() const { return mSizeMapUnitScale; }
 
   protected:
 
@@ -1101,17 +1157,19 @@ class CORE_EXPORT QgsRasterFillSymbolLayer: public QgsImageFillSymbolLayer
     QgsMapUnitScale mOffsetMapUnitScale;
 
     double mWidth = 0.0;
-    Qgis::RenderUnit mWidthUnit = Qgis::RenderUnit::Pixels;
-    QgsMapUnitScale mWidthMapUnitScale;
+    Qgis::RenderUnit mSizeUnit = Qgis::RenderUnit::Pixels;
+    QgsMapUnitScale mSizeMapUnitScale;
+
+    double mHeight = 0.0;
 
     //! Applies the image pattern to the brush
-    void applyPattern( QBrush &brush, const QString &imageFilePath, double width, double opacity,
+    void applyPattern( QBrush &brush, const QString &imageFilePath, double width, double height, double opacity,
                        const QgsSymbolRenderContext &context );
 };
 
 /**
  * \ingroup core
- * \brief A class for filling symbols with a repeated SVG file.
+ * \brief A fill symbol layer which fills polygons with a repeated SVG file.
 */
 class CORE_EXPORT QgsSVGFillSymbolLayer: public QgsImageFillSymbolLayer
 {
@@ -1144,7 +1202,6 @@ class CORE_EXPORT QgsSVGFillSymbolLayer: public QgsImageFillSymbolLayer
     /**
      * Turns relative paths in properties map to absolute when reading and vice versa when writing.
      * Used internally when reading/writing symbols.
-     * \since QGIS 3.0
      */
     static void resolvePaths( QVariantMap &properties, const QgsPathResolver &pathResolver, bool saving );
 
@@ -1156,12 +1213,13 @@ class CORE_EXPORT QgsSVGFillSymbolLayer: public QgsImageFillSymbolLayer
     void renderPolygon( const QPolygonF &points, const QVector<QPolygonF> *rings, QgsSymbolRenderContext &context ) override;
     QVariantMap properties() const override;
     QgsSVGFillSymbolLayer *clone() const override SIP_FACTORY;
-    void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override;
+    Q_DECL_DEPRECATED void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override SIP_DEPRECATED;
+    bool toSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &context ) const override;
     bool usesMapUnits() const override;
     QgsSymbol *subSymbol() override;
     bool setSubSymbol( QgsSymbol *symbol SIP_TRANSFER ) override;
     double estimateMaxBleed( const QgsRenderContext &context ) const override;
-    // QColor dxfColor( QgsSymbolRenderContext &context ) const override;
+    QColor dxfColor( QgsSymbolRenderContext &context ) const override;
     QSet<QString> usedAttributes( const QgsRenderContext &context ) const override;
     bool hasDataDefinedProperties() const override;
 
@@ -1431,7 +1489,8 @@ class CORE_EXPORT QgsLinePatternFillSymbolLayer: public QgsImageFillSymbolLayer
     void renderPolygon( const QPolygonF &points, const QVector<QPolygonF> *rings, QgsSymbolRenderContext &context ) override;
     QVariantMap properties() const override;
     QgsLinePatternFillSymbolLayer *clone() const override SIP_FACTORY;
-    void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override;
+    Q_DECL_DEPRECATED void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override SIP_DEPRECATED;
+    bool toSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &context ) const override;
     QImage toTiledPatternImage( ) const override;
     double estimateMaxBleed( const QgsRenderContext &context ) const override;
 
@@ -1668,10 +1727,11 @@ class CORE_EXPORT QgsLinePatternFillSymbolLayer: public QgsImageFillSymbolLayer
 #endif
 
     //! Applies the svg pattern to the brush
-    void applyPattern( const QgsSymbolRenderContext &context, QBrush &brush, double lineAngle, double distance );
+    bool applyPattern( const QgsSymbolRenderContext &context, QBrush &brush, double lineAngle, double distance );
 
     //! Fill line
     std::unique_ptr< QgsLineSymbol > mFillLineSymbol;
+    bool mFillLineSymbolRenderStarted = false;
 
     Qgis::LineClipMode mClipMode = Qgis::LineClipMode::ClipPainterOnly;
 };
@@ -1703,7 +1763,8 @@ class CORE_EXPORT QgsPointPatternFillSymbolLayer: public QgsImageFillSymbolLayer
     void renderPolygon( const QPolygonF &points, const QVector<QPolygonF> *rings, QgsSymbolRenderContext &context ) override;
     QVariantMap properties() const override;
     QgsPointPatternFillSymbolLayer *clone() const override SIP_FACTORY;
-    void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override;
+    Q_DECL_DEPRECATED void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override SIP_DEPRECATED;
+    bool toSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &context ) const override;
     QImage toTiledPatternImage( ) const override;
     double estimateMaxBleed( const QgsRenderContext &context ) const override;
     bool setSubSymbol( QgsSymbol *symbol SIP_TRANSFER ) override;
@@ -2185,6 +2246,7 @@ class CORE_EXPORT QgsPointPatternFillSymbolLayer: public QgsImageFillSymbolLayer
 
   protected:
     std::unique_ptr< QgsMarkerSymbol > mMarkerSymbol;
+    bool mMarkerSymbolRenderStarted = false;
     double mDistanceX = 15;
     Qgis::RenderUnit mDistanceXUnit = Qgis::RenderUnit::Millimeters;
     QgsMapUnitScale mDistanceXMapUnitScale;
@@ -2219,7 +2281,7 @@ class CORE_EXPORT QgsPointPatternFillSymbolLayer: public QgsImageFillSymbolLayer
     QgsPointPatternFillSymbolLayer( const QgsPointPatternFillSymbolLayer &other );
 #endif
 
-    void applyPattern( const QgsSymbolRenderContext &context, QBrush &brush, double distanceX, double distanceY,
+    bool applyPattern( const QgsSymbolRenderContext &context, QBrush &brush, double distanceX, double distanceY,
                        double displacementX, double displacementY, double offsetX, double offsetY );
 
     Qgis::MarkerClipMode mClipMode = Qgis::MarkerClipMode::Shape;
@@ -2268,7 +2330,7 @@ class CORE_EXPORT QgsRandomMarkerFillSymbolLayer : public QgsFillSymbolLayer
     QColor color() const override;
 
     QgsSymbol *subSymbol() override;
-    bool setSubSymbol( QgsSymbol *symbol SIP_TRANSFER ) override;
+    bool setSubSymbol( QgsSymbol *symbol SIP_TRANSFER ) FINAL;
 
     void setOutputUnit( Qgis::RenderUnit unit ) override;
     Qgis::RenderUnit outputUnit() const override;
@@ -2421,6 +2483,8 @@ class CORE_EXPORT QgsRandomMarkerFillSymbolLayer : public QgsFillSymbolLayer
 /**
  * \ingroup core
  * \class QgsCentroidFillSymbolLayer
+ *
+ * \brief A fill symbol layer which renders a marker symbol at the centroid of a polygon geometry.
  */
 class CORE_EXPORT QgsCentroidFillSymbolLayer : public QgsFillSymbolLayer
 {
@@ -2446,11 +2510,12 @@ class CORE_EXPORT QgsCentroidFillSymbolLayer : public QgsFillSymbolLayer
     void renderPolygon( const QPolygonF &points, const QVector<QPolygonF> *rings, QgsSymbolRenderContext &context ) override;
     QVariantMap properties() const override;
     QgsCentroidFillSymbolLayer *clone() const override SIP_FACTORY;
-    void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override;
+    Q_DECL_DEPRECATED void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const override SIP_DEPRECATED;
+    bool toSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &context ) const override;
     void setColor( const QColor &color ) override;
     QColor color() const override;
     QgsSymbol *subSymbol() override;
-    bool setSubSymbol( QgsSymbol *symbol SIP_TRANSFER ) override;
+    bool setSubSymbol( QgsSymbol *symbol SIP_TRANSFER ) FINAL;
     void setOutputUnit( Qgis::RenderUnit unit ) override;
     Qgis::RenderUnit outputUnit() const override;
     bool usesMapUnits() const override;
@@ -2466,14 +2531,12 @@ class CORE_EXPORT QgsCentroidFillSymbolLayer : public QgsFillSymbolLayer
     /**
      * Sets whether a point is drawn for all parts or only on the biggest part of multi-part features.
      * \see pointOnAllParts()
-     * \since QGIS 2.16
     */
     void setPointOnAllParts( bool pointOnAllParts ) { mPointOnAllParts = pointOnAllParts; }
 
     /**
      * Returns whether a point is drawn for all parts or only on the biggest part of multi-part features.
      * \see setPointOnAllParts()
-     * \since QGIS 2.16
     */
     bool pointOnAllParts() const { return mPointOnAllParts; }
 
@@ -2481,7 +2544,7 @@ class CORE_EXPORT QgsCentroidFillSymbolLayer : public QgsFillSymbolLayer
      * Returns TRUE if point markers should be clipped to the polygon boundary.
      *
      * \see setClipPoints()
-     * \since 3.14
+     * \since QGIS 3.14
      */
     bool clipPoints() const { return mClipPoints; }
 
@@ -2489,7 +2552,7 @@ class CORE_EXPORT QgsCentroidFillSymbolLayer : public QgsFillSymbolLayer
      * Sets whether point markers should be \a clipped to the polygon boundary.
      *
      * \see clipPoints()
-     * \since 3.14
+     * \since QGIS 3.14
      */
     void setClipPoints( bool clipPoints ) { mClipPoints = clipPoints; }
 
@@ -2497,7 +2560,7 @@ class CORE_EXPORT QgsCentroidFillSymbolLayer : public QgsFillSymbolLayer
      * Returns TRUE if point markers should be clipped to the current part boundary only.
      *
      * \see setClipPoints()
-     * \since 3.14
+     * \since QGIS 3.14
      */
     bool clipOnCurrentPartOnly() const { return mClipOnCurrentPartOnly; }
 
@@ -2505,7 +2568,7 @@ class CORE_EXPORT QgsCentroidFillSymbolLayer : public QgsFillSymbolLayer
      * Sets whether point markers should be \a clipped to the current part boundary only.
      *
      * \see clipOnCurrentPartOnly()
-     * \since 3.14
+     * \since QGIS 3.14
      */
     void setClipOnCurrentPartOnly( bool clipOnCurrentPartOnly ) { mClipOnCurrentPartOnly = clipOnCurrentPartOnly; }
 
@@ -2522,6 +2585,7 @@ class CORE_EXPORT QgsCentroidFillSymbolLayer : public QgsFillSymbolLayer
 
     bool mRenderingFeature = false;
     double mFeatureSymbolOpacity = 1;
+    bool mUseSelectedColor = false;
 
   private:
 #ifdef SIP_RUN

@@ -24,9 +24,9 @@ QString QgsRenameLayerAlgorithm::name() const
   return QStringLiteral( "renamelayer" );
 }
 
-QgsProcessingAlgorithm::Flags QgsRenameLayerAlgorithm::flags() const
+Qgis::ProcessingAlgorithmFlags QgsRenameLayerAlgorithm::flags() const
 {
-  return FlagHideFromToolbox;
+  return Qgis::ProcessingAlgorithmFlag::HideFromToolbox;
 }
 
 QString QgsRenameLayerAlgorithm::displayName() const
@@ -52,6 +52,11 @@ QString QgsRenameLayerAlgorithm::groupId() const
 QString QgsRenameLayerAlgorithm::shortHelpString() const
 {
   return QObject::tr( "This algorithm renames a layer." );
+}
+
+QString QgsRenameLayerAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Renames a layer." );
 }
 
 QgsRenameLayerAlgorithm *QgsRenameLayerAlgorithm::createInstance() const

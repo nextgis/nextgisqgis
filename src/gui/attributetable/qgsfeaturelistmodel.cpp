@@ -15,6 +15,7 @@
 #include "qgsexception.h"
 #include "qgsvectordataprovider.h"
 #include "qgsfeaturelistmodel.h"
+#include "moc_qgsfeaturelistmodel.cpp"
 #include "qgsattributetablemodel.h"
 #include "qgsvectorlayereditbuffer.h"
 #include "qgsattributetablefiltermodel.h"
@@ -68,7 +69,7 @@ QVariant QgsFeatureListModel::data( const QModelIndex &index, int role ) const
     }
     else
     {
-      return QVariant( QVariant::Invalid );
+      return QgsVariantUtils::createNullVariant( QMetaType::Type::UnknownType );
     }
   }
 
@@ -114,6 +115,14 @@ QVariant QgsFeatureListModel::data( const QModelIndex &index, int role ) const
 
     return QVariant::fromValue( feat );
   }
+  else if ( role == FeatureWithGeometryRole )
+  {
+    QgsFeature feat;
+
+    mFilterModel->layerCache()->completeFeatureAtId( idxToFid( index ), feat );
+
+    return QVariant::fromValue( feat );
+  }
   else if ( role == Qt::TextAlignmentRole )
   {
     return static_cast<Qt::Alignment::Int>( Qt::AlignLeft );
@@ -137,7 +146,7 @@ QVariant QgsFeatureListModel::data( const QModelIndex &index, int role ) const
     }
     else
     {
-      styles = QgsConditionalStyle::matchingConditionalStyles( layer->conditionalStyles()->rowStyles(), QVariant(),  mExpressionContext );
+      styles = QgsConditionalStyle::matchingConditionalStyles( layer->conditionalStyles()->rowStyles(), QVariant(), mExpressionContext );
       mRowStylesMap.insert( fid, styles );
     }
 
@@ -147,7 +156,7 @@ QVariant QgsFeatureListModel::data( const QModelIndex &index, int role ) const
     {
       const QString fieldName = *mDisplayExpression.referencedColumns().constBegin();
       styles = layer->conditionalStyles()->fieldStyles( fieldName );
-      styles = QgsConditionalStyle::matchingConditionalStyles( styles, feat.attribute( fieldName ),  mExpressionContext );
+      styles = QgsConditionalStyle::matchingConditionalStyles( styles, feat.attribute( fieldName ), mExpressionContext );
     }
 
     styles.insert( 0, rowstyle );
@@ -222,7 +231,9 @@ bool QgsFeatureListModel::setDisplayExpression( const QString &expression )
   mDisplayExpression = exp;
 
   if ( mSortByDisplayExpression )
-    masterModel()->prefetchSortData( expression, 1 );
+  {
+    masterModel()->prefetchSortData( expression, QGSFEATURELISTMODEL_CACHE_INDEX );
+  }
 
   emit dataChanged( index( 0, 0 ), index( rowCount() - 1, 0 ) );
 
@@ -284,13 +295,20 @@ bool QgsFeatureListModel::sortByDisplayExpression() const
 
 void QgsFeatureListModel::setSortByDisplayExpression( bool sortByDisplayExpression, Qt::SortOrder order )
 {
+  if ( !mSortByDisplayExpression && sortByDisplayExpression )
+  {
+    masterModel()->prefetchSortData( mDisplayExpression.expression(), QGSFEATURELISTMODEL_CACHE_INDEX );
+  }
+
   mSortByDisplayExpression = sortByDisplayExpression;
 
   // If we are sorting by display expression, we do not support injected null
   if ( mSortByDisplayExpression )
+  {
     setInjectNull( false );
+  }
 
-  setSortRole( QgsAttributeTableModel::SortRole + 1 );
+  setSortRole( static_cast<int>( QgsAttributeTableModel::CustomRole::Sort ) + 1 );
   setDynamicSortFilter( mSortByDisplayExpression );
   sort( 0, order );
 }

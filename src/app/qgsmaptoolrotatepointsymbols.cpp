@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmaptoolrotatepointsymbols.h"
+#include "moc_qgsmaptoolrotatepointsymbols.cpp"
 #include "qgsmapcanvas.h"
 #include "qgspointrotationitem.h"
 #include "qgssymbol.h"
@@ -132,7 +133,7 @@ void QgsMapToolRotatePointSymbols::canvasPressOnFeature( QgsMapMouseEvent *e, co
     mRotationItem->setPointLocation( snappedPoint );
   }
   mCurrentMouseAzimut = calculateAzimut( e->pos() );
-  setPixmapItemRotation( ( int )( mCurrentMouseAzimut ) );
+  setPixmapItemRotation( ( int ) ( mCurrentMouseAzimut ) );
   mRotating = true;
 }
 
@@ -140,7 +141,7 @@ bool QgsMapToolRotatePointSymbols::checkSymbolCompatibility( QgsMarkerSymbol *ma
 {
   bool ok = false;
   const QgsProperty ddAngle( markerSymbol->dataDefinedAngle() );
-  if ( ddAngle && ddAngle.isActive() && ddAngle.propertyType() == QgsProperty::FieldBasedProperty )
+  if ( ddAngle && ddAngle.isActive() && ddAngle.propertyType() == Qgis::PropertyType::Field )
   {
     mCurrentRotationAttributes << mActiveLayer->fields().indexFromName( ddAngle.field() );
     ok = true;
@@ -196,7 +197,7 @@ void QgsMapToolRotatePointSymbols::canvasMoveEvent( QgsMapMouseEvent *e )
   }
   else
   {
-    displayValue = ( int )( mCurrentRotationFeature );
+    displayValue = ( int ) ( mCurrentRotationFeature );
     mCtrlPressed = false;
   }
   setPixmapItemRotation( displayValue );
@@ -235,7 +236,7 @@ void QgsMapToolRotatePointSymbols::createPixmapItem( QgsMarkerSymbol *markerSymb
 
   if ( markerSymbol )
   {
-    const std::unique_ptr< QgsSymbol > clone( markerSymbol->clone() );
+    const std::unique_ptr<QgsSymbol> clone( markerSymbol->clone() );
     QgsMarkerSymbol *markerClone = static_cast<QgsMarkerSymbol *>( clone.get() );
     markerClone->setDataDefinedAngle( QgsProperty() );
     pointImage = markerClone->bigSymbolPreviewImage( nullptr, Qgis::SymbolPreviewFlags() );
@@ -256,7 +257,6 @@ void QgsMapToolRotatePointSymbols::setPixmapItemRotation( double rotation )
 
 int QgsMapToolRotatePointSymbols::roundTo15Degrees( double n )
 {
-  const int m = ( int )( n / 15.0 + 0.5 );
+  const int m = ( int ) ( n / 15.0 + 0.5 );
   return ( m * 15 );
 }
-

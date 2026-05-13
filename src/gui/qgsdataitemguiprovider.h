@@ -29,6 +29,7 @@ class QgsDataItem;
 class QgsMessageBar;
 class QgsLayerItem;
 class QgsBrowserTreeView;
+class QgsMapCanvas;
 
 /**
  * \class QgsDataItemGuiContext
@@ -41,10 +42,6 @@ class QgsBrowserTreeView;
 class GUI_EXPORT QgsDataItemGuiContext
 {
   public:
-
-    /**
-     * Constructor for QgsDataItemGuiContext.
-     */
     QgsDataItemGuiContext() = default;
 
     /**
@@ -66,6 +63,24 @@ class GUI_EXPORT QgsDataItemGuiContext
     void setMessageBar( QgsMessageBar *bar );
 
     /**
+     * Sets the map canvas associated with the data item.
+     *
+     * This allows the item to retrieve the current map scale and other properties from the canvas.
+     *
+     * \see mapCanvas()
+     * \since QGIS 3.44
+     */
+    void setMapCanvas( QgsMapCanvas *canvas );
+
+    /**
+     * Returns the map canvas associated with the item.
+     *
+     * \see setMapCanvas()
+     * \since QGIS 3.44
+     */
+    QgsMapCanvas *mapCanvas() const;
+
+    /**
      * Returns the associated view.
      *
      * \see setView()
@@ -82,10 +97,11 @@ class GUI_EXPORT QgsDataItemGuiContext
     void setView( QgsBrowserTreeView *view );
 
   private:
-
     QgsMessageBar *mMessageBar = nullptr;
 
     QgsBrowserTreeView *mView = nullptr;
+
+    QgsMapCanvas *mCanvas = nullptr;
 };
 
 Q_DECLARE_METATYPE( QgsDataItemGuiContext );
@@ -104,7 +120,6 @@ Q_DECLARE_METATYPE( QgsDataItemGuiContext );
 class GUI_EXPORT QgsDataItemGuiProvider
 {
   public:
-
     virtual ~QgsDataItemGuiProvider() = default;
 
     /**
@@ -136,8 +151,7 @@ class GUI_EXPORT QgsDataItemGuiProvider
      *
      * The base class method has no effect.
      */
-    virtual void populateContextMenu( QgsDataItem *item, QMenu *menu,
-                                      const QList<QgsDataItem *> &selectedItems, QgsDataItemGuiContext context );
+    virtual void populateContextMenu( QgsDataItem *item, QMenu *menu, const QList<QgsDataItem *> &selectedItems, QgsDataItemGuiContext context );
 
     /**
      * Returns the provider's precedence to use when populating context menus via calls to populateContextMenu().

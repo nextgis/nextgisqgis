@@ -33,11 +33,10 @@ class QCloseEvent;
  * \ingroup gui
  * \brief A generic dialog widget for displaying QGIS log messages.
  */
-class GUI_EXPORT QgsMessageLogViewer: public QDialog, private Ui::QgsMessageLogViewer
+class GUI_EXPORT QgsMessageLogViewer : public QDialog, private Ui::QgsMessageLogViewer
 {
     Q_OBJECT
   public:
-
     /**
      * Create a new message log viewer. The viewer will automatically connect to the system's
      * QgsApplication::messageLog() instance.
@@ -51,6 +50,13 @@ class GUI_EXPORT QgsMessageLogViewer: public QDialog, private Ui::QgsMessageLogV
      */
     void logMessage( const QString &message, const QString &tag, Qgis::MessageLevel level );
 
+    /**
+     * Activates the tab whose title matches the given \a tag, if any.
+     *
+     * \since QGIS 3.44
+     */
+    void showTab( const QString &tag );
+
   protected:
     void closeEvent( QCloseEvent *e ) override;
     void reject() override;
@@ -61,7 +67,6 @@ class GUI_EXPORT QgsMessageLogViewer: public QDialog, private Ui::QgsMessageLogV
     void closeTab( int index );
 
   private:
-
     QString mClickedAnchor;
     QMenu *mTabBarContextMenu = nullptr;
     int mMessageLoggedCount = 0;

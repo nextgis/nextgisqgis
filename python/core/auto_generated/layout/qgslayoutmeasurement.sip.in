@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/layout/qgslayoutmeasurement.h                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,12 +12,10 @@
 class QgsLayoutMeasurement
 {
 %Docstring(signature="appended")
-This class provides a method of storing measurements for use in QGIS layouts
-using a variety of different measurement units.
+Provides a method of storing measurements for use in QGIS layouts using
+a variety of different measurement units.
 
 .. seealso:: :py:class:`QgsLayoutMeasurementConverter`
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -56,8 +54,8 @@ Returns the units for the measurement.
 
     void setUnits( const Qgis::LayoutUnit units );
 %Docstring
-Sets the ``units`` for the measurement. Does not alter the stored length,
-ie. no length conversion is done.
+Sets the ``units`` for the measurement. Does not alter the stored
+length, ie. no length conversion is done.
 
 .. seealso:: :py:func:`units`
 %End
@@ -108,5 +106,5 @@ Decodes a measurement from a ``string``.
  *                                                                      *
  * src/core/layout/qgslayoutmeasurement.h                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/layout/qgslayoutitempolygon.h                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -14,8 +14,6 @@ class QgsLayoutItemPolygon: QgsLayoutNodesItem
 {
 %Docstring(signature="appended")
 Layout item for node based polygon shapes.
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -30,8 +28,8 @@ Constructor for QgsLayoutItemPolygon for the specified ``layout``.
 
     QgsLayoutItemPolygon( const QPolygonF &polygon, QgsLayout *layout );
 %Docstring
-Constructor for QgsLayoutItemPolygon for the specified ``polygon``
-and ``layout``.
+Constructor for QgsLayoutItemPolygon for the specified ``polygon`` and
+``layout``.
 %End
 
     ~QgsLayoutItemPolygon();
@@ -55,6 +53,8 @@ The caller takes responsibility for deleting the returned object.
 
     virtual QgsGeometry clipPath() const;
 
+    virtual bool isValid() const;
+
 
     QgsFillSymbol *symbol();
 %Docstring
@@ -65,8 +65,8 @@ Returns the fill symbol used to draw the shape.
 
     void setSymbol( QgsFillSymbol *symbol );
 %Docstring
-Sets the ``symbol`` used to draw the shape.
-Ownership of ``symbol`` is not transferred.
+Sets the ``symbol`` used to draw the shape. Ownership of ``symbol`` is
+not transferred.
 
 .. seealso:: :py:func:`symbol`
 %End
@@ -90,5 +90,5 @@ Ownership of ``symbol`` is not transferred.
  *                                                                      *
  * src/core/layout/qgslayoutitempolygon.h                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

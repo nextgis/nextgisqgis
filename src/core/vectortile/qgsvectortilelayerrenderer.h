@@ -31,12 +31,13 @@ class QgsVectorTileDataProvider;
 
 /**
  * \ingroup core
- * \brief This class provides map rendering functionality for vector tile layers.
+ * \brief Provides map rendering functionality for vector tile layers.
+ *
  * In render() function (assumed to be run in a worker thread) it will:
  *
- * # fetch vector tiles using QgsVectorTileLoader
- * # decode raw tiles into QgsFeature objects using QgsVectorTileDecoder
- * # render tiles using a class derived from QgsVectorTileRenderer
+ * - fetch vector tiles using QgsVectorTileLoader
+ * - decode raw tiles into QgsFeature objects using QgsVectorTileDecoder
+ * - render tiles using a class derived from QgsVectorTileRenderer
  *
  * \since QGIS 3.14
  */
@@ -56,10 +57,14 @@ class QgsVectorTileLayerRenderer : public QgsMapLayerRenderer
 
     // data coming from the vector tile layer
 
+    QString mLayerName;
+
     std::unique_ptr< QgsVectorTileDataProvider > mDataProvider;
 
     //! Tile renderer object to do rendering of individual tiles
     std::unique_ptr<QgsVectorTileRenderer> mRenderer;
+
+    QPainter::CompositionMode mLayerBlendMode = QPainter::CompositionMode::CompositionMode_SourceOver;
 
     /**
      * Label provider that handles registration of labels.
@@ -67,8 +72,14 @@ class QgsVectorTileLayerRenderer : public QgsMapLayerRenderer
      */
     QgsVectorTileLabelProvider *mLabelProvider = nullptr;
 
+    // Decoded tile data
+    QMap<QString, QgsVectorTileRendererData> mTileDataMap;
+
     //! Whether to draw boundaries of tiles (useful for debugging)
     bool mDrawTileBoundaries = false;
+
+    //! True if labels are enabled
+    bool mLabelsEnabled = true;
 
     // temporary data used during rendering process
 
@@ -101,6 +112,9 @@ class QgsVectorTileLayerRenderer : public QgsMapLayerRenderer
     double mLayerOpacity = 1.0;
 
     QgsVectorTileMatrixSet mTileMatrixSet;
+
+    bool mEnableProfile = false;
+    quint64 mPreparationTime = 0;
 
 };
 

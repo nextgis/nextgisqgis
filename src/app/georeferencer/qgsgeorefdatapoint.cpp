@@ -19,10 +19,9 @@
 #include "qgsgcpcanvasitem.h"
 #include "qgscoordinatereferencesystem.h"
 #include "qgsgeorefdatapoint.h"
+#include "moc_qgsgeorefdatapoint.cpp"
 
-QgsGeorefDataPoint::QgsGeorefDataPoint( QgsMapCanvas *srcCanvas, QgsMapCanvas *dstCanvas,
-                                        const QgsPointXY &sourceCoordinates, const QgsPointXY &destinationPoint,
-                                        const QgsCoordinateReferenceSystem &destinationPointCrs, bool enabled )
+QgsGeorefDataPoint::QgsGeorefDataPoint( QgsMapCanvas *srcCanvas, QgsMapCanvas *dstCanvas, const QgsPointXY &sourceCoordinates, const QgsPointXY &destinationPoint, const QgsCoordinateReferenceSystem &destinationPointCrs, bool enabled )
   : mSrcCanvas( srcCanvas )
   , mDstCanvas( dstCanvas )
   , mGcpPoint( sourceCoordinates, destinationPoint, destinationPointCrs, enabled )
@@ -46,6 +45,7 @@ QgsGeorefDataPoint::QgsGeorefDataPoint( const QgsGeorefDataPoint &p )
   , mDstCanvas( p.mDstCanvas )
   , mGCPSourceItem( nullptr )
   , mGCPDestinationItem( nullptr )
+  , mHovered( p.mHovered )
   , mGcpPoint( p.mGcpPoint )
   , mId( p.id() )
   , mResidual( p.residual() )
@@ -92,13 +92,18 @@ void QgsGeorefDataPoint::setEnabled( bool enabled )
 
 void QgsGeorefDataPoint::setId( int id )
 {
+  const bool noLongerTemporary = mId < 0 && id >= 0;
   mId = id;
   if ( mGCPSourceItem )
   {
+    if ( noLongerTemporary )
+      mGCPSourceItem->setPointColor( Qt::red );
     mGCPSourceItem->update();
   }
   if ( mGCPDestinationItem )
   {
+    if ( noLongerTemporary )
+      mGCPDestinationItem->setPointColor( Qt::red );
     mGCPDestinationItem->update();
   }
 }
@@ -126,47 +131,63 @@ void QgsGeorefDataPoint::updateCoords()
   }
 }
 
-bool QgsGeorefDataPoint::contains( QPoint p, QgsGcpPoint::PointType type, double &distance )
+void QgsGeorefDataPoint::setHovered( bool hovered )
+{
+  mHovered = hovered;
+
+  if ( mGCPSourceItem )
+  {
+    mGCPSourceItem->update();
+  }
+  if ( mGCPDestinationItem )
+  {
+    mGCPDestinationItem->update();
+  }
+}
+
+bool QgsGeorefDataPoint::contains( const QgsPointXY &p, QgsGcpPoint::PointType type, double &distance )
 {
   const double searchRadiusMM = QgsMapTool::searchRadiusMM();
   const double pixelsPerMM = mGCPSourceItem->canvas()->logicalDpiX() / 25.4;
   const double searchRadiusPx = searchRadiusMM * pixelsPerMM;
 
+  QPointF pPos;
   QPointF itemPos;
   switch ( type )
   {
     case QgsGcpPoint::PointType::Source:
     {
+      pPos = mGCPSourceItem->toCanvasCoordinates( p );
       itemPos = mGCPSourceItem->pos();
       break;
     }
 
     case QgsGcpPoint::PointType::Destination:
     {
+      pPos = mGCPDestinationItem->toCanvasCoordinates( p );
       itemPos = mGCPDestinationItem->pos();
       break;
     }
   }
 
-  const double dx = p.x() - itemPos.x();
-  const double dy = p.y() - itemPos.y();
+  const double dx = pPos.x() - itemPos.x();
+  const double dy = pPos.y() - itemPos.y();
   distance = std::sqrt( dx * dx + dy * dy );
   return distance <= searchRadiusPx;
 }
 
-void QgsGeorefDataPoint::moveTo( QPoint canvasPixels, QgsGcpPoint::PointType type )
+void QgsGeorefDataPoint::moveTo( QgsPointXY p, QgsGcpPoint::PointType type )
 {
   switch ( type )
   {
     case QgsGcpPoint::PointType::Source:
     {
-      const QgsPointXY pnt = mGCPSourceItem->toMapCoordinates( canvasPixels );
-      mGcpPoint.setSourcePoint( pnt );
+      mGcpPoint.setSourcePoint( p );
       break;
     }
     case QgsGcpPoint::PointType::Destination:
     {
-      mGcpPoint.setDestinationPoint( mGCPDestinationItem->toMapCoordinates( canvasPixels ) );
+      mGcpPoint.setDestinationPoint( p );
       if ( mSrcCanvas && mSrcCanvas->mapSettings().destinationCrs().isValid() )
         mGcpPoint.setDestinationPointCrs( mSrcCanvas->mapSettings().destinationCrs() );
       else

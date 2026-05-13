@@ -151,6 +151,11 @@
 #define SIP_PYARGREMOVE
 
 /*
+ * remove argument in SIP method only for Qt version >= 6
+ */
+#define SIP_PYARGREMOVE6
+
+/*
  * rename argument in SIP method
  */
 #define SIP_PYARGRENAME(pyname)
@@ -239,7 +244,7 @@
 
 /*
  * Define Python special method (bool, repr, etc.) using the given method or code
- * sipify.pl will create a dedicated python file named according to the class
+ * sipify.py will create a dedicated python file named according to the class
  * and located in python/{module}/auto_additions/{classname}.py
  * a simple method name can be provided (e.g. isValid) and sipify will create the proper code
  * or some Python code can be provided:
@@ -268,8 +273,23 @@
 #define SIP_MONKEYPATCH_COMPAT_NAME(FORMERNAME)
 
 /*
+ * Directive to define the base type for a enum
+ */
+#define SIP_ENUM_BASETYPE(type)
+
+/*
  * Directive to define a Python property;
  */
 #define SIP_PROPERTY(name,getter,setter)
+
+/*
+ * Directive to indicate that following code is only available with Qt 5 version
+ */
+#define SIP_PYQT5_RUN
+
+/*
+ * Adds an include in the type header code
+ */
+#define SIP_TYPEHEADER_INCLUDE(file)
 
 #endif // QGIS_SIP_H

@@ -13,8 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsspatialitedataitems.h"
-
-#include "qgsapplication.h"
+#include "moc_qgsspatialitedataitems.cpp"
 #include "qgsspatialiteprovider.h"
 #include "qgsspatialiteconnection.h"
 #include "qgsfieldsitem.h"
@@ -24,8 +23,6 @@
 #endif
 
 #include "qgslogger.h"
-#include "qgsvectorlayerexporter.h"
-#include "qgsvectorlayer.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -289,9 +286,9 @@ QString QgsSpatiaLiteDataItemProvider::dataProviderKey() const
   return QStringLiteral( "spatialite" );
 }
 
-int QgsSpatiaLiteDataItemProvider::capabilities() const
+Qgis::DataItemProviderCapabilities QgsSpatiaLiteDataItemProvider::capabilities() const
 {
-  return QgsDataProvider::Database;
+  return Qgis::DataItemProviderCapability::Databases;
 }
 
 QgsDataItem *QgsSpatiaLiteDataItemProvider::createDataItem( const QString &pathIn, QgsDataItem *parentItem )
@@ -309,9 +306,6 @@ bool QgsSLConnectionItem::layerCollection() const
 QVector<QgsDataItem *> QgsSLLayerItem::createChildren()
 {
   QVector<QgsDataItem *> children;
-  children.push_back( new QgsFieldsItem( this,
-                                         path() + QStringLiteral( "/columns/ " ),
-                                         uri(),
-                                         QStringLiteral( "spatialite" ), QString(), name() ) );
+  children.push_back( new QgsFieldsItem( this, path() + QStringLiteral( "/columns/ " ), uri(), QStringLiteral( "spatialite" ), QString(), name() ) );
   return children;
 }

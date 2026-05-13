@@ -43,8 +43,8 @@ class QgsMapLayer;
 
 /**
  * \ingroup core
- * \brief The QgsOgcUtils class provides various utility functions for conversion between
- *   OGC (Open Geospatial Consortium) standards and QGIS internal representations.
+ * \brief Provides various utility functions for conversion between
+ * OGC (Open Geospatial Consortium) standards and QGIS internal representations.
  *
  * Currently supported standards:
  *
@@ -106,7 +106,6 @@ class CORE_EXPORT QgsOgcUtils
     /**
      * Exports the geometry to GML
       * \returns QDomElement
-      * \since QGIS 2.16
      */
     static QDomElement geometryToGML( const QgsGeometry &geometry, QDomDocument &doc,
                                       QgsOgcUtils::GMLVersion gmlVersion,
@@ -131,14 +130,13 @@ class CORE_EXPORT QgsOgcUtils
      * Exports the rectangle to GML2 Box
      * \returns QDomElement
      */
-    static QDomElement rectangleToGMLBox( QgsRectangle *box, QDomDocument &doc, int precision = 17 );
+    static QDomElement rectangleToGMLBox( const QgsRectangle *box, QDomDocument &doc, int precision = 17 );
 
     /**
      * Exports the rectangle to GML2 Box
      * \returns QDomElement
-     * \since QGIS 2.16
      */
-    static QDomElement rectangleToGMLBox( QgsRectangle *box, QDomDocument &doc,
+    static QDomElement rectangleToGMLBox( const QgsRectangle *box, QDomDocument &doc,
                                           const QString &srsName,
                                           bool invertAxisOrientation,
                                           int precision = 17 );
@@ -147,14 +145,13 @@ class CORE_EXPORT QgsOgcUtils
      * Exports the rectangle to GML3 Envelope
      * \returns QDomElement
      */
-    static QDomElement rectangleToGMLEnvelope( QgsRectangle *env, QDomDocument &doc, int precision = 17 );
+    static QDomElement rectangleToGMLEnvelope( const QgsRectangle *env, QDomDocument &doc, int precision = 17 );
 
     /**
      * Exports the rectangle to GML3 Envelope
      * \returns QDomElement
-     * \since QGIS 2.16
      */
-    static QDomElement rectangleToGMLEnvelope( QgsRectangle *env, QDomDocument &doc,
+    static QDomElement rectangleToGMLEnvelope( const QgsRectangle *env, QDomDocument &doc,
         const QString &srsName,
         bool invertAxisOrientation,
         int precision = 17 );
@@ -199,7 +196,6 @@ class CORE_EXPORT QgsOgcUtils
      * \returns valid \verbatim <Filter> \endverbatim QDomElement on success,
      * otherwise null QDomElement
      * \note not available in Python bindings
-     * \since QGIS 2.16
      */
     static QDomElement expressionToOgcFilter( const QgsExpression &exp,
         QDomDocument &doc,
@@ -211,7 +207,9 @@ class CORE_EXPORT QgsOgcUtils
         const QString &srsName,
         bool honourAxisOrientation,
         bool invertAxisOrientation,
-        QString *errorMessage = nullptr ) SIP_SKIP;
+        QString *errorMessage = nullptr,
+        const QMap<QString, QString> &fieldNameToXPathMap = QMap<QString, QString>(),
+        const QMap<QString, QString> &namespacePrefixToUriMap = QMap<QString, QString>() ) SIP_SKIP;
 
     /**
      * Creates an OGC expression XML element from the \a exp expression
@@ -243,7 +241,9 @@ class CORE_EXPORT QgsOgcUtils
         bool honourAxisOrientation,
         bool invertAxisOrientation,
         QString *errorMessage = nullptr,
-        bool requiresFilterElement = false );
+        bool requiresFilterElement = false,
+        const QMap<QString, QString> &fieldNameToXPathMap = QMap<QString, QString>(),
+        const QMap<QString, QString> &namespacePrefixToUriMap = QMap<QString, QString>() );
 
 #ifndef SIP_RUN
 
@@ -251,12 +251,10 @@ class CORE_EXPORT QgsOgcUtils
      * \ingroup core
      * \brief Layer properties. Used by SQLStatementToOgcFilter().
      * \note not available in Python bindings
-     * \since QGIS 2.16
      */
     class LayerProperties
     {
       public:
-        //! Constructor
         LayerProperties() = default;
 
         //! Layer name
@@ -288,7 +286,6 @@ class CORE_EXPORT QgsOgcUtils
      * \returns valid \verbatim <Filter> \endverbatim QDomElement on success,
      * otherwise null QDomElement
      * \note not available in Python bindings
-     * \since QGIS 2.16
      */
     static QDomElement SQLStatementToOgcFilter( const QgsSQLStatement &statement,
         QDomDocument &doc,
@@ -298,7 +295,9 @@ class CORE_EXPORT QgsOgcUtils
         bool honourAxisOrientation,
         bool invertAxisOrientation,
         const QMap< QString, QString> &mapUnprefixedTypenameToPrefixedTypename,
-        QString *errorMessage = nullptr ) SIP_SKIP;
+        QString *errorMessage = nullptr,
+        const QMap<QString, QString> &fieldNameToXPathMap = QMap<QString, QString>(),
+        const QMap<QString, QString> &namespacePrefixToUriMap = QMap<QString, QString>() ) SIP_SKIP;
 
   private:
 
@@ -399,7 +398,10 @@ class QgsOgcUtilsExprToFilter
                              const QString &geometryName,
                              const QString &srsName,
                              bool honourAxisOrientation,
-                             bool invertAxisOrientation );
+                             bool invertAxisOrientation,
+                             const QMap<QString, QString> &fieldNameToXPathMap,
+                             const QMap<QString, QString> &namespacePrefixToUriMap
+                           );
 
     //! Convert an expression to a OGC filter
     QDomElement expressionNodeToOgcFilter( const QgsExpressionNode *node, QgsExpression *expression, const QgsExpressionContext *context );
@@ -415,11 +417,13 @@ class QgsOgcUtilsExprToFilter
     bool mGMLUsed;
     QgsOgcUtils::GMLVersion mGMLVersion;
     QgsOgcUtils::FilterVersion mFilterVersion;
-    const QString &mNamespacePrefix;
-    const QString &mNamespaceURI;
-    const QString &mGeometryName;
-    const QString &mSrsName;
+    QString mNamespacePrefix;
+    QString mNamespaceURI;
+    QString mGeometryName;
+    QString mSrsName;
     bool mInvertAxisOrientation;
+    QMap<QString, QString> mFieldNameToXPathMap;
+    QMap<QString, QString> mNamespacePrefixToUriMap;
     QString mErrorMessage;
     QString mFilterPrefix;
     QString mPropertyName;
@@ -509,7 +513,7 @@ class QgsOgcUtilsExpressionFromFilter
 
     /**
      * Returns an expression node from a WFS filter embedded in a document with
-     * boudnaries operator.
+     * boundaries operator.
      */
     QgsExpressionNode *nodeIsBetweenFromOgcFilter( const QDomElement &element );
 
@@ -535,7 +539,9 @@ class QgsOgcUtilsSQLStatementToFilter
                                      const QList<QgsOgcUtils::LayerProperties> &layerProperties,
                                      bool honourAxisOrientation,
                                      bool invertAxisOrientation,
-                                     const QMap< QString, QString> &mapUnprefixedTypenameToPrefixedTypename );
+                                     const QMap< QString, QString> &mapUnprefixedTypenameToPrefixedTypename,
+                                     const QMap<QString, QString> &fieldNameToXPathMap,
+                                     const QMap<QString, QString> &namespacePrefixToUriMap );
 
     //! Convert a SQL statement to a OGC filter
     QDomElement toOgcFilter( const QgsSQLStatement::Node *node );
@@ -561,6 +567,8 @@ class QgsOgcUtilsSQLStatementToFilter
     QString mCurrentSRSName;
     QMap<QString, QString> mMapTableAliasToNames;
     const QMap< QString, QString> &mMapUnprefixedTypenameToPrefixedTypename;
+    const QMap<QString, QString> &mFieldNameToXPathMap;
+    const QMap<QString, QString> &mNamespacePrefixToUriMap;
 
     QDomElement toOgcFilter( const QgsSQLStatement::NodeUnaryOperator *node );
     QDomElement toOgcFilter( const QgsSQLStatement::NodeBinaryOperator *node );
@@ -594,12 +602,12 @@ class CORE_EXPORT QgsOgcCrsUtils
     //! CRS flavor
     enum class CRSFlavor
     {
-      UNKNOWN, //! unknown/unhandled flavor
-      AUTH_CODE, //! e.g EPSG:4326
-      HTTP_EPSG_DOT_XML, //! e.g. http://www.opengis.net/gml/srs/epsg.xml#4326 (called "OGC HTTP URL" in GeoServer WFS configuration panel)
-      OGC_URN, //! e.g. urn:ogc:def:crs:EPSG::4326
-      X_OGC_URN, //! e.g. urn:x-ogc:def:crs:EPSG::4326
-      OGC_HTTP_URI, //! e.g. http://www.opengis.net/def/crs/EPSG/0/4326
+      UNKNOWN, //!< Unknown/unhandled flavor
+      AUTH_CODE, //!< E.g EPSG:4326
+      HTTP_EPSG_DOT_XML, //!< E.g. http://www.opengis.net/gml/srs/epsg.xml#4326 (called "OGC HTTP URL" in GeoServer WFS configuration panel)
+      OGC_URN, //!< E.g. urn:ogc:def:crs:EPSG::4326
+      X_OGC_URN, //!< E.g. urn:x-ogc:def:crs:EPSG::4326
+      OGC_HTTP_URI, //!< E.g. http://www.opengis.net/def/crs/EPSG/0/4326
     };
 
     /**

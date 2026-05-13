@@ -27,14 +27,13 @@
 /**
  * \ingroup gui
  * \class QgsPluginManagerInterface
+ * \brief Abstract interface class for the QGIS plugin manager.
  */
 class GUI_EXPORT QgsPluginManagerInterface : public QObject
 {
     Q_OBJECT
 
   public:
-
-    //! Constructor
     QgsPluginManagerInterface() = default;
 
     //! remove Python plugins from the metadata registry (c++ plugins stay)

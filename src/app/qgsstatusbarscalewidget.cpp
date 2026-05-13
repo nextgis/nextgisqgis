@@ -20,6 +20,7 @@
 #include <QValidator>
 
 #include "qgsstatusbarscalewidget.h"
+#include "moc_qgsstatusbarscalewidget.cpp"
 
 #include "qgsmapcanvas.h"
 #include "qgsscalecombobox.h"
@@ -95,12 +96,7 @@ void QgsStatusBarScaleWidget::updateScales()
 {
   if ( QgsProject::instance()->viewSettings()->useProjectScales() )
   {
-    const QVector< double > scales = QgsProject::instance()->viewSettings()->mapScales();
-    QStringList textScales;
-    textScales.reserve( scales.size() );
-    for ( const double scale : scales )
-      textScales << QStringLiteral( "1:%1" ).arg( QLocale().toString( scale, 'f', 0 ) );
-    mScale->updateScales( textScales );
+    mScale->setPredefinedScales( QgsProject::instance()->viewSettings()->mapScales() );
   }
   else
   {

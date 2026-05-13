@@ -33,7 +33,7 @@ class QgsAuthMethodConfig;
 
 /**
  * \ingroup core
- * \brief Abstract base class for authentication method plugins
+ * \brief Abstract base class for authentication method plugins.
  */
 class CORE_EXPORT QgsAuthMethod : public QObject
 {
@@ -49,7 +49,7 @@ class CORE_EXPORT QgsAuthMethod : public QObject
      * \note When adding an 'update' member function, also add the corresponding Expansion flag.
      * \note These flags will be added to as new update points are added
      */
-    enum Expansion
+    enum Expansion SIP_ENUM_BASETYPE( IntFlag )
     {
       // TODO: Figure out all different authentication expansions current layer providers use
       NetworkRequest       = 0x1,

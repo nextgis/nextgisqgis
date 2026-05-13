@@ -29,28 +29,18 @@
 /**
  * \class QgsArchive
  * \ingroup core
- * \brief Class allowing to manage the zip/unzip actions
- * \since QGIS 3.0
+ * \brief Manages zip/unzip operations for an archive.
  */
 class CORE_EXPORT QgsArchive
 {
   public:
 
-    /**
-     * Constructor
-     */
     QgsArchive();
 
-    /**
-     * Copy constructor
-     */
     QgsArchive( const QgsArchive &other );
 
     QgsArchive &operator=( const QgsArchive &other );
 
-    /**
-     * Destructor
-     */
     virtual ~QgsArchive() = default;
 
     /**
@@ -115,8 +105,7 @@ class CORE_EXPORT QgsArchive
 /**
  * \class QgsProjectArchive
  * \ingroup core
- * \brief Class allowing to manage the zip/unzip actions on project file
- * \since QGIS 3.0
+ * \brief Allows managing the zip/unzip actions on project files.
  */
 class  CORE_EXPORT QgsProjectArchive : public QgsArchive
 {

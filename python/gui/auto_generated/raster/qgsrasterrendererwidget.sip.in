@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/raster/qgsrasterrendererwidget.h                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,11 +11,11 @@
 
 
 
-class QgsRasterRendererWidget: QWidget
+class QgsRasterRendererWidget : QWidget
 {
 %Docstring(signature="appended")
-
-Abstract base class for widgets which configure a :py:class:`QgsRasterRenderer`.
+Abstract base class for widgets which configure a
+:py:class:`QgsRasterRenderer`.
 %End
 
 %TypeHeaderCode
@@ -24,6 +24,12 @@ Abstract base class for widgets which configure a :py:class:`QgsRasterRenderer`.
   public:
 
     QgsRasterRendererWidget( QgsRasterLayer *layer, const QgsRectangle &extent );
+%Docstring
+Constructor for QgsRasterRendererWidget.
+
+:param layer: associated raster layer
+:param extent: current canvas extent
+%End
 
     virtual QgsRasterRenderer *renderer() = 0 /Factory/;
 %Docstring
@@ -48,14 +54,12 @@ Returns the raster layer associated with the widget.
 
     virtual void setMapCanvas( QgsMapCanvas *canvas );
 %Docstring
-Sets the map canvas associated with the widget. This allows the widget to retrieve the current
-map extent and other properties from the canvas.
+Sets the map canvas associated with the widget. This allows the widget
+to retrieve the current map extent and other properties from the canvas.
 
 :param canvas: map canvas
 
 .. seealso:: :py:func:`mapCanvas`
-
-.. versionadded:: 2.16
 %End
 
     QgsMapCanvas *mapCanvas();
@@ -63,8 +67,6 @@ map extent and other properties from the canvas.
 Returns the map canvas associated with the widget.
 
 .. seealso:: :py:func:`setMapCanvas`
-
-.. versionadded:: 2.16
 %End
 
     virtual QString min( int index = 0 );
@@ -87,14 +89,16 @@ Returns min/max widget when it exists.
 
     virtual QgsContrastEnhancement::ContrastEnhancementAlgorithm contrastEnhancementAlgorithm() const;
 %Docstring
-Returns the contrast enhancement ``algorithm`` to be used by the raster renderer.
+Returns the contrast enhancement ``algorithm`` to be used by the raster
+renderer.
 
 .. versionadded:: 3.26
 %End
 
     virtual void setContrastEnhancementAlgorithm( QgsContrastEnhancement::ContrastEnhancementAlgorithm algorithm );
 %Docstring
-Sets the contrast enhancement ``algorithm`` to be used by the raster renderer.
+Sets the contrast enhancement ``algorithm`` to be used by the raster
+renderer.
 
 .. versionadded:: 3.26
 %End
@@ -103,8 +107,8 @@ Sets the contrast enhancement ``algorithm`` to be used by the raster renderer.
 
     void widgetChanged();
 %Docstring
-Emitted when something on the widget has changed.
-All widgets will fire this event to notify of an internal change.
+Emitted when something on the widget has changed. All widgets will fire
+this event to notify of an internal change.
 %End
 
   protected:
@@ -117,5 +121,5 @@ All widgets will fire this event to notify of an internal change.
  *                                                                      *
  * src/gui/raster/qgsrasterrendererwidget.h                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -18,7 +18,6 @@
 #ifndef QGSCOPCPOINTCLOUDINDEX_H
 #define QGSCOPCPOINTCLOUDINDEX_H
 
-#include <QObject>
 #include <QString>
 #include <QHash>
 #include <QStringList>
@@ -27,11 +26,9 @@
 #include <QFile>
 
 #include <fstream>
+#include <optional>
 
 #include "qgspointcloudindex.h"
-#include "qgspointcloudattribute.h"
-#include "qgsstatisticalsummary.h"
-#include "qgis_sip.h"
 #include "qgspointcloudstatistics.h"
 
 #include "qgslazinfo.h"
@@ -42,76 +39,88 @@
 
 class QgsCoordinateReferenceSystem;
 
-class CORE_EXPORT QgsCopcPointCloudIndex: public QgsPointCloudIndex
+class CORE_EXPORT QgsCopcPointCloudIndex: public QgsAbstractPointCloudIndex
 {
-    Q_OBJECT
   public:
 
     explicit QgsCopcPointCloudIndex();
     ~QgsCopcPointCloudIndex();
 
-    std::unique_ptr<QgsPointCloudIndex> clone() const override;
-
     void load( const QString &fileName ) override;
 
-    bool hasNode( const IndexedPointCloudNode &n ) const override;
-    QList<IndexedPointCloudNode> nodeChildren( const IndexedPointCloudNode &n ) const override;
+    bool hasNode( const QgsPointCloudNodeId &n ) const override;
+    QgsPointCloudNode getNode( const QgsPointCloudNodeId &id ) const override;
 
-    QgsPointCloudBlock *nodeData( const IndexedPointCloudNode &n, const QgsPointCloudRequest &request ) override;
-    QgsPointCloudBlockRequest *asyncNodeData( const IndexedPointCloudNode &n, const QgsPointCloudRequest &request ) override;
+    std::unique_ptr< QgsPointCloudBlock> nodeData( const QgsPointCloudNodeId &n, const QgsPointCloudRequest &request ) override;
+    QgsPointCloudBlockRequest *asyncNodeData( const QgsPointCloudNodeId &n, const QgsPointCloudRequest &request ) override;
+
+    //! Returns the raw, encoded, compressed data for a node or empty if missing
+    const QByteArray rawNodeData( QgsPointCloudNodeId n ) const;
 
     QgsCoordinateReferenceSystem crs() const override;
     qint64 pointCount() const override;
-    bool hasStatisticsMetadata() const override { return false; };
     QVariantMap originalMetadata() const override { return mOriginalMetadata; }
 
     bool isValid() const override;
-    QgsPointCloudIndex::AccessType accessType() const override { return QgsPointCloudIndex::Local; };
+    Qgis::PointCloudAccessType accessType() const override { return mAccessType; };
 
     /**
      * Writes the statistics object \a stats into the COPC dataset as an Extended Variable Length Record (EVLR).
      * Returns true if the data was written successfully.
      * \since QGIS 3.26
      */
-    bool writeStatistics( QgsPointCloudStatistics &stats );
+    bool writeStatistics( QgsPointCloudStatistics &stats ) override;
 
     /**
      * Returns the statistics object contained in the COPC dataset.
      * If the dataset doesn't contain statistics EVLR, an object with 0 samples will be returned.
-     * \since QGIS 3.26
+     * \since QGIS 3.42
      */
-    QgsPointCloudStatistics readStatistics();
+    QgsPointCloudStatistics metadataStatistics() const override;
 
     /**
-     * Copies common properties to the \a destination index
-     * \since QGIS 3.26
+     * Returns one datapoint, "CopcGpsTimeFlag": The gps time flag from global_encoding field in LAS header,
+     * 0 indicates GPS week time (seconds passed since the beginning of the week)
+     * 1 indicates GPS adjusted time, which is seconds passed since the GPS base time minus 1e9
      */
-    void copyCommonProperties( QgsCopcPointCloudIndex *destination ) const;
+    QVariantMap extraMetadata() const override;
 
   protected:
     bool loadSchema( QgsLazInfo &lazInfo );
-    bool loadHierarchy();
+    bool loadHierarchy() const;
 
     //! Fetches all nodes leading to node \a node into memory
-    virtual bool fetchNodeHierarchy( const IndexedPointCloudNode &n ) const;
+    bool fetchNodeHierarchy( const QgsPointCloudNodeId &n ) const;
 
     /**
      * Fetches the COPC hierarchy page at offset \a offset and of size \a byteSize into memory
-     * \note: This function is NOT thread safe and the mutex mHierarchyMutex needs to be locked before entering
      */
     virtual void fetchHierarchyPage( uint64_t offset, uint64_t byteSize ) const;
 
-    QByteArray fetchCopcStatisticsEvlrData();
+    void populateHierarchy( const char *hierarchyPageData, uint64_t byteSize ) const;
+
+    //! Utility function for reading sub-range of mUri
+    QByteArray readRange( uint64_t offset, uint64_t length ) const;
+
+    QByteArray fetchCopcStatisticsEvlrData() const;
+
+    void reset();
 
     bool mIsValid = false;
-    QString mFileName;
+    Qgis::PointCloudAccessType mAccessType = Qgis::PointCloudAccessType::Local;
     mutable std::ifstream mCopcFile;
     mutable lazperf::copc_info_vlr mCopcInfoVlr;
-    mutable QHash<IndexedPointCloudNode, QPair<uint64_t, int32_t>> mHierarchyNodePos; //!< Additional data hierarchy for COPC
+    mutable QHash<QgsPointCloudNodeId, QPair<uint64_t, int32_t>> mHierarchyNodePos; //!< Additional data hierarchy for COPC
+
+    mutable QMutex mFileMutex;
 
     QVariantMap mOriginalMetadata;
+    mutable std::optional<QgsPointCloudStatistics> mStatistics;
 
     std::unique_ptr<QgsLazInfo> mLazInfo = nullptr;
+
+    friend class QgsPointCloudLayerEditUtils;
+    friend class QgsPointCloudEditingIndex;
 };
 
 ///@endcond

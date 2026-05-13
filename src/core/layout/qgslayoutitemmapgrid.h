@@ -41,7 +41,6 @@ class QgsLineSymbol;
  * QgsLayoutItemMap. The grid stack controls which grids are drawn and the
  * order they are drawn in.
  * \see QgsLayoutItemMapGrid
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutItemMapGridStack : public QgsLayoutItemMapItemStack
 {
@@ -100,12 +99,12 @@ class CORE_EXPORT QgsLayoutItemMapGridStack : public QgsLayoutItemMapItemStack
      * Returns a reference to a grid at the specified \a index within the stack.
      * \see grid()
      */
-    QgsLayoutItemMapGrid &operator[]( int index );
+    QgsLayoutItemMapGrid &operator[]( int index ); // cppcheck-suppress duplInheritedMember
 
     /**
      * Returns a list of QgsLayoutItemMapGrids contained by the stack.
      */
-    QList< QgsLayoutItemMapGrid * > asList() const;
+    QList< QgsLayoutItemMapGrid * > asList() const; // cppcheck-suppress duplInheritedMember
 
     bool readXml( const QDomElement &elem, const QDomDocument &doc, const QgsReadWriteContext &context ) override;
 
@@ -135,7 +134,6 @@ class CORE_EXPORT QgsLayoutItemMapGridStack : public QgsLayoutItemMapItemStack
  * \brief An individual grid which is drawn above the map content in a
  * QgsLayoutItemMap.
  * \see QgsLayoutItemMapGridStack
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutItemMapGrid : public QgsLayoutItemMapItem
 {
@@ -254,7 +252,7 @@ class CORE_EXPORT QgsLayoutItemMapGrid : public QgsLayoutItemMapItem
     /**
      * Flags for controlling which side of the map a frame is drawn on
      */
-    enum FrameSideFlag
+    enum FrameSideFlag SIP_ENUM_BASETYPE( IntFlag )
     {
       FrameLeft = 0x01, //!< Left side of map
       FrameRight = 0x02, //!< Right side of map
@@ -596,7 +594,7 @@ class CORE_EXPORT QgsLayoutItemMapGrid : public QgsLayoutItemMapItem
      * Sets the \a font used for drawing grid annotations.
      * Shortcut for annotationTextFormat().setFont().
      * \see annotationFont()
-     * \deprecated use setAnnotationTextFormat() instead
+     * \deprecated QGIS 3.40. Use setAnnotationTextFormat() instead.
      */
     Q_DECL_DEPRECATED void setAnnotationFont( const QFont &font ) SIP_DEPRECATED;
 
@@ -604,7 +602,7 @@ class CORE_EXPORT QgsLayoutItemMapGrid : public QgsLayoutItemMapItem
      * Returns the font used for drawing grid annotations.
      * Shortcut for annotationTextFormat().font().
      * \see setAnnotationFont()
-     * \deprecated use annotationTextFormat() instead
+     * \deprecated QGIS 3.40. Use annotationTextFormat() instead.
      */
     Q_DECL_DEPRECATED QFont annotationFont() const SIP_DEPRECATED;
 
@@ -612,7 +610,7 @@ class CORE_EXPORT QgsLayoutItemMapGrid : public QgsLayoutItemMapItem
      * Sets the font \a color used for drawing grid annotations.
      * Shortcut for annotationTextFormat().setColor() and annotationTextFormat().setOpacity().
      * \see annotationFontColor()
-     * \deprecated use setAnnotationTextFormat() instead
+     * \deprecated QGIS 3.40. Use setAnnotationTextFormat() instead.
      */
     Q_DECL_DEPRECATED void setAnnotationFontColor( const QColor &color ) SIP_DEPRECATED;
 
@@ -620,7 +618,7 @@ class CORE_EXPORT QgsLayoutItemMapGrid : public QgsLayoutItemMapItem
      * Returns the font color used for drawing grid annotations.
      * Shortcut for annotationTextFormat().color() and annotationTextFormat().opacity().
      * \see setAnnotationFontColor()
-     * \deprecated use annotationTextFormat() instead
+     * \deprecated QGIS 3.40. Use annotationTextFormat() instead.
      */
     Q_DECL_DEPRECATED QColor annotationFontColor() const SIP_DEPRECATED;
 
@@ -823,7 +821,7 @@ class CORE_EXPORT QgsLayoutItemMapGrid : public QgsLayoutItemMapItem
      * \see setRotatedTicksEnabled()
      * \since QGIS 3.16
      */
-    double rotatedTicksEnabled() const { return mRotatedTicksEnabled; }
+    bool rotatedTicksEnabled() const { return mRotatedTicksEnabled; }
 
     /**
      * Sets the tick length calculation mode.
@@ -879,7 +877,7 @@ class CORE_EXPORT QgsLayoutItemMapGrid : public QgsLayoutItemMapItem
      * \see setRotatedAnnotationsEnabled()
      * \since QGIS 3.16
      */
-    double rotatedAnnotationsEnabled() const { return mRotatedAnnotationsEnabled; }
+    bool rotatedAnnotationsEnabled() const { return mRotatedAnnotationsEnabled; }
 
     /**
      * Sets the annotation length calculation mode.
@@ -889,35 +887,35 @@ class CORE_EXPORT QgsLayoutItemMapGrid : public QgsLayoutItemMapItem
     void setRotatedAnnotationsLengthMode( const TickLengthMode mode ) { mRotatedAnnotationsLengthMode = mode; }
 
     /**
-     * Returns the grid frame style.
+     * Returns the annotation length calculation mode.
      * \see setRotatedAnnotationsLengthMode()
      * \since QGIS 3.16
      */
     TickLengthMode rotatedAnnotationsLengthMode() const { return mRotatedAnnotationsLengthMode; }
 
     /**
-     * Sets the \a minimum angle (in degrees) below which annotated are not drawn.
+     * Sets the \a minimum angle (in degrees) below which annotations are not drawn.
      * \see rotatedAnnotationsMinimumAngle()
      * \since QGIS 3.16
      */
     void setRotatedAnnotationsMinimumAngle( const double angle ) { mRotatedAnnotationsMinimumAngle = angle; }
 
     /**
-     * Gets the \a minimum angle (in degrees) below which annotated are not drawn.
+     * Gets the \a minimum angle (in degrees) below which annotations are not drawn.
      * \see setRotatedAnnotationsMinimumAngle()
      * \since QGIS 3.16
      */
     double rotatedAnnotationsMinimumAngle() const { return mRotatedAnnotationsMinimumAngle; }
 
     /**
-     * Sets the \a margin to corners (in canvas units) below which outwards facing ticks are not drawn.
+     * Sets the \a margin to corners (in canvas units) below which outwards facing annotations are not drawn.
      * \see rotatedAnnotationsMarginToCorner()
      * \since QGIS 3.16
      */
     void setRotatedAnnotationsMarginToCorner( const double margin ) { mRotatedAnnotationsMarginToCorner = margin; }
 
     /**
-     * Gets the \a margin to corners (in canvas units) below which outwards facing ticks are not drawn.
+     * Gets the \a margin to corners (in canvas units) below which outwards facing annotations are not drawn.
      * \see setRotatedAnnotationsMarginToCorner()
      * \since QGIS 3.16
      */
@@ -998,7 +996,7 @@ class CORE_EXPORT QgsLayoutItemMapGrid : public QgsLayoutItemMapItem
     /**
      * Retrieves the second fill color for the grid frame.
      * \see setFrameFillColor2()
-     * \see framePenColor(
+     * \see framePenColor()
      * \see frameFillColor1()
      */
     QColor frameFillColor2() const { return mGridFrameFillColor2; }
@@ -1006,6 +1004,13 @@ class CORE_EXPORT QgsLayoutItemMapGrid : public QgsLayoutItemMapItem
     QgsExpressionContext createExpressionContext() const override;
     bool accept( QgsStyleEntityVisitorInterface *visitor ) const override;
     void refresh() override;
+
+    /**
+     * Copies properties from specified map grid.
+     *
+     * \since QGIS 3.38
+     */
+    void copyProperties( const QgsLayoutItemMapGrid *other );
 
   signals:
 
@@ -1303,6 +1308,9 @@ class CORE_EXPORT QgsLayoutItemMapGrid : public QgsLayoutItemMapItem
     double mapWidth() const;
 
     friend class TestQgsLayoutMapGrid;
+
+    // Needs access to evaluated properties to compute frame bleed
+    friend class QgsLayoutItemMap;
 
 };
 

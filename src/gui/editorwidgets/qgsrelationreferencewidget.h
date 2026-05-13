@@ -42,21 +42,21 @@ class QgsCollapsibleGroupBox;
 class QLabel;
 
 #ifdef SIP_RUN
-% ModuleHeaderCode
+//%ModuleHeaderCode
 // fix to allow compilation with sip that for some reason
 // doesn't add this include to the file where the code from
 // ConvertToSubClassCode goes.
 #include <qgsrelationreferencewidget.h>
-% End
+//%End
 #endif
 
 /**
  * \ingroup gui
  * \class QgsRelationReferenceWidget
+ * \brief A widget which shows related features.
  */
 class GUI_EXPORT QgsRelationReferenceWidget : public QWidget
 {
-
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
     if ( qobject_cast<QgsRelationReferenceWidget *>( sipCpp ) )
@@ -70,7 +70,6 @@ class GUI_EXPORT QgsRelationReferenceWidget : public QWidget
     Q_PROPERTY( bool openFormButtonVisible READ openFormButtonVisible WRITE setOpenFormButtonVisible )
 
   public:
-
     enum CanvasExtent
     {
       Fixed,
@@ -88,7 +87,7 @@ class GUI_EXPORT QgsRelationReferenceWidget : public QWidget
 
     /**
      * this sets the related feature using from the foreign key
-     * \deprecated since QGIS 3.10 use setForeignKeys
+     * \deprecated QGIS 3.10. Use setForeignKeys.
      */
     Q_DECL_DEPRECATED void setForeignKey( const QVariant &value ) SIP_DEPRECATED;
 
@@ -100,7 +99,7 @@ class GUI_EXPORT QgsRelationReferenceWidget : public QWidget
 
     /**
      * returns the related feature foreign key
-     * \deprecated since QGIS 3.10
+     * \deprecated QGIS 3.10
      */
     Q_DECL_DEPRECATED QVariant foreignKey() const SIP_DEPRECATED;
 
@@ -172,21 +171,18 @@ class GUI_EXPORT QgsRelationReferenceWidget : public QWidget
 
     /**
      * Sets the widget to display in an indeterminate "mixed value" state.
-     * \since QGIS 2.16
      */
     void showIndeterminateState();
 
     /**
      * Determines if a button for adding new features should be shown.
      *
-     * \since QGIS 2.16
      */
     bool allowAddFeatures() const;
 
     /**
      * Determines if a button for adding new features should be shown.
      *
-     * \since QGIS 2.16
      */
     void setAllowAddFeatures( bool allowAddFeatures );
 
@@ -202,6 +198,13 @@ class GUI_EXPORT QgsRelationReferenceWidget : public QWidget
      * \since QGIS 3.10
      */
     void setFormFeature( const QgsFeature &formFeature );
+
+    /**
+     * Set the current parent form feature
+     *
+     * \since QGIS 3.42.2
+     */
+    void setParentFormFeature( const QgsFeature &parentFormFeature );
 
     /**
      * Returns the public data source of the referenced layer
@@ -255,14 +258,13 @@ class GUI_EXPORT QgsRelationReferenceWidget : public QWidget
      * Returns the limit of fetched features (0 means all features)
      * \since QGIS 3.32
      */
-    int fetchLimit() const {return mFetchLimit; }
+    int fetchLimit() const { return mFetchLimit; }
 
     /**
      * Set the limit of fetched features (0 means all features)
      * \since QGIS 3.32
      */
-    void setFetchLimit( int fetchLimit ) {mFetchLimit = fetchLimit; }
-
+    void setFetchLimit( int fetchLimit ) { mFetchLimit = fetchLimit; }
 
   public slots:
     //! open the form of the related feature in a new dialog
@@ -274,6 +276,14 @@ class GUI_EXPORT QgsRelationReferenceWidget : public QWidget
     //! unset the currently related feature
     void deleteForeignKeys();
 
+    /**
+      * Trigger save of the embedded referenced attribute form.
+      * Returns TRUE on success or if no embedded form is present.
+      *
+      * \since QGIS 3.42
+      */
+    bool saveReferencedAttributeForm();
+
   protected:
     void showEvent( QShowEvent *e ) override;
 
@@ -283,20 +293,21 @@ class GUI_EXPORT QgsRelationReferenceWidget : public QWidget
 
     /**
      * Emitted when the foreign key changed
-     * \deprecated since QGIS 3.10
+     * \deprecated QGIS 3.10
      */
-    Q_DECL_DEPRECATED void foreignKeyChanged( const QVariant & ) SIP_DEPRECATED;
+    Q_DECL_DEPRECATED void foreignKeyChanged( const QVariant &key ) SIP_DEPRECATED;
 
     /**
      * Emitted when the foreign keys changed
      * \since QGIS 3.10
      */
-    void foreignKeysChanged( const QVariantList & );
+    void foreignKeysChanged( const QVariantList &keys );
 
   private slots:
     void highlightActionTriggered( QAction *action );
     void deleteHighlight();
     void comboReferenceChanged();
+    void comboReferenceFoundChanged( bool found );
     void featureIdentified( const QgsFeature &feature );
     void setMapTool( QgsMapTool *mapTool );
     void unsetMapTool();
@@ -319,7 +330,6 @@ class GUI_EXPORT QgsRelationReferenceWidget : public QWidget
     QgsMessageBar *mMessageBar = nullptr;
     QVariantList mForeignKeys;
     QgsFeature mFeature;
-    QgsFeature mFormFeature;
     // Index of the referenced layer key
     QStringList mReferencedFields;
     bool mAllowNull = true;
@@ -339,7 +349,7 @@ class GUI_EXPORT QgsRelationReferenceWidget : public QWidget
     QgsRelation mRelation;
     bool mIsEditable = true;
     QStringList mFilterFields;
-    QMap<QString, QMap<QString, QSet<QString> > > mFilterCache;
+    QMap<QString, QMap<QString, QSet<QString>>> mFilterCache;
     bool mInitialized = false;
     int mFetchLimit = 0;
 

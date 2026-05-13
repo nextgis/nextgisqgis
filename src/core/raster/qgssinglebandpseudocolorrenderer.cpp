@@ -20,10 +20,9 @@
 #include "qgscolorrampshader.h"
 #include "qgsrastershader.h"
 #include "qgsrastertransparency.h"
-#include "qgsrasterviewport.h"
 #include "qgsstyleentityvisitor.h"
 #include "qgscolorramplegendnode.h"
-
+#include "qgssldexportcontext.h"
 #include <QDomDocument>
 #include <QDomElement>
 #include <QImage>
@@ -39,16 +38,27 @@ QgsSingleBandPseudoColorRenderer::QgsSingleBandPseudoColorRenderer( QgsRasterInt
 
 void QgsSingleBandPseudoColorRenderer::setBand( int bandNo )
 {
+  setInputBand( bandNo );
+}
+
+int QgsSingleBandPseudoColorRenderer::inputBand() const
+{
+  return mBand;
+}
+
+bool QgsSingleBandPseudoColorRenderer::setInputBand( int band )
+{
   if ( !mInput )
   {
-    mBand = bandNo;
-    return;
+    mBand = band;
+    return true;
   }
-
-  if ( bandNo <= mInput->bandCount() || bandNo > 0 )
+  else if ( band > 0 && band <= mInput->bandCount() )
   {
-    mBand = bandNo;
+    mBand = band;
+    return true;
   }
+  return false;
 }
 
 void QgsSingleBandPseudoColorRenderer::setClassificationMin( double min )
@@ -110,15 +120,15 @@ void QgsSingleBandPseudoColorRenderer::setShader( QgsRasterShader *shader )
   mShader.reset( shader );
 }
 
-void QgsSingleBandPseudoColorRenderer::createShader( QgsColorRamp *colorRamp, QgsColorRampShader::Type colorRampType, QgsColorRampShader::ClassificationMode classificationMode, int classes, bool clip, const QgsRectangle &extent )
+void QgsSingleBandPseudoColorRenderer::createShader( QgsColorRamp *colorRamp, Qgis::ShaderInterpolationMethod colorRampType, Qgis::ShaderClassificationMethod classificationMode, int classes, bool clip, const QgsRectangle &extent )
 {
-  if ( band() == -1 || classificationMin() >= classificationMax() )
+  if ( mBand == -1 || classificationMin() >= classificationMax() )
   {
     return;
   }
 
   QgsColorRampShader *colorRampShader = new QgsColorRampShader( classificationMin(), classificationMax(), colorRamp,  colorRampType, classificationMode );
-  colorRampShader->classifyColorRamp( classes, band(), extent, input() );
+  colorRampShader->classifyColorRamp( classes, mBand, extent, input() );
   colorRampShader->setClip( clip );
 
   QgsRasterShader *rasterShader = new QgsRasterShader();
@@ -155,41 +165,41 @@ QgsRasterRenderer *QgsSingleBandPseudoColorRenderer::create( const QDomElement &
   {
     if ( minMaxOrigin.contains( QLatin1String( "MinMax" ) ) )
     {
-      r->mMinMaxOrigin.setLimits( QgsRasterMinMaxOrigin::MinMax );
+      r->mMinMaxOrigin.setLimits( Qgis::RasterRangeLimit::MinimumMaximum );
     }
     else if ( minMaxOrigin.contains( QLatin1String( "CumulativeCut" ) ) )
     {
-      r->mMinMaxOrigin.setLimits( QgsRasterMinMaxOrigin::CumulativeCut );
+      r->mMinMaxOrigin.setLimits( Qgis::RasterRangeLimit::CumulativeCut );
     }
     else if ( minMaxOrigin.contains( QLatin1String( "StdDev" ) ) )
     {
-      r->mMinMaxOrigin.setLimits( QgsRasterMinMaxOrigin::StdDev );
+      r->mMinMaxOrigin.setLimits( Qgis::RasterRangeLimit::StdDev );
     }
     else
     {
-      r->mMinMaxOrigin.setLimits( QgsRasterMinMaxOrigin::None );
+      r->mMinMaxOrigin.setLimits( Qgis::RasterRangeLimit::NotSet );
     }
 
     if ( minMaxOrigin.contains( QLatin1String( "FullExtent" ) ) )
     {
-      r->mMinMaxOrigin.setExtent( QgsRasterMinMaxOrigin::WholeRaster );
+      r->mMinMaxOrigin.setExtent( Qgis::RasterRangeExtent::WholeRaster );
     }
     else if ( minMaxOrigin.contains( QLatin1String( "SubExtent" ) ) )
     {
-      r->mMinMaxOrigin.setExtent( QgsRasterMinMaxOrigin::CurrentCanvas );
+      r->mMinMaxOrigin.setExtent( Qgis::RasterRangeExtent::FixedCanvas );
     }
     else
     {
-      r->mMinMaxOrigin.setExtent( QgsRasterMinMaxOrigin::WholeRaster );
+      r->mMinMaxOrigin.setExtent( Qgis::RasterRangeExtent::WholeRaster );
     }
 
     if ( minMaxOrigin.contains( QLatin1String( "Estimated" ) ) )
     {
-      r->mMinMaxOrigin.setStatAccuracy( QgsRasterMinMaxOrigin::Estimated );
+      r->mMinMaxOrigin.setStatAccuracy( Qgis::RasterRangeAccuracy::Estimated );
     }
     else // if ( minMaxOrigin.contains( QLatin1String( "Exact" ) ) )
     {
-      r->mMinMaxOrigin.setStatAccuracy( QgsRasterMinMaxOrigin::Exact );
+      r->mMinMaxOrigin.setStatAccuracy( Qgis::RasterRangeAccuracy::Exact );
     }
   }
 
@@ -200,7 +210,7 @@ QgsRasterBlock *QgsSingleBandPseudoColorRenderer::block( int bandNo, QgsRectangl
 {
   Q_UNUSED( bandNo )
 
-  std::unique_ptr< QgsRasterBlock > outputBlock( new QgsRasterBlock() );
+  auto outputBlock = std::make_unique<QgsRasterBlock>();
   if ( !mInput || !mShader || !mShader->rasterShaderFunction() )
   {
     return outputBlock.release();
@@ -276,7 +286,7 @@ QgsRasterBlock *QgsSingleBandPseudoColorRenderer::block( int bandNo, QgsRectangl
       double currentOpacity = mOpacity;
       if ( mRasterTransparency )
       {
-        currentOpacity = mRasterTransparency->alphaValue( val, mOpacity * 255 ) / 255.0;
+        currentOpacity *= mRasterTransparency->opacityForValue( val );
       }
       if ( mAlphaBand > 0 )
       {
@@ -345,13 +355,20 @@ QList<int> QgsSingleBandPseudoColorRenderer::usesBands() const
 
 void QgsSingleBandPseudoColorRenderer::toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const
 {
+  QgsSldExportContext context;
+  context.setExtraProperties( props );
+  toSld( doc, element, context );
+}
+
+bool QgsSingleBandPseudoColorRenderer::toSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &context ) const
+{
   // create base structure
-  QgsRasterRenderer::toSld( doc, element, props );
+  QgsRasterRenderer::toSld( doc, element, context );
 
   // look for RasterSymbolizer tag
   const QDomNodeList elements = element.elementsByTagName( QStringLiteral( "sld:RasterSymbolizer" ) );
   if ( elements.size() == 0 )
-    return;
+    return false;
 
   // there SHOULD be only one
   QDomElement rasterSymbolizerElem = elements.at( 0 ).toElement();
@@ -366,7 +383,7 @@ void QgsSingleBandPseudoColorRenderer::toSld( QDomDocument &doc, QDomElement &el
 
   // set band
   QDomElement sourceChannelNameElem = doc.createElement( QStringLiteral( "sld:SourceChannelName" ) );
-  sourceChannelNameElem.appendChild( doc.createTextNode( QString::number( band() ) ) );
+  sourceChannelNameElem.appendChild( doc.createTextNode( QString::number( mBand ) ) );
   channelElem.appendChild( sourceChannelNameElem );
 
   // add ColorMap tag
@@ -377,17 +394,17 @@ void QgsSingleBandPseudoColorRenderer::toSld( QDomDocument &doc, QDomElement &el
   QString rampType = QStringLiteral( "ramp" );
   const QgsColorRampShader *rampShader = dynamic_cast<const QgsColorRampShader *>( mShader->rasterShaderFunction() );
   if ( !rampShader )
-    return;
+    return false;
 
   switch ( rampShader->colorRampType() )
   {
-    case ( QgsColorRampShader::Exact ):
+    case ( Qgis::ShaderInterpolationMethod::Exact ):
       rampType = QStringLiteral( "values" );
       break;
-    case ( QgsColorRampShader::Discrete ):
+    case ( Qgis::ShaderInterpolationMethod::Discrete ):
       rampType = QStringLiteral( "intervals" );
       break;
-    case ( QgsColorRampShader::Interpolated ):
+    case ( Qgis::ShaderInterpolationMethod::Linear ):
       rampType = QStringLiteral( "ramp" );
       break;
   }
@@ -415,6 +432,7 @@ void QgsSingleBandPseudoColorRenderer::toSld( QDomDocument &doc, QDomElement &el
       colorMapEntryElem.setAttribute( QStringLiteral( "opacity" ), QString::number( classDataIt->color.alphaF() ) );
     }
   }
+  return true;
 }
 
 bool QgsSingleBandPseudoColorRenderer::accept( QgsStyleEntityVisitorInterface *visitor ) const
@@ -448,7 +466,7 @@ QList<QgsLayerTreeModelLegendNode *> QgsSingleBandPseudoColorRenderer::createLeg
 
   switch ( rampShader->colorRampType() )
   {
-    case QgsColorRampShader::Interpolated:
+    case Qgis::ShaderInterpolationMethod::Linear:
       // for interpolated shaders we use a ramp legend node unless the settings flag
       // to use the continuous legend is not set, in that case we fall through
       if ( ! rampShader->legendSettings() || rampShader->legendSettings()->useContinuousLegend() )
@@ -461,9 +479,9 @@ QList<QgsLayerTreeModelLegendNode *> QgsSingleBandPseudoColorRenderer::createLeg
         }
         break;
       }
-      Q_FALLTHROUGH();
-    case QgsColorRampShader::Discrete:
-    case QgsColorRampShader::Exact:
+      [[fallthrough]];
+    case Qgis::ShaderInterpolationMethod::Discrete:
+    case Qgis::ShaderInterpolationMethod::Exact:
     {
       // for all others we use itemised lists
       const QList< QPair< QString, QColor > > items = legendSymbologyItems();
@@ -482,3 +500,44 @@ bool QgsSingleBandPseudoColorRenderer::canCreateRasterAttributeTable() const
 {
   return true;
 }
+
+bool QgsSingleBandPseudoColorRenderer::refresh( const QgsRectangle &extent, const QList<double> &min, const QList<double> &max, bool force )
+{
+  if ( !needsRefresh( extent ) && !force )
+  {
+    return false;
+  }
+
+  bool refreshed = false;
+  if ( min.size() >= 1 && max.size() >= 1 )
+  {
+    mLastRectangleUsedByRefreshContrastEnhancementIfNeeded = extent;
+
+    // Do not overwrite min/max with NaN if they were already set,
+    // for example when the style was already loaded from a raster attribute table
+    // in that case we need to respect the style from the attribute table and do
+    // not perform any reclassification.
+    bool refreshed = false;
+
+    if ( !std::isnan( min[0] ) )
+    {
+      setClassificationMin( min[0] );
+      refreshed = true;
+    }
+
+    if ( !std::isnan( max[0] ) )
+    {
+      setClassificationMax( max[0] );
+      refreshed = true;
+    }
+
+    QgsColorRampShader *rampShader = dynamic_cast<QgsColorRampShader *>( mShader->rasterShaderFunction() );
+    if ( rampShader && refreshed )
+    {
+      rampShader->classifyColorRamp( mBand, extent, input() );
+    }
+  }
+
+  return refreshed;
+}
+

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgstemporalproperty.h                                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -34,9 +34,11 @@ Base class for temporal property.
 
     QgsTemporalProperty( QObject *parent /TransferThis/ = 0, bool enabled = false );
 %Docstring
-Constructor for QgsTemporalProperty, with the specified ``parent`` object.
+Constructor for QgsTemporalProperty, with the specified ``parent``
+object.
 
-The ``active`` argument specifies whether the property is initially active (see :py:func:`~QgsTemporalProperty.isActive`).
+The ``active`` argument specifies whether the property is initially
+active (see :py:func:`~QgsTemporalProperty.isActive`).
 %End
 
     void setIsActive( bool active );
@@ -72,5 +74,5 @@ Emitted when the temporal properties have changed.
  *                                                                      *
  * src/core/qgstemporalproperty.h                                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

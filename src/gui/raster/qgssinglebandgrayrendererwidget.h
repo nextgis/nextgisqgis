@@ -29,11 +29,17 @@ class QgsRasterMinMaxWidget;
 /**
  * \ingroup gui
  * \class QgsSingleBandGrayRendererWidget
+ * \brief A widget for configuring a QgsSingleBandGrayRenderer.
  */
-class GUI_EXPORT QgsSingleBandGrayRendererWidget: public QgsRasterRendererWidget, private Ui::QgsSingleBandGrayRendererWidgetBase
+class GUI_EXPORT QgsSingleBandGrayRendererWidget : public QgsRasterRendererWidget, private Ui::QgsSingleBandGrayRendererWidgetBase
 {
     Q_OBJECT
   public:
+    /**
+     * Constructor for QgsSingleBandGrayRendererWidget.
+     * \param layer associated raster layer
+     * \param extent current canvas extent
+     */
     QgsSingleBandGrayRendererWidget( QgsRasterLayer *layer, const QgsRectangle &extent = QgsRectangle() );
 
     static QgsRasterRendererWidget *create( QgsRasterLayer *layer, const QgsRectangle &extent ) SIP_FACTORY { return new QgsSingleBandGrayRendererWidget( layer, extent ); }
@@ -46,11 +52,23 @@ class GUI_EXPORT QgsSingleBandGrayRendererWidget: public QgsRasterRendererWidget
      */
     void setFromRenderer( const QgsRasterRenderer *r );
 
-    QString min( int index = 0 ) override { Q_UNUSED( index ) return mMinLineEdit->text(); }
-    QString max( int index = 0 ) override { Q_UNUSED( index ) return mMaxLineEdit->text(); }
+    QString min( int index = 0 ) override
+    {
+      Q_UNUSED( index )
+      return mMinLineEdit->text();
+    }
+    QString max( int index = 0 ) override
+    {
+      Q_UNUSED( index )
+      return mMaxLineEdit->text();
+    }
     void setMin( const QString &value, int index = 0 ) override;
     void setMax( const QString &value, int index = 0 ) override;
-    int selectedBand( int index = 0 ) override { Q_UNUSED( index ) return mGrayBandComboBox->currentBand(); }
+    int selectedBand( int index = 0 ) override
+    {
+      Q_UNUSED( index )
+      return mGrayBandComboBox->currentBand();
+    }
 
     QgsContrastEnhancement::ContrastEnhancementAlgorithm contrastEnhancementAlgorithm() const override;
     void setContrastEnhancementAlgorithm( QgsContrastEnhancement::ContrastEnhancementAlgorithm algorithm ) override;

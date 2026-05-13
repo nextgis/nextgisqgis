@@ -27,6 +27,7 @@
  *
  */
 
+#include "qgsgeometryutils_base.h"
 #include "geomfunction.h"
 #include "feature.h"
 #include "util.h"
@@ -225,13 +226,13 @@ std::vector< int > GeomFunction::convexHullId( std::vector< int > &id, const std
     // Coolineaire !! garder le plus éloigné
     if ( qgsDoubleNear( result, 0.0 ) )
     {
-      if ( dist_euc2d_sq( x[id[stack[second]]], y[id[stack[second]]], x[id[convexHull[i]]], y[id[convexHull[i]]] )
-           >  dist_euc2d_sq( x[id[stack[second]]], y[id[stack[second]]], x[id[stack[top]]], y[id[stack[top]]] ) )
+      if ( QgsGeometryUtilsBase::sqrDistance2D( x[id[stack[second]]], y[id[stack[second]]], x[id[convexHull[i]]], y[id[convexHull[i]]] )
+           >  QgsGeometryUtilsBase::sqrDistance2D( x[id[stack[second]]], y[id[stack[second]]], x[id[stack[top]]], y[id[stack[top]]] ) )
       {
         stack[top] = convexHull[i];
       }
     }
-    else if ( result > 0 ) //convexe
+    else if ( result > 0 ) //convex
     {
       second++;
       top++;
@@ -307,7 +308,7 @@ bool GeomFunction::containsCandidate( const GEOSPreparedGeometry *geom, double x
 
   try
   {
-    GEOSContextHandle_t geosctxt = QgsGeos::getGEOSHandler();
+    GEOSContextHandle_t geosctxt = QgsGeosContext::get();
     GEOSCoordSequence *coord = GEOSCoordSeq_create_r( geosctxt, 5, 2 );
 
     GEOSCoordSeq_setXY_r( geosctxt, coord, 0, x, y );

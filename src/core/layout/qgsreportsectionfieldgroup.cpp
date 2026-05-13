@@ -27,7 +27,7 @@ QgsReportSectionFieldGroup::QgsReportSectionFieldGroup( QgsAbstractReportSection
 
 QString QgsReportSectionFieldGroup::description() const
 {
-  if ( mCoverageLayer.get() )
+  if ( mCoverageLayer )
     return QObject::tr( "Group: %1 - %2" ).arg( mCoverageLayer->name(), mField );
   else
     return QObject::tr( "Group" );
@@ -40,7 +40,7 @@ QIcon QgsReportSectionFieldGroup::icon() const
 
 QgsReportSectionFieldGroup *QgsReportSectionFieldGroup::clone() const
 {
-  std::unique_ptr< QgsReportSectionFieldGroup > copy = std::make_unique< QgsReportSectionFieldGroup >( nullptr );
+  auto copy = std::make_unique< QgsReportSectionFieldGroup >( nullptr );
   copyCommonProperties( copy.get() );
 
   if ( mBody )
@@ -60,7 +60,7 @@ QgsReportSectionFieldGroup *QgsReportSectionFieldGroup::clone() const
 
 bool QgsReportSectionFieldGroup::beginRender()
 {
-  if ( !mCoverageLayer.get() )
+  if ( !mCoverageLayer )
     return false;
 
   if ( !mField.isEmpty() )
@@ -219,7 +219,7 @@ bool QgsReportSectionFieldGroup::readPropertiesFromElement( const QDomElement &e
   if ( !bodyElement.isNull() )
   {
     const QDomElement bodyLayoutElem = bodyElement.firstChild().toElement();
-    std::unique_ptr< QgsLayout > body = std::make_unique< QgsLayout >( project() );
+    auto body = std::make_unique< QgsLayout >( project() );
     body->readXml( bodyLayoutElem, doc, context );
     mBody = std::move( body );
   }

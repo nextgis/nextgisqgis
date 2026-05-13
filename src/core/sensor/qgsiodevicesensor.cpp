@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgsiodevicesensor.h"
+#include "moc_qgsiodevicesensor.cpp"
 #include "qgssensorregistry.h"
 
 #include <QDomElement>
@@ -57,12 +58,7 @@ QgsTcpSocketSensor::QgsTcpSocketSensor( QObject *parent )
   , mTcpSocket( new QTcpSocket() )
 {
   connect( mTcpSocket, &QAbstractSocket::stateChanged, this, &QgsTcpSocketSensor::socketStateChanged );
-
-#if QT_VERSION < QT_VERSION_CHECK( 5, 15, 0 )
-  connect( mTcpSocket, qOverload<QAbstractSocket::SocketError>( &QAbstractSocket::error ), this, &QgsTcpSocketSensor::handleError );
-#else
   connect( mTcpSocket, qOverload<QAbstractSocket::SocketError>( &QAbstractSocket::errorOccurred ), this, &QgsTcpSocketSensor::handleError );
-#endif
 
   initIODevice( mTcpSocket );
 }
@@ -191,7 +187,7 @@ QgsUdpSocketSensor::QgsUdpSocketSensor( QObject *parent )
 #endif
 
   connect( mUdpSocket.get(), &QAbstractSocket::stateChanged, this, &QgsUdpSocketSensor::socketStateChanged );
-  connect( mUdpSocket.get(), &QUdpSocket::readyRead, this, [ = ]()
+  connect( mUdpSocket.get(), &QUdpSocket::readyRead, this, [this]()
   {
     QByteArray datagram;
     while ( mUdpSocket->hasPendingDatagrams() )
@@ -206,11 +202,7 @@ QgsUdpSocketSensor::QgsUdpSocketSensor( QObject *parent )
     }
   } );
 
-#if QT_VERSION < QT_VERSION_CHECK( 5, 15, 0 )
-  connect( mUdpSocket.get(), qOverload<QAbstractSocket::SocketError>( &QAbstractSocket::error ), this, &QgsUdpSocketSensor::handleError );
-#else
   connect( mUdpSocket.get(), qOverload<QAbstractSocket::SocketError>( &QAbstractSocket::errorOccurred ), this, &QgsUdpSocketSensor::handleError );
-#endif
 
   initIODevice( mBuffer );
 }
@@ -362,10 +354,76 @@ void QgsSerialPortSensor::setPortName( const QString &portName )
   mPortName = portName;
 }
 
+QSerialPort::BaudRate QgsSerialPortSensor::baudRate() const
+{
+  return mBaudRate;
+}
+
+void QgsSerialPortSensor::setBaudRate( const QSerialPort::BaudRate &baudRate )
+{
+  if ( mBaudRate == baudRate )
+    return;
+
+  mBaudRate = baudRate;
+}
+
+QByteArray QgsSerialPortSensor::delimiter() const
+{
+  return mDelimiter;
+}
+
+void QgsSerialPortSensor::setDelimiter( const QByteArray &delimiter )
+{
+  if ( mDelimiter == delimiter )
+    return;
+
+  mDelimiter = delimiter;
+}
+
+
+void QgsSerialPortSensor::parseData()
+{
+  if ( !mDelimiter.isEmpty() )
+  {
+    if ( mFirstDelimiterHit )
+    {
+      mDataBuffer += mSerialPort->readAll();
+      const auto lastIndex = mDataBuffer.lastIndexOf( mDelimiter );
+      if ( lastIndex > -1 )
+      {
+        QgsAbstractSensor::SensorData data;
+        data.lastValue = mDataBuffer.mid( 0, lastIndex );
+        mDataBuffer = mDataBuffer.mid( lastIndex + mDelimiter.size() );
+        data.lastTimestamp = QDateTime::currentDateTime();
+        setData( data );
+      }
+    }
+    else
+    {
+      QByteArray data = mSerialPort->readAll();
+      const auto lastIndex = data.lastIndexOf( mDelimiter );
+      if ( lastIndex > -1 )
+      {
+        mFirstDelimiterHit = true;
+        mDataBuffer = data.mid( lastIndex + mDelimiter.size() );
+      }
+    }
+  }
+  else
+  {
+    QgsAbstractSensor::SensorData data;
+    data.lastValue = mSerialPort->readAll();
+    data.lastTimestamp = QDateTime::currentDateTime();
+    setData( data );
+  }
+}
+
 void QgsSerialPortSensor::handleConnect()
 {
   mSerialPort->setPortName( mPortName );
-  mSerialPort->setBaudRate( QSerialPort::Baud9600 );
+  mSerialPort->setBaudRate( mBaudRate );
+  mFirstDelimiterHit = false;
+
   if ( mSerialPort->open( QIODevice::ReadOnly ) )
   {
     setStatus( Qgis::DeviceConnectionStatus::Connected );
@@ -410,14 +468,16 @@ void QgsSerialPortSensor::handleError( QSerialPort::SerialPortError error )
 bool QgsSerialPortSensor::writePropertiesToElement( QDomElement &element, QDomDocument & ) const
 {
   element.setAttribute( QStringLiteral( "portName" ), mPortName );
-
+  element.setAttribute( QStringLiteral( "baudRate" ), static_cast<int>( mBaudRate ) );
+  element.setAttribute( QStringLiteral( "delimiter" ), QString( mDelimiter ) );
   return true;
 }
 
 bool QgsSerialPortSensor::readPropertiesFromElement( const QDomElement &element, const QDomDocument & )
 {
   mPortName = element.attribute( QStringLiteral( "portName" ) );
-
+  mBaudRate = static_cast< QSerialPort::BaudRate >( element.attribute( QStringLiteral( "baudRate" ) ).toInt() );
+  mDelimiter = element.attribute( QStringLiteral( "delimiter" ) ).toLocal8Bit();
   return true;
 }
 #endif

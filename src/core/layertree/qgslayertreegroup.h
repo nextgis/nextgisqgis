@@ -35,7 +35,6 @@ class QgsGroupLayer;
  * While a layer tree group is typically used for hierarchical organisation of a QgsProject,
  * they can optionally be associated with a QgsGroupLayer for map rendering purposes.
  *
- * \since QGIS 2.4
  */
 class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
 {
@@ -131,7 +130,6 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
 
     /**
      * Find layer node representing the map layer. Searches recursively the whole sub-tree.
-     * \since QGIS 3.0
      */
     QgsLayerTreeLayer *findLayer( QgsMapLayer *layer ) const;
 
@@ -187,14 +185,13 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
      * Read group (tree) from XML element <layer-tree-group> and return the newly created group (or NULLPTR on error).
      * Does not resolve textual references to layers. Call resolveReferences() afterwards to do it.
      */
-    static QgsLayerTreeGroup *readXml( QDomElement &element, const QgsReadWriteContext &context ) SIP_FACTORY;
+    static QgsLayerTreeGroup *readXml( const QDomElement &element, const QgsReadWriteContext &context ) SIP_FACTORY;  // cppcheck-suppress duplInheritedMember
 
     /**
      * Read group (tree) from XML element <layer-tree-group> and return the newly created group (or NULLPTR on error).
      * Also resolves textual references to layers from the project (calls resolveReferences() internally).
-     * \since QGIS 3.0
      */
-    static QgsLayerTreeGroup *readXml( QDomElement &element, const QgsProject *project, const QgsReadWriteContext &context ) SIP_FACTORY;
+    static QgsLayerTreeGroup *readXml( const QDomElement &element, const QgsProject *project, const QgsReadWriteContext &context ) SIP_FACTORY;
 
     /**
      * Write group (tree) as XML element <layer-tree-group> and add it to the given parent element
@@ -205,7 +202,7 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
      * Read children from XML and append them to the group.
      * Does not resolve textual references to layers. Call resolveReferences() afterwards to do it.
      */
-    void readChildrenFromXml( QDomElement &element, const QgsReadWriteContext &context );
+    void readChildrenFromXml( const QDomElement &element, const QgsReadWriteContext &context );
 
     /**
      * Returns text representation of the tree. For debugging purposes only.
@@ -219,7 +216,6 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
 
     /**
      * Calls resolveReferences() on child tree nodes
-     * \since QGIS 3.0
      */
     void resolveReferences( const QgsProject *project, bool looseMatching = false ) override;
 
@@ -230,7 +226,6 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
 
     /**
      * Returns whether the group is mutually exclusive (only one child can be checked at a time)
-     * \since QGIS 2.12
      */
     bool isMutuallyExclusive() const;
 
@@ -238,7 +233,6 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
      * Set whether the group is mutually exclusive (only one child can be checked at a time).
      * The initial child index determines which child should be initially checked. The default value
      * of -1 will determine automatically (either first one currently checked or none)
-     * \since QGIS 2.12
      */
     void setIsMutuallyExclusive( bool enabled, int initialChildIndex = -1 );
 
@@ -281,6 +275,40 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
      */
     QgsGroupLayer *convertToGroupLayer( const QgsGroupLayer::LayerOptions &options ) SIP_FACTORY;
 
+    /**
+     * Returns QGIS Server Properties for the layer tree group
+     * \since QGIS 3.44
+     */
+    QgsMapLayerServerProperties *serverProperties();
+
+    /**
+     * Returns QGIS Server Properties const for the layer tree group
+     * \since QGIS 3.44
+     */
+    const QgsMapLayerServerProperties *serverProperties() const SIP_SKIP;
+
+    /**
+     * Sets whether the WMS time dimension should be computed for this group or not
+     * \param hasWmsTimeDimension if TRUE, when a GetCapabilities request is sent,
+     * QGIS server would return a TIME dimension computed as an union of all time
+     * dimensions of its children recursively. Else, no TIME dimension will be returned.
+     *
+     * \see hasWmsTimeDimension()
+     * \since QGIS 3.44
+     */
+    void setHasWmsTimeDimension( const bool hasWmsTimeDimension );
+
+    /**
+     * Returns whether the WMS time dimension should be computed for this group or not.
+     * if TRUE, when a GetCapabilities request is sent, QGIS server would return a TIME
+     * dimension computed as an union of all time dimensions of its children recursively.
+     * Else, no TIME dimension will be returned.
+     *
+     * \see setHasWmsTimeDimension()
+     * \since QGIS 3.44
+     */
+    bool hasWmsTimeDimension() const;
+
   protected slots:
 
     void nodeVisibilityChanged( QgsLayerTreeNode *node );
@@ -305,6 +333,8 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
      */
     int mMutuallyExclusiveChildIndex = -1;
 
+    bool mWmsHasTimeDimension = false;
+
     //! Sets parent to NULLPTR and disconnects all external and forwarded signals
     virtual void makeOrphan() override SIP_SKIP;
 
@@ -320,11 +350,24 @@ class CORE_EXPORT QgsLayerTreeGroup : public QgsLayerTreeNode
 
     QgsLayerTreeGroup &operator= ( const QgsLayerTreeGroup & ) = delete;
 
+    /**
+     * Helper method to migrate project before 3.44 where shortName, title and abstract were
+     * properties, not server properties
+     *
+     * \since QGIS 3.44
+     */
+    static void readLegacyServerProperties( QgsLayerTreeGroup *groupNode );
+
     void init();
     void updateGroupLayers();
     void refreshParentGroupLayerMembers();
 
     QgsMapLayerRef mGroupLayer;
+
+    /**
+     * Stores information about server properties
+     */
+    std::unique_ptr< QgsMapLayerServerProperties > mServerProperties;
 };
 
 

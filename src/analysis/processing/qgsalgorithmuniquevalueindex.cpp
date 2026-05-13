@@ -46,19 +46,15 @@ QString QgsAddUniqueValueIndexAlgorithm::groupId() const
 
 void QgsAddUniqueValueIndexAlgorithm::initAlgorithm( const QVariantMap & )
 {
-  addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "INPUT" ), QObject::tr( "Input layer" ),
-                QList< int >() << QgsProcessing::TypeVector ) );
-  addParameter( new QgsProcessingParameterField( QStringLiteral( "FIELD" ), QObject::tr( "Class field" ), QVariant(),
-                QStringLiteral( "INPUT" ), QgsProcessingParameterField::Any ) );
-  addParameter( new QgsProcessingParameterString( QStringLiteral( "FIELD_NAME" ),
-                QObject::tr( "Output field name" ), QStringLiteral( "NUM_FIELD" ) ) );
+  addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "INPUT" ), QObject::tr( "Input layer" ), QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::Vector ) ) );
+  addParameter( new QgsProcessingParameterField( QStringLiteral( "FIELD" ), QObject::tr( "Class field" ), QVariant(), QStringLiteral( "INPUT" ), Qgis::ProcessingFieldParameterDataType::Any ) );
+  addParameter( new QgsProcessingParameterString( QStringLiteral( "FIELD_NAME" ), QObject::tr( "Output field name" ), QStringLiteral( "NUM_FIELD" ) ) );
 
-  std::unique_ptr< QgsProcessingParameterFeatureSink > classedOutput = std::make_unique< QgsProcessingParameterFeatureSink >( QStringLiteral( "OUTPUT" ), QObject::tr( "Layer with index field" ), QgsProcessing::TypeVectorAnyGeometry, QVariant(), true );
+  auto classedOutput = std::make_unique<QgsProcessingParameterFeatureSink>( QStringLiteral( "OUTPUT" ), QObject::tr( "Layer with index field" ), Qgis::ProcessingSourceType::VectorAnyGeometry, QVariant(), true );
   classedOutput->setCreateByDefault( true );
   addParameter( classedOutput.release() );
 
-  std::unique_ptr< QgsProcessingParameterFeatureSink > summaryOutput = std::make_unique< QgsProcessingParameterFeatureSink >( QStringLiteral( "SUMMARY_OUTPUT" ),  QObject::tr( "Class summary" ),
-      QgsProcessing::TypeVector, QVariant(), true );
+  auto summaryOutput = std::make_unique<QgsProcessingParameterFeatureSink>( QStringLiteral( "SUMMARY_OUTPUT" ), QObject::tr( "Class summary" ), Qgis::ProcessingSourceType::Vector, QVariant(), true );
   summaryOutput->setCreateByDefault( false );
   addParameter( summaryOutput.release() );
 }
@@ -71,6 +67,11 @@ QString QgsAddUniqueValueIndexAlgorithm::shortHelpString() const
                       "Optionally, a separate table can be output which contains a summary of the class field values mapped to the new unique numeric value." );
 }
 
+QString QgsAddUniqueValueIndexAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Adds a numeric field and assigns the same index to features of the same attribute value." );
+}
+
 QgsAddUniqueValueIndexAlgorithm *QgsAddUniqueValueIndexAlgorithm::createInstance() const
 {
   return new QgsAddUniqueValueIndexAlgorithm();
@@ -78,17 +79,23 @@ QgsAddUniqueValueIndexAlgorithm *QgsAddUniqueValueIndexAlgorithm::createInstance
 
 QVariantMap QgsAddUniqueValueIndexAlgorithm::processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback )
 {
-  std::unique_ptr< QgsProcessingFeatureSource > source( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
+  std::unique_ptr<QgsProcessingFeatureSource> source( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
   if ( !source )
     throw QgsProcessingException( invalidSourceError( parameters, QStringLiteral( "INPUT" ) ) );
 
   const QString newFieldName = parameterAsString( parameters, QStringLiteral( "FIELD_NAME" ), context );
   QgsFields fields = source->fields();
-  const QgsField newField = QgsField( newFieldName, QVariant::Int );
+
+  if ( fields.lookupField( newFieldName ) >= 0 )
+  {
+    throw QgsProcessingException( QObject::tr( "A field with the same name (%1) already exists" ).arg( newFieldName ) );
+  }
+
+  const QgsField newField = QgsField( newFieldName, QMetaType::Type::Int );
   fields.append( newField );
 
   QString dest;
-  std::unique_ptr< QgsFeatureSink > sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, fields, source->wkbType(), source->sourceCrs() ) );
+  std::unique_ptr<QgsFeatureSink> sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, fields, source->wkbType(), source->sourceCrs() ) );
 
   const QString sourceFieldName = parameterAsString( parameters, QStringLiteral( "FIELD" ), context );
   const int fieldIndex = source->fields().lookupField( sourceFieldName );
@@ -99,11 +106,11 @@ QVariantMap QgsAddUniqueValueIndexAlgorithm::processAlgorithm( const QVariantMap
   QgsFields summaryFields;
   summaryFields.append( newField );
   summaryFields.append( source->fields().at( fieldIndex ) );
-  std::unique_ptr< QgsFeatureSink > summarySink( parameterAsSink( parameters, QStringLiteral( "SUMMARY_OUTPUT" ), context, summaryDest, summaryFields, Qgis::WkbType::NoGeometry ) );
+  std::unique_ptr<QgsFeatureSink> summarySink( parameterAsSink( parameters, QStringLiteral( "SUMMARY_OUTPUT" ), context, summaryDest, summaryFields, Qgis::WkbType::NoGeometry ) );
 
-  QHash< QVariant, int > classes;
+  QHash<QVariant, int> classes;
 
-  QgsFeatureIterator it = source->getFeatures( QgsFeatureRequest(), QgsProcessingFeatureSource::FlagSkipGeometryValidityChecks );
+  QgsFeatureIterator it = source->getFeatures( QgsFeatureRequest(), Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks );
 
   const long count = source->featureCount();
   const double step = count > 0 ? 100.0 / count : 1;
@@ -141,7 +148,7 @@ QVariantMap QgsAddUniqueValueIndexAlgorithm::processAlgorithm( const QVariantMap
   if ( summarySink )
   {
     //generate summary table - first we make a sorted version of the classes
-    QMap< int, QVariant > sorted;
+    QMap<int, QVariant> sorted;
     for ( auto classIt = classes.constBegin(); classIt != classes.constEnd(); ++classIt )
     {
       sorted.insert( classIt.value(), classIt.key() );
@@ -158,9 +165,15 @@ QVariantMap QgsAddUniqueValueIndexAlgorithm::processAlgorithm( const QVariantMap
 
   QVariantMap results;
   if ( sink )
+  {
+    sink->finalize();
     results.insert( QStringLiteral( "OUTPUT" ), dest );
+  }
   if ( summarySink )
+  {
+    summarySink->finalize();
     results.insert( QStringLiteral( "SUMMARY_OUTPUT" ), summaryDest );
+  }
   return results;
 }
 

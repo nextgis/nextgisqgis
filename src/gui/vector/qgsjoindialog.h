@@ -30,8 +30,9 @@ class QgsVectorLayerJoinInfo;
 /**
  * \ingroup gui
  * \class QgsJoinDialog
+ * \brief A dialog for configuring vector layer joins.
  */
-class GUI_EXPORT QgsJoinDialog: public QDialog, private Ui::QgsJoinDialogBase
+class GUI_EXPORT QgsJoinDialog : public QDialog, private Ui::QgsJoinDialogBase
 {
     Q_OBJECT
   public:

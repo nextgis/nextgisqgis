@@ -25,8 +25,7 @@
 
 /**
  * \ingroup core
- * \brief The QgsRunnableProviderCreator class is used when reading a project
- * to create asynchronously provider that support asynchronous creation
+ * \brief Used when reading a project to asynchronously create data providers that support asynchronous creation.
  *
  * \since QGIS 3.32
  */
@@ -40,7 +39,7 @@ class QgsRunnableProviderCreator : public QObject, public QRunnable
                                 QString const &providerKey,
                                 QString const &dataSource,
                                 const QgsDataProvider::ProviderOptions &options,
-                                QgsDataProvider::ReadFlags flags );
+                                Qgis::DataProviderReadFlags flags );
 
     void run() override;
 
@@ -61,7 +60,7 @@ class QgsRunnableProviderCreator : public QObject, public QRunnable
     QString mProviderKey;
     QString mDataSource;
     QgsDataProvider::ProviderOptions mOptions;
-    QgsDataProvider::ReadFlags mFlags;
+    Qgis::DataProviderReadFlags mFlags;
 };
 
 #endif // QGSRUNNABLEPROVIDERCREATOR_H

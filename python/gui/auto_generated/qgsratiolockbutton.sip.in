@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgsratiolockbutton.h                                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,20 +13,18 @@
 class QgsRatioLockButton : QToolButton
 {
 %Docstring(signature="appended")
-A cross platform button subclass used to represent a locked / unlocked ratio state.
-
-.. versionadded:: 3.0
+A cross platform button subclass used to represent a locked / unlocked
+ratio state.
 %End
 
 %TypeHeaderCode
 #include "qgsratiolockbutton.h"
 %End
   public:
-
     QgsRatioLockButton( QWidget *parent /TransferThis/ = 0 );
 %Docstring
-Construct a new ratio lock button.
-Use ``parent`` to attach a parent QWidget to the button.
+Construct a new ratio lock button. Use ``parent`` to attach a parent
+QWidget to the button.
 %End
 
     void setLocked( bool locked );
@@ -51,10 +49,10 @@ Returns whether the button state is locked.
 %Docstring
 Registers a spin box ``widget`` as the linked "width" spin box.
 
-If both a width and height spin box are linked to the button, they will automatically
-have their values updates when if the other spin box value is changed. I.e. changing the
-width spin box will automatically update the height spin box to a value which keeps the
-same locked ratio.
+If both a width and height spin box are linked to the button, they will
+automatically have their values updates when if the other spin box value
+is changed. I.e. changing the width spin box will automatically update
+the height spin box to a value which keeps the same locked ratio.
 
 .. seealso:: :py:func:`setHeightSpinBox`
 %End
@@ -63,18 +61,18 @@ same locked ratio.
 %Docstring
 Registers a spin box ``widget`` as the linked "height" spin box.
 
-If both a width and height spin box are linked to the button, they will automatically
-have their values updates when if the other spin box value is changed. I.e. changing the
-width spin box will automatically update the height spin box to a value which keeps the
-same locked ratio.
+If both a width and height spin box are linked to the button, they will
+automatically have their values updates when if the other spin box value
+is changed. I.e. changing the width spin box will automatically update
+the height spin box to a value which keeps the same locked ratio.
 
 .. seealso:: :py:func:`setWidthSpinBox`
 %End
 
     void resetRatio();
 %Docstring
-Resets the current width/height ratio, taking the width and height
-from the current values of the width and height spin boxes.
+Resets the current width/height ratio, taking the width and height from
+the current values of the width and height spin boxes.
 %End
 
   signals:
@@ -85,7 +83,6 @@ Emitted whenever the lock state changes.
 %End
 
   protected:
-
     virtual void changeEvent( QEvent *e );
 
     virtual void showEvent( QShowEvent *e );
@@ -100,5 +97,5 @@ Emitted whenever the lock state changes.
  *                                                                      *
  * src/gui/qgsratiolockbutton.h                                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

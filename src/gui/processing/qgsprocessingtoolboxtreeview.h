@@ -24,6 +24,7 @@
 class QgsProcessingRegistry;
 class QgsProcessingRecentAlgorithmLog;
 class QgsProcessingAlgorithm;
+class QgsProcessingFavoriteAlgorithmManager;
 
 ///@cond PRIVATE
 
@@ -38,7 +39,6 @@ class GUI_EXPORT QgsProcessingToolboxTreeView : public QTreeView
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsProcessingToolboxTreeView, with the specified \a parent widget.
      *
@@ -48,20 +48,26 @@ class GUI_EXPORT QgsProcessingToolboxTreeView : public QTreeView
      *
      * If \a recentLog is specified then it will be used to create a "Recently used" top
      * level group containing recently used algorithms.
+     *
+     * If \a favoriteManager is specified then it will be used to create a "Favorites" top
+     * level group containing favorite algorithms. Since QGIS 3.40
      */
-    QgsProcessingToolboxTreeView( QWidget *parent SIP_TRANSFERTHIS = nullptr,
-                                  QgsProcessingRegistry *registry = nullptr,
-                                  QgsProcessingRecentAlgorithmLog *recentLog = nullptr );
+    QgsProcessingToolboxTreeView( QWidget *parent SIP_TRANSFERTHIS = nullptr, QgsProcessingRegistry *registry = nullptr, QgsProcessingRecentAlgorithmLog *recentLog = nullptr, QgsProcessingFavoriteAlgorithmManager *favoriteManager = nullptr );
 
     /**
      * Sets the processing \a registry associated with the view.
      *
      * If \a recentLog is specified then it will be used to create a "Recently used" top
      * level group containing recently used algorithms.
+     *
+     * If \a favoriteManager is specified then it will be used to create a "Favorites" top
+     * level group containing favorite algorithms. Since QGIS 3.40
      */
     void setRegistry(
       QgsProcessingRegistry *registry,
-      QgsProcessingRecentAlgorithmLog *recentLog = nullptr );
+      QgsProcessingRecentAlgorithmLog *recentLog = nullptr,
+      QgsProcessingFavoriteAlgorithmManager *favoriteManager = nullptr
+    );
 
     /**
      * Sets the toolbox proxy model used to drive the view.
@@ -79,6 +85,23 @@ class GUI_EXPORT QgsProcessingToolboxTreeView : public QTreeView
      * if no algorithm is currently selected.
      */
     const QgsProcessingAlgorithm *selectedAlgorithm();
+
+    /**
+     * Returns the model parameter at the specified tree view \a index, or NULLPTR
+     * if the index does not correspond to a model parameter.
+     * 
+     * \since 3.44
+     */
+    const QgsProcessingParameterType *parameterTypeForIndex( const QModelIndex &index );
+
+    /**
+     * Returns the currently selected model parameter in the tree view, or NULLPTR
+     * if no model parameter is currently selected.
+     * 
+     * \since 3.44
+     */
+    const QgsProcessingParameterType *selectedParameterType();
+
 
     /**
      * Sets \a filters controlling the view's contents.
@@ -106,12 +129,15 @@ class GUI_EXPORT QgsProcessingToolboxTreeView : public QTreeView
      */
     void setFilterString( const QString &filter );
 
-  protected:
+    /**
+     * Expands the tree view if a filter string is set after the view is reset.
+     */
+    void reset() override;
 
+  protected:
     void keyPressEvent( QKeyEvent *event ) override;
 
   private:
-
     QgsProcessingToolboxProxyModel *mModel = nullptr;
     QgsProcessingToolboxModel *mToolboxModel = nullptr;
 
@@ -121,7 +147,6 @@ class GUI_EXPORT QgsProcessingToolboxTreeView : public QTreeView
     QModelIndex findFirstVisibleAlgorithm( const QModelIndex &parent );
 
     friend class TestQgsProcessingModel;
-
 };
 
 ///@endcond

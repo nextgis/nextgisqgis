@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsexpressioncontextscopegenerator.h                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,8 +12,6 @@ class QgsExpressionContextScopeGenerator
 {
 %Docstring(signature="appended")
 Abstract interface for generating an expression context scope.
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -23,10 +21,8 @@ Abstract interface for generating an expression context scope.
 
     virtual QgsExpressionContextScope *createExpressionContextScope() const = 0 /Factory/;
 %Docstring
-This method needs to be reimplemented in all classes which implement this interface
-and return an expression context scope.
-
-.. versionadded:: 3.0
+This method needs to be reimplemented in all classes which implement
+this interface and return an expression context scope.
 %End
 
     virtual ~QgsExpressionContextScopeGenerator();
@@ -37,5 +33,5 @@ and return an expression context scope.
  *                                                                      *
  * src/core/qgsexpressioncontextscopegenerator.h                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

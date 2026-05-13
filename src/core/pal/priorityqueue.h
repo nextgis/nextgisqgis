@@ -34,6 +34,7 @@
 
 
 #include <iostream>
+#include <memory>
 
 #define LEFT(x) (2*x+1)
 #define RIGHT(x) (2*x+2)
@@ -63,9 +64,7 @@ namespace pal
       PriorityQueue( int n, int maxId, bool min );
       ~PriorityQueue();
 
-      //! PriorityQueue cannot be copied.
       PriorityQueue( const PriorityQueue & ) = delete;
-      //! PriorityQueue cannot be copied.
       PriorityQueue &operator=( const PriorityQueue & ) = delete;
 
       void print();
@@ -95,9 +94,9 @@ namespace pal
       int size;
       int maxsize;
       int maxId;
-      int *heap = nullptr;
-      double *p = nullptr;
-      int *pos = nullptr;
+      std::unique_ptr<int[]> heap;
+      std::unique_ptr<double[]> p;
+      std::unique_ptr<int[]> pos;
 
       bool ( *greater )( double l, double r );
   };

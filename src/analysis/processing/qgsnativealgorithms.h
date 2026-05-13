@@ -26,14 +26,12 @@
  * \ingroup analysis
  * \class QgsNativeAlgorithms
  * \brief Native c++ processing algorithm provider.
- * \since QGIS 3.0
  */
-class ANALYSIS_EXPORT QgsNativeAlgorithms: public QgsProcessingProvider
+class ANALYSIS_EXPORT QgsNativeAlgorithms : public QgsProcessingProvider
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsNativeAlgorithms.
      */
@@ -45,13 +43,10 @@ class ANALYSIS_EXPORT QgsNativeAlgorithms: public QgsProcessingProvider
     QString helpId() const override;
     QString name() const override;
     bool supportsNonFileBasedOutput() const override;
+    Qgis::ProcessingProviderFlags flags() const override;
 
   protected:
-
     void loadAlgorithms() override;
-
 };
 
 #endif // QGSNATIVEALGORITHMS_H
-
-

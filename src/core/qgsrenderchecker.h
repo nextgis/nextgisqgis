@@ -34,7 +34,7 @@ class QImage;
 
 /**
  * \ingroup core
- * \brief This is a helper class for unit tests that need to
+ * \brief Helper class for unit tests that need to
  * write an image and compare it to an expected result
  * or render time.
  */
@@ -86,8 +86,21 @@ class CORE_EXPORT QgsRenderChecker
      *
      * If \a ignoreSuccess is TRUE then the report will always be empty if
      * the test was successful.
+     *
+     * \see markdownReport()
      */
     QString report( bool ignoreSuccess = true ) const;
+
+    /**
+     * Returns the markdown report describing the results of the test run.
+     *
+     * If \a ignoreSuccess is TRUE then the report will always be empty if
+     * the test was successful.
+     *
+     * \see report()
+     * \since QGIS 3.34
+     */
+    QString markdownReport( bool ignoreSuccess = true ) const;
 
     /**
      * Returns the percent of pixels which matched the control image.
@@ -111,7 +124,7 @@ class CORE_EXPORT QgsRenderChecker
     /**
      * Returns the total elapsed time for the rendering test.
      *
-     * \note this only records time for actual render part.
+     * \note This only records time for actual render part.
      */
     int elapsedTime() const { return mElapsedTime; }
     void setElapsedTimeTarget( int target ) { mElapsedTimeTarget = target; }
@@ -161,7 +174,6 @@ class CORE_EXPORT QgsRenderChecker
      */
     QString renderedImage() const { return mRenderedImageFile; }
 
-    //! \since QGIS 2.4
     void setMapSettings( const QgsMapSettings &mapSettings );
 
     /**
@@ -169,7 +181,6 @@ class CORE_EXPORT QgsRenderChecker
      * Default value is 0.
      * \param colorTolerance is maximum difference for each color component
      * including alpha to be considered correct.
-     * \since QGIS 2.1
      */
     void setColorTolerance( unsigned int colorTolerance ) { mColorTolerance = colorTolerance; }
 
@@ -177,7 +188,6 @@ class CORE_EXPORT QgsRenderChecker
      * Sets the largest allowable difference in size between the rendered and the expected image.
      * \param xTolerance x tolerance in pixels
      * \param yTolerance y tolerance in pixels
-     * \since QGIS 2.12
      */
     void setSizeTolerance( int xTolerance, int yTolerance ) { mMaxSizeDifferenceX = xTolerance; mMaxSizeDifferenceY = yTolerance; }
 
@@ -186,9 +196,10 @@ class CORE_EXPORT QgsRenderChecker
      *
      * \since QGIS 3.28
      */
-    enum class Flag : int
+    enum class Flag : int SIP_ENUM_BASETYPE( IntFlag )
     {
       AvoidExportingRenderedImage = 1 << 0, //!< Avoids exporting rendered images to reports
+      Silent = 1 << 1, //!< Don't output non-critical messages to console \since QGIS 3.40
     };
     Q_ENUM( Flag )
 
@@ -202,28 +213,30 @@ class CORE_EXPORT QgsRenderChecker
 
     /**
      * Test using renderer to generate the image to be compared.
-     * \param testName - to be used as the basis for writing a file to
+     * \param testName to be used as the basis for writing a file to
      * e.g. /tmp/theTestName.png
-     * \param mismatchCount - defaults to 0 - the number of pixels that
+     * \param mismatchCount defaults to 0. The number of pixels that
      * are allowed to be different from the control image. In some cases
      * rendering may be non-deterministic. This parameter allows you to account
      * for that by providing a tolerance.
      * \param flags render checker flags
-     * \note make sure to call setExpectedImage and setMapRenderer first
+     *
+     * \note Make sure to call setExpectedImage and setMapRenderer first
      */
     bool runTest( const QString &testName, unsigned int mismatchCount = 0, QgsRenderChecker::Flags flags = QgsRenderChecker::Flags() );
 
     /**
      * Test using two arbitrary images (map renderer will not be used)
-     * \param testName - to be used as the basis for writing a file to
+     * \param testName to be used as the basis for writing a file to
      * e.g. /tmp/theTestName.png
-     * \param mismatchCount - defaults to 0 - the number of pixels that
+     * \param mismatchCount defaults to 0. The number of pixels that
      * are allowed to be different from the control image. In some cases
      * rendering may be non-deterministic. This parameter allows you to account
      * for that by providing a tolerance.
      * \param renderedImageFile to optionally override the output filename
      * \param flags render checker flags
-     * \note: make sure to call setExpectedImage and setRenderedImage first.
+     *
+     * \note Make sure to call setExpectedImage and setRenderedImage first.
      */
     bool compareImages( const QString &testName, unsigned int mismatchCount = 0, const QString &renderedImageFile = QString(), QgsRenderChecker::Flags flags = QgsRenderChecker::Flags() );
 
@@ -242,7 +255,7 @@ class CORE_EXPORT QgsRenderChecker
      * acceptable.
      * \returns a bool indicating if the diff matched one of the anomaly files
      *
-     * \deprecated Use the test mask system instead.
+     * \deprecated QGIS 3.40. Use the test mask system instead.
      */
     Q_DECL_DEPRECATED bool isKnownAnomaly( const QString &diffImageFile ) SIP_DEPRECATED;
 
@@ -276,10 +289,21 @@ class CORE_EXPORT QgsRenderChecker
      */
     QVector<QgsDartMeasurement> dartMeasurements() const { return mDashMessages; }
 
+    /**
+     * Returns the path to the QGIS source code.
+     *
+     * \since QGIS 3.36
+     */
+    static QString sourcePath();
+
   protected:
+    //! HTML format report
     QString mReport;
+    //! Markdown report
+    QString mMarkdownReport;
     unsigned int mMatchTarget = 0;
     int mElapsedTime = 0;
+    QImage mRenderedImage;
     QString mRenderedImageFile;
     QString mExpectedImageFile;
 

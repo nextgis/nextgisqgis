@@ -1,0 +1,70 @@
+/************************************************************************
+ * This file has been generated automatically from                      *
+ *                                                                      *
+ * src/core/raster/qgsrasterlayerutils.h                                *
+ *                                                                      *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
+ ************************************************************************/
+
+
+
+
+
+class QgsRasterLayerUtils
+{
+%Docstring(signature="appended")
+Contains utility functions for working with raster layers.
+
+.. versionadded:: 3.38
+%End
+
+%TypeHeaderCode
+#include "qgsrasterlayerutils.h"
+%End
+  public:
+
+    static int renderedBandForElevationAndTemporalRange(
+      QgsRasterLayer *layer,
+      const QgsDateTimeRange &temporalRange,
+      const QgsDoubleRange &elevationRange,
+      bool &matched /Out/ );
+%Docstring
+Given a raster ``layer``, returns the band which should be used for
+rendering the layer for a specified temporal and elevation range,
+respecting any elevation and temporal settings which affect the rendered
+band.
+
+:param layer: Target raster layer
+:param temporalRange: temporal range for rendering
+:param elevationRange: elevation range for rendering
+
+:return: - Matched band, or -1 if the layer does not have any elevation
+           or temporal settings which affect the rendered band.
+         - matched: ``True`` if a band matching the temporal and
+           elevation range was found
+%End
+
+    static QgsRectangle alignRasterExtent( const QgsRectangle &extent, const QgsPointXY &origin, double pixelSizeX, double pixelSizeY );
+%Docstring
+Returns a new extent that includes the given ``extent`` with corners
+coordinates aligned to the pixel grid defined by the ``origin`` and
+``pixelSizeX`` and ``pixelSizeY`` arguments.
+
+The resulting extent will be expanded if necessary to ensure that its
+corners fall on pixel boundaries defined by the origin and pixel sizes.
+
+:return: The aligned extent or the original extent if pixel sizes are
+         zero (to avoid division by zero) or if the extent is empty.
+
+.. versionadded:: 4.0
+%End
+
+};
+
+/************************************************************************
+ * This file has been generated automatically from                      *
+ *                                                                      *
+ * src/core/raster/qgsrasterlayerutils.h                                *
+ *                                                                      *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
+ ************************************************************************/

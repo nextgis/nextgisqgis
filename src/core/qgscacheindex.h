@@ -24,17 +24,12 @@ class QgsFeatureIterator;
 
 /**
  * \ingroup core
- * \brief
- * \brief Abstract base class for cache indices
+ * \brief Abstract base class for cache indices.
  */
-
 class CORE_EXPORT QgsAbstractCacheIndex
 {
   public:
 
-    /**
-     * Constructor for QgsAbstractCacheIndex.
-     */
     QgsAbstractCacheIndex() = default;
     virtual ~QgsAbstractCacheIndex() = default;
 

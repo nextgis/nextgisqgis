@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmaprendererstagedrenderjob.h"
+#include "moc_qgsmaprendererstagedrenderjob.cpp"
 
 #include "qgsfeedback.h"
 #include "qgslabelingengine.h"
@@ -106,11 +107,17 @@ bool QgsMapRendererStagedRenderJob::renderCurrentPart( QPainter *painter )
     emit layerRenderingStarted( job.layerId );
     job.renderer->renderContext()->setPainter( painter );
 
-    if ( job.context()->useAdvancedEffects() )
+    if ( job.context()->rasterizedRenderingPolicy() != Qgis::RasterizedRenderingPolicy::ForceVector )
     {
       // Set the QPainter composition mode so that this layer is rendered using
       // the desired blending mode
       painter->setCompositionMode( job.blendMode );
+    }
+
+    if ( job.previewRenderImage && !job.previewRenderImageInitialized )
+    {
+      job.previewRenderImage->fill( 0 );
+      job.previewRenderImageInitialized = true;
     }
 
     if ( job.img )
@@ -157,7 +164,7 @@ bool QgsMapRendererStagedRenderJob::renderCurrentPart( QPainter *painter )
       mLabelJob.context.setPainter( painter );
       drawLabeling( mLabelJob.context, mLabelingEngineV2.get(), painter );
       mLabelJob.complete = true;
-      mLabelJob.participatingLayers = _qgis_listRawToQPointer( mLabelingEngineV2->participatingLayers() );
+      mLabelJob.participatingLayers = participatingLabelLayers( mLabelingEngineV2.get() );
       mLabelJob.context.setPainter( nullptr );
     }
   }

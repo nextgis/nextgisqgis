@@ -14,6 +14,8 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgssnappingconfig.h"
+#include "qgsproject.h"
+#include "moc_qgssnappingconfig.cpp"
 
 #include <QDomElement>
 #include <QHeaderView>
@@ -22,7 +24,6 @@
 #include "qgssettingsregistrycore.h"
 #include "qgslogger.h"
 #include "qgsvectorlayer.h"
-#include "qgsproject.h"
 #include "qgsapplication.h"
 #include "qgssettingsentryenumflag.h"
 
@@ -702,9 +703,11 @@ QgsProject *QgsSnappingConfig::project() const
 
 void QgsSnappingConfig::setProject( QgsProject *project )
 {
-  if ( mProject != project )
-    mProject = project;
-
+  if ( mProject == project )
+  {
+    return;
+  }
+  mProject = project;
   reset();
 }
 

@@ -26,7 +26,7 @@
 
 
 class QgisInterface;
-#ifdef  HAVE_SERVER_PYTHON_PLUGINS
+#ifdef HAVE_SERVER_PYTHON_PLUGINS
 class QgsServerInterface;
 #endif
 
@@ -44,7 +44,6 @@ class QgsServerInterface;
 class PYTHON_EXPORT QgsPythonUtils
 {
   public:
-
     virtual ~QgsPythonUtils() = default;
 
     /**
@@ -101,9 +100,21 @@ class PYTHON_EXPORT QgsPythonUtils
     virtual QString runStringUnsafe( const QString &command, bool single = true ) = 0;
 
     /**
+     * Runs a Python \a filename, showing an error message if one occurred.
+     * \returns TRUE if no error occurred
+     */
+    virtual bool runFile( const QString &filename, const QString &messageOnError = QString() ) = 0;
+
+    /**
      * Evaluates a Python \a command and stores the result in a the \a result string.
      */
     virtual bool evalString( const QString &command, QString &result ) = 0;
+
+    /**
+     * Sets sys.argv to the given Python \a arguments, showing an error message if one occurred.
+     * \returns TRUE if no error occurred
+     */
+    virtual bool setArgv( const QStringList &arguments, const QString &messageOnError = QString() ) = 0;
 
     /**
      * Gets information about error to the supplied arguments
@@ -176,6 +187,17 @@ class PYTHON_EXPORT QgsPythonUtils
     virtual bool startProcessingPlugin( const QString &packageName ) = 0;
 
     /**
+     * Finalizes the startup of the Processing plugin.
+     *
+     * \warning This should only be called after the startProcessingPlugin() method has been called
+     * for every installed and enabled plugin.
+     *
+     * \see startProcessingPlugin()
+     * \since QGIS 3.36
+     */
+    virtual bool finalizeProcessingStartup() = 0;
+
+    /**
      * Helper function to return some information about a plugin.
      *
      * \param function metadata component to return. Must match one of the strings: name, type, version, description, hasProcessingProvider.
@@ -207,6 +229,11 @@ class PYTHON_EXPORT QgsPythonUtils
      */
     virtual bool unloadPlugin( const QString &packageName ) = 0;
 
+    /**
+     * Initialize GDAL Python, turning on its exceptions.
+     * \since QGIS 3.38
+     */
+    virtual void initGDAL() = 0;
 };
 
 #endif

@@ -21,8 +21,7 @@
 #include "qgsvectorlayerref.h"
 
 /**
- * The QgsWeakRelation class represent a QgsRelation with possibly
- * unresolved layers or unmatched fields.
+ * Represent a QgsRelation with possibly unresolved layers or unmatched fields.
  *
  * This class is used to store relation information attached to a
  * layer style, a method to attempt relation resolution is also
@@ -113,6 +112,8 @@ class CORE_EXPORT QgsWeakRelation
     /**
      * Returns the source URI for the referencing (or "child" / "right") layer.
      *
+     * \see referencingLayerProvider()
+     * \see setReferencingLayer()
      * \since QGIS 3.28
      */
     QString referencingLayerSource() const;
@@ -120,6 +121,8 @@ class CORE_EXPORT QgsWeakRelation
     /**
      * Returns the provider ID for the referencing (or "child" / "right") layer.
      *
+     * \see referencingLayerSource()
+     * \see setReferencingLayer()
      * \since QGIS 3.28
      */
     QString referencingLayerProvider() const;
@@ -135,6 +138,15 @@ class CORE_EXPORT QgsWeakRelation
     QString referencingLayerName() const;
 
     /**
+     * Sets the source for the referencing (or "child" / "right") layer, by \a sourceUri and \a provider ID.
+     *
+     * \see referencingLayerSource()
+     * \see referencingLayerProvider()
+     * \since QGIS 3.36
+     */
+    void setReferencingLayer( const QString &sourceUri, const QString &provider );
+
+    /**
      * Returns a weak reference to the referenced (or "parent" / "left") layer.
      *
      * \note Not available in Python bindings.
@@ -144,6 +156,8 @@ class CORE_EXPORT QgsWeakRelation
     /**
      * Returns the source URI for the referenced (or "parent" / "left") layer.
      *
+     * \see referencedLayerProvider()
+     * \see setReferencedLayer()
      * \since QGIS 3.28
      */
     QString referencedLayerSource() const;
@@ -151,6 +165,8 @@ class CORE_EXPORT QgsWeakRelation
     /**
      * Returns the provider ID for the referenced (or "parent" / "left") layer.
      *
+     * \see referencedLayerSource()
+     * \see setReferencedLayer()
      * \since QGIS 3.28
      */
     QString referencedLayerProvider() const;
@@ -164,6 +180,15 @@ class CORE_EXPORT QgsWeakRelation
      * \since QGIS 3.28
      */
     QString referencedLayerName() const;
+
+    /**
+     * Sets the source for the referenced (or "parent" / "left") layer, by \a sourceUri and \a provider ID.
+     *
+     * \see referencedLayerSource()
+     * \see referencedLayerProvider()
+     * \since QGIS 3.36
+     */
+    void setReferencedLayer( const QString &sourceUri, const QString &provider );
 
     /**
      * Returns a weak reference to the mapping table, which forms the middle table in many-to-many relationships.
@@ -186,6 +211,8 @@ class CORE_EXPORT QgsWeakRelation
     /**
      * Returns the source URI for the mapping table, which forms the middle table in many-to-many relationships.
      *
+     * \see mappingTableProvider()
+     * \see setMappingTable()
      * \since QGIS 3.28
      */
     QString mappingTableSource() const;
@@ -193,6 +220,8 @@ class CORE_EXPORT QgsWeakRelation
     /**
      * Returns the provider ID for the mapping table, which forms the middle table in many-to-many relationships.
      *
+     * \see mappingTableSource()
+     * \see setMappingTable()
      * \since QGIS 3.28
      */
     QString mappingTableProvider() const;
@@ -206,6 +235,15 @@ class CORE_EXPORT QgsWeakRelation
      * \since QGIS 3.28
      */
     QString mappingTableName() const;
+
+    /**
+     * Sets the source for the mapping table, which forms the middle table in many-to-many relationships, by \a sourceUri and \a provider ID.
+     *
+     * \see mappingTableSource()
+     * \see mappingTableProvider()
+     * \since QGIS 3.36
+     */
+    void setMappingTable( const QString &sourceUri, const QString &provider );
 
     /**
      * Returns the list of fields from the referencingLayer() involved in the relationship.

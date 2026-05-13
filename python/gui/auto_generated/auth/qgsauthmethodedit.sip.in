@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/auth/qgsauthmethodedit.h                                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,7 +12,8 @@
 class QgsAuthMethodEdit : QWidget
 {
 %Docstring(signature="appended")
-Abstract base class for the edit widget of authentication method plugins
+Abstract base class for the edit widget of authentication method
+plugins.
 %End
 
 %TypeHeaderCode
@@ -41,12 +42,13 @@ Emitted when the configuration validatity changes
 %Docstring
 Load an existing config map into subclassed widget
 
-:param configmap:
+:param configmap: 
 %End
 
     virtual void resetConfig() = 0;
 %Docstring
-Clear GUI controls in subclassed widget, optionally reloading any previously loaded config map
+Clear GUI controls in subclassed widget, optionally reloading any
+previously loaded config map
 %End
 
     virtual void clearConfig() = 0;
@@ -55,7 +57,6 @@ Clear GUI controls in subclassed widget
 %End
 
   protected:
-
     explicit QgsAuthMethodEdit( QWidget *parent = 0 );
 %Docstring
 Construct widget to edit an authentication method configuration
@@ -75,5 +76,5 @@ Construct widget to edit an authentication method configuration
  *                                                                      *
  * src/gui/auth/qgsauthmethodedit.h                                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

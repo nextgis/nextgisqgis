@@ -25,7 +25,6 @@ class QgsAbstractGeometry;
  * \ingroup core
  * \class QgsVertexId
  * \brief Utility class for identifying a unique vertex within a geometry.
- * \since QGIS 2.10
  */
 struct CORE_EXPORT QgsVertexId
 {
@@ -77,7 +76,7 @@ struct CORE_EXPORT QgsVertexId
    */
   bool vertexEqual( QgsVertexId o ) const SIP_HOLDGIL
   {
-    return ringEqual( o ) && ( vertex >= 0 && o.ring == ring );
+    return ringEqual( o ) && ( vertex >= 0 && o.vertex == vertex );
   }
 
   /**

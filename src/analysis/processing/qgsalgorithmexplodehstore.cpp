@@ -53,6 +53,11 @@ QString QgsExplodeHstoreAlgorithm::shortHelpString() const
                       "The expected field list is an optional comma separated list. By default, all unique keys are added. If this list is specified, only these fields are added and the HStore field is updated." );
 }
 
+QString QgsExplodeHstoreAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Creates a copy of the input layer and adds a new field for every unique key in the HStore field." );
+}
+
 QgsProcessingAlgorithm *QgsExplodeHstoreAlgorithm::createInstance() const
 {
   return new QgsExplodeHstoreAlgorithm();
@@ -60,17 +65,15 @@ QgsProcessingAlgorithm *QgsExplodeHstoreAlgorithm::createInstance() const
 
 void QgsExplodeHstoreAlgorithm::initAlgorithm( const QVariantMap & )
 {
-  addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "INPUT" ),
-                QObject::tr( "Input layer" ) ) );
-  addParameter( new QgsProcessingParameterField( QStringLiteral( "FIELD" ),
-                QObject::tr( "HStore field" ), QVariant(), QStringLiteral( "INPUT" ) ) );
+  addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "INPUT" ), QObject::tr( "Input layer" ) ) );
+  addParameter( new QgsProcessingParameterField( QStringLiteral( "FIELD" ), QObject::tr( "HStore field" ), QVariant(), QStringLiteral( "INPUT" ) ) );
   addParameter( new QgsProcessingParameterString( QStringLiteral( "EXPECTED_FIELDS" ), QObject::tr( "Expected list of fields separated by a comma" ), QVariant(), false, true ) );
   addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Exploded" ) ) );
 }
 
 QVariantMap QgsExplodeHstoreAlgorithm::processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback )
 {
-  std::unique_ptr< QgsProcessingFeatureSource > source( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
+  std::unique_ptr<QgsProcessingFeatureSource> source( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
   if ( !source )
     throw QgsProcessingException( invalidSourceError( parameters, QStringLiteral( "INPUT" ) ) );
   int attrSourceCount = source->fields().count();
@@ -82,7 +85,7 @@ QVariantMap QgsExplodeHstoreAlgorithm::processAlgorithm( const QVariantMap &para
 
   QStringList expectedFields;
   QString fieldList = parameterAsString( parameters, QStringLiteral( "EXPECTED_FIELDS" ), context );
-  if ( ! fieldList.trimmed().isEmpty() )
+  if ( !fieldList.trimmed().isEmpty() )
   {
     expectedFields = fieldList.split( ',' );
   }
@@ -93,7 +96,7 @@ QVariantMap QgsExplodeHstoreAlgorithm::processAlgorithm( const QVariantMap &para
 
   double step = source->featureCount() > 0 ? 50.0 / source->featureCount() : 1;
   int i = 0;
-  QgsFeatureIterator featIterator = source->getFeatures( );
+  QgsFeatureIterator featIterator = source->getFeatures();
   QgsFeature feat;
   while ( featIterator.nextFeature( feat ) )
   {
@@ -110,14 +113,14 @@ QVariantMap QgsExplodeHstoreAlgorithm::processAlgorithm( const QVariantMap &para
     QVariantMap currentHStore = QgsHstoreUtils::parse( feat.attribute( fieldName ).toString() );
     for ( auto key = currentHStore.keyBegin(); key != currentHStore.keyEnd(); key++ )
     {
-      if ( expectedFields.isEmpty() && ! fieldsToAdd.contains( *key ) )
+      if ( expectedFields.isEmpty() && !fieldsToAdd.contains( *key ) )
         fieldsToAdd.insert( 0, *key );
     }
     hstoreFeatures.insert( feat.id(), currentHStore );
     features.append( feat );
   }
 
-  if ( ! expectedFields.isEmpty() )
+  if ( !expectedFields.isEmpty() )
   {
     fieldsToAdd = expectedFields;
   }
@@ -125,13 +128,13 @@ QVariantMap QgsExplodeHstoreAlgorithm::processAlgorithm( const QVariantMap &para
   QgsFields hstoreFields;
   for ( const QString &fieldName : fieldsToAdd )
   {
-    hstoreFields.append( QgsField( fieldName, QVariant::String ) );
+    hstoreFields.append( QgsField( fieldName, QMetaType::Type::QString ) );
   }
 
   QgsFields outFields = QgsProcessingUtils::combineFields( source->fields(), hstoreFields );
 
   QString sinkId;
-  std::unique_ptr< QgsFeatureSink > sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, sinkId, outFields, source->wkbType(), source->sourceCrs() ) );
+  std::unique_ptr<QgsFeatureSink> sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, sinkId, outFields, source->wkbType(), source->sourceCrs() ) );
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
@@ -166,7 +169,7 @@ QVariantMap QgsExplodeHstoreAlgorithm::processAlgorithm( const QVariantMap &para
       }
     }
 
-    if ( ! expectedFields.isEmpty() )
+    if ( !expectedFields.isEmpty() )
     {
       outAttributes[fieldIndex] = QgsHstoreUtils::build( currentHStore );
     }
@@ -176,6 +179,8 @@ QVariantMap QgsExplodeHstoreAlgorithm::processAlgorithm( const QVariantMap &para
     if ( !sink->addFeature( outFeature, QgsFeatureSink::FastInsert ) )
       throw QgsProcessingException( writeFeatureError( sink.get(), parameters, QStringLiteral( "OUTPUT" ) ) );
   }
+
+  sink->finalize();
 
   QVariantMap outputs;
   outputs.insert( QStringLiteral( "OUTPUT" ), sinkId );

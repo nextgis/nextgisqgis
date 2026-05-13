@@ -23,11 +23,10 @@
 #include "qgis_sip.h"
 
 #include "qgis_core.h"
-#include "qgsfeaturerequest.h"
 
 class QString;
 class QgsVectorLayer;
-
+class QgsFeatureRequest;
 
 /**
  * \ingroup core
@@ -37,7 +36,6 @@ class QgsVectorLayer;
  * A QgsFeatureFilterProvider provides a method for modifying a QgsFeatureRequest in place to apply
  * additional filters to the request, since QGIS 3.18 a method to filter allowed attributes is also available.
  *
- * \since QGIS 2.14
  */
 
 class CORE_EXPORT QgsFeatureFilterProvider
@@ -46,7 +44,6 @@ class CORE_EXPORT QgsFeatureFilterProvider
 
 #ifndef SIP_RUN
 
-    //! Constructor
     QgsFeatureFilterProvider() = default;
 
     virtual ~QgsFeatureFilterProvider() = default;

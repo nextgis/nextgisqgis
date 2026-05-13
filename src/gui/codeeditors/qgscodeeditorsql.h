@@ -26,10 +26,10 @@ SIP_IF_MODULE( HAVE_QSCI_SIP )
 
 /**
  * \ingroup gui
- * \brief A SQL editor based on QScintilla2. Adds syntax highlighting and
- * code autocompletion.
+ * \brief A SQL editor based on QScintilla2.
+ *
+ * Adds syntax highlighting and code autocompletion.
  * \note may not be available in Python bindings, depending on platform support
- * \since QGIS 2.6
  */
 class GUI_EXPORT QgsCodeEditorSQL : public QgsCodeEditor
 {
@@ -111,13 +111,14 @@ class GUI_EXPORT QgsCodeEditorSQL : public QgsCodeEditor
  * \note not available in Python bindings
  * \ingroup gui
 */
-class QgsCaseInsensitiveLexerSQL: public QsciLexerSQL
+class QgsCaseInsensitiveLexerSQL : public QsciLexerSQL
 {
     Q_OBJECT
 
   public:
     //! constructor
-    explicit QgsCaseInsensitiveLexerSQL( QObject *parent = nullptr ) : QsciLexerSQL( parent ) {}
+    explicit QgsCaseInsensitiveLexerSQL( QObject *parent = nullptr )
+      : QsciLexerSQL( parent ) {}
 
     bool caseSensitive() const override { return false; }
 };

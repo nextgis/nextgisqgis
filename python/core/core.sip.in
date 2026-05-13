@@ -91,18 +91,24 @@ done:
 
 %End
 
+%Feature HAVE_GUI
+%Feature HAVE_QTSERIALPORT
+%Feature HAVE_QTPRINTER
+%Feature ANDROID
+%Feature VECTOR_MAPPED_TYPE
+%Feature HAVE_WEBENGINE_SIP
+
 %Import QtXml/QtXmlmod.sip
 %Import QtNetwork/QtNetworkmod.sip
 %Import QtSql/QtSqlmod.sip
 
 %Import QtPrintSupport/QtPrintSupportmod.sip
 %Import QtWidgets/QtWidgetsmod.sip
-// %Import QtPositioning/QtPositioningmod.sip
+%Import QtPositioning/QtPositioningmod.sip
 
-%Feature HAVE_GUI
-%Feature HAVE_QTSERIALPORT
-%Feature ANDROID
-%Feature VECTOR_MAPPED_TYPE
+%If (HAVE_QTSERIALPORT)
+%Import QtSerialPort/QtSerialPortmod.sip
+%End
 
 %Include conversions.sip
 %Include qgsexception.sip

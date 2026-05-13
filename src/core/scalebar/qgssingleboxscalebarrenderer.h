@@ -26,15 +26,11 @@
  * \ingroup core
  * \brief Scalebar style that draws a single box with alternating
  * color for the segments.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsSingleBoxScaleBarRenderer: public QgsScaleBarRenderer
 {
   public:
 
-    /**
-     * Constructor for QgsSingleBoxScaleBarRenderer.
-     */
     QgsSingleBoxScaleBarRenderer() = default;
 
     QString id() const override;
@@ -47,6 +43,7 @@ class CORE_EXPORT QgsSingleBoxScaleBarRenderer: public QgsScaleBarRenderer
                const QgsScaleBarSettings &settings,
                const QgsScaleBarRenderer::ScaleBarContext &scaleContext ) const override;
 
+    bool applyDefaultSettings( QgsScaleBarSettings &settings ) const override;
 };
 
 #endif // QGSSINGLEBOXSCALEBARRENDERER_H

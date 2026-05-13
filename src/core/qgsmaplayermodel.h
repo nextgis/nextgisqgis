@@ -29,10 +29,9 @@ class QgsProject;
 
 /**
  * \ingroup core
- * \brief The QgsMapLayerModel class is a model to display layers in widgets.
+ * \brief A model for display of map layers in widgets.
  * \see QgsMapLayerProxyModel to sort and/filter the layers
  * \see QgsFieldModel to combine in with a field selector.
- * \since QGIS 2.3
  */
 class CORE_EXPORT QgsMapLayerModel : public QAbstractItemModel
 {
@@ -45,20 +44,28 @@ class CORE_EXPORT QgsMapLayerModel : public QAbstractItemModel
 
   public:
 
-    //! Item data roles
-    enum ItemDataRole
+    // *INDENT-OFF*
+
+    /**
+     * Custom model roles.
+     *
+     * \note Prior to QGIS 3.36 this was available as QgsMapLayerModel::ItemDataRole
+     * \since QGIS 3.36
+     */
+    enum class CustomRole SIP_MONKEYPATCH_SCOPEENUM_UNNEST( QgsMapLayerModel, ItemDataRole ) : int
     {
-      LayerIdRole = Qt::UserRole + 1, //!< Stores the map layer ID
-      LayerRole, //!< Stores pointer to the map layer itself
-      EmptyRole, //!< True if index corresponds to the empty (not set) value
-      AdditionalRole, //!< True if index corresponds to an additional (non map layer) item
+      LayerId SIP_MONKEYPATCH_COMPAT_NAME(LayerIdRole) = Qt::UserRole + 1, //!< Stores the map layer ID
+      Layer SIP_MONKEYPATCH_COMPAT_NAME(LayerRole), //!< Stores pointer to the map layer itself
+      Empty SIP_MONKEYPATCH_COMPAT_NAME(EmptyRole), //!< True if index corresponds to the empty (not set) value
+      Additional SIP_MONKEYPATCH_COMPAT_NAME(AdditionalRole), //!< True if index corresponds to an additional (non map layer) item
     };
-    Q_ENUM( ItemDataRole )
+    Q_ENUM( CustomRole )
+    // *INDENT-ON*
 
     /**
      * \brief QgsMapLayerModel creates a model to display layers in widgets.
      *
-     * If a specific \a project is not specified then the QgsProject::instance() project will be used to
+     * If \a project is not specified then the QgsProject.instance() project will be used to
      * populate the model.
      */
     explicit QgsMapLayerModel( QObject *parent SIP_TRANSFERTHIS = nullptr, QgsProject *project = nullptr );
@@ -66,13 +73,13 @@ class CORE_EXPORT QgsMapLayerModel : public QAbstractItemModel
     /**
      * \brief QgsMapLayerModel creates a model to display a specific list of layers in a widget.
      *
-     * If a specific \a project is not specified then the QgsProject::instance() project will be used to
+     * If \a project is not specified then the QgsProject.instance() project will be used to
      * populate the model.
      */
     explicit QgsMapLayerModel( const QList<QgsMapLayer *> &layers, QObject *parent = nullptr, QgsProject *project = nullptr );
 
     /**
-     * \brief setItemsCheckable defines if layers should be selectable in the widget
+     * \brief Defines if layers should be selectable in the widget
      */
     void setItemsCheckable( bool checkable );
 
@@ -110,33 +117,29 @@ class CORE_EXPORT QgsMapLayerModel : public QAbstractItemModel
      * Since QGIS 3.20, the optional \a text and \a icon arguments allows the text and icon for the empty layer item to be set.
      *
      * \see allowEmptyLayer()
-     * \since QGIS 3.0
      */
     void setAllowEmptyLayer( bool allowEmpty, const QString &text = QString(), const QIcon &icon = QIcon() );
 
     /**
      * Returns TRUE if the model allows the empty layer ("not set") choice.
      * \see setAllowEmptyLayer()
-     * \since QGIS 3.0
      */
     bool allowEmptyLayer() const { return mAllowEmpty; }
 
     /**
      * Sets whether the CRS of layers is also included in the model's display role.
      * \see showCrs()
-     * \since QGIS 3.0
      */
     void setShowCrs( bool showCrs );
 
     /**
      * Returns TRUE if the model includes layer's CRS in the display role.
      * \see setShowCrs()
-     * \since QGIS 3.0
      */
     bool showCrs() const { return mShowCrs; }
 
     /**
-     * \brief layersChecked returns the list of layers which are checked (or unchecked)
+     * \brief Returns the list of layers which are checked (or unchecked)
      */
     QList<QgsMapLayer *> layersChecked( Qt::CheckState checkState = Qt::Checked );
 
@@ -145,7 +148,7 @@ class CORE_EXPORT QgsMapLayerModel : public QAbstractItemModel
      */
     void setLayersChecked( const QList< QgsMapLayer * > &layers );
 
-    //! returns if the items can be checked or not
+    //! Returns whether the items can be checked or not
     bool itemsCheckable() const { return mItemCheckable; }
 
     /**
@@ -157,7 +160,6 @@ class CORE_EXPORT QgsMapLayerModel : public QAbstractItemModel
     /**
      * Returns the map layer corresponding to the specified \a index.
      * \see indexFromLayer()
-     * \since QGIS 3.0
      */
     QgsMapLayer *layerFromIndex( const QModelIndex &index ) const;
 
@@ -166,14 +168,12 @@ class CORE_EXPORT QgsMapLayerModel : public QAbstractItemModel
      * These may represent additional layers such as layers which are not included in the active project,
      * or paths to layers which have not yet been loaded into QGIS.
      * \see additionalItems()
-     * \since QGIS 3.0
      */
     void setAdditionalItems( const QStringList &items );
 
     /**
      * Returns the list of additional (non map layer) items included at the end of the model.
      * \see setAdditionalItems()
-     * \since QGIS 3.0
      */
     QStringList additionalItems() const { return mAdditionalItems; }
 
@@ -221,7 +221,6 @@ class CORE_EXPORT QgsMapLayerModel : public QAbstractItemModel
 
     /**
      * Returns the icon corresponding to a specified map \a layer.
-     * \since QGIS 3.0
      */
     static QIcon iconForLayer( QgsMapLayer *layer );
 

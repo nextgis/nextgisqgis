@@ -62,6 +62,7 @@ class QgisVisitor : public SpatialIndex::IVisitor
 /**
  * \ingroup core
  * \class QgsSpatialIndexCopyVisitor
+ * \brief SpatialIndex visitor which copies data to a new index.
  * \note not available in Python bindings
  */
 class QgsSpatialIndexCopyVisitor : public SpatialIndex::IVisitor
@@ -456,16 +457,16 @@ bool QgsSpatialIndex::addFeature( QgsFeatureId id, const QgsRectangle &bounds )
   catch ( Tools::Exception &e )
   {
     Q_UNUSED( e )
-    QgsDebugError( QStringLiteral( "Tools::Exception caught: " ).arg( e.what().c_str() ) );
+    QgsDebugError( QStringLiteral( "Tools::Exception caught when adding feature to QgsSpatialIndex: %1" ).arg( e.what().c_str() ) );
   }
   catch ( const std::exception &e )
   {
     Q_UNUSED( e )
-    QgsDebugError( QStringLiteral( "std::exception caught: " ).arg( e.what() ) );
+    QgsDebugError( QStringLiteral( "std::exception caught when adding feature to QgsSpatialIndex: %1" ).arg( e.what() ) );
   }
   catch ( ... )
   {
-    QgsDebugError( QStringLiteral( "unknown spatial index exception caught" ) );
+    QgsDebugError( QStringLiteral( "unknown spatial index exception caught when adding feature to QgsSpatialIndex" ) );
   }
 
   return false;
@@ -482,6 +483,17 @@ bool QgsSpatialIndex::deleteFeature( const QgsFeature &f )
   // TODO: handle exceptions
   if ( d->mFlags & QgsSpatialIndex::FlagStoreFeatureGeometries )
     d->mGeometries.remove( f.id() );
+  return d->mRTree->deleteData( r, FID_TO_NUMBER( id ) );
+}
+
+bool QgsSpatialIndex::deleteFeature( QgsFeatureId id, const QgsRectangle &bounds )
+{
+  const SpatialIndex::Region r = QgsSpatialIndexUtils::rectangleToRegion( bounds );
+
+  const QMutexLocker locker( &d->mMutex );
+  // TODO: handle exceptions (if the comment in the other ::deleteFeature implementation is correct!)
+  if ( d->mFlags & QgsSpatialIndex::FlagStoreFeatureGeometries )
+    d->mGeometries.remove( id );
   return d->mRTree->deleteData( r, FID_TO_NUMBER( id ) );
 }
 

@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgsgrouplayer.h"
+#include "moc_qgsgrouplayer.cpp"
 #include "qgsmaplayerfactory.h"
 #include "qgspainting.h"
 #include "qgsmaplayerlistutils_p.h"
@@ -39,13 +40,13 @@ QgsGroupLayer::QgsGroupLayer( const QString &name, const LayerOptions &options )
 
   QgsDataProvider::ProviderOptions providerOptions;
   providerOptions.transformContext = options.transformContext;
-  mDataProvider = new QgsGroupLayerDataProvider( providerOptions, QgsDataProvider::ReadFlags() );
+  mDataProvider = std::make_unique<QgsGroupLayerDataProvider>( providerOptions, Qgis::DataProviderReadFlags() );
 }
 
 QgsGroupLayer::~QgsGroupLayer()
 {
   emit willBeDeleted();
-  delete mDataProvider;
+
 }
 
 QgsGroupLayer *QgsGroupLayer::clone() const
@@ -53,7 +54,7 @@ QgsGroupLayer *QgsGroupLayer::clone() const
   QGIS_PROTECT_QOBJECT_THREAD_ACCESS
 
   const QgsGroupLayer::LayerOptions options( mTransformContext );
-  std::unique_ptr< QgsGroupLayer > layer = std::make_unique< QgsGroupLayer >( name(), options );
+  auto layer = std::make_unique< QgsGroupLayer >( name(), options );
   QgsMapLayer::clone( layer.get() );
   layer->setChildLayers( _qgis_listRefToRaw( mChildren ) );
   layer->setPaintEffect( mPaintEffect ? mPaintEffect->clone() : nullptr );
@@ -225,14 +226,14 @@ QgsDataProvider *QgsGroupLayer::dataProvider()
 {
   QGIS_PROTECT_QOBJECT_THREAD_ACCESS
 
-  return mDataProvider;
+  return mDataProvider.get();
 }
 
 const QgsDataProvider *QgsGroupLayer::dataProvider() const
 {
   QGIS_PROTECT_QOBJECT_THREAD_ACCESS
 
-  return mDataProvider;
+  return mDataProvider.get();
 }
 
 QString QgsGroupLayer::htmlMetadata() const
@@ -285,6 +286,11 @@ void QgsGroupLayer::setChildLayers( const QList< QgsMapLayer * > &layers )
     if ( !currentLayers.contains( layer ) )
     {
       connect( layer, &QgsMapLayer::repaintRequested, this, &QgsMapLayer::triggerRepaint, Qt::UniqueConnection );
+      if ( layer->blendMode() == QPainter::CompositionMode_SourceOver && layer->customProperty( QStringLiteral( "_prevGroupBlendMode" ) ).isValid() )
+      {
+        // try to restore previous group blend mode
+        layer->setBlendMode( static_cast< QPainter::CompositionMode >( layer->customProperty( QStringLiteral( "_prevGroupBlendMode" ) ).toInt() ) );
+      }
     }
   }
   for ( QgsMapLayer *layer : currentLayers )
@@ -294,9 +300,15 @@ void QgsGroupLayer::setChildLayers( const QList< QgsMapLayer * > &layers )
       // layer removed from group
       disconnect( layer, &QgsMapLayer::repaintRequested, this, &QgsMapLayer::triggerRepaint );
 
-      if ( QgsPainting::isClippingMode( QgsPainting::getBlendModeEnum( layer->blendMode() ) ) )
+      const QPainter::CompositionMode groupBlendMode = layer->blendMode();
+      if ( QgsPainting::isClippingMode( QgsPainting::getBlendModeEnum( groupBlendMode ) ) )
       {
         layer->setBlendMode( QPainter::CompositionMode_SourceOver );
+        layer->setCustomProperty( QStringLiteral( "_prevGroupBlendMode" ), static_cast< int >( groupBlendMode ) );
+      }
+      else
+      {
+        layer->removeCustomProperty( QStringLiteral( "_prevGroupBlendMode" ) );
       }
     }
   }
@@ -354,7 +366,7 @@ void QgsGroupLayer::prepareLayersForRemovalFromGroup()
 ///@cond PRIVATE
 QgsGroupLayerDataProvider::QgsGroupLayerDataProvider(
   const ProviderOptions &options,
-  QgsDataProvider::ReadFlags flags )
+  Qgis::DataProviderReadFlags flags )
   : QgsDataProvider( QString(), options, flags )
 {}
 

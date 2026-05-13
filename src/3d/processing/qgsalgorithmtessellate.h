@@ -30,9 +30,7 @@
  */
 class QgsTessellateAlgorithm : public QgsProcessingFeatureBasedAlgorithm
 {
-
   public:
-
     QgsTessellateAlgorithm() = default;
     QString name() const override;
     QString displayName() const override;
@@ -40,21 +38,19 @@ class QgsTessellateAlgorithm : public QgsProcessingFeatureBasedAlgorithm
     QString group() const override;
     QString groupId() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
     QList<int> inputLayerTypes() const override;
     QgsTessellateAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
     QString outputName() const override;
-    QgsProcessing::SourceType outputLayerType() const override;
+    Qgis::ProcessingSourceType outputLayerType() const override;
     Qgis::WkbType outputWkbType( Qgis::WkbType inputWkbType ) const override;
 
     QgsFeatureList processFeature( const QgsFeature &feature, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
-
 };
 
 
 ///@endcond PRIVATE
 
 #endif // QGSALGORITHMTESSELLATE_H
-
-

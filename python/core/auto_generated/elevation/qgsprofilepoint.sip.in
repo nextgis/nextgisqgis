@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/elevation/qgsprofilepoint.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -63,7 +63,8 @@ Returns the elevation of the point.
 %Docstring
 Returns ``True`` if the point is empty.
 
-A QgsProfilePoint is considered empty when the coordinates have not been explicitly filled in.
+A QgsProfilePoint is considered empty when the coordinates have not been
+explicitly filled in.
 %End
 
     bool operator==( const QgsProfilePoint &other ) /HoldGIL/;
@@ -108,5 +109,5 @@ A QgsProfilePoint is considered empty when the coordinates have not been explici
  *                                                                      *
  * src/core/elevation/qgsprofilepoint.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

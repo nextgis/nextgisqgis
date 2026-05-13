@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsrenderermeshpropertieswidget.h"
+#include "moc_qgsrenderermeshpropertieswidget.cpp"
 
 #include "qgis.h"
 #include "qgsmapcanvas.h"
@@ -32,13 +33,11 @@ QgsRendererMeshPropertiesWidget::QgsRendererMeshPropertiesWidget( QgsMeshLayer *
 
   setupUi( this );
 
-  connect( mMeshLayer,
-           &QgsMeshLayer::dataChanged,
-           this,
-           &QgsRendererMeshPropertiesWidget::syncToLayerPrivate );
+  connect( mMeshLayer, &QgsMeshLayer::dataChanged, this, &QgsRendererMeshPropertiesWidget::syncToLayerPrivate );
 
   mMeshRendererActiveDatasetWidget->setLayer( mMeshLayer );
   mMeshRendererScalarSettingsWidget->setLayer( mMeshLayer );
+  mMeshRendererScalarSettingsWidget->setCanvas( mMapCanvas );
   mNativeMeshSettingsWidget->setLayer( mMeshLayer, QgsMeshRendererMeshSettingsWidget::MeshType::Native );
   mTriangularMeshSettingsWidget->setLayer( mMeshLayer, QgsMeshRendererMeshSettingsWidget::MeshType::Triangular );
   mEdgeMeshSettingsWidget->setLayer( mMeshLayer, QgsMeshRendererMeshSettingsWidget::MeshType::Edge );
@@ -54,10 +53,8 @@ QgsRendererMeshPropertiesWidget::QgsRendererMeshPropertiesWidget( QgsMeshLayer *
   mOpacityWidget->setOpacity( mMeshLayer->opacity() );
   connect( mOpacityWidget, &QgsOpacityWidget::opacityChanged, this, &QgsPanelWidget::widgetChanged );
 
-  connect( mMeshRendererActiveDatasetWidget, &QgsMeshRendererActiveDatasetWidget::activeScalarGroupChanged,
-           this, &QgsRendererMeshPropertiesWidget::onActiveScalarGroupChanged );
-  connect( mMeshRendererActiveDatasetWidget, &QgsMeshRendererActiveDatasetWidget::activeVectorGroupChanged,
-           this, &QgsRendererMeshPropertiesWidget::onActiveVectorGroupChanged );
+  connect( mMeshRendererActiveDatasetWidget, &QgsMeshRendererActiveDatasetWidget::activeScalarGroupChanged, this, &QgsRendererMeshPropertiesWidget::onActiveScalarGroupChanged );
+  connect( mMeshRendererActiveDatasetWidget, &QgsMeshRendererActiveDatasetWidget::activeVectorGroupChanged, this, &QgsRendererMeshPropertiesWidget::onActiveVectorGroupChanged );
 
   connect( mNativeMeshGroup, &QGroupBox::toggled, this, &QgsPanelWidget::widgetChanged );
   connect( mEdgeMeshGroup, &QGroupBox::toggled, this, &QgsPanelWidget::widgetChanged );
@@ -67,13 +64,10 @@ QgsRendererMeshPropertiesWidget::QgsRendererMeshPropertiesWidget( QgsMeshLayer *
   connect( mMeshRendererActiveDatasetWidget, &QgsMeshRendererActiveDatasetWidget::widgetChanged, this, &QgsPanelWidget::widgetChanged );
   connect( mMeshRendererScalarSettingsWidget, &QgsMeshRendererScalarSettingsWidget::widgetChanged, this, &QgsPanelWidget::widgetChanged );
   connect( mMeshRendererVectorSettingsWidget, &QgsMeshRendererVectorSettingsWidget::widgetChanged, this, &QgsPanelWidget::widgetChanged );
-  connect( mNativeMeshSettingsWidget, &QgsMeshRendererMeshSettingsWidget::widgetChanged,
-           this, &QgsPanelWidget::widgetChanged );
-  connect( mTriangularMeshSettingsWidget, &QgsMeshRendererMeshSettingsWidget::widgetChanged,
-           this, &QgsPanelWidget::widgetChanged );
-  connect( mEdgeMeshSettingsWidget, &QgsMeshRendererMeshSettingsWidget::widgetChanged,
-           this, &QgsPanelWidget::widgetChanged );
-  connect( m3dAveragingSettingsWidget, &QgsMeshRenderer3dAveragingWidget::widgetChanged, this, &QgsPanelWidget::widgetChanged );
+  connect( mNativeMeshSettingsWidget, &QgsMeshRendererMeshSettingsWidget::widgetChanged, this, &QgsPanelWidget::widgetChanged );
+  connect( mTriangularMeshSettingsWidget, &QgsMeshRendererMeshSettingsWidget::widgetChanged, this, &QgsPanelWidget::widgetChanged );
+  connect( mEdgeMeshSettingsWidget, &QgsMeshRendererMeshSettingsWidget::widgetChanged, this, &QgsPanelWidget::widgetChanged );
+  connect( m3dAveragingSettingsWidget, &QgsMeshRenderer3DAveragingWidget::widgetChanged, this, &QgsPanelWidget::widgetChanged );
 }
 
 void QgsRendererMeshPropertiesWidget::apply()
@@ -128,7 +122,7 @@ void QgsRendererMeshPropertiesWidget::apply()
   mMeshLayer->setBlendMode( mBlendModeComboBox->blendMode() );
   mLayer->setOpacity( mOpacityWidget->opacity() );
   //set the averaging method for the layer
-  const std::unique_ptr<QgsMesh3dAveragingMethod> averagingMethod( m3dAveragingSettingsWidget->averagingMethod() );
+  const std::unique_ptr<QgsMesh3DAveragingMethod> averagingMethod( m3dAveragingSettingsWidget->averagingMethod() );
   settings.setAveragingMethod( averagingMethod.get() );
   mMeshLayer->setRendererSettings( settings );
   mMeshLayer->triggerRepaint();
@@ -157,15 +151,18 @@ void QgsRendererMeshPropertiesWidget::syncToLayer( QgsMapLayer *mapLayer )
 
 void QgsRendererMeshPropertiesWidget::syncToLayerPrivate()
 {
+  if ( !mMeshLayer )
+    return;
+
   mMeshRendererActiveDatasetWidget->syncToLayer();
   mNativeMeshSettingsWidget->syncToLayer();
   mTriangularMeshSettingsWidget->syncToLayer();
   mEdgeMeshSettingsWidget->syncToLayer();
   m3dAveragingSettingsWidget->syncToLayer();
 
-  mNativeMeshGroup->setChecked( mMeshLayer ? mMeshLayer->rendererSettings().nativeMeshSettings().isEnabled() : false );
-  mTriangularMeshGroup->setChecked( mMeshLayer ? mMeshLayer->rendererSettings().triangularMeshSettings().isEnabled() : false );
-  mEdgeMeshGroup->setChecked( mMeshLayer ? mMeshLayer->rendererSettings().edgeMeshSettings().isEnabled() : false );
+  mNativeMeshGroup->setChecked( mMeshLayer->rendererSettings().nativeMeshSettings().isEnabled() );
+  mTriangularMeshGroup->setChecked( mMeshLayer->rendererSettings().triangularMeshSettings().isEnabled() );
+  mEdgeMeshGroup->setChecked( mMeshLayer->rendererSettings().edgeMeshSettings().isEnabled() );
 
   onActiveScalarGroupChanged( mMeshLayer->rendererSettings().activeScalarDatasetGroup() );
   onActiveVectorGroupChanged( mMeshLayer->rendererSettings().activeVectorDatasetGroup() );

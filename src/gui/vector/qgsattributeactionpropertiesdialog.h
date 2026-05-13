@@ -30,13 +30,13 @@
 /**
  * \ingroup gui
  * \class QgsAttributeActionPropertiesDialog
+ * \brief A dialog for configuring a map layer action.
  */
-class GUI_EXPORT QgsAttributeActionPropertiesDialog: public QDialog, private Ui::QgsAttributeActionPropertiesDialogBase, public QgsExpressionContextGenerator
+class GUI_EXPORT QgsAttributeActionPropertiesDialog : public QDialog, private Ui::QgsAttributeActionPropertiesDialogBase, public QgsExpressionContextGenerator
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsAttributeActionPropertiesDialog.
      */

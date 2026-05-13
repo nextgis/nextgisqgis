@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgslayoutitemnodeitem.h"
+#include "moc_qgslayoutitemnodeitem.cpp"
 #include "qgssymbol.h"
 #include "qgslayout.h"
 #include "qgsmarkersymbol.h"
@@ -77,12 +78,19 @@ void QgsLayoutNodesItem::draw( QgsLayoutItemRenderContext &context )
   painter->setPen( Qt::NoPen );
   painter->setBrush( Qt::NoBrush );
 
-  context.renderContext().setForceVectorOutput( true );
+  if ( context.renderContext().rasterizedRenderingPolicy() == Qgis::RasterizedRenderingPolicy::Default )
+    context.renderContext().setRasterizedRenderingPolicy( Qgis::RasterizedRenderingPolicy::PreferVector );
+
   rescaleToFitBoundingBox();
   _draw( context );
 
   if ( mDrawNodes && layout()->renderContext().isPreviewRender() )
     drawNodes( context );
+}
+
+QgsLayoutItem::Flags QgsLayoutNodesItem::itemFlags() const
+{
+  return QgsLayoutItem::FlagDisableSceneCaching;
 }
 
 double QgsLayoutNodesItem::computeDistance( QPointF pt1,
@@ -173,8 +181,7 @@ void QgsLayoutNodesItem::drawNodes( QgsLayoutItemRenderContext &context ) const
   properties.insert( QStringLiteral( "name" ), QStringLiteral( "cross" ) );
   properties.insert( QStringLiteral( "color_border" ), QStringLiteral( "red" ) );
 
-  std::unique_ptr<QgsMarkerSymbol> symbol;
-  symbol.reset( QgsMarkerSymbol::createSimple( properties ) );
+  std::unique_ptr<QgsMarkerSymbol> symbol = QgsMarkerSymbol::createSimple( properties );
   symbol->setSize( rectSize );
   symbol->setAngle( 45 );
 
@@ -197,8 +204,7 @@ void QgsLayoutNodesItem::drawSelectedNode( QgsLayoutItemRenderContext &context )
   properties.insert( QStringLiteral( "color_border" ), QStringLiteral( "blue" ) );
   properties.insert( QStringLiteral( "width_border" ), QStringLiteral( "4" ) );
 
-  std::unique_ptr<QgsMarkerSymbol> symbol;
-  symbol.reset( QgsMarkerSymbol::createSimple( properties ) );
+  std::unique_ptr<QgsMarkerSymbol> symbol = QgsMarkerSymbol::createSimple( properties );
   symbol->setSize( rectSize );
 
   symbol->startRender( context.renderContext() );
@@ -344,10 +350,10 @@ void QgsLayoutNodesItem::updateBoundingRect()
 {
   QRectF br = rect();
   br.adjust( -mMaxSymbolBleed, -mMaxSymbolBleed, mMaxSymbolBleed, mMaxSymbolBleed );
+  prepareGeometryChange();
   mCurrentRectangle = br;
 
   // update
-  prepareGeometryChange();
   update();
 }
 

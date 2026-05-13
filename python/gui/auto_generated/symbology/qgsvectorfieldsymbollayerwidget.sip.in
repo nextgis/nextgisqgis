@@ -3,19 +3,21 @@
  *                                                                      *
  * src/gui/symbology/qgsvectorfieldsymbollayerwidget.h                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 
-class QgsVectorFieldSymbolLayerWidget: QgsSymbolLayerWidget
+class QgsVectorFieldSymbolLayerWidget : QgsSymbolLayerWidget
 {
+%Docstring(signature="appended")
+A widget for configuring a :py:class:`QgsVectorFieldSymbolLayer`.
+%End
 
 %TypeHeaderCode
 #include "qgsvectorfieldsymbollayerwidget.h"
 %End
   public:
-
     QgsVectorFieldSymbolLayerWidget( QgsVectorLayer *vl, QWidget *parent /TransferThis/ = 0 );
 %Docstring
 Constructor for QgsVectorFieldSymbolLayerWidget.
@@ -45,5 +47,5 @@ Creates a new QgsVectorFieldSymbolLayerWidget.
  *                                                                      *
  * src/gui/symbology/qgsvectorfieldsymbollayerwidget.h                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

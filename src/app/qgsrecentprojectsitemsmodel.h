@@ -29,14 +29,14 @@ class QgsRecentProjectItemsModel : public QAbstractListModel
   public:
     struct RecentProjectData
     {
-      bool operator==( const RecentProjectData &other ) const { return other.path == this->path; }
-      QString path;
-      QString title;
-      QString previewImagePath;
-      QString crs;
-      mutable bool pin = false;
-      mutable bool checkedExists = false;
-      mutable bool exists = false;
+        bool operator==( const RecentProjectData &other ) const { return other.path == this->path; }
+        QString path;
+        QString title;
+        QString previewImagePath;
+        QString crs;
+        mutable bool pin = false;
+        mutable bool checkedExists = false;
+        mutable bool exists = false;
     };
 
     explicit QgsRecentProjectItemsModel( QObject *parent = nullptr );
@@ -51,6 +51,7 @@ class QgsRecentProjectItemsModel : public QAbstractListModel
     void unpinProject( const QModelIndex &index );
     void removeProject( const QModelIndex &index );
     void recheckProject( const QModelIndex &index );
+    void clear( bool clearPinned = false );
 
   private:
     QList<RecentProjectData> mRecentProjects;

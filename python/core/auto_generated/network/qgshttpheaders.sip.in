@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/network/qgshttpheaders.h                                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -15,7 +15,7 @@
 class QgsHttpHeaders
 {
 %Docstring(signature="appended")
-This class implements simple http header management.
+Implements simple HTTP header management.
 
 .. versionadded:: 3.24
 %End
@@ -30,37 +30,36 @@ This class implements simple http header management.
 %Docstring
 Constructor from map
 
-:param headers:
+:param headers: 
 %End
 
     QgsHttpHeaders();
+
+ QgsHttpHeaders( const QgsSettings &settings, const QString &key = QString() ) /Deprecated="Since 3.30. Use a variant map settings and the default constructor instead."/;
 %Docstring
-default constructor
-%End
+Constructor from :py:class:`QgsSettings` ``settings`` object and root
+``key``
 
- QgsHttpHeaders( const QgsSettings &settings, const QString &key = QString() ) /Deprecated/;
-%Docstring
-Constructor from :py:class:`QgsSettings` ``settings`` object and root ``key``
+:param settings: 
+:param key: 
 
-:param settings:
-:param key:
+.. deprecated:: 3.30
 
-.. deprecated:: QGIS 3.30
-   use a variant map settings and the default constructor instead
+   Use a variant map settings and the default constructor instead.
 %End
 
     QgsHttpHeaders( const QString &key );
 %Docstring
 Constructor from default :py:class:`QgsSettings` object and root ``key``
 
-:param key:
+:param key: 
 %End
 
     QgsHttpHeaders( const QDomElement &element );
 %Docstring
 Constructor from a QDomElement ``element``
 
-:param element:
+:param element: 
 %End
 
     virtual ~QgsHttpHeaders();
@@ -72,19 +71,23 @@ Returns the headers as a variant map
 .. versionadded:: 3.30
 %End
 
- bool updateSettings( QgsSettings &settings, const QString &key = QString() ) const /Deprecated/;
+ bool updateSettings( QgsSettings &settings, const QString &key = QString() ) const /Deprecated="Since 3.30. Directly use a variant setting instead."/;
 %Docstring
-Updates the ``settings`` by adding all the http headers in the path "key/PATH_PREFIX/"
+Updates the ``settings`` by adding all the http headers in the path
+"key/PATH_PREFIX/"
 
-KEY_REFERER value will be available at path "key/PATH_PREFIX/KEY_REFERER" and path "key/KEY_REFERER" (for backward compatibility)
+KEY_REFERER value will be available at path
+"key/PATH_PREFIX/KEY_REFERER" and path "key/KEY_REFERER" (for backward
+compatibility)
 
-:param settings:
+:param settings: 
 :param key: sub group path
 
 :return: ``True`` if the update succeed
 
-.. deprecated:: QGIS 3.30
-   directly use a variant setting instead
+.. deprecated:: 3.30
+
+   Directly use a variant setting instead.
 %End
 
     bool updateNetworkRequest( QNetworkRequest &request ) const;
@@ -105,27 +108,38 @@ Updates an ``uri`` by adding all the HTTP headers
 %Docstring
 Updates a ``map`` by adding all the HTTP headers
 
-KEY_REFERER value will be available at key "KEY_PREFIX+KEY_REFERER" and key "KEY_REFERER" (for backward compatibility)
+KEY_REFERER value will be available at key "KEY_PREFIX+KEY_REFERER" and
+key "KEY_REFERER" (for backward compatibility)
 
 :return: ``True`` if the update succeed
 %End
 
-    bool updateDomElement( QDomElement &el ) const;
+ bool updateDomElement( QDomElement &el ) const /Deprecated="Since 3.42. Will be removed in QGIS 4.0."/;
 %Docstring
-Updates a ``map`` by adding all the HTTP headers
+Updates a DOM element by adding all the HTTP headers
 
-KEY_REFERER value will be available at attribute "KEY_PREFIX+KEY_REFERER" and attribute "KEY_REFERER" (for backward compatibility)
+KEY_REFERER value will be available at attribute
+"KEY_PREFIX+KEY_REFERER" and attribute "KEY_REFERER" (for backward
+compatibility)
+
+:param el: DOM element
 
 :return: ``True`` if the update succeed
+
+.. deprecated:: 3.42
+
+   Will be removed in QGIS 4.0.
 %End
+
 
     void setFromSettings( const QgsSettings &settings, const QString &key = QString() );
 %Docstring
 Loads headers from the ``settings``
 
-key KEY_REFERER will be read at path "key/PATH_PREFIX/KEY_REFERER" and path "key/KEY_REFERER" (for backward compatibility)
+key KEY_REFERER will be read at path "key/PATH_PREFIX/KEY_REFERER" and
+path "key/KEY_REFERER" (for backward compatibility)
 
-:param settings:
+:param settings: 
 :param key: sub group path
 %End
 
@@ -133,25 +147,27 @@ key KEY_REFERER will be read at path "key/PATH_PREFIX/KEY_REFERER" and path "key
 %Docstring
 Loads headers from the ``uri``
 
-:param uri:
+:param uri: 
 %End
 
     void setFromMap( const QVariantMap &map );
 %Docstring
 Loads headers from the ``map``
 
-key KEY_REFERER will be read from key "KEY_PREFIX+KEY_REFERER" and key "KEY_REFERER" (for backward compatibility)
+key KEY_REFERER will be read from key "KEY_PREFIX+KEY_REFERER" and key
+"KEY_REFERER" (for backward compatibility)
 
-:param map:
+:param map: 
 %End
 
     void setFromDomElement( const QDomElement &element );
 %Docstring
 Loads headers from the ``element``
 
-key KEY_REFERER will be read from attribute "KEY_PREFIX+KEY_REFERER" and attribute "KEY_REFERER" (for backward compatibility)
+key KEY_REFERER will be read from attribute "KEY_PREFIX+KEY_REFERER" and
+attribute "KEY_REFERER" (for backward compatibility)
 
-:param element:
+:param element: 
 %End
 
     QString sanitizeKey( const QString &key ) const;
@@ -164,6 +180,9 @@ Returns a cleansed ``key``
     QVariant &operator[]( const QString &key );
 
 
+    bool operator==( const QgsHttpHeaders &other ) const;
+    bool operator!=( const QgsHttpHeaders &other ) const;
+
     void insert( const QString &key, const QVariant &value );
 %Docstring
 insert a ``key`` with the specific ``value``
@@ -174,8 +193,7 @@ insert a ``key`` with the specific ``value``
 
     QList<QString> keys() const;
 %Docstring
-
-:return: the list of all http header keys
+Returns the list of all HTTP header keys.
 %End
 
     QString toSpacedString() const;
@@ -186,10 +204,11 @@ Returns key/value pairs as strings separated by space
 
 };
 
+
 /************************************************************************
  * This file has been generated automatically from                      *
  *                                                                      *
  * src/core/network/qgshttpheaders.h                                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

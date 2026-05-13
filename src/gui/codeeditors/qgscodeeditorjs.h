@@ -25,8 +25,9 @@ SIP_IF_MODULE( HAVE_QSCI_SIP )
 
 /**
  * \ingroup gui
- * \brief A Javascript editor based on QScintilla2. Adds syntax highlighting and
- * code autocompletion.
+ * \brief A Javascript editor based on QScintilla2.
+ *
+ * Adds syntax highlighting and code autocompletion.
  * \since QGIS 3.14
  */
 class GUI_EXPORT QgsCodeEditorJavascript : public QgsCodeEditor
@@ -34,7 +35,6 @@ class GUI_EXPORT QgsCodeEditorJavascript : public QgsCodeEditor
     Q_OBJECT
 
   public:
-
     //! Constructor for QgsCodeEditorJavascript
     QgsCodeEditorJavascript( QWidget *parent SIP_TRANSFERTHIS = nullptr );
     Qgis::ScriptLanguage language() const override;

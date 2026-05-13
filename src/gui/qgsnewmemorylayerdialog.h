@@ -29,13 +29,13 @@ class QgsVectorLayer;
 /**
  * \ingroup gui
  * \class QgsNewMemoryLayerDialog
+ * \brief A dialog for configuring the properties of a new memory (scratch) layer.
  */
-class GUI_EXPORT QgsNewMemoryLayerDialog: public QDialog, private Ui::QgsNewMemoryLayerDialogBase
+class GUI_EXPORT QgsNewMemoryLayerDialog : public QDialog, private Ui::QgsNewMemoryLayerDialogBase
 {
     Q_OBJECT
 
   public:
-
     /**
      * Runs the dialog and creates a new memory layer
      * \param parent parent widget
@@ -55,7 +55,6 @@ class GUI_EXPORT QgsNewMemoryLayerDialog: public QDialog, private Ui::QgsNewMemo
     /**
      * Sets the \a crs value for the new layer in the dialog.
      * \see crs()
-     * \since QGIS 3.0
      */
     void setCrs( const QgsCoordinateReferenceSystem &crs );
 
@@ -77,7 +76,6 @@ class GUI_EXPORT QgsNewMemoryLayerDialog: public QDialog, private Ui::QgsNewMemo
     void accept() override;
 
   private:
-
     QString mCrsId;
     QPushButton *mOkButton = nullptr;
 
@@ -90,6 +88,8 @@ class GUI_EXPORT QgsNewMemoryLayerDialog: public QDialog, private Ui::QgsNewMemo
     void mRemoveAttributeButton_clicked();
     void selectionChanged();
     void showHelp();
+    void moveFieldsUp();
+    void moveFieldsDown();
 };
 
 #endif //QGSNEWMEMORYLAYERDIALOG_H

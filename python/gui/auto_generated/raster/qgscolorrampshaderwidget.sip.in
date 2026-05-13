@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/raster/qgscolorrampshaderwidget.h                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,12 +11,14 @@
 
 
 
-class QgsColorRampShaderWidget: QWidget
+class QgsColorRampShaderWidget : QWidget
 {
 %Docstring(signature="appended")
+A widget for configuring numeric ranges associated with a color ramp.
 
-It has 2 ways how to use it. For raster layers, raster data provider and band is assigned and
-the Quantile classification mode can be used and the LoadFromBandButton is visible.
+It has 2 ways how to use it. For raster layers, raster data provider and
+band is assigned and the Quantile classification mode can be used and
+the LoadFromBandButton is visible.
 
 The other mode is used to style mesh layer contours (scalar datasets)
 
@@ -27,11 +29,11 @@ The other mode is used to style mesh layer contours (scalar datasets)
 #include "qgscolorrampshaderwidget.h"
 %End
   public:
-
     QgsColorRampShaderWidget( QWidget *parent = 0 );
 %Docstring
 Creates new color ramp shader widget
 %End
+    ~QgsColorRampShaderWidget();
 
     void initializeForUseWithRasterLayer();
 %Docstring
@@ -94,7 +96,7 @@ Color ramp tree has changed
 Widget changed
 %End
 
-    void classificationModeChanged( QgsColorRampShader::ClassificationMode mode );
+    void classificationModeChanged( Qgis::ShaderClassificationMethod mode );
 %Docstring
 Classification mode changed
 %End
@@ -112,7 +114,6 @@ Loads min and max values from color ramp tree
 %End
 
   protected:
-
     void populateColormapTreeWidget( const QList<QgsColorRampShader::ColorRampItem> &colorRampItems );
 %Docstring
 Populates color ramp tree from ramp items
@@ -125,5 +126,5 @@ Populates color ramp tree from ramp items
  *                                                                      *
  * src/gui/raster/qgscolorrampshaderwidget.h                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

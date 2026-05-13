@@ -13,6 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgspostgresprojectstoragedialog.h"
+#include "moc_qgspostgresprojectstoragedialog.cpp"
 
 #include "qgspostgresconn.h"
 #include "qgspostgresconnpool.h"
@@ -51,7 +52,7 @@ QgsPostgresProjectStorageDialog::QgsPostgresProjectStorageDialog( bool saving, Q
     setWindowTitle( tr( "Load project from PostgreSQL" ) );
   }
 
-  connect( mCboConnection, qOverload< int >( &QComboBox::currentIndexChanged ), this, &QgsPostgresProjectStorageDialog::populateSchemas );
+  connect( mCboConnection, qOverload<int>( &QComboBox::currentIndexChanged ), this, &QgsPostgresProjectStorageDialog::populateSchemas );
 
   mLblProjectsNotAllowed->setVisible( false );
 
@@ -63,7 +64,7 @@ QgsPostgresProjectStorageDialog::QgsPostgresProjectStorageDialog( bool saving, Q
   mCboConnection->setCurrentIndex( mCboConnection->findText( toSelect ) );
   populateProjects();
 
-  connect( mCboSchema, qOverload< int >( &QComboBox::currentIndexChanged ), this, &QgsPostgresProjectStorageDialog::populateProjects );
+  connect( mCboSchema, qOverload<int>( &QComboBox::currentIndexChanged ), this, &QgsPostgresProjectStorageDialog::populateProjects );
   connect( mCboProject, &QComboBox::currentTextChanged, this, &QgsPostgresProjectStorageDialog::projectChanged );
 
   projectChanged();
@@ -99,11 +100,11 @@ void QgsPostgresProjectStorageDialog::populateSchemas()
 
   QApplication::setOverrideCursor( Qt::WaitCursor );
 
-  QgsPostgresConn *conn = QgsPostgresConnPool::instance()->acquireConnection( uri.connectionInfo( false ) );
+  QgsPostgresConn *conn = QgsPostgresConnPool::instance()->acquireConnection( QgsPostgresConn::connectionInfo( uri, false ) );
   if ( !conn )
   {
     QApplication::restoreOverrideCursor();
-    QMessageBox::critical( this, tr( "Error" ), tr( "Connection failed" ) + "\n" + uri.connectionInfo( false ) );
+    QMessageBox::critical( this, tr( "Error" ), tr( "Connection failed" ) + "\n" + QgsPostgresConn::connectionInfo( uri, false ) );
     return;
   }
 
@@ -150,9 +151,7 @@ void QgsPostgresProjectStorageDialog::onOK()
   {
     if ( mExistingProjects.contains( mCboProject->currentText() ) )
     {
-      int res = QMessageBox::question( this, tr( "Overwrite project" ),
-                                       tr( "A project with the same name already exists. Would you like to overwrite it?" ),
-                                       QMessageBox::Yes | QMessageBox::No );
+      int res = QMessageBox::question( this, tr( "Overwrite project" ), tr( "A project with the same name already exists. Would you like to overwrite it?" ), QMessageBox::Yes | QMessageBox::No );
       if ( res != QMessageBox::Yes )
         return;
     }
@@ -168,9 +167,7 @@ void QgsPostgresProjectStorageDialog::projectChanged()
 
 void QgsPostgresProjectStorageDialog::removeProject()
 {
-  int res = QMessageBox::question( this, tr( "Remove project" ),
-                                   tr( "Do you really want to remove the project \"%1\"?" ).arg( mCboProject->currentText() ),
-                                   QMessageBox::Yes | QMessageBox::No );
+  int res = QMessageBox::question( this, tr( "Remove project" ), tr( "Do you really want to remove the project \"%1\"?" ).arg( mCboProject->currentText() ), QMessageBox::Yes | QMessageBox::No );
   if ( res != QMessageBox::Yes )
     return;
 

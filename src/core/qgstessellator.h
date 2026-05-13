@@ -28,14 +28,13 @@ class QgsMultiPolygon;
 
 /**
  * \ingroup core
- * \brief Class that takes care of tessellation of polygons into triangles.
+ * \brief Tessellates polygons into triangles.
  *
  * It is expected that client code will create the tessellator object, then repeatedly call
  * addPolygon() method that will generate triangles, and finally call data() to get final vertex data.
  *
  * Optionally provides extrusion by adding triangles that serve as walls when extrusion height is non-zero.
  *
- * \since QGIS 3.4 (since QGIS 3.0 in QGIS_3D library)
  */
 class CORE_EXPORT QgsTessellator
 {
@@ -55,6 +54,22 @@ class CORE_EXPORT QgsTessellator
      */
     QgsTessellator( const QgsRectangle &bounds, bool addNormals, bool invertNormals = false, bool addBackFaces = false, bool noZ = false,
                     bool addTextureCoords = false, int facade = 3, float textureRotation = 0.0f );
+
+    /**
+     * Sets whether the "up" direction should be the Z axis on output (TRUE),
+     * otherwise the "up" direction will be the Y axis (FALSE). The default
+     * value is FALSE (to keep compatibility for existing tessellator use cases).
+     * \since QGIS 3.42
+     */
+    void setOutputZUp( bool zUp ) { mOutputZUp = zUp; }
+
+    /**
+     * Returns whether the "up" direction should be the Z axis on output (TRUE),
+     * otherwise the "up" direction will be the Y axis (FALSE). The default
+     * value is FALSE (to keep compatibility for existing tessellator use cases).
+     * \since QGIS 3.42
+     */
+    bool isOutputZUp() const { return mOutputZUp; }
 
     //! Tessellates a triangle and adds its vertex entries to the output data array
     void addPolygon( const QgsPolygon &polygon, float extrusionHeight );
@@ -89,6 +104,13 @@ class CORE_EXPORT QgsTessellator
      */
     float zMaximum() const { return mZMax; }
 
+    /**
+     * Returns a descriptive error string if the tessellation failed.
+     *
+     * \since QGIS 3.34
+     */
+    QString error() const { return mError; }
+
   private:
     void init();
 
@@ -98,11 +120,13 @@ class CORE_EXPORT QgsTessellator
     bool mInvertNormals = false;
     bool mAddBackFaces = false;
     bool mAddTextureCoords = false;
+    bool mOutputZUp = false;
     QVector<float> mData;
     int mStride;
     bool mNoZ = false;
     int mTessellatedFacade = 3;
     float mTextureRotation = 0.0f;
+    QString mError;
 
     float mZMin = std::numeric_limits<float>::max();
     float mZMax = -std::numeric_limits<float>::max();

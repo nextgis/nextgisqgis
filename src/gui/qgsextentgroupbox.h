@@ -23,8 +23,6 @@
 #include "qgsrectangle.h"
 #include "qgis_gui.h"
 
-#include <memory>
-
 class QgsCoordinateReferenceSystem;
 class QgsMapLayer;
 class QgsExtentWidget;
@@ -42,7 +40,6 @@ class QgsMapCanvas;
  *
  * \see QgsExtentWidget
  *
- * \since QGIS 2.4
  */
 class GUI_EXPORT QgsExtentGroupBox : public QgsCollapsibleGroupBox
 {
@@ -50,17 +47,16 @@ class GUI_EXPORT QgsExtentGroupBox : public QgsCollapsibleGroupBox
     Q_PROPERTY( QString titleBase READ titleBase WRITE setTitleBase )
 
   public:
-
     // TODO QGIS 4.0 -- use QgsExtentWidget enum instead
 
     //! Available states for the current extent selection in the widget
     enum ExtentState
     {
-      OriginalExtent,  //!< Layer's extent
-      CurrentExtent,   //!< Map canvas extent
-      UserExtent,      //!< Extent manually entered/modified by the user
+      OriginalExtent,     //!< Layer's extent
+      CurrentExtent,      //!< Map canvas extent
+      UserExtent,         //!< Extent manually entered/modified by the user
       ProjectLayerExtent, //!< Extent taken from a layer within the project
-      DrawOnCanvas, //!< Extent taken from a rectangled drawn onto the map canvas
+      DrawOnCanvas,       //!< Extent taken from a rectangled drawn onto the map canvas
     };
 
     /**
@@ -129,7 +125,6 @@ class GUI_EXPORT QgsExtentGroupBox : public QgsCollapsibleGroupBox
     /**
      * Returns the current output CRS, used in the display.
      * \see outputExtent
-     * \since QGIS 3.0
      */
     QgsCoordinateReferenceSystem outputCrs() const;
 
@@ -141,14 +136,12 @@ class GUI_EXPORT QgsExtentGroupBox : public QgsCollapsibleGroupBox
     /**
      * Sets the base part of \a title of the group box (will be appended with extent state)
      * \see titleBase()
-     * \since QGIS 2.12
      */
     void setTitleBase( const QString &title );
 
     /**
      * Returns the base part of title of the group box (will be appended with extent state).
      * \see setTitleBase()
-     * \since QGIS 2.12
      */
     QString titleBase() const;
 
@@ -156,14 +149,12 @@ class GUI_EXPORT QgsExtentGroupBox : public QgsCollapsibleGroupBox
      * Sets the map canvas to enable dragging of extent on a canvas.
      * \param canvas the map canvas
      * \param drawOnCanvasOption set to false to disable to draw on canvas option
-     * \since QGIS 3.0
      */
     void setMapCanvas( QgsMapCanvas *canvas, bool drawOnCanvasOption = true );
 
     /**
      * Returns the current fixed aspect ratio to be used when dragging extent onto the canvas.
      * If the aspect ratio isn't fixed, the width and height will be set to zero.
-     * \since QGIS 3.0
      */
     QSize ratio() const;
 
@@ -186,13 +177,11 @@ class GUI_EXPORT QgsExtentGroupBox : public QgsCollapsibleGroupBox
 
     /**
      * Sets the output extent to match a \a layer's extent (may be transformed to output CRS).
-     * \since QGIS 3.0
      */
     void setOutputExtentFromLayer( const QgsMapLayer *layer );
 
     /**
      * Sets the output extent by dragging on the canvas.
-     * \since QGIS 3.0
      */
     void setOutputExtentFromDrawOnCanvas();
 
@@ -200,7 +189,6 @@ class GUI_EXPORT QgsExtentGroupBox : public QgsCollapsibleGroupBox
      * Sets a fixed aspect ratio to be used when dragging extent onto the canvas.
      * To unset a fixed aspect ratio, set the width and height to zero.
      * \param ratio aspect ratio's width and height
-     * \since QGIS 3.0
      */
     void setRatio( QSize ratio );
 
@@ -210,6 +198,12 @@ class GUI_EXPORT QgsExtentGroupBox : public QgsCollapsibleGroupBox
      * Emitted when the widget's extent is changed.
      */
     void extentChanged( const QgsRectangle &r );
+
+    /**
+     * Emitted when the extent layer is changed.
+     * \since QGIS 3.44
+     */
+    void extentLayerChanged( QgsMapLayer *layer );
 
   private slots:
 
@@ -226,7 +220,6 @@ class GUI_EXPORT QgsExtentGroupBox : public QgsCollapsibleGroupBox
 
     //! Base part of the title used for the extent
     QString mTitleBase;
-
 };
 
 #endif // QGSEXTENTGROUPBOX_H

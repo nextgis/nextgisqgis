@@ -28,7 +28,6 @@ class QgsLineSymbol;
 /**
  * \ingroup core
  * \brief Layout item for node based polyline shapes.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutItemPolyline: public QgsLayoutNodesItem
 {
@@ -67,6 +66,7 @@ class CORE_EXPORT QgsLayoutItemPolyline: public QgsLayoutNodesItem
     QIcon icon() const override;
     QString displayName() const override;
     QPainterPath shape() const override;
+    bool isValid() const override;
 
     /**
      * Returns the line symbol used to draw the shape.

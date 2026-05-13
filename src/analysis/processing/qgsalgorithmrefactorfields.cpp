@@ -41,6 +41,11 @@ QString QgsRefactorFieldsAlgorithm::shortHelpString() const
                       "enforced by the algorithm." );
 }
 
+QString QgsRefactorFieldsAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Allows editing the structure of the attributes table of a vector layer, permitting field renaming, creation and deletion." );
+}
+
 QStringList QgsRefactorFieldsAlgorithm::tags() const
 {
   return QObject::tr( "attributes,table" ).split( ',' );
@@ -63,12 +68,12 @@ QString QgsRefactorFieldsAlgorithm::outputName() const
 
 QList<int> QgsRefactorFieldsAlgorithm::inputLayerTypes() const
 {
-  return QList<int>() << QgsProcessing::TypeVector;
+  return QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::Vector );
 }
 
-QgsProcessingFeatureSource::Flag QgsRefactorFieldsAlgorithm::sourceFlags() const
+Qgis::ProcessingFeatureSourceFlags QgsRefactorFieldsAlgorithm::sourceFlags() const
 {
-  return QgsProcessingFeatureSource::FlagSkipGeometryValidityChecks;
+  return Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks;
 }
 
 QgsRefactorFieldsAlgorithm *QgsRefactorFieldsAlgorithm::createInstance() const
@@ -78,7 +83,7 @@ QgsRefactorFieldsAlgorithm *QgsRefactorFieldsAlgorithm::createInstance() const
 
 void QgsRefactorFieldsAlgorithm::initParameters( const QVariantMap & )
 {
-  std::unique_ptr< QgsProcessingParameterFieldMapping > param = std::make_unique< QgsProcessingParameterFieldMapping> ( QStringLiteral( "FIELDS_MAPPING" ), QObject::tr( "Fields mapping" ), QStringLiteral( "INPUT" ) );
+  auto param = std::make_unique<QgsProcessingParameterFieldMapping>( QStringLiteral( "FIELDS_MAPPING" ), QObject::tr( "Fields mapping" ), QStringLiteral( "INPUT" ) );
   addParameter( param.release() );
 }
 
@@ -89,7 +94,7 @@ QgsFields QgsRefactorFieldsAlgorithm::outputFields( const QgsFields & ) const
 
 bool QgsRefactorFieldsAlgorithm::prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback * )
 {
-  std::unique_ptr< QgsProcessingFeatureSource > source( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
+  std::unique_ptr<QgsProcessingFeatureSource> source( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
   if ( !source )
     throw QgsProcessingException( invalidSourceError( parameters, QStringLiteral( "INPUT" ) ) );
 
@@ -106,9 +111,9 @@ bool QgsRefactorFieldsAlgorithm::prepareAlgorithm( const QVariantMap &parameters
     if ( name.isEmpty() )
       throw QgsProcessingException( QObject::tr( "Field name cannot be empty" ) );
 
-    const QVariant::Type type = static_cast< QVariant::Type >( fieldDef.value( QStringLiteral( "type" ) ).toInt() );
+    const QMetaType::Type type = static_cast<QMetaType::Type>( fieldDef.value( QStringLiteral( "type" ) ).toInt() );
     const QString typeName = fieldDef.value( QStringLiteral( "sub_name" ) ).toString();
-    const QVariant::Type subType = static_cast< QVariant::Type >( fieldDef.value( QStringLiteral( "sub_type" ) ).toInt() );
+    const QMetaType::Type subType = static_cast<QMetaType::Type>( fieldDef.value( QStringLiteral( "sub_type" ) ).toInt() );
 
     const int length = fieldDef.value( QStringLiteral( "length" ), 0 ).toInt();
     const int precision = fieldDef.value( QStringLiteral( "precision" ), 0 ).toInt();
@@ -131,10 +136,11 @@ bool QgsRefactorFieldsAlgorithm::prepareAlgorithm( const QVariantMap &parameters
       if ( expression.hasParserError() )
       {
         throw QgsProcessingException( QObject::tr( "Parser error for field \"%1\" with expression \"%2\": %3" )
-                                      .arg(
-                                        name,
-                                        expressionString,
-                                        expression.parserErrorString() ) );
+                                        .arg(
+                                          name,
+                                          expressionString,
+                                          expression.parserErrorString()
+                                        ) );
       }
       mExpressions.append( expression );
     }
@@ -156,6 +162,7 @@ QgsFeatureList QgsRefactorFieldsAlgorithm::processFeature( const QgsFeature &fea
       if ( it->isValid() )
         it->prepare( &mExpressionContext );
     }
+    mExpressionsPrepared = true;
   }
 
   QgsAttributes attributes;

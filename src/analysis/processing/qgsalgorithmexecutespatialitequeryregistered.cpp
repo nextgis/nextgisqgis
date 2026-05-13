@@ -1,5 +1,5 @@
 /***************************************************************************
-                         qgsalgorithmexecutepostgisqueryregistered.cpp
+                         qgsalgorithmexecutespatialitequeryregistered.cpp
                          ---------------------
     begin                : May 2020
     copyright            : (C) 2020 by Alexander Bruy
@@ -48,6 +48,11 @@ QString QgsExecuteRegisteredSpatialiteQueryAlgorithm::groupId() const
 }
 
 QString QgsExecuteRegisteredSpatialiteQueryAlgorithm::shortHelpString() const
+{
+  return QObject::tr( "This algorithm executes a SQL command on a SpatiaLite database." );
+}
+
+QString QgsExecuteRegisteredSpatialiteQueryAlgorithm::shortDescription() const
 {
   return QObject::tr( "Executes a SQL command on a SpatiaLite database." );
 }

@@ -31,9 +31,11 @@ class QgsAdvancedDigitizingDockWidget;
 
 /**
 * \ingroup gui
-* \brief The QgsAdvancedDigitizingFloater class is widget that floats
-* next to the mouse pointer, and allow interaction with the AdvancedDigitizing
-* feature. It proxies display and actions to QgsMapToolAdvancedDigitizingDockWidget.
+* \brief A widget that floats next to the mouse pointer, and allows interaction with the AdvancedDigitizing
+* feature.
+*
+* It proxies display and actions to QgsMapToolAdvancedDigitizingDockWidget.
+*
 * \note This class is a technology preview and unstable API.
 * \since QGIS 3.8
 */
@@ -42,9 +44,8 @@ class GUI_EXPORT QgsAdvancedDigitizingFloater : public QWidget, private Ui::QgsA
     Q_OBJECT
 
   public:
-
     //! Available floater items
-    enum class FloaterItem : int
+    enum class FloaterItem : int SIP_ENUM_BASETYPE( IntFlag )
     {
       XCoordinate = 1 << 1,
       YCoordinate = 1 << 2,
@@ -140,12 +141,11 @@ class GUI_EXPORT QgsAdvancedDigitizingFloater : public QWidget, private Ui::QgsA
     void enabledChangedBearing( bool enabled );
 
   private:
-
     //! pointer to map canvas
     QgsMapCanvas *mMapCanvas = nullptr;
 
     //! pointer to map cad docker widget
-    QPointer< QgsAdvancedDigitizingDockWidget > mCadDockWidget;
+    QPointer<QgsAdvancedDigitizingDockWidget> mCadDockWidget;
 
     /**
     * event filter to track mouse position

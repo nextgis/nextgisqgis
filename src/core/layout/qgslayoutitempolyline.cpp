@@ -15,8 +15,10 @@
  ***************************************************************************/
 
 #include "qgslayoutitempolyline.h"
+#include "moc_qgslayoutitempolyline.cpp"
 #include "qgslayoutitemregistry.h"
 #include "qgssymbollayerutils.h"
+#include "qgscolorutils.h"
 #include "qgssymbol.h"
 #include "qgslayout.h"
 #include "qgslayoutrendercontext.h"
@@ -82,20 +84,15 @@ bool QgsLayoutItemPolyline::_addNode( const int indexPoint,
 
 bool QgsLayoutItemPolyline::_removeNode( const int index )
 {
-  if ( index < 0 || index >= mPolygon.size() )
+  if ( index < 0 || index >= mPolygon.size() || mPolygon.size() <= 2 )
     return false;
 
   mPolygon.remove( index );
 
-  if ( mPolygon.size() < 2 )
-    mPolygon.clear();
-  else
-  {
-    int newSelectNode = index;
-    if ( index >= mPolygon.size() )
-      newSelectNode = mPolygon.size() - 1;
-    setSelectedNode( newSelectNode );
-  }
+  int newSelectNode = index;
+  if ( index >= mPolygon.size() )
+    newSelectNode = mPolygon.size() - 1;
+  setSelectedNode( newSelectNode );
 
   return true;
 }
@@ -107,7 +104,7 @@ void QgsLayoutItemPolyline::createDefaultPolylineStyleSymbol()
   properties.insert( QStringLiteral( "width" ), QStringLiteral( "0.3" ) );
   properties.insert( QStringLiteral( "capstyle" ), QStringLiteral( "square" ) );
 
-  mPolylineStyleSymbol.reset( QgsLineSymbol::createSimple( properties ) );
+  mPolylineStyleSymbol = QgsLineSymbol::createSimple( properties );
   refreshSymbol();
 }
 
@@ -279,25 +276,30 @@ QString QgsLayoutItemPolyline::displayName() const
 
 void QgsLayoutItemPolyline::_draw( QgsLayoutItemRenderContext &context, const QStyleOptionGraphicsItem * )
 {
-  const QgsScopedQPainterState painterState( context.renderContext().painter() );
+  QgsRenderContext renderContext = context.renderContext();
+  // symbol clipping messes with geometry generators used in the symbol for this item, and has no
+  // valid use here. See https://github.com/qgis/QGIS/issues/58909
+  renderContext.setFlag( Qgis::RenderContextFlag::DisableSymbolClippingToExtent );
+
+  const QgsScopedQPainterState painterState( renderContext.painter() );
   //setup painter scaling to dots so that raster symbology is drawn to scale
-  const double scale = context.renderContext().convertToPainterUnits( 1, Qgis::RenderUnit::Millimeters );
+  const double scale = renderContext.convertToPainterUnits( 1, Qgis::RenderUnit::Millimeters );
   const QTransform t = QTransform::fromScale( scale, scale );
 
-  mPolylineStyleSymbol->startRender( context.renderContext() );
-  mPolylineStyleSymbol->renderPolyline( t.map( mPolygon ), nullptr, context.renderContext() );
-  mPolylineStyleSymbol->stopRender( context.renderContext() );
+  mPolylineStyleSymbol->startRender( renderContext );
+  mPolylineStyleSymbol->renderPolyline( t.map( mPolygon ), nullptr, renderContext );
+  mPolylineStyleSymbol->stopRender( renderContext );
 
   // painter is scaled to dots, so scale back to layout units
-  context.renderContext().painter()->scale( context.renderContext().scaleFactor(), context.renderContext().scaleFactor() );
+  renderContext.painter()->scale( renderContext.scaleFactor(), renderContext.scaleFactor() );
 
-  drawStartMarker( context.renderContext().painter() );
-  drawEndMarker( context.renderContext().painter() );
+  drawStartMarker( renderContext.painter() );
+  drawEndMarker( renderContext.painter() );
 }
 
 void QgsLayoutItemPolyline::_readXmlStyle( const QDomElement &elmt, const QgsReadWriteContext &context )
 {
-  mPolylineStyleSymbol.reset( QgsSymbolLayerUtils::loadSymbol<QgsLineSymbol>( elmt, context ) );
+  mPolylineStyleSymbol = QgsSymbolLayerUtils::loadSymbol<QgsLineSymbol>( elmt, context );
 }
 
 void QgsLayoutItemPolyline::setSymbol( QgsLineSymbol *symbol )
@@ -336,6 +338,23 @@ QPainterPath QgsLayoutItemPolyline::shape() const
   const QPainterPath strokedOutline = ps.createStroke( path );
 
   return strokedOutline;
+}
+
+bool QgsLayoutItemPolyline::isValid() const
+{
+  // A Polyline is valid if it has at least 2 unique points
+  QList<QPointF> uniquePoints;
+  int seen = 0;
+  for ( QPointF point : mPolygon )
+  {
+    if ( !uniquePoints.contains( point ) )
+    {
+      uniquePoints.append( point );
+      if ( ++seen > 1 )
+        return true;
+    }
+  }
+  return false;
 }
 
 QgsLineSymbol *QgsLayoutItemPolyline::symbol()
@@ -426,8 +445,8 @@ bool QgsLayoutItemPolyline::writePropertiesToElement( QDomElement &elmt, QDomDoc
   const QString endMarkerPath = QgsSymbolLayerUtils::svgSymbolPathToName( mEndMarkerFile, context.pathResolver() );
 
   elmt.setAttribute( QStringLiteral( "arrowHeadWidth" ), QString::number( mArrowHeadWidth ) );
-  elmt.setAttribute( QStringLiteral( "arrowHeadFillColor" ), QgsSymbolLayerUtils::encodeColor( mArrowHeadFillColor ) );
-  elmt.setAttribute( QStringLiteral( "arrowHeadOutlineColor" ), QgsSymbolLayerUtils::encodeColor( mArrowHeadStrokeColor ) );
+  elmt.setAttribute( QStringLiteral( "arrowHeadFillColor" ), QgsColorUtils::colorToString( mArrowHeadFillColor ) );
+  elmt.setAttribute( QStringLiteral( "arrowHeadOutlineColor" ), QgsColorUtils::colorToString( mArrowHeadStrokeColor ) );
   elmt.setAttribute( QStringLiteral( "outlineWidth" ), QString::number( mArrowHeadStrokeWidth ) );
   elmt.setAttribute( QStringLiteral( "markerMode" ), mEndMarker );
   elmt.setAttribute( QStringLiteral( "startMarkerMode" ), mStartMarker );
@@ -440,8 +459,8 @@ bool QgsLayoutItemPolyline::writePropertiesToElement( QDomElement &elmt, QDomDoc
 bool QgsLayoutItemPolyline::readPropertiesFromElement( const QDomElement &elmt, const QDomDocument &doc, const QgsReadWriteContext &context )
 {
   mArrowHeadWidth = elmt.attribute( QStringLiteral( "arrowHeadWidth" ), QStringLiteral( "2.0" ) ).toDouble();
-  mArrowHeadFillColor = QgsSymbolLayerUtils::decodeColor( elmt.attribute( QStringLiteral( "arrowHeadFillColor" ), QStringLiteral( "0,0,0,255" ) ) );
-  mArrowHeadStrokeColor = QgsSymbolLayerUtils::decodeColor( elmt.attribute( QStringLiteral( "arrowHeadOutlineColor" ), QStringLiteral( "0,0,0,255" ) ) );
+  mArrowHeadFillColor = QgsColorUtils::colorFromString( elmt.attribute( QStringLiteral( "arrowHeadFillColor" ), QStringLiteral( "0,0,0,255" ) ) );
+  mArrowHeadStrokeColor = QgsColorUtils::colorFromString( elmt.attribute( QStringLiteral( "arrowHeadOutlineColor" ), QStringLiteral( "0,0,0,255" ) ) );
   mArrowHeadStrokeWidth = elmt.attribute( QStringLiteral( "outlineWidth" ), QStringLiteral( "1.0" ) ).toDouble();
   // relative paths to absolute
   const QString startMarkerPath = elmt.attribute( QStringLiteral( "startMarkerFile" ), QString() );
@@ -467,10 +486,10 @@ void QgsLayoutItemPolyline::updateBoundingRect()
     margin += 0.5 * mArrowHeadWidth;
   }
   br.adjust( -margin, -margin, margin, margin );
+  prepareGeometryChange();
   mCurrentRectangle = br;
 
   // update
-  prepareGeometryChange();
   update();
 }
 

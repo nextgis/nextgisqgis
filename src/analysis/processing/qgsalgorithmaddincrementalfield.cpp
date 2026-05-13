@@ -43,6 +43,12 @@ QString QgsAddIncrementalFieldAlgorithm::shortHelpString() const
                       "this sort order." );
 }
 
+QString QgsAddIncrementalFieldAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Adds a new integer field to a vector layer, with a sequential value for each feature, "
+                      "usable as a unique ID for features in the layer." );
+}
+
 QStringList QgsAddIncrementalFieldAlgorithm::tags() const
 {
   return QObject::tr( "add,create,serial,primary,key,unique,fields" ).split( ',' );
@@ -65,7 +71,7 @@ QString QgsAddIncrementalFieldAlgorithm::outputName() const
 
 QList<int> QgsAddIncrementalFieldAlgorithm::inputLayerTypes() const
 {
-  return QList<int>() << QgsProcessing::TypeVector;
+  return QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::Vector );
 }
 
 QgsAddIncrementalFieldAlgorithm *QgsAddIncrementalFieldAlgorithm::createInstance() const
@@ -73,43 +79,41 @@ QgsAddIncrementalFieldAlgorithm *QgsAddIncrementalFieldAlgorithm::createInstance
   return new QgsAddIncrementalFieldAlgorithm();
 }
 
-QgsProcessingFeatureSource::Flag QgsAddIncrementalFieldAlgorithm::sourceFlags() const
+Qgis::ProcessingFeatureSourceFlags QgsAddIncrementalFieldAlgorithm::sourceFlags() const
 {
-  return QgsProcessingFeatureSource::FlagSkipGeometryValidityChecks;
+  return Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks;
 }
 
 void QgsAddIncrementalFieldAlgorithm::initParameters( const QVariantMap & )
 {
   addParameter( new QgsProcessingParameterString( QStringLiteral( "FIELD_NAME" ), QObject::tr( "Field name" ), QStringLiteral( "AUTO" ) ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "START" ), QObject::tr( "Start values at" ),
-                QgsProcessingParameterNumber::Integer, 0, true ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "MODULUS" ), QObject::tr( "Modulus value" ),
-                QgsProcessingParameterNumber::Integer, QVariant( 0 ), true ) );
-  addParameter( new QgsProcessingParameterField( QStringLiteral( "GROUP_FIELDS" ), QObject::tr( "Group values by" ), QVariant(),
-                QStringLiteral( "INPUT" ), QgsProcessingParameterField::Any, true, true ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "START" ), QObject::tr( "Start values at" ), Qgis::ProcessingNumberParameterType::Integer, 0, true ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "MODULUS" ), QObject::tr( "Modulus value" ), Qgis::ProcessingNumberParameterType::Integer, QVariant( 0 ), true ) );
+  addParameter( new QgsProcessingParameterField( QStringLiteral( "GROUP_FIELDS" ), QObject::tr( "Group values by" ), QVariant(), QStringLiteral( "INPUT" ), Qgis::ProcessingFieldParameterDataType::Any, true, true ) );
 
   // sort params
-  std::unique_ptr< QgsProcessingParameterExpression > sortExp = std::make_unique< QgsProcessingParameterExpression >( QStringLiteral( "SORT_EXPRESSION" ), QObject::tr( "Sort expression" ), QVariant(), QStringLiteral( "INPUT" ), true );
-  sortExp->setFlags( sortExp->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
+  auto sortExp = std::make_unique<QgsProcessingParameterExpression>( QStringLiteral( "SORT_EXPRESSION" ), QObject::tr( "Sort expression" ), QVariant(), QStringLiteral( "INPUT" ), true );
+  sortExp->setFlags( sortExp->flags() | Qgis::ProcessingParameterFlag::Advanced );
   addParameter( sortExp.release() );
-  std::unique_ptr< QgsProcessingParameterBoolean > sortAscending = std::make_unique< QgsProcessingParameterBoolean >( QStringLiteral( "SORT_ASCENDING" ), QObject::tr( "Sort ascending" ), true );
-  sortAscending->setFlags( sortAscending->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
+  auto sortAscending = std::make_unique<QgsProcessingParameterBoolean>( QStringLiteral( "SORT_ASCENDING" ), QObject::tr( "Sort ascending" ), true );
+  sortAscending->setFlags( sortAscending->flags() | Qgis::ProcessingParameterFlag::Advanced );
   addParameter( sortAscending.release() );
-  std::unique_ptr< QgsProcessingParameterBoolean > sortNullsFirst = std::make_unique< QgsProcessingParameterBoolean >( QStringLiteral( "SORT_NULLS_FIRST" ), QObject::tr( "Sort nulls first" ), false );
-  sortNullsFirst->setFlags( sortNullsFirst->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
+  auto sortNullsFirst = std::make_unique<QgsProcessingParameterBoolean>( QStringLiteral( "SORT_NULLS_FIRST" ), QObject::tr( "Sort nulls first" ), false );
+  sortNullsFirst->setFlags( sortNullsFirst->flags() | Qgis::ProcessingParameterFlag::Advanced );
   addParameter( sortNullsFirst.release() );
 }
 
 QgsFields QgsAddIncrementalFieldAlgorithm::outputFields( const QgsFields &inputFields ) const
 {
   QgsFields outFields = inputFields;
-  outFields.append( QgsField( mFieldName, QVariant::LongLong ) );
+  outFields.append( QgsField( mFieldName, QMetaType::Type::LongLong ) );
   mFields = outFields;
   return outFields;
 }
 
 bool QgsAddIncrementalFieldAlgorithm::prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback * )
 {
+  std::unique_ptr<QgsProcessingFeatureSource> source( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
   mStartValue = parameterAsInt( parameters, QStringLiteral( "START" ), context );
   mValue = mStartValue;
   mModulusValue = parameterAsInt( parameters, QStringLiteral( "MODULUS" ), context );
@@ -119,6 +123,11 @@ bool QgsAddIncrementalFieldAlgorithm::prepareAlgorithm( const QVariantMap &param
   mSortExpressionString = parameterAsExpression( parameters, QStringLiteral( "SORT_EXPRESSION" ), context );
   mSortAscending = parameterAsBoolean( parameters, QStringLiteral( "SORT_ASCENDING" ), context );
   mSortNullsFirst = parameterAsBoolean( parameters, QStringLiteral( "SORT_NULLS_FIRST" ), context );
+
+  if ( source->fields().lookupField( mFieldName ) >= 0 )
+  {
+    throw QgsProcessingException( QObject::tr( "A field with the same name (%1) already exists" ).arg( mFieldName ) );
+  }
 
   return true;
 }
@@ -165,7 +174,7 @@ QgsFeatureList QgsAddIncrementalFieldAlgorithm::processFeature( const QgsFeature
     value++;
     if ( mModulusValue != 0 && ( value % mModulusValue ) == 0 )
       value = mStartValue;
-    mGroupedValues[ groupAttributes ] = value;
+    mGroupedValues[groupAttributes] = value;
   }
   f.setAttributes( attributes );
   return QgsFeatureList() << f;

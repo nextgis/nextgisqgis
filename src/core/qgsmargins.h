@@ -23,12 +23,11 @@
 /**
  * \ingroup core
  * \class QgsMargins
- * \brief The QgsMargins class defines the four margins of a rectangle.
+ * \brief Defines the four margins of a rectangle.
  *
  * QgsMargins defines a set of four margins; left, top, right and bottom, that describe the size of the borders surrounding a rectangle.
  *
  * The isNull() function returns TRUE only if all margins are set to zero.
- * \since QGIS 3.0
  */
 
 //This class was originally based off Qt's QgsMarginsF class
@@ -160,6 +159,14 @@ class CORE_EXPORT QgsMargins
      * \see toString()
      */
     static QgsMargins fromString( const QString &string );
+
+#ifdef SIP_RUN
+    SIP_PYOBJECT __repr__();
+    % MethodCode
+    const QString str = QStringLiteral( "<QgsMargins: %1 %2 %3 %4>" ).arg( sipCpp->left() ).arg( sipCpp->top() ).arg( sipCpp->right() ).arg( sipCpp->bottom() );
+    sipRes = PyUnicode_FromString( str.toUtf8().constData() );
+    % End
+#endif
 
   private:
     double mLeft = 0.0;

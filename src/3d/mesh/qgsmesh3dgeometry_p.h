@@ -21,7 +21,7 @@
 #include <QFuture>
 
 #include <Qt3DExtras/qt3dextras_global.h>
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
 #include <Qt3DRender/QGeometry>
 #else
 #include <Qt3DCore/QGeometry>
@@ -32,6 +32,7 @@
 
 #include "qgsmaplayerref.h"
 #include "qgsmesh3dsymbol.h"
+#include "qgsrectangle.h"
 #include "qgstriangularmesh.h"
 
 ///@cond PRIVATE
@@ -47,18 +48,18 @@
 
 #define SIP_NO_FILE
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
 namespace Qt3DRender
 {
   class QAttribute;
   class QBuffer;
-}
+} // namespace Qt3DRender
 #else
 namespace Qt3DCore
 {
   class QAttribute;
   class QBuffer;
-}
+} // namespace Qt3DCore
 #endif
 
 class QgsMeshLayer;
@@ -66,19 +67,16 @@ class QgsMeshLayer;
 /**
  * Class that constructs the geometry 3D mesh on another thread
  */
-class QgsMesh3DGeometryBuilder: public QObject
+class QgsMesh3DGeometryBuilder : public QObject
 {
     Q_OBJECT
   public:
-    QgsMesh3DGeometryBuilder( const QgsTriangularMesh &mesh,
-                              const QgsVector3D &origin,
-                              float vertScale,
-                              QObject *parent );
+    QgsMesh3DGeometryBuilder( const QgsTriangularMesh &mesh, const QgsVector3D &origin, const QgsRectangle &extent, float vertScale, QObject *parent );
 
     virtual void start();
 
-    QByteArray vertexData() const {return mFutureVertex.result();}
-    QByteArray indexData() const {return mFutureIndex.result();}
+    QByteArray vertexData() const { return mFutureVertex.result(); }
+    QByteArray indexData() const { return mFutureIndex.result(); }
 
   signals:
     void dataIsReady();
@@ -95,6 +93,7 @@ class QgsMesh3DGeometryBuilder: public QObject
 
     QgsTriangularMesh mMesh;
     QgsVector3D mOrigin;
+    QgsRectangle mExtent;
     float mVertScale;
 
     mutable QMutex mMutex;
@@ -107,23 +106,20 @@ class QgsMesh3DGeometryBuilder: public QObject
 /**
 * Base class for creating attributes and vertex/index buffers for a mesh layer
 */
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-class QgsMesh3dGeometry: public Qt3DRender::QGeometry
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
+class QgsMesh3DGeometry : public Qt3DRender::QGeometry
 #else
-class QgsMesh3dGeometry: public Qt3DCore::QGeometry
+class QgsMesh3DGeometry : public Qt3DCore::QGeometry
 #endif
 {
     Q_OBJECT
   protected:
     //! Constructor
-    explicit QgsMesh3dGeometry( const QgsTriangularMesh &triangularMesh,
-                                const QgsVector3D &origin,
-                                double verticalScale,
-                                QNode *parent );
+    explicit QgsMesh3DGeometry( const QgsTriangularMesh &triangularMesh, const QgsVector3D &origin, const QgsRectangle &extent, double verticalScale, QNode *parent );
 
-    ~QgsMesh3dGeometry() = default;
+    ~QgsMesh3DGeometry() = default;
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
     void prepareVerticesPositionAttribute( Qt3DRender::QBuffer *buffer, int stride, int offset );
     void prepareVerticesNormalAttribute( Qt3DRender::QBuffer *buffer, int stride, int offset );
     void prepareIndexesAttribute( Qt3DRender::QBuffer *buffer );
@@ -134,10 +130,11 @@ class QgsMesh3dGeometry: public Qt3DCore::QGeometry
 #endif
 
     QgsVector3D mOrigin;
+    QgsRectangle mExtent;
     float mVertScale;
     QgsTriangularMesh mTriangulaMesh;
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
     Qt3DRender::QBuffer *mVertexBuffer = nullptr;
     Qt3DRender::QBuffer *mIndexBuffer = nullptr;
 
@@ -153,7 +150,7 @@ class QgsMesh3dGeometry: public Qt3DCore::QGeometry
     Qt3DCore::QAttribute *mIndexAttribute = nullptr;
 #endif
 
-    QgsMesh3DGeometryBuilder *mBuilder;
+    QgsMesh3DGeometryBuilder *mBuilder = nullptr;
 
   protected slots:
     virtual void getData();
@@ -168,30 +165,25 @@ class QgsMeshDataset3DGeometryBuilder;
  *  Then the instance launches immediately another thread that constructs 3D vertices, faces  and scalar value on vertices
  *  depending on the dataset chosen for vertical magnitude and the one for scalar magnitude (color rendering).
  *
- *  When this job is finished, the mesh datset 3D geometry node is updated and can be rendered in the 3D scene.
+ *  When this job is finished, the mesh dataset 3D geometry node is updated and can be rendered in the 3D scene.
  */
-class QgsMeshDataset3dGeometry: public  QgsMesh3dGeometry
+class QgsMeshDataset3DGeometry : public QgsMesh3DGeometry
 {
     Q_OBJECT
   public:
     //! Constructs a mesh layer geometry from triangular mesh.
-    explicit QgsMeshDataset3dGeometry( const QgsTriangularMesh &triangularMesh,
-                                       QgsMeshLayer *layer,
-                                       const QgsDateTimeRange &timeRange,
-                                       const QgsVector3D &origin,
-                                       const QgsMesh3DSymbol *symbol,
-                                       QNode *parent );
+    explicit QgsMeshDataset3DGeometry( const QgsTriangularMesh &triangularMesh, QgsMeshLayer *layer, const QgsDateTimeRange &timeRange, const QgsVector3D &origin, const QgsRectangle &extent, const QgsMesh3DSymbol *symbol, QNode *parent );
 
     //! Data sended to the other thread to consctruct the 3D geometry
     struct VertexData
     {
-      QgsMeshDatasetGroupMetadata verticalGroupMetadata;
-      QgsMeshDatasetGroupMetadata scalarGroupMetadata;
-      QgsMeshDataBlock verticalData;
-      QgsMeshDataBlock scalarData;
+        QgsMeshDatasetGroupMetadata verticalGroupMetadata;
+        QgsMeshDatasetGroupMetadata scalarGroupMetadata;
+        QgsMeshDataBlock verticalData;
+        QgsMeshDataBlock scalarData;
 
-      QgsMeshDataBlock activeFaceFlagValues;
-      bool isVerticalMagnitudeRelative;
+        QgsMeshDataBlock activeFaceFlagValues;
+        bool isVerticalMagnitudeRelative;
     };
 
   private slots:
@@ -202,7 +194,7 @@ class QgsMeshDataset3dGeometry: public  QgsMesh3dGeometry
 
     //! Returns the number of active faces
     int extractDataset( QVector<double> &verticaleMagnitude, QVector<double> &scalarMagnitude, QgsMeshDataBlock &verticalActiveFaceFlagValues );
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
     void prepareVerticesDatasetAttribute( Qt3DRender::QBuffer *buffer, int stride, int offset );
 #else
     void prepareVerticesDatasetAttribute( Qt3DCore::QBuffer *buffer, int stride, int offset );
@@ -215,29 +207,24 @@ class QgsMeshDataset3dGeometry: public  QgsMesh3dGeometry
 
     QgsMeshLayer *meshLayer() const;
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
     Qt3DRender::QAttribute *mMagnitudeAttribute = nullptr;
 #else
     Qt3DCore::QAttribute *mMagnitudeAttribute = nullptr;
 #endif
 };
 
-class QgsMeshDataset3DGeometryBuilder: public QgsMesh3DGeometryBuilder
+class QgsMeshDataset3DGeometryBuilder : public QgsMesh3DGeometryBuilder
 {
     Q_OBJECT
 
   public:
-    QgsMeshDataset3DGeometryBuilder( const QgsTriangularMesh &mesh,
-                                     const QgsMesh &nativeMesh,
-                                     const QgsVector3D &origin,
-                                     float vertScale,
-                                     const QgsMeshDataset3dGeometry::VertexData &vertexData,
-                                     QObject *parent );
+    QgsMeshDataset3DGeometryBuilder( const QgsTriangularMesh &mesh, const QgsMesh &nativeMesh, const QgsVector3D &origin, const QgsRectangle &extent, float vertScale, const QgsMeshDataset3DGeometry::VertexData &vertexData, QObject *parent );
     void start() override;
 
   private:
     QgsMesh mNativeMesh;
-    QgsMeshDataset3dGeometry::VertexData mVertexData;
+    QgsMeshDataset3DGeometry::VertexData mVertexData;
 };
 
 /**
@@ -246,17 +233,13 @@ class QgsMeshDataset3DGeometryBuilder: public QgsMesh3DGeometryBuilder
  *  On creation, the instance launches immediately another thread that constructs 3D vertices, faces of the mesh based on the mesh vertices z value.
  *  When this job is finished, the mesh terrain 3D geometry node is updated and can be rendered in the 3D scene.
  */
-class QgsMeshTerrain3dGeometry: public  QgsMesh3dGeometry
+class QgsMeshTerrain3DGeometry : public QgsMesh3DGeometry
 {
     Q_OBJECT
   public:
     //! Constructs a mesh layer geometry from triangular mesh.
-    explicit QgsMeshTerrain3dGeometry( const QgsTriangularMesh &triangularMesh,
-                                       const QgsVector3D &origin,
-                                       double verticalSacle,
-                                       QNode *parent );
+    explicit QgsMeshTerrain3DGeometry( const QgsTriangularMesh &triangularMesh, const QgsVector3D &origin, const QgsRectangle &extent, double verticalScale, QNode *parent );
 };
-
 
 
 ///@endcond

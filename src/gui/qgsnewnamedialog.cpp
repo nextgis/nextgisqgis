@@ -19,17 +19,13 @@
 #include <QPushButton>
 #include <QRegularExpressionValidator>
 #include <QSizePolicy>
+#include <QCompleter>
 
 #include "qgslogger.h"
 #include "qgsnewnamedialog.h"
+#include "moc_qgsnewnamedialog.cpp"
 
-QgsNewNameDialog::QgsNewNameDialog( const QString &source,
-                                    const QString &initial,
-                                    const QStringList &extensions,
-                                    const QStringList &existing,
-                                    Qt::CaseSensitivity cs,
-                                    QWidget *parent,
-                                    Qt::WindowFlags flags )
+QgsNewNameDialog::QgsNewNameDialog( const QString &source, const QString &initial, const QStringList &extensions, const QStringList &existing, Qt::CaseSensitivity cs, QWidget *parent, Qt::WindowFlags flags )
   : QgsDialog( parent, flags, QDialogButtonBox::Ok | QDialogButtonBox::Cancel )
   , mExiting( existing )
   , mExtensions( extensions )
@@ -123,6 +119,20 @@ void QgsNewNameDialog::setRegularExpression( const QString &expression )
   nameChanged();
 }
 
+void QgsNewNameDialog::setShowExistingNamesCompleter( bool show )
+{
+  if ( !show )
+  {
+    mLineEdit->setCompleter( nullptr );
+    return;
+  }
+
+  QCompleter *completer = new QCompleter( mExiting, this );
+  completer->setCaseSensitivity( Qt::CaseInsensitive );
+  completer->setCompletionMode( QCompleter::UnfilteredPopupCompletion );
+  mLineEdit->setCompleter( completer );
+}
+
 QString QgsNewNameDialog::highlightText( const QString &text )
 {
   return "<b>" + text + "</b>";
@@ -161,7 +171,7 @@ void QgsNewNameDialog::nameChanged()
   if ( !conflicts.isEmpty() )
   {
     const QString warning = !mConflictingNameWarning.isEmpty() ? mConflictingNameWarning
-                            : tr( "%n Name(s) %1 exists", nullptr, conflicts.size() ).arg( conflicts.join( QLatin1String( ", " ) ) );
+                                                               : tr( "%n Name(s) %1 exists", nullptr, conflicts.size() ).arg( conflicts.join( QLatin1String( ", " ) ) );
     mErrorLabel->setText( highlightText( warning ) );
     if ( mOverwriteEnabled )
     {
@@ -187,7 +197,6 @@ QStringList QgsNewNameDialog::fullNames( const QString &name, const QStringList 
   for ( const QString &ext : constExtensions )
   {
     list << name + ext;
-
   }
   if ( list.isEmpty() )
   {
@@ -196,8 +205,7 @@ QStringList QgsNewNameDialog::fullNames( const QString &name, const QStringList 
   return list;
 }
 
-QStringList QgsNewNameDialog::matching( const QStringList &newNames, const QStringList &existingNames,
-                                        Qt::CaseSensitivity cs )
+QStringList QgsNewNameDialog::matching( const QStringList &newNames, const QStringList &existingNames, Qt::CaseSensitivity cs )
 {
   QStringList list;
 
@@ -216,8 +224,7 @@ QStringList QgsNewNameDialog::matching( const QStringList &newNames, const QStri
   return list;
 }
 
-bool QgsNewNameDialog::exists( const QString &name, const QStringList &extensions,
-                               const QStringList &existing, Qt::CaseSensitivity cs )
+bool QgsNewNameDialog::exists( const QString &name, const QStringList &extensions, const QStringList &existing, Qt::CaseSensitivity cs )
 {
   const QStringList newNames = fullNames( name, extensions );
   const QStringList conflicts = matching( newNames, existing, cs );

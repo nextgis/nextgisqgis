@@ -20,6 +20,7 @@
 #include "qgssymbol.h"
 #include "qgscolorramp.h"
 #include "qgscolorrampimpl.h"
+#include "qgscolorutils.h"
 #include "qgsexpression.h"
 #include "qgsexpressionnode.h"
 #include "qgspainteffect.h"
@@ -42,8 +43,11 @@
 #include "qgsfillsymbol.h"
 #include "qgssymbollayerreference.h"
 #include "qgsmarkersymbollayer.h"
-#include "qmath.h"
+#include "qgscurvepolygon.h"
+#include "qgsmasksymbollayer.h"
+#include "qgssldexportcontext.h"
 
+#include "qmath.h"
 #include <QColor>
 #include <QFont>
 #include <QDomDocument>
@@ -389,6 +393,56 @@ Qt::BrushStyle QgsSymbolLayerUtils::decodeSldBrushStyle( const QString &str )
   return Qt::NoBrush;
 }
 
+Qgis::EndCapStyle QgsSymbolLayerUtils::penCapStyleToEndCapStyle( Qt::PenCapStyle style )
+{
+  switch ( style )
+  {
+    case Qt::FlatCap:
+      return Qgis::EndCapStyle::Flat;
+    case Qt::SquareCap:
+      return Qgis::EndCapStyle::Square;
+    case Qt::RoundCap:
+      return Qgis::EndCapStyle::Round;
+    case Qt::MPenCapStyle:
+      // undocumented?
+      break;
+  }
+
+  return Qgis::EndCapStyle::Round;
+}
+
+Qgis::JoinStyle QgsSymbolLayerUtils::penJoinStyleToJoinStyle( Qt::PenJoinStyle style )
+{
+  switch ( style )
+  {
+    case Qt::MiterJoin:
+    case Qt::SvgMiterJoin:
+      return Qgis::JoinStyle::Miter;
+    case Qt::BevelJoin:
+      return Qgis::JoinStyle::Bevel;
+    case Qt::RoundJoin:
+      return Qgis::JoinStyle::Round;
+    case Qt::MPenJoinStyle:
+      // undocumented?
+      break;
+  }
+  return Qgis::JoinStyle::Round;
+}
+
+bool QgsSymbolLayerUtils::hasSldSymbolizer( const QDomElement &element )
+{
+  const QDomNodeList children = element.childNodes();
+  for ( int i = 0; i < children.size(); ++i )
+  {
+    const QDomElement childElement = children.at( i ).toElement();
+    if ( childElement.tagName() == QLatin1String( "se:LineSymbolizer" )
+         || childElement.tagName() == QLatin1String( "se:PointSymbolizer" )
+         || childElement.tagName() == QLatin1String( "se:PolygonSymbolizer" ) )
+      return true;
+  }
+  return false;
+}
+
 Qgis::SymbolCoordinateReference QgsSymbolLayerUtils::decodeCoordinateReference( const QString &string, bool *ok )
 {
   const QString compareString = string.trimmed();
@@ -556,7 +610,7 @@ QPointF QgsSymbolLayerUtils::toPoint( const QVariant &value, bool *ok )
   if ( QgsVariantUtils::isNull( value ) )
     return QPoint();
 
-  if ( value.type() == QVariant::List )
+  if ( value.userType() == QMetaType::Type::QVariantList )
   {
     const QVariantList list = value.toList();
     if ( list.size() != 2 )
@@ -620,7 +674,7 @@ QSizeF QgsSymbolLayerUtils::toSize( const QVariant &value, bool *ok )
   if ( QgsVariantUtils::isNull( value ) )
     return QSizeF();
 
-  if ( value.type() == QVariant::List )
+  if ( value.userType() == QMetaType::Type::QVariantList )
   {
     const QVariantList list = value.toList();
     if ( list.size() != 2 )
@@ -955,7 +1009,7 @@ QPicture QgsSymbolLayerUtils::symbolLayerPreviewPicture( const QgsSymbolLayer *l
   painter.begin( &picture );
   painter.setRenderHint( QPainter::Antialiasing );
   QgsRenderContext renderContext = QgsRenderContext::fromQPainter( &painter );
-  renderContext.setForceVectorOutput( true );
+  renderContext.setRasterizedRenderingPolicy( Qgis::RasterizedRenderingPolicy::PreferVector );
   renderContext.setFlag( Qgis::RenderContextFlag::RenderSymbolPreview, true );
   renderContext.setFlag( Qgis::RenderContextFlag::Antialiasing, true );
   renderContext.setFlag( Qgis::RenderContextFlag::HighQualityImageTransforms, true );
@@ -1224,7 +1278,7 @@ QList<QPolygonF> offsetLine( QPolygonF polyline, double dist, Qgis::GeometryType
 /////
 
 
-QgsSymbol *QgsSymbolLayerUtils::loadSymbol( const QDomElement &element, const QgsReadWriteContext &context )
+std::unique_ptr< QgsSymbol > QgsSymbolLayerUtils::loadSymbol( const QDomElement &element, const QgsReadWriteContext &context )
 {
   if ( element.isNull() )
     return nullptr;
@@ -1235,7 +1289,7 @@ QgsSymbol *QgsSymbolLayerUtils::loadSymbol( const QDomElement &element, const Qg
   while ( !layerNode.isNull() )
   {
     QDomElement e = layerNode.toElement();
-    if ( !e.isNull() && e.tagName() != QLatin1String( "data_defined_properties" ) )
+    if ( !e.isNull() && e.tagName() != QLatin1String( "data_defined_properties" ) && e.tagName() != QLatin1String( "buffer" ) )
     {
       if ( e.tagName() != QLatin1String( "layer" ) )
       {
@@ -1243,7 +1297,8 @@ QgsSymbol *QgsSymbolLayerUtils::loadSymbol( const QDomElement &element, const Qg
       }
       else
       {
-        if ( QgsSymbolLayer *layer = loadSymbolLayer( e, context ) )
+        std::unique_ptr< QgsSymbolLayer > layer = loadSymbolLayer( e, context );
+        if ( layer )
         {
           // Dealing with sub-symbols nested into a layer
           const QDomElement s = e.firstChildElement( QStringLiteral( "symbol" ) );
@@ -1253,10 +1308,10 @@ QgsSymbol *QgsSymbolLayerUtils::loadSymbol( const QDomElement &element, const Qg
             // special handling for SVG fill symbol layer -- upgrade the subsymbol which
             // was historically used for the fill stroke to be dedicated symbol layer instead
             // in order to match the behavior of all other fill symbol layer types
-            if ( dynamic_cast< QgsSVGFillSymbolLayer * >( layer ) )
+            if ( dynamic_cast< QgsSVGFillSymbolLayer * >( layer.get() ) )
             {
               // add the SVG fill first
-              layers.append( layer );
+              layers.append( layer.release() );
               // then add the layers from the subsymbol stroke outline on top
               for ( int i = 0; i < subSymbol->symbolLayerCount(); ++i )
               {
@@ -1270,12 +1325,12 @@ QgsSymbol *QgsSymbolLayerUtils::loadSymbol( const QDomElement &element, const Qg
               {
                 QgsDebugError( QStringLiteral( "symbol layer refused subsymbol: " ) + s.attribute( "name" ) );
               }
-              layers.append( layer );
+              layers.append( layer.release() );
             }
           }
           else
           {
-            layers.append( layer );
+            layers.append( layer.release() );
           }
         }
       }
@@ -1291,13 +1346,13 @@ QgsSymbol *QgsSymbolLayerUtils::loadSymbol( const QDomElement &element, const Qg
 
   const QString symbolType = element.attribute( QStringLiteral( "type" ) );
 
-  QgsSymbol *symbol = nullptr;
+  std::unique_ptr< QgsSymbol > symbol;
   if ( symbolType == QLatin1String( "line" ) )
-    symbol = new QgsLineSymbol( layers );
+    symbol = std::make_unique< QgsLineSymbol >( layers );
   else if ( symbolType == QLatin1String( "fill" ) )
-    symbol = new QgsFillSymbol( layers );
+    symbol = std::make_unique< QgsFillSymbol >( layers );
   else if ( symbolType == QLatin1String( "marker" ) )
-    symbol = new QgsMarkerSymbol( layers );
+    symbol = std::make_unique< QgsMarkerSymbol >( layers );
   else
   {
     QgsDebugError( "unknown symbol type " + symbolType );
@@ -1318,6 +1373,8 @@ QgsSymbol *QgsSymbolLayerUtils::loadSymbol( const QDomElement &element, const Qg
     symbol->setMapUnitScale( mapUnitScale );
   }
   symbol->setOpacity( element.attribute( QStringLiteral( "alpha" ), QStringLiteral( "1.0" ) ).toDouble() );
+  symbol->setExtentBuffer( element.attribute( QStringLiteral( "extent_buffer" ), QStringLiteral( "0.0" ) ).toDouble() );
+  symbol->setExtentBufferSizeUnit( QgsUnitTypes::decodeRenderUnit( element.attribute( QStringLiteral( "extent_buffer_unit" ), QStringLiteral( "MapUnit" ) ) ) );
   symbol->setClipFeaturesToExtent( element.attribute( QStringLiteral( "clip_to_extent" ), QStringLiteral( "1" ) ).toInt() );
   symbol->setForceRHR( element.attribute( QStringLiteral( "force_rhr" ), QStringLiteral( "0" ) ).toInt() );
   Qgis::SymbolFlags flags;
@@ -1328,6 +1385,17 @@ QgsSymbol *QgsSymbolLayerUtils::loadSymbol( const QDomElement &element, const Qg
   symbol->animationSettings().setIsAnimated( element.attribute( QStringLiteral( "is_animated" ), QStringLiteral( "0" ) ).toInt() );
   symbol->animationSettings().setFrameRate( element.attribute( QStringLiteral( "frame_rate" ), QStringLiteral( "10" ) ).toDouble() );
 
+  if ( !element.firstChildElement( QStringLiteral( "buffer" ) ).isNull() )
+  {
+    auto bufferSettings = std::make_unique< QgsSymbolBufferSettings >();
+    bufferSettings->readXml( element, context );
+    symbol->setBufferSettings( bufferSettings.release() );
+  }
+  else
+  {
+    symbol->setBufferSettings( nullptr );
+  }
+
   const QDomElement ddProps = element.firstChildElement( QStringLiteral( "data_defined_properties" ) );
   if ( !ddProps.isNull() )
   {
@@ -1337,13 +1405,14 @@ QgsSymbol *QgsSymbolLayerUtils::loadSymbol( const QDomElement &element, const Qg
   return symbol;
 }
 
-QgsSymbolLayer *QgsSymbolLayerUtils::loadSymbolLayer( QDomElement &element, const QgsReadWriteContext &context )
+std::unique_ptr< QgsSymbolLayer > QgsSymbolLayerUtils::loadSymbolLayer( QDomElement &element, const QgsReadWriteContext &context )
 {
   const QString layerClass = element.attribute( QStringLiteral( "class" ) );
   const bool locked = element.attribute( QStringLiteral( "locked" ) ).toInt();
   const bool enabled = element.attribute( QStringLiteral( "enabled" ), QStringLiteral( "1" ) ).toInt();
   const int pass = element.attribute( QStringLiteral( "pass" ) ).toInt();
   const QString id = element.attribute( QStringLiteral( "id" ) );
+  const Qgis::SymbolLayerUserFlags userFlags = qgsFlagKeysToValue( element.attribute( QStringLiteral( "userFlags" ) ), Qgis::SymbolLayerUserFlags() );
 
   // parse properties
   QVariantMap props = parseProperties( element );
@@ -1353,13 +1422,13 @@ QgsSymbolLayer *QgsSymbolLayerUtils::loadSymbolLayer( QDomElement &element, cons
 
   QgsApplication::symbolLayerRegistry()->resolveFonts( layerClass, props, context );
 
-  QgsSymbolLayer *layer = nullptr;
-  layer = QgsApplication::symbolLayerRegistry()->createSymbolLayer( layerClass, props );
+  std::unique_ptr< QgsSymbolLayer > layer = QgsApplication::symbolLayerRegistry()->createSymbolLayer( layerClass, props );
   if ( layer )
   {
     layer->setLocked( locked );
     layer->setRenderingPass( pass );
     layer->setEnabled( enabled );
+    layer->setUserFlags( userFlags );
 
     // old project format, empty is missing, keep the actual layer one
     if ( !id.isEmpty() )
@@ -1423,12 +1492,20 @@ QDomElement QgsSymbolLayerUtils::saveSymbol( const QString &name, const QgsSymbo
   symEl.setAttribute( QStringLiteral( "name" ), name );
   symEl.setAttribute( QStringLiteral( "alpha" ), QString::number( symbol->opacity() ) );
   symEl.setAttribute( QStringLiteral( "clip_to_extent" ), symbol->clipFeaturesToExtent() ? QStringLiteral( "1" ) : QStringLiteral( "0" ) );
+  if ( !qgsDoubleNear( symbol->extentBuffer(), 0 ) )
+  {
+    symEl.setAttribute( QStringLiteral( "extent_buffer" ), QString::number( symbol->extentBuffer() ) );
+    symEl.setAttribute( QStringLiteral( "extent_buffer_unit" ), QgsUnitTypes::encodeUnit( symbol->extentBufferSizeUnit() ) );
+  }
   symEl.setAttribute( QStringLiteral( "force_rhr" ), symbol->forceRHR() ? QStringLiteral( "1" ) : QStringLiteral( "0" ) );
   if ( symbol->flags() & Qgis::SymbolFlag::RendererShouldUseSymbolLevels )
     symEl.setAttribute( QStringLiteral( "renderer_should_use_levels" ), QStringLiteral( "1" ) );
 
   symEl.setAttribute( QStringLiteral( "is_animated" ), symbol->animationSettings().isAnimated() ? QStringLiteral( "1" ) : QStringLiteral( "0" ) );
   symEl.setAttribute( QStringLiteral( "frame_rate" ), qgsDoubleToString( symbol->animationSettings().frameRate() ) );
+
+  if ( const QgsSymbolBufferSettings *bufferSettings = symbol->bufferSettings() )
+    bufferSettings->writeXml( symEl, context );
 
   //QgsDebugMsgLevel( "num layers " + QString::number( symbol->symbolLayerCount() ), 2 );
 
@@ -1446,6 +1523,8 @@ QDomElement QgsSymbolLayerUtils::saveSymbol( const QString &name, const QgsSymbo
     layerEl.setAttribute( QStringLiteral( "locked" ), layer->isLocked() );
     layerEl.setAttribute( QStringLiteral( "pass" ), layer->renderingPass() );
     layerEl.setAttribute( QStringLiteral( "id" ), layer->id() );
+    if ( layer->userFlags() != Qgis::SymbolLayerUserFlags() )
+      layerEl.setAttribute( QStringLiteral( "userFlags" ), qgsFlagValueToKeys( layer->userFlags() ) );
 
     QVariantMap props = layer->properties();
 
@@ -1492,8 +1571,6 @@ bool QgsSymbolLayerUtils::createSymbolLayerListFromSld( QDomElement &element,
   if ( element.isNull() )
     return false;
 
-  QgsSymbolLayer *l = nullptr;
-
   const QString symbolizerName = element.localName();
 
   if ( symbolizerName == QLatin1String( "PointSymbolizer" ) )
@@ -1509,30 +1586,37 @@ bool QgsSymbolLayerUtils::createSymbolLayerListFromSld( QDomElement &element,
       switch ( geomType )
       {
         case Qgis::GeometryType::Polygon:
+        {
           // polygon layer and point symbolizer: draw polygon centroid
-          l = QgsApplication::symbolLayerRegistry()->createSymbolLayerFromSld( QStringLiteral( "CentroidFill" ), element );
+          std::unique_ptr< QgsSymbolLayer> l = QgsApplication::symbolLayerRegistry()->createSymbolLayerFromSld( QStringLiteral( "CentroidFill" ), element );
           if ( l )
-            layers.append( l );
+            layers.append( l.release() );
 
           break;
+        }
 
         case Qgis::GeometryType::Point:
+        {
           // point layer and point symbolizer: use markers
-          l = createMarkerLayerFromSld( element );
+          std::unique_ptr< QgsSymbolLayer> l( createMarkerLayerFromSld( element ) );
           if ( l )
-            layers.append( l );
+            layers.append( l.release() );
 
           break;
+        }
 
         case Qgis::GeometryType::Line:
+        {
           // line layer and point symbolizer: draw central point
-          l = QgsApplication::symbolLayerRegistry()->createSymbolLayerFromSld( QStringLiteral( "SimpleMarker" ), element );
+          std::unique_ptr< QgsSymbolLayer> l = QgsApplication::symbolLayerRegistry()->createSymbolLayerFromSld( QStringLiteral( "SimpleMarker" ), element );
           if ( l )
-            layers.append( l );
+            layers.append( l.release() );
 
           break;
+        }
 
-        default:
+        case Qgis::GeometryType::Unknown:
+        case Qgis::GeometryType::Null:
           break;
       }
     }
@@ -1552,23 +1636,28 @@ bool QgsSymbolLayerUtils::createSymbolLayerListFromSld( QDomElement &element,
       {
         case Qgis::GeometryType::Polygon:
         case Qgis::GeometryType::Line:
+        {
           // polygon layer and line symbolizer: draw polygon stroke
           // line layer and line symbolizer: draw line
-          l = createLineLayerFromSld( element );
+          std::unique_ptr< QgsSymbolLayer> l = createLineLayerFromSld( element );
           if ( l )
-            layers.append( l );
+            layers.append( l.release() );
 
           break;
+        }
 
         case Qgis::GeometryType::Point:
+        {
           // point layer and line symbolizer: draw a little line marker
-          l = QgsApplication::symbolLayerRegistry()->createSymbolLayerFromSld( QStringLiteral( "MarkerLine" ), element );
+          std::unique_ptr< QgsSymbolLayer> l = QgsApplication::symbolLayerRegistry()->createSymbolLayerFromSld( QStringLiteral( "MarkerLine" ), element );
           if ( l )
-            layers.append( l );
+            layers.append( l.release() );
 
           break;
+        }
 
-        default:
+        case Qgis::GeometryType::Unknown:
+        case Qgis::GeometryType::Null:
           break;
       }
     }
@@ -1585,21 +1674,21 @@ bool QgsSymbolLayerUtils::createSymbolLayerListFromSld( QDomElement &element,
     }
     else
     {
-      QgsSymbolLayer *l = nullptr;
-
       switch ( geomType )
       {
         case Qgis::GeometryType::Polygon:
+        {
           // polygon layer and polygon symbolizer: draw fill
 
-          l = createFillLayerFromSld( element );
+          std::unique_ptr< QgsSymbolLayer > l = createFillLayerFromSld( element );
           if ( l )
           {
-            layers.append( l );
+            QgsSymbolLayer *lastLayer = l.get();
+            layers.append( l.release() );
 
             // SVGFill and SimpleFill symbolLayerV2 supports stroke internally,
             // so don't go forward to create a different symbolLayerV2 for stroke
-            if ( l->layerType() == QLatin1String( "SimpleFill" ) || l->layerType() == QLatin1String( "SVGFill" ) )
+            if ( lastLayer->layerType() == QLatin1String( "SimpleFill" ) || lastLayer->layerType() == QLatin1String( "SVGFill" ) )
               break;
           }
 
@@ -1607,24 +1696,29 @@ bool QgsSymbolLayerUtils::createSymbolLayerListFromSld( QDomElement &element,
           // polygon layer and polygon symbolizer: draw polygon stroke
           l = createLineLayerFromSld( element );
           if ( l )
-            layers.append( l );
+            layers.append( l.release() );
 
           break;
+        }
 
         case Qgis::GeometryType::Line:
+        {
           // line layer and polygon symbolizer: draw line
-          l = createLineLayerFromSld( element );
+          std::unique_ptr< QgsSymbolLayer > l = createLineLayerFromSld( element );
           if ( l )
-            layers.append( l );
+            layers.append( l.release() );
 
           break;
+        }
 
         case Qgis::GeometryType::Point:
+        {
           // point layer and polygon symbolizer: draw a square marker
           convertPolygonSymbolizerToPointMarker( element, layers );
           break;
-
-        default:
+        }
+        case Qgis::GeometryType::Unknown:
+        case Qgis::GeometryType::Null:
           break;
       }
     }
@@ -1633,7 +1727,7 @@ bool QgsSymbolLayerUtils::createSymbolLayerListFromSld( QDomElement &element,
   return true;
 }
 
-QgsSymbolLayer *QgsSymbolLayerUtils::createFillLayerFromSld( QDomElement &element )
+std::unique_ptr< QgsSymbolLayer > QgsSymbolLayerUtils::createFillLayerFromSld( QDomElement &element )
 {
   const QDomElement fillElem = element.firstChildElement( QStringLiteral( "Fill" ) );
   if ( fillElem.isNull() )
@@ -1642,7 +1736,7 @@ QgsSymbolLayer *QgsSymbolLayerUtils::createFillLayerFromSld( QDomElement &elemen
     return nullptr;
   }
 
-  QgsSymbolLayer *l = nullptr;
+  std::unique_ptr< QgsSymbolLayer > l;
 
   if ( needLinePatternFill( element ) )
     l = QgsApplication::symbolLayerRegistry()->createSymbolLayerFromSld( QStringLiteral( "LinePatternFill" ), element );
@@ -1658,7 +1752,7 @@ QgsSymbolLayer *QgsSymbolLayerUtils::createFillLayerFromSld( QDomElement &elemen
   return l;
 }
 
-QgsSymbolLayer *QgsSymbolLayerUtils::createLineLayerFromSld( QDomElement &element )
+std::unique_ptr< QgsSymbolLayer > QgsSymbolLayerUtils::createLineLayerFromSld( QDomElement &element )
 {
   const QDomElement strokeElem = element.firstChildElement( QStringLiteral( "Stroke" ) );
   if ( strokeElem.isNull() )
@@ -1667,7 +1761,7 @@ QgsSymbolLayer *QgsSymbolLayerUtils::createLineLayerFromSld( QDomElement &elemen
     return nullptr;
   }
 
-  QgsSymbolLayer *l = nullptr;
+  std::unique_ptr< QgsSymbolLayer > l;
 
   if ( needMarkerLine( element ) )
     l = QgsApplication::symbolLayerRegistry()->createSymbolLayerFromSld( QStringLiteral( "MarkerLine" ), element );
@@ -1677,7 +1771,7 @@ QgsSymbolLayer *QgsSymbolLayerUtils::createLineLayerFromSld( QDomElement &elemen
   return l;
 }
 
-QgsSymbolLayer *QgsSymbolLayerUtils::createMarkerLayerFromSld( QDomElement &element )
+std::unique_ptr< QgsSymbolLayer > QgsSymbolLayerUtils::createMarkerLayerFromSld( QDomElement &element )
 {
   const QDomElement graphicElem = element.firstChildElement( QStringLiteral( "Graphic" ) );
   if ( graphicElem.isNull() )
@@ -1686,7 +1780,7 @@ QgsSymbolLayer *QgsSymbolLayerUtils::createMarkerLayerFromSld( QDomElement &elem
     return nullptr;
   }
 
-  QgsSymbolLayer *l = nullptr;
+  std::unique_ptr< QgsSymbolLayer > l;
 
   if ( needFontMarker( element ) )
     l = QgsApplication::symbolLayerRegistry()->createSymbolLayerFromSld( QStringLiteral( "FontMarker" ), element );
@@ -1694,6 +1788,8 @@ QgsSymbolLayer *QgsSymbolLayerUtils::createMarkerLayerFromSld( QDomElement &elem
     l = QgsApplication::symbolLayerRegistry()->createSymbolLayerFromSld( QStringLiteral( "SvgMarker" ), element );
   else if ( needEllipseMarker( element ) )
     l = QgsApplication::symbolLayerRegistry()->createSymbolLayerFromSld( QStringLiteral( "EllipseMarker" ), element );
+  else if ( needRasterMarker( element ) )
+    l = QgsApplication::symbolLayerRegistry()->createSymbolLayerFromSld( QStringLiteral( "RasterMarker" ), element );
   else
     l = QgsApplication::symbolLayerRegistry()->createSymbolLayerFromSld( QStringLiteral( "SimpleMarker" ), element );
 
@@ -1705,7 +1801,7 @@ bool QgsSymbolLayerUtils::hasExternalGraphic( QDomElement &element )
   return hasExternalGraphicV2( element, QStringLiteral( "image/svg+xml" ) );
 }
 
-bool QgsSymbolLayerUtils::hasExternalGraphicV2( QDomElement &element, const QString format )
+bool QgsSymbolLayerUtils::hasExternalGraphicV2( const QDomElement &element, const QString format )
 {
   const QDomElement graphicElem = element.firstChildElement( QStringLiteral( "Graphic" ) );
   if ( graphicElem.isNull() )
@@ -1730,20 +1826,20 @@ bool QgsSymbolLayerUtils::hasExternalGraphicV2( QDomElement &element, const QStr
   // check for a valid content
   const QDomElement onlineResourceElem = externalGraphicElem.firstChildElement( QStringLiteral( "OnlineResource" ) );
   const QDomElement inlineContentElem = externalGraphicElem.firstChildElement( QStringLiteral( "InlineContent" ) );
+  // NOLINTBEGIN(bugprone-branch-clone)
   if ( !onlineResourceElem.isNull() )
   {
     return true;
   }
-#if 0
   else if ( !inlineContentElem.isNull() )
   {
-    return false; // not implemented yet
+    return true;
   }
-#endif
   else
   {
     return false;
   }
+  // NOLINTEND(bugprone-branch-clone)
 }
 
 bool QgsSymbolLayerUtils::hasWellKnownMark( QDomElement &element )
@@ -1801,9 +1897,15 @@ bool QgsSymbolLayerUtils::needFontMarker( QDomElement &element )
   return false;
 }
 
-bool QgsSymbolLayerUtils::needSvgMarker( QDomElement &element )
+bool QgsSymbolLayerUtils::needSvgMarker( const QDomElement &element )
 {
   return hasExternalGraphicV2( element, QStringLiteral( "image/svg+xml" ) );
+}
+
+bool QgsSymbolLayerUtils::needRasterMarker( const QDomElement &element )
+{
+  // any external graphic except SVGs are considered rasters
+  return hasExternalGraphicV2( element, QString() ) && !needSvgMarker( element );
 }
 
 bool QgsSymbolLayerUtils::needEllipseMarker( QDomElement &element )
@@ -1963,12 +2065,12 @@ bool QgsSymbolLayerUtils::convertPolygonSymbolizerToPointMarker( QDomElement &el
     {
       QVariantMap map;
       map[QStringLiteral( "name" )] = QStringLiteral( "square" );
-      map[QStringLiteral( "color" )] = encodeColor( validFill ? fillColor : Qt::transparent );
-      map[QStringLiteral( "color_border" )] = encodeColor( validStroke ? strokeColor : Qt::transparent );
+      map[QStringLiteral( "color" )] = QgsColorUtils::colorToString( validFill ? fillColor : Qt::transparent );
+      map[QStringLiteral( "color_border" )] = QgsColorUtils::colorToString( validStroke ? strokeColor : Qt::transparent );
       map[QStringLiteral( "size" )] = QString::number( 6 );
       map[QStringLiteral( "angle" )] = QString::number( 0 );
       map[QStringLiteral( "offset" )] = encodePoint( QPointF( 0, 0 ) );
-      layers.append( QgsApplication::symbolLayerRegistry()->createSymbolLayer( QStringLiteral( "SimpleMarker" ), map ) );
+      layers.append( QgsApplication::symbolLayerRegistry()->createSymbolLayer( QStringLiteral( "SimpleMarker" ), map ).release() );
     }
   }
 
@@ -2149,21 +2251,21 @@ bool QgsSymbolLayerUtils::convertPolygonSymbolizerToPointMarker( QDomElement &el
           map[QStringLiteral( "angle" )] = QString::number( angle );
         if ( !offset.isNull() )
           map[QStringLiteral( "offset" )] = encodePoint( offset );
-        layers.append( QgsApplication::symbolLayerRegistry()->createSymbolLayer( QStringLiteral( "SvgMarker" ), map ) );
+        layers.append( QgsApplication::symbolLayerRegistry()->createSymbolLayer( QStringLiteral( "SvgMarker" ), map ).release() );
       }
       else if ( format == QLatin1String( "ttf" ) )
       {
         QVariantMap map;
         map[QStringLiteral( "font" )] = name;
         map[QStringLiteral( "chr" )] = markIndex;
-        map[QStringLiteral( "color" )] = encodeColor( validFill ? fillColor : Qt::transparent );
+        map[QStringLiteral( "color" )] = QgsColorUtils::colorToString( validFill ? fillColor : Qt::transparent );
         if ( size > 0 )
           map[QStringLiteral( "size" )] = QString::number( size );
         if ( !qgsDoubleNear( angle, 0.0 ) )
           map[QStringLiteral( "angle" )] = QString::number( angle );
         if ( !offset.isNull() )
           map[QStringLiteral( "offset" )] = encodePoint( offset );
-        layers.append( QgsApplication::symbolLayerRegistry()->createSymbolLayer( QStringLiteral( "FontMarker" ), map ) );
+        layers.append( QgsApplication::symbolLayerRegistry()->createSymbolLayer( QStringLiteral( "FontMarker" ), map ).release() );
       }
     }
   }
@@ -2177,6 +2279,12 @@ bool QgsSymbolLayerUtils::convertPolygonSymbolizerToPointMarker( QDomElement &el
 }
 
 void QgsSymbolLayerUtils::fillToSld( QDomDocument &doc, QDomElement &element, Qt::BrushStyle brushStyle, const QColor &color )
+{
+  QgsSldExportContext context;
+  fillToSld( doc, element, context, brushStyle, color );
+}
+
+void QgsSymbolLayerUtils::fillToSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &context, Qt::BrushStyle brushStyle, const QColor &color )
 {
   QString patternName;
   switch ( brushStyle )
@@ -2210,7 +2318,7 @@ void QgsSymbolLayerUtils::fillToSld( QDomDocument &doc, QDomElement &element, Qt
       break;
 
     default:
-      element.appendChild( doc.createComment( QStringLiteral( "Qt::BrushStyle '%1'' not supported yet" ).arg( brushStyle ) ) );
+      context.pushWarning( QObject::tr( "Brush style '%1' is not supported for SLD" ).arg( brushStyle ) );
       return;
   }
 
@@ -2224,7 +2332,7 @@ void QgsSymbolLayerUtils::fillToSld( QDomDocument &doc, QDomElement &element, Qt
   const QColor strokeColor = !patternName.startsWith( QLatin1String( "brush://" ) ) ? color : QColor();
 
   /* Use WellKnownName tag to handle QT brush styles. */
-  wellKnownMarkerToSld( doc, graphicElem, patternName, fillColor, strokeColor, Qt::SolidLine, -1, -1 );
+  wellKnownMarkerToSld( doc, graphicElem, patternName, fillColor, strokeColor, Qt::SolidLine, context, -1, -1 );
 }
 
 bool QgsSymbolLayerUtils::fillFromSld( QDomElement &element, Qt::BrushStyle &brushStyle, QColor &color )
@@ -2282,7 +2390,7 @@ bool QgsSymbolLayerUtils::fillFromSld( QDomElement &element, Qt::BrushStyle &bru
 }
 
 void QgsSymbolLayerUtils::lineToSld( QDomDocument &doc, QDomElement &element,
-                                     Qt::PenStyle penStyle, const QColor &color, double width,
+                                     Qt::PenStyle penStyle, const QColor &color, QgsSldExportContext &context, double width,
                                      const Qt::PenJoinStyle *penJoinStyle, const Qt::PenCapStyle *penCapStyle,
                                      const QVector<qreal> *customDashPattern, double dashOffset )
 {
@@ -2291,7 +2399,7 @@ void QgsSymbolLayerUtils::lineToSld( QDomDocument &doc, QDomElement &element,
 
   if ( penStyle == Qt::CustomDashLine && !customDashPattern )
   {
-    element.appendChild( doc.createComment( QStringLiteral( "WARNING: Custom dash pattern required but not provided. Using default dash pattern." ) ) );
+    context.pushWarning( QObject::tr( "WARNING: Custom dash pattern required but not provided. Using default dash pattern." ) );
     penStyle = Qt::DashLine;
   }
 
@@ -2332,7 +2440,7 @@ void QgsSymbolLayerUtils::lineToSld( QDomDocument &doc, QDomElement &element,
       break;
 
     default:
-      element.appendChild( doc.createComment( QStringLiteral( "Qt::BrushStyle '%1'' not supported yet" ).arg( penStyle ) ) );
+      context.pushWarning( QObject::tr( "Pen style '%1' is not supported for SLD" ).arg( penStyle ) );
       return;
   }
 
@@ -2519,6 +2627,12 @@ void QgsSymbolLayerUtils::externalGraphicToSld( QDomDocument &doc, QDomElement &
 void QgsSymbolLayerUtils::parametricSvgToSld( QDomDocument &doc, QDomElement &graphicElem,
     const QString &path, const QColor &fillColor, double size, const QColor &strokeColor, double strokeWidth )
 {
+  QgsSldExportContext context;
+  parametricSvgToSld( doc, graphicElem, path, fillColor, size, strokeColor, strokeWidth, context );
+}
+
+void QgsSymbolLayerUtils::parametricSvgToSld( QDomDocument &doc, QDomElement &graphicElem, const QString &path, const QColor &fillColor, double size, const QColor &strokeColor, double strokeWidth, QgsSldExportContext &context )
+{
   // Parametric SVG paths are an extension that few systems will understand, but se:Graphic allows for fallback
   // symbols, this encodes the full parametric path first, the pure shape second, and a mark with the right colors as
   // a last resort for systems that cannot do SVG at all
@@ -2532,7 +2646,7 @@ void QgsSymbolLayerUtils::parametricSvgToSld( QDomDocument &doc, QDomElement &gr
   QgsSymbolLayerUtils::externalGraphicToSld( doc, graphicElem, path, QStringLiteral( "image/svg+xml" ), fillColor, -1 );
   // finally encode a simple mark with the right colors/outlines for renderers that cannot do SVG at all
   graphicElem.appendChild( doc.createComment( QStringLiteral( "Well known marker fallback" ) ) );
-  QgsSymbolLayerUtils::wellKnownMarkerToSld( doc, graphicElem, QStringLiteral( "square" ), fillColor, strokeColor, Qt::PenStyle::SolidLine, strokeWidth, -1 );
+  QgsSymbolLayerUtils::wellKnownMarkerToSld( doc, graphicElem, QStringLiteral( "square" ), fillColor, strokeColor, Qt::PenStyle::SolidLine, context, strokeWidth, -1 );
 
   // size is encoded here, it's part of se:Graphic, not attached to the single symbol
   if ( size >= 0 )
@@ -2542,7 +2656,6 @@ void QgsSymbolLayerUtils::parametricSvgToSld( QDomDocument &doc, QDomElement &gr
     graphicElem.appendChild( sizeElem );
   }
 }
-
 
 QString QgsSymbolLayerUtils::getSvgParametricPath( const QString &basePath, const QColor &fillColor, const QColor &strokeColor, double strokeWidth )
 {
@@ -2608,6 +2721,12 @@ void QgsSymbolLayerUtils::externalMarkerToSld( QDomDocument &doc, QDomElement &e
     const QString &path, const QString &format, int *markIndex,
     const QColor &color, double size )
 {
+  QgsSldExportContext context;
+  externalMarkerToSld( doc, element, path, format, context, markIndex, color, size );
+}
+
+void QgsSymbolLayerUtils::externalMarkerToSld( QDomDocument &doc, QDomElement &element, const QString &path, const QString &format, QgsSldExportContext &context, int *markIndex, const QColor &color, double size )
+{
   QDomElement markElem = doc.createElement( QStringLiteral( "se:Mark" ) );
   element.appendChild( markElem );
 
@@ -2622,7 +2741,7 @@ void QgsSymbolLayerUtils::externalMarkerToSld( QDomDocument &doc, QDomElement &e
 
   // <Fill>
   QDomElement fillElem = doc.createElement( QStringLiteral( "se:Fill" ) );
-  fillToSld( doc, fillElem, Qt::SolidPattern, color );
+  fillToSld( doc, fillElem, context, Qt::SolidPattern, color );
   markElem.appendChild( fillElem );
 
   // <Size>
@@ -2682,6 +2801,12 @@ void QgsSymbolLayerUtils::wellKnownMarkerToSld( QDomDocument &doc, QDomElement &
     const QString &name, const QColor &color, const QColor &strokeColor, Qt::PenStyle strokeStyle,
     double strokeWidth, double size )
 {
+  QgsSldExportContext context;
+  wellKnownMarkerToSld( doc, element, name, color, strokeColor, strokeStyle, context, strokeWidth, size );
+}
+
+void QgsSymbolLayerUtils::wellKnownMarkerToSld( QDomDocument &doc, QDomElement &element, const QString &name, const QColor &color, const QColor &strokeColor, Qt::PenStyle strokeStyle, QgsSldExportContext &context, double strokeWidth, double size )
+{
   QDomElement markElem = doc.createElement( QStringLiteral( "se:Mark" ) );
   element.appendChild( markElem );
 
@@ -2693,7 +2818,7 @@ void QgsSymbolLayerUtils::wellKnownMarkerToSld( QDomDocument &doc, QDomElement &
   if ( color.isValid() )
   {
     QDomElement fillElem = doc.createElement( QStringLiteral( "se:Fill" ) );
-    fillToSld( doc, fillElem, Qt::SolidPattern, color );
+    fillToSld( doc, fillElem, context, Qt::SolidPattern, color );
     markElem.appendChild( fillElem );
   }
 
@@ -2701,7 +2826,7 @@ void QgsSymbolLayerUtils::wellKnownMarkerToSld( QDomDocument &doc, QDomElement &
   if ( strokeColor.isValid() )
   {
     QDomElement strokeElem = doc.createElement( QStringLiteral( "se:Stroke" ) );
-    lineToSld( doc, strokeElem, strokeStyle, strokeColor, strokeWidth );
+    lineToSld( doc, strokeElem, strokeStyle, strokeColor, context, strokeWidth );
     markElem.appendChild( strokeElem );
   }
 
@@ -2763,10 +2888,16 @@ bool QgsSymbolLayerUtils::wellKnownMarkerFromSld( QDomElement &element,
 
 void QgsSymbolLayerUtils::createRotationElement( QDomDocument &doc, QDomElement &element, const QString &rotationFunc )
 {
+  QgsSldExportContext context;
+  createRotationElement( doc, element, rotationFunc, context );
+}
+
+void QgsSymbolLayerUtils::createRotationElement( QDomDocument &doc, QDomElement &element, const QString &rotationFunc, QgsSldExportContext &context )
+{
   if ( !rotationFunc.isEmpty() )
   {
     QDomElement rotationElem = doc.createElement( QStringLiteral( "se:Rotation" ) );
-    createExpressionElement( doc, rotationElem, rotationFunc );
+    createExpressionElement( doc, rotationElem, rotationFunc, context );
     element.appendChild( rotationElem );
   }
 }
@@ -2781,13 +2912,18 @@ bool QgsSymbolLayerUtils::rotationFromSldElement( QDomElement &element, QString 
   return true;
 }
 
-
 void QgsSymbolLayerUtils::createOpacityElement( QDomDocument &doc, QDomElement &element, const QString &alphaFunc )
+{
+  QgsSldExportContext context;
+  createOpacityElement( doc, element, alphaFunc, context );
+}
+
+void QgsSymbolLayerUtils::createOpacityElement( QDomDocument &doc, QDomElement &element, const QString &alphaFunc, QgsSldExportContext &context )
 {
   if ( !alphaFunc.isEmpty() )
   {
     QDomElement opacityElem = doc.createElement( QStringLiteral( "se:Opacity" ) );
-    createExpressionElement( doc, opacityElem, alphaFunc );
+    createExpressionElement( doc, opacityElem, alphaFunc, context );
     element.appendChild( opacityElem );
   }
 }
@@ -2870,6 +3006,12 @@ void QgsSymbolLayerUtils::labelTextToSld( QDomDocument &doc, QDomElement &elemen
     const QString &label, const QFont &font,
     const QColor &color, double size )
 {
+  QgsSldExportContext context;
+  labelTextToSld( doc, element, label, font, context, color, size );
+}
+
+void QgsSymbolLayerUtils::labelTextToSld( QDomDocument &doc, QDomElement &element, const QString &label, const QFont &font, QgsSldExportContext &context, const QColor &color, double size )
+{
   QDomElement labelElem = doc.createElement( QStringLiteral( "se:Label" ) );
   labelElem.appendChild( doc.createTextNode( label ) );
   element.appendChild( labelElem );
@@ -2888,7 +3030,7 @@ void QgsSymbolLayerUtils::labelTextToSld( QDomDocument &doc, QDomElement &elemen
   if ( color.isValid() )
   {
     QDomElement fillElem = doc.createElement( QStringLiteral( "Fill" ) );
-    fillToSld( doc, fillElem, Qt::SolidPattern, color );
+    fillToSld( doc, fillElem, context, Qt::SolidPattern, color );
     element.appendChild( fillElem );
   }
 }
@@ -2979,6 +3121,12 @@ QString QgsSymbolLayerUtils::ogrFeatureStyleBrush( const QColor &fillColor )
 
 void QgsSymbolLayerUtils::createGeometryElement( QDomDocument &doc, QDomElement &element, const QString &geomFunc )
 {
+  QgsSldExportContext context;
+  createGeometryElement( doc, element, geomFunc, context );
+}
+
+void QgsSymbolLayerUtils::createGeometryElement( QDomDocument &doc, QDomElement &element, const QString &geomFunc, QgsSldExportContext &context )
+{
   if ( geomFunc.isEmpty() )
     return;
 
@@ -3008,7 +3156,7 @@ void QgsSymbolLayerUtils::createGeometryElement( QDomDocument &doc, QDomElement 
    * like offset, centroid, ...
    */
 
-  createExpressionElement( doc, geometryElem, geomFunc );
+  createExpressionElement( doc, geometryElem, geomFunc, context );
 }
 
 bool QgsSymbolLayerUtils::geometryFromSldElement( QDomElement &element, QString &geomFunc )
@@ -3022,11 +3170,17 @@ bool QgsSymbolLayerUtils::geometryFromSldElement( QDomElement &element, QString 
 
 bool QgsSymbolLayerUtils::createExpressionElement( QDomDocument &doc, QDomElement &element, const QString &function )
 {
+  QgsSldExportContext context;
+  return createExpressionElement( doc, element, function, context );
+}
+
+bool QgsSymbolLayerUtils::createExpressionElement( QDomDocument &doc, QDomElement &element, const QString &function, QgsSldExportContext &context )
+{
   // let's use QgsExpression to generate the SLD for the function
   const QgsExpression expr( function );
   if ( expr.hasParserError() )
   {
-    element.appendChild( doc.createComment( "Parser Error: " + expr.parserErrorString() + " - Expression was: " + function ) );
+    context.pushError( QObject::tr( "Parser error encountered when converting expression to SLD: %1 - Expression was: %2" ).arg( expr.parserErrorString(), function ) );
     return false;
   }
   const QDomElement filterElem = QgsOgcUtils::expressionToOgcExpression( expr, doc );
@@ -3035,8 +3189,13 @@ bool QgsSymbolLayerUtils::createExpressionElement( QDomDocument &doc, QDomElemen
   return true;
 }
 
-
 bool QgsSymbolLayerUtils::createFunctionElement( QDomDocument &doc, QDomElement &element, const QString &function )
+{
+  QgsSldExportContext context;
+  return createFunctionElement( doc, element, function, context );
+}
+
+bool QgsSymbolLayerUtils::createFunctionElement( QDomDocument &doc, QDomElement &element, const QString &function, QgsSldExportContext &context )
 {
   // else rule is not a valid expression
   if ( function == QLatin1String( "ELSE" ) )
@@ -3051,7 +3210,7 @@ bool QgsSymbolLayerUtils::createFunctionElement( QDomDocument &doc, QDomElement 
     const QgsExpression expr( function );
     if ( expr.hasParserError() )
     {
-      element.appendChild( doc.createComment( "Parser Error: " + expr.parserErrorString() + " - Expression was: " + function ) );
+      context.pushError( QObject::tr( "Parser error encountered when converting expression to SLD: %1 - Expression was: %2" ).arg( expr.parserErrorString(), function ) );
       return false;
     }
     const QDomElement filterElem = QgsOgcUtils::expressionToOgcFilter( expr, doc );
@@ -3210,7 +3369,7 @@ QgsStringMap QgsSymbolLayerUtils::getVendorOptionList( QDomElement &element )
 QVariantMap QgsSymbolLayerUtils::parseProperties( const QDomElement &element )
 {
   const QVariant newSymbols = QgsXmlUtils::readVariant( element.firstChildElement( QStringLiteral( "Option" ) ) );
-  if ( newSymbols.type() == QVariant::Map )
+  if ( newSymbols.userType() == QMetaType::Type::QVariantMap )
   {
     return newSymbols.toMap();
   }
@@ -3251,9 +3410,9 @@ QgsSymbolMap QgsSymbolLayerUtils::loadSymbols( QDomElement &element, const QgsRe
   {
     if ( e.tagName() == QLatin1String( "symbol" ) )
     {
-      QgsSymbol *symbol = QgsSymbolLayerUtils::loadSymbol( e, context );
+      std::unique_ptr< QgsSymbol > symbol = QgsSymbolLayerUtils::loadSymbol( e, context );
       if ( symbol )
-        symbols.insert( e.attribute( QStringLiteral( "name" ) ), symbol );
+        symbols.insert( e.attribute( QStringLiteral( "name" ) ), symbol.release() );
     }
     else
     {
@@ -3356,7 +3515,7 @@ QMimeData *QgsSymbolLayerUtils::symbolToMimeData( const QgsSymbol *symbol )
   return mimeData.release();
 }
 
-QgsSymbol *QgsSymbolLayerUtils::symbolFromMimeData( const QMimeData *data )
+std::unique_ptr< QgsSymbol > QgsSymbolLayerUtils::symbolFromMimeData( const QMimeData *data )
 {
   if ( !data )
     return nullptr;
@@ -3381,7 +3540,7 @@ QgsSymbol *QgsSymbolLayerUtils::symbolFromMimeData( const QMimeData *data )
 }
 
 
-QgsColorRamp *QgsSymbolLayerUtils::loadColorRamp( QDomElement &element )
+std::unique_ptr< QgsColorRamp > QgsSymbolLayerUtils::loadColorRamp( QDomElement &element )
 {
   const QString rampType = element.attribute( QStringLiteral( "type" ) );
 
@@ -3389,15 +3548,15 @@ QgsColorRamp *QgsSymbolLayerUtils::loadColorRamp( QDomElement &element )
   const QVariantMap props = QgsSymbolLayerUtils::parseProperties( element );
 
   if ( rampType == QgsGradientColorRamp::typeString() )
-    return QgsGradientColorRamp::create( props );
+    return std::unique_ptr< QgsColorRamp >( QgsGradientColorRamp::create( props ) );
   else if ( rampType == QgsLimitedRandomColorRamp::typeString() )
-    return QgsLimitedRandomColorRamp::create( props );
+    return std::unique_ptr< QgsColorRamp >( QgsLimitedRandomColorRamp::create( props ) );
   else if ( rampType == QgsColorBrewerColorRamp::typeString() )
-    return QgsColorBrewerColorRamp::create( props );
+    return std::unique_ptr< QgsColorRamp >( QgsColorBrewerColorRamp::create( props ) );
   else if ( rampType == QgsCptCityColorRamp::typeString() )
-    return QgsCptCityColorRamp::create( props );
+    return std::unique_ptr< QgsColorRamp >( QgsCptCityColorRamp::create( props ) );
   else if ( rampType == QgsPresetSchemeColorRamp::typeString() )
-    return QgsPresetSchemeColorRamp::create( props );
+    return std::unique_ptr< QgsColorRamp >( QgsPresetSchemeColorRamp::create( props ) );
   else
   {
     QgsDebugError( "unknown colorramp type " + rampType );
@@ -3406,7 +3565,7 @@ QgsColorRamp *QgsSymbolLayerUtils::loadColorRamp( QDomElement &element )
 }
 
 
-QDomElement QgsSymbolLayerUtils::saveColorRamp( const QString &name, QgsColorRamp *ramp, QDomDocument &doc )
+QDomElement QgsSymbolLayerUtils::saveColorRamp( const QString &name, const QgsColorRamp *ramp, QDomDocument &doc )
 {
   QDomElement rampEl = doc.createElement( QStringLiteral( "colorramp" ) );
   rampEl.setAttribute( QStringLiteral( "type" ), ramp->type() );
@@ -3435,7 +3594,7 @@ QVariant QgsSymbolLayerUtils::colorRampToVariant( const QString &name, QgsColorR
   return rampMap;
 }
 
-QgsColorRamp *QgsSymbolLayerUtils::loadColorRamp( const QVariant &value )
+std::unique_ptr< QgsColorRamp > QgsSymbolLayerUtils::loadColorRamp( const QVariant &value )
 {
   const QVariantMap rampMap = value.toMap();
 
@@ -3451,15 +3610,15 @@ QgsColorRamp *QgsSymbolLayerUtils::loadColorRamp( const QVariant &value )
   }
 
   if ( rampType == QgsGradientColorRamp::typeString() )
-    return QgsGradientColorRamp::create( props );
+    return std::unique_ptr< QgsColorRamp >( QgsGradientColorRamp::create( props ) );
   else if ( rampType == QgsLimitedRandomColorRamp::typeString() )
-    return QgsLimitedRandomColorRamp::create( props );
+    return std::unique_ptr< QgsColorRamp >( QgsLimitedRandomColorRamp::create( props ) );
   else if ( rampType == QgsColorBrewerColorRamp::typeString() )
-    return QgsColorBrewerColorRamp::create( props );
+    return std::unique_ptr< QgsColorRamp >( QgsColorBrewerColorRamp::create( props ) );
   else if ( rampType == QgsCptCityColorRamp::typeString() )
-    return QgsCptCityColorRamp::create( props );
+    return std::unique_ptr< QgsColorRamp >( QgsCptCityColorRamp::create( props ) );
   else if ( rampType == QgsPresetSchemeColorRamp::typeString() )
-    return QgsPresetSchemeColorRamp::create( props );
+    return std::unique_ptr< QgsColorRamp >( QgsPresetSchemeColorRamp::create( props ) );
   else
   {
     QgsDebugError( "unknown colorramp type " + rampType );
@@ -3560,6 +3719,9 @@ QMimeData *QgsSymbolLayerUtils::colorToMimeData( const QColor &color )
 
 QColor QgsSymbolLayerUtils::colorFromMimeData( const QMimeData *mimeData, bool &hasAlpha )
 {
+  if ( !mimeData )
+    return QColor();
+
   //attempt to read color data directly from mime
   if ( mimeData->hasColor() )
   {
@@ -3588,6 +3750,9 @@ QColor QgsSymbolLayerUtils::colorFromMimeData( const QMimeData *mimeData, bool &
 
 QgsNamedColorList QgsSymbolLayerUtils::colorListFromMimeData( const QMimeData *data )
 {
+  if ( !data )
+    return {};
+
   QgsNamedColorList mimeColors;
 
   //prefer xml format
@@ -3614,7 +3779,7 @@ QgsNamedColorList QgsSymbolLayerUtils::colorListFromMimeData( const QMimeData *d
         }
 
         QPair< QColor, QString> namedColor;
-        namedColor.first = QgsSymbolLayerUtils::decodeColor( currentElem.attribute( QStringLiteral( "color" ), QStringLiteral( "255,255,255,255" ) ) );
+        namedColor.first = QgsColorUtils::colorFromString( currentElem.attribute( QStringLiteral( "color" ), QStringLiteral( "255,255,255,255" ) ) );
         namedColor.second = currentElem.attribute( QStringLiteral( "label" ), QString() );
 
         mimeColors << namedColor;
@@ -3711,7 +3876,7 @@ QMimeData *QgsSymbolLayerUtils::colorListToMimeData( const QgsNamedColorList &co
   for ( ; colorIt != colorList.constEnd(); ++colorIt )
   {
     QDomElement namedColor = xmlDoc.createElement( QStringLiteral( "NamedColor" ) );
-    namedColor.setAttribute( QStringLiteral( "color" ), QgsSymbolLayerUtils::encodeColor( ( *colorIt ).first ) );
+    namedColor.setAttribute( QStringLiteral( "color" ), QgsColorUtils::colorToString( ( *colorIt ).first ) );
     namedColor.setAttribute( QStringLiteral( "label" ), ( *colorIt ).second );
     xmlRootElement.appendChild( namedColor );
   }
@@ -3748,6 +3913,10 @@ bool QgsSymbolLayerUtils::saveColorsToGpl( QFile &file, const QString &paletteNa
   }
 
   QTextStream stream( &file );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+  stream.setCodec( "UTF-8" );
+#endif
+
   stream << "GIMP Palette" << Qt::endl;
   if ( paletteName.isEmpty() )
   {
@@ -3786,6 +3955,9 @@ QgsNamedColorList QgsSymbolLayerUtils::importColorsFromGpl( QFile &file, bool &o
   }
 
   QTextStream in( &file );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+  in.setCodec( "UTF-8" );
+#endif
 
   QString line = in.readLine();
   if ( !line.startsWith( QLatin1String( "GIMP Palette" ) ) )
@@ -3916,14 +4088,29 @@ QColor QgsSymbolLayerUtils::parseColorWithAlpha( const QString &colorStr, bool &
   }
 
   //color in (rrr,ggg,bbb) format, brackets and rgb prefix optional
-  const thread_local QRegularExpression rgbFormatRx( "^\\s*(?:rgb)?\\(?\\s*([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\s*,\\s*([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\s*,\\s*([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\s*\\)?\\s*;?\\s*$" );
+  const thread_local QRegularExpression rgbFormatRx( "^\\s*(?:rgb)?\\(?\\s*((?:[01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])(?:\\.\\d*)?)\\s*,\\s*((?:[01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])(?:\\.\\d*)?)\\s*,\\s*((?:[01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])(?:\\.\\d*)?)\\s*\\)?\\s*;?\\s*$" );
   match = rgbFormatRx.match( colorStr );
   if ( match.hasMatch() )
   {
-    const int r = match.captured( 1 ).toInt();
-    const int g = match.captured( 2 ).toInt();
-    const int b = match.captured( 3 ).toInt();
-    parsedColor.setRgb( r, g, b );
+    bool rOk = false;
+    bool gOk = false;
+    bool bOk = false;
+    const int r = match.captured( 1 ).toInt( &rOk );
+    const int g = match.captured( 2 ).toInt( &gOk );
+    const int b = match.captured( 3 ).toInt( &bOk );
+
+    if ( !rOk || !gOk || !bOk )
+    {
+      const float rFloat = match.captured( 1 ).toFloat();
+      const float gFloat = match.captured( 2 ).toFloat();
+      const float bFloat = match.captured( 3 ).toFloat();
+      parsedColor.setRgbF( rFloat / 255.0, gFloat / 255.0, bFloat / 255.0 );
+    }
+    else
+    {
+      parsedColor.setRgb( r, g, b );
+    }
+
     if ( parsedColor.isValid() )
     {
       containsAlpha = false;
@@ -3932,14 +4119,28 @@ QColor QgsSymbolLayerUtils::parseColorWithAlpha( const QString &colorStr, bool &
   }
 
   //color in hsl(h,s,l) format, brackets optional
-  const thread_local QRegularExpression hslFormatRx( "^\\s*hsl\\(?\\s*(\\d+)\\s*,\\s*(\\d+)\\s*%\\s*,\\s*(\\d+)\\s*%\\s*\\)?\\s*;?\\s*$" );
+  const thread_local QRegularExpression hslFormatRx( "^\\s*hsl\\(?\\s*(\\d+(?:\\.\\d*)?)\\s*,\\s*(\\d+(?:\\.\\d*)?)\\s*%\\s*,\\s*(\\d+(?:\\.\\d*)?)\\s*%\\s*\\)?\\s*;?\\s*$" );
   match = hslFormatRx.match( colorStr );
   if ( match.hasMatch() )
   {
-    const int h = match.captured( 1 ).toInt();
-    const int s = match.captured( 2 ).toInt();
-    const int l = match.captured( 3 ).toInt();
-    parsedColor.setHsl( h, s / 100.0 * 255.0, l / 100.0 * 255.0 );
+    bool hOk = false;
+    bool sOk = false;
+    bool lOk = false;
+    const int h = match.captured( 1 ).toInt( &hOk );
+    const int s = match.captured( 2 ).toInt( &sOk );
+    const int l = match.captured( 3 ).toInt( &lOk );
+
+    if ( !hOk || !sOk || !lOk )
+    {
+      const float hFloat = match.captured( 1 ).toFloat();
+      const float sFloat = match.captured( 2 ).toFloat();
+      const float lFloat = match.captured( 3 ).toFloat();
+      parsedColor.setHslF( hFloat / 360.0, sFloat / 100.0, lFloat / 100.0 );
+    }
+    else
+    {
+      parsedColor.setHsl( h, s / 100.0 * 255.0, l / 100.0 * 255.0 );
+    }
     if ( parsedColor.isValid() )
     {
       containsAlpha = false;
@@ -3948,14 +4149,14 @@ QColor QgsSymbolLayerUtils::parseColorWithAlpha( const QString &colorStr, bool &
   }
 
   //color in (r%,g%,b%) format, brackets and rgb prefix optional
-  const thread_local QRegularExpression rgbPercentFormatRx( "^\\s*(?:rgb)?\\(?\\s*(100|0*\\d{1,2})\\s*%\\s*,\\s*(100|0*\\d{1,2})\\s*%\\s*,\\s*(100|0*\\d{1,2})\\s*%\\s*\\)?\\s*;?\\s*$" );
+  const thread_local QRegularExpression rgbPercentFormatRx( "^\\s*(?:rgb)?\\(?\\s*(100|0*\\d{1,2}(?:\\.\\d*)?)\\s*%\\s*,\\s*(100|0*\\d{1,2}(?:\\.\\d*)?)\\s*%\\s*,\\s*(100|0*\\d{1,2}(?:\\.\\d*)?)\\s*%\\s*\\)?\\s*;?\\s*$" );
   match = rgbPercentFormatRx.match( colorStr );
   if ( match.hasMatch() )
   {
-    const int r = std::round( match.captured( 1 ).toDouble() * 2.55 );
-    const int g = std::round( match.captured( 2 ).toDouble() * 2.55 );
-    const int b = std::round( match.captured( 3 ).toDouble() * 2.55 );
-    parsedColor.setRgb( r, g, b );
+    const double r = match.captured( 1 ).toDouble() / 100;
+    const double g = match.captured( 2 ).toDouble() / 100;
+    const double b = match.captured( 3 ).toDouble() / 100;
+    parsedColor.setRgbF( r, g, b );
     if ( parsedColor.isValid() )
     {
       containsAlpha = false;
@@ -3964,15 +4165,30 @@ QColor QgsSymbolLayerUtils::parseColorWithAlpha( const QString &colorStr, bool &
   }
 
   //color in (r,g,b,a) format, brackets and rgba prefix optional
-  const thread_local QRegularExpression rgbaFormatRx( "^\\s*(?:rgba)?\\(?\\s*([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\s*,\\s*([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\s*,\\s*([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\s*,\\s*(0|0?\\.\\d*|1(?:\\.0*)?)\\s*\\)?\\s*;?\\s*$" );
+  const thread_local QRegularExpression rgbaFormatRx( "^\\s*(?:rgba)?\\(?\\s*((?:[01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])(?:\\.\\d*)?)\\s*,\\s*((?:[01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])(?:\\.\\d*)?)\\s*,\\s*((?:[01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])(?:\\.\\d*)?)\\s*,\\s*(0|0?\\.\\d*|1(?:\\.0*)?)\\s*\\)?\\s*;?\\s*$" );
   match = rgbaFormatRx.match( colorStr );
   if ( match.hasMatch() )
   {
-    const int r = match.captured( 1 ).toInt();
-    const int g = match.captured( 2 ).toInt();
-    const int b = match.captured( 3 ).toInt();
-    const int a = std::round( match.captured( 4 ).toDouble() * 255.0 );
-    parsedColor.setRgb( r, g, b, a );
+    bool rOk = false;
+    bool gOk = false;
+    bool bOk = false;
+    const int r = match.captured( 1 ).toInt( &rOk );
+    const int g = match.captured( 2 ).toInt( &gOk );
+    const int b = match.captured( 3 ).toInt( &bOk );
+    const double aDouble = match.captured( 4 ).toDouble();
+
+    if ( !rOk || !gOk || !bOk )
+    {
+      const float rFloat = match.captured( 1 ).toFloat();
+      const float gFloat = match.captured( 2 ).toFloat();
+      const float bFloat = match.captured( 3 ).toFloat();
+      parsedColor.setRgbF( rFloat / 255.0, gFloat / 255.0, bFloat / 255.0, aDouble );
+    }
+    else
+    {
+      const int a = static_cast< int >( std::round( match.captured( 4 ).toDouble() * 255.0 ) );
+      parsedColor.setRgb( r, g, b, a );
+    }
     if ( parsedColor.isValid() )
     {
       containsAlpha = true;
@@ -3981,15 +4197,15 @@ QColor QgsSymbolLayerUtils::parseColorWithAlpha( const QString &colorStr, bool &
   }
 
   //color in (r%,g%,b%,a) format, brackets and rgba prefix optional
-  const thread_local QRegularExpression rgbaPercentFormatRx( "^\\s*(?:rgba)?\\(?\\s*(100|0*\\d{1,2})\\s*%\\s*,\\s*(100|0*\\d{1,2})\\s*%\\s*,\\s*(100|0*\\d{1,2})\\s*%\\s*,\\s*(0|0?\\.\\d*|1(?:\\.0*)?)\\s*\\)?\\s*;?\\s*$" );
+  const thread_local QRegularExpression rgbaPercentFormatRx( "^\\s*(?:rgba)?\\(?\\s*(100|0*\\d{1,2}(?:\\.\\d*)?)\\s*%\\s*,\\s*(100|0*\\d{1,2}(?:\\.\\d*)?)\\s*%\\s*,\\s*(100|0*\\d{1,2}(?:\\.\\d*)?)\\s*%\\s*,\\s*(0|0?\\.\\d*|1(?:\\.0*)?)\\s*\\)?\\s*;?\\s*$" );
   match = rgbaPercentFormatRx.match( colorStr );
   if ( match.hasMatch() )
   {
-    const int r = std::round( match.captured( 1 ).toDouble() * 2.55 );
-    const int g = std::round( match.captured( 2 ).toDouble() * 2.55 );
-    const int b = std::round( match.captured( 3 ).toDouble() * 2.55 );
-    const int a = std::round( match.captured( 4 ).toDouble() * 255.0 );
-    parsedColor.setRgb( r, g, b, a );
+    const double r = match.captured( 1 ).toDouble() / 100;
+    const double g = match.captured( 2 ).toDouble() / 100;
+    const double b = match.captured( 3 ).toDouble() / 100;
+    const double a = match.captured( 4 ).toDouble();
+    parsedColor.setRgbF( r, g, b, a );
     if ( parsedColor.isValid() )
     {
       containsAlpha = true;
@@ -3998,15 +4214,31 @@ QColor QgsSymbolLayerUtils::parseColorWithAlpha( const QString &colorStr, bool &
   }
 
   //color in hsla(h,s%,l%,a) format, brackets optional
-  const thread_local QRegularExpression hslaPercentFormatRx( "^\\s*hsla\\(?\\s*(\\d+)\\s*,\\s*(\\d+)\\s*%\\s*,\\s*(\\d+)\\s*%\\s*,\\s*([\\d\\.]+)\\s*\\)?\\s*;?\\s*$" );
+  const thread_local QRegularExpression hslaPercentFormatRx( "^\\s*hsla\\(?\\s*(\\d+(?:\\.\\d*)?)\\s*,\\s*(\\d+(?:\\.\\d*)?)\\s*%\\s*,\\s*(\\d+(?:\\.\\d*)?)\\s*%\\s*,\\s*([\\d\\.]+)\\s*\\)?\\s*;?\\s*$" );
   match = hslaPercentFormatRx.match( colorStr );
   if ( match.hasMatch() )
   {
-    const int h = match.captured( 1 ).toInt();
-    const int s = match.captured( 2 ).toInt();
-    const int l = match.captured( 3 ).toInt();
-    const int a = std::round( match.captured( 4 ).toDouble() * 255.0 );
-    parsedColor.setHsl( h, s / 100.0 * 255.0, l / 100.0 * 255.0, a );
+    bool hOk = false;
+    bool sOk = false;
+    bool lOk = false;
+    const int h = match.captured( 1 ).toInt( &hOk );
+    const int s = match.captured( 2 ).toInt( &sOk );
+    const int l = match.captured( 3 ).toInt( &lOk );
+    const double aDouble = match.captured( 4 ).toDouble();
+
+    if ( !hOk || !sOk || !lOk )
+    {
+      const float hFloat = match.captured( 1 ).toFloat();
+      const float sFloat = match.captured( 2 ).toFloat();
+      const float lFloat = match.captured( 3 ).toFloat();
+      parsedColor.setHslF( hFloat / 360.0, sFloat / 100.0, lFloat / 100.0, aDouble );
+    }
+    else
+    {
+      const int a = std::round( aDouble * 255.0 );
+      parsedColor.setHsl( h, s / 100.0 * 255.0, l / 100.0 * 255.0, a );
+    }
+
     if ( parsedColor.isValid() )
     {
       containsAlpha = true;
@@ -4367,6 +4599,105 @@ QString QgsSymbolLayerUtils::svgSymbolPathToName( const QString &p, const QgsPat
   return pathResolver.writePath( path );
 }
 
+QPolygonF lineStringToQPolygonF( const QgsLineString *line )
+{
+  const double *srcX = line->xData();
+  const double *srcY = line->yData();
+  const int count = line->numPoints();
+  QPolygonF thisRes( count );
+  QPointF *dest = thisRes.data();
+  for ( int i = 0; i < count; ++i )
+  {
+    *dest++ = QPointF( *srcX++, *srcY++ );
+  }
+  return thisRes;
+}
+
+QPolygonF curveToPolygonF( const QgsCurve *curve )
+{
+  if ( const QgsLineString *line = qgsgeometry_cast< const QgsLineString * >( curve ) )
+  {
+    return lineStringToQPolygonF( line );
+  }
+  else
+  {
+    const std::unique_ptr< QgsLineString > straightened( curve->curveToLine() );
+    return lineStringToQPolygonF( straightened.get() );
+  }
+}
+
+QList<QList<QPolygonF> > QgsSymbolLayerUtils::toQPolygonF( const QgsGeometry &geometry, Qgis::SymbolType type )
+{
+  return toQPolygonF( geometry.constGet(), type );
+}
+
+QList<QList<QPolygonF> > QgsSymbolLayerUtils::toQPolygonF( const QgsAbstractGeometry *geometry, Qgis::SymbolType type )
+{
+  if ( !geometry )
+    return {};
+
+  switch ( type )
+  {
+    case Qgis::SymbolType::Marker:
+    {
+      QPolygonF points;
+
+      if ( QgsWkbTypes::flatType( geometry->wkbType() ) == Qgis::WkbType::MultiPoint )
+      {
+        for ( auto it = geometry->vertices_begin(); it != geometry->vertices_end(); ++it )
+          points << QPointF( ( *it ).x(), ( *it ).y() );
+      }
+      else
+      {
+        points << QPointF( 0, 0 );
+      }
+      return QList< QList<QPolygonF> >() << ( QList< QPolygonF >() << points );
+    }
+
+    case Qgis::SymbolType::Line:
+    {
+      QList< QList<QPolygonF> > res;
+      if ( QgsWkbTypes::geometryType( geometry->wkbType() ) == Qgis::GeometryType::Line )
+      {
+        for ( auto it = geometry->const_parts_begin(); it != geometry->const_parts_end(); ++it )
+        {
+          res << ( QList< QPolygonF >() << curveToPolygonF( qgsgeometry_cast< const QgsCurve * >( *it ) ) );
+        }
+      }
+      return res;
+    }
+
+    case Qgis::SymbolType::Fill:
+    {
+      QList< QList<QPolygonF> > res;
+
+      for ( auto it = geometry->const_parts_begin(); it != geometry->const_parts_end(); ++it )
+      {
+        QList<QPolygonF> thisPart;
+        const QgsCurvePolygon *surface = qgsgeometry_cast< const QgsCurvePolygon * >( *it );
+        if ( !surface )
+          continue;
+
+        if ( !surface->exteriorRing() )
+          continue;
+
+        thisPart << curveToPolygonF( surface->exteriorRing() );
+
+        for ( int i = 0; i < surface->numInteriorRings(); ++i )
+          thisPart << curveToPolygonF( surface->interiorRing( i ) );
+        res << thisPart;
+      }
+
+      return res;
+    }
+
+    case Qgis::SymbolType::Hybrid:
+      return QList< QList<QPolygonF> >();
+  }
+
+  return QList< QList<QPolygonF> >();
+}
+
 
 QPointF QgsSymbolLayerUtils::polygonCentroid( const QPolygonF &points )
 {
@@ -4530,7 +4861,7 @@ QPolygonF QgsSymbolLayerUtils::polylineSubstring( const QPolygonF &polyline, dou
       // start point falls on this segment
       const double distanceToStart = startDistance - distanceTraversed;
       double startX, startY;
-      QgsGeometryUtils::pointOnLineWithDistance( p1.x(), p1.y(), p2.x(), p2.y(), distanceToStart, startX, startY );
+      QgsGeometryUtilsBase::pointOnLineWithDistance( p1.x(), p1.y(), p2.x(), p2.y(), distanceToStart, startX, startY );
       substringPoints << QPointF( startX, startY );
       foundStart = true;
     }
@@ -4539,7 +4870,7 @@ QPolygonF QgsSymbolLayerUtils::polylineSubstring( const QPolygonF &polyline, dou
       // end point falls on this segment
       const double distanceToEnd = endDistance - distanceTraversed;
       double endX, endY;
-      QgsGeometryUtils::pointOnLineWithDistance( p1.x(), p1.y(), p2.x(), p2.y(), distanceToEnd, endX, endY );
+      QgsGeometryUtilsBase::pointOnLineWithDistance( p1.x(), p1.y(), p2.x(), p2.y(), distanceToEnd, endX, endY );
       if ( substringPoints.last() != QPointF( endX, endY ) )
         substringPoints << QPointF( endX, endY );
     }
@@ -4566,7 +4897,7 @@ QPolygonF QgsSymbolLayerUtils::polylineSubstring( const QPolygonF &polyline, dou
 bool QgsSymbolLayerUtils::isSharpCorner( QPointF p1, QPointF p2, QPointF p3 )
 {
   double vertexAngle = M_PI - ( std::atan2( p3.y() - p2.y(), p3.x() - p2.x() ) - std::atan2( p2.y() - p1.y(), p2.x() - p1.x() ) );
-  vertexAngle = QgsGeometryUtils::normalizedAngle( vertexAngle );
+  vertexAngle = QgsGeometryUtilsBase::normalizedAngle( vertexAngle );
 
   // extreme angles form more than 45 degree angle at a node
   return vertexAngle < M_PI * 135.0 / 180.0 || vertexAngle > M_PI * 225.0 / 180.0;
@@ -4584,20 +4915,19 @@ void QgsSymbolLayerUtils::appendPolyline( QPolygonF &target, const QPolygonF &li
   }
 }
 
-QgsExpression *QgsSymbolLayerUtils::fieldOrExpressionToExpression( const QString &fieldOrExpression )
+std::unique_ptr< QgsExpression > QgsSymbolLayerUtils::fieldOrExpressionToExpression( const QString &fieldOrExpression )
 {
   if ( fieldOrExpression.isEmpty() )
     return nullptr;
 
-  QgsExpression *expr = new QgsExpression( fieldOrExpression );
+  auto expr = std::make_unique< QgsExpression >( fieldOrExpression );
   if ( !expr->hasParserError() )
     return expr;
 
   // now try with quoted field name
-  delete expr;
-  QgsExpression *expr2 = new QgsExpression( QgsExpression::quotedColumnRef( fieldOrExpression ) );
-  Q_ASSERT( !expr2->hasParserError() );
-  return expr2;
+  expr = std::make_unique< QgsExpression >( QgsExpression::quotedColumnRef( fieldOrExpression ) );
+  Q_ASSERT( !expr->hasParserError() );
+  return expr;
 }
 
 QString QgsSymbolLayerUtils::fieldOrExpressionFromExpression( QgsExpression *expression )
@@ -4929,6 +5259,7 @@ double QgsSymbolLayerUtils::sizeInPixelsFromSldUom( const QString &uom, double s
 
 QSet<const QgsSymbolLayer *> QgsSymbolLayerUtils::toSymbolLayerPointers( const QgsFeatureRenderer *renderer, const QSet<QgsSymbolLayerId> &symbolLayerIds )
 {
+  Q_NOWARN_DEPRECATED_PUSH
   class SymbolLayerVisitor : public QgsStyleEntityVisitorInterface
   {
     public:
@@ -4953,10 +5284,12 @@ QSet<const QgsSymbolLayer *> QgsSymbolLayerUtils::toSymbolLayerPointers( const Q
           QVector<int> indexPath = rootPath;
           indexPath.append( idx );
           const QgsSymbolLayer *sl = symbol->symbolLayer( idx );
+          Q_NOWARN_DEPRECATED_PUSH
           if ( mSymbolLayerIds.contains( QgsSymbolLayerId( mCurrentRuleKey + identifier, indexPath ) ) )
           {
             mSymbolLayers.insert( sl );
           }
+          Q_NOWARN_DEPRECATED_POP
 
           const QgsSymbol *subSymbol = const_cast<QgsSymbolLayer *>( sl )->subSymbol();
           if ( subSymbol )
@@ -4981,6 +5314,7 @@ QSet<const QgsSymbolLayer *> QgsSymbolLayerUtils::toSymbolLayerPointers( const Q
       const QSet<QgsSymbolLayerId> &mSymbolLayerIds;
       QSet<const QgsSymbolLayer *> mSymbolLayers;
   };
+  Q_NOWARN_DEPRECATED_POP
 
   SymbolLayerVisitor visitor( symbolLayerIds );
   renderer->accept( &visitor );
@@ -5050,7 +5384,7 @@ double QgsSymbolLayerUtils::rendererFrameRate( const QgsFeatureRenderer *rendere
   return visitor.refreshRate;
 }
 
-QgsSymbol *QgsSymbolLayerUtils::restrictedSizeSymbol( const QgsSymbol *s, double minSize, double maxSize, QgsRenderContext *context, double &width, double &height, bool *ok )
+std::unique_ptr< QgsSymbol > QgsSymbolLayerUtils::restrictedSizeSymbol( const QgsSymbol *s, double minSize, double maxSize, QgsRenderContext *context, double &width, double &height, bool *ok )
 {
   if ( !s || !context )
   {
@@ -5110,7 +5444,7 @@ QgsSymbol *QgsSymbolLayerUtils::restrictedSizeSymbol( const QgsSymbol *s, double
 
   if ( markerSymbol )
   {
-    QgsMarkerSymbol *ms = dynamic_cast<QgsMarkerSymbol *>( s->clone() );
+    std::unique_ptr< QgsMarkerSymbol > ms( markerSymbol->clone() );
     ms->setSize( size );
     ms->setSizeUnit( Qgis::RenderUnit::Millimeters );
     width = size;
@@ -5119,7 +5453,7 @@ QgsSymbol *QgsSymbolLayerUtils::restrictedSizeSymbol( const QgsSymbol *s, double
   }
   else if ( lineSymbol )
   {
-    QgsLineSymbol *ls = dynamic_cast<QgsLineSymbol *>( s->clone() );
+    std::unique_ptr< QgsLineSymbol > ls( lineSymbol->clone() );
     ls->setWidth( size );
     ls->setWidthUnit( Qgis::RenderUnit::Millimeters );
     height = size;
@@ -5407,6 +5741,46 @@ void QgsSymbolLayerUtils::clearSymbolLayerIds( QgsSymbolLayer *symbolLayer )
 void QgsSymbolLayerUtils::resetSymbolLayerIds( QgsSymbolLayer *symbolLayer )
 {
   changeSymbolLayerIds( symbolLayer, []() { return QUuid::createUuid().toString(); } );
+}
+
+void QgsSymbolLayerUtils::clearSymbolLayerMasks( QgsSymbol *symbol )
+{
+  if ( !symbol )
+    return;
+
+  for ( int idx = 0; idx < symbol->symbolLayerCount(); idx++ )
+  {
+    if ( QgsMaskMarkerSymbolLayer *maskSl = dynamic_cast<QgsMaskMarkerSymbolLayer *>( symbol->symbolLayer( idx ) ) )
+    {
+      maskSl->clearMasks();
+
+      // recurse over sub symbols
+      if ( QgsSymbol *subSymbol = maskSl->subSymbol() )
+      {
+        clearSymbolLayerMasks( subSymbol );
+      }
+    }
+  }
+}
+
+QVector<QgsGeometry> QgsSymbolLayerUtils::collectSymbolLayerClipGeometries( const QgsRenderContext &context, const QString &symbolLayerId, const QRectF &bounds )
+{
+  QVector<QgsGeometry> clipGeometries = context.symbolLayerClipGeometries( symbolLayerId );
+  if ( clipGeometries.empty() )
+    return {};
+
+  if ( bounds.isNull() )
+    return clipGeometries;
+
+  const QgsRectangle boundsRect = QgsRectangle( bounds );
+
+  clipGeometries.erase(
+    std::remove_if( clipGeometries.begin(), clipGeometries.end(), [&boundsRect]( const QgsGeometry & geometry )
+  {
+    return !geometry.boundingBoxIntersects( boundsRect );
+  } ), clipGeometries.end() );
+
+  return clipGeometries;
 }
 
 void QgsSymbolLayerUtils::resetSymbolLayerIds( QgsSymbol *symbol )

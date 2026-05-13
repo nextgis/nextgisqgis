@@ -24,7 +24,7 @@
 /**
  * \class QgsLayoutComboBox
  * \ingroup gui
- * \brief The QgsLayoutComboBox class is a combo box which displays available layouts from a QgsLayoutManager.
+ * \brief A combobox which displays available layouts from a QgsLayoutManager.
  * \since QGIS 3.8
  */
 class GUI_EXPORT QgsLayoutComboBox : public QComboBox
@@ -32,7 +32,6 @@ class GUI_EXPORT QgsLayoutComboBox : public QComboBox
     Q_OBJECT
 
   public:
-
     /**
      * QgsLayoutComboBox creates a combo box to display a list of items in a
      * layout \a manager. The layouts can optionally be filtered by type.
@@ -99,7 +98,6 @@ class GUI_EXPORT QgsLayoutComboBox : public QComboBox
   private:
     QgsLayoutManagerModel *mModel = nullptr;
     QgsLayoutManagerProxyModel *mProxyModel = nullptr;
-
 };
 
 #endif // QGSLAYOUTCOMBOBOX_H

@@ -27,7 +27,7 @@ class QgsSymbolLayerReference;
 /**
  * \ingroup core
  * \class QgsMaskMarkerSymbolLayer
- * \brief Special symbol layer that uses its sub symbol as a selective mask
+ * \brief Special symbol layer that uses its sub symbol as a selective mask.
  * \since QGIS 3.12
  */
 
@@ -67,8 +67,10 @@ class CORE_EXPORT QgsMaskMarkerSymbolLayer : public QgsMarkerSymbolLayer
 
     virtual void drawPreviewIcon( QgsSymbolRenderContext &context, QSize size ) override;
 
+    // TODO QGIS 4.0 rename to avoid collision with base class member
+
     //! Whether some masked symbol layers are defined
-    bool enabled() const;
+    bool enabled() const; // cppcheck-suppress duplInheritedMember
 
     /**
      * Returns a list of references to symbol layers that are masked by the sub symbol's shape.
@@ -76,6 +78,13 @@ class CORE_EXPORT QgsMaskMarkerSymbolLayer : public QgsMarkerSymbolLayer
      * \see setMasks
      */
     QList<QgsSymbolLayerReference> masks() const override;
+
+    /**
+     * Remove masks defined by this symbol layer.
+     * \see masks()
+     * \since QGIS 3.42
+     */
+    void clearMasks();
 
     /**
      * Sets the symbol layers that will be masked by the sub symbol's shape.
@@ -99,5 +108,3 @@ class CORE_EXPORT QgsMaskMarkerSymbolLayer : public QgsMarkerSymbolLayer
 };
 
 #endif
-
-

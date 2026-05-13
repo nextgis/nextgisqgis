@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/symbology/qgssymbolslistwidget.h                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,12 +13,15 @@
 
 class QgsSymbolsListWidget : QWidget
 {
+%Docstring(signature="appended")
+A widget which presents symbol-level properties (such as size), and
+allows selection of symbols from stored styles.
+%End
 
 %TypeHeaderCode
 #include "qgssymbolslistwidget.h"
 %End
   public:
-
     QgsSymbolsListWidget( QgsSymbol *symbol, QgsStyle *style, QMenu *menu, QWidget *parent /TransferThis/, QgsVectorLayer *layer = 0 );
 %Docstring
 Constructor for QgsSymbolsListWidget.
@@ -35,29 +38,25 @@ Constructor for QgsSymbolsListWidget.
 
     void setContext( const QgsSymbolWidgetContext &context );
 %Docstring
-Sets the context in which the symbol widget is shown, e.g., the associated map canvas and expression contexts.
+Sets the context in which the symbol widget is shown, e.g., the
+associated map canvas and expression contexts.
 
 :param context: symbol widget context
 
 .. seealso:: :py:func:`context`
-
-.. versionadded:: 3.0
 %End
 
     QgsSymbolWidgetContext context() const;
 %Docstring
-Returns the context in which the symbol widget is shown, e.g., the associated map canvas and expression contexts.
+Returns the context in which the symbol widget is shown, e.g., the
+associated map canvas and expression contexts.
 
 .. seealso:: :py:func:`setContext`
-
-.. versionadded:: 3.0
 %End
 
     const QgsVectorLayer *layer() const;
 %Docstring
 Returns the vector layer associated with the widget.
-
-.. versionadded:: 2.12
 %End
 
   public slots:
@@ -74,17 +73,18 @@ Returns the vector layer associated with the widget.
     void updateDataDefinedLineWidth();
 
   signals:
+
     void changed();
+%Docstring
+Emitted when the symbol is modified in the widget.
+%End
 
 };
-
-
-
 
 /************************************************************************
  * This file has been generated automatically from                      *
  *                                                                      *
  * src/gui/symbology/qgssymbolslistwidget.h                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

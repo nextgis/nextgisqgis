@@ -26,6 +26,7 @@
 #include <QUiLoader>
 
 #include "qgisappinterface.h"
+#include "moc_qgisappinterface.cpp"
 #include "qgisappstylesheet.h"
 #include "qgisapp.h"
 #include "qgsapplayertreeviewmenuprovider.h"
@@ -45,29 +46,26 @@
 #include "qgslocator.h"
 #include "qgsmessagebar.h"
 #include "qgsappmaptools.h"
+#include "qgspointcloudlayer.h"
+#include "qgsappgpsdigitizing.h"
 
 QgisAppInterface::QgisAppInterface( QgisApp *_qgis )
   : qgis( _qgis )
   , pluginManagerIface( _qgis->pluginManager() )
+  , mGpsToolsIface()
 {
   // connect signals
-  connect( qgis, &QgisApp::activeLayerChanged,
-           this, &QgisInterface::currentLayerChanged );
-  connect( qgis, &QgisApp::currentThemeChanged,
-           this, &QgisAppInterface::currentThemeChanged );
+  connect( qgis, &QgisApp::activeLayerChanged, this, &QgisInterface::currentLayerChanged );
+  connect( qgis, &QgisApp::currentThemeChanged, this, &QgisAppInterface::currentThemeChanged );
 
   connect( qgis, &QgisApp::layoutDesignerOpened, this, &QgisAppInterface::layoutDesignerOpened );
   connect( qgis, &QgisApp::layoutDesignerWillBeClosed, this, &QgisAppInterface::layoutDesignerWillBeClosed );
   connect( qgis, &QgisApp::layoutDesignerClosed, this, &QgisAppInterface::layoutDesignerClosed );
 
-  connect( qgis, &QgisApp::initializationCompleted,
-           this, &QgisInterface::initializationCompleted );
-  connect( qgis, &QgisApp::newProject,
-           this, &QgisInterface::newProjectCreated );
-  connect( qgis, &QgisApp::projectRead,
-           this, &QgisInterface::projectRead );
-  connect( qgis, &QgisApp::layerSavedAs,
-           this, &QgisInterface::layerSavedAs );
+  connect( qgis, &QgisApp::initializationCompleted, this, &QgisInterface::initializationCompleted );
+  connect( qgis, &QgisApp::newProject, this, &QgisInterface::newProjectCreated );
+  connect( qgis, &QgisApp::projectRead, this, &QgisInterface::projectRead );
+  connect( qgis, &QgisApp::layerSavedAs, this, &QgisInterface::layerSavedAs );
 }
 
 QgsPluginManagerInterface *QgisAppInterface::pluginManagerInterface()
@@ -80,8 +78,12 @@ QgsLayerTreeView *QgisAppInterface::layerTreeView()
   return qgis->layerTreeView();
 }
 
-void QgisAppInterface::addCustomActionForLayerType( QAction *action,
-    QString menu, Qgis::LayerType type, bool allLayers )
+QgsGpsToolsInterface *QgisAppInterface::gpsTools()
+{
+  return &mGpsToolsIface;
+}
+
+void QgisAppInterface::addCustomActionForLayerType( QAction *action, QString menu, Qgis::LayerType type, bool allLayers )
 {
   QgsAppLayerTreeViewMenuProvider *menuProvider = dynamic_cast<QgsAppLayerTreeViewMenuProvider *>( qgis->layerTreeView()->menuProvider() );
   if ( !menuProvider )
@@ -160,16 +162,19 @@ QgsMeshLayer *QgisAppInterface::addMeshLayer( const QString &url, const QString 
   return qgis->addMeshLayer( url, baseName, providerKey );
 }
 
-/*
 QgsVectorTileLayer *QgisAppInterface::addVectorTileLayer( const QString &url, const QString &baseName )
 {
-  return qgis->addVectorTileLayer( url, baseName );
+  return qgis->addLayer<QgsVectorTileLayer>( url, baseName, QString() );
 }
-*/
 
 QgsPointCloudLayer *QgisAppInterface::addPointCloudLayer( const QString &url, const QString &baseName, const QString &providerKey )
 {
-  return qgis->addPointCloudLayer( url, baseName, providerKey );
+  return qgis->addLayer<QgsPointCloudLayer>( url, baseName, providerKey );
+}
+
+QgsTiledSceneLayer *QgisAppInterface::addTiledSceneLayer( const QString &url, const QString &baseName, const QString &providerKey )
+{
+  return qgis->addLayer<QgsTiledSceneLayer>( url, baseName, providerKey );
 }
 
 bool QgisAppInterface::addProject( const QString &projectName )
@@ -184,7 +189,7 @@ bool QgisAppInterface::newProject( bool promptToSaveFlag )
 
 void QgisAppInterface::reloadConnections()
 {
-  qgis->reloadConnections( );
+  qgis->reloadConnections();
 }
 
 QgsMapLayer *QgisAppInterface::activeLayer()
@@ -387,6 +392,21 @@ void QgisAppInterface::closeMapCanvas( const QString &name )
   qgis->closeMapCanvas( name );
 }
 
+QList<Qgs3DMapCanvas *> QgisAppInterface::mapCanvases3D()
+{
+  return qgis->mapCanvases3D();
+}
+
+Qgs3DMapCanvas *QgisAppInterface::createNewMapCanvas3D( const QString &name, Qgis::SceneMode sceneMode )
+{
+  return qgis->createNewMapCanvas3D( name, sceneMode );
+}
+
+void QgisAppInterface::closeMapCanvas3D( const QString &name )
+{
+  qgis->close3DMapView( name );
+}
+
 QSize QgisAppInterface::iconSize( bool dockedToolbar ) const
 {
   return qgis->iconSize( dockedToolbar );
@@ -407,9 +427,9 @@ QgsMessageBar *QgisAppInterface::messageBar()
   return qgis->messageBar();
 }
 
-void QgisAppInterface::openMessageLog()
+void QgisAppInterface::openMessageLog( const QString &tabName )
 {
-  qgis->openMessageLog();
+  qgis->openMessageLog( tabName );
 }
 
 
@@ -480,15 +500,12 @@ QMap<QString, QVariant> QgisAppInterface::defaultStyleSheetOptions()
 void QgisAppInterface::buildStyleSheet( const QMap<QString, QVariant> &opts )
 {
   // remove unwanted fontPointSize / fontFamily keys, which may be present from older code
-  QMap< QString, QVariant> newOpts = opts;
-  if ( newOpts.contains( QStringLiteral( "fontPointSize" ) ) && (
-         newOpts.value( QStringLiteral( "fontPointSize" ) ).toDouble() == qgis->styleSheetBuilder()->defaultFont().pointSizeF()
-         || newOpts.value( QStringLiteral( "fontPointSize" ) ).toString() == QString::number( qgis->styleSheetBuilder()->defaultFont().pointSizeF() ) ) )
+  QMap<QString, QVariant> newOpts = opts;
+  if ( newOpts.contains( QStringLiteral( "fontPointSize" ) ) && ( newOpts.value( QStringLiteral( "fontPointSize" ) ).toDouble() == qgis->styleSheetBuilder()->defaultFont().pointSizeF() || newOpts.value( QStringLiteral( "fontPointSize" ) ).toString() == QString::number( qgis->styleSheetBuilder()->defaultFont().pointSizeF() ) ) )
   {
     newOpts.remove( QStringLiteral( "fontPointSize" ) );
   }
-  if ( newOpts.contains( QStringLiteral( "fontFamily" ) ) &&
-       newOpts.value( QStringLiteral( "fontFamily" ) ).toString() == qgis->styleSheetBuilder()->defaultFont().family() )
+  if ( newOpts.contains( QStringLiteral( "fontFamily" ) ) && newOpts.value( QStringLiteral( "fontFamily" ) ).toString() == qgis->styleSheetBuilder()->defaultFont().family() )
   {
     newOpts.remove( QStringLiteral( "fontFamily" ) );
   }
@@ -499,15 +516,12 @@ void QgisAppInterface::buildStyleSheet( const QMap<QString, QVariant> &opts )
 void QgisAppInterface::saveStyleSheetOptions( const QMap<QString, QVariant> &opts )
 {
   // remove unwanted fontPointSize / fontFamily keys, which may be present from older code
-  QMap< QString, QVariant> newOpts = opts;
-  if ( newOpts.contains( QStringLiteral( "fontPointSize" ) ) && (
-         newOpts.value( QStringLiteral( "fontPointSize" ) ).toDouble() == qgis->styleSheetBuilder()->defaultFont().pointSizeF()
-         || newOpts.value( QStringLiteral( "fontPointSize" ) ).toString() == QString::number( qgis->styleSheetBuilder()->defaultFont().pointSizeF() ) ) )
+  QMap<QString, QVariant> newOpts = opts;
+  if ( newOpts.contains( QStringLiteral( "fontPointSize" ) ) && ( newOpts.value( QStringLiteral( "fontPointSize" ) ).toDouble() == qgis->styleSheetBuilder()->defaultFont().pointSizeF() || newOpts.value( QStringLiteral( "fontPointSize" ) ).toString() == QString::number( qgis->styleSheetBuilder()->defaultFont().pointSizeF() ) ) )
   {
     newOpts.remove( QStringLiteral( "fontPointSize" ) );
   }
-  if ( newOpts.contains( QStringLiteral( "fontFamily" ) ) &&
-       newOpts.value( QStringLiteral( "fontFamily" ) ).toString() == qgis->styleSheetBuilder()->defaultFont().family() )
+  if ( newOpts.contains( QStringLiteral( "fontFamily" ) ) && newOpts.value( QStringLiteral( "fontFamily" ) ).toString() == qgis->styleSheetBuilder()->defaultFont().family() )
   {
     newOpts.remove( QStringLiteral( "fontFamily" ) );
   }
@@ -621,6 +635,12 @@ void QgisAppInterface::unregisterDevToolWidgetFactory( QgsDevToolWidgetFactory *
   qgis->unregisterDevToolFactory( factory );
 }
 
+void QgisAppInterface::showApiDocumentation( Qgis::DocumentationApi api, Qgis::DocumentationBrowser browser, const QString &object, const QString &module )
+{
+  qgis->showApiDocumentation( api, browser, object, module );
+}
+
+
 void QgisAppInterface::registerApplicationExitBlocker( QgsApplicationExitBlockerInterface *blocker )
 {
   qgis->registerApplicationExitBlocker( blocker );
@@ -697,7 +717,7 @@ void QgisAppInterface::addProjectExportAction( QAction *action )
   if ( QMenu *menu = projectImportExportMenu() )
   {
     // export actions come before import actions in the menu, so find separator in menu
-    const QList< QAction * > actions = menu->actions();
+    const QList<QAction *> actions = menu->actions();
     for ( QAction *menuAction : actions )
     {
       if ( menuAction->isSeparator() )
@@ -720,6 +740,18 @@ void QgisAppInterface::removeProjectExportAction( QAction *action )
   }
 }
 
+QMenu *QgisAppInterface::projectModelsMenu()
+{
+  return qgis->projectModelsMenu();
+}
+
+QMenu *QgisAppInterface::createProjectModelSubMenu( const QString &title )
+{
+  QMenu *modelSubMenu = new QMenu( title, qgis->projectModelsMenu() );
+  qgis->projectModelsMenu()->addMenu( modelSubMenu );
+  return modelSubMenu;
+}
+
 QMenu *QgisAppInterface::editMenu() { return qgis->editMenu(); }
 QMenu *QgisAppInterface::viewMenu() { return qgis->viewMenu(); }
 QMenu *QgisAppInterface::layerMenu() { return qgis->layerMenu(); }
@@ -732,6 +764,7 @@ QMenu *QgisAppInterface::rasterMenu() { return qgis->rasterMenu(); }
 QMenu *QgisAppInterface::vectorMenu() { return qgis->vectorMenu(); }
 QMenu *QgisAppInterface::databaseMenu() { return qgis->databaseMenu(); }
 QMenu *QgisAppInterface::webMenu() { return qgis->webMenu(); }
+QMenu *QgisAppInterface::meshMenu() { return qgis->meshMenu(); }
 QMenu *QgisAppInterface::firstRightStandardMenu() { return qgis->firstRightStandardMenu(); }
 QMenu *QgisAppInterface::windowMenu() { return qgis->windowMenu(); }
 QMenu *QgisAppInterface::helpMenu() { return qgis->helpMenu(); }
@@ -815,7 +848,7 @@ QAction *QgisAppInterface::actionAddRasterLayer() { return qgis->actionAddRaster
 QAction *QgisAppInterface::actionAddPgLayer() { return qgis->actionAddPgLayer(); }
 QAction *QgisAppInterface::actionAddWmsLayer() { return qgis->actionAddWmsLayer(); }
 QAction *QgisAppInterface::actionAddXyzLayer() { return qgis->actionAddXyzLayer(); }
-// QAction *QgisAppInterface::actionAddVectorTileLayer() { return qgis->actionAddVectorTileLayer(); }
+QAction *QgisAppInterface::actionAddVectorTileLayer() { return qgis->actionAddVectorTileLayer(); }
 QAction *QgisAppInterface::actionAddPointCloudLayer() { return qgis->actionAddPointCloudLayer(); }
 QAction *QgisAppInterface::actionAddAfsLayer() { return qgis->actionAddAfsLayer(); }
 QAction *QgisAppInterface::actionAddAmsLayer() { return qgis->actionAddAfsLayer(); }
@@ -880,8 +913,7 @@ bool QgisAppInterface::openFeatureForm( QgsVectorLayer *vlayer, QgsFeature &f, b
 
 void QgisAppInterface::preloadForm( const QString &uifile )
 {
-  QTimer::singleShot( 0, this, [ = ]
-  {
+  QTimer::singleShot( 0, this, [=] {
     cacheloadForm( uifile );
   } );
 }
@@ -980,12 +1012,10 @@ QgsLayerTreeRegistryBridge::InsertionPoint QgisAppInterface::layerTreeInsertionP
   return qgis->layerTreeInsertionPoint();
 }
 
-/*
 void QgisAppInterface::setGpsPanelConnection( QgsGpsConnection *connection )
 {
   qgis->setGpsPanelConnection( connection );
 }
-*/
 
 QList<QgsMapDecoration *> QgisAppInterface::activeDecorations()
 {
@@ -995,4 +1025,9 @@ QList<QgsMapDecoration *> QgisAppInterface::activeDecorations()
 QgsUserProfileManager *QgisAppInterface::userProfileManager()
 {
   return qgis->userProfileManager();
+}
+
+void QgisAppInterface::blockActiveLayerChanges( bool blocked )
+{
+  qgis->blockActiveLayerChanges( blocked );
 }

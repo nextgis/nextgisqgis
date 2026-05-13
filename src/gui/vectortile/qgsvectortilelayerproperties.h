@@ -16,9 +16,8 @@
 #ifndef QGSVECTORTILELAYERPROPERTIES_H
 #define QGSVECTORTILELAYERPROPERTIES_H
 
-#include "qgsoptionsdialogbase.h"
 #include "ui_qgsvectortilelayerpropertiesbase.h"
-#include "qgsmaplayerstyle.h"
+#include "qgslayerpropertiesdialog.h"
 
 class QgsMapLayer;
 class QgsMapCanvas;
@@ -33,10 +32,10 @@ class QgsProviderSourceWidget;
 /**
  * \ingroup gui
  * \class QgsVectorTileLayerProperties
- * \brief Vectortile layer properties dialog
+ * \brief Layer properties dialog for vector tile layers.
  * \since QGIS 3.28
  */
-class GUI_EXPORT QgsVectorTileLayerProperties : public QgsOptionsDialogBase, private Ui::QgsVectorTileLayerPropertiesBase
+class GUI_EXPORT QgsVectorTileLayerProperties : public QgsLayerPropertiesDialog, private Ui::QgsVectorTileLayerPropertiesBase
 {
     Q_OBJECT
   public:
@@ -44,18 +43,11 @@ class GUI_EXPORT QgsVectorTileLayerProperties : public QgsOptionsDialogBase, pri
     QgsVectorTileLayerProperties( QgsVectorTileLayer *lyr, QgsMapCanvas *canvas, QgsMessageBar *messageBar, QWidget *parent = nullptr, Qt::WindowFlags = QgsGuiUtils::ModalDialogFlags );
 
     /**
-     * Loads the default style when appropriate button is pressed
-     *
-     * \since QGIS 3.30
-     */
-    void loadDefaultStyle();
-
-    /**
      * Saves the default style when appropriate button is pressed
      *
-     * \since QGIS 3.30
+     * \deprecated QGIS 3.40. Use saveStyleAsDefault() instead.
      */
-    void saveDefaultStyle();
+    Q_DECL_DEPRECATED void saveDefaultStyle() SIP_DEPRECATED;
 
     /**
      * Loads a saved style when appropriate button is pressed
@@ -67,26 +59,19 @@ class GUI_EXPORT QgsVectorTileLayerProperties : public QgsOptionsDialogBase, pri
     /**
      * Saves a style when appriate button is pressed
      *
-     * \since QGIS 3.30
+     * \deprecated QGIS 3.40. Use saveStyleToFile() instead.
      */
-    void saveStyleAs();
+    Q_DECL_DEPRECATED void saveStyleAs() SIP_DEPRECATED;
 
   private slots:
-    void apply();
-    void onCancel();
+    void apply() FINAL;
 
     void aboutToShowStyleMenu();
-    void loadMetadata();
-    void saveMetadataAs();
     void showHelp();
-    void urlClicked( const QUrl &url );
     void crsChanged( const QgsCoordinateReferenceSystem &crs );
 
-  protected slots:
-    void optionsStackedWidget_CurrentChanged( int index ) override SIP_SKIP ;
-
   private:
-    void syncToLayer();
+    void syncToLayer() FINAL;
 
   private:
     QgsVectorTileLayer *mLayer = nullptr;
@@ -99,16 +84,9 @@ class GUI_EXPORT QgsVectorTileLayerProperties : public QgsOptionsDialogBase, pri
     QAction *mActionLoadMetadata = nullptr;
     QAction *mActionSaveMetadataAs = nullptr;
 
-    QgsMapCanvas *mMapCanvas = nullptr;
     QgsMetadataWidget *mMetadataWidget = nullptr;
 
     QgsProviderSourceWidget *mSourceWidget = nullptr;
-
-    /**
-     * Previous layer style. Used to reset style to previous state if new style
-     * was loaded but dialog is canceled.
-    */
-    QgsMapLayerStyle mOldStyle;
 };
 
 #endif // QGSVECTORTILELAYERPROPERTIES_H

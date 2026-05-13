@@ -32,9 +32,9 @@ function(check_version major minor patch qgis_major qgis_minor qgis_patch qgis_n
     # QGIS_PORT is the version of QGIS this release is bound to
 
     set(QGIS_MAJOR 3)
-    set(QGIS_MINOR 32)
-    set(QGIS_PATCH 2)
-    set(QGIS_NAME "Lima")
+    set(QGIS_MINOR 44)
+    set(QGIS_PATCH 10)
+    set(QGIS_NAME "Solothurn")
 
     set(${major} ${VERSION_MAJOR} PARENT_SCOPE)
     set(${minor} ${VERSION_MINOR} PARENT_SCOPE)

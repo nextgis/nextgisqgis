@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgseditorwidgetsetup.h                                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,8 +12,6 @@ class QgsEditorWidgetSetup
 {
 %Docstring(signature="appended")
 Holder for the widget type and its configuration for a field.
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -27,27 +25,23 @@ Constructor
 %End
 
     QgsEditorWidgetSetup();
-%Docstring
-Constructor for QgsEditorWidgetSetup
-%End
 
     QString type() const;
 %Docstring
-
-:return: the widget type to use
+Returns the widget type to use.
 %End
 
     QVariantMap config() const;
 %Docstring
-
-:return: the widget configuration to used
+Returns the widget configuration.
 %End
 
     bool isNull() const;
 %Docstring
-
-:return: ``True`` if there is no widget configured.
+Returns ``True`` if there is no widget configured.
 %End
+
+    bool operator==( const QgsEditorWidgetSetup &other ) const;
 
 };
 
@@ -56,5 +50,5 @@ Constructor for QgsEditorWidgetSetup
  *                                                                      *
  * src/core/qgseditorwidgetsetup.h                                      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

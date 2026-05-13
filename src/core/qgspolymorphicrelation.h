@@ -37,7 +37,10 @@ class QgsPolymorphicRelationPrivate;
 class QgsExpressionContext;
 
 /**
- * \brief A polymorphic relation consists of the same properties like a normal relation except for the referenced layer which is calculated based on one or several fields of the referencing layer.
+ * \brief A relation where the referenced (parent) layer is calculated based on fields from the referencing (child) layer.
+ *
+ * A polymorphic relation consists of the same properties like a normal relation except for the referenced (parent) layer which
+ * is calculated based on one or several fields of the referencing (child) layer.
  *
  * In its most simple form, the referencing layer will just insert the layer name of the referenced layer into this field.
  * To be more precise, a polymorphic relation is a set of normal relations having the same referencing layer but having the referenced layer dynamically defined.
@@ -156,7 +159,6 @@ class CORE_EXPORT QgsPolymorphicRelation
 
     /**
      * Generate a (project-wide) unique id for this relation
-     * \since QGIS 3.0
      */
     void generateId();
 
@@ -286,6 +288,10 @@ class CORE_EXPORT QgsPolymorphicRelation
     void setRelationStrength( Qgis::RelationshipStrength relationStrength );
 
   private:
+    friend class QgsRelationManager;
+
+    //! Upgrades a relation ID to a stabler ID former if generated using QGIS < 3.38
+    QString upgradeGeneratedRelationId( const QString &oldRelationId ) const;
 
     QExplicitlySharedDataPointer<QgsPolymorphicRelationPrivate> d;
 

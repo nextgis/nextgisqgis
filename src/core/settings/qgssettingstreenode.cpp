@@ -14,20 +14,29 @@
  ***************************************************************************/
 
 #include "qgssettingstreenode.h"
+#include "moc_qgssettingstreenode.cpp"
 #include "qgssettingsentryimpl.h"
 #include "qgsexception.h"
 #include "qgssettings.h"
+#include "qgssettingsproxy.h"
 
 #include <QDir>
-
 
 QgsSettingsTreeNode::~QgsSettingsTreeNode()
 {
   if ( mType != Qgis::SettingsTreeNodeType::Root )
     mParent->unregisterChildNode( this );
 
-  qDeleteAll( mChildrenNodes );
-  qDeleteAll( mChildrenSettings );
+  // do not use qDeleteAll
+  // the destructor of QgsSettingsTreeNode and QgsSettingsEntry
+  // will call unregister on the parent (see above)
+  // and will modify the containers at the same time
+  const auto nodes = mChildrenNodes;
+  for ( const auto *node : nodes )
+    delete node;
+  const auto settings = mChildrenSettings;
+  for ( const auto *setting : settings )
+    delete setting;
 }
 
 QgsSettingsTreeNode *QgsSettingsTreeNode::createRootNode()
@@ -135,6 +144,7 @@ void QgsSettingsTreeNode::init( QgsSettingsTreeNode *parent, const QString &key 
   mCompleteKey = QDir::cleanPath( QStringLiteral( "%1/%2" ).arg( parent->completeKey(), key ) ) + '/';
 }
 
+QgsSettingsTreeNamedListNode::QgsSettingsTreeNamedListNode() = default;
 
 void QgsSettingsTreeNamedListNode::initNamedList( const Qgis::SettingsTreeNodeOptions &options )
 {
@@ -142,7 +152,7 @@ void QgsSettingsTreeNamedListNode::initNamedList( const Qgis::SettingsTreeNodeOp
   if ( options.testFlag( Qgis::SettingsTreeNodeOption::NamedListSelectedItemSetting ) )
   {
     // this must be done before completing the key
-    mSelectedItemSetting = new QgsSettingsEntryString( QStringLiteral( "%1/selected" ).arg( mCompleteKey ), nullptr );
+    mSelectedItemSetting = std::make_unique<QgsSettingsEntryString>( QStringLiteral( "%1/selected" ).arg( mCompleteKey ), nullptr );
   }
 
   mNamedNodesCount = mParent->namedNodesCount() + 1;
@@ -152,7 +162,7 @@ void QgsSettingsTreeNamedListNode::initNamedList( const Qgis::SettingsTreeNodeOp
 
 QgsSettingsTreeNamedListNode::~QgsSettingsTreeNamedListNode()
 {
-  delete mSelectedItemSetting;
+
 }
 
 
@@ -168,9 +178,11 @@ QStringList QgsSettingsTreeNamedListNode::items( Qgis::SettingsOrigin origin, co
 
 
   const QString completeKeyParam = completeKeyWithNamedItems( mItemsCompleteKey, parentsNamedItems );
-  QgsSettings settings;
-  settings.beginGroup( completeKeyParam );
-  return settings.childGroups( origin );
+  auto settings = QgsSettings::get();
+  settings->beginGroup( completeKeyParam );
+  const QStringList res = settings->childGroups( origin );
+  settings->endGroup();
+  return res;
 }
 
 void QgsSettingsTreeNamedListNode::setSelectedItem( const QString &item, const QStringList &parentsNamedItems )
@@ -201,7 +213,7 @@ void QgsSettingsTreeNamedListNode::deleteItem( const QString &item, const QStrin
   QStringList args = parentsNamedItems;
   args << item;
   QString key = completeKeyWithNamedItems( mCompleteKey, args );
-  QgsSettings().remove( key );
+  QgsSettings::get()->remove( key );
 }
 
 void QgsSettingsTreeNamedListNode::deleteAllItems( const QStringList &parentsNamedItems )
@@ -210,12 +222,13 @@ void QgsSettingsTreeNamedListNode::deleteAllItems( const QStringList &parentsNam
     throw QgsSettingsException( QObject::tr( "The number of given parent named items (%1) doesn't match with the number of named items in the key (%2)." ).arg( parentsNamedItems.count(), namedNodesCount() ) );
 
   const QStringList children = items( parentsNamedItems );
+  auto settings = QgsSettings::get();
   for ( const QString &child : children )
   {
     QStringList args = parentsNamedItems;
     args << child;
     QString key = completeKeyWithNamedItems( mCompleteKey, args );
-    QgsSettings().remove( key );
+    settings->remove( key );
   }
 }
 

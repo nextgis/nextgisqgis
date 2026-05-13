@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/actions/qgsactionmanager.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -17,8 +17,8 @@ class QgsActionManager: QObject
 %Docstring(signature="appended")
 Storage and management of actions associated with a layer.
 
-Actions can trigger custom code or applications to be executed
-based on attributes of a given feature.
+Actions can trigger custom code or applications to be executed based on
+attributes of a given feature.
 %End
 
 %TypeHeaderCode
@@ -32,20 +32,18 @@ Constructor
 
     QUuid addAction( Qgis::AttributeActionType type, const QString &name, const QString &command, bool capture = false );
 %Docstring
-Add an action with the given name and action details.
-Will happily have duplicate names and actions. If
-capture is ``True``, when running the action using :py:func:`~QgsActionManager.doAction`,
-any stdout from the process will be captured and displayed in a
-dialog box.
+Add an action with the given name and action details. Will happily have
+duplicate names and actions. If capture is ``True``, when running the
+action using :py:func:`~QgsActionManager.doAction`, any stdout from the
+process will be captured and displayed in a dialog box.
 %End
 
     QUuid addAction( Qgis::AttributeActionType type, const QString &name, const QString &command, const QString &icon, bool capture = false );
 %Docstring
-Add an action with the given name and action details.
-Will happily have duplicate names and actions. If
-capture is ``True``, when running the action using :py:func:`~QgsActionManager.doAction`,
-any stdout from the process will be captured and displayed in a
-dialog box.
+Add an action with the given name and action details. Will happily have
+duplicate names and actions. If capture is ``True``, when running the
+action using :py:func:`~QgsActionManager.doAction`, any stdout from the
+process will be captured and displayed in a dialog box.
 %End
 
     void addAction( const QgsAction &action );
@@ -56,8 +54,6 @@ Add a new action to this list.
     void removeAction( QUuid actionId );
 %Docstring
 Remove an action by its id.
-
-.. versionadded:: 3.0
 %End
 
     void doAction( QUuid actionId, const QgsFeature &feature, int defaultValueIndex = 0, const QgsExpressionContextScope &scope = QgsExpressionContextScope() ) /PyName=doActionFeature/;
@@ -66,18 +62,18 @@ Does the given action.
 
 :param actionId: action id
 :param feature: feature to run action for
-:param defaultValueIndex: index of the field to be used if the action has a $currfield placeholder.
-:param scope: expression context scope to add during expression evaluation
+:param defaultValueIndex: index of the field to be used if the action
+                          has a $currfield placeholder.
+:param scope: expression context scope to add during expression
+              evaluation
 
-.. note::
 
-   available in Python bindings as doActionFeature
 %End
 
     void doAction( QUuid actionId, const QgsFeature &feature, const QgsExpressionContext &context );
 %Docstring
-Does the action using the expression engine to replace any embedded expressions
-in the action definition.
+Does the action using the expression engine to replace any embedded
+expressions in the action definition.
 
 :param actionId: action id
 :param feature: feature to run action for
@@ -93,8 +89,6 @@ Removes all actions
 %Docstring
 Returns a list of actions that are available in the given action scope.
 If no action scope is provided, all actions will be returned.
-
-.. versionadded:: 3.0
 %End
 
     QgsVectorLayer *layer() const;
@@ -115,8 +109,6 @@ Reads the actions in in XML format
     QgsAction action( QUuid id ) const;
 %Docstring
 Gets an action by its ``id``.
-
-.. versionadded:: 3.0
 %End
 
     QgsAction action( const QString &id ) const;
@@ -130,16 +122,12 @@ Gets an action by its ``id``.
 %Docstring
 Each scope can have a default action. This will be saved in the project
 file.
-
-.. versionadded:: 3.0
 %End
 
     QgsAction defaultAction( const QString &actionScope );
 %Docstring
 Each scope can have a default action. This will be saved in the project
 file.
-
-.. versionadded:: 3.0
 %End
 
 };
@@ -149,5 +137,5 @@ file.
  *                                                                      *
  * src/core/actions/qgsactionmanager.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

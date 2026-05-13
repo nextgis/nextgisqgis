@@ -19,6 +19,7 @@
 #define QGSSTOREDEXPRESSIONMANAGER_H
 
 #include "qgis_core.h"
+#include "qgis_sip.h"
 #include <QString>
 #include <QObject>
 #include <QUuid>
@@ -38,56 +39,54 @@ class QDomDocument;
  * \brief Stored expression containing name, content (expression text) and a category tag.
  * \since QGIS 3.10
  */
-struct CORE_EXPORT QgsStoredExpression
+class CORE_EXPORT QgsStoredExpression
 {
+  public:
 
-  /**
-   * Categories of use cases
-   * FilterExpression for stored expressions to filter attribute table
-   * DefaultValueExpression for stored expressions to use for default values (not yet used)
-   */
-  enum Category
-  {
-    FilterExpression        = 1 << 0, //!< Expressions to filter features
-    DefaultValueExpression  = 1 << 1,  //!< Expressions to determine default values (not yet used)
-    All                     = FilterExpression | DefaultValueExpression
-  };
+    /**
+     * Categories of use cases
+     * FilterExpression for stored expressions to filter attribute table
+     * DefaultValueExpression for stored expressions to use for default values (not yet used)
+     */
+    enum Category SIP_ENUM_BASETYPE( IntFlag )
+    {
+      FilterExpression        = 1 << 0, //!< Expressions to filter features
+      DefaultValueExpression  = 1 << 1,  //!< Expressions to determine default values (not yet used)
+      All                     = FilterExpression | DefaultValueExpression
+    };
 
 #ifndef SIP_RUN
 
-  /**
-   * Constructor for QgsStoredExpression
-   */
-  QgsStoredExpression() = default;
+    QgsStoredExpression() = default;
 
-  /**
-   * Create a new QgsStoredExpression with a generated uuid as id
-   *
-   *  \param name           descriptive name of the expression
-   *  \param expression     expression text
-   *  \param tag            category of the expression use case - default FilterExpression
-   */
-  QgsStoredExpression( QString name, QString expression, Category tag = Category::FilterExpression )
-    : id( QUuid::createUuid().toString() ),
-      name( name ),
-      expression( expression ),
-      tag( tag )
-  {}
+    /**
+     * Create a new QgsStoredExpression with a generated uuid as id
+     *
+     *  \param name           descriptive name of the expression
+     *  \param expression     expression text
+     *  \param tag            category of the expression use case - default FilterExpression
+     */
+    QgsStoredExpression( const QString &name, const QString &expression, Category tag = Category::FilterExpression )
+      : id( QUuid::createUuid().toString() )
+      , name( name )
+      , expression( expression )
+      , tag( tag )
+    {}
 #endif
 
-  //! generated uuid used for identification
-  QString id;
-  //! descriptive name of the expression
-  QString name;
-  //! expression text
-  QString expression;
-  //! category of the expression use case
-  Category tag = Category::FilterExpression;
+    //! generated uuid used for identification
+    QString id;
+    //! descriptive name of the expression
+    QString name;
+    //! expression text
+    QString expression;
+    //! category of the expression use case
+    QgsStoredExpression::Category tag = QgsStoredExpression::Category::FilterExpression;
 };
 
 /**
  * \ingroup core
- * \brief Manages stored expressions regarding creation, modification and storing in the project
+ * \brief Manages stored expressions regarding creation, modification and storing in the project.
  * \since QGIS 3.10
  */
 class CORE_EXPORT QgsStoredExpressionManager : public QObject
@@ -96,9 +95,6 @@ class CORE_EXPORT QgsStoredExpressionManager : public QObject
 
   public:
 
-    /**
-    * Constructor for QgsStoredExpressionManager
-    */
     QgsStoredExpressionManager() = default;
 
     /**

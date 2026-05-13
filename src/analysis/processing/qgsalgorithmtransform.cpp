@@ -30,9 +30,8 @@ void QgsTransformAlgorithm::initParameters( const QVariantMap & )
   addParameter( convertCurvesParam.release() );
 
   // Optional coordinate operation
-  auto crsOpParam = std::make_unique< QgsProcessingParameterCoordinateOperation >( QStringLiteral( "OPERATION" ), QObject::tr( "Coordinate operation" ),
-                    QVariant(), QStringLiteral( "INPUT" ), QStringLiteral( "TARGET_CRS" ), QVariant(), QVariant(), true );
-  crsOpParam->setFlags( crsOpParam->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
+  auto crsOpParam = std::make_unique<QgsProcessingParameterCoordinateOperation>( QStringLiteral( "OPERATION" ), QObject::tr( "Coordinate operation" ), QVariant(), QStringLiteral( "INPUT" ), QStringLiteral( "TARGET_CRS" ), QVariant(), QVariant(), true );
+  crsOpParam->setFlags( crsOpParam->flags() | Qgis::ProcessingParameterFlag::Advanced );
   addParameter( crsOpParam.release() );
 }
 
@@ -46,9 +45,9 @@ QString QgsTransformAlgorithm::outputName() const
   return QObject::tr( "Reprojected" );
 }
 
-QgsProcessingFeatureSource::Flag QgsTransformAlgorithm::sourceFlags() const
+Qgis::ProcessingFeatureSourceFlags QgsTransformAlgorithm::sourceFlags() const
 {
-  return QgsProcessingFeatureSource::FlagSkipGeometryValidityChecks;
+  return Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks;
 }
 
 QString QgsTransformAlgorithm::name() const
@@ -81,6 +80,11 @@ QString QgsTransformAlgorithm::shortHelpString() const
   return QObject::tr( "This algorithm reprojects a vector layer. It creates a new layer with the same features "
                       "as the input one, but with geometries reprojected to a new CRS.\n\n"
                       "Attributes are not modified by this algorithm." );
+}
+
+QString QgsTransformAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Creates a vector layer with geometries transformed to a new CRS." );
 }
 
 QgsTransformAlgorithm *QgsTransformAlgorithm::createInstance() const
@@ -150,6 +154,3 @@ QgsFeatureList QgsTransformAlgorithm::processFeature( const QgsFeature &f, QgsPr
 }
 
 ///@endcond
-
-
-

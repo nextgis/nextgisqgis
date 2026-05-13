@@ -24,24 +24,25 @@ class QgsSpinBoxLineEdit;
 
 
 #ifdef SIP_RUN
-% ModuleHeaderCode
+//%ModuleHeaderCode
 // fix to allow compilation with sip that for some reason
 // doesn't add this include to the file where the code from
 // ConvertToSubClassCode goes.
 #include <qgsdoublespinbox.h>
-% End
+//%End
 #endif
 
 
 /**
  * \ingroup gui
  * \brief The QgsSpinBox is a spin box with a clear button that will set the value to the defined clear value.
+ *
  * The clear value can be either the minimum or the maiximum value of the spin box or a custom value.
+ *
  * This value can then be handled by a special value text.
  */
 class GUI_EXPORT QgsDoubleSpinBox : public QDoubleSpinBox
 {
-
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
     if ( qobject_cast<QgsDoubleSpinBox *>( sipCpp ) )
@@ -57,13 +58,12 @@ class GUI_EXPORT QgsDoubleSpinBox : public QDoubleSpinBox
     Q_PROPERTY( bool expressionsEnabled READ expressionsEnabled WRITE setExpressionsEnabled )
 
   public:
-
     //! Behavior when widget is cleared.
     enum ClearValueMode
     {
       MinimumValue, //!< Reset value to minimum()
       MaximumValue, //!< Reset value to maximum()
-      CustomValue, //!< Reset value to custom value (see setClearValue() )
+      CustomValue,  //!< Reset value to custom value (see setClearValue() )
     };
 
     /**
@@ -84,13 +84,12 @@ class GUI_EXPORT QgsDoubleSpinBox : public QDoubleSpinBox
      * Returns whether the widget is showing a clear button.
      * \see setShowClearButton()
      */
-    bool showClearButton() const {return mShowClearButton;}
+    bool showClearButton() const { return mShowClearButton; }
 
     /**
      * Sets if the widget will allow entry of simple expressions, which are
      * evaluated and then discarded.
      * \param enabled set to TRUE to allow expression entry
-     * \since QGIS 2.7
      */
     void setExpressionsEnabled( bool enabled );
 
@@ -98,9 +97,8 @@ class GUI_EXPORT QgsDoubleSpinBox : public QDoubleSpinBox
      * Returns whether the widget will allow entry of simple expressions, which are
      * evaluated and then discarded.
      * \returns TRUE if spin box allows expression entry
-     * \since QGIS 2.7
      */
-    bool expressionsEnabled() const {return mExpressionsEnabled;}
+    bool expressionsEnabled() const { return mExpressionsEnabled; }
 
     //! Sets the current value to the value defined by the clear value.
     void clear() override;
@@ -127,6 +125,15 @@ class GUI_EXPORT QgsDoubleSpinBox : public QDoubleSpinBox
     double clearValue() const;
 
     /**
+     * Returns TRUE if the value is equal to the clear value.
+     *
+     * \see clearValue()
+     *
+     * \since QGIS 3.42
+     */
+    bool isCleared() const;
+
+    /**
      * Set alignment in the embedded line edit widget
      * \param alignment
      */
@@ -142,10 +149,64 @@ class GUI_EXPORT QgsDoubleSpinBox : public QDoubleSpinBox
     double valueFromText( const QString &text ) const override;
     QValidator::State validate( QString &input, int &pos ) const override;
     void paintEvent( QPaintEvent *e ) override;
+    void stepBy( int steps ) override;
+
+    /**
+     * Returns the timeout (in milliseconds) threshold for the editingTimeout() signal to be emitted
+     * after an edit.
+     *
+     * \see setEditingTimeoutInterval()
+     *
+     * \since QGIS 3.42
+     */
+    int editingTimeoutInterval() const;
+
+  public slots:
+
+    /**
+     * Sets the \a timeout (in milliseconds) threshold for the editingTimeout() signal to be emitted
+     * after an edit.
+     *
+     * \see editingTimeoutInterval()
+     * \see editingTimeout()
+     *
+     * \since QGIS 3.42
+     */
+    void setEditingTimeoutInterval( int timeout );
+
+  signals:
+
+    /**
+     * Emitted when the Return or Enter key is used in the line edit.
+     * \since QGIS 3.40
+     */
+    void returnPressed();
+
+    /**
+     * Emitted when the the value has been manually edited via line edit.
+     * \since QGIS 3.40
+     */
+    void textEdited( const QString &text );
+
+    /**
+     * Emitted when either:
+     *
+     * 1. 1 second has elapsed since the last value change in the widget (eg last key press or scroll wheel event)
+     * 2. or, immediately after the widget has lost focus after its value was changed.
+     *
+     * This signal can be used to respond semi-instantly to changes in the spin box, without responding too quickly
+     * while the user in the middle of setting the value.
+     *
+     * \see editingTimeoutInterval()
+     *
+     * \since QGIS 3.42
+     */
+    void editingTimeout( double value );
 
   protected:
     void changeEvent( QEvent *event ) override;
     void wheelEvent( QWheelEvent *event ) override;
+    void focusOutEvent( QFocusEvent *event ) override;
     // This is required because private implementation of
     // QAbstractSpinBoxPrivate may trigger a second
     // undesired event from the auto-repeat mouse timer
@@ -153,6 +214,7 @@ class GUI_EXPORT QgsDoubleSpinBox : public QDoubleSpinBox
 
   private slots:
     void changed( double value );
+    void onLastEditTimeout();
 
   private:
     int frameWidth() const;
@@ -165,6 +227,9 @@ class GUI_EXPORT QgsDoubleSpinBox : public QDoubleSpinBox
     double mCustomClearValue = 0.0;
 
     bool mExpressionsEnabled = true;
+
+    QTimer *mLastEditTimer = nullptr;
+    double mLastEditTimeoutValue = std::numeric_limits<double>::quiet_NaN();
 
     QString stripped( const QString &originalText ) const;
 

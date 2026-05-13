@@ -23,8 +23,10 @@
 #include <QMap>
 #include <QFile>
 #include <QVector3D>
+#include <QMatrix4x4>
 
 #include "qgs3dexportobject.h"
+#include "qgsfeatureid.h"
 
 class QgsTessellatedPolygonGeometry;
 class QgsTerrainTileEntity;
@@ -35,20 +37,22 @@ class QgsDemTerrainGenerator;
 class QgsChunkNode;
 class Qgs3DExportObject;
 class QgsTerrainTextureGenerator;
+class QgsVector3D;
 class QgsVectorLayer;
 class QgsPolygon3DSymbol;
 class QgsLine3DSymbol;
 class QgsPoint3DSymbol;
 class QgsMeshEntity;
+class TestQgs3DExporter;
 
 #define SIP_NO_FILE
 
 /**
- * \brief Entity that handles the exporting of 3D scene
+ * \brief Entity that handles the exporting of 3D scenes.
  *
  * \note Not available in Python bindings
  *
- * \ingroup 3d
+ * \ingroup qgis_3d
  * \since QGIS 3.16
  */
 class _3D_EXPORT Qgs3DSceneExporter : public Qt3DCore::QEntity
@@ -56,9 +60,8 @@ class _3D_EXPORT Qgs3DSceneExporter : public Qt3DCore::QEntity
     Q_OBJECT
 
   public:
-    //! Constructor
-    Qgs3DSceneExporter() { }
-    //! Destructor
+    Qgs3DSceneExporter() {}
+
     ~Qgs3DSceneExporter()
     {
       for ( Qgs3DExportObject *obj : mObjects )
@@ -72,10 +75,13 @@ class _3D_EXPORT Qgs3DSceneExporter : public Qt3DCore::QEntity
     bool parseVectorLayerEntity( Qt3DCore::QEntity *entity, QgsVectorLayer *layer );
 
     //! Creates terrain export objects from the terrain entity
-    void parseTerrain( QgsTerrainEntity *terrain, const  QString &layer );
+    void parseTerrain( QgsTerrainEntity *terrain, const QString &layer );
 
-    //! Saves the scene to a .obj file
-    void save( const QString &sceneName, const QString &sceneFolderPath );
+    /**
+     * Saves the scene to a .obj file
+     * Returns FALSE if the operation failed
+     */
+    bool save( const QString &sceneName, const QString &sceneFolderPath, int precision = 6 );
 
     //! Sets whether the triangles will look smooth
     void setSmoothEdges( bool smoothEdges ) { mSmoothEdges = smoothEdges; }
@@ -112,7 +118,7 @@ class _3D_EXPORT Qgs3DSceneExporter : public Qt3DCore::QEntity
     //! Constructs Qgs3DExportObject from 3D models loaded using a scene loader
     QVector<Qgs3DExportObject *> processSceneLoaderGeometries( Qt3DRender::QSceneLoader *sceneLoader, const QString &objectNamePrefix );
     //! Constructs Qgs3DExportObject from geometry renderer
-    Qgs3DExportObject *processGeometryRenderer( Qt3DRender::QGeometryRenderer *mesh, const QString &objectNamePrefix, float sceneScale = 1.0f, QVector3D sceneTranslation = QVector3D( 0.0f, 0.0f, 0.0f ) );
+    Qgs3DExportObject *processGeometryRenderer( Qt3DRender::QGeometryRenderer *mesh, const QString &objectNamePrefix, const QMatrix4x4 &sceneTransform = QMatrix4x4() );
     //! Extracts material information from geometry renderer and inserts it into the export object
     void processEntityMaterial( Qt3DCore::QEntity *entity, Qgs3DExportObject *object );
     //! Constricts Qgs3DExportObject from line entity
@@ -121,11 +127,11 @@ class _3D_EXPORT Qgs3DSceneExporter : public Qt3DCore::QEntity
     Qgs3DExportObject *processPoints( Qt3DCore::QEntity *entity, const QString &objectNamePrefix );
 
     //! Returns a tile entity that contains the geometry to be exported and necessary scaling parameters
-    QgsTerrainTileEntity *getFlatTerrainEntity( QgsTerrainEntity *terrain, QgsChunkNode *node );
+    QgsTerrainTileEntity *getFlatTerrainEntity( QgsTerrainEntity *terrain, QgsChunkNode *node, const QgsVector3D &mapOrigin );
     //! Returns a tile entity that contains the geometry to be exported and necessary scaling parameters
-    QgsTerrainTileEntity *getDemTerrainEntity( QgsTerrainEntity *terrain, QgsChunkNode *node );
+    QgsTerrainTileEntity *getDemTerrainEntity( QgsTerrainEntity *terrain, QgsChunkNode *node, const QgsVector3D &mapOrigin );
     //! Returns a tile entity that contains the geometry to be exported and necessary scaling parameters
-    QgsTerrainTileEntity *getMeshTerrainEntity( QgsTerrainEntity *terrain, QgsChunkNode *node );
+    QgsTerrainTileEntity *getMeshTerrainEntity( QgsTerrainEntity *terrain, QgsChunkNode *node, const QgsVector3D &mapOrigin );
 
     //! Constructs a Qgs3DExportObject from the DEM tile entity
     void parseDemTile( QgsTerrainTileEntity *tileEntity, const QString &layerName );
@@ -135,6 +141,7 @@ class _3D_EXPORT Qgs3DSceneExporter : public Qt3DCore::QEntity
     void parseMeshTile( QgsTerrainTileEntity *meshEntity, const QString &layerName );
 
     QString getObjectName( const QString &name );
+
   private:
     QMap<QString, int> usedObjectNamesCounter;
     QVector<Qgs3DExportObject *> mObjects;
@@ -146,9 +153,12 @@ class _3D_EXPORT Qgs3DSceneExporter : public Qt3DCore::QEntity
     int mTerrainTextureResolution = 512;
     float mScale = 1.0f;
 
+    QSet<QgsFeatureId> mExportedFeatureIds;
+
     friend QgsPolygon3DSymbol;
     friend QgsLine3DSymbol;
     friend QgsPoint3DSymbol;
+    friend TestQgs3DExporter;
 };
 
 #endif // QGS3DSCENEEXPORTER_H

@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgspointcloudlayer3drendererwidget.h"
+#include "moc_qgspointcloudlayer3drendererwidget.cpp"
 
 #include "qgspointcloud3dsymbolwidget.h"
 #include "qgspointcloudlayer3drenderer.h"
@@ -44,12 +45,13 @@ QgsPointCloudLayer3DRendererWidget::QgsPointCloudLayer3DRendererWidget( QgsPoint
 
 void QgsPointCloudLayer3DRendererWidget::setRenderer( const QgsPointCloudLayer3DRenderer *renderer )
 {
-  if ( renderer != nullptr )
+  if ( renderer )
   {
     mWidgetPointCloudSymbol->setSymbol( const_cast<QgsPointCloud3DSymbol *>( renderer->symbol() ) );
     mWidgetPointCloudSymbol->setPointBudget( renderer->pointRenderingBudget() );
     mWidgetPointCloudSymbol->setMaximumScreenError( renderer->maximumScreenError() );
     mWidgetPointCloudSymbol->setShowBoundingBoxes( renderer->showBoundingBoxes() );
+    mWidgetPointCloudSymbol->setZoomOutBehavior( renderer->zoomOutBehavior() );
   }
 }
 
@@ -62,6 +64,7 @@ QgsPointCloudLayer3DRenderer *QgsPointCloudLayer3DRendererWidget::renderer()
   renderer->setPointRenderingBudget( mWidgetPointCloudSymbol->pointBudget() );
   renderer->setMaximumScreenError( mWidgetPointCloudSymbol->maximumScreenError() );
   renderer->setShowBoundingBoxes( mWidgetPointCloudSymbol->showBoundingBoxes() );
+  renderer->setZoomOutBehavior( mWidgetPointCloudSymbol->zoomOutBehavior() );
   return renderer;
 }
 
@@ -91,7 +94,6 @@ void QgsPointCloudLayer3DRendererWidget::syncToLayer( QgsMapLayer *layer )
   if ( r && r->type() == QLatin1String( "pointcloud" ) )
   {
     pointCloudRenderer = static_cast<QgsPointCloudLayer3DRenderer *>( r );
-    pointCloudRenderer->setSymbol( mWidgetPointCloudSymbol->symbol() );
   }
   setRenderer( pointCloudRenderer );
   mWidgetPointCloudSymbol->setEnabled( true );
@@ -105,8 +107,8 @@ void QgsPointCloudLayer3DRendererWidget::setDockMode( bool dockMode )
     mWidgetPointCloudSymbol->setDockMode( dockMode );
 }
 
-QgsPointCloudLayer3DRendererWidgetFactory::QgsPointCloudLayer3DRendererWidgetFactory( QObject *parent ):
-  QObject( parent )
+QgsPointCloudLayer3DRendererWidgetFactory::QgsPointCloudLayer3DRendererWidgetFactory( QObject *parent )
+  : QObject( parent )
 {
   setIcon( QIcon( ":/images/themes/default/3d.svg" ) );
   setTitle( tr( "3D View" ) );

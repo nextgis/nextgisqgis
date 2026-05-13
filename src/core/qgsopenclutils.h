@@ -47,7 +47,9 @@
 /**
  * \ingroup core
  * \class QgsOpenClUtils
- * \brief The QgsOpenClUtils class is responsible for common OpenCL operations such as
+ * \brief Utilities responsible for common OpenCL operations.
+ *
+ * These operations include:
  *
  * - enable/disable opencl
  * - store and retrieve preferences for the default device
@@ -203,7 +205,7 @@ class CORE_EXPORT QgsOpenClUtils
      * Build the program from \a source in the given \a context and depending on \a exceptionBehavior
      * can throw or catch the exceptions
      * \return the built program
-     * \deprecated since QGIS 3.6
+     * \deprecated QGIS 3.6
      */
     Q_DECL_DEPRECATED static cl::Program buildProgram( const cl::Context &context, const QString &source, ExceptionBehavior exceptionBehavior = Catch );
 
@@ -311,6 +313,8 @@ class CORE_EXPORT QgsOpenClUtils
      * \see available()
      */
     static bool activate( const QString &preferredDeviceId = QString() );
+
+    static bool activateInternal( const QString &preferredDeviceId );
 
     /**
      * Initialize the OpenCL system by setting and activating the default device.

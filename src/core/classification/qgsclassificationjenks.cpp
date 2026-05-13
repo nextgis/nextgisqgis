@@ -17,9 +17,7 @@
 #include "qgsclassificationjenks.h"
 #include "qgsapplication.h"
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
 #include <QRandomGenerator>
-#endif
 
 QgsClassificationJenks::QgsClassificationJenks()
   : QgsClassificationMethod()
@@ -37,10 +35,10 @@ QString QgsClassificationJenks::id() const
   return QStringLiteral( "Jenks" );
 }
 
-QgsClassificationMethod *QgsClassificationJenks::clone() const
+std::unique_ptr<QgsClassificationMethod> QgsClassificationJenks::clone() const
 {
-  QgsClassificationJenks *c = new QgsClassificationJenks();
-  copyBase( c );
+  auto c = std::make_unique< QgsClassificationJenks >();
+  copyBase( c.get() );
   return c;
 }
 
@@ -51,8 +49,9 @@ QIcon QgsClassificationJenks::icon() const
 
 
 QList<double> QgsClassificationJenks::calculateBreaks( double &minimum, double &maximum,
-    const QList<double> &values, int nclasses )
+    const QList<double> &values, int nclasses, QString &error )
 {
+  Q_UNUSED( error )
   // Jenks Optimal (Natural Breaks) algorithm
   // Based on the Jenks algorithm from the 'classInt' package available for
   // the R statistical prgramming language, and from Python code from here:

@@ -26,13 +26,13 @@
 #include <QtMath>
 
 class QgsPointCloudAttribute;
-class IndexedPointCloudNode;
+class QgsPointCloudNodeId;
 
 /**
  * \ingroup core
  * \class QgsPointCloudAttributeStatistics
  *
- * \brief Class used to store statistics of one attribute of a point cloud dataset.
+ * \brief Stores statistics of one attribute of a point cloud dataset.
  *
  * \since QGIS 3.26
  */
@@ -48,20 +48,25 @@ struct CORE_EXPORT QgsPointCloudAttributeStatistics
   //! Updates the current point cloud statistics to hold the cumulation of the current statistics and \a stats
   void cumulateStatistics( const QgsPointCloudAttributeStatistics &stats );
 #endif
+
+  /**
+   * Returns the count of points in given class or -1 on error
+   * \since QGIS 3.42
+   */
+  int singleClassCount( int cls ) const;
 };
 
 /**
  * \ingroup core
  * \class QgsPointCloudStatistics
  *
- * \brief Class used to store statistics of a point cloud dataset.
+ * \brief Used to store statistics of a point cloud dataset.
  *
  * \since QGIS 3.26
  */
 class CORE_EXPORT QgsPointCloudStatistics
 {
   public:
-    //! Constructor
     QgsPointCloudStatistics();
 
 #ifndef SIP_RUN
@@ -124,7 +129,7 @@ class CORE_EXPORT QgsPointCloudStatistics
     QByteArray toStatisticsJson() const;
 
     //! Creates a statistics object from the JSON object \a stats
-    static QgsPointCloudStatistics fromStatisticsJson( QByteArray stats );
+    static QgsPointCloudStatistics fromStatisticsJson( const QByteArray &stats );
 
 #ifndef SIP_RUN
     //! Returns a map object containing all the statistics

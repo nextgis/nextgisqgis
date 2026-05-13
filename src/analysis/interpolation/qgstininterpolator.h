@@ -31,17 +31,15 @@ class QgsFields;
 
 /**
  * \ingroup analysis
- * \brief Interpolation in a triangular irregular network
- * \since QGIS 3.0
+ * \brief Interpolation in a triangular irregular network.
 */
-class ANALYSIS_EXPORT QgsTinInterpolator: public QgsInterpolator
+class ANALYSIS_EXPORT QgsTinInterpolator : public QgsInterpolator
 {
   public:
-
     //! Indicates the type of interpolation to be performed
-    enum TinInterpolation
+    enum class TinInterpolation SIP_MONKEYPATCH_SCOPEENUM_UNNEST( QgsTinInterpolator, TinInterpolation ) : int
     {
-      Linear, //!< Linear interpolation
+      Linear,       //!< Linear interpolation
       CloughTocher, //!< Clough-Tocher interpolation
     };
 
@@ -50,7 +48,7 @@ class ANALYSIS_EXPORT QgsTinInterpolator: public QgsInterpolator
      * The \a feedback object specifies an optional QgsFeedback object for progress reports and cancellation support.
      * Ownership of \a feedback is not transferred and callers must ensure that it exists for the lifetime of this object.
      */
-    QgsTinInterpolator( const QList<QgsInterpolator::LayerData> &inputData, TinInterpolation interpolation = Linear, QgsFeedback *feedback = nullptr );
+    QgsTinInterpolator( const QList<QgsInterpolator::LayerData> &inputData, QgsTinInterpolator::TinInterpolation interpolation = QgsTinInterpolator::TinInterpolation::Linear, QgsFeedback *feedback = nullptr );
     ~QgsTinInterpolator() override;
 
     int interpolatePoint( double x, double y, double &result SIP_OUT, QgsFeedback *feedback ) override;
@@ -60,7 +58,6 @@ class ANALYSIS_EXPORT QgsTinInterpolator: public QgsInterpolator
      * These fields should be used when creating
      * a suitable feature sink for setTriangulationSink()
      * \see setTriangulationSink()
-     * \since QGIS 3.0
      */
     static QgsFields triangulationFields();
 
@@ -71,7 +68,6 @@ class ANALYSIS_EXPORT QgsTinInterpolator: public QgsInterpolator
      * those returned by triangulationFields().
      *
      * \see triangulationFields()
-     *  \since QGIS 3.0
      */
     void setTriangulationSink( QgsFeatureSink *sink );
 
@@ -84,7 +80,7 @@ class ANALYSIS_EXPORT QgsTinInterpolator: public QgsInterpolator
     //! Feature sink for triangulation
     QgsFeatureSink *mTriangulationSink = nullptr;
     //! Type of interpolation
-    TinInterpolation mInterpolation;
+    QgsTinInterpolator::TinInterpolation mInterpolation;
 
     //! Create dual edge triangulation
     void initialize();
@@ -97,9 +93,9 @@ class ANALYSIS_EXPORT QgsTinInterpolator: public QgsInterpolator
      * \param type point/structure line, break line
      * \returns 0 in case of success, -1 if the feature could not be inserted because of numerical problems
     */
-    int insertData( const QgsFeature &f, QgsInterpolator::ValueSource source, int attr, SourceType type );
+    int insertData( const QgsFeature &f, QgsInterpolator::ValueSource source, int attr, QgsInterpolator::SourceType type );
 
-    int addPointsFromGeometry( const QgsGeometry &g, ValueSource source, double attributeValue );
+    int addPointsFromGeometry( const QgsGeometry &g, QgsInterpolator::ValueSource source, double attributeValue );
 };
 
 #endif

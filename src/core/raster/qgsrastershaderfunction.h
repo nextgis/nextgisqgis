@@ -1,4 +1,4 @@
-/* **************************************************************************
+/***************************************************************************
                 qgsrastershaderfunction.h -  description
                        -------------------
 begin                : Fri Dec 28 2007
@@ -7,7 +7,7 @@ email                : ersts@amnh.org
 
 ****************************************************************************/
 
-/* **************************************************************************
+/***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -33,9 +33,7 @@ email                : ersts@amnh.org
 
 class CORE_EXPORT QgsRasterShaderFunction
 {
-#ifdef SIP_RUN
-#include <qgscolorrampshader.h>
-#endif
+    //SIP_TYPEHEADER_INCLUDE( "qgscolorrampshader.h" );
 
 
 #ifdef SIP_RUN

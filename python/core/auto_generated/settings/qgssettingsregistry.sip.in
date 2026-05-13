@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/settings/qgssettingsregistry.h                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -14,13 +14,15 @@
 class QgsSettingsRegistry
 {
 %Docstring(signature="appended")
-:py:class:`QgsSettingsRegistry` is used for settings introspection and collects a
-list of child :py:class:`QgsSettingsRegistry` and a list of child :py:class:`QgsSettingsRegistry`
+Used for settings introspection and collects a list of child
+:py:class:`QgsSettingsRegistry` and a list of child
+:py:class:`QgsSettingsRegistry`.
 
 .. versionadded:: 3.20
 
-.. deprecated:: QGIS 3.30
-   use :py:func:`QgsSettings.treeRoot()` instead
+.. deprecated:: 3.30
+
+   Use :py:func:`QgsSettings.treeRoot()` instead.
 %End
 
 %TypeHeaderCode
@@ -29,10 +31,6 @@ list of child :py:class:`QgsSettingsRegistry` and a list of child :py:class:`Qgs
   public:
 
     QgsSettingsRegistry();
-%Docstring
-Constructor for QgsSettingsRegistry.
-%End
-
     virtual ~QgsSettingsRegistry();
 
     QList<const QgsSettingsEntryBase *> settingEntries() const;
@@ -42,9 +40,11 @@ Returns the list of registered :py:class:`QgsSettingsEntryBase`.
 
     const QgsSettingsEntryBase *settingsEntry( const QString &key, bool searchChildRegistries = true ) const;
 %Docstring
-Returns the :py:class:`QgsSettingsEntry` with the given ``key`` or None if not found.
+Returns the :py:class:`QgsSettingsEntry` with the given ``key`` or None
+if not found.
 
-The ``searchChildRegistries`` parameter specifies if child registries should be included in the search
+The ``searchChildRegistries`` parameter specifies if child registries
+should be included in the search
 %End
 
     void addSubRegistry( const QgsSettingsRegistry *settingsRegistry );
@@ -69,13 +69,13 @@ Returns the list of registered child QgsSettingsRegistry.
 Adds ``settingsEntry`` to the registry.
 %End
 
- void addSettingsEntryGroup( const QgsSettingsEntryGroup *settingsGroup ) /Deprecated/;
+ void addSettingsEntryGroup( const QgsSettingsEntryGroup *settingsGroup ) /Deprecated="Since 3.30. "/;
 %Docstring
 Adds a group of setting to the registry
 
 .. versionadded:: 3.26
 
-.. deprecated:: QGIS 3.30
+.. deprecated:: 3.30
 %End
 
 };
@@ -85,5 +85,5 @@ Adds a group of setting to the registry
  *                                                                      *
  * src/core/settings/qgssettingsregistry.h                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

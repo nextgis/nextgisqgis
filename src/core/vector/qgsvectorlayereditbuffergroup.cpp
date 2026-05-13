@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgsvectorlayereditbuffergroup.h"
+#include "moc_qgsvectorlayereditbuffergroup.cpp"
 
 #include "qgsproject.h"
 #include "qgstransaction.h"
@@ -32,6 +33,11 @@ QgsVectorLayerEditBufferGroup::QgsVectorLayerEditBufferGroup( QObject *parent )
 void QgsVectorLayerEditBufferGroup::addLayer( QgsVectorLayer *layer )
 {
   mLayers.insert( layer );
+}
+
+void QgsVectorLayerEditBufferGroup::removeLayer( QgsVectorLayer *layer )
+{
+  mLayers.remove( layer );
 }
 
 void QgsVectorLayerEditBufferGroup::clear()
@@ -172,7 +178,7 @@ bool QgsVectorLayerEditBufferGroup::commitChanges( QStringList &commitErrors, bo
       break;
   }
 
-  // Order layers childrens to parents
+  // Order layers children to parents
   const QList<QgsVectorLayer *> orderedLayers = orderLayersParentsToChildren( constModifiedLayers );
   QList<QgsVectorLayer *>::const_iterator orderedLayersIterator;
 
@@ -181,7 +187,7 @@ bool QgsVectorLayerEditBufferGroup::commitChanges( QStringList &commitErrors, bo
   {
     for ( orderedLayersIterator = orderedLayers.constBegin(); orderedLayersIterator != orderedLayers.constEnd(); ++orderedLayersIterator )
     {
-      if ( ( *orderedLayersIterator )->editBuffer() == nullptr )
+      if ( !( *orderedLayersIterator )->editBuffer() )
       {
         commitErrors << tr( "ERROR: edit buffer of layer '%1' is not valid." ).arg( ( *orderedLayersIterator )->name() );
         success = false;
@@ -306,10 +312,10 @@ bool QgsVectorLayerEditBufferGroup::commitChanges( QStringList &commitErrors, bo
     if ( ! modifiedLayersOnProviderSide.isEmpty() )
     {
       if ( modifiedLayersOnProviderSide.size() == 1 )
-        commitErrors << tr( "WARNING: changes to layer '%1' where already sent to data provider and cannot be rolled back." ).arg( ( *modifiedLayersOnProviderSide.begin() )->name() );
+        commitErrors << tr( "WARNING: changes to layer '%1' were already sent to data provider and cannot be rolled back." ).arg( ( *modifiedLayersOnProviderSide.begin() )->name() );
       else
       {
-        commitErrors << tr( "WARNING: changes to following layers where already sent to data provider and cannot be rolled back:" );
+        commitErrors << tr( "WARNING: changes to following layers were already sent to data provider and cannot be rolled back:" );
         for ( QgsVectorLayer *layer : std::as_const( modifiedLayersOnProviderSide ) )
           commitErrors << tr( "- '%1'" ).arg( layer->name() );
       }
@@ -400,7 +406,7 @@ QList<QgsVectorLayer *> QgsVectorLayerEditBufferGroup::orderLayersParentsToChild
     while ( unorderedLayerIterator != unorderedLayers.end() )
     {
       // Get referencing relation to find referenced layers
-      const QList<QgsRelation> referencingRelations = QgsProject::instance()->relationManager()->referencingRelations( *unorderedLayerIterator );
+      const QList<QgsRelation> referencingRelations = QgsProject::instance()->relationManager()->referencingRelations( *unorderedLayerIterator ); // skip-keyword-check
 
       // If this layer references at least one modified layer continue
       bool layerReferencingModifiedLayer = false;
@@ -455,7 +461,11 @@ void QgsVectorLayerEditBufferGroup::editingFinished( bool stopEditing )
     layer->updateFields();
 
     layer->dataProvider()->updateExtents();
-    layer->dataProvider()->leaveUpdateMode();
+
+    if ( stopEditing )
+    {
+      layer->dataProvider()->leaveUpdateMode();
+    }
 
     // This second call is required because OGR provider with JSON
     // driver might have changed fields order after the call to

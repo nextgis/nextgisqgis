@@ -3,19 +3,23 @@
  *                                                                      *
  * src/core/qgspluginlayer.h                                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 class QgsPluginLayer : QgsMapLayer
 {
 %Docstring(signature="appended")
-Base class for plugin layers. These can be implemented by plugins
-and registered in :py:class:`QgsPluginLayerRegistry`.
+Base class for plugin layers.
 
-In order to be readable from project files, they should set these attributes in layer DOM node:
-"type" = "plugin"
-"name" = "your_layer_type"
+These can be implemented by plugins and registered in
+:py:class:`QgsPluginLayerRegistry`.
+
+In order to be readable from project files, they should set these
+attributes in layer DOM node:
+
+- "type" = "plugin"
+- "name" = "your_layer_type"
 %End
 
 %TypeHeaderCode
@@ -37,13 +41,12 @@ In order to be readable from project files, they should set these attributes in 
 Returns a new instance equivalent to this one.
 
 :return: a new layer instance
-
-.. versionadded:: 3.0
 %End
 
     QString pluginLayerType();
 %Docstring
-Returns plugin layer type (the same as used in :py:class:`QgsPluginLayerRegistry`)
+Returns plugin layer type (the same as used in
+:py:class:`QgsPluginLayerRegistry`)
 %End
 
     virtual void setExtent( const QgsRectangle &extent );
@@ -54,13 +57,19 @@ Sets extent of the layer
 
     void setSource( const QString &source );
 %Docstring
-Set source string. This is used for example in layer tree to show tooltip.
-
-.. versionadded:: 2.16
+Set source string. This is used for example in layer tree to show
+tooltip.
 %End
 
     virtual QgsDataProvider *dataProvider();
 
+
+    virtual QIcon icon() const;
+%Docstring
+Returns an icon for the layer.
+
+.. versionadded:: 3.42
+%End
 
   protected:
 };
@@ -71,5 +80,5 @@ Set source string. This is used for example in layer tree to show tooltip.
  *                                                                      *
  * src/core/qgspluginlayer.h                                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -24,9 +24,9 @@ QString QgsStringConcatenationAlgorithm::name() const
   return QStringLiteral( "stringconcatenation" );
 }
 
-QgsProcessingAlgorithm::Flags QgsStringConcatenationAlgorithm::flags() const
+Qgis::ProcessingAlgorithmFlags QgsStringConcatenationAlgorithm::flags() const
 {
-  return FlagHideFromToolbox | FlagSkipGenericModelLogging;
+  return Qgis::ProcessingAlgorithmFlag::HideFromToolbox | Qgis::ProcessingAlgorithmFlag::SkipGenericModelLogging;
 }
 
 QString QgsStringConcatenationAlgorithm::displayName() const
@@ -52,6 +52,11 @@ QString QgsStringConcatenationAlgorithm::groupId() const
 QString QgsStringConcatenationAlgorithm::shortHelpString() const
 {
   return QObject::tr( "This algorithm concatenates two strings together." );
+}
+
+QString QgsStringConcatenationAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Concatenates two strings together." );
 }
 
 QgsStringConcatenationAlgorithm *QgsStringConcatenationAlgorithm::createInstance() const

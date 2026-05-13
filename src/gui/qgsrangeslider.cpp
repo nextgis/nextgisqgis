@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsrangeslider.h"
+#include "moc_qgsrangeslider.cpp"
 #include <QPainter>
 #include <QMouseEvent>
 
@@ -120,7 +121,15 @@ void QgsRangeSlider::setLowerValue( int lowerValue )
     return;
 
   mLowerValue = std::min( mStyleOption.maximum, std::max( mStyleOption.minimum, lowerValue ) );
-  mUpperValue = std::max( mLowerValue, mUpperValue );
+  if ( mFixedRangeSize >= 0 )
+  {
+    mUpperValue = std::min( mLowerValue + mFixedRangeSize, mStyleOption.maximum );
+    mLowerValue = std::max( mStyleOption.minimum, mUpperValue - mFixedRangeSize );
+  }
+  else
+  {
+    mUpperValue = std::max( mLowerValue, mUpperValue );
+  }
   emit rangeChanged( mLowerValue, mUpperValue );
   update();
 }
@@ -137,7 +146,16 @@ void QgsRangeSlider::setUpperValue( int upperValue )
     return;
 
   mUpperValue = std::max( mStyleOption.minimum, std::min( mStyleOption.maximum, upperValue ) );
-  mLowerValue = std::min( mLowerValue, mUpperValue );
+  if ( mFixedRangeSize >= 0 )
+  {
+    mLowerValue = std::max( mStyleOption.minimum, mUpperValue - mFixedRangeSize );
+    mUpperValue = std::min( mLowerValue + mFixedRangeSize, mStyleOption.maximum );
+  }
+  else
+  {
+    mLowerValue = std::min( mLowerValue, mUpperValue );
+  }
+
   emit rangeChanged( mLowerValue, mUpperValue );
   update();
 }
@@ -152,6 +170,15 @@ void QgsRangeSlider::setRange( int lower, int upper )
 
   mLowerValue = std::min( mStyleOption.maximum, std::max( mStyleOption.minimum, lower ) );
   mUpperValue = std::min( mStyleOption.maximum, std::max( mStyleOption.minimum, upper ) );
+  if ( mFixedRangeSize >= 0 )
+  {
+    mUpperValue = std::min( mLowerValue + mFixedRangeSize, mStyleOption.maximum );
+    mLowerValue = std::max( mStyleOption.minimum, mUpperValue - mFixedRangeSize );
+  }
+  else
+  {
+    mUpperValue = std::min( mStyleOption.maximum, std::max( mStyleOption.minimum, upper ) );
+  }
   emit rangeChanged( mLowerValue, mUpperValue );
   update();
 }
@@ -195,8 +222,7 @@ int QgsRangeSlider::pixelPosToRangeValue( int pos ) const
     sliderMax = gr.bottom() - sliderLength + 1;
   }
 
-  int value = QStyle::sliderValueFromPosition( mStyleOption.minimum, mStyleOption.maximum, pos - sliderMin,
-              sliderMax - sliderMin );
+  int value = QStyle::sliderValueFromPosition( mStyleOption.minimum, mStyleOption.maximum, pos - sliderMin, sliderMax - sliderMin );
   if ( mFlipped )
     value = mStyleOption.maximum + mStyleOption.minimum - value;
   return value;
@@ -288,33 +314,35 @@ QRect QgsRangeSlider::selectedRangeRect()
   switch ( mStyleOption.orientation )
   {
     case Qt::Horizontal:
-      selectionRect = mFlipped ? QRect( upperHandleRect.right(),
-                                        grooveRect.y(),
-                                        lowerHandleRect.left() - upperHandleRect.right(),
-                                        grooveRect.height()
-                                      )
-                      : QRect( lowerHandleRect.right(),
-                               grooveRect.y(),
-                               upperHandleRect.left() - lowerHandleRect.right(),
-                               grooveRect.height()
-                             );
+      selectionRect = mFlipped ? QRect( upperHandleRect.right(), grooveRect.y(), lowerHandleRect.left() - upperHandleRect.right(), grooveRect.height() )
+                               : QRect( lowerHandleRect.right(), grooveRect.y(), upperHandleRect.left() - lowerHandleRect.right(), grooveRect.height() );
       break;
 
     case Qt::Vertical:
-      selectionRect = mFlipped ? QRect( grooveRect.x(),
-                                        lowerHandleRect.top(),
-                                        grooveRect.width(),
-                                        upperHandleRect.bottom() - lowerHandleRect.top()
-                                      )
-                      : QRect( grooveRect.x(),
-                               upperHandleRect.top(),
-                               grooveRect.width(),
-                               lowerHandleRect.bottom() - upperHandleRect.top()
-                             );
+      selectionRect = mFlipped ? QRect( grooveRect.x(), lowerHandleRect.top(), grooveRect.width(), upperHandleRect.bottom() - lowerHandleRect.top() )
+                               : QRect( grooveRect.x(), upperHandleRect.top(), grooveRect.width(), lowerHandleRect.bottom() - upperHandleRect.top() );
       break;
   }
 
   return selectionRect.adjusted( -1, 1, 1, -1 );
+}
+
+int QgsRangeSlider::fixedRangeSize() const
+{
+  return mFixedRangeSize;
+}
+
+void QgsRangeSlider::setFixedRangeSize( int size )
+{
+  if ( size == mFixedRangeSize )
+    return;
+
+  mFixedRangeSize = size;
+
+  if ( mFixedRangeSize >= 0 )
+    setUpperValue( mLowerValue + mFixedRangeSize );
+
+  emit fixedRangeSizeChanged( mFixedRangeSize );
 }
 
 void QgsRangeSlider::applyStep( int step )
@@ -327,6 +355,11 @@ void QgsRangeSlider::applyStep( int step )
       if ( newLowerValue != mLowerValue )
       {
         mLowerValue = newLowerValue;
+        if ( mFixedRangeSize >= 0 )
+        {
+          mUpperValue = std::min( mLowerValue + mFixedRangeSize, mStyleOption.maximum );
+          mLowerValue = std::max( mStyleOption.minimum, mUpperValue - mFixedRangeSize );
+        }
         emit rangeChanged( mLowerValue, mUpperValue );
         update();
       }
@@ -339,6 +372,11 @@ void QgsRangeSlider::applyStep( int step )
       if ( newUpperValue != mUpperValue )
       {
         mUpperValue = newUpperValue;
+        if ( mFixedRangeSize >= 0 )
+        {
+          mLowerValue = std::max( mStyleOption.minimum, mUpperValue - mFixedRangeSize );
+          mUpperValue = std::min( mLowerValue + mFixedRangeSize, mStyleOption.maximum );
+        }
         emit rangeChanged( mLowerValue, mUpperValue );
         update();
       }
@@ -354,7 +392,15 @@ void QgsRangeSlider::applyStep( int step )
         if ( newLowerValue != mLowerValue )
         {
           mLowerValue = newLowerValue;
-          mUpperValue = std::min( mStyleOption.maximum, mLowerValue + previousWidth );
+          if ( mFixedRangeSize >= 0 )
+          {
+            mUpperValue = std::min( mLowerValue + mFixedRangeSize, mStyleOption.maximum );
+            mLowerValue = std::max( mStyleOption.minimum, mUpperValue - mFixedRangeSize );
+          }
+          else
+          {
+            mUpperValue = std::min( mStyleOption.maximum, mLowerValue + previousWidth );
+          }
           emit rangeChanged( mLowerValue, mUpperValue );
           update();
         }
@@ -366,7 +412,15 @@ void QgsRangeSlider::applyStep( int step )
         if ( newUpperValue != mUpperValue )
         {
           mUpperValue = newUpperValue;
-          mLowerValue = std::max( mStyleOption.minimum, mUpperValue - previousWidth );
+          if ( mFixedRangeSize >= 0 )
+          {
+            mLowerValue = std::max( mStyleOption.minimum, mUpperValue - mFixedRangeSize );
+            mUpperValue = std::min( mLowerValue + mFixedRangeSize, mStyleOption.maximum );
+          }
+          else
+          {
+            mLowerValue = std::max( mStyleOption.minimum, mUpperValue - previousWidth );
+          }
           emit rangeChanged( mLowerValue, mUpperValue );
           update();
         }
@@ -604,6 +658,12 @@ void QgsRangeSlider::mouseMoveEvent( QMouseEvent *event )
       {
         changed = true;
         mUpperValue = mPreDragUpperValue;
+        if ( mFixedRangeSize >= 0 )
+        {
+          // don't permit fixed width drags if it pushes the other value out of range
+          mLowerValue = std::max( mStyleOption.minimum, mUpperValue - mFixedRangeSize );
+          mUpperValue = std::min( mLowerValue + mFixedRangeSize, mStyleOption.maximum );
+        }
       }
     }
     else if ( newPosition > mStartDragPos )
@@ -614,6 +674,12 @@ void QgsRangeSlider::mouseMoveEvent( QMouseEvent *event )
       {
         changed = true;
         mLowerValue = mPreDragLowerValue;
+        if ( mFixedRangeSize >= 0 )
+        {
+          // don't permit fixed width drags if it pushes the other value out of range
+          mUpperValue = std::min( mLowerValue + mFixedRangeSize, mStyleOption.maximum );
+          mLowerValue = std::max( mStyleOption.minimum, mUpperValue - mFixedRangeSize );
+        }
       }
     }
     else
@@ -623,11 +689,23 @@ void QgsRangeSlider::mouseMoveEvent( QMouseEvent *event )
       {
         changed = true;
         mUpperValue = mPreDragUpperValue;
+        if ( mFixedRangeSize >= 0 )
+        {
+          // don't permit fixed width drags if it pushes the other value out of range
+          mLowerValue = std::max( mStyleOption.minimum, mUpperValue - mFixedRangeSize );
+          mUpperValue = std::min( mLowerValue + mFixedRangeSize, mStyleOption.maximum );
+        }
       }
       if ( mLowerValue != mPreDragLowerValue )
       {
         changed = true;
         mLowerValue = mPreDragLowerValue;
+        if ( mFixedRangeSize >= 0 )
+        {
+          // don't permit fixed width drags if it pushes the other value out of range
+          mUpperValue = std::min( mLowerValue + mFixedRangeSize, mStyleOption.maximum );
+          mLowerValue = std::max( mStyleOption.minimum, mUpperValue - mFixedRangeSize );
+        }
       }
     }
   }
@@ -645,6 +723,13 @@ void QgsRangeSlider::mouseMoveEvent( QMouseEvent *event )
       if ( mLowerValue != newPosition )
       {
         mLowerValue = newPosition;
+        if ( mFixedRangeSize >= 0 )
+        {
+          // don't permit fixed width drags if it pushes the other value out of range
+          mUpperValue = std::min( mLowerValue + mFixedRangeSize, mStyleOption.maximum );
+          mLowerValue = std::max( mStyleOption.minimum, mUpperValue - mFixedRangeSize );
+        }
+
         changed = true;
       }
       break;
@@ -657,6 +742,13 @@ void QgsRangeSlider::mouseMoveEvent( QMouseEvent *event )
       if ( mUpperValue != newPosition )
       {
         mUpperValue = newPosition;
+        if ( mFixedRangeSize >= 0 )
+        {
+          // don't permit fixed width drags if it pushes the other value out of range
+          mLowerValue = std::max( mStyleOption.minimum, mUpperValue - mFixedRangeSize );
+          mUpperValue = std::min( mLowerValue + mFixedRangeSize, mStyleOption.maximum );
+        }
+
         changed = true;
       }
       break;
@@ -664,7 +756,7 @@ void QgsRangeSlider::mouseMoveEvent( QMouseEvent *event )
 
     case Range:
     {
-      newPosition = pixelPosToRangeValue( pick( event->pos() ) - mRangeDragOffset ) ;
+      newPosition = pixelPosToRangeValue( pick( event->pos() ) - mRangeDragOffset );
       int delta = newPosition - mStartDragPos;
 
       if ( delta > 0 )
@@ -680,7 +772,7 @@ void QgsRangeSlider::mouseMoveEvent( QMouseEvent *event )
       {
         // move range down
         delta = -delta;
-        const int maxDelta = mPreDragLowerValue - mStyleOption.minimum ;
+        const int maxDelta = mPreDragLowerValue - mStyleOption.minimum;
         delta = std::min( maxDelta, delta );
         mLowerValue = mPreDragLowerValue - delta;
         mUpperValue = mPreDragUpperValue - delta;
@@ -980,7 +1072,7 @@ void QgsRangeSlider::keyPressEvent( QKeyEvent *event )
           break;
 
         case Range:
-          applyStep( mFlipped ? mStyleOption.maximum - mUpperValue : mStyleOption.minimum  - mLowerValue );
+          applyStep( mFlipped ? mStyleOption.maximum - mUpperValue : mStyleOption.minimum - mLowerValue );
           break;
 
         case Both:
@@ -1008,7 +1100,7 @@ void QgsRangeSlider::keyPressEvent( QKeyEvent *event )
           break;
 
         case Range:
-          applyStep( mFlipped ? mStyleOption.minimum  - mLowerValue : mStyleOption.maximum - mUpperValue );
+          applyStep( mFlipped ? mStyleOption.minimum - mLowerValue : mStyleOption.maximum - mUpperValue );
           break;
 
         case Both:
@@ -1060,5 +1152,3 @@ QSize QgsRangeSlider::minimumSizeHint() const
     s.setHeight( length );
   return s;
 }
-
-

@@ -13,6 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "qgsgeometryutils_base.h"
 #include "qgsarrowsymbollayer.h"
 #include "qgssymbollayerutils.h"
 #include "qgsfillsymbol.h"
@@ -25,7 +26,7 @@ QgsArrowSymbolLayer::QgsArrowSymbolLayer()
   setOffset( 0.0 );
   setOffsetUnit( Qgis::RenderUnit::Millimeters );
 
-  mSymbol.reset( static_cast<QgsFillSymbol *>( QgsFillSymbol::createSimple( QVariantMap() ) ) );
+  mSymbol = QgsFillSymbol::createSimple( QVariantMap() );
 }
 
 QgsArrowSymbolLayer::~QgsArrowSymbolLayer() = default;
@@ -107,7 +108,7 @@ QgsSymbolLayer *QgsArrowSymbolLayer::create( const QVariantMap &props )
 
   l->restoreOldDataDefinedProperties( props );
 
-  l->setSubSymbol( QgsFillSymbol::createSimple( props ) );
+  l->setSubSymbol( QgsFillSymbol::createSimple( props ).release() );
 
   return l;
 }
@@ -214,7 +215,18 @@ void QgsArrowSymbolLayer::startRender( QgsSymbolRenderContext &context )
   mComputedHeadType = headType();
   mComputedArrowType = arrowType();
 
-  mSymbol->startRender( context.renderContext() );
+  // Store all defaults
+  mDefaultScaledArrowWidth = mScaledArrowWidth;
+  mDefaultScaledArrowStartWidth = mScaledArrowStartWidth;
+  mDefaultScaledHeadLength = mScaledHeadLength;
+  mDefaultScaledHeadThickness = mScaledHeadThickness;
+  mDefaultScaledOffset = mScaledOffset;
+  mDefaultComputedHeadType = mComputedHeadType;
+  mDefaultComputedArrowType = mComputedArrowType;
+
+  mSymbol->setRenderHints( mSymbol->renderHints() | Qgis::SymbolRenderHint::IsSymbolLayerSubSymbol );
+
+  mSymbol->startRender( context.renderContext(), context.fields() );
 }
 
 void QgsArrowSymbolLayer::stopRender( QgsSymbolRenderContext &context )
@@ -222,9 +234,23 @@ void QgsArrowSymbolLayer::stopRender( QgsSymbolRenderContext &context )
   mSymbol->stopRender( context.renderContext() );
 }
 
+void QgsArrowSymbolLayer::startFeatureRender( const QgsFeature &, QgsRenderContext &context )
+{
+  installMasks( context, true );
+
+  // The base class version passes this on to the subsymbol, but we deliberately don't do that here.
+}
+
+void QgsArrowSymbolLayer::stopFeatureRender( const QgsFeature &, QgsRenderContext &context )
+{
+  removeMasks( context, true );
+
+  // The base class version passes this on to the subsymbol, but we deliberately don't do that here.
+}
+
 inline qreal euclidean_distance( QPointF po, QPointF pd )
 {
-  return std::sqrt( ( po.x() - pd.x() ) * ( po.x() - pd.x() ) + ( po.y() - pd.y() ) * ( po.y() - pd.y() ) );
+  return QgsGeometryUtilsBase::distance2D( po.x(), po.y(), pd.x(), pd.y() );
 }
 
 QPolygonF straightArrow( QPointF po, QPointF pd,
@@ -400,7 +426,7 @@ bool pointsToCircle( QPointF a, QPointF b, QPointF c, QPointF &center, qreal &ra
     cy = bc2.y() - ( cx - bc2.x() ) * bc.x() / bc.y();
   }
   // Radius
-  radius = std::sqrt( ( a.x() - cx ) * ( a.x() - cx ) + ( a.y() - cy ) * ( a.y() - cy ) );
+  radius = QgsGeometryUtilsBase::distance2D( a.x(), a.y(), cx, cy );
   // Center
   center.setX( cx );
   center.setY( cy );
@@ -637,9 +663,9 @@ void QgsArrowSymbolLayer::_resolveDataDefined( QgsSymbolRenderContext &context )
 
   QVariant exprVal;
   bool ok;
-  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyArrowWidth ) )
+  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::Property::ArrowWidth ) )
   {
-    exprVal = mDataDefinedProperties.value( QgsSymbolLayer::PropertyArrowWidth, context.renderContext().expressionContext() );
+    exprVal = mDataDefinedProperties.value( QgsSymbolLayer::Property::ArrowWidth, context.renderContext().expressionContext() );
     if ( !QgsVariantUtils::isNull( exprVal ) )
     {
       const double w = exprVal.toDouble( &ok );
@@ -647,12 +673,20 @@ void QgsArrowSymbolLayer::_resolveDataDefined( QgsSymbolRenderContext &context )
       {
         mScaledArrowWidth = context.renderContext().convertToPainterUnits( w, arrowWidthUnit(), arrowWidthUnitScale() );
       }
+      else
+      {
+        mScaledArrowWidth = mDefaultScaledArrowWidth;
+      }
+    }
+    else
+    {
+      mScaledArrowWidth = mDefaultScaledArrowWidth;
     }
   }
-  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyArrowStartWidth ) )
+  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::Property::ArrowStartWidth ) )
   {
     context.setOriginalValueVariable( arrowStartWidth() );
-    exprVal = mDataDefinedProperties.value( QgsSymbolLayer::PropertyArrowStartWidth, context.renderContext().expressionContext() );
+    exprVal = mDataDefinedProperties.value( QgsSymbolLayer::Property::ArrowStartWidth, context.renderContext().expressionContext() );
     if ( !QgsVariantUtils::isNull( exprVal ) )
     {
       const double w = exprVal.toDouble( &ok );
@@ -660,12 +694,20 @@ void QgsArrowSymbolLayer::_resolveDataDefined( QgsSymbolRenderContext &context )
       {
         mScaledArrowStartWidth = context.renderContext().convertToPainterUnits( w, arrowStartWidthUnit(), arrowStartWidthUnitScale() );
       }
+      else
+      {
+        mScaledArrowStartWidth = mDefaultScaledArrowStartWidth;
+      }
+    }
+    else
+    {
+      mScaledArrowStartWidth = mDefaultScaledArrowStartWidth;
     }
   }
-  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyArrowHeadLength ) )
+  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::Property::ArrowHeadLength ) )
   {
     context.setOriginalValueVariable( headLength() );
-    exprVal = mDataDefinedProperties.value( QgsSymbolLayer::PropertyArrowHeadLength, context.renderContext().expressionContext() );
+    exprVal = mDataDefinedProperties.value( QgsSymbolLayer::Property::ArrowHeadLength, context.renderContext().expressionContext() );
     if ( !QgsVariantUtils::isNull( exprVal ) )
     {
       const double w = exprVal.toDouble( &ok );
@@ -673,12 +715,20 @@ void QgsArrowSymbolLayer::_resolveDataDefined( QgsSymbolRenderContext &context )
       {
         mScaledHeadLength = context.renderContext().convertToPainterUnits( w, headLengthUnit(), headLengthUnitScale() );
       }
+      else
+      {
+        mScaledHeadLength = mDefaultScaledHeadLength;
+      }
+    }
+    else
+    {
+      mScaledHeadLength = mDefaultScaledHeadLength;
     }
   }
-  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyArrowHeadThickness ) )
+  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::Property::ArrowHeadThickness ) )
   {
     context.setOriginalValueVariable( headThickness() );
-    exprVal = mDataDefinedProperties.value( QgsSymbolLayer::PropertyArrowHeadThickness, context.renderContext().expressionContext() );
+    exprVal = mDataDefinedProperties.value( QgsSymbolLayer::Property::ArrowHeadThickness, context.renderContext().expressionContext() );
     if ( !QgsVariantUtils::isNull( exprVal ) )
     {
       const double w = exprVal.toDouble( &ok );
@@ -686,23 +736,42 @@ void QgsArrowSymbolLayer::_resolveDataDefined( QgsSymbolRenderContext &context )
       {
         mScaledHeadThickness = context.renderContext().convertToPainterUnits( w, headThicknessUnit(), headThicknessUnitScale() );
       }
+      else
+      {
+        mScaledHeadThickness = mDefaultScaledHeadThickness;
+      }
+    }
+    else
+    {
+      mScaledHeadThickness = mDefaultScaledHeadThickness;
     }
   }
-  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyOffset ) )
+  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::Property::Offset ) )
   {
     context.setOriginalValueVariable( offset() );
-    exprVal = mDataDefinedProperties.value( QgsSymbolLayer::PropertyOffset, context.renderContext().expressionContext() );
-    const double w = exprVal.toDouble( &ok );
-    if ( ok )
+    exprVal = mDataDefinedProperties.value( QgsSymbolLayer::Property::Offset, context.renderContext().expressionContext() );
+    if ( !QgsVariantUtils::isNull( exprVal ) )
     {
-      mScaledOffset = context.renderContext().convertToPainterUnits( w, offsetUnit(), offsetMapUnitScale() );
+      const double w = exprVal.toDouble( &ok );
+      if ( ok )
+      {
+        mScaledOffset = context.renderContext().convertToPainterUnits( w, offsetUnit(), offsetMapUnitScale() );
+      }
+      else
+      {
+        mScaledOffset = mDefaultScaledOffset;
+      }
+    }
+    else
+    {
+      mScaledOffset = mDefaultScaledOffset;
     }
   }
 
-  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyArrowHeadType ) )
+  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::Property::ArrowHeadType ) )
   {
     context.setOriginalValueVariable( headType() );
-    exprVal = mDataDefinedProperties.value( QgsSymbolLayer::PropertyArrowHeadType, context.renderContext().expressionContext() );
+    exprVal = mDataDefinedProperties.value( QgsSymbolLayer::Property::ArrowHeadType, context.renderContext().expressionContext() );
     if ( !QgsVariantUtils::isNull( exprVal ) )
     {
       const HeadType h = QgsSymbolLayerUtils::decodeArrowHeadType( exprVal, &ok );
@@ -710,13 +779,21 @@ void QgsArrowSymbolLayer::_resolveDataDefined( QgsSymbolRenderContext &context )
       {
         mComputedHeadType = h;
       }
+      else
+      {
+        mComputedHeadType = mDefaultComputedHeadType;
+      }
+    }
+    else
+    {
+      mComputedHeadType = mDefaultComputedHeadType;
     }
   }
 
-  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::PropertyArrowType ) )
+  if ( mDataDefinedProperties.isActive( QgsSymbolLayer::Property::ArrowType ) )
   {
     context.setOriginalValueVariable( arrowType() );
-    exprVal = mDataDefinedProperties.value( QgsSymbolLayer::PropertyArrowType, context.renderContext().expressionContext() );
+    exprVal = mDataDefinedProperties.value( QgsSymbolLayer::Property::ArrowType, context.renderContext().expressionContext() );
     if ( !QgsVariantUtils::isNull( exprVal ) )
     {
       const ArrowType h = QgsSymbolLayerUtils::decodeArrowType( exprVal, &ok );
@@ -724,6 +801,14 @@ void QgsArrowSymbolLayer::_resolveDataDefined( QgsSymbolRenderContext &context )
       {
         mComputedArrowType = h;
       }
+      else
+      {
+        mComputedArrowType = mDefaultComputedArrowType;
+      }
+    }
+    else
+    {
+      mComputedArrowType = mDefaultComputedArrowType;
     }
   }
 }
@@ -747,6 +832,7 @@ void QgsArrowSymbolLayer::renderPolyline( const QPolygonF &points, QgsSymbolRend
   const double prevOpacity = mSymbol->opacity();
   mSymbol->setOpacity( prevOpacity * context.opacity() );
 
+  const bool useSelectedColor = shouldRenderUsingSelectionColor( context );
   if ( isCurved() )
   {
     _resolveDataDefined( context );
@@ -763,7 +849,7 @@ void QgsArrowSymbolLayer::renderPolyline( const QPolygonF &points, QgsSymbolRend
         const QPointF pd( points.back() );
 
         const QPolygonF poly = curvedArrow( po, pm, pd, mScaledArrowStartWidth, mScaledArrowWidth, mScaledHeadLength, mScaledHeadThickness, mComputedHeadType, mComputedArrowType, mScaledOffset );
-        mSymbol->renderPolygon( poly, /* rings */ nullptr, context.feature(), context.renderContext(), -1, context.selected() );
+        mSymbol->renderPolygon( poly, /* rings */ nullptr, context.feature(), context.renderContext(), -1, useSelectedColor );
       }
       // straight arrow
       else if ( points.size() == 2 )
@@ -774,7 +860,7 @@ void QgsArrowSymbolLayer::renderPolyline( const QPolygonF &points, QgsSymbolRend
         const QPointF pd( points.at( 1 ) );
 
         const QPolygonF poly = straightArrow( po, pd, mScaledArrowStartWidth, mScaledArrowWidth, mScaledHeadLength, mScaledHeadThickness, mComputedHeadType, mComputedArrowType, mScaledOffset );
-        mSymbol->renderPolygon( poly, /* rings */ nullptr, context.feature(), context.renderContext(), -1, context.selected() );
+        mSymbol->renderPolygon( poly, /* rings */ nullptr, context.feature(), context.renderContext(), -1, useSelectedColor );
       }
     }
     else
@@ -797,7 +883,7 @@ void QgsArrowSymbolLayer::renderPolyline( const QPolygonF &points, QgsSymbolRend
           const QPointF pd( points.at( pIdx + 2 ) );
 
           const QPolygonF poly = curvedArrow( po, pm, pd, mScaledArrowStartWidth, mScaledArrowWidth, mScaledHeadLength, mScaledHeadThickness, mComputedHeadType, mComputedArrowType, mScaledOffset );
-          mSymbol->renderPolygon( poly, /* rings */ nullptr, context.feature(), context.renderContext(), -1, context.selected() );
+          mSymbol->renderPolygon( poly, /* rings */ nullptr, context.feature(), context.renderContext(), -1, useSelectedColor );
         }
         // straight arrow
         else if ( points.size() - pIdx == 2 )
@@ -808,7 +894,7 @@ void QgsArrowSymbolLayer::renderPolyline( const QPolygonF &points, QgsSymbolRend
           const QPointF pd( points.at( pIdx + 1 ) );
 
           const QPolygonF poly = straightArrow( po, pd, mScaledArrowStartWidth, mScaledArrowWidth, mScaledHeadLength, mScaledHeadThickness, mComputedHeadType, mComputedArrowType, mScaledOffset );
-          mSymbol->renderPolygon( poly, /* rings */ nullptr, context.feature(), context.renderContext(), -1, context.selected() );
+          mSymbol->renderPolygon( poly, /* rings */ nullptr, context.feature(), context.renderContext(), -1, useSelectedColor );
         }
       }
     }
@@ -827,7 +913,7 @@ void QgsArrowSymbolLayer::renderPolyline( const QPolygonF &points, QgsSymbolRend
         const QPointF pd( points.back() );
 
         const QPolygonF poly = straightArrow( po, pd, mScaledArrowStartWidth, mScaledArrowWidth, mScaledHeadLength, mScaledHeadThickness, mComputedHeadType, mComputedArrowType, mScaledOffset );
-        mSymbol->renderPolygon( poly, /* rings */ nullptr, context.feature(), context.renderContext(), -1, context.selected() );
+        mSymbol->renderPolygon( poly, /* rings */ nullptr, context.feature(), context.renderContext(), -1, useSelectedColor );
       }
     }
     else
@@ -848,7 +934,7 @@ void QgsArrowSymbolLayer::renderPolyline( const QPolygonF &points, QgsSymbolRend
 
         const QPolygonF poly = straightArrow( po, pd, mScaledArrowStartWidth, mScaledArrowWidth, mScaledHeadLength, mScaledHeadThickness, mComputedHeadType, mComputedArrowType, mScaledOffset );
 
-        mSymbol->renderPolygon( poly, /* rings */ nullptr, context.feature(), context.renderContext(), -1, context.selected() );
+        mSymbol->renderPolygon( poly, /* rings */ nullptr, context.feature(), context.renderContext(), -1, useSelectedColor );
       }
     }
   }

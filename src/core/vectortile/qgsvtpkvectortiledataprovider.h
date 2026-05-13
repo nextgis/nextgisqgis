@@ -37,14 +37,12 @@ class CORE_EXPORT QgsVtpkVectorTileDataProvider : public QgsVectorTileDataProvid
   public:
     QgsVtpkVectorTileDataProvider( const QString &uri,
                                    const QgsDataProvider::ProviderOptions &providerOptions,
-                                   QgsDataProvider::ReadFlags flags );
+                                   Qgis::DataProviderReadFlags flags );
     QgsVtpkVectorTileDataProvider( const QgsVtpkVectorTileDataProvider &other );
 
-    /**
-     * QgsVtpkVectorTileDataProvider cannot be assigned.
-     */
     QgsVtpkVectorTileDataProvider &operator=( const QgsVtpkVectorTileDataProvider &other ) = delete;
 
+    Qgis::DataProviderFlags flags() const override;
     Qgis::VectorTileProviderFlags providerFlags() const override;
     Qgis::VectorTileProviderCapabilities providerCapabilities() const override;
     QString name() const override;
@@ -88,7 +86,7 @@ class QgsVtpkVectorTileDataProviderMetadata : public QgsProviderMetadata
   public:
     QgsVtpkVectorTileDataProviderMetadata();
     QgsProviderMetadata::ProviderMetadataCapabilities capabilities() const override;
-    QgsVtpkVectorTileDataProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() ) override;
+    QgsVtpkVectorTileDataProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() ) override;
     QIcon icon() const override;
     ProviderCapabilities providerCapabilities() const override;
     QString filters( Qgis::FileFilterType type ) override;

@@ -26,7 +26,6 @@
  * \class QgsPointClusterRenderer
  * \ingroup core
  * \brief A renderer that automatically clusters points with the same geographic position.
- * \since QGIS 3.0
 */
 class CORE_EXPORT QgsPointClusterRenderer: public QgsPointDistanceRenderer
 {
@@ -34,6 +33,7 @@ class CORE_EXPORT QgsPointClusterRenderer: public QgsPointDistanceRenderer
 
     QgsPointClusterRenderer();
 
+    Qgis::FeatureRendererFlags flags() const override;
     QgsPointClusterRenderer *clone() const override SIP_FACTORY;
     void startRender( QgsRenderContext &context, const QgsFields &fields ) override;
     void stopRender( QgsRenderContext &context ) override;

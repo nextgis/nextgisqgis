@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/project/qgsprojectversion.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,10 +12,10 @@
 class QgsProjectVersion
 {
 %Docstring(signature="appended")
-A class to describe the version of a project.
+Describes the version of a project.
 
-Used in places where you need to check if the current version
-of QGIS is greater than the one used to create a project file.
+Used in places where you need to check if the current version of QGIS is
+greater than the one used to create a project file.
 %End
 
 %TypeHeaderCode
@@ -30,12 +30,14 @@ Creates a new NULL version
 
     QgsProjectVersion( int major, int minor, int sub, const QString &name = QString() );
 %Docstring
-Constructor for QgsProjectVersion, with the specified ``major``, ``minor`` and ``sub`` version numbers.
+Constructor for QgsProjectVersion, with the specified ``major``,
+``minor`` and ``sub`` version numbers.
 %End
 
     QgsProjectVersion( const QString &string );
 %Docstring
-Constructor for QgsProjectVersion, which parses the version number from a ``string``.
+Constructor for QgsProjectVersion, which parses the version number from
+a ``string``.
 %End
 
     int majorVersion() const;
@@ -64,15 +66,10 @@ Returns ``True`` if this is a NULL project version.
 %End
 
     bool operator==( const QgsProjectVersion &other ) const;
-
     bool operator!=( const QgsProjectVersion &other ) const;
-
     bool operator>=( const QgsProjectVersion &other ) const;
-
     bool operator>( const QgsProjectVersion &other ) const;
-
     bool operator<( const QgsProjectVersion &other ) const;
-
     bool operator<=( const QgsProjectVersion &other ) const;
 
 };
@@ -82,5 +79,5 @@ Returns ``True`` if this is a NULL project version.
  *                                                                      *
  * src/core/project/qgsprojectversion.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

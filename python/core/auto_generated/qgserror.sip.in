@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgserror.h                                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,7 +13,7 @@
 class QgsErrorMessage
 {
 %Docstring(signature="appended")
-:py:class:`QgsErrorMessage` represents single error message.
+Represents a single error message.
 %End
 
 %TypeHeaderCode
@@ -27,9 +27,6 @@ class QgsErrorMessage
     };
 
     QgsErrorMessage();
-%Docstring
-Constructor for QgsErrorMessage
-%End
 
     QgsErrorMessage( const QString &message, const QString &tag = QString(), const QString &file = QString(), const QString &function = QString(), int line = 0 );
 %Docstring
@@ -53,9 +50,10 @@ Constructor.
 class QgsError
 {
 %Docstring(signature="appended")
-:py:class:`QgsError` is container for error messages (report). It may contain chain
-(sort of traceback) of error messages (e.g. GDAL - provider - layer).
-Higher level messages are appended at the end.
+A container for error messages.
+
+It may contain a chain (e.g. a traceback) of error messages (e.g. GDAL -
+provider - layer). Higher level messages are appended at the end.
 %End
 
 %TypeHeaderCode
@@ -64,9 +62,6 @@ Higher level messages are appended at the end.
   public:
 
     QgsError();
-%Docstring
-Constructor for QgsError
-%End
 
     QgsError( const QString &message, const QString &tag );
 %Docstring
@@ -93,9 +88,9 @@ Append new error message.
 
     bool isEmpty() const;
 %Docstring
-Test if any error is set.
+Test if no error is set.
 
-:return: ``True`` if contains error
+:return: ``False`` if contains error
 %End
 
     QString message( QgsErrorMessage::Format format = QgsErrorMessage::Html ) const;
@@ -109,7 +104,8 @@ Full error messages description
 
     QString summary() const;
 %Docstring
-Short error description, usually the first error in chain, the real error.
+Short error description, usually the first error in chain, the real
+error.
 
 :return: error description
 %End
@@ -140,5 +136,5 @@ messageList return the list of current error messages
  *                                                                      *
  * src/core/qgserror.h                                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

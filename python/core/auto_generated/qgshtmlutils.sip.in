@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgshtmlutils.h                                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,9 +12,7 @@
 class QgsHtmlUtils
 {
 %Docstring(signature="appended")
-Class for HTML utilities.
-
-.. versionadded:: 3.0
+Contains utilities for working with HTML.
 %End
 
 %TypeHeaderCode
@@ -24,8 +22,7 @@ Class for HTML utilities.
 
     static QString buildBulletList( const QStringList &values );
 %Docstring
-Build a bullet list.
-This will return a HTML "ul" element.
+Build a bullet list. This will return a HTML "ul" element.
 %End
 };
 
@@ -34,5 +31,5 @@ This will return a HTML "ul" element.
  *                                                                      *
  * src/core/qgshtmlutils.h                                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -29,7 +29,7 @@
 
 /**
  * \ingroup core
- * \brief Base class for storing raw data from point cloud nodes
+ * \brief Base class for storing raw data from point cloud nodes.
  *
  * \note The API is considered EXPERIMENTAL and can be changed without a notice
  *
@@ -42,8 +42,15 @@ class CORE_EXPORT QgsPointCloudBlock
     QgsPointCloudBlock( int count,
                         const QgsPointCloudAttributeCollection &attributes,
                         const QByteArray &data, const QgsVector3D &scale, const QgsVector3D &offset );
-    //! Dtor
+
     virtual ~QgsPointCloudBlock() = default;
+
+    /**
+     * Clones the QgsPointCloudBlock returning a new copy.
+     * Caller takes ownership of the returned object.
+     * \since QGIS 3.36
+     */
+    QgsPointCloudBlock *clone() const SIP_FACTORY;
 
     //! Returns raw pointer to data
     const char *data() const;
@@ -69,8 +76,10 @@ class CORE_EXPORT QgsPointCloudBlock
 
     /**
      * Changes the number of points in the block.
+     *
      * This is used in order to remove all points after point \a size.
-     * If a \a size larger than \a pointCount() is used, data for the new points will be uninitialized
+     *
+     * If a \a size larger than pointCount() is used, data for the new points will be uninitialized.
      *
      * \since QGIS 3.26
      */

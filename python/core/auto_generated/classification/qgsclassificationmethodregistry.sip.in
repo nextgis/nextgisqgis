@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/classification/qgsclassificationmethodregistry.h            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -15,9 +15,10 @@
 class QgsClassificationMethodRegistry
 {
 %Docstring(signature="appended")
-This class manages all known classification methods
+Manages all known classification methods.
 
-:py:class:`QgsClassificationMethodRegistry` is not usually directly created, but rather accessed through
+:py:class:`QgsClassificationMethodRegistry` is not usually directly
+created, but rather accessed through
 :py:func:`QgsApplication.classificationMethodRegistry()`.
 
 .. versionadded:: 3.10
@@ -32,11 +33,11 @@ This class manages all known classification methods
 
     bool addMethod( QgsClassificationMethod *method /Transfer/ );
 %Docstring
-Adds a method to the registry
-Returns ``False`` if a method with same id already exists.
+Adds a method to the registry Returns ``False`` if a method with same id
+already exists.
 %End
 
-    QgsClassificationMethod *method( const QString &id ) /Factory/;
+    std::unique_ptr< QgsClassificationMethod > method( const QString &id );
 %Docstring
 Returns a new instance of the method for the given id
 %End
@@ -58,5 +59,5 @@ Returns the icon for a given method id
  *                                                                      *
  * src/core/classification/qgsclassificationmethodregistry.h            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

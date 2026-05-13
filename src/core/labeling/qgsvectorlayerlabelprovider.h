@@ -29,13 +29,13 @@ class QgsSymbol;
 
 /**
  * \ingroup core
- * \brief The QgsVectorLayerLabelProvider class implements a label provider
- * for vector layers. Parameters for the labeling are taken from the layer's
+ * \brief Implements a label provider for vector layers.
+ *
+ * Parameters for the labeling are taken from the layer's
  * custom properties or from the given settings.
  *
  * \note this class is not a part of public API yet. See notes in QgsLabelingEngine
  * \note not available in Python bindings
- * \since QGIS 2.12
  */
 class CORE_EXPORT QgsVectorLayerLabelProvider : public QgsAbstractLabelProvider
 {
@@ -100,7 +100,6 @@ class CORE_EXPORT QgsVectorLayerLabelProvider : public QgsAbstractLabelProvider
      * \param fet point feature
      * \param context render context
      * \param symbols symbols rendered for point feature
-     * \since QGIS 2.14
      */
     static QgsGeometry getPointObstacleGeometry( QgsFeature &fet, QgsRenderContext &context, const QgsSymbolList &symbols );
 

@@ -35,15 +35,13 @@ typedef QPointF QwtDoublePoint SIP_SKIP;
 
 /**
  * \ingroup gui
- * \brief Histogram widget
+ * \brief A widget for display and configuring a raster layer histogram.
   */
-
 class GUI_EXPORT QgsRasterHistogramWidget : public QgsMapLayerConfigWidget, private Ui::QgsRasterHistogramWidgetBase
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsRasterHistogramWidget, for the specified raster \a layer.
      */
@@ -100,7 +98,6 @@ class GUI_EXPORT QgsRasterHistogramWidget : public QgsMapLayerConfigWidget, priv
     void btnHistoCompute_clicked();
 
   private:
-
     enum HistoShowBands
     {
       ShowAll = 0,
@@ -129,9 +126,9 @@ class GUI_EXPORT QgsRasterHistogramWidget : public QgsMapLayerConfigWidget, priv
     /* bool mHistoLoadApplyAll; */
     HistoShowBands mHistoShowBands;
     //! \brief Returns a list of selected bands in the histogram widget- or empty if there is no selection restriction.
-    QList< int > histoSelectedBands();
+    QList<int> histoSelectedBands();
     //! \brief Returns a list of selected bands in the renderer widget.
-    QList< int > rendererSelectedBands();
-    QPair< QString, QString > rendererMinMax( int bandNo );
+    QList<int> rendererSelectedBands();
+    QPair<QString, QString> rendererMinMax( int bandNo );
 };
 #endif

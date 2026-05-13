@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/sensor/qgssensormodel.h                                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,7 +13,8 @@
 class QgsSensorModel: QAbstractItemModel
 {
 %Docstring(signature="appended")
-A QAbstractItemModel subclass for showing sensors within a :py:class:`QgsSensorManager`.
+A QAbstractItemModel subclass for showing sensors within a
+:py:class:`QgsSensorManager`.
 
 .. versionadded:: 3.32
 %End
@@ -29,7 +30,8 @@ A QAbstractItemModel subclass for showing sensors within a :py:class:`QgsSensorM
       LastValue,
     };
 
-    enum Role
+
+    enum class CustomRole
     {
       SensorType,
       SensorId,
@@ -42,7 +44,8 @@ A QAbstractItemModel subclass for showing sensors within a :py:class:`QgsSensorM
 
     explicit QgsSensorModel( QgsSensorManager *manager, QObject *parent /TransferThis/ = 0 );
 %Docstring
-Constructor for QgsSensorModel, for the specified ``manager`` and ``parent`` object.
+Constructor for QgsSensorModel, for the specified ``manager`` and
+``parent`` object.
 %End
 
     virtual QVariant data( const QModelIndex &index, int role ) const;
@@ -69,5 +72,5 @@ Constructor for QgsSensorModel, for the specified ``manager`` and ``parent`` obj
  *                                                                      *
  * src/core/sensor/qgssensormodel.h                                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

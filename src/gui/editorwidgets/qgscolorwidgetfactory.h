@@ -24,13 +24,13 @@ SIP_NO_FILE
 /**
  * \ingroup gui
  * \class QgsColorWidgetFactory
+ * \brief Factory for creation of color widgets.
  * \note not available in Python bindings
  */
 
 class GUI_EXPORT QgsColorWidgetFactory : public QgsEditorWidgetFactory
 {
   public:
-
     /**
      * Constructor for QgsColorWidgetFactory, where \a name is a human-readable
      * name for the factory.

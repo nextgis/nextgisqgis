@@ -22,7 +22,7 @@
 
 /**
  * \ingroup core
- * \brief This is a container for attribute editors, used to group them visually in the
+ * \brief A container for attribute editors, used to group them visually in the
  * attribute form if it is set to the drag and drop designer.
  */
 class CORE_EXPORT QgsAttributeEditorContainer : public QgsAttributeEditorElement
@@ -70,7 +70,7 @@ class CORE_EXPORT QgsAttributeEditorContainer : public QgsAttributeEditorElement
      * Determines if this container is rendered as collapsible group box or tab in a tabwidget
      *
      * \param isGroupBox If TRUE, this will be a group box
-     * \deprecated use setType() instead.
+     * \deprecated QGIS 3.40. Use setType() instead.
      */
     Q_DECL_DEPRECATED virtual void setIsGroupBox( bool isGroupBox ) SIP_DEPRECATED;
 
@@ -79,7 +79,7 @@ class CORE_EXPORT QgsAttributeEditorContainer : public QgsAttributeEditorElement
      *
      * \returns TRUE if it will be a group box, FALSE if it will be a tab
      *
-     * \deprecated Use type() instead.
+     * \deprecated QGIS 3.40. Use type() instead.
      */
     Q_DECL_DEPRECATED virtual bool isGroupBox() const SIP_DEPRECATED;
 
@@ -145,7 +145,6 @@ class CORE_EXPORT QgsAttributeEditorContainer : public QgsAttributeEditorElement
     /**
      * Creates a deep copy of this element. To be implemented by subclasses.
      *
-     * \since QGIS 3.0
      */
     QgsAttributeEditorElement *clone( QgsAttributeEditorElement *parent ) const override SIP_FACTORY;
 
@@ -154,7 +153,6 @@ class CORE_EXPORT QgsAttributeEditorContainer : public QgsAttributeEditorElement
      * show or hide this container based on an expression incorporating
      * the field value controlled by editor widgets.
      *
-     * \since QGIS 3.0
      */
     QgsOptionalExpression visibilityExpression() const;
 
@@ -163,7 +161,6 @@ class CORE_EXPORT QgsAttributeEditorContainer : public QgsAttributeEditorElement
      * show or hide this container based on an expression incorporating
      * the field value controlled by editor widgets.
      *
-     * \since QGIS 3.0
      */
     void setVisibilityExpression( const QgsOptionalExpression &visibilityExpression );
 

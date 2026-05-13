@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/processing/qgsprocessingparameteraggregate.h                *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,8 +11,9 @@
 class QgsProcessingParameterAggregate : QgsProcessingParameterDefinition
 {
 %Docstring(signature="appended")
-A parameter for "aggregate" configurations, which consist of a definition
-of desired output fields, types, and aggregate used to populate then.
+A parameter for "aggregate" configurations, which consist of a
+definition of desired output fields, types, and aggregate used to
+populate them.
 
 Designed for use with the "Aggregate" algorithm.
 
@@ -36,7 +37,7 @@ Constructor for QgsProcessingParameterAggregate.
 
     virtual QString valueAsPythonString( const QVariant &value, QgsProcessingContext &context ) const;
 
-    virtual QString asPythonString( QgsProcessing::PythonOutputType outputType = QgsProcessing::PythonQgsProcessingAlgorithmSubclass ) const;
+    virtual QString asPythonString( QgsProcessing::PythonOutputType outputType = QgsProcessing::PythonOutputType::PythonQgsProcessingAlgorithmSubclass ) const;
 
     virtual QVariantMap toVariantMap() const;
 
@@ -52,14 +53,16 @@ Returns the type name for the parameter class.
 
     QString parentLayerParameterName() const;
 %Docstring
-Returns the name of the parent layer parameter, or an empty string if this is not set.
+Returns the name of the parent layer parameter, or an empty string if
+this is not set.
 
 .. seealso:: :py:func:`setParentLayerParameterName`
 %End
 
     void setParentLayerParameterName( const QString &name );
 %Docstring
-Sets the ``name`` of the parent layer parameter. Use an empty string if this is not required.
+Sets the ``name`` of the parent layer parameter. Use an empty string if
+this is not required.
 
 .. seealso:: :py:func:`parentLayerParameterName`
 %End
@@ -72,5 +75,5 @@ Sets the ``name`` of the parent layer parameter. Use an empty string if this is 
  *                                                                      *
  * src/core/processing/qgsprocessingparameteraggregate.h                *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

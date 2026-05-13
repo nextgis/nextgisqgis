@@ -32,29 +32,23 @@ class QgsMapLayerActionContextGenerator;
 
 /**
  * \ingroup gui
- * \brief This class is a menu that is populated automatically with the actions defined for a given layer.
+ * \brief A menu that is populated automatically with the actions defined for a given layer.
  */
-
 class GUI_EXPORT QgsActionMenu : public QMenu
 {
     Q_OBJECT
 
   public:
-
     struct GUI_EXPORT ActionData
     {
+        ActionData() = default;
+        ActionData( const QgsAction &action, QgsFeatureId featureId, QgsMapLayer *mapLayer );
+        ActionData( QgsMapLayerAction *action, QgsFeatureId featureId, QgsMapLayer *mapLayer );
 
-      /**
-       * Constructor for ActionData.
-       */
-      ActionData() = default;
-      ActionData( const QgsAction &action, QgsFeatureId featureId, QgsMapLayer *mapLayer );
-      ActionData( QgsMapLayerAction *action, QgsFeatureId featureId, QgsMapLayer *mapLayer );
-
-      Qgis::ActionType actionType = Qgis::ActionType::Invalid;
-      QVariant actionData;
-      QgsFeatureId featureId = 0;
-      QgsMapLayer *mapLayer = nullptr;
+        Qgis::ActionType actionType = Qgis::ActionType::Invalid;
+        QVariant actionData;
+        QgsFeatureId featureId = 0;
+        QgsMapLayer *mapLayer = nullptr;
     };
 
     /**
@@ -105,14 +99,12 @@ class GUI_EXPORT QgsActionMenu : public QMenu
     /**
      * Sets an expression context scope used to resolve underlying actions.
      *
-     * \since QGIS 3.0
      */
     void setExpressionContextScope( const QgsExpressionContextScope &scope );
 
     /**
      * Returns an expression context scope used to resolve underlying actions.
      *
-     * \since QGIS 3.0
      */
     QgsExpressionContextScope expressionContextScope() const;
 
@@ -131,6 +123,10 @@ class GUI_EXPORT QgsActionMenu : public QMenu
     bool isEmpty() const;
 
   signals:
+
+    /**
+     * Emitted after actions have been reloaded.
+     */
     void reinit();
 
   private slots:

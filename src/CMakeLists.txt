@@ -38,6 +38,10 @@ if (WITH_GUI)
 #  add_subdirectory(native)
 endif()
 
+if (WITH_GUI AND NOT TARGET ui)
+  add_custom_target(ui)
+endif()
+
 if (NOT PREPARE_ONLY)
    add_subdirectory(providers)
 endif()
@@ -49,16 +53,15 @@ if (ENABLE_TESTS)
 endif()
 
 if (WITH_DESKTOP)
+  if (WITH_BINDINGS)
+    add_subdirectory(python)
+  endif()
   add_subdirectory(app)
   add_subdirectory(plugins)
 endif()
 
 if (WITH_3D)
   add_subdirectory(3d)
-endif()
-
-if (WITH_BINDINGS)
-  add_subdirectory(python)
 endif()
 
 if (WITH_QGIS_PROCESS)

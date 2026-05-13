@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgsmaptoolshapecircle2tangentspoint.h"
+#include "moc_qgsmaptoolshapecircle2tangentspoint.cpp"
 #include "qgsgeometryrubberband.h"
 #include "qgsadvanceddigitizingdockwidget.h"
 #include "qgssnappingutils.h"
@@ -87,12 +88,10 @@ bool QgsMapToolShapeCircle2TangentsPoint::cadCanvasReleaseEvent( QgsMapMouseEven
     {
       bool isIntersect = false;
       QgsPoint ptInter;
-      QgsGeometryUtils::segmentIntersection( mPoints.at( 0 ), mPoints.at( 1 ),
-                                             mPoints.at( 2 ), mPoints.at( 3 ), ptInter, isIntersect );
+      QgsGeometryUtils::segmentIntersection( mPoints.at( 0 ), mPoints.at( 1 ), mPoints.at( 2 ), mPoints.at( 3 ), ptInter, isIntersect );
       if ( !isIntersect )
       {
-        QgisApp::instance()->messageBar()->pushMessage( tr( "Error" ), tr( "Segments are parallels" ),
-            Qgis::MessageLevel::Critical );
+        QgisApp::instance()->messageBar()->pushMessage( tr( "Error" ), tr( "Segments are parallels" ), Qgis::MessageLevel::Critical );
         clean();
       }
       else
@@ -130,7 +129,7 @@ void QgsMapToolShapeCircle2TangentsPoint::cadCanvasMoveEvent( QgsMapMouseEvent *
     {
       QgsPointXY p1, p2;
       match.edgePoints( p1, p2 );
-      std::unique_ptr<QgsLineString> line( new QgsLineString() );
+      auto line = std::make_unique<QgsLineString>();
 
       line->addVertex( QgsPoint( p1 ) );
       line->addVertex( QgsPoint( p2 ) );
@@ -156,43 +155,38 @@ void QgsMapToolShapeCircle2TangentsPoint::cadCanvasMoveEvent( QgsMapMouseEvent *
   }
 }
 
-void QgsMapToolShapeCircle2TangentsPoint::getPossibleCenter( )
+void QgsMapToolShapeCircle2TangentsPoint::getPossibleCenter()
 {
-
   mCenters.clear();
 
   if ( mPoints.size() == 4 )
   {
-    std::unique_ptr<QgsLineString> l1( new QgsLineString() );
+    auto l1 = std::make_unique<QgsLineString>();
     l1->addVertex( mPoints.at( 0 ) );
     l1->addVertex( mPoints.at( 1 ) );
 
-    std::unique_ptr<QgsLineString> l2( new QgsLineString() );
+    auto l2 = std::make_unique<QgsLineString>();
     l2->addVertex( mPoints.at( 2 ) );
     l2->addVertex( mPoints.at( 3 ) );
 
     /* use magic default values (8, QgsGeometry::JoinStyleBevel, 5), is useless for segments */
     const QgsGeometry line1 = QgsGeometry( l1.release() );
-    const QgsGeometry line1m = line1.offsetCurve( - mRadius, 8, Qgis::JoinStyle::Bevel, 5 );
-    const QgsGeometry line1p = line1.offsetCurve( + mRadius, 8, Qgis::JoinStyle::Bevel, 5 );
+    const QgsGeometry line1m = line1.offsetCurve( -mRadius, 8, Qgis::JoinStyle::Bevel, 5 );
+    const QgsGeometry line1p = line1.offsetCurve( +mRadius, 8, Qgis::JoinStyle::Bevel, 5 );
 
     const QgsGeometry line2 = QgsGeometry( l2.release() );
-    const QgsGeometry line2m = line2.offsetCurve( - mRadius, 8, Qgis::JoinStyle::Bevel, 5 );
-    const QgsGeometry line2p = line2.offsetCurve( + mRadius, 8, Qgis::JoinStyle::Bevel, 5 );
+    const QgsGeometry line2m = line2.offsetCurve( -mRadius, 8, Qgis::JoinStyle::Bevel, 5 );
+    const QgsGeometry line2p = line2.offsetCurve( +mRadius, 8, Qgis::JoinStyle::Bevel, 5 );
 
     bool isIntersect = false;
     QgsPoint inter;
-    QgsGeometryUtils::segmentIntersection( QgsPoint( line1m.asPolyline().at( 0 ) ), QgsPoint( line1m.asPolyline().at( 1 ) ),
-                                           QgsPoint( line2m.asPolyline().at( 0 ) ), QgsPoint( line2m.asPolyline().at( 1 ) ), inter, isIntersect );
+    QgsGeometryUtils::segmentIntersection( QgsPoint( line1m.asPolyline().at( 0 ) ), QgsPoint( line1m.asPolyline().at( 1 ) ), QgsPoint( line2m.asPolyline().at( 0 ) ), QgsPoint( line2m.asPolyline().at( 1 ) ), inter, isIntersect );
     mCenters.append( QgsPoint( inter ) );
-    QgsGeometryUtils::segmentIntersection( QgsPoint( line1m.asPolyline().at( 0 ) ), QgsPoint( line1m.asPolyline().at( 1 ) ),
-                                           QgsPoint( line2p.asPolyline().at( 0 ) ), QgsPoint( line2p.asPolyline().at( 1 ) ), inter, isIntersect );
+    QgsGeometryUtils::segmentIntersection( QgsPoint( line1m.asPolyline().at( 0 ) ), QgsPoint( line1m.asPolyline().at( 1 ) ), QgsPoint( line2p.asPolyline().at( 0 ) ), QgsPoint( line2p.asPolyline().at( 1 ) ), inter, isIntersect );
     mCenters.append( QgsPoint( inter ) );
-    QgsGeometryUtils::segmentIntersection( QgsPoint( line1p.asPolyline().at( 0 ) ), QgsPoint( line1p.asPolyline().at( 1 ) ),
-                                           QgsPoint( line2m.asPolyline().at( 0 ) ), QgsPoint( line2m.asPolyline().at( 1 ) ), inter, isIntersect );
+    QgsGeometryUtils::segmentIntersection( QgsPoint( line1p.asPolyline().at( 0 ) ), QgsPoint( line1p.asPolyline().at( 1 ) ), QgsPoint( line2m.asPolyline().at( 0 ) ), QgsPoint( line2m.asPolyline().at( 1 ) ), inter, isIntersect );
     mCenters.append( QgsPoint( inter ) );
-    QgsGeometryUtils::segmentIntersection( QgsPoint( line1p.asPolyline().at( 0 ) ), QgsPoint( line1p.asPolyline().at( 1 ) ),
-                                           QgsPoint( line2p.asPolyline().at( 0 ) ), QgsPoint( line2p.asPolyline().at( 1 ) ), inter, isIntersect );
+    QgsGeometryUtils::segmentIntersection( QgsPoint( line1p.asPolyline().at( 0 ) ), QgsPoint( line1p.asPolyline().at( 1 ) ), QgsPoint( line2p.asPolyline().at( 0 ) ), QgsPoint( line2p.asPolyline().at( 1 ) ), inter, isIntersect );
     mCenters.append( QgsPoint( inter ) );
   }
 }
@@ -208,7 +202,7 @@ void QgsMapToolShapeCircle2TangentsPoint::createRadiusSpinBox()
   mRadiusSpinBox->setValue( mRadius );
   QgisApp::instance()->addUserInputWidget( mRadiusSpinBox );
   mRadiusSpinBox->setFocus( Qt::TabFocusReason );
-  QObject::connect( mRadiusSpinBox, qOverload< double >( &QDoubleSpinBox::valueChanged ), this, &QgsMapToolShapeCircle2TangentsPoint::radiusSpinBoxChanged );
+  QObject::connect( mRadiusSpinBox, qOverload<double>( &QDoubleSpinBox::valueChanged ), this, &QgsMapToolShapeCircle2TangentsPoint::radiusSpinBoxChanged );
 }
 
 void QgsMapToolShapeCircle2TangentsPoint::deleteRadiusSpinBox()
@@ -223,7 +217,7 @@ void QgsMapToolShapeCircle2TangentsPoint::deleteRadiusSpinBox()
 void QgsMapToolShapeCircle2TangentsPoint::radiusSpinBoxChanged( double radius )
 {
   mRadius = radius;
-  getPossibleCenter( );
+  getPossibleCenter();
 
   qDeleteAll( mRubberBands );
   mRubberBands.clear();
@@ -233,7 +227,7 @@ void QgsMapToolShapeCircle2TangentsPoint::radiusSpinBoxChanged( double radius )
     for ( int i = 0; i < mCenters.size(); ++i )
     {
       std::unique_ptr<QgsGeometryRubberBand> tempRB( mParentTool->createGeometryRubberBand( Qgis::GeometryType::Point, true ) );
-      std::unique_ptr<QgsPoint> tempCenter( new QgsPoint( mCenters.at( i ) ) );
+      auto tempCenter = std::make_unique<QgsPoint>( mCenters.at( i ) );
       tempRB->setGeometry( tempCenter.release() );
       tempRB->show();
       mRubberBands.append( tempRB.release() );

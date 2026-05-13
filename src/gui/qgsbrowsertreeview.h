@@ -22,9 +22,9 @@
 
 #ifdef SIP_RUN
 // this is needed for the "convert to subclass" code below to compile
-% ModuleHeaderCode
+//%ModuleHeaderCode
 #include "qgsbrowsertreeview.h"
-% End
+//%End
 #endif
 
 class QgsBrowserGuiModel;
@@ -32,14 +32,12 @@ class QgsDataItem;
 
 /**
  * \ingroup gui
- * \brief The QgsBrowserTreeView class extends QTreeView with save/restore tree state functionality.
+ * \brief Extends QTreeView with save/restore tree state and other browser-specific functionality.
  *
  * \see QgsBrowserModel
- * \since QGIS 2.8
  */
 class GUI_EXPORT QgsBrowserTreeView : public QTreeView
 {
-
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
     if ( qobject_cast<QgsBrowserTreeView *>( sipCpp ) != nullptr )
@@ -51,7 +49,6 @@ class GUI_EXPORT QgsBrowserTreeView : public QTreeView
 
     Q_OBJECT
   public:
-
     //! Constructor for QgsBrowserTreeView
     QgsBrowserTreeView( QWidget *parent SIP_TRANSFERTHIS = nullptr );
 
@@ -83,12 +80,13 @@ class GUI_EXPORT QgsBrowserTreeView : public QTreeView
      *
      * The \a path must correspond to a valid directory existing on the file system.
      *
+     * Since QGIS 3.38 the \a selectPath argument can be used to automatically select the path too.
+     *
      * \since QGIS 3.28
      */
-    void expandPath( const QString &path );
+    void expandPath( const QString &path, bool selectPath = false );
 
   protected:
-
     void keyPressEvent( QKeyEvent *event ) override;
 
   protected slots:

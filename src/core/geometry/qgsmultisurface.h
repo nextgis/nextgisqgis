@@ -27,7 +27,6 @@ class QgsSurface;
  * \ingroup core
  * \class QgsMultiSurface
  * \brief Multi surface geometry collection.
- * \since QGIS 2.10
  */
 class CORE_EXPORT QgsMultiSurface: public QgsGeometryCollection
 {
@@ -90,8 +89,10 @@ class CORE_EXPORT QgsMultiSurface: public QgsGeometryCollection
     QDomElement asGml3( QDomDocument &doc, int precision = 17, const QString &ns = "gml", QgsAbstractGeometry::AxisOrder axisOrder = QgsAbstractGeometry::AxisOrder::XY ) const override;
     json asJsonObject( int precision = 17 ) const override SIP_SKIP;
     bool addGeometry( QgsAbstractGeometry *g SIP_TRANSFER ) override;
+    bool addGeometries( const QVector< QgsAbstractGeometry * > &geometries SIP_TRANSFER ) override;
     bool insertGeometry( QgsAbstractGeometry *g SIP_TRANSFER, int index ) override;
     QgsAbstractGeometry *boundary() const override SIP_FACTORY;
+    QgsMultiSurface *simplifyByDistance( double tolerance ) const override SIP_FACTORY;
 
 #ifndef SIP_RUN
 
@@ -99,10 +100,11 @@ class CORE_EXPORT QgsMultiSurface: public QgsGeometryCollection
      * Cast the \a geom to a QgsMultiSurface.
      * Should be used by qgsgeometry_cast<QgsMultiSurface *>( geometry ).
      *
-     * \note Not available in Python. Objects will be automatically be converted to the appropriate target type.
-     * \since QGIS 3.0
+     * Objects will be automatically converted to the appropriate target type.
+     *
+     * \note Not available in Python.
      */
-    inline static const QgsMultiSurface *cast( const QgsAbstractGeometry *geom )
+    inline static const QgsMultiSurface *cast( const QgsAbstractGeometry *geom ) // cppcheck-suppress duplInheritedMember
     {
       if ( !geom )
         return nullptr;
@@ -112,6 +114,27 @@ class CORE_EXPORT QgsMultiSurface: public QgsGeometryCollection
       if ( flatType == Qgis::WkbType::MultiSurface
            || flatType == Qgis::WkbType::MultiPolygon )
         return static_cast<const QgsMultiSurface *>( geom );
+      return nullptr;
+    }
+
+    /**
+     * Cast the \a geom to a QgsMultiSurface.
+     * Should be used by qgsgeometry_cast<QgsMultiSurface *>( geometry ).
+     *
+     * Objects will be automatically converted to the appropriate target type.
+     *
+     * \note Not available in Python.
+     */
+    inline static QgsMultiSurface *cast( QgsAbstractGeometry *geom ) // cppcheck-suppress duplInheritedMember
+    {
+      if ( !geom )
+        return nullptr;
+
+      const Qgis::WkbType flatType = QgsWkbTypes::flatType( geom->wkbType() );
+
+      if ( flatType == Qgis::WkbType::MultiSurface
+           || flatType == Qgis::WkbType::MultiPolygon )
+        return static_cast<QgsMultiSurface *>( geom );
       return nullptr;
     }
 #endif

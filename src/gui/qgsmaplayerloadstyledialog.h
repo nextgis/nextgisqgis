@@ -42,7 +42,6 @@ class GUI_EXPORT QgsMapLayerLoadStyleDialog : public QDialog, private Ui::QgsVec
 {
     Q_OBJECT
   public:
-
     /**
      * Constructor for QgsMapLayerLoadStyleDialog, associated with the specified map \a layer.
      */
@@ -54,9 +53,9 @@ class GUI_EXPORT QgsMapLayerLoadStyleDialog : public QDialog, private Ui::QgsVec
     QgsMapLayer::StyleCategories styleCategories() const;
 
     /**
-     * Returns the selected vector style type, for vector layers only.
+     * Returns the selected style type.
      */
-    QgsVectorLayerProperties::StyleType currentStyleType() const;
+    QgsLayerPropertiesDialog::StyleType currentStyleType() const;
 
     /**
      * Returns the file extension for the selected layer style source file.
@@ -91,6 +90,9 @@ class GUI_EXPORT QgsMapLayerLoadStyleDialog : public QDialog, private Ui::QgsVec
     void onOthersTableSelectionChanged();
     void deleteStyleFromDB();
     void showHelp();
+    void selectAll();
+    void deselectAll();
+    void invertSelection();
 
   private:
     void selectionChanged( QTableWidget *styleTable );

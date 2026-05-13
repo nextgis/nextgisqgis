@@ -49,12 +49,18 @@ QString QgsRescaleRasterAlgorithm::groupId() const
 
 QString QgsRescaleRasterAlgorithm::shortHelpString() const
 {
-  return QObject::tr( "Rescales raster layer to a new value range, while preserving the shape "
+  return QObject::tr( "This algorithm rescales a raster layer to a new value range, while preserving the shape "
                       "(distribution) of the raster's histogram (pixel values). Input values "
                       "are mapped using a linear interpolation from the source raster's minimum "
                       "and maximum pixel values to the destination minimum and maximum pixel range.\n\n"
-                      "By default the algorithm preserves original the NODATA value, but there is "
+                      "By default the algorithm preserves the original NoData value, but there is "
                       "an option to override it." );
+}
+
+QString QgsRescaleRasterAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Rescales a raster layer to a new value range, while preserving the shape "
+                      "(distribution) of the raster's histogram (pixel values)." );
 }
 
 QgsRescaleRasterAlgorithm *QgsRescaleRasterAlgorithm::createInstance() const
@@ -66,9 +72,22 @@ void QgsRescaleRasterAlgorithm::initAlgorithm( const QVariantMap & )
 {
   addParameter( new QgsProcessingParameterRasterLayer( QStringLiteral( "INPUT" ), QStringLiteral( "Input raster" ) ) );
   addParameter( new QgsProcessingParameterBand( QStringLiteral( "BAND" ), QObject::tr( "Band number" ), 1, QStringLiteral( "INPUT" ) ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "MINIMUM" ), QObject::tr( "New minimum value" ), QgsProcessingParameterNumber::Double, 0 ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "MAXIMUM" ), QObject::tr( "New maximum value" ), QgsProcessingParameterNumber::Double, 255 ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "NODATA" ), QObject::tr( "New NODATA value" ), QgsProcessingParameterNumber::Double, QVariant(), true ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "MINIMUM" ), QObject::tr( "New minimum value" ), Qgis::ProcessingNumberParameterType::Double, 0 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "MAXIMUM" ), QObject::tr( "New maximum value" ), Qgis::ProcessingNumberParameterType::Double, 255 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "NODATA" ), QObject::tr( "New NoData value" ), Qgis::ProcessingNumberParameterType::Double, QVariant(), true ) );
+
+  // backwards compatibility parameter
+  // TODO QGIS 4: remove parameter and related logic
+  auto createOptsParam = std::make_unique<QgsProcessingParameterString>( QStringLiteral( "CREATE_OPTIONS" ), QObject::tr( "Creation options" ), QVariant(), false, true );
+  createOptsParam->setMetadata( QVariantMap( { { QStringLiteral( "widget_wrapper" ), QVariantMap( { { QStringLiteral( "widget_type" ), QStringLiteral( "rasteroptions" ) } } ) } } ) );
+  createOptsParam->setFlags( createOptsParam->flags() | Qgis::ProcessingParameterFlag::Hidden );
+  addParameter( createOptsParam.release() );
+
+  auto creationOptsParam = std::make_unique<QgsProcessingParameterString>( QStringLiteral( "CREATION_OPTIONS" ), QObject::tr( "Creation options" ), QVariant(), false, true );
+  creationOptsParam->setMetadata( QVariantMap( { { QStringLiteral( "widget_wrapper" ), QVariantMap( { { QStringLiteral( "widget_type" ), QStringLiteral( "rasteroptions" ) } } ) } } ) );
+  creationOptsParam->setFlags( creationOptsParam->flags() | Qgis::ProcessingParameterFlag::Advanced );
+  addParameter( creationOptsParam.release() );
+
   addParameter( new QgsProcessingParameterRasterDestination( QStringLiteral( "OUTPUT" ), QObject::tr( "Rescaled" ) ) );
 }
 
@@ -83,8 +102,8 @@ bool QgsRescaleRasterAlgorithm::prepareAlgorithm( const QVariantMap &parameters,
   mBand = parameterAsInt( parameters, QStringLiteral( "BAND" ), context );
   if ( mBand < 1 || mBand > layer->bandCount() )
     throw QgsProcessingException( QObject::tr( "Invalid band number for BAND (%1): Valid values for input raster are 1 to %2" )
-                                  .arg( mBand )
-                                  .arg( layer->bandCount() ) );
+                                    .arg( mBand )
+                                    .arg( layer->bandCount() ) );
 
   mMinimum = parameterAsDouble( parameters, QStringLiteral( "MINIMUM" ), context );
   mMaximum = parameterAsDouble( parameters, QStringLiteral( "MAXIMUM" ), context );
@@ -122,16 +141,28 @@ bool QgsRescaleRasterAlgorithm::prepareAlgorithm( const QVariantMap &parameters,
 QVariantMap QgsRescaleRasterAlgorithm::processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback )
 {
   feedback->pushInfo( QObject::tr( "Calculating raster minimum and maximum values…" ) );
-  const QgsRasterBandStats stats = mInterface->bandStatistics( mBand, QgsRasterBandStats::Min | QgsRasterBandStats::Max, QgsRectangle(), 0 );
+  const QgsRasterBandStats stats = mInterface->bandStatistics( mBand, Qgis::RasterBandStatistic::Min | Qgis::RasterBandStatistic::Max, QgsRectangle(), 0 );
 
   feedback->pushInfo( QObject::tr( "Rescaling values…" ) );
+
+  QString creationOptions = parameterAsString( parameters, QStringLiteral( "CREATION_OPTIONS" ), context ).trimmed();
+  // handle backwards compatibility parameter CREATE_OPTIONS
+  const QString optionsString = parameterAsString( parameters, QStringLiteral( "CREATE_OPTIONS" ), context );
+  if ( !optionsString.isEmpty() )
+    creationOptions = optionsString;
+
   const QString outputFile = parameterAsOutputLayer( parameters, QStringLiteral( "OUTPUT" ), context );
   const QFileInfo fi( outputFile );
   const QString outputFormat = QgsRasterFileWriter::driverForExtension( fi.suffix() );
-  std::unique_ptr< QgsRasterFileWriter > writer = std::make_unique< QgsRasterFileWriter >( outputFile );
+  auto writer = std::make_unique<QgsRasterFileWriter>( outputFile );
   writer->setOutputProviderKey( QStringLiteral( "gdal" ) );
+  if ( !creationOptions.isEmpty() )
+  {
+    writer->setCreationOptions( creationOptions.split( '|' ) );
+  }
+
   writer->setOutputFormat( outputFormat );
-  std::unique_ptr<QgsRasterDataProvider > provider( writer->createOneBandRaster( Qgis::DataType::Float32, mXSize, mYSize, mExtent, mCrs ) );
+  std::unique_ptr<QgsRasterDataProvider> provider( writer->createOneBandRaster( Qgis::DataType::Float32, mXSize, mYSize, mExtent, mCrs ) );
   if ( !provider )
     throw QgsProcessingException( QObject::tr( "Could not create raster output: %1" ).arg( outputFile ) );
   if ( !provider->isValid() )
@@ -143,8 +174,8 @@ QVariantMap QgsRescaleRasterAlgorithm::processAlgorithm( const QVariantMap &para
 
   const int blockWidth = QgsRasterIterator::DEFAULT_MAXIMUM_TILE_WIDTH;
   const int blockHeight = QgsRasterIterator::DEFAULT_MAXIMUM_TILE_HEIGHT;
-  const int numBlocksX = static_cast< int >( std::ceil( 1.0 * mLayerWidth / blockWidth ) );
-  const int numBlocksY = static_cast< int >( std::ceil( 1.0 * mLayerHeight / blockHeight ) );
+  const int numBlocksX = static_cast<int>( std::ceil( 1.0 * mLayerWidth / blockWidth ) );
+  const int numBlocksY = static_cast<int>( std::ceil( 1.0 * mLayerHeight / blockHeight ) );
   const int numBlocks = numBlocksX * numBlocksY;
 
   QgsRasterIterator iter( mInterface.get() );
@@ -153,10 +184,10 @@ QVariantMap QgsRescaleRasterAlgorithm::processAlgorithm( const QVariantMap &para
   int iterTop = 0;
   int iterCols = 0;
   int iterRows = 0;
-  std::unique_ptr< QgsRasterBlock > inputBlock;
+  std::unique_ptr<QgsRasterBlock> inputBlock;
   while ( iter.readNextRasterPart( mBand, iterCols, iterRows, inputBlock, iterLeft, iterTop ) )
   {
-    std::unique_ptr< QgsRasterBlock > outputBlock( new QgsRasterBlock( destProvider->dataType( 1 ), iterCols, iterRows ) );
+    auto outputBlock = std::make_unique<QgsRasterBlock>( destProvider->dataType( 1 ), iterCols, iterRows );
     feedback->setProgress( 100 * ( ( iterTop / blockHeight * numBlocksX ) + iterLeft / blockWidth ) / numBlocks );
 
     for ( int row = 0; row < iterRows; row++ )
@@ -179,7 +210,10 @@ QVariantMap QgsRescaleRasterAlgorithm::processAlgorithm( const QVariantMap &para
         }
       }
     }
-    destProvider->writeBlock( outputBlock.get(), mBand, iterLeft, iterTop );
+    if ( !destProvider->writeBlock( outputBlock.get(), mBand, iterLeft, iterTop ) )
+    {
+      throw QgsProcessingException( QObject::tr( "Could not write raster block: %1" ).arg( destProvider->error().summary() ) );
+    }
   }
   destProvider->setEditable( false );
 

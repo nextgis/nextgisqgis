@@ -16,20 +16,18 @@
 #include "qgspointcloudlayer3drenderer.h"
 
 #include "qgs3dutils.h"
-#include "qgschunkedentity_p.h"
 #include "qgspointcloudlayerchunkloader_p.h"
 
 #include "qgspointcloudindex.h"
 #include "qgspointcloudlayer.h"
-// #include "qgsvirtualpointcloudentity_p.h"
+#include "qgsvirtualpointcloudentity_p.h"
 #include "qgsxmlutils.h"
-#include "qgsapplication.h"
 #include "qgs3dsymbolregistry.h"
 #include "qgspointcloud3dsymbol.h"
 #include "qgspointcloudlayerelevationproperties.h"
 
-QgsPointCloud3DRenderContext::QgsPointCloud3DRenderContext( const Qgs3DMapSettings &map, const QgsCoordinateTransform &coordinateTransform, std::unique_ptr<QgsPointCloud3DSymbol> symbol, double zValueScale, double zValueFixedOffset )
-  : Qgs3DRenderContext( map )
+QgsPointCloud3DRenderContext::QgsPointCloud3DRenderContext( const Qgs3DRenderContext &context, const QgsCoordinateTransform &coordinateTransform, std::unique_ptr<QgsPointCloud3DSymbol> symbol, double zValueScale, double zValueFixedOffset )
+  : Qgs3DRenderContext( context )
   , mSymbol( std::move( symbol ) )
   , mZValueScale( zValueScale )
   , mZValueFixedOffset( zValueFixedOffset )
@@ -80,22 +78,22 @@ void QgsPointCloud3DRenderContext::cancelRendering() const
 
 void QgsPointCloud3DRenderContext::updateExtent()
 {
-  if ( map().extent().isEmpty() )
+  if ( extent().isEmpty() )
   {
     // an empty extent means no filter, so let's pass it without transformation
-    mExtent = QgsRectangle();
+    mLayerExtent = QgsRectangle();
   }
   else
   {
     try
     {
-      mExtent = mCoordinateTransform.transformBoundingBox( map().extent(), Qgis::TransformDirection::Reverse );
+      mLayerExtent = mCoordinateTransform.transformBoundingBox( extent(), Qgis::TransformDirection::Reverse );
     }
     catch ( const QgsCsException & )
     {
       // bad luck, can't reproject for some reason. Let's use an empty extent to skip filtering.
       QgsDebugError( QStringLiteral( "Transformation of extent failed!" ) );
-      mExtent = QgsRectangle();
+      mLayerExtent = QgsRectangle();
     }
   }
 }
@@ -118,7 +116,7 @@ QgsAbstract3DRenderer *QgsPointCloudLayer3DRendererMetadata::createRenderer( QDo
 // ---------
 
 
-QgsPointCloudLayer3DRenderer::QgsPointCloudLayer3DRenderer( )
+QgsPointCloudLayer3DRenderer::QgsPointCloudLayer3DRenderer()
 {
 }
 
@@ -147,10 +145,11 @@ QgsPointCloudLayer3DRenderer *QgsPointCloudLayer3DRenderer::clone() const
   }
   r->setMaximumScreenError( mMaximumScreenError );
   r->setShowBoundingBoxes( mShowBoundingBoxes );
+  r->setZoomOutBehavior( mZoomOutBehavior );
   return r;
 }
 
-Qt3DCore::QEntity *QgsPointCloudLayer3DRenderer::createEntity( const Qgs3DMapSettings &map ) const
+Qt3DCore::QEntity *QgsPointCloudLayer3DRenderer::createEntity( Qgs3DMapSettings *map ) const
 {
   QgsPointCloudLayer *pcl = layer();
   if ( !pcl || !pcl->dataProvider() )
@@ -158,25 +157,17 @@ Qt3DCore::QEntity *QgsPointCloudLayer3DRenderer::createEntity( const Qgs3DMapSet
   if ( !mSymbol )
     return nullptr;
 
-  const QgsCoordinateTransform coordinateTransform( pcl->crs(), map.crs(), map.transformContext() );
+  const QgsCoordinateTransform coordinateTransform( pcl->crs3D(), map->crs(), map->transformContext() );
 
   Qt3DCore::QEntity *entity = nullptr;
-  /*
-  if ( pcl->dataProvider()->index() )
+  if ( pcl->index() )
   {
-  */
-    entity = new QgsPointCloudLayerChunkedEntity( pcl->dataProvider()->index(), map, coordinateTransform, dynamic_cast<QgsPointCloud3DSymbol *>( mSymbol->clone() ), maximumScreenError(), showBoundingBoxes(),
-        static_cast< const QgsPointCloudLayerElevationProperties * >( pcl->elevationProperties() )->zScale(),
-        static_cast< const QgsPointCloudLayerElevationProperties * >( pcl->elevationProperties() )->zOffset(), mPointBudget );
-  /*
+    entity = new QgsPointCloudLayerChunkedEntity( map, pcl, pcl->index(), coordinateTransform, mSymbol->clone(), static_cast<float>( maximumScreenError() ), showBoundingBoxes(), static_cast<const QgsPointCloudLayerElevationProperties *>( pcl->elevationProperties() )->zScale(), static_cast<const QgsPointCloudLayerElevationProperties *>( pcl->elevationProperties() )->zOffset(), mPointBudget );
   }
   else if ( !pcl->dataProvider()->subIndexes().isEmpty() )
   {
-    entity = new QgsVirtualPointCloudEntity( pcl, map, coordinateTransform, dynamic_cast<QgsPointCloud3DSymbol *>( mSymbol->clone() ), maximumScreenError(), showBoundingBoxes(),
-        static_cast< const QgsPointCloudLayerElevationProperties * >( pcl->elevationProperties() )->zScale(),
-        static_cast< const QgsPointCloudLayerElevationProperties * >( pcl->elevationProperties() )->zOffset(), mPointBudget );
+    entity = new QgsVirtualPointCloudEntity( map, pcl, coordinateTransform, mSymbol->clone(), static_cast<float>( maximumScreenError() ), showBoundingBoxes(), static_cast<const QgsPointCloudLayerElevationProperties *>( pcl->elevationProperties() )->zScale(), static_cast<const QgsPointCloudLayerElevationProperties *>( pcl->elevationProperties() )->zOffset(), mPointBudget );
   }
-  */
   return entity;
 }
 
@@ -195,6 +186,7 @@ void QgsPointCloudLayer3DRenderer::writeXml( QDomElement &elem, const QgsReadWri
   elem.setAttribute( QStringLiteral( "max-screen-error" ), maximumScreenError() );
   elem.setAttribute( QStringLiteral( "show-bounding-boxes" ), showBoundingBoxes() ? QStringLiteral( "1" ) : QStringLiteral( "0" ) );
   elem.setAttribute( QStringLiteral( "point-budget" ), mPointBudget );
+  elem.setAttribute( QStringLiteral( "zoom-out-behavior" ), qgsEnumValueToKey( mZoomOutBehavior ) );
 
   QDomElement elemSymbol = doc.createElement( QStringLiteral( "symbol" ) );
   if ( mSymbol )
@@ -215,6 +207,7 @@ void QgsPointCloudLayer3DRenderer::readXml( const QDomElement &elem, const QgsRe
   mShowBoundingBoxes = elem.attribute( QStringLiteral( "show-bounding-boxes" ), QStringLiteral( "0" ) ).toInt();
   mMaximumScreenError = elem.attribute( QStringLiteral( "max-screen-error" ), QStringLiteral( "3.0" ) ).toDouble();
   mPointBudget = elem.attribute( QStringLiteral( "point-budget" ), QStringLiteral( "5000000" ) ).toInt();
+  mZoomOutBehavior = qgsEnumKeyToValue( elem.attribute( QStringLiteral( "zoom-out-behavior" ) ), Qgis::PointCloudZoomOutRenderBehavior::RenderExtents );
 
   if ( symbolType == QLatin1String( "single-color" ) )
     mSymbol.reset( new QgsSingleColorPointCloud3DSymbol );
@@ -263,7 +256,7 @@ void QgsPointCloudLayer3DRenderer::setPointRenderingBudget( int budget )
 
 bool QgsPointCloudLayer3DRenderer::convertFrom2DRenderer( QgsPointCloudRenderer *renderer )
 {
-  std::unique_ptr< QgsPointCloudLayer3DRenderer > renderer3D = Qgs3DUtils::convert2DPointCloudRendererTo3D( renderer );
+  std::unique_ptr<QgsPointCloudLayer3DRenderer> renderer3D = Qgs3DUtils::convert2DPointCloudRendererTo3D( renderer );
   if ( !renderer3D )
   {
     setSymbol( nullptr );
@@ -271,8 +264,8 @@ bool QgsPointCloudLayer3DRenderer::convertFrom2DRenderer( QgsPointCloudRenderer 
   }
 
   QgsPointCloud3DSymbol *newSymbol = const_cast<QgsPointCloud3DSymbol *>(
-                                       static_cast<QgsPointCloud3DSymbol *>( renderer3D->symbol()->clone() )
-                                     );
+    static_cast<QgsPointCloud3DSymbol *>( renderer3D->symbol()->clone() )
+  );
   // we need to retain some settings from the previous symbol, like point size
   const QgsPointCloud3DSymbol *oldSymbol = symbol();
   if ( oldSymbol )

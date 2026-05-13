@@ -55,6 +55,11 @@ QString QgsDropGeometryAlgorithm::shortHelpString() const
   return QObject::tr( "This algorithm removes any geometries from an input layer and returns a layer containing only the feature attributes." );
 }
 
+QString QgsDropGeometryAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Removes any geometries from an input layer and returns a layer containing only the feature attributes." );
+}
+
 QgsDropGeometryAlgorithm *QgsDropGeometryAlgorithm::createInstance() const
 {
   return new QgsDropGeometryAlgorithm();
@@ -67,7 +72,7 @@ QgsCoordinateReferenceSystem QgsDropGeometryAlgorithm::outputCrs( const QgsCoord
 
 bool QgsDropGeometryAlgorithm::supportInPlaceEdit( const QgsMapLayer *l ) const
 {
-  return qobject_cast< const QgsVectorLayer * >( l );
+  return qobject_cast<const QgsVectorLayer *>( l );
 }
 
 Qgis::WkbType QgsDropGeometryAlgorithm::outputWkbType( Qgis::WkbType ) const
@@ -75,14 +80,14 @@ Qgis::WkbType QgsDropGeometryAlgorithm::outputWkbType( Qgis::WkbType ) const
   return Qgis::WkbType::NoGeometry;
 }
 
-QgsProcessingFeatureSource::Flag QgsDropGeometryAlgorithm::sourceFlags() const
+Qgis::ProcessingFeatureSourceFlags QgsDropGeometryAlgorithm::sourceFlags() const
 {
-  return QgsProcessingFeatureSource::FlagSkipGeometryValidityChecks;
+  return Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks;
 }
 
 QgsFeatureRequest QgsDropGeometryAlgorithm::request() const
 {
-  return QgsFeatureRequest().setFlags( QgsFeatureRequest::NoGeometry );
+  return QgsFeatureRequest().setFlags( Qgis::FeatureRequestFlag::NoGeometry );
 }
 
 QgsFeatureList QgsDropGeometryAlgorithm::processFeature( const QgsFeature &feature, QgsProcessingContext &, QgsProcessingFeedback * )

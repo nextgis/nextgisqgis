@@ -44,7 +44,7 @@ class GUI_EXPORT QgsNumericFormatConfigurationWidgetFactory
 };
 
 /**
- * The QgsNumericFormatGuiRegistry is a home for widgets for configuring QgsNumericFormat objects.
+ * A registry for widgets which configure QgsNumericFormat objects.
  *
  * QgsNumericFormatGuiRegistry is not usually directly created, but rather accessed through
  * QgsGui::numericFormatGuiRegistry().
@@ -55,7 +55,6 @@ class GUI_EXPORT QgsNumericFormatConfigurationWidgetFactory
 class GUI_EXPORT QgsNumericFormatGuiRegistry
 {
   public:
-
     /**
      * Constructor. Should never be called manually, is already
      * created by QgsGui.
@@ -83,8 +82,7 @@ class GUI_EXPORT QgsNumericFormatGuiRegistry
     QgsNumericFormatWidget *formatConfigurationWidget( const QgsNumericFormat *format ) const SIP_TRANSFERBACK;
 
   private:
-
-    QMap< QString, QgsNumericFormatConfigurationWidgetFactory *> mFormatConfigurationWidgetFactories;
+    QMap<QString, QgsNumericFormatConfigurationWidgetFactory *> mFormatConfigurationWidgetFactories;
 };
 
 #endif // QGSNUMERICFORMATGUIREGISTRY_H

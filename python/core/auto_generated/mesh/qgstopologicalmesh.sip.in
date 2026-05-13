@@ -226,7 +226,15 @@ instance of the class QgsTopologicalMesh.Change that can be used to
 reverse or reapply the operation.
 %End
 
-    bool canBeMerged( int vertexIndex2, int vertexIndex2 ) const;
+    bool delaunayConditionForEdge( int vertexIndex1, int vertexIndex2 );
+%Docstring
+Check if Delaunay condition holds for given edge returns ``True`` if
+delaunay condition holds ``False`` otherwise
+
+.. versionadded:: 3.42
+%End
+
+    bool canBeMerged( int vertexIndex1, int vertexIndex2 ) const;
 %Docstring
 Returns ``True`` if faces separated by vertices with indexes
 ``vertexIndex1`` and ``vertexIndex2`` can be merged
@@ -346,6 +354,16 @@ there is a consistency issue
 %Docstring
 Checks the topology of the mesh ``mesh``, if error occurs, this mesh
 can't be edited
+%End
+
+    static int vertexPositionInFace( int vertexIndex, const QgsMeshFace &face );
+%Docstring
+Returns vertex position in face
+%End
+
+    static int vertexPositionInFace( const QgsMesh &mesh, int vertexIndex, int faceIndex );
+%Docstring
+Returns vertex position in face
 %End
 
 };

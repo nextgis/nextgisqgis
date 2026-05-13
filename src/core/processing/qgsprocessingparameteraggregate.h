@@ -22,7 +22,7 @@
 /**
  * \ingroup core
  * \brief A parameter for "aggregate" configurations, which consist of a definition
- * of desired output fields, types, and aggregate used to populate then.
+ * of desired output fields, types, and aggregate used to populate them.
  *
  * Designed for use with the "Aggregate" algorithm.
  *
@@ -38,7 +38,7 @@ class CORE_EXPORT QgsProcessingParameterAggregate : public QgsProcessingParamete
     QString type() const override;
     bool checkValueIsAcceptable( const QVariant &input, QgsProcessingContext *context = nullptr ) const override;
     QString valueAsPythonString( const QVariant &value, QgsProcessingContext &context ) const override;
-    QString asPythonString( QgsProcessing::PythonOutputType outputType = QgsProcessing::PythonQgsProcessingAlgorithmSubclass ) const override;
+    QString asPythonString( QgsProcessing::PythonOutputType outputType = QgsProcessing::PythonOutputType::PythonQgsProcessingAlgorithmSubclass ) const override;
     QVariantMap toVariantMap() const override;
     bool fromVariantMap( const QVariantMap &map ) override;
     QStringList dependsOnOtherParameters() const override;
@@ -110,6 +110,18 @@ class CORE_EXPORT QgsProcessingParameterTypeAggregate : public QgsProcessingPara
     {
       return QStringList() << QObject::tr( "list[dict]: list of aggregate definitions as dictionaries" );
     }
+
+    QStringList acceptedParameterTypes() const override
+    {
+      return QStringList()
+             << QgsProcessingParameterAggregate::typeName();
+    }
+
+    QStringList acceptedOutputTypes() const override
+    {
+      return QStringList();
+    }
+
 };
 
 ///@endcond

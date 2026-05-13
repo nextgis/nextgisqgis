@@ -32,6 +32,7 @@ class QgsVectorTileRawData;
 /**
  * \ingroup core
  * \brief Implements a map layer that is dedicated to rendering of vector tiles.
+ *
  * Vector tiles compared to "ordinary" vector layers are pre-processed data
  * optimized for fast rendering. A dataset is provided with a series of zoom levels
  * for different map scales. Each zoom level has a matrix of tiles that contain
@@ -48,11 +49,13 @@ class QgsVectorTileRawData;
  * Vector tile layer currently does not use the concept of data providers that other
  * layer types use. The process of rendering of vector tiles looks like this:
  *
+ * ~~~
  * +--------+                +------+                 +---------+
  * |  DATA  |                |  RAW |                 | DECODED |
  * |        | --> LOADER --> |      | --> DECODER --> |         | --> RENDERER
  * | SOURCE |                | TILE |                 |  TILE   |
  * +--------+                +------+                 +---------+
+ * ~~~
  *
  * Data source is a place from where tiles are fetched from (URL for HTTP access, local
  * files, MBTiles file, GeoPackage file or others. Loader (QgsVectorTileLoader) class
@@ -216,6 +219,27 @@ class CORE_EXPORT QgsVectorTileLayer : public QgsMapLayer
     //! Returns currently assigned labeling
     QgsVectorTileLabeling *labeling() const;
 
+    /**
+     * Returns whether the layer contains labels which are enabled and should be drawn.
+     * \returns TRUE if layer contains enabled labels
+     *
+     * \see setLabelsEnabled()
+     * \since QGIS 3.34
+     */
+    bool labelsEnabled() const;
+
+    /**
+     * Sets whether labels should be \a enabled for the layer.
+     *
+     * \note Labels will only be rendered if labelsEnabled() is TRUE and a labeling
+     * object is returned by labeling().
+     *
+     * \see labelsEnabled()
+     * \see labeling()
+     * \since QGIS 3.34
+     */
+    void setLabelsEnabled( bool enabled );
+
     //! Sets whether to render also borders of tiles (useful for debugging)
     void setTileBorderRenderingEnabled( bool enabled ) { mTileBorderRendering = enabled; }
     //! Returns whether to render also borders of tiles (useful for debugging)
@@ -293,6 +317,8 @@ class CORE_EXPORT QgsVectorTileLayer : public QgsMapLayer
     std::unique_ptr<QgsVectorTileRenderer> mRenderer;
     //! Labeling assigned to the layer to produce labels
     std::unique_ptr<QgsVectorTileLabeling> mLabeling;
+    //! True if labels are enabled
+    bool mLabelsEnabled = true;
     //! Whether we draw borders of tiles
     bool mTileBorderRendering = false;
 
@@ -303,7 +329,7 @@ class CORE_EXPORT QgsVectorTileLayer : public QgsMapLayer
     QHash< QgsFeatureId, QgsFeature > mSelectedFeatures;
 
     void setDataSourcePrivate( const QString &dataSource, const QString &baseName, const QString &provider,
-                               const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags ) override;
+                               const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags ) override;
 
     bool loadDefaultStyleAndSubLayersPrivate( QString &error, QStringList &warnings, QList< QgsMapLayer * > *subLayers );
 

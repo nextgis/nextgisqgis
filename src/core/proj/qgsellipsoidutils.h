@@ -28,7 +28,6 @@ class QgsCelestialBody;
  * \ingroup core
  * \brief Contains utility functions for working with ellipsoids and querying the ellipsoid database.
  *
- * \since QGIS 3.0
 */
 class CORE_EXPORT QgsEllipsoidUtils
 {
@@ -36,16 +35,15 @@ class CORE_EXPORT QgsEllipsoidUtils
 
     /**
      * Contains parameters for an ellipsoid.
-     * \since QGIS 3.0
      */
     struct EllipsoidParameters
     {
       //! Whether ellipsoid parameters are valid
       bool valid{ true };
 
-      //! Semi-major axis
+      //! Semi-major axis, in meters
       double semiMajor{ -1.0 };
-      //! Semi-minor axis
+      //! Semi-minor axis, in meters
       double semiMinor{ -1.0 };
 
       //! Whether custom parameters alone should be used (semiMajor/semiMinor only)
@@ -61,7 +59,6 @@ class CORE_EXPORT QgsEllipsoidUtils
 
     /**
      * Contains definition of an ellipsoid.
-     * \since QGIS 3.0
      */
     struct EllipsoidDefinition
     {

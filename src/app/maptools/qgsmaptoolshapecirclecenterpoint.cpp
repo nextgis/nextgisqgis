@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgsmaptoolshapecirclecenterpoint.h"
+#include "moc_qgsmaptoolshapecirclecenterpoint.cpp"
 #include "qgsgeometryrubberband.h"
 #include "qgspoint.h"
 #include "qgsmapmouseevent.h"
@@ -64,7 +65,6 @@ bool QgsMapToolShapeCircleCenterPoint::cadCanvasReleaseEvent( QgsMapMouseEvent *
       mTempRubberBand = mParentTool->createGeometryRubberBand( type, true );
       mTempRubberBand->show();
     }
-
   }
   else if ( e->button() == Qt::RightButton )
   {
@@ -81,7 +81,7 @@ void QgsMapToolShapeCircleCenterPoint::cadCanvasMoveEvent( QgsMapMouseEvent *e, 
 
   const QgsPoint point = mParentTool->mapPoint( *e );
 
-  if ( mTempRubberBand )
+  if ( mTempRubberBand && !mPoints.isEmpty() )
   {
     mCircle = QgsCircle::fromCenterPoint( mPoints.at( 0 ), point );
     mTempRubberBand->setGeometry( mCircle.toCircularString( true ) );

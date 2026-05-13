@@ -16,14 +16,18 @@
  ***************************************************************************/
 
 #include "qgspointcloudextentrenderer.h"
-#include "qgspointcloudblock.h"
-#include "qgssymbollayerutils.h"
-#include "qgssymbol.h"
-#include "qgspolygon.h"
 #include "qgscurve.h"
-#include "qgslinesymbollayer.h"
-#include "qgslayertreemodellegendnode.h"
 #include "qgsfillsymbol.h"
+#include "qgslayertreemodellegendnode.h"
+#include "qgslinesymbollayer.h"
+#include "qgspointcloudblock.h"
+#include "qgspolygon.h"
+#include "qgsstyle.h"
+#include "qgssymbol.h"
+#include "qgssymbollayerutils.h"
+#include "qgstextdocument.h"
+#include "qgstextdocumentmetrics.h"
+#include "qgstextrenderer.h"
 
 QgsPointCloudExtentRenderer::QgsPointCloudExtentRenderer( QgsFillSymbol *symbol )
   : mFillSymbol( symbol ? symbol : defaultFillSymbol() )
@@ -40,7 +44,7 @@ QString QgsPointCloudExtentRenderer::type() const
 
 QgsPointCloudRenderer *QgsPointCloudExtentRenderer::clone() const
 {
-  std::unique_ptr< QgsPointCloudExtentRenderer > res = std::make_unique< QgsPointCloudExtentRenderer >( mFillSymbol ? mFillSymbol->clone() : nullptr );
+  auto res = std::make_unique< QgsPointCloudExtentRenderer >( mFillSymbol ? mFillSymbol->clone() : nullptr );
   copyCommonProperties( res.get() );
   return res.release();
 }
@@ -52,12 +56,12 @@ void QgsPointCloudExtentRenderer::renderBlock( const QgsPointCloudBlock *, QgsPo
 
 QgsPointCloudRenderer *QgsPointCloudExtentRenderer::create( QDomElement &element, const QgsReadWriteContext &context )
 {
-  std::unique_ptr< QgsPointCloudExtentRenderer > r = std::make_unique< QgsPointCloudExtentRenderer >();
+  auto r = std::make_unique< QgsPointCloudExtentRenderer >();
 
   const QDomElement symbolElem = element.firstChildElement( QStringLiteral( "symbol" ) );
   if ( !symbolElem.isNull() )
   {
-    r->mFillSymbol.reset( QgsSymbolLayerUtils::loadSymbol<QgsFillSymbol>( symbolElem, context ) );
+    r->mFillSymbol = QgsSymbolLayerUtils::loadSymbol<QgsFillSymbol>( symbolElem, context );
   }
 
   r->restoreCommonProperties( element, context );
@@ -117,7 +121,7 @@ void QgsPointCloudExtentRenderer::renderExtent( const QgsGeometry &extent, QgsPo
 
 QgsFillSymbol *QgsPointCloudExtentRenderer::defaultFillSymbol()
 {
-  std::unique_ptr< QgsSimpleLineSymbolLayer > layer = std::make_unique< QgsSimpleLineSymbolLayer >();
+  auto layer = std::make_unique< QgsSimpleLineSymbolLayer >();
   layer->setColor( QColor( 228, 26, 28 ) );
   layer->setWidth( 0.960000 );
   layer->setPenStyle( Qt::DotLine );
@@ -133,6 +137,16 @@ QgsFillSymbol *QgsPointCloudExtentRenderer::fillSymbol() const
 void QgsPointCloudExtentRenderer::setFillSymbol( QgsFillSymbol *symbol )
 {
   mFillSymbol.reset( symbol );
+}
+void QgsPointCloudExtentRenderer::renderLabel( const QRectF &extent, const QString &text, QgsPointCloudRenderContext &context ) const
+{
+  const QgsTextDocument doc = QgsTextDocument::fromTextAndFormat( {text}, labelTextFormat() );
+  const QgsTextDocumentMetrics metrics = QgsTextDocumentMetrics::calculateMetrics( doc, labelTextFormat(), context.renderContext() );
+  const QSizeF textSize = metrics.documentSize( Qgis::TextLayoutMode::Rectangle, labelTextFormat().orientation() );
+  if ( textSize.width() < extent.width() && textSize.height() < extent.height() )
+  {
+    QgsTextRenderer::drawDocument( extent, labelTextFormat(), metrics.document(), metrics, context.renderContext(), Qgis::TextHorizontalAlignment::Center, Qgis::TextVerticalAlignment::VerticalCenter );
+  }
 }
 
 QDomElement QgsPointCloudExtentRenderer::save( QDomDocument &doc, const QgsReadWriteContext &context ) const

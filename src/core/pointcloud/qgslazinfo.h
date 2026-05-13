@@ -30,8 +30,8 @@
 /**
  * \ingroup core
  *
- * \brief Class for extracting information contained in LAZ file such as the public header block
- * and variable length records
+ * \brief Extracts information contained in a LAZ file, such as the public header block
+ * and variable length records.
  *
  * \since QGIS 3.26
  */
@@ -134,9 +134,6 @@ class CORE_EXPORT QgsLazInfo
     static QgsLazInfo fromFile( std::ifstream &file );
     //! Static function to create a QgsLazInfo class from a file over network
     static QgsLazInfo fromUrl( QUrl &url );
-
-    //! Static function to check whether the server of URL \a url supports range queries
-    static bool supportsRangeQueries( QUrl &url );
 
   private:
     void parseHeader( lazperf::header14 &header );

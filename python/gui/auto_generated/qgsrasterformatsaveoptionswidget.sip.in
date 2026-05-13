@@ -3,24 +3,23 @@
  *                                                                      *
  * src/gui/qgsrasterformatsaveoptionswidget.h                           *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 
 
 
-class QgsRasterFormatSaveOptionsWidget: QWidget
+class QgsRasterFormatSaveOptionsWidget : QWidget
 {
 %Docstring(signature="appended")
-A widget to select format-specific raster saving options
+A widget to select format-specific raster saving options.
 %End
 
 %TypeHeaderCode
 #include "qgsrasterformatsaveoptionswidget.h"
 %End
   public:
-
     enum Type
     {
       Default,
@@ -30,21 +29,17 @@ A widget to select format-specific raster saving options
       ProfileLineEdit
     };
 
-    QgsRasterFormatSaveOptionsWidget( QWidget *parent /TransferThis/ = 0,
-                                      const QString &format = "GTiff",
-                                      QgsRasterFormatSaveOptionsWidget::Type type = Default,
-                                      const QString &provider = "gdal" );
+    QgsRasterFormatSaveOptionsWidget( QWidget *parent /TransferThis/ = 0, const QString &format = "GTiff", QgsRasterFormatSaveOptionsWidget::Type type = Default, const QString &provider = "gdal" );
 
     void setFormat( const QString &format );
 %Docstring
-Set output raster format, it is used to determine list
-of available options
+Set output raster format, it is used to determine list of available
+options
 %End
 
     void setProvider( const QString &provider );
 %Docstring
-Set provider key, , it is used to determine list
-of available options
+Set provider key, , it is used to determine list of available options
 %End
 
     void setRasterLayer( QgsRasterLayer *rasterLayer );
@@ -70,8 +65,6 @@ Populate widget with user-defined options. String should contain
 key=value pairs separated by spaces, e.g. "TILED=YES TFW=YES"
 
 .. seealso:: :py:func:`options`
-
-.. versionadded:: 3.0
 %End
 
     void setType( QgsRasterFormatSaveOptionsWidget::Type type = Default );
@@ -90,8 +83,8 @@ Set pyramids format to use
 
     void helpOptions();
 %Docstring
-Opens window with options description for given provider
-and output format
+Opens window with options description for given provider and output
+format
 %End
 
     QString validateOptions( bool gui = true, bool reportOk = true );
@@ -121,16 +114,20 @@ Reloads profiles list from QGIS settings
 
 
   signals:
+
     void optionsChanged();
+%Docstring
+Emitted when the options configured in the widget are changed.
+%End
 
   private:
     QString settingsKey( QString profile ) const;
     QString currentProfileKey() const;
-    QString createOptions( const QString &profile ) const;
-    void deleteCreateOptions( const QString &profile );
-    void setCreateOptions();
-    void setCreateOptions( const QString &profile, const QString &options );
-    void setCreateOptions( const QString &profile, const QStringList &list );
+    QString creationOptions( const QString &profile ) const;
+    void deleteCreationOptions( const QString &profile );
+    void setCreationOptions();
+    void setCreationOptions( const QString &profile, const QString &options );
+    void setCreationOptions( const QString &profile, const QStringList &options );
     QStringList profiles() const;
     virtual bool eventFilter( QObject *obj, QEvent *event );
 
@@ -143,5 +140,5 @@ Reloads profiles list from QGIS settings
  *                                                                      *
  * src/gui/qgsrasterformatsaveoptionswidget.h                           *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

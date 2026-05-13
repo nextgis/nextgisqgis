@@ -25,14 +25,15 @@
 
 /**
  * \ingroup gui
- * \brief Wraps a search widget. Default form is just a QgsLineFilterEdit
+ * \brief Wraps a search widget.
+ *
+ * Default form is just a QgsLineFilterEdit
  */
 
 class GUI_EXPORT QgsDefaultSearchWidgetWrapper : public QgsSearchWidgetWrapper
 {
     Q_OBJECT
   public:
-
     //! Constructor for QgsDefaultSearchWidgetWrapper
     explicit QgsDefaultSearchWidgetWrapper( QgsVectorLayer *vl, int fieldIdx, QWidget *parent SIP_TRANSFERTHIS = nullptr );
 

@@ -15,6 +15,7 @@
 
 #include "qgsmeshspatialindex.h"
 #include "qgsrectangle.h"
+#include "qgsspatialindexutils.h"
 #include "qgslogger.h"
 #include "qgsfeedback.h"
 
@@ -71,13 +72,6 @@ static Region edgeToRegion( const QgsMesh &mesh, int id, bool &ok )
   double pt1[2] = { xMinimum, yMinimum };
   double pt2[2] = { xMaximum, yMaximum };
   ok = true;
-  return SpatialIndex::Region( pt1, pt2, 2 );
-}
-
-static Region rectToRegion( const QgsRectangle &rect )
-{
-  double pt1[2] = { rect.xMinimum(), rect.yMinimum() };
-  double pt2[2] = { rect.xMaximum(), rect.yMaximum() };
   return SpatialIndex::Region( pt1, pt2, 2 );
 }
 
@@ -155,7 +149,7 @@ class QgsMeshIteratorDataStream : public IDataStream
                                         QgsFeedback *feedback = nullptr )
       : mMesh( mesh )
       , mFeaturesCount( featuresCount )
-      , mFeatureToRegionFunction( featureToRegionFunction )
+      , mFeatureToRegionFunction( std::move( featureToRegionFunction ) )
       , mFeedback( feedback )
     {
       readNextEntry();
@@ -374,9 +368,12 @@ QgsMeshSpatialIndex &QgsMeshSpatialIndex::operator=( const QgsMeshSpatialIndex &
 QList<int> QgsMeshSpatialIndex::intersects( const QgsRectangle &rect ) const
 {
   QList<int> list;
+  if ( rect.isNull() )
+    return list;
+
   QgisMeshVisitor visitor( list );
 
-  const SpatialIndex::Region r = rectToRegion( rect );
+  const SpatialIndex::Region r = QgsSpatialIndexUtils::rectangleToRegion( rect );
 
   const QMutexLocker locker( &d->mMutex );
   d->mRTree->intersectsWithQuery( r, visitor );

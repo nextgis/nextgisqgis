@@ -41,29 +41,25 @@ class APP_EXPORT NGQgisApp : public QgisApp
     Q_OBJECT
     Q_DISABLE_COPY(NGQgisApp)
 public:
-    NGQgisApp( QSplashScreen *splash, bool restorePlugins = true, bool skipBadLayers = false,
-             bool skipVersionCheck = false, const QString &rootProfileLocation = QString(),
+    NGQgisApp( QSplashScreen *splash, AppOptions options = DEFAULT_OPTIONS,
+             const QString &rootProfileLocation = QString(),
              const QString &activeProfile = QString(),
              QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::Window );
     virtual ~NGQgisApp();
-protected:
-    void about() override;
-    void checkQgisVersion() override;
-    virtual void createToolBars() override;
-    virtual void functionProfileNG(void (NGQgisApp:: *fnc)(), NGQgisApp *instance, QString name);
 
 private:
-    bool mUpdatesCheckStartByUser;
+    void triggerCheckQgisVersion();
+    void showNextGisAbout();
+    void setupNextGISToolbar();
     void addNextGISAuthentication();
+    void updatesSearchStart();
+    void updatesSearchStop( bool updatesAvailable );
+    void startUpdate();
+    bool mUpdatesCheckStartByUser = false;
 #ifdef NGSTD_USING
-    NGQgisUpdater* mNGUpdater;
+    NGQgisUpdater *mNGUpdater = nullptr;
     NGCPLHTTPFetchOverrider* m_CPLHTTPFetchOverrider;
 #endif // NGSTD_USING
-
-private slots:
-    void updatesSearchStart();
-    void updatesSearchStop(bool updatesAvailable);
-	void startUpdate();
 };
 
 QString APP_EXPORT nextgisDomain();

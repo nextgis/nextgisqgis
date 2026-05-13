@@ -17,10 +17,10 @@
 ///@cond PRIVATE
 
 #include "qgsmeshmemorydataprovider.h"
+#include "moc_qgsmeshmemorydataprovider.cpp"
 #include "qgsmeshdataprovidertemporalcapabilities.h"
 #include "qgsapplication.h"
 
-#include <cstring>
 #include <QIcon>
 
 #define TEXT_PROVIDER_KEY QStringLiteral( "mesh_memory" )
@@ -48,7 +48,7 @@ QgsCoordinateReferenceSystem QgsMeshMemoryDataProvider::crs() const
 
 QgsMeshMemoryDataProvider::QgsMeshMemoryDataProvider( const QString &uri,
     const ProviderOptions &options,
-    QgsDataProvider::ReadFlags flags )
+    Qgis::DataProviderReadFlags flags )
   : QgsMeshDataProvider( uri, options, flags )
 {
   QString data( uri );
@@ -74,11 +74,7 @@ QString QgsMeshMemoryDataProvider::providerDescription()
 
 bool QgsMeshMemoryDataProvider::splitMeshSections( const QString &uri )
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-  const QStringList sections = uri.split( QStringLiteral( "---" ), QString::SkipEmptyParts );
-#else
   const QStringList sections = uri.split( QStringLiteral( "---" ), Qt::SkipEmptyParts );
-#endif
   if ( sections.size() != 2 )
   {
     setError( QgsError( tr( "Invalid mesh definition, does not contain 2 sections" ),
@@ -96,18 +92,10 @@ bool QgsMeshMemoryDataProvider::addMeshVertices( const QString &def )
 {
   QVector<QgsMeshVertex> vertices;
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-  const QStringList verticesCoords = def.split( '\n', QString::SkipEmptyParts );
-#else
   const QStringList verticesCoords = def.split( '\n', Qt::SkipEmptyParts );
-#endif
   for ( int i = 0; i < verticesCoords.size(); ++i )
   {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    const QStringList coords = verticesCoords[i].split( ',', QString::SkipEmptyParts );
-#else
     const QStringList coords = verticesCoords[i].split( ',', Qt::SkipEmptyParts );
-#endif
     if ( coords.size() != 2 )
     {
       setError( QgsError( tr( "Invalid mesh definition, vertex definition does not contain x, y" ),
@@ -129,18 +117,10 @@ bool QgsMeshMemoryDataProvider::addMeshFacesOrEdges( const QString &def )
   QVector<QgsMeshFace> faces;
   QVector<QgsMeshEdge> edges;
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-  const QStringList elements = def.split( '\n', QString::SkipEmptyParts );
-#else
   const QStringList elements = def.split( '\n', Qt::SkipEmptyParts );
-#endif
   for ( int i = 0; i < elements.size(); ++i )
   {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    const QStringList vertices = elements[i].split( ',', QString::SkipEmptyParts );
-#else
     const QStringList vertices = elements[i].split( ',', Qt::SkipEmptyParts );
-#endif
     if ( vertices.size() < 2 )
     {
       setError( QgsError( tr( "Invalid mesh definition, edge must contain at least 2 vertices" ),
@@ -185,11 +165,7 @@ bool QgsMeshMemoryDataProvider::addMeshFacesOrEdges( const QString &def )
 
 bool QgsMeshMemoryDataProvider::splitDatasetSections( const QString &uri, QgsMeshMemoryDatasetGroup &datasetGroup )
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-  const QStringList sections = uri.split( QStringLiteral( "---" ), QString::SkipEmptyParts );
-#else
   const QStringList sections = uri.split( QStringLiteral( "---" ), Qt::SkipEmptyParts );
-#endif
   bool success = sections.size() > 2;
   if ( !success )
   {
@@ -206,12 +182,12 @@ bool QgsMeshMemoryDataProvider::splitDatasetSections( const QString &uri, QgsMes
   {
     if ( !success )
       break;
-    std::shared_ptr<QgsMeshMemoryDataset> dataset = std::make_shared<QgsMeshMemoryDataset>();
+    auto dataset = std::make_shared<QgsMeshMemoryDataset>();
     success = addDatasetValues( sections[i], dataset, datasetGroup.isScalar() );
     if ( success )
       success = checkDatasetValidity( dataset, datasetGroup.dataType() );
     if ( success )
-      datasetGroup.addDataset( dataset );
+      datasetGroup.addDataset( std::move( dataset ) );
   }
 
   return success;
@@ -219,11 +195,7 @@ bool QgsMeshMemoryDataProvider::splitDatasetSections( const QString &uri, QgsMes
 
 bool QgsMeshMemoryDataProvider::setDatasetGroupType( const QString &def, QgsMeshMemoryDatasetGroup &datasetGroup )
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-  const QStringList types = def.split( ' ', QString::SkipEmptyParts );
-#else
   const QStringList types = def.split( ' ', Qt::SkipEmptyParts );
-#endif
   if ( types.size() != 3 )
   {
     setError( QgsError( tr( "Invalid type definition, must be Vertex/Edge/Face Vector/Scalar Name" ),
@@ -248,18 +220,10 @@ bool QgsMeshMemoryDataProvider::setDatasetGroupType( const QString &def, QgsMesh
 
 bool QgsMeshMemoryDataProvider::addDatasetGroupMetadata( const QString &def, QgsMeshMemoryDatasetGroup &datasetGroup )
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-  const QStringList metadataLines = def.split( '\n', QString::SkipEmptyParts );
-#else
   const QStringList metadataLines = def.split( '\n', Qt::SkipEmptyParts );
-#endif
   for ( int i = 0; i < metadataLines.size(); ++i )
   {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    const QStringList keyVal = metadataLines[i].split( QStringLiteral( ": " ), QString::SkipEmptyParts );
-#else
     const QStringList keyVal = metadataLines[i].split( QStringLiteral( ": " ), Qt::SkipEmptyParts );
-#endif
     if ( keyVal.size() != 2 )
     {
       setError( QgsError( tr( "Invalid dataset definition, dataset metadata does not contain key: value" ),
@@ -274,11 +238,7 @@ bool QgsMeshMemoryDataProvider::addDatasetGroupMetadata( const QString &def, Qgs
 
 bool QgsMeshMemoryDataProvider::addDatasetValues( const QString &def, std::shared_ptr<QgsMeshMemoryDataset> &dataset, bool isScalar )
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-  const QStringList valuesLines = def.split( '\n', QString::SkipEmptyParts );
-#else
   const QStringList valuesLines = def.split( '\n', Qt::SkipEmptyParts );
-#endif
   // first line is time
   if ( valuesLines.size() < 2 )
   {
@@ -291,11 +251,7 @@ bool QgsMeshMemoryDataProvider::addDatasetValues( const QString &def, std::share
 
   for ( int i = 1; i < valuesLines.size(); ++i )
   {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    const QStringList values = valuesLines[i].split( ',', QString::SkipEmptyParts );
-#else
     const QStringList values = valuesLines[i].split( ',', Qt::SkipEmptyParts );
-#endif
     QgsMeshDatasetValue point;
 
     if ( isScalar )
@@ -474,6 +430,26 @@ bool QgsMeshMemoryDataProvider::addDataset( const QString &uri )
   return valid;
 }
 
+bool QgsMeshMemoryDataProvider::removeDatasetGroup( int index )
+{
+  if ( index < 0 && index > datasetGroupCount() - 1 )
+  {
+    return false;
+  }
+  else
+  {
+    const QgsMeshDatasetGroupMetadata datasetGroupMeta = datasetGroupMetadata( index );
+
+    mDatasetGroups.removeAt( index );
+
+    if ( !mExtraDatasetUris.contains( datasetGroupMeta.uri() ) )
+      mExtraDatasetUris.removeAll( datasetGroupMeta.uri() );
+
+    emit dataChanged();
+    return true;
+  }
+}
+
 QStringList QgsMeshMemoryDataProvider::extraDatasets() const
 {
   return mExtraDatasetUris;
@@ -563,10 +539,10 @@ QgsMeshDataBlock QgsMeshMemoryDataProvider::datasetValues( QgsMeshDatasetIndex i
   }
 }
 
-QgsMesh3dDataBlock QgsMeshMemoryDataProvider::dataset3dValues( QgsMeshDatasetIndex, int, int ) const
+QgsMesh3DDataBlock QgsMeshMemoryDataProvider::dataset3dValues( QgsMeshDatasetIndex, int, int ) const
 {
   // 3d stacked meshes are not supported by memory provider
-  return QgsMesh3dDataBlock();
+  return QgsMesh3DDataBlock();
 }
 
 
@@ -640,7 +616,7 @@ void QgsMeshMemoryDataProvider::close()
 QgsRectangle QgsMeshMemoryDataProvider::calculateExtent() const
 {
   QgsRectangle rec;
-  rec.setMinimal();
+  rec.setNull();
   for ( const QgsMeshVertex &v : mVertices )
   {
     rec.setXMinimum( std::min( rec.xMinimum(), v.x() ) );
@@ -663,7 +639,7 @@ QIcon QgsMeshMemoryProviderMetadata::icon() const
   return QgsApplication::getThemeIcon( QStringLiteral( "mIconMeshLayer.svg" ) );
 }
 
-QgsDataProvider *QgsMeshMemoryProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags )
+QgsDataProvider *QgsMeshMemoryProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags )
 {
   return new QgsMeshMemoryDataProvider( uri, options, flags );
 }
@@ -672,5 +648,8 @@ QList<Qgis::LayerType> QgsMeshMemoryProviderMetadata::supportedLayerTypes() cons
 {
   return { Qgis::LayerType::Mesh };
 }
+
+#undef TEXT_PROVIDER_KEY
+#undef TEXT_PROVIDER_DESCRIPTION
 
 ///@endcond

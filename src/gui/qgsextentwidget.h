@@ -53,22 +53,21 @@ class GUI_EXPORT QgsExtentWidget : public QWidget, private Ui::QgsExtentGroupBox
     Q_OBJECT
 
   public:
-
     //! Available states for the current extent selection in the widget
     enum ExtentState
     {
-      OriginalExtent,  //!< Layer's extent
-      CurrentExtent,   //!< Map canvas extent
-      UserExtent,      //!< Extent manually entered/modified by the user
+      OriginalExtent,     //!< Layer's extent
+      CurrentExtent,      //!< Map canvas extent
+      UserExtent,         //!< Extent manually entered/modified by the user
       ProjectLayerExtent, //!< Extent taken from a layer within the project
-      DrawOnCanvas, //!< Extent taken from a rectangled drawn onto the map canvas
+      DrawOnCanvas,       //!< Extent taken from a rectangled drawn onto the map canvas
     };
 
     //! Widget styles
     enum WidgetStyle
     {
       CondensedStyle, //!< Shows a compressed widget, for use when available space is minimal
-      ExpandedStyle, //!< Shows an expanded widget, for use when space is not constrained
+      ExpandedStyle,  //!< Shows an expanded widget, for use when space is not constrained
     };
 
     /**
@@ -236,11 +235,17 @@ class GUI_EXPORT QgsExtentWidget : public QWidget, private Ui::QgsExtentGroupBox
      */
     void toggleDialogVisibility( bool visible );
 
-  protected:
+    /**
+     * Emitted when the extent layer is changed.
+     * \since QGIS 3.44
+     */
+    void extentLayerChanged( QgsMapLayer *layer );
 
+  protected:
     void dragEnterEvent( QDragEnterEvent *event ) override;
     void dragLeaveEvent( QDragLeaveEvent *event ) override;
     void dropEvent( QDropEvent *event ) override;
+    void showEvent( QShowEvent *event ) override;
 
   private slots:
 
@@ -275,16 +280,16 @@ class GUI_EXPORT QgsExtentWidget : public QWidget, private Ui::QgsExtentGroupBox
     QgsMapLayerProxyModel *mMapLayerModel = nullptr;
     QgsBookmarkManagerProxyModel *mBookmarkModel = nullptr;
 
-    QList< QAction * > mLayerMenuActions;
+    QList<QAction *> mLayerMenuActions;
     QAction *mUseCanvasExtentAction = nullptr;
     QAction *mUseCurrentExtentAction = nullptr;
     QAction *mDrawOnCanvasAction = nullptr;
 
-    QPointer< const QgsMapLayer > mExtentLayer;
+    QPointer<const QgsMapLayer> mExtentLayer;
     QString mExtentLayerName;
 
-    std::unique_ptr< QgsMapToolExtent > mMapToolExtent;
-    QPointer< QgsMapTool > mMapToolPrevious = nullptr;
+    std::unique_ptr<QgsMapToolExtent> mMapToolExtent;
+    QPointer<QgsMapTool> mMapToolPrevious = nullptr;
     QgsMapCanvas *mCanvas = nullptr;
     QSize mRatio;
 
@@ -292,6 +297,10 @@ class GUI_EXPORT QgsExtentWidget : public QWidget, private Ui::QgsExtentGroupBox
     bool mHasFixedOutputCrs = false;
 
     QRegularExpression mCondensedRe;
+
+    bool mFirstShow = true;
+    bool mBlockDrawOnCanvas = false;
+
     void setValid( bool valid );
 
     void setExtentToLayerExtent( const QString &layerId );
@@ -299,8 +308,6 @@ class GUI_EXPORT QgsExtentWidget : public QWidget, private Ui::QgsExtentGroupBox
     QgsMapLayer *mapLayerFromMimeData( const QMimeData *data ) const;
 
     friend class TestProcessingGui;
-
-
 };
 
 #endif // QGSEXTENTWIDGET_H

@@ -33,12 +33,16 @@ class QgsGeoPackageProviderConnection : public QgsOgrProviderConnection
 
     // QgsAbstractProviderConnection interface
   public:
+
     void store( const QString &name ) const override;
     void remove( const QString &name ) const override;
     QgsAbstractDatabaseProviderConnection::TableProperty table( const QString &schema, const QString &table, QgsFeedback *feedback = nullptr ) const override;
     QString tableUri( const QString &schema, const QString &name ) const override;
     void dropRasterTable( const QString &schema, const QString &name ) const override;
     void renameVectorTable( const QString &schema, const QString &name, const QString &newName ) const override;
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,10,0)
+    void renameRasterTable( const QString &schema, const QString &name, const QString &newName ) const override;
+#endif
     void vacuum( const QString &schema, const QString &name ) const override;
     void createSpatialIndex( const QString &schema, const QString &name, const QgsAbstractDatabaseProviderConnection::SpatialIndexOptions &options = QgsAbstractDatabaseProviderConnection::SpatialIndexOptions() ) const override;
     bool spatialIndexExists( const QString &schema, const QString &name, const QString &geometryColumn ) const override;
@@ -50,14 +54,17 @@ class QgsGeoPackageProviderConnection : public QgsOgrProviderConnection
     QMultiMap<Qgis::SqlKeywordCategory, QStringList> sqlDictionary() override;
     QList< Qgis::FieldDomainType > supportedFieldDomainTypes() const override;
     QList<QgsLayerMetadataProviderResult> searchLayerMetadata( const QgsMetadataSearchContext &searchContext, const QString &searchString, const QgsRectangle &geographicExtent, QgsFeedback *feedback ) const override;
+    Qgis::DatabaseProviderTableImportCapabilities tableImportCapabilities() const override;
 
   protected:
+
     QString databaseQueryLogIdentifier() const override;
     QString primaryKeyColumnName( const QString &table ) const override;
 
   private:
 
     void setDefaultCapabilities();
+    void renameTablePrivate( const QString &schema, const QString &name, const QString &newName ) const;
 
 };
 

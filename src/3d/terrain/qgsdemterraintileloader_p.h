@@ -34,10 +34,10 @@
 #include <QElapsedTimer>
 #include <QMutex>
 
-#include "qgschunknode_p.h"
+#include "qgschunknode.h"
 #include "qgscoordinatetransformcontext.h"
 #include "qgsrectangle.h"
-#include "qgsterraintileloader_p.h"
+#include "qgsterraintileloader.h"
 #include "qgstilingscheme.h"
 
 class QgsRasterDataProvider;
@@ -46,9 +46,8 @@ class QgsCoordinateTransformContext;
 class QgsTerrainGenerator;
 
 /**
- * \ingroup 3d
+ * \ingroup qgis_3d
  * \brief Chunk loader for DEM terrain tiles.
- * \since QGIS 3.0
  */
 class QgsDemTerrainTileLoader : public QgsTerrainTileLoader
 {
@@ -63,7 +62,6 @@ class QgsDemTerrainTileLoader : public QgsTerrainTileLoader
     void onHeightMapReady( int jobId, const QByteArray &heightMap );
 
   private:
-
     int mHeightMapJobId;
     QByteArray mHeightMap;
     int mResolution;
@@ -74,15 +72,13 @@ class QgsDemTerrainTileLoader : public QgsTerrainTileLoader
 class QgsTerrainDownloader;
 
 /**
- * \ingroup 3d
+ * \ingroup qgis_3d
  * \brief Utility class to asynchronously create heightmaps from DEM raster for given tiles of terrain.
- * \since QGIS 3.0
  */
 class QgsDemHeightMapGenerator : public QObject
 {
     Q_OBJECT
   public:
-
     /**
      * Constructs height map generator based on a raster layer with elevation model,
      * terrain's tiling scheme and height map resolution (number of height values on each side of tile)
@@ -126,14 +122,14 @@ class QgsDemHeightMapGenerator : public QObject
 
     struct JobData
     {
-      int jobId;
-      QgsChunkNodeId tileId;
-      QgsRectangle extent;
-      QFuture<QByteArray> future;
-      QElapsedTimer timer;
+        int jobId;
+        QgsChunkNodeId tileId;
+        QgsRectangle extent;
+        QFuture<QByteArray> future;
+        QElapsedTimer timer;
     };
 
-    QHash<QFutureWatcher<QByteArray>*, JobData> mJobs;
+    QHash<QFutureWatcher<QByteArray> *, JobData> mJobs;
 
     void lazyLoadDtmCoarseData( int res, const QgsRectangle &rect );
     mutable QMutex mLazyLoadDtmCoarseDataMutex;

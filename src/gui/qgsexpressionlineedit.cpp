@@ -14,15 +14,16 @@
 ***************************************************************************/
 
 #include "qgsexpressionlineedit.h"
+#include "moc_qgsexpressionlineedit.cpp"
 #include "qgsfilterlineedit.h"
 #include "qgsexpressioncontext.h"
 #include "qgsapplication.h"
 #include "qgsexpressionbuilderdialog.h"
 #include "qgsexpressioncontextgenerator.h"
-#include "qgscodeeditorsql.h"
 #include "qgsproject.h"
 #include "qgsvectorlayer.h"
 #include "qgsexpressioncontextutils.h"
+#include "qgscodeeditorexpression.h"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -31,7 +32,7 @@
 
 QgsExpressionLineEdit::QgsExpressionLineEdit( QWidget *parent )
   : QWidget( parent )
-  , mExpressionDialogTitle( tr( "Expression Dialog" ) )
+  , mExpressionDialogTitle( tr( "Expression Builder" ) )
 {
   mButton = new QToolButton();
   mButton->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum );
@@ -79,7 +80,7 @@ void QgsExpressionLineEdit::setMultiLine( bool multiLine )
     setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
 
     setFocusProxy( mCodeEditor );
-    connect( mCodeEditor, &QsciScintilla::textChanged, this, static_cast < void ( QgsExpressionLineEdit::* )() > ( &QgsExpressionLineEdit::expressionEdited ) );
+    connect( mCodeEditor, &QsciScintilla::textChanged, this, static_cast<void ( QgsExpressionLineEdit::* )()>( &QgsExpressionLineEdit::expressionEdited ) );
 
     setExpression( exp );
   }
@@ -101,7 +102,7 @@ void QgsExpressionLineEdit::setMultiLine( bool multiLine )
     setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Minimum );
 
     setFocusProxy( mLineEdit );
-    connect( mLineEdit, &QLineEdit::textChanged, this, static_cast < void ( QgsExpressionLineEdit::* )( const QString & ) > ( &QgsExpressionLineEdit::expressionEdited ) );
+    connect( mLineEdit, &QLineEdit::textChanged, this, static_cast<void ( QgsExpressionLineEdit::* )( const QString & )>( &QgsExpressionLineEdit::expressionEdited ) );
 
     setExpression( exp );
   }

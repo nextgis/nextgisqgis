@@ -24,13 +24,12 @@ SIP_NO_FILE
 /**
  * \ingroup gui
  * \class QgsHiddenWidgetFactory
+ * \brief Editor widget factory for hidden widgets.
  * \note not available in Python bindings
  */
-
 class GUI_EXPORT QgsHiddenWidgetFactory : public QgsEditorWidgetFactory
 {
   public:
-
     /**
      * Constructor for QgsHiddenWidgetFactory, where \a name is a human-readable
      * name for the factory.
@@ -41,6 +40,7 @@ class GUI_EXPORT QgsHiddenWidgetFactory : public QgsEditorWidgetFactory
   public:
     QgsEditorWidgetWrapper *create( QgsVectorLayer *vl, int fieldIdx, QWidget *editor, QWidget *parent ) const override;
     QgsEditorConfigWidget *configWidget( QgsVectorLayer *vl, int fieldIdx, QWidget *parent ) const override;
+    bool isReadOnly() const override;
 };
 
 #endif // QGSHIDDENWIDGETFACTORY_H

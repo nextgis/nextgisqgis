@@ -26,8 +26,9 @@
 
 /**
  * \ingroup core
- * \brief QgsInvertedPolygonRenderer is a polygon-only feature renderer used to
- * display features inverted, where the exterior is turned to an interior
+ * \brief A polygon-only feature renderer used to display features inverted.
+ *
+ * The exterior of the polygon is turned to an interior
  * and where the exterior theoretically spans the entire plane, allowing
  * to mask the surroundings of some features.
  *
@@ -37,7 +38,6 @@
  * Features are collected to form one "inverted" polygon
  * during renderFeature() and rendered on stopRender().
  *
- * \since QGIS 2.4
  */
 class CORE_EXPORT QgsInvertedPolygonRenderer : public QgsMergedFeatureRenderer
 {
@@ -60,27 +60,34 @@ class CORE_EXPORT QgsInvertedPolygonRenderer : public QgsMergedFeatureRenderer
     QString dump() const override;
 
     //! Creates a renderer out of an XML, for loading
-    static QgsFeatureRenderer *create( QDomElement &element, const QgsReadWriteContext &context ) SIP_FACTORY;
+    static QgsFeatureRenderer *create( QDomElement &element, const QgsReadWriteContext &context ) SIP_FACTORY; // cppcheck-suppress duplInheritedMember
 
     QDomElement save( QDomDocument &doc, const QgsReadWriteContext &context ) override;
 
-    //! \returns TRUE if the geometries are to be preprocessed (merged with an union) before rendering.
+    /**
+     * Returns TRUE if the geometries are to be preprocessed (merged with an union) before rendering.
+     *
+     * \see setPreprocessingEnabled()
+     */
     bool preprocessingEnabled() const { return mOperation == MergeAndInvert; }
 
     /**
-     * \param enabled enables or disables the preprocessing.
+     * Sets whether geometries preprocessing is enabled.
+     *
      * When enabled, geometries will be merged with an union before being rendered.
-     * It allows fixing some rendering artifacts (when rendering overlapping polygons for instance).
+     *
+     * This allows fixing some rendering artifacts (when rendering overlapping polygons for instance).
      * This will involve some CPU-demanding computations and is thus disabled by default.
+     *
+     * \see preprocessingEnabled()
      */
     void setPreprocessingEnabled( bool enabled ) { mOperation = enabled ? MergeAndInvert : InvertOnly; }
 
     /**
      * Creates a QgsInvertedPolygonRenderer by a conversion from an existing renderer.
      * \returns a new renderer if the conversion was possible, otherwise NULLPTR.
-     * \since QGIS 2.5
      */
-    static QgsInvertedPolygonRenderer *convertFromRenderer( const QgsFeatureRenderer *renderer ) SIP_FACTORY;
+    static QgsInvertedPolygonRenderer *convertFromRenderer( const QgsFeatureRenderer *renderer ) SIP_FACTORY; // cppcheck-suppress duplInheritedMember
 
 };
 

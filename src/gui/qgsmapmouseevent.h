@@ -27,14 +27,15 @@ class QgsMapToolAdvancedDigitizing;
 
 /**
  * \ingroup gui
- * \brief A QgsMapMouseEvent is the result of a user interaction with the mouse on a QgsMapCanvas.
+ * \brief A mouse event which is the result of a user interaction with a QgsMapCanvas.
+ *
  * It is sent whenever the user moves, clicks, releases or double clicks the mouse.
+ *
  * In addition to the coordinates in pixel space it also knows the coordinates in the mapcanvas' CRS
  * as well as it knows the concept of snapping.
  */
 class GUI_EXPORT QgsMapMouseEvent : public QMouseEvent
 {
-
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
     if ( dynamic_cast<QgsMapMouseEvent *>( sipCpp ) )
@@ -45,7 +46,6 @@ class GUI_EXPORT QgsMapMouseEvent : public QMouseEvent
 #endif
 
   public:
-
     /**
      * Creates a new QgsMapMouseEvent. Should only be required to be called from the QgsMapCanvas.
      *
@@ -64,8 +64,7 @@ class GUI_EXPORT QgsMapMouseEvent : public QMouseEvent
      * \param buttons   Further buttons that are pressed
      * \param modifiers Keyboard modifiers
      */
-    QgsMapMouseEvent( QgsMapCanvas *mapCanvas, QEvent::Type type, QPoint pos, Qt::MouseButton button = Qt::NoButton,
-                      Qt::MouseButtons buttons = Qt::NoButton, Qt::KeyboardModifiers modifiers = Qt::NoModifier );
+    QgsMapMouseEvent( QgsMapCanvas *mapCanvas, QEvent::Type type, QPoint pos, Qt::MouseButton button = Qt::NoButton, Qt::MouseButtons buttons = Qt::NoButton, Qt::KeyboardModifiers modifiers = Qt::NoModifier );
 
     /**
      * \brief snapPoint will snap the points using the map canvas snapping utils configuration
@@ -92,7 +91,6 @@ class GUI_EXPORT QgsMapMouseEvent : public QMouseEvent
       * \returns the snapping data structure
       * \note This method returns the most recent snap match. It must
       * follow a call to snapPoint() in order to have a recent snap result available.
-      * \since QGIS 2.14
       */
     QgsPointLocator::Match mapPointMatch() const { return mSnapMatch; }
 
@@ -136,7 +134,6 @@ class GUI_EXPORT QgsMapMouseEvent : public QMouseEvent
     void snapToGrid( double precision, const QgsCoordinateReferenceSystem &crs );
 
   private:
-
     QPoint mapToPixelCoordinates( const QgsPointXY &point );
 
     //! Whether snapPoint() was already called

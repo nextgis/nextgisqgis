@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/raster/qgsrasterhistogram.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,7 +13,8 @@
 class QgsRasterHistogram
 {
 %Docstring(signature="appended")
-The :py:class:`QgsRasterHistogram` is a container for histogram of a single raster band.
+A container for a histogram of a single raster band.
+
 It is used to cache computed histograms in raster providers.
 %End
 
@@ -57,5 +58,5 @@ Constructor for an invalid QgsRasterHistogram.
  *                                                                      *
  * src/core/raster/qgsrasterhistogram.h                                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -32,7 +32,9 @@ class QgsVectorLayer;
 
 /**
  * \ingroup core
- * \brief This class allows including a set of layers in a database-side transaction,
+ * \brief Allows creation of a multi-layer database-side transaction.
+ *
+ * This class allows including a set of layers in a database-side transaction,
  * provided the layer data providers support transactions and are compatible
  * with each other.
  *
@@ -132,38 +134,32 @@ class CORE_EXPORT QgsTransaction : public QObject SIP_ABSTRACT
      * creates a save point
      * returns empty string on error
      * returns the last created savepoint if it's not dirty
-     * \since QGIS 3.0
      */
     QString createSavepoint( QString &error SIP_OUT );
 
     /**
      * creates a save point
      * returns empty string on error
-     * \since QGIS 3.0
      */
     virtual QString createSavepoint( const QString &savePointId, QString &error SIP_OUT );
 
     /**
      * rollback to save point, the save point is maintained and is "undertied"
-     * \since QGIS 3.0
      */
     virtual bool rollbackToSavepoint( const QString &name, QString &error SIP_OUT );
 
     /**
      * dirty save point such that next call to createSavepoint will create a new one
-     * \since QGIS 3.0
      */
     void dirtyLastSavePoint();
 
     /**
      * returns savepoints
-     * \since QGIS 3.0
      */
     QList< QString > savePoints() const { return QList< QString >::fromVector( mSavepoints ); }
 
     /**
      * returns the last created savepoint
-     * \since QGIS 3.0
      */
     bool lastSavePointIsDirty() const { return mLastSavePointIsDirty; }
 
@@ -178,6 +174,12 @@ class CORE_EXPORT QgsTransaction : public QObject SIP_ABSTRACT
      * Emitted after a rollback
      */
     void afterRollback();
+
+    /**
+     * Emitted after a rollback to savepoint
+     * \since QGIS 3.42
+     */
+    void afterRollbackToSavepoint( const QString &savepointName );
 
     /**
      * Emitted if a sql query is executed and the underlying data is modified

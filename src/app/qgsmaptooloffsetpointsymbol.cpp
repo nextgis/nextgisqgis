@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmaptooloffsetpointsymbol.h"
+#include "moc_qgsmaptooloffsetpointsymbol.cpp"
 #include "qgsmapcanvas.h"
 #include "qgspointmarkeritem.h"
 #include "qgssymbol.h"
@@ -131,20 +132,20 @@ bool QgsMapToolOffsetPointSymbol::checkSymbolCompatibility( QgsMarkerSymbol *mar
   const auto constSymbolLayers = markerSymbol->symbolLayers();
   for ( QgsSymbolLayer *layer : constSymbolLayers )
   {
-    if ( !layer->dataDefinedProperties().isActive( QgsSymbolLayer::PropertyOffset ) )
+    if ( !layer->dataDefinedProperties().isActive( QgsSymbolLayer::Property::Offset ) )
       continue;
 
-    const QgsProperty p = layer->dataDefinedProperties().property( QgsSymbolLayer::PropertyOffset );
-    if ( p.propertyType() != QgsProperty::FieldBasedProperty )
+    const QgsProperty p = layer->dataDefinedProperties().property( QgsSymbolLayer::Property::Offset );
+    if ( p.propertyType() != Qgis::PropertyType::Field )
       continue;
 
     ok = true;
     if ( !mMarkerSymbol )
     {
       double symbolRotation = markerSymbol->angle();
-      if ( layer->dataDefinedProperties().isActive( QgsSymbolLayer::PropertyAngle ) )
+      if ( layer->dataDefinedProperties().isActive( QgsSymbolLayer::Property::Angle ) )
       {
-        symbolRotation = layer->dataDefinedProperties().valueAsDouble( QgsSymbolLayer::PropertyAngle, context.expressionContext(), symbolRotation );
+        symbolRotation = layer->dataDefinedProperties().valueAsDouble( QgsSymbolLayer::Property::Angle, context.expressionContext(), symbolRotation );
       }
 
       mSymbolRotation = symbolRotation;
@@ -195,7 +196,7 @@ void QgsMapToolOffsetPointSymbol::createPreviewItem( QgsMarkerSymbol *markerSymb
 
   mOffsetItem = new QgsMapCanvasMarkerSymbolItem( mCanvas );
   mOffsetItem->setOpacity( 0.7 );
-  mOffsetItem->setSymbol( std::unique_ptr< QgsSymbol >( markerSymbol->clone() ) );
+  mOffsetItem->setSymbol( std::unique_ptr<QgsSymbol>( markerSymbol->clone() ) );
 }
 
 QMap<int, QVariant> QgsMapToolOffsetPointSymbol::calculateNewOffsetAttributes( const QgsPointXY &startPoint, const QgsPointXY &endPoint ) const
@@ -204,21 +205,21 @@ QMap<int, QVariant> QgsMapToolOffsetPointSymbol::calculateNewOffsetAttributes( c
   const auto constSymbolLayers = mMarkerSymbol->symbolLayers();
   for ( QgsSymbolLayer *layer : constSymbolLayers )
   {
-    if ( !layer->dataDefinedProperties().isActive( QgsSymbolLayer::PropertyOffset ) )
+    if ( !layer->dataDefinedProperties().isActive( QgsSymbolLayer::Property::Offset ) )
       continue;
 
-    const QgsProperty ddOffset = layer->dataDefinedProperties().property( QgsSymbolLayer::PropertyOffset );
-    if ( ddOffset.propertyType() != QgsProperty::FieldBasedProperty )
+    const QgsProperty ddOffset = layer->dataDefinedProperties().property( QgsSymbolLayer::Property::Offset );
+    if ( ddOffset.propertyType() != Qgis::PropertyType::Field )
       continue;
 
-    QgsMarkerSymbolLayer *ml = dynamic_cast< QgsMarkerSymbolLayer * >( layer );
+    QgsMarkerSymbolLayer *ml = dynamic_cast<QgsMarkerSymbolLayer *>( layer );
     if ( !ml )
       continue;
 
     const QPointF offset = calculateOffset( startPoint, endPoint, ml->offsetUnit() );
     const int fieldIdx = mActiveLayer->fields().indexFromName( ddOffset.field() );
     if ( fieldIdx >= 0 )
-      newAttrValues[ fieldIdx ] = QgsSymbolLayerUtils::encodePoint( offset );
+      newAttrValues[fieldIdx] = QgsSymbolLayerUtils::encodePoint( offset );
   }
   return newAttrValues;
 }
@@ -294,4 +295,3 @@ QPointF QgsMapToolOffsetPointSymbol::rotatedOffset( QPointF offset, double angle
   double c = std::cos( angle ), s = std::sin( angle );
   return QPointF( offset.x() * c - offset.y() * s, offset.x() * s + offset.y() * c );
 }
-

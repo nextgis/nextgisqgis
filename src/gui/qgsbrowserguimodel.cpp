@@ -13,6 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsbrowserguimodel.h"
+#include "moc_qgsbrowserguimodel.cpp"
 #include "qgslogger.h"
 #include "qgsdataitemguiproviderregistry.h"
 #include "qgsdataitemguiprovider.h"
@@ -29,13 +30,14 @@ QgsDataItemGuiContext QgsBrowserGuiModel::createDataItemContext() const
 {
   QgsDataItemGuiContext context;
   context.setMessageBar( mMessageBar );
+  context.setMapCanvas( mMapCanvas );
   return context;
 }
 
 struct QgsBrowserGuiModelCachedAcceptDropValue
 {
-  bool acceptDrop;
-  int numberOfProviders;
+    bool acceptDrop;
+    int numberOfProviders;
 };
 Q_DECLARE_METATYPE( QgsBrowserGuiModelCachedAcceptDropValue )
 
@@ -177,4 +179,9 @@ bool QgsBrowserGuiModel::setData( const QModelIndex &index, const QVariant &valu
 void QgsBrowserGuiModel::setMessageBar( QgsMessageBar *bar )
 {
   mMessageBar = bar;
+}
+
+void QgsBrowserGuiModel::setMapCanvas( QgsMapCanvas *canvas )
+{
+  mMapCanvas = canvas;
 }

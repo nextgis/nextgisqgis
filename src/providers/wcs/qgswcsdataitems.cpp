@@ -12,14 +12,11 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-#include "qgsapplication.h"
 #include "qgswcsdataitems.h"
-#include "qgswcsprovider.h"
+#include "moc_qgswcsdataitems.cpp"
 #include "qgslogger.h"
 #include "qgsdatasourceuri.h"
 #include "qgsowsconnection.h"
-
-#include "qgssettings.h"
 
 #ifdef HAVE_GUI
 #include "qgswcssourceselect.h"
@@ -189,7 +186,7 @@ QgsWCSRootItem::QgsWCSRootItem( QgsDataItem *parent, QString name, QString path 
   populate();
 }
 
-QVector<QgsDataItem *>QgsWCSRootItem::createChildren()
+QVector<QgsDataItem *> QgsWCSRootItem::createChildren()
 {
   QVector<QgsDataItem *> connections;
   const QStringList list = QgsOwsConnection::connectionList( "WCS" );
@@ -229,9 +226,9 @@ QString QgsWcsDataItemProvider::dataProviderKey() const
   return QStringLiteral( "wcs" );
 }
 
-int QgsWcsDataItemProvider::capabilities() const
+Qgis::DataItemProviderCapabilities QgsWcsDataItemProvider::capabilities() const
 {
-  return QgsDataProvider::Net;
+  return Qgis::DataItemProviderCapability::NetworkSources;
 }
 
 QgsDataItem *QgsWcsDataItemProvider::createDataItem( const QString &path, QgsDataItem *parentItem )

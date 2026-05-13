@@ -57,6 +57,11 @@ QString QgsTranslateAlgorithm::shortHelpString() const
          + QObject::tr( "Z and M values present in the geometry can also be translated." );
 }
 
+QString QgsTranslateAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Moves the geometries within a layer, by offsetting them with a specified x, y, z or m displacement." );
+}
+
 QgsTranslateAlgorithm *QgsTranslateAlgorithm::createInstance() const
 {
   return new QgsTranslateAlgorithm();
@@ -64,33 +69,25 @@ QgsTranslateAlgorithm *QgsTranslateAlgorithm::createInstance() const
 
 void QgsTranslateAlgorithm::initParameters( const QVariantMap & )
 {
-  std::unique_ptr< QgsProcessingParameterDistance > xOffset = std::make_unique< QgsProcessingParameterDistance >( QStringLiteral( "DELTA_X" ),
-      QObject::tr( "Offset distance (x-axis)" ),
-      0.0, QStringLiteral( "INPUT" ) );
+  auto xOffset = std::make_unique<QgsProcessingParameterDistance>( QStringLiteral( "DELTA_X" ), QObject::tr( "Offset distance (x-axis)" ), 0.0, QStringLiteral( "INPUT" ) );
   xOffset->setIsDynamic( true );
   xOffset->setDynamicPropertyDefinition( QgsPropertyDefinition( QStringLiteral( "DELTA_X" ), QObject::tr( "Offset distance (x-axis)" ), QgsPropertyDefinition::Double ) );
   xOffset->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
   addParameter( xOffset.release() );
 
-  std::unique_ptr< QgsProcessingParameterDistance > yOffset = std::make_unique< QgsProcessingParameterDistance >( QStringLiteral( "DELTA_Y" ),
-      QObject::tr( "Offset distance (y-axis)" ),
-      0.0, QStringLiteral( "INPUT" ) );
+  auto yOffset = std::make_unique<QgsProcessingParameterDistance>( QStringLiteral( "DELTA_Y" ), QObject::tr( "Offset distance (y-axis)" ), 0.0, QStringLiteral( "INPUT" ) );
   yOffset->setIsDynamic( true );
   yOffset->setDynamicPropertyDefinition( QgsPropertyDefinition( QStringLiteral( "DELTA_Y" ), QObject::tr( "Offset distance (y-axis)" ), QgsPropertyDefinition::Double ) );
   yOffset->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
   addParameter( yOffset.release() );
 
-  std::unique_ptr< QgsProcessingParameterNumber > zOffset = std::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "DELTA_Z" ),
-      QObject::tr( "Offset distance (z-axis)" ), QgsProcessingParameterNumber::Double,
-      0.0 );
+  auto zOffset = std::make_unique<QgsProcessingParameterNumber>( QStringLiteral( "DELTA_Z" ), QObject::tr( "Offset distance (z-axis)" ), Qgis::ProcessingNumberParameterType::Double, 0.0 );
   zOffset->setIsDynamic( true );
   zOffset->setDynamicPropertyDefinition( QgsPropertyDefinition( QStringLiteral( "DELTA_Z" ), QObject::tr( "Offset distance (z-axis)" ), QgsPropertyDefinition::Double ) );
   zOffset->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
   addParameter( zOffset.release() );
 
-  std::unique_ptr< QgsProcessingParameterNumber > mOffset = std::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "DELTA_M" ),
-      QObject::tr( "Offset distance (m values)" ), QgsProcessingParameterNumber::Double,
-      0.0 );
+  auto mOffset = std::make_unique<QgsProcessingParameterNumber>( QStringLiteral( "DELTA_M" ), QObject::tr( "Offset distance (m values)" ), Qgis::ProcessingNumberParameterType::Double, 0.0 );
   mOffset->setIsDynamic( true );
   mOffset->setDynamicPropertyDefinition( QgsPropertyDefinition( QStringLiteral( "DELTA_M" ), QObject::tr( "Offset distance (m values)" ), QgsPropertyDefinition::Double ) );
   mOffset->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
@@ -102,22 +99,22 @@ bool QgsTranslateAlgorithm::prepareAlgorithm( const QVariantMap &parameters, Qgs
   mDeltaX = parameterAsDouble( parameters, QStringLiteral( "DELTA_X" ), context );
   mDynamicDeltaX = QgsProcessingParameters::isDynamic( parameters, QStringLiteral( "DELTA_X" ) );
   if ( mDynamicDeltaX )
-    mDeltaXProperty = parameters.value( QStringLiteral( "DELTA_X" ) ).value< QgsProperty >();
+    mDeltaXProperty = parameters.value( QStringLiteral( "DELTA_X" ) ).value<QgsProperty>();
 
   mDeltaY = parameterAsDouble( parameters, QStringLiteral( "DELTA_Y" ), context );
   mDynamicDeltaY = QgsProcessingParameters::isDynamic( parameters, QStringLiteral( "DELTA_Y" ) );
   if ( mDynamicDeltaY )
-    mDeltaYProperty = parameters.value( QStringLiteral( "DELTA_Y" ) ).value< QgsProperty >();
+    mDeltaYProperty = parameters.value( QStringLiteral( "DELTA_Y" ) ).value<QgsProperty>();
 
   mDeltaZ = parameterAsDouble( parameters, QStringLiteral( "DELTA_Z" ), context );
   mDynamicDeltaZ = QgsProcessingParameters::isDynamic( parameters, QStringLiteral( "DELTA_Z" ) );
   if ( mDynamicDeltaZ )
-    mDeltaZProperty = parameters.value( QStringLiteral( "DELTA_Z" ) ).value< QgsProperty >();
+    mDeltaZProperty = parameters.value( QStringLiteral( "DELTA_Z" ) ).value<QgsProperty>();
 
   mDeltaM = parameterAsDouble( parameters, QStringLiteral( "DELTA_M" ), context );
   mDynamicDeltaM = QgsProcessingParameters::isDynamic( parameters, QStringLiteral( "DELTA_M" ) );
   if ( mDynamicDeltaM )
-    mDeltaMProperty = parameters.value( QStringLiteral( "DELTA_M" ) ).value< QgsProperty >();
+    mDeltaMProperty = parameters.value( QStringLiteral( "DELTA_M" ) ).value<QgsProperty>();
 
   return true;
 }
@@ -142,9 +139,9 @@ QgsFeatureList QgsTranslateAlgorithm::processFeature( const QgsFeature &feature,
     if ( mDynamicDeltaM )
       deltaM = mDeltaMProperty.valueAsDouble( context.expressionContext(), deltaM );
 
-    if ( deltaZ != 0.0 && !geometry.constGet()->is3D() )
+    if ( QgsWkbTypes::hasZ( mOutputWkbType ) && !geometry.constGet()->is3D() )
       geometry.get()->addZValue( 0 );
-    if ( deltaM != 0.0 && !geometry.constGet()->isMeasure() )
+    if ( QgsWkbTypes::hasM( mOutputWkbType ) && !geometry.constGet()->isMeasure() )
       geometry.get()->addMValue( 0 );
 
     geometry.translate( deltaX, deltaY, deltaZ, deltaM );
@@ -155,22 +152,21 @@ QgsFeatureList QgsTranslateAlgorithm::processFeature( const QgsFeature &feature,
 
 Qgis::WkbType QgsTranslateAlgorithm::outputWkbType( Qgis::WkbType inputWkbType ) const
 {
-  Qgis::WkbType wkb = inputWkbType;
-  if ( mDeltaZ != 0.0 )
-    wkb = QgsWkbTypes::addZ( wkb );
-  if ( mDeltaM != 0.0 )
-    wkb = QgsWkbTypes::addM( wkb );
-  return wkb;
+  mOutputWkbType = inputWkbType;
+  if ( mDynamicDeltaZ || mDeltaZ != 0.0 )
+    mOutputWkbType = QgsWkbTypes::addZ( mOutputWkbType );
+  if ( mDynamicDeltaM || mDeltaM != 0.0 )
+    mOutputWkbType = QgsWkbTypes::addM( mOutputWkbType );
+  return mOutputWkbType;
 }
-
 
 bool QgsTranslateAlgorithm::supportInPlaceEdit( const QgsMapLayer *l ) const
 {
-  const QgsVectorLayer *layer = qobject_cast< const QgsVectorLayer * >( l );
+  const QgsVectorLayer *layer = qobject_cast<const QgsVectorLayer *>( l );
   if ( !layer )
     return false;
 
-  if ( ! QgsProcessingFeatureBasedAlgorithm::supportInPlaceEdit( layer ) )
+  if ( !QgsProcessingFeatureBasedAlgorithm::supportInPlaceEdit( layer ) )
     return false;
 
   // Check if we can drop Z/M and still have some work done
@@ -181,6 +177,5 @@ bool QgsTranslateAlgorithm::supportInPlaceEdit( const QgsMapLayer *l ) const
   const Qgis::WkbType inPlaceWkbType = layer->wkbType();
   return inPlaceWkbType == outputWkbType( inPlaceWkbType );
 }
+
 ///@endcond
-
-

@@ -32,7 +32,6 @@ SIP_NO_FILE
 class GUI_EXPORT QgsJsonEditWidgetFactory : public QgsEditorWidgetFactory
 {
   public:
-
     /**
      * Constructor for QgsJsonEditWidgetFactory, where \a name is a human-readable
      * name for the factory.
@@ -44,6 +43,8 @@ class GUI_EXPORT QgsJsonEditWidgetFactory : public QgsEditorWidgetFactory
     QgsEditorConfigWidget *configWidget( QgsVectorLayer *vl, int fieldIdx, QWidget *parent ) const override;
 
     unsigned int fieldScore( const QgsVectorLayer *vl, int fieldIdx ) const override;
+
+    bool isReadOnly() const override;
 };
 
 #endif // QGSJSONEDITWIDGETFACTORY_H

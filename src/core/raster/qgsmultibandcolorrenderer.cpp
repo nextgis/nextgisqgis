@@ -18,9 +18,8 @@
 #include "qgsmultibandcolorrenderer.h"
 #include "qgscontrastenhancement.h"
 #include "qgsrastertransparency.h"
-#include "qgsrasterviewport.h"
 #include "qgslayertreemodellegendnode.h"
-#include "qgssymbol.h"
+#include "qgssldexportcontext.h"
 
 #include <QDomDocument>
 #include <QDomElement>
@@ -41,12 +40,7 @@ QgsMultiBandColorRenderer::QgsMultiBandColorRenderer( QgsRasterInterface *input,
 {
 }
 
-QgsMultiBandColorRenderer::~QgsMultiBandColorRenderer()
-{
-  delete mRedContrastEnhancement;
-  delete mGreenContrastEnhancement;
-  delete mBlueContrastEnhancement;
-}
+QgsMultiBandColorRenderer::~QgsMultiBandColorRenderer() = default;
 
 QgsMultiBandColorRenderer *QgsMultiBandColorRenderer::clone() const
 {
@@ -76,20 +70,36 @@ Qgis::RasterRendererFlags QgsMultiBandColorRenderer::flags() const
 
 void QgsMultiBandColorRenderer::setRedContrastEnhancement( QgsContrastEnhancement *ce )
 {
-  delete mRedContrastEnhancement;
-  mRedContrastEnhancement = ce;
+  if ( ce == mRedContrastEnhancement.get() )
+    return;
+
+  mRedContrastEnhancement.reset( ce );
+}
+
+const QgsContrastEnhancement *QgsMultiBandColorRenderer::greenContrastEnhancement() const
+{
+  return mGreenContrastEnhancement.get();
 }
 
 void QgsMultiBandColorRenderer::setGreenContrastEnhancement( QgsContrastEnhancement *ce )
 {
-  delete mGreenContrastEnhancement;
-  mGreenContrastEnhancement = ce;
+  if ( ce == mGreenContrastEnhancement.get() )
+    return;
+
+  mGreenContrastEnhancement.reset( ce );
+}
+
+const QgsContrastEnhancement *QgsMultiBandColorRenderer::blueContrastEnhancement() const
+{
+  return mBlueContrastEnhancement.get();
 }
 
 void QgsMultiBandColorRenderer::setBlueContrastEnhancement( QgsContrastEnhancement *ce )
 {
-  delete mBlueContrastEnhancement;
-  mBlueContrastEnhancement = ce;
+  if ( ce == mBlueContrastEnhancement.get() )
+    return;
+
+  mBlueContrastEnhancement.reset( ce );
 }
 
 QgsRasterRenderer *QgsMultiBandColorRenderer::create( const QDomElement &elem, QgsRasterInterface *input )
@@ -141,7 +151,7 @@ QgsRasterRenderer *QgsMultiBandColorRenderer::create( const QDomElement &elem, Q
 QgsRasterBlock *QgsMultiBandColorRenderer::block( int bandNo, QgsRectangle  const &extent, int width, int height, QgsRasterBlockFeedback *feedback )
 {
   Q_UNUSED( bandNo )
-  std::unique_ptr< QgsRasterBlock > outputBlock( new QgsRasterBlock() );
+  auto outputBlock = std::make_unique<QgsRasterBlock>();
   if ( !mInput )
   {
     return outputBlock.release();
@@ -366,7 +376,7 @@ QgsRasterBlock *QgsMultiBandColorRenderer::block( int bandNo, QgsRectangle  cons
     double currentOpacity = mOpacity;
     if ( mRasterTransparency )
     {
-      currentOpacity = mRasterTransparency->alphaValue( redVal, greenVal, blueVal, mOpacity * 255 ) / 255.0;
+      currentOpacity *= mRasterTransparency->opacityForRgbValues( redVal, greenVal, blueVal );
     }
     if ( mAlphaBand > 0 )
     {
@@ -400,6 +410,11 @@ QgsRasterBlock *QgsMultiBandColorRenderer::block( int bandNo, QgsRectangle  cons
   }
 
   return outputBlock.release();
+}
+
+const QgsContrastEnhancement *QgsMultiBandColorRenderer::redContrastEnhancement() const
+{
+  return mRedContrastEnhancement.get();
 }
 
 void QgsMultiBandColorRenderer::writeXml( QDomDocument &doc, QDomElement &parentElem ) const
@@ -476,8 +491,15 @@ QList<QgsLayerTreeModelLegendNode *> QgsMultiBandColorRenderer::createLegendNode
 
 void QgsMultiBandColorRenderer::toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props ) const
 {
+  QgsSldExportContext context;
+  context.setExtraProperties( props );
+  toSld( doc, element, context );
+}
+
+bool QgsMultiBandColorRenderer::toSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &context ) const
+{
   // create base structure
-  QgsRasterRenderer::toSld( doc, element, props );
+  QgsRasterRenderer::toSld( doc, element, context );
 
 
 #if 0
@@ -530,7 +552,7 @@ void QgsMultiBandColorRenderer::toSld( QDomDocument &doc, QDomElement &element, 
   // look for RasterSymbolizer tag
   QDomNodeList elements = element.elementsByTagName( QStringLiteral( "sld:RasterSymbolizer" ) );
   if ( elements.size() == 0 )
-    return;
+    return false;
 
   // there SHOULD be only one
   QDomElement rasterSymbolizerElem = elements.at( 0 ).toElement();
@@ -561,9 +583,9 @@ void QgsMultiBandColorRenderer::toSld( QDomDocument &doc, QDomElement &element, 
   static QStringList tags { QStringLiteral( "sld:RedChannel" ), QStringLiteral( "sld:GreenChannel" ), QStringLiteral( "sld:BlueChannel" ) };
 
   QList<QgsContrastEnhancement *> contrastEnhancements;
-  contrastEnhancements.append( mRedContrastEnhancement );
-  contrastEnhancements.append( mGreenContrastEnhancement );
-  contrastEnhancements.append( mBlueContrastEnhancement );
+  contrastEnhancements.append( mRedContrastEnhancement.get() );
+  contrastEnhancements.append( mGreenContrastEnhancement.get() );
+  contrastEnhancements.append( mBlueContrastEnhancement.get() );
 
   const QList<int> bands = usesBands();
   QList<int>::const_iterator bandIt = bands.constBegin();
@@ -590,4 +612,45 @@ void QgsMultiBandColorRenderer::toSld( QDomDocument &doc, QDomElement &element, 
       channelElem.appendChild( contrastEnhancementElem );
     }
   }
+  return true;
+}
+
+bool QgsMultiBandColorRenderer::refresh( const QgsRectangle &extent, const QList<double> &min, const QList<double> &max, bool forceRefresh )
+{
+  if ( !needsRefresh( extent ) && !forceRefresh )
+  {
+    return false;
+  }
+
+  bool refreshed = false;
+  if ( min.size() >= 3 && max.size() >= 3 )
+  {
+    mLastRectangleUsedByRefreshContrastEnhancementIfNeeded = extent;
+
+    if ( mRedContrastEnhancement && mRedContrastEnhancement->contrastEnhancementAlgorithm() != QgsContrastEnhancement::NoEnhancement &&
+         !std::isnan( min[0] ) && !std::isnan( max[0] ) )
+    {
+      mRedContrastEnhancement->setMinimumValue( min[0] );
+      mRedContrastEnhancement->setMaximumValue( max[0] );
+      refreshed = true;
+    }
+
+    if ( mGreenContrastEnhancement && mGreenContrastEnhancement->contrastEnhancementAlgorithm() != QgsContrastEnhancement::NoEnhancement &&
+         !std::isnan( min[1] ) && !std::isnan( max[1] ) )
+    {
+      mGreenContrastEnhancement->setMinimumValue( min[1] );
+      mGreenContrastEnhancement->setMaximumValue( max[1] );
+      refreshed = true;
+    }
+
+    if ( mBlueContrastEnhancement && mBlueContrastEnhancement->contrastEnhancementAlgorithm() != QgsContrastEnhancement::NoEnhancement &&
+         !std::isnan( min[2] ) && !std::isnan( max[2] ) )
+    {
+      mBlueContrastEnhancement->setMinimumValue( min[2] );
+      mBlueContrastEnhancement->setMaximumValue( max[2] );
+      refreshed = true;
+    }
+  }
+
+  return refreshed;
 }

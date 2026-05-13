@@ -25,6 +25,7 @@ class QgsSymbol;
 /**
  * \ingroup core
  * \class QgsSingleSymbolRenderer
+ * \brief A feature renderer which renders all features with the same symbol.
  */
 class CORE_EXPORT QgsSingleSymbolRenderer : public QgsFeatureRenderer
 {
@@ -39,6 +40,7 @@ class CORE_EXPORT QgsSingleSymbolRenderer : public QgsFeatureRenderer
     QgsSingleSymbolRenderer( QgsSymbol *symbol SIP_TRANSFER );
     ~QgsSingleSymbolRenderer() override;
 
+    Qgis::FeatureRendererFlags flags() const override;
     QgsSymbol *symbolForFeature( const QgsFeature &feature, QgsRenderContext &context ) const override;
     QgsSymbol *originalSymbolForFeature( const QgsFeature &feature, QgsRenderContext &context ) const override;
     void startRender( QgsRenderContext &context, const QgsFields &fields ) override;
@@ -62,8 +64,8 @@ class CORE_EXPORT QgsSingleSymbolRenderer : public QgsFeatureRenderer
     QString dump() const override;
 
     QgsSingleSymbolRenderer *clone() const override SIP_FACTORY;
-
-    void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props = QVariantMap() ) const override;
+    Q_DECL_DEPRECATED void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props = QVariantMap() ) const override SIP_DEPRECATED;
+    bool toSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &context ) const override;
 
     /**
      * Creates a new single symbol renderer from an SLD \a element.
@@ -93,7 +95,6 @@ class CORE_EXPORT QgsSingleSymbolRenderer : public QgsFeatureRenderer
     /**
      * Creates a new single symbol renderer from an existing \a renderer.
      * \returns a new renderer if the conversion was possible, otherwise NULLPTR.
-     * \since QGIS 2.5
      */
     static QgsSingleSymbolRenderer *convertFromRenderer( const QgsFeatureRenderer *renderer ) SIP_FACTORY;
 
@@ -105,14 +106,12 @@ class CORE_EXPORT QgsSingleSymbolRenderer : public QgsFeatureRenderer
      * When renderer does not use data-defined size or does not use marker symbols, these settings will be ignored.
      * Takes ownership of the passed settings objects. NULLPTR is a valid input that disables data-defined
      * size legend.
-     * \since QGIS 3.0
      */
     void setDataDefinedSizeLegend( QgsDataDefinedSizeLegend *settings SIP_TRANSFER );
 
     /**
      * Returns configuration of appearance of legend when using data-defined size for marker symbols.
      * Will return NULLPTR if the functionality is disabled.
-     * \since QGIS 3.0
      */
     QgsDataDefinedSizeLegend *dataDefinedSizeLegend() const;
 

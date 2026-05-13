@@ -19,22 +19,18 @@
 #include "qgsmesheditor.h"
 #include "qgsmessagelog.h"
 #include "qgsgeometryutils.h"
+#include "qgscircle.h"
 
 #include <poly2tri.h>
 #include <QSet>
 #include <QQueue>
 
-static int vertexPositionInFace( int vertexIndex, const QgsMeshFace &face )
-{
-  return face.indexOf( vertexIndex );
-}
-
-static int vertexPositionInFace( const QgsMesh &mesh, int vertexIndex, int faceIndex )
+/*static*/ int QgsTopologicalMesh::vertexPositionInFace( const QgsMesh &mesh, int vertexIndex, int faceIndex )
 {
   if ( faceIndex < 0 || faceIndex >= mesh.faceCount() )
     return -1;
 
-  return vertexPositionInFace( vertexIndex, mesh.face( faceIndex ) );
+  return QgsTopologicalMesh::vertexPositionInFace( vertexIndex, mesh.face( faceIndex ) );
 }
 
 
@@ -66,7 +62,7 @@ QgsMeshVertexCirculator::QgsMeshVertexCirculator( const QgsTopologicalMesh &topo
   if ( vertexIndex >= 0 && vertexIndex < topologicalMesh.mMesh->vertexCount() )
   {
     mCurrentFace = topologicalMesh.mVertexToFace[vertexIndex];
-    mIsValid = vertexPositionInFace( *topologicalMesh.mesh(), vertexIndex, mCurrentFace ) != -1;
+    mIsValid = QgsTopologicalMesh::vertexPositionInFace( *topologicalMesh.mesh(), vertexIndex, mCurrentFace ) != -1;
   }
   else
   {
@@ -83,7 +79,7 @@ QgsMeshVertexCirculator::QgsMeshVertexCirculator( const QgsTopologicalMesh::Topo
   , mVertexIndex( vertexIndex )
 {
   const QgsMeshFace &face = topologicalFaces.mFaces.at( faceIndex );
-  mIsValid = vertexPositionInFace( vertexIndex, face ) != -1;
+  mIsValid = QgsTopologicalMesh::vertexPositionInFace( vertexIndex, face ) != -1;
 
   mCurrentFace = faceIndex;
   mLastValidFace = mCurrentFace;
@@ -193,7 +189,7 @@ int QgsMeshVertexCirculator::oppositeVertexClockwise() const
   if ( face.isEmpty() )
     return -1;
 
-  int vertexPosition = vertexPositionInFace( mVertexIndex, currentFace() );
+  int vertexPosition = QgsTopologicalMesh::vertexPositionInFace( mVertexIndex, currentFace() );
 
   if ( vertexPosition == -1 )
     return -1;
@@ -211,7 +207,7 @@ int QgsMeshVertexCirculator::oppositeVertexCounterClockwise() const
   if ( face.isEmpty() )
     return -1;
 
-  int vertexPosition = vertexPositionInFace( mVertexIndex, currentFace() );
+  int vertexPosition = QgsTopologicalMesh::vertexPositionInFace( mVertexIndex, currentFace() );
 
   if ( vertexPosition == -1 )
     return -1;
@@ -281,7 +277,7 @@ int QgsMeshVertexCirculator::positionInCurrentFace() const
   if ( mCurrentFace < 0 || mCurrentFace >= mFaces.count() )
     return -1;
 
-  return vertexPositionInFace( mVertexIndex, mFaces.at( mCurrentFace ) );
+  return QgsTopologicalMesh::vertexPositionInFace( mVertexIndex, mFaces.at( mCurrentFace ) );
 }
 
 QgsTopologicalMesh::Changes QgsTopologicalMesh::addFaces( const QgsTopologicalMesh::TopologicalFaces &topologicalFaces )
@@ -349,7 +345,8 @@ QgsTopologicalMesh::Changes QgsTopologicalMesh::addFaces( const QgsTopologicalMe
     if ( mVertexToFace.at( vtc ) == -1 )
       changes.mVerticesToFaceChanges.append( {vtc,
                                               mVertexToFace.at( vtc ),
-                                              changes.addedFaceIndexInMesh( topologicalFaces.mVerticesToFace.values( vtc ).first() ) } );
+                                              changes.addedFaceIndexInMesh( topologicalFaces.mVerticesToFace.values( vtc ).first() )
+                                             } );
 
   applyChanges( changes );
 
@@ -402,11 +399,11 @@ void QgsTopologicalMesh::applyChanges( const QgsTopologicalMesh::Changes &change
     mFacesNeighborhood[changes.addedFaceIndexInMesh( i )] = changes.mFacesNeighborhoodToAdd.at( i );
   }
 
-  for ( const std::array<int, 4> neigborChange : std::as_const( changes.mNeighborhoodChanges ) )
+  for ( const std::array<int, 4> neighborChange : std::as_const( changes.mNeighborhoodChanges ) )
   {
-    const int faceIndex = neigborChange.at( 0 );
-    const int positionInFace = neigborChange.at( 1 );
-    const int valueToApply = neigborChange.at( 3 );
+    const int faceIndex = neighborChange.at( 0 );
+    const int positionInFace = neighborChange.at( 1 );
+    const int valueToApply = neighborChange.at( 3 );
     mFacesNeighborhood[faceIndex][positionInFace] = valueToApply;
   }
 
@@ -440,11 +437,11 @@ void QgsTopologicalMesh::applyChanges( const QgsTopologicalMesh::Changes &change
 
 void QgsTopologicalMesh::reverseChanges( const QgsTopologicalMesh::Changes &changes )
 {
-  for ( const std::array<int, 4> neigborChange : std::as_const( changes.mNeighborhoodChanges ) )
+  for ( const std::array<int, 4> neighborChange : std::as_const( changes.mNeighborhoodChanges ) )
   {
-    const int faceIndex = neigborChange.at( 0 );
-    const int positionInFace = neigborChange.at( 1 );
-    const int valueToApply = neigborChange.at( 2 );
+    const int faceIndex = neighborChange.at( 0 );
+    const int positionInFace = neighborChange.at( 1 );
+    const int valueToApply = neighborChange.at( 2 );
     mFacesNeighborhood[faceIndex][positionInFace] = valueToApply;
   }
 
@@ -567,7 +564,7 @@ QgsMeshEditingError QgsTopologicalMesh::checkConsistency() const
           return QgsMeshEditingError( Qgis::MeshEditingErrorType::InvalidFace, faceIndex );
         int neighborSize = neighborFace.size();
         const FaceNeighbors &neighborhoodOfNeighbor = mFacesNeighborhood.at( neighborIndex );
-        int posInNeighbor = vertexPositionInFace( *mMesh, vertexIndex, neighborIndex );
+        int posInNeighbor = QgsTopologicalMesh::vertexPositionInFace( *mMesh, vertexIndex, neighborIndex );
         if ( neighborhoodOfNeighbor.isEmpty() || neighborhoodOfNeighbor.at( ( posInNeighbor + neighborSize - 1 ) % neighborSize ) != faceIndex )
           return QgsMeshEditingError( Qgis::MeshEditingErrorType::InvalidFace, faceIndex );
       }
@@ -702,7 +699,7 @@ QgsMeshEditingError QgsTopologicalMesh::counterClockwiseFaces( QgsMeshFace &face
   if ( error != QgsMeshEditingError() )
     return error;
 
-  if ( clockwise > 0 )// clockwise --> reverse the order of the index;
+  if ( clockwise )// clockwise --> reverse the order of the index;
   {
     for ( int i = 0; i < faceSize / 2; ++i )
     {
@@ -837,7 +834,7 @@ bool QgsTopologicalMesh::renumberVertices( QVector<int> &oldToNewIndex ) const
     circ.goBoundaryCounterClockwise();
     neighbors.append( circ.oppositeVertexCounterClockwise() );
 
-    int firsrFace = circ.currentFaceIndex();
+    int firstFace = circ.currentFaceIndex();
     do
     {
       int neighborIndex = circ.oppositeVertexClockwise();
@@ -855,7 +852,7 @@ bool QgsTopologicalMesh::renumberVertices( QVector<int> &oldToNewIndex ) const
       if ( it == neighbors.end() )
         neighbors.append( neighborIndex );
     }
-    while ( circ.turnClockwise() != firsrFace && circ.currentFaceIndex() != -1 );
+    while ( circ.turnClockwise() != firstFace && circ.currentFaceIndex() != -1 );
   };
 
   int newIndex = 0;
@@ -945,7 +942,7 @@ bool QgsTopologicalMesh::renumberFaces( QVector<int> &oldToNewIndex ) const
   int currentFace = minDegreeFace;
   nonThreadedFaces.remove( minDegreeFace );
 
-  auto sortedNeighbor = [ = ]( QList<int> &neighbors, int index )
+  auto sortedNeighbor = [this, faceDegrees]( QList<int> &neighbors, int index )
   {
     const FaceNeighbors &neighborhood = mFacesNeighborhood.at( index );
 
@@ -1364,7 +1361,7 @@ QgsTopologicalMesh::Changes QgsTopologicalMesh::removeVertexFillHole( int vertex
         mapPoly2TriPointToVertex.insert( holeToFill[i], holeVertices.at( i ) );
       }
 
-      std::unique_ptr<p2t::CDT> cdt( new p2t::CDT( holeToFill ) );
+      auto cdt = std::make_unique<p2t::CDT>( holeToFill );
 
       cdt->Triangulate();
       std::vector<p2t::Triangle *> triangles = cdt->GetTriangles();
@@ -1399,7 +1396,8 @@ QgsTopologicalMesh::Changes QgsTopologicalMesh::removeVertexFillHole( int vertex
         if ( mVertexToFace.at( vtc ) == -1 )
           addChanges.mVerticesToFaceChanges.append( {vtc,
               mVertexToFace.at( vtc ),
-              addChanges.addedFaceIndexInMesh( topologicalFaces.mVerticesToFace.values( vtc ).first() ) } );
+              addChanges.addedFaceIndexInMesh( topologicalFaces.mVerticesToFace.values( vtc ).first() )
+                                                    } );
 
 
       // reindex neighborhood for new faces
@@ -2022,13 +2020,13 @@ QgsTopologicalMesh::Changes QgsTopologicalMesh::flipEdge( int vertexIndex1, int 
   int pos2 = vertexPositionInFace( vertexIndex2, face2 );
 
   int neighborFace1 = mFacesNeighborhood.at( faceIndex1 ).at( pos1 );
-  int posInNeighbor1 = vertexPositionInFace( *mMesh, oppositeVertexFace1, neighborFace1 );
+  int posInNeighbor1 = QgsTopologicalMesh::vertexPositionInFace( *mMesh, oppositeVertexFace1, neighborFace1 );
   int neighborFace2 = mFacesNeighborhood.at( faceIndex1 ).at( ( pos1 + 1 ) % 3 );
-  int posInNeighbor2 = vertexPositionInFace( *mMesh, vertexIndex2, neighborFace2 );
+  int posInNeighbor2 = QgsTopologicalMesh::vertexPositionInFace( *mMesh, vertexIndex2, neighborFace2 );
   int neighborFace3 = mFacesNeighborhood.at( faceIndex2 ).at( pos2 );
-  int posInNeighbor3 = vertexPositionInFace( *mMesh, oppositeVertexFace2, neighborFace3 );
+  int posInNeighbor3 = QgsTopologicalMesh::vertexPositionInFace( *mMesh, oppositeVertexFace2, neighborFace3 );
   int neighborFace4 = mFacesNeighborhood.at( faceIndex2 ).at( ( pos2 + 1 ) % 3 );
-  int posInNeighbor4 = vertexPositionInFace( *mMesh, vertexIndex1, neighborFace4 );
+  int posInNeighbor4 = QgsTopologicalMesh::vertexPositionInFace( *mMesh, vertexIndex1, neighborFace4 );
 
   changes.mFaceIndexesToRemove.append( faceIndex1 );
   changes.mFaceIndexesToRemove.append( faceIndex2 );
@@ -2042,10 +2040,12 @@ QgsTopologicalMesh::Changes QgsTopologicalMesh::flipEdge( int vertexIndex1, int 
   changes.mFacesToAdd.append( {oppositeVertexFace2, oppositeVertexFace1, vertexIndex2} );
   changes.mFacesNeighborhoodToAdd.append( {startIndex + 1,
                                           mFacesNeighborhood.at( faceIndex2 ).at( ( pos2 + 1 ) % 3 ),
-                                          mFacesNeighborhood.at( faceIndex1 ).at( pos1 )} );
+                                          mFacesNeighborhood.at( faceIndex1 ).at( pos1 )
+                                          } );
   changes.mFacesNeighborhoodToAdd.append( {startIndex,
                                           mFacesNeighborhood.at( faceIndex1 ).at( ( pos1 + 1 ) % 3 ),
-                                          mFacesNeighborhood.at( faceIndex2 ).at( pos2 )} );
+                                          mFacesNeighborhood.at( faceIndex2 ).at( pos2 )
+                                          } );
 
   if ( neighborFace1 >= 0 )
     changes.mNeighborhoodChanges.append( {neighborFace1, posInNeighbor1, faceIndex1, startIndex} );
@@ -2147,8 +2147,8 @@ QgsTopologicalMesh::Changes QgsTopologicalMesh::merge( int vertexIndex1, int ver
   int faceSize1 = face1.count();
   int faceSize2 = face2.count();
 
-  int pos1 = vertexPositionInFace( vertexIndex1, face1 );
-  int pos2 = vertexPositionInFace( vertexIndex2, face2 );
+  int pos1 = QgsTopologicalMesh::vertexPositionInFace( vertexIndex1, face1 );
+  int pos2 = QgsTopologicalMesh::vertexPositionInFace( vertexIndex2, face2 );
 
   changes.mFaceIndexesToRemove.append( faceIndex1 );
   changes.mFaceIndexesToRemove.append( faceIndex2 );
@@ -2171,7 +2171,7 @@ QgsTopologicalMesh::Changes QgsTopologicalMesh::merge( int vertexIndex1, int ver
 
     if ( currentNeighbor != -1 )
     {
-      int currentPosInNeighbor = vertexPositionInFace( *mMesh, face1.at( ( currentPos + 1 ) % faceSize1 ), currentNeighbor );
+      int currentPosInNeighbor = QgsTopologicalMesh::vertexPositionInFace( *mMesh, face1.at( ( currentPos + 1 ) % faceSize1 ), currentNeighbor );
       changes.mNeighborhoodChanges.append( {currentNeighbor, currentPosInNeighbor, faceIndex1, startIndex} );
     }
   }
@@ -2185,7 +2185,7 @@ QgsTopologicalMesh::Changes QgsTopologicalMesh::merge( int vertexIndex1, int ver
 
     if ( currentNeighbor != -1 )
     {
-      int currentPosInNeighbor = vertexPositionInFace( *mMesh, face2.at( ( currentPos + 1 ) % faceSize2 ), currentNeighbor );
+      int currentPosInNeighbor = QgsTopologicalMesh::vertexPositionInFace( *mMesh, face2.at( ( currentPos + 1 ) % faceSize2 ), currentNeighbor );
       changes.mNeighborhoodChanges.append( {currentNeighbor, currentPosInNeighbor, faceIndex2, startIndex} );
     }
   }
@@ -2257,7 +2257,7 @@ QgsTopologicalMesh::Changes QgsTopologicalMesh::splitFace( int faceIndex )
   for ( int i = 0; i < faceSize; ++i )
   {
     neighborIndex[i] = mFacesNeighborhood.at( faceIndex ).at( ( splitVertexPos + i ) % faceSize );
-    posInNeighbor[i] = vertexPositionInFace( *mMesh,  face.at( ( splitVertexPos + i + 1 ) % faceSize ), neighborIndex[i] );
+    posInNeighbor[i] = QgsTopologicalMesh::vertexPositionInFace( *mMesh,  face.at( ( splitVertexPos + i + 1 ) % faceSize ), neighborIndex[i] );
   }
 
   changes.mFaceIndexesToRemove.append( faceIndex );
@@ -2270,10 +2270,12 @@ QgsTopologicalMesh::Changes QgsTopologicalMesh::splitFace( int faceIndex )
 
   changes.mFacesNeighborhoodToAdd.append( {mFacesNeighborhood.at( faceIndex ).at( splitVertexPos ),
                                           mFacesNeighborhood.at( faceIndex ).at( ( splitVertexPos + 1 ) % faceSize ),
-                                          startIndex + 1} );
+                                          startIndex + 1
+                                          } );
   changes.mFacesNeighborhoodToAdd.append( {startIndex,
                                           mFacesNeighborhood.at( faceIndex ).at( ( splitVertexPos + 2 ) % faceSize ),
-                                          mFacesNeighborhood.at( faceIndex ).at( ( splitVertexPos + 3 ) % faceSize )} );
+                                          mFacesNeighborhood.at( faceIndex ).at( ( splitVertexPos + 3 ) % faceSize )
+                                          } );
 
   for ( int i = 0; i < faceSize; ++i )
   {
@@ -2335,7 +2337,7 @@ QgsTopologicalMesh::Changes QgsTopologicalMesh::addVertexInFace( int includingFa
 
     if ( includingFaceNeighbor != -1 )
     {
-      int indexInNeighbor = vertexPositionInFace( *mMesh, includingFace.at( ( i + 1 ) % includingFaceSize ), includingFaceNeighbor );
+      int indexInNeighbor = QgsTopologicalMesh::vertexPositionInFace( *mMesh, includingFace.at( ( i + 1 ) % includingFaceSize ), includingFaceNeighbor );
       int oldValue = mFacesNeighborhood[includingFaceNeighbor][indexInNeighbor];
       mFacesNeighborhood[includingFaceNeighbor][indexInNeighbor] = changes.mAddedFacesFirstIndex + i;
       changes.mNeighborhoodChanges.append( {includingFaceNeighbor, indexInNeighbor, oldValue, changes.mAddedFacesFirstIndex + i} );
@@ -2396,7 +2398,7 @@ QgsTopologicalMesh::Changes QgsTopologicalMesh::insertVertexInFacesEdge( int fac
         mapPoly2TriPointToVertex.insert( faceToFill[i], newBoundary.at( i ) );
       }
 
-      std::unique_ptr<p2t::CDT> cdt( new p2t::CDT( faceToFill ) );
+      auto cdt = std::make_unique<p2t::CDT>( faceToFill );
       cdt->Triangulate();
       std::vector<p2t::Triangle *> triangles = cdt->GetTriangles();
       QVector<QgsMeshFace> newFaces( triangles.size() );
@@ -2466,22 +2468,23 @@ QgsTopologicalMesh::Changes QgsTopologicalMesh::insertVertexInFacesEdge( int fac
           edgeFacesIndexes[1] =  newFaceBoundaryLocalIndex;
         }
         else
-          meshFaceBoundaryIndex = mFacesNeighborhood.at( removedFaceIndex ).at( vertexPositionInFace( vertexIndex, initialFace ) );
+          meshFaceBoundaryIndex = mFacesNeighborhood.at( removedFaceIndex ).at( QgsTopologicalMesh::vertexPositionInFace( vertexIndex, initialFace ) );
 
         const QgsMeshFace &newFace = circulator.currentFace();
-        int positionInNewFaces = vertexPositionInFace( vertexIndex, newFace );
+        int positionInNewFaces = QgsTopologicalMesh::vertexPositionInFace( vertexIndex, newFace );
 
         if ( meshFaceBoundaryIndex != -1 )
         {
           const QgsMeshFace meshFace = mMesh->face( meshFaceBoundaryIndex );
-          int positionInMeshFaceBoundary = vertexPositionInFace( *mMesh, vertexIndex, meshFaceBoundaryIndex );
+          int positionInMeshFaceBoundary = QgsTopologicalMesh::vertexPositionInFace( *mMesh, vertexIndex, meshFaceBoundaryIndex );
           positionInMeshFaceBoundary = ( positionInMeshFaceBoundary - 1 + meshFace.count() ) % meshFace.count(); //take the position just before
 
           changes.mNeighborhoodChanges.append( {meshFaceBoundaryIndex,
                                                 positionInMeshFaceBoundary,
                                                 removedFaceIndex,
                                                 newFaceBoundaryIndexInMesh +
-                                                circulator.currentFaceIndex()} );
+                                                circulator.currentFaceIndex()
+                                               } );
         }
 
         changes.mFacesNeighborhoodToAdd[newFaceBoundaryLocalIndex][positionInNewFaces] = meshFaceBoundaryIndex;
@@ -2581,4 +2584,42 @@ QgsTopologicalMesh::Changes QgsTopologicalMesh::changeXYValue( const QList<int> 
   applyChanges( changes );
 
   return changes;
+}
+
+bool QgsTopologicalMesh::delaunayConditionForEdge( int vertexIndex1, int vertexIndex2 )
+{
+  int faceIndex1;
+  int faceIndex2;
+  int oppositeVertexFace1;
+  int oppositeVertexFace2;
+  int supposedOppositeVertexFace1;
+  int supposedoppositeVertexFace2;
+
+  bool result =  eitherSideFacesAndVertices(
+                   vertexIndex1,
+                   vertexIndex2,
+                   faceIndex1,
+                   faceIndex2,
+                   oppositeVertexFace1,
+                   supposedoppositeVertexFace2,
+                   supposedOppositeVertexFace1,
+                   oppositeVertexFace2 );
+
+  if ( ! result )
+    return false;
+
+  const QgsMeshFace face1 = mMesh->face( faceIndex1 );
+  const QgsMeshFace face2 = mMesh->face( faceIndex2 );
+
+  QgsCircle circle = QgsCircle::from3Points( mMesh->vertex( face1.at( 0 ) ),
+                     mMesh->vertex( face1.at( 1 ) ),
+                     mMesh->vertex( face1.at( 2 ) ) );
+  bool circle1ContainsPoint = circle.contains( mMesh->vertex( supposedoppositeVertexFace2 ) );
+
+  circle = QgsCircle::from3Points( mMesh->vertex( face2.at( 0 ) ),
+                                   mMesh->vertex( face2.at( 1 ) ),
+                                   mMesh->vertex( face2.at( 2 ) ) );
+  bool circle2ContainsPoint = circle.contains( mMesh->vertex( supposedOppositeVertexFace1 ) );
+
+  return !( circle1ContainsPoint || circle2ContainsPoint );
 }

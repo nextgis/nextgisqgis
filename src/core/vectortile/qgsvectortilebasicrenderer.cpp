@@ -438,15 +438,15 @@ QList<QgsVectorTileBasicRendererStyle> QgsVectorTileBasicRenderer::simpleStyleWi
   QColor polygonFillColor = QgsApplication::colorSchemeRegistry()->fetchRandomStyleColor();
   QColor polygonStrokeColor = polygonFillColor;
   polygonFillColor.setAlpha( 100 );
-  double polygonStrokeWidth = DEFAULT_LINE_WIDTH;
+  double polygonStrokeWidth = Qgis::DEFAULT_LINE_WIDTH;
 
   QColor lineStrokeColor = QgsApplication::colorSchemeRegistry()->fetchRandomStyleColor();
-  double lineStrokeWidth = DEFAULT_LINE_WIDTH;
+  double lineStrokeWidth = Qgis::DEFAULT_LINE_WIDTH;
 
   QColor pointFillColor = QgsApplication::colorSchemeRegistry()->fetchRandomStyleColor();
   QColor pointStrokeColor = pointFillColor;
   pointFillColor.setAlpha( 100 );
-  double pointSize = DEFAULT_POINT_SIZE;
+  double pointSize = Qgis::DEFAULT_POINT_SIZE;
 
   return simpleStyle( polygonFillColor, polygonStrokeColor, polygonStrokeWidth,
                       lineStrokeColor, lineStrokeWidth,
@@ -476,15 +476,15 @@ QList<QgsVectorTileBasicRendererStyle> QgsVectorTileBasicRenderer::simpleStyle(
   QgsMarkerSymbol *markerSymbol = new QgsMarkerSymbol( QgsSymbolLayerList() << markerSymbolLayer );
 
   QgsVectorTileBasicRendererStyle st1( QStringLiteral( "Polygons" ), QString(), Qgis::GeometryType::Polygon );
-  st1.setFilterExpression( QStringLiteral( "geometry_type($geometry)='Polygon'" ) );
+  st1.setFilterExpression( QStringLiteral( "geometry_type(@geometry)='Polygon'" ) );
   st1.setSymbol( fillSymbol );
 
   QgsVectorTileBasicRendererStyle st2( QStringLiteral( "Lines" ), QString(), Qgis::GeometryType::Line );
-  st2.setFilterExpression( QStringLiteral( "geometry_type($geometry)='Line'" ) );
+  st2.setFilterExpression( QStringLiteral( "geometry_type(@geometry)='Line'" ) );
   st2.setSymbol( lineSymbol );
 
   QgsVectorTileBasicRendererStyle st3( QStringLiteral( "Points" ), QString(), Qgis::GeometryType::Point );
-  st3.setFilterExpression( QStringLiteral( "geometry_type($geometry)='Point'" ) );
+  st3.setFilterExpression( QStringLiteral( "geometry_type(@geometry)='Point'" ) );
   st3.setSymbol( markerSymbol );
 
   QList<QgsVectorTileBasicRendererStyle> lst;

@@ -25,6 +25,8 @@
 #include "qgsprovidermetadata.h"
 #include "qgsreferencedgeometry.h"
 #include <memory>
+#include <optional>
+#include "qgspostgresutils.h"
 
 class QgsFeature;
 class QgsField;
@@ -45,14 +47,13 @@ class QgsPostgresListener;
  * interface defined in the QgsDataProvider class to provide access to spatial
  * data residing in a PostgreSQL/PostGIS enabled database.
   */
-class QgsPostgresProvider final: public QgsVectorDataProvider
+class QgsPostgresProvider final : public QgsVectorDataProvider
 {
     Q_OBJECT
 
     friend class TestQgsPostgresProvider;
 
   public:
-
     static const QString POSTGRES_KEY;
     static const QString POSTGRES_DESCRIPTION;
 
@@ -70,6 +71,7 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
       const QgsCoordinateReferenceSystem &srs,
       bool overwrite,
       QMap<int, int> *oldToNewAttrIdxMap,
+      QString &createdLayerUri,
       QString *errorMessage = nullptr,
       const QMap<QString, QVariant> *options = nullptr
     );
@@ -82,8 +84,7 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
      * \param options generic data provider options
      * \param flags generic data provider flags
      */
-    explicit QgsPostgresProvider( QString const &uri, const QgsDataProvider::ProviderOptions &providerOptions,
-                                  QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() );
+    explicit QgsPostgresProvider( QString const &uri, const QgsDataProvider::ProviderOptions &providerOptions, Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() );
 
 
     ~QgsPostgresProvider() override;
@@ -127,9 +128,10 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
      * Changes the stored extent for this layer to the supplied extent.
      * For example, this is called when the extent worker thread has a result.
      */
-    void setExtent( QgsRectangle &newExtent );
+    void setExtent( const QgsRectangle &newExtent );
 
     QgsRectangle extent() const override;
+    QgsBox3D extent3D() const override;
     void updateExtents() override;
 
     /**
@@ -149,15 +151,14 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
     QString dataComment() const override;
     QVariant minimumValue( int index ) const override;
     QVariant maximumValue( int index ) const override;
-    QSet< QVariant > uniqueValues( int index, int limit = -1 ) const override;
-    QStringList uniqueStringsMatching( int index, const QString &substring, int limit = -1,
-                                       QgsFeedback *feedback = nullptr ) const override;
+    QSet<QVariant> uniqueValues( int index, int limit = -1 ) const override;
+    QStringList uniqueStringsMatching( int index, const QString &substring, int limit = -1, QgsFeedback *feedback = nullptr ) const override;
     void enumValues( int index, QStringList &enumList ) const override;
     bool isValid() const override;
-    bool isSaveAndLoadStyleToDatabaseSupported() const override { return true; }
-    bool isDeleteStyleFromDatabaseSupported() const override { return true; }
+    Qgis::ProviderStyleStorageCapabilities styleStorageCapabilities() const override;
     QgsAttributeList attributeIndexes() const override;
     QgsAttributeList pkAttributeIndexes() const override { return mPrimaryKeyAttrs; }
+    QString geometryColumnName() const override;
     QString defaultValueClause( int fieldId ) const override;
     QVariant defaultValue( int fieldId ) const override;
     bool skipConstraintCheck( int fieldIndex, QgsFieldConstraints::Constraint constraint, const QVariant &value = QVariant() ) const override;
@@ -179,10 +180,12 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
 
     QString subsetString() const override;
     bool setSubsetString( const QString &theSQL, bool updateFeatureCount = true ) override;
-    bool supportsSubsetString() const override { return true; }
-    QgsVectorDataProvider::Capabilities capabilities() const override;
+    bool supportsSubsetString() const override;
+    QString subsetStringDialect() const override;
+    QString subsetStringHelpUrl() const override;
+    Qgis::VectorProviderCapabilities capabilities() const override;
     Qgis::VectorDataProviderAttributeEditCapabilities attributeEditCapabilities() const override;
-    SpatialIndexPresence hasSpatialIndex() const override;
+    Qgis::SpatialIndexPresence hasSpatialIndex() const override;
 
     /**
      * The Postgres provider does its own transforms so we return
@@ -192,7 +195,7 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
      */
     // XXX For now we have disabled native transforms in the PG provider since
     //     it appears there are problems with some of the projection definitions
-    bool supportsNativeTransform() {return false;}
+    bool supportsNativeTransform() { return false; }
 
     QString name() const override;
     QString description() const override;
@@ -206,8 +209,8 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
      * \param value the value to convert
      * \returns a QVariant of the given type or a null QVariant
      */
-    QVariant convertValue( QVariant::Type type, QVariant::Type subType, const QString &value, const QString &typeName ) const;
-    static QVariant convertValue( QVariant::Type type, QVariant::Type subType, const QString &value, const QString &typeName, QgsPostgresConn *conn );
+    QVariant convertValue( QMetaType::Type type, QMetaType::Type subType, const QString &value, const QString &typeName ) const;
+    static QVariant convertValue( QMetaType::Type type, QMetaType::Type subType, const QString &value, const QString &typeName, QgsPostgresConn *conn );
 
     QList<QgsRelation> discoverRelations( const QgsVectorLayer *target, const QList<QgsVectorLayer *> &layers ) const override;
 
@@ -219,7 +222,6 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
      *
      * \returns true if data source has metadata, false otherwise.
      *
-     * \since QGIS 3.0
      */
     bool hasMetadata() const override;
 
@@ -227,7 +229,6 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
      * Launch a listening thead to listen to postgres NOTIFY on "qgis" channel
      * the notification is transformed into a Qt signal.
      *
-     * \since QGIS 3.0
      */
     void setListening( bool isListening ) override;
 
@@ -236,7 +237,6 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
     void handlePostCloneOperations( QgsVectorDataProvider *source ) override;
 
   private:
-
     /**
      * \returns relation kind
      */
@@ -247,16 +247,9 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
      */
     void setQuery( const QString &query );
 
-    bool declareCursor( const QString &cursorName,
-                        const QgsAttributeList &fetchAttributes,
-                        bool fetchGeometry,
-                        QString whereClause );
+    bool declareCursor( const QString &cursorName, const QgsAttributeList &fetchAttributes, bool fetchGeometry, QString whereClause );
 
-    bool getFeature( QgsPostgresResult &queryResult,
-                     int row,
-                     bool fetchGeometry,
-                     QgsFeature &feature,
-                     const QgsAttributeList &fetchAttributes );
+    bool getFeature( QgsPostgresResult &queryResult, int row, bool fetchGeometry, QgsFeature &feature, const QgsAttributeList &fetchAttributes );
 
     QString geomParam( int offset ) const;
 
@@ -264,10 +257,10 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
     static QString getNextString( const QString &txt, int &i, const QString &sep );
     static QVariant parseHstore( const QString &txt );
     static QVariant parseJson( const QString &txt );
-    static QVariant parseOtherArray( const QString &txt, QVariant::Type subType, const QString &typeName, QgsPostgresConn *conn );
+    static QVariant parseOtherArray( const QString &txt, QMetaType::Type subType, const QString &typeName, QgsPostgresConn *conn );
     static QVariant parseStringArray( const QString &txt );
     static QVariant parseMultidimensionalArray( const QString &txt );
-    static QVariant parseArray( const QString &txt, QVariant::Type type, QVariant::Type subType, const QString &typeName, QgsPostgresConn *conn );
+    static QVariant parseArray( const QString &txt, QMetaType::Type type, QMetaType::Type subType, const QString &typeName, QgsPostgresConn *conn );
 
 
     /**
@@ -396,16 +389,16 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
     QList<int> mPrimaryKeyAttrs;
     QString mPrimaryKeyDefault;
 
-    QString mGeometryColumn;          //!< Name of the geometry column
-    QString mBoundingBoxColumn;       //!< Name of the bounding box column
-    mutable QgsRectangle mLayerExtent;        //!< Rectangle that contains the extent (bounding box) of the layer
+    QString mGeometryColumn;                      //!< Name of the geometry column
+    QString mBoundingBoxColumn;                   //!< Name of the bounding box column
+    mutable std::optional<QgsBox3D> mLayerExtent; //!< QgsBox3D that contains the extent (bounding box) of the layer
 
-    Qgis::WkbType mDetectedGeomType = Qgis::WkbType::Unknown ;  //!< Geometry type detected in the database
-    Qgis::WkbType mRequestedGeomType = Qgis::WkbType::Unknown ; //!< Geometry type requested in the uri
-    QString mDetectedSrid;            //!< Spatial reference detected in the database
-    QString mRequestedSrid;           //!< Spatial reference requested in the uri
+    Qgis::WkbType mDetectedGeomType = Qgis::WkbType::Unknown;  //!< Geometry type detected in the database
+    Qgis::WkbType mRequestedGeomType = Qgis::WkbType::Unknown; //!< Geometry type requested in the uri
+    QString mDetectedSrid;                                     //!< Spatial reference detected in the database
+    QString mRequestedSrid;                                    //!< Spatial reference requested in the uri
 
-    std::shared_ptr<QgsPostgresSharedData> mShared;  //!< Mutable data shared between provider and feature sources
+    std::shared_ptr<QgsPostgresSharedData> mShared; //!< Mutable data shared between provider and feature sources
 
     bool getGeometryDetails();
 
@@ -413,16 +406,16 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
 
     struct TopoLayerInfo
     {
-      QString topologyName;
-      long    layerId;
-      int     layerLevel;
-      enum TopoFeatureType
-      {
-        Puntal = 1,
-        Lineal = 2,
-        Polygonal = 3,
-        Mixed = 4
-      } featureType;
+        QString topologyName;
+        long layerId;
+        int layerLevel;
+        enum TopoFeatureType
+        {
+          Puntal = 1,
+          Lineal = 2,
+          Polygonal = 3,
+          Mixed = 4
+        } featureType;
     };
 
     TopoLayerInfo mTopoLayerInfo;
@@ -438,20 +431,21 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
 
     bool mSelectAtIdDisabled = false; //!< Disable support for SelectAtId
 
-    struct PGFieldNotFound {}; //! Exception to throw
+    struct PGFieldNotFound
+    {}; //! Exception to throw
 
     // A function that determines if the given columns contain unique entries
     bool uniqueData( const QString &quotedColNames );
 
-    QgsVectorDataProvider::Capabilities mEnabledCapabilities = QgsVectorDataProvider::Capabilities();
+    Qgis::VectorProviderCapabilities mEnabledCapabilities;
 
     void appendGeomParam( const QgsGeometry &geom, QStringList &param ) const;
     void appendPkParams( QgsFeatureId fid, QStringList &param ) const;
 
     QString paramValue( const QString &fieldvalue, const QString &defaultValue ) const;
 
-    mutable QgsPostgresConn *mConnectionRO = nullptr ; //!< Read-only database connection (initially)
-    QgsPostgresConn *mConnectionRW = nullptr ; //!< Read-write database connection (on update)
+    mutable QgsPostgresConn *mConnectionRO = nullptr; //!< Read-only database connection (initially)
+    QgsPostgresConn *mConnectionRW = nullptr;         //!< Read-write database connection (on update)
 
     QgsPostgresConn *connectionRO() const;
     QgsPostgresConn *connectionRW();
@@ -479,121 +473,46 @@ class QgsPostgresProvider final: public QgsVectorDataProvider
 
     QgsLayerMetadata mLayerMetadata;
 
-    std::unique_ptr< QgsPostgresListener > mListener;
+    std::unique_ptr<QgsPostgresListener> mListener;
 
     static QgsReferencedGeometry fromEwkt( const QString &ewkt, QgsPostgresConn *conn );
     static QString toEwkt( const QgsReferencedGeometry &geom, QgsPostgresConn *conn );
     static QString geomAttrToString( const QVariant &attr, QgsPostgresConn *conn );
-    static int crsToSrid( const QgsCoordinateReferenceSystem &crs,  QgsPostgresConn *conn );
+    static int crsToSrid( const QgsCoordinateReferenceSystem &crs, QgsPostgresConn *conn );
     static QgsCoordinateReferenceSystem sridToCrs( int srsId, QgsPostgresConn *conn );
 
+    /**
+     * Set mLayerExtent by estimation, if possible
+     *
+     * \returns whether it was possible to estimate extent.
+     * If false is returned, mLayerExtent is left untouched.
+     */
+    bool estimateExtent() const;
+
+    /**
+     * Set mLayerExtent by 3d computation, if possible
+     *
+     * \returns whether it was possible to estimate extent.
+     * If false is returned, mLayerExtent is left untouched.
+     */
+    bool computeExtent3D() const;
 };
 
-
-//! Assorted Postgres utility functions
-class QgsPostgresUtils
-{
-  public:
-    static bool deleteLayer( const QString &uri, QString &errCause );
-    static bool deleteSchema( const QString &schema, const QgsDataSourceUri &uri, QString &errCause, bool cascade = false );
-
-    static QString whereClause( QgsFeatureId featureId,
-                                const QgsFields &fields,
-                                QgsPostgresConn *conn,
-                                QgsPostgresPrimaryKeyType pkType,
-                                const QList<int> &pkAttrs,
-                                const std::shared_ptr<QgsPostgresSharedData> &sharedData );
-
-    static QString whereClause( const QgsFeatureIds &featureIds,
-                                const QgsFields &fields,
-                                QgsPostgresConn *conn,
-                                QgsPostgresPrimaryKeyType pkType,
-                                const QList<int> &pkAttrs,
-                                const std::shared_ptr<QgsPostgresSharedData> &sharedData );
-
-    static QString andWhereClauses( const QString &c1, const QString &c2 );
-
-    static const qint64 INT32PK_OFFSET = 4294967296; // 2^32
-
-    // We shift negative 32bit integers to above the max 32bit
-    // positive integer to support the whole range of int32 values
-    // See https://github.com/qgis/QGIS/issues/22258
-    static qint64 int32pk_to_fid( qint32 x )
-    {
-      return x >= 0 ? x : x + INT32PK_OFFSET;
-    }
-
-    static qint32 fid_to_int32pk( qint64 x )
-    {
-      return x <= ( ( INT32PK_OFFSET ) / 2.0 ) ? x : -( INT32PK_OFFSET - x );
-    }
-
-    //! Replaces invalid XML chars with UTF-8[<char_code>]
-    static void replaceInvalidXmlChars( QString &xml );
-
-    //! Replaces UTF-8[<char_code>] with the actual unicode char
-    static void restoreInvalidXmlChars( QString &xml );
-};
-
-/**
- * Data shared between provider class and its feature sources. Ideally there should
- *  be as few members as possible because there could be simultaneous reads/writes
- *  from different threads and therefore locking has to be involved.
-*/
-class QgsPostgresSharedData
-{
-  public:
-    QgsPostgresSharedData() = default;
-
-    long long featuresCounted();
-    void setFeaturesCounted( long long count );
-    void addFeaturesCounted( long long diff );
-    void ensureFeaturesCountedAtLeast( long long fetched );
-
-    // FID lookups
-    QgsFeatureId lookupFid( const QVariantList &v ); // lookup existing mapping or add a new one
-    QVariantList removeFid( QgsFeatureId fid );
-    void insertFid( QgsFeatureId fid, const QVariantList &k );
-    QVariantList lookupKey( QgsFeatureId featureId );
-    void clear();
-
-    void clearSupportsEnumValuesCache( );
-    bool fieldSupportsEnumValuesIsSet( int index );
-    bool fieldSupportsEnumValues( int index );
-    void setFieldSupportsEnumValues( int index, bool isSupported );
-
-  protected:
-    QMutex mMutex; //!< Access to all data members is guarded by the mutex
-
-    long long mFeaturesCounted = -1 ;    //!< Number of features in the layer
-
-    QgsFeatureId mFidCounter = 0;                    // next feature id if map is used
-    QMap<QVariantList, QgsFeatureId> mKeyToFid;      // map key values to feature id
-    QMap<QgsFeatureId, QVariantList> mFidToKey;      // map feature id back to key values
-    QMap<int, bool> mFieldSupportsEnumValues;        // map field index to bool flag supports enum values
-};
-
-class QgsPostgresProviderMetadata final: public QgsProviderMetadata
+class QgsPostgresProviderMetadata final : public QgsProviderMetadata
 {
     Q_OBJECT
   public:
     QgsPostgresProviderMetadata();
     QIcon icon() const override;
-    QgsDataProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() ) override;
-    QList< QgsDataItemProvider * > dataItemProviders() const override;
-    Qgis::VectorExportResult createEmptyLayer( const QString &uri, const QgsFields &fields, Qgis::WkbType wkbType,
-        const QgsCoordinateReferenceSystem &srs,
-        bool overwrite,
-        QMap<int, int> &oldToNewAttrIdxMap, QString &errorMessage,
-        const QMap<QString, QVariant> *options ) override;
+    QgsDataProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() ) override;
+    QList<QgsDataItemProvider *> dataItemProviders() const override;
+    Qgis::VectorExportResult createEmptyLayer( const QString &uri, const QgsFields &fields, Qgis::WkbType wkbType, const QgsCoordinateReferenceSystem &srs, bool overwrite, QMap<int, int> &oldToNewAttrIdxMap, QString &errorMessage, const QMap<QString, QVariant> *options, QString &createdLayerUri ) override;
 
     bool styleExists( const QString &uri, const QString &styleId, QString &errorCause ) override;
-    bool saveStyle( const QString &uri, const QString &qmlStyle, const QString &sldStyle, const QString &styleName,
-                    const QString &styleDescription, const QString &uiFileContent, bool useAsDefault, QString &errCause ) override;
+    bool saveStyle( const QString &uri, const QString &qmlStyle, const QString &sldStyle, const QString &styleName, const QString &styleDescription, const QString &uiFileContent, bool useAsDefault, QString &errCause ) override;
     QString loadStyle( const QString &uri, QString &errCause ) override;
     virtual QString loadStoredStyle( const QString &uri, QString &styleName, QString &errCause ) override;
-    int listStyles( const QString &uri, QStringList &ids,
-                    QStringList &names, QStringList &descriptions, QString &errCause ) override;
+    int listStyles( const QString &uri, QStringList &ids, QStringList &names, QStringList &descriptions, QString &errCause ) override;
     bool deleteStyleById( const QString &uri, const QString &styleId, QString &errCause ) override;
     QString getStyleById( const QString &uri, const QString &styleId, QString &errCause ) override;
     QgsTransaction *createTransaction( const QString &connString ) override;
@@ -606,7 +525,7 @@ class QgsPostgresProviderMetadata final: public QgsProviderMetadata
     void cleanupProvider() override;
     QVariantMap decodeUri( const QString &uri ) const override;
     QString encodeUri( const QVariantMap &parts ) const override;
-    QList< Qgis::LayerType > supportedLayerTypes() const override;
+    QList<Qgis::LayerType> supportedLayerTypes() const override;
     bool saveLayerMetadata( const QString &uri, const QgsLayerMetadata &metadata, QString &errorMessage ) override;
     QgsProviderMetadata::ProviderCapabilities providerCapabilities() const override;
 };

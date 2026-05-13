@@ -51,9 +51,14 @@ QString QgsRotateFeaturesAlgorithm::outputName() const
 
 QString QgsRotateFeaturesAlgorithm::shortHelpString() const
 {
-  return QObject::tr( "This algorithm rotates feature geometries, by the specified angle clockwise" )
+  return QObject::tr( "This algorithm rotates feature geometries by the specified angle clockwise." )
          + QStringLiteral( "\n\n" )
          + QObject::tr( "Optionally, the rotation can occur around a preset point. If not set the rotation occurs around each feature's centroid." );
+}
+
+QString QgsRotateFeaturesAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Rotates feature geometries by a specified angle clockwise." );
 }
 
 QgsRotateFeaturesAlgorithm *QgsRotateFeaturesAlgorithm::createInstance() const
@@ -63,16 +68,13 @@ QgsRotateFeaturesAlgorithm *QgsRotateFeaturesAlgorithm::createInstance() const
 
 void QgsRotateFeaturesAlgorithm::initParameters( const QVariantMap & )
 {
-  std::unique_ptr< QgsProcessingParameterNumber > rotation = std::make_unique< QgsProcessingParameterNumber >( QStringLiteral( "ANGLE" ),
-      QObject::tr( "Rotation (degrees clockwise)" ), QgsProcessingParameterNumber::Double,
-      0.0 );
+  auto rotation = std::make_unique<QgsProcessingParameterNumber>( QStringLiteral( "ANGLE" ), QObject::tr( "Rotation (degrees clockwise)" ), Qgis::ProcessingNumberParameterType::Double, 0.0 );
   rotation->setIsDynamic( true );
   rotation->setDynamicPropertyDefinition( QgsPropertyDefinition( QStringLiteral( "ANGLE" ), QObject::tr( "Rotation (degrees clockwise)" ), QgsPropertyDefinition::Rotation ) );
   rotation->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
   addParameter( rotation.release() );
 
-  std::unique_ptr< QgsProcessingParameterPoint > anchor = std::make_unique< QgsProcessingParameterPoint >( QStringLiteral( "ANCHOR" ),
-      QObject::tr( "Rotation anchor point" ), QVariant(), true );
+  auto anchor = std::make_unique<QgsProcessingParameterPoint>( QStringLiteral( "ANCHOR" ), QObject::tr( "Rotation anchor point" ), QVariant(), true );
   addParameter( anchor.release() );
 }
 
@@ -81,7 +83,7 @@ bool QgsRotateFeaturesAlgorithm::prepareAlgorithm( const QVariantMap &parameters
   mAngle = parameterAsDouble( parameters, QStringLiteral( "ANGLE" ), context );
   mDynamicAngle = QgsProcessingParameters::isDynamic( parameters, QStringLiteral( "ANGLE" ) );
   if ( mDynamicAngle )
-    mAngleProperty = parameters.value( QStringLiteral( "ANGLE" ) ).value< QgsProperty >();
+    mAngleProperty = parameters.value( QStringLiteral( "ANGLE" ) ).value<QgsProperty>();
 
   mUseAnchor = parameters.value( QStringLiteral( "ANCHOR" ) ).isValid();
   if ( mUseAnchor )
@@ -145,5 +147,3 @@ QgsFeatureList QgsRotateFeaturesAlgorithm::processFeature( const QgsFeature &fea
 
 
 ///@endcond
-
-

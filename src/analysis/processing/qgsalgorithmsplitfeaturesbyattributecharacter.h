@@ -32,9 +32,7 @@
  */
 class QgsSplitFeaturesByAttributeCharacterAlgorithm : public QgsProcessingFeatureBasedAlgorithm
 {
-
   public:
-
     QgsSplitFeaturesByAttributeCharacterAlgorithm() = default;
     QString name() const override;
     QString displayName() const override;
@@ -43,28 +41,27 @@ class QgsSplitFeaturesByAttributeCharacterAlgorithm : public QgsProcessingFeatur
     QString groupId() const override;
     QString shortHelpString() const override;
     QString shortDescription() const override;
+    Qgis::ProcessingAlgorithmDocumentationFlags documentationFlags() const override;
     QList<int> inputLayerTypes() const override;
     void initParameters( const QVariantMap &configuration = QVariantMap() ) override;
-    QgsProcessing::SourceType outputLayerType() const override;
+    Qgis::ProcessingSourceType outputLayerType() const override;
     QgsSplitFeaturesByAttributeCharacterAlgorithm *createInstance() const override SIP_FACTORY;
     QgsFields outputFields( const QgsFields &inputFields ) const override;
 
   protected:
     QString outputName() const override;
     bool prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
-    QgsFeatureList processFeature( const QgsFeature &feature,  QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
+    QgsFeatureList processFeature( const QgsFeature &feature, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
     QgsFeatureSink::SinkFlags sinkFlags() const override;
+
   private:
     QString mFieldName;
     mutable int mFieldIndex = -1;
     QString mChar;
     bool mUseRegex = false;
     QRegularExpression mRegex;
-
 };
 
 ///@endcond PRIVATE
 
 #endif // QGSALGORITHMSPLITFEATURESBYATTRIBUTECHARACTER_H
-
-

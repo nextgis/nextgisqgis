@@ -46,7 +46,6 @@ class CORE_EXPORT QgsEditFormConfig
 
     struct GroupData
     {
-      //! Constructor for GroupData
       GroupData() = default;
       GroupData( const QString &name, const QList<QString> &fields )
         : mName( name )
@@ -58,7 +57,6 @@ class CORE_EXPORT QgsEditFormConfig
 
     struct TabData
     {
-      //! Constructor for TabData
       TabData() = default;
       TabData( const QString &name, const QList<QString> &fields, const QList<QgsEditFormConfig::GroupData> &groups )
         : mName( name )
@@ -70,6 +68,8 @@ class CORE_EXPORT QgsEditFormConfig
       QList<QgsEditFormConfig::GroupData> mGroups;
     };
 
+    // *INDENT-OFF*
+
     /**
      * Data defined properties.
      * Form data defined overrides are stored in a property collection
@@ -77,19 +77,15 @@ class CORE_EXPORT QgsEditFormConfig
      * enum.
      * \since QGIS 3.14
      */
-    enum DataDefinedProperty
-    {
+    enum class DataDefinedProperty SIP_MONKEYPATCH_SCOPEENUM_UNNEST( QgsEditFormConfig, DataDefinedProperty ) : int
+      {
       NoProperty = 0, //!< No property
       AllProperties = 1, //!< All properties for item
       Alias = 2, //!< Alias
       Editable = 3, //!< Editable state \since QGIS 3.30
     };
+    // *INDENT-ON*
 
-    /**
-     * Copy constructor
-     *
-     * \since QGIS 3.0
-     */
     QgsEditFormConfig( const QgsEditFormConfig &o );
     ~QgsEditFormConfig();
 
@@ -297,7 +293,7 @@ class CORE_EXPORT QgsEditFormConfig
 
     /**
      * Deserialize drag and drop designer elements.
-     * \deprecated since QGIS 3.18 use QgsAttributeEditorElement::create instead
+     * \deprecated QGIS 3.18. Use QgsAttributeEditorElement::create instead.
      */
     Q_DECL_DEPRECATED QgsAttributeEditorElement *attributeEditorElementFromDomElement( QDomElement &elem, QgsAttributeEditorElement *parent, const QString &layerId = QString(), const QgsReadWriteContext &context = QgsReadWriteContext() ) SIP_DEPRECATED;
 
@@ -335,7 +331,7 @@ class CORE_EXPORT QgsEditFormConfig
     /**
      * Will be called by friend class QgsVectorLayer
      */
-    void onRelationsLoaded();
+    void onRelationsLoaded(); // cppcheck-suppress functionConst
 
     /**
      * Used for the backwards compatibility of the api, on setting nmrel or force-suppress-popup for relations.
@@ -344,7 +340,7 @@ class CORE_EXPORT QgsEditFormConfig
     bool legacyUpdateRelationWidgetInTabs( QgsAttributeEditorContainer *container,  const QString &widgetName, const QVariantMap &config );
 
   private:
-    void fixLegacyConfig( QDomElement &el );
+    void fixLegacyConfig( QDomElement &el ) const;
 
     QExplicitlySharedDataPointer<QgsEditFormConfigPrivate> d;
 

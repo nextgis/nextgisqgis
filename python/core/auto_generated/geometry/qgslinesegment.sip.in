@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/geometry/qgslinesegment.h                                   *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,7 +13,8 @@
 class QgsLineSegment2D
 {
 %Docstring(signature="appended")
-Represents a single 2D line segment, consisting of a 2D start and end vertex only.
+Represents a single 2D line segment, consisting of a 2D start and end
+vertex only.
 
 .. versionadded:: 3.2
 %End
@@ -177,11 +178,12 @@ Sets the segment's ``end`` point.
 %Docstring
 Tests if a ``point`` is to the left of the line segment.
 
-Returns -1 if the point falls to the left of the line, or +1 if the point
-is to the right.
+Returns -1 if the point falls to the left of the line, or +1 if the
+point is to the right.
 
-If the return value is 0, then the test was unsuccessful (e.g. due to testing a point exactly
-on the line, or exactly in line with the segment) and the result is undefined.
+If the return value is 0, then the test was unsuccessful (e.g. due to
+testing a point exactly on the line, or exactly in line with the
+segment) and the result is undefined.
 
 .. seealso:: :py:func:`QgsGeometryUtils.leftOfLine`
 %End
@@ -203,5 +205,5 @@ Reverses the line segment, so that the start and end points are flipped.
  *                                                                      *
  * src/core/geometry/qgslinesegment.h                                   *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

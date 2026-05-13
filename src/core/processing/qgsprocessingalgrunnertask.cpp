@@ -16,16 +16,16 @@
  ***************************************************************************/
 
 #include "qgsprocessingalgrunnertask.h"
+#include "moc_qgsprocessingalgrunnertask.cpp"
 #include "qgsprocessingfeedback.h"
 #include "qgsprocessingcontext.h"
 #include "qgsprocessingalgorithm.h"
-#include "qgsprocessingutils.h"
-#include "qgsvectorlayer.h"
+#include "qgsmessagelog.h"
 
 QgsProcessingAlgRunnerTask::QgsProcessingAlgRunnerTask( const QgsProcessingAlgorithm *algorithm, const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback, Flags flags )
   : QgsTask(
       tr( "Executing “%1”" ).arg( algorithm->displayName() ),
-      flags & ( !( algorithm->flags() & QgsProcessingAlgorithm::FlagCanCancel ) ? ( ~QgsTask::CanCancel ) : ( ~QgsTask::Flags() ) )
+      flags & ( !( algorithm->flags() & Qgis::ProcessingAlgorithmFlag::CanCancel ) ? ( ~QgsTask::CanCancel ) : ( ~QgsTask::Flags() ) )
     )
   , mParameters( parameters )
   , mContext( context )
@@ -81,10 +81,6 @@ bool QgsProcessingAlgRunnerTask::run()
 void QgsProcessingAlgRunnerTask::finished( bool result )
 {
   Q_UNUSED( result )
-  QVariantMap ppResults;
-  if ( result )
-  {
-    ppResults = mAlgorithm->postProcess( mContext, mFeedback );
-  }
+  const QVariantMap ppResults = mAlgorithm->postProcess( mContext, mFeedback, result );
   emit executed( result, !ppResults.isEmpty() ? ppResults : mResults );
 }

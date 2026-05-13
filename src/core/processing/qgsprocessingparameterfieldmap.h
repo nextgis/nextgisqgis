@@ -22,7 +22,7 @@
 /**
  * \ingroup core
  * \brief A parameter for "field mapping" configurations, which consist of a definition
- * of desired output fields, types, and expressions used to populate then.
+ * of desired output fields, types, and expressions used to populate them.
  *
  * Designed for use with the "Refactor fields" algorithm.
  *
@@ -38,7 +38,7 @@ class CORE_EXPORT QgsProcessingParameterFieldMapping : public QgsProcessingParam
     QString type() const override;
     bool checkValueIsAcceptable( const QVariant &input, QgsProcessingContext *context = nullptr ) const override;
     QString valueAsPythonString( const QVariant &value, QgsProcessingContext &context ) const override;
-    QString asPythonString( QgsProcessing::PythonOutputType outputType = QgsProcessing::PythonQgsProcessingAlgorithmSubclass ) const override;
+    QString asPythonString( QgsProcessing::PythonOutputType outputType = QgsProcessing::PythonOutputType::PythonQgsProcessingAlgorithmSubclass ) const override;
     QVariantMap toVariantMap() const override;
     bool fromVariantMap( const QVariantMap &map ) override;
     QStringList dependsOnOtherParameters() const override;
@@ -109,6 +109,17 @@ class CORE_EXPORT QgsProcessingParameterTypeFieldMapping : public QgsProcessingP
     QStringList acceptedPythonTypes() const override
     {
       return QStringList() << QObject::tr( "list[dict]: list of field definitions as dictionaries" );
+    }
+
+    QStringList acceptedParameterTypes() const override
+    {
+      return QStringList()
+             << QgsProcessingParameterFieldMapping::typeName();
+    }
+
+    QStringList acceptedOutputTypes() const override
+    {
+      return QStringList();
     }
 };
 

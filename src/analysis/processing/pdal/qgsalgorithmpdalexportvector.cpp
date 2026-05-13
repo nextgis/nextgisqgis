@@ -52,6 +52,11 @@ QString QgsPdalExportVectorAlgorithm::shortHelpString() const
   return QObject::tr( "This algorithm exports point cloud data to a vector layer with 3D points (a GeoPackage), optionally with extra attributes." );
 }
 
+QString QgsPdalExportVectorAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Exports a point cloud to a vector layer with 3D points." );
+}
+
 QgsPdalExportVectorAlgorithm *QgsPdalExportVectorAlgorithm::createInstance() const
 {
   return new QgsPdalExportVectorAlgorithm();
@@ -62,7 +67,7 @@ void QgsPdalExportVectorAlgorithm::initAlgorithm( const QVariantMap & )
   addParameter( new QgsProcessingParameterPointCloudLayer( QStringLiteral( "INPUT" ), QObject::tr( "Input layer" ) ) );
   addParameter( new QgsProcessingParameterPointCloudAttribute( QStringLiteral( "ATTRIBUTE" ), QObject::tr( "Attribute" ), QVariant(), QStringLiteral( "INPUT" ), true, true ) );
   createCommonParameters();
-  addParameter( new QgsProcessingParameterVectorDestination( QStringLiteral( "OUTPUT" ), QObject::tr( "Exported" ), QgsProcessing::TypeVectorPoint ) );
+  addParameter( new QgsProcessingParameterVectorDestination( QStringLiteral( "OUTPUT" ), QObject::tr( "Exported" ), Qgis::ProcessingSourceType::VectorPoint ) );
 }
 
 QStringList QgsPdalExportVectorAlgorithm::createArgumentLists( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback )
@@ -76,10 +81,11 @@ QStringList QgsPdalExportVectorAlgorithm::createArgumentLists( const QVariantMap
   const QString outputFile = parameterAsOutputLayer( parameters, QStringLiteral( "OUTPUT" ), context );
   setOutputValue( QStringLiteral( "OUTPUT" ), outputFile );
 
-  QStringList args = { QStringLiteral( "to_vector" ),
-                       QStringLiteral( "--input=%1" ).arg( layer->source() ),
-                       QStringLiteral( "--output=%1" ).arg( outputFile ),
-                     };
+  QStringList args = {
+    QStringLiteral( "to_vector" ),
+    QStringLiteral( "--input=%1" ).arg( layer->source() ),
+    QStringLiteral( "--output=%1" ).arg( outputFile ),
+  };
 
   if ( parameters.value( QStringLiteral( "ATTRIBUTE" ) ).isValid() )
   {

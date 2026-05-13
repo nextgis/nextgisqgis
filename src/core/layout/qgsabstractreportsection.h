@@ -32,7 +32,6 @@
  * \brief Current context for a report section.
  * \warning This is not considered stable API, and may change in future QGIS releases. It is
  * exposed to the Python bindings for unit testing purposes only.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsReportSectionContext
 {
@@ -54,7 +53,6 @@ class CORE_EXPORT QgsReportSectionContext
  * \brief An abstract base class for QgsReport subsections.
  * \warning This is not considered stable API, and may change in future QGIS releases. It is
  * exposed to the Python bindings for unit testing purposes only.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsAbstractReportSection : public QgsAbstractLayoutIterator
 {
@@ -79,11 +77,7 @@ class CORE_EXPORT QgsAbstractReportSection : public QgsAbstractLayoutIterator
     QgsAbstractReportSection( QgsAbstractReportSection *parentSection = nullptr );
 
     ~QgsAbstractReportSection() override;
-
-    //! QgsAbstractReportSection cannot be copied
     QgsAbstractReportSection( const QgsAbstractReportSection &other ) = delete;
-
-    //! QgsAbstractReportSection cannot be copied
     QgsAbstractReportSection &operator=( const QgsAbstractReportSection &other ) = delete;
 
     /**

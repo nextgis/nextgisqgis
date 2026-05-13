@@ -31,7 +31,7 @@ QString QgsPointCloudRgbRenderer::type() const
 
 QgsPointCloudRenderer *QgsPointCloudRgbRenderer::clone() const
 {
-  std::unique_ptr< QgsPointCloudRgbRenderer > res = std::make_unique< QgsPointCloudRgbRenderer >();
+  auto res = std::make_unique< QgsPointCloudRgbRenderer >();
   res->mRedAttribute = mRedAttribute;
   res->mGreenAttribute = mGreenAttribute;
   res->mBlueAttribute = mBlueAttribute;
@@ -56,7 +56,13 @@ QgsPointCloudRenderer *QgsPointCloudRgbRenderer::clone() const
 
 void QgsPointCloudRgbRenderer::renderBlock( const QgsPointCloudBlock *block, QgsPointCloudRenderContext &context )
 {
-  const QgsRectangle visibleExtent = context.renderContext().extent();
+  QgsRectangle visibleExtent = context.renderContext().extent();
+  if ( renderAsTriangles() )
+  {
+    // we need to include also points slightly outside of the visible extent,
+    // otherwise the triangulation may be missing triangles near the edges and corners
+    visibleExtent.grow( std::max( visibleExtent.width(), visibleExtent.height() ) * 0.05 );
+  }
 
   const char *ptr = block->data();
   const int count = block->pointCount();
@@ -158,9 +164,19 @@ void QgsPointCloudRgbRenderer::renderBlock( const QgsPointCloudBlock *block, Qgs
       green = std::max( 0, std::min( 255, green ) );
       blue = std::max( 0, std::min( 255, blue ) );
 
+      if ( renderAsTriangles() )
+      {
+        addPointToTriangulation( x, y, z, QColor( red, green, blue ), context );
+
+        // We don't want to render any points if we're rendering triangles and there is no preview painter
+        if ( !context.renderContext().previewRenderPainter() )
+          continue;
+      }
+
       drawPoint( x, y, QColor( red, green, blue ), context );
       if ( renderElevation )
         drawPointToElevationMap( x, y, z, context );
+
       rendered++;
     }
   }
@@ -170,7 +186,7 @@ void QgsPointCloudRgbRenderer::renderBlock( const QgsPointCloudBlock *block, Qgs
 
 QgsPointCloudRenderer *QgsPointCloudRgbRenderer::create( QDomElement &element, const QgsReadWriteContext &context )
 {
-  std::unique_ptr< QgsPointCloudRgbRenderer > r = std::make_unique< QgsPointCloudRgbRenderer >();
+  auto r = std::make_unique< QgsPointCloudRgbRenderer >();
 
   r->setRedAttribute( element.attribute( QStringLiteral( "red" ), QStringLiteral( "Red" ) ) );
   r->setGreenAttribute( element.attribute( QStringLiteral( "green" ), QStringLiteral( "Green" ) ) );
@@ -253,7 +269,7 @@ QSet<QString> QgsPointCloudRgbRenderer::usedAttributes( const QgsPointCloudRende
 
 std::unique_ptr<QgsPreparedPointCloudRendererData> QgsPointCloudRgbRenderer::prepare()
 {
-  std::unique_ptr< QgsPointCloudRgbRendererPreparedData > data = std::make_unique< QgsPointCloudRgbRendererPreparedData >();
+  auto data = std::make_unique< QgsPointCloudRgbRendererPreparedData >();
   data->redAttribute = mRedAttribute;
   if ( mRedContrastEnhancement )
     data->redContrastEnhancement.reset( new QgsContrastEnhancement( *mRedContrastEnhancement ) );

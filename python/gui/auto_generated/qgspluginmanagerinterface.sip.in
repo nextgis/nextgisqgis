@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgspluginmanagerinterface.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,16 +11,15 @@
 
 class QgsPluginManagerInterface : QObject
 {
+%Docstring(signature="appended")
+Abstract interface class for the QGIS plugin manager.
+%End
 
 %TypeHeaderCode
 #include "qgspluginmanagerinterface.h"
 %End
   public:
-
     QgsPluginManagerInterface();
-%Docstring
-Constructor
-%End
 
     virtual void clearPythonPluginMetadata() = 0;
 %Docstring
@@ -68,5 +67,5 @@ show the given message in the Plugin Manager internal message bar
  *                                                                      *
  * src/gui/qgspluginmanagerinterface.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

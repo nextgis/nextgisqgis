@@ -33,7 +33,6 @@ class GUI_EXPORT QgsRangeSlider : public QWidget
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsRangeSlider, with the specified \a parent widget.
      */
@@ -169,6 +168,30 @@ class GUI_EXPORT QgsRangeSlider : public QWidget
      */
     int pageStep() const;
 
+    /**
+     * Returns the slider's fixed range size, or -1 if not set.
+     *
+     * If a fixed range size is set then moving either the lower or upper slider will automatically
+     * move the other slider accordingly, in order to keep the selected range at the specified
+     * fixed size.
+     *
+     * \see setFixedRangeSize()
+     * \since QGIS 3.38
+     */
+    int fixedRangeSize() const;
+
+    /**
+     * Sets the slider's fixed range \a size. Set to -1 if no fixed size is desired.
+     *
+     * If a fixed range size is set then moving either the lower or upper slider will automatically
+     * move the other slider accordingly, in order to keep the selected range at the specified
+     * fixed size.
+     *
+     * \see fixedRangeSize()
+     * \since QGIS 3.38
+     */
+    void setFixedRangeSize( int size );
+
   public slots:
 
     /**
@@ -255,8 +278,17 @@ class GUI_EXPORT QgsRangeSlider : public QWidget
      */
     void rangeLimitsChanged( int minimum, int maximum );
 
-  private:
+    /**
+     * Emitted when the widget's fixed range size is changed.
+     *
+     * \see fixedRangeSize()
+     * \see setFixedRangeSize()
+     *
+     * \since QGIS 3.38
+     */
+    void fixedRangeSizeChanged( int size );
 
+  private:
     int pick( const QPoint &pt ) const;
     int pixelPosToRangeValue( int pos ) const;
     bool updateHoverControl( const QPoint &pos );
@@ -269,6 +301,8 @@ class GUI_EXPORT QgsRangeSlider : public QWidget
 
     int mSingleStep = 1;
     int mPageStep = 10;
+
+    int mFixedRangeSize = -1;
 
     QStyleOptionSlider mStyleOption;
     enum Control

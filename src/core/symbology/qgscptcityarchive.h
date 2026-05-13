@@ -35,6 +35,7 @@ class QgsCptCitySelectionItem;
 /**
  * \class QgsCptCityArchive
  * \ingroup core
+ * \brief Represents a CPT City color scheme.
  */
 class CORE_EXPORT QgsCptCityArchive
 {
@@ -43,9 +44,7 @@ class CORE_EXPORT QgsCptCityArchive
                        const QString &baseDir = QString() );
     ~QgsCptCityArchive();
 
-    //! QgsCptCityArchive cannot be copied
     QgsCptCityArchive( const QgsCptCityArchive &rh ) = delete;
-    //! QgsCptCityArchive cannot be copied
     QgsCptCityArchive &operator=( const QgsCptCityArchive &rh ) = delete;
 
     // basic dir info
@@ -64,7 +63,8 @@ class CORE_EXPORT QgsCptCityArchive
     static QMap< double, QPair<QColor, QColor> > gradientColorMap( const QString &fileName ) SIP_SKIP;
 
     // archive management
-    bool isEmpty();
+    //! Returns TRUE if archive is empty
+    bool isEmpty() const;
     QString archiveName() const { return mArchiveName; }
     static void initArchives( bool loadAll = false );
     static void initArchive( const QString &archiveName, const QString &archiveBaseDir );
@@ -93,7 +93,7 @@ class CORE_EXPORT QgsCptCityArchive
 };
 
 /**
- * Base class for all items in the model
+ * Base class for all items in a QgsCptCityBrowserModel model.
  * \ingroup core
 */
 class CORE_EXPORT QgsCptCityDataItem : public QObject
@@ -115,44 +115,79 @@ class CORE_EXPORT QgsCptCityDataItem : public QObject
     bool hasChildren();
 
     int rowCount();
-    // retrieve total count of "leaf" items (all children which are end nodes)
+
+    /**
+     * Returns the total count of "leaf" items (all children which are end nodes).
+     */
     virtual int leafCount() const;
 
     //
 
     virtual void refresh();
 
-    // Create vector of children
+    /**
+     * Returns a vector of children items.
+     */
     virtual QVector<QgsCptCityDataItem *> createChildren();
 
-    // Populate children using children vector created by createChildren()
+    /**
+     * Populates children using children vector created by createChildren().
+     */
     virtual void populate();
+
+    /**
+     * Returns TRUE if the item is already populated.
+     */
     bool isPopulated() { return mPopulated; }
 
-    // Insert new child using alphabetical order based on mName, emits necessary signal to model before and after, sets parent and connects signals
-    // refresh - refresh populated item, emit signals to model
+    /**
+     * Inserts a new \a child using alphabetical order based on mName, emits necessary signal to model before and after, sets parent and connects signals.
+     *
+     * The \a refresh argument will refresh the populated item by emitting signals to the model.
+     */
     virtual void addChildItem( QgsCptCityDataItem *child SIP_TRANSFER, bool refresh = false );
 
-    // remove and delete child item, signals to browser are emitted
+    /**
+     * Removes and deletes a child \a item, signals to browser are emitted.
+     */
     virtual void deleteChildItem( QgsCptCityDataItem *child );
 
-    // remove child item but don't delete it, signals to browser are emitted
-    // returns pointer to the removed item or null if no such item was found
+    /**
+     * Removes a \a child item but doesn't delete it, signals to browser are emitted.
+     *
+     * \returns pointer to the removed item or NULLPTR if no such item was found
+     */
     virtual QgsCptCityDataItem *removeChildItem( QgsCptCityDataItem *child ) SIP_TRANSFERBACK;
 
+    /**
+     * Returns TRUE if this item is equal to an \a other item.
+     */
     virtual bool equal( const QgsCptCityDataItem *other );
 
-    virtual QWidget *paramWidget() SIP_FACTORY { return nullptr; }
+    /**
+     * \deprecated QGIS 3.40. Is unused and will be removed in QGIS 4.0.
+     */
+    Q_DECL_DEPRECATED virtual QWidget *paramWidget() SIP_DEPRECATED { return nullptr; }
 
-    // whether accepts drag&drop'd layers - e.g. for import
-    virtual bool acceptDrop() { return false; }
+    /**
+     * Returns TRUE if the item accepts drag & dropped layers - e.g. for import.
+     *
+     * \deprecated QGIS 3.40. Is unused and will be removed in QGIS 4.0.
+     */
+    Q_DECL_DEPRECATED virtual bool acceptDrop() SIP_DEPRECATED { return false; }
 
-    // try to process the data dropped on this item
-    virtual bool handleDrop( const QMimeData * /*data*/, Qt::DropAction /*action*/ ) { return false; }
+    /**
+     * Tries to process the \a data dropped on this item.
+     *
+     * \deprecated QGIS 3.40. Is unused and will be removed in QGIS 4.0.
+     */
+    Q_DECL_DEPRECATED virtual bool handleDrop( const QMimeData *data, Qt::DropAction action ) SIP_DEPRECATED { Q_UNUSED( data ); Q_UNUSED( action ); return false; }
 
     // static methods
 
-    // Find child index in vector of items using '==' operator
+    /**
+     * Finds a child index in vector of items using '==' operator.
+     */
     static int findItem( QVector<QgsCptCityDataItem *> items, QgsCptCityDataItem *item );
 
     // members
@@ -190,14 +225,54 @@ class CORE_EXPORT QgsCptCityDataItem : public QObject
     bool mValid;
 
   signals:
+
+    /**
+     * Emitted before child items are added to this item.
+     *
+     * This signal *must* be followed by endInsertItems().
+     *
+     * \param parent the parent item having children added
+     * \param first index of first child item to be added
+     * \param last index last child item, after the addition has occurred
+     *
+     * \see endInsertItems()
+     */
     void beginInsertItems( QgsCptCityDataItem *parent, int first, int last );
+
+    /**
+     * Emitted after child items have been added to this data item.
+     *
+     * This signal will always be preceded by beginInsertItems().
+     *
+     * \see beginInsertItems()
+     */
     void endInsertItems();
+
+    /**
+     * Emitted before child items are removed from this data item.
+     *
+     * This signal *must* be followed by endRemoveItems().
+     *
+     * \param parent the parent item having children removed
+     * \param first index of first child item to be removed
+     * \param last index of the last child item to be removed
+     *
+     * \see endRemoveItems()
+     */
     void beginRemoveItems( QgsCptCityDataItem *parent, int first, int last );
+
+    /**
+     * Emitted after child items have been removed from this data item.
+     *
+     * This signal will always be preceded by beginRemoveItems().
+     *
+     * \see beginRemoveItems()
+     */
     void endRemoveItems();
 };
 
 /**
- * Item that represents a layer that can be opened with one of the providers
+ * An item that represents a layer that can be opened with one of the providers for a QgsCptCityBrowserModel.
  * \ingroup core
 */
 class CORE_EXPORT QgsCptCityColorRampItem : public QgsCptCityDataItem
@@ -233,7 +308,7 @@ class CORE_EXPORT QgsCptCityColorRampItem : public QgsCptCityDataItem
 
 
 /**
- * A Collection: logical collection of subcollections and color ramps
+ * A logical collection of subcollections and color ramps for use in QgsCptCityBrowserModel.
  * \ingroup core
 */
 class CORE_EXPORT QgsCptCityCollectionItem : public QgsCptCityDataItem
@@ -253,7 +328,7 @@ class CORE_EXPORT QgsCptCityCollectionItem : public QgsCptCityDataItem
 };
 
 /**
- * A directory: contains subdirectories and color ramps
+ * A directory which contains subdirectories and color ramps for use in QgsCptCityBrowserModel.
  * \ingroup core
 */
 class CORE_EXPORT QgsCptCityDirectoryItem : public QgsCptCityCollectionItem
@@ -279,7 +354,7 @@ class CORE_EXPORT QgsCptCityDirectoryItem : public QgsCptCityCollectionItem
 /**
  * \ingroup core
  * \class QgsCptCitySelectionItem
- * \brief A selection: contains subdirectories and color ramps
+ * \brief A selection which contains subdirectories and color ramps for use in QgsCptCityBrowserModel.
 */
 class CORE_EXPORT QgsCptCitySelectionItem : public QgsCptCityCollectionItem
 {
@@ -300,7 +375,7 @@ class CORE_EXPORT QgsCptCitySelectionItem : public QgsCptCityCollectionItem
 
 /**
  * \ingroup core
- * \brief An "All ramps item", which contains all items in a flat hierarchy
+ * \brief An "All ramps item", which contains all items in a flat hierarchy.
 */
 class CORE_EXPORT QgsCptCityAllRampsItem : public QgsCptCityCollectionItem
 {
@@ -318,6 +393,7 @@ class CORE_EXPORT QgsCptCityAllRampsItem : public QgsCptCityCollectionItem
 /**
  * \ingroup core
  * \class QgsCptCityBrowserModel
+ * \brief A custom item model for display of CPT City color palettes.
  */
 class CORE_EXPORT QgsCptCityBrowserModel : public QAbstractItemModel
 {
@@ -349,26 +425,20 @@ class CORE_EXPORT QgsCptCityBrowserModel : public QAbstractItemModel
 
     QModelIndex parent( const QModelIndex &index ) const override;
 
-    //! Returns a list of mime that can describe model indexes
-    /* virtual QStringList mimeTypes() const; */
-
-    //! Returns an object that contains serialized items of data corresponding to the list of indexes specified
-    /* virtual QMimeData * mimeData( const QModelIndexList &indexes ) const; */
-
-    //! Handles the data supplied by a drag and drop operation that ended with the given action
-    /* virtual bool dropMimeData( const QMimeData * data, Qt::DropAction action, int row, int column, const QModelIndex & parent ); */
-
+    /**
+     * Returns the data item corresponding to the given index.
+     */
     QgsCptCityDataItem *dataItem( const QModelIndex &idx ) const;
 
     bool hasChildren( const QModelIndex &parent = QModelIndex() ) const override;
 
-    // Reload the whole model
+    //! Reload the whole model
     void reload();
 
-    // Refresh item specified by path
+    //! Refresh the item specified by \a path
     void refresh( const QString &path );
 
-    // Refresh item children
+    //! Refresh item children
     void refresh( const QModelIndex &index = QModelIndex() );
 
     //! Returns index of a path
@@ -379,12 +449,7 @@ class CORE_EXPORT QgsCptCityBrowserModel : public QAbstractItemModel
     bool canFetchMore( const QModelIndex &parent ) const override;
     void fetchMore( const QModelIndex &parent ) override;
 
-  signals:
-
   public slots:
-    //void removeItems( QgsCptCityDataItem * parent, QVector<QgsCptCityDataItem *>items );
-    //void addItems( QgsCptCityDataItem * parent, QVector<QgsCptCityDataItem *>items );
-    //void refreshItems( QgsCptCityDataItem * parent, QVector<QgsCptCityDataItem *>items );
 
     void beginInsertItems( QgsCptCityDataItem *parent, int first, int last );
     void endInsertItems();

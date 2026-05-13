@@ -53,6 +53,11 @@ QString QgsSlopeAlgorithm::shortHelpString() const
                       "is expressed in degrees." );
 }
 
+QString QgsSlopeAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Calculates the angle of inclination of the terrain from an input raster layer." );
+}
+
 QgsSlopeAlgorithm *QgsSlopeAlgorithm::createInstance() const
 {
   return new QgsSlopeAlgorithm();
@@ -61,8 +66,7 @@ QgsSlopeAlgorithm *QgsSlopeAlgorithm::createInstance() const
 void QgsSlopeAlgorithm::initAlgorithm( const QVariantMap & )
 {
   addParameter( new QgsProcessingParameterRasterLayer( QStringLiteral( "INPUT" ), QObject::tr( "Elevation layer" ) ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "Z_FACTOR" ), QObject::tr( "Z factor" ),
-                QgsProcessingParameterNumber::Double, 1, false, 0 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "Z_FACTOR" ), QObject::tr( "Z factor" ), Qgis::ProcessingNumberParameterType::Double, 1, false, 0 ) );
 
   addParameter( new QgsProcessingParameterRasterDestination( QStringLiteral( "OUTPUT" ), QObject::tr( "Slope" ) ) );
 }

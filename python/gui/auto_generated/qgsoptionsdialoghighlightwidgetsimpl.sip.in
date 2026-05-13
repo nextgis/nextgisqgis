@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgsoptionsdialoghighlightwidgetsimpl.h                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -16,9 +16,9 @@ class QgsOptionsDialogHighlightLabel : QgsOptionsDialogHighlightWidget
 {
 %Docstring(signature="appended")
 A highlight widget for labels.
-This is used to search and highlight text in :py:class:`QgsOptionsDialogBase` implementations.
 
-.. versionadded:: 3.0
+This is used to search and highlight text in
+:py:class:`QgsOptionsDialogBase` implementations.
 %End
 
 %TypeHeaderCode
@@ -29,6 +29,7 @@ This is used to search and highlight text in :py:class:`QgsOptionsDialogBase` im
 %Docstring
 constructs a highlight widget for a label
 %End
+
   protected:
     virtual bool searchText( const QString &text );
 
@@ -42,9 +43,9 @@ class QgsOptionsDialogHighlightCheckBox : QgsOptionsDialogHighlightWidget
 {
 %Docstring(signature="appended")
 A highlight widget for checkboxes.
-This is used to search and highlight text in :py:class:`QgsOptionsDialogBase` implementations.
 
-.. versionadded:: 3.0
+This is used to search and highlight text in
+:py:class:`QgsOptionsDialogBase` implementations.
 %End
 
 %TypeHeaderCode
@@ -55,6 +56,7 @@ This is used to search and highlight text in :py:class:`QgsOptionsDialogBase` im
 %Docstring
 constructs a highlight widget for a checkbox
 %End
+
   protected:
     virtual bool searchText( const QString &text );
 
@@ -68,9 +70,9 @@ class QgsOptionsDialogHighlightButton : QgsOptionsDialogHighlightWidget
 {
 %Docstring(signature="appended")
 A highlight widget for buttons.
-This is used to search and highlight text in :py:class:`QgsOptionsDialogBase` implementations.
 
-.. versionadded:: 3.0
+This is used to search and highlight text in
+:py:class:`QgsOptionsDialogBase` implementations.
 %End
 
 %TypeHeaderCode
@@ -81,6 +83,7 @@ This is used to search and highlight text in :py:class:`QgsOptionsDialogBase` im
 %Docstring
 constructs a highlight widget for a button.
 %End
+
   protected:
     virtual bool searchText( const QString &text );
 
@@ -94,9 +97,9 @@ class QgsOptionsDialogHighlightGroupBox : QgsOptionsDialogHighlightWidget
 {
 %Docstring(signature="appended")
 A highlight widget for group boxes.
-This is used to search and highlight text in :py:class:`QgsOptionsDialogBase` implementations.
 
-.. versionadded:: 3.0
+This is used to search and highlight text in
+:py:class:`QgsOptionsDialogBase` implementations.
 %End
 
 %TypeHeaderCode
@@ -107,6 +110,7 @@ This is used to search and highlight text in :py:class:`QgsOptionsDialogBase` im
 %Docstring
 constructs a highlight widget for a group box.
 %End
+
   protected:
     virtual bool searchText( const QString &text );
 
@@ -120,11 +124,11 @@ class QgsOptionsDialogHighlightTree : QgsOptionsDialogHighlightWidget
 {
 %Docstring(signature="appended")
 A highlight widget for trees.
-This is used to search and highlight text in :py:class:`QgsOptionsDialogBase` implementations.
-Highlighting is only available for tree widgets only while searching can be performed
-in any tree view or inherited class.
 
-.. versionadded:: 3.0
+This is used to search and highlight text in
+:py:class:`QgsOptionsDialogBase` implementations. Highlighting is only
+available for tree widgets only while searching can be performed in any
+tree view or inherited class.
 %End
 
 %TypeHeaderCode
@@ -135,6 +139,7 @@ in any tree view or inherited class.
 %Docstring
 constructs a highlight widget for a tree view or widget.
 %End
+
   protected:
     virtual bool searchText( const QString &text );
 
@@ -148,7 +153,9 @@ class QgsOptionsDialogHighlightTable : QgsOptionsDialogHighlightWidget
 {
 %Docstring(signature="appended")
 A highlight widget for table widgets.
-This is used to search and highlight text in :py:class:`QgsOptionsDialogBase` implementations.
+
+This is used to search and highlight text in
+:py:class:`QgsOptionsDialogBase` implementations.
 
 .. versionadded:: 3.22
 %End
@@ -161,6 +168,7 @@ This is used to search and highlight text in :py:class:`QgsOptionsDialogBase` im
 %Docstring
 constructs a highlight widget for a table view or widget.
 %End
+
   protected:
     virtual bool searchText( const QString &text );
 
@@ -174,5 +182,5 @@ constructs a highlight widget for a table view or widget.
  *                                                                      *
  * src/gui/qgsoptionsdialoghighlightwidgetsimpl.h                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

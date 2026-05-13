@@ -14,11 +14,14 @@
  ***************************************************************************/
 
 #include "qgsmodelgraphicitem.h"
+#include "qgsmodelcomponentgraphicitem.h"
+#include "moc_qgsmodelgraphicitem.cpp"
 #include "qgsapplication.h"
 #include "qgsmodelgraphicsscene.h"
 #include "qgsmodelgraphicsview.h"
 #include "qgsmodelviewtool.h"
 #include "qgsmodelviewmouseevent.h"
+#include <QGraphicsSceneMouseEvent>
 #include <QPainter>
 #include <QSvgRenderer>
 
@@ -37,7 +40,7 @@ QgsModelDesignerFlatButtonGraphicItem::QgsModelDesignerFlatButtonGraphicItem( QG
 
 void QgsModelDesignerFlatButtonGraphicItem::paint( QPainter *painter, const QStyleOptionGraphicsItem *, QWidget * )
 {
-  if ( QgsModelGraphicsScene *modelScene = qobject_cast< QgsModelGraphicsScene * >( scene() ) )
+  if ( QgsModelGraphicsScene *modelScene = qobject_cast<QgsModelGraphicsScene *>( scene() ) )
   {
     if ( modelScene->flags() & QgsModelGraphicsScene::FlagHideControls )
       return;
@@ -46,14 +49,12 @@ void QgsModelDesignerFlatButtonGraphicItem::paint( QPainter *painter, const QSty
   if ( mHoverState )
   {
     painter->setPen( QPen( Qt::transparent, 1.0 ) );
-    painter->setBrush( QBrush( QColor( 55, 55, 55, 33 ),
-                               Qt::SolidPattern ) );
+    painter->setBrush( QBrush( QColor( 55, 55, 55, 33 ), Qt::SolidPattern ) );
   }
   else
   {
     painter->setPen( QPen( Qt::transparent, 1.0 ) );
-    painter->setBrush( QBrush( Qt::transparent,
-                               Qt::SolidPattern ) );
+    painter->setBrush( QBrush( Qt::transparent, Qt::SolidPattern ) );
   }
   const QPointF topLeft = mPosition - QPointF( std::floor( mSize.width() / 2 ), std::floor( mSize.height() / 2 ) );
   const QRectF rect = QRectF( topLeft.x(), topLeft.y(), mSize.width(), mSize.height() );
@@ -63,10 +64,7 @@ void QgsModelDesignerFlatButtonGraphicItem::paint( QPainter *painter, const QSty
 
 QRectF QgsModelDesignerFlatButtonGraphicItem::boundingRect() const
 {
-  return QRectF( mPosition.x() - std::floor( mSize.width() / 2 ),
-                 mPosition.y() - std::floor( mSize.height() / 2 ),
-                 mSize.width(),
-                 mSize.height() );
+  return QRectF( mPosition.x() - std::floor( mSize.width() / 2 ), mPosition.y() - std::floor( mSize.height() / 2 ), mSize.width(), mSize.height() );
 }
 
 void QgsModelDesignerFlatButtonGraphicItem::hoverEnterEvent( QGraphicsSceneHoverEvent * )
@@ -124,7 +122,7 @@ void QgsModelDesignerFlatButtonGraphicItem::setPosition( const QPointF &position
 
 QgsModelGraphicsView *QgsModelDesignerFlatButtonGraphicItem::view()
 {
-  return qobject_cast< QgsModelGraphicsView * >( scene()->views().first() );
+  return qobject_cast<QgsModelGraphicsView *>( scene()->views().first() );
 }
 
 void QgsModelDesignerFlatButtonGraphicItem::setPicture( const QPicture &picture )
@@ -170,5 +168,33 @@ void QgsModelDesignerFoldButtonGraphicItem::modelPressEvent( QgsModelViewMouseEv
   QgsModelDesignerFlatButtonGraphicItem::modelPressEvent( event );
 }
 
-///@endcond
 
+QgsModelDesignerSocketGraphicItem::QgsModelDesignerSocketGraphicItem( QgsModelComponentGraphicItem *parent, QgsProcessingModelComponent *component, int index, const QPointF &position, Qt::Edge edge, const QSizeF &size )
+  : QgsModelDesignerFlatButtonGraphicItem( parent, QPicture(), position, size )
+  , mComponentItem( parent )
+  , mComponent( component )
+  , mIndex( index )
+  , mEdge( edge )
+{
+}
+
+void QgsModelDesignerSocketGraphicItem::paint( QPainter *painter, const QStyleOptionGraphicsItem *, QWidget * )
+{
+  painter->setPen( QPen() );
+  painter->setBrush( QBrush( QColor( 0, 0, 0, mHoverState ? 200 : 33 ), Qt::SolidPattern ) );
+
+  painter->setRenderHint( QPainter::Antialiasing );
+
+  constexpr float DISPLAY_SIZE = 3.2;
+  painter->drawEllipse( position(), DISPLAY_SIZE, DISPLAY_SIZE );
+  /* Uncomment to display bounding box */
+#if 0
+  painter->save();
+  painter->setPen( QPen() );
+  painter->setBrush( QBrush() );
+  painter->drawRect( boundingRect() );
+  painter->restore();
+#endif
+}
+
+///@endcond

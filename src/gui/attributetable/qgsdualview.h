@@ -32,11 +32,14 @@ class QgsFeatureRequest;
 class QgsMapLayerAction;
 class QgsScrollArea;
 class QgsFieldConditionalFormatWidget;
+class QgsSettingsEntryVariant;
 
 /**
  * \ingroup gui
  * \brief This widget is used to show the attributes of a set of features of a QgsVectorLayer.
+ *
  * The attributes can be edited.
+ *
  * It supports two different layouts: the table layout, in which the attributes for the features
  * are shown in a table and the editor layout, where the features are shown as a selectable list
  * and the attributes for the currently selected feature are shown in a form.
@@ -46,7 +49,6 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
     Q_OBJECT
 
   public:
-
     /**
      * The view modes, in which this widget can present information.
      * Relates to the QStackedWidget stacks.
@@ -73,8 +75,8 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
     //! Action on the map canvas when browsing the list of features
     enum FeatureListBrowsingAction
     {
-      NoAction = 0, //!< No action is done
-      PanToFeature, //!< The map is panned to the center of the feature bounding-box
+      NoAction = 0,  //!< No action is done
+      PanToFeature,  //!< The map is panned to the center of the feature bounding-box
       ZoomToFeature, //!< The map is zoomed to contained the feature bounding-box
     };
     Q_ENUM( FeatureListBrowsingAction )
@@ -98,11 +100,7 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
      *                   FALSE, limited features can later be loaded using setFilterMode()
      * \param showFirstFeature whether to initially show the first feature form upon initializing the dual view
      */
-    void init( QgsVectorLayer *layer,
-               QgsMapCanvas *mapCanvas,
-               const QgsFeatureRequest &request = QgsFeatureRequest(),
-               const QgsAttributeEditorContext &context = QgsAttributeEditorContext(),
-               bool loadFeatures = true, bool showFirstFeature = true );
+    void init( QgsVectorLayer *layer, QgsMapCanvas *mapCanvas, const QgsFeatureRequest &request = QgsFeatureRequest(), const QgsAttributeEditorContext &context = QgsAttributeEditorContext(), bool loadFeatures = true, bool showFirstFeature = true );
 
     /**
      * Change the current view mode.
@@ -115,7 +113,6 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
     /**
      * Returns the current view mode.
      * \see setView()
-     * \since QGIS 2.16
      */
     ViewMode view() const;
 
@@ -161,7 +158,7 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
      *
      * \param filteredFeatures  A list of feature ids
      *
-     * \deprecated since filterFeatures is handled in the attribute filter model itself
+     * \deprecated QGIS 3.40. Since filterFeatures is handled in the attribute filter model itself.
     */
     Q_DECL_DEPRECATED void setFilteredFeatures( const QgsFeatureIds &filteredFeatures );
 
@@ -256,28 +253,24 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
 
     /**
      * Sets whether multi edit mode is enabled.
-     * \since QGIS 2.16
      */
     void setMultiEditEnabled( bool enabled );
 
     /**
      * Toggles whether search mode should be enabled in the form.
      * \param enabled set to TRUE to switch on search mode
-     * \since QGIS 2.16
      */
     void toggleSearchMode( bool enabled );
 
     /**
      * Copy the content of the selected cell in the clipboard.
-     * \since QGIS 1.16
      */
     void copyCellContent() const;
 
     /**
      * Cancel the progress dialog (if any)
-     * \since QGIS 3.0
      */
-    void cancelProgress( );
+    void cancelProgress();
 
     /**
      * Called in embedded forms when an \a attribute \a value in the parent form has changed.
@@ -306,7 +299,6 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
      * Emitted when a filter expression is set using the view.
      * \param expression filter expression
      * \param type filter type
-     * \since QGIS 2.16
      */
     void filterExpressionSet( const QString &expression, QgsAttributeForm::FilterType type );
 
@@ -407,7 +399,6 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
     void filterError( const QString &errorMessage );
 
   private:
-
     /**
      * Initialize the attribute form to a given \a feature.
      *
@@ -433,6 +424,9 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
     //! Returns TRUE if the expression dialog has been accepted
     bool modifySort();
 
+    static const std::unique_ptr<QgsSettingsEntryVariant> conditionalFormattingSplitterState;
+    static const std::unique_ptr<QgsSettingsEntryVariant> attributeEditorSplitterState;
+
     QgsFieldConditionalFormatWidget *mConditionalFormatWidget = nullptr;
     QgsAttributeEditorContext mEditorContext;
     QgsAttributeTableModel *mMasterModel = nullptr;
@@ -444,7 +438,7 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
     QAction *mLastDisplayExpressionAction = nullptr;
     QMenu *mHorizontalHeaderMenu = nullptr;
     QgsVectorLayerCache *mLayerCache = nullptr;
-    QPointer< QgsVectorLayer > mLayer = nullptr;
+    QPointer<QgsVectorLayer> mLayer = nullptr;
     QProgressDialog *mProgressDlg = nullptr;
     QgsIFeatureSelectionManager *mFeatureSelectionManager = nullptr;
     QString mDisplayExpression;
@@ -461,17 +455,16 @@ class GUI_EXPORT QgsDualView : public QStackedWidget, private Ui::QgsDualViewBas
 /**
  * \ingroup gui
  * \class QgsAttributeTableAction
+ * \brief A QAction subclass for map layer actions shown in an attribute table.
  */
 class GUI_EXPORT QgsAttributeTableAction : public QAction
 {
     Q_OBJECT
 
   public:
-
     /**
      * Create a new attribute table action.
      *
-     * \since QGIS 3.0
      */
     QgsAttributeTableAction( const QString &name, QgsDualView *dualView, QUuid action, const QModelIndex &fieldIdx )
       : QAction( name, dualView )
@@ -493,6 +486,7 @@ class GUI_EXPORT QgsAttributeTableAction : public QAction
 /**
  * \ingroup gui
  * \class QgsAttributeTableMapLayerAction
+ * \brief A QAction for attribute table map layer actions.
  */
 class GUI_EXPORT QgsAttributeTableMapLayerAction : public QAction
 {

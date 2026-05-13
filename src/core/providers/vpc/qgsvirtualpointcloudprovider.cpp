@@ -19,10 +19,9 @@
 #include "qgslogger.h"
 #include "qgsproviderregistry.h"
 #include "qgsvirtualpointcloudprovider.h"
+#include "moc_qgsvirtualpointcloudprovider.cpp"
 #include "qgscopcpointcloudindex.h"
 #include "qgseptpointcloudindex.h"
-#include "qgsremotecopcpointcloudindex.h"
-#include "qgsremoteeptpointcloudindex.h"
 #include "qgspointcloudsubindex.h"
 #include "qgspointcloudclassifiedrenderer.h"
 #include "qgspointcloudextentrenderer.h"
@@ -46,7 +45,7 @@
 QgsVirtualPointCloudProvider::QgsVirtualPointCloudProvider(
   const QString &uri,
   const QgsDataProvider::ProviderOptions &options,
-  QgsDataProvider::ReadFlags flags )
+  Qgis::DataProviderReadFlags flags )
   : QgsPointCloudDataProvider( uri, options, flags )
 {
   std::unique_ptr< QgsScopedRuntimeProfile > profile;
@@ -56,6 +55,11 @@ QgsVirtualPointCloudProvider::QgsVirtualPointCloudProvider(
   mPolygonBounds.reset( new QgsGeometry( new QgsMultiPolygon() ) );
 
   parseFile();
+}
+
+Qgis::DataProviderFlags QgsVirtualPointCloudProvider::flags() const
+{
+  return Qgis::DataProviderFlag::FastExtent2D;
 }
 
 QgsVirtualPointCloudProvider::~QgsVirtualPointCloudProvider() = default;
@@ -110,12 +114,12 @@ QString QgsVirtualPointCloudProvider::description() const
   return PROVIDER_DESCRIPTION;
 }
 
-QgsPointCloudIndex *QgsVirtualPointCloudProvider::index() const
+QgsPointCloudIndex QgsVirtualPointCloudProvider::index() const
 {
   // non fatal for now -- 2d rendering of point clouds is not thread safe and calls this
   QGIS_PROTECT_QOBJECT_THREAD_ACCESS_NON_FATAL
 
-  return nullptr;
+  return QgsPointCloudIndex( nullptr );
 }
 
 qint64 QgsVirtualPointCloudProvider::pointCount() const
@@ -173,6 +177,8 @@ void QgsVirtualPointCloudProvider::parseFile()
   }
 
   QSet<QString> attributeNames;
+  double subIndexesWidth = 0.0;
+  double subIndexesHeight = 0.0;
 
   for ( const auto &f : data["features"] )
   {
@@ -193,17 +199,34 @@ void QgsVirtualPointCloudProvider::parseFile()
     }
 
     QString uri;
-    qint64 count;
+    qint64 count = 0;
     QgsRectangle extent;
     QgsGeometry geometry;
     QgsDoubleRange zRange;
 
-    for ( const auto &asset : f["assets"] )
+    // look directly for link to data file
+    if ( f["assets"].contains( "data" ) && f["assets"]["data"].contains( "href" ) )
     {
-      if ( asset.contains( "href" ) )
+      uri = QString::fromStdString( f["assets"]["data"]["href"] );
+    }
+
+    // look for vpc overview reference
+    if ( !mOverview && f["assets"].contains( "overview" ) && f["assets"]["overview"].contains( "href" ) )
+    {
+      mOverview = QgsPointCloudIndex( new QgsCopcPointCloudIndex() );
+      mOverview.load( fInfo.absoluteDir().absoluteFilePath( QString::fromStdString( f["assets"]["overview"]["href"] ) ) );
+    }
+    // if it doesn't exist look for overview file in the directory
+    else if ( !mOverview )
+    {
+      QDir vpcDir = fInfo.absoluteDir();
+      QStringList nameFilter = { QString( fInfo.baseName() + "-overview.copc.laz" ) };
+      vpcDir.setNameFilters( nameFilter );
+      vpcDir.setFilter( QDir::Files );
+      if ( !vpcDir.entryList().empty() )
       {
-        uri = QString::fromStdString( asset["href"] );
-        break;
+        mOverview = QgsPointCloudIndex( new QgsCopcPointCloudIndex() );;
+        mOverview.load( vpcDir.absoluteFilePath( vpcDir.entryList().first() ) );
       }
     }
 
@@ -220,7 +243,7 @@ void QgsVirtualPointCloudProvider::parseFile()
     if ( !mCrs.isValid() )
     {
       if ( f["properties"].contains( "proj:epsg" ) )
-        mCrs.createFromSrsId( f["properties"]["proj:epsg"].get<long>() );
+        mCrs = QgsCoordinateReferenceSystem( QStringLiteral( "EPSG:%1" ).arg( f["properties"]["proj:epsg"].get<long>() ) );
       else if ( f["properties"].contains( "proj:wkt2" ) )
         mCrs.createFromString( QString::fromStdString( f["properties"]["proj:wkt2"] ) );
     }
@@ -336,7 +359,7 @@ void QgsVirtualPointCloudProvider::parseFile()
     if ( uri.startsWith( QLatin1String( "./" ) ) )
     {
       // resolve relative path
-      uri = fInfo.absoluteDir().absoluteFilePath( uri );
+      uri = QDir::cleanPath( fInfo.absoluteDir().absoluteFilePath( uri ) );
     }
 
     if ( f["properties"].contains( "pc:schemas" ) )
@@ -360,12 +383,16 @@ void QgsVirtualPointCloudProvider::parseFile()
       }
     }
 
+    subIndexesWidth += extent.width();
+    subIndexesHeight += extent.height();
     mPolygonBounds->addPart( geometry );
     mPointCount += count;
     QgsPointCloudSubIndex si( uri, geometry, extent, zRange, count );
     mSubLayers.push_back( si );
   }
   mExtent = mPolygonBounds->boundingBox();
+  mAverageSubIndexWidth = subIndexesWidth / mSubLayers.size();
+  mAverageSubIndexHeight = subIndexesHeight / mSubLayers.size();
   populateAttributeCollection( attributeNames );
 }
 
@@ -386,29 +413,20 @@ void QgsVirtualPointCloudProvider::loadSubIndex( int i )
   if ( sl.index() )
     return;
 
-  if ( sl.uri().startsWith( QStringLiteral( "http" ), Qt::CaseSensitivity::CaseInsensitive ) )
-  {
-    if ( sl.uri().endsWith( QStringLiteral( "copc.laz" ), Qt::CaseSensitivity::CaseInsensitive ) )
-      sl.setIndex( new QgsRemoteCopcPointCloudIndex() );
-    else if ( sl.uri().endsWith( QStringLiteral( "ept.json" ), Qt::CaseSensitivity::CaseInsensitive ) )
-      sl.setIndex( new QgsRemoteEptPointCloudIndex() );
-  }
+  if ( sl.uri().endsWith( QStringLiteral( "copc.laz" ), Qt::CaseSensitivity::CaseInsensitive ) )
+    sl.setIndex( QgsPointCloudIndex( new QgsCopcPointCloudIndex() ) );
+  else if ( sl.uri().endsWith( QStringLiteral( "ept.json" ), Qt::CaseSensitivity::CaseInsensitive ) )
+    sl.setIndex( QgsPointCloudIndex( new QgsEptPointCloudIndex() ) );
   else
-  {
-    if ( sl.uri().endsWith( QStringLiteral( "copc.laz" ), Qt::CaseSensitivity::CaseInsensitive ) )
-      sl.setIndex( new QgsCopcPointCloudIndex() );
-    else if ( sl.uri().endsWith( QStringLiteral( "ept.json" ), Qt::CaseSensitivity::CaseInsensitive ) )
-      sl.setIndex( new QgsEptPointCloudIndex() );
-  }
-
-  if ( !sl.index() )
     return;
 
-  sl.index()->load( sl.uri() );
+  sl.index().load( sl.uri() );
+  if ( !sl.index().isValid() )
+    return;
 
   // if expression is broken or index is missing a required field, set to "false" so it returns no points
-  if ( !sl.index()->setSubsetString( mSubsetString ) )
-    sl.index()->setSubsetString( QStringLiteral( "false" ) );
+  if ( !mSubsetString.isEmpty() && !sl.index().setSubsetString( mSubsetString ) )
+    sl.index().setSubsetString( QStringLiteral( "false" ) );
 
   emit subIndexLoaded( i );
 }
@@ -432,15 +450,25 @@ void QgsVirtualPointCloudProvider::populateAttributeCollection( QSet<QString> na
   if ( names.contains( QLatin1String( "Classification" ) ) )
     mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "Classification" ), QgsPointCloudAttribute::UChar ) );
   if ( names.contains( QLatin1String( "ScanAngleRank" ) ) )
-    mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "ScanAngleRank" ), QgsPointCloudAttribute::Short ) );
+    mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "ScanAngleRank" ), QgsPointCloudAttribute::Float ) );
   if ( names.contains( QLatin1String( "UserData" ) ) )
     mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "UserData" ), QgsPointCloudAttribute::Char ) );
   if ( names.contains( QLatin1String( "PointSourceId" ) ) )
     mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "PointSourceId" ), QgsPointCloudAttribute::UShort ) );
   if ( names.contains( QLatin1String( "ScannerChannel" ) ) )
     mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "ScannerChannel" ), QgsPointCloudAttribute::Char ) );
-  if ( names.contains( QLatin1String( "ClassificationFlags" ) ) )
-    mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "ClassificationFlags" ), QgsPointCloudAttribute::Char ) );
+  if ( names.contains( QLatin1String( "Synthetic" ) ) ||
+       names.contains( QLatin1String( "ClassFlags" ) ) )
+    mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "Synthetic" ), QgsPointCloudAttribute::UChar ) );
+  if ( names.contains( QLatin1String( "KeyPoint" ) ) ||
+       names.contains( QLatin1String( "ClassFlags" ) ) )
+    mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "KeyPoint" ), QgsPointCloudAttribute::UChar ) );
+  if ( names.contains( QLatin1String( "Withheld" ) ) ||
+       names.contains( QLatin1String( "ClassFlags" ) ) )
+    mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "Withheld" ), QgsPointCloudAttribute::UChar ) );
+  if ( names.contains( QLatin1String( "Overlap" ) ) ||
+       names.contains( QLatin1String( "ClassFlags" ) ) )
+    mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "Overlap" ), QgsPointCloudAttribute::UChar ) );
   if ( names.contains( QLatin1String( "GpsTime" ) ) )
     mAttributes.push_back( QgsPointCloudAttribute( QStringLiteral( "GpsTime" ), QgsPointCloudAttribute::Double ) );
   if ( names.contains( QLatin1String( "Red" ) ) )
@@ -464,7 +492,11 @@ void QgsVirtualPointCloudProvider::populateAttributeCollection( QSet<QString> na
                     QLatin1String( "UserData" ),
                     QLatin1String( "PointSourceId" ),
                     QLatin1String( "ScannerChannel" ),
-                    QLatin1String( "ClassificationFlags" ),
+                    QLatin1String( "ClassFlags" ),
+                    QLatin1String( "Synthetic" ),
+                    QLatin1String( "KeyPoint" ),
+                    QLatin1String( "Withheld" ),
+                    QLatin1String( "Overlap" ),
                     QLatin1String( "GpsTime" ),
                     QLatin1String( "Red" ),
                     QLatin1String( "Green" ),
@@ -486,8 +518,8 @@ bool QgsVirtualPointCloudProvider::setSubsetString( const QString &subset, bool 
       continue;
 
     // if expression is broken or index is missing a required field, set to "false" so it returns no points
-    if ( !i.index()->setSubsetString( subset ) )
-      i.index()->setSubsetString( QStringLiteral( "false" ) );
+    if ( !i.index().setSubsetString( subset ) )
+      i.index().setSubsetString( QStringLiteral( "false" ) );
   }
 
   mSubsetString = subset;
@@ -501,7 +533,12 @@ QgsPointCloudRenderer *QgsVirtualPointCloudProvider::createRenderer( const QVari
 
   if ( mAttributes.indexOf( QLatin1String( "Classification" ) ) >= 0 )
   {
-    return new QgsPointCloudClassifiedRenderer( QStringLiteral( "Classification" ), QgsPointCloudClassifiedRenderer::defaultCategories() );
+    QgsPointCloudClassifiedRenderer *newRenderer = new QgsPointCloudClassifiedRenderer( QStringLiteral( "Classification" ), QgsPointCloudClassifiedRenderer::defaultCategories() );
+    if ( mOverview )
+    {
+      newRenderer->setZoomOutBehavior( Qgis::PointCloudZoomOutRenderBehavior::RenderOverview );
+    }
+    return newRenderer;
   }
 
   return new QgsPointCloudExtentRenderer();
@@ -517,7 +554,7 @@ QIcon QgsVirtualPointCloudProviderMetadata::icon() const
   return QgsApplication::getThemeIcon( QStringLiteral( "mIconPointCloudLayer.svg" ) );
 }
 
-QgsVirtualPointCloudProvider *QgsVirtualPointCloudProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags )
+QgsVirtualPointCloudProvider *QgsVirtualPointCloudProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags )
 {
   return new QgsVirtualPointCloudProvider( uri, options, flags );
 }
@@ -576,6 +613,7 @@ QString QgsVirtualPointCloudProviderMetadata::filters( Qgis::FileFilterType type
     case Qgis::FileFilterType::Mesh:
     case Qgis::FileFilterType::MeshDataset:
     case Qgis::FileFilterType::VectorTile:
+    case Qgis::FileFilterType::TiledScene:
       return QString();
 
     case Qgis::FileFilterType::PointCloud:
@@ -606,5 +644,9 @@ QgsProviderMetadata::ProviderMetadataCapabilities QgsVirtualPointCloudProviderMe
          | ProviderMetadataCapability::PriorityForUri
          | ProviderMetadataCapability::QuerySublayers;
 }
+
+#undef PROVIDER_KEY
+#undef PROVIDER_DESCRIPTION
+
 ///@endcond
 

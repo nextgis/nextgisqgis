@@ -14,8 +14,9 @@
  ***************************************************************************/
 
 #include "qgslinevertexdata_p.h"
+#include "qgsabstractterrainsettings.h"
 
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
 #include <Qt3DRender/QAttribute>
 #include <Qt3DRender/QBuffer>
 #include <Qt3DRender/QGeometry>
@@ -46,12 +47,13 @@ QgsLineVertexData::QgsLineVertexData()
   vertices << QVector3D();
 }
 
-void QgsLineVertexData::init( Qgis::AltitudeClamping clamping, Qgis::AltitudeBinding binding, float height, const Qgs3DMapSettings *map )
+void QgsLineVertexData::init( Qgis::AltitudeClamping clamping, Qgis::AltitudeBinding binding, float height, const Qgs3DRenderContext &context, const QgsVector3D &chunkOrigin )
 {
   altClamping = clamping;
   altBinding = binding;
   baseHeight = height;
-  mapSettings = map;
+  renderContext = context;
+  origin = chunkOrigin;
 }
 
 QByteArray QgsLineVertexData::createVertexBuffer()
@@ -115,10 +117,10 @@ Qt3DQGeometry *QgsLineVertexData::createGeometry( Qt3DCore::QNode *parent )
   return geom;
 }
 
-void QgsLineVertexData::addLineString( const QgsLineString &lineString, float extraHeightOffset )
+void QgsLineVertexData::addLineString( const QgsLineString &lineString, float extraHeightOffset, bool closePolygon )
 {
   if ( withAdjacency )
-    indexes << vertices.count();  // add the following vertex (for adjacency)
+    indexes << vertices.count(); // add the following vertex (for adjacency)
 
   QgsPoint centroid;
   switch ( altBinding )
@@ -130,19 +132,32 @@ void QgsLineVertexData::addLineString( const QgsLineString &lineString, float ex
       break;
   }
 
+  const int firstIndex = vertices.count();
+
   for ( int i = 0; i < lineString.vertexCount(); ++i )
   {
     QgsPoint p = lineString.pointN( i );
-    float z = Qgs3DUtils::clampAltitude( p, altClamping, altBinding, baseHeight + extraHeightOffset, centroid, *mapSettings );
-
-    vertices << QVector3D( p.x() - mapSettings->origin().x(), z, -( p.y() - mapSettings->origin().y() ) );
+    if ( geocentricCoordinates )
+    {
+      // TODO: implement altitude clamping when dealing with geocentric coordinates
+      // where Z coordinate is not altitude and can't be used directly...
+      vertices << QVector3D( static_cast<float>( p.x() - origin.x() ), static_cast<float>( p.y() - origin.y() ), static_cast<float>( p.z() - origin.z() ) );
+    }
+    else
+    {
+      const float z = Qgs3DUtils::clampAltitude( p, altClamping, altBinding, baseHeight + extraHeightOffset, centroid, renderContext );
+      vertices << QVector3D( static_cast<float>( p.x() - origin.x() ), static_cast<float>( p.y() - origin.y() ), static_cast<float>( z - origin.z() ) );
+    }
     indexes << vertices.count() - 1;
   }
 
-  if ( withAdjacency )
-    indexes << vertices.count() - 1;  // add the last vertex (for adjacency)
+  if ( closePolygon )
+    indexes << firstIndex; // repeat the first vertex
 
-  indexes << 0;  // add primitive restart
+  if ( withAdjacency )
+    indexes << vertices.count() - 1; // add the last vertex (for adjacency)
+
+  indexes << 0; // add primitive restart
 }
 
 void QgsLineVertexData::addVerticalLines( const QgsLineString &lineString, float verticalLength, float extraHeightOffset )
@@ -160,21 +175,21 @@ void QgsLineVertexData::addVerticalLines( const QgsLineString &lineString, float
   for ( int i = 0; i < lineString.vertexCount(); ++i )
   {
     QgsPoint p = lineString.pointN( i );
-    float z = Qgs3DUtils::clampAltitude( p, altClamping, altBinding, baseHeight + extraHeightOffset, centroid, *mapSettings );
+    float z = Qgs3DUtils::clampAltitude( p, altClamping, altBinding, baseHeight + extraHeightOffset, centroid, renderContext );
     float z2 = z + verticalLength;
 
     if ( withAdjacency )
-      indexes << vertices.count();  // add the following vertex (for adjacency)
+      indexes << vertices.count(); // add the following vertex (for adjacency)
 
-    vertices << QVector3D( p.x() - mapSettings->origin().x(), z, -( p.y() - mapSettings->origin().y() ) );
+    vertices << QVector3D( static_cast<float>( p.x() - origin.x() ), static_cast<float>( p.y() - origin.y() ), z );
     indexes << vertices.count() - 1;
-    vertices << QVector3D( p.x() - mapSettings->origin().x(), z2, -( p.y() - mapSettings->origin().y() ) );
+    vertices << QVector3D( static_cast<float>( p.x() - origin.x() ), static_cast<float>( p.y() - origin.y() ), z2 );
     indexes << vertices.count() - 1;
 
     if ( withAdjacency )
-      indexes << vertices.count() - 1;  // add the last vertex (for adjacency)
+      indexes << vertices.count() - 1; // add the last vertex (for adjacency)
 
-    indexes << 0;  // add primitive restart
+    indexes << 0; // add primitive restart
   }
 }
 

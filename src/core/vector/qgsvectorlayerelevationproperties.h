@@ -54,7 +54,7 @@ class CORE_EXPORT QgsVectorLayerElevationProperties : public QgsMapLayerElevatio
     void setDefaultsFromLayer( QgsMapLayer *layer ) override;
     QgsVectorLayerElevationProperties *clone() const override SIP_FACTORY;
     QString htmlSummary() const override;
-    bool isVisibleInZRange( const QgsDoubleRange &range ) const override;
+    bool isVisibleInZRange( const QgsDoubleRange &range, QgsMapLayer *layer = nullptr ) const override;
     QgsDoubleRange calculateZRange( QgsMapLayer *layer ) const override;
     bool showByDefaultInElevationProfilePlots() const override;
 
@@ -141,6 +141,46 @@ class CORE_EXPORT QgsVectorLayerElevationProperties : public QgsMapLayerElevatio
      * \see extrusionHeight()
      */
     void setExtrusionHeight( double height );
+
+    /**
+     * Returns TRUE if custom tolerance is enabled.
+     *
+     * \see setCustomToleranceEnabled()
+     * \see customTolerance()
+     */
+    bool customToleranceEnabled() const { return mEnableCustomTolerance; }
+
+    /**
+     * Sets whether custom tolerance is \a enabled.
+     *
+     * \see customToleranceEnabled()
+     * \see setCustomTolerance()
+     */
+    void setCustomToleranceEnabled( bool enabled );
+
+    /**
+     * Returns the feature custom tolerance.
+     *
+     * \warning custom tolerance is only applied if customToleranceEnabled() is TRUE.
+     *
+     * If enabled, the profile generator will use this tolerance instead of the one
+     * defined in the elevation profile widget.
+     *
+     * \see setCustomTolerance()
+     */
+    double customTolerance() const { return mCustomTolerance; }
+
+    /**
+     * Sets the feature custom tolerance.
+     *
+     * \warning custom tolerance is only applied if customToleranceEnabled() is TRUE.
+     *
+     * If enabled, the profile generator will use this tolerance instead of the one
+     * defined in the elevation profile widget.
+     *
+     * \see customTolerance()
+     */
+    void setCustomTolerance( double tolerance );
 
     /**
      * Returns TRUE if layer symbology should be respected when rendering elevation profile plots.
@@ -292,7 +332,7 @@ class CORE_EXPORT QgsVectorLayerElevationProperties : public QgsMapLayerElevatio
     bool showMarkerSymbolInSurfacePlots() const { return mShowMarkerSymbolInSurfacePlots; }
 
     /**
-     * Sets whehter the marker symbol should also be shown in continuous surface plots.
+     * Sets whether the marker symbol should also be shown in continuous surface plots.
      *
      * \note This setting is only used when type() is Qgis::VectorProfileType::ContinuousSurface.
      *
@@ -313,6 +353,8 @@ class CORE_EXPORT QgsVectorLayerElevationProperties : public QgsMapLayerElevatio
 
     bool mEnableExtrusion = false;
     double mExtrusionHeight = 0;
+    bool mEnableCustomTolerance = false;
+    double mCustomTolerance = 0;
 
     std::unique_ptr< QgsLineSymbol > mProfileLineSymbol;
     std::unique_ptr< QgsFillSymbol > mProfileFillSymbol;

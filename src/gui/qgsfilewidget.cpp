@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgsfilewidget.h"
+#include "moc_qgsfilewidget.cpp"
 
 #include <QLineEdit>
 #include <QToolButton>
@@ -82,12 +83,8 @@ QString QgsFileWidget::filePath()
 QStringList QgsFileWidget::splitFilePaths( const QString &path )
 {
   QStringList paths;
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-  const QStringList pathParts = path.split( QRegExp( "\"\\s+\"" ), QString::SkipEmptyParts );
-#else
   const thread_local QRegularExpression partsRegex = QRegularExpression( QStringLiteral( "\"\\s+\"" ) );
   const QStringList pathParts = path.split( partsRegex, Qt::SkipEmptyParts );
-#endif
 
   const thread_local QRegularExpression cleanRe( QStringLiteral( "(^\\s*\")|(\"\\s*)" ) );
   paths.reserve( pathParts.size() );
@@ -266,9 +263,7 @@ void QgsFileWidget::updateLayout()
   mFileWidgetButton->setEnabled( !mReadOnly );
   mLineEdit->setEnabled( !mReadOnly );
 
-  mLinkEditButton->setIcon( linkVisible && !mReadOnly ?
-                            QgsApplication::getThemeIcon( QStringLiteral( "/mActionToggleEditing.svg" ) ) :
-                            QgsApplication::getThemeIcon( QStringLiteral( "/mActionSaveEdits.svg" ) ) );
+  mLinkEditButton->setIcon( linkVisible && !mReadOnly ? QgsApplication::getThemeIcon( QStringLiteral( "/mActionToggleEditing.svg" ) ) : QgsApplication::getThemeIcon( QStringLiteral( "/mActionSaveEdits.svg" ) ) );
 }
 
 void QgsFileWidget::openFileDialog()
@@ -337,6 +332,16 @@ void QgsFileWidget::openFileDialog()
         // make sure filename ends with filter. This isn't automatically done by
         // getSaveFileName on some platforms (e.g. gnome)
         fileName = QgsFileUtils::addExtensionFromFilter( fileName, mSelectedFilter );
+
+        // A bit of hack to solve https://github.com/qgis/QGIS/issues/54566
+        // to be able to select an existing File Geodatabase, we add in the filter
+        // the "gdb" file that is found in all File Geodatabase .gdb directory
+        // to allow the user to select it. We now need to remove this gdb file
+        // (which became gdb.gdb due to above logic) from the selected filename
+        if ( mFilter.contains( QLatin1String( "(*.gdb *.GDB gdb)" ) ) && ( fileName.endsWith( QLatin1String( "/gdb.gdb" ) ) || fileName.endsWith( QLatin1String( "\\gdb.gdb" ) ) ) )
+        {
+          fileName.chop( static_cast<int>( strlen( "/gdb.gdb" ) ) );
+        }
       }
       break;
     }
@@ -346,7 +351,7 @@ void QgsFileWidget::openFileDialog()
   activateWindow();
   raise();
 
-  if ( fileName.isEmpty() && fileNames.isEmpty( ) )
+  if ( fileName.isEmpty() && fileNames.isEmpty() )
     return;
 
   if ( mStorageMode != GetMultipleFiles )
@@ -400,7 +405,7 @@ void QgsFileWidget::setFilePaths( const QStringList &filePaths )
     }
     else
     {
-      setFilePath( filePaths.first( ) );
+      setFilePath( filePaths.first() );
     }
   }
 }
@@ -512,11 +517,11 @@ QStringList QgsFileDropEdit::acceptableFilePaths( QDropEvent *event ) const
   QStringList paths;
   if ( event->mimeData()->hasUrls() )
   {
-    const QList< QUrl > urls = event->mimeData()->urls();
+    const QList<QUrl> urls = event->mimeData()->urls();
     rawPaths.reserve( urls.count() );
     for ( const QUrl &url : urls )
     {
-      const QString local =  url.toLocalFile();
+      const QString local = url.toLocalFile();
       if ( !rawPaths.contains( local ) )
         rawPaths.append( local );
     }

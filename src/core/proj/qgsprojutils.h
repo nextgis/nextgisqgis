@@ -165,21 +165,59 @@ class CORE_EXPORT QgsProjUtils
     static bool isDynamic( const PJ *crs );
 
     /**
-     * Given a PROJ crs (which may be a compound or bound crs, or some other type), extract a single crs
+     * Given a PROJ crs (which may be a compound or bound crs, or some other type), extract the horizontal crs
      * from it.
+     *
+     * If \a crs does not contain a horizontal CRS (i.e. it is a vertical CRS) NULLPTR will be returned.
+     *
+     * \see crsToVerticalCrs()
      */
-    static proj_pj_unique_ptr crsToSingleCrs( const PJ *crs );
+    static proj_pj_unique_ptr crsToHorizontalCrs( const PJ *crs );
+
+    /**
+     * Given a PROJ crs (which may be a compound crs, or some other type), extract the vertical crs
+     * from it.
+     *
+     * If \a crs does not contain a vertical CRS (i.e. it is a horizontal CRS) NULLPTR will be returned.
+     *
+     * \see crsToHorizontalCrs()
+     *
+     * \since QGIS 3.38
+     */
+    static proj_pj_unique_ptr crsToVerticalCrs( const PJ *crs );
+
+    /**
+     * Returns TRUE if a PROJ \a crs has a vertical axis.
+     *
+     * \since QGIS 3.38
+     */
+    static bool hasVerticalAxis( const PJ *crs );
+
+    /**
+     * Given a PROJ crs (which may be a compound or bound crs, or some other type), ensure that it is not
+     * a bound CRS object.
+     *
+     * Bound CRS objects will be returned as their source CRS, other types will be returned as a direct clone.
+     */
+    static proj_pj_unique_ptr unboundCrs( const PJ *crs );
 
     /**
      * Given a PROJ \a crs, attempt to retrieve the datum ensemble from it.
      *
-     * \warning This method requires PROJ 8.0 or later
-     *
-     * \throws QgsNotSupportedException on QGIS builds based on PROJ 7 or earlier.
+     * \note In the case of a compound \a crs, this method will always return the datum ensemble for the horizontal component.
      *
      * \since QGIS 3.20
      */
     static proj_pj_unique_ptr crsToDatumEnsemble( const PJ *crs );
+
+    /**
+     * Given a PROJ horizontal and vertical CRS, attempt to create a compound CRS from them.
+     *
+     * Optionally, the \a errors argument can be set to a string list to collect errors reported by PROJ when attempting to create the compound CRS.
+     *
+     * \since QGIS 3.38
+     */
+    static proj_pj_unique_ptr createCompoundCrs( const PJ *horizontalCrs, const PJ *verticalCrs, QStringList *errors = nullptr );
 
     /**
      * Attempts to identify a \a crs, matching it to a known authority and code within
@@ -199,6 +237,27 @@ class CORE_EXPORT QgsProjUtils
      */
     static QList< QgsDatumTransform::GridDetails > gridsUsed( const QString &proj );
 
+    /**
+     * Default QGIS proj log function.
+     *
+     * Uses QgsDebugError or QgsDebugMsgLevel to report errors in debug builds only.
+     */
+    static void proj_logger( void *user_data, int level, const char *message );
+
+    /**
+     * QGIS proj log function which collects errors to a QStringList.
+     *
+     * \warning The user_data argument passed to proj_log_func MUST be a QStringList object,
+     * and must exist for the duration where proj_collecting_logger is used. You MUST reset
+     * the proj_log_func to proj_logger before the user data QStringList is destroyed.
+     */
+    static void proj_collecting_logger( void *user_data, int level, const char *message );
+
+    /**
+     * QGIS proj log function which ignores errors.
+     */
+    static void proj_silent_logger( void *user_data, int level, const char *message );
+
 #if 0 // not possible in current Proj 6 API
 
     /**
@@ -212,13 +271,8 @@ class CORE_EXPORT QgsProjUtils
 
 #ifndef SIP_RUN
 
-#if PROJ_VERSION_MAJOR>=8
 struct pj_ctx;
 typedef struct pj_ctx PJ_CONTEXT;
-#else
-struct projCtx_t;
-typedef struct projCtx_t PJ_CONTEXT;
-#endif
 
 /**
  * \class QgsProjContext
@@ -251,6 +305,78 @@ class CORE_EXPORT QgsProjContext
 #else
     static QThreadStorage< QgsProjContext * > sProjContext;
 #endif
+};
+
+/**
+ * \ingroup core
+ *
+ * \brief Scoped object for temporary suppression of PROJ logging output.
+ *
+ * Temporarily sets the PROJ log function to one which suppresses errors for the lifetime of the object,
+ * before returning it to the default QGIS proj logging function on destruction.
+ *
+ * \note The collecting logger ONLY applies to the current thread.
+ *
+ * \note Not available in Python bindings
+ * \since QGIS 3.42
+ */
+class CORE_EXPORT QgsScopedProjSilentLogger
+{
+  public:
+
+    /**
+     * Constructor for QgsScopedProjSilentLogger.
+     *
+     * PROJ errors will be ignored.
+     */
+    QgsScopedProjSilentLogger();
+
+    /**
+     * Returns the PROJ logger back to the default QGIS PROJ logger.
+     */
+    ~QgsScopedProjSilentLogger();
+
+};
+
+
+
+/**
+ * \ingroup core
+ *
+ * \brief Scoped object for temporary swapping to an error-collecting PROJ log function.
+ *
+ * Temporarily sets the PROJ log function to one which collects errors for the lifetime of the object,
+ * before returning it to the default QGIS proj logging function on destruction.
+ *
+ * \note The collecting logger ONLY applies to the current thread.
+ *
+ * \note Not available in Python bindings
+ * \since QGIS 3.40
+ */
+class CORE_EXPORT QgsScopedProjCollectingLogger
+{
+  public:
+
+    /**
+     * Constructor for QgsScopedProjCollectingLogger.
+     *
+     * PROJ errors will be collected, and can be retrieved by calling errors().
+     */
+    QgsScopedProjCollectingLogger();
+
+    /**
+     * Returns the PROJ logger back to the default QGIS PROJ logger.
+     */
+    ~QgsScopedProjCollectingLogger();
+
+    /**
+     * Returns the (possibly empty) list of collected errors.
+     */
+    QStringList errors() const { return mProjErrors; }
+
+  private:
+
+    QStringList mProjErrors;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS( QgsProjUtils::IdentifyFlags )

@@ -25,8 +25,7 @@
 /**
  * \ingroup core
  * \class QgsHtmlUtils
- * \brief Class for HTML utilities.
- * \since QGIS 3.0
+ * \brief Contains utilities for working with HTML.
  */
 class CORE_EXPORT QgsHtmlUtils
 {

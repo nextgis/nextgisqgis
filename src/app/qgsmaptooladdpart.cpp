@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmaptooladdpart.h"
+#include "moc_qgsmaptooladdpart.cpp"
 #include "qgsadvanceddigitizingdockwidget.h"
 #include "qgscurvepolygon.h"
 #include "qgsgeometry.h"
@@ -162,6 +163,7 @@ void QgsMapToolAddPart::finalizeEditCommand( QgsVectorLayer *layer, Qgis::Geomet
     case Qgis::GeometryOperationResult::LayerNotEditable:
     case Qgis::GeometryOperationResult::NothingHappened:
     case Qgis::GeometryOperationResult::SplitCannotSplitPoint:
+    case Qgis::GeometryOperationResult::GeometryTypeHasChanged:
       // Should not reach here
       // Other OperationResults should not be returned by addPart
       errorMessage = tr( "Unexpected OperationResult: %1" ).arg( qgsEnumValueToKey( errorCode ) );
@@ -211,8 +213,7 @@ QgsVectorLayer *QgsMapToolAddPart::getLayerAndCheckSelection()
     QgsFeatureIterator selectedFeatures = layer->getSelectedFeatures();
     QgsFeature selectedFeature;
     selectedFeatures.nextFeature( selectedFeature );
-    if ( QgsWkbTypes::isSingleType( layer->wkbType() ) &&
-         selectedFeature.geometry().constGet() )
+    if ( QgsWkbTypes::isSingleType( layer->wkbType() ) && selectedFeature.geometry().constGet() )
     {
       selectionErrorMsg = tr( "This layer does not support multipart geometries." );
     }
@@ -228,4 +229,3 @@ QgsVectorLayer *QgsMapToolAddPart::getLayerAndCheckSelection()
   else
     return nullptr;
 }
-

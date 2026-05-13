@@ -36,7 +36,7 @@ class QgsProject;
  *
  * \ingroup core
  *
- * \brief Class allowing to manage the auxiliary storage for a vector layer.
+ * \brief Allows managing the auxiliary storage for a vector layer.
  *
  * Such auxiliary data are data used mostly for the needs of QGIS (symbology)
  * and have no real interest in being stored with the native raw geospatial
@@ -56,7 +56,6 @@ class QgsProject;
  * Cascade". Thus, auxiliary fields are editable even if the
  * source layer is not and edition of a joined field is also possible.
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsAuxiliaryLayer : public QgsVectorLayer
 {
@@ -74,9 +73,6 @@ class CORE_EXPORT QgsAuxiliaryLayer : public QgsVectorLayer
      */
     QgsAuxiliaryLayer( const QString &pkField, const QString &filename, const QString &table, QgsVectorLayer *vlayer );
 
-    /**
-     * Copy constructor deactivated
-     */
     QgsAuxiliaryLayer( const QgsAuxiliaryLayer &rhs ) = delete;
 
     QgsAuxiliaryLayer &operator=( QgsAuxiliaryLayer const &rhs ) = delete;
@@ -280,9 +276,8 @@ class CORE_EXPORT QgsAuxiliaryLayer : public QgsVectorLayer
  *
  * \ingroup core
  *
- * \brief Class providing some utility methods to manage auxiliary storage.
+ * \brief Providing some utility methods to manage auxiliary storage.
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsAuxiliaryStorage
 {
@@ -324,9 +319,6 @@ class CORE_EXPORT QgsAuxiliaryStorage
      */
     QgsAuxiliaryStorage( const QString &filename = QString(), bool copy = true );
 
-    /**
-     * Destructor.
-     */
     virtual ~QgsAuxiliaryStorage();
 
     /**

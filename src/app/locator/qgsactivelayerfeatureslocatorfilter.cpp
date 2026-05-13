@@ -17,6 +17,7 @@
 
 #include "qgisapp.h"
 #include "qgsactivelayerfeatureslocatorfilter.h"
+#include "moc_qgsactivelayerfeatureslocatorfilter.cpp"
 #include "qgsexpressioncontextutils.h"
 #include "qgsfeatureaction.h"
 #include "qgsiconutils.h"
@@ -63,8 +64,11 @@ QStringList QgsActiveLayerFeaturesLocatorFilter::prepare( const QString &string,
   QgsSettings settings;
   mMaxTotalResults = settings.value( QStringLiteral( "locator_filters/active_layer_features/limit_global" ), 30, QgsSettings::App ).toInt();
 
-  QgsVectorLayer *layer = qobject_cast< QgsVectorLayer *>( QgisApp::instance()->activeLayer() );
+  QgsVectorLayer *layer = qobject_cast<QgsVectorLayer *>( QgisApp::instance()->activeLayer() );
   if ( !layer )
+    return QStringList();
+
+  if ( !layer->flags().testFlag( QgsMapLayer::Searchable ) )
     return QStringList();
 
   mLayerIsSpatial = layer->isSpatial();
@@ -85,11 +89,11 @@ QStringList QgsActiveLayerFeaturesLocatorFilter::prepare( const QString &string,
     QgsFeatureRequest req;
     req.setSubsetOfAttributes( qgis::setToList( mDispExpression.referencedAttributeIndexes( layer->fields() ) ) );
     if ( !mDispExpression.needsGeometry() )
-      req.setFlags( QgsFeatureRequest::NoGeometry );
+      req.setFlags( Qgis::FeatureRequestFlag::NoGeometry );
     QString enhancedSearch = searchString;
     enhancedSearch.replace( ' ', '%' );
     req.setFilterExpression( QStringLiteral( "%1 ILIKE '%%2%'" )
-                             .arg( layer->displayExpression(), enhancedSearch ) );
+                               .arg( layer->displayExpression(), enhancedSearch ) );
     req.setLimit( mMaxTotalResults );
     mDisplayTitleIterator = layer->getFeatures( req );
   }
@@ -105,7 +109,7 @@ QStringList QgsActiveLayerFeaturesLocatorFilter::prepare( const QString &string,
   QgsAttributeList subsetOfAttributes = qgis::setToList( mDispExpression.referencedAttributeIndexes( layer->fields() ) );
   for ( const QgsField &field : fields )
   {
-    if ( field.configurationFlags().testFlag( QgsField::ConfigurationFlag::NotSearchable ) )
+    if ( field.configurationFlags().testFlag( Qgis::FieldConfigurationFlag::NotSearchable ) )
       continue;
 
     if ( isRestricting && !field.name().startsWith( _fieldRestriction ) )
@@ -128,10 +132,9 @@ QStringList QgsActiveLayerFeaturesLocatorFilter::prepare( const QString &string,
     // the completion list (returned by the current method) is used by the locator line edit directly
     completionList.append( QStringLiteral( "@%1 " ).arg( field.name() ) );
 
-    if ( field.type() == QVariant::String )
+    if ( field.type() == QMetaType::Type::QString )
     {
-      expressionParts << QStringLiteral( "%1 ILIKE '%%2%'" ).arg( QgsExpression::quotedColumnRef( field.name() ),
-                      searchString );
+      expressionParts << QStringLiteral( "%1 ILIKE '%%2%'" ).arg( QgsExpression::quotedColumnRef( field.name() ), searchString );
     }
     else if ( allowNumeric && field.isNumeric() )
     {
@@ -143,7 +146,7 @@ QStringList QgsActiveLayerFeaturesLocatorFilter::prepare( const QString &string,
 
   QgsFeatureRequest req;
   if ( !mDispExpression.needsGeometry() )
-    req.setFlags( QgsFeatureRequest::NoGeometry );
+    req.setFlags( Qgis::FeatureRequestFlag::NoGeometry );
   req.setFilterExpression( expression );
   if ( isRestricting )
     req.setSubsetOfAttributes( subsetOfAttributes );
@@ -175,9 +178,7 @@ void QgsActiveLayerFeaturesLocatorFilter::fetchResults( const QString &string, c
     QgsLocatorResult result;
     result.displayString = QStringLiteral( "@%1" ).arg( field );
     result.description = tr( "Limit the search to the field '%1'" ).arg( field );
-    result.userData = QVariantMap( {{QStringLiteral( "type" ), QVariant::fromValue( ResultType::FieldRestriction )},
-      {QStringLiteral( "search_text" ), QStringLiteral( "%1 @%2 " ).arg( prefix(), field ) }
-    } );
+    result.setUserData( QVariantMap( { { QStringLiteral( "type" ), QVariant::fromValue( ResultType::FieldRestriction ) }, { QStringLiteral( "search_text" ), QStringLiteral( "%1 @%2 " ).arg( prefix(), field ) } } ) );
     result.score = 1;
     emit resultFetched( result );
   }
@@ -194,16 +195,16 @@ void QgsActiveLayerFeaturesLocatorFilter::fetchResults( const QString &string, c
 
       QgsLocatorResult result;
 
-      result.displayString =  mDispExpression.evaluate( &mContext ).toString();
-      result.userData = QVariantMap(
-      {
-        {QStringLiteral( "type" ), QVariant::fromValue( ResultType::Feature )},
-        {QStringLiteral( "feature_id" ), f.id()},
-        {QStringLiteral( "layer_id" ), mLayerId},
-        {QStringLiteral( "layer_is_spatial" ), mLayerIsSpatial}
-      } );
+      result.displayString = mDispExpression.evaluate( &mContext ).toString();
+      result.setUserData( QVariantMap(
+        { { QStringLiteral( "type" ), QVariant::fromValue( ResultType::Feature ) },
+          { QStringLiteral( "feature_id" ), f.id() },
+          { QStringLiteral( "layer_id" ), mLayerId },
+          { QStringLiteral( "layer_is_spatial" ), mLayerIsSpatial }
+        }
+      ) );
       result.icon = mLayerIcon;
-      result.score = static_cast< double >( searchString.length() ) / result.displayString.size();
+      result.score = static_cast<double>( searchString.length() ) / result.displayString.size();
       if ( mLayerIsSpatial )
         result.actions << QgsLocatorResult::ResultAction( OpenForm, tr( "Open form…" ) );
 
@@ -250,15 +251,15 @@ void QgsActiveLayerFeaturesLocatorFilter::fetchResults( const QString &string, c
       continue; //not sure how this result slipped through...
 
     result.description = mDispExpression.evaluate( &mContext ).toString();
-    result.userData = QVariantMap(
-    {
-      {QStringLiteral( "type" ), QVariant::fromValue( ResultType::Feature )},
-      {QStringLiteral( "feature_id" ), f.id()},
-      {QStringLiteral( "layer_id" ), mLayerId},
-      {QStringLiteral( "layer_is_spatial" ), mLayerIsSpatial}
-    } );
+    result.setUserData( QVariantMap(
+      { { QStringLiteral( "type" ), QVariant::fromValue( ResultType::Feature ) },
+        { QStringLiteral( "feature_id" ), f.id() },
+        { QStringLiteral( "layer_id" ), mLayerId },
+        { QStringLiteral( "layer_is_spatial" ), mLayerIsSpatial }
+      }
+    ) );
     result.icon = mLayerIcon;
-    result.score = static_cast< double >( searchString.length() ) / result.displayString.size();
+    result.score = static_cast<double>( searchString.length() ) / result.displayString.size();
     if ( mLayerIsSpatial )
       result.actions << QgsLocatorResult::ResultAction( OpenForm, tr( "Open form…" ) );
 
@@ -278,7 +279,7 @@ void QgsActiveLayerFeaturesLocatorFilter::triggerResult( const QgsLocatorResult 
 
 void QgsActiveLayerFeaturesLocatorFilter::triggerResultFromAction( const QgsLocatorResult &result, const int actionId )
 {
-  QVariantMap data = result.userData.value<QVariantMap>();
+  QVariantMap data = result.userData().value<QVariantMap>();
   switch ( data.value( QStringLiteral( "type" ) ).value<ResultType>() )
   {
     case ResultType::Feature:
@@ -326,7 +327,7 @@ void QgsActiveLayerFeaturesLocatorFilter::openConfigWidget( QWidget *parent )
 {
   QString key = "locator_filters/active_layer_features";
   QgsSettings settings;
-  std::unique_ptr<QDialog> dlg( new QDialog( parent ) );
+  auto dlg = std::make_unique<QDialog>( parent );
   dlg->restoreGeometry( settings.value( QStringLiteral( "Windows/%1/geometry" ).arg( key ) ).toByteArray() );
   dlg->setWindowTitle( "All layers features locator filter" );
   QFormLayout *formLayout = new QFormLayout;
@@ -338,8 +339,7 @@ void QgsActiveLayerFeaturesLocatorFilter::openConfigWidget( QWidget *parent )
   QDialogButtonBox *buttonbBox = new QDialogButtonBox( QDialogButtonBox::Ok | QDialogButtonBox::Cancel, dlg.get() );
   formLayout->addRow( buttonbBox );
   dlg->setLayout( formLayout );
-  connect( buttonbBox, &QDialogButtonBox::accepted, dlg.get(), [&]()
-  {
+  connect( buttonbBox, &QDialogButtonBox::accepted, dlg.get(), [&]() {
     settings.setValue( QStringLiteral( "%1/limit_global" ).arg( key ), globalLimitSpinBox->value(), QgsSettings::App );
     dlg->accept();
   } );

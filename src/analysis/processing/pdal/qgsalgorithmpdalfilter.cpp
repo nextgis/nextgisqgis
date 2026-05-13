@@ -76,12 +76,10 @@ QStringList QgsPdalFilterAlgorithm::createArgumentLists( const QVariantMap &para
 
   const QString outputName = parameterAsOutputLayer( parameters, QStringLiteral( "OUTPUT" ), context );
   QString outputFile = fixOutputFileName( layer->source(), outputName, context );
+  checkOutputFormat( layer->source(), outputFile );
   setOutputValue( QStringLiteral( "OUTPUT" ), outputFile );
 
-  QStringList args = { QStringLiteral( "translate" ),
-                       QStringLiteral( "--input=%1" ).arg( layer->source() ),
-                       QStringLiteral( "--output=%1" ).arg( outputFile )
-                     };
+  QStringList args = { QStringLiteral( "translate" ), QStringLiteral( "--input=%1" ).arg( layer->source() ), QStringLiteral( "--output=%1" ).arg( outputFile ) };
 
 
   const QString filterExpression = parameterAsString( parameters, QStringLiteral( "FILTER_EXPRESSION" ), context ).trimmed();
@@ -97,20 +95,19 @@ QStringList QgsPdalFilterAlgorithm::createArgumentLists( const QVariantMap &para
     {
       const QgsRectangle extent = parameterAsExtent( parameters, QStringLiteral( "FILTER_EXTENT" ), context, layer->crs() );
       args << QStringLiteral( "--bounds=([%1, %2], [%3, %4])" )
-           .arg( extent.xMinimum() )
-           .arg( extent.xMaximum() )
-           .arg( extent.yMinimum() )
-           .arg( extent.yMaximum() );
-
+                .arg( extent.xMinimum() )
+                .arg( extent.xMaximum() )
+                .arg( extent.yMinimum() )
+                .arg( extent.yMaximum() );
     }
     else
     {
       const QgsRectangle extent = parameterAsExtent( parameters, QStringLiteral( "FILTER_EXTENT" ), context );
       args << QStringLiteral( "--bounds=([%1, %2], [%3, %4])" )
-           .arg( extent.xMinimum() )
-           .arg( extent.xMaximum() )
-           .arg( extent.yMinimum() )
-           .arg( extent.yMaximum() );
+                .arg( extent.xMinimum() )
+                .arg( extent.xMaximum() )
+                .arg( extent.yMinimum() )
+                .arg( extent.yMaximum() );
     }
   }
 

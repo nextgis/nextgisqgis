@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgsmaptoolshaperegularpolygon2points.h"
+#include "moc_qgsmaptoolshaperegularpolygon2points.cpp"
 #include "qgsgeometryrubberband.h"
 #include "qgspoint.h"
 #include "qgsmapmouseevent.h"
@@ -89,9 +90,9 @@ void QgsMapToolShapeRegularPolygon2Points::cadCanvasMoveEvent( QgsMapMouseEvent 
 {
   Q_UNUSED( mode )
 
-  const QgsPoint point =  mParentTool->mapPoint( *e );
+  const QgsPoint point = mParentTool->mapPoint( *e );
 
-  if ( mTempRubberBand )
+  if ( mTempRubberBand && !mPoints.isEmpty() )
   {
     mRegularPolygon = QgsRegularPolygon( mPoints.at( 0 ), point, mNumberSidesSpinBox->value() );
     mTempRubberBand->setGeometry( mRegularPolygon.toPolygon() );

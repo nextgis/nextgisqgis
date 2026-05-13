@@ -16,11 +16,14 @@
  ***************************************************************************/
 
 #include "qgstiledownloadmanager.h"
+#include "moc_qgstiledownloadmanager.cpp"
 
 #include "qgslogger.h"
 #include "qgsnetworkaccessmanager.h"
 #include "qgsrangerequestcache.h"
 #include "qgssettings.h"
+#include "qgssettingsregistrycore.h"
+#include "qgssettingsentryimpl.h"
 
 #include <QElapsedTimer>
 #include <QNetworkReply>
@@ -92,7 +95,9 @@ void QgsTileDownloadManagerWorker::queueUpdated()
       QgsDebugMsgLevel( QStringLiteral( "Tile download manager: starting request: " ) + it->request.url().toString(), 2 );
       // start entries which are not in progress
 
-      it->networkReply = QgsNetworkAccessManager::instance()->get( it->request );
+      QNetworkRequest request( it->request );
+      request.setAttribute( QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy );
+      it->networkReply = QgsNetworkAccessManager::instance()->get( request );
       connect( it->networkReply, &QNetworkReply::finished, it->objWorker, &QgsTileDownloadManagerReplyWorkerObject::replyFinished );
 
       ++mManager->mStats.networkRequestsStarted;
@@ -190,7 +195,7 @@ QgsTileDownloadManager::QgsTileDownloadManager()
   mRangesCache.reset( new QgsRangeRequestCache );
 
   const QgsSettings settings;
-  QString cacheDirectory = settings.value( QStringLiteral( "cache/directory" ) ).toString();
+  QString cacheDirectory = QgsSettingsRegistryCore::settingsNetworkCacheDirectory->value();
   if ( cacheDirectory.isEmpty() )
     cacheDirectory = QStandardPaths::writableLocation( QStandardPaths::CacheLocation );
   if ( !cacheDirectory.endsWith( QDir::separator() ) )
@@ -198,9 +203,8 @@ QgsTileDownloadManager::QgsTileDownloadManager()
     cacheDirectory.push_back( QDir::separator() );
   }
   cacheDirectory += QLatin1String( "http-ranges" );
-  const qint64 cacheSize = settings.value( QStringLiteral( "cache/size" ), 256 * 1024 * 1024 ).toLongLong();
-
   mRangesCache->setCacheDirectory( cacheDirectory );
+  qint64 cacheSize = QgsSettingsRegistryCore::settingsNetworkCacheSize->value();
   mRangesCache->setCacheSize( cacheSize );
 }
 

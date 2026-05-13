@@ -170,6 +170,15 @@
             <normaloff>:/images/themes/default/propertyicons/editmetadata.svg</normaloff>:/images/themes/default/propertyicons/editmetadata.svg</iconset>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>QGIS Server</string>
+          </property>
+          <property name="icon">
+           <iconset resource="../../images/images.qrc">
+            <normaloff>:/images/themes/default/propertyicons/network_and_proxy.svg</normaloff>:/images/themes/default/propertyicons/network_and_proxy.svg</iconset>
+          </property>
+         </item>
         </widget>
        </item>
       </layout>
@@ -212,7 +221,7 @@
           <enum>QFrame::Plain</enum>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>6</number>
          </property>
          <widget class="QWidget" name="mOptsPage_Information">
           <layout class="QVBoxLayout" name="verticalLayout_20">
@@ -260,11 +269,23 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>661</width>
-                <height>507</height>
+                <width>664</width>
+                <height>505</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_7">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_14">
                  <item>
@@ -290,7 +311,7 @@
                  <property name="checkable">
                   <bool>false</bool>
                  </property>
-                 <property name="syncGroup" stdset="0">
+                 <property name="syncGroup">
                   <string notr="true">vectorgeneral</string>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_28">
@@ -298,7 +319,7 @@
                    <number>6</number>
                   </property>
                   <item>
-                   <widget class="QgsProjectionSelectionWidget" name="mCrsSelector" native="true">
+                   <widget class="QgsProjectionSelectionWidget" name="mCrsSelector">
                     <property name="focusPolicy">
                      <enum>Qt::StrongFocus</enum>
                     </property>
@@ -400,7 +421,7 @@
              <property name="checked">
               <bool>false</bool>
              </property>
-             <property name="syncGroup" stdset="0">
+             <property name="syncGroup">
               <string notr="true">rastergeneral</string>
              </property>
              <layout class="QGridLayout" name="_5">
@@ -420,11 +441,8 @@
                <number>6</number>
               </property>
               <item row="0" column="0" colspan="2">
-               <widget class="QgsScaleRangeWidget" name="mScaleRangeWidget" native="true">
+               <widget class="QgsScaleRangeWidget" name="mScaleRangeWidget">
                 <property name="toolTip">
-                 <string/>
-                </property>
-                <property name="whatsThis">
                  <string/>
                 </property>
                </widget>
@@ -462,13 +480,88 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="QFrame" name="metadataFrame">
+            <widget class="QgsScrollArea" name="scrollArea_2">
              <property name="frameShape">
               <enum>QFrame::NoFrame</enum>
              </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
+             <property name="widgetResizable">
+              <bool>true</bool>
              </property>
+             <widget class="QWidget" name="scrollAreaWidgetContents_6">
+              <property name="geometry">
+               <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>664</width>
+                <height>505</height>
+               </rect>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_11">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QFrame" name="metadataFrame">
+                 <property name="frameShape">
+                  <enum>QFrame::NoFrame</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="mOptsPage_Server">
+          <layout class="QVBoxLayout" name="verticalLayout_9">
+           <item>
+            <widget class="QgsScrollArea" name="scrollArea">
+             <property name="frameShape">
+              <enum>QFrame::NoFrame</enum>
+             </property>
+             <property name="widgetResizable">
+              <bool>true</bool>
+             </property>
+             <widget class="QWidget" name="scrollAreaWidgetContents">
+              <property name="geometry">
+               <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>652</width>
+                <height>493</height>
+               </rect>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_10">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QgsMapLayerServerPropertiesWidget" name="mMapLayerServerPropertiesWidget" native="true"/>
+               </item>
+              </layout>
+             </widget>
             </widget>
            </item>
           </layout>
@@ -540,20 +633,26 @@
    <container>1</container>
   </customwidget>
   <customwidget>
+   <class>QgsScaleRangeWidget</class>
+   <extends>QWidget</extends>
+   <header>qgsscalerangewidget.h</header>
+  </customwidget>
+  <customwidget>
    <class>QgsScrollArea</class>
    <extends>QScrollArea</extends>
    <header>qgsscrollarea.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>QgsScaleRangeWidget</class>
-   <extends>QWidget</extends>
-   <header>qgsscalerangewidget.h</header>
-  </customwidget>
-  <customwidget>
    <class>QgsWebView</class>
    <extends>QWidget</extends>
    <header>qgswebview.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QgsMapLayerServerPropertiesWidget</class>
+   <extends>QWidget</extends>
+   <header>qgsmaplayerserverpropertieswidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

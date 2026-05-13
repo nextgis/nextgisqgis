@@ -21,7 +21,7 @@
 /**
  * \ingroup core
  * \class QgsSettingsTree
- * \brief QgsSettingsTree holds the tree structure for the settings in QGIS core
+ * \brief Holds the tree structure for the settings in QGIS core.
  *
  * \see QgsSettingsEntryBase
  *
@@ -32,12 +32,12 @@ class CORE_EXPORT QgsSettingsTree
 
   public:
 
-#ifndef SIP_RUN
-
     /**
      * Returns the tree root node for the settings tree
      */
     static QgsSettingsTreeNode *treeRoot();
+
+#ifndef SIP_RUN
 
     // only create first level here
     static inline QgsSettingsTreeNode *sTreeApp = treeRoot()->createChildNode( QStringLiteral( "app" ) );
@@ -63,6 +63,11 @@ class CORE_EXPORT QgsSettingsTree
     static inline QgsSettingsTreeNode *sTreeWms = treeRoot()->createChildNode( QStringLiteral( "wms" ) );
     static inline QgsSettingsTreeNode *sTreeMeasure = treeRoot()->createChildNode( QStringLiteral( "measure" ) );
     static inline QgsSettingsTreeNode *sTreeAnnotations = treeRoot()->createChildNode( QStringLiteral( "annotations" ) );
+    static inline QgsSettingsTreeNode *sTreeNetworkCache = treeRoot()->createChildNode( QStringLiteral( "cache" ) );
+    static inline QgsSettingsTreeNode *sTreeAttributeTable = treeRoot()->createChildNode( QStringLiteral( "attribute-table" ) );
+    static inline QgsSettingsTreeNode *sTreeWindowState = sTreeGui->createChildNode( QStringLiteral( "window-state" ) );
+    static inline QgsSettingsTreeNode *sTreeAuthentication = treeRoot()->createChildNode( QStringLiteral( "authentication" ) );
+    static inline QgsSettingsTreeNode *sTreeDatabase = treeRoot()->createChildNode( QStringLiteral( "database" ) );
 
 #endif
 

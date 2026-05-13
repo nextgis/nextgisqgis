@@ -33,7 +33,7 @@ QString QgsAspectAlgorithm::displayName() const
 
 QStringList QgsAspectAlgorithm::tags() const
 {
-  return QObject::tr( "dem,aspect,terrain" ).split( ',' );
+  return QObject::tr( "dem,aspect,terrain,slope" ).split( ',' );
 }
 
 QString QgsAspectAlgorithm::group() const
@@ -54,6 +54,11 @@ QString QgsAspectAlgorithm::shortHelpString() const
                         "the slope direction: starting from North (0°) and continuing clockwise." );
 }
 
+QString QgsAspectAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Generates a raster layer representing the slope direction from a Digital Terrain Model." );
+}
+
 QgsAspectAlgorithm *QgsAspectAlgorithm::createInstance() const
 {
   return new QgsAspectAlgorithm();
@@ -62,8 +67,7 @@ QgsAspectAlgorithm *QgsAspectAlgorithm::createInstance() const
 void QgsAspectAlgorithm::initAlgorithm( const QVariantMap & )
 {
   addParameter( new QgsProcessingParameterRasterLayer( QStringLiteral( "INPUT" ), QObject::tr( "Elevation layer" ) ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "Z_FACTOR" ), QObject::tr( "Z factor" ),
-                QgsProcessingParameterNumber::Double, 1, false, 0 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "Z_FACTOR" ), QObject::tr( "Z factor" ), Qgis::ProcessingNumberParameterType::Double, 1, false, 0 ) );
 
   addParameter( new QgsProcessingParameterRasterDestination( QStringLiteral( "OUTPUT" ), QObject::tr( "Aspect" ) ) );
 }

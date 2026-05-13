@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/editorwidgets/qgsrelationreferencewidget.h                   *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -19,6 +19,9 @@
 
 class QgsRelationReferenceWidget : QWidget
 {
+%Docstring(signature="appended")
+A widget which shows related features.
+%End
 
 %TypeHeaderCode
 #include "qgsrelationreferencewidget.h"
@@ -30,7 +33,6 @@ class QgsRelationReferenceWidget : QWidget
       sipType = NULL;
 %End
   public:
-
     enum CanvasExtent
     {
       Fixed,
@@ -46,12 +48,13 @@ class QgsRelationReferenceWidget : QWidget
 
     void setRelationEditable( bool editable );
 
- void setForeignKey( const QVariant &value ) /Deprecated/;
+ void setForeignKey( const QVariant &value ) /Deprecated="Since 3.10. Use setForeignKeys."/;
 %Docstring
 this sets the related feature using from the foreign key
 
-.. deprecated:: QGIS 3.10
-   use setForeignKeys
+.. deprecated:: 3.10
+
+   Use setForeignKeys.
 %End
 
     void setForeignKeys( const QVariantList &values );
@@ -61,11 +64,11 @@ Sets the related feature using the foreign keys
 .. versionadded:: 3.10
 %End
 
- QVariant foreignKey() const /Deprecated/;
+ QVariant foreignKey() const /Deprecated="Since 3.10. "/;
 %Docstring
 returns the related feature foreign key
 
-.. deprecated:: QGIS 3.10
+.. deprecated:: 3.10
 %End
 
 
@@ -100,7 +103,8 @@ determines if the drop-down is enabled
 
     bool allowMapIdentification();
 %Docstring
-determines if the widget offers the possibility to select the related feature on the map (using a dedicated map tool)
+determines if the widget offers the possibility to select the related
+feature on the map (using a dedicated map tool)
 %End
     void setAllowMapIdentification( bool allowMapIdentification );
 
@@ -124,8 +128,8 @@ Determines if the filters are chained
 
     void setChainFilters( bool chainFilters );
 %Docstring
-Set if filters are chained.
-Chained filters restrict the option of subsequent filters based on the selection of a previous filter.
+Set if filters are chained. Chained filters restrict the option of
+subsequent filters based on the selection of a previous filter.
 
 :param chainFilters: If chaining should be enabled
 %End
@@ -136,35 +140,29 @@ Returns the currently set filter expression.
 %End
     void setFilterExpression( const QString &filterExpression );
 %Docstring
-If not empty, will be used as filter expression.
-Only if this evaluates to ``True``, the value will be shown.
+If not empty, will be used as filter expression. Only if this evaluates
+to ``True``, the value will be shown.
 %End
 
     QgsFeature referencedFeature() const;
 %Docstring
-Returns the related feature (from the referenced layer)
-if no feature is related, it returns an invalid feature
+Returns the related feature (from the referenced layer) if no feature is
+related, it returns an invalid feature
 %End
 
     void showIndeterminateState();
 %Docstring
 Sets the widget to display in an indeterminate "mixed value" state.
-
-.. versionadded:: 2.16
 %End
 
     bool allowAddFeatures() const;
 %Docstring
 Determines if a button for adding new features should be shown.
-
-.. versionadded:: 2.16
 %End
 
     void setAllowAddFeatures( bool allowAddFeatures );
 %Docstring
 Determines if a button for adding new features should be shown.
-
-.. versionadded:: 2.16
 %End
 
     QgsRelation relation() const;
@@ -181,6 +179,13 @@ Set the current form feature (from the referencing layer)
 .. versionadded:: 3.10
 %End
 
+    void setParentFormFeature( const QgsFeature &parentFormFeature );
+%Docstring
+Set the current parent form feature
+
+.. versionadded:: 3.42.2
+%End
+
     QString referencedLayerDataSource() const;
 %Docstring
 Returns the public data source of the referenced layer
@@ -190,7 +195,8 @@ Returns the public data source of the referenced layer
 
     void setReferencedLayerDataSource( const QString &referencedLayerDataSource );
 %Docstring
-Set the public data source of the referenced layer to ``referencedLayerDataSource``
+Set the public data source of the referenced layer to
+``referencedLayerDataSource``
 
 .. versionadded:: 3.12
 %End
@@ -204,7 +210,8 @@ Returns the data provider key of the referenced layer
 
     void setReferencedLayerProviderKey( const QString &referencedLayerProviderKey );
 %Docstring
-Set the data provider key of the referenced layer to ``referencedLayerProviderKey``
+Set the data provider key of the referenced layer to
+``referencedLayerProviderKey``
 
 .. versionadded:: 3.12
 %End
@@ -251,7 +258,6 @@ Set the limit of fetched features (0 means all features)
 .. versionadded:: 3.32
 %End
 
-
   public slots:
     void openForm();
 %Docstring
@@ -268,6 +274,14 @@ activate the map tool to select a new related feature on the map
 unset the currently related feature
 %End
 
+    bool saveReferencedAttributeForm();
+%Docstring
+Trigger save of the embedded referenced attribute form. Returns ``True``
+on success or if no embedded form is present.
+
+.. versionadded:: 3.42
+%End
+
   protected:
     virtual void showEvent( QShowEvent *e );
 
@@ -276,14 +290,14 @@ unset the currently related feature
 
   signals:
 
- void foreignKeyChanged( const QVariant & ) /Deprecated/;
+ void foreignKeyChanged( const QVariant &key ) /Deprecated="Since 3.10. "/;
 %Docstring
 Emitted when the foreign key changed
 
-.. deprecated:: QGIS 3.10
+.. deprecated:: 3.10
 %End
 
-    void foreignKeysChanged( const QVariantList & );
+    void foreignKeysChanged( const QVariantList &keys );
 %Docstring
 Emitted when the foreign keys changed
 
@@ -297,5 +311,5 @@ Emitted when the foreign keys changed
  *                                                                      *
  * src/gui/editorwidgets/qgsrelationreferencewidget.h                   *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

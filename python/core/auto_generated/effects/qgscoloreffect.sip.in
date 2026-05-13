@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/effects/qgscoloreffect.h                                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -14,8 +14,6 @@ class QgsColorEffect : QgsPaintEffect /NoDefaultCtors/
 %Docstring(signature="appended")
 A paint effect which alters the colors (e.g., brightness, contrast) in a
 source picture.
-
-.. versionadded:: 2.9
 %End
 
 %TypeHeaderCode
@@ -34,6 +32,8 @@ Creates a new QgsColorEffect effect from a properties string map.
 
     QgsColorEffect();
 
+    virtual Qgis::PaintEffectFlags flags() const;
+
     virtual QString type() const;
     virtual QVariantMap properties() const;
 
@@ -46,9 +46,9 @@ Creates a new QgsColorEffect effect from a properties string map.
 %Docstring
 Sets the brightness modification for the effect.
 
-:param brightness: Valid values are between -255 and 255, where 0 represents
-                   no change, negative values indicate darkening and positive values indicate
-                   lightening
+:param brightness: Valid values are between -255 and 255, where 0
+                   represents no change, negative values indicate
+                   darkening and positive values indicate lightening
 
 .. seealso:: :py:func:`setBrightness`
 %End
@@ -57,9 +57,9 @@ Sets the brightness modification for the effect.
 %Docstring
 Returns the brightness modification for the effect.
 
-:return: brightness value. Values are between -255 and 255, where 0 represents
-         no change, negative values indicate darkening and positive values indicate
-         lightening
+:return: brightness value. Values are between -255 and 255, where 0
+         represents no change, negative values indicate darkening and
+         positive values indicate lightening
 
 .. seealso:: :py:func:`setBrightness`
 %End
@@ -68,9 +68,9 @@ Returns the brightness modification for the effect.
 %Docstring
 Sets the contrast modification for the effect.
 
-:param contrast: Valid values are between -100 and 100, where 0 represents
-                 no change, negative values indicate less contrast and positive values indicate
-                 greater contrast
+:param contrast: Valid values are between -100 and 100, where 0
+                 represents no change, negative values indicate less
+                 contrast and positive values indicate greater contrast
 
 .. seealso:: :py:func:`setContrast`
 %End
@@ -79,9 +79,9 @@ Sets the contrast modification for the effect.
 %Docstring
 Returns the contrast modification for the effect.
 
-:return: contrast value. Values are between -100 and 100, where 0 represents
-         no change, negative values indicate less contrast and positive values indicate
-         greater contrast
+:return: contrast value. Values are between -100 and 100, where 0
+         represents no change, negative values indicate less contrast
+         and positive values indicate greater contrast
 
 .. seealso:: :py:func:`setContrast`
 %End
@@ -90,8 +90,9 @@ Returns the contrast modification for the effect.
 %Docstring
 Sets the saturation modification for the effect.
 
-:param saturation: Valid values are between 0 and 2.0, where 1.0 represents
-                   no change, 0.0 represents totally desaturated (grayscale), and positive values indicate
+:param saturation: Valid values are between 0 and 2.0, where 1.0
+                   represents no change, 0.0 represents totally
+                   desaturated (grayscale), and positive values indicate
                    greater saturation
 
 .. seealso:: :py:func:`saturation`
@@ -101,9 +102,9 @@ Sets the saturation modification for the effect.
 %Docstring
 Returns the saturation modification for the effect.
 
-:return: saturation value. Values are between 0 and 2.0, where 1.0 represents
-         no change, 0.0 represents totally desaturated (grayscale), and positive values indicate
-         greater saturation
+:return: saturation value. Values are between 0 and 2.0, where 1.0
+         represents no change, 0.0 represents totally desaturated
+         (grayscale), and positive values indicate greater saturation
 
 .. seealso:: :py:func:`setSaturation`
 %End
@@ -212,8 +213,8 @@ Returns the strength used for colorizing a picture. This is only used if
 %Docstring
 Sets the ``opacity`` for the effect.
 
-:param opacity: double between 0 and 1 inclusive, where 0 is fully transparent
-                and 1 is fully opaque
+:param opacity: double between 0 and 1 inclusive, where 0 is fully
+                transparent and 1 is fully opaque
 
 .. seealso:: :py:func:`opacity`
 %End
@@ -222,8 +223,8 @@ Sets the ``opacity`` for the effect.
 %Docstring
 Returns the opacity for the effect.
 
-:return: opacity value between 0 and 1 inclusive, where 0 is fully transparent
-         and 1 is fully opaque.
+:return: opacity value between 0 and 1 inclusive, where 0 is fully
+         transparent and 1 is fully opaque.
 
 .. seealso:: :py:func:`setOpacity`
 %End
@@ -261,5 +262,5 @@ Returns the blend mode for the effect
  *                                                                      *
  * src/core/effects/qgscoloreffect.h                                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/attributetable/qgsattributetableview.h                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -16,15 +16,15 @@ class QgsAttributeTableView : QgsTableView
 %Docstring(signature="appended")
 Provides a table view of features of a :py:class:`QgsVectorLayer`.
 
-This can either be used as a standalone widget. :py:class:`QgsBrowser` features a reference implementation.
-Or this can be used within the :py:class:`QgsDualView` stacked widget.
+This can either be used as a standalone widget. :py:class:`QgsBrowser`
+features a reference implementation. Or this can be used within the
+:py:class:`QgsDualView` stacked widget.
 %End
 
 %TypeHeaderCode
 #include "qgsattributetableview.h"
 %End
   public:
-
     QgsAttributeTableView( QWidget *parent /TransferThis/ = 0 );
 %Docstring
 Constructor for QgsAttributeTableView
@@ -36,15 +36,16 @@ Constructor for QgsAttributeTableView
 %Docstring
 setFeatureSelectionManager
 
-:param featureSelectionManager:
+:param featureSelectionManager: 
 %End
 
     virtual bool eventFilter( QObject *object, QEvent *event );
 
 %Docstring
-This event filter is installed on the verticalHeader to intercept mouse press and release
-events. These are used to disable / enable live synchronisation with the map canvas selection
-which can be slow due to recurring canvas repaints.
+This event filter is installed on the verticalHeader to intercept mouse
+press and release events. These are used to disable / enable live
+synchronisation with the map canvas selection which can be slow due to
+recurring canvas repaints.
 
 :param object: The object which is the target of the event.
 :param event: The intercepted event
@@ -54,17 +55,17 @@ which can be slow due to recurring canvas repaints.
 
     void setAttributeTableConfig( const QgsAttributeTableConfig &config );
 %Docstring
-Set the attribute table config which should be used to control
-the appearance of the attribute table.
-
-.. versionadded:: 2.16
+Set the attribute table config which should be used to control the
+appearance of the attribute table.
 %End
 
     QList<QgsFeatureId> selectedFeaturesIds() const;
 %Docstring
-Returns the selected features in the attribute table in table sorted order.
+Returns the selected features in the attribute table in table sorted
+order.
 
-:return: The selected features in the attribute table in the order sorted by the table.
+:return: The selected features in the attribute table in the order
+         sorted by the table.
 
 .. versionadded:: 3.4
 %End
@@ -73,24 +74,26 @@ Returns the selected features in the attribute table in table sorted order.
 %Docstring
 Scroll to a feature with a given ``fid``.
 
-Optionally a ``column`` can be specified, which will also bring that column into view.
+Optionally a ``column`` can be specified, which will also bring that
+column into view.
 
 .. versionadded:: 3.16
 %End
 
     void closeCurrentEditor();
 %Docstring
-Closes the editor delegate for the current item, committing its changes to the model.
+Closes the editor delegate for the current item, committing its changes
+to the model.
 
 .. versionadded:: 3.30
 %End
-  protected:
 
+  protected:
     virtual void mousePressEvent( QMouseEvent *event );
 
 %Docstring
-Called for mouse press events on a table cell.
-Disables selection change for these events.
+Called for mouse press events on a table cell. Disables selection change
+for these events.
 
 :param event: The mouse event
 %End
@@ -98,8 +101,8 @@ Disables selection change for these events.
     virtual void mouseReleaseEvent( QMouseEvent *event );
 
 %Docstring
-Called for mouse release events on a table cell.
-Disables selection change for these events.
+Called for mouse release events on a table cell. Disables selection
+change for these events.
 
 :param event: The mouse event
 %End
@@ -107,8 +110,8 @@ Disables selection change for these events.
     virtual void mouseMoveEvent( QMouseEvent *event );
 
 %Docstring
-Called for mouse move events on a table cell.
-Disables selection change for these events.
+Called for mouse move events on a table cell. Disables selection change
+for these events.
 
 :param event: The mouse event
 %End
@@ -116,8 +119,8 @@ Disables selection change for these events.
     virtual void keyPressEvent( QKeyEvent *event );
 
 %Docstring
-Called for key press events
-Disables selection change by only pressing an arrow key
+Called for key press events Disables selection change by only pressing
+an arrow key
 
 :param event: The mouse event
 %End
@@ -125,8 +128,9 @@ Disables selection change by only pressing an arrow key
     virtual void contextMenuEvent( QContextMenuEvent *event );
 
 %Docstring
-Is called when the context menu will be shown. Emits a :py:func:`~QgsAttributeTableView.willShowContextMenu` signal,
-so the menu can be populated by other parts of the application.
+Is called when the context menu will be shown. Emits a
+:py:func:`~QgsAttributeTableView.willShowContextMenu` signal, so the
+menu can be populated by other parts of the application.
 
 :param event: The associated event object.
 %End
@@ -143,11 +147,14 @@ Saves geometry to the settings on close
 
     void willShowContextMenu( QMenu *menu, const QModelIndex &atIndex );
 %Docstring
-Emitted in order to provide a hook to add additional* menu entries to the context menu.
+Emitted in order to provide a hook to add additional* menu entries to
+the context menu.
 
-:param menu: If additional QMenuItems are added, they will show up in the context menu.
-:param atIndex: The QModelIndex, to which the context menu belongs. Relative to the source model.
-                In most cases, this will be a :py:class:`QgsAttributeTableFilterModel`
+:param menu: If additional QMenuItems are added, they will show up in
+             the context menu.
+:param atIndex: The QModelIndex, to which the context menu belongs.
+                Relative to the source model. In most cases, this will
+                be a :py:class:`QgsAttributeTableFilterModel`
 %End
 
     void columnResized( int column, int width );
@@ -156,11 +163,14 @@ Emitted when a column in the view has been resized.
 
 :param column: column index (starts at 0)
 :param width: new width in pixel
-
-.. versionadded:: 2.16
 %End
 
-    void finished();
+ void finished() /Deprecated="Since 3.40. No longer used."/;
+%Docstring
+.. deprecated:: 3.40
+
+   No longer used.
+%End
 
   public slots:
     void repaintRequested( const QModelIndexList &indexes );
@@ -177,5 +187,5 @@ Emitted when a column in the view has been resized.
  *                                                                      *
  * src/gui/attributetable/qgsattributetableview.h                       *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

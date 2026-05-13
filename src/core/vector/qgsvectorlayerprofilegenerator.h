@@ -88,9 +88,9 @@ class CORE_EXPORT QgsVectorLayerProfileResults : public QgsAbstractProfileSurfac
     QgsProfileSnapResult snapPointToIndividualFeatures( const QgsProfilePoint &point, const QgsProfileSnapContext &context );
 
     void visitFeaturesAtPoint( const QgsProfilePoint &point, double maximumPointDistanceDelta, double maximumPointElevationDelta, double maximumSurfaceElevationDelta,
-                               const std::function< void( QgsFeatureId, double delta, double distance, double elevation ) > &visitor, bool visitWithin );
+                               const std::function< void( QgsFeatureId, double delta, double distance, double elevation ) > &visitor, bool visitWithin ) const;
     void visitFeaturesInRange( const QgsDoubleRange &distanceRange, const QgsDoubleRange &elevationRange,
-                               const std::function<void ( QgsFeatureId )> &visitor );
+                               const std::function<void ( QgsFeatureId )> &visitor ) const;
 };
 
 
@@ -120,21 +120,38 @@ class CORE_EXPORT QgsVectorLayerProfileGenerator : public QgsAbstractProfileSurf
 
   private:
 
+    // We may need to split mProfileCurve into multiple parts, this will be
+    // called for each part.
+    bool generateProfileInner( const QgsProfileGenerationContext &context = QgsProfileGenerationContext() );
+
     bool generateProfileForPoints();
     bool generateProfileForLines();
     bool generateProfileForPolygons();
 
-    double terrainHeight( double x, double y );
-    double featureZToHeight( double x, double y, double z, double offset );
+    void processIntersectionPoint( const QgsPoint *intersectionPoint, const QgsFeature &feature );
+    void processIntersectionCurve( const QgsLineString *intersectionCurve, const QgsFeature &feature );
 
-    void clampAltitudes( QgsLineString *lineString, const QgsPoint &centroid, double offset );
-    bool clampAltitudes( QgsPolygon *polygon, double offset );
+    QgsPoint interpolatePointOnTriangle( const QgsPolygon *triangle, double x, double y ) const;
+    void processTriangleIntersectForPoint( const QgsPolygon *triangle, const QgsPoint *intersect, QVector< QgsGeometry > &transformedParts, QVector< QgsGeometry > &crossSectionParts );
+    void processTriangleIntersectForLine( const QgsPolygon *triangle, const QgsLineString *intersect, QVector< QgsGeometry > &transformedParts, QVector< QgsGeometry > &crossSectionParts );
+    void processTriangleIntersectForPolygon( const QgsPolygon *triangle, const QgsPolygon *intersectionPolygon, QVector< QgsGeometry > &transformedParts, QVector< QgsGeometry > &crossSectionParts );
+
+    double tolerance() const;
+
+    double terrainHeight( double x, double y ) const;
+    double featureZToHeight( double x, double y, double z, double offset ) const;
+
+    void clampAltitudes( QgsLineString *lineString, const QgsPoint &centroid, double offset ) const;
+    bool clampAltitudes( QgsPolygon *polygon, double offset ) const;
 
     QString mId;
     std::unique_ptr<QgsFeedback> mFeedback = nullptr;
 
     std::unique_ptr< QgsCurve > mProfileCurve;
     std::unique_ptr< QgsGeos > mProfileCurveEngine;
+
+    std::unique_ptr<QgsAbstractGeometry> mProfileBufferedCurve;
+    std::unique_ptr< QgsGeos > mProfileBufferedCurveEngine;
 
     std::unique_ptr< QgsAbstractTerrainProvider > mTerrainProvider;
 
@@ -156,6 +173,8 @@ class CORE_EXPORT QgsVectorLayerProfileGenerator : public QgsAbstractProfileSurf
     Qgis::AltitudeBinding mBinding = Qgis::AltitudeBinding::Centroid;
     bool mExtrusionEnabled = false;
     double mExtrusionHeight = 0;
+    bool mCustomToleranceEnabled = false;
+    double mCustomTolerance = 0;
 
     QgsExpressionContext mExpressionContext;
     QgsFields mFields;

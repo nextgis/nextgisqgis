@@ -27,7 +27,6 @@ class QSlider;
  * \class QgsOpacityWidget
  * \ingroup gui
  * \brief A widget for setting an opacity value.
- * \since QGIS 3.0
  */
 class GUI_EXPORT QgsOpacityWidget : public QWidget
 {
@@ -35,7 +34,6 @@ class GUI_EXPORT QgsOpacityWidget : public QWidget
     Q_PROPERTY( double opacity READ opacity WRITE setOpacity NOTIFY opacityChanged )
 
   public:
-
     /**
      * Constructor for QgsOpacityWidget.
      */
@@ -74,10 +72,8 @@ class GUI_EXPORT QgsOpacityWidget : public QWidget
     void spinChanged( double value );
 
   private:
-
     QgsDoubleSpinBox *mSpinBox = nullptr;
     QSlider *mSlider = nullptr;
-
 };
 
 #endif // QGSOPACITYWIDGET_H

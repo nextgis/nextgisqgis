@@ -69,7 +69,7 @@ QgsQuadrilateral QgsQuadrilateral::rectangleFrom3Points( const QgsPoint &p1, con
   QgsQuadrilateral rect;
   double inclination = 90.0;
   double distance = 0;
-  const double azimuth = point1.azimuth( point2 ) + 90.0 * QgsGeometryUtils::leftOfLine( point3.x(), point3.y(), point1.x(), point1.y(), point2.x(), point2.y() );
+  const double azimuth = point1.azimuth( point2 ) + 90.0 * QgsGeometryUtilsBase::leftOfLine( point3.x(), point3.y(), point1.x(), point1.y(), point2.x(), point2.y() );
   switch ( mode )
   {
     case Distance:
@@ -385,7 +385,7 @@ QgsPointSequence QgsQuadrilateral::points() const
 
 QgsPolygon *QgsQuadrilateral::toPolygon( bool force2D ) const
 {
-  std::unique_ptr<QgsPolygon> polygon = std::make_unique< QgsPolygon >();
+  auto polygon = std::make_unique< QgsPolygon >();
   if ( !isValid() )
   {
     return polygon.release();
@@ -398,7 +398,7 @@ QgsPolygon *QgsQuadrilateral::toPolygon( bool force2D ) const
 
 QgsLineString *QgsQuadrilateral::toLineString( bool force2D ) const
 {
-  std::unique_ptr<QgsLineString> ext = std::make_unique< QgsLineString>();
+  auto ext = std::make_unique< QgsLineString>();
   if ( !isValid() )
   {
     return ext.release();

@@ -33,13 +33,10 @@
  *
  * \note not available in Python bindings
  *
- * \since QGIS 3.0
 */
-class GUI_EXPORT QgsLayoutReportSectionLabel: public QGraphicsRectItem
+class GUI_EXPORT QgsLayoutReportSectionLabel : public QGraphicsRectItem
 {
-
   public:
-
     /**
      * Constructor for QgsLayoutReportSectionLabel.
      */
@@ -51,11 +48,9 @@ class GUI_EXPORT QgsLayoutReportSectionLabel: public QGraphicsRectItem
     void setLabel( const QString &label );
 
   private:
-
-    QPointer< QgsLayout > mLayout;
-    QPointer< QgsLayoutView > mView;
+    QPointer<QgsLayout> mLayout;
+    QPointer<QgsLayoutView> mView;
     QString mLabel;
-
 };
 
 ///@endcond PRIVATE

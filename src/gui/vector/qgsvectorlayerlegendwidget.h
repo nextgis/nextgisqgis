@@ -40,7 +40,7 @@ class QgsVectorLayer;
  * \ingroup gui
  * \class QgsVectorLayerLegendWidget
  *
- * \brief A widget for configuration of options specific to vector layer's legend.
+ * \brief A widget for configuration of options specific to a vector layer's legend.
  */
 class GUI_EXPORT QgsVectorLayerLegendWidget : public QWidget
 {
@@ -74,7 +74,6 @@ class GUI_EXPORT QgsVectorLayerLegendWidget : public QWidget
     QgsFontButton *mTextOnSymbolFormatButton = nullptr;
     QPushButton *mTextOnSymbolFromExpressionButton = nullptr;
     QgsCollapsibleGroupBox *mTextOnSymbolGroupBox = nullptr;
-    QLabel *mTextOnSymbolLabel = nullptr;
     QgsCollapsibleGroupBox *mLabelLegendGroupBox = nullptr;
     QTreeWidget *mLabelLegendTreeWidget = nullptr;
     QLabel *mPlaceholderImageLabel = nullptr;

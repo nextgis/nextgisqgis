@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/annotations/qgsannotationpointtextitem.h                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -25,7 +25,8 @@ An annotation item which renders a text string at a point location.
 
     QgsAnnotationPointTextItem( const QString &text, QgsPointXY point );
 %Docstring
-Constructor for QgsAnnotationPointTextItem, containing the specified ``text`` at the specified ``point``.
+Constructor for QgsAnnotationPointTextItem, containing the specified
+``text`` at the specified ``point``.
 %End
     ~QgsAnnotationPointTextItem();
 
@@ -45,24 +46,25 @@ Creates a new text at point annotation item.
 
     virtual bool readXml( const QDomElement &element, const QgsReadWriteContext &context );
 
-    virtual QgsAnnotationPointTextItem *clone() /Factory/;
+    virtual QgsAnnotationPointTextItem *clone() const /Factory/;
 
     virtual QgsRectangle boundingBox() const;
 
     virtual QgsRectangle boundingBox( QgsRenderContext &context ) const;
 
-    virtual QList< QgsAnnotationItemNode > nodes() const;
+    virtual QList< QgsAnnotationItemNode > nodesV2( const QgsAnnotationItemEditContext &context ) const;
 
-    virtual Qgis::AnnotationItemEditOperationResult applyEdit( QgsAbstractAnnotationItemEditOperation *operation );
+    virtual Qgis::AnnotationItemEditOperationResult applyEditV2( QgsAbstractAnnotationItemEditOperation *operation, const QgsAnnotationItemEditContext &context );
 
-    virtual QgsAnnotationItemEditOperationTransientResults *transientEditResults( QgsAbstractAnnotationItemEditOperation *operation ) /Factory/;
+    virtual QgsAnnotationItemEditOperationTransientResults *transientEditResultsV2( QgsAbstractAnnotationItemEditOperation *operation, const QgsAnnotationItemEditContext &context ) /Factory/;
 
 
     QgsPointXY point() const;
 %Docstring
 Returns the point location of the text.
 
-The coordinate reference system for the point will be the parent layer's :py:func:`QgsAnnotationLayer.crs()`.
+The coordinate reference system for the point will be the parent layer's
+:py:func:`QgsAnnotationLayer.crs()`.
 
 .. seealso:: :py:func:`setPoint`
 %End
@@ -71,7 +73,8 @@ The coordinate reference system for the point will be the parent layer's :py:fun
 %Docstring
 Sets the ``point`` location of the text.
 
-The coordinate reference system for the point will be the parent layer's :py:func:`QgsAnnotationLayer.crs()`.
+The coordinate reference system for the point will be the parent layer's
+:py:func:`QgsAnnotationLayer.crs()`.
 
 .. seealso:: :py:func:`point`
 %End
@@ -120,14 +123,16 @@ Sets the text's rotation ``angle``, in degrees clockwise.
 
     Qt::Alignment alignment() const;
 %Docstring
-Returns the text's alignment relative to the reference :py:func:`~QgsAnnotationPointTextItem.point`.
+Returns the text's alignment relative to the reference
+:py:func:`~QgsAnnotationPointTextItem.point`.
 
 .. seealso:: :py:func:`setAlignment`
 %End
 
     void setAlignment( Qt::Alignment alignment );
 %Docstring
-Sets the text's ``alignment`` relative to the reference :py:func:`~QgsAnnotationPointTextItem.point`.
+Sets the text's ``alignment`` relative to the reference
+:py:func:`~QgsAnnotationPointTextItem.point`.
 
 .. seealso:: :py:func:`alignment`
 %End
@@ -159,5 +164,5 @@ Sets the rotation ``mode`` for the text item.
  *                                                                      *
  * src/core/annotations/qgsannotationpointtextitem.h                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

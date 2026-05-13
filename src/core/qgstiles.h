@@ -28,7 +28,9 @@ class QgsRenderContext;
 
 /**
  * \ingroup core
- * \brief Stores coordinates of a tile in a tile matrix set. Tile matrix is identified
+ * \brief Stores coordinates of a tile in a tile matrix set.
+ *
+ * Tile matrix is identified
  * by the zoomLevel(), and the position within tile matrix is given by column()
  * and row().
  *
@@ -77,19 +79,18 @@ class CORE_EXPORT QgsTileXYZ
  */
 CORE_EXPORT inline uint qHash( QgsTileXYZ id ) SIP_SKIP
 {
-  return id.column() + id.row() + id.zoomLevel();
-
   const uint h1 = qHash( static_cast< quint64 >( id.column( ) ) );
   const uint h2 = qHash( static_cast< quint64 >( id.row() ) );
   const uint h3 = qHash( static_cast< quint64 >( id.zoomLevel() ) );
-  return h1 ^ ( h2 << 1 ) ^ ( h3 );
+  return h1 ^ ( h2 << 1 ) ^ ( h3 << 2 );
 }
 
 
 /**
  * \ingroup core
- * \brief Range of tiles in a tile matrix to be rendered. The selection is rectangular,
- * given by start/end row and column numbers.
+ * \brief A range of tiles in a tile matrix.
+ *
+ * The selection is rectangular, given by start/end row and column numbers.
  *
  * \since QGIS 3.14
  */
@@ -111,6 +112,13 @@ class CORE_EXPORT QgsTileRange
     int startRow() const { return mStartRow; }
     //! Returns index of the last row in the range
     int endRow() const { return mEndRow; }
+
+    /**
+     * Returns the total number of tiles in the range.
+     *
+     * \since QGIS 3.44
+     */
+    int count() const { return isValid() ? ( mEndRow - mStartRow + 1 ) * ( mEndColumn - mStartColumn + 1 ) : 0; }
 
   private:
     int mStartColumn = -1;

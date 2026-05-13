@@ -40,8 +40,9 @@ class QgsAction;
 /**
  * \ingroup gui
  * \class QgsAttributeActionDialog
+ * \brief A dialog for configuring vector layer actions.
  */
-class GUI_EXPORT QgsAttributeActionDialog: public QWidget, private Ui::QgsAttributeActionDialogBase
+class GUI_EXPORT QgsAttributeActionDialog : public QWidget, private Ui::QgsAttributeActionDialogBase
 {
     Q_OBJECT
   private:
@@ -61,12 +62,11 @@ class GUI_EXPORT QgsAttributeActionDialog: public QWidget, private Ui::QgsAttrib
     enum Role
     {
       ActionType = Qt::UserRole,
-      ActionId  = Qt::UserRole + 1
+      ActionId = Qt::UserRole + 1
     };
 
   public:
-    QgsAttributeActionDialog( const QgsActionManager &actions,
-                              QWidget *parent = nullptr );
+    QgsAttributeActionDialog( const QgsActionManager &actions, QWidget *parent = nullptr );
 
     void init( const QgsActionManager &action, const QgsAttributeTableConfig &attributeTableConfig );
 
@@ -81,6 +81,7 @@ class GUI_EXPORT QgsAttributeActionDialog: public QWidget, private Ui::QgsAttrib
     void moveDown();
     void remove();
     void insert();
+    void duplicate();
     void addDefaultActions();
     void itemDoubleClicked( QTableWidgetItem *item );
     void updateButtons();

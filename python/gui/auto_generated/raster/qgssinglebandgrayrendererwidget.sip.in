@@ -3,21 +3,30 @@
  *                                                                      *
  * src/gui/raster/qgssinglebandgrayrendererwidget.h                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 
 
 
-class QgsSingleBandGrayRendererWidget: QgsRasterRendererWidget
+class QgsSingleBandGrayRendererWidget : QgsRasterRendererWidget
 {
+%Docstring(signature="appended")
+A widget for configuring a :py:class:`QgsSingleBandGrayRenderer`.
+%End
 
 %TypeHeaderCode
 #include "qgssinglebandgrayrendererwidget.h"
 %End
   public:
     QgsSingleBandGrayRendererWidget( QgsRasterLayer *layer, const QgsRectangle &extent = QgsRectangle() );
+%Docstring
+Constructor for QgsSingleBandGrayRendererWidget.
+
+:param layer: associated raster layer
+:param extent: current canvas extent
+%End
 
     static QgsRasterRendererWidget *create( QgsRasterLayer *layer, const QgsRectangle &extent ) /Factory/;
 
@@ -61,5 +70,5 @@ called when new min/max values are loaded
  *                                                                      *
  * src/gui/raster/qgssinglebandgrayrendererwidget.h                     *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

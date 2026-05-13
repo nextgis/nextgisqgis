@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgssublayersdialog.h                                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,16 +11,17 @@
 class QgsSublayersDialog : QDialog
 {
 %Docstring(signature="appended")
+Presents a choice of sublayers.
 
-.. deprecated::
-   Will be removed in QGIS 4.0
+.. deprecated:: 3.40
+
+   Will be removed in QGIS 4.0.
 %End
 
 %TypeHeaderCode
 #include "qgssublayersdialog.h"
 %End
   public:
-
     enum PromptMode
     {
 
@@ -43,27 +44,25 @@ class QgsSublayersDialog : QDialog
 
     struct LayerDefinition
     {
-      int layerId;
+        int layerId;
 
-      QString layerName;
+        QString layerName;
 
-      int count;
+        int count;
 
-      QString type;
+        QString type;
 
-      QString description;
+        QString description;
     };
 
     typedef QList<QgsSublayersDialog::LayerDefinition> LayerDefinitionList;
 
 
- QgsSublayersDialog( ProviderType providerType,
-                                          const QString &name,
-                                          QWidget *parent /TransferThis/ = 0,
-                                          Qt::WindowFlags fl = Qt::WindowFlags(),
-                                          const QString &dataSourceUri = QString() ) /Deprecated/;
+ QgsSublayersDialog( ProviderType providerType, const QString &name, QWidget *parent /TransferThis/ = 0, Qt::WindowFlags fl = Qt::WindowFlags(), const QString &dataSourceUri = QString() ) /Deprecated="Since 3.40. Will be removed in QGIS 4.0."/;
 %Docstring
-Construct a new QgsSublayersDialog object - a dialog to select which sub layers to be imported from a data source (e.g. from geopackage or zipfile)
+Construct a new QgsSublayersDialog object - a dialog to select which sub
+layers to be imported from a data source (e.g. from geopackage or
+zipfile)
 
 :param providerType: provider type
 :param name: provider type name
@@ -71,8 +70,9 @@ Construct a new QgsSublayersDialog object - a dialog to select which sub layers 
 :param fl: window flags
 :param dataSourceUri: data source URI
 
-.. deprecated::
-   Will be removed in QGIS 4.0
+.. deprecated:: 3.40
+
+   Will be removed in QGIS 4.0.
 %End
 
     ~QgsSublayersDialog();
@@ -80,43 +80,31 @@ Construct a new QgsSublayersDialog object - a dialog to select which sub layers 
     void populateLayerTable( const LayerDefinitionList &list );
 %Docstring
 Populate the table with layers
-
-.. versionadded:: 2.16
 %End
 
     LayerDefinitionList selection();
 %Docstring
 Returns list of selected layers
-
-.. versionadded:: 2.16
 %End
 
     void setShowAddToGroupCheckbox( bool showAddToGroupCheckbox );
 %Docstring
 Set if we should display the add to group checkbox
-
-.. versionadded:: 3.0
 %End
 
     bool showAddToGroupCheckbox() const;
 %Docstring
 If we should display the add to group checkbox
-
-.. versionadded:: 3.0
 %End
 
     bool addToGroupCheckbox() const;
 %Docstring
 If we should add layers in a group
-
-.. versionadded:: 3.0
 %End
 
     int countColumn() const;
 %Docstring
 Returns column with count or -1
-
-.. versionadded:: 3.0
 %End
 
   public slots:
@@ -126,7 +114,6 @@ Returns column with count or -1
   protected:
 
 
-
 };
 
 /************************************************************************
@@ -134,5 +121,5 @@ Returns column with count or -1
  *                                                                      *
  * src/gui/qgssublayersdialog.h                                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

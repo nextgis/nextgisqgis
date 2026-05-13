@@ -45,23 +45,22 @@ class GUI_EXPORT QgsModelGraphicsScene : public QGraphicsScene
     Q_OBJECT
 
   public:
-
     //! Z values for scene items
     enum ZValues
     {
-      GroupBox = 0, //!< A logical group box
-      ArrowLink = 1, //!< An arrow linking model items
-      ModelComponent = 2, //!< Model components (e.g. algorithms, inputs and outputs)
-      MouseHandles = 99, //!< Mouse handles
-      RubberBand = 100, //!< Rubber band item
+      GroupBox = 0,         //!< A logical group box
+      ArrowLink = 1,        //!< An arrow linking model items
+      ModelComponent = 2,   //!< Model components (e.g. algorithms, inputs and outputs)
+      MouseHandles = 99,    //!< Mouse handles
+      RubberBand = 100,     //!< Rubber band item
       ZSnapIndicator = 101, //!< Z-value for snapping indicator
 
     };
 
     //! Flags for controlling how the scene is rendered and scene behavior
-    enum Flag
+    enum Flag SIP_ENUM_BASETYPE( IntFlag )
     {
-      FlagHideControls = 1 << 1,  //!< If set, item interactive controls will be hidden
+      FlagHideControls = 1 << 1, //!< If set, item interactive controls will be hidden
       FlagHideComments = 1 << 2, //!< If set, comments will be hidden
     };
     Q_DECLARE_FLAGS( Flags, Flag )
@@ -120,6 +119,20 @@ class GUI_EXPORT QgsModelGraphicsScene : public QGraphicsScene
     QgsModelComponentGraphicItem *groupBoxItem( const QString &uuid );
 
     /**
+     * Returns the graphic item corresponding to the specified child algorithm
+     * 
+     * \since QGIS 3.44
+     */
+    QgsModelChildAlgorithmGraphicItem *childAlgorithmItem( const QString &childId );
+
+    /**
+     * Returns the QgsModelComponentGraphicItem corresponding to the specified child algorithm
+     * 
+     * \since QGIS 3.44
+     */
+    QgsModelComponentGraphicItem *parameterItem( const QString &name );
+
+    /**
      * Selects all the components in the scene.
      */
     void selectAll();
@@ -138,14 +151,9 @@ class GUI_EXPORT QgsModelGraphicsScene : public QGraphicsScene
     void setSelectedItem( QgsModelComponentGraphicItem *item );
 
     /**
-     * Sets the results for child algorithms for the last model execution.
+     * Sets the \a result of the last run of the model through the designer window.
      */
-    void setChildAlgorithmResults( const QVariantMap &results );
-
-    /**
-     * Sets the inputs for child algorithms for the last model execution.
-     */
-    void setChildAlgorithmInputs( const QVariantMap &inputs );
+    void setLastRunResult( const QgsProcessingModelResult &result );
 
     /**
      * Returns the message bar associated with the scene.
@@ -165,6 +173,13 @@ class GUI_EXPORT QgsModelGraphicsScene : public QGraphicsScene
      * Shows a warning message, allowing users to click a button to see the full details (\a longMessage).
      */
     void showWarning( const QString &shortMessage, const QString &title, const QString &longMessage, Qgis::MessageLevel level = Qgis::MessageLevel::Warning ) const;
+
+    /**
+     * Requests a complete rebuild of a model by emitting the according signal
+     * 
+     * \since QGIS 3.44
+     */
+    void requestRebuildRequired();
 
   signals:
 
@@ -192,8 +207,35 @@ class GUI_EXPORT QgsModelGraphicsScene : public QGraphicsScene
      */
     void selectedItemChanged( QgsModelComponentGraphicItem *selected );
 
-  protected:
+    /**
+     * Emitted when the user opts to run selected steps from the model.
+     *
+     * \since QGIS 3.38
+    */
+    void runSelected();
 
+    /**
+     * Emitted when the user opts to run the part of the model starting from the specified child algorithm.
+     *
+     * \since QGIS 3.38
+     */
+    void runFromChild( const QString &childId );
+
+    /**
+     * Emitted when the user opts to view previous results from the child algorithm with matching ID.
+     *
+     * \since QGIS 3.38
+     */
+    void showChildAlgorithmOutputs( const QString &childId );
+
+    /**
+    * Emitted when the user opts to view the previous log from the child algorithm with matching ID.
+    *
+    * \since QGIS 3.38
+    */
+    void showChildAlgorithmLog( const QString &childId );
+
+  protected:
     /**
      * Creates a new graphic item for a model parameter.
      */
@@ -202,7 +244,7 @@ class GUI_EXPORT QgsModelGraphicsScene : public QGraphicsScene
     /**
      * Creates a new graphic item for a model child algorithm.
      */
-    virtual QgsModelChildAlgorithmGraphicItem *createChildAlgGraphicItem( QgsProcessingModelAlgorithm *model, QgsProcessingModelChildAlgorithm *child ) const  SIP_FACTORY;
+    virtual QgsModelChildAlgorithmGraphicItem *createChildAlgGraphicItem( QgsProcessingModelAlgorithm *model, QgsProcessingModelChildAlgorithm *child ) const SIP_FACTORY;
 
     /**
      * Creates a new graphic item for a model output.
@@ -212,8 +254,7 @@ class GUI_EXPORT QgsModelGraphicsScene : public QGraphicsScene
     /**
      * Creates a new graphic item for a model comment.
      */
-    virtual QgsModelComponentGraphicItem *createCommentGraphicItem( QgsProcessingModelAlgorithm *model, QgsProcessingModelComment *comment,
-        QgsModelComponentGraphicItem *parentItem ) const SIP_FACTORY;
+    virtual QgsModelComponentGraphicItem *createCommentGraphicItem( QgsProcessingModelAlgorithm *model, QgsProcessingModelComment *comment, QgsModelComponentGraphicItem *parentItem ) const SIP_FACTORY;
 
     /**
      * Creates a new graphic item for a model group box.
@@ -221,14 +262,13 @@ class GUI_EXPORT QgsModelGraphicsScene : public QGraphicsScene
     QgsModelComponentGraphicItem *createGroupBoxGraphicItem( QgsProcessingModelAlgorithm *model, QgsProcessingModelGroupBox *box ) const SIP_FACTORY;
 
   private:
-
     struct LinkSource
     {
-      QgsModelComponentGraphicItem *item = nullptr;
-      Qt::Edge edge = Qt::LeftEdge;
-      int linkIndex = -1;
+        QgsModelComponentGraphicItem *item = nullptr;
+        Qt::Edge edge = Qt::LeftEdge;
+        int linkIndex = -1;
     };
-    QList< LinkSource > linkSourcesForParameterValue( QgsProcessingModelAlgorithm *model, const QVariant &value, const QString &childId, QgsProcessingContext &context ) const;
+    QList<LinkSource> linkSourcesForParameterValue( QgsProcessingModelAlgorithm *model, const QVariant &value, const QString &childId, QgsProcessingContext &context ) const;
 
     void addCommentItemForComponent( QgsProcessingModelAlgorithm *model, const QgsProcessingModelComponent &component, QgsModelComponentGraphicItem *parentItem );
 
@@ -236,15 +276,13 @@ class GUI_EXPORT QgsModelGraphicsScene : public QGraphicsScene
 
     QgsProcessingModelAlgorithm *mModel = nullptr;
 
-    QMap< QString, QgsModelComponentGraphicItem * > mParameterItems;
-    QMap< QString, QgsModelChildAlgorithmGraphicItem * > mChildAlgorithmItems;
-    QMap< QString, QMap< QString, QgsModelComponentGraphicItem * > > mOutputItems;
-    QMap< QString, QgsModelComponentGraphicItem * > mGroupBoxItems;
-    QVariantMap mChildResults;
-    QVariantMap mChildInputs;
+    QMap<QString, QgsModelComponentGraphicItem *> mParameterItems;
+    QMap<QString, QgsModelChildAlgorithmGraphicItem *> mChildAlgorithmItems;
+    QMap<QString, QMap<QString, QgsModelComponentGraphicItem *>> mOutputItems;
+    QMap<QString, QgsModelComponentGraphicItem *> mGroupBoxItems;
+    QgsProcessingModelResult mLastResult;
 
     QgsMessageBar *mMessageBar = nullptr;
-
 };
 
 Q_DECLARE_METATYPE( QgsModelGraphicsScene::Flags )

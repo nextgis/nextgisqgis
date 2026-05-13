@@ -34,26 +34,23 @@ class QgsReadWriteContext;
 /**
  * \ingroup core
  * \brief A base class for objects which belong to a layout.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutObject: public QObject, public QgsExpressionContextGenerator
 {
-#ifdef SIP_RUN
-#include <qgslayoutitem.h>
-#include "qgslayoutitemgroup.h"
-#include "qgslayoutitemmap.h"
-#include "qgslayoutitempicture.h"
-#include "qgslayoutitemlabel.h"
-#include "qgslayoutitemlegend.h"
-#include "qgslayoutitempolygon.h"
-#include "qgslayoutitempolyline.h"
-#include "qgslayoutitemscalebar.h"
-#include "qgslayoutframe.h"
-#include "qgslayoutitemshape.h"
-#include "qgslayoutitempage.h"
-#include "qgslayoutitemmarker.h"
-#include "qgslayoutitemelevationprofile.h"
-#endif
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitem.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemgroup.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemmap.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitempicture.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemlabel.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemlegend.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitempolygon.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitempolyline.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemscalebar.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutframe.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemshape.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitempage.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemmarker.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgslayoutitemelevationprofile.h" );
 
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
@@ -136,11 +133,13 @@ class CORE_EXPORT QgsLayoutObject: public QObject, public QgsExpressionContextGe
     Q_OBJECT
   public:
 
+    // *INDENT-OFF*
+
     /**
      * Data defined properties for different item types
      */
-    enum DataDefinedProperty
-    {
+    enum class DataDefinedProperty SIP_MONKEYPATCH_SCOPEENUM_UNNEST( QgsLayoutObject, DataDefinedProperty ) : int
+      {
       NoProperty = 0, //!< No property
       AllProperties, //!< All properties for item
       TestProperty, //!< Dummy property with no effect on item
@@ -163,10 +162,10 @@ class CORE_EXPORT QgsLayoutObject: public QObject, public QgsExpressionContextGe
       ExcludeFromExports, //!< Exclude item from exports
       FrameColor, //!< Item frame color
       BackgroundColor, //!< Item background color
-      MarginLeft, //!< Left margin (since QGIS 3.30)
-      MarginTop, //!< Top margin (since QGIS 3.30)
-      MarginRight, //!< Right margin (since QGIS 3.30)
-      MarginBottom, //!< Bottom margin (since QGIS 3.30)
+      MarginLeft, //!< Left margin \since QGIS 3.30
+      MarginTop, //!< Top margin \since QGIS 3.30
+      MarginRight, //!< Right margin \since QGIS 3.30
+      MarginBottom, //!< Bottom margin \since QGIS 3.30
       //composer map
       MapRotation, //!< Map rotation
       MapScale, //!< Map scale
@@ -196,6 +195,11 @@ class CORE_EXPORT QgsLayoutObject: public QObject, public QgsExpressionContextGe
       MapGridFrameDivisionsRight, //!< Map frame division display right
       MapGridFrameDivisionsTop, //!< Map frame division display top
       MapGridFrameDivisionsBottom, //!< Map frame division display bottom
+      MapCrs, //!< Map CRS
+      StartDateTime, //!< Temporal range's start DateTime
+      EndDateTime, //!< Temporal range's end DateTime
+      MapZRangeLower, //!< Map frame Z-range lower value \since QGIS 3.38
+      MapZRangeUpper, //!< Map frame Z-range lower value \since QGIS 3.38
       //composer picture
       PictureSource, //!< Picture source url
       PictureSvgBackgroundColor, //!< SVG background color
@@ -206,36 +210,36 @@ class CORE_EXPORT QgsLayoutObject: public QObject, public QgsExpressionContextGe
       //legend item
       LegendTitle, //!< Legend title
       LegendColumnCount, //!< Legend column count
+      LegendAutoWrapWidth, //!< Legend text automatic wrapping width \since QGIS 3.44
       //scalebar item
-      ScalebarLeftSegments, //!< Number of segments on the left of 0 (since QGIS 3.26)
-      ScalebarRightSegments, //!< Number of segments on the right of 0 (since QGIS 3.26)
-      ScalebarSegmentWidth, //!< Scalebar width in map units of a single segment (since QGIS 3.26)
-      ScalebarMinimumWidth, //!< Scalebar segment minimum width (since QGIS 3.26)
-      ScalebarMaximumWidth, //!< Scalebar segment maximum width (since QGIS 3.26)
-      ScalebarHeight, //!< Scalebar height (since QGIS 3.26)
-      ScalebarRightSegmentSubdivisions, //!< Number of subdivisions per segment on right of 0 (since QGIS 3.26)
-      ScalebarSubdivisionHeight, //!< Scalebar subdivision height (since QGIS 3.26)
+      ScalebarLeftSegments, //!< Number of segments on the left of 0 \since QGIS 3.26
+      ScalebarRightSegments, //!< Number of segments on the right of 0 \since QGIS 3.26
+      ScalebarSegmentWidth, //!< Scalebar width in map units of a single segment \since QGIS 3.26
+      ScalebarMinimumWidth, //!< Scalebar segment minimum width \since QGIS 3.26
+      ScalebarMaximumWidth, //!< Scalebar segment maximum width \since QGIS 3.26
+      ScalebarHeight, //!< Scalebar height \since QGIS 3.26
+      ScalebarRightSegmentSubdivisions, //!< Number of subdivisions per segment on right of 0 \since QGIS 3.26
+      ScalebarSubdivisionHeight, //!< Scalebar subdivision height \since QGIS 3.26
       ScalebarFillColor, //!< Scalebar fill color (deprecated, use data defined properties on scalebar fill symbol 1 instead)
       ScalebarFillColor2, //!< Scalebar secondary fill color (deprecated, use data defined properties on scalebar fill symbol 2 instead)
       ScalebarLineColor, //!< Scalebar line color (deprecated, use data defined properties on scalebar line symbol instead)
       ScalebarLineWidth, //!< Scalebar line width (deprecated, use data defined properties on scalebar line symbol instead)
       //table item
       AttributeTableSourceLayer, //!< Attribute table source layer
-      MapCrs, //!< Map CRS
-      StartDateTime, //!< Temporal range's start DateTime
-      EndDateTime, //!< Temporal range's end DateTime
-      ElevationProfileTolerance, //!< Tolerance distance for elevation profiles (since QGIS 3.30)
-      ElevationProfileDistanceMajorInterval, //!< Major grid line interval for elevation profile distance axis (since QGIS 3.30)
-      ElevationProfileDistanceMinorInterval, //!< Minor grid line interval for elevation profile distance axis (since QGIS 3.30)
-      ElevationProfileDistanceLabelInterval, //!< Label interval for elevation profile distance axis (since QGIS 3.30)
-      ElevationProfileElevationMajorInterval, //!< Major grid line interval for elevation profile elevation axis (since QGIS 3.30)
-      ElevationProfileElevationMinorInterval, //!< Minor grid line interval for elevation profile elevation axis (since QGIS 3.30)
-      ElevationProfileElevationLabelInterval, //!< Label interval for elevation profile elevation axis (since QGIS 3.30)
-      ElevationProfileMinimumDistance, //!< Minimum distance value for elevation profile (since QGIS 3.30)
-      ElevationProfileMaximumDistance, //!< Maximum distance value for elevation profile (since QGIS 3.30)
-      ElevationProfileMinimumElevation, //!< Minimum elevation value for elevation profile (since QGIS 3.30)
-      ElevationProfileMaximumElevation, //!< Maximum elevation value for elevation profile (since QGIS 3.30)
+      ElevationProfileTolerance, //!< Tolerance distance for elevation profiles \since QGIS 3.30
+      ElevationProfileDistanceMajorInterval, //!< Major grid line interval for elevation profile distance axis \since QGIS 3.30
+      ElevationProfileDistanceMinorInterval, //!< Minor grid line interval for elevation profile distance axis \since QGIS 3.30
+      ElevationProfileDistanceLabelInterval, //!< Label interval for elevation profile distance axis \since QGIS 3.30
+      ElevationProfileElevationMajorInterval, //!< Major grid line interval for elevation profile elevation axis \since QGIS 3.30
+      ElevationProfileElevationMinorInterval, //!< Minor grid line interval for elevation profile elevation axis \since QGIS 3.30
+      ElevationProfileElevationLabelInterval, //!< Label interval for elevation profile elevation axis \since QGIS 3.30
+      ElevationProfileMinimumDistance, //!< Minimum distance value for elevation profile \since QGIS 3.30
+      ElevationProfileMaximumDistance, //!< Maximum distance value for elevation profile \since QGIS 3.30
+      ElevationProfileMinimumElevation, //!< Minimum elevation value for elevation profile \since QGIS 3.30
+      ElevationProfileMaximumElevation, //!< Maximum elevation value for elevation profile \since QGIS 3.30
     };
+
+    // *INDENT-ON*
 
     /**
      * Specifies whether the value returned by a function should be the original, user
@@ -294,7 +298,7 @@ class CORE_EXPORT QgsLayoutObject: public QObject, public QgsExpressionContextGe
      * \see setDataDefinedProperties()
      * \see DataDefinedProperty
      */
-    const QgsPropertyCollection &dataDefinedProperties() const { return mDataDefinedProperties; } SIP_SKIP
+    const QgsPropertyCollection &dataDefinedProperties() const SIP_SKIP { return mDataDefinedProperties; }
 
     /**
      * Sets the objects's property collection, used for data defined overrides.

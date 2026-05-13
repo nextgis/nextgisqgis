@@ -43,6 +43,11 @@ QgsRasterContourRenderer *QgsRasterContourRenderer::clone() const
   return renderer;
 }
 
+Qgis::RasterRendererFlags QgsRasterContourRenderer::flags() const
+{
+  return Qgis::RasterRendererFlag::UseNoDataForOutOfRangePixels;
+}
+
 QgsRasterRenderer *QgsRasterContourRenderer::create( const QDomElement &elem, QgsRasterInterface *input )
 {
   if ( elem.isNull() )
@@ -140,7 +145,7 @@ QgsRasterBlock *QgsRasterContourRenderer::block( int bandNo, const QgsRectangle 
 {
   Q_UNUSED( bandNo )
 
-  std::unique_ptr< QgsRasterBlock > outputBlock( new QgsRasterBlock() );
+  auto outputBlock = std::make_unique<QgsRasterBlock>();
   if ( !mInput || !mContourSymbol )
   {
     return outputBlock.release();
@@ -230,6 +235,26 @@ QList<QgsLayerTreeModelLegendNode *> QgsRasterContourRenderer::createLegendNodes
   }
 
   return nodes;
+}
+
+int QgsRasterContourRenderer::inputBand() const
+{
+  return mInputBand;
+}
+
+bool QgsRasterContourRenderer::setInputBand( int band )
+{
+  if ( !mInput )
+  {
+    mInputBand = band;
+    return true;
+  }
+  else if ( band > 0 && band <= mInput->bandCount() )
+  {
+    mInputBand = band;
+    return true;
+  }
+  return false;
 }
 
 void QgsRasterContourRenderer::setContourSymbol( QgsLineSymbol *symbol )

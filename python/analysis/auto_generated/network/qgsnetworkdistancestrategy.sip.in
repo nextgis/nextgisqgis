@@ -3,7 +3,7 @@
  *                                                                      *
  * src/analysis/network/qgsnetworkdistancestrategy.h                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,10 +11,9 @@
 class QgsNetworkDistanceStrategy : QgsNetworkStrategy
 {
 %Docstring(signature="appended")
-Strategy for calculating edge cost based on its length. Should be
-used for finding shortest path between two points.
+Strategy for calculating edge cost based on its length.
 
-.. versionadded:: 3.0
+Should be used for finding shortest path between two points.
 %End
 
 %TypeHeaderCode
@@ -30,5 +29,5 @@ used for finding shortest path between two points.
  *                                                                      *
  * src/analysis/network/qgsnetworkdistancestrategy.h                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

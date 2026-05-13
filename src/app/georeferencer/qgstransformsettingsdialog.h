@@ -27,7 +27,6 @@ class QgsTransformSettingsDialog : public QDialog, private Ui::QgsTransformSetti
     Q_OBJECT
 
   public:
-
     static const QgsSettingsEntryString *settingLastDestinationFolder;
     static const QgsSettingsEntryString *settingLastPdfFolder;
 
@@ -74,14 +73,14 @@ class QgsTransformSettingsDialog : public QDialog, private Ui::QgsTransformSetti
     void setResamplingMethod( QgsImageWarper::ResamplingMethod method );
 
     /**
-     * Returns the selected compression method.
+     * Returns raster creation options.
      */
-    QString compressionMethod() const;
+    QStringList creationOptions() const;
 
     /**
-     * Sets the selected compression \a method.
+     * Sets raster creation options.
      */
-    void setCompressionMethod( const QString &method );
+    void setCreationOptions( const QString &options );
 
     /**
      * Returns the destination filename.

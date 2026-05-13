@@ -14,6 +14,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsabstractdatabaseproviderconnection.h"
+#include "moc_qgsabstractdatabaseproviderconnection.cpp"
 #include "qgsvectorlayer.h"
 #include "qgsexception.h"
 #include "qgsweakrelation.h"
@@ -55,6 +56,10 @@ Qgis::SqlLayerDefinitionCapabilities QgsAbstractDatabaseProviderConnection::sqlL
   return mSqlLayerDefinitionCapabilities;
 }
 
+QString QgsAbstractDatabaseProviderConnection::createVectorLayerExporterDestinationUri( const VectorLayerExporterOptions &, QVariantMap & ) const
+{
+  throw QgsProviderConnectionException( QObject::tr( "Operation 'createVectorLayerExporterDestinationUri' is not supported" ) );
+}
 
 QString QgsAbstractDatabaseProviderConnection::tableUri( const QString &schema, const QString &name ) const
 {
@@ -81,6 +86,16 @@ void QgsAbstractDatabaseProviderConnection::checkCapability( Qgis::DatabaseProvi
   {
     throw QgsProviderConnectionException( QObject::tr( "Operation '%1' is not supported for this connection" ).arg( qgsEnumValueToKey( capability ) ) );
   }
+}
+
+QString QgsAbstractDatabaseProviderConnection::sanitizeSqlForQueryLayer( const QString &sql ) const
+{
+  QString sanitizedSql { sql.trimmed() };
+  while ( sanitizedSql.endsWith( ';' ) )
+  {
+    sanitizedSql.chop( 1 );
+  }
+  return sanitizedSql;
 }
 
 ///@endcond
@@ -1033,6 +1048,16 @@ QSet<QString> QgsAbstractDatabaseProviderConnection::illegalFieldNames() const
   return mIllegalFieldNames;
 }
 
+QString QgsAbstractDatabaseProviderConnection::defaultPrimaryKeyColumnName() const
+{
+  return QStringLiteral( "pk" );
+}
+
+QString QgsAbstractDatabaseProviderConnection::defaultGeometryColumnName() const
+{
+  return QStringLiteral( "geom" );
+}
+
 QList<Qgis::FieldDomainType> QgsAbstractDatabaseProviderConnection::supportedFieldDomainTypes() const
 {
   return {};
@@ -1177,6 +1202,12 @@ QgsVectorLayer *QgsAbstractDatabaseProviderConnection::createSqlVectorLayer( con
   return nullptr;
 }
 
+bool QgsAbstractDatabaseProviderConnection::validateSqlVectorLayer( const SqlVectorLayerOptions &, QString & ) const
+{
+  checkCapability( Capability::SqlLayers );
+  return true;
+}
+
 void QgsAbstractDatabaseProviderConnection::deleteSpatialIndex( const QString &, const QString &, const QString & ) const
 {
   checkCapability( Capability::DeleteSpatialIndex );
@@ -1219,7 +1250,7 @@ void QgsAbstractDatabaseProviderConnection::addField( const QgsField &field, con
 
   QgsVectorLayer::LayerOptions options { false, false };
   options.skipCrsValidation = true;
-  std::unique_ptr<QgsVectorLayer> vl( std::make_unique<QgsVectorLayer>( tableUri( schema, tableName ), QStringLiteral( "temp_layer" ), mProviderKey, options ) );
+  auto vl = std::make_unique<QgsVectorLayer>( tableUri( schema, tableName ), QStringLiteral( "temp_layer" ), mProviderKey, options ) ;
   if ( ! vl->isValid() )
   {
     throw QgsProviderConnectionException( QObject::tr( "Could not create a vector layer for table '%1' in schema '%2'" )
@@ -1244,7 +1275,7 @@ void QgsAbstractDatabaseProviderConnection::renameField( const QString &schema, 
 
   QgsVectorLayer::LayerOptions options { false, false };
   options.skipCrsValidation = true;
-  std::unique_ptr<QgsVectorLayer> vl( std::make_unique<QgsVectorLayer>( tableUri( schema, tableName ), QStringLiteral( "temp_layer" ), mProviderKey, options ) );
+  auto vl = std::make_unique<QgsVectorLayer>( tableUri( schema, tableName ), QStringLiteral( "temp_layer" ), mProviderKey, options ) ;
   if ( ! vl->isValid() )
   {
     throw QgsProviderConnectionException( QObject::tr( "Could not create a vector layer for table '%1' in schema '%2'" )
@@ -1377,6 +1408,11 @@ void QgsAbstractDatabaseProviderConnection::setFieldAlias( const QString &, cons
   checkCapability( Qgis::DatabaseProviderConnectionCapability2::SetFieldAlias );
 }
 
+void QgsAbstractDatabaseProviderConnection::setTableComment( const QString &, const QString &, const QString & ) const
+{
+  checkCapability( Qgis::DatabaseProviderConnectionCapability2::SetTableComment );
+}
+
 void QgsAbstractDatabaseProviderConnection::setFieldComment( const QString &, const QString &, const QString &, const QString & ) const
 {
   checkCapability( Qgis::DatabaseProviderConnectionCapability2::SetFieldComment );
@@ -1408,6 +1444,14 @@ QString QgsAbstractDatabaseProviderConnection::TableProperty::defaultName() cons
   QString n = mTableName;
   if ( mGeometryColumnCount > 1 ) n += '.' + mGeometryColumn;
   return n;
+}
+
+void QgsAbstractDatabaseProviderConnection::moveTableToSchema( const QString &schema, const QString &tableName, const QString &targetSchema ) const
+{
+  Q_UNUSED( schema );
+  Q_UNUSED( tableName );
+  Q_UNUSED( targetSchema );
+  checkCapability( Capability::MoveTableToSchema );
 }
 
 QgsAbstractDatabaseProviderConnection::TableProperty QgsAbstractDatabaseProviderConnection::TableProperty::at( int index ) const
@@ -1541,7 +1585,6 @@ void QgsAbstractDatabaseProviderConnection::TableProperty::setSchema( const QStr
 {
   mSchema = schema;
 }
-
 
 ///@cond PRIVATE
 

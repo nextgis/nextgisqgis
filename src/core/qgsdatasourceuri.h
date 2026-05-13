@@ -29,7 +29,7 @@
 
 /**
  * \ingroup core
- * \brief Class for storing the component parts of a RDBMS data source URI (e.g. a Postgres data source).
+ * \brief Stores the component parts of a data source URI (e.g. a Postgres data source).
  *
  * This structure stores the database connection information, including host, database,
  * user name, password, schema, password, and SQL where clause.
@@ -187,8 +187,13 @@ class CORE_EXPORT QgsDataSourceUri
 
     /**
      * Removes the password element from a URI.
+     *
+     * \param aUri A data source uri
+     * \param hide TRUE to replace the password value with 'xxxxxxxx', FALSE to remove password (key and value) (since QGIS 3.34)
+     *
+     * \returns The data source uri without the password
      */
-    static QString removePassword( const QString &aUri );
+    static QString removePassword( const QString &aUri, bool hide = false );
 
     /**
      * Returns any associated authentication configuration ID stored in the URI.
@@ -234,7 +239,6 @@ class CORE_EXPORT QgsDataSourceUri
 
     /**
      * Sets the \a scheme for the URI.
-     * \since QGIS 2.12
      */
     void setSchema( const QString &schema );
 
@@ -248,32 +252,80 @@ class CORE_EXPORT QgsDataSourceUri
      */
     void setSql( const QString &sql );
 
-    //! Returns the host name stored in the URI.
+    /**
+     * Sets the \a host name stored in the URI.
+     *
+     * \see host()
+     * \since QGIS 3.42
+     */
+    void setHost( const QString &host );
+
+    /**
+     * Returns the host name stored in the URI.
+     *
+     * \see setHost()
+     */
     QString host() const;
+
     //! Returns the database name stored in the URI.
     QString database() const;
-    //! Returns the port stored in the URI.
+
+    /**
+     * Sets the \a port stored in the URI.
+     *
+     * \see port()
+     * \since QGIS 3.42
+     */
+    void setPort( const QString &port );
+
+    /**
+     * Returns the port stored in the URI.
+     *
+     * \see setPort()
+     */
     QString port() const;
 
     /**
      * Returns the driver name stored in the URI
-     * \since QGIS 2.16
      */
     QString driver() const;
 
     /**
      * Sets the \a driver name stored in the URI.
-     * \since QGIS 2.16
      */
     void setDriver( const QString &driver );
 
     //! Returns the password stored in the URI.
     QString password() const;
 
-    //! Returns the SSL mode associated with the URI.
+    /**
+     * Sets the SSL \a mode associated with the URI.
+     *
+     * \see sslMode()
+     * \since QGIS 3.42
+     */
+    void setSslMode( SslMode mode );
+
+    /**
+     * Returns the SSL mode associated with the URI.
+     *
+     * \see setSslMode()
+     */
     SslMode sslMode() const;
 
-    //! Returns the service name associated with the URI.
+    /**
+     * Sets the \a service name associated with the URI.
+     *
+     * \see service()
+     * \since QGIS 3.42
+     */
+    void setService( const QString &service );
+
+    /**
+     * Returns the service name associated with the URI.
+     *
+     * \see setService()
+     */
     QString service() const;
 
     //! Returns the name of the (primary) key column for the referenced table.
@@ -356,6 +408,9 @@ class CORE_EXPORT QgsDataSourceUri
     sipRes = PyUnicode_FromString( str.toUtf8().constData() );
     % End
 #endif
+
+    bool operator==( const QgsDataSourceUri &other ) const;
+    bool operator!=( const QgsDataSourceUri &other ) const;
 
   private:
     void skipBlanks( const QString &uri, int &i );

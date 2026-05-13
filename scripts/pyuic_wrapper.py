@@ -21,4 +21,12 @@ __author__ = 'Juergen E. Fischer'
 __date__ = 'March 2016'
 __copyright__ = '(C) 2016, Juergen E. Fischer'
 
-import qgis.PyQt.uic.pyuic
+try:
+    import qgis.PyQt.uic.pyuic as _pyuic
+except ModuleNotFoundError:
+    try:
+        import PyQt5.uic.pyuic as _pyuic
+    except ModuleNotFoundError:
+        import PyQt6.uic.pyuic as _pyuic
+
+_pyuic.main()

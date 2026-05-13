@@ -27,18 +27,15 @@ class QDomElement;
 #define SIP_NO_FILE
 
 /**
- * \brief class containing the configuration of shadows rendering
- * \ingroup 3d
+ * \brief Contains configuration for rendering shadows.
+ * \ingroup qgis_3d
  * \since QGIS 3.16
  */
 class _3D_EXPORT QgsShadowSettings
 {
   public:
-    //! Default constructor
     QgsShadowSettings() = default;
-    //! Copy constructor
     QgsShadowSettings( const QgsShadowSettings &other );
-    //! delete assignment operator
     QgsShadowSettings &operator=( QgsShadowSettings const &rhs );
 
     //! Reads settings from a DOM \a element

@@ -18,6 +18,7 @@
 #include "qgsgeocodercontext.h"
 #include "qgslogger.h"
 #include "qgsnetworkaccessmanager.h"
+#include "qgssetrequestinitiator_p.h"
 #include "qgscoordinatetransform.h"
 #include <QDateTime>
 #include <QUrl>
@@ -29,7 +30,7 @@
 
 QMutex QgsNominatimGeocoder::sMutex;
 typedef QMap< QUrl, QList< QgsGeocoderResult > > CachedGeocodeResult;
-Q_GLOBAL_STATIC( CachedGeocodeResult, sCachedResults )
+Q_GLOBAL_STATIC( CachedGeocodeResult, sCachedResultsNominatim )
 qint64 QgsNominatimGeocoder::sLastRequestTimestamp = 0;
 
 QgsNominatimGeocoder::QgsNominatimGeocoder( const QString &countryCodes, const QString &endpoint )
@@ -49,19 +50,19 @@ QgsGeocoderInterface::Flags QgsNominatimGeocoder::flags() const
 QgsFields QgsNominatimGeocoder::appendedFields() const
 {
   QgsFields fields;
-  fields.append( QgsField( QStringLiteral( "osm_type" ), QVariant::String ) );
-  fields.append( QgsField( QStringLiteral( "display_name" ), QVariant::String ) );
-  fields.append( QgsField( QStringLiteral( "place_id" ), QVariant::String ) );
-  fields.append( QgsField( QStringLiteral( "class" ), QVariant::String ) );
-  fields.append( QgsField( QStringLiteral( "type" ), QVariant::String ) );
-  fields.append( QgsField( QStringLiteral( "road" ), QVariant::String ) );
-  fields.append( QgsField( QStringLiteral( "village" ), QVariant::String ) );
-  fields.append( QgsField( QStringLiteral( "city_district" ), QVariant::String ) );
-  fields.append( QgsField( QStringLiteral( "town" ), QVariant::String ) );
-  fields.append( QgsField( QStringLiteral( "city" ), QVariant::String ) );
-  fields.append( QgsField( QStringLiteral( "state" ), QVariant::String ) );
-  fields.append( QgsField( QStringLiteral( "country" ), QVariant::String ) );
-  fields.append( QgsField( QStringLiteral( "postcode" ), QVariant::String ) );
+  fields.append( QgsField( QStringLiteral( "osm_type" ), QMetaType::Type::QString ) );
+  fields.append( QgsField( QStringLiteral( "display_name" ), QMetaType::Type::QString ) );
+  fields.append( QgsField( QStringLiteral( "place_id" ), QMetaType::Type::QString ) );
+  fields.append( QgsField( QStringLiteral( "class" ), QMetaType::Type::QString ) );
+  fields.append( QgsField( QStringLiteral( "type" ), QMetaType::Type::QString ) );
+  fields.append( QgsField( QStringLiteral( "road" ), QMetaType::Type::QString ) );
+  fields.append( QgsField( QStringLiteral( "village" ), QMetaType::Type::QString ) );
+  fields.append( QgsField( QStringLiteral( "city_district" ), QMetaType::Type::QString ) );
+  fields.append( QgsField( QStringLiteral( "town" ), QMetaType::Type::QString ) );
+  fields.append( QgsField( QStringLiteral( "city" ), QMetaType::Type::QString ) );
+  fields.append( QgsField( QStringLiteral( "state" ), QMetaType::Type::QString ) );
+  fields.append( QgsField( QStringLiteral( "country" ), QMetaType::Type::QString ) );
+  fields.append( QgsField( QStringLiteral( "postcode" ), QMetaType::Type::QString ) );
   return fields;
 }
 
@@ -91,8 +92,8 @@ QList<QgsGeocoderResult> QgsNominatimGeocoder::geocodeString( const QString &str
   const QUrl url = requestUrl( string, bounds );
 
   const QMutexLocker locker( &sMutex );
-  const auto it = sCachedResults()->constFind( url );
-  if ( it != sCachedResults()->constEnd() )
+  const auto it = sCachedResultsNominatim()->constFind( url );
+  if ( it != sCachedResultsNominatim()->constEnd() )
   {
     return *it;
   }
@@ -128,7 +129,7 @@ QList<QgsGeocoderResult> QgsNominatimGeocoder::geocodeString( const QString &str
   const QVariantList results = doc.array().toVariantList();
   if ( results.isEmpty() )
   {
-    sCachedResults()->insert( url, QList<QgsGeocoderResult>() );
+    sCachedResultsNominatim()->insert( url, QList<QgsGeocoderResult>() );
     return QList<QgsGeocoderResult>();
   }
 
@@ -139,7 +140,7 @@ QList<QgsGeocoderResult> QgsNominatimGeocoder::geocodeString( const QString &str
     matches << jsonToResult( result.toMap() );
   }
 
-  sCachedResults()->insert( url, matches );
+  sCachedResultsNominatim()->insert( url, matches );
 
   return matches;
 }
@@ -152,10 +153,7 @@ QUrl QgsNominatimGeocoder::requestUrl( const QString &address, const QgsRectangl
   query.addQueryItem( QStringLiteral( "addressdetails" ), QStringLiteral( "1" ) );
   if ( !bounds.isNull() && bounds.isFinite() )
   {
-    query.addQueryItem( QStringLiteral( "viewbox" ), QStringLiteral( "%1,%2,%3,%4" ).arg( bounds.xMinimum() )
-                        .arg( bounds.yMinimum() )
-                        .arg( bounds.xMaximum() )
-                        .arg( bounds.yMaximum() ) );
+    query.addQueryItem( QStringLiteral( "viewbox" ), bounds.toString( 7 ).replace( QLatin1String( " : " ), QLatin1String( "," ) ) );
   }
   if ( !mCountryCodes.isEmpty() )
   {

@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgsmaptoolshapecircle2points.h"
+#include "moc_qgsmaptoolshapecircle2points.cpp"
 #include "qgsgeometryrubberband.h"
 #include "qgsmapmouseevent.h"
 #include "qgsmaptoolcapture.h"
@@ -73,10 +74,9 @@ bool QgsMapToolShapeCircle2Points::cadCanvasReleaseEvent( QgsMapMouseEvent *e, Q
 void QgsMapToolShapeCircle2Points::cadCanvasMoveEvent( QgsMapMouseEvent *e, QgsMapToolCapture::CaptureMode mode )
 {
   Q_UNUSED( mode )
-  if ( !mTempRubberBand )
+  if ( !mTempRubberBand || mPoints.isEmpty() )
     return;
 
   mCircle = QgsCircle::from2Points( mPoints.at( 0 ), mParentTool->mapPoint( *e ) );
   mTempRubberBand->setGeometry( mCircle.toCircularString( true ) );
 }
-

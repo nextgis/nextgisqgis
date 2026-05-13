@@ -139,7 +139,7 @@ class CORE_EXPORT QgsGroupLayer : public QgsMapLayer
 
   private:
 
-    QgsGroupLayerDataProvider *mDataProvider = nullptr;
+    std::unique_ptr<QgsGroupLayerDataProvider> mDataProvider;
     QgsCoordinateTransformContext mTransformContext;
 
     QList< QgsMapLayerRef > mChildren;
@@ -161,7 +161,7 @@ class QgsGroupLayerDataProvider : public QgsDataProvider
 
   public:
     QgsGroupLayerDataProvider( const QgsDataProvider::ProviderOptions &providerOptions,
-                               QgsDataProvider::ReadFlags flags );
+                               Qgis::DataProviderReadFlags flags );
     void setCrs( const QgsCoordinateReferenceSystem &crs );
     QgsCoordinateReferenceSystem crs() const override;
     QString name() const override;

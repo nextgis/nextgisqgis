@@ -37,7 +37,6 @@ class QgsDockableWidgetHelper;
 /**
  * \class QgsMapCanvasDockWidget
  * A dock widget with an embedded map canvas, for additional map views.
- * \since QGIS 3.0
  */
 class APP_EXPORT QgsMapCanvasDockWidget : public QWidget, private Ui::QgsMapCanvasWidgetBase
 {
@@ -154,7 +153,6 @@ class APP_EXPORT QgsMapCanvasDockWidget : public QWidget, private Ui::QgsMapCanv
     void renameTriggered();
 
   protected:
-
     void resizeEvent( QResizeEvent *e ) override;
 
   private slots:
@@ -206,15 +204,13 @@ class APP_EXPORT QgsMapCanvasDockWidget : public QWidget, private Ui::QgsMapCanv
 /**
  * \class QgsMapSettingsAction
  * Allows embedding a scale, rotation and other map settings into a menu.
- * \since QGIS 3.0
  */
 
-class QgsMapSettingsAction: public QWidgetAction
+class QgsMapSettingsAction : public QWidgetAction
 {
     Q_OBJECT
 
   public:
-
     QgsMapSettingsAction( QWidget *parent = nullptr );
 
     QCheckBox *syncExtentCheck() { return mSyncExtentCheck; }

@@ -51,7 +51,6 @@ namespace pal
   class FeaturePart;
 
   class Pal;
-  class LabelInfo;
 
   /**
    * \ingroup core
@@ -88,7 +87,7 @@ namespace pal
       /**
        * Returns the number of features in layer.
        */
-      int featureCount() { return mHashtable.size(); }
+      int featureCount() const { return mHashtable.size(); }
 
       /**
        * Returns the maximum number of point label candidates to generate for features
@@ -324,7 +323,7 @@ namespace pal
 
       double mDefaultPriority;
 
-      QgsLabelObstacleSettings::ObstacleType mObstacleType = QgsLabelObstacleSettings::PolygonBoundary;
+      QgsLabelObstacleSettings::ObstacleType mObstacleType = QgsLabelObstacleSettings::ObstacleType::PolygonBoundary;
       bool mActive;
       bool mLabelLayer;
       bool mCentroidInside = false;

@@ -85,7 +85,7 @@ QgsRasterBlock *QgsRasterNuller::block( int bandNo, QgsRectangle  const &extent,
     return inputBlock.release();
   }
 
-  std::unique_ptr< QgsRasterBlock > outputBlock( new QgsRasterBlock( inputBlock->dataType(), width, height ) );
+  auto outputBlock = std::make_unique<QgsRasterBlock>( inputBlock->dataType(), width, height );
   if ( mHasOutputNoData.value( bandNo - 1 ) || inputBlock->hasNoDataValue() )
   {
     double noDataValue;
@@ -111,7 +111,6 @@ QgsRasterBlock *QgsRasterNuller::block( int bandNo, QgsRectangle  const &extent,
       {
         isNoData = true;
       }
-      outputBlock->setValue( i, j, inputBlock->value( i, j ) );
       if ( isNoData )
       {
         outputBlock->setIsNoData( i, j );

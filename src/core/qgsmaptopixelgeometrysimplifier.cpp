@@ -18,17 +18,14 @@
 #include <memory>
 
 #include "qgsmaptopixelgeometrysimplifier.h"
-#include "qgsapplication.h"
-#include "qgslogger.h"
 #include "qgsrectangle.h"
-#include "qgswkbptr.h"
 #include "qgsgeometry.h"
 #include "qgslinestring.h"
 #include "qgspolygon.h"
 #include "qgsgeometrycollection.h"
 #include "qgsvertexid.h"
 
-QgsMapToPixelSimplifier::QgsMapToPixelSimplifier( int simplifyFlags, double tolerance, SimplifyAlgorithm simplifyAlgorithm )
+QgsMapToPixelSimplifier::QgsMapToPixelSimplifier( int simplifyFlags, double tolerance, Qgis::VectorSimplificationAlgorithm simplifyAlgorithm )
   : mSimplifyFlags( simplifyFlags )
   , mSimplifyAlgorithm( simplifyAlgorithm )
   , mTolerance( tolerance )
@@ -97,22 +94,22 @@ static std::unique_ptr< QgsAbstractGeometry > generalizeWkbGeometryByBoundingBox
   }
   else
   {
-    std::unique_ptr< QgsLineString > ext = std::make_unique< QgsLineString >(
-        QVector< double >() << x1
-        << x2
-        << x2
-        << x1
-        << x1,
-        QVector< double >() << y1
-        << y1
-        << y2
-        << y2
-        << y1 );
+    auto ext = std::make_unique< QgsLineString >(
+                 QVector< double >() << x1
+                 << x2
+                 << x2
+                 << x1
+                 << x1,
+                 QVector< double >() << y1
+                 << y1
+                 << y2
+                 << y2
+                 << y1 );
     if ( geometryType == Qgis::WkbType::LineString )
       return std::move( ext );
     else
     {
-      std::unique_ptr< QgsPolygon > polygon = std::make_unique< QgsPolygon >();
+      auto polygon = std::make_unique< QgsPolygon >();
       polygon->setExteriorRing( ext.release() );
       return std::move( polygon );
     }
@@ -120,7 +117,7 @@ static std::unique_ptr< QgsAbstractGeometry > generalizeWkbGeometryByBoundingBox
 }
 
 std::unique_ptr< QgsAbstractGeometry > QgsMapToPixelSimplifier::simplifyGeometry( int simplifyFlags,
-    SimplifyAlgorithm simplifyAlgorithm,
+    Qgis::VectorSimplificationAlgorithm simplifyAlgorithm,
     const QgsAbstractGeometry &geometry, double map2pixelTol,
     bool isaLinearRing )
 {
@@ -190,7 +187,7 @@ std::unique_ptr< QgsAbstractGeometry > QgsMapToPixelSimplifier::simplifyGeometry
     // Process each vertex...
     switch ( simplifyAlgorithm )
     {
-      case SnapToGrid:
+      case Qgis::VectorSimplificationAlgorithm::SnapToGrid:
       {
         const double gridOriginX = envelope.xMinimum();
         const double gridOriginY = envelope.yMinimum();
@@ -258,13 +255,13 @@ std::unique_ptr< QgsAbstractGeometry > QgsMapToPixelSimplifier::simplifyGeometry
         break;
       }
 
-      case SnappedToGridGlobal:
+      case Qgis::VectorSimplificationAlgorithm::SnappedToGridGlobal:
       {
         output.reset( qgsgeometry_cast< QgsCurve * >( srcCurve.snappedToGrid( map2pixelTol, map2pixelTol ) ) );
         break;
       }
 
-      case Visvalingam:
+      case Qgis::VectorSimplificationAlgorithm::Visvalingam:
       {
         map2pixelTol *= map2pixelTol; //-> Use mappixelTol for 'Area' calculations.
 
@@ -295,7 +292,7 @@ std::unique_ptr< QgsAbstractGeometry > QgsMapToPixelSimplifier::simplifyGeometry
         break;
       }
 
-      case Distance:
+      case Qgis::VectorSimplificationAlgorithm::Distance:
       {
         map2pixelTol *= map2pixelTol; //-> Use mappixelTol for 'LengthSquare' calculations.
 
@@ -379,7 +376,7 @@ std::unique_ptr< QgsAbstractGeometry > QgsMapToPixelSimplifier::simplifyGeometry
   else if ( flatType == Qgis::WkbType::Polygon )
   {
     const QgsPolygon &srcPolygon = dynamic_cast<const QgsPolygon &>( geometry );
-    std::unique_ptr<QgsPolygon> polygon( new QgsPolygon() );
+    auto polygon = std::make_unique<QgsPolygon>();
     std::unique_ptr<QgsAbstractGeometry> extRing = simplifyGeometry( simplifyFlags, simplifyAlgorithm, *srcPolygon.exteriorRing(), map2pixelTol, true );
     polygon->setExteriorRing( qgsgeometry_cast<QgsCurve *>( extRing.release() ) );
     for ( int i = 0; i < srcPolygon.numInteriorRings(); ++i )

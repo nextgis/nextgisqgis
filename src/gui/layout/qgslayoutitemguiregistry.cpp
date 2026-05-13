@@ -15,6 +15,7 @@
  ***************************************************************************/
 
 #include "qgslayoutitemguiregistry.h"
+#include "moc_qgslayoutitemguiregistry.cpp"
 #include "qgslayoutviewrubberband.h"
 #include "qgslayoutitemregistry.h"
 #include "qgslayoutframe.h"
@@ -27,7 +28,7 @@ QgsLayoutViewRubberBand *QgsLayoutItemAbstractGuiMetadata::createRubberBand( Qgs
   return new QgsLayoutViewRectangularRubberBand( view );
 }
 
-QAbstractGraphicsShapeItem *QgsLayoutItemAbstractGuiMetadata::createNodeRubberBand( QgsLayoutView * )
+QGraphicsItem *QgsLayoutItemAbstractGuiMetadata::createNodeRubberBand( QgsLayoutView * )
 {
   return nullptr;
 }
@@ -39,8 +40,18 @@ QgsLayoutItem *QgsLayoutItemAbstractGuiMetadata::createItem( QgsLayout * )
 
 void QgsLayoutItemAbstractGuiMetadata::newItemAddedToLayout( QgsLayoutItem * )
 {
-
 }
+
+void QgsLayoutItemAbstractGuiMetadata::handleDoubleClick( QgsLayoutItem *, Qgis::MouseHandlesAction )
+{
+}
+
+void QgsLayoutItemGuiMetadata::handleDoubleClick( QgsLayoutItem *item, Qgis::MouseHandlesAction action )
+{
+  if ( mDoubleClickedFunc )
+    mDoubleClickedFunc( item, action );
+}
+
 
 QgsLayoutItemGuiRegistry::QgsLayoutItemGuiRegistry( QObject *parent )
   : QObject( parent )
@@ -89,34 +100,36 @@ bool QgsLayoutItemGuiRegistry::addItemGroup( const QgsLayoutItemGuiGroup &group 
 
 const QgsLayoutItemGuiGroup &QgsLayoutItemGuiRegistry::itemGroup( const QString &id )
 {
-  return mItemGroups[ id ];
+  return mItemGroups[id];
 }
 
 QgsLayoutItem *QgsLayoutItemGuiRegistry::createItem( int metadataId, QgsLayout *layout ) const
 {
-  if ( !mMetadata.contains( metadataId ) )
+  auto it = mMetadata.constFind( metadataId );
+  if ( it == mMetadata.constEnd() )
     return nullptr;
 
-  std::unique_ptr< QgsLayoutItem > item( mMetadata.value( metadataId )->createItem( layout ) );
+  std::unique_ptr<QgsLayoutItem> item( it.value()->createItem( layout ) );
   if ( item )
     return item.release();
 
-  const int type = mMetadata.value( metadataId )->type();
+  const int type = it.value()->type();
   return QgsApplication::layoutItemRegistry()->createItem( type, layout );
 }
 
 void QgsLayoutItemGuiRegistry::newItemAddedToLayout( int metadataId, QgsLayoutItem *item, const QVariantMap &properties )
 {
-  if ( !mMetadata.contains( metadataId ) )
+  auto it = mMetadata.constFind( metadataId );
+  if ( it == mMetadata.constEnd() )
     return;
 
-  if ( QgsLayoutItemGuiMetadata *metadata = dynamic_cast<QgsLayoutItemGuiMetadata *>( mMetadata.value( metadataId ) ) )
+  if ( QgsLayoutItemGuiMetadata *metadata = dynamic_cast<QgsLayoutItemGuiMetadata *>( it.value() ) )
   {
     metadata->newItemAddedToLayout( item, properties );
   }
   else
   {
-    mMetadata.value( metadataId )->newItemAddedToLayout( item );
+    it.value()->newItemAddedToLayout( item );
   }
 }
 
@@ -128,7 +141,7 @@ QgsLayoutItemBaseWidget *QgsLayoutItemGuiRegistry::createItemWidget( QgsLayoutIt
   int type = item->type();
   if ( type == QgsLayoutItemRegistry::LayoutFrame )
   {
-    QgsLayoutMultiFrame *multiFrame = qobject_cast< QgsLayoutFrame * >( item )->multiFrame();
+    QgsLayoutMultiFrame *multiFrame = qobject_cast<QgsLayoutFrame *>( item )->multiFrame();
     if ( multiFrame )
       type = multiFrame->type();
   }
@@ -143,18 +156,20 @@ QgsLayoutItemBaseWidget *QgsLayoutItemGuiRegistry::createItemWidget( QgsLayoutIt
 
 QgsLayoutViewRubberBand *QgsLayoutItemGuiRegistry::createItemRubberBand( int metadataId, QgsLayoutView *view ) const
 {
-  if ( !mMetadata.contains( metadataId ) )
+  auto it = mMetadata.constFind( metadataId );
+  if ( it == mMetadata.constEnd() )
     return nullptr;
 
-  return mMetadata[metadataId]->createRubberBand( view );
+  return it.value()->createRubberBand( view );
 }
 
-QAbstractGraphicsShapeItem *QgsLayoutItemGuiRegistry::createNodeItemRubberBand( int metadataId, QgsLayoutView *view )
+QGraphicsItem *QgsLayoutItemGuiRegistry::createNodeItemRubberBand( int metadataId, QgsLayoutView *view )
 {
-  if ( !mMetadata.contains( metadataId ) )
+  auto it = mMetadata.constFind( metadataId );
+  if ( it == mMetadata.constEnd() )
     return nullptr;
 
-  return mMetadata[metadataId]->createNodeRubberBand( view );
+  return it.value()->createNodeRubberBand( view );
 }
 
 QList<int> QgsLayoutItemGuiRegistry::itemMetadataIds() const

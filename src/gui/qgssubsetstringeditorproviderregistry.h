@@ -30,7 +30,7 @@ class QgsVectorLayer;
 
 /**
  * \ingroup gui
- * \brief This class keeps a list of subset string editor providers.
+ * \brief A registry for subset string editor providers.
  *
  * QgsSubsetStringEditorProviderRegistry is not usually directly created, but rather accessed through
  * QgsGui::subsetStringEditorProvideRegistry().
@@ -40,17 +40,14 @@ class QgsVectorLayer;
 class GUI_EXPORT QgsSubsetStringEditorProviderRegistry
 {
   public:
-
     QgsSubsetStringEditorProviderRegistry();
     ~QgsSubsetStringEditorProviderRegistry();
 
-    //! QgsDataItemProviderRegistry cannot be copied.
     QgsSubsetStringEditorProviderRegistry( const QgsSubsetStringEditorProviderRegistry &rh ) = delete;
-    //! QgsDataItemProviderRegistry cannot be copied.
     QgsSubsetStringEditorProviderRegistry &operator=( const QgsSubsetStringEditorProviderRegistry &rh ) = delete;
 
     //! Gets list of available providers
-    QList< QgsSubsetStringEditorProvider *> providers();
+    QList<QgsSubsetStringEditorProvider *> providers();
 
     //! Add a \a provider implementation. Takes ownership of the object.
     void addProvider( QgsSubsetStringEditorProvider *provider SIP_TRANSFER );
@@ -75,7 +72,7 @@ class GUI_EXPORT QgsSubsetStringEditorProviderRegistry
 
     /**
      * Creates a new dialog to edit the subset string of the provided \a layer.
-     * It will default to returning a QgsQueryBuilder* if no provider was found.
+     * It will default to returning a QgsQueryBuilder if no provider was found.
      * The returned object must be destroyed by the caller.
      */
     QgsSubsetStringEditorInterface *createDialog( QgsVectorLayer *layer, QWidget *parent SIP_TRANSFERTHIS = nullptr, Qt::WindowFlags fl = QgsGuiUtils::ModalDialogFlags ) SIP_TRANSFERBACK;

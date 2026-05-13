@@ -15,6 +15,7 @@
 
 #include "qgs3dutils.h"
 
+#include "qgs3dmapcanvas.h"
 #include "qgslinestring.h"
 #include "qgspolygon.h"
 #include "qgsfeaturerequest.h"
@@ -24,19 +25,16 @@
 #include "qgsvectorlayer.h"
 #include "qgsexpressioncontextutils.h"
 #include "qgsfeedback.h"
+#include "qgsglobechunkedentity.h"
 #include "qgsoffscreen3dengine.h"
 #include "qgs3dmapscene.h"
 #include "qgsabstract3dengine.h"
 #include "qgsterraingenerator.h"
 #include "qgscameracontroller.h"
-#include "qgschunkedentity_p.h"
-#include "qgsterrainentity_p.h"
+#include "qgschunkedentity.h"
+#include "qgsterrainentity.h"
 #include "qgsraycastingutils_p.h"
-
-#include "qgsline3dsymbol.h"
-#include "qgspoint3dsymbol.h"
-#include "qgspolygon3dsymbol.h"
-
+#include "qgsabstractterrainsettings.h"
 #include "qgspointcloudrenderer.h"
 #include "qgspointcloud3dsymbol.h"
 #include "qgspointcloudlayer3drenderer.h"
@@ -47,9 +45,42 @@
 #include <QtMath>
 #include <Qt3DExtras/QPhongMaterial>
 #include <Qt3DRender/QRenderSettings>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
+#include <Qt3DLogic/QFrameAction>
+
+#if !defined( Q_OS_MAC )
+#include <GL/gl.h>
+#endif
+
+#if QT_VERSION < QT_VERSION_CHECK( 6, 0, 0 )
+#include <Qt3DRender/QBuffer>
+typedef Qt3DRender::QBuffer Qt3DQBuffer;
+#else
+#include <Qt3DCore/QBuffer>
+typedef Qt3DCore::QBuffer Qt3DQBuffer;
+#endif
 
 // declared here as Qgs3DTypes has no cpp file
 const char *Qgs3DTypes::PROP_NAME_3D_RENDERER_FLAG = "PROP_NAME_3D_RENDERER_FLAG";
+
+void Qgs3DUtils::waitForFrame( QgsAbstract3DEngine &engine, Qgs3DMapScene *scene )
+{
+  // Set policy to always render frame, so we don't wait forever.
+  Qt3DRender::QRenderSettings::RenderPolicy oldPolicy = engine.renderSettings()->renderPolicy();
+  engine.renderSettings()->setRenderPolicy( Qt3DRender::QRenderSettings::RenderPolicy::Always );
+
+  // Wait for at least one frame to render
+  Qt3DLogic::QFrameAction *frameAction = new Qt3DLogic::QFrameAction();
+  scene->addComponent( frameAction );
+  QEventLoop evLoop;
+  QObject::connect( frameAction, &Qt3DLogic::QFrameAction::triggered, &evLoop, &QEventLoop::quit );
+  evLoop.exec();
+  scene->removeComponent( frameAction );
+  frameAction->deleteLater();
+
+  engine.renderSettings()->setRenderPolicy( oldPolicy );
+}
 
 QImage Qgs3DUtils::captureSceneImage( QgsAbstract3DEngine &engine, Qgs3DMapScene *scene )
 {
@@ -59,23 +90,23 @@ QImage Qgs3DUtils::captureSceneImage( QgsAbstract3DEngine &engine, Qgs3DMapScene
   // We need to change render policy to RenderPolicy::Always, since otherwise render capture node won't work
   engine.renderSettings()->setRenderPolicy( Qt3DRender::QRenderSettings::RenderPolicy::Always );
 
-  auto requestImageFcn = [&engine, scene]
-  {
-    if ( scene->sceneState() == Qgs3DMapScene::Ready )
-    {
-      engine.renderSettings()->setRenderPolicy( Qt3DRender::QRenderSettings::RenderPolicy::OnDemand );
-      engine.requestCaptureImage();
-    }
-  };
+  waitForFrame( engine, scene );
 
-  auto saveImageFcn = [&evLoop, &resImage]( const QImage & img )
-  {
+  auto saveImageFcn = [&evLoop, &resImage]( const QImage &img ) {
     resImage = img;
     evLoop.quit();
   };
 
   const QMetaObject::Connection conn1 = QObject::connect( &engine, &QgsAbstract3DEngine::imageCaptured, saveImageFcn );
   QMetaObject::Connection conn2;
+
+  auto requestImageFcn = [&engine, scene] {
+    if ( scene->sceneState() == Qgs3DMapScene::Ready )
+    {
+      engine.renderSettings()->setRenderPolicy( Qt3DRender::QRenderSettings::RenderPolicy::OnDemand );
+      engine.requestCaptureImage();
+    }
+  };
 
   if ( scene->sceneState() == Qgs3DMapScene::Ready )
   {
@@ -105,8 +136,7 @@ QImage Qgs3DUtils::captureSceneDepthBuffer( QgsAbstract3DEngine &engine, Qgs3DMa
   // We need to change render policy to RenderPolicy::Always, since otherwise render capture node won't work
   engine.renderSettings()->setRenderPolicy( Qt3DRender::QRenderSettings::RenderPolicy::Always );
 
-  auto requestImageFcn = [&engine, scene]
-  {
+  auto requestImageFcn = [&engine, scene] {
     if ( scene->sceneState() == Qgs3DMapScene::Ready )
     {
       engine.renderSettings()->setRenderPolicy( Qt3DRender::QRenderSettings::RenderPolicy::OnDemand );
@@ -114,8 +144,7 @@ QImage Qgs3DUtils::captureSceneDepthBuffer( QgsAbstract3DEngine &engine, Qgs3DMa
     }
   };
 
-  auto saveImageFcn = [&evLoop, &resImage]( const QImage & img )
-  {
+  auto saveImageFcn = [&evLoop, &resImage]( const QImage &img ) {
     resImage = img;
     evLoop.quit();
   };
@@ -123,6 +152,8 @@ QImage Qgs3DUtils::captureSceneDepthBuffer( QgsAbstract3DEngine &engine, Qgs3DMa
   QMetaObject::Connection conn1 = QObject::connect( &engine, &QgsAbstract3DEngine::depthBufferCaptured, saveImageFcn );
   QMetaObject::Connection conn2;
 
+  // Make sure once-per-frame functions run
+  waitForFrame( engine, scene );
   if ( scene->sceneState() == Qgs3DMapScene::Ready )
   {
     requestImageFcn();
@@ -143,15 +174,24 @@ QImage Qgs3DUtils::captureSceneDepthBuffer( QgsAbstract3DEngine &engine, Qgs3DMa
   return resImage;
 }
 
-bool Qgs3DUtils::exportAnimation( const Qgs3DAnimationSettings &animationSettings,
-                                  Qgs3DMapSettings &mapSettings,
-                                  int framesPerSecond,
-                                  const QString &outputDirectory,
-                                  const QString &fileNameTemplate,
-                                  const QSize &outputSize,
-                                  QString &error,
-                                  QgsFeedback *feedback
-                                )
+
+double Qgs3DUtils::calculateEntityGpuMemorySize( Qt3DCore::QEntity *entity )
+{
+  long long usedGpuMemory = 0;
+  for ( Qt3DQBuffer *buffer : entity->findChildren<Qt3DQBuffer *>() )
+  {
+    usedGpuMemory += buffer->data().size();
+  }
+  for ( Qt3DRender::QTexture2D *tex : entity->findChildren<Qt3DRender::QTexture2D *>() )
+  {
+    // TODO : lift the assumption that the texture is RGBA
+    usedGpuMemory += static_cast< long long >( tex->width() ) * static_cast< long long >( tex->height() ) * 4;
+  }
+  return usedGpuMemory / 1024.0 / 1024.0;
+}
+
+
+bool Qgs3DUtils::exportAnimation( const Qgs3DAnimationSettings &animationSettings, Qgs3DMapSettings &mapSettings, int framesPerSecond, const QString &outputDirectory, const QString &fileNameTemplate, const QSize &outputSize, QString &error, QgsFeedback *feedback )
 {
   if ( animationSettings.keyFrames().size() < 2 )
   {
@@ -207,7 +247,6 @@ bool Qgs3DUtils::exportAnimation( const Qgs3DAnimationSettings &animationSetting
 
   while ( time <= duration )
   {
-
     if ( feedback )
     {
       if ( feedback->isCanceled() )
@@ -220,7 +259,7 @@ bool Qgs3DUtils::exportAnimation( const Qgs3DAnimationSettings &animationSetting
     ++frameNo;
 
     const Qgs3DAnimationSettings::Keyframe kf = animationSettings.interpolate( time );
-    scene->cameraController()->setLookingAtPoint( kf.point, kf.dist, kf.pitch, kf.yaw );
+    scene->cameraController()->setLookingAtMapPoint( kf.point, kf.dist, kf.pitch, kf.yaw );
 
     QString fileName( fileNameTemplate );
     const QString frameNoPaddedLeft( QStringLiteral( "%1" ).arg( frameNo, numberOfDigits, 10, QChar( '0' ) ) ); // e.g. 0001
@@ -241,14 +280,14 @@ bool Qgs3DUtils::exportAnimation( const Qgs3DAnimationSettings &animationSetting
 int Qgs3DUtils::maxZoomLevel( double tile0width, double tileResolution, double maxError )
 {
   if ( maxError <= 0 || tileResolution <= 0 || tile0width <= 0 )
-    return 0;  // invalid input
+    return 0; // invalid input
 
   // derived from:
   // tile width [map units] = tile0width / 2^zoomlevel
   // tile error [map units] = tile width / tile resolution
   // + re-arranging to get zoom level if we know tile error we want to get
   const double zoomLevel = -log( tileResolution * maxError / tile0width ) / log( 2 );
-  return round( zoomLevel );  // we could use ceil() here if we wanted to always get to the desired error
+  return round( zoomLevel ); // we could use ceil() here if we wanted to always get to the desired error
 }
 
 QString Qgs3DUtils::altClampingToString( Qgis::AltitudeClamping altClamp )
@@ -272,7 +311,7 @@ Qgis::AltitudeClamping Qgs3DUtils::altClampingFromString( const QString &str )
     return Qgis::AltitudeClamping::Absolute;
   else if ( str == QLatin1String( "terrain" ) )
     return Qgis::AltitudeClamping::Terrain;
-  else   // "relative"  (default)
+  else // "relative"  (default)
     return Qgis::AltitudeClamping::Relative;
 }
 
@@ -294,7 +333,7 @@ Qgis::AltitudeBinding Qgs3DUtils::altBindingFromString( const QString &str )
 {
   if ( str == QLatin1String( "vertex" ) )
     return Qgis::AltitudeBinding::Vertex;
-  else  // "centroid"  (default)
+  else // "centroid"  (default)
     return Qgis::AltitudeBinding::Centroid;
 }
 
@@ -326,7 +365,7 @@ Qgs3DTypes::CullingMode Qgs3DUtils::cullingModeFromString( const QString &str )
     return Qgs3DTypes::NoCulling;
 }
 
-float Qgs3DUtils::clampAltitude( const QgsPoint &p, Qgis::AltitudeClamping altClamp, Qgis::AltitudeBinding altBind, float height, const QgsPoint &centroid, const Qgs3DMapSettings &map )
+float Qgs3DUtils::clampAltitude( const QgsPoint &p, Qgis::AltitudeClamping altClamp, Qgis::AltitudeBinding altBind, float offset, const QgsPoint &centroid, const Qgs3DRenderContext &context )
 {
   float terrainZ = 0;
   switch ( altClamp )
@@ -335,7 +374,7 @@ float Qgs3DUtils::clampAltitude( const QgsPoint &p, Qgis::AltitudeClamping altCl
     case Qgis::AltitudeClamping::Terrain:
     {
       const QgsPointXY pt = altBind == Qgis::AltitudeBinding::Vertex ? p : centroid;
-      terrainZ = map.terrainRenderingEnabled() && map.terrainGenerator() ? map.terrainGenerator()->heightAt( pt.x(), pt.y(), map ) : 0;
+      terrainZ = context.terrainRenderingEnabled() && context.terrainGenerator() ? context.terrainGenerator()->heightAt( pt.x(), pt.y(), context ) : 0;
       break;
     }
 
@@ -358,11 +397,11 @@ float Qgs3DUtils::clampAltitude( const QgsPoint &p, Qgis::AltitudeClamping altCl
     }
   }
 
-  const float z = ( terrainZ + geomZ ) * map.terrainVerticalScale() + height;
+  const float z = ( terrainZ + geomZ ) * static_cast<float>( context.terrainSettings()->verticalScale() ) + offset;
   return z;
 }
 
-void Qgs3DUtils::clampAltitudes( QgsLineString *lineString, Qgis::AltitudeClamping altClamp, Qgis::AltitudeBinding altBind, const QgsPoint &centroid, float height, const Qgs3DMapSettings &map )
+void Qgs3DUtils::clampAltitudes( QgsLineString *lineString, Qgis::AltitudeClamping altClamp, Qgis::AltitudeBinding altBind, const QgsPoint &centroid, float offset, const Qgs3DRenderContext &context )
 {
   for ( int i = 0; i < lineString->nCoordinates(); ++i )
   {
@@ -385,7 +424,7 @@ void Qgs3DUtils::clampAltitudes( QgsLineString *lineString, Qgis::AltitudeClampi
             break;
         }
 
-        terrainZ = map.terrainRenderingEnabled() && map.terrainGenerator() ? map.terrainGenerator()->heightAt( pt.x(), pt.y(), map ) : 0;
+        terrainZ = context.terrainRenderingEnabled() && context.terrainGenerator() ? context.terrainGenerator()->heightAt( pt.x(), pt.y(), context ) : 0;
         break;
       }
 
@@ -406,13 +445,13 @@ void Qgs3DUtils::clampAltitudes( QgsLineString *lineString, Qgis::AltitudeClampi
         break;
     }
 
-    const float z = ( terrainZ + geomZ ) * map.terrainVerticalScale() + height;
+    const float z = ( terrainZ + geomZ ) * static_cast<float>( context.terrainSettings()->verticalScale() ) + offset;
     lineString->setZAt( i, z );
   }
 }
 
 
-bool Qgs3DUtils::clampAltitudes( QgsPolygon *polygon, Qgis::AltitudeClamping altClamp, Qgis::AltitudeBinding altBind, float height, const Qgs3DMapSettings &map )
+bool Qgs3DUtils::clampAltitudes( QgsPolygon *polygon, Qgis::AltitudeClamping altClamp, Qgis::AltitudeBinding altBind, float offset, const Qgs3DRenderContext &context )
 {
   if ( !polygon->is3D() )
     polygon->addZValue( 0 );
@@ -433,7 +472,7 @@ bool Qgs3DUtils::clampAltitudes( QgsPolygon *polygon, Qgis::AltitudeClamping alt
   if ( !lineString )
     return false;
 
-  clampAltitudes( lineString, altClamp, altBind, centroid, height, map );
+  clampAltitudes( lineString, altClamp, altBind, centroid, offset, context );
 
   for ( int i = 0; i < polygon->numInteriorRings(); ++i )
   {
@@ -442,7 +481,7 @@ bool Qgs3DUtils::clampAltitudes( QgsPolygon *polygon, Qgis::AltitudeClamping alt
     if ( !lineString )
       return false;
 
-    clampAltitudes( lineString, altClamp, altBind, centroid, height, map );
+    clampAltitudes( lineString, altClamp, altBind, centroid, offset, context );
   }
   return true;
 }
@@ -468,7 +507,7 @@ QMatrix4x4 Qgs3DUtils::stringToMatrix4x4( const QString &str )
   return m;
 }
 
-void Qgs3DUtils::extractPointPositions( const QgsFeature &f, const Qgs3DMapSettings &map, Qgis::AltitudeClamping altClamp, QVector<QVector3D> &positions )
+void Qgs3DUtils::extractPointPositions( const QgsFeature &f, const Qgs3DRenderContext &context, const QgsVector3D &chunkOrigin, Qgis::AltitudeClamping altClamp, QVector<QVector3D> &positions )
 {
   const QgsAbstractGeometry *g = f.geometry().constGet();
   for ( auto it = g->vertices_begin(); it != g->vertices_end(); ++it )
@@ -479,7 +518,7 @@ void Qgs3DUtils::extractPointPositions( const QgsFeature &f, const Qgs3DMapSetti
     {
       geomZ = pt.z();
     }
-    const float terrainZ = map.terrainRenderingEnabled() && map.terrainGenerator() ? map.terrainGenerator()->heightAt( pt.x(), pt.y(), map ) * map.terrainVerticalScale() : 0;
+    const float terrainZ = context.terrainRenderingEnabled() && context.terrainGenerator() ? static_cast<float>( context.terrainGenerator()->heightAt( pt.x(), pt.y(), context ) * context.terrainSettings()->verticalScale() ) : 0.f;
     float h = 0.0f;
     switch ( altClamp )
     {
@@ -493,7 +532,11 @@ void Qgs3DUtils::extractPointPositions( const QgsFeature &f, const Qgs3DMapSetti
         h = terrainZ + geomZ;
         break;
     }
-    positions.append( QVector3D( pt.x() - map.origin().x(), h, -( pt.y() - map.origin().y() ) ) );
+    positions.append( QVector3D(
+      static_cast<float>( pt.x() - chunkOrigin.x() ),
+      static_cast<float>( pt.y() - chunkOrigin.y() ),
+      h
+    ) );
     QgsDebugMsgLevel( QStringLiteral( "%1 %2 %3" ).arg( positions.last().x() ).arg( positions.last().y() ).arg( positions.last().z() ), 2 );
   }
 }
@@ -513,12 +556,18 @@ static inline uint outcode( QVector4D v )
   // TODO: optimise this with assembler - according to D&P this can
   // be done in one line of assembler on some platforms
   uint code = 0;
-  if ( v.x() < -v.w() ) code |= 0x01;
-  if ( v.x() > v.w() )  code |= 0x02;
-  if ( v.y() < -v.w() ) code |= 0x04;
-  if ( v.y() > v.w() )  code |= 0x08;
-  if ( v.z() < -v.w() ) code |= 0x10;
-  if ( v.z() > v.w() )  code |= 0x20;
+  if ( v.x() < -v.w() )
+    code |= 0x01;
+  if ( v.x() > v.w() )
+    code |= 0x02;
+  if ( v.y() < -v.w() )
+    code |= 0x04;
+  if ( v.y() > v.w() )
+    code |= 0x08;
+  if ( v.z() < -v.w() )
+    code |= 0x10;
+  if ( v.z() > v.w() )
+    code |= 0x20;
   return code;
 }
 
@@ -539,9 +588,7 @@ bool Qgs3DUtils::isCullable( const QgsAABB &bbox, const QMatrix4x4 &viewProjecti
 
   for ( int i = 0; i < 8; ++i )
   {
-    const QVector4D p( ( ( i >> 0 ) & 1 ) ? bbox.xMin : bbox.xMax,
-                       ( ( i >> 1 ) & 1 ) ? bbox.yMin : bbox.yMax,
-                       ( ( i >> 2 ) & 1 ) ? bbox.zMin : bbox.zMax, 1 );
+    const QVector4D p( ( ( i >> 0 ) & 1 ) ? bbox.xMin : bbox.xMax, ( ( i >> 1 ) & 1 ) ? bbox.yMin : bbox.yMax, ( ( i >> 2 ) & 1 ) ? bbox.zMin : bbox.zMax, 1 );
     const QVector4D pc = viewProjectionMatrix * p;
 
     // if the logical AND of all the outcodes is non-zero then the BB is
@@ -553,17 +600,12 @@ bool Qgs3DUtils::isCullable( const QgsAABB &bbox, const QMatrix4x4 &viewProjecti
 
 QgsVector3D Qgs3DUtils::mapToWorldCoordinates( const QgsVector3D &mapCoords, const QgsVector3D &origin )
 {
-  return QgsVector3D( mapCoords.x() - origin.x(),
-                      mapCoords.z() - origin.z(),
-                      -( mapCoords.y() - origin.y() ) );
-
+  return QgsVector3D( mapCoords.x() - origin.x(), mapCoords.y() - origin.y(), mapCoords.z() - origin.z() );
 }
 
 QgsVector3D Qgs3DUtils::worldToMapCoordinates( const QgsVector3D &worldCoords, const QgsVector3D &origin )
 {
-  return QgsVector3D( worldCoords.x() + origin.x(),
-                      -worldCoords.z() + origin.y(),
-                      worldCoords.y() + origin.z() );
+  return QgsVector3D( worldCoords.x() + origin.x(), worldCoords.y() + origin.y(), worldCoords.z() + origin.z() );
 }
 
 QgsRectangle Qgs3DUtils::tryReprojectExtent2D( const QgsRectangle &extent, const QgsCoordinateReferenceSystem &crs1, const QgsCoordinateReferenceSystem &crs2, const QgsCoordinateTransformContext &context )
@@ -605,9 +647,18 @@ QgsAABB Qgs3DUtils::mapToWorldExtent( const QgsRectangle &extent, double zMin, d
   const QgsVector3D extentMax3D( extent.xMaximum(), extent.yMaximum(), zMax );
   const QgsVector3D worldExtentMin3D = mapToWorldCoordinates( extentMin3D, mapOrigin );
   const QgsVector3D worldExtentMax3D = mapToWorldCoordinates( extentMax3D, mapOrigin );
-  QgsAABB rootBbox( worldExtentMin3D.x(), worldExtentMin3D.y(), worldExtentMin3D.z(),
-                    worldExtentMax3D.x(), worldExtentMax3D.y(), worldExtentMax3D.z() );
+  QgsAABB rootBbox( worldExtentMin3D.x(), worldExtentMin3D.y(), worldExtentMin3D.z(), worldExtentMax3D.x(), worldExtentMax3D.y(), worldExtentMax3D.z() );
   return rootBbox;
+}
+
+QgsAABB Qgs3DUtils::mapToWorldExtent( const QgsBox3D &box3D, const QgsVector3D &mapOrigin )
+{
+  const QgsVector3D extentMin3D( box3D.xMinimum(), box3D.yMinimum(), box3D.zMinimum() );
+  const QgsVector3D extentMax3D( box3D.xMaximum(), box3D.yMaximum(), box3D.zMaximum() );
+  const QgsVector3D worldExtentMin3D = mapToWorldCoordinates( extentMin3D, mapOrigin );
+  const QgsVector3D worldExtentMax3D = mapToWorldCoordinates( extentMax3D, mapOrigin );
+  // casting to float should be ok, assuming that the map origin is not too far from the box
+  return QgsAABB( static_cast<float>( worldExtentMin3D.x() ), static_cast<float>( worldExtentMin3D.y() ), static_cast<float>( worldExtentMin3D.z() ), static_cast<float>( worldExtentMax3D.x() ), static_cast<float>( worldExtentMax3D.y() ), static_cast<float>( worldExtentMax3D.z() ) );
 }
 
 QgsRectangle Qgs3DUtils::worldToMapExtent( const QgsAABB &bbox, const QgsVector3D &mapOrigin )
@@ -661,8 +712,10 @@ void Qgs3DUtils::estimateVectorLayerZRange( QgsVectorLayer *layer, double &zMin,
     for ( auto vit = g.vertices_begin(); vit != g.vertices_end(); ++vit )
     {
       const double z = ( *vit ).z();
-      if ( z < zMin ) zMin = z;
-      if ( z > zMax ) zMax = z;
+      if ( z < zMin )
+        zMin = z;
+      if ( z > zMax )
+        zMax = z;
     }
   }
 
@@ -754,21 +807,21 @@ std::unique_ptr<QgsPointCloudLayer3DRenderer> Qgs3DUtils::convert2DPointCloudRen
   if ( !renderer )
     return nullptr;
 
-  std::unique_ptr< QgsPointCloud3DSymbol > symbol3D;
+  std::unique_ptr<QgsPointCloud3DSymbol> symbol3D;
   if ( renderer->type() == QLatin1String( "ramp" ) )
   {
-    const QgsPointCloudAttributeByRampRenderer *renderer2D = dynamic_cast< const QgsPointCloudAttributeByRampRenderer * >( renderer );
-    symbol3D = std::make_unique< QgsColorRampPointCloud3DSymbol >();
-    QgsColorRampPointCloud3DSymbol *symbol = static_cast< QgsColorRampPointCloud3DSymbol * >( symbol3D.get() );
+    const QgsPointCloudAttributeByRampRenderer *renderer2D = qgis::down_cast<const QgsPointCloudAttributeByRampRenderer *>( renderer );
+    symbol3D = std::make_unique<QgsColorRampPointCloud3DSymbol>();
+    QgsColorRampPointCloud3DSymbol *symbol = static_cast<QgsColorRampPointCloud3DSymbol *>( symbol3D.get() );
     symbol->setAttribute( renderer2D->attribute() );
     symbol->setColorRampShaderMinMax( renderer2D->minimum(), renderer2D->maximum() );
     symbol->setColorRampShader( renderer2D->colorRampShader() );
   }
   else if ( renderer->type() == QLatin1String( "rgb" ) )
   {
-    const QgsPointCloudRgbRenderer *renderer2D = dynamic_cast< const QgsPointCloudRgbRenderer * >( renderer );
-    symbol3D = std::make_unique< QgsRgbPointCloud3DSymbol >();
-    QgsRgbPointCloud3DSymbol *symbol = static_cast< QgsRgbPointCloud3DSymbol * >( symbol3D.get() );
+    const QgsPointCloudRgbRenderer *renderer2D = qgis::down_cast<const QgsPointCloudRgbRenderer *>( renderer );
+    symbol3D = std::make_unique<QgsRgbPointCloud3DSymbol>();
+    QgsRgbPointCloud3DSymbol *symbol = static_cast<QgsRgbPointCloud3DSymbol *>( symbol3D.get() );
     symbol->setRedAttribute( renderer2D->redAttribute() );
     symbol->setGreenAttribute( renderer2D->greenAttribute() );
     symbol->setBlueAttribute( renderer2D->blueAttribute() );
@@ -779,17 +832,16 @@ std::unique_ptr<QgsPointCloudLayer3DRenderer> Qgs3DUtils::convert2DPointCloudRen
   }
   else if ( renderer->type() == QLatin1String( "classified" ) )
   {
-
-    const QgsPointCloudClassifiedRenderer *renderer2D = dynamic_cast< const QgsPointCloudClassifiedRenderer * >( renderer );
-    symbol3D = std::make_unique< QgsClassificationPointCloud3DSymbol >();
-    QgsClassificationPointCloud3DSymbol *symbol = static_cast< QgsClassificationPointCloud3DSymbol * >( symbol3D.get() );
+    const QgsPointCloudClassifiedRenderer *renderer2D = qgis::down_cast<const QgsPointCloudClassifiedRenderer *>( renderer );
+    symbol3D = std::make_unique<QgsClassificationPointCloud3DSymbol>();
+    QgsClassificationPointCloud3DSymbol *symbol = static_cast<QgsClassificationPointCloud3DSymbol *>( symbol3D.get() );
     symbol->setAttribute( renderer2D->attribute() );
     symbol->setCategoriesList( renderer2D->categories() );
   }
 
   if ( symbol3D )
   {
-    std::unique_ptr< QgsPointCloudLayer3DRenderer > renderer3D = std::make_unique< QgsPointCloudLayer3DRenderer >();
+    auto renderer3D = std::make_unique<QgsPointCloudLayer3DRenderer>();
     renderer3D->setSymbol( symbol3D.release() );
     return renderer3D;
   }
@@ -799,7 +851,7 @@ std::unique_ptr<QgsPointCloudLayer3DRenderer> Qgs3DUtils::convert2DPointCloudRen
 QHash<QgsMapLayer *, QVector<QgsRayCastingUtils::RayHit>> Qgs3DUtils::castRay( Qgs3DMapScene *scene, const QgsRay3D &ray, const QgsRayCastingUtils::RayCastContext &context )
 {
   QgsRayCastingUtils::Ray3D r( ray.origin(), ray.direction(), context.maxDistance );
-  QHash<QgsMapLayer *, QVector<QgsRayCastingUtils:: RayHit>> results;
+  QHash<QgsMapLayer *, QVector<QgsRayCastingUtils::RayHit>> results;
   const QList<QgsMapLayer *> keys = scene->layers();
   for ( QgsMapLayer *layer : keys )
   {
@@ -809,19 +861,25 @@ QHash<QgsMapLayer *, QVector<QgsRayCastingUtils::RayHit>> Qgs3DUtils::castRay( Q
     {
       const QVector<QgsRayCastingUtils::RayHit> result = chunkedEntity->rayIntersection( r, context );
       if ( !result.isEmpty() )
-        results[ layer ] = result;
+        results[layer] = result;
     }
   }
   if ( QgsTerrainEntity *terrain = scene->terrainEntity() )
   {
     const QVector<QgsRayCastingUtils::RayHit> result = terrain->rayIntersection( r, context );
     if ( !result.isEmpty() )
-      results[ nullptr ] = result;  // Terrain hits are not tied to a layer so we use nullptr as their key here
+      results[nullptr] = result; // Terrain hits are not tied to a layer so we use nullptr as their key here
+  }
+  if ( QgsGlobeEntity *globe = scene->globeEntity() )
+  {
+    const QVector<QgsRayCastingUtils::RayHit> result = globe->rayIntersection( r, context );
+    if ( !result.isEmpty() )
+      results[nullptr] = result; // Terrain hits are not tied to a layer so we use nullptr as their key here
   }
   return results;
 }
 
-float Qgs3DUtils::screenSpaceError( float epsilon, float distance, float screenSize, float fov )
+float Qgs3DUtils::screenSpaceError( float epsilon, float distance, int screenSize, float fov )
 {
   /* This routine approximately calculates how an error (epsilon) of an object in world coordinates
    * at given distance (between camera and the object) will look like in screen coordinates.
@@ -843,6 +901,284 @@ float Qgs3DUtils::screenSpaceError( float epsilon, float distance, float screenS
    *       \|/    angle = field of view
    *       camera
    */
-  float phi = epsilon * screenSize / ( 2 * distance * tan( fov * M_PI / ( 2 * 180 ) ) );
+  float phi = epsilon * static_cast<float>( screenSize ) / static_cast<float>( 2 * distance * tan( fov * M_PI / ( 2 * 180 ) ) );
   return phi;
+}
+
+void Qgs3DUtils::computeBoundingBoxNearFarPlanes( const QgsAABB &bbox, const QMatrix4x4 &viewMatrix, float &fnear, float &ffar )
+{
+  fnear = 1e9;
+  ffar = 0;
+
+  for ( int i = 0; i < 8; ++i )
+  {
+    const QVector4D p( ( ( i >> 0 ) & 1 ) ? bbox.xMin : bbox.xMax, ( ( i >> 1 ) & 1 ) ? bbox.yMin : bbox.yMax, ( ( i >> 2 ) & 1 ) ? bbox.zMin : bbox.zMax, 1 );
+
+    const QVector4D pc = viewMatrix * p;
+
+    const float dst = -pc.z(); // in camera coordinates, x grows right, y grows down, z grows to the back
+    fnear = std::min( fnear, dst );
+    ffar = std::max( ffar, dst );
+  }
+}
+
+Qt3DRender::QCullFace::CullingMode Qgs3DUtils::qt3DcullingMode( Qgs3DTypes::CullingMode mode )
+{
+  switch ( mode )
+  {
+    case Qgs3DTypes::NoCulling:
+      return Qt3DRender::QCullFace::NoCulling;
+    case Qgs3DTypes::Front:
+      return Qt3DRender::QCullFace::Front;
+    case Qgs3DTypes::Back:
+      return Qt3DRender::QCullFace::Back;
+    case Qgs3DTypes::FrontAndBack:
+      return Qt3DRender::QCullFace::FrontAndBack;
+  }
+  return Qt3DRender::QCullFace::NoCulling;
+}
+
+
+QByteArray Qgs3DUtils::addDefinesToShaderCode( const QByteArray &shaderCode, const QStringList &defines )
+{
+  // There is one caveat to take care of - GLSL source code needs to start with #version as
+  // a first directive, otherwise we get the old GLSL 100 version. So we can't just prepend the
+  // shader source code, but insert our defines at the right place.
+
+  QStringList defineLines;
+  for ( const QString &define : defines )
+    defineLines += "#define " + define + "\n";
+
+  QString definesText = defineLines.join( QString() );
+
+  QByteArray newShaderCode = shaderCode;
+  int versionIndex = shaderCode.indexOf( "#version " );
+  int insertionIndex = versionIndex == -1 ? 0 : shaderCode.indexOf( '\n', versionIndex + 1 ) + 1;
+  newShaderCode.insert( insertionIndex, definesText.toLatin1() );
+  return newShaderCode;
+}
+
+QByteArray Qgs3DUtils::removeDefinesFromShaderCode( const QByteArray &shaderCode, const QStringList &defines )
+{
+  QByteArray newShaderCode = shaderCode;
+
+  for ( const QString &define : defines )
+  {
+    const QString defineLine = "#define " + define + "\n";
+    const int defineLineIndex = newShaderCode.indexOf( defineLine.toUtf8() );
+    if ( defineLineIndex != -1 )
+    {
+      newShaderCode.remove( defineLineIndex, defineLine.size() );
+    }
+  }
+
+  return newShaderCode;
+}
+
+void Qgs3DUtils::decomposeTransformMatrix( const QMatrix4x4 &matrix, QVector3D &translation, QQuaternion &rotation, QVector3D &scale )
+{
+  // decompose the transform matrix
+  // assuming the last row has values [0 0 0 1]
+  // see https://math.stackexchange.com/questions/237369/given-this-transformation-matrix-how-do-i-decompose-it-into-translation-rotati
+  const float *md = matrix.data(); // returns data in column-major order
+  const float sx = QVector3D( md[0], md[1], md[2] ).length();
+  const float sy = QVector3D( md[4], md[5], md[6] ).length();
+  const float sz = QVector3D( md[8], md[9], md[10] ).length();
+  float rd[9] = {
+    md[0] / sx,
+    md[4] / sy,
+    md[8] / sz,
+    md[1] / sx,
+    md[5] / sy,
+    md[9] / sz,
+    md[2] / sx,
+    md[6] / sy,
+    md[10] / sz,
+  };
+  const QMatrix3x3 rot3x3( rd ); // takes data in row-major order
+
+  scale = QVector3D( sx, sy, sz );
+  rotation = QQuaternion::fromRotationMatrix( rot3x3 );
+  translation = QVector3D( md[12], md[13], md[14] );
+}
+
+int Qgs3DUtils::openGlMaxClipPlanes( QSurface *surface )
+{
+  int numPlanes = 6;
+
+  QOpenGLContext context;
+  context.setFormat( QSurfaceFormat::defaultFormat() );
+  if ( context.create() )
+  {
+    if ( context.makeCurrent( surface ) )
+    {
+      QOpenGLFunctions *funcs = context.functions();
+      funcs->glGetIntegerv( GL_MAX_CLIP_PLANES, &numPlanes );
+    }
+  }
+
+  return numPlanes;
+}
+
+QQuaternion Qgs3DUtils::rotationFromPitchHeadingAngles( float pitchAngle, float headingAngle )
+{
+  return QQuaternion::fromAxisAndAngle( QVector3D( 0, 0, 1 ), headingAngle ) * QQuaternion::fromAxisAndAngle( QVector3D( 1, 0, 0 ), pitchAngle );
+}
+
+QgsPoint Qgs3DUtils::screenPointToMapCoordinates( const QPoint &screenPoint, const QSize size, const QgsCameraController *cameraController, const Qgs3DMapSettings *mapSettings )
+{
+  const QgsRay3D ray = rayFromScreenPoint( screenPoint, size, cameraController->camera() );
+
+  // pick an arbitrary point mid-way between near and far plane
+  const float pointDistance = ( cameraController->camera()->farPlane() + cameraController->camera()->nearPlane() ) / 2;
+  const QVector3D worldPoint = ray.origin() + pointDistance * ray.direction().normalized();
+  const QgsVector3D mapTransform = worldToMapCoordinates( worldPoint, mapSettings->origin() );
+  const QgsPoint mapPoint( mapTransform.x(), mapTransform.y(), mapTransform.z() );
+  return mapPoint;
+}
+
+// computes the portion of the Y=y plane the camera is looking at
+void Qgs3DUtils::calculateViewExtent( const Qt3DRender::QCamera *camera, float maxRenderingDistance, float z, float &minX, float &maxX, float &minY, float &maxY, float &minZ, float &maxZ )
+{
+  const QVector3D cameraPos = camera->position();
+  const QMatrix4x4 projectionMatrix = camera->projectionMatrix();
+  const QMatrix4x4 viewMatrix = camera->viewMatrix();
+  float depth = 1.0f;
+  QVector4D viewCenter = viewMatrix * QVector4D( camera->viewCenter(), 1.0f );
+  viewCenter /= viewCenter.w();
+  viewCenter = projectionMatrix * viewCenter;
+  viewCenter /= viewCenter.w();
+  depth = viewCenter.z();
+  QVector<QVector3D> viewFrustumPoints = {
+    QVector3D( 0.0f, 0.0f, depth ),
+    QVector3D( 0.0f, 1.0f, depth ),
+    QVector3D( 1.0f, 0.0f, depth ),
+    QVector3D( 1.0f, 1.0f, depth ),
+    QVector3D( 0.0f, 0.0f, 0 ),
+    QVector3D( 0.0f, 1.0f, 0 ),
+    QVector3D( 1.0f, 0.0f, 0 ),
+    QVector3D( 1.0f, 1.0f, 0 )
+  };
+  maxX = std::numeric_limits<float>::lowest();
+  maxY = std::numeric_limits<float>::lowest();
+  maxZ = std::numeric_limits<float>::lowest();
+  minX = std::numeric_limits<float>::max();
+  minY = std::numeric_limits<float>::max();
+  minZ = std::numeric_limits<float>::max();
+  for ( int i = 0; i < viewFrustumPoints.size(); ++i )
+  {
+    // convert from view port space to world space
+    viewFrustumPoints[i] = viewFrustumPoints[i].unproject( viewMatrix, projectionMatrix, QRect( 0, 0, 1, 1 ) );
+    minX = std::min( minX, viewFrustumPoints[i].x() );
+    maxX = std::max( maxX, viewFrustumPoints[i].x() );
+    minY = std::min( minY, viewFrustumPoints[i].y() );
+    maxY = std::max( maxY, viewFrustumPoints[i].y() );
+    minZ = std::min( minZ, viewFrustumPoints[i].z() );
+    maxZ = std::max( maxZ, viewFrustumPoints[i].z() );
+    // find the intersection between the line going from cameraPos to the frustum quad point
+    // and the horizontal plane Z=z
+    // if the intersection is on the back side of the viewing panel we get a point that is
+    // maxRenderingDistance units in front of the camera
+    const QVector3D pt = cameraPos;
+    const QVector3D vect = ( viewFrustumPoints[i] - pt ).normalized();
+    float t = ( z - pt.z() ) / vect.z();
+    if ( t < 0 )
+      t = maxRenderingDistance;
+    else
+      t = std::min( t, maxRenderingDistance );
+    viewFrustumPoints[i] = pt + t * vect;
+    minX = std::min( minX, viewFrustumPoints[i].x() );
+    maxX = std::max( maxX, viewFrustumPoints[i].x() );
+    minY = std::min( minY, viewFrustumPoints[i].y() );
+    maxY = std::max( maxY, viewFrustumPoints[i].y() );
+    minZ = std::min( minZ, viewFrustumPoints[i].z() );
+    maxZ = std::max( maxZ, viewFrustumPoints[i].z() );
+  }
+}
+
+QList<QVector4D> Qgs3DUtils::lineSegmentToClippingPlanes( const QgsVector3D &startPoint, const QgsVector3D &endPoint, const double distance, const QgsVector3D &origin )
+{
+  // return empty vector if distance is negative
+  if ( distance < 0 )
+    return QList<QVector4D>();
+
+  QgsVector3D lineDirection( endPoint - startPoint );
+  lineDirection.normalize();
+  const QgsVector lineDirection2DPerp = QgsVector( lineDirection.x(), lineDirection.y() ).perpVector();
+  const QgsVector3D linePerp( lineDirection2DPerp.x(), lineDirection2DPerp.y(), 0 );
+
+  QList<QVector4D> clippingPlanes;
+  QgsVector3D planePoint;
+  double originDistance;
+
+  // the naming is assigned according to line direction
+  //! back clip plane
+  planePoint = startPoint;
+  originDistance = QgsVector3D::dotProduct( planePoint - origin, lineDirection );
+  clippingPlanes << QVector4D( static_cast<float>( lineDirection.x() ), static_cast<float>( lineDirection.y() ), 0, static_cast<float>( -originDistance ) );
+
+  //! left clip plane
+  planePoint = startPoint + linePerp * distance;
+  originDistance = QgsVector3D::dotProduct( planePoint - origin, -linePerp );
+  clippingPlanes << QVector4D( static_cast<float>( -linePerp.x() ), static_cast<float>( -linePerp.y() ), 0, static_cast<float>( -originDistance ) );
+
+  //! front clip plane
+  planePoint = endPoint;
+  originDistance = QgsVector3D::dotProduct( planePoint - origin, -lineDirection );
+  clippingPlanes << QVector4D( static_cast<float>( -lineDirection.x() ), static_cast<float>( -lineDirection.y() ), 0, static_cast<float>( -originDistance ) );
+
+  //! right clip plane
+  planePoint = startPoint - linePerp * distance;
+  originDistance = QgsVector3D::dotProduct( planePoint - origin, linePerp );
+  clippingPlanes << QVector4D( static_cast<float>( linePerp.x() ), static_cast<float>( linePerp.y() ), 0, static_cast<float>( -originDistance ) );
+
+  return clippingPlanes;
+}
+
+QgsCameraPose Qgs3DUtils::lineSegmentToCameraPose( const QgsVector3D &startPoint, const QgsVector3D &endPoint, const QgsDoubleRange &elevationRange, const float fieldOfView, const QgsVector3D &worldOrigin )
+{
+  QgsCameraPose cameraPose;
+  // we tilt the view slightly to see flat layers if the elevationRange is infinite (scene has flat terrain, vector layers...)
+  elevationRange.isInfinite() ? cameraPose.setPitchAngle( 89 ) : cameraPose.setPitchAngle( 90 );
+
+  // calculate the middle of the front side defined by clipping planes
+  QgsVector linePerpVec( ( endPoint - startPoint ).x(), ( endPoint - startPoint ).y() );
+  linePerpVec = -linePerpVec.normalized().perpVector();
+  const QgsVector3D linePerpVec3D( linePerpVec.x(), linePerpVec.y(), 0 );
+  QgsVector3D middle( startPoint + ( endPoint - startPoint ) / 2 );
+
+  double elevationRangeHalf;
+  elevationRange.isInfinite() ? elevationRangeHalf = 0 : elevationRangeHalf = ( elevationRange.upper() - elevationRange.lower() ) / 2;
+  const double side = std::max( middle.distance( startPoint ), elevationRangeHalf );
+  const double distance = ( side / std::tan( fieldOfView / 2 * M_PI / 180 ) ) * 1.05;
+  cameraPose.setDistanceFromCenterPoint( static_cast<float>( distance ) );
+
+  elevationRange.isInfinite() ? middle.setZ( 0 ) : middle.setZ( elevationRange.lower() + ( elevationRange.upper() - elevationRange.lower() ) / 2 );
+  cameraPose.setCenterPoint( mapToWorldCoordinates( middle, worldOrigin ) );
+
+  const QgsVector3D northDirectionVec( 0, -1, 0 );
+  // calculate the angle between vector pointing to the north and vector pointing from the front side of clipped area
+  float yawAngle = static_cast<float>( acos( QgsVector3D::dotProduct( linePerpVec3D, northDirectionVec ) ) * 180 / M_PI );
+  // check if the angle between the view point is to the left or right of the scene north, apply angle offset if necessary for camera
+  if ( QgsVector3D::crossProduct( linePerpVec3D, northDirectionVec ).z() > 0 )
+  {
+    yawAngle = 360 - yawAngle;
+  }
+  cameraPose.setHeadingAngle( yawAngle );
+
+  return cameraPose;
+}
+
+std::unique_ptr<Qt3DRender::QCamera> Qgs3DUtils::copyCamera( Qt3DRender::QCamera *cam )
+{
+  std::unique_ptr<Qt3DRender::QCamera> copy = std::make_unique<Qt3DRender::QCamera>();
+  copy->setPosition( cam->position() );
+  copy->setViewCenter( cam->viewCenter() );
+  copy->setUpVector( cam->upVector() );
+  copy->setProjectionMatrix( cam->projectionMatrix() );
+  copy->setNearPlane( cam->nearPlane() );
+  copy->setFarPlane( cam->farPlane() );
+  copy->setAspectRatio( cam->aspectRatio() );
+  copy->setFieldOfView( cam->fieldOfView() );
+  return copy;
 }

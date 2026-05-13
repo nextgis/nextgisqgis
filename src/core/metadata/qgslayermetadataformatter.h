@@ -27,12 +27,11 @@
 /**
  * \ingroup core
  * \class QgsLayerMetadataFormatter
- * \brief Class for metadata formatter.
- * \since QGIS 3.0
+ * \brief Formats layer metadata into HTML.
  */
 class CORE_EXPORT QgsLayerMetadataFormatter
 {
-    Q_DECLARE_TR_FUNCTIONS( "QgsLayerMetadataFormatter" )
+    Q_DECLARE_TR_FUNCTIONS( QgsLayerMetadataFormatter )
 
   public:
 

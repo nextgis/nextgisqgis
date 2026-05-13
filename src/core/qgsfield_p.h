@@ -50,8 +50,8 @@ class QgsFieldPrivate : public QSharedData
   public:
 
     QgsFieldPrivate( const QString &name = QString(),
-                     QVariant::Type type = QVariant::Invalid,
-                     QVariant::Type subType = QVariant::Invalid,
+                     QMetaType::Type type = QMetaType::Type::UnknownType,
+                     QMetaType::Type subType = QMetaType::Type::UnknownType,
                      const QString &typeName = QString(),
                      int len = 0,
                      int prec = 0,
@@ -82,7 +82,10 @@ class QgsFieldPrivate : public QSharedData
       , flags( other.flags )
       , defaultValueDefinition( other.defaultValueDefinition )
       , constraints( other.constraints )
+      , editorWidgetSetup( other.editorWidgetSetup )
       , splitPolicy( other.splitPolicy )
+      , duplicatePolicy( other.duplicatePolicy )
+      , mergePolicy( other.mergePolicy )
       , isReadOnly( other.isReadOnly )
     {
     }
@@ -98,17 +101,20 @@ class QgsFieldPrivate : public QSharedData
                && ( alias == other.alias ) && ( defaultValueDefinition == other.defaultValueDefinition )
                && ( constraints == other.constraints )  && ( flags == other.flags )
                && ( splitPolicy == other.splitPolicy )
-               && ( isReadOnly == other.isReadOnly ) );
+               && ( duplicatePolicy == other.duplicatePolicy )
+               && ( mergePolicy == other.mergePolicy )
+               && ( isReadOnly == other.isReadOnly )
+               && ( editorWidgetSetup == other.editorWidgetSetup ) );
     }
 
     //! Name
     QString name;
 
     //! Variant type
-    QVariant::Type type;
+    QMetaType::Type type;
 
     //! If the variant is a collection, its element's type
-    QVariant::Type subType;
+    QMetaType::Type subType;
 
     //! Type name from provider
     QString typeName;
@@ -129,7 +135,7 @@ class QgsFieldPrivate : public QSharedData
     QString alias;
 
     //! Flags for the field (searchable, …)
-    QgsField::ConfigurationFlags flags = QgsField::ConfigurationFlag::None;
+    Qgis::FieldConfigurationFlags flags = Qgis::FieldConfigurationFlag::NoFlag;
 
     //! Default value
     QgsDefaultValue defaultValueDefinition;
@@ -141,6 +147,12 @@ class QgsFieldPrivate : public QSharedData
 
     //! Split policy
     Qgis::FieldDomainSplitPolicy splitPolicy = Qgis::FieldDomainSplitPolicy::Duplicate;
+
+    //! Duplicate policy
+    Qgis::FieldDuplicatePolicy duplicatePolicy = Qgis::FieldDuplicatePolicy::Duplicate;
+
+    //! Merge policy
+    Qgis::FieldDomainMergePolicy mergePolicy = Qgis::FieldDomainMergePolicy::UnsetField;
 
     //! Read-only
     bool isReadOnly = false;

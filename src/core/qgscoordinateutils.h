@@ -37,7 +37,6 @@ class QgsRectangle;
  * \ingroup core
  * \class QgsCoordinateUtils
  * \brief Utilities for handling and formatting coordinates
- * \since QGIS 2.14
  */
 class CORE_EXPORT QgsCoordinateUtils
 {
@@ -68,7 +67,7 @@ class CORE_EXPORT QgsCoordinateUtils
      * calculates a precision based on CRS units.
      *
      * \param crs Coordinate system
-     * \param project QGIS project. Takes QgsProject::instance() if NULL
+     * \param project QGIS project. Takes QgsProject.instance() if NULL
      *
      * \returns number of decimal places behind the dot
      * \since QGIS 3.18

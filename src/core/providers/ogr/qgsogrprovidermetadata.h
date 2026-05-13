@@ -38,7 +38,7 @@ class QgsOgrProviderMetadata final: public QgsProviderMetadata
     void initProvider() override;
     void cleanupProvider() override;
     QList< QgsDataItemProvider * > dataItemProviders() const override;
-    QgsDataProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() ) override;
+    QgsDataProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() ) override;
     QVariantMap decodeUri( const QString &uri ) const override;
     QString encodeUri( const QVariantMap &parts ) const override;
     QString absoluteToRelativeUri( const QString &uri, const QgsReadWriteContext &context ) const override;
@@ -58,7 +58,8 @@ class QgsOgrProviderMetadata final: public QgsProviderMetadata
       bool overwrite,
       QMap<int, int> &oldToNewAttrIdxMap,
       QString &errorMessage,
-      const QMap<QString, QVariant> *options ) override;
+      const QMap<QString, QVariant> *options,
+      QString &createdLayerUri ) override;
     bool createDatabase( const QString &uri, QString &errorMessage ) override;
 
     // -----

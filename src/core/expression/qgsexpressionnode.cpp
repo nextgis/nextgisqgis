@@ -29,8 +29,7 @@ QVariant QgsExpressionNode::eval( QgsExpression *parent, const QgsExpressionCont
   }
   else
   {
-    QVariant res = evalNode( parent, context );
-    return res;
+    return evalNode( parent, context );
   }
 }
 
@@ -97,4 +96,3 @@ void QgsExpressionNode::cloneTo( QgsExpressionNode *target ) const
   target->parserFirstColumn = parserFirstColumn;
   target->parserFirstLine = parserFirstLine;
 }
-

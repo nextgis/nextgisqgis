@@ -28,7 +28,7 @@ class QPushButton;
 
 /**
  * \ingroup gui
- * \brief Widget for importing a certificate into the authentication database
+ * \brief Widget for importing a certificate into the authentication database.
  */
 class GUI_EXPORT QgsAuthImportCertDialog : public QDialog, private Ui::QgsAuthImportCertDialog
 {
@@ -56,9 +56,7 @@ class GUI_EXPORT QgsAuthImportCertDialog : public QDialog, private Ui::QgsAuthIm
      * \param filter Certificate type filter to apply to dialog
      * \param input Type of input(s) for certificates
      */
-    explicit QgsAuthImportCertDialog( QWidget *parent SIP_TRANSFERTHIS = nullptr,
-                                      QgsAuthImportCertDialog::CertFilter filter = NoFilter,
-                                      QgsAuthImportCertDialog::CertInput input = AllInputs );
+    explicit QgsAuthImportCertDialog( QWidget *parent SIP_TRANSFERTHIS = nullptr, QgsAuthImportCertDialog::CertFilter filter = NoFilter, QgsAuthImportCertDialog::CertInput input = AllInputs );
 
     //! Gets list of certificate objects to import
     const QList<QSslCertificate> certificatesToImport();

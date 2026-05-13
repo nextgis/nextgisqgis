@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgsprovidersublayertask.h"
+#include "moc_qgsprovidersublayertask.cpp"
 #include "qgsfeedback.h"
 #include "qgsprovidermetadata.h"
 #include "qgsproviderregistry.h"
@@ -49,7 +50,7 @@ bool QgsProviderSublayerTask::run()
 {
   mFeedback = std::make_unique< QgsFeedback >();
 
-  Qgis::SublayerQueryFlags flags = Qgis::SublayerQueryFlag::ResolveGeometryType | Qgis::SublayerQueryFlag::CountFeatures;
+  Qgis::SublayerQueryFlags flags = Qgis::SublayerQueryFlag::ResolveGeometryType | Qgis::SublayerQueryFlag::CountFeatures | Qgis::SublayerQueryFlag::OpenLayersToResolveDescriptions;
   if ( mIncludeSystemTables )
     flags |= Qgis::SublayerQueryFlag::IncludeSystemTables;
 

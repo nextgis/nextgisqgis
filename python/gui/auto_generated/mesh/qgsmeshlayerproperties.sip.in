@@ -3,18 +3,17 @@
  *                                                                      *
  * src/gui/mesh/qgsmeshlayerproperties.h                                *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 
 
-
-class QgsMeshLayerProperties : QgsOptionsDialogBase
+class QgsMeshLayerProperties : QgsLayerPropertiesDialog
 {
 %Docstring(signature="appended")
+A dialog for configuring mesh layer properties.
 
-Property sheet for a mesh map layer.
 Contains information, source and style tabs
 
 .. versionadded:: 3.16
@@ -24,7 +23,6 @@ Contains information, source and style tabs
 #include "qgsmeshlayerproperties.h"
 %End
   public:
-
     QgsMeshLayerProperties( QgsMapLayer *lyr, QgsMapCanvas *canvas, QWidget *parent = 0, Qt::WindowFlags = QgsGuiUtils::ModalDialogFlags );
 %Docstring
 Constructor
@@ -35,42 +33,40 @@ Constructor
 :param fl: Window flags
 %End
 
-    void addPropertiesPageFactory( const QgsMapLayerConfigWidgetFactory *factory );
-%Docstring
-Adds properties page from a factory
-
-.. versionadded:: 3.16
-%End
-
-    void loadDefaultStyle();
-%Docstring
-Loads the default style when appropriate button is pressed
-
-.. versionadded:: 3.30
-%End
-
-    void saveDefaultStyle();
+ void saveDefaultStyle() /Deprecated="Since 3.40. Use saveStyleAsDefault() instead."/;
 %Docstring
 Saves the default style when appropriate button is pressed
 
-.. versionadded:: 3.30
+.. deprecated:: 3.40
+
+   Use :py:func:`~QgsMeshLayerProperties.saveStyleAsDefault` instead.
 %End
 
-    void loadStyle();
+ void loadStyle() /Deprecated="Since 3.40. Use loadStyleFromFile() instead."/;
 %Docstring
 Loads a saved style when appropriate button is pressed
 
-.. versionadded:: 3.30
+.. deprecated:: 3.40
+
+   Use :py:func:`~QgsMeshLayerProperties.loadStyleFromFile` instead.
 %End
 
-    void saveStyleAs();
+ void saveStyleAs() /Deprecated="Since 3.40. Use saveStyleToFile() instead."/;
 %Docstring
 Saves a style when appriate button is pressed
 
-.. versionadded:: 3.30
+.. deprecated:: 3.40
+
+   Use :py:func:`~QgsMeshLayerProperties.saveStyleToFile` instead.
 %End
 
   protected slots:
+    virtual void syncToLayer() ${SIP_FINAL};
+
+    virtual void apply() ${SIP_FINAL};
+
+    virtual void rollback() ${SIP_FINAL};
+
 
 };
 
@@ -80,5 +76,5 @@ Saves a style when appriate button is pressed
  *                                                                      *
  * src/gui/mesh/qgsmeshlayerproperties.h                                *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

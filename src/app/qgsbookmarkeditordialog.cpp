@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "qgsbookmarkeditordialog.h"
+#include "moc_qgsbookmarkeditordialog.cpp"
 
 #include "qgis.h"
 #include "qgisapp.h"
@@ -28,7 +29,7 @@
 #include "qgsmapcanvas.h"
 #include "qgshelp.h"
 
-QgsBookmarkEditorDialog::QgsBookmarkEditorDialog( QgsBookmark bookmark, bool inProject, QWidget *parent, QgsMapCanvas *mapCanvas )
+QgsBookmarkEditorDialog::QgsBookmarkEditorDialog( const QgsBookmark &bookmark, bool inProject, QWidget *parent, QgsMapCanvas *mapCanvas )
   : QDialog( parent )
   , mBookmark( bookmark )
   , mInProject( inProject )
@@ -62,6 +63,7 @@ QgsBookmarkEditorDialog::QgsBookmarkEditorDialog( QgsBookmark bookmark, bool inP
   connect( buttonBox, &QDialogButtonBox::helpRequested, this, &QgsBookmarkEditorDialog::showHelp );
 
   mName->setFocus();
+  mName->selectAll();
 }
 
 void QgsBookmarkEditorDialog::crsChanged( const QgsCoordinateReferenceSystem &crs )
@@ -105,4 +107,3 @@ void QgsBookmarkEditorDialog::onAccepted()
       QgsProject::instance()->bookmarkManager()->moveBookmark( bookmark.id(), QgsApplication::bookmarkManager() );
   }
 }
-

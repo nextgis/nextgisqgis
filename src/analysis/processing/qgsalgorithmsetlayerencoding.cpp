@@ -55,7 +55,7 @@ QString QgsSetLayerEncodingAlgorithm::shortHelpString() const
 
 QString QgsSetLayerEncodingAlgorithm::shortDescription() const
 {
-  return QObject::tr( "Sets the encoding used for reading a layer's attributes" );
+  return QObject::tr( "Sets the encoding used for reading a layer's attributes." );
 }
 
 QgsSetLayerEncodingAlgorithm *QgsSetLayerEncodingAlgorithm::createInstance() const
@@ -83,7 +83,7 @@ bool QgsSetLayerEncodingAlgorithm::prepareAlgorithm( const QVariantMap &paramete
   mOutputId = layer->id();
   QgsVectorDataProvider *provider = layer->dataProvider();
 
-  if ( provider->capabilities() & QgsVectorDataProvider::SelectEncoding )
+  if ( provider->capabilities() & Qgis::VectorProviderCapability::SelectEncoding )
   {
     layer->setProviderEncoding( encoding );
   }

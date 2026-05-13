@@ -13,7 +13,9 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "qgscolorutils.h"
 #include "qgsprojectstylesettings.h"
+#include "moc_qgsprojectstylesettings.cpp"
 #include "qgis.h"
 #include "qgsproject.h"
 #include "qgssymbol.h"
@@ -25,6 +27,7 @@
 #include "qgstextformat.h"
 #include "qgsstyle.h"
 #include "qgscombinedstylemodel.h"
+#include "qgsxmlutils.h"
 
 #include <QDomElement>
 
@@ -69,15 +72,30 @@ void QgsProjectStyleSettings::setDefaultSymbol( Qgis::SymbolType symbolType, Qgs
   switch ( symbolType )
   {
     case Qgis::SymbolType::Marker:
+      if ( mDefaultMarkerSymbol.get() == symbol )
+        return;
+
       mDefaultMarkerSymbol.reset( symbol ? symbol->clone() : nullptr );
+
+      makeDirty();
       break;
 
     case Qgis::SymbolType::Line:
+      if ( mDefaultLineSymbol.get() == symbol )
+        return;
+
       mDefaultLineSymbol.reset( symbol ? symbol->clone() : nullptr );
+
+      makeDirty();
       break;
 
     case Qgis::SymbolType::Fill:
+      if ( mDefaultFillSymbol.get() == symbol )
+        return;
+
       mDefaultFillSymbol.reset( symbol ? symbol->clone() : nullptr );
+
+      makeDirty();
       break;
 
     case Qgis::SymbolType::Hybrid:
@@ -92,7 +110,12 @@ QgsColorRamp *QgsProjectStyleSettings::defaultColorRamp() const
 
 void QgsProjectStyleSettings::setDefaultColorRamp( QgsColorRamp *colorRamp )
 {
+  if ( mDefaultColorRamp.get() == colorRamp )
+    return;
+
   mDefaultColorRamp.reset( colorRamp ? colorRamp->clone() : nullptr );
+
+  makeDirty();
 }
 
 QgsTextFormat QgsProjectStyleSettings::defaultTextFormat() const
@@ -102,7 +125,32 @@ QgsTextFormat QgsProjectStyleSettings::defaultTextFormat() const
 
 void QgsProjectStyleSettings::setDefaultTextFormat( const QgsTextFormat &textFormat )
 {
+  if ( mDefaultTextFormat == textFormat )
+    return;
+
   mDefaultTextFormat = textFormat;
+
+  makeDirty();
+}
+
+void QgsProjectStyleSettings::setDefaultSymbolOpacity( double opacity )
+{
+  if ( qgsDoubleNear( mDefaultSymbolOpacity, opacity ) )
+    return;
+
+  mDefaultSymbolOpacity = opacity;
+
+  makeDirty();
+}
+
+void QgsProjectStyleSettings::setRandomizeDefaultSymbolColor( bool randomized )
+{
+  if ( mRandomizeDefaultSymbolColor == randomized )
+    return;
+
+  mRandomizeDefaultSymbolColor = randomized;
+
+  makeDirty();
 }
 
 void QgsProjectStyleSettings::reset()
@@ -170,12 +218,13 @@ bool QgsProjectStyleSettings::readXml( const QDomElement &element, const QgsRead
 {
   mRandomizeDefaultSymbolColor = element.attribute( QStringLiteral( "RandomizeDefaultSymbolColor" ), QStringLiteral( "0" ) ).toInt();
   mDefaultSymbolOpacity = element.attribute( QStringLiteral( "DefaultSymbolOpacity" ), QStringLiteral( "1.0" ) ).toDouble();
+  mColorModel = qgsEnumKeyToValue( element.attribute( QStringLiteral( "colorModel" ) ), Qgis::ColorModel::Rgb );
 
   QDomElement elem = element.firstChildElement( QStringLiteral( "markerSymbol" ) );
   if ( !elem.isNull() )
   {
     QDomElement symbolElem = elem.firstChildElement( QStringLiteral( "symbol" ) );
-    mDefaultMarkerSymbol.reset( !symbolElem.isNull() ? QgsSymbolLayerUtils::loadSymbol<QgsMarkerSymbol>( symbolElem, context ) : nullptr );
+    mDefaultMarkerSymbol = !symbolElem.isNull() ? QgsSymbolLayerUtils::loadSymbol<QgsMarkerSymbol>( symbolElem, context ) : nullptr;
   }
   else
   {
@@ -186,7 +235,7 @@ bool QgsProjectStyleSettings::readXml( const QDomElement &element, const QgsRead
   if ( !elem.isNull() )
   {
     QDomElement symbolElem = elem.firstChildElement( QStringLiteral( "symbol" ) );
-    mDefaultLineSymbol.reset( !symbolElem.isNull() ? QgsSymbolLayerUtils::loadSymbol<QgsLineSymbol>( symbolElem, context ) : nullptr );
+    mDefaultLineSymbol = !symbolElem.isNull() ? QgsSymbolLayerUtils::loadSymbol<QgsLineSymbol>( symbolElem, context ) : nullptr;
   }
   else
   {
@@ -197,7 +246,7 @@ bool QgsProjectStyleSettings::readXml( const QDomElement &element, const QgsRead
   if ( !elem.isNull() )
   {
     QDomElement symbolElem = elem.firstChildElement( QStringLiteral( "symbol" ) );
-    mDefaultFillSymbol.reset( !symbolElem.isNull() ? QgsSymbolLayerUtils::loadSymbol<QgsFillSymbol>( symbolElem, context ) : nullptr );
+    mDefaultFillSymbol = !symbolElem.isNull() ? QgsSymbolLayerUtils::loadSymbol<QgsFillSymbol>( symbolElem, context ) : nullptr;
   }
   else
   {
@@ -205,7 +254,7 @@ bool QgsProjectStyleSettings::readXml( const QDomElement &element, const QgsRead
   }
 
   elem = element.firstChildElement( QStringLiteral( "colorramp" ) );
-  mDefaultColorRamp.reset( !elem.isNull() ? QgsSymbolLayerUtils::loadColorRamp( elem ) : nullptr );
+  mDefaultColorRamp = !elem.isNull() ? QgsSymbolLayerUtils::loadColorRamp( elem ) : nullptr;
 
   elem = element.firstChildElement( QStringLiteral( "text-style" ) );
   if ( !elem.isNull() )
@@ -259,6 +308,18 @@ bool QgsProjectStyleSettings::readXml( const QDomElement &element, const QgsRead
     }
   }
 
+  const QString iccProfileId = element.attribute( QStringLiteral( "iccProfileId" ) );
+  mIccProfileFilePath = mProject ? mProject->resolveAttachmentIdentifier( iccProfileId ) : QString();
+  if ( !mIccProfileFilePath.isEmpty() )
+  {
+    QString errorMsg;
+    QColorSpace colorSpace = QgsColorUtils::iccProfile( mIccProfileFilePath, errorMsg );
+    if ( !errorMsg.isEmpty() )
+      context.pushMessage( errorMsg );
+
+    setColorSpace( colorSpace );
+  }
+
   emit styleDatabasesChanged();
 
   return true;
@@ -270,6 +331,8 @@ QDomElement QgsProjectStyleSettings::writeXml( QDomDocument &doc, const QgsReadW
 
   element.setAttribute( QStringLiteral( "RandomizeDefaultSymbolColor" ), mRandomizeDefaultSymbolColor ? QStringLiteral( "1" ) : QStringLiteral( "0" ) );
   element.setAttribute( QStringLiteral( "DefaultSymbolOpacity" ), QString::number( mDefaultSymbolOpacity ) );
+
+  element.setAttribute( QStringLiteral( "colorModel" ), qgsEnumValueToKey( mColorModel ) );
 
   if ( mDefaultMarkerSymbol )
   {
@@ -318,6 +381,11 @@ QDomElement QgsProjectStyleSettings::writeXml( QDomDocument &doc, const QgsReadW
   if ( mProject && mProjectStyle )
   {
     element.setAttribute( QStringLiteral( "projectStyleId" ), mProject->attachmentIdentifier( mProjectStyle->fileName() ) );
+  }
+
+  if ( mProject )
+  {
+    element.setAttribute( QStringLiteral( "iccProfileId" ), mProject->attachmentIdentifier( mIccProfileFilePath ) );
   }
 
   return element;
@@ -390,7 +458,7 @@ void QgsProjectStyleSettings::loadStyleAtPath( const QString &path )
   if ( fileInfo.suffix().compare( QLatin1String( "xml" ), Qt::CaseInsensitive ) == 0 )
   {
     style->createMemoryDatabase();
-    style->importXml( path );
+    ( void )style->importXml( path );
     style->setFileName( path );
     style->setReadOnly( true );
   }
@@ -440,8 +508,83 @@ QgsCombinedStyleModel *QgsProjectStyleSettings::combinedStyleModel()
   return mCombinedStyleModel;
 }
 
+void QgsProjectStyleSettings::setColorModel( Qgis::ColorModel colorModel )
+{
+  if ( mColorModel == colorModel )
+    return;
 
+  mColorModel = colorModel;
 
+  makeDirty();
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  if ( mColorSpace.isValid() && QgsColorUtils::toColorModel( mColorSpace.colorModel() ) != colorModel )
+  {
+    setColorSpace( QColorSpace() );
+  }
+#endif
+}
+
+Qgis::ColorModel QgsProjectStyleSettings::colorModel() const
+{
+  return mColorModel;
+}
+
+void QgsProjectStyleSettings::setColorSpace( const QColorSpace &colorSpace )
+{
+  if ( mColorSpace == colorSpace )
+    return;
+
+  if ( !mProject )
+  {
+    QgsDebugError( "Impossible to attach ICC profile, no project defined" );
+    return;
+  }
+
+  auto clearIccProfile = [this]()
+  {
+    mProject->removeAttachedFile( mIccProfileFilePath );
+    mIccProfileFilePath.clear();
+    mColorSpace = QColorSpace();
+  };
+
+  if ( !mIccProfileFilePath.isEmpty() )
+    clearIccProfile();
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  bool ok;
+  Qgis::ColorModel colorModel = QgsColorUtils::toColorModel( colorSpace.colorModel(), &ok );
+  mColorSpace = ok ? colorSpace : QColorSpace();
+#else
+  mColorSpace = colorSpace;
+#endif
+
+  makeDirty();
+
+  if ( !mColorSpace.isValid() )
+    return;
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+  if ( colorModel != mColorModel )
+    mColorModel = colorModel;
+#endif
+
+  mIccProfileFilePath = mProject->createAttachedFile( QStringLiteral( "profile.icc" ) );
+  QFile file( mIccProfileFilePath );
+  if ( !file.open( QIODevice::WriteOnly ) || file.write( colorSpace.iccProfile() ) < 0 )
+    clearIccProfile();
+}
+
+QColorSpace QgsProjectStyleSettings::colorSpace() const
+{
+  return mColorSpace;
+}
+
+void QgsProjectStyleSettings::makeDirty()
+{
+  if ( mProject )
+    mProject->setDirty( true );
+}
 
 //
 // QgsProjectStyleDatabaseModel
@@ -495,7 +638,7 @@ QVariant QgsProjectStyleDatabaseModel::data( const QModelIndex &index, int role 
       else
         return mSettings ? QDir::toNativeSeparators( mSettings->styles().at( styleRow )->fileName() ) : QVariant();
 
-    case StyleRole:
+    case static_cast< int >( CustomRole::Style ):
     {
       if ( isDefault )
         return QVariant::fromValue( QgsStyle::defaultStyle() );
@@ -507,7 +650,7 @@ QVariant QgsProjectStyleDatabaseModel::data( const QModelIndex &index, int role 
         return QVariant();
     }
 
-    case PathRole:
+    case static_cast< int >( CustomRole::Path ):
       if ( isDefault )
         return QgsStyle::defaultStyle()->fileName();
       else if ( isProjectStyle )
@@ -526,7 +669,7 @@ QgsStyle *QgsProjectStyleDatabaseModel::styleFromIndex( const QModelIndex &index
     return mProjectStyle;
   else if ( mShowDefault && ( ( index.row() == 0 && !mProjectStyle ) || ( index.row() == 1 && mProjectStyle ) ) )
     return QgsStyle::defaultStyle();
-  else if ( QgsStyle *style = qobject_cast< QgsStyle * >( qvariant_cast<QObject *>( data( index, StyleRole ) ) ) )
+  else if ( QgsStyle *style = qobject_cast< QgsStyle * >( qvariant_cast<QObject *>( data( index, static_cast< int >( CustomRole::Style ) ) ) ) )
     return style;
   else
     return nullptr;
@@ -656,7 +799,7 @@ bool QgsProjectStyleDatabaseProxyModel::filterAcceptsRow( int sourceRow, const Q
 {
   if ( mFilters & Filter::FilterHideReadOnly )
   {
-    if ( const QgsStyle *style = qobject_cast< QgsStyle * >( sourceModel()->data( sourceModel()->index( sourceRow, 0, sourceParent ), QgsProjectStyleDatabaseModel::Role::StyleRole ).value< QObject * >() ) )
+    if ( const QgsStyle *style = qobject_cast< QgsStyle * >( sourceModel()->data( sourceModel()->index( sourceRow, 0, sourceParent ), static_cast< int >( QgsProjectStyleDatabaseModel::CustomRole::Style ) ).value< QObject * >() ) )
     {
       if ( style->isReadOnly() )
         return false;

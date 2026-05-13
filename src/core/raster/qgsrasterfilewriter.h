@@ -43,9 +43,8 @@ class CORE_EXPORT QgsRasterFileWriter
 
     /**
      * Options for sorting and filtering raster formats.
-     * \since QGIS 3.0
      */
-    enum RasterFormatOption
+    enum RasterFormatOption SIP_ENUM_BASETYPE( IntFlag )
     {
       SortRecommended = 1 << 1, //!< Use recommended sort order, with extremely commonly used formats listed first
     };
@@ -62,7 +61,6 @@ class CORE_EXPORT QgsRasterFileWriter
      * Ownership of the returned provider is passed to the caller.
      * \returns Instance of data provider in editing mode (on success) or NULLPTR on error.
      * \note Does not work with tiled mode enabled.
-     * \since QGIS 3.0
      */
     QgsRasterDataProvider *createOneBandRaster( Qgis::DataType dataType,
         int width, int height,
@@ -75,7 +73,6 @@ class CORE_EXPORT QgsRasterFileWriter
      * Ownership of the returned provider is passed to the caller.
      * \returns Instance of data provider in editing mode (on success) or NULLPTR on error.
      * \note Does not work with tiled mode enabled.
-     * \since QGIS 3.0
      */
     QgsRasterDataProvider *createMultiBandRaster( Qgis::DataType dataType,
         int width, int height,
@@ -92,7 +89,7 @@ class CORE_EXPORT QgsRasterFileWriter
      * \param outputExtent extent to output
      * \param crs crs to reproject to
      * \param feedback optional feedback object for progress reports
-     * \deprecated since QGIS 3.8, use version with transformContext instead
+     * \deprecated QGIS 3.8. Use version with transformContext instead.
     */
     Q_DECL_DEPRECATED Qgis::RasterFileWriterResult writeRaster( const QgsRasterPipe *pipe, int nCols, int nRows, const QgsRectangle &outputExtent,
         const QgsCoordinateReferenceSystem &crs, QgsRasterBlockFeedback *feedback = nullptr ) SIP_DEPRECATED;
@@ -115,7 +112,6 @@ class CORE_EXPORT QgsRasterFileWriter
 
     /**
      * Returns the output URL (filename) for the raster.
-     * \since QGIS 3.0
      */
     QString outputUrl() const { return mOutputUrl; }
 
@@ -251,21 +247,45 @@ class CORE_EXPORT QgsRasterFileWriter
      */
     int maxTileHeight() const { return mMaxTileHeight; }
 
+    // TODO QGIS 4.0: rename list to options to have more semantic argument name
+
     /**
      * Sets a list of data source creation options to use when
      * creating the output raster file.
      *
      * \see createOptions()
+     * \deprecated QGIS 3.44. Use setCreationOptions() instead.
      */
-    void setCreateOptions( const QStringList &list ) { mCreateOptions = list; }
+    Q_DECL_DEPRECATED void setCreateOptions( const QStringList &list ) SIP_DEPRECATED { setCreationOptions( list ); }
 
     /**
      * Returns the list of data source creation options which will be used when
      * creating the output raster file.
      *
      * \see setCreateOptions()
+     * \deprecated QGIS 3.44. Use creationOptions() instead.
      */
-    QStringList createOptions() const { return mCreateOptions; }
+    Q_DECL_DEPRECATED QStringList createOptions() const SIP_DEPRECATED { return creationOptions(); }
+
+    /**
+     * Returns the list of data source creation options which will be used when
+     * creating the output raster file.
+     *
+     * \see setCreationOptions()
+     * \since QGIS 3.44
+     */
+    QStringList creationOptions() const { return mCreationOptions; }
+
+    /**
+     * Sets a list of data source creation options to use when
+     * creating the output raster file.
+     *
+     * \see creationOptions()
+     * \since QGIS 3.44
+     */
+    void setCreationOptions( const QStringList &options ) { mCreationOptions = options; }
+
+    // TODO QGIS 4.0: rename list to options to have more semantic argument name
 
     /**
      * Sets a \a list of configuration options to use when
@@ -288,7 +308,6 @@ class CORE_EXPORT QgsRasterFileWriter
 
     /**
      * Details of available filters and formats.
-     * \since QGIS 3.0
      */
     struct FilterFormatDetails
     {
@@ -317,7 +336,6 @@ class CORE_EXPORT QgsRasterFileWriter
      * returned formats.
      *
      * \see supportedFiltersAndFormats()
-     * \since QGIS 3.0
      */
     static QStringList supportedFormatExtensions( RasterFormatOptions options = SortRecommended );
 
@@ -329,7 +347,6 @@ class CORE_EXPORT QgsRasterFileWriter
      * Note that this method works for all GDAL drivers, including those without create support
      * (and which are not supported by QgsRasterFileWriter).
      *
-     * \since QGIS 3.0
      */
     static QString driverForExtension( const QString &extension );
 
@@ -342,7 +359,6 @@ class CORE_EXPORT QgsRasterFileWriter
      * Note that this method works for all GDAL drivers, including those without create support
      * (and which are not supported by QgsRasterFileWriter).
      *
-     * \since QGIS 3.0
      */
     static QStringList extensionsForFormat( const QString &format );
 
@@ -417,7 +433,7 @@ class CORE_EXPORT QgsRasterFileWriter
     QString mOutputUrl;
     QString mOutputProviderKey = QStringLiteral( "gdal" );
     QString mOutputFormat = QStringLiteral( "GTiff" );
-    QStringList mCreateOptions;
+    QStringList mCreationOptions;
     QgsCoordinateReferenceSystem mOutputCRS;
 
     //! False: Write one file, TRUE: create a directory and add the files numbered

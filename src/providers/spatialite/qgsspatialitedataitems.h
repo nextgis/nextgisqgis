@@ -32,7 +32,6 @@ class QgsSLLayerItem : public QgsLayerItem
 };
 
 
-
 class QgsSLConnectionItem : public QgsDataCollectionItem
 {
     Q_OBJECT
@@ -76,7 +75,7 @@ namespace SpatiaLiteUtils
 {
   bool createDb( const QString &dbPath, QString &errCause );
   bool deleteLayer( const QString &dbPath, const QString &tableName, QString &errCause );
-}
+} // namespace SpatiaLiteUtils
 
 //! Provider for SpatiaLite root data item
 class QgsSpatiaLiteDataItemProvider : public QgsDataItemProvider
@@ -84,9 +83,7 @@ class QgsSpatiaLiteDataItemProvider : public QgsDataItemProvider
   public:
     QString name() override;
     QString dataProviderKey() const override;
-
-    int capabilities() const override;
-
+    Qgis::DataItemProviderCapabilities capabilities() const override;
     QgsDataItem *createDataItem( const QString &pathIn, QgsDataItem *parentItem ) override;
 };
 

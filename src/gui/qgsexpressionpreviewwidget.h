@@ -22,14 +22,20 @@
 
 #include "qgis_gui.h"
 #include "qgsdistancearea.h"
+#include "qgsexpression.h"
+#include "qgsexpressioncontext.h"
+
+#include <functional>
 
 class QAction;
 class QgsVectorLayer;
 
 /**
  * \ingroup gui
- * \brief QgsExpressionPreviewWidget is a widget to preview an expression result.
+ * \brief A widget for previewing an expression result.
+ *
  * If the layer is set, one can browse across features to see the different outputs.
+ *
  * \since QGIS 3.14
  */
 class GUI_EXPORT QgsExpressionPreviewWidget : public QWidget, private Ui::QgsExpressionPreviewWidgetBase
@@ -41,6 +47,61 @@ class GUI_EXPORT QgsExpressionPreviewWidget : public QWidget, private Ui::QgsExp
 
     //! Sets the layer used in the preview
     void setLayer( QgsVectorLayer *layer );
+
+#ifndef SIP_RUN
+
+    /**
+     * Sets the widget to run using a custom preview generator.
+     *
+     * In this mode, the widget will call a callback function to generate a new QgsExpressionContext
+     * as the previewed object changes. This can be used to provide custom preview values for different
+     * objects (i.e. for objects which aren't vector layer features).
+     *
+     * \param label The label to display for the combo box presenting choices of objects. This should be a representative name, eg "Band" if the widget is showing choices of raster layer bands
+     * \param choices A list of choices to present to the user. Each choice is a pair of a human-readable label and a QVariant representing the object to preview.
+     * \param previewContextGenerator A function which takes a QVariant representing the object to preview, and returns a QgsExpressionContext to use for previewing the object.
+     *
+     * \since QGIS 3.38
+     */
+    void setCustomPreviewGenerator( const QString &label, const QList<QPair<QString, QVariant>> &choices, const std::function<QgsExpressionContext( const QVariant & )> &previewContextGenerator );
+#else
+
+    /**
+     * Sets the widget to run using a custom preview generator.
+     *
+     * In this mode, the widget will call a callback function to generate a new QgsExpressionContext
+     * as the previewed object changes. This can be used to provide custom preview values for different
+     * objects (i.e. for objects which aren't vector layer features).
+     *
+     * \param label The label to display for the combo box presenting choices of objects. This should be a representative name, eg "Band" if the widget is showing choices of raster layer bands
+     * \param choices A list of choices to present to the user. Each choice is a pair of a human-readable label and a QVariant representing the object to preview.
+     * \param previewContextGenerator A function which takes a QVariant representing the object to preview, and returns a QgsExpressionContext to use for previewing the object.
+     *
+     * \since QGIS 3.38
+     */
+    void setCustomPreviewGenerator( const QString &label, const QList<QPair<QString, QVariant>> &choices, SIP_PYCALLABLE );
+    //%MethodCode
+    Py_XINCREF( a2 );
+    Py_BEGIN_ALLOW_THREADS
+      sipCpp->setCustomPreviewGenerator( *a0, *a1, [a2]( const QVariant &value ) -> QgsExpressionContext {
+        QgsExpressionContext res;
+        SIP_BLOCK_THREADS
+        PyObject *s = sipCallMethod( NULL, a2, "D", &value, sipType_QVariant, NULL );
+        int state;
+        int sipIsError = 0;
+        QgsExpressionContext *t1 = reinterpret_cast<QgsExpressionContext *>( sipConvertToType( s, sipType_QgsExpressionContext, 0, SIP_NOT_NONE, &state, &sipIsError ) );
+        if ( sipIsError == 0 )
+        {
+          res = QgsExpressionContext( *t1 );
+        }
+        sipReleaseType( t1, sipType_QgsExpressionContext, state );
+        SIP_UNBLOCK_THREADS
+        return res;
+      } );
+
+    Py_END_ALLOW_THREADS
+    //%End
+#endif
 
     //! Sets the expression
     void setExpressionText( const QString &expression );
@@ -75,10 +136,17 @@ class GUI_EXPORT QgsExpressionPreviewWidget : public QWidget, private Ui::QgsExp
     bool parserError() const;
 
     //! Returns the root node of the expression
-    const QgsExpressionNode *rootNode() const {return mExpression.rootNode();}
+    const QgsExpressionNode *rootNode() const { return mExpression.rootNode(); }
 
-    //! Returns the expression parser erros
-    QList<QgsExpression::ParserError> parserErrors() const {return mExpression.parserErrors();}
+    //! Returns the expression parser errors
+    QList<QgsExpression::ParserError> parserErrors() const { return mExpression.parserErrors(); }
+
+    /**
+     * Returns the current expression result preview text.
+     *
+     * \since QGIS 3.38
+     */
+    QString currentPreviewText() const;
 
   signals:
 
@@ -115,6 +183,7 @@ class GUI_EXPORT QgsExpressionPreviewWidget : public QWidget, private Ui::QgsExp
     void setEvalError( bool evalError );
     void setParserError( bool parserError );
     void copyFullExpressionValue();
+    void setCustomChoice( int );
 
   private:
     void setExpressionToolTip( const QString &toolTip );
@@ -130,6 +199,8 @@ class GUI_EXPORT QgsExpressionPreviewWidget : public QWidget, private Ui::QgsExp
     QString mExpressionText;
     QgsExpression mExpression;
     QAction *mCopyPreviewAction = nullptr;
+
+    std::function<QgsExpressionContext( const QVariant & )> mCustomPreviewGeneratorFunction;
 };
 
 #endif // QGSEXPRESSIONPREVIEWWIDGET_H

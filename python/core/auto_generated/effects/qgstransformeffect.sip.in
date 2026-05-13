@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/effects/qgstransformeffect.h                                *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,10 +12,8 @@
 class QgsTransformEffect : QgsPaintEffect /NoDefaultCtors/
 {
 %Docstring(signature="appended")
-A paint effect which applies transformations (such as move,
-scale and rotate) to a picture.
-
-.. versionadded:: 2.9
+A paint effect which applies transformations (such as move, scale and
+rotate) to a picture.
 %End
 
 %TypeHeaderCode
@@ -33,9 +31,6 @@ Creates a new QgsTransformEffect effect from a properties string map.
 %End
 
     QgsTransformEffect();
-%Docstring
-Constructor for QgsTransformEffect.
-%End
 
     virtual QString type() const;
     virtual QVariantMap properties() const;
@@ -324,5 +319,5 @@ Returns whether transform will be reflected along the y-axis
  *                                                                      *
  * src/core/effects/qgstransformeffect.h                                *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -121,6 +121,7 @@ ENDIF(MSVC)
     SET(TARGETS ${TARGETS} ${LIB_NAME} PARENT_SCOPE)
     
     add_library(${LIB_NAME} SHARED ${QGIS_NATIVE_SRCS} ${QGIS_NATIVE_HDRS})
+    add_library(qgis_native ALIAS ${LIB_NAME})
     SET_PROPERTY(TARGET ${LIB_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
     generate_export_header(

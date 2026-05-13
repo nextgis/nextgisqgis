@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsrelationcontext.h                                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,7 +13,9 @@
 class QgsRelationContext
 {
 %Docstring(signature="appended")
-Context for relations. Used to resolve layers from projects.
+Context for relations.
+
+Used to resolve layers from projects.
 
 .. versionadded:: 3.11
 %End
@@ -39,10 +41,6 @@ project instance
     ~QgsRelationContext();
 
     QgsRelationContext( const QgsRelationContext &other );
-%Docstring
-Copy constructor
-%End
-
 
 };
 
@@ -52,5 +50,5 @@ Copy constructor
  *                                                                      *
  * src/core/qgsrelationcontext.h                                        *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

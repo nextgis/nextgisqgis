@@ -19,6 +19,7 @@
  */
 
 #include "qgsvectorlayerdirector.h"
+#include "moc_qgsvectorlayerdirector.cpp"
 #include "qgsgraphbuilderinterface.h"
 
 #include "qgsfeatureiterator.h"
@@ -27,7 +28,7 @@
 #include "qgsgeometry.h"
 #include "qgsdistancearea.h"
 #include "qgswkbtypes.h"
-
+#include "qgslogger.h"
 #include <QString>
 #include <QtAlgorithms>
 
@@ -37,28 +38,23 @@ using namespace SpatialIndex;
 
 struct TiePointInfo
 {
-  TiePointInfo() = default;
-  TiePointInfo( int additionalPointId, QgsFeatureId featureId, const QgsPointXY &start, const QgsPointXY &end )
-    : additionalPointId( additionalPointId )
-    , mNetworkFeatureId( featureId )
-    , mFirstPoint( start )
-    , mLastPoint( end )
-  {}
+    TiePointInfo() = default;
+    TiePointInfo( int additionalPointId, QgsFeatureId featureId, const QgsPointXY &start, const QgsPointXY &end )
+      : additionalPointId( additionalPointId )
+      , mNetworkFeatureId( featureId )
+      , mFirstPoint( start )
+      , mLastPoint( end )
+    {}
 
-  int additionalPointId = -1;
-  QgsPointXY mTiedPoint;
-  double mLength = std::numeric_limits<double>::max();
-  QgsFeatureId mNetworkFeatureId = -1;
-  QgsPointXY mFirstPoint;
-  QgsPointXY mLastPoint;
+    int additionalPointId = -1;
+    QgsPointXY mTiedPoint;
+    double mLength = std::numeric_limits<double>::max();
+    QgsFeatureId mNetworkFeatureId = -1;
+    QgsPointXY mFirstPoint;
+    QgsPointXY mLastPoint;
 };
 
-QgsVectorLayerDirector::QgsVectorLayerDirector( QgsFeatureSource *source,
-    int directionFieldId,
-    const QString &directDirectionValue,
-    const QString &reverseDirectionValue,
-    const QString &bothDirectionValue,
-    const Direction defaultDirection )
+QgsVectorLayerDirector::QgsVectorLayerDirector( QgsFeatureSource *source, int directionFieldId, const QString &directDirectionValue, const QString &reverseDirectionValue, const QString &bothDirectionValue, const Direction defaultDirection )
   : mSource( source )
   , mDirectionFieldId( directionFieldId )
   , mDirectDirectionValue( directDirectionValue )
@@ -75,7 +71,7 @@ QString QgsVectorLayerDirector::name() const
 
 QgsAttributeList QgsVectorLayerDirector::requiredAttributes() const
 {
-  QSet< int > attrs;
+  QSet<int> attrs;
 
   if ( mDirectionFieldId != -1 )
     attrs.insert( mDirectionFieldId );
@@ -115,27 +111,31 @@ QgsVectorLayerDirector::Direction QgsVectorLayerDirector::directionForFeature( c
 class QgsNetworkVisitor : public SpatialIndex::IVisitor
 {
   public:
-    explicit QgsNetworkVisitor( QVector< int > &pointIndexes )
+    explicit QgsNetworkVisitor( QVector<int> &pointIndexes )
       : mPoints( pointIndexes ) {}
 
     void visitNode( const INode &n ) override
-    { Q_UNUSED( n ) }
+    {
+      Q_UNUSED( n )
+    }
 
     void visitData( const IData &d ) override
     {
-      mPoints.append( d.getIdentifier() );
+      mPoints.append( static_cast<int>( d.getIdentifier() ) );
     }
 
     void visitData( std::vector<const IData *> &v ) override
-    { Q_UNUSED( v ) }
+    {
+      Q_UNUSED( v )
+    }
 
   private:
-    QVector< int > &mPoints;
+    QVector<int> &mPoints;
 };
 
 ///@endcond
 
-std::unique_ptr< SpatialIndex::ISpatialIndex > createVertexSpatialIndex( SpatialIndex::IStorageManager &storageManager )
+std::unique_ptr<SpatialIndex::ISpatialIndex> createVertexSpatialIndex( SpatialIndex::IStorageManager &storageManager )
 {
   // R-Tree parameters
   double fillFactor = 0.7;
@@ -146,18 +146,17 @@ std::unique_ptr< SpatialIndex::ISpatialIndex > createVertexSpatialIndex( Spatial
 
   // create R-tree
   SpatialIndex::id_type indexId;
-  std::unique_ptr< SpatialIndex::ISpatialIndex > iRTree( RTree::createNewRTree( storageManager, fillFactor, indexCapacity,
-      leafCapacity, dimension, variant, indexId ) );
+  std::unique_ptr<SpatialIndex::ISpatialIndex> iRTree( RTree::createNewRTree( storageManager, fillFactor, indexCapacity, leafCapacity, dimension, variant, indexId ) );
   return iRTree;
 }
 
 int findClosestVertex( const QgsPointXY &point, SpatialIndex::ISpatialIndex *index, double tolerance )
 {
-  QVector< int > matching;
+  QVector<int> matching;
   QgsNetworkVisitor visitor( matching );
 
   double pt1[2] = { point.x() - tolerance, point.y() - tolerance },
-                  pt2[2] = { point.x() + tolerance, point.y() + tolerance };
+         pt2[2] = { point.x() + tolerance, point.y() + tolerance };
   SpatialIndex::Region searchRegion( pt1, pt2, 2 );
 
   index->intersectsWithQuery( searchRegion, visitor );
@@ -165,8 +164,7 @@ int findClosestVertex( const QgsPointXY &point, SpatialIndex::ISpatialIndex *ind
   return matching.empty() ? -1 : matching.at( 0 );
 }
 
-void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const QVector< QgsPointXY > &additionalPoints,
-                                        QVector< QgsPointXY > &snappedPoints, QgsFeedback *feedback ) const
+void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const QVector<QgsPointXY> &additionalPoints, QVector<QgsPointXY> &snappedPoints, QgsFeedback *feedback ) const
 {
   long featureCount = mSource->featureCount() * 2;
   int step = 0;
@@ -179,25 +177,23 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
   }
 
   // clear existing snapped points list, and resize to length of provided additional points
-  snappedPoints = QVector< QgsPointXY >( additionalPoints.size(), QgsPointXY( 0.0, 0.0 ) );
+  snappedPoints = QVector<QgsPointXY>( additionalPoints.size(), QgsPointXY( 0.0, 0.0 ) );
   // tie points = snapped location of specified additional points to network lines
-  QVector< TiePointInfo > additionalTiePoints( additionalPoints.size() );
+  QVector<TiePointInfo> additionalTiePoints( additionalPoints.size() );
 
   // graph's vertices = all vertices in graph, with vertices within builder's tolerance collapsed together
-  QVector< QgsPointXY > graphVertices;
+  QVector<QgsPointXY> graphVertices;
 
   // spatial index for graph vertices
-  std::unique_ptr< SpatialIndex::IStorageManager > iStorage( StorageManager::createNewMemoryStorageManager() );
-  std::unique_ptr< SpatialIndex::ISpatialIndex > iRTree = createVertexSpatialIndex( *iStorage );
+  std::unique_ptr<SpatialIndex::IStorageManager> iStorage( StorageManager::createNewMemoryStorageManager() );
+  std::unique_ptr<SpatialIndex::ISpatialIndex> iRTree = createVertexSpatialIndex( *iStorage );
 
   double tolerance = std::max( builder->topologyTolerance(), 1e-10 );
-  auto findPointWithinTolerance = [&iRTree, tolerance]( const QgsPointXY & point )->int
-  {
+  auto findPointWithinTolerance = [&iRTree, tolerance]( const QgsPointXY &point ) -> int {
     return findClosestVertex( point, iRTree.get(), tolerance );
   };
-  auto addPointToIndex = [&iRTree]( const QgsPointXY & point, int index )
-  {
-    double coords[] = {point.x(), point.y()};
+  auto addPointToIndex = [&iRTree]( const QgsPointXY &point, int index ) {
+    double coords[] = { point.x(), point.y() };
     iRTree->insertData( 0, nullptr, SpatialIndex::Point( coords, 2 ), index );
   };
 
@@ -210,10 +206,15 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
       return;
 
     QgsMultiPolylineXY mpl;
-    if ( QgsWkbTypes::flatType( feature.geometry().wkbType() ) == Qgis::WkbType::MultiLineString )
+    const Qgis::WkbType wkbType = QgsWkbTypes::flatType( feature.geometry().wkbType() );
+    if ( QgsWkbTypes::geometryType( wkbType ) == Qgis::GeometryType::Line && QgsWkbTypes::isMultiType( wkbType ) )
+    {
       mpl = feature.geometry().asMultiPolyline();
-    else if ( QgsWkbTypes::flatType( feature.geometry().wkbType() ) == Qgis::WkbType::LineString )
+    }
+    else if ( QgsWkbTypes::geometryType( wkbType ) == Qgis::GeometryType::Line && !QgsWkbTypes::isMultiType( wkbType ) )
+    {
       mpl.push_back( feature.geometry().asPolyline() );
+    }
 
     for ( const QgsPolylineXY &line : std::as_const( mpl ) )
     {
@@ -223,11 +224,11 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
       {
         pt2 = ct.transform( point );
 
-        int pt2Idx = findPointWithinTolerance( pt2 ) ;
+        int pt2Idx = findPointWithinTolerance( pt2 );
         if ( pt2Idx == -1 )
         {
           // no vertex already exists within tolerance - add to points, and index
-          addPointToIndex( pt2, graphVertices.count() );
+          addPointToIndex( pt2, static_cast<int>( graphVertices.count() ) );
           graphVertices.push_back( pt2 );
         }
         else
@@ -242,7 +243,6 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
           int i = 0;
           for ( const QgsPointXY &additionalPoint : additionalPoints )
           {
-
             QgsPointXY snappedPoint;
             double thisSegmentClosestDist = std::numeric_limits<double>::max();
             if ( pt1 == pt2 )
@@ -252,19 +252,18 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
             }
             else
             {
-              thisSegmentClosestDist = additionalPoint.sqrDistToSegment( pt1.x(), pt1.y(),
-                                       pt2.x(), pt2.y(), snappedPoint, 0 );
+              thisSegmentClosestDist = additionalPoint.sqrDistToSegment( pt1.x(), pt1.y(), pt2.x(), pt2.y(), snappedPoint, 0 );
             }
 
-            if ( thisSegmentClosestDist < additionalTiePoints[ i ].mLength )
+            if ( thisSegmentClosestDist < additionalTiePoints[i].mLength )
             {
               // found a closer segment for this additional point
               TiePointInfo info( i, feature.id(), pt1, pt2 );
               info.mLength = thisSegmentClosestDist;
               info.mTiedPoint = snappedPoint;
 
-              additionalTiePoints[ i ] = info;
-              snappedPoints[ i ] = info.mTiedPoint;
+              additionalTiePoints[i] = info;
+              snappedPoints[i] = info.mTiedPoint;
             }
             i++;
           }
@@ -274,15 +273,15 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
       }
     }
     if ( feedback )
-      feedback->setProgress( 100.0 * static_cast< double >( ++step ) / featureCount );
+      feedback->setProgress( 100.0 * static_cast<double>( ++step ) / static_cast<double>( featureCount ) );
   }
 
   // build a hash of feature ids to tie points which depend on this feature
-  QHash< QgsFeatureId, QList< int > > tiePointNetworkFeatures;
+  QHash<QgsFeatureId, QList<int>> tiePointNetworkFeatures;
   int i = 0;
   for ( TiePointInfo &info : additionalTiePoints )
   {
-    tiePointNetworkFeatures[ info.mNetworkFeatureId ] << i;
+    tiePointNetworkFeatures[info.mNetworkFeatureId] << i;
     i++;
   }
 
@@ -295,21 +294,20 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
     if ( ptIdx == -1 )
     {
       // no vertex already within tolerance, add to index and network vertices
-      addPointToIndex( point, graphVertices.count() );
+      addPointToIndex( point, static_cast<int>( graphVertices.count() ) );
       graphVertices.push_back( point );
     }
     else
     {
       // otherwise snap tie point to vertex
-      snappedPoints[ i ] = graphVertices.at( ptIdx );
+      snappedPoints[i] = graphVertices.at( ptIdx );
     }
   }
   // also need to update tie points - they need to be matched for snapped points
   for ( int i = 0; i < additionalTiePoints.count(); ++i )
   {
-    additionalTiePoints[ i ].mTiedPoint = snappedPoints.at( additionalTiePoints.at( i ).additionalPointId );
+    additionalTiePoints[i].mTiedPoint = snappedPoints.at( additionalTiePoints.at( i ).additionalPointId );
   }
-
 
   // begin graph construction
 
@@ -333,10 +331,15 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
 
     // begin features segments and add arc to the Graph;
     QgsMultiPolylineXY mpl;
-    if ( QgsWkbTypes::flatType( feature.geometry().wkbType() ) == Qgis::WkbType::MultiLineString )
+    const Qgis::WkbType wkbType = QgsWkbTypes::flatType( feature.geometry().wkbType() );
+    if ( QgsWkbTypes::geometryType( wkbType ) == Qgis::GeometryType::Line && QgsWkbTypes::isMultiType( wkbType ) )
+    {
       mpl = feature.geometry().asMultiPolyline();
-    else if ( QgsWkbTypes::flatType( feature.geometry().wkbType() ) == Qgis::WkbType::LineString )
+    }
+    else if ( QgsWkbTypes::geometryType( wkbType ) == Qgis::GeometryType::Line && !QgsWkbTypes::isMultiType( wkbType ) )
+    {
       mpl.push_back( feature.geometry().asPolyline() );
+    }
 
     for ( const QgsPolylineXY &line : std::as_const( mpl ) )
     {
@@ -347,22 +350,22 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
       {
         pt2 = ct.transform( point );
         int pPt2idx = findPointWithinTolerance( pt2 );
-        Q_ASSERT_X( pPt2idx >= 0, "QgsVectorLayerDirectory::makeGraph", "encountered a vertex which was not present in graph" );
+        Q_ASSERT_X( pPt2idx >= 0, "QgsVectorLayerDirector::makeGraph", "encountered a vertex which was not present in graph" );
         pt2 = graphVertices.at( pPt2idx );
 
         if ( !isFirstPoint )
         {
-          QMap< double, QgsPointXY > pointsOnArc;
-          pointsOnArc[ 0.0 ] = pt1;
-          pointsOnArc[ pt1.sqrDist( pt2 )] = pt2;
+          QMap<double, QgsPointXY> pointsOnArc;
+          pointsOnArc[0.0] = pt1;
+          pointsOnArc[pt1.sqrDist( pt2 )] = pt2;
 
-          const QList< int > tiePointsForCurrentFeature = tiePointNetworkFeatures.value( feature.id() );
+          const QList<int> tiePointsForCurrentFeature = tiePointNetworkFeatures.value( feature.id() );
           for ( int tiePointIdx : tiePointsForCurrentFeature )
           {
             const TiePointInfo &t = additionalTiePoints.at( tiePointIdx );
             if ( t.mFirstPoint == pt1 && t.mLastPoint == pt2 )
             {
-              pointsOnArc[ pt1.sqrDist( t.mTiedPoint )] = t.mTiedPoint;
+              pointsOnArc[pt1.sqrDist( t.mTiedPoint )] = t.mTiedPoint;
             }
           }
 
@@ -376,26 +379,34 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
             arcPt2 = arcPointIt.value();
 
             pt2idx = findPointWithinTolerance( arcPt2 );
-            Q_ASSERT_X( pt2idx >= 0, "QgsVectorLayerDirectory::makeGraph", "encountered a vertex which was not present in graph" );
+            Q_ASSERT_X( pt2idx >= 0, "QgsVectorLayerDirector::makeGraph", "encountered a vertex which was not present in graph" );
             arcPt2 = graphVertices.at( pt2idx );
 
             if ( !isFirstPoint && arcPt1 != arcPt2 )
             {
-              double distance = builder->distanceArea()->measureLine( arcPt1, arcPt2 );
-              QVector< QVariant > prop;
+              double distance = 0;
+              try
+              {
+                distance = builder->distanceArea()->measureLine( arcPt1, arcPt2 );
+              }
+              catch ( QgsCsException & )
+              {
+                // TODO report errors to user
+                QgsDebugError( QStringLiteral( "An error occurred while calculating length" ) );
+              }
+
+              QVector<QVariant> prop;
               prop.reserve( mStrategies.size() );
               for ( QgsNetworkStrategy *strategy : mStrategies )
               {
                 prop.push_back( strategy->cost( distance, feature ) );
               }
 
-              if ( direction == Direction::DirectionForward ||
-                   direction == Direction::DirectionBoth )
+              if ( direction == Direction::DirectionForward || direction == Direction::DirectionBoth )
               {
                 builder->addEdge( pt1idx, arcPt1, pt2idx, arcPt2, prop );
               }
-              if ( direction == Direction::DirectionBackward ||
-                   direction == Direction::DirectionBoth )
+              if ( direction == Direction::DirectionBackward || direction == Direction::DirectionBoth )
               {
                 builder->addEdge( pt2idx, arcPt2, pt1idx, arcPt1, prop );
               }
@@ -411,8 +422,7 @@ void QgsVectorLayerDirector::makeGraph( QgsGraphBuilderInterface *builder, const
     }
     if ( feedback )
     {
-      feedback->setProgress( 100.0 * static_cast< double >( ++step ) / featureCount );
+      feedback->setProgress( 100.0 * static_cast<double>( ++step ) / static_cast<double>( featureCount ) );
     }
-
   }
 }

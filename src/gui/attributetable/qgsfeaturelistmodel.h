@@ -32,9 +32,12 @@ class QgsAttributeTableFilterModel;
 class QgsAttributeTableModel;
 class QgsVectorLayerCache;
 
+#define QGSFEATURELISTMODEL_CACHE_INDEX 1
+
 /**
  * \ingroup gui
  * \class QgsFeatureListModel
+ * \brief A proxy model for feature lists.
  */
 class GUI_EXPORT QgsFeatureListModel : public QSortFilterProxyModel, public QgsFeatureModel
 {
@@ -44,10 +47,6 @@ class GUI_EXPORT QgsFeatureListModel : public QSortFilterProxyModel, public QgsF
     struct FeatureInfo
     {
       public:
-
-        /**
-         * Constructor for FeatureInfo.
-         */
         FeatureInfo() = default;
 
         //! True if feature is a newly added feature.
@@ -60,11 +59,11 @@ class GUI_EXPORT QgsFeatureListModel : public QSortFilterProxyModel, public QgsF
     enum Role
     {
       FeatureInfoRole = 0x1000, // Make sure no collisions with roles on QgsAttributeTableModel
-      FeatureRole
+      FeatureRole,              //!< Feature with all attributes and no geometry
+      FeatureWithGeometryRole,  //!< Feature with all attributes and geometry, \since QGIS 3.42
     };
 
   public:
-
     //! Constructor for QgsFeatureListModel
     explicit QgsFeatureListModel( QgsAttributeTableFilterModel *sourceModel, QObject *parent SIP_TRANSFERTHIS = nullptr );
 
@@ -89,22 +88,22 @@ class GUI_EXPORT QgsFeatureListModel : public QSortFilterProxyModel, public QgsF
      * \brief If TRUE is specified, a NULL value will be injected
      * \param injectNull state of null value injection
      * \note If set to TRUE, the sort by display expression cannot be used
-     * \since QGIS 2.9
      */
     void setInjectNull( bool injectNull );
 
     /**
      * \brief Returns the current state of null value injection
      * \returns If a NULL value is added
-     * \since QGIS 2.9
      */
     bool injectNull();
 
     QgsAttributeTableModel *masterModel();
 
     /**
-     *  \param  expression   A QgsExpression compatible string.
-     *  \returns TRUE if the expression could be set, FALSE if there was a parse error.
+     * Sets the display expression.
+     *
+     * \param expression A QgsExpression compatible string.
+     * \returns TRUE if the expression could be set, FALSE if there was a parse error.
      *          If it fails, the old expression will still be applied. Call parserErrorString()
      *          for a meaningful error message.
      */
@@ -169,28 +168,28 @@ class GUI_EXPORT QgsFeatureListModel : public QSortFilterProxyModel, public QgsF
     /**
      * Does nothing except for calling beginRemoveRows()
      *
-     * \deprecated Use beginRemoveRows() instead
+     * \deprecated QGIS 3.40. Use beginRemoveRows() instead.
      */
     Q_DECL_DEPRECATED void onBeginRemoveRows( const QModelIndex &parent, int first, int last );
 
     /**
      * Does nothing except for calling endRemoveRows()
      *
-     * \deprecated Use endRemoveRows() instead
+     * \deprecated QGIS 3.40. Use endRemoveRows() instead.
      */
     Q_DECL_DEPRECATED void onEndRemoveRows( const QModelIndex &parent, int first, int last );
 
     /**
      * Does nothing except for calling beginInsertRows()
      *
-     * \deprecated use beginInsertRows() instead
+     * \deprecated QGIS 3.40. Use beginInsertRows() instead.
      */
     Q_DECL_DEPRECATED void onBeginInsertRows( const QModelIndex &parent, int first, int last );
 
     /**
      * Does nothing except for calling endInsertRows()
      *
-     * \deprecated use endInsertRows() instead
+     * \deprecated QGIS 3.40. Use endInsertRows() instead.
      */
     Q_DECL_DEPRECATED void onEndInsertRows( const QModelIndex &parent, int first, int last );
 
@@ -204,9 +203,9 @@ class GUI_EXPORT QgsFeatureListModel : public QSortFilterProxyModel, public QgsF
     QString mParserErrorString;
     bool mInjectNull = false;
     mutable QgsExpressionContext mExpressionContext;
-    mutable QMap< QgsFeatureId, QList<QgsConditionalStyle> > mRowStylesMap;
+    mutable QMap<QgsFeatureId, QList<QgsConditionalStyle>> mRowStylesMap;
     bool mSortByDisplayExpression = false;
-    QPointer< QgsVectorLayer > mSourceLayer;
+    QPointer<QgsVectorLayer> mSourceLayer;
 };
 
 Q_DECLARE_METATYPE( QgsFeatureListModel::FeatureInfo )

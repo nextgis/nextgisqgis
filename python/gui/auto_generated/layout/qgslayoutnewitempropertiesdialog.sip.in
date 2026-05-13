@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/layout/qgslayoutnewitempropertiesdialog.h                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,19 +12,17 @@
 class QgsLayoutItemPropertiesDialog : QDialog
 {
 %Docstring(signature="appended")
-A dialog for configuring properties like the size and position of layout items.
+A dialog for configuring properties like the size and position of layout
+items.
 
-This is usually used only when constructing new layout items, allowing users to precisely
-enter their sizes and positions.
-
-.. versionadded:: 3.0
+This is usually used only when constructing new layout items, allowing
+users to precisely enter their sizes and positions.
 %End
 
 %TypeHeaderCode
 #include "qgslayoutnewitempropertiesdialog.h"
 %End
   public:
-
     QgsLayoutItemPropertiesDialog( QWidget *parent = 0, Qt::WindowFlags flags = Qt::WindowFlags() );
 %Docstring
 Constructor for :py:class:`QgsLayoutNewItemPropertiesDialog`.
@@ -91,5 +89,5 @@ conversion of units.
  *                                                                      *
  * src/gui/layout/qgslayoutnewitempropertiesdialog.h                    *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

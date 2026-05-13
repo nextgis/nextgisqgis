@@ -25,13 +25,12 @@
 
 /**
  * \ingroup gui
- * \brief A combobox which lets the user select blend modes from a predefined list
+ * \brief A combobox which lets the user select blend modes from a predefined list.
  */
 class GUI_EXPORT QgsBlendModeComboBox : public QComboBox
 {
     Q_OBJECT
   public:
-
     //! Constructor for QgsBlendModeComboBox
     QgsBlendModeComboBox( QWidget *parent SIP_TRANSFERTHIS = nullptr );
 
@@ -73,7 +72,6 @@ class GUI_EXPORT QgsBlendModeComboBox : public QComboBox
     bool showClippingModes() const;
 
   private:
-
     bool mShowClipModes = false;
 
   public slots:
@@ -83,7 +81,6 @@ class GUI_EXPORT QgsBlendModeComboBox : public QComboBox
     * blend modes to combo box indexes
     */
     void updateModes();
-
 };
 
 #endif // QGSBLENDMODECOMBOBOX_H

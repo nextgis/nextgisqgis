@@ -20,7 +20,6 @@
 
 #include <QColor>
 #include <QDomElement>
-#include <limits>
 
 #include "qgis_core.h"
 #include "qgis.h"
@@ -31,7 +30,7 @@
 /**
  * \ingroup core
  *
- * \brief Represents a mesh renderer settings for mesh object
+ * \brief Represents a mesh renderer settings for mesh objects.
  *
  * \note The API is considered EXPERIMENTAL and can be changed without a notice
  *
@@ -76,7 +75,7 @@ class CORE_EXPORT QgsMeshRendererMeshSettings
 
   private:
     bool mEnabled = false;
-    double mLineWidth = DEFAULT_LINE_WIDTH;
+    double mLineWidth = Qgis::DEFAULT_LINE_WIDTH;
     Qgis::RenderUnit mLineWidthUnit = Qgis::RenderUnit::Millimeters;
     QColor mColor = Qt::black;
 };
@@ -84,7 +83,7 @@ class CORE_EXPORT QgsMeshRendererMeshSettings
 /**
  * \ingroup core
  *
- * \brief Represents a mesh renderer settings for scalar datasets
+ * \brief Represents a mesh renderer settings for scalar datasets.
  *
  * \note The API is considered EXPERIMENTAL and can be changed without a notice
  *
@@ -107,7 +106,7 @@ class CORE_EXPORT QgsMeshRendererScalarSettings
       /**
        * Does not use resampling
        */
-      None = 0,
+      NoResampling = 0,
 
       /**
        * Does a simple average of values defined for all surrounding faces/vertices
@@ -176,26 +175,59 @@ class CORE_EXPORT QgsMeshRendererScalarSettings
      */
     void setEdgeStrokeWidthUnit( Qgis::RenderUnit edgeStrokeWidthUnit );
 
+    /**
+     * Sets the range limits type for minimum maximum calculation
+     *
+     * \since QGIS 3.42
+     */
+    void setLimits( Qgis::MeshRangeLimit limits ) { mRangeLimit = limits; }
+
+    /**
+     * Returns the range limits type for minimum maximum calculation
+     *
+     * \since QGIS 3.42
+     */
+    Qgis::MeshRangeLimit limits() const { return mRangeLimit; }
+
+    /**
+     * Sets the mesh extent for minimum maximum calculation
+     *
+     * \since QGIS 3.42
+     */
+    void setExtent( Qgis::MeshRangeExtent extent ) { mRangeExtent = extent; }
+
+    /**
+     * Returns the mesh extent for minimum maximum calculation
+     *
+     * \since QGIS 3.42
+     */
+    Qgis::MeshRangeExtent extent() const { return mRangeExtent; }
+
     //! Writes configuration to a new DOM element
     QDomElement writeXml( QDomDocument &doc, const QgsReadWriteContext &context = QgsReadWriteContext() ) const;
     //! Reads configuration from the given DOM element
     void readXml( const QDomElement &elem, const QgsReadWriteContext &context = QgsReadWriteContext() );
 
   private:
+    void updateShader();
+
     QgsColorRampShader mColorRampShader;
-    DataResamplingMethod mDataResamplingMethod = DataResamplingMethod::None;
+    DataResamplingMethod mDataResamplingMethod = DataResamplingMethod::NoResampling;
     double mClassificationMinimum = 0;
     double mClassificationMaximum = 0;
     double mOpacity = 1;
 
     QgsInterpolatedLineWidth mEdgeStrokeWidth;
     Qgis::RenderUnit mEdgeStrokeWidthUnit = Qgis::RenderUnit::Millimeters;
+
+    Qgis::MeshRangeExtent mRangeExtent = Qgis::MeshRangeExtent::WholeMesh;
+    Qgis::MeshRangeLimit mRangeLimit = Qgis::MeshRangeLimit::NotSet;
 };
 
 /**
  * \ingroup core
  *
- * \brief Represents a mesh renderer settings for vector datasets displayed with arrows
+ * \brief Represents a mesh renderer settings for vector datasets displayed with arrows.
  *
  * \note The API is considered EXPERIMENTAL and can be changed without a notice
  *
@@ -314,7 +346,7 @@ class CORE_EXPORT QgsMeshRendererVectorArrowSettings
 /**
  * \ingroup core
  *
- * \brief Represents a streamline renderer settings for vector datasets displayed by streamlines
+ * \brief Represents a streamline renderer settings for vector datasets displayed by streamlines.
  *
  * \note The API is considered EXPERIMENTAL and can be changed without a notice
  *
@@ -360,7 +392,7 @@ class CORE_EXPORT QgsMeshRendererVectorStreamlineSettings
 /**
  * \ingroup core
  *
- * \brief Represents a trace renderer settings for vector datasets displayed by particle traces
+ * \brief Represents a trace renderer settings for vector datasets displayed by particle traces.
  *
  * \note The API is considered EXPERIMENTAL and can be changed without a notice
  *
@@ -398,7 +430,87 @@ class CORE_EXPORT QgsMeshRendererVectorTracesSettings
 /**
  * \ingroup core
  *
- * \brief Represents a renderer settings for vector datasets
+ * \brief Represents a mesh renderer settings for vector datasets displayed with wind barbs.
+ *
+ * \note The API is considered EXPERIMENTAL and can be changed without a notice
+ *
+ * \since QGIS 3.38
+ */
+class CORE_EXPORT QgsMeshRendererVectorWindBarbSettings
+{
+  public:
+    //! Wind speed units. Wind barbs use knots so we use this enum for preset conversion values
+    enum class WindSpeedUnit
+    {
+      MetersPerSecond = 0, //!< Meters per second
+      KilometersPerHour, //!< Kilometers per hour
+      Knots, //!< Knots (Nautical miles per hour)
+      MilesPerHour, //!< Miles per hour
+      FeetPerSecond, //!< Feet per second
+      OtherUnit //!< Other unit
+    };
+
+    /**
+     * Returns the multiplier for the magnitude to convert it to knots, according to the units set with setMagnitudeUnits()
+     * A custom multiplier can be set with setMagnitudeMultiplier() for the case when units are set to OtherUnit
+     */
+    double magnitudeMultiplier() const;
+
+    /**
+     * Sets a multiplier for the magnitude to convert it to knots
+     */
+    void setMagnitudeMultiplier( double magnitudeMultiplier );
+
+    /**
+     * Returns the shaft length (in millimeters)
+     */
+    double shaftLength() const;
+
+    /**
+     * Sets the shaft length  (in millimeters)
+     */
+    void setShaftLength( double shaftLength );
+
+    /**
+     * Returns the units for the shaft length.
+     *
+     * \see setShaftLengthUnits()
+     */
+    Qgis::RenderUnit shaftLengthUnits() const;
+
+    /**
+     * Sets the units for the shaft length.
+     *
+     * \see shaftLengthUnits()
+     */
+    void setShaftLengthUnits( Qgis::RenderUnit shaftLengthUnit );
+
+    /**
+     * Returns the units that the data are in
+     */
+    WindSpeedUnit magnitudeUnits() const;
+
+    /**
+     * Sets the units that the data are in
+     */
+    void setMagnitudeUnits( WindSpeedUnit units );
+
+    //! Writes configuration to a new DOM element
+    QDomElement writeXml( QDomDocument &doc ) const;
+    //! Reads configuration from the given DOM element
+    void readXml( const QDomElement &elem );
+
+  private:
+    double mShaftLength = 10;
+    Qgis::RenderUnit mShaftLengthUnits = Qgis::RenderUnit::Millimeters;
+    WindSpeedUnit mMagnitudeUnits = WindSpeedUnit::MetersPerSecond;
+    double mMagnitudeMultiplier = 1;
+};
+
+/**
+ * \ingroup core
+ *
+ * \brief Represents a renderer settings for vector datasets.
  *
  * \note The API is considered EXPERIMENTAL and can be changed without a notice
  *
@@ -419,7 +531,9 @@ class CORE_EXPORT QgsMeshRendererVectorSettings
       //! Displaying vector dataset with streamlines
       Streamlines,
       //! Displaying vector dataset with particle traces
-      Traces
+      Traces,
+      //! Displaying vector dataset with wind barbs
+      WindBarbs
     };
 
     //! Returns line width of the arrow (in millimeters)
@@ -551,6 +665,18 @@ class CORE_EXPORT QgsMeshRendererVectorSettings
      */
     void setTracesSettings( const QgsMeshRendererVectorTracesSettings &tracesSettings );
 
+    /**
+    * Returns settings for vector rendered with wind barbs
+    * \since QGIS 3.38
+    */
+    QgsMeshRendererVectorWindBarbSettings windBarbSettings() const;
+
+    /**
+     * Sets settings for vector rendered with wind barbs
+     * \since QGIS 3.38
+     */
+    void setWindBarbSettings( const QgsMeshRendererVectorWindBarbSettings &windBarbSettings );
+
     //! Writes configuration to a new DOM element
     QDomElement writeXml( QDomDocument &doc, const QgsReadWriteContext &context = QgsReadWriteContext() ) const;
     //! Reads configuration from the given DOM element
@@ -560,7 +686,7 @@ class CORE_EXPORT QgsMeshRendererVectorSettings
 
     Symbology mDisplayingMethod = Arrows;
 
-    double mLineWidth = DEFAULT_LINE_WIDTH; //in millimeters
+    double mLineWidth = Qgis::DEFAULT_LINE_WIDTH; //in millimeters
     QgsColorRampShader mColorRampShader;
     QColor mColor = Qt::black;
     QgsInterpolatedLineColor::ColoringMethod mColoringMethod = QgsInterpolatedLineColor::SingleColor;
@@ -573,12 +699,13 @@ class CORE_EXPORT QgsMeshRendererVectorSettings
     QgsMeshRendererVectorArrowSettings mArrowsSettings;
     QgsMeshRendererVectorStreamlineSettings mStreamLinesSettings;
     QgsMeshRendererVectorTracesSettings mTracesSettings;
+    QgsMeshRendererVectorWindBarbSettings mWindBarbSettings;
 };
 
 /**
  * \ingroup core
  *
- * \brief Represents all mesh renderer settings
+ * \brief Represents all mesh renderer settings.
  *
  * \note The API is considered EXPERIMENTAL and can be changed without a notice
  *
@@ -592,7 +719,6 @@ class CORE_EXPORT QgsMeshRendererSettings
      * Constructs renderer with default single layer averaging method
      */
     QgsMeshRendererSettings();
-    //! Destructor
     ~QgsMeshRendererSettings();
 
     //! Returns native mesh renderer settings
@@ -657,14 +783,14 @@ class CORE_EXPORT QgsMeshRendererSettings
      *
      * Caller does not own the resulting pointer
      */
-    QgsMesh3dAveragingMethod *averagingMethod() const;
+    QgsMesh3DAveragingMethod *averagingMethod() const;
 
     /**
      * Sets averaging method for conversion of 3d stacked mesh data to 2d data
      *
      * Ownership of the method is not transferred.
      */
-    void setAveragingMethod( QgsMesh3dAveragingMethod *method );
+    void setAveragingMethod( QgsMesh3DAveragingMethod *method );
 
     //! Writes configuration to a new DOM element
     QDomElement writeXml( QDomDocument &doc, const QgsReadWriteContext &context = QgsReadWriteContext() ) const;
@@ -717,7 +843,7 @@ class CORE_EXPORT QgsMeshRendererSettings
     int mActiveVectorDatasetGroup = -1;
 
     //! Averaging method to get 2D datasets from 3D stacked mesh datasets
-    std::shared_ptr<QgsMesh3dAveragingMethod> mAveragingMethod;
+    std::shared_ptr<QgsMesh3DAveragingMethod> mAveragingMethod;
 };
 
 #endif //QGSMESHRENDERERSETTINGS_H

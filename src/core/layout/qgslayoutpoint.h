@@ -20,13 +20,16 @@
 
 #include "qgis_core.h"
 #include "qgis.h"
+#include "qgsconfig.h"
 #include <QPointF>
 
 /**
  * \ingroup core
  * \class QgsLayoutPoint
- * \brief This class provides a method of storing points, consisting of an x and y coordinate,
- * for use in QGIS layouts. Measurement units are stored alongside the position.
+ * \brief Provides a method of storing points, consisting of an x and y coordinate,
+ * for use in QGIS layouts.
+ *
+ * Measurement units are stored alongside the position.
  *
  * \see QgsLayoutMeasurementConverter
  * \note This class does not inherit from QPointF since QPointF includes methods which should not apply
@@ -34,7 +37,6 @@
  * to believe that addition of two QgsLayoutPoints with different unit types would automatically convert
  * units. Instead, all unit conversion must be handled by a QgsLayoutMeasurementConverter so that
  * conversion between paper and screen units can be correctly performed.
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsLayoutPoint
 {
@@ -76,7 +78,13 @@ class CORE_EXPORT QgsLayoutPoint
      * \see x()
      * \see setY()
     */
-    void setX( const double x ) { mX = x; }
+    void setX( const double x )
+    {
+#ifdef QGISDEBUG
+      Q_ASSERT_X( !std::isnan( x ), "QgsLayoutPoint", "Layout point with NaN coordinates created" );
+#endif
+      mX = x;
+    }
 
     /**
      * Returns y coordinate of point.
@@ -90,7 +98,13 @@ class CORE_EXPORT QgsLayoutPoint
      * \see y()
      * \see setX()
     */
-    void setY( const double y ) { mY = y; }
+    void setY( const double y )
+    {
+#ifdef QGISDEBUG
+      Q_ASSERT_X( !std::isnan( y ), "QgsLayoutPoint", "Layout point with NaN coordinates created" );
+#endif
+      mY = y;
+    }
 
     /**
      * Returns the units for the point.

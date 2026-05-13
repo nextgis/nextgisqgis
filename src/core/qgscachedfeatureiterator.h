@@ -20,14 +20,15 @@
 #include "qgsfeature.h"
 #include "qgsfeatureiterator.h"
 #include "qgscoordinatetransform.h"
+#include "qgsvectorlayercache.h"
+#include <QPointer>
 
 class QgsVectorLayerCache;
 
 /**
  * \ingroup core
  * \brief
- * \brief Delivers features from the cache
- *
+ * \brief Delivers features from the cache.
  */
 class CORE_EXPORT QgsCachedFeatureIterator : public QgsAbstractFeatureIterator
 {
@@ -65,8 +66,6 @@ class CORE_EXPORT QgsCachedFeatureIterator : public QgsAbstractFeatureIterator
      *
      * \param f      Will write to this feature
      * \returns bool  TRUE if the operation was OK
-     *
-     * \see bool getFeature( QgsFeature& f )
      */
     bool fetchFeature( QgsFeature &f ) override;
 
@@ -84,7 +83,7 @@ class CORE_EXPORT QgsCachedFeatureIterator : public QgsAbstractFeatureIterator
 #endif
 
     QList< QgsFeatureId > mFeatureIds;
-    QgsVectorLayerCache *mVectorLayerCache = nullptr;
+    QPointer< QgsVectorLayerCache > mVectorLayerCache = nullptr;
     QList< QgsFeatureId >::ConstIterator mFeatureIdIterator;
     QgsCoordinateTransform mTransform;
     QgsRectangle mFilterRect;
@@ -97,7 +96,7 @@ class CORE_EXPORT QgsCachedFeatureIterator : public QgsAbstractFeatureIterator
 /**
  * \ingroup core
  * \brief
- * \brief Uses another iterator as backend and writes features to the cache
+ * \brief Uses another iterator as backend and writes features to the cache.
  *
  */
 class CORE_EXPORT QgsCachedFeatureWriterIterator : public QgsAbstractFeatureIterator
@@ -133,14 +132,12 @@ class CORE_EXPORT QgsCachedFeatureWriterIterator : public QgsAbstractFeatureIter
      *
      * \param f      Will write to this feature
      * \returns bool  TRUE if the operation was OK
-     *
-     * \see bool getFeature( QgsFeature& f )
      */
     bool fetchFeature( QgsFeature &f ) override;
 
   private:
     QgsFeatureIterator mFeatIt;
-    QgsVectorLayerCache *mVectorLayerCache = nullptr;
+    QPointer< QgsVectorLayerCache > mVectorLayerCache;
     QgsFeatureIds mFids;
     QgsCoordinateTransform mTransform;
     QgsRectangle mFilterRect;

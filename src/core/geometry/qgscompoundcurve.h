@@ -25,8 +25,7 @@
 /**
  * \ingroup core
  * \class QgsCompoundCurve
- * \brief Compound curve geometry type
- * \since QGIS 2.10
+ * \brief Compound curve geometry type.
  */
 class CORE_EXPORT QgsCompoundCurve: public QgsCurve
 {
@@ -36,7 +35,58 @@ class CORE_EXPORT QgsCompoundCurve: public QgsCurve
     QgsCompoundCurve &operator=( const QgsCompoundCurve &curve );
     ~QgsCompoundCurve() override;
 
-    bool equals( const QgsCurve &other ) const override;
+#ifndef SIP_RUN
+  private:
+    bool fuzzyHelper( const QgsAbstractGeometry &other, double epsilon, bool useDistance ) const
+    {
+      const QgsCompoundCurve *otherCurve = qgsgeometry_cast< const QgsCompoundCurve * >( &other );
+      if ( !otherCurve )
+        return false;
+
+      if ( mWkbType != otherCurve->mWkbType )
+        return false;
+
+      if ( mCurves.size() != otherCurve->mCurves.size() )
+        return false;
+
+      for ( int i = 0; i < mCurves.size(); ++i )
+      {
+        if ( useDistance )
+        {
+          if ( !( *mCurves.at( i ) ).fuzzyDistanceEqual( *otherCurve->mCurves.at( i ), epsilon ) )
+          {
+            return false;
+          }
+
+        }
+        else
+        {
+          if ( !( *mCurves.at( i ) ).fuzzyEqual( *otherCurve->mCurves.at( i ), epsilon ) )
+          {
+            return false;
+          }
+
+        }
+      }
+
+      return true;
+    }
+#endif
+  public:
+    bool fuzzyEqual( const QgsAbstractGeometry &other, double epsilon = 1e-8 ) const override SIP_HOLDGIL
+    {
+      return fuzzyHelper( other, epsilon, false );
+    }
+    bool fuzzyDistanceEqual( const QgsAbstractGeometry &other, double epsilon = 1e-8 ) const override SIP_HOLDGIL
+    {
+      return fuzzyHelper( other, epsilon, true );
+    }
+
+    bool equals( const QgsCurve &other ) const override
+    {
+      return fuzzyEqual( other, 1e-8 );
+    }
+
 
     QString geometryType() const override SIP_HOLDGIL;
     int dimension() const override SIP_HOLDGIL;
@@ -71,9 +121,10 @@ class CORE_EXPORT QgsCompoundCurve: public QgsCurve
     */
     QgsLineString *curveToLine( double tolerance = M_PI_2 / 90, SegmentationToleranceType toleranceType = MaximumAngle ) const override SIP_FACTORY;
 
-    QgsCompoundCurve *snappedToGrid( double hSpacing, double vSpacing, double dSpacing = 0, double mSpacing = 0 ) const override SIP_FACTORY;
+    QgsCompoundCurve *snappedToGrid( double hSpacing, double vSpacing, double dSpacing = 0, double mSpacing = 0, bool removeRedundantPoints = false ) const override SIP_FACTORY;
+    QgsAbstractGeometry *simplifyByDistance( double tolerance ) const override SIP_FACTORY;
     bool removeDuplicateNodes( double epsilon = 4 * std::numeric_limits<double>::epsilon(), bool useZValues = false ) override;
-    bool boundingBoxIntersects( const QgsRectangle &rectangle ) const override SIP_HOLDGIL;
+    bool boundingBoxIntersects( const QgsBox3D &box3d ) const override SIP_HOLDGIL;
     const QgsAbstractGeometry *simplifiedTypeRef() const override SIP_HOLDGIL;
 
     /**
@@ -172,13 +223,29 @@ class CORE_EXPORT QgsCompoundCurve: public QgsCurve
      * Cast the \a geom to a QgsCompoundCurve.
      * Should be used by qgsgeometry_cast<QgsCompoundCurve *>( geometry ).
      *
-     * \note Not available in Python. Objects will be automatically be converted to the appropriate target type.
-     * \since QGIS 3.0
+     * Objects will be automatically converted to the appropriate target type.
+     *
+     * \note Not available in Python.
      */
-    inline static const QgsCompoundCurve *cast( const QgsAbstractGeometry *geom )
+    inline static const QgsCompoundCurve *cast( const QgsAbstractGeometry *geom ) // cppcheck-suppress duplInheritedMember
     {
       if ( geom && QgsWkbTypes::flatType( geom->wkbType() ) == Qgis::WkbType::CompoundCurve )
         return static_cast<const QgsCompoundCurve *>( geom );
+      return nullptr;
+    }
+
+    /**
+     * Cast the \a geom to a QgsCompoundCurve.
+     * Should be used by qgsgeometry_cast<QgsCompoundCurve *>( geometry ).
+     *
+     * Objects will be automatically converted to the appropriate target type.
+     *
+     * \note Not available in Python.
+     */
+    inline static QgsCompoundCurve *cast( QgsAbstractGeometry *geom ) // cppcheck-suppress duplInheritedMember
+    {
+      if ( geom && QgsWkbTypes::flatType( geom->wkbType() ) == Qgis::WkbType::CompoundCurve )
+        return static_cast<QgsCompoundCurve *>( geom );
       return nullptr;
     }
 #endif
@@ -199,7 +266,7 @@ class CORE_EXPORT QgsCompoundCurve: public QgsCurve
   protected:
 
     int compareToSameClass( const QgsAbstractGeometry *other ) const final;
-    QgsRectangle calculateBoundingBox() const override;
+    QgsBox3D calculateBoundingBox3D() const override;
 
   private:
     QVector< QgsCurve * > mCurves;

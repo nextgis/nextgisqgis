@@ -70,7 +70,7 @@ bool QgsZipUtils::unzip( const QString &zipFilename, const QString &dir, QString
 
   if ( rc == ZIP_ER_OK && z )
   {
-    const int count = zip_get_num_files( z );
+    const int count = zip_get_num_entries( z, ZIP_FL_UNCHANGED );
     if ( count != -1 )
     {
       struct zip_stat stat;
@@ -85,7 +85,21 @@ bool QgsZipUtils::unzip( const QString &zipFilename, const QString &dir, QString
         if ( zip_fread( file, buf.get(), len ) != -1 )
         {
           const QString fileName( stat.name );
+          if ( fileName.endsWith( "/" ) )
+          {
+            continue;
+          }
+
           const QFileInfo newFile( QDir( dir ), fileName );
+
+          if ( !QString( QDir::cleanPath( newFile.absolutePath() ) + QStringLiteral( "/" ) ).startsWith( QDir( dir ).absolutePath() + QStringLiteral( "/" ) ) )
+          {
+            QgsMessageLog::logMessage( QObject::tr( "Skipped file %1 outside of the directory %2" ).arg(
+                                         newFile.absoluteFilePath(),
+                                         QDir( dir ).absolutePath()
+                                       ) );
+            continue;
+          }
 
           // Create path for a new file if it does not exist.
           if ( !newFile.absoluteDir().exists() )
@@ -132,7 +146,7 @@ bool QgsZipUtils::unzip( const QString &zipFilename, const QString &dir, QString
   return true;
 }
 
-bool QgsZipUtils::zip( const QString &zipFilename, const QStringList &files )
+bool QgsZipUtils::zip( const QString &zipFilename, const QStringList &files, bool overwrite )
 {
   if ( zipFilename.isEmpty() )
   {
@@ -142,7 +156,7 @@ bool QgsZipUtils::zip( const QString &zipFilename, const QStringList &files )
 
   int rc = 0;
   const QByteArray zipFileNamePtr = zipFilename.toUtf8();
-  struct zip *z = zip_open( zipFileNamePtr.constData(), ZIP_CREATE, &rc );
+  struct zip *z = zip_open( zipFileNamePtr.constData(), overwrite ? ( ZIP_CREATE | ZIP_TRUNCATE ) : ZIP_CREATE, &rc );
 
   if ( rc == ZIP_ER_OK && z )
   {
@@ -185,7 +199,7 @@ bool QgsZipUtils::zip( const QString &zipFilename, const QStringList &files )
   }
   else
   {
-    QgsMessageLog::logMessage( QObject::tr( "Error creating zip archive '%1': %2" ).arg( zipFilename, zip_strerror( z ) ) );
+    QgsMessageLog::logMessage( QObject::tr( "Error creating zip archive '%1': %2" ).arg( zipFilename, z ? zip_strerror( z ) : zipFilename ) );
     return false;
   }
 
@@ -216,7 +230,10 @@ bool QgsZipUtils::decodeGzip( const char *bytesIn, std::size_t size, QByteArray 
 
   int ret = inflateInit2( &strm, MAX_WBITS + DEC_MAGIC_NUM_FOR_GZIP );
   if ( ret != Z_OK )
+  {
+    inflateEnd( &strm );
     return false;
+  }
 
   while ( ret != Z_STREAM_END ) // done when inflate() says it's done
   {
@@ -308,7 +325,7 @@ const QStringList QgsZipUtils::files( const QString &zip )
 
   if ( rc == ZIP_ER_OK && z )
   {
-    const int count = zip_get_num_files( z );
+    const int count = zip_get_num_entries( z, ZIP_FL_UNCHANGED );
     if ( count != -1 )
     {
       struct zip_stat stat;

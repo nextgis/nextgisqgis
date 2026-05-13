@@ -19,7 +19,10 @@
 #include <QString>
 #include <QThread>
 #include <QMutex>
+
+#if not defined( Q_OS_ANDROID )
 #include <QSharedMemory>
+#endif
 
 #include <map>
 #include <memory>
@@ -56,8 +59,10 @@ class QgsCacheDirectoryManager
     //! Called by constructor
     void init();
 
+#if not defined( Q_OS_ANDROID )
     //! Create a shared memory segment for the keep-alive mechanism
     std::unique_ptr<QSharedMemory> createAndAttachSHM();
+#endif
 
     //! Returns the name of temporary directory.
     QString getCacheDirectory( bool createIfNotExisting );
@@ -68,8 +73,9 @@ class QgsCacheDirectoryManager
     static bool removeDir( const QString &dirName );
 };
 
+#if not defined( Q_OS_ANDROID )
 //! For internal use of QgsCacheDirectoryManager
-class QgsCacheDirectoryManagerKeepAlive: public QThread
+class QgsCacheDirectoryManagerKeepAlive : public QThread
 {
     Q_OBJECT
   public:
@@ -79,8 +85,10 @@ class QgsCacheDirectoryManagerKeepAlive: public QThread
     void run() override;
   private slots:
     void updateTimestamp();
+
   private:
     std::unique_ptr<QSharedMemory> mSharedMemory;
 };
+#endif
 
 #endif // QGSCACHEDIRECTORYMANAGER_H

@@ -86,6 +86,82 @@ class CORE_EXPORT QgsProjectElevationProperties : public QObject
      */
     void setTerrainProvider( QgsAbstractTerrainProvider *provider SIP_TRANSFER );
 
+    /**
+     * Returns the project's elevation range, which indicates the upper and lower
+     * elevation limits associated with the project.
+     *
+     * \note This is a manual, use-set property, and does not necessarily
+     * coincide with the elevation ranges for individual layers in the project.
+     *
+     * \see setElevationRange()
+     * \see elevationRangeChanged()
+     *
+     * \since QGIS 3.38
+     */
+    QgsDoubleRange elevationRange() const { return mElevationRange; }
+
+    /**
+     * Returns the fixed size for elevation range filtering in the project, used when interactively filtering by elevation.
+     *
+     * Returns -1 if no fixed elevation range size is desired.
+     *
+     * A fixed size forces the selected elevation range to have a matching difference between
+     * the upper and lower elevation.
+     *
+     * \see setElevationFilterRangeSize()
+     *
+     * \since QGIS 3.38
+     */
+    double elevationFilterRangeSize() const { return mElevationFilterRangeSize; }
+
+    /**
+     * Returns TRUE if the elevation range filter slider should be inverted for this project.
+     *
+     * \see setInvertElevationFilter()
+     *
+     * \since QGIS 3.38
+     */
+    bool invertElevationFilter() const { return mInvertElevationFilter; }
+
+  public slots:
+
+    /**
+     * Sets the project's elevation \a range, which indicates the upper and lower
+     * elevation limits associated with the project.
+     *
+     * \note This is a manual, use-set property, and does not necessarily
+     * coincide with the elevation ranges for individual layers in the project.
+     *
+     * \see elevationRange()
+     * \see elevationRangeChanged()
+     *
+     * \since QGIS 3.38
+     */
+    void setElevationRange( const QgsDoubleRange &range );
+
+    /**
+     * Sets the fixed size for elevation range filtering in the project, used when interactively filtering by elevation.
+     *
+     * Set to -1 if no fixed elevation range size is desired.
+     *
+     * A fixed size forces the selected elevation range to have a matching difference between
+     * the upper and lower elevation.
+     *
+     * \see elevationFilterRangeSize()
+     *
+     * \since QGIS 3.38
+     */
+    void setElevationFilterRangeSize( double size );
+
+    /**
+     * Sets whether the elevation range filter slider should be inverted for this project.
+     *
+     * \see invertElevationFilter()
+     *
+     * \since QGIS 3.38
+     */
+    void setInvertElevationFilter( bool invert );
+
   signals:
 
     /**
@@ -93,9 +169,25 @@ class CORE_EXPORT QgsProjectElevationProperties : public QObject
      */
     void changed();
 
+    /**
+    * Emitted when the project's elevation \a is changed.
+    *
+     * \note This is a manual, use-set property, and does not necessarily
+     * coincide with the elevation ranges for individual layers in the project.
+     *
+     * \see elevationRange()
+     * \see setElevationRange()
+     *
+     * \since QGIS 3.38
+    */
+    void elevationRangeChanged( const QgsDoubleRange &range );
+
   private:
 
     std::unique_ptr< QgsAbstractTerrainProvider > mTerrainProvider;
+    QgsDoubleRange mElevationRange;
+    double mElevationFilterRangeSize = -1;
+    bool mInvertElevationFilter = false;
 
 };
 

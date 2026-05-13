@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmbtilesvectortiledataprovider.h"
+#include "moc_qgsmbtilesvectortiledataprovider.cpp"
 #include "qgsthreadingutils.h"
 #include "qgsmbtiles.h"
 #include "qgstiles.h"
@@ -33,7 +34,7 @@
 QString QgsMbTilesVectorTileDataProvider::MB_TILES_VECTOR_TILE_DATA_PROVIDER_KEY = QStringLiteral( "mbtilesvectortiles" );
 QString QgsMbTilesVectorTileDataProvider::MB_TILES_VECTOR_TILE_DATA_PROVIDER_DESCRIPTION = QObject::tr( "MBTile Vector Tiles data provider" );
 
-QgsMbTilesVectorTileDataProvider::QgsMbTilesVectorTileDataProvider( const QString &uri, const ProviderOptions &providerOptions, ReadFlags flags )
+QgsMbTilesVectorTileDataProvider::QgsMbTilesVectorTileDataProvider( const QString &uri, const ProviderOptions &providerOptions, Qgis::DataProviderReadFlags flags )
   : QgsVectorTileDataProvider( uri, providerOptions, flags )
 {
   QgsDataSourceUri dsUri;
@@ -58,15 +59,26 @@ QgsMbTilesVectorTileDataProvider::QgsMbTilesVectorTileDataProvider( const QStrin
 
   QgsDebugMsgLevel( QStringLiteral( "name: " ) + reader.metadataValue( QStringLiteral( "name" ) ), 2 );
 
-  mMatrixSet = QgsVectorTileMatrixSet::fromWebMercator();
-
   bool minZoomOk, maxZoomOk;
   const int minZoom = reader.metadataValue( QStringLiteral( "minzoom" ) ).toInt( &minZoomOk );
   const int maxZoom = reader.metadataValue( QStringLiteral( "maxzoom" ) ).toInt( &maxZoomOk );
-  if ( minZoomOk )
-    mMatrixSet.dropMatricesOutsideZoomRange( minZoom, 99 );
-  if ( maxZoomOk )
-    mMatrixSet.dropMatricesOutsideZoomRange( 0, maxZoom );
+  if ( minZoomOk && maxZoomOk )
+  {
+    mMatrixSet = QgsVectorTileMatrixSet::fromWebMercator( minZoom, maxZoom );
+  }
+  else if ( minZoomOk )
+  {
+    mMatrixSet = QgsVectorTileMatrixSet::fromWebMercator( minZoom, 99 );
+  }
+  else if ( maxZoomOk )
+  {
+    mMatrixSet = QgsVectorTileMatrixSet::fromWebMercator( 0, maxZoom );
+  }
+  else
+  {
+    mMatrixSet = QgsVectorTileMatrixSet::fromWebMercator();
+  }
+
   QgsDebugMsgLevel( QStringLiteral( "zoom range: %1 - %2" ).arg( mMatrixSet.minimumZoom() ).arg( mMatrixSet.maximumZoom() ), 2 );
 
   QgsRectangle r = reader.extent();
@@ -91,6 +103,11 @@ QgsMbTilesVectorTileDataProvider::QgsMbTilesVectorTileDataProvider( const QgsMbT
   mIsValid = other.mIsValid;
   mExtent = other.mExtent;
   mMatrixSet = other.mMatrixSet;
+}
+
+Qgis::DataProviderFlags QgsMbTilesVectorTileDataProvider::flags() const
+{
+  return Qgis::DataProviderFlag::FastExtent2D;
 }
 
 QString QgsMbTilesVectorTileDataProvider::name() const
@@ -230,7 +247,7 @@ QgsProviderMetadata::ProviderMetadataCapabilities QgsMbTilesVectorTileDataProvid
          | ProviderMetadataCapability::QuerySublayers;
 }
 
-QgsMbTilesVectorTileDataProvider *QgsMbTilesVectorTileDataProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags )
+QgsMbTilesVectorTileDataProvider *QgsMbTilesVectorTileDataProviderMetadata::createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags )
 {
   return new QgsMbTilesVectorTileDataProvider( uri, options, flags );
 }
@@ -254,6 +271,7 @@ QString QgsMbTilesVectorTileDataProviderMetadata::filters( Qgis::FileFilterType 
     case Qgis::FileFilterType::Mesh:
     case Qgis::FileFilterType::MeshDataset:
     case Qgis::FileFilterType::PointCloud:
+    case Qgis::FileFilterType::TiledScene:
       return QString();
 
     case Qgis::FileFilterType::VectorTile:

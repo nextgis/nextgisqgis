@@ -17,6 +17,7 @@
 #include "qgsconfig.h"
 
 #include "qgssensorguiregistry.h"
+#include "moc_qgssensorguiregistry.cpp"
 #include "qgssensorwidget.h"
 
 QgsSensorGuiRegistry::QgsSensorGuiRegistry( QObject *parent )
@@ -34,34 +35,19 @@ bool QgsSensorGuiRegistry::populate()
   if ( !mMetadata.isEmpty() )
     return false;
 
-  addSensorGuiMetadata( new QgsSensorGuiMetadata( QStringLiteral( "tcp_socket" ),
-                        QObject::tr( "TCP socket sensor" ),
-                        QgsApplication::getThemeIcon( QStringLiteral( "/mSensor.svg" ) ),
-                        [ = ]( QgsAbstractSensor * sensor )->QgsAbstractSensorWidget *
-  {
+  addSensorGuiMetadata( new QgsSensorGuiMetadata( QStringLiteral( "tcp_socket" ), QObject::tr( "TCP socket sensor" ), QgsApplication::getThemeIcon( QStringLiteral( "/mSensor.svg" ) ), [=]( QgsAbstractSensor *sensor ) -> QgsAbstractSensorWidget * {
     QgsTcpSocketSensorWidget *widget = new QgsTcpSocketSensorWidget( nullptr );
     widget->setSensor( sensor );
-    return widget;
-  }, nullptr ) );
-  addSensorGuiMetadata( new QgsSensorGuiMetadata( QStringLiteral( "udp_socket" ),
-                        QObject::tr( "UDP socket sensor" ),
-                        QgsApplication::getThemeIcon( QStringLiteral( "/mSensor.svg" ) ),
-                        [ = ]( QgsAbstractSensor * sensor )->QgsAbstractSensorWidget *
-  {
+    return widget; }, nullptr ) );
+  addSensorGuiMetadata( new QgsSensorGuiMetadata( QStringLiteral( "udp_socket" ), QObject::tr( "UDP socket sensor" ), QgsApplication::getThemeIcon( QStringLiteral( "/mSensor.svg" ) ), [=]( QgsAbstractSensor *sensor ) -> QgsAbstractSensorWidget * {
     QgsUdpSocketSensorWidget *widget = new QgsUdpSocketSensorWidget( nullptr );
     widget->setSensor( sensor );
-    return widget;
-  }, nullptr ) );
+    return widget; }, nullptr ) );
 #if defined( HAVE_QTSERIALPORT )
-  addSensorGuiMetadata( new QgsSensorGuiMetadata( QStringLiteral( "serial_port" ),
-                        QObject::tr( "Serial port sensor" ),
-                        QgsApplication::getThemeIcon( QStringLiteral( "/mSensor.svg" ) ),
-                        [ = ]( QgsAbstractSensor * sensor )->QgsAbstractSensorWidget *
-  {
+  addSensorGuiMetadata( new QgsSensorGuiMetadata( QStringLiteral( "serial_port" ), QObject::tr( "Serial port sensor" ), QgsApplication::getThemeIcon( QStringLiteral( "/mSensor.svg" ) ), [=]( QgsAbstractSensor *sensor ) -> QgsAbstractSensorWidget * {
     QgsSerialPortSensorWidget *widget = new QgsSerialPortSensorWidget( nullptr );
     widget->setSensor( sensor );
-    return widget;
-  }, nullptr ) );
+    return widget; }, nullptr ) );
 #endif
   return true;
 }
@@ -83,10 +69,11 @@ bool QgsSensorGuiRegistry::addSensorGuiMetadata( QgsSensorAbstractGuiMetadata *m
 
 QgsAbstractSensor *QgsSensorGuiRegistry::createSensor( const QString &type, QObject *parent ) const
 {
-  if ( !mMetadata.contains( type ) )
+  auto it = mMetadata.constFind( type );
+  if ( it == mMetadata.constEnd() )
     return nullptr;
 
-  std::unique_ptr< QgsAbstractSensor > sensor( mMetadata.value( type )->createSensor( parent ) );
+  std::unique_ptr<QgsAbstractSensor> sensor( it.value()->createSensor( parent ) );
   if ( sensor )
     return sensor.release();
 
@@ -95,10 +82,14 @@ QgsAbstractSensor *QgsSensorGuiRegistry::createSensor( const QString &type, QObj
 
 QgsAbstractSensorWidget *QgsSensorGuiRegistry::createSensorWidget( QgsAbstractSensor *sensor ) const
 {
-  if ( !sensor || !mMetadata.contains( sensor->type() ) )
+  if ( !sensor )
     return nullptr;
 
-  return  mMetadata[sensor->type()]->createSensorWidget( sensor );
+  auto it = mMetadata.constFind( sensor->type() );
+  if ( it == mMetadata.constEnd() )
+    return nullptr;
+
+  return it.value()->createSensorWidget( sensor );
 }
 
 QMap<QString, QString> QgsSensorGuiRegistry::sensorTypes() const

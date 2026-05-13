@@ -28,7 +28,6 @@
  * \ingroup core
  * \brief An interface for objects which accept features via addFeature(s) methods.
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsFeatureSink
 {
@@ -39,7 +38,7 @@ class CORE_EXPORT QgsFeatureSink
      *
      * \since QGIS 3.4
      */
-    enum SinkFlag
+    enum SinkFlag SIP_ENUM_BASETYPE( IntFlag )
     {
 
       /**
@@ -57,7 +56,7 @@ class CORE_EXPORT QgsFeatureSink
     Q_DECLARE_FLAGS( SinkFlags, SinkFlag )
 
     //! Flags controlling how features are added to a sink.
-    enum Flag
+    enum Flag SIP_ENUM_BASETYPE( IntFlag )
     {
 
       /**
@@ -80,6 +79,13 @@ class CORE_EXPORT QgsFeatureSink
     Q_DECLARE_FLAGS( Flags, Flag )
 
     virtual ~QgsFeatureSink() = default;
+
+    /**
+     * Finalizes the sink, flushing any buffered features to the destination.
+     *
+     * \since QGIS 3.42
+     */
+    virtual void finalize();
 
     /**
      * Adds a single \a feature to the sink. Feature addition behavior is controlled by the specified \a flags.

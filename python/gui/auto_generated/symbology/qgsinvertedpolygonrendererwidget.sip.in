@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/symbology/qgsinvertedpolygonrendererwidget.h                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -11,22 +11,20 @@
 class QgsInvertedPolygonRendererWidget : QgsRendererWidget
 {
 %Docstring(signature="appended")
-A widget used represent options of a :py:class:`QgsInvertedPolygonRenderer`
-
-.. versionadded:: 2.4
+A widget for configuring options for a
+:py:class:`QgsInvertedPolygonRenderer`.
 %End
 
 %TypeHeaderCode
 #include "qgsinvertedpolygonrendererwidget.h"
 %End
   public:
-
     static QgsRendererWidget *create( QgsVectorLayer *layer, QgsStyle *style, QgsFeatureRenderer *renderer ) /Factory/;
 %Docstring
 Static creation method
 
 :param layer: the layer where this renderer is applied
-:param style:
+:param style: 
 :param renderer: the mask renderer (will not take ownership)
 %End
 
@@ -35,7 +33,7 @@ Static creation method
 Constructor
 
 :param layer: the layer where this renderer is applied
-:param style:
+:param style: 
 :param renderer: the mask renderer (will not take ownership)
 %End
     ~QgsInvertedPolygonRendererWidget();
@@ -59,5 +57,5 @@ Constructor
  *                                                                      *
  * src/gui/symbology/qgsinvertedpolygonrendererwidget.h                 *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

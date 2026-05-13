@@ -24,13 +24,13 @@ SIP_NO_FILE
 /**
  * \ingroup gui
  * \class QgsCheckboxWidgetFactory
+ * \brief Editor widget factory for checkbox widgets.
  * \note not available in Python bindings
  */
 
 class GUI_EXPORT QgsCheckboxWidgetFactory : public QgsEditorWidgetFactory
 {
   public:
-
     /**
      * Constructor for QgsCheckboxWidgetFactory, where \a name is a human-readable
      * name for the factory.

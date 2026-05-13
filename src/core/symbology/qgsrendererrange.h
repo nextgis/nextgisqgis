@@ -32,14 +32,12 @@ class QgsClassificationRange;
 /**
  * \ingroup core
  * \class QgsRendererRange
+ * \brief Represents a value range for a QgsGraduatedSymbolRenderer.
  */
 class CORE_EXPORT QgsRendererRange
 {
   public:
 
-    /**
-     * Constructor for QgsRendererRange.
-     */
     QgsRendererRange() = default;
     ~QgsRendererRange();
 
@@ -48,15 +46,32 @@ class CORE_EXPORT QgsRendererRange
      * \param range The classification range
      * \param symbol The symbol for this renderer range
      * \param render If TRUE, it will be renderered
+     * \param uuid Optional parameter to manually set the UUID key identifier for the this range (since QGIS 3.34).
      */
-    QgsRendererRange( const QgsClassificationRange &range, QgsSymbol *symbol SIP_TRANSFER, bool render = true );
-    QgsRendererRange( double lowerValue, double upperValue, QgsSymbol *symbol SIP_TRANSFER, const QString &label, bool render = true );
+    QgsRendererRange( const QgsClassificationRange &range, QgsSymbol *symbol SIP_TRANSFER, bool render = true, const QString &uuid = QString() );
+
+    /**
+     * Creates a renderer symbol range
+     * \param lowerValue The lower bound of the range
+     * \param upperValue The upper bound of the range
+     * \param symbol The symbol for this renderer range
+     * \param label The label used for the range
+     * \param render If TRUE, it will be renderered
+     * \param uuid Optional parameter to manually set the UUID key identifier for the this range (since QGIS 3.34).
+     */
+    QgsRendererRange( double lowerValue, double upperValue, QgsSymbol *symbol SIP_TRANSFER, const QString &label, bool render = true, const QString &uuid = QString() );
     QgsRendererRange( const QgsRendererRange &range );
 
     // default dtor is OK
     QgsRendererRange &operator=( QgsRendererRange range );
 
     bool operator<( const QgsRendererRange &other ) const;
+
+    /**
+     * Returns the unique identifier for this range.
+     * \since QGIS 3.34
+     */
+    QString uuid() const;
 
     /**
      * Returns the lower bound of the range.
@@ -124,7 +139,6 @@ class CORE_EXPORT QgsRendererRange
      * Returns TRUE if the range should be rendered.
      *
      * \see setRenderState()
-     * \since QGIS 2.6
      */
     bool renderState() const;
 
@@ -132,7 +146,6 @@ class CORE_EXPORT QgsRendererRange
      * Sets whether the range should be rendered.
      *
      * \see renderState()
-     * \since QGIS 2.6
      */
     void setRenderState( bool render );
 
@@ -148,8 +161,21 @@ class CORE_EXPORT QgsRendererRange
      * \param props graduated renderer properties
      * \param firstRange set to TRUE if the range is the first range, where the lower value uses a <= test
      * rather than a < test.
+     * \deprecated QGIS 3.44. Use the version with QgsSldExportContext instead.
      */
-    void toSld( QDomDocument &doc, QDomElement &element, QVariantMap props, bool firstRange = false ) const;
+    Q_DECL_DEPRECATED void toSld( QDomDocument &doc, QDomElement &element, QVariantMap props, bool firstRange = false ) const SIP_DEPRECATED;
+
+    /**
+     * Creates a DOM element representing the range in SLD format.
+     * \param doc DOM document
+     * \param element destination DOM element
+     * \param classAttribute classification attribute or expression
+     * \param context conversion context
+     * \param firstRange set to TRUE if the range is the first range, where the lower value uses a <= test
+     * rather than a < test.
+     * \since QGIS 3.44
+     */
+    bool toSld( QDomDocument &doc, QDomElement &element, const QString &classAttribute, QgsSldExportContext &context, bool firstRange = false ) const;
 
 #ifdef SIP_RUN
     SIP_PYOBJECT __repr__();
@@ -179,13 +205,13 @@ class CORE_EXPORT QgsRendererRange
 #endif
 
   protected:
+    friend class QgsGraduatedSymbolRendererWidget;
+
     double mLowerValue = 0, mUpperValue = 0;
     std::unique_ptr<QgsSymbol> mSymbol;
     QString mLabel;
     bool mRender = true;
-
-    // for cpy+swap idiom
-    void swap( QgsRendererRange &other );
+    QString mUuid;
 };
 
 typedef QList<QgsRendererRange> QgsRangeList;
@@ -194,8 +220,9 @@ typedef QList<QgsRendererRange> QgsRangeList;
 /**
  * \ingroup core
  * \class QgsRendererRangeLabelFormat
- * \since QGIS 2.6
- * \deprecated since QGIS 3.10, use QgsClassificationMethod instead
+ * \brief Encapsulates the formatting for a QgsRendererRange label.
+ *
+ * \deprecated QGIS 3.10. Use QgsClassificationMethod instead.
  */
 class CORE_DEPRECATED_EXPORT QgsRendererRangeLabelFormat SIP_DEPRECATED
 {
@@ -215,7 +242,9 @@ class CORE_DEPRECATED_EXPORT QgsRendererRangeLabelFormat SIP_DEPRECATED
     bool trimTrailingZeroes() const { return mTrimTrailingZeroes; }
     void setTrimTrailingZeroes( bool trimTrailingZeroes ) { mTrimTrailingZeroes = trimTrailingZeroes; }
 
-    //! \note labelForLowerUpper in Python bindings
+    /**
+     * Returns the label to use for a range with the specified \a lower and \a upper bounds.
+     */
     QString labelForRange( double lower, double upper ) const SIP_PYNAME( labelForLowerUpper );
     QString labelForRange( const QgsRendererRange &range ) const;
     QString formatNumber( double value ) const;

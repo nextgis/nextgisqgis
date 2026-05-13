@@ -31,7 +31,6 @@ class QgsRasterInterface;
 /**
  * \ingroup core
  * \brief A renderer for generating live hillshade models.
- * \since QGIS 2.16
  */
 class CORE_EXPORT QgsHillshadeRenderer : public QgsRasterRenderer
 {
@@ -62,19 +61,26 @@ class CORE_EXPORT QgsHillshadeRenderer : public QgsRasterRenderer
     QgsRasterBlock *block( int bandNo, const QgsRectangle &extent, int width, int height, QgsRasterBlockFeedback *feedback = nullptr ) override SIP_FACTORY;
 
     QList<int> usesBands() const override;
+    int inputBand() const override;
 
-    void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props = QVariantMap() ) const override;
+    Q_DECL_DEPRECATED void toSld( QDomDocument &doc, QDomElement &element, const QVariantMap &props = QVariantMap() ) const override SIP_DEPRECATED;
+    bool toSld( QDomDocument &doc, QDomElement &element, QgsSldExportContext &context ) const override;
 
     /**
      * Returns the band used by the renderer
+     *
+     * \deprecated QGIS 3.38. Use inputBand() instead.
      */
-    int band() const { return mBand; }
+    Q_DECL_DEPRECATED int band() const SIP_DEPRECATED { return mBand; }
 
     /**
      * Sets the band used by the renderer.
      * \see band
+     *
+     * \deprecated QGIS 3.38. Use setInputBand() instead.
      */
-    void setBand( int bandNo );
+    Q_DECL_DEPRECATED void setBand( int bandNo ) SIP_DEPRECATED;
+    bool setInputBand( int band ) override;
 
     /**
      * Returns the direction of the light over the raster between 0-360.

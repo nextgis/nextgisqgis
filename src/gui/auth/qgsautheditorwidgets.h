@@ -25,14 +25,13 @@
 
 /**
  * \ingroup gui
- * \brief Dialog for viewing available authentication method plugins
+ * \brief Dialog for viewing available authentication method plugins.
  */
 class GUI_EXPORT QgsAuthMethodPlugins : public QDialog, private Ui::QgsAuthMethodPlugins
 {
     Q_OBJECT
 
   public:
-
     /**
      * Construct a dialog for viewing available authentication method plugins
      * \param parent Parent widget
@@ -52,14 +51,13 @@ class GUI_EXPORT QgsAuthMethodPlugins : public QDialog, private Ui::QgsAuthMetho
 
 /**
  * \ingroup gui
- * \brief Wrapper widget for available authentication editors
+ * \brief Wrapper widget for available authentication editors.
  */
 class GUI_EXPORT QgsAuthEditorWidgets : public QWidget, private Ui::QgsAuthEditors
 {
     Q_OBJECT
 
   public:
-
     /**
      * Construct a widget to contain various authentication editors
      * \param parent Parent widget
@@ -95,13 +93,10 @@ class GUI_EXPORT QgsAuthEditorWidgets : public QWidget, private Ui::QgsAuthEdito
     void eraseAuthenticationDatabase();
 
     //! Relay messages to widget's messagebar
-    void authMessageOut( const QString &message, const QString &authtag, QgsAuthManager::MessageLevel level );
+    void authMessageLog( const QString &message, const QString &authtag, Qgis::MessageLevel level );
 
     //! Remove master password from wallet
-    void  passwordHelperDelete();
-
-    //! Store master password into the wallet
-    void  passwordHelperSync();
+    void passwordHelperDelete();
 
     //! Toggle password helper (enable/disable)
     void passwordHelperEnableTriggered();
@@ -124,12 +119,10 @@ class GUI_EXPORT QgsAuthEditorWidgets : public QWidget, private Ui::QgsAuthEdito
     QAction *mActionRemoveAuthConfigs = nullptr;
     QAction *mActionEraseAuthDatabase = nullptr;
     QAction *mActionPasswordHelperDelete = nullptr;
-    QAction *mActionPasswordHelperSync = nullptr;
     QAction *mActionPasswordHelperEnable = nullptr;
     QAction *mActionPasswordHelperLoggingEnable = nullptr;
     QAction *mActionClearAccessCacheNow = nullptr;
     QAction *mActionAutoClearAccessCache = nullptr;
-
 };
 
 #endif // QGSAUTHEDITORWIDGETS_H

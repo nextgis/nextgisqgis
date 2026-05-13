@@ -31,23 +31,26 @@ void QgsPointCloudAttributeStatistics::cumulateStatistics( const QgsPointCloudAt
   minimum = std::min( minimum, stats.minimum );
   maximum = std::max( maximum, stats.maximum );
 
-  double newMean = ( mean * count + stats.mean * stats.count ) / ( count + stats.count );
-  double delta1 = newMean - mean;
-  double variance1 = stDev * stDev + delta1 * delta1 - 2 * count * delta1 * mean;
-  double delta2 = newMean - stats.mean;
-  double variance2 = stats.stDev * stats.stDev + delta2 * delta2 - 2 * stats.count * delta2 * stats.mean;
-  stDev = ( variance1 * count + variance2 * stats.count ) / ( count + stats.count );
-  stDev = std::sqrt( stDev );
+  const double newMean = ( mean * count + stats.mean * stats.count ) / ( count + stats.count );
+  const double delta1 = newMean - mean;
+  const double variance1 = stDev * stDev * ( count - 1 ) + count * delta1 * delta1;
+  const double delta2 = newMean - stats.mean;
+  const double variance2 = stats.stDev * stats.stDev * ( stats.count - 1 ) + stats.count * delta2 * delta2;
+  const double variance = ( variance1 + variance2 ) / ( count + stats.count );
+  stDev = std::sqrt( variance );
 
   mean = newMean;
   count += stats.count;
 
   for ( auto it = stats.classCount.constBegin(); it != stats.classCount.constEnd(); it++ )
   {
-    int c = classCount.value( it.key(), 0 );
-    c += it.value();
-    classCount[ it.key() ] = c;
+    classCount[ it.key() ] += it.value();
   }
+}
+
+int QgsPointCloudAttributeStatistics::singleClassCount( int cls ) const
+{
+  return classCount.value( cls, -1 );
 }
 
 // QgsPointCloudStatistics
@@ -160,7 +163,7 @@ QByteArray QgsPointCloudStatistics::toStatisticsJson() const
   return statsDoc.toJson( QJsonDocument::Compact );
 }
 
-QgsPointCloudStatistics QgsPointCloudStatistics::fromStatisticsJson( QByteArray statsByteArray )
+QgsPointCloudStatistics QgsPointCloudStatistics::fromStatisticsJson( const QByteArray &statsByteArray )
 {
   QJsonParseError error;
   QJsonDocument document = QJsonDocument::fromJson( statsByteArray, &error );

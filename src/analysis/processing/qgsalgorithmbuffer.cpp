@@ -17,6 +17,7 @@
 
 #include "qgsalgorithmbuffer.h"
 #include "qgsvectorlayer.h"
+#include "qgsmessagelog.h"
 
 ///@cond PRIVATE
 
@@ -49,26 +50,26 @@ void QgsBufferAlgorithm::initAlgorithm( const QVariantMap & )
 {
   addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "INPUT" ), QObject::tr( "Input layer" ) ) );
 
-  auto bufferParam = std::make_unique < QgsProcessingParameterDistance >( QStringLiteral( "DISTANCE" ), QObject::tr( "Distance" ), 10, QStringLiteral( "INPUT" ) );
+  auto bufferParam = std::make_unique<QgsProcessingParameterDistance>( QStringLiteral( "DISTANCE" ), QObject::tr( "Distance" ), 10, QStringLiteral( "INPUT" ) );
   bufferParam->setIsDynamic( true );
   bufferParam->setDynamicPropertyDefinition( QgsPropertyDefinition( QStringLiteral( "Distance" ), QObject::tr( "Buffer distance" ), QgsPropertyDefinition::Double ) );
   bufferParam->setDynamicLayerParameterName( QStringLiteral( "INPUT" ) );
   addParameter( bufferParam.release() );
-  auto segmentParam = std::make_unique < QgsProcessingParameterNumber >( QStringLiteral( "SEGMENTS" ), QObject::tr( "Segments" ), QgsProcessingParameterNumber::Integer, 5, false, 1 );
+  auto segmentParam = std::make_unique<QgsProcessingParameterNumber>( QStringLiteral( "SEGMENTS" ), QObject::tr( "Segments" ), Qgis::ProcessingNumberParameterType::Integer, 5, false, 1 );
   segmentParam->setHelp( QObject::tr( "The segments parameter controls the number of line segments to use to approximate a quarter circle when creating rounded offsets." ) );
   addParameter( segmentParam.release() );
   addParameter( new QgsProcessingParameterEnum( QStringLiteral( "END_CAP_STYLE" ), QObject::tr( "End cap style" ), QStringList() << QObject::tr( "Round" ) << QObject::tr( "Flat" ) << QObject::tr( "Square" ), false, 0 ) );
   addParameter( new QgsProcessingParameterEnum( QStringLiteral( "JOIN_STYLE" ), QObject::tr( "Join style" ), QStringList() << QObject::tr( "Round" ) << QObject::tr( "Miter" ) << QObject::tr( "Bevel" ), false, 0 ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "MITER_LIMIT" ), QObject::tr( "Miter limit" ), QgsProcessingParameterNumber::Double, 2, false, 1 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "MITER_LIMIT" ), QObject::tr( "Miter limit" ), Qgis::ProcessingNumberParameterType::Double, 2, false, 1 ) );
 
   addParameter( new QgsProcessingParameterBoolean( QStringLiteral( "DISSOLVE" ), QObject::tr( "Dissolve result" ), false ) );
 
-  auto keepDisjointParam = std::make_unique < QgsProcessingParameterBoolean >( QStringLiteral( "SEPARATE_DISJOINT" ), QObject::tr( "Keep disjoint results separate" ), false );
-  keepDisjointParam->setFlags( keepDisjointParam->flags() | QgsProcessingParameterDefinition::FlagAdvanced );
+  auto keepDisjointParam = std::make_unique<QgsProcessingParameterBoolean>( QStringLiteral( "SEPARATE_DISJOINT" ), QObject::tr( "Keep disjoint results separate" ), false );
+  keepDisjointParam->setFlags( keepDisjointParam->flags() | Qgis::ProcessingParameterFlag::Advanced );
   keepDisjointParam->setHelp( QObject::tr( "If checked, then any disjoint parts in the buffer results will be output as separate single-part features." ) );
   addParameter( keepDisjointParam.release() );
 
-  addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Buffered" ), QgsProcessing::TypeVectorPolygon, QVariant(), false, true, true ) );
+  addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Buffered" ), Qgis::ProcessingSourceType::VectorPolygon, QVariant(), false, true, true ) );
 }
 
 QString QgsBufferAlgorithm::shortHelpString() const
@@ -80,6 +81,16 @@ QString QgsBufferAlgorithm::shortHelpString() const
                       "The miter limit parameter is only applicable for miter join styles, and controls the maximum distance from the offset curve to use when creating a mitered join." );
 }
 
+QString QgsBufferAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Computes a buffer area for all the features in an input layer, using a fixed or dynamic distance." );
+}
+
+Qgis::ProcessingAlgorithmDocumentationFlags QgsBufferAlgorithm::documentationFlags() const
+{
+  return Qgis::ProcessingAlgorithmDocumentationFlag::RegeneratesPrimaryKeyInSomeScenarios;
+}
+
 QgsBufferAlgorithm *QgsBufferAlgorithm::createInstance() const
 {
   return new QgsBufferAlgorithm();
@@ -87,41 +98,42 @@ QgsBufferAlgorithm *QgsBufferAlgorithm::createInstance() const
 
 QVariantMap QgsBufferAlgorithm::processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback )
 {
-  std::unique_ptr< QgsProcessingFeatureSource > source( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
+  std::unique_ptr<QgsProcessingFeatureSource> source( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
   if ( !source )
     throw QgsProcessingException( invalidSourceError( parameters, QStringLiteral( "INPUT" ) ) );
-
-  QString dest;
-  std::unique_ptr< QgsFeatureSink > sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, source->fields(), Qgis::WkbType::MultiPolygon, source->sourceCrs() ) );
-  if ( !sink )
-    throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
   // fixed parameters
   const bool dissolve = parameterAsBoolean( parameters, QStringLiteral( "DISSOLVE" ), context );
   const bool keepDisjointSeparate = parameterAsBoolean( parameters, QStringLiteral( "SEPARATE_DISJOINT" ), context );
   const int segments = parameterAsInt( parameters, QStringLiteral( "SEGMENTS" ), context );
-  const Qgis::EndCapStyle endCapStyle = static_cast< Qgis::EndCapStyle >( 1 + parameterAsInt( parameters, QStringLiteral( "END_CAP_STYLE" ), context ) );
-  const Qgis::JoinStyle joinStyle = static_cast< Qgis::JoinStyle>( 1 + parameterAsInt( parameters, QStringLiteral( "JOIN_STYLE" ), context ) );
+  const Qgis::EndCapStyle endCapStyle = static_cast<Qgis::EndCapStyle>( 1 + parameterAsInt( parameters, QStringLiteral( "END_CAP_STYLE" ), context ) );
+  const Qgis::JoinStyle joinStyle = static_cast<Qgis::JoinStyle>( 1 + parameterAsInt( parameters, QStringLiteral( "JOIN_STYLE" ), context ) );
   const double miterLimit = parameterAsDouble( parameters, QStringLiteral( "MITER_LIMIT" ), context );
   const double bufferDistance = parameterAsDouble( parameters, QStringLiteral( "DISTANCE" ), context );
   const bool dynamicBuffer = QgsProcessingParameters::isDynamic( parameters, QStringLiteral( "DISTANCE" ) );
+
+  QString dest;
+  std::unique_ptr<QgsFeatureSink> sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, source->fields(), Qgis::WkbType::MultiPolygon, source->sourceCrs(), keepDisjointSeparate ? QgsFeatureSink::RegeneratePrimaryKey : QgsFeatureSink::SinkFlags() ) );
+  if ( !sink )
+    throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
+
   QgsExpressionContext expressionContext = createExpressionContext( parameters, context, source.get() );
   QgsProperty bufferProperty;
   if ( dynamicBuffer )
   {
-    bufferProperty = parameters.value( QStringLiteral( "DISTANCE" ) ).value< QgsProperty >();
+    bufferProperty = parameters.value( QStringLiteral( "DISTANCE" ) ).value<QgsProperty>();
   }
 
   const long count = source->featureCount();
 
   QgsFeature f;
   // buffer doesn't care about invalid features, and buffering can be used to repair geometries
-  QgsFeatureIterator it = source->getFeatures( QgsFeatureRequest(), QgsProcessingFeatureSource::FlagSkipGeometryValidityChecks );
+  QgsFeatureIterator it = source->getFeatures( QgsFeatureRequest(), Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks );
 
   const double step = count > 0 ? 100.0 / count : 1;
   int current = 0;
 
-  QVector< QgsGeometry > bufferedGeometriesForDissolve;
+  QVector<QgsGeometry> bufferedGeometriesForDissolve;
   QgsAttributes dissolveAttrs;
 
   while ( it.nextFeature( f ) )
@@ -136,7 +148,7 @@ QVariantMap QgsBufferAlgorithm::processAlgorithm( const QVariantMap &parameters,
     QgsFeature out = f;
     if ( out.hasGeometry() )
     {
-      double distance =  bufferDistance;
+      double distance = bufferDistance;
       if ( dynamicBuffer )
       {
         expressionContext.setFeature( f );
@@ -214,15 +226,17 @@ QVariantMap QgsBufferAlgorithm::processAlgorithm( const QVariantMap &parameters,
     }
   }
 
+  sink->finalize();
+
   QVariantMap outputs;
   outputs.insert( QStringLiteral( "OUTPUT" ), dest );
   return outputs;
 }
 
-QgsProcessingAlgorithm::Flags QgsBufferAlgorithm::flags() const
+Qgis::ProcessingAlgorithmFlags QgsBufferAlgorithm::flags() const
 {
-  Flags f = QgsProcessingAlgorithm::flags();
-  f |= QgsProcessingAlgorithm::FlagSupportsInPlaceEdits;
+  Qgis::ProcessingAlgorithmFlags f = QgsProcessingAlgorithm::flags();
+  f |= Qgis::ProcessingAlgorithmFlag::SupportsInPlaceEdits;
   return f;
 }
 
@@ -233,24 +247,24 @@ QgsProcessingAlgorithm::VectorProperties QgsBufferAlgorithm::sinkProperties( con
   QgsProcessingAlgorithm::VectorProperties result;
   if ( sink == QLatin1String( "OUTPUT" ) )
   {
-    if ( sourceProperties.value( QStringLiteral( "INPUT" ) ).availability == QgsProcessingAlgorithm::Available )
+    if ( sourceProperties.value( QStringLiteral( "INPUT" ) ).availability == Qgis::ProcessingPropertyAvailability::Available )
     {
       const VectorProperties inputProps = sourceProperties.value( QStringLiteral( "INPUT" ) );
       result.fields = inputProps.fields;
       result.crs = inputProps.crs;
       result.wkbType = keepDisjointSeparate ? Qgis::WkbType::Polygon : Qgis::WkbType::MultiPolygon;
-      result.availability = Available;
+      result.availability = Qgis::ProcessingPropertyAvailability::Available;
       return result;
     }
     else
     {
-      std::unique_ptr< QgsProcessingFeatureSource > source( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
+      std::unique_ptr<QgsProcessingFeatureSource> source( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
       if ( source )
       {
         result.fields = source->fields();
         result.crs = source->sourceCrs();
         result.wkbType = keepDisjointSeparate ? Qgis::WkbType::Polygon : Qgis::WkbType::MultiPolygon;
-        result.availability = Available;
+        result.availability = Qgis::ProcessingPropertyAvailability::Available;
         return result;
       }
     }
@@ -260,7 +274,7 @@ QgsProcessingAlgorithm::VectorProperties QgsBufferAlgorithm::sinkProperties( con
 
 bool QgsBufferAlgorithm::supportInPlaceEdit( const QgsMapLayer *layer ) const
 {
-  const QgsVectorLayer *vlayer = qobject_cast< const QgsVectorLayer * >( layer );
+  const QgsVectorLayer *vlayer = qobject_cast<const QgsVectorLayer *>( layer );
   if ( !vlayer )
     return false;
   //Only Polygons

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/symbology/qgsarrowsymbollayer.h                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -15,8 +15,6 @@ class QgsArrowSymbolLayer : QgsLineSymbolLayer
 {
 %Docstring(signature="appended")
 Line symbol layer used for representing lines as arrows.
-
-.. versionadded:: 2.16
 %End
 
 %TypeHeaderCode
@@ -33,7 +31,8 @@ Simple constructor
 %Docstring
 Create a new QgsArrowSymbolLayer
 
-:param properties: A property map to deserialize saved information from :py:func:`~QgsArrowSymbolLayer.properties`
+:param properties: A property map to deserialize saved information from
+                   :py:func:`~QgsArrowSymbolLayer.properties`
 
 :return: A new QgsArrowSymbolLayer
 %End
@@ -211,6 +210,10 @@ Sets the arrow type
 
     virtual void stopRender( QgsSymbolRenderContext &context );
 
+    virtual void startFeatureRender( const QgsFeature &feature, QgsRenderContext &context );
+
+    virtual void stopFeatureRender( const QgsFeature &feature, QgsRenderContext &context );
+
     virtual void renderPolyline( const QPolygonF &points, QgsSymbolRenderContext &context );
 
     virtual void setColor( const QColor &c );
@@ -231,5 +234,5 @@ Sets the arrow type
  *                                                                      *
  * src/core/symbology/qgsarrowsymbollayer.h                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

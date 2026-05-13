@@ -30,17 +30,14 @@ class QDomElement;
 /**
  * \brief Contains the configuration of a skybox entity.
  *
- * \ingroup 3d
+ * \ingroup qgis_3d
  * \since QGIS 3.16
  */
 class _3D_EXPORT QgsSkyboxSettings
 {
   public:
-    //! default constructor
     QgsSkyboxSettings() = default;
-    //! copy constructor
     QgsSkyboxSettings( const QgsSkyboxSettings &other );
-    //! delete assignment operator
     QgsSkyboxSettings &operator=( QgsSkyboxSettings const &rhs );
 
     //! Reads settings from a DOM \a element

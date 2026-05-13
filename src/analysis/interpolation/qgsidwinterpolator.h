@@ -26,10 +26,9 @@
  * \class QgsIDWInterpolator
  * \brief Inverse distance weight interpolator.
  */
-class ANALYSIS_EXPORT QgsIDWInterpolator: public QgsInterpolator
+class ANALYSIS_EXPORT QgsIDWInterpolator : public QgsInterpolator
 {
   public:
-
     /**
      * Constructor for QgsIDWInterpolator, with the specified \a layerData sources.
      */
@@ -44,9 +43,8 @@ class ANALYSIS_EXPORT QgsIDWInterpolator: public QgsInterpolator
      * Point values are weighted by 1 / ( distance ^ coefficient ).
      *
      * \see distanceCoefficient()
-     * \since QGIS 3.0
     */
-    void setDistanceCoefficient( double coefficient ) { mDistanceCoefficient = coefficient;}
+    void setDistanceCoefficient( double coefficient ) { mDistanceCoefficient = coefficient; }
 
     /**
      * Returns the distance coefficient, the parameter that sets how the values are
@@ -56,12 +54,10 @@ class ANALYSIS_EXPORT QgsIDWInterpolator: public QgsInterpolator
      * Point values are weighted by 1 / ( distance ^ coefficient ).
      *
      * \see setDistanceCoefficient()
-     * \since QGIS 3.0
     */
     double distanceCoefficient() const { return mDistanceCoefficient; }
 
   private:
-
     QgsIDWInterpolator() = delete;
 
     double mDistanceCoefficient = 2.0;

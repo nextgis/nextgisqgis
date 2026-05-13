@@ -31,9 +31,7 @@
  */
 class QgsGeometryByExpressionAlgorithm : public QgsProcessingFeatureBasedAlgorithm
 {
-
   public:
-
     QgsGeometryByExpressionAlgorithm() = default;
     QIcon icon() const override { return QgsApplication::getThemeIcon( QStringLiteral( "/algorithms/mAlgorithmCentroids.svg" ) ); }
     QString svgIconPath() const override { return QgsApplication::iconPath( QStringLiteral( "/algorithms/mAlgorithmCentroids.svg" ) ); }
@@ -44,22 +42,21 @@ class QgsGeometryByExpressionAlgorithm : public QgsProcessingFeatureBasedAlgorit
     QString groupId() const override;
     QString shortHelpString() const override;
     QList<int> inputLayerTypes() const override;
+    QString shortDescription() const override;
     QgsGeometryByExpressionAlgorithm *createInstance() const override SIP_FACTORY;
     void initParameters( const QVariantMap &configuration = QVariantMap() ) override;
 
   protected:
-
     QString outputName() const override;
     Qgis::WkbType outputWkbType( Qgis::WkbType ) const override;
-    QgsProcessingFeatureSource::Flag sourceFlags() const override;
+    Qgis::ProcessingFeatureSourceFlags sourceFlags() const override;
     bool prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
-    QgsFeatureList processFeature( const QgsFeature &feature,  QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
+    QgsFeatureList processFeature( const QgsFeature &feature, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
 
   private:
-
-    Qgis::WkbType mWkbType;
+    Qgis::WkbType mWkbType = Qgis::WkbType::Unknown;
     QgsExpression mExpression;
-    QgsExpressionContext mExpressionContext;
+    bool mExpressionPrepared = false;
 };
 
 ///@endcond PRIVATE

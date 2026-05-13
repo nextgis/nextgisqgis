@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgslayertreenode.h"
+#include "moc_qgslayertreenode.cpp"
 
 #include "qgslayertree.h"
 #include "qgslayertreeutils.h"
@@ -233,7 +234,7 @@ QStringList QgsLayerTreeNode::customProperties() const
   return mProperties.keys();
 }
 
-void QgsLayerTreeNode::readCommonXml( QDomElement &element )
+void QgsLayerTreeNode::readCommonXml( const QDomElement &element )
 {
   mProperties.readXml( element );
 }

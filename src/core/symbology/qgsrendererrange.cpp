@@ -16,26 +16,31 @@
 #include "qgsrendererrange.h"
 #include "qgsclassificationmethod.h"
 #include "qgssymbol.h"
+#include "qgssldexportcontext.h"
 
 #include <QLocale>
+#include <QUuid>
 
 
-QgsRendererRange::QgsRendererRange( const QgsClassificationRange &range, QgsSymbol *symbol, bool render )
+QgsRendererRange::QgsRendererRange( const QgsClassificationRange &range, QgsSymbol *symbol, bool render, const QString &uuid )
   : mLowerValue( range.lowerBound() )
   , mUpperValue( range.upperBound() )
   , mSymbol( symbol )
   , mLabel( range.label() )
   , mRender( render )
 {
+  mUuid = !uuid.isEmpty() ? uuid : QUuid::createUuid().toString();
 }
 
-QgsRendererRange::QgsRendererRange( double lowerValue, double upperValue, QgsSymbol *symbol, const QString &label, bool render )
+QgsRendererRange::QgsRendererRange( double lowerValue, double upperValue, QgsSymbol *symbol, const QString &label, bool render, const QString &uuid )
   : mLowerValue( lowerValue )
   , mUpperValue( upperValue )
   , mSymbol( symbol )
   , mLabel( label )
   , mRender( render )
-{}
+{
+  mUuid = !uuid.isEmpty() ? uuid : QUuid::createUuid().toString();
+}
 
 QgsRendererRange::QgsRendererRange( const QgsRendererRange &range )
   : mLowerValue( range.mLowerValue )
@@ -43,15 +48,19 @@ QgsRendererRange::QgsRendererRange( const QgsRendererRange &range )
   , mSymbol( range.mSymbol ? range.mSymbol->clone() : nullptr )
   , mLabel( range.mLabel )
   , mRender( range.mRender )
+  , mUuid( range.mUuid )
 {}
 
 QgsRendererRange::~QgsRendererRange() = default;
 
-
-// cpy and swap idiom, note that the cpy is done with 'pass by value'
 QgsRendererRange &QgsRendererRange::operator=( QgsRendererRange range )
 {
-  swap( range );
+  mLowerValue = range.mLowerValue;
+  mUpperValue = range.mUpperValue;
+  mSymbol.reset( range.mSymbol ? range.mSymbol->clone() : nullptr );
+  mLabel = range.mLabel;
+  mRender = range.mRender;
+  mUuid = range.mUuid;
   return *this;
 }
 
@@ -62,13 +71,9 @@ bool QgsRendererRange::operator<( const QgsRendererRange &other ) const
     ( qgsDoubleNear( lowerValue(), other.lowerValue() ) && upperValue() < other.upperValue() );
 }
 
-
-void QgsRendererRange::swap( QgsRendererRange &other )
+QString QgsRendererRange::uuid() const
 {
-  std::swap( mLowerValue, other.mLowerValue );
-  std::swap( mUpperValue, other.mUpperValue );
-  std::swap( mSymbol, other.mSymbol );
-  std::swap( mLabel, other.mLabel );
+  return mUuid;
 }
 
 double QgsRendererRange::lowerValue() const
@@ -128,13 +133,19 @@ QString QgsRendererRange::dump() const
 
 void QgsRendererRange::toSld( QDomDocument &doc, QDomElement &element, QVariantMap props, bool firstRange ) const
 {
-  if ( !mSymbol || props.value( QStringLiteral( "attribute" ), QString() ).toString().isEmpty() )
-    return;
+  QgsSldExportContext context;
+  context.setExtraProperties( props );
+  toSld( doc, element, props.value( QStringLiteral( "attribute" ), QString() ).toString(), context, firstRange );
+}
 
-  QString attrName = props[ QStringLiteral( "attribute" )].toString();
+bool QgsRendererRange::toSld( QDomDocument &doc, QDomElement &element, const QString &classAttribute, QgsSldExportContext &context, bool firstRange ) const
+{
+  if ( !mSymbol || classAttribute.isEmpty() )
+    return false;
+
+  QString attrName = classAttribute;
 
   QDomElement ruleElem = doc.createElement( QStringLiteral( "se:Rule" ) );
-  element.appendChild( ruleElem );
 
   QDomElement nameElem = doc.createElement( QStringLiteral( "se:Name" ) );
   nameElem.appendChild( doc.createTextNode( mLabel ) );
@@ -153,9 +164,18 @@ void QgsRendererRange::toSld( QDomDocument &doc, QDomElement &element, QVariantM
                              firstRange ? QStringLiteral( ">=" ) : QStringLiteral( ">" ),
                              qgsDoubleToString( mLowerValue ),
                              qgsDoubleToString( mUpperValue ) );
-  QgsSymbolLayerUtils::createFunctionElement( doc, ruleElem, filterFunc );
+  QgsSymbolLayerUtils::createFunctionElement( doc, ruleElem, filterFunc, context );
 
-  mSymbol->toSld( doc, ruleElem, props );
+  mSymbol->toSld( doc, ruleElem, context );
+  if ( !QgsSymbolLayerUtils::hasSldSymbolizer( ruleElem ) )
+  {
+    // symbol could not be converted to SLD, or is an "empty" symbol. In this case we do not generate a rule, as
+    // SLD spec requires a Symbolizer element to be present
+    return false;
+  }
+
+  element.appendChild( ruleElem );
+  return true;
 }
 
 //////////

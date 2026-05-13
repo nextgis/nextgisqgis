@@ -32,9 +32,7 @@
  */
 class QgsConvexHullAlgorithm : public QgsProcessingFeatureBasedAlgorithm
 {
-
   public:
-
     QgsConvexHullAlgorithm() = default;
     QIcon icon() const override { return QgsApplication::getThemeIcon( QStringLiteral( "/algorithms/mAlgorithmConvexHull.svg" ) ); }
     QString svgIconPath() const override { return QgsApplication::iconPath( QStringLiteral( "/algorithms/mAlgorithmConvexHull.svg" ) ); }
@@ -44,19 +42,17 @@ class QgsConvexHullAlgorithm : public QgsProcessingFeatureBasedAlgorithm
     QString group() const override;
     QString groupId() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
     QgsConvexHullAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
     QString outputName() const override;
     Qgis::WkbType outputWkbType( Qgis::WkbType ) const override { return Qgis::WkbType::Polygon; }
     QgsFields outputFields( const QgsFields &inputFields ) const override;
-    QgsFeatureList processFeature( const QgsFeature &feature,  QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
-
+    QgsFeatureList processFeature( const QgsFeature &feature, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
 };
 
 
 ///@endcond PRIVATE
 
 #endif // QGSALGORITHMCONVEXHULL_H
-
-

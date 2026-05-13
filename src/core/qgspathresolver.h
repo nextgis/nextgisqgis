@@ -24,9 +24,9 @@
 
 /**
  * \ingroup core
- * \brief Resolves relative paths into absolute paths and vice versa. Used for writing
+ * \brief Resolves relative paths into absolute paths and vice versa.
  *
- * \since QGIS 3.0
+ * Used for writing and reading paths for projects.
  */
 class CORE_EXPORT QgsPathResolver
 {

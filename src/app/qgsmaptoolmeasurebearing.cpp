@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsmaptoolmeasurebearing.h"
+#include "moc_qgsmaptoolmeasurebearing.cpp"
 #include "qgsdisplayangle.h"
 #include "qgsdistancearea.h"
 #include "qgsmapcanvas.h"
@@ -31,8 +32,7 @@ QgsMapToolMeasureBearing::QgsMapToolMeasureBearing( QgsMapCanvas *canvas )
 {
   mToolName = tr( "Measure bearing" );
 
-  connect( canvas, &QgsMapCanvas::destinationCrsChanged,
-           this, &QgsMapToolMeasureBearing::updateSettings );
+  connect( canvas, &QgsMapCanvas::destinationCrsChanged, this, &QgsMapToolMeasureBearing::updateSettings );
 }
 
 QgsMapToolMeasureBearing::~QgsMapToolMeasureBearing()
@@ -60,13 +60,11 @@ void QgsMapToolMeasureBearing::canvasMoveEvent( QgsMapMouseEvent *e )
 
       if ( !mResultDisplay->isVisible() )
       {
-        mResultDisplay->move( e->pos() - QPoint( 100, 100 ) );
         mResultDisplay->show();
       }
     }
     catch ( QgsCsException & )
     {
-
     }
   }
 }
@@ -93,7 +91,7 @@ void QgsMapToolMeasureBearing::canvasReleaseEvent( QgsMapMouseEvent *e )
       mResultDisplay = new QgsDisplayAngle( this );
       mResultDisplay->setWindowFlags( mResultDisplay->windowFlags() | Qt::Tool );
       mResultDisplay->setWindowTitle( tr( "Bearing" ) );
-      connect( mResultDisplay, &QDialog::rejected, this, &QgsMapToolMeasureBearing::stopMeasuring );
+      connect( mResultDisplay, &QDialog::finished, this, &QgsMapToolMeasureBearing::stopMeasuring );
     }
     configureDistanceArea();
     createRubberBand();

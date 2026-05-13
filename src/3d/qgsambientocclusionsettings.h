@@ -27,19 +27,16 @@ class QDomElement;
 #define SIP_NO_FILE
 
 /**
- * \brief class containing the configuration of ambient occlusion rendering
- * \ingroup 3d
+ * \brief Contains the configuration of ambient occlusion rendering.
+ * \ingroup qgis_3d
  * \note Not available in Python bindings
  * \since QGIS 3.28
  */
 class _3D_EXPORT QgsAmbientOcclusionSettings
 {
   public:
-    //! Default constructor
     QgsAmbientOcclusionSettings() = default;
-    //! Copy constructor
     QgsAmbientOcclusionSettings( const QgsAmbientOcclusionSettings &other );
-    //! delete assignment operator
     QgsAmbientOcclusionSettings &operator=( QgsAmbientOcclusionSettings const &rhs );
 
     //! Reads settings from a DOM \a element

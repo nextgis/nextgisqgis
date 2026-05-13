@@ -24,8 +24,17 @@
 #include "qgsmessagebar.h"
 #include "qgsmessagebaritem.h"
 #include "qgsapplication.h"
+#include "qgsmessagelog.h"
 
+#include <QApplication>
+#include <QHBoxLayout>
+#include <QLabel>
 #include <QMessageBox>
+#include <QPushButton>
+#include <QSettings>
+#include <QTimer>
+#include <QToolBar>
+#include <QWidget>
 
 #ifdef NGSTD_USING
 #include "core/version.h"
@@ -37,26 +46,42 @@ static const QString SENTRY_KEY = "https://71159235f0b542adb8ef214aa24f5aa6@sent
 
 static const QString NextGIS = "NextGIS";
 
-NGQgisApp::NGQgisApp( QSplashScreen *splash, bool restorePlugins, bool skipBadLayers,
-             bool skipVersionCheck, const QString &rootProfileLocation,
+NGQgisApp::NGQgisApp( QSplashScreen *splash, AppOptions options,
+             const QString &rootProfileLocation,
              const QString &activeProfile, QWidget *parent, Qt::WindowFlags fl )
-             : QgisApp( splash, restorePlugins, skipBadLayers, skipVersionCheck, rootProfileLocation, activeProfile, parent, fl)
+             : QgisApp( splash, options, rootProfileLocation, activeProfile, parent, fl)
 {
 
 #ifdef NGSTD_USING
-    mNGUpdater = new NGQgisUpdater(this);
-    connect(mNGUpdater, SIGNAL(checkUpdatesStarted()), this, SLOT(updatesSearchStart()));
-    connect(mNGUpdater, SIGNAL(checkUpdatesFinished(bool)), this, SLOT(updatesSearchStop(bool)));
     m_CPLHTTPFetchOverrider = nullptr;
+    mNGUpdater = new NGQgisUpdater( this );
+    connect( mNGUpdater, &NGUpdater::checkUpdatesStarted, this, &NGQgisApp::updatesSearchStart );
+    connect( mNGUpdater, &NGUpdater::checkUpdatesFinished, this, &NGQgisApp::updatesSearchStop );
 #endif // NGSTD_USING
 
-    QSettings settings;
-    if (settings.value("/qgis/checkVersion", true).toBool())
-        connect(this, SIGNAL(initializationCompleted()), this, SLOT(checkQgisVersion()));
-
-    functionProfileNG(&NGQgisApp::createToolBars, this, "Toolbars");
-
     addNextGISAuthentication();
+    QTimer::singleShot( 0, this, [this]
+    {
+      addNextGISAuthentication();
+    } );
+    connect( this, &QgisApp::initializationCompleted, this, [this]
+    {
+      addNextGISAuthentication();
+    } );
+    disconnect( actionCheckQgisVersion(), nullptr, this, nullptr );
+    connect( actionCheckQgisVersion(), &QAction::triggered, this, [this]
+    {
+      triggerCheckQgisVersion();
+    } );
+    connect( this, &QgisApp::initializationCompleted, this, [this]
+    {
+      QSettings settings;
+      if ( settings.value( QStringLiteral( "/qgis/checkVersion" ), true ).toBool() )
+        triggerCheckQgisVersion();
+    } );
+    disconnect( actionAbout(), nullptr, this, nullptr );
+    connect( actionAbout(), &QAction::triggered, this, &NGQgisApp::showNextGisAbout );
+    setupNextGISToolbar();
 }
 
 NGQgisApp::~NGQgisApp()
@@ -68,105 +93,97 @@ NGQgisApp::~NGQgisApp()
 #endif // NGSTD_USING
 }
 
-void NGQgisApp::about()
+void NGQgisApp::showNextGisAbout()
 {
-    static NgsAboutDialog *about = new NgsAboutDialog (this);
+    static NgsAboutDialog *about = nullptr;
+    if ( !about )
+        about = new NgsAboutDialog( this );
     about->exec();
 }
 
-void NGQgisApp::checkQgisVersion()
+void NGQgisApp::triggerCheckQgisVersion()
 {
-    QObject* obj = sender();
-    mUpdatesCheckStartByUser = (obj == mActionCheckQgisVersion);
+  QObject *obj = sender();
+  mUpdatesCheckStartByUser = ( obj == actionCheckQgisVersion() );
 
-    QgsMessageLog::logMessage( tr("Started check updates ..."), QString::null, Qgis::Info );
+  QgsMessageLog::logMessage( tr( "Started check updates ..." ), QString(), Qgis::MessageLevel::Info );
 #ifdef NGSTD_USING
-    mNGUpdater->checkUpdates();
-
-    if (mUpdatesCheckStartByUser)
-    {
-        QApplication::setOverrideCursor(Qt::WaitCursor);
-    }
-#endif // NGSTD_USING
+  mNGUpdater->checkUpdates();
+  if ( mUpdatesCheckStartByUser )
+    QApplication::setOverrideCursor( Qt::WaitCursor );
+#endif
 }
 
 void NGQgisApp::updatesSearchStart()
 {
 }
 
-void NGQgisApp::updatesSearchStop(bool updatesAvailable)
+void NGQgisApp::updatesSearchStop( bool updatesAvailable )
 {
-  if (!updatesAvailable && !mUpdatesCheckStartByUser)
+  if ( !updatesAvailable && !mUpdatesCheckStartByUser )
     return;
 
   QWidget *banner = new QWidget;
-  QHBoxLayout* bannerLayout = new QHBoxLayout(banner);
-  bannerLayout->setContentsMargins(0, 0, 0, 0);
-  bannerLayout->setSpacing(20);
+  QHBoxLayout *bannerLayout = new QHBoxLayout( banner );
+  bannerLayout->setContentsMargins( 0, 0, 0, 0 );
+  bannerLayout->setSpacing( 20 );
 
   if ( updatesAvailable )
   {
-      QLabel* msg = new QLabel(QString("<strong>%1</strong>").arg(this->tr("QGIS updates are available")), banner);
-      msg->setTextFormat(Qt::RichText);
-      bannerLayout->addWidget(msg);
+    QLabel *msg = new QLabel( QString( "<strong>%1</strong>" ).arg( tr( "QGIS updates are available" ) ), banner );
+    msg->setTextFormat( Qt::RichText );
+    bannerLayout->addWidget( msg );
 
-      QPushButton* upgrade = new QPushButton(this->tr("Update"), banner);
-      bannerLayout->addWidget(upgrade);
-      connect(upgrade, SIGNAL(clicked(bool)), this, SLOT(startUpdate()));
-
+    QPushButton *upgrade = new QPushButton( tr( "Update" ), banner );
+    bannerLayout->addWidget( upgrade );
+    connect( upgrade, &QPushButton::clicked, this, &NGQgisApp::startUpdate );
   }
   else
   {
-      QLabel* msg = new QLabel(QString("<strong>%1</strong>").arg(this->tr("There are no available QGIS updates")), banner);
-      msg->setTextFormat(Qt::RichText);
-      bannerLayout->addWidget(msg);
+    QLabel *msg = new QLabel( QString( "<strong>%1</strong>" ).arg( tr( "There are no available QGIS updates" ) ), banner );
+    msg->setTextFormat( Qt::RichText );
+    bannerLayout->addWidget( msg );
   }
 
-  bannerLayout->insertStretch(-1, 1);
+  bannerLayout->insertStretch( -1, 1 );
+  QgsMessageBarItem *item = new QgsMessageBarItem( banner );
+  messageBar()->pushItem( item );
 
-  QgsMessageBarItem* item = new QgsMessageBarItem(banner);
-  this->messageBar()->pushItem(item);
-
-
-  if (mUpdatesCheckStartByUser)
-  {
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
-  }
+  if ( mUpdatesCheckStartByUser )
+    QApplication::restoreOverrideCursor();
 }
 
 void NGQgisApp::startUpdate()
 {
 #ifdef NGSTD_USING
-    QMessageBox::StandardButton answer = QMessageBox::question(
-        static_cast<QWidget*>(parent()),
-		tr("Close QGIS?"),
-		tr("We'll need to close QGIS to start updating. OK?"),
-		QMessageBox::Cancel | QMessageBox::Ok
-	);
+  QMessageBox::StandardButton answer = QMessageBox::question(
+    this,
+    tr( "Close QGIS?" ),
+    tr( "We'll need to close QGIS to start updating. OK?" ),
+    QMessageBox::Cancel | QMessageBox::Ok
+  );
 
-	if ( QMessageBox::Ok == answer )
-	{
-		if(saveDirty())
-        {
-            closeProject();
-			QString lastProject;
-			if(!mRecentProjects.isEmpty())
-				lastProject = mRecentProjects.at( 0 ).path;
-            mNGUpdater->startUpdate(lastProject);
-            qApp->exit( 0 );
-        }
+  if ( answer == QMessageBox::Ok )
+  {
+    if ( saveDirty() )
+    {
+      mNGUpdater->startUpdate( QString() );
+      qApp->exit( 0 );
     }
-#endif // NGSTD_USING
+  }
+#endif
 }
 
-void NGQgisApp::createToolBars()
+void NGQgisApp::setupNextGISToolbar()
 {
     QSettings settings;
+    QToolBar *ngAccountToolBar = addToolBar( tr( "NextGIS Account" ) );
+    ngAccountToolBar->setObjectName( QStringLiteral( "mNGAccountToolBar" ) );
 
     // Add NextGIS account toolbar
     QWidget *spacer = new QWidget();
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    mNGAccountToolBar->addWidget(spacer);
+    ngAccountToolBar->addWidget(spacer);
 
 #ifdef NGSTD_USING
 #if defined(NGLIB_COMPUTE_VERSION) && NGLIB_VERSION_NUMBER > NGLIB_COMPUTE_VERSION(0,11,0)
@@ -190,38 +207,40 @@ void NGQgisApp::createToolBars()
         scopes, endPointStr, type);
 
     QString version = QLatin1String(VENDOR_VERSION) + " (" + QLatin1String(VERSION) + ")";
-    NGAccess::instance().initSentry(settings.value("nextgis/send_crashes", "0").toBool(), SENTRY_KEY, version);
+    const QString sentryKey = settings.value( "nextgis/send_crashes", "0" ).toBool()
+      ? SENTRY_KEY
+      : QString();
+    NGAccess::instance().initSentry( sentryKey, version );
 #else
     NGSignInButton *toolbAuth = new NGSignInButton(QLatin1String("tv88lHLi6I9vUIck7eHxhkoJRfSLR74eLRx4YrpN"),
         QLatin1String("user_info.read"));
 #endif // NGLIB_VERSION_NUMBER > 1100
     toolbAuth->setCursor(Qt::PointingHandCursor);
-    mNGAccountToolBar->addWidget(toolbAuth);
+    ngAccountToolBar->addWidget(toolbAuth);
     // TODO: QObject::connect(toolbAuth, SIGNAL(supportInfoUpdated()), this, SLOT(onSupportInfoUpdated()));
 #endif // NGSTD_USING
-}
-
-void NGQgisApp::functionProfileNG(void (NGQgisApp:: *fnc)(),
-    NGQgisApp *instance, QString name)
-{
-    startProfile(name);
-    (instance->*fnc)();
-    endProfile();
 }
 
 void NGQgisApp::addNextGISAuthentication()
 {
     QgsAuthManager *authManager = QgsApplication::authManager();
-    auto pNextGISAuthMethod = authManager->authMethod(NextGIS);
 
-    if (pNextGISAuthMethod && !authManager->configIds().contains(NextGIS))
+    if ( !authManager->configIds().contains( NextGIS ) )
     {
+        if ( !authManager->masterPasswordHashInDatabase() && !authManager->masterPasswordIsSet() )
+        {
+            authManager->setMasterPassword( QStringLiteral( "nextgis" ), false );
+        }
+
         QgsAuthMethodConfig config(NextGIS);
         config.setName(NextGIS);
         config.setId(NextGIS);
         config.setConfig(NextGIS, NextGIS);
 
-        authManager->storeAuthenticationConfig(config);
+        if ( !authManager->storeAuthenticationConfig( config, true ) )
+        {
+            QgsMessageLog::logMessage( QObject::tr( "Failed to store NextGIS auth config." ), QStringLiteral( "NextGIS" ), Qgis::MessageLevel::Warning );
+        }
     }
 #ifdef NGSTD_USING
 //    m_oCPLHTTPFetcher = new QgsCPLHTTPFetchOverrider(NextGIS);

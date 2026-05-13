@@ -35,7 +35,6 @@ class QgsProcessingAlgorithm;
 /**
  * \brief Child algorithm representing a single component of a QgsProcessingModelAlgorithm.
  * \ingroup core
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsProcessingModelChildAlgorithm : public QgsProcessingModelComponent
 {
@@ -106,7 +105,7 @@ class CORE_EXPORT QgsProcessingModelChildAlgorithm : public QgsProcessingModelCo
     bool setAlgorithmId( const QString &algorithmId );
 
     /**
-     * Attempts to re-attach the child to the algorithm specified by \a algorithmId().
+     * Attempts to re-attach the child to the algorithm specified by algorithmId().
      *
      * This can be run to relink the child to algorithms from providers which were not
      * originally available for the model to link to.

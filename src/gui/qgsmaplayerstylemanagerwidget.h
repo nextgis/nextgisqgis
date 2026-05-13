@@ -28,14 +28,12 @@ class QgsMapCanvas;
 
 /**
  * \ingroup gui
- * \brief The QgsMapLayerStyleManagerWidget class which is used to visually manage
- * the layer styles.
+ * \brief A widget which is used to visually manage the layer styles.
  */
 class GUI_EXPORT QgsMapLayerStyleManagerWidget : public QgsMapLayerConfigWidget
 {
     Q_OBJECT
   public:
-
     /**
      * \brief Style manager widget to manage the layers styles.
      * \param layer The layer for the widget

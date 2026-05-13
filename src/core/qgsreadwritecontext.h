@@ -28,8 +28,7 @@ class QgsReadWriteContextCategoryPopper;
 /**
  * \class QgsReadWriteContext
  * \ingroup core
- * \brief The class is used as a container of context for various read/write operations on other objects.
- * \since QGIS 3.0
+ * \brief A container for the context for various read/write operations on objects.
  */
 class CORE_EXPORT QgsReadWriteContext
 {
@@ -172,6 +171,7 @@ class CORE_EXPORT QgsReadWriteContext
  * \ingroup core
  * \brief Allows entering a context category and takes care of
  * leaving this category on deletion of the class.
+ *
  * This would happen when it gets out of scope.
  * \since QGIS 3.2
  */

@@ -25,7 +25,7 @@
 
 /**
  * \ingroup core
- * \brief Item that represents a layer that can be opened with one of the providers
+ * \brief A browser item that represents a layer that can be opened with one of the providers.
 */
 class CORE_EXPORT QgsLayerItem : public QgsDataItem
 {
@@ -70,24 +70,18 @@ class CORE_EXPORT QgsLayerItem : public QgsDataItem
     //! Returns layer uri or empty string if layer cannot be created
     QString uri() const { return mUri; }
 
-    //! Returns provider key
-    QString providerKey() const { return mProviderKey; }
-
     /**
      * Returns the supported CRS
-     *  \since QGIS 2.8
      */
     QStringList supportedCrs() const { return mSupportedCRS; }
 
     /**
      * Returns the supported formats
-     *  \since QGIS 2.8
      */
     QStringList supportedFormats() const { return mSupportFormats; }
 
     /**
      * Returns comments of the layer
-     * \since QGIS 2.12
      */
     virtual QString comments() const { return QString(); }
 
@@ -141,7 +135,7 @@ class CORE_EXPORT QgsLayerItem : public QgsDataItem
     static QIcon iconVectorTile();
     //! Returns icon for point cloud layer
     static QIcon iconPointCloud();
-    //! \returns the layer name
+    //! Returns the layer name
     virtual QString layerName() const { return name(); }
     QgsAbstractDatabaseProviderConnection *databaseConnection() const override;
 

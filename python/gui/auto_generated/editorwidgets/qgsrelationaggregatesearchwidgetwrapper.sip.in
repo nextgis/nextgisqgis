@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/editorwidgets/qgsrelationaggregatesearchwidgetwrapper.h      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,19 +13,17 @@
 class QgsRelationAggregateSearchWidgetWrapper : QgsSearchWidgetWrapper
 {
 %Docstring(signature="appended")
-
 Search widget for the children of a relation.
-For each attribute of the child, an additional :py:class:`QgsAggregateToolButton` will be shown
-to determine how the values should be aggregated for searching.
 
-.. versionadded:: 3.0
+For each attribute of the child, an additional
+:py:class:`QgsAggregateToolButton` will be shown to determine how the
+values should be aggregated for searching.
 %End
 
 %TypeHeaderCode
 #include "qgsrelationaggregatesearchwidgetwrapper.h"
 %End
   public:
-
     explicit QgsRelationAggregateSearchWidgetWrapper( QgsVectorLayer *layer, QgsRelationWidgetWrapper *wrapper, QWidget *parent /TransferThis/ = 0 );
 %Docstring
 Constructor
@@ -52,5 +50,5 @@ Constructor
  *                                                                      *
  * src/gui/editorwidgets/qgsrelationaggregatesearchwidgetwrapper.h      *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

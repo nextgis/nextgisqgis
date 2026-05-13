@@ -3,8 +3,9 @@
  *                                                                      *
  * src/gui/editorwidgets/qgsjsoneditwidget.h                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
+
 
 
 
@@ -12,7 +13,8 @@
 class QgsJsonEditWidget : QWidget
 {
 %Docstring(signature="appended")
-The :py:class:`QgsJsonEditWidget` is a widget to display JSON data in a code highlighted text or tree form.
+A widget for displaying JSON data in a code highlighted text or tree
+form.
 
 .. versionadded:: 3.20
 %End
@@ -21,7 +23,6 @@ The :py:class:`QgsJsonEditWidget` is a widget to display JSON data in a code hig
 #include "qgsjsoneditwidget.h"
 %End
   public:
-
     enum class View
     {
       Text,
@@ -40,6 +41,13 @@ The :py:class:`QgsJsonEditWidget` is a widget to display JSON data in a code hig
 Constructor for QgsJsonEditWidget.
 
 :param parent: parent widget
+%End
+
+    QgsCodeEditorJson *jsonEditor();
+%Docstring
+Returns a reference to the JSON code editor used in the widget.
+
+.. versionadded:: 3.36
 %End
 
     void setJsonText( const QString &jsonText );
@@ -78,5 +86,5 @@ Set the visibility of controls to ``visible``.
  *                                                                      *
  * src/gui/editorwidgets/qgsjsoneditwidget.h                            *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

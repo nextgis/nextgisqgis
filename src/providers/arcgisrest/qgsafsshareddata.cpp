@@ -18,6 +18,7 @@
 #include "qgsarcgisrestquery.h"
 #include "qgslogger.h"
 #include "qgsnetworkaccessmanager.h"
+#include "qgssetrequestinitiator_p.h"
 #include "qgsblockingnetworkrequest.h"
 #include "qgsreadwritelocker.h"
 #include "qgsjsonutils.h"
@@ -47,13 +48,31 @@ QgsRectangle QgsAfsSharedData::extent() const
   if ( mDataSource.sql().isEmpty() )
     return mExtent;
 
-  return QgsArcGisRestQueryUtils::getExtent( mDataSource.param( QStringLiteral( "url" ) ), mDataSource.sql(), mDataSource.authConfigId(),
-         mDataSource.httpHeaders() );
+  return QgsArcGisRestQueryUtils::getExtent( mDataSource.param( QStringLiteral( "url" ) ), mDataSource.sql(), mDataSource.authConfigId(), mDataSource.httpHeaders() );
 }
 
 QgsAfsSharedData::QgsAfsSharedData( const QgsDataSourceUri &uri )
   : mDataSource( uri )
 {
+}
+
+std::shared_ptr<QgsAfsSharedData> QgsAfsSharedData::clone() const
+{
+  QgsReadWriteLocker locker( mReadWriteLock, QgsReadWriteLocker::Read );
+  auto copy = std::make_shared<QgsAfsSharedData>( mDataSource );
+  copy->mLimitBBox = mLimitBBox;
+  copy->mExtent = mExtent;
+  copy->mGeometryType = mGeometryType;
+  copy->mFields = mFields;
+  copy->mMaximumFetchObjectsCount = mMaximumFetchObjectsCount;
+  copy->mObjectIdFieldName = mObjectIdFieldName;
+  copy->mObjectIdFieldIdx = mObjectIdFieldIdx;
+  copy->mObjectIds = mObjectIds;
+  copy->mObjectIdToFeatureId = mObjectIdToFeatureId;
+  copy->mDeletedFeatureIds = mDeletedFeatureIds;
+  copy->mCache = mCache;
+  copy->mSourceCRS = mSourceCRS;
+  return copy;
 }
 
 QString QgsAfsSharedData::subsetString() const
@@ -90,16 +109,15 @@ bool QgsAfsSharedData::getObjectIds( QString &errorMessage )
   // also returns the name of the ObjectID field.
   QString errorTitle;
   QString error;
-  QVariantMap objectIdData = QgsArcGisRestQueryUtils::getObjectIds( mDataSource.param( QStringLiteral( "url" ) ), mDataSource.authConfigId(),
-                             errorTitle, error, mDataSource.httpHeaders(), mLimitBBox ? mExtent : QgsRectangle(), mDataSource.sql() );
+  QVariantMap objectIdData = QgsArcGisRestQueryUtils::getObjectIds( mDataSource.param( QStringLiteral( "url" ) ), mDataSource.authConfigId(), errorTitle, error, mDataSource.httpHeaders(), mDataSource.param( QStringLiteral( "urlprefix" ) ), mLimitBBox ? mExtent : QgsRectangle(), mDataSource.sql() );
   if ( objectIdData.isEmpty() )
   {
-    errorMessage = tr( "getObjectIds failed: %1 - %2" ).arg( errorTitle, error );
+    errorMessage = QObject::tr( "getObjectIds failed: %1 - %2" ).arg( errorTitle, error );
     return false;
   }
   if ( !objectIdData[QStringLiteral( "objectIdFieldName" )].isValid() || !objectIdData[QStringLiteral( "objectIds" )].isValid() )
   {
-    errorMessage = tr( "Failed to determine objectIdFieldName and/or objectIds" );
+    errorMessage = QObject::tr( "Failed to determine objectIdFieldName and/or objectIds" );
     return false;
   }
   mObjectIdFieldName = objectIdData[QStringLiteral( "objectIdFieldName" )].toString();
@@ -113,8 +131,8 @@ bool QgsAfsSharedData::getObjectIds( QString &errorMessage )
       QgsFieldConstraints constraints = mFields.at( idx ).constraints();
       constraints.setConstraint( QgsFieldConstraints::ConstraintNotNull, QgsFieldConstraints::ConstraintOriginProvider );
       constraints.setConstraint( QgsFieldConstraints::ConstraintUnique, QgsFieldConstraints::ConstraintOriginProvider );
-      mFields[ idx ].setConstraints( constraints );
-      mFields[ idx ].setReadOnly( true );
+      mFields[idx].setConstraints( constraints );
+      mFields[idx].setReadOnly( true );
 
       break;
     }
@@ -163,7 +181,7 @@ bool QgsAfsSharedData::getFeature( QgsFeatureId id, QgsFeature &f, const QgsRect
   while ( !featureFetched )
   {
     startId = ( id / mMaximumFetchObjectsCount ) * mMaximumFetchObjectsCount;
-    const int stopId = std::min< size_t >( startId + mMaximumFetchObjectsCount, mObjectIds.length() );
+    const int stopId = std::min<size_t>( startId + mMaximumFetchObjectsCount, mObjectIds.length() );
     objectIds.clear();
     objectIds.reserve( stopId - startId );
     for ( int i = startId; i < stopId; ++i )
@@ -184,9 +202,10 @@ bool QgsAfsSharedData::getFeature( QgsFeatureId id, QgsFeature &f, const QgsRect
     // Query
     QString errorTitle, errorMessage;
     queryData = QgsArcGisRestQueryUtils::getObjects(
-                  mDataSource.param( QStringLiteral( "url" ) ), authcfg, objectIds, mDataSource.param( QStringLiteral( "crs" ) ), true,
-                  QStringList(), QgsWkbTypes::hasM( mGeometryType ), QgsWkbTypes::hasZ( mGeometryType ),
-                  filterRect, errorTitle, errorMessage, mDataSource.httpHeaders(), feedback );
+      mDataSource.param( QStringLiteral( "url" ) ), authcfg, objectIds, mDataSource.param( QStringLiteral( "crs" ) ), true,
+      QStringList(), QgsWkbTypes::hasM( mGeometryType ), QgsWkbTypes::hasZ( mGeometryType ),
+      filterRect, errorTitle, errorMessage, mDataSource.httpHeaders(), feedback, mDataSource.param( QStringLiteral( "urlprefix" ) )
+    );
 
     if ( feedback && feedback->isCanceled() )
     {
@@ -236,11 +255,11 @@ bool QgsAfsSharedData::getFeature( QgsFeatureId id, QgsFeature &f, const QgsRect
       if ( QgsVariantUtils::isNull( attribute ) )
       {
         // ensure that null values are mapped correctly for PyQGIS
-        attribute = QVariant( QVariant::Int );
+        attribute = QgsVariantUtils::createNullVariant( QMetaType::Type::Int );
       }
 
       // date/datetime fields must be converted
-      if ( mFields.at( idx ).type() == QVariant::DateTime || mFields.at( idx ).type() == QVariant::Date )
+      if ( mFields.at( idx ).type() == QMetaType::Type::QDateTime || mFields.at( idx ).type() == QMetaType::Type::QDate )
         attribute = QgsArcGisRestUtils::convertDateTime( attribute );
 
       if ( !mFields.at( idx ).convertCompatible( attribute ) )
@@ -260,8 +279,7 @@ bool QgsAfsSharedData::getFeature( QgsFeatureId id, QgsFeature &f, const QgsRect
 
     // Set geometry
     const QVariantMap geometryData = featureData[QStringLiteral( "geometry" )].toMap();
-    std::unique_ptr< QgsAbstractGeometry > geometry( QgsArcGisRestUtils::convertGeometry( geometryData, queryData[QStringLiteral( "geometryType" )].toString(),
-        QgsWkbTypes::hasM( mGeometryType ), QgsWkbTypes::hasZ( mGeometryType ) ) );
+    std::unique_ptr<QgsAbstractGeometry> geometry( QgsArcGisRestUtils::convertGeometry( geometryData, queryData[QStringLiteral( "geometryType" )].toString(), QgsWkbTypes::hasM( mGeometryType ), QgsWkbTypes::hasZ( mGeometryType ), QgsWkbTypes::isCurvedType( mGeometryType ) ) );
     // Above might return 0, which is OK since in theory empty geometries are allowed
     if ( geometry )
       feature.setGeometry( QgsGeometry( std::move( geometry ) ) );
@@ -286,8 +304,7 @@ QgsFeatureIds QgsAfsSharedData::getFeatureIdsInExtent( const QgsRectangle &exten
   QString errorText;
 
   const QString authcfg = mDataSource.authConfigId();
-  const QList<quint32> objectIdsInRect = QgsArcGisRestQueryUtils::getObjectIdsByExtent( mDataSource.param( QStringLiteral( "url" ) ),
-                                         extent, errorTitle, errorText, authcfg, mDataSource.httpHeaders(), feedback, mDataSource.sql() );
+  const QList<quint32> objectIdsInRect = QgsArcGisRestQueryUtils::getObjectIdsByExtent( mDataSource.param( QStringLiteral( "url" ) ), extent, errorTitle, errorText, authcfg, mDataSource.httpHeaders(), feedback, mDataSource.sql(), mDataSource.param( QStringLiteral( "urlprefix" ) ) );
 
   QgsReadWriteLocker locker( mReadWriteLock, QgsReadWriteLocker::Read );
   QgsFeatureIds ids;
@@ -319,7 +336,7 @@ bool QgsAfsSharedData::deleteFeatures( const QgsFeatureIds &ids, QString &error,
 
   bool ok = false;
   postData( queryUrl, payload, feedback, ok, error );
-  if ( ! ok )
+  if ( !ok )
   {
     return false;
   }
@@ -345,7 +362,7 @@ bool QgsAfsSharedData::addFeatures( QgsFeatureList &features, QString &errorMess
   featuresJson.reserve( features.size() );
   for ( const QgsFeature &feature : features )
   {
-    featuresJson.append( QgsArcGisRestUtils::featureToJson( feature, context ) );
+    featuresJson.append( QgsArcGisRestUtils::featureToJson( feature, context, QgsCoordinateReferenceSystem(), QgsArcGisRestUtils::FeatureToJsonFlag::IncludeGeometry | QgsArcGisRestUtils::FeatureToJsonFlag::IncludeNonObjectIdAttributes | QgsArcGisRestUtils::FeatureToJsonFlag::SkipUnsetAttributes ) );
   }
 
   const QString json = QString::fromStdString( QgsJsonUtils::jsonFromVariant( featuresJson ).dump( 2 ) );
@@ -401,7 +418,7 @@ bool QgsAfsSharedData::updateFeatures( const QgsFeatureList &features, bool incl
   if ( includeGeometries )
     flags |= QgsArcGisRestUtils::FeatureToJsonFlag::IncludeGeometry;
   if ( includeAttributes )
-    flags |= QgsArcGisRestUtils::FeatureToJsonFlag::IncludeNonObjectIdAttributes;
+    flags |= QgsArcGisRestUtils::FeatureToJsonFlag::IncludeNonObjectIdAttributes | QgsArcGisRestUtils::FeatureToJsonFlag::SkipUnsetAttributes;
 
   QVariantList featuresJson;
   featuresJson.reserve( features.size() );
@@ -454,7 +471,7 @@ bool QgsAfsSharedData::addFields( const QString &adminUrl, const QList<QgsField>
     fieldsJson.append( QgsArcGisRestUtils::fieldDefinitionToJson( field ) );
   }
 
-  const QVariantMap definition {{ QStringLiteral( "fields" ), fieldsJson }};
+  const QVariantMap definition { { QStringLiteral( "fields" ), fieldsJson } };
 
   const QString json = QString::fromStdString( QgsJsonUtils::jsonFromVariant( definition ).dump( 2 ) );
 
@@ -498,12 +515,12 @@ bool QgsAfsSharedData::deleteFields( const QString &adminUrl, const QgsAttribute
   {
     if ( index >= 0 && index < mFields.count() )
     {
-      fieldsJson.append( QVariantMap( {{QStringLiteral( "name" ), mFields.at( index ).name() }} ) );
+      fieldsJson.append( QVariantMap( { { QStringLiteral( "name" ), mFields.at( index ).name() } } ) );
       fieldNames << mFields.at( index ).name();
     }
   }
 
-  const QVariantMap definition {{ QStringLiteral( "fields" ), fieldsJson }};
+  const QVariantMap definition { { QStringLiteral( "fields" ), fieldsJson } };
 
   const QString json = QString::fromStdString( QgsJsonUtils::jsonFromVariant( definition ).dump( 2 ) );
 
@@ -545,14 +562,14 @@ bool QgsAfsSharedData::addAttributeIndex( const QString &adminUrl, int attribute
 
   QVariantList indexJson;
   indexJson << QVariantMap(
-  {
-    {QStringLiteral( "name" ), QStringLiteral( "%1_index" ).arg( name )},
-    {QStringLiteral( "fields" ), name},
-    {QStringLiteral( "description" ), name}
-  } );
+    { { QStringLiteral( "name" ), QStringLiteral( "%1_index" ).arg( name ) },
+      { QStringLiteral( "fields" ), name },
+      { QStringLiteral( "description" ), name }
+    }
+  );
 
 
-  const QVariantMap definition {{ QStringLiteral( "indexes" ), indexJson }};
+  const QVariantMap definition { { QStringLiteral( "indexes" ), indexJson } };
 
   const QString json = QString::fromStdString( QgsJsonUtils::jsonFromVariant( definition ).dump( 2 ) );
 
@@ -624,7 +641,7 @@ QVariantMap QgsAfsSharedData::postData( const QUrl &url, const QByteArray &paylo
 
   const QgsBlockingNetworkRequest::ErrorCode error = networkRequest.post( request, payload, false, feedback );
 
-// Handle network errors
+  // Handle network errors
   if ( error != QgsBlockingNetworkRequest::NoError )
   {
     QgsDebugError( QStringLiteral( "Network error: %1" ).arg( networkRequest.errorMessage() ) );

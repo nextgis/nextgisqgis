@@ -25,7 +25,7 @@
 
 /**
  * \ingroup core
- * \brief Class that adds extra information to QgsLabelFeature for labeling of diagrams
+ * \brief Adds extra information to QgsLabelFeature for labeling of diagrams.
  *
  * \note this class is not a part of public API yet. See notes in QgsLabelingEngine
  * \note not available in Python bindings
@@ -47,12 +47,12 @@ class QgsAbstractFeatureSource;
 
 /**
  * \ingroup core
- * \brief The QgsVectorLayerDiagramProvider class implements support for diagrams within
- * the labeling engine. Parameters for the diagrams are taken from the layer settings.
+ * \brief Implements support for diagrams within the labeling engine.
+ *
+ * Parameters for the diagrams are taken from the layer settings.
  *
  * \note this class is not a part of public API yet. See notes in QgsLabelingEngine
  * \note not available in Python bindings
- * \since QGIS 2.12
  */
 class CORE_EXPORT QgsVectorLayerDiagramProvider : public QgsAbstractLabelProvider
 {

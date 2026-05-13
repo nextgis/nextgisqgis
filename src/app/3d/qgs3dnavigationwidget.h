@@ -16,17 +16,10 @@
 #ifndef QGS3DNAVIGATIONWIDGET_H
 #define QGS3DNAVIGATIONWIDGET_H
 
-#include <QWidget>
-#include <QGridLayout>
-#include <QToolButton>
-#include <QLabel>
-#include <QTableView>
-#include <QStandardItemModel>
+class QStandardItemModel;
 
+class Qgs3DMapCanvas;
 class QwtCompass;
-
-#include "qgs3dmapcanvas.h"
-#include "qgscameracontroller.h"
 
 #include <ui_3dnavigationwidget.h>
 
@@ -34,26 +27,10 @@ class Qgs3DNavigationWidget : public QWidget, private Ui::Q3DNavigationWidget
 {
     Q_OBJECT
   public:
-    Qgs3DNavigationWidget( Qgs3DMapCanvas *parent = nullptr );
-
-  public slots:
-
-    /**
-     * Update the state of navigation widget from camera's state
-     */
-    void updateFromCamera();
-
-  signals:
-    void sizeChanged( const QSize &newSize );
-
-  protected:
-    void resizeEvent( QResizeEvent *event ) override;
-    void hideEvent( QHideEvent *event ) override;
-    void showEvent( QShowEvent *event ) override;
+    Qgs3DNavigationWidget( Qgs3DMapCanvas *canvas, QWidget *parent = nullptr );
 
   private:
-    Qgs3DMapCanvas *mParent3DMapCanvas = nullptr;
-    QStandardItemModel *mCameraInfoItemModel = nullptr;
+    Qgs3DMapCanvas *m3DMapCanvas = nullptr;
 };
 
 #endif // QGS3DNAVIGATIONWIDGET_H

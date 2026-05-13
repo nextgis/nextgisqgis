@@ -44,14 +44,12 @@ typedef QgsDataItem *dataItem_t( QString, QgsDataItem * ) SIP_SKIP;
 */
 class CORE_EXPORT QgsDataItem : public QObject
 {
-#ifdef SIP_RUN
-#include "qgslayeritem.h"
-#include "qgsdirectoryitem.h"
-#include "qgsfavoritesitem.h"
-#include "qgszipitem.h"
-#include "qgsdatacollectionitem.h"
-#include "qgsprojectitem.h"
-#endif
+    //SIP_TYPEHEADER_INCLUDE( "qgslayeritem.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgsdirectoryitem.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgsfavoritesitem.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgszipitem.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgsdatacollectionitem.h" );
+    //SIP_TYPEHEADER_INCLUDE( "qgsprojectitem.h" );
 
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
@@ -142,20 +140,18 @@ class CORE_EXPORT QgsDataItem : public QObject
     SIP_END
 #endif
 
-    //! \since QGIS 2.8
     Qgis::BrowserItemState state() const;
 
     /**
      * Set item state. It also take care about starting/stopping loading icon animation.
      * \param state
-     * \since QGIS 2.8
      */
     virtual void setState( Qgis::BrowserItemState state );
 
     /**
      * Inserts a new child item. The child will be inserted at a position using an alphabetical order based on mName.
      * \param child child item to insert. Ownership is transferred, and item parent will be set and relevant connections made.
-     * \param refresh - set to TRUE to refresh populated item, emitting relevant signals to the model
+     * \param refresh set to TRUE to refresh populated item, emitting relevant signals to the model
      * \see deleteChildItem()
      */
     virtual void addChildItem( QgsDataItem *child SIP_TRANSFER, bool refresh = false );
@@ -203,7 +199,6 @@ class CORE_EXPORT QgsDataItem : public QObject
      * created menus is correctly handled by parenting them to the specified parent widget.
      * \param parent a parent widget of the menu
      * \returns list of menus
-     * \since QGIS 3.0
      */
     virtual QList<QMenu *> menus( QWidget *parent );
 
@@ -239,7 +234,6 @@ class CORE_EXPORT QgsDataItem : public QObject
      * Called when a user double clicks on the item. Subclasses should return TRUE
      * if they have implemented a double-click handler and do not want the default
      * double-click behavior for items.
-     * \since QGIS 3.0
      */
     virtual bool handleDoubleClick();
 
@@ -248,7 +242,6 @@ class CORE_EXPORT QgsDataItem : public QObject
      * Default implementation returns FALSE.
      * A draggable item has to implement mimeUris() that will be used to pass data.
      * \see mimeUris()
-     * \since QGIS 3.0
      */
     virtual bool hasDragEnabled() const { return false; }
 
@@ -256,8 +249,7 @@ class CORE_EXPORT QgsDataItem : public QObject
      * Returns mime URI for the data item.
      * Items that return valid URI will be returned in mime data when dragging a selection from browser model.
      * \see hasDragEnabled()
-     * \deprecated since QGIS 3.18, use mimeUris() instead
-     * \since QGIS 3.0
+     * \deprecated QGIS 3.18. Use mimeUris() instead.
      */
     Q_DECL_DEPRECATED virtual QgsMimeDataUtils::Uri mimeUri() const SIP_DEPRECATED;
 
@@ -275,7 +267,7 @@ class CORE_EXPORT QgsDataItem : public QObject
      * Writes the selected crs into data source. The original data source will be modified when calling this
      * method.
      *
-     * \deprecated since QGIS 3.6. This method is no longer used by QGIS and will be removed in QGIS 4.0.
+     * \deprecated QGIS 3.6. This method is no longer used by QGIS and will be removed in QGIS 4.0.
      */
     Q_DECL_DEPRECATED virtual bool setCrs( const QgsCoordinateReferenceSystem &crs ) SIP_DEPRECATED;
 
@@ -310,7 +302,7 @@ class CORE_EXPORT QgsDataItem : public QObject
     virtual void setCapabilities( Qgis::BrowserItemCapabilities capabilities ) SIP_PYNAME( setCapabilitiesV2 ) { mCapabilities = capabilities; }
 
     /**
-     * \deprecated use setCapabilitiesV2 instead.
+     * \deprecated QGIS 3.40. Use setCapabilitiesV2() instead.
      */
     Q_DECL_DEPRECATED void setCapabilities( int capabilities ) SIP_DEPRECATED;
 
@@ -318,6 +310,27 @@ class CORE_EXPORT QgsDataItem : public QObject
 
     // Find child index in vector of items using '==' operator
     static int findItem( QVector<QgsDataItem *> items, QgsDataItem *item );
+
+#ifndef SIP_RUN
+
+    /**
+     * Returns a filtered list of data \a items which match the template type.
+     *
+     * \since QGIS 3.38
+     */
+    template<class T>
+    static QList< T * > filteredItems( const QList< QgsDataItem * > &items )
+    {
+      QList< T * > result;
+      result.reserve( items.size() );
+      for ( QgsDataItem *item : items )
+      {
+        if ( T *matchedItem = qobject_cast< T * >( item ) )
+          result << matchedItem;
+      }
+      return result;
+    }
+#endif
 
     // members
 
@@ -385,14 +398,12 @@ class CORE_EXPORT QgsDataItem : public QObject
      * sort key.
      *
      * \see setSortKey()
-     * \since QGIS 3.0
      */
     virtual QVariant sortKey() const;
 
     /**
      * Sets a custom sorting \a key for the item.
      * \see sortKey()
-     * \since QGIS 3.0
      */
     void setSortKey( const QVariant &key );
 
@@ -494,10 +505,54 @@ class CORE_EXPORT QgsDataItem : public QObject
     virtual void childrenCreated();
 
   signals:
+
+    /**
+     * Emitted before child items are added to this data item.
+     *
+     * This signal *must* be followed by endInsertItems().
+     *
+     * \param parent the parent item having children added, will always be this object
+     * \param first index of first child item to be added
+     * \param last index last child item, after the addition has occurred
+     *
+     * \see endInsertItems()
+     */
     void beginInsertItems( QgsDataItem *parent, int first, int last );
+
+    /**
+     * Emitted after child items have been added to this data item.
+     *
+     * This signal will always be preceded by beginInsertItems().
+     *
+     * \see beginInsertItems()
+     */
     void endInsertItems();
+
+    /**
+     * Emitted before child items are removed from this data item.
+     *
+     * This signal *must* be followed by endRemoveItems().
+     *
+     * \param parent the parent item having children removed, will always be this object
+     * \param first index of first child item to be removed
+     * \param last index of the last child item to be removed
+     *
+     * \see endRemoveItems()
+     */
     void beginRemoveItems( QgsDataItem *parent, int first, int last );
+
+    /**
+     * Emitted after child items have been removed from this data item.
+     *
+     * This signal will always be preceded by beginRemoveItems().
+     *
+     * \see beginRemoveItems()
+     */
     void endRemoveItems();
+
+    /**
+     * Emitted when data changes for an \a item.
+     */
     void dataChanged( QgsDataItem *item );
 
     /**
@@ -519,7 +574,6 @@ class CORE_EXPORT QgsDataItem : public QObject
     /**
      * Will request a repaint of this icon.
      *
-     * \since QGIS 3.0
      */
     void updateIcon();
 
@@ -528,14 +582,14 @@ class CORE_EXPORT QgsDataItem : public QObject
 
     // Set to true if object has to be deleted when possible (nothing running in threads)
     bool mDeferredDelete = false;
-    QFutureWatcher< QVector <QgsDataItem *> > *mFutureWatcher = nullptr;
+    std::unique_ptr<QFutureWatcher<QVector<QgsDataItem *> >> mFutureWatcher;
     // number of items currently in loading (populating) state
     static QgsAnimatedIcon *sPopulatingIcon;
 };
 
 /**
  * \ingroup core
- * \brief Data item that can be used to report problems (e.g. network error)
+ * \brief A browser item that can be used to report problems (e.g. network error).
  */
 class CORE_EXPORT QgsErrorItem : public QgsDataItem
 {

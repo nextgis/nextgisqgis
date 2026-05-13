@@ -62,7 +62,7 @@ QgsStringMap QgsAuthNextGISEdit::configMap() const
         NGAccess::instance().setUseCodeChallenge(true);
     }
     NGAccess::instance().setEndPoint(ngAuthOptions->endpointEdit->text(), type);
-    NGAccess::instance().initSentry(ngAuthOptions->sendCrashes->isChecked(), "");
+    NGAccess::instance().initSentry(QString());
 
     emit NGAccess::instance().userInfoUpdated();
 

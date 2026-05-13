@@ -28,7 +28,7 @@
 /**
  * \class QgsMeshDataProviderTemporalCapabilities
  * \ingroup core
- * \brief Class for handling properties relating to a mesh data provider's temporal capabilities.
+ * \brief Handles properties relating to a mesh data provider's temporal capabilities.
  *
  * \since QGIS 3.14
  */
@@ -131,7 +131,7 @@ class CORE_EXPORT QgsMeshDataProviderTemporalCapabilities: public QgsDataProvide
     qint64 datasetTime( const QgsMeshDatasetIndex &index ) const;
 
     /**
-    * Clears alls stored reference times and dataset times
+    * Clears all stored reference times and dataset times
     */
     void clear();
 

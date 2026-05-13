@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsrelationwidgetwrapper.h"
+#include "moc_qgsrelationwidgetwrapper.cpp"
 
 #include "qgsrelationeditorwidget.h"
 #include "qgsattributeeditorcontext.h"
@@ -75,30 +76,29 @@ void QgsRelationWidgetWrapper::setVisible( bool visible )
 
 void QgsRelationWidgetWrapper::aboutToSave()
 {
-  if ( !mRelation.isValid() || !widget() || !widget()->isVisible() || mRelation.referencingLayer() ==  mRelation.referencedLayer() || ( mNmRelation.isValid() && mNmRelation.referencedLayer() ==  mRelation.referencedLayer() ) )
+  if ( !mRelation.isValid() || !widget() || !widget()->isVisible() || mRelation.referencingLayer() == mRelation.referencedLayer() || ( mNmRelation.isValid() && mNmRelation.referencedLayer() == mRelation.referencedLayer() ) )
     return;
 
   // If the layer is already saved before, return
   const QgsAttributeEditorContext *ctx = &context();
   do
   {
-    if ( ctx->relation().isValid() && ( ctx->relation().referencedLayer() == mRelation.referencingLayer()
-                                        || ( mNmRelation.isValid() && ctx->relation().referencedLayer() == mNmRelation.referencedLayer() ) )
-       )
+    if ( ctx->relation().isValid() && ( ctx->relation().referencedLayer() == mRelation.referencingLayer() || ( mNmRelation.isValid() && ctx->relation().referencedLayer() == mNmRelation.referencedLayer() ) ) )
     {
       return;
     }
     ctx = ctx->parentContext();
-  }
-  while ( ctx );
+  } while ( ctx );
 
   // Calling isModified() will emit a beforeModifiedCheck()
   // signal that will make the embedded form to send any
   // outstanding widget changes to the edit buffer
-  mRelation.referencingLayer()->isModified();
+  ( void ) mRelation.referencingLayer()->isModified();
 
   if ( mNmRelation.isValid() )
-    mNmRelation.referencedLayer()->isModified();
+  {
+    ( void ) mNmRelation.referencedLayer()->isModified();
+  }
 }
 
 QgsRelation QgsRelationWidgetWrapper::relation() const
@@ -162,7 +162,7 @@ void QgsRelationWidgetWrapper::initWidget( QWidget *editor )
   if ( !w )
   {
     w = QgsGui::relationWidgetRegistry()->create( mRelationEditorId, widgetConfig(), editor );
-    if ( ! editor->layout() )
+    if ( !editor->layout() )
     {
       editor->setLayout( new QVBoxLayout( editor ) );
     }
@@ -200,8 +200,7 @@ void QgsRelationWidgetWrapper::initWidget( QWidget *editor )
       break;
     }
     ctx = ctx->parentContext();
-  }
-  while ( ctx );
+  } while ( ctx );
 
   w->setEditorContext( myContext );
   w->setRelations( mRelation, mNmRelation );
@@ -237,7 +236,7 @@ bool QgsRelationWidgetWrapper::showSaveChildEditsButton() const
 
 void QgsRelationWidgetWrapper::setVisibleButtons( const QgsAttributeEditorRelation::Buttons &buttons )
 {
-  if ( ! mWidget )
+  if ( !mWidget )
     return;
   QVariantMap config = mWidget->config();
   config.insert( "buttons", qgsFlagValueToKeys( buttons ) );

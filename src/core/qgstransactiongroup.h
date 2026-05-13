@@ -27,6 +27,7 @@ class QgsVectorLayer;
 /**
  * \ingroup core
  * \class QgsTransactionGroup
+ * \brief Represents a transaction group.
  */
 class CORE_EXPORT QgsTransactionGroup : public QObject
 {
@@ -86,7 +87,6 @@ class CORE_EXPORT QgsTransactionGroup : public QObject
     void onRollback();
 
   private:
-    bool mEditingStarting = false;
     bool mEditingStopping = false;
 
     void disableTransaction();

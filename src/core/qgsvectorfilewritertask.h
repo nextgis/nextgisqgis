@@ -26,11 +26,12 @@
  * \class QgsVectorFileWriterTask
  * \ingroup core
  * \brief QgsTask task which performs a QgsVectorFileWriter layer saving operation as a background
- * task. This can be used to save a vector layer out to a file without blocking the
+ * task.
+ *
+ * This can be used to save a vector layer out to a file without blocking the
  * QGIS interface.
  * \see QgsVectorLayerExporterTask
  * \see QgsRasterFileWriterTask
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsVectorFileWriterTask : public QgsTask
 {
@@ -41,10 +42,13 @@ class CORE_EXPORT QgsVectorFileWriterTask : public QgsTask
     /**
      * Constructor for QgsVectorFileWriterTask. Takes a source \a layer, destination \a fileName
      * and save \a options.
+     *
+     * Since QGIS 3.40 the \a sinkFlags can be specified.
      */
     QgsVectorFileWriterTask( QgsVectorLayer *layer,
                              const QString &fileName,
-                             const QgsVectorFileWriter::SaveVectorOptions &options );
+                             const QgsVectorFileWriter::SaveVectorOptions &options,
+                             QgsFeatureSink::SinkFlags sinkFlags = QgsFeatureSink::SinkFlags() );
 
     void cancel() override;
 
@@ -80,6 +84,7 @@ class CORE_EXPORT QgsVectorFileWriterTask : public QgsTask
     QString mDestFileName;
 
     std::unique_ptr< QgsFeedback > mOwnedFeedback;
+    QgsFeatureSink::SinkFlags mSinkFlags;
     QgsVectorFileWriter::WriterError mError = QgsVectorFileWriter::NoError;
 
     QString mNewFilename;

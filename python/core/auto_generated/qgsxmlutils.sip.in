@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsxmlutils.h                                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -15,7 +15,7 @@
 class QgsXmlUtils
 {
 %Docstring(signature="appended")
-Assorted helper methods for reading and writing chunks of XML
+Assorted helper methods for reading and writing chunks of XML.
 %End
 
 %TypeHeaderCode
@@ -37,6 +37,17 @@ Decodes a distance unit from a DOM element.
 
     static QgsRectangle readRectangle( const QDomElement &element );
 
+    static QgsBox3D readBox3D( const QDomElement &element );
+%Docstring
+Decodes a DOM element to a 3D box.
+
+:param element: DOM document
+
+:return: decoded 3D box
+
+.. versionadded:: 3.36
+%End
+
 
     static QDomElement writeMapUnits( Qgis::DistanceUnit units, QDomDocument &doc );
 %Docstring
@@ -48,6 +59,19 @@ Encodes a distance unit to a DOM element.
 :return: element containing encoded units
 
 .. seealso:: :py:func:`readMapUnits`
+%End
+
+    static QDomElement writeBox3D( const QgsBox3D &box, QDomDocument &doc, const QString &elementName = QStringLiteral( "extent3D" ) );
+%Docstring
+Encodes a 3D box to a DOM element.
+
+:param box: 3D box to encode
+:param doc: DOM document
+:param elementName: name of the DOM element
+
+:return: element containing encoded 3D box
+
+.. versionadded:: 3.36
 %End
 
     static QDomElement writeRectangle( const QgsRectangle &rect, QDomDocument &doc, const QString &elementName = QStringLiteral( "extent" ) );
@@ -88,5 +112,5 @@ Read a QVariant from a QDomElement.
  *                                                                      *
  * src/core/qgsxmlutils.h                                               *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

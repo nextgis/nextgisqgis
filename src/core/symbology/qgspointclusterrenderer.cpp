@@ -38,8 +38,18 @@ QgsPointClusterRenderer::QgsPointClusterRenderer()
   fm->setColor( QColor( 255, 255, 255 ) );
   fm->setSize( 3.2 );
   fm->setOffset( QPointF( 0, -0.4 ) );
-  fm->setDataDefinedProperty( QgsSymbolLayer::PropertyCharacter, QgsProperty::fromExpression( QStringLiteral( "@cluster_size" ) ) );
+  fm->setDataDefinedProperty( QgsSymbolLayer::Property::Character, QgsProperty::fromExpression( QStringLiteral( "@cluster_size" ) ) );
   mClusterSymbol->insertSymbolLayer( 1, fm );
+}
+
+Qgis::FeatureRendererFlags QgsPointClusterRenderer::flags() const
+{
+  Qgis::FeatureRendererFlags res;
+  if ( mClusterSymbol && mClusterSymbol->flags().testFlag( Qgis::SymbolFlag::AffectsLabeling ) )
+    res.setFlag( Qgis::FeatureRendererFlag::AffectsLabeling );
+  if ( mRenderer && mRenderer->flags().testFlag( Qgis::FeatureRendererFlag::AffectsLabeling ) )
+    res.setFlag( Qgis::FeatureRendererFlag::AffectsLabeling );
+  return res;
 }
 
 QgsPointClusterRenderer *QgsPointClusterRenderer::clone() const
@@ -113,7 +123,7 @@ QgsFeatureRenderer *QgsPointClusterRenderer::create( QDomElement &symbologyElem,
   const QDomElement centerSymbolElem = symbologyElem.firstChildElement( QStringLiteral( "symbol" ) );
   if ( !centerSymbolElem.isNull() )
   {
-    r->setClusterSymbol( QgsSymbolLayerUtils::loadSymbol<QgsMarkerSymbol>( centerSymbolElem, context ) );
+    r->setClusterSymbol( QgsSymbolLayerUtils::loadSymbol<QgsMarkerSymbol>( centerSymbolElem, context ).release() );
   }
   return r;
 }
@@ -200,8 +210,6 @@ QgsPointClusterRenderer *QgsPointClusterRenderer::convertFromRenderer( const Qgs
     pointRenderer->setTolerance( displacementRenderer->tolerance() );
     pointRenderer->setToleranceUnit( displacementRenderer->toleranceUnit() );
     pointRenderer->setToleranceMapUnitScale( displacementRenderer->toleranceMapUnitScale() );
-    if ( const_cast< QgsPointDisplacementRenderer * >( displacementRenderer )->centerSymbol() )
-      pointRenderer->setClusterSymbol( const_cast< QgsPointDisplacementRenderer * >( displacementRenderer )->centerSymbol()->clone() );
     renderer->copyRendererData( pointRenderer );
     return pointRenderer;
   }

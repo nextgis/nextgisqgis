@@ -33,14 +33,13 @@ typedef QMap<QgsDiagramLayerSettings::Property, int> QgsDiagramIndexes;
 typedef QMap<QgsCallout::Property, int> QgsCalloutIndexes;
 
 //! Base class for map tools that modify label properties
-class APP_EXPORT QgsMapToolLabel: public QgsMapToolAdvancedDigitizing
+class APP_EXPORT QgsMapToolLabel : public QgsMapToolAdvancedDigitizing
 {
     Q_OBJECT
 
   public:
     QgsMapToolLabel( QgsMapCanvas *canvas, QgsAdvancedDigitizingDockWidget *cadDock );
     ~QgsMapToolLabel() override;
-
 
 
     void deactivate() override;
@@ -56,7 +55,6 @@ class APP_EXPORT QgsMapToolLabel: public QgsMapToolAdvancedDigitizing
     /**
      * Returns TRUE if layer has attribute field set up for diagrams
      * \param showCol out: attribute column for data defined diagram showing
-     * \since QGIS 2.16
     */
     bool diagramCanShowHide( QgsVectorLayer *vlayer, int &showCol ) const;
 
@@ -90,12 +88,12 @@ class APP_EXPORT QgsMapToolLabel: public QgsMapToolAdvancedDigitizing
 
     struct APP_EXPORT LabelDetails
     {
-      LabelDetails() = default;
-      explicit LabelDetails( const QgsLabelPosition &p, QgsMapCanvas *canvas );
-      bool valid = false;
-      QgsLabelPosition pos;
-      QgsVectorLayer *layer = nullptr;
-      QgsPalLayerSettings settings;
+        LabelDetails() = default;
+        explicit LabelDetails( const QgsLabelPosition &p, QgsMapCanvas *canvas );
+        bool valid = false;
+        QgsLabelPosition pos;
+        QgsVectorLayer *layer = nullptr;
+        QgsPalLayerSettings settings;
     };
 
     //! Currently dragged label position
@@ -209,7 +207,8 @@ class APP_EXPORT QgsMapToolLabel: public QgsMapToolAdvancedDigitizing
       double &lineAnchorPercent, bool &lineAnchorPercentSuccess, int &lineAnchorPercentCol,
       QString &lineAnchorClipping, bool &lineAnchorClippingSuccess, int &lineAnchorClippingCol,
       QString &lineAnchorType, bool &lineAnchorTypeSuccess, int &lineAnchorTypeCol,
-      QString &lineAnchorTextPoint, bool &lineAnchorTextPointSuccess, int &lineAnchorTextPointCol ) const;
+      QString &lineAnchorTextPoint, bool &lineAnchorTextPointSuccess, int &lineAnchorTextPointCol
+    ) const;
 
     /**
     * Returns data defined rotation of current label
@@ -250,7 +249,6 @@ class APP_EXPORT QgsMapToolLabel: public QgsMapToolAdvancedDigitizing
     /**
      * Returns the pin status for the current label/diagram
      * \returns TRUE if the label/diagram is pinned, FALSE otherwise
-     * \since QGIS 2.16
     */
     bool isPinned();
 

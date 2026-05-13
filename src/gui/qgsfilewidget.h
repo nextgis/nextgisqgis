@@ -33,11 +33,10 @@ class QgsFileDropEdit;
 
 /**
  * \ingroup gui
- * \brief The QgsFileWidget class creates a widget for selecting a file or a folder.
+ * \brief A widget for selecting a file or a folder.
  */
 class GUI_EXPORT QgsFileWidget : public QWidget
 {
-
 #ifdef SIP_RUN
     SIP_CONVERT_TO_SUBCLASS_CODE
     if ( qobject_cast<QgsFileWidget *>( sipCpp ) )
@@ -59,16 +58,15 @@ class GUI_EXPORT QgsFileWidget : public QWidget
     Q_PROPERTY( QFileDialog::Options options READ options WRITE setOptions )
 
   public:
-
     /**
      * \brief The StorageMode enum determines if the file picker should pick files or directories
      */
     enum StorageMode
     {
-      GetFile, //!< Select a single file
-      GetDirectory, //!< Select a directory
+      GetFile,          //!< Select a single file
+      GetDirectory,     //!< Select a directory
       GetMultipleFiles, //!< Select multiple files
-      SaveFile, //!< Select a single new or pre-existing file
+      SaveFile,         //!< Select a single new or pre-existing file
     };
     Q_ENUM( StorageMode )
 
@@ -283,7 +281,6 @@ class GUI_EXPORT QgsFileWidget : public QWidget
     /**
      * Returns a pointer to the widget's line edit, which can be used to customize
      * the appearance and behavior of the line edit portion of the widget.
-     * \since QGIS 3.0
      */
     QgsFilterLineEdit *lineEdit();
 
@@ -301,7 +298,6 @@ class GUI_EXPORT QgsFileWidget : public QWidget
     void fileDropped( const QString &filePath );
 
   protected:
-
     /**
      * Update buttons visibility
      */
@@ -361,7 +357,6 @@ class GUI_EXPORT QgsFileWidget : public QWidget
 ///@cond PRIVATE
 
 
-
 #ifndef SIP_RUN
 
 /**
@@ -373,7 +368,7 @@ class GUI_EXPORT QgsFileWidget : public QWidget
  * or directories only. By default, dropping is limited to files only.
  * \note not available in Python bindings
  */
-class GUI_EXPORT QgsFileDropEdit: public QgsHighlightableLineEdit
+class GUI_EXPORT QgsFileDropEdit : public QgsHighlightableLineEdit
 {
     Q_OBJECT
 
@@ -395,7 +390,6 @@ class GUI_EXPORT QgsFileDropEdit: public QgsHighlightableLineEdit
     void fileDropped( const QString &filePath );
 
   protected:
-
     //! Returns file name if object meets drop criteria.
     QString acceptableFilePath( QDropEvent *event ) const;
 
@@ -404,8 +398,6 @@ class GUI_EXPORT QgsFileDropEdit: public QgsHighlightableLineEdit
     void dropEvent( QDropEvent *event ) override;
 
   private:
-
-
     QStringList mAcceptableExtensions;
     QgsFileWidget::StorageMode mStorageMode = QgsFileWidget::GetFile;
     friend class TestQgsFileWidget;

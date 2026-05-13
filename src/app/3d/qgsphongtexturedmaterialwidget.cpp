@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgsphongtexturedmaterialwidget.h"
+#include "moc_qgsphongtexturedmaterialwidget.cpp"
 
 #include "qgsphongtexturedmaterialsettings.h"
 #include "qgis.h"
@@ -23,6 +24,8 @@ QgsPhongTexturedMaterialWidget::QgsPhongTexturedMaterialWidget( QWidget *parent 
 {
   setupUi( this );
 
+  spinShininess->setClearValue( 0, tr( "None" ) );
+
   QgsPhongTexturedMaterialSettings defaultMaterial;
   setSettings( &defaultMaterial, nullptr );
   textureScaleSpinBox->setClearValue( 100 );
@@ -30,7 +33,10 @@ QgsPhongTexturedMaterialWidget::QgsPhongTexturedMaterialWidget( QWidget *parent 
 
   connect( btnAmbient, &QgsColorButton::colorChanged, this, &QgsPhongTexturedMaterialWidget::changed );
   connect( btnSpecular, &QgsColorButton::colorChanged, this, &QgsPhongTexturedMaterialWidget::changed );
-  connect( spinShininess, static_cast<void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, &QgsPhongTexturedMaterialWidget::changed );
+  connect( spinShininess, static_cast<void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, [=] {
+    updateWidgetState();
+    emit changed();
+  } );
   connect( mOpacityWidget, &QgsOpacityWidget::opacityChanged, this, &QgsPhongTexturedMaterialWidget::changed );
   connect( textureFile, &QgsImageSourceLineEdit::sourceChanged, this, &QgsPhongTexturedMaterialWidget::changed );
   connect( textureScaleSpinBox, static_cast<void ( QDoubleSpinBox::* )( double )>( &QDoubleSpinBox::valueChanged ), this, &QgsPhongTexturedMaterialWidget::changed );
@@ -44,7 +50,7 @@ QgsMaterialSettingsWidget *QgsPhongTexturedMaterialWidget::create()
 
 void QgsPhongTexturedMaterialWidget::setSettings( const QgsAbstractMaterialSettings *settings, QgsVectorLayer * )
 {
-  const QgsPhongTexturedMaterialSettings *phongMaterial = dynamic_cast< const QgsPhongTexturedMaterialSettings * >( settings );
+  const QgsPhongTexturedMaterialSettings *phongMaterial = dynamic_cast<const QgsPhongTexturedMaterialSettings *>( settings );
   if ( !phongMaterial )
     return;
   btnAmbient->setColor( phongMaterial->ambient() );
@@ -56,11 +62,13 @@ void QgsPhongTexturedMaterialWidget::setSettings( const QgsAbstractMaterialSetti
   textureRotationSpinBox->setValue( phongMaterial->textureRotation() );
 
   mPropertyCollection = settings->dataDefinedProperties();
+
+  updateWidgetState();
 }
 
 QgsAbstractMaterialSettings *QgsPhongTexturedMaterialWidget::settings()
 {
-  std::unique_ptr< QgsPhongTexturedMaterialSettings > m = std::make_unique< QgsPhongTexturedMaterialSettings >();
+  auto m = std::make_unique<QgsPhongTexturedMaterialSettings>();
   m->setAmbient( btnAmbient->color() );
   m->setSpecular( btnSpecular->color() );
   m->setShininess( spinShininess->value() );
@@ -71,4 +79,18 @@ QgsAbstractMaterialSettings *QgsPhongTexturedMaterialWidget::settings()
   m->setDataDefinedProperties( mPropertyCollection );
 
   return m.release();
+}
+
+void QgsPhongTexturedMaterialWidget::updateWidgetState()
+{
+  if ( spinShininess->value() > 0 )
+  {
+    btnSpecular->setEnabled( true );
+    btnSpecular->setToolTip( QString() );
+  }
+  else
+  {
+    btnSpecular->setEnabled( false );
+    btnSpecular->setToolTip( tr( "Specular color is disabled because material has no shininess" ) );
+  }
 }

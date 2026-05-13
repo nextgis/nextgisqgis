@@ -60,6 +60,12 @@ QString QgsGeometryByExpressionAlgorithm::shortHelpString() const
                       "which is available in the expression builder." );
 }
 
+QString QgsGeometryByExpressionAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Updates existing geometries (or creates new geometries) for input "
+                      "features by use of a QGIS expression." );
+}
+
 QgsGeometryByExpressionAlgorithm *QgsGeometryByExpressionAlgorithm::createInstance() const
 {
   return new QgsGeometryByExpressionAlgorithm();
@@ -67,7 +73,7 @@ QgsGeometryByExpressionAlgorithm *QgsGeometryByExpressionAlgorithm::createInstan
 
 QList<int> QgsGeometryByExpressionAlgorithm::inputLayerTypes() const
 {
-  return QList< int >() << QgsProcessing::TypeVector;
+  return QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::Vector );
 }
 
 Qgis::WkbType QgsGeometryByExpressionAlgorithm::outputWkbType( Qgis::WkbType ) const
@@ -75,19 +81,17 @@ Qgis::WkbType QgsGeometryByExpressionAlgorithm::outputWkbType( Qgis::WkbType ) c
   return mWkbType;
 }
 
-QgsProcessingFeatureSource::Flag QgsGeometryByExpressionAlgorithm::sourceFlags() const
+Qgis::ProcessingFeatureSourceFlags QgsGeometryByExpressionAlgorithm::sourceFlags() const
 {
-  return QgsProcessingFeatureSource::FlagSkipGeometryValidityChecks;
+  return Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks;
 }
 
 void QgsGeometryByExpressionAlgorithm::initParameters( const QVariantMap & )
 {
-  addParameter( new QgsProcessingParameterEnum( QStringLiteral( "OUTPUT_GEOMETRY" ), QObject::tr( "Output geometry type" ),
-                QStringList() << QObject::tr( "Polygon" ) << QObject::tr( "Line" ) << QObject::tr( "Point" ), false, 0 ) );
+  addParameter( new QgsProcessingParameterEnum( QStringLiteral( "OUTPUT_GEOMETRY" ), QObject::tr( "Output geometry type" ), QStringList() << QObject::tr( "Polygon" ) << QObject::tr( "Line" ) << QObject::tr( "Point" ), false, 0 ) );
   addParameter( new QgsProcessingParameterBoolean( QStringLiteral( "WITH_Z" ), QObject::tr( "Output geometry has z dimension" ), false ) );
   addParameter( new QgsProcessingParameterBoolean( QStringLiteral( "WITH_M" ), QObject::tr( "Output geometry has m values" ), false ) );
-  addParameter( new QgsProcessingParameterExpression( QStringLiteral( "EXPRESSION" ), QObject::tr( "Geometry expression" ),
-                QStringLiteral( "$geometry" ), QStringLiteral( "INPUT" ) ) );
+  addParameter( new QgsProcessingParameterExpression( QStringLiteral( "EXPRESSION" ), QObject::tr( "Geometry expression" ), QStringLiteral( "@geometry" ), QStringLiteral( "INPUT" ) ) );
 }
 
 bool QgsGeometryByExpressionAlgorithm::prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback )
@@ -122,17 +126,19 @@ bool QgsGeometryByExpressionAlgorithm::prepareAlgorithm( const QVariantMap &para
     return false;
   }
 
-  mExpressionContext = createExpressionContext( parameters, context );
-  mExpression.prepare( &mExpressionContext );
-
   return true;
 }
 
-QgsFeatureList QgsGeometryByExpressionAlgorithm::processFeature( const QgsFeature &f, QgsProcessingContext &, QgsProcessingFeedback * )
+QgsFeatureList QgsGeometryByExpressionAlgorithm::processFeature( const QgsFeature &f, QgsProcessingContext &context, QgsProcessingFeedback * )
 {
+  if ( !mExpressionPrepared )
+  {
+    mExpression.prepare( &context.expressionContext() );
+    mExpressionPrepared = true;
+  }
+
   QgsFeature feature = f;
-  mExpressionContext.setFeature( feature );
-  const QVariant value = mExpression.evaluate( &mExpressionContext );
+  const QVariant value = mExpression.evaluate( &context.expressionContext() );
 
   if ( mExpression.hasEvalError() )
   {
@@ -145,7 +151,7 @@ QgsFeatureList QgsGeometryByExpressionAlgorithm::processFeature( const QgsFeatur
   }
   else
   {
-    if ( value.userType() == QMetaType::type( "QgsGeometry" ) )
+    if ( value.userType() == qMetaTypeId<QgsGeometry>() )
     {
       const QgsGeometry geom = value.value<QgsGeometry>();
       feature.setGeometry( geom );

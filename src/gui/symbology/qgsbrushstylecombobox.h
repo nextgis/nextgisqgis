@@ -23,6 +23,7 @@
 /**
  * \ingroup gui
  * \class QgsBrushStyleComboBox
+ * \brief A combobox which presents choices of Qt::BrushStyle.
  */
 class GUI_EXPORT QgsBrushStyleComboBox : public QComboBox
 {
@@ -37,7 +38,6 @@ class GUI_EXPORT QgsBrushStyleComboBox : public QComboBox
 
   protected:
     QIcon iconForBrush( Qt::BrushStyle style );
-
 };
 
 #endif

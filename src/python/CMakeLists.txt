@@ -32,6 +32,9 @@ target_compile_features(${NG_PREFIX}qgispython PRIVATE cxx_std_17)
 target_include_directories(${NG_PREFIX}qgispython PUBLIC
   ${CMAKE_SOURCE_DIR}/src/python
   ${CMAKE_BINARY_DIR}/src/python
+  ${CMAKE_SOURCE_DIR}/src/core
+  ${CMAKE_SOURCE_DIR}/src/core/settings
+  ${CMAKE_BINARY_DIR}
 )
 target_include_directories(${NG_PREFIX}qgispython SYSTEM PRIVATE
   ${Python3_INCLUDE_DIRS}
@@ -47,6 +50,9 @@ if (NOT ANDROID)
 endif()
 
 target_link_libraries(${NG_PREFIX}qgispython
+  ${QT_VERSION_BASE}::Core
+  ${QT_VERSION_BASE}::Gui
+  ${QT_VERSION_BASE}::Widgets
   ${NG_PREFIX}qgis_core
   ${Python3_LIBRARIES}
   ${OPENPTY_LIBRARY}

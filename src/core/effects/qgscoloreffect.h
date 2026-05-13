@@ -29,7 +29,6 @@
  * \brief A paint effect which alters the colors (e.g., brightness, contrast) in a
  * source picture.
  *
- * \since QGIS 2.9
  */
 
 class CORE_EXPORT QgsColorEffect : public QgsPaintEffect SIP_NODEFAULTCTORS
@@ -46,6 +45,7 @@ class CORE_EXPORT QgsColorEffect : public QgsPaintEffect SIP_NODEFAULTCTORS
 
     QgsColorEffect();
 
+    Qgis::PaintEffectFlags flags() const override;
     QString type() const override { return QStringLiteral( "color" ); }
     QVariantMap properties() const override;
     void readProperties( const QVariantMap &props ) override;

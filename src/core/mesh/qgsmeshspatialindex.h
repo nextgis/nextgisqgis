@@ -67,13 +67,11 @@ class CORE_EXPORT QgsMeshSpatialIndex
      */
     explicit QgsMeshSpatialIndex( const QgsMesh &mesh, QgsFeedback *feedback = nullptr, QgsMesh::ElementType elementType = QgsMesh::ElementType::Face );
 
-    //! Copy constructor
     QgsMeshSpatialIndex( const QgsMeshSpatialIndex &other );
 
     //! Destructor finalizes work with spatial index
     ~QgsMeshSpatialIndex();
 
-    //! Implement assignment operator
     QgsMeshSpatialIndex &operator=( const QgsMeshSpatialIndex &other );
 
     /**
@@ -81,6 +79,7 @@ class CORE_EXPORT QgsMeshSpatialIndex
      *
      * \note The intersection test is performed based on the face bounding boxes only, so it is necessary
      * to manually test the returned faces for exact geometry intersection when required.
+     * \note Since QGIS 4.0, an empty list is returned if the specified \a rectangle is null.
      */
     QList<int> intersects( const QgsRectangle &rectangle ) const;
 

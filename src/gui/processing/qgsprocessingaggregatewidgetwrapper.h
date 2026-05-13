@@ -67,17 +67,11 @@ class GUI_EXPORT QgsProcessingAggregateParameterDefinitionWidget : public QgsPro
 {
     Q_OBJECT
   public:
-
-    QgsProcessingAggregateParameterDefinitionWidget( QgsProcessingContext &context,
-        const QgsProcessingParameterWidgetContext &widgetContext,
-        const QgsProcessingParameterDefinition *definition = nullptr,
-        const QgsProcessingAlgorithm *algorithm = nullptr, QWidget *parent SIP_TRANSFERTHIS = nullptr );
-    QgsProcessingParameterDefinition *createParameter( const QString &name, const QString &description, QgsProcessingParameterDefinition::Flags flags ) const override;
+    QgsProcessingAggregateParameterDefinitionWidget( QgsProcessingContext &context, const QgsProcessingParameterWidgetContext &widgetContext, const QgsProcessingParameterDefinition *definition = nullptr, const QgsProcessingAlgorithm *algorithm = nullptr, QWidget *parent SIP_TRANSFERTHIS = nullptr );
+    QgsProcessingParameterDefinition *createParameter( const QString &name, const QString &description, Qgis::ProcessingParameterFlags flags ) const override;
 
   private:
-
     QComboBox *mParentLayerComboBox = nullptr;
-
 };
 
 
@@ -86,13 +80,11 @@ class GUI_EXPORT QgsProcessingAggregateWidgetWrapper : public QgsAbstractProcess
     Q_OBJECT
 
   public:
-
-    QgsProcessingAggregateWidgetWrapper( const QgsProcessingParameterDefinition *parameter = nullptr,
-                                         QgsProcessingGui::WidgetType type = QgsProcessingGui::Standard, QWidget *parent = nullptr );
+    QgsProcessingAggregateWidgetWrapper( const QgsProcessingParameterDefinition *parameter = nullptr, Qgis::ProcessingMode type = Qgis::ProcessingMode::Standard, QWidget *parent = nullptr );
 
     // QgsProcessingParameterWidgetFactoryInterface
     QString parameterType() const override;
-    QgsAbstractProcessingParameterWidgetWrapper *createWidgetWrapper( const QgsProcessingParameterDefinition *parameter, QgsProcessingGui::WidgetType type ) override SIP_FACTORY;
+    QgsAbstractProcessingParameterWidgetWrapper *createWidgetWrapper( const QgsProcessingParameterDefinition *parameter, Qgis::ProcessingMode type ) override SIP_FACTORY;
 
     // QgsProcessingParameterWidgetWrapper interface
     QWidget *createWidget() override SIP_FACTORY;
@@ -100,27 +92,25 @@ class GUI_EXPORT QgsProcessingAggregateWidgetWrapper : public QgsAbstractProcess
       QgsProcessingContext &context,
       const QgsProcessingParameterWidgetContext &widgetContext,
       const QgsProcessingParameterDefinition *definition = nullptr,
-      const QgsProcessingAlgorithm *algorithm = nullptr ) override;
+      const QgsProcessingAlgorithm *algorithm = nullptr
+    ) override;
 
-    void postInitialize( const QList< QgsAbstractProcessingParameterWidgetWrapper * > &wrappers ) override;
+    void postInitialize( const QList<QgsAbstractProcessingParameterWidgetWrapper *> &wrappers ) override;
     int stretch() const override;
 
   public slots:
     void setParentLayerWrapperValue( const QgsAbstractProcessingParameterWidgetWrapper *parentWrapper );
 
   protected:
-
     void setWidgetValue( const QVariant &value, QgsProcessingContext &context ) override;
     QVariant widgetValue() const override;
 
-    QStringList compatibleParameterTypes() const override;
-    QStringList compatibleOutputTypes() const override;
     QString modelerExpressionFormatString() const override;
     const QgsVectorLayer *linkedVectorLayer() const override;
-  private:
 
+  private:
     QgsProcessingAggregatePanelWidget *mPanel = nullptr;
-    std::unique_ptr< QgsVectorLayer > mParentLayer;
+    std::unique_ptr<QgsVectorLayer> mParentLayer;
 
     friend class TestProcessingGui;
 };

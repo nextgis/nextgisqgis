@@ -16,24 +16,10 @@
  ***************************************************************************/
 
 #include "qgsalgorithmzonalstatisticsfeaturebased.h"
+#include "qgszonalstatistics.h"
+#include "qgsalgorithmzonalstatistics_private.h"
 
 ///@cond PRIVATE
-
-const std::vector< QgsZonalStatistics::Statistic > STATS
-{
-  QgsZonalStatistics::Count,
-  QgsZonalStatistics::Sum,
-  QgsZonalStatistics::Mean,
-  QgsZonalStatistics::Median,
-  QgsZonalStatistics::StDev,
-  QgsZonalStatistics::Min,
-  QgsZonalStatistics::Max,
-  QgsZonalStatistics::Range,
-  QgsZonalStatistics::Minority,
-  QgsZonalStatistics::Majority,
-  QgsZonalStatistics::Variety,
-  QgsZonalStatistics::Variance,
-};
 
 QString QgsZonalStatisticsFeatureBasedAlgorithm::name() const
 {
@@ -48,7 +34,8 @@ QString QgsZonalStatisticsFeatureBasedAlgorithm::displayName() const
 QStringList QgsZonalStatisticsFeatureBasedAlgorithm::tags() const
 {
   return QObject::tr( "stats,statistics,zones,layer,sum,maximum,minimum,mean,count,standard,deviation,"
-                      "median,range,majority,minority,variety,variance,summary,raster" ).split( ',' );
+                      "median,range,majority,minority,variety,variance,summary,raster" )
+    .split( ',' );
 }
 
 QString QgsZonalStatisticsFeatureBasedAlgorithm::group() const
@@ -67,9 +54,15 @@ QString QgsZonalStatisticsFeatureBasedAlgorithm::shortHelpString() const
                       "of an overlapping polygon vector layer." );
 }
 
+QString QgsZonalStatisticsFeatureBasedAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Calculates statistics of a raster layer for each feature "
+                      "of an overlapping polygon vector layer." );
+}
+
 QList<int> QgsZonalStatisticsFeatureBasedAlgorithm::inputLayerTypes() const
 {
-  return QList<int>() << QgsProcessing::TypeVectorPolygon;
+  return QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::VectorPolygon );
 }
 
 QgsZonalStatisticsFeatureBasedAlgorithm *QgsZonalStatisticsFeatureBasedAlgorithm::createInstance() const
@@ -82,19 +75,17 @@ void QgsZonalStatisticsFeatureBasedAlgorithm::initParameters( const QVariantMap 
   Q_UNUSED( configuration )
   QStringList statChoices;
   statChoices.reserve( STATS.size() );
-  for ( const QgsZonalStatistics::Statistic stat : STATS )
+  for ( const Qgis::ZonalStatistic stat : STATS )
   {
     statChoices << QgsZonalStatistics::displayName( stat );
   }
 
   addParameter( new QgsProcessingParameterRasterLayer( QStringLiteral( "INPUT_RASTER" ), QObject::tr( "Raster layer" ) ) );
-  addParameter( new QgsProcessingParameterBand( QStringLiteral( "RASTER_BAND" ),
-                QObject::tr( "Raster band" ), 1, QStringLiteral( "INPUT_RASTER" ) ) );
+  addParameter( new QgsProcessingParameterBand( QStringLiteral( "RASTER_BAND" ), QObject::tr( "Raster band" ), 1, QStringLiteral( "INPUT_RASTER" ) ) );
 
   addParameter( new QgsProcessingParameterString( QStringLiteral( "COLUMN_PREFIX" ), QObject::tr( "Output column prefix" ), QStringLiteral( "_" ) ) );
 
-  addParameter( new QgsProcessingParameterEnum( QStringLiteral( "STATISTICS" ), QObject::tr( "Statistics to calculate" ),
-                statChoices, true, QVariantList() << 0 << 1 << 2 ) );
+  addParameter( new QgsProcessingParameterEnum( QStringLiteral( "STATISTICS" ), QObject::tr( "Statistics to calculate" ), statChoices, true, QVariantList() << 0 << 1 << 2 ) );
 }
 
 QString QgsZonalStatisticsFeatureBasedAlgorithm::outputName() const
@@ -112,8 +103,8 @@ bool QgsZonalStatisticsFeatureBasedAlgorithm::prepareAlgorithm( const QVariantMa
 {
   mPrefix = parameterAsString( parameters, QStringLiteral( "COLUMN_PREFIX" ), context );
 
-  const QList< int > stats = parameterAsEnums( parameters, QStringLiteral( "STATISTICS" ), context );
-  mStats = QgsZonalStatistics::Statistics();
+  const QList<int> stats = parameterAsEnums( parameters, QStringLiteral( "STATISTICS" ), context );
+  mStats = Qgis::ZonalStatistics();
   for ( const int s : stats )
   {
     mStats |= STATS.at( s );
@@ -125,8 +116,7 @@ bool QgsZonalStatisticsFeatureBasedAlgorithm::prepareAlgorithm( const QVariantMa
 
   mBand = parameterAsInt( parameters, QStringLiteral( "RASTER_BAND" ), context );
   if ( mBand < 1 || mBand > rasterLayer->bandCount() )
-    throw QgsProcessingException( QObject::tr( "Invalid band number for BAND (%1): Valid values for input raster are 1 to %2" ).arg( mBand )
-                                  .arg( rasterLayer->bandCount() ) );
+    throw QgsProcessingException( QObject::tr( "Invalid band number for BAND (%1): Valid values for input raster are 1 to %2" ).arg( mBand ).arg( rasterLayer->bandCount() ) );
 
   if ( !rasterLayer->dataProvider() )
     throw QgsProcessingException( QObject::tr( "Invalid raster layer. Layer %1 is invalid." ).arg( rasterLayer->id() ) );
@@ -139,11 +129,11 @@ bool QgsZonalStatisticsFeatureBasedAlgorithm::prepareAlgorithm( const QVariantMa
 
   mOutputFields = source->fields();
 
-  for ( const QgsZonalStatistics::Statistic stat : STATS )
+  for ( const Qgis::ZonalStatistic stat : STATS )
   {
     if ( mStats & stat )
     {
-      const QgsField field = QgsField( mPrefix + QgsZonalStatistics::shortName( stat ), QVariant::Double, QStringLiteral( "double precision" ) );
+      const QgsField field = QgsField( mPrefix + QgsZonalStatistics::shortName( stat ), QMetaType::Type::Double, QStringLiteral( "double precision" ) );
       if ( mOutputFields.names().contains( field.name() ) )
       {
         throw QgsProcessingException( QObject::tr( "Field %1 already exists" ).arg( field.name() ) );
@@ -179,7 +169,7 @@ QgsFeatureList QgsZonalStatisticsFeatureBasedAlgorithm::processFeature( const Qg
       feedback->reportError( QObject::tr( "Encountered a transform error when reprojecting feature with id %1." ).arg( feature.id() ) );
   }
 
-  const QMap<QgsZonalStatistics::Statistic, QVariant> results = QgsZonalStatistics::calculateStatistics( mRaster.get(), geometry, mPixelSizeX, mPixelSizeY, mBand, mStats );
+  const QMap<Qgis::ZonalStatistic, QVariant> results = QgsZonalStatistics::calculateStatistics( mRaster.get(), geometry, mPixelSizeX, mPixelSizeY, mBand, mStats );
   for ( auto result = results.constBegin(); result != results.constEnd(); ++result )
   {
     attributes.replace( mStatFieldsMapping.value( result.key() ), result.value() );

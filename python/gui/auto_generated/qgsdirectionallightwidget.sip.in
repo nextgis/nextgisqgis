@@ -3,15 +3,14 @@
  *                                                                      *
  * src/gui/qgsdirectionallightwidget.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
 class QgsDirectionalLightWidget : QWidget
 {
 %Docstring(signature="appended")
-
-Widget for direction light settings
+Widget for direction light settings.
 
 The user can choose azimuth and altitude values.
 
@@ -50,7 +49,8 @@ Returns the ``altitude`` value (degree)
 
     void setEnableAzimuth( bool enable );
 %Docstring
-Sets whether the azimut can be changed, for example, when using multidirectional light
+Sets whether the azimut can be changed, for example, when using
+multidirectional light
 %End
 
   signals:
@@ -58,6 +58,7 @@ Sets whether the azimut can be changed, for example, when using multidirectional
 %Docstring
 Emitted when the direction is changed
 %End
+
 };
 
 /************************************************************************
@@ -65,5 +66,5 @@ Emitted when the direction is changed
  *                                                                      *
  * src/gui/qgsdirectionallightwidget.h                                  *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

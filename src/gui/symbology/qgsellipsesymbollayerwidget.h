@@ -25,13 +25,13 @@ class QgsEllipseSymbolLayer;
 /**
  * \ingroup gui
  * \class QgsEllipseSymbolLayerWidget
+ * \brief A widget for configuring a QgsEllipseSymbolLayer.
  */
-class GUI_EXPORT QgsEllipseSymbolLayerWidget: public QgsSymbolLayerWidget, private Ui::WidgetEllipseBase
+class GUI_EXPORT QgsEllipseSymbolLayerWidget : public QgsSymbolLayerWidget, private Ui::WidgetEllipseBase
 {
     Q_OBJECT
 
   public:
-
     /**
      * Constructor for QgsEllipseSymbolLayerWidget.
      * \param vl associated vector layer

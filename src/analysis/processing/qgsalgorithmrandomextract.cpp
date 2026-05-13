@@ -46,12 +46,22 @@ QString QgsRandomExtractAlgorithm::groupId() const
   return QStringLiteral( "vectorselection" );
 }
 
+QString QgsRandomExtractAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Generates a vector layer that contains only a random subset of the features in an input layer." );
+}
+
 QString QgsRandomExtractAlgorithm::shortHelpString() const
 {
   return QObject::tr( "This algorithm takes a vector layer and generates a new one that contains only a subset "
                       "of the features in the input layer.\n\n"
                       "The subset is defined randomly, using a percentage or count value to define the total number "
                       "of features in the subset." );
+}
+
+Qgis::ProcessingAlgorithmDocumentationFlags QgsRandomExtractAlgorithm::documentationFlags() const
+{
+  return Qgis::ProcessingAlgorithmDocumentationFlag::RegeneratesPrimaryKey;
 }
 
 QgsRandomExtractAlgorithm *QgsRandomExtractAlgorithm::createInstance() const
@@ -61,24 +71,21 @@ QgsRandomExtractAlgorithm *QgsRandomExtractAlgorithm::createInstance() const
 
 void QgsRandomExtractAlgorithm::initAlgorithm( const QVariantMap & )
 {
-  addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "INPUT" ), QObject::tr( "Input layer" ),
-                QList< int >() << QgsProcessing::TypeVector ) );
+  addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "INPUT" ), QObject::tr( "Input layer" ), QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::Vector ) ) );
   addParameter( new QgsProcessingParameterEnum( QStringLiteral( "METHOD" ), QObject::tr( "Method" ), QStringList() << QObject::tr( "Number of features" ) << QObject::tr( "Percentage of features" ), false, 0 ) );
-  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "NUMBER" ), QObject::tr( "Number/percentage of features" ),
-                QgsProcessingParameterNumber::Integer, 10, false, 0 ) );
+  addParameter( new QgsProcessingParameterNumber( QStringLiteral( "NUMBER" ), QObject::tr( "Number/percentage of features" ), Qgis::ProcessingNumberParameterType::Integer, 10, false, 0 ) );
 
   addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Extracted (random)" ) ) );
 }
 
 QVariantMap QgsRandomExtractAlgorithm::processAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback )
 {
-  std::unique_ptr< QgsProcessingFeatureSource > source( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
+  std::unique_ptr<QgsProcessingFeatureSource> source( parameterAsSource( parameters, QStringLiteral( "INPUT" ), context ) );
   if ( !source )
     throw QgsProcessingException( invalidSourceError( parameters, QStringLiteral( "INPUT" ) ) );
 
   QString dest;
-  std::unique_ptr< QgsFeatureSink > sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, source->fields(),
-                                          source->wkbType(), source->sourceCrs(), QgsFeatureSink::RegeneratePrimaryKey ) );
+  std::unique_ptr<QgsFeatureSink> sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, dest, source->fields(), source->wkbType(), source->sourceCrs(), QgsFeatureSink::RegeneratePrimaryKey ) );
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
@@ -98,14 +105,14 @@ QVariantMap QgsRandomExtractAlgorithm::processAlgorithm( const QVariantMap &para
     if ( number > 100 )
       throw QgsProcessingException( QObject::tr( "Percentage can't be greater than 100. Choose a lower value and try again." ) );
 
-    number = static_cast< int >( std::ceil( number * count / 100 ) );
+    number = static_cast<int>( std::ceil( number * count / 100 ) );
   }
 
   // Build a list of all feature ids
   QgsFeatureIterator fit = source->getFeatures( QgsFeatureRequest()
-                           .setFlags( QgsFeatureRequest::NoGeometry )
-                           .setNoAttributes() );
-  std::vector< QgsFeatureId > allFeats;
+                                                  .setFlags( Qgis::FeatureRequestFlag::NoGeometry )
+                                                  .setNoAttributes() );
+  std::vector<QgsFeatureId> allFeats;
   allFeats.reserve( count );
   QgsFeature f;
   feedback->pushInfo( QObject::tr( "Building list of all features..." ) );
@@ -126,7 +133,7 @@ QVariantMap QgsRandomExtractAlgorithm::processAlgorithm( const QVariantMap &para
   // we will instead randomly select features to *exclude* from the output layer
   size_t actualFeatureCount = allFeats.size();
   size_t shuffledFeatureCount = number;
-  bool invertSelection = static_cast< size_t>( number ) > actualFeatureCount / 2;
+  bool invertSelection = static_cast<size_t>( number ) > actualFeatureCount / 2;
   if ( invertSelection )
     shuffledFeatureCount = actualFeatureCount - number;
 
@@ -162,7 +169,7 @@ QVariantMap QgsRandomExtractAlgorithm::processAlgorithm( const QVariantMap &para
       selected.insert( *it );
 
   feedback->pushInfo( QObject::tr( "Adding selected features" ) );
-  fit = source->getFeatures( QgsFeatureRequest().setFilterFids( selected ), QgsProcessingFeatureSource::FlagSkipGeometryValidityChecks );
+  fit = source->getFeatures( QgsFeatureRequest().setFilterFids( selected ), Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks );
   while ( fit.nextFeature( f ) )
   {
     if ( feedback->isCanceled() )
@@ -171,6 +178,8 @@ QVariantMap QgsRandomExtractAlgorithm::processAlgorithm( const QVariantMap &para
     if ( !sink->addFeature( f, QgsFeatureSink::FastInsert ) )
       throw QgsProcessingException( writeFeatureError( sink.get(), parameters, QStringLiteral( "OUTPUT" ) ) );
   }
+
+  sink->finalize();
 
   QVariantMap outputs;
   outputs.insert( QStringLiteral( "OUTPUT" ), dest );

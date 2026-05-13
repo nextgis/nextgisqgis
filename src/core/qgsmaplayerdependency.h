@@ -24,7 +24,7 @@
 
 /**
  * \ingroup core
- * \brief This class models dependencies with or between map layers.
+ * \brief Models dependencies with or between map layers.
  *
  * A dependency is defined by a layer ID, a type and an origin.
  * The two combinations of type/origin that are currently supported are:
@@ -32,7 +32,6 @@
  * - PresenceDependency && FromProvider: virtual layers for instance which may depend on other layers already loaded to work
  * - DataDependency && FromUser: dependencies given by the user, mainly to represent database triggers
  *
- * \since QGIS 3.0
  */
 class CORE_EXPORT QgsMapLayerDependency
 {
@@ -69,7 +68,6 @@ class CORE_EXPORT QgsMapLayerDependency
 
     // TODO c++20 - replace with = default
 
-    //! Comparison operator
     bool operator==( const QgsMapLayerDependency &other ) const
     {
       return layerId() == other.layerId() && origin() == other.origin() && type() == other.type();

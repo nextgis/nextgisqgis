@@ -25,8 +25,10 @@
 
 /**
  * \ingroup core
- * \brief A collection of field items with some internal logic to retrieve
- * the fields and a the vector layer instance from a connection URI,
+ * \brief A browser item which contains a collection of field items.
+ *
+ * QgsFieldsItem contains internal logic to retrieve
+ * the fields and the corresponding vector layer instance from a connection URI,
  * the schema and the table name.
  * \since QGIS 3.16
 */
@@ -83,12 +85,12 @@ class CORE_EXPORT QgsFieldsItem : public QgsDataItem
     QString connectionUri() const;
 
     /**
-     * Creates and returns a (possibly NULL) layer from the connection URI and schema/table information
+     * Creates and returns a (possibly NULLPTR) layer from the connection URI and schema/table information
      */
     QgsVectorLayer *layer() SIP_FACTORY;
 
     /**
-     * Returns the (possibly NULL) properties of the table this fields belong to.
+     * Returns the (possibly NULLPTR) properties of the table this fields belong to.
      * \since QGIS 3.16
      */
     QgsAbstractDatabaseProviderConnection::TableProperty *tableProperty() const;
@@ -113,9 +115,10 @@ class CORE_EXPORT QgsFieldsItem : public QgsDataItem
 
 /**
  * \ingroup core
- * \brief A layer field item, information about the connection URI, the schema and the
- * table as well as the layer instance the field belongs to can be retrieved
- * from the parent QgsFieldsItem object.
+ * \brief A data item representing a single field from a layer.
+ *
+ * Information about the connection URI, the schema and the table as well as the layer
+ * instance the field belongs to can be retrieved from the parent QgsFieldsItem object.
  * \since QGIS 3.16
 */
 class CORE_EXPORT QgsFieldItem : public QgsDataItem

@@ -46,14 +46,18 @@
  *
  * \since QGIS 3.16
 */
-class ANALYSIS_EXPORT QgsDualEdgeTriangulation: public QgsTriangulation
+class ANALYSIS_EXPORT QgsDualEdgeTriangulation : public QgsTriangulation
 {
   public:
     QgsDualEdgeTriangulation();
+
+    QgsDualEdgeTriangulation( const QgsDualEdgeTriangulation & ) = delete;
+    QgsDualEdgeTriangulation &operator=( const QgsDualEdgeTriangulation &other ) = delete;
+
     //! Constructor with a number of points to reserve
     QgsDualEdgeTriangulation( int nop );
     ~QgsDualEdgeTriangulation() override;
-    void addLine( const QVector< QgsPoint > &points, QgsInterpolator::SourceType lineType ) override;
+    void addLine( const QVector<QgsPoint> &points, QgsInterpolator::SourceType lineType ) override;
     int addPoint( const QgsPoint &p ) override;
     //! Performs a consistency check, remove this later
     void performConsistencyTest() override;
@@ -117,7 +121,7 @@ class ANALYSIS_EXPORT QgsDualEdgeTriangulation: public QgsTriangulation
     //! Association to an interpolator object
     TriangleInterpolator *mTriangleInterpolator = nullptr;
     //! Member to store the behavior in case of crossing forced segments
-    QgsTriangulation::ForcedCrossBehavior mForcedCrossBehavior = QgsTriangulation::DeleteFirst;
+    QgsTriangulation::ForcedCrossBehavior mForcedCrossBehavior = QgsTriangulation::ForcedCrossBehavior::DeleteFirst;
     //! Inserts an edge and makes sure, everything is OK with the storage of the edge. The number of the HalfEdge is returned
     unsigned int insertEdge( int dual, int next, int point, bool mbreak, bool forced );
     //! Inserts a forced segment between the points with the numbers p1 and p2 into the triangulation and returns the number of a HalfEdge belonging to this forced edge or -100 in case of failure
@@ -208,19 +212,9 @@ inline QgsPoint *QgsDualEdgeTriangulation::point( int i ) const
 inline bool QgsDualEdgeTriangulation::halfEdgeBBoxTest( int edge, double xlowleft, double ylowleft, double xupright, double yupright ) const
 {
   return (
-           ( point( mHalfEdge[edge]->getPoint() )->x() >= xlowleft &&
-             point( mHalfEdge[edge]->getPoint() )->x() <= xupright &&
-             point( mHalfEdge[edge]->getPoint() )->y() >= ylowleft &&
-             point( mHalfEdge[edge]->getPoint() )->y() <= yupright ) ||
-           ( point( mHalfEdge[mHalfEdge[edge]->getDual()]->getPoint() )->x() >= xlowleft &&
-             point( mHalfEdge[mHalfEdge[edge]->getDual()]->getPoint() )->x() <= xupright &&
-             point( mHalfEdge[mHalfEdge[edge]->getDual()]->getPoint() )->y() >= ylowleft &&
-             point( mHalfEdge[mHalfEdge[edge]->getDual()]->getPoint() )->y() <= yupright )
-         );
+    ( point( mHalfEdge[edge]->getPoint() )->x() >= xlowleft && point( mHalfEdge[edge]->getPoint() )->x() <= xupright && point( mHalfEdge[edge]->getPoint() )->y() >= ylowleft && point( mHalfEdge[edge]->getPoint() )->y() <= yupright ) || ( point( mHalfEdge[mHalfEdge[edge]->getDual()]->getPoint() )->x() >= xlowleft && point( mHalfEdge[mHalfEdge[edge]->getDual()]->getPoint() )->x() <= xupright && point( mHalfEdge[mHalfEdge[edge]->getDual()]->getPoint() )->y() >= ylowleft && point( mHalfEdge[mHalfEdge[edge]->getDual()]->getPoint() )->y() <= yupright )
+  );
 }
 
 #endif
 #endif
-
-
-

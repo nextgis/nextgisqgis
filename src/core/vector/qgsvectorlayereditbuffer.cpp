@@ -13,6 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsvectorlayereditbuffer.h"
+#include "moc_qgsvectorlayereditbuffer.cpp"
 
 #include "qgsgeometry.h"
 #include "qgslogger.h"
@@ -81,7 +82,7 @@ void QgsVectorLayerEditBuffer::updateFields( QgsFields &fields )
   // add new fields
   for ( int i = 0; i < mAddedAttributes.count(); ++i )
   {
-    fields.append( mAddedAttributes.at( i ), QgsFields::OriginEdit, i );
+    fields.append( mAddedAttributes.at( i ), Qgis::FieldOrigin::Edit, i );
   }
 }
 
@@ -131,13 +132,13 @@ void QgsVectorLayerEditBuffer::updateChangedAttributes( QgsFeature &f )
 
 bool QgsVectorLayerEditBuffer::addFeature( QgsFeature &f )
 {
-  if ( !( L->dataProvider()->capabilities() & QgsVectorDataProvider::AddFeatures ) )
+  if ( !( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::AddFeatures ) )
   {
     return false;
   }
-  if ( L->mFields.count() != f.attributes().count() )
+  if ( L->mFields.count() != f.attributeCount() )
   {
-    QgsMessageLog::logMessage( tr( "cannot add feature, wrong field count: layer: %1 feature: %2:" ).arg( L->mFields.count() ).arg( f.attributes().count() ) );
+    QgsMessageLog::logMessage( tr( "cannot add feature, wrong field count: layer: %1 feature: %2:" ).arg( L->mFields.count() ).arg( f.attributeCount() ) );
     return false;
   }
 
@@ -150,7 +151,7 @@ bool QgsVectorLayerEditBuffer::addFeature( QgsFeature &f )
 
 bool QgsVectorLayerEditBuffer::addFeatures( QgsFeatureList &features )
 {
-  if ( !( L->dataProvider()->capabilities() & QgsVectorDataProvider::AddFeatures ) )
+  if ( !( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::AddFeatures ) )
     return false;
 
   // we don't want to emit layerModified for every added feature, rather just once for the batch lot
@@ -181,7 +182,7 @@ bool QgsVectorLayerEditBuffer::addFeatures( QgsFeatureList &features )
 
 bool QgsVectorLayerEditBuffer::deleteFeature( QgsFeatureId fid )
 {
-  if ( !( L->dataProvider()->capabilities() & QgsVectorDataProvider::DeleteFeatures ) )
+  if ( !( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::DeleteFeatures ) )
   {
     QgsDebugError( QStringLiteral( "Cannot delete features (missing DeleteFeature capability)" ) );
     return false;
@@ -210,7 +211,7 @@ bool QgsVectorLayerEditBuffer::deleteFeature( QgsFeatureId fid )
 
 bool QgsVectorLayerEditBuffer::deleteFeatures( const QgsFeatureIds &fids )
 {
-  if ( !( L->dataProvider()->capabilities() & QgsVectorDataProvider::DeleteFeatures ) )
+  if ( !( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::DeleteFeatures ) )
   {
     QgsDebugError( QStringLiteral( "Cannot delete features (missing DeleteFeatures capability)" ) );
     return false;
@@ -243,7 +244,7 @@ bool QgsVectorLayerEditBuffer::changeGeometry( QgsFeatureId fid, const QgsGeomet
     if ( !mAddedFeatures.contains( fid ) )
       return false;
   }
-  else if ( !( L->dataProvider()->capabilities() & QgsVectorDataProvider::ChangeGeometries ) )
+  else if ( !( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::ChangeGeometries ) )
     return false;
 
   // TODO: check compatible geometry
@@ -285,15 +286,17 @@ bool QgsVectorLayerEditBuffer::changeAttributeValue( QgsFeatureId fid, int field
     if ( !mAddedFeatures.contains( fid ) )
       return false;
   }
-  else if ( !( L->dataProvider()->capabilities() & QgsVectorDataProvider::ChangeAttributeValues ) )
+  else if ( !( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::ChangeAttributeValues ) )
   {
     return false;
   }
 
   if ( field < 0 || field >= L->fields().count() ||
-       L->fields().fieldOrigin( field ) == QgsFields::OriginJoin ||
-       L->fields().fieldOrigin( field ) == QgsFields::OriginExpression )
+       L->fields().fieldOrigin( field ) == Qgis::FieldOrigin::Join ||
+       L->fields().fieldOrigin( field ) == Qgis::FieldOrigin::Expression )
+  {
     return false;
+  }
 
   L->undoStack()->push( new QgsVectorLayerUndoCommandChangeAttribute( this, fid, field, newValue, oldValue ) );
   return true;
@@ -302,7 +305,7 @@ bool QgsVectorLayerEditBuffer::changeAttributeValue( QgsFeatureId fid, int field
 
 bool QgsVectorLayerEditBuffer::addAttribute( const QgsField &field )
 {
-  if ( !( L->dataProvider()->capabilities() & QgsVectorDataProvider::AddAttributes ) )
+  if ( !( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::AddAttributes ) )
     return false;
 
   if ( field.name().isEmpty() )
@@ -325,20 +328,20 @@ bool QgsVectorLayerEditBuffer::addAttribute( const QgsField &field )
 
 bool QgsVectorLayerEditBuffer::deleteAttribute( int index )
 {
-  if ( !( L->dataProvider()->capabilities() & QgsVectorDataProvider::DeleteAttributes ) )
+  if ( !( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::DeleteAttributes ) )
     return false;
 
   if ( index < 0 || index >= L->fields().count() )
     return false;
 
   // find out source of the field
-  QgsFields::FieldOrigin origin = L->fields().fieldOrigin( index );
+  Qgis::FieldOrigin origin = L->fields().fieldOrigin( index );
   int originIndex = L->fields().fieldOriginIndex( index );
 
-  if ( origin == QgsFields::OriginProvider && mDeletedAttributeIds.contains( originIndex ) )
+  if ( origin == Qgis::FieldOrigin::Provider && mDeletedAttributeIds.contains( originIndex ) )
     return false;
 
-  if ( origin == QgsFields::OriginJoin )
+  if ( origin == Qgis::FieldOrigin::Join )
     return false;
 
   L->undoStack()->push( new QgsVectorLayerUndoCommandDeleteAttribute( this, index ) );
@@ -347,7 +350,7 @@ bool QgsVectorLayerEditBuffer::deleteAttribute( int index )
 
 bool QgsVectorLayerEditBuffer::renameAttribute( int index, const QString &newName )
 {
-  if ( !( L->dataProvider()->capabilities() & QgsVectorDataProvider::RenameAttributes ) )
+  if ( !( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::RenameAttributes ) )
     return false;
 
   if ( newName.isEmpty() )
@@ -502,7 +505,7 @@ QString QgsVectorLayerEditBuffer::dumpEditBuffer()
 }
 #endif
 
-void QgsVectorLayerEditBuffer::handleAttributeAdded( int index )
+void QgsVectorLayerEditBuffer::handleAttributeAdded( int index, const QgsField &field )
 {
   // go through the changed attributes map and adapt indices
   QgsChangedAttributesMap::iterator it = mChangedAttributeValues.begin();
@@ -518,6 +521,21 @@ void QgsVectorLayerEditBuffer::handleAttributeAdded( int index )
     QgsAttributes attrs = featureIt->attributes();
     attrs.insert( index, QVariant() );
     featureIt->setAttributes( attrs );
+    QgsFields fields;
+    const QgsFields oldFields = featureIt->fields();
+    for ( int i = 0; i < oldFields.size(); i++ )
+    {
+      if ( i == index )
+      {
+        fields.append( field, L->fields().fieldOrigin( L->fields().indexFromName( field.name() ) ) );
+      }
+      fields.append( oldFields.at( i ), oldFields.fieldOrigin( i ) );
+    }
+    if ( index == oldFields.size() )
+    {
+      fields.append( field, L->fields().fieldOrigin( L->fields().indexFromName( field.name() ) ) );
+    }
+    featureIt->setFields( fields, false );
   }
 
   // go through renamed attributes and adapt
@@ -558,6 +576,9 @@ void QgsVectorLayerEditBuffer::handleAttributeDeleted( int index )
     QgsAttributes attrs = featureIt->attributes();
     attrs.remove( index );
     featureIt->setAttributes( attrs );
+    QgsFields fields = featureIt->fields();
+    fields.remove( index );
+    featureIt->setFields( fields, false );
   }
 
   // go through rename attributes and adapt
@@ -605,7 +626,7 @@ bool QgsVectorLayerEditBuffer::commitChangesCheckGeometryTypeCompatibility( QStr
   if ( mAddedFeatures.isEmpty() )
     return true;
 
-  if ( L->dataProvider()->capabilities() & QgsVectorDataProvider::AddFeatures )
+  if ( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::AddFeatures )
   {
     if ( L->dataProvider()->doesStrictFeatureTypeCheck() )
     {
@@ -639,7 +660,7 @@ bool QgsVectorLayerEditBuffer::commitChangesDeleteAttributes( bool &attributesDe
   if ( mDeletedAttributeIds.isEmpty() )
     return true;
 
-  if ( ( L->dataProvider()->capabilities() & QgsVectorDataProvider::DeleteAttributes ) && L->dataProvider()->deleteAttributes( qgis::listToSet( mDeletedAttributeIds ) ) )
+  if ( ( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::DeleteAttributes ) && L->dataProvider()->deleteAttributes( qgis::listToSet( mDeletedAttributeIds ) ) )
   {
     commitErrors << tr( "SUCCESS: %n attribute(s) deleted.", "deleted attributes count", mDeletedAttributeIds.size() );
 
@@ -673,7 +694,7 @@ bool QgsVectorLayerEditBuffer::commitChangesRenameAttributes( bool &attributesRe
   if ( mRenamedAttributes.isEmpty() )
     return true;
 
-  if ( ( L->dataProvider()->capabilities() & QgsVectorDataProvider::RenameAttributes ) && L->dataProvider()->renameAttributes( mRenamedAttributes ) )
+  if ( ( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::RenameAttributes ) && L->dataProvider()->renameAttributes( mRenamedAttributes ) )
   {
     commitErrors << tr( "SUCCESS: %n attribute(s) renamed.", "renamed attributes count", mRenamedAttributes.size() );
 
@@ -698,7 +719,7 @@ bool QgsVectorLayerEditBuffer::commitChangesAddAttributes( bool &attributesAdded
   if ( mAddedAttributes.isEmpty() )
     return true;
 
-  if ( ( L->dataProvider()->capabilities()  & QgsVectorDataProvider::AddAttributes ) && L->dataProvider()->addAttributes( mAddedAttributes ) )
+  if ( ( L->dataProvider()->capabilities()  & Qgis::VectorProviderCapability::AddAttributes ) && L->dataProvider()->addAttributes( mAddedAttributes ) )
   {
     commitErrors << tr( "SUCCESS: %n attribute(s) added.", "added attributes count", mAddedAttributes.size() );
     emit committedAttributesAdded( L->id(), mAddedAttributes );
@@ -769,10 +790,10 @@ bool QgsVectorLayerEditBuffer::commitChangesChangeAttributes( bool &attributesCh
 {
   attributesChanged = false;
 
-  if ( L->dataProvider()->capabilities() & QgsVectorDataProvider::ChangeFeatures && !mChangedGeometries.isEmpty() && !mChangedAttributeValues.isEmpty() )
+  if ( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::ChangeFeatures && !mChangedGeometries.isEmpty() && !mChangedAttributeValues.isEmpty() )
   {
     // cppcheck-suppress assertWithSideEffect
-    Q_ASSERT( ( L->dataProvider()->capabilities() & ( QgsVectorDataProvider::ChangeAttributeValues | QgsVectorDataProvider::ChangeGeometries ) ) == ( QgsVectorDataProvider::ChangeAttributeValues | QgsVectorDataProvider::ChangeGeometries ) );
+    Q_ASSERT( ( L->dataProvider()->capabilities() & ( Qgis::VectorProviderCapability::ChangeAttributeValues | Qgis::VectorProviderCapability::ChangeGeometries ) ) == ( Qgis::VectorProviderCapability::ChangeAttributeValues | Qgis::VectorProviderCapability::ChangeGeometries ) );
 
     if ( L->dataProvider()->changeFeatures( mChangedAttributeValues, mChangedGeometries ) )
     {
@@ -793,8 +814,8 @@ bool QgsVectorLayerEditBuffer::commitChangesChangeAttributes( bool &attributesCh
 
   if ( !mChangedGeometries.isEmpty() )
   {
-    if ( ! L->dataProvider()->capabilities().testFlag( QgsVectorDataProvider::ChangeFeatures )
-         && ! L->dataProvider()->capabilities().testFlag( QgsVectorDataProvider::ChangeGeometries ) )
+    if ( ! L->dataProvider()->capabilities().testFlag( Qgis::VectorProviderCapability::ChangeFeatures )
+         && ! L->dataProvider()->capabilities().testFlag( Qgis::VectorProviderCapability::ChangeGeometries ) )
     {
       commitErrors << tr( "ERROR: %1 geometries not changed. Data provider '%2' does not have ChangeFeatures or ChangeGeometries capabilities", "not changed geometries count" )
                    .arg( mChangedGeometries.size() )
@@ -818,8 +839,8 @@ bool QgsVectorLayerEditBuffer::commitChangesChangeAttributes( bool &attributesCh
 
   if ( !mChangedAttributeValues.isEmpty() )
   {
-    if ( ! L->dataProvider()->capabilities().testFlag( QgsVectorDataProvider::ChangeFeatures )
-         && ! L->dataProvider()->capabilities().testFlag( QgsVectorDataProvider::ChangeAttributeValues ) )
+    if ( ! L->dataProvider()->capabilities().testFlag( Qgis::VectorProviderCapability::ChangeFeatures )
+         && ! L->dataProvider()->capabilities().testFlag( Qgis::VectorProviderCapability::ChangeAttributeValues ) )
     {
       commitErrors << tr( "ERROR: %1 attribute value change(s) not applied. Data provider '%2' does not have ChangeFeatures or ChangeAttributeValues capabilities", "not changed attribute values count" )
                    .arg( mChangedAttributeValues.size() )
@@ -866,7 +887,7 @@ bool QgsVectorLayerEditBuffer::commitChangesDeleteFeatures( bool &featuresDelete
   if ( mDeletedFeatureIds.isEmpty() )
     return true;
 
-  if ( ( L->dataProvider()->capabilities() & QgsVectorDataProvider::DeleteFeatures ) && L->dataProvider()->deleteFeatures( mDeletedFeatureIds ) )
+  if ( ( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::DeleteFeatures ) && L->dataProvider()->deleteFeatures( mDeletedFeatureIds ) )
   {
     commitErrors << tr( "SUCCESS: %n feature(s) deleted.", "deleted features count", mDeletedFeatureIds.size() );
     featuresDeleted = true;
@@ -906,7 +927,7 @@ bool QgsVectorLayerEditBuffer::commitChangesAddFeatures( bool &featuresAdded, QS
   if ( mAddedFeatures.isEmpty() )
     return true;
 
-  if ( L->dataProvider()->capabilities() & QgsVectorDataProvider::AddFeatures )
+  if ( L->dataProvider()->capabilities() & Qgis::VectorProviderCapability::AddFeatures )
   {
     QList<QgsFeatureId> ids;
     QgsFeatureList featuresToAdd;
@@ -918,6 +939,7 @@ bool QgsVectorLayerEditBuffer::commitChangesAddFeatures( bool &featuresAdded, QS
     // not be sent to the data provider. Refs #18784
     for ( int i = 0; i < featuresToAdd.count(); ++i )
     {
+      // Empty the feature's fields so the up-to-date fields from the data provider is used to match attributes
       QgsVectorLayerUtils::matchAttributesToFields( featuresToAdd[i], L->dataProvider()->fields() );
     }
 

@@ -25,7 +25,7 @@
 /**
  * \class QgsValidityCheckRegistry
  * \ingroup gui
- * \brief This class keeps a list of QgsAbstractValidityCheck checks which can be used when
+ * \brief A registry that keeps a list of QgsAbstractValidityCheck checks which can be used when
  * performing validity checks.
  *
  * QgsValidityCheckRegistry is not usually directly created, but rather accessed through
@@ -42,9 +42,7 @@ class CORE_EXPORT QgsValidityCheckRegistry
 
     ~QgsValidityCheckRegistry();
 
-    //! QgsValidityCheckRegistry cannot be copied.
     QgsValidityCheckRegistry( const QgsValidityCheckRegistry &rh ) = delete;
-    //! QgsValidityCheckRegistry cannot be copied.
     QgsValidityCheckRegistry &operator=( const QgsValidityCheckRegistry &rh ) = delete;
 
     /**

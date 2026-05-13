@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/layout/qgslayoutitempolyline.h                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -14,8 +14,6 @@ class QgsLayoutItemPolyline: QgsLayoutNodesItem
 {
 %Docstring(signature="appended")
 Layout item for node based polyline shapes.
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -38,8 +36,8 @@ Constructor for QgsLayoutItemPolyline for the specified ``layout``.
 
     QgsLayoutItemPolyline( const QPolygonF &polyline, QgsLayout *layout );
 %Docstring
-Constructor for QgsLayoutItemPolyline for the specified ``polyline``
-and ``layout``.
+Constructor for QgsLayoutItemPolyline for the specified ``polyline`` and
+``layout``.
 %End
 
     static QgsLayoutItemPolyline *create( QgsLayout *layout ) /Factory/;
@@ -57,6 +55,8 @@ The caller takes responsibility for deleting the returned object.
 
     virtual QPainterPath shape() const;
 
+    virtual bool isValid() const;
+
 
     QgsLineSymbol *symbol();
 %Docstring
@@ -67,15 +67,16 @@ Returns the line symbol used to draw the shape.
 
     void setSymbol( QgsLineSymbol *symbol );
 %Docstring
-Sets the ``symbol`` used to draw the shape.
-Ownership of ``symbol`` is not transferred.
+Sets the ``symbol`` used to draw the shape. Ownership of ``symbol`` is
+not transferred.
 
 .. seealso:: :py:func:`symbol`
 %End
 
     MarkerMode startMarker() const;
 %Docstring
-Returns the start marker mode, which controls what marker is drawn at the start of the line.
+Returns the start marker mode, which controls what marker is drawn at
+the start of the line.
 
 .. seealso:: :py:func:`setStartMarker`
 
@@ -84,7 +85,8 @@ Returns the start marker mode, which controls what marker is drawn at the start 
 
     void setStartMarker( MarkerMode mode );
 %Docstring
-Sets the start marker ``mode``, which controls what marker is drawn at the start of the line.
+Sets the start marker ``mode``, which controls what marker is drawn at
+the start of the line.
 
 .. seealso:: :py:func:`startMarker`
 
@@ -93,7 +95,8 @@ Sets the start marker ``mode``, which controls what marker is drawn at the start
 
     MarkerMode endMarker() const;
 %Docstring
-Returns the end marker mode, which controls what marker is drawn at the end of the line.
+Returns the end marker mode, which controls what marker is drawn at the
+end of the line.
 
 .. seealso:: :py:func:`setEndMarker`
 
@@ -102,7 +105,8 @@ Returns the end marker mode, which controls what marker is drawn at the end of t
 
     void setEndMarker( MarkerMode mode );
 %Docstring
-Sets the end marker ``mode``, which controls what marker is drawn at the end of the line.
+Sets the end marker ``mode``, which controls what marker is drawn at the
+end of the line.
 
 .. seealso:: :py:func:`endMarker`
 
@@ -246,5 +250,5 @@ Returns the pen width in millimeters for the stroke of the arrow head.
  *                                                                      *
  * src/core/layout/qgslayoutitempolyline.h                              *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

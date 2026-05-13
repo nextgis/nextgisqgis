@@ -28,11 +28,8 @@
 /**
  * \ingroup core
  * \class QgsShadowEffect
- * \brief Base class for paint effects which offset, blurred shadows
- *
- * \since QGIS 2.9
+ * \brief Base class for paint effects which render offset, blurred shadows.
  */
-
 class CORE_EXPORT QgsShadowEffect : public QgsPaintEffect SIP_NODEFAULTCTORS
 {
 
@@ -40,6 +37,7 @@ class CORE_EXPORT QgsShadowEffect : public QgsPaintEffect SIP_NODEFAULTCTORS
 
     QgsShadowEffect();
 
+    Qgis::PaintEffectFlags flags() const override;
     QVariantMap properties() const override;
     void readProperties( const QVariantMap &props ) override;
 
@@ -249,9 +247,8 @@ class CORE_EXPORT QgsShadowEffect : public QgsPaintEffect SIP_NODEFAULTCTORS
 /**
  * \ingroup core
  * \class QgsDropShadowEffect
- * \brief A paint effect which draws an offset and optionally blurred drop shadow
+ * \brief A paint effect which draws an offset and optionally blurred drop shadow.
  *
- * \since QGIS 2.9
  */
 class CORE_EXPORT QgsDropShadowEffect : public QgsShadowEffect SIP_NODEFAULTCTORS
 {
@@ -282,7 +279,6 @@ class CORE_EXPORT QgsDropShadowEffect : public QgsShadowEffect SIP_NODEFAULTCTOR
  * \brief A paint effect which draws an offset and optionally blurred drop shadow
  * within a picture.
  *
- * \since QGIS 2.9
  */
 class CORE_EXPORT QgsInnerShadowEffect : public QgsShadowEffect SIP_NODEFAULTCTORS
 {

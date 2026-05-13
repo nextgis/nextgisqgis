@@ -25,16 +25,13 @@ class QgsInvertedPolygonRenderer;
 
 /**
  * \ingroup gui
- * \brief A widget used represent options of a QgsInvertedPolygonRenderer
- *
- * \since QGIS 2.4
+ * \brief A widget for configuring options for a QgsInvertedPolygonRenderer.
  */
 class GUI_EXPORT QgsInvertedPolygonRendererWidget : public QgsRendererWidget, private Ui::QgsInvertedPolygonRendererWidgetBase
 {
     Q_OBJECT
 
   public:
-
     /**
      * Static creation method
      * \param layer the layer where this renderer is applied

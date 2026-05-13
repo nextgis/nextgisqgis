@@ -14,6 +14,7 @@
  ***************************************************************************/
 
 #include "qgslayertreeviewfilterindicator.h"
+#include "moc_qgslayertreeviewfilterindicator.cpp"
 
 #include "qgslayertree.h"
 #include "qgslayertreeview.h"
@@ -36,10 +37,9 @@ void QgsLayerTreeViewFilterIndicatorProvider::onIndicatorClicked( const QModelIn
     return;
 
   QgsMapLayer *layer = QgsLayerTree::toLayer( node )->layer();
-  QgsVectorLayer *vl = qobject_cast<QgsVectorLayer *>( layer );
-  if ( vl && vl->isEditable() )
+  if ( layer && layer->isEditable() )
   {
-    QgisApp::instance()->messageBar()->pushWarning( tr( "Edit filter" ),  tr( "Cannot edit filter when layer is in edit mode" ) );
+    QgisApp::instance()->messageBar()->pushWarning( tr( "Edit filter" ), tr( "Cannot edit filter when layer is in edit mode" ) );
     return;
   }
 
@@ -108,6 +108,7 @@ void QgsLayerTreeViewFilterIndicatorProvider::connectSignals( QgsMapLayer *layer
     case Qgis::LayerType::Mesh:
     case Qgis::LayerType::Plugin:
     case Qgis::LayerType::VectorTile:
+    case Qgis::LayerType::TiledScene:
       break;
   }
 }
@@ -144,6 +145,7 @@ void QgsLayerTreeViewFilterIndicatorProvider::disconnectSignals( QgsMapLayer *la
     case Qgis::LayerType::Mesh:
     case Qgis::LayerType::Plugin:
     case Qgis::LayerType::VectorTile:
+    case Qgis::LayerType::TiledScene:
       break;
   }
 }
@@ -155,23 +157,24 @@ bool QgsLayerTreeViewFilterIndicatorProvider::acceptLayer( QgsMapLayer *layer )
     case Qgis::LayerType::Vector:
     {
       QgsVectorLayer *vlayer = qobject_cast<QgsVectorLayer *>( layer );
-      return ! vlayer->subsetString().isEmpty();
+      return !vlayer->subsetString().isEmpty();
     }
     case Qgis::LayerType::Raster:
     {
       QgsRasterLayer *rlayer = qobject_cast<QgsRasterLayer *>( layer );
-      return ! rlayer->subsetString().isEmpty();
+      return !rlayer->subsetString().isEmpty();
     }
     case Qgis::LayerType::PointCloud:
     {
       QgsPointCloudLayer *pclayer = qobject_cast<QgsPointCloudLayer *>( layer );
-      return ! pclayer->subsetString().isEmpty();
+      return !pclayer->subsetString().isEmpty();
     }
     case Qgis::LayerType::Annotation:
     case Qgis::LayerType::Group:
     case Qgis::LayerType::Mesh:
     case Qgis::LayerType::Plugin:
     case Qgis::LayerType::VectorTile:
+    case Qgis::LayerType::TiledScene:
       break;
   }
   return false;

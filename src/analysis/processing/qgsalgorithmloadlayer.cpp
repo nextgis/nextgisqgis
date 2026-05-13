@@ -24,9 +24,9 @@ QString QgsLoadLayerAlgorithm::name() const
   return QStringLiteral( "loadlayer" );
 }
 
-QgsProcessingAlgorithm::Flags QgsLoadLayerAlgorithm::flags() const
+Qgis::ProcessingAlgorithmFlags QgsLoadLayerAlgorithm::flags() const
 {
-  return FlagHideFromToolbox | FlagNotAvailableInStandaloneTool;
+  return Qgis::ProcessingAlgorithmFlag::HideFromToolbox | Qgis::ProcessingAlgorithmFlag::NotAvailableInStandaloneTool;
 }
 
 QString QgsLoadLayerAlgorithm::displayName() const
@@ -52,6 +52,11 @@ QString QgsLoadLayerAlgorithm::groupId() const
 QString QgsLoadLayerAlgorithm::shortHelpString() const
 {
   return QObject::tr( "This algorithm loads a layer to the current project." );
+}
+
+QString QgsLoadLayerAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Loads a layer to the current project." );
 }
 
 QgsLoadLayerAlgorithm *QgsLoadLayerAlgorithm::createInstance() const

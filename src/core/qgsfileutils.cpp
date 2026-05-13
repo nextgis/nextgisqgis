@@ -30,6 +30,7 @@
 // For getrlimit()
 #include <sys/resource.h>
 #include <sys/time.h>
+#include <dirent.h>
 #endif
 
 #ifdef _MSC_VER
@@ -57,7 +58,7 @@ QString QgsFileUtils::representFileSize( qint64 bytes )
 
 QStringList QgsFileUtils::extensionsFromFilter( const QString &filter )
 {
-  const thread_local QRegularExpression rx( QStringLiteral( "\\*\\.([a-zA-Z0-9]+)" ) );
+  const thread_local QRegularExpression rx( QStringLiteral( "\\*\\.([a-zA-Z0-9\\.]+)" ) );
   QStringList extensions;
   QRegularExpressionMatchIterator matches = rx.globalMatch( filter );
 
@@ -91,11 +92,7 @@ bool QgsFileUtils::fileMatchesFilter( const QString &fileName, const QString &fi
   const QStringList parts = filter.split( QStringLiteral( ";;" ) );
   for ( const QString &part : parts )
   {
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    const QStringList globPatterns = wildcardsFromFilter( part ).split( ' ', QString::SkipEmptyParts );
-#else
     const QStringList globPatterns = wildcardsFromFilter( part ).split( ' ', Qt::SkipEmptyParts );
-#endif
     for ( const QString &glob : globPatterns )
     {
       const QString re = QRegularExpression::wildcardToRegularExpression( glob );
@@ -565,10 +562,21 @@ int QgsFileUtils::openedFileLimit()
 int QgsFileUtils::openedFileCount()
 {
 #ifdef Q_OS_LINUX
-  int res = static_cast<int>( QDir( "/proc/self/fd" ).entryList().size() );
-  if ( res == 0 )
-    res = -1;
-  return res;
+  int fileCount = 0;
+
+  DIR *dirp = opendir( "/proc/self/fd" );
+  if ( !dirp )
+    return -1;
+
+  while ( struct dirent *entry = readdir( dirp ) )
+  {
+    if ( entry->d_type == DT_REG )
+    {
+      fileCount++;
+    }
+  }
+  closedir( dirp );
+  return fileCount;
 #else
   return -1;
 #endif

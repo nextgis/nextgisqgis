@@ -16,10 +16,11 @@
  ***************************************************************************/
 
 #include "qgsprocessingprovider.h"
+#include "moc_qgsprocessingprovider.cpp"
 #include "qgsapplication.h"
 #include "qgsvectorfilewriter.h"
 #include "qgsrasterfilewriter.h"
-#include "qgssettings.h"
+#include "qgsmessagelog.h"
 
 QgsProcessingProvider::QgsProcessingProvider( QObject *parent SIP_TRANSFERTHIS )
   : QObject( parent )
@@ -41,9 +42,9 @@ QString QgsProcessingProvider::svgIconPath() const
   return QgsApplication::iconPath( QStringLiteral( "processingAlgorithm.svg" ) );
 }
 
-QgsProcessingProvider::Flags QgsProcessingProvider::flags() const
+Qgis::ProcessingProviderFlags QgsProcessingProvider::flags() const
 {
-  return QgsProcessingProvider::Flags();
+  return Qgis::ProcessingProviderFlags();
 }
 
 QString QgsProcessingProvider::helpId() const
@@ -130,11 +131,11 @@ QStringList QgsProcessingProvider::supportedOutputTableExtensions() const
 bool QgsProcessingProvider::isSupportedOutputValue( const QVariant &outputValue, const QgsProcessingDestinationParameter *parameter, QgsProcessingContext &context, QString &error ) const
 {
   error.clear();
-  QString outputPath = QgsProcessingParameters::parameterAsOutputLayer( parameter, outputValue, context ).trimmed();
+  QString outputPath = QgsProcessingParameters::parameterAsOutputLayer( parameter, outputValue, context, true ).trimmed();
 
   if ( outputPath.isEmpty() )
   {
-    if ( parameter->flags() & QgsProcessingParameterDefinition::FlagOptional )
+    if ( parameter->flags() & Qgis::ProcessingParameterFlag::Optional )
     {
       return true;
     }

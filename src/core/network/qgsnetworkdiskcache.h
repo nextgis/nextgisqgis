@@ -20,6 +20,8 @@
 
 #define SIP_NO_FILE
 
+#include "qgis_core.h"
+
 #include <QNetworkDiskCache>
 #include <QMutex>
 
@@ -41,15 +43,65 @@ class ExpirableNetworkDiskCache : public QNetworkDiskCache
 /**
  * \ingroup core
  * \brief Wrapper implementation of QNetworkDiskCache with all methods guarded by a
- * mutex soly for internal use of QgsNetworkAccessManagers
+ * mutex solely for internal use of QgsNetworkAccessManagers
  *
  * \note not available in Python bindings
  */
-class QgsNetworkDiskCache : public QNetworkDiskCache
+class CORE_EXPORT QgsNetworkDiskCache : public QNetworkDiskCache
 {
     Q_OBJECT
 
   public:
+
+    /**
+     * Registers the original request headers for a pending request to the specified \a url.
+     *
+     * This method is thread-safe.
+     *
+     * \see hasPendingRequestForUrl()
+     * \see removePendingRequestForUrl()
+     * \since QGIS 4.0
+     */
+    void insertPendingRequestHeaders( const QUrl &url, const QVariantMap &headers );
+
+    /**
+     * Returns TRUE if there is a pending (ongoing) request in place for the specified \a url.
+     *
+      * This method is thread-safe.
+     *
+     * \see insertPendingRequestHeaders()
+     * \see removePendingRequestForUrl()
+     *
+     * \since QGIS 4.0
+     */
+    bool hasPendingRequestForUrl( const QUrl &url ) const;
+
+    /**
+     * Removes a pending (ongoing) request in place for the specified \a url.
+     *
+     * This method is thread-safe.
+     *
+     * \see insertPendingRequestHeaders()
+     * \see hasPendingRequestForUrl()
+     *
+     * \since QGIS 4.0
+     */
+    void removePendingRequestForUrl( const QUrl &url ) const;
+
+    /**
+     * Returns TRUE if the cache has a matching but invalid entry for a \a request.
+     *
+     * Since QNetworkDiskCache entirely basis cache storage on URLs alone, we may
+     * get situations where there's a match for a URL in the cache but it should
+     * NOT be used for the specified \a request (e.g. when the previous response
+     * had a non-matching "Vary" attribute).
+     *
+     * If this method returns FALSE, then the request should be amended to
+     * prevent potential false-positive retrieval from cache.
+     *
+     * This method is thread-safe.
+     */
+    bool hasInvalidMatchForRequest( const QNetworkRequest &request );
 
     //! \see QNetworkDiskCache::cacheDirectory
     QString cacheDirectory() const;
@@ -87,6 +139,12 @@ class QgsNetworkDiskCache : public QNetworkDiskCache
     //! \see QNetworkDiskCache::fileMetaData()
     QNetworkCacheMetaData fileMetaData( const QString &fileName ) const;
 
+    /**
+     * Returns a smart cache size, in bytes, based on available free space
+     * \since QGIS 3.40
+     */
+    static qint64 smartCacheSize( const QString &path );
+
   public slots:
     //! \see QNetworkDiskCache::clear()
     void clear() override;
@@ -100,6 +158,8 @@ class QgsNetworkDiskCache : public QNetworkDiskCache
 
     static ExpirableNetworkDiskCache sDiskCache;
     static QMutex sDiskCacheMutex;
+
+    static QHash<QUrl, QVariantMap> sPendingRequestHeaders;
 
     friend class QgsNetworkAccessManager;
 };

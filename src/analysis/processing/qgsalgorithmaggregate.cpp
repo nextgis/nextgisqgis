@@ -33,11 +33,16 @@ QString QgsAggregateAlgorithm::displayName() const
 
 QString QgsAggregateAlgorithm::shortHelpString() const
 {
-  return QObject::tr( "This algorithm take a vector or table layer and aggregate features based on a group by expression. Features for which group by expression return the same value are grouped together.\n\n"
+  return QObject::tr( "This algorithm takes a vector or table layer and aggregates features based on a group by expression. Features for which group by expression return the same value are grouped together.\n\n"
                       "It is possible to group all source features together using constant value in group by parameter, example: NULL.\n\n"
                       "It is also possible to group features using multiple fields using Array function, example: Array(\"Field1\", \"Field2\").\n\n"
                       "Geometries (if present) are combined into one multipart geometry for each group.\n\n"
                       "Output attributes are computed depending on each given aggregate definition." );
+}
+
+QString QgsAggregateAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Aggregates features based on a group by expression, combining geometries (if present) into one multipart geometry for each group." );
 }
 
 QStringList QgsAggregateAlgorithm::tags() const
@@ -62,7 +67,7 @@ QgsAggregateAlgorithm *QgsAggregateAlgorithm::createInstance() const
 
 void QgsAggregateAlgorithm::initAlgorithm( const QVariantMap & )
 {
-  addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "INPUT" ), QObject::tr( "Input layer" ), QList<int>() << QgsProcessing::TypeVector ) );
+  addParameter( new QgsProcessingParameterFeatureSource( QStringLiteral( "INPUT" ), QObject::tr( "Input layer" ), QList<int>() << static_cast<int>( Qgis::ProcessingSourceType::Vector ) ) );
   addParameter( new QgsProcessingParameterExpression( QStringLiteral( "GROUP_BY" ), QObject::tr( "Group by expression (NULL to group all features)" ), QStringLiteral( "NULL" ), QStringLiteral( "INPUT" ) ) );
   addParameter( new QgsProcessingParameterAggregate( QStringLiteral( "AGGREGATES" ), QObject::tr( "Aggregates" ), QStringLiteral( "INPUT" ) ) );
   addParameter( new QgsProcessingParameterFeatureSink( QStringLiteral( "OUTPUT" ), QObject::tr( "Aggregated" ) ) );
@@ -92,9 +97,9 @@ bool QgsAggregateAlgorithm::prepareAlgorithm( const QVariantMap &parameters, Qgs
     if ( name.isEmpty() )
       throw QgsProcessingException( QObject::tr( "Field name cannot be empty" ) );
 
-    const QVariant::Type type = static_cast< QVariant::Type >( aggregateDef.value( QStringLiteral( "type" ) ).toInt() );
+    const QMetaType::Type type = static_cast<QMetaType::Type>( aggregateDef.value( QStringLiteral( "type" ) ).toInt() );
     const QString typeName = aggregateDef.value( QStringLiteral( "type_name" ) ).toString();
-    const QVariant::Type subType = static_cast< QVariant::Type >( aggregateDef.value( QStringLiteral( "sub_type" ) ).toInt() );
+    const QMetaType::Type subType = static_cast<QMetaType::Type>( aggregateDef.value( QStringLiteral( "sub_type" ) ).toInt() );
 
     const int length = aggregateDef.value( QStringLiteral( "length" ), 0 ).toInt();
     const int precision = aggregateDef.value( QStringLiteral( "precision" ), 0 ).toInt();
@@ -118,11 +123,7 @@ bool QgsAggregateAlgorithm::prepareAlgorithm( const QVariantMap &parameters, Qgs
     }
     else if ( aggregateType == QLatin1String( "concatenate" ) || aggregateType == QLatin1String( "concatenate_unique" ) )
     {
-      expression = QStringLiteral( "%1(%2, %3, %4, %5)" ).arg( aggregateType,
-                   source,
-                   mGroupBy,
-                   QStringLiteral( "TRUE" ),
-                   QgsExpression::quotedString( delimiter ) );
+      expression = QStringLiteral( "%1(%2, %3, %4, %5)" ).arg( aggregateType, source, mGroupBy, QStringLiteral( "TRUE" ), QgsExpression::quotedString( delimiter ) );
     }
     else
     {
@@ -145,11 +146,11 @@ QVariantMap QgsAggregateAlgorithm::processAlgorithm( const QVariantMap &paramete
   double progressStep = count > 0 ? 50.0 / count : 1;
   long long current = 0;
 
-  QHash< QVariantList, Group > groups;
-  QVector< QVariantList > keys; // We need deterministic order for the tests
+  QHash<QVariantList, Group> groups;
+  QVector<QVariantList> keys; // We need deterministic order for the tests
   QgsFeature feature;
 
-  std::vector< std::unique_ptr< QgsFeatureSink > > groupSinks;
+  std::vector<std::unique_ptr<QgsFeatureSink>> groupSinks;
 
   QgsFeatureIterator it = mSource->getFeatures( QgsFeatureRequest() );
   while ( it.nextFeature( feature ) )
@@ -158,22 +159,17 @@ QVariantMap QgsAggregateAlgorithm::processAlgorithm( const QVariantMap &paramete
     const QVariant groupByValue = mGroupByExpression.evaluate( &expressionContext );
     if ( mGroupByExpression.hasEvalError() )
     {
-      throw QgsProcessingException( QObject::tr( "Evaluation error in group by expression \"%1\": %2" ).arg( mGroupByExpression.expression(),
-                                    mGroupByExpression.evalErrorString() ) );
+      throw QgsProcessingException( QObject::tr( "Evaluation error in group by expression \"%1\": %2" ).arg( mGroupByExpression.expression(), mGroupByExpression.evalErrorString() ) );
     }
 
     // upgrade group by value to a list, so that we get correct behavior with the QHash
-    const QVariantList key = groupByValue.type() == QVariant::List ? groupByValue.toList() : ( QVariantList() << groupByValue );
+    const QVariantList key = groupByValue.userType() == QMetaType::Type::QVariantList ? groupByValue.toList() : ( QVariantList() << groupByValue );
 
     const auto groupIt = groups.find( key );
     if ( groupIt == groups.end() )
     {
       QString id = QStringLiteral( "memory:" );
-      std::unique_ptr< QgsFeatureSink > sink( QgsProcessingUtils::createFeatureSink( id,
-                                              context,
-                                              mSource->fields(),
-                                              mSource->wkbType(),
-                                              mSource->sourceCrs() ) );
+      std::unique_ptr<QgsFeatureSink> sink( QgsProcessingUtils::createFeatureSink( id, context, mSource->fields(), mSource->wkbType(), mSource->sourceCrs() ) );
 
       if ( !sink->addFeature( feature, QgsFeatureSink::FastInsert ) )
         throw QgsProcessingException( writeFeatureError( sink.get(), parameters, QString() ) );
@@ -207,7 +203,7 @@ QVariantMap QgsAggregateAlgorithm::processAlgorithm( const QVariantMap &paramete
   groupSinks.clear();
 
   QString destId;
-  std::unique_ptr< QgsFeatureSink > sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, destId, mFields, QgsWkbTypes::multiType( mSource->wkbType() ), mSource->sourceCrs() ) );
+  std::unique_ptr<QgsFeatureSink> sink( parameterAsSink( parameters, QStringLiteral( "OUTPUT" ), context, destId, mFields, QgsWkbTypes::multiType( mSource->wkbType() ), mSource->sourceCrs() ) );
   if ( !sink )
     throw QgsProcessingException( invalidSinkError( parameters, QStringLiteral( "OUTPUT" ) ) );
 
@@ -218,17 +214,16 @@ QVariantMap QgsAggregateAlgorithm::processAlgorithm( const QVariantMap &paramete
   current = 0;
   for ( const QVariantList &key : keys )
   {
-    const Group &group = groups[ key ];
+    const Group &group = groups[key];
 
     QgsExpressionContext exprContext = createExpressionContext( parameters, context );
     exprContext.appendScope( QgsExpressionContextUtils::layerScope( group.layer ) );
     exprContext.setFeature( group.firstFeature );
 
-    QgsGeometry geometry = mGeometryExpression.evaluate( &exprContext ).value< QgsGeometry >();
+    QgsGeometry geometry = mGeometryExpression.evaluate( &exprContext ).value<QgsGeometry>();
     if ( mGeometryExpression.hasEvalError() )
     {
-      throw QgsProcessingException( QObject::tr( "Evaluation error in geometry expression \"%1\": %2" ).arg( mGeometryExpression.expression(),
-                                    mGeometryExpression.evalErrorString() ) );
+      throw QgsProcessingException( QObject::tr( "Evaluation error in geometry expression \"%1\": %2" ).arg( mGeometryExpression.expression(), mGeometryExpression.evalErrorString() ) );
     }
 
     if ( !geometry.isNull() && !geometry.isEmpty() )
@@ -279,6 +274,8 @@ QVariantMap QgsAggregateAlgorithm::processAlgorithm( const QVariantMap &paramete
       break;
   }
 
+  sink->finalize();
+
   QVariantMap results;
   results.insert( QStringLiteral( "OUTPUT" ), destId );
   return results;
@@ -299,7 +296,8 @@ QgsExpression QgsAggregateAlgorithm::createExpression( const QString &expression
   if ( expr.hasParserError() )
   {
     throw QgsProcessingException(
-      QObject::tr( "Parser error in expression \"%1\": %2" ).arg( expressionString, expr.parserErrorString() ) );
+      QObject::tr( "Parser error in expression \"%1\": %2" ).arg( expressionString, expr.parserErrorString() )
+    );
   }
   return expr;
 }

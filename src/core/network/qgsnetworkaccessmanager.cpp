@@ -20,10 +20,12 @@
  ***************************************************************************/
 
 #include "qgsnetworkaccessmanager.h"
+#include "moc_qgsnetworkaccessmanager.cpp"
 
 #include "qgsapplication.h"
 #include "qgsmessagelog.h"
 #include "qgssettings.h"
+#include "qgssettingsregistrycore.h"
 #include "qgslogger.h"
 #include "qgis.h"
 #include "qgsnetworkdiskcache.h"
@@ -55,6 +57,7 @@ const QgsSettingsEntryInteger *QgsNetworkAccessManager::settingsNetworkTimeout =
 QgsNetworkAccessManager *QgsNetworkAccessManager::sMainNAM = nullptr;
 
 static std::vector< std::pair< QString, std::function< void( QNetworkRequest * ) > > > sCustomPreprocessors;
+static std::vector< std::pair< QString, std::function< void( QNetworkRequest *, int &op, QByteArray *data ) > > > sCustomAdvancedPreprocessors;
 static std::vector< std::pair< QString, std::function< void( const QNetworkRequest &, QNetworkReply * ) > > > sCustomReplyPreprocessors;
 
 /// @cond PRIVATE
@@ -214,8 +217,11 @@ QgsNetworkAccessManager::QgsNetworkAccessManager( QObject *parent )
   , mSslErrorHandlerSemaphore( 1 )
   , mAuthRequestHandlerSemaphore( 1 )
 {
+  setRedirectPolicy( QNetworkRequest::NoLessSafeRedirectPolicy );
   setProxyFactory( new QgsNetworkProxyFactory() );
   setCookieJar( new QgsNetworkCookieJar( this ) );
+  enableStrictTransportSecurityStore( true );
+  setStrictTransportSecurityEnabled( true );
 }
 
 void QgsNetworkAccessManager::setSslErrorHandler( std::unique_ptr<QgsSslErrorHandler> handler )
@@ -296,26 +302,27 @@ QNetworkReply *QgsNetworkAccessManager::createRequest( QNetworkAccessManager::Op
 {
   const QgsSettings s;
 
-  QNetworkRequest *pReq( const_cast< QNetworkRequest * >( &req ) ); // hack user agent
+  // copy request so we can modify it
+  QNetworkRequest modifiedRequest( req );
 
   QString userAgent = s.value( QStringLiteral( "/qgis/networkAndProxy/userAgent" ), "Mozilla/5.0" ).toString();
   if ( !userAgent.isEmpty() )
     userAgent += ' ';
   userAgent += QStringLiteral( "QGIS/%1/%2" ).arg( Qgis::versionInt() ).arg( QSysInfo::prettyProductName() );
-  pReq->setRawHeader( "User-Agent", userAgent.toLatin1() );
+  modifiedRequest.setRawHeader( "User-Agent", userAgent.toLatin1() );
 
 #ifndef QT_NO_SSL
-  const bool ishttps = pReq->url().scheme().compare( QLatin1String( "https" ), Qt::CaseInsensitive ) == 0;
+  const bool ishttps = modifiedRequest.url().scheme().compare( QLatin1String( "https" ), Qt::CaseInsensitive ) == 0;
   if ( ishttps && !QgsApplication::authManager()->isDisabled() )
   {
     QgsDebugMsgLevel( QStringLiteral( "Adding trusted CA certs to request" ), 3 );
-    QSslConfiguration sslconfig( pReq->sslConfiguration() );
+    QSslConfiguration sslconfig( modifiedRequest.sslConfiguration() );
     // Merge trusted CAs with any additional CAs added by the authentication methods
     sslconfig.setCaCertificates( QgsAuthCertUtils::casMerge( QgsApplication::authManager()->trustedCaCertsCache(), sslconfig.caCertificates( ) ) );
     // check for SSL cert custom config
     const QString hostport( QStringLiteral( "%1:%2" )
-                            .arg( pReq->url().host().trimmed() )
-                            .arg( pReq->url().port() != -1 ? pReq->url().port() : 443 ) );
+                            .arg( modifiedRequest.url().host().trimmed() )
+                            .arg( modifiedRequest.url().port() != -1 ? modifiedRequest.url().port() : 443 ) );
     const QgsAuthConfigSslServer servconfig = QgsApplication::authManager()->sslCertCustomConfigByHost( hostport.trimmed() );
     if ( !servconfig.isNull() )
     {
@@ -325,20 +332,34 @@ QNetworkReply *QgsNetworkAccessManager::createRequest( QNetworkAccessManager::Op
       sslconfig.setPeerVerifyDepth( servconfig.sslPeerVerifyDepth() );
     }
 
-    pReq->setSslConfiguration( sslconfig );
+    modifiedRequest.setSslConfiguration( sslconfig );
   }
 #endif
+
+  if ( modifiedRequest.url().port() != -1 )
+  {
+    QUrl requestUrl = modifiedRequest.url();
+    const QString scheme = requestUrl.scheme();
+    const bool isDefaultPort = ( scheme == QLatin1String( "http" ) && requestUrl.port() == 80 )
+                               || ( scheme == QLatin1String( "https" ) && requestUrl.port() == 443 );
+    if ( isDefaultPort )
+    {
+      QgsDebugMsgLevel( QStringLiteral( "Removing explicit default port %2 from url %1" ).arg( requestUrl.port( ) ).arg( requestUrl.toString() ), 2 );
+      requestUrl.setPort( -1 );
+      modifiedRequest.setUrl( requestUrl );
+    }
+  }
 
   if ( sMainNAM->mCacheDisabled )
   {
     // if caching is disabled then we override whatever the request actually has set!
-    pReq->setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork );
-    pReq->setAttribute( QNetworkRequest::CacheSaveControlAttribute, false );
+    modifiedRequest.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork );
+    modifiedRequest.setAttribute( QNetworkRequest::CacheSaveControlAttribute, false );
   }
 
   for ( const auto &preprocessor :  sCustomPreprocessors )
   {
-    preprocessor.second( pReq );
+    preprocessor.second( &modifiedRequest );
   }
 
   static QAtomicInt sRequestId = 0;
@@ -349,13 +370,65 @@ QNetworkReply *QgsNetworkAccessManager::createRequest( QNetworkAccessManager::Op
     content = buffer->buffer();
   }
 
-  emit requestAboutToBeCreated( QgsNetworkRequestParameters( op, req, requestId, content ) );
+  for ( const auto &preprocessor :  sCustomAdvancedPreprocessors )
+  {
+    int intOp = static_cast< int >( op );
+    preprocessor.second( &modifiedRequest, intOp, &content );
+    op = static_cast< QNetworkAccessManager::Operation >( intOp );
+  }
+
+  bool needsCachePendingRequestCleanup = false;
+  if ( QgsNetworkDiskCache *diskCache = qobject_cast< QgsNetworkDiskCache * >( cache() ) )
+  {
+    if ( modifiedRequest.attribute( QNetworkRequest::CacheLoadControlAttribute ) != QNetworkRequest::AlwaysNetwork )
+    {
+      // if we are going to attempt to retrieve this request from cache, first do some checks
+      // on the version in the cache
+      if ( diskCache->hasInvalidMatchForRequest( modifiedRequest ) )
+      {
+        if ( modifiedRequest.attribute( QNetworkRequest::CacheSaveControlAttribute ).toBool() )
+        {
+          // evict the previous invalid response, so this response will be cached
+          diskCache->remove( modifiedRequest.url() );
+        }
+        else
+        {
+          // can't use the previously cached response for this request, so explicitly block that
+          modifiedRequest.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork );
+          modifiedRequest.setAttribute( QNetworkRequest::CacheSaveControlAttribute, false );
+        }
+      }
+    }
+
+    if ( modifiedRequest.attribute( QNetworkRequest::CacheSaveControlAttribute, true ).toBool() )
+    {
+      if ( diskCache->hasPendingRequestForUrl( modifiedRequest.url() ) )
+      {
+        // don't allow multiple requests to attempt to write to the same cache resource
+        modifiedRequest.setAttribute( QNetworkRequest::CacheSaveControlAttribute, false );
+      }
+      else
+      {
+        QVariantMap currentHeaders;
+        const QList<QByteArray> rawHeaderList = modifiedRequest.rawHeaderList();
+        for ( const QByteArray &header : rawHeaderList )
+        {
+          currentHeaders.insert( QString::fromUtf8( header ).toLower(), modifiedRequest.rawHeader( header ) );
+        }
+        diskCache->insertPendingRequestHeaders( modifiedRequest.url(), currentHeaders );
+        needsCachePendingRequestCleanup = true;
+      }
+    }
+  }
+
+  emit requestAboutToBeCreated( QgsNetworkRequestParameters( op, modifiedRequest, requestId, content ) );
   Q_NOWARN_DEPRECATED_PUSH
-  emit requestAboutToBeCreated( op, req, outgoingData );
+  emit requestAboutToBeCreated( op, modifiedRequest, outgoingData );
   Q_NOWARN_DEPRECATED_POP
-  QNetworkReply *reply = QNetworkAccessManager::createRequest( op, req, outgoingData );
+  QNetworkReply *reply = QNetworkAccessManager::createRequest( op, modifiedRequest, outgoingData );
   reply->setProperty( "requestId", requestId );
 
+  emit requestCreated( QgsNetworkRequestParameters( op, reply->request(), requestId, content ) );
   Q_NOWARN_DEPRECATED_PUSH
   emit requestCreated( reply );
   Q_NOWARN_DEPRECATED_POP
@@ -367,7 +440,16 @@ QNetworkReply *QgsNetworkAccessManager::createRequest( QNetworkAccessManager::Op
 
   for ( const auto &replyPreprocessor :  sCustomReplyPreprocessors )
   {
-    replyPreprocessor.second( req, reply );
+    replyPreprocessor.second( modifiedRequest, reply );
+  }
+
+  if ( needsCachePendingRequestCleanup )
+  {
+    if ( QgsNetworkDiskCache *diskCache = qobject_cast< QgsNetworkDiskCache * >( cache() ) )
+    {
+      const QUrl url = modifiedRequest.url();
+      connect( reply, &QNetworkReply::finished, diskCache, [url, diskCache] { diskCache->removePendingRequestForUrl( url ); } );
+    }
   }
 
   // The timer will call abortRequest slot to abort the connection if needed.
@@ -631,6 +713,9 @@ void QgsNetworkAccessManager::setupDefaultProxyAndCache( Qt::ConnectionType conn
     connect( this, qOverload< QgsNetworkRequestParameters >( &QgsNetworkAccessManager::requestAboutToBeCreated ),
              sMainNAM, qOverload< QgsNetworkRequestParameters >( &QgsNetworkAccessManager::requestAboutToBeCreated ) );
 
+    connect( this, qOverload< const QgsNetworkRequestParameters & >( &QgsNetworkAccessManager::requestCreated ),
+             sMainNAM, qOverload< const QgsNetworkRequestParameters & >( &QgsNetworkAccessManager::requestCreated ) );
+
     connect( this, qOverload< QgsNetworkReplyContent >( &QgsNetworkAccessManager::finished ),
              sMainNAM, qOverload< QgsNetworkReplyContent >( &QgsNetworkAccessManager::finished ) );
 
@@ -651,9 +736,11 @@ void QgsNetworkAccessManager::setupDefaultProxyAndCache( Qt::ConnectionType conn
   else
   {
 #ifndef QT_NO_SSL
-    setSslErrorHandler( std::make_unique< QgsSslErrorHandler >() );
+    if ( !mSslErrorHandler )
+      setSslErrorHandler( std::make_unique< QgsSslErrorHandler >() );
 #endif
-    setAuthHandler( std::make_unique< QgsNetworkAuthenticationHandler>() );
+    if ( !mAuthHandler )
+      setAuthHandler( std::make_unique< QgsNetworkAuthenticationHandler>() );
   }
 #ifndef QT_NO_SSL
   connect( this, &QgsNetworkAccessManager::sslErrorsOccurred, sMainNAM, &QgsNetworkAccessManager::handleSslErrors );
@@ -730,8 +817,8 @@ void QgsNetworkAccessManager::setupDefaultProxyAndCache( Qt::ConnectionType conn
     {
       QgsDebugMsgLevel( QStringLiteral( "setting proxy from stored authentication configuration %1" ).arg( authcfg ), 2 );
       // Never crash! Never.
-      if ( QgsApplication::authManager() )
-        QgsApplication::authManager()->updateNetworkProxy( proxy, authcfg );
+      if ( QgsAuthManager *authManager = QgsApplication::authManager() )
+        authManager->updateNetworkProxy( proxy, authcfg );
     }
   }
 
@@ -741,12 +828,13 @@ void QgsNetworkAccessManager::setupDefaultProxyAndCache( Qt::ConnectionType conn
   if ( !newcache )
     newcache = new QgsNetworkDiskCache( this );
 
-  QString cacheDirectory = settings.value( QStringLiteral( "cache/directory" ) ).toString();
+  QString cacheDirectory = QgsSettingsRegistryCore::settingsNetworkCacheDirectory->value();
   if ( cacheDirectory.isEmpty() )
     cacheDirectory = QStandardPaths::writableLocation( QStandardPaths::CacheLocation );
-  const qint64 cacheSize = settings.value( QStringLiteral( "cache/size" ), 256 * 1024 * 1024 ).toLongLong();
   newcache->setCacheDirectory( cacheDirectory );
+  qint64 cacheSize = QgsSettingsRegistryCore::settingsNetworkCacheSize->value();
   newcache->setMaximumCacheSize( cacheSize );
+
   QgsDebugMsgLevel( QStringLiteral( "cacheDirectory: %1" ).arg( newcache->cacheDirectory() ), 4 );
   QgsDebugMsgLevel( QStringLiteral( "maximumCacheSize: %1" ).arg( newcache->maximumCacheSize() ), 4 );
 
@@ -793,7 +881,7 @@ QgsNetworkReplyContent QgsNetworkAccessManager::blockingPost( QNetworkRequest &r
 {
   QgsBlockingNetworkRequest br;
   br.setAuthCfg( authCfg );
-  br.post( request, data, forceRefresh, feedback );
+  ( void )br.post( request, data, forceRefresh, feedback );
   return br.reply();
 }
 
@@ -812,6 +900,23 @@ bool QgsNetworkAccessManager::removeRequestPreprocessor( const QString &id )
     return a.first == id;
   } ), sCustomPreprocessors.end() );
   return prevCount != sCustomPreprocessors.size();
+}
+
+bool QgsNetworkAccessManager::removeAdvancedRequestPreprocessor( const QString &id )
+{
+  const size_t prevCount = sCustomAdvancedPreprocessors.size();
+  sCustomAdvancedPreprocessors.erase( std::remove_if( sCustomAdvancedPreprocessors.begin(), sCustomAdvancedPreprocessors.end(), [id]( std::pair< QString, std::function< void( QNetworkRequest *, int &, QByteArray * ) > > &a )
+  {
+    return a.first == id;
+  } ), sCustomAdvancedPreprocessors.end() );
+  return prevCount != sCustomAdvancedPreprocessors.size();
+}
+
+QString QgsNetworkAccessManager::setAdvancedRequestPreprocessor( const std::function<void ( QNetworkRequest *, int &, QByteArray * )> &processor )
+{
+  QString id = QUuid::createUuid().toString();
+  sCustomAdvancedPreprocessors.emplace_back( std::make_pair( id, processor ) );
+  return id;
 }
 
 QString QgsNetworkAccessManager::setReplyPreprocessor( const std::function<void ( const QNetworkRequest &, QNetworkReply * )> &processor )

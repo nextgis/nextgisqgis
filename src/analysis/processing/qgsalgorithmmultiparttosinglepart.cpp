@@ -61,6 +61,16 @@ QString QgsMultipartToSinglepartAlgorithm::shortHelpString() const
                       "a single part. Features with multipart geometries are divided in as many different features as parts the geometry "
                       "contain, and the same attributes are used for each of them." );
 }
+QString QgsMultipartToSinglepartAlgorithm::shortDescription() const
+{
+  return QObject::tr( "Takes a vector layer with multipart geometries and generates a new one in which all geometries contain "
+                      "a single part." );
+}
+
+Qgis::ProcessingAlgorithmDocumentationFlags QgsMultipartToSinglepartAlgorithm::documentationFlags() const
+{
+  return Qgis::ProcessingAlgorithmDocumentationFlag::RegeneratesPrimaryKey;
+}
 
 QgsMultipartToSinglepartAlgorithm *QgsMultipartToSinglepartAlgorithm::createInstance() const
 {
@@ -68,10 +78,10 @@ QgsMultipartToSinglepartAlgorithm *QgsMultipartToSinglepartAlgorithm::createInst
 }
 
 
-QgsProcessingFeatureSource::Flag QgsMultipartToSinglepartAlgorithm::sourceFlags() const
+Qgis::ProcessingFeatureSourceFlags QgsMultipartToSinglepartAlgorithm::sourceFlags() const
 {
   // skip geometry checks - this algorithm can be used to repair geometries
-  return QgsProcessingFeatureSource::FlagSkipGeometryValidityChecks;
+  return Qgis::ProcessingFeatureSourceFlag::SkipGeometryValidityChecks;
 }
 
 QgsFeatureSink::SinkFlags QgsMultipartToSinglepartAlgorithm::sinkFlags() const
@@ -106,5 +116,3 @@ QgsFeatureList QgsMultipartToSinglepartAlgorithm::processFeature( const QgsFeatu
 
 
 ///@endcond
-
-

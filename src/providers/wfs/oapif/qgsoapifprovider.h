@@ -33,17 +33,16 @@
 
 class QgsOapifSharedData;
 
-class QgsOapifProvider final: public QgsVectorDataProvider
+class QgsOapifProvider final : public QgsVectorDataProvider
 {
     Q_OBJECT
   public:
-
     static const QString OAPIF_PROVIDER_KEY;
     static const QString OAPIF_PROVIDER_DESCRIPTION;
 
     static const QString OAPIF_PROVIDER_DEFAULT_CRS;
 
-    explicit QgsOapifProvider( const QString &uri, const QgsDataProvider::ProviderOptions &providerOptions, QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() );
+    explicit QgsOapifProvider( const QString &uri, const QgsDataProvider::ProviderOptions &providerOptions, Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() );
     ~QgsOapifProvider() override;
 
     /* Inherited from QgsVectorDataProvider */
@@ -61,8 +60,9 @@ class QgsOapifProvider final: public QgsVectorDataProvider
 
     QString subsetString() const override { return mSubsetString; }
     bool setSubsetString( const QString &theSQL, bool updateFeatureCount = true ) override;
-
-    bool supportsSubsetString() const override { return true; }
+    QString subsetStringDialect() const override;
+    QString subsetStringHelpUrl() const override;
+    bool supportsSubsetString() const override;
 
     QString storageType() const override { return QStringLiteral( "OGC API - Features" ); }
 
@@ -75,11 +75,13 @@ class QgsOapifProvider final: public QgsVectorDataProvider
 
     static QString providerKey();
 
-    QgsVectorDataProvider::Capabilities capabilities() const override;
+    Qgis::VectorProviderCapabilities capabilities() const override;
 
     QgsLayerMetadata layerMetadata() const override { return mLayerMetadata; }
 
     bool empty() const override;
+
+    QString geometryColumnName() const override;
 
     enum class FilterTranslationState
     {
@@ -114,7 +116,7 @@ class QgsOapifProvider final: public QgsVectorDataProvider
     bool mValid = true;
 
     //! Server capabilities for this layer (generated from capabilities document)
-    QgsVectorDataProvider::Capabilities mCapabilities = QgsVectorDataProvider::Capabilities();
+    Qgis::VectorProviderCapabilities mCapabilities;
 
     //! Whether server supports PATCH operation
     bool mSupportsPatch = false;
@@ -124,6 +126,9 @@ class QgsOapifProvider final: public QgsVectorDataProvider
 
     //! Layer metadata
     QgsLayerMetadata mLayerMetadata;
+
+    //! Feature count when advertized (currently only through ldproxy's itemCount)
+    int64_t mFeatureCount = -1;
 
     //! Set to true by reloadProviderData()
     mutable bool mUpdateFeatureCountAtNextFeatureCountRequest = true;
@@ -138,20 +143,23 @@ class QgsOapifProvider final: public QgsVectorDataProvider
 
     //! Compute capabilities
     void computeCapabilities( const QgsOapifItemsRequest &itemsRequest );
+
+    //! Issue a GET /schema request and handle it
+    void handleGetSchemaRequest( const QString &schemaUrl );
 };
 
-class QgsOapifProviderMetadata final: public QgsProviderMetadata
+class QgsOapifProviderMetadata final : public QgsProviderMetadata
 {
     Q_OBJECT
   public:
     QgsOapifProviderMetadata();
     QIcon icon() const override;
-    QgsOapifProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, QgsDataProvider::ReadFlags flags = QgsDataProvider::ReadFlags() ) override;
-    QList< Qgis::LayerType > supportedLayerTypes() const override;
+    QgsOapifProvider *createProvider( const QString &uri, const QgsDataProvider::ProviderOptions &options, Qgis::DataProviderReadFlags flags = Qgis::DataProviderReadFlags() ) override;
+    QList<Qgis::LayerType> supportedLayerTypes() const override;
 };
 
 //! Class shared between provider and feature source
-class QgsOapifSharedData final: public QObject, public QgsBackgroundCachedSharedData
+class QgsOapifSharedData final : public QObject, public QgsBackgroundCachedSharedData
 {
     Q_OBJECT
   public:
@@ -208,6 +216,9 @@ class QgsOapifSharedData final: public QObject, public QgsBackgroundCachedShared
     //! Server filter
     QString mServerFilter;
 
+    //! Geometry column name
+    QString mGeometryColumnName;
+
     //! Translation state of filter to server-side filter.
     QgsOapifProvider::FilterTranslationState mFilterTranslationState = QgsOapifProvider::FilterTranslationState::FULLY_CLIENT;
 
@@ -229,8 +240,8 @@ class QgsOapifSharedData final: public QObject, public QgsBackgroundCachedShared
     //! Whether server supports CQL2 case-insensitive-comparison conformance class (CASEI function)
     bool mServerSupportsCaseI = false;
 
-    //! Whether server supports CQL2 basic-spatial-operators conformance class (S_INTERSECTS(,BBOX() or POINT()))
-    bool mServerSupportsBasicSpatialOperators = false;
+    //! Whether server supports CQL2 basic-spatial-functions conformance class (S_INTERSECTS(,BBOX() or POINT()))
+    bool mServerSupportsBasicSpatialFunctions = false;
 
     // Map of queryables items for CQL2 request. The key of the map is a queryable name.
     QMap<QString, QgsOapifQueryablesRequest::Queryable> mQueryables;
@@ -239,17 +250,11 @@ class QgsOapifSharedData final: public QObject, public QgsBackgroundCachedShared
     QString appendExtraQueryParameters( const QString &url ) const;
 
   private:
-
     // Translate part of an expression to a server-side filter using Part1 features only
-    QString compileExpressionNodeUsingPart1( const QgsExpressionNode *node,
-        QgsOapifProvider::FilterTranslationState &translationState,
-        QString &untranslatedPart ) const;
+    QString compileExpressionNodeUsingPart1( const QgsExpressionNode *node, QgsOapifProvider::FilterTranslationState &translationState, QString &untranslatedPart ) const;
 
     // Translate part of an expression to a server-side filter using Part1 or Part3
-    bool computeFilter( const QgsExpression &expr,
-                        QgsOapifProvider::FilterTranslationState &translationState,
-                        QString &serverSideParameters,
-                        QString &clientSideFilterExpression ) const;
+    bool computeFilter( const QgsExpression &expr, QgsOapifProvider::FilterTranslationState &translationState, QString &serverSideParameters, QString &clientSideFilterExpression ) const;
 
     //! Log error to QgsMessageLog and raise it to the provider
     void pushError( const QString &errorMsg ) const override;
@@ -272,11 +277,11 @@ class QgsOapifSharedData final: public QObject, public QgsBackgroundCachedShared
 };
 
 
-class QgsOapifFeatureDownloaderImpl final: public QObject, public QgsFeatureDownloaderImpl
+class QgsOapifFeatureDownloaderImpl final : public QObject, public QgsFeatureDownloaderImpl
 {
     Q_OBJECT
 
-    DEFINE_FEATURE_DOWLOADER_IMPL_SLOTS
+    DEFINE_FEATURE_DOWNLOADER_IMPL_SLOTS
 
   signals:
     /* Used internally by the stop() method */
@@ -292,10 +297,9 @@ class QgsOapifFeatureDownloaderImpl final: public QObject, public QgsFeatureDown
     void run( bool serializeFeatures, long long maxFeatures ) override;
 
   private slots:
-    void createProgressDialog();
+    void createProgressTask();
 
   private:
-
     //! Mutable data shared between provider, feature sources and downloader.
     QgsOapifSharedData *mShared = nullptr;
 

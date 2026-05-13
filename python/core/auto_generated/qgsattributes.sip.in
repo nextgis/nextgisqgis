@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsattributes.h                                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -19,6 +19,7 @@ typedef QMap<int, QVariant> QgsAttributeMap;
 typedef QMap<int, QString> QgsFieldNameMap;
 
 typedef QMap<int, QgsField> QgsFieldMap;
+
 
 
 typedef QVector<QVariant> QgsAttributes;
@@ -39,14 +40,69 @@ typedef QVector<QVariant> QgsAttributes;
   // Set the list elements.
   for ( int i = 0; i < sipCpp->size(); ++i )
   {
-    QVariant *v = new QVariant( sipCpp->at( i ) );
-    PyObject *tobj;
+    const QVariant v = sipCpp->at( i );
+    PyObject *tobj = NULL;
+    if ( !v.isValid() )
+    {
+      Py_INCREF( Py_None );
+      tobj = Py_None;
+    }
+    // QByteArray null handling is "special"! See null_from_qvariant_converter in conversions.sip
+    else if ( QgsVariantUtils::isNull( v, true ) && v.userType() != QMetaType::Type::QByteArray )
+    {
+      PyObject *vartype = sipConvertFromEnum( v.type(), sipType_QVariant_Type );
+      PyObject *args = PyTuple_Pack( 1, vartype );
+      PyTypeObject *typeObj = sipTypeAsPyTypeObject( sipType_QVariant );
+      tobj = PyObject_Call( ( PyObject * )typeObj, args, nullptr );
+      Py_DECREF( args );
+      Py_DECREF( vartype );
+    }
+    else
+    {
+      switch ( v.userType() )
+      {
+        case QMetaType::Type::Int:
+          tobj = PyLong_FromLong( v.toInt() );
+          break;
 
-    if ( ( tobj = sipConvertFromNewType( v, sipType_QVariant, Py_None ) ) == NULL )
+        case QMetaType::Type::UInt:
+          tobj = PyLong_FromUnsignedLong( v.toUInt() );
+          break;
+
+        case QMetaType::Type::Long:
+        case QMetaType::Type::LongLong:
+          tobj = PyLong_FromLongLong( v.toLongLong() );
+          break;
+
+        case QMetaType::Type::ULong:
+        case QMetaType::Type::ULongLong:
+          tobj = PyLong_FromUnsignedLongLong( v.toULongLong() );
+          break;
+
+        case QMetaType::Type::Bool:
+          tobj = PyBool_FromLong( v.toBool() ? 1 : 0 );
+          break;
+
+        case QMetaType::Type::Float:
+        case QMetaType::Type::Double:
+          tobj = PyFloat_FromDouble( v.toDouble() );
+          break;
+
+        case QMetaType::Type::QString:
+          tobj = PyUnicode_FromString( v.toString().toUtf8().constData() );
+          break;
+
+        default:
+        {
+          QVariant *newV = new QVariant( v );
+          tobj = sipConvertFromNewType( newV, sipType_QVariant, sipTransferObj );
+          break;
+        }
+      }
+    }
+    if ( tobj == NULL )
     {
       Py_DECREF( l );
-      delete v;
-
       return NULL;
     }
 
@@ -70,16 +126,37 @@ typedef QVector<QVariant> QgsAttributes;
     return 1;
   }
 
-  QgsAttributes *qv = new QgsAttributes;
   SIP_SSIZE_T listSize = PyList_GET_SIZE( sipPy );
-  qv->reserve( listSize );
+  // Initialize attributes to null. This has two motivations:
+  // 1. It speeds up the QVector construction, as otherwise we are creating n default QVariant objects (default QVariant constructor is not free!)
+  // 2. It lets us shortcut in the loop below when a Py_None is encountered in the list
+  const QVariant nullVariant( QVariant::Int );
+  QgsAttributes *qv = new QgsAttributes( listSize, nullVariant );
+  QVariant *outData = qv->data();
 
   for ( SIP_SSIZE_T i = 0; i < listSize; ++i )
   {
     PyObject *obj = PyList_GET_ITEM( sipPy, i );
     if ( obj == Py_None )
     {
-      qv->append( QVariant( QVariant::Int ) );
+      // outData was already initialized to null values
+      *outData++;
+    }
+    else if ( PyBool_Check( obj ) )
+    {
+      *outData++ = QVariant( PyObject_IsTrue( obj ) == 1 );
+    }
+    else if ( PyLong_Check( obj ) )
+    {
+      *outData++ = QVariant( PyLong_AsLongLong( obj ) );
+    }
+    else if ( PyFloat_Check( obj ) )
+    {
+      *outData++ = QVariant( PyFloat_AsDouble( obj ) );
+    }
+    else if ( PyUnicode_Check( obj ) )
+    {
+      *outData++ = QVariant( QString::fromUtf8( PyUnicode_AsUTF8( obj ) ) );
     }
     else
     {
@@ -94,7 +171,7 @@ typedef QVector<QVariant> QgsAttributes;
         return 0;
       }
 
-      qv->append( *t );
+      *outData++ = *t;
       sipReleaseType( t, sipType_QVariant, state );
     }
   }
@@ -105,11 +182,10 @@ typedef QVector<QVariant> QgsAttributes;
 %End
 };
 
-
 /************************************************************************
  * This file has been generated automatically from                      *
  *                                                                      *
  * src/core/qgsattributes.h                                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

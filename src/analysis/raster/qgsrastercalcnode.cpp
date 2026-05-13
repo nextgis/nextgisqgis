@@ -25,7 +25,6 @@ QgsRasterCalcNode::QgsRasterCalcNode( QgsRasterMatrix *matrix )
   : mType( tMatrix )
   , mMatrix( matrix )
 {
-
 }
 
 QgsRasterCalcNode::QgsRasterCalcNode( Operator op, QgsRasterCalcNode *left, QgsRasterCalcNode *right )
@@ -36,7 +35,7 @@ QgsRasterCalcNode::QgsRasterCalcNode( Operator op, QgsRasterCalcNode *left, QgsR
 {
 }
 
-QgsRasterCalcNode::QgsRasterCalcNode( QString functionName, QVector <QgsRasterCalcNode *> functionArgs )
+QgsRasterCalcNode::QgsRasterCalcNode( QString functionName, QVector<QgsRasterCalcNode *> functionArgs )
   : mType( tFunction )
   , mFunctionName( functionName )
   , mFunctionArgs( functionArgs )
@@ -62,7 +61,7 @@ QgsRasterCalcNode::~QgsRasterCalcNode()
   }
 }
 
-bool QgsRasterCalcNode::calculate( QMap<QString, QgsRasterBlock * > &rasterData, QgsRasterMatrix &result, int row ) const
+bool QgsRasterCalcNode::calculate( QMap<QString, QgsRasterBlock *> &rasterData, QgsRasterMatrix &result, int row ) const
 {
   //if type is raster ref: return a copy of the corresponding matrix
 
@@ -87,12 +86,12 @@ bool QgsRasterCalcNode::calculate( QMap<QString, QgsRasterBlock * > &rasterData,
 
     int outRow = 0;
     bool isNoData = false;
-    for ( int dataRow = startRow; dataRow < endRow ; ++dataRow, ++outRow )
+    for ( int dataRow = startRow; dataRow < endRow; ++dataRow, ++outRow )
     {
       for ( int dataCol = 0; dataCol < nCols; ++dataCol )
       {
         const double value = ( *it )->valueAndNoData( dataRow, dataCol, isNoData );
-        data[ dataCol + nCols * outRow] = isNoData ? result.nodataValue() : value;
+        data[dataCol + nCols * outRow] = isNoData ? result.nodataValue() : value;
       }
     }
     result.setData( nCols, nRows, data, result.nodataValue() );
@@ -202,8 +201,8 @@ bool QgsRasterCalcNode::calculate( QMap<QString, QgsRasterBlock * > &rasterData,
   }
   else if ( mType == tNumber )
   {
-    const size_t nEntries = static_cast<size_t>( result.nColumns() * result.nRows() );
-    double *data = new double[ nEntries ];
+    const size_t nEntries = static_cast<size_t>( result.nColumns() ) * static_cast<size_t>( result.nRows() );
+    double *data = new double[nEntries];
     std::fill( data, data + nEntries, mNumber );
     result.setData( result.nColumns(), 1, data, result.nodataValue() );
 
@@ -222,10 +221,10 @@ bool QgsRasterCalcNode::calculate( QMap<QString, QgsRasterBlock * > &rasterData,
   }
   else if ( mType == tFunction )
   {
-    std::vector< std::unique_ptr< QgsRasterMatrix > > matrixContainer;
+    std::vector<std::unique_ptr<QgsRasterMatrix>> matrixContainer;
     for ( int i = 0; i < mFunctionArgs.size(); ++i )
     {
-      std::unique_ptr< QgsRasterMatrix > singleMatrix = std::make_unique< QgsRasterMatrix >( result.nColumns(), result.nRows(), nullptr, result.nodataValue() );
+      auto singleMatrix = std::make_unique<QgsRasterMatrix>( result.nColumns(), result.nRows(), nullptr, result.nodataValue() );
       if ( !mFunctionArgs.at( i ) || !mFunctionArgs.at( i )->calculate( rasterData, *singleMatrix, row ) )
       {
         return false;
@@ -254,73 +253,73 @@ QString QgsRasterCalcNode::toString( bool cStyle ) const
       switch ( mOperator )
       {
         case opPLUS:
-          result = QStringLiteral( "( %1 + %2 )" ).arg( left ).arg( right );
+          result = QStringLiteral( "( %1 + %2 )" ).arg( left, right );
           break;
         case opMINUS:
-          result = QStringLiteral( "( %1 - %2 )" ).arg( left ).arg( right );
+          result = QStringLiteral( "( %1 - %2 )" ).arg( left, right );
           break;
         case opSIGN:
           result = QStringLiteral( "-%1" ).arg( left );
           break;
         case opMUL:
-          result = QStringLiteral( "%1 * %2" ).arg( left ).arg( right );
+          result = QStringLiteral( "%1 * %2" ).arg( left, right );
           break;
         case opDIV:
-          result = QStringLiteral( "%1 / %2" ).arg( left ).arg( right );
+          result = QStringLiteral( "%1 / %2" ).arg( left, right );
           break;
         case opPOW:
           if ( cStyle )
-            result = QStringLiteral( "pow( %1, %2 )" ).arg( left ).arg( right );
+            result = QStringLiteral( "pow( %1, %2 )" ).arg( left, right );
           else
-            result = QStringLiteral( "%1^%2" ).arg( left ).arg( right );
+            result = QStringLiteral( "%1^%2" ).arg( left, right );
           break;
         case opEQ:
           if ( cStyle )
-            result = QStringLiteral( "( float ) ( %1 == %2 )" ).arg( left ).arg( right );
+            result = QStringLiteral( "( float ) ( %1 == %2 )" ).arg( left, right );
           else
-            result = QStringLiteral( "%1 = %2" ).arg( left ).arg( right );
+            result = QStringLiteral( "%1 = %2" ).arg( left, right );
           break;
         case opNE:
           if ( cStyle )
-            result = QStringLiteral( "( float ) ( %1 != %2 )" ).arg( left ).arg( right );
+            result = QStringLiteral( "( float ) ( %1 != %2 )" ).arg( left, right );
           else
-            result = QStringLiteral( "%1 != %2" ).arg( left ).arg( right );
+            result = QStringLiteral( "%1 != %2" ).arg( left, right );
           break;
         case opGT:
           if ( cStyle )
-            result = QStringLiteral( "( float ) ( %1 > %2 )" ).arg( left ).arg( right );
+            result = QStringLiteral( "( float ) ( %1 > %2 )" ).arg( left, right );
           else
-            result = QStringLiteral( "%1 > %2" ).arg( left ).arg( right );
+            result = QStringLiteral( "%1 > %2" ).arg( left, right );
           break;
         case opLT:
           if ( cStyle )
-            result = QStringLiteral( "( float ) ( %1 < %2 )" ).arg( left ).arg( right );
+            result = QStringLiteral( "( float ) ( %1 < %2 )" ).arg( left, right );
           else
-            result = QStringLiteral( "%1 < %2" ).arg( left ).arg( right );
+            result = QStringLiteral( "%1 < %2" ).arg( left, right );
           break;
         case opGE:
           if ( cStyle )
-            result = QStringLiteral( "( float ) ( %1 >= %2 )" ).arg( left ).arg( right );
+            result = QStringLiteral( "( float ) ( %1 >= %2 )" ).arg( left, right );
           else
-            result = QStringLiteral( "%1 >= %2" ).arg( left ).arg( right );
+            result = QStringLiteral( "%1 >= %2" ).arg( left, right );
           break;
         case opLE:
           if ( cStyle )
-            result = QStringLiteral( "( float ) ( %1 <= %2 )" ).arg( left ).arg( right );
+            result = QStringLiteral( "( float ) ( %1 <= %2 )" ).arg( left, right );
           else
-            result = QStringLiteral( "%1 <= %2" ).arg( left ).arg( right );
+            result = QStringLiteral( "%1 <= %2" ).arg( left, right );
           break;
         case opAND:
           if ( cStyle )
-            result = QStringLiteral( "( float ) ( %1 && %2 )" ).arg( left ).arg( right );
+            result = QStringLiteral( "( float ) ( %1 && %2 )" ).arg( left, right );
           else
-            result = QStringLiteral( "%1 AND %2" ).arg( left ).arg( right );
+            result = QStringLiteral( "%1 AND %2" ).arg( left, right );
           break;
         case opOR:
           if ( cStyle )
-            result = QStringLiteral( "( float ) ( %1 || %2 )" ).arg( left ).arg( right );
+            result = QStringLiteral( "( float ) ( %1 || %2 )" ).arg( left, right );
           else
-            result = QStringLiteral( "%1 OR %2" ).arg( left ).arg( right );
+            result = QStringLiteral( "%1 OR %2" ).arg( left, right );
           break;
         case opSQRT:
           result = QStringLiteral( "sqrt( %1 )" ).arg( left );
@@ -358,15 +357,15 @@ QString QgsRasterCalcNode::toString( bool cStyle ) const
           break;
         case opMIN:
           if ( cStyle )
-            result = QStringLiteral( "min( ( float ) ( %1 ), ( float ) ( %2 ) )" ).arg( left ).arg( right );
+            result = QStringLiteral( "min( ( float ) ( %1 ), ( float ) ( %2 ) )" ).arg( left, right );
           else
-            result = QStringLiteral( "min( %1, %2 )" ).arg( left ).arg( right );
+            result = QStringLiteral( "min( %1, %2 )" ).arg( left, right );
           break;
         case opMAX:
           if ( cStyle )
-            result = QStringLiteral( "max( ( float ) ( %1 ), ( float ) ( %2 ) )" ).arg( left ).arg( right );
+            result = QStringLiteral( "max( ( float ) ( %1 ), ( float ) ( %2 ) )" ).arg( left, right );
           else
-            result = QStringLiteral( "max( %1, %2 )" ).arg( left ).arg( right );
+            result = QStringLiteral( "max( %1, %2 )" ).arg( left, right );
           break;
         case opNONE:
           break;
@@ -394,7 +393,7 @@ QString QgsRasterCalcNode::toString( bool cStyle ) const
         const QString argTwo = mFunctionArgs.at( 1 )->toString( cStyle );
         const QString argThree = mFunctionArgs.at( 2 )->toString( cStyle );
         if ( cStyle )
-          result =  QStringLiteral( " ( %1 ) ? ( %2 ) : ( %3 ) " ).arg( argOne, argTwo, argThree );
+          result = QStringLiteral( " ( bool ) ( %1 ) ? ( %2 ) : ( %3 ) " ).arg( argOne, argTwo, argThree );
         else
           result = QStringLiteral( "if( %1 , %2 , %3 )" ).arg( argOne, argTwo, argThree );
       }
@@ -421,38 +420,37 @@ QList<const QgsRasterCalcNode *> QgsRasterCalcNode::findNodes( const QgsRasterCa
 
 QgsRasterCalcNode *QgsRasterCalcNode::parseRasterCalcString( const QString &str, QString &parserErrorMsg )
 {
-  extern QgsRasterCalcNode *localParseRasterCalcString( const QString & str, QString & parserErrorMsg );
+  extern QgsRasterCalcNode *localParseRasterCalcString( const QString &str, QString &parserErrorMsg );
   return localParseRasterCalcString( str, parserErrorMsg );
 }
 
-QStringList QgsRasterCalcNode::referencedLayerNames()
+QStringList QgsRasterCalcNode::referencedLayerNames() const
 {
   QStringList referencedRasters;
 
-  QStringList rasterRef = this->cleanRasterReferences();
-  for ( const auto &i : rasterRef )
+  const QStringList rasterRef = this->cleanRasterReferences();
+  for ( const auto &i : std::as_const( rasterRef ) )
   {
-    if ( referencedRasters.contains( i.mid( 0, i.lastIndexOf( "@" ) ) ) ) continue;
+    if ( referencedRasters.contains( i.mid( 0, i.lastIndexOf( "@" ) ) ) )
+      continue;
     referencedRasters << i.mid( 0, i.lastIndexOf( "@" ) );
   }
 
   return referencedRasters;
 }
 
-QStringList QgsRasterCalcNode::cleanRasterReferences()
+QStringList QgsRasterCalcNode::cleanRasterReferences() const
 {
   QStringList rasterReferences;
-  const QList<const QgsRasterCalcNode *> rasterRefNodes =  this->findNodes( QgsRasterCalcNode::Type::tRasterRef );
+  const QList<const QgsRasterCalcNode *> rasterRefNodes = this->findNodes( QgsRasterCalcNode::Type::tRasterRef );
 
   for ( const QgsRasterCalcNode *r : rasterRefNodes )
   {
-
     QString layerRef( r->toString() );
     if ( layerRef.at( 0 ) == QLatin1String( "\"" ) && layerRef.at( layerRef.size() - 1 ) == QLatin1String( "\"" ) )
     {
       layerRef.remove( 0, 1 );
       layerRef.chop( 1 );
-
     }
     layerRef.remove( QChar( '\\' ), Qt::CaseInsensitive );
     rasterReferences << layerRef;
@@ -461,22 +459,21 @@ QStringList QgsRasterCalcNode::cleanRasterReferences()
   return rasterReferences;
 }
 
-QgsRasterMatrix QgsRasterCalcNode::evaluateFunction( const std::vector< std::unique_ptr< QgsRasterMatrix > > &matrixVector, QgsRasterMatrix &result ) const
+QgsRasterMatrix QgsRasterCalcNode::evaluateFunction( const std::vector<std::unique_ptr<QgsRasterMatrix>> &matrixVector, QgsRasterMatrix &result ) const
 {
-
   if ( mFunctionName == "if" )
   {
     //scalar condition
     if ( matrixVector.at( 0 )->isNumber() )
     {
-      result = ( matrixVector.at( 0 )->data() ? * matrixVector.at( 1 ) : * matrixVector.at( 2 ) );
+      result = ( matrixVector.at( 0 )->data() ? *matrixVector.at( 1 ) : *matrixVector.at( 2 ) );
       return result;
     }
     int nCols = matrixVector.at( 0 )->nColumns();
     int nRows = matrixVector.at( 0 )->nRows();
     int nEntries = nCols * nRows;
-    std::unique_ptr< double[] > dataResult = std::make_unique< double[] >( nEntries );
-    double *dataResultRawPtr =  dataResult.get();
+    auto dataResult = std::make_unique<double[]>( nEntries );
+    double *dataResultRawPtr = dataResult.get();
 
     double *condition = matrixVector.at( 0 )->data();
     double *firstOption = matrixVector.at( 1 )->data();

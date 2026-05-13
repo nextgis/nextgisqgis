@@ -28,7 +28,7 @@ class QMouseEvent;
 
 /**
  * \ingroup core
- * \brief A directory: contains subdirectories and layers
+ * \brief A browser item for directories: contains subdirectories and layers.
 */
 class CORE_EXPORT QgsDirectoryItem : public QgsDataCollectionItem
 {
@@ -120,6 +120,9 @@ class CORE_EXPORT QgsDirectoryItem : public QgsDataCollectionItem
      */
     static void setCustomColor( const QString &directory, const QColor &color );
 
+    /**
+     * \deprecated QGIS 3.20
+     */
     Q_DECL_DEPRECATED QWidget *paramWidget() override SIP_FACTORY SIP_DEPRECATED;
     bool hasDragEnabled() const override { return true; }
     QgsMimeDataUtils::UriList mimeUris() const override;
@@ -216,6 +219,9 @@ class CORE_EXPORT QgsDirectoryItem : public QgsDataCollectionItem
     QDateTime mLastScan;
     QColor mIconColor;
 
+    bool mIsDir = false;
+    bool mIsSymLink = false;
+
     friend class TestQgsDataItem;
 };
 
@@ -250,7 +256,6 @@ class CORE_EXPORT QgsDirectoryParamWidget : public QTreeWidget
  * \ingroup core
  * \brief A directory item showing the current project directory.
  * \note Not available in Python bindings.
- * \since QGIS 3.0
 */
 class CORE_EXPORT QgsProjectHomeItem : public QgsDirectoryItem
 {
@@ -271,5 +276,3 @@ class CORE_EXPORT QgsProjectHomeItem : public QgsDirectoryItem
 #endif
 
 #endif // QGSDATAITEM_H
-
-

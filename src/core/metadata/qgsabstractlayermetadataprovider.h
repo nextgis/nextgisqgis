@@ -43,6 +43,7 @@ struct CORE_EXPORT QgsMetadataSearchContext
 /**
  * \ingroup core
  * \brief Result record of layer metadata provider search.
+ *
  * The result contains QGIS metadata information and all information
  * that is required by QGIS to load the layer and to filter
  * the results.
@@ -67,9 +68,6 @@ class CORE_EXPORT QgsLayerMetadataProviderResult: public QgsLayerMetadata
      */
     QgsLayerMetadataProviderResult( const QgsLayerMetadata &metadata );
 
-    /**
-     * Default constructor.
-     */
     QgsLayerMetadataProviderResult( ) = default;
 
     /**
@@ -148,7 +146,7 @@ class CORE_EXPORT QgsLayerMetadataProviderResult: public QgsLayerMetadata
     //! Layer spatial extent of the layer in EPSG:4326
     QgsPolygon mGeographicExtent;
     //! Layer geometry type (Point, Polygon, Linestring)
-    Qgis::GeometryType mGeometryType;
+    Qgis::GeometryType mGeometryType = Qgis::GeometryType::Unknown;
     //! Layer CRS authid
     QString mAuthid;
     //! Layer QgsDataSourceUri string
@@ -156,7 +154,7 @@ class CORE_EXPORT QgsLayerMetadataProviderResult: public QgsLayerMetadata
     //! Layer data provider name
     QString mDataProviderName;
     //! Layer type (vector, raster etc.)
-    Qgis::LayerType mLayerType;
+    Qgis::LayerType mLayerType = Qgis::LayerType::Vector;
     //! Metadata standard uri, QGIS QMD metadata format uses "http://mrcc.com/qgis.dtd"
     QString mStandardUri;
 };

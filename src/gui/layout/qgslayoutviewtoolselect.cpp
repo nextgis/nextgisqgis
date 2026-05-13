@@ -14,12 +14,16 @@
  ***************************************************************************/
 
 #include "qgslayoutviewtoolselect.h"
+#include "moc_qgslayoutviewtoolselect.cpp"
 #include "qgslayoutviewmouseevent.h"
 #include "qgslayoutview.h"
 #include "qgslayout.h"
 #include "qgslayoutitempage.h"
 #include "qgslayoutmousehandles.h"
 #include "qgslayoutitemgroup.h"
+
+
+const double QgsLayoutViewToolSelect::sSearchToleranceInMillimeters = 2.0;
 
 
 QgsLayoutViewToolSelect::QgsLayoutViewToolSelect( QgsLayoutView *view )
@@ -53,11 +57,11 @@ void QgsLayoutViewToolSelect::layoutPressEvent( QgsLayoutViewMouseEvent *event )
   if ( mMouseHandles->isVisible() )
   {
     //selection handles are being shown, get mouse action for current cursor position
-    QgsLayoutMouseHandles::MouseAction mouseAction = mMouseHandles->mouseActionForScenePos( event->layoutPoint() );
+    Qgis::MouseHandlesAction mouseAction = mMouseHandles->mouseActionForScenePos( event->layoutPoint() );
 
-    if ( mouseAction != QgsLayoutMouseHandles::MoveItem
-         && mouseAction != QgsLayoutMouseHandles::NoAction
-         && mouseAction != QgsLayoutMouseHandles::SelectItem )
+    if ( mouseAction != Qgis::MouseHandlesAction::MoveItem
+         && mouseAction != Qgis::MouseHandlesAction::NoAction
+         && mouseAction != Qgis::MouseHandlesAction::SelectItem )
     {
       //mouse is over a resize handle, so propagate event onward
       event->ignore();
@@ -94,19 +98,19 @@ void QgsLayoutViewToolSelect::layoutPressEvent( QgsLayoutViewMouseEvent *event )
   if ( previousSelectedItem )
   {
     //select highest item just below previously selected item at position of event
-    selectedItem = layout()->layoutItemAt( event->layoutPoint(), previousSelectedItem, true );
+    selectedItem = layout()->layoutItemAt( event->layoutPoint(), previousSelectedItem, true, searchToleranceInLayoutUnits() );
 
     //if we didn't find a lower item we'll use the top-most as fall-back
     //this duplicates mapinfo/illustrator/etc behavior where ctrl-clicks are "cyclic"
     if ( !selectedItem )
     {
-      selectedItem = layout()->layoutItemAt( event->layoutPoint(), true );
+      selectedItem = layout()->layoutItemAt( event->layoutPoint(), true, searchToleranceInLayoutUnits() );
     }
   }
   else
   {
     //select topmost item at position of event
-    selectedItem = layout()->layoutItemAt( event->layoutPoint(), true );
+    selectedItem = layout()->layoutItemAt( event->layoutPoint(), true, searchToleranceInLayoutUnits() );
   }
 
   // if selected item is in a group, we actually get the top-level group it's part of
@@ -145,7 +149,7 @@ void QgsLayoutViewToolSelect::layoutPressEvent( QgsLayoutViewMouseEvent *event )
   }
   else
   {
-    if ( ( !selectedItem->isSelected() ) &&       //keep selection if an already selected item pressed
+    if ( ( !selectedItem->isSelected() ) &&            //keep selection if an already selected item pressed
          !( event->modifiers() & Qt::ShiftModifier ) ) //keep selection if shift key pressed
     {
       layout()->setSelectedItem( selectedItem ); // clears existing selection
@@ -154,7 +158,12 @@ void QgsLayoutViewToolSelect::layoutPressEvent( QgsLayoutViewMouseEvent *event )
     {
       selectedItem->setSelected( true );
     }
-    event->ignore();
+
+    // Due to the selection tolerance, items can be selected while the mouse is not over them,
+    // so we cannot just forward the mouse press event by calling event->ignore().
+    // We call startMove to simulate a mouse press event on the handles
+    mMouseHandles->startMove( view()->mapToScene( event->pos() ) );
+
     emit itemFocused( selectedItem );
   }
 }
@@ -167,6 +176,17 @@ void QgsLayoutViewToolSelect::layoutMoveEvent( QgsLayoutViewMouseEvent *event )
   }
   else
   {
+    if ( !mMouseHandles->isDragging() && !mMouseHandles->isResizing() )
+    {
+      if ( layout()->layoutItemAt( event->layoutPoint(), true, searchToleranceInLayoutUnits() ) )
+      {
+        view()->viewport()->setCursor( Qt::SizeAllCursor );
+      }
+      else
+      {
+        view()->viewport()->setCursor( Qt::ArrowCursor );
+      }
+    }
     event->ignore();
   }
 }
@@ -219,7 +239,10 @@ void QgsLayoutViewToolSelect::layoutReleaseEvent( QgsLayoutViewMouseEvent *event
   //find all items in rect
   QList<QGraphicsItem *> itemList;
   if ( wasClick )
-    itemList = layout()->items( rect.center(), selectionMode );
+  {
+    const double tolerance = searchToleranceInLayoutUnits();
+    itemList = layout()->items( QRectF( rect.center().x() - tolerance, rect.center().y() - tolerance, 2 * tolerance, 2 * tolerance ), selectionMode );
+  }
   else
     itemList = layout()->items( rect, selectionMode );
 
@@ -322,5 +345,10 @@ void QgsLayoutViewToolSelect::setLayout( QgsLayout *layout )
   mMouseHandles->hide();
   mMouseHandles->setZValue( QgsLayout::ZMouseHandles );
   layout->addItem( mMouseHandles );
+}
+double QgsLayoutViewToolSelect::searchToleranceInLayoutUnits()
+{
+  const double pixelsPerMm = view()->physicalDpiX() / 25.4;
+  return sSearchToleranceInMillimeters * pixelsPerMm / view()->transform().m11();
 }
 ///@endcond

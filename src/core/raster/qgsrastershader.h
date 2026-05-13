@@ -1,4 +1,4 @@
-/* **************************************************************************
+/***************************************************************************
                 qgsrastershader.h -  description
                        -------------------
 begin                : Fri Dec 28 2007
@@ -7,7 +7,7 @@ email                : ersts@amnh.org
 
 ****************************************************************************/
 
-/* **************************************************************************
+/***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -38,9 +38,7 @@ class CORE_EXPORT QgsRasterShader
   public:
     QgsRasterShader( double minimumValue = 0.0, double maximumValue = 255.0 );
 
-    //! QgsRasterShader cannot be copied
     QgsRasterShader( const QgsRasterShader &rh ) = delete;
-    //! QgsRasterShader cannot be copied
     QgsRasterShader &operator=( const QgsRasterShader &rh ) = delete;
 
     /*
@@ -64,7 +62,7 @@ class CORE_EXPORT QgsRasterShader
     double minimumValue() const { return mMinimumValue; }
 
     QgsRasterShaderFunction *rasterShaderFunction() { return mRasterShaderFunction.get(); }
-    const QgsRasterShaderFunction *rasterShaderFunction() const { return mRasterShaderFunction.get(); } SIP_SKIP
+    const QgsRasterShaderFunction *rasterShaderFunction() const SIP_SKIP { return mRasterShaderFunction.get(); }
 
     /*
      *
@@ -86,7 +84,7 @@ class CORE_EXPORT QgsRasterShader
                 int *returnRedValue SIP_OUT,
                 int *returnGreenValue SIP_OUT,
                 int *returnBlueValue SIP_OUT,
-                int *returnAlpha SIP_OUT );
+                int *returnAlpha SIP_OUT ) const;
 
     /**
      * Generates a new RGBA value based on an original RGBA value.
@@ -107,7 +105,7 @@ class CORE_EXPORT QgsRasterShader
                 int *returnRedValue SIP_OUT,
                 int *returnGreenValue SIP_OUT,
                 int *returnBlueValue SIP_OUT,
-                int *returnAlpha SIP_OUT );
+                int *returnAlpha SIP_OUT ) const;
 
     /**
      * \brief A public method that allows the user to set their own shader \a function.

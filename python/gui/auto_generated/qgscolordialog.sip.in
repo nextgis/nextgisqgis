@@ -3,7 +3,7 @@
  *                                                                      *
  * src/gui/qgscolordialog.h                                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -13,19 +13,17 @@
 class QgsColorDialog : QDialog
 {
 %Docstring(signature="appended")
-A custom QGIS dialog for selecting a color. Has many improvements over the standard Qt color picker dialog, including
-hue wheel supports, color swatches, and a color sampler.
+A custom QGIS dialog for selecting a color.
 
-.. versionadded:: 2.5
+Has many improvements over the standard Qt color picker dialog,
+including hue wheel supports, color swatches, and a color sampler.
 %End
 
 %TypeHeaderCode
 #include "qgscolordialog.h"
 %End
   public:
-
-    QgsColorDialog( QWidget *parent /TransferThis/ = 0, Qt::WindowFlags fl = QgsGuiUtils::ModalDialogFlags,
-                    const QColor &color = QColor() );
+    QgsColorDialog( QWidget *parent /TransferThis/ = 0, Qt::WindowFlags fl = QgsGuiUtils::ModalDialogFlags, const QColor &color = QColor() );
 %Docstring
 Create a new color picker dialog
 
@@ -50,25 +48,24 @@ Sets the title for the color dialog
 
     void setAllowOpacity( bool allowOpacity );
 %Docstring
-Sets whether opacity modification (transparency) is permitted
-for the color dialog. Defaults to ``True``.
+Sets whether opacity modification (transparency) is permitted for the
+color dialog. Defaults to ``True``.
 
 :param allowOpacity: set to ``False`` to disable opacity modification
-
-.. versionadded:: 3.0
 %End
 
-    static QColor getColor( const QColor &initialColor, QWidget *parent, const QString &title = QString(),
-                            bool allowOpacity = false );
+    static QColor getColor( const QColor &initialColor, QWidget *parent, const QString &title = QString(), bool allowOpacity = false );
 %Docstring
 Returns a color selection from a color dialog.
 
 :param initialColor: the initial color of the selection dialog.
 :param parent: parent widget
 :param title: the title of the dialog.
-:param allowOpacity: set to ``True`` to allow modification of color opacity value (transparency)
+:param allowOpacity: set to ``True`` to allow modification of color
+                     opacity value (transparency)
 
-:return: Selected color on :py:func:`~QgsColorDialog.accepted` or initialColor on :py:func:`~QgsColorDialog.rejected`.
+:return: Selected color on :py:func:`~QgsColorDialog.accepted` or
+         initialColor on :py:func:`~QgsColorDialog.rejected`.
 %End
 
   signals:
@@ -90,7 +87,6 @@ Sets the current color for the dialog
 %End
 
   protected:
-
     virtual void closeEvent( QCloseEvent *e );
 
 
@@ -101,5 +97,5 @@ Sets the current color for the dialog
  *                                                                      *
  * src/gui/qgscolordialog.h                                             *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

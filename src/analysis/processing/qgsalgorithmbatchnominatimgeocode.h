@@ -33,9 +33,7 @@
  */
 class QgsBatchNominatimGeocodeAlgorithm : public QgsBatchGeocodeAlgorithm
 {
-
   public:
-
     /**
      * Constructor for QgsBatchNominatimGeocodeAlgorithm.
      */
@@ -45,6 +43,7 @@ class QgsBatchNominatimGeocodeAlgorithm : public QgsBatchGeocodeAlgorithm
     QString displayName() const override;
     QStringList tags() const override;
     QString shortHelpString() const override;
+    QString shortDescription() const override;
     QgsBatchNominatimGeocodeAlgorithm *createInstance() const override SIP_FACTORY;
 
   protected:
@@ -52,14 +51,10 @@ class QgsBatchNominatimGeocodeAlgorithm : public QgsBatchGeocodeAlgorithm
     bool prepareAlgorithm( const QVariantMap &parameters, QgsProcessingContext &context, QgsProcessingFeedback *feedback ) override;
 
   private:
-
     QgsNominatimGeocoder mNominatimGeocoder;
     mutable QgsCoordinateReferenceSystem mOutputCrs;
-
 };
 
 ///@endcond PRIVATE
 
 #endif // QGSALGORITHMBATCHNOMINATIMGEOCODE_H
-
-

@@ -3,7 +3,7 @@
  *                                                                      *
  * src/core/qgsfieldformatter.h                                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/
 
 
@@ -12,7 +12,7 @@
 class QgsFieldFormatterContext
 {
 %Docstring(signature="appended")
-A context for field formatter containing information like the project
+A context for field formatter containing information like the project.
 
 .. versionadded:: 3.12
 %End
@@ -23,9 +23,6 @@ A context for field formatter containing information like the project
   public:
 
     QgsFieldFormatterContext();
-%Docstring
-Constructor
-%End
 
     QgsProject *project() const;
 %Docstring
@@ -48,15 +45,13 @@ class QgsFieldFormatter
 %Docstring(signature="appended")
 A field formatter helps to handle and display values for a field.
 
-It allows for using a shared configuration with the editor widgets
-for representation of attribute values.
-Field kits normally have one single instance which is managed by the
-:py:class:`QgsFieldFormatterRegistry`. Custom field formatters should be registered there and
-field formatters for use within code should normally be obtained from there.
+It allows for using a shared configuration with the editor widgets for
+representation of attribute values. Field kits normally have one single
+instance which is managed by the :py:class:`QgsFieldFormatterRegistry`.
+Custom field formatters should be registered there and field formatters
+for use within code should normally be obtained from there.
 
 This is an abstract base class and will always need to be subclassed.
-
-.. versionadded:: 3.0
 %End
 
 %TypeHeaderCode
@@ -65,9 +60,6 @@ This is an abstract base class and will always need to be subclassed.
   public:
 
     QgsFieldFormatter();
-%Docstring
-Default constructor
-%End
 
     virtual ~QgsFieldFormatter();
 
@@ -80,8 +72,9 @@ Default constructor
 
     virtual QString id() const = 0;
 %Docstring
-Returns a unique id for this field formatter.
-This id will later be used to identify this field formatter in the registry with :py:func:`QgsFieldFormatterRegistry.fieldFormatter()`.
+Returns a unique id for this field formatter. This id will later be used
+to identify this field formatter in the registry with
+:py:func:`QgsFieldFormatterRegistry.fieldFormatter()`.
 
 This id matches the id of a :py:class:`QgsEditorWidgetFactory`.
 %End
@@ -90,49 +83,48 @@ This id matches the id of a :py:class:`QgsEditorWidgetFactory`.
 %Docstring
 Create a pretty String representation of the value.
 
-:return: By default the string representation of the provided value as implied by the field definition is returned.
-
-.. versionadded:: 3.0
+:return: By default the string representation of the provided value as
+         implied by the field definition is returned.
 %End
 
     virtual QVariant sortValue( QgsVectorLayer *layer, int fieldIndex, const QVariantMap &config, const QVariant &cache, const QVariant &value ) const;
 %Docstring
-If the default sort order should be overwritten for this widget, you can transform the value in here.
+If the default sort order should be overwritten for this widget, you can
+transform the value in here.
 
 :return: an unmodified value by default.
-
-.. versionadded:: 3.0
 %End
 
     virtual Qt::AlignmentFlag alignmentFlag( QgsVectorLayer *layer, int fieldIndex, const QVariantMap &config ) const;
 %Docstring
-Returns the alignment for a particular field. By default this will consider the field type but can be overwritten if mapped
-values are represented.
-
-.. versionadded:: 3.0
+Returns the alignment for a particular field. By default this will
+consider the field type but can be overwritten if mapped values are
+represented.
 %End
 
     virtual QVariant createCache( QgsVectorLayer *layer, int fieldIndex, const QVariantMap &config ) const;
 %Docstring
 Create a cache for a given field.
 
-This will be used in situations where a field is being represented various times in a loop. And will be passed
-to other methods on :py:class:`QgsFieldKit` and :py:class:`QgsEditorWidgetWrapper`.
+This will be used in situations where a field is being represented
+various times in a loop. And will be passed to other methods on
+:py:class:`QgsFieldKit` and :py:class:`QgsEditorWidgetWrapper`.
 
-For example, the attribute table will create a cache once for each field and then use this
-cache for representation. The :py:class:`QgsValueRelationFieldFormatter` and :py:class:`QgsValueRelationEditorWidget`
-implement this functionality to create a lookuptable once (a QVariantMap / dict) and are
-make use of a cache if present.
-
-.. versionadded:: 3.0
+For example, the attribute table will create a cache once for each field
+and then use this cache for representation. The
+:py:class:`QgsValueRelationFieldFormatter` and
+:py:class:`QgsValueRelationEditorWidget` implement this functionality to
+create a lookuptable once (a QVariantMap / dict) and are make use of a
+cache if present.
 %End
 
 
     virtual QVariantList availableValues( const QVariantMap &config, int countLimit, const QgsFieldFormatterContext &context ) const;
 %Docstring
-Returns a list of the values that would be possible to select with this widget type
-On a RelationReference that would be the parents ids or on ValueMap all the configured keys
-according to the settings in the ``config``
+Returns a list of the values that would be possible to select with this
+widget type On a RelationReference that would be the parents ids or on
+ValueMap all the configured keys according to the settings in the
+``config``
 
 .. versionadded:: 3.12
 %End
@@ -158,5 +150,5 @@ Sets the ``flags``
  *                                                                      *
  * src/core/qgsfieldformatter.h                                         *
  *                                                                      *
- * Do not edit manually ! Edit header and run scripts/sipify.pl again   *
+ * Do not edit manually ! Edit header and run scripts/sipify.py again   *
  ************************************************************************/

@@ -21,14 +21,13 @@
 
 /**
  * \ingroup analysis
- * \brief This class implements a resolution for problems detected in geometry checks.
+ * \brief Implements a resolution for problems detected in geometry checks.
  *
  * \since QGIS 3.12
  */
 class ANALYSIS_EXPORT QgsGeometryCheckResolutionMethod
 {
   public:
-
     /**
      * Creates a new method with the specified parameters.
      */
